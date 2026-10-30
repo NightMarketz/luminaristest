@@ -1,7 +1,11 @@
 # FE-INCR-ECF-Y600 — painéis da ECF (Presumido e Real) coletam o Y600 (BRIEF)
 
-> **Sessão:** `sessao-planejamento`, sem código. Nenhum fork se auto-ratificou: os F-FE-Y600-1..6 do §4 estão
-> **RATIFICAÇÃO PENDENTE**.
+> **Sessão:** `sessao-planejamento`, sem código. Nenhum fork se auto-ratificou.
+> **[EMENDA 2026-10-29 — FORKS RATIFICADOS]** No questionário da sessão, o dono escolheu a recomendação nos seis forks:
+> F-FE-Y600-1 (b) *"Rota da ECF"*, F-FE-Y600-2 (a) *"Sim, como PR-2"*, F-FE-Y600-3/4/6 (a) *"Ratifico 3a, 4a, 6a"* e
+> F-FE-Y600-5 (a) *"Aba Perfil fiscal"*. Com o 1 (b) e o 2 (a), entram no escopo o PR-0 (leitura no `server/`) e o PR-2
+> (cadastro de sócios). Registro em [`D-2026-10-29-FE-ECF-Y600-FORKS`](../plano/decisoes/D-2026-10-29-FE-ECF-Y600-FORKS.md).
+> **A ratificação não dá `executa`:** a `sessao-feature` exige autorização própria.
 > **Item:** passo 14 do H2 (`docs/accounting/RUNBOOK-H2-BROWSER-SIGNOFF.md`, branch `claude/gate-copilot-h2-9782b8`,
 > PR #982), marcado FALHOU pelo dono em 29/10. Achado fora de escopo do BE: `BE-INCR-ECF-Y600-brief.md` §7, *"FE-INCR-ECF-Y600
 > (vizinho, não planejado aqui)… Exige autorização própria"*.
@@ -92,10 +96,10 @@ fonte de cada regra é o BE em `main` e, por trás dele, o Manual ECF L12 ([D01]
 
 ## 2. Checklist de comportamentos
 
-Cada item é testável sozinho. Os itens marcados *(F-FE-Y600-n)* seguem a **recomendação** do fork. A recomendação
-**não está ratificada**: se o dono escolher outro caminho, o item muda.
+Cada item é testável sozinho. Os itens marcados *(F-FE-Y600-n)* seguem a recomendação do fork, que o dono ratificou em
+29/10. O checklist vale como está.
 
-### PR-0 — leitura das vigências do ano (BE, só se F-FE-Y600-1 = (b); some se for (c))
+### PR-0 — leitura das vigências do ano (BE; F-FE-Y600-1 → (b))
 
 1. **`GET /accounting/sped/ecf/y600/vigencias?unitId&year`** *(F-FE-Y600-1)*: devolve as vigências que o `montarY600`
    vai exigir, **pela mesma função**. Extrair de `montarY600` um `selecionarVigenciasDoAno(vivos, year)` puro, que
@@ -184,7 +188,7 @@ Cada item é testável sozinho. Os itens marcados *(F-FE-Y600-n)* seguem a **rec
     `features/accounting`; o shim de `React` global nos testes de componente; `npm run check:arch`; paridade i18n; e
     **verificação contra o build de produção** (tela atrás de `withAuth`). Nenhum `any`, nenhum `zinc-*`.
 
-### PR-2 — cadastro de sócios na tela (só se F-FE-Y600-2 = (a))
+### PR-2 — cadastro de sócios na tela (F-FE-Y600-2 → (a); na aba Perfil fiscal, F-FE-Y600-5 → (a))
 
 16. **Seção "Sócios"** *(F-FE-Y600-2)*: lista, cria, edita e remove sócios por `/accounting/partners`, com tipos de
     `PartnerDto.gen.ts`. Campos do `CreatePartnerInput`: nome, CPF/CNPJ, residente, participação %, entrada e saída. Os
@@ -256,7 +260,7 @@ export interface EcfY600EditorProps {
 }
 ```
 
-## 4. Forks — RATIFICAÇÃO PENDENTE
+## 4. Forks — RATIFICADOS em 2026-10-29, todos na recomendação ([`D-2026-10-29-FE-ECF-Y600-FORKS`](../plano/decisoes/D-2026-10-29-FE-ECF-Y600-FORKS.md))
 
 | Fork | Pergunta | Caminhos | Recomendação |
 |---|---|---|---|
