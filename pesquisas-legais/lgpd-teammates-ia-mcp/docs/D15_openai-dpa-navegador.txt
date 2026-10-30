@@ -1,0 +1,11 @@
+Fonte: https://openai.com/pt-BR/policies/data-processing-addendum/ (redireciona de /policies/data-processing-addendum/)
+Lido no navegador embutido em 2026-10-29 (document.body.innerText, 23.139 caracteres); o curl devolveu 403.
+Trechos literais extraídos (página em pt-BR):
+
+"Updated: 1 de dezembro de 2025 Adendo de Processamento de Dados da OpenAI [...] Vigente a partir de: 1º de janeiro de 2026"
+
+"4. Transferências Internacionais de Dados. 4.1 Dados do EEE e da Suíça. Os dados do cliente processados pela OpenAI ao abrigo deste DPA podem estar sujeitos às leis de proteção de dados do Espaço Económico Europeu ou da Suíça (“Dados do EEE e da Suíça”). Independentemente da Parte contratante aplicável da OpenAI nos termos deste DPA, o Cliente instrui a OpenAI Ireland Limited a processar quaisquer Dados do EEE e da Suíça em conformidade com este DPA. Na medida em que a OpenAI Ireland Limited transfira dados do EEE e da Suíça para outras afiliadas da OpenAI ou terceiros fora do Espaço Econômico Europeu ou da Suíça para fornecer os Serviços, fará isso com base em contratos que contenham Cláusulas Contratuais Padrão (SCCs) que garantam a existência de salvaguardas adequadas para a proteção dos Dados do Cliente ou em uma decisão de adequação emitida pela Comissão Europeia nos termos do Artigo 45 do RGPD. 4.2 Dados do Reino Unido. [...] o Cliente instrui a OpenAI OpCo, LLC a processar quaisquer Dados do Reino Unido em conformidade com este DPA e com as Cláusulas Contratuais Padrão (SCCs), conforme alteradas pelo Adendo do Reino Unido [...] 5. Requisitos adicionais. Na medida em que as leis de privacidade dos EUA se aplicam:"
+
+"“SCCs” significa as cláusulas contratuais padrão para a transferência de dados pessoais para países terceiros, adotadas pela Comissão Europeia em 4 de junho de 2021"
+
+Busca no innerText por "brasileir", "Brasil" (fora do seletor de idioma), "LGPD", "ANPD", "Autoridade Nacional": nenhuma ocorrência no corpo do DPA.
