@@ -326,6 +326,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // X10a PR-8 (D-2026-10-29-X10A-PR7-9-FORKS decisão 3) — só unidade, ambiente e o identificador do CSC: NUNCA o CSC.
   'nfce_csc.set':     ['unitId', 'ambiente', 'cscId'],
   'nfce_csc.removed': ['unitId', 'ambiente', 'cscId'],
+  // X10a PR-9 (EMENDA-1 item 26; D-2026-10-29-X10A-PR7-9-FORKS decisões 4 e 8) — entrada e saída da contingência off-line da
+  // NFC-e. O xJust (texto livre do operador) fica na linha, não aqui.
+  'dfe.contingency_entered': ['unitId', 'ambiente', 'origem', 'dhCont'],
+  'dfe.contingency_left':    ['unitId', 'ambiente', 'origem'],
   'collection_charge.created':        ['collectionChargeId', 'receivableId', 'paymentAccountId', 'kind', 'amountCents', 'status'],
   'collection_charge.status_changed': ['collectionChargeId', 'from', 'to', 'providerStatus'],
   'collection_charge.cancelled':      ['collectionChargeId', 'fromStatus', 'toStatus', 'providerStatus'],

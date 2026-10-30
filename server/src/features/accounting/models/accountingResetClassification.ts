@@ -82,6 +82,9 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'FiscalDocumentPendingAttachment',
   'FiscalDocumentSequence',
   'FiscalNumberVoid', // BE-INCR-NFCE PR-4: pedido de inutilização enviado à SEFAZ ⇒ bloqueia, como a sequência
+  // X10a PR-9: estado da contingência e a nota normal órfã seguem o FiscalDocument (emissão real à SEFAZ) ⇒ bloqueiam.
+  'NfceContingencia',
+  'NfceContingenciaOrfa',
   'FixedAssetClass',
   'DepreciationRate',
   'FixedAsset',

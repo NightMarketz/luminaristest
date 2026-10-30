@@ -246,6 +246,7 @@ import {
   updatePscProvider,
 } from '../controllers/pscCredentialController';
 import { deleteNfceCsc, listNfceCscs, putNfceCsc } from '../controllers/nfceCscController';
+import { getNfceContingencia, putNfceContingencia } from '../controllers/nfceContingenciaController';
 import { confirmIbsCbsAssessment, getIbsCbsResumo, listIbsCbsAssessments, previewIbsCbsAssessment, reconcileIbsCbsProvisao } from '../controllers/ibsCbsAssessmentController';
 import { apropriarCreditoIbsCbs } from '../controllers/payableController';
 
@@ -299,6 +300,9 @@ router.delete('/psc-credentials/:unitId', deletePscCredential);
 router.put('/nfce-cscs/:unitId', putNfceCsc);
 router.get('/nfce-cscs/:unitId', listNfceCscs);
 router.delete('/nfce-cscs/:unitId', deleteNfceCsc);
+// X10a PR-9 (E-9; decisões 4 e 8): contingência off-line da NFC-e por unidade e ambiente.
+router.put('/nfce-contingencia/:unitId', putNfceContingencia);
+router.get('/nfce-contingencia/:unitId', getNfceContingencia);
 router.get('/psc-providers', listPscProviders);
 router.post('/psc-providers', createPscProvider);
 router.patch('/psc-providers/:id', updatePscProvider);

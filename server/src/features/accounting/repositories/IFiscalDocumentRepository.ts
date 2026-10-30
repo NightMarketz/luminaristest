@@ -9,7 +9,9 @@ export type FiscalDocumentKind = (typeof FISCAL_DOCUMENT_KINDS)[number];
 // PENDING_SIGNATURE — EMENDA-PSC E-13 (F-PSC-6 a): a sessão do PSC da unidade venceu; a nota espera a reautorização
 // (sem número, se venceu antes de numerar; com o número, se o PSC recusou no envio). Sai pelo `reenviar` ou pelo envio
 // das pendentes no callback OAuth (D-2026-10-29-X10A-PR7-9-FORKS decisão 5).
-export const FISCAL_DOCUMENT_STATUSES = ['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED', 'PENDING_SIGNATURE'] as const;
+// CONTINGENCY — X10a PR-9 (E-9, F-NFCE-E1-5 b): NFC-e emitida em contingência off-line (tpEmis=9), com número e DANFE,
+// ainda não transmitida. O job a transmite enquanto a SEFAZ responder (decisão 7); o resultado sai pelo `applyResult`.
+export const FISCAL_DOCUMENT_STATUSES = ['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED', 'PENDING_SIGNATURE', 'CONTINGENCY'] as const;
 export type FiscalDocumentStatus = (typeof FISCAL_DOCUMENT_STATUSES)[number];
 
 /** Documento autorizado no ambiente nacional — com ou sem divergência na releitura (F-MAN-2 c). */
@@ -35,7 +37,7 @@ export interface CreateSentFiscalDocumentData {
   /** payload da tentativa 1 (imutável — ADR §9.1). */
   payloadJson: string;
   /** X10a PR-7 (E-13, F-PSC-6 a): `PENDING_SIGNATURE` quando o token do PSC venceu antes do envio. Ausente = `SENT`. */
-  initialStatus?: 'SENT' | 'PENDING_SIGNATURE';
+  initialStatus?: 'SENT' | 'PENDING_SIGNATURE' | 'CONTINGENCY';
   /**
    * BE-INCR-PACOTE-VALIDADE (§5.2 item 14a, F-PV-9d a): chave de unicidade do documento. Ausente = `saleId`
    * (toda NFS-e de venda); a NFS-e do saldo vencido usa a chave do movimento `expiry:<balanceId>:<expiresOn>`
@@ -85,6 +87,8 @@ export interface TransitionData {
   substitutedByDocumentId?: string | null;
   /** BE-INCR-DFE-EVENTOS (item 7) — anexo do XML do evento e101101. */
   cancelEventAttachmentId?: string | null;
+  /** X10a PR-9 (E-9): o infNFeSupl {qrCode, urlChave} da NFC-e off-line, em JSON. */
+  contingenciaSuplJson?: string | null;
   /**
    * Guarda autoritativa DENTRO da escrita (memória authoritative-gate-inside-tx): a transição só acontece se o status
    * atual estiver aqui; senão o repositório lança `fiscal_document_status_changed`.
@@ -165,6 +169,8 @@ export interface IFiscalDocumentRepository {
   saleIdsWithAuthorizedDocument(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<string[]>;
   /** SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos. */
   listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  /** X10a PR-9 (decisão 7) — `CONTINGENCY` de todas as unidades, mais antigas primeiro (o job transmite e confere o prazo). */
+  listContingencia(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
   /**
    * BE-INCR-DFE (PR-3, item 28) — busca cross-tenant por `partnerRef`, mesmo desenho de
    * `listPending`: o webhook chega ANTES de o serviço saber a qual escopo pertence (a

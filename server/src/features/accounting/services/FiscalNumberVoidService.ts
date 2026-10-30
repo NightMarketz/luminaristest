@@ -54,6 +54,28 @@ export class FiscalNumberVoidService {
     if (!this.policy.canCancelFiscalDocument(scope)) {
       throw new ForbiddenError('Você não tem permissão para inutilizar numeração de documento fiscal.');
     }
+    return this.pedir(scope, input);
+  }
+
+  /**
+   * X10a PR-9 (decisão 6 de D-2026-10-29-X10A-PR7-9-FORKS; MOC 7.0 Anexo IV p. 11: "inutilizar a numeração, se não
+   * autorizada") — o pedido que o job da contingência faz pelo número da NFC-e normal que a SEFAZ não recebeu (217). Sem a
+   * policy do operador (o job é o autor); as MESMAS guardas do `inutilizar`, e o ambiente tem de ser o da emissão
+   * configurada (a porta do env não pede inutilização de outro ambiente).
+   */
+  async inutilizarOrfa(
+    scope: AccountingScope,
+    input: { kind: 'NFCE'; ambiente: DfeAmbiente; serie: number; numero: bigint; xJust: string },
+  ): Promise<FiscalNumberVoidView> {
+    const selection = selectDfeEmissor(process.env, input.kind);
+    if (selection.ambiente !== input.ambiente) {
+      throw new ValidationError(`inut_bloqueada: ambiente_divergente (número em ${input.ambiente}, emissão em ${selection.ambiente ?? 'nenhum'})`, null);
+    }
+    const n = Number(input.numero);
+    return this.pedir(scope, { kind: input.kind, serie: input.serie, nIni: n, nFin: n, xJust: input.xJust });
+  }
+
+  private async pedir(scope: AccountingScope, input: Omit<VoidNumberRangeInput, 'unitId'>): Promise<FiscalNumberVoidView> {
     const selection = selectDfeEmissor(process.env, input.kind);
     if (!selection.enabled || selection.ambiente === null) {
       throw new ValidationError(`dfe_disabled: ${selection.reason}`, { faltantes: [selection.reason ?? 'porta desabilitada'] });

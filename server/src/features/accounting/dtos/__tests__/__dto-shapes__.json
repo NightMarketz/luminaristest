@@ -1517,6 +1517,8 @@
                   "FiscalDocumentPendingAttachment",
                   "FiscalDocumentSequence",
                   "FiscalNumberVoid",
+                  "NfceContingencia",
+                  "NfceContingenciaOrfa",
                   "FixedAssetClass",
                   "DepreciationRate",
                   "FixedAsset",
@@ -5772,7 +5774,8 @@
             "AUTHORIZED_DIVERGENT",
             "REJECTED",
             "CANCELLED",
-            "PENDING_SIGNATURE"
+            "PENDING_SIGNATURE",
+            "CONTINGENCY"
           ]
         },
         "pendencias": {
@@ -6222,7 +6225,8 @@
                 "AUTHORIZED_DIVERGENT",
                 "REJECTED",
                 "CANCELLED",
-                "PENDING_SIGNATURE"
+                "PENDING_SIGNATURE",
+                "CONTINGENCY"
               ]
             },
             {
@@ -10297,6 +10301,155 @@
       "required": [
         "unitId",
         "anoCalendario"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "NfceContingenciaDto.ts": {
+    "ContingenciaTickSummarySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "transmitidas": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "semComunicacao": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "pertoDoPrazo": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "vencidas": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "saidasAutomaticas": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "orfasResolvidas": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "orfasFalharam": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "transmitidas",
+        "semComunicacao",
+        "pertoDoPrazo",
+        "vencidas",
+        "saidasAutomaticas",
+        "orfasResolvidas",
+        "orfasFalharam",
+        "failed"
+      ],
+      "additionalProperties": false
+    },
+    "NfceContingenciaViewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string"
+        },
+        "ambiente": {
+          "type": "string",
+          "enum": [
+            "producao",
+            "homologacao"
+          ]
+        },
+        "ativa": {
+          "type": "boolean"
+        },
+        "origem": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "AUTO",
+                "MANUAL"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dhCont": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "xJust": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "ambiente",
+        "ativa",
+        "origem",
+        "dhCont",
+        "xJust"
+      ],
+      "additionalProperties": false
+    },
+    "PutNfceContingenciaSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "ambiente": {
+          "type": "string",
+          "enum": [
+            "producao",
+            "homologacao"
+          ]
+        },
+        "ativa": {
+          "type": "boolean"
+        },
+        "xJust": {
+          "type": "string",
+          "minLength": 15,
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "ambiente",
+        "ativa"
       ],
       "additionalProperties": false
     }
@@ -21164,6 +21317,16 @@
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 9
+                },
+                "dhCont": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "xJust": {
+                  "type": "string",
+                  "minLength": 15,
+                  "maxLength": 256
                 }
               },
               "required": [
@@ -23321,6 +23484,16 @@
                   "type": "string",
                   "minLength": 1,
                   "maxLength": 20
+                },
+                "dhCont": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "xJust": {
+                  "type": "string",
+                  "minLength": 15,
+                  "maxLength": 256
                 }
               },
               "required": [

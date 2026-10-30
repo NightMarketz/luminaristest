@@ -1,3 +1,4 @@
+import { X509Certificate, verify as verifyRsa } from 'node:crypto';
 import { createServer, type Server } from 'node:https';
 import type { AddressInfo } from 'node:net';
 import forge from 'node-forge';
@@ -84,6 +85,8 @@ export interface FakeSefazControle {
   atrasoMs: number;
   /** X10a PR-8: a UF não aceita o QR Code v3 (RV ZX02-220, rej. 407). */
   recusarQrV3: boolean;
+  /** X10a PR-9: a SEFAZ está fora — derruba a conexão ANTES de processar (nada fica na base). */
+  foraDoAr: boolean;
   chamadas: Array<{ servico: string; corpo: string }>;
 }
 
@@ -98,6 +101,7 @@ export class FakeSefaz {
     cStatInutilizacao: null,
     atrasoMs: 0,
     recusarQrV3: false,
+    foraDoAr: false,
     chamadas: [],
   };
   public baseUrl = '';
@@ -117,6 +121,10 @@ export class FakeSefaz {
             const corpo = Buffer.concat(chunks).toString('utf8');
             // Registra ANTES do atraso: a chamada lenta de um teste não pode cair na contagem do teste seguinte.
             this.controle.chamadas.push({ servico, corpo });
+            if (this.controle.foraDoAr) {
+              req.socket.destroy();
+              return;
+            }
             if (this.controle.atrasoMs) await new Promise((r) => setTimeout(r, this.controle.atrasoMs));
             const resultado = this.responder(servico, corpo);
             if (resultado === null) {
@@ -145,6 +153,23 @@ export class FakeSefaz {
   /** Resolver de endpoint para o adaptador: toda UF aponta para esta SEFAZ falsa. */
   endpoint = (_uf: string, _modelo: 55 | 65, _amb: string, servico: string): string => `${this.baseUrl}/ws/${servico}.asmx`;
 
+  /**
+   * X10a PR-9 — QR Code da NFC-e tpEmis=9 (RVs da NT 2025.001 v1.03): v3 sem assinatura ⇒ 474; assinatura que não confere
+   * com o certificado da nota (RSA-SHA1 dos parâmetros 1–7) ⇒ 583; v3 com assinatura numa nota normal ⇒ 445.
+   */
+  private conferirQrOffline(chave: string, nfe: string): string | null {
+    const qr = /<qrCode>([^<]*)<\/qrCode>/.exec(nfe)?.[1]?.replace(/&amp;/g, '&');
+    if (!qr || !/\?p=\w{44}\|3\|/.test(qr)) return null;
+    const params = qr.slice(qr.indexOf('?p=') + 3).split('|');
+    const contingencia = chave[34] === '9';
+    if (!contingencia) return params.length > 3 ? '445' : null;
+    if (params.length !== 8 || !params[7]) return '474';
+    const certB64 = /<X509Certificate>([^<]+)<\/X509Certificate>/.exec(nfe)?.[1] ?? '';
+    const cert = new X509Certificate(Buffer.from(certB64, 'base64'));
+    const ok = verifyRsa('sha1', Buffer.from(params.slice(0, 7).join('|'), 'utf8'), cert.publicKey, Buffer.from(params[7], 'base64'));
+    return ok ? null : '583';
+  }
+
   private protNFe(chave: string, cStat: string, xMotivo: string, extra = ''): string {
     return `<protNFe versao="4.00"><infProt><tpAmb>2</tpAmb><verAplic>FAKE</verAplic><chNFe>${chave}</chNFe><dhRecbto>2026-10-29T10:00:00-03:00</dhRecbto>${extra}<cStat>${cStat}</cStat><xMotivo>${xMotivo}</xMotivo></infProt></protNFe>`;
   }
@@ -163,6 +188,10 @@ export class FakeSefaz {
       }
       if (this.autorizadas.has(chave)) {
         return `<retEnviNFe xmlns="${NS}" versao="4.00"><cStat>104</cStat><xMotivo>Lote processado</xMotivo>${this.protNFe(chave, '204', 'Rejeicao: Duplicidade de NF-e')}</retEnviNFe>`;
+      }
+      const qrOffline = this.conferirQrOffline(chave, nfe);
+      if (qrOffline) {
+        return `<retEnviNFe xmlns="${NS}" versao="4.00"><cStat>104</cStat><xMotivo>Lote processado</xMotivo>${this.protNFe(chave, qrOffline, `Rejeicao QR off-line ${qrOffline}`)}</retEnviNFe>`;
       }
       if (this.controle.recusarQrV3 && /<qrCode>[^<]*\?p=\w{44}\|3\|/.test(nfe)) {
         return `<retEnviNFe xmlns="${NS}" versao="4.00"><cStat>104</cStat><xMotivo>Lote processado</xMotivo>${this.protNFe(chave, '407', 'Rejeicao: QR Code versao 3 nao aceito pela UF')}</retEnviNFe>`;
@@ -185,9 +214,18 @@ export class FakeSefaz {
     }
     if (servico === 'NFeRecepcaoEvento4') {
       const evento = /<evento[\s\S]*<\/evento>/.exec(msg)?.[0] ?? '';
-      const tree = parser.parse(evento) as { evento: { infEvento: { chNFe: string; detEvento: { nProt: string } } } };
-      const a = this.autorizadas.get(tree.evento.infEvento.chNFe);
-      const cStat = this.controle.cStatEvento ?? (a && a.nProt === String(tree.evento.infEvento.detEvento.nProt) ? '135' : '222');
+      const tree = parser.parse(evento) as { evento: { infEvento: { chNFe: string; tpEvento: string; detEvento: { nProt: string; chNFeRef?: string } } } };
+      const inf = tree.evento.infEvento;
+      const a = this.autorizadas.get(inf.chNFe);
+      let cStat = this.controle.cStatEvento ?? (a && a.nProt === String(inf.detEvento.nProt) ? '135' : '222');
+      if (cStat === '135' && String(inf.tpEvento) === '110112') {
+        // X10a PR-9 — RVs do 110112 (MOC 7.0 VG Tabela 5-38): cancelada normal (920), substituta na base (912) e de
+        // contingência (921). A posição 35 da chave é o tpEmis.
+        const ref = String(inf.detEvento.chNFeRef ?? '');
+        if (inf.chNFe[34] !== '1') cStat = '920';
+        else if (!this.autorizadas.has(ref)) cStat = '912';
+        else if (ref[34] === '1') cStat = '921';
+      }
       return `<retEnvEvento xmlns="${NS}" versao="1.00"><cStat>128</cStat><xMotivo>Lote de evento processado</xMotivo><retEvento versao="1.00"><infEvento><cStat>${cStat}</cStat><xMotivo>cStat ${cStat}</xMotivo></infEvento></retEvento></retEnvEvento>`;
     }
     if (servico === 'NFeInutilizacao4') {

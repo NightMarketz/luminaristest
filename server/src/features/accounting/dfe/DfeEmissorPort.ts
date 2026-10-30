@@ -93,6 +93,43 @@ export interface DfeCapabilities {
    * fica para o polling, como antes.
    */
   resultadoSincrono?: boolean;
+  /**
+   * X10a PR-9 (E-9, F-NFCE-E1-5 b) — NFC-e em contingência off-line (`tpEmis=9`): o adaptador monta o `infNFeSupl` da nota
+   * off-line (`montarContingencia`), transmite-a depois pelo `emitir` e pede o cancelamento por substituição 110112
+   * (`cancelarPorSubstituicao`). Ausente = `false`: falha de comunicação segue a regra antiga (fica `SENT`).
+   */
+  contingenciaOffline?: boolean;
+}
+
+/**
+ * X10a PR-9 (decisão 4 de D-2026-10-29-X10A-PR7-9-FORKS) — falha de COMUNICAÇÃO com o fisco (timeout, 5xx, rede, TLS,
+ * resposta sem corpo): o que liga a contingência automática. Rejeição nunca é isto. O adaptador lança uma subclasse.
+ */
+export class DfeTransporteError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'DfeTransporteError';
+  }
+}
+
+export function isFalhaDeComunicacao(error: unknown): error is DfeTransporteError {
+  return error instanceof DfeTransporteError;
+}
+
+/** X10a PR-9 — o grupo `infNFeSupl` da NFC-e (QR Code + urlChave), entregue ao FE para o DANFE (F-NFCE-E1-6 b). */
+export interface NfceSupl {
+  qrCode: string;
+  urlChave: string;
+}
+
+/** X10a PR-9 — pedido do evento 110112 (MOC 7.0 VG Tabela 5-37; Aj. SINIEF 19/16 cl. 15ª-A). */
+export interface CancelSubstInput {
+  /** Chave (44) da NFC-e substituta, emitida em contingência (`chNFeRef`, P31). */
+  chNFeRef: string;
+  xJust: string;
 }
 
 /**
@@ -215,6 +252,13 @@ export interface DfeEmissorPort {
    * como faltantes nomeados. O serviço consulta ANTES de consumir o número. Ausente = nada a checar.
    */
   faltantesDoEnvio?(kind: DfeKind, cUF: string, ambiente: DfeAmbiente): string[];
+  /**
+   * X10a PR-9 (E-9) — só com `capabilities.contingenciaOffline`: assina a NFC-e `tpEmis=9` e devolve o `infNFeSupl` que o
+   * DANFE impresso leva (v3 off-line assinado; v2 off-line com o CSC quando `v2`). Não fala com o fisco.
+   */
+  montarContingencia?(payload: unknown, ctx: DfeCallContext, versao?: 2 | 3): Promise<NfceSupl>;
+  /** X10a PR-9 (decisão 6) — evento 110112 sobre a nota normal autorizada, apontando a substituta de contingência. */
+  cancelarPorSubstituicao?(partnerRef: string, input: CancelSubstInput, ctx: DfeCallContext): Promise<CancelResult>;
   /** BE-INCR-NFCE item 24 — só existe quando `capabilities.inutilizar`. */
   inutilizar?(input: InutilizarInput): Promise<InutilizarResult>;
   /** BE-INCR-NFCE item 28 — CC-e (110110), só NF-e e só quando `capabilities.cce`. Sem implementação (F-NFCE-9 c). */

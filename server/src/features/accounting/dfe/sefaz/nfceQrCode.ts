@@ -14,6 +14,8 @@ import dados from './nfceQrCode.data.json';
  * - v2 on-line (D01 §4.3.1, Tabela 2; §4.3.3–4.3.4): `p=<chave>|2|<tpAmb>|<idCSC>|<hash>`, hash = SHA-1 em hex de
  *   `chave|2|tpAmb|idCSC` + CSC (colado, sem separador); idCSC sem zeros não significativos; hex em maiúsculas como no
  *   vetor do manual (a RV ZX02-316 aceita as duas caixas).
+ * - Off-line (X10a PR-9, tpEmis=9): v3 com a assinatura RSA-SHA1 dos parâmetros 1–7 (D01 §4.4.2) e v2 com dia, vNF e
+ *   DigestValue (D01 §4.3.2, §4.3.5).
  * - URLs por UF × ambiente em `nfceQrCode.data.json` (§2 da transcrição): UF sem fonte oficial, sem `urlChave`
  *   declarada ou com fonte ambígua fica desabilitada com o motivo — nunca a URL de outra UF.
  */
@@ -80,6 +82,50 @@ export function qrCodeV3Online(base: string, chave: string, tpAmb: 1 | 2): strin
 
 export function qrCodeV2Online(base: string, chave: string, tpAmb: 1 | 2, csc: CscNfce): string {
   return `${base}?p=${chave}|2|${tpAmb}|${idCscSemZeros(csc.id)}|${hashQrCodeV2(chave, tpAmb, csc.id, csc.csc)}`;
+}
+
+/**
+ * X10a PR-9 (E-9, F-NFCE-E1-5 b) — dados da NFC-e emitida em contingência off-line que entram no QR Code: dia do `dhEmi`
+ * (B09, dois dígitos), `vNF` (W16, com ponto) e o destinatário (E02/E03; ausente ⇒ parâmetros vazios).
+ */
+export interface DadosQrOffline {
+  dhEmi: string;
+  vNF: string;
+  dest?: { CNPJ?: string; CPF?: string } | undefined;
+}
+
+/** D01 Tabela 3/7, 4º parâmetro: "o dia da data de emissão […] exatamente dois dígitos" (o dia escrito no `dhEmi`, no fuso dele). */
+function diaDoDhEmi(dhEmi: string): string {
+  const dia = /^\d{4}-\d{2}-(\d{2})T/.exec(dhEmi)?.[1];
+  if (!dia) throw new Error(`nfce_qr_dhemi_invalido: ${dhEmi}`);
+  return dia;
+}
+
+/**
+ * v3 off-line (D01 §4.4.2, Tabela 7): parâmetros 1–7 `chave|3|tpAmb|dd|vNF|tp_idDest|idDest`. Destinatário não
+ * identificado ⇒ "informar apenas o separador" (6º e 7º vazios — leitura mais segura da transcrição §1(c), item 1).
+ */
+export function baseAssinavelQrV3Offline(chave: string, tpAmb: 1 | 2, d: DadosQrOffline): string {
+  const tpIdDest = d.dest?.CNPJ ? '1' : d.dest?.CPF ? '2' : '';
+  const idDest = d.dest?.CNPJ ?? d.dest?.CPF ?? '';
+  return `${chave}|3|${tpAmb}|${diaDoDhEmi(d.dhEmi)}|${d.vNF}|${tpIdDest}|${idDest}`;
+}
+
+/** A URL v3 off-line: a base assinável + `|<assinatura RSA-SHA1 em Base64>` (8º parâmetro; RV ZX02-334 rej. 474 sem ele). */
+export function qrCodeV3Offline(base: string, baseAssinavel: string, assinaturaB64: string): string {
+  return `${base}?p=${baseAssinavel}|${assinaturaB64}`;
+}
+
+/**
+ * v2 off-line (D01 §4.3.2, Tabela 3; §4.3.5): `chave|2|tpAmb|dd|vNF|digValHex|idCSC|hash`, digValHex = hex minúsculo dos
+ * bytes ASCII do DigestValue em Base64 (conferido no vetor §4.3.6.2), hash = SHA-1 em hex de `chave|2|tpAmb|dd|vNF|
+ * digValHex|idCSC` + CSC. Usado quando a UF recusa a v3 (rej. 407, F-NFCE-E1-4 c) e a unidade tem CSC.
+ */
+export function qrCodeV2Offline(base: string, chave: string, tpAmb: 1 | 2, d: DadosQrOffline, digestValueB64: string, csc: CscNfce): string {
+  const digValHex = Buffer.from(digestValueB64, 'utf8').toString('hex');
+  const params = `${chave}|2|${tpAmb}|${diaDoDhEmi(d.dhEmi)}|${d.vNF}|${digValHex}|${idCscSemZeros(csc.id)}`;
+  const hash = createHash('sha1').update(`${params}${csc.csc}`, 'utf8').digest('hex').toUpperCase();
+  return `${base}?p=${params}|${hash}`;
 }
 
 /** O grupo `infNFeSupl` validado pelo contrato; fica fora da assinatura (D02 p. 8: "não afetando a assinatura digital"). */

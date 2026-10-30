@@ -129,6 +129,10 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     });
   }
 
+  public async listContingencia(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
+    return this.db(tx).fiscalDocument.findMany({ where: { status: 'CONTINGENCY', deletedAt: null }, orderBy: [{ createdAt: 'asc' }], take: limit });
+  }
+
   public async findByPartnerRef(partnerRef: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null> {
     // Pendente ainda não tem `partnerRef` (só o AUTHORIZED grava): o parceiro conhece o `ref` da tentativa CORRENTE.
     const attempt = await this.db(tx).fiscalDocumentAttempt.findUnique({ where: { ref: partnerRef }, include: { document: true } });
