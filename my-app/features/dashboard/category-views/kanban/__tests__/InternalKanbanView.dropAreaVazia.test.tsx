@@ -75,6 +75,13 @@ const droppableRects = new Map<UniqueIdentifier, ClientRect>([
   ['Feito 3', rect(1437, 619, 1758, 720)],
 ]);
 
+// `data` como o dnd-kit monta: card (useSortable) com sortable.containerId = coluna; coluna (useDroppable) sem data
+const columnOf = new Map(tasks.map(t => [t.id, String(t.status)]));
+const sortableData = (id: UniqueIdentifier) => {
+  const containerId = columnOf.get(String(id));
+  return { current: containerId ? { sortable: { containerId } } : undefined };
+};
+
 describe('InternalKanbanView — RUNBOOK-KANBAN-REORDER passo 6', () => {
   it('soltar na área vazia de outra coluna manda o card para o fim dela', async () => {
     render(
@@ -86,10 +93,10 @@ describe('InternalKanbanView — RUNBOOK-KANBAN-REORDER passo 6', () => {
     // "A fazer 2" (321×101) arrastado pelo centro até {x:1598, y:936}: área vazia de Done, abaixo de "Feito 3" (y≤720)
     const pointer = { x: 1598, y: 936 };
     const collisions = collisionDetection({
-      active: { id: 'A fazer 2' },
+      active: { id: 'A fazer 2', data: sortableData('A fazer 2') },
       collisionRect: rect(pointer.x - 160.5, pointer.y - 50.5, pointer.x + 160.5, pointer.y + 50.5),
       droppableRects,
-      droppableContainers: [...droppableRects.keys()].map(id => ({ id })) as unknown as DroppableContainer[],
+      droppableContainers: [...droppableRects.keys()].map(id => ({ id, data: sortableData(id) })) as unknown as DroppableContainer[],
       pointerCoordinates: pointer,
     } as unknown as Parameters<CollisionDetection>[0]);
     const over = collisions[0] ? { id: collisions[0].id } : null;

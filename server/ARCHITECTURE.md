@@ -180,7 +180,6 @@ const service = getFactory().getUserService();
 | `chatInstances` | Chat instances (DOCUMENT/GENERIC) per widget | [README](./src/features/chatInstances/README.md) |
 | `chatMessages` | Message persistence (CRUD; AI lives in `/api/chat`) | [README](./src/features/chatMessages/README.md) |
 | `documents` | Upload, processing and search of documents (RAG/vectors) | [README](./src/features/documents/README.md) |
-| `structuredData` | Structured data extracted from documents | [README](./src/features/structuredData/README.md) |
 | `dashboardLayout` | Dashboard layout configs (upsert per user) | [README](./src/features/dashboardLayout/README.md) |
 | `interview` | Guided customization (interview/field services) | [READMEs](./src/features/interview/) |
 

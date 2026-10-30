@@ -279,7 +279,6 @@ model Document {
   updatedAt DateTime @updatedAt
 
   chunks         Chunk[] // relation to chunks
-  structuredData StructuredData? // relation to structured data
 
   @@index([userId])
 }
@@ -294,26 +293,6 @@ model Chunk {
   createdAt  DateTime @default(now())
 
   @@index([documentId])
-}
-
-// Model for structured data extracted from documents
-model StructuredData {
-  id String @id @default(cuid())
-
-  // One-to-one relation with Document
-  documentId String   @unique
-  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
-  // Stores headers and their types, detected by AI
-  // Ex: [{ "name": "Produto", "type": "TEXT" }, { "name": "Valor", "type": "CURRENCY" }]
-  headers Json
-
-  // Stores row data, ready for Handsontable
-  // Ex: [["Notebook", 5000.00], ["Mouse", 150.00]]
-  data Json
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 // Model for dynamically created tables by users

@@ -159,6 +159,7 @@
       "package": "Pacote",
       "package_placeholder": "Selecione o pacote…",
       "package_option": "Pacote {{id}} — saldo {{balance}}",
+      "package_option_named": "{{name}} — saldo {{balance}}",
       "insufficient": "Saldo do pacote insuficiente para o total da venda.",
       "reference": "Referência (opcional)",
       "reference_placeholder": "NSU, código Pix…",

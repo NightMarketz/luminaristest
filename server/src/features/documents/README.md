@@ -34,7 +34,6 @@ scoped to its owner (tenant).
 | PATCH | `/:id` | Update `status`/`summary`/`contextJson`/`processingDate`/`processingError`. |
 | DELETE | `/:id` | Delete the document + its chunks + its vectors. |
 | POST | `/search` | Semantic search over the user's documents (`{ query, limit? }`). |
-| GET | `/:id/qdrant` | Inspect a document's stored vectors (owner-checked). |
 | POST | `/token-cost` | Estimate token count for an uploaded file (no persistence). |
 
 All endpoints require authentication. Static paths (`/list`) are registered before `/:id` so they
@@ -46,9 +45,9 @@ are not shadowed by the parametric route.
 blocking the response:
 
 1. Status → `PROCESSING`; statistics computed.
-2. **DATA_ANALYSIS** purpose: Excel → direct structured extraction; other tabular text → LLM-based
-   structured extraction (delegated to [`structuredData`](../structuredData/README.md)). Extraction
-   failures are recorded in `contextJson.errors` but don't abort the run.
+2. `documentPurpose` no longer changes processing: the structured extraction behind `DATA_ANALYSIS`
+   (R26) was retired together with the `structuredData` feature and its table (dono, 2026-10-29,
+   `docs/plano/decisoes/D-2026-10-29-FIX-CHAT-AGENTE-FECHAMENTO.md`). The purpose is kept as a label.
 3. Text is chunked; each chunk is embedded and upserted into Qdrant in batches of 10. Each vector's
    payload carries `{ documentId, userId, index, textContent, chunkId, fileName }`.
 4. Status → `COMPLETED` (or `ERROR`, with the message persisted) on finish.
@@ -64,6 +63,14 @@ blocking the response:
   fails, vectors are already gone and SQL is intact (logged for visibility, no data corruption).
 - **Vector point id** = `uuidv5(chunk.id, NAMESPACE)` at upsert (see pipeline). Because deletion is
   by payload filter, callers never need to reconstruct this id.
+- **`Chunk` is the record copy, Qdrant is the index** (FIX-CHAT-AGENTE #18, dono 2026-10-29: keep).
+  Nothing reads `Chunk` at runtime, and the text is repeated in the Qdrant payload, but the table is
+  what lets the index be rebuilt from SQLite (lost collection, change of embedding model) and it is
+  the source of the point id above. Do not drop it as "write-only".
+- **No reprocessing after restart** (FIX-CHAT-AGENTE #6, dono 2026-10-29): the file bytes live only in
+  memory during processing. A document left in `PROCESSING` by a restart goes to `FAILED` through the
+  R18 watchdog (`server.ts`) and the user uploads it again. Automatic reprocessing waits for the
+  document queue (#10, on the TEAMMATES BullMQ queue, after its PR-0).
 
 ## DTOs
 
@@ -93,9 +100,8 @@ Gold-standard 4-level suite (see [`TESTING.md`](../../../TESTING.md)):
 
 ## Interaction with other features
 
-- **Consumes:** [`structuredData`](../structuredData/README.md) (structured extraction for tabular
-  docs — **DEPRECATED R26 on the frontend**, see that feature's README), [`users`](../users/README.md)
-  (`UserRepository` to resolve the owner during processing), `lib/openai` (tabular detection / embeddings).
+- **Consumes:** [`users`](../users/README.md) (`UserRepository` to resolve the owner during processing),
+  `lib/vector` (embeddings).
 - **Consumed by:** [`chat`](../chat/README.md) (RAG search via `VectorRepository.search`),
   [`reports`](../reports/README.md) (context extraction for chart generation). Both pass the
   authenticated `userId`, so retrieval stays tenant-scoped.

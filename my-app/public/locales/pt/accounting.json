@@ -136,7 +136,7 @@
       "mode": {
         "expense": "Despesa",
         "inventory": "Compra de estoque",
-        "inventoryHint": "Debita 1.1.6 Estoques e valora o produto pelo custo médio — o valor acima é o TOTAL da compra."
+        "inventoryHint": "Debita 1.1.3.01 Estoques e valora o produto pelo custo médio — o valor acima é o TOTAL da compra."
       },
       "noProducts": "Nenhum produto no catálogo. Cadastre produtos no módulo de estoque."
     },
@@ -2525,7 +2525,8 @@
         "vDescCond": "Desconto condicionado",
         "vDescIncond": "Desconto incondicionado",
         "vServ": "Valor do Serviço prestado",
-        "xDescServ": "Descrição do Serviço"
+        "xDescServ": "Descrição do Serviço",
+        "totTrib": "Valor aproximado dos tributos"
       },
       "homologacaoSemLink": "Homologação: use o ambiente de produção restrita do portal (endereço a confirmar no runbook — PV-7).",
       "howto": "Use a Emissão Completa do portal. Copie cada valor no campo de mesmo nome; os marcados \"conferido na volta\" são comparados com o XML autorizado.",
@@ -2542,7 +2543,9 @@
         "naoInformado": "Não informado.",
         "prestador": "Marque Prestador.",
         "retidoSim": "Sim, retido pelo tomador.",
-        "tributavel": "Operação tributável."
+        "tributavel": "Operação tributável.",
+        "fedMei": "Sem tributação federal na nota do MEI — não informe.",
+        "totTribMei": "Não informe — facultativo para o MEI."
       },
       "note": {
         "aliquota": "conferência — o portal pode calcular",
@@ -2553,6 +2556,7 @@
       },
       "opSimpNac": {
         "1": "1 — Não optante",
+        "2": "2 — Optante MEI",
         "3": "3 — Optante ME/EPP"
       },
       "portalLink": "Abrir o Emissor Nacional",

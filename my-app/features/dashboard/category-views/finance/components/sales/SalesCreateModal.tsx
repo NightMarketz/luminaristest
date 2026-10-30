@@ -20,6 +20,7 @@ import RelationSelector from '@/features/dashboard/components/forms/RelationSele
 import { isTableSchema, type IDynamicTable } from '@/features/dashboard/components/shared/dynamic-tables.client';
 import { useSalesCreateForm } from '../../hooks/sales/useSalesCreateForm';
 import { usePackageCatalog } from '../../hooks/sales/usePackageCatalog';
+import { useServicePriceIndex } from '../../hooks/sales/useServicePriceIndex';
 import { SaleItemsManager } from './create/SaleItemsManager';
 import { PaymentTermChips } from './create/inputs';
 import { useFormatCurrency } from '@/lib/context/CurrencyContext';
@@ -137,6 +138,9 @@ export default function SalesCreateModal({
         [variantOptions, saleItemsFields]
     );
     const packageCatalog = usePackageCatalog(packageTargetTable);
+    const servicePriceIndex = useServicePriceIndex(
+        saleItemsFields.find(f => f.name === 'serviceId')?.relation?.targetTable ?? ''
+    );
     const canFlagAboveCatalog = salesFields.some(f => f.name === 'aboveCatalogPrice');
 
     // ── Hook do formulário — destructure for stable references ──────
@@ -514,6 +518,7 @@ export default function SalesCreateModal({
                             saleItemsFields={saleItemsFields}
                             stockIndex={stockIndex}
                             packageCatalog={packageCatalog}
+                            servicePriceIndex={servicePriceIndex}
                             packageIssue={packageIssue}
                             onAddItem={addItem}
                             onRemoveItem={removeItem}

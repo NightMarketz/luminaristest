@@ -29,6 +29,8 @@ export const ChatResponseSchema = z.object({
   // Proposal metadata, when present.
   proposal: z.object({
     id: z.string(),
+    // DELETE has no emitter yet (no delete tool in LuminarisAgentService); kept for TEAMMATES, whose
+    // TABLE_ROW proposal uses the same enum (dono, 2026-10-29, D-2026-10-29-FIX-CHAT-AGENTE-FECHAMENTO, #20).
     action: z.enum(['CREATE', 'UPDATE', 'DELETE']),
     tableName: z.string(),
     tableLabel: z.string(),

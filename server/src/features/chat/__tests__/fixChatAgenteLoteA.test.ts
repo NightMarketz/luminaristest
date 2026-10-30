@@ -4,8 +4,9 @@
  * e 2026-10-22 ("Todos os 22 em série").
  *
  * Cada `it` afirma o comportamento correto; antes do fix falha na asserção final.
+ * Lote D (dono, 2026-10-29): o guarda do #13 saiu com a rota `qdrant-status` e o do log `warn` da extração (#8)
+ * saiu com `extractStructuredData` (R26 aposentado) — ver `features/documents/__tests__/fixChatAgenteLoteD.test.ts`.
  */
-import type { Request, Response } from 'express';
 import { ChatService } from '../services/ChatService';
 import { LuminarisAgentService } from '../services/LuminarisAgentService';
 import { OpenAIService } from '@/lib/openai/OpenAIService';
@@ -18,17 +19,9 @@ jest.mock('@/lib/prisma', () => ({
   default: { document: { findMany: jest.fn(async () => []) } },
 }));
 
-const countPoints = jest.fn();
-const getPoints = jest.fn();
-jest.mock('@/lib/vector/qdrant', () => ({
-  qdrant: { api: () => ({ countPoints, getPoints }) },
-}));
-
 jest.mock('@/lib/authUtils', () => ({
   getUserContextFromRequest: () => ({ id: 'user_A', userId: 'user_A' }),
 }));
-
-import { qdrantStatus } from '@/controllers/documentsController';
 
 const user: UserContext = {
   id: 'user_A', userId: 'user_A', name: 'A', username: 'a', email: 'a@test.co', userEmail: 'a@test.co',
@@ -121,37 +114,6 @@ describe('#8 — PII fora do log', () => {
     expect(JSON.stringify(info.mock.calls)).not.toMatch(/Joana Pereira|123\.456\.789-09/);
   });
 
-  it('JSON malformado da extração não vai inteiro para o log warn', async () => {
-    process.env.OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'ci-dummy-openai-key';
-    const warn = jest.spyOn(logger, 'warn').mockImplementation(() => undefined);
-    jest.spyOn(logger, 'info').mockImplementation(() => undefined);
-    jest.spyOn(logger, 'error').mockImplementation(() => undefined);
-    const svc = new OpenAIService();
-    const create = jest.fn().mockResolvedValue({
-      model: 'gpt-4o-mini', usage: { prompt_tokens: 1, completion_tokens: 1 },
-      choices: [{ message: { content: '{"cliente": "Joana Pereira", "cpf": "123.456.789-09" <<<' } }],
-    });
-    (svc as unknown as { openai: unknown }).openai = { chat: { completions: { create } } };
-
-    await svc.extractStructuredData('Nome;CPF\nJoana Pereira;123.456.789-09').catch(() => null);
-
-    expect(warn).toHaveBeenCalled();
-    expect(JSON.stringify(warn.mock.calls)).not.toMatch(/Joana Pereira|123\.456\.789-09/);
-  });
-});
-
-describe('#13 — /documents/qdrant-status sem contagem global', () => {
-  it('a contagem é filtrada pelo userId do chamador', async () => {
-    countPoints.mockResolvedValue({ data: { result: { count: 3 } } });
-    getPoints.mockResolvedValue({ data: { result: [] } });
-    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() } as unknown as Response;
-
-    await qdrantStatus({} as Request, res);
-
-    expect(countPoints).toHaveBeenCalledWith(expect.objectContaining({
-      filter: { must: [{ key: 'userId', match: { value: 'user_A' } }] },
-    }));
-  });
 });
 
 describe('#22 — RequestLock não confunde pedidos diferentes', () => {

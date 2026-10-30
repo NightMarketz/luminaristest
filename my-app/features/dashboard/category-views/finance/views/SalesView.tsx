@@ -219,6 +219,7 @@ export function SalesView({
             <SalePaymentModal
                 sale={saleToPay}
                 soldPackageId={soldPackageId}
+                packageNameMap={packageNameMap}
                 isOpen={saleToPay != null}
                 onClose={() => setSaleToPay(null)}
                 onConfirm={async (payment) => {

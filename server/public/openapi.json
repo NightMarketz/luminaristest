@@ -6685,88 +6685,6 @@
         }
       }
     },
-    "/api/structured-data/{documentId}": {
-      "get": {
-        "summary": "Get structured data extracted from a specific document",
-        "description": "Deprecated (R26) — feature retired, backend preserved without a UI.",
-        "deprecated": true,
-        "tags": [
-          "StructuredData"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "documentId",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "cuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Extracted structured data"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          }
-        }
-      },
-      "put": {
-        "summary": "Update the structured data extracted from a specific document",
-        "description": "Deprecated (R26) — feature retired, backend preserved without a UI.",
-        "deprecated": true,
-        "tags": [
-          "StructuredData"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "documentId",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "cuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated structured data"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          }
-        }
-      }
-    },
     "/api/accounting-binding/compile": {
       "post": {
         "summary": "Compile a binding candidate — validates and persists (auto-activates on PASS)",
@@ -24019,27 +23937,6 @@
         }
       }
     },
-    "/api/documents/qdrant-status": {
-      "get": {
-        "summary": "Get Qdrant vector collection status",
-        "tags": [
-          "Documents"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Qdrant collection health and point count"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          }
-        }
-      }
-    },
     "/api/documents/{id}": {
       "get": {
         "summary": "Get a document by ID",
@@ -24147,37 +24044,6 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFoundError"
-          }
-        }
-      }
-    },
-    "/api/documents/{id}/qdrant": {
-      "get": {
-        "summary": "Get Qdrant vector points for a specific document",
-        "tags": [
-          "Documents"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Vector points"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
           }
         }
       }
@@ -31727,10 +31593,6 @@
     {
       "name": "Reports",
       "description": "Server-sent-event report generation"
-    },
-    {
-      "name": "StructuredData",
-      "description": "Structured data extracted from documents"
     },
     {
       "name": "Accounting",

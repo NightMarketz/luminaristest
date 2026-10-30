@@ -39,8 +39,6 @@ function makeService() {
     vector as any,
     processing as any,
     new DocumentPolicy(),
-    {} as any, // openAIService — pipeline-only
-    {} as any, // structuredDataService — pipeline-only
     {} as any // userRepository — pipeline-only
   );
   return { service, vector, processing };

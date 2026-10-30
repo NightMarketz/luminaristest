@@ -4813,6 +4813,19 @@
                             "pTotTribSN"
                           ],
                           "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "indTotTrib": {
+                              "type": "number",
+                              "const": 0
+                            }
+                          },
+                          "required": [
+                            "indTotTrib"
+                          ],
+                          "additionalProperties": false
                         }
                       ]
                     }
@@ -5290,6 +5303,19 @@
                           },
                           "required": [
                             "pTotTribSN"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "indTotTrib": {
+                              "type": "number",
+                              "const": 0
+                            }
+                          },
+                          "required": [
+                            "indTotTrib"
                           ],
                           "additionalProperties": false
                         }
