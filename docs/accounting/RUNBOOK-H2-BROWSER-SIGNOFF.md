@@ -694,7 +694,28 @@ Assinatura do executor (passos 12–14): ____________
 > `seed-real`. Dois são o 400 da ECF Real (passo 14) e o do encerramento. Os outros 2 não têm origem identificada, como no
 > passo 11.
 >
-> Leitura do agente: a) a k) com 2xx nas escritas, menos o braço estoque de a) e o encerramento de k). DESFECHO: [dono]
+> **Refeitos a pedido do dono** (chat, 29/10, questionário: *"Refazer a/k antes"*):
+>
+> ```text
+> a) produto pela tela (Dashboard → Produtos → Novo Produto):
+> POST /api/dynamic-tables/cmuw4z7xu02drcii06zy1xj4m/data → 201 body={"data":{"name":"Condicionador H2","sku":"H2-COND","category":"Cabelo","usageType":"Sale"}}
+> Contas a Pagar → Nova Conta → "Compra de estoque" (o select de produto passa a listar "Condicionador H2"):
+> POST /api/payables → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","supplierName":"Fornecedor H2","description":"H2 15a estoque","issueDate":"2026-10-29","dueDate":"2026-10-29","amountCents":10000,"inventoryProductRef":"cmvu8199300dvci9ce08ij9sr","inventoryQty":5,"documentNumber":"NF-H2-EST-1"}
+>   resposta: id cmvu81uyv00e3ci9ckhwb0e63, "expenseAccountId":null, "inventoryProductRef":"cmvu8199300dvc…"
+> k) exercício com saldo: Períodos 2027 → Fev "Abrir"; Balancete → Novo Lançamento em 10/02/2027; Dez "Abrir"; "Encerrar exercício 2027":
+> POST /api/accounting/periods/cmvtzmt7500cuci9c5bamfzy0/open → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"}
+> POST /api/accounting/post → 201 body={"date":"2027-02-10","description":"H2 15k despesa 2027 para encerramento","unitId":"cmuw4z7zj02ehcii0st3unfr4","lines":[{"accountCode":"4.9","debitCents":1000,"creditCents":0},{"accountCode":"1.1.1.01","debitCents":0,"creditCents":1000}]}
+> POST /api/accounting/closing/exercise → 422 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2027} res={"code":"ACCOUNTING_PERIOD_NOT_OPEN","message":"Período contábil 2027/12 não está aberto para lançamentos."}
+> POST /api/accounting/periods/cmvtzmt7900d5ci9cg0bmvtxb/open → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"}   (Dez/2027)
+> POST /api/accounting/closing/exercise → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2027} res={"success":true,"data":{"id":"cmvu80m5800dpci9c4cn3y3ev",…,"date":"2027-12-31T00:00:00.000Z","description":"Encerramento do exercício 2027 — apuração do resultado","status":"Posted","sourceType":"closing","sourceId":"2027",…}}
+> tela: "Exercício encerrado. | Lançamento nº 2 — exercício 2027"
+> ```
+>
+> Efeito no `seed-real`: 2027 com 2 lançamentos (a despesa de R$ 10 e o encerramento), Jan/2027 `HARD_CLOSED`, Fev e
+> Dez/2027 abertos. O 2026 não foi tocado pelo encerramento. Antes do encerramento, a tela não avisa que Dez precisa estar
+> aberto: o 422 aparece só depois do clique.
+>
+> Leitura do agente: a) a k) com 2xx nas escritas depois do refazer. DESFECHO: [dono]
 
 Desfecho do passo 15 (marcar UM):
 [ ] PASSOU — a) a k) com evidência conferindo com o esperado
