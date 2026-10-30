@@ -511,10 +511,24 @@ Pré-condições (verificar antes de começar):
 >   O produto continua vindo do `salePrice` (o Shampoo H2 não tem, daí R$ 0,00). Print do passo 6.
 > - **(E) Continua aberto.** "Próximo" vira "Salvar Rascunho" no mesmo elemento (mesmo `ref` no DOM). Nesta execução o modal
 >   mudou de altura ao trocar de aba, e o botão não ficou no mesmo pixel, mas o risco do clique duplo não foi testado.
-> - **Console / 400.** O console das telas de venda se perdeu na navegação para a Contabilidade e não foi lido. Depois da
->   navegação, `read_console_messages` (só erros) voltou vazio. No log do servidor, a janela 02:55–03:09 UTC (login e passos
->   6–10) teve `{200: 324, 201: 9, 304: 91}` e **nenhuma** resposta ≥400. O 400 de origem não identificada de 29/10 não se
->   repetiu do lado do servidor, mas a causa segue sem identificação.
+> - **Console / 400.** O buffer do console do painel guardou a sessão inteira dos passos 6–10. Ao voltar à tela de vendas
+>   (03:4x UTC; o agente só abriu detalhes e o modal Nova Venda e cancelou, sem gravar nada), `read_console_messages` devolveu
+>   a sequência exata da execução: 8× "Registro criado com sucesso.", 4× "Venda finalizada com sucesso.", 1× "Devolução
+>   registrada.", 3× "Pagamento registrado.", todos `[log]`. Com o filtro só de erros, e com o padrão `warn`, o retorno foi
+>   **"No console logs."**: o console está **limpo**. No log do servidor, a janela 02:55–03:09 UTC (login e passos 6–10)
+>   teve `{200: 324, 201: 9, 304: 91}` e **nenhuma** resposta ≥400. O 400 de origem não identificada de 29/10 não se repetiu,
+>   e a causa dele segue sem identificação.
+> - **Livro Diário na tela (passo 11).** A aba Contabilidade → Lançamentos lista 2026/0181–0189, todos "Postado" e com data
+>   30/10/2026. Cada lançamento expandido mostra as mesmas contas e valores da leitura do dev.db acima. Texto lido do DOM:
+>   `0181 D 1.1.2.01 80 / C 3.1 80` · `0182 D 1.1.2.01 300 / C 2.1.1.01 300` · `0183 D 1.1.2.01 50 / C 3.3 50` ·
+>   `0184 D 4.2 20 / C 1.1.3.01 20` · `0185 D 3.2 80 / C 1.1.2.01 80` · `0186 D 1.1.1.01 50 / C 1.1.2.01 50` ·
+>   `0187 D 1.1.1.02 300 / C 1.1.2.01 300` · `0188 D 1.1.2.01 80 / C 3.1 80` · `0189 D 2.1.1.01 80 / C 1.1.2.01 80` (R$). Prints:
+>   [`refazer-985-p11-01-lancamentos-0181-0189.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p11-01-lancamentos-0181-0189.jpg),
+>   [`refazer-985-p11-02-linhas-0189-0185.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p11-02-linhas-0189-0185.jpg),
+>   [`refazer-985-p11-03-linhas-0184-0181.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p11-03-linhas-0184-0181.jpg).
+> - **(F) Achado novo de tela:** nas linhas expandidas da aba Lançamentos, a coluna **Crédito** fica fora do card e não
+>   aparece. O card tem `overflow-hidden` (`scrollWidth` 1088 > `clientWidth` 958 com viewport de 1240; com 1700 também
+>   corta). A coluna não rola: nos prints só se vê o Débito, e o Crédito está no DOM (texto acima). Não corrigido.
 > - **Observação nova (não é achado de A–E):** a segunda compra do mesmo pacote pelo mesmo cliente não criou outro saldo. A
 >   linha existente foi de 22000 para 52000 (antes da baixa do passo 10), e o vencimento **do saldo inteiro** foi de 29/10/2027 para
 >   30/10/2027. Os R$ 220 antigos ganharam um dia de validade. Inferido pelo dado; não li o código que decide isso.
