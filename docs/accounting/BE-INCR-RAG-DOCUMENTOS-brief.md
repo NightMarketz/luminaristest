@@ -152,7 +152,7 @@ resumo · F-RAG-B6 orçamento estourado para e avisa.
       pelo comando do item 10).
 
     **Emenda no TEAMMATES (item 23):** o cálculo do orçamento mensal passa a somar `AgentTurn` **e**
-    `DocumentAiUsage` da credencial. A emenda é do nó TEAMMATES; este item depende dela.
+    `DocumentAiUsage` da credencial. **Feita em 30/10** no BRIEF do TEAMMATES (`LlmBudgetService.usedThisMonth`, que este item usa).
 
     **Prova:**
     - uma linha por tipo de chamada;
@@ -367,7 +367,7 @@ F-RAG-B2b e F-RAG-B6 nasceram da resposta do F-RAG-B2 e foram perguntados no mes
   - motivo do `FAILED` e do aviso de contexto na lista de documentos.
 - **Seletor "Análise de dados × Base de conhecimento" do upload:** segue só como rótulo desde o R26.
 - **README de documentos:** cita `reports` como consumidor; o grep do PRE-ADR não achou (inferido).
-- **Emendas no BRIEF do TEAMMATES (feitas pelo nó TEAMMATES, não por este):**
+- **Emendas no BRIEF do TEAMMATES (feitas em 30/10, dono: "Sim, emendas"):**
   - **item 8:** a reserva lê `OPENAI_API_KEY` no caminho do teammate;
   - **item 23:** o orçamento mensal passa a somar `DocumentAiUsage`, além de `AgentTurn` (F-RAG-B2).
 - **FE:** o novo estado `AWAITING_BUDGET` precisa de rótulo e aviso na lista de documentos (i18n pt/en).

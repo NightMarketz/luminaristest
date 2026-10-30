@@ -46,10 +46,10 @@ atualizado: "2026-10-30"
 
 - **TEAMMATES, item 8 do BRIEF:** a ferramenta `search_documents` roda no caminho do teammate e, pela reserva do
   F-RAG-5b, pode ler a `OPENAI_API_KEY` da instância. O teste do item 8 precisa da ressalva "cobre `lib/llm/**` e o
-  runner, não o embedding". A emenda é feita pelo nó TEAMMATES, não por este. A chave da instância é do cliente
+  runner, não o embedding". Feita em 30/10 no BRIEF do TEAMMATES. A chave da instância é do cliente
   (ADR-M2 (3)), então o F-TM-6 ("nenhuma chave da plataforma") não é violado.
 - **TEAMMATES, item 23 do BRIEF:** o orçamento mensal passa a somar `DocumentAiUsage`, além de `AgentTurn`
-  (F-RAG-B2). Emenda do nó TEAMMATES.
+  (F-RAG-B2). Feita em 30/10 no BRIEF do TEAMMATES.
 - **Runbook M2:** sai o Qdrant (serviço, volume, `QDRANT_*`); entra o binário do `sqlite-vec` na imagem. Gate humano.
 - **ADR-M2:** o item aberto "Qdrant gerenciado ou não" fecha (Qdrant sai).
 - **LGPD:** hoje todos os trechos do documento já vão à OpenAI para o embedding. O F-RAG-4/F-RAG-9 manda também o
