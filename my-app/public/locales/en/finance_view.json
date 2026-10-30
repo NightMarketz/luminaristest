@@ -159,6 +159,7 @@
       "package": "Package",
       "package_placeholder": "Select the package…",
       "package_option": "Package {{id}} — balance {{balance}}",
+      "package_option_named": "{{name}} — balance {{balance}}",
       "insufficient": "Package balance is not enough for the sale total.",
       "reference": "Reference (optional)",
       "reference_placeholder": "NSU, Pix code…",

@@ -110,6 +110,8 @@ describe('SaleDetailPanel — ações da venda vão às rotas dedicadas (LAC-A)'
     expect(screen.queryByRole('button', { name: 'Pagar' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Devolver' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Cancelar' })).toBeNull();
+    // Achado (A) do H2 passo 10 (29/10): a venda Devolvida ainda oferecia "Finalizar".
+    expect(screen.queryByRole('button', { name: 'Finalizar' })).toBeNull();
   });
 });
 

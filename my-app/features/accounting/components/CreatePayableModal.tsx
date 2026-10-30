@@ -387,7 +387,7 @@ export function CreatePayableModal({
             </div>
             {mode === 'inventory' && (
               <p className="text-xs text-neutral-500">
-                {t('contasAPagar.createModal.mode.inventoryHint', 'Debita 1.1.6 Estoques e valora o produto pelo custo médio — o valor acima é o TOTAL da compra.')}
+                {t('contasAPagar.createModal.mode.inventoryHint', 'Debita 1.1.3.01 Estoques e valora o produto pelo custo médio — o valor acima é o TOTAL da compra.')}
               </p>
             )}
           </div>

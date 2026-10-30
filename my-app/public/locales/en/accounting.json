@@ -136,7 +136,7 @@
       "mode": {
         "expense": "Expense",
         "inventory": "Inventory purchase",
-        "inventoryHint": "Debits 1.1.6 Inventory and values the product at moving average — the amount above is the purchase TOTAL."
+        "inventoryHint": "Debits 1.1.3.01 Inventory and values the product at moving average — the amount above is the purchase TOTAL."
       },
       "noProducts": "No products in the catalog. Register products in the inventory module."
     },

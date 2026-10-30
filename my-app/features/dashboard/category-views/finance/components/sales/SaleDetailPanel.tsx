@@ -110,7 +110,7 @@ export default function SaleDetailPanel({
             <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-100">{t('finance_view:sales.labels.details', 'Detalhes')}</h2>
                 <div className="flex gap-2">
-                    {!isFinalized && !isCancelled && (
+                    {!isFinalized && !isCancelled && !isReturned && (
                         <button
                             disabled={isUpdating === sale.id}
                             onClick={() => confirm({
