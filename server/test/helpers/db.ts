@@ -161,6 +161,10 @@ export async function resetDb(): Promise<void> {
   await prisma.paymentAccount.deleteMany();
   // BE-INCR-DFE-ADN-EMISSOR PR-1 (nó X10i): fiscal_certificates não tem FK — sem ordem.
   await prisma.fiscalCertificate.deleteMany();
+  // X10a PR-7 (EMENDA-PSC): credencial do PSC por unidade, autorização pendente e cadastro dos PSCs.
+  await prisma.pscAuthorization.deleteMany();
+  await prisma.pscCredential.deleteMany();
+  await prisma.pscProvider.deleteMany();
   // BE-INCR-MIT-EXPORT PR-2 (nó X9): mit_exports só referencia User (Cascade) — sem ordem de FK.
   await prisma.mitExport.deleteMany();
   // BE-INCR-EFD-REINF PR-1: reinf_batches só referencia User (Cascade) — sem ordem de FK.
