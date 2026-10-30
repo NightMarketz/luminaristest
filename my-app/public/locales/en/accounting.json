@@ -68,7 +68,8 @@
       "PAYING": "Paying",
       "PAID": "Paid",
       "CANCELLED": "Cancelled",
-      "PARTIALLY_PAID": "Partially paid"
+      "PARTIALLY_PAID": "Partially paid",
+      "DEFERRED": "Deferred"
     },
     "col": {
       "expand": "Expand",
@@ -671,6 +672,7 @@
     "reverseAction": {
       "enabledTitle": "Reverse this entry",
       "disabledTitle": "Entry already reversed",
+      "notPostedTitle": "Only posted entries can be reversed",
       "label": "Reverse"
     },
     "receiptAction": {

@@ -42,6 +42,7 @@ const STATUS_LABEL: Record<PayableStatus, string> = {
   PAYING: 'Em pagamento',
   PAID: 'Paga',
   CANCELLED: 'Cancelada',
+  DEFERRED: 'Adiada',
 };
 
 const STATUS_CLASS: Record<PayableStatus, string> = {
@@ -50,6 +51,7 @@ const STATUS_CLASS: Record<PayableStatus, string> = {
   PAYING: 'bg-blue-900/40 text-blue-300',
   PAID: 'bg-emerald-900/40 text-emerald-300',
   CANCELLED: 'bg-neutral-700/60 text-neutral-300',
+  DEFERRED: 'bg-neutral-700/50 text-neutral-400',
 };
 
 function StatusBadge({ status }: { status: PayableStatus }) {

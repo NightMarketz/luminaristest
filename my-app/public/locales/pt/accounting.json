@@ -68,7 +68,8 @@
       "PAYING": "Em pagamento",
       "PAID": "Paga",
       "CANCELLED": "Cancelada",
-      "PARTIALLY_PAID": "Paga em parte"
+      "PARTIALLY_PAID": "Paga em parte",
+      "DEFERRED": "Adiada"
     },
     "col": {
       "expand": "Expandir",
@@ -671,6 +672,7 @@
     "reverseAction": {
       "enabledTitle": "Estornar este lançamento",
       "disabledTitle": "Lançamento já estornado",
+      "notPostedTitle": "Só lançamentos postados podem ser estornados",
       "label": "Estornar"
     },
     "receiptAction": {

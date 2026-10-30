@@ -218,7 +218,9 @@ function JournalEntryRow({
               onClick={() => onReverseClick(entry.id)}
               title={canReverse
                 ? t('journalEntries.reverseAction.enabledTitle', 'Estornar este lançamento')
-                : t('journalEntries.reverseAction.disabledTitle', 'Lançamento já estornado')}
+                : !canReceipt
+                  ? t('journalEntries.reverseAction.notPostedTitle', 'Só lançamentos postados podem ser estornados')
+                  : t('journalEntries.reverseAction.disabledTitle', 'Lançamento já estornado')}
               className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-300 transition-colors hover:border-red-700 hover:bg-red-900/30 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-neutral-700 disabled:hover:bg-neutral-800 disabled:hover:text-neutral-300"
             >
               <FiRotateCcw size={12} />

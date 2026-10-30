@@ -24,7 +24,7 @@ interface ApiEnvelope<T> {
 }
 
 // ── Domain types ───────────────────────────────────────────────────────────────
-export type PayableStatus = 'OPEN' | 'PARTIALLY_PAID' | 'PAYING' | 'PAID' | 'CANCELLED';
+export type PayableStatus = 'OPEN' | 'PARTIALLY_PAID' | 'PAYING' | 'PAID' | 'CANCELLED' | 'DEFERRED';
 export type PaymentMethod = 'Cash' | 'Pix' | 'TED' | 'Boleto';
 export type PaymentStatus = 'ACTIVE' | 'CANCELLED';
 
