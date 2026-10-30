@@ -281,6 +281,16 @@ Pré-condições (verificar antes de começar):
    não com o preço de venda.
    EVIDÊNCIA: [print da tela + prints dos DOIS lançamentos no Livro Diário]
 
+   > **[EMENDA 2026-10-30] Passo 8 — produto em venda separada** (dono, chat, 30/10: *"Emendar o passo 8"*). A venda
+   > mista de serviço com produto é **proibida por regra de negócio**, não falta de tela: `validateNoMixedItemTypesOnInsert`
+   > (`server/src/features/dynamicTables/rules/plugins/sales/saleItems.ts:141`, chamada em `SalesPlugin.ts:224`) recusa o
+   > item com *"Venda não pode mesclar produtos, serviços e pacotes; crie vendas separadas."*, e o modal Nova Venda espelha a
+   > regra (`useSalesCreateForm.ts:160`). Por isso, a partir desta emenda, o passo 8 é uma **venda só de produto de estoque**.
+   > Resultado esperado: DOIS lançamentos. (a) finalized: D 1.1.2 A Receber = total e C **3.3 Receita de Revenda** = total, **sem**
+   > linha 3.1. (b) cogs: D **4.2 CMV** = custo cadastrado e C Estoques (1.1.3.01 no binding v2) = mesmo valor, não o preço de
+   > venda. O split misto 3.1 + 3.3 de uma mesma venda fica coberto só pelo golden test (`goldenPhase1.test.ts`, caso
+   > "finalized: split misto 100/100"), colado no passo 11.
+
 9. Fazer a **devolução** de uma das vendas acima — evento `salon.sale.returned` (hoje: `sale.returned`, PR #222).
    Resultado esperado: lançamento NOVO e separado (não é estorno/`reversedById` do lançamento
    original — o original de `salon.sale.finalized` (hoje: `sale.finalized`, PR #222) continua `Posted`, intocado) com D **3.2
@@ -540,6 +550,10 @@ Pré-condições (verificar antes de começar):
 > [x] FALHOU — passo 8 divergiu (venda mista de serviço + produto não sai do modal Nova Venda; o split misto só está
 > coberto pelo golden test); evidência da divergência colada acima *(marcado pelo dono no chat, 30/10; assinatura abaixo
 > continua do dono)*. Os passos 9–10 foram rodados na mesma passada, antes do desfecho.
+>
+> **Depois da [EMENDA 2026-10-30] do passo 8** (dono, chat, 30/10: *"Emendar o passo 8"*): o FALHOU acima foi dado contra
+> o texto original. Pelo texto emendado, a evidência do passo 8 já colada (2026/0183 D 1.1.2.01 / C 3.3 5000, sem 3.1;
+> 2026/0184 D 4.2 / C 1.1.3.01 2000 = custo) confere com o esperado. Novo desfecho sob a emenda: [dono]
 >
 > ASSINATURA: [dono]
 
