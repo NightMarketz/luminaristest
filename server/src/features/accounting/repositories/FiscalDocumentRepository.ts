@@ -129,8 +129,27 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     });
   }
 
-  public async listContingencia(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
-    return this.db(tx).fiscalDocument.findMany({ where: { status: 'CONTINGENCY', deletedAt: null }, orderBy: [{ createdAt: 'asc' }], take: limit });
+  public async listContingencia(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]> {
+    return this.db(tx).fiscalDocument.findMany({
+      where: { status: 'CONTINGENCY', deletedAt: null },
+      include: { attempts: { orderBy: { attemptNo: 'asc' } } },
+      orderBy: [{ createdAt: 'asc' }],
+      take: limit,
+    });
+  }
+
+  public async listContingenciaNaoAutorizada(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]> {
+    return this.db(tx).fiscalDocument.findMany({
+      where: {
+        kind: 'NFCE',
+        status: { in: ['CONTINGENCY', 'SENT', 'PROCESSING', 'REJECTED', 'PENDING_SIGNATURE'] },
+        deletedAt: null,
+        attempts: { some: { payloadJson: { contains: '"tpEmis":9' } } },
+      },
+      include: { attempts: { orderBy: { attemptNo: 'asc' } } },
+      orderBy: [{ createdAt: 'asc' }],
+      take: limit,
+    });
   }
 
   public async findByPartnerRef(partnerRef: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null> {

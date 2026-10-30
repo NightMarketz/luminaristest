@@ -16,16 +16,28 @@ export const ALERTA_PRAZO_ANTECEDENCIA_MS = 4 * 3600_000;
 
 /**
  * Prazo de transmissão (D03 p. 7: "até o final do primeiro dia útil subsequente contado a partir de sua emissão em
- * contingência"; Aj. SINIEF 19/16 cl. 11ª §1º II "a"): 23:59:59 do 1º dia útil depois do dia do `dhEmi`, no fuso do próprio
- * `dhEmi` (o da unidade). Dia útil = seg–sex fora de `FERIADO_NACIONAL` (`ehDiaUtil`; decisão 9 — feriado estadual ou
- * municipal fora só encurta o prazo, nunca o alonga).
+ * contingência"; Aj. SINIEF 19/16 cl. 11ª §1º II "a"): 23:59:59 **de Brasília** (decisão 9; Brasília sem horário de verão
+ * desde 2019 ⇒ -03:00) do 1º dia útil depois do dia escrito no `dhEmi`. Numa UF a oeste (UTC-4/-5) o fim do dia em Brasília
+ * chega antes do fim do dia local: o prazo nunca alonga. Dia útil = seg–sex fora de `FERIADO_NACIONAL` (`ehDiaUtil`;
+ * feriado estadual ou municipal fora só encurta o prazo).
  */
 export function prazoTransmissao(dhEmi: string, feriados: readonly LinhaLegal[]): Date {
   const m = /^(\d{4}-\d{2}-\d{2})T[\d:.]+([+-]\d{2}:\d{2}|Z)$/.exec(dhEmi);
   if (!m) throw new Error(`nfce_contingencia_dhemi_invalido: ${dhEmi}`);
   let n = dayNumberFromDateOnly(m[1]) + 1;
   while (!ehDiaUtil(dateOnlyFromDayNumber(n), feriados)) n += 1;
-  return new Date(`${dateOnlyFromDayNumber(n)}T23:59:59${m[2]}`);
+  return new Date(`${dateOnlyFromDayNumber(n)}T23:59:59${FUSO_BRASILIA}`);
+}
+
+const FUSO_BRASILIA = '-03:00';
+
+/** A NFC-e de contingência leva o `infNFeSupl` no XML autorizado: o QR Code e a urlChave que a SEFAZ aceitou. */
+export function suplDoXml(xml: string): { qrCode: string; urlChave: string } | null {
+  if (!/<ide>[\s\S]*?<tpEmis>9<\/tpEmis>/.test(xml)) return null;
+  const qr = /<infNFeSupl><qrCode>([^<]*)<\/qrCode><urlChave>([^<]*)<\/urlChave><\/infNFeSupl>/.exec(xml);
+  if (!qr) return null;
+  const des = (v: string) => v.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+  return { qrCode: des(qr[1]), urlChave: des(qr[2]) };
 }
 
 export type AlertaDePrazo = 'PERTO' | 'VENCIDO' | null;

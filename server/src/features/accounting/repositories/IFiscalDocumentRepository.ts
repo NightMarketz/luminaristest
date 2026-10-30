@@ -170,7 +170,12 @@ export interface IFiscalDocumentRepository {
   /** SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos. */
   listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
   /** X10a PR-9 (decisão 7) — `CONTINGENCY` de todas as unidades, mais antigas primeiro (o job transmite e confere o prazo). */
-  listContingencia(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  listContingencia(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]>;
+  /**
+   * X10a PR-9 (decisão 7, revisão D) — NFC-e com alguma tentativa `tpEmis=9` ainda sem autorização (CONTINGENCY, SENT,
+   * PROCESSING, REJECTED, PENDING_SIGNATURE), de todas as unidades: o prazo de transmissão corre para todas.
+   */
+  listContingenciaNaoAutorizada(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]>;
   /**
    * BE-INCR-DFE (PR-3, item 28) — busca cross-tenant por `partnerRef`, mesmo desenho de
    * `listPending`: o webhook chega ANTES de o serviço saber a qual escopo pertence (a

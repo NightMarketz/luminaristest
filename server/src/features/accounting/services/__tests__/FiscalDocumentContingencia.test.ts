@@ -84,7 +84,12 @@ class MemRepo {
   listBySale = async (_s: unknown, saleId: string) => [...this.docs.values()].filter((d) => d.saleId === saleId).map(this.full);
   listByStatus = async (_s: unknown, status: string) => [...this.docs.values()].filter((d) => d.status === status);
   listPending = async () => [...this.docs.values()].filter((d) => d.status === 'SENT' || d.status === 'PROCESSING');
-  listContingencia = async () => [...this.docs.values()].filter((d) => d.status === 'CONTINGENCY');
+  listContingencia = async () => [...this.docs.values()].filter((d) => d.status === 'CONTINGENCY').map(this.full);
+  listContingenciaNaoAutorizada = async () =>
+    [...this.docs.values()]
+      .filter((d) => d.kind === 'NFCE' && ['CONTINGENCY', 'SENT', 'PROCESSING', 'REJECTED', 'PENDING_SIGNATURE'].includes(d.status))
+      .filter((d) => (this.attempts.get(d.id) ?? []).some((a) => a.payloadJson.includes('"tpEmis":9')))
+      .map(this.full);
   createPendingAttachment = jest.fn();
   createSent = async (_s: unknown, data: Record<string, unknown>) => {
     const { payloadJson, initialStatus, ...doc } = data;
@@ -421,6 +426,53 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
       expect(sefaz.controle.chamadas.at(-1)!.corpo).toMatch(/\|2\|2\|29\|60\.00\|[0-9a-f]{56}\|2\|[0-9A-F]{40}<\/qrCode>/);
     } finally {
       sefaz.controle.recusarQrV3 = false;
+    }
+  });
+
+  it('revisão A: a UF recusa a v3 (407) na transmissão ⇒ o QR que o BE entrega para o DANFE passa a ser o v2 do XML autorizado', async () => {
+    sefaz.controle.foraDoAr = true;
+    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
+    expect(view.contingencia!.qrCode).toMatch(/\|3\|2\|/);
+    sefaz.controle.foraDoAr = false;
+    sefaz.controle.recusarQrV3 = true;
+    cscStub.resolveForEmission.mockResolvedValue({ id: '2', csc: 'A1B2C3D4E5F6G7H8I9J0' });
+    try {
+      await contingencia.tick(PASSADO());
+      const enviado = /<qrCode>([^<]+)<\/qrCode>/.exec(sefaz.controle.chamadas.at(-1)!.corpo)![1].replace(/&amp;/g, '&');
+      const doc = await emission.getById(SCOPE, view.id);
+      expect(doc.status).toBe('AUTHORIZED');
+      expect(doc.contingencia!.qrCode).toBe(enviado);
+      expect(doc.contingencia!.qrCode).toMatch(/\|2\|2\|29\|60\.00\|[0-9a-f]{56}\|2\|[0-9A-F]{40}$/);
+    } finally {
+      sefaz.controle.recusarQrV3 = false;
+    }
+  });
+
+  it('revisão D: a de contingência que volta rejeitada segue no alerta de prazo (o prazo legal continua correndo)', async () => {
+    sefaz.controle.foraDoAr = true;
+    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
+    sefaz.controle.foraDoAr = false;
+    sefaz.controle.cStatAutorizacao = '704';
+    await contingencia.tick(PASSADO());
+    expect((await emission.getById(SCOPE, view.id)).status).toBe('REJECTED');
+    jest.setSystemTime(new Date('2026-10-30T23:00:00Z')); // sex 20:00 (Brasília) — 3h59m59s antes do fim
+    expect(await contingencia.tick(PASSADO())).toMatchObject({ transmitidas: 0, pertoDoPrazo: 1 });
+    jest.setSystemTime(new Date('2026-10-31T03:30:00Z'));
+    expect(await contingencia.tick(PASSADO())).toMatchObject({ vencidas: 1 });
+  });
+
+  it('revisão B (F-AMB-2 a): documento de outro ambiente que o da emissão configurada não é transmitido pelo tick', async () => {
+    sefaz.controle.foraDoAr = true;
+    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
+    sefaz.controle.foraDoAr = false;
+    (selectDfeEmissor as jest.Mock).mockImplementation(() => ({ enabled: true, port: emissor, ambiente: 'producao' }));
+    try {
+      const antes = sefaz.controle.chamadas.length;
+      expect(await contingencia.tick(PASSADO())).toMatchObject({ transmitidas: 0, failed: 1 });
+      expect(autorizacoes(antes)).toBe(0);
+      expect((await emission.getById(SCOPE, view.id)).status).toBe('CONTINGENCY');
+    } finally {
+      (selectDfeEmissor as jest.Mock).mockImplementation(() => ({ enabled: true, port: emissor, ambiente: 'homologacao' }));
     }
   });
 

@@ -57,7 +57,12 @@ export async function enviarTentativa(
     if (isFalhaDeComunicacao(emitError) && input.kind === 'NFCE' && port.capabilities.contingenciaOffline) {
       const tpEmis = tpEmisDe(input.payload);
       if (tpEmis === 9) {
-        await repo.transition(scope, doc.id, { status: 'CONTINGENCY', errorsJson: JSON.stringify([{ code: failCode, message }]), whenStatusIn: ['SENT'] });
+        await repo.transition(scope, doc.id, {
+          status: 'CONTINGENCY',
+          errorsJson: JSON.stringify([{ code: failCode, message }]),
+          contingenciaSuplJson: null, // o tick gera o QR da chave desta tentativa antes de transmitir
+          whenStatusIn: ['SENT'],
+        });
         return;
       }
       if (tpEmis === 1 && contingencia) {

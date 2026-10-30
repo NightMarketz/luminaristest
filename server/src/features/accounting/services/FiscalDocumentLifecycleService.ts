@@ -8,7 +8,7 @@ import { NfePayloadSchema, NfePayloadSemNumeracaoSchema } from '../dtos/NfePaylo
 import type { NfePayload, NfePayloadSemNumeracao } from '../dtos/NfePayloadDto';
 import type { ContingenciaTickSummary } from '../dtos/NfceContingenciaDto';
 import { gerarCnf, numerarNfe } from '../models/nfeMontagem';
-import { emContingencia } from '../models/nfceContingencia';
+import { emContingencia, suplDoXml } from '../models/nfceContingencia';
 import type { IFiscalNumberVoidRepository } from '../repositories/IFiscalNumberVoidRepository';
 import { OCCUPYING_VOID_STATUSES } from '../repositories/IFiscalNumberVoidRepository';
 import {
@@ -425,6 +425,7 @@ export class FiscalDocumentLifecycleService {
             currentAttemptNo: nextAttemptNo,
             errorsJson: null,
             ...(numero !== undefined ? { numero } : {}),
+            ...(doc.contingenciaSuplJson ? { contingenciaSuplJson: null } : {}), // X10a PR-9: a chave nova invalida o QR off-line
             whenStatusIn: [doc.status as FiscalDocumentStatus], // o callback e a rota podem disputar a mesma pendente
           },
           tx,
@@ -1101,6 +1102,7 @@ export class FiscalDocumentLifecycleService {
     }
 
     const divergente = manual?.releitura?.releitura.status === 'DIVERGENTE';
+    const suplAutorizado = doc.kind === 'NFCE' && result.xml ? suplDoXml(result.xml.toString('utf8')) : null;
     const chaveOuCodigo = result.chaveOuCodigo;
     const nfseDhProc = result.dhProc ? new Date(result.dhProc) : null;
     let originalSourceARetirar = null as string | null; // atribuída dentro da tx (o `as` evita o estreitamento para null)
@@ -1150,6 +1152,9 @@ export class FiscalDocumentLifecycleService {
         {
           status: divergente ? 'AUTHORIZED_DIVERGENT' : 'AUTHORIZED',
           ...(manual?.serie !== undefined ? { serie: manual.serie } : {}),
+          // X10a PR-9 (revisão A): na NFC-e de contingência o DANFE passa a mostrar o QR do XML autorizado — o v2 do recuo
+          // na 407 ou a chave nova do reenvio da rejeitada —, não o montado na emissão off-line.
+          ...(suplAutorizado ? { contingenciaSuplJson: JSON.stringify(suplAutorizado) } : {}),
           whenStatusIn: guardaDoResultado(doc),
           partnerRef: result.partnerRef,
           nNFSe: result.nNFSe ?? null,

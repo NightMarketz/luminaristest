@@ -15,6 +15,10 @@ describe('nfceContingencia — prazo de transmissão e alerta', () => {
     expect(prazoTransmissao('2026-10-30T22:00:00-03:00', FERIADOS_SEMENTE).toISOString()).toBe('2026-11-04T02:59:59.000Z');
   });
 
+  it('revisão C (decisão 9): o fim do prazo é 23:59:59 de Brasília também numa UF a oeste (Manaus, -04:00)', () => {
+    expect(prazoTransmissao('2026-10-29T15:00:00-04:00', FERIADOS_SEMENTE).toISOString()).toBe('2026-10-31T02:59:59.000Z');
+  });
+
   it('sexta comum ⇒ fim de segunda', () => {
     expect(prazoTransmissao('2026-10-23T09:00:00-03:00', FERIADOS_SEMENTE).toISOString()).toBe('2026-10-27T02:59:59.000Z');
   });

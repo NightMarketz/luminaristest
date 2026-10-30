@@ -31,6 +31,7 @@ import type { LegalParameterService } from '../../legalParameters/services/Legal
 import type { DfeResultApplier } from './dfeEnvio';
 import { isFalhaDeComunicacao, type DfeAmbiente, type DfeCallContext, type DfeEmissorPort, type EmitirInput, type NfceSupl } from '../dfe/DfeEmissorPort';
 import { resolveEmissorFor } from '../dfe/resolveEmissor';
+import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
@@ -40,6 +41,7 @@ export const DFE_CONTINGENCY_LEFT = 'dfe.contingency_left';
 
 const AMBIENTES: readonly DfeAmbiente[] = ['homologacao', 'producao'];
 const TICK_LIMIT = 50;
+const ALERTA_LIMIT = 200;
 
 type Tx = Prisma.TransactionClient;
 
@@ -188,24 +190,32 @@ export class NfceContingenciaService {
     const s: ContingenciaTickSummary = {
       transmitidas: 0, semComunicacao: 0, pertoDoPrazo: 0, vencidas: 0, saidasAutomaticas: 0, orfasResolvidas: 0, orfasFalharam: 0, failed: 0,
     };
-    const feriados = await this.legalParams.fotografia(['FERIADO_NACIONAL']);
     for (const doc of await this.docRepo.listContingencia(TICK_LIMIT)) {
-      await this.transmitirUma(doc, feriados, s);
+      await this.transmitirUma(doc, s);
     }
     for (const orfa of await this.repo.listOrfasPendentes(olderThan, TICK_LIMIT)) {
       await this.resolverOrfa(orfa, s);
     }
+    // Revisão D: o prazo corre para toda NFC-e de contingência ainda não autorizada — inclusive a rejeitada ou à espera
+    // de resposta depois da transmissão —, não só para a que segue `CONTINGENCY`.
+    const feriados = await this.legalParams.fotografia(['FERIADO_NACIONAL']);
+    for (const doc of await this.docRepo.listContingenciaNaoAutorizada(ALERTA_LIMIT)) {
+      this.conferirPrazo(doc, feriados, s);
+    }
     return ContingenciaTickSummarySchema.parse(s);
   }
 
-  private async transmitirUma(doc: FiscalDocument, feriados: Awaited<ReturnType<LegalParameterService['fotografia']>>, s: ContingenciaTickSummary): Promise<void> {
+  private async transmitirUma(doc: FiscalDocument, s: ContingenciaTickSummary): Promise<void> {
     const scope = resolveAccountingScopeInternal({ userId: doc.userId }, doc.unitId);
-    let payload: NfePayload | null = null;
     try {
       const full = await this.comTentativas(scope, doc);
-      payload = NfePayloadSchema.parse(JSON.parse(this.tentativaCorrente(full).payloadJson));
+      const payload = NfePayloadSchema.parse(JSON.parse(this.tentativaCorrente(full).payloadJson));
       const port = resolveEmissorFor(doc.partner, doc.kind as FiscalDocumentKind);
       if (!port.capabilities.contingenciaOffline) return;
+      if (this.ambienteDivergente(doc)) {
+        s.failed++;
+        return;
+      }
       const ctx = await this.ctxDe(scope, full, port, payload);
       if (!ctx?.assinatura) {
         logger.warn('dfe_contingencia_transmissao: sem sessão do PSC — a NFC-e off-line espera a reautorização', { documentId: doc.id });
@@ -239,29 +249,44 @@ export class NfceContingenciaService {
         documentId: doc.id,
         error: error instanceof Error ? error.message : String(error),
       });
-    } finally {
-      if (payload) await this.conferirPrazo(scope, doc.id, payload, feriados, s);
     }
   }
 
-  /** Decisão 9 — a nota que segue `CONTINGENCY` faltando ≤ 4 h (ou depois) do fim do prazo vira alerta. */
-  private async conferirPrazo(
-    scope: AccountingScope,
-    documentId: string,
-    payload: NfePayload,
-    feriados: Awaited<ReturnType<LegalParameterService['fotografia']>>,
-    s: ContingenciaTickSummary,
-  ): Promise<void> {
-    const atual = await this.docRepo.findById(scope, documentId);
-    if (atual?.status !== 'CONTINGENCY') return;
-    const prazo = prazoTransmissao(payload.infNFe.ide.dhEmi, feriados);
+  /**
+   * Revisão B (F-AMB-2 a, como o `reenviar`): a porta do env aponta para o ambiente do env; documento de outro ambiente não
+   * sai por ela (uma nota de homologação sairia como produção). Fica parado, e o prazo segue alertando.
+   */
+  private ambienteDivergente(doc: FiscalDocument): boolean {
+    const env = selectDfeEmissor(process.env, doc.kind as FiscalDocumentKind);
+    if (env.port.name !== doc.partner || env.ambiente === doc.ambiente) return false;
+    logger.warn('dfe_contingencia: documento de outro ambiente que o da emissão configurada — não transmite', {
+      documentId: doc.id,
+      ambienteDocumento: doc.ambiente,
+      ambienteEmissao: env.ambiente ?? 'nenhum',
+    });
+    return true;
+  }
+
+  /** Decisão 9 — NFC-e de contingência sem autorização faltando ≤ 4 h (ou depois) do fim do prazo vira alerta. */
+  private conferirPrazo(doc: FiscalDocumentWithAttempts, feriados: Awaited<ReturnType<LegalParameterService['fotografia']>>, s: ContingenciaTickSummary): void {
+    const corrente = doc.attempts.find((a) => a.attemptNo === doc.currentAttemptNo);
+    let ide: { tpEmis?: unknown; dhEmi?: unknown } | undefined;
+    try {
+      ide = corrente ? (JSON.parse(corrente.payloadJson) as { infNFe?: { ide?: { tpEmis?: unknown; dhEmi?: unknown } } }).infNFe?.ide : undefined;
+    } catch {
+      ide = undefined;
+    }
+    if (ide?.tpEmis !== 9 || typeof ide.dhEmi !== 'string') return;
+    const documentId = doc.id;
+    const prazo = prazoTransmissao(ide.dhEmi, feriados);
     const alerta = alertaDePrazo(this.now(), prazo);
     if (!alerta) return;
     if (alerta === 'PERTO') s.pertoDoPrazo++;
     else s.vencidas++;
-    logger.error('dfe_contingencia_prazo: NFC-e de contingência sem transmissão perto do prazo ou vencida — ação humana', {
+    logger.error('dfe_contingencia_prazo: NFC-e de contingência sem autorização perto do prazo ou vencida — ação humana', {
       documentId,
-      unitId: scope.unitId,
+      unitId: doc.unitId,
+      status: doc.status,
       alerta,
       prazo: prazo.toISOString(),
     });
@@ -278,7 +303,7 @@ export class NfceContingenciaService {
       const doc = await this.docRepo.findById(scope, orfa.documentId);
       if (!doc) throw new Error(`fiscal_document_not_found: ${orfa.documentId}`);
       const port = resolveEmissorFor(doc.partner, doc.kind as FiscalDocumentKind);
-      if (!port.cancelarPorSubstituicao) return;
+      if (!port.cancelarPorSubstituicao || this.ambienteDivergente(doc)) return;
       let consulta;
       try {
         consulta = await port.consultar(orfa.chave, { ambiente: orfa.ambiente as DfeAmbiente });
