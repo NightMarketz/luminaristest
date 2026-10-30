@@ -85,7 +85,7 @@ class MemRepo {
   listByStatus = async (_s: unknown, status: string) => [...this.docs.values()].filter((d) => d.status === status);
   listPending = async () => [...this.docs.values()].filter((d) => d.status === 'SENT' || d.status === 'PROCESSING');
   listContingencia = async () => [...this.docs.values()].filter((d) => d.status === 'CONTINGENCY').map(this.full);
-  listContingenciaNaoAutorizada = async () =>
+  listContingenciaNaoAutorizada = async (_desde: Date) =>
     [...this.docs.values()]
       .filter((d) => d.kind === 'NFCE' && ['CONTINGENCY', 'SENT', 'PROCESSING', 'REJECTED', 'PENDING_SIGNATURE'].includes(d.status))
       .filter((d) => (this.attempts.get(d.id) ?? []).some((a) => a.payloadJson.includes('"tpEmis":9')))

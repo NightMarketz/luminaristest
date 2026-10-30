@@ -133,7 +133,7 @@ describe('FiscalDocument + ServiceFiscalProfile — contrato em SQLite real (BE-
     const fila = await docRepo.listContingencia(50);
     expect(fila.map((d) => d.id)).toEqual([pendente.id]);
     expect(fila[0].attempts).toHaveLength(1);
-    const alerta = (await docRepo.listContingenciaNaoAutorizada(50)).map((d) => d.id);
+    const alerta = (await docRepo.listContingenciaNaoAutorizada(new Date(Date.now() - 86_400_000))).map((d) => d.id);
     expect(alerta).toEqual(expect.arrayContaining([pendente.id, rejeitada.id]));
     expect(alerta).not.toContain(autorizada.id);
     expect(alerta).not.toContain(normal.id);
@@ -147,13 +147,19 @@ describe('FiscalDocument + ServiceFiscalProfile — contrato em SQLite real (BE-
         if (status === 'REJECTED') await docRepo.transition(escopo(DONO_B), d.id, { status: 'REJECTED', whenStatusIn: ['CONTINGENCY'] });
         return d;
       });
-    // E: três rejeitadas abandonadas e, depois, uma nova; com teto 2, a nova entra no alerta.
+    // E e G: sem teto — a mais antiga da janela (a que vence primeiro) e a nova entram juntas; a abandonada de 20 dias
+    // atrás sai pela janela, não pelo teto.
+    const antiga = await off('sale-antiga', 'CONTINGENCY');
     for (const n of [1, 2, 3]) {
       await off(`sale-aband-${n}`, 'REJECTED');
       await pausa();
     }
+    const abandonada = await off('sale-aband-velha', 'REJECTED');
+    await prisma.fiscalDocument.update({ where: { id: abandonada.id }, data: { createdAt: new Date(Date.now() - 20 * 86_400_000) } });
     const nova = await off('sale-nova', 'CONTINGENCY');
-    expect((await docRepo.listContingenciaNaoAutorizada(2)).map((d) => d.id)).toContain(nova.id);
+    const janela = (await docRepo.listContingenciaNaoAutorizada(new Date(Date.now() - 15 * 86_400_000))).map((d) => d.id);
+    expect(janela).toEqual(expect.arrayContaining([antiga.id, nova.id]));
+    expect(janela).not.toContain(abandonada.id);
 
     // F: a CONTINGENCY tocada pelo job (adiada) vai para o fim; com teto 1, a outra é a próxima a transmitir.
     const todas = await docRepo.listContingencia(50);

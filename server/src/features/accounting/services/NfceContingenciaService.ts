@@ -41,7 +41,12 @@ export const DFE_CONTINGENCY_LEFT = 'dfe.contingency_left';
 
 const AMBIENTES: readonly DfeAmbiente[] = ['homologacao', 'producao'];
 const TICK_LIMIT = 50;
-const ALERTA_LIMIT = 200;
+/**
+ * Revisões E e G — janela do alerta de prazo: o prazo é o fim do 1º dia útil seguinte (no máximo poucos dias depois da
+ * emissão, mesmo com feriado prolongado), então 15 dias cobrem toda nota que ainda pode vencer e a vencida há pouco; a
+ * vencida há mais de 15 dias deixa de alertar a cada tick (segue na lista do documento com o status dela).
+ */
+export const ALERTA_JANELA_MS = 15 * 86_400_000;
 
 type Tx = Prisma.TransactionClient;
 
@@ -199,7 +204,7 @@ export class NfceContingenciaService {
     // Revisão D: o prazo corre para toda NFC-e de contingência ainda não autorizada — inclusive a rejeitada ou à espera
     // de resposta depois da transmissão —, não só para a que segue `CONTINGENCY`.
     const feriados = await this.legalParams.fotografia(['FERIADO_NACIONAL']);
-    for (const doc of await this.docRepo.listContingenciaNaoAutorizada(ALERTA_LIMIT)) {
+    for (const doc of await this.docRepo.listContingenciaNaoAutorizada(new Date(this.now().getTime() - ALERTA_JANELA_MS))) {
       this.conferirPrazo(doc, feriados, s);
     }
     return ContingenciaTickSummarySchema.parse(s);
@@ -380,9 +385,14 @@ export class NfceContingenciaService {
         return;
       }
       s.failed++;
-      logger.error('dfe_contingencia_orfa: falha ao resolver a NFC-e normal órfã — alerta', {
-        orfaId: orfa.id,
-        error: error instanceof Error ? error.message : String(error),
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error('dfe_contingencia_orfa: falha ao resolver a NFC-e normal órfã — alerta', { orfaId: orfa.id, error: message });
+      // Rodízio: a órfã com falha que se repete vai para o fim da fila, com o erro gravado.
+      await this.repo.updateOrfa(orfa.id, { tentativas: orfa.tentativas + 1, ultimoErro: message.slice(0, 500) }).catch((touchError: unknown) => {
+        logger.warn('dfe_contingencia_orfa: não deu para tocar a órfã depois da falha', {
+          orfaId: orfa.id,
+          error: touchError instanceof Error ? touchError.message : String(touchError),
+        });
       });
     }
   }

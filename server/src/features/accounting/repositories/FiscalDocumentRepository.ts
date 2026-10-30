@@ -139,18 +139,19 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     });
   }
 
-  public async listContingenciaNaoAutorizada(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]> {
+  public async listContingenciaNaoAutorizada(desde: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]> {
     return this.db(tx).fiscalDocument.findMany({
       where: {
         kind: 'NFCE',
+        createdAt: { gte: desde },
         status: { in: ['CONTINGENCY', 'SENT', 'PROCESSING', 'REJECTED', 'PENDING_SIGNATURE'] },
         deletedAt: null,
         attempts: { some: { payloadJson: { contains: '"tpEmis":9' } } },
       },
       include: { attempts: { orderBy: { attemptNo: 'asc' } } },
-      // Revisão E: as mais recentes primeiro — a rejeitada abandonada (vencida há muito) não tira do alerta a que vence hoje.
-      orderBy: [{ createdAt: 'desc' }],
-      take: limit,
+      // Revisões E e G: sem teto — a janela `desde` é que limita (a abandonada há muito sai sozinha; a que vence primeiro
+      // nunca fica de fora por haver muitas pendentes depois dela).
+      orderBy: [{ createdAt: 'asc' }],
     });
   }
 
