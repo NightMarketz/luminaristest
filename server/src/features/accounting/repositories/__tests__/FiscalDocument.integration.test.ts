@@ -140,6 +140,30 @@ describe('FiscalDocument + ServiceFiscalProfile — contrato em SQLite real (BE-
     expect((await docRepo.findById(escopo(DONO_A), autorizada.id))?.contingenciaSuplJson).toBe('{"qrCode":"q","urlChave":"u"}');
   });
 
+  it('X10a PR-9 revisões E e F: nota parada não toma o teto — o alerta pega a mais recente e a transmissão gira pelo updatedAt', async () => {
+    const pausa = () => new Promise((r) => setTimeout(r, 15));
+    const off = (saleId: string, status: 'CONTINGENCY' | 'REJECTED') =>
+      docRepo.createSent(escopo(DONO_B), sent(saleId, { kind: 'NFCE', cTribNac: '', initialStatus: 'CONTINGENCY', payloadJson: JSON.stringify({ infNFe: { ide: { tpEmis: 9 } } }) })).then(async (d) => {
+        if (status === 'REJECTED') await docRepo.transition(escopo(DONO_B), d.id, { status: 'REJECTED', whenStatusIn: ['CONTINGENCY'] });
+        return d;
+      });
+    // E: três rejeitadas abandonadas e, depois, uma nova; com teto 2, a nova entra no alerta.
+    for (const n of [1, 2, 3]) {
+      await off(`sale-aband-${n}`, 'REJECTED');
+      await pausa();
+    }
+    const nova = await off('sale-nova', 'CONTINGENCY');
+    expect((await docRepo.listContingenciaNaoAutorizada(2)).map((d) => d.id)).toContain(nova.id);
+
+    // F: a CONTINGENCY tocada pelo job (adiada) vai para o fim; com teto 1, a outra é a próxima a transmitir.
+    const todas = await docRepo.listContingencia(50);
+    expect(todas.length).toBeGreaterThanOrEqual(2);
+    const [primeira, segunda] = todas;
+    await pausa();
+    await docRepo.transition(escopo(primeira.userId, primeira.unitId), primeira.id, { status: 'CONTINGENCY', whenStatusIn: ['CONTINGENCY'] });
+    expect((await docRepo.listContingencia(1)).map((d) => d.id)).toEqual([segunda.id]);
+  });
+
   // GAP-MAP "DF-e — webhook nunca acha documento pendente" — teste-guarda (sessao-instrumentacao, 07/10). O webhook
   // resolve o documento por `findByPartnerRef(ref da tentativa)`; o mock do LifecycleService.test grava `partnerRef`
   // no documento pendente e por isso não enxerga a lacuna — aqui é o banco real.

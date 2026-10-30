@@ -39,7 +39,7 @@ export class NfceContingenciaRepository implements INfceContingenciaRepository {
   public async listOrfasPendentes(olderThan: Date, limit: number, tx?: Prisma.TransactionClient): Promise<NfceContingenciaOrfa[]> {
     return (tx ?? prisma).nfceContingenciaOrfa.findMany({
       where: { status: 'PENDING', createdAt: { lt: olderThan } },
-      orderBy: [{ createdAt: 'asc' }],
+      orderBy: [{ updatedAt: 'asc' }], // rodízio: a órfã que espera é tocada pelo job e vai para o fim
       take: limit,
     });
   }

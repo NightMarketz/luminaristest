@@ -133,7 +133,8 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     return this.db(tx).fiscalDocument.findMany({
       where: { status: 'CONTINGENCY', deletedAt: null },
       include: { attempts: { orderBy: { attemptNo: 'asc' } } },
-      orderBy: [{ createdAt: 'asc' }],
+      // Rodízio (revisão F): a que não sai é tocada pelo job e vai para o fim — nota parada não toma o teto das outras.
+      orderBy: [{ updatedAt: 'asc' }],
       take: limit,
     });
   }
@@ -147,7 +148,8 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
         attempts: { some: { payloadJson: { contains: '"tpEmis":9' } } },
       },
       include: { attempts: { orderBy: { attemptNo: 'asc' } } },
-      orderBy: [{ createdAt: 'asc' }],
+      // Revisão E: as mais recentes primeiro — a rejeitada abandonada (vencida há muito) não tira do alerta a que vence hoje.
+      orderBy: [{ createdAt: 'desc' }],
       take: limit,
     });
   }

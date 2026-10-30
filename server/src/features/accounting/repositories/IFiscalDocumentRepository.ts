@@ -169,11 +169,15 @@ export interface IFiscalDocumentRepository {
   saleIdsWithAuthorizedDocument(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<string[]>;
   /** SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos. */
   listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
-  /** X10a PR-9 (decisão 7) — `CONTINGENCY` de todas as unidades, mais antigas primeiro (o job transmite e confere o prazo). */
+  /**
+   * X10a PR-9 (decisão 7) — `CONTINGENCY` de todas as unidades, em rodízio: a tocada há mais tempo primeiro (`updatedAt`); a
+   * que o job não consegue transmitir é tocada e vai para o fim.
+   */
   listContingencia(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]>;
   /**
    * X10a PR-9 (decisão 7, revisão D) — NFC-e com alguma tentativa `tpEmis=9` ainda sem autorização (CONTINGENCY, SENT,
-   * PROCESSING, REJECTED, PENDING_SIGNATURE), de todas as unidades: o prazo de transmissão corre para todas.
+   * PROCESSING, REJECTED, PENDING_SIGNATURE), de todas as unidades, as mais recentes primeiro: o prazo de transmissão corre
+   * para todas, e a que vence agora é sempre recente.
    */
   listContingenciaNaoAutorizada(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]>;
   /**

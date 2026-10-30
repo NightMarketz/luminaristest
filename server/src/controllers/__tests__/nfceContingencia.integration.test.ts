@@ -93,6 +93,20 @@ describe('X10a PR-9 — contingência off-line da NFC-e por unidade', () => {
     expect(await repo.listOrfasDosDocumentos(alheio, ['doc-x'])).toHaveLength(0);
   });
 
+  it('revisão F (órfãs): a que espera é tocada e vai para o fim do rodízio — não toma o teto das outras', async () => {
+    const repo = new NfceContingenciaRepository();
+    const scope = resolveAccountingScopeInternal({ userId: dono.id }, unitId);
+    const chave = (n: number) => `352610114447770001616500300000000${n}9${'12345678'}0`;
+    const a = await repo.createOrfa(scope, { documentId: 'doc-r1', ambiente: 'homologacao', serie: 3, numero: 11n, chave: chave(11) });
+    await new Promise((r) => setTimeout(r, 15));
+    const b = await repo.createOrfa(scope, { documentId: 'doc-r2', ambiente: 'homologacao', serie: 3, numero: 12n, chave: chave(12) });
+    const futuro = new Date(Date.now() + 1000);
+    expect((await repo.listOrfasPendentes(futuro, 1)).map((o) => o.id)).toEqual([a.id]);
+    await new Promise((r) => setTimeout(r, 15));
+    await repo.updateOrfa(a.id, { tentativas: 1 }); // o job tocou a que espera
+    expect((await repo.listOrfasPendentes(futuro, 1)).map((o) => o.id)).toEqual([b.id]);
+  });
+
   it('tenancy: outro usuário não lê nem liga a contingência desta unidade', async () => {
     expect((await request(app).get(`${BASE}/${unitId}`).set(authHeader(outro))).status).toBeGreaterThanOrEqual(403);
     expect((await request(app).put(`${BASE}/${unitId}`).set(authHeader(outro)).send({ ambiente: 'homologacao', ativa: true, xJust: XJUST })).status).toBeGreaterThanOrEqual(403);

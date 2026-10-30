@@ -40,7 +40,10 @@ export interface INfceContingenciaRepository {
    */
   desligar(scope: AccountingScope, ambiente: string, soOrigem?: OrigemContingencia, tx?: Prisma.TransactionClient): Promise<boolean>;
   createOrfa(scope: AccountingScope, data: CreateOrfaData, tx?: Prisma.TransactionClient): Promise<NfceContingenciaOrfa>;
-  /** Todas as unidades: as órfãs `PENDING` criadas antes de `olderThan` (o job reconstrói o escopo de cada uma). */
+  /**
+   * Todas as unidades: as órfãs `PENDING` criadas antes de `olderThan`, em rodízio pela última vez em que o job as tocou
+   * (`updatedAt`) — a que espera para sempre não toma o teto das outras. O job reconstrói o escopo de cada uma.
+   */
   listOrfasPendentes(olderThan: Date, limit: number, tx?: Prisma.TransactionClient): Promise<NfceContingenciaOrfa[]>;
   listOrfasDosDocumentos(scope: AccountingScope, documentIds: readonly string[], tx?: Prisma.TransactionClient): Promise<NfceContingenciaOrfa[]>;
   updateOrfa(id: string, patch: OrfaPatch, tx?: Prisma.TransactionClient): Promise<NfceContingenciaOrfa>;

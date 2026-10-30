@@ -214,12 +214,14 @@ export class NfceContingenciaService {
       if (!port.capabilities.contingenciaOffline) return;
       if (this.ambienteDivergente(doc)) {
         s.failed++;
+        await this.adiar(scope, doc.id);
         return;
       }
       const ctx = await this.ctxDe(scope, full, port, payload);
       if (!ctx?.assinatura) {
         logger.warn('dfe_contingencia_transmissao: sem sessão do PSC — a NFC-e off-line espera a reautorização', { documentId: doc.id });
         s.failed++;
+        await this.adiar(scope, doc.id);
         return;
       }
       if (!full.contingenciaSuplJson) await this.gerarSupl(scope, doc.id, port, payload, ctx);
@@ -237,6 +239,7 @@ export class NfceContingenciaService {
       } catch (error) {
         if (!isFalhaDeComunicacao(error)) throw error;
         s.semComunicacao++; // a SEFAZ segue fora: a nota fica CONTINGENCY e o próximo tick tenta de novo
+        await this.adiar(scope, doc.id);
         return;
       }
       if (!this.applier) throw new Error('dfe_contingencia_sem_applier: a factory não ligou o applyResult');
@@ -247,6 +250,22 @@ export class NfceContingenciaService {
       s.failed++;
       logger.error('dfe_contingencia_transmissao: falha ao transmitir a NFC-e off-line — alerta', {
         documentId: doc.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      await this.adiar(scope, doc.id);
+    }
+  }
+
+  /**
+   * Revisão F — a nota que ficou `CONTINGENCY` neste tick é tocada (`updatedAt`) e vai para o fim do rodízio. Se ela mudou
+   * de status no meio (o operador reenviou, a SEFAZ respondeu), não há o que adiar.
+   */
+  private async adiar(scope: AccountingScope, documentId: string): Promise<void> {
+    try {
+      await this.docRepo.transition(scope, documentId, { status: 'CONTINGENCY', whenStatusIn: ['CONTINGENCY'] });
+    } catch (error) {
+      logger.warn('dfe_contingencia: a nota saiu de CONTINGENCY durante o tick — nada a adiar', {
+        documentId,
         error: error instanceof Error ? error.message : String(error),
       });
     }
@@ -303,7 +322,11 @@ export class NfceContingenciaService {
       const doc = await this.docRepo.findById(scope, orfa.documentId);
       if (!doc) throw new Error(`fiscal_document_not_found: ${orfa.documentId}`);
       const port = resolveEmissorFor(doc.partner, doc.kind as FiscalDocumentKind);
-      if (!port.cancelarPorSubstituicao || this.ambienteDivergente(doc)) return;
+      if (!port.cancelarPorSubstituicao) return;
+      if (this.ambienteDivergente(doc)) {
+        await this.repo.updateOrfa(orfa.id, { tentativas: orfa.tentativas + 1 }); // rodízio
+        return;
+      }
       let consulta;
       try {
         consulta = await port.consultar(orfa.chave, { ambiente: orfa.ambiente as DfeAmbiente });
@@ -315,9 +338,15 @@ export class NfceContingenciaService {
       await this.sairAutomatico(scope, orfa.ambiente as DfeAmbiente);
       if (consulta.status === 'AUTHORIZED') {
         // A substituta tem de existir na SEFAZ (5P31-10 rej. 912): espera a de contingência sair autorizada.
-        if (!AUTHORIZED_STATUSES.includes(doc.status as FiscalDocumentStatus) || !doc.chaveOuCodigo) return;
+        if (!AUTHORIZED_STATUSES.includes(doc.status as FiscalDocumentStatus) || !doc.chaveOuCodigo) {
+          await this.repo.updateOrfa(orfa.id, { tentativas: orfa.tentativas + 1 }); // rodízio: vai para o fim da fila
+          return;
+        }
         const ctx = await this.ctxDe(scope, doc, port, null);
-        if (!ctx?.assinatura) return; // sem sessão do PSC: tenta no próximo tick
+        if (!ctx?.assinatura) {
+          await this.repo.updateOrfa(orfa.id, { tentativas: orfa.tentativas + 1 }); // sem sessão do PSC: próximo tick
+          return;
+        }
         const r = await port.cancelarPorSubstituicao(orfa.chave, { chNFeRef: doc.chaveOuCodigo, xJust: XJUST_CANCEL_SUBST }, ctx);
         if (r.status === 'CANCELLED') {
           await this.repo.updateOrfa(orfa.id, { status: 'CANCELLED_SUBST', tentativas: orfa.tentativas + 1, ultimoErro: null });
