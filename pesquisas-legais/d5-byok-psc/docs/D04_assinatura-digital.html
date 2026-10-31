@@ -1,0 +1,1703 @@
+
+<!doctype html>
+<html lang="pt" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Manual de integracão de aplicações com o PSC SerproID">
+      
+      
+        <meta name="author" content="SERPRO">
+      
+      
+      
+        <link rel="prev" href="../../autorizacao/2-token-acesso/">
+      
+      
+        <link rel="next" href="../recuperacao-certificado/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Assinatura digital - SerproID - Manual de integração</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="default" data-md-color-accent="teal">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#assinatura-digital" class="md-skip">
+          Pular para conteúdo
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Cabeçalho">
+    <a href="../.." title="SerproID - Manual de integração" class="md-header__button md-logo" aria-label="SerproID - Manual de integração" data-md-component="logo">
+      
+  <img src="../../assets/images/serproid-icon-64.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            SerproID - Manual de integração
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Assinatura digital
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Buscar" placeholder="Buscar" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Pesquisar">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Compartilhar" aria-label="Compartilhar" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Limpar" aria-label="Limpar" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Inicializando busca
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Abas" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Introdução
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../autorizacao/1-codigo-autorizacao/" class="md-tabs__link">
+          
+  
+  
+  Referência da API
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../suporte/insumos-homologacao/" class="md-tabs__link">
+          
+  
+  
+  Suporte
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navegação" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="SerproID - Manual de integração" class="md-nav__button md-logo" aria-label="SerproID - Manual de integração" data-md-component="logo">
+      
+  <img src="../../assets/images/serproid-icon-64.png" alt="logo">
+
+    </a>
+    SerproID - Manual de integração
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introdução
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Referência da API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Referência da API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_1" id="__nav_2_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Autorização do titular do certificado
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Autorização do titular do certificado
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../autorizacao/1-codigo-autorizacao/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Código de autorização
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../autorizacao/2-token-acesso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Token de acesso
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilização do certificado
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Utilização do certificado
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assinatura digital
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Assinatura digital
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#post-signature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /signature
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="POST /signature">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#solicitacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Solicitação
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Solicitação">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parametros" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parâmetros
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exemplo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exemplo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resposta-da-solicitacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resposta da solicitação
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resposta da solicitação">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#solicitacao-valida-sucesso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Solicitação válida (Sucesso)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Solicitação válida (Sucesso)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parametros-resposta-sucesso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parâmetros
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exemplo-resposta-sucesso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exemplo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#solicitacao-invalida-erro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Solicitação inválida (Erro)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Solicitação inválida (Erro)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parametros-resposta-erro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parâmetros
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exemplo-resposta-erro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exemplo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lista-de-erros" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lista de erros
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recuperacao-certificado/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recuperação de certificado
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auxílio à utilização do certificado
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Auxílio à utilização do certificado
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auxilio/localizacao-titular/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Localização de titular
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auxilio/revogacao-sessao-assinatura/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Revogação de sessão de assinatura
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manutenção de aplicações
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Manutenção de aplicações
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manutencao/formulario-cadastro-aplicacao/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cadastro de aplicação
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../manutencao/documentacao-openapi-v1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API de manutenção
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Suporte
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Suporte
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../suporte/insumos-homologacao/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ambiente para integração de aplicação cliente
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../suporte/icones-logomarcas-integracao/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ícones e logomarcas para integração
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../suporte/notas-versao/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notas de Versão
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#post-signature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        POST /signature
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="POST /signature">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#solicitacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Solicitação
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Solicitação">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parametros" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parâmetros
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exemplo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exemplo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resposta-da-solicitacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resposta da solicitação
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Resposta da solicitação">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#solicitacao-valida-sucesso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Solicitação válida (Sucesso)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Solicitação válida (Sucesso)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parametros-resposta-sucesso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parâmetros
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exemplo-resposta-sucesso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exemplo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#solicitacao-invalida-erro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Solicitação inválida (Erro)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Solicitação inválida (Erro)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parametros-resposta-erro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parâmetros
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exemplo-resposta-erro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exemplo
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lista-de-erros" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lista de erros
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="assinatura-digital">Assinatura digital<a class="headerlink" href="#assinatura-digital" title="Permanent link">&para;</a></h1>
+<p>Realiza a assinatura digital do <em>hash</em> de um conteúdo, utilizando a chave privada do certificado do usuário.</p>
+<hr />
+<h2 id="post-signature"><code>POST /signature</code><a class="headerlink" href="#post-signature" title="Permanent link">&para;</a></h2>
+<h3 id="solicitacao">Solicitação<a class="headerlink" href="#solicitacao" title="Permanent link">&para;</a></h3>
+<p>A aplicação deve enviar os dados a serem assinados ao <em>endpoint</em> de assinatura do <abbr title="Prestador de serviço de confiança">PSC</abbr> SerproID, <code>https://serproid.serpro.gov.br/oauth/v0/oauth/signature</code> postando os parâmetros via <code>application/json</code>. O <em>token</em> de acesso gerado em <a href="../../autorizacao/2-token-acesso/">Token de acesso</a> deverá ser enviado via <em>HTTP Header</em> no parâmetro <code>Authorization</code>.</p>
+<h4 id="parametros">Parâmetros<a class="headerlink" href="#parametros" title="Permanent link">&para;</a></h4>
+<p><em><strong>HEADER</strong></em>:</p>
+<ul>
+<li><strong><code>Authorization</code></strong> - (<em>string</em>) - valor "Bearer &lt;access_token&gt;", onde &lt;access_token&gt; se refere ao token de acesso obtido em <a href="../../autorizacao/2-token-acesso/">Token de acesso</a></li>
+</ul>
+<p><em><strong>JSON</strong></em>:</p>
+<ul>
+<li><strong><code>hashes</code></strong> - (<em>array</em>) - lista com os dados a serem assinados, limite atual de 5<ul>
+<li><strong><code>id</code></strong> - (<em>string</em>) - utilizado para identificação do <em>hash</em></li>
+<li><strong><code>alias</code></strong> - (<em>string</em>) - descrição do conteúdo a ser assinado</li>
+<li><strong><code>hash</code></strong> - (<em>string</em>) - Base64 do <em>hash</em> do conteúdo a ser assinado</li>
+<li><strong><code>hash_algorithm</code></strong> - (<em>string</em>) - <em>OID</em> (<em>Objetct Identifier</em>) do algoritmo de <em>hash</em> utilizado, valores possíveis: <em><code>2.16.840.1.101.3.4.2.1</code></em>: representa o algoritmo <em>SHA-2 256</em> e <em><code>2.16.840.1.101.3.4.2.3</code></em>: representa o algoritmo <em>SHA-2 512</em></li>
+<li><strong><code>signature_format</code></strong> - (<em>string</em>) - o tipo de assinatura a ser realizada, <em><code>RAW</code></em> para assinatura digital simples (<em>PKCS1</em>) e <em><code>CMS</code></em> para assinatura digital qualificada (<em>PKCS7</em>)</li>
+</ul>
+</li>
+</ul>
+<h4 id="exemplo">Exemplo<a class="headerlink" href="#exemplo" title="Permanent link">&para;</a></h4>
+<blockquote>
+<p>O exemplo encontra-se com quebras de linha e espaços para melhor leitura</p>
+</blockquote>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">HTTP</label><label for="__tabbed_1_2">cURL</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="nf">POST</span> <span class="nn">/oauth/v0/oauth/signature</span> <span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span>
+<span class="na">Host</span><span class="o">:</span> <span class="l">serproid.serpro.gov.br</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+<span class="na">Authorization</span><span class="o">:</span> <span class="l">Bearer &lt;token_de_acesso&gt;</span>
+
+<span class="p">{</span>
+<span class="w">    </span><span class="nt">"hashes"</span><span class="p">:[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;identificador do hash&gt;"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"alias"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;descrição do conteúdo a ser assinado&gt;"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"hash"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;base_64_hash_sha_256&gt;"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"hash_algorithm"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;oid_do_hash_utilizado&gt;"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"signature_format"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;tipo_de_assinatura_desejada&gt;"</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="se">\</span>
+https://serproid.serpro.gov.br/oauth/v0/oauth/signature<span class="w"> </span><span class="se">\</span>
+-H<span class="w"> </span><span class="s1">'Content-Type: application/json'</span><span class="w"> </span><span class="se">\</span>
+-H<span class="w"> </span><span class="s1">'Authorization: Bearer &lt;token_de_acesso&gt;'</span><span class="w"> </span><span class="se">\</span>
+-d<span class="w"> </span><span class="s1">'{</span>
+<span class="s1">    "hashes":[</span>
+<span class="s1">        {</span>
+<span class="s1">            "id": "&lt;identificador do hash&gt;",</span>
+<span class="s1">            "alias": "&lt;descrição do conteúdo a ser assinado&gt;",</span>
+<span class="s1">            "hash": "&lt;base_64_hash_sha_256&gt;",</span>
+<span class="s1">            "hash_algorithm": "&lt;oid_do_hash_utilizado&gt;",</span>
+<span class="s1">            "signature_format": "&lt;tipo_de_assinatura_desejada&gt;"</span>
+<span class="s1">        }</span>
+<span class="s1">        ]</span>
+<span class="s1">    }'</span>
+</code></pre></div>
+</div>
+</div>
+</div>
+<p>Poderá ser utilizado os algoritmos de <em>hash</em> <em>SHA2 256</em> e <em>SHA2 512</em> e para realização do <em>encode</em> o Base64. A operação para obtenção do <em>hash</em> deve ser similar à seguinte função de exemplo em alto nível: <code>base64(funcao-hash(conteudo_a_ser_assinado))</code>. A função <code>funcao-hash</code> deve retornar um <em>array</em> de <em>bytes</em> contendo o <em>hash</em> do conteúdo a ser assinado, o resultado final da operação após a função <code>base64</code> deve ser uma <em>string</em>.</p>
+<h3 id="resposta-da-solicitacao">Resposta da solicitação<a class="headerlink" href="#resposta-da-solicitacao" title="Permanent link">&para;</a></h3>
+<p>O <abbr title="Prestador de serviço de confiança">PSC</abbr> SerproID irá realizar a assinatura digital utilizando a chave privada do certificado que o usuário autorizou no processo de solicitação de autorização.</p>
+<h4 id="solicitacao-valida-sucesso">Solicitação válida (Sucesso)<a class="headerlink" href="#solicitacao-valida-sucesso" title="Permanent link">&para;</a></h4>
+<p>Se a solicitação estiver válida, o <abbr title="Prestador de serviço de confiança">PSC</abbr> SerproID irá retornar a solicitação com <em>HTTP code 200</em> no formato <code>application/json</code>.</p>
+<h5 id="parametros-resposta-sucesso">Parâmetros<a class="headerlink" href="#parametros-resposta-sucesso" title="Permanent link">&para;</a></h5>
+<p><em><strong>JSON</strong></em>:</p>
+<ul>
+<li><strong><code>signatures</code></strong> - (<em>array</em>) - lista com as assinaturas<ul>
+<li><strong><code>id</code></strong> - (<em>string</em>) - identificação do <em>hash</em> conforme apresentado na solicitação</li>
+<li><strong><code>raw_signature</code></strong> - (<em>string</em>) - assinatura do <em>hash</em> no formato solicitado, <em>PKCS7</em> ou Base64 da assinatura <em>RAW</em></li>
+</ul>
+</li>
+</ul>
+<h5 id="exemplo-resposta-sucesso">Exemplo<a class="headerlink" href="#exemplo-resposta-sucesso" title="Permanent link">&para;</a></h5>
+<div class="highlight"><pre><span></span><code><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+
+<span class="p">{</span>
+<span class="w">    </span><span class="nt">"signatures"</span><span class="p">:[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;identificador_do_hash&gt;"</span><span class="p">,</span>
+<span class="w">            </span><span class="nt">"raw_signature"</span><span class="p">:</span><span class="w"> </span><span class="s2">"&lt;assinatura_no_formato_solicitado&gt;"</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4 id="solicitacao-invalida-erro">Solicitação inválida (Erro)<a class="headerlink" href="#solicitacao-invalida-erro" title="Permanent link">&para;</a></h4>
+<p>Se a solicitação for considerada inválida, seja devido a verificação dos parâmetros informados ou caso algum erro inesperado aconteça, o <abbr title="Prestador de serviço de confiança">PSC</abbr> SerproID retornará um erro no formato <code>application/json</code> com o <em>HTTP code</em> correspondente ao tipo do erro.</p>
+<h5 id="parametros-resposta-erro">Parâmetros<a class="headerlink" href="#parametros-resposta-erro" title="Permanent link">&para;</a></h5>
+<p><em><strong>JSON</strong></em>:</p>
+<ul>
+<li><strong><code>code</code></strong> - (<em>string</em>) - código do tipo do erro</li>
+<li><strong><code>msg</code></strong>- (<em>string</em>) - mensagem de erro</li>
+<li><strong><code>debug</code></strong> - (<em>string</em>) - informações adicionais sobre o erro</li>
+</ul>
+<h5 id="exemplo-resposta-erro">Exemplo<a class="headerlink" href="#exemplo-resposta-erro" title="Permanent link">&para;</a></h5>
+<div class="highlight"><pre><span></span><code><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">401</span> <span class="ne">Unauthorized</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+
+<span class="p">{</span>
+<span class="w">    </span><span class="nt">"code"</span><span class="p">:</span><span class="w"> </span><span class="s2">"TOKEN_DE_ACESSO_INVALIDO"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"msg"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Token de acesso não informado ou inválido"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"debug"</span><span class="p">:</span><span class="w"> </span><span class="s2">""</span>
+<span class="p">}</span>
+</code></pre></div>
+<h5 id="lista-de-erros">Lista de erros<a class="headerlink" href="#lista-de-erros" title="Permanent link">&para;</a></h5>
+<table>
+<thead>
+<tr>
+<th><strong>Tipo do erro</strong></th>
+<th style="text-align: center;"><em><strong>HTTP Code</strong></em></th>
+<th><strong>Detalhes</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><code>TOKEN_DE_ACESSO_INVALIDO</code></strong></td>
+<td style="text-align: center;"><strong>401</strong></td>
+<td><em>Token</em> de acesso não informado ou inválido</td>
+</tr>
+<tr>
+<td><strong><code>TOKEN_JA_UTILIZADO</code></strong></td>
+<td style="text-align: center;"><strong>401</strong></td>
+<td><em>Token</em> de acesso já utilizado</td>
+</tr>
+<tr>
+<td><strong><code>NAMESPACE_BLOQUEADO</code></strong></td>
+<td style="text-align: center;"><strong>401</strong></td>
+<td>Acesso bloqueado por limite de erro de credenciais</td>
+</tr>
+<tr>
+<td><strong><code>ASSINATURA_DADOS_INVALIDOS</code></strong></td>
+<td style="text-align: center;"><strong>412</strong></td>
+<td><em>Hash(es)</em> para assinatura não informado(s)</td>
+</tr>
+<tr>
+<td><strong><code>ASSINATURA_NOT_SINGLE</code></strong></td>
+<td style="text-align: center;"><strong>412</strong></td>
+<td><em>Token</em> de acesso gerado apenas para escopo "<code>single_signature</code>" e mais de um <em>hash</em> informado</td>
+</tr>
+<tr>
+<td><strong><code>MULTI_SIGNATURE_ASSINATURAS_MAXIMO_ATINGIDO</code></strong></td>
+<td style="text-align: center;"><strong>412</strong></td>
+<td>Valor máximo de assinaturas atingido</td>
+</tr>
+<tr>
+<td><strong><code>MULTI_SIGNATURE_TAMANHO_MAXIMO_ATINGIDO</code></strong></td>
+<td style="text-align: center;"><strong>412</strong></td>
+<td>Valor máximo em <em>bytes</em> dos <em>hashes</em> atingido</td>
+</tr>
+<tr>
+<td><strong><code>INVALID_SIGNATURE</code></strong></td>
+<td style="text-align: center;"><strong>412</strong></td>
+<td>Os parâmetros informados são inválidos ou o certificado não é mais válido (expirado ou revogado)<br><br>Cenários possíveis:<br><ul><li>Valor do <em>hash</em> inválido, Base64 esperado</li><li>O <em>hash</em> não condiz com o algoritmo de <em>hash</em> informado</li><li>O certificado encontra-se fora da data de validade</li><li>Não foi possível verificar se o certificado está revogado</li><li>O certificado está revogado</li></ul></td>
+</tr>
+<tr>
+<td><strong><code>TOKEN_USO_EXCLUSIVO_AUTENTICACAO</code></strong></td>
+<td style="text-align: center;"><strong>403</strong></td>
+<td>A autorização concedida é para fim exclusivo de autenticação e não possibilita a geração de assinatura digital.</td>
+</tr>
+<tr>
+<td><strong><code>TOKEN_REVOGADO</code></strong></td>
+<td style="text-align: center;"><strong>403</strong></td>
+<td>O token apresentado se encontra revogado.</td>
+</tr>
+<tr>
+<td><strong><code>SIGN_FAIL</code></strong></td>
+<td style="text-align: center;"><strong>500</strong></td>
+<td>Algo inesperado aconteceu e não foi possível realizar a assinatura</td>
+</tr>
+</tbody>
+</table>
+<!-- Links -->
+
+<!-- Abreviações -->
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Voltar para o topo
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Rodapé" >
+        
+          
+          <a href="../../autorizacao/2-token-acesso/" class="md-footer__link md-footer__link--prev" aria-label="Anterior: Token de acesso">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Anterior
+              </span>
+              <div class="md-ellipsis">
+                Token de acesso
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../recuperacao-certificado/" class="md-footer__link md-footer__link--next" aria-label="Próximo: Recuperação de certificado">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Próximo
+              </span>
+              <div class="md-ellipsis">
+                Recuperação de certificado
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      <a href="https://www.serpro.gov.br" title="SERPRO - Serviço Federal de Processamento de Dados" target="_blank">SERPRO - Serviço Federal de Processamento de Dados</a>
+    </div>
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "navigation.footer", "search.share"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "mais 1 nesta p\u00e1gina", "search.result.more.other": "# mais nesta p\u00e1gina", "search.result.none": "Nenhum documento encontrado", "search.result.one": "1 documento encontrado", "search.result.other": "# documentos encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

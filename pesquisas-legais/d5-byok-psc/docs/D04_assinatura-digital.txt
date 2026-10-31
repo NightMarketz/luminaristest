@@ -1,0 +1,211 @@
+Assinatura digital - SerproID - Manual de integração 
+ Pular para conteúdo 
+
+ SerproID - Manual de integração 
+
+ Assinatura digital 
+
+ Inicializando busca 
+
+ Introdução 
+
+ Referência da API 
+
+ Suporte 
+
+ SerproID - Manual de integração 
+ Introdução 
+
+ Referência da API Referência da API 
+ Autorização do titular do certificado Autorização do titular do certificado 
+ Código de autorização 
+
+ Token de acesso 
+
+ Utilização do certificado Utilização do certificado 
+ Assinatura digital Assinatura digital Índice 
+ POST /signature 
+ Solicitação 
+ Parâmetros 
+
+ Exemplo 
+
+ Resposta da solicitação 
+ Solicitação válida (Sucesso) 
+ Parâmetros 
+
+ Exemplo 
+
+ Solicitação inválida (Erro) 
+ Parâmetros 
+
+ Exemplo 
+
+ Lista de erros 
+
+ Recuperação de certificado 
+
+ Auxílio à utilização do certificado Auxílio à utilização do certificado 
+ Localização de titular 
+
+ Revogação de sessão de assinatura 
+
+ Manutenção de aplicações Manutenção de aplicações 
+ Cadastro de aplicação 
+
+ API de manutenção 
+
+ Suporte Suporte 
+ Ambiente para integração de aplicação cliente 
+
+ Ícones e logomarcas para integração 
+
+ Notas de Versão 
+
+ Índice 
+ POST /signature 
+ Solicitação 
+ Parâmetros 
+
+ Exemplo 
+
+ Resposta da solicitação 
+ Solicitação válida (Sucesso) 
+ Parâmetros 
+
+ Exemplo 
+
+ Solicitação inválida (Erro) 
+ Parâmetros 
+
+ Exemplo 
+
+ Lista de erros 
+
+Assinatura digital¶
+
+Realiza a assinatura digital do hash de um conteúdo, utilizando a chave privada do certificado do usuário.
+
+POST /signature¶
+
+Solicitação¶
+
+A aplicação deve enviar os dados a serem assinados ao endpoint de assinatura do PSC SerproID, https://serproid.serpro.gov.br/oauth/v0/oauth/signature postando os parâmetros via application/json. O token de acesso gerado em Token de acesso deverá ser enviado via HTTP Header no parâmetro Authorization.
+
+Parâmetros¶
+
+HEADER:
+
+Authorization - (string) - valor "Bearer <access_token>", onde <access_token> se refere ao token de acesso obtido em Token de acesso
+
+JSON:
+
+hashes - (array) - lista com os dados a serem assinados, limite atual de 5 
+id - (string) - utilizado para identificação do hash
+
+alias - (string) - descrição do conteúdo a ser assinado
+
+hash - (string) - Base64 do hash do conteúdo a ser assinado
+
+hash_algorithm - (string) - OID (Objetct Identifier) do algoritmo de hash utilizado, valores possíveis: 2.16.840.1.101.3.4.2.1: representa o algoritmo SHA-2 256 e 2.16.840.1.101.3.4.2.3: representa o algoritmo SHA-2 512
+
+signature_format - (string) - o tipo de assinatura a ser realizada, RAW para assinatura digital simples (PKCS1) e CMS para assinatura digital qualificada (PKCS7)
+
+Exemplo¶
+
+O exemplo encontra-se com quebras de linha e espaços para melhor leitura
+
+HTTPcURL
+
+POST /oauth/v0/oauth/signature HTTP/1.1 Host: serproid.serpro.gov.br Content-Type: application/json Authorization: Bearer <token_de_acesso> { "hashes":[ { "id": "<identificador do hash>", "alias": "<descrição do conteúdo a ser assinado>", "hash": "<base_64_hash_sha_256>", "hash_algorithm": "<oid_do_hash_utilizado>", "signature_format": "<tipo_de_assinatura_desejada>" } ] } 
+
+curl -X POST \ https://serproid.serpro.gov.br/oauth/v0/oauth/signature \ -H 'Content-Type: application/json' \ -H 'Authorization: Bearer <token_de_acesso>' \ -d '{ "hashes":[ { "id": "<identificador do hash>", "alias": "<descrição do conteúdo a ser assinado>", "hash": "<base_64_hash_sha_256>", "hash_algorithm": "<oid_do_hash_utilizado>", "signature_format": "<tipo_de_assinatura_desejada>" } ] }' 
+
+Poderá ser utilizado os algoritmos de hash SHA2 256 e SHA2 512 e para realização do encode o Base64. A operação para obtenção do hash deve ser similar à seguinte função de exemplo em alto nível: base64(funcao-hash(conteudo_a_ser_assinado)). A função funcao-hash deve retornar um array de bytes contendo o hash do conteúdo a ser assinado, o resultado final da operação após a função base64 deve ser uma string.
+
+Resposta da solicitação¶
+
+O PSC SerproID irá realizar a assinatura digital utilizando a chave privada do certificado que o usuário autorizou no processo de solicitação de autorização.
+
+Solicitação válida (Sucesso)¶
+
+Se a solicitação estiver válida, o PSC SerproID irá retornar a solicitação com HTTP code 200 no formato application/json.
+
+Parâmetros¶
+
+JSON:
+
+signatures - (array) - lista com as assinaturas 
+id - (string) - identificação do hash conforme apresentado na solicitação
+
+raw_signature - (string) - assinatura do hash no formato solicitado, PKCS7 ou Base64 da assinatura RAW
+
+Exemplo¶
+
+HTTP/1.1 200 OK Content-Type: application/json { "signatures":[ { "id": "<identificador_do_hash>", "raw_signature": "<assinatura_no_formato_solicitado>" } ] } 
+
+Solicitação inválida (Erro)¶
+
+Se a solicitação for considerada inválida, seja devido a verificação dos parâmetros informados ou caso algum erro inesperado aconteça, o PSC SerproID retornará um erro no formato application/json com o HTTP code correspondente ao tipo do erro.
+
+Parâmetros¶
+
+JSON:
+
+code - (string) - código do tipo do erro
+
+msg- (string) - mensagem de erro
+
+debug - (string) - informações adicionais sobre o erro
+
+Exemplo¶
+
+HTTP/1.1 401 Unauthorized Content-Type: application/json { "code": "TOKEN_DE_ACESSO_INVALIDO", "msg": "Token de acesso não informado ou inválido", "debug": "" } 
+
+Lista de erros¶
+
+ Tipo do erro HTTP Code Detalhes 
+
+ TOKEN_DE_ACESSO_INVALIDO 401 Token de acesso não informado ou inválido 
+
+ TOKEN_JA_UTILIZADO 401 Token de acesso já utilizado 
+
+ NAMESPACE_BLOQUEADO 401 Acesso bloqueado por limite de erro de credenciais 
+
+ ASSINATURA_DADOS_INVALIDOS 412 Hash(es) para assinatura não informado(s) 
+
+ ASSINATURA_NOT_SINGLE 412 Token de acesso gerado apenas para escopo "single_signature" e mais de um hash informado 
+
+ MULTI_SIGNATURE_ASSINATURAS_MAXIMO_ATINGIDO 412 Valor máximo de assinaturas atingido 
+
+ MULTI_SIGNATURE_TAMANHO_MAXIMO_ATINGIDO 412 Valor máximo em bytes dos hashes atingido 
+
+ INVALID_SIGNATURE 412 Os parâmetros informados são inválidos ou o certificado não é mais válido (expirado ou revogado)
+
+Cenários possíveis:
+
+Valor do hash inválido, Base64 esperado
+
+O hash não condiz com o algoritmo de hash informado
+
+O certificado encontra-se fora da data de validade
+
+Não foi possível verificar se o certificado está revogado
+
+O certificado está revogado
+
+ TOKEN_USO_EXCLUSIVO_AUTENTICACAO 403 A autorização concedida é para fim exclusivo de autenticação e não possibilita a geração de assinatura digital. 
+
+ TOKEN_REVOGADO 403 O token apresentado se encontra revogado. 
+
+ SIGN_FAIL 500 Algo inesperado aconteceu e não foi possível realizar a assinatura 
+
+ Voltar para o topo 
+
+ Anterior 
+ Token de acesso 
+
+ Próximo 
+ Recuperação de certificado 
+
+ SERPRO - Serviço Federal de Processamento de Dados

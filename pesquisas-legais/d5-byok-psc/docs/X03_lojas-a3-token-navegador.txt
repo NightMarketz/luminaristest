@@ -1,0 +1,22 @@
+Leitura pelo navegador embutido em 2026-10-30. Preço de loja do dia: dado comercial, não é norma.
+
+## DIGITALSIGN — https://www.digitalsigncertificadora.com.br/pt/certificados-digitais/e-cnpj
+(abas da página; texto extraído de document.body.textContent)
+"e-CNPJ A1 Software 3 Meses R$ 114,00"
+"e-CNPJ A1 Software 12 Meses R$ 268,00"
+"e-CNPJ A3 - DS Cloud 12 Meses R$ 180,00" / "24 Meses R$ 220,00"
+"e-CNPJ A3 - Cartão inteligente Cartão 12 Meses R$ 312,00" / "24 Meses R$ 357,00"
+"e-CNPJ A3 - Cartão inteligente + Leitora Cartão + Leitor 12 Meses R$ 459,00" / "24 Meses R$ 486,00"
+"e-CNPJ A3 - Token Token 12 Meses R$ 459,00" / "24 Meses R$ 486,00"
+
+## CERTISIGN — https://certisign.com.br/certificados/e-cnpj/nf-e
+"NF-e Armazenamento certificado com cartão Válido por 24 meses R$ 355,99 12x R$ 29,67"
+(página dinâmica; o preço do token não ficou isolado na leitura.)
+https://certisign.com.br/parceiros/certificado-digital: "A3 [...] Cartão [...] Token [...] Nuvem [...] A validade desses
+modelos é de 12, 24 ou 36 meses."
+
+## SAFEWEB — https://www.safeweb.com.br/produtos/ecnpj
+Produtos listados: "e-CNPJ A3 Cartão", "e-CNPJ A3 Token". Sem preço visível na leitura.
+Documentos do titular: "Cartão CNPJ retirado do site da Receita Federal. Caso seja apresentado o Cartão CNPJ modelo II,
+fica dispensada qualquer outra documentação. Para essa modalidade, você precisa ter login e senha na Redesim." /
+"Emissão com Cartão CNPJ + Ato constitutivo da empresa + [...]"
