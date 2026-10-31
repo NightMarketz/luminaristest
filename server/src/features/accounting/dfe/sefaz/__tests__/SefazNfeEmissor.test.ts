@@ -213,6 +213,54 @@ describe('SefazNfeEmissor', () => {
     }
   });
 
+  it('E-3/E-8: 407 grava o flag ANTES do reenvio v2; resposta perdida ⇒ a consulta seguinte remonta o nfeProc com o QR v2, não o v3', async () => {
+    sefaz.controle.recusarQrV3 = true;
+    try {
+      const p = nova();
+      const chave = p.infNFe.Id.slice(3);
+      const csc = { id: '000001', csc: 'A1B2C3D4E5F6G7H8I9J0' };
+      let gravado = 0;
+      const marcarQrV3Recusado = async () => {
+        gravado += 1;
+        sefaz.controle.perderRespostaAutorizacao = true; // a resposta do reenvio v2 se perde depois do flag gravado
+      };
+      sefaz.controle.perderRespostaAutorizacao = false;
+      await expect(
+        emissor.emitir({ kind: 'NFCE', ref: 'd:1', ambiente: 'homologacao', cnpjEmitente: p.infNFe.emit.CNPJ, partnerAccountRef: null, payload: p, ctx: { ...ctx, csc: { ...csc, marcarQrV3Recusado } } }),
+      ).rejects.toBeInstanceOf(SefazTransporteError);
+      expect(gravado).toBe(1);
+      sefaz.controle.perderRespostaAutorizacao = false;
+      const r = await emissor.consultar(chave, { ...ctx, payload: p, csc: { ...csc, qrV3Recusado: true } });
+      expect(r.status).toBe('AUTHORIZED');
+      const xml = r.xml!.toString('utf8');
+      expect(xml).toContain(`?p=${chave}|2|2|1|${hashQrCodeV2(chave, 2, '1', csc.csc)}</qrCode>`);
+      expect(xml).not.toContain(`?p=${chave}|3|2`);
+      expect(xml).not.toContain(csc.csc);
+    } finally {
+      sefaz.controle.recusarQrV3 = false;
+    }
+  });
+
+  it('E-3: com o flag já gravado a emissão sai direto em v2 (uma só chamada) e sem o flag a consulta segue em v3', async () => {
+    const csc = { id: '000001', csc: 'A1B2C3D4E5F6G7H8I9J0' };
+    sefaz.controle.recusarQrV3 = true;
+    try {
+      const p = nova();
+      const chave = p.infNFe.Id.slice(3);
+      const antes = sefaz.controle.chamadas.length;
+      const r = await emissor.emitir({ kind: 'NFCE', ref: 'd:1', ambiente: 'homologacao', cnpjEmitente: p.infNFe.emit.CNPJ, partnerAccountRef: null, payload: p, ctx: { ...ctx, csc: { ...csc, qrV3Recusado: true } } });
+      expect(r.status).toBe('AUTHORIZED');
+      expect(sefaz.controle.chamadas.slice(antes).map((c) => c.servico)).toEqual(['NFeAutorizacao4']);
+      expect(r.xml!.toString('utf8')).toContain(`?p=${chave}|2|2|1|`);
+    } finally {
+      sefaz.controle.recusarQrV3 = false;
+    }
+    const q = nova();
+    await emitir(q);
+    const c = await emissor.consultar(q.infNFe.Id.slice(3), { ...ctx, payload: q, csc });
+    expect(c.xml!.toString('utf8')).toContain(`?p=${q.infNFe.Id.slice(3)}|3|2`);
+  });
+
   it('faltantesDoEnvio: UF sem URL oficial do QR Code ou sem webservice ⇒ faltante nomeado; SP homologação passa', () => {
     expect(emissor.faltantesDoEnvio('NFCE', '35', 'homologacao')).toEqual([]);
     expect(emissor.faltantesDoEnvio('NFCE', '12', 'homologacao').join(' ')).toMatch(/AC\/homologacao sem URL oficial do QR Code/);

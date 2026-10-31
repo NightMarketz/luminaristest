@@ -3599,6 +3599,7 @@ model NfceCsc {
   cscId         String // identificador do CSC na SEFAZ (1–6 dígitos)
   cscCiphertext Bytes?
   keyVersion    Int?
+  qrV3Recusado  Boolean   @default(false) // a UF devolveu 407 ao QR v3 (F-NFCE-E1-4 c): emissão e remontagem do nfeProc usam o v2
   createdAt     DateTime  @default(now())
   deletedAt     DateTime?
 

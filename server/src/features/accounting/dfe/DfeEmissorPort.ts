@@ -96,6 +96,17 @@ export interface DfeCapabilities {
 }
 
 /**
+ * X10a PR-8 — CSC da unidade no ambiente. `qrV3Recusado`: a UF já devolveu 407 ao QR v3 (aceitação é por UF, F-NFCE-E1-4 c),
+ * então emissão e remontagem usam o v2; `marcarQrV3Recusado` grava esse fato antes do reenvio v2 (a resposta pode se perder).
+ */
+export interface CscDaUnidade {
+  id: string;
+  csc: string;
+  qrV3Recusado?: boolean;
+  marcarQrV3Recusado?: () => Promise<void>;
+}
+
+/**
  * BE-INCR-DFE-ADN-EMENDA-PSC item E-12 (X10a PR-7) — contexto por chamada, resolvido pelo SERVIÇO pela unidade do
  * documento (BRIEF-ADN item 16; a porta não lê Prisma). `payload` serve ao `consultar` que remonta o `nfeProc` (E-8).
  */
@@ -104,7 +115,7 @@ export interface DfeCallContext {
   assinatura?: { assinador: AssinadorRemotoPort; credencial: CredencialPscResolvida };
   payload?: unknown;
   /** X10a PR-8 (E-3, F-NFCE-E1-4 c): CSC da unidade no ambiente, para o QR Code v2 quando a UF recusa a v3 (rej. 407). */
-  csc?: { id: string; csc: string };
+  csc?: CscDaUnidade;
 }
 
 /**

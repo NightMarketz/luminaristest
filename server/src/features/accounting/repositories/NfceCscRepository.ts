@@ -14,12 +14,16 @@ export class NfceCscRepository implements INfceCscRepository {
     return prisma.nfceCsc.findMany({ where: { ...accountingScopeWhere(scope), deletedAt: null }, orderBy: [{ ambiente: 'asc' }] });
   }
 
-  public async createShell(scope: AccountingScope, data: { ambiente: string; cscId: string }, tx: Prisma.TransactionClient): Promise<NfceCsc> {
+  public async createShell(scope: AccountingScope, data: { ambiente: string; cscId: string; qrV3Recusado?: boolean }, tx: Prisma.TransactionClient): Promise<NfceCsc> {
     return tx.nfceCsc.create({ data: { ...accountingScopeWhere(scope), ...data } });
   }
 
   public async writeCipher(id: string, sealed: { cscCiphertext: Uint8Array; keyVersion: number }, tx: Prisma.TransactionClient): Promise<NfceCsc> {
     return tx.nfceCsc.update({ where: { id }, data: { cscCiphertext: Buffer.from(sealed.cscCiphertext), keyVersion: sealed.keyVersion } });
+  }
+
+  public async markQrV3Recusado(id: string, tx: Prisma.TransactionClient): Promise<NfceCsc> {
+    return tx.nfceCsc.update({ where: { id }, data: { qrV3Recusado: true } });
   }
 
   public async softDelete(id: string, tx: Prisma.TransactionClient): Promise<NfceCsc> {

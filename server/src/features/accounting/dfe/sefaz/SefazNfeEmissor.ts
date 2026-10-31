@@ -100,10 +100,11 @@ export class SefazNfeEmissor implements DfeEmissorPort {
     const chave = payload.infNFe.Id.slice(3);
     const { uf, modelo } = partesDaChave(chave);
     let assinado = await this.assinarNota(payload, input.kind as TipoDfeAssinado, input.ctx);
-    // E-3: a NFC-e leva o infNFeSupl (fora da assinatura) — v3 primeiro (F-NFCE-E1-4 c).
-    if (modelo === 65) assinado = comInfNFeSupl(assinado, this.supl(uf, chave, 3));
+    let ctx = input.ctx;
+    // E-3: a NFC-e leva o infNFeSupl (fora da assinatura) — v3 primeiro (F-NFCE-E1-4 c); UF que já recusou a v3 vai direto na v2.
+    if (modelo === 65) assinado = comInfNFeSupl(assinado, ctx?.csc?.qrV3Recusado ? this.supl(uf, chave, 2, ctx.csc) : this.supl(uf, chave, 3));
     let envio = await this.enviarLote(uf, modelo, assinado);
-    if (modelo === 65 && envio.cStat === QR_V3_RECUSADO) {
+    if (modelo === 65 && envio.cStat === QR_V3_RECUSADO && !ctx?.csc?.qrV3Recusado) {
       if (!input.ctx?.csc) {
         return {
           status: 'REJECTED',
@@ -111,13 +112,16 @@ export class SefazNfeEmissor implements DfeEmissorPort {
           errors: [{ code: QR_V3_RECUSADO, message: `${envio.xMotivo} — a UF recusa o QR Code v3 e a unidade não tem CSC cadastrado (PUT /api/accounting/nfce-cscs/:unitId)` }],
         };
       }
+      // O fato (a UF recusa a v3) é gravado ANTES do reenvio: se a resposta do v2 se perder, o `consultar` remonta em v2.
+      await input.ctx.csc.marcarQrV3Recusado?.();
+      ctx = { ...input.ctx, csc: { ...input.ctx.csc, qrV3Recusado: true } };
       // A mesma nota assinada: só o infNFeSupl muda (D02 p. 8), então não há nova assinatura.
-      assinado = comInfNFeSupl(assinado, this.supl(uf, chave, 2, input.ctx.csc));
+      assinado = comInfNFeSupl(assinado, this.supl(uf, chave, 2, ctx.csc));
       envio = await this.enviarLote(uf, modelo, assinado);
     }
     const { ret, prot, cStat, xMotivo } = envio;
     if (AUTORIZADO.has(cStat)) return this.autorizado(chave, payload, assinado, extrairProtNFe(ret), prot);
-    if (DUPLICIDADE.has(cStat)) return this.consultar(chave, input.ctx ? { ...input.ctx, payload } : { ambiente: this.opts.ambiente, payload });
+    if (DUPLICIDADE.has(cStat)) return this.consultar(chave, ctx ? { ...ctx, payload } : { ambiente: this.opts.ambiente, payload });
     return { status: 'REJECTED', partnerRef: chave, errors: [{ code: cStat || 'sefaz_sem_cstat', message: xMotivo }] };
   }
 
@@ -153,8 +157,8 @@ export class SefazNfeEmissor implements DfeEmissorPort {
         return { status: 'AUTHORIZED', partnerRef, chaveOuCodigo: partnerRef, numero: String(partesDaChave(partnerRef).nNF), errors: [] };
       }
       let assinado = await this.assinarNota(payload, modelo === 65 ? 'NFCE' : 'NFE', ctx);
-      // O infNFeSupl não é assinado; na remontagem vai o v3 (a versão aceita pela UF não volta no protocolo).
-      if (modelo === 65) assinado = comInfNFeSupl(assinado, this.supl(uf, partnerRef, 3));
+      // O infNFeSupl não é assinado e a versão aceita pela UF não volta no protocolo: o serviço traz o fato gravado (407 visto ⇒ v2).
+      if (modelo === 65) assinado = comInfNFeSupl(assinado, ctx?.csc?.qrV3Recusado ? this.supl(uf, partnerRef, 2, ctx.csc) : this.supl(uf, partnerRef, 3));
       return this.autorizado(partnerRef, payload, assinado, extrairProtNFe(ret), prot);
     }
     return { status: 'PROCESSING', partnerRef, errors: [{ code: cStat || 'sefaz_sem_cstat', message: str(r.xMotivo) }] };

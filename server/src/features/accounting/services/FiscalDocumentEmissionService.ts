@@ -47,7 +47,7 @@ import {
 import type { ProductFiscalProfileService } from './ProductFiscalProfileService';
 import { selectDfeEmissor, type DfeSelection } from '../dfe/selectDfeEmissor';
 import { assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
-import type { DfeAmbiente, DfeEmissorPort, DfeKind, EmitirInput } from '../dfe/DfeEmissorPort';
+import type { CscDaUnidade, DfeAmbiente, DfeEmissorPort, DfeKind, EmitirInput } from '../dfe/DfeEmissorPort';
 import { bloqueioSessaoPsc, type AssinaturaDaUnidade, type DfeAssinaturaResolver } from './DfeAssinaturaResolver';
 import { enviarTentativa, type DfeResultApplier } from './dfeEnvio';
 import { scopeToday } from '../models/dates';
@@ -220,7 +220,7 @@ export class FiscalDocumentEmissionService {
   }
 
   /** X10a PR-8 (E-3) — o CSC da unidade para o QR Code v2 da NFC-e; sem resolvedor ou sem cadastro ⇒ `undefined`. */
-  async cscDaUnidade(scope: AccountingScope, port: DfeEmissorPort, kind: FiscalDocumentKind, ambiente: DfeAmbiente): Promise<{ id: string; csc: string } | undefined> {
+  async cscDaUnidade(scope: AccountingScope, port: DfeEmissorPort, kind: FiscalDocumentKind, ambiente: DfeAmbiente): Promise<CscDaUnidade | undefined> {
     return this.assinatura ? this.assinatura.cscDaUnidade(scope, port, kind, ambiente) : undefined;
   }
 

@@ -2,7 +2,7 @@ import { ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { AssinadorRemotoPort } from '../dfe/AssinadorRemotoPort';
-import type { DfeAmbiente, DfeCallContext, DfeEmissorPort } from '../dfe/DfeEmissorPort';
+import type { CscDaUnidade, DfeAmbiente, DfeCallContext, DfeEmissorPort } from '../dfe/DfeEmissorPort';
 import type { PscCredentialService, ResolveForEmissionResult } from './PscCredentialService';
 import type { NfceCscService } from './NfceCscService';
 
@@ -30,7 +30,7 @@ export class DfeAssinaturaResolver {
   ) {}
 
   /** X10a PR-8 — o CSC vivo da unidade no ambiente, só para a NFC-e do emissor próprio; sem cadastro ⇒ `undefined`. */
-  async cscDaUnidade(scope: AccountingScope, port: Pick<DfeEmissorPort, 'capabilities'>, kind: string, ambiente: DfeAmbiente): Promise<{ id: string; csc: string } | undefined> {
+  async cscDaUnidade(scope: AccountingScope, port: Pick<DfeEmissorPort, 'capabilities'>, kind: string, ambiente: DfeAmbiente): Promise<CscDaUnidade | undefined> {
     if (kind !== 'NFCE' || !port.capabilities.assinaturaRemota || !this.cscs) return undefined;
     return (await this.cscs.resolveForEmission(scope, ambiente)) ?? undefined;
   }
