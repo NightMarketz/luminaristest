@@ -1,6 +1,7 @@
-import { CoreSystemPreset, tablePresetSuites, type PresetTableDefinition } from '..';
-import { composeModuleTables, MODULE_KEYS } from '../modules/registry';
-import { resolveModuleSelection } from '../modules/moduleSelection';
+import { CoreSystemPreset, tablePresetSuites, type PresetSuite, type PresetTableDefinition } from '..';
+import { ValidationError } from '../../../../lib/errors';
+import { composeModuleTables, MODULE_KEYS, type ModuleKey } from '../modules/registry';
+import { composeSuiteDefaultTables, resolveModuleSelection } from '../modules/moduleSelection';
 
 /**
  * TESTE-ACOPLAMENTO-PRESET (docs/accounting/TESTE-ACOPLAMENTO-PRESET-brief.md) — tipos e universo compartilhados
@@ -10,6 +11,10 @@ import { resolveModuleSelection } from '../modules/moduleSelection';
  * ordem de spread do `dashboardController.createDashboardFromPreset`) e, além dela, Core + cada módulo do
  * `MODULE_REGISTRY` isolado (fechado pelas dependências) — módulo instalável sozinho pode citar tabela que só existe
  * com outro.
+ *
+ * BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: o universo da suíte usa a fonte/trava que ela declara (item 11a — é assim que o
+ * manifesto de plugins guarda o override da clínica em `customers`). Módulo que sozinho não satisfaz `requiresOneOf`
+ * (VEN-0, VEN-COM) vira um universo por opção do grupo (`module:VEN-0+VEN-SERV`, …).
  */
 
 export const PRESET_REF = '@@PRESET_TABLE_KEY::';
@@ -37,19 +42,38 @@ export type CouplingFinding = {
 
 export type KnownGap = {
   key: string;
-  owner: 'FIX-PLUGINS-VENDA' | 'FIX-ANALYTICS-RESIDUO';
-  since: '2026-10-21';
+  // BUILDER-VERTICAIS: dono, 31/10/2026, questionário, "BUILDER-VERTICAIS (Recommended)" (BE-INCR-MODULOS-BASE-SUBMODULOS PR-2).
+  owner: 'FIX-PLUGINS-VENDA' | 'FIX-ANALYTICS-RESIDUO' | 'BUILDER-VERTICAIS';
+  since: '2026-10-21' | '2026-10-31';
 };
 
-export function suiteUniverse(name: string, suite: { tables: Tables; modules?: readonly (typeof MODULE_KEYS)[number][] }): Universe {
-  return {
-    name,
-    tables: {
-      ...CoreSystemPreset.tables,
-      ...composeModuleTables(resolveModuleSelection([], suite.modules ?? [])),
-      ...suite.tables,
-    },
-  };
+/** Uma entrada de `KNOWN_GAPS` por universo de módulo × referência (`<source>:module:<u>.<table>:<ref>`). */
+export function knownGapsAcross(
+  source: CouplingFinding['source'],
+  universes: readonly string[],
+  refs: readonly string[],
+  owner: KnownGap['owner'],
+  since: KnownGap['since'],
+): KnownGap[] {
+  return universes.flatMap((u) => refs.map((ref) => ({ key: `${source}:module:${u}.${ref}`, owner, since })));
+}
+
+export function suiteUniverse(
+  name: string,
+  suite: Pick<PresetSuite, 'tables' | 'modules' | 'moduleOverrides' | 'lockedModuleTables'>,
+): Universe {
+  return { name, tables: { ...CoreSystemPreset.tables, ...composeSuiteDefaultTables(suite) } };
+}
+
+/** Seleções instaláveis de um módulo isolado: ele fechado pelas dependências, ou uma por opção do `requiresOneOf`. */
+function isolatedSelections(key: ModuleKey): { name: string; modules: ModuleKey[] }[] {
+  try {
+    return [{ name: `module:${key}`, modules: resolveModuleSelection([key]) }];
+  } catch (e) {
+    const details = (e as ValidationError).details as { reason?: string; oneOf?: ModuleKey[] } | undefined;
+    if (!(e instanceof ValidationError) || details?.reason !== 'REQUIRES_ONE_OF') throw e;
+    return (details.oneOf ?? []).map((opt) => ({ name: `module:${key}+${opt}`, modules: resolveModuleSelection([key, opt]) }));
+  }
 }
 
 export function buildUniverses(): Universe[] {
@@ -60,10 +84,9 @@ export function buildUniverses(): Universe[] {
     }
   }
   for (const key of MODULE_KEYS) {
-    out.push({
-      name: `module:${key}`,
-      tables: { ...CoreSystemPreset.tables, ...composeModuleTables(resolveModuleSelection([key])) },
-    });
+    for (const sel of isolatedSelections(key)) {
+      out.push({ name: sel.name, tables: { ...CoreSystemPreset.tables, ...composeModuleTables(sel.modules) } });
+    }
   }
   return out;
 }

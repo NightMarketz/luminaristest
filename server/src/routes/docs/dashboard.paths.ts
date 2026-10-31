@@ -61,7 +61,7 @@
  *                     modules:
  *                       type: array
  *                       description: 'I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit). CRM-2 is a group key (BE-INCR-CRM-SUBMODULES F-SUB-2 a) that expands to CRM-2A + CRM-2B; data.modules.installed lists only atomic keys'
- *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-2] }
+ *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, PES-0, PES-FORN, VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM, CRM-2, PESSOAS, VENDAS] }
  *                     selectOverrides:
  *                       type: object
  *                       description: 'I8 c11 (F-I8-C11) - { table: { field: options[] } }; only fields that are already select and in the module freeSelects allowlist; a text field yields 400 NOT_A_SELECT'
@@ -112,7 +112,7 @@
  *                     modules:
  *                       type: array
  *                       description: 'I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit). CRM-2 is a group key (BE-INCR-CRM-SUBMODULES F-SUB-2 a) that expands to CRM-2A + CRM-2B; data.modules.installed lists only atomic keys'
- *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-2] }
+ *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, PES-0, PES-FORN, VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM, CRM-2, PESSOAS, VENDAS] }
  *                     selectOverrides:
  *                       type: object
  *                       description: 'I8 c11 (F-I8-C11) - { table: { field: options[] } }; only fields that are already select and in the module freeSelects allowlist; a text field yields 400 NOT_A_SELECT'
@@ -154,7 +154,7 @@
  *               required: [moduleKey]
  *               additionalProperties: false
  *               properties:
- *                 moduleKey: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-2] }
+ *                 moduleKey: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, PES-0, PES-FORN, VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM, CRM-2, PESSOAS, VENDAS] }
  *       responses:
  *         '200':
  *           description: 'Install result { status: installed | already-installed, tables, synced, modules? } - modules only for a group key'
@@ -291,7 +291,7 @@
  *                 modules:
  *                   type: array
  *                   description: 'W1 (F-W1-6 a) - modules checked in the front; read only on the turn that opens the customization session (choice customize)'
- *                   items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-2] }
+ *                   items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, PES-0, PES-FORN, VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM, CRM-2, PESSOAS, VENDAS] }
  *       responses:
  *         '200':
  *           description: Interview turn result
@@ -329,7 +329,7 @@
  *                     items:
  *                       type: object
  *                       properties:
- *                         key: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3] }
+ *                         key: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, PES-0, PES-FORN, VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM] }
  *                         name:
  *                           type: object
  *                           properties:
@@ -535,7 +535,7 @@
  *                 sessionId: { type: string, format: uuid }
  *                 modules:
  *                   type: array
- *                   items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-2] }
+ *                   items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, PES-0, PES-FORN, VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM, CRM-2, PESSOAS, VENDAS] }
  *       responses:
  *         '200':
  *           description: Session after the change

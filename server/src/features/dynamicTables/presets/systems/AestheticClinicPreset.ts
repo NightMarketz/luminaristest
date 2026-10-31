@@ -1,21 +1,14 @@
-// W2 / F-W2-2: `lockedByAccounting` nas 4 tabelas que a contabilidade lê pelo nome (pontes de venda + emissão fiscal).
-import { createTableFromModule, lockedByAccounting } from '../../utils/TableFactory';
+import { createTableFromModule } from '../../utils/TableFactory';
 import { aestheticClinicCustomerModule } from '../modules/people/AestheticClinicCustomerModule';
-import { serviceModule } from '../modules/service/ServiceModule';
-import { productModule, productUnitModule } from '../modules/product/ProductModule';
-import { salesModule } from '../modules/finance/SalesModule';
-import { saleItemsMixedModule } from '../modules/finance/SalesItemsMixed';
-import { packageCatalogModule } from '../modules/finance/PackageCatalogModule';
+import { productUnitModule } from '../modules/product/ProductModule';
 import { stockMovementsModule } from '../modules/inventory/StockMovementsModule';
 import { appointmentsModule } from '../modules/planning/AppointmentsModule';
 import { goalsModule } from '../modules/business/GoalsModule';
 import { reportsModule } from '../modules/business/ReportsModule';
 import { campaignsModule } from '../modules/business/CampaignsModule';
 import { expensesModule } from '../modules/finance/ExpensesModule';
-import { suppliersModule } from '../modules/people/SuppliersModule';
 import { otherRevenuesModule } from '../modules/finance/OtherRevenuesModule';
 import { financialBaselinesModule } from '../modules/finance/FinancialBaselinesModule';
-import { commissionsModule } from '../modules/finance/CommissionsModule';
 import type { ModuleKey } from '../modules/registry';
 
 /**
@@ -47,7 +40,12 @@ const AestheticClinicPreset = {
     'Complete management solution for aesthetic clinics: appointments, clinical customer registry, ' +
     'inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.',
   // I8, F-I8-COMP3-a (ratificado 2026-09-26): CRM-0 + CRM-1 por padrão, igual ao salão (antes vinham do Core).
-  modules: ['CRM-0', 'CRM-1'] as ModuleKey[],
+  modules: ['CRM-0', 'CRM-1', 'PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM'] as ModuleKey[],
+  // BE-INCR-MODULOS-BASE-SUBMODULOS item 11b: as 4 tabelas que a contabilidade lê pelo nome (W2 / F-W2-2) seguem
+  // travadas; viraram tabelas de módulo (PES-0, VEN-0, VEN-PAC), então a trava vem daqui até o PR-5.
+  lockedModuleTables: ['customers', 'packages', 'sales', 'saleItems'],
+  // Item 11a: a ficha da clínica (F-P2-5 a) substitui a fonte de `customers` do PES-0 — mesmo internalName.
+  moduleOverrides: { customers: aestheticClinicCustomerModule },
   // W5 item 2 (F-W5-1 → b): perfil da IA movido byte a byte do `presetKnowledgeBase` escrito à mão (`8ba1ed8f`).
   aiProfile: {
     name: 'Clínica de Estética',
@@ -60,16 +58,8 @@ const AestheticClinicPreset = {
     description: 'Um sistema completo de gestão para clínicas de estética — procedimentos estéticos, protocolos de tratamento e pacotes de sessões pré-pagas. Otimizado para o relacionamento com o paciente/cliente e a agenda de atendimentos. Inclui tabelas para: Clientes (ficha com registro administrativo próprio da clínica), Serviços (catálogo de procedimentos com preço e duração), Agendamentos (marcação de atendimentos vinculando cliente, procedimento e profissional), Produtos (cosméticos/insumos para revenda ou uso interno, com controle de estoque), Pacotes (sessões pré-pagas), Vendas (registrando procedimentos e produtos), e Comissões (por profissional).',
   },
   tables: {
-    customers: lockedByAccounting(createTableFromModule(aestheticClinicCustomerModule)),
-    suppliers: createTableFromModule(suppliersModule),
-    services: createTableFromModule(serviceModule),
-    packages: lockedByAccounting(createTableFromModule(packageCatalogModule)),
-    products: createTableFromModule(productModule),
     productUnits: createTableFromModule(productUnitModule),
     appointments: createTableFromModule(appointmentsModule),
-    // Invariante duro — internalName 'sales'/'saleItems', ver docstring acima.
-    sales: lockedByAccounting(createTableFromModule(salesModule)),
-    saleItems: lockedByAccounting(createTableFromModule(saleItemsMixedModule)),
     goals: createTableFromModule(goalsModule),
     reports: createTableFromModule(reportsModule),
     campaigns: createTableFromModule(campaignsModule),
@@ -77,7 +67,6 @@ const AestheticClinicPreset = {
     otherRevenues: createTableFromModule(otherRevenuesModule),
     financialBaselines: createTableFromModule(financialBaselinesModule),
     stockMovements: createTableFromModule(stockMovementsModule),
-    commissions: createTableFromModule(commissionsModule),
   },
 };
 

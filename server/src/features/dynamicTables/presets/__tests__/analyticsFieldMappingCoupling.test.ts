@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { tablePresetSuites } from '..';
+import { composeSuiteDefaultTables } from '../modules/moduleSelection';
 import type { AnalyticsConfiguration } from '@/features/analytics/core/models/AnalyticsConfiguration';
 import {
   buildUniverses,
@@ -10,6 +11,7 @@ import {
   partitionByKnownGaps,
   resolveTableRef,
   type CouplingFinding,
+  knownGapsAcross,
   type KnownGap,
   type Universe,
 } from './presetCouplingUniverse';
@@ -48,7 +50,59 @@ const PREFIX_TO_TABLE_KEY_PARAMS: Array<[prefix: string, params: string[]]> = [
 const ROW_ID = 'id';
 
 /** F-TAP-4 → (a): vermelhos conhecidos com o nó dono; a lista só encolhe. */
-const KNOWN_GAPS: readonly KnownGap[] = [];
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-2 (F-TAP-1 b + F-TAP-4 a): os universos isolados de VENDAS revelam achados que já
+// existiam (Controle Total podia remover despesas/estoque) e só agora ficam visíveis. Nó dono decidido pelo dono, 31/10/2026,
+// questionário, opção "BUILDER-VERTICAIS (Recommended)": (b) analytics de sales/saleItems que leem expenses/stockMovements
+// fecha quando FINANCEIRO/ESTOQUE virarem módulos (PR-3/PR-4).
+const VENDAS_ISOLADA = ['VEN-0+VEN-SERV', 'VEN-0+VEN-PROD', 'VEN-0+VEN-PAC', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM+VEN-SERV', 'VEN-COM+VEN-PROD', 'VEN-COM+VEN-PAC'] as const;
+const COM_PRODUTO_OU_PACOTE = ['VEN-0+VEN-PROD', 'VEN-0+VEN-PAC', 'VEN-PROD', 'VEN-PAC', 'VEN-COM+VEN-PROD', 'VEN-COM+VEN-PAC'] as const;
+const BUILDER_VERTICAIS_ANALYTICS: Readonly<Record<string, { universes: readonly string[]; refs: readonly string[] }>> = {
+  VENDAS_ISOLADA: {
+    universes: VENDAS_ISOLADA,
+    refs: [
+      'sales:profitByCustomer:expenseAmountField=amount',
+      'sales:profitByCustomer:expenseCategoryField=category',
+      'sales:profitByCustomer:expenseDateField=paymentDate',
+      'sales:costByCustomer:expenseAmountField=amount',
+      'sales:costByCustomer:expenseCategoryField=category',
+      'sales:costByCustomer:expenseDateField=paymentDate',
+      'sales:profitByCampaign:expenseAmountField=amount',
+      'sales:profitByCampaign:expenseCategoryField=category',
+      'sales:profitByCampaign:expenseDateField=paymentDate',
+      'sales:profitKpis:expenseAmountField=amount',
+      'sales:profitKpis:expenseCategoryField=category',
+      'sales:profitKpis:expenseDateField=paymentDate',
+      'sales:cashflowKpis:expenseAmountField=amount',
+      'sales:cashflowKpis:expenseDateField=paymentDate',
+      'sales:cashflowKpis:expenseDueDateField=dueDate',
+      'sales:cashflowKpis:expensePaymentStatusField=paymentStatus',
+      'sales:cashflowKpis:importantFields[Contas a Pagar Total]=dueDate',
+      'sales:cashflowKpis:importantFields[Contas a Pagar Total]=amount',
+      'sales:cashflowKpis:importantFields[Contas a Pagar Total]=paymentStatus',
+      'sales:cashflowKpis:importantFields[Contas a Pagar Vencidas]=dueDate',
+      'sales:cashflowKpis:importantFields[Contas a Pagar Vencidas]=amount',
+      'sales:cashflowKpis:importantFields[Contas a Pagar Vencidas]=paymentStatus',
+      'sales:cashflowKpis:importantFields[Prazo Médio de Pagamento (dias)]=dueDate',
+      'sales:cashflowKpis:importantFields[Prazo Médio de Pagamento (dias)]=amount',
+      'sales:cashflowKpis:importantFields[Prazo Médio de Pagamento (dias)]=paymentStatus',
+      'saleItems:productsProfitMonthly:stockTypeField=type',
+      'saleItems:productsProfitMonthly:stockProductIdField=productId',
+      'saleItems:productsProfitMonthly:stockQuantityField=quantity',
+      'saleItems:productsProfitMonthly:stockCostField=cost',
+    ],
+  },
+  COM_PRODUTO_OU_PACOTE: {
+    universes: COM_PRODUTO_OU_PACOTE,
+    refs: [
+      'saleItems:serviceEstimatedCost:rightField=id',
+      'saleItems:serviceEstimatedProfit:rightField=id',
+      'saleItems:employeeServiceProfit:rightField=id',
+    ],
+  },
+};
+const KNOWN_GAPS: readonly KnownGap[] = Object.values(BUILDER_VERTICAIS_ANALYTICS).flatMap(({ universes, refs }) =>
+  knownGapsAcross('analytics', universes, refs, 'BUILDER-VERTICAIS', '2026-10-31'),
+);
 
 /**
  * F-TAP-6 → (b): nome de cada KPI emitido → `tableSource`, lido do `return` de cada processador em 2026-10-25.
@@ -247,7 +301,7 @@ function collectAnalyticsFindings(universes: readonly Universe[]): CouplingFindi
 
 describe('presets de analytics × schema das tabelas de módulo', () => {
   it('varre pelo menos o bloco cashflowKpis do SalesModule (sanidade do varredor)', () => {
-    const sales = tablePresetSuites.services.beautySalon.tables.sales;
+    const sales = composeSuiteDefaultTables(tablePresetSuites.services.beautySalon).sales;
     const cashflow = sales.analytics?.find((c) => c.key === 'cashflowKpis');
     expect(cashflow?.params?.expenseDateField).toBeDefined();
     expect(targetTableFor('expenseDateField', cashflow!, 'sales')).toBe('expenses');

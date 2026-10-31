@@ -30,6 +30,8 @@ const criar = (who: { id: string; username: string; role?: string }, body: Recor
 const tabelasDe = async (userId: string) =>
   prisma.dynamicTable.findMany({ where: { userId }, select: { internalName: true, category: true, schema: true } });
 const nome = { name: 'name', label: 'Nome', type: 'string', required: true };
+// BE-INCR-MODULOS-BASE-SUBMODULOS item 11: salão e clínica declaram também PESSOAS e VENDAS.
+const PV = ['PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM'];
 
 describe('W1 — customização da entrevista chega ao /dashboard/create', () => {
   beforeAll(() => {
@@ -99,9 +101,9 @@ describe('W1 — customização da entrevista chega ao /dashboard/create', () =>
       const r = await request(app).post(URL).set(authHeader(u as never)).send({ sessionId: s.id, modules: ['CRM-0', 'CRM-1', 'CRM-3'] });
       expect(r.status).toBe(200);
       expect(r.body.sessionId).toBe(s.id);
-      expect(r.body.customizationState.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-3']);
+      expect(r.body.customizationState.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-3', ...PV]);
       expect(r.body.customizationState.tables.map((t: { key: string }) => t.key)).toContain('crmOpportunities');
-      expect((await sm.loadSession(s.id, u.id)).state.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-3']);
+      expect((await sm.loadSession(s.id, u.id)).state.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-3', ...PV]);
     });
 
     it('sessão de outro usuário → 404 INTERVIEW_SESSION_NOT_FOUND; chave extra → 400; módulo fora do registro → 400', async () => {
@@ -117,7 +119,7 @@ describe('W1 — customização da entrevista chega ao /dashboard/create', () =>
 
       const fora = await request(app).post(URL).set(authHeader(dono as never)).send({ sessionId: s.id, modules: ['CRM-9'] });
       expect(fora.status).toBe(400);
-      expect((await sm.loadSession(s.id, dono.id)).state.modules).toEqual(['CRM-0', 'CRM-1']);
+      expect((await sm.loadSession(s.id, dono.id)).state.modules).toEqual(['CRM-0', 'CRM-1', ...PV]);
     });
   });
 });

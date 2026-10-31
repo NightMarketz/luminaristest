@@ -6,11 +6,14 @@ import BeautySalonPreset from '../systems/BeautySalonPreset';
 import AestheticClinicPreset from '../systems/AestheticClinicPreset';
 import CrmModulePreset from '../systems/CrmModulePreset';
 import { assertRemovalsAllowed, computeTableLocks, type TableLock } from '../removability';
-import type { PresetTableDefinition } from '..';
+import type { PresetSuite, PresetTableDefinition } from '..';
+import { composeSuiteDefaultTables } from '../modules/moduleSelection';
 
 beforeEach(() => jest.clearAllMocks());
 
-const tables = (p: { tables: Record<string, PresetTableDefinition> }) => p.tables;
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: customers/sales/saleItems/packages… viraram tabelas de módulo; o conjunto que a
+// suíte instala é módulos default (com fonte/trava da suíte) ∪ tabelas soltas.
+const tables = (p: Pick<PresetSuite, 'tables' | 'modules' | 'moduleOverrides' | 'lockedModuleTables'>) => composeSuiteDefaultTables(p);
 const all = (t: Record<string, PresetTableDefinition>) => new Set(Object.keys(t));
 const without = (t: Record<string, PresetTableDefinition>, ...gone: string[]) =>
   new Set(Object.keys(t).filter((k) => !gone.includes(k)));
@@ -27,7 +30,10 @@ describe('item 1 — computeTableLocks', () => {
     const livres = ['suppliers', 'goals', 'reports', 'campaigns', 'expenses', 'otherRevenues', 'financialBaselines',
       'commissions', 'appointments', 'stockMovements'];
     for (const k of livres) expect(locks[k]).toBeNull();
-    expect(Object.keys(locks)).toHaveLength(17);
+    // PR-2: o conjunto composto inclui os módulos default do CRM (17 tabelas do salão + 5 de CRM-0/CRM-1).
+    for (const k of ['leadPipelines', 'leadStages', 'leads', 'leadActivities']) expect(locks[k]).toEqual({ reason: 'FIXED_MODULE', by: ['CRM-0'] });
+    expect(locks.leadProposals).toBeNull();
+    expect(Object.keys(locks)).toHaveLength(22);
   });
 
   it('(ii) crmModule: as 4 tabelas do CRM-0 travam como módulo fixo; os módulos de uma tabela ficam livres', () => {
@@ -68,8 +74,8 @@ describe('item 2 — a trava é dinâmica (F-W2-1)', () => {
 });
 
 describe('item 3 — marcação contábil nas suítes (F-W2-2)', () => {
-  const marcadas = (p: { tables: Record<string, PresetTableDefinition> }) =>
-    Object.entries(p.tables).filter(([, d]) => d.meta?.lockedBy === 'accounting').map(([k]) => k).sort();
+  const marcadas = (p: Pick<PresetSuite, 'tables' | 'modules' | 'moduleOverrides' | 'lockedModuleTables'>) =>
+    Object.entries(tables(p)).filter(([, d]) => d.meta?.lockedBy === 'accounting').map(([k]) => k).sort();
 
   it('salão e clínica marcam exatamente sales, saleItems, customers e packages; crmModule não marca nada', () => {
     const esperado = ['customers', 'packages', 'saleItems', 'sales'];
@@ -79,7 +85,7 @@ describe('item 3 — marcação contábil nas suítes (F-W2-2)', () => {
   });
 
   it('a marcação preserva a meta do módulo (sales segue exigindo saleItems)', () => {
-    expect(BeautySalonPreset.tables.sales.meta).toEqual({ requiresTables: ['saleItems'], lockedBy: 'accounting' });
+    expect(tables(BeautySalonPreset).sales.meta).toEqual({ requiresTables: ['saleItems'], lockedBy: 'accounting' });
   });
 });
 
@@ -108,7 +114,18 @@ describe('item 7 (regra pura) — assertRemovalsAllowed', () => {
     expect(erro(['goals', 'suppliers'])).toBeNull();
   });
 
-  it('chave fora das tabelas (Core no create) e tabela de módulo ficam de fora', () => {
+  it('PR-2: tabela de PESSOAS/VENDAS segue travada como quando era tabela da suíte (contábil e relação obrigatória)', () => {
+    for (const k of ['customers', 'saleItems', 'packages']) {
+      expect(erro([k])).toEqual({ reason: 'TABLE_LOCKED', table: k, lock: { reason: 'ACCOUNTING' } });
+    }
+    expect(erro(['services'])).toEqual({
+      reason: 'TABLE_LOCKED', table: 'services', lock: { reason: 'REQUIRED_RELATION', by: ['appointments'] },
+    });
+    expect(erro(['commissions'])).toBeNull();
+    expect(erro(['suppliers'])).toBeNull();
+  });
+
+  it('chave fora das tabelas (Core no create) e tabela de módulo fixo sem trava contábil ficam de fora', () => {
     expect(erro(['units', 'naoExiste'])).toBeNull();
     const crm = tables(CrmModulePreset);
     expect(() => assertRemovalsAllowed(crm, ['leadPipelines', 'leadStages', 'leads', 'leadActivities'])).not.toThrow();

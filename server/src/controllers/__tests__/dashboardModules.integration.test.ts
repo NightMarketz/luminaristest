@@ -8,7 +8,7 @@ import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { getFactory } from '@/lib/factory';
 import { CoreSystemPreset } from '@/features/dynamicTables/presets';
-import { composeModuleTables } from '@/features/dynamicTables/presets/modules/registry';
+import { composeSuiteDefaultTables } from '@/features/dynamicTables/presets/modules/moduleSelection';
 import BeautySalonPreset from '@/features/dynamicTables/presets/systems/BeautySalonPreset';
 
 const app = makeApp();
@@ -29,6 +29,8 @@ const linhasDe = async (userId: string, internalName: string) => {
   return t ? prisma.dynamicTableData.findMany({ where: { dynamicTableId: t.id }, orderBy: { id: 'asc' } }) : [];
 };
 const LEADS = ['leadPipelines', 'leadStages', 'leads', 'leadActivities', 'leadProposals'];
+// BE-INCR-MODULOS-BASE-SUBMODULOS item 11: salão e clínica declaram também PESSOAS e VENDAS.
+const PV = ['PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM'];
 const B2B = ['crmAccounts', 'crmContacts', 'crmOpportunities'];
 
 describe('I8 — CRM como categoria composta por módulos', () => {
@@ -44,7 +46,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     const u = await novoUsuario();
     const r = await criar(u, { suiteKey: 'beautySalon', unit: { name: 'Matriz' } });
     expect(r.status).toBe(201);
-    expect(r.body.data.modules).toEqual({ installed: ['CRM-0', 'CRM-1'] });
+    expect(r.body.data.modules).toEqual({ installed: ['CRM-0', 'CRM-1', ...PV] });
     const t = await tabelasDe(u.id);
     for (const x of LEADS) expect(t).toContain(x);
     for (const x of B2B) expect(t).not.toContain(x);
@@ -56,7 +58,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     const u = await novoUsuario();
     const r = await criar(u, { suiteKey: 'aestheticClinic', unit: { name: 'Clínica' } });
     expect(r.status).toBe(201);
-    expect(r.body.data.modules).toEqual({ installed: ['CRM-0', 'CRM-1'] });
+    expect(r.body.data.modules).toEqual({ installed: ['CRM-0', 'CRM-1', ...PV] });
     const t = await tabelasDe(u.id);
     for (const x of LEADS) expect(t).toContain(x);
     for (const x of B2B) expect(t).not.toContain(x);
@@ -66,7 +68,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     const u = await novoUsuario();
     const r = await criar(u, { suiteKey: 'beautySalon', unit: { name: 'Matriz' }, modules: ['CRM-3'] });
     expect(r.status).toBe(201);
-    expect(r.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'CRM-3']);
+    expect(r.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'CRM-3', ...PV]);
     const t = await tabelasDe(u.id);
     expect(t).toContain('crmOpportunities');
     expect(t).not.toContain('crmAccounts');
@@ -180,7 +182,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     const u = await novoUsuario();
     const r = await criar(u, { suiteKey: 'beautySalon', unit: { name: 'M' }, modules: ['CRM-2'] });
     expect(r.status).toBe(201);
-    expect(r.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B']);
+    expect(r.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', ...PV]);
     const t = await tabelasDe(u.id);
     for (const x of [...LEADS, 'crmAccounts', 'crmContacts']) expect(t).toContain(x);
     expect(t).not.toContain('crmOpportunities');
@@ -258,7 +260,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     });
     expect(Object.keys(crm.body.data.tables)).toHaveLength(8);
     const salao = await request(app).get('/api/dashboard/presets/beautySalon').set(authHeader(u as never));
-    expect(salao.body.data.moduleViews.map((m: { key: string }) => m.key)).toEqual(['CRM-0', 'CRM-1']);
+    expect(salao.body.data.moduleViews.map((m: { key: string }) => m.key)).toEqual(['CRM-0', 'CRM-1', ...PV]);
   });
 
   // W5 item 6 (F-W5-2): o Controle Total resolve pelo registro (`presetService`), não pelo import dinâmico do
@@ -297,11 +299,27 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
   });
 
+  it('BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: tabela de PESSOAS/VENDAS segue com a trava de tabela no create (400 TABLE_LOCKED, nada instalado)', async () => {
+    const casos: [string, Record<string, unknown>][] = [
+      ['packages', { reason: 'ACCOUNTING' }],
+      ['customers', { reason: 'ACCOUNTING' }],
+      ['products', { reason: 'REQUIRED_RELATION', by: ['productUnits', 'stockMovements'] }],
+    ];
+    for (const [tabelaRemovida, lock] of casos) {
+      const u = await novoUsuario();
+      const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: [tabelaRemovida], unit: { name: 'M' } });
+      expect({ tabelaRemovida, status: r.status, details: r.body.details }).toEqual({
+        tabelaRemovida, status: 400, details: { reason: 'TABLE_LOCKED', table: tabelaRemovida, lock },
+      });
+      expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
+    }
+  });
+
   it('GAP-MAP CRM-0 parcial: salão custom sem as 5 tabelas de lead → modules.installed sem CRM-0 nem CRM-1', async () => {
     const u = await novoUsuario();
     const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: LEADS, unit: { name: 'M' } });
     expect(r.status).toBe(201);
-    expect(r.body.data.modules).toEqual({ installed: [] });
+    expect(r.body.data.modules).toEqual({ installed: PV });
   });
 
   // GAP-MAP Nível 3 "CRM — convertLead fixa enum inglês em campo freeSelects" (FIX-CRM-CONVERT-LEAD-SELECTS).
@@ -346,7 +364,8 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     const u = await novoUsuario('ADMIN');
     // O Core antigo = Core atual + as 5 tabelas de lead (mesmos módulos, mesma fábrica) — é o que um tenant
     // criado antes do I8 tem instalado.
-    const legado = { tables: { ...CoreSystemPreset.tables, ...composeModuleTables(['CRM-0', 'CRM-1']), ...BeautySalonPreset.tables } };
+    // PR-2: as tabelas de PESSOAS/VENDAS também vêm dos módulos default da suíte.
+    const legado = { tables: { ...CoreSystemPreset.tables, ...composeSuiteDefaultTables(BeautySalonPreset) } };
     const dts = getFactory().getDynamicTableService();
     await dts.installPresetAsSystem(u.id, legado);
     const unitsT = (await tabela(u.id, 'units'))!;

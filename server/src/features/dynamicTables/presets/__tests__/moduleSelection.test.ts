@@ -125,6 +125,14 @@ describe('assertAddedFieldsRespectModules (comportamento 10, F-CRM-7 → a)', ()
     );
   });
 
+  it("PR-2 item 13: addedFields.sales com campo 'totalAmount' → 400 (sales virou tabela de VEN-0)", () => {
+    const vendas = composeModuleTables(['PES-0', 'VEN-0', 'VEN-SERV']);
+    expect(() => assertAddedFieldsRespectModules({ sales: [{ name: 'totalAmount', type: 'number' }] }, vendas)).toThrow(
+      /addedFields\.sales: o campo 'totalAmount' é declarado pelo módulo 'VEN-0'/,
+    );
+    expect(() => assertAddedFieldsRespectModules({ customers: [{ name: 'email' }] }, vendas)).toThrow(/módulo 'PES-0'/);
+  });
+
   it('sombrear qualquer campo declarado pelo módulo → 400', () => {
     expect(() => assertAddedFieldsRespectModules({ leadStages: [{ name: 'type' }] }, tables)).toThrow(ValidationError);
   });
@@ -132,8 +140,8 @@ describe('assertAddedFieldsRespectModules (comportamento 10, F-CRM-7 → a)', ()
   it('campo novo em tabela de módulo é aceito; tabela fora de módulo não é checada aqui', () => {
     expect(() =>
       assertAddedFieldsRespectModules(
-        { leads: [{ name: 'instagram', type: 'string' }], customers: [{ name: 'name' }] },
-        { ...tables, customers: { name: 'C', category: 'business', schema: { fields: [{ name: 'name', label: 'N', type: 'string' }] } } } as never,
+        { leads: [{ name: 'instagram', type: 'string' }], productUnits: [{ name: 'name' }] },
+        { ...tables, productUnits: { name: 'C', category: 'business', schema: { fields: [{ name: 'name', label: 'N', type: 'string' }] } } } as never,
       ),
     ).not.toThrow();
   });

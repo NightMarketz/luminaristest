@@ -16,6 +16,14 @@
  *    tabelas mantidas. A trava vem de `meta`, que o create descarta antes de gravar; por isso esta parte compõe as
  *    tabelas com as mesmas funções públicas do controller (`resolveModuleSelection`, `composeModuleTables`).
  *
+ * Alterações da fixture (cada uma com a justificativa):
+ *  - PR-2 (BE-INCR-MODULOS-BASE-SUBMODULOS itens 9–11): `response.modules.installed` ganha PES-0, PES-FORN, VEN-0,
+ *    VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM (as suítes passaram a declarar PESSOAS e VENDAS; em `sem-commissions` sai
+ *    VEN-COM, porque remover `commissions` remove o módulo de uma tabela). A lista `by` da trava de `units` muda só de
+ *    ORDEM (`sales` antes de `productUnits`: tabela de módulo entra antes das da suíte). Conferido por script que, sem
+ *    as chaves novas em `modules.installed` e com `by` ordenado, a fixture é idêntica à do PR-0 — tabelas gravadas,
+ *    schemas (inclusive a ficha da clínica e a variante de `saleItems`) e motivos de trava inalterados.
+ *
  * Regenerar (somente num PR que mude comportamento de propósito): `UPDATE_BASELINE=1 npx jest --selectProjects
  * integration --runInBand src/features/dynamicTables/presets/__tests__/suitePayloadBaseline.integration.test.ts`.
  */
@@ -25,7 +33,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { CoreSystemPreset, tablePresetSuites } from '@/features/dynamicTables/presets';
-import { composeModuleTables } from '@/features/dynamicTables/presets/modules/registry';
+import { composeModuleTables, suiteModuleOptions } from '@/features/dynamicTables/presets/modules/registry';
 import { resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
 import { computeTableLocks } from '@/features/dynamicTables/presets/removability';
 
@@ -74,7 +82,8 @@ async function snapshotInstalled(userId: string) {
 function snapshotLocks(suiteKey: string) {
   const suite = Object.values(tablePresetSuites).flatMap((c) => Object.values(c)).find((s) => s.key === suiteKey)!;
   const installed = resolveModuleSelection([], suite.modules ?? []);
-  const tables = { ...CoreSystemPreset.tables, ...composeModuleTables(installed), ...suite.tables };
+  // PR-2 (itens 11a/11b): fonte e trava das tabelas de módulo declaradas pela suíte — o mesmo que o controller passa.
+  const tables = { ...CoreSystemPreset.tables, ...composeModuleTables(installed, suiteModuleOptions(suite)), ...suite.tables };
   return computeTableLocks(tables, new Set(Object.keys(tables)));
 }
 

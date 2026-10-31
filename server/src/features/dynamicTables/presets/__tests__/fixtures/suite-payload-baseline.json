@@ -6,7 +6,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -3003,7 +3010,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -5956,7 +5970,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -8761,7 +8782,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -11609,7 +11637,13 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC"
             ]
           },
           "business": [
@@ -14525,9 +14559,9 @@
         "by": [
           "leadPipelines",
           "leads",
+          "sales",
           "productUnits",
           "appointments",
-          "sales",
           "goals",
           "campaigns",
           "expenses",
@@ -14546,7 +14580,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -17551,7 +17592,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -20512,7 +20560,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -23325,7 +23380,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -26181,7 +26243,13 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC"
             ]
           },
           "business": [
@@ -29105,9 +29173,9 @@
         "by": [
           "leadPipelines",
           "leads",
+          "sales",
           "productUnits",
           "appointments",
-          "sales",
           "goals",
           "campaigns",
           "expenses",
