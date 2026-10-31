@@ -27,7 +27,8 @@ beforeEach(() => jest.clearAllMocks());
 
 const TRAVADAS_SALAO = ['customers', 'packages', 'sales', 'saleItems', 'products', 'services', 'productUnits'];
 // CRM-0 (fixo) vem dos módulos default do salão, travado por FIXED_MODULE.
-const FUNIL = ['leadPipelines', 'leadStages', 'leads', 'leadActivities'];
+// PR-4: as bases fixas de FINANCEIRO (FIN-0 = expenses) e GESTÃO (GES-0 = reports) travam do mesmo jeito.
+const FUNIL = ['leadPipelines', 'leadStages', 'leads', 'leadActivities', 'expenses', 'reports'];
 
 describe('item 4 — TableExtractor deriva isCore da trava', () => {
   it('salão: isCore só nas tabelas travadas; lock com o motivo', () => {

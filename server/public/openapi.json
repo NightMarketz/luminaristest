@@ -22120,6 +22120,7 @@
                             "CRM-2A",
                             "CRM-2B",
                             "CRM-3",
+                            "CRM-CAMP",
                             "PES-0",
                             "PES-FORN",
                             "VEN-0",
@@ -22127,9 +22128,16 @@
                             "VEN-PROD",
                             "VEN-PAC",
                             "VEN-COM",
+                            "FIN-0",
+                            "FIN-REC",
+                            "FIN-BASE",
+                            "GES-0",
+                            "GES-META",
                             "CRM-2",
                             "PESSOAS",
-                            "VENDAS"
+                            "VENDAS",
+                            "FINANCEIRO",
+                            "GESTAO"
                           ]
                         }
                       },
@@ -22279,6 +22287,7 @@
                             "CRM-2A",
                             "CRM-2B",
                             "CRM-3",
+                            "CRM-CAMP",
                             "PES-0",
                             "PES-FORN",
                             "VEN-0",
@@ -22286,9 +22295,16 @@
                             "VEN-PROD",
                             "VEN-PAC",
                             "VEN-COM",
+                            "FIN-0",
+                            "FIN-REC",
+                            "FIN-BASE",
+                            "GES-0",
+                            "GES-META",
                             "CRM-2",
                             "PESSOAS",
-                            "VENDAS"
+                            "VENDAS",
+                            "FINANCEIRO",
+                            "GESTAO"
                           ]
                         }
                       },
@@ -22381,6 +22397,7 @@
                       "CRM-2A",
                       "CRM-2B",
                       "CRM-3",
+                      "CRM-CAMP",
                       "PES-0",
                       "PES-FORN",
                       "VEN-0",
@@ -22388,9 +22405,16 @@
                       "VEN-PROD",
                       "VEN-PAC",
                       "VEN-COM",
+                      "FIN-0",
+                      "FIN-REC",
+                      "FIN-BASE",
+                      "GES-0",
+                      "GES-META",
                       "CRM-2",
                       "PESSOAS",
-                      "VENDAS"
+                      "VENDAS",
+                      "FINANCEIRO",
+                      "GESTAO"
                     ]
                   }
                 }
@@ -22688,6 +22712,7 @@
                         "CRM-2A",
                         "CRM-2B",
                         "CRM-3",
+                        "CRM-CAMP",
                         "PES-0",
                         "PES-FORN",
                         "VEN-0",
@@ -22695,9 +22720,16 @@
                         "VEN-PROD",
                         "VEN-PAC",
                         "VEN-COM",
+                        "FIN-0",
+                        "FIN-REC",
+                        "FIN-BASE",
+                        "GES-0",
+                        "GES-META",
                         "CRM-2",
                         "PESSOAS",
-                        "VENDAS"
+                        "VENDAS",
+                        "FINANCEIRO",
+                        "GESTAO"
                       ]
                     }
                   }
@@ -22814,13 +22846,19 @@
                               "CRM-2A",
                               "CRM-2B",
                               "CRM-3",
+                              "CRM-CAMP",
                               "PES-0",
                               "PES-FORN",
                               "VEN-0",
                               "VEN-SERV",
                               "VEN-PROD",
                               "VEN-PAC",
-                              "VEN-COM"
+                              "VEN-COM",
+                              "FIN-0",
+                              "FIN-REC",
+                              "FIN-BASE",
+                              "GES-0",
+                              "GES-META"
                             ]
                           },
                           "name": {
@@ -23356,6 +23394,7 @@
                         "CRM-2A",
                         "CRM-2B",
                         "CRM-3",
+                        "CRM-CAMP",
                         "PES-0",
                         "PES-FORN",
                         "VEN-0",
@@ -23363,9 +23402,16 @@
                         "VEN-PROD",
                         "VEN-PAC",
                         "VEN-COM",
+                        "FIN-0",
+                        "FIN-REC",
+                        "FIN-BASE",
+                        "GES-0",
+                        "GES-META",
                         "CRM-2",
                         "PESSOAS",
-                        "VENDAS"
+                        "VENDAS",
+                        "FINANCEIRO",
+                        "GESTAO"
                       ]
                     }
                   }

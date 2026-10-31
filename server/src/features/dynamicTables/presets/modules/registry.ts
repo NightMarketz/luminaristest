@@ -17,6 +17,12 @@ import { serviceModule } from './service/ServiceModule';
 import { productModule } from './product/ProductModule';
 import { packageCatalogModule } from './finance/PackageCatalogModule';
 import { commissionsModule } from './finance/CommissionsModule';
+import { campaignsModule } from './business/CampaignsModule';
+import { expensesModule } from './finance/ExpensesModule';
+import { otherRevenuesModule } from './finance/OtherRevenuesModule';
+import { financialBaselinesModule } from './finance/FinancialBaselinesModule';
+import { reportsModule } from './business/ReportsModule';
+import { goalsModule } from './business/GoalsModule';
 
 /**
  * BE-INCR-CRM-MODULE-COMPOSITION (nó I8) — comportamento 1: registro de módulos.
@@ -44,6 +50,10 @@ import { commissionsModule } from './finance/CommissionsModule';
  * `modules`. A suíte pode trocar a fonte de uma tabela de módulo (`moduleOverrides`, item 11a — a clínica usa a ficha
  * própria em `customers`) e travar tabelas de módulo pela contabilidade (`lockedModuleTables`, item 11b, até o PR-5
  * mover a trava para o módulo).
+ *
+ * PR-4 (itens 21–22): FINANCEIRO (FIN-0 base = expenses; FIN-REC = otherRevenues; FIN-BASE = financialBaselines),
+ * GESTÃO (GES-0 base = reports; GES-META = goals) e Campanhas como submódulo do CRM (CRM-CAMP = campaigns,
+ * F-MS-2 b / F-MB-3b). Nenhuma das três categorias depende de outra por tabela (BRIEF §0.2, E14).
  */
 
 export const MODULE_CATEGORIES = ['crm', 'pessoas', 'vendas', 'estoque', 'agenda', 'financeiro', 'gestao'] as const;
@@ -51,15 +61,17 @@ export const moduleCategorySchema = z.enum(MODULE_CATEGORIES);
 export type ModuleCategory = z.infer<typeof moduleCategorySchema>;
 
 export const MODULE_KEYS = [
-  'CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3',
+  'CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3', 'CRM-CAMP',
   'PES-0', 'PES-FORN',
   'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM',
+  'FIN-0', 'FIN-REC', 'FIN-BASE',
+  'GES-0', 'GES-META',
 ] as const;
 export const moduleKeySchema = z.enum(MODULE_KEYS);
 export type ModuleKey = z.infer<typeof moduleKeySchema>;
 
 /** BRIEF item 7: um grupo por categoria, com a chave da categoria em maiúsculas — só as categorias que já têm módulos. */
-export const MODULE_GROUP_KEYS = ['CRM-2', 'PESSOAS', 'VENDAS'] as const;
+export const MODULE_GROUP_KEYS = ['CRM-2', 'PESSOAS', 'VENDAS', 'FINANCEIRO', 'GESTAO'] as const;
 export const moduleGroupKeySchema = z.enum(MODULE_GROUP_KEYS);
 export type ModuleGroupKey = z.infer<typeof moduleGroupKeySchema>;
 
@@ -149,6 +161,20 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
       'Oportunidades de venda num segundo funil; oportunidade ganha gera conta a receber.',
     fixed: false,
     tables: ['crmOpportunities'],
+    dependsOn: ['CRM-0'],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  // BRIEF item 22 (F-MS-2 b, F-MB-3b): Campanhas é submódulo do CRM. Sem ele `sales.campaignId` (opcional) é
+  // descartado na instalação (E5); um vertical sem CRM perde campanhas por escolha do dono.
+  'CRM-CAMP': {
+    key: 'CRM-CAMP',
+    category: 'crm',
+    name: { pt: 'Campanhas', en: 'Campaigns' },
+    aiDescription:
+      'Campanhas de marketing com período, canal e orçamento; a venda pode apontar a campanha de origem para medir receita incremental.',
+    fixed: false,
+    tables: ['campaigns'],
     dependsOn: ['CRM-0'],
     requiresOneOf: [],
     freeSelects: {},
@@ -244,6 +270,71 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     requiresOneOf: [],
     freeSelects: {},
   },
+  // BRIEF §1 / F-MS-8 (a): FINANCEIRO com base Despesas; Outras receitas e Linha de base são submódulos. O mapa-alvo
+  // não declara `dependsOn` para FINANCEIRO nem GESTÃO (como PES-FORN): nenhuma tabela deles relaciona a base.
+  'FIN-0': {
+    key: 'FIN-0',
+    category: 'financeiro',
+    group: 'FINANCEIRO',
+    name: { pt: 'Despesas', en: 'Expenses' },
+    aiDescription:
+      'Base do Financeiro: despesas e contas a pagar com vencimento, pagamento e categoria; alimenta fluxo de caixa e lucro.',
+    fixed: true,
+    tables: ['expenses'],
+    dependsOn: [],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  'FIN-REC': {
+    key: 'FIN-REC',
+    category: 'financeiro',
+    group: 'FINANCEIRO',
+    name: { pt: 'Outras receitas', en: 'Other revenues' },
+    aiDescription: 'Receitas que não vêm de venda (juros, aluguel, revenda), somadas ao resultado do período.',
+    fixed: false,
+    tables: ['otherRevenues'],
+    dependsOn: [],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  'FIN-BASE': {
+    key: 'FIN-BASE',
+    category: 'financeiro',
+    group: 'FINANCEIRO',
+    name: { pt: 'Linha de base financeira', en: 'Financial baselines' },
+    aiDescription: 'Fotografias de referência por unidade e data (caixa inicial, patrimônio líquido, passivos) para os indicadores financeiros.',
+    fixed: false,
+    tables: ['financialBaselines'],
+    dependsOn: [],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  // BRIEF §1 / E14: GESTÃO não depende de outra categoria por tabela; a meta lê KPIs por `metricKey` (item 25).
+  'GES-0': {
+    key: 'GES-0',
+    category: 'gestao',
+    group: 'GESTAO',
+    name: { pt: 'Relatórios', en: 'Reports' },
+    aiDescription: 'Base de Gestão: relatórios gerenciais salvos para acompanhar o negócio.',
+    fixed: true,
+    tables: ['reports'],
+    dependsOn: [],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  'GES-META': {
+    key: 'GES-META',
+    category: 'gestao',
+    group: 'GESTAO',
+    name: { pt: 'Metas', en: 'Goals' },
+    aiDescription:
+      'Metas por unidade e período sobre um indicador; sem a fonte do indicador a meta existe e o acompanhamento fica vazio.',
+    fixed: false,
+    tables: ['goals'],
+    dependsOn: [],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
 };
 
 /** Grupos de módulos (F-SUB-5 a): só nome de UI + membros atômicos; o alias de entrada vem daqui (F-SUB-2 a). */
@@ -253,6 +344,8 @@ export const MODULE_GROUPS: Readonly<
   'CRM-2': { name: { pt: 'Contas e contatos', en: 'Accounts and contacts' }, members: ['CRM-2A', 'CRM-2B'] },
   PESSOAS: { name: { pt: 'Pessoas', en: 'People' }, members: ['PES-0', 'PES-FORN'] },
   VENDAS: { name: { pt: 'Vendas', en: 'Sales' }, members: ['VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM'] },
+  FINANCEIRO: { name: { pt: 'Financeiro', en: 'Finance' }, members: ['FIN-0', 'FIN-REC', 'FIN-BASE'] },
+  GESTAO: { name: { pt: 'Gestão', en: 'Management' }, members: ['GES-0', 'GES-META'] },
 };
 
 /** Expande chaves de grupo em seus membros; deduplica e devolve na ordem do registro. */
@@ -318,6 +411,12 @@ export const MODULE_TABLE_SOURCES: Readonly<Record<ModuleKey, Readonly<Record<st
   'VEN-PROD': { products: productModule },
   'VEN-PAC': { packages: packageCatalogModule },
   'VEN-COM': { commissions: commissionsModule },
+  'CRM-CAMP': { campaigns: campaignsModule },
+  'FIN-0': { expenses: expensesModule },
+  'FIN-REC': { otherRevenues: otherRevenuesModule },
+  'FIN-BASE': { financialBaselines: financialBaselinesModule },
+  'GES-0': { reports: reportsModule },
+  'GES-META': { goals: goalsModule },
 };
 
 /**

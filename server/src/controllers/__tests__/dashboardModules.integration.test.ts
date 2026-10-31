@@ -30,7 +30,9 @@ const linhasDe = async (userId: string, internalName: string) => {
 };
 const LEADS = ['leadPipelines', 'leadStages', 'leads', 'leadActivities', 'leadProposals'];
 // BE-INCR-MODULOS-BASE-SUBMODULOS item 11: salão e clínica declaram também PESSOAS e VENDAS.
-const PV = ['PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM'];
+// PR-4 (itens 21–22): e Campanhas (CRM-CAMP, logo depois do CRM na ordem do registro), FINANCEIRO e GESTÃO.
+const FORA_DO_CRM = ['PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM', 'FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META'];
+const PV = ['CRM-CAMP', ...FORA_DO_CRM];
 const B2B = ['crmAccounts', 'crmContacts', 'crmOpportunities'];
 
 describe('I8 — CRM como categoria composta por módulos', () => {
@@ -90,7 +92,8 @@ describe('I8 — CRM como categoria composta por módulos', () => {
 
   it('c3: tenant sem CRM (Controle Total removendo o funil) cria unidade sem pipeline e tasks sem leadId', async () => {
     const u = await novoUsuario();
-    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: LEADS, unit: { name: 'M' } });
+    // PR-4: Campanhas é submódulo do CRM (CRM-CAMP, F-MB-3b) — sem CRM sai junto.
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: [...LEADS, 'campaigns'], unit: { name: 'M' } });
     expect(r.status).toBe(201);
     const t = await tabelasDe(u.id);
     for (const x of LEADS) expect(t).not.toContain(x);
@@ -317,9 +320,41 @@ describe('I8 — CRM como categoria composta por módulos', () => {
 
   it('GAP-MAP CRM-0 parcial: salão custom sem as 5 tabelas de lead → modules.installed sem CRM-0 nem CRM-1', async () => {
     const u = await novoUsuario();
-    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: LEADS, unit: { name: 'M' } });
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: [...LEADS, 'campaigns'], unit: { name: 'M' } });
     expect(r.status).toBe(201);
-    expect(r.body.data.modules).toEqual({ installed: PV });
+    expect(r.body.data.modules).toEqual({ installed: FORA_DO_CRM });
+  });
+
+  it('PR-4 item 22: tirar o funil mantendo Campanhas → 400 DEPENDENT_MODULE_KEPT [CRM-CAMP], nada instalado (F-MB-3b)', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: LEADS, unit: { name: 'M' } });
+    expect({ status: r.status, details: r.body.details }).toMatchObject({
+      status: 400, details: { reason: 'DEPENDENT_MODULE_KEPT', moduleKey: 'CRM-0', dependents: ['CRM-CAMP'] },
+    });
+    expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
+  });
+
+  it('PR-4 item 21: FINANCEIRO e GESTÃO saem inteiros no create; sem Campanhas `sales.campaignId` é descartado', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, {
+      mode: 'custom', presetKey: 'beautySalon', unit: { name: 'M' },
+      removedTables: ['expenses', 'otherRevenues', 'financialBaselines', 'reports', 'goals', 'campaigns'],
+    });
+    expect(r.status).toBe(201);
+    expect(r.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM']);
+    const t = await tabelasDe(u.id);
+    for (const x of ['expenses', 'otherRevenues', 'financialBaselines', 'reports', 'goals', 'campaigns']) expect(t).not.toContain(x);
+    const sales = await tabela(u.id, 'sales');
+    const campos = ((sales!.schema as unknown as { fields: { name: string }[] }).fields).map((f) => f.name);
+    expect(campos).not.toContain('campaignId');
+  });
+
+  it('PR-4: só a base de FINANCEIRO com os submódulos mantidos → 400 DEPENDENT_MODULE_KEPT (categoria sem cascata)', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: ['expenses'], unit: { name: 'M' } });
+    expect({ status: r.status, details: r.body.details }).toMatchObject({
+      status: 400, details: { reason: 'DEPENDENT_MODULE_KEPT', moduleKey: 'FIN-0', dependents: ['FIN-REC', 'FIN-BASE'] },
+    });
   });
 
   // GAP-MAP Nível 3 "CRM — convertLead fixa enum inglês em campo freeSelects" (FIX-CRM-CONVERT-LEAD-SELECTS).

@@ -47,7 +47,8 @@ const OPTIONAL_RELATIONS: Readonly<Record<string, string>> = {
   // BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: PESSOAS/VENDAS isolados (F-TAP-1 b) sem CRM, sem os outros catálogos e sem
   // as categorias que ainda são tabelas soltas da suíte (AGENDA, CRM-CAMP). Relação opcional sai na instalação (E5).
   'tasks.leadId->leads': 'CRM-0 é opcional fora das suítes que o declaram: sem Funil o vínculo da tarefa ao lead é descartado (E5)',
-  'sales.campaignId->campaigns': 'F-MB-3b: sem Campanhas `sales.campaignId` (opcional) é descartado na instalação',
+  // PR-4 (item 22): Campanhas virou o submódulo CRM-CAMP; VENDAS não depende dele (F-MB-3b, escolha do dono).
+  'sales.campaignId->campaigns': 'F-MB-3b: sem Campanhas (CRM-CAMP) `sales.campaignId` (opcional) é descartado na instalação',
   'saleItems.productId->products': 'F-MB-2: catálogo por requiresOneOf — sem VEN-PROD o item não aponta produto (E5)',
   'saleItems.serviceId->services': 'F-MB-2: catálogo por requiresOneOf — sem VEN-SERV o item não aponta serviço (E5)',
   'saleItems.packageId->packages': 'F-MB-2 / F-MS-3 (a): sem VEN-PAC o item não aponta pacote (E5)',

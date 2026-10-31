@@ -227,8 +227,8 @@ describe('PR-2 — PESSOAS e VENDAS no registro (itens 7, 9, 10, 11a/11b)', () =
     expect(expandModuleSelectors(['PESSOAS'])).toEqual(['PES-0', 'PES-FORN']);
     expect(moduleSelectorSchema.safeParse('VENDAS').success).toBe(true);
     expect(moduleKeySchema.safeParse('VENDAS').success).toBe(false);
-    // categorias ainda sem módulos não têm grupo (PR-3/PR-4)
-    for (const g of ['ESTOQUE', 'AGENDA', 'FINANCEIRO', 'GESTAO']) expect(moduleSelectorSchema.safeParse(g).success).toBe(false);
+    // categorias ainda sem módulos não têm grupo (PR-3; FINANCEIRO e GESTAO entraram no PR-4)
+    for (const g of ['ESTOQUE', 'AGENDA']) expect(moduleSelectorSchema.safeParse(g).success).toBe(false);
   });
 
   it('item 11a: override troca a fonte de uma tabela de módulo; override de tabela fora de módulo → erro', () => {
@@ -243,5 +243,41 @@ describe('PR-2 — PESSOAS e VENDAS no registro (itens 7, 9, 10, 11a/11b)', () =
     expect(t.sales.meta).toEqual({ requiresTables: ['saleItems'], lockedBy: 'accounting' });
     expect(t.saleItems.meta?.lockedBy).toBeUndefined();
     expect(() => composeModuleTables(['PES-0'], { locked: ['units'] })).toThrow(/'units' não é tabela de módulo/);
+  });
+});
+
+describe('PR-4 — FINANCEIRO, GESTÃO e Campanhas no registro (itens 21–22)', () => {
+  const view = (k: ModuleKey) => {
+    const { category, fixed, tables, dependsOn, requiresOneOf, freeSelects } = MODULE_REGISTRY[k];
+    return { category, fixed, tables, dependsOn, requiresOneOf, freeSelects };
+  };
+  const sub = (category: ModuleCategory, table: string, dependsOn: ModuleKey[] = []) =>
+    ({ category, fixed: false, tables: [table], dependsOn, requiresOneOf: [], freeSelects: {} });
+
+  it('item 21: o mapa-alvo §1 — FIN-0 (expenses) + FIN-REC/FIN-BASE; GES-0 (reports) + GES-META', () => {
+    expect(view('FIN-0')).toEqual({ ...sub('financeiro', 'expenses'), fixed: true });
+    expect(view('FIN-REC')).toEqual(sub('financeiro', 'otherRevenues'));
+    expect(view('FIN-BASE')).toEqual(sub('financeiro', 'financialBaselines'));
+    expect(view('GES-0')).toEqual({ ...sub('gestao', 'reports'), fixed: true });
+    expect(view('GES-META')).toEqual(sub('gestao', 'goals'));
+  });
+
+  it("item 22: CRM-CAMP é submódulo do CRM (category 'crm', dependsOn ['CRM-0']) dono de `campaigns`", () => {
+    expect(view('CRM-CAMP')).toEqual(sub('crm', 'campaigns', ['CRM-0']));
+    expect(MODULE_REGISTRY['CRM-CAMP'].group).toBeUndefined();
+    expect(moduleOfTable('campaigns')).toBe('CRM-CAMP');
+  });
+
+  it('item 7 (PR-4): FINANCEIRO e GESTAO expandem para os módulos da categoria', () => {
+    expect(expandModuleSelectors(['FINANCEIRO'])).toEqual(['FIN-0', 'FIN-REC', 'FIN-BASE']);
+    expect(expandModuleSelectors(['GESTAO'])).toEqual(['GES-0', 'GES-META']);
+    for (const k of ['FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META', 'CRM-CAMP'] as const) {
+      expect(MODULE_REGISTRY[k].aiDescription.length).toBeGreaterThan(20);
+    }
+  });
+
+  it('a suíte Módulo CRM continua com as mesmas 8 tabelas (CRM-CAMP fica fora; é opcional)', () => {
+    expect(CrmModulePreset.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3']);
+    expect(Object.keys(CrmModulePreset.tables)).not.toContain('campaigns');
   });
 });

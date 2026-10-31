@@ -27,9 +27,12 @@ describe('item 1 — computeTableLocks', () => {
     expect(locks.products).toEqual({ reason: 'REQUIRED_RELATION', by: ['productUnits', 'stockMovements'] });
     expect(locks.services).toEqual({ reason: 'REQUIRED_RELATION', by: ['appointments'] });
     expect(locks.productUnits).toEqual({ reason: 'REQUIRED_CAPABILITY', by: ['stockMovements'] });
-    const livres = ['suppliers', 'goals', 'reports', 'campaigns', 'expenses', 'otherRevenues', 'financialBaselines',
+    const livres = ['suppliers', 'goals', 'campaigns', 'otherRevenues', 'financialBaselines',
       'commissions', 'appointments', 'stockMovements'];
     for (const k of livres) expect(locks[k]).toBeNull();
+    // PR-4 (item 21): `expenses` e `reports` são as bases fixas de FINANCEIRO (FIN-0) e GESTÃO (GES-0) — travam como CRM-0.
+    expect(locks.expenses).toEqual({ reason: 'FIXED_MODULE', by: ['FIN-0'] });
+    expect(locks.reports).toEqual({ reason: 'FIXED_MODULE', by: ['GES-0'] });
     // PR-2: o conjunto composto inclui os módulos default do CRM (17 tabelas do salão + 5 de CRM-0/CRM-1).
     for (const k of ['leadPipelines', 'leadStages', 'leads', 'leadActivities']) expect(locks[k]).toEqual({ reason: 'FIXED_MODULE', by: ['CRM-0'] });
     expect(locks.leadProposals).toBeNull();

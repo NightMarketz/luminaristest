@@ -23,6 +23,13 @@
  *    ORDEM (`sales` antes de `productUnits`: tabela de módulo entra antes das da suíte). Conferido por script que, sem
  *    as chaves novas em `modules.installed` e com `by` ordenado, a fixture é idêntica à do PR-0 — tabelas gravadas,
  *    schemas (inclusive a ficha da clínica e a variante de `saleItems`) e motivos de trava inalterados.
+ *  - PR-4 (itens 21–24): `response.modules.installed` ganha CRM-CAMP, FIN-0, FIN-REC, FIN-BASE, GES-0, GES-META (em
+ *    `sem-campaigns` sai CRM-CAMP e em `sem-goals` sai GES-META — remover a tabela remove o módulo de uma tabela).
+ *    `locks.expenses` e `locks.reports` passam de `null` para `FIXED_MODULE` (FIN-0 e GES-0 são as bases fixas das
+ *    categorias, BRIEF §1; mesma regra do CRM-0 desde o I8 e do item 32, "base fixa travada"; dono, chat, 31/10,
+ *    "pode seguir" depois da pergunta sobre esta trava). A lista `by` da trava de `units` muda só de ORDEM. Conferido
+ *    por script: sem as chaves novas, com `by` ordenado e essas duas travas em `null`, a fixture é idêntica à do PR-2 —
+ *    tabelas gravadas, schemas e demais travas inalterados.
  *
  * Regenerar (somente num PR que mude comportamento de propósito): `UPDATE_BASELINE=1 npx jest --selectProjects
  * integration --runInBand src/features/dynamicTables/presets/__tests__/suitePayloadBaseline.integration.test.ts`.

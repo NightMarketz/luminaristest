@@ -7,13 +7,19 @@
             "installed": [
               "CRM-0",
               "CRM-1",
+              "CRM-CAMP",
               "PES-0",
               "PES-FORN",
               "VEN-0",
               "VEN-SERV",
               "VEN-PROD",
               "VEN-PAC",
-              "VEN-COM"
+              "VEN-COM",
+              "FIN-0",
+              "FIN-REC",
+              "FIN-BASE",
+              "GES-0",
+              "GES-META"
             ]
           },
           "business": [
@@ -3011,13 +3017,19 @@
             "installed": [
               "CRM-0",
               "CRM-1",
+              "CRM-CAMP",
               "PES-0",
               "PES-FORN",
               "VEN-0",
               "VEN-SERV",
               "VEN-PROD",
               "VEN-PAC",
-              "VEN-COM"
+              "VEN-COM",
+              "FIN-0",
+              "FIN-REC",
+              "FIN-BASE",
+              "GES-0",
+              "GES-META"
             ]
           },
           "business": [
@@ -5977,7 +5989,12 @@
               "VEN-SERV",
               "VEN-PROD",
               "VEN-PAC",
-              "VEN-COM"
+              "VEN-COM",
+              "FIN-0",
+              "FIN-REC",
+              "FIN-BASE",
+              "GES-0",
+              "GES-META"
             ]
           },
           "business": [
@@ -8783,13 +8800,18 @@
             "installed": [
               "CRM-0",
               "CRM-1",
+              "CRM-CAMP",
               "PES-0",
               "PES-FORN",
               "VEN-0",
               "VEN-SERV",
               "VEN-PROD",
               "VEN-PAC",
-              "VEN-COM"
+              "VEN-COM",
+              "FIN-0",
+              "FIN-REC",
+              "FIN-BASE",
+              "GES-0"
             ]
           },
           "business": [
@@ -11638,12 +11660,18 @@
             "installed": [
               "CRM-0",
               "CRM-1",
+              "CRM-CAMP",
               "PES-0",
               "PES-FORN",
               "VEN-0",
               "VEN-SERV",
               "VEN-PROD",
-              "VEN-PAC"
+              "VEN-PAC",
+              "FIN-0",
+              "FIN-REC",
+              "FIN-BASE",
+              "GES-0",
+              "GES-META"
             ]
           },
           "business": [
@@ -14493,7 +14521,12 @@
         ],
         "reason": "REQUIRED_RELATION"
       },
-      "expenses": null,
+      "expenses": {
+        "by": [
+          "FIN-0"
+        ],
+        "reason": "FIXED_MODULE"
+      },
       "financialBaselines": null,
       "goals": null,
       "leadActivities": {
@@ -14538,7 +14571,12 @@
         ],
         "reason": "REQUIRED_CAPABILITY"
       },
-      "reports": null,
+      "reports": {
+        "by": [
+          "GES-0"
+        ],
+        "reason": "FIXED_MODULE"
+      },
       "saleItems": {
         "reason": "ACCOUNTING"
       },
@@ -14559,14 +14597,14 @@
         "by": [
           "leadPipelines",
           "leads",
-          "sales",
-          "productUnits",
-          "appointments",
-          "goals",
           "campaigns",
+          "sales",
           "expenses",
           "otherRevenues",
           "financialBaselines",
+          "goals",
+          "productUnits",
+          "appointments",
           "stockMovements"
         ],
         "reason": "REQUIRED_RELATION"
@@ -14581,13 +14619,19 @@
             "installed": [
               "CRM-0",
               "CRM-1",
+              "CRM-CAMP",
               "PES-0",
               "PES-FORN",
               "VEN-0",
               "VEN-SERV",
               "VEN-PROD",
               "VEN-PAC",
-              "VEN-COM"
+              "VEN-COM",
+              "FIN-0",
+              "FIN-REC",
+              "FIN-BASE",
+              "GES-0",
+              "GES-META"
             ]
           },
           "business": [
@@ -17593,13 +17637,19 @@
             "installed": [
               "CRM-0",
               "CRM-1",
+              "CRM-CAMP",
               "PES-0",
               "PES-FORN",
               "VEN-0",
               "VEN-SERV",
               "VEN-PROD",
               "VEN-PAC",
-              "VEN-COM"
+              "VEN-COM",
+              "FIN-0",
+              "FIN-REC",
+              "FIN-BASE",
+              "GES-0",
+              "GES-META"
             ]
           },
           "business": [
@@ -20567,7 +20617,12 @@
               "VEN-SERV",
               "VEN-PROD",
               "VEN-PAC",
-              "VEN-COM"
+              "VEN-COM",
+              "FIN-0",
+              "FIN-REC",
+              "FIN-BASE",
+              "GES-0",
+              "GES-META"
             ]
           },
           "business": [
@@ -23381,13 +23436,18 @@
             "installed": [
               "CRM-0",
               "CRM-1",
+              "CRM-CAMP",
               "PES-0",
               "PES-FORN",
               "VEN-0",
               "VEN-SERV",
               "VEN-PROD",
               "VEN-PAC",
-              "VEN-COM"
+              "VEN-COM",
+              "FIN-0",
+              "FIN-REC",
+              "FIN-BASE",
+              "GES-0"
             ]
           },
           "business": [
@@ -26244,12 +26304,18 @@
             "installed": [
               "CRM-0",
               "CRM-1",
+              "CRM-CAMP",
               "PES-0",
               "PES-FORN",
               "VEN-0",
               "VEN-SERV",
               "VEN-PROD",
-              "VEN-PAC"
+              "VEN-PAC",
+              "FIN-0",
+              "FIN-REC",
+              "FIN-BASE",
+              "GES-0",
+              "GES-META"
             ]
           },
           "business": [
@@ -29107,7 +29173,12 @@
         ],
         "reason": "REQUIRED_RELATION"
       },
-      "expenses": null,
+      "expenses": {
+        "by": [
+          "FIN-0"
+        ],
+        "reason": "FIXED_MODULE"
+      },
       "financialBaselines": null,
       "goals": null,
       "leadActivities": {
@@ -29152,7 +29223,12 @@
         ],
         "reason": "REQUIRED_CAPABILITY"
       },
-      "reports": null,
+      "reports": {
+        "by": [
+          "GES-0"
+        ],
+        "reason": "FIXED_MODULE"
+      },
       "saleItems": {
         "reason": "ACCOUNTING"
       },
@@ -29173,14 +29249,14 @@
         "by": [
           "leadPipelines",
           "leads",
-          "sales",
-          "productUnits",
-          "appointments",
-          "goals",
           "campaigns",
+          "sales",
           "expenses",
           "otherRevenues",
           "financialBaselines",
+          "goals",
+          "productUnits",
+          "appointments",
           "stockMovements"
         ],
         "reason": "REQUIRED_RELATION"

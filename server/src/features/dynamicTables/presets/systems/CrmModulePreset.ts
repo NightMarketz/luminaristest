@@ -2,7 +2,9 @@ import type { SelectablePresetSuite } from '..';
 import { composeModuleTables, MODULE_KEYS, MODULE_REGISTRY } from '../modules/registry';
 
 // BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: o registro deixou de ser só CRM — a suíte compõe só a categoria `crm`.
-const CRM_MODULE_KEYS = MODULE_KEYS.filter((k) => MODULE_REGISTRY[k].category === 'crm');
+// PR-4: CRM-CAMP (Campanhas) entrou na categoria `crm`, mas a suíte continua com as mesmas 8 tabelas (a instalação do
+// Módulo CRM não muda; Campanhas é opcional, ligável depois).
+const CRM_MODULE_KEYS = MODULE_KEYS.filter((k) => MODULE_REGISTRY[k].category === 'crm' && k !== 'CRM-CAMP');
 
 /**
  * @description
