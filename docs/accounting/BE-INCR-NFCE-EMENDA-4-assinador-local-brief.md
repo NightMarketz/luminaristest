@@ -9,6 +9,9 @@
 > assinador local?"*: *"Sim, planeja"*. **Cobre só este BRIEF** (checklist, contratos esboçados, forks pendentes).
 > Não é `executa`, não ratifica fork, não autoriza merge nem o ADR do PR-0 (que pede autorização "só ADR" própria).
 >
+> **Forks: ✅ RATIFICADOS 2026-10-30** pelo dono, todos pela recomendação (§6). Achados fora de escopo (§9) em
+> pesquisa para decisão: [`X10A-EMENDA-4-FORA-DE-ESCOPO-2026-10-30.md`](../plano/gates/X10A-EMENDA-4-FORA-DE-ESCOPO-2026-10-30.md).
+>
 > **Em duas linhas:** o servidor continua montando, numerando e decidindo o estado da nota. Duas operações saem dele
 > para um **assinador local** na máquina do cliente: assinar com a chave do token (rsa-sha1) e abrir o mTLS com a SEFAZ
 > com o mesmo certificado. **Risco principal (inferido, não testado):** a pilha Windows do token (driver + CNG/CSP)
@@ -369,7 +372,11 @@ model DfeSignerTask {
 O runbook A3 (gate humano, dono executa) só começa com AL-PR-3 e AL-PR-5 em `main`, um cliente com e-CNPJ A3 próprio e
 inscrição estadual em SP habilitada para homologação [X04]. O FE de pareamento é incremento à parte (§9).
 
-## 6. Forks — RATIFICAÇÃO PENDENTE (nenhum decidido nesta sessão)
+## 6. Forks — ✅ RATIFICADOS 2026-10-30 pela recomendação
+
+> Dono, chat, 30/10: *"Pode ratificar todos e vamos abordar os que estao fora do escopo como decidir, pesquise"*.
+> Registro: [`D-2026-10-30-X10A-EMENDA-4-FORKS`](../plano/decisoes/D-2026-10-30-X10A-EMENDA-4-FORKS.md). Não é `executa`.
+> O texto das cédulas abaixo fica como estava; em cada uma vale o ramo da recomendação.
 
 ### F-AL-0 — O assinador local pede ADR próprio?
 O assinador é um **componente novo fora de `server/` e `my-app/`**: outra unidade de deploy (a máquina do cliente,
@@ -379,7 +386,7 @@ fronteira que o `check:arch` não alcança (ADR-ARCH-BOUNDARIES §5: mudar front
 - **(b)** Só emenda do ADR-DFE (a porta já existe).
 - **(c)** Sem ADR; o BRIEF basta.
 - **Recomendação: (a).** As decisões F-AL-1, 2, 3, 5 e 8 são duráveis e fora do domínio fiscal; uma emenda do ADR-DFE
-  as esconderia num documento sobre parceiro emissor. **PENDENTE.**
+  as esconderia num documento sobre parceiro emissor. **✅ RATIFICADA (30/10).**
 
 ### F-AL-1 — Plataforma e linguagem do assinador
 - **(a) .NET 8 (C#), Windows:** `X509Store` vê A1 e A3 pelo mesmo caminho (minidriver/CNG/CSP); `RSA.SignHash` com
@@ -392,7 +399,7 @@ fronteira que o `check:arch` não alcança (ADR-ARCH-BOUNDARIES §5: mudar front
   linguagem nova sem reuso nenhum.
 - **Recomendação: (a).** O mTLS com a chave no token é o ponto que decide, e no .NET ele sai pelo store do Windows,
   que é onde o driver do token já registra o certificado. Grau: **inferido** (documentação de plataforma conhecida,
-  nada testado com token real). **PENDENTE.**
+  nada testado com token real). **✅ RATIFICADA (30/10).**
 
 ### F-AL-2 — Como o servidor fala com o assinador
 - **(a) Long-poll HTTPS saindo do caixa:** nenhuma porta aberta no cliente; reusa Express sem dependência nova; o
@@ -404,7 +411,7 @@ fronteira que o `check:arch` não alcança (ADR-ARCH-BOUNDARIES §5: mudar front
   (página pública chamando endereço local) e põe a regra no frontend.
 - **(d) O servidor chama o assinador** (porta aberta ou túnel): exige abrir porta no cliente. Descartável.
 - **Recomendação: (a).** É o mesmo princípio do ADR-DFE D6 (polling), não abre porta e cabe no Express. A latência
-  de um poll é de milissegundos quando a tarefa já está na fila. **PENDENTE.**
+  de um poll é de milissegundos quando a tarefa já está na fila. **✅ RATIFICADA (30/10).**
 
 ### F-AL-3 — Autenticação e vínculo do assinador
 - **(a) Código de pareamento + token de dispositivo** (hash no banco), certificado conferido no pareamento (CNPJ-raiz =
@@ -414,7 +421,7 @@ fronteira que o `check:arch` não alcança (ADR-ARCH-BOUNDARIES §5: mudar front
 - **(c) Desafio assinado pela chave do token a cada sessão:** prova posse da chave sem mexer no proxy; PIN a cada
   sessão.
 - **Recomendação: (a)**, com o certificado amarrado no pareamento e conferido de novo em cada tarefa `ASSINAR` pelo
-  CNPJ (AL-19). (b) e (c) prendem o caixa ao PIN fora da hora da venda. **PENDENTE.**
+  CNPJ (AL-19). (b) e (c) prendem o caixa ao PIN fora da hora da venda. **✅ RATIFICADA (30/10).**
 
 ### F-AL-4 — Contingência off-line no caixa
 A contingência ratificada (E1-5 b, decisões 4 e 6–10 de 29/10) trata **a SEFAZ fora do ar**. Com o assinador, aparece
@@ -424,7 +431,7 @@ um caso novo: o caixa sem internet nenhuma (sem Luminaris e sem SEFAZ).
 - **(b) O assinador ganha montagem local e fila:** emite NFC-e off-line sem o servidor. Duplica montagem, numeração
   (série própria de contingência) e regra fiscal no desktop.
 - **Recomendação: (a).** (b) leva o domínio fiscal para fora do servidor, contra a figura do §2 e contra o contrato
-  (regra única num lugar). Fica registrado em §9 como frente que só nasce com autorização nova. **PENDENTE.**
+  (regra única num lugar). Fica registrado em §9 como frente que só nasce com autorização nova. **✅ RATIFICADA (30/10).**
 
 ### F-AL-5 — O assinador assina às cegas ou confere o conteúdo?
 - **(a) Só o hash**, como o PSC: assinador mínimo, nenhuma c14n no desktop.
@@ -432,7 +439,7 @@ um caso novo: o caixa sem internet nenhuma (sem Luminaris e sem SEFAZ).
   (AL-10, AL-19).
 - **Recomendação: (b).** O token é do cliente e obedeceria a qualquer hash que o servidor mandasse; com (a), um
   servidor comprometido assina NF-e falsa em nome do cliente. No PSC o titular tem o app do PSC como controle; aqui o
-  único controle é o assinador. Custo: c14n no assinador e o teste de contrato de ida e volta. **PENDENTE.**
+  único controle é o assinador. Custo: c14n no assinador e o teste de contrato de ida e volta. **✅ RATIFICADA (30/10).**
 
 ### F-AL-6 — Assinador indisponível na hora da emissão
 - **(a) Herdar o `PENDING_SIGNATURE` do PR-7:** pré-voo nomeia o faltante; queda no meio ⇒ `PENDING_SIGNATURE`;
@@ -442,7 +449,7 @@ um caso novo: o caixa sem internet nenhuma (sem Luminaris e sem SEFAZ).
 - **(c) Ligar a contingência off-line.**
 - **Recomendação: (a).** (c) não resolve: a contingência off-line também precisa assinar a nota e o QR com o token
   [MOC Anexo IV, via PR-9]. (b) perde a nota que caiu no meio. A decisão 5 foi dada para a sessão do PSC; aplicá-la
-  aqui é extensão, por isso fork. **PENDENTE.**
+  aqui é extensão, por isso fork. **✅ RATIFICADA (30/10).**
 
 ### F-AL-7 — O que fazer com o ramo PSC (#984/#986/#992)
 - **(a) Manter o PSC como segundo adaptador da `AssinadorRemotoPort`, atrás de `DFE_ASSINADOR=psc`** (desligado por
@@ -454,7 +461,7 @@ um caso novo: o caixa sem internet nenhuma (sem Luminaris e sem SEFAZ).
 - **Recomendação: (a).** O PSC do cliente continua BYOK e permitido pela decisão de 30/10 ([[D5]] §7 (i)), e o código
   já está escrito e testado com o falso. O caminho PSC só volta a transmitir se a saída (b) do D5 §4.1 (PKCS#11) ou o
   próprio assinador local fizer o transporte. Já o transmissor com certificado do Luminaris contraria a decisão e não
-  deve ficar configurável. **PENDENTE.**
+  deve ficar configurável. **✅ RATIFICADA (30/10).**
 
 ### F-AL-8 — Distribuição, assinatura de código e atualização
 - **(a) Binário sem assinatura de código**, baixado da própria instância do cliente, com SHA-256 publicado na tela;
@@ -462,7 +469,7 @@ um caso novo: o caixa sem internet nenhuma (sem Luminaris e sem SEFAZ).
 - **(b) Certificado de assinatura de código do Luminaris:** some o aviso, mas é **compra do Luminaris** e contraria
   [[D-2026-10-30-D5-SEM-CONTRATACAO-BYOK]]; só com decisão nova.
 - **(c) Microsoft Store / MSIX:** a loja assina o pacote; conta de desenvolvedor, termos e custo **não verificados**.
-- **Recomendação: (a)** para a homologação e o 1º cliente, com (c) pesquisado antes de um segundo cliente. **PENDENTE.**
+- **Recomendação: (a)** para a homologação e o 1º cliente, com (c) pesquisado antes de um segundo cliente. **✅ RATIFICADA (30/10).**
 
 ### F-AL-9 — Selo Eletrônico depois de 02/03/2029
 O A3 de PJ vale até 02/03/2029 e depois a PJ passa ao Selo Eletrônico [D06]; o MOC ainda diz "A1 ou A3" [D05] e não
@@ -470,21 +477,21 @@ achei nota técnica que admita o Selo.
 - **(a)** Vigilância datada no nó: revisar o MOC online e a FAQ do ITI em 03/2028; o assinador já lê o store, então o
   SE-H em token entra sem mudança de desenho (inferido).
 - **(b)** Nada agora.
-- **Recomendação: (a).** Não pede código (go-live só em 2027; a regra só muda em 2029). **PENDENTE.**
+- **Recomendação: (a).** Não pede código (go-live só em 2027; a regra só muda em 2029). **✅ RATIFICADA (30/10).**
 
 ### F-AL-10 — Quanto tempo o pedido do operador espera o assinador
 - **(a) Espera até 20 s** (`DFE_ASSINADOR_TIMEOUT_MS`) e aplica o resultado síncrono (decisão 1 de 29/10); estourou ⇒
   `SENT`/`PENDING_SIGNATURE` e o ciclo de polling continua.
 - **(b) Sempre assíncrono** (202 e a tela consulta).
 - **Recomendação: (a).** Mantém o resultado síncrono ratificado e o balcão sabe na hora se a nota saiu. O número 20 s
-  é proposta, a medir no runbook. **PENDENTE.**
+  é proposta, a medir no runbook. **✅ RATIFICADA (30/10).**
 
 ### F-AL-11 — Ordem com os PRs abertos do PSC falso
 - **(a)** Esta emenda empilha **depois** de #984, #986 e #992 entrarem em `main` (merge pela maestro ou pelo lote do
   dono, como manda a classe de risco).
 - **(b)** Reescrever os PRs abertos já para o assinador local.
 - **Recomendação: (a).** Os três PRs têm `executa` e revisão própria; reescrevê-los mistura duas autorizações num
-  diff. **PENDENTE.**
+  diff. **✅ RATIFICADA (30/10).**
 
 
 ## 7. Pendente de validação externa
