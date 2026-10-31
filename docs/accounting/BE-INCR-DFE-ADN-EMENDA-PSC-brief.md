@@ -1,3 +1,5 @@
+> **31/10:** segue superada. A NFS-e automática voltou pelo assinador local, não pelo PSC: ver [`BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md`](BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md). O desenho em duas fases (E-7) já existe no #984 e é reaproveitado lá.
+
 > **SUPERADO EM 13/10 (dono, conciliação do PR #639):** vale [[D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS]] — **ADN pausado, pesquisar PSC**; a guarda do certificado pelo Luminaris (decisão de 12/10) não vale. Onde as respostas de 12/10 e 13/10 a F-NFCE-E1/F-FE-COB divergirem, vale 13/10. O achado da FAQ NFS-e v1.1 17.7 (mTLS exige o certificado do próprio prestador; PSC não cobre a conexão) continua de pé e fica para a pesquisa de PSC.
 
 > **SUPERADA em 2026-10-12** (dono, chat, 2026-10-12, questionário ([[D-2026-10-12-QUESTIONARIO-DONO]] §5ª rodada)): a FAQ oficial da NFS-e (17.7) exige o certificado do próprio prestador no mTLS, o que derruba o F-PSC-1; o dono escolheu a guarda do certificado do cliente pelo Luminaris para os três DF-e. F-PSC-1..8 perdem o objeto. Vale o BRIEF-ADN original. Mantido como registro.
