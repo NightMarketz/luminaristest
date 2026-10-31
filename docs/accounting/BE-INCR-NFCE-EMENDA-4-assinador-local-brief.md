@@ -431,7 +431,7 @@ um caso novo: o caixa sem internet nenhuma (sem Luminaris e sem SEFAZ).
 - **(b) O assinador ganha montagem local e fila:** emite NFC-e off-line sem o servidor. Duplica montagem, numeração
   (série própria de contingência) e regra fiscal no desktop.
 - **Recomendação: (a).** (b) leva o domínio fiscal para fora do servidor, contra a figura do §2 e contra o contrato
-  (regra única num lugar). Fica registrado em §9 como frente que só nasce com autorização nova. **✅ RATIFICADA (30/10).**
+  (regra única num lugar). Fica registrado em §9 como frente que só nasce com autorização nova. **✅ RATIFICADA (30/10) pela (a) e REABERTA no mesmo dia → (b)**, contra a recomendação ([`D-2026-10-30-X10A-EMENDA-4-FORA-DE-ESCOPO`](../plano/decisoes/D-2026-10-30-X10A-EMENDA-4-FORA-DE-ESCOPO.md) item 3): a NFC-e off-line no caixa vira frente nova com BRIEF próprio; o checklist AL-1..AL-24 não muda.
 
 ### F-AL-5 — O assinador assina às cegas ou confere o conteúdo?
 - **(a) Só o hash**, como o PSC: assinador mínimo, nenhuma c14n no desktop.
@@ -518,6 +518,10 @@ achei nota técnica que admita o Selo.
    tem `DFE_SEFAZ_CA` opcional, sem o arquivo.
 
 ## 9. Achados fora de escopo (não planejados)
+
+> **Decididos em 30/10** ([`D-2026-10-30-X10A-EMENDA-4-FORA-DE-ESCOPO`](../plano/decisoes/D-2026-10-30-X10A-EMENDA-4-FORA-DE-ESCOPO.md)):
+> item 1 → BRIEF de FE junto do AL-PR-2; item 2 → reabrir já (emenda do BRIEF ADN); item 3 → Reinf pelo portal ou
+> contador (F-REINF-2 b); item 4 → frente nova (F-AL-4 → b); item 5 segue aberto.
 
 1. **FE-INCR do assinador:** tela de pareamento (gerar código, ver estado, revogar) e aviso no balcão quando o
    assinador está fora. Incremento à parte (a casa separa BE e FE).

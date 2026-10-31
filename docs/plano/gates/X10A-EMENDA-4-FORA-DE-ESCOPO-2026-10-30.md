@@ -2,8 +2,9 @@
 
 **Pedido do dono (chat, 30/10/2026):** *"Pode ratificar todos e vamos abordar os que estao fora do escopo como decidir,
 pesquise"*. Os forks F-AL-0..11 estão em [[D-2026-10-30-X10A-EMENDA-4-FORKS]]. Esta cédula trata só do §9 do
-[BRIEF](../../accounting/BE-INCR-NFCE-EMENDA-4-assinador-local-brief.md). **Nada aqui está decidido**: cada item
-termina numa pergunta ao dono. Não é `executa`.
+[BRIEF](../../accounting/BE-INCR-NFCE-EMENDA-4-assinador-local-brief.md). **Decidido em 30/10 por questionário** ([[D-2026-10-30-X10A-EMENDA-4-FORA-DE-ESCOPO]]): §1 → (a) reabrir já;
+§2 → (b) portal ou contador; §3 → (b) frente nova; §4 → (a). §5 não foi perguntado. O texto abaixo é a cédula como foi
+apresentada. Não é `executa`.
 
 **Fontes:** todas já estão em dossiês com hash, baixados entre 27/10 e 30/10. A cópia tem menos de 90 dias e não há
 "Redação dada" nova no trecho citado, então não houve download novo (método `VERIFICACAO-LEGAL.md`, passo 3).

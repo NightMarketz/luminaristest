@@ -37,3 +37,5 @@ BRIEF: [`BE-INCR-NFCE-EMENDA-4-assinador-local-brief.md`](../../accounting/BE-IN
   AL-PR-0 (ADR) com autorização "só ADR" ou dentro do `executa`.
 - Os achados fora de escopo do BRIEF (§9) **não** entram por esta decisão: o dono pediu pesquisa para decidir cada um
   ([`X10A-EMENDA-4-FORA-DE-ESCOPO-2026-10-30.md`](../gates/X10A-EMENDA-4-FORA-DE-ESCOPO-2026-10-30.md)).
+- **Mesmo dia, depois:** o F-AL-4 foi reaberto e passou a **(b)**, contra a recomendação
+  ([[D-2026-10-30-X10A-EMENDA-4-FORA-DE-ESCOPO]] item 3). Os outros 11 forks ficam como na tabela.
