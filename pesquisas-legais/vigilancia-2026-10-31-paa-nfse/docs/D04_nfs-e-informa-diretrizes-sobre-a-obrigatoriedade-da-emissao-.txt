@@ -1,0 +1,497 @@
+NFS-e informa: diretrizes sobre a Obrigatoriedade da Emissão da NFS-e Nacional para Optantes do Simples Nacional — Portal da Nota Fiscal de Serviço eletrônica Ir para o Conteúdo 1 Ir para a Página Inicial 2 Ir para o menu de Navegação 3 Ir para a Busca 4 Ir para o Mapa do site 5 Atenção! Seu navegador não pode executar javascript. Alguns recursos podem não funcionar corretamente. 
+
+ Abrir menu principal de navegação 
+ Portal da Nota Fiscal de Serviço eletrônica 
+
+ Termos mais buscados 
+
+ Desenrola Brasil 
+
+ assinatura 
+
+ mei 
+
+ imposto de renda 
+
+ enem 
+
+ Termos mais buscados 
+
+ Desenrola Brasil 
+
+ assinatura 
+
+ mei 
+
+MEI e demais empresas 
+ Emissor de NFS-e WEB 
+
+ Consultar Nota Fiscal 
+
+ Acesso aos Sistemas 
+ Consultar Nota Fiscal 
+
+ Prestador de Serviços 
+
+ Município 
+
+ Cidadão 
+
+ Consultar Nota Fiscal 
+
+ Lista de Serviços Anexa à Lei Complementar nº 116, de 31 de julho de 2003 
+
+Consumidor dos serviços 
+ Consultar Nota Fiscal 
+
+ Apps NFSe Mobile 
+
+Municípios 
+ Conheça a NFS-e 
+ O que é a NFS-e 
+
+ Histórico da NFS-e 
+
+ O padrão nacional da NFS-e 
+
+ O que é SPED 
+
+ Benefícios 
+
+ Produtos disponíveis 
+ Ambiente de Dados Nacional 
+
+ Emissor NFS-e WEB 
+
+ APP emissor de NFS-e 
+
+ APP Cidadão (NFSe Cidadao) 
+
+ Secretaria de Finanças Nacional 
+
+ Guia de Recolhimento 
+
+ Portal NFS-e 
+
+ Webservices Municipais 
+
+ Webservices empresariais 
+
+ Webservices conveniados 
+
+ EFD ISS 
+
+ API de integração 
+
+ Painel Administrativo Municipal 
+
+ Como conveniar-se 
+ Como conveniar-se 
+
+ Como implementar a NFS-e 
+ Implementação da NFS-e - ADN 
+
+ Implementação da NFS-e - Emissores Públicos 
+
+ Monitoramento das Adesões à NFS-e 
+
+ Plano de Implantação da NFS-e 
+
+ Painel Municipal (parametrização) 
+
+NFS-e Via 
+ Solicitação de cadastramento no Portal das Concessionárias de Exploração de Vias 
+
+ Documentação técnica 
+ Manuais e anexos 
+
+ Leiautes 
+
+ Arquivos dos esquemas XSD 
+
+ Notas técnicas 
+
+ Versões anteriores da documentação 
+
+ Links 
+
+Canais de Atendimento
+
+Biblioteca 
+ Portarias e Resoluções do CGNFS-e 
+
+ Documentação técnica 
+ Atualizações e Implantações 
+
+ Documentação Atual (Produção) 
+
+ Documentação Técnica (Homologação/testes) 
+
+ APIs - Prod. Restrita e Produção 
+
+ RTC 
+
+ Leiaute e esquemas antigos (julho de 2022 a 28/09/2025) 
+
+ Logos da NFS-e 
+
+ Links com Passo a Passo 
+
+ Legislação Aplicável ao MEI 
+
+ Eventos NFS-e 
+
+ Alíquotas de ISSQN 
+
+Perguntas Frequentes
+
+Privacidade e Proteção de Dados
+
+ GOV.BR 
+ Serviços 
+ Buscar serviços por 
+ Categorias 
+
+ Órgãos 
+
+ Estados 
+
+ Serviços por público alvo 
+ Cidadãos 
+
+ Empresas 
+
+ Órgãos e Entidades Públicas 
+
+ Demais segmentos (ONGs, organizações sociais, etc) 
+
+ Servidor Público 
+
+ Temas em Destaque 
+ Orçamento Nacional 
+
+ Redes de Atendimento da Administração Pública Federal 
+
+ Proteção de Dados Pessoais 
+
+ Serviços para Imigrantes 
+
+ Política e Orçamento Educacionais 
+
+ Educação Profissional e Tecnológica 
+
+ Educação Profissional para Jovens e Adultos 
+
+ Trabalho e Emprego 
+
+ Serviços para Pessoas com Deficiência 
+
+ Combate à Discriminação Racial 
+
+ Política de Proteção Social 
+
+ Política para Mulheres 
+
+ Saúde Reprodutiva da Mulher 
+
+ Cuidados na Primeira Infância 
+
+ Habitação Popular 
+
+ Controle de Poluição e Resíduos Sólidos 
+
+ Notícias 
+ Saúde 
+
+ Agricultura e Pecuária 
+
+ Cidadania e Assistência Social 
+
+ Ciência e Tecnologia 
+
+ Comunicação 
+
+ Cultura e Esporte 
+
+ Economia e Gestão Pública 
+
+ Educação e Pesquisa 
+
+ Energia 
+
+ Forças Armadas e Defesa Civil 
+
+ Infraestrutura 
+
+ Justiça e Segurança 
+
+ Meio Ambiente 
+
+ Trabalho e Previdência 
+ FGTS 
+
+ Direitos do Trabalhador 
+
+ Turismo 
+ Direitos do Viajante 
+
+ Viaje o Brasil 
+
+ Galeria de Aplicativos 
+
+ Acompanhe o Planalto 
+
+ Navegação 
+ Acessibilidade 
+
+ Mapa do Site 
+
+ Termo de Uso e Aviso de Privacidade 
+
+ Consultar minhas solicitações 
+
+ Órgãos do Governo 
+
+ Por dentro do Gov.br 
+ Dúvidas Frequentes em relação ao Portal gov.br 
+
+ Dúvidas Frequentes da conta gov.br 
+
+ Ajuda para Navegar o Portal 
+
+ Conheça os elementos do Portal 
+
+ Política de e-participação 
+
+ Termos de Uso 
+
+ Governo Digital 
+
+ Guia de Edição de Serviços do Portal Gov.br 
+
+ Canais do Executivo Federal 
+
+ Dados da Administração Pública Federal 
+ Dados Abertos 
+
+ Painel Estatístico de Pessoal 
+
+ Painel de Compras da Administração Pública Federal 
+
+ Acesso à Informação 
+
+ Empresas e Negócios 
+
+Links Úteis
+
+ Galeria de Aplicativos 
+
+ Participe 
+
+ Galeria de Aplicativos 
+
+ Participe 
+
+ Ajude a melhorar o gov.br 
+
+Redes sociais
+
+ Twitter 
+
+ YouTube 
+
+ Facebook 
+
+ Flickr 
+
+ Você está aqui: Página Inicial Notícias NFS-e informa: diretrizes sobre a Obrigatoriedade da Emissão da NFS-e Nacional para Optantes do Simples Nacional 
+
+ Info 
+
+Notícias
+
+NFS-e informa: diretrizes sobre a Obrigatoriedade da Emissão da NFS-e Nacional para Optantes do Simples Nacional
+
+ Compartilhe: Compartilhe por Facebook Compartilhe por Twitter Compartilhe por LinkedIn Compartilhe por WhatsApp link para Copiar para área de transferência 
+
+ Publicado em 29/10/2026 14h55 
+
+A partir de 01/11/2026, as Microempresas (ME) e Empresas de Pequeno Porte (EPP) optantes do Simples Nacional devem emitir a NFS-e exclusivamente pelo Emissor Nacional (Web ou API).
+
+O critério fundamental que norteia a validação do documento fiscal e as travas operacionais do sistema é a Data de Competência do serviço.
+
+1. Fluxo de Emissão a Partir de 01/11/2026
+
+Para competências a partir de 1º de novembro de 2026, todos os optantes do Simples Nacional estarão habilitados e deverão emitir os seus documentos fiscais pelo ambiente nacional.
+
+Esta regra é obrigatória independentemente de o município possuir emissor próprio e de o contribuinte constar ou não no cadastro municipal.
+
+Para os contribuintes de municípios que já utilizavam a emissão nacional previamente, o fluxo operacional permanece inalterado.
+
+2. Municípios com Emissor Próprio: Como configurar as travas e tratar notas retroativas
+
+Trava para Notas Novas: O sistema da prefeitura deve bloquear a emissão de notas para o Simples Nacional (ME/EPP) se a competência for igual ou posterior a 01/11/2026.
+
+Autorização para Emissões Retroativas (Notas Antigas): Para competências anteriores a 01/11/2026 (como 30 de outubro), o sistema municipal deve manter a autorização de emissão e o envio normal dos dados ao ADN. Esta conduta é indispensável, uma vez que o Emissor Nacional irá barrar emissões com datas retroativas destinadas a municípios com a emissão em sistema próprio.
+
+Rejeição Automática: Caso o sistema municipal não faça o bloqueio e tente enviar ao Ambiente de Dados Nacional (ADN) uma nota do Simples Nacional com competência nova (de novembro em diante), o arquivo será rejeitado automaticamente por uma regra de layout.
+
+Resumo prático: Para competências novas, o município passa a ser apenas um "consumidor" (recebedor) das notas geradas no ambiente nacional. Para competências antigas, a prefeitura continua autorizando e compartilhando os dados.
+
+ Categoria 
+Finanças, Impostos e Gestão Pública
+
+ Compartilhe: Compartilhe por Facebook Compartilhe por Twitter Compartilhe por LinkedIn Compartilhe por WhatsApp link para Copiar para área de transferência 
+
+MEI e demais empresas 
+ Emissor de NFS-e WEB 
+
+ Consultar Nota Fiscal 
+
+ Acesso aos Sistemas 
+ Consultar Nota Fiscal 
+
+ Prestador de Serviços 
+
+ Município 
+
+ Cidadão 
+
+ Consultar Nota Fiscal 
+
+ Lista de Serviços Anexa à Lei Complementar nº 116, de 31 de julho de 2003 
+
+Consumidor dos serviços 
+ Consultar Nota Fiscal 
+
+ Apps NFSe Mobile 
+
+Municípios 
+ Conheça a NFS-e 
+ O que é a NFS-e 
+
+ Histórico da NFS-e 
+
+ O padrão nacional da NFS-e 
+
+ O que é SPED 
+
+ Benefícios 
+
+ Produtos disponíveis 
+ Ambiente de Dados Nacional 
+
+ Emissor NFS-e WEB 
+
+ APP emissor de NFS-e 
+
+ APP Cidadão (NFSe Cidadao) 
+
+ Secretaria de Finanças Nacional 
+
+ Guia de Recolhimento 
+
+ Portal NFS-e 
+
+ Webservices Municipais 
+
+ Webservices empresariais 
+
+ Webservices conveniados 
+
+ EFD ISS 
+
+ API de integração 
+
+ Painel Administrativo Municipal 
+
+ Como conveniar-se 
+ Como conveniar-se 
+
+ Como implementar a NFS-e 
+ Implementação da NFS-e - ADN 
+
+ Implementação da NFS-e - Emissores Públicos 
+
+ Monitoramento das Adesões à NFS-e 
+
+ Plano de Implantação da NFS-e 
+
+ Painel Municipal (parametrização) 
+
+NFS-e Via 
+ Solicitação de cadastramento no Portal das Concessionárias de Exploração de Vias 
+
+ Documentação técnica 
+ Manuais e anexos 
+
+ Leiautes 
+
+ Arquivos dos esquemas XSD 
+
+ Notas técnicas 
+
+ Versões anteriores da documentação 
+
+ Links 
+
+Canais de Atendimento
+
+Biblioteca 
+ Portarias e Resoluções do CGNFS-e 
+
+ Documentação técnica 
+ Atualizações e Implantações 
+
+ Documentação Atual (Produção) 
+
+ Documentação Técnica (Homologação/testes) 
+
+ APIs - Prod. Restrita e Produção 
+
+ RTC 
+
+ Leiaute e esquemas antigos (julho de 2022 a 28/09/2025) 
+
+ Logos da NFS-e 
+
+ Links com Passo a Passo 
+
+ Legislação Aplicável ao MEI 
+
+ Eventos NFS-e 
+
+ Alíquotas de ISSQN 
+
+Perguntas Frequentes
+
+Privacidade e Proteção de Dados
+
+ Redefinir Cookies 
+
+Redes sociais
+
+ Twitter 
+
+ YouTube 
+
+ Facebook 
+
+ Flickr 
+
+ Acesso àInformação 
+
+ Todo o conteúdo deste site está publicado sob a licença Creative Commons Atribuição-SemDerivações 3.0 Não Adaptada. 
+ Voltar ao topo da página 
+
+ Rejeitar 
+
+ Fale Agora Refazer a busca 
+
+Ajude a melhorar o gov.br
+
+Ao compartilhar sua opinião, você nos ajuda a identificar problemas e a melhorar a navegação para você.
+
+ Agora não Responder pesquisa 
+
+ Não exibir esta mensagem novamente.

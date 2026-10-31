@@ -1,0 +1,555 @@
+Atualizações e Implantações — Portal da Nota Fiscal de Serviço eletrônica Ir para o Conteúdo 1 Ir para a Página Inicial 2 Ir para o menu de Navegação 3 Ir para a Busca 4 Ir para o Mapa do site 5 Atenção! Seu navegador não pode executar javascript. Alguns recursos podem não funcionar corretamente. 
+
+ Abrir menu principal de navegação 
+ Portal da Nota Fiscal de Serviço eletrônica 
+
+ Termos mais buscados 
+
+ Desenrola Brasil 
+
+ assinatura 
+
+ mei 
+
+ imposto de renda 
+
+ enem 
+
+ Termos mais buscados 
+
+ Desenrola Brasil 
+
+ assinatura 
+
+ mei 
+
+MEI e demais empresas 
+ Emissor de NFS-e WEB 
+
+ Consultar Nota Fiscal 
+
+ Acesso aos Sistemas 
+ Consultar Nota Fiscal 
+
+ Prestador de Serviços 
+
+ Município 
+
+ Cidadão 
+
+ Consultar Nota Fiscal 
+
+ Lista de Serviços Anexa à Lei Complementar nº 116, de 31 de julho de 2003 
+
+Consumidor dos serviços 
+ Consultar Nota Fiscal 
+
+ Apps NFSe Mobile 
+
+Municípios 
+ Conheça a NFS-e 
+ O que é a NFS-e 
+
+ Histórico da NFS-e 
+
+ O padrão nacional da NFS-e 
+
+ O que é SPED 
+
+ Benefícios 
+
+ Produtos disponíveis 
+ Ambiente de Dados Nacional 
+
+ Emissor NFS-e WEB 
+
+ APP emissor de NFS-e 
+
+ APP Cidadão (NFSe Cidadao) 
+
+ Secretaria de Finanças Nacional 
+
+ Guia de Recolhimento 
+
+ Portal NFS-e 
+
+ Webservices Municipais 
+
+ Webservices empresariais 
+
+ Webservices conveniados 
+
+ EFD ISS 
+
+ API de integração 
+
+ Painel Administrativo Municipal 
+
+ Como conveniar-se 
+ Como conveniar-se 
+
+ Como implementar a NFS-e 
+ Implementação da NFS-e - ADN 
+
+ Implementação da NFS-e - Emissores Públicos 
+
+ Monitoramento das Adesões à NFS-e 
+
+ Plano de Implantação da NFS-e 
+
+ Painel Municipal (parametrização) 
+
+NFS-e Via 
+ Solicitação de cadastramento no Portal das Concessionárias de Exploração de Vias 
+
+ Documentação técnica 
+ Manuais e anexos 
+
+ Leiautes 
+
+ Arquivos dos esquemas XSD 
+
+ Notas técnicas 
+
+ Versões anteriores da documentação 
+
+ Links 
+
+Canais de Atendimento
+
+Biblioteca 
+ Portarias e Resoluções do CGNFS-e 
+
+ Documentação técnica 
+ Atualizações e Implantações 
+
+ Documentação Atual (Produção) 
+
+ Documentação Técnica (Homologação/testes) 
+
+ APIs - Prod. Restrita e Produção 
+
+ RTC 
+
+ Leiaute e esquemas antigos (julho de 2022 a 28/09/2025) 
+
+ Logos da NFS-e 
+
+ Links com Passo a Passo 
+
+ Legislação Aplicável ao MEI 
+
+ Eventos NFS-e 
+
+ Alíquotas de ISSQN 
+
+Perguntas Frequentes
+
+Privacidade e Proteção de Dados
+
+ GOV.BR 
+ Serviços 
+ Buscar serviços por 
+ Categorias 
+
+ Órgãos 
+
+ Estados 
+
+ Serviços por público alvo 
+ Cidadãos 
+
+ Empresas 
+
+ Órgãos e Entidades Públicas 
+
+ Demais segmentos (ONGs, organizações sociais, etc) 
+
+ Servidor Público 
+
+ Temas em Destaque 
+ Orçamento Nacional 
+
+ Redes de Atendimento da Administração Pública Federal 
+
+ Proteção de Dados Pessoais 
+
+ Serviços para Imigrantes 
+
+ Política e Orçamento Educacionais 
+
+ Educação Profissional e Tecnológica 
+
+ Educação Profissional para Jovens e Adultos 
+
+ Trabalho e Emprego 
+
+ Serviços para Pessoas com Deficiência 
+
+ Combate à Discriminação Racial 
+
+ Política de Proteção Social 
+
+ Política para Mulheres 
+
+ Saúde Reprodutiva da Mulher 
+
+ Cuidados na Primeira Infância 
+
+ Habitação Popular 
+
+ Controle de Poluição e Resíduos Sólidos 
+
+ Notícias 
+ Saúde 
+
+ Agricultura e Pecuária 
+
+ Cidadania e Assistência Social 
+
+ Ciência e Tecnologia 
+
+ Comunicação 
+
+ Cultura e Esporte 
+
+ Economia e Gestão Pública 
+
+ Educação e Pesquisa 
+
+ Energia 
+
+ Forças Armadas e Defesa Civil 
+
+ Infraestrutura 
+
+ Justiça e Segurança 
+
+ Meio Ambiente 
+
+ Trabalho e Previdência 
+ FGTS 
+
+ Direitos do Trabalhador 
+
+ Turismo 
+ Direitos do Viajante 
+
+ Viaje o Brasil 
+
+ Galeria de Aplicativos 
+
+ Acompanhe o Planalto 
+
+ Navegação 
+ Acessibilidade 
+
+ Mapa do Site 
+
+ Termo de Uso e Aviso de Privacidade 
+
+ Consultar minhas solicitações 
+
+ Órgãos do Governo 
+
+ Por dentro do Gov.br 
+ Dúvidas Frequentes em relação ao Portal gov.br 
+
+ Dúvidas Frequentes da conta gov.br 
+
+ Ajuda para Navegar o Portal 
+
+ Conheça os elementos do Portal 
+
+ Política de e-participação 
+
+ Termos de Uso 
+
+ Governo Digital 
+
+ Guia de Edição de Serviços do Portal Gov.br 
+
+ Canais do Executivo Federal 
+
+ Dados da Administração Pública Federal 
+ Dados Abertos 
+
+ Painel Estatístico de Pessoal 
+
+ Painel de Compras da Administração Pública Federal 
+
+ Acesso à Informação 
+
+ Empresas e Negócios 
+
+Links Úteis
+
+ Galeria de Aplicativos 
+
+ Participe 
+
+ Galeria de Aplicativos 
+
+ Participe 
+
+ Ajude a melhorar o gov.br 
+
+Redes sociais
+
+ Twitter 
+
+ YouTube 
+
+ Facebook 
+
+ Flickr 
+
+ Você está aqui: Página Inicial Biblioteca Documentação técnica Atualizações e Implantações 
+
+ Info 
+
+Atualizações e Implantações
+
+Atualizações e implantações dos sistemas da NFS-e
+
+ Compartilhe: Compartilhe por Facebook Compartilhe por Twitter Compartilhe por LinkedIn Compartilhe por WhatsApp link para Copiar para área de transferência 
+
+ Publicado em 18/03/2026 08h49 Atualizado em 21/10/2026 15h01 
+
+PRODUÇÃO
+
+PRODUÇÃO RESTRITA
+
+20/10/2026
+
+ -
+
+- Reposicionamento dos campos CST e cClassTrib na estrutura do XML da nota fiscal (item 2.16 da Nota Técnica 009);
+
+- Inclusão dos novos fatos geradores na API de emissão (códigos 99.02 a 99.04, itens 2.15 da Nota Técnica 009 e 2.1.3 da Nota Técnica 005);
+
+- Criação do grupo vAjusteBC a partir do merge dos grupos vDedRed e gReeRepRes (item 2.3 da Nota Técnica 009).
+
+28/09/2026
+
+Nova funcionalidade no Painel Administrativo Municipal para permitir antecipar a adoção do Emissor Nacional para optantes pelo Simples Nacional
+ Nova funcionalidade no Painel Administrativo Municipal para permitir antecipar a adoção do Emissor Nacional para optantes pelo Simples Nacional 
+
+10/08/2026
+
+Evolução para tratamento do CNPJ alfanumérico;
+
+Emissor Nacional Web - Evolução para destaque de IBS/CBS - NT 004;
+
+Emissor Nacional Web para Decisões Administrativas e Judiciais com grupos IBS/CBS;
+
+Emissor Nacional Web - Ajustes na Consulta e Ordenação por Datas (Notas emitidas e recebidas);
+
+Ajuste no enquadramento e desenquadramento do Simples Nacional na funcionalidade de Substituição de Notas;
+
+SEFIN Nacional - Tratamento de casos de enquadramento e desenquadramento de emitente no Simples Nacional; e
+
+Evolução no Controle de Acesso ao Portal do Contribuinte.
+
+03/08/2026
+
+Consulta Pública com exibição dos grupos IBS/CBS;
+
+Geração do DANFSe atualizada em conformidade com a Nota Técnica 008 (NT008), por meio da Consulta Pública, do Portal do Contribuinte e do Painel Administrativo Municipal;
+
+Evolução do DANFSE e da Consulta Pública: Novos grupos IBS/CBS;
+
+Evolução Sefin - Endereço no Exterior do Prestador/Fornecedor; e
+
+Desativação da API do DANFSe do ADN (versão 1.0).
+
+01/07/2026
+
+Ajustes nas regras E1577, E1549 e E1554 com o objetivo de permitir o correto compartilhamento ao ADN, pelos Municípios, dos documentos fiscais que possuem os grupos IBSCBS preenchidos. Havia divergência no cálculo e validação dos valores dos campos pAliqEfetUF, pAliqEfetMun e pAliqEfetCBS. Em resumo, esses campos são obrigatórios e devem ser iguais às alíquotas (pIBSUF, pIBSMun e pCBS, respectivamente) quando não houver redutores.
+
+24/04/2026
+
+Correção de códigos de mensagens, conforme abaixo e criação da regra E1000 para retornar erros da Calculadora RTC.
+
+- RNG6110 mudou para E1235 - Falha Schema XML;
+
+- E6151 mudou para E1634 - Certificado Digital fora do padrão estabelecido;
+
+- E6152 mudou para E1200 - Certificado Digital da transmissao inválido;
+
+- E6154 mudou para E1229 - Xml não está utilizando codificação UTF-8;
+
+- E6155 mudou para E1228 - Xml declarado com prefixo de namespace; e
+
+- E6157 mudou para E1225 - Falha ao descompactar XML Zip B64.
+
+13/03/2026
+
+- Desligamento da regras E1543, E1547 e E1552 que causavam conflito com demais regras existentes;
+
+- Desligamento da regra E0675 e os respectivos reflexos nos emissores nacionais para permitir a informação de tributos federais por prestador/fornecedor pessoa física (CPF);
+
+- Melhoria no tratamento da integração com a Calculadora de Tributos para retornar ao usuário a mensagem de erro real que foi lançada pela própria integração;
+
+- Ajuste no compartilhamento ADN para tratar corretamente o local de incidência de ISSQN em casos de serviço do subitem 14.14;
+
+- Correção do Emissor Nacional Web para aceitar a faixa de série correta (entre 80000 e 89999) quando emissão indicar transcrição manual de número e série de DPS;
+
+- Melhoria no tratamento de falhas de esquema para não retornar 999 em alguns casos (exemplo: quando o arquivo não possui o atributo xmlns);
+
+- Ajuste na API de consulta NFS-e da Sefin Nacional para considerar codificação UTF-8 no retorno da chamada.
+
+ Compartilhe: Compartilhe por Facebook Compartilhe por Twitter Compartilhe por LinkedIn Compartilhe por WhatsApp link para Copiar para área de transferência 
+
+MEI e demais empresas 
+ Emissor de NFS-e WEB 
+
+ Consultar Nota Fiscal 
+
+ Acesso aos Sistemas 
+ Consultar Nota Fiscal 
+
+ Prestador de Serviços 
+
+ Município 
+
+ Cidadão 
+
+ Consultar Nota Fiscal 
+
+ Lista de Serviços Anexa à Lei Complementar nº 116, de 31 de julho de 2003 
+
+Consumidor dos serviços 
+ Consultar Nota Fiscal 
+
+ Apps NFSe Mobile 
+
+Municípios 
+ Conheça a NFS-e 
+ O que é a NFS-e 
+
+ Histórico da NFS-e 
+
+ O padrão nacional da NFS-e 
+
+ O que é SPED 
+
+ Benefícios 
+
+ Produtos disponíveis 
+ Ambiente de Dados Nacional 
+
+ Emissor NFS-e WEB 
+
+ APP emissor de NFS-e 
+
+ APP Cidadão (NFSe Cidadao) 
+
+ Secretaria de Finanças Nacional 
+
+ Guia de Recolhimento 
+
+ Portal NFS-e 
+
+ Webservices Municipais 
+
+ Webservices empresariais 
+
+ Webservices conveniados 
+
+ EFD ISS 
+
+ API de integração 
+
+ Painel Administrativo Municipal 
+
+ Como conveniar-se 
+ Como conveniar-se 
+
+ Como implementar a NFS-e 
+ Implementação da NFS-e - ADN 
+
+ Implementação da NFS-e - Emissores Públicos 
+
+ Monitoramento das Adesões à NFS-e 
+
+ Plano de Implantação da NFS-e 
+
+ Painel Municipal (parametrização) 
+
+NFS-e Via 
+ Solicitação de cadastramento no Portal das Concessionárias de Exploração de Vias 
+
+ Documentação técnica 
+ Manuais e anexos 
+
+ Leiautes 
+
+ Arquivos dos esquemas XSD 
+
+ Notas técnicas 
+
+ Versões anteriores da documentação 
+
+ Links 
+
+Canais de Atendimento
+
+Biblioteca 
+ Portarias e Resoluções do CGNFS-e 
+
+ Documentação técnica 
+ Atualizações e Implantações 
+
+ Documentação Atual (Produção) 
+
+ Documentação Técnica (Homologação/testes) 
+
+ APIs - Prod. Restrita e Produção 
+
+ RTC 
+
+ Leiaute e esquemas antigos (julho de 2022 a 28/09/2025) 
+
+ Logos da NFS-e 
+
+ Links com Passo a Passo 
+
+ Legislação Aplicável ao MEI 
+
+ Eventos NFS-e 
+
+ Alíquotas de ISSQN 
+
+Perguntas Frequentes
+
+Privacidade e Proteção de Dados
+
+ Redefinir Cookies 
+
+Redes sociais
+
+ Twitter 
+
+ YouTube 
+
+ Facebook 
+
+ Flickr 
+
+ Acesso àInformação 
+
+ Todo o conteúdo deste site está publicado sob a licença Creative Commons Atribuição-SemDerivações 3.0 Não Adaptada. 
+ Voltar ao topo da página 
+
+ Rejeitar 
+
+ Fale Agora Refazer a busca 
+
+Ajude a melhorar o gov.br
+
+Ao compartilhar sua opinião, você nos ajuda a identificar problemas e a melhorar a navegação para você.
+
+ Agora não Responder pesquisa 
+
+ Não exibir esta mensagem novamente.
