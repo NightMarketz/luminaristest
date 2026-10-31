@@ -19,6 +19,9 @@ export const ACCOUNTING_RESET_SETUP = [
   'AccountingPolicyVersion',
   // X10i PR-1 (dono, questionário, 2026-10-17, na integração do #650: "SETUP (sai no reset)"). Sem FK: posição livre.
   'FiscalCertificate',
+  // X10a PR-7 (EMENDA-PSC E-3/E-4): como o FiscalCertificate — credencial da unidade, sem FK.
+  'PscCredential',
+  'PscAuthorization',
   'ReferentialMapping',
   'RoleAccountOverride',
   'FiscalProfile',

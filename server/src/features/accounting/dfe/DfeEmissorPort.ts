@@ -1,5 +1,6 @@
 import type { DpsManualPayload, DpsPayload } from '../dtos/DpsPayloadDto';
 import type { NfePayload as NfePayloadNumerada, NfePayloadSemNumeracao } from '../dtos/NfePayloadDto';
+import type { AssinadorRemotoPort, CredencialPscResolvida } from './AssinadorRemotoPort';
 
 /**
  * DfeEmissorPort — BE-INCR-DFE (nó X10b, BRIEF item 10; ADR-DFE D-X10b-1).
@@ -81,6 +82,27 @@ export interface DfeCapabilities {
    * vedada na NFC-e, Aj. SINIEF 19/16 cl. 8ª §1º). Reservada: nenhum adaptador declara `true` e não há rota.
    */
   cce: boolean;
+  /**
+   * BE-INCR-DFE-ADN-EMENDA-PSC (E-6/E-12; X10a PR-7) — o adaptador assina pelo PSC e precisa da credencial da unidade em
+   * `ctx.assinatura`. O serviço faz o pré-voo (F-PSC-5 a) antes de consumir número. Ausente = `false`.
+   */
+  assinaturaRemota?: boolean;
+  /**
+   * X10a PR-7 (F-ADN-5 a, D-2026-10-29-X10A-PR7-9-FORKS decisão 1) — o retorno de `emitir` é o resultado do fisco (SEFAZ
+   * com `indSinc=1`), e o serviço o aplica pelo mesmo `applyResult` do ciclo. Ausente = `false`: o resultado imediato
+   * fica para o polling, como antes.
+   */
+  resultadoSincrono?: boolean;
+}
+
+/**
+ * BE-INCR-DFE-ADN-EMENDA-PSC item E-12 (X10a PR-7) — contexto por chamada, resolvido pelo SERVIÇO pela unidade do
+ * documento (BRIEF-ADN item 16; a porta não lê Prisma). `payload` serve ao `consultar` que remonta o `nfeProc` (E-8).
+ */
+export interface DfeCallContext {
+  ambiente: DfeAmbiente;
+  assinatura?: { assinador: AssinadorRemotoPort; credencial: CredencialPscResolvida };
+  payload?: unknown;
 }
 
 /**
@@ -98,6 +120,8 @@ export interface EmitirInput {
   partnerAccountRef: string | null;
   /** DPS numerada, DPS sem numeração (portal numera, F-MAN-4 a) ou NF-e/NFC-e (item 12). */
   payload: DpsPayload | DpsManualPayload | NfePayload;
+  /** X10a PR-7 — credencial do PSC quando `capabilities.assinaturaRemota`. */
+  ctx?: DfeCallContext;
 }
 
 export interface EmissaoResult {
@@ -163,6 +187,9 @@ export interface InutilizarInput {
   nIni: bigint;
   nFin: bigint;
   xJust: string;
+  /** X10a PR-7 (E-6) — UF do emitente (cUF do `infInut`) e a credencial do PSC, para o adaptador que assina. */
+  uf?: string;
+  ctx?: DfeCallContext;
 }
 
 export interface InutilizarResult {
@@ -179,8 +206,8 @@ export interface DfeEmissorPort {
   readonly name: string;
   readonly capabilities: DfeCapabilities;
   emitir(input: EmitirInput): Promise<EmissaoResult>;
-  consultar(partnerRef: string): Promise<EmissaoResult>;
-  cancelar(partnerRef: string, input: CancelInput): Promise<CancelResult>;
+  consultar(partnerRef: string, ctx?: DfeCallContext): Promise<EmissaoResult>;
+  cancelar(partnerRef: string, input: CancelInput, ctx?: DfeCallContext): Promise<CancelResult>;
   /** BE-INCR-NFCE item 24 — só existe quando `capabilities.inutilizar`. */
   inutilizar?(input: InutilizarInput): Promise<InutilizarResult>;
   /** BE-INCR-NFCE item 28 — CC-e (110110), só NF-e e só quando `capabilities.cce`. Sem implementação (F-NFCE-9 c). */

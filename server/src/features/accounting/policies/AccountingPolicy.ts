@@ -173,6 +173,11 @@ export class AccountingPolicy implements IAccountingPolicy {
     return this.canManageFiscalProfile(scope);
   }
 
+  // X10a PR-7 (EMENDA-PSC E-5): credencial do PSC da unidade — mesma régua do perfil fiscal.
+  canManagePscCredential(scope: AccountingScope): boolean {
+    return this.canManageFiscalProfile(scope);
+  }
+
   // BE-INCR-DFE (nó X10b, BRIEF item 5)
   canManageServiceFiscalProfile(scope: AccountingScope): boolean {
     return this.canManageFiscalProfile(scope);
