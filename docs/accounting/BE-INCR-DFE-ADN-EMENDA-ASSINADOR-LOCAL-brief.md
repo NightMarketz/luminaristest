@@ -452,7 +452,9 @@ do próprio estabelecimento.
 2. **Distribuição por NSU no ADN** (`GET /DFe/{NSU}`, NFS-e tomadas): aceita certificado da mesma raiz; o assinador
    serviria. Outro nó, sem autorização.
 3. **Envio do DANFSe ao tomador** (BRIEF-ADN §9 item 1): segue sem dono.
-4. **Fold no nó X10a** avisando o executor do AL-PR-2 sobre o `certCnpj` (F-ADL-5): só depois da ratificação.
+4. **Aviso ao executor do AL-PR-2 sobre o `certCnpj`** (F-ADL-5): feito em 31/10 (dono, chat: *"Pode editar o adn
+   brief e atualizar a documentação"*) como nota no AL-4 da EMENDA-4. A nota do nó X10a não foi tocada, porque os
+   PRs #997 e #998 já a editam.
 5. **Template da `sessao-planejamento`, pendência 2** (fold na nota do nó): segue aberto; o fold curto no X10i foi
    pedido pela sessão de origem.
 

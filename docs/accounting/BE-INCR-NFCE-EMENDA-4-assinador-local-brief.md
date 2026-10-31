@@ -103,7 +103,7 @@ num ramo. Cada item tem o teste que o prova. Numeração AL-n para não colidir 
   *Teste:* código expirado, reusado e de outra unidade ⇒ 400 nomeado; certificado de outra raiz ⇒ 400; caminho feliz
   devolve o token uma vez só e grava só o hash.
 - **AL-4 [fork:F-AL-3] Um assinador ativo por unidade.** Parear de novo revoga o anterior na mesma tx. Um dispositivo
-  pode servir N unidades **da mesma raiz** (a matriz assina a filial, F-SIG-3 b), cada vínculo explícito. Revogação por
+  pode servir N unidades **da mesma raiz** (a matriz assina a filial, F-SIG-3 b), cada vínculo explícito. *(31/10, [`BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md`](BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md) ADL-4/F-ADL-3/F-ADL-5, pendentes: o dispositivo grava também o `certCnpj` de 14 dígitos — entra neste PR se ainda não tiver sido mergeado —, porque a NFS-e exige o certificado do próprio estabelecimento.)* Revogação por
   rota própria, com soft-delete. *Teste:* segundo pareamento ⇒ o token antigo dá 401; unidade de outra raiz ⇒ 400.
 - **AL-5 [direto] Autenticação das rotas do assinador:** `Authorization: Bearer <token de dispositivo>`, middleware
   próprio (não é sessão de usuário; `withAuth` não se aplica), compara hash em tempo constante, limite de taxa por
@@ -527,7 +527,7 @@ achei nota técnica que admita o Selo.
    assinador está fora. Incremento à parte (a casa separa BE e FE).
 2. **NFS-e pelo mesmo assinador:** a FAQ NFS-e v1.1 item 17.7 exige no mTLS o certificado do próprio prestador
    (D5 §4.3). O token do cliente **é** esse certificado. O assinador local poderia, em tese, reabrir a emissão própria
-   da NFS-e que saiu em 22/10 ([[D-2026-10-22-NFSE-PORTAL-E-H1-POR-ULTIMO]]). Exige decisão nova.
+   da NFS-e que saiu em 22/10 ([[D-2026-10-22-NFSE-PORTAL-E-H1-POR-ULTIMO]]). Exige decisão nova. **Planejado em 31/10:** [`BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md`](BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md) (F-ADL-1..5 pendentes).
 3. **EFD-Reinf:** o `ReinfTransmissorPort` do ADR-EFD-REINF tem o certificado como fork aberto; o mesmo assinador
    serviria. Exige decisão nova.
 4. **Contingência com caixa totalmente off-line** (F-AL-4 b), se o dono quiser um dia.
