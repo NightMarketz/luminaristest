@@ -252,7 +252,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     expect(crm.body.data.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3']);
     expect(crm.body.data.moduleViews).toHaveLength(5);
     expect(crm.body.data.moduleViews[0]).toEqual({
-      key: 'CRM-0', name: { pt: 'Funil', en: 'Funnel' }, fixed: true,
+      key: 'CRM-0', category: 'crm', name: { pt: 'Funil', en: 'Funnel' }, fixed: true,
       tables: ['leadPipelines', 'leadStages', 'leads', 'leadActivities'], dependsOn: [],
     });
     expect(crm.body.data.moduleViews.find((m: { key: string }) => m.key === 'CRM-2B')).toMatchObject({
@@ -261,6 +261,11 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     expect(Object.keys(crm.body.data.tables)).toHaveLength(8);
     const salao = await request(app).get('/api/dashboard/presets/beautySalon').set(authHeader(u as never));
     expect(salao.body.data.moduleViews.map((m: { key: string }) => m.key)).toEqual(['CRM-0', 'CRM-1', ...PV]);
+    // BE-INCR-MODULOS-BASE-SUBMODULOS §3: moduleViews traz a categoria (aditivo) — o FE agrupa sem lista paralela.
+    expect(salao.body.data.moduleViews.map((m: { key: string; category: string }) => `${m.key}:${m.category}`)).toEqual([
+      'CRM-0:crm', 'CRM-1:crm', 'PES-0:pessoas', 'PES-FORN:pessoas',
+      'VEN-0:vendas', 'VEN-SERV:vendas', 'VEN-PROD:vendas', 'VEN-PAC:vendas', 'VEN-COM:vendas',
+    ]);
   });
 
   // W5 item 6 (F-W5-2): o Controle Total resolve pelo registro (`presetService`), não pelo import dinâmico do
@@ -297,6 +302,14 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     const r = await criar(u, { mode: 'custom', presetKey: 'crmModule', removedTables: ['leadActivities'], unit: { name: 'M' } });
     expect({ status: r.status, details: r.body.details }).toMatchObject({ status: 400, details: { moduleKey: 'CRM-0' } });
     expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
+  });
+
+  it('BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: Controle Total instala saleItems na variante dos catálogos (mista), como o Rápido', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: [], unit: { name: 'M' } });
+    expect(r.status).toBe(201);
+    const nomes = (await campos(u.id, 'saleItems')).map((f) => f.name);
+    expect(nomes).toEqual(expect.arrayContaining(['type', 'productId', 'serviceId', 'packageId', 'quantity']));
   });
 
   it('BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: tabela de PESSOAS/VENDAS segue com a trava de tabela no create (400 TABLE_LOCKED, nada instalado)', async () => {

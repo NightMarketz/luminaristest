@@ -286,6 +286,10 @@ async function handleCustomCreation(
         name: tableData.name || internalName.replace(/_/g, ' '),
         category: tableData.category,
         schema: tableData.schema,
+        // BE-INCR-MODULOS-BASE-SUBMODULOS PR-2 (dono, chat, 31/10/2026: "Corrigir aqui"): `meta` segue até o instalador,
+        // como no modo Rápido — sem ele `installPresetAsSystem` não vê os catálogos e o Controle Total instalava
+        // `saleItems` só-serviços (salão/clínica sem produto nem pacote no item de venda).
+        ...(tableData.meta ? { meta: tableData.meta } : {}),
         internalName: internalName,
       };
     }

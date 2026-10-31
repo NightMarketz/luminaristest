@@ -422,6 +422,8 @@
   "onboardingTotalControlCustomizingHint": "Uncheck the tables you don't want to use in your workflow.",
   "onboardingTotalControlEnabled": "Enabled",
   "onboardingTotalControlIgnored": "Skipped",
+  "onboardingTotalControlModules": "Modules",
+  "onboardingTotalControlModuleBase": "Base — always installed",
   "onboardingTotalControlTableFields": "Fields in this table",
   "onboardingTotalControlCreating": "Creating custom system...",
   "onboardingTotalControlFinish": "Finish and create system",

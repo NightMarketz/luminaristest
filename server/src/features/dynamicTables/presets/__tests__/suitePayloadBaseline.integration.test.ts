@@ -23,6 +23,10 @@
  *    ORDEM (`sales` antes de `productUnits`: tabela de módulo entra antes das da suíte). Conferido por script que, sem
  *    as chaves novas em `modules.installed` e com `by` ordenado, a fixture é idêntica à do PR-0 — tabelas gravadas,
  *    schemas (inclusive a ficha da clínica e a variante de `saleItems`) e motivos de trava inalterados.
+ *  - PR-2, correção pedida pelo dono (chat, 31/10/2026, "Corrigir aqui"): no Controle Total (`default`, `sem-*`) o
+ *    `saleItems` passa da variante só-serviços para a mista — o create custom descartava `meta` e o instalador não via
+ *    os catálogos. Conferido por script: só `installed.saleItems` desses 8 cenários mudou, e ficou idêntico ao do
+ *    cenário `rapido` da mesma suíte; demais tabelas, `response` e `locks` iguais.
  *
  * Regenerar (somente num PR que mude comportamento de propósito): `UPDATE_BASELINE=1 npx jest --selectProjects
  * integration --runInBand src/features/dynamicTables/presets/__tests__/suitePayloadBaseline.integration.test.ts`.

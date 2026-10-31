@@ -191,7 +191,7 @@
  *           required: true
  *           schema: { type: string }
  *       responses:
- *         '200': { description: 'Preset detail - the raw suite plus moduleViews (BE-INCR-CRM-SUBMODULES item 11): the registry modules the suite composes, each { key, group?, name, fixed, tables, dependsOn }' }
+ *         '200': { description: 'Preset detail - the raw suite plus moduleViews (BE-INCR-CRM-SUBMODULES item 11): the registry modules the suite composes, each { key, category, group?, name, fixed, tables, dependsOn }' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *

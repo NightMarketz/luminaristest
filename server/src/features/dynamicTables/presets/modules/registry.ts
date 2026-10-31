@@ -268,10 +268,14 @@ export function expandModuleSelectors(selectors: readonly ModuleSelector[]): Mod
   return MODULE_KEYS.filter((k) => out.has(k));
 }
 
-/** BRIEF item 11 (F-SUB-8 a): visão de um módulo exposta em `GET /dashboard/presets/:key` (`moduleViews`). */
+/**
+ * BRIEF item 11 (F-SUB-8 a): visão de um módulo exposta em `GET /dashboard/presets/:key` (`moduleViews`).
+ * BE-INCR-MODULOS-BASE-SUBMODULOS §3: `category` (aditivo) — o FE agrupa por categoria sem lista paralela.
+ */
 export const presetModuleViewSchema = z
   .object({
     key: moduleKeySchema,
+    category: moduleCategorySchema,
     group: moduleGroupKeySchema.optional(),
     name: z.object({ pt: z.string().min(1), en: z.string().min(1) }).strict(),
     fixed: z.boolean(),
@@ -284,9 +288,10 @@ export type PresetModuleView = z.infer<typeof presetModuleViewSchema>;
 /** Visões dos módulos dados, na ordem do registro. */
 export function presetModuleViews(keys: readonly ModuleKey[]): PresetModuleView[] {
   return MODULE_KEYS.filter((k) => keys.includes(k)).map((k) => {
-    const { key, group, name, fixed, tables, dependsOn } = MODULE_REGISTRY[k];
+    const { key, category, group, name, fixed, tables, dependsOn } = MODULE_REGISTRY[k];
     return {
       key,
+      category,
       ...(group ? { group } : {}),
       name: { ...name },
       fixed,
