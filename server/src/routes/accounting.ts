@@ -245,6 +245,7 @@ import {
   pscCredentialCallback,
   updatePscProvider,
 } from '../controllers/pscCredentialController';
+import { deleteNfceCsc, listNfceCscs, putNfceCsc } from '../controllers/nfceCscController';
 import { confirmIbsCbsAssessment, getIbsCbsResumo, listIbsCbsAssessments, previewIbsCbsAssessment, reconcileIbsCbsProvisao } from '../controllers/ibsCbsAssessmentController';
 import { apropriarCreditoIbsCbs } from '../controllers/payableController';
 
@@ -294,6 +295,10 @@ router.get('/psc-credentials/callback', pscCredentialCallback);
 router.post('/psc-credentials/:unitId/authorize', authorizePscCredential);
 router.get('/psc-credentials/:unitId', getPscCredential);
 router.delete('/psc-credentials/:unitId', deletePscCredential);
+// X10a PR-8 (D-2026-10-29-X10A-PR7-9-FORKS decisão 3): CSC da NFC-e por unidade e ambiente.
+router.put('/nfce-cscs/:unitId', putNfceCsc);
+router.get('/nfce-cscs/:unitId', listNfceCscs);
+router.delete('/nfce-cscs/:unitId', deleteNfceCsc);
 router.get('/psc-providers', listPscProviders);
 router.post('/psc-providers', createPscProvider);
 router.patch('/psc-providers/:id', updatePscProvider);

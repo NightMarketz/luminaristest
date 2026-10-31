@@ -47,7 +47,7 @@ import {
 import type { ProductFiscalProfileService } from './ProductFiscalProfileService';
 import { selectDfeEmissor, type DfeSelection } from '../dfe/selectDfeEmissor';
 import { assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
-import type { DfeAmbiente, DfeEmissorPort, DfeKind, EmitirInput } from '../dfe/DfeEmissorPort';
+import type { CscDaUnidade, DfeAmbiente, DfeEmissorPort, DfeKind, EmitirInput } from '../dfe/DfeEmissorPort';
 import { bloqueioSessaoPsc, type AssinaturaDaUnidade, type DfeAssinaturaResolver } from './DfeAssinaturaResolver';
 import { enviarTentativa, type DfeResultApplier } from './dfeEnvio';
 import { scopeToday } from '../models/dates';
@@ -217,6 +217,11 @@ export class FiscalDocumentEmissionService {
   /** Liga o `applyResult` do ciclo (late-bound na factory: o ciclo depende deste serviço, não o contrário). */
   setResultApplier(fn: DfeResultApplier): void {
     this.resultApplier = fn;
+  }
+
+  /** X10a PR-8 (E-3) — o CSC da unidade para o QR Code v2 da NFC-e; sem resolvedor ou sem cadastro ⇒ `undefined`. */
+  async cscDaUnidade(scope: AccountingScope, port: DfeEmissorPort, kind: FiscalDocumentKind, ambiente: DfeAmbiente): Promise<CscDaUnidade | undefined> {
+    return this.assinatura ? this.assinatura.cscDaUnidade(scope, port, kind, ambiente) : undefined;
   }
 
   /** E-6/E-12 — pré-voo da assinatura pela unidade do escopo; sem o resolvedor, adaptador que assina fica SEM_CREDENCIAL. */
@@ -408,6 +413,12 @@ export class FiscalDocumentEmissionService {
     const { group } = args;
     // F-PSC-5 a (E-6): o pré-voo da assinatura roda ANTES da tx que consome o número. Sem credencial ou com o certificado
     // vencido ⇒ 400; token vencido ⇒ a nota nasce PENDING_SIGNATURE sem número (E-13, F-PSC-6 a).
+    // X10a PR-8: o que o adaptador não consegue enviar na UF/ambiente do emitente (webservice, URL do QR Code) também
+    // barra aqui, antes do número.
+    if (kind !== 'NFSE' && selection.port.faltantesDoEnvio) {
+      const faltantes = selection.port.faltantesDoEnvio(kind, String((group.payload as NfePayloadSemNumeracao).infNFe.ide.cUF), selection.ambiente as DfeAmbiente);
+      if (faltantes.length) throw new ValidationError(`emissao_bloqueada: ${faltantes.length} pendência(s) — ver 'faltantes'.`, { faltantes });
+    }
     const assinatura = await this.assinaturaDaUnidade(scope, selection.port);
     if (!assinatura.ok && (assinatura.motivo !== 'TOKEN_EXPIRADO' || kind === 'NFSE')) throw bloqueioSessaoPsc(assinatura.motivo);
     const aguardaAssinatura = !assinatura.ok;
@@ -498,6 +509,7 @@ export class FiscalDocumentEmissionService {
     if (aguardaAssinatura) return doc;
     // Pós-commit (mesma regra do AccountingSyncPort): chama a porta fora da tx.
     const payload: unknown = JSON.parse(doc.attempts[0].payloadJson);
+    const csc = await this.cscDaUnidade(scope, selection.port, kind, selection.ambiente as DfeAmbiente);
     await enviarTentativa(
       this.repo,
       this.resultApplier,
@@ -512,7 +524,7 @@ export class FiscalDocumentEmissionService {
         partnerAccountRef: args.partnerAccountRef,
         payload: payload as EmitirInput['payload'],
         ...(assinatura.ok && assinatura.assinatura
-          ? { ctx: { ambiente: selection.ambiente as DfeAmbiente, assinatura: assinatura.assinatura, payload } }
+          ? { ctx: { ambiente: selection.ambiente as DfeAmbiente, assinatura: assinatura.assinatura, payload, ...(csc ? { csc } : {}) } }
           : {}),
       },
       'dfe_emitir_failed',

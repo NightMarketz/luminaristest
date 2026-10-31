@@ -120,6 +120,7 @@ describe('X10a PR-7 — credencial do PSC nos serviços de emissão, ciclo e inu
   let repo: MemRepo;
   let audit: { append: jest.Mock };
   let pscStub: { resolveForEmission: jest.Mock; registrarConsumo: jest.Mock };
+  let cscStub: { resolveForEmission: jest.Mock };
   let emission: FiscalDocumentEmissionService;
   let lifecycle: FiscalDocumentLifecycleService;
   let agora = new Date('2026-10-29T15:00:00Z');
@@ -148,7 +149,7 @@ describe('X10a PR-7 — credencial do PSC nos serviços de emissão, ciclo e inu
     process.env = { ...OLD_ENV, NODE_ENV: 'test' };
     agora = new Date('2026-10-29T15:00:00Z');
     jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask'] }).setSystemTime(agora);
-    Object.assign(sefaz.controle, { cStatAutorizacao: null, perderRespostaAutorizacao: false, cStatEvento: null, cStatInutilizacao: null, atrasoMs: 0 });
+    Object.assign(sefaz.controle, { cStatAutorizacao: null, perderRespostaAutorizacao: false, cStatEvento: null, cStatInutilizacao: null, atrasoMs: 0, recusarQrV3: false });
     Object.assign(psc.controle, { statusAssinatura: null, atrasoAssinaturaMs: 0 });
     findTableByInternalName.mockImplementation(async (_u: string, name: string) => TABLES[name] ?? null);
     existsByIdInTable.mockResolvedValue(true);
@@ -165,7 +166,8 @@ describe('X10a PR-7 — credencial do PSC nos serviços de emissão, ciclo e inu
     repo = new MemRepo();
     audit = { append: jest.fn() };
     pscStub = { resolveForEmission: jest.fn(async () => sessao), registrarConsumo: jest.fn(async () => undefined) };
-    const resolver = new DfeAssinaturaResolver(pscStub, new PscAssinador(3_000));
+    cscStub = { resolveForEmission: jest.fn(async () => null) };
+    const resolver = new DfeAssinaturaResolver(pscStub, new PscAssinador(3_000), cscStub);
     const policy = { canEmitFiscalDocument: () => true, canReadFiscalDocument: () => true, canCancelFiscalDocument: () => true };
     emission = new FiscalDocumentEmissionService(
       repo as never,
@@ -196,6 +198,31 @@ describe('X10a PR-7 — credencial do PSC nos serviços de emissão, ciclo e inu
 
   const eventos = () => audit.append.mock.calls.map((c) => (c[2] as { eventType: string }).eventType);
   const servicosSefaz = (desde: number) => sefaz.controle.chamadas.slice(desde).map((c) => c.servico);
+
+  it('X10a PR-8: o adaptador não envia na UF do emitente (sem URL oficial do QR Code) ⇒ 400 com o faltante, antes do número', async () => {
+    const faltantes = jest.spyOn(emissor, 'faltantesDoEnvio').mockReturnValue(['NFC-e em SP/homologacao sem URL oficial do QR Code: teste']);
+    try {
+      await expect(emission.emit(SCOPE, 'sale-1', 'NFCE')).rejects.toMatchObject({ details: { faltantes: [expect.stringContaining('URL oficial do QR Code')] } });
+      expect(faltantes).toHaveBeenCalledWith('NFCE', '35', 'homologacao');
+      expect(repo.nextNumber).not.toHaveBeenCalled();
+      expect(pscStub.resolveForEmission).not.toHaveBeenCalled();
+    } finally {
+      faltantes.mockRestore();
+    }
+  });
+
+  it('X10a PR-8 (E-3, decisão 3): a UF recusa o QR v3 ⇒ o CSC da unidade no ambiente vai no contexto e a nota sai com o v2', async () => {
+    cscStub.resolveForEmission.mockResolvedValue({ id: '2', csc: 'A1B2C3D4E5F6G7H8I9J0' });
+    sefaz.controle.recusarQrV3 = true;
+    try {
+      const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
+      expect(view).toMatchObject({ status: 'AUTHORIZED', numero: '1' });
+      expect(cscStub.resolveForEmission).toHaveBeenCalledWith(SCOPE, 'homologacao');
+      expect(sefaz.controle.chamadas.at(-1)!.corpo).toMatch(/\|2\|2\|2\|[0-9A-F]{40}<\/qrCode>/);
+    } finally {
+      sefaz.controle.recusarQrV3 = false;
+    }
+  });
 
   it('E-6 (F-PSC-5 a): sem credencial ⇒ 400 com o faltante "sessão do PSC"; nenhum número consumido, nada gravado', async () => {
     sessao = { ok: false, motivo: 'SEM_CREDENCIAL' };

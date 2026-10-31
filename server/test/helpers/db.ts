@@ -165,6 +165,7 @@ export async function resetDb(): Promise<void> {
   await prisma.pscAuthorization.deleteMany();
   await prisma.pscCredential.deleteMany();
   await prisma.pscProvider.deleteMany();
+  await prisma.nfceCsc.deleteMany(); // X10a PR-8: CSC da NFC-e por unidade
   // BE-INCR-MIT-EXPORT PR-2 (nó X9): mit_exports só referencia User (Cascade) — sem ordem de FK.
   await prisma.mitExport.deleteMany();
   // BE-INCR-EFD-REINF PR-1: reinf_batches só referencia User (Cascade) — sem ordem de FK.
