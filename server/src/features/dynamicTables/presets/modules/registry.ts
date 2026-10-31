@@ -25,7 +25,16 @@ import { opportunitiesModule } from './crm/OpportunitiesModule';
  * atômicos; `group` é só UI/alias e nunca entra em dependência. F-SUB-2 (a): a chave do grupo ('CRM-2') segue
  * aceita na ENTRADA e expande para os membros; a saída só tem chaves atômicas. Regra do corte (BRIEF §2):
  * módulo não-fixo tem exatamente uma tabela (guarda em `moduleRegistry.test.ts`).
+ *
+ * BE-INCR-MODULOS-BASE-SUBMODULOS (docs/accounting/BE-INCR-MODULOS-BASE-SUBMODULOS-brief.md, PR-1): o registro é
+ * genérico por categoria — `category` é enum, cada categoria presente tem UMA base fixa (`assertRegistryInvariants`),
+ * `dependsOn` pode cruzar categorias e `requiresOneOf` exige pelo menos um módulo de cada grupo. As entradas do
+ * registro continuam só as do CRM; as demais categorias entram nos PR-2..4.
  */
+
+export const MODULE_CATEGORIES = ['crm', 'pessoas', 'vendas', 'estoque', 'agenda', 'financeiro', 'gestao'] as const;
+export const moduleCategorySchema = z.enum(MODULE_CATEGORIES);
+export type ModuleCategory = z.infer<typeof moduleCategorySchema>;
 
 export const MODULE_KEYS = ['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3'] as const;
 export const moduleKeySchema = z.enum(MODULE_KEYS);
@@ -43,17 +52,21 @@ export type ModuleSelector = z.infer<typeof moduleSelectorSchema>;
 export const moduleDefSchema = z
   .object({
     key: moduleKeySchema,
-    category: z.literal('crm'),
+    category: moduleCategorySchema,
     group: moduleGroupKeySchema.optional(),
     name: z.object({ pt: z.string().min(1), en: z.string().min(1) }).strict(),
     aiDescription: z.string().min(1),
     fixed: z.boolean(),
     tables: z.array(z.string().min(1)).min(1),
     dependsOn: z.array(moduleKeySchema),
+    /** Cada grupo (≥2 chaves) exige pelo menos UM módulo selecionado/mantido (BRIEF item 4). */
+    requiresOneOf: z.array(z.array(moduleKeySchema).min(2)).default([]),
     freeSelects: z.record(z.string(), z.array(z.string().min(1))),
   })
   .strict();
 export type ModuleDef = z.infer<typeof moduleDefSchema>;
+/** Registro como as regras puras o leem (chave string: o registro de teste pode ter chaves que o real ainda não tem). */
+export type ModuleRegistry = Readonly<Record<string, ModuleDef>>;
 
 export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
   'CRM-0': {
@@ -65,6 +78,7 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     fixed: true,
     tables: ['leadPipelines', 'leadStages', 'leads', 'leadActivities'],
     dependsOn: [],
+    requiresOneOf: [],
     freeSelects: {},
   },
   'CRM-1': {
@@ -76,6 +90,7 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     fixed: false,
     tables: ['leadProposals'],
     dependsOn: ['CRM-0'],
+    requiresOneOf: [],
     freeSelects: {},
   },
   'CRM-2A': {
@@ -88,6 +103,7 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     fixed: false,
     tables: ['crmAccounts'],
     dependsOn: ['CRM-0'],
+    requiresOneOf: [],
     // F-I8-C11 (2026-09-26): só campos JÁ `select`; `segment` (texto) ficou fora.
     freeSelects: { crmAccounts: ['size'] },
   },
@@ -103,6 +119,7 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     // F-SUB-3 (a): Contatos NÃO depende de Contas — `crmContacts.accountId` é opcional (descartado sem Contas,
     // restaurado por sync quando Contas chega).
     dependsOn: ['CRM-0'],
+    requiresOneOf: [],
     freeSelects: { crmContacts: ['role'] },
   },
   'CRM-3': {
@@ -114,6 +131,7 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     fixed: false,
     tables: ['crmOpportunities'],
     dependsOn: ['CRM-0'],
+    requiresOneOf: [],
     freeSelects: {},
   },
 };
@@ -166,17 +184,43 @@ export function presetModuleViews(keys: readonly ModuleKey[]): PresetModuleView[
   });
 }
 
-/** Fonte de schema de cada tabela registrada (o módulo de preset que já existia). */
-const TABLE_SOURCES: Readonly<Record<string, unknown>> = {
-  leadPipelines: leadPipelinesModule,
-  leadStages: leadStagesModule,
-  leads: leadsModule,
-  leadActivities: leadActivitiesModule,
-  leadProposals: leadProposalsModule,
-  crmAccounts: crmAccountsModule,
-  crmContacts: crmContactsModule,
-  crmOpportunities: opportunitiesModule,
+/**
+ * Fonte de schema de cada tabela, por módulo (BRIEF item 6): `systems/*.ts` não importam de novo o mesmo módulo de
+ * preset — a tabela de um módulo registrado vem sempre daqui.
+ */
+export const MODULE_TABLE_SOURCES: Readonly<Record<ModuleKey, Readonly<Record<string, unknown>>>> = {
+  'CRM-0': {
+    leadPipelines: leadPipelinesModule,
+    leadStages: leadStagesModule,
+    leads: leadsModule,
+    leadActivities: leadActivitiesModule,
+  },
+  'CRM-1': { leadProposals: leadProposalsModule },
+  'CRM-2A': { crmAccounts: crmAccountsModule },
+  'CRM-2B': { crmContacts: crmContactsModule },
+  'CRM-3': { crmOpportunities: opportunitiesModule },
 };
+
+/**
+ * Invariantes do registro (BRIEF item 2): cada categoria PRESENTE tem exatamente um módulo fixo (a base; pode ter N
+ * tabelas) e todo módulo não-fixo tem exatamente uma tabela. Lança `Error` nomeando a categoria/módulo.
+ */
+export function assertRegistryInvariants(registry: ModuleRegistry = MODULE_REGISTRY): void {
+  const defs = Object.values(registry);
+  for (const category of new Set(defs.map((d) => d.category))) {
+    const bases = defs.filter((d) => d.category === category && d.fixed).map((d) => d.key);
+    if (bases.length !== 1) {
+      throw new Error(
+        `Registro de módulos: a categoria '${category}' precisa de exatamente uma base fixa (encontradas: ${bases.length}${bases.length ? ` — ${bases.join(', ')}` : ''}).`,
+      );
+    }
+  }
+  for (const d of defs) {
+    if (!d.fixed && d.tables.length !== 1) {
+      throw new Error(`Registro de módulos: o módulo não-fixo '${d.key}' precisa de exatamente uma tabela (tem ${d.tables.length}).`);
+    }
+  }
+}
 
 /** Módulo dono de uma tabela de preset, ou `undefined` se a tabela não pertence a módulo (ex.: core). */
 export function moduleOfTable(internalName: string): ModuleKey | undefined {
@@ -189,7 +233,7 @@ export function composeModuleTables(keys: readonly ModuleKey[]): Record<string, 
   for (const key of MODULE_KEYS) {
     if (!keys.includes(key)) continue;
     for (const internalName of MODULE_REGISTRY[key].tables) {
-      tables[internalName] = createTableFromModule(TABLE_SOURCES[internalName]);
+      tables[internalName] = createTableFromModule(MODULE_TABLE_SOURCES[key][internalName]);
     }
   }
   return tables;
