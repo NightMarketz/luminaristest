@@ -88,6 +88,8 @@ export async function resetDb(): Promise<void> {
   await prisma.fiscalDocument.deleteMany();
   await prisma.fiscalDocumentSequence.deleteMany();
   await prisma.fiscalNumberVoid.deleteMany(); // BE-INCR-NFCE PR-4
+  await prisma.nfceContingenciaOrfa.deleteMany(); // X10a PR-9 — sem FK
+  await prisma.nfceContingencia.deleteMany(); // X10a PR-9 — sem FK
   await prisma.serviceFiscalProfile.deleteMany();
   await prisma.productFiscalProfile.deleteMany(); // BE-INCR-NFCE item 10
   await prisma.issBeneficioMunicipal.deleteMany(); // SIMPLES-PISO-ANEXO-XI bloco 1

@@ -129,6 +129,33 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     });
   }
 
+  public async listContingencia(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]> {
+    return this.db(tx).fiscalDocument.findMany({
+      where: { status: 'CONTINGENCY', deletedAt: null },
+      include: { attempts: { orderBy: { attemptNo: 'asc' } } },
+      // Rodízio (revisão F): a que não sai é tocada pelo job e vai para o fim — nota parada não toma o teto das outras.
+      orderBy: [{ updatedAt: 'asc' }],
+      take: limit,
+    });
+  }
+
+  public async listContingenciaNaoAutorizada(desde: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]> {
+    return this.db(tx).fiscalDocument.findMany({
+      where: {
+        kind: 'NFCE',
+        status: { in: ['CONTINGENCY', 'SENT', 'PROCESSING', 'REJECTED', 'PENDING_SIGNATURE'] },
+        deletedAt: null,
+        // Revisão J: a janela é a da TENTATIVA de contingência (o documento pode ser antigo e cair em contingência hoje,
+        // no reenvio da rejeitada ou da que esperava a assinatura).
+        attempts: { some: { payloadJson: { contains: '"tpEmis":9' }, sentAt: { gte: desde } } },
+      },
+      include: { attempts: { orderBy: { attemptNo: 'asc' } } },
+      // Revisões E e G: sem teto — a janela `desde` é que limita (a abandonada há muito sai sozinha; a que vence primeiro
+      // nunca fica de fora por haver muitas pendentes depois dela).
+      orderBy: [{ createdAt: 'asc' }],
+    });
+  }
+
   public async findByPartnerRef(partnerRef: string, tx?: Prisma.TransactionClient): Promise<FiscalDocument | null> {
     // Pendente ainda não tem `partnerRef` (só o AUTHORIZED grava): o parceiro conhece o `ref` da tentativa CORRENTE.
     const attempt = await this.db(tx).fiscalDocumentAttempt.findUnique({ where: { ref: partnerRef }, include: { document: true } });

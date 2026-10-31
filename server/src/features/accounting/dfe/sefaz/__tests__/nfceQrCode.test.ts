@@ -3,7 +3,10 @@ import {
   InfNFeSuplSchema,
   NFCE_QRCODE_DESABILITADAS,
   NFCE_QRCODE_URLS,
+  baseAssinavelQrV3Offline,
   comInfNFeSupl,
+  qrCodeV2Offline,
+  qrCodeV3Offline,
   hashQrCodeV2,
   qrCodeV2Online,
   qrCodeV3Online,
@@ -62,6 +65,26 @@ describe('nfceQrCode', () => {
       expect(InfNFeSuplSchema.safeParse({ qrCode: qrCodeV3Online(u.qrCodeBase, CHAVE_MANUAL, 1), urlChave: u.urlChave }).success).toBe(true);
       expect(InfNFeSuplSchema.safeParse({ qrCode: qrCodeV2Online(u.qrCodeBase, CHAVE_MANUAL, 1, { id: '1', csc: 'A'.repeat(36) }), urlChave: u.urlChave }).success).toBe(true);
     }
+  });
+
+  it('X10a PR-9 — v2 off-line: o vetor do manual (D01 §4.3.6.2) — dia 02, vNF 60.90, digVal em hex dos bytes ASCII, hash 4615A93B…7D66', () => {
+    const chave = '28170800156225000131650110000151349562040824';
+    expect(
+      qrCodeV2Offline('http://www.sefazexemplo.gov.br/nfce/qrcode', chave, 1, { dhEmi: '2017-08-02T10:00:00-03:00', vNF: '60.90' }, 'yzGYhUx1/XYYzksWB+fPR3Qc50c=', {
+        id: '1',
+        csc: CSC_MANUAL,
+      }),
+    ).toBe(
+      `http://www.sefazexemplo.gov.br/nfce/qrcode?p=${chave}|2|1|02|60.90|797a4759685578312f5859597a6b7357422b6650523351633530633d|1|4615A93BB0D7C4E780F8D30EE77EDD5BA55C7D66`,
+    );
+  });
+
+  it('X10a PR-9 — v3 off-line (D01 §4.4.2): parâmetros 1–7; CPF ⇒ tp 2; sem destinatário ⇒ 6º e 7º vazios; a assinatura é o 8º', () => {
+    const d = { dhEmi: '2026-10-09T10:00:00-03:00', vNF: '60.00' };
+    expect(baseAssinavelQrV3Offline(CHAVE_MANUAL, 2, { ...d, dest: { CPF: '11144477735' } })).toBe(`${CHAVE_MANUAL}|3|2|09|60.00|2|11144477735`);
+    expect(baseAssinavelQrV3Offline(CHAVE_MANUAL, 2, { ...d, dest: { CNPJ: '11222333000181' } })).toBe(`${CHAVE_MANUAL}|3|2|09|60.00|1|11222333000181`);
+    expect(baseAssinavelQrV3Offline(CHAVE_MANUAL, 2, d)).toBe(`${CHAVE_MANUAL}|3|2|09|60.00||`);
+    expect(qrCodeV3Offline('https://x/qrcode', `${CHAVE_MANUAL}|3|2|09|60.00||`, 'QUJD')).toBe(`https://x/qrcode?p=${CHAVE_MANUAL}|3|2|09|60.00|||QUJD`);
   });
 
   it('o infNFeSupl entra entre </infNFe> e <Signature> e troca o anterior (recuo v3 → v2)', () => {

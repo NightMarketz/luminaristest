@@ -73,6 +73,9 @@ const IdeBase = z
     indIntermed: z.literal(0).optional(), // B25c
     procEmi: z.literal(0), // B26
     verProc: z.string().min(1).max(20), // B27
+    // X10a PR-9 (E-9): B28 dhCont (UTC com TZD) e B29 xJust (15–256) — só na contingência (556/557, regra abaixo).
+    dhCont: z.string().datetime({ offset: true }).optional(), // B28
+    xJust: z.string().min(15).max(256).optional(), // B29
   })
   .strict();
 
@@ -259,6 +262,15 @@ function regrasNfe(inf: InfNFeComum & { ide: { cNF?: string; nNF?: number; cDV?:
 
   // Grupo UB e totais W03 (NT 2025.002 v1.52) — `NfeIbsCbsDto.regrasIbsCbs`.
   regrasIbsCbs(inf, add);
+
+  // Contingência (X10a PR-9; Anexo I B28-10 rej. 556, B28-20 rej. 557; B22-10 rej. 711 na 55).
+  if (ide.tpEmis === 1 && (ide.dhCont !== undefined || ide.xJust !== undefined)) {
+    add('rej. 556: dhCont/xJust informados em emissão normal — B28-10', ['ide', 'dhCont']);
+  }
+  if (ide.tpEmis === 9 && (ide.dhCont === undefined || ide.xJust === undefined)) {
+    add('rej. 557: contingência sem dhCont/xJust — B28-20', ['ide', 'dhCont']);
+  }
+  if (!nfce && ide.tpEmis === 9) add('rej. 711: NF-e (modelo 55) com contingência off-line — B22-10', ['ide', 'tpEmis']);
 
   if (!nfce) return;
 

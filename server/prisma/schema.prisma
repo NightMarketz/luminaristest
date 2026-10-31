@@ -2242,6 +2242,9 @@ model FiscalDocument {
   substMotivo             String? // TSCodJustSubst 01|02|03|04|05|99 (Anexo I [115]) — domínio ≠ cancelMotivo (TSCodJustCanc 1|2|9)
   substReason             String? // xMotivo 15–255 (Anexo I [116])
   cancelEventAttachmentId String? // item 7 — XML do evento e101101 (DocumentAttachment, só em produção)
+  // X10a PR-9 (E-9, F-NFCE-E1-6 b) — infNFeSupl {qrCode, urlChave} da NFC-e emitida em contingência off-line: o DANFE sai
+  // antes da autorização, então o BE entrega o QR Code da nota impressa. null na emissão normal.
+  contingenciaSuplJson    String?
   createdById             String?
   createdAt               DateTime                @default(now())
   updatedAt               DateTime                @updatedAt
@@ -3605,6 +3608,50 @@ model NfceCsc {
 
   @@index([userId, unitId, ambiente])
   @@map("nfce_cscs")
+}
+
+// X10a PR-9 (E-9, F-NFCE-E1-5 b; D-2026-10-29-X10A-PR7-9-FORKS decisões 4 e 8) — contingência off-line da NFC-e por unidade
+// e ambiente. ativa ⇒ a venda nova sai com tpEmis=9 sem tentar a SEFAZ. origem AUTO (falha de comunicação) sai sozinha
+// quando o job volta a falar com a SEFAZ; MANUAL só pelo operador. dhCont/xJust são o B28/B29 das notas emitidas nela.
+model NfceContingencia {
+  id        String    @id @default(cuid())
+  userId    String
+  unitId    String
+  ambiente  String // producao | homologacao
+  ativa     Boolean   @default(false)
+  origem    String? // AUTO | MANUAL — da entrada vigente (ou da última)
+  dhCont    DateTime?
+  xJust     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, unitId, ambiente])
+  @@map("nfce_contingencias")
+}
+
+// X10a PR-9 (decisão 6) — a NFC-e "normal" que ficou sem resposta quando a venda saiu em contingência (MOC 7.0 Anexo IV
+// p. 11: "inutilizar a numeração, se não autorizada; ou cancelar, se autorizada"). O job consulta a chave: autorizada ⇒
+// 110112 apontando a de contingência; 217 ⇒ pedido de inutilização; falha ⇒ FAILED (pendência visível no documento).
+model NfceContingenciaOrfa {
+  id         String   @id @default(cuid())
+  userId     String
+  unitId     String
+  documentId String // o FiscalDocument da venda — agora a nota de contingência
+  ambiente   String // producao | homologacao
+  serie      Int
+  numero     BigInt // nNF da nota normal
+  chave      String // chave (44) da nota normal
+  status     String // PENDING | CANCELLED_SUBST | VOID_REQUESTED | FAILED
+  voidId     String? // FiscalNumberVoid do pedido de inutilização
+  tentativas Int      @default(0)
+  ultimoErro String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([documentId, numero])
+  @@index([status])
+  @@index([userId, unitId, documentId])
+  @@map("nfce_contingencia_orfas")
 }
 
 // EFICIENCIA-FISCAL PR-1 (BRIEF BE-INCR-EFICIENCIA-FISCAL §4.1; ADR-INCR-EFICIENCIA-FISCAL D2, D3, D5, D6) — política

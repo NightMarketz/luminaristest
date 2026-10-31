@@ -90,6 +90,8 @@ export const REKEY_MODELS = [
   //   REKEY pelo precedente do FiscalCertificate. Deixá-las no unitId antigo tiraria da unidade re-chaveada a assinatura.
   'PscCredential', 'PscAuthorization',
   'NfceCsc', // X10a PR-8: CSC da NFC-e por unidade; AAD da cifra = id → REKEY pelo mesmo precedente
+  // X10a PR-9: contingência da unidade e a nota órfã (segue o FiscalDocument), sem hash → REKEY pelo F-RK-5.
+  'NfceContingencia', 'NfceContingenciaOrfa',
 ] as const;
 
 /**

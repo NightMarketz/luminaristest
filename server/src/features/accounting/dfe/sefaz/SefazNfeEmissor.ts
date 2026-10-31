@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { XMLParser } from 'fast-xml-parser';
 import { logger } from '../../../../lib/logger';
 import { NFE_NS, escapeXml, partesDaChave, serializeNfe, CUF_POR_SIGLA } from '../../../../lib/nfeXml';
@@ -8,6 +9,7 @@ import { tpAmbFor } from '../DfeEmissorPort';
 import type {
   CancelInput,
   CancelResult,
+  CancelSubstInput,
   DfeAmbiente,
   DfeCallContext,
   DfeCapabilities,
@@ -17,10 +19,21 @@ import type {
   EmitirInput,
   InutilizarInput,
   InutilizarResult,
+  NfceSupl,
 } from '../DfeEmissorPort';
 import { AssinaturaRemotaError, type TipoDfeAssinado } from '../AssinadorRemotoPort';
 import { endpointSefaz, type SefazServico } from './sefazConfig';
-import { comInfNFeSupl, qrCodeV2Online, qrCodeV3Online, urlsNfce, type InfNFeSupl } from './nfceQrCode';
+import {
+  baseAssinavelQrV3Offline,
+  comInfNFeSupl,
+  qrCodeV2Offline,
+  qrCodeV2Online,
+  qrCodeV3Offline,
+  qrCodeV3Online,
+  urlsNfce,
+  type CscNfce,
+  type InfNFeSupl,
+} from './nfceQrCode';
 import type { SefazSoapClient } from './SefazSoapClient';
 
 /**
@@ -39,6 +52,10 @@ import type { SefazSoapClient } from './SefazSoapClient';
  *   consulta (sem coluna nova).
  * - Releitura (E-10): o `nfeProc` passa por `readNfeTree` (assinatura PRIMEIRO, F-SIG-5 a) e é comparado com o payload;
  *   divergência de identidade ⇒ alerta, e o protocolo da SEFAZ é o fato.
+ * - Contingência off-line (E-9, F-NFCE-E1-5 b; X10a PR-9): a NFC-e `tpEmis=9` leva o QR Code off-line — v3 com a
+ *   assinatura RSA-SHA1 dos parâmetros 1–7 pelo PSC (D01 §4.4.2) e, se a UF recusar a v3 (407) e houver CSC, v2 off-line
+ *   com dia/vNF/DigestValue (D01 §4.3.5). `montarContingencia` dá o `infNFeSupl` do DANFE sem falar com a SEFAZ; o `emitir`
+ *   posterior remonta o mesmo (a assinatura PKCS#1 v1.5 é determinística). `cancelarPorSubstituicao` = evento 110112.
  *
  * Não recusa `NODE_ENV=production`: é o adaptador real. Não tem webhook.
  */
@@ -84,6 +101,7 @@ export class SefazNfeEmissor implements DfeEmissorPort {
     inutilizar: true,
     cce: false,
     assinaturaRemota: true,
+    contingenciaOffline: true, // X10a PR-9 (E-9): NFC-e tpEmis=9 + 110112
     resultadoSincrono: true, // indSinc=1: o protNFe vem na resposta do lote (F-ADN-5 a)
   };
   private readonly endpoint: EndpointResolver;
@@ -102,7 +120,12 @@ export class SefazNfeEmissor implements DfeEmissorPort {
     let assinado = await this.assinarNota(payload, input.kind as TipoDfeAssinado, input.ctx);
     let ctx = input.ctx;
     // E-3: a NFC-e leva o infNFeSupl (fora da assinatura) — v3 primeiro (F-NFCE-E1-4 c); UF que já recusou a v3 vai direto na v2.
-    if (modelo === 65) assinado = comInfNFeSupl(assinado, ctx?.csc?.qrV3Recusado ? this.supl(uf, chave, 2, ctx.csc) : this.supl(uf, chave, 3));
+    // E-9: tpEmis=9 ⇒ o QR off-line, na mesma versão.
+    const offline = payload.infNFe.ide.tpEmis === 9;
+    const versao = ctx?.csc?.qrV3Recusado ? 2 : 3;
+    if (modelo === 65) {
+      assinado = comInfNFeSupl(assinado, offline ? await this.suplOffline(uf, chave, payload, assinado, versao, ctx) : this.supl(uf, chave, versao, ctx?.csc));
+    }
     let envio = await this.enviarLote(uf, modelo, assinado);
     if (modelo === 65 && envio.cStat === QR_V3_RECUSADO && !ctx?.csc?.qrV3Recusado) {
       if (!input.ctx?.csc) {
@@ -116,7 +139,7 @@ export class SefazNfeEmissor implements DfeEmissorPort {
       await input.ctx.csc.marcarQrV3Recusado?.();
       ctx = { ...input.ctx, csc: { ...input.ctx.csc, qrV3Recusado: true } };
       // A mesma nota assinada: só o infNFeSupl muda (D02 p. 8), então não há nova assinatura.
-      assinado = comInfNFeSupl(assinado, this.supl(uf, chave, 2, ctx.csc));
+      assinado = comInfNFeSupl(assinado, offline ? await this.suplOffline(uf, chave, payload, assinado, 2, ctx) : this.supl(uf, chave, 2, ctx.csc));
       envio = await this.enviarLote(uf, modelo, assinado);
     }
     const { ret, prot, cStat, xMotivo } = envio;
@@ -158,7 +181,11 @@ export class SefazNfeEmissor implements DfeEmissorPort {
       }
       let assinado = await this.assinarNota(payload, modelo === 65 ? 'NFCE' : 'NFE', ctx);
       // O infNFeSupl não é assinado e a versão aceita pela UF não volta no protocolo: o serviço traz o fato gravado (407 visto ⇒ v2).
-      if (modelo === 65) assinado = comInfNFeSupl(assinado, ctx?.csc?.qrV3Recusado ? this.supl(uf, partnerRef, 2, ctx.csc) : this.supl(uf, partnerRef, 3));
+      if (modelo === 65) {
+        const versao = ctx?.csc?.qrV3Recusado ? 2 : 3;
+        const supl = payload.infNFe.ide.tpEmis === 9 ? await this.suplOffline(uf, partnerRef, payload, assinado, versao, ctx) : this.supl(uf, partnerRef, versao, ctx?.csc);
+        assinado = comInfNFeSupl(assinado, supl);
+      }
       return this.autorizado(partnerRef, payload, assinado, extrairProtNFe(ret), prot);
     }
     return { status: 'PROCESSING', partnerRef, errors: [{ code: cStat || 'sefaz_sem_cstat', message: str(r.xMotivo) }] };
@@ -184,6 +211,51 @@ export class SefazNfeEmissor implements DfeEmissorPort {
     const cStat = str(inf.cStat) || str(r.cStat);
     if (cStat === '135' || cStat === '155') return { status: 'CANCELLED', errors: [] }; // [WS-EVENTO] 135 registrado; 155 fora de prazo
     if (cStat === '501') return { status: 'OUT_OF_WINDOW', errors: [{ code: '501', message: str(inf.xMotivo) }] }; // [NFCE-CANC-FORA]
+    return { status: 'REJECTED', errors: [{ code: cStat || 'sefaz_sem_cstat', message: str(inf.xMotivo) || str(r.xMotivo) }] };
+  }
+
+  /**
+   * E-9 — o `infNFeSupl` da NFC-e off-line para o DANFE impresso na hora da venda (F-NFCE-E1-6 b: o BE entrega chave/QR/
+   * URL). Assina a nota (o v2 precisa do DigestValue) e, no v3, os parâmetros 1–7; nada vai à SEFAZ.
+   */
+  async montarContingencia(payloadBruto: unknown, ctx: DfeCallContext, versao: 2 | 3 = 3): Promise<NfceSupl> {
+    const payload = NfePayloadSchema.parse(payloadBruto);
+    if (payload.infNFe.ide.tpEmis !== 9 || payload.infNFe.ide.mod !== 65) throw new Error('dfe_contingencia_tpemis: só a NFC-e tpEmis=9 tem QR Code off-line');
+    const chave = payload.infNFe.Id.slice(3);
+    const { uf } = partesDaChave(chave);
+    const assinado = await this.assinarNota(payload, 'NFCE', ctx);
+    return this.suplOffline(uf, chave, payload, assinado, versao, ctx);
+  }
+
+  /**
+   * Decisão 6 de D-2026-10-29-X10A-PR7-9-FORKS — evento 110112 "Cancelamento por substituição" (MOC 7.0 VG §5.9, Tabela
+   * 5-37: detEvento com descEvento, cOrgaoAutor, tpAutor=1, verAplic, nProt, xJust, chNFeRef; nSeqEvento 1; Id "ID" +
+   * tpEvento + chave + nSeqEvento). **Grau I** do literal `descEvento`: o MOC só nomeia o evento ("110112 - Cancelamento por
+   * substituição", p. 105); a enumeração sem acento vem do `e110112_v1.00.xsd` lido num espelho público (nfephp-org/
+   * sped-nfe, PL_009_V4), não no pacote oficial — conferir no runbook D5. 135/155 ⇒ CANCELLED; 501 ⇒ OUT_OF_WINDOW.
+   */
+  async cancelarPorSubstituicao(partnerRef: string, input: CancelSubstInput, ctx: DfeCallContext): Promise<CancelResult> {
+    const assinatura = this.exigirAssinatura(ctx);
+    const { uf, modelo, cnpj, cUF } = partesDaChave(partnerRef);
+    if (modelo !== 65) throw new Error('dfe_cancel_subst_modelo: o 110112 é da NFC-e');
+    const nProt = await this.nProtDe(partnerRef, uf, modelo);
+    if (!nProt) return { status: 'REJECTED', errors: [{ code: 'sefaz_sem_protocolo', message: 'a consulta não devolveu o protocolo de autorização' }] };
+    const id = `ID110112${partnerRef}01`; // [VG-EVT-ID]; P15 nSeqEvento "Informar o valor 1 para este evento"
+    const verAplic = escapeXml((this.opts.versaoAplicativo ?? 'Luminaris').slice(0, 20));
+    const evento =
+      `<evento xmlns="${NFE_NS}" versao="1.00"><infEvento Id="${id}"><cOrgao>${cUF}</cOrgao><tpAmb>${tpAmbFor(this.opts.ambiente)}</tpAmb>` +
+      `<CNPJ>${cnpj}</CNPJ><chNFe>${partnerRef}</chNFe><dhEvento>${dataHoraBrasilia(this.now())}</dhEvento><tpEvento>110112</tpEvento>` +
+      `<nSeqEvento>1</nSeqEvento><verEvento>1.00</verEvento><detEvento versao="1.00"><descEvento>Cancelamento por substituicao</descEvento>` +
+      `<cOrgaoAutor>${cUF}</cOrgaoAutor><tpAutor>1</tpAutor><verAplic>${verAplic}</verAplic>` +
+      `<nProt>${nProt}</nProt><xJust>${escapeXml(input.xJust)}</xJust><chNFeRef>${input.chNFeRef}</chNFeRef></detEvento></infEvento></evento>`;
+    const assinado = await this.assinar(evento, 'infEvento', 'NFCE', assinatura);
+    const lote = `<envEvento xmlns="${NFE_NS}" versao="1.00"><idLote>${this.idLote()}</idLote>${assinado}</envEvento>`;
+    const ret = await this.opts.soap.call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeRecepcaoEvento4'), 'NFeRecepcaoEvento4', lote);
+    const r = no(no(parser.parse(ret)).retEnvEvento);
+    const inf = no(no(r.retEvento).infEvento);
+    const cStat = str(inf.cStat) || str(r.cStat);
+    if (cStat === '135' || cStat === '155') return { status: 'CANCELLED', errors: [] }; // D07 p. 11: 155 = homologado fora de prazo
+    if (cStat === '501') return { status: 'OUT_OF_WINDOW', errors: [{ code: '501', message: str(inf.xMotivo) }] }; // 2P12-18: > 168 h
     return { status: 'REJECTED', errors: [{ code: cStat || 'sefaz_sem_cstat', message: str(inf.xMotivo) || str(r.xMotivo) }] };
   }
 
@@ -230,6 +302,28 @@ export class SefazNfeEmissor implements DfeEmissorPort {
     if (versao === 2 && !csc) throw new Error('dfe_nfce_sem_csc: QR Code v2 sem o CSC da unidade');
     const qrCode = versao === 3 ? qrCodeV3Online(urls.qrCodeBase, chave, tpAmb) : qrCodeV2Online(urls.qrCodeBase, chave, tpAmb, csc!);
     return { qrCode, urlChave: urls.urlChave };
+  }
+
+  /**
+   * E-9 — o QR Code off-line: v3 = parâmetros 1–7 assinados em RSA-SHA1 pelo certificado da nota (o mesmo PSC; o hash
+   * SHA-1 da string ASCII vai ao `/oauth/signature`, PKCS#1 v1.5 — padding assumido, transcrição §1(c)); v2 = hash com o
+   * DigestValue da nota assinada e o CSC da unidade.
+   */
+  private async suplOffline(uf: string, chave: string, payload: NfePayload, assinado: string, versao: 2 | 3, ctx?: DfeCallContext): Promise<InfNFeSupl> {
+    const urls = urlsNfce(uf, this.opts.ambiente);
+    if (!urls.ok) throw new Error(`dfe_nfce_sem_url: ${urls.motivo}`);
+    const tpAmb = tpAmbFor(this.opts.ambiente);
+    const dados = { dhEmi: payload.infNFe.ide.dhEmi, vNF: payload.infNFe.total.ICMSTot.vNF, dest: payload.infNFe.dest };
+    if (versao === 2) {
+      if (!ctx?.csc) throw new Error('dfe_nfce_sem_csc: QR Code v2 sem o CSC da unidade');
+      return { qrCode: qrCodeV2Offline(urls.qrCodeBase, chave, tpAmb, dados, digestValueDe(assinado), ctx.csc as CscNfce), urlChave: urls.urlChave };
+    }
+    const a = this.exigirAssinatura(ctx);
+    const base = baseAssinavelQrV3Offline(chave, tpAmb, dados);
+    const digest = createHash('sha1').update(base, 'utf8').digest('base64');
+    const r = await a.assinador.assinarHash(digest, 'sha1', 'NFCE', a.credencial);
+    if (!r.ok) throw new AssinaturaRemotaError(r.code, r.message);
+    return { qrCode: qrCodeV3Offline(urls.qrCodeBase, base, r.signatureValueB64), urlChave: urls.urlChave };
   }
 
   private idLote(): string {

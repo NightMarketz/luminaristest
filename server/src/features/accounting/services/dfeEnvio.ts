@@ -2,11 +2,20 @@ import type { FiscalDocument } from 'generated/prisma';
 import logger from '../../../lib/logger';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
-import type { DfeEmissorPort, EmissaoResult, EmitirInput } from '../dfe/DfeEmissorPort';
+import { isFalhaDeComunicacao, type DfeEmissorPort, type EmissaoResult, type EmitirInput } from '../dfe/DfeEmissorPort';
 import { isSessaoPscVencida } from '../dfe/AssinadorRemotoPort';
 
 /** F-ADN-5 a — quem aplica o resultado síncrono do envio (o `applyResult` do ciclo). */
 export type DfeResultApplier = (scope: AccountingScope, doc: FiscalDocument, result: EmissaoResult) => Promise<void>;
+
+/** X10a PR-9 (decisão 4) — quem re-emite a NFC-e em contingência off-line quando o envio normal falha por comunicação. */
+export type DfeContingenciaHandler = (scope: AccountingScope, doc: FiscalDocument, port: DfeEmissorPort, input: EmitirInput) => Promise<void>;
+
+/** `tpEmis` (B22) do payload de NF-e/NFC-e; `null` na DPS. */
+function tpEmisDe(payload: unknown): number | null {
+  const tpEmis = (payload as { infNFe?: { ide?: { tpEmis?: unknown } } } | null)?.infNFe?.ide?.tpEmis;
+  return typeof tpEmis === 'number' ? tpEmis : null;
+}
 
 /**
  * Envio pós-commit de UMA tentativa — criação (`FiscalDocumentEmissionService.createAndSend`) e reenvio
@@ -17,6 +26,9 @@ export type DfeResultApplier = (scope: AccountingScope, doc: FiscalDocument, res
  *   (E-13, F-PSC-6 a); nada foi ao fisco.
  * - Adaptador com `resultadoSincrono` ⇒ o retorno é aplicado por `applier` (F-ADN-5 a). Sem ele, o resultado imediato
  *   fica para o polling, como antes. Falha ao aplicar não propaga: o documento fica `SENT` e o polling reconsulta.
+ * - X10a PR-9 (E-9; decisão 4 de D-2026-10-29-X10A-PR7-9-FORKS): falha de COMUNICAÇÃO (`DfeTransporteError`, nunca
+ *   rejeição) no envio de uma NFC-e normal por adaptador com `contingenciaOffline` ⇒ `contingencia` re-emite a venda
+ *   off-line. A NFC-e que JÁ é de contingência (reenvio da rejeitada) volta a `CONTINGENCY`: o job a transmite.
  */
 export async function enviarTentativa(
   repo: Pick<IFiscalDocumentRepository, 'transition'>,
@@ -26,6 +38,7 @@ export async function enviarTentativa(
   port: DfeEmissorPort,
   input: EmitirInput,
   failCode: string,
+  contingencia: DfeContingenciaHandler | null = null,
 ): Promise<void> {
   let result: EmissaoResult;
   try {
@@ -40,6 +53,29 @@ export async function enviarTentativa(
         whenStatusIn: ['SENT'],
       });
       return;
+    }
+    if (isFalhaDeComunicacao(emitError) && input.kind === 'NFCE' && port.capabilities.contingenciaOffline) {
+      const tpEmis = tpEmisDe(input.payload);
+      if (tpEmis === 9) {
+        await repo.transition(scope, doc.id, {
+          status: 'CONTINGENCY',
+          errorsJson: JSON.stringify([{ code: failCode, message }]),
+          contingenciaSuplJson: null, // o tick gera o QR da chave desta tentativa antes de transmitir
+          whenStatusIn: ['SENT'],
+        });
+        return;
+      }
+      if (tpEmis === 1 && contingencia) {
+        try {
+          await contingencia(scope, doc, port, input);
+          return;
+        } catch (contError) {
+          logger.error('dfe_contingencia: a entrada em contingência falhou — documento fica SENT', {
+            documentId: doc.id,
+            error: contError instanceof Error ? contError.message : String(contError),
+          });
+        }
+      }
     }
     logger.error('DfeEmissorPort.emitir falhou — documento fica SENT, sem tentativa automática', { documentId: doc.id, error: message });
     await repo.transition(scope, doc.id, { status: 'SENT', errorsJson: JSON.stringify([{ code: failCode, message }]) });
