@@ -8,9 +8,8 @@
 
 ## Pré-condição
 
-- **O PR #994 (triagem de 30/10) está aberto em 31/10** e traz os folds de 30/10 do [[D1]] e do [[D1f]]
-  ("do contador não falta nada"). Fechar os dois gates antes do merge do #994 deixaria o `estado_detalhe` de `main` sem a
-  razão do fechamento. Ordem sugerida: merge do #994 → fechamento (um PR só de docs com o fold).
+- ✅ **O PR #994 (triagem de 30/10) foi mergeado em 31/10** (`d81ae797`, dono no chat: "Sim, OK no #994"). Os folds de
+  30/10 do [[D1]] e do [[D1f]] ("do contador não falta nada") já estão em `main`. A pré-condição se sustenta.
 
 ## D1 — o que cada item da lista tem
 

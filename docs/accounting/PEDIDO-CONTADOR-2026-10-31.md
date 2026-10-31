@@ -4,9 +4,9 @@
 > Autorização: dono, chat, 2026-10-31: "Monte o pedido em linguagem de contador, com critério de aceite por item, num
 > arquivo que eu possa copiar. Você NUNCA envia — eu envio."
 > Base: triagem de 30/10 no PR #994 ([`PEDIDO-CONTADOR-2026-10-30.md`](PEDIDO-CONTADOR-2026-10-30.md),
-> [`D-2026-10-30-TRIAGEM-CONTADOR`](../plano/decisoes/D-2026-10-30-TRIAGEM-CONTADOR.md)), **ainda não mergeado em 31/10**.
+> [`D-2026-10-30-TRIAGEM-CONTADOR`](../plano/decisoes/D-2026-10-30-TRIAGEM-CONTADOR.md)), mergeado em 31/10 (`d81ae797`, OK do dono no chat).
 > Este arquivo não substitui o de 30/10: a mensagem é a mesma. Ele só registra a reconferência de 31/10 e acrescenta o PE-6
-> ao bloco "o que não estamos pedindo". Se o #994 entrar primeiro, os dois convivem.
+> ao bloco "o que não estamos pedindo". Os dois convivem.
 
 ## Triagem de 31/10 (os 5 itens que o dono listou)
 
