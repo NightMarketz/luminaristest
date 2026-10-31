@@ -14,7 +14,7 @@
 > (contato, versão, validade do certificado, token) e revoga; um aviso na seção "Documentos fiscais" da venda diz quando
 > há nota em `PENDING_SIGNATURE` com o assinador fora. **Risco principal (verificado por leitura):** não existe tela de
 > emissão de NF-e/NFC-e em `main` (só o botão "Emitir NFS-e"), então o "balcão" do aviso não tem casa óbvia (F-FEAS-4).
-> Além disso, todo contrato aqui depende do AL-PR-2 e dos PRs #984/#992, nenhum em `main`.
+> **Forks F-FEAS-1..7: ✅ ratificados 31/10 pela recomendação (§5).** Além disso, todo contrato aqui depende do AL-PR-2 e dos PRs #984/#992, nenhum em `main`.
 
 ## 0. Formulário (contexto fixo)
 
@@ -231,7 +231,12 @@ existe num ramo. Numeração FA-n para não colidir com AL-n.
 "Junto do AL-PR-2" quer dizer o FA-PR-1 empilhado no AL-PR-2 (mesma fila, PR próprio, porque a casa separa BE e FE),
 não um diff misturado. O FA-PR-1 sozinho já basta para o passo "parear" do runbook A3.
 
-## 5. Forks — RATIFICAÇÃO PENDENTE
+## 5. Forks — ✅ RATIFICADOS 2026-10-31 pela recomendação
+
+> Dono, chat, 31/10: *"Pode decidir os forks pelo recomendado, todos"*. Registro:
+> [`D-2026-10-31-FE-NFCE-ASSINADOR-FORKS`](../plano/decisoes/D-2026-10-31-FE-NFCE-ASSINADOR-FORKS.md). Não é `executa`.
+> O texto das cédulas fica como estava; em cada uma vale o ramo da recomendação. O F-FEAS-5 (a) pede três campos ao
+> AL-PR-2 (§2, campos marcados com `(*)`).
 
 ### F-FEAS-1 — Onde fica a seção do assinador
 - **(a)** Seção na aba "Perfil fiscal", depois do `FiscalProfilePanel`.
@@ -239,7 +244,7 @@ não um diff misturado. O FA-PR-1 sozinho já basta para o passo "parear" do run
 - **(c)** Dentro da `FiscalDocumentsSection` da venda.
 - **Recomendação: (a).** O assinador é configuração fiscal da unidade, como o perfil e o certificado, e a aba já é
   por unidade e fora do modo delegado. (b) põe a 30ª aba para uma seção pequena. (c) mistura configuração da unidade
-  com o documento de uma venda. **RATIFICAÇÃO PENDENTE.**
+  com o documento de uma venda. **✅ RATIFICADA (31/10).**
 
 ### F-FEAS-2 — Como o código de pareamento aparece
 O código **não pode** ser revisto depois de gerado: o servidor só guarda o hash (AL-3). O que resta escolher é a
@@ -248,7 +253,7 @@ apresentação.
 - **(b)** Código inline na seção, visível até expirar mesmo com a navegação entre seções da aba.
 - **Recomendação: (a).** O modal deixa claro que é uma vez só e não deixa o código à vista na tela enquanto o
   operador faz outra coisa. Se a pessoa fechar sem querer, gerar outro custa um clique (o novo pareamento só vale um
-  código). **RATIFICAÇÃO PENDENTE.**
+  código). **✅ RATIFICADA (31/10).**
 
 ### F-FEAS-3 — O aviso no balcão bloqueia ou só informa
 - **(a)** Só informa: aviso visível; a emissão segue pelo servidor, que deixa a nota em `PENDING_SIGNATURE` e a retoma
@@ -256,7 +261,7 @@ apresentação.
 - **(b)** Bloqueia: com o assinador fora, a tela desabilita a emissão.
 - **Recomendação: (a).** O F-AL-6 (a) já ratificou que a nota fica pendente e sai sozinha; bloquear na tela
   contradiz essa decisão e perde a venda que o servidor guardaria. Também põe regra no FE, quando o pré-voo AL-13 já é
-  a regra no servidor. **RATIFICAÇÃO PENDENTE.**
+  a regra no servidor. **✅ RATIFICADA (31/10).**
 
 ### F-FEAS-4 — Onde fica o "balcão" do aviso
 Não existe tela de emissão de NF-e/NFC-e no `my-app` (§1).
@@ -266,7 +271,7 @@ Não existe tela de emissão de NF-e/NFC-e no `my-app` (§1).
 - **(c)** Esperar o `FE-INCR-NFCE` (botão "Emitir NFC-e"), que não tem autorização.
 - **Recomendação: (a).** É o único lugar de hoje em que o operador vê a nota da venda, e não cria tela nova. (b) é
   mais visível, mas toca o dashboard inteiro e consulta a cada página. (c) deixa o aviso sem casa por tempo
-  indeterminado. Quando o `FE-INCR-NFCE` existir, ele reusa o `AssinadorForaAviso` (§9 item 1). **RATIFICAÇÃO PENDENTE.**
+  indeterminado. Quando o `FE-INCR-NFCE` existir, ele reusa o `AssinadorForaAviso` (§8 item 1). **✅ RATIFICADA (31/10).**
 
 ### F-FEAS-5 — Valores derivados: servidor ou cliente
 `online` (90 s do AL-13), `diasParaVencer` e `versaoMinima` podem vir prontos na view ou ser calculados no FE.
@@ -274,7 +279,7 @@ Não existe tela de emissão de NF-e/NFC-e no `my-app` (§1).
 - **(b)** O FE calcula a partir de `lastSeenAt`, `certNotAfter` e de uma constante.
 - **Recomendação: (a).** Uma fonte só para "assinador fora": o pré-voo AL-13 e a tela usam o mesmo limiar, e o
   relógio do caixa não entra na conta. (b) repete o 90 no cliente e traz conta de data com fuso. **Efeito:** o AL-PR-2
-  precisa incluir esses campos na view (nota ao BRIEF BE, sem editá-lo aqui). **RATIFICAÇÃO PENDENTE.**
+  precisa incluir esses campos na view (nota ao BRIEF BE, sem editá-lo aqui). **✅ RATIFICADA (31/10).**
 
 ### F-FEAS-6 — Como a tela fica em dia
 - **(a)** Releitura a cada 30 s com a aba visível, mais botão "atualizar".
@@ -282,14 +287,14 @@ Não existe tela de emissão de NF-e/NFC-e no `my-app` (§1).
 - **(c)** Canal de push (SSE/WebSocket) do servidor.
 - **Recomendação: (a).** O pareamento (FA-8) e o "voltou" do assinador só aparecem sem clique com releitura; 30 s com
   a aba visível custa duas consultas leves por minuto, e só enquanto a seção está aberta. (c) traz dependência e canal novos para um estado que muda
-  pouco. **RATIFICAÇÃO PENDENTE.**
+  pouco. **✅ RATIFICADA (31/10).**
 
 ### F-FEAS-7 — Download do assinador e SHA-256 nesta tela
 O F-AL-8 (a) ratificado diz "SHA-256 publicado na tela", sem dizer qual tela.
 - **(a)** Nesta seção, como FA-PR-3, quando o AL-PR-6 existir.
 - **(b)** Fora deste BRIEF; outro FE-INCR quando o AL-PR-6 vier.
 - **Recomendação: (a).** É a mesma seção em que o operador pareia; quem baixa o assinador está nela. Fica
-  condicionado ao AL-PR-6 para não planejar contrato que não existe. **RATIFICAÇÃO PENDENTE.**
+  condicionado ao AL-PR-6 para não planejar contrato que não existe. **✅ RATIFICADA (31/10).**
 
 ## 6. Pendente de validação externa
 
