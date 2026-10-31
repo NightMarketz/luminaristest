@@ -11,6 +11,11 @@
 >
 > **Forks: todos PENDENTES** (§6). Nenhum foi decidido nesta sessão.
 >
+> **Emenda de 31/10 (2ª sessão, pedido do dono no chat):** li o fluxo da venda de balcão on-line (§2A), que era o insumo
+> ausente 1 do §8. A leitura mostrou que a OFF-5 não podia criar a venda já `Finalized` com os itens, e ela foi refeita.
+> Entraram três forks novos (F-OFF-10..12). O mais grave é o F-OFF-10: um gate do servidor pode recusar, na sincronização,
+> uma nota que já foi emitida e não tem volta.
+>
 > **Em duas linhas:** quando o caixa não alcança o servidor, o assinador local monta, numera numa **série só dele**,
 > assina e imprime a NFC-e `tpEmis=9`. Na volta da conexão, ele manda a nota pronta, e o servidor cria a venda, lança no
 > razão pelo caminho normal e transmite pelo job do PR-9. **Risco principal:** a regra fiscal passa a rodar também no
@@ -97,6 +102,85 @@ caixa (Windows, assinador .NET 8)                                   VPS (server/
 └───────────────────────────────────────────┘                      └──────────────────────────────────────┘
 ```
 
+## 2A. Fluxo on-line de referência (lido em 31/10, branch desta frente)
+
+A sincronização (OFF-5) tem de reproduzir o que a venda de balcão on-line escreve hoje. Li os arquivos abaixo. **Não li o
+`my-app`**: a sequência de chamadas da tela é inferida a partir dos hooks e das rotas.
+
+**a) Quem finaliza, e em que ordem.** A venda on-line não é uma chamada só. São pelo menos quatro pedidos HTTP:
+
+| # | Pedido | O que roda | Fonte |
+|---|---|---|---|
+| 1 | `POST /dynamic-tables/:sales/data` (cabeçalho `Draft`) | `beforeCreate` exige `unitId` e preenche `date` e `dueDate` | `SalesPlugin.ts:192-215` |
+| 2 | `POST …/:sale_items/data`, um por item | `assertParentSaleNotFinalized`, coerência de tipo; produto sem `Product Units` ⇒ 400; reserva de estoque (`ensureReservationAvailability`) | `SalesPlugin.ts:218-280`, `stockSync.ts:73-85` |
+| 3 | `PUT …/:sales/data/:id` `status → Finalized` | gates de finalização (item f), depois baixa do estoque, movimento `Out` e comissões, dentro da tx | `SalesPlugin.ts:141-189` e `:342-349` |
+| 3′ | pós-commit, no controller | `maybeSyncSaleFinalized` → `maybeSyncSalePackageSold` (o PUT não chama o settled) | `dynamicTablesController.ts:160-161` |
+| 4 | `POST` do pagamento (`RegisterPaymentService`) | só aceita venda `Finalized`; escrita `isSystem` de 4 ou 5 colunas; pós-commit `maybeSyncSaleSettled` | `RegisterPaymentService.ts:44-136` |
+| 5 | `POST /api/nfe/dfe/documents` | `emit`: exige venda `Finalized`; monta, numera na `nfceSerie` do perfil e envia | `FiscalDocumentEmissionService.ts:267-283`, `:686`, `:1065` |
+
+A NFC-e on-line é **o último passo e um pedido separado**: a venda existe finalizada mesmo que a nota falhe. No
+off-line a ordem se inverte: a nota existe antes da venda. **Esse é o conflito estrutural da frente.**
+
+Fato que derruba a OFF-5 original: um item não pode ser criado numa venda que já nasceu `Finalized`
+(`assertParentSaleNotFinalized`, `saleItems.ts:173-180`, chamado em `SalesPlugin.ts:222`). E o `afterCreate` do
+cabeçalho não baixa estoque nem gera comissão: só o `afterUpdate` com mudança de status faz isso (`SalesPlugin.ts:284-290`
+× `:337-349`). **Verificado** por leitura.
+
+**b) Transação × pós-commit.**
+- O `before*` roda fora da tx (preflight). O `after*` e a escrita rodam numa tx só, e a falha de um plugin desfaz a
+  linha (`DynamicTableService.ts:590-614` create, `:791-817` update).
+- Com `options.tx`, as duas fases usam o repositório da tx do chamador (`:571-575`, `:814-815`). É o que deixa a
+  sincronização compor cabeçalho, itens e finalização numa tx. **Verificado.**
+- As três pontes contábeis (receita + CMV + subrazão fiscal; pacote; baixa do A Receber) são pós-commit, *best-effort*,
+  e não desfazem a venda (`SaleSalesAccountingBridge.ts:1-13`, `SaleSettlementBridge.ts:1-20`). Cada uma abre a própria
+  tx raiz.
+- O `RegisterPaymentService` **não recebe `tx`** (`:120-125`): a sincronização não pode chamá-lo dentro da sua tx.
+  **Verificado.**
+
+**c) Pagamento.**
+- Uma forma por venda: `paymentMethod ∈ {Credit Card, Debit Card, Cash, Pix, Package Balance}` (`RegisterPaymentDto.ts:21`).
+- Colunas escritas: `paymentStatus`, `paymentMethod`, `paidAt`, `paidByUserId` e `paymentReference?` (`RegisterPaymentService.ts:108-114`).
+- **Não há** campo de troco, de pagamento múltiplo nem de parcelas.
+- O prazo é `paymentTermDays → dueDate` no cabeçalho (`SalesPlugin.ts:208-214`). A receita vai para A Receber e a baixa
+  vem no pagamento.
+- `Package Balance` exige saldo do servidor (`assertSufficient`, `:96-104`). O caixa off-line não sabe esse saldo, e a
+  `VendaOffline` (§4.1) já o exclui.
+- O caixa conhece a forma, o valor e o troco que ele mesmo calculou. O troco só existiria no `detPag` do XML (inferido:
+  não conferi se o `montarNfe` emite `vTroco`).
+
+**d) Estoque.**
+- Na finalização, `ensureSufficientStock` (`stockSync.ts:110-118`) e `processSaleStockUpdate` recusam saldo negativo
+  com `ValidationError` (`:246-248`). A tx inteira volta.
+- Produto sem `Product Units` na unidade também recusa (`SalesPlugin.ts:183-186`).
+- O módulo só roda quando a unidade tem sistema de estoque (`hasInventorySystem`, `stockSync.ts:173`).
+- **Logo:** se o saldo do servidor não comporta a venda off-line na hora da sincronização, a criação da venda **falha**
+  como o código está hoje. **Verificado.**
+
+**e) Idempotência.**
+- A criação da venda **não tem chave de idempotência**: o id da linha nasce no servidor. Repetir o pedido cria uma
+  segunda venda.
+- A unicidade do documento é `@@unique([userId, unitId, saleKey, kind, cTribNac])`, com `saleKey = saleId`
+  (`schema.prisma:2210`, `:2251`). Uma segunda venda tem `saleId` novo, então essa chave **não** protege o reenvio.
+- O que protege o reenvio é o `offlineId @unique` do §4.3, **desde que** venda e documento estejam na mesma tx: o
+  segundo `INSERT` dá P2002 e desfaz a venda junto.
+- Fora da tx, as pontes já deduplicam (`@@unique` do `PostingService`; comentário em `SaleSalesAccountingBridge.ts:11-13`).
+- **Cabe:** o `offlineId` fecha a lacuna se a OFF-5 ler o `offlineId` antes de tudo e, se ele já existir, devolver
+  `repetida` e só redisparar as pontes. **Inferido** do desenho; não há teste.
+
+**f) Gates que a venda roda, e quais recusam uma nota já emitida.**
+
+| Gate | Fonte | Recusa a nota off-line? |
+|---|---|---|
+| `canManageData` (policy da tabela) | `DynamicTableService.ts:566-568` | Sim, se o dono do dispositivo perdeu acesso. Raro |
+| `unitId` obrigatório | `SalesPlugin.ts:198-200` | Não: vem do pareamento |
+| venda sem itens | `:143-145` | Não |
+| desconto e preço = catálogo (`assertSaleDiscountItemization`) | `:161`, `discountGuard.ts:28-80` | Não: compara campos do próprio item, sem reler o catálogo. O caixa manda `unitPrice = catalogUnitPrice` do snapshot e não tem desconto (OFF-16) |
+| cliente relacional ou "cliente simples" | `:163-171` | Não: F-OFF-5 cria o cliente |
+| serviço exige agendamento pronto | `:174`, `:343` | Sim, para item de serviço. Ver F-OFF-12 |
+| produto sem `Product Units` | `:183-186` | **Sim** |
+| estoque insuficiente ou negativo | `stockSync.ts:110-118`, `:246-248` | **Sim**: o caso mais provável (F-OFF-10) |
+| período contábil fechado | `AccountingSyncPort.ts:124-125` | Não recusa a venda. A ponte **pula** a receita com `warn` (`SaleSalesAccountingBridge.ts:113-124`): a nota é transmitida e o razão fica sem a receita até o reconcile. Vira alerta na OFF-10 |
+
 ## 3. Checklist de comportamentos
 
 Marcadores: `[direto]` sem fork · `[fork:F-OFF-n]` vale o ramo recomendado **se** o dono ratificar · `[cond:…]` só existe
@@ -137,18 +221,39 @@ num ramo · `[legal:…]` regra com artefato citado. Numeração OFF-n, para nã
   `offlineId` (UUID gerado no caixa): o mesmo id com o mesmo hash ⇒ 200 sem efeito; com hash diferente ⇒ 409. *Teste:*
   cada recusa; reenvio do lote inteiro ⇒ zero efeitos novos; nota de outro dispositivo ⇒ recusa.
 - **OFF-5 [fork:F-OFF-4] Reconciliação: venda, documento e razão.** `NfceOfflineSyncService` (accounting, Prisma
-  first-class), chamado pelo controller da rota OFF-4. Ele **não** é plugin nem regra do motor (Contrato §2.1). Numa tx
-  só:
-  1. cria a venda na tabela `sales` (e `sale_items`) pelo `DynamicTableService` com `options.tx`, com `status =
-     'Finalized'`, os itens, o `paymentMethod` e o cliente (F-OFF-5);
-  2. cria o `FiscalDocument` NFCE com `origem = 'CAIXA_OFFLINE'`, `offlineId`, série, número, `status = 'CONTINGENCY'`,
-     `contingenciaSuplJson` (o QR que foi impresso) e a tentativa 1 com o **XML do caixa como veio**, sem remontar;
-  3. grava o número recebido em `DfeSignerOfflineSeries.ultimoRecebido`.
+  first-class), chamado pelo controller da rota OFF-4. Ele **não** é plugin nem regra do motor (Contrato §2.1).
+  Refeito em 31/10 pelo §2A: a venda nasce como nasce on-line (passos 1→3 do §2A), não já `Finalized`.
 
-  Depois do commit, o controller chama `maybeSyncSaleFinalized`, a mesma ponte do motor. A receita entra no razão como em
-  qualquer venda finalizada, e o job de reconciliação refaz a ponte se ela falhar. *Teste:* o lote de uma nota gera uma
-  venda, um documento e um lançamento; a ponte com falha não desfaz a venda e o job refaz uma vez; o reenvio não duplica
-  nada (`@@unique` do `PostingService` + `offlineId`).
+  0. **Antes de tudo**, procura o `offlineId`. Se ele já existe com o mesmo hash, devolve `repetida`, só redispara as
+     pontes do passo 6 e para (§2A e).
+
+  Depois, numa tx só (`options.tx` em todas as escritas do motor):
+  1. cria o cabeçalho `sales` em `Draft`, com `unitId` do pareamento, `date` = dia do `dhEmi` e o cliente (F-OFF-5);
+  2. cria um `sale_items` por item, com `unitPrice = catalogUnitPrice = precoCents` do snapshot e o `productId` do
+     `productRef` (`[cond:F-OFF-12 a]`: só produto);
+  3. atualiza o cabeçalho com `isSystem`: `status = 'Finalized'`, `paymentStatus = 'Paid'`, `paymentMethod`,
+     `paidAt = dhEmi`, `paidByUserId` = o dono do dispositivo. O `beforeUpdate` já aceita Draft → Paid forçando
+     Finalized (`SalesPlugin.ts:101-104`), e o `afterUpdate` baixa o estoque, grava o movimento `Out` e as comissões
+     dentro da tx. As colunas de pagamento são as mesmas que o `RegisterPaymentService` escreve (`:108-114`). O serviço
+     em si não é chamado, porque não recebe `tx` (§2A b). O estoque insuficiente segue o F-OFF-10;
+  4. cria o `FiscalDocument` NFCE com:
+     - `origem = 'CAIXA_OFFLINE'`, `offlineId`, `saleKey = saleId`, série, número e `status = 'CONTINGENCY'`;
+     - `contingenciaSuplJson` (o QR que foi impresso);
+     - a tentativa 1 com o **XML do caixa como veio**, sem remontar;
+  5. grava o número recebido em `DfeSignerOfflineSeries.ultimoRecebido`.
+
+  6. **Depois do commit**, o serviço chama as mesmas três pontes que a venda on-line dispara, em sequência:
+     `maybeSyncSaleFinalized` → `maybeSyncSalePackageSold` (no-op sem pacote) → `maybeSyncSaleSettled`. É a mesma ordem
+     do `createTableData` (`dynamicTablesController.ts:130-132`): a baixa exige a receita lançada antes.
+
+  *Teste:*
+  - o lote de uma nota gera uma venda `Finalized`+`Paid` com itens, um movimento `Out`, um documento e os lançamentos
+    de receita e baixa;
+  - a ponte com falha não desfaz a venda, e o job refaz uma vez;
+  - o reenvio não duplica nada (`offlineId` no passo 0; `@@unique` do `PostingService`);
+  - corrida de dois reenvios simultâneos: um faz commit e o outro dá P2002 no passo 4 e desfaz a venda dele;
+  - **falsificador:** criar o cabeçalho já `Finalized` faz o passo 2 falhar com "Não é permitido alterar itens de uma
+    venda finalizada".
 - **OFF-6 [fork:F-OFF-3] Conferência por remontagem.** Depois do commit, o servidor roda `montarNfe` com a venda criada
   e a **versão do snapshot** que o caixa declarou, e compara com o `infNFe` recebido (fora `Id`, `cNF`, `cDV`, `dhEmi`,
   `dhCont`, `xJust`). Se divergir, alerta `dfe.offline.divergencia` com os campos divergentes (sem valor de CPF). **A nota
@@ -172,7 +277,10 @@ num ramo · `[legal:…]` regra com artefato citado. Numeração OFF-n, para nã
 
   *Teste:* os dois casos, com relógio injetado; o teste do scheduler já descobre o arquivo.
 - **OFF-10 [direto] Observabilidade e auditoria.** Eventos no `LOG_EVENTS`: `dfe.offline.synced`, `dfe.offline.recusada`,
-  `dfe.offline.divergencia`, `dfe.offline.buraco`, `dfe.offline.diario_regrediu`, `dfe.offline.snapshot_served`. Na
+  `dfe.offline.divergencia`, `dfe.offline.buraco`, `dfe.offline.diario_regrediu`, `dfe.offline.snapshot_served`,
+  `dfe.offline.receita_pulada` e `dfe.offline.estoque_negativo` (`[cond:F-OFF-10 a]`). `dfe.offline.receita_pulada`
+  sai quando a ponte de receita pula a venda sincronizada por período não aberto: a nota é transmitida e o razão fica sem
+  a receita até o reconcile (§2A f). Na
   allowlist do `auditCanonical.ts`: `dfe_offline_series.reserved` e `dfe_offline_series.released`. **PII:** a nota traz
   CPF/CNPJ e nome do destinatário (F-NFCE-7 b exige o documento). Log e auditoria levam só `offlineId`, série, número e
   chave; nunca o XML, o `dest`, nem o snapshot (OBS-R7). *Teste:* o guarda de PII da allowlist reprova campo novo sem
@@ -208,8 +316,10 @@ num ramo · `[legal:…]` regra com artefato citado. Numeração OFF-n, para nã
   snapshot vencido ⇒ não entra (mostra "sem venda off-line: cadastro desatualizado"); saída no primeiro poll bom.
 - **OFF-16 [fork:F-OFF-9] PDV mínimo.** É uma janela do assinador, usada só no modo off-line: busca de produto do
   snapshot, quantidade, CPF/CNPJ (DV conferido; sem documento ⇒ sem NFC-e, pelo F-NFCE-7 b), forma de pagamento do
-  snapshot e o total. A janela não tem desconto nem cancelamento (OFF-21). *Teste:* venda sem documento ⇒ recusa; produto
-  fora do snapshot não aparece.
+  snapshot e o total. A janela não tem desconto nem cancelamento (OFF-21). Ela vende só produto (`[cond:F-OFF-12 a]`).
+  Também não deixa vender acima do `saldo` do snapshot menos o que já vendeu off-line (`[cond:F-OFF-10 a]`). *Teste:*
+  venda sem documento ⇒ recusa; produto fora do snapshot não aparece; quantidade acima do saldo restante ⇒ recusa no
+  caixa.
 - **OFF-17 [fork:F-OFF-2] Numeração com diário (write-ahead).** O diário local é um SQLite cifrado com DPAPI. A ordem é:
   1. monta a nota (OFF-12) com o número `ultimoGravado + 1` da série do caixa;
   2. assina `infNFe` e o QR;
@@ -258,7 +368,8 @@ num ramo · `[legal:…]` regra com artefato citado. Numeração OFF-n, para nã
 // server/src/features/accounting/models/offline/montagemOffline.ts — entrada única do bundle (OFF-12)
 export interface VendaOffline {
   offlineId: string;                         // UUID v4 gerado no caixa
-  itens: Array<{ productRef: string; qty: number; vProdCents: number }>;
+  itens: Array<{ productRef: string; qty: number; vProdCents: number;
+    responsavelRef?: string }>;              // [cond:F-OFF-12 a] quem vendeu, para a comissão; da lista do snapshot
   dest: { CPF?: string; CNPJ?: string; xNome?: string };   // obrigatório (F-NFCE-7 b)
   paymentMethod: 'Cash' | 'Credit Card' | 'Debit Card' | 'Pix';   // chaves de TPAG_POR_METODO
 }
@@ -287,10 +398,12 @@ export const OfflineSnapshot = z.object({
     codMun: z.string().length(7) }).strict(),
   crt: z.literal(1),                         // montarNfe só aceita CRT 1 hoje
   produtos: z.array(z.object({ productRef: z.string(), xProd: z.string(), precoCents: z.number().int().nonnegative(),
+    saldo: z.number().nullable(),            // [cond:F-OFF-10 a] saldo − reservas da unidade; null = unidade sem estoque
     perfil: z.object({ ncm: z.string(), cest: z.string().nullable(), origem: z.number().int(), cfopPadrao: z.string(),
       csosn: z.string().nullable(), uCom: z.string(), cEan: z.string(), cstPis: z.string(), cstCofins: z.string() }).strict(),
   }).strict()),
   foraDoSnapshot: z.array(z.object({ productRef: z.string(), motivo: z.string() }).strict()),
+  responsaveis: z.array(z.object({ ref: z.string(), nome: z.string() }).strict()),   // [cond:F-OFF-12 a]
   tPag: z.record(z.string(), z.string()),    // TPAG_POR_METODO
   legal: z.object({ limitesNfce: z.unknown(), rtcSimplesDesde: z.string(), feriados: z.array(z.string()) }).strict(),
   qr: z.discriminatedUnion('modo', [
@@ -387,7 +500,7 @@ interface IImpressoraDanfe { void Imprimir(DanfeLeiaute leiaute); }             
 | OFF-PR-0 (docs) | seção "modo off-line" no `ADR-ASSINADOR-LOCAL` (F-OFF-0), com F-OFF-1, 3 e 9 | AL-PR-0 + autorização "só ADR" | decisão estrutural |
 | OFF-PR-1 (server) | OFF-1, OFF-2, OFF-3, OFF-11 (parte) | AL-PR-2; F-OFF-2, 6 | migração + rotas |
 | OFF-PR-2 (server) | OFF-12, OFF-13 (lado servidor), `montagemOffline.ts` | OFF-PR-1; F-OFF-3 | bundle + fixtures |
-| OFF-PR-3 (server) | OFF-4..OFF-8, OFF-10, OFF-11 (resto) | OFF-PR-2, AL-PR-3, #992 em `main`; F-OFF-4, 5, 8 | recepção + reconciliação |
+| OFF-PR-3 (server) | OFF-4..OFF-8, OFF-10, OFF-11 (resto) | OFF-PR-2, AL-PR-3, #992 em `main`; F-OFF-4, 5, 8, 10, 11, 12 | recepção + reconciliação |
 | OFF-PR-4 (server) | OFF-9 | OFF-PR-3, AL-PR-4 | scheduler + alerta |
 | OFF-PR-5 (assinador) | OFF-13 (lado caixa), OFF-14..OFF-21 | AL-PR-5, OFF-PR-2; F-OFF-1, 7, 9 | modo off-line |
 | OFF-PR-6 (assinador) | OFF-22 | OFF-PR-5; F-OFF-8 = c | emergência |
@@ -457,6 +570,11 @@ A cl. 11ª manda operar em contingência "quando em decorrência de problemas t�
   (cl. 11ª § 1º III) deixaria a venda em suspenso, embora a operação já tenha acontecido. Fato de código: a ponte é
   invocada hoje pelo controller do motor, então o serviço de sincronização chama a mesma função exportada
   (`maybeSyncSaleFinalized`) e não mexe no `DynamicTableService` (STOP do CLAUDE.md). **RATIFICAÇÃO PENDENTE.**
+- **Emenda de 31/10, com a recomendação mantida.** O ramo (a) dizia "cria a venda com `status = 'Finalized'` e os
+  itens". Isso é impossível: item não entra em venda finalizada, e o cabeçalho que já nasce finalizado não baixa
+  estoque (§2A a). O mecanismo foi corrigido na OFF-5 (Draft → itens → finalização paga, tudo com `options.tx`). A
+  recomendação continua (a), porque o motivo dela não muda: há um caminho de receita só. O que (a) passa a exigir é
+  decidir o que acontece quando um gate da finalização recusa a nota já emitida. Isso é o F-OFF-10.
 
 ### F-OFF-5 — O cliente da venda off-line
 F-NFCE-7 (b), ratificado: sem CPF/CNPJ, sem NFC-e. Logo, a venda off-line exige o documento do adquirente.
@@ -507,6 +625,65 @@ O app web é servido pela VPS: sem o servidor, a tela de venda não abre.
   (c) não cobre a venda nova, que é o caso inteiro. A janela fica deliberadamente pobre: sem desconto, sem pacote e sem
   cancelamento. **RATIFICAÇÃO PENDENTE.**
 
+### F-OFF-10 — O gate do servidor recusa, na sincronização, uma nota que já foi emitida
+**Fato (§2A d, f):** a finalização recusa a venda quando o estoque fica negativo ou o produto não tem `Product Units` na
+unidade. A tx volta inteira. A nota off-line, porém, já foi emitida na impressão do DANFE (cl. 11ª § 1º IV "a") e
+**tem de** ser transmitida (cl. 11ª; prazo do PR-9). Ela não pode ser recusada como uma venda on-line. O saldo diverge
+quando:
+- a unidade vendeu por outro canal enquanto o caixa estava isolado (no F-OFF-1 b o app web pode continuar no ar);
+- o saldo do servidor já estava errado;
+- o snapshot ficou velho.
+
+Caminhos:
+- **(a) Prevenir no caixa, e na sobra a nota manda.** O snapshot leva o `saldo` por produto, e o PDV não vende acima
+  dele menos o já vendido off-line (OFF-16). Se mesmo assim o saldo não comportar, a sincronização cria a venda, baixa o
+  estoque abaixo de zero e alerta `dfe.offline.estoque_negativo` para o ajuste de inventário. Para isso, a recusa de
+  negativo do `processSaleStockUpdate` e o `ensureSufficientStock` ganham uma exceção estreita: escrita `isSystem` com
+  marcador de origem `CAIXA_OFFLINE`.
+- **(b) Prevenir no caixa, e na sobra a venda espera.** Mesma prevenção. Se o gate recusar, o `FiscalDocument` nasce
+  **sem venda** (`saleKey = offline:<offlineId>`), é transmitido normalmente e entra numa fila "venda pendente de
+  reconciliação" com alerta. O operador ajusta o estoque e reprocessa.
+- **(c) Sem prevenção, só (a) ou (b) na sincronização.**
+
+**Recomendação: (a).** A nota autorizada é fato fiscal consumado, e a receita do razão e o subrazão fiscal
+(`maybeRecordReceitaFiscal`) dependem da venda. Em (b), a NFC-e transmitida fica sem receita no razão e sem linha na
+apuração até alguém agir: é a divergência que o razão nunca deveria ter. Estoque negativo é o sintoma certo de um
+cadastro errado, e o alerta pede o ajuste. A prevenção no caixa faz a sobra ser rara. Custo de (a): mexer na regra de
+estoque do `SalesPlugin` com uma exceção nomeada. É regra do próprio módulo de vendas, não integração cruzada no motor,
+então não cai no STOP do CLAUDE.md (inferido; o revisor do OFF-PR-3 confere). O produto sem `Product Units` continua
+recusado no snapshot (`foraDoSnapshot`, OFF-2), então não chega ao servidor. **RATIFICAÇÃO PENDENTE.**
+
+### F-OFF-11 — Pagamento da venda off-line
+**Fato (§2A c):**
+- a venda tem uma forma de pagamento só;
+- não há troco, pagamento múltiplo nem parcelas;
+- o prazo vira `dueDate` e A Receber;
+- `Package Balance` exige saldo do servidor.
+
+Caminhos:
+- **(a) À vista, uma forma só.** `Cash`, `Pix`, `Credit Card` ou `Debit Card`, sempre `Paid` na sincronização (OFF-5
+  passo 3). O troco vai só no `detPag` do XML, sem coluna na venda. Sem prazo e sem `Package Balance`.
+- **(b)** (a) mais pagamento misto (duas formas) no XML, com a venda gravando só a forma de maior valor.
+- **(c)** Campos novos na venda para troco e pagamento múltiplo.
+
+**Recomendação: (a).** Espelha o que a venda on-line grava hoje, então a baixa (`maybeSyncSaleSettled`) e o relatório de
+caixa não mudam. (b) faz a venda mentir sobre a forma. (c) muda o módulo de vendas por causa do off-line: frente
+própria. Confirmar no OFF-PR-2 se o `montarNfe` emite `vTroco` (§2A c, inferido). **RATIFICAÇÃO PENDENTE.**
+
+### F-OFF-12 — Que itens a venda off-line aceita, e a comissão
+**Fato (§2A f):** item de serviço exige agendamento pronto para finalizar, e a NFC-e é documento de mercadoria (o
+serviço vai na NFS-e). A comissão só nasce com responsável e taxa no item (`materializeCommissions`, `SalesPlugin.ts:348`).
+
+Caminhos:
+- **(a) Só produto, com responsável opcional.** O snapshot leva a lista de responsáveis ativos da unidade, só id e
+  nome. O item off-line leva `responsavelRef?`, e a comissão nasce na finalização como on-line.
+- **(b) Só produto, sem responsável:** a venda off-line nunca gera comissão.
+- **(c) Produto e serviço.**
+
+**Recomendação: (a).** (c) traz agendamento e NFS-e para o caixa off-line, fora do que a frente autorizou (NFC-e). (b)
+faz o funcionário perder comissão só porque a internet caiu, e alguém teria de lançar à mão. O nome de funcionário no
+disco do caixa é PII mínima e necessária (inferido). **RATIFICAÇÃO PENDENTE.**
+
 ## 7. Pendente de validação externa
 
 1. **"Servidor do Luminaris fora" é problema técnico da cl. 11ª?** (F-OFF-1). O caput fala em não poder transmitir "ou
@@ -528,9 +705,8 @@ O app web é servido pela VPS: sem o servidor, a tela de venda não abre.
 
 ## 8. Insumos ausentes (pausados — regra 2)
 
-1. **As escritas que a venda de balcão on-line faz hoje** (linha `sales`, `sale_items`, pagamento por
-   `RegisterPaymentService`, estoque). A OFF-5 tem de reproduzi-las na mesma ordem. Não varri o `my-app` nem o fluxo de
-   pagamento; o executor lê antes do OFF-PR-3.
+1. ~~As escritas que a venda de balcão on-line faz hoje.~~ **Lido em 31/10 → §2A.** Segue ausente só a sequência exata
+   de chamadas da tela do `my-app`, inferida no §2A a; ela não muda a OFF-5, que chama o serviço e não a tela.
 2. **Leiaute do DANFE NFC-e** (Manual v6.0, seções fora do QR) e se o repositório já renderiza DANFE NFC-e. O
    `DanfeDto` do #992 é da NF-e 55 (NFE-DANFE-IBSCBS).
 3. **O que o sistema faz com venda sem `customerId`** (ramo F-OFF-5 c).
@@ -538,10 +714,11 @@ O app web é servido pela VPS: sem o servidor, a tela de venda não abre.
 
 ## 9. Achados fora de escopo (não planejados)
 
-1. **Estoque no off-line:** o caixa vende sem ver o saldo, e a sincronização pode deixar o estoque negativo. O
-   tratamento é do módulo de estoque, não deste BRIEF.
+1. ~~Estoque no off-line~~ **Entrou no escopo em 31/10 (F-OFF-10).** A sincronização tem de reproduzir a baixa, e a
+   recusa por saldo bate de frente com a nota já emitida (§2A d).
 2. **Pagamento off-line:** Pix e cartão dependem da maquininha ou do PSP, fora do Luminaris. Aqui só se registra o
-   `paymentMethod`.
+   `paymentMethod`. O que a venda grava foi decidido para o F-OFF-11. Troco e pagamento misto como colunas da venda são
+   frente própria (F-OFF-11 c).
 3. **Mais de um caixa off-line por unidade:** exige reabrir o F-AL-3 / AL-4 (um assinador por unidade).
 4. **NF-e 55 off-line:** a contingência off-line é só da NFC-e (rej. 711 na 55, `emContingencia`). Fora.
 
@@ -563,6 +740,13 @@ O app web é servido pela VPS: sem o servidor, a tela de venda não abre.
    transmitida (cl. 11ª § 5º). Isso mudou a recomendação do F-OFF-2 para (a). Segundo caso: "o servidor remonta e
    corrige a nota do caixa". Falha porque a nota já foi emitida na impressão (cl. 11ª § 1º IV "a"), e daí a OFF-6 só
    alerta.
+   Terceiro caso (emenda de 31/10), contra o F-OFF-4 (a): "a sincronização cria a venda já `Finalized` com os itens
+   numa chamada". Falha no código: item não entra em venda finalizada (`saleItems.ts:173-180`), e o cabeçalho que já
+   nasce finalizado não baixa estoque nem gera comissão (`SalesPlugin.ts:284-290` × `:337-349`). A OFF-5 foi refeita, e
+   a recomendação ficou. Quarto caso: "o `@@unique` do documento já impede venda duplicada no reenvio". Falha porque
+   o `saleKey` é o `saleId`, que é novo a cada criação; quem protege é o `offlineId` na mesma tx (§2A e).
+   - **Grau dos achados do §2A:** a–d e f **verificados** por leitura dos arquivos citados; e **inferido** (sem teste);
+     a sequência de telas do `my-app` e o `vTroco` no `montarNfe` **não verificados**.
 4. **Checagem que teria falhado:** se a regra de série exclusiva de contingência (séries 890–989 ou 501–999) estivesse
    vigente, a série "qualquer, 0–889" do OFF-1 estaria errada. A leitura do texto compilado mostrou "III - REVOGADO" com
    efeitos desde 18/12/2019, e as duas redações com séries específicas marcadas "sem efeitos" [D01].
