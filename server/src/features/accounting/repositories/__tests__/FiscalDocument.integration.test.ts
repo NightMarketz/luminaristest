@@ -154,11 +154,19 @@ describe('FiscalDocument + ServiceFiscalProfile — contrato em SQLite real (BE-
       await off(`sale-aband-${n}`, 'REJECTED');
       await pausa();
     }
+    const vinteDias = new Date(Date.now() - 20 * 86_400_000);
     const abandonada = await off('sale-aband-velha', 'REJECTED');
-    await prisma.fiscalDocument.update({ where: { id: abandonada.id }, data: { createdAt: new Date(Date.now() - 20 * 86_400_000) } });
+    await prisma.fiscalDocument.update({ where: { id: abandonada.id }, data: { createdAt: vinteDias } });
+    await prisma.fiscalDocumentAttempt.updateMany({ where: { documentId: abandonada.id }, data: { sentAt: vinteDias } });
     const nova = await off('sale-nova', 'CONTINGENCY');
+    // J: documento de 20 dias (normal, tpEmis=1) que cai em contingência hoje — a janela é a da tentativa, não a do documento.
+    const reemitida = await docRepo.createSent(escopo(DONO_B), sent('sale-reemitida', { kind: 'NFCE', cTribNac: '', payloadJson: JSON.stringify({ infNFe: { ide: { tpEmis: 1 } } }) }));
+    await prisma.fiscalDocument.update({ where: { id: reemitida.id }, data: { createdAt: vinteDias } });
+    await prisma.fiscalDocumentAttempt.updateMany({ where: { documentId: reemitida.id }, data: { sentAt: vinteDias } });
+    await docRepo.appendAttempt(escopo(DONO_B), { documentId: reemitida.id, attemptNo: 2, payloadJson: JSON.stringify({ infNFe: { ide: { tpEmis: 9 } } }) });
+    await docRepo.transition(escopo(DONO_B), reemitida.id, { status: 'CONTINGENCY', currentAttemptNo: 2, whenStatusIn: ['SENT'] });
     const janela = (await docRepo.listContingenciaNaoAutorizada(new Date(Date.now() - 15 * 86_400_000))).map((d) => d.id);
-    expect(janela).toEqual(expect.arrayContaining([antiga.id, nova.id]));
+    expect(janela).toEqual(expect.arrayContaining([antiga.id, nova.id, reemitida.id]));
     expect(janela).not.toContain(abandonada.id);
 
     // F: a CONTINGENCY tocada pelo job (adiada) vai para o fim; com teto 1, a outra é a próxima a transmitir.

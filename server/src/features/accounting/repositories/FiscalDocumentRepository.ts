@@ -143,10 +143,11 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     return this.db(tx).fiscalDocument.findMany({
       where: {
         kind: 'NFCE',
-        createdAt: { gte: desde },
         status: { in: ['CONTINGENCY', 'SENT', 'PROCESSING', 'REJECTED', 'PENDING_SIGNATURE'] },
         deletedAt: null,
-        attempts: { some: { payloadJson: { contains: '"tpEmis":9' } } },
+        // Revisão J: a janela é a da TENTATIVA de contingência (o documento pode ser antigo e cair em contingência hoje,
+        // no reenvio da rejeitada ou da que esperava a assinatura).
+        attempts: { some: { payloadJson: { contains: '"tpEmis":9' }, sentAt: { gte: desde } } },
       },
       include: { attempts: { orderBy: { attemptNo: 'asc' } } },
       // Revisões E e G: sem teto — a janela `desde` é que limita (a abandonada há muito sai sozinha; a que vence primeiro

@@ -176,7 +176,8 @@ export interface IFiscalDocumentRepository {
   listContingencia(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]>;
   /**
    * X10a PR-9 (decisão 7, revisão D) — NFC-e com alguma tentativa `tpEmis=9` ainda sem autorização (CONTINGENCY, SENT,
-   * PROCESSING, REJECTED, PENDING_SIGNATURE), de todas as unidades, criadas a partir de `desde` — todas, sem teto: o prazo
+   * PROCESSING, REJECTED, PENDING_SIGNATURE), de todas as unidades, com tentativa tpEmis=9 enviada a partir de `desde` (a
+   * âncora é a tentativa, não o documento) — todas, sem teto: o prazo
    * corre para cada uma, e a que vence primeiro não pode ficar de fora da janela.
    */
   listContingenciaNaoAutorizada(desde: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]>;
