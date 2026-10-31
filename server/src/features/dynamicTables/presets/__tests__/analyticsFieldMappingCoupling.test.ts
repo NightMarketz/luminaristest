@@ -56,9 +56,15 @@ const ROW_ID = 'id';
 // fecha quando FINANCEIRO/ESTOQUE virarem módulos (PR-3/PR-4).
 const VENDAS_ISOLADA = ['VEN-0+VEN-SERV', 'VEN-0+VEN-PROD', 'VEN-0+VEN-PAC', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM+VEN-SERV', 'VEN-COM+VEN-PROD', 'VEN-COM+VEN-PAC'] as const;
 const COM_PRODUTO_OU_PACOTE = ['VEN-0+VEN-PROD', 'VEN-0+VEN-PAC', 'VEN-PROD', 'VEN-PAC', 'VEN-COM+VEN-PROD', 'VEN-COM+VEN-PAC'] as const;
+// PR-3: os universos de ESTOQUE (EST-0 + VEN-PROD) e AGENDA (AGE-0 + PES-0 + VEN-SERV) herdam os mesmos achados de VENDAS
+// isolada, exceto o que o próprio módulo resolve — com EST-0 a leitura de `stockMovements` pelo `productsProfitMonthly`
+// acha a tabela. Despesas ficam para o PR-4 (FINANCEIRO).
+const SEM_DESPESAS = [...VENDAS_ISOLADA, 'EST-0', 'AGE-0'] as const;
+const SEM_ESTOQUE = [...VENDAS_ISOLADA, 'AGE-0'] as const;
+const SEM_SERVICOS = [...COM_PRODUTO_OU_PACOTE, 'EST-0'] as const;
 const BUILDER_VERTICAIS_ANALYTICS: Readonly<Record<string, { universes: readonly string[]; refs: readonly string[] }>> = {
-  VENDAS_ISOLADA: {
-    universes: VENDAS_ISOLADA,
+  SEM_DESPESAS: {
+    universes: SEM_DESPESAS,
     refs: [
       'sales:profitByCustomer:expenseAmountField=amount',
       'sales:profitByCustomer:expenseCategoryField=category',
@@ -85,14 +91,19 @@ const BUILDER_VERTICAIS_ANALYTICS: Readonly<Record<string, { universes: readonly
       'sales:cashflowKpis:importantFields[Prazo Médio de Pagamento (dias)]=dueDate',
       'sales:cashflowKpis:importantFields[Prazo Médio de Pagamento (dias)]=amount',
       'sales:cashflowKpis:importantFields[Prazo Médio de Pagamento (dias)]=paymentStatus',
+    ],
+  },
+  SEM_ESTOQUE: {
+    universes: SEM_ESTOQUE,
+    refs: [
       'saleItems:productsProfitMonthly:stockTypeField=type',
       'saleItems:productsProfitMonthly:stockProductIdField=productId',
       'saleItems:productsProfitMonthly:stockQuantityField=quantity',
       'saleItems:productsProfitMonthly:stockCostField=cost',
     ],
   },
-  COM_PRODUTO_OU_PACOTE: {
-    universes: COM_PRODUTO_OU_PACOTE,
+  SEM_SERVICOS: {
+    universes: SEM_SERVICOS,
     refs: [
       'saleItems:serviceEstimatedCost:rightField=id',
       'saleItems:serviceEstimatedProfit:rightField=id',

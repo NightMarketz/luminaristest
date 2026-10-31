@@ -1,8 +1,4 @@
-import { createTableFromModule } from '../../utils/TableFactory';
 import { aestheticClinicCustomerModule } from '../modules/people/AestheticClinicCustomerModule';
-import { productUnitModule } from '../modules/product/ProductModule';
-import { stockMovementsModule } from '../modules/inventory/StockMovementsModule';
-import { appointmentsModule } from '../modules/planning/AppointmentsModule';
 import type { ModuleKey } from '../modules/registry';
 
 /**
@@ -35,7 +31,9 @@ const AestheticClinicPreset = {
     'inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.',
   // I8, F-I8-COMP3-a (ratificado 2026-09-26): CRM-0 + CRM-1 por padrão, igual ao salão (antes vinham do Core).
   modules: ['CRM-0', 'CRM-1', 'CRM-CAMP', 'PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM',
-    'FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META'] as ModuleKey[],
+    'EST-0', 'AGE-0', 'FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META'] as ModuleKey[],
+  // BE-INCR-MODULOS-BASE-SUBMODULOS PR-3 (item 16): ESTOQUE (productUnits + stockMovements) e AGENDA (appointments)
+  // viraram módulos; saíram de `tables`.
   // BE-INCR-MODULOS-BASE-SUBMODULOS item 11b: as 4 tabelas que a contabilidade lê pelo nome (W2 / F-W2-2) seguem
   // travadas; viraram tabelas de módulo (PES-0, VEN-0, VEN-PAC), então a trava vem daqui até o PR-5.
   lockedModuleTables: ['customers', 'packages', 'sales', 'saleItems'],
@@ -54,9 +52,6 @@ const AestheticClinicPreset = {
   },
   // BE-INCR-MODULOS-BASE-SUBMODULOS PR-4 (item 21–22): FINANCEIRO, GESTÃO e Campanhas (CRM-CAMP) saíram daqui.
   tables: {
-    productUnits: createTableFromModule(productUnitModule),
-    appointments: createTableFromModule(appointmentsModule),
-    stockMovements: createTableFromModule(stockMovementsModule),
   },
 };
 

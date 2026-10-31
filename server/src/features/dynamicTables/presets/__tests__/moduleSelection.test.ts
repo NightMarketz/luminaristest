@@ -140,8 +140,8 @@ describe('assertAddedFieldsRespectModules (comportamento 10, F-CRM-7 → a)', ()
   it('campo novo em tabela de módulo é aceito; tabela fora de módulo não é checada aqui', () => {
     expect(() =>
       assertAddedFieldsRespectModules(
-        { leads: [{ name: 'instagram', type: 'string' }], productUnits: [{ name: 'name' }] },
-        { ...tables, productUnits: { name: 'C', category: 'business', schema: { fields: [{ name: 'name', label: 'N', type: 'string' }] } } } as never,
+        { leads: [{ name: 'instagram', type: 'string' }], units: [{ name: 'name' }] },
+        { ...tables, units: { name: 'C', category: 'business', schema: { fields: [{ name: 'name', label: 'N', type: 'string' }] } } } as never,
       ),
     ).not.toThrow();
   });

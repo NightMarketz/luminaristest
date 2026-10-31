@@ -22,6 +22,8 @@ import {
   type ModuleKey,
 } from '../modules/registry';
 import { CrmModulePreset } from '../systems/CrmModulePreset';
+import BeautySalonPreset from '../systems/BeautySalonPreset';
+import AestheticClinicPreset from '../systems/AestheticClinicPreset';
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -110,7 +112,8 @@ describe('registro de módulos — invariantes (BRIEF §2.1)', () => {
   it('(e) todo membro de grupo existe, pertence a um único grupo e declara esse grupo', () => {
     const vistos = new Map<ModuleKey, string>();
     for (const g of MODULE_GROUP_KEYS) {
-      expect(MODULE_GROUPS[g].members.length).toBeGreaterThanOrEqual(2);
+      // BRIEF §1 / item 7: o grupo de categoria é alias de entrada mesmo com um só módulo (ESTOQUE = EST-0, AGENDA = AGE-0).
+      expect(MODULE_GROUPS[g].members.length).toBeGreaterThanOrEqual(1);
       for (const m of MODULE_GROUPS[g].members) {
         expect(MODULE_KEYS).toContain(m);
         expect(vistos.has(m)).toBe(false);
@@ -227,15 +230,15 @@ describe('PR-2 — PESSOAS e VENDAS no registro (itens 7, 9, 10, 11a/11b)', () =
     expect(expandModuleSelectors(['PESSOAS'])).toEqual(['PES-0', 'PES-FORN']);
     expect(moduleSelectorSchema.safeParse('VENDAS').success).toBe(true);
     expect(moduleKeySchema.safeParse('VENDAS').success).toBe(false);
-    // categorias ainda sem módulos não têm grupo (PR-3; FINANCEIRO e GESTAO entraram no PR-4)
-    for (const g of ['ESTOQUE', 'AGENDA']) expect(moduleSelectorSchema.safeParse(g).success).toBe(false);
+    // desde o PR-3 (ESTOQUE, AGENDA) e o PR-4 (FINANCEIRO, GESTAO) toda categoria tem grupo
+    for (const g of ['ESTOQUE', 'AGENDA', 'FINANCEIRO', 'GESTAO']) expect(moduleSelectorSchema.safeParse(g).success).toBe(true);
   });
 
   it('item 11a: override troca a fonte de uma tabela de módulo; override de tabela fora de módulo → erro', () => {
     const override = { name: 'Fichas', category: 'business', schema: { fields: [{ name: 'x', label: 'x', type: 'string' }] } };
     expect(composeModuleTables(['PES-0'], { overrides: { customers: override } }).customers.name).toBe('Fichas');
     expect(composeModuleTables(['PES-0']).customers.name).toBe('Customers');
-    expect(() => composeModuleTables(['PES-0'], { overrides: { productUnits: override } })).toThrow(/'productUnits' não é tabela de módulo/);
+    expect(() => composeModuleTables(['PES-0'], { overrides: { units: override } })).toThrow(/'units' não é tabela de módulo/);
   });
 
   it('item 11b: locked marca lockedBy accounting só nas tabelas pedidas, preservando a meta do módulo', () => {
@@ -281,3 +284,36 @@ describe('PR-4 — FINANCEIRO, GESTÃO e Campanhas no registro (itens 21–22)',
     expect(Object.keys(CrmModulePreset.tables)).not.toContain('campaigns');
   });
 });
+describe('PR-3 — ESTOQUE e AGENDA no registro (item 16)', () => {
+  it('item 16: o mapa-alvo §1 — EST-0 depende de VEN-PROD; AGE-0 de PES-0 e VEN-SERV; ambos base fixa', () => {
+    const view = (k: ModuleKey) => {
+      const { category, group, fixed, tables, dependsOn, requiresOneOf, freeSelects } = MODULE_REGISTRY[k];
+      return { category, group, fixed, tables, dependsOn, requiresOneOf, freeSelects };
+    };
+    expect(view('EST-0')).toEqual({
+      category: 'estoque', group: 'ESTOQUE', fixed: true, tables: ['productUnits', 'stockMovements'], dependsOn: ['VEN-PROD'],
+      requiresOneOf: [], freeSelects: {},
+    });
+    expect(view('AGE-0')).toEqual({
+      category: 'agenda', group: 'AGENDA', fixed: true, tables: ['appointments'], dependsOn: ['PES-0', 'VEN-SERV'],
+      requiresOneOf: [], freeSelects: {},
+    });
+    for (const k of ['EST-0', 'AGE-0'] as const) expect(MODULE_REGISTRY[k].aiDescription.length).toBeGreaterThan(20);
+    expect(moduleOfTable('productUnits')).toBe('EST-0');
+    expect(moduleOfTable('stockMovements')).toBe('EST-0');
+    expect(moduleOfTable('appointments')).toBe('AGE-0');
+  });
+
+  it('item 16 (grupos): ESTOQUE expande para EST-0 e AGENDA para AGE-0', () => {
+    expect(expandModuleSelectors(['ESTOQUE'])).toEqual(['EST-0']);
+    expect(expandModuleSelectors(['AGENDA'])).toEqual(['AGE-0']);
+  });
+
+  it('item 16: salão e clínica declaram EST-0 e AGE-0 e não carregam mais as três tabelas soltas', () => {
+    for (const suite of [BeautySalonPreset, AestheticClinicPreset]) {
+      expect(suite.modules).toEqual(expect.arrayContaining(['EST-0', 'AGE-0']));
+      for (const t of ['productUnits', 'stockMovements', 'appointments']) expect(Object.keys(suite.tables)).not.toContain(t);
+    }
+  });
+});
+

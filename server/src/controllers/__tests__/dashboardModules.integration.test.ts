@@ -31,7 +31,7 @@ const linhasDe = async (userId: string, internalName: string) => {
 const LEADS = ['leadPipelines', 'leadStages', 'leads', 'leadActivities', 'leadProposals'];
 // BE-INCR-MODULOS-BASE-SUBMODULOS item 11: salão e clínica declaram também PESSOAS e VENDAS.
 // PR-4 (itens 21–22): e Campanhas (CRM-CAMP, logo depois do CRM na ordem do registro), FINANCEIRO e GESTÃO.
-const FORA_DO_CRM = ['PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM', 'FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META'];
+const FORA_DO_CRM = ['PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM', 'EST-0', 'AGE-0', 'FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META'];
 const PV = ['CRM-CAMP', ...FORA_DO_CRM];
 const B2B = ['crmAccounts', 'crmContacts', 'crmOpportunities'];
 
@@ -268,6 +268,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     expect(salao.body.data.moduleViews.map((m: { key: string; category: string }) => `${m.key}:${m.category}`)).toEqual([
       'CRM-0:crm', 'CRM-1:crm', 'CRM-CAMP:crm', 'PES-0:pessoas', 'PES-FORN:pessoas',
       'VEN-0:vendas', 'VEN-SERV:vendas', 'VEN-PROD:vendas', 'VEN-PAC:vendas', 'VEN-COM:vendas',
+      'EST-0:estoque', 'AGE-0:agenda', // PR-3
       'FIN-0:financeiro', 'FIN-REC:financeiro', 'FIN-BASE:financeiro', 'GES-0:gestao', 'GES-META:gestao',
     ]);
   });
@@ -355,7 +356,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
       removedTables: ['expenses', 'otherRevenues', 'financialBaselines', 'reports', 'goals', 'campaigns'],
     });
     expect(r.status).toBe(201);
-    expect(r.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM']);
+    expect(r.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM', 'EST-0', 'AGE-0']); // + ESTOQUE e AGENDA (PR-3)
     const t = await tabelasDe(u.id);
     for (const x of ['expenses', 'otherRevenues', 'financialBaselines', 'reports', 'goals', 'campaigns']) expect(t).not.toContain(x);
     const sales = await tabela(u.id, 'sales');

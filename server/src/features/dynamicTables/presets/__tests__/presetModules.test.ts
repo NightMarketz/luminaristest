@@ -7,13 +7,9 @@ import BeautySalonPreset from '../systems/BeautySalonPreset';
 import AestheticClinicPreset from '../systems/AestheticClinicPreset';
 import { moduleOfTable } from '../modules/registry';
 
-// ESTOQUE (EST-0 = productUnits + stockMovements) e AGENDA (AGE-0 = appointments) entram no registro no PR-3, que corre
-// em paralelo a este; quem chegar depois rebaseia e esvazia esta lista.
-const TABELAS_SOLTAS: Readonly<Record<string, string>> = {
-  productUnits: 'PR-3 em paralelo: EST-0 ainda não está no registro desta base',
-  stockMovements: 'PR-3 em paralelo: EST-0 ainda não está no registro desta base',
-  appointments: 'PR-3 em paralelo: AGE-0 ainda não está no registro desta base',
-};
+// O PR-3 (ESTOQUE: EST-0 = productUnits + stockMovements; AGENDA: AGE-0 = appointments) rebaseou sobre este e esvaziou a
+// lista — não sobrou tabela solta nas suítes.
+const TABELAS_SOLTAS: Readonly<Record<string, string>> = {};
 
 describe('item 23 — toda tabela de suíte pertence a módulo', () => {
   it.each([

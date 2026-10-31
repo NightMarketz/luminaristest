@@ -23,6 +23,9 @@ import { otherRevenuesModule } from './finance/OtherRevenuesModule';
 import { financialBaselinesModule } from './finance/FinancialBaselinesModule';
 import { reportsModule } from './business/ReportsModule';
 import { goalsModule } from './business/GoalsModule';
+import { productUnitModule } from './product/ProductModule';
+import { stockMovementsModule } from './inventory/StockMovementsModule';
+import { appointmentsModule } from './planning/AppointmentsModule';
 
 /**
  * BE-INCR-CRM-MODULE-COMPOSITION (nó I8) — comportamento 1: registro de módulos.
@@ -51,6 +54,8 @@ import { goalsModule } from './business/GoalsModule';
  * própria em `customers`) e travar tabelas de módulo pela contabilidade (`lockedModuleTables`, item 11b, até o PR-5
  * mover a trava para o módulo).
  *
+ * PR-3 (itens 16–20): ESTOQUE (EST-0 base = productUnits + stockMovements, depende de VEN-PROD — F-MB-4) e AGENDA
+ * (AGE-0 base = appointments, depende de PES-0 e VEN-SERV) entram no registro; salão e clínica passam a declará-los.
  * PR-4 (itens 21–22): FINANCEIRO (FIN-0 base = expenses; FIN-REC = otherRevenues; FIN-BASE = financialBaselines),
  * GESTÃO (GES-0 base = reports; GES-META = goals) e Campanhas como submódulo do CRM (CRM-CAMP = campaigns,
  * F-MS-2 b / F-MB-3b). Nenhuma das três categorias depende de outra por tabela (BRIEF §0.2, E14).
@@ -64,6 +69,7 @@ export const MODULE_KEYS = [
   'CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3', 'CRM-CAMP',
   'PES-0', 'PES-FORN',
   'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM',
+  'EST-0', 'AGE-0',
   'FIN-0', 'FIN-REC', 'FIN-BASE',
   'GES-0', 'GES-META',
 ] as const;
@@ -71,7 +77,7 @@ export const moduleKeySchema = z.enum(MODULE_KEYS);
 export type ModuleKey = z.infer<typeof moduleKeySchema>;
 
 /** BRIEF item 7: um grupo por categoria, com a chave da categoria em maiúsculas — só as categorias que já têm módulos. */
-export const MODULE_GROUP_KEYS = ['CRM-2', 'PESSOAS', 'VENDAS', 'FINANCEIRO', 'GESTAO'] as const;
+export const MODULE_GROUP_KEYS = ['CRM-2', 'PESSOAS', 'VENDAS', 'ESTOQUE', 'AGENDA', 'FINANCEIRO', 'GESTAO'] as const;
 export const moduleGroupKeySchema = z.enum(MODULE_GROUP_KEYS);
 export type ModuleGroupKey = z.infer<typeof moduleGroupKeySchema>;
 
@@ -270,6 +276,35 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     requiresOneOf: [],
     freeSelects: {},
   },
+  // BRIEF §1 / F-MB-4: ESTOQUE é um bloco fixo dependente de Produtos. Sem ele a variante de `saleItems` segue pelos
+  // catálogos (item 12) e o CMV segue pelo estoque valorado em Prisma (BRIEF §0.2, E13).
+  'EST-0': {
+    key: 'EST-0',
+    category: 'estoque',
+    group: 'ESTOQUE',
+    name: { pt: 'Estoque', en: 'Inventory' },
+    aiDescription:
+      'Base de Estoque: saldo de cada produto por unidade e as movimentações de entrada e saída, inclusive as geradas pelas vendas.',
+    fixed: true,
+    tables: ['productUnits', 'stockMovements'],
+    dependsOn: ['VEN-PROD'],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  // BRIEF §1: AGENDA marca atendimentos de cliente (PES-0) para um serviço do catálogo (VEN-SERV).
+  'AGE-0': {
+    key: 'AGE-0',
+    category: 'agenda',
+    group: 'AGENDA',
+    name: { pt: 'Agenda', en: 'Schedule' },
+    aiDescription:
+      'Base de Agenda: agendamentos que ligam cliente, serviço, profissional e unidade, com horário e status do atendimento.',
+    fixed: true,
+    tables: ['appointments'],
+    dependsOn: ['PES-0', 'VEN-SERV'],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
   // BRIEF §1 / F-MS-8 (a): FINANCEIRO com base Despesas; Outras receitas e Linha de base são submódulos. O mapa-alvo
   // não declara `dependsOn` para FINANCEIRO nem GESTÃO (como PES-FORN): nenhuma tabela deles relaciona a base.
   'FIN-0': {
@@ -344,6 +379,8 @@ export const MODULE_GROUPS: Readonly<
   'CRM-2': { name: { pt: 'Contas e contatos', en: 'Accounts and contacts' }, members: ['CRM-2A', 'CRM-2B'] },
   PESSOAS: { name: { pt: 'Pessoas', en: 'People' }, members: ['PES-0', 'PES-FORN'] },
   VENDAS: { name: { pt: 'Vendas', en: 'Sales' }, members: ['VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM'] },
+  ESTOQUE: { name: { pt: 'Estoque', en: 'Inventory' }, members: ['EST-0'] },
+  AGENDA: { name: { pt: 'Agenda', en: 'Schedule' }, members: ['AGE-0'] },
   FINANCEIRO: { name: { pt: 'Financeiro', en: 'Finance' }, members: ['FIN-0', 'FIN-REC', 'FIN-BASE'] },
   GESTAO: { name: { pt: 'Gestão', en: 'Management' }, members: ['GES-0', 'GES-META'] },
 };
@@ -417,6 +454,8 @@ export const MODULE_TABLE_SOURCES: Readonly<Record<ModuleKey, Readonly<Record<st
   'VEN-PAC': { packages: packageCatalogModule },
   'VEN-COM': { commissions: commissionsModule },
   'CRM-CAMP': { campaigns: campaignsModule },
+  'EST-0': { productUnits: productUnitModule, stockMovements: stockMovementsModule },
+  'AGE-0': { appointments: appointmentsModule },
   'FIN-0': { expenses: expensesModule },
   'FIN-REC': { otherRevenues: otherRevenuesModule },
   'FIN-BASE': { financialBaselines: financialBaselinesModule },

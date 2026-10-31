@@ -15,6 +15,8 @@
               "VEN-PROD",
               "VEN-PAC",
               "VEN-COM",
+              "EST-0",
+              "AGE-0",
               "FIN-0",
               "FIN-REC",
               "FIN-BASE",
@@ -3025,6 +3027,8 @@
               "VEN-PROD",
               "VEN-PAC",
               "VEN-COM",
+              "EST-0",
+              "AGE-0",
               "FIN-0",
               "FIN-REC",
               "FIN-BASE",
@@ -6034,6 +6038,8 @@
               "VEN-PROD",
               "VEN-PAC",
               "VEN-COM",
+              "EST-0",
+              "AGE-0",
               "FIN-0",
               "FIN-REC",
               "FIN-BASE",
@@ -8896,6 +8902,8 @@
               "VEN-PROD",
               "VEN-PAC",
               "VEN-COM",
+              "EST-0",
+              "AGE-0",
               "FIN-0",
               "FIN-REC",
               "FIN-BASE",
@@ -11799,6 +11807,8 @@
               "VEN-SERV",
               "VEN-PROD",
               "VEN-PAC",
+              "EST-0",
+              "AGE-0",
               "FIN-0",
               "FIN-REC",
               "FIN-BASE",
@@ -14685,7 +14695,12 @@
     },
     "locks": {
       "analyticsDefinitions": null,
-      "appointments": null,
+      "appointments": {
+        "by": [
+          "AGE-0"
+        ],
+        "reason": "FIXED_MODULE"
+      },
       "campaigns": null,
       "commissions": null,
       "customers": {
@@ -14743,9 +14758,9 @@
       },
       "productUnits": {
         "by": [
-          "stockMovements"
+          "EST-0"
         ],
-        "reason": "REQUIRED_CAPABILITY"
+        "reason": "FIXED_MODULE"
       },
       "reports": {
         "by": [
@@ -14766,7 +14781,12 @@
         "reason": "REQUIRED_RELATION"
       },
       "stakeholders": null,
-      "stockMovements": null,
+      "stockMovements": {
+        "by": [
+          "EST-0"
+        ],
+        "reason": "FIXED_MODULE"
+      },
       "suppliers": null,
       "tasks": null,
       "units": {
@@ -14775,13 +14795,13 @@
           "leads",
           "campaigns",
           "sales",
+          "productUnits",
+          "stockMovements",
+          "appointments",
           "expenses",
           "otherRevenues",
           "financialBaselines",
-          "goals",
-          "productUnits",
-          "appointments",
-          "stockMovements"
+          "goals"
         ],
         "reason": "REQUIRED_RELATION"
       }
@@ -14803,6 +14823,8 @@
               "VEN-PROD",
               "VEN-PAC",
               "VEN-COM",
+              "EST-0",
+              "AGE-0",
               "FIN-0",
               "FIN-REC",
               "FIN-BASE",
@@ -17821,6 +17843,8 @@
               "VEN-PROD",
               "VEN-PAC",
               "VEN-COM",
+              "EST-0",
+              "AGE-0",
               "FIN-0",
               "FIN-REC",
               "FIN-BASE",
@@ -20838,6 +20862,8 @@
               "VEN-PROD",
               "VEN-PAC",
               "VEN-COM",
+              "EST-0",
+              "AGE-0",
               "FIN-0",
               "FIN-REC",
               "FIN-BASE",
@@ -23708,6 +23734,8 @@
               "VEN-PROD",
               "VEN-PAC",
               "VEN-COM",
+              "EST-0",
+              "AGE-0",
               "FIN-0",
               "FIN-REC",
               "FIN-BASE",
@@ -26619,6 +26647,8 @@
               "VEN-SERV",
               "VEN-PROD",
               "VEN-PAC",
+              "EST-0",
+              "AGE-0",
               "FIN-0",
               "FIN-REC",
               "FIN-BASE",
@@ -29513,7 +29543,12 @@
     },
     "locks": {
       "analyticsDefinitions": null,
-      "appointments": null,
+      "appointments": {
+        "by": [
+          "AGE-0"
+        ],
+        "reason": "FIXED_MODULE"
+      },
       "campaigns": null,
       "commissions": null,
       "customers": {
@@ -29571,9 +29606,9 @@
       },
       "productUnits": {
         "by": [
-          "stockMovements"
+          "EST-0"
         ],
-        "reason": "REQUIRED_CAPABILITY"
+        "reason": "FIXED_MODULE"
       },
       "reports": {
         "by": [
@@ -29594,7 +29629,12 @@
         "reason": "REQUIRED_RELATION"
       },
       "stakeholders": null,
-      "stockMovements": null,
+      "stockMovements": {
+        "by": [
+          "EST-0"
+        ],
+        "reason": "FIXED_MODULE"
+      },
       "suppliers": null,
       "tasks": null,
       "units": {
@@ -29603,13 +29643,13 @@
           "leads",
           "campaigns",
           "sales",
+          "productUnits",
+          "stockMovements",
+          "appointments",
           "expenses",
           "otherRevenues",
           "financialBaselines",
-          "goals",
-          "productUnits",
-          "appointments",
-          "stockMovements"
+          "goals"
         ],
         "reason": "REQUIRED_RELATION"
       }

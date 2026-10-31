@@ -26,9 +26,12 @@ describe('item 1 — computeTableLocks', () => {
     for (const k of ['sales', 'saleItems', 'customers', 'packages']) expect(reasonOf(locks, k)).toBe('ACCOUNTING');
     expect(locks.products).toEqual({ reason: 'REQUIRED_RELATION', by: ['productUnits', 'stockMovements'] });
     expect(locks.services).toEqual({ reason: 'REQUIRED_RELATION', by: ['appointments'] });
-    expect(locks.productUnits).toEqual({ reason: 'REQUIRED_CAPABILITY', by: ['stockMovements'] });
+    // PR-3 (F-MB-4 "um bloco fixo"; regra geral de D-2026-10-31: a base da categoria é fixa): ESTOQUE e AGENDA são bases
+    // fixas — as tabelas travam como módulo fixo (antes: productUnits por capacidade; stockMovements/appointments livres).
+    for (const k of ['productUnits', 'stockMovements']) expect(locks[k]).toEqual({ reason: 'FIXED_MODULE', by: ['EST-0'] });
+    expect(locks.appointments).toEqual({ reason: 'FIXED_MODULE', by: ['AGE-0'] });
     const livres = ['suppliers', 'goals', 'campaigns', 'otherRevenues', 'financialBaselines',
-      'commissions', 'appointments', 'stockMovements'];
+      'commissions'];
     for (const k of livres) expect(locks[k]).toBeNull();
     // PR-4 (item 21): `expenses` e `reports` são as bases fixas de FINANCEIRO (FIN-0) e GESTÃO (GES-0) — travam como CRM-0.
     expect(locks.expenses).toEqual({ reason: 'FIXED_MODULE', by: ['FIN-0'] });
@@ -62,17 +65,18 @@ describe('item 1 — computeTableLocks', () => {
 });
 
 describe('item 2 — a trava é dinâmica (F-W2-1)', () => {
-  it('tirar stockMovements libera productUnits; tirar productUnits libera products; services segue travado', () => {
+  // PR-3: productUnits + stockMovements são o bloco fixo EST-0 (saem juntos ou não saem — FIXED_MODULE_PARTIAL no
+  // create); a trava dinâmica se mostra no que eles seguram.
+  it('tirar o ESTOQUE (EST-0 inteiro) libera products; tirar a AGENDA (AGE-0) libera services', () => {
     const t = tables(BeautySalonPreset);
     expect(reasonOf(computeTableLocks(t, all(t)), 'products')).toBe('REQUIRED_RELATION');
 
-    const passo1 = computeTableLocks(t, without(t, 'stockMovements'));
-    expect(passo1.productUnits).toBeNull();
-    expect(passo1.products).toEqual({ reason: 'REQUIRED_RELATION', by: ['productUnits'] });
+    const semEstoque = computeTableLocks(t, without(t, 'stockMovements', 'productUnits'));
+    expect(semEstoque.products).toBeNull();
+    expect(reasonOf(semEstoque, 'services')).toBe('REQUIRED_RELATION');
 
-    const passo2 = computeTableLocks(t, without(t, 'stockMovements', 'productUnits'));
-    expect(passo2.products).toBeNull();
-    expect(reasonOf(passo2, 'services')).toBe('REQUIRED_RELATION');
+    const semAgenda = computeTableLocks(t, without(t, 'appointments'));
+    expect(semAgenda.services).toBeNull();
   });
 });
 

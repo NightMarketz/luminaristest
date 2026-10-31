@@ -73,6 +73,8 @@
                   "VEN-PROD",
                   "VEN-PAC",
                   "VEN-COM",
+                  "EST-0",
+                  "AGE-0",
                   "FIN-0",
                   "FIN-REC",
                   "FIN-BASE",
@@ -86,6 +88,8 @@
                   "CRM-2",
                   "PESSOAS",
                   "VENDAS",
+                  "ESTOQUE",
+                  "AGENDA",
                   "FINANCEIRO",
                   "GESTAO"
                 ]
@@ -412,6 +416,8 @@
                   "VEN-PROD",
                   "VEN-PAC",
                   "VEN-COM",
+                  "EST-0",
+                  "AGE-0",
                   "FIN-0",
                   "FIN-REC",
                   "FIN-BASE",
@@ -425,6 +431,8 @@
                   "CRM-2",
                   "PESSOAS",
                   "VENDAS",
+                  "ESTOQUE",
+                  "AGENDA",
                   "FINANCEIRO",
                   "GESTAO"
                 ]

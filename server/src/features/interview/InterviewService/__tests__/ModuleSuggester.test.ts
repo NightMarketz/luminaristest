@@ -38,7 +38,7 @@ const turn = (picks: string[] | Error) => {
 
 // BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: PESSOAS e VENDAS entram no registro e no default do salão/clínica (travados).
 // PR-4: e Campanhas (CRM-CAMP, logo depois do CRM na ordem do registro), FINANCEIRO e GESTÃO.
-const ALEM_DO_FUNIL = ['CRM-CAMP', 'PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM',
+const ALEM_DO_FUNIL = ['CRM-CAMP', 'PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM', 'EST-0', 'AGE-0',
   'FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META'];
 
 const byKey = (options: InterviewModuleOption[]) =>

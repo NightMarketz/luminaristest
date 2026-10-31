@@ -32,7 +32,7 @@ const tabelasDe = async (userId: string) =>
 const nome = { name: 'name', label: 'Nome', type: 'string', required: true };
 // BE-INCR-MODULOS-BASE-SUBMODULOS item 11: salão e clínica declaram também PESSOAS e VENDAS.
 // PR-4 (itens 21–22): e Campanhas (CRM-CAMP, logo depois do CRM na ordem do registro), FINANCEIRO e GESTÃO.
-const PV = ['CRM-CAMP', 'PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM', 'FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META'];
+const PV = ['CRM-CAMP', 'PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM', 'EST-0', 'AGE-0', 'FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META'];
 
 describe('W1 — customização da entrevista chega ao /dashboard/create', () => {
   beforeAll(() => {

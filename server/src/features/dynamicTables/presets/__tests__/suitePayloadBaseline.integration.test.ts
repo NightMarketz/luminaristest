@@ -34,6 +34,14 @@
  *    "pode seguir" depois da pergunta sobre esta trava). A lista `by` da trava de `units` muda só de ORDEM. Conferido
  *    por script: sem as chaves novas, com `by` ordenado e essas duas travas em `null`, a fixture é idêntica à do PR-2 (já com a correção do Controle Total) —
  *    tabelas gravadas, schemas e demais travas inalterados.
+ *  - PR-3 (itens 16–20): `response.modules.installed` ganha EST-0 e AGE-0 (as suítes declaram ESTOQUE e AGENDA). As
+ *    travas de `productUnits` (REQUIRED_CAPABILITY ← stockMovements), `stockMovements` (null) e `appointments` (null)
+ *    passam a FIXED_MODULE [EST-0]/[AGE-0]: são bases fixas (F-MB-4 "um bloco fixo"; regra geral de
+ *    D-2026-10-31-MODULOS-BASE-SUBMODULOS) e `lockOf` trava tabela de módulo fixo como já fazia com o CRM-0. Efeito: na
+ *    entrevista o salão não tira Estoque/Agenda — dono, 2026-10-31, questionário: "Aceitar até o PR-6 (Recommended)";
+ *    no Controle Total a categoria inteira sai (teste em `dashboardSemEstoqueAgenda.integration.test.ts`). A lista `by`
+ *    da trava de `units` muda só de ORDEM (`stockMovements` agora vem com o módulo EST-0). Conferido por script que,
+ *    sem essas três travas, sem EST-0/AGE-0 em `modules.installed` e com `by` ordenado, a fixture é idêntica à do PR-4 (#1006).
  *
  * Regenerar (somente num PR que mude comportamento de propósito): `UPDATE_BASELINE=1 npx jest --selectProjects
  * integration --runInBand src/features/dynamicTables/presets/__tests__/suitePayloadBaseline.integration.test.ts`.

@@ -26,7 +26,7 @@ afterEach(() => jest.restoreAllMocks());
 const USER = 'w1-user';
 // BE-INCR-MODULOS-BASE-SUBMODULOS item 11: o salão declara também PESSOAS e VENDAS.
 // PR-4 (itens 21–22): e Campanhas (CRM-CAMP, na ordem do registro logo depois do CRM), FINANCEIRO e GESTÃO.
-const PV: ModuleKey[] = ['CRM-CAMP', 'PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM', 'FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META'];
+const PV: ModuleKey[] = ['CRM-CAMP', 'PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM', 'EST-0', 'AGE-0', 'FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META'];
 const SALAO_MODULOS: ModuleKey[] = ['CRM-0', 'CRM-1', ...PV];
 
 const setup = () => {

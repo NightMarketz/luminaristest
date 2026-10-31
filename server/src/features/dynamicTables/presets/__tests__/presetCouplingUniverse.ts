@@ -65,14 +65,19 @@ export function suiteUniverse(
   return { name, tables: { ...CoreSystemPreset.tables, ...composeSuiteDefaultTables(suite) } };
 }
 
-/** Seleções instaláveis de um módulo isolado: ele fechado pelas dependências, ou uma por opção do `requiresOneOf`. */
-function isolatedSelections(key: ModuleKey): { name: string; modules: ModuleKey[] }[] {
+/**
+ * Seleções instaláveis de um módulo isolado: ele fechado pelas dependências, ou uma por opção do `requiresOneOf`.
+ * PR-3: dependência NÃO-fixa (EST-0 → VEN-PROD, AGE-0 → VEN-SERV) entra no pedido — sem ela o create responde 400
+ * `missingModule`, então o menor universo instalável a inclui.
+ */
+function isolatedSelections(key: ModuleKey, requested: ModuleKey[] = [key]): { name: string; modules: ModuleKey[] }[] {
   try {
-    return [{ name: `module:${key}`, modules: resolveModuleSelection([key]) }];
+    return [{ name: `module:${key}`, modules: resolveModuleSelection(requested) }];
   } catch (e) {
-    const details = (e as ValidationError).details as { reason?: string; oneOf?: ModuleKey[] } | undefined;
+    const details = (e as ValidationError).details as { reason?: string; oneOf?: ModuleKey[]; missingModule?: ModuleKey } | undefined;
+    if (e instanceof ValidationError && details?.missingModule) return isolatedSelections(key, [...requested, details.missingModule]);
     if (!(e instanceof ValidationError) || details?.reason !== 'REQUIRES_ONE_OF') throw e;
-    return (details.oneOf ?? []).map((opt) => ({ name: `module:${key}+${opt}`, modules: resolveModuleSelection([key, opt]) }));
+    return (details.oneOf ?? []).map((opt) => ({ name: `module:${key}+${opt}`, modules: resolveModuleSelection([...requested, opt]) }));
   }
 }
 
