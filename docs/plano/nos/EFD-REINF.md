@@ -86,3 +86,9 @@ registros: ["server/src/lib/factory.ts", "server/src/routes/accounting.ts", "ser
   P-REINF-9 (nova tabela SPED) não mudam.
 - Dossiê: [`fila-2026-10-27-bloco2-reinf`](../../../pesquisas-legais/fila-2026-10-27-bloco2-reinf/relatorio.md).
 - Estado e autorização **não mudam**.
+
+## Fold 30/10 — transmissão pelo portal ou pelo contador
+
+- [[D-2026-10-30-X10A-EMENDA-4-FORA-DE-ESCOPO]] item 2 (dono, questionário, 30/10: *"Portal ou contador"*): o Luminaris
+  gera relatório e XML; quem transmite é o cliente no Reinf Web ou o contador como procurador (FAQ Reinf 1.3, 1.10, 8.1).
+  Responde o **F-REINF-2 → (b)**, contra a recomendação (a) do ADR. F-REINF-1, 3, 4 e 5 seguem pendentes.
