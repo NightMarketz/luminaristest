@@ -1,22 +1,38 @@
 import { ValidationError } from '../../../../lib/errors';
 import type { ISchemaField } from '../../models/DynamicTable.model';
 import type { PresetTableDefinition } from '..';
-import { MODULE_KEYS, MODULE_REGISTRY, moduleOfTable, type ModuleDef, type ModuleKey } from './registry';
+import { MODULE_REGISTRY, moduleOfTable, type ModuleKey, type ModuleRegistry } from './registry';
 
 /**
  * BE-INCR-CRM-MODULE-COMPOSITION (I8) — regras puras de seleção de módulos no onboarding.
  * Nenhuma escrita: o controller do create compõe o resultado com o `installPresetAsSystem`.
  */
 
+/** `requiresOneOf` (BRIEF item 4): cada grupo exige pelo menos um módulo do conjunto. Lança `REQUIRES_ONE_OF`. */
+function assertRequiresOneOf(present: ReadonlySet<string>, registry: ModuleRegistry): void {
+  for (const key of Object.keys(registry)) {
+    if (!present.has(key)) continue;
+    for (const oneOf of registry[key].requiresOneOf) {
+      if (oneOf.some((m) => present.has(m))) continue;
+      throw new ValidationError(`O módulo '${key}' exige pelo menos um destes: ${oneOf.join(', ')}.`, {
+        reason: 'REQUIRES_ONE_OF',
+        module: key,
+        oneOf: [...oneOf],
+      });
+    }
+  }
+}
+
 /**
  * Comportamento 2. Resolve a seleção final = pedido explícito ∪ default da suíte, fechada pelas dependências.
  * Dependência que é a base FIXA da categoria (CRM-0) entra implicitamente (BRIEF §2.2: "CRM-0 é implícito");
- * dependência não-fixa ausente → 400 com o módulo faltante nomeado. Devolve na ordem do registro.
+ * dependência não-fixa ausente → 400 com o módulo faltante nomeado. A dependência pode cruzar categorias (BRIEF item 3).
+ * Depois de fechar as dependências, `requiresOneOf` é conferido (item 4). Devolve na ordem do registro.
  */
 export function resolveModuleSelection(
   requested: readonly ModuleKey[],
   suiteDefaults: readonly ModuleKey[] = [],
-  registry: Readonly<Record<ModuleKey, ModuleDef>> = MODULE_REGISTRY,
+  registry: ModuleRegistry = MODULE_REGISTRY,
 ): ModuleKey[] {
   const selected = new Set<ModuleKey>([...suiteDefaults, ...requested]);
   let grew = true;
@@ -36,7 +52,8 @@ export function resolveModuleSelection(
       }
     }
   }
-  return MODULE_KEYS.filter((k) => selected.has(k));
+  assertRequiresOneOf(selected, registry);
+  return (Object.keys(registry) as ModuleKey[]).filter((k) => selected.has(k));
 }
 
 /**
@@ -46,11 +63,14 @@ export function resolveModuleSelection(
  * (BE-INCR-CRM-SUBMODULES item 5, F-SUB-4 → a). Remover módulo mantendo um dependente selecionado → 400
  * `DEPENDENT_MODULE_KEPT` com os dependentes nomeados (item 6, F-SUB-6 → a; sem cascata no servidor). Devolve os
  * módulos com TODAS as tabelas mantidas (o que de fato será instalado), na ordem recebida.
+ * BRIEF item 5: sair a base fixa de uma categoria exige que nenhum outro módulo da categoria continue mantido
+ * (`DEPENDENT_MODULE_KEPT`, sem cascata), além dos dependentes declarados em `dependsOn`. Item 4: `requiresOneOf`
+ * é conferido sobre os mantidos, depois da regra de dependentes.
  */
 export function applyModuleRemovals(
   selected: readonly ModuleKey[],
   removedTables: readonly string[],
-  registry: Readonly<Record<ModuleKey, ModuleDef>> = MODULE_REGISTRY,
+  registry: ModuleRegistry = MODULE_REGISTRY,
 ): ModuleKey[] {
   const removed = new Set(removedTables);
   const kept = selected.filter((key) => {
@@ -68,7 +88,10 @@ export function applyModuleRemovals(
   });
   for (const key of selected) {
     if (kept.includes(key)) continue;
-    const dependents = kept.filter((k) => registry[k].dependsOn.includes(key));
+    const { fixed, category } = registry[key];
+    const dependents = kept.filter(
+      (k) => registry[k].dependsOn.includes(key) || (fixed && registry[k].category === category),
+    );
     if (dependents.length > 0) {
       throw new ValidationError(
         `O módulo '${key}' não pode ser removido: ${dependents.join(', ')} depende(m) dele e foi(ram) mantido(s).`,
@@ -76,6 +99,7 @@ export function applyModuleRemovals(
       );
     }
   }
+  assertRequiresOneOf(new Set(kept), registry);
   return kept;
 }
 

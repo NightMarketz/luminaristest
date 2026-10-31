@@ -13,6 +13,11 @@ import {
   moduleSelectorSchema,
   MODULE_GROUPS,
   MODULE_GROUP_KEYS,
+  MODULE_CATEGORIES,
+  MODULE_TABLE_SOURCES,
+  assertRegistryInvariants,
+  type ModuleCategory,
+  type ModuleDef,
   type ModuleKey,
 } from '../modules/registry';
 import { CrmModulePreset } from '../systems/CrmModulePreset';
@@ -124,5 +129,66 @@ describe('registro de módulos — invariantes (BRIEF §2.1)', () => {
   it('moduleOfTable devolve undefined para tabela de core', () => {
     expect(moduleOfTable('employees')).toBeUndefined();
     expect(moduleOfTable('leadProposals')).toBe('CRM-1');
+  });
+});
+
+describe('registro genérico por categoria (BE-INCR-MODULOS-BASE-SUBMODULOS PR-1)', () => {
+  const def = (key: string, category: ModuleCategory, over: Partial<ModuleDef> = {}): ModuleDef => ({
+    key: key as ModuleKey,
+    category,
+    name: { pt: key, en: key },
+    aiDescription: key,
+    fixed: false,
+    tables: [`${key}-t`],
+    dependsOn: [],
+    requiresOneOf: [],
+    freeSelects: {},
+    ...over,
+  });
+
+  it('item 1: category é enum fechado de 7 categorias; toda entrada real passa no schema', () => {
+    expect(MODULE_CATEGORIES).toEqual(['crm', 'pessoas', 'vendas', 'estoque', 'agenda', 'financeiro', 'gestao']);
+    for (const k of MODULE_KEYS) expect(moduleDefSchema.safeParse(MODULE_REGISTRY[k]).success).toBe(true);
+    expect(moduleDefSchema.safeParse({ ...MODULE_REGISTRY['CRM-0'], category: 'vendas' }).success).toBe(true);
+    expect(moduleDefSchema.safeParse({ ...MODULE_REGISTRY['CRM-0'], category: 'outra' }).success).toBe(false);
+  });
+
+  it('item 2: cada categoria presente tem uma base; não-fixo tem uma tabela', () => {
+    expect(() => assertRegistryInvariants()).not.toThrow();
+    const cats = new Set(MODULE_KEYS.map((k) => MODULE_REGISTRY[k].category));
+    for (const c of cats) {
+      expect(MODULE_KEYS.filter((k) => MODULE_REGISTRY[k].category === c && MODULE_REGISTRY[k].fixed)).toHaveLength(1);
+    }
+  });
+
+  it('item 2 (negativo): duas bases na mesma categoria → falha nomeando a categoria', () => {
+    const reg = { 'VEN-0': def('VEN-0', 'vendas', { fixed: true }), 'VEN-X': def('VEN-X', 'vendas', { fixed: true }) };
+    expect(() => assertRegistryInvariants(reg)).toThrow(/categoria 'vendas'.*exatamente uma base fixa.*VEN-0, VEN-X/);
+  });
+
+  it('item 2 (negativo): categoria sem base e não-fixo com 2 tabelas → falham', () => {
+    expect(() => assertRegistryInvariants({ 'VEN-S': def('VEN-S', 'vendas') })).toThrow(/categoria 'vendas'/);
+    const reg = { 'VEN-0': def('VEN-0', 'vendas', { fixed: true }), 'VEN-S': def('VEN-S', 'vendas', { tables: ['a', 'b'] }) };
+    expect(() => assertRegistryInvariants(reg)).toThrow(/'VEN-S'.*exatamente uma tabela/);
+  });
+
+  it('item 4: requiresOneOf default [] e cada grupo exige ≥2 chaves', () => {
+    const { requiresOneOf: _drop, ...semCampo } = MODULE_REGISTRY['CRM-0'];
+    expect(_drop).toEqual([]);
+    expect(moduleDefSchema.parse(semCampo).requiresOneOf).toEqual([]);
+    expect(moduleDefSchema.safeParse({ ...MODULE_REGISTRY['CRM-0'], requiresOneOf: [['CRM-1']] }).success).toBe(false);
+    expect(moduleDefSchema.safeParse({ ...MODULE_REGISTRY['CRM-0'], requiresOneOf: [['CRM-1', 'CRM-3']] }).success).toBe(true);
+  });
+
+  it('item 6: toda tabela de todo módulo tem fonte, e a fonte não traz tabela de outro módulo', () => {
+    for (const k of MODULE_KEYS) {
+      expect(Object.keys(MODULE_TABLE_SOURCES[k]).sort()).toEqual([...MODULE_REGISTRY[k].tables].sort());
+      for (const t of MODULE_REGISTRY[k].tables) expect(MODULE_TABLE_SOURCES[k][t]).toBeDefined();
+    }
+    expect(Object.keys(composeModuleTables(MODULE_KEYS))).toEqual(MODULE_KEYS.flatMap((k) => MODULE_REGISTRY[k].tables));
+  });
+
+  it('a ordem de chaves do registro é a de MODULE_KEYS (as regras puras devolvem na ordem do registro)', () => {
+    expect(Object.keys(MODULE_REGISTRY)).toEqual([...MODULE_KEYS]);
   });
 });
