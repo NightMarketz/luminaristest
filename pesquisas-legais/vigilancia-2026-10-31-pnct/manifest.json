@@ -1,0 +1,92 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Últimas Notícias — Receita Federal",
+      "url": "https://www.gov.br/receitafederal/pt-br/acesso-a-informacao/acoes-e-programas/reforma-tributaria-do-consumo/ultimas-noticias/noticias",
+      "url_final": "https://www.gov.br/receitafederal/pt-br/acesso-a-informacao/acoes-e-programas/reforma-tributaria-do-consumo/ultimas-noticias/noticias",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-31T12:43:08-03:00",
+      "sha256": "0576f060fb372da9c28137de1ee3fee48c121d48f85aea8f4f4150b4df3afd71",
+      "arquivo": "docs/D01_noticias.html",
+      "texto": "docs/D01_noticias.txt",
+      "bytes": 274377
+    },
+    {
+      "id": "D02",
+      "titulo": "Mais de 1 milhão de contribuintes já optaram pelo regime regular do IBS e da CBS — Receita Federal",
+      "url": "https://www.gov.br/receitafederal/pt-br/assuntos/noticias/2026/outubro/mais-de-1-milhao-de-contribuintes-ja-optaram-pelo-regime-regular-do-ibs-e-da-cbs",
+      "url_final": "https://www.gov.br/receitafederal/pt-br/assuntos/noticias/2026/outubro/mais-de-1-milhao-de-contribuintes-ja-optaram-pelo-regime-regular-do-ibs-e-da-cbs",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-31T12:43:09-03:00",
+      "sha256": "7a35ae2103fad098df7ab4e4f63d043834efcf5cba328914d5b18ee990f8e3a3",
+      "arquivo": "docs/D02_mais-de-1-milhao-de-contribuintes-ja-optaram-pelo-regime-reg.html",
+      "texto": "docs/D02_mais-de-1-milhao-de-contribuintes-ja-optaram-pelo-regime-reg.txt",
+      "bytes": 204196
+    },
+    {
+      "id": "D03",
+      "titulo": "Receita Federal e CGIBS regulamentam Programa Nacional de Conformidade Tributária para apoiar adaptação à Reforma Tributária no ano de 2026 — Receita Federal",
+      "url": "https://www.gov.br/receitafederal/pt-br/assuntos/noticias/2026/agosto/receita-federal-e-cgibs-regulamentam-programa-nacional-de-conformidade-tributaria-para-apoiar-adaptacao-a-reforma-tributaria-no-ano-de-2026",
+      "url_final": "https://www.gov.br/receitafederal/pt-br/assuntos/noticias/2026/agosto/receita-federal-e-cgibs-regulamentam-programa-nacional-de-conformidade-tributaria-para-apoiar-adaptacao-a-reforma-tributaria-no-ano-de-2026",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-31T12:43:09-03:00",
+      "sha256": "60717d7a66ef00e6c021725b23e9a305b14ac7c02c29705b6671ce7f77c4173f",
+      "arquivo": "docs/D03_receita-federal-e-cgibs-regulamentam-programa-nacional-de-co.html",
+      "texto": "docs/D03_receita-federal-e-cgibs-regulamentam-programa-nacional-de-co.txt",
+      "bytes": 213331
+    },
+    {
+      "id": "D04",
+      "titulo": "SIJUT — atos com o termo CGIBS (busca)",
+      "url": "https://normas.receita.fazenda.gov.br/pesquisa",
+      "url_final": "https://normas.receita.fazenda.gov.br/pesquisa",
+      "orgao": "Receita Federal (SIJUT), lido pelo navegador embutido",
+      "baixado_em": "2026-10-31T13:30:00-03:00",
+      "sha256": "227ac9e3c0ea1d8947900e9f1b085193af6cc2f10363db804492f8c5d3d4e648",
+      "arquivo": "docs/D04_sijut-busca-cgibs-2026-navegador.txt",
+      "texto": "docs/D04_sijut-busca-cgibs-2026-navegador.txt",
+      "bytes": 754
+    },
+    {
+      "id": "D05",
+      "titulo": "Ato Conjunto RFB/CGIBS nº 5/2026 (multivigente)",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/152862/visao/multivigente",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/152862/visao/multivigente",
+      "orgao": "Receita Federal (SIJUT), lido pelo navegador embutido",
+      "baixado_em": "2026-10-31T13:30:00-03:00",
+      "sha256": "869042e7ac230eab9a4d61022e39e7102111e8d4d49aedba9b65e96cedbe6c2e",
+      "arquivo": "docs/D05_ato-conjunto-rfb-cgibs-5-2026-multivigente-navegador.txt",
+      "texto": "docs/D05_ato-conjunto-rfb-cgibs-5-2026-multivigente-navegador.txt",
+      "bytes": 1829
+    },
+    {
+      "id": "D06",
+      "titulo": "Ato Conjunto RFB/CGIBS nº 6/2026",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/153216/visao/multivigente",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/153216/visao/multivigente",
+      "orgao": "Receita Federal (SIJUT), lido pelo navegador embutido",
+      "baixado_em": "2026-10-31T13:30:00-03:00",
+      "sha256": "5dd842f68e9add480511c60c1da0d1ba6ee239ff417fedf505549aba0a4ddc88",
+      "arquivo": "docs/D06_ato-conjunto-rfb-cgibs-6-2026-navegador.txt",
+      "texto": "docs/D06_ato-conjunto-rfb-cgibs-6-2026-navegador.txt",
+      "bytes": 801
+    },
+    {
+      "id": "D07",
+      "titulo": "Ato Técnico Conjunto RFB/CGIBS nº 9/2026",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/154246/visao/multivigente",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/154246/visao/multivigente",
+      "orgao": "Receita Federal (SIJUT), lido pelo navegador embutido",
+      "baixado_em": "2026-10-31T13:30:00-03:00",
+      "sha256": "49fccd4f8bf52d53e323e98e33d43ca7360cf7f5c43937b394582577c0af2716",
+      "arquivo": "docs/D07_atc-rfb-cgibs-9-2026-navegador.txt",
+      "texto": "docs/D07_atc-rfb-cgibs-9-2026-navegador.txt",
+      "bytes": 662
+    }
+  ],
+  "buscas": [],
+  "slug": "vigilancia-2026-10-31-pnct",
+  "pergunta": "Há comunicação/ato novo do PNCT (Ato Conjunto RFB/CGIBS) até 31/12/2026? A leitura de 28/10 (não alcança o Simples em 2026) continua de pé?",
+  "criado": "2026-10-31T12:14:34-03:00"
+}

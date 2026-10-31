@@ -1,0 +1,6 @@
+Fonte: SIJUT (normas.receita.fazenda.gov.br/pesquisa), lido pelo navegador embutido em 2026-10-31.
+Busca: termo "ECF"; filtros: Tipo de ato = Ato Declaratório Executivo; Ano do ato = 2026.
+Resultado: "Localizados 11 itens" — Órgão/Unidade: Cofis 1, Corat 10.
+- ADE Cofis 2, publicação 29/01/2026: "Dispõe sobre o Manual de Orientação do Leiaute 12 da Escrituração Contábil Fiscal - ECF."
+- ADE Corat 2, 5, 11, 15, 18, 22, 47, 63, 78, 85 (28/10/2026): Agenda Tributária (fev a nov/2026).
+Nenhum ADE Cofis de 2026 sobre o Leiaute 13 da ECF.

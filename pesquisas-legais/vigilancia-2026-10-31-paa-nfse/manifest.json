@@ -1,0 +1,104 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Documentação Atual — Portal da Nota Fiscal de Serviço eletrônica",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-31T12:40:17-03:00",
+      "sha256": "82328aa612f16271f3cc54bd1fa9ef31ae12dd44ecb6a5dd9563128a9d54ef06",
+      "arquivo": "docs/D01_documentacao-atual.html",
+      "texto": "docs/D01_documentacao-atual.txt",
+      "bytes": 92882
+    },
+    {
+      "id": "D02",
+      "titulo": "Atualizações e Implantações — Portal da Nota Fiscal de Serviço eletrônica",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/atualizacoes-e-implantacoes",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/atualizacoes-e-implantacoes",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-31T12:40:17-03:00",
+      "sha256": "0786832d6e2f10566d72f37f185e4ce658b2896bcb58ee2b977f242bbffd831c",
+      "arquivo": "docs/D02_atualizacoes-e-implantacoes.html",
+      "texto": "docs/D02_atualizacoes-e-implantacoes.txt",
+      "bytes": 92789
+    },
+    {
+      "id": "D03",
+      "titulo": "Notícias — Portal da Nota Fiscal de Serviço eletrônica",
+      "url": "https://www.gov.br/nfse/pt-br/noticias",
+      "url_final": "https://www.gov.br/nfse/pt-br/noticias",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-31T12:40:17-03:00",
+      "sha256": "0844a5508a7e92ccaac7781174f8dc1bdb41554fc0895d027d14c034f9b84490",
+      "arquivo": "docs/D03_noticias.html",
+      "texto": "docs/D03_noticias.txt",
+      "bytes": 153439
+    },
+    {
+      "id": "D04",
+      "titulo": "NFS-e informa: diretrizes sobre a Obrigatoriedade da Emissão da NFS-e Nacional para Optantes do Simples Nacional — Portal da Nota Fiscal de Serviço eletrônica",
+      "url": "https://www.gov.br/nfse/pt-br/noticias/nfs-e-informa-diretrizes-sobre-a-obrigatoriedade-da-emissao-da-nfs-e-nacional-para-optantes-do-simples-nacional",
+      "url_final": "https://www.gov.br/nfse/pt-br/noticias/nfs-e-informa-diretrizes-sobre-a-obrigatoriedade-da-emissao-da-nfs-e-nacional-para-optantes-do-simples-nacional",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-31T12:40:45-03:00",
+      "sha256": "12e04c1fa84a2d037e7e29ff8e514071b82bf75aed7cc54906b88f5f5bbcb435",
+      "arquivo": "docs/D04_nfs-e-informa-diretrizes-sobre-a-obrigatoriedade-da-emissao-.html",
+      "texto": "docs/D04_nfs-e-informa-diretrizes-sobre-a-obrigatoriedade-da-emissao-.txt",
+      "bytes": 90954
+    },
+    {
+      "id": "D05",
+      "titulo": "NFS-e Nacional: confira as orientações sobre leiaute em produção, regras de preenchimento de IBS/CBS e status da Nota Técnica 009 — Portal da Nota Fiscal de Serviço eletrônica",
+      "url": "https://www.gov.br/nfse/pt-br/noticias/nfs-e-nacional-confira-oas-rientacoes-sobre-leiaute-em-producao-regras-de-preenchimento-de-ibs-cbs-e-status-da-nota-tecnica-009",
+      "url_final": "https://www.gov.br/nfse/pt-br/noticias/nfs-e-nacional-confira-oas-rientacoes-sobre-leiaute-em-producao-regras-de-preenchimento-de-ibs-cbs-e-status-da-nota-tecnica-009",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-31T12:40:45-03:00",
+      "sha256": "2d0b5e5796e922146a99f596b05aaae49522ba70de668ee8153bda5f9751c53f",
+      "arquivo": "docs/D05_nfs-e-nacional-confira-oas-rientacoes-sobre-leiaute-em-produ.html",
+      "texto": "docs/D05_nfs-e-nacional-confira-oas-rientacoes-sobre-leiaute-em-produ.txt",
+      "bytes": 95136
+    },
+    {
+      "id": "D06",
+      "titulo": "RTC — Portal da Nota Fiscal de Serviço eletrônica",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-31T12:41:02-03:00",
+      "sha256": "f824b8cd299941c1c2594b33d20db9da648a3304e4f718eee53543428fbf05df",
+      "arquivo": "docs/D06_rtc.html",
+      "texto": "docs/D06_rtc.txt",
+      "bytes": 98778
+    },
+    {
+      "id": "D07",
+      "titulo": "Documentação Técnica (Homologação/testes) — Portal da Nota Fiscal de Serviço eletrônica",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/producao-restrita",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/producao-restrita",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-31T12:41:02-03:00",
+      "sha256": "38392b1f566b3cd74bfc90e80b9276ed9e81e96076821a79e71cead027818aea",
+      "arquivo": "docs/D07_producao-restrita.html",
+      "texto": "docs/D07_producao-restrita.txt",
+      "bytes": 90266
+    },
+    {
+      "id": "D08",
+      "titulo": "D08_anexovii-indop_ibscbs_v1-03-00-nt009-xlsx",
+      "url": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/anexovii-indop_ibscbs_v1-03-00-nt009.xlsx",
+      "url_final": "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/rtc/anexovii-indop_ibscbs_v1-03-00-nt009.xlsx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-31T12:41:17-03:00",
+      "sha256": "95f30a44ee94adeea57fb92f3a0337b1e62fdc106f393e73894087889be9e5aa",
+      "arquivo": "docs/D08_anexovii-indop_ibscbs_v1-03-00-nt009-xlsx.html",
+      "texto": "docs/D08_anexovii-indop_ibscbs_v1-03-00-nt009-xlsx.txt",
+      "bytes": 27475
+    }
+  ],
+  "buscas": [],
+  "slug": "vigilancia-2026-10-31-paa-nfse",
+  "pergunta": "Já existe ato oficial liberando emissor automático (PAA) para a NFS-e nacional? Mudou algo desde 22/10/2026?",
+  "criado": "2026-10-31T12:14:32-03:00"
+}

@@ -1,0 +1,670 @@
+Notícias — Portal da Nota Fiscal de Serviço eletrônica Ir para o Conteúdo 1 Ir para a Página Inicial 2 Ir para o menu de Navegação 3 Ir para a Busca 4 Ir para o Mapa do site 5 Atenção! Seu navegador não pode executar javascript. Alguns recursos podem não funcionar corretamente. 
+
+ Abrir menu principal de navegação 
+ Portal da Nota Fiscal de Serviço eletrônica 
+
+ Termos mais buscados 
+
+ Desenrola Brasil 
+
+ assinatura 
+
+ mei 
+
+ imposto de renda 
+
+ enem 
+
+ Termos mais buscados 
+
+ Desenrola Brasil 
+
+ assinatura 
+
+ mei 
+
+MEI e demais empresas 
+ Emissor de NFS-e WEB 
+
+ Consultar Nota Fiscal 
+
+ Acesso aos Sistemas 
+ Consultar Nota Fiscal 
+
+ Prestador de Serviços 
+
+ Município 
+
+ Cidadão 
+
+ Consultar Nota Fiscal 
+
+ Lista de Serviços Anexa à Lei Complementar nº 116, de 31 de julho de 2003 
+
+Consumidor dos serviços 
+ Consultar Nota Fiscal 
+
+ Apps NFSe Mobile 
+
+Municípios 
+ Conheça a NFS-e 
+ O que é a NFS-e 
+
+ Histórico da NFS-e 
+
+ O padrão nacional da NFS-e 
+
+ O que é SPED 
+
+ Benefícios 
+
+ Produtos disponíveis 
+ Ambiente de Dados Nacional 
+
+ Emissor NFS-e WEB 
+
+ APP emissor de NFS-e 
+
+ APP Cidadão (NFSe Cidadao) 
+
+ Secretaria de Finanças Nacional 
+
+ Guia de Recolhimento 
+
+ Portal NFS-e 
+
+ Webservices Municipais 
+
+ Webservices empresariais 
+
+ Webservices conveniados 
+
+ EFD ISS 
+
+ API de integração 
+
+ Painel Administrativo Municipal 
+
+ Como conveniar-se 
+ Como conveniar-se 
+
+ Como implementar a NFS-e 
+ Implementação da NFS-e - ADN 
+
+ Implementação da NFS-e - Emissores Públicos 
+
+ Monitoramento das Adesões à NFS-e 
+
+ Plano de Implantação da NFS-e 
+
+ Painel Municipal (parametrização) 
+
+NFS-e Via 
+ Solicitação de cadastramento no Portal das Concessionárias de Exploração de Vias 
+
+ Documentação técnica 
+ Manuais e anexos 
+
+ Leiautes 
+
+ Arquivos dos esquemas XSD 
+
+ Notas técnicas 
+
+ Versões anteriores da documentação 
+
+ Links 
+
+Canais de Atendimento
+
+Biblioteca 
+ Portarias e Resoluções do CGNFS-e 
+
+ Documentação técnica 
+ Atualizações e Implantações 
+
+ Documentação Atual (Produção) 
+
+ Documentação Técnica (Homologação/testes) 
+
+ APIs - Prod. Restrita e Produção 
+
+ RTC 
+
+ Leiaute e esquemas antigos (julho de 2022 a 28/09/2025) 
+
+ Logos da NFS-e 
+
+ Links com Passo a Passo 
+
+ Legislação Aplicável ao MEI 
+
+ Eventos NFS-e 
+
+ Alíquotas de ISSQN 
+
+Perguntas Frequentes
+
+Privacidade e Proteção de Dados
+
+ GOV.BR 
+ Serviços 
+ Buscar serviços por 
+ Categorias 
+
+ Órgãos 
+
+ Estados 
+
+ Serviços por público alvo 
+ Cidadãos 
+
+ Empresas 
+
+ Órgãos e Entidades Públicas 
+
+ Demais segmentos (ONGs, organizações sociais, etc) 
+
+ Servidor Público 
+
+ Temas em Destaque 
+ Orçamento Nacional 
+
+ Redes de Atendimento da Administração Pública Federal 
+
+ Proteção de Dados Pessoais 
+
+ Serviços para Imigrantes 
+
+ Política e Orçamento Educacionais 
+
+ Educação Profissional e Tecnológica 
+
+ Educação Profissional para Jovens e Adultos 
+
+ Trabalho e Emprego 
+
+ Serviços para Pessoas com Deficiência 
+
+ Combate à Discriminação Racial 
+
+ Política de Proteção Social 
+
+ Política para Mulheres 
+
+ Saúde Reprodutiva da Mulher 
+
+ Cuidados na Primeira Infância 
+
+ Habitação Popular 
+
+ Controle de Poluição e Resíduos Sólidos 
+
+ Notícias 
+ Saúde 
+
+ Agricultura e Pecuária 
+
+ Cidadania e Assistência Social 
+
+ Ciência e Tecnologia 
+
+ Comunicação 
+
+ Cultura e Esporte 
+
+ Economia e Gestão Pública 
+
+ Educação e Pesquisa 
+
+ Energia 
+
+ Forças Armadas e Defesa Civil 
+
+ Infraestrutura 
+
+ Justiça e Segurança 
+
+ Meio Ambiente 
+
+ Trabalho e Previdência 
+ FGTS 
+
+ Direitos do Trabalhador 
+
+ Turismo 
+ Direitos do Viajante 
+
+ Viaje o Brasil 
+
+ Galeria de Aplicativos 
+
+ Acompanhe o Planalto 
+
+ Navegação 
+ Acessibilidade 
+
+ Mapa do Site 
+
+ Termo de Uso e Aviso de Privacidade 
+
+ Consultar minhas solicitações 
+
+ Órgãos do Governo 
+
+ Por dentro do Gov.br 
+ Dúvidas Frequentes em relação ao Portal gov.br 
+
+ Dúvidas Frequentes da conta gov.br 
+
+ Ajuda para Navegar o Portal 
+
+ Conheça os elementos do Portal 
+
+ Política de e-participação 
+
+ Termos de Uso 
+
+ Governo Digital 
+
+ Guia de Edição de Serviços do Portal Gov.br 
+
+ Canais do Executivo Federal 
+
+ Dados da Administração Pública Federal 
+ Dados Abertos 
+
+ Painel Estatístico de Pessoal 
+
+ Painel de Compras da Administração Pública Federal 
+
+ Acesso à Informação 
+
+ Empresas e Negócios 
+
+Links Úteis
+
+ Galeria de Aplicativos 
+
+ Participe 
+
+ Galeria de Aplicativos 
+
+ Participe 
+
+ Ajude a melhorar o gov.br 
+
+Redes sociais
+
+ Twitter 
+
+ YouTube 
+
+ Facebook 
+
+ Flickr 
+
+ Você está aqui: Página Inicial Notícias 
+
+ Info 
+
+Últimas Notícias
+
+ Compartilhe: Compartilhe por Facebook Compartilhe por Twitter Compartilhe por LinkedIn Compartilhe por WhatsApp link para Copiar para área de transferência 
+
+ Publicado em 31/05/2013 15h12 Atualizado em 29/10/2026 14h54 
+
+ Filtrar 
+
+Pesquisar Notícias
+
+Período
+
+ De 
+
+ Ate 
+
+Categoria
+
+ Todas Agricultura e Pecuária Assistência Social Ciência e Tecnologia Comunicações e Transparência Pública Cultura, Artes, História e Esportes Defesa Civil e Defesa Nacional Educação e Pesquisa Empresa, Indústria e Comércio Energia, Minerais e Combustíveis Finanças, Impostos e Gestão Pública Infraestrutura, Trânsito e Transportes Justiça e Segurança Meio Ambiente e Clima Saúde e Vigilância Sanitária Trabalho, Emprego e Previdência Viagens e Turismo 
+
+ Limpar Aplicar 
+
+Finanças, Impostos e Gestão Pública
+
+ NFS-e informa: diretrizes sobre a Obrigatoriedade da Emissão da NFS-e Nacional para Optantes do Simples Nacional 
+
+ 29/10/2026 
+
+Finanças, Impostos e Gestão Pública
+
+ NFS-e Nacional: confira as orientações sobre leiaute em produção, regras de preenchimento de IBS/CBS e status da Nota Técnica 009 
+
+ 29/10/2026 
+
+Finanças, Impostos e Gestão Pública
+
+ CGNFS-e informa: disponibilizadas no ambiente de testes o release 1 das evoluções da Nota Técnica 009 
+
+ 20/10/2026 - Evoluções já estão disponíveis para testes pelos municípios e contribuintes 
+
+Finanças, Impostos e Gestão Pública
+
+ Disponibilizadas em produção as evoluções da Nota Técnica 010 da NFS-e Via 
+
+ 19/10/2026 - Atualizações do Leiaute e Evento de Manifestação do Adquirente já estão disponíveis para os usuários do sistema 
+
+ Publicado o Ato Técnico Conjunto RFB/CGIBS nº 7 aprovando a versão 1.01 da Nota Técnica 009 NFS-e e a Nota Técnica 010 da NFS-e Via 
+
+ 09/10/2026 - Os documentos técnicos trazem mudanças no leiaute da nota fiscal de serviço para o IBS e a CBS, regras específicas para comércio exterior, condomínios e eventos, e o Evento de Manifestação do Adquirente da NFS-e Via 
+
+Finanças, Impostos e Gestão Pública
+
+ Comitê Gestor da NFS-e se reúne Belo Horizonte/MG para homologar novas funcionalidades para a Reforma Tributária 
+
+ 09/10/2026 
+
+Finanças, Impostos e Gestão Pública
+
+ Comitê Gestor da NFS-e e Fiscos da União, Estados e Municípios reúnem-se em São Paulo 
+
+ 01/10/2026 
+
+Finanças, Impostos e Gestão Pública
+
+ Nova funcionalidade no Painel Administrativo Municipal permite antecipar a adoção do Emissor Nacional para optantes pelo Simples Nacional 
+
+ 28/09/2026 
+
+Finanças, Impostos e Gestão Pública
+
+ Publicado o Perguntas e Respostas da NFS-e 
+
+ 16/09/2026 - O material foi compilado com base nas dúvidas recebidas de Municípios, contribuintes e empresas de desenvolvimento 
+
+Finanças, Impostos e Gestão Pública
+
+ Secretaria Executiva do CGNFS-e participa de homologação de novas funcionalidades da Nota Fiscal de Serviço Eletrônica para a Reforma Tributária 
+
+ 05/09/2026 - Atividades aconteceram na sede do Serpro em Belo Horizonte (MG) 
+
+Finanças, Impostos e Gestão Pública
+
+ Comitê Gestor do Simples Nacional prorroga a obrigatoriedade de emissão de notas fiscais de serviço pelo Emissor Nacional da NFS-e 
+
+ 11/08/2026 
+
+Finanças, Impostos e Gestão Pública
+
+ CGNFS-e orienta sobre os prazos para destaque de IBS/CBS nas notas fiscais de serviço 
+
+ 07/08/2026 - Comitê Gestor do IBS e Receita Federal flexibilizaram a obrigatoriedade de informações nos documentos fiscais. Regras de validação que exigem informações do IBS e da CBS foram alteradas para evitar rejeição de documentos fiscais. 
+
+Finanças, Impostos e Gestão Pública
+
+ Plataforma NFS-e disponibiliza novas evoluções em Produção Restrita e divulga cronograma de implantação 
+
+ 28/07/2026 - Entre as evoluções estão o CNPJ Alfanumérico e os grupos IBS/CBS no Emissor Web 
+
+Finanças, Impostos e Gestão Pública
+
+ Manutenção no ambiente do CNPJ neste sábado (25) não afetará os principais serviços da NFS-e 
+
+ 23/07/2026 - Apenas os serviços de criação de usuário e recuperação de senha do Portal do Contribuinte serão afetados 
+
+Finanças, Impostos e Gestão Pública
+
+ DANFSE: novos ajustes e prorrogação do prazo para adequação 
+
+ 14/07/2026 - Novo prazo passa a ser 3 de agosto de 2026 
+
+Finanças, Impostos e Gestão Pública
+
+ NFS-e Via: Publicada nova API para consulta de alíquotas do ISS 
+
+ 10/07/2026 - As Administrações Municipais poderão consultar alíquotas de ISS por trecho e data 
+
+Finanças, Impostos e Gestão Pública
+
+ NFS-e informa: indisponibilidade do ambiente do CNPJ no dia 25 de julho 
+
+ 09/07/2026 - Parada programada visa a implantação do CNPJ alfanumérico 
+
+Finanças, Impostos e Gestão Pública
+
+ CGNFS-e e Entidades debatem classificação tributária de serviços funerários e seus impactos sobre o IBS 
+
+ 01/07/2026 
+
+Finanças, Impostos e Gestão Pública
+
+ SE/CGNFS-e prorroga o prazo para adequação ao novo leiaute do DANFSE 
+
+ 30/06/2026 - A atual API será descontinuada a partir de 15 de julho 
+
+Finanças, Impostos e Gestão Pública
+
+ CGNFS-e se reúne para apresentar entregas e alinhar os próximos passos da plataforma 
+
+ 22/06/2026 
+
+Finanças, Impostos e Gestão Pública
+
+ Publicada a Nota Técnica 009 com evoluções da NFS-e 
+
+ 09/06/2026 - Evoluções da plataforma consolidam adaptações da DPS e das NFS-e geradas pelo sistema 
+
+Finanças, Impostos e Gestão Pública
+
+ Comitê Gestor da NFS-e realiza primeira reunião presencial do GT Empresas em São Paulo 
+
+ 09/06/2026 - O evento aconteceu na sede da Associação Comercial de São Paulo e abordou evoluções da NFS-e e da Calculadora de Tributos da Reforma Tributária 
+
+Finanças, Impostos e Gestão Pública
+
+ Municípios sem adesão ou parametrização da NFS-e já estão sujeitos a bloqueio de transferências 
+
+ 13/05/2026 - Lei Complementar nº 214/2025 prêve o bloqueio de transferências voluntárias para os Municípios que não cumprirem suas obrigações com a NFS-e. 
+
+Finanças, Impostos e Gestão Pública
+
+ Atendimento aos contribuintes passa a ser realizado diretamente pelos Municípios 
+
+ 13/05/2026 - A mudança reforça o papel dos Municípios no suporte aos contribuintes em suas administrações tributárias. 
+
+Finanças, Impostos e Gestão Pública
+
+ SE/CGNFS-e publica Nota Técnica nº 008/2026 com regras para emissão do DANFSe 
+
+ 05/05/2026 - Documento tem como principal objetivo facilitar a consulta às informações das notas fiscais 
+
+Finanças, Impostos e Gestão Pública
+
+ CGSN autoriza uso do DAS para recolhimento do ISS no Regime Geral pelo MAN até 2032 
+
+ 28/04/2026 - As apurações do ISS em regime geral realizadas pelo MAN irão utilizar o DAS como documento de arrecadação. 
+
+Finanças, Impostos e Gestão Pública
+
+ NFS-e e Simples Nacional: obrigatoriedade de emissão através do Emissor Nacional 
+
+ 28/04/2026 - ME e EPP optantes pelo Simples Nacional deverão usar obrigatoriamente o Emissor Nacional a partir de 01/09/2026. 
+
+Finanças, Impostos e Gestão Pública
+
+ Módulo de Apuração Nacional para o ISSQN é disponibilizado no ambiente de Produção Restrita da NFS-e 
+
+ 17/04/2026 - Municípios já podem iniciar seus testes e pilotos com seus contribuintes 
+
+ Publicada Nota Técnica SE/CGNFS-e nº 007 com Atualizações e Esclarecimentos 
+
+ 07/02/2026 
+
+Finanças, Impostos e Gestão Pública
+
+ Publicada Nova Nota Técnica com Novidades acerca do Ambiente RTC da NFS-e 
+
+ 10/12/2025 
+
+ « Anterior 
+
+ 1 
+
+ 2 
+
+ Próximo » 
+
+ Compartilhe: Compartilhe por Facebook Compartilhe por Twitter Compartilhe por LinkedIn Compartilhe por WhatsApp link para Copiar para área de transferência 
+
+MEI e demais empresas 
+ Emissor de NFS-e WEB 
+
+ Consultar Nota Fiscal 
+
+ Acesso aos Sistemas 
+ Consultar Nota Fiscal 
+
+ Prestador de Serviços 
+
+ Município 
+
+ Cidadão 
+
+ Consultar Nota Fiscal 
+
+ Lista de Serviços Anexa à Lei Complementar nº 116, de 31 de julho de 2003 
+
+Consumidor dos serviços 
+ Consultar Nota Fiscal 
+
+ Apps NFSe Mobile 
+
+Municípios 
+ Conheça a NFS-e 
+ O que é a NFS-e 
+
+ Histórico da NFS-e 
+
+ O padrão nacional da NFS-e 
+
+ O que é SPED 
+
+ Benefícios 
+
+ Produtos disponíveis 
+ Ambiente de Dados Nacional 
+
+ Emissor NFS-e WEB 
+
+ APP emissor de NFS-e 
+
+ APP Cidadão (NFSe Cidadao) 
+
+ Secretaria de Finanças Nacional 
+
+ Guia de Recolhimento 
+
+ Portal NFS-e 
+
+ Webservices Municipais 
+
+ Webservices empresariais 
+
+ Webservices conveniados 
+
+ EFD ISS 
+
+ API de integração 
+
+ Painel Administrativo Municipal 
+
+ Como conveniar-se 
+ Como conveniar-se 
+
+ Como implementar a NFS-e 
+ Implementação da NFS-e - ADN 
+
+ Implementação da NFS-e - Emissores Públicos 
+
+ Monitoramento das Adesões à NFS-e 
+
+ Plano de Implantação da NFS-e 
+
+ Painel Municipal (parametrização) 
+
+NFS-e Via 
+ Solicitação de cadastramento no Portal das Concessionárias de Exploração de Vias 
+
+ Documentação técnica 
+ Manuais e anexos 
+
+ Leiautes 
+
+ Arquivos dos esquemas XSD 
+
+ Notas técnicas 
+
+ Versões anteriores da documentação 
+
+ Links 
+
+Canais de Atendimento
+
+Biblioteca 
+ Portarias e Resoluções do CGNFS-e 
+
+ Documentação técnica 
+ Atualizações e Implantações 
+
+ Documentação Atual (Produção) 
+
+ Documentação Técnica (Homologação/testes) 
+
+ APIs - Prod. Restrita e Produção 
+
+ RTC 
+
+ Leiaute e esquemas antigos (julho de 2022 a 28/09/2025) 
+
+ Logos da NFS-e 
+
+ Links com Passo a Passo 
+
+ Legislação Aplicável ao MEI 
+
+ Eventos NFS-e 
+
+ Alíquotas de ISSQN 
+
+Perguntas Frequentes
+
+Privacidade e Proteção de Dados
+
+ Redefinir Cookies 
+
+Redes sociais
+
+ Twitter 
+
+ YouTube 
+
+ Facebook 
+
+ Flickr 
+
+ Acesso àInformação 
+
+ Todo o conteúdo deste site está publicado sob a licença Creative Commons Atribuição-SemDerivações 3.0 Não Adaptada. 
+ Voltar ao topo da página 
+
+ Rejeitar 
+
+ Fale Agora Refazer a busca 
+
+Ajude a melhorar o gov.br
+
+Ao compartilhar sua opinião, você nos ajuda a identificar problemas e a melhorar a navegação para você.
+
+ Agora não Responder pesquisa 
+
+ Não exibir esta mensagem novamente.
