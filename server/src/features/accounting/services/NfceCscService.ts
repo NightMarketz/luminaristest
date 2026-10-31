@@ -9,7 +9,7 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AuditService } from './AuditService';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
-import type { DfeAmbiente } from '../dfe/DfeEmissorPort';
+import type { CscDaUnidade, DfeAmbiente } from '../dfe/DfeEmissorPort';
 
 export const NFCE_CSC_SET = 'nfce_csc.set';
 export const NFCE_CSC_REMOVED = 'nfce_csc.removed';
@@ -37,7 +37,7 @@ export class NfceCscService {
     const saved = await this.repo.runTransaction(async (tx) => {
       const anterior = await this.repo.findLive(scope, input.ambiente, tx);
       if (anterior) await this.repo.softDelete(anterior.id, tx);
-      const shell = await this.repo.createShell(scope, { ambiente: input.ambiente, cscId: input.cscId }, tx);
+      const shell = await this.repo.createShell(scope, { ambiente: input.ambiente, cscId: input.cscId, qrV3Recusado: anterior?.qrV3Recusado ?? false }, tx);
       const sealed = seal(input.csc, shell.id, keyring);
       const row = await this.repo.writeCipher(shell.id, { cscCiphertext: sealed.blob, keyVersion: sealed.keyVersion }, tx);
       await this.audit(tx, scope, NFCE_CSC_SET, row);
@@ -62,11 +62,24 @@ export class NfceCscService {
   }
 
   /** O CSC vivo da unidade no ambiente, decifrado só em memória; sem cadastro ⇒ `null`. */
-  async resolveForEmission(scope: AccountingScope, ambiente: DfeAmbiente): Promise<{ id: string; csc: string } | null> {
+  async resolveForEmission(scope: AccountingScope, ambiente: DfeAmbiente): Promise<CscDaUnidade | null> {
     const row = await this.repo.findLive(scope, ambiente);
     if (!row || !row.cscCiphertext || row.keyVersion == null) return null;
     const keyring = loadKeyring(this.env, DFE_PSC_KEYRING);
-    return { id: row.cscId, csc: open(row.cscCiphertext, row.id, row.keyVersion, keyring) };
+    return {
+      id: row.cscId,
+      csc: open(row.cscCiphertext, row.id, row.keyVersion, keyring),
+      qrV3Recusado: row.qrV3Recusado,
+      marcarQrV3Recusado: () => this.marcarQrV3Recusado(scope, ambiente),
+    };
+  }
+
+  /** A UF devolveu 407 ao QR v3 (aceitação por UF, F-NFCE-E1-4 c): grava na linha viva da unidade/ambiente; sem linha, nada a gravar. */
+  async marcarQrV3Recusado(scope: AccountingScope, ambiente: DfeAmbiente): Promise<void> {
+    await this.repo.runTransaction(async (tx) => {
+      const row = await this.repo.findLive(scope, ambiente, tx);
+      if (row && !row.qrV3Recusado) await this.repo.markQrV3Recusado(row.id, tx);
+    });
   }
 
   private assertManage(scope: AccountingScope): void {

@@ -176,7 +176,8 @@ export class NfceContingenciaService {
   async gerarSupl(scope: AccountingScope, documentId: string, port: DfeEmissorPort, payload: NfePayload, ctx: DfeCallContext): Promise<NfceSupl | null> {
     if (!port.montarContingencia) return null;
     try {
-      const supl = await port.montarContingencia(payload, ctx, 3);
+      // UF que já recusou o QR v3 (407 gravado no CSC, X10a PR-8) recebe o off-line em v2.
+      const supl = await port.montarContingencia(payload, ctx, ctx.csc?.qrV3Recusado ? 2 : 3);
       await this.docRepo.transition(scope, documentId, { status: 'CONTINGENCY', contingenciaSuplJson: JSON.stringify(supl), whenStatusIn: ['CONTINGENCY'] });
       return supl;
     } catch (error) {

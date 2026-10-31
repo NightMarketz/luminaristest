@@ -8,8 +8,9 @@ import type { AccountingScope } from '../scope/AccountingScope';
 export interface INfceCscRepository {
   findLive(scope: AccountingScope, ambiente: string, tx?: Prisma.TransactionClient): Promise<NfceCsc | null>;
   listLive(scope: AccountingScope): Promise<NfceCsc[]>;
-  createShell(scope: AccountingScope, data: { ambiente: string; cscId: string }, tx: Prisma.TransactionClient): Promise<NfceCsc>;
+  createShell(scope: AccountingScope, data: { ambiente: string; cscId: string; qrV3Recusado?: boolean }, tx: Prisma.TransactionClient): Promise<NfceCsc>;
   writeCipher(id: string, sealed: { cscCiphertext: Uint8Array; keyVersion: number }, tx: Prisma.TransactionClient): Promise<NfceCsc>;
+  markQrV3Recusado(id: string, tx: Prisma.TransactionClient): Promise<NfceCsc>;
   softDelete(id: string, tx: Prisma.TransactionClient): Promise<NfceCsc>;
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

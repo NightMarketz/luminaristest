@@ -91,11 +91,24 @@ describe('X10a PR-8 — CSC da NFC-e por unidade', () => {
     expect(apagada.deletedAt).not.toBeNull();
     expect(apagada.cscCiphertext).toBeNull();
     const scope = resolveAccountingScopeInternal({ userId: dono.id }, unitId);
-    expect(await getFactory().getNfceCscService().resolveForEmission(scope, 'homologacao')).toEqual({ id: '2', csc: CSC_NOVO });
+    expect(await getFactory().getNfceCscService().resolveForEmission(scope, 'homologacao')).toMatchObject({ id: '2', csc: CSC_NOVO, qrV3Recusado: false });
     const lista = await request(app).get(`${BASE}/${unitId}`).set(authHeader(dono));
     expect(lista.status).toBe(200);
     expect(lista.body.data.map((v: { ambiente: string }) => v.ambiente)).toEqual(['homologacao', 'producao']);
     expect(JSON.stringify(lista.body)).not.toMatch(new RegExp(`${CSC}|${CSC_NOVO}`));
+  });
+
+  it('QR v3 recusado pela UF: marcarQrV3Recusado grava na linha viva, a emissão lê o flag e a troca do CSC o preserva', async () => {
+    withKey();
+    const svc = getFactory().getNfceCscService();
+    const scope = resolveAccountingScopeInternal({ userId: dono.id }, unitId);
+    const csc = await svc.resolveForEmission(scope, 'homologacao');
+    expect(csc?.qrV3Recusado).toBe(false);
+    await csc!.marcarQrV3Recusado!();
+    expect((await svc.resolveForEmission(scope, 'homologacao'))?.qrV3Recusado).toBe(true);
+    expect((await request(app).put(`${BASE}/${unitId}`).set(authHeader(dono)).send({ ambiente: 'homologacao', cscId: '3', csc: CSC })).status).toBe(200);
+    expect(await svc.resolveForEmission(scope, 'homologacao')).toMatchObject({ id: '3', csc: CSC, qrV3Recusado: true });
+    expect(JSON.stringify((await request(app).get(`${BASE}/${unitId}`).set(authHeader(dono))).body)).not.toContain('qrV3Recusado');
   });
 
   it('tenancy: outro usuário não lê nem grava o CSC desta unidade', async () => {

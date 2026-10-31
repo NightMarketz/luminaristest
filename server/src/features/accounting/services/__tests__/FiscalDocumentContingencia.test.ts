@@ -429,6 +429,23 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
     }
   });
 
+  it('X10a PR-8 (qrV3Recusado): a UF já recusou a v3 ⇒ o DANFE off-line nasce em v2 e a transmissão sai numa só chamada', async () => {
+    cscStub.resolveForEmission.mockResolvedValue({ id: '2', csc: 'A1B2C3D4E5F6G7H8I9J0', qrV3Recusado: true });
+    sefaz.controle.foraDoAr = true;
+    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
+    expect(view.contingencia!.qrCode).toMatch(/\|2\|2\|29\|60\.00\|[0-9a-f]{56}\|2\|[0-9A-F]{40}$/);
+    sefaz.controle.foraDoAr = false;
+    sefaz.controle.recusarQrV3 = true;
+    try {
+      const antes = sefaz.controle.chamadas.length;
+      expect(await contingencia.tick(PASSADO())).toMatchObject({ transmitidas: 1 });
+      expect(sefaz.controle.chamadas.slice(antes).filter((c) => c.servico === 'NFeAutorizacao4')).toHaveLength(1);
+      expect((await emission.getById(SCOPE, view.id)).contingencia!.qrCode).toBe(view.contingencia!.qrCode);
+    } finally {
+      sefaz.controle.recusarQrV3 = false;
+    }
+  });
+
   it('revisão A: a UF recusa a v3 (407) na transmissão ⇒ o QR que o BE entrega para o DANFE passa a ser o v2 do XML autorizado', async () => {
     sefaz.controle.foraDoAr = true;
     const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
