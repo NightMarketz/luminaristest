@@ -8,6 +8,7 @@ import {
   partitionByKnownGaps,
   resolveTableRef,
   type CouplingFinding,
+  knownGapsAcross,
   type KnownGap,
   type Universe,
 } from './presetCouplingUniverse';
@@ -43,6 +44,15 @@ const OPTIONAL_RELATIONS: Readonly<Record<string, string>> = {
     'F-CRM-5 (a): Oportunidades depende só de CRM-0 — accountId opcional, descartado sem CRM-2A (registry.ts)',
   'crmOpportunities.contactId->crmContacts':
     'F-CRM-5 (a): Oportunidades depende só de CRM-0 — contactId opcional, descartado sem CRM-2B (registry.ts)',
+  // BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: PESSOAS/VENDAS isolados (F-TAP-1 b) sem CRM, sem os outros catálogos e sem
+  // as categorias que ainda são tabelas soltas da suíte (AGENDA, CRM-CAMP). Relação opcional sai na instalação (E5).
+  'tasks.leadId->leads': 'CRM-0 é opcional fora das suítes que o declaram: sem Funil o vínculo da tarefa ao lead é descartado (E5)',
+  'sales.campaignId->campaigns': 'F-MB-3b: sem Campanhas `sales.campaignId` (opcional) é descartado na instalação',
+  'saleItems.productId->products': 'F-MB-2: catálogo por requiresOneOf — sem VEN-PROD o item não aponta produto (E5)',
+  'saleItems.serviceId->services': 'F-MB-2: catálogo por requiresOneOf — sem VEN-SERV o item não aponta serviço (E5)',
+  'saleItems.packageId->packages': 'F-MB-2 / F-MS-3 (a): sem VEN-PAC o item não aponta pacote (E5)',
+  'saleItems.appointmentId->appointments': 'AGENDA é categoria própria (AGE-0, PR-3): sem ela o item não aponta atendimento (E5)',
+  'services.associatedProducts->products': 'VEN-SERV não depende de VEN-PROD: sem Produtos a lista de produtos associados é descartada (E5)',
 };
 
 // --- Item 6 / F-TAP-2 → (a): manifesto estático dos campos que cada plugin escreve/lê ---------------------------
@@ -175,7 +185,23 @@ const PLUGIN_MANIFEST: readonly PluginFieldManifest[] = [
 
 // --- Item 8 / F-TAP-4 → (a): vermelhos conhecidos, com o nó dono — a lista só encolhe ----------------------------
 
-const KNOWN_GAPS: readonly KnownGap[] = [];
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-2 (F-TAP-1 b + F-TAP-4 a): os universos isolados de VENDAS revelam achados que já
+// existiam (Controle Total podia remover despesas/estoque) e só agora ficam visíveis. Nó dono decidido pelo dono, 31/10/2026,
+// questionário, opção "BUILDER-VERTICAIS (Recommended)": (a) `products.deleteConstraints` → productUnits/stockMovements
+// ausentes fecha no PR-3, item 18 (E8: a constraint só é lida se outra tabela referencia a linha).
+const COM_PRODUTO = ['VEN-0+VEN-PROD', 'VEN-PROD', 'VEN-COM+VEN-PROD'] as const;
+const BUILDER_VERTICAIS_RULE: Readonly<Record<string, { universes: readonly string[]; refs: readonly string[] }>> = {
+  COM_PRODUTO: {
+    universes: COM_PRODUTO,
+    refs: [
+      'products:@@PRESET_TABLE_KEY::productUnits',
+      'products:@@PRESET_TABLE_KEY::stockMovements',
+    ],
+  },
+};
+const KNOWN_GAPS: readonly KnownGap[] = Object.values(BUILDER_VERTICAIS_RULE).flatMap(({ universes, refs }) =>
+  knownGapsAcross('rule', universes, refs, 'BUILDER-VERTICAIS', '2026-10-31'),
+);
 
 // --- Coletores ---------------------------------------------------------------------------------------------------
 

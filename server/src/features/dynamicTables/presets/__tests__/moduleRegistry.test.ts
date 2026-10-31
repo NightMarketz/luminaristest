@@ -16,6 +16,7 @@ import {
   MODULE_CATEGORIES,
   MODULE_TABLE_SOURCES,
   assertRegistryInvariants,
+  expandModuleSelectors,
   type ModuleCategory,
   type ModuleDef,
   type ModuleKey,
@@ -45,8 +46,8 @@ describe('registro de módulos — contrato Zod (BRIEF §3)', () => {
     expect(moduleDefSchema.safeParse({ ...MODULE_REGISTRY['CRM-0'], extra: 1 }).success).toBe(false);
   });
 
-  it('CRM-0 é o único fixo; CRM-1/2A/2B/3 dependem só de CRM-0 (F-CRM-3/5 → a; F-SUB-3 → a)', () => {
-    expect(MODULE_KEYS.filter((k) => MODULE_REGISTRY[k].fixed)).toEqual(['CRM-0']);
+  it('CRM-0 é o único fixo do CRM; CRM-1/2A/2B/3 dependem só de CRM-0 (F-CRM-3/5 → a; F-SUB-3 → a)', () => {
+    expect(MODULE_KEYS.filter((k) => MODULE_REGISTRY[k].fixed && MODULE_REGISTRY[k].category === 'crm')).toEqual(['CRM-0']);
     for (const k of ['CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3'] as const) {
       expect(MODULE_REGISTRY[k].dependsOn).toEqual(['CRM-0']);
     }
@@ -190,5 +191,57 @@ describe('registro genérico por categoria (BE-INCR-MODULOS-BASE-SUBMODULOS PR-1
 
   it('a ordem de chaves do registro é a de MODULE_KEYS (as regras puras devolvem na ordem do registro)', () => {
     expect(Object.keys(MODULE_REGISTRY)).toEqual([...MODULE_KEYS]);
+  });
+});
+
+describe('PR-2 — PESSOAS e VENDAS no registro (itens 7, 9, 10, 11a/11b)', () => {
+  it('itens 9–10: o mapa-alvo §1 — base, tabelas, dependências e requiresOneOf', () => {
+    const view = (k: ModuleKey) => {
+      const { category, fixed, tables, dependsOn, requiresOneOf } = MODULE_REGISTRY[k];
+      return { category, fixed, tables, dependsOn, requiresOneOf };
+    };
+    expect(view('PES-0')).toEqual({ category: 'pessoas', fixed: true, tables: ['customers'], dependsOn: [], requiresOneOf: [] });
+    expect(view('PES-FORN')).toEqual({ category: 'pessoas', fixed: false, tables: ['suppliers'], dependsOn: [], requiresOneOf: [] });
+    expect(view('VEN-0')).toEqual({
+      category: 'vendas', fixed: true, tables: ['sales', 'saleItems'], dependsOn: ['PES-0'],
+      requiresOneOf: [['VEN-SERV', 'VEN-PROD', 'VEN-PAC']],
+    });
+    for (const [k, t] of [['VEN-SERV', 'services'], ['VEN-PROD', 'products'], ['VEN-PAC', 'packages'], ['VEN-COM', 'commissions']] as const) {
+      expect(view(k)).toEqual({ category: 'vendas', fixed: false, tables: [t], dependsOn: ['VEN-0'], requiresOneOf: [] });
+    }
+  });
+
+  it('item 9 (F-MS-6 a): os módulos novos nascem com freeSelects vazio e aiDescription em pt', () => {
+    for (const k of ['PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM'] as const) {
+      expect(MODULE_REGISTRY[k].freeSelects).toEqual({});
+      expect(MODULE_REGISTRY[k].aiDescription.length).toBeGreaterThan(20);
+    }
+  });
+
+  it('item 10: VEN-0 não declara trava (lockedBy é do PR-5)', () => {
+    expect(Object.keys(MODULE_REGISTRY['VEN-0'])).not.toContain('lockedBy');
+  });
+
+  it('item 7: VENDAS expande para VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM; PESSOAS para PES-0, PES-FORN', () => {
+    expect(expandModuleSelectors(['VENDAS'])).toEqual(['VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM']);
+    expect(expandModuleSelectors(['PESSOAS'])).toEqual(['PES-0', 'PES-FORN']);
+    expect(moduleSelectorSchema.safeParse('VENDAS').success).toBe(true);
+    expect(moduleKeySchema.safeParse('VENDAS').success).toBe(false);
+    // categorias ainda sem módulos não têm grupo (PR-3/PR-4)
+    for (const g of ['ESTOQUE', 'AGENDA', 'FINANCEIRO', 'GESTAO']) expect(moduleSelectorSchema.safeParse(g).success).toBe(false);
+  });
+
+  it('item 11a: override troca a fonte de uma tabela de módulo; override de tabela fora de módulo → erro', () => {
+    const override = { name: 'Fichas', category: 'business', schema: { fields: [{ name: 'x', label: 'x', type: 'string' }] } };
+    expect(composeModuleTables(['PES-0'], { overrides: { customers: override } }).customers.name).toBe('Fichas');
+    expect(composeModuleTables(['PES-0']).customers.name).toBe('Customers');
+    expect(() => composeModuleTables(['PES-0'], { overrides: { productUnits: override } })).toThrow(/'productUnits' não é tabela de módulo/);
+  });
+
+  it('item 11b: locked marca lockedBy accounting só nas tabelas pedidas, preservando a meta do módulo', () => {
+    const t = composeModuleTables(['PES-0', 'VEN-0', 'VEN-SERV'], { locked: ['sales'] });
+    expect(t.sales.meta).toEqual({ requiresTables: ['saleItems'], lockedBy: 'accounting' });
+    expect(t.saleItems.meta?.lockedBy).toBeUndefined();
+    expect(() => composeModuleTables(['PES-0'], { locked: ['units'] })).toThrow(/'units' não é tabela de módulo/);
   });
 });

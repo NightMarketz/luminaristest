@@ -10,6 +10,15 @@ import { AIInteractions } from '../AIInteractions';
 import { FakeInterviewSessionRepository } from './fakeInterviewSessionRepository';
 import type { OpenAIService } from '../../../../lib/openai/OpenAIService';
 import BeautySalonPreset from '../../../dynamicTables/presets/systems/BeautySalonPreset';
+import { composeSessionTables } from '../sessionComposition';
+import { resolveModuleSelection } from '../../../dynamicTables/presets/modules/moduleSelection';
+
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: customers/sales/… viraram tabelas de módulo — a sessão real nasce de
+// `composeSessionTables` (módulos default ∪ suíte), como no `CustomizationService.createCustomizationSession`.
+const salaoPreset = {
+  key: BeautySalonPreset.key,
+  tables: composeSessionTables(BeautySalonPreset, resolveModuleSelection([], BeautySalonPreset.modules)),
+};
 
 // Sem chave de OpenAI no projeto unit: o cliente nunca é chamado (getAiResponse é stub abaixo).
 jest.mock('../../../../lib/openai/OpenAIService', () => ({ OpenAIService: { getInstance: () => ({}) } }));
@@ -17,12 +26,14 @@ jest.mock('../../../../lib/openai/OpenAIService', () => ({ OpenAIService: { getI
 beforeEach(() => jest.clearAllMocks());
 
 const TRAVADAS_SALAO = ['customers', 'packages', 'sales', 'saleItems', 'products', 'services', 'productUnits'];
+// CRM-0 (fixo) vem dos módulos default do salão, travado por FIXED_MODULE.
+const FUNIL = ['leadPipelines', 'leadStages', 'leads', 'leadActivities'];
 
 describe('item 4 — TableExtractor deriva isCore da trava', () => {
   it('salão: isCore só nas tabelas travadas; lock com o motivo', () => {
-    const tables = new TableExtractor().extractTablesFromRealPreset(BeautySalonPreset);
-    expect(tables).toHaveLength(17);
-    expect(tables.filter((t) => t.isCore).map((t) => t.key).sort()).toEqual([...TRAVADAS_SALAO].sort());
+    const tables = new TableExtractor().extractTablesFromRealPreset(salaoPreset);
+    expect(tables).toHaveLength(22);
+    expect(tables.filter((t) => t.isCore).map((t) => t.key).sort()).toEqual([...TRAVADAS_SALAO, ...FUNIL].sort());
     expect(tables.find((t) => t.key === 'sales')?.lock).toEqual({ reason: 'ACCOUNTING' });
     expect(tables.find((t) => t.key === 'goals')?.lock).toBeNull();
   });
@@ -34,7 +45,10 @@ const USER = 'w2-user';
 describe('item 5 — remoção recalcula as travas da sessão', () => {
   const sm = new StateManager(new FakeInterviewSessionRepository());
   const abrir = () =>
-    sm.createSessionState(USER, 'beautySalon', 'Salão', new TableExtractor().extractTablesFromRealPreset(BeautySalonPreset));
+    sm.createSessionState(
+      USER, 'beautySalon', 'Salão', new TableExtractor().extractTablesFromRealPreset(salaoPreset),
+      resolveModuleSelection([], BeautySalonPreset.modules),
+    );
   const removiveis = async (s: IInterviewSessionHandle) =>
     (await sm.loadSession(s.id, USER)).state.tables.filter((t) => !t.isCore).map((t) => t.key);
 

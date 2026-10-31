@@ -6,7 +6,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -3003,7 +3010,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -4961,12 +4975,44 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Item Type",
+                  "name": "type",
+                  "options": [
+                    "Service",
+                    "Product",
+                    "Package"
+                  ],
+                  "required": true,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Product",
+                  "name": "productId",
+                  "relation": {
+                    "targetTable": "@@id:products"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Service",
                   "name": "serviceId",
                   "relation": {
                     "targetTable": "@@id:services"
                   },
-                  "required": true,
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Package",
+                  "name": "packageId",
+                  "relation": {
+                    "targetTable": "@@id:packages"
+                  },
+                  "required": false,
                   "searchable": false,
                   "type": "relation"
                 },
@@ -4975,6 +5021,18 @@
                   "name": "description",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": 1,
+                  "label": "Quantity",
+                  "name": "quantity",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "minValue": 1
+                  }
                 },
                 {
                   "label": "Unit Price",
@@ -5956,7 +6014,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -7777,12 +7842,44 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Item Type",
+                  "name": "type",
+                  "options": [
+                    "Service",
+                    "Product",
+                    "Package"
+                  ],
+                  "required": true,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Product",
+                  "name": "productId",
+                  "relation": {
+                    "targetTable": "@@id:products"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Service",
                   "name": "serviceId",
                   "relation": {
                     "targetTable": "@@id:services"
                   },
-                  "required": true,
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Package",
+                  "name": "packageId",
+                  "relation": {
+                    "targetTable": "@@id:packages"
+                  },
+                  "required": false,
                   "searchable": false,
                   "type": "relation"
                 },
@@ -7791,6 +7888,18 @@
                   "name": "description",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": 1,
+                  "label": "Quantity",
+                  "name": "quantity",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "minValue": 1
+                  }
                 },
                 {
                   "label": "Unit Price",
@@ -8761,7 +8870,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -10614,12 +10730,44 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Item Type",
+                  "name": "type",
+                  "options": [
+                    "Service",
+                    "Product",
+                    "Package"
+                  ],
+                  "required": true,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Product",
+                  "name": "productId",
+                  "relation": {
+                    "targetTable": "@@id:products"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Service",
                   "name": "serviceId",
                   "relation": {
                     "targetTable": "@@id:services"
                   },
-                  "required": true,
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Package",
+                  "name": "packageId",
+                  "relation": {
+                    "targetTable": "@@id:packages"
+                  },
+                  "required": false,
                   "searchable": false,
                   "type": "relation"
                 },
@@ -10628,6 +10776,18 @@
                   "name": "description",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": 1,
+                  "label": "Quantity",
+                  "name": "quantity",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "minValue": 1
+                  }
                 },
                 {
                   "label": "Unit Price",
@@ -11609,7 +11769,13 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC"
             ]
           },
           "business": [
@@ -13454,12 +13620,44 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Item Type",
+                  "name": "type",
+                  "options": [
+                    "Service",
+                    "Product",
+                    "Package"
+                  ],
+                  "required": true,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Product",
+                  "name": "productId",
+                  "relation": {
+                    "targetTable": "@@id:products"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Service",
                   "name": "serviceId",
                   "relation": {
                     "targetTable": "@@id:services"
                   },
-                  "required": true,
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Package",
+                  "name": "packageId",
+                  "relation": {
+                    "targetTable": "@@id:packages"
+                  },
+                  "required": false,
                   "searchable": false,
                   "type": "relation"
                 },
@@ -13468,6 +13666,18 @@
                   "name": "description",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": 1,
+                  "label": "Quantity",
+                  "name": "quantity",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "minValue": 1
+                  }
                 },
                 {
                   "label": "Unit Price",
@@ -14525,9 +14735,9 @@
         "by": [
           "leadPipelines",
           "leads",
+          "sales",
           "productUnits",
           "appointments",
-          "sales",
           "goals",
           "campaigns",
           "expenses",
@@ -14546,7 +14756,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -17551,7 +17768,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -19517,12 +19741,44 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Item Type",
+                  "name": "type",
+                  "options": [
+                    "Service",
+                    "Product",
+                    "Package"
+                  ],
+                  "required": true,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Product",
+                  "name": "productId",
+                  "relation": {
+                    "targetTable": "@@id:products"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Service",
                   "name": "serviceId",
                   "relation": {
                     "targetTable": "@@id:services"
                   },
-                  "required": true,
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Package",
+                  "name": "packageId",
+                  "relation": {
+                    "targetTable": "@@id:packages"
+                  },
+                  "required": false,
                   "searchable": false,
                   "type": "relation"
                 },
@@ -19531,6 +19787,18 @@
                   "name": "description",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": 1,
+                  "label": "Quantity",
+                  "name": "quantity",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "minValue": 1
+                  }
                 },
                 {
                   "label": "Unit Price",
@@ -20512,7 +20780,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -22341,12 +22616,44 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Item Type",
+                  "name": "type",
+                  "options": [
+                    "Service",
+                    "Product",
+                    "Package"
+                  ],
+                  "required": true,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Product",
+                  "name": "productId",
+                  "relation": {
+                    "targetTable": "@@id:products"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Service",
                   "name": "serviceId",
                   "relation": {
                     "targetTable": "@@id:services"
                   },
-                  "required": true,
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Package",
+                  "name": "packageId",
+                  "relation": {
+                    "targetTable": "@@id:packages"
+                  },
+                  "required": false,
                   "searchable": false,
                   "type": "relation"
                 },
@@ -22355,6 +22662,18 @@
                   "name": "description",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": 1,
+                  "label": "Quantity",
+                  "name": "quantity",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "minValue": 1
+                  }
                 },
                 {
                   "label": "Unit Price",
@@ -23325,7 +23644,14 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC",
+              "VEN-COM"
             ]
           },
           "business": [
@@ -25186,12 +25512,44 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Item Type",
+                  "name": "type",
+                  "options": [
+                    "Service",
+                    "Product",
+                    "Package"
+                  ],
+                  "required": true,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Product",
+                  "name": "productId",
+                  "relation": {
+                    "targetTable": "@@id:products"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Service",
                   "name": "serviceId",
                   "relation": {
                     "targetTable": "@@id:services"
                   },
-                  "required": true,
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Package",
+                  "name": "packageId",
+                  "relation": {
+                    "targetTable": "@@id:packages"
+                  },
+                  "required": false,
                   "searchable": false,
                   "type": "relation"
                 },
@@ -25200,6 +25558,18 @@
                   "name": "description",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": 1,
+                  "label": "Quantity",
+                  "name": "quantity",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "minValue": 1
+                  }
                 },
                 {
                   "label": "Unit Price",
@@ -26181,7 +26551,13 @@
           "modules": {
             "installed": [
               "CRM-0",
-              "CRM-1"
+              "CRM-1",
+              "PES-0",
+              "PES-FORN",
+              "VEN-0",
+              "VEN-SERV",
+              "VEN-PROD",
+              "VEN-PAC"
             ]
           },
           "business": [
@@ -28034,12 +28410,44 @@
                   "type": "relation"
                 },
                 {
+                  "label": "Item Type",
+                  "name": "type",
+                  "options": [
+                    "Service",
+                    "Product",
+                    "Package"
+                  ],
+                  "required": true,
+                  "searchable": false,
+                  "type": "select"
+                },
+                {
+                  "label": "Product",
+                  "name": "productId",
+                  "relation": {
+                    "targetTable": "@@id:products"
+                  },
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
                   "label": "Service",
                   "name": "serviceId",
                   "relation": {
                     "targetTable": "@@id:services"
                   },
-                  "required": true,
+                  "required": false,
+                  "searchable": false,
+                  "type": "relation"
+                },
+                {
+                  "label": "Package",
+                  "name": "packageId",
+                  "relation": {
+                    "targetTable": "@@id:packages"
+                  },
+                  "required": false,
                   "searchable": false,
                   "type": "relation"
                 },
@@ -28048,6 +28456,18 @@
                   "name": "description",
                   "required": false,
                   "type": "textarea"
+                },
+                {
+                  "defaultValue": 1,
+                  "label": "Quantity",
+                  "name": "quantity",
+                  "numberFormat": "integer",
+                  "required": true,
+                  "searchable": false,
+                  "type": "number",
+                  "validation": {
+                    "minValue": 1
+                  }
                 },
                 {
                   "label": "Unit Price",
@@ -29105,9 +29525,9 @@
         "by": [
           "leadPipelines",
           "leads",
+          "sales",
           "productUnits",
           "appointments",
-          "sales",
           "goals",
           "campaigns",
           "expenses",

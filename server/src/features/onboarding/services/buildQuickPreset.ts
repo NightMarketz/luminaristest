@@ -1,7 +1,7 @@
 import { NotFoundError, ValidationError } from '../../../lib/errors';
 import { CoreSystemPreset, tablePresetSuites } from '../../dynamicTables/presets';
 import type { PresetSuite, PresetTableDefinition } from '../../dynamicTables/presets';
-import { composeModuleTables, expandModuleSelectors, type ModuleSelector } from '../../dynamicTables/presets/modules/registry';
+import { composeModuleTables, expandModuleSelectors, suiteModuleOptions, type ModuleSelector } from '../../dynamicTables/presets/modules/registry';
 import { applySelectOverrides, resolveModuleSelection } from '../../dynamicTables/presets/modules/moduleSelection';
 import { validateConfigurations } from '../../analytics/services/AnalyticsValidator';
 import type { ITableSchema } from '../../dynamicTables/models/DynamicTable.model';
@@ -51,7 +51,7 @@ export function buildQuickPreset(
   const mergedPreset = {
     tables: {
       ...CoreSystemPreset.tables,
-      ...composeModuleTables(installedModules),
+      ...composeModuleTables(installedModules, suiteModuleOptions(selectedPreset)),
       ...(selectedPreset.tables || {}),
     },
   };

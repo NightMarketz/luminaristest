@@ -22120,7 +22120,16 @@
                             "CRM-2A",
                             "CRM-2B",
                             "CRM-3",
-                            "CRM-2"
+                            "PES-0",
+                            "PES-FORN",
+                            "VEN-0",
+                            "VEN-SERV",
+                            "VEN-PROD",
+                            "VEN-PAC",
+                            "VEN-COM",
+                            "CRM-2",
+                            "PESSOAS",
+                            "VENDAS"
                           ]
                         }
                       },
@@ -22270,7 +22279,16 @@
                             "CRM-2A",
                             "CRM-2B",
                             "CRM-3",
-                            "CRM-2"
+                            "PES-0",
+                            "PES-FORN",
+                            "VEN-0",
+                            "VEN-SERV",
+                            "VEN-PROD",
+                            "VEN-PAC",
+                            "VEN-COM",
+                            "CRM-2",
+                            "PESSOAS",
+                            "VENDAS"
                           ]
                         }
                       },
@@ -22363,7 +22381,16 @@
                       "CRM-2A",
                       "CRM-2B",
                       "CRM-3",
-                      "CRM-2"
+                      "PES-0",
+                      "PES-FORN",
+                      "VEN-0",
+                      "VEN-SERV",
+                      "VEN-PROD",
+                      "VEN-PAC",
+                      "VEN-COM",
+                      "CRM-2",
+                      "PESSOAS",
+                      "VENDAS"
                     ]
                   }
                 }
@@ -22452,7 +22479,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Preset detail - the raw suite plus moduleViews (BE-INCR-CRM-SUBMODULES item 11): the registry modules the suite composes, each { key, group?, name, fixed, tables, dependsOn }"
+            "description": "Preset detail - the raw suite plus moduleViews (BE-INCR-CRM-SUBMODULES item 11): the registry modules the suite composes, each { key, category, group?, name, fixed, tables, dependsOn }"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"
@@ -22661,7 +22688,16 @@
                         "CRM-2A",
                         "CRM-2B",
                         "CRM-3",
-                        "CRM-2"
+                        "PES-0",
+                        "PES-FORN",
+                        "VEN-0",
+                        "VEN-SERV",
+                        "VEN-PROD",
+                        "VEN-PAC",
+                        "VEN-COM",
+                        "CRM-2",
+                        "PESSOAS",
+                        "VENDAS"
                       ]
                     }
                   }
@@ -22777,7 +22813,14 @@
                               "CRM-1",
                               "CRM-2A",
                               "CRM-2B",
-                              "CRM-3"
+                              "CRM-3",
+                              "PES-0",
+                              "PES-FORN",
+                              "VEN-0",
+                              "VEN-SERV",
+                              "VEN-PROD",
+                              "VEN-PAC",
+                              "VEN-COM"
                             ]
                           },
                           "name": {
@@ -23313,7 +23356,16 @@
                         "CRM-2A",
                         "CRM-2B",
                         "CRM-3",
-                        "CRM-2"
+                        "PES-0",
+                        "PES-FORN",
+                        "VEN-0",
+                        "VEN-SERV",
+                        "VEN-PROD",
+                        "VEN-PAC",
+                        "VEN-COM",
+                        "CRM-2",
+                        "PESSOAS",
+                        "VENDAS"
                       ]
                     }
                   }

@@ -11,6 +11,15 @@ import { InterviewService } from '../../InterviewService/InterviewService';
 import { InterviewSessionConflictError, InterviewSessionNotFoundError } from '../../models/InterviewSession.model';
 import { FakeInterviewSessionRepository } from './fakeInterviewSessionRepository';
 import BeautySalonPreset from '../../../dynamicTables/presets/systems/BeautySalonPreset';
+import { composeSessionTables } from '../sessionComposition';
+import { resolveModuleSelection } from '../../../dynamicTables/presets/modules/moduleSelection';
+
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: customers/sales/… viraram tabelas de módulo — a sessão real nasce de
+// `composeSessionTables` (módulos default ∪ suíte), como no `CustomizationService.createCustomizationSession`.
+const salaoPreset = {
+  key: BeautySalonPreset.key,
+  tables: composeSessionTables(BeautySalonPreset, resolveModuleSelection([], BeautySalonPreset.modules)),
+};
 import type { OpenAIService } from '../../../../lib/openai/OpenAIService';
 
 // Sem chave de OpenAI no projeto unit: o cliente nunca é chamado (a IA é stub abaixo).
@@ -21,7 +30,7 @@ afterEach(() => jest.restoreAllMocks());
 
 const USER = 'w4-user';
 const T0 = new Date('2026-10-16T12:00:00.000Z');
-const salao = () => new TableExtractor().extractTablesFromRealPreset(BeautySalonPreset);
+const salao = () => new TableExtractor().extractTablesFromRealPreset(salaoPreset);
 
 /** Relógio controlável: `clock.at(ms)` move o "agora" a partir de T0. */
 function setup() {

@@ -1,11 +1,14 @@
 import BeautySalonPreset from '../systems/BeautySalonPreset';
+import { composeSuiteDefaultTables } from '../modules/moduleSelection';
 import { packageCatalogModule } from '../modules/finance/PackageCatalogModule';
 import { saleItemsMixedModule } from '../modules/finance/SalesItemsMixed';
 import { itemType } from '../fields/select/SelectPresets';
 
 describe('P3 — Package catalog preset wiring', () => {
   it('registers a `packages` table in the BeautySalon preset', () => {
-    expect(BeautySalonPreset.tables.packages).toBeDefined();
+    // PR-2: `packages` é a tabela de VEN-PAC, que o salão liga por padrão.
+    expect(BeautySalonPreset.modules).toContain('VEN-PAC');
+    expect(composeSuiteDefaultTables(BeautySalonPreset).packages).toBeDefined();
   });
 
   it('PackageCatalogModule is a minimal monetary catalog (no stock / no components)', () => {

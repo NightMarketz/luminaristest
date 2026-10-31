@@ -64,13 +64,22 @@
                   "CRM-1",
                   "CRM-2A",
                   "CRM-2B",
-                  "CRM-3"
+                  "CRM-3",
+                  "PES-0",
+                  "PES-FORN",
+                  "VEN-0",
+                  "VEN-SERV",
+                  "VEN-PROD",
+                  "VEN-PAC",
+                  "VEN-COM"
                 ]
               },
               {
                 "type": "string",
                 "enum": [
-                  "CRM-2"
+                  "CRM-2",
+                  "PESSOAS",
+                  "VENDAS"
                 ]
               }
             ]
@@ -386,13 +395,22 @@
                   "CRM-1",
                   "CRM-2A",
                   "CRM-2B",
-                  "CRM-3"
+                  "CRM-3",
+                  "PES-0",
+                  "PES-FORN",
+                  "VEN-0",
+                  "VEN-SERV",
+                  "VEN-PROD",
+                  "VEN-PAC",
+                  "VEN-COM"
                 ]
               },
               {
                 "type": "string",
                 "enum": [
-                  "CRM-2"
+                  "CRM-2",
+                  "PESSOAS",
+                  "VENDAS"
                 ]
               }
             ]

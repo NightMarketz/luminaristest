@@ -82,6 +82,16 @@ export type PresetSuite = {
    * `modules` do body do create). Salão e clínica: CRM-0 + CRM-1 (F-CRM-2 → a, F-I8-COMP3-a); crmModule: CRM-0..3.
    */
   modules?: ModuleKey[];
+  /**
+   * BE-INCR-MODULOS-BASE-SUBMODULOS item 11a: troca a fonte de schema de uma tabela de módulo nesta suíte
+   * (internalName → módulo-fonte; ex.: a clínica usa a ficha própria em `customers`). Só tabela de módulo do registro.
+   */
+  moduleOverrides?: Readonly<Record<string, unknown>>;
+  /**
+   * Item 11b: tabelas de módulo que a contabilidade do setor lê pelo nome (`meta.lockedBy: 'accounting'`). Vale até o
+   * PR-5 (item 28) levar a trava para o módulo.
+   */
+  lockedModuleTables?: readonly string[];
 };
 
 /**

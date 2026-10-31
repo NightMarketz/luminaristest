@@ -35,10 +35,12 @@ describe('crmModule = composição dos módulos CRM-0..3 (comportamento 4)', () 
     expect(CrmModulePreset.tables).toEqual(BEFORE);
   });
 
-  it('BE-INCR-CRM-SUBMODULES item 2: crmModule compõe as 5 chaves atômicas; salão e clínica seguem CRM-0 + CRM-1', () => {
+  it('BE-INCR-CRM-SUBMODULES item 2: crmModule compõe as 5 chaves atômicas; salão e clínica seguem CRM-0 + CRM-1 no CRM', () => {
     expect(CrmModulePreset.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3']);
-    expect(tablePresetSuites.services.beautySalon.modules).toEqual(['CRM-0', 'CRM-1']);
-    expect(tablePresetSuites.services.aestheticClinic.modules).toEqual(['CRM-0', 'CRM-1']);
+    // BE-INCR-MODULOS-BASE-SUBMODULOS item 11: as suítes passam a declarar também PESSOAS e VENDAS.
+    const pessoasVendas = ['PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM'];
+    expect(tablePresetSuites.services.beautySalon.modules).toEqual(['CRM-0', 'CRM-1', ...pessoasVendas]);
+    expect(tablePresetSuites.services.aestheticClinic.modules).toEqual(['CRM-0', 'CRM-1', ...pessoasVendas]);
   });
 
   it('identidade da suíte e registro no catálogo inalterados', () => {

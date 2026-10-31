@@ -1,7 +1,14 @@
 import { ValidationError } from '../../../../lib/errors';
 import type { ISchemaField } from '../../models/DynamicTable.model';
-import type { PresetTableDefinition } from '..';
-import { MODULE_REGISTRY, moduleOfTable, type ModuleKey, type ModuleRegistry } from './registry';
+import type { PresetSuite, PresetTableDefinition } from '..';
+import {
+  composeModuleTables,
+  MODULE_REGISTRY,
+  moduleOfTable,
+  suiteModuleOptions,
+  type ModuleKey,
+  type ModuleRegistry,
+} from './registry';
 
 /**
  * BE-INCR-CRM-MODULE-COMPOSITION (I8) — regras puras de seleção de módulos no onboarding.
@@ -54,6 +61,16 @@ export function resolveModuleSelection(
   }
   assertRequiresOneOf(selected, registry);
   return (Object.keys(registry) as ModuleKey[]).filter((k) => selected.has(k));
+}
+
+/**
+ * BE-INCR-MODULOS-BASE-SUBMODULOS item 11: as tabelas que a suíte instala por padrão (Core fora) — módulos default
+ * fechados pelas dependências, com a fonte/trava da suíte, e as tabelas soltas da suíte por cima (precedência do create).
+ */
+export function composeSuiteDefaultTables(
+  suite: Pick<PresetSuite, 'tables' | 'modules' | 'moduleOverrides' | 'lockedModuleTables'>,
+): Record<string, PresetTableDefinition> {
+  return { ...composeModuleTables(resolveModuleSelection([], suite.modules ?? []), suiteModuleOptions(suite)), ...suite.tables };
 }
 
 /**

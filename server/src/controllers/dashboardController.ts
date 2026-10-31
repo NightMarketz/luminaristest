@@ -32,7 +32,7 @@ import { resolveBindingScope } from '@/features/accountingBinding/scope/BindingS
 import { reloadAccountingMappersSerialized } from '@/features/accountingBinding/runtime/mapperReload';
 import { OnboardingAccountingResultSchema } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
 import type { ActivateDefaultBindingResult, OnboardingAccountingResult } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
-import { composeModuleTables, expandModuleSelectors, moduleOfTable, type ModuleSelector } from '@/features/dynamicTables/presets/modules/registry';
+import { composeModuleTables, expandModuleSelectors, moduleOfTable, suiteModuleOptions, type ModuleSelector } from '@/features/dynamicTables/presets/modules/registry';
 import { applyModuleRemovals, applySelectOverrides, assertAddedFieldsRespectModules, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
 import { assertRemovalsAllowed } from '@/features/dynamicTables/presets/removability';
 import { CoreSystemPreset, PresetTableDefinition } from '@/features/dynamicTables/presets';
@@ -202,15 +202,18 @@ async function handleCustomCreation(
     const installedModules = resolveModuleSelection(expandModuleSelectors(modules), originalPreset.modules ?? []);
     const finalTablesConfig: Record<string, PresetTableDefinition> = {
       ...CoreSystemPreset.tables,
-      ...composeModuleTables(installedModules),
+      // BE-INCR-MODULOS-BASE-SUBMODULOS itens 11a/11b: fonte e trava das tabelas de módulo declaradas pela suíte.
+      ...composeModuleTables(installedModules, suiteModuleOptions(originalPreset)),
       ...originalPreset.tables,
     };
 
-    const keptModules = applyModuleRemovals(installedModules, removedTables);
     // W2 item 7 (F-W2-3 → a): a mesma trava da Entrevista com IA, sobre o conjunto final (antes de apagar e antes do
-    // `finalPayload`, que descarta `meta`). Módulos já foram decididos acima; Core em `removedTables` segue ignorado.
+    // `finalPayload`, que descarta `meta`). Core em `removedTables` segue ignorado.
+    // BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: roda ANTES da regra de módulos, para que a trava de tabela de PESSOAS/VENDAS
+    // (contábil, relação obrigatória) responda o mesmo 400 `TABLE_LOCKED` de quando elas eram tabelas da suíte.
     const coreTableKeys = Object.keys(CoreSystemPreset.tables);
     assertRemovalsAllowed(finalTablesConfig, removedTables.filter((k) => !coreTableKeys.includes(k)));
+    const keptModules = applyModuleRemovals(installedModules, removedTables);
 
     for (const tableKey of removedTables) {
       if (!coreTableKeys.includes(tableKey)) {
@@ -283,6 +286,10 @@ async function handleCustomCreation(
         name: tableData.name || internalName.replace(/_/g, ' '),
         category: tableData.category,
         schema: tableData.schema,
+        // BE-INCR-MODULOS-BASE-SUBMODULOS PR-2 (dono, chat, 31/10/2026: "Corrigir aqui"): `meta` segue até o instalador,
+        // como no modo Rápido — sem ele `installPresetAsSystem` não vê os catálogos e o Controle Total instalava
+        // `saleItems` só-serviços (salão/clínica sem produto nem pacote no item de venda).
+        ...(tableData.meta ? { meta: tableData.meta } : {}),
         internalName: internalName,
       };
     }

@@ -24,7 +24,9 @@ beforeEach(() => jest.clearAllMocks());
 afterEach(() => jest.restoreAllMocks());
 
 const USER = 'w1-user';
-const SALAO_MODULOS: ModuleKey[] = ['CRM-0', 'CRM-1'];
+// BE-INCR-MODULOS-BASE-SUBMODULOS item 11: o salão declara também PESSOAS e VENDAS.
+const PV: ModuleKey[] = ['PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM'];
+const SALAO_MODULOS: ModuleKey[] = ['CRM-0', 'CRM-1', ...PV];
 
 const setup = () => {
   const sm = new StateManager(new FakeInterviewSessionRepository());
@@ -61,7 +63,7 @@ describe('F-W1-6 (a) — a sessão nasce da suíte ∪ módulos escolhidos', () 
   it('modules do front entram fechados pelas dependências; tabela de módulo fixo fica travada', async () => {
     const { svc } = setup();
     const s = (await svc.createCustomizationSession('beautySalon', USER, ['CRM-3']))!;
-    expect(s.state.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-3']);
+    expect(s.state.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-3', ...PV]);
     expect(s.state.tables.find((t) => t.key === 'crmOpportunities')).toMatchObject({ isSelected: true, isCore: false });
     expect(s.state.tables.find((t) => t.key === 'leads')?.lock).toEqual({ reason: 'FIXED_MODULE', by: ['CRM-0'] });
   });
@@ -150,14 +152,14 @@ describe('item 3 / F-W1-5 (a) — remoção nunca parcial de módulo', () => {
     const s = (await svc.createCustomizationSession('beautySalon', USER, ['CRM-3']))!;
     const r = await remover(svc, s.id, 'leadProposals');
     expect(r.response).toContain('o módulo saiu junto');
-    expect(r.customizationState?.modules).toEqual(['CRM-0', 'CRM-3']);
+    expect(r.customizationState?.modules).toEqual(['CRM-0', 'CRM-3', ...PV]);
 
     const st = (await sm.loadSession(s.id, USER)).state;
     const draft = toCustomCreation(st, BeautySalonPreset);
     expect(draft.removedTables).toEqual(['leadProposals']);
     // O create resolve `modules` ∪ padrão da suíte e aplica as remoções: módulo inteiro, sem MODULE_PARTIAL.
     const instalados = resolveModuleSelection(st.modules!, BeautySalonPreset.modules);
-    expect(applyModuleRemovals(instalados, draft.removedTables)).toEqual(['CRM-0', 'CRM-3']);
+    expect(applyModuleRemovals(instalados, draft.removedTables)).toEqual(['CRM-0', 'CRM-3', ...PV]);
   });
 
   it('tabela de módulo fixo → recusada pela trava (FIXED_MODULE)', async () => {
@@ -202,11 +204,11 @@ describe('F-W1-6 (a) + sincronização — syncModules', () => {
     await sm.saveSession(h);
 
     const com = await svc.syncModules(s.id, USER, ['CRM-0', 'CRM-1', 'CRM-3']);
-    expect(com.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-3']);
+    expect(com.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-3', ...PV]);
     expect(com.tables.filter((t) => t.key === 'crmOpportunities')).toHaveLength(1);
 
     const sem = await svc.syncModules(s.id, USER, ['CRM-0', 'CRM-1']);
-    expect(sem.modules).toEqual(['CRM-0', 'CRM-1']);
+    expect(sem.modules).toEqual(['CRM-0', 'CRM-1', ...PV]);
     expect(sem.tables.some((t) => t.key === 'crmOpportunities')).toBe(false);
     expect(sem.tables.find((t) => t.key === 'goals')?.fields?.some((f) => f.name === 'nota')).toBe(true);
   });
@@ -218,7 +220,7 @@ describe('F-W1-6 (a) + sincronização — syncModules', () => {
 
     await remover(svc, s.id, 'leadProposals');
     const depois = await svc.syncModules(s.id, USER, ['CRM-0', 'CRM-3']);
-    expect(depois.modules).toEqual(['CRM-0', 'CRM-3']);
+    expect(depois.modules).toEqual(['CRM-0', 'CRM-3', ...PV]);
     expect(depois.tables.some((t) => t.key === 'leadProposals')).toBe(false);
   });
 

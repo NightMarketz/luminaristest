@@ -1,6 +1,6 @@
 import type { ISchemaField } from '../../dynamicTables/models/DynamicTable.model';
 import { CoreSystemPreset, type PresetSuite, type PresetTableDefinition } from '../../dynamicTables/presets';
-import { composeModuleTables, type ModuleKey } from '../../dynamicTables/presets/modules/registry';
+import { composeModuleTables, suiteModuleOptions, type ModuleKey } from '../../dynamicTables/presets/modules/registry';
 import { resolveModuleSelection } from '../../dynamicTables/presets/modules/moduleSelection';
 import type { CustomCreationDraft } from '../dtos/CustomCreationDraft.dto';
 import type { ICustomizationState } from '../models/InterviewTypes';
@@ -11,17 +11,18 @@ import type { ICustomizationState } from '../models/InterviewTypes';
  * a autoridade e revalida tudo.
  */
 
-type SessionPreset = Pick<PresetSuite, 'tables' | 'modules'>;
+type SessionPreset = Pick<PresetSuite, 'tables' | 'modules' | 'moduleOverrides' | 'lockedModuleTables'>;
 
 /**
  * F-W1-6 (a): as tabelas que a sessão customiza — as dos módulos instalados e as da suíte, na mesma precedência do
  * create (a suíte sobrepõe o módulo de mesma chave). O Core fica fora: a sessão nunca o mostrou.
+ * BE-INCR-MODULOS-BASE-SUBMODULOS itens 11a/11b: com a fonte e a trava que a suíte declara para as tabelas de módulo.
  */
 export function composeSessionTables(
   preset: SessionPreset,
   modules: readonly ModuleKey[],
 ): Record<string, PresetTableDefinition> {
-  return { ...composeModuleTables(modules), ...preset.tables };
+  return { ...composeModuleTables(modules, suiteModuleOptions(preset)), ...preset.tables };
 }
 
 /**
