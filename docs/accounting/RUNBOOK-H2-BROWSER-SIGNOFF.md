@@ -88,6 +88,49 @@ Pré-condições (verificar antes de começar):
    Resultado esperado: telas renderizam, console sem erro.
    EVIDÊNCIA: [screenshots das abas-chave + print do console limpo ao final]
 
+   > **Execução 2026-10-29.** Preenchida pelo agente sob comando do dono no chat (29/10: *"Autorizo executar os runbooks"*
+   > e *"Segue pro H2"*). **P0:** é a re-semeadura do H1 e não foi repetida. A EVIDÊNCIA está no bloco "Tentativa 4 —
+   > 2026-10-29" do P0 do [RUNBOOK-H1-PVA](RUNBOOK-H1-PVA.md) (PR #981): backup `dev-20261029-142253-pre-h1-t4.db`, 25
+   > migrações, seed e binding idempotentes, build de produção de `455c1a45` (front `127.0.0.1:3100`, back `:3101`, `dev.db`
+   > real). **Passo 1:** Puppeteer headless, login `seed-presumido`, unidade `seed-unit-presumido`, cada aba clicada com
+   > 2,5 s de espera. Prints das 13 abas-chave em [`runbook-evidence/H2-2026-10-29/`](runbook-evidence/H2-2026-10-29/).
+   > Saída literal:
+   >
+   > ```text
+   > login seed-presumido · unidade cmuw4yqxg001jcii0iz2yb9rw · 29 abas
+   >  1. Balancete · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   >  2. Períodos · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   >  3. Lançamentos · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   >  4. Aprovações · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-04-aprovacoes.png
+   >  5. Contas a Pagar · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-05-contas-a-pagar.png
+   >  6. Contas a Receber · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-06-contas-a-receber.png
+   >  7. Aging · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   >  8. Fluxo de Caixa Projetado · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   >  9. Contrapartes · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-09-contrapartes.png
+   > 10. Razão · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 11. Plano de Contas · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 12. BP · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-12-bp.png
+   > 13. DRE · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-13-dre.png
+   > 14. DFC · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-14-dfc.png
+   > 15. Comparativo · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-15-comparativo.png
+   > 16. Livro Diário · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-16-livro-diario.png
+   > 17. Importação/Exportação · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-17-importacao-exportacao.png
+   > 18. Conciliação · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-18-conciliacao.png
+   > 19. NF-e · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 20. Compliance · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-20-compliance.png
+   > 21. Dimensões · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum · passo1-21-dimensoes.png
+   > 22. Imobilizado · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 23. Perfil fiscal · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 24. Parâmetros legais · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 25. Política contábil · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 26. Apuração · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 27. Pendências · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 28. Cobrança · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > 29. Kit de setor · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
+   > ```
+   >
+   > DESFECHO: [dono]   ASSINATURA: [dono]
+
 2. Na aba **Conciliação**, importar o extrato **clicando** no controle de upload e escolhendo o
    `.ofx` do disco (não colar, não fetch).
    Resultado esperado: extrato listado com linhas; auto-match roda.
@@ -97,14 +140,95 @@ Pré-condições (verificar antes de começar):
    Resultado esperado: idem.
    EVIDÊNCIA: [screenshot]
 
+   > **Execução 2026-10-29 — passos 2 e 3.** O **dono** fez os dois uploads por clique, no painel do navegador embutido
+   > (build de produção, `127.0.0.1:3100`, login `seed-presumido`). O agente preparou a tela (Conciliação → Extratos, conta
+   > `1.1.1.01 — Banco`, formato "Detectar pelo conteúdo", período 27/10/2026–28/10/2026, referência `H2 OFX`), gerou os
+   > arquivos de teste no formato dos fixtures de `ofx.test.ts`/`cnab.test.ts`, clicou em "Auto-conciliar" e conferiu no
+   > `dev.db`. Print: [`passo2-3-conciliacao-extratos.jpg`](runbook-evidence/H2-2026-10-29/passo2-3-conciliacao-extratos.jpg).
+   > Saída literal:
+   >
+   > ```text
+   > arquivos (C:\Users\smurf\Downloads\H2-BROWSER\)
+   >   extrato-teste.ofx · 629 bytes · sha256 9ebfafec5ac21699e631c5fe5b36facc98f8594d1be265695a4f032fb61c7111
+   >   extrato-teste-cnab240.ret · 726 bytes · sha256 ade0f16f228cdaf1747325772601a47eb47881a714abec6ef57959b4eb9c88b1
+   > tela, depois do 2º upload:  "Extrato importado: 2 linha(s)."
+   > tela, Auto-conciliar (CNAB): "Auto-conciliação: 0 conciliada(s), 0 ambígua(s), 2 sem candidato (de 2)."
+   > tela, Auto-conciliar (OFX):  "Auto-conciliação: 0 conciliada(s), 0 ambígua(s), 3 sem candidato (de 3)."
+   > console do painel (só erros): No console logs.
+   > dev.db (bank_statements / bank_statement_lines, unidade cmuw4yqxg001jcii0iz2yb9rw)
+   > extrato cmvtx4jbo000fci9czmbowfx0 | ref H2 OFX | conta 1.1.1.01 | periodo 2026-10-27..2026-10-28 | sha256 9ebfafec5ac21699e631c5fe5b36facc98f8594d1be265695a4f032fb61c7111 | criado 2026-10-29T19:10:20.628Z | anexo -
+   >    1 | 2026-10-27T00:00:00.000Z | 35000 | PIX RECEBIDO CLIENTE TESTE | H2-OFX-1 | UNMATCHED
+   >    2 | 2026-10-27T00:00:00.000Z | -12050 | TARIFA BANCARIA | H2-OFX-2 | UNMATCHED
+   >    3 | 2026-10-28T00:00:00.000Z | 8990 | DEPOSITO | H2-OFX-3 | UNMATCHED
+   > extrato cmvtx4li6000kci9cw27p8bn8 | ref H2 OFX | conta 1.1.1.01 | periodo 2026-10-27..2026-10-28 | sha256 ade0f16f228cdaf1747325772601a47eb47881a714abec6ef57959b4eb9c88b1 | criado 2026-10-29T19:10:23.454Z | anexo -
+   >    1 | 2026-10-27T00:00:00.000Z | 45000 | TED RECEBIDA TESTE | H2-CNAB-1 | UNMATCHED
+   >    2 | 2026-10-28T00:00:00.000Z | -7890 | PAGTO FORNECEDOR TESTE | H2-CNAB-2 | UNMATCHED
+   > ```
+   >
+   > Leitura do agente: o sha256 de cada extrato é igual ao do arquivo, e as datas e os valores são os do arquivo (o dia
+   > escrito, sem recuo UTC). Os desvios do roteiro ficam escritos aqui. (1) O CNAB entrou com a referência `H2 OFX`, porque o
+   > campo não foi trocado entre os dois uploads. (2) Os dois uploads ficaram a 2,8 s um do outro, e o agente não viu o
+   > diálogo de arquivo; o "por clique" é a palavra do dono ("upei os 2"), não um artefato. (3) Nenhuma linha casou: são
+   > linhas sintéticas, sem lançamento correspondente.
+   >
+   > DESFECHO: [dono]   ASSINATURA: [dono]
+
 4. Em **Recibos**, gerar o PDF de um recibo (caminho puppeteer) e ABRIR o arquivo baixado.
    Resultado esperado: PDF válido, com os dados do recibo.
    EVIDÊNCIA: [o PDF anexado ou screenshot dele aberto]
+
+   > **Execução 2026-10-29.** Feita pelo agente sob comando do dono. O recibo fica na aba **Lançamentos** (botão "Recibo
+   > (PDF)" de cada linha; não existe aba "Recibos"). Pela tela, no painel, o clique no lançamento `2026/0170` fez o GET
+   > responder 200, sem erro no console. O destino do download do painel não ficou visível ao agente, então o mesmo endpoint
+   > foi chamado pela API para salvar e abrir o arquivo (`pypdf`). Saída literal:
+   >
+   > ```text
+   > painel: GET http://127.0.0.1:3101/api/accounting/journal-entries/cmuw4z7v302cmcii0fxxn95uz/receipt?unitId=REDACTED → 200 OK · console: No console logs.
+   > API:    GET /accounting/journal-entries/cmuw4z7v302cmcii0fxxn95uz/receipt → HTTP 200 · application/pdf · attachment; filename="comprovante-lancamento-2026-170.pdf"
+   >         58531 bytes · cabeçalho %PDF- · sha256 283c363dd955fb1a5fd0aebc36ee7178edc434e87db3d75e511ab656ef1b1896
+   > PDF aberto: 1 pagina(s)
+   >   Comprovante de Lançamento Contábil
+   >   Lançamento nº 170/2026 – Posted
+   >   Data 06/10/2026
+   >   Histórico Contas a receber – Cliente Seed (Fatura SEED-AR-2026-10-2)
+   >   Origem ar.receivable – ref. cmuw4z7ua02ckcii08hbl4pcn
+   >   CONTA DESCRIÇÃO DÉBITO CRÉDITO
+   >   1.1.2.03 Clientes a Receber R$ 2.568,00
+   >   3.1 Receita de Serviços R$ 2.568,00
+   >   Totais R$ 2.568,00 R$ 2.568,00
+   >   Documento gerado eletronicamente em 29/10/2026.
+   > ```
+   >
+   > **Arquivo baixado pela tela** (o dono localizou o download do painel e colou no chat):
+   >
+   > ```text
+   > C:\Users\smurf\Downloads\recibo-cmuw4z7v302cmcii0fxxn95uz.pdf · 58531 bytes · 29/10/2026 16:15:40
+   > sha256 da83ee4fda5b1dc248562bc5737be458315bb957dcf5906e9b56bb4dd1a434eb · 1 pagina(s)
+   > texto: igual ao da cópia da API acima, linha a linha (nº 170/2026, 06/10/2026, 1.1.2.03 D / 3.1 C, R$ 2.568,00)
+   > ```
+   >
+   > Os dois arquivos têm o mesmo tamanho e o mesmo texto, mas sha256 diferentes. Leitura inferida: cada geração grava data
+   > e ID internos próprios no PDF.
+   >
+   > Achado para o passo 5 (rótulo, não foi corrigido): o recibo, que está em PT, mostra o status em inglês ("Posted").
+   >
+   > DESFECHO: [dono]   ASSINATURA: [dono]
 
 5. Releitura crítica ("carimbo"): algo em qualquer tela está errado para uso real (rótulo,
    número, fluxo)? Se sim, registrar em Achados — não corrigir nada nesta sessão.
    Resultado esperado: veredicto consciente do executor.
    EVIDÊNCIA: [uma frase por tela inspecionada OU "sem ressalvas"]
+
+   > **Execução 2026-10-29.** Releitura do **dono**, no chat, depois de ver as telas dos passos 1–4 no painel. Texto literal:
+   >
+   > ```text
+   > Loguei, sem ressalvas
+   > ```
+   >
+   > O achado do passo 4 continua registrado (o recibo em PT mostra o status "Posted" em inglês). É um rótulo e não foi
+   > corrigido nesta sessão. O dono decide se ele vira ressalva no desfecho.
+   >
+   > DESFECHO: [dono]   ASSINATURA: [dono]
 
 ---
 
@@ -157,6 +281,16 @@ Pré-condições (verificar antes de começar):
    não com o preço de venda.
    EVIDÊNCIA: [print da tela + prints dos DOIS lançamentos no Livro Diário]
 
+   > **[EMENDA 2026-10-30] Passo 8 — produto em venda separada** (dono, chat, 30/10: *"Emendar o passo 8"*). A venda
+   > mista de serviço com produto é **proibida por regra de negócio**, não falta de tela: `validateNoMixedItemTypesOnInsert`
+   > (`server/src/features/dynamicTables/rules/plugins/sales/saleItems.ts:141`, chamada em `SalesPlugin.ts:224`) recusa o
+   > item com *"Venda não pode mesclar produtos, serviços e pacotes; crie vendas separadas."*, e o modal Nova Venda espelha a
+   > regra (`useSalesCreateForm.ts:160`). Por isso, a partir desta emenda, o passo 8 é uma **venda só de produto de estoque**.
+   > Resultado esperado: DOIS lançamentos. (a) finalized: D 1.1.2 A Receber = total e C **3.3 Receita de Revenda** = total, **sem**
+   > linha 3.1. (b) cogs: D **4.2 CMV** = custo cadastrado e C Estoques (1.1.3.01 no binding v2) = mesmo valor, não o preço de
+   > venda. O split misto 3.1 + 3.3 de uma mesma venda fica coberto só pelo golden test (`goldenPhase1.test.ts`, caso
+   > "finalized: split misto 100/100"), colado no passo 11.
+
 9. Fazer a **devolução** de uma das vendas acima — evento `salon.sale.returned` (hoje: `sale.returned`, PR #222).
    Resultado esperado: lançamento NOVO e separado (não é estorno/`reversedById` do lançamento
    original — o original de `salon.sale.finalized` (hoje: `sale.finalized`, PR #222) continua `Posted`, intocado) com D **3.2
@@ -188,6 +322,245 @@ Pré-condições (verificar antes de começar):
     EVIDÊNCIA: [print do console final (sem erros) + saída do comando jest acima (verde) +
     confirmação linha-a-linha dos lançamentos dos passos 6–10, ou divergência registrada em
     Achados]
+
+> **Execução 2026-10-29 — passos 6 a 11.** Feita pelo agente sob comando do dono no chat (29/10: *"Autorizo executar os
+> runbooks"*). O dono logou `seed-presumido` no painel do navegador embutido, e o agente clicou cada ação na tela de vendas
+> (Financeiro → Vendas, build de produção de `455c1a45`, `127.0.0.1:3100`, unidade `seed-unit-presumido` =
+> `cmuw4yqxg001jcii0iz2yb9rw`, binding `beautySalon` v2 `Active`). Cada venda seguiu a EMENDA 2026-10-05: **Salvar
+> Rascunho** no modal Nova Venda e depois **Finalizar** → "Confirmar finalização" na lista. O razão foi lido no `dev.db` real,
+> só leitura, depois de cada ação.
+>
+> **Preparação (não é evidência de passo).** Backup `server/prisma/prisma/dev-20261029-pre-h2-p6.db` (9.895.936 bytes,
+> sha256 `e23f4060d526715f7ac396f4b06191fb253ceadd5406b6f865fdce16a9198f99`, `integrity_check` ok), feito pela cópia online do
+> SQLite antes do passo 6. A unidade estava sem catálogo (0 serviços, produtos, pacotes, clientes e vendas), então o catálogo
+> H2 foi criado pela API do build com o login do seed:
+>
+> ```text
+> POST customers → HTTP 201 | id cmvtxuu6b000pci9c3yk4b6n2 | {"name":"Cliente H2","email":"cliente.h2@example.com","mainUnitId":"cmuw4yqxg001jcii0iz2yb9rw"}
+> POST services → HTTP 201 | id cmvtxuu71000tci9chpnj578o | {"name":"Corte H2","category":"Cabelo","price":80,"duration":30,"isActive":true}
+> POST products → HTTP 201 | id cmvtxuu7l000xci9crbmlvkqu | {"name":"Shampoo H2","usageType":"Sale","sku":"H2-SHAMPOO"}
+> POST packages → HTTP 201 | id cmvtxuu8f0015ci9c87vo9g6f | {"name":"Pacote H2","price":300,"validityDays":365,"active":true}
+> ```
+>
+> O estoque com custo entrou **pela tela**, em Contas a Pagar → Nova Conta → "Compra de estoque", com Shampoo H2, 10 un.,
+> R$ 200,00 e NF H2-NF-1. Resultado: título `OPEN` de 20000 centavos, `inventory_items` com qtd 10 e valor 20000 (custo de
+> R$ 20,00/un.), `productUnits.stock` 10 e o lançamento 2026/0171 (abaixo).
+>
+> **Vendas na tela** (lista de vendas, saída literal do `dev.db`):
+>
+> ```text
+> cmvtxzxnq001uci9chnle6uoe 2026-10-29 Returned Pending Pix 80               ← passo 6 (só serviço) e passo 9 (devolução)
+> cmvty32ke002gci9c3ly0x5sj 2026-10-29 Finalized Paid Cash 300              ← passo 7 (pacote) e passo 10 (Dinheiro)
+> cmvty55ma0035ci9ciymrduie 2026-10-29 Finalized Paid Pix 50                ← passo 8 (produto) e passo 10 (Pix)
+> cmvtya7g00057ci9cidoityjv 2026-10-29 Finalized Paid Package Balance 80    ← passo 10 (saldo de pacote)
+> ```
+>
+> **Razão** (`journal_entries` + `postings`, só leitura, todos os lançamentos criados na sessão; valores em centavos; o "date" é
+> o dia escrito 29/10/2026, gravado como 00:00 UTC, e a tela mostra 29/10/2026):
+>
+> ```text
+> lançamento 2026/0171 | ap.payable cmvtxwdiz0019ci9ckprvb3ze | Posted | binding vNone | criado 2026-10-29T19:31:59.518Z
+>    D 1.1.3.01 Estoques | 20000                     C 2.1.2.01 Fornecedores a Pagar | 20000
+> lançamento 2026/0172 | sale.finalized cmvtxzxnq001uci9chnle6uoe | Posted | reversedBy - | binding v2 | criado 2026-10-29T19:35:24.832Z
+>    D 1.1.2.01 A Receber | 8000                     C 3.1 Receita de Serviços | 8000
+> lançamento 2026/0173 | sale.package.sold cmvty32ke002gci9c3ly0x5sj | Posted | binding v2 | criado 2026-10-29T19:37:29.775Z
+>    D 1.1.2.01 A Receber | 30000                    C 2.1.1.01 Pacotes Pré-pagos | 30000
+> lançamento 2026/0174 | sale.finalized cmvty55ma0035ci9ciymrduie | Posted | binding v2 | criado 2026-10-29T19:39:05.938Z
+>    D 1.1.2.01 A Receber | 5000                     C 3.3 Receita de Revenda de Mercadorias | 5000
+> lançamento 2026/0175 | sale.cogs cmvty55ma0035ci9ciymrduie | Posted | binding v2 | criado 2026-10-29T19:39:05.972Z
+>    D 4.2 Custo das Mercadorias Vendidas | 2000     C 1.1.3.01 Estoques | 2000
+> lançamento 2026/0176 | sale.returned cmvtxzxnq001uci9chnle6uoe | Posted | reversedBy - | binding v2 | criado 2026-10-29T19:39:49.583Z
+>    D 3.2 Devoluções de Vendas | 8000               C 1.1.2.01 A Receber | 8000
+> lançamento 2026/0177 | sale.settled cmvty55ma0035ci9ciymrduie (Pix) | Posted | binding v2 | criado 2026-10-29T19:40:54.499Z
+>    D 1.1.1.01 Banco | 5000                         C 1.1.2.01 A Receber | 5000
+> lançamento 2026/0178 | sale.settled cmvty32ke002gci9c3ly0x5sj (Dinheiro) | Posted | binding v2 | criado 2026-10-29T19:41:23.995Z
+>    D 1.1.1.02 Caixa | 30000                        C 1.1.2.01 A Receber | 30000
+> lançamento 2026/0179 | sale.finalized cmvtya7g00057ci9cidoityjv | Posted | binding v2 | criado 2026-10-29T19:43:09.925Z
+>    D 1.1.2.01 A Receber | 8000                     C 3.1 Receita de Serviços | 8000
+> lançamento 2026/0180 | sale.settled cmvtya7g00057ci9cidoityjv (Saldo de pacote) | Posted | binding v2 | criado 2026-10-29T19:43:56.780Z
+>    D 2.1.1.01 Pacotes Pré-pagos | 8000             C 1.1.2.01 A Receber | 8000
+> ```
+>
+> Leitura linha a linha (o agente compara com o roteiro e com o binding v2; os códigos do binding v2 são subcontas, ex.:
+> 1.1.2 → 1.1.2.01, 1.1.3 Caixa → 1.1.1.02, 1.1.6 Estoques → 1.1.3.01):
+>
+> - **Passo 6** (só serviço, R$ 80): 2026/0172 tem D 1.1.2.01 e C 3.1, de 8000 cada, e **nenhuma linha 3.3**. Prints:
+>   [`passo6-01-nova-venda-servico.jpg`](runbook-evidence/H2-2026-10-29/passo6-01-nova-venda-servico.jpg),
+>   [`passo6-02-venda-finalizada.jpg`](runbook-evidence/H2-2026-10-29/passo6-02-venda-finalizada.jpg).
+> - **Passo 7** (pacote, R$ 300): 2026/0173 tem D 1.1.2.01 e C 2.1.1.01 (passivo), de 30000 cada, sem receita.
+>   `customer_package_balances` = 30000, com vencimento em 29/10/2027 (aceite da validade marcado na tela,
+>   `POST /api/package-acceptances` → 201). Print: [`passo7-01-nova-venda-pacote.jpg`](runbook-evidence/H2-2026-10-29/passo7-01-nova-venda-pacote.jpg).
+> - **Passo 8** (produto, R$ 50, custo R$ 20): foram **dois** lançamentos. 2026/0174 tem D 1.1.2.01 e C 3.3, de 5000. 2026/0175
+>   é a CMV, D 4.2 e C 1.1.3.01, de **2000 = custo cadastrado** (não o preço de 5000). O estoque foi de 10/20000 para 9/18000, com
+>   `stock_movements` COGS −1/−2000. Print: [`passo8-01-nova-venda-produto.jpg`](runbook-evidence/H2-2026-10-29/passo8-01-nova-venda-produto.jpg),
+>   [`passo7-8-vendas-finalizadas.jpg`](runbook-evidence/H2-2026-10-29/passo7-8-vendas-finalizadas.jpg).
+>   **Desvio do roteiro:** a venda não teve serviço junto, então não houve C 3.1 + C 3.3 no mesmo lançamento. O modal Nova
+>   Venda tem um tipo só por venda (Produtos | Serviços | Pacotes; `useSalesCreateForm.ts:177` define o `type` do item pela
+>   variante — verificado no código). A venda mista não sai desta tela, e o split misto fica coberto só pelo golden test
+>   ("finalized: split misto 100/100").
+> - **Passo 9** (devolução da venda do passo 6): 2026/0176 é **novo** (`sale.returned`), com D 3.2 e C 1.1.2.01 de 8000. O original
+>   2026/0172 continua `('Posted', reversedById None, version 1, updatedAt 1793302524832)`, e esse `updatedAt` é igual ao
+>   instante de criação (19:35:24.832Z). Print: [`passo9-01-devolucao.jpg`](runbook-evidence/H2-2026-10-29/passo9-01-devolucao.jpg).
+> - **Passo 10** (três meios, pelo botão "Pagar" → "Registrar pagamento"): Pix → 2026/0177 com D 1.1.1.01 Banco. Dinheiro →
+>   2026/0178 com D 1.1.1.02 Caixa. **Saldo de pacote → 2026/0180 com D 2.1.1.01 Pacotes Pré-pagos, sem conta de caixa ou banco.**
+>   O saldo foi de 30000 para 22000 (`package_balance_movements` debit 8000, venda `cmvtya7g…`). Cartão não foi testado; o roteiro
+>   pede "Pix ou Cartão". Prints: [`passo10-01-pagamento-pix.jpg`](runbook-evidence/H2-2026-10-29/passo10-01-pagamento-pix.jpg),
+>   [`passo10-02-pagamento-dinheiro.jpg`](runbook-evidence/H2-2026-10-29/passo10-02-pagamento-dinheiro.jpg),
+>   [`passo10-03-pagamento-saldo-pacote.jpg`](runbook-evidence/H2-2026-10-29/passo10-03-pagamento-saldo-pacote.jpg),
+>   [`passo10-04-lancamento-0180-saldo-pacote.jpg`](runbook-evidence/H2-2026-10-29/passo10-04-lancamento-0180-saldo-pacote.jpg).
+> - **Passo 11:** a aba Lançamentos mostra 2026/0171–0180, todos "Postado", com data 29/10/2026
+>   ([`passo11-01-lancamentos-0171-0180.jpg`](runbook-evidence/H2-2026-10-29/passo11-01-lancamentos-0171-0180.jpg)).
+>   **Console:** `read_console_messages` (só erros) devolve **1** entrada, `Failed to load resource: the server responded with
+>   a status of 400 (Bad Request)`, e ela já estava lá antes do primeiro clique do passo 6. Nenhuma requisição desta página
+>   respondeu ≥400 (`performance` e o Network do painel, últimas 50). A origem do 400 não foi identificada, e o console **não**
+>   está limpo. Golden test no worktree (`81c0f409`; `git diff 455c1a45..HEAD -- server/src/features/accountingBinding
+>   server/src/features/accounting/sync` vazio, logo o mesmo código do intérprete do build). Saída literal:
+>
+> ```text
+> $ cd server && npx jest src/features/accountingBinding/__tests__/goldenPhase1.test.ts
+> PASS unit src/features/accountingBinding/__tests__/goldenPhase1.test.ts
+>   golden Fase 1 — mapper-à-mão vs. InterpretedEventMapper+binding-do-salão (pós-P1, pré-swap)
+>     √ finalized: sem breakdown — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte) (2 ms)
+>     √ finalized: split misto 100/100 — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ finalized: rateio de desconto de header (180 sobre itens 100+100) — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ finalized: resíduo de arredondamento 1:2 sobre 10001¢ — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ finalized: só-serviço (sem linha 3.3 zerada) — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ finalized: só-produto (sem linha 3.1 zerada) — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte) (1 ms)
+>     √ finalized: idempotência preservada sob split — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ finalized: arredondamento round-half-up no limite (0,005) — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ settled: Cash — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ settled: Pix — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte) (1 ms)
+>     √ settled: Debit Card — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ settled: Credit Card — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ settled: Package Balance — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ returned: base — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ packageSold: base — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ cogs: base — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ cogs: fronteira MAX_CENTS — intérprete produz EXATAMENTE o que o mapper-à-mão produz (byte a byte)
+>     √ cobre exatamente os mesmos 17 casos de goldenPhase0.test.ts (nenhum a mais/a menos sem revisão)
+> Test Suites: 1 passed, 1 total
+> Tests:       18 passed, 18 total
+> [exited with code 0]
+> ```
+>
+> **Achados da tela** (rótulo e fluxo, não corrigidos):
+> - (A) Na lista de vendas, a venda **Devolvida** ainda mostra o botão "Finalizar" (verificado no DOM, linha "Devolvida
+>   Pendente R$ 80,00"). O agente não clicou nele, e não se sabe o efeito.
+> - (B) No "Registrar pagamento" com Saldo de pacote, a opção do pacote mostra "Pacote cmvtxuu8 — saldo R$ 300,00 …", um pedaço
+>   do ID, em vez do nome "Pacote H2".
+> - (C) A dica do modal de compra de estoque diz "Debita 1.1.6 Estoques", mas o lançamento real debita **1.1.3.01** Estoques
+>   (plano do binding v2).
+> - (D) O preço do serviço não vem do catálogo ao escolher o serviço; ele é digitado (`SaleItemsManager.tsx:198`, por desenho
+>   do código). O campo de preço lê "8000" como R$ 8.000,00: quem digita em centavos erra por 100×.
+> - (E) O botão "Próximo" do modal Nova Venda vira "Salvar Rascunho" no mesmo lugar, e um clique duplo grava o rascunho.
+>
+> DESFECHO: [dono]   ASSINATURA: [dono]
+
+> **Passos 6–10 refeitos sobre o #985 (agente, 30/10/2026 03:01–03:08 UTC, sob comando do dono no chat: "Sim, manda pra
+> ela", repassado pela sessão-mãe; RUNBOOK-FORMAT §Fronteira).** O PR #985 (commits `10a8ebd7` teste-guarda e `81b8ca63`
+> correção) corrige os achados A–D. Ambiente: build de produção da `origin/main` `c8b7c83551a665d29d3ca855d6f22a4a5fb340a4`
+> (worktree separado, sem tocar o branch deste PR), back `:3101` e front `127.0.0.1:3100`, o mesmo `server/.env` e o dev.db
+> real. Antes de subir: backup `server/prisma/prisma/dev.db.bak-h2-refazer-6-10-2026-10-29` (10.166.272 bytes, sha256
+> `b430ee50ced2c74cbbd6fec042fa027a7c0ac412789bec0bfcfa6f2bb5be9bca`, API de backup do SQLite) e, com o ok do dono no chat
+> ("Ok, migrate"), `npx prisma migrate deploy` aplicou as 2 migrações pendentes (`20261029130000_legal_parameters_retencoes_v3_inss`
+> e `20261029150000_fix_chat_agente_r26_drop_structured_data`, `StructuredData` com 0 linhas). O dono logou `seed-presumido`
+> no painel. Os passos rodaram depois das 03:00 UTC, fora da janela em que o dia BRT e o dia UTC divergem; as vendas são de
+> 30/10/2026. Mesmo roteiro da execução de 29/10 (Salvar Rascunho → Finalizar → "Confirmar finalização"), com a mesma
+> unidade, cliente e catálogo. Estado inicial lido no dev.db: último lançamento 2026/0180, Shampoo H2 9 un./18000,
+> saldo de pacote 22000.
+>
+> Razão (`razao.py`, só leitura, lançamentos criados depois de 02:55 UTC; centavos; o `date` é o dia escrito 30/10, 00:00 UTC):
+>
+> ```text
+> lançamento 2026/0181 | sale.finalized cmvudz55v0001ci38nrddtau5 | Posted | binding v2 | criado 2026-10-30T03:02:23.804Z
+>    D 1.1.2.01 A Receber | 8000                     C 3.1 Receita de Serviços | 8000
+> lançamento 2026/0182 | sale.package.sold cmvue0zpl000nci38s86twu4x | Posted | binding v2 | criado 2026-10-30T03:03:41.415Z
+>    D 1.1.2.01 A Receber | 30000                    C 2.1.1.01 Pacotes Pré-pagos | 30000
+> lançamento 2026/0183 | sale.finalized cmvue2rru001cci387qk76tpn | Posted | binding v2 | criado 2026-10-30T03:05:04.124Z
+>    D 1.1.2.01 A Receber | 5000                     C 3.3 Receita de Revenda de Mercadorias | 5000
+> lançamento 2026/0184 | sale.cogs cmvue2rru001cci387qk76tpn | Posted | binding v2 | criado 2026-10-30T03:05:04.158Z
+>    D 4.2 Custo das Mercadorias Vendidas | 2000     C 1.1.3.01 Estoques | 2000
+> lançamento 2026/0185 | sale.returned cmvudz55v0001ci38nrddtau5 | Posted | binding v2 | criado 2026-10-30T03:05:28.832Z
+>    D 3.2 Devoluções de Vendas | 8000               C 1.1.2.01 A Receber | 8000
+> lançamento 2026/0186 | sale.settled cmvue2rru001cci387qk76tpn (Pix) | Posted | binding v2 | criado 2026-10-30T03:06:05.569Z
+>    D 1.1.1.01 Banco | 5000                         C 1.1.2.01 A Receber | 5000
+> lançamento 2026/0187 | sale.settled cmvue0zpl000nci38s86twu4x (Dinheiro) | Posted | binding v2 | criado 2026-10-30T03:06:22.401Z
+>    D 1.1.1.02 Caixa | 30000                        C 1.1.2.01 A Receber | 30000
+> lançamento 2026/0188 | sale.finalized cmvue5lcy003eci38d00hecak | Posted | binding v2 | criado 2026-10-30T03:07:12.934Z
+>    D 1.1.2.01 A Receber | 8000                     C 3.1 Receita de Serviços | 8000
+> lançamento 2026/0189 | sale.settled cmvue5lcy003eci38d00hecak (Saldo de pacote) | Posted | binding v2 | criado 2026-10-30T03:07:45.442Z
+>    D 2.1.1.01 Pacotes Pré-pagos | 8000             C 1.1.2.01 A Receber | 8000
+> ```
+>
+> - **Passo 6** (só serviço): 2026/0181 tem D 1.1.2.01 e C 3.1, de 8000, sem linha 3.3. Print:
+>   [`refazer-985-p6-01-servico-preco-do-catalogo.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p6-01-servico-preco-do-catalogo.jpg).
+> - **Passo 7** (pacote): 2026/0182 tem D 1.1.2.01 e C 2.1.1.01, de 30000, sem receita. O modal mostrou "Válido até
+>   30/10/2027", e o aceite foi marcado. Print: [`refazer-985-p7-01-pacote.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p7-01-pacote.jpg).
+> - **Passo 8** (produto, R$ 50): 2026/0183 tem D 1.1.2.01 e C 3.3, de 5000. A CMV 2026/0184 tem D 4.2 e C 1.1.3.01, de **2000 =
+>   custo** (não o preço). O estoque foi de 9/18000 para 8/16000. O produto não tem preço de venda no catálogo, então o campo
+>   veio com R$ 0,00 e o agente digitou 50, como em 29/10. Print: [`refazer-985-p8-01-produto.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p8-01-produto.jpg).
+>   Segue o desvio de 29/10: a venda mista não sai desta tela (um tipo por venda).
+> - **Passo 9** (devolução da venda do passo 6): 2026/0185 é **novo** (`sale.returned`), com D 3.2 e C 1.1.2.01 de 8000. O original
+>   2026/0181 continua `('Posted', reversedById None, version 1)`, com `updatedAt` = `createdAt` = 1793329343804. Print:
+>   [`refazer-985-p9-01-devolucao-so-ver-detalhes.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p9-01-devolucao-so-ver-detalhes.jpg).
+> - **Passo 10** ("Pagar" → "Registrar pagamento"): Pix → 2026/0186 com D 1.1.1.01 Banco. Dinheiro → 2026/0187 com D 1.1.1.02
+>   Caixa. **Saldo de pacote → 2026/0189 com D 2.1.1.01, sem conta de caixa ou banco**, e `package_balance_movements` debit
+>   8000 na venda `cmvue5lcy…`. Cartão não foi testado, como em 29/10. Print:
+>   [`refazer-985-p10-01-saldo-pacote-nome.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p10-01-saldo-pacote-nome.jpg).
+>
+> **Achados A–D contra o #985** (cada um lido no DOM do build `c8b7c835`):
+> - **(A) Confirmado corrigido.** As duas vendas Devolvidas (a de 29/10 e a nova de 30/10) mostram só "Ver Detalhes"; não há
+>   "Finalizar". Prints: [`refazer-985-A-devolvida-sem-finalizar.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-A-devolvida-sem-finalizar.jpg),
+>   [`refazer-985-p9-01-devolucao-so-ver-detalhes.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p9-01-devolucao-so-ver-detalhes.jpg).
+> - **(B) Confirmado corrigido.** A opção do saldo diz "Pacote H2 — saldo R$ 520,00 — vence em 30/10/2027": é o nome, não o ID.
+>   Print: [`refazer-985-p10-01-saldo-pacote-nome.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p10-01-saldo-pacote-nome.jpg).
+> - **(C) Confirmado corrigido.** O modal "Compra de estoque" diz "Debita 1.1.3.01 Estoques e valora o produto pelo custo
+>   médio — o valor acima é o TOTAL da compra." O modal foi só aberto pelo deep link e fechado com Cancelar, sem registrar
+>   nada. Print: [`refazer-985-C-dica-1.1.3.01.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-C-dica-1.1.3.01.jpg).
+> - **(D) Confirmado corrigido para o serviço.** Ao escolher "Corte H2", o preço veio R$ 80,00 do catálogo, sem digitação.
+>   O produto continua vindo do `salePrice` (o Shampoo H2 não tem, daí R$ 0,00). Print do passo 6.
+> - **(E) Continua aberto.** "Próximo" vira "Salvar Rascunho" no mesmo elemento (mesmo `ref` no DOM). Nesta execução o modal
+>   mudou de altura ao trocar de aba, e o botão não ficou no mesmo pixel, mas o risco do clique duplo não foi testado.
+> - **Console / 400.** O buffer do console do painel guardou a sessão inteira dos passos 6–10. Ao voltar à tela de vendas
+>   (03:4x UTC; o agente só abriu detalhes e o modal Nova Venda e cancelou, sem gravar nada), `read_console_messages` devolveu
+>   a sequência exata da execução: 8× "Registro criado com sucesso.", 4× "Venda finalizada com sucesso.", 1× "Devolução
+>   registrada.", 3× "Pagamento registrado.", todos `[log]`. Com o filtro só de erros, e com o padrão `warn`, o retorno foi
+>   **"No console logs."**: o console está **limpo**. No log do servidor, a janela 02:55–03:09 UTC (login e passos 6–10)
+>   teve `{200: 324, 201: 9, 304: 91}` e **nenhuma** resposta ≥400. O 400 de origem não identificada de 29/10 não se repetiu,
+>   e a causa dele segue sem identificação.
+> - **Livro Diário na tela (passo 11).** A aba Contabilidade → Lançamentos lista 2026/0181–0189, todos "Postado" e com data
+>   30/10/2026. Cada lançamento expandido mostra as mesmas contas e valores da leitura do dev.db acima. Texto lido do DOM:
+>   `0181 D 1.1.2.01 80 / C 3.1 80` · `0182 D 1.1.2.01 300 / C 2.1.1.01 300` · `0183 D 1.1.2.01 50 / C 3.3 50` ·
+>   `0184 D 4.2 20 / C 1.1.3.01 20` · `0185 D 3.2 80 / C 1.1.2.01 80` · `0186 D 1.1.1.01 50 / C 1.1.2.01 50` ·
+>   `0187 D 1.1.1.02 300 / C 1.1.2.01 300` · `0188 D 1.1.2.01 80 / C 3.1 80` · `0189 D 2.1.1.01 80 / C 1.1.2.01 80` (R$). Prints:
+>   [`refazer-985-p11-01-lancamentos-0181-0189.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p11-01-lancamentos-0181-0189.jpg),
+>   [`refazer-985-p11-02-linhas-0189-0185.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p11-02-linhas-0189-0185.jpg),
+>   [`refazer-985-p11-03-linhas-0184-0181.jpg`](runbook-evidence/H2-2026-10-29/refazer-985-p11-03-linhas-0184-0181.jpg).
+> - **(F) Achado novo de tela:** nas linhas expandidas da aba Lançamentos, a coluna **Crédito** fica fora do card e não
+>   aparece. O card tem `overflow-hidden` (`scrollWidth` 1088 > `clientWidth` 958 com viewport de 1240; com 1700 também
+>   corta). A coluna não rola: nos prints só se vê o Débito, e o Crédito está no DOM (texto acima). Não corrigido.
+> - **Observação nova (não é achado de A–E):** a segunda compra do mesmo pacote pelo mesmo cliente não criou outro saldo. A
+>   linha existente foi de 22000 para 52000 (antes da baixa do passo 10), e o vencimento **do saldo inteiro** foi de 29/10/2027 para
+>   30/10/2027. Os R$ 220 antigos ganharam um dia de validade. Inferido pelo dado; não li o código que decide isso.
+>
+> Leitura do agente: os lançamentos dos passos 6, 7, 9 e 10 e a CMV do passo 8 conferem com o esperado, mas o passo 8 pede
+> **um** lançamento com C 3.1 **e** C 3.3 (venda mista), e a tela não monta venda mista (um tipo por venda).
+> Desfecho escolhido pelo dono no chat (30/10): *"FALHOU no passo 8"*.
+>
+> [x] FALHOU — passo 8 divergiu (venda mista de serviço + produto não sai do modal Nova Venda; o split misto só está
+> coberto pelo golden test); evidência da divergência colada acima *(marcado pelo dono no chat, 30/10; assinatura abaixo
+> continua do dono)*. Os passos 9–10 foram rodados na mesma passada, antes do desfecho.
+>
+> **Depois da [EMENDA 2026-10-30] do passo 8** (dono, chat, 30/10: *"Emendar o passo 8"*): o FALHOU acima foi dado contra
+> o texto original. Pelo texto emendado, a evidência do passo 8 já colada (2026/0183 D 1.1.2.01 / C 3.3 5000, sem 3.1;
+> 2026/0184 D 4.2 / C 1.1.3.01 2000 = custo) confere com o esperado.
+> Desfecho escolhido pelo dono no chat (30/10), sob a emenda: *"PASSOU"*.
+>
+> [x] PASSOU — passos 6–10 (passo 8 pelo texto da EMENDA 2026-10-30) com evidência conferindo com o esperado *(marcado pelo
+> dono no chat, 30/10; assinatura abaixo continua do dono)*. Ressalva registrada antes da escolha: nos prints do Livro Diário só
+> a coluna Débito aparece (achado F), e o lado do crédito está provado pelo texto do DOM e pelo dev.db.
+>
+> ASSINATURA: [dono]
 
 ---
 
@@ -222,9 +595,93 @@ Pré-condições (verificar antes de começar):
     EVIDÊNCIA: [status + corpo de `POST /api/accounting/sped/ecf/generate` e de
     `POST /api/accounting/sped/ecf/real/generate` + a 1ª linha de cada `.txt`]
 
+> **EVIDÊNCIA dos passos 12–14 (agente, 29/10/2026, sob comando do dono no chat; RUNBOOK-FORMAT §Fronteira).**
+> Ambiente: build de produção de `455c1a45` (back `:3101`, front `127.0.0.1:3100`), dev.db real
+> `server/prisma/prisma/dev.db`, usuário `seed-presumido`, unidade `seed-unit-presumido`, exercício **2025** (`HARD_CLOSED`).
+> O agente preencheu os formulários de Contabilidade → Compliance no painel do navegador embutido com os dados fictícios
+> do H1 (CNPJ `08845676000198`, CPFs `23456789173`/`12345678062`, CRC `SP-123456/O-1`). Os códigos dos signatários foram
+> escolhidos no combobox ("900 · Contador/Contabilista", "205 · Administrador", "203 · Diretor"). Status e corpo foram
+> lidos no Network do painel.
+>
+> **Passo 12 — ECD:** `POST http://127.0.0.1:3101/api/accounting/sped/ecd/generate → 201 Created`. Corpo da resposta:
+>
+> ```text
+> {"success":true,"data":{"id":"cmvtyocgj0066ci9c0phmim1f","direction":"EXPORT","kind":"EXPORT_SPED_ECD","status":"EXPORTED","fileName":"ecd_08845676000198_2025.txt","mimeType":"text/plain","sizeBytes":53513,"sha256":"7d23fc3820d688743791d9e9f2a5a7ec1346a1fc0d756634a13bee9f479fd880","totalRows":991,"validRows":0,"invalidRows":0,"committedRows":0,"createdAt":"2026-10-29T19:53:44.467Z","periodStart":"2025-01-01","periodEnd":"2025-12-31"},"perfilFiscal":{"aplicado":false,"sobrescritos":[]},"avisos":["perfil fiscal da empresa ausente para 2025: a geração usou só o corpo da requisição (F-XP-1 c)."]}
+> ```
+>
+> O `.txt` caiu em `Downloads` e foi movido para `Downloads/H2-BROWSER/passo12-14/` (fora do repo). Conferência literal:
+>
+> ```text
+> $ sha256sum ecd_08845676000198_2025.txt; head -1 …; grep "^|J930|" …; wc -l < …
+> 7d23fc3820d688743791d9e9f2a5a7ec1346a1fc0d756634a13bee9f479fd880 *ecd_08845676000198_2025.txt
+> |0000|LECD|01012025|31122025|CORP�REOS - SERVI�OS TERAP�UTICOS S.A.|08845676000198|SP||3550308|||0|0|0||0|0||N|N|0|0|1|
+> |J930|CONTADOR FICTICIO DE TESTE|23456789173|Contador|900|SP-123456/O-1|contador.teste@example.com|1148583340|SP|||N|
+> |J930|DIRETOR FICTICIO DE TESTE|12345678062|Administrador|205|||||||S|
+> 991
+> ```
+>
+> O sha256 do arquivo é igual ao da resposta. O `�` é o terminal UTF-8 lendo o `.txt` em Latin-1, que é a codificação do
+> SPED. O J930 do contador tem CRC, UF, e-mail e fone, com `IND_RESP_LEGAL = N`. O do 205 tem `S`.
+>
+> **Passo 13 — recusa local:** com o CRC do contador apagado (DOM: `CRC=` vazio), "Gerar e baixar ECD" mostrou na tela
+> "O signatário contador (900) exige CPF de 11 dígitos, CRC, UF do CRC, e-mail e fone.". Depois do clique, o Network
+> filtrado em `sped/ecd` continuou com **um só** POST, o 201 do passo 12, e nenhum request novo. Print:
+> [`passo13-01-recusa-local-crc.jpg`](runbook-evidence/H2-2026-10-29/passo13-01-recusa-local-crc.jpg).
+>
+> **Passo 14 — ECF Presumido:** `POST http://127.0.0.1:3101/api/accounting/sped/ecf/generate → 400 Bad Request`. Corpo:
+>
+> ```text
+> {"code":"ECF_Y600_COMPLEMENTO_FALTANDO","message":"Y600: toda vigência de sócio em 2025 precisa de complemento em socios (qualif e valores); faltam os partnerId: cmvttnb71000cci9cinonvsp9.","details":{"partnerIds":["cmvttnb71000cci9cinonvsp9"]}}
+> ```
+>
+> A tela mostra a mensagem inteira, mas não tem campo de sócios, então não há como completar o pedido por ela. O sócio é o
+> `SOCIO TESTE H1`, criado pela API no H1 tentativa 4 (`partners`: `('cmvttnb71000cci9cinonvsp9', …, 'SOCIO TESTE H1',
+> '11144477735', 'PF', 1, 10000, '2020-01-01', None, …)`, lido do dev.db em modo só-leitura). O código já registra a
+> lacuna: `SpedEcfRealPanel.tsx:122` tem *"a tela ainda não coleta sócios — o servidor devolve 400 ECF_Y600_*; FE próprio
+> pendente"*, e o `BE-INCR-ECF-Y600-brief.md:271` lista o **FE-INCR-ECF-Y600** como "vizinho, não planejado aqui". Print:
+> [`passo14-01-ecf-presumido-400-y600.jpg`](runbook-evidence/H2-2026-10-29/passo14-01-ecf-presumido-400-y600.jpg).
+>
+> **Passo 14 — ECF Real** (mesmo tenant, `FORMA_TRIB = 1`, `FORMA_TRIB_PER = RRRR`):
+> `POST http://127.0.0.1:3101/api/accounting/sped/ecf/real/generate → 400 Bad Request`. Corpo:
+>
+> ```text
+> {"code":"VALIDATION_ERROR","message":"Feche a Parte B do e-Lalur/e-Lacs de T01/2025 (e dos trimestres seguintes) antes de gerar a ECF — o M500 e o E020 do exercício seguinte saem da materialização (Manual p.271)."}
+> ```
+>
+> O tenant `seed-presumido` é de Lucro Presumido e não tem a Parte B de 2025 fechada. A ECF Real precisa do `seed-real`, que
+> outro login abre. Mesmo nesse tenant, o painel do Real manda `socios: []` fixo (`SpedEcfRealPanel.tsx:123`), então um
+> tenant com sócio cadastrado daria o mesmo 400 de Y600 (inferido pelo código, não executado). Print:
+> [`passo14-02-ecf-real-400-parte-b.jpg`](runbook-evidence/H2-2026-10-29/passo14-02-ecf-real-400-parte-b.jpg).
+>
+> **Achado de tela (F):** nos dois painéis da ECF, a linha de signatário passa da largura do card e a página ganha rolagem
+> horizontal (visível nos dois prints do passo 14).
+>
+> Leitura do agente: 12 e 13 conferem com o esperado. No 14, "nenhum 400" **não** se cumpriu nas duas ECFs.
+> Desfecho escolhido pelo dono no chat (29/10, questionário): *"FALHOU no 14"*. O dono também pediu para refazer o 14 no
+> `seed-real` antes de seguir.
+>
+> **Passo 14 refeito no `seed-real`** (o dono logou no painel; unidade `seed-unit-real`). Pelo dev.db, em modo só-leitura,
+> o tenant tinha 0 sócios, 0 contas da Parte B e nenhum trimestre fechado. Pela tela (Compliance → e-Lalur → Fechamento do
+> trimestre, ano 2025), o agente fechou T01→T04 confirmando o diálogo, e foram 4× `POST
+> http://127.0.0.1:3101/api/lalur/parte-b/close → 200 OK`. A tela passou a mostrar os quatro "fechado 29/10/2026". No dev.db:
+> `[(2025, 'T01', 1793304243209), (2025, 'T02', 1793304246022), (2025, 'T03', 1793304248855), (2025, 'T04', 1793304251672)]`.
+> Depois, a ECF Real com os mesmos dados (203 + 900, `FORMA_TRIB_PER = RRRR`) deu
+> `POST http://127.0.0.1:3101/api/accounting/sped/ecf/real/generate → 400 Bad Request`. Corpo:
+>
+> ```text
+> {"code":"ECF_Y600_SEM_SOCIOS","message":"Y600: a ECF de 2025 exige ao menos um sócio, titular ou dirigente (Manual ECF L12 p. 56, OC para FORMA_TRIB 1 a 7) — cadastre os sócios em /accounting/partners ou informe dirigentes."}
+> ```
+>
+> Print: [`passo14-03-ecf-real-seed-real-400-sem-socios.jpg`](runbook-evidence/H2-2026-10-29/passo14-03-ecf-real-seed-real-400-sem-socios.jpg).
+> As duas metades se fecham. Sem sócio cadastrado, o servidor recusa (`ECF_Y600_SEM_SOCIOS`). Com sócio cadastrado, ele
+> exige o complemento que a tela não coleta (`ECF_Y600_COMPLEMENTO_FALTANDO`, `seed-presumido`). **Nenhuma ECF de 2025 sai
+> pela tela hoje.** Isso está verificado para o Real nos dois casos e para o Presumido no caso com sócio. O Presumido sem sócio
+> foi inferido pela mesma regra Y600 do BRIEF (F-Y600-1 a, "Presumido e Real juntos") e não foi executado. A causa é a tela
+> que falta (FE-INCR-ECF-Y600), não um bug do servidor.
+
 Desfecho dos passos 12–14 (marcar UM):
 [ ] PASSOU — 12, 13 e 14 com evidência conferindo com o esperado
-[ ] FALHOU — passo __ divergiu; evidência colada acima; nenhum passo seguinte executado
+[x] FALHOU — passo 14 divergiu; evidência colada acima; nenhum passo seguinte executado *(marcado pelo dono no chat, 29/10; assinatura abaixo continua do dono)*
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passos 12–14): ____________
 
@@ -250,8 +707,135 @@ Assinatura do executor (passos 12–14): ____________
     - k) Plano de contas: criar conta; ligar/desligar "exige dimensão". Períodos: criar exercício, abrir,
       fechar (parcial/definitivo), reabrir; encerrar exercício. EVIDÊNCIA: [ ]
 
+> **EVIDÊNCIA do passo 15 (agente, 29/10/2026, sob comando do dono no chat; RUNBOOK-FORMAT §Fronteira).** Mesmo ambiente dos
+> passos 12–14, usuário `seed-real` (o dono logou no painel), unidade `seed-unit-real` (`cmuw4z7zj02ehcii0st3unfr4`). O agente
+> operou as telas no painel do navegador embutido, com cliques e preenchimento de campos por script na página. Para ter o
+> **corpo do request**, que o Network do painel não mostra, o agente instalou na página um gancho só de leitura em `fetch`/XHR.
+> Ele grava método, URL, corpo, status e o começo da resposta de toda escrita. A saída abaixo é a transcrição desse gancho e do
+> Network, com os ids encurtados só onde está indicado. Nos itens g) e h), os arquivos CSV foram entregues ao `<input type=file>`
+> por `DataTransfer`, sem diálogo do sistema. O upload por clique é o passo 2, não este. Contagem final do gancho: **52 escritas,
+> 1 com status ≥ 400** (o encerramento do item k, regra de negócio). Nenhuma escrita deu 400 de `unrecognized_keys` ou
+> `invalid_type`.
+>
+> ```text
+> ## a) AP
+> POST /api/payables → 201 (resp id cmvtz4385006jci9c10ux4oes, amountCents 15000, expenseAccountId 4.1, status OPEN, withholdingAvisos SEM_PERFIL_RETENCAO)
+> POST /api/payables/cmvtz4385006jci9c10ux4oes/pay → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","method":"Pix","paidAt":"2026-10-29","amountCents":15000}
+> POST /api/payables/cmvtz4385006jci9c10ux4oes/payments/cmvtz51c7006uci9cyg1add7j/cancel → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","reversalDate":"2026-10-29","reason":"H2 15a teste"}
+>   resp updatedAt 20:06:43.262Z mas dev.db updatedAt 20:06:57.856 (resposta com updatedAt velho)
+> POST /api/payables/cmvtz4385006jci9c10ux4oes/cancel → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","reversalDate":"2026-10-29","reason":"H2 15a cancelar titulo"} resp status CANCELLED, documentNumber "deleted:<id>:NF-H2-1"
+> braço estoque: seed-real sem produto ("Nenhum produto no catálogo"); feito pela tela no seed-presumido antes do passo 6 (Shampoo H2) sem status capturado
+> Achados: "Cash" sem tradução no select; status "PARTIALLY_PAID" sem tradução na lista; dica "Debita 1.1.6" (=C)
+> ## b) AR
+> POST /api/receivables → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","customerName":"Cliente H2","description":"H2 15b receita","issueDate":"2026-10-29","dueDate":"2026-10-29","amountCents":12000,"revenueAccountId":"cmuw4z86802gpcii04kmwh7xu","documentNumber":"FAT-H2-1"}
+> POST /api/receivables/cmvtz63wp007gci9cis6sswh9/receive → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","method":"Pix","receivedAt":"2026-10-29","amountCents":12000}
+> POST /api/receivables/cmvtz63wp007gci9cis6sswh9/receipts/cmvtz6cl9007rci9c7vp2evu1/cancel → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","reversalDate":"2026-10-29","reason":"H2 15b teste"}
+> POST /api/receivables/cmvtz63wp007gci9cis6sswh9/cancel → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","reversalDate":"2026-10-29","reason":"H2 15b cancelar titulo"}
+> linhas: Recebida → Em aberto → some da lista
+> ## c) e-Lalur
+> POST /api/lalur/parte-b → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","codCtaB":"PB-H2-1","descricao":"H2 15c prejuizo fiscal","dtCriacao":"2026-03-31","codPbRfb":"1000","codTributo":"I","saldoIniCents":0,"indSaldoIni":"D"}  (id cmvtz7a7n008bci9cf3u0vmes)
+> PATCH /api/lalur/parte-b/cmvtz7a7n008bci9cf3u0vmes → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","descricao":"H2 15c prejuizo fiscal (editada)","dtCriacao":"2026-03-31","codPbRfb":"1000","dtLimite":null,"saldoIniCents":0,"indSaldoIni":"D","cnpjSitEsp":null}
+>   (1º PATCH 200 saiu com a descrição antiga — erro do agente: preencheu o campo errado; refeito)
+> POST /api/lalur/parte-b → 201 ×2 (PB-H2-2 p/ passo 16; PB-H2-X p/ arquivar)
+> POST /api/lalur/parte-b/cmvtz8dto008fci9c1o3u346y/archive → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"} resp codCtaB "deleted:<id>:PB-H2-X"; linha sumiu
+> POST /api/lalur/entries → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2026,"quarter":"T01","livro":"lalur","codigo":"8.60","valorCents":10000,"indRelacao":"4","histLancamento":"H2 15c ajuste de teste"}
+> PATCH /api/lalur/entries/cmvtz92b0008hci9c1wup3g4p → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","valorCents":15000,"indRelacao":"4","parteBId":null,"accountId":null,"histLancamento":"H2 15c ajuste de teste (editado)"}
+> POST /api/lalur/entries/cmvtz92b0008hci9c1wup3g4p/archive → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"}; linha sumiu
+> ## d) Aprovações
+> POST /api/entry-approvals/drafts → 201 body={"date":"2026-10-29","description":"H2 15d rascunho A","unitId":"cmuw4z7zj02ehcii0st3unfr4","lines":[{"accountCode":"4.1","debitCents":5000,"creditCents":0},{"accountCode":"1.1.1.01","debitCents":0,"creditCents":5000}]}
+> PUT /api/entry-approvals/drafts/cmvtza6j6008jci9cuva6bekg → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","date":"2026-10-29","description":"H2 15d rascunho A (editado)","lines":[{"accountCode":"4.1","debitCents":6000,"creditCents":0},{"accountCode":"1.1.1.01","debitCents":0,"creditCents":6000}],"expectedVersion":1}
+> POST /api/entry-approvals/drafts/cmvtza6j6008jci9cuva6bekg/submit → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","expectedVersion":2}
+> POST /api/entry-approvals/cmvtza6j6008jci9cuva6bekg/approve → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","expectedVersion":3} resp status "Posted", sourceType manual
+> POST /api/entry-approvals/drafts → 201 (rascunho B, 3000)
+> POST /api/entry-approvals/drafts/cmvtzayms008tci9c166s5kz7/submit → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","expectedVersion":1}
+> POST /api/entry-approvals/cmvtzayms008tci9c166s5kz7/reject → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","expectedVersion":2,"reason":"H2 15d motivo da rejeição"}; card volta a rascunho (Editar/Enviar)
+> ## e) Lançamentos (Balancete → Novo Lançamento)
+> POST /api/accounting/post → 201 body={"date":"2026-10-29","description":"H2 15e lancamento com dimensao","unitId":"cmuw4z7zj02ehcii0st3unfr4","lines":[{"accountCode":"4.1","debitCents":2500,"creditCents":0,"dimensions":["cmvtzbva90091ci9cjb6dcsaa"]},{"accountCode":"1.1.1.01","debitCents":0,"creditCents":2500}]} → 2026/0180
+> POST /api/accounting/reverse → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","lancamentoId":"cmvtzckf00093ci9crf8hl7ko","reversalPostingDate":"2026-10-29"}; linha 2026/0180 "Estornado" mas ainda com botão Estornar
+> Achado (I): rascunho B (status Rascunho, sem nº) aparece em Lançamentos com "Recibo (PDF)" e "Estornar"
+> ## f) Dimensões
+> POST /api/dimensions/definitions → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","code":"H2_CC","name":"Centro de custo H2"}
+> POST /api/dimensions/values → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","definitionId":"cmvtzboo5008zci9ckjlqx6u6","code":"LOJA1","name":"Loja 1 H2"}
+> POST /api/dimensions/values/cmvtzbva90091ci9cjb6dcsaa/archive → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"}
+> POST /api/dimensions/definitions/cmvtzboo5008zci9ckjlqx6u6/archive → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"}; tela: "Nenhum eixo de dimensão cadastrado"
+> ## g) Conciliação (extrato CSV de 3 linhas injetado no input file por DataTransfer — não é "upload por clique"; isso foi o passo 2)
+> POST /api/accounting/reconciliation/statements → 201 body=[FormData] (statement cmvtze2hc009jci9czqvrgtsz, ref EXTRATO-H2-15G, conta 1.1.1.01) tela "Extrato importado: 3 linha(s)."
+> POST /api/accounting/reconciliation/statements/cmvtze2hc009jci9czqvrgtsz/auto-match → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"} res={"success":true,"data":{"processed":3,"matched":1,"zeroCandidates":2,"ambiguous":0}}
+> POST /api/accounting/reconciliation/lines/cmvtze2hd009mci9co3ob8gug/ignore → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","ignored":true}
+> (linha E sem candidato: 2026/0180 estornado; postado lançamento 4.1 D / 1.1.1.01 C 2500, POST /api/accounting/post → 201; 1ª abertura de Sugestões depois disso mostrou "Nenhum candidato" (GET suggestions → 200 {"success":true,"data":[]}); a API, chamada direto, devolveu o candidato; reaberto depois de "Atualizar", a tela listou. Ordem GET×POST não confirmada.)
+> POST /api/accounting/reconciliation/matches → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","statementLineId":"cmvtze2hd009lci9cresny5cz","postingIds":["cmvtzfgju009uci9crgmpv7hg"]} res={"success":true,"data":{"matchedPostings":1}}
+> POST /api/accounting/reconciliation/matches/cmvtzhcgc009wci9cmdtlhgq9/unmatch → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"}; linha volta a Pendente
+> ## h) Import/Export (CSV de lançamentos injetado no input file)
+> POST /api/accounting/data-exchange/imports → 201 (job cmvtziswn009xci9c3nru7tqx, IMPORT_JOURNAL_ENTRIES, VALIDATED; tela "Total: 2 | Válidas: 2 | Inválidas: 0")
+> POST /api/accounting/data-exchange/jobs/cmvtziswn009xci9c3nru7tqx/commit → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"} status COMMITTED
+> POST /api/accounting/data-exchange/exports → 201 body={"kind":"EXPORT_TRIAL_BALANCE","format":"csv","unitId":"cmuw4z7zj02ehcii0st3unfr4"} status EXPORTED, export_trial_balance.csv 779 bytes
+> ## i) Referencial (seed-real: 2025 = 42/42 "Pronto"; 2026 vazio)
+> POST /api/accounting/referential/mappings/copy → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","fromVersion":"2025","toVersion":"2026"} (2026 passa a 42/42; com tudo mapeado a tela esconde a grade de edição)
+> POST /api/accounting/referential/mappings/batch → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","mappingVersion":"2027","items":[{"accountId":"cmuw4z84o02g1cii05zbuilnh","referentialCode":"1.01.01.02.01","label":"Bancos Conta Movimento - No País"}]}; tela "Mapeadas: 1 | Pendentes: 41"
+> ## j) Contrapartes
+> POST /api/counterparties → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","type":"SUPPLIER","name":"Contraparte H2 com ref","ref":"H2-REF-001"}
+> POST /api/counterparties → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","type":"CUSTOMER","name":"Contraparte H2 sem ref"}  (sem chave ref)
+> POST /api/counterparties/cmvtzlc3900crci9c9791y9e1/archive → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"}; linha sumiu
+> ## k) Plano de contas / Períodos
+> POST /api/accounting/accounts → 201 body={"code":"4.9","name":"Despesa teste H2","nature":"Expense","acceptsEntries":true,"unitId":"cmuw4z7zj02ehcii0st3unfr4"}
+> PATCH /api/accounting/accounts/cmvtzm15000ctci9cizegw9tr/requires-dimension → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","requiresDimension":true} (linha "Obrigatória")
+> PATCH .../requires-dimension → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","requiresDimension":false} (linha "Opcional")
+> POST /api/accounting/cmuw4z7zj02ehcii0st3unfr4/periods/seed-year → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2027} ("Semear 2027"; 12 meses Futuro)
+> POST /api/accounting/periods/cmvtzmt7300cuci9cf3yhsv46/open → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"} (Jan/2027 Aberto)
+> POST .../soft-close → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","reason":"H2 15k teste"} (Fech. Parcial)
+> POST .../reopen → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","periodId":"cmvtzmt7300cuci9cf3yhsv46","reason":"H2 15k teste"} (Aberto)
+> POST .../hard-close → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","reason":"H2 15k teste"} (Definitivo)
+> POST /api/accounting/closing/exercise → 400 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2027} res={"code":"VALIDATION_ERROR","message":"Não há saldo de contas de resultado para encerrar em 2027."}
+> Achado: modal "Encerrar exercício" mostra Unidade = id cru (cmuw4z7zj02ehcii0st3unfr4)
+> Total: 52 escritas registradas pelo gancho; 1 ≥400 (o encerramento). Console: 4× "Failed to load resource: 400" desde o login no seed-real (ECF Real 400, encerramento 400 e 2 de origem não identificada).
+> ```
+>
+> **Desvios e lacunas do passo 15:**
+> - a) O braço **estoque** não rodou no `seed-real`: o modal mostra "Nenhum produto no catálogo". Ele rodou pela mesma tela no
+>   `seed-presumido`, hoje, antes do passo 6 (Shampoo H2, 10 un., título `OPEN` de 20000; ver o bloco dos passos 6–11), mas
+>   aquela sessão não guardou o status nem o corpo do request.
+> - c) O 1º PATCH da conta da Parte B saiu com a descrição antiga porque o agente preencheu o campo errado (no modo edição os
+>   índices mudam). Foi refeito; o PATCH válido está acima.
+> - g) A 1ª abertura de "Sugestões" depois de postar o lançamento de R$ 25 mostrou "Nenhum candidato". A mesma rota chamada
+>   pela API devolveu o candidato. Depois de "Atualizar", a tela também listou. Não foi confirmado se o GET saiu antes do POST.
+> - k) "Encerrar exercício" deu 400 de regra ("Não há saldo de contas de resultado para encerrar em 2027"). O corpo
+>   `{unitId, year}` passou pelo DTO. O agente não encerrou 2026 (exercício com movimento e meses abertos) para não lançar
+>   encerramento real no dev.db. Efeito colateral no `seed-real`: 2027 semeado e Jan/2027 `HARD_CLOSED`.
+>
+> **Achados de tela (rótulo e fluxo, não corrigidos):** (G) "Cash" sem tradução no select de forma de pagamento/recebimento e
+> status "PARTIALLY_PAID" sem tradução na lista de Contas a Pagar. (H) A resposta do cancelamento de pagamento traz um
+> `updatedAt` velho (20:06:43.262Z, enquanto o dev.db tem 20:06:57.856). (I) Em Lançamentos, um rascunho (status "Rascunho",
+> sem número) mostra "Recibo (PDF)" e "Estornar", e um lançamento "Estornado" ainda mostra "Estornar". (J) O modal "Encerrar
+> exercício" mostra o `unitId` cru no campo Unidade. Console (só erros): 4× "Failed to load resource: 400" desde o login no
+> `seed-real`. Dois são o 400 da ECF Real (passo 14) e o do encerramento. Os outros 2 não têm origem identificada, como no
+> passo 11.
+>
+> **Refeitos a pedido do dono** (chat, 29/10, questionário: *"Refazer a/k antes"*):
+>
+> ```text
+> a) produto pela tela (Dashboard → Produtos → Novo Produto):
+> POST /api/dynamic-tables/cmuw4z7xu02drcii06zy1xj4m/data → 201 body={"data":{"name":"Condicionador H2","sku":"H2-COND","category":"Cabelo","usageType":"Sale"}}
+> Contas a Pagar → Nova Conta → "Compra de estoque" (o select de produto passa a listar "Condicionador H2"):
+> POST /api/payables → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","supplierName":"Fornecedor H2","description":"H2 15a estoque","issueDate":"2026-10-29","dueDate":"2026-10-29","amountCents":10000,"inventoryProductRef":"cmvu8199300dvci9ce08ij9sr","inventoryQty":5,"documentNumber":"NF-H2-EST-1"}
+>   resposta: id cmvu81uyv00e3ci9ckhwb0e63, "expenseAccountId":null, "inventoryProductRef":"cmvu8199300dvc…"
+> k) exercício com saldo: Períodos 2027 → Fev "Abrir"; Balancete → Novo Lançamento em 10/02/2027; Dez "Abrir"; "Encerrar exercício 2027":
+> POST /api/accounting/periods/cmvtzmt7500cuci9c5bamfzy0/open → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"}
+> POST /api/accounting/post → 201 body={"date":"2027-02-10","description":"H2 15k despesa 2027 para encerramento","unitId":"cmuw4z7zj02ehcii0st3unfr4","lines":[{"accountCode":"4.9","debitCents":1000,"creditCents":0},{"accountCode":"1.1.1.01","debitCents":0,"creditCents":1000}]}
+> POST /api/accounting/closing/exercise → 422 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2027} res={"code":"ACCOUNTING_PERIOD_NOT_OPEN","message":"Período contábil 2027/12 não está aberto para lançamentos."}
+> POST /api/accounting/periods/cmvtzmt7900d5ci9cg0bmvtxb/open → 200 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4"}   (Dez/2027)
+> POST /api/accounting/closing/exercise → 201 body={"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2027} res={"success":true,"data":{"id":"cmvu80m5800dpci9c4cn3y3ev",…,"date":"2027-12-31T00:00:00.000Z","description":"Encerramento do exercício 2027 — apuração do resultado","status":"Posted","sourceType":"closing","sourceId":"2027",…}}
+> tela: "Exercício encerrado. | Lançamento nº 2 — exercício 2027"
+> ```
+>
+> Efeito no `seed-real`: 2027 com 2 lançamentos (a despesa de R$ 10 e o encerramento), Jan/2027 `HARD_CLOSED`, Fev e
+> Dez/2027 abertos. O 2026 não foi tocado pelo encerramento. Antes do encerramento, a tela não avisa que Dez precisa estar
+> aberto: o 422 aparece só depois do clique.
+>
+> Leitura do agente: a) a k) com 2xx nas escritas depois do refazer.
+> Desfecho escolhido pelo dono no chat (29/10, questionário): *"PASSOU"*.
+
 Desfecho do passo 15 (marcar UM):
-[ ] PASSOU — a) a k) com evidência conferindo com o esperado
+[x] PASSOU — a) a k) com evidência conferindo com o esperado *(marcado pelo dono no chat, 29/10; assinatura abaixo continua do dono)*
 [ ] FALHOU — item __ divergiu; evidência colada acima
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passo 15): ____________
