@@ -1,0 +1,23 @@
+Fonte: https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/122002 (SIJUT, visão Multivigente)
+Lido no navegador embutido em 2026-10-30. SHA-256 do document.body.innerText integral da página (132.778 caracteres):
+73f7e0cf4dc5647d33a0957c093f1b14bc65d15b744b06631e66f1d71996105a
+Trechos abaixo copiados literalmente desse innerText.
+
+INSTRUÇÃO NORMATIVA RFB Nº 2055, DE 6 DE DEZEMBRO DE 2021
+Publicado(a) no DOU de 08/12/2021, seção 1, página 57
+Histórico de alterações
+[Republicado(a) parcialmente em 13 de dezembro de 2021]
+[Alterado(a) pelo(a) Instrução Normativa RFB nº 2156, de 8 de agosto de 2023]
+[Alterado(a) pelo(a) Instrução Normativa RFB nº 2214, de 2 de setembro de 2024]
+[Alterado(a) pelo(a) Instrução Normativa RFB nº 2272, de 17 de julho de 2025]
+[Alterado(a) pelo(a) Instrução Normativa RFB nº 2288, de 30 de outubro de 2025]
+[Alterado(a) pelo(a) Instrução Normativa RFB nº 2314, de 18 de março de 2026]
+
+Art. 27. Os saldos negativos do IRPJ e da CSLL poderão ser objeto de restituição no caso de:
+I - apuração anual, a partir do mês de janeiro do ano-calendário subsequente ao do encerramento do período de apuração;
+II - apuração trimestral, a partir do mês subsequente ao do trimestre de apuração; e
+III - apuração especial decorrente de extinção, cisão parcial, cisão total, fusão ou incorporação, a partir do 1º (primeiro) dia útil subsequente ao do encerramento do período de apuração.
+Art. 28. O pedido de restituição e a declaração de compensação relativos ao saldo negativo de IRPJ ou de CSLL serão recepcionados pela RFB somente depois da confirmação da transmissão da ECF, na qual esteja demonstrado o direito creditório, de acordo com o período de apuração.
+§ 1º O disposto no caput aplica-se, inclusive, aos casos de apuração especial decorrente de extinção, cisão parcial, cisão total, fusão ou incorporação.
+§ 2º No caso de saldo negativo de IRPJ ou de CSLL apurado trimestralmente, a restrição de que trata o caput será aplicada somente depois do encerramento do respectivo ano-calendário.
+(Os arts. 27 e 28 não trazem marca de alteração na visão multivigente.)
