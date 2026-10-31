@@ -181,6 +181,31 @@ cabeçalho não baixa estoque nem gera comissão: só o `afterUpdate` com mudan�
 | estoque insuficiente ou negativo | `stockSync.ts:110-118`, `:246-248` | **Sim**: o caso mais provável (F-OFF-10) |
 | período contábil fechado | `AccountingSyncPort.ts:124-125` | Não recusa a venda. A ponte **pula** a receita com `warn` (`SaleSalesAccountingBridge.ts:113-124`): a nota é transmitida e o razão fica sem a receita até o reconcile. Vira alerta na OFF-10 |
 
+## 2B. Como o mercado faz (pesquisa de 31/10, a pedido do dono)
+
+Fontes: documentação de fabricante e fórum do ACBr. **Não são norma.** A regra fiscal continua no dossiê
+`nfce-offline-caixa-serie` [D01]; o que segue é prática, para pesar os forks.
+
+| # | Achado | Fonte | Grau |
+|---|---|---|---|
+| M1 | **PDV com banco local que sincroniza com a retaguarda.** O Íntero PDV trabalha com a base da loja ou com a da retaguarda; com a base local, os dados vão para a matriz por sincronização | [Alterdata, Íntero PDV](https://ajuda.alterdata.com.br/interodoc/varejo/intero-pdv) | verificado (fabricante) |
+| M2 | **Contingência automática.** O FrontLoja emite a NFC-e off-line e transmite depois; o TSS entra e sai da contingência sem o administrador | [TOTVS, FrontLoja NFC-e](https://tdn.totvs.com.br/download/attachments/172300183/FRT_BT_Emissao_de_NFCE_FrontLoja_TPXUL0.pdf?api=v2) | verificado (fabricante) |
+| M3 | **O modelo contrário existe:** o PDV NFC-e do Protheus (SIGALOJA) opera on-line com a retaguarda e não tem modo off-line, que é o F-AL-4 (a) | [TOTVS, SIGALOJA NFC-e](https://tdn.totvs.com.br/download/attachments/126189679/LOJA_BT_NFCe_Nota_Fiscal_de_Consumidor_Eletronica_THCODX.pdf?api=v2) | verificado (fabricante) |
+| M4 | **Série por caixa é o padrão.** A Senior exige série diferente por PDV, a CIGAM pede série distinta por caixa e a Alterdata diz que a série da NFC-e é diferente em cada máquina. No fórum há relato de que a SEFAZ-AM orientou o mesmo. Na contramão, outro relato diz que a SEFAZ-MT não exige série por caixa | [Senior, F070PDV](https://documentacao.senior.com.br/gestaoempresarialerp/5.10.3/Menu_Cadastros/f070pdv.htm); [CIGAM](https://www.cigam.com.br/wiki/index.php/CL_-_Como_Fazer_-_Nota_Fiscal_de_Consumidor_Eletr%C3%B4nica_-_NFC-e); [Alterdata, NFC-e no PDV](https://ajuda.alterdata.com.br/shop/configuracoes-e-manutencao-aba-do-shop/pdv/configurador-pdv-alterdata/configuracoes-da-nfc-e-pdv-shop); [ACBr](https://www.projetoacbr.com.br/forum/topic/16971-sequ%C3%AAncia-nfc-e-para-pdv-distintos/); [Contábeis](https://www.contabeis.com.br/forum/tecnologia-contabil/140524/nfc-e/) | verificado nos fabricantes; relatos de SEFAZ não verificados |
+| M5 | **Estoque negativo é configuração da retaguarda,** com quatro modos: permitir sem aviso, avisar, proibir ou pedir permissão. A TOTVS agenda a baixa de estoque off-line, separada da venda | [Alterdata, Estoque Negativo](https://ajuda.alterdata.com.br/x/WmhEDg); [TOTVS PDV](https://tdn.totvs.com/download/attachments/146183750/FRT_LOJA_BT_TOTVS_PDV_THFGHO.pdf?api=v2) | verificado (fabricante) |
+| M6 | **A série 890–989 de contingência ainda aparece em blogs,** mas um usuário em MG relata a rejeição 266 ao usá-la. Bate com a revogação de 2019 [D01] | [ACBr, NFC-e MG](https://www.projetoacbr.com.br/forum/topic/49249-nfc-e-mg-duvidas-contingencia/) | relato; a norma está em [D01] |
+| M7 | **O prazo de "24 h" é citado por blog e pela TOTVS,** mas em SP vale o 1º dia útil seguinte (Portaria SRE 40/2024), e o PR-9 usa esse. Os fabricantes também alertam para a rejeição 462 e o buraco no SPED, que OFF-8 e OFF-9 cobrem | [TOTVS, Auditoria NFC-e](https://tdn.totvs.com.br/download/attachments/207356053/Tutorial%20Auditoria%20NFC-e.pdf?api=v2); [ACBr, contingência](https://www.projetoacbr.com.br/forum/topic/93366-conting%C3%AAncia-nfc-e-como-manter-as-vendas-no-ar-quando-a-sefaz-cai/) | verificado (fabricante); UF varia |
+
+**Diferença de desenho:** no padrão de mercado (M1, M4), o caixa emite **sempre** e tem a série dele sempre. Neste BRIEF
+o caixa emite só quando o servidor cai, e a série é reservada a esse uso. Não proponho trocar: isso reabriria o desenho
+da EMENDA-4 (servidor monta, caixa só assina), fora desta frente. Fica em §9.
+
+**Lacunas:**
+- nenhuma fonte diz o que a retaguarda faz quando não consegue importar a venda do caixa (F-OFF-10);
+- nada sobre o pagamento (F-OFF-11) nem sobre itens e comissão (F-OFF-12).
+
+O próximo passo seria ler o código-fonte do OCA `l10n-brazil` e do Odoo POS. Não li.
+
 ## 3. Checklist de comportamentos
 
 Marcadores: `[direto]` sem fork · `[fork:F-OFF-n]` vale o ramo recomendado **se** o dono ratificar · `[cond:…]` só existe
@@ -531,6 +556,8 @@ A cl. 11ª manda operar em contingência "quando em decorrência de problemas t�
   110112. Isso é o que a regra 2 da casa e o F-AL-4 (a) tentavam evitar. (a) deixa o cliente sem vender justamente no
   caso mais comum (VPS fora com internet boa). A leitura de que "o sistema emissor do contribuinte fora" é problema
   técnico é **inferida**, não verificada (§7 item 1). **RATIFICAÇÃO PENDENTE.**
+- *Mercado (§2B, M2 e M3):* os PDVs off-line de fabricante entram e saem da contingência sozinhos, sem o administrador.
+  O modelo Protheus on-line, sem modo off-line, é o equivalente do (a).
 
 ### F-OFF-2 — Como reservar a numeração do caixa sem colidir com o servidor
 - **(a) Série exclusiva por dispositivo e ambiente** (OFF-1). O caixa numera em sequência própria, com diário
@@ -542,7 +569,8 @@ A cl. 11ª manda operar em contingência "quando em decorrência de problemas t�
   vedação de reusar em contingência número já transmitido como normal (cl. 11ª § 2º) fica satisfeita, porque a série do
   caixa nunca recebe nota normal. (b) cria buraco quando a faixa volta. Em SP, desde 01/11/2026, não há inutilização
   (cl. 16ª § 6º, Aj. 38/26), e o buraco vira presunção de nota não transmitida (cl. 11ª § 5º). (c) só faz sentido com
-  vários caixas off-line, o que o AL-4 já impede. Série própria é lícita e não exigida: cl. 4ª § 1º III revogada [D01];
+  vários caixas off-line, o que o AL-4 já impede. *Mercado (§2B M4):* série por caixa é o padrão de três fabricantes.
+  Série própria é lícita e não exigida: cl. 4ª § 1º III revogada [D01];
   Anexo IV p. 7. Lacuna: se a SEFAZ-SP limita o número de séries (cl. 4ª § 2º, §7 item 2). **RATIFICAÇÃO PENDENTE.**
 
 ### F-OFF-3 — Quanto da montagem vai para o desktop
@@ -652,6 +680,9 @@ cadastro errado, e o alerta pede o ajuste. A prevenção no caixa faz a sobra se
 estoque do `SalesPlugin` com uma exceção nomeada. É regra do próprio módulo de vendas, não integração cruzada no motor,
 então não cai no STOP do CLAUDE.md (inferido; o revisor do OFF-PR-3 confere). O produto sem `Product Units` continua
 recusado no snapshot (`foraDoSnapshot`, OFF-2), então não chega ao servidor. **RATIFICAÇÃO PENDENTE.**
+- *Mercado (§2B, M5):* estoque negativo é uma configuração da retaguarda nos fabricantes (Alterdata: permitir, avisar,
+  proibir ou pedir permissão), e a TOTVS agenda a baixa do estoque off-line, separada da venda. Isso aponta para (a),
+  mas é inferência: nenhuma fonte diz o que a retaguarda faz quando a importação da venda falha.
 
 ### F-OFF-11 — Pagamento da venda off-line
 **Fato (§2A c):**
@@ -721,6 +752,8 @@ disco do caixa é PII mínima e necessária (inferido). **RATIFICAÇÃO PENDENTE
    frente própria (F-OFF-11 c).
 3. **Mais de um caixa off-line por unidade:** exige reabrir o F-AL-3 / AL-4 (um assinador por unidade).
 4. **NF-e 55 off-line:** a contingência off-line é só da NFC-e (rej. 711 na 55, `emContingencia`). Fora.
+5. **Caixa como emissor sempre, não só no off-line** (§2B, padrão M1 e M4): o caixa sempre emite, com a série dele.
+   Isso reabre o desenho da EMENDA-4 (servidor monta, caixa só assina). Exige autorização própria.
 
 ## 10. Gates de envio [OPS-001]
 
