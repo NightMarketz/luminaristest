@@ -83,7 +83,7 @@ E-5 — data do Simples, portal NFS-e, notícia de 29/10/2026 (mesmo dossiê, [D
 ## Desfecho — marcar UM por gate (dono)
 
 **D1**
-[ ] FECHA — todos os itens da lista com resposta verificada ou decisão do dono (tabela acima)
+[x] FECHA — dono, chat, 31/10: "Pode fechar o d1" (fold feito na nota do D1)
 [ ] NÃO FECHA — item __ ainda depende de: ____
 [ ] ADIA — esperar: ____
 
