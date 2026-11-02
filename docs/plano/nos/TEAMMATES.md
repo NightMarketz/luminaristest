@@ -26,6 +26,9 @@ prs: ["#969"]
 - [`PRE-ADR-TEAMMATES.md`](../../adr/PRE-ADR-TEAMMATES.md) — 29/10, **Accepted**: F-TM-1..13 ratificados; quatro contra a recomendação (canais completos, BullMQ + Redis, webhook de rotina, cliente MCP), com as consequências na §5.1
 - [`BE-INCR-TEAMMATES-brief.md`](../../accounting/BE-INCR-TEAMMATES-brief.md) — 43 itens em PR-0..PR-10; canais, webhook e MCP por último, cortáveis sem desfazer a base
 - Cédula: [[D-2026-10-29-TEAMMATES-FORKS]]
+- **Sequência de execução** (TEAMMATES + RAG intercalados, um PR por vez, 18 passos): [[FILA-ORDEM]] §G
+- **Emenda de 30/10** (dono, chat: "Sim, emendas"; origem [[D-2026-10-30-RAG-DOCUMENTOS-FORKS]]): itens 8 (ressalva
+  do teste de `OPENAI_API_KEY` para `lib/embedding/**`) e 23 (o orçamento soma `DocumentAiUsage`) do BRIEF
 
 ## O que é
 
