@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — lgpd-teammates-ia-mcp
 
 **Pergunta:** Teammates (agentes de IA) do Luminaris: papéis LGPD (controlador/operador/suboperador), transferência internacional (art. 33 + Res. CD/ANPD 19/2024), base legal (art. 7º) e obrigações do produto ao enviar dados de clientes do tenant a provedor de IA (BYOK) e a servidores MCP de terceiros
-**Aberto em:** 2026-10-29T10:35:24-03:00 · **Atualizado em:** 2026-10-29T10:46:38-03:00
+**Aberto em:** 2026-10-29T10:35:24-03:00 · **Atualizado em:** 2026-10-29T23:35:19-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -10,9 +10,10 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
 
 **Em duas linhas:** o envio é lícito se o tenant tiver base legal e um mecanismo válido de transferência
 internacional, e esse mecanismo precisa estar no contrato **do tenant** com o provedor (BYOK), não no do
-Luminaris. Risco principal: hoje só a UE tem decisão de adequação da ANPD [D06][D09]. Fora dela, a transferência
-depende das cláusulas-padrão da ANPD sem nenhuma alteração [D03 art. 16], e **não verifiquei** se os contratos de
-Anthropic, OpenAI e Google as incluem (§5, L1).
+Luminaris. Contratos lidos em 29/10 (§6): **só o Google** traz as cláusulas-padrão da ANPD e processa na UE
+(adequada pela Res. 32/2026), e isso vale também para o Claude pelo Google Cloud. A API direta da Anthropic e a da
+OpenAI **não têm mecanismo pronto** para dado vindo do Brasil. Risco principal: ligar o piloto (PR-8) num adaptador
+direto da Anthropic ou da OpenAI.
 
 Graus: **verificado** = li o texto vigente; **inferido** = aplicação minha ao caso, sobre texto lido.
 
@@ -191,7 +192,12 @@ art. 37. Dado vindo de fora e tratado aqui segue sob a LGPD [D03 art. 8º]. *Inf
 **A3. O provedor de IA é só operador?** Depende de os termos de API do provedor permitirem uso do dado para fim
 próprio (treino, retenção para monitorar abuso). Se permitirem, para esse fim ele é **controlador**: é
 compartilhamento com outro controlador [D01 art. 9º V], com base legal própria. Isso é fato contratual de cada
-provedor, não norma. Fica como lacuna L1, sem decisão de produto antes de lido.
+provedor, não norma. **Lido em 29/10 (§6):** nos planos pagos, nenhum dos três treina com o dado de API
+[D13 B; D16; D20]. Os três guardam os dados por um tempo limitado para monitorar abuso: OpenAI até 30 dias [D16],
+Google "for a limited period of time" [D20], e a Anthropic pode reter "to combat harmful use" [D12 H.1.b]. Essa
+retenção para segurança do próprio serviço é a zona cinzenta. A leitura mais segura é tratá-la como parte do
+serviço de operador e citá-la no aviso ao titular. O **plano gratuito da Gemini API usa o dado para melhorar
+produtos e pode ter revisão humana** [D20]: lá o Google é controlador, e o produto tem de recusar essa chave.
 
 **A4. O tenant pequeno perde os benefícios da Res. 2/2022?** IA conta como critério específico de alto risco
 ("tecnologias emergentes ou inovadoras") [D04 art. 4º II "a"]. Falta um critério geral: larga escala, ou afetar
@@ -208,13 +214,22 @@ padrão vem conservador e é configurável, e o tenant confirma a lista ao ligar
 dele. É desenho de produto, sem pergunta ao advogado.
 
 ## 5. Lacunas
-- **L1. Contratos dos provedores (não lidos):** se os termos de API e o DPA de Anthropic, OpenAI e Google incluem
-  as cláusulas-padrão da ANPD **integrais**; se oferecem processamento em região UE/EEE; e se usam dado de API para
-  fim próprio. Não é norma (página de fornecedor), mas decide a Q2 na prática. Antes do PR-8, ler no navegador
-  embutido e gravar `docs/Dnn_*-navegador.txt` com SHA-256.
-- **L2. Hospedagem do próprio Luminaris:** o ADR-M2 deixa em aberto "qual VPS/provedor concreto". Se a VPS ficar
-  fora do Brasil, o ERP inteiro já é transferência internacional (Luminaris operador → hospedagem suboperador),
-  antes de qualquer teammate.
+- **L1. Contratos dos provedores: FECHADA em 29/10.** Resultado no §6. Ficam abertos dois pontos menores: (a) se o
+  Claude pelo Google Cloud (modelo de parceiro) está sob o DPA do Google ou sob os termos da Anthropic. A
+  residência na UE está verificada [D22]; a cobertura contratual é *inferida*, porque não achei cláusula que inclua
+  nem que exclua os modelos de parceiro do CDPA [D18]. (b) Qual entidade do Google contrata com o tenant brasileiro:
+  isso decide qual versão das BR SCCs se aplica [D18 Brazil 3.1].
+- **L2. Hospedagem do próprio Luminaris (decisão do dono, ainda aberta):** o ADR-M2 deixa em aberto "qual
+  VPS/provedor concreto". A LGPD não exige hospedar no Brasil: não há regra de localização de dado para ERP privado
+  nas normas lidas. O que ela exige é o mecanismo do art. 33 para qualquer saída do país. Critério para a escolha,
+  da mais simples para a mais trabalhosa:
+  (1) **região no Brasil**: não há transferência internacional na hospedagem;
+  (2) **região na UE/EEE**: adequada pela Res. 32/2026, sem cláusula [D09];
+  (3) **qualquer outro país**: só se o contrato do provedor de VPS trouxer as BR SCCs integrais [D03 art. 16]. Se
+  não trouxer, todo o ERP fica sem mecanismo, com ou sem teammate.
+  Nos casos (2) e (3), o Luminaris (operador) é o exportador perante a hospedagem (suboperador), que é a Opção B da
+  Cláusula 4 com o tenant como "Terceiro Controlador" [D03 Anexo II], e a hospedagem entra na lista de
+  suboperadores e no aviso do tenant.
 - **L3.** Res. CD/ANPD 18/2024 (encarregado) e o texto das alterações da Res. 15/2024 na Res. 2/2022 não foram
   lidos. Não mudam a conclusão, mas entram no DPA.
 - **L4.** Não achei norma que fixe prazo para o **operador** avisar o controlador de incidente. A Res. 15/2024 fala
@@ -222,7 +237,58 @@ dele. É desenho de produto, sem pergunta ao advogado.
 - **L5.** O guia da ANPD [D05] é a versão 2.0 de abril/2022 e não é vinculante. Não verifiquei se há versão mais
   nova.
 - **Fora de escopo (achado):** o chat agente que já existe (I11, `OPENAI_API_KEY` do cliente, ADR-M2 decisão 3) já
-  manda dado de tenant à OpenAI. A mesma análise vale para ele hoje, independente dos teammates.
+  manda dado de tenant à OpenAI. A mesma análise vale para ele hoje, independente dos teammates. Pelo §6, a API
+  direta da OpenAI não tem mecanismo pronto para dado vindo do Brasil.
+
+## 6. Contratos dos provedores de IA (L1, lidos em 29/10/2026)
+
+São documentos de fornecedor, não normas. Valem como prova do que cada contrato diz na data. Arquivos e SHA-256
+estão na tabela de fontes de fornecedor abaixo.
+
+| | **Google**: Gemini API paga e Vertex (Google Cloud) | **Anthropic**: API direta | **OpenAI**: API direta |
+|---|---|---|---|
+| Cláusulas-padrão **da ANPD** no contrato | **Sim.** O CDPA do Google Cloud tem a seção "Brazil", com BR SCCs controlador→operador e operador→operador [D18], e o texto é o da ANPD: "aprovadas pela Autoridade Nacional de Proteção de Dados (ANPD)" [D19 Cl. 1]. A Gemini API paga segue o DPA de operador do Google [D20], que tem a "PART C - ADDITIONAL TERMS FOR LGPD" com BR SCCs [D21]. | **Não.** O DPA (em vigor desde 24/02/2025) incorpora só as SCCs da UE (Módulos 2 e 3), o adendo do Reino Unido e o da Suíça [D12 I.1; Schedule 3]. Não menciona Brasil, LGPD nem ANPD. | **Não.** O DPA (em vigor desde 01/01/2026) trata só de "Dados do EEE e da Suíça" e "Dados do Reino Unido", com as SCCs da Comissão Europeia [D15 §4]. Não menciona Brasil, LGPD nem ANPD. |
+| Processar na UE (adequada pela Res. 32/2026) | **Sim, no Vertex**: os endpoints multi-região UE mantêm o processamento na UE [D22]. Modelos Gemini 3.5–4 e **Claude (Haiku/Sonnet/Opus 4.5–5.5, Fable)** constam como "EU multi-region: Supported" [D22]. A Gemini API (ai.google.dev) guarda logs "in any country" [D20] e não tem residência. | **Não.** `inference_geo` só aceita "global" ou "us", e o armazenamento só "us": "Currently, "us" is the only available workspace geo" [D14]. | **Sim, com condições**: a região Europa (EEE + Suíça) existe, mas exige aprovação comercial, controles de monitoramento de abuso e uma emenda de retenção: "To use data residency with any region other than the United States, you must be approved for abuse monitoring controls, and execute a Modified Retention amendment" [D17]. |
+| Processar no Brasil (sem transferência) | Só o **Gemini 2.5 Flash (128k)** em southamerica-east1 [D22]. Os modelos atuais não têm essa opção. | Não. | Não: a lista de regiões não tem o Brasil [D17]. |
+| Treino com dado de API | Não, no plano pago [D20]. **O plano gratuito treina e pode ter revisão humana** [D20]. | Não: "Anthropic may not train models on Customer Content from Services" [D13 B]. | Não, por padrão [D16; D17]. |
+| Retenção para abuso | Logs "for a limited period of time" [D20] | Pode reter "to combat harmful use of the Services" [D12 H.1.b] | Até 30 dias. Retenção zero (ZDR) só com aprovação [D16] |
+
+**O que isso muda na conclusão (inferido sobre o que foi lido):**
+1. **Caminho de menor atrito para o piloto (PR-8): Google Cloud.** Pode ser Gemini ou Claude pelo Vertex, no
+   endpoint multi-região UE. Fica com dois amparos: adequação, porque o destino é a UE [D09 art. 1º], e as BR SCCs
+   do CDPA como reserva [D18 Brazil 3.1]. A Gemini API paga também serve, com as BR SCCs [D21], mas sem residência.
+2. **A API direta da Anthropic não tem mecanismo do art. 33 pronto.** Não traz BR SCCs, e não há região UE nem
+   Brasil. Um tenant pequeno não consegue fazer a Anthropic assinar as cláusulas da ANPD integrais [D03 art. 16].
+   Restariam o art. 33 IX (A2, leitura fraca) ou o consentimento específico (inviável). Para dado pessoal real, o
+   adaptador direto da Anthropic **não deve ficar disponível** até a Anthropic publicar BR SCCs ou região UE. O
+   Claude continua disponível pelo Google Cloud.
+3. **A API direta da OpenAI** só fecha se o tenant for aprovado para a região Europa e assinar a emenda de retenção
+   [D17]. Sem isso, a situação é a mesma da Anthropic. Isso alcança **o chat agente que já existe** (achado acima).
+4. **Travas de produto novas:** (a) recusar chave Gemini sem projeto com faturamento [D20 "Unpaid Services"];
+   (b) no Vertex, usar endpoint regional ou multi-região UE e nunca o global, que "don't provide regional isolation
+   or data residency guarantees" [D22]; (c) a tela de destino da Q4 mostra provedor, região e mecanismo
+   (adequação UE / BR SCCs / nenhum), e com "nenhum" o envio de dado pessoal fica bloqueado.
+5. **Efeito no F-TM-9 (SDK oficial por provedor):** o Claude pelo Vertex usa o cliente Vertex do SDK oficial da
+   Anthropic. Não pede adaptador novo de fora, mas pede o modo "Claude via Google Cloud" no adaptador Anthropic.
+   Isso é decisão de produto e volta ao PRE-ADR, não a esta pesquisa.
+
+### Fontes de fornecedor (não normativas)
+| Id | Documento | Origem | Lido | SHA-256 |
+|---|---|---|---|---|
+| D12 | Anthropic Data Processing Addendum (efetivo 24/02/2025) | <https://www.anthropic.com/legal/data-processing-addendum> (curl) | 2026-10-29 | `42ee5e9feda6af923947ec2b2636a4ccea78f641b4d7584cb723c86cfb3cfc5e` |
+| D13 | Anthropic Commercial Terms (efetivo 17/06/2025) | <https://www.anthropic.com/legal/commercial-terms> (curl) | 2026-10-29 | `e6ac4a73d651c69637ed0f7271aa835966a0fb901bad3c4d7899053ba5062c6f` |
+| D14 | Anthropic — Data residency | <https://platform.claude.com/docs/en/build-with-claude/data-residency> (curl) | 2026-10-29 | `e4ce1eae50f36bffc1c9a95628c8457ccf2f5e9afd5c73f0668cbe1417eb0d25` |
+| D15 | OpenAI DPA (vigente 01/01/2026), trechos | <https://openai.com/pt-BR/policies/data-processing-addendum/> (navegador; curl 403) | 2026-10-29 | `37ed1cfb3c123bf96fae176a799acaec41970011bdede878a1fcd38f26961405` |
+| D16 | OpenAI Privacidade empresarial (08/01/2026), trechos | <https://openai.com/pt-BR/enterprise-privacy/> (navegador; curl 403) | 2026-10-29 | `d4b8d65e350b38c65c818860b15d4e685daf84b0489e13fae4b0c35788c25892` |
+| D17 | OpenAI — Data controls / data residency | <https://developers.openai.com/api/docs/guides/your-data> (curl) | 2026-10-29 | `831eeab4c90b9d5ba19cea6beb2edc41bd06663466f0ab810b2a553666d1ab57` |
+| D18 | Google Cloud Data Processing Addendum (CDPA), seção Brazil | <https://cloud.google.com/terms/data-processing-addendum> (curl) | 2026-10-29 | `b716fab82d99fcf1e1bdfdb87acb325536f6c0c340a05ae12b186b5113521639` |
+| D19 | Google — BR SCCs (Controller-to-Processor) | <https://cloud.google.com/sccs/br-c2p?hl=pt-br> (curl) | 2026-10-29 | `8eb683efa2c71d519d2d789515d5ca216f8906400a0e0adb4217388e93de6ab3` |
+| D20 | Gemini API Additional Terms (atualizado 28/04/2026) | <https://ai.google.dev/gemini-api/terms> (curl) | 2026-10-29 | `b6f41e84292f39299066fecaaf05ba1ebcac4a6c4300c15bfc878b7ac515efce` |
+| D21 | Google Data Processing Addendum (processor terms), Part C LGPD | <https://business.safety.google/processorterms/> (curl) | 2026-10-29 | `2aa7653d04060f3e906cfb968c213d6549fbd2a1ae3e7f56797c906a19b45acb` |
+| D22 | Vertex AI — Data residency (atualizado 28/10/2026) | <https://docs.cloud.google.com/vertex-ai/generative-ai/docs/learn/data-residency> (curl) | 2026-10-29 | `6ab60506d6c91cfcf2f3ecfa1496734a9814a3cbb2bade4af2bcda9ef92d0485` |
+
+Os `.txt` em `docs/` são a conversão do HTML para texto (D15 e D16: trechos copiados do `innerText` no navegador
+embutido). A página do fornecedor muda sem aviso: confira a data de vigência antes de citar de novo.
 <!-- /ANALISE -->
 
 ## Fontes consultadas

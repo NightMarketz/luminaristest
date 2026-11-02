@@ -1,0 +1,53 @@
+Leitura pelo navegador embutido em 2026-10-30. Documentação de fornecedor: vale como dado técnico/comercial do dia,
+não como norma. Linhas copiadas literalmente das páginas.
+
+## SOLUTI / BirdID — API do PSC (docs.vaultid.com.br, índice em https://docs.vaultid.com.br/workspace/llms.txt)
+- https://docs.vaultid.com.br/workspace/cloud/api/manutencao/cadastro-de-aplicacao.md
+  "POST https://api.birdid.com.br/v0/oauth/application" — corpo: name, comments, redirect_uris, email, client_secret, client_id
+  (sem certificado). Resposta: "Aplicacao cadastrada com sucesso".
+- https://docs.vaultid.com.br/workspace/cloud/api/manutencao/auto-cadastro-de-aplicacao.md
+  "É um serviço público, que não requer uma pré-autenticação, o registro da aplicação com assinatura digital (Com um
+  Certificado Digital ICP Brasil - SSL) deve ser feito através do protocolo JWS"
+- https://docs.vaultid.com.br/workspace/cloud/api/uso-de-certificado/assinatura-digital.md
+  "POST https://api.birdid.com.br/v0/oauth/signature"; "hash_algorithm: Object Identifier (OID) do algoritimo de hash.
+  Por exemplo, para SHA256 utilize o OID 2.16.840.1.101.3.4.2.1"; "RAW: Assinatura PKCS#1 v1.5, resultado direto da
+  operação RSA/DSA sobre o hash". Não lista os OIDs aceitos.
+  "Para abstrair o uso de recursos de criptografia [...] Conheça também os middlewares: PKCS11, CSP (Microsoft Crypto
+  API), Engine OpenSSL, JCA/JCE."
+- https://docs.vaultid.com.br/workspace/middleware/pkcs-11.md
+  "no cenário do uso de certificado em nuvem é utilizado principalmente para autenticação, listagem de objetos e
+  assinatura." C_Sign / C_SignInit: "OK".
+- https://docs.vaultid.com.br/workspace/middleware/engine-openssl.md
+  "a engine OpenSSL do BirdID é disponibilizada através do wrapper libp11 mantido pela OpenSC, esse wrapper permite o uso
+  de uma engine OpenSSL a partir de um driver PKCS#11 que o BirdID já implementa nativamente."
+- https://docs.vaultid.com.br/workspace/cess/api/preparacao-de-documento-s.md (BirdID Pro / CESS, produto licenciado)
+  "hash_algorithm | Algoritmo de hash que será utilizado na assinatura (SHA1,SHA256, SHA384 ou SHA512)"; tipos:
+  CMS, PDFSignature, CAdES, PAdES, XAdES.
+- https://docs.vaultid.com.br/workspace/cess/licenca.md
+  "Para que seja possível utilizar o BirdID Pro em produção é necessário uma licença."
+
+## SAFEWEB / SafeID — documentação do PSC (https://pscsafeweb.safewebpss.com.br/Docs/#/)
+- #/endpoints/signature/signature: "https://pscsafeweb.safewebpss.com.br/Service/Microservice/OAuth/api/v0/oauth/signature";
+  "hash_algorithm | Object Identifier (OID) do algoritimo de hash. Por exemplo, para SHA256 utilize o OID
+  2.16.840.1.101.3.4.2.1". Não lista os OIDs aceitos.
+- #/endpoints/qrcode/authorize: "Para usar este método você deve ter um client_id e um client_secret cadastrado aqui."
+  "lifetime [...] O limite para pessoas físicas é de 7 dias. Para pessoa jurídica é de 30 dias."
+- https://www.safeweb.com.br/produtos/safeidintegracao: "Realize o seu cadastro gratuito em poucos minutos"; "Cadastre a
+  sua aplicação em poucos passos"; "Personalize o limite de consumo e defina valores máximos para cobranças extras";
+  "Para utilizar a API SafeID, é necessário possuir um Certificado Digital em nuvem SafeID."
+
+## SERPRO / SerproID — oficial (gov.br), salvo como [D04]
+- "hash_algorithm - [...] valores possíveis: 2.16.840.1.101.3.4.2.1: representa o algoritmo SHA-2 256 e
+  2.16.840.1.101.3.4.2.3: representa o algoritmo SHA-2 512"
+
+## VALID — https://validcertificadora.com.br/pages/psc-integracao-via-api
+- IntegraICP: "Para adquirir o canal para integração, a solicitação precisa ser encaminhada para nossa equipe Comercial".
+
+## DIGITALSIGN — https://www.digitalsigncertificadora.com.br/repositorio/psc
+- "Serviços Implementados: Armazenamento de chaves privadas dos subscritores." Nenhuma documentação de API achada
+  (repositório, loja e busca web de 30/10).
+
+## CERTISIGN
+- Nenhuma documentação oficial da API do PSC achada. Indício de terceiro (PR público de software,
+  https://github.com/storytold/pdfcraft/pull/1615): base "https://remoteidcertisign.com.br/api/v0/" com
+  signature_session e RAW. Não é fonte da Certisign.

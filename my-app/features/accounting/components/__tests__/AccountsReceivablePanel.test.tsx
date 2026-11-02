@@ -263,6 +263,14 @@ describe('AccountsReceivablePanel — cobrança por provedor', () => {
     expect(screen.getByText('Recebida em parte')).toBeInTheDocument();
   });
 
+  it('EMENDA-1 16b: o seed do link da aba Cobrança filtra pelo nº e abre o drawer de cobranças do título', async () => {
+    vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [openReceivable], total: 1 });
+    render(<AccountsReceivablePanel unitId="u1" initialFilters={{ q: 'NF-1' }} initialChargesReceivableId="ar1" />);
+    await waitFor(() => expect(screen.getByTestId('charges-drawer-ar1')).toBeInTheDocument());
+    expect(collectionChargesService.listByReceivable).toHaveBeenCalledWith('ar1', 'u1');
+    expect(vi.mocked(accountsReceivableService.listReceivables).mock.calls[0][0]).toMatchObject({ q: 'NF-1' });
+  });
+
   it('item 20: sem conta ACTIVE ⇒ "Cobrar" desabilitado com dica; 403 na leitura das contas ⇒ habilitado', async () => {
     vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [openReceivable], total: 1 });
     vi.mocked(paymentAccountsService.list).mockResolvedValue([]);

@@ -130,6 +130,26 @@ describe('item 8 — saldo com validade no pagamento', () => {
         expect(option(sel, 'pkgOld0001').textContent).toContain('vencido em 15/01/2020');
     });
 
+    // Achado (B) do runbook H2, passo 10 (29/10): o seletor mostrava "Pacote cmvtxuu8" (pedaço do id) em vez do nome.
+    it('o saldo aparece pelo nome do pacote quando o nome é conhecido', async () => {
+        vi.mocked(packageBalancesService.listBalances).mockResolvedValue([bal('pkgValid1', null)]);
+        render(
+            <SalePaymentModal
+                sale={{ id: 's1', unitId: 'u1', customerId: 'c1', totalAmount: 100 } as SaleRecord}
+                packageNameMap={{ pkgValid1: 'Pacote H2' }}
+                isOpen
+                onClose={() => {}}
+                onConfirm={async () => {}}
+            />,
+        );
+        await waitFor(() => expect(packageBalancesService.listBalances).toHaveBeenCalled());
+        fireEvent.change(screen.getAllByRole('combobox')[0], { target: { value: 'Package Balance' } });
+        await waitFor(() => expect(screen.getAllByRole('combobox')).toHaveLength(2));
+        const text = option(screen.getAllByRole('combobox')[1] as HTMLSelectElement, 'pkgValid1').textContent ?? '';
+        expect(text).toContain('Pacote H2 — saldo R$ 500.00');
+        expect(text).not.toContain('pkgValid');
+    });
+
     it('sem nenhum saldo: a forma "Saldo de pacote" fica indisponível', async () => {
         vi.mocked(packageBalancesService.listBalances).mockResolvedValue([]);
         render(<SalePaymentModal sale={{ id: 's1', unitId: 'u1', customerId: 'c1', totalAmount: 100 } as SaleRecord} isOpen onClose={() => {}} onConfirm={async () => {}} />);

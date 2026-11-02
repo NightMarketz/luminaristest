@@ -1,6 +1,11 @@
 import { apiClient } from '../api/api-client';
 import { notify } from '../notifications/notify';
-import type { CreateChargeInput, CancelChargeInput, PayerInput } from '@/types/contracts/accounting/CollectionChargeDto.gen';
+import type {
+  CreateChargeInput,
+  CancelChargeInput,
+  ListCollectionChargesQueryInput,
+  PayerInput,
+} from '@/types/contracts/accounting/CollectionChargeDto.gen';
 
 /**
  * Cobrança por provedor (FE-INCR-PAYMENT-PROVIDER PR-2, itens 2 e 12–17) — cliente fino sobre as rotas do
@@ -66,6 +71,21 @@ export interface CollectionChargeView {
   updatedAt: string;
   /** Só no detalhe e só para quem gere o título (F9). */
   payer?: PayerInput;
+}
+
+/** Item da lista da unidade: sem pagador + o nº do título como escrito (16b; à mão, de `CollectionChargeListItem`). */
+export interface CollectionChargeListItem extends CollectionChargeView {
+  receivableDocumentNumber: string | null;
+  /** Título cancelado: fora do AR, então o nº vai sem link (D-2026-10-29-F5-16B-TITULO-CANCELADO). */
+  receivableCancelled: boolean;
+}
+
+/** Página da lista da unidade (EMENDA-1 item 16c) — à mão, transcrita de `CollectionChargeService.ts` (CollectionChargePage). */
+export interface CollectionChargePage {
+  items: CollectionChargeListItem[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 /** `amountCents` chega como string (BigInt). Único ponto de conversão (item 2). */
@@ -183,6 +203,17 @@ export const collectionChargesService = {
   /** GET /receivables/:id/charges — sem pagador (F9). */
   async listByReceivable(receivableId: string, unitId: string): Promise<CollectionChargeView[]> {
     const res = await apiClient.get<ApiEnvelope<CollectionChargeView[]>>(`/receivables/${enc(receivableId)}/charges${scopeQs(unitId)}`);
+    return res.data;
+  },
+
+  /** GET /collection-charges?unitId&status&kind&page&limit — lista da unidade (EMENDA-1 item 16c), sem pagador (F9). */
+  async listByUnit(query: ListCollectionChargesQueryInput): Promise<CollectionChargePage> {
+    // Campo vazio fica fora da query: o BE é `.strict()` e um `status=` vazio daria 400.
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(query)) {
+      if (v !== undefined && v !== null && v !== '') params.set(k, String(v));
+    }
+    const res = await apiClient.get<ApiEnvelope<CollectionChargePage>>(`/collection-charges?${params.toString()}`);
     return res.data;
   },
 

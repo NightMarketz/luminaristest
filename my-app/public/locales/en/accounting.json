@@ -67,7 +67,9 @@
       "OPEN": "Open",
       "PAYING": "Paying",
       "PAID": "Paid",
-      "CANCELLED": "Cancelled"
+      "CANCELLED": "Cancelled",
+      "PARTIALLY_PAID": "Partially paid",
+      "DEFERRED": "Deferred"
     },
     "col": {
       "expand": "Expand",
@@ -136,7 +138,7 @@
       "mode": {
         "expense": "Expense",
         "inventory": "Inventory purchase",
-        "inventoryHint": "Debits 1.1.6 Inventory and values the product at moving average — the amount above is the purchase TOTAL."
+        "inventoryHint": "Debits 1.1.3.01 Inventory and values the product at moving average — the amount above is the purchase TOTAL."
       },
       "noProducts": "No products in the catalog. Register products in the inventory module."
     },
@@ -145,6 +147,9 @@
       "paidAtLabel": "Payment date",
       "reversalDateLabel": "Reversal date",
       "methodLabel": "Payment method",
+      "method": {
+        "Cash": "Cash"
+      },
       "reasonLabel": "Reason",
       "payTitle": "Register payment",
       "payConfirm": "Confirm payment",
@@ -244,6 +249,9 @@
       "receivedAtLabel": "Receipt date",
       "reversalDateLabel": "Reversal date",
       "methodLabel": "Receipt method",
+      "method": {
+        "Cash": "Cash"
+      },
       "reasonLabel": "Reason",
       "receiveTitle": "Register receipt",
       "receiveConfirm": "Confirm receipt",
@@ -664,6 +672,7 @@
     "reverseAction": {
       "enabledTitle": "Reverse this entry",
       "disabledTitle": "Entry already reversed",
+      "notPostedTitle": "Only posted entries can be reversed",
       "label": "Reverse"
     },
     "receiptAction": {
@@ -3459,6 +3468,21 @@
       "PARTIALLY_REFUNDED": "Partially refunded",
       "PENDING": "Pending",
       "REFUNDED": "Refunded"
+    },
+    "list": {
+      "title": "Unit charges",
+      "filterStatus": "Status",
+      "filterKind": "Type",
+      "all": "All",
+      "loading": "Loading charges…",
+      "empty": "No charges in this unit with these filters.",
+      "error": "Error loading the unit's charges.",
+      "openReceivable": "Open the receivable in Accounts Receivable",
+      "noNumber": "no number",
+      "receivableCancelled": "cancelled",
+      "col": {
+        "receivable": "Receivable"
+      }
     }
   },
   "paymentProvider": {

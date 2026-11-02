@@ -1,0 +1,29 @@
+Leitura pelo navegador embutido em 2026-10-30. Fonte OFICIAL (SEFAZ-SP), mas salva a partir do texto renderizado no
+navegador: o `legal.py baixar` recebeu do servidor só 1.379 caracteres (D09, página sem o conteúdo do FAQ).
+
+URL: https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/perguntas-frequentes.aspx
+SHA-256 do document.body.textContent (espaços normalizados): a6db046b164f27db6859e016066f88e25dc3d211807060400129d48fb586c625
+
+Trechos literais:
+
+"Preciso autorizar minhas impressoras ou software na SEFAZ para emitir a NFC-e? Não é necessário autorizar qualquer
+equipamento ou software na SEFAZ para emitir a NFC-e."
+
+"A SEFAZ/SP disponibilizará “software” emissor de NFC-e? Não. O contribuinte deverá utilizar “software” desenvolvido
+ou adquirido por ele, sem necessidade de homologação."
+
+"Quais são os requisitos necessários para a emissão da NFC-e? • Acesso a Internet;• Possuir certificado digital no
+padrão ICP-Brasil, contendo o CNPJ da empresa;• Fazer o credenciamento como emitente de NFC-e;• Desenvolver ou adquirir
+um software emissor de NFC-e;• Solicitar o Código de Segurança do Contribuinte (CSC) de produção através do Portal da
+NFC-e;• Estar com a inscrição estadual regular;"
+
+"O acesso ao ambiente de teste e de produção está disponível para as empresas desenvolvedoras de software? O acesso a
+esses ambientes da NFC-e da SEFAZ está disponível para os contribuintes do ICMS."
+
+"Quais certificados digitais poderão ser utilizados? Os certificados devem ser emitidos por uma autoridade certificadora
+- AC, seguindo o padrão ICP-Brasil, podendo ser dos seguintes tipos:. A1 - gerado e armazenado em seu computador pessoal,
+dispensando o uso de cartões inteligentes ou tokens;. A3 - emitido em uma mídia criptográfica: HSM, cartão inteligente ou
+token, proporcionando maior mobilidade e segurança."
+
+Busca na página por "responsável técnico", "infRespTec" e "CSRT": nenhuma ocorrência. Também nenhuma no FAQ da NF-e de SP
+(https://portal.fazenda.sp.gov.br/servicos/nfe/Paginas/perguntas-frequentes.aspx), lido no navegador.
