@@ -110,6 +110,17 @@ describe('FiscalDocument + ServiceFiscalProfile — contrato em SQLite real (BE-
     expect(relido?.currentAttemptNo).toBe(2);
   });
 
+  it('X10a PR-7 (E-13, F-PSC-6 a): createSent com initialStatus PENDING_SIGNATURE grava a nota sem número, fora do polling; a saída para SENT respeita whenStatusIn', async () => {
+    const doc = await docRepo.createSent(escopo(DONO_A), sent('sale-psc', { kind: 'NFCE', cTribNac: '', numero: null, initialStatus: 'PENDING_SIGNATURE' }));
+    expect(doc).toMatchObject({ status: 'PENDING_SIGNATURE', numero: null, currentAttemptNo: 1 });
+    expect((await docRepo.listPending(new Date(Date.now() + 60_000))).map((d) => d.id)).not.toContain(doc.id);
+    expect((await docRepo.listByStatus(escopo(DONO_A), 'PENDING_SIGNATURE')).map((d) => d.id)).toEqual([doc.id]);
+    // a corrida callback × rota: quem chega depois acha o status trocado
+    await docRepo.transition(escopo(DONO_A), doc.id, { status: 'SENT', numero: 9n, currentAttemptNo: 2, whenStatusIn: ['PENDING_SIGNATURE'] });
+    await expect(docRepo.transition(escopo(DONO_A), doc.id, { status: 'SENT', whenStatusIn: ['PENDING_SIGNATURE'] })).rejects.toThrow(/fiscal_document_status_changed/);
+    expect(await docRepo.findById(escopo(DONO_A), doc.id)).toMatchObject({ status: 'SENT', numero: 9n });
+  });
+
   // GAP-MAP "DF-e — webhook nunca acha documento pendente" — teste-guarda (sessao-instrumentacao, 07/10). O webhook
   // resolve o documento por `findByPartnerRef(ref da tentativa)`; o mock do LifecycleService.test grava `partnerRef`
   // no documento pendente e por isso não enxerga a lacuna — aqui é o banco real.

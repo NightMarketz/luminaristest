@@ -6,7 +6,10 @@ export type FiscalDocumentKind = (typeof FISCAL_DOCUMENT_KINDS)[number];
 
 // AUTHORIZED_DIVERGENT — BE-INCR-DFE-MANUAL F-MAN-2 (c): nota autorizada no ambiente nacional cuja releitura (XML ×
 // DPS enviada) achou divergência de conteúdo. Só sai cancelando (F-MAN-2b → b).
-export const FISCAL_DOCUMENT_STATUSES = ['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED'] as const;
+// PENDING_SIGNATURE — EMENDA-PSC E-13 (F-PSC-6 a): a sessão do PSC da unidade venceu; a nota espera a reautorização
+// (sem número, se venceu antes de numerar; com o número, se o PSC recusou no envio). Sai pelo `reenviar` ou pelo envio
+// das pendentes no callback OAuth (D-2026-10-29-X10A-PR7-9-FORKS decisão 5).
+export const FISCAL_DOCUMENT_STATUSES = ['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED', 'PENDING_SIGNATURE'] as const;
 export type FiscalDocumentStatus = (typeof FISCAL_DOCUMENT_STATUSES)[number];
 
 /** Documento autorizado no ambiente nacional — com ou sem divergência na releitura (F-MAN-2 c). */
@@ -31,6 +34,8 @@ export interface CreateSentFiscalDocumentData {
   tpRetISSQN: number;
   /** payload da tentativa 1 (imutável — ADR §9.1). */
   payloadJson: string;
+  /** X10a PR-7 (E-13, F-PSC-6 a): `PENDING_SIGNATURE` quando o token do PSC venceu antes do envio. Ausente = `SENT`. */
+  initialStatus?: 'SENT' | 'PENDING_SIGNATURE';
   /**
    * BE-INCR-PACOTE-VALIDADE (§5.2 item 14a, F-PV-9d a): chave de unicidade do documento. Ausente = `saleId`
    * (toda NFS-e de venda); a NFS-e do saldo vencido usa a chave do movimento `expiry:<balanceId>:<expiresOn>`

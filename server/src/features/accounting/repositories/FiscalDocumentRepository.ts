@@ -158,14 +158,14 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
 
   public async createSent(scope: AccountingScope, data: CreateSentFiscalDocumentData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts> {
     const { userId, unitId } = accountingScopeWhere(scope);
-    const { payloadJson, ...doc } = data;
+    const { payloadJson, initialStatus, ...doc } = data;
     const created = await this.db(tx).fiscalDocument.create({
       data: {
         userId,
         unitId,
         ...doc,
         saleKey: data.saleKey ?? data.saleId,
-        status: 'SENT',
+        status: initialStatus ?? 'SENT',
         currentAttemptNo: 1,
         createdById: scope.actorUserId,
       },

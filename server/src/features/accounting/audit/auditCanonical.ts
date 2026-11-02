@@ -318,6 +318,11 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-DFE-ADN-EMISSOR PR-1 (item 6) — só unidade, fingerprint e validade: NUNCA chave, certificado, senha nem CNPJ.
   'fiscal_certificate.set':     ['unitId', 'fingerprintSha256', 'notAfter'],
   'fiscal_certificate.removed': ['unitId', 'fingerprintSha256', 'notAfter'],
+  // X10a PR-7 (EMENDA-PSC E-5) — NUNCA token, segredo OAuth, code_verifier nem CNPJ.
+  'psc_credential.authorized': ['unitId', 'pscProviderId', 'certNotAfter'],
+  'psc_credential.removed':    ['unitId', 'pscProviderId', 'certNotAfter'],
+  'psc_provider.set':          ['pscProviderId', 'nome'],
+  'psc_provider.removed':      ['pscProviderId', 'nome'],
   'collection_charge.created':        ['collectionChargeId', 'receivableId', 'paymentAccountId', 'kind', 'amountCents', 'status'],
   'collection_charge.status_changed': ['collectionChargeId', 'from', 'to', 'providerStatus'],
   'collection_charge.cancelled':      ['collectionChargeId', 'fromStatus', 'toStatus', 'providerStatus'],

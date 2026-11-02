@@ -47,7 +47,9 @@ import {
 import type { ProductFiscalProfileService } from './ProductFiscalProfileService';
 import { selectDfeEmissor, type DfeSelection } from '../dfe/selectDfeEmissor';
 import { assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
-import type { DfeAmbiente, DfeEmissorPort, DfeKind } from '../dfe/DfeEmissorPort';
+import type { DfeAmbiente, DfeEmissorPort, DfeKind, EmitirInput } from '../dfe/DfeEmissorPort';
+import { bloqueioSessaoPsc, type AssinaturaDaUnidade, type DfeAssinaturaResolver } from './DfeAssinaturaResolver';
+import { enviarTentativa, type DfeResultApplier } from './dfeEnvio';
 import { scopeToday } from '../models/dates';
 import { IND_OP_DEFAULT_SALAO } from '../models/indOp';
 import { RECEITA_NAO_USO_CODE, A_RECEBER_CODE } from '../fixtures/ChartOfAccountsFixture';
@@ -176,6 +178,10 @@ function buildDpsId(cMun: string, cnpj: string, serie: number, nDPS: number): st
  * FALHA de rede é gravada (mesmo status SENT, `errorsJson` via o primitivo `repo.transition`, sem
  * decisão de máquina de estados — é uma atualização de MESMO estado). Um resultado imediato bem-
  * sucedido (ex.: NullEmissor) fica para o job de polling (item 27, PR-3) aplicar.
+ *
+ * X10a PR-7: o adaptador com `capabilities.resultadoSincrono` (SEFAZ, `indSinc=1`) tem o retorno aplicado na hora pelo
+ * `applyResult` do ciclo (F-ADN-5 a); o que assina pelo PSC passa pelo pré-voo da credencial ANTES de consumir número
+ * (F-PSC-5 a) e, com o token vencido, a nota nasce `PENDING_SIGNATURE` sem número (F-PSC-6 a).
  */
 export class FiscalDocumentEmissionService {
   constructor(
@@ -202,7 +208,22 @@ export class FiscalDocumentEmissionService {
         opts: { forEmission?: boolean; persistSnapshot?: boolean; sale?: Record<string, unknown> },
       ): Promise<{ violations: Array<{ code: string; severity: string; legalBasis: string }> }>;
     },
+    /** X10a PR-7 (EMENDA-PSC E-6/E-12): credencial do PSC da unidade para o adaptador que assina remotamente. */
+    private readonly assinatura?: DfeAssinaturaResolver,
   ) {}
+
+  private resultApplier: DfeResultApplier | null = null;
+
+  /** Liga o `applyResult` do ciclo (late-bound na factory: o ciclo depende deste serviço, não o contrário). */
+  setResultApplier(fn: DfeResultApplier): void {
+    this.resultApplier = fn;
+  }
+
+  /** E-6/E-12 — pré-voo da assinatura pela unidade do escopo; sem o resolvedor, adaptador que assina fica SEM_CREDENCIAL. */
+  async assinaturaDaUnidade(scope: AccountingScope, port: DfeEmissorPort): Promise<AssinaturaDaUnidade> {
+    if (this.assinatura) return this.assinatura.paraUnidade(scope, port);
+    return port.capabilities.assinaturaRemota ? { ok: false, motivo: 'SEM_CREDENCIAL' } : { ok: true };
+  }
 
   private async lc116(scope: AccountingScope): Promise<ListaLc116> {
     return listaLc116De(await this.legalParams.fotografia(['LC116_SERVICO']), scopeToday(scope));
@@ -385,6 +406,11 @@ export class FiscalDocumentEmissionService {
     },
   ): Promise<FiscalDocumentWithAttempts> {
     const { group } = args;
+    // F-PSC-5 a (E-6): o pré-voo da assinatura roda ANTES da tx que consome o número. Sem credencial ou com o certificado
+    // vencido ⇒ 400; token vencido ⇒ a nota nasce PENDING_SIGNATURE sem número (E-13, F-PSC-6 a).
+    const assinatura = await this.assinaturaDaUnidade(scope, selection.port);
+    if (!assinatura.ok && (assinatura.motivo !== 'TOKEN_EXPIRADO' || kind === 'NFSE')) throw bloqueioSessaoPsc(assinatura.motivo);
+    const aguardaAssinatura = !assinatura.ok;
     const doc = await this.repo.runTransaction(async (tx) => {
       // X11 review M1: a original é relida DENTRO da tx do insert — gate autoritativo (E0046: cancelada não substitui).
       if (args.substitutes) {
@@ -394,7 +420,7 @@ export class FiscalDocumentEmissionService {
         }
       }
       let numero: bigint | null = null;
-      if (!selection.port.capabilities.numbersDps) {
+      if (!selection.port.capabilities.numbersDps && !aguardaAssinatura) {
         // BE-INCR-NFCE item 23 (F-NFCE-4 a): NF-e/NFC-e numeram por ambiente; a NFS-e segue sem ('' — lacuna no GAP-MAP).
         numero = await this.repo.nextNumber(scope, kind, kind === 'NFSE' ? '' : (selection.ambiente as DfeAmbiente), args.serie, tx);
       }
@@ -439,6 +465,7 @@ export class FiscalDocumentEmissionService {
           vDescIncondCents: BigInt(Math.round(Number(('infDPS' in payload ? payload.infDPS.valores.vDescCondIncond?.vDescIncond : undefined) ?? 0) * 100)),
           tpRetISSQN: args.tpRetISSQN,
           payloadJson: JSON.stringify(payload),
+          ...(aguardaAssinatura ? { initialStatus: 'PENDING_SIGNATURE' as const } : {}),
           ...(args.substitutes
             ? {
                 substitutesDocumentId: args.substitutes.documentId,
@@ -449,6 +476,8 @@ export class FiscalDocumentEmissionService {
         },
         tx,
       );
+      // `dfe.emitted` registra o ENVIO: a nota que espera a assinatura o ganha quando sair (reenviar / callback OAuth).
+      if (aguardaAssinatura) return createdDoc;
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
         eventType: DFE_EMITTED_EVENT,
@@ -466,26 +495,31 @@ export class FiscalDocumentEmissionService {
       return createdDoc;
     });
 
-    // Pós-commit (mesma regra do AccountingSyncPort): chama a porta fora da tx. Resultado imediato
-    // NÃO é aplicado aqui (item 24 é PR-3) — só a FALHA de rede é gravada (mesmo status SENT).
-    try {
-      await selection.port.emitir({
+    if (aguardaAssinatura) return doc;
+    // Pós-commit (mesma regra do AccountingSyncPort): chama a porta fora da tx.
+    const payload: unknown = JSON.parse(doc.attempts[0].payloadJson);
+    await enviarTentativa(
+      this.repo,
+      this.resultApplier,
+      scope,
+      doc,
+      selection.port,
+      {
         kind,
         ref: attemptRef(doc.id, 1),
         ambiente: selection.ambiente as DfeAmbiente,
         cnpjEmitente: args.cnpjEmitente,
         partnerAccountRef: args.partnerAccountRef,
-        payload: JSON.parse(doc.attempts[0].payloadJson),
-      });
-    } catch (emitError) {
-      const message = emitError instanceof Error ? emitError.message : String(emitError);
-      logger.error('DfeEmissorPort.emitir falhou — documento fica SENT, sem tentativa 2 automática', {
-        documentId: doc.id,
-        error: message,
-      });
-      await this.repo.transition(scope, doc.id, { status: 'SENT', errorsJson: JSON.stringify([{ code: 'dfe_emitir_failed', message }]) });
-    }
-    return doc;
+        payload: payload as EmitirInput['payload'],
+        ...(assinatura.ok && assinatura.assinatura
+          ? { ctx: { ambiente: selection.ambiente as DfeAmbiente, assinatura: assinatura.assinatura, payload } }
+          : {}),
+      },
+      'dfe_emitir_failed',
+    );
+    // Só o adaptador síncrono / do PSC muda o documento no envio (applyResult, PENDING_SIGNATURE): relê para a view.
+    const { capabilities } = selection.port;
+    return capabilities.resultadoSincrono || capabilities.assinaturaRemota ? ((await this.repo.findById(scope, doc.id)) ?? doc) : doc;
   }
 
   /**

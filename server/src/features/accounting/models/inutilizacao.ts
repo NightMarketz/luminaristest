@@ -9,7 +9,7 @@ import { linhaLegalVigente } from '../../legalParameters/models/legalParameter';
  */
 
 /** Status do documento fiscal, como o modelo o lê (espelho de `FISCAL_DOCUMENT_STATUSES`; o modelo não importa repositório — L6). */
-type FiscalDocumentStatus = 'SENT' | 'PROCESSING' | 'AUTHORIZED' | 'AUTHORIZED_DIVERGENT' | 'REJECTED' | 'CANCELLED';
+type FiscalDocumentStatus = 'SENT' | 'PROCESSING' | 'AUTHORIZED' | 'AUTHORIZED_DIVERGENT' | 'REJECTED' | 'CANCELLED' | 'PENDING_SIGNATURE';
 
 /** Rej. 201: "Faixa de inutilização com mais de 10.000 números". */
 export const INUT_MAX_NUMEROS = 10_000n;
@@ -18,8 +18,9 @@ export const INUT_MAX_NUMEROS = 10_000n;
  * Status de documento que ocupa o número na guarda da rej. 241 ("um número da faixa já foi utilizado"): o que ainda pode
  * voltar autorizado (SENT/PROCESSING — F-NFCE-5) e o autorizado, cancelado ou não. REJECTED fica de fora: a nota rejeitada
  * é descartada pela SEFAZ (`[VG-REJ-DESCARTADA]`, MOC VG §5.1.6) — dono, 26/10: "REJECTED não bloqueia".
+ * PENDING_SIGNATURE (X10a PR-7, F-PSC-6 a) ocupa: a nota guarda o número para sair com ele depois da reautorização.
  */
-export const STATUS_QUE_OCUPAM_NUMERO: readonly FiscalDocumentStatus[] = ['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'CANCELLED'];
+export const STATUS_QUE_OCUPAM_NUMERO: readonly FiscalDocumentStatus[] = ['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'CANCELLED', 'PENDING_SIGNATURE'];
 
 /**
  * `[NFCE-PRESUNCAO]` — Ajuste SINIEF 19/16 cl. 11ª § 5º (redação do Ajuste SINIEF 26/19, efeitos a partir de 18.12.19), texto
