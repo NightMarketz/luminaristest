@@ -1,0 +1,22 @@
+Fontes (SIJUT, lidas no navegador embutido em 2026-10-30):
+- Res. CGSN 190/2026 — https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/152832
+  SHA-256 do innerText integral: 2a0590a136f5c44a2495a5b3df7aa4deedbc52104c589e33a4c0a6efbf98fcc8 (o mesmo do D16)
+- Res. CGSN 140/2018, visão multivigente — https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/92278
+  SHA-256 do innerText integral (425.574 caracteres): 56261fb79f193c8c2b4e3ec3ede2e1b53f2a9143af6a6a1c0ea4d7645c1127b4
+  (arts. 106 e 106-A com "[Vide modificação prevista para 01/01/2027, nos termos do(a) Resolução CGSN nº 190]" e
+  "[Vide dispositivo a ser incluído em 01/01/2027, nos termos do(a) Resolução CGSN nº 195]")
+
+Redação da Res. 190 (efeitos em 01/01/2027, art. 9º), trechos literais:
+"Art. 106. O MEI deverá emitir os documentos fiscais nas vendas e nas prestações de serviços realizadas. (Lei Complementar nº 123, de 2006, art. 26, §§ 1º e 6º, inciso II)"
+"§ 1º [...] IV - da emissão de outro documento fiscal municipal relativo ao ISS quando, para a mesma operação ou prestação, tenha emitido a Nota Fiscal de Serviço eletrônica (NFS-e) de padrão nacional de que trata o art. 106-A; e V - de destacar os valores de IBS e CBS nos documentos fiscais emitidos nas vendas e nas prestações de serviços realizadas." (NR)
+"Art. 106-A. Relativamente à prestação de serviços sujeita à Nota Fiscal de Serviços, utilizará, obrigatoriamente e sem custos para o MEI, a Nota Fiscal de Serviço eletrônica (NFS-e) de padrão nacional, emitida pelo Emissor Nacional da NFS-e, englobando as seguintes funcionalidades: (Lei Complementar nº 123, de 2006, art. 18-A, § 20, art. 26, § 8º)" (NR)
+"Art. 106-B. Relativamente às operações com mercadorias, ou prestações de serviço de transporte intermunicipal ou interestadual, sujeitas aos documentos fiscais eletrônicos relacionados no Ajuste Sinief nº 37, de 13 de dezembro de 2019, utilizará, preferencialmente e sem custos para o MEI, o Regime Especial da Nota Fiscal Fácil - NFF instituído pelo referido ato normativo." (NR)
+Art. 8º Ficam revogados: [...] XXIX - os incisos I e II do caput, o inciso III do § 1º e o §2º do art. 106; XXX - os §§ 1º e 2º do art. 106-A; [...]
+
+Redação vigente até 31/12/2026 (Res. 140 multivigente), para comparação:
+art. 106 II "a) ficará dispensado da emissão: 1. nas operações com venda de mercadorias ou prestações de serviços para consumidor final pessoa física"
+art. 106-A § 2º "Nas operações para tomador consumidor final pessoa física, a emissão da NFS-e é facultativa."
+
+Res. CGSN 195/2026 (efeitos em 01/01/2027): art. 106-C — ver D17.
+LC 214 art. 517 (efeitos em 01/01/2027, art. 544 III red. LC 227) dá à LC 123 art. 26 § 6º II a redação: "será obrigatória a
+emissão de documento fiscal nas vendas e nas prestações de serviços realizadas pelo MEI." — ver D10, linha 9961.

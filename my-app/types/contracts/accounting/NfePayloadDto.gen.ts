@@ -26,6 +26,8 @@ verProc: string
 cNF: string
 nNF: number
 cDV: number
+dhCont?: string
+xJust?: string
 }
 emit: {
 CNPJ: string
@@ -739,6 +741,8 @@ indPres: (0 | 1 | 2 | 3 | 4 | 5 | 9)
 indIntermed?: 0
 procEmi: 0
 verProc: string
+dhCont?: string
+xJust?: string
 }
 emit: {
 CNPJ: string
