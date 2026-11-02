@@ -88,7 +88,7 @@ E-5 — data do Simples, portal NFS-e, notícia de 29/10/2026 (mesmo dossiê, [D
 [ ] ADIA — esperar: ____
 
 **D1f**
-[ ] FECHA — os quatro itens verificados em fonte oficial (tabela acima)
+[x] FECHA — dono, chat, 02/11: "Sim, fecha o D1f" (fold feito na nota do D1f)
 [ ] NÃO FECHA — item __ ainda depende de: ____
 [ ] ADIA — esperar: ____
 
