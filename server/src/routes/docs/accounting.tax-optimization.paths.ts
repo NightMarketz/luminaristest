@@ -1,5 +1,5 @@
 /**
- * OpenAPI de /api/accounting/tax-optimization (EFICIENCIA-FISCAL PR-1, BRIEF BE-INCR-EFICIENCIA-FISCAL §4.3).
+ * OpenAPI de /api/accounting/tax-optimization (EFICIENCIA-FISCAL PR-1 e PR-4, BRIEF BE-INCR-EFICIENCIA-FISCAL §4.3).
  * Um arquivo por feature (dono, 2026-10-16).
  * @openapi
  * paths:
@@ -163,5 +163,25 @@
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *         '409': { description: 'SUGESTAO_JA_DECIDIDA' }
+ *   /api/accounting/tax-optimization/report:
+ *     get:
+ *       summary: Tax-saving report of a competence (EFICIENCIA-FISCAL PR-4 item 23)
+ *       description: >-
+ *         Sums only ACCEPTED suggestions with effect in the month (I-11; month = the COMPETENCIA subject, the sale month for
+ *         SALE subjects, else the decision month in the scope time zone); PROPOSED, REJECTED and EXPIRED only appear in
+ *         `contagem`. Measured lines (Simples ME/EPP only): segregation = DAS without the exclusion marks minus the computed DAS;
+ *         unconditional discount = month discount × DAS ÷ PA revenue. Withholdings suffered (RETENCOES-FONTE) and IBS/CBS credit
+ *         not taken (IBS-CBS-2027) are NAO_DISPONIVEL. Read only. Also exported as EXPORT_ECONOMIA_FISCAL.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: competencia, required: true, schema: { type: string, pattern: '^\d{4}-(0[1-9]|1[0-2])$' } }
+ *       responses:
+ *         '200': { description: 'TaxOptimizationReport { competencia, unitId, linhas[], totais, contagem, parametrosSha256 }' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export {};

@@ -1,0 +1,37 @@
+Extraído de [D02] (Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026, SHA-256 366b8d9030a04e9f6203b6ae29ace49d3ffa3fa0c1f5a7a18b0c967b9a5a3cac) em 2026-10-27, por openpyxl.
+
+## PARTEB_PADRAO (códigos 1000, 1003, 1071, 2210)
+1000 | Prejuízo Fiscal Operacional - Atividade Geral | 01012018 | I
+1003 | Base de Cálculo Negativa da CSLL - Atividade Geral | 01012018 | C
+1071 | Depreciação - diferença entre as depreciações contábil e fiscal | 01012018 | A
+2210 | Depreciação - Diferença entre as Depreciações Contábil e Fiscal | 01012018 | A
+
+## PARTEB_PARTEA (1071 e 2210, todas as qualificações)
+1071 | Depreciação - diferença entre as depreciações contábil e fiscal | 86 | 01012018 | 01
+1071 | Depreciação - diferença entre as depreciações contábil e fiscal | 161 | 01012018 | 01
+1071 | Depreciação - diferença entre as depreciações contábil e fiscal | 260 | 01012018 | 01
+2210 | Depreciação - Diferença entre as Depreciações Contábil e Fiscal | 86 | 01012018 | 01
+2210 | Depreciação - Diferença entre as Depreciações Contábil e Fiscal | 161 | 01012018 | 01
+2210 | Depreciação - Diferença entre as Depreciações Contábil e Fiscal | 335 | 01012018 | 01
+2210 | Depreciação - Diferença entre as Depreciações Contábil e Fiscal | 265.01 | 01012018 | 01
+2210 | Depreciação - Diferença entre as Depreciações Contábil e Fiscal | 91.01 | 01012018 | 01
+2210 | Depreciação - Diferença entre as Depreciações Contábil e Fiscal | 86 | 01012018 | 02
+2210 | Depreciação - Diferença entre as Depreciações Contábil e Fiscal | 193 | 01012018 | 02
+2210 | Depreciação - Diferença entre as Depreciações Contábil e Fiscal | 90.02 | 01012018 | 02
+2210 | Depreciação - Diferença entre as Depreciações Contábil e Fiscal | 73 | 01010218 | 03
+2210 | Depreciação - Diferença entre as Depreciações Contábil e Fiscal | 132 | 01012018 | 03
+2210 | Depreciação - Diferença entre as Depreciações Contábil e Fiscal | 77.02 | 01012018 | 03
+
+## M300A/M300R linhas 86, 161, 91.01, 260, 335, 265.01 (início da descrição)
+M300A | 86 | Depreciação - diferença entre as depreciações contábil e fiscal | 01012015 | E | N | A | Art. 124, § 5°, da Instrução Normativa RFB nº 1.700/2017. Informar nesta linha o valor correspondente à depreciação constante da escrituração comercial, a partir do período de apuração em que o total da depreciação acumulada, computado para fins de apuração do lucro real e do resultado ajustado, atingir o
+M300A | 91.01 | Depreciação - diferença entre as depreciações contábil e fiscal - alienação ou baixa de ativo | 01012015 | E | N | A | Art. 200, § 3º, da Instrução Normativa RFB nº 1.700/2017. Informar nesta linha o saldo da depreciação existente na parte "B" do e-Lalur e do e-Lacs, no caso de alienação ou baixa a qualquer título do bem ou direito. | 3
+M300A | 161 | (-) Depreciação - diferença entre as depreciações contábil e fiscal | 01012015 | E | N | E | Art. 124, § 5º, da Instrução Normativa RFB nº 1.700/2017. Informar nesta linha a diferença entre a quota de depreciação calculada com base no prazo de vida útil admissível estabelecido no Anexo III - Tabela de Quotas de Depreciação da Instrução Normativa RFB nº 1.700/2017 e a quota de depreciação reg
+M300R | 260 | Depreciação - diferença entre as depreciações contábil e fiscal | 01012015 | E | N | A | Art. 124, § 5°, da Instrução Normativa RFB nº 1.700/2017. Informar nesta linha o valor correspondente à depreciação constante da escrituração comercial, a partir do período de apuração em que o total da depreciação acumulada, computado para fins de apuração do lucro real e do resultado ajustado, atingir 
+M300R | 265.01 | Depreciação - diferença entre as depreciações contábil e fiscal - alienação ou baixa de ativo | 01012015 | E | N | A | Art. 200, § 3º, da Instrução Normativa RFB nº 1.700/2017. Informar nesta linha o saldo da depreciação existente na parte "B" do e-Lalur e do e-Lacs, no caso de alienação ou baixa a qualquer título do bem ou direito. | 3
+M300R | 335 | (-) Depreciação - diferença entre as depreciações contábil e fiscal | 01012015 | E | N | E | Art. 124, § 5º, da Instrução Normativa RFB nº 1.700/2017. Informar nesta linha a diferença entre a quota de depreciação calculada com base no prazo de vida útil admissível estabelecido no Anexo III - Tabela de Quotas de Depreciação da Instrução Normativa RFB nº 1.700/2017 e a quota de depreciação reg
+
+## L100A e P100A: contas com 'IBS', 'CBS' ou 'BENS E SERVIÇOS' no nome
+L100A: 0 conta(s) []
+L100A | 2.01.01.09.28 | Outros Tributos a Recolher – Circulante | 01012015 | A | 2.01.01.09 | 5 | 2 | Contas que registram o valor dos tributos a recolher não classificáveis em contas específicas.
+P100A: 0 conta(s) []
+P100A | 2.01.01.09.28 | Outros Tributos a Recolher – Circulante | 01012015 | A | 2.01.01.09 | 5 | 2 | Contas que registram o valor dos tributos a recolher não classificáveis em contas específicas.

@@ -74,6 +74,7 @@ export function useKanbanData(tables: IDynamicTable[]) {
                         const data = (record.data || {}) as Record<string, unknown>;
                         results.push({
                             ...data, // Preserve all dynamic fields from the backend
+                            data, // SortSelect/sortRecords leem os campos em record.data (passo 7 do RUNBOOK-KANBAN-REORDER)
                             id: record.id,
                             name: (data.name || data.title || 'Untitled') as string,
                             description: (data.description || '') as string,

@@ -17,7 +17,6 @@ import { ChatMessageRepository } from '../features/chatMessages/repositories/Cha
 import { ChunkRepository } from '../features/documents/repositories/ChunkRepository';
 import { DashboardLayoutRepository } from '../features/dashboardLayout/repositories/DashboardLayoutRepository';
 import { DocumentRepository } from '../features/documents/repositories/DocumentRepository';
-import { StructuredDataRepository } from '../features/structuredData/repositories/StructuredDataRepository';
 import { UserRepository } from '../features/users/repositories/UserRepository';
 import { VectorRepository } from '../features/documents/repositories/VectorRepository';
 import { DynamicTableRepository } from '../features/dynamicTables/repositories/DynamicTableRepository';
@@ -47,6 +46,22 @@ import { CounterpartyRepository } from '../features/accounting/repositories/Coun
 import { AccountingContactRepository } from '../features/accounting/repositories/AccountingContactRepository';
 import { PaymentAccountRepository } from '../features/accounting/repositories/PaymentAccountRepository';
 import { FiscalCertificateRepository } from '../features/accounting/repositories/FiscalCertificateRepository';
+// X10a PR-7 (EMENDA-PSC) — PSC
+import { PscProviderRepository } from '../features/accounting/repositories/PscProviderRepository';
+import { PscCredentialRepository } from '../features/accounting/repositories/PscCredentialRepository';
+import type { IPscProviderRepository } from '../features/accounting/repositories/IPscProviderRepository';
+import type { IPscCredentialRepository } from '../features/accounting/repositories/IPscCredentialRepository';
+import { PscProviderService } from '../features/accounting/services/PscProviderService';
+import { PscCredentialService } from '../features/accounting/services/PscCredentialService';
+import { DfeAssinaturaResolver } from '../features/accounting/services/DfeAssinaturaResolver';
+import { NfceCscService } from '../features/accounting/services/NfceCscService';
+import { NfceCscRepository } from '../features/accounting/repositories/NfceCscRepository';
+import type { INfceCscRepository } from '../features/accounting/repositories/INfceCscRepository';
+import { NfceContingenciaService } from '../features/accounting/services/NfceContingenciaService';
+import { NfceContingenciaRepository } from '../features/accounting/repositories/NfceContingenciaRepository';
+import type { INfceContingenciaRepository } from '../features/accounting/repositories/INfceContingenciaRepository';
+import { PscAssinador } from '../features/accounting/dfe/psc/PscAssinador';
+import { PscProviderPolicy } from '../features/accounting/policies/PscProviderPolicy';
 import { CollectionChargeRepository } from '../features/accounting/repositories/CollectionChargeRepository';
 import { TaxAssessmentRepository } from '../features/accounting/repositories/TaxAssessmentRepository';
 import { ConsumptionTaxAssessmentRepository } from '../features/accounting/repositories/ConsumptionTaxAssessmentRepository';
@@ -91,7 +106,6 @@ import { ChatInstancePolicy } from '../features/chatInstances/policies/ChatInsta
 import { ChatMessagePolicy } from '../features/chatMessages/policies/ChatMessagePolicy';
 import { DashboardLayoutPolicy } from '../features/dashboardLayout/policies/DashboardLayoutPolicy';
 import { DocumentPolicy } from '../features/documents/policies/DocumentPolicy';
-import { StructuredDataPolicy } from '../features/structuredData/policies/StructuredDataPolicy';
 import { UserPolicy } from '../features/users/policies/UserPolicy';
 import { DynamicTablePolicy } from '../features/dynamicTables/policies/DynamicTablePolicy';
 import { AttachmentPolicy } from '../features/attachments/policies/AttachmentPolicy';
@@ -110,7 +124,6 @@ import { ChatService } from '../features/chat/services/ChatService';
 import { DashboardLayoutService } from '../features/dashboardLayout/services/DashboardLayoutService';
 import { DocumentProcessingService } from '../features/documents/services/DocumentProcessingService';
 import { DocumentService } from '../features/documents/services/DocumentService';
-import { StructuredDataService } from '../features/structuredData/services/StructuredDataService';
 import { UserService } from '../features/users/services/UserService';
 import { DynamicTableService } from '../features/dynamicTables/services/DynamicTableService';
 import { LuminarisAgentService } from '../features/chat/services/LuminarisAgentService';
@@ -269,6 +282,10 @@ import { SalesCancellationService } from '../features/sales/services/SalesCancel
 import { RegisterPaymentService } from '../features/sales/services/RegisterPaymentService';
 import { SaleFiscalGuardService } from '../features/sales/services/SaleFiscalGuardService'; // EFICIENCIA-FISCAL PR-1
 import { TaxOptimizationService } from '../features/accounting/services/TaxOptimizationService'; // EFICIENCIA-FISCAL PR-1
+import { TaxSimulationService } from '../features/accounting/services/TaxSimulationService'; // EFICIENCIA-FISCAL PR-3
+import { TaxOptimizationReportService } from '../features/accounting/services/TaxOptimizationReportService'; // EFICIENCIA-FISCAL PR-4
+import { loadUnconditionalDiscountCents } from '../features/accounting/sync/bridges/saleItems'; // EFICIENCIA-FISCAL PR-4
+import { ServicoFiscalAvaliacaoService } from '../features/accounting/services/ServicoFiscalAvaliacaoService';
 import { TaxOptimizationRepository } from '../features/accounting/repositories/TaxOptimizationRepository'; // EFICIENCIA-FISCAL PR-1
 import type { ITaxOptimizationRepository } from '../features/accounting/repositories/ITaxOptimizationRepository';
 import { PresetSyncService } from '../features/dynamicTables/services/PresetSyncService';
@@ -794,7 +811,6 @@ export class ApplicationFactory {
     document: IDocumentRepository;
     vector: IVectorRepository;
     chunk: ChunkRepository;
-    structuredData: StructuredDataRepository;
     dynamicTable: IDynamicTableRepository;
     dynamicTableVersion: IDynamicTableVersionRepository;
     actionProposal: IActionProposalRepository;
@@ -846,6 +862,11 @@ export class ApplicationFactory {
     accountingContact: IAccountingContactRepository;
     paymentAccount: IPaymentAccountRepository; // BE-INCR-PAYMENT-PROVIDER PR-1
     fiscalCertificate: IFiscalCertificateRepository; // BE-INCR-DFE-ADN-EMISSOR PR-1
+    // X10a PR-7 (EMENDA-PSC E-2/E-3)
+    pscProvider: IPscProviderRepository;
+    pscCredential: IPscCredentialRepository;
+    nfceCsc: INfceCscRepository; // X10a PR-8
+    nfceContingencia: INfceContingenciaRepository; // X10a PR-9
     collectionCharge: ICollectionChargeRepository; // BE-INCR-PAYMENT-PROVIDER PR-2
     taxAssessment: ITaxAssessmentRepository; // X7 Fase A PR-2
     consumptionTaxAssessment: IConsumptionTaxAssessmentRepository; // IBS-CBS-2027 PR-2 (item 8)
@@ -872,7 +893,6 @@ export class ApplicationFactory {
     chatInstance: IChatInstancePolicy;
     dashboardLayout: IDashboardLayoutPolicy;
     document: IDocumentPolicy;
-    structuredData: StructuredDataPolicy;
     dynamicTable: IDynamicTablePolicy;
     attachment: IAttachmentPolicy;
     savedTableView: ISavedTableViewPolicy;
@@ -893,7 +913,6 @@ export class ApplicationFactory {
     dashboardLayout: DashboardLayoutService;
     document: DocumentService;
     chat: IChatService;
-    structuredData: StructuredDataService;
     dynamicTable: DynamicTableService;
     dynamicTableVersion: DynamicTableVersionService;
     luminarisAgent: LuminarisAgentService;
@@ -946,6 +965,10 @@ export class ApplicationFactory {
     productFiscalProfile: ProductFiscalProfileService; // BE-INCR-NFCE item 10
     issBeneficioMunicipal: IssBeneficioMunicipalService; // SIMPLES-PISO-ANEXO-XI bloco 1
     taxOptimization: TaxOptimizationService; // EFICIENCIA-FISCAL PR-1
+    /** EFICIENCIA-FISCAL PR-3 — montado no getter: depende de simplesApuracao e interestOnEquity, criados no mesmo literal. */
+    taxSimulation?: TaxSimulationService;
+    taxOptimizationReport: TaxOptimizationReportService; // EFICIENCIA-FISCAL PR-4
+    servicoFiscalAvaliacao: ServicoFiscalAvaliacaoService; // EFICIENCIA-FISCAL PR-5
     productDestination: ProductDestinationService; // ITEM-DESTINATION PR-2
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
@@ -961,6 +984,11 @@ export class ApplicationFactory {
     accountingContact: AccountingContactService;
     paymentAccount: PaymentAccountService; // BE-INCR-PAYMENT-PROVIDER PR-1
     fiscalCertificate: FiscalCertificateService; // BE-INCR-DFE-ADN-EMISSOR PR-1
+    // X10a PR-7 (EMENDA-PSC E-2..E-6, E-9)
+    pscProvider: PscProviderService;
+    pscCredential: PscCredentialService;
+    nfceCsc: NfceCscService; // X10a PR-8
+    nfceContingencia: NfceContingenciaService; // X10a PR-9
     collectionCharge: CollectionChargeService; // BE-INCR-PAYMENT-PROVIDER PR-2
     releaseReport: ReleaseReportService; // BE-INCR-PAYMENT-PROVIDER PR-3
     taxAssessment: TaxAssessmentService; // X7 Fase A PR-2
@@ -1018,7 +1046,6 @@ export class ApplicationFactory {
       chunk: new ChunkRepository(),
       dashboardLayout: new DashboardLayoutRepository(),
       document: new DocumentRepository(),
-      structuredData: new StructuredDataRepository(),
       user: new UserRepository(),
       vector: new VectorRepository(),
       dynamicTable: new DynamicTableRepository(),
@@ -1072,6 +1099,11 @@ export class ApplicationFactory {
       accountingContact: new AccountingContactRepository(),
       paymentAccount: new PaymentAccountRepository(),
       fiscalCertificate: new FiscalCertificateRepository(),
+      // X10a PR-7 (EMENDA-PSC)
+      pscProvider: new PscProviderRepository(),
+      pscCredential: new PscCredentialRepository(),
+      nfceCsc: new NfceCscRepository(),
+      nfceContingencia: new NfceContingenciaRepository(),
       collectionCharge: new CollectionChargeRepository(),
       taxAssessment: new TaxAssessmentRepository(),
       consumptionTaxAssessment: new ConsumptionTaxAssessmentRepository(),
@@ -1098,7 +1130,6 @@ export class ApplicationFactory {
       chatMessage: new ChatMessagePolicy(),
       dashboardLayout: new DashboardLayoutPolicy(),
       document: new DocumentPolicy(),
-      structuredData: new StructuredDataPolicy(this.repositories.document),
       user: new UserPolicy(),
       dynamicTable: new DynamicTablePolicy(),
       attachment: new AttachmentPolicy(),
@@ -1113,11 +1144,6 @@ export class ApplicationFactory {
     };
 
     // Services (handling inter-dependencies)
-    const structuredDataService = new StructuredDataService(
-      this.repositories.structuredData,
-      this.policies.structuredData,
-      chatOpenAIService
-    );
     const knowledgeGraphService = new KnowledgeGraphService(
       this.repositories.knowledgeGraph,
       this.repositories.dynamicTable
@@ -1312,6 +1338,8 @@ export class ApplicationFactory {
       this.repositories.accountingPeriod, // X7 Fase B item 15: meses fechados antes do balancete (só leitura)
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-1: fotografia TAX_ASSESSMENT + CSLL_ALIQUOTA
       presumidoTetoService, // PRESUMIDO-TETO-78MI item 9b/9c: aviso na prévia, 400 na confirmação
+      this.repositories.receitaFiscal, // EFICIENCIA-FISCAL PR-5 item 26: subrazão por serviço (8 %/12 % hospitalar)
+      this.repositories.serviceFiscalProfile,
     );
 
     // BE-INCR-SPED-ECF-FASE3B item 11 (Fork 4→b): e-Lalur/e-Lacs store. Lê o repo de contas do plano
@@ -1508,6 +1536,18 @@ export class ApplicationFactory {
       this.repositories.inventory,
       taxOptimizationService,
     );
+    // X10a PR-7 (EMENDA-PSC): credencial OAuth do PSC por unidade. Const própria porque a emissão, o ciclo e a
+    // inutilização resolvem por ela o `ctx.assinatura` (E-12); o gancho `onAuthorized` é ligado abaixo, ao ciclo.
+    const pscCredentialService = new PscCredentialService(
+      this.repositories.pscCredential,
+      this.repositories.pscProvider,
+      auditService,
+      this.policies.accounting,
+      resolveUnitCnpjFromUnits,
+    );
+    // X10a PR-8: o CSC da NFC-e (QR Code v2 quando a UF recusa a v3) entra no mesmo contexto do envio.
+    const nfceCscService = new NfceCscService(this.repositories.nfceCsc, auditService, this.policies.accounting);
+    const dfeAssinaturaResolver = new DfeAssinaturaResolver(pscCredentialService, new PscAssinador(), nfceCscService);
     // BE-INCR-DFE (nó X10b, PR-2): porta+adaptadores e montagem/envio da DPS (Fase B+C).
     const fiscalDocumentEmissionService = new FiscalDocumentEmissionService(
       this.repositories.fiscalDocument,
@@ -1520,6 +1560,7 @@ export class ApplicationFactory {
       legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LC116_SERVICO
       productFiscalProfileService, // BE-INCR-NFCE PR-3: perfis dos produtos na montagem da NF-e/NFC-e
       saleFiscalGuardService, // EFICIENCIA-FISCAL PR-1 item 6: guarda fiscal como pré-condição da emissão
+      dfeAssinaturaResolver, // X10a PR-7: pré-voo e ctx.assinatura do adaptador que assina pelo PSC
     );
     // Extraído como const própria (não só inline no literal abaixo) porque
     // FiscalDocumentLifecycleService (PR-3) também a injeta (item 25 — anexa XML/PDF).
@@ -1542,6 +1583,38 @@ export class ApplicationFactory {
       auditService,
       this.repositories.fiscalNumberVoid, // BE-INCR-NFCE PR-4: reenvio recusa número com pedido de inutilização
     );
+    // X10a PR-7 (F-ADN-5 a): o retorno síncrono do envio é aplicado pelo applyResult do ciclo.
+    fiscalDocumentEmissionService.setResultApplier((scope, doc, result) =>
+      fiscalDocumentLifecycleService.aplicarResultadoDoEnvio(scope, doc, result),
+    );
+    // BE-INCR-NFCE (nó X10a, itens 24–25): inutilização de faixa + lista das lacunas de numeração.
+    const fiscalNumberVoidService = new FiscalNumberVoidService(
+      this.repositories.fiscalDocument,
+      this.repositories.fiscalNumberVoid,
+      fiscalProfileService,
+      this.policies.accounting,
+      auditService,
+      legalParameterService, // EMENDA-3 E3-2 a: fotografia INUT_NAO_SE_APLICA
+      dfeAssinaturaResolver, // X10a PR-7 (E-6): o inutNFe é assinado pelo PSC
+    );
+    // X10a PR-9 (E-9): contingência off-line da NFC-e — a emissão e o reenvio a acionam na falha de comunicação, e o
+    // retorno da transmissão posterior sai pelo applyResult do ciclo.
+    const nfceContingenciaService = new NfceContingenciaService(
+      this.repositories.nfceContingencia,
+      this.repositories.fiscalDocument,
+      fiscalDocumentEmissionService,
+      fiscalNumberVoidService,
+      this.policies.accounting,
+      auditService,
+      legalParameterService, // FERIADO_NACIONAL do prazo de transmissão (decisão 9)
+    );
+    fiscalDocumentEmissionService.setContingencia(nfceContingenciaService);
+    fiscalDocumentLifecycleService.setContingenciaHandler(fiscalDocumentEmissionService.contingenciaHandler());
+    nfceContingenciaService.setResultApplier((scope, doc, result) => fiscalDocumentLifecycleService.aplicarResultadoDoEnvio(scope, doc, result));
+    // Decisão 5 de D-2026-10-29-X10A-PR7-9-FORKS: a reautorização no PSC envia as PENDING_SIGNATURE da unidade.
+    pscCredentialService.setOnAuthorized(async (scope) => {
+      await fiscalDocumentLifecycleService.enviarPendentesDaUnidade(scope);
+    });
     // Extraído como const própria (não só inline no literal abaixo) porque FixedAssetService
     // (BE-INCR-FIXED-ASSETS, nó C8, PR-2) também a injeta (baixa lê disposalGain/LossAccountId).
     const accountingScopeSettingsService = new AccountingScopeSettingsService(
@@ -1667,6 +1740,27 @@ export class ApplicationFactory {
       productFiscalProfile: productFiscalProfileService,
       issBeneficioMunicipal: new IssBeneficioMunicipalService(this.repositories.issBeneficioMunicipal, this.policies.accounting, auditService),
       taxOptimization: taxOptimizationService, // EFICIENCIA-FISCAL PR-1
+      // EFICIENCIA-FISCAL PR-4 (itens 22–23): relatório de economia. A medida vem da apuração do Simples, montada mais abaixo
+      // neste literal — leitura tardia por closure.
+      taxOptimizationReport: new TaxOptimizationReportService(
+        this.repositories.taxOptimization,
+        this.repositories.receitaFiscal,
+        { medidaDaApuracao: (scope, competencia) => this.services.simplesApuracao.medidaDaApuracao(scope, competencia) },
+        { descontoIncondicionalCents: loadUnconditionalDiscountCents },
+        this.policies.accounting,
+      ),
+      // EFICIENCIA-FISCAL PR-5 (itens 27, 30–32): alertas de enquadramento e sugestões dos serviços — só leitura + proposeSystem.
+      servicoFiscalAvaliacao: new ServicoFiscalAvaliacaoService(
+        this.policies.accounting,
+        this.repositories.companyFiscalProfile,
+        this.repositories.serviceFiscalProfile,
+        this.repositories.fiscalProfile,
+        this.repositories.receitaFiscal,
+        this.repositories.account,
+        this.repositories.posting,
+        legalParameterService,
+        taxOptimizationService,
+      ),
       // ITEM-DESTINATION PR-2 (item 17, F-ID-2 a): destinação padrão por produto — a mesma porta de existência
       // de produto do LAC-E (reuso), sob a policy fiscal.
       productDestination: new ProductDestinationService(
@@ -1678,7 +1772,13 @@ export class ApplicationFactory {
       // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, PR-1): perfil da EMPRESA por ano + signatários não-contador.
       companyFiscalProfile: companyFiscalProfileService,
       companySigner: new CompanySignerService(this.repositories.companySigner, this.policies.accounting, auditService),
-      partner: new PartnerService(this.repositories.partner, this.policies.accounting, auditService), // IRRF-DISTRIBUICAO PR-1
+      partner: new PartnerService( // IRRF-DISTRIBUICAO PR-1; D-2026-10-28 item 1 (409 com distribuição)
+        this.repositories.partner,
+        this.policies.accounting,
+        auditService,
+        this.repositories.profitDistribution,
+        this.repositories.interestOnEquity,
+      ),
       // RETENCOES-FONTE PR-1 (item 6): perfil de retenção; fotografia NATUREZA_RENDIMENTO e a leitura dos rascunhos dela.
       withholdingProfile: new WithholdingProfileService(
         this.repositories.withholdingProfile,
@@ -1716,15 +1816,8 @@ export class ApplicationFactory {
       depreciation: depreciationService,
       fiscalDocumentEmission: fiscalDocumentEmissionService,
       fiscalDocumentLifecycle: fiscalDocumentLifecycleService,
-      // BE-INCR-NFCE (nó X10a, itens 24–25): inutilização de faixa + lista das lacunas de numeração.
-      fiscalNumberVoid: new FiscalNumberVoidService(
-        this.repositories.fiscalDocument,
-        this.repositories.fiscalNumberVoid,
-        fiscalProfileService,
-        this.policies.accounting,
-        auditService,
-        legalParameterService, // EMENDA-3 E3-2 a: fotografia INUT_NAO_SE_APLICA
-      ),
+      fiscalNumberVoid: fiscalNumberVoidService,
+      nfceContingencia: nfceContingenciaService,
       chat: new ChatService(
         embeddingOpenAIService,
         this.repositories.vector,
@@ -1747,11 +1840,8 @@ export class ApplicationFactory {
         this.repositories.vector,
         new DocumentProcessingService(),
         this.policies.document,
-        chatOpenAIService,
-        structuredDataService, // Injected dependency
         this.repositories.user
       ),
-      structuredData: structuredDataService, // Assigned service
       user: new UserService(this.repositories.user, this.policies.user, this.repositories.vector),
       dynamicTable: dynamicTableService,
       // BE-INCR-DT-VERSION-LEDGER: leitura/diff/restore do ledger; o restore delega ao DynamicTableService.
@@ -1823,6 +1913,9 @@ export class ApplicationFactory {
         this.repositories.fiscalDocument,
         legalParameterService, // fotografia LC116_SERVICO: município do ISS pelo li (LC 116 art. 3º)
         this.repositories.consumptionTaxAssessment, // IBS-CBS-2027 PR-5 (item 24): EXPORT_IBS_CBS_MEMO
+        // EFICIENCIA-FISCAL PR-4 (item 23): EXPORT_ECONOMIA_FISCAL. Leitura tardia: o serviço do relatório depende da
+        // apuração do Simples, montada mais abaixo neste mesmo literal.
+        { relatorio: (scope, competencia) => this.services.taxOptimizationReport.relatorio(scope, competencia) },
       ),
       dataExchangeImport: new DataExchangeImportService(
         this.repositories.dataExchange,
@@ -2009,6 +2102,7 @@ export class ApplicationFactory {
         sourceDocumentUploadService, // BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-9 a: o PDF do DAS na visão
         this.repositories.receitaFiscalRecebimento, // X14-CAIXA PR-2 item 8: recebimentos, base do caixa
         this.repositories.productFiscalProfile, // EFICIENCIA-FISCAL PR-2 item 13: avisos SEM_NCM e ICMS_ST_NAO_CONFERIDA
+        this.repositories.partner, // EFICIENCIA-FISCAL PR-4 item 20: aviso de interdependência pelos sócios
       ),
       // BE-INCR-SIMPLES-NACIONAL PR-4 (nó X14, itens 27–28): espelhos DASN-SIMEI e DEFIS.
       simplesDeclaracao: new SimplesDeclaracaoService(
@@ -2058,6 +2152,8 @@ export class ApplicationFactory {
         legalParameterService,
         // PR-2 (E4): dividendos e JCP POSTED, só leitura pelas interfaces do IRRF-DISTRIBUICAO.
         { dividendos: this.repositories.profitDistribution, jcp: this.repositories.interestOnEquity, socios: this.repositories.partner },
+        // PR-3 (item 22): XML e relatório viram jobs EXPORT_REINF/EXPORT_REINF_RELATORIO no disco dos artefatos.
+        { jobs: this.repositories.dataExchange, salvar: attachmentStorage.saveFile },
       ),
       // BE-INCR-PIS-COFINS PR-2 (nó X8): prévia/confirmação da apuração mensal de PIS/Cofins (reusa o TaxAssessment do X7).
       pisCofinsAssessment: pisCofinsAssessmentService,
@@ -2102,6 +2198,10 @@ export class ApplicationFactory {
         this.policies.accounting,
         resolveUnitCnpjFromUnits,
       ),
+      // X10a PR-7 (EMENDA-PSC): cadastro de PSCs (PLATFORM_ADMIN) e credencial OAuth por unidade (const acima).
+      pscProvider: new PscProviderService(this.repositories.pscProvider, auditService, new PscProviderPolicy()),
+      pscCredential: pscCredentialService,
+      nfceCsc: nfceCscService,
       collectionCharge: collectionChargeService,
       releaseReport: releaseReportService, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-1..P3-5)
       accountingDelivery: new AccountingDeliveryService(
@@ -2440,7 +2540,6 @@ export class ApplicationFactory {
   public getAnalyticsService = (): AnalyticsService => this.services.analytics;
   public getDashboardLayoutService = (): DashboardLayoutService => this.services.dashboardLayout;
   public getDocumentService = (): DocumentService => this.services.document;
-  public getStructuredDataService = (): StructuredDataService => this.services.structuredData;
   public getUserService = (): UserService => this.services.user;
   public getDynamicTableService = (): DynamicTableService => this.services.dynamicTable;
   public getDynamicTableVersionService = (): DynamicTableVersionService => this.services.dynamicTableVersion;
@@ -2488,6 +2587,11 @@ export class ApplicationFactory {
   public getAccountingContactService = (): AccountingContactService => this.services.accountingContact;
   public getPaymentAccountService = (): PaymentAccountService => this.services.paymentAccount;
   public getFiscalCertificateService = (): FiscalCertificateService => this.services.fiscalCertificate;
+  // X10a PR-7 (EMENDA-PSC)
+  public getPscProviderService = (): PscProviderService => this.services.pscProvider;
+  public getPscCredentialService = (): PscCredentialService => this.services.pscCredential;
+  public getNfceCscService = (): NfceCscService => this.services.nfceCsc;
+  public getNfceContingenciaService = (): NfceContingenciaService => this.services.nfceContingencia;
   public getCollectionChargeService = (): CollectionChargeService => this.services.collectionCharge;
   public getReleaseReportService = (): ReleaseReportService => this.services.releaseReport;
   public getTaxAssessmentService = (): TaxAssessmentService => this.services.taxAssessment;
@@ -2521,6 +2625,24 @@ export class ApplicationFactory {
   public getProductFiscalProfileService = (): ProductFiscalProfileService => this.services.productFiscalProfile;
   public getIssBeneficioMunicipalService = (): IssBeneficioMunicipalService => this.services.issBeneficioMunicipal;
   public getTaxOptimizationService = (): TaxOptimizationService => this.services.taxOptimization;
+  public getTaxSimulationService = (): TaxSimulationService =>
+    (this.services.taxSimulation ??= new TaxSimulationService(
+      this.services.simplesApuracao,
+      this.repositories.companyFiscalProfile,
+      this.repositories.fiscalProfile,
+      this.repositories.account,
+      this.repositories.posting,
+      this.repositories.receitaFiscal,
+      this.repositories.simplesEntradas,
+      this.services.accountingReport,
+      this.repositories.partner,
+      this.services.interestOnEquity,
+      this.services.legalParameter,
+      this.services.taxOptimization,
+      this.policies.accounting,
+    ));
+  public getTaxOptimizationReportService = (): TaxOptimizationReportService => this.services.taxOptimizationReport;
+  public getServicoFiscalAvaliacaoService = (): ServicoFiscalAvaliacaoService => this.services.servicoFiscalAvaliacao;
   public getProductDestinationService = (): ProductDestinationService => this.services.productDestination;
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;

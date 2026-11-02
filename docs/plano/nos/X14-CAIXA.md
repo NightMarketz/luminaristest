@@ -4,16 +4,16 @@ tipo: "regua"
 dominio: "fiscal"
 titulo: "Simples Nacional ME/EPP: base do DAS pela receita recebida (regime de caixa) — registro de recebíveis e gatilhos do art. 20"
 estado: "done"
-estado_detalhe: "20/10 (fold): os 3 PRs mergeados em main em 16/10 — #729 (22:58Z), #738 (23:25Z), #739 (23:36Z); nó fecha (done). Pendentes de contador continuam abertas: A1, A2, A3 (transição competência → caixa) · 16/10: execução autorizada (dono, chat, 2026-10-16: \"Pode começar agora e disparar as sessões com brief autorizado\"). 22 itens em 3 PRs empilhados e abertos: #729 (recebimento + trava de ano, itens 1–7a) → #738 (base caixa + art. 20, itens 8–18) → #739 (Anexo IX + incobráveis, itens 19–21). Lacunas L1 (a) e L2 (a) decididas pelo dono em 16/10 ([[D-2026-10-16-X14-CAIXA-LACUNAS]]); A3 nova (transição competência → caixa). Pendentes de contador: A1, A2, A3. Não mergear sem OK"
+estado_detalhe: "30/10 (triagem): A1–A3 saem sem código — o produto vai ao ar só em 2027 (dono) e o caixa acaba em 31/12/2026; A1 tem leitura firme (art. 20 II b, dez/2026) e o dono escolheu automatizar, sem efeito prático · 20/10 (fold): os 3 PRs mergeados em main em 16/10 — #729 (22:58Z), #738 (23:25Z), #739 (23:36Z); nó fecha (done). Pendentes de contador continuam abertas: A1, A2, A3 (transição competência → caixa) · 16/10: execução autorizada (dono, chat, 2026-10-16: \"Pode começar agora e disparar as sessões com brief autorizado\"). 22 itens em 3 PRs empilhados e abertos: #729 (recebimento + trava de ano, itens 1–7a) → #738 (base caixa + art. 20, itens 8–18) → #739 (Anexo IX + incobráveis, itens 19–21). Lacunas L1 (a) e L2 (a) decididas pelo dono em 16/10 ([[D-2026-10-16-X14-CAIXA-LACUNAS]]); A3 nova (transição competência → caixa). Pendentes de contador: A1, A2, A3. Não mergear sem OK"
 depende_de: ["[[X14]]", "[[D-2026-10-10-X14-PROXIMOS-PASSOS]]", "[[D-2026-10-15-X14-CAIXA-FORKS]]"]
 autorizacao: "dono, chat, 2026-10-15: \"Autorizo planejar o BRIEF do X14-CAIXA — sessao-planejamento, sem código, sem 'executa'\" — só o BRIEF; forks ratificados no questionário do mesmo dia ([[D-2026-10-15-X14-CAIXA-FORKS]]) — sem executa · fold R0 (dono, chat, 2026-10-20): \"Q1 a, Q2 a. Grava as decisões e pode começar pelo fold R0 (Q3 a).\" — D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS (commit 6ca851d2, PR do plano de complemento); só o fold, não é executa"
 ancora_sdd: "—"
-atualizado: "2026-10-20"
+atualizado: "2026-10-30"
 prs: ["#711", "#729", "#738", "#739"]
 ---
 # X14-CAIXA — base do DAS por recebimento (regime de caixa)
 
-**Estado:** `done` — 20/10 (fold): os 3 PRs mergeados em main em 16/10 — #729 (22:58Z), #738 (23:25Z), #739 (23:36Z); nó fecha (done). Pendentes de contador continuam abertas: A1, A2, A3 (transição competência → caixa) · 16/10: execução autorizada (dono, chat, 2026-10-16: "Pode começar agora e disparar as sessões com brief autorizado"). 22 itens em 3 PRs empilhados e abertos: #729 (recebimento + trava de ano, itens 1–7a) → #738 (base caixa + art. 20, itens 8–18) → #739 (Anexo IX + incobráveis, itens 19–21). Lacunas L1 (a) e L2 (a) decididas pelo dono em 16/10 ([[D-2026-10-16-X14-CAIXA-LACUNAS]]); A3 nova (transição competência → caixa). Pendentes de contador: A1, A2, A3. Não mergear sem OK  
+**Estado:** `done` — 30/10 (triagem): A1–A3 saem sem código — o produto vai ao ar só em 2027 (dono) e o caixa acaba em 31/12/2026; A1 tem leitura firme (art. 20 II b, dez/2026) e o dono escolheu automatizar, sem efeito prático · 20/10 (fold): os 3 PRs mergeados em main em 16/10 — #729 (22:58Z), #738 (23:25Z), #739 (23:36Z); nó fecha (done). Pendentes de contador continuam abertas: A1, A2, A3 (transição competência → caixa) · 16/10: execução autorizada (dono, chat, 2026-10-16: "Pode começar agora e disparar as sessões com brief autorizado"). 22 itens em 3 PRs empilhados e abertos: #729 (recebimento + trava de ano, itens 1–7a) → #738 (base caixa + art. 20, itens 8–18) → #739 (Anexo IX + incobráveis, itens 19–21). Lacunas L1 (a) e L2 (a) decididas pelo dono em 16/10 ([[D-2026-10-16-X14-CAIXA-LACUNAS]]); A3 nova (transição competência → caixa). Pendentes de contador: A1, A2, A3. Não mergear sem OK  
 **Autorização:** dono, chat, 2026-10-15. Planejar o BRIEF só pela `sessao-planejamento`. O código exige `executa` **Fold R0:** fold R0 (dono, chat, 2026-10-20): "Q1 a, Q2 a. Grava as decisões e pode começar pelo fold R0 (Q3 a)." — D-2026-10-20-COMPLEMENTO-FIN-CTB-FIS (commit 6ca851d2, PR do plano de complemento); só o fold, não é executa  
 próprio por PR.  
 **Depende de:** [[X14]] (cálculo por competência, perfil com `simplesRegimeApuracao`).
@@ -41,3 +41,14 @@ competência de out/2026 vence em 20/11/2026, e a de dez/2026 em 20/01/2027.
 - [[D-2026-10-15-X14-CAIXA-FORKS]] — escopo e forks F-CX-1..7 (15/10)
 - [[D-2026-10-10-X14-PROXIMOS-PASSOS]] — D2 (c)
 - [`BE-INCR-SIMPLES-NACIONAL-brief.md`](../../accounting/BE-INCR-SIMPLES-NACIONAL-brief.md)
+
+## Fold 30/10 — triagem das perguntas ao contador
+
+- Decisão: [[D-2026-10-30-TRIAGEM-CONTADOR]]. Dossiê: [`relatorio.md`](../../../pesquisas-legais/triagem-contador-2026-10-30/relatorio.md).
+- **Fato novo (dono, chat, 30/10):** "Esse projeto vai pro ar só em 2027". O caixa acaba em 31/12/2026 (Res. CGSN 190),
+  então nenhum cliente vai apurar PA no caixa dentro do sistema.
+- **A1:** a leitura firme é que o não recebido entra em **dez/2026**. O art. 20 II b da Res. 140 vale até 31/12/2026, e o fim
+  do caixa é um "retorno ao Regime de Competência". A RFB não publicou regra de transição (notícia de 14/08/2026). O dono
+  escolheu "automatizar dez/2026" (reverte a D-6 a de 10/10), mas **não se abre `executa`**: sem cliente.
+- **A2 e A3:** a norma não diz nada. Ficam as decisões do dono (F-CX-2 c, D+N; "só vendas de ano no caixa", 16/10). Sem cliente.
+- Nada vai ao contador. Estado (`done`) e autorização **não mudam**.

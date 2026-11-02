@@ -7,13 +7,15 @@ import {
   ServiceCostEvidenceCreateSchema,
   SuggestionListQuerySchema,
   TaxOptimizationIdParamSchema,
+  TaxOptimizationReportQuerySchema,
   TaxOptimizationScopeQuerySchema,
   UpdateTaxOptimizationPolicySchema,
 } from '../features/accounting/dtos/TaxOptimizationDto';
 
 /**
  * EFICIENCIA-FISCAL PR-1 itens 5 e 7 (BRIEF §4.3) — /api/accounting/tax-optimization: GET|PUT /policy,
- * GET|POST /service-costs, DELETE /service-costs/:id, GET /suggestions, POST /suggestions/:id/accept|reject.
+ * GET|POST /service-costs, DELETE /service-costs/:id, GET /suggestions, POST /suggestions/:id/accept|reject;
+ * PR-4 item 23: GET /report?competencia=.
  */
 const scopeOf = (user: NonNullable<ReturnType<typeof getUserContextFromRequest>>, unitId: string, access: 'read' | 'write') =>
   getFactory().getAccountingScopeResolver().resolve(user, unitId, { access });
@@ -119,3 +121,16 @@ const decide = (action: 'accept' | 'reject') => async (req: Request, res: Respon
 
 export const acceptTaxSuggestion = decide('accept');
 export const rejectTaxSuggestion = decide('reject');
+
+export const getTaxOptimizationReport = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const query = TaxOptimizationReportQuerySchema.safeParse(req.query);
+    if (!query.success) return res.status(400).json({ success: false, error: query.error.flatten() });
+    const data = await getFactory().getTaxOptimizationReportService().relatorio(await scopeOf(user, query.data.unitId, 'read'), query.data.competencia);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};

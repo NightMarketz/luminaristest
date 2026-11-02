@@ -7,7 +7,8 @@
  * BRIEF §5 item 1). A DCTFWeb entrou com o X9 (BE-INCR-MIT-EXPORT item 13, F-X9-6 a; IN RFB 2.237/2024 relida no Sijut
  * em 03/10). PGDAS-D, DEFIS, Livro Caixa (dispensado com escrituração) e DASN-SIMEI entraram com o X14 PR-3 (item 22;
  * Res. CGSN 140/2018 arts. 38, 40, 63 § 3º, 72 e 109, corpus). IBS_CBS_APURACAO entrou com o IBS-CBS-2027 PR-5 (item 21;
- * LC 214 arts. 41 § 1º, 43, 45 § 6º; Dec. 12.955 art. 44 § 6º para a inativa — dono, 23/10).
+ * LC 214 arts. 41 § 1º, 43, 45 § 6º; Dec. 12.955 art. 44 § 6º para a inativa — dono, 23/10). REINF entrou com o EFD-REINF
+ * PR-3 (item 20; PRE-ADR D7; IN RFB 2.043 arts. 3º I e VIII, § 1º I e 4º, Sijut 28/10): CONDICIONAL em todo regime.
  *
  * BE-INCR-LEGAL-PARAMS PR-2 (item 20): as linhas da matriz moram na tabela de plataforma `OBRIGACAO_REGIME` (chave =
  * obrigação, discriminador = regime, `valorJson` = status base, condições, pergunta e status da inativa), cópia byte a
@@ -19,7 +20,7 @@ import { linhasVigentesDaTabela, type LinhaLegal } from '../../legalParameters/m
 export const STATUS_OBRIGACAO = ['OBRIGATORIA', 'CONDICIONAL', 'FACULTATIVA', 'NAO_SE_APLICA'] as const;
 export type StatusObrigacao = (typeof STATUS_OBRIGACAO)[number];
 /** O nome do tipo fica (BRIEF X9 item 13): DCTFWeb não é SPED, mas renomear mexe em 3 arquivos sem ganho. */
-export type ObrigacaoSped = 'ECD' | 'ECF' | 'DCTFWEB' | 'PGDAS_D' | 'DEFIS' | 'LIVRO_CAIXA' | 'DASN_SIMEI' | 'IBS_CBS_APURACAO';
+export type ObrigacaoSped = 'ECD' | 'ECF' | 'DCTFWEB' | 'PGDAS_D' | 'DEFIS' | 'LIVRO_CAIXA' | 'DASN_SIMEI' | 'IBS_CBS_APURACAO' | 'REINF';
 
 /** Respostas do perfil que mudam o status. `null` = ainda não respondida (vira CONDICIONAL). */
 export interface CondicoesPerfil {
@@ -52,7 +53,8 @@ export interface LinhaMatriz {
 
 /** A ordem da matriz (ECD, ECF; DCTFWEB no fim — lacuna do X9 PR-1 decidida pelo dono em 06/10). */
 // IBS-CBS-2027 PR-5 (BRIEF item 21): a apuração mensal de IBS/CBS (regime regular, desde 2027-01-01) vai no fim.
-export const ORDEM_OBRIGACOES: readonly ObrigacaoSped[] = ['ECD', 'ECF', 'DCTFWEB', 'PGDAS_D', 'DEFIS', 'LIVRO_CAIXA', 'DASN_SIMEI', 'IBS_CBS_APURACAO'];
+// EFD-REINF PR-3 (BRIEF item 20): REINF no fim.
+export const ORDEM_OBRIGACOES: readonly ObrigacaoSped[] = ['ECD', 'ECF', 'DCTFWEB', 'PGDAS_D', 'DEFIS', 'LIVRO_CAIXA', 'DASN_SIMEI', 'IBS_CBS_APURACAO', 'REINF'];
 
 /**
  * Fotografia → matriz vigente em `data`. Na ECD do Presumido a ordem das condições (guardada na linha) É a precedência

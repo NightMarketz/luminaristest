@@ -7,7 +7,10 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { getFactory } from '@/lib/factory';
-import { ReinfBatchCreatedSchema, ReinfBatchViewSchema } from '@/features/accounting/dtos/ReinfDto';
+import { createHash } from 'node:crypto';
+import { ReinfBatchCreatedSchema, ReinfBatchViewSchema, type ReinfBatchCreated } from '@/features/accounting/dtos/ReinfDto';
+import { buildDeliveryManifest, DELIVERABLE_EXPORT_KINDS } from '@/features/accounting/models/AccountingDelivery.model';
+import type { ExportKind } from '@/features/accounting/models/DataExchange.model';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { signReinfEventoForTest } from '@test/helpers/nfeSignature';
 import { validarNoXsdReinf } from '@test/helpers/reinfXsd';
@@ -111,7 +114,7 @@ describe('EFD-REINF PR-2 — R-2010, R-4010 e R-2099 a partir de dado real', () 
     await prisma.$disconnect();
   });
 
-  let lote: { batchId: string; xml: string; sha256: string; relatorio: { linhas: { evento: string; beneficiario: string }[]; avisos: string[] } };
+  let lote: ReinfBatchCreated;
 
   it('itens 15–18: lote R-1000 → R-2010 → R-4010 (2 CPFs) → R-2099 → R-4099; cada evento assinado valida no XSD (invariante 7)', async () => {
     const r = await gerar('2026-03');
@@ -135,7 +138,7 @@ describe('EFD-REINF PR-2 — R-2010, R-4010 e R-2099 a partir de dado real', () 
     expect(rC).toContain('<rendIsento><tpIsencao>12</tpIsencao><vlrIsento>30000,00</vlrIsento></rendIsento>');
     // Sócio PJ: dividendo fora, com aviso (lacuna A); nenhum R-4020.
     expect(lote.xml).not.toContain(CNPJ_SOCIO_PJ);
-    expect(lote.relatorio.avisos).toEqual([expect.stringContaining('DIVIDENDO_PJ_FORA_DA_REINF')]);
+    expect(lote.relatorio.avisos.map((a) => a.codigo)).toEqual(['DIVIDENDO_PJ_FORA_DA_REINF']);
   });
 
   it('invariante 13: Σ vlrTotalRetPrinc do R-2010 = Σ amountCents das linhas INSS da porta; o relatório traz o R-2010 e o R-4010 mascarados', async () => {
@@ -162,6 +165,52 @@ describe('EFD-REINF PR-2 — R-2010, R-4010 e R-2099 a partir de dado real', () 
     const ev = await prisma.auditEvent.findFirstOrThrow({ where: { eventType: 'tax.reinf_batch.generated', targetId: lote.batchId } });
     expect(JSON.parse(JSON.parse(ev.payload).contagemPorTipo)).toEqual({ 'R-1000': 1, 'R-2010': 1, 'R-4010': 2, 'R-2099': 1, 'R-4099': 1 });
     expect(ev.payload).not.toMatch(new RegExp(`${CPF_A}|${CPF_C}`));
+  });
+
+  it('PR-3 item 21: só o R-4010 do CPF de transição (isenção 12) tem o prazo trimestral; o lote leva o mensal', async () => {
+    expect(lote.relatorio.linhas.map((l) => [l.evento, l.beneficiario, l.prazoReinf])).toEqual([
+      ['R-2010', '**.***.***/0001-**', '2026-04-15'],
+      ['R-4010', '***.444.777-**', '2026-04-15'],
+      ['R-4010', '***.533.447-**', '2026-05-15'],
+      ['R-4010', '***.444.777-**', '2026-04-15'],
+      ['R-4010', '***.444.777-**', '2026-04-15'],
+    ]);
+    expect(lote.relatorio.prazo).toBe('2026-04-15');
+    const row = await prisma.reinfBatch.findUniqueOrThrow({ where: { id: lote.batchId } });
+    const eventos = row.eventos as { tipo: string; beneficiarioRef?: string; prazo?: string }[];
+    expect(eventos.find((e) => e.beneficiarioRef === socio.C)?.prazo).toBe('2026-05-15');
+  });
+
+  it('PR-3 item 22: XML e relatório baixados pelo job com o sha256 do lote; os dois entram no manifesto do pacote', async () => {
+    const baixar = async (jobId: string) =>
+      request(app).get(`/api/accounting/data-exchange/jobs/${jobId}/download`).set(authHeader(dono)).query({ unitId: U1 }).buffer(true).parse((res, cb) => {
+        const partes: Buffer[] = [];
+        res.on('data', (c: Buffer) => partes.push(c));
+        res.on('end', () => cb(null, Buffer.concat(partes)));
+      });
+    const xml = await baixar(lote.exportJobIds.xml);
+    const csv = await baixar(lote.exportJobIds.relatorio);
+    expect([xml.status, (xml.body as Buffer).toString('utf8') === lote.xml, createHash('sha256').update(xml.body as Buffer).digest('hex')]).toEqual([200, true, lote.sha256]);
+    expect([csv.status, (csv.body as Buffer).toString('utf8')]).toEqual([200, lote.relatorio.csv]);
+
+    const jobs = await prisma.accountingDataExchangeJob.findMany({ where: { id: { in: [lote.exportJobIds.xml, lote.exportJobIds.relatorio] } }, orderBy: { kind: 'asc' } });
+    expect(jobs.map((j) => [j.kind, j.status, j.unitId, j.periodStart?.toISOString(), j.periodEnd?.toISOString()])).toEqual([
+      ['EXPORT_REINF', 'EXPORTED', U1, '2026-03-01T00:00:00.000Z', '2026-03-31T00:00:00.000Z'],
+      ['EXPORT_REINF_RELATORIO', 'EXPORTED', U1, '2026-03-01T00:00:00.000Z', '2026-03-31T00:00:00.000Z'],
+    ]);
+    expect(jobs.every((j) => (DELIVERABLE_EXPORT_KINDS as readonly string[]).includes(j.kind))).toBe(true);
+    const manifesto = buildDeliveryManifest({
+      scope: { ownerUserId: dono.id, actorUserId: dono.id, unitId: U1, ledgerCode: 'DEFAULT', baseCurrencyCode: 'BRL', timeZone: 'America/Sao_Paulo' },
+      period: { start: new Date('2026-01-01T00:00:00Z'), end: new Date('2026-12-31T00:00:00Z') },
+      contactId: 'c',
+      core: { ecd: { jobId: 'ecd', kind: 'EXPORT_SPED_ECD', sha256: 'a' }, ecf: { jobId: 'ecf', kind: 'EXPORT_SPED_ECF', sha256: 'b' } },
+      extras: jobs.map((j) => ({ jobId: j.id, kind: j.kind as ExportKind, sha256: j.sha256! })),
+      generatedAt: new Date(),
+    });
+    expect(manifesto.files.filter((f) => f.kind.startsWith('EXPORT_REINF'))).toEqual([
+      { kind: 'EXPORT_REINF', jobId: lote.exportJobIds.xml, sha256: lote.sha256 },
+      { kind: 'EXPORT_REINF_RELATORIO', jobId: lote.exportJobIds.relatorio, sha256: createHash('sha256').update(lote.relatorio.csv, 'utf8').digest('hex') },
+    ]);
   });
 
   it('item 13: JCP cancelado depois do lote ⇒ defasado', async () => {

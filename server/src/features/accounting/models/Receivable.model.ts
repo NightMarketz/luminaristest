@@ -102,3 +102,9 @@ export function deletedDocumentNumber(id: string, documentNumber: string | null)
   if (documentNumber === null) return null;
   return `deleted:${id}:${documentNumber}`;
 }
+
+/** Inverso de `deletedDocumentNumber`: o nº como o usuário escreveu, para exibição (F5 EMENDA-1 16b). */
+export function writtenDocumentNumber(id: string, stored: string | null): string | null {
+  const prefix = `deleted:${id}:`;
+  return stored !== null && stored.startsWith(prefix) ? stored.slice(prefix.length) : stored;
+}

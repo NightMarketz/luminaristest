@@ -24,13 +24,17 @@ describe('regimeEmpresa (item 2)', () => {
 
 describe('matriz ECD/ECF/DCTFWEB × 4 regimes (item 3; X9 item 13) — só linhas com fonte verificada', () => {
   // X9 item 13 (F-X9-6 a): 8 → 12 linhas, DCTFWEB por regime — mudança esperada, não regressão.
-  it('tem exatamente 12 linhas (ECD, ECF e DCTFWEB para MEI, SIMPLES, PRESUMIDO, REAL), cada uma com fonte e vigência', () => {
-    expect(OBRIGACOES_POR_REGIME).toHaveLength(12);
+  // EFD-REINF PR-3 (item 20): 12 → 16 linhas, REINF por regime — mudança esperada, não regressão.
+  it('tem exatamente 16 linhas (ECD, ECF, DCTFWEB e REINF para MEI, SIMPLES, PRESUMIDO, REAL), cada uma com fonte e vigência', () => {
+    expect(OBRIGACOES_POR_REGIME).toHaveLength(16);
     for (const r of REGIMES_EMPRESA) {
-      expect(OBRIGACOES_POR_REGIME.filter((l) => l.regime === r).map((l) => l.obrigacao).sort()).toEqual(['DCTFWEB', 'ECD', 'ECF']);
+      expect(OBRIGACOES_POR_REGIME.filter((l) => l.regime === r).map((l) => l.obrigacao).sort()).toEqual(['DCTFWEB', 'ECD', 'ECF', 'REINF']);
     }
     for (const l of OBRIGACOES_POR_REGIME) {
-      if (l.obrigacao === 'DCTFWEB') {
+      if (l.obrigacao === 'REINF') {
+        expect(l.fonte).toMatch(/IN RFB 2\.043\/2021/);
+        expect(l.vigenteDesde).toBe('2025-01-01');
+      } else if (l.obrigacao === 'DCTFWEB') {
         expect(l.fonte).toMatch(/IN RFB 2\.237\/2024/);
         expect(l.vigenteDesde).toBe('2025-01-01');
       } else {

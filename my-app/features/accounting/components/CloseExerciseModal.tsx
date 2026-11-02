@@ -8,6 +8,8 @@ export interface CloseExerciseModalProps {
   isOpen: boolean;
   onClose: () => void;
   unitId: string;
+  /** Nome da unidade para o campo Unidade (o `unitId` cru não é mostrado). */
+  unitName?: string;
   /** Ano do exercício a encerrar — já selecionado no seletor da PeriodsPanel. */
   year: number;
   /** Chamado com o JournalEntry retornado (novo OU idempotente — resposta HTTP idêntica). */
@@ -21,7 +23,7 @@ export interface CloseExerciseModalProps {
  * re-close returns the SAME entry, HTTP 201 both times, with no flag distinguishing the two
  * cases — so success renders one neutral copy for both (BRIEF-W2-G FORK 2).
  */
-export function CloseExerciseModal({ isOpen, onClose, unitId, year, onSuccess }: CloseExerciseModalProps) {
+export function CloseExerciseModal({ isOpen, onClose, unitId, unitName, year, onSuccess }: CloseExerciseModalProps) {
   const { t } = useTranslation('accounting');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +115,7 @@ export function CloseExerciseModal({ isOpen, onClose, unitId, year, onSuccess }:
               <dt className="text-neutral-500">{t('periods.fiscalYear', 'Exercício')}</dt>
               <dd className="text-neutral-200">{year}</dd>
               <dt className="text-neutral-500">{t('view.unit', 'Unidade')}</dt>
-              <dd className="truncate text-neutral-200" title={unitId}>{unitId}</dd>
+              <dd className="truncate text-neutral-200" title={unitId}>{unitName ?? '—'}</dd>
             </dl>
             <p className="text-sm text-neutral-300">
               {t(

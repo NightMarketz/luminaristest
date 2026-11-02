@@ -536,7 +536,7 @@
               "type": "string"
             },
             "maxItems": 20,
-            "description": "Até 20 jobs EXPORTED extras (balancete, razão, conciliação, amostra, BP, DRE, memória das apurações, ISS por competência) — SPED nunca é extra"
+            "description": "Até 20 jobs EXPORTED extras (balancete, razão, conciliação, amostra, BP, DRE, memória das apurações, ISS por competência, XML e relatório da EFD-Reinf) — SPED nunca é extra"
           }
         }
       },
@@ -600,7 +600,9 @@
                 "EXPORT_ENTRY_SAMPLE",
                 "EXPORT_TAX_ASSESSMENT_MEMO",
                 "EXPORT_ISS_BY_COMPETENCE",
-                "EXPORT_IBS_CBS_MEMO"
+                "EXPORT_IBS_CBS_MEMO",
+                "EXPORT_REINF",
+                "EXPORT_REINF_RELATORIO"
               ]
             },
             "description": "Kinds que a UI pré-marca no build — SUGESTÃO, não gate (C6b PR-3, F-C6b-2 a)"
@@ -6410,39 +6412,6 @@
       }
     },
     "/api/dashboard-layout/{id}": {
-      "get": {
-        "summary": "Get a dashboard layout by ID",
-        "tags": [
-          "DashboardLayout"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "cuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Layout"
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          },
-          "404": {
-            "$ref": "#/components/responses/NotFoundError"
-          }
-        }
-      },
       "patch": {
         "summary": "Update a dashboard layout",
         "tags": [
@@ -12765,6 +12734,9 @@
           },
           "404": {
             "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "description": "SOCIO_COM_DISTRIBUICAO (partner has profit distribution or JCP; set saidaEm instead) or deleted unit"
           }
         }
       }
@@ -13941,6 +13913,735 @@
           },
           "409": {
             "$ref": "#/components/responses/UnitDeleted"
+          }
+        }
+      }
+    },
+    "/api/accounting/psc-credentials/{unitId}/authorize": {
+      "post": {
+        "summary": "Start the OAuth 2.0 + PKCE authorization at the cloud-certificate provider (PSC); returns the URL",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "pscProviderId",
+                  "escopo"
+                ],
+                "properties": {
+                  "pscProviderId": {
+                    "type": "string"
+                  },
+                  "escopo": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "NFSE_DPS",
+                        "NFE",
+                        "NFCE"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authorization URL (state signed, code_challenge S256)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "authorizationUrl": {
+                          "type": "string"
+                        },
+                        "expiresAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "psc_nao_homologado | unidade_sem_cnpj"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "dfe_psc_key_missing | dfe_psc_redirect_missing"
+          }
+        }
+      }
+    },
+    "/api/accounting/psc-credentials/callback": {
+      "get": {
+        "summary": "OAuth return from the PSC (public; authenticated by the signed state)",
+        "tags": [
+          "Accounting"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "state",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "code",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "error",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Credential stored; public view (no token)"
+          },
+          "400": {
+            "description": "psc_state_invalido | psc_autorizacao_negada | psc_autorizacao_erro"
+          },
+          "422": {
+            "description": "psc_certificado_nao_e_da_unidade | psc_nao_homologado | unidade_sem_cnpj"
+          },
+          "502": {
+            "description": "psc_indisponivel | psc_resposta_invalida"
+          },
+          "503": {
+            "description": "dfe_psc_key_missing | dfe_psc_redirect_missing"
+          }
+        }
+      }
+    },
+    "/api/accounting/psc-credentials/{unitId}": {
+      "get": {
+        "summary": "Public view of the unit's PSC credential (no token), with warnings",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public view",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "unitId": {
+                          "type": "string"
+                        },
+                        "psc": {
+                          "type": "string"
+                        },
+                        "titularCnpj": {
+                          "type": "string"
+                        },
+                        "certNotAfter": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "tokenExpiraEm": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "consumoNoAno": {
+                          "type": "integer"
+                        },
+                        "cotaAnual": {
+                          "type": "integer",
+                          "nullable": true
+                        },
+                        "avisos": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete the unit's PSC credential (token ciphertext wiped)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/accounting/nfce-cscs/{unitId}": {
+      "put": {
+        "summary": "Store (or replace) the unit's NFC-e CSC for one environment (encrypted with DFE_PSC_KEYS)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ambiente",
+                  "cscId",
+                  "csc"
+                ],
+                "properties": {
+                  "ambiente": {
+                    "type": "string",
+                    "enum": [
+                      "producao",
+                      "homologacao"
+                    ]
+                  },
+                  "cscId": {
+                    "type": "string",
+                    "pattern": "^\\d{1,6}$"
+                  },
+                  "csc": {
+                    "type": "string",
+                    "pattern": "^[0-9A-Za-z]{16,36}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Public view (unitId",
+            "ambiente": null,
+            "cscId": null,
+            "createdAt) — never the CSC": null
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "dfe_psc_key_missing"
+          }
+        }
+      },
+      "get": {
+        "summary": "The unit's live NFC-e CSCs (identifier only)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of public views"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove the unit's NFC-e CSC for one environment (soft-delete, ciphertext zeroed)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ambiente",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "producao",
+                "homologacao"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/accounting/nfce-contingencia/{unitId}": {
+      "put": {
+        "summary": "Turn the unit's NFC-e offline contingency (tpEmis=9) on or off for one environment",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ambiente",
+                  "ativa"
+                ],
+                "properties": {
+                  "ambiente": {
+                    "type": "string",
+                    "enum": [
+                      "producao",
+                      "homologacao"
+                    ]
+                  },
+                  "ativa": {
+                    "type": "boolean"
+                  },
+                  "xJust": {
+                    "type": "string",
+                    "minLength": 15,
+                    "maxLength": 256,
+                    "description": "Required to turn it on (B29)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "State (unitId",
+            "ambiente": null,
+            "ativa": null,
+            "origem": null,
+            "dhCont": null,
+            "xJust)": null
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      },
+      "get": {
+        "summary": "The unit's NFC-e offline contingency state in both environments",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of states"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting/psc-providers": {
+      "get": {
+        "summary": "List the homologated PSCs (PLATFORM_ADMIN only; client secret never returned)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Provider views"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      },
+      "post": {
+        "summary": "Register a PSC (PLATFORM_ADMIN only; client secret stored encrypted)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "nome",
+                  "baseUrl",
+                  "clientId",
+                  "clientSecret",
+                  "algoritmos"
+                ],
+                "properties": {
+                  "nome": {
+                    "type": "string"
+                  },
+                  "baseUrl": {
+                    "type": "string",
+                    "description": "https only"
+                  },
+                  "clientId": {
+                    "type": "string"
+                  },
+                  "clientSecret": {
+                    "type": "string"
+                  },
+                  "cotaAnual": {
+                    "type": "integer",
+                    "nullable": true
+                  },
+                  "lifetimeMaxSegundos": {
+                    "type": "integer",
+                    "nullable": true
+                  },
+                  "algoritmos": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "habilitadoEm": {
+                    "type": "string",
+                    "format": "date-time",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Provider view"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "503": {
+            "description": "dfe_psc_key_missing"
+          }
+        }
+      }
+    },
+    "/api/accounting/psc-providers/{id}": {
+      "patch": {
+        "summary": "Update a PSC (PLATFORM_ADMIN only)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Provider view"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete a PSC (PLATFORM_ADMIN only)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           }
         }
       }
@@ -22163,8 +22864,7 @@
                       },
                       "suiteKey": {
                         "type": "string",
-                        "description": "Preset suite key",
-                        "e.g. \"agronegocio\"": null
+                        "description": "Preset suite key, e.g. \"agronegocio\""
                       },
                       "unit": {
                         "type": "object",
@@ -22335,6 +23035,38 @@
                           "type": "array",
                           "items": {
                             "type": "object"
+                          }
+                        }
+                      },
+                      "addedTables": {
+                        "type": "array",
+                        "description": "W1 (F-W1-4 a) - tables created in the AI interview. Installed with category other; the key must not exist in the suite, a module or the Core (400 details.reason ADDED_TABLE_EXISTS); fields go through the same validation as addedFields (400 details.reason ADDED_TABLE_INVALID)",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "key",
+                            "name",
+                            "fields"
+                          ],
+                          "additionalProperties": false,
+                          "properties": {
+                            "key": {
+                              "type": "string",
+                              "pattern": "^[a-z][a-z0-9_]*$",
+                              "maxLength": 64
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 120
+                            },
+                            "fields": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "object"
+                              }
+                            }
                           }
                         }
                       },
@@ -27502,6 +28234,69 @@
         }
       }
     },
+    "/api/nfe/dfe/documents/{id}/danfe": {
+      "get": {
+        "summary": "DANFE PDF of an authorized NF-e 55 (NFE-DANFE-IBSCBS PR-3 item 19)",
+        "description": "Gera sob demanda o DANFE (NT 2026.010) só a partir do nfeProc anexado ao documento; nada é gravado. Policy canReadFiscalDocument, a mesma da leitura por id.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF (Content-Disposition attachment; filename=\"danfe-<chave>.pdf\")",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Unidade ou documento fiscal inexistente (ou de outro tenant)"
+          },
+          "409": {
+            "description": "DANFE_DOCUMENTO_NAO_AUTORIZADO (status fora de AUTHORIZED/AUTHORIZED_DIVERGENT) ou DANFE_SEM_XML"
+          },
+          "422": {
+            "description": "DANFE_SO_NFE (documento NFS-e) ou DANFE_NFCE_NO_FE (NFC-e, DANFE do frontend)"
+          }
+        }
+      }
+    },
     "/api/nfe/dfe/documents/{id}/retorno-manual": {
       "post": {
         "summary": "Register the authorized NFS-e XML downloaded from the public portal (manual mode, item 11)",
@@ -29729,44 +30524,6 @@
         }
       }
     },
-    "/api/reports/generate-chart-data": {
-      "post": {
-        "summary": "Generate chart data via Server-Sent Events stream",
-        "tags": [
-          "Reports"
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "SSE stream of progress events and final chart data",
-            "content": {
-              "text/event-stream": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/UnauthorizedError"
-          }
-        }
-      }
-    },
     "/api/sales/cancel": {
       "post": {
         "summary": "Cancel a finalized salon sale (status → Cancelled; reverses the revenue entry)",
@@ -31138,8 +31895,8 @@
     },
     "/api/accounting/reinf/batches": {
       "post": {
-        "summary": "Generate the EFD-Reinf batch of a month (BE-INCR-EFD-REINF PR-1 items 4-14, PR-2 items 15-18)",
-        "description": "Monta o lote da EFD-Reinf (leiaute 2.1.2b; R-1000 quando preciso, R-2010 por prestador de cessão de mão de obra, R-4010 por sócio PF (dividendos e JCP), R-4020 por fornecedor PJ e sócio PJ com JCP, R-2099 e R-4099) a partir das retenções feitas e das distribuições POSTED da PJ inteira, sem assinatura, e registra a geração (hash + ids, sem XML nem CPF/CNPJ). O XML e o relatório de conferência só saem nesta resposta. 400 - competência futura (REINF_COMPETENCIA_FUTURA), perfil do ano ausente, CNPJ do fornecedor inválido (REINF_BENEFICIARIO_CNPJ_INVALIDO), natureza do rendimento sem mapa (NATUREZA_RENDIMENTO_SEM_MAPA), CPF do sócio inválido (REINF_BENEFICIARIO_CPF_INVALIDO), sócio removido com JCP (REINF_SOCIO_REMOVIDO), R-2010 sem série/número/tipo de serviço/CPRB (REINF_R2010_CAMPO_AUSENTE), prestador sem CNPJ (REINF_PRESTADOR_CNPJ_INVALIDO), CPRB divergente (REINF_R2010_CPRB_DIVERGENTE), cadastro do R-1000 incompleto (REINF_SEM_CNPJ_DECLARANTE, REINF_SEM_CONTATO, REINF_CLASSTRIB_PENDENTE, REINF_ECD_INDEFINIDA), limites do XSD (REINF_*_ACIMA_DO_LIMITE). 422 - REINF_SEM_FATO (dispensada sem fato) ou REINF_SEM_EVENTO_GERAVEL.",
+        "summary": "Generate the EFD-Reinf batch of a month (BE-INCR-EFD-REINF PR-1 items 4-14, PR-2 items 15-18, PR-3 items 21-23)",
+        "description": "Monta o lote da EFD-Reinf (leiaute 2.1.2b; R-1000 quando preciso, R-2010 por prestador de cessão de mão de obra, R-4010 por sócio PF (dividendos e JCP), R-4020 por fornecedor PJ e sócio PJ com JCP, R-2099 e R-4099) a partir das retenções feitas e das distribuições POSTED da PJ inteira, sem assinatura, e registra a geração (hash + ids, sem XML nem CPF/CNPJ). O XML e o relatório de conferência saem nesta resposta e, desde o PR-3, também como 2 jobs de export (EXPORT_REINF com o sha256 do lote; EXPORT_REINF_RELATORIO), extras do pacote do contador (exportJobIds). O relatório traz o prazo por linha (trimestral só no R-4010 inteiramente de isenção 12) e avisos com código. 400 - competência futura (REINF_COMPETENCIA_FUTURA), perfil do ano ausente, CNPJ do fornecedor inválido (REINF_BENEFICIARIO_CNPJ_INVALIDO), natureza do rendimento sem mapa (NATUREZA_RENDIMENTO_SEM_MAPA), CPF do sócio inválido (REINF_BENEFICIARIO_CPF_INVALIDO), sócio removido com JCP (REINF_SOCIO_REMOVIDO), R-2010 sem série/número/tipo de serviço/CPRB (REINF_R2010_CAMPO_AUSENTE), prestador sem CNPJ (REINF_PRESTADOR_CNPJ_INVALIDO), CPRB divergente (REINF_R2010_CPRB_DIVERGENTE), cadastro do R-1000 incompleto (REINF_SEM_CNPJ_DECLARANTE, REINF_SEM_CONTATO, REINF_CLASSTRIB_PENDENTE, REINF_ECD_INDEFINIDA), limites do XSD (REINF_*_ACIMA_DO_LIMITE). 422 - REINF_SEM_FATO (dispensada sem fato) ou REINF_SEM_EVENTO_GERAVEL.",
         "tags": [
           "Accounting"
         ],
@@ -31175,7 +31932,7 @@
         },
         "responses": {
           "201": {
-            "description": "ReinfBatchCreated (batchId, sha256, xml, relatorio)"
+            "description": "ReinfBatchCreated (batchId, sha256, xml, relatorio, exportJobIds)"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -31294,10 +32051,10 @@
         }
       }
     },
-    "/api/nfe/dfe/documents/{id}/danfe": {
+    "/api/accounting/simples/simulacoes/fator-r": {
       "get": {
-        "summary": "DANFE PDF of an authorized NF-e 55 (NFE-DANFE-IBSCBS PR-3 item 19)",
-        "description": "Gera sob demanda o DANFE (NT 2026.010) só a partir do nfeProc anexado ao documento; nada é gravado. Policy canReadFiscalDocument, a mesma da leitura por id.",
+        "summary": "Simples factor r simulation (current payroll x target payroll of the RBT12 window)",
+        "description": "Pure calculation, nothing is saved. folhaAlvoCents is the payroll of the 12 months of the RBT12 window of the period (FS12) and is never persisted (I-5). Cost of the extra payroll from table ENCARGO_FOLHA - PRO_LABORE pays the partner INSS of 11% up to the RGPS ceiling, EMPREGADO pays FGTS of 8%. Every answer carries the real-payroll warning. 400 SEM_ATIVIDADE_SUJEITA_AO_FATOR_R, ATIVIDADE_SEM_ANEXO, PARAMETRO_LEGAL_AUSENTE.",
         "tags": [
           "Accounting"
         ],
@@ -31308,8 +32065,8 @@
         ],
         "parameters": [
           {
-            "in": "path",
-            "name": "id",
+            "in": "query",
+            "name": "unitId",
             "required": true,
             "schema": {
               "type": "string"
@@ -31317,24 +32074,38 @@
           },
           {
             "in": "query",
-            "name": "unitId",
+            "name": "competencia",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "YYYY-MM"
+            }
+          },
+          {
+            "in": "query",
+            "name": "folhaAlvoCents",
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tipoFolha",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PRO_LABORE",
+                "EMPREGADO"
+              ],
+              "default": "PRO_LABORE"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "PDF (Content-Disposition attachment; filename=\"danfe-<chave>.pdf\")",
-            "content": {
-              "application/pdf": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
-            }
+            "description": "FatorRSimulacao (cents as strings; economiaLiquidaCents may be negative)"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"
@@ -31346,13 +32117,288 @@
             "$ref": "#/components/responses/ForbiddenError"
           },
           "404": {
-            "description": "Unidade ou documento fiscal inexistente (ou de outro tenant)"
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/accounting/simples/simulacoes/fator-r/sugestao": {
+      "post": {
+        "summary": "Record the factor r simulation as a SYSTEM suggestion (FATOR_R_FOLHA)",
+        "description": "Same fields as the GET, in the body. Recalculates and records a PROPOSED suggestion proposed by SYSTEM (decided by the ACTIVE accountant or, without one, the owner). A live PROPOSED of the same period is reused and never recalculated; if its parametrosSha256 differs a warning is returned (I-10). 400 SIMULACAO_SEM_ECONOMIA.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "competencia",
+                  "folhaAlvoCents"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "competencia": {
+                    "type": "string"
+                  },
+                  "folhaAlvoCents": {
+                    "type": "string"
+                  },
+                  "tipoFolha": {
+                    "type": "string",
+                    "enum": [
+                      "PRO_LABORE",
+                      "EMPREGADO"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "SimulacaoSugestao { suggestionId, reaproveitada, avisos }"
           },
-          "409": {
-            "description": "DANFE_DOCUMENTO_NAO_AUTORIZADO (status fora de AUTHORIZED/AUTHORIZED_DIVERGENT) ou DANFE_SEM_XML"
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
           },
-          "422": {
-            "description": "DANFE_SO_NFE (documento NFS-e) ou DANFE_NFCE_NO_FE (NFC-e, DANFE do frontend)"
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting/simulacoes/regime": {
+      "get": {
+        "summary": "Regime simulation for a year (Simples x Presumido x Real) over the ledger, with the 2027 projection",
+        "description": "Pure calculation. Simples = DAS month by month from the fiscal subledger; Presumido and Real = IRPJ/CSLL (X7 pure functions; Real on the book result without e-Lalur), PIS/COFINS (no credits) or CBS/IBS from 2027, CPP of 20% on the reported payroll and ISS at the unit profile rate. Year up to 2026 also returns projecao2027 with the same revenue (DRAFT CBS line = warning). Alerts for the sublimit (80%), EPP limit and the option window.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ano",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "RegimeSimulacao (cents as strings)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/accounting/simulacoes/regime/sugestao": {
+      "post": {
+        "summary": "Record the regime simulation as a SYSTEM suggestion (TROCA_DE_REGIME)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "ano"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "ano": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "SimulacaoSugestao { suggestionId, reaproveitada, avisos }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      }
+    },
+    "/api/accounting/simulacoes/remuneracao-socio": {
+      "get": {
+        "summary": "Partner pay simulation (pro-labore x dividends x JCP) for an annual amount",
+        "description": "Pure calculation. Three mixes of valorAnualCents - all pro-labore; one minimum wage of pro-labore plus dividends; minimum pro-labore plus JCP up to the partner share of the deductible limit (Real only) plus dividends. INSS 11% up to the ceiling, CPP 20% outside the DAS, IRRF table on pro-labore, IRRF 10% above R$ 50 thousand a month on dividends, IRRF 17.5% on JCP. 404 unknown partner; 400 SOCIO_FORA_DO_ESCOPO, SOCIO_FORA_DO_ANO.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ano",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "partnerId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "valorAnualCents",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "RemuneracaoSocioSimulacao (cents as strings)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "description": "Unit or partner not found"
+          }
+        }
+      }
+    },
+    "/api/accounting/simulacoes/remuneracao-socio/sugestao": {
+      "post": {
+        "summary": "Record the partner pay simulation as a SYSTEM suggestion (REMUNERACAO_SOCIO)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "ano",
+                  "partnerId",
+                  "valorAnualCents"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "ano": {
+                    "type": "integer"
+                  },
+                  "partnerId": {
+                    "type": "string"
+                  },
+                  "valorAnualCents": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "SimulacaoSugestao { suggestionId, reaproveitada, avisos }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
           }
         }
       }

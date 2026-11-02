@@ -58,7 +58,7 @@ function perfilSimples(over: Record<string, unknown> = {}) {
     partnerAccountRef: null,
     icmsContribuinte: false,
     pisCofinsRegime: 'SIMPLES',
-    emissao: { completo: true, faltantes: [], pendingExternalValidation: [] },
+    emissao: { completo: true, faltantes: [], pendingExternalValidation: [], opSimpNac: 3 },
     ...over,
   };
 }

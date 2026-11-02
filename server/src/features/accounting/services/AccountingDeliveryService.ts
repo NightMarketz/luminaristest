@@ -410,8 +410,16 @@ export class AccountingDeliveryService {
    * ESCOPO e o PERÍODO do núcleo. `findJobById` já filtra por `(userId, unitId)` do escopo —
    * cross-tenant OU de outra unidade resolve `null` → `NotFoundError` (mesmo padrão de
    * `resolveJobs`, nunca `ForbiddenError`). Ordem de validação por id: existe → `EXPORTED` →
-   * `sha256` → kind entregável (SPED nunca é extra) → kind não duplicado no pacote → período
-   * gravado e ⊆ período do núcleo. Id duplicado em `extraJobIds` é 400 antes de tudo.
+   * `sha256` → kind entregável (SPED nunca é extra) → período gravado → kind+período não
+   * duplicado no pacote → período ⊆ período do núcleo. Id duplicado em `extraJobIds` é 400 antes
+   * de tudo.
+   *
+   * Emenda C6b (cédula D-2026-10-28-LACUNAS-EXECUTA-27-28, item 2): a unicidade do extra é
+   * **kind + período** — o mesmo kind entra várias vezes se os intervalos `[periodStart,
+   * periodEnd]` não se cruzam (ex.: os 12 meses de um export mensal no pacote anual); intervalo
+   * sobreposto ou igual do mesmo kind continua 400 `DUPLICATE_KIND`. A checagem de período
+   * ausente sobe para antes da de duplicata porque a duplicata agora precisa do período; o job
+   * sem período segue com a mensagem própria (é o conserto que o operador precisa fazer).
    */
   private async resolveExtras(
     scope: AccountingScope,
@@ -420,7 +428,7 @@ export class AccountingDeliveryService {
     tx?: Prisma.TransactionClient,
   ): Promise<ResolvedExtra[]> {
     const seenIds = new Set<string>();
-    const seenKinds = new Set<string>();
+    const seenPeriodsByKind = new Map<string, Array<{ start: Date; end: Date }>>();
     const resolved: ResolvedExtra[] = [];
     for (const id of extraJobIds) {
       if (seenIds.has(id)) {
@@ -444,14 +452,6 @@ export class AccountingDeliveryService {
             '(SPED é o núcleo obrigatório, nunca um extra).',
         );
       }
-      if (seenKinds.has(job.kind)) {
-        throw new AppError(
-          `Já existe um extra do kind '${job.kind}' neste pacote — cada demonstrativo entra uma vez.`,
-          400,
-          'DUPLICATE_KIND',
-        );
-      }
-      seenKinds.add(job.kind);
       if (!job.periodStart || !job.periodEnd) {
         throw new ValidationError(
           `O job extra '${id}' não tem período gravado — regere o arquivo com asOf/janela antes ` +
@@ -460,6 +460,21 @@ export class AccountingDeliveryService {
       }
       const extraStart = job.periodStart as Date;
       const extraEnd = job.periodEnd as Date;
+      const seenPeriods = seenPeriodsByKind.get(job.kind) ?? [];
+      const clash = seenPeriods.find(
+        (p) => extraStart.getTime() <= p.end.getTime() && p.start.getTime() <= extraEnd.getTime(),
+      );
+      if (clash) {
+        throw new AppError(
+          `Já existe um extra do kind '${job.kind}' cobrindo ${toDateOnly(clash.start)}..` +
+            `${toDateOnly(clash.end)} neste pacote, que se cruza com ${toDateOnly(extraStart)}..` +
+            `${toDateOnly(extraEnd)} do job '${id}' — o mesmo demonstrativo só entra de novo com ` +
+            'período disjunto.',
+          400,
+          'DUPLICATE_KIND',
+        );
+      }
+      seenPeriodsByKind.set(job.kind, [...seenPeriods, { start: extraStart, end: extraEnd }]);
       if (extraStart.getTime() < period.start.getTime() || extraEnd.getTime() > period.end.getTime()) {
         throw new AppError(
           `O job extra '${id}' cobre ${toDateOnly(extraStart)}..${toDateOnly(extraEnd)}, fora do ` +

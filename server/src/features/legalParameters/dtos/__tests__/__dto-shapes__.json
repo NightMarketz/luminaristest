@@ -42,7 +42,9 @@
             "ISS_TRANSICAO",
             "NFCE_LIMITE",
             "INUT_NAO_SE_APLICA",
-            "ICMS_ST_NCM_UF"
+            "ICMS_ST_NCM_UF",
+            "ENCARGO_FOLHA",
+            "IBS_CBS_REDUCAO_NBS"
           ]
         },
         "chave": {
@@ -146,7 +148,9 @@
             "ISS_TRANSICAO",
             "NFCE_LIMITE",
             "INUT_NAO_SE_APLICA",
-            "ICMS_ST_NCM_UF"
+            "ICMS_ST_NCM_UF",
+            "ENCARGO_FOLHA",
+            "IBS_CBS_REDUCAO_NBS"
           ]
         },
         "status": {
@@ -233,7 +237,9 @@
             "ISS_TRANSICAO",
             "NFCE_LIMITE",
             "INUT_NAO_SE_APLICA",
-            "ICMS_ST_NCM_UF"
+            "ICMS_ST_NCM_UF",
+            "ENCARGO_FOLHA",
+            "IBS_CBS_REDUCAO_NBS"
           ]
         },
         "chave": {

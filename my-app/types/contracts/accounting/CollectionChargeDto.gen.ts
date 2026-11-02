@@ -54,6 +54,13 @@ unitId: string
 export interface CancelChargeInput {
 unitId: string
 }
+export interface ListCollectionChargesQueryInput {
+unitId: string
+status?: ("CREATING" | "PENDING" | "PAID" | "PARTIALLY_REFUNDED" | "CHARGED_BACK" | "REFUNDED" | "EXPIRED" | "CANCELLED" | "FAILED")
+kind?: ("BOLETO" | "PIX")
+page?: number
+limit?: number
+}
 export interface CollectionWebhookParamsInput {
 provider: string
 accountId: string

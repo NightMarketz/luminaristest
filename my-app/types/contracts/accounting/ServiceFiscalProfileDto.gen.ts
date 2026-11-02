@@ -15,4 +15,7 @@ cIndOp?: string
 cLocPrestacao?: (string | null)
 xDescServ?: (string | null)
 cClassTrib?: (string | null)
+finalidade?: (("TERAPEUTICA" | "ESTETICA" | "BELEZA") | null)
+elegivelHospitalar?: boolean
+fundamentoHospitalar?: (string | null)
 }

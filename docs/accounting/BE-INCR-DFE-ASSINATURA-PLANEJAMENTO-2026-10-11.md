@@ -172,6 +172,11 @@ PSCs**. O filtro que importa deixa de ser o fornecedor e passa a ser a **cota de
 
 ## 9. Dados para o F-E8-3 (levantados em 2026-10-11)
 
+> **Reconferido em 27/10** (dossiê `pesquisas-legais/fila-2026-10-27-bloco6-terceiros`, fold 28/10): lista do ITI sem
+> mudança; DOC-ICP-17.01 vigente = v3.0, com API e SLA iguais para todos; Certisign achada a R$ 324,40 (sem cota
+> informada); a página de certificado da loja do Serpro dá 404; Valid e DigitalSign iguais às linhas abaixo. O pedido
+> escrito no fim desta seção vai só a DigitalSign, Certisign e Safeweb.
+
 | # | Fato | Fonte | Grau |
 |---|---|---|---|
 | 1 | **8 PSCs credenciados:** ACDIGITAL (23/10/2025), DIGITALSIGN (25/10/2023), SERPRO (13/04/2018), CERTISIGN (24/10/2018), SOLUTI (18/01/2019), SAFEWEB (26/03/2019), VALID (19/09/2019), SYNGULARID (22/07/2024). A página não diz o tipo de serviço de cada um | [ITI, Lista de PSC](https://www.gov.br/iti/pt-br/assuntos/icp-brasil/lista-de-prestadores-de-servico-de-confianca-psc), atualizada em 17/09/2026 | **Verificado** |

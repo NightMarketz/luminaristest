@@ -6,7 +6,6 @@ import { CreateDocumentSchema, UpdateDocumentSchema, SearchDocumentsSchema } fro
 import { DocumentPurpose } from '@/features/documents/models/Document.model';
 import { handleApiError } from '@/lib/apiUtils';
 import { getUserContextFromRequest } from '@/lib/authUtils';
-import { qdrant } from '@/lib/vector/qdrant';
 import { DocumentProcessingService } from '@/features/documents/services/DocumentProcessingService';
 
 // ---------------------------------------------------------------------------
@@ -250,53 +249,6 @@ export async function updateDocument(req: Request, res: Response) {
     const service = getFactory().getDocumentService();
     const updated = await service.updateDocument(idParsed.data.id, parse.data, ctx);
     return res.json({ success: true, data: updated });
-  } catch (error) {
-    return handleApiError(error, res);
-  }
-}
-
-export async function qdrantStatus(req: Request, res: Response) {
-  try {
-    const ctx = getUserContextFromRequest(req);
-    if (!ctx) return res.status(401).json({ success: false, error: 'Unauthorized' });
-
-    // Só os pontos do chamador: sem o filtro a rota devolvia a contagem da coleção inteira (todos os usuários).
-    const countResponse = await qdrant.api().countPoints({
-      collection_name: 'documents',
-      filter: { must: [{ key: 'userId', match: { value: ctx.userId } }] },
-    } as Parameters<ReturnType<typeof qdrant.api>['countPoints']>[0]);
-    const count = (countResponse.data as { result?: { count?: number } })?.result?.count ?? 0;
-
-    const sampleResponse = await qdrant.api().getPoints({
-      collection_name: 'documents',
-      ids: [],
-      with_payload: true,
-      with_vector: false,
-    } as Parameters<ReturnType<typeof qdrant.api>['getPoints']>[0]);
-    const sample = (sampleResponse.data as { result?: unknown[] })?.result ?? [];
-
-    return res.status(200).json({ success: true, data: { count, sample } });
-  } catch (error) {
-    return handleApiError(error, res);
-  }
-}
-
-export async function getDocumentQdrant(req: Request, res: Response) {
-  try {
-    const ctx = getUserContextFromRequest(req);
-    if (!ctx) return res.status(401).json({ success: false, error: 'Unauthorized' });
-
-    const documentId = req.params.id;
-    if (!documentId) return res.status(400).json({ success: false, error: 'Document ID is required' });
-
-    const factory = getFactory();
-    const vectorRepo = factory.getVectorRepository();
-    const documentService = factory.getDocumentService();
-    const document = await documentService.getDocumentById(documentId, ctx);
-    if (!document) return res.status(404).json({ success: false, error: 'Document not found' });
-
-    const points = await vectorRepo.getPointsByDocumentId(documentId);
-    return res.status(200).json({ success: true, data: { points } });
   } catch (error) {
     return handleApiError(error, res);
   }

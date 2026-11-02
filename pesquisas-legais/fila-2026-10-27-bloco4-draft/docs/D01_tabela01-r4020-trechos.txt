@@ -1,0 +1,34 @@
+Extraído de [D01] (zip oficial 'EFD-REINF - Tabelas 15012026.zip', SHA-256 do zip no manifest) em 2026-10-27, por openpyxl.
+
+## EFD-REINF - Tabela 01.xlsx — SHA-256 07537f5f6a05b8255995bbd6096bc8ea4e1b5aedbd36a69ffa1fb4db01edecb7
+Grupo 13 - Rendimento de Direitos (Royalties) | 13003 | Rendimentos de Arrendamento ou Subarrendamento | Não | Não | Sim | 1, 5, 7, 8 |  | F | O | PF/PJ | IR | 01/09/2023 | 
+Grupo 13 - Rendimento de Direitos (Royalties) | 13007 | Juros decorrente da alienação a prazo de bens | Não | Não | Sim | 1, 5, 7, 8 |  | F | O | PF/PJ | IR | 01/09/2023 | 
+Grupo 15 - Rendimento Pago/Creditado a Pessoa Jurídica | 15001 | Importâncias pagas ou creditadas a cooperativas de trabalho relativas a serviços pessoais que lhes forem prestados por associados destas ou colocados à disposição | Não | Não | Não |  |  | N/A | N | PJ | IR, COFINS, PP, AGREGADO | 01/09/2023 | 
+Grupo 15 - Rendimento Pago/Creditado a Pessoa Jurídica | 15003 | Remuneração de Serviços de administração de bens ou negócios em geral, exceto consórcios ou fundos mútuos para aquisição de bens | Não | Não | Não |  |  | N/A | N | PJ | IR, CSLL, COFINS, PP, AGREGADO | 01/09/2023 | 
+Grupo 15 - Rendimento Pago/Creditado a Pessoa Jurídica | 15015 | Remuneração de Serviços de  contabilidade; | Não | Não | Não |  |  | N/A | N | PJ | IR, CSLL, COFINS, PP, AGREGADO | 01/09/2023 | 
+Grupo 15 - Rendimento Pago/Creditado a Pessoa Jurídica | 15043 | Remuneração de Serviços de Limpeza | Não | Não | Não |  |  | N/A | N | PJ | IR, CSLL, COFINS, PP, AGREGADO | 01/09/2023 | 
+Grupo 15 - Rendimento Pago/Creditado a Pessoa Jurídica | 15045 | Remuneração de Serviços de Segurança/Vigilância/Transporte de valores | Não | Não | Não |  |  | N/A | N | PJ | IR, CSLL, COFINS, PP, AGREGADO | 01/09/2023 | 
+Grupo 15 - Rendimento Pago/Creditado a Pessoa Jurídica | 15052 | Demais comissões, corretagens ou qualquer outra importância paga/creditada pela representação comercial ou pela mediação na realização de negócios civis e comerciais, que não se enquandrem nas situações listadas nos códigos do grupo 20 | Não | Não | Não |  |  | N/A | N | PJ | IR | 01/09/2023 | 
+Grupo 20 - Rendimentos a Pessoa Jurídica – Retenção no recebimento | 20001 | Rendimento de Serviços de propaganda e publicidade | Não | Não | Não |  |  | N/A | N | PJ | IR | 01/09/2023 | 
+
+## EFD-REINF - Tabela R-4020.xlsx — SHA-256 43a1795019258267618ec3835660710bb2500375bb0960dcc8d2909f12d3ff11
+15001 | Importâncias pagas ou creditadas a cooperativas de trabalho relativas a serviços pessoais que lhes forem prestados por associados destas ou colocados à disposição | Não | IRPJ | N/A | 328006 | Mensal | 01/09/2023 | 
+15001 | Importâncias pagas ou creditadas a cooperativas de trabalho relativas a serviços pessoais que lhes forem prestados por associados destas ou colocados à disposição | Não | AGREGADO | N/A | 595207 | Mensal | 01/09/2023 | 
+15001 | Importâncias pagas ou creditadas a cooperativas de trabalho relativas a serviços pessoais que lhes forem prestados por associados destas ou colocados à disposição | Não | COFINS | N/A | 596007 | Mensal | 01/09/2023 | 
+15001 | Importâncias pagas ou creditadas a cooperativas de trabalho relativas a serviços pessoais que lhes forem prestados por associados destas ou colocados à disposição | Não | PIS/PASEP | N/A | 597907 | Mensal | 01/09/2023 | 
+15003 | Remuneração de Serviços de administração de bens ou negócios em geral, exceto consórcios ou fundos mútuos para aquisição de bens | Não | IRPJ | N/A | 170806 | Mensal | 01/09/2023 | 
+15003 | Remuneração de Serviços de administração de bens ou negócios em geral, exceto consórcios ou fundos mútuos para aquisição de bens | Não | AGREGADO | N/A | 595207 | Mensal | 01/09/2023 | 
+15003 | Remuneração de Serviços de administração de bens ou negócios em geral, exceto consórcios ou fundos mútuos para aquisição de bens | Não | COFINS | N/A | 596007 | Mensal | 01/09/2023 | 
+15003 | Remuneração de Serviços de administração de bens ou negócios em geral, exceto consórcios ou fundos mútuos para aquisição de bens | Não | PIS/PASEP | N/A | 597907 | Mensal | 01/09/2023 | 
+15003 | Remuneração de Serviços de administração de bens ou negócios em geral, exceto consórcios ou fundos mútuos para aquisição de bens | Não | CSLL | N/A | 598707 | Mensal | 01/09/2023 | 
+15043 | Remuneração de Serviços de Limpeza | Não | IRPJ | N/A | 170806 | Mensal | 01/09/2023 | 
+15043 | Remuneração de Serviços de Limpeza | Não | AGREGADO | N/A | 595207 | Mensal | 01/09/2023 | 
+15043 | Remuneração de Serviços de Limpeza | Não | COFINS | N/A | 596007 | Mensal | 01/09/2023 | 
+15043 | Remuneração de Serviços de Limpeza | Não | PIS/PASEP | N/A | 597907 | Mensal | 01/09/2023 | 
+15043 | Remuneração de Serviços de Limpeza | Não | CSLL | N/A | 598707 | Mensal | 01/09/2023 | 
+15045 | Remuneração de Serviços de Segurança/Vigilância/Transporte de valores | Não | IRPJ | N/A | 170806 | Mensal | 01/09/2023 | 
+15045 | Remuneração de Serviços de Segurança/Vigilância/Transporte de valores | Não | AGREGADO | N/A | 595207 | Mensal | 01/09/2023 | 
+15045 | Remuneração de Serviços de Segurança/Vigilância/Transporte de valores | Não | COFINS | N/A | 596007 | Mensal | 01/09/2023 | 
+15045 | Remuneração de Serviços de Segurança/Vigilância/Transporte de valores | Não | PIS/PASEP | N/A | 597907 | Mensal | 01/09/2023 | 
+15045 | Remuneração de Serviços de Segurança/Vigilância/Transporte de valores | Não | CSLL | N/A | 598707 | Mensal | 01/09/2023 | 
+15052 | Demais comissões, corretagens ou qualquer outra importância paga/creditada pela representação comercial ou pela mediação na realização de negócios civis e comerciais, que não se enquandrem nas situações listadas nos códigos do grupo 20 | Não | IRPJ | N/A | 804506 | Mensal | 01/09/2023 | 

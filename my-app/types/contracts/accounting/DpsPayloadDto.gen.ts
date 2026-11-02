@@ -84,6 +84,8 @@ pTotTribMun: string
 }
 } | {
 pTotTribSN: string
+} | {
+indTotTrib: 0
 })
 }
 }
@@ -178,6 +180,8 @@ pTotTribMun: string
 }
 } | {
 pTotTribSN: string
+} | {
+indTotTrib: 0
 })
 }
 }

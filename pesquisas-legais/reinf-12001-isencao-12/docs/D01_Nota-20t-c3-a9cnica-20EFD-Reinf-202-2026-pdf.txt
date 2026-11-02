@@ -1,0 +1,33 @@
+1 
+ 
+ 
+NOTA TÉCNICA EFD-REINF 02/2026 
+ 
+Essa Nota Técnica tem como objetivo apresentar os seguintes ajustes nos leiautes da versão 2.1.2 da 
+EFD-Reinf: 
+ 
+Leiaute do R-4010: 
+Campo {tpIsencao} do grupo {rendIsento}: inclusão do tipo de isenção “12 - Lucros e dividendos 
+distribuídos nos termos do § 3º do art. 6º‑A da Lei nº 9.250/1995”. 
+ 
+ 
+ 
+ 
+“Tabela 01 – Natureza de Rendimentos” do anexo I dos leiautes: 
+a) Exclusão do tipo de isenção “5 - Valores pagos a titular ou sócio de microempresa ou empresa de 
+pequeno porte, exceto pró-labore, alugueis e serviços prestados” do código de natureza de rendimento 
+“10001 – Rendimento decorrente do trabalho com vínculo empregatício” com vigência a partir de 
+05/2026. 
+ 
+ 
+ 
+ 
+ 
+
+2 
+ 
+b) Inclusão do tipo de isenção “12 – Lucros e dividendos distribuídos nos termos do § 3º do art. 6º‑A da Lei 
+nº 9.250/1995” no código de natureza de rendimento “12001 – Lucro e dividendo” com vigência a partir 
+de 01/2026. 
+ 
+ 

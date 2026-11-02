@@ -259,10 +259,18 @@ export class TaxOptimizationService {
 
   /** Item 8: sugestão do sistema — reaproveita a PROPOSED viva do mesmo assunto, senão cria. Devolve o id. */
   async proposeSystem(scope: AccountingScope, args: ProposeSuggestionArgs): Promise<string> {
+    return (await this.proposeSystemDetalhado(scope, args)).id;
+  }
+
+  /**
+   * PR-3 item 18 (I-10) — como `proposeSystem`, dizendo se reaproveitou a PROPOSED viva e se ela foi calculada com outros
+   * parâmetros: a viva nunca é recalculada por cima (o chamador avisa; rejeitar libera o assunto para nova proposta).
+   */
+  async proposeSystemDetalhado(scope: AccountingScope, args: ProposeSuggestionArgs): Promise<{ id: string; reaproveitada: boolean; parametrosDivergentes: boolean }> {
     return this.repo.runTransaction(async (tx) => {
       const viva = await this.repo.findPendingSuggestion(scope, args, tx);
-      if (viva) return viva.id;
-      return (await this.proposeInTx(scope, args, SYSTEM_PROPOSER, tx)).id;
+      if (viva) return { id: viva.id, reaproveitada: true, parametrosDivergentes: viva.parametrosSha256 !== canonicalSha256(args.calc) };
+      return { id: (await this.proposeInTx(scope, args, SYSTEM_PROPOSER, tx)).id, reaproveitada: false, parametrosDivergentes: false };
     });
   }
 

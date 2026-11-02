@@ -1,6 +1,8 @@
 import { DfeDisabledEmissor } from './DfeDisabledEmissor';
 import { ManualEmissor } from './ManualEmissor';
 import { NullEmissor } from './NullEmissor';
+import { SefazNfeEmissor } from './sefaz/SefazNfeEmissor';
+import { SefazSoapClient, loadTransporteTls } from './sefaz/SefazSoapClient';
 import type { DfeAmbiente, DfeEmissorPort, DfeKind } from './DfeEmissorPort';
 
 export interface DfeSelection {
@@ -31,7 +33,7 @@ export function selectDfeEmissor(env: NodeJS.ProcessEnv, kind: DfeKind): DfeSele
   const ambiente = KNOWN_AMBIENTES.includes(ambienteRaw as DfeAmbiente) ? (ambienteRaw as DfeAmbiente) : null;
 
   // BE-INCR-DFE-MANUAL (F-MAN-3 → a): 'file' deixou de existir — o modo manual é 'manual'.
-  if (partner !== 'null' && partner !== 'manual') {
+  if (partner !== 'null' && partner !== 'manual' && partner !== 'sefaz') {
     const reason = partner
       ? `parceiro '${partner}' não tem adaptador implementado neste BRIEF`
       : 'DFE_PARTNER não configurado';
@@ -43,7 +45,18 @@ export function selectDfeEmissor(env: NodeJS.ProcessEnv, kind: DfeKind): DfeSele
     return { port: new DfeDisabledEmissor(reason), ambiente: null, enabled: false, reason };
   }
 
-  const port = partner === 'null' ? new NullEmissor() : new ManualEmissor();
+  let port: DfeEmissorPort;
+  if (partner === 'sefaz') {
+    // X10a PR-7 (EMENDA-1 E-4): sem o e-CNPJ do transmissor a porta fica desabilitada com o motivo, nunca em silêncio.
+    try {
+      port = new SefazNfeEmissor({ ambiente, soap: new SefazSoapClient({ transporte: loadTransporteTls(env) }) });
+    } catch (error) {
+      const reason = `parceiro 'sefaz' sem transmissor: ${error instanceof Error ? error.message : String(error)}`;
+      return { port: new DfeDisabledEmissor(reason), ambiente: null, enabled: false, reason };
+    }
+  } else {
+    port = partner === 'null' ? new NullEmissor() : new ManualEmissor();
+  }
   if (!port.capabilities.kinds.includes(kind)) {
     const reason = `parceiro '${partner}' não emite ${kind}`;
     return { port: new DfeDisabledEmissor(reason), ambiente: null, enabled: false, reason };

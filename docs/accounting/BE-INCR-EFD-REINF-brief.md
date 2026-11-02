@@ -29,6 +29,43 @@
 > AskUserQuestion): **F-REINF-6..13 todos (a)**, a recomendação do BRIEF; inclui a devDependency `xmllint-wasm`
 > (F-REINF-7). F-REINF-8/9 foram perguntados em par com F-RET-16/18. **Não é `executa`.**
 
+## Emenda 28/10 — fila de pesquisa de 27/10 (bloco 2; dossiê `pesquisas-legais/fila-2026-10-27-bloco2-reinf`)
+
+> **Pedido do dono** (chat, 2026-10-28): *"Faz o fold dos achados da fila de pesquisa de 27/10 (blocos 1 a 6) no vault e
+> nos BRIEFs, junto com os 7 dossiês, num PR sem merge."* Escopo: este BRIEF e a nota do nó. **Só fato de fonte oficial:
+> nenhum fork é ratificado, e não é `executa`.** Resumo da fila: [[PESQUISA-FILA-2026-10-27]].
+
+1. **P-REINF-7: `classTrib` 01.** Salão e clínica do Simples tributados pelos Anexos III ou V (CPP dentro do DAS) informam
+   **01**, "Empresa enquadrada no regime de tributação Simples Nacional com tributação previdenciária substituída"; **02** é
+   só para quem tem atividade do Anexo IV; **03**, para quem tem as duas; **99**, "Pessoas jurídicas em geral", para
+   Presumido e Real (leiaute 2.1.2, Anexo I, Tabela 08, extraída com pypdf em `docs/D07_anexo-I-tabelas.txt` [D07]).
+   **Efeito:** o item 4 deriva o valor do perfil fiscal (regime e anexo), sem pergunta a ninguém.
+2. **P-REINF-5: sim.** O portal web da Reinf no e-CAC gera e transmite os eventos a partir de formulários (MOU 2.1.2.1
+   item 7.2 [D01]); o FAQ diz que ele "estará apto a recepcionar todos os eventos" (6.1 [D05]); o menu "Rendimentos
+   Pagos/Creditados (Série R-4000)" tem R-4010 e R-4020 (página do SPED de 27/11/2025 [D04]). Limite de 100 notas por
+   evento no portal (FAQ 2.3.19). Na fase 1, o relatório do produto pode ser digitado à mão no portal.
+3. **P-REINF-2: mapa pronto; o contador só confirma, uma vez.** Pela Tabela 01 de 15/01/2026 [D03], a mesma da carga do
+   PR-1 do RETENCOES-FONTE: contabilidade 15015 · advocacia 15004 · limpeza 15043 · conservação e manutenção, exceto
+   reforma, 15044 · segurança e vigilância 15045 · locação de mão de obra (ex.: recepcionista terceirizada) 15046 ·
+   fisioterapia 15022 · fonoaudiologia 15023 · medicina, exceto hospital, ambulatório, pronto-socorro e afins, 15026 ·
+   nutrição 15027 · odontologia 15028 · psicologia 15034 · biomedicina 15012 · análise clínica laboratorial 15005 ·
+   radiologia 15036 · terapia ocupacional 15039 · prótese 15033 · ensino e treinamento 15020 · consultoria 15014 ·
+   assessoria técnica 15008 · programação (TI) 15032 · assessoria mercadológica, gestão de crédito, cobrança e contas a
+   pagar e a receber 15047 · demais serviços técnicos ou administrativos 15099. Reforma e obra não têm natureza no grupo
+   15 (a 15019 exclui "construção de estradas, pontes, prédios e obras assemelhadas"): só INSS (R-2010). O aviso
+   `NATUREZA_NAO_CONFERIDA` (item 23) continua até a confirmação.
+4. **P-REINF-4 (= P-RET-5): regra mais dado do tenant.** A IN RFB 2.110 (arts. 108–115) decide quais serviços são cessão;
+   se o salão contrata limpeza ou vigilância por cessão é dado do cadastro do fornecedor e do onboarding, não pergunta ao
+   contador (BRIEF do RETENCOES-FONTE, Emenda 28/10 item 3).
+5. **P-REINF-8 (= P-RET-9): vira confirmação.** "Como regra geral, rendimentos do trabalho devem ser informados apenas no
+   eSocial" (MOU item 11 [D01]); com relação de trabalho, "a informação sobre o pagamento deve ser prestada no ambiente do
+   eSocial" (FAQ 1.17 [D05]). É o que o item 19 já assume (`PF_SERVICO_FORA_DA_REINF`). Resta a ambiguidade da natureza
+   10002, que a Tabela 01 mantém: a leitura segura é não gerar R-4010 de autônomo que já está no eSocial.
+6. **O que vai ao contador:** P-REINF-3 e P-REINF-6, como estão, mais as confirmações de sim ou não do mapa da P-REINF-2 e
+   da P-REINF-8.
+7. **Lacunas:** as notas técnicas 1, 2 e 3 de 2026 não foram relidas para a Tabela 08; o grupo 20 da Tabela 01
+   (comissões, propaganda) não foi mapeado.
+
 ## TLDR (2 linhas)
 
 Quatro PRs geram a EFD-Reinf do tenant a partir das retenções que ele **fez**: **PR-1** monta o serializer `lib/reinf.ts` (R-1000,
@@ -364,13 +401,13 @@ export const ReinfBatchView = z.object({
 | # | Pergunta | Trava | Quem |
 |---|---|---|---|
 | **P-REINF-1** | Oráculo do leiaute: 1º lote aceito na produção restrita (ou a Reinf Web conferindo o relatório) | aceite × leitura | runbook humano (`RUNBOOK-FORMAT`); agente prepara, não assina |
-| **P-REINF-2** | Natureza do rendimento (Tabela 01) de cada serviço que o salão/clínica contrata de PJ (ex.: fisioterapia 15022, limpeza 15043, demais 15099) | `natRend` de cada `WithholdingProfile` (F-RET-16 a) conferido; a tabela já é oficial (item 1) | contador |
+| **P-REINF-2** | Natureza do rendimento (Tabela 01) de cada serviço que o salão/clínica contrata de PJ. **27/10: mapa de 23 serviços pronto pela Tabela 01 oficial (Emenda 28/10 item 3); o contador confirma o mapa uma vez** | `natRend` de cada `WithholdingProfile` (F-RET-16 a) conferido; a tabela já é oficial (item 1) | contador (confirmação) |
 | **P-REINF-3** | O Simples tomador que retém só IRRF declara R-4020 do mesmo jeito? (ambiguidade A do RETENCOES-FONTE) | item 8 (há fato?) | contador |
-| **P-REINF-4** | O salão contrata limpeza/vigilância **por cessão de mão de obra**? (decide se há R-2010) — mesmo ponto da P-RET-5 | PR-2 itens 17–18 | contador |
-| **P-REINF-5** | A Reinf Web permite digitar os eventos R-4000 na fase 1? | uso do relatório | leitura do e-CAC (dono) |
+| **P-REINF-4** | ~~O salão contrata limpeza/vigilância por cessão de mão de obra?~~ **27/10: a regra é da IN 2.110 (arts. 108–115); o fato é dado do fornecedor/tenant** (Emenda 28/10 item 4) | PR-2 itens 17–18 | usuário (cadastro) |
+| **P-REINF-5** | ~~A Reinf Web permite digitar os eventos R-4000 na fase 1?~~ **Resolvida 27/10: sim**, até 100 notas por evento (Emenda 28/10 item 2) | uso do relatório | — |
 | **P-REINF-6** | Dividendo ≤ R$ 50 mil/mês de lucro de 2026: no R-4010 vai **só o bruto** na 12001 (MOU item 9) ou em `rendIsento` com algum tipo? (ambiguidade A do dossiê 22/10) | item 16 | contador |
-| **P-REINF-7** | `classTrib` do salão/clínica no R-1000 (01, 02 ou 03 conforme a CPP substituída — anexo do Simples) | item 4 | contador |
-| **P-REINF-8** | IRRF de autônomo PF sem vínculo vai no R-4010 (natureza 10002) ou só no eSocial S-1210? (ambiguidade C do dossiê 22/10) | F-REINF-9 | contador |
+| **P-REINF-7** | ~~`classTrib` do salão/clínica no R-1000~~ **Resolvida 27/10: 01** no Simples com CPP substituída (Anexos III e V); 99 fora do Simples (Tabela 08; Emenda 28/10 item 1) | item 4 | — |
+| **P-REINF-8** | IRRF de autônomo PF sem vínculo vai no R-4010 (natureza 10002) ou só no eSocial S-1210? **27/10: manual (item 11) e FAQ (1.17) mandam ao eSocial; vira confirmação de sim ou não** (Emenda 28/10 item 5) | F-REINF-9 | contador (confirmação) |
 | **P-REINF-9** | Tabela de códigos de 2027: Cofins/PIS retidos deixam de existir (LC 214 art. 509), mas a tabela de 15/01/2026 não encerra as linhas | invariante 5; tabela do item 1 | fonte oficial (nova tabela SPED) |
 
 ## 8. Insumos ausentes
@@ -381,7 +418,8 @@ export const ReinfBatchView = z.object({
    pessoal (item 19).
 3. **Models do IRRF-DISTRIBUICAO** (`ProfitDistributionEvent`, JCP) fora de `main`: o PR-2 cita o BRIEF daquele nó, não o código.
 4. Leiaute 2.1.2b em PDF com colunas desalinhadas na Tabela 08 (classificação tributária): a leitura do código do Simples
-   foi conferida pelo texto da descrição, não pela tabela formatada; a P-REINF-7 decide o valor.
+   foi conferida pelo texto da descrição, não pela tabela formatada; a P-REINF-7 decide o valor. **28/10:** decidido pela
+   Tabela 08 extraída com pypdf (Emenda 28/10 item 1).
 
 ## 9. Achados fora de escopo (registrados, não planejados)
 

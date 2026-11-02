@@ -110,4 +110,20 @@ describe('FichaModal', () => {
     const pessoas = buildFichaSections(p, 's1', idt)[0].rows.map((r) => r.id);
     expect(pessoas).not.toContain('regApTribSN');
   });
+
+  // F-XP-4 → (b) (dono, 29/10/2026): a ficha do MEI segue a DPS opSimpNac=2 (Anexo I v1.01 E0676/E0710).
+  it('buildFichaSections: MEI mostra "2 — Optante MEI", sem tributo federal nem percentual de tributos', () => {
+    const p = simplesPayload();
+    p.infDPS.prest.regTrib = { opSimpNac: 2, regEspTrib: 0 };
+    p.infDPS.valores.trib.totTrib = { indTotTrib: 0 };
+    const [pessoasSec, , valoresSec] = buildFichaSections(p, 's1', idt);
+    const pessoas = Object.fromEntries(pessoasSec.rows.map((r) => [r.id, r]));
+    expect(pessoas.opSimpNac.copy).toBe('2 — Optante MEI');
+    expect(pessoas.regApTribSN).toBeUndefined();
+    const valores = Object.fromEntries(valoresSec.rows.map((r) => [r.id, r]));
+    expect(valores.tribFed.instruction).toBe('Sem tributação federal na nota do MEI — não informe.');
+    expect(valores.totTrib.instruction).toBe('Não informe — facultativo para o MEI.');
+    expect(valores.pTotTribSN).toBeUndefined();
+    expect(valores.pTotTribFed).toBeUndefined();
+  });
 });

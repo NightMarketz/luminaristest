@@ -1,0 +1,58 @@
+IN RFB nº 2.110/2022 — lida em 2026-10-27 no navegador embutido (normasinternet2.receita.fazenda.gov.br/#/consulta/externa/126687/visao/vigente;
+o download automático [D01] trouxe só a casca JS da página, sha256 9f9413e2…, a mesma casca do dossiê presumido-teto-78mi).
+Visão "Vigente". Histórico de alterações exibido na página: IN RFB 2.185/2024, IN RFB 2.289/2025, IN RFB 2.321/2026.
+SHA-256 do innerText completo da página lida (499.405 caracteres): 2829fdd2ee2631925c6dfcc32bc2bd0976c3d9bcdfeff0c5827c6ad19170d543
+Trechos literais (incisos sem relação com salão/clínica abreviados entre colchetes):
+
+Art. 108. Cessão de mão de obra é a colocação à disposição da empresa contratante, em suas dependências ou nas de terceiros, de trabalhadores que realizem serviços contínuos, relacionados ou não com sua atividade fim, quaisquer que sejam a natureza e a forma de contratação, inclusive por meio de trabalho temporário na forma da Lei nº 6.019, de 1974. (Lei nº 8.212, de 1991, art. 31, § 3º; e Regulamento da Previdência Social, de 1999, art. 219, § 1º)
+§ 1º Entende-se por:
+I - dependências de terceiros, aquelas indicadas pela empresa contratante, que não sejam as suas próprias e que não pertençam à empresa prestadora dos serviços;
+II - serviços contínuos, aqueles que constituem necessidade permanente da contratante, que se repetem periódica ou sistematicamente, ligados ou não a sua atividade fim, ainda que sua execução seja realizada de forma intermitente ou por diferentes trabalhadores; e
+III - colocação à disposição da empresa contratante, a cessão do trabalhador, em caráter não eventual, respeitados os limites do contrato.
+§ 2º A caracterização da cessão de mão de obra independe da existência de poder de gerência ou direção do tomador do serviço sobre os trabalhadores colocados à sua disposição. (Solução de Consulta Interna Cosit nº 4, de 28 de maio de 2021)
+Art. 109. Empreitada é a execução, contratualmente estabelecida, de tarefa, de obra ou de serviço, por preço ajustado, com ou sem fornecimento de material ou uso de equipamentos, que podem ou não ser utilizados, realizada nas dependências da empresa contratante, nas de terceiros ou nas da empresa contratada, tendo como objeto um resultado pretendido, observado o disposto no inciso VI do caput do art. 114 quanto à empreitada realizada nas dependências da contratada.
+Art. 110. A empresa contratante de serviços prestados mediante cessão de mão de obra ou empreitada, inclusive em regime de trabalho temporário, deverá reter 11% (onze por cento) do valor bruto da nota fiscal ou fatura e recolher à Previdência Social a importância retida, em documento de arrecadação identificado com a denominação social e o CNPJ da empresa contratada, observado o disposto no art. 50 e no art. 131. (Lei nº 8.212, de 1991, art. 31, caput; e Regulamento da Previdência Social, de 1999, art. 219, caput)
+Art. 111. Estão sujeitos à retenção de que trata o art. 110, se contratados mediante cessão de mão de obra ou empreitada, observado o disposto no art. 114, os serviços de: (Lei nº 8.212, de 1991, art. 31, § 4º; e Regulamento da Previdência Social, de 1999, art. 219, §§ 2º e 3º)
+I - limpeza, conservação ou zeladoria, que se constituam em varrição, lavagem, enceramento ou em outros serviços destinados a manter a higiene, o asseio ou a conservação de praias, jardins, rodovias, monumentos, edificações, instalações, dependências, logradouros, vias públicas, pátios ou de áreas de uso comum;
+II - vigilância ou segurança, que tenham por finalidade a garantia da integridade física de pessoas ou a preservação de bens patrimoniais;
+III - construção civil, que envolvam a construção, a demolição, a reforma ou o acréscimo de edificações ou de qualquer benfeitoria agregada ao solo ou ao subsolo ou obras complementares que se integrem a esse conjunto, tais como a reparação de jardins ou de passeios, a colocação de grades ou de instrumentos de recreação, de urbanização ou de sinalização de rodovias ou de vias públicas;
+[IV - natureza rural; V - digitação; VI - preparação de dados para processamento]
+Parágrafo único. Os serviços de vigilância ou segurança prestados por meio de monitoramento eletrônico não estão sujeitos à retenção.
+Art. 112. Estão sujeitos à retenção de que trata o art. 110, se contratados mediante cessão de mão de obra, observado o disposto no art. 114, os serviços de: (Lei nº 8.212, de 1991, art. 31, § 4º; e Regulamento da Previdência Social, de 1999, art. 219, § 2º)
+[I - acabamento; II - embalagem; III - acondicionamento; IV - cobrança; V - coleta ou reciclagem de lixo ou de resíduos]
+VI - copa, que envolvam a preparação, o manuseio e a distribuição de todo ou de qualquer produto alimentício;
+VII - hotelaria, que concorram para o atendimento ao hóspede em hotel, pousada, paciente em hospital, clínica ou em outros estabelecimentos do gênero;
+[VIII - corte ou ligação de serviços públicos; IX - distribuição]
+X - treinamento e ensino, assim considerados como o conjunto de serviços envolvidos na transmissão de conhecimentos para a instrução ou para a capacitação de pessoas;
+[XI - entrega de contas e de documentos; XII - ligação de medidores; XIII - leitura de medidores]
+XIV - manutenção de instalações, de máquinas ou de equipamentos, quando indispensáveis ao seu funcionamento regular e permanente e desde que mantida equipe à disposição da contratante;
+[XV - montagem; XVI - operação de máquinas; XVII - operação de pedágio ou de terminal de transporte; XVIII - operação de transporte de passageiros]
+XIX - portaria, recepção ou ascensorista, realizados com vistas ao ordenamento ou ao controle do trânsito de pessoas em locais de acesso público ou à distribuição de encomendas ou de documentos;
+[XX - recepção, triagem ou movimentação de materiais; XXI - promoção de vendas ou de eventos]
+XXII - secretaria e expediente, quando relacionados com o desempenho de rotinas administrativas;
+XXIII - saúde, quando prestados por empresas da área da saúde e direcionados ao atendimento de pacientes, com o objetivo de avaliar, recuperar, manter ou melhorar o estado físico, mental ou emocional desses pacientes; e
+XXIV - telefonia ou de telemarketing, que envolvam a operação de centrais ou de aparelhos telefônicos ou de teleatendimento.
+Art. 113. São exaustivas as relações dos serviços sujeitos à retenção constantes dos arts. 111 e 112.
+Parágrafo único. A pormenorização das tarefas compreendidas em cada um dos serviços constantes dos incisos do caput dos arts. 111 e 112 é exemplificativa.
+Art. 114. Não se aplica a retenção de que trata o art. 110: [Redação dada pela IN RFB nº 2289, de 30 de outubro de 2025]
+[I - avulsos por sindicato ou Ogmo; II - empreitada total (IN RFB 2.021 art. 7º III); III - entidade beneficente imune]
+IV - à pessoa física, inclusive na condição de contribuinte individual equiparado a empresa, na hipótese de ser contratante de serviços;
+V - à contratação de serviços de transporte de cargas;
+VI - à empreitada realizada nas dependências da contratada; e
+[VII - órgãos públicos contratantes de obra por empreitada total]
+Art. 115. A contratante fica dispensada de efetuar a retenção na forma do art. 110, e a contratada, de registrar o destaque da retenção na nota fiscal ou fatura, quando:
+I - o valor correspondente a 11% (onze por cento) dos serviços contidos em cada nota fiscal ou fatura de prestação de serviços for inferior ao limite mínimo estabelecido pela RFB para recolhimento em documento de arrecadação;
+II - a contratada não possuir empregados, o serviço for prestado pessoalmente pelo titular ou sócio e o seu faturamento do mês anterior for igual ou inferior a 2 (duas) vezes o limite máximo do salário de contribuição, cumulativamente; ou
+III - a contratação envolver somente serviços profissionais relativos ao exercício de profissão regulamentada por legislação federal, ou serviços de treinamento e ensino definidos no inciso X do caput do art. 112, desde que prestados pessoalmente pelos sócios, sem o concurso de empregados ou de outros contribuintes individuais.
+§ 1º [declaração assinada da contratada para o inciso II] § 2º [declaração assinada, ou consignação na nota, para o inciso III]
+§ 3º Para fins do disposto no inciso III do caput, são serviços profissionais regulamentados pela legislação federal, dentre outros, os prestados por administradores, advogados, [...] biomédicos, cirurgiões dentistas, contabilistas, [...] enfermeiros, [...] farmacêuticos, fisioterapeutas, terapeutas ocupacionais, fonoaudiólogos, [...] massagistas, médicos, [...] nutricionistas, psicólogos, [...] secretárias, [...] técnicos em radiologia e tecnólogos.
+Art. 133. A entidade beneficente de assistência social em gozo de isenção, a empresa optante pelo Simples Nacional, o sindicato da categoria de trabalhadores avulsos, o Ogmo, o operador portuário e a cooperativa, quando forem contratantes de serviços mediante cessão de mão de obra ou empreitada, estão obrigados a efetuar a retenção de que trata o art. 110 sobre o valor da nota fiscal ou fatura e o recolhimento da importância retida em nome da empresa contratada, observadas as demais disposições previstas neste Capítulo.
+Art. 164. [...] § 1º Não se aplica a substituição a que se refere o caput para as pessoas jurídicas que se dediquem às seguintes atividades: (Lei Complementar nº 123, de 2006, art. 18, § 5º-C)
+I - construção de imóveis e obras de engenharia em geral, inclusive sob a forma de subempreitada, execução de projetos e serviços de paisagismo, bem como decoração de interiores;
+II - serviço de vigilância, limpeza ou conservação; e
+III - serviços advocatícios.
+Art. 166. As microempresas e empresas de pequeno porte tributadas na forma do Anexo IV da Lei Complementar nº 123, de 2006, estão sujeitas à retenção da contribuição social previdenciária incidente sobre o valor bruto da nota fiscal, da fatura ou do recibo de prestação de serviços executados mediante cessão de mão de obra ou empreitada. (Lei Complementar nº 123, de 2006, art. 18, § 5º-C; Lei nº 8.212, de 1991, art. 31, caput; e Regulamento da Previdência Social, de 1999, art. 219, caput)
+Parágrafo único. A retenção disposta no caput restringe-se à execução dos serviços elencados nos arts. 111 e 112, sendo aplicado, no que couber, as disposições do Capítulo VIII do Título II.
+Art. 167. As microempresas e as empresas de pequeno porte optantes pelo Simples Nacional que prestarem serviços mediante cessão de mão de obra ou empreitada, exceto nos casos previstos no art. 166, não estão sujeitas à retenção da contribuição social previdenciária incidente sobre o valor da nota fiscal, da fatura ou do recibo da prestação de serviços. (STJ, Súmula nº 425)
+Parágrafo único. As microempresas e as empresas de pequeno porte optantes pelo Simples Nacional que prestarem serviços mediante cessão ou locação de mão de obra estão sujeitas à exclusão do Simples Nacional, exceto nos casos previstos no art. 166. [Redação dada pela IN RFB nº 2289, de 30 de outubro de 2025]
+Art. 168. [I - tributação] a) dos Anexos I, II, III e V da Lei Complementar nº 123, de 2006, hipótese em que a contribuição previdenciária patronal incide sobre a receita; ou b) do Anexo IV da Lei Complementar nº 123, de 2006, hipótese em que a contribuição previdenciária patronal incide sobre a remuneração dos segurados;

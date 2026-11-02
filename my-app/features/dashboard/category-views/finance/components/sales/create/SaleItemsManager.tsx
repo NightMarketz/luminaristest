@@ -33,6 +33,8 @@ interface SaleItemsManagerProps {
     saleItemsFields: SchemaField[];
     stockIndex: Record<string, StockIndexEntry>;
     packageCatalog?: PackageCatalog;
+    /** serviceId → preço do catálogo (useServicePriceIndex) */
+    servicePriceIndex?: Record<string, number>;
     packageIssue?: PackageSaleIssue | null;
     onAddItem: () => void;
     onRemoveItem: (tempId: string) => void;
@@ -61,6 +63,7 @@ export function SaleItemsManager({
     saleItemsFields,
     stockIndex,
     packageCatalog = {},
+    servicePriceIndex = {},
     packageIssue = null,
     onAddItem,
     onRemoveItem,
@@ -195,7 +198,11 @@ export function SaleItemsManager({
                                                                 ...(entry?.salePrice ? { unitPrice: entry.salePrice } : {}),
                                                             });
                                                         } else {
-                                                            onUpdateItem(item.id, { serviceId: val });
+                                                            const price = servicePriceIndex[val];
+                                                            onUpdateItem(item.id, {
+                                                                serviceId: val,
+                                                                ...(price ? { unitPrice: price } : {}),
+                                                            });
                                                         }
                                                     }}
                                                     targetTable={isPackage ? packageTargetTable : isProduct ? productTargetTable : serviceTargetTable}

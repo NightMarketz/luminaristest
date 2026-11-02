@@ -56,6 +56,25 @@ export const SimplesSegregacaoUpsertSchema = z
   .strict();
 export type SimplesSegregacaoUpsert = z.infer<typeof SimplesSegregacaoUpsertSchema>;
 
+/**
+ * EFICIENCIA-FISCAL PR-4 item 19 (D-2026-10-28-EFICIENCIA-FISCAL-PR4-EXECUCAO #2) — a cláusula da P-EF-9 como checklist
+ * DECLARADO (I-19: nada é inferido de agenda ou pagamento). Cada item: SIM | NAO | NAO_INFORMADO. Item ≠ SIM ⇒ alerta INFO.
+ */
+export const RESPOSTAS_CHECKLIST_PARCERIA = ['SIM', 'NAO', 'NAO_INFORMADO'] as const;
+export const ChecklistParceriaSchema = z
+  .object({
+    /** % da cota do salão a título de locação de bem móvel separado no contrato (Lei 12.592 art. 1º-A § 4º). */
+    clausulaLocacaoBemMovel: z.enum(RESPOSTAS_CHECKLIST_PARCERIA),
+    /** % de custeio (produtos e serviços de gestão) separado no contrato. */
+    clausulaCusteio: z.enum(RESPOSTAS_CHECKLIST_PARCERIA),
+    /** O profissional-parceiro emite a NFS-e da cota dele. */
+    nfseEmitidaPeloParceiro: z.enum(RESPOSTAS_CHECKLIST_PARCERIA),
+  })
+  .strict();
+export type ChecklistParceria = z.infer<typeof ChecklistParceriaSchema>;
+
+const cnpjDigitos = z.string().regex(CNPJ_REGEX, 'CNPJ = 14 posições sem máscara').refine(isValidCnpj, 'CNPJ com dígito verificador inválido');
+
 const parceriaCampos = {
   unitId: z.string().min(1),
   profissionalContactId: z.string().min(1),
@@ -65,6 +84,9 @@ const parceriaCampos = {
   sindicato: z.string().trim().min(1).max(200),
   vigenteDesde: dateOnly('vigenteDesde'),
   vigenteAte: dateOnly('vigenteAte').nullable(),
+  // EFICIENCIA-FISCAL PR-4 item 19: opcionais no POST (ausente = não declarado ⇒ alerta), sem default (PATCH parcial).
+  profissionalCnpj: cnpjDigitos.nullable().optional(),
+  checklistDeclarado: ChecklistParceriaSchema.nullable().optional(),
 };
 const vigenciaOrdenada = (v: { vigenteDesde?: string; vigenteAte?: string | null }) =>
   !v.vigenteDesde || !v.vigenteAte || v.vigenteAte >= v.vigenteDesde;
@@ -114,6 +136,16 @@ export const CODIGOS_ALERTA_SIMPLES = [
   'SEGREGACAO_DIVERGE',
   'SEGREGACAO_INDEVIDA',
   'ICMS_ST_NAO_CONFERIDA',
+  // BE-INCR-EFICIENCIA-FISCAL PR-4 (itens 19–21; D-2026-10-28-EFICIENCIA-FISCAL-PR4-EXECUCAO #1): parceria, interdependência e
+  // projeção dos limites — só aviso, nenhum bloqueia o DAS.
+  'PARCERIA_COTA_SEM_CONTRATO',
+  'PARCERIA_SEM_COTA',
+  'PARCEIRO_SEM_CNPJ',
+  'PARCERIA_CHECKLIST_INCOMPLETO',
+  'INTERDEPENDENCIA_SOCIO',
+  'INTERDEPENDENCIA_RECEITA_NAO_INFORMADA',
+  'PROJECAO_LIMITE_EPP',
+  'PROJECAO_SUBLIMITE_ICMS_ISS',
 ] as const;
 /** D-2026-10-10-X14-ALERTA-INFORMATIVO (dono, chat, 2026-10-10), item 1: o código fica estável; o alerta ganha severidade. */
 export const SEVERIDADES_ALERTA_SIMPLES = ['INFO', 'WARNING'] as const;
@@ -253,6 +285,8 @@ export type SalaoParceriaContratoView = {
   sindicato: string;
   vigenteDesde: string;
   vigenteAte: string | null;
+  profissionalCnpj: string | null;
+  checklistDeclarado: ChecklistParceria | null;
   createdAt: string;
   updatedAt: string;
 };
