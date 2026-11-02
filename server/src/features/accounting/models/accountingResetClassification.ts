@@ -22,6 +22,8 @@ export const ACCOUNTING_RESET_SETUP = [
   // X10a PR-7 (EMENDA-PSC E-3/E-4): como o FiscalCertificate — credencial da unidade, sem FK.
   'PscCredential',
   'PscAuthorization',
+  // X10a PR-8: o CSC da NFC-e é cadastro da unidade, como a credencial do PSC — sem FK.
+  'NfceCsc',
   'ReferentialMapping',
   'RoleAccountOverride',
   'FiscalProfile',
@@ -80,6 +82,9 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'FiscalDocumentPendingAttachment',
   'FiscalDocumentSequence',
   'FiscalNumberVoid', // BE-INCR-NFCE PR-4: pedido de inutilização enviado à SEFAZ ⇒ bloqueia, como a sequência
+  // X10a PR-9: estado da contingência e a nota normal órfã seguem o FiscalDocument (emissão real à SEFAZ) ⇒ bloqueiam.
+  'NfceContingencia',
+  'NfceContingenciaOrfa',
   'FixedAssetClass',
   'DepreciationRate',
   'FixedAsset',

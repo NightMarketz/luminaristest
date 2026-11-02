@@ -2,8 +2,9 @@ import { ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { AssinadorRemotoPort } from '../dfe/AssinadorRemotoPort';
-import type { DfeCallContext, DfeEmissorPort } from '../dfe/DfeEmissorPort';
+import type { CscDaUnidade, DfeAmbiente, DfeCallContext, DfeEmissorPort } from '../dfe/DfeEmissorPort';
 import type { PscCredentialService, ResolveForEmissionResult } from './PscCredentialService';
+import type { NfceCscService } from './NfceCscService';
 
 /** E-6 (F-PSC-5 a) — o faltante nomeado do pré-voo da assinatura. */
 export const FALTANTE_SESSAO_PSC = 'sessão do PSC';
@@ -24,7 +25,15 @@ export class DfeAssinaturaResolver {
   constructor(
     private readonly psc: Pick<PscCredentialService, 'resolveForEmission' | 'registrarConsumo'>,
     private readonly assinador: AssinadorRemotoPort,
+    /** X10a PR-8 (E-3, decisão 3): o CSC da unidade para o QR Code v2. */
+    private readonly cscs?: Pick<NfceCscService, 'resolveForEmission'>,
   ) {}
+
+  /** X10a PR-8 — o CSC vivo da unidade no ambiente, só para a NFC-e do emissor próprio; sem cadastro ⇒ `undefined`. */
+  async cscDaUnidade(scope: AccountingScope, port: Pick<DfeEmissorPort, 'capabilities'>, kind: string, ambiente: DfeAmbiente): Promise<CscDaUnidade | undefined> {
+    if (kind !== 'NFCE' || !port.capabilities.assinaturaRemota || !this.cscs) return undefined;
+    return (await this.cscs.resolveForEmission(scope, ambiente)) ?? undefined;
+  }
 
   async paraUnidade(scope: AccountingScope, port: Pick<DfeEmissorPort, 'capabilities'>): Promise<AssinaturaDaUnidade> {
     if (!port.capabilities.assinaturaRemota) return { ok: true };

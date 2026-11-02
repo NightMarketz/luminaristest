@@ -6,7 +6,9 @@ import { invariantesSubstituicao } from '../models/substituicaoInvariantes';
 import type { DpsManualPayload, DpsPayload, SubstMotivo } from '../dtos/DpsPayloadDto';
 import { NfePayloadSchema, NfePayloadSemNumeracaoSchema } from '../dtos/NfePayloadDto';
 import type { NfePayload, NfePayloadSemNumeracao } from '../dtos/NfePayloadDto';
+import type { ContingenciaTickSummary } from '../dtos/NfceContingenciaDto';
 import { gerarCnf, numerarNfe } from '../models/nfeMontagem';
+import { emContingencia, suplDoXml } from '../models/nfceContingencia';
 import type { IFiscalNumberVoidRepository } from '../repositories/IFiscalNumberVoidRepository';
 import { OCCUPYING_VOID_STATUSES } from '../repositories/IFiscalNumberVoidRepository';
 import {
@@ -33,7 +35,7 @@ import { ambienteFromTpAmb, assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort'
 import type { CancelInput, CancelResult, DfeAmbiente, DfeCallContext, DfeEmissorPort, EmissaoResult } from '../dfe/DfeEmissorPort';
 import { AssinaturaRemotaError, isSessaoPscVencida } from '../dfe/AssinadorRemotoPort';
 import { bloqueioSessaoPsc } from './DfeAssinaturaResolver';
-import { enviarTentativa } from './dfeEnvio';
+import { enviarTentativa, type DfeContingenciaHandler } from './dfeEnvio';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
 import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -55,6 +57,8 @@ import type { AccountingScope } from '../scope/AccountingScope';
 const VALID_RESULT_TRANSITIONS: Partial<Record<FiscalDocumentStatus, FiscalDocumentStatus[]>> = {
   SENT: ['AUTHORIZED', 'REJECTED', 'PROCESSING'],
   PROCESSING: ['AUTHORIZED', 'REJECTED', 'PROCESSING'],
+  // X10a PR-9 (decisão 7): o job transmite a NFC-e off-line e o retorno da SEFAZ é aplicado daqui.
+  CONTINGENCY: ['AUTHORIZED', 'REJECTED', 'PROCESSING'],
 };
 
 export function isValidResultTransition(from: FiscalDocumentStatus, to: FiscalDocumentStatus): boolean {
@@ -68,6 +72,13 @@ function isDfeSkippableError(error: unknown): boolean {
 }
 
 const PENDING_STATUSES: readonly FiscalDocumentStatus[] = ['SENT', 'PROCESSING'];
+/**
+ * De onde um RESULTADO da porta pode chegar: os pendentes ou — só para o documento que está nela — a NFC-e off-line que o
+ * job transmitiu (X10a PR-9). A guarda de quem não está em contingência fica exatamente a de antes.
+ */
+function guardaDoResultado(doc: FiscalDocument): readonly FiscalDocumentStatus[] {
+  return doc.status === 'CONTINGENCY' ? ['CONTINGENCY'] : PENDING_STATUSES;
+}
 /** Item 26 + decisão 5 de D-2026-10-29-X10A-PR7-9-FORKS: o `reenviar` aceita a rejeitada e a que espera a assinatura. */
 const REENVIAVEIS: readonly FiscalDocumentStatus[] = ['REJECTED', 'PENDING_SIGNATURE'];
 
@@ -177,6 +188,8 @@ export interface PollSummary {
   failed: number;
   /** BE-INCR-DFE-ANEXO-PENDENTE item 7 — resultado da varredura de pendências de anexo no mesmo tick. */
   attachments?: PendingAttachmentDrainSummary;
+  /** X10a PR-9 (decisões 6 e 7) — transmissão das NFC-e off-line, prazo e órfãs no mesmo tick. */
+  contingencia?: ContingenciaTickSummary;
 }
 
 // BE-INCR-DFE-ANEXO-PENDENTE F-PA-6 (a): teto de 10 tentativas, backoff exponencial de 2 min até 1 h.
@@ -198,6 +211,13 @@ export class FiscalDocumentLifecycleService {
     private readonly voidRepo: Pick<IFiscalNumberVoidRepository, 'findOverlapping'>,
   ) {}
 
+  private contingencia: DfeContingenciaHandler | null = null;
+
+  /** X10a PR-9 (decisão 4) — liga a contingência off-line ao reenvio (late-bound na factory, como na emissão). */
+  setContingenciaHandler(fn: DfeContingenciaHandler | null): void {
+    this.contingencia = fn;
+  }
+
   /**
    * F-ADN-5 a (D-2026-10-29-X10A-PR7-9-FORKS decisão 1): o resultado síncrono do envio passa pelo MESMO `applyResult` —
    * a factory liga isto em `FiscalDocumentEmissionService.setResultApplier`.
@@ -216,10 +236,13 @@ export class FiscalDocumentLifecycleService {
     if (!port.capabilities.assinaturaRemota) return undefined;
     const a = await this.emissionService.assinaturaDaUnidade(scope, port);
     if (!a.ok && exigir) throw bloqueioSessaoPsc(a.motivo);
+    // X10a PR-8: o CSC da NFC-e acompanha o contexto (o reenvio pode cair no QR Code v2).
+    const csc = await this.emissionService.cscDaUnidade(scope, port, doc.kind as FiscalDocumentKind, doc.ambiente as DfeAmbiente);
     return {
       ambiente: doc.ambiente as DfeAmbiente,
       ...(a.ok && a.assinatura ? { assinatura: a.assinatura } : {}),
       payload: JSON.parse(this.currentAttempt(doc).payloadJson) as unknown,
+      ...(csc ? { csc } : {}),
     };
   }
 
@@ -402,6 +425,7 @@ export class FiscalDocumentLifecycleService {
             currentAttemptNo: nextAttemptNo,
             errorsJson: null,
             ...(numero !== undefined ? { numero } : {}),
+            ...(doc.contingenciaSuplJson ? { contingenciaSuplJson: null } : {}), // X10a PR-9: a chave nova invalida o QR off-line
             whenStatusIn: [doc.status as FiscalDocumentStatus], // o callback e a rota podem disputar a mesma pendente
           },
           tx,
@@ -434,6 +458,7 @@ export class FiscalDocumentLifecycleService {
         ...(assinatura ? { ctx: { ...assinatura, payload } } : {}),
       },
       'dfe_reenvio_failed',
+      this.contingencia,
     );
   }
 
@@ -506,7 +531,15 @@ export class FiscalDocumentLifecycleService {
     }
     const reassembled = await this.emissionService.reassembleNfeForReenvio(scope, doc.saleId, kind, ambiente);
     const { infNFe } = reassembled.payload;
-    const semNumero: NfePayloadSemNumeracao = { ...reassembled.payload, infNFe: { ...infNFe, ide: { ...infNFe.ide, serie: doc.serie } } };
+    let semNumero: NfePayloadSemNumeracao = { ...reassembled.payload, infNFe: { ...infNFe, ide: { ...infNFe.ide, serie: doc.serie } } };
+    // X10a PR-9 (decisão 10): a NFC-e de contingência rejeitada volta com o mesmo número e série e cNF novo, e continua de
+    // contingência — tpEmis=9, dhCont/xJust e o dhEmi da emissão off-line (Anexo IV p. 11: "gerar novamente o arquivo com
+    // a mesma numeração e série"). Manter o dhEmi segura o 110112 da órfã (5P31-20 rej. 914: substituta > 2 h da original).
+    const corrente = doc.attempts.find((a) => a.attemptNo === doc.currentAttemptNo);
+    const anterior = corrente ? (JSON.parse(corrente.payloadJson) as { infNFe?: { ide?: Record<string, unknown> } }).infNFe?.ide : undefined;
+    if (anterior?.tpEmis === 9 && typeof anterior.dhEmi === 'string' && typeof anterior.dhCont === 'string' && typeof anterior.xJust === 'string') {
+      semNumero = emContingencia(semNumero, { dhEmi: anterior.dhEmi, dhCont: anterior.dhCont, xJust: anterior.xJust });
+    }
     const payload =
       !port.capabilities.numbersDps && doc.numero != null
         ? NfePayloadSchema.parse(numerarNfe(semNumero, Number(doc.numero), gerarCnf(Number(doc.numero))))
@@ -1030,7 +1063,7 @@ export class FiscalDocumentLifecycleService {
     };
 
     if (result.status === 'PROCESSING') {
-      await this.repo.transition(scope, doc.id, { status: 'PROCESSING', attemptResult, whenStatusIn: PENDING_STATUSES });
+      await this.repo.transition(scope, doc.id, { status: 'PROCESSING', attemptResult, whenStatusIn: guardaDoResultado(doc) });
       return;
     }
 
@@ -1039,7 +1072,7 @@ export class FiscalDocumentLifecycleService {
         await this.repo.transition(
           scope,
           doc.id,
-          { status: 'REJECTED', errorsJson: JSON.stringify(result.errors), attemptResult, whenStatusIn: PENDING_STATUSES },
+          { status: 'REJECTED', errorsJson: JSON.stringify(result.errors), attemptResult, whenStatusIn: guardaDoResultado(doc) },
           tx,
         );
         await this.auditService.append(tx, scope, {
@@ -1069,6 +1102,7 @@ export class FiscalDocumentLifecycleService {
     }
 
     const divergente = manual?.releitura?.releitura.status === 'DIVERGENTE';
+    const suplAutorizado = doc.kind === 'NFCE' && result.xml ? suplDoXml(result.xml.toString('utf8')) : null;
     const chaveOuCodigo = result.chaveOuCodigo;
     const nfseDhProc = result.dhProc ? new Date(result.dhProc) : null;
     let originalSourceARetirar = null as string | null; // atribuída dentro da tx (o `as` evita o estreitamento para null)
@@ -1118,7 +1152,10 @@ export class FiscalDocumentLifecycleService {
         {
           status: divergente ? 'AUTHORIZED_DIVERGENT' : 'AUTHORIZED',
           ...(manual?.serie !== undefined ? { serie: manual.serie } : {}),
-          whenStatusIn: PENDING_STATUSES,
+          // X10a PR-9 (revisão A): na NFC-e de contingência o DANFE passa a mostrar o QR do XML autorizado — o v2 do recuo
+          // na 407 ou a chave nova do reenvio da rejeitada —, não o montado na emissão off-line.
+          ...(suplAutorizado ? { contingenciaSuplJson: JSON.stringify(suplAutorizado) } : {}),
+          whenStatusIn: guardaDoResultado(doc),
           partnerRef: result.partnerRef,
           nNFSe: result.nNFSe ?? null,
           chaveOuCodigo: result.chaveOuCodigo,

@@ -121,6 +121,63 @@ describe('FiscalDocument + ServiceFiscalProfile — contrato em SQLite real (BE-
     expect(await docRepo.findById(escopo(DONO_A), doc.id)).toMatchObject({ status: 'SENT', numero: 9n });
   });
 
+  it('X10a PR-9: listContingencia traz só CONTINGENCY com as tentativas; listContingenciaNaoAutorizada acha a tpEmis=9 rejeitada e ignora a normal e a autorizada', async () => {
+    const off = (saleId: string) => sent(saleId, { kind: 'NFCE', cTribNac: '', initialStatus: 'CONTINGENCY', payloadJson: JSON.stringify({ infNFe: { ide: { tpEmis: 9 } } }) });
+    const pendente = await docRepo.createSent(escopo(DONO_A), off('sale-cont-1'));
+    const rejeitada = await docRepo.createSent(escopo(DONO_A), off('sale-cont-2'));
+    const autorizada = await docRepo.createSent(escopo(DONO_A), off('sale-cont-3'));
+    const normal = await docRepo.createSent(escopo(DONO_A), sent('sale-cont-4', { kind: 'NFCE', cTribNac: '', payloadJson: JSON.stringify({ infNFe: { ide: { tpEmis: 1 } } }) }));
+    await docRepo.transition(escopo(DONO_A), rejeitada.id, { status: 'REJECTED', whenStatusIn: ['CONTINGENCY'] });
+    await docRepo.transition(escopo(DONO_A), autorizada.id, { status: 'AUTHORIZED', contingenciaSuplJson: '{"qrCode":"q","urlChave":"u"}', whenStatusIn: ['CONTINGENCY'] });
+
+    const fila = await docRepo.listContingencia(50);
+    expect(fila.map((d) => d.id)).toEqual([pendente.id]);
+    expect(fila[0].attempts).toHaveLength(1);
+    const alerta = (await docRepo.listContingenciaNaoAutorizada(new Date(Date.now() - 86_400_000))).map((d) => d.id);
+    expect(alerta).toEqual(expect.arrayContaining([pendente.id, rejeitada.id]));
+    expect(alerta).not.toContain(autorizada.id);
+    expect(alerta).not.toContain(normal.id);
+    expect((await docRepo.findById(escopo(DONO_A), autorizada.id))?.contingenciaSuplJson).toBe('{"qrCode":"q","urlChave":"u"}');
+  });
+
+  it('X10a PR-9 revisões E e F: nota parada não toma o teto — o alerta pega a mais recente e a transmissão gira pelo updatedAt', async () => {
+    const pausa = () => new Promise((r) => setTimeout(r, 15));
+    const off = (saleId: string, status: 'CONTINGENCY' | 'REJECTED') =>
+      docRepo.createSent(escopo(DONO_B), sent(saleId, { kind: 'NFCE', cTribNac: '', initialStatus: 'CONTINGENCY', payloadJson: JSON.stringify({ infNFe: { ide: { tpEmis: 9 } } }) })).then(async (d) => {
+        if (status === 'REJECTED') await docRepo.transition(escopo(DONO_B), d.id, { status: 'REJECTED', whenStatusIn: ['CONTINGENCY'] });
+        return d;
+      });
+    // E e G: sem teto — a mais antiga da janela (a que vence primeiro) e a nova entram juntas; a abandonada de 20 dias
+    // atrás sai pela janela, não pelo teto.
+    const antiga = await off('sale-antiga', 'CONTINGENCY');
+    for (const n of [1, 2, 3]) {
+      await off(`sale-aband-${n}`, 'REJECTED');
+      await pausa();
+    }
+    const vinteDias = new Date(Date.now() - 20 * 86_400_000);
+    const abandonada = await off('sale-aband-velha', 'REJECTED');
+    await prisma.fiscalDocument.update({ where: { id: abandonada.id }, data: { createdAt: vinteDias } });
+    await prisma.fiscalDocumentAttempt.updateMany({ where: { documentId: abandonada.id }, data: { sentAt: vinteDias } });
+    const nova = await off('sale-nova', 'CONTINGENCY');
+    // J: documento de 20 dias (normal, tpEmis=1) que cai em contingência hoje — a janela é a da tentativa, não a do documento.
+    const reemitida = await docRepo.createSent(escopo(DONO_B), sent('sale-reemitida', { kind: 'NFCE', cTribNac: '', payloadJson: JSON.stringify({ infNFe: { ide: { tpEmis: 1 } } }) }));
+    await prisma.fiscalDocument.update({ where: { id: reemitida.id }, data: { createdAt: vinteDias } });
+    await prisma.fiscalDocumentAttempt.updateMany({ where: { documentId: reemitida.id }, data: { sentAt: vinteDias } });
+    await docRepo.appendAttempt(escopo(DONO_B), { documentId: reemitida.id, attemptNo: 2, payloadJson: JSON.stringify({ infNFe: { ide: { tpEmis: 9 } } }) });
+    await docRepo.transition(escopo(DONO_B), reemitida.id, { status: 'CONTINGENCY', currentAttemptNo: 2, whenStatusIn: ['SENT'] });
+    const janela = (await docRepo.listContingenciaNaoAutorizada(new Date(Date.now() - 15 * 86_400_000))).map((d) => d.id);
+    expect(janela).toEqual(expect.arrayContaining([antiga.id, nova.id, reemitida.id]));
+    expect(janela).not.toContain(abandonada.id);
+
+    // F: a CONTINGENCY tocada pelo job (adiada) vai para o fim; com teto 1, a outra é a próxima a transmitir.
+    const todas = await docRepo.listContingencia(50);
+    expect(todas.length).toBeGreaterThanOrEqual(2);
+    const [primeira, segunda] = todas;
+    await pausa();
+    await docRepo.transition(escopo(primeira.userId, primeira.unitId), primeira.id, { status: 'CONTINGENCY', whenStatusIn: ['CONTINGENCY'] });
+    expect((await docRepo.listContingencia(1)).map((d) => d.id)).toEqual([segunda.id]);
+  });
+
   // GAP-MAP "DF-e — webhook nunca acha documento pendente" — teste-guarda (sessao-instrumentacao, 07/10). O webhook
   // resolve o documento por `findByPartnerRef(ref da tentativa)`; o mock do LifecycleService.test grava `partnerRef`
   // no documento pendente e por isso não enxerga a lacuna — aqui é o banco real.

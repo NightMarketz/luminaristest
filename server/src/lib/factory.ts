@@ -54,6 +54,12 @@ import type { IPscCredentialRepository } from '../features/accounting/repositori
 import { PscProviderService } from '../features/accounting/services/PscProviderService';
 import { PscCredentialService } from '../features/accounting/services/PscCredentialService';
 import { DfeAssinaturaResolver } from '../features/accounting/services/DfeAssinaturaResolver';
+import { NfceCscService } from '../features/accounting/services/NfceCscService';
+import { NfceCscRepository } from '../features/accounting/repositories/NfceCscRepository';
+import type { INfceCscRepository } from '../features/accounting/repositories/INfceCscRepository';
+import { NfceContingenciaService } from '../features/accounting/services/NfceContingenciaService';
+import { NfceContingenciaRepository } from '../features/accounting/repositories/NfceContingenciaRepository';
+import type { INfceContingenciaRepository } from '../features/accounting/repositories/INfceContingenciaRepository';
 import { PscAssinador } from '../features/accounting/dfe/psc/PscAssinador';
 import { PscProviderPolicy } from '../features/accounting/policies/PscProviderPolicy';
 import { CollectionChargeRepository } from '../features/accounting/repositories/CollectionChargeRepository';
@@ -859,6 +865,8 @@ export class ApplicationFactory {
     // X10a PR-7 (EMENDA-PSC E-2/E-3)
     pscProvider: IPscProviderRepository;
     pscCredential: IPscCredentialRepository;
+    nfceCsc: INfceCscRepository; // X10a PR-8
+    nfceContingencia: INfceContingenciaRepository; // X10a PR-9
     collectionCharge: ICollectionChargeRepository; // BE-INCR-PAYMENT-PROVIDER PR-2
     taxAssessment: ITaxAssessmentRepository; // X7 Fase A PR-2
     consumptionTaxAssessment: IConsumptionTaxAssessmentRepository; // IBS-CBS-2027 PR-2 (item 8)
@@ -979,6 +987,8 @@ export class ApplicationFactory {
     // X10a PR-7 (EMENDA-PSC E-2..E-6, E-9)
     pscProvider: PscProviderService;
     pscCredential: PscCredentialService;
+    nfceCsc: NfceCscService; // X10a PR-8
+    nfceContingencia: NfceContingenciaService; // X10a PR-9
     collectionCharge: CollectionChargeService; // BE-INCR-PAYMENT-PROVIDER PR-2
     releaseReport: ReleaseReportService; // BE-INCR-PAYMENT-PROVIDER PR-3
     taxAssessment: TaxAssessmentService; // X7 Fase A PR-2
@@ -1092,6 +1102,8 @@ export class ApplicationFactory {
       // X10a PR-7 (EMENDA-PSC)
       pscProvider: new PscProviderRepository(),
       pscCredential: new PscCredentialRepository(),
+      nfceCsc: new NfceCscRepository(),
+      nfceContingencia: new NfceContingenciaRepository(),
       collectionCharge: new CollectionChargeRepository(),
       taxAssessment: new TaxAssessmentRepository(),
       consumptionTaxAssessment: new ConsumptionTaxAssessmentRepository(),
@@ -1533,7 +1545,9 @@ export class ApplicationFactory {
       this.policies.accounting,
       resolveUnitCnpjFromUnits,
     );
-    const dfeAssinaturaResolver = new DfeAssinaturaResolver(pscCredentialService, new PscAssinador());
+    // X10a PR-8: o CSC da NFC-e (QR Code v2 quando a UF recusa a v3) entra no mesmo contexto do envio.
+    const nfceCscService = new NfceCscService(this.repositories.nfceCsc, auditService, this.policies.accounting);
+    const dfeAssinaturaResolver = new DfeAssinaturaResolver(pscCredentialService, new PscAssinador(), nfceCscService);
     // BE-INCR-DFE (nó X10b, PR-2): porta+adaptadores e montagem/envio da DPS (Fase B+C).
     const fiscalDocumentEmissionService = new FiscalDocumentEmissionService(
       this.repositories.fiscalDocument,
@@ -1573,6 +1587,30 @@ export class ApplicationFactory {
     fiscalDocumentEmissionService.setResultApplier((scope, doc, result) =>
       fiscalDocumentLifecycleService.aplicarResultadoDoEnvio(scope, doc, result),
     );
+    // BE-INCR-NFCE (nó X10a, itens 24–25): inutilização de faixa + lista das lacunas de numeração.
+    const fiscalNumberVoidService = new FiscalNumberVoidService(
+      this.repositories.fiscalDocument,
+      this.repositories.fiscalNumberVoid,
+      fiscalProfileService,
+      this.policies.accounting,
+      auditService,
+      legalParameterService, // EMENDA-3 E3-2 a: fotografia INUT_NAO_SE_APLICA
+      dfeAssinaturaResolver, // X10a PR-7 (E-6): o inutNFe é assinado pelo PSC
+    );
+    // X10a PR-9 (E-9): contingência off-line da NFC-e — a emissão e o reenvio a acionam na falha de comunicação, e o
+    // retorno da transmissão posterior sai pelo applyResult do ciclo.
+    const nfceContingenciaService = new NfceContingenciaService(
+      this.repositories.nfceContingencia,
+      this.repositories.fiscalDocument,
+      fiscalDocumentEmissionService,
+      fiscalNumberVoidService,
+      this.policies.accounting,
+      auditService,
+      legalParameterService, // FERIADO_NACIONAL do prazo de transmissão (decisão 9)
+    );
+    fiscalDocumentEmissionService.setContingencia(nfceContingenciaService);
+    fiscalDocumentLifecycleService.setContingenciaHandler(fiscalDocumentEmissionService.contingenciaHandler());
+    nfceContingenciaService.setResultApplier((scope, doc, result) => fiscalDocumentLifecycleService.aplicarResultadoDoEnvio(scope, doc, result));
     // Decisão 5 de D-2026-10-29-X10A-PR7-9-FORKS: a reautorização no PSC envia as PENDING_SIGNATURE da unidade.
     pscCredentialService.setOnAuthorized(async (scope) => {
       await fiscalDocumentLifecycleService.enviarPendentesDaUnidade(scope);
@@ -1778,16 +1816,8 @@ export class ApplicationFactory {
       depreciation: depreciationService,
       fiscalDocumentEmission: fiscalDocumentEmissionService,
       fiscalDocumentLifecycle: fiscalDocumentLifecycleService,
-      // BE-INCR-NFCE (nó X10a, itens 24–25): inutilização de faixa + lista das lacunas de numeração.
-      fiscalNumberVoid: new FiscalNumberVoidService(
-        this.repositories.fiscalDocument,
-        this.repositories.fiscalNumberVoid,
-        fiscalProfileService,
-        this.policies.accounting,
-        auditService,
-        legalParameterService, // EMENDA-3 E3-2 a: fotografia INUT_NAO_SE_APLICA
-        dfeAssinaturaResolver, // X10a PR-7 (E-6): o inutNFe é assinado pelo PSC
-      ),
+      fiscalNumberVoid: fiscalNumberVoidService,
+      nfceContingencia: nfceContingenciaService,
       chat: new ChatService(
         embeddingOpenAIService,
         this.repositories.vector,
@@ -2171,6 +2201,7 @@ export class ApplicationFactory {
       // X10a PR-7 (EMENDA-PSC): cadastro de PSCs (PLATFORM_ADMIN) e credencial OAuth por unidade (const acima).
       pscProvider: new PscProviderService(this.repositories.pscProvider, auditService, new PscProviderPolicy()),
       pscCredential: pscCredentialService,
+      nfceCsc: nfceCscService,
       collectionCharge: collectionChargeService,
       releaseReport: releaseReportService, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-1..P3-5)
       accountingDelivery: new AccountingDeliveryService(
@@ -2559,6 +2590,8 @@ export class ApplicationFactory {
   // X10a PR-7 (EMENDA-PSC)
   public getPscProviderService = (): PscProviderService => this.services.pscProvider;
   public getPscCredentialService = (): PscCredentialService => this.services.pscCredential;
+  public getNfceCscService = (): NfceCscService => this.services.nfceCsc;
+  public getNfceContingenciaService = (): NfceContingenciaService => this.services.nfceContingencia;
   public getCollectionChargeService = (): CollectionChargeService => this.services.collectionCharge;
   public getReleaseReportService = (): ReleaseReportService => this.services.releaseReport;
   public getTaxAssessmentService = (): TaxAssessmentService => this.services.taxAssessment;

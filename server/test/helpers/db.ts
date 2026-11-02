@@ -88,6 +88,8 @@ export async function resetDb(): Promise<void> {
   await prisma.fiscalDocument.deleteMany();
   await prisma.fiscalDocumentSequence.deleteMany();
   await prisma.fiscalNumberVoid.deleteMany(); // BE-INCR-NFCE PR-4
+  await prisma.nfceContingenciaOrfa.deleteMany(); // X10a PR-9 — sem FK
+  await prisma.nfceContingencia.deleteMany(); // X10a PR-9 — sem FK
   await prisma.serviceFiscalProfile.deleteMany();
   await prisma.productFiscalProfile.deleteMany(); // BE-INCR-NFCE item 10
   await prisma.issBeneficioMunicipal.deleteMany(); // SIMPLES-PISO-ANEXO-XI bloco 1
@@ -165,6 +167,7 @@ export async function resetDb(): Promise<void> {
   await prisma.pscAuthorization.deleteMany();
   await prisma.pscCredential.deleteMany();
   await prisma.pscProvider.deleteMany();
+  await prisma.nfceCsc.deleteMany(); // X10a PR-8: CSC da NFC-e por unidade
   // BE-INCR-MIT-EXPORT PR-2 (nó X9): mit_exports só referencia User (Cascade) — sem ordem de FK.
   await prisma.mitExport.deleteMany();
   // BE-INCR-EFD-REINF PR-1: reinf_batches só referencia User (Cascade) — sem ordem de FK.

@@ -2,6 +2,7 @@ import { request } from 'node:https';
 import { readFileSync } from 'node:fs';
 import { AppError } from '../../../../lib/errors';
 import { logger } from '../../../../lib/logger';
+import { DfeTransporteError } from '../DfeEmissorPort';
 import type { SefazServico } from './sefazConfig';
 
 /**
@@ -46,12 +47,13 @@ export function loadTransporteTls(env: NodeJS.ProcessEnv = process.env): Transpo
   return { pfx: readFileSync(path), passphrase, ...(ca ? { ca: readFileSync(ca) } : {}) };
 }
 
-export class SefazTransporteError extends Error {
+/** X10a PR-9: subclasse do marcador da porta — a falha de transporte é a que liga a contingência automática (decisão 4). */
+export class SefazTransporteError extends DfeTransporteError {
   constructor(
     public readonly code: 'sefaz_timeout' | 'sefaz_tls' | 'sefaz_http' | 'sefaz_resposta_ilegivel',
     message: string,
   ) {
-    super(`${code}: ${message}`);
+    super(code, `${code}: ${message}`);
     this.name = 'SefazTransporteError';
   }
 }
