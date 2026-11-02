@@ -11,7 +11,19 @@ import { notifyAccountingDraft } from './accountingDraftNotice';
 // Local lightweight types for frontend-only usage
 interface ISchemaField { name: string; label?: string; type: string; required?: boolean }
 interface ITableSchema { fields: ISchemaField[] }
-interface IPresetDetails { tables: Record<string, { name?: string; schema: ITableSchema | null }> }
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: tabelas de módulo (CRM, PESSOAS, VENDAS…) não vêm em `tables`; vêm em
+// `moduleViews` (GET /dashboard/presets/:key). Base fixa nunca sai; submódulo sai com a sua tabela.
+interface IModuleView {
+  key: string;
+  category: string;
+  name: { pt: string; en: string };
+  fixed: boolean;
+  tables: string[];
+}
+interface IPresetDetails {
+  tables: Record<string, { name?: string; schema: ITableSchema | null }>;
+  moduleViews?: IModuleView[];
+}
 
 // --- Interfaces ---
 interface Preset {
@@ -52,7 +64,7 @@ export default function TotalControlSetup() {
   const [unitName, setUnitName] = useState('');
   // I4 PR-4 (F-I4-9 a): antes de criar, a pergunta fechada de regime/porte (+ ICMS em Presumido/Real).
   const [askFiscal, setAskFiscal] = useState(false);
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   const [error, setError] = useState<string | null>(null);
 
   const groupedPresets = useMemo(() => {
@@ -104,6 +116,9 @@ export default function TotalControlSetup() {
       for (const tableKey of Object.keys((presetData as IPresetDetails).tables)) {
         initialSelectedTables[tableKey] = true; // Todas as tabelas selecionadas por padrão
         initialCustomFields[tableKey] = []; // Nenhum campo customizado inicialmente
+      }
+      for (const view of presetData.moduleViews ?? []) {
+        for (const tableKey of view.tables) initialSelectedTables[tableKey] = true;
       }
       setSelectedTables(initialSelectedTables);
       setCustomFields(initialCustomFields);
@@ -308,6 +323,48 @@ export default function TotalControlSetup() {
             );
           })}
         </div>
+
+        {(presetDetails.moduleViews ?? []).length > 0 && (
+          <section className="mt-10">
+            <h3 className="text-xs font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest mb-4">{t('onboardingTotalControlModules')}</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {(presetDetails.moduleViews ?? []).map((view) => {
+                const isSelected = view.tables.every((k) => selectedTables[k] ?? false);
+                const inputId = `module-toggle-${view.key}`;
+                return (
+                  <div
+                    key={view.key}
+                    data-testid={`module-${view.key}`}
+                    className={`p-4 rounded-2xl border-2 ${isSelected
+                        ? 'bg-white dark:bg-neutral-900 border-blue-500'
+                        : 'bg-neutral-50/50 dark:bg-neutral-100/5 border-neutral-200 dark:border-neutral-800 opacity-60'
+                      }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id={inputId}
+                        disabled={isCreating || view.fixed}
+                        checked={isSelected}
+                        onChange={(e) => setSelectedTables({
+                          ...selectedTables,
+                          ...Object.fromEntries(view.tables.map((k) => [k, e.target.checked])),
+                        })}
+                        className="h-5 w-5 rounded-lg border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-blue-600 focus:ring-blue-500 cursor-pointer disabled:cursor-not-allowed"
+                      />
+                      <label htmlFor={inputId} className="font-bold text-neutral-900 dark:text-white cursor-pointer">
+                        {i18n?.language?.startsWith('en') ? view.name.en : view.name.pt}
+                      </label>
+                    </div>
+                    <div className="mt-1 ml-8 text-xs text-neutral-400 dark:text-neutral-500">
+                      {view.fixed ? `${t('onboardingTotalControlModuleBase')} · ` : ''}{view.tables.join(', ')}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         <div className="mt-12 mx-auto w-full max-w-sm">
           <label htmlFor="custom-unit-name" className="mb-2 block text-sm font-bold text-neutral-700 dark:text-neutral-300">
