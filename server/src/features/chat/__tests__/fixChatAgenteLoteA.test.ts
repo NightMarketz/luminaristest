@@ -82,8 +82,8 @@ describe('#3 — loop de tools com mais de um passo', () => {
   it('query_table_data → request_record_update no mesmo turno devolve ACTION_PROPOSAL', async () => {
     const { service, openai, agent } = makeChatService();
     openai.getChatCompletionWithToolsAndHistory
-      .mockResolvedValueOnce({ tool_calls: [{ id: 't1', function: { name: 'query_table_data', arguments: '{"tableId":"tbl"}' } }] })
-      .mockResolvedValueOnce({ tool_calls: [{ id: 't2', function: { name: 'request_record_update', arguments: '{"tableId":"tbl","recordId":"r1","data":{"status":"Won"}}' } }] });
+      .mockResolvedValueOnce({ tool_calls: [{ id: 't1', type: 'function', function: { name: 'query_table_data', arguments: '{"tableId":"tbl"}' } }] })
+      .mockResolvedValueOnce({ tool_calls: [{ id: 't2', type: 'function', function: { name: 'request_record_update', arguments: '{"tableId":"tbl","recordId":"r1","data":{"status":"Won"}}' } }] });
     agent.handleToolCall
       .mockResolvedValueOnce({ rows: [{ id: 'r1', data: { status: 'Open' } }], total: 1, returned: 1, truncated: false })
       .mockResolvedValueOnce({ status: 'PROPOSED', proposalId: 'p1' });

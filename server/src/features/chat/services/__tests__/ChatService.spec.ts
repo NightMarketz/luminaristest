@@ -104,7 +104,7 @@ describe('Agent mode (no documentIds)', () => {
   it('returns an ACTION_PROPOSAL when a tool call proposes an action', async () => {
     const { service, openai, agent } = makeService();
     openai.getChatCompletionWithToolsAndHistory.mockResolvedValue({
-      tool_calls: [{ id: 't1', function: { name: 'request_record_creation', arguments: '{}' } }],
+      tool_calls: [{ id: 't1', type: 'function', function: { name: 'request_record_creation', arguments: '{}' } }],
     });
     agent.handleToolCall.mockResolvedValue({ status: 'PROPOSED', proposalId: 'p1' });
     agent.getProposal.mockResolvedValue({ id: 'p1', action: 'CREATE', tableName: 'sales', tableLabel: 'Sales', data: {} });
@@ -120,7 +120,7 @@ describe('Agent mode (no documentIds)', () => {
     const { service, openai, agent } = makeService();
     openai.getChatCompletionWithToolsAndHistory
       .mockResolvedValueOnce({
-        tool_calls: [{ id: 't1', function: { name: 'request_record_creation', arguments: '{"tableId":"tbl","data":{"a":1}}' } }],
+        tool_calls: [{ id: 't1', type: 'function', function: { name: 'request_record_creation', arguments: '{"tableId":"tbl","data":{"a":1}}' } }],
       })
       .mockResolvedValueOnce({ content: 'Você não tem permissão nessa tabela.', tool_calls: [] });
     agent.handleToolCall.mockResolvedValue({ error: 'SEM_PERMISSAO', message: 'sem permissão' });
@@ -191,7 +191,7 @@ describe('token usage per assistant message (I11 PR-3)', () => {
     openai.getChatCompletionWithToolsAndHistory
       .mockImplementationOnce(async (_m: unknown, _t: unknown, _model: unknown, onUsage: OnUsage) => {
         onUsage(gpt4o);
-        return { tool_calls: [{ id: 't1', function: { name: 'list_my_tables', arguments: '{}' } }] };
+        return { tool_calls: [{ id: 't1', type: 'function', function: { name: 'list_my_tables', arguments: '{}' } }] };
       })
       .mockImplementationOnce(async (_m: unknown, _t: unknown, _model: unknown, onUsage: OnUsage) => {
         onUsage(gpt35);
@@ -213,7 +213,7 @@ describe('token usage per assistant message (I11 PR-3)', () => {
     const { service, openai, agent, messages } = makeService();
     openai.getChatCompletionWithToolsAndHistory.mockImplementation(async (_m: unknown, _t: unknown, _model: unknown, onUsage: OnUsage) => {
       onUsage(gpt4o);
-      return { tool_calls: [{ id: 't1', function: { name: 'request_record_creation', arguments: '{}' } }] };
+      return { tool_calls: [{ id: 't1', type: 'function', function: { name: 'request_record_creation', arguments: '{}' } }] };
     });
     agent.handleToolCall.mockResolvedValue({ status: 'PROPOSED', proposalId: 'p1' });
     agent.getProposal.mockResolvedValue({ id: 'p1', action: 'CREATE', tableName: 'sales', tableLabel: 'Sales', data: {} });
