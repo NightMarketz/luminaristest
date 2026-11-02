@@ -39,4 +39,5 @@ fontes: [`X10A-EMENDA-4-FORA-DE-ESCOPO-2026-10-30.md`](../gates/X10A-EMENDA-4-FO
 - [[D-2026-10-30-X10A-EMENDA-4-FORKS]]: F-AL-4 deixa de ser (a); os outros 11 forks não mudam.
 - Planejamentos a abrir (cada um pede sessão de planejamento; a autorização é esta decisão): emenda do BRIEF ADN
   (NFS-e pelo assinador), BRIEF da NFC-e off-line no caixa, BRIEF de FE do assinador.
+- **Andamento (31/10):** emenda do BRIEF ADN escrita, [`BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md`](../../accounting/BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md) (F-ADL-1..5 pendentes, sem `executa`).
 - A pendência do template da `sessao-planejamento` (item 5 da cédula) não foi perguntada e segue aberta.
