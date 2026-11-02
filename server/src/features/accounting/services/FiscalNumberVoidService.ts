@@ -11,8 +11,11 @@ import { OCCUPYING_VOID_STATUSES } from '../repositories/IFiscalNumberVoidReposi
 import type { FiscalProfileService } from './FiscalProfileService';
 import type { AuditService } from './AuditService';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
+import type { DfeAssinaturaResolver } from './DfeAssinaturaResolver';
+import { bloqueioSessaoPsc } from './DfeAssinaturaResolver';
 import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
-import type { DfeAmbiente, InutilizarResult } from '../dfe/DfeEmissorPort';
+import type { DfeAmbiente, DfeCallContext, InutilizarResult } from '../dfe/DfeEmissorPort';
+import { isSessaoPscVencida, type AssinaturaRemotaError } from '../dfe/AssinadorRemotoPort';
 import { scopeToday } from '../models/dates';
 import { ufDoCodMun } from '../models/nfeMontagem';
 import { STATUS_QUE_OCUPAM_NUMERO, avisoDeInutilizacao, guardaDaFaixa, lacunasDeNumeracao } from '../models/inutilizacao';
@@ -43,12 +46,36 @@ export class FiscalNumberVoidService {
     private readonly policy: IAccountingPolicy,
     private readonly auditService: AuditService,
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
+    /** X10a PR-7 (E-6): o `inutNFe` é assinado pelo PSC da unidade. */
+    private readonly assinatura?: DfeAssinaturaResolver,
   ) {}
 
   async inutilizar(scope: AccountingScope, input: Omit<VoidNumberRangeInput, 'unitId'>): Promise<FiscalNumberVoidView> {
     if (!this.policy.canCancelFiscalDocument(scope)) {
       throw new ForbiddenError('Você não tem permissão para inutilizar numeração de documento fiscal.');
     }
+    return this.pedir(scope, input);
+  }
+
+  /**
+   * X10a PR-9 (decisão 6 de D-2026-10-29-X10A-PR7-9-FORKS; MOC 7.0 Anexo IV p. 11: "inutilizar a numeração, se não
+   * autorizada") — o pedido que o job da contingência faz pelo número da NFC-e normal que a SEFAZ não recebeu (217). Sem a
+   * policy do operador (o job é o autor); as MESMAS guardas do `inutilizar`, e o ambiente tem de ser o da emissão
+   * configurada (a porta do env não pede inutilização de outro ambiente).
+   */
+  async inutilizarOrfa(
+    scope: AccountingScope,
+    input: { kind: 'NFCE'; ambiente: DfeAmbiente; serie: number; numero: bigint; xJust: string },
+  ): Promise<FiscalNumberVoidView> {
+    const selection = selectDfeEmissor(process.env, input.kind);
+    if (selection.ambiente !== input.ambiente) {
+      throw new ValidationError(`inut_bloqueada: ambiente_divergente (número em ${input.ambiente}, emissão em ${selection.ambiente ?? 'nenhum'})`, null);
+    }
+    const n = Number(input.numero);
+    return this.pedir(scope, { kind: input.kind, serie: input.serie, nIni: n, nFin: n, xJust: input.xJust });
+  }
+
+  private async pedir(scope: AccountingScope, input: Omit<VoidNumberRangeInput, 'unitId'>): Promise<FiscalNumberVoidView> {
     const selection = selectDfeEmissor(process.env, input.kind);
     if (!selection.enabled || selection.ambiente === null) {
       throw new ValidationError(`dfe_disabled: ${selection.reason}`, { faltantes: [selection.reason ?? 'porta desabilitada'] });
@@ -65,6 +92,15 @@ export class FiscalNumberVoidService {
     const fp = await this.fiscalProfileService.get(scope);
     const cnpjEmitente = await this.unitCnpj(scope);
     if (!cnpjEmitente) throw new ValidationError("inut_bloqueada: CNPJ da unidade ausente ou inválido (cadastre em 'units')", null);
+    // E-6: a UF do emitente (cUF do `infInut`) vem do município do perfil fiscal; e a assinatura é pré-voo, ANTES de gravar
+    // o pedido (sem assinatura viva não há pedido REQUESTED órfão).
+    const uf = fp?.codMun ? ufDoCodMun(fp.codMun).UF : undefined;
+    let ctx: DfeCallContext | undefined;
+    if (port.capabilities.assinaturaRemota) {
+      if (!uf) throw new ValidationError('inut_bloqueada: município do perfil fiscal ausente (UF do emitente)', { faltantes: ['perfil fiscal da unidade: codMun'] });
+      if (!this.assinatura) throw bloqueioSessaoPsc('SEM_CREDENCIAL');
+      ctx = { ambiente, assinatura: await this.assinatura.exigir(scope, port) };
+    }
 
     const created = await this.voidRepo.runTransaction(async (tx) => {
       const last = (await this.docRepo.listSequences(scope, input.kind, tx)).find((s) => s.ambiente === ambiente && s.serie === input.serie)?.last ?? 0n;
@@ -102,8 +138,18 @@ export class FiscalNumberVoidService {
         nIni,
         nFin,
         xJust: input.xJust,
+        ...(uf ? { uf } : {}),
+        ...(ctx ? { ctx } : {}),
       });
     } catch (portError) {
+      if (isSessaoPscVencida(portError)) {
+        // A sessão caiu entre o pré-voo e a assinatura: o pedido não foi ao fisco — sai do caminho e o 400 pede a reautorização.
+        await this.voidRepo.applyResult(scope, created.id, {
+          status: 'REJECTED',
+          errorsJson: JSON.stringify([{ code: 'psc_sessao_vencida', message: (portError as Error).message }]),
+        });
+        throw bloqueioSessaoPsc((portError as AssinaturaRemotaError).code as 'CREDENCIAL_EXPIRADA' | 'CREDENCIAL_REVOGADA');
+      }
       const message = portError instanceof Error ? portError.message : String(portError);
       logger.error('DfeEmissorPort.inutilizar falhou — pedido fica REQUESTED', { voidId: created.id, error: message });
       const kept = await this.voidRepo.applyResult(scope, created.id, {

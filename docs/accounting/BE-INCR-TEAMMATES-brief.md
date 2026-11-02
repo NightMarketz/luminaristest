@@ -3,6 +3,7 @@
 > Produzido por **sessão de planejamento** em 2026-10-29. Escopo: **backend**. A tela é nó vizinho (FE-INCR-TEAMMATES).
 > **Forks F-TM-1..13 ratificados** no mesmo dia. Executável com `executa` do dono **depois** do FIX-CHAT-AGENTE fechado.
 > Quatro respostas foram contra a recomendação (F-TM-4, 5, 11, 12); o checklist já as materializa — não "conserte".
+> **Emenda de 30/10** (dono, chat: "Sim, emendas"), vinda do RAG-DOCUMENTOS (F-RAG-5b e F-RAG-B2): itens 8 e 23.
 
 ## Contexto fixo
 
@@ -55,6 +56,15 @@ externa `PROPOSTA` · F-TM-13 MCP com token estático · decisões diretas D-1..
 8. Resolução de chave por turno, **só BYOK** (F-TM-6 b): chave do tenant para o provedor do teammate → senão erro
    `LLM_SEM_CREDENCIAL` e o turno vai a `FAILED` sem chamar provedor. Nenhuma chave de IA da plataforma é lida.
    **Prova:** 2 casos + teste que falha se o código ler `OPENAI_API_KEY` no caminho do teammate.
+   **Ressalva (emenda 30/10, F-RAG-5b):**
+   - O teste cobre `lib/llm/**` e `features/teammates/**` (runner, resolução de chave, worker).
+   - Não cobre `lib/embedding/**`. A ferramenta `search_documents` gera o embedding da pergunta pelo
+     `EmbeddingKeyResolver` do [RAG-DOCUMENTOS](BE-INCR-RAG-DOCUMENTOS-brief.md), e esse resolvedor, sem chave
+     OpenAI/Gemini do usuário, usa a `OPENAI_API_KEY` da instância.
+   - Essa chave é do cliente (ADR-M2 (3)), não da plataforma, então o F-TM-6 vale.
+   - O runner nunca importa `lib/embedding/**` direto; só chega lá pela ferramenta.
+   **Prova da ressalva:** o teste continua vermelho com uma leitura de prova de `OPENAI_API_KEY` no runner, e
+   continua verde com a leitura que já existe em `lib/embedding/**`.
 9. Reserva: em 429, 5xx ou `quota` do provedor primário, o turno tenta **uma vez** o provedor reserva do teammate (se o
    tenant tiver chave dele); o turno grava qual respondeu. 400/401 **não** disparam reserva. **Prova:** 4 casos.
 
@@ -106,6 +116,19 @@ externa `PROPOSTA` · F-TM-13 MCP com token estático · decisões diretas D-1..
 23. Limites (F-TM-10 a): turnos/dia por teammate, orçamento mensal de tokens definido pelo tenant (protege a conta dele
     no provedor) e saltos por thread. Estourou → teammate (ou thread) vai a `PAUSED`, nada roda, e uma proposta
     `kind = LIMITE_ATINGIDO` aparece na caixa do dono. **Prova:** um teste por limite.
+    **Soma do orçamento (emenda 30/10, F-RAG-B2):** o consumo do mês de uma credencial C (usuário U, provedor P) é
+    Σ `AgentTurn.promptTokens + completionTokens` de U com `provider = P` no mês, mais Σ `DocumentAiUsage` com
+    `credentialId = C` no mês. A tabela `DocumentAiUsage` é do RAG-DOCUMENTOS.
+    - O cálculo fica num só lugar (`LlmBudgetService.usedThisMonth(credentialId)`), usado pelos teammates e pelo RAG.
+    - Linhas `DocumentAiUsage` com `source = 'INSTANCE'` não têm `credentialId` e ficam fora.
+    - O embedding da pergunta feito por `search_documents` dentro de um turno grava só em `DocumentAiUsage`, porque
+      os tokens do turno vêm das `complete`. Não há contagem dupla.
+    - O orçamento é um só por credencial: documentos podem esgotá-lo e pausar teammates, e vice-versa. Isso é
+      consequência do F-RAG-B2.
+    - Se o RAG-PR-C ainda não existir, a parcela `DocumentAiUsage` é zero; o cálculo não depende da tabela existir
+      antes.
+    **Prova:** teste com turnos e linhas `DocumentAiUsage` da mesma credencial somando acima do teto → `PAUSED`;
+    linha `INSTANCE` não entra; linha de outra credencial não entra.
 
 ### PR-5 · rotinas agendadas e manuais (depois de PR-4)
 

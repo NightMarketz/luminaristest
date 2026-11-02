@@ -64,6 +64,18 @@ Nenhuma que bloqueie a DPS do MEI. As regras do leiaute são fechadas, e o `indT
 ## 5. Lacunas
 - A disponibilidade da NFF para o MEI de SP em 2027 e a eventual exigência de DF-e do MEI pela SEFAZ-SP até 2026 não foram lidas em fonte da SEFAZ-SP.
 - O E0041 exige que o município emissor do MEI seja o do endereço no CNPJ. O Luminaris não confere o `codMun` contra o cadastro CNPJ, então essa checagem fica no runbook.
+
+## 6. Adendo 30/10/2026 — MEI e consumidor PF a partir de 2027
+Este dossiê diz que a NFS-e do MEI para tomador PF é facultativa "até 31/12/2026". Em 2027:
+- a LC 214 art. 517 faz o documento fiscal obrigatório em toda venda e prestação do MEI (LC 123 art. 26 § 6º II, nova redação);
+- a Res. CGSN 190 revoga o art. 106 II "a" 1 e o art. 106-A § 2º;
+- a **Res. CGSN 195/2026 (DOU 22/10/2026) inclui o art. 106-C**: a DASN-Simei "poderá ser utilizada como documento fiscal
+  eletrônico" na venda e no serviço a consumidor final PF sem CNPJ.
+
+Resultado: em 2027 o MEI também não precisa de NFS-e por venda a PF, e para tomador CNPJ a NFS-e segue obrigatória. A
+conferência do produto (`SimplesApuracaoService.ts:1028`, só tomador `CNPJ`) continua certa; o comentário dela precisa
+citar o art. 106-C. Fontes e trechos literais: dossiê
+[`triagem-contador-2026-10-30`](../triagem-contador-2026-10-30/relatorio.md) §6, [D17] e [D18].
 <!-- /ANALISE -->
 
 ## Fontes consultadas

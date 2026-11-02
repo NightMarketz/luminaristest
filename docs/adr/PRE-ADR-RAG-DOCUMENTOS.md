@@ -1,7 +1,7 @@
 # PRE-ADR-RAG-DOCUMENTOS — Repensar o RAG de documentos: índice, busca, embeddings e fila
 
 - **Data:** 2026-10-29
-- **Status:** **Proposed**. Os forks F-RAG-1..8 estão todos **PENDENTES**. Nenhum código autorizado sem "executa".
+- **Status:** **Accepted** (30/10/2026). F-RAG-1..10 respondidos pelo dono por questionário, cinco contra a recomendação (F-RAG-1, 2, 3, 5 e 5b). Respostas e consequências na §2.1 e na cédula [`D-2026-10-30-RAG-DOCUMENTOS-FORKS`](../plano/decisoes/D-2026-10-30-RAG-DOCUMENTOS-FORKS.md). Nenhum código autorizado sem BRIEF e "executa". **O TLDR, o §3 e o §4 abaixo descrevem as recomendações e ficam como registro; onde a §2.1 diverge, a §2.1 manda e o BRIEF reescreve o checklist.**
 - **Autorização:** dono, chat, 29/10/2026, na confirmação do item #17 do FIX-CHAT-AGENTE: *"Sim, vamos repensar o RAG
   agora, as coisas mudaram muito"*. Na pergunta anterior, o dono tinha dito: *"Qdrant pode extinguir e as rotas de
   buscar documento são de RAG"*. As duas frases estão no campo `autorizacao` de
@@ -76,7 +76,7 @@ o app sobe e as rotas de teammates respondem 503; mapa `TOOL_CLASS` (item 4) com
 - Gemini: `gemini-embedding-001` e `gemini-embedding-2` com 3072 dimensões por padrão e 768/1536/3072 recomendadas; há
   ferramenta hospedada "File Search" (ai.google.dev/gemini-api/docs/embeddings e …/file-search). Verificado.
 
-## 2. Forks (todos PENDENTES)
+## 2. Forks (respondidos em 30/10; respostas na §2.1)
 
 ### F-RAG-1 — O Qdrant continua?
 
@@ -189,6 +189,109 @@ mesmo nos dois caminhos. O que se perde sem Redis é só a retomada após restar
 
 **Recomendação: a.** A cédula do #6 já diz que *"o reprocessamento automático chega com a fila do #10"*. Pergunto só
 porque o dono pode preferir manter o reenvio manual.
+
+## 2.1 Respostas do dono (30/10/2026) e consequências
+
+Questionário no chat, 30/10. A primeira resposta do F-RAG-4 foi texto livre ("Vamos evoluir isso para um contexto
+completo"), e a pergunta de esclarecimento fixou a leitura. F-RAG-5b, F-RAG-9 e F-RAG-10 nasceram das próprias
+respostas e foram perguntados no mesmo turno.
+
+| Fork | Resposta | Recomendada? |
+|---|---|---|
+| F-RAG-1 | c — `sqlite-vec` | Não (era b) |
+| F-RAG-2 | c — serviço + ferramenta + rota | Não (era b) |
+| F-RAG-3 | a — mantém os dois modos | Não (era b) |
+| F-RAG-4 | contexto gerado pelo processamento + PATCH só com campos de contexto | Caminho novo (nem a, b nem c) |
+| F-RAG-5 | b — `LlmCredential` do usuário | Não (era a) |
+| F-RAG-5b | sem chave OpenAI/Gemini do usuário → chave da instância como reserva | Não (era ficar sem índice e avisar) |
+| F-RAG-6 | b — fila própria, mesmo Redis | Sim |
+| F-RAG-7 | a — sem Redis, fila em memória | Sim |
+| F-RAG-8 | a — 3 tentativas e alerta | Sim |
+| F-RAG-9 | contexto gerado com a mesma regra de chave do embedding | Sim |
+| F-RAG-10 | provedor de embedding escolhido pelo usuário; trocar reindexa | Sim |
+
+### Consequências que o BRIEF precisa carregar
+
+**F-RAG-1 c (`sqlite-vec`).**
+- O vetor vai numa tabela virtual `vec0` no mesmo arquivo SQLite. A `Chunk` continua como cópia de registro e ganha
+  `embeddingModel` e `embeddingDims`. O vetor fica na `vec0`, ligado por `chunk.id`.
+- **Carga da extensão (insumo ausente, primeiro item do BRIEF):** o Prisma 6.16 do repo não expõe `loadExtension`
+  (inferido, não verificado). Há dois caminhos a medir antes de qualquer outro item:
+  1. Driver adapter do Prisma para better-sqlite3, carregando a extensão na mesma conexão (não verificado).
+  2. Uma segunda conexão `better-sqlite3` só para vetor.
+- No caminho 2 há dois escritores no mesmo arquivo. Isso pede `busy_timeout` e teste de concorrência rodado no CI Linux, porque o Windows serializa o SQLite e o
+  teste local verde não prova nada.
+- **A exclusão deixa de ser uma transação só.** A `vec0` não tem FK nem cascata a partir de `Document`/`User`. Se a
+  conexão for outra (caminho 2), apagar documento ou usuário exige ordem explícita: vetores antes do SQL, como era com
+  o Qdrant. Também exige uma varredura de órfãos, com teste do caso LGPD art. 18 VI. No caminho 1 a exclusão volta a
+  caber numa transação, mas por código, não por FK.
+- **Migração:** `CREATE VIRTUAL TABLE … USING vec0` só roda com a extensão carregada. O `prisma migrate` não a carrega,
+  então a tabela é criada no boot, de forma idempotente, pela conexão que carrega a extensão. O BRIEF precisa provar que
+  o `prisma migrate dev` não tenta apagar a tabela virtual nem as tabelas-sombra dela (drift). Isso não foi verificado.
+- **Binário nativo por plataforma:** Windows (dev), Linux (CI e VPS). A imagem do M2 precisa dele (emenda do runbook).
+- **Dimensão:** a coluna da `vec0` tem dimensão fixa. Fica 768, com `dimensions` na OpenAI e `outputDimensionality` no
+  Gemini. A busca filtra pelo carimbo do modelo. Se a versão do `sqlite-vec` não tiver coluna de metadado ou partição
+  para filtrar dentro do KNN, o filtro vira pós-filtro com k ampliado (verificar a versão).
+- **Gatilho de reabertura:** se a extensão não carregar nas três plataformas, ou se o drift do Prisma não tiver saída
+  limpa, a decisão volta ao dono com o erro, e o caminho b do F-RAG-1 é a alternativa medida.
+
+**F-RAG-2 c.**
+- `POST /documents/search` fica, religada ao `DocumentSearchService`: rota → controller → serviço, sem `searchVectors`
+  direto.
+- Contrato e snapshot do DTO mudam só onde o serviço muda. A guarda de path-count do openapi não muda.
+
+**F-RAG-3 a.**
+- O modo RAG separado continua: com `documentIds`, usa `RAG_SYSTEM_PROMPT`, sem ferramentas, com `gpt-4o-mini`.
+- A checagem de posse ainda sai do `ChatService` (o `prisma` direto) e vai para o `DocumentSearchService`. As
+  respostas não mudam isso, que é direto.
+- A ferramenta `search_documents` serve ao modo agente (sem `documentIds`) e aos teammates.
+
+**F-RAG-4 (contexto gerado + correção).**
+- Depois do chunking, o worker chama a IA uma vez por documento e grava `summary`, um tipo de documento e entidades
+  em `contextJson`, com schema Zod próprio e versionado.
+- O `PATCH /documents/:id` passa a aceitar só campos de contexto corrigíveis: `fileName`, `documentPurpose`, `summary`
+  e o `contextJson` validado pelo schema. `status`, `processingError` e `processingDate` saem do corpo, o que fecha o
+  buraco do "marcar COMPLETED".
+- Correção do usuário não pode ser sobrescrita por reprocessamento. O BRIEF decide o mecanismo, por exemplo uma marca
+  de campo corrigido. É detalhe de implementação, não fork.
+- O modo RAG e a ferramenta podem devolver o resumo junto com os trechos. Isso fica como item do BRIEF, não como
+  decisão.
+- **Tela:** a correção do contexto precisa de tela (FE fora deste backend, §7).
+
+**F-RAG-5 b + F-RAG-5b + F-RAG-10 (embedding pela chave do usuário).**
+- O embedding usa a `LlmCredential` OpenAI ou Gemini do usuário. Quando há as duas, vale a escolhida pelo usuário
+  (campo "provedor de embedding"). O padrão é a primeira chave cadastrada que sirva.
+- Sem chave própria que sirva, usa a `OPENAI_API_KEY` da instância.
+- Cada trecho guarda o carimbo (`embeddingModel`). A busca gera o embedding da pergunta com o provedor atual do usuário
+  e só considera trechos com o mesmo carimbo. Trecho com outro carimbo fica invisível até a reindexação.
+- Trocar de provedor, cadastrar a primeira chave própria ou apagar a chave dispara a reindexação dos documentos daquele
+  usuário, como job na fila do F-RAG-6.
+- **Dependência:** a `LlmCredential` e o `LlmCredentialService` nascem no **PR-1 do TEAMMATES**. A parte "chave do
+  usuário" não sai antes dele.
+- Até lá, ou se o RAG-PR-A vier antes, o índice usa só a reserva (chave da instância). Isso cabe na resposta do
+  F-RAG-5b sem fork novo.
+- **Emenda no TEAMMATES (item 8):** a reserva lê `OPENAI_API_KEY` no caminho do teammate. A ressalva do item 15 deste
+  PRE-ADR continua necessária, e é feita pelo nó TEAMMATES.
+- **Custo:** o embedding passa a sair da conta do usuário quando ele tem chave. Pelo F-RAG-B2 do BRIEF (dono, 30/10:
+  "Os dois contam"), embedding e contexto entram na medida e no orçamento, o que revisa o F-I11-5 a só para o RAG.
+
+**F-RAG-9.** O contexto gerado usa a `LlmCredential` do usuário, de qualquer provedor (Claude, OpenAI ou Gemini, pela
+porta `LlmProvider`), com reserva na chave da instância. Depende do PR-1 do TEAMMATES pelo mesmo motivo do F-RAG-5.
+
+**F-RAG-6..8:** como recomendado no §2.
+
+### Ordem que sai das respostas (o BRIEF confirma)
+
+| Bloco | Conteúdo | Depende de |
+|---|---|---|
+| RAG-PR-A | Medir a carga do `sqlite-vec` (os dois caminhos) e o drift do Prisma; índice `vec0` com a chave da instância; saída do Qdrant | #977 (mergeado) |
+| RAG-PR-B | `DocumentSearchService` + `search_documents` + rota religada; PATCH estreitado para os campos de contexto | RAG-PR-A |
+| RAG-PR-C | Embedding pela `LlmCredential` (F-RAG-5/5b/10) e adaptador Gemini; reindexação por usuário | TEAMMATES PR-1 |
+| RAG-PR-D | Fila `document-processing` (F-RAG-6..8) + geração de contexto (F-RAG-4/9) no worker | TEAMMATES PR-4 (fila) e PR-1 (chave) |
+
+**Arquivos em comum com o TEAMMATES:** `features/chat/**` (a ferramenta no `LuminarisAgentService`), `lib/factory.ts`,
+`routes/index.ts` e `server/package.json`. Os PRs dos dois nós que tocam esses arquivos rodam em série, nunca em
+paralelo.
 
 ## 3. Checklist (esqueleto do BRIEF; cada item testável sozinho)
 
