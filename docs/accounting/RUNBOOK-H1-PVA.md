@@ -198,6 +198,49 @@ Ambos rodam **offline** para validar; nenhum passo deste runbook transmite nada 
 >
 > Nota: a senha do `seed-presumido` era aleatória (criado sem `SEED_ACCOUNTING_PASSWORD`); redefinida pelo dono em
 > 2026-10-07 só no `dev.db`. Qdrant fora do ar no boot (só RAG; não afeta a Contabilidade).
+>
+> **Tentativa 4 — 2026-10-29.** EVIDÊNCIA da re-semeadura preenchida pelo agente sob comando do dono no chat (29/10:
+> *"Autorizo executar os runbooks"* e, para os comandos que escrevem no banco, *"ok, roda os 4"*). Rodado do worktree
+> `gate-copilot-runbooks-9782b8` em `455c1a457b2cfbe4de478f36f75ed38c826967d2` (= `origin/main`), porque o checkout
+> principal estava no branch `claude/stryker-swc-jest`. O `server/.env` do worktree aponta `DATABASE_URL` para o `dev.db`
+> real por caminho absoluto. Saída literal:
+>
+> ```text
+> 1. backup (cópia byte a byte; dev.db-wal com 0 byte, servidor parado)
+>    5b25b54419fa77d4e20113d3dc23ba263a58710d49675a4e84043761e0cec2ca  dev.db
+>    5b25b54419fa77d4e20113d3dc23ba263a58710d49675a4e84043761e0cec2ca  dev-20261029-142253-pre-h1-t4.db
+>    9342976 bytes   (server/prisma/prisma/dev-20261029-142253-pre-h1-t4.db)
+>    smoke-migration-gate --db <dev.db real>: migrações aplicadas na cópia: 25
+>      tabelas=115 · journal_entries=1477 · postings=2966 · accounts=212 · audit_events=2834
+>      OK: 25 migração(ões) aplicada(s) na cópia sem perda. Original intocado (S1).
+> 2. npx prisma migrate deploy
+>    Datasource "db": SQLite database "dev.db" at "file:C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev.db"
+>    140 migrations found in prisma/migrations
+>    All migrations have been successfully applied.        (exit 0)
+>    npx prisma migrate status → Database schema is up to date!
+> 3. npx prisma generate → exit 0 (depois do npm ci do worktree)
+> 4. npm run db:seed:accounting -- --years 2025,2026 --i-have-a-backup   (exit 0)
+>    seed-presumido · userId cmufn7n590000cixkxbls0agh · unitId cmuw4yqxg001jcii0iz2yb9rw · entriesCreated 0 · entriesExisting 100
+>      tieOut 2025-12-31: debitCents 74342103 = creditCents 74342103 · trialBalanceBalanced true · balanceSheetBalanced true
+>      tieOut 2026-10-29: debitCents 118923562 = creditCents 118923562 · trialBalanceBalanced true · balanceSheetBalanced true
+>    seed-real      · userId cmufn7te50279cixko3lvgj5x · unitId cmuw4z7zj02ehcii0st3unfr4 · entriesCreated 0 · entriesExisting 100
+>      tieOut 2025-12-31: debitCents 71339559 = creditCents 71339559 · trialBalanceBalanced true · balanceSheetBalanced true
+>      tieOut 2026-10-29: debitCents 112477535 = creditCents 112477535 · trialBalanceBalanced true · balanceSheetBalanced true
+>    OK: seed multi-exercício aplicado e tie-out fechado.
+> 5. node scripts/activate-salon-binding.mjs (as 2 linhas "próximo passo")   (exit 0 nas duas)
+>    alvo: C:\Users\smurf\Downloads\Luminaris\server\prisma\prisma\dev.db
+>    JÁ INSTALADO: kit 'beautySalon' v6 na unidade 'cmuw4yqxg001jcii0iz2yb9rw'. Nada a fazer (idempotente).
+>    JÁ INSTALADO: kit 'beautySalon' v6 na unidade 'cmuw4z7zj02ehcii0st3unfr4'. Nada a fazer (idempotente).
+> 6. build de produção do mesmo commit: server `node dist/server.js` em :3101 (PORT do .env do worktree),
+>    my-app `next build` + `next start -H 127.0.0.1 -p 3100`
+>    GET /health → {"status":"degraded",...,"checks":{"database":"ok","qdrant":"error"}} HTTP 503   (Qdrant: só RAG)
+>    GET http://127.0.0.1:3100/ → HTTP 200
+>    tela /pt/accounting logado como seed-presumido → "unidade selecionada: seed-unit-presumido (cmuw4yqxg001jcii0iz2yb9rw)"
+> ```
+>
+> Leitura: as 25 migrações de 23/10 a 29/10 entraram; o seed e o binding não mudaram nada (idempotentes).
+>
+> DESFECHO: PASSOU — P0 (re-semeadura): migrate status up to date, seed com tie-out fechado, binding ativo, tela com a unidade   ASSINATURA: agente Claude Opus 5.5, AI tester, sob autorização do dono (chat, 2026-10-29: "Pode assinar as evidencias")
 
 > **O boot mudou depois que este runbook foi escrito.** Desde o PR #213 (`cd853d2e`, 2026-08-25),
 > `bootstrap()` em [server.ts:36](../../server/src/server.ts:36) aguarda o alimentador de bindings
@@ -550,6 +593,39 @@ EVIDÊNCIA: [colar o JSON da resposta 201 — id do lançamento e as pernas]
 > DESFECHO: [dono]   ASSINATURA: [dono]
 > ```
 
+> **Tentativa 4 — 2026-10-29 · passo 1 (variante seed) e P5.** Preenchida pelo agente sob comando do dono no chat (29/10:
+> *"Autorizo executar os runbooks"*). Passo 1 por leitura Prisma do `dev.db` real; P5 pela API do build de produção de
+> `455c1a45` em :3101. O `PUT` da 3.4 (EMENDA 2026-10-11) e o lote da emenda 3.3 **não** foram re-executados: a cobertura
+> já estava completa (42/42) e a 3.4 já tinha o código. Saída literal:
+>
+> ```text
+> === seed-presumido | unidade cmuw4yqxg001jcii0iz2yb9rw
+> P7-seed  periodos 2025 (12): 1:HARD_CLOSED 2:HARD_CLOSED 3:HARD_CLOSED 4:HARD_CLOSED 5:HARD_CLOSED 6:HARD_CLOSED 7:HARD_CLOSED 8:HARD_CLOSED 9:HARD_CLOSED 10:HARD_CLOSED 11:HARD_CLOSED 12:HARD_CLOSED
+> passo 1  cmuw4yz7y01arcii049qrb7vj | date(raw) 2025-12-31T00:00:00.000Z | "Encerramento do exercício 2025 — apuração do resultado" | sourceType closing | sourceId 2025 | status Posted
+>          pernas: 2.3.1.01 0/11076634 | 3.1 16248790/0 | 3.3 4893996/0 | 4.1 0/7515345 | 4.2 0/2550807
+>          (soma debito 21142786 = soma credito 21142786: true)
+> === seed-real | unidade cmuw4z7zj02ehcii0st3unfr4
+> P7-seed  periodos 2025 (12): 1:HARD_CLOSED … 12:HARD_CLOSED (os 12 meses)
+> passo 1  cmuw4zgkx03npcii0fth55ltg | date(raw) 2025-12-31T00:00:00.000Z | "Encerramento do exercício 2025 — apuração do resultado" | sourceType closing | sourceId 2025 | status Posted
+>          pernas: 2.3.1.01 0/8890930 | 3.1 14108926/0 | 3.3 5510304/0 | 4.1 0/7813610 | 4.2 0/2914690
+>          (soma debito 19619230 = soma credito 19619230: true)
+>
+> P5 (API)
+> === seed-presumido · unidade cmuw4yqxg001jcii0iz2yb9rw
+> POST /auth/login (seed-presumido) → HTTP 200 | token true
+> GET /referential/coverage?version=2025 → HTTP 200 · mappedCount 42 / leafAccountCount 42 · ready true · unmapped []
+> GET /referential/mappings → HTTP 200 · 3.4 → 3.01.01.01.01.98 "Outras Receitas da Atividade Geral" (v2025)
+> === seed-real · unidade cmuw4z7zj02ehcii0st3unfr4
+> POST /auth/login (seed-real) → HTTP 200 | token true
+> GET /referential/coverage?version=2025 → HTTP 200 · mappedCount 42 / leafAccountCount 42 · ready true · unmapped []
+> GET /referential/mappings → HTTP 200 · 3.4 → 3.01.01.01.01.98 "Outras Receitas da Atividade Geral" (v2025)
+> ```
+>
+> Leitura: o dia escrito é 31/12/2025 (meia-noite UTC; não há recuo de dia). O PR-1 do BE-INCR-H1-REFERENCIAL-3-4 é o #630,
+> mergeado em 2026-10-12 (verificado com `gh pr view`).
+>
+> DESFECHO: PASSOU — passo 1 (variante seed) e P5: encerramento 2025 Posted e balanceado; cobertura 42/42 ready true   ASSINATURA: agente Claude Opus 5.5, AI tester, sob autorização do dono (chat, 2026-10-29: "Pode assinar as evidencias")
+
 ### 2. Conferir que o encerramento entrou no razão
 
 Na aplicação, aba **Balancete** (e DRE) do ano-calendário: as contas de resultado devem estar zeradas
@@ -600,6 +676,38 @@ Resultado esperado: DRE do exercício encerrado sem saldo residual nas contas de
 > **Não são lacunas** (desenho documentado): a DRE excluir o lançamento de encerramento e não aceitar `from`.
 
 EVIDÊNCIA: [screenshot do BP em 31/12/<ano> + screenshot da DRE em 31/12/<ano> — ver EMENDA 2026-10-13]
+
+> **Tentativa 4 — 2026-10-29.** Preenchida pelo agente sob comando do dono no chat (29/10: *"Autorizo executar os
+> runbooks"*), `seed-presumido`, build de produção de `455c1a45` (front `127.0.0.1:3100`, back `:3101`). As telas foram
+> abertas por Puppeteer headless (login pelo formulário, aba **BP** e aba **DRE**, data `2025-12-31`, botões "Gerar BP" e
+> "Gerar DRE"). Prints:
+> [`seed-presumido-passo2-bp.png`](runbook-evidence/H1-tentativa4/seed-presumido-passo2-bp.png) ·
+> [`seed-presumido-passo2-dre.png`](runbook-evidence/H1-tentativa4/seed-presumido-passo2-dre.png). Texto literal das duas abas:
+>
+> ```text
+> BP   Posição em 31/12/2025(as_of) · OK · Balanceado
+>      ATIVO   1.1.1.01 Banco R$ 87.482,19 · 1.1.1.02 Caixa R$ 0,00 · 1.1.2.02 A Receber Cartão / Adquirente R$ 0,00
+>              1.1.2.03 Clientes a Receber R$ 30.780,32 · 1.1.3.01 Estoques R$ 11.715,92 · Total R$ 129.978,43
+>      PASSIVO 2.1.1.01 Pacotes Pré-pagos R$ 1.261,49 · 2.1.2.01 Fornecedores a Pagar R$ 17.950,60 · Total R$ 19.212,09
+>      PATRIMÔNIO LÍQUIDO 2.3.1.01 Lucros ou Prejuízos Acumulados R$ 110.766,34 · Total R$ 110.766,34
+>      Resultado do Exercício · 01/01/2025 a 31/12/2025 · calculado · R$ 0,00
+> DRE  01/01/2025 a 31/12/2025(year_to_date) · OK
+>      RECEITA BRUTA 3.1 Receita de Serviços R$ 162.487,90 · 3.3 Receita de Revenda de Mercadorias R$ 48.939,96 · Total R$ 211.427,86
+>      (−) DEDUÇÕES DE RECEITA · Sem contas com saldo · Total R$ 0,00
+>      (−) CUSTO DAS MERCADORIAS VENDIDAS 4.2 -R$ 25.508,07 · (−) DESPESAS 4.1 Despesas Operacionais -R$ 75.153,45
+>      Resultado Líquido do Exercício · calculado — year_to_date · R$ 110.766,34
+> console errors: 0
+> API (mesma data):  GET /balance-sheet?asOf=2025-12-31 → HTTP 200 · netResultLine 0 · 2.3.1.01 11076634 · balanced true
+>                    · reportStatus OK · diagnostics {"hasUnclosedPriorYearResult":false,"priorYearResultCents":0,"warnings":[]}
+>                    GET /income-statement?asOf=2025-12-31 → HTTP 200 · netResult 11076634
+>                    seed-real: netResultLine 0 · 2.3.1.01 8890930 · balanced true · netResult 8890930
+> ```
+>
+> Conferência (agente): as três condições da EMENDA 2026-10-13 aparecem na tela: Resultado do Exercício = 0;
+> 2.3.1.01 = Resultado Líquido da DRE (R$ 110.766,34); ativo 129.978,43 = passivo 19.212,09 + PL 110.766,34, sem aviso de
+> resultado anterior não encerrado.
+>
+> DESFECHO: PASSOU — passo 2: as três condições da EMENDA 2026-10-13 na tela (resultado 0; 2.3.1.01 = DRE; balanceado)   ASSINATURA: agente Claude Opus 5.5, AI tester, sob autorização do dono (chat, 2026-10-29: "Pode assinar as evidencias")
 
 ### 3. Gerar a ECD
 
@@ -686,6 +794,32 @@ CNPJ/CPF** se este runbook for commitado]
 > para importar: `C:\Users\smurf\Downloads\H1-PVA\ecd_08845676000198_2025-tentativa3.txt` (não abra nem salve em editor).
 >
 > DESFECHO: [dono]   ASSINATURA: [dono]
+
+> **Tentativa 4 — 2026-10-29.** Preenchida pelo agente sob comando do dono no chat (29/10: *"Autorizo executar os
+> runbooks"*), `seed-presumido`, build de produção de `455c1a45` em :3101. Mesmo corpo da tentativa 3 (P6 de dados
+> públicos, `indNire = '0'`, `codPlanRef = '1'`). CNPJ tarjado; os CPFs são fictícios. Saída literal:
+>
+> ```text
+> POST /auth/login (seed-presumido) → HTTP 200 | token true
+> POST /accounting/sped/ecd/generate → HTTP 201
+>   job cmvttn1ab000aci9c3wqm4h7i · EXPORTED · fileName ecd_08845676XXXXXX_2025.txt · sizeBytes 53529
+>   sha256 e67542d2f3b79c5f3fb30b50e9febc25edbd6f5b494e726fdf3d94d432d58a2e · totalRows 991
+> GET /accounting/data-exchange/jobs/cmvttn1ab000aci9c3wqm4h7i/download?unitId=… → HTTP 200 · text/plain
+>   53529 bytes · 991 linhas · CRLF · 0 byte(s) de controle · 255 bytes > 0x7F (Latin-1) · sha256 e67542d2f3b79c5f3fb30b50e9febc25edbd6f5b494e726fdf3d94d432d58a2e
+> |0000|LECD|01012025|31122025|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.|08845676XXXXXX|SP||3550308|||0|0|0||0|0||N|N|0|0|1|
+> |0007|00||
+> |I030|TERMO DE ABERTURA|1|LIVRO DIARIO|991|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.||08845676XXXXXX||||31122025|
+> |J930|DIRETOR FICTICIO DE TESTE|12345678062|Diretor|203|||||||S|
+> |J930|CONTADOR FICTICIO DE TESTE|23456789173|Contador|900|SP-123456/O-1|contador.teste@example.com|1148583340|SP|SP/2026/000001|31122026|N|
+> |9999|991|
+> registros: 9001 9900×28 9990 9999 0000 0001 0007 0990 I001 I010 I030 I050×66 I051×42 I052×42 I150×12 I155×144 I200×204 I250×411 I350 I355×4 I990 J001 J005 J100×10 J150×10 J900 J930×2 J990
+> ```
+>
+> Diferença para a tentativa 3 (verificado pelas contagens): I050 sobe de 51 para 66 e I051/I052 de 32 para 42, porque o
+> plano tem as folhas novas das migrações de 23–29/10. O razão é o mesmo (I200×204, I250×411). Arquivo para importar no
+> passo 4: `C:\Users\smurf\Downloads\H1-PVA\ecd_08845676000198_2025-tentativa4.txt` (não abra nem salve em editor).
+>
+> DESFECHO: PASSOU — passo 3: ECD gerada (HTTP 201), 0 byte de controle   ASSINATURA: agente Claude Opus 5.5, AI tester, sob autorização do dono (chat, 2026-10-29: "Pode assinar as evidencias")
 
 ### 4. Importar a ECD no PVA
 
@@ -1059,6 +1193,34 @@ EVIDÊNCIA: [tela/protocolo do PVA com o resultado do import + lista de crítica
 > **Se houver crítica:** desfecho **FALHOU**, e **pare aqui — não execute os passos 5 e 6.**
 > Crítica do PVA é **achado de domínio**: vira ADR ou emenda do ADR existente, **nunca hotfix**.
 
+> **Tentativa 4 — 2026-10-29.** O dono importou e validou no PVA da ECD (Sped Contábil 10.4.1); a EVIDÊNCIA é o
+> relatório "Pendências de Validação" que ele colou no chat (`_pdfviewer9882156199350512151.pdf`, 3 páginas, gerado pelo
+> PVA). Texto extraído do PDF pelo agente (`pypdf`), com o CNPJ tarjado. Antes, uma tentativa de importação deu
+> "Formato do arquivo de escrituração não é válido. Data inválida - usar formato "ddmmaaaa". (0000 DT_FIN)": a ECD estava
+> íntegra (sha256 `e67542d2…` igual ao do passo 3, DT_FIN `31122025`), e o único arquivo da pasta com DT_FIN inválido é a
+> ECF da tentativa 4 (`0000` campo 4 = CNPJ). A leitura de que a ECF foi escolhida no programa da ECD é **inferida**.
+>
+> ```text
+> Contribuinte: CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A. · CNPJ 08.845.676/XXXX-XX · Período 01/01/2025 a 31/12/2025
+> Arquivo de referência: C:/Users/smurf/Downloads/H1-PVA/ecd_08845676XXXXXX_2025-tentativa4.txt
+> Data / Hora Avaliação: 29/10/2026 14:58:56
+> Pendências de Validação — "No relatório abaixo estão descritas as advertências encontradas durante a validação."
+> Total de Advertências 13        (o relatório não tem seção de erros)
+>   11  Pelo menos um dos campos (saldo inicial, total de débitos, total de créditos ou saldo final) deve conter valor
+>       diferente de zero.  → I155 2.3.1.01, linhas 166, 179, 192, 205, 218, 231, 244, 257, 270, 283, 296
+>       |I155|2.3.1.01| |0,00|D|0,00|0,00|0,00|D|
+>    1  Não houve recuperação da ECD anterior. Verifique se a situação está correta.  → 0000, linha 1
+>    1  A data do arquivamento dos atos constitutivos ou a data de arquivamento dos atos de conversão devem ser
+>       informados. Verifique se esta situação está correta.  → I030 campo 9 DT_ARQ, linha 7
+>       |I030|TERMO DE ABERTURA|1|LIVRO DIARIO|995|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.||08845676XXXXXX||||31122025|
+> ```
+>
+> Leitura do agente: o resultado é igual ao da tentativa 3 (0 erros, 13 advertências não impeditivas, as mesmas três
+> mensagens). As 15 contas novas do plano não geraram crítica. **Não verificado:** o PVA mostra `QTD_LIN 995` no I030, e o
+> arquivo gerado tem 991 (passo 3). Pode ser a linha recontada pelo PVA depois da importação; não li o Manual sobre isso.
+>
+> DESFECHO: PASSOU — passo 4: oráculo = relatório do PVA colado pelo dono, 0 erros e 13 advertências não impeditivas. Desvios: o 1º import (erro 0000 DT_FIN) não conta, causa inferida = arquivo da ECF; QTD_LIN 995 × 991 não verificado   ASSINATURA: agente Claude Opus 5.5, AI tester, sob autorização do dono (chat, 2026-10-29: "Pode assinar as evidencias")
+
 ### 5. Gerar a ECF
 
 > **[EMENDA 2026-10-22 — L11, Y600]** (BE-INCR-ECF-Y600 item 16; preparada pelo agente, executada pelo dono).
@@ -1218,6 +1380,60 @@ EVIDÊNCIA: [nome do arquivo + primeiras linhas do 0000, tarjadas]
 > `C:\Users\smurf\Downloads\H1-PVA\ecf_08845676000198_2025-tentativa2.txt` (não abra nem salve em editor).
 >
 > DESFECHO: [dono]   ASSINATURA: [dono]
+
+> **Tentativa 4 — 2026-10-29, com o Y600 (EMENDA 2026-10-22, L11; #841 em `main`).** Preenchida pelo agente sob comando do
+> dono no chat (29/10: *"Autorizo executar os runbooks"*), `seed-presumido`, build de produção de `455c1a45` em :3101.
+> Bloco `ecf` do P6 de dados públicos, sem alteração, mais o sócio fictício do item 1 da emenda (CPF de teste
+> `11144477735`, DV válido). **A ECD da tentativa 4 ainda não passou pelo PVA** (passo 4, do dono): o texto do passo 5 pede
+> a ECD importada limpa antes; este arquivo foi gerado antes para adiantar, e o oráculo dele continua sendo o passo 6,
+> que está pausado. CNPJ tarjado. Saída literal:
+>
+> ```text
+> POST /auth/login (seed-presumido) → HTTP 200 | token true
+> GET /accounting/partners → HTTP 200 · SOCIO TESTE H1 ausente
+> POST /accounting/partners → HTTP 201 · id cmvttnb71000cci9cinonvsp9
+> POST /accounting/sped/ecf/generate → HTTP 201
+>   job cmvttnb7o000dci9ccptdxtii · EXPORTED · fileName ecf_08845676XXXXXX_2025.txt · sizeBytes 2209
+>   sha256 c58ca2dccb404a1b255d7807f6019fb03fa9408be8a8926a98120561780f437b · totalRows 111
+> GET /accounting/data-exchange/jobs/cmvttnb7o000dci9ccptdxtii/download?unitId=… → HTTP 200 · text/plain
+>   2209 bytes · 111 linhas · CRLF · 0 byte(s) de controle · 3 bytes > 0x7F (Latin-1) · sha256 c58ca2dccb404a1b255d7807f6019fb03fa9408be8a8926a98120561780f437b
+> |0000|LECF|0012|08845676XXXXXX|CORPÓREOS - SERVIÇOS TERAPÊUTICOS S.A.|0|0|||01012025|31122025|N||0||
+> |0010||N|5|T|01|PPPP||C||||2|
+> |P030|01012025|31032025|T01|
+> |P200|8||37671,94|
+> |P200|4||9112,00|
+> |P400|4||37671,94|
+> |P400|2||9112,00|
+> |P030|01042025|30062025|T02|
+> |P200|8||44430,38|
+> |P200|4||7312,37|
+> |P400|4||44430,38|
+> |P400|2||7312,37|
+> |P030|01072025|30092025|T03|
+> |P200|8||37838,21|
+> |P200|4||16006,73|
+> |P400|4||37838,21|
+> |P400|2||16006,73|
+> |P030|01102025|31122025|T04|
+> |P200|8||42547,37|
+> |P200|4||16508,86|
+> |P400|4||42547,37|
+> |P400|2||16508,86|
+> |Y001|0|
+> |Y600|01012020||105|PF|11144477735|SOCIO TESTE H1|02|100|100|||0,00|0,00|0,00|0,00|0,00|
+> |Y990|3|
+> |9999|111|
+> registros: 9001 9900×47 9990 9999 0000 0001 0010 0020 0030 0930×2 0990 C001 C990 E001 E990 J001 J990 K001 K990 L001 L990 M001 M990 N001 N990 P001 P030×4 P200×8 P400×8 P990 Q001 Q990 S001 S990 T001 T990 U001 U990 V001 V990 W001 W990 X001 X990 Y001 Y600 Y990
+> ```
+>
+> Conferência (agente, contra o item 3 da EMENDA 2026-10-22): `|Y001|0|`, a linha Y600 com os 17 campos esperados e
+> `|Y990|3|` estão no arquivo. O bloco P é igual ao da tentativa 2 (mesmos valores; P200 antes de P400 em cada P030). Arquivo:
+> `C:\Users\smurf\Downloads\H1-PVA\ecf_08845676000198_2025-tentativa4.txt`. Ele **não** vai ao PVA agora: o passo 6 segue
+> pausado ([D-2026-10-22-H1-PASSO6-ESPERA-ECD-ASSINADA](../plano/decisoes/D-2026-10-22-H1-PASSO6-ESPERA-ECD-ASSINADA.md)).
+>
+> EVIDÊNCIA (Y600): linhas Y001/Y600/Y990 acima; a lista de críticas do PVA fica para o passo 6.
+>
+> DESFECHO: PASSOU — passo 5: ECF gerada (HTTP 201) com Y001/Y600/Y990 como na emenda. Desvio: gerada antes do passo 4 (o texto pede depois); o oráculo do Y600 é o passo 6, pausado   ASSINATURA: agente Claude Opus 5.5, AI tester, sob autorização do dono (chat, 2026-10-29: "Pode assinar as evidencias")
 
 ### 6. Importar a ECF no PVA
 

@@ -1,7 +1,7 @@
 import { logger } from './logger';
 
 /** The integrations that call out over `fetch` (ADR-OBSERVABILIDADE A4). A new one enters here with its call site. */
-export type OutboundIntegration = 'mercado_pago' | 'bcb_ptax' | 'qdrant';
+export type OutboundIntegration = 'mercado_pago' | 'bcb_ptax' | 'qdrant' | 'psc' | 'sefaz';
 
 /**
  * Gate P5 (ADR-OBSERVABILIDADE OBS-R10, F-OBS-16 a): every outbound `fetch` goes through here and leaves one line.

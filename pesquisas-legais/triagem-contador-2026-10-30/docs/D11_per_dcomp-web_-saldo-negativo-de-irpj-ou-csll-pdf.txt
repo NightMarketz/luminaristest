@@ -1,0 +1,559 @@
+PER/DCOMP Web: Saldo Negativo de 
+IRPJ ou CSLL  
+v24/09/2026 
+Histórico de alterações: 
+23/09/2025  
+ 
+Estimativas compensadas: Informação de estimativas compensadas de ofício. 
+24/09/2026 Estimativas parceladas: Inclusão da Súmula CARF nº 248.  
+ 
+ 
+ 
+Estas orientações são exclusivamente para os contribuintes pessoas jurídicas que apuraram crédito 
+de Saldo Negativo de IRPJ ou CSLL em sua Escrituração Contábil Fiscal - ECF. 
+As antecipações (retenções na fonte, estimativas, imposto sobre renda vari ável e imposto pago ou 
+retido no exterior) devem ser informadas na ECF e o resultado do tributo devido, deduzidas as 
+antecipações, quando negativo, pode ser restituído ou compensado. 
+Os registros da ECF, em que deve ser demonstrado que o tributo a pagar é negativo, são: IRPJ Lucro 
+Real N630, CSLL Lucro Real N670, IRPJ Lucro Presumido P300, CSLL Lucro Presumido P500. 
+As orienta ções deste roteiro não se aplicam para o cr édito apurado por Sociedade em Conta de 
+Participação (SCP), cujo PER/DCOMP deve ser formulado por meio de formul ário (Anexo I ou IV da 
+Instrução Normativa RFB nº 2.055/2021), mediante formalização de processo.  
+O direito de solicitar o crédito se extingue após 5 anos contados: 
+I - apuração anual, a partir do m ês de janeiro do ano -calendário subsequente ao do encerramento 
+do período de apuração; 
+II - apuração trimestral, a partir do mês subsequente ao do trimestre de apuração; e 
+III - apuração especial decorrente de extin ção, cis ão parcial, cis ão total, fus ão ou incorpora ção, a 
+partir do 1º (primeiro) dia útil subsequente ao do encerramento do período de apuração. 
+(Lei nº 5.172/1966, art. 168, inciso I; Instru ção Normativa RFB n º 2.055/2021, art. 27, incisos I, II e 
+III). 
+  
+
+Exigência de transmissão da ECF antes do PER/DCOMP 
+ 
+REGRA 
+Apuração anual com ou sem evento especial e Apuração trimestral com evento especial 
+O PER/DCOMP ser á recepcionado pela Receita Federal somente se houver a confirma ção de 
+transmissão da ECF, na qual esteja demonstrado o cr édito, de acordo com o per íodo de apura ção 
+(Instrução Normativa RFB nº 2.055/2021, art. 28). 
+Nessas situações, considera-se que o contribuinte dispõe das informações necessárias para elaborar 
+e transmitir a ECF, cujo Programa Validador também já está disponível. 
+ 
+EXCEÇÃO 
+Apuração trimestral sem evento especial 
+Se o PER/DCOMP for transmitido antes do encerramento do ano de referência do trimestre, não há 
+exigência de transmissão prévia da ECF. 
+Se o PER/DCOMP for transmitido após o encerramento do ano de referência do trimestre, aplica-se a 
+regra, ou seja, há exigência de transmissão prévia da ECF. 
+Se considerar necessário, antes de prosseguir, consulte aqui algumas orientações iniciais sobre o 
+PER/DCOMP Web, como, por exemplo, as diferenças entre pedido de restituição e declaração de 
+compensação. 
+  
+a) Identificar Documento 
+ 
+Etapa Identificar Documento (Clique em "Declaração de Compensação" ou "Pedido de Restituição", conforme o caso). 
+Documento Retificador? 
+ 
+Responda "Sim" apenas se o PER/DCOMP est á sendo elaborado para corrigir as informa ções de um 
+outro PER/DCOMP que já foi transmitido. Caso contrário, responda "Não". 
+Se respondido "Sim", ser á necessário tamb ém informar o n úmero do PER/DCOMP que se deseja 
+retificar. Nessa situa ção, caso seja informado o n úmero de um documento que tamb ém seja 
+retificador, o PER/DCOMP Web irá recuperar o número do documento original correspondente, que 
+é o que deve constar no campo. 
+ 
+Atenção!  
+O PER/DCOMP n ão poder á ser retificado se j á tiver sido analisado pela Receita Federal, ou se o 
+contribuinte tiver sido intimado para apresentar documentos ou esclarecimentos relativos ao 
+PER/DCOMP . 
+Tipo de Crédito 
+ 
+Selecione "Saldo Negativo de IRPJ" ou "Saldo Negativo de CSLL", conforme o tributo de origem do 
+crédito apurado. 
+ 
+ 
+ 
+
+Apelido para Identificação do Documento 
+ 
+Texto livre, que ajuda o contribuinte a identificar o documento que est á sendo preenchido. Com o 
+apelido, será mais fácil localizar o documento na área Visualizar Documentos. 
+Qualificação do Contribuinte 
+ 
+Selecione, dentre as op ções apresentadas, aquela que mais se enquadra na atividade exercida pela 
+Pessoa Jurídica. Não havendo uma qualificação específica, selecione "Outra Qualificação". 
+Detalhamento do Crédito 
+ 
+Na primeira vez em que o contribuinte solicitar ou utilizar o cr édito, deverá elaborar o PER/DCOMP 
+indicando que o crédito será detalhado neste documento.  
+Quando a inten ção for solicitar ou utilizar o cr édito que j á foi objeto de um PER/DCOMP anterior, 
+selecione a opção o crédito já foi detalhado em PER/DCOMP anterior. Nessa situação, será solicitado 
+também o n úmero do primeiro PER/DCOMP transmitido para o mesmo cr édito (se tal PER/DCOMP 
+foi retificado, informe o número do original). 
+Há ainda a possibilidade de informar que o cr édito j á foi detalhado em Processo Administrativo , 
+quando, por impossibilidade de utiliza ção do PER/DCOMP Web ou Programa PER/DCOMP , foi 
+apresentado anteriormente um PER/DCOMP em formul ário, mediante formaliza ção de processo. 
+Nessa situa ção, os campos exibidos pelo PER/DCOMP Web poder ão ser diferentes do que consta 
+neste roteiro. 
+ 
+
+Quando, na identificação do documento, for informado que O crédito já foi detalhado em 
+PER/DCOMP anterior, algumas das abas seguintes já estarão preenchidas com as mesmas 
+informações que constam no PER/DCOMP anterior. 
+Caso seja preciso corrigir alguma informação, será necessário primeiro retificar o PER/DCOMP 
+anterior, para depois elaborar o novo PER/DCOMP . 
+Pessoa Jurídica Extinta por Liquidação Voluntária? 
+ 
+Campo exclusivo para pedido de restituição. 
+Caso a pessoa jur ídica tenha sido baixada por liquida ção volunt ária, informe "Sim", para que, na 
+etapa "Informar Dados Gerais", seja habilitado campo espec ífico para informa ção dos dados 
+bancários dos beneficiários. 
+Crédito com fundamento em inconstitucionalidade de lei 
+ 
+Depois de clicar em "Prosseguir", ser á exibida esta pergunta, que elenca situa ções em que n ão é 
+permitido o PER/DCOMP .  Se o cr édito a ser informado n ão se enquadrar nas situa ções descritas, 
+responda "Não" e selecione "OK" para prosseguir. 
+  
+
+b) Informar Crédito|Identificação do Crédito 
+ 
+Etapa Informar Crédito: Identificação do Crédito 
+Detentor do Crédito 
+ 
+Se o crédito foi apurado originalmente pelo CNPJ da pessoa jurídica que acessou o PER/DCOMP Web, 
+selecione "Crédito apurado pelo próprio contribuinte". 
+Se o cr édito foi apurado originalmente por um CNPJ sucedido pela pessoa jur ídica que acessou o 
+PER/DCOMP Web, selecione "Crédito apurado por empresa sucedida". 
+Nesse caso, ser á necessário informar os dados do evento de sucess ão (incorporação, fus ão, cis ão 
+total ou cis ão parcial). Os dados informados ser ão confirmados no cadastro CNPJ. Por isso, é 
+necessário que o evento de sucess ão tenha sido previamente informado à Receita Federal pelos 
+meios próprios. 
+ 
+Período de Apuração 
+ 
+Selecione a forma de tributa ção do lucro, escolhendo "Lucro Real" ou "Lucro Presumido" e na 
+sequência a forma de apura ção. Para o Lucro Real as op ções s ão "Anual" e "Trimestral", e para o 
+Lucro Presumido apenas "Trimestral". 
+As informa ções devem estar de acordo com a forma de tributa ção e apura ção que consta ou 
+constará na ECF. 
+
+Em caso de Lucro Real Trimestral  ou Lucro Presumido , é necessário indicar o "Trimestre e Ano 
+Calendário" a que se refere o crédito. 
+Em caso de Lucro Real Anual, é necessário indicar o "Exercício" a que se refere o crédito. 
+Atenção!  
+Exercício é o ano em que a respectiva ECF deve ser entregue (ano seguinte ao ano de apuração do 
+crédito). Contudo, excepcionalmente, quando há um evento de sucessão, o exercício deve ser igual 
+ao ano de apuração do crédito, conforme detalhado a seguir. 
+Os campos "Data Inicial do Per íodo" e "Data Final do Per íodo" correspondem ao per íodo de 
+apuração do cr édito, e s ão preenchidos automaticamente pelo PER/DCOMP Web, mas podem ser 
+editados pelo contribuinte (em caso de evento de sucessão ou extinção, por exemplo). 
+Quando ocorre um evento de sucess ão ou extin ção, a Lei n º 9.430/1996, em seu artigo 1 º, §§ 1º e 
+2º, prev ê que a base de c álculo do IRPJ deve ser apurada na data do evento, levantando -se um 
+balanço específico para tal fim. O mesmo se aplica à CSLL (Lei nº 8.981/1995, artigo 57). 
+As ECF do ano em que ocorreu o evento devem refletir os balanços levantados. 
+ 
+Exemplo:  
+Para um evento de incorporação ocorrido em 31/07/2022, teríamos: 
+• 1 - ECF da incorporadora, relativa ao período de apuração de 01/01/2022 a 31/07/2022; 
+• 2 - ECF da incorporadora, relativa ao período de apuração de 01/08/2022 a 31/12/2022; 
+• 3 - ECF da incorporada, relativa ao período de apuração de 01/01/2022 a 31/07/2022. 
+Caso em alguns desses per íodos tenha sido apurado Saldo Negativo de IRPJ ou CSLL, poder á ser 
+transmitido PER/DCOMP . É necessário, contudo, que cada período tenha o seu próprio PER/DCOMP . 
+Não se deve somar todos os per íodos e informar em um mesmo PER/DCOMP . Também não se deve 
+somar o crédito que originalmente pertencia à sucedida com o crédito da sucessora. 
+Observe tamb ém que nos PER/DCOMP relativos às ECF 1 e 2 deve ser informado, no campo 
+"Detentor do Crédito", que o crédito foi apurado pelo próprio contribuinte.  
+Já no PER/DCOMP relativo à ECF 3, deve ser informado, no campo "Detentor do Cr édito", que o 
+crédito foi apurado por empresa sucedida. 
+Nessas situa ções de sucess ão, em caso de Lucro Real Anual , deve ser informado, no campo 
+“Exercício”, o mesmo ano do per íodo de apuração do crédito. No nosso exemplo, o exercício seria 
+2022. Muito embora o PER/DCOMP Web preencha a data inicial e final do per íodo com o ano 
+anterior ao do exerc ício, o contribuinte deve alterar a "Data Inicial do Per íodo" e "Data Final do 
+Período" e fazer constar o período correto.  
+ 
+Exemplo de preenchimento: sem evento de sucessão 
+ 
+Exemplo de preenchimento: com evento de sucessão 
+  
+
+c) Informar Crédito|Detalhamento do Crédito 
+ 
+Etapa Informar Crédito: Detalhamento do Crédito 
+Para melhor exemplificar a forma correta de preenchimento do PER/DCOMP Web, utilizaremos uma 
+ECF fictícia, em que o Saldo Negativo de IRPJ foi informado da seguinte maneira no registro N630: 
+ 
+No exemplo, verifica-se que: 
+• O imposto devido (linhas em azul) é de R$ 226.000,00; 
+• O total de deduções fiscais do imposto (linhas em verde) é de R$ 22.000,00; 
+• O total de antecipações do imposto (linhas em amarelo) é de R$ 254.000,00; 
+• O imposto a pagar (linha em laranja) é de R$  -50.000,00. Este é o valor do Saldo Negativo de 
+IRPJ. 
+ 
+
+Atenção!  
+Na aba "Detalhamento do Crédito", é necessário detalhar todas as antecipações, no valor de R$ 
+254.000,00, mesmo que o Saldo Negativo seja menor, de R$ 50.000,00. 
+Não é relevante se o Saldo Negativo será compensado todo no primeiro PER/DCOMP, ou se será 
+consumido em diversas DCOMP: em qualquer situação, é necessário detalhar todas as antecipações 
+(R$ 254.000,00) no primeiro PER/DCOMP . 
+Já o valor das deduções fiscais (R$ 22.000.00) não é detalhado no PER/DCOMP . 
+  
+IR Pago Exterior 
+ 
+Nesta aba, informe o valor total do imposto de renda pago ou retido no exterior no per íodo de 
+apuração a que se refere o crédito objeto do PER/DCOMP , conforme informado na ECF. 
+De acordo com o nosso exemplo, o valor a ser informado nesta aba seria de R$ 11.000,00. 
+Em razão das regras de preenchimento da ECF, é possível que o valor relativo ao imposto pago ou 
+retido no exterior conste nas linhas de estimativas pagas ou parceladas. Nesse caso, no 
+PER/DCOMP Web, ainda assim tais valores devem ser informados na aba "IR Pago Exterior". Essa 
+divergência relativa ao tipo de antecipa ção, entre ECF e PER/DCOMP, n ão gera preju ízo ao 
+contribuinte quando da análise do crédito. 
+Atenção! 
+O valor informado no campo “IR Pago no Exterior” não pode ser superior ao valor do IRPJ ou da CSLL 
+apurados no Brasil, conforme limites previstos na Instrução Normativa SRF nº 213/2002 e Instrução 
+Normativa RFB nº 1.520/2014. 
+Caso não tenha havido apuração de IRPJ ou CSLL no Brasil, não cabe a utilização do imposto pago ou 
+retido no exterior para composição do Saldo Negativo. 
+  
+
+IR Retido na Fonte  
+CSLL Retida na Fonte  
+ 
+As abas “IR Retido na Fonte” e "CSLL Retida na Fonte" dever ão ser preenchidas com as informa ções 
+relativas às retenções sofridas no período de apuração do crédito (Código da Receita, CNPJ da Fonte 
+Pagadora e Valor), considerando ainda que as respectivas receitas devem integrar a base de c álculo 
+do IRPJ/CSLL, conforme informado na ECF. 
+As retenções efetuadas por uma mesma fonte pagadora, sob um mesmo c ódigo de receita, deverão 
+ser somadas e informadas uma única vez. 
+Em caso de autorretenção sob o código de receita 8045, informe o CNPJ da fonte pagadora, mesmo 
+que o recolhimento caiba ao próprio beneficiário.  
+Em caso de autorretenção sob o c ódigo de receita 3426, informe, como fonte pagadora, o CNPJ do 
+detentor do crédito (beneficiário). 
+Para finalizar o preenchimento de cada registro, clique no botão "Incluir". 
+De acordo com o nosso exemplo, o valor a ser informado nesta aba seria de R$ 69.000,00. 
+Em razão das regras de preenchimento da ECF, é possível que o valor relativo às retenções conste 
+nas linhas de estimativas pagas ou parceladas. Nesse caso, no PER/DCOMP Web, ainda assim tais 
+valores devem ser informados nas abas "IR Retido na Fonte" ou "CSLL Retida na Fonte". Essa 
+divergência relativa ao tipo de antecipa ção, entre ECF e PER/DCOMP, n ão gera preju ízo ao 
+contribuinte quando da análise do crédito. 
+Atenção! 
+Quando a retenção englobar mais de um tributo, deve ser marcada a caixa "Retenção engloba mais 
+de um tributo", para que a relação de códigos de receita seja atualizada com os códigos que possuem 
+essa caraterística. 
+Contudo, no campo "Valor", informe apenas a parte da retenção correspondente ao IRPJ ou à CSLL. 
+
+Exemplo: Suponha uma retenção total sofrida no código 6147, no valor de R$ 1.000,00. A tabela a 
+seguir demonstra como deve ser informado no PER/DCOMP o valor do IRPJ e CSLL, de acordo com a 
+legislação. 
+ 
+Importar Arquivo 
+Está disponível tamb ém o bot ão "Importar Arquivo", que permite que o preenchimento das 
+retenções seja realizado por meio da importa ção de um arquivo em formato txt, com layout 
+predefinido. 
+O layout que pode ser consultado no ícone “?”, dentro do botão “Importar Arquivo”, ao lado do texto 
+“Arquivos para importação”. 
+Cada retenção deve ser informada em uma linha diferente, com todas as informa ções que constam 
+no layout mencionado. 
+As informações não devem ser separadas por espaço ou qualquer outro caractere (. , ; etc) 
+ 
+Exemplo de arquivo txt, com duas retenções: 
+R29999999999999990000000000000001012015311220151111111111111109160000000000100000 
+R29999999999999990000000000000001012015311220152222222222222280451000000000100001 
+ 
+Observações sobre os campos 
+• 01 Tipo: Informe sempre R29 (Saldo Negativo de IRPJ) ou R36 (Saldo Negativo de CSLL). 
+ 
+• 02 CNPJ do Declarante: Informe o CNPJ do contribuinte que está elaborando o PER/DCOMP, 
+com 14 dígitos e sem formatação. 
+ 
+• 03 CNPJ do Detentor do Crédito:  Se o crédito for de uma empresa sucedida, informe o CNPJ 
+da sucedida com 14 dígitos e sem formatação. Caso contrário, preencha com 14 espaços 
+vazios. 
+ 
+• 04 Data Inicial do Período: Informe, com 8 dígitos, sem formatação, a data inicial do período 
+de apuração do crédito. 
+ 
+• 05 Data Final do Período: Informe, com 8 dígitos, sem formatação, a data final do período de 
+apuração do crédito. 
+ 
+
+• 06 CNPJ da Fonte Pagadora: Informe o CNPJ da fonte pagadora, com 14 dígitos e sem 
+formatação. 
+ 
+• 07 Código da Receita: Informe o código de receita da retenção com 4 dígitos. 
+ 
+• 08 Variação: Deve ser informado 0 (zero), observadas as exceções dos códigos de receita 
+abaixo: 
+o 0916 - Prêmios de Proprietários de Cavalos de Corrida, deve ser informado 0; 
+o 0916 - Títulos de capitalização, deve ser informado 1; 
+o 1895 - Rendimento decorrente de decisão da Justiça dos Estados/DF, deve ser 
+informado 1; 
+o 5987 - Retenção sobre pagamentos de Pessoa Jurídica a Pessoa Jurídica de direito 
+privado, deve ser informado 1; 
+o 8045 - Comissões e Corretagens Pagas à Pessoa Jurídica, deve ser informado 0; 
+o 8045 - Condenações Judiciais, deve ser informado 1;  
+o 8045 - Multas e vantagens, deve ser informado 2; 
+o 8045 - Serviços de propaganda prestados por Pessoa Jurídica, deve ser informado 3. 
+ 
+• 09 Retenção engloba mais de um tributo: Se for um código de receita que englobe outros 
+tributos além do relativo ao Saldo Negativo que está sendo informado, informe 1. Caso 
+contrário, informe 0. 
+ 
+• 10 Valor: Informe, com 14 dígitos, o valor retido relativo ao tributo do Saldo Negativo que 
+está sendo informado, sem vírgula ou pontos. Acrescente zeros à esquerda para completar 
+14 dígitos. Os centavos correspondem aos dois últimos dígitos. 
+ 
+#Dica 
+As retenções informadas pelas fontes pagadoras à Receita Federal, por meio da Dirf, podem ser 
+consultadas no Portal e-CAC, menu "Declarações e Demonstrativos", opção "Consulta Rendimentos 
+Informados por Fontes Pagadoras". 
+  
+Pagamentos 
+ 
+A caixa de seleção destacada permite excluir os pagamentos em lote. 
+Nesta aba, informe: 
+• Saldo Negativo IRPJ / Lucro Real Anual: Pagamentos de estimativas mensais e imposto sobre 
+renda variável; 
+• Saldo Negativo CSLL / Lucro Real Anual: Pagamentos de estimativas mensais; 
+• Saldo Negativo IRPJ / Lucro Real Trimestral ou Lucro Presumido : Pagamentos de imposto 
+sobre renda variável. 
+De acordo com o nosso exemplo, o valor a ser informado nesta aba seria de R$ 158.000,00. 
+O PER/DCOMP Web recupera automaticamente os pagamentos relativos ao tributo (IRPJ ou CSLL), 
+compreendidos dentro do período de apuração do saldo negativo em questão. 
+Os códigos de receita considerados pelo PER/DCOMP Web, na recuperação automática, são: 
+• Estimativas IRPJ: 2319, 2362 e 5993; 
+• Estimativas CSLL: 2469 e 2484; 
+• Imposto sobre renda variável: 0231 e 3317. 
+No campo "Valor Utilizado para Compor o Saldo Negativo do Per íodo", o PER/DCOMP Web, como 
+padrão, traz o valor do principal do DARF. Contudo, o contribuinte poder á editar o valor, ou mesmo 
+excluir o DARF (por meio do bot ão "Lixeira"), caso tenha optado por utilizar, parcial ou totalmente, 
+algum DARF em PER/DCOMP de Pagamento Indevido ou a Maior. 
+Nessa hipótese, somente a parcela do pagamento correspondente ao d ébito de estimativa apurado 
+no período deverá ser informada como “Valor Utilizado para Compor o Saldo Negativo do Período”. 
+Utilize o botão "Recarregar Pagamentos" para que o PER/DCOMP Web atualize a lista de pagamentos 
+recuperados. 
+
+ 
+Utilizar o bot ão "Informar Pagamentos" caso tenha sido efetuado um pagamento com c ódigo de 
+receita diferente dos relacionados acima, e desde que se refiram à estimativa mensal ou imposto 
+sobre renda variável. 
+Nessa situa ção, inclua o pagamento por meio do n úmero (preferencialmente), marcando a caixa 
+"Informar Número do Pagamento?" ou informe todos os demais dados do pagamento. 
+Utilize a opção "Informar Número do Pagamento?" apenas se o pagamento contiver um número com 
+17 dígitos iniciado por 07 ou 09. 
+  
+
+Estimativas Compensadas 
+ 
+A caixa de seleção destacada permite excluir as DCOMP em lote. 
+Nesta aba, informe, em caso de Saldo Negativo IRPJ ou CSLL / Lucro Real Anual, as estimativas 
+mensais quitadas por compensação, por meio de DCOMP ou processo. 
+Informe também nesta aba as estimativas compensadas de of ício. Nesse caso, deve ser informado o 
+número do processo cujo crédito foi utilizado para compensação de ofício. 
+O PER/DCOMP Web recupera automaticamente as DCOMP de d ébitos de estimativas mensais 
+relativos ao tributo (IRPJ ou CSLL), compreendidos dentro do período de apuração do saldo negativo 
+em questão. 
+O contribuinte poder á excluir a DCOMP (por meio do bot ão "Lixeira"), caso n ão a tenha utilizado 
+para compor o Saldo Negativo. 
+Utilize o bot ão "Recarregar Estimativas Compensadas" para que o PER/DCOMP Web atualize a lista 
+de DCOMP recuperadas. 
+Em raz ão das regras de preenchimento da ECF, é possível que o valor relativo às estimativas 
+compensadas conste na linha de estimativas pagas. Nesse caso, no PER/DCOMP Web, ainda assim 
+tais valores devem ser informados na aba "Estimativas Compensadas". Essa diverg ência relativa 
+ao tipo de antecipa ção, entre ECF e PER/DCOMP , n ão gera preju ízo ao contribuinte quando da 
+análise do crédito. 
+ 
+Marque a caixa "Incluir Estimativa Compensada" para informar uma compensa ção n ão recuperada 
+pelo PER/DCOMP Web (DCOMP ou processo), desde que se refira à estimativa mensal. 
+Para finalizar o preenchimento de cada registro, clique no botão "Incluir". 
+ 
+ 
+ 
+
+Atenção! 
+A partir de 30 de maio de 2018, não é mais permitida a compensação de estimativas de IRPJ e CSLL, 
+inclusive em caso de balancete mensal de redução (Lei nº 9.430/1996, art. 74, § 3º, inciso IX; Solução 
+de Consulta Cosit nº 279/2019). 
+  
+Estimativas Parceladas 
+ 
+Nesta aba, informe, em caso de Saldo Negativo IRPJ ou CSLL / Lucro Real Anual, os d ébitos de 
+estimativas mensais quitados por meio de parcelamento, relativos ao tributo (IRPJ ou CSLL), 
+compreendidos dentro do período de apuração do saldo negativo em questão. 
+Informe tamb ém as estimativas mensais quitadas por meio de transa ção ou programa de 
+autorregularização, caso o pagamento tenha sido realizado com c ódigo de receita espec ífico 
+(diferente do código de receita do débito). 
+Deverão ser informados os dados do d ébito objeto de parcelamento, transa ção ou 
+autorregularização (e n ão dos DARF pagos): N úmero do parcelamento ou n úmero do processo 
+administrativo, valor da estimativa, mês de apuração e data de vencimento.  
+De acordo com o nosso exemplo, o valor a ser informado nesta aba seria de R$ 16.000,00. 
+Para finalizar o preenchimento de cada registro, clique no botão "Incluir". 
+Veja também a Súmula CARF nº 248: 
+SÚMULA CARF Nº 248 
+Aprovada pela 1ª Turma da CSRF em sessão de 14/09/2026 – vigência em 21/09/2026 
+Estimativas de IRPJ ou CSLL validamente incluídas em parcelamento regularmente 
+formalizado, que constitua confissão irrevogável e irretratável da dívida e instrumento hábil 
+para sua cobrança em caso de inadimplemento, podem compor o saldo negativo do 
+respectivo período de apuração para fins de compensação tributária, ainda que o 
+parcelamento não tenha sido integralmente quitado na data da declaração de compensação. 
+Acórdãos Precedentes: 9101 -007.475, 9101 -007.256, 9101 -005.532, 1301 -007.920, 1302 -
+005.369, 1302-004.825. 
+ 
+  
+
+IR Renda Variável Compensado 
+ 
+O comportamento desta aba é similar ao da aba "Estimativas Compensadas", mas se refere apenas 
+às compensações de imposto sobre renda variável. 
+  
+
+d) Informar Crédito|Demonstrativo do Crédito 
+ 
+Etapa Informar Crédito: Demonstrativo do Crédito (Declaração de Compensação) 
+ 
+Etapa Informar Crédito: Demonstrativo do Crédito (Pedido de Restituição) 
+Valor Original do Crédito Inicial 
+Informar o valor do Saldo negativo de IRPJ ou CSLL apurado na ECF. 
+De acordo com o nosso exemplo, o valor a ser informado neste campo seria de R$ 50.000,00. 
+O valor do campo deve ser igual à diferença entre os campos Total das Parcelas de Composi ção do 
+Crédito e Imposto Devido/CSLL devida. 
+Crédito Original na Data de Entrega 
+Informe o Valor Original do Cr édito Inicial que não ainda foi utilizado em compensa ções realizadas 
+antes do PER/DCOMP que est á sendo preenchido (considere a data de transmiss ão do original, se 
+estiver elaborando um PER/DCOMP retificador). 
+Quando se trata do primeiro PER/DCOMP que informa o cr édito de determinado per íodo, o valor 
+deste campo é igual ao Valor Original do Crédito Inicial. 
+
+Se o contribuinte fez, primeiro, um pedido de restitui ção e, agora, quer utilizar o cr édito em 
+compensação, tamb ém nesse caso o valor deste campo ser á igual ao Valor Original do Cr édito 
+Inicial. 
+Quando o contribuinte já fez uma ou mais compensações anteriores para o crédito, deverá informar 
+nesse campo o valor que resta do cr édito inicial ap ós dedução das compensa ções anteriores. Esse 
+valor pode ser recuperado no campo Saldo do Cr édito Original do PER/DCOMP imediatamente 
+anterior.  
+O valor deste campo não pode ser maior que o Valor Original do Crédito Inicial. 
+Valor do Pedido de Restituição 
+Campo exclusivo para pedido de restituição. 
+Este campo é preenchido automaticamente pelo PER/DCOMP Web, com o mesmo valor do campo 
+Crédito Original na Data de Entrega. 
+Este será o valor que será pago ao contribuinte quando o pedido for deferido, descontados eventuais 
+valores utilizados em compensação. 
+Imposto Devido/CSLL devida 
+No campo “Imposto Devido” ou “CSLL Devida”, deve ser informado o IRPJ/CSLL apurado na ECF do 
+período do cr édito, descontando -se as dedu ções fiscais, mas sem descontar as antecipa ções 
+(retenções na fonte, estimativas, imposto sobre renda variável e imposto pago ou retido no exterior). 
+De acordo com o nosso exemplo, o valor a ser informado nest e campo seria de R$ 204.000,00, que 
+equivale à diferença entre o imposto devido (R$ 226.000,00) e as deduções fiscais (R$ 22.000,00). 
+Total das Parcelas de Composição do Crédito 
+Neste campo, o PER/DCOMP Web soma automaticamente todas as parcelas de composi ção do 
+crédito que foram informadas na aba "Detalhamento do Crédito".   
+De acordo com o nosso exemplo, o total deste campo seria de R$ 254.000,00. 
+ 
+ 
+ 
+ 
+Selic Acumulada 
+Campo exclusivo para declaração de compensação. 
+Corresponde à taxa Selic acumulada desde o m ês seguinte ao final do per íodo de apura ção do 
+crédito, até o mês anterior à data de entrega da declara ção de compensação, mais 1% referente ao 
+mês corrente. 
+Se a declara ção de compensa ção original for apresentada no mesmo m ês em que for finalizado o 
+período de apuração, não é cabível a atualização do crédito. 
+Crédito Atualizado 
+Campo exclusivo para declaração de compensação. 
+O PER/DCOMP Web atualiza o valor do campo Crédito Original na Data de Entrega,  considerando a 
+taxa Selic acumulada do campo anterior. 
+Este ser á o valor máximo de d ébitos que poder ão ser informados, para compensa ção, na etapa 
+seguinte: Informar e Ordenar Débitos. 
+ 
+Atenção! 
+Em caso de retifica ção, o c álculo da taxa Selic leva em considera ção a data de transmiss ão da 
+declaração de compensação original. 
+Se for feito um pedido de restituição, também haverá atualização do crédito pela Selic? 
+O crédito também é atualizado no pedido de restituição. Contudo, nesse caso, o valor atualizado não 
+é calculado no PER/DCOMP Web porque a atualiza ção será feita até a data em que o valor for pago 
+ao contribuinte, e não até a data de transmissão do pedido de restituição. 
+Total dos Débitos deste Documento 
+Campo exclusivo para declaração de compensação. 
+Este campo é preenchido automaticamente pelo PER/DCOMP Web e equivale à soma dos d ébitos 
+informados, para compensação, na etapa seguinte: Informar e Ordenar Débitos. 
+ 
+Total do Crédito Original Utilizado neste Documento 
+Campo exclusivo para declaração de compensação. 
+Este campo é calculado automaticamente pelo PER/DCOMP Web. O sistema verifica quanto do 
+Crédito Original na Data de Entrega será necessário para quitar os débitos que serão compensados. 
+O c álculo é realizado dividindo-se o Total dos D ébitos deste Documento  por (1 + taxa Selic, em 
+formato decimal).  
+Saldo do Crédito Original 
+Campo exclusivo para declaração de compensação. 
+Este campo é calculado automaticamente pelo PER/DCOMP Web, e equivale à diferença entre os 
+campos Crédito Original na Data de Entrega e Total do Crédito Original Utilizado neste Documento. 
+Tal valor, quando maior que zero, poder á ser informado no campo Crédito Original na Data de 
+Entrega de uma próxima declaração de compensação, se for o caso. 
+  
+e) Informar e Ordenar Débitos 
+ 
+Caso esteja elaborando uma declaração de compensação, verifique as orientações de preenchimento 
+da etapa Informar e Ordenar Débitos aqui. 
+ 
+  
+f) Informar Dados Gerais 
+ 
+Etapa Informar Dados Gerais 
+Nesta etapa, informe os dados do responsável pelo preenchimento do PER/DCOMP . 
+Caso esteja preenchendo um pedido de restitui ção, informe tamb ém os dados banc ários para 
+pagamento do valor solicitado. 
+Atenção! 
+O pagamento só pode ser realizado em uma conta do próprio contribuinte, com exceção: 
+• das pessoas jurídicas baixadas, situação em que a restituição poderá ser depositada na conta 
+das pessoas físicas ou jurídicas sócias, conforme dispuser o distrato social. Nesse caso, utilize 
+o botão "Informar Novo Beneficiário", para incluir as pessoas que receberão a restituição. 
+ 
+#Dica 
+Caso o tipo de conta informada seja conta corrente, conta poupança ou conta pagamento, a conta 
+deverá necessariamente ser em um dos bancos habilitados pela Receita Federal, conforme lista 
+disponível no PER/DCOMP Web (botão "Selecionar Banco"). 
+Caso seja escolhida a opção PIX, o pagamento poderá ser realizado para qualquer instituição 
+financeira em que estiver cadastrada a chave PIX associada ao CNPJ/CPF do beneficiário. 
+  
+
+g) Verificar Pendências 
+ 
+Nesta etapa, são exibidas as pendências de preenchimento do PER/DCOMP , que podem ser erros ou 
+alertas. 
+#Dica 
+Ao clicar sobre a mensagem de erro ou alerta, o PER/DCOMP Web direciona o contribuinte à aba que 
+necessita ser verificada ou corrigida. 
+ 
+Os erros, identificados pela mensagem acima, impedem que o PER/DCOMP seja transmitido à 
+Receita Federal. Assim, o contribuinte deverá corrigir o erro indicado antes do envio do PER/DCOMP . 
+ 
+Os alertas, identificados pela mensagem acima, não impedem que o PER/DCOMP seja transmitido à 
+Receita Federal. Contudo, verifique se é o caso de corrigir o preenchimento do PER/DCOMP, pois o 
+alerta pode indicar uma inconsistência que impactará o reconhecimento do crédito e/ou a 
+homologação da compensação. 
+  
+
+h) Enviar Documento 
+ 
+Nesta última etapa, o contribuinte dever á realizar a conferência do cr édito e d ébitos informados, e 
+acionar o botão Enviar. 
+ 
+Se houver alertas de preenchimento, é necessário clicar em "Não" na mensagem. 
+Neste momento, ser á exibida uma mensagem com o n úmero do PER/DCOMP , para 
+acompanhamento. 
+ 
+Atenção! 
+Não será possível transmitir o documento se houver erros de preenchimento , indicados na etapa 
+Verificar Pendências. 
+Caso seja identificado algum impedimento à transmissão, será exibida mensagem na parte superior 
+da tela, e também não será possível transmitir o PER/DCOMP .  
+#Dica 
+Após transmitir o PER/DCOMP , acompanhe o seu processamento por meio do serviço "Consulta 
+Processamento PER/DCOMP", disponível no Portal eCAC, opção "Restituição e Compensação". 
+Nessa mesma opção, há outros serviços disponíveis, para consulta às comunicações relativas ao 
+PER/DCOMP: 
+• Consulta Despacho Decisório PER/DCOMP; 
+• Consulta Intimação PER/DCOMP"; e 
+• Consulta Análise Preliminar PER/DCOMP - Autorregularização. 
+A Receita Federal também envia mensagens para a Caixa Postal do eCAC, para comunicar o 
+contribuinte sobre o andamento do PER/DCOMP (análise, decisão ou pagamento). 

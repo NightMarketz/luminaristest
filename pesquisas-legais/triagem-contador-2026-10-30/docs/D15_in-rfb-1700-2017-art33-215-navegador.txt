@@ -1,0 +1,18 @@
+Fonte: https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/81268 (SIJUT, visão Multivigente; inclui a IN RFB 2.343/2026)
+Lido no navegador embutido em 2026-10-30 (2ª varredura). SHA-256 do document.body.innerText integral (581.552 caracteres),
+calculado no navegador: 281f851ffc972286b60ca2442cb8a38e3a01cc674fe5697bca5196392338c540
+Trechos literais da redação vigente (a visão multivigente mostra também as redações anteriores; só as vigentes abaixo).
+
+Art. 33 § 1º IV - 32% (trinta e dois por cento) sobre a receita bruta auferida com as atividades de:
+a) prestação de serviços relativos ao exercício de profissão legalmente regulamentada;
+b) intermediação de negócios;
+c) administração, locação ou cessão de bens imóveis, móveis e direitos de qualquer natureza;
+d) construção por administração ou por empreitada unicamente de mão de obra ou com emprego parcial de materiais;
+[...]
+j) prestação de qualquer outra espécie de serviço não mencionada neste parágrafo. [Incluído(a) pelo(a) Instrução Normativa RFB nº 1881, de 3 de abril de 2019]
+
+Art. 33 § 7º As pessoas jurídicas exclusivamente prestadoras de serviços em geral, mencionadas nas alíneas "b", "c", "d", "f", "g" e "j" do inciso IV do § 1º, cuja receita bruta anual seja de até R$ 120.000,00 (cento e vinte mil reais), poderão utilizar, na determinação da parcela da base de cálculo do IRPJ de que trata o caput do § 1º, o percentual de 16% (dezesseis por cento). [Redação dada pelo(a) Instrução Normativa RFB nº 1881, de 3 de abril de 2019]
+
+Art. 215 § 10. As pessoas jurídicas exclusivamente prestadoras de serviços em geral, mencionadas nas alíneas "b", "c", "d", "f", "g" e "j" do inciso IV do § 1º do art. 33, cuja receita bruta anual seja de até R$ 120.000,00 (cento e vinte mil reais), poderão utilizar, na determinação da parcela da base de cálculo do IRPJ de que trata o caput, o percentual de 16% (dezesseis por cento). [Redação dada pelo(a) Instrução Normativa RFB nº 1881, de 3 de abril de 2019]
+
+Busca no texto integral por "cabeleireir": só 2 ocorrências, ambas na tabela de depreciação (NCM 9402, "CADEIRAS PARA SALÕES DE CABELEIREIRO"). A IN não define "profissão legalmente regulamentada".
