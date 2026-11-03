@@ -192,7 +192,10 @@ Pré-condições (verificar antes de começar):
    > 29. Kit de setor · console errors 0 · HTTP>=400 0 · texto de erro na tela: nenhum
    > ```
    >
-   > DESFECHO: [dono]   ASSINATURA: [dono]
+   > DESFECHO (passo 1), marcado pelo agente AI tester em 03/11 pela evidência já colada (C7; autorização do dono, chat, 2026-11-02):
+   > [x] PASSOU — as 29 abas renderizaram com `console errors 0` e `HTTP>=400 0` (saída acima), e os 13 prints `passo1-*.png` estão em
+   > `runbook-evidence/H2-2026-10-29/`. Grau: verificado (saída do runner de 29/10).
+   > ASSINATURA (passo 1): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
 2. Na aba **Conciliação**, importar o extrato **clicando** no controle de upload e escolhendo o
    `.ofx` do disco (não colar, não fetch).
@@ -234,7 +237,13 @@ Pré-condições (verificar antes de começar):
    > diálogo de arquivo; o "por clique" é a palavra do dono ("upei os 2"), não um artefato. (3) Nenhuma linha casou: são
    > linhas sintéticas, sem lançamento correspondente.
    >
-   > DESFECHO: [dono]   ASSINATURA: [dono]
+   > DESFECHO (passos 2 e 3), marcado pelo agente AI tester em 03/11 pela evidência já colada:
+   > [x] PASSOU — os dois extratos aparecem com linhas (3 no OFX, 2 no CNAB), com sha256 igual ao do arquivo, e o auto-match rodou
+   > nos dois ("Auto-conciliação: … sem candidato"). Isso é o resultado esperado. **Ressalva:** o "por clique" se apoia na palavra
+   > do dono, que executou os uploads ("upei os 2"). Não há artefato do gesto: falta o "nome do arquivo no diálogo" que a EVIDÊNCIA
+   > pede, e os sha256 provam o conteúdo, não o clique. O CNAB entrou com a referência `H2 OFX` (desvio de dado, sem efeito no
+   > resultado). Grau: verificado no resultado; o modo de upload é atestado pelo dono.
+   > ASSINATURA (passos 2 e 3): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
 4. Em **Recibos**, gerar o PDF de um recibo (caminho puppeteer) e ABRIR o arquivo baixado.
    Resultado esperado: PDF válido, com os dados do recibo.
@@ -275,7 +284,11 @@ Pré-condições (verificar antes de começar):
    >
    > Achado para o passo 5 (rótulo, não foi corrigido): o recibo, que está em PT, mostra o status em inglês ("Posted").
    >
-   > DESFECHO: [dono]   ASSINATURA: [dono]
+   > DESFECHO (passo 4), marcado pelo agente AI tester em 03/11 pela evidência já colada:
+   > [x] PASSOU — o arquivo baixado pela tela (`recibo-cmuw4z7v302cmcii0fxxn95uz.pdf`, 58531 bytes, 1 página) abre como PDF válido,
+   > com o texto do lançamento 170/2026 (06/10/2026, D 1.1.2.03 / C 3.1, R$ 2.568,00). O rótulo "Posted" em inglês fica como ressalva
+   > menor no passo 5. Grau: verificado.
+   > ASSINATURA (passo 4): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
 5. Releitura crítica ("carimbo"): algo em qualquer tela está errado para uso real (rótulo,
    número, fluxo)? Se sim, registrar em Achados — não corrigir nada nesta sessão.
@@ -291,7 +304,10 @@ Pré-condições (verificar antes de começar):
    > O achado do passo 4 continua registrado (o recibo em PT mostra o status "Posted" em inglês). É um rótulo e não foi
    > corrigido nesta sessão. O dono decide se ele vira ressalva no desfecho.
    >
-   > DESFECHO: [dono]   ASSINATURA: [dono]
+   > DESFECHO (passo 5), marcado pelo agente AI tester em 03/11 pela evidência já colada:
+   > [x] PASSOU — há veredicto consciente do executor (o dono, no chat: "Loguei, sem ressalvas"). A única ressalva registrada é de
+   > rótulo: o recibo em PT mostra o status "Posted". Ela não foi corrigida e não bloqueia o passo. Grau: verificado (texto literal do dono).
+   > ASSINATURA (passo 5): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
 ---
 
@@ -624,6 +640,23 @@ Pré-condições (verificar antes de começar):
 > a coluna Débito aparece (achado F), e o lado do crédito está provado pelo texto do DOM e pelo dev.db.
 >
 > ASSINATURA (passos 6–10): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02) — atesta a conferência da evidência colada na execução de 29–30/10; desfecho marcado pelo dono (conferido em 02/11: blocos de Network/dev.db acima e os prints passo6-01…passo10-04 em runbook-evidence/H2-2026-10-29/).
+> **Desfecho do passo 11** (agente AI tester, 03/11, C7; autorização do dono, chat, 2026-11-02). Contra a passada refeita
+> sobre o #985 (30/10): o console está limpo (filtros de erro e de warn: "No console logs."), o log do servidor não tem
+> resposta ≥400 na janela, e os pares débito/crédito de 2026/0181–0189 conferem com o dev.db. O golden foi rodado de novo
+> em 03/11 no código do build desta execução:
+>
+> ```text
+> worktree agent-af93873e91c9b426b · 3077cda9 (sem diff de código para ac4acf38)
+> $ cd server && npx jest src/features/accountingBinding/__tests__/goldenPhase1.test.ts
+> PASS unit src/features/accountingBinding/__tests__/goldenPhase1.test.ts
+> Test Suites: 1 passed, 1 total
+> Tests:       18 passed, 18 total
+> ```
+>
+> [x] PASSOU — console limpo e golden verde, com os pares conferindo linha a linha. Ressalvas, nenhuma bloqueante: (F) a coluna
+> Crédito sai cortada nas linhas expandidas, e o crédito fica provado pelo texto do DOM e pelo dev.db, não pelo print. O 400
+> de origem não identificada de 29/10 não se repetiu e segue sem causa. Grau: verificado.
+> ASSINATURA (passo 11): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
 ---
 
