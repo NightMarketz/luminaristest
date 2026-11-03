@@ -750,7 +750,9 @@
       "date": "Date",
       "description": "Description",
       "descriptionPlaceholder": "Entry memo…",
-      "selectAccount": "— select account —"
+      "selectAccount": "— select account —",
+      "extemporaneousReason": "Reason for the late (extemporaneous) entry",
+      "extemporaneousReasonHelp": "Optional. Required when the date falls in a period that has already been closed."
     },
     "column": {
       "account": "Account",

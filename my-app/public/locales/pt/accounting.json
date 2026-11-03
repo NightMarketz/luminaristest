@@ -750,7 +750,9 @@
       "date": "Data",
       "description": "Descrição",
       "descriptionPlaceholder": "Histórico do lançamento…",
-      "selectAccount": "— selecione a conta —"
+      "selectAccount": "— selecione a conta —",
+      "extemporaneousReason": "Razão do registro extemporâneo",
+      "extemporaneousReasonHelp": "Opcional. Exigida quando a data cai num período que já foi fechado."
     },
     "column": {
       "account": "Conta",

@@ -350,7 +350,13 @@ export class PostingService {
         // efetiva da ocorrência e a razão do registro extemporâneo (D-2026-11-02-DELEGACAO-DONO).
         let description = input.description;
         if (jaFechado) {
-          const razao = input.extemporaneousReason?.trim();
+          // Gravador automático (sourceType ≠ manual) sem razão: a razão real do registro tardio é o processamento
+          // depois do fechamento; o manual segue exigindo a razão digitada (D-2026-11-02-DELEGACAO-DONO §3).
+          const razao =
+            input.extemporaneousReason?.trim() ||
+            (sourceType !== 'manual'
+              ? `lançamento automático (${sourceType}) processado depois do fechamento do período`
+              : undefined);
           if (!razao) {
             throw new ValidationError(
               'Lançamento em período já fechado e reaberto: informe a razão do registro extemporâneo (ITG 2000, item 36).',

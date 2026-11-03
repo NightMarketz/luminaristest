@@ -130,5 +130,20 @@ describe('ITG 2000 (R1) — histórico da retificação (item 32) e do extempor�
       ).rejects.toBeInstanceOf(ValidationError);
       expect(await prisma.journalEntry.count({ where: { userId: DONO, unitId: UNIT } })).toBe(antes);
     });
+
+    // Correção 2 (D-2026-11-02-DELEGACAO-DONO §3): o gravador automático não trava; a razão é o processamento tardio.
+    it('lançamento AUTOMÁTICO (sourceType ≠ manual) sem razão, no período reaberto, passa e o histórico traz a data e a razão automática', async () => {
+      // Depende do caso acima: junho já foi fechado e reaberto.
+      const entry = await posting().postEntry(scope(), {
+        ...lancamento('baixa de conta a pagar', '2026-06-22', 2500),
+        sourceType: 'ap.payment',
+        sourceId: 'itg2000-auto-1',
+      });
+
+      expect(entry.description).toContain('ocorrência em 22/06/2026');
+      expect(entry.description).toContain(
+        'razão: lançamento automático (ap.payment) processado depois do fechamento do período',
+      );
+    });
   });
 });
