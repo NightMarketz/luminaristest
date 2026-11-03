@@ -182,3 +182,26 @@ Numa sessão nova, nesta ordem:
 - [`docs/accounting/RUNBOOK-H2-BROWSER-SIGNOFF.md`](RUNBOOK-H2-BROWSER-SIGNOFF.md) (na branch do #982)
 - [`docs/plano/nos/FIX-DRE-DEDUCAO-SINAL.md`](../plano/nos/FIX-DRE-DEDUCAO-SINAL.md): o passo 3 (seed no `dev.db` real) é o P0 do H2
 - [`docs/plano/nos/FE-INCR-ECF-Y600.md`](../plano/nos/FE-INCR-ECF-Y600.md)
+
+## 8. Disparo de 03/11
+
+Dono, chat, 03/11: *"Dispara todos em sessões separadas"*. Uma sessão local por correção, cada uma em worktree própria a
+partir de `main`. O app caiu em 03/11 por volta de 20:30 UTC. Depois disso, o dono pediu *"Faz com que todos voltem a
+trabalhar"*, e cada sessão recebeu a ordem de conferir o próprio estado git antes de retomar.
+
+| Correção | Sessão | Observação |
+|---|---|---|
+| C1 | `c1-907-brecha` | fix da brecha + `revisor-independente`; push na branch do #907 |
+| C2 | `c2-ecd-referencial` | PR novo |
+| C3 | `c3-nfce-alerta` | PR novo |
+| C5 | `c5-ecf-y600` | BRIEF inteiro; não refaz passos do H2 |
+| C6 | `c6-f17-erro-ecf` | só o F-17-1 (F-16-e vai ao GOV-CONTADOR; F-20-1 é regra; F-907-T no #1012) |
+| C7 | `c7-h2-resto` | única com o `dev.db` real e as portas 3100/4100; confere `integrity_check` depois da queda; push no #982 |
+| C8 | `c8-memo-linha-ecf` | PR novo, com a emenda ao BRIEF X7-C |
+
+**Não disparados:**
+
+- **C4:** espera o #907 em `main`.
+- **Refazer 14, 18 e 19 do H2:** espera o C5 em `main`.
+- **Lote M1:** a maestro tem de ser aberta pelo dono (`.claude/prompts/maestro.md`: "num chat seu, aberto por você, não
+  por outra sessão"). Em 03/11, #1011, #1012 e #1003 estavam MERGEABLE, fora de draft e com CI verde.
