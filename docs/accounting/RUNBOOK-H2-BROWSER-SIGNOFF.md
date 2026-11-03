@@ -1373,13 +1373,26 @@ Assinatura do executor (passo 23): ____________
 
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
-[ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;
-    NENHUM passo seguinte foi executado após a falha
+[x] FALHOU — passo 14 divergiu; evidência da divergência colada acima;
+    NENHUM passo seguinte foi executado após a falha *(marcado pelo agente AI tester, 02/11, pela evidência dos blocos acima)*
+    **Desvio do roteiro, escrito ao lado do desfecho:** a cláusula "nenhum passo seguinte executado" **não** vale nesta
+    execução. O dono seguiu depois do 14 (passo 15, em 29/10) e o agente rodou 16–20 em 02/11 sob a delegação
+    (`D-2026-11-02-DELEGACAO-DONO` §6). Quadro por passo: 1–5 e 11 sem desfecho marcado · 6–10 PASSOU (dono, sob a emenda
+    do passo 8) · 12–14 FALHOU (14: ECF 400 Y600) · 15 PASSOU (dono) · 16 BLOQUEADO (16 e) · 17 PASSOU · 18 BLOQUEADO
+    (sem ECF EXPORTED) · 19 BLOQUEADO (sem revisão assinada; 19 a) confere) · 20 PASSOU · **21–23 não executados em 02/11**
+    (fôlego da sessão). 18, 19 e o FALHOU do 14 têm a mesma causa: a tela ainda não coleta sócios para o Y600
+    (nó FE-INCR-ECF-Y600).
 [ ] BLOQUEADO — pré-condição __ não se sustentava; execução nem começou
 
 ## Registro
-- Achados no caminho (fora do escopo deste runbook): [lista ou "nenhum" — bug novo vai para §5.2]
-- Atualização do artefato de rastreio: [§5.1 Bloco A item 4 do master map + data — cobre AMBOS:
+- Achados no caminho (fora do escopo deste runbook), execução 02/11: **F-17-1** (menor, de tela): o 400 da ECF "contador sem
+  telefone" cita o **id** do contato (`O contador 'cmvwly3ta000ncizsty2l1a4a' não tem telefone…`), não o nome. É legível,
+  mas o operador não reconhece o id. **F-16-e** (lacuna de política, não bug): `canManageLalur` ≡ `canReadLalur`
+  (`AccountingPolicy.ts:91-97`), então o ramo só-leitura do e-Lalur não tem como ser exercitado até o GOV-CONTADOR.
+  **F-20-1** (dado/regra): sem `documentNumber` = `externalRef`, todas as linhas dos extratos do H2 saem "ambíguas" na
+  varredura (`pickCandidate`, `BankSettlement.model.ts:199-205`). É comportamento desenhado (desempate só por documento), anotado porque o
+  operador precisa saber disso. Sem bug de runtime novo.
+- Atualização do artefato de rastreio: nota `docs/plano/gates/H2.md`, "Fold 02/11" (estado segue `human-open`). Texto original: [§5.1 Bloco A item 4 do master map + data — cobre AMBOS:
   o browser sign-off original (passos 1–5) E, desde a emenda 2026-08-22, o fluxo de salão
   pós-swap do binding (passos 6–11, intérprete `SALON_BINDING_V1`/`04582d8a`/PR #211)]
-- Assinatura do executor: ____________
+- Assinatura do executor: agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
