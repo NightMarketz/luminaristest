@@ -34,11 +34,11 @@ describe('CloseExerciseModal', () => {
     const onSuccess = vi.fn();
 
     render(
-      <CloseExerciseModal isOpen onClose={() => {}} unitId="u1" year={2026} onSuccess={onSuccess} />,
+      <CloseExerciseModal isOpen onClose={() => {}} unitId="u1" unitName="Loja Centro" year={2026} onSuccess={onSuccess} />,
     );
 
     expect(screen.getByText(/2\.3\.1/)).toBeInTheDocument();
-    expect(screen.getByText('u1')).toBeInTheDocument();
+    expect(screen.getByText('Loja Centro')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Encerrar' }));
 

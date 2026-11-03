@@ -67,7 +67,9 @@
       "OPEN": "Em aberto",
       "PAYING": "Em pagamento",
       "PAID": "Paga",
-      "CANCELLED": "Cancelada"
+      "CANCELLED": "Cancelada",
+      "PARTIALLY_PAID": "Paga em parte",
+      "DEFERRED": "Adiada"
     },
     "col": {
       "expand": "Expandir",
@@ -136,7 +138,7 @@
       "mode": {
         "expense": "Despesa",
         "inventory": "Compra de estoque",
-        "inventoryHint": "Debita 1.1.6 Estoques e valora o produto pelo custo médio — o valor acima é o TOTAL da compra."
+        "inventoryHint": "Debita 1.1.3.01 Estoques e valora o produto pelo custo médio — o valor acima é o TOTAL da compra."
       },
       "noProducts": "Nenhum produto no catálogo. Cadastre produtos no módulo de estoque."
     },
@@ -145,6 +147,9 @@
       "paidAtLabel": "Data do pagamento",
       "reversalDateLabel": "Data da reversão",
       "methodLabel": "Forma de pagamento",
+      "method": {
+        "Cash": "Dinheiro"
+      },
       "reasonLabel": "Motivo",
       "payTitle": "Registrar pagamento",
       "payConfirm": "Confirmar pagamento",
@@ -244,6 +249,9 @@
       "receivedAtLabel": "Data do recebimento",
       "reversalDateLabel": "Data da reversão",
       "methodLabel": "Forma de recebimento",
+      "method": {
+        "Cash": "Dinheiro"
+      },
       "reasonLabel": "Motivo",
       "receiveTitle": "Registrar recebimento",
       "receiveConfirm": "Confirmar recebimento",
@@ -664,6 +672,7 @@
     "reverseAction": {
       "enabledTitle": "Estornar este lançamento",
       "disabledTitle": "Lançamento já estornado",
+      "notPostedTitle": "Só lançamentos postados podem ser estornados",
       "label": "Estornar"
     },
     "receiptAction": {
@@ -3459,6 +3468,21 @@
       "PARTIALLY_REFUNDED": "Estornada em parte",
       "PENDING": "Pendente",
       "REFUNDED": "Estornada"
+    },
+    "list": {
+      "title": "Cobranças da unidade",
+      "filterStatus": "Status",
+      "filterKind": "Tipo",
+      "all": "Todos",
+      "loading": "Carregando cobranças…",
+      "empty": "Nenhuma cobrança nesta unidade com estes filtros.",
+      "error": "Erro ao carregar as cobranças da unidade.",
+      "openReceivable": "Abrir o título no Contas a Receber",
+      "noNumber": "sem nº",
+      "receivableCancelled": "cancelado",
+      "col": {
+        "receivable": "Título"
+      }
     }
   },
   "paymentProvider": {

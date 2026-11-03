@@ -349,13 +349,13 @@ describe('incomeStatement', () => {
     expect(report.grossRevenue.totalCents).toBe('5000');
   });
 
-  it('revenueDeductions (3.2) is credit_negative (credit 1000 → amountCents -1000)', async () => {
+  it('revenueDeductions (3.2) is debit_negative (debit 1000 → amountCents -1000)', async () => {
     const accounts = [makeAccount({ code: '3.2.01', nature: 'Revenue' })];
     const { svc } = buildService(accounts, [
-      { accountId: '3.2.01', debitCents: 0, creditCents: 1000 },
+      { accountId: '3.2.01', debitCents: 1000, creditCents: 0 },
     ]);
     const report = await svc.incomeStatement(SCOPE, AS_OF);
-    // rawBalance = 0 - 1000 = -1000; sign=credit_negative → amountCents = rawBalance = -1000
+    // FIX-DRE-DEDUCAO-SINAL: dedução tem saldo devedor e sai no sinal do resultado (como despesa) — rawBalance = 1000 → -1000
     expect(report.revenueDeductions.accounts[0].amountCents).toBe('-1000');
     expect(report.revenueDeductions.totalCents).toBe('-1000');
   });
@@ -374,8 +374,8 @@ describe('incomeStatement', () => {
     const report = await svc.incomeStatement(SCOPE, AS_OF);
     expect(report.grossRevenue.accounts.map((a) => a.code)).toEqual(['3.1']);
     expect(report.revenueDeductions.accounts.map((a) => [a.code, a.amountCents])).toEqual([
-      ['3.6.1', '650'],
-      ['3.6.2', '3000'],
+      ['3.6.1', '-650'],
+      ['3.6.2', '-3000'],
     ]);
   });
 
@@ -436,14 +436,14 @@ describe('incomeStatement', () => {
     ];
     const raw: MockGroupByResult[] = [
       { accountId: '3.1.01', debitCents: 0, creditCents: 5000 },
-      { accountId: '3.2.01', debitCents: 0, creditCents: 1000 },
+      { accountId: '3.2.01', debitCents: 1000, creditCents: 0 },
       { accountId: '4.1', debitCents: 2000, creditCents: 0 },
     ];
     const { svc } = buildService(accounts, raw);
     const report = await svc.incomeStatement(SCOPE, AS_OF);
 
     // grossRevenue credit_positive: credit 5000 → rawBalance=-5000 → amountCents=-(-5000)=5000
-    // deductions credit_negative: credit 1000 → rawBalance=-1000 → amountCents=rawBalance=-1000
+    // deductions debit_negative: debit 1000 → rawBalance=1000 → amountCents=-1000
     // expenses debit_negative: debit 2000 → rawBalance=2000 → amountCents=-2000
     // net = 5000 + (-1000) + (-2000) = 2000
     expect(report.netResult.amountCents).toBe('2000');

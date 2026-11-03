@@ -35,10 +35,14 @@ describe('crmModule = composição dos módulos CRM-0..3 (comportamento 4)', () 
     expect(CrmModulePreset.tables).toEqual(BEFORE);
   });
 
-  it('BE-INCR-CRM-SUBMODULES item 2: crmModule compõe as 5 chaves atômicas; salão e clínica seguem CRM-0 + CRM-1', () => {
+  it('BE-INCR-CRM-SUBMODULES item 2: crmModule compõe as 5 chaves atômicas; salão e clínica seguem CRM-0 + CRM-1 no CRM', () => {
     expect(CrmModulePreset.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3']);
-    expect(tablePresetSuites.services.beautySalon.modules).toEqual(['CRM-0', 'CRM-1']);
-    expect(tablePresetSuites.services.aestheticClinic.modules).toEqual(['CRM-0', 'CRM-1']);
+    // BE-INCR-MODULOS-BASE-SUBMODULOS item 11: as suítes passam a declarar também PESSOAS e VENDAS.
+    // PR-4 (itens 21–22): e Campanhas (CRM-CAMP), FINANCEIRO e GESTÃO — o default §1 do BRIEF.
+    const pessoasVendas = ['PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM', 'EST-0', 'AGE-0']; // + ESTOQUE e AGENDA (PR-3)
+    const finGes = ['FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META'];
+    expect(tablePresetSuites.services.beautySalon.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-CAMP', ...pessoasVendas, ...finGes]);
+    expect(tablePresetSuites.services.aestheticClinic.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-CAMP', ...pessoasVendas, ...finGes]);
   });
 
   it('identidade da suíte e registro no catálogo inalterados', () => {

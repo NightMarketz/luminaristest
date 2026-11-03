@@ -1,0 +1,60 @@
+Contabilidade
+
+Razão de partida dobrada — balancete por unidade
+
+Unidade
+seed-unit-presumido
+Balancete
+Períodos
+Lançamentos
+Aprovações
+Contas a Pagar
+Contas a Receber
+Aging
+Fluxo de Caixa Projetado
+Contrapartes
+Razão
+Plano de Contas
+BP
+DRE
+DFC
+Comparativo
+Livro Diário
+Importação/Exportação
+Conciliação
+NF-e
+Compliance
+Dimensões
+Imobilizado
+Perfil fiscal
+Parâmetros legais
+Política contábil
+Apuração
+Pendências
+Cobrança
+Kit de setor
+Posição em
+Gerar BP
+Posição em 31/12/2025(as_of)
+OK
+Balanceado
+ATIVO
+1.1.1.01 — Banco	R$ 87.482,19
+1.1.1.02 — Caixa	R$ 0,00
+1.1.2.02 — A Receber Cartão / Adquirente	R$ 0,00
+1.1.2.03 — Clientes a Receber	R$ 30.780,32
+1.1.3.01 — Estoques	R$ 11.715,92
+Total	R$ 129.978,43
+PASSIVO
+2.1.1.01 — Pacotes Pré-pagos	R$ 1.261,49
+2.1.2.01 — Fornecedores a Pagar	R$ 17.950,60
+Total	R$ 19.212,09
+PATRIMÔNIO LÍQUIDO
+2.3.1.01 — Lucros ou Prejuízos Acumulados	R$ 110.766,34
+Total	R$ 110.766,34
+
+Resultado do Exercício
+
+01/01/2025 a 31/12/2025 · calculado
+
+R$ 0,00

@@ -10,19 +10,34 @@ import { AIInteractions } from '../AIInteractions';
 import { FakeInterviewSessionRepository } from './fakeInterviewSessionRepository';
 import type { OpenAIService } from '../../../../lib/openai/OpenAIService';
 import BeautySalonPreset from '../../../dynamicTables/presets/systems/BeautySalonPreset';
+import { composeSessionTables } from '../sessionComposition';
+import { resolveModuleSelection } from '../../../dynamicTables/presets/modules/moduleSelection';
+
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: customers/sales/… viraram tabelas de módulo — a sessão real nasce de
+// `composeSessionTables` (módulos default ∪ suíte), como no `CustomizationService.createCustomizationSession`.
+const salaoPreset = {
+  key: BeautySalonPreset.key,
+  tables: composeSessionTables(BeautySalonPreset, resolveModuleSelection([], BeautySalonPreset.modules)),
+};
 
 // Sem chave de OpenAI no projeto unit: o cliente nunca é chamado (getAiResponse é stub abaixo).
 jest.mock('../../../../lib/openai/OpenAIService', () => ({ OpenAIService: { getInstance: () => ({}) } }));
 
 beforeEach(() => jest.clearAllMocks());
 
-const TRAVADAS_SALAO = ['customers', 'packages', 'sales', 'saleItems', 'products', 'services', 'productUnits'];
+// PR-3: productUnits/stockMovements (EST-0) e appointments (AGE-0) são bases fixas → FIXED_MODULE, como o CRM-0. Dono,
+// 2026-10-31, questionário: "Aceitar até o PR-6 (Recommended)" — na entrevista o salão não tira Estoque/Agenda até o
+// PR-6 (item 32) decidir a remoção da categoria inteira; no Controle Total a categoria inteira sai.
+const TRAVADAS_SALAO = ['customers', 'packages', 'sales', 'saleItems', 'products', 'services', 'productUnits', 'stockMovements', 'appointments'];
+// CRM-0 (fixo) vem dos módulos default do salão, travado por FIXED_MODULE.
+// PR-4: as bases fixas de FINANCEIRO (FIN-0 = expenses) e GESTÃO (GES-0 = reports) travam do mesmo jeito.
+const FUNIL = ['leadPipelines', 'leadStages', 'leads', 'leadActivities', 'expenses', 'reports'];
 
 describe('item 4 — TableExtractor deriva isCore da trava', () => {
   it('salão: isCore só nas tabelas travadas; lock com o motivo', () => {
-    const tables = new TableExtractor().extractTablesFromRealPreset(BeautySalonPreset);
-    expect(tables).toHaveLength(17);
-    expect(tables.filter((t) => t.isCore).map((t) => t.key).sort()).toEqual([...TRAVADAS_SALAO].sort());
+    const tables = new TableExtractor().extractTablesFromRealPreset(salaoPreset);
+    expect(tables).toHaveLength(22);
+    expect(tables.filter((t) => t.isCore).map((t) => t.key).sort()).toEqual([...TRAVADAS_SALAO, ...FUNIL].sort());
     expect(tables.find((t) => t.key === 'sales')?.lock).toEqual({ reason: 'ACCOUNTING' });
     expect(tables.find((t) => t.key === 'goals')?.lock).toBeNull();
   });
@@ -34,19 +49,24 @@ const USER = 'w2-user';
 describe('item 5 — remoção recalcula as travas da sessão', () => {
   const sm = new StateManager(new FakeInterviewSessionRepository());
   const abrir = () =>
-    sm.createSessionState(USER, 'beautySalon', 'Salão', new TableExtractor().extractTablesFromRealPreset(BeautySalonPreset));
+    sm.createSessionState(
+      USER, 'beautySalon', 'Salão', new TableExtractor().extractTablesFromRealPreset(salaoPreset),
+      resolveModuleSelection([], BeautySalonPreset.modules),
+    );
   const removiveis = async (s: IInterviewSessionHandle) =>
     (await sm.loadSession(s.id, USER)).state.tables.filter((t) => !t.isCore).map((t) => t.key);
 
-  it('stockMovements → libera productUnits; productUnits → libera products', async () => {
+  it('PR-3: tabela de base fixa (EST-0, AGE-0) fica travada na sessão; o alvo dela (products/services) segue travado', async () => {
     const s = await abrir();
-    expect(await sm.removeTable(s, 'products')).toBe(false);
-    expect(await sm.removeTable(s, 'stockMovements')).toBe(true);
-    expect(await removiveis(s)).toContain('productUnits');
+    expect(await sm.removeTable(s, 'stockMovements')).toBe(false);
+    expect(await sm.removeTable(s, 'appointments')).toBe(false);
+    const tabelas = (await sm.loadSession(s.id, USER)).state.tables;
+    expect(tabelas.find((t) => t.key === 'stockMovements')?.lock).toEqual({ reason: 'FIXED_MODULE', by: ['EST-0'] });
+    expect(tabelas.find((t) => t.key === 'appointments')?.lock).toEqual({ reason: 'FIXED_MODULE', by: ['AGE-0'] });
     expect(await removiveis(s)).not.toContain('products');
-    expect(await sm.removeTable(s, 'productUnits')).toBe(true);
-    expect(await removiveis(s)).toContain('products');
-    expect(await sm.removeTable(s, 'products')).toBe(true);
+    expect(await removiveis(s)).not.toContain('services');
+    // a trava é dinâmica: submódulo de uma tabela segue removível
+    expect(await sm.removeTable(s, 'suppliers')).toBe(true);
   });
 
   it('tabela adicionada pelo usuário segue removível e sem lock', async () => {

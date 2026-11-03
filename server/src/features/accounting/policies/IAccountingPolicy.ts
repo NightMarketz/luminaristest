@@ -131,6 +131,8 @@ export interface IAccountingPolicy {
   canManageFiscalProfile(scope: AccountingScope): boolean;
   /** BE-INCR-DFE-ADN-EMISSOR PR-1 (item 6): upload/leitura/remoção do certificado fiscal — delega a canManageFiscalProfile. */
   canManageFiscalCertificate(scope: AccountingScope): boolean;
+  /** X10a PR-7 (EMENDA-PSC E-5): delega a canManageFiscalProfile. */
+  canManagePscCredential(scope: AccountingScope): boolean;
 
   /**
    * BE-INCR-DFE (nó X10b, BRIEF item 5): perfil fiscal do serviço = régua do perfil fiscal; emissão/cancelamento

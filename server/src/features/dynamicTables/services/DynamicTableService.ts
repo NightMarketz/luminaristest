@@ -417,8 +417,12 @@ export class DynamicTableService {
 
     // Resolve variant schemas before entering the transaction. Dynamic imports must not
     // run inside a SQLite transaction to avoid holding the connection lock during I/O.
-    const hasStock = provides.has('inventory.stock');
+    // BE-INCR-MODULOS-BASE-SUBMODULOS item 12: a variante sai dos catálogos instalados (capacidades das tabelas
+    // `products`/`services`/`packages`), não do estoque — Produtos sem Estoque continua vendável. F-MS-3 (a): Pacotes
+    // não muda a variante; só a mista tem `packageId`, então qualquer combinação com Pacotes sem os dois é mista.
+    const hasProducts = provides.has('catalog.products');
     const hasServices = provides.has('services.catalog');
+    const hasPackages = provides.has('catalog.packages');
     const saleItemsKey = tableKeys.find(k => k === 'saleItems');
     let variantSchema: ITableSchema | null = null;
     if (saleItemsKey) {
@@ -426,9 +430,17 @@ export class DynamicTableService {
         const { saleItemsProductsOnlyModule } = await import('../presets/modules/finance/SalesItemsProductsOnly');
         const { saleItemsServicesOnlyModule } = await import('../presets/modules/finance/SalesItemsServicesOnly');
         const { saleItemsMixedModule } = await import('../presets/modules/finance/SalesItemsMixed');
-        if (hasStock && hasServices) variantSchema = saleItemsMixedModule.schema;
-        else if (hasStock) variantSchema = saleItemsProductsOnlyModule.schema;
+        if ((hasProducts && hasServices) || hasPackages) variantSchema = saleItemsMixedModule.schema;
+        else if (hasProducts) variantSchema = saleItemsProductsOnlyModule.schema;
         else variantSchema = saleItemsServicesOnlyModule.schema;
+        // Mesma regra do pré-voo acima (relação OPCIONAL para tabela não instalada é descartada): com os catálogos
+        // como submódulos, a variante pode citar catálogo/agenda ausente (ex.: só Pacotes → mista sem `products`).
+        const variantFields = variantSchema.fields.filter(field => {
+          if (field.type !== 'relation' || field.required || typeof field.relation?.targetTable !== 'string') return true;
+          const target = field.relation.targetTable;
+          return !target.startsWith(PRESET_TABLE_KEY_PREFIX) || !!tables[target.replace(PRESET_TABLE_KEY_PREFIX, '')];
+        });
+        if (variantFields.length !== variantSchema.fields.length) variantSchema = { ...variantSchema, fields: variantFields };
       } catch (err) {
         logger.warn('installPresetAsSystem: saleItems variant unavailable — keeping the preset default schema', { userId, ...errorContext(err) });
       }

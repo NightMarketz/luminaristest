@@ -421,6 +421,8 @@
   "onboardingTotalControlCustomizingHint": "Desmarque as tabelas que não deseja utilizar no seu fluxo de trabalho.",
   "onboardingTotalControlEnabled": "Ativado",
   "onboardingTotalControlIgnored": "Ignorado",
+  "onboardingTotalControlModules": "Módulos",
+  "onboardingTotalControlModuleBase": "Base — sempre instalada",
   "onboardingTotalControlTableFields": "Campos desta tabela",
   "onboardingTotalControlCreating": "Criando Sistema Personalizado...",
   "onboardingTotalControlFinish": "Finalizar e Criar Sistema",

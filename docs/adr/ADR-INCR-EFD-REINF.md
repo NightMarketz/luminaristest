@@ -279,7 +279,9 @@ export const ReinfBatchRequestSchema = z.object({ competencia: z.string().regex(
 
 ## 14. Sinal humano — estado do gate
 
-- **F-REINF-1..5:** PENDENTES. **P-REINF-1..5:** externos. BRIEF depois da ratificação e **depois do BRIEF do
+- **F-REINF-2 → (b)** (dono, questionário, 30/10, [[D-2026-10-30-X10A-EMENDA-4-FORA-DE-ESCOPO]] item 2: *"Portal ou
+  contador"*): sem adaptador de transmissão; o cliente transmite no Reinf Web ou o contador como procurador. Contra a
+  recomendação (a). **F-REINF-1, 3, 4, 5:** PENDENTES. **P-REINF-1..5:** externos. BRIEF depois da ratificação e **depois do BRIEF do
   RETENCOES-FONTE** (dependência dura: consome o D8); código só com `executa`, PR a PR.
 - Nota `docs/plano/nos/EFD-REINF.md` aponta para cá; `depende_de` RETENCOES-FONTE e IRRF-DISTRIBUICAO.
 
