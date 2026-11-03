@@ -28,15 +28,50 @@ const nextDay = (iso: string): string => {
   return d.toISOString().slice(0, 10);
 };
 
+type VigenciaBase = Pick<Partner, 'id' | 'taxId' | 'entradaEm' | 'saidaEm'>;
+
+/** Uma vigência do cadastro que o Y600 do ano exige, com o que dela vai para o arquivo além do cadastro. */
+export interface VigenciaDoAno<P extends VigenciaBase = Partner> {
+  partner: P;
+  /** Ordem do item 3 do BRIEF do BE: vigente em 31/12 vem antes de quem saiu no ano. */
+  vigenteNoFim: boolean;
+  /** DT_FIM_SOC: `saidaEm` só na saída de fato no ano; mudança de participação (sucessora no dia seguinte) dá null. */
+  dtFimSoc: string | null;
+}
+
+/**
+ * BE-INCR-ECF-Y600 itens 8 e 10 — a seleção das vigências do ano num lugar só (FE-INCR-ECF-Y600 item 1, F-FE-Y600-1 → b):
+ * o `montarY600` e a rota de leitura `GET /sped/ecf/y600/vigencias` chamam esta função, então a tela mostra exatamente
+ * o conjunto que o gerador exige.
+ *  - Item 8: vigências vivas que cruzam o ano (`entradaEm ≤ DT_FIN` e `saidaEm` nulo ou `≥ DT_INI`).
+ *  - Item 10 (F-Y600-4): `DT_FIM_SOC = saidaEm` só na saída de fato — `saidaEm` no ano e nenhuma vigência viva do mesmo
+ *    `taxId` começando no dia seguinte (mudança de participação não é saída, p. 570 regra 2).
+ * `vivos` já vem sem as apagadas (o repositório filtra o soft-delete).
+ */
+export function selecionarVigenciasDoAno<P extends VigenciaBase>(vivos: readonly P[], year: number): Array<VigenciaDoAno<P>> {
+  const dtIni = `${year}-01-01`;
+  const dtFin = `${year}-12-31`;
+  return vivos
+    .filter((p) => p.entradaEm <= dtFin && (p.saidaEm === null || p.saidaEm >= dtIni))
+    .map((p) => {
+      const saidaNoAno = p.saidaEm !== null && p.saidaEm <= dtFin;
+      const sucessora =
+        p.saidaEm !== null && vivos.some((o) => o.id !== p.id && o.taxId === p.taxId && o.entradaEm === nextDay(p.saidaEm!));
+      return {
+        partner: p,
+        vigenteNoFim: p.saidaEm === null || p.saidaEm >= dtFin,
+        dtFimSoc: saidaNoAno && !sucessora ? p.saidaEm : null,
+      };
+    });
+}
+
 /**
  * BE-INCR-ECF-Y600 itens 8–11 (+ ordem e limites do item 3) — UM lugar só, usado pelo Presumido e pelo Real
  * (item 13, F-Y600-1 → a). Cruza o complemento do request com as vigências do cadastro `Partner` e devolve as
  * linhas do Y600 já ordenadas. Toda incoerência é 400; nada do request é aceito e ignorado (item 9).
  *
- *  - Item 8: vigências vivas que cruzam o ano (`entradaEm ≤ DT_FIN` e `saidaEm` nulo ou `≥ DT_INI`).
- *  - Item 10 (F-Y600-4): uma ocorrência por vigência; `DT_ALT_SOC = entradaEm` (p. 571); `DT_FIM_SOC = saidaEm` só
- *    na saída de fato — `saidaEm` no ano e nenhuma vigência viva do mesmo `taxId` começando no dia seguinte (mudança
- *    de participação não é saída, p. 570 regra 2).
+ *  - Itens 8 e 10: as vigências do ano e o DT_FIM_SOC saem de `selecionarVigenciasDoAno` (o mesmo cálculo da rota de
+ *    leitura da tela); uma ocorrência por vigência, `DT_ALT_SOC = entradaEm` (p. 571).
  *  - Item 11 (F-Y600-7): nenhuma ocorrência ⇒ 400 `ECF_Y600_SEM_SOCIOS`. Soma ≠ 100% não bloqueia (F-Y600-8).
  *  - Mensagens de erro citam `partnerId`, nunca nome nem CPF/CNPJ (PII).
  */
@@ -47,11 +82,8 @@ export async function montarY600(
   socios: SocioEcfDto[],
   dirigentes: DirigenteEcfDto[],
 ): Promise<Y600Row[]> {
-  const dtIni = `${year}-01-01`;
-  const dtFin = `${year}-12-31`;
-  const vivos = await partners.list(scope);
-  const doAno = vivos.filter((p) => p.entradaEm <= dtFin && (p.saidaEm === null || p.saidaEm >= dtIni));
-  const porId = new Map<string, Partner>(doAno.map((p) => [p.id, p]));
+  const doAno = selecionarVigenciasDoAno(await partners.list(scope), year);
+  const porId = new Map<string, VigenciaDoAno>(doAno.map((v) => [v.partner.id, v]));
 
   // ── Item 9: complemento × cadastro ──
   const foraDoAno = socios.filter((s) => !porId.has(s.partnerId)).map((s) => s.partnerId);
@@ -63,7 +95,7 @@ export async function montarY600(
     );
   }
   const complementados = new Set(socios.map((s) => s.partnerId));
-  const faltando = doAno.filter((p) => !complementados.has(p.id)).map((p) => p.id);
+  const faltando = doAno.filter((v) => !complementados.has(v.partner.id)).map((v) => v.partner.id);
   if (faltando.length > 0) {
     throw new ValidationError(
       `Y600: toda vigência de sócio em ${year} precisa de complemento em socios (qualif e valores); faltam os partnerId: ${faltando.join(', ')}.`,
@@ -82,7 +114,7 @@ export async function montarY600(
 
   const candidates: Y600Candidate[] = [];
   for (const s of socios) {
-    const p = porId.get(s.partnerId)!;
+    const { partner: p, vigenteNoFim, dtFimSoc } = porId.get(s.partnerId)!;
     const tipo = p.tipoPessoa as 'PF' | 'PJ';
     if (p.residenteBrasil === (s.pais !== undefined)) {
       throw new ValidationError(
@@ -109,14 +141,11 @@ export async function montarY600(
         'ECF_Y600_QUALIF_INCOERENTE',
       );
     }
-    const saidaNoAno = p.saidaEm !== null && p.saidaEm <= dtFin;
-    const sucessora =
-      p.saidaEm !== null && vivos.some((o) => o.id !== p.id && o.taxId === p.taxId && o.entradaEm === nextDay(p.saidaEm!));
     candidates.push({
-      vigenteNoFim: p.saidaEm === null || p.saidaEm >= dtFin,
+      vigenteNoFim,
       row: {
         dtAltSoc: p.entradaEm,
-        dtFimSoc: saidaNoAno && !sucessora ? p.saidaEm! : undefined,
+        dtFimSoc: dtFimSoc ?? undefined,
         pais: p.residenteBrasil ? '105' : s.pais!,
         indQualifSocio: tipo,
         cpfCnpj: p.residenteBrasil ? p.taxId : undefined,
@@ -130,6 +159,7 @@ export async function montarY600(
       },
     });
   }
+  const dtFin = `${year}-12-31`;
   for (const d of dirigentes) {
     candidates.push({
       vigenteNoFim: d.dtFimSoc === undefined || d.dtFimSoc >= dtFin,
