@@ -8,6 +8,16 @@ const jestBin = fileURLToPath(new URL('../node_modules/jest/bin/jest.js', import
 const extra = process.argv.slice(2);
 const failed = [];
 
+// Os 4 shards são a suíte inteira: só no CI ou com FULL_SUITE=1 (scripts/test-scope-guard.cjs; dono, 03/11).
+if (!process.env.CI && process.env.FULL_SUITE !== '1') {
+  console.error(
+    'Integração inteira (227 suítes, 4 shards de 8 GB) bloqueada fora do CI: pesa o PC (dono, 2026-11-03).\n' +
+      'Rode um arquivo por vez: npx jest <arquivo> --selectProjects integration --runInBand\n' +
+      'A suíte completa roda no CI do PR. Para rodar tudo aqui mesmo assim: FULL_SUITE=1 npm run test:integration',
+  );
+  process.exit(1);
+}
+
 for (let i = 1; i <= SHARDS; i++) {
   console.log(`\n=== integração shard ${i}/${SHARDS} ===`);
   const r = spawnSync(
