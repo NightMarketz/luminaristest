@@ -698,6 +698,7 @@ export class ReceivableService {
       description: this.recognitionDescription(receivable),
       auditDescription: this.recognitionAuditDescription(receivable),
       sourceType: AR_RECEIVABLE_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: receivable.id,
       sourceDocument: {
         externalRef: dto.documentNumber,
@@ -723,6 +724,7 @@ export class ReceivableService {
       description: this.recognitionDescription(receivable),
       auditDescription: this.recognitionAuditDescription(receivable),
       sourceType: AR_RECEIVABLE_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: receivable.id,
       sourceDocument: {
         externalRef: receivable.documentNumber ?? undefined,
@@ -748,6 +750,7 @@ export class ReceivableService {
       description: this.receiptDescription(receivable),
       auditDescription: this.receiptAuditDescription(receivable),
       sourceType: AR_RECEIPT_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: receipt.id,
       lines: [
         { accountCode: debitCode, debitCents: dto.amountCents, creditCents: 0 },
@@ -769,6 +772,7 @@ export class ReceivableService {
       description: this.receiptDescription(receivable),
       auditDescription: this.receiptAuditDescription(receivable),
       sourceType: AR_RECEIPT_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: receipt.id,
       lines: [
         { accountCode: debitCode, debitCents: centsFromDb(receipt.amountCents), creditCents: 0 },

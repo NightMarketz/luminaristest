@@ -559,6 +559,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
       description: `Retenção de ${tributo} — ${payable.supplierName}${payable.documentNumber ? ` (NF ${payable.documentNumber})` : ''}`,
       auditDescription: `Retenção de ${tributo} — NF ${payable.documentNumber ?? 's/nº'}`,
       sourceType: AP_WITHHOLDING_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: paymentId,
       lines: [
         { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: cents, creditCents: 0 },
@@ -1472,6 +1473,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
       description: this.recognitionDescription(payable),
       auditDescription: this.recognitionAuditDescription(payable),
       sourceType: AP_PAYABLE_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: payable.id,
       sourceDocument: {
         externalRef: dto.documentNumber,
@@ -1731,6 +1733,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
       description: this.recognitionDescription(payable),
       auditDescription: this.recognitionAuditDescription(payable),
       sourceType: AP_PAYABLE_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: payable.id,
       sourceDocument: {
         externalRef: payable.documentNumber ?? undefined,
@@ -1760,6 +1763,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
       description: this.settlementDescription(payable),
       auditDescription: this.settlementAuditDescription(payable),
       sourceType: AP_PAYMENT_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: payment.id,
       lines: [
         { accountCode: debitCode, debitCents: dto.amountCents, creditCents: 0 },
@@ -1782,6 +1786,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
       description: this.settlementDescription(payable),
       auditDescription: this.settlementAuditDescription(payable),
       sourceType: AP_PAYMENT_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: payment.id,
       lines: [
         { accountCode: debitCode, debitCents: centsFromDb(payment.amountCents), creditCents: 0 },

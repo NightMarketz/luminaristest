@@ -135,6 +135,7 @@ export class ExerciseClosingService {
       date: `${year}-12-31`,
       description: `Encerramento do exercício ${year} — apuração do resultado`,
       sourceType: CLOSING_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: closingSourceId(year),
       lines,
     };

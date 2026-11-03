@@ -492,6 +492,7 @@ export class BankSettlementService {
           date: lineDate,
           description: `Encargo bancário — ${titleType} ${item.titleId}`,
           sourceType: BANK_CHARGE_SOURCE_TYPE,
+          automaticWriter: true,
           sourceId: item.id,
           lines:
             titleType === 'PAYABLE'
@@ -517,6 +518,7 @@ export class BankSettlementService {
           date: lineDate,
           description: `Tarifa do provedor — ${titleType} ${item.titleId}`,
           sourceType: PROVIDER_FEE_SOURCE_TYPE,
+          automaticWriter: true,
           sourceId: item.id,
           lines: [
             { accountCode: ctx.feeAccountCode!, debitCents: feeCents, creditCents: 0 },

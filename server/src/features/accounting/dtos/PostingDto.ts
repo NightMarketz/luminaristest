@@ -248,6 +248,13 @@ export type PostEntryInput = z.infer<typeof PostEntrySchema> & {
    * do `auditDescription` (o parse do controller descarta a chave).
    */
   bindingRef?: { bindingId: string; bindingVersion: number };
+  /**
+   * INTERNO — ITG 2000 (R1) item 36: gravador automático (bridge, subrazão, apuração, job). Em período fechado e
+   * reaberto, sem `extemporaneousReason`, o `PostingService` consigna a razão automática em vez de recusar. Fora do
+   * `PostEntrySchema` pelo mesmo motivo do `auditDescription`: o parse do controller descarta a chave, então pelo HTTP a
+   * razão é sempre exigida, qualquer que seja o `sourceType` (D-2026-11-02-DELEGACAO-DONO §3.6).
+   */
+  automaticWriter?: boolean;
 };
 export type ReverseEntryInput = z.infer<typeof ReverseEntrySchema>;
 export type ReportQueryInput = z.infer<typeof ReportQuerySchema>;

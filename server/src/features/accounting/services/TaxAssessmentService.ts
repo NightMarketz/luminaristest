@@ -628,6 +628,7 @@ export class TaxAssessmentService {
         date: fimDoPeriodo(row.anoCalendario, row.periodo),
         description: `Provisão de ${row.tributo}${row.periodo === 'A00' ? ' (ajuste anual)' : ''} — ${row.periodo}/${row.anoCalendario} (apuração ${row.id})`,
         sourceType: TAX_ASSESSMENT_PROVISION_SOURCE_TYPE,
+        automaticWriter: true,
         sourceId: row.id,
         lines,
       });

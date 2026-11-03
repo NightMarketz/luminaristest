@@ -132,12 +132,14 @@ describe('ITG 2000 (R1) — histórico da retificação (item 32) e do extempor�
     });
 
     // Correção 2 (D-2026-11-02-DELEGACAO-DONO §3): o gravador automático não trava; a razão é o processamento tardio.
-    it('lançamento AUTOMÁTICO (sourceType ≠ manual) sem razão, no período reaberto, passa e o histórico traz a data e a razão automática', async () => {
+    it('lançamento AUTOMÁTICO (gravador interno, automaticWriter) sem razão, no período reaberto, passa e o histórico traz a data e a razão automática', async () => {
       // Depende do caso acima: junho já foi fechado e reaberto.
       const entry = await posting().postEntry(scope(), {
         ...lancamento('baixa de conta a pagar', '2026-06-22', 2500),
         sourceType: 'ap.payment',
         sourceId: 'itg2000-auto-1',
+        // Chamada interna (gravador automático): só ela carrega o marcador; pelo HTTP o parse o descarta.
+        automaticWriter: true,
       });
 
       expect(entry.description).toContain('ocorrência em 22/06/2026');

@@ -350,11 +350,12 @@ export class PostingService {
         // efetiva da ocorrência e a razão do registro extemporâneo (D-2026-11-02-DELEGACAO-DONO).
         let description = input.description;
         if (jaFechado) {
-          // Gravador automático (sourceType ≠ manual) sem razão: a razão real do registro tardio é o processamento
-          // depois do fechamento; o manual segue exigindo a razão digitada (D-2026-11-02-DELEGACAO-DONO §3).
+          // Gravador automático (chamada interna, `automaticWriter`) sem razão: a razão real do registro tardio é o
+          // processamento depois do fechamento. Pelo HTTP a razão digitada é sempre exigida — o `sourceType` vem do
+          // cliente e não decide nada aqui (D-2026-11-02-DELEGACAO-DONO §3.6).
           const razao =
             input.extemporaneousReason?.trim() ||
-            (sourceType !== 'manual'
+            (input.automaticWriter
               ? `lançamento automático (${sourceType}) processado depois do fechamento do período`
               : undefined);
           if (!razao) {

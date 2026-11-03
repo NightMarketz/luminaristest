@@ -85,4 +85,15 @@ describe('POST /api/accounting/post — ITG 2000 item 36 em período fechado e r
       expect(await contarLancamentos()).toBe(antes);
     },
   );
+
+  it('o marcador interno de gravador automático enviado no corpo é descartado: continua 400', async () => {
+    const antes = await contarLancamentos();
+    const res = await post(
+      lancamento('sem razão, marcador forjado', '2026-06-23', { sourceType: 'ap.payment', sourceId: 'itg2000-http-forjado', automaticWriter: true }),
+    );
+
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).toContain('registro extemporâneo');
+    expect(await contarLancamentos()).toBe(antes);
+  });
 });
