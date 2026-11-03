@@ -81,6 +81,69 @@ Pré-condições (verificar antes de começar):
   passos 6–11 abaixo, não é pré-condição já satisfeita** — registrar como sub-passo do primeiro
   evento tocado.
 
+### Execução 02/11 — P0 de re-semeadura e passo 3 do FIX-DRE-DEDUCAO-SINAL (agente AI tester)
+
+> **Autorização** (dono, chat, 2026-11-02): *"gates humanos H1 e H2, as cédulas de decisão pendentes e o #907. Faz e me
+> substitui nas decisões"*, registrada em `docs/plano/decisoes/D-2026-11-02-DELEGACAO-DONO.md` §6. Assina
+> `agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)`. A assinatura atesta a execução e a
+> conferência da evidência. Ela **não** substitui oráculo externo.
+>
+> **Ambiente:** worktree `agent-af93873e91c9b426b`, branch `claude/gate-copilot-h2-9782b8` com `origin/main` (`f5dc79b7`, o
+> #1005 já mergeado) trazida por merge (`ac4acf38`). `npm ci` em `server/` e `my-app/`. A worktree não tem `server/.env`, então
+> tudo foi passado por variável de ambiente: `DATABASE_URL=file:C:/Users/smurf/Downloads/Luminaris/server/prisma/prisma/dev.db`
+> (o dev.db **real**, caminho absoluto), JWT de teste e `OPENAI_API_KEY=ci-dummy-openai-key`. Desvio do roteiro: o roteiro
+> manda parar server e app antes. Os processos do dono (`:3000` e `127.0.0.1:5000`) estavam de pé e **não foram tocados**. O
+> backup por cópia de bytes levou também o `-wal` e o `-shm`, porque o banco está em modo WAL.
+>
+> ```text
+> 0. cópia de bytes → C:\Users\smurf\Downloads\Luminaris\server\prisma\backups\h2-2026-11-02-20261103-000306\
+>    origem (server/prisma/prisma)                                        cópia
+>    794550434fb515591b26259bfa0a95d0cd09d2f4fb9cb933bcbc481c902cbd54 *dev.db      794550434fb515591b26259bfa0a95d0cd09d2f4fb9cb933bcbc481c902cbd54 *dev.db
+>    0572b0ebba4a8e384f310ad078611bf530b2cab09b4a2733576dd90a5d162e6f *dev.db-wal  0572b0ebba4a8e384f310ad078611bf530b2cab09b4a2733576dd90a5d162e6f *dev.db-wal
+>    a42fc0bea900030cb4ef4b51d709db6f6604c9064ef6e5b84b3f217f36f30324 *dev.db-shm  a42fc0bea900030cb4ef4b51d709db6f6604c9064ef6e5b84b3f217f36f30324 *dev.db-shm
+> 1. npm run db:backup
+>    origem: C:\Users\smurf\Downloads\Luminaris\server\prisma\prisma\dev.db
+>    backup gerado: C:\Users\smurf\Downloads\Luminaris\.claude\worktrees\agent-af93873e91c9b426b\server\prisma\backups\dev-20261103030314.db
+>    integrity_check: ok
+>    journal_entries: fonte=1513 · cópia=1513
+> 2. npx prisma migrate deploy
+>    The following migration(s) have been applied:
+>      20261029130000_psc_credentials · 20261029160000_nfce_cscs · 20261029200000_nfce_contingencia · 20261031120000_nfce_csc_qr_v3_recusado
+>    All migrations have been successfully applied.
+>    npx prisma migrate status → 146 migrations found in prisma/migrations · Database schema is up to date!
+> 3. npx prisma generate → ✔ Generated Prisma Client (v6.16.2) to .\generated\prisma in 453ms
+> 4. npm run db:seed:accounting -- --years 2025,2026 --i-have-a-backup
+>    [ { "username": "seed-presumido", "regime": "PRESUMIDO", "userId": "cmufn7n590000cixkxbls0agh", "unitId": "cmuw4yqxg001jcii0iz2yb9rw",
+>        "entriesCreated": 10, "entriesExisting": 100, "payablesCreated": 2, "receivablesCreated": 2, "closedYears": [ 2025 ],
+>        "tieOut": [ { "asOf": "2025-12-31", "debitCents": 74342103, "creditCents": 74342103, "trialBalanceBalanced": true, "balanceSheetBalanced": true },
+>                    { "asOf": "2026-11-03", "debitCents": 125044929, "creditCents": 125044929, "trialBalanceBalanced": true, "balanceSheetBalanced": true } ] },
+>      { "username": "seed-real", "regime": "REAL", "userId": "cmufn7te50279cixko3lvgj5x", "unitId": "cmuw4z7zj02ehcii0st3unfr4",
+>        "entriesCreated": 10, "entriesExisting": 100, "payablesCreated": 2, "receivablesCreated": 2, "closedYears": [ 2025 ],
+>        "tieOut": [ { "asOf": "2025-12-31", "debitCents": 71339559, "creditCents": 71339559, "trialBalanceBalanced": true, "balanceSheetBalanced": true },
+>                    { "asOf": "2026-11-03", "debitCents": 117447750, "creditCents": 117447750, "trialBalanceBalanced": true, "balanceSheetBalanced": true } ] } ]
+>    próximo passo (binding NÃO é semeado — ADR-FEEDER §7/§8): node scripts/activate-salon-binding.mjs --owner-user-id cmufn7n590000cixkxbls0agh --unit-id cmuw4yqxg001jcii0iz2yb9rw
+>    próximo passo (binding NÃO é semeado — ADR-FEEDER §7/§8): node scripts/activate-salon-binding.mjs --owner-user-id cmufn7te50279cixko3lvgj5x --unit-id cmuw4z7zj02ehcii0st3unfr4
+>    OK: seed multi-exercício aplicado e tie-out fechado.
+>    exit 0
+> 5. node scripts/activate-salon-binding.mjs … (os dois "próximo passo")
+>    alvo: C:\Users\smurf\Downloads\Luminaris\server\prisma\prisma\dev.db
+>    JÁ INSTALADO: kit 'beautySalon' v6 na unidade 'cmuw4yqxg001jcii0iz2yb9rw'. Nada a fazer (idempotente).   exit 0
+>    alvo: C:\Users\smurf\Downloads\Luminaris\server\prisma\prisma\dev.db
+>    JÁ INSTALADO: kit 'beautySalon' v6 na unidade 'cmuw4z7zj02ehcii0st3unfr4'. Nada a fazer (idempotente).   exit 0
+> 6. build de produção do commit ac4acf38: server `npm run build` (exit 0) e `node dist/server.js` em :4100;
+>    my-app `next build` (✓ Compiled successfully) e `next start -H 127.0.0.1 -p 3100`
+>    {"level":"info","message":"Luminaris Server running","url":"http://localhost:4100",…,"event":"process.started"}
+> ```
+>
+> **Passo 3 do FIX-DRE-DEDUCAO-SINAL:** o `db:seed:accounting` saiu com **exit 0** e `balanceSheetBalanced: true` no corte de
+> 2026 do `seed-presumido`, o mesmo corte que em 31/10 dava `false`. Grau: **verificado** (saída acima).
+>
+> **Como a tela foi rodada nos passos 16 em diante:** um runner Puppeteer (Chrome headless 1280×900, sessão persistente)
+> loga pelo formulário `/users/login` com a senha do seed lida de `server/.env` (`SEED_ACCOUNTING_PASSWORD`, não impressa). Em
+> cada ação, ele grava print `.png` e texto da tela `.txt` em
+> [`runbook-evidence/H2-2026-11-02/`](runbook-evidence/H2-2026-11-02/) e guarda o Network (`/api`: método, URL, status, corpo do
+> request e início do corpo da resposta) e o console (erro/aviso). O Network colado abaixo vem dessa captura, não do DevTools.
+
 ## Passos
 
 1. Passada final pelas abas do painel de contabilidade (AP, AR, Dimensões, Conciliação,
@@ -849,20 +912,89 @@ Assinatura do executor (passo 15): ____________
 16. Contabilidade → Compliance → e-Lalur → "Movimentos da Parte B (M410)".
     - a) Criar um movimento `CR` com contrapartida (a lista só oferece contas do mesmo tributo, sem a própria) e
       um `PF` (a contrapartida some). Resultado esperado: 2xx; o `PF` sai sem `contrapartidaId` no request.
-      EVIDÊNCIA: [ ]
-    - b) Histórico com `|`: a tela recusa antes do envio. EVIDÊNCIA: [ ]
+      EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
+    - b) Histórico com `|`: a tela recusa antes do envio. EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
     - c) Fechar T01, depois T02 (o botão de T03 só habilita com T02 fechado); reabrir T02 (o de T01 fica
       desabilitado enquanto T02 estiver fechado). Resultado esperado: 2xx; o chip muda de estado e o
-      diagnóstico recarrega. EVIDÊNCIA: [ ]
+      diagnóstico recarrega. EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
     - d) Diagnóstico: saldos por trimestre × conta; se houver divergência, a linha fica vermelha e aparece na
-      lista do topo; se houver aviso M312, "Ver o ajuste na Parte A" filtra o ajuste. EVIDÊNCIA: [ ]
-    - e) Usuário sem `canManageLalur`: sem botões de escrita; a leitura segue. EVIDÊNCIA: [ ]
+      lista do topo; se houver aviso M312, "Ver o ajuste na Parte A" filtra o ajuste. EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
+    - e) Usuário sem `canManageLalur`: sem botões de escrita; a leitura segue. EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
+
+
+> **Execução 02/11 — passo 16 (agente AI tester; autorização e método no bloco "Execução 02/11 — P0", antes de "## Passos").**
+> Usuário `seed-real`, unidade `seed-unit-real` (`cmuw4z7zj02ehcii0st3unfr4`), exercício 2026. Estado de partida, lido na tela:
+> 2 contas da Parte B do tributo I (`PB-H2-1`, `PB-H2-2`), 2 movimentos de T01 e **T01 já "fechado 31/10/2026"**, deixados pelo
+> preflight de 31/10. Por isso os movimentos novos foram lançados em **T02** (desvio de dado, não de roteiro).
+>
+> **a)** Com `CR`, o modal mostra o campo "Contrapartida (COD_CTA_B_CTP) — opcional, mesmo tributo" com as opções
+> `— sem contrapartida —|PB-H2-2 — H2 16 contrapartida`: só a outra conta do tributo I, sem a própria `PB-H2-1`. Com `PF`, o
+> campo some: `[campo Contrapartida] com CR: true · com PF: false`. Network:
+>
+> ```text
+> POST /api/lalur/parte-b/movements -> 201
+>    req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","parteBId":"cmvtz7a7n008bci9cf3u0vmes","year":2026,"quarter":"T02","valorCents":12000,"indicador":"CR","historico":"H2 02/11 passo 16a CR com contrapartida (AI tester)","indLanAnt":"N","contrapartidaId":"cmvtz89s8008dci9crjdvu8x1"}
+> POST /api/lalur/parte-b/movements -> 201
+>    req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","parteBId":"cmvtz7a7n008bci9cf3u0vmes","year":2026,"quarter":"T02","valorCents":3000,"indicador":"PF","historico":"H2 02/11 passo 16a PF sem contrapartida (AI tester)","indLanAnt":"N"}
+>    res: {"success":true,"data":{"id":"cmw04093q0003ciokqtdtm4he",…,"indicador":"PF","contrapartidaId":null,…}}
+> ```
+>
+> O `PF` sai sem `contrapartidaId` no request. Lista depois: `T02 PB-H2-1 CR R$ 120,00 PB-H2-2 H2 02/11 passo 16a CR com
+> contrapartida (AI tester) N usuário` ([`passo16a-02-movimentos-m410.txt`](runbook-evidence/H2-2026-11-02/passo16a-02-movimentos-m410.txt),
+> [`passo16a-01-cr-contrapartida-form.png`](runbook-evidence/H2-2026-11-02/passo16a-01-cr-contrapartida-form.png)).
+>
+> **b)** Histórico `H2 passo 16b | com barra vertical` → "Salvar": `[16b] requests após Salvar com "|": 0`, e o modal mostra
+> "O histórico não pode conter "|" — é o separador de campo do arquivo SPED."
+> ([`passo16b-01-historico-com-barra-recusado.png`](runbook-evidence/H2-2026-11-02/passo16b-01-historico-com-barra-recusado.png)).
+>
+> **c)** Para fechar T01 pela tela, primeiro ele foi reaberto (T02 aberto, o que é permitido). Cada ação tem diálogo de
+> confirmação ("Fechar materializa o M500 do trimestre e deriva o PF/BC. Exige o trimestre anterior fechado." / "Reabrir apaga a
+> materialização do M500 …"):
+>
+> ```text
+> [inicial]          T01 fechado 31/10/2026 · T02 aberto · T03 aberto · T04 aberto || Reabrir T01 , Fechar T02 , Fechar T03(DIS) , Fechar T04(DIS)
+> [após Reabrir T01] T01 aberto · …                                              || Fechar T01 , Fechar T02(DIS) , Fechar T03(DIS) , Fechar T04(DIS)
+> [após Fechar T01]  T01 fechado 03/11/2026 · T02 aberto · …                     || Reabrir T01 , Fechar T02 , Fechar T03(DIS) , Fechar T04(DIS)
+> [após Fechar T02]  T01 fechado 03/11/2026 · T02 fechado 03/11/2026 · …        || Reabrir T01(DIS) , Reabrir T02 , Fechar T03 , Fechar T04(DIS)
+> [assert] com T02 fechado: "Reabrir T01" disabled=true (esperado true) · "Fechar T03" disabled=false (esperado false)
+> [após Reabrir T02] T01 fechado 03/11/2026 · T02 aberto · …                     || Reabrir T01 , Fechar T02 , Fechar T03(DIS) , Fechar T04(DIS)
+> POST /api/lalur/parte-b/reopen -> 200  req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2026,"quarter":"T01"}
+> GET /api/lalur/parte-b/balances?unitId=cmuw4z7zj02ehcii0st3unfr4&year=2026 -> 200
+> POST /api/lalur/parte-b/close -> 200   req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2026,"quarter":"T01"}
+> GET /api/lalur/parte-b/balances?unitId=cmuw4z7zj02ehcii0st3unfr4&year=2026 -> 200
+> POST /api/lalur/parte-b/close -> 200   req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2026,"quarter":"T02"}
+> GET /api/lalur/parte-b/balances?unitId=cmuw4z7zj02ehcii0st3unfr4&year=2026 -> 200
+> POST /api/lalur/parte-b/reopen -> 200  req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2026,"quarter":"T02"}
+> GET /api/lalur/parte-b/balances?unitId=cmuw4z7zj02ehcii0st3unfr4&year=2026 -> 200
+> ```
+>
+> O `GET …/balances` depois de cada escrita é o diagnóstico recarregando. Prints:
+> [`passo16c-01-t01-t02-fechados.png`](runbook-evidence/H2-2026-11-02/passo16c-01-t01-t02-fechados.png),
+> [`passo16c-02-t02-reaberto.png`](runbook-evidence/H2-2026-11-02/passo16c-02-t02-reaberto.png). Estado final: T01 fechado, T02–T04 abertos.
+>
+> **d)** "DIAGNÓSTICO DE SALDOS — MATERIALIZADO × RECOMPUTADO" lista trimestre × conta (saldo inicial, lançamentos Parte A e
+> Parte B, saldo final). No T01 fechado, cada célula mostra o par materializado/recomputado e os dois são iguais: `T01
+> PB-H2-1 (I) … -R$ 50,00 / -R$ 50,00`, `T01 PB-H2-2 (I) … R$ 100,00 / R$ 100,00`. Linhas vermelhas: `[]`. Aviso M312 / "Ver o
+> ajuste na Parte A": `false false`. **Sem divergência e sem aviso M312 neste dado**, então os dois ramos condicionais do item
+> ("se houver…") não foram exercitados
+> ([`passo16d-01-diagnostico.txt`](runbook-evidence/H2-2026-11-02/passo16d-01-diagnostico.txt),
+> [`passo16d-01-diagnostico.png`](runbook-evidence/H2-2026-11-02/passo16d-01-diagnostico.png)).
+>
+> **e)** **Não executável: a pré-condição não existe.** `server/src/features/accounting/policies/AccountingPolicy.ts:91-97`:
+> `canManageLalur` e `canReadLalur` são o mesmo predicado, `return !!scope.actorUserId;`. Logo, não existe usuário que leia o
+> e-Lalur sem poder escrever nele. O ramo de tela existe (`LalurParteBMovementsSection.tsx`: `readOnly` esconde os botões de
+> escrita; um 403 no salvar liga o `readOnly`), mas só um servidor que devolva 403 o alcança. Isso só acontece depois do
+> GOV-CONTADOR, que troca o predicado (comentário em `AccountingPolicy.ts:99`).
+>
+> Console nas ações a–d: `(sem erro/aviso)`. Leitura do agente: a)–c) conferem com o esperado. d) confere na parte
+> incondicional. e) não roda porque falta a pré-condição. Grau: **verificado** (Network e tela capturados). O "e)" está
+> verificado por leitura do código.
 
 Desfecho do passo 16 (marcar UM):
 [ ] PASSOU — a) a e) com evidência conferindo com o esperado
 [ ] FALHOU — item __ divergiu; evidência colada acima
-[ ] BLOQUEADO — pré-condição __ não se sustentava
-Assinatura do executor (passo 16): ____________
+[x] BLOQUEADO — pré-condição 16 e) — usuário sem `canManageLalur` não existe (`AccountingPolicy.ts:91-97`, mesmo predicado de leitura) não se sustentava; a)–d) conferem com o esperado *(marcado pelo agente AI tester, 02/11, pela evidência do bloco acima)*
+Assinatura do executor (passo 16): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
 ### [EMENDA 2026-09-28] Passo 17 — SPED: qualificação do assinante e contador do cadastro (FE-INCR-SPED-SIGNERS)
 
