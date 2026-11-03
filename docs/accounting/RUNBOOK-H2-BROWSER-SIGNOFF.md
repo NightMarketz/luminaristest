@@ -1090,20 +1090,50 @@ Assinatura do executor (passo 17): agente claude-opus-5-5, AI tester, sob autori
 
 18. Contabilidade → Compliance → "Revisão profissional".
     - a) "Abrir revisão": os selects listam os arquivos EXPORTED do exercício; abrir com a ECD e a ECF. Abrir de novo
-      o mesmo par dá 409 com a mensagem e a lista recarrega. EVIDÊNCIA: [ ]
+      o mesmo par dá 409 com a mensagem e a lista recarrega. EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
     - b) No detalhe: adicionar um achado BLOCKER (I050) e um NOTE (I200). "Assinar" fica desabilitado enquanto o
-      BLOCKER estiver aberto. EVIDÊNCIA: [ ]
+      BLOCKER estiver aberto. EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
     - c) Resolver o BLOCKER por "Apontar dado editado" (conta) — o link leva ao Plano de Contas; resolver o NOTE por
-      "Lançar acerto" com "Estornar também o lançamento original" (só aparece no I200). EVIDÊNCIA: [ ]
+      "Lançar acerto" com "Estornar também o lançamento original" (só aparece no I200). EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
     - d) Assinar (nome + CRC `UF-NNNNNN/O-D` + declaração). Se vier 409 `REVIEW_STALE`, regerar, "Trocar jobs" e
-      assinar de novo. Resultado esperado: status "assinada". EVIDÊNCIA: [ ]
-    - e) Em outra revisão: "Rejeitar" com motivo → status "rejeitada", sem mais ações. EVIDÊNCIA: [ ]
+      assinar de novo. Resultado esperado: status "assinada". EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
+    - e) Em outra revisão: "Rejeitar" com motivo → status "rejeitada", sem mais ações. EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
+
+
+> **Execução 02/11 — passo 18 (agente AI tester; autorização e método no bloco "Execução 02/11 — P0").** Pré-condição: "a ECD
+> e a ECF do exercício já geradas pela tela". `seed-real`, Compliance → Revisão profissional → "Abrir revisão", Exercício
+> 2025:
+>
+> ```text
+> select "Arquivo da ECD (EXPORTED)": — nenhum — | cmw049xs… · ECD · 03/11/2026, 00:17:07 | cmvwlzja… · ECD · 31/10/2026, 13:21:50 | cmvwlvx4… · ECD · 31/10/2026, 13:19:01
+> select "Arquivo da ECF (EXPORTED)": — nenhum —
+> botões do diálogo: ["","Abrir(DIS)"]
+> ```
+>
+> Não existe ECF EXPORTED, e a tela não gera nenhuma. Tentativa nesta execução (ECF Real 2025, `seed-real`, contador do
+> cadastro com fone, 203 com e-mail e fone):
+>
+> ```text
+> POST /api/accounting/sped/ecf/real/generate -> 400
+>    req: {…,"fiscal":{"formaTrib":"1","formaTribPer":"RRRR","indAliqCsll":"1","indRecReceita":"2"},"signers":[{"identNom":"DIRETOR FICTICIO DE TESTE","identCpfCnpj":"12345678062","identQualif":"203","email":"diretor.teste@example.com","fone":"1140000000"}],"socios":[],"signerContactIds":["cmvwlx9sq000lcizs3z1p4zng"]}
+>    res: {"code":"ECF_Y600_SEM_SOCIOS","message":"Y600: a ECF de 2025 exige ao menos um sócio, titular ou dirigente (Manual ECF L12 p. 56, OC para FORMA_TRIB 1 a 7) — cadastre os sócios em /accounting/partners ou informe dirigentes."}
+> ```
+>
+> `SpedEcfRealPanel.tsx:122-123` registra a mesma lacuna: `// Y600 (BE-INCR-ECF-Y600): a tela ainda não coleta sócios — o
+> servidor devolve 400 ECF_Y600_*; FE próprio pendente.` / `socios: [],`. É a causa do FALHOU do passo 14 e só muda com o nó
+> FE-INCR-ECF-Y600. Prints: [`passo18a-01-abrir-revisao-2025.png`](runbook-evidence/H2-2026-11-02/passo18a-01-abrir-revisao-2025.png),
+> [`passo18-00-ecf-real-2025-y600.png`](runbook-evidence/H2-2026-11-02/passo18-00-ecf-real-2025-y600.png). Os 400 de
+> `Failed to load resource` no console desta tela vieram do campo "Exercício" recebendo `0`, `02`, `020` enquanto o runner
+> digitava `2025`: são GETs com ano inválido, artefato da digitação. Não é bug.
+>
+> Leitura do agente: os itens a)–e) **não foram executados**. Sem ECF EXPORTED, "Abrir" fica desabilitado e nenhuma revisão
+> abre. Grau: **verificado** (tela, Network e leitura do código).
 
 Desfecho do passo 18 (marcar UM):
 [ ] PASSOU — a) a e) com evidência conferindo com o esperado
 [ ] FALHOU — item __ divergiu; evidência colada acima
-[ ] BLOQUEADO — pré-condição __ não se sustentava
-Assinatura do executor (passo 18): ____________
+[x] BLOQUEADO — pré-condição "ECD e ECF do exercício geradas pela tela" — nenhuma ECF sai pela tela (ECF_Y600_SEM_SOCIOS; causa do FALHOU do passo 14, nó FE-INCR-ECF-Y600) não se sustentava *(marcado pelo agente AI tester, 02/11, pela evidência do bloco acima)*
+Assinatura do executor (passo 18): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
 ### [EMENDA 2026-09-28] Passo 19 — Entrega ao contador (FE-INCR-DELIVERY PR-D1/PR-D2)
 
@@ -1113,20 +1143,55 @@ Assinatura do executor (passo 18): ____________
 
 19. Contabilidade → Compliance → "Entrega ao contador".
     - a) Contadores: cadastrar um (CPF, CRC `UF-NNNNNN/O-D`, UF do CRC); editar limpando a certidão; salvar um perfil de
-      pacote com "Balancete". EVIDÊNCIA: [ ]
+      pacote com "Balancete". EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
     - b) Montar pacote: escolher o contador (o balancete do exercício vem pré-marcado pelo perfil), a ECD e a ECF;
       "Validar pacote" → manifesto com ECD, ECF e os extras na ordem, sha256 e período. Sem revisão assinada: 409
-      `REVIEW_REQUIRED` com o link "Revisão profissional ↑". EVIDÊNCIA: [ ]
+      `REVIEW_REQUIRED` com o link "Revisão profissional ↑". EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
     - c) Baixar os arquivos pelo manifesto e conferir o sha256; marcar "Confirmo que despachei…" e "Registrar despacho"
-      → recibo com `SENT`, o significado devolvido pelo servidor, o contador e o signatário J930. EVIDÊNCIA: [ ]
+      → recibo com `SENT`, o significado devolvido pelo servidor, o contador e o signatário J930. EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
     - d) Entregas: a entrega aparece no histórico; o detalhe lista os itens; "Reprocessar" só aparece em `FAILED`.
-      EVIDÊNCIA: [ ]
+      EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
+
+
+> **Execução 02/11 — passo 19 (agente AI tester; autorização e método no bloco "Execução 02/11 — P0").** `seed-real`,
+> Compliance → Entrega ao contador.
+>
+> **a)** "Novo contador" (CPF, CRC `UF-NNNNNN/O-D`, UF do CRC, certidão com validade), depois "Editar" limpando a certidão e a
+> validade, depois "Perfil de pacote" só com "Balancete":
+>
+> ```text
+> POST /api/accounting/contacts -> 201
+>    req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","name":"CONTADORA H2 AI TESTER","email":"contadora.h2@example.com","cpf":"52998224725","crcNumber":"MG-012345/O-6","crcUf":"MG","phone":"1130000000","crcCertificate":"MG/2026/000999","crcCertificateValidUntil":"2026-12-31"}
+> PATCH /api/accounting/contacts/cmw04ev93000hcioktfbd76uv -> 200
+>    req: {…,"crcNumber":"MG-012345/O-6","crcUf":"MG","crcCertificate":null,"crcCertificateValidUntil":null}
+> PUT /api/accounting/delivery/profile?unitId=cmuw4z7zj02ehcii0st3unfr4&contactId=cmw04ev93000hcioktfbd76uv -> 200
+>    req: {"kinds":["EXPORT_TRIAL_BALANCE"]}
+>    res: {"success":true,"data":{"kinds":["EXPORT_TRIAL_BALANCE"]}}
+> [linha após editar] CONTADORA H2 AI TESTER contadora.h2@example.com MG-012345/O-6 · MG — Editar Perfil de pacote Arquivar
+> ```
+>
+> Print: [`passo19a-01-novo-contador.png`](runbook-evidence/H2-2026-11-02/passo19a-01-novo-contador.png). Confere com o
+> esperado.
+>
+> **b)–d)** Montar pacote, Exercício 2025, contadora acima, ECD `cmw049xs…` (gerada no passo 17c):
+>
+> ```text
+> select "Arquivo da ECF (EXPORTED)": — nenhum —
+> Extras: "Nenhum relatório EXPORTED no exercício — gere na aba Importação/Exportação."
+> Validar desabilitado? true
+> ```
+>
+> Print: [`passo19b-01-montar-pacote.png`](runbook-evidence/H2-2026-11-02/passo19b-01-montar-pacote.png). Sem ECF EXPORTED,
+> "Validar pacote" fica desabilitado e nem o 409 `REVIEW_REQUIRED` é alcançável. A pré-condição do passo ("revisão do par
+> ECD/ECF assinada", passo 18) também não se sustenta. b), c) e d) **não foram executados**. Não houve tentativa de "12 meses
+> `HARD_CLOSED`", nem de gerar o balancete EXPORTED do exercício na aba Importação/Exportação, porque o bloqueio da ECF vem
+> antes. Grau: **verificado**.
 
 Desfecho do passo 19 (marcar UM):
 [ ] PASSOU — a) a d) com evidência conferindo com o esperado
 [ ] FALHOU — item __ divergiu; evidência colada acima
-[ ] BLOQUEADO — pré-condição __ não se sustentava
-Assinatura do executor (passo 19): ____________
+[x] BLOQUEADO — pré-condição "revisão do par ECD/ECF assinada" (passo 18 BLOQUEADO; sem ECF EXPORTED o "Validar pacote" fica desabilitado); a) confere não se sustentava *(marcado pelo agente AI tester, 02/11, pela evidência do bloco acima)*
+Assinatura do executor (passo 19): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
 ### [EMENDA 2026-09-29] Passo 20 — Baixas por retorno bancário (FE-INCR-BANK-SETTLEMENT)
 
