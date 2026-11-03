@@ -56,7 +56,7 @@
    usada) e o movimento em centavos. Fonte: o mesmo `groupByAccount` que o cálculo já fez (sem query nova para o
    movimento). (F-RT-1 a, ratificado.) Teste-tabela: trimestre com receita em 2 contas analíticas de 3.1 ⇒ 2
    entradas, e a soma delas = `valorCents` da linha `RECEITA_SERVICO`.
-   **Exceção — `RECEITA_HOSPITALAR` [fork F-RT-7, RATIFICAÇÃO PENDENTE]:** essa linha não é movimento de conta; é a parte
+   **Exceção — `RECEITA_HOSPITALAR` [fork F-RT-7, decidido 03/11 — §3.1]:** essa linha não é movimento de conta; é a parte
    da 3.1 nos serviços marcados HOSPITALAR (subrazão por serviço, `linhaHospitalar`). Rastrear por conta apontaria a 3.1
    inteira. Achado de 03/11, depois da ratificação dos F-RT-1..6; a sessão de execução foi avisada para perguntar ao dono.
 3. **Saldo do balancete.** (F-RT-2 a, ratificado.) Cada entrada de rastreio grava também o saldo da conta no
@@ -186,10 +186,13 @@ export function vencimentoQuotaUnica(anoCalendario: number, periodo: LalurPeriod
 | F-RT-5 | "Fora, frente própria (Recomendado)" | não |
 | F-RT-6 | "Descrição + fonte (Recomendado)" — mais um teste: toda linha `CALCULO` diz a operação na descrição | não |
 
-**F-RT-7 (aberto em 03/11, depois do `executa`) — RATIFICAÇÃO PENDENTE.** Rastreio da `RECEITA_HOSPITALAR`:
-(a) por serviço (serviço, movimento do serviço no período, conta-mãe 3.1); (b) por conta mesmo, com nota na descrição;
-(c) sem rastreio nessa linha nesta emenda. Recomendação: **(a)**, porque é a única que mostra de onde vem a parte
-hospitalar, e o contador pediu justamente isso. O resto do BRIEF segue com o `executa` do dono (03/11).
+**Decisões de 03/11 tomadas na execução (PR #1013, commit `644f8989`, questionário do dono):**
+
+| Ponto | Resposta do dono | Efeito |
+|---|---|---|
+| F-RT-7 — rastreio da `RECEITA_HOSPITALAR` | "Basta como está (Recomendado)" | a linha é `CALCULO`, sem conta; a descrição diz "= min(Σ receita dos serviços hospitalares na subrazão por serviço, receita de serviço)". O questionário ofereceu só "basta como está" e "apontar a 3.1"; o rastreio **por serviço** (recomendação deste BRIEF) **não** foi oferecido |
+| A1 — linhas que somam vários períodos | "Cálculo + períodos" | `RECEITA_ACUMULADA_ANO`, `LC224_RECEITA_ACUMULADA`, `LC224_EXCEDENTES_ANTERIORES`, `DEVIDO_MESES_ANTERIORES`, `RETIDO_MESES`, `ESTIMATIVA_PAGA_ASSUMIDA` e `ESTIMATIVA_NAO_PAGA` são `CALCULO`, sem ponteiro, com os períodos na descrição. `MEMORIA_ANTERIOR` fica para `LC224_SOBRA_ANTERIOR` e as linhas de um período nomeado (item 4 estreitado) |
+| A2 — receita líquida negativa | "Descrição com max(0, Σ)" | `RECEITA_SERVICO` e `RECEITA_REVENDA` dizem "max(0, crédito − débito da conta 3.x)" |
 
 ## 4. Pendente de validação externa
 
