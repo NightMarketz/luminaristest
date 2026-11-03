@@ -131,7 +131,7 @@ geral do BROWSER-SIGNOFF: **FALHOU (passo 14)**, assinado como AI tester **[V, r
 | Y600 na tela | 14, 18 e 19 têm a mesma causa: o painel da ECF não coleta sócios (`SpedEcfRealPanel.tsx:122`), então não há ECF exportada, revisão assinada nem pacote | **C5**; depois refazer 14, 18 e 19 |
 | F-17-1 | o 400 da ECF por "contador sem telefone" mostra o id do contato, não o nome | correção leve (instrumentação → correção) no texto do erro |
 | F-16-e | `canManageLalur` e `canReadLalur` são o mesmo predicado (`AccountingPolicy.ts:91-97`): o ramo só-leitura do e-Lalur não existe | lacuna de política: vai ao [[GOV-CONTADOR]] (perfis do contador), não a fix isolado |
-| F-907-T | o toast global de erro do `apiClient` cobre o botão "Postar" do modal de lançamento em 1280×900; o clique cai no fundo e abre "alterações não salvas" (anterior ao #907) | correção leve de FE (posição do toast ou do rodapé do modal) |
+| F-907-T | o toast global de erro do `apiClient` cobria o botão "Postar" do modal de lançamento (erro repetido do que o modal já mostra) | **resolvido no #1012** (03/11): as 4 escritas que só o modal chama passam `silent`; classe verde; tela não conferida (vai no C7) |
 | F-20-1 | a linha do extrato só casa com a conta a pagar quando a referência é igual ao nº do documento (`BankSettlement.model.ts:199-205`) | regra desenhada, não bug; vira texto de ajuda na tela de conciliação se o dono quiser |
 
 ### C7 — resto da execução do H2
@@ -154,6 +154,7 @@ entrar em `main` antes. Pare num passo fechado perto de 150k de contexto e faça
 | PR | Condição para a maestro mergear |
 |---|---|
 | #1011 | CI verde (só docs) |
+| #1012 | classe **verde** (fix de FE do F-907-T): a maestro mergeia com CI verde |
 | #1003 | CI verde na cabeça `b5fed32b` ou depois |
 | #907 | C1: revisor APROVA a cabeça final |
 | #982 | depois que o agente do H2 terminar e o CI ficar verde; o H2 segue `human-open` se houver FALHOU/BLOQUEADO |
