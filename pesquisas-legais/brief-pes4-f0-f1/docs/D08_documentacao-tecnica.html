@@ -1,0 +1,4692 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-br" xml:lang="pt-br">
+
+<head>
+    <meta charset="utf-8" />
+  <!-- Google Tag Manager -->
+  <script type="text">(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-NHZSKTD');</script>
+  <!-- End Google Tag Manager -->
+
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "url": "https://www.gov.br/esocial",
+            "logo": "https://www.gov.br/esocial/logo.png"
+        }</script>
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "url": "https://www.gov.br/esocial",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://www.gov.br/esocial/search?SearchableText={search_term_string}",
+              "query-input": "required name=search_term_string"
+            }
+        }</script>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    
+        <base href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/documentacao-tecnica/" /><!--[if lt IE 7]></base><![endif]-->
+    
+
+    
+        <meta property="og:title" content="Documentação Técnica" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://www.gov.br/esocial/pt-br/documentacao-tecnica/documentacao-tecnica" />
+<meta property="og:image" content="https://www.gov.br/esocial/logo.png" />
+
+<meta property="og:locale" content="pt_BR" />
+<meta property="og:site_name" content="eSocial" />
+
+
+  
+
+  
+  
+  <script type="text">
+    (function() {
+        var po = document.createElement('script');
+        po.async = true;
+        po.src = document.location.protocol + '//connect.facebook.net/pt_BR/all.js#xfbml=1';
+        var head = document.getElementsByTagName('head')[0];
+        head.appendChild(po);
+    }());
+    </script>
+
+
+
+  
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@" />
+  
+
+
+
+
+
+<meta property="creator.productor" content="http://estruturaorganizacional.dados.gov.br/id/unidade-organizacional/26" />
+
+
+
+  
+    <link rel="stylesheet" type="text/css" href="https://www.gov.br/esocial/portal_css/Sunburst%20Theme/reset-cachekey-cbdb94fd52e3243e9196076d5c1697bd.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="https://www.gov.br/esocial/portal_css/Sunburst%20Theme/base-cachekey-cd6e481e2cf67f706516141c3036f3da.css" />
+    <style type="text/css" media="screen">@import url(https://www.gov.br/esocial/portal_css/Sunburst%20Theme/resourceplone.app.jquerytools.dateinput-cachekey-916c17b254abf73e089acec37b4120c7.css);</style>
+    <link rel="stylesheet" type="text/css" href="https://www.gov.br/esocial/portal_css/Sunburst%20Theme/resourceplone.formwidget.datetimestyles-cachekey-88aa30fabef272135e1a350e94aebc9c.css" />
+    <style type="text/css" media="screen">@import url(https://www.gov.br/esocial/portal_css/Sunburst%20Theme/jquery.autocomplete-cachekey-d8f85c6cc53f3c18ca2f52156ffa42a6.css);</style>
+    <link rel="stylesheet" type="text/css" href="https://www.gov.br/esocial/portal_css/Sunburst%20Theme/embedder-cachekey-b9f7e2e84b4ae546c2f41862b20e24d2.css" media="screen" />
+    <style type="text/css" media="screen">@import url(https://www.gov.br/esocial/portal_css/Sunburst%20Theme/resourcecollective.pollscsscollective.polls-cachekey-5665753329d7f03df239fb20a0291516.css);</style>
+        <!--[if lt IE 8]>    
+    
+    <link rel="stylesheet" type="text/css" href="https://www.gov.br/esocial/portal_css/Sunburst%20Theme/IEFixes-cachekey-bcaff68d991fc912d042ddffbfe5456c.css" media="screen" />
+        <![endif]-->
+    
+    <style type="text/css" media="all">@import url(https://www.gov.br/esocial/portal_css/Sunburst%20Theme/resourcepas.plugins.loginunicologinunico-cachekey-7819bf17671bf3d9c004d7c934ef213a.css);</style>
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/Swiper/3.4.2/css/swiper.min.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="https://www.gov.br/esocial/portal_css/Sunburst%20Theme/resourcelgpd.plugindsgov.min-cachekey-6c6d10e6834051a7ccc33205597ae0cc.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="https://www.gov.br/esocial/portal_css/Sunburst%20Theme/resourcegovbr.policycanais-cachekey-d98dab4cb8295e53923caa7323cbb14d.css" />
+
+  
+  
+    <script type="text/javascript" src="https://www.gov.br/esocial/portal_javascripts/Sunburst%20Theme/resourceplone.app.jquery-cachekey-fcc6ba4e8a882bc6561402836ad3607e.js"></script>
+    <script type="text/javascript" src="https://www.gov.br/esocial/portal_javascripts/Sunburst%20Theme/resourcegovbr.policyfolder_contents-cachekey-d50948a150f8a42b2a6095beea7355db.js"></script>
+    <script type="text/javascript" src="https://www.gov.br/esocial/portal_javascripts/Sunburst%20Theme/resourcegovbr.policycookiebar_1_3_57-cachekey-6a7f7224e373b3fcca561c64ce53acef.js"></script>
+    <script type="text/javascript" src="https://www.gov.br/esocial/portal_javascripts/Sunburst%20Theme/resourcegovbr.policyapplication_cookiebar_1_3_57-cachekey-605e90eca61a77528fd8b4e4debe9a21.js"></script>
+    <script type="text/javascript" src="https://www.gov.br/esocial/portal_javascripts/Sunburst%20Theme/register_function-cachekey-ad602c55d861f654ef7b6004d49822b2.js"></script>
+    <script type="text/javascript" src="https://www.gov.br/esocial/portal_javascripts/Sunburst%20Theme/resourceplone.formwidget.recurrencejquery.tmpl-beta1-cachekey-3f964151ca769cffa82c2f44d463a4e5.js"></script>
+    <script type="text/javascript" src="https://www.gov.br/esocial/portal_javascripts/Sunburst%20Theme/resourcecollective.js.bootstrapjsbootstrap.min-cachekey-59c47c4363067b9fcc392dba84e51336.js"></script>
+    <script type="text/javascript" src="https://www.gov.br/esocial/portal_javascripts/Sunburst%20Theme/resourcecollective.coverjsmain-cachekey-0e00fb2af4f36ccfa18251f51b2a8505.js"></script>
+    <script type="text/javascript" src="https://www.gov.br/esocial/portal_javascripts/Sunburst%20Theme/resourcebrasil.gov.tilesvendorjquery.jplayer.min-cachekey-d2b96d4ba7a49fc5b6a88aa2f0bad125.js"></script>
+    <script type="text/javascript" src="https://www.gov.br/esocial/portal_javascripts/Sunburst%20Theme/resourcedropdown-menu-cachekey-9091f6d976d1f65b3177ff9c715d7449.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/Swiper/3.4.2/js/swiper.min.js"></script>
+    <script type="text/javascript"></script>
+    <script type="text/javascript"></script>
+    <script type="text/javascript" src="https://www.gov.br/esocial/portal_javascripts/Sunburst%20Theme/resourcelgpd.pluginchangeCookieImage-cachekey-5c32a045374d360f3a1a477477a5828e.js"></script>
+    <script type="text/javascript" src="https://www.gov.br/esocial/portal_javascripts/Sunburst%20Theme/resourcelgpd.pluginblock_cookies-cachekey-8a25f527fb1c3d74271d291e285b7d95.js"></script>
+    <script type="text/javascript" src="https://www.gov.br/esocial/portal_javascripts/Sunburst%20Theme/++resource++govbr.recomendacao/govbr.recom.c339e72c8ffbb2f6c087.js"></script>
+
+
+
+  <link rel="stylesheet" href="https://www.gov.br/esocial/++resource++brasil.gov.agenda/brasilgovagenda-720c34e.css" />
+
+
+  <script defer="defer" src="https://www.gov.br/esocial/++resource++brasil.gov.agenda/brasilgovagenda-720c34e.js"></script>
+
+
+
+  <link rel="stylesheet" href="https://www.gov.br/esocial/++resource++brasil.gov.portal/brasilgovportal-ee510e4.css" />
+
+
+  <script defer="defer" src="https://www.gov.br/esocial/++resource++brasil.gov.portal/brasilgovportal-ee510e4.js"></script>
+
+
+
+  <link rel="stylesheet" href="https://www.gov.br/esocial/++resource++brasil.gov.tiles/brasilgovtiles-7d5753d.css" />
+
+
+  <script defer="defer" src="https://www.gov.br/esocial/++resource++brasil.gov.tiles/brasilgovtiles-7d5753d.js"></script>
+
+
+
+<title>Documentação Técnica — eSocial</title>
+<link rel="http://purl.org/dc/terms/subject http://schema.org/about http://xmlns.com/foaf/0.1/primaryTopic" href="http://vocab.e.gov.br/2011/03/vcge#esquema" />
+        
+    <link rel="author" href="https://www.gov.br/esocial/pt-br" title="Informações do Autor" />
+
+    <link rel="canonical" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica" />
+
+    
+    
+
+
+<script type="text/javascript">
+        jQuery(function($){
+            if (typeof($.datepicker) != "undefined"){
+              $.datepicker.setDefaults(
+                jQuery.extend($.datepicker.regional['pt-BR'],
+                {dateFormat: 'dd/mm/yy'}));
+            }
+        });
+        </script>
+
+
+
+
+    <link rel="search" href="https://www.gov.br/esocial/pt-br/@@search" title="Buscar neste site" />
+
+
+
+        
+        
+        
+  
+
+        
+        
+
+        
+        <meta name="generator" content="Plone - http://plone.org" />
+    
+
+    
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/esocial/++theme++padrao_govbr/favicons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/esocial/++theme++padrao_govbr/favicons/favicon-32x32.png" />
+    <link rel="shortcut icon" type="image/png" href="/esocial/++theme++padrao_govbr/favicons/favicon-48x48.png" />
+    <link rel="mask-icon" href="/esocial/++theme++padrao_govbr/favicons/safari-pinned-tab.svg" color="#00a300" />
+    <meta name="msapplication-config" content="favicons/browserconfig.xml" />
+    <meta name="theme-color" content="#00a300" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" integrity="sha512-5Hs3dF2AEPkpNAR7UiOHba+lRSJNeM2ECkwxUIxC1Q/FLycGTbNapWXB4tP889k5T5Ju8fs4b1P5z/iB4nMfSQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body.userrole-authenticated .btn.btn-success.fileinput-button span:after {
+            content: "Adicionar Arquivos" !important;
+        }
+    </style>
+    
+    <script type="module" id="barra-govbr-pro" src="https://barra.sistema.gov.br/v1/barra-govbr-wc.iife.js"></script>
+    <script type="module" src="/govbrportal/js/session.js" defer="defer"></script>
+<link href="/esocial/++theme++padrao_govbr/govbrtheme-1b543ca.css" rel="stylesheet" /></head>
+
+<body id="" class="default-header-template portal-institucional cover-layout-destaques template-view portaltype-collective-cover-content site-pt-br section-documentacao-tecnica subsection-documentacao-tecnica userrole-anonymous" data-base-url="https://www.gov.br/esocial/pt-br/documentacao-tecnica/documentacao-tecnica" data-portal-url="https://www.gov.br/esocial" dir="ltr">
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe height="0" width="0" style="display:none;visibility:hidden" data-src="https://www.googletagmanager.com/ns.html?id=GTM-NHZSKTD"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <nav class="govbr-skip-menu" aria-label="Acesso rápido">
+    <a href="#wrapper" accesskey="1">
+      <span class="sr-only">Ir para o</span>
+      Conteúdo
+      <span class="access-key">1</span>
+    </a>
+    <a href="/" accesskey="2">
+      <span class="sr-only">Ir para a</span>
+      Página Inicial
+      <span class="access-key">2</span>
+    </a>
+    <a href="#main-navigation" accesskey="3">
+      <span class="sr-only">Ir para o menu de</span>
+      Navegação
+      <span class="access-key">3</span>
+    </a>
+    <a href="#govbr-busca-input" accesskey="4">
+      <span class="sr-only">Ir para a</span>
+      Busca
+      <span class="access-key">4</span>
+    </a>
+    <a href="#portal-footer" accesskey="5">
+      <span class="sr-only">Ir para o</span>
+      Mapa do site
+      <span class="access-key">5</span>
+    </a>
+  </nav>
+
+  <noscript aria-label="Aviso de Javascript desabilitado">
+    <dl class="portalMessage attention erro-javascript">
+      <dt>Atenção!</dt>
+      <dd>Seu navegador não pode executar javascript. Alguns recursos podem não funcionar corretamente.</dd>
+    </dl>
+  </noscript>
+<!-- modal session message --><!-- User --><!-- Header --><!--
+    Para habilitar o novo menu &#233; necess&#225;rio descoment&#225;-lo em:
+    govbr/institucional/viewlets/institucional_menu_govbr.pt
+    --><!-- <header id="site-header" class="has-navigation-swipe"> --><header id="site-header" class="has-navigation-dropdown" style="z-index: 999;">
+        <div class="header-wrapper secondary">
+            <barra-govbr class="width100 shadow-none show-contrast-toggle" style="width: 100%;" id="barra-govbr" titulo="Governo Federal" signinhref="/govbrportal/inicializacao-autenticacao-openid.html" signouthref="/govbrportal/logout.html" linktitulo="http://estruturaorganizacional.dados.gov.br/id/unidade-organizacional/26" linklogo="https://www.gov.br/pt-br" idiomas="" idiomaativo="" linksdosistema="[{&quot;title&quot;:&quot;Órgãos do Governo&quot;,&quot;href&quot;:&quot;https://www.gov.br/pt-br/orgaos-do-governo&quot;},{&quot;title&quot;:&quot;Acesso à Informação&quot;,&quot;href&quot;:&quot;https://www.gov.br/acessoainformacao/pt-br&quot;},{&quot;title&quot;:&quot;Legislação&quot;,&quot;href&quot;:&quot;http://www4.planalto.gov.br/legislacao&quot;},{&quot;title&quot;:&quot;Acessibilidade&quot;,&quot;href&quot;:&quot;https://www.gov.br/governodigital/pt-br/acessibilidade-digital&quot;}]" contrastactive="false">
+            </barra-govbr>
+        </div>
+
+        <div class="main">
+            <div class="header-wrapper">
+
+                <div class="site-name-wrapper">
+                    <a class="ico-navegacao toggle-main-navigation" href="#">
+                        <span class="sr-only">Abrir menu principal de navegação</span>
+                        <span class="fa fa-bars" aria-hidden="true"></span>
+                        <span class="fa fa-times" aria-hidden="true"></span>
+                    </a>
+
+                    <!-- <a href="/" class="site-name">Nome do site</a> -->
+                    <!-- Usar nome completo -->
+                    
+                    <div class="site-name">
+                        <a href="https://www.gov.br/esocial/pt-br">eSocial</a>
+                    </div>
+                </div>
+
+                
+            <div class="termos-mais-buscados desktop">
+                <section class="source-termos-mais-buscados">
+                    <div class="source-header-termos-mais-buscados">
+                        Termos mais buscados
+                    </div>
+                    <ul class="list-termos-mais-buscados">
+                        
+                            <li class="item-termos-mais-buscados">
+                                <a href="https://www.gov.br/esocial/pt-br/search?origem=termos&amp;SearchableText=Desenrola Brasil">
+                                   <span class="fa-solid fa-arrow-trend-up"></span>
+                                   Desenrola Brasil
+                                </a>
+                            </li>
+                        
+                            <li class="item-termos-mais-buscados">
+                                <a href="https://www.gov.br/esocial/pt-br/search?origem=termos&amp;SearchableText=assinatura">
+                                   <span class="fa-solid fa-arrow-trend-up"></span>
+                                   assinatura
+                                </a>
+                            </li>
+                        
+                            <li class="item-termos-mais-buscados">
+                                <a href="https://www.gov.br/esocial/pt-br/search?origem=termos&amp;SearchableText=mei">
+                                   <span class="fa-solid fa-arrow-trend-up"></span>
+                                   mei
+                                </a>
+                            </li>
+                        
+                            <li class="item-termos-mais-buscados">
+                                <a href="https://www.gov.br/esocial/pt-br/search?origem=termos&amp;SearchableText=enem">
+                                   <span class="fa-solid fa-arrow-trend-up"></span>
+                                   enem
+                                </a>
+                            </li>
+                        
+                            <li class="item-termos-mais-buscados">
+                                <a href="https://www.gov.br/esocial/pt-br/search?origem=termos&amp;SearchableText=imposto de renda">
+                                   <span class="fa-solid fa-arrow-trend-up"></span>
+                                   imposto de renda
+                                </a>
+                            </li>
+                        
+                    </ul>
+                </section>
+            </div>
+            <div class="termos-mais-buscados mobile">
+                <section class="source-termos-mais-buscados">
+                    <div class="source-header-termos-mais-buscados">
+                        Termos mais buscados
+                    </div>                                
+                    <ul class="list-termos-mais-buscados">
+                        
+                            <li class="item-termos-mais-buscados">
+                                <a href="https://www.gov.br/esocial/pt-br/search?origem=termos&amp;SearchableText=Desenrola Brasil">
+                                    <span class="fa-solid fa-arrow-trend-up"></span>
+                                    Desenrola Brasil
+                                </a>
+                            </li>
+                        
+                            <li class="item-termos-mais-buscados">
+                                <a href="https://www.gov.br/esocial/pt-br/search?origem=termos&amp;SearchableText=assinatura">
+                                    <span class="fa-solid fa-arrow-trend-up"></span>
+                                    assinatura
+                                </a>
+                            </li>
+                        
+                            <li class="item-termos-mais-buscados">
+                                <a href="https://www.gov.br/esocial/pt-br/search?origem=termos&amp;SearchableText=mei">
+                                    <span class="fa-solid fa-arrow-trend-up"></span>
+                                    mei
+                                </a>
+                            </li>
+                        
+                    </ul>
+                </section>
+            </div>
+        <div class="govbr-busca-header">
+                    <div id="govbr-busca-input">
+                    </div>
+                </div>
+
+                <script>
+                    $(document).ready(function() {                
+                        $('#searchtext-label button').appendTo(".aa-InputWrapperPrefix");
+                        $('#searchtext-label').remove();
+                    });
+                </script>
+
+            </div>
+        </div>
+
+        <!-- Main Menu -->
+        <nav class="navigation-wrapper navigation-dropdown" aria-label="Menu Principal">
+            <div class="navigation-content">
+                <div id="main-navigation" class="navigation-cell">
+                    <ul class="list-navigation"><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/acesso-ao-sistema" class="plain">Acesso ao sistema</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://login.esocial.gov.br/login.aspx" class="state-published">
+            
+            Acesse o eSocial
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="http://www.gov.br/esocial/pt-br/acesso-ao-sistema/acesso-ao-esocial-por-meio-do-gov.br" class="state-published">
+            
+            Orientações de acesso ao eSocial por meio do Gov.br
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/acesso-ao-sistema/semaforo" class="state-published">
+            
+            Semáforo
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/acesso-ao-sistema/cronograma-de-implantacao" class="state-published">
+            
+            Cronograma de implantação
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/acesso-ao-sistema/ambiente-de-producao-restrita" class="state-published">
+            
+            Produção Restrita - Ambiente de Testes
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/acesso-ao-sistema/orientacoes-assinatura-digital-e-procuracao-eletronica" class="state-published">
+            
+            Orientações - Procuração Eletrônica e Assinatura Digital
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/empregador-domestico" class="plain">Empregador Doméstico</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/manual-do-empregador-domestico" class="state-published">
+            
+            Manual do Doméstico
+        </a>
+
+        
+    
+</li>
+
+<li class="dropdown-submenu">
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/perguntas-frequentes" class="state-published hasDropDown">
+            
+            Perguntas Frequentes
+        </a>
+
+        <ul class="submenu navTree navTreeLevel1">
+            
+
+
+
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/perguntas-frequentes/historico-das-perguntas-frequentes-empregador-domestico" class="state-published">
+            
+            Histórico das Perguntas Frequentes - Empregador Doméstico
+        </a>
+
+        
+    
+</li>
+
+
+
+
+        </ul>
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/app-esocial-domestico" class="state-published">
+            
+            App eSocial Doméstico
+        </a>
+
+        
+    
+</li>
+
+<li class="dropdown-submenu">
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes" class="state-published hasDropDown">
+            
+            Orientações
+        </a>
+
+        <ul class="submenu navTree navTreeLevel1">
+            
+
+
+
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/como-acessar-o-esocial" class="state-published">
+            
+            Como Acessar o eSocial
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/consultar-guias-pagas" class="state-published">
+            
+            Consultar Guias Pagas
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/documento-de-arrecadacao-do-esocial-dae" class="state-published">
+            
+            Documento de Arrecadação do eSocial - DAE
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/direitos-do-trabalhador-domestico" class="state-published">
+            
+            Direitos do Trabalhador Doméstico
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="http://www.grfempregadodomestico.caixa.gov.br/" class="state-published">
+            
+            Guia FGTS - Recolhimento Anterior a 10/2015
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="http://www.caixa.gov.br/empresa/fgts-empresas/FGTS-para-Empregador-Domestico/Paginas/default.aspx" class="state-published">
+            
+            FGTS para Empregador Doméstico
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/saque-fgts" class="state-published">
+            
+            Saque FGTS
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/seguro-desemprego" class="state-published">
+            
+            Seguro Desemprego
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/recebimento-de-beneficios-do-inss-pelo-trabalhador-domestico" class="state-published">
+            
+            Recebimento de benefícios do INSS pelo trabalhador doméstico
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/tutoriais-em-video" class="state-published">
+            
+            Tutoriais em vídeo
+        </a>
+
+        
+    
+</li>
+
+
+
+
+        </ul>
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/acesso-ao-sistema/o-que-muda-com-o-novo-esocial-simplificado" class="state-published">
+            
+            O que muda com o Novo eSocial Simplificado
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/manual-do-usuario-esocial-web-processo-trabalhista.pdf" class="state-published">
+            
+            Manual Web Processo Trabalhista
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/empresas" class="plain">Empresas e Órgãos Públicos</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empresas/manual-web-geral" class="state-published">
+            
+            Manual WEB GERAL / SST
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empresas/perguntas-frequentes" class="state-published">
+            
+            Perguntas Frequentes
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empresas/orientacoes" class="state-published">
+            
+            Orientações
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empresas/consulta-qualificacao-cadastral" class="state-published">
+            
+            Consulta Qualificação Cadastral
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/manual-do-usuario-esocial-web-processo-trabalhista.pdf" class="state-published">
+            
+            Manual WEB Processo Trabalhista
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empresas/videoaulas-processos-trabalhistas" class="state-published">
+            
+            Videoaulas Processos Trabalhistas
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/microempreendedor-individual" class="plain">Microempreendedor Individual</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/microempreendedor-individual/microempreendedor-individual-mei" class="state-published">
+            
+            Manual WEB MEI
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/microempreendedor-individual/perguntas-frequentes" class="state-published">
+            
+            Perguntas Frequentes
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/empresas-e-negocios/pt-br/empreendedor" class="state-published">
+            
+            Portal do Empreendedor
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/segurado-especial" class="plain">Segurado Especial</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/segurado-especial/manual-do-segurado-especial" class="state-published">
+            
+            Manual do Segurado Especial
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/noticias" class="plain">Notícias</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/noticias/colecao-domestico" class="state-published">
+            
+            Doméstico
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/noticias/colecao-empresas" class="state-published">
+            
+            Empresas
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/noticias/colecao-coronavirus-covid-19" class="state-published">
+            
+            Coronavírus - COVID 19
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/noticias/colecao-TODAS-NOTICIAS" class="state-published">
+            
+            Todas as Notícias
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="selected dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/documentacao-tecnica" class="plain">Documentação Técnica</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/leiautes-esocial-versao-s-1-3-nt-07-2026" class="state-published">
+            
+            Leiautes eSocial versão S-1.3 - NT 07/2026
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/leiautes-esocial-v-s-1-3-nt-07-2026-rev-24-09-2026" class="state-published">
+            
+            Leiautes eSocial versão S-1.3 - NT 07/2026. rev. 24/09/2026
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/leiautes-esocial-versao-s-1-3-nt-07-2026-rev-20-10-2026" class="state-published">
+            
+            Leiautes eSocial versão S-1.3 - NT 07/2026. rev. 20/10/2026
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/centrais-de-conteudo" class="plain">Centrais de conteúdo</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/centrais-de-conteudo/conheca-o-esocial" class="state-published">
+            
+            Conheça o eSocial
+        </a>
+
+        
+    
+</li>
+
+<li class="dropdown-submenu">
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/centrais-de-conteudo/legislacao" class="state-published hasDropDown">
+            
+            Legislação
+        </a>
+
+        <ul class="submenu navTree navTreeLevel1">
+            
+
+
+
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/centrais-de-conteudo/legislacao/empregador-domestico" class="state-published">
+            
+            Empregador Doméstico
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/centrais-de-conteudo/legislacao/empresas" class="state-published">
+            
+            Empresas
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="http://www.portaldoempreendedor.gov.br/legislacao" class="state-published">
+            
+            MEI
+        </a>
+
+        
+    
+</li>
+
+
+
+
+        </ul>
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/centrais-de-conteudo/coronavirus-orientacoes" class="state-published">
+            
+            CORONAVíRUS - Orientações
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/canais_atendimento" class="plain">Canais de Atendimento</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/canais_atendimento" class="state-published">
+            
+            Fale Conosco
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="/esocial/pt-br/canais_atendimento" class="state-published">
+            
+            Central  0800 730 0888
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/canais_atendimento/servico-informacao-cidadao-sic" class="state-published">
+            
+            Serviço de Informação ao Cidadão - SIC
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/canais_atendimento/ouvidoria" class="state-published">
+            
+            Ouvidoria
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/canais_atendimento/imprensa" class="state-published">
+            
+            Imprensa
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/tabelas-do-esocial" class="plain">Tabelas do eSocial</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://frontend.esocial.gov.br/adm/" class="state-published">
+            
+            Consulta tabelas do eSocial
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li id="portaltab-govbr-root" class="plain dropdown-submenu menu-govbr-root">
+            <a class="plain" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/documentacao-tecnica">
+                <span>GOV.BR</span>
+            </a>
+            <!-- Menu nivel1 -->
+            <ul class="submenu navTree">
+                
+                    <li class="dropdown-submenu">
+                        <a href="https://www.gov.br/pt-br/servicos" class="hasDropDown">Serviços</a>
+                        
+                            
+    <ul class="submenu navTree">
+        
+            <li class="dropdown-submenu">
+                <a href="https://www.gov.br/pt-br/servicos/buscar-servicos-por">Buscar serviços por</a>
+                
+                    
+    <ul class="submenu navTree">
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/categorias">Categorias</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/servicos/listar_orgaos">Órgãos</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/servicos-estaduais">Estados</a>
+                
+            </li>
+        
+    </ul>
+
+                
+            </li>
+        
+            <li class="dropdown-submenu">
+                <a href="https://www.gov.br/pt-br/servicos/servicos-por-publico-alvo">Serviços por público alvo</a>
+                
+                    
+    <ul class="submenu navTree">
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/servicos/listar_servicos_segmento?segmento=publico_alvo_cidadaos">Cidadãos</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/servicos/listar_servicos_segmento?segmento=publico_alvo_empresas">Empresas</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/servicos/listar_servicos_segmento?segmento=publico_alvo_orgaos">Órgãos e Entidades Públicas</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/servicos/listar_servicos_segmento?segmento=publico_alvo_outros">Demais segmentos (ONGs, organizações sociais, etc)</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/servicos/listar_servicos_segmento?segmento=publico_alvo_servidor">Servidor Público</a>
+                
+            </li>
+        
+    </ul>
+
+                
+            </li>
+        
+    </ul>
+
+                        
+                    </li>
+                
+                    <li class="dropdown-submenu">
+                        <a href="https://www.gov.br/pt-br/temas-em-destaque" class="hasDropDown">Temas em Destaque</a>
+                        
+                            
+    <ul class="submenu navTree">
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/transparencia-fiscal-orcamento-nacional">Orçamento Nacional</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/redes-civis-de-unidades-de-atendimento-do-governo-federal">Redes de Atendimento da Administração Pública Federal</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/protecao-de-dados-pessoais">Proteção de Dados Pessoais</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/servicos-para-imigrantes">Serviços para Imigrantes</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/politica-e-orcamento-educacional">Política e Orçamento Educacionais</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/educacao-profissional-e-tecnologica-1">Educação Profissional e Tecnológica</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/habilidades-online-para-jovens-e-adultos">Educação Profissional para Jovens e Adultos</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/trabalho-emprego">Trabalho e Emprego</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/acesso-a-educacao-para-pessoas-com-deficiencia">Serviços para Pessoas com Deficiência</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/politica-e-legislacao-contra-a-discriminacao-racial">Combate à Discriminação Racial</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/politica-e-orcamento-de-protecao-social">Política de Proteção Social</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/politica-para-mulheres">Política para Mulheres</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/saude-reprodutiva-da-mulher">Saúde Reprodutiva da Mulher</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/desenvolvimento-cuidados-e-educacao-pre-escolar">Cuidados na Primeira Infância</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/habitacao-popular">Habitação Popular</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/temas/controle-da-poluicao-e-outras-medidas-de-precaucao">Controle de Poluição e Resíduos Sólidos</a>
+                
+            </li>
+        
+    </ul>
+
+                        
+                    </li>
+                
+                    <li class="dropdown-submenu">
+                        <a href="https://www.gov.br/pt-br/noticias" class="hasDropDown">Notícias</a>
+                        
+                            
+    <ul class="submenu navTree">
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/saude-e-vigilancia-sanitaria">Saúde</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/agricultura-e-pecuaria">Agricultura e Pecuária</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/assistencia-social">Cidadania e Assistência Social</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/ciencia-e-tecnologia">Ciência e Tecnologia</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/comunicacao">Comunicação</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/cultura-artes-historia-e-esportes">Cultura e Esporte</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/financas-impostos-e-gestao-publica">Economia e Gestão Pública</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/educacao-e-pesquisa">Educação e Pesquisa</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/energia-minerais-e-combustiveis">Energia</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/forcas-armadas">Forças Armadas e Defesa Civil</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/transito-e-transportes">Infraestrutura</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/justica-e-seguranca">Justiça e Segurança</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/meio-ambiente-e-clima">Meio Ambiente</a>
+                
+            </li>
+        
+            <li class="dropdown-submenu">
+                <a href="https://www.gov.br/pt-br/noticias/trabalho-e-previdencia">Trabalho e Previdência</a>
+                
+                    
+    <ul class="submenu navTree">
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/trabalho-e-previdencia/fgts">FGTS</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/trabalho-e-previdencia/direitos-do-trabalhador">Direitos do Trabalhador</a>
+                
+            </li>
+        
+    </ul>
+
+                
+            </li>
+        
+            <li class="dropdown-submenu">
+                <a href="https://www.gov.br/pt-br/noticias/viagens-e-turismo">Turismo</a>
+                
+                    
+    <ul class="submenu navTree">
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/viagens-e-turismo/direitos-do-viajante">Direitos do Viajante</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/noticias/viagens-e-turismo/viaje-o-brasil">Viaje o Brasil</a>
+                
+            </li>
+        
+    </ul>
+
+                
+            </li>
+        
+    </ul>
+
+                        
+                    </li>
+                
+                    <li class="plain">
+                        <a href="https://www.gov.br/pt-br/apps/@@galeria-de-aplicativos" class="hasDropDown">Galeria de Aplicativos</a>
+                        
+                    </li>
+                
+                    <li class="plain">
+                        <a href="/planalto" class="hasDropDown">Acompanhe o Planalto</a>
+                        
+                    </li>
+                
+                    <li class="dropdown-submenu">
+                        <a href="https://www.gov.br/pt-br/navegacao" class="hasDropDown">Navegação</a>
+                        
+                            
+    <ul class="submenu navTree">
+        
+            <li class="plain">
+                <a href="https://www.gov.br/governodigital/pt-br/acessibilidade-digital">Acessibilidade</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/sitemap">Mapa do Site</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="/pt-br/termos-de-uso">Termo de Uso e Aviso de Privacidade</a>
+                
+            </li>
+        
+    </ul>
+
+                        
+                    </li>
+                
+                    <li class="plain">
+                        <a href="https://www.gov.br/governodigital/pt-br/acessibilidade-e-usuario/atendimento-gov.br/duvidas-na-plataforma-de-automacao/cidadao/consultar-as-minhas-solicitacoes" class="hasDropDown">Consultar minhas solicitações</a>
+                        
+                    </li>
+                
+                    <li class="plain">
+                        <a href="https://www.gov.br/pt-br/orgaos-do-governo" class="hasDropDown">Órgãos do Governo</a>
+                        
+                    </li>
+                
+                    <li class="dropdown-submenu">
+                        <a href="https://www.gov.br/pt-br/por-dentro-do-govbr" class="hasDropDown">Por dentro do Gov.br</a>
+                        
+                            
+    <ul class="submenu navTree">
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/por-dentro-do-govbr/perguntas-frequentes">Dúvidas Frequentes em relação ao Portal gov.br</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="http://faq-login-unico.servicos.gov.br/en/latest/">Dúvidas Frequentes da conta gov.br</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/por-dentro-do-govbr/ajuda-para-navegar-o-portal">Ajuda para Navegar o Portal</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/por-dentro-do-govbr/conheca-os-elementos-do-portal">Conheça os elementos do Portal</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/participamaisbrasil/sobre">Política de e-participação</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="/pt-br/termos-de-uso">Termos de Uso</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/governodigital/pt-br">Governo Digital</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/pt-br/guia-de-edicao-de-servicos-do-gov.br/bem-vindo-editor">Guia de Edição de Serviços do Portal Gov.br</a>
+                
+            </li>
+        
+    </ul>
+
+                        
+                    </li>
+                
+                    <li class="plain">
+                        <a href="https://www.gov.br/pt-br/canais-do-executivo-federal" class="hasDropDown">Canais do Executivo Federal</a>
+                        
+                    </li>
+                
+                    <li class="dropdown-submenu">
+                        <a href="https://www.gov.br/pt-br/dados-da-administracao-publica-federal" class="hasDropDown">Dados da Administração Pública Federal</a>
+                        
+                            
+    <ul class="submenu navTree">
+        
+            <li class="plain">
+                <a href="/governodigital/pt-br/dados-abertos">Dados Abertos</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/gestao/pt-br/acesso-a-informacao/servidores/servidores-publicos/painel-estatistico-de-pessoal">Painel Estatístico de Pessoal</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="http://paineldecompras.economia.gov.br">Painel de Compras da Administração Pública Federal</a>
+                
+            </li>
+        
+            <li class="plain">
+                <a href="https://www.gov.br/acessoainformacao/pt-br">Acesso à Informação</a>
+                
+            </li>
+        
+    </ul>
+
+                        
+                    </li>
+                
+                    <li class="plain">
+                        <a href="https://www.gov.br/empresas-e-negocios/pt-br" class="hasDropDown">Empresas e Negócios</a>
+                        
+                    </li>
+                
+            </ul>
+        </li></ul>
+                </div>
+            </div>
+
+            <div class="navigation-content-extra">
+                <div class="links-redes-wrap">
+            <div class="links-uteis">
+              <div class="titulo">Links Úteis</div>
+              <ul>
+                <!-- <li>
+                  <a href="#">Órgãos do Governo</a>
+                </li> -->
+                <li>
+                  <a href="https://www.gov.br/pt-br/apps/@@galeria-de-aplicativos">Galeria de Aplicativos</a>
+                </li>
+                <li>
+                  <a href="https://www.gov.br/pt-br/participacao-social">Participe</a>
+                </li>
+              </ul>
+            </div>
+
+            <div class="header-accessibility">
+              <ul>
+                <!--li>
+                  <a
+                    href="https://www.gov.br/pt-br/orgaos-do-governo"
+                    class="orgaos-de-governo"
+                    i18n:translate="orgaos_do_governo"
+                    >Órgãos do Governo</a
+                  >
+                </li-->
+                <li>
+                  <a href="https://www.gov.br/pt-br/apps/@@galeria-de-aplicativos">Galeria de Aplicativos</a>
+                </li>
+                <!--li>
+                  <a href="http://www4.planalto.gov.br/legislacao" i18n:translate="legislacao"
+                    >Legislação</a
+                  >
+                </li>
+                <li>
+                  <a href="https://www.gov.br/acessoainformacao/pt-br" i18n:translate="acesso_a_informacao"
+                    >Acesso à Informação</a
+                  >
+                </li-->
+                <li>
+                  <a href="https://www.gov.br/pt-br/participacao-social">Participe</a>
+                </li>
+              </ul>
+            </div>
+
+            <div class="govbr-escuta-link">
+              <a href="#">Ajude a melhorar o gov.br</a>
+            </div>
+          
+                    <div class="redes-sociais">
+                        <div class="titulo">Redes sociais</div>
+                    <ul class="portal-redes">
+            
+                <li class="portalredes-twitter portalredes-item">
+                    <a href="https://www.twitter.com/twitter">Twitter</a>
+                </li>
+            
+                <li class="portalredes-youtube portalredes-item">
+                    <a href="https://www.youtube.com/youtube">YouTube</a>
+                </li>
+            
+                <li class="portalredes-facebook portalredes-item">
+                    <a href="https://www.facebook.com/facebook">Facebook</a>
+                </li>
+            
+                <li class="portalredes-flickr portalredes-item">
+                    <a href="https://www.flickr.com/flickr">Flickr</a>
+                </li>
+            
+        </ul></div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Menu -->
+        
+    </header><div id="portal-breadcrumbs-wrapper"><nav id="breadcrumbs" aria-label="Histórico de navegação (Breadcrumbs)">
+            <div class="content">
+                <span class="sr-only">Você está aqui:</span>
+                <span class="home">
+            <a href="https://www.gov.br/esocial/pt-br">
+              <span class="fas fa-home" aria-hidden="true"></span>
+                <span class="sr-only">Página Inicial</span>
+                </a>
+                </span>
+            
+
+    
+    
+    <span dir="ltr" id="breadcrumbs-1">
+        
+            
+            
+            <span id="breadcrumbs-current">Documentação Técnica</span>
+         
+    </span>
+
+</div>
+        </nav></div><h1 id="page-title-alt" class="sr-only">Documentação Técnica</h1><!-- <div class="video"></div> --><div id="wrapper">
+        <!-- Columns -->
+
+        <div id="main">
+            
+
+            <main id="main-content">
+
+            <div id="viewlet-above-content">
+
+
+
+
+
+
+    
+        <script type="application/ld+json">{"@context": "http://schema.org", "itemListElement": [{"position": 1, "@type": "ListItem", "item": "https://www.gov.br/esocial/pt-br/documentacao-tecnica", "name": "Documenta\u00e7\u00e3o T\u00e9cnica"}], "@type": "BreadcrumbList"}</script>
+    
+
+
+<div id="viewlet-tileshare" data-title-fb="Compartilhar no Facebook (abre em nova janela)" data-title-twitter="Tweet (abre em nova janela)" data-title-linkedin="Compartilhar no Linkedin  (abre em nova janela)" data-title-gplus="Compartilhar no Google+  (abre em nova janela)" data-title-link="Copiar para área de transferência" data-title-more="Mais opções">
+</div>
+
+
+
+    
+</div>
+
+            
+                <div class="">
+
+                    
+
+                    
+
+    <dl class="portalMessage info" id="kssPortalMessage" style="display:none">
+        <dt>Info</dt>
+        <dd></dd>
+    </dl>
+
+    
+
+
+                    
+                        <div id="content">
+
+                            
+
+                            
+    
+    
+        
+            
+                
+
+
+    
+
+        
+            
+            
+                <div class="row tile-default">
+                    <div class="row-content">
+
+                        
+                            
+    
+        
+            
+                
+                
+                    <div class="column col-md-12 linha-destacada-escura " data-panel="">
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile cabecalho-superior topo-com-degrade" id="c1fff3db-b14b-4794-92e5-407f2d7f5417">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+            
+            <h2 class="outstanding-title">Documentação Técnica</h2>
+            
+            
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+
+                    </div>
+                
+            
+        
+    
+
+
+                        
+
+                    </div>
+                </div>
+            
+        
+
+    
+
+
+
+            
+                
+
+
+    
+
+        
+            
+            
+                <div class="row">
+                    <div class="row-content">
+
+                        
+                            
+    
+        
+            
+                
+                
+                    <div class="column col-md-12 " data-panel="">
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="fe0e0925-911c-4bfe-9869-f0fd09114654">
+                        
+    
+        
+        <div class="cover-richtext-tile tile-content">
+            
+                
+                    <p style="text-align: left;" data-mce-style="text-align: left;"><img src="https://www.gov.br/esocial/pt-br/documentacao-tecnica/imagens/LeiautesdoeSocialsimplificadoV.jpg" alt="" data-mce-src="resolveuid/5b80c5a5a2b648b5b95c1ad062ee02b1" class="image-inline" /><br /></p>
+                
+            
+        </div>
+    
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="a273588f-cf0a-4778-b601-3358529a128c">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+
+                    </div>
+                
+            
+        
+    
+
+
+                        
+
+                    </div>
+                </div>
+            
+        
+
+    
+
+
+
+            
+                
+
+
+    
+
+        
+            
+            
+                <div class="row">
+                    <div class="row-content">
+
+                        
+                            
+    
+        
+            
+                
+                
+                    <div class="column col-md-6 " data-panel="">
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="fd22c600-93ec-472a-b5ad-feb77dd16ac6">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/leiautes-esocial-versao-s-1-3-nt-06-2026-rev-09-04-2026/index.html">Leiautes eSocial versão 1.3 - NT 06/2026 rev. 09/04/2026 - formato HTML</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="bbc4fdb7-0157-4ba1-b033-d69c16fa936d">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-06-2026-rev-pdf.zip">Leiautes eSocial versão 1.3 - NT 06/2026 rev. 09/04/2026 - formato PDF</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="e5ee6e03-60f2-45d9-ad3d-ec3f222d4b96">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/2026-04-27_esquemas_xsd_v_s_01_03_00.zip">Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 06/2026) - produção em 27/04/2026</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="ae6170ee-7517-4ceb-bb31-14200c0df0f1">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/2026-07-01_esquemas_xsd_v_s_01_03_00.zip">Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 06/2026) - CNPJ alfanumérico - produção em 01/07/2026</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="f499a63d-957a-479c-84fd-ec17f7815859">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/mos-s-1-3-consolidada-ate-a-no-s-1-3-12-2026.pdf">Manual de Orientação do eSocial v. S-1.3 - consolidada até NO 12/2026</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+
+                    </div>
+                
+            
+        
+    
+
+
+                        
+                            
+    
+        
+            
+                
+                
+                    <div class="column col-md-6 " data-panel="">
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="b17b0eb1-9b61-4afd-9e14-f7e18487b43a">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/leiautes-esocial-versao-s-1-3-nt-07-2026-rev-20-10-2026/index.html">Leiautes eSocial versão 1.3 - NT 07/2026 rev. - formato HTML</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="ce3069d2-f5fd-4a40-a30f-1542c942bd82">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-07-2026-rev-20-10-2026-pdf.zip/">Leiautes eSocial versão 1.3 - NT 07/2026 rev. - formato PDF</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="a505e72d-585b-4e5c-855f-29042d79b298">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/2026-10-26_esquemas_xsd_v_s_01_03_00-1-1.zip/">Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) - produção em 26/10/2026</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="cf0093d0-8848-446c-a12d-f38d75f299e1">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/2026-11-23_esquemas_xsd_v_s_01_03_00-1-1.zip/">Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) - produção em 23/11/2026</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="c116872e-9727-4bbe-8bb1-b8181231511a">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/2026-12-14_esquemas_xsd_v_s_01_03_00-1-1.zip/">Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) - produção em 14/12/2026</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="ee00bc5d-f485-4be6-9755-5856b069fc00">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/2027-01-18_esquemas_xsd_v_s_01_03_00-1-1.zip/">Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) - produção em 18/01/2027</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+
+                    </div>
+                
+            
+        
+    
+
+
+                        
+
+                    </div>
+                </div>
+            
+        
+
+    
+
+
+
+            
+                
+
+
+    
+
+        
+            
+            
+                <div class="row">
+                    <div class="row-content">
+
+                        
+                            
+    
+        
+            
+                
+                
+                    <div class="column col-md-12 " data-panel="">
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile cabecalho-linha" id="cda82953-112b-4e21-8cf9-7f73b04fa294">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+      
+
+        
+
+            
+            <h2 class="outstanding-title">NOTAS TÉCNICAS V. S-1.3</h2>
+            
+            
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="e9b7db20-6921-4919-a48f-c3516a036d13">
+                        
+    
+        
+        <div class="cover-richtext-tile tile-content">
+            
+                
+                    <ul><li><a style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-07-2026-rev-20-10-2026.pdf" data-tippreview-title="" data-mce-href="resolveuid/1d25d858a61e4c22882ddc58c78c03cf" class="internal-link" data-tippreview-enabled="false">Nota Técnica v. S-1.3 07/2026 rev. 20/10/2026</a></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-07-2026-rev.pdf" data-tippreview-title="" data-mce-href="resolveuid/4e2e609173c34464a8851a83b3eb9865" class="internal-link" data-tippreview-enabled="true">Nota Técnica v. S-1.3 07/2026 rev. 24/09/2026</a></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-07-2026.pdf" data-tippreview-title="" data-mce-href="resolveuid/10240f1ec61c436983bd219fe2b65c3b" class="internal-link" data-tippreview-enabled="false">Nota Técnica v. S-1.3 07/2026</a></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-06-2026-rev.pdf" data-tippreview-title="" data-mce-href="resolveuid/2dc4df6112e04681be16c79fe3a58d0f" class="internal-link" data-tippreview-enabled="false">Nota Técnica v. S-1.3 06/2026 rev. 09/04/2026</a></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-06-2026.pdf" data-tippreview-title="" data-mce-href="resolveuid/967bf56d88a947a584fe57d3007bdf13" class="internal-link" data-tippreview-enabled="false">Nota Técnica v. S-1.3 06/2026</a></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-05-2025.pdf" data-tippreview-title="" data-mce-href="resolveuid/a91bec221ed64288b55e9183316a3404" class="internal-link" data-tippreview-enabled="false">Nota Técnica v. S-1.3 05/2025</a></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-04-2025-rev-26-08-2025.pdf" data-tippreview-title="" data-mce-href="resolveuid/115fbbeb498941f29769261130e66a8d" class="internal-link" data-tippreview-enabled="false">Nota Técnica v. S-1.3 04/2025 rev. 26/08/2025</a></li><li><a data-mce-style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-04-2025.pdf" data-tippreview-title="" data-mce-href="resolveuid/c878123b49c24cd090847d3c7e7a7fc9" class="internal-link" data-tippreview-enabled="false">Nota Técnica v. S-1.3 04/2025</a></li><li><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-03-2025.pdf" data-tippreview-title="" data-mce-href="resolveuid/9e8d3050ca314629b06c3945b11c6257" class="internal-link" data-tippreview-enabled="false">Nota Técnica v. S-1.3 03/2025</a> </li><li><a data-mce-style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-02-2024-rev.pdf" data-tippreview-title="" data-mce-href="resolveuid/f1c02369ce5f4ffbbdebeb7938a19311" class="internal-link" data-tippreview-enabled="false">Nota Técnica v. S-1.3 02/2024 - rev. 29/10/2024</a></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-02-2024.pdf" data-tippreview-title="" data-mce-href="resolveuid/38fda3f34952471cb780a1fdf52b1b5e" class="internal-link" data-tippreview-enabled="false">Nota Técnica v. S-1.3 02/2024</a></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-01-2024-rev.pdf" data-tippreview-title="" data-mce-href="resolveuid/d4e05e1ee89149ac867bdd5c49c0a437" class="internal-link" data-tippreview-enabled="false">Nota Técnica v. S-1.3 01/2024 - rev. 03/10/2024</a></li><li><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-01-2024.pdf" data-tippreview-title="" data-mce-href="resolveuid/686644ed7eeb468cb9b6f0ab88133a00" class="internal-link" data-tippreview-enabled="false">Nota Técnica v. S-1.3 01/2024</a></li></ul>
+                
+            
+        </div>
+    
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+
+                    </div>
+                
+            
+        
+    
+
+
+                        
+
+                    </div>
+                </div>
+            
+        
+
+    
+
+
+
+            
+                
+
+
+    
+
+        
+            
+            
+                <div class="row tile-default">
+                    <div class="row-content">
+
+                        
+                            
+    
+        
+            
+                
+                
+                    <div class="column col-md-12 tile-default " data-panel="">
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile cabecalho-superior" id="a9b74ff6-66be-4e54-9c88-b9f4427e97cd">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+      
+
+        
+
+            
+            <h2 class="outstanding-title">Manuais</h2>
+            
+            
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+
+                    </div>
+                
+            
+        
+    
+
+
+                        
+
+                    </div>
+                </div>
+            
+        
+
+    
+
+
+
+            
+                
+
+
+    
+
+        
+            
+            
+                <div class="row tile-default">
+                    <div class="row-content">
+
+                        
+                            
+    
+        
+            
+                
+                
+                    <div class="column col-md-6 tile-default " data-panel="">
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="cf5e21bb-2860-4f87-aa54-9964005f3c5c">
+                        
+    
+        
+        <div class="cover-richtext-tile tile-content">
+            
+                
+                    <p style="text-align: center;" data-mce-style="text-align: center;"><img src="https://www.gov.br/esocial/pt-br/documentacao-tecnica/imagens/Documentacaotecnica_manual.png" alt="" data-mce-src="resolveuid/4bae678c10d44b85b848197319b4b20e" class="image-inline" /></p>
+                
+            
+        </div>
+    
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="d6c2ddb4-b159-4158-8997-e63aa786660a">
+                        
+    
+        
+        <div class="cover-richtext-tile tile-content">
+            
+                
+                    <ul><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/mos-s-1-3-consolidada-ate-a-no-s-1-3-12-2026.pdf" data-tippreview-title="" data-mce-href="resolveuid/b84d2c844d844e5cb039b8052354437e" class="internal-link" data-tippreview-enabled="true">MANUAL DE ORIENTAÇÃO DO ESOCIAL SIMPLIFICADO v. S-1.3 consolidado até NO nº 12/2026</a></li></ul><p><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/mos-s-1-3-consolidada-ate-a-no-s-1-3-12-2026-com-marcacoes.pdf" data-tippreview-title="" data-mce-href="resolveuid/a11bb56c04c54a46b1a5cc629627c19d" class="internal-link" data-tippreview-enabled="true">- Manual de Orientação do eSocial Simplificado v. S-1.3 consolidado até NO nº 12/2026 - com marcações</a></p><p class=" " style="padding-left: 60px; text-align: justify;" data-mce-style="padding-left: 60px; text-align: justify;"><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-1-03-2023.pdf" data-tippreview-title="" data-mce-href="resolveuid/378e14d086b0471998277c82cbe97ca9" class="internal-link" data-tippreview-enabled="false"></a></p>
+                
+            
+        </div>
+    
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+
+                    </div>
+                
+            
+        
+    
+
+
+                        
+                            
+    
+        
+            
+                
+                
+                    <div class="column col-md-6 tile-default " data-panel="">
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="e04f2a34-9d39-45b2-a50e-5d4889f2f644">
+                        
+    
+        
+        <div class="cover-richtext-tile tile-content">
+            
+                
+                    <p style="text-align: center;"><img src="https://www.gov.br/esocial/pt-br/documentacao-tecnica/imagens/Documentacaotecnica_outros.png" alt="" data-mce-src="resolveuid/7c5dc4f63b82448ab8b438b4c23bfc70" class="image-inline" /><br data-mce-bogus="1" /></p>
+                
+            
+        </div>
+    
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="b958d5e9-d4c8-4867-96ae-fc3c3237f89e">
+                        
+    
+        
+        <div class="cover-richtext-tile tile-content">
+            
+                
+                    <ul><li><a href="https://www.gov.br/esocial/pt-br/empresas/manual-web-geral" data-mce-href="https://www.gov.br/esocial/pt-br/empresas/manual-web-geral">MANUAL DO ESOCIAL WEB GERAL - EMPRESAS</a></li><li><a class="external-link" href="https://www.gov.br/esocial/pt-br/microempreendedor-individual/manual-web-mei" style="" target="_blank" title="" data-mce-href="https://www.gov.br/esocial/pt-br/microempreendedor-individual/manual-web-mei" data-tippreview-enabled="false" data-tippreview-image="" data-tippreview-title="" data-mce-style="">MANUAL DO ESOCIAL WEB MEI (MICROEMPREENDEDOR INDIVIDUAL)</a></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/empregador-domestico/manual-do-empregador-domestico/manual-do-empregador-domestico_1" data-tippreview-title="" data-mce-href="resolveuid/1102465f1bc142e7a1d07a5968da5117" class="internal-link" data-tippreview-enabled="true">MANUAL DO ESOCIAL PARA O EMPREGADOR DOMÉSTICO</a></li><li><a class="state-published" href="https://www.gov.br/esocial/pt-br/segurado-especial/manual-do-segurado-especial" title="" data-mce-href="https://www.gov.br/esocial/pt-br/segurado-especial/manual-do-segurado-especial">MANUAL DO SEGURADO ESPECIAL</a></li><li><a data-mce-style="" style="" target="_self" title="Manual do Usuário - eSocial WEB PROCESSO TRABALHISTA" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/manual-do-usuario-esocial-web-processo-trabalhista.pdf" data-tippreview-title="" data-mce-href="resolveuid/c0f2779ec243413bbbe450f4a02db80c" class="internal-link" data-tippreview-enabled="true">MANUAL DO ESOCIAL WEB PROCESSO TRABALHISTA</a></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/manual-web-judiciario-v6-180526.pdf" data-tippreview-title="" data-mce-href="resolveuid/a1de5bf4457f4589b4756b0a7916e060" class="internal-link" data-tippreview-enabled="true">MANUAL DO ESOCIAL WEB PARA SERVIDORES DA JUSTIÇA DO TRABALHO</a></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/manual-relatorios-gerenciais-versao-atualizada-19032026.pdf" data-tippreview-title="" data-mce-href="resolveuid/4a687d7ce5734b9a817d0454c1efb44a" class="internal-link" data-tippreview-enabled="true">MANUAL DO ESOCIAL WEB RELATÓRIOS GERENCIAIS</a></li></ul>
+                
+            
+        </div>
+    
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+
+                    </div>
+                
+            
+        
+    
+
+
+                        
+
+                    </div>
+                </div>
+            
+        
+
+    
+
+
+
+            
+                
+
+
+    
+
+        
+            
+            
+                <div class="row">
+                    <div class="row-content">
+
+                        
+                            
+    
+        
+            
+                
+                
+                    <div class="column col-md-12 " data-panel="">
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile cabecalho-linha" id="fd6cfae4-cda6-495c-90bb-757cffc231ef">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+      
+
+        
+
+            
+            <h2 class="outstanding-title">Notas Orientativas v. S-1.3</h2>
+            
+            
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="b819f3fd-903d-41a9-abc1-473b635afcb1">
+                        
+    
+        
+        <div class="cover-richtext-tile tile-content">
+            
+                
+                    <ul><li><a style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-12-2026.pdf" data-tippreview-title="" data-mce-href="resolveuid/a178c18f4721499caf6a4fb103e0d16c" class="internal-link" data-tippreview-enabled="false">Nota Orientativa v. S-1.3 12/2026 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 12.2026”</a></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-11-2026-retificada.pdf" data-tippreview-title="" data-mce-href="resolveuid/4426fbf6a448421e83072c954080db28" class="internal-link" data-tippreview-enabled="true">Nota Orientativa v. S-1.3 11/2026 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 11.2026”</a></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-10-2026.pdf" data-tippreview-title="" data-mce-href="resolveuid/c25ab292249b4ed78bfcfa07dcb799b6" class="internal-link" data-tippreview-enabled="true">Nota Orientativa v. S-1.3 10/2026 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 10.2026”</a></li><li><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-09-2026-rev.pdf" data-tippreview-title="" data-mce-href="resolveuid/3c0a08628c5441a99992dc131534c539" class="internal-link" data-tippreview-enabled="true">Nota Orientativa v. S-1.3 09/2026 (atualizada)- <span class="fontstyle0">Apresenta os ajustes necessários nos eventos do eSocial para os contribuintes do Serviço Social da Indústria (SESI) e do Serviço Nacional de Aprendizagem Industrial (SENAI) que mantinham convênio para a arrecadação direta dessas contribuições, incluindo a contribuição adicional devida ao SENAI</span></a><br /></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-08-2026.pdf" data-tippreview-title="" data-mce-href="resolveuid/3300b8c32f2345f38a9b2e7e99847b15" class="internal-link" data-tippreview-enabled="false">Nota Orientativa v. S-1.3 08/2026 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 08.2026”</a></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-07-2026.pdf" data-tippreview-title="" data-mce-href="resolveuid/c0cadfad07cf485b9cf0a1d8213e5aed" class="internal-link" data-tippreview-enabled="false">Nota Orientativa v. S-1.3 07/2026 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 07.2026"</a></li><li><a data-mce-style="" style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-07-2026.pdf" data-tippreview-title="" data-mce-href="resolveuid/c0cadfad07cf485b9cf0a1d8213e5aed" class="internal-link" data-tippreview-enabled="false"></a><a data-mce-style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-06-2025.pdf" data-tippreview-title="" data-mce-href="resolveuid/b4bf887c0f7d441eb619c6bbd21fb0ba" class="internal-link" data-tippreview-enabled="true">Nota Orientativa v. S-1.3 06/2025 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 06.2025"</a></li><li><a data-mce-style="" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-06-2025.pdf" data-tippreview-title="" data-mce-href="resolveuid/b4bf887c0f7d441eb619c6bbd21fb0ba" class="internal-link" data-tippreview-enabled="true"></a><a data-mce-style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-05-2025.pdf" data-tippreview-title="" data-mce-href="resolveuid/579dde25cf084b43820c38d2786b2ecd" class="internal-link" data-tippreview-enabled="false">Nota Orientativa v. S-1.3 05/2025 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 05.2025”</a></li><li><a data-mce-style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-05-2025.pdf" data-tippreview-title="" data-mce-href="resolveuid/579dde25cf084b43820c38d2786b2ecd" class="internal-link" data-tippreview-enabled="false"></a><a data-mce-style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-04-2025.pdf" data-tippreview-title="" data-mce-href="resolveuid/27f389de4c2a49b6838547bb9318d6c1" class="internal-link" data-tippreview-enabled="false">Nota Orientativa v. S-1.3 04/2025 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 04.2025"</a></li><li><a data-mce-style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-04-2025.pdf" data-tippreview-title="" data-mce-href="resolveuid/27f389de4c2a49b6838547bb9318d6c1" class="internal-link" data-tippreview-enabled="false"></a><a data-mce-style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-03-2025.pdf" data-tippreview-title="" data-mce-href="resolveuid/80232989236e41e985bf4672d010259c" class="internal-link" data-tippreview-enabled="false">Nota Orientativa v. S-1.3. 03/2025 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 03.2025”</a></li><li><a data-mce-style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-03-2025.pdf" data-tippreview-title="" data-mce-href="resolveuid/80232989236e41e985bf4672d010259c" class="internal-link" data-tippreview-enabled="false"></a><a target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-02-2024.pdf" data-tippreview-title="" data-mce-href="resolveuid/b2e7534e041346f899bc7b1b4c52eedd" class="internal-link" data-tippreview-enabled="false">Nota Orientativa v. S-1.3. 02/2024 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 02.2024”</a></li><li><a data-mce-style="text-align: justify;" style="text-align: justify;" target="_blank" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-orientativa-s-1-3-01-2024-revisada.pdf" data-tippreview-title="" data-mce-href="resolveuid/af9d207d9a0b4994b1d04c9a8cf287a2" class="internal-link" data-tippreview-enabled="true">Nota Orientativa v. S-1.3 01/2024 - (revisada em 29/10/2024) - Apresenta orientações necessárias para atender ao disposto na Lei nº 14.973, de 16 de setembro de 2024, que instituiu a reoneração gradual da folha de pagamento, a não incidência de contribuição patronal sobre as parcelas de 13º salário para empresas desoneradas e o retorno gradual da alíquota de 20% para os municípios com baixo índice populacional</a></li></ul>
+                
+            
+        </div>
+    
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+
+                    </div>
+                
+            
+        
+    
+
+
+                        
+
+                    </div>
+                </div>
+            
+        
+
+    
+
+
+
+            
+                
+
+
+    
+
+        
+            
+            
+                <div class="row">
+                    <div class="row-content">
+
+                        
+                            
+    
+        
+            
+                
+                
+                    <div class="column col-md-12 " data-panel="">
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile cabecalho-superior" id="d404259c-cdfc-47c2-bf29-17380d364bd9">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+      
+
+        
+
+            
+            <h2 class="outstanding-title">Desenvolvedor</h2>
+            
+            
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+
+                    </div>
+                
+            
+        
+    
+
+
+                        
+
+                    </div>
+                </div>
+            
+        
+
+    
+
+
+
+            
+                
+
+
+    
+
+        
+            
+            
+                <div class="row">
+                    <div class="row-content">
+
+                        
+                            
+    
+        
+            
+                
+                
+                    <div class="column col-md-6 " data-panel="">
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="e26f8775-fed2-4b65-9ef1-88359cf65c9e">
+                        
+    
+        
+        <div class="cover-richtext-tile tile-content">
+            
+                
+                    <p style="text-align: center;"><img src="https://www.gov.br/esocial/pt-br/documentacao-tecnica/imagens/Documentacaotecnica_leiautes.png" alt="" data-mce-src="resolveuid/7692137ae1414367949d9a8513ee298a" class="image-inline" /><br data-mce-bogus="1" /></p>
+                
+            
+        </div>
+    
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="ae6c8eaf-d702-451e-8d7e-9fa4380cd683">
+                        
+    
+        
+        <div class="cover-richtext-tile tile-content">
+            
+                
+                    <ul><ul><li><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-07-2026-rev-20-10-2026.pdf" data-tippreview-title="" data-mce-href="resolveuid/1d25d858a61e4c22882ddc58c78c03cf" class="internal-link" data-tippreview-enabled="true">Leiautes do eSocial v. S-1.3 NT 07/2026 rev. 20/10/2026 - formato PDF</a></li></ul></ul><p style="padding-left: 60px;" data-mce-style="padding-left: 60px;"><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/2026-10-26_esquemas_xsd_v_s_01_03_00-1-1.zip" data-tippreview-title="" data-mce-href="resolveuid/855383ee065b4c95961a31ce06019e0f" class="internal-link" data-tippreview-enabled="true">- Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) </a>- produção em 26/10/2026</p><p style="padding-left: 60px;" data-mce-style="padding-left: 60px;"><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/2026-11-23_esquemas_xsd_v_s_01_03_00-1-1.zip" data-tippreview-title="" data-mce-href="resolveuid/6744d91ba3dd427281f601ad7ebcac0e" class="internal-link" data-tippreview-enabled="true">- Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.)</a> - produção em 23/11/2026</p><p style="padding-left: 60px;" data-mce-style="padding-left: 60px;"><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/2026-12-14_esquemas_xsd_v_s_01_03_00-1-1.zip" data-tippreview-title="" data-mce-href="resolveuid/b32298a4c5cb4ca9a86898ddfd965263" class="internal-link" data-tippreview-enabled="true">- Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.)</a> - produção em 14/12/2026</p><p style="padding-left: 60px;" data-mce-style="padding-left: 60px;"><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/2027-01-18_esquemas_xsd_v_s_01_03_00-1-1.zip" data-tippreview-title="" data-mce-href="resolveuid/9aae56ac761f4c5da3a290e3e212c39d" class="internal-link" data-tippreview-enabled="true">- Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.). </a>- produção em 18/01/2027</p><ul><ul><li><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-06-2026-rev-pdf.zip" data-tippreview-title="" data-mce-href="resolveuid/17036e9946b24b63ad427f5b14c04c2b" class="internal-link" data-tippreview-enabled="true">Leiautes do eSocial v. S-1.3 (até NT 06/2026 rev. 09/04/2026) - formato PDF</a></li></ul></ul><p style="padding-left: 60px;" data-mce-style="padding-left: 60px;"><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/2026-02-13_esquemas_xsd_v_s_01_03_00.zip" data-tippreview-title="" data-mce-href="resolveuid/ceeeb064066f4ce187fe63770c50a6af" class="internal-link" data-tippreview-enabled="true">- Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 06/2026 rev. 09/04/2026)</a> - produção em 13/02/2026</p><p style="padding-left: 60px;" data-mce-style="padding-left: 60px;"><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/2026-04-27_esquemas_xsd_v_s_01_03_00.zip" data-tippreview-title="" data-mce-href="resolveuid/fed0374a5c444c1d8693ce8f90b1753a" class="internal-link" data-tippreview-enabled="true">- Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 06/2026 rev. 09/04/2026)</a> - produção em 27/04/2026 </p><ul><ul><li><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-05-2025-pdf.zip" data-tippreview-title="" data-mce-href="resolveuid/d42bb19163d04aa689d6d9ba481a76bc" class="internal-link" data-tippreview-enabled="false">Leiautes do eSocial v. S-1.3 (até NT 05/2025) - formato PDF</a></li></ul></ul><p style="padding-left: 60px;" data-mce-style="padding-left: 60px;"><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/2025-11-24_esquemas_xsd_v_s_01_03_00.zip" data-tippreview-title="" data-mce-href="resolveuid/f18924087a114b42b7f8fa4917a194cf" class="internal-link" data-tippreview-enabled="false">- Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 05/2025) - produção em 24/11/2025</a></p>
+                
+            
+        </div>
+    
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="c3c52af5-9c71-4ef7-934d-3ffb3a8cf380">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/996775-manualorientacaodesenvolvedoresocialv1-16.pdf">Manual de Orientação do Desenvolvedor do eSocial v.1.16</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="df108223-db79-489b-8f30-8d1099e02c49">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/998566-mensagensdosistema-v2-5.pdf">Mensagens do Sistema - v. 2.5</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="c2ad1446-0237-4122-a7e1-4b5722d79f34">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/pacote-de-comunicacao-esocial-v1-6.zip">Pacote de Comunicação eSocial v.1.6</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="db2d3b4c-583e-42b5-bdba-7f5d9613d6b2">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/entes-federados-responsaveis.csv">Entes Federativos Responsáveis</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="b667a39e-5dd8-483d-b10a-363fbad9bb55">
+                        
+
+    <div class="outstanding-header tile-content">
+    
+
+      
+
+          <a class="outstanding-link" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/pacote-de-comunicacao-esocial-v1-6-alfa.zip">Pacote de Comunicação eSocial v.1.6 - Alfa</a>
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+      
+
+      
+
+        
+
+      
+
+      
+    
+
+    </div>
+
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+
+                    </div>
+                
+            
+        
+    
+
+
+                        
+                            
+    
+        
+            
+                
+                
+                    <div class="column col-md-6 " data-panel="">
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="b2a01a69-a429-4fb0-853e-b6b819416e0d">
+                        
+    
+        
+        <div class="cover-richtext-tile tile-content">
+            
+                
+                    <p style="text-align: center;"><img src="https://www.gov.br/esocial/pt-br/documentacao-tecnica/imagens/Documentacaotecnica_historico.png" alt="" data-mce-src="resolveuid/a4a307034f7f4b67bbbc9b3b1faa7f61" class="image-inline" /><br data-mce-bogus="1" /></p>
+                
+            
+        </div>
+    
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+                            
+    
+        
+
+            
+                
+                    
+
+                    <div class="tile tile-default" id="bc3ef08a-0952-41ff-8ca0-101384e14507">
+                        
+    
+        
+        <div class="cover-richtext-tile tile-content">
+            
+                
+                    <ul><li><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/versoes-do-sistema" data-tippreview-title="" data-mce-href="resolveuid/fc58a06e061e4ccfbcfdf749f5f136a5" class="internal-link" data-tippreview-enabled="true">Histórico de versões do sistema</a></li><li><a data-mce-style="" style="" target="_self" title="" data-tippreview-image="" href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/versoes-anteriores-da-documentacao-tecnica" data-tippreview-title="" data-mce-href="resolveuid/08c81dd4028c4d1a83c3ec8964821287" class="internal-link" data-tippreview-enabled="true">Versões anteriores da Documentação Técnica</a></li></ul>
+                
+            
+        </div>
+    
+
+                    </div>
+                
+            
+
+            
+
+            
+
+        
+    
+
+
+                        
+
+                    </div>
+                
+            
+        
+    
+
+
+                        
+
+                    </div>
+                </div>
+            
+        
+
+    
+
+
+
+            
+        
+    
+
+
+
+                        </div>
+                    
+
+                    
+                </div>
+            
+
+            <div id="viewlet-below-content">
+
+
+
+
+
+
+    
+        <script class="social-links-script">
+        document.addEventListener("DOMContentLoaded", function() {
+            var containers = document.getElementsByClassName("nitf-basic-tile");
+            for (var i = 0; i < containers.length; i++) {
+                var ulElements = containers[i].getElementsByClassName("share");
+                while (ulElements.length > 0) {
+                    ulElements[0].parentNode.removeChild(ulElements[0]);
+                }
+            }
+        });
+        $(document).ready(function () {
+            for (let tile of $('.nitf-basic-tile')) {
+                if (!$(tile).find('.social-links').length) {
+                    var url = '#'
+                    $(tile).find('a').each(function(){
+                        url = $(this).attr('href');
+                    });
+                    var titulo = '#'
+                    $(tile).find('a').each(function(){
+                        titulo = $(this).text();
+                    });
+                    var imagem = url+'/logo.png'
+                    $(tile).find('img').each(function(){
+                        imagem = $(this).attr('src');
+                    });
+                    var link_telegram = $('<a title="Telegram" class="link-whatsapp"><span class="fab fa-telegram-plane"></span></a>');
+                    $(link_telegram).attr('href', 'https://telegram.me/share/url?url='+url);
+                    var link_whatsapp = $('<a title="WhatsApp" class="link-whatsapp"><span class="fab fa-whatsapp"></span></a>');
+                    $(link_whatsapp).attr('href', 'https://api.whatsapp.com/send?text='+url);
+                    var link_facebook = $('<a title="Facebook"><span class="fab fa-facebook-f"></span></a>');
+                    $(link_facebook).attr('href', 'http://www.facebook.com/sharer.php?u='+url);
+                    var link_twitter = $('<a title="Twitter"><span class="fab fa-x-twitter"></span></a>');
+                    $(link_twitter).attr('href', 'https://twitter.com/share?text='+titulo+'&url='+url);
+                    var link_linkedin = $('<a title="LinkedIn"><span class="fab fa-linkedin-in"></span></a>');
+                    $(link_linkedin).attr('href', 'https://www.linkedin.com/shareArticle?mini=true&title='+titulo+'&url='+url);
+                    var link_google = $('<a title="Google+"><span class="fab fa-google-plus-g"></span></a>');
+                    $(link_google).attr('href', 'https://plus.google.com/share?url='+url);
+                    var link_email = $('<a title="E-mail"><span class="fas fa-at"></span></a>');
+                    $(link_email).attr('href', url+'/sendto_form');
+                    var link_pinterest = $('<a title="Pinterest"><span class="fab fa-pinterest-p"></span></a>');
+                    $(link_pinterest).attr('href', 'https://pinterest.com/pin/create/button/?url='+url+'&media='+imagem+'&description='+titulo);
+                    var link_clipboard = $('<a class="link-clipboard" onclick="event.preventDefault()"><span class="fas fa-link"></span></a>');
+                    $(link_clipboard).attr('href', url);
+                    $(link_clipboard).attr('title', $('#viewlet-tileshare')[0].dataset.titleLink);
+                    var link_x = $('<a href="#" class="toggle-social-links"><span class="fas fa-share-alt"></span><span class="fas fa-times"></span></a>');
+                    var div_principal = $('<div class="social-links"></div>');
+                    $(div_principal).append(link_facebook);$(div_principal).append(link_twitter);$(div_principal).append(link_linkedin);$(div_principal).append(link_whatsapp);
+                    $(div_principal).append(link_clipboard);
+                    $(div_principal).prepend(link_x);
+
+                    var container = $(tile).children('.tile-subtitle');
+                    $(container).append(div_principal);
+                }
+            }
+            new ClipboardJS('.link-clipboard', {
+                text: function (trigger) {
+                    return trigger.getAttribute('href');
+                }
+            });
+        });
+        </script>
+    
+    
+
+
+    
+        <script class="social-links-script">
+        document.addEventListener("DOMContentLoaded", function() {
+            var containers = document.getElementsByClassName("nitf-basic-tile");
+            for (var i = 0; i < containers.length; i++) {
+                var ulElements = containers[i].getElementsByClassName("share");
+                while (ulElements.length > 0) {
+                    ulElements[0].parentNode.removeChild(ulElements[0]);
+                }
+            }
+        });
+        $(document).ready(function () {
+            for (let tile of $('.nitf-basic-tile')) {
+                if (!$(tile).find('.social-links').length) {
+                    var url = '#'
+                    $(tile).find('a').each(function(){
+                        url = $(this).attr('href');
+                    });
+                    var titulo = '#'
+                    $(tile).find('a').each(function(){
+                        titulo = $(this).text();
+                    });
+                    var imagem = url+'/logo.png'
+                    $(tile).find('img').each(function(){
+                        imagem = $(this).attr('src');
+                    });
+                    var link_telegram = $('<a title="Telegram" class="link-whatsapp"><span class="fab fa-telegram-plane"></span></a>');
+                    $(link_telegram).attr('href', 'https://telegram.me/share/url?url='+url);
+                    var link_whatsapp = $('<a title="WhatsApp" class="link-whatsapp"><span class="fab fa-whatsapp"></span></a>');
+                    $(link_whatsapp).attr('href', 'https://api.whatsapp.com/send?text='+url);
+                    var link_facebook = $('<a title="Facebook"><span class="fab fa-facebook-f"></span></a>');
+                    $(link_facebook).attr('href', 'http://www.facebook.com/sharer.php?u='+url);
+                    var link_twitter = $('<a title="Twitter"><span class="fab fa-x-twitter"></span></a>');
+                    $(link_twitter).attr('href', 'https://twitter.com/share?text='+titulo+'&url='+url);
+                    var link_linkedin = $('<a title="LinkedIn"><span class="fab fa-linkedin-in"></span></a>');
+                    $(link_linkedin).attr('href', 'https://www.linkedin.com/shareArticle?mini=true&title='+titulo+'&url='+url);
+                    var link_google = $('<a title="Google+"><span class="fab fa-google-plus-g"></span></a>');
+                    $(link_google).attr('href', 'https://plus.google.com/share?url='+url);
+                    var link_email = $('<a title="E-mail"><span class="fas fa-at"></span></a>');
+                    $(link_email).attr('href', url+'/sendto_form');
+                    var link_pinterest = $('<a title="Pinterest"><span class="fab fa-pinterest-p"></span></a>');
+                    $(link_pinterest).attr('href', 'https://pinterest.com/pin/create/button/?url='+url+'&media='+imagem+'&description='+titulo);
+                    var link_clipboard = $('<a class="link-clipboard" onclick="event.preventDefault()"><span class="fas fa-link"></span></a>');
+                    $(link_clipboard).attr('href', url);
+                    $(link_clipboard).attr('title', $('#viewlet-tileshare')[0].dataset.titleLink);
+                    var link_x = $('<a href="#" class="toggle-social-links"><span class="fas fa-share-alt"></span><span class="fas fa-times"></span></a>');
+                    var div_principal = $('<div class="social-links"></div>');
+                    $(div_principal).append(link_facebook);$(div_principal).append(link_twitter);$(div_principal).append(link_linkedin);$(div_principal).append(link_whatsapp);
+                    $(div_principal).append(link_clipboard);
+                    $(div_principal).prepend(link_x);
+
+                    var container = $(tile).children('.tile-subtitle');
+                    $(container).append(div_principal);
+                }
+            }
+            new ClipboardJS('.link-clipboard', {
+                text: function (trigger) {
+                    return trigger.getAttribute('href');
+                }
+            });
+        });
+        </script>
+    
+    
+
+
+  
+
+
+<div class="govbr-recom-config" data-recom-history-title="Serviços que você acessou">
+
+
+            
+    
+
+</div>
+
+
+
+
+</div>
+        </main>
+
+            
+        </div>
+
+        <div class="conteudo-relacionado"></div>
+
+        <div class="govbr-history-render"></div>
+
+        <footer id="portal-footer" class="portal-footer">
+            <div class="footer-wrapper">
+                <div class="govbr-logo"></div>
+                <!--<div class="colunas-rodape">
+              <div class="coluna-menu">-->
+                <ul class="list-navigation"><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/acesso-ao-sistema" class="plain">Acesso ao sistema</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://login.esocial.gov.br/login.aspx" class="state-published">
+            
+            Acesse o eSocial
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="http://www.gov.br/esocial/pt-br/acesso-ao-sistema/acesso-ao-esocial-por-meio-do-gov.br" class="state-published">
+            
+            Orientações de acesso ao eSocial por meio do Gov.br
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/acesso-ao-sistema/semaforo" class="state-published">
+            
+            Semáforo
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/acesso-ao-sistema/cronograma-de-implantacao" class="state-published">
+            
+            Cronograma de implantação
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/acesso-ao-sistema/ambiente-de-producao-restrita" class="state-published">
+            
+            Produção Restrita - Ambiente de Testes
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/acesso-ao-sistema/orientacoes-assinatura-digital-e-procuracao-eletronica" class="state-published">
+            
+            Orientações - Procuração Eletrônica e Assinatura Digital
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/empregador-domestico" class="plain">Empregador Doméstico</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/manual-do-empregador-domestico" class="state-published">
+            
+            Manual do Doméstico
+        </a>
+
+        
+    
+</li>
+
+<li class="dropdown-submenu">
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/perguntas-frequentes" class="state-published hasDropDown">
+            
+            Perguntas Frequentes
+        </a>
+
+        <ul class="submenu navTree navTreeLevel1">
+            
+
+
+
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/perguntas-frequentes/historico-das-perguntas-frequentes-empregador-domestico" class="state-published">
+            
+            Histórico das Perguntas Frequentes - Empregador Doméstico
+        </a>
+
+        
+    
+</li>
+
+
+
+
+        </ul>
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/app-esocial-domestico" class="state-published">
+            
+            App eSocial Doméstico
+        </a>
+
+        
+    
+</li>
+
+<li class="dropdown-submenu">
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes" class="state-published hasDropDown">
+            
+            Orientações
+        </a>
+
+        <ul class="submenu navTree navTreeLevel1">
+            
+
+
+
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/como-acessar-o-esocial" class="state-published">
+            
+            Como Acessar o eSocial
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/consultar-guias-pagas" class="state-published">
+            
+            Consultar Guias Pagas
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/documento-de-arrecadacao-do-esocial-dae" class="state-published">
+            
+            Documento de Arrecadação do eSocial - DAE
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/direitos-do-trabalhador-domestico" class="state-published">
+            
+            Direitos do Trabalhador Doméstico
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="http://www.grfempregadodomestico.caixa.gov.br/" class="state-published">
+            
+            Guia FGTS - Recolhimento Anterior a 10/2015
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="http://www.caixa.gov.br/empresa/fgts-empresas/FGTS-para-Empregador-Domestico/Paginas/default.aspx" class="state-published">
+            
+            FGTS para Empregador Doméstico
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/saque-fgts" class="state-published">
+            
+            Saque FGTS
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/seguro-desemprego" class="state-published">
+            
+            Seguro Desemprego
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/recebimento-de-beneficios-do-inss-pelo-trabalhador-domestico" class="state-published">
+            
+            Recebimento de benefícios do INSS pelo trabalhador doméstico
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empregador-domestico/orientacoes/tutoriais-em-video" class="state-published">
+            
+            Tutoriais em vídeo
+        </a>
+
+        
+    
+</li>
+
+
+
+
+        </ul>
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/acesso-ao-sistema/o-que-muda-com-o-novo-esocial-simplificado" class="state-published">
+            
+            O que muda com o Novo eSocial Simplificado
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/manual-do-usuario-esocial-web-processo-trabalhista.pdf" class="state-published">
+            
+            Manual Web Processo Trabalhista
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/empresas" class="plain">Empresas e Órgãos Públicos</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empresas/manual-web-geral" class="state-published">
+            
+            Manual WEB GERAL / SST
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empresas/perguntas-frequentes" class="state-published">
+            
+            Perguntas Frequentes
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empresas/orientacoes" class="state-published">
+            
+            Orientações
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empresas/consulta-qualificacao-cadastral" class="state-published">
+            
+            Consulta Qualificação Cadastral
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/manual-do-usuario-esocial-web-processo-trabalhista.pdf" class="state-published">
+            
+            Manual WEB Processo Trabalhista
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/empresas/videoaulas-processos-trabalhistas" class="state-published">
+            
+            Videoaulas Processos Trabalhistas
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/microempreendedor-individual" class="plain">Microempreendedor Individual</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/microempreendedor-individual/microempreendedor-individual-mei" class="state-published">
+            
+            Manual WEB MEI
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/microempreendedor-individual/perguntas-frequentes" class="state-published">
+            
+            Perguntas Frequentes
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/empresas-e-negocios/pt-br/empreendedor" class="state-published">
+            
+            Portal do Empreendedor
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/segurado-especial" class="plain">Segurado Especial</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/segurado-especial/manual-do-segurado-especial" class="state-published">
+            
+            Manual do Segurado Especial
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/noticias" class="plain">Notícias</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/noticias/colecao-domestico" class="state-published">
+            
+            Doméstico
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/noticias/colecao-empresas" class="state-published">
+            
+            Empresas
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/noticias/colecao-coronavirus-covid-19" class="state-published">
+            
+            Coronavírus - COVID 19
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/noticias/colecao-TODAS-NOTICIAS" class="state-published">
+            
+            Todas as Notícias
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="selected dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/documentacao-tecnica" class="plain">Documentação Técnica</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/leiautes-esocial-versao-s-1-3-nt-07-2026" class="state-published">
+            
+            Leiautes eSocial versão S-1.3 - NT 07/2026
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/leiautes-esocial-v-s-1-3-nt-07-2026-rev-24-09-2026" class="state-published">
+            
+            Leiautes eSocial versão S-1.3 - NT 07/2026. rev. 24/09/2026
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/documentacao-tecnica/leiautes-esocial-versao-s-1-3-nt-07-2026-rev-20-10-2026" class="state-published">
+            
+            Leiautes eSocial versão S-1.3 - NT 07/2026. rev. 20/10/2026
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/centrais-de-conteudo" class="plain">Centrais de conteúdo</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/centrais-de-conteudo/conheca-o-esocial" class="state-published">
+            
+            Conheça o eSocial
+        </a>
+
+        
+    
+</li>
+
+<li class="dropdown-submenu">
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/centrais-de-conteudo/legislacao" class="state-published hasDropDown">
+            
+            Legislação
+        </a>
+
+        <ul class="submenu navTree navTreeLevel1">
+            
+
+
+
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/centrais-de-conteudo/legislacao/empregador-domestico" class="state-published">
+            
+            Empregador Doméstico
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/centrais-de-conteudo/legislacao/empresas" class="state-published">
+            
+            Empresas
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="http://www.portaldoempreendedor.gov.br/legislacao" class="state-published">
+            
+            MEI
+        </a>
+
+        
+    
+</li>
+
+
+
+
+        </ul>
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/centrais-de-conteudo/coronavirus-orientacoes" class="state-published">
+            
+            CORONAVíRUS - Orientações
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/canais_atendimento" class="plain">Canais de Atendimento</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/canais_atendimento" class="state-published">
+            
+            Fale Conosco
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="/esocial/pt-br/canais_atendimento" class="state-published">
+            
+            Central  0800 730 0888
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/canais_atendimento/servico-informacao-cidadao-sic" class="state-published">
+            
+            Serviço de Informação ao Cidadão - SIC
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/canais_atendimento/ouvidoria" class="state-published">
+            
+            Ouvidoria
+        </a>
+
+        
+    
+</li>
+
+<li>
+
+    
+
+        <a href="https://www.gov.br/esocial/pt-br/canais_atendimento/imprensa" class="state-published">
+            
+            Imprensa
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li><li class="plain dropdown-submenu"><a href="https://www.gov.br/esocial/pt-br/tabelas-do-esocial" class="plain">Tabelas do eSocial</a>
+                <ul class="submenu">
+                    <li>
+
+    
+
+        <a href="https://frontend.esocial.gov.br/adm/" class="state-published">
+            
+            Consulta tabelas do eSocial
+        </a>
+
+        
+    
+</li>
+                </ul>
+            </li></ul>
+                <!--</div>
+            </div>-->
+
+                
+        <div class="lgpd-reset-cookies">
+        <a href="#" class="reset-cookies" onclick="_redefinirCookies(); return false;">Redefinir Cookies</a>
+    </div>
+    <div class="redes-e-logos">
+                    <div class="redes-sociais">
+                        <div class="titulo">Redes sociais</div>
+                    <ul class="portal-redes">
+            
+                <li class="portalredes-twitter portalredes-item">
+                    <a href="https://www.twitter.com/twitter">Twitter</a>
+                </li>
+            
+                <li class="portalredes-youtube portalredes-item">
+                    <a href="https://www.youtube.com/youtube">YouTube</a>
+                </li>
+            
+                <li class="portalredes-facebook portalredes-item">
+                    <a href="https://www.facebook.com/facebook">Facebook</a>
+                </li>
+            
+                <li class="portalredes-flickr portalredes-item">
+                    <a href="https://www.flickr.com/flickr">Flickr</a>
+                </li>
+            
+        </ul></div>
+                    <div id="footer-govbr">
+                        <div id="wrapper-footer-brasil">
+                            <a class="logo-acesso-footer" href="https://www.gov.br/acessoainformacao/pt-br" title="Acesse o portal sobre o acesso à informação">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 117 49" height="49" width="117" shape-rendering="geometricPrecision" text-rendering="geometricPrecision"><defs><style type="text/css"><![CDATA[.a {font: normal bold 11px Open Sans, sans-serif;}]]></style></defs><circle cx="22" cy="23" r="22" fill="#222"></circle><path style="stroke:#fff;stroke-width:9;stroke-linecap:round;" d="m 22,23 v 13"></path><path style="stroke:#222;stroke-width:4;stroke-linejoin:round;" d="m 4,43 3,-6 4,3 z"></path><circle r="4.5" cy="11" cx="22" fill="#fff"></circle><g fill="#222"><text x="47" y="22"><tspan class="a" y="18">Acesso à</tspan><tspan class="a" x="47" y="31">Informação</tspan></text></g></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="texto-copyright">
+    Todo o conteúdo deste site está publicado sob a licença <a rel="license" href="https://creativecommons.org/licenses/by-nd/3.0/deed.pt_BR">Creative Commons Atribuição-SemDerivações 3.0 Não Adaptada</a>.
+  </div>
+        </footer>
+
+        <nav class="back-to-top" aria-label="Voltar ao topo da página">
+            <a href="#wrapper">
+                <span class="fa fa-chevron-up"></span>
+                <span class="sr-only">Voltar ao topo da página</span>
+            </a>
+        </nav>
+    <div id="govbr-busca-input-data" style="display: none" data-autocomplete-api="https://portalunico.estaleiro.serpro.gov.br/api/" data-autocomplete-index="//www.gov.br/esocial" data-autocomplete-orgao="secretaria-de-trabalho" data-autocomplete-search="https://www.gov.br/esocial/pt-br" data-autocomplete-portal="https://www.gov.br" data-historico-title="Histórico de buscas" data-servicos-title="Serviços e Apps" data-sugestoes-title="Você quis dizer?" data-input-placeholder="O que você procura?"></div></div><div id="main-navigation-overlay"></div><div class="redefinir-cookies">
+
+    
+
+</div><div class="dsgov">
+    <div class="br-cookiebar default d-none" tabindex="-1">
+      <div class="br-modal">
+        <div class="br-card">
+          <div class="container">
+            <div class="wrapper">
+              <div class="br-modal-header entry-content">
+                <div class="br-modal-title"></div>
+                <div class="last-update"></div>
+                <div class="entry-text"></div>
+              </div>
+              <div class="br-modal-body">
+                <div class="info-text"></div>
+                <div class="br-list main-content">
+                </div>
+              </div>
+            </div>
+            <div class="br-modal-footer actions">
+              <button class="br-button small btn-manage" type="button" aria-label="Definir Cookies"></button>
+              <button class="br-button secondary small reject-all" type="button" aria-label="Rejeitar cookies">Rejeitar</button>
+              <button class="br-button secondary small btn-accept" type="button" aria-label="Aceitar"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><script id="lgpd-cookie-handling" type="text/javascript" src="https://www.gov.br/esocial/++resource++govbr.policy/lgpd_cookie_handling_1_3_91.js"></script><div id="govbr-login-overlay-wrapper"></div><div id="govbr-busca-por-voz-overlay-wrapper">
+        <div class="busca-por-voz">
+            <span class="transcpt-text">Fale Agora</span>
+            <a href="#" id="btn-refazer-busca" class="refazer-busca">
+                Refazer a busca
+            </a>
+            
+            <a href="#" id="btn-ouvindo" class="btn-microfone ouvindo">
+                <span class="fas fa-microphone"></span>
+            </a>
+
+            <a href="#" id="btn-nao-entendi" class="btn-microfone nao-entendi">
+                <span class="fas fa-microphone"></span>
+            </a>
+
+            <a href="#" id="btn-fechar">
+                <span class="fas fa-times"></span>
+            </a>
+        </div>
+    </div><div vw="" class="enabled">
+        <div vw-access-button="" class="active"></div>
+        <div vw-plugin-wrapper="">
+          <div class="vw-plugin-top-wrapper"></div>
+        </div>
+    </div><div class="escuta-govbr-popup-wrapper">
+        <a href="#" class="escuta-govbr-popup-fechar" id="escuta-govbr-popup-fechar">
+            <span class="fas fa-times"></span>
+        </a>
+
+        <div class="title">Ajude a melhorar o gov.br</div>
+
+        <p>Ao compartilhar sua opinião, você nos ajuda a identificar problemas e a melhorar a navegação para você.</p>
+        
+        <div class="buttons">
+            <button class="escuta-govbr-popup-agora-nao" id="escuta-govbr-popup-agora-nao">Agora não</button>
+            <button class="escuta-govbr-popup-responder" id="escuta-govbr-popup-responder">Responder pesquisa</button>            
+        </div>
+
+        <div class="footer">
+            <input type="checkbox" id="escuta-govbr-popup-nao-exibir" />
+            <label for="escuta-govbr-popup-nao-exibir">Não exibir esta mensagem novamente.</label>
+        </div>
+    </div><!-- relato 4118176 --><script>
+        window.onbeforeunload = null;
+    </script><script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script><script>
+    new window.VLibras.Widget('https://vlibras.gov.br/app', 'https://vlibras.gov.br/config/default_logo.json');
+    </script><script>        
+        window.addEventListener('troca-contraste', function() {            
+            if ($("body").hasClass("contraste")) {
+                setCookie("contraste", "");
+                $("body").removeClass("contraste");
+                $("barra-govbr").attr('contrastActive', 'false');
+            } else {
+                setCookie("contraste", "on");
+                $("body").addClass("contraste");
+                $("barra-govbr").attr('contrastActive', 'true');
+            }
+            return false;
+        });
+        window.addEventListener('abrir-cookie-config', function() {
+            _redefinirCookies(); return false;
+        });
+        window.addEventListener('ACCESSTOKEN_ERROR', function() {
+            window.location.href = "/govbrportal/logout.html";
+        });
+    </script><script type="text/javascript" src="/esocial/++theme++padrao_govbr/govbrtheme-1b543ca.js"></script><div id="plone-analytics"></div></body>
+</html>
