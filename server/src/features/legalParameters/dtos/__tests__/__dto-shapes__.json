@@ -44,7 +44,12 @@
             "INUT_NAO_SE_APLICA",
             "ICMS_ST_NCM_UF",
             "ENCARGO_FOLHA",
-            "IBS_CBS_REDUCAO_NBS"
+            "IBS_CBS_REDUCAO_NBS",
+            "INSS_EMPREGADO",
+            "ESOCIAL_CATEGORIA",
+            "ESOCIAL_NATUREZA_RUBRICA",
+            "ESOCIAL_INCIDENCIA_RUBRICA",
+            "ESOCIAL_MOTIVO_AFASTAMENTO"
           ]
         },
         "chave": {
@@ -150,7 +155,12 @@
             "INUT_NAO_SE_APLICA",
             "ICMS_ST_NCM_UF",
             "ENCARGO_FOLHA",
-            "IBS_CBS_REDUCAO_NBS"
+            "IBS_CBS_REDUCAO_NBS",
+            "INSS_EMPREGADO",
+            "ESOCIAL_CATEGORIA",
+            "ESOCIAL_NATUREZA_RUBRICA",
+            "ESOCIAL_INCIDENCIA_RUBRICA",
+            "ESOCIAL_MOTIVO_AFASTAMENTO"
           ]
         },
         "status": {
@@ -239,7 +249,12 @@
             "INUT_NAO_SE_APLICA",
             "ICMS_ST_NCM_UF",
             "ENCARGO_FOLHA",
-            "IBS_CBS_REDUCAO_NBS"
+            "IBS_CBS_REDUCAO_NBS",
+            "INSS_EMPREGADO",
+            "ESOCIAL_CATEGORIA",
+            "ESOCIAL_NATUREZA_RUBRICA",
+            "ESOCIAL_INCIDENCIA_RUBRICA",
+            "ESOCIAL_MOTIVO_AFASTAMENTO"
           ]
         },
         "chave": {
