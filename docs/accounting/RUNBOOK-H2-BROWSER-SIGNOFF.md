@@ -623,7 +623,7 @@ Pré-condições (verificar antes de começar):
 > dono no chat, 30/10; assinatura abaixo continua do dono)*. Ressalva registrada antes da escolha: nos prints do Livro Diário só
 > a coluna Débito aparece (achado F), e o lado do crédito está provado pelo texto do DOM e pelo dev.db.
 >
-> ASSINATURA: [dono]
+> ASSINATURA (passos 6–10): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02) — atesta a conferência da evidência colada na execução de 29–30/10; desfecho marcado pelo dono (conferido em 02/11: blocos de Network/dev.db acima e os prints passo6-01…passo10-04 em runbook-evidence/H2-2026-10-29/).
 
 ---
 
@@ -746,7 +746,7 @@ Desfecho dos passos 12–14 (marcar UM):
 [ ] PASSOU — 12, 13 e 14 com evidência conferindo com o esperado
 [x] FALHOU — passo 14 divergiu; evidência colada acima; nenhum passo seguinte executado *(marcado pelo dono no chat, 29/10; assinatura abaixo continua do dono)*
 [ ] BLOQUEADO — pré-condição __ não se sustentava
-Assinatura do executor (passos 12–14): ____________
+Assinatura do executor (passos 12–14): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02) — atesta a conferência da evidência colada na execução de 29–30/10; desfecho marcado pelo dono (conferido em 02/11: corpos dos POST 201/400 de ECD/ECF acima e os prints passo13-01, passo14-01…03).
 
 ### [EMENDA 2026-09-28] Passo 15 — telas contábeis com o body tipado (contrato gerado PR-2)
 
@@ -901,7 +901,7 @@ Desfecho do passo 15 (marcar UM):
 [x] PASSOU — a) a k) com evidência conferindo com o esperado *(marcado pelo dono no chat, 29/10; assinatura abaixo continua do dono)*
 [ ] FALHOU — item __ divergiu; evidência colada acima
 [ ] BLOQUEADO — pré-condição __ não se sustentava
-Assinatura do executor (passo 15): ____________
+Assinatura do executor (passo 15): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02) — atesta a conferência da evidência colada na execução de 29–30/10; desfecho marcado pelo dono (conferido em 02/11: bloco "EVIDÊNCIA do passo 15" com status e corpo de a) a k)).
 
 ### [EMENDA 2026-09-28] Passo 16 — e-Lalur: movimentos M410, fechamento do trimestre e diagnóstico (FE-INCR-LALUR-PR2)
 
@@ -1190,7 +1190,7 @@ Assinatura do executor (passo 18): agente claude-opus-5-5, AI tester, sob autori
 Desfecho do passo 19 (marcar UM):
 [ ] PASSOU — a) a d) com evidência conferindo com o esperado
 [ ] FALHOU — item __ divergiu; evidência colada acima
-[x] BLOQUEADO — pré-condição "revisão do par ECD/ECF assinada" (passo 18 BLOQUEADO; sem ECF EXPORTED o "Validar pacote" fica desabilitado); a) confere não se sustentava *(marcado pelo agente AI tester, 02/11, pela evidência do bloco acima)*
+[x] BLOQUEADO — pré-condição "revisão do par ECD/ECF assinada" (passo 18 BLOQUEADO; sem ECF EXPORTED o "Validar pacote" fica desabilitado) não se sustentava; a) confere com o esperado *(marcado pelo agente AI tester, 02/11, pela evidência do bloco acima)*
 Assinatura do executor (passo 19): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
 ### [EMENDA 2026-09-29] Passo 20 — Baixas por retorno bancário (FE-INCR-BANK-SETTLEMENT)
