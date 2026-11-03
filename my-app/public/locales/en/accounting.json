@@ -400,9 +400,10 @@
     "generating": "Generating…",
     "ecd": {
       "title": "Generate SPED ECD",
-      "description": "Digital Accounting Bookkeeping. Requires a complete referential mapping (the \"Ready\" badge above).",
+      "description": "Digital Accounting Bookkeeping. An account without a referential code does not block: it ships without I051, with a warning (mapping is optional in the ECD; the ECF requires it).",
       "book": "Book (term)",
-      "submit": "Generate & download ECD"
+      "submit": "Generate & download ECD",
+      "avisos": "ECD generated and downloaded, with warnings:"
     },
     "ecf": {
       "title": "Generate SPED ECF",

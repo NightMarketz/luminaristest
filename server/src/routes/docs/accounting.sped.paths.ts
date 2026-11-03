@@ -11,8 +11,9 @@
  *         Composes the ECD (Livro Diário Geral, tipo G) for the given year from the ledger
  *         (chart, referential mapping, monthly balances, journal, BP/DRE) and persists a
  *         plain-text (ISO-8859-1) artifact as an EXPORT job. Download via
- *         /data-exchange/jobs/{jobId}/download. Blocks with 400 + unmappedAccounts if any
- *         leaf account is unmapped in the referential version (coverage gate).
+ *         /data-exchange/jobs/{jobId}/download. A leaf account unmapped in the referential version
+ *         does NOT block (C2 - Manual da ECD item 1.17, mapping is optional in the ECD): it ships
+ *         without I051, is listed in coberturaReferencial.unmappedAccounts and gets a line in avisos.
  *         BE-INCR-FIXED-ASSETS PR-4 (retificação versionada, item 26-31): a ECD SUBSTITUTA
  *         (declarant.indFinEsc=1) exige declarant.codHashSub (40 hex), supersedesJobId (o job
  *         EXPORTED sendo substituído) e verificationTerm (J801+J932); o .rtf do Termo chega por

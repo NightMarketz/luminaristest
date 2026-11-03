@@ -21,6 +21,11 @@ interface Envelope<T> {
   data: T;
 }
 
+/** Envelope da geração do SPED: `avisos` não bloqueiam (ex.: conta sem código referencial na ECD — Manual da ECD 1.17, C2). */
+interface GenerationEnvelope<T> extends Envelope<T> {
+  avisos?: string[];
+}
+
 // ── Payloads (contrato gerado) ──────────────────────────────────────────────────
 // ponytail: `signerContactIds` é consumida por spedController.expandSignerContacts ANTES do .strict()
 // (F-C12-4; D9 do PLANO-FE-CONTRACT-TYPES): o contador do cadastro vira signatário 900 no servidor.
@@ -94,9 +99,9 @@ export const spedService = {
     return (await apiClient.get<Envelope<QualifAssinante[]>>(`/accounting/sped/qualif-assinante${qs}`)).data;
   },
 
-  /** Generate the ECD .txt and immediately download it. Requires coverage.ready. */
-  async generateAndDownloadEcd(payload: GenerateEcdPayload): Promise<DataExchangeJob> {
-    const res = await apiClient.post<Envelope<DataExchangeJob>>(
+  /** Generate the ECD .txt and immediately download it; `avisos` vêm junto (conta sem referencial não bloqueia, C2). */
+  async generateAndDownloadEcd(payload: GenerateEcdPayload): Promise<{ job: DataExchangeJob; avisos: string[] }> {
+    const res = await apiClient.post<GenerationEnvelope<DataExchangeJob>>(
       '/accounting/sped/ecd/generate',
       payload,
     );
@@ -106,7 +111,7 @@ export const spedService = {
       payload.unitId,
       job.fileName ?? `sped-ecd-${payload.year}.txt`,
     );
-    return job;
+    return { job, avisos: res.avisos ?? [] };
   },
 
   /** Generate the ECF .txt and immediately download it. */

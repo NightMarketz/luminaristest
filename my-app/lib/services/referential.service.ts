@@ -9,8 +9,9 @@ import type {
 /**
  * Referential mapping service — typed client over the RFB chart-mapping endpoints
  * (`/api/accounting/referential/*`, BE-INCR-9 / 9B). The owner authors the
- * Account→RFB code de-para that gates SPED ECD generation: `coverage.ready` must
- * be true (no unmapped leaf accounts) before `/sped/ecd/generate` will accept.
+ * Account→RFB code de-para used by SPED ECD generation: an unmapped leaf account no
+ * longer blocks `/sped/ecd/generate` — it ships without I051 and comes back as an aviso
+ * (Manual da ECD 1.17, mapeamento facultativo — C2).
  *
  * All logic (versioning, in-tx gate, audit) lives on the backend; this only shapes
  * requests/responses. Mirrors the dataExchange.service envelope pattern.
