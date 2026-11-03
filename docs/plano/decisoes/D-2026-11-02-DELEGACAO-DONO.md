@@ -81,7 +81,14 @@ marcação nova. O desfecho geral do H1 segue em branco até o passo 6.
 Execução autorizada pela frase acima, pela emenda de 29/10. Ordem: [[FIX-DRE-DEDUCAO-SINAL]] (#1005) em `main` →
 re-semear o `dev.db` real (P0, com backup) → passos 16–23 do `RUNBOOK-H2-BROWSER-SIGNOFF` → runbooks irmãos do H2. O
 passo 14 segue FALHOU (Y600 ausente na ECF) até o [[FE-INCR-ECF-Y600]] existir, e por isso o desfecho geral do H2 não
-pode ser PASSOU nesta execução.
+pode ser PASSOU nesta execução. Para destravá-lo, o [[FE-INCR-ECF-Y600]] recebe `executa` do BRIEF inteiro (forks já
+ratificados em 29/10); depois dele, o passo 14 é refeito pela tela como AI tester.
+
+## 6b. Lote de merge
+
+Aprovados para a maestro, com condição: #1011 e #1003 com CI verde; #907 depois do revisor independente aprovar a
+cabeça final; #982 depois de terminar a execução do H2. Ordem, prompts e correções restantes em
+[`HANDOFF-2026-11-02-delegacao-dono.md`](../../accounting/HANDOFF-2026-11-02-delegacao-dono.md).
 
 ## 7. Forks pendentes — ratificados pela recomendação do BRIEF
 
