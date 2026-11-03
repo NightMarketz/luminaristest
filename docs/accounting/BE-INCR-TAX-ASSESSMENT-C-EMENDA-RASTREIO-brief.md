@@ -1,7 +1,8 @@
 # BE-INCR-TAX-ASSESSMENT-C — EMENDA RASTREIO (§C3 item 5): rastreabilidade da memória de cálculo
 
 > Sessão `sessao-planejamento`. **Só BRIEF: sem código, sem branch de código, sem `executa`.**
-> Forks **RATIFICAÇÃO PENDENTE** — nenhum se auto-ratifica.
+> Forks F-RT-1..6 **ratificados pelo dono em 03/11** por questionário (§3.1); **F-RT-4 contra a recomendação** (coluna nova,
+> com migração). Itens 1, 13 e o contrato §2.1 já estão na forma ratificada. Ainda sem `executa`.
 
 ## Contexto fixo
 
@@ -39,28 +40,30 @@
 
 ## 1. Checklist numerado
 
-> Cada item é testável sozinho. Os marcados **[fork F-RT-n]** só entram na forma da recomendação depois da ratificação.
+> Cada item é testável sozinho. Os forks estão ratificados (§3.1).
 
 ### A. Persistir a origem na confirmação (sem recálculo no export)
 
-1. **Origem gravada na linha da memória.** `MemoriaLinhaSchema` ganha campos **opcionais** de origem (contrato §2.1).
-   Opcionais porque as apurações já confirmadas não têm o dado e o schema é `.strict()`: o parse delas segue válido.
-   **[fork F-RT-4: onde guardar]** Teste: memória antiga (só os 4 campos) passa no `MemoriaCalculoSchema`; memória nova com
-   origem passa; campo desconhecido segue reprovado.
+1. **Origem gravada em coluna própria (F-RT-4 b, ratificado).** `TaxAssessment` ganha `rastreio Json?` (migração aditiva,
+   coluna nula), validada por `RastreioApuracaoSchema` (contrato §2.1), com uma entrada por `codigo` de linha da memória.
+   `MemoriaLinhaSchema` **não muda**. Apuração anterior à emenda fica com `rastreio = null`. Migração no padrão da casa:
+   SQLite sem transação ⇒ prólogo defensivo, e o smoke de migração roda (memórias `migracao-sqlite-nao-e-transacional`,
+   `smoke-gate-s6-x-migracao-de-dado`; aqui não há backfill). Teste: confirmação grava `rastreio` válido; apuração antiga
+   (`rastreio` nulo) exporta sem erro; `rastreio` com `codigo` que não existe na memória ⇒ erro na confirmação (não silencia).
 2. **Linhas `RASTREIO` por conta, gravadas na confirmação.** Para cada linha da memória que vem do razão (receita de
    serviço 3.1, receita por não uso 3.4, revenda 3.3, receita hospitalar, despesas lidas no Real), a confirmação grava uma
    entrada de rastreio **por conta analítica** com movimento ≠ 0: `accountCode`, `accountName`, `from`, `to` (a janela
    usada) e o movimento em centavos. Fonte: o mesmo `groupByAccount` que o cálculo já fez (sem query nova para o
-   movimento). **[fork F-RT-1: granularidade]** Teste-tabela: trimestre com receita em 2 contas analíticas de 3.1 ⇒ 2
+   movimento). (F-RT-1 a, ratificado.) Teste-tabela: trimestre com receita em 2 contas analíticas de 3.1 ⇒ 2
    entradas, e a soma delas = `valorCents` da linha `RECEITA_SERVICO`.
-3. **Saldo do balancete.** **[fork F-RT-2]** Na recomendação, cada entrada de rastreio grava também o saldo da conta no
+3. **Saldo do balancete.** (F-RT-2 a, ratificado.) Cada entrada de rastreio grava também o saldo da conta no
    fim da janela (`saldoFinalCents`), lido na confirmação e congelado. Teste: lançamento retroativo postado **depois** da
    confirmação não muda o saldo exportado.
 4. **Período de origem das linhas que vêm de outra apuração.** Linha copiada de memória anterior (trimestres anteriores,
    `RECEITA_ACUMULADA_ANO`, `LC224_SOBRA_ANTERIOR`…) grava `origemApuracaoId` e `origemPeriodo`. Teste: a linha da sobra
    do T02 aponta a apuração T01 confirmada.
-5. **Linhas de parâmetro e de informado.** Linha cuja fonte é parâmetro legal ou valor informado pelo usuário grava
-   `origemTipo = PARAMETRO | INFORMADO` (sem conta). Teste: alíquota da CSLL ⇒ `PARAMETRO`; dedução informada ⇒ `INFORMADO`.
+5. **Linhas de parâmetro, informado e cálculo.** Linha cuja fonte é parâmetro legal ou valor informado pelo usuário grava
+   `origemTipo = PARAMETRO | INFORMADO` (sem conta). Teste: alíquota da CSLL ⇒ `PARAMETRO`; dedução informada ⇒ `INFORMADO`; presunção ⇒ `CALCULO`, e toda linha `CALCULO` diz a operação na `descricao` (F-RT-6 a).
 
 ### B. Exportar
 
@@ -81,29 +84,34 @@
    - CSLL: as mesmas (art. 28).
    Reusa `ultimoDiaUtilDoMesSeguinte` (`codMun = null`: tributo federal, só feriado nacional). Teste-tabela: T01/2027,
    A12/2027, A00/2027, com um feriado nacional no último dia útil.
-   **[fork F-RT-3: quotas]** O art. 5º § 1º deixa pagar o trimestral em 3 quotas; a recomendação é só a quota única nesta emenda.
+   (F-RT-3 a, ratificado: só a quota única; as 3 quotas do art. 5º § 1º ficam fora.)
 10. **Linha-meta** ganha `rastreio=v1` (o leitor sabe que as colunas novas existem). Teste: 1ª linha contém `rastreio=v1`.
 
 ### C. Documento de origem
 
-11. **[fork F-RT-1, ramo (a)]** O razão (`EXPORT_GENERAL_LEDGER`) ganha `sourceType` e `sourceId` ao fim das colunas
+11. **(F-RT-1 a, ratificado)** O razão (`EXPORT_GENERAL_LEDGER`) ganha `sourceType` e `sourceId` ao fim das colunas
     (aditivo), para fechar a cadeia conta → lançamento → documento. Teste: lançamento de venda sai com o `sourceType` da
-    venda e o id. **Este item toca outro kind:** só entra se o F-RT-1 (a) for ratificado.
+    venda e o id. Este item toca outro kind (aditivo), e entra porque o F-RT-1 (a) foi ratificado.
 
 ### D. Gates que o diff aciona
 
 12. Snapshot de shape dos DTOs (`__dto-shapes__.json`) se o DTO de export mudar: inserir só o novo, sem reordenar
     (memória `dto-snapshot-update-reordena-no-windows`).
-13. Nenhum `eventType` novo de auditoria (o export não audita linha); nenhuma rota nova; nenhuma migração na recomendação
-    do F-RT-4 (campos dentro do `Json`).
+13. Nenhum `eventType` novo de auditoria (o export não audita linha); nenhuma rota nova. **Uma migração** (F-RT-4 b):
+    `ALTER TABLE tax_assessments ADD COLUMN rastreio` nula, sem backfill; `npm run smoke:migration` verde.
 14. `tsc` limpo em `server/` e `npm run check:arch` sem violação nova.
 
 ## 2. Contratos esboçados
 
-### 2.1 Memória persistida (recomendação do F-RT-4 = (a), aditivo e opcional)
+### 2.1 Rastreio persistido (F-RT-4 b, ratificado: coluna própria)
+
+```prisma
+// model TaxAssessment — aditivo
+rastreio Json? // RastreioApuracaoSchema; null nas apurações anteriores à EMENDA RASTREIO
+```
 
 ```ts
-// models/taxAssessmentCalc.ts
+// models/taxAssessmentCalc.ts (ou models/taxAssessmentRastreio.ts)
 export const RastreioContaSchema = z.object({
   accountCode: z.string().min(1),
   accountName: z.string(),
@@ -113,17 +121,15 @@ export const RastreioContaSchema = z.object({
   saldoFinalCents: z.string().regex(/^-?\d+$/).optional(), // F-RT-2
 }).strict();
 
-export const MemoriaLinhaSchema = z.object({
-  codigo: z.string().min(1),
-  descricao: z.string(),
-  valorCents: z.string().regex(/^-?\d+$/),
-  fonte: z.string(),
-  // EMENDA RASTREIO — todos opcionais (memória anterior à emenda segue válida)
-  origemTipo: z.enum(['RAZAO', 'MEMORIA_ANTERIOR', 'PARAMETRO', 'INFORMADO', 'CALCULO']).optional(),
-  origemApuracaoId: z.string().optional(),   // MEMORIA_ANTERIOR
-  origemPeriodo: z.string().optional(),      // MEMORIA_ANTERIOR: 'T01' | 'A03' …
-  rastreio: z.array(RastreioContaSchema).optional(), // RAZAO
+export const RastreioLinhaSchema = z.object({
+  codigo: z.string().min(1),                  // = MemoriaLinha.codigo
+  origemTipo: z.enum(['RAZAO', 'MEMORIA_ANTERIOR', 'PARAMETRO', 'INFORMADO', 'CALCULO']),
+  origemApuracaoId: z.string().optional(),    // MEMORIA_ANTERIOR
+  origemPeriodo: z.string().optional(),       // MEMORIA_ANTERIOR: 'T01' | 'A03' …
+  contas: z.array(RastreioContaSchema).optional(), // RAZAO
 }).strict();
+export const RastreioApuracaoSchema = z.array(RastreioLinhaSchema);
+// MemoriaLinhaSchema: sem mudança.
 ```
 
 ### 2.2 Planilha (`MemoLinhaExport`, aditivo ao fim)
@@ -155,7 +161,7 @@ export function vencimentoQuotaUnica(anoCalendario: number, periodo: LalurPeriod
 // A00 ⇒ ultimoDiaUtilDoMesSeguinte(ano + 1, 2, feriados, null)  // março do ano seguinte
 ```
 
-## 3. Forks — RATIFICAÇÃO PENDENTE
+## 3. Forks (ratificados em 03/11 — §3.1)
 
 | Fork | Pergunta | (a) | (b) | (c) | Recomendação |
 |---|---|---|---|---|---|
@@ -165,6 +171,19 @@ export function vencimentoQuotaUnica(anoCalendario: number, periodo: LalurPeriod
 | **F-RT-4** | Onde guardar a origem | Campos **opcionais** dentro da `memoria` Json (`MemoriaLinhaSchema`) | Coluna nova `rastreio Json?` no `TaxAssessment` (migração) | — | **(a).** Zero migração, o JSON já é a "memória sem recálculo" do item 4, e a apuração antiga continua válida. (b) separa o dado do passo que ele explica |
 | **F-RT-5** | Pagamento efetivo (data e valor recolhidos) | **Fora desta emenda**; registrar como frente própria | Entrar agora, lendo de onde o pagamento é lançado | — | **(a).** O próprio contador diz que o recolhimento "não precisa integrar a memória de cálculo". Além disso, a ligação apuração → pagamento não existe hoje (insumo ausente I1) |
 | **F-RT-6** | "Fórmula ou regra de cálculo" | Basta o que existe: `descricao` com a operação + `fonte` com a base legal + `origemTipo`; um teste garante que toda linha `CALCULO` diz a operação na descrição | Coluna `formula` estruturada (ex.: `RECEITA_SERVICO * 0.32`) | — | **(a).** A descrição já traz a conta e o percentual (ex.: `` `Receita de serviço × ${pS.valor / 100}%` ``). Uma fórmula estruturada pede uma linguagem de expressão nova para as 42 chamadas de `linha(` do `taxAssessmentCalc.ts` (contadas em 03/11), sem ganho para quem confere a planilha |
+
+### 3.1 Ratificação (dono, chat, 03/11/2026, questionário)
+
+| Fork | Resposta do dono | Contra a recomendação? |
+|---|---|---|
+| F-RT-1 | "Por conta (Recomendado)" — linha `RASTREIO` por conta analítica; razão ganha `sourceType`/`sourceId` (item 11 entra) | não |
+| F-RT-2 | "Movimento + saldo (Recomendado)" — `movimentoCents` e `saldoFinalCents`, congelados na confirmação | não |
+| F-RT-3 | "Só quota única (Recomendado)" | não |
+| F-RT-4 | **"Coluna nova"** — `rastreio Json?` no `TaxAssessment`, com migração | **sim** |
+| F-RT-5 | "Fora, frente própria (Recomendado)" | não |
+| F-RT-6 | "Descrição + fonte (Recomendado)" — mais um teste: toda linha `CALCULO` diz a operação na descrição | não |
+
+Nenhum fork pendente. O BRIEF espera o `executa` do dono.
 
 ## 4. Pendente de validação externa
 
