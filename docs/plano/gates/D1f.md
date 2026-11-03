@@ -3,16 +3,16 @@ id: "D1f"
 tipo: "dado-externo"
 dominio: "externo"
 titulo: "Itens 5a-5f do contador (item LC 116, alíquota ISS, cClassTrib)"
-estado: "human-open"
+estado: "done"
 estado_detalhe: "30/10 (triagem): nada do contador falta; o D1 também não espera mais assinatura; fechar é do dono · 28/10 (indOp): 030101 VERIFICADO no Anexo C v1.01 do gov.br/nfse (art. 11 III da LC 214, local = estabelecimento do fornecedor; mesmo hash da cópia do corpus de 10/09; em main desde o #348, indOp.ts); os 3 itens do D1f conferidos em fonte oficial; fechar o gate é do dono · 28/10 (fold da fila de pesquisa de 27/10): cClassTrib 000001 VERIFICADO na tabela oficial do SVRS (carga de 05/10/2026, com a v1.70) e na IT 2025.002 v1.70; clínica com NBS do Anexo III = 200029 (redução de 60%); os 3 itens do D1f têm resposta conferida, falta só o indOp 030101; fechar o gate é do dono · 15/10 (fold): alíquota DECIDIDA por delegação do contador — ISS SP 5% padrão, retenção configurável por nota (D-3 de D-2026-10-10-TRIAGEM-CONTADOR-DELEGACAO); ressalva INFERIDA, não verificada: no Simples o ISS vai no DAS pela faixa do Anexo III (LC 123), então os 5% valem fora do Simples — conferir por fonte oficial · cClassTrib: o contador respondeu 000001 ('tributadas integralmente pelo IBS e CBS') + indOp 030101 em 10/10 (TRIAGEM-RESPOSTA-CONTADOR-2026-10-10 I-1/II-1), grau secundário — falta conferir na tabela oficial (pesquisa do agente pelo método legal, não pergunta ao contador); cTribNac/NBS já conferidos em fonte oficial (pesquisas-legais/ctribnac-salao-clinica: 060101/060201/060301). O follow-up de 26/09 foi SUPERSEDIDO pelo pedido único de 10/10 (enviado e respondido) · 27/09: Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado"
 depende_de: ["[[D1]]"]
 ancora_sdd: "§III.2"
-atualizado: "2026-10-30"
-prs: ["#936"]
+atualizado: "2026-11-03"
+prs: ["#936", "#1011"]
 ---
 # D1f — Itens 5a-5f do contador (item LC 116, alíquota ISS, cClassTrib)
 
-**Estado:** `human-open` — 30/10 (triagem): nada do contador falta; o D1 também não espera mais assinatura; fechar é do dono · 28/10 (indOp): 030101 VERIFICADO no Anexo C v1.01 do gov.br/nfse (art. 11 III da LC 214, local = estabelecimento do fornecedor; mesmo hash da cópia do corpus de 10/09; em main desde o #348, indOp.ts); os 3 itens do D1f conferidos em fonte oficial; fechar o gate é do dono · 28/10 (fold da fila de pesquisa de 27/10): cClassTrib 000001 VERIFICADO na tabela oficial do SVRS (carga de 05/10/2026, com a v1.70) e na IT 2025.002 v1.70; clínica com NBS do Anexo III = 200029 (redução de 60%); os 3 itens do D1f têm resposta conferida, falta só o indOp 030101; fechar o gate é do dono · 15/10 (fold): alíquota DECIDIDA por delegação do contador — ISS SP 5% padrão, retenção configurável por nota (D-3 de D-2026-10-10-TRIAGEM-CONTADOR-DELEGACAO); ressalva INFERIDA, não verificada: no Simples o ISS vai no DAS pela faixa do Anexo III (LC 123), então os 5% valem fora do Simples — conferir por fonte oficial · cClassTrib: o contador respondeu 000001 ('tributadas integralmente pelo IBS e CBS') + indOp 030101 em 10/10 (TRIAGEM-RESPOSTA-CONTADOR-2026-10-10 I-1/II-1), grau secundário — falta conferir na tabela oficial (pesquisa do agente pelo método legal, não pergunta ao contador); cTribNac/NBS já conferidos em fonte oficial (pesquisas-legais/ctribnac-salao-clinica: 060101/060201/060301). O follow-up de 26/09 foi SUPERSEDIDO pelo pedido único de 10/10 (enviado e respondido) · 27/09: Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado  
+**Estado:** `done` — 30/10 (triagem): nada do contador falta; o D1 também não espera mais assinatura; fechar é do dono · 28/10 (indOp): 030101 VERIFICADO no Anexo C v1.01 do gov.br/nfse (art. 11 III da LC 214, local = estabelecimento do fornecedor; mesmo hash da cópia do corpus de 10/09; em main desde o #348, indOp.ts); os 3 itens do D1f conferidos em fonte oficial; fechar o gate é do dono · 28/10 (fold da fila de pesquisa de 27/10): cClassTrib 000001 VERIFICADO na tabela oficial do SVRS (carga de 05/10/2026, com a v1.70) e na IT 2025.002 v1.70; clínica com NBS do Anexo III = 200029 (redução de 60%); os 3 itens do D1f têm resposta conferida, falta só o indOp 030101; fechar o gate é do dono · 15/10 (fold): alíquota DECIDIDA por delegação do contador — ISS SP 5% padrão, retenção configurável por nota (D-3 de D-2026-10-10-TRIAGEM-CONTADOR-DELEGACAO); ressalva INFERIDA, não verificada: no Simples o ISS vai no DAS pela faixa do Anexo III (LC 123), então os 5% valem fora do Simples — conferir por fonte oficial · cClassTrib: o contador respondeu 000001 ('tributadas integralmente pelo IBS e CBS') + indOp 030101 em 10/10 (TRIAGEM-RESPOSTA-CONTADOR-2026-10-10 I-1/II-1), grau secundário — falta conferir na tabela oficial (pesquisa do agente pelo método legal, não pergunta ao contador); cTribNac/NBS já conferidos em fonte oficial (pesquisas-legais/ctribnac-salao-clinica: 060101/060201/060301). O follow-up de 26/09 foi SUPERSEDIDO pelo pedido único de 10/10 (enviado e respondido) · 27/09: Item LC 116 recebido (6.01/6.02/6.03; ISS no prestador — triagem 23/09 5a); faltam alíquota (município) e cClassTrib; pedidos no follow-up de 26/09 (item 3), não enviado  
 **Autorização:** **falta** — não roteia sem autorização citável do dono (ORCH-006)  
 **Depende de:** [[D1]]  
 **Desbloqueia:** [[X10b]]  
@@ -91,3 +91,10 @@ prs: ["#936"]
 - Nenhum item do D1f espera o contador (os três estão conferidos desde 28/10). A assinatura das confirmações de 10/10 do
   [[D1]] também saiu do pedido.
 - Estado e autorização **não mudam**. Fechar o gate é do dono.
+
+## Fold 03/11 — fechado pelo dono
+
+- Dono, chat, 03/11: *"Sim, fecha os dois"* (D1 e D1f). Os três itens têm resposta conferida em fonte oficial: item da
+  LC 116 (6.01/6.02/6.03), alíquota do ISS, e cClassTrib **000001** + indOp **030101** (tabela do SVRS, carga de 05/10/2026,
+  fold de 28/10; Anexo C v1.01 do gov.br/nfse). Estado `done`.
+- A ambiguidade "000001 segue secundário" do dossiê `gates-humanos-lei` §4 é anterior ao fold de 28/10 e está superada.
