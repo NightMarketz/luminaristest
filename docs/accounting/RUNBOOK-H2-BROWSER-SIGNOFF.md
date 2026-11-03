@@ -1339,38 +1339,201 @@ Assinatura do executor (passo 21): ____________
 
 22. Resultado esperado em todas: 2xx nas escritas, console sem erro.
     - a) Aba **Perfil fiscal** aparece depois de Imobilizado, com os dois painéis (unidade em cima, serviços embaixo).
-      Se o usuário também atende clientes como contador: no modo cliente a aba **não** aparece. EVIDÊNCIA: [ ]
+      Se o usuário também atende clientes como contador: no modo cliente a aba **não** aparece. EVIDÊNCIA: [bloco "Execução 03/11 — passo 22" abaixo]
     - b) Unidade **sem** perfil: formulário em branco e o aviso "nenhuma venda emite NFS-e". (Um toast vermelho do
       `apiClient` com "Perfil fiscal da unidade não cadastrado" pode aparecer junto — é o 404 esperado; anotar se
-      aparecer.) EVIDÊNCIA: [ ]
+      aparecer.) EVIDÊNCIA: [bloco "Execução 03/11 — passo 22" abaixo]
     - c) Escolher Simples Nacional: ICMS desabilitado e PIS/COFINS travado em "Simples". Trocar para Lucro Presumido:
-      some o campo do Simples e aparecem Federal/Estadual/Municipal. EVIDÊNCIA: [ ]
+      some o campo do Simples e aparecem Federal/Estadual/Municipal. EVIDÊNCIA: [bloco "Execução 03/11 — passo 22" abaixo]
     - d) Preencher município (IBGE 7 dígitos), série da DPS (use **7**), ISS `2,00`, tributos aproximados `15,50`,
       "Competência fora do mês" = **Bloquear**; salvar. No Network: PUT com `issAliquotaBp: 200`, `pTotTribSNCent:
       1550`, `dpsSerie: 7`, `emissaoForaDoMes: "BLOQUEAR"` e **todos** os demais campos do perfil presentes.
-      EVIDÊNCIA: [corpo do PUT]
+      EVIDÊNCIA: [bloco "Execução 03/11 — passo 22" abaixo]
     - e) Recarregar a página (F5), reabrir a aba: os valores voltam; salvar de novo sem mexer em nada — o corpo do PUT
-      é o mesmo e série 7 / Bloquear continuam. EVIDÊNCIA: [corpo do 2º PUT + print]
+      é o mesmo e série 7 / Bloquear continuam. EVIDÊNCIA: [bloco "Execução 03/11 — passo 22" abaixo]
     - f) O selo "Pronto para emitir NFS-e" ou a lista "O que falta" confere com o que foi preenchido; o aviso de valores
-      do contador (D1f) some depois do primeiro salvamento. EVIDÊNCIA: [ ]
+      do contador (D1f) some depois do primeiro salvamento. EVIDÊNCIA: [bloco "Execução 03/11 — passo 22" abaixo]
     - g) Serviços: cada serviço do catálogo aparece; os sem perfil mostram "sem perfil". Configurar um colando
       `01.07.01` no código de tributação: sai salvo como `010701` com a descrição da lista nacional ao lado. Corpo do
-      PUT sem `cIndOp` quando o campo ficou vazio. EVIDÊNCIA: [print + corpo do PUT]
+      PUT sem `cIndOp` quando o campo ficou vazio. EVIDÊNCIA: [bloco "Execução 03/11 — passo 22" abaixo]
     - h) Código fora da lista nacional (ex.: `99.99.99`): o erro do servidor aparece inteiro no modal, que continua
-      aberto. EVIDÊNCIA: [ ]
+      aberto. EVIDÊNCIA: [bloco "Execução 03/11 — passo 22" abaixo]
     - i) Excluir o perfil de um serviço: pede confirmação; confirmando, a linha volta a "sem perfil" e o DELETE leva o
-      `unitId` na query. EVIDÊNCIA: [ ]
+      `unitId` na query. EVIDÊNCIA: [bloco "Execução 03/11 — passo 22" abaixo]
     - j) (Só se houver contador ACTIVE na unidade) Salvar o perfil da unidade: a mensagem do servidor sobre contador
-      responsável aparece inteira, sem esconder o formulário. EVIDÊNCIA: [ ]
+      responsável aparece inteira, sem esconder o formulário. EVIDÊNCIA: [bloco "Execução 03/11 — passo 22" abaixo]
       **[EMENDA 2026-10-09 — FE-INCR-ACCOUNTING-POLICY-VERSION item 14]** o resultado esperado do 22 j mudou: com
       contador ACTIVE o botão já diz **"Enviar ao contador para aprovação"** (F-FE-POL-1 a) e o clique faz `POST
       /policy-versions` (201), não `PUT`. O roteiro completo está no passo 23.
 
+> **Execução 03/11 — passo 22** (AI tester, sob autorização do dono no chat em 2026-11-02). Build de produção em
+> `http://127.0.0.1:3100`, API em `127.0.0.1:4100`, worktree `agent-af93873e91c9b426b`, commit `3077cda9`, banco
+> `server/prisma/prisma/dev.db` (o real). Usuário `seed-presumido`, unidade `cmuw4yqxg001jcii0iz2yb9rw`
+> (seed-unit-presumido). A tela foi rodada por Puppeteer headless (perfil `p22`). Os cliques são de DOM e a Network vem
+> dos eventos de resposta.
+>
+> **Pré-condições lidas no banco antes de começar (só leitura):** `accountant_assignments` está vazia
+> (`count(*) = 0`). `fiscal_profiles` **já tem** a linha da unidade (`cmuw4z7w502cxcii08xrngvk2`, criada em
+> 2026-10-06 03:45 UTC e alterada pela última vez em 2026-11-03 03:04 UTC) com `regimeTributario=PRESUMIDO`,
+> `pisCofinsRegime=CUMULATIVO`, `codMun=NULL`, `dpsSerie=1`, `issAliquotaBp=NULL`, `emissaoForaDoMes=AVISAR` e
+> `d1fConfirmado=1`. `service_fiscal_profiles` está vazia, e o catálogo tem um serviço, "Corte H2" (`cmvtxuu71000tci9chpnj578o`).
+>
+> **a)** Contabilidade → aba **Perfil fiscal**. A lista de abas é `[… "Dimensões","Imobilizado","Perfil fiscal","Parâmetros legais",…]`,
+> e a aba anterior é `"Imobilizado"`. Os painéis aparecem nesta ordem: `["Perfil fiscal da unidade","Enquadramento do MEI (Anexo XI)",
+> "Prestadora exclusiva de serviços (Presumido/Real)","Perfis fiscais dos serviços"]`, com a unidade em cima e os serviços
+> embaixo. Entre os dois há dois painéis do perfil da empresa, o MEI e a prestadora exclusiva. Contador:
+> `GET /api/accounting/accountant-assignments/mine -> 304  res: {"success":true,"data":[]}`. Como não há nenhuma
+> atribuição de contador no banco, o ramo "no modo cliente a aba não aparece" **não se aplica** nesta execução.
+>
+> **b)** **Não exercitável.** A unidade já tinha perfil fiscal antes da execução (linha acima), e o tenant tem só essa
+> unidade, porque o seletor lista uma opção (`cmuw4yqxg001jcii0iz2yb9rw:seed-unit-presumido`). O perfil não foi apagado pelo banco.
+> O GET devolve o perfil (`GET /api/accounting/fiscal-profile?unitId=… -> 200  res: {"success":true,"data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","regimeTributario":"PRESUMIDO",…`),
+> por isso o formulário em branco, o aviso "nenhuma venda emite NFS-e" e o toast do 404 não aparecem. A tela abriu com
+> o selo "Perfil da unidade incompleto" e a lista "O que falta": `Município do emitente (código IBGE) · Tributos
+> aproximados — federal (%) · estadual (%) · municipal (%) · IBS/CBS — CST · IBS/CBS — cClassTrib`.
+>
+> **c)** Regime tributário → **Simples Nacional**. Estado lido dos controles visíveis:
+>
+> ```text
+> {"Regime tributário":"SIMPLES","Regime de PIS/COFINS":"SIMPLES (desabilitado)","Contribuinte de ICMS":"false (desabilitado)",…,
+>  "Regime de apuração pelo Simples":"",…,"Simples Nacional":"",…}
+> fieldset: TRIBUTOS APROXIMADOS (%) / Simples Nacional
+> ```
+>
+> Depois, **Lucro Presumido**:
+>
+> ```text
+> {"Regime tributário":"PRESUMIDO","Regime de PIS/COFINS":"","Contribuinte de ICMS":"false",…,"Federal":"","Estadual":"","Municipal":"",…}
+> ```
+>
+> O campo do Simples e o "Regime de apuração pelo Simples" somem. Aparecem Federal, Estadual e Municipal, e o PIS/COFINS
+> volta a "— selecione —" (habilitado). Para seguir no d), o PIS/COFINS foi escolhido de novo como **Cumulativo**, o valor
+> que estava gravado.
+>
+> **d)** Preenchido pela tela: município `3550308` (São Paulo), série da DPS `7`, ISS `2,00`, tributos aproximados `15,50`
+> e "Competência fora do mês" = **Bloquear**. Em Lucro Presumido o campo de tributos é o **Federal**, porque o do Simples
+> não existe nesse regime. Clique em "Salvar perfil":
+>
+> ```text
+> PUT /api/accounting/fiscal-profile -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","regimeTributario":"PRESUMIDO","icmsContribuinte":false,"pisCofinsRegime":"CUMULATIVO","pisCofinsCreditExcludesIcms":true,"pisCofinsCreditIncludesIpi":false,"pisCofinsCreditFromSimplesSupplier":false,"icmsRecuperavelAccountId":null,"pisCofinsRecuperavelAccountId":null,"insumoExpenseAccountId":null,"irpjDespesaAccountId":"cmv92dutt001tcipsmwuog2aa","csllDespesaAccountId":"cmv92dutv001vcips4uxlowrq","irpjRecolherAccountId":"cmv92dute001hcipst311772n","csllRecolherAccountId":"cmv92duth001jcipsj7d2sdcg","partnerAccountRef":null,"codMun":"3550308","inscricaoMunicipal":null,"cnae":null,"dpsSerie":7,"regEspTrib":0,"regApTribSN":null,"issAliquotaBp":200,"issRetidoTomadorPj":false,"pacoteFatoGerador":"CONSUMO","pacoteCTribNac":null,"pacoteCNBS":null,"ibsCbsInformar":true,"ibsCbsCst":null,"ibsCbsClassTrib":null,"pTotTribFedCent":1550,"pTotTribEstCent":null,"pTotTribMunCent":null,"pTotTribSNCent":null,"emissaoForaDoMes":"BLOQUEAR"}
+>    res: {"success":true,"data":{…,"pisDespesaAccountId":"cmv92duto001pcipsmdgbtzkp","cofinsDespesaAccountId":"cmv92dutr001rcipsgwr4fat1","pisRecolherAccountId":"cmv92dutj001lcips2p8x87id","cofinsRecolherAccountId":"cmv92dutm001ncipsaspiq36c",…,"codMun":"3550308",…,"dpsSerie":7,…,"nfeSerie":1,"nfceSerie":1,…,"issAliquotaBp":200,…,"pTotTribFedCent":1550,"pTotTribEstCent":null,"pTotTribMunCent":null,"pTotTribSNCent":null,"emissaoForaDoMes":"BLOQUEAR",…,"d1fConfirmado":true,"emissao":{"completo":false,"faltantes":["pTotTribEstCent","pTotTribMunCent","ibsCbsCst","ibsCbsClassTrib"],"pendingExternalValidation":[],"opSimpNac":1},"updatedAt":"2026-11-03T20:57:48.043Z"}}
+> ```
+>
+> O corpo tem `issAliquotaBp: 200`, `dpsSerie: 7` e `emissaoForaDoMes: "BLOQUEAR"`. O runbook pede `pTotTribSNCent: 1550`,
+> mas em Presumido o 15,50 sai como **`pTotTribFedCent: 1550`** com `pTotTribSNCent: null`, que é a regra do mapper (SN só
+> no SIMPLES). O corpo leva os 37 campos que o formulário conhece (os da tela mais os 7 `carried`). Os campos que a tela
+> não conhece (contas de PIS/COFINS, IBS/CBS, retenções, `nfeSerie`/`nfceSerie`, emitente da NF-e) **não vão no corpo**.
+> Mesmo assim, o banco antes e depois do PUT difere **só** em `codMun (None→'3550308')`, `dpsSerie (1→7)`,
+> `issAliquotaBp (None→200)`, `pTotTribFedCent (None→1550)`, `emissaoForaDoMes ('AVISAR'→'BLOQUEAR')` e `updatedAt`.
+> As quatro contas de PIS/COFINS foram preservadas (diff da linha `fiscal_profiles`, lida só para conferência).
+>
+> **e)** Página recarregada (F5) e aba reaberta. Os valores voltam: `"Município…":"3550308","Série da DPS":"7","Alíquota do ISS (%)":"2,00",
+> "Federal":"15,50","Competência fora do mês":"BLOQUEAR"`. "Salvar perfil" sem mexer em nada:
+> `PUT /api/accounting/fiscal-profile -> 200`, com corpo **byte a byte igual** ao do d) (`cmp` dos dois `req:` sem
+> diferença). Série 7 e Bloquear continuam.
+>
+> **f)** O selo depois dos dois salvamentos é "Perfil da unidade incompleto", e "O que falta" mostra `Tributos aproximados — estadual (%) ·
+> Tributos aproximados — municipal (%) · IBS/CBS — CST · IBS/CBS — cClassTrib`. Município e Federal saíram da lista,
+> o que confere com o preenchido. Estadual, Municipal e CST/cClassTrib do IBS/CBS não foram preenchidos, então o
+> selo "Pronto para emitir" não aparece, e isso também confere. **Aviso D1f:** não aparece nem antes nem depois
+> (`pendingExternalValidation: []`), porque o `d1fConfirmado` já era 1 antes da execução. A transição "some depois do
+> primeiro salvamento" **não foi exercitável** com este dado.
+>
+> **g)** Serviços: "Corte H2" aparece como `Corte H2 sem perfil Configurar`. "Configurar", depois `01.07.01` colado no
+> código de tributação, os outros campos vazios e "Salvar":
+>
+> ```text
+> PUT /api/accounting/service-fiscal-profiles/cmvtxuu71000tci9chpnj578o -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","cTribNac":"010701","cTribMun":null,"cNBS":null,"cLocPrestacao":null,"xDescServ":null}
+>    res: {"success":true,"data":{"serviceRef":"cmvtxuu71000tci9chpnj578o","cTribNac":"010701","cTribNacDescricao":"Suporte técnico em informática, inclusive instalação, configuração e manutenção de programas de computação e bancos de dados.","cTribMun":null,"cNBS":null,"cIndOp":"030101",…}}
+> linha: Corte H2 010701 Suporte técnico em informática, inclusive instalação, configuração e manutenção de programas de computação e bancos de dados. — 030101 Editar Excluir
+> ```
+>
+> O código sai salvo como `010701`, com a descrição da lista nacional ao lado. O corpo do PUT vai **sem `cIndOp`**, e o
+> servidor aplica o padrão `030101`.
+>
+> **h)** "Editar", código `99.99.99` e "Salvar":
+>
+> ```text
+> PUT /api/accounting/service-fiscal-profiles/cmvtxuu71000tci9chpnj578o -> 400  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","cTribNac":"999999","cTribMun":null,"cNBS":null,"cIndOp":"030101","cLocPrestacao":null,"xDescServ":null}
+>    res: {"success":false,"error":{"formErrors":[],"fieldErrors":{"cTribNac":["cTribNac fora da lista nacional de serviços (Anexo I MUN.INCID_INFO.SERV.)"]}}}
+> modal (role=alert): cTribNac: cTribNac fora da lista nacional de serviços (Anexo I MUN.INCID_INFO.SERV.)
+> modalAberto: true · valor do campo: "99.99.99"
+> ```
+>
+> O erro aparece inteiro no modal, e o modal continua aberto. O toast vermelho do `apiClient` mostra o mesmo texto. Depois
+> foi clicado "Cancelar", e a linha continuou com `010701`.
+>
+> **i)** "Excluir" abre a confirmação `Remover perfil fiscal do serviço / Corte H2 — sem o perfil, as vendas deste serviço deixam de
+> emitir NFS-e. Remover? / Não, fechar · Remover`. "Remover":
+>
+> ```text
+> DELETE /api/accounting/service-fiscal-profiles/cmvtxuu71000tci9chpnj578o?unitId=cmuw4yqxg001jcii0iz2yb9rw -> 200
+>    res: {"success":true}
+> linha: Corte H2 sem perfil Configurar
+> ```
+>
+> O DELETE leva o `unitId` na query, e a linha volta a "sem perfil". No banco ficou o soft-delete com o `serviceRef`
+> trocado por lápide (`deleted:cmw168lvr000aci9czl1ec9cl:cmvtxuu71000tci9chpnj578o`, `deletedAt` preenchido).
+>
+> **Desvio de dado (depois do i):** "Corte H2" foi configurado de novo pela tela com `01.07.01`, porque o passo 23 e o
+> DFE-MANUAL usam o serviço com perfil:
+> `PUT /api/accounting/service-fiscal-profiles/cmvtxuu71000tci9chpnj578o -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","cTribNac":"010701","cTribMun":null,"cNBS":null,"cLocPrestacao":null,"xDescServ":null}`,
+> com a linha `Corte H2 010701 … — 030101 Editar Excluir`. O perfil da unidade ficou em Lucro Presumido, com
+> `codMun=3550308`, `dpsSerie=7`, `issAliquotaBp=200`, `pTotTribFedCent=1550` e `emissaoForaDoMes=BLOQUEAR`. Os dois
+> valores agora estão gravados no `dev.db` real.
+>
+> **j)** **Não se aplica nesta execução.** Não há contador ACTIVE (`GET /api/accounting/accountant-assignments?unitId=… -> 304  res: {"success":true,"data":[]}`),
+> e o botão diz "Salvar perfil". O ramo está coberto pelo passo 23 a).
+>
+> Prints: [`passo22a-01-aba-perfil-fiscal.png`](runbook-evidence/H2-2026-11-03/passo22a-01-aba-perfil-fiscal.png),
+> [`passo22c-01-simples.png`](runbook-evidence/H2-2026-11-03/passo22c-01-simples.png),
+> [`passo22c-02-simples-tributos.png`](runbook-evidence/H2-2026-11-03/passo22c-02-simples-tributos.png),
+> [`passo22c-03-presumido.png`](runbook-evidence/H2-2026-11-03/passo22c-03-presumido.png),
+> [`passo22c-04-presumido-fed-est-mun.png`](runbook-evidence/H2-2026-11-03/passo22c-04-presumido-fed-est-mun.png),
+> [`passo22d-01-preenchido.png`](runbook-evidence/H2-2026-11-03/passo22d-01-preenchido.png),
+> [`passo22d-02-salvo.png`](runbook-evidence/H2-2026-11-03/passo22d-02-salvo.png),
+> [`passo22e-01-recarregado.png`](runbook-evidence/H2-2026-11-03/passo22e-01-recarregado.png),
+> [`passo22e-02-segundo-put.png`](runbook-evidence/H2-2026-11-03/passo22e-02-segundo-put.png),
+> [`passo22g-01-modal-colado.png`](runbook-evidence/H2-2026-11-03/passo22g-01-modal-colado.png),
+> [`passo22g-02-salvo-010701.png`](runbook-evidence/H2-2026-11-03/passo22g-02-salvo-010701.png),
+> [`passo22h-01-erro-no-modal.png`](runbook-evidence/H2-2026-11-03/passo22h-01-erro-no-modal.png),
+> [`passo22i-01-confirmacao.png`](runbook-evidence/H2-2026-11-03/passo22i-01-confirmacao.png),
+> [`passo22i-02-sem-perfil.png`](runbook-evidence/H2-2026-11-03/passo22i-02-sem-perfil.png),
+> [`passo22-desvio-corte-h2-reconfigurado.png`](runbook-evidence/H2-2026-11-03/passo22-desvio-corte-h2-reconfigurado.png).
+> Network completa: `passo22cd-network.txt`, `passo22e-network.txt`, `passo22ghi-network.txt` e `passo22-desvio-network.txt`,
+> na mesma pasta. Console: o único erro é `Failed to load resource: the server responded with a status of 400 (Bad Request)`
+> no h), que é o log do Chrome para o 400 esperado. Não houve outro `console.error`.
+>
+> Leitura do agente: a), c), d), e), g), h) e i) conferem com o esperado. A ressalva do d) é que, em Presumido, o 15,50
+> vai em `pTotTribFedCent` e não em `pTotTribSNCent`. A primeira metade do f) confere (selo e "O que falta"). O b) e a
+> segunda metade do f) (aviso D1f sumindo) não foram exercitáveis, porque a unidade já tinha perfil e o D1f já estava
+> confirmado. O ramo "modo cliente" do a) e o j) não se aplicam, porque não há contador. Grau: **verificado** (tela,
+> Network e diff do banco).
+
+Achados do passo 22 (não corrigidos):
+- **22-1 (texto do runbook, d):** o esperado `pTotTribSNCent: 1550` só vale no Simples. Em Presumido/Real, o mesmo 15,50 sai
+  como `pTotTribFedCent: 1550` (`my-app/features/accounting/lib/fiscalProfileForm.ts:204-207`), e o corpo está certo. O que
+  falta é emendar o texto do 22 d).
+- **22-2 (bug latente, inferido por leitura, não observado):** o PUT da tela não manda `nfeSerie` nem `nfceSerie`
+  (`fiscalProfileForm.ts:174-209`), e o DTO tem `.default(1)` nos dois (`server/src/features/accounting/dtos/FiscalProfileDto.ts:101-102`).
+  Assim, uma série diferente de 1 gravada por outro caminho volta a 1 quando o dono salva esta tela. Instrumentação: um teste
+  do PUT que grava `nfeSerie=5`, salva o formulário hidratado e espera 5 (hoje deve dar 1). Correção: levar os dois campos
+  em `carried` ou trocar o default por `.optional()`.
+- **22-3 (cosmético, verificado na tela):** o 400 do h) repete o campo (`cTribNac: cTribNac fora da lista…`), porque
+  `my-app/lib/api/zodFlatten.ts:19` prefixa o nome e a mensagem do servidor já começa com ele.
+- **22-4 (dado de teste):** `01.07.01` é "Suporte técnico em informática", não corte de cabelo (o item 06.01 é inferido, não
+  conferido). Foi mantido porque o passo 23 e o DFE-MANUAL usam esse código.
+
 Desfecho do passo 22 (marcar UM):
 [ ] PASSOU — a) a j) com evidência conferindo com o esperado
 [ ] FALHOU — item __ divergiu; evidência colada acima
-[ ] BLOQUEADO — pré-condição __ não se sustentava
-Assinatura do executor (passo 22): ____________
+[x] BLOQUEADO — a pré-condição do **b)** ("unidade **sem** perfil") não se sustentava. A única unidade do `seed-presumido` já
+    tinha perfil fiscal, com o D1f confirmado, então nem o b) nem a saída do aviso D1f no f) puderam ser vistos. Os itens a),
+    c) a i) conferem (no f), o selo e "O que falta"). O j) não se aplica: não há contador ACTIVE, e ele fica coberto pelo 23 a).
+    Não houve divergência de código. Vira PASSOU quando b) e f-D1f rodarem numa unidade sem perfil. Desvio de dado: o perfil
+    da unidade ficou em Presumido com `codMun 3550308`, série 7, ISS 2,00, Federal 15,50 e Bloquear, e o "Corte H2" foi
+    reconfigurado com `01.07.01` depois do i). *(marcado pelo agente AI tester, 03/11, pela evidência do bloco acima)*
+Assinatura do executor (passo 22): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
 ### [EMENDA 2026-10-09] Passo 23 — Política contábil versionada: proposta do dono, decisão do contador (FE-INCR-ACCOUNTING-POLICY-VERSION)
 
