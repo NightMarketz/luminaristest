@@ -748,7 +748,7 @@ describe('EXPORT_TAX_ASSESSMENT_MEMO (X7 Fase C PR-1)', () => {
 
   const COLS = [
     'anoCalendario', 'periodo', 'tributo', 'regime', 'forma', 'modo', 'codigoReceita', 'tabelaVersao', 'confirmedAt',
-    'apuracaoId', 'substitui', 'tipoLinha', 'codigo', 'descricao', 'valorCents', 'fonte',
+    'apuracaoId', 'substitui', 'tipoLinha', 'codigo', 'registroEcf', 'linhaEcf', 'descricao', 'valorCents', 'fonte',
   ];
 
   it('itens 5/6/8: trimestral Presumido + A00 com saldo negativo — meta, colunas, RESUMO antes da MEMORIA, substitui', async () => {
@@ -765,17 +765,18 @@ describe('EXPORT_TAX_ASSESSMENT_MEMO (X7 Fase C PR-1)', () => {
     const body = table.rows.slice(1);
     expect(body).toHaveLength(14); // (6 RESUMO + 1 MEMORIA) × 2
     // A00 vem antes de T01 (ordem por período).
-    expect(body.slice(0, 6).map((r) => [r[1], r[11], r[12], r[14]])).toEqual([
-      ['A00', 'RESUMO', 'base', '100000'], ['A00', 'RESUMO', 'devido', '15000'], ['A00', 'RESUMO', 'deducoes', '0'],
-      ['A00', 'RESUMO', 'aPagar', '0'], ['A00', 'RESUMO', 'saldoNegativo', '4200'], ['A00', 'RESUMO', 'diferencaPostergada', '0'],
+    // Emenda C8: o RESUMO do ajuste anual do IRPJ aponta a base e o a pagar do N630; o resto não tem linha.
+    expect(body.slice(0, 6).map((r) => [r[1], r[11], r[12], r[13], r[14], r[16]])).toEqual([
+      ['A00', 'RESUMO', 'base', 'N630', '1', '100000'], ['A00', 'RESUMO', 'devido', '', '', '15000'], ['A00', 'RESUMO', 'deducoes', '', '', '0'],
+      ['A00', 'RESUMO', 'aPagar', 'N630', '26', '0'], ['A00', 'RESUMO', 'saldoNegativo', '', '', '4200'], ['A00', 'RESUMO', 'diferencaPostergada', '', '', '0'],
     ]);
     expect(body[6]).toEqual([
       '2026', 'A00', 'IRPJ', 'REAL', 'ANUAL', 'AJUSTE_ANUAL', '243001', 'lc224-2026-v1', '2026-04-10T12:00:00.000Z',
-      'ta-a00', 'ta-a00-old', 'MEMORIA', 'SN', 'Saldo negativo', '-4200', 'ajuste',
+      'ta-a00', 'ta-a00-old', 'MEMORIA', 'SN', '', '', 'Saldo negativo', '-4200', 'ajuste',
     ]);
     expect(body[13]).toEqual([
       '2026', 'T01', 'IRPJ', 'PRESUMIDO', 'TRIMESTRAL', 'PRESUMIDO', '208901', 'lc224-2026-v1', '2026-04-10T12:00:00.000Z',
-      'ta-1', '', 'MEMORIA', 'RB', 'Receita bruta', '1250000', 'razão 3.1',
+      'ta-1', '', 'MEMORIA', 'RB', '', '', 'Receita bruta', '1250000', 'razão 3.1',
     ]);
     expect(createJob.mock.calls[0][0]).toMatchObject({
       kind: 'EXPORT_TAX_ASSESSMENT_MEMO',
@@ -821,8 +822,8 @@ describe('EXPORT_TAX_ASSESSMENT_MEMO (X7 Fase C PR-1)', () => {
       '2026-01-01', '2026-03-31',
     );
     const body = table.rows.slice(1);
-    expect(body[0][14]).toBe('9007199254740993');
-    expect(body[6][14]).toBe('9007199254740993');
+    expect(body[0][16]).toBe('9007199254740993');
+    expect(body[6][16]).toBe('9007199254740993');
   });
 
   it('item 10: não filtra por tributo', async () => {

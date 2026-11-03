@@ -77,10 +77,10 @@ describe('X7 Fase C PR-1 — EXPORT_TAX_ASSESSMENT_MEMO pelo HTTP', () => {
 
     const lines = await baixar(dono, res.body.data.id);
     expect(lines[0]).toMatch(/^# kind=EXPORT_TAX_ASSESSMENT_MEMO; periodStart=2026-01-01; periodEnd=2026-03-31; apuracoes=1; geradoEm=/);
-    expect(lines[1]).toBe('anoCalendario,periodo,tributo,regime,forma,modo,codigoReceita,tabelaVersao,confirmedAt,apuracaoId,substitui,tipoLinha,codigo,descricao,valorCents,fonte');
+    expect(lines[1]).toBe('anoCalendario,periodo,tributo,regime,forma,modo,codigoReceita,tabelaVersao,confirmedAt,apuracaoId,substitui,tipoLinha,codigo,registroEcf,linhaEcf,descricao,valorCents,fonte');
     expect(lines).toHaveLength(2 + 7);
     expect(lines.slice(2).every((l) => l.includes(t01.id))).toBe(true);
-    expect(lines[8]).toBe(`2026,T01,IRPJ,PRESUMIDO,TRIMESTRAL,PRESUMIDO,208901,v-test,2026-04-10T12:00:00.000Z,${t01.id},,MEMORIA,RB,Receita bruta,1250000,razão`);
+    expect(lines[8]).toBe(`2026,T01,IRPJ,PRESUMIDO,TRIMESTRAL,PRESUMIDO,208901,v-test,2026-04-10T12:00:00.000Z,${t01.id},,MEMORIA,RB,,,Receita bruta,1250000,razão`);
   });
 
   it('item 12: janela sem apuração ⇒ 201 com meta + cabeçalho e 0 linhas', async () => {

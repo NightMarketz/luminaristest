@@ -1,6 +1,7 @@
 import type { TaxAssessment } from 'generated/prisma';
 import { MemoriaCalculoSchema } from './taxAssessmentCalc';
 import { periodoBounds, type LalurPeriodo } from './Lalur.model';
+import { linhaEcfDoPasso, linhaEcfDoResumo, type LinhaEcf } from './taxAssessmentEcfLinhas';
 
 /**
  * X7 Fase C PR-1 — memória de cálculo das apurações no pacote do contador (`EXPORT_TAX_ASSESSMENT_MEMO`).
@@ -9,12 +10,17 @@ import { periodoBounds, type LalurPeriodo } from './Lalur.model';
  * foi confirmado (`memoria` persistida + colunas do model).
  */
 
-/** Colunas da planilha (BRIEF C §2.1, `MemoLinhaExport`), na ordem. */
+/**
+ * Colunas da planilha (BRIEF C §2.1, `MemoLinhaExport`), na ordem. Emenda C8 (03/11, nota D-2026-11-02-DELEGACAO-DONO §9):
+ * `registroEcf` e `linhaEcf` logo depois de `codigo` — vazias quando o passo não tem linha na ECF.
+ */
 export const MEMO_COLUMNS = [
   'anoCalendario', 'periodo', 'tributo', 'regime', 'forma', 'modo', 'codigoReceita',
   'tabelaVersao', 'confirmedAt', 'apuracaoId', 'substitui', 'tipoLinha',
-  'codigo', 'descricao', 'valorCents', 'fonte',
+  'codigo', 'registroEcf', 'linhaEcf', 'descricao', 'valorCents', 'fonte',
 ] as const;
+
+const ecf = (l: LinhaEcf | null): [string, string] => (l ? [l.registro, l.linha] : ['', '']);
 
 /** F-TC-6 (a): linhas `RESUMO` lidas das colunas do model (S1), antes das `MEMORIA` da mesma apuração. */
 const RESUMO_COLUNAS = [
@@ -64,7 +70,10 @@ export class MemoriaInvalidaError extends Error {
   }
 }
 
-/** Itens 5, 7, 8: formato longo, uma linha por `MemoriaLinha`, precedida das linhas `RESUMO`; centavos em string inteira. */
+/**
+ * Itens 5, 7, 8: formato longo, uma linha por `MemoriaLinha`, precedida das linhas `RESUMO`; centavos em string inteira.
+ * Emenda C8: registro/linha da ECF de cada passo (`taxAssessmentEcfLinhas.ts`).
+ */
 export function linhasDaApuracao(r: TaxAssessment): string[][] {
   const parsed = MemoriaCalculoSchema.safeParse(r.memoria);
   if (!parsed.success) throw new MemoriaInvalidaError(r.id);
@@ -73,9 +82,9 @@ export function linhasDaApuracao(r: TaxAssessment): string[][] {
     r.tabelaVersao, r.confirmedAt.toISOString(), r.id, r.supersedesId ?? '',
   ];
   const resumo = RESUMO_COLUNAS.map(([codigo, coluna]) => [
-    ...prefixo, 'RESUMO', codigo, coluna, (r[coluna] as bigint).toString(), `TaxAssessment.${coluna}`,
+    ...prefixo, 'RESUMO', codigo, ...ecf(linhaEcfDoResumo(r, codigo)), coluna, (r[coluna] as bigint).toString(), `TaxAssessment.${coluna}`,
   ]);
-  const memoria = parsed.data.map((l) => [...prefixo, 'MEMORIA', l.codigo, l.descricao, l.valorCents, l.fonte]);
+  const memoria = parsed.data.map((l) => [...prefixo, 'MEMORIA', l.codigo, ...ecf(linhaEcfDoPasso(r, l, parsed.data)), l.descricao, l.valorCents, l.fonte]);
   return [...resumo, ...memoria];
 }
 
