@@ -143,7 +143,7 @@ async function expandSignerContacts(
       const signer = contactToEcf0930Signer(contact);
       if (!signer) {
         throw new ValidationError(
-          `O contador '${id}' não tem telefone no cadastro — o registro 0930 da ECF exige FONE.`,
+          `O contador '${contact.name}' não tem telefone no cadastro — o registro 0930 da ECF exige FONE.`,
         );
       }
       fromContacts.push(signer);
