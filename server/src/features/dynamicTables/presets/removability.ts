@@ -34,8 +34,12 @@ const PRESET_REF = '@@PRESET_TABLE_KEY::';
 
 /**
  * Item 1. Para cada tabela mantida, a trava que a impede de sair (ou `null`), nesta precedência:
- * FIXED_MODULE → ACCOUNTING → REQUIRED_RELATION → REQUIRED_TABLE → REQUIRED_CAPABILITY. Item 2: só as tabelas AINDA
+ * ACCOUNTING → FIXED_MODULE → REQUIRED_RELATION → REQUIRED_TABLE → REQUIRED_CAPABILITY. Item 2: só as tabelas AINDA
  * mantidas (`keptKeys`) contam como origem, então a trava se desfaz quando o dependente sai.
+ *
+ * BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: `customers`/`sales`/`saleItems` viraram tabelas das bases fixas PES-0/VEN-0.
+ * A trava contábil vem antes da de módulo fixo para que elas sigam travadas por ACCOUNTING (fotografia do PR-0 e o
+ * estado final do item 28); nas tabelas do CRM nada muda (nenhuma tem trava contábil).
  */
 export function computeTableLocks(
   tables: Readonly<Record<string, PresetTableDefinition>>,
@@ -52,9 +56,9 @@ function lockOf(
   tables: Readonly<Record<string, PresetTableDefinition>>,
   kept: readonly string[],
 ): TableLock | null {
+  if (tables[key].meta?.lockedBy === 'accounting') return { reason: 'ACCOUNTING' };
   const moduleKey = moduleOfTable(key);
   if (moduleKey && MODULE_REGISTRY[moduleKey].fixed) return { reason: 'FIXED_MODULE', by: [moduleKey] };
-  if (tables[key].meta?.lockedBy === 'accounting') return { reason: 'ACCOUNTING' };
 
   const others = kept.filter((k) => k !== key);
   const byRelation = others.filter((k) =>
@@ -93,16 +97,25 @@ export function describeTableLock(table: string, lock: TableLock): string {
 
 /**
  * Item 7 (F-W2-3). Lança `ValidationError { reason:'TABLE_LOCKED', table, lock }` na primeira tabela removida que
- * continua travada contra o conjunto FINAL mantido (remover dependente e alvo juntos passa). Tabelas de módulo ficam
- * de fora: no create quem decide é o `applyModuleRemovals` (I8 / F-SUB-6, módulo inteiro ou nada), que roda antes.
+ * continua travada contra o conjunto FINAL mantido (remover dependente e alvo juntos passa). Tabelas de módulo FIXO
+ * sem trava contábil ficam de fora: quem decide é o `applyModuleRemovals` (I8 / F-SUB-6, módulo inteiro ou nada).
  * Chave fora de `tables` (ex.: tabela do Core, que o create ignora — item 8) também fica de fora.
+ *
+ * BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: as tabelas de PESSOAS/VENDAS viraram tabelas de módulo, mas suas travas de
+ * tabela (contábil em `customers`/`sales`/`saleItems`/`packages`; relação obrigatória de `productUnits` em `products`,
+ * de `appointments` em `services`) continuam valendo como antes — por isso só a tabela de módulo fixo sem trava
+ * contábil fica de fora, e o create chama esta regra ANTES de `applyModuleRemovals`.
  */
 export function assertRemovalsAllowed(
   tables: Readonly<Record<string, PresetTableDefinition>>,
   removedTables: readonly string[],
 ): void {
   const removed = new Set(removedTables);
-  const candidates = removedTables.filter((k) => tables[k] && !moduleOfTable(k));
+  const candidates = removedTables.filter((k) => {
+    if (!tables[k]) return false;
+    const moduleKey = moduleOfTable(k);
+    return !moduleKey || !MODULE_REGISTRY[moduleKey].fixed || tables[k].meta?.lockedBy === 'accounting';
+  });
   for (const key of candidates) {
     const keptPlusThis = new Set(Object.keys(tables).filter((k) => !removed.has(k) || k === key));
     const lock = computeTableLocks(tables, keptPlusThis)[key];

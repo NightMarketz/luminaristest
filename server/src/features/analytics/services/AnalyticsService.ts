@@ -6,6 +6,7 @@
  */
 
 import { tablePresetSuites } from '../../dynamicTables/presets';
+import { composeSuiteDefaultTables } from '../../dynamicTables/presets/modules/moduleSelection';
 import type { AnalyticsPresetGroup, ChartPreset, ChartType } from '../core/models/ChartPreset';
 import type { AnalyticsConfiguration } from '../core/models/AnalyticsConfiguration';
 import type { PipelineSpec } from '../core/pipeline/Pipeline';
@@ -196,7 +197,9 @@ export class AnalyticsService {
           continue;
         }
 
-        const tables: Record<string, PresetTableDefinition> = presetObj.tables || {};
+        // BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: tabelas de módulo (customers, sales, saleItems…) saíram de `tables`; as
+        // analytics por tabela continuam vindo de todas as tabelas que a suíte instala por padrão.
+        const tables: Record<string, PresetTableDefinition> = composeSuiteDefaultTables(presetObj);
         const availableConfigsInPreset: AnalyticsConfiguration[] = [];
 
         // 1) Collect Table-level analytics for tables the user actually has
