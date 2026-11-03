@@ -240,9 +240,9 @@ export function parcelaExcedenteLc224(e: EntradaLc224): ResultadoLc224 {
   }
   memoria.push(
     linha('LC224_LIMITE_ANUAL', `Limite anual: ${n} trimestre(s) em atividade × limite do trimestre`, limiteAnual, F_15_9),
-    linha('LC224_RECEITA_ACUMULADA', 'Receita bruta acumulada do ano-calendário', acumulada, F_15_5),
+    linha('LC224_RECEITA_ACUMULADA', `Receita bruta acumulada do ano-calendário = Σ receita bruta de ${[...anteriores.map((a) => a.periodo), e.periodo].join(', ')}`, acumulada, F_15_5),
     linha('LC224_EXCEDENTE_ANUAL', 'Excedente anual = max(0, receita acumulada − limite anual)', excedenteAnual, F_15_5),
-    linha('LC224_EXCEDENTES_ANTERIORES', 'Soma das parcelas excedentes dos trimestres anteriores', somaAnteriores, F_15_5),
+    linha('LC224_EXCEDENTES_ANTERIORES', `Σ parcelas excedentes confirmadas de ${anteriores.map((a) => a.periodo).join(', ') || 'nenhum trimestre'}`, somaAnteriores, F_15_5),
     linha('LC224_EXCEDENTE', `Parcela excedente do último trimestre (§ 5º ${ramo}) = ${excedenteAnual >= somaAnteriores ? 'min(excedente do trimestre, excedente anual − Σ excedentes anteriores)' : '0 (excedente anual < Σ excedentes anteriores)'}`, excedente, `${F_15_5} ${ramo}`),
   );
   return {
@@ -493,7 +493,8 @@ function regra16(
   const limite = linhaVigente(e.tabela, 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', dataFim)!;
   const acumuladaAnterior = e.anteriores.reduce((s, a) => s + receitaDaMemoria(a), 0n);
   const acumulada = acumuladaAnterior + receitaTrimestre;
-  const memoria = [linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} (limite ${limite.valor} centavos)`, acumulada, F_215_10)];
+  const somados = [...e.anteriores.map((a) => a.periodo), e.periodo].join(', ');
+  const memoria = [linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} = Σ receita bruta de ${somados} (limite ${limite.valor} centavos)`, acumulada, F_215_10)];
   if (acumulada <= BigInt(limite.valor)) return { reduzida16: linhaVigente(e.tabela, 'PRESUNCAO_IRPJ_REDUZIDA', dataFim)!, memoria, diferenca: null };
   if (acumuladaAnterior > BigInt(limite.valor)) return { memoria, diferenca: null }; // item 5: o excesso já foi cobrado antes
   return { memoria, diferenca: diferencaPostergada16Trimestral(e) };
@@ -558,9 +559,9 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
   const hosp = hospitalarComTeto(e.receitaHospitalarCents, servico);
   const r16 = regra16({ ...e, receitaHospitalarCents: hosp }, dataFim, lc);
   const memoria: MemoriaLinha[] = [
-    linha('RECEITA_SERVICO', 'Receita bruta de serviço do trimestre (conta 3.1)', e.receitaServicoCents, 'IN RFB 1.700/2017 art. 215 caput'),
+    linha('RECEITA_SERVICO', 'Receita bruta de serviço do trimestre = max(0, crédito − débito da conta 3.1)', e.receitaServicoCents, 'IN RFB 1.700/2017 art. 215 caput'),
     ...linhaNaoUso(e.receitaNaoUsoCents, 'trimestre'),
-    linha('RECEITA_REVENDA', 'Receita bruta de revenda do trimestre (conta 3.3)', e.receitaRevendaCents, 'IN RFB 1.700/2017 art. 215 caput'),
+    linha('RECEITA_REVENDA', 'Receita bruta de revenda do trimestre = max(0, crédito − débito da conta 3.3)', e.receitaRevendaCents, 'IN RFB 1.700/2017 art. 215 caput'),
     ...linhaHospitalar(hosp, 'trimestre'),
     ...r16.memoria,
     ...lc.memoria,

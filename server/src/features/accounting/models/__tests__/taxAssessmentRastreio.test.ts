@@ -187,6 +187,18 @@ describe('EMENDA RASTREIO itens 2 e 3 — linhas do razão por conta analítica,
     expect(lair.contas!.reduce((s, c) => s + BigInt(c.movimentoCents), 0n)).toBe(BigInt(linhaDe(m, 'LAIR').valorCents));
   });
 
+  it('A2 (dono 03/11): 3.1 líquida negativa ⇒ linha 0 e rastreio com o movimento negativo; a descrição diz max(0, …)', () => {
+    const m = presumidoAno({ T01: [0, 0] }).T01; // receitaBrutaPorAtividade entrega max(0, net) = 0
+    const r = montarRastreio(m, {
+      razao: { ...SEM_RAZAO, contasPorCodigo: { RECEITA_SERVICO: [{ accountId: 's', accountCode: '3.1', accountName: 'Receita de Serviços', movimentoCents: R(-500) }] } },
+      anteriores: [],
+    });
+    expect(linhaDe(m, 'RECEITA_SERVICO').valorCents).toBe('0');
+    expect(r.find((l) => l.codigo === 'RECEITA_SERVICO')!.contas![0].movimentoCents).toBe(String(R(-500)));
+    expect(linhaDe(m, 'RECEITA_SERVICO').descricao).toContain('max(0, crédito − débito da conta 3.1)');
+    expect(linhaDe(m, 'RECEITA_REVENDA').descricao).toContain('max(0, crédito − débito da conta 3.3)');
+  });
+
   it('Presumido: RECEITA_SERVICO e RECEITA_REVENDA apontam as contas 3.1 e 3.3; sem saldo lido ⇒ sem saldoFinalCents', () => {
     const m = presumidoAno({ T01: [100_000, 30_000] }).T01;
     const r = montarRastreio(m, {
@@ -217,12 +229,32 @@ describe('EMENDA RASTREIO item 4 — período de origem das linhas que vêm de o
     });
   });
 
-  it('linha de um período nomeado aponta aquele período; a acumulada aponta a imediatamente anterior', () => {
+  it('linha de um período nomeado aponta aquele período; a acumulada é CALCULO com os períodos somados (A1, dono 03/11)', () => {
     const ano = presumidoAno({ T01: [60_000, 0], T02: [60_000, 0], T03: [10_000, 0] }, 'IRPJ', { prestadoraExclusivaServicos: true, declaraNaoProfissaoRegulamentada: true });
     const anteriores = [{ id: 'ta-t02', periodo: 'T02' }, { id: 'ta-t01', periodo: 'T01' }];
     const r = montarRastreio(ano.T03, { razao: SEM_RAZAO, anteriores });
     expect(r.find((l) => l.codigo === 'DIFERENCA_POSTERGADA_T01')).toMatchObject({ origemTipo: 'MEMORIA_ANTERIOR', origemApuracaoId: 'ta-t01', origemPeriodo: 'T01' });
-    expect(r.find((l) => l.codigo === 'RECEITA_ACUMULADA_ANO')).toMatchObject({ origemTipo: 'MEMORIA_ANTERIOR', origemApuracaoId: 'ta-t02', origemPeriodo: 'T02' });
+    // A memória do T02 não carrega o acumulado do T01: um ponteiro para ela não sustentaria o número.
+    expect(r.find((l) => l.codigo === 'RECEITA_ACUMULADA_ANO')).toEqual({ codigo: 'RECEITA_ACUMULADA_ANO', origemTipo: 'CALCULO' });
+    expect(linhaDe(ano.T03, 'RECEITA_ACUMULADA_ANO').descricao).toContain('Σ receita bruta de T01, T02, T03');
+  });
+
+  it('A1: toda linha que soma vários períodos é CALCULO e nomeia os períodos (T04 da LC 224; ajuste anual)', () => {
+    const t04 = presumidoAno({ T01: [2_000_000, 0], T02: [0, 0], T03: [0, 0], T04: [1_000_000, 0] }).T04;
+    expect(linhaDe(t04, 'LC224_RECEITA_ACUMULADA').descricao).toContain('T01, T02, T03, T04');
+    expect(linhaDe(t04, 'LC224_EXCEDENTES_ANTERIORES').descricao).toContain('T01, T02, T03');
+    const meses = estimativas('IRPJ').map((r, i) => confirmar(r, A(i + 1)));
+    const a00 = apurarAjusteAnual({
+      tabela, ano: 2026, tributo: 'IRPJ', resultadoAntesCents: R(300_000), contasProvisaoConfiguradas: true, linhasParteA: [], parteBFechada: true,
+      meses, perfil: PERFIL_ANUAL, deducoes: [], estimativasPagas: [{ periodo: 'A01', tributo: 'IRPJ', valorCents: '100' }],
+    }).memoria;
+    expect(linhaDe(a00, 'RETIDO_MESES').descricao).toContain('A01, A02, A03');
+    expect(linhaDe(a00, 'ESTIMATIVA_PAGA_ASSUMIDA').descricao).toContain('A02, A03');
+    expect(linhaDe(a00, 'ESTIMATIVA_NAO_PAGA').descricao).toContain('A01');
+    const somam = [...t04, ...a00].filter((l) => ['LC224_RECEITA_ACUMULADA', 'LC224_EXCEDENTES_ANTERIORES', 'RETIDO_MESES', 'ESTIMATIVA_PAGA_ASSUMIDA', 'ESTIMATIVA_NAO_PAGA'].includes(l.codigo));
+    expect(somam).toHaveLength(5);
+    expect(somam.every((l) => origemTipoDaLinha(l) === 'CALCULO' && DESCRICAO_COM_OPERACAO.test(l.descricao))).toBe(true);
+    expect(origemTipoDaLinha({ codigo: 'DEVIDO_MESES_ANTERIORES', descricao: 'Σ devido', valorCents: '0', fonte: '' })).toBe('CALCULO');
   });
 });
 

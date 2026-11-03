@@ -44,17 +44,13 @@ export type RastreioApuracao = z.infer<typeof RastreioApuracaoSchema>;
 
 /** Item 2: linhas cujo valor é o movimento de contas do razão (receita do Presumido/estimativa; LAIR do Real). */
 const RAZAO = new Set(['RECEITA_SERVICO', 'RECEITA_REVENDA', 'RECEITA_NAO_USO', 'LAIR', 'LAIR_PERIODO_EM_CURSO']);
-/** Item 4: linhas lidas (ou somadas) de apurações confirmadas anteriores (F-TA-3 a: a fonte é a memória, não o razão). */
-const MEMORIA_ANTERIOR = new Set([
-  'LC224_SOBRA_ANTERIOR',
-  'RECEITA_ACUMULADA_ANO',
-  'LC224_RECEITA_ACUMULADA',
-  'LC224_EXCEDENTES_ANTERIORES',
-  'DEVIDO_MESES_ANTERIORES',
-  'RETIDO_MESES',
-  'ESTIMATIVA_PAGA_ASSUMIDA',
-  'ESTIMATIVA_NAO_PAGA',
-]);
+/**
+ * Item 4: linha lida da memória de UMA apuração anterior — a sobra do trimestre imediatamente anterior (IN 2.305 art. 15
+ * § 4º lê só o anterior). As linhas que SOMAM vários períodos (receita acumulada, Σ devido/retido/estimativas dos meses,
+ * Σ excedentes) são `CALCULO`, com os períodos somados na descrição — dono, 03/11, achado A1 da revisão do #1013: um
+ * ponteiro para a anterior não sustenta um acumulado que ela não carrega.
+ */
+const MEMORIA_ANTERIOR = new Set(['LC224_SOBRA_ANTERIOR']);
 /** Item 5: o valor é (ou aplica) um coeficiente da tabela legal vigente — alíquota, adicional, limite, teto, prazo. */
 const PARAMETRO = new Set([
   'ALIQUOTA',
@@ -110,8 +106,7 @@ export interface ContextoRastreio {
 
 /**
  * Uma entrada por código de linha da memória (item 1). `MEMORIA_ANTERIOR` aponta a apuração do período nomeado no código
- * (`DIFERENCA_POSTERGADA_T01`, `ESTIMATIVA_PAGA_A03`) ou, nas linhas acumuladas, a imediatamente anterior — cada memória
- * confirmada já carrega o acumulado das que vieram antes (a cadeia segue apuração a apuração).
+ * (`DIFERENCA_POSTERGADA_T01`, `ESTIMATIVA_PAGA_A03`) ou, na sobra da LC 224, a imediatamente anterior.
  */
 export function montarRastreio(memoria: readonly MemoriaLinha[], ctx: ContextoRastreio): RastreioApuracao {
   const anteriores = [...ctx.anteriores].sort((a, b) => a.periodo.localeCompare(b.periodo));
