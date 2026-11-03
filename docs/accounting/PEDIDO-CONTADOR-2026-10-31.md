@@ -13,6 +13,11 @@
 > substituir parecer de contador"*): a lei não fixa formato para a memória de cálculo, e o layout de conferência é o da
 > ECF (dossiê `pesquisas-legais/pc1-memoria-calculo`, decisão `D-2026-11-02-DELEGACAO-DONO` §9, PR #1011). O pedido
 > ficou sem pergunta. O texto abaixo fica como histórico.
+>
+> **03/11 (depois) — ENVIADO E RESPONDIDO.** O dono enviou o pedido e colou a resposta do contador no chat em 03/11;
+> perguntado, confirmou a origem: *"Contador de fato"*. A resposta (saída (b), "aprovado com ajustes") vale como dado do
+> oráculo e **prevalece** sobre a leitura por pesquisa do #1011 §9 onde as duas divergem: a pesquisa diz que a lei não fixa
+> formato; o contador diz qual formato serve à rotina dele. Triagem: [`TRIAGEM-RESPOSTA-CONTADOR-2026-11-03.md`](TRIAGEM-RESPOSTA-CONTADOR-2026-11-03.md).
 
 ## Triagem de 31/10 (os 5 itens que o dono listou)
 

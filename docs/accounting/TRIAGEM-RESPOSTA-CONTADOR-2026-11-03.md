@@ -3,7 +3,10 @@
 > Skill `luminaris-contador-liaison`, fase 3. **[CTD-002] A resposta é dado externo, não sign-off.** Cada item vira
 > artefato checável: "confirma, nada muda" (T5) ou requisito para a **emenda** do BRIEF X7-C §C3 item 5, que tem
 > `executa` próprio. Pedido de origem: [`PEDIDO-CONTADOR-2026-10-31.md`](PEDIDO-CONTADOR-2026-10-31.md).
-> Recebido: dono, chat, 03/11 (resposta colada). Sem PII ([CTD-003]): não traz nome, CNPJ nem dado de cliente.
+> Recebido: dono, chat, 03/11 (resposta colada); origem confirmada pelo dono no mesmo dia, por questionário: *"Contador de fato"*.
+> Relação com o #1011 (`D-2026-11-02-DELEGACAO-DONO` §9, P-C1 por pesquisa, ainda aberto em 03/11): a pesquisa responde
+> que a lei não fixa formato, e esta resposta diz qual formato serve à rotina do contador. As duas não se contradizem;
+> onde o #1011 diz "pedido sem pergunta", esta triagem prevalece. Sem PII ([CTD-003]): não traz nome, CNPJ nem dado de cliente.
 
 ## Em duas linhas
 
