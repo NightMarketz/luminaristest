@@ -16,6 +16,10 @@ export class ProfitDistributionRepository implements IProfitDistributionReposito
     return this.db(tx).profitDistributionEvent.findFirst({ where: { id, userId: ownerUserId, deletedAt: null } });
   }
 
+  public async existsDoSocio(ownerUserId: string, partnerId: string, tx?: Prisma.TransactionClient): Promise<boolean> {
+    return (await this.db(tx).profitDistributionEvent.findFirst({ where: { userId: ownerUserId, partnerId, deletedAt: null }, select: { id: true } })) !== null;
+  }
+
   public async listDoMes(ownerUserId: string, taxId: string, competencia: string, status: readonly string[], tx?: Prisma.TransactionClient): Promise<ProfitDistributionEvent[]> {
     return this.db(tx).profitDistributionEvent.findMany({
       where: { userId: ownerUserId, taxId, competencia, status: { in: [...status] }, deletedAt: null },

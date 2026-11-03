@@ -11,7 +11,42 @@
 2. **Gate humano em cadeia** segue a ordem que o dono fixou: H1 → H2 → M2 (`[[H1]]`). **Desde 22/10:** H1 (passos 1–5) → H2 → M2 →
    1º cliente → H1 passo 6 + assinaturas — o fechamento de ECD/ECF é o último passo ([[D-2026-10-22-NFSE-PORTAL-E-H1-POR-ULTIMO]] §2).
 3. **Código só com `executa` citável** (ORCH-006). Brief pronto sem `executa` não entra como "a fazer agora": entra como "pronto para autorizar".
+   Desde 28/10 um `executa` cobre o BRIEF inteiro, e o merge segue a classe de risco ([[D-2026-10-28-FLUXO-AUTONOMO]]).
 4. Dependência explícita (`depende_de`) manda. Sufixo `?` (condicional) não bloqueia, mas sinaliza risco.
+
+## Estado em 26/10 (revisão semanal — não muda a ordem)
+
+> Leitura de `origin/main` em 26/10 ([[REVISAO-SEMANAL-2026-10-26]]). Só atualiza o **estado** de cada linha abaixo;
+> a ordem A–F continua a ratificada. Estado de nó manda o frontmatter — os folds vencidos pelos consolidados #902/#903
+> (RETENCOES-FONTE, PRESUMIDO-TETO-78MI `done`, ISS-TRANSICAO-IBS, FIX-PLUGINS-VENDA, FIX-ANALYTICS-RESIDUO, OBS,
+> FE-INCR-KANBAN-REORDER) entraram no mesmo PR desta leitura.
+>
+> **Adendo 27/10 (mesmo PR):** 18 PRs entraram em `main` na madrugada de 27/10 — X10a PR-0..PR-4 (#909, #910, #914, #917,
+> #924), NFE-DANFE-IBSCBS PR-0..PR-2 (#906, #915, #922), C8 emenda 3.2 P1..P3 (#911, #918, #923), LAC-B EMENDA-2 (#916,
+> #919, #921), X9 PR-3 (#908), #898 e #899. Folds de 27/10: X10a `inflight`; FIX-PLUGINS-VENDA e FIX-ANALYTICS-RESIDUO
+> `done`. Plano dia a dia 27/10 → 01/11 com os "executa" necessários: [[REVISAO-SEMANAL-2026-10-26]] §8.
+
+- **A1** fechado em 22/10 (portal + PAA; [[D5]]). Resta: quem contrata PSC + e-CNPJ. **A2** H1 passos 1–5 provados
+  (tentativa 3, 22/10); passo 6 é o último do plano. **A3/A4** H2 → M2 seguem os próximos gates humanos, sem bloqueio
+  de código. **A5** D7 até 31/12. **A6** D1f alíquota decidida por delegação; cClassTrib e XML real seguem abertos.
+  **A7** F-GOV-1 em docs (#904/#905 abertos).
+- **B1** X9: PR-2 (#566), PR-3 (#908) e PR-4 (#860, em `main` desde 23/10 — listado como aberto por engano em 26/10,
+  corrigido 27/10) em `main`; o nó segue `inflight` só pelos oráculos do X7. **B2** I4+I5: nós `done` (fechados antes
+  de 19/10). **B3** DEFIS-MANUAL / GET-ENTRADAS: nós `done`. **B5** CRM-RB: nó `done`.
+  **B6** F5 FE em `main` (#862, 23/10) — fechado como item de fila; o nó segue `inflight` por 16b/16c e chave do M2.
+  **B7** fechado (#866, nó `done` 24/10). **B8** LAC-B EMENDA-2: PR-0 #916, PR-1 #919 e PR-2 #921 em `main` (27/10); runbook da aba PASSOU (#925 aberto, só docs).
+- **C** W6 em `main` (#785/#786), nó `human-open`; W3 BRIEF da confirmação fechado (#788), forks F-W3-C1..C3 pendentes.
+- **D** X10a: PR-0..PR-4 (#909, #910, #914, #917, #924 com a EMENDA-3) em `main` em 27/10; PR-5 #926 aberto; PR-6 sob o
+  mesmo 'executa' de 26/10; nó `inflight` (fold 27/10). PR-7..PR-9 continuam no D (PSC + e-CNPJ, mTLS). O #914 destrava
+  o PR-2 do EFICIENCIA-FISCAL.
+- **E1** fechado 20/10 · **E2** fechado (#883) · **E3** #897 e #898 em `main` — nó `done` (27/10) · **E4** lotes 1–4 em `main`,
+  #10/#11/#20 esperam o dono · **E5** lotes A–C em `main`, 22 itens instrumentados, decisões de produto esperam o dono ·
+  **E6** fechado (nó `done` 24/10) · **E7** #894 e #899 em `main` — nó `done` (27/10) · **E8** nó `done` desde 20/10 (#773 e o BRIEF em `main`) — a linha E8
+  da tabela E está superada; a leitura de 26/10 ("BRIEF não pushado") estava errada.
+- **F1** IBS-CBS-2027 `done` (24/10) · RETENCOES-FONTE PR-1/PR-2 em `main`, PR-3/4 esperam o contador · PRESUMIDO-TETO-78MI
+  `done` (#887 em `main`; P-PT-1..3 com o contador) · ISS-TRANSICAO-IBS PR-1 #885 em `main` · EFD-REINF PR-1 #912 aberto (em conflito com `main` desde 27/10) · NFE-DANFE-IBSCBS PR-0..PR-2 (#906, #915, #922) em
+  `main` 27/10; PR-3 espera 'executa' (alvo 30/11) · **F1.5** EFICIENCIA-FISCAL PR-1 #913 aberto (em conflito); PR-2
+  destravado pelo #914. **F2–F5** sem nó em `nos/`; Q4–Q12 abertas.
 
 ## A. Prazos e decisões do dono (só o dono move)
 
@@ -23,7 +58,7 @@
 | A4 | **M2 — host e 1º deploy** [[M2]] | VPS contratada (26/09). Chave do MP no ambiente e conta de emissão por unidade (R8). | [[F5]] em produção, [[PACOTE-VALIDADE]], [[GOV-CONTADOR]] (consulta CFC), [[P4]] (assinatura) | Deploy após H2. |
 | A5 | **D7 — PNCT** (vigilância de comunicações) | Prazo **31/12/2026**. Nasce com a emissão (depende de A1). | — | Corrigir até o prazo, com contador responsável. |
 | A6 | **D1 / D1f / D2 — contador e XML real de NF-e** | Pedido de follow-up de 26/09 não enviado; falta alíquota de ISS e cClassTrib; sem XML real (E9 fica preso). | Fixtures reais ([[E9]]), itens 5a–5f | Enviar o pedido ao contador (o agente só monta). |
-| A7 | **F-GOV-1 — consulta ao CRC-SP** | Dono decidiu enviar agora (10/10). | [[GOV-CONTADOR]] | Confirmar envio. |
+| A7 | **F-GOV-1 — consulta ao CRC-SP** | ✅ Fechado em 25/10 com risco residual (dono, Q1 c / Q2 c do `DECISAO-F-GOV-1-GATE-E-TRAVA-2026-10-25`): "contador parceiro, contratado pelo cliente" liberado; "com contador incluso" segue suspenso. 26/10: consulta opcional, v2 com 2 perguntas; dono decidiu enviar a v2. | [[GOV-CONTADOR]] | Confirmar envio da v2 (data e protocolo) — opcional. |
 
 ## B. Código destravado (precisa de `executa` do dono, por PR)
 
@@ -64,7 +99,7 @@ Ordem sugerida, da menor dependência para a maior:
 | E2 | [[TESTE-ACOPLAMENTO-PRESET]] | planned | Barato e preventivo: é a causa comum de 4 achados (campo lido que o preset não declara) | `executa` |
 | E3 | [[FIX-PLUGINS-VENDA]] | planned | Mudam estoque e receita em silêncio no molde; mesmos arquivos do #771 (depois de E1) | `executa` (pode ser fatiado) |
 | E4 | [[FIX-AUTH-CONTA]] | planned | Delete de usuário 500 com vetores já apagados; logout/JWT; ADMIN desativando o próprio layout | `executa` |
-| E5 | [[FIX-CHAT-AGENTE]] | planned | Injeção de `system` no histórico; PROCESSING eterno; propostas sem TTL | `executa` |
+| E5 | [[FIX-CHAT-AGENTE]] | **done (#977, 29/10)** | Injeção de `system` no histórico; PROCESSING eterno; propostas sem TTL | — (desbloqueia a seção G) |
 | E6 | [[FIX-FE-DASHBOARD]] | planned | Datetime com dia anterior, 401 e erros por campo — o que o dono vê ao clicar | `executa` |
 | E7 | [[FIX-ANALYTICS-RESIDUO]] | planned | Período/fuso e validador; depois do #770 | `executa` |
 | E8 | BRIEF `BE-INCR-DT-NO-CONSUMER-CALLS` (branch local `claude/mystifying-ptolemy-65dd7c`, empilhada no #769, não pushada) | BRIEF com forks ratificados | Arquitetura, sem efeito no dado do usuário; depende do #769 | Pedir o push/PR do BRIEF; depois `executa` |
@@ -108,3 +143,81 @@ ratificado; a ordem de 20/10 vale até o dono responder Q10–Q12.**
 
 Fechado em 20/10 (R0, Q3 a): E1 inteiro mergeado (#769 · #771 · #770 · #772); X14-CAIXA (#729/#738/#739), FE-INCR-SIMPLES
 PR-D (#733) e X11 PR-1 (#633) em `main` — fold em sessão própria.
+
+## G. Teammates + RAG de documentos — sequência de execução (30/10)
+
+> Registrada a pedido do dono (chat, 30/10: "faz só o grafo de sequencia para todas essas tarefas e fecharmos rag e
+> teammates" · "Documenta isso"). A sequência foi proposta pelo agente, e o dono pediu o registro. **Cada PR de código
+> ainda precisa de `executa`**; um `executa` cobre o BRIEF inteiro ([[D-2026-10-28-FLUXO-AUTONOMO]]). Detalhe dos
+> itens: [`BE-INCR-TEAMMATES-brief.md`](../accounting/BE-INCR-TEAMMATES-brief.md) e
+> [`BE-INCR-RAG-DOCUMENTOS-brief.md`](../accounting/BE-INCR-RAG-DOCUMENTOS-brief.md). Nós: [[TEAMMATES]] e
+> [[RAG-DOCUMENTOS]]. O [[FIX-CHAT-AGENTE]], de que os dois dependem, fechou com o #977.
+
+**Uma fila só, um PR por vez.** Quase todo PR dos dois nós toca `lib/factory.ts`, `routes/index.ts` ou
+`prisma/schema.prisma` (os dois `write_set` se cruzam em `features/chat/**`). Rodar dois em paralelo gera conflito,
+então cada PR parte da `main` com o anterior mergeado.
+
+```mermaid
+flowchart LR
+  P0{{"0 · antes da fila<br/>#979 · deps · FIX-AUTH-CONTA · OBS 12/14"}} --> TM0
+  TM0["1 · TM PR-0<br/>schema"] --> RA["2 · RAG-A<br/>sqlite-vec · gate"]
+  RA --> TM1["3 · TM PR-1<br/>provedor e chave"] --> TM2["4 · TM PR-2<br/>alçada"]
+  TM2 --> RB["5 · RAG-B<br/>busca e PATCH"] --> TM3["6 · TM PR-3<br/>runner"]
+  TM3 --> TM7["7 · TM PR-7<br/>propostas"] --> TM4["8 · TM PR-4<br/>fila e orçamento"]
+  TM4 --> RC["9 · RAG-C<br/>chave do usuário"] --> RD["10 · RAG-D<br/>fila de docs"]
+  RD --> TM5["11 · TM PR-5<br/>rotinas"] --> TM6["12 · TM PR-6<br/>canais"] --> TM9["13 · TM PR-9<br/>webhook"]
+  TM9 --> LG{{"14 · LGPD L1 + L2"}} --> TM8["15 · TM PR-8<br/>piloto"] --> TM10["16 · TM PR-10<br/>MCP"]
+  TM10 --> M2{{"17 · Runbook M2<br/>Redis · sqlite-vec"}} --> PROD(["18 · Produção<br/>nós fechados"])
+  RA -. "extensão não carrega ou drift" .-> DONO{{"volta ao dono"}}
+```
+
+| # | Passo | Depende de | Por que aqui |
+|---|---|---|---|
+| 0 | **Antes da fila** (passo 0, abaixo) | — | Itens já documentados que tocam os mesmos arquivos ou a mesma régua |
+| 1 | TM PR-0 · schema e contratos | #977, passo 0 | Serial por definição: nada dos corpos antes dele |
+| 2 | RAG-A · índice `sqlite-vec`, saída do Qdrant | #977 | **Risco técnico mais alto, na frente:** os itens 1 e 2 (carga da extensão nas 3 plataformas, drift do Prisma) devolvem a decisão ao dono se falharem, e é melhor saber antes de 10 PRs |
+| 3 | TM PR-1 · porta `LlmProvider` e `LlmCredential` | 1 | Já com a ressalva do item 8 (emenda 30/10) |
+| 4 | TM PR-2 · teammate e alçada | 1 | Corpo paralelizável com o 3, mas registros em comum → serial |
+| 5 | RAG-B · `DocumentSearchService`, ferramenta, rota, PATCH de contexto | 2 | Toca `features/chat/**` antes do runner (6), que também toca |
+| 6 | TM PR-3 · runner de turno | 3, 4 | — |
+| 7 | TM PR-7 · caixa única de propostas | 6 | Antes do piloto e do MCP, que propõem |
+| 8 | TM PR-4 · fila BullMQ, worker e limites | 6 | Traz o `LlmBudgetService` (item 23 emendado), que o RAG-C usa |
+| 9 | RAG-C · embedding pela chave do usuário, orçamento | 3, 5, 8 | Precisa da `LlmCredential` (3) e da soma de orçamento (8) |
+| 10 | RAG-D · fila `document-processing`, contexto gerado | 8, 9 | Reusa Redis, BullMQ e a descoberta de `*Worker.ts` do 8 |
+| 11 | TM PR-5 · rotinas | 8 | — |
+| 12 | TM PR-6 · canais | 8 | — |
+| 13 | TM PR-9 · webhook de rotina | 11 | — |
+| 14 | **LGPD L1 + L2** (gate) | — | L1: termos e DPA de Anthropic, OpenAI e Google (o agente pesquisa). L2: região da VPS (o dono decide). **Pode sair em paralelo a qualquer momento**; só precisa estar fechado antes do 15 |
+| 15 | TM PR-8 · piloto Conciliação | 6, 7, 14 | Primeiro dado real ao provedor |
+| 16 | TM PR-10 · cliente MCP | 6, 7, 14 | Dado a servidor de terceiro |
+| 17 | **Runbook M2** (gate humano) | 2, 8, 10 | Redis por instância, Qdrant fora, binário do `sqlite-vec` e `DOCUMENTS_DIR` na imagem. O agente prepara a emenda depois do 2; o dono executa e assina |
+| 18 | Produção | 17 | TEAMMATES e RAG-DOCUMENTOS vão a `done` |
+
+### Passo 0 — o que entra antes (levantado em 30/10)
+
+Cruzamento por `node scripts/paralelo.mjs plano` com todos os nós não `done` e com os PRs abertos em 30/10.
+
+| Item | O que é | Por que vem antes | Ação |
+|---|---|---|---|
+| #979 | Limite de workers no jest e no vitest | Os 16 PRs de código rodam suítes pesadas; merge pequeno e sem conflito | Merge |
+| #949 | `openai` 4 → 7 (Dependabot) | O TM PR-1 embrulha o `OpenAIService`, e o embedding do RAG usa o mesmo SDK. Trocar no meio quebra os dois | Dono decide antes do passo 1: mergear e adaptar, ou fechar e fixar a versão |
+| #951, #950 | TypeScript 5.9 → 7.0 e dependency-cruiser 16 → 18 (Dependabot) | São os gates de todo PR (`tsc` e `check:arch`); trocar no meio muda a régua da fila | Idem |
+| #948, #952 e os do my-app | Bumps menores (Dependabot) | O TEAMMATES mexe no `server/package.json` | Se entrarem, antes do passo 1 |
+| [[FIX-AUTH-CONTA]] (inflight) | Itens #10 (a purga cobre 2 de 47 modelos com `deletedAt`), #11 (anexo apagado na hora) e #20 esperam decisão do dono; #19 (CSRF) vai a BRIEF | Choca com o RAG-A no `UserService.ts` e no `user-deletion-qdrant.test.ts`, que o RAG-A reescreve. O #10 deve fechar antes de o TEAMMATES criar mais modelos com exclusão lógica | Dono decide #10/#11/#20; fecha antes do passo 2 |
+| [[OBS]] itens 12 e 14 da Fase B | Restos da Onda 0 | Tocam `schedulerFailureAlert.test.ts`, `docker-compose.yml` e `.env.example`, que o RAG-A e o TM PR-4 também tocam | Fecha antes do passo 2. Não conferido se têm `executa` |
+
+**Não entram na fila (correm em paralelo):**
+- EFICIENCIA-FISCAL, F5, X10a, X9, RETENCOES-FONTE, EFD-REINF e PACOTE-VALIDADE.
+- Só a ordem de merge dos registros comuns (`factory.ts`, `openapi.json`, `auditCanonical.ts`) fica serial, pela Fase B do
+  contrato de paralelização.
+- O conflito que o `paralelo.mjs` acusa entre EFICIENCIA-FISCAL e o chat vem de um glob largo de testes
+  (`server/src/features/**/__tests__/**`), não de código.
+- W8 (#989, só docs) toca a entrevista, que o TEAMMATES deixou fora do escopo. A lista de arquivos dele não foi
+  conferida contra esta sequência.
+- BUILDER-VERTICAIS: forks pendentes, sem BRIEF.
+
+**Fora da fila de código:**
+- merge da documentação: #975 (LGPD) e #990 (BRIEF do RAG e emendas do TEAMMATES). Se o #990 não for mergeado
+  antes, o passo 1 parte do branch `claude/rag-forks-ratificacao`, para os BRIEFs entrarem junto;
+- a decisão do L2;
+- a assinatura do runbook M2.

@@ -1,4 +1,12 @@
-import { quotaCumulativa, lifeMonths, isAnexoSource, resolveRateForNcm, type NcmRateCandidate } from '../FixedAsset.model';
+import {
+  quotaCumulativa,
+  quotaCumulativaLinear,
+  amortizationTerms,
+  lifeMonths,
+  isAnexoSource,
+  resolveRateForNcm,
+  type NcmRateCandidate,
+} from '../FixedAsset.model';
 import { ValidationError } from '../../../../lib/errors';
 
 describe('quotaCumulativa — fórmula pura (BRIEF item 12)', () => {
@@ -101,5 +109,30 @@ describe('resolveRateForNcm — casamento por NCM (Anexo III), FUNÇÃO PURA', (
   it('taxa CUSTOM (ncm=null) nunca casa por prefixo — é ignorada no matching', () => {
     const rates: NcmRateCandidate[] = [{ id: 'rate-custom', ncm: null, annualRateBp: 9999 }];
     expect(() => resolveRateForNcm(rates, '84521000', 'MAQ-1')).toThrow(/Nenhuma taxa de depreciação/);
+  });
+});
+
+describe('amortização linear da benfeitoria (C8 emenda 3.2, E11)', () => {
+  const quotas = (base: bigint, n: number) =>
+    Array.from({ length: n }, (_, i) => quotaCumulativaLinear(base, n, i + 1) - quotaCumulativaLinear(base, n, i));
+
+  it('base 12.000, contrato 24 meses, taxa 10% → n = 24 → 500/mês, Σ = 12.000 exato no mês 24', () => {
+    const { nBook, nFiscal } = amortizationTerms(24, 1000);
+    expect({ nBook, nFiscal }).toEqual({ nBook: 24, nFiscal: 24 });
+    const q = quotas(12_000n, nBook);
+    expect(q.every((v) => v === 500n)).toBe(true);
+    expect(quotaCumulativaLinear(12_000n, nBook, 24)).toBe(12_000n);
+  });
+
+  it('base 10.000 / 3 meses → 3.333, 3.333, 3.334 (resíduo no último mês)', () => {
+    expect(quotas(10_000n, 3)).toEqual([3333n, 3333n, 3334n]);
+  });
+
+  it('contrato de 15 anos com taxa 10% → nBook = 120 (vida útil vence), nFiscal = 180', () => {
+    expect(amortizationTerms(180, 1000)).toEqual({ nBook: 120, nFiscal: 180 });
+  });
+
+  it('depois do mês n a cumulativa fica presa na base (cap)', () => {
+    expect(quotaCumulativaLinear(10_000n, 3, 4)).toBe(10_000n);
   });
 });

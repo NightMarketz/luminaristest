@@ -49,6 +49,8 @@ const dateOnly = (field: string) =>
  *         annualRateBp:           { type: integer, minimum: 1, maximum: 10000, description: 'XOR com rateId — taxa explícita em basis points' }
  *         bookAnnualRateBp:       { type: integer, minimum: 1, maximum: 10000, description: 'taxa CONTÁBIL, se diverge da fiscal — exige bookRateJustification' }
  *         bookRateJustification:  { type: string }
+ *         leaseEndDate:           { type: string, description: 'YYYY-MM-DD — fim do contrato de locação; obrigatório em classe AMORTIZATION_LEASEHOLD (E10)' }
+ *         leaseIndemnifiable:     { type: boolean, description: 'declaração obrigatória em classe AMORTIZATION_LEASEHOLD: true (direito a indenização) não amortiza (RIR 331 III; Lei 8.245/91 art. 35)' }
  */
 export const CreateFixedAssetSchema = z
   .object({
@@ -65,6 +67,8 @@ export const CreateFixedAssetSchema = z
     annualRateBp: z.number().int().min(1).max(10000).optional(),
     bookAnnualRateBp: z.number().int().min(1).max(10000).optional(),
     bookRateJustification: z.string().min(1).optional(),
+    leaseEndDate: dateOnly('leaseEndDate').optional(), // C8 emenda 3.2 E10 (F-EM-6 → a) — obrigatoriedade é do serviço (depende da classe)
+    leaseIndemnifiable: z.boolean().optional(), // E8b — sem default: "não sei" não pode virar false (PN 210/73 item 4)
   })
   .strict()
   .superRefine((val, ctx) => {
@@ -113,6 +117,8 @@ export const CreateFixedAssetSchema = z
  *         annualRateBp:           { type: integer, minimum: 1, maximum: 10000 }
  *         bookAnnualRateBp:       { type: integer, minimum: 1, maximum: 10000, nullable: true }
  *         bookRateJustification:  { type: string, nullable: true }
+ *         leaseEndDate:           { type: string, nullable: true, description: 'YYYY-MM-DD; imutável depois do activate (E13)' }
+ *         leaseIndemnifiable:     { type: boolean, nullable: true }
  */
 export const UpdateFixedAssetSchema = z
   .object({
@@ -130,6 +136,8 @@ export const UpdateFixedAssetSchema = z
     annualRateBp: z.number().int().min(1).max(10000).optional(),
     bookAnnualRateBp: z.number().int().min(1).max(10000).nullable().optional(),
     bookRateJustification: z.string().min(1).nullable().optional(),
+    leaseEndDate: dateOnly('leaseEndDate').nullable().optional(),
+    leaseIndemnifiable: z.boolean().nullable().optional(),
   })
   .strict();
 

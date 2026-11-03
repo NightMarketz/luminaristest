@@ -1,6 +1,6 @@
-import type { FiscalDocument } from 'generated/prisma';
+import type { FiscalDocument, NfceContingencia } from 'generated/prisma';
 import { Prisma } from 'generated/prisma';
-import { ConflictError, ForbiddenError, PackageExpiryNfsePendingError, ValidationError } from '../../../lib/errors';
+import { ConflictError, ForbiddenError, NotFoundError, PackageExpiryNfsePendingError, ValidationError } from '../../../lib/errors';
 import { getFactory } from '../../../lib/factory';
 import logger from '../../../lib/logger';
 import { classifyTaxId, isValidCnpj, stripCnpjMask } from '../../../lib/cnpj';
@@ -12,22 +12,45 @@ import type { FiscalProfileService } from './FiscalProfileService';
 import type { ServiceFiscalProfileService, ServiceFiscalProfileView } from './ServiceFiscalProfileService';
 import type { AuditService } from './AuditService';
 import { attemptRef } from '../repositories/FiscalDocumentRepository';
-import { AUTHORIZED_STATUSES } from '../repositories/IFiscalDocumentRepository';
+import { AUTHORIZED_STATUSES, FISCAL_DOCUMENT_KINDS } from '../repositories/IFiscalDocumentRepository';
 import type {
   FiscalDocumentKind,
   FiscalDocumentStatus,
   FiscalDocumentWithAttempts,
   IFiscalDocumentRepository,
 } from '../repositories/IFiscalDocumentRepository';
-import { loadSalePackageInfo, loadSaleServiceLines } from '../sync/bridges/saleItems';
+import { loadSalePackageInfo, loadSaleProductLines, loadSaleServiceLines } from '../sync/bridges/saleItems';
 import type { SaleServiceLine } from '../sync/bridges/saleItems';
-import { SERVICE_REVENUE_ACCOUNT } from '../sync/mappers/revenueSplit';
+import { RESALE_REVENUE_ACCOUNT, SERVICE_REVENUE_ACCOUNT } from '../sync/mappers/revenueSplit';
 import { splitCents } from '../dfe/splitCents';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
 import type { DpsManualPayload, DpsPayload } from '../dtos/DpsPayloadDto';
-import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
+import { NfePayloadSchema, NfePayloadSemNumeracaoSchema } from '../dtos/NfePayloadDto';
+import type { NfePayload, NfePayloadSemNumeracao } from '../dtos/NfePayloadDto';
+import { crtDoRegime, faltantesDosItens } from '../models/nfePrecondicoes';
+import { CRT3_ICMS_SEM_SPEC, ibsCbsDoProduto } from '../models/nfeIbsCbsMontagem';
+import {
+  RTC_SIMPLES_DESDE,
+  RTC_SIMPLES_NAO_TRANSCRITO,
+  clienteDaVenda,
+  destNfce,
+  dhEmiNoFuso,
+  gerarCnf,
+  limitesNfce,
+  montarNfe,
+  numerarNfe,
+  pisCofinsSimples,
+  tPagDoMetodo,
+  ufDoCodMun,
+  type ItemParaMontagem,
+} from '../models/nfeMontagem';
+import type { ProductFiscalProfileService } from './ProductFiscalProfileService';
+import { selectDfeEmissor, type DfeSelection } from '../dfe/selectDfeEmissor';
 import { assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
-import type { DfeAmbiente, DfeEmissorPort } from '../dfe/DfeEmissorPort';
+import type { CscDaUnidade, DfeAmbiente, DfeCallContext, DfeEmissorPort, DfeKind, EmitirInput, NfceSupl } from '../dfe/DfeEmissorPort';
+import { bloqueioSessaoPsc, type AssinaturaDaUnidade, type DfeAssinaturaResolver } from './DfeAssinaturaResolver';
+import { enviarTentativa, type DfeContingenciaHandler, type DfeResultApplier } from './dfeEnvio';
+import { prazoTransmissao } from '../models/nfceContingencia';
 import { scopeToday } from '../models/dates';
 import { IND_OP_DEFAULT_SALAO } from '../models/indOp';
 import { RECEITA_NAO_USO_CODE, A_RECEBER_CODE } from '../fixtures/ChartOfAccountsFixture';
@@ -55,7 +78,8 @@ export interface PreviewResult {
   ok: boolean;
   faltantes: string[];
   competenciaAlerta: boolean;
-  payloads: DpsPayload[];
+  /** DPS (NFS-e) ou NF-e/NFC-e sem numeração (BE-INCR-NFCE item 22: a numeração e a chave nascem na tx do envio). */
+  payloads: Array<DpsPayload | NfePayloadSemNumeracao>;
   tieOut: { vServCents: string; ledgerCents: string; matches: boolean };
 }
 
@@ -97,6 +121,8 @@ export interface FiscalDocumentView {
   substitutesDocumentId: string | null;
   substitutedByDocumentId: string | null;
   substMotivo: string | null;
+  /** X10a PR-9 (E-9) — NFC-e emitida em contingência off-line (tpEmis=9): dados do DANFE e o prazo de transmissão. */
+  contingencia: { dhCont: string; prazoTransmissao: string; qrCode: string | null; urlChave: string | null } | null;
 }
 
 /** `resultJson` nulo, inválido ou sem `releitura` ⇒ `null` (nunca lança — a view não pode quebrar por dado legado). */
@@ -108,6 +134,25 @@ function readReleitura(resultJson: string | null | undefined): ReleituraJson['re
   } catch {
     return null;
   }
+}
+
+/** GET /api/nfe/dfe/status — o estado de UMA seleção (um tipo de documento). */
+export interface DfeStatusView {
+  enabled: boolean;
+  partner: string | null;
+  ambiente: DfeAmbiente | null;
+  reason?: string;
+  capabilities?: DfeEmissorPort['capabilities'];
+}
+
+function statusView(selection: DfeSelection): DfeStatusView {
+  return {
+    enabled: selection.enabled,
+    partner: selection.enabled ? selection.port.name : null,
+    ambiente: selection.ambiente,
+    reason: selection.reason,
+    capabilities: selection.enabled ? selection.port.capabilities : undefined,
+  };
 }
 
 function centsToMoneyString(cents: number): string {
@@ -136,6 +181,10 @@ function buildDpsId(cMun: string, cnpj: string, serie: number, nDPS: number): st
  * FALHA de rede é gravada (mesmo status SENT, `errorsJson` via o primitivo `repo.transition`, sem
  * decisão de máquina de estados — é uma atualização de MESMO estado). Um resultado imediato bem-
  * sucedido (ex.: NullEmissor) fica para o job de polling (item 27, PR-3) aplicar.
+ *
+ * X10a PR-7: o adaptador com `capabilities.resultadoSincrono` (SEFAZ, `indSinc=1`) tem o retorno aplicado na hora pelo
+ * `applyResult` do ciclo (F-ADN-5 a); o que assina pelo PSC passa pelo pré-voo da credencial ANTES de consumir número
+ * (F-PSC-5 a) e, com o token vencido, a nota nasce `PENDING_SIGNATURE` sem número (F-PSC-6 a).
  */
 export class FiscalDocumentEmissionService {
   constructor(
@@ -148,22 +197,67 @@ export class FiscalDocumentEmissionService {
     private readonly auditService: AuditService,
     /** BE-INCR-LEGAL-PARAMS PR-2 (F-LP-4 a): fotografia `LC116_SERVICO` (cTribNac na lista nacional). */
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
+    // BE-INCR-NFCE (nó X10a, item 11): perfis fiscais dos produtos para a montagem da NF-e/NFC-e.
+    private readonly productFiscalProfileService: Pick<ProductFiscalProfileService, 'list'>,
+    /**
+     * EFICIENCIA-FISCAL PR-1 item 6 (ADR-INCR-EFICIENCIA-FISCAL D4.2): guarda fiscal da venda como pré-condição da emissão —
+     * cada violação BLOCK vira pendência `fiscal_guard: <código> (<base legal>)` no 400 `emissao_bloqueada` existente.
+     * Porta estrutural (o `SaleFiscalGuardService` de `features/sales`), injetada pela factory.
+     */
+    private readonly fiscalGuard?: {
+      check(
+        scope: AccountingScope,
+        saleId: string,
+        opts: { forEmission?: boolean; persistSnapshot?: boolean; sale?: Record<string, unknown> },
+      ): Promise<{ violations: Array<{ code: string; severity: string; legalBasis: string }> }>;
+    },
+    /** X10a PR-7 (EMENDA-PSC E-6/E-12): credencial do PSC da unidade para o adaptador que assina remotamente. */
+    private readonly assinatura?: DfeAssinaturaResolver,
   ) {}
+
+  private resultApplier: DfeResultApplier | null = null;
+  private contingencia: ContingenciaDaEmissao | null = null;
+
+  /** Liga o `applyResult` do ciclo (late-bound na factory: o ciclo depende deste serviço, não o contrário). */
+  setResultApplier(fn: DfeResultApplier): void {
+    this.resultApplier = fn;
+  }
+
+  /** X10a PR-9 (E-9) — liga a contingência off-line da NFC-e (late-bound: ela depende deste serviço para a assinatura). */
+  setContingencia(svc: ContingenciaDaEmissao): void {
+    this.contingencia = svc;
+  }
+
+  /** X10a PR-9 (decisão 4) — o handler da falha de comunicação para o `enviarTentativa` (o reenvio do ciclo também usa). */
+  contingenciaHandler(): DfeContingenciaHandler | null {
+    const c = this.contingencia;
+    return c ? (scope, doc, port, input) => c.aoFalharComunicacao(scope, doc, port, input) : null;
+  }
+
+  /** X10a PR-8 (E-3) — o CSC da unidade para o QR Code v2 da NFC-e; sem resolvedor ou sem cadastro ⇒ `undefined`. */
+  async cscDaUnidade(scope: AccountingScope, port: DfeEmissorPort, kind: FiscalDocumentKind, ambiente: DfeAmbiente): Promise<CscDaUnidade | undefined> {
+    return this.assinatura ? this.assinatura.cscDaUnidade(scope, port, kind, ambiente) : undefined;
+  }
+
+  /** E-6/E-12 — pré-voo da assinatura pela unidade do escopo; sem o resolvedor, adaptador que assina fica SEM_CREDENCIAL. */
+  async assinaturaDaUnidade(scope: AccountingScope, port: DfeEmissorPort): Promise<AssinaturaDaUnidade> {
+    if (this.assinatura) return this.assinatura.paraUnidade(scope, port);
+    return port.capabilities.assinaturaRemota ? { ok: false, motivo: 'SEM_CREDENCIAL' } : { ok: true };
+  }
 
   private async lc116(scope: AccountingScope): Promise<ListaLc116> {
     return listaLc116De(await this.legalParams.fotografia(['LC116_SERVICO']), scopeToday(scope));
   }
 
-  /** GET /api/nfe/dfe/status (item 13). */
-  getStatus(): { enabled: boolean; partner: string | null; ambiente: DfeAmbiente | null; reason?: string; capabilities?: DfeEmissorPort['capabilities'] } {
-    const selection = selectDfeEmissor(process.env);
-    return {
-      enabled: selection.enabled,
-      partner: selection.enabled ? selection.port.name : null,
-      ambiente: selection.ambiente,
-      reason: selection.reason,
-      capabilities: selection.enabled ? selection.port.capabilities : undefined,
-    };
+  /**
+   * GET /api/nfe/dfe/status (item 13). BE-INCR-NFCE (nó X10a, item 5): o estado é POR TIPO em `porTipo`; os campos de
+   * topo continuam sendo os da NFS-e, que é o que o FE lê hoje (botão "Emitir NFS-e").
+   */
+  getStatus(): DfeStatusView & { porTipo: Record<FiscalDocumentKind, DfeStatusView> } {
+    const porTipo = Object.fromEntries(
+      FISCAL_DOCUMENT_KINDS.map((kind) => [kind, statusView(selectDfeEmissor(process.env, kind))]),
+    ) as Record<FiscalDocumentKind, DfeStatusView>;
+    return { ...porTipo.NFSE, porTipo };
   }
 
   /** POST /api/nfe/dfe/preview (item 23) — roda as pré-condições e a montagem SEM persistir nem chamar a porta. */
@@ -172,8 +266,12 @@ export class FiscalDocumentEmissionService {
       throw new ForbiddenError('Você não tem permissão para emitir documento fiscal.');
     }
     try {
-      const assembly = await this.assemble(scope, saleId, kind, selectDfeEmissor(process.env).ambiente);
-      const totalServiceCents = assembly.groups.reduce((sum, g) => sum + g.vServCents, 0);
+      const ambiente = selectDfeEmissor(process.env, kind).ambiente;
+      // Review do #913: a prévia só LÊ — a guarda roda sem gravar o custo nem a trilha de bloqueio.
+      const assembly =
+        kind === 'NFSE' ? await this.assemble(scope, saleId, kind, ambiente, false, 'preview') : await this.assembleNfe(scope, saleId, kind, ambiente, false, 'preview');
+      // F-EF-16 a: o tie-out da NFS-e é Σ (vServ − vDescIncond) = crédito 3.1 (a NF-e não destaca — sem a coluna no grupo).
+      const totalServiceCents = assembly.groups.reduce((sum, g) => sum + g.vServCents - ('vDescIncondCents' in g ? g.vDescIncondCents : 0), 0);
       return {
         ok: true,
         faltantes: [],
@@ -211,8 +309,9 @@ export class FiscalDocumentEmissionService {
     if (!this.policy.canEmitFiscalDocument(scope)) {
       throw new ForbiddenError('Você não tem permissão para emitir documento fiscal.');
     }
-    const selection = selectDfeEmissor(process.env);
-    const assembly = await this.assemble(scope, saleId, kind, selection.ambiente);
+    const selection = selectDfeEmissor(process.env, kind);
+    const assembly =
+      kind === 'NFSE' ? await this.assemble(scope, saleId, kind, selection.ambiente) : await this.assembleNfe(scope, saleId, kind, selection.ambiente);
     if (!selection.enabled) {
       throw new ValidationError(`dfe_disabled: ${selection.reason}`, { faltantes: [selection.reason ?? 'porta desabilitada'] });
     }
@@ -222,7 +321,8 @@ export class FiscalDocumentEmissionService {
       created.push(await this.createAndSend(scope, selection, kind, { ...assembly, saleId, group }));
     }
     const prazos = await this.fiscalProfileService.get(scope);
-    return created.map((d) => this.toView(d, [], prazos));
+    const feriados = await this.feriadosSeContingencia(created); // X10a PR-9: a NFC-e que saiu off-line já tem prazo
+    return created.map((d) => this.toView(d, [], prazos, feriados));
   }
 
   /**
@@ -250,7 +350,7 @@ export class FiscalDocumentEmissionService {
     if (!fiscalProfile || fiscalProfile.pacoteFatoGerador !== 'CONSUMO') return 'not_applicable';
     if (await this.repo.findBySaleKey(scope, movementKey, 'NFSE')) return 'exists';
 
-    const selection = selectDfeEmissor(process.env);
+    const selection = selectDfeEmissor(process.env, 'NFSE');
     let assembly: Awaited<ReturnType<FiscalDocumentEmissionService['assembleExpiry']>>;
     try {
       assembly = await this.assembleExpiry(scope, movementKey, selection.ambiente);
@@ -288,7 +388,7 @@ export class FiscalDocumentEmissionService {
       subst: { cMotivo: string; xMotivo: string | null };
     },
   ): Promise<FiscalDocumentWithAttempts> {
-    const selection = selectDfeEmissor(process.env);
+    const selection = selectDfeEmissor(process.env, original.kind as FiscalDocumentKind);
     const { infDPS } = args.payload;
     return this.createAndSend(scope, selection, original.kind as FiscalDocumentKind, {
       saleId: original.saleId,
@@ -315,7 +415,7 @@ export class FiscalDocumentEmissionService {
     args: {
       saleId: string;
       saleKey?: string;
-      group: { cTribNac: string; vServCents: number; payload: DpsPayload };
+      group: { cTribNac: string; vServCents: number; payload: DpsPayload | NfePayloadSemNumeracao };
       anchorEntryId: string;
       serie: number;
       dCompet: string;
@@ -327,6 +427,20 @@ export class FiscalDocumentEmissionService {
     },
   ): Promise<FiscalDocumentWithAttempts> {
     const { group } = args;
+    // F-PSC-5 a (E-6): o pré-voo da assinatura roda ANTES da tx que consome o número. Sem credencial ou com o certificado
+    // vencido ⇒ 400; token vencido ⇒ a nota nasce PENDING_SIGNATURE sem número (E-13, F-PSC-6 a).
+    // X10a PR-8: o que o adaptador não consegue enviar na UF/ambiente do emitente (webservice, URL do QR Code) também
+    // barra aqui, antes do número.
+    if (kind !== 'NFSE' && selection.port.faltantesDoEnvio) {
+      const faltantes = selection.port.faltantesDoEnvio(kind, String((group.payload as NfePayloadSemNumeracao).infNFe.ide.cUF), selection.ambiente as DfeAmbiente);
+      if (faltantes.length) throw new ValidationError(`emissao_bloqueada: ${faltantes.length} pendência(s) — ver 'faltantes'.`, { faltantes });
+    }
+    const assinatura = await this.assinaturaDaUnidade(scope, selection.port);
+    if (!assinatura.ok && (assinatura.motivo !== 'TOKEN_EXPIRADO' || kind === 'NFSE')) throw bloqueioSessaoPsc(assinatura.motivo);
+    const aguardaAssinatura = !assinatura.ok;
+    // X10a PR-9 (E-9, decisão 8): com a unidade em contingência no ambiente, a NFC-e sai off-line direto (tpEmis=9).
+    const contingenciaAtiva = kind === 'NFCE' && selection.port.capabilities.contingenciaOffline === true && this.contingencia !== null;
+    let offline = false;
     const doc = await this.repo.runTransaction(async (tx) => {
       // X11 review M1: a original é relida DENTRO da tx do insert — gate autoritativo (E0046: cancelada não substitui).
       if (args.substitutes) {
@@ -336,21 +450,38 @@ export class FiscalDocumentEmissionService {
         }
       }
       let numero: bigint | null = null;
-      if (!selection.port.capabilities.numbersDps) {
-        numero = await this.repo.nextNumber(scope, kind, args.serie, tx);
+      if (!selection.port.capabilities.numbersDps && !aguardaAssinatura) {
+        // BE-INCR-NFCE item 23 (F-NFCE-4 a): NF-e/NFC-e numeram por ambiente; a NFS-e segue sem ('' — lacuna no GAP-MAP).
+        numero = await this.repo.nextNumber(scope, kind, kind === 'NFSE' ? '' : (selection.ambiente as DfeAmbiente), args.serie, tx);
       }
-      let payload: DpsPayload | DpsManualPayload;
-      if (selection.port.capabilities.numbersDps) {
+      let payload: DpsPayload | DpsManualPayload | NfePayloadSemNumeracao;
+      if (kind !== 'NFSE') {
+        // BE-INCR-NFCE item 21: chave de acesso montada aqui, com o número da tx, só quando o Luminaris numera.
+        let semNumero = group.payload as NfePayloadSemNumeracao;
+        const estado = numero != null && contingenciaAtiva ? await this.contingencia!.estadoAtivo(scope, selection.ambiente as DfeAmbiente, tx) : null;
+        if (estado) {
+          semNumero = this.contingencia!.paraContingencia(scope, estado, semNumero);
+          offline = true;
+        }
+        payload =
+          numero != null
+            ? NfePayloadSchema.parse(numerarNfe(semNumero, Number(numero), gerarCnf(Number(numero))))
+            : NfePayloadSemNumeracaoSchema.parse(semNumero);
+        if (payload.infNFe.ide.tpAmb !== tpAmbFor(selection.ambiente as DfeAmbiente)) {
+          throw new Error(`dfe_tpamb_invariant: NF-e com tpAmb=${payload.infNFe.ide.tpAmb} num documento de ${selection.ambiente}.`);
+        }
+      } else if (selection.port.capabilities.numbersDps) {
         // BE-INCR-DFE-MANUAL (item 8, F-MAN-4 a): quem numera é o adaptador/portal — a DPS sai SEM id/serie/nDPS.
-        payload = DpsManualPayloadSchema.parse(toManualDps(group.payload));
+        payload = DpsManualPayloadSchema.parse(toManualDps(group.payload as DpsPayload));
+        assertTpAmb(payload, selection.ambiente as DfeAmbiente);
       } else {
-        const numerada = { ...group.payload };
+        const numerada = { ...(group.payload as DpsPayload) };
         if (numero != null) {
           numerada.infDPS = { ...numerada.infDPS, nDPS: Number(numero), id: numerada.infDPS.id.slice(0, -15) + String(numero).padStart(15, '0') };
         }
         payload = DpsPayloadSchema.parse(numerada); // valida ANTES de persistir (payload inválido = bug nosso, não 400)
+        assertTpAmb(payload, selection.ambiente as DfeAmbiente);
       }
-      assertTpAmb(payload, selection.ambiente as DfeAmbiente);
       const createdDoc = await this.repo.createSent(
         scope,
         {
@@ -365,8 +496,11 @@ export class FiscalDocumentEmissionService {
           numero,
           dCompet: args.dCompet,
           vServCents: BigInt(group.vServCents),
+          // F-EF-16 a (reabre F-DFE-15 a): a coluna reservada recebe o desconto destacado no payload.
+          vDescIncondCents: BigInt(Math.round(Number(('infDPS' in payload ? payload.infDPS.valores.vDescCondIncond?.vDescIncond : undefined) ?? 0) * 100)),
           tpRetISSQN: args.tpRetISSQN,
           payloadJson: JSON.stringify(payload),
+          ...(aguardaAssinatura ? { initialStatus: 'PENDING_SIGNATURE' as const } : offline ? { initialStatus: 'CONTINGENCY' as const } : {}),
           ...(args.substitutes
             ? {
                 substitutesDocumentId: args.substitutes.documentId,
@@ -377,6 +511,8 @@ export class FiscalDocumentEmissionService {
         },
         tx,
       );
+      // `dfe.emitted` registra o ENVIO: a nota que espera a assinatura o ganha quando sair (reenviar / callback OAuth).
+      if (aguardaAssinatura) return createdDoc;
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
         eventType: DFE_EMITTED_EVENT,
@@ -394,26 +530,45 @@ export class FiscalDocumentEmissionService {
       return createdDoc;
     });
 
-    // Pós-commit (mesma regra do AccountingSyncPort): chama a porta fora da tx. Resultado imediato
-    // NÃO é aplicado aqui (item 24 é PR-3) — só a FALHA de rede é gravada (mesmo status SENT).
-    try {
-      await selection.port.emitir({
+    if (aguardaAssinatura) return doc;
+    // Pós-commit (mesma regra do AccountingSyncPort): chama a porta fora da tx.
+    const payload: unknown = JSON.parse(doc.attempts[0].payloadJson);
+    const csc = await this.cscDaUnidade(scope, selection.port, kind, selection.ambiente as DfeAmbiente);
+    if (offline) {
+      // E-9: nada vai à SEFAZ agora — o DANFE sai com o QR Code off-line e o job transmite (decisão 7).
+      if (assinatura.ok && assinatura.assinatura) {
+        await this.contingencia!.gerarSupl(scope, doc.id, selection.port, payload as NfePayload, {
+          ambiente: selection.ambiente as DfeAmbiente,
+          assinatura: assinatura.assinatura,
+          payload,
+          ...(csc ? { csc } : {}),
+        });
+      }
+      return (await this.repo.findById(scope, doc.id)) ?? doc;
+    }
+    await enviarTentativa(
+      this.repo,
+      this.resultApplier,
+      scope,
+      doc,
+      selection.port,
+      {
         kind,
         ref: attemptRef(doc.id, 1),
         ambiente: selection.ambiente as DfeAmbiente,
         cnpjEmitente: args.cnpjEmitente,
         partnerAccountRef: args.partnerAccountRef,
-        payload: JSON.parse(doc.attempts[0].payloadJson),
-      });
-    } catch (emitError) {
-      const message = emitError instanceof Error ? emitError.message : String(emitError);
-      logger.error('DfeEmissorPort.emitir falhou — documento fica SENT, sem tentativa 2 automática', {
-        documentId: doc.id,
-        error: message,
-      });
-      await this.repo.transition(scope, doc.id, { status: 'SENT', errorsJson: JSON.stringify([{ code: 'dfe_emitir_failed', message }]) });
-    }
-    return doc;
+        payload: payload as EmitirInput['payload'],
+        ...(assinatura.ok && assinatura.assinatura
+          ? { ctx: { ambiente: selection.ambiente as DfeAmbiente, assinatura: assinatura.assinatura, payload, ...(csc ? { csc } : {}) } }
+          : {}),
+      },
+      'dfe_emitir_failed',
+      this.contingenciaHandler(),
+    );
+    // Só o adaptador síncrono / do PSC muda o documento no envio (applyResult, PENDING_SIGNATURE): relê para a view.
+    const { capabilities } = selection.port;
+    return capabilities.resultadoSincrono || capabilities.assinaturaRemota ? ((await this.repo.findById(scope, doc.id)) ?? doc) : doc;
   }
 
   /**
@@ -480,6 +635,9 @@ export class FiscalDocumentEmissionService {
     const siblingsCache = new Map<string, FiscalDocument[]>(siblingsSeed ?? []);
     // BE-INCR-DFE-EVENTOS (item 3): os prazos do município vêm do perfil da unidade (F-EVT-1 a).
     const prazos = docs.length ? await this.fiscalProfileService.get(scope) : null;
+    // X10a PR-9: a órfã que o job não resolveu vira pendência; o prazo da NFC-e off-line usa os feriados nacionais.
+    const orfas = this.contingencia ? await this.contingencia.pendenciasDe(scope, docs.map((d) => d.id)) : new Map<string, string[]>();
+    const feriados = await this.feriadosSeContingencia(docs);
     const views: FiscalDocumentView[] = [];
     for (const doc of docs) {
       if (!saleStatusCache.has(doc.saleId)) {
@@ -513,7 +671,8 @@ export class FiscalDocumentEmissionService {
         const substituta = siblings.find((d) => d.substitutesDocumentId === doc.id);
         if (substituta?.status === 'REJECTED') pendencias.push('substituicao_rejeitada');
       }
-      views.push(this.toView(doc, pendencias, prazos));
+      pendencias.push(...(orfas.get(doc.id) ?? []));
+      views.push(this.toView(doc, pendencias, prazos, feriados));
     }
     return views;
   }
@@ -557,6 +716,23 @@ export class FiscalDocumentEmissionService {
     return { ...group, cnpjEmitente: assembly.cnpjEmitente, partnerAccountRef: assembly.partnerAccountRef };
   }
 
+  /**
+   * BE-INCR-NFCE (nó X10a, PR-4; EMENDA-3 F-NFCE-E3-2 a) — remonta a NF-e/NFC-e de um documento `REJECTED` para o reenvio,
+   * pelas MESMAS pré-condições da emissão (`assembleNfe`), menos a de "documento vivo já existe" (o vivo é o próprio
+   * rejeitado). Devolve SEM numeração: quem numera é o `reenviar`, com o número do documento (a nota rejeitada é
+   * descartada e "pode ser corrigida e novamente transmitida", MOC VG §5.1.6 — `[VG-REJ-DESCARTADA]`). O `dhEmi` é o do
+   * reenvio (F-NFCE-6 a; na NFC-e a SEFAZ rejeita atraso > 5 min, B09-40 rej. 704).
+   */
+  async reassembleNfeForReenvio(
+    scope: AccountingScope,
+    saleId: string,
+    kind: 'NFE' | 'NFCE',
+    ambiente: DfeAmbiente,
+  ): Promise<{ vServCents: number; payload: NfePayloadSemNumeracao; cnpjEmitente: string; partnerAccountRef: string | null }> {
+    const assembly = await this.assembleNfe(scope, saleId, kind, ambiente, true);
+    return { ...assembly.groups[0], cnpjEmitente: assembly.cnpjEmitente, partnerAccountRef: assembly.partnerAccountRef };
+  }
+
   // ---- Montagem interna (itens 14-19) — compartilhada por preview e emit ----
 
   private async assemble(
@@ -565,8 +741,10 @@ export class FiscalDocumentEmissionService {
     kind: FiscalDocumentKind,
     ambiente: DfeAmbiente | null,
     reenvio = false,
+    /** EFICIENCIA-FISCAL PR-1: 'preview' roda a guarda fiscal sem efeito (sem gravar custo nem trilha); 'emit' com. */
+    guardMode: 'preview' | 'emit' = 'emit',
   ): Promise<{
-    groups: Array<{ cTribNac: string; vServCents: number; payload: DpsPayload }>;
+    groups: Array<{ cTribNac: string; vServCents: number; vDescIncondCents: number; payload: DpsPayload }>;
     ledgerCents: number;
     anchorEntryId: string;
     serie: number;
@@ -576,10 +754,9 @@ export class FiscalDocumentEmissionService {
     partnerAccountRef: string | null;
     competenciaAlerta: boolean;
   }> {
-    if (kind === 'NFE') {
-      throw new ValidationError('nfe_nao_implementada: NF-e 55 é Fase E, [pendente-insumo] (F-DFE-13 a) — fora desta fatia.', {
-        faltantes: ['Fase E (NF-e 55) ainda não implementada'],
-      });
+    if (kind !== 'NFSE') {
+      // BE-INCR-NFCE: NF-e/NFC-e montam por `assembleNfe` (emissão, prévia e, desde o PR-4, o reenvio) — chegar aqui é bug.
+      throw new Error(`dfe_assemble_kind_invariant: a montagem da DPS recebeu ${kind}.`);
     }
 
     const faltantes: string[] = [];
@@ -688,7 +865,7 @@ export class FiscalDocumentEmissionService {
     }
 
     // (viii) porta habilitada.
-    const selection = selectDfeEmissor(process.env);
+    const selection = selectDfeEmissor(process.env, kind);
     if (!selection.enabled) {
       faltantes.push(selection.reason ?? 'porta de emissão desabilitada');
     }
@@ -701,6 +878,10 @@ export class FiscalDocumentEmissionService {
     if (!unitCnpj || !isValidCnpj(unitCnpj)) {
       faltantes.push("CNPJ da unidade ausente ou inválido (cadastre em 'units')");
     }
+
+    // (ix) EFICIENCIA-FISCAL PR-1 item 6: guarda fiscal da venda (piso, rateio, preço = catálogo). Só a venda que vai
+    // virar documento passa por aqui — a venda sem nota nunca é barrada (ADR §12).
+    if (validSale && !pacoteVenda && saleInfo?.kind !== 'Empty') faltantes.push(...(await this.fiscalGuardFaltantes(scope, saleId, saleData, guardMode)));
 
     if (faltantes.length > 0) {
       throw new ValidationError(`emissao_bloqueada: ${faltantes.length} pendência(s) — ver 'faltantes'.`, { faltantes });
@@ -724,7 +905,7 @@ export class FiscalDocumentEmissionService {
     // Agrupa as linhas de serviço por cTribNac (F-DFE-16 b — a DPS é mono-serviço).
     const groupsMap = new Map<string, ServiceLineGroup>();
     const linesForGrouping = pacoteVenda
-      ? [{ serviceRef: '', description: String(saleData.description ?? 'Pacote'), quantity: 1, unitPrice: ledgerCents / 100 }]
+      ? [{ serviceRef: '', description: String(saleData.description ?? 'Pacote'), quantity: 1, unitPrice: ledgerCents / 100, discountCents: 0 }]
       : serviceLines;
     for (const line of linesForGrouping) {
       const profile = pacoteVenda ? this.pacoteServiceProfile(fiscalProfile!) : profileByServiceRef.get(line.serviceRef)!;
@@ -750,24 +931,32 @@ export class FiscalDocumentEmissionService {
     // F-DFE-16 (b): "ordem determinística por cTribNac" — ordena por VALOR, não por ordem de
     // inserção no Map (que seguiria a ordem de retorno do repositório de linhas de venda).
     const orderedGroups = [...groupsMap.values()].sort((a, b) => a.cTribNac.localeCompare(b.cTribNac));
-    const weights = orderedGroups.map((g) => g.lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0));
+    // EFICIENCIA-FISCAL PR-1 (F-EF-15 a / F-EF-16 a): com desconto INCONDICIONAL por item, o peso do grupo é o líquido
+    // (Σ quantidade × preço − desconto) e o desconto do grupo é destacado em `vDescIncond`; `vServ` = parcela do crédito
+    // 3.1 + desconto do grupo, então Σ (vServ − vDescIncond) = crédito 3.1 por construção. Venda legada ou CONDITIONAL:
+    // peso bruto e nenhum destaque (o condicional não abate a base — LC 87 art. 13 § 1º II "a"; LC 214 art. 12 § 3º).
+    const incondicional = saleData.discountKind === 'UNCONDITIONAL';
+    const descontoDoGrupo = (g: ServiceLineGroup) => (incondicional ? g.lines.reduce((s, l) => s + (l.discountCents ?? 0), 0) : 0);
+    const weights = orderedGroups.map((g) => g.lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0) - descontoDoGrupo(g) / 100);
     const shares = splitCents(ledgerCents, weights);
 
     const fp = fiscalProfile!;
     const groups = orderedGroups.map((g, i) => {
-      const vServCents = shares[i];
+      const vDescIncondCents = pacoteVenda ? 0 : descontoDoGrupo(g);
+      const vServCents = shares[i] + vDescIncondCents;
       const xDescServ = g.lines.map((l) => `${l.quantity}x ${l.description || l.serviceRef}`).join('; ').slice(0, 1000) || 'Serviço';
       const payload = this.buildPayload({
         fp,
         cnpjEmitente: unitCnpj,
         group: g,
         vServCents,
+        vDescIncondCents,
         xDescServ,
         dCompet,
         tomador,
         ambiente,
       });
-      return { cTribNac: g.cTribNac, vServCents, payload };
+      return { cTribNac: g.cTribNac, vServCents, vDescIncondCents, payload };
     });
 
     return {
@@ -780,6 +969,223 @@ export class FiscalDocumentEmissionService {
       cnpjEmitente: unitCnpj,
       partnerAccountRef: fp.partnerAccountRef,
       competenciaAlerta: competenciaCruzouMes,
+    };
+  }
+
+  /**
+   * BE-INCR-NFCE (nó X10a, Fase C — itens 11, 13–19, 21–22) — pré-condições e montagem da NF-e 55 / NFC-e 65 do Simples.
+   * Mesmo contrato de `assemble`: todas as pendências num 400 agregado (`faltantes`) ANTES de tocar a porta; o payload sai
+   * SEM numeração (a chave nasce na tx do envio, `createAndSend`, item 21). Só as linhas de PRODUTO (item 13: o serviço
+   * segue na NFS-e) e um documento por venda; Σ vProd = crédito 3.3 do `sale.finalized`, exato (item 14, F-DFE-11 a).
+   * O regime normal (CRT 3) monta o IBS/CBS (PR-6) e para no ICMS (`CRT3_ICMS_SEM_SPEC`); a NF-e 55 para nos faltantes até haver o código IBGE do município do destinatário
+   * (questionário de 26/10, "Recusa nomeada na 55").
+   */
+  /**
+   * EFICIENCIA-FISCAL PR-1 item 6 (ADR D4.2): a guarda fiscal da venda como pendência da emissão — NFS-e e NF-e/NFC-e
+   * (onde a Lei 8.137 e a LC 214 art. 7º mordem). Cada BLOCK vira `fiscal_guard: <código> (<base legal>)` no 400
+   * `emissao_bloqueada` existente. 'preview' só lê: sem gravar o custo nem a trilha de bloqueio (review do #913).
+   */
+  private async fiscalGuardFaltantes(scope: AccountingScope, saleId: string, saleData: Record<string, unknown>, guardMode: 'preview' | 'emit'): Promise<string[]> {
+    if (!this.fiscalGuard) return [];
+    try {
+      const emit = guardMode === 'emit';
+      const check = await this.fiscalGuard.check(scope, saleId, { forEmission: emit, persistSnapshot: emit, sale: saleData });
+      return check.violations.filter((v) => v.severity === 'BLOCK').map((v) => `fiscal_guard: ${v.code} (${v.legalBasis})`);
+    } catch (e) {
+      if (!(e instanceof NotFoundError)) throw e;
+      return [`fiscal_guard: ${e.message}`];
+    }
+  }
+
+  private async assembleNfe(
+    scope: AccountingScope,
+    saleId: string,
+    kind: 'NFE' | 'NFCE',
+    ambiente: DfeAmbiente | null,
+    reenvio = false,
+    /** 'preview' roda a guarda fiscal sem efeito (como na NFS-e); 'emit' com. */
+    guardMode: 'preview' | 'emit' = 'emit',
+  ): Promise<{
+    groups: Array<{ cTribNac: string; vServCents: number; payload: NfePayloadSemNumeracao }>;
+    ledgerCents: number;
+    anchorEntryId: string;
+    serie: number;
+    dCompet: string;
+    tpRetISSQN: number;
+    cnpjEmitente: string;
+    partnerAccountRef: string | null;
+    competenciaAlerta: boolean;
+  }> {
+    const faltantes: string[] = [];
+    const bloquear = (lista: string[]): never => {
+      throw new ValidationError(`emissao_bloqueada: ${lista.length} pendência(s) — ver 'faltantes'.`, { faltantes: lista });
+    };
+    const dynamicTableRepo = getFactory().getDynamicTableRepository();
+    const salesTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'sales');
+    const saleRow = salesTable ? await dynamicTableRepo.findDataById(saleId) : null;
+    const validSale = saleRow && salesTable && (await dynamicTableRepo.existsByIdInTable(saleId, salesTable.id));
+    const saleData = (validSale ? saleRow!.data : {}) as Record<string, unknown>;
+    if (!validSale) faltantes.push(`venda '${saleId}' não encontrada neste escopo`);
+    else if (saleData.status !== 'Finalized') faltantes.push(`venda '${saleId}' não está Finalizada (status atual: ${String(saleData.status ?? '?')})`);
+
+    // Emitente (C02–C21): perfil da unidade + CNPJ da unidade.
+    const fp = await this.fiscalProfileService.get(scope);
+    let crt: 1 | 3 | null = null;
+    if (!fp) {
+      faltantes.push('perfil fiscal da unidade não cadastrado (PUT /api/accounting/fiscal-profile)');
+    } else {
+      // NF-e/NFC-e do MEI segue fora: até 31/12/2026 ele é dispensado do DF-e de ICMS salvo exigência do Estado com
+      // emissor gratuito (Res. CGSN 140 art. 106 § 1º III); desde 01/01/2027 usa preferencialmente a NFF (art. 106-B,
+      // red. Res. CGSN 190/2026). A NFS-e do MEI (opSimpNac=2) é a que o F-XP-4 → (b) liberou.
+      if (fp.emissao.opSimpNac === 2) {
+        faltantes.push('perfil fiscal da unidade: regime MEI — NF-e/NFC-e fora do escopo (Res. CGSN 140 art. 106 § 1º III; art. 106-B NFF desde 2027)');
+      }
+      const campos: Array<[string, unknown]> = [
+        ['codMun', fp.codMun], // C10/B12
+        ['inscricaoEstadual', fp.inscricaoEstadual], // C17 (item 8)
+        ['razaoSocial', fp.razaoSocial], // C03
+        ['enderLogradouro', fp.enderLogradouro], // C06
+        ['enderNumero', fp.enderNumero], // C07
+        ['enderBairro', fp.enderBairro], // C09
+        ['enderMunicipio', fp.enderMunicipio], // C11
+        ['enderCep', fp.enderCep], // C13
+      ];
+      for (const [campo, valor] of campos) if (!valor) faltantes.push(`perfil fiscal da unidade: falta '${campo}'`);
+      crt = crtDoRegime(fp.regimeTributario);
+      // PR-6 (item 20; questionário de 27/10, "Só UB; CRT 3 segue recusado"): o IBS/CBS do CRT 3 é montado e validado
+      // (`models/nfeIbsCbsMontagem.ts`), mas o ICMS do regime normal não tem alíquota no perfil nem item no BRIEF.
+      if (crt === 3) faltantes.push(CRT3_ICMS_SEM_SPEC);
+    }
+
+    // Item 19 ([RTC-SIMPLES]): a partir de 04/01/2027 o Simples leva o grupo IBSCBS, ainda não transcrito.
+    const today = scopeToday(scope);
+    if (crt === 1 && today >= RTC_SIMPLES_DESDE) faltantes.push(RTC_SIMPLES_NAO_TRANSCRITO);
+
+    // Itens 11 e 13: só linhas de produto, cada uma com perfil fiscal compatível com o CRT e o modelo.
+    const productLines = validSale ? await loadSaleProductLines(scope.ownerUserId, saleId) : [];
+    if (validSale && productLines.length === 0) faltantes.push('venda sem linhas de produto (nenhum item Product) — NF-e/NFC-e exige ao menos uma');
+    const perfis = productLines.length ? await this.productFiscalProfileService.list(scope) : [];
+    const perfilPorRef = new Map(perfis.map((p) => [p.productRef, p]));
+    if (crt !== null) {
+      faltantes.push(...faltantesDosItens(kind, crt, productLines.map((l) => l.productRef), perfis));
+      for (const ref of new Set(productLines.map((l) => l.productRef))) {
+        const perfil = perfilPorRef.get(ref);
+        if (perfil && crt === 3) {
+          const r = ibsCbsDoProduto(ref, perfil, kind === 'NFCE' ? 65 : 55, today);
+          if ('faltantes' in r) faltantes.push(...r.faltantes);
+        }
+        if (!perfil || crt !== 1) continue;
+        for (const [t, cst] of [['PIS', perfil.cstPis], ['COFINS', perfil.cstCofins]] as const) {
+          const r = pisCofinsSimples(t, cst);
+          if ('faltante' in r) faltantes.push(`produto ${ref}: ${r.faltante}`);
+        }
+      }
+    }
+
+    // Item 18: forma de pagamento → tPag.
+    const pag = validSale ? tPagDoMetodo(saleData.paymentMethod) : null;
+    if (pag && 'faltante' in pag) faltantes.push(pag.faltante);
+
+    // Destinatário: na 55 obrigatório (F-DFE-7 b) e, sem o cMun IBGE do cliente, impossível nesta fatia; na 65, pela A9.
+    const customerId = typeof saleData.customerId === 'string' ? saleData.customerId : '';
+    let cliente = clienteDaVenda('', '', '');
+    if (validSale && customerId) {
+      const customersTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'customers');
+      const customerRow = customersTable ? await dynamicTableRepo.findDataById(customerId) : null;
+      const customerData = (customerRow?.data ?? {}) as Record<string, unknown>;
+      cliente = clienteDaVenda(customerId, String(customerData.taxId ?? ''), String(customerData.name ?? saleData.simpleCustomerName ?? ''));
+    }
+    if (kind === 'NFE') {
+      if (cliente.status !== 'valido') faltantes.push('venda sem cliente com CPF/CNPJ válido — a NF-e 55 exige o destinatário (E01; F-DFE-7 b)');
+      faltantes.push(
+        'NF-e 55: o endereço do destinatário precisa do código IBGE do município (enderDest/cMun, E10), que o cadastro de clientes não tem — lacuna até haver a tabela de municípios',
+      );
+    }
+
+    // Documento vivo do mesmo tipo para a venda (uma NF-e/NFC-e por venda). No reenvio o vivo é o próprio rejeitado.
+    if (validSale && !reenvio) {
+      const vivo = (await this.repo.findLiveBySale(scope, saleId, kind))[0];
+      if (vivo) faltantes.push(`documento vivo já existe para esta venda/kind (id ${vivo.id}, status ${vivo.status})`);
+    }
+
+    const selection = selectDfeEmissor(process.env, kind);
+    if (!selection.enabled) faltantes.push(selection.reason ?? 'porta de emissão desabilitada');
+
+    const unitsTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'units');
+    const unitRow = unitsTable ? await dynamicTableRepo.findDataById(scope.unitId) : null;
+    const unitCnpj = stripCnpjMask(String((unitRow?.data as Record<string, unknown> | undefined)?.cnpj ?? '')).toUpperCase();
+    if (!unitCnpj || !isValidCnpj(unitCnpj)) faltantes.push("CNPJ da unidade ausente ou inválido (cadastre em 'units')");
+
+    // EFICIENCIA-FISCAL PR-1 item 6: o produto do combo agora tem documento — a guarda vale aqui também.
+    if (validSale && productLines.length > 0) faltantes.push(...(await this.fiscalGuardFaltantes(scope, saleId, saleData, guardMode)));
+
+    if (faltantes.length > 0) bloquear(faltantes);
+    if (ambiente === null) throw new Error('dfe_tpamb_invariant: montagem sem ambiente com a porta habilitada.');
+
+    // Item 14: Σ vProd = crédito 3.3 do lançamento da venda, rateado pelas linhas de produto (técnica canônica).
+    const anchor = await this.journalEntryRepo.findBySource(scope, 'sale.finalized', saleId);
+    if (!anchor) bloquear(["lançamento âncora 'sale.finalized' ausente — a venda não foi contabilizada ainda"]);
+    const ledgerCents = await this.sumPostings(scope, anchor!.postings, RESALE_REVENUE_ACCOUNT, 'credit');
+    const shares = splitCents(ledgerCents, productLines.map((l) => l.lineReais));
+
+    const profile = fp!;
+    const { cUF } = ufDoCodMun(profile.codMun!);
+    let dest = null;
+    if (kind === 'NFCE') {
+      const limites = limitesNfce(await this.legalParams.fotografia(['NFCE_LIMITE']), cUF, today);
+      const r = destNfce(ledgerCents, limites, cliente);
+      if (r.faltantes.length) bloquear(r.faltantes);
+      dest = r.dest;
+    }
+
+    const productsTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'products');
+    const nomes = new Map<string, string>();
+    for (const ref of new Set(productLines.map((l) => l.productRef))) {
+      const row = productsTable ? await dynamicTableRepo.findDataById(ref) : null;
+      nomes.set(ref, String((row?.data as Record<string, unknown> | undefined)?.name ?? ref));
+    }
+    const itens: ItemParaMontagem[] = productLines.map((l, i) => {
+      const perfil = perfilPorRef.get(l.productRef)!;
+      return { productRef: l.productRef, xProd: perfil.xProd ?? nomes.get(l.productRef)!, qty: l.quantity, vProdCents: shares[i], perfil };
+    });
+
+    const serie = kind === 'NFCE' ? profile.nfceSerie : profile.nfeSerie;
+    const semNumero = montarNfe({
+      mod: kind === 'NFCE' ? 65 : 55,
+      ambiente,
+      serie,
+      dhEmi: dhEmiNoFuso(new Date(), scope.timeZone), // F-NFCE-6 a: momento da montagem
+      codMun: profile.codMun!,
+      crt: crt!,
+      emit: {
+        cnpj: unitCnpj,
+        razaoSocial: profile.razaoSocial!,
+        ie: profile.inscricaoEstadual!,
+        logradouro: profile.enderLogradouro!,
+        numero: profile.enderNumero!,
+        complemento: profile.enderComplemento,
+        bairro: profile.enderBairro!,
+        municipio: profile.enderMunicipio!,
+        cep: profile.enderCep!,
+      },
+      dest,
+      itens,
+      tPag: (pag as { tPag: string }).tPag,
+    });
+    // Item 12: as regras da SEFAZ que o cadastro pode violar (ex.: CSOSN × CFOP, rej. 386) voltam como faltantes nomeados.
+    const parsed = NfePayloadSemNumeracaoSchema.safeParse(semNumero);
+    if (!parsed.success) bloquear(parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`));
+
+    return {
+      groups: [{ cTribNac: '', vServCents: ledgerCents, payload: parsed.data! }],
+      ledgerCents,
+      anchorEntryId: anchor!.id,
+      serie,
+      dCompet: typeof saleData.date === 'string' ? saleData.date.slice(0, 10) : today,
+      tpRetISSQN: 1,
+      cnpjEmitente: unitCnpj,
+      partnerAccountRef: profile.partnerAccountRef,
+      competenciaAlerta: false,
     };
   }
 
@@ -799,6 +1205,9 @@ export class FiscalDocumentEmissionService {
       cLocPrestacao: null,
       xDescServ: null,
       cClassTrib: null, // IBS-CBS-2027 PR-1: pacote sem serviço ⇒ cClassTrib do perfil (F-IBS-10 a, fallback)
+      finalidade: null, // EFICIENCIA-FISCAL PR-5 (item 25): a emissão não lê estes campos
+      elegivelHospitalar: false,
+      fundamentoHospitalar: null,
       updatedAt: '',
     };
   }
@@ -881,7 +1290,7 @@ export class FiscalDocumentEmissionService {
       faltantes.push(`competência ${dCompet} fora do mês corrente (${today.slice(0, 7)}) e emissaoForaDoMes=BLOQUEAR`);
     }
 
-    const selection = selectDfeEmissor(process.env);
+    const selection = selectDfeEmissor(process.env, 'NFSE');
     if (!selection.enabled) faltantes.push(selection.reason ?? 'porta de emissão desabilitada');
 
     const unitsTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'units');
@@ -944,6 +1353,8 @@ export class FiscalDocumentEmissionService {
     cnpjEmitente: string;
     group: ServiceLineGroup;
     vServCents: number;
+    /** F-EF-16 a: desconto incondicional destacado do grupo; 0 ⇒ sem o grupo `vDescCondIncond`. */
+    vDescIncondCents?: number;
     xDescServ: string;
     dCompet: string;
     tomador: { cnpj?: string; cpf?: string; xNome: string } | null;
@@ -951,7 +1362,12 @@ export class FiscalDocumentEmissionService {
   }): DpsPayload {
     const { fp, group, vServCents, xDescServ, dCompet, tomador } = args;
     const dhEmi = new Date().toISOString();
-    const isSimples = fp.regimeTributario === 'SIMPLES';
+    // [140] opSimpNac vem do status de emissão (regime da EMPRESA): MEI = 2 (F-XP-4 → b, dono 29/10/2026). O MEI não
+    // informa regApTribSN (E0162), pAliq (E0600) nem pTotTribSN (E0710); regEspTrib = 0 e sem retenção (E0174/E0583)
+    // são garantidos pelo status, que recusa o perfil que os contrarie.
+    const opSimpNac = fp.emissao.opSimpNac;
+    const isMei = opSimpNac === 2;
+    const isSimples = opSimpNac === 3;
     return {
       versao: '1.01',
       infDPS: {
@@ -967,7 +1383,7 @@ export class FiscalDocumentEmissionService {
         prest: {
           CNPJ: args.cnpjEmitente,
           regTrib: {
-            opSimpNac: isSimples ? 3 : 1,
+            opSimpNac,
             ...(isSimples && fp.regApTribSN ? { regApTribSN: fp.regApTribSN } : {}),
             regEspTrib: fp.regEspTrib,
           },
@@ -990,6 +1406,7 @@ export class FiscalDocumentEmissionService {
         },
         valores: {
           vServPrest: { vServ: centsToMoneyString(vServCents) },
+          ...(args.vDescIncondCents ? { vDescCondIncond: { vDescIncond: centsToMoneyString(args.vDescIncondCents) } } : {}),
           trib: {
             tribMun: {
               tribISSQN: 1,
@@ -997,11 +1414,13 @@ export class FiscalDocumentEmissionService {
               // Anexo I v1.01 E0625/E0631: ME/EPP com ISS pelo SN e sem retenção NÃO informa pAliq (município ativo
               // ou não); com retenção é obrigatório (E0621/E0628). Regime normal: issAliquotaBp = município não
               // conveniado (E0619); vazio omite (E0617). Verificação legal 17/10/2026 (verif-2026-10-17-iss-nfse).
-              ...(fp.issAliquotaBp && !(isSimples && fp.regApTribSN === 1 && !fp.issRetidoTomadorPj)
+              ...(fp.issAliquotaBp && !isMei && !(isSimples && fp.regApTribSN === 1 && !fp.issRetidoTomadorPj)
                 ? { pAliq: bpToPctString(fp.issAliquotaBp) }
                 : {}),
             },
-            totTrib: isSimples
+            totTrib: isMei
+              ? { indTotTrib: 0 }
+              : isSimples
               ? { pTotTribSN: bpToPctString(fp.pTotTribSNCent ?? 0) }
               : {
                   pTotTrib: {
@@ -1013,7 +1432,7 @@ export class FiscalDocumentEmissionService {
           },
         },
         // IBS-CBS-2027 PR-1 (BRIEF item 3; F-IBS-10 a): cClassTrib do serviço, com fallback no do perfil.
-        ...(fp.ibsCbsInformar && fp.ibsCbsCst && (group.profile.cClassTrib ?? fp.ibsCbsClassTrib)
+        ...(!isMei && fp.ibsCbsInformar && fp.ibsCbsCst && (group.profile.cClassTrib ?? fp.ibsCbsClassTrib)
           ? {
               IBSCBS: {
                 finNFSe: 0,
@@ -1044,10 +1463,16 @@ export class FiscalDocumentEmissionService {
       .reduce((sum, p) => sum + centsFromDb(side === 'debit' ? p.debitCents : p.creditCents), 0);
   }
 
+  /** X10a PR-9 — só lê `FERIADO_NACIONAL` quando algum documento é NFC-e de contingência. */
+  private async feriadosSeContingencia(docs: FiscalDocumentWithAttempts[]): Promise<Parameters<typeof prazoTransmissao>[1]> {
+    return docs.some((d) => contingenciaDoPayload(d) !== null) ? this.legalParams.fotografia(['FERIADO_NACIONAL']) : [];
+  }
+
   private toView(
     doc: FiscalDocumentWithAttempts,
     pendencias: string[] = [],
-    prazos: { cancelPrazoDias: number | null; substPrazoDias: number | null } | null = null,
+    prazos: Parameters<typeof janelaEventos>[1] = null,
+    feriados: Parameters<typeof prazoTransmissao>[1] = [],
   ): FiscalDocumentView {
     return {
       id: doc.id,
@@ -1084,10 +1509,58 @@ export class FiscalDocumentEmissionService {
       xmlAttachmentId: doc.xmlAttachmentId ?? null,
       pdfAttachmentId: doc.pdfAttachmentId ?? null,
       releitura: readReleitura(doc.attempts.find((a) => a.attemptNo === doc.currentAttemptNo)?.resultJson),
-      janela: janelaEventos({ nfseDhProc: doc.nfseDhProc ?? null }, prazos),
+      janela: janelaEventos({ kind: doc.kind as DfeKind, nfseDhProc: doc.nfseDhProc ?? null }, prazos),
       substitutesDocumentId: doc.substitutesDocumentId ?? null,
       substitutedByDocumentId: doc.substitutedByDocumentId ?? null,
       substMotivo: doc.substMotivo ?? null,
+      contingencia: contingenciaDaView(doc, feriados),
     };
   }
+}
+
+/** X10a PR-9 — `dhEmi`/`dhCont` da tentativa corrente quando ela é NFC-e de contingência (tpEmis=9); senão `null`. */
+function contingenciaDoPayload(doc: FiscalDocumentWithAttempts): { dhEmi: string; dhCont: string } | null {
+  if (doc.kind !== 'NFCE') return null;
+  const json = doc.attempts.find((a) => a.attemptNo === doc.currentAttemptNo)?.payloadJson;
+  if (!json) return null;
+  try {
+    const ide = (JSON.parse(json) as { infNFe?: { ide?: { tpEmis?: unknown; dhEmi?: unknown; dhCont?: unknown } } }).infNFe?.ide;
+    return ide?.tpEmis === 9 && typeof ide.dhEmi === 'string' && typeof ide.dhCont === 'string' ? { dhEmi: ide.dhEmi, dhCont: ide.dhCont } : null;
+  } catch {
+    return null; // payload legado/ilegível: a view não quebra
+  }
+}
+
+/**
+ * X10a PR-9 (E-9, F-NFCE-E1-6 b) — o que o DANFE da NFC-e off-line precisa: QR Code e urlChave (null até o PSC assinar),
+ * `dhCont` e o prazo de transmissão (fim do 1º dia útil seguinte, decisão 9). O FE imprime "EMITIDA EM CONTINGÊNCIA"
+ * (Anexo IV p. 9) quando o campo vem preenchido.
+ */
+function contingenciaDaView(doc: FiscalDocumentWithAttempts, feriados: Parameters<typeof prazoTransmissao>[1]): FiscalDocumentView['contingencia'] {
+  const c = contingenciaDoPayload(doc);
+  if (!c) return null;
+  let supl: { qrCode?: string; urlChave?: string } = {};
+  try {
+    supl = doc.contingenciaSuplJson ? (JSON.parse(doc.contingenciaSuplJson) as typeof supl) : {};
+  } catch {
+    supl = {};
+  }
+  return {
+    dhCont: c.dhCont,
+    prazoTransmissao: prazoTransmissao(c.dhEmi, feriados).toISOString(),
+    qrCode: supl.qrCode ?? null,
+    urlChave: supl.urlChave ?? null,
+  };
+}
+
+/**
+ * X10a PR-9 — a parte da contingência que a emissão usa, implementada por `NfceContingenciaService` (interface estrutural:
+ * a contingência depende desta emissão para a assinatura, então aqui não se importa o serviço — X3-no-circular).
+ */
+export interface ContingenciaDaEmissao {
+  estadoAtivo(scope: AccountingScope, ambiente: DfeAmbiente, tx?: Prisma.TransactionClient): Promise<NfceContingencia | null>;
+  paraContingencia(scope: AccountingScope, estado: NfceContingencia, semNumero: NfePayloadSemNumeracao): NfePayloadSemNumeracao;
+  aoFalharComunicacao: DfeContingenciaHandler;
+  gerarSupl(scope: AccountingScope, documentId: string, port: DfeEmissorPort, payload: NfePayload, ctx: DfeCallContext): Promise<NfceSupl | null>;
+  pendenciasDe(scope: AccountingScope, documentIds: readonly string[]): Promise<Map<string, string[]>>;
 }

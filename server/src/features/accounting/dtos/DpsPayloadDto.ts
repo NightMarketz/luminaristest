@@ -128,6 +128,7 @@ export const DpsPayloadSchema = z
                     })
                     .strict(),
                   z.object({ pTotTribSN: Pct2 }).strict(), // só SIMPLES (E0713)
+                  z.object({ indTotTrib: z.literal(0) }).strict(), // [333] só MEI aqui (E0712/E0713; Decreto 8.264 art. 8º)
                 ]),
               })
               .strict(),

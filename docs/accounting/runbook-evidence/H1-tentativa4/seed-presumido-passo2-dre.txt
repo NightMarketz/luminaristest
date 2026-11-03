@@ -1,0 +1,61 @@
+Contabilidade
+
+Razão de partida dobrada — balancete por unidade
+
+Unidade
+seed-unit-presumido
+Balancete
+Períodos
+Lançamentos
+Aprovações
+Contas a Pagar
+Contas a Receber
+Aging
+Fluxo de Caixa Projetado
+Contrapartes
+Razão
+Plano de Contas
+BP
+DRE
+DFC
+Comparativo
+Livro Diário
+Importação/Exportação
+Conciliação
+NF-e
+Compliance
+Dimensões
+Imobilizado
+Perfil fiscal
+Parâmetros legais
+Política contábil
+Apuração
+Pendências
+Cobrança
+Kit de setor
+Até
+Gerar DRE
+01/01/2025 a 31/12/2025(year_to_date)
+OK
+RECEITA BRUTA
+3.1
+3.1 — Receita de Serviços	R$ 162.487,90
+3.3 — Receita de Revenda de Mercadorias	R$ 48.939,96
+Total	R$ 211.427,86
+(−) DEDUÇÕES DE RECEITA
+3.2
+Sem contas com saldo
+Total	R$ 0,00
+(−) CUSTO DAS MERCADORIAS VENDIDAS
+4.2
+4.2 — Custo das Mercadorias Vendidas	-R$ 25.508,07
+Total	-R$ 25.508,07
+(−) DESPESAS
+4.1 — Despesas Operacionais	-R$ 75.153,45
+Total	-R$ 75.153,45
+
+Resultado Líquido do Exercício
+
+calculado — year_to_date
+
+R$ 110.766,34

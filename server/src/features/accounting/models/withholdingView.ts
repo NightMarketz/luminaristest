@@ -58,11 +58,12 @@ export function toWithholdingLineForReinf(r: TaxWithholdingComOrigem): Withholdi
     taxPayableId: r.taxPayableId,
     settlementId: r.settlementId,
     originSettlementId: r.originSettlementId,
+    unitId: r.unitId,
   };
 }
 
-/** A linha da rota = a da porta sem as duas baixas (mesmo mapeador). */
+/** A linha da rota = a da porta sem as duas baixas e a unidade (mesmo mapeador). */
 export function toWithholdingLineView(r: TaxWithholdingComOrigem): WithholdingLineView {
-  const { settlementId: _s, originSettlementId: _o, ...view } = toWithholdingLineForReinf(r);
+  const { settlementId: _s, originSettlementId: _o, unitId: _u, ...view } = toWithholdingLineForReinf(r);
   return view;
 }

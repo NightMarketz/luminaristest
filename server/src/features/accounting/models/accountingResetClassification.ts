@@ -19,11 +19,17 @@ export const ACCOUNTING_RESET_SETUP = [
   'AccountingPolicyVersion',
   // X10i PR-1 (dono, questionário, 2026-10-17, na integração do #650: "SETUP (sai no reset)"). Sem FK: posição livre.
   'FiscalCertificate',
+  // X10a PR-7 (EMENDA-PSC E-3/E-4): como o FiscalCertificate — credencial da unidade, sem FK.
+  'PscCredential',
+  'PscAuthorization',
+  // X10a PR-8: o CSC da NFC-e é cadastro da unidade, como a credencial do PSC — sem FK.
+  'NfceCsc',
   'ReferentialMapping',
   'RoleAccountOverride',
   'FiscalProfile',
   'AccountingScopeSettings',
   'ServiceFiscalProfile',
+  'ProductFiscalProfile', // BE-INCR-NFCE item 10 — cadastro (SETUP), como o perfil do serviço
   'AccountingBinding',
   'KitInstallation',
   'AccountingPeriodTransition',
@@ -67,10 +73,18 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'ProfitDistributionEvent', // IRRF-DISTRIBUICAO PR-2: evento com lançamento e IRRF ⇒ bloqueia
   'InterestOnEquityCalculation', // IRRF-DISTRIBUICAO PR-4: JCP com lançamento e Parte A ⇒ bloqueia
   'IssBeneficioMunicipal',
+  // EFICIENCIA-FISCAL PR-1: o onboarding não escreve política, custo de serviço nem sugestão (a sugestão é trilha) ⇒ bloqueia.
+  'TaxOptimizationPolicy',
+  'ServiceCostEvidence',
+  'TaxOptimizationSuggestion',
   'ProductDestinationDefault',
   'FiscalDocument',
   'FiscalDocumentPendingAttachment',
   'FiscalDocumentSequence',
+  'FiscalNumberVoid', // BE-INCR-NFCE PR-4: pedido de inutilização enviado à SEFAZ ⇒ bloqueia, como a sequência
+  // X10a PR-9: estado da contingência e a nota normal órfã seguem o FiscalDocument (emissão real à SEFAZ) ⇒ bloqueiam.
+  'NfceContingencia',
+  'NfceContingenciaOrfa',
   'FixedAssetClass',
   'DepreciationRate',
   'FixedAsset',
@@ -88,6 +102,7 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'TaxAssessment',
   'ConsumptionTaxAssessment', // IBS-CBS-2027 PR-2 — tabela nova nasce BLOCKING
   'MitExport',
+  'ReinfBatch', // BE-INCR-EFD-REINF PR-1 — tabela nova nasce BLOCKING
   'SimplesHistoricoMensal',
   'SimplesSegregacaoManual',
   'SalaoParceriaContrato',
@@ -108,8 +123,9 @@ export const ACCOUNTING_RESET_BLOCKING = [
  */
 export const ACCOUNTING_RESET_SPLIT = ['AccountingPolicyVersion'] as const satisfies readonly SetupTable[];
 
-/** Os de SETUP sem `unitId` (da EMPRESA, chaveados só por `userId`): contados fora da quebra por unidade. */
-export const ACCOUNTING_RESET_SETUP_USER_LEVEL = ['CompanyFiscalProfile'] as const satisfies readonly SetupTable[];
+/** Os de SETUP sem `unitId` (da EMPRESA, chaveados só por `userId`): contados fora da quebra por unidade. ProductFiscalProfile:
+ * BE-INCR-NFCE item 10 (F-NFCE-3 b, um perfil por produto do dono). */
+export const ACCOUNTING_RESET_SETUP_USER_LEVEL = ['CompanyFiscalProfile', 'ProductFiscalProfile'] as const satisfies readonly SetupTable[];
 
 export type TrailTable = (typeof ACCOUNTING_RESET_TRAIL)[number];
 export type SetupTable = (typeof ACCOUNTING_RESET_SETUP)[number];

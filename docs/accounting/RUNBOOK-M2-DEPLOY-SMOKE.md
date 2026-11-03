@@ -54,6 +54,26 @@ Pré-condições (verificar antes de começar):
 >   credencial do Mercado Pago. Backup da chave **separado** do backup do `.db`. Onde a chave mora além do env
 >   (cofre/KMS) continua decisão deste gate.
 
+> **[EMENDA 2026-10-29: Redis por instância. Dono, chat, 2026-10-29: *"Dispara sessão para o … Runbook do M2 com
+> Redis, para colocar em produção."*]** O escopo é só preparar o runbook. Origem: F-TM-5 = "BullMQ + Redis" (PR #969,
+> `D-2026-10-29-TEAMMATES-FORKS.md` e `BE-INCR-TEAMMATES-brief.md` itens 19–22). Desenho do serviço em
+> [`ADR-M2-deploy-topology.md` §8](../adr/ADR-M2-deploy-topology.md) (versão, rede, senha, AOF, `noeviction`, backup).
+> - **Bloco R (passos R0–R5), condicional:** só se aplica quando o commit implantado contém o **PR-4 do TEAMMATES**
+>   (fila BullMQ). O passo R0 decide isso com um comando. Sem o PR-4, o bloco inteiro fica de fora e o resto do runbook
+>   segue igual.
+> - **Redis ausente não é falha de deploy do ERP.** Pelo item 22 do BRIEF, a aplicação sobe sem Redis e só os
+>   teammates respondem 503 `TEAMMATES_FILA_INDISPONIVEL`. O passo R5 prova isso.
+> - **Regra de desfecho do bloco R** (aceita pelo dono no chat em 29/10/2026, com a ressalva do R5):
+>   cada passo R tem desfecho próprio. **R3 FALHOU** (Redis alcançável de fora ou sem senha) → para tudo, e o M2 fica
+>   FALHOU, porque é exposição. **R5 FALHOU com `/health` ou ERP fora de 200** (Redis fora derrubou o ERP) → para
+>   tudo, e o M2 fica FALHOU. Qualquer **outro** passo R FALHOU ou BLOQUEADO (inclusive R5 com health e ERP em 200)
+>   → para **só o bloco R**: o executor desliga os teammates (`docker compose stop redis`), registra em "Achados", e o
+>   M2 segue nos passos numerados (5–7) sem contar isso como falha do ERP.
+> - **Ordem:** R0–R3 vêm entre o 4a e o 5 (Redis de pé antes do server). R4–R5 vêm entre o 6 e o 7 (precisam do server
+>   de pé, e o 7 lê os logs depois da queda simulada).
+> - **Pendências de infraestrutura** (compose, CI, `/health`, reconciliação), que são código do PR-4 e não deste
+>   runbook: seção "Pendências do bloco R", no fim.
+
 ### A5 — o que a auditoria de 2026-08-15 mediu sobre voltar atrás (triagem ratificada 2026-08-20)
 
 Três fatos verificados em `main` `3a761812`. Não são recomendação de alvo; são o que o executor
@@ -159,6 +179,48 @@ Fatos observados no worktree — não é recomendação de alvo (decisão do don
    Resultado esperado: `set host=<host do receptor>`; `MISSING` ou erro do compose → parar.
    EVIDÊNCIA: [saída da conferência (NUNCA a URL inteira)]
 
+### Bloco R — Redis da fila dos teammates (condicional ao PR-4 do TEAMMATES; ADR-M2 §8)
+
+R0. **O bloco se aplica?** No checkout do commit implantado (o do pré-requisito "branch a implantar integrada"):
+   `grep -c '"bullmq"' server/package.json`
+   Resultado esperado: `1` → o PR-4 está no commit, e R1–R5 são obrigatórios. `0` → o bloco **não se aplica**: colar a
+   saída, pular R1–R5 (inclusive R4 e R5, depois do passo 6) e não subir Redis. Com `0`, nada aqui conta como pendência do M2.
+   EVIDÊNCIA: [saída do grep + `git rev-parse HEAD`]
+
+R1. **`REDIS_PASSWORD` no `.env` da instância** (ao lado do `docker-compose.yml`). Gerar fora do repo, sem colar o valor
+   em lugar nenhum: `openssl rand -hex 32` → linha `REDIS_PASSWORD=<hex>` no `.env`. A `REDIS_URL` do server é montada
+   pelo compose (`redis://:${REDIS_PASSWORD}@redis:6379/0`, ADR-M2 §8.2) e não é escrita à mão. Conferir sem imprimir a
+   senha:
+   `docker compose config --format json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const u=new URL(JSON.parse(s).services.server.environment.REDIS_URL||'redis://MISSING');console.log('host='+u.hostname+' port='+u.port+' db='+u.pathname+' senha='+(u.password?u.password.length+' chars':'AUSENTE'))})"`
+   Resultado esperado: `host=redis port=6379 db=/0 senha=64 chars`. `host=MISSING`, `senha=AUSENTE` ou erro do
+   compose → FALHOU.
+   EVIDÊNCIA: [saída da conferência (NUNCA a senha nem a URL inteira)]
+   Desfecho do passo (marcar UM): [ ] PASSOU  [ ] FALHOU  [ ] BLOQUEADO
+
+R2. **Subir o Redis e conferir versão e configuração** (antes do server, no passo 5):
+   `docker compose up -d redis`
+   `docker image inspect --format '{{index .RepoDigests 0}}' $(docker compose images -q redis)`
+   `docker compose exec -T redis sh -c 'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli --no-auth-warning INFO server | grep redis_version; REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli --no-auth-warning CONFIG GET maxmemory-policy maxmemory appendonly appendfsync save'`
+   Resultado esperado: o digest `redis@sha256:…` igual ao fixado no `docker-compose.yml`; `redis_version:8.2.x`;
+   `maxmemory-policy` = `noeviction`, `maxmemory` = `134217728`, `appendonly` = `yes`, `appendfsync` = `everysec`,
+   `save` = vazio. Qualquer política diferente de `noeviction` → FALHOU, porque o BullMQ quebra (ADR-M2 §8.4).
+   EVIDÊNCIA: [saída dos três comandos]
+   Desfecho do passo (marcar UM): [ ] PASSOU  [ ] FALHOU  [ ] BLOQUEADO
+
+R3. **O Redis não está exposto.** Na VPS:
+   `docker compose port redis 6379; echo "exit=$?"`
+   `docker inspect --format '{{json .NetworkSettings.Ports}}' $(docker compose ps -q redis)`
+   `ss -ltn '( sport = :6379 )'`
+   `docker compose exec -T redis redis-cli ping`
+   E **de fora da VPS** (outra máquina, contra o IP público): `nc -vz -w 5 <IP público da VPS> 6379`. No Windows:
+   `Test-NetConnection <IP público da VPS> -Port 6379`.
+   Resultado esperado: `docker compose port` sem endereço e `exit` ≠ 0; `{"6379/tcp":null}` (porta exposta só na rede
+   do compose, sem *binding* no host); `ss` só com a linha de cabeçalho; `ping` sem senha → `NOAUTH Authentication
+   required.`; o teste externo recusado ou em *timeout* (`TcpTestSucceeded : False`). Qualquer *binding* no host,
+   conexão externa aceita ou `PONG` sem senha → **FALHOU, e o M2 inteiro para** (regra do bloco R).
+   EVIDÊNCIA: [saída literal dos cinco comandos, com o externo identificado por máquina de origem]
+   Desfecho do passo (marcar UM): [ ] PASSOU  [ ] FALHOU  [ ] BLOQUEADO
+
 5. Deploy do server e do front no alvo; subir os processos.
    Resultado esperado: processos de pé, `/api` respondendo autenticado.
    EVIDÊNCIA: [comandos usados + resposta de um endpoint autenticado]
@@ -168,8 +230,56 @@ Fatos observados no worktree — não é recomendação de alvo (decisão do don
    Resultado esperado: PDF gerado sem erro de launch.
    EVIDÊNCIA: [o PDF ou o log do launch]
 
+R4. **Smoke da fila: enfileirar e consumir um job de teste** (bloco R; server do passo 5 de pé). Usa uma fila
+   própria, `m2-smoke`, e não a `teammate-turns`: um job de teste na fila real seria pego pelo worker do app, que não
+   acharia o `AgentTurn` e dispararia `job_failed`. Roda dentro do container do server, com o `bullmq` e a `REDIS_URL`
+   da imagem implantada:
+   ```
+   docker compose exec -T server node -e "
+   const IORedis=require('ioredis');const {Queue,Worker}=require('bullmq');
+   const mk=()=>new IORedis(process.env.REDIS_URL,{maxRetriesPerRequest:null});
+   const q=new Queue('m2-smoke',{connection:mk()});const t0=Date.now();
+   const fim=async(c)=>{await w.close();await q.obliterate({force:true});await q.close();process.exit(c)};
+   const w=new Worker('m2-smoke',async j=>({eco:j.data.ping}),{connection:mk()});
+   w.on('completed',(j,r)=>{console.log('consumido id='+j.id+' retorno='+JSON.stringify(r)+' ms='+(Date.now()-t0));fim(0)});
+   w.on('failed',(j,e)=>{console.log('FALHOU '+e.message);fim(1)});
+   q.add('ping',{ping:'m2'},{jobId:'m2-smoke-1'}).then(j=>console.log('enfileirado id='+j.id));
+   setTimeout(()=>{console.log('TIMEOUT 15s');process.exit(2)},15000);
+   "; echo "exit=$?"
+   ```
+   Depois, para conferir que o teste não deixou resto:
+   `docker compose exec -T redis sh -c 'REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli --no-auth-warning --scan --pattern "bull:m2-smoke:*" | wc -l'`
+   Resultado esperado: `enfileirado id=m2-smoke-1`, depois `consumido id=m2-smoke-1 retorno={"eco":"m2"} ms=<n>` e
+   `exit=0`; a contagem de chaves dá `0`. `FALHOU`, `TIMEOUT` ou `exit` ≠ 0 → FALHOU (regra do bloco R).
+   `Cannot find module` → BLOQUEADO: é defeito do runbook diante da imagem, não do deploy. Não improvisar; o agente
+   diagnostica.
+   **Limite do passo:** prova Redis + BullMQ + rede + senha na imagem implantada. Não prova o worker do app
+   (`TeammateTurnWorker`), que só se prova no primeiro turno real de um teammate, fora do M2.
+   EVIDÊNCIA: [saída literal dos dois comandos]
+   Desfecho do passo (marcar UM): [ ] PASSOU  [ ] FALHOU  [ ] BLOQUEADO
+
+R5. **Redis fora → ERP segue no ar** (bloco R; item 22 do BRIEF). Use o mesmo endpoint autenticado e o mesmo token do
+   passo 5 (`$TOKEN` abaixo). Antes, ache o path da listagem de teammates:
+   `grep -o '"/teammates[^"]*"' server/public/openapi.json | sort -u`
+   ```
+   docker compose stop redis
+   curl -s -o /dev/null -w 'health=%{http_code}\n' http://127.0.0.1:3001/health
+   curl -s -o /dev/null -w 'erp=%{http_code}\n' -H "Authorization: Bearer $TOKEN" http://127.0.0.1:3001/api/<endpoint do passo 5>
+   curl -s -w '\nteammates=%{http_code}\n' -H "Authorization: Bearer $TOKEN" http://127.0.0.1:3001/api/<path de listagem de teammates>
+   docker compose start redis
+   ```
+   Aguardar ~15 s **sem reiniciar o server** e repetir só o último `curl`.
+   Resultado esperado, com o Redis parado: `health=200`, `erp=200`, `teammates=503` e corpo com
+   `TEAMMATES_FILA_INDISPONIVEL`. Depois do `start`: `teammates=200`. `health=503` com o Redis fora → FALHOU
+   (pendência P5: o `/health` não pode cair por causa dos teammates). `erp` ≠ 200 → FALHOU do **M2**, porque aí o
+   ERP depende do Redis, contra o item 22. `teammates` ainda 503 depois do `start` → FALHOU (pendência P8,
+   reconexão).
+   EVIDÊNCIA: [saída literal de todos os comandos, na ordem, incluindo o `curl` repetido]
+   Desfecho do passo (marcar UM): [ ] PASSOU  [ ] FALHOU  [ ] BLOQUEADO
+
 7. `cd server && npm run logs:errors` após alguns minutos de uso real.
-   Resultado esperado: sem erro novo.
+   Resultado esperado: sem erro novo. Se o bloco R rodou, erros de conexão ao Redis **dentro da janela do R5** são
+   esperados: listar, com o horário, separados do resto. Fora dessa janela, erro de Redis conta como erro novo.
    EVIDÊNCIA: [saída do comando]
 
 ## Desfecho (marcar UM)
@@ -181,4 +291,57 @@ Fatos observados no worktree — não é recomendação de alvo (decisão do don
 ## Registro
 - Achados no caminho (fora do escopo deste runbook): [lista ou "nenhum"]
 - Atualização do artefato de rastreio: [§5.1 Bloco A item 5 do master map + data]
+- Bloco R: [ ] não se aplica (R0 = `0`)  [ ] aplicou. Desfecho de cada passo marcado acima.
 - Assinatura do executor: ____________
+
+## Pendências do bloco R (código do PR-4 do TEAMMATES; nada aqui foi aplicado)
+
+Levantadas em 29/10 contra `main` `455c1a45`. Hoje o `docker-compose.yml` não tem serviço Redis e o `ci.yml` não tem
+serviço nenhum. Sem P1 o bloco R não roda; sem P5 e P8, o R5 termina em FALHOU. Detalhe e motivo de cada uma em
+[`ADR-M2-deploy-topology.md` §8.7](../adr/ADR-M2-deploy-topology.md).
+
+**P1: diff proposto para o `docker-compose.yml`** (não aplicado; o patch e o digest da imagem são escolhidos no PR-4):
+
+```diff
+   server:
+     environment:
++      # ADR-M2 §8.2: só rede interna; senha hex por env. Sem Redis o server sobe (BRIEF TEAMMATES item 22).
++      REDIS_URL: redis://:${REDIS_PASSWORD:?defina REDIS_PASSWORD no .env (openssl rand -hex 32)}@redis:6379/0
+     depends_on:
+       - qdrant
++      - redis
++
++  redis:
++    # ADR-M2 §8.2–8.4. SEM `ports:`: nunca publicar 6379 no host.
++    image: redis:8.2.<patch>-alpine@sha256:<digest>
++    environment:
++      REDIS_PASSWORD: ${REDIS_PASSWORD:?defina REDIS_PASSWORD no .env}
++    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes --appendfsync everysec --save '' --maxmemory 128mb --maxmemory-policy noeviction"]
++    volumes:
++      - redis_data:/data
++    restart: unless-stopped
+
+ volumes:
++  redis_data:
+```
+
+**P7: diff proposto para o `.github/workflows/ci.yml`**, job `server-tests` (matriz `integration`, 4 shards):
+
+```diff
+   server-tests:
+     runs-on: ubuntu-latest
++    services:
++      redis:
++        image: redis:8.2.<patch>-alpine
++        ports: ["6379:6379"]
++        options: >-
++          --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 10
++    env:
++      REDIS_URL: redis://localhost:6379/0
+```
+
+**Demais (comportamento, com teste no PR-4/PR-5):** P2, reconciliação no boot (re-enfileirar `AgentTurn` órfão e
+regravar os schedulers de `TeammateRoutine`); sem ela, perder o volume `redis_data` apaga as rotinas em silêncio, e
+restaurar a instância exige regravar as rotinas à mão · P3, OOM do `noeviction` → 503, não 500 · P4,
+`removeOnComplete`/`removeOnFail` com teto · P5, Redis informativo no `/health`, fora do 503 · P6, alerta de Redis
+inalcançável por janela · P8, reconexão sem reiniciar o server.

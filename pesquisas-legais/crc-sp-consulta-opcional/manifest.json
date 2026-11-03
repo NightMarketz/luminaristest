@@ -1,0 +1,52 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "RESOLUÇÃO CFC Nº 1.640, DE 18 DE NOVEMBRO DE 2021",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/reguladores/cfc/resolucoes/2021/resolucao-cfc-n-1.640-de-18-de-novembro-de-2021-367541982.md",
+      "url_final": "https://github.com/ctresb/leis/blob/207390262912b4e7e8c1cbbf6c700ce9a2f13ca3/reguladores/cfc/resolucoes/2021/resolucao-cfc-n-1.640-de-18-de-novembro-de-2021-367541982.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.in.gov.br/web/dou/-/resolucao-cfc-n-1.640-de-18-de-novembro-de-2021-367541982",
+      "versao_texto": "publicação original",
+      "acervo_baixado_em": "2026-10-21",
+      "commit": "207390262912b4e7e8c1cbbf6c700ce9a2f13ca3",
+      "alertas": [
+        "versao_texto = 'publicação original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-10-26T15:44:37-03:00",
+      "sha256": "d397214b5b94ac96da0d37c3456313998b9a2a98f689fb8e741ef1b2b25042fa",
+      "arquivo": "docs/D01_resolucao-cfc-n-1-640-de-18-de-novembro-de-2021-367541982.md",
+      "texto": "docs/D01_resolucao-cfc-n-1-640-de-18-de-novembro-de-2021-367541982.txt",
+      "bytes": 17183
+    },
+    {
+      "id": "D02",
+      "titulo": "PROC",
+      "url": "https://www1.cfc.org.br/sisweb/SRE/docs/RES_1708.pdf",
+      "url_final": "https://www1.cfc.org.br/sisweb/SRE/docs/RES_1708.pdf",
+      "orgao": "Conselho Federal de Contabilidade (SRE: resoluções e NBC)",
+      "baixado_em": "2026-10-26T15:47:10-03:00",
+      "sha256": "b7714fc8681cdebeba5760ceb46d8bc3cfdc798c9edfe374a23d2654ac53a170",
+      "arquivo": "docs/D02_RES_1708-pdf.pdf",
+      "texto": "docs/D02_RES_1708-pdf.txt",
+      "bytes": 164528
+    },
+    {
+      "id": "D03",
+      "titulo": "D03_RES_1640-pdf",
+      "url": "https://www1.cfc.org.br/sisweb/SRE/docs/RES_1640.pdf",
+      "url_final": "https://www1.cfc.org.br/sisweb/SRE/docs/RES_1640.pdf",
+      "orgao": "Conselho Federal de Contabilidade (SRE: resoluções e NBC)",
+      "baixado_em": "2026-10-26T15:47:10-03:00",
+      "sha256": "ef3edd4ce422c8c32be33b8e7f7722dc99737145892e2c853b984b81cbe4cefa",
+      "arquivo": "docs/D03_RES_1640-pdf.pdf",
+      "texto": "docs/D03_RES_1640-pdf.txt",
+      "bytes": 268743
+    }
+  ],
+  "buscas": [],
+  "slug": "crc-sp-consulta-opcional",
+  "pergunta": "A consulta ao CRC-SP (F-GOV-1) é obrigatória? Base: Res. CFC 1.640/2021 art. 3º VIII e Res. CFC 1.708 art. 1º; o que resta perguntar",
+  "criado": "2026-10-26T15:44:35-03:00"
+}

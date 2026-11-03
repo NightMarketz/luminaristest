@@ -1,0 +1,80 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Nota Técnica 2026.010 v1.00 — DANFE Reforma Tributária (rebaixada 26/10; sha igual ao de 22/10)",
+      "url": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=ugn4MYF5PLg=",
+      "url_final": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=ugn4MYF5PLg=",
+      "orgao": "Portal Nacional da NF-e (ENCAT/RFB) — baixado por curl com cookie de sessão (o legal.py baixar entra em laço de 302)",
+      "baixado_em": "2026-10-26T16:55:00-03:00",
+      "sha256": "eadc5246235f37a55f8140ddcf84595c8ce77f2d760f111f7b85ddf389b8f484",
+      "arquivo": "docs/D01_NT2026010-v1.00.pdf",
+      "texto": "docs/D01_NT2026010-v1.00.txt",
+      "bytes": 712823
+    },
+    {
+      "id": "D02",
+      "titulo": "MOC 7.0 — Anexo II, Manual de Especificações Técnicas do DANFE e Código de Barras (versão 7.00)",
+      "url": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=f%20NhsSn3/5M=",
+      "url_final": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=f%20NhsSn3/5M=",
+      "orgao": "Portal Nacional da NF-e (ENCAT/RFB) — baixado por curl com cookie de sessão (o legal.py baixar entra em laço de 302)",
+      "baixado_em": "2026-10-26T16:55:00-03:00",
+      "sha256": "729c04fd1374188c29eb21ca60342741b24a014003d4c2ff1bbb455bb1a6a60e",
+      "arquivo": "docs/D02_MOC70-AnexoII-DANFE.pdf",
+      "texto": "docs/D02_MOC70-AnexoII-DANFE.txt",
+      "bytes": 1345906
+    },
+    {
+      "id": "D03",
+      "titulo": "Nota Técnica 2026.009 v1.00 — Alteração de Regra de Validação de CFOP (I08-140)",
+      "url": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=ADlgg2xjMZI=",
+      "url_final": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=ADlgg2xjMZI=",
+      "orgao": "Portal Nacional da NF-e (ENCAT/RFB) — baixado por curl com cookie de sessão (o legal.py baixar entra em laço de 302)",
+      "baixado_em": "2026-10-26T16:55:00-03:00",
+      "sha256": "50b7dec40bba8928b4d544feb4fdbd8c8bac16e37c99d926ddb2834cf246f15d",
+      "arquivo": "docs/D03_NT2026009-v1.00.pdf",
+      "texto": "docs/D03_NT2026009-v1.00.txt",
+      "bytes": 310342
+    },
+    {
+      "id": "D04",
+      "titulo": "Nota Técnica 2026.006 v1.00 — Vinculação com a Transação de Pagamento do DF-e (split payment)",
+      "url": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=k7zG06n5M6I=",
+      "url_final": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=k7zG06n5M6I=",
+      "orgao": "Portal Nacional da NF-e (ENCAT/RFB) — baixado por curl com cookie de sessão (o legal.py baixar entra em laço de 302)",
+      "baixado_em": "2026-10-26T16:55:00-03:00",
+      "sha256": "47a65abde315fed1e6a8c6085a67ca483935cb57877ae5715d365377a725e05d",
+      "arquivo": "docs/D04_NT2026006-v1.00.pdf",
+      "texto": "docs/D04_NT2026006-v1.00.txt",
+      "bytes": 767681
+    },
+    {
+      "id": "D05",
+      "titulo": "Nota Técnica 2026.003 v1.00 — DANFE Simplificado Tipo 2",
+      "url": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=2YdaBTIql%20k=",
+      "url_final": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=2YdaBTIql%20k=",
+      "orgao": "Portal Nacional da NF-e (ENCAT/RFB) — baixado por curl com cookie de sessão (o legal.py baixar entra em laço de 302)",
+      "baixado_em": "2026-10-26T16:55:00-03:00",
+      "sha256": "2ef826027e0e8423ba9dc2f53ee7197f8bfdcc399a30459b72da977528600f13",
+      "arquivo": "docs/D05_NT2026003-v1.00.pdf",
+      "texto": "docs/D05_NT2026003-v1.00.txt",
+      "bytes": 1666337
+    },
+    {
+      "id": "D06",
+      "titulo": "Nota Técnica 2014.001 v1.41 — Evento Prévio de Emissão em Contingência (EPEC)",
+      "url": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=9hgG%20%20cH8gA=",
+      "url_final": "https://www.nfe.fazenda.gov.br/portal/exibirArquivo.aspx?conteudo=9hgG%20%20cH8gA=",
+      "orgao": "Portal Nacional da NF-e (ENCAT/RFB) — baixado por curl com cookie de sessão (o legal.py baixar entra em laço de 302)",
+      "baixado_em": "2026-10-26T16:55:00-03:00",
+      "sha256": "fa9218ddadcb35ca1233434a4dfd040243360d983c0d3f6b85e7756284a6fd19",
+      "arquivo": "docs/D06_NT2014001-v1.41.pdf",
+      "texto": "docs/D06_NT2014001-v1.41.txt",
+      "bytes": 814340
+    }
+  ],
+  "buscas": [],
+  "slug": "nfe-danfe-pr0",
+  "pergunta": "PR-0 do NFE-DANFE-IBSCBS: NT 2026.010 rebaixada, leiaute base do DANFE no MOC e classificação das NTs 2026.009, 2026.006, 2026.003 e 2014.001 v1.41",
+  "criado": "2026-10-26T16:52:28-03:00"
+}

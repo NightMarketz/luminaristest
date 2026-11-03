@@ -63,10 +63,23 @@ export class DfePollScheduler {
     this.running = true;
     try {
       const summary = await this.poll();
-      if (summary.failed > 0 || (summary.attachments?.failed ?? 0) > 0) {
+      const c = summary.contingencia;
+      if (summary.failed > 0 || (summary.attachments?.failed ?? 0) > 0 || (c && c.failed + c.orfasFalharam + c.pertoDoPrazo + c.vencidas > 0)) {
         this.log.event('warn', 'job.completed', JOB, { job: JOB, ...summary });
       } else {
         this.log.event('info', 'job.completed', JOB, { job: JOB, ...summary });
+      }
+      // X10a PR-9 (decisões 6, 7 e 9): NFC-e off-line perto do prazo/vencida ou órfã não resolvida ⇒ alerta remoto.
+      if (c && c.pertoDoPrazo + c.vencidas + c.orfasFalharam > 0) {
+        this.alert({
+          source: 'dfe_poll',
+          event: 'reconcile_summary',
+          timestamp: new Date().toISOString(),
+          job: JOB,
+          contingenciaPertoDoPrazo: c.pertoDoPrazo,
+          contingenciaVencidas: c.vencidas,
+          contingenciaOrfasFalharam: c.orfasFalharam,
+        });
       }
       return summary;
     } catch (error) {

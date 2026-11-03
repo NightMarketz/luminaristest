@@ -11,6 +11,59 @@
 > **Item 12 reescrito em 21/10** (pedido do dono: "reescreve o item 12 do BRIEF do IBS"): reclassificação receita → passivo
 > na apuração mensal; o momento é o **F-IBS-14 (a), ratificado 21/10** (§5.1). Próximo: `executa` do PR-2. Contas do referencial seguem DRAFT (não conferidas).
 
+## Emenda 28/10 — fila de pesquisa de 27/10 (blocos 4 e 5)
+
+> **Pedido do dono** (chat, 2026-10-28): *"Faz o fold dos achados da fila de pesquisa de 27/10 (blocos 1 a 6) no vault e
+> nos BRIEFs, junto com os 7 dossiês, num PR sem merge."* Escopo: este BRIEF e a nota do nó. **Só fato de fonte oficial:
+> nenhum fork é ratificado, e não é `executa`.** Resumo da fila: [[PESQUISA-FILA-2026-10-27]].
+
+1. **`cClassTrib` do salão e da clínica (P-IBS-2, 1ª parte; item 3): conferido na tabela oficial.** A tabela está no
+   Portal da Conformidade Fácil, do SVRS, com a carga de 05/10/2026, que já traz as linhas da v1.70 (dossiê
+   `pesquisas-legais/fila-2026-10-27-bloco5-cclasstrib` [D01]). O **000001** é "Situações tributadas integralmente pelo IBS e
+   CBS.", CST 000, sem redução, aceito na NFS-e: é o do salão (NBS 1.2602; LC 116 6.01–6.03), que não está no Anexo III da
+   LC 214, e a esteticista não está no art. 127 [D02]. Consulta e procedimento médico com NBS do Anexo III (1.2301.21.00 e
+   1.2301.22.00) levam **200029**, CST 200, redução de 60% (art. 130). A IT 2025.002 v1.70, lida no Portal NF-e por outra
+   sessão no mesmo dia, traz as duas linhas iguais (`fontes-oficiais/TRANSCRICAO-IT2025002-v170-tabelas-IBSCBS-2026-10-27.md`;
+   `ibsCbsTabelas.ts` em `main`). **Efeito:** o valor que o usuário informa no `ServiceFiscalProfile` tem referência
+   conferida; o item 3 continua sem seed (sugerir o valor por padrão mudaria o item e pede emenda própria). Ambiguidade:
+   procedimento estético feito por médico só leva 200029 com NBS do Anexo III marcado pela clínica; a classificação é do
+   cliente com o contador (`pesquisas-legais/ctribnac-salao-clinica` §4). **indOp 030101:** conferido em 28/10 no Anexo C v1.01 (dossiê `fila-2026-10-28-d1f-indop`).
+2. **Lista de uso e consumo pessoal (P-IBS-2, 2ª parte; item 15): a lista do contador não serve, e a chave por NCM só cobre
+   parte do art. 57** (dossiê `fila-2026-10-27-bloco4-draft` [D03] LC 214; [D06] Regulamento da CBS, arts. 62 e 63).
+   - O inciso I lista bens por natureza: joias, pedras e metais preciosos, obras de arte, bebidas alcoólicas, derivados do
+     tabaco, armas e munições, "bens e serviços recreativos, esportivos e estéticos" e, desde a LC 227/2026, a alínea "g":
+     "bens e serviços relacionados à aquisição ou à manutenção dos bens de que trata este inciso" (o Regulamento já a trazia
+     no art. 62 VII). O inciso II trata dos bens e serviços dados de graça ou abaixo do mercado a sócio, administrador,
+     empregado ou parente.
+   - As exceções estão no próprio art. 57 § 3º da LC 214, e o Regulamento as detalha. Bem estético usado "exclusivamente em
+     estabelecimento físico pelos seus clientes" ou revendido não é uso pessoal (LC 214 art. 57 § 3º III; Regulamento art. 62
+     p.ú. III). Serviço estético comprado por quem presta "esses mesmos serviços" também não, mas essa exceção só está no
+     Regulamento (art. 62 p.ú. IV "a"), pela delegação do § 3º V da LC. Para salão e clínica, a alínea "f" **não** entra na
+     tabela.
+   - Os quatro itens do contador (copa, veículo de passeio, vestuário, higiene pessoal) são casos de destino (inciso II),
+     e três têm exceção expressa: alimentação na jornada (LC 214 art. 57 § 3º IV "c"; Regulamento art. 63 § 1º III),
+     uniforme (§ 3º IV "a"; art. 63 § 1º I) e veículo usado na função (só no Regulamento, art. 63 § 2º II). Nenhum se
+     reconhece pelo NCM.
+   - **Efeito no item 15:** `IBS_CBS_USO_CONSUMO` (chave = prefixo de NCM) comporta só as alíneas "a" a "e" do inciso I,
+     com a exceção de revenda. Conteúdo `DRAFT` proposto (grau inferido: a correspondência categoria × NCM é leitura do
+     agente): pedras e metais preciosos 7101–7112; joias e ourivesaria 7113, 7114 e 7116; bebidas alcoólicas 2203–2206 e
+     2208; derivados do tabaco 2402–2404; armas e munições 93; obras de arte e antiguidades 97. Bijuteria (7117) e álcool
+     etílico (2207) ficam de fora.
+   - **A alínea "g" também fica fora da tabela:** o que a define é a ligação com o bem principal (a manutenção da joia, o
+     acessório da arma), não o NCM. Para salão e clínica, a manutenção de equipamento estético usado só com clientes fica
+     fora da alínea "g" porque o bem principal está na exceção do § 3º III. O § 3º não cita a alínea "g", então essa leitura
+     é do agente (grau inferido) e vai junto da confirmação da lista ao contador, quando o efeito de 2027 chegar.
+   - **Ponto de desenho aberto para emenda do PR-3 (não é fork ratificado):** o PR-3 já está em `main` (#833, 22/10), e o
+     inciso II pede uma marca por item de entrada ("fornecido a sócio, empregado ou parente") que o código não tem
+     (`NfeImportService` só cruza NCM): campo por item na importação da NF-e ou regra por conta de despesa. O efeito só
+     começa em 2027; entra como emenda do PR-3.
+3. **P-IBS-4 (códigos do referencial): sem tabela nova.** O Leiaute 12 da ECF (28/05/2026) segue o mais recente na pasta do
+   SPED [D04]; nas abas L100A e P100A há 0 contas com "IBS", "CBS" ou "Bens e Serviços" no nome [D02]. Fica a escolha do
+   dono de 21/10, `2.01.01.09.28 Outros Tributos a Recolher – Circulante` (`ChartOfAccountsFixture.ts:289-293`). Revisar
+   quando sair a tabela do ano-calendário de 2027.
+4. **Lacunas:** a NT 2026.006 continua não lida; o ato conjunto RFB/CGIBS do art. 63 § 2º V do Regulamento não foi
+   procurado; o Regulamento do IBS (Resolução CGIBS 6/2026) não foi lido.
+
 ## TLDR (2 linhas)
 
 Cinco PRs fecham IBS/CBS no regime regular para 01/01/2027: **PR-1** (tabela de vigência + `cClassTrib` por serviço + parser) e **PR-2** (apuração mensal com débito por documento, CAS e provisão) cabem antes do prazo; PR-3 (crédito + antecipação), PR-4 (split no F7) e PR-5 (matriz + superfície) seguem.
@@ -362,9 +415,9 @@ export const IbsCbsResumoSchema = z.object({
 | # | Pergunta | Trava | Quem |
 |---|---|---|---|
 | **P-IBS-1** — **respondida 21/10: basta o DF-e com o grupo IBS/CBS** (confirmação; [triagem](TRIAGEM-RESPOSTA-CONTADOR-2026-10-21-AMBIGUIDADES.md)) | 2026: as NFS-e/NF-e com `gIBSCBS` bastam para a dispensa do art. 348 § 1º? | condição do F-IBS-7 b (item 10) | contador |
-| **P-IBS-2** | `cClassTrib`/`cst` do salão e da clínica; lista de uso/consumo pessoal (art. 57) | valores dos itens 3 e 15 | contador |
+| **P-IBS-2** | ~~`cClassTrib`/`cst` do salão e da clínica~~ **conferidos 27/10 na tabela oficial:** 000001/CST 000 (salão) e 200029/CST 200 (serviço médico do Anexo III). Lista de uso/consumo pessoal (art. 57): **relida 27/10**, por NCM só o inciso I "a"–"e"; o inciso II pede marca por item (Emenda 28/10 itens 1 e 2) | item 3 (referência conferida); item 15 (`DRAFT` com 6 categorias de NCM; contador confirma) | contador (confirmação da lista, efeito em 2027) |
 | **P-IBS-3** | o art. 10 § 4º se aplica ao pacote de sessões? há hipótese dos 5 dias? | enquadramento dos itens 17–18 | contador |
-| **P-IBS-4** | ~~classe contábil~~ respondida 21/10: (c) fora do resultado. Resta conferir os códigos do referencial (`2.01.01.02.xx`) | item 12 | fonte oficial (tabela do referencial) |
+| **P-IBS-4** | ~~classe contábil~~ respondida 21/10: (c) fora do resultado. ~~Conferir os códigos do referencial~~ **27/10: a ECF (Leiaute 12) não tem conta de IBS/CBS; fica 2.01.01.09.28** até a tabela de 2027 (Emenda 28/10 item 3) | item 12 | fonte oficial (tabela do referencial de 2027) |
 | **P-IBS-5** | alíquota de referência da CBS 2027 (Res. SF) e vencimento do saldo mensal | linha `DRAFT` (item 1) e item 22 | fonte oficial |
 | **P-IBS-6** | apuração assistida RFB/CG-IBS do 1º mês real | oráculo do número | runbook humano |
 | **P-IBS-7** | o Mercado Pago faz o split nas vendas do salão? como aparece no extrato? | item 19–20 na prática | dono + doc do MP |
@@ -372,7 +425,7 @@ export const IbsCbsResumoSchema = z.object({
 ## 7. Insumos ausentes
 
 1. Resolução do Senado (CBS 2027) — mitigada pela linha `DRAFT`.
-2. NT 2026.006 e tabela oficial de `cClassTrib` — não lidas em fonte oficial.
+2. NT 2026.006 — não lida em fonte oficial. ~~Tabela oficial de `cClassTrib`~~: lida em 27/10 (Emenda 28/10 item 1).
 3. Regulamento do IBS (CG-IBS) e hipótese dos 5 dias.
 4. Texto dos arts. 44–45 do Decreto 12.955 (prazos/vencimento) — o dossiê cita, não extrai.
 5. **NF-e real com grupo `IBSCBS`** para a fixture do item 4 — não verificado se há uma no repo (não varrido, regra 2).

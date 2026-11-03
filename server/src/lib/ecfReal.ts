@@ -112,6 +112,11 @@ export interface EcfRealLalurLine {
   hist?: string;
   /** → M305/M355.COD_CTA_B (indRelacao ∈ {1,3}). */
   codCtaB?: string;
+  /**
+   * → um M305/M355 por conta, com o valor de cada (C8 emenda 3.2, E21b, F-EM-14 → a): linha `system` do Bloco F. Quando
+   * presente, substitui `codCtaB` — o leiaute aceita vários M305 por M300 e a REGRA_VALOR_DETALHADO soma os VL_CTA.
+   */
+  parteBLinks?: Array<{ codCtaB: string; valorCents: number }>;
   /** → M310/M360.COD_CTA = I050/J050.COD_CTA da ECD (p.252) (indRelacao ∈ {2,3}). */
   codCta?: string;
   /** J050.COD_NAT da conta ('01'..'04','09' — domínio de natureToCodNat/I050) — decide o sinal do M310 (p.246). */
@@ -429,7 +434,11 @@ function parteAChildren(livro: 'lalur' | 'lacs', l: EcfRealLalurLine): string[] 
   const out: string[] = [];
   const needsB = l.indRelacao === '1' || l.indRelacao === '3';
   const needsCta = l.indRelacao === '2' || l.indRelacao === '3';
-  if (needsB) out.push(buildParteBChild(livro === 'lalur' ? 'M305' : 'M355', l));
+  if (needsB) {
+    const reg = livro === 'lalur' ? 'M305' : 'M355';
+    if (l.parteBLinks?.length) for (const p of l.parteBLinks) out.push(buildParteBChild(reg, { ...l, codCtaB: p.codCtaB, valorCents: p.valorCents }));
+    else out.push(buildParteBChild(reg, l));
+  }
   if (needsCta) {
     out.push(buildContabilChild(livro === 'lalur' ? 'M310' : 'M360', l));
     for (const n of l.numLctos ?? []) out.push(buildNumLctoChild(livro === 'lalur' ? 'M312' : 'M362', n));

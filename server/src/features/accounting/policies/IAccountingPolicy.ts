@@ -131,14 +131,22 @@ export interface IAccountingPolicy {
   canManageFiscalProfile(scope: AccountingScope): boolean;
   /** BE-INCR-DFE-ADN-EMISSOR PR-1 (item 6): upload/leitura/remoção do certificado fiscal — delega a canManageFiscalProfile. */
   canManageFiscalCertificate(scope: AccountingScope): boolean;
+  /** X10a PR-7 (EMENDA-PSC E-5): delega a canManageFiscalProfile. */
+  canManagePscCredential(scope: AccountingScope): boolean;
 
   /**
    * BE-INCR-DFE (nó X10b, BRIEF item 5): perfil fiscal do serviço = régua do perfil fiscal; emissão/cancelamento
    * de documento fiscal = quem gerencia dados contábeis (efeito legal externo); leitura = canRead.
    */
   canManageServiceFiscalProfile(scope: AccountingScope): boolean;
+  /** BE-INCR-NFCE (nó X10a, item 10): perfil fiscal do produto = régua do perfil fiscal. */
+  canManageProductFiscalProfile(scope: AccountingScope): boolean;
   /** SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1): benefício municipal de ISS = régua do perfil fiscal. */
   canManageIssBeneficioMunicipal(scope: AccountingScope): boolean;
+  /** EFICIENCIA-FISCAL PR-1 (item 5): política de eficiência fiscal e custo de serviço — delega a canManageFiscalProfile. */
+  canManageTaxOptimization(scope: AccountingScope): boolean;
+  /** EFICIENCIA-FISCAL PR-1 (item 7; F-EF-3 a): contador ACTIVE decide; sem ele o dono; CRITERIO_CARGA só o contador. */
+  canDecideTaxSuggestion(scope: AccountingScope, active: ActiveAccountant | null, practice: string): boolean;
   canReadFiscalDocument(scope: AccountingScope): boolean;
 
   /** BE-INCR-FIXED-ASSETS (nó C8, item 11) — mesma régua de quem fecha período (padrão canManageFiscalProfile). */

@@ -11,8 +11,6 @@ import { DocumentUpdateInput } from '../models/Document.model';
 import type { IDocumentPolicy } from '../policies/IDocumentPolicy';
 import { DocumentStatus, DocumentPurpose } from '../models/Document.model';
 import { logger } from '@/lib/logger';
-import { OpenAIService } from '@/lib/openai/OpenAIService';
-import { StructuredDataService } from '../../structuredData/services/StructuredDataService';
 import type { IUserRepository } from '../../users/repositories/IUserRepository';
 
 /**
@@ -28,8 +26,6 @@ export class DocumentService {
     private readonly vectorRepository: IVectorRepository,
     private readonly processingService: DocumentProcessingService,
     private readonly policy: IDocumentPolicy,
-    private readonly openAIService: OpenAIService,
-    private readonly structuredDataService: StructuredDataService,
     private readonly userRepository: IUserRepository
   ) {
     this.processingPipeline = new DocumentProcessingPipeline(
@@ -37,8 +33,6 @@ export class DocumentService {
       vectorRepository,
       processingService,
       repository,
-      openAIService,
-      structuredDataService,
       userRepository
     );
   }
@@ -108,8 +102,6 @@ export class DocumentService {
         throw new ValidationError(`Unsupported file type: ${fileType}`);
     }
 
-    const buffer = Buffer.from(fileBuffer);
-
     const doc = await this.repository.create({
       userId: userContext.userId,
       fileName,
@@ -122,7 +114,7 @@ export class DocumentService {
     });
 
     setImmediate(() => {
-      this.processDocumentAsync(doc.id, fileBuffer, buffer, mimeType).catch(error => {
+      this.processDocumentAsync(doc.id, fileBuffer, mimeType).catch(error => {
         logger.error(`Error in async document processing for document ${doc.id}`, { error });
       });
     });
@@ -137,7 +129,6 @@ export class DocumentService {
   private async processDocumentAsync(
     docId: string,
     fileBuffer: ArrayBuffer,
-    buffer: Buffer,
     mimeType: string
   ): Promise<void> {
     try {
@@ -163,7 +154,7 @@ export class DocumentService {
 
       // Run chunking + embedding + Qdrant storage; pipeline sets status=COMPLETED on success
       const docWithText: IDocument = { ...document, textContent: text };
-      await this.processingPipeline.processDocument(docWithText, text, buffer);
+      await this.processingPipeline.processDocument(docWithText, text);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown processing error';
       logger.error(`Async processing failed for document ${docId}`, { error });

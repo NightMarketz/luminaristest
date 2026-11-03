@@ -1,3 +1,5 @@
+> **ESTADO 2026-10-31 (leia primeiro; vale sobre os avisos abaixo):** a emissão automática de NFS-e foi **reaberta pelo assinador local** ([[D-2026-10-30-X10A-EMENDA-4-FORA-DE-ESCOPO]] item 1, dono, 30/10: *"Reabrir já"*). Vale este BRIEF **com a emenda [`BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md`](BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md)**: a DPS e o pedido de cancelamento são assinados, e o mTLS com a Sefin Nacional é aberto, pelo assinador local da X10a EMENDA-4, com o e-CNPJ do **próprio estabelecimento** (14 dígitos). **A guarda do certificado segue arquivada** (item 3 de [[D-2026-10-22-NFSE-PORTAL-E-H1-POR-ULTIMO]]): caem os itens 3–7, 13 e 24–25 e os F-ADN-1..4; os itens 9, 12 e 16 são reescritos (ADL-7, ADL-8, ADL-11); o resto fica, com o mapa completo no §1 da emenda. Forks novos **F-ADL-1..5 com RATIFICAÇÃO PENDENTE**. Sem `executa`; a NFS-e segue pelo portal até a emenda ser implementada. Os avisos de 12/10 e 13/10 abaixo ficam como registro.
+
 > **SUPERADO EM 13/10 (dono, conciliação do PR #639):** vale [[D-2026-10-13-QUESTIONARIO-BRIEFS-PRONTOS]] — **ADN pausado, pesquisar PSC**; a guarda do certificado pelo Luminaris (decisão de 12/10) não vale. Onde as respostas de 12/10 e 13/10 a F-NFCE-E1/F-FE-COB divergirem, vale 13/10. O achado da FAQ NFS-e v1.1 17.7 (mTLS exige o certificado do próprio prestador; PSC não cobre a conexão) continua de pé e fica para a pesquisa de PSC.
 
 # BRIEF — BE-INCR-DFE-ADN-EMISSOR (emissor próprio de NFS-e na Sefin Nacional / ADN, sem depender do A1 real) — nó X10i
@@ -146,6 +148,8 @@ corrige sem mudar o comportamento. Cada item termina no teste que o prova. Nenhu
 
 ### PR-1 — Certificado A1 por unidade (guarda, cifra, validade)
 
+> **Emenda 31/10 ([`BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md`](BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md)):** **itens 3–7 caem** (sem guarda de certificado). O vínculo da unidade com o certificado é o pareamento do assinador (EMENDA-4 AL-3/AL-4) com o `certCnpj` de 14 dígitos (ADL-4); o pré-voo do item 7 vira o ADL-6.
+
 3. **[cond:F-ADN-2]** Model `FiscalCertificate` (Prisma first-class, §2.1: credencial de emissão legal), uma linha
    viva por `(userId, unitId)` (R8: um A1 por unidade/CNPJ), soft-delete com rename. Guarda chave privada PKCS#8 e
    certificado DER **cifrados** (`secretBox`, AAD = `id`), mais as projeções legíveis: `cnpjCertificado`,
@@ -183,6 +187,9 @@ corrige sem mudar o comportamento. Cada item termina no teste que o prova. Nenhu
    (`[XSD-NDPS]`), dinheiro como a string do DTO, sem campo fora do DTO. Teste: ida e volta, com o XML serializado lido
    pelo mesmo leitor da DPS embutida que `parseNfseAutorizada` usa, devolvendo os 13 campos da releitura iguais;
    golden file revisado à mão contra o XSD; DTO com campo extra é recusado antes de serializar.
+
+> **Emenda 31/10 ([`BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md`](BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md)):** **item 9 reescrito como ADL-7** (assinatura em duas fases do #984 com o `AssinadorLocalSigner`; guarda dos 14 dígitos no servidor e no assinador). **Item 12 reescrito como ADL-8:** a chave da sequência já tem `ambiente` em `main`; falta a NFS-e deixar de passar `''`.
+
 9. **[cond:F-ADN-7]** `lib/dfeXmlSign.ts` · `signEnveloped(xml, rootLocalName, idOfSignedNode, credential, algos)`:
    `ds:Signature` enveloped como último filho de `<DPS>`, `Reference URI = "#" + infDPS/@Id`, transforms
    enveloped + c14n, `KeyInfo/X509Data/X509Certificate` só com o certificado do usuário final. Parâmetros de algoritmo
@@ -206,6 +213,8 @@ corrige sem mudar o comportamento. Cada item termina no teste que o prova. Nenhu
 
 ### PR-3 — Cliente HTTP com mTLS (rede só contra servidor local de teste)
 
+> **Emenda 31/10 ([`BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md`](BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md)):** **item 13 cai.** O servidor não tem chave: o mTLS sai do assinador pela tarefa `TRANSMITIR` `rest` (`AdnTransporte`, ADL-9); a prova do handshake passa para a suíte do assinador (ADL-10). O item 14 fica.
+
 13. **[direto]** `dfe/adn/AdnHttpClient.ts`: `https.request` com `key`/`cert` da credencial **por chamada** (sem
     agente global compartilhado entre unidades), `minVersion: 'TLSv1.2'`, `rejectUnauthorized: true`, timeout de
     conexão e de resposta configuráveis, corpo JSON, `Content-Type: application/json`. A URL vem da tabela de hosts por
@@ -225,6 +234,9 @@ corrige sem mudar o comportamento. Cada item termina no teste que o prova. Nenhu
     `{numbersDps: false, consultar: true, cancelar: [cond:F-ADN-13], webhook: false}` (a API não tem webhook,
     `[API-*]`); com o X10a, `kinds: ['NFSE']`. **Não** recusa `NODE_ENV=production` (é o adaptador real).
     `verifyWebhook` ⇒ `{ok: false}` sempre. Teste: unitário de capabilities; `verifyWebhook` nunca aceita.
+
+> **Emenda 31/10 ([`BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md`](BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md)):** **item 16 reescrito como ADL-11:** o contexto da porta leva `{ambiente, unitId}`, e o `AdnEmissor` resolve o dispositivo ativo da unidade do documento; nenhuma chave passa pela porta. Itens 17–21 ficam, com o orçamento de tempo do ADL-12 e a recuperação pelo assinador do ADL-13; itens 22–23 ganham o ADL-14 (portal × automática por unidade).
+
 16. **[direto]** Contrato da porta ganha a credencial resolvida pelo serviço (§4): `EmitirInput.credential?:
     DfeCredential` e um 2º parâmetro `ctx: DfeCallContext` em `consultar` e `cancelar`. `Null`/`Manual` ignoram.
     Quem abre o `FiscalCertificate` da unidade **do documento** é o serviço (emissão: a unidade do escopo; job e
@@ -269,6 +281,8 @@ corrige sem mudar o comportamento. Cada item termina no teste que o prova. Nenhu
     `assertTpAmb` + host derivado do mesmo ambiente; impossível montar `tpAmb = 2` apontando para produção.
 
 ### PR-5 — Rotas, DTOs, gates
+
+> **Emenda 31/10 ([`BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md`](BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md)):** **itens 24–25 caem** (sem rotas de certificado; as do assinador são da EMENDA-4). No item 26, a mutação (iv) troca pelas do ADL-17.
 
 24. **[direto]** Rotas novas em 2 toques (`index.ts` + `docs.paths.ts`; `npm run docs:generate`; BASELINE do
     `openapi-paths.test.ts`): `PUT/GET/DELETE /api/accounting/fiscal-certificates/:unitId`. Deny-by-default. O upload
@@ -363,6 +377,8 @@ DFE_PARTNER_ENV=homologacao               # producao só depois do runbook do D5
 ```
 
 ## 5. Forks — RATIFICAÇÃO PENDENTE (nenhum se auto-ratifica)
+
+> **Emenda 31/10 ([`BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md`](BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md)):** estado de cada F-ADN no §1.2 da emenda — F-ADN-1..4 **sem objeto**; F-ADN-10 substituído pelo ADL-6; F-ADN-5..9 e 11..13 mantidos. Forks novos F-ADL-1..5 (pendentes) no §6 da emenda.
 
 ### F-ADN-1 — Registro da reabertura da decisão 2 (26/09) e do D1 do ADR
 - **(a)** Emenda do ADR-DFE (§12) e nota de decisão citando o fold de 07/10 como cumprimento da condição (b) da
@@ -478,6 +494,8 @@ DFE_PARTNER_ENV=homologacao               # producao só depois do runbook do D5
 
 ### 6.2 Gate humano — runbook do D5 (fora do checklist; o agente prepara em branco)
 
+> **Emenda 31/10 ([`BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md`](BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md)):** o runbook passa a ser o ADL-19: assinador pareado com o e-CNPJ do próprio estabelecimento, sem upload de A1 nem keyring. O §6.3 (keyring no M2) **perde o objeto**.
+
 `RUNBOOK-D5-ADN-HOMOLOGACAO.md` (formato `RUNBOOK-FORMAT`), preparado depois do PR-4 com "executa": pré-condições (A1
 de teste do dono instalado pela rota do item 5, keyring no env, `DFE_PARTNER=adn`, `DFE_PARTNER_ENV=homologacao`); 1
 DPS autorizada na produção restrita com releitura `IGUAL`; 1 rejeição proposital com o código E0xxx preservado; 1
@@ -588,6 +606,8 @@ deste BRIEF. Linha a acrescentar na nota do M2 e no runbook do M2 quando o PR-1 
    certificado, notas antigas relidas depois continuam válidas (a regra é sobre `dhProc`). Sem ação.
 
 ## 10. Plano de execução por fatias (para a `sessao-feature`, só depois de "executa")
+
+> **Emenda 31/10 ([`BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md`](BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md)):** **tabela substituída pelo §5 da emenda** (ADL-PR-0..5).
 
 | PR | Itens | Depende |
 |---|---|---|

@@ -1,0 +1,50 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 12.546 de 14/12/2011",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2011/lei-12546-2011-12-14.md",
+      "url_final": "https://github.com/ctresb/leis/blob/4fbb5d105ae40e82c1f5afc2d01ca728f47e5e66/federal/leis-ordinarias/2011/lei-12546-2011-12-14.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2011-12-14;12546",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "4fbb5d105ae40e82c1f5afc2d01ca728f47e5e66",
+      "alertas": [],
+      "baixado_em": "2026-10-27T02:18:57-03:00",
+      "sha256": "ae4a2cb31093920893030d91f9460b536c801ba7c5400d2a77ce857b8d644ab1",
+      "arquivo": "docs/D01_lei-12546-2011-12-14.md",
+      "texto": "docs/D01_lei-12546-2011-12-14.txt",
+      "bytes": 90388
+    },
+    {
+      "id": "D02",
+      "titulo": "Normas",
+      "url": "https://normas.receita.fazenda.gov.br/sijut2consulta/consulta.action?facetsExistentes=&orgaosSelecionados=Cosit&tiposAtosSelecionados=72&numero_ato=153&ano_ato=2026&termoBusca=",
+      "url_final": "https://normas.receita.fazenda.gov.br/sijut2consulta/consulta.action?facetsExistentes=&orgaosSelecionados=Cosit&tiposAtosSelecionados=72&numero_ato=153&ano_ato=2026&termoBusca=",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T02:31:04-03:00",
+      "sha256": "9f9413e20884b24680269927744a2abbf407243127ba5087a1489fd91fc8153a",
+      "arquivo": "docs/D02_consulta-action.html",
+      "texto": "docs/D02_consulta-action.txt",
+      "bytes": 45247
+    },
+    {
+      "id": "D03",
+      "titulo": "D03_Manual-20da-20EFD-Reinf-20vers-c3-a3o-202-1-2-1-pdf",
+      "url": "http://sped.rfb.gov.br/arquivo/download/7261",
+      "url_final": "http://sped.rfb.gov.br/estatico/28/40FAAC1C636CC110D4C12D2790B43C641C6BCA/Manual%20da%20EFD-Reinf%20vers%c3%a3o%202.1.2.1.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T02:31:09-03:00",
+      "sha256": "563e771cf0b48dec156c44bc3582a469c8a7203b2e415a89da7bba1ee27f5977",
+      "arquivo": "docs/D03_Manual-20da-20EFD-Reinf-20vers-c3-a3o-202-1-2-1-pdf.pdf",
+      "texto": "docs/D03_Manual-20da-20EFD-Reinf-20vers-c3-a3o-202-1-2-1-pdf.txt",
+      "bytes": 3044983
+    }
+  ],
+  "buscas": [],
+  "slug": "fila-2026-10-27-p-ret-6-8",
+  "pergunta": "P-RET-6 e P-RET-8: qual o código de recolhimento (DCTFWeb/GPS) da retenção de 11% (Lei 8.212 art. 31) e o prestador na CPRB sofre retenção de 3,5% em vez de 11%? Vigência em 2026 e 2027",
+  "criado": "2026-10-27T02:18:54-03:00"
+}

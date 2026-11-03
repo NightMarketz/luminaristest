@@ -95,7 +95,9 @@
     "Sale": "Venda",
     "Internal Use": "Uso Interno",
     "Return": "Devolução",
-    "Adjustment": "Ajuste Manual"
+    "Adjustment": "Ajuste Manual",
+    "SALE": "Venda",
+    "RETURN": "Devolução"
   },
   "actions": {
     "register_movement": "Registrar Movimentação",

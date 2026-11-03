@@ -3,8 +3,6 @@ import { apiClient } from '../api/api-client';
 interface DocumentResponse { id?: string; name?: string; [key: string]: unknown }
 interface UploadResponse { id?: string; url?: string; [key: string]: unknown }
 interface TokenCostResponse { tokens?: number; cost?: number; [key: string]: unknown }
-interface QdrantStatusResponse { status?: string; [key: string]: unknown }
-interface QdrantPointsResponse { points?: unknown[]; [key: string]: unknown }
 interface DeleteResponse { success?: boolean; [key: string]: unknown }
 
 export const DocumentService = {
@@ -60,14 +58,6 @@ export const DocumentService = {
     // The server answers { success, data: { tokens, charCount } }.
     const body = await response.json() as { data?: TokenCostResponse } & TokenCostResponse;
     return body.data ?? body;
-  },
-
-  async getQdrantStatus(): Promise<QdrantStatusResponse> {
-    return apiClient.get('/documents/qdrant-status');
-  },
-
-  async getQdrantPoints(docId: string): Promise<QdrantPointsResponse> {
-    return apiClient.get(`/documents/${docId}/qdrant`);
   },
 
   async deleteDocument(docId: string): Promise<DeleteResponse> {

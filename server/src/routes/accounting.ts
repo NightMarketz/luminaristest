@@ -192,12 +192,38 @@ import {
   upsertServiceFiscalProfile,
 } from '../controllers/serviceFiscalProfileController';
 import {
+  deleteProductFiscalProfile,
+  getProductFiscalProfile,
+  listProductFiscalProfiles,
+  upsertProductFiscalProfile,
+} from '../controllers/productFiscalProfileController';
+import {
   createIssBeneficioMunicipal,
   deleteIssBeneficioMunicipal,
   getIssBeneficioMunicipal,
   listIssBeneficiosMunicipais,
   updateIssBeneficioMunicipal,
 } from '../controllers/issBeneficioMunicipalController';
+import {
+  acceptTaxSuggestion,
+  createServiceCost,
+  deleteServiceCost,
+  getTaxOptimizationPolicy,
+  listServiceCosts,
+  listTaxSuggestions,
+  rejectTaxSuggestion,
+  getTaxOptimizationReport,
+  updateTaxOptimizationPolicy,
+} from '../controllers/taxOptimizationController';
+import { avaliarServicosFiscais } from '../controllers/servicoFiscalAvaliacaoController';
+import {
+  proporFatorR,
+  proporRegime,
+  proporRemuneracaoSocio,
+  simularFatorR,
+  simularRegime,
+  simularRemuneracaoSocio,
+} from '../controllers/taxSimulationController';
 import {
   deleteProductDestination,
   listProductDestinations,
@@ -209,6 +235,18 @@ import {
   getFiscalCertificate,
   putFiscalCertificate,
 } from '../controllers/fiscalCertificateController';
+import {
+  authorizePscCredential,
+  createPscProvider,
+  deletePscCredential,
+  deletePscProvider,
+  getPscCredential,
+  listPscProviders,
+  pscCredentialCallback,
+  updatePscProvider,
+} from '../controllers/pscCredentialController';
+import { deleteNfceCsc, listNfceCscs, putNfceCsc } from '../controllers/nfceCscController';
+import { getNfceContingencia, putNfceContingencia } from '../controllers/nfceContingenciaController';
 import { confirmIbsCbsAssessment, getIbsCbsResumo, listIbsCbsAssessments, previewIbsCbsAssessment, reconcileIbsCbsProvisao } from '../controllers/ibsCbsAssessmentController';
 import { apropriarCreditoIbsCbs } from '../controllers/payableController';
 
@@ -251,6 +289,24 @@ router.get('/journal-entries/:journalEntryId/attachments', listDocumentAttachmen
 router.put('/fiscal-certificates/:unitId', fiscalCertificateUpload, putFiscalCertificate);
 router.get('/fiscal-certificates/:unitId', getFiscalCertificate);
 router.delete('/fiscal-certificates/:unitId', deleteFiscalCertificate);
+
+// Credencial do PSC por unidade + cadastro dos PSCs (X10a PR-7; EMENDA-PSC E-2..E-5). `callback` é estático e vem
+// ANTES de '/:unitId'; é público (publicApiRoutes) — a prova é o `state` assinado.
+router.get('/psc-credentials/callback', pscCredentialCallback);
+router.post('/psc-credentials/:unitId/authorize', authorizePscCredential);
+router.get('/psc-credentials/:unitId', getPscCredential);
+router.delete('/psc-credentials/:unitId', deletePscCredential);
+// X10a PR-8 (D-2026-10-29-X10A-PR7-9-FORKS decisão 3): CSC da NFC-e por unidade e ambiente.
+router.put('/nfce-cscs/:unitId', putNfceCsc);
+router.get('/nfce-cscs/:unitId', listNfceCscs);
+router.delete('/nfce-cscs/:unitId', deleteNfceCsc);
+// X10a PR-9 (E-9; decisões 4 e 8): contingência off-line da NFC-e por unidade e ambiente.
+router.put('/nfce-contingencia/:unitId', putNfceContingencia);
+router.get('/nfce-contingencia/:unitId', getNfceContingencia);
+router.get('/psc-providers', listPscProviders);
+router.post('/psc-providers', createPscProvider);
+router.patch('/psc-providers/:id', updatePscProvider);
+router.delete('/psc-providers/:id', deletePscProvider);
 
 // Formal provenance on an already-posted entry (BE-INCR-PROVENANCE-ATTACH / NFE-X).
 // Distinct from /attachments above: that one stores a FILE; this one records the FISCAL
@@ -399,12 +455,37 @@ router.get('/service-fiscal-profiles', listServiceFiscalProfiles);
 router.get('/service-fiscal-profiles/:serviceRef', getServiceFiscalProfile);
 router.put('/service-fiscal-profiles/:serviceRef', upsertServiceFiscalProfile);
 router.delete('/service-fiscal-profiles/:serviceRef', deleteServiceFiscalProfile);
+// BE-INCR-NFCE (nó X10a, item 30): perfil fiscal do produto (F-NFCE-3 b)
+router.get('/product-fiscal-profiles', listProductFiscalProfiles);
+router.get('/product-fiscal-profiles/:productRef', getProductFiscalProfile);
+router.put('/product-fiscal-profiles/:productRef', upsertProductFiscalProfile);
+router.delete('/product-fiscal-profiles/:productRef', deleteProductFiscalProfile);
 // SIMPLES-PISO-ANEXO-XI bloco 1 (BRIEF item 1): benefício municipal de ISS (Res. CGSN 140 arts. 31-32)
 router.get('/iss-beneficios-municipais', listIssBeneficiosMunicipais);
 router.post('/iss-beneficios-municipais', createIssBeneficioMunicipal);
 router.get('/iss-beneficios-municipais/:id', getIssBeneficioMunicipal);
 router.put('/iss-beneficios-municipais/:id', updateIssBeneficioMunicipal);
 router.delete('/iss-beneficios-municipais/:id', deleteIssBeneficioMunicipal);
+// EFICIENCIA-FISCAL PR-1 (BRIEF itens 5 e 7, §4.3): política de eficiência fiscal, custo de serviço (piso) e sugestões.
+router.get('/tax-optimization/policy', getTaxOptimizationPolicy);
+router.put('/tax-optimization/policy', updateTaxOptimizationPolicy);
+router.get('/tax-optimization/service-costs', listServiceCosts);
+router.post('/tax-optimization/service-costs', createServiceCost);
+router.delete('/tax-optimization/service-costs/:id', deleteServiceCost);
+router.get('/tax-optimization/suggestions', listTaxSuggestions);
+router.post('/tax-optimization/suggestions/:id/accept', acceptTaxSuggestion);
+router.post('/tax-optimization/suggestions/:id/reject', rejectTaxSuggestion);
+// EFICIENCIA-FISCAL PR-3 (BRIEF itens 15–18, §4.3): simuladores (GET não grava) e o POST gêmeo que grava a sugestão do SYSTEM.
+// O fator r fica sob /simples: o router de /accounting/simples (montado antes) não tem a rota e passa adiante.
+router.get('/simples/simulacoes/fator-r', simularFatorR);
+router.post('/simples/simulacoes/fator-r/sugestao', proporFatorR);
+router.get('/simulacoes/regime', simularRegime);
+router.post('/simulacoes/regime/sugestao', proporRegime);
+router.get('/simulacoes/remuneracao-socio', simularRemuneracaoSocio);
+router.post('/simulacoes/remuneracao-socio/sugestao', proporRemuneracaoSocio);
+router.get('/tax-optimization/report', getTaxOptimizationReport); // EFICIENCIA-FISCAL PR-4 item 23
+// EFICIENCIA-FISCAL PR-5 (BRIEF itens 27, 30–32; lacuna 4 do dono, 28/10): avaliação dos serviços do ano.
+router.post('/tax-optimization/servicos/avaliar', avaliarServicosFiscais);
 // ITEM-DESTINATION PR-2 (BRIEF item 18, F-ID-2 a) — destinação padrão por produto
 router.get('/product-destinations', listProductDestinations);
 router.put('/product-destinations', upsertProductDestination);

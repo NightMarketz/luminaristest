@@ -1,12 +1,17 @@
 import type { FiscalDocument, FiscalDocumentAttempt, FiscalDocumentPendingAttachment, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 
-export const FISCAL_DOCUMENT_KINDS = ['NFSE', 'NFE'] as const;
+export const FISCAL_DOCUMENT_KINDS = ['NFSE', 'NFE', 'NFCE'] as const; // NFCE: BE-INCR-NFCE item 3
 export type FiscalDocumentKind = (typeof FISCAL_DOCUMENT_KINDS)[number];
 
 // AUTHORIZED_DIVERGENT — BE-INCR-DFE-MANUAL F-MAN-2 (c): nota autorizada no ambiente nacional cuja releitura (XML ×
 // DPS enviada) achou divergência de conteúdo. Só sai cancelando (F-MAN-2b → b).
-export const FISCAL_DOCUMENT_STATUSES = ['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED'] as const;
+// PENDING_SIGNATURE — EMENDA-PSC E-13 (F-PSC-6 a): a sessão do PSC da unidade venceu; a nota espera a reautorização
+// (sem número, se venceu antes de numerar; com o número, se o PSC recusou no envio). Sai pelo `reenviar` ou pelo envio
+// das pendentes no callback OAuth (D-2026-10-29-X10A-PR7-9-FORKS decisão 5).
+// CONTINGENCY — X10a PR-9 (E-9, F-NFCE-E1-5 b): NFC-e emitida em contingência off-line (tpEmis=9), com número e DANFE,
+// ainda não transmitida. O job a transmite enquanto a SEFAZ responder (decisão 7); o resultado sai pelo `applyResult`.
+export const FISCAL_DOCUMENT_STATUSES = ['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED', 'PENDING_SIGNATURE', 'CONTINGENCY'] as const;
 export type FiscalDocumentStatus = (typeof FISCAL_DOCUMENT_STATUSES)[number];
 
 /** Documento autorizado no ambiente nacional — com ou sem divergência na releitura (F-MAN-2 c). */
@@ -26,9 +31,13 @@ export interface CreateSentFiscalDocumentData {
   numero: bigint | null;
   dCompet: string;
   vServCents: bigint;
+  /** EFICIENCIA-FISCAL PR-1 (F-EF-16 a): desconto incondicional destacado (`vDescIncond`); ausente = 0. */
+  vDescIncondCents?: bigint;
   tpRetISSQN: number;
   /** payload da tentativa 1 (imutável — ADR §9.1). */
   payloadJson: string;
+  /** X10a PR-7 (E-13, F-PSC-6 a): `PENDING_SIGNATURE` quando o token do PSC venceu antes do envio. Ausente = `SENT`. */
+  initialStatus?: 'SENT' | 'PENDING_SIGNATURE' | 'CONTINGENCY';
   /**
    * BE-INCR-PACOTE-VALIDADE (§5.2 item 14a, F-PV-9d a): chave de unicidade do documento. Ausente = `saleId`
    * (toda NFS-e de venda); a NFS-e do saldo vencido usa a chave do movimento `expiry:<balanceId>:<expiresOn>`
@@ -78,6 +87,8 @@ export interface TransitionData {
   substitutedByDocumentId?: string | null;
   /** BE-INCR-DFE-EVENTOS (item 7) — anexo do XML do evento e101101. */
   cancelEventAttachmentId?: string | null;
+  /** X10a PR-9 (E-9): o infNFeSupl {qrCode, urlChave} da NFC-e off-line, em JSON. */
+  contingenciaSuplJson?: string | null;
   /**
    * Guarda autoritativa DENTRO da escrita (memória authoritative-gate-inside-tx): a transição só acontece se o status
    * atual estiver aqui; senão o repositório lança `fiscal_document_status_changed`.
@@ -88,6 +99,23 @@ export interface TransitionData {
 }
 
 export type FiscalDocumentWithAttempts = FiscalDocument & { attempts: FiscalDocumentAttempt[] };
+
+/** BE-INCR-NFCE item 23 — o ambiente da sequência: o do documento na NF-e/NFC-e, `''` na NFS-e. */
+export type SequenceAmbiente = 'producao' | 'homologacao' | '';
+
+export interface FiscalSequenceView {
+  ambiente: string;
+  serie: number;
+  last: bigint;
+}
+
+export interface NumberedDocumentView {
+  id: string;
+  ambiente: string;
+  serie: number;
+  numero: bigint;
+  status: FiscalDocumentStatus;
+}
 
 /** BE-INCR-DFE-ANEXO-PENDENTE (BRIEF item 2) — criação da pendência, na tx da autorização. */
 export interface CreatePendingAttachmentData {
@@ -142,6 +170,18 @@ export interface IFiscalDocumentRepository {
   /** SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos. */
   listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
   /**
+   * X10a PR-9 (decisão 7) — `CONTINGENCY` de todas as unidades, em rodízio: a tocada há mais tempo primeiro (`updatedAt`); a
+   * que o job não consegue transmitir é tocada e vai para o fim.
+   */
+  listContingencia(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]>;
+  /**
+   * X10a PR-9 (decisão 7, revisão D) — NFC-e com alguma tentativa `tpEmis=9` ainda sem autorização (CONTINGENCY, SENT,
+   * PROCESSING, REJECTED, PENDING_SIGNATURE), de todas as unidades, com tentativa tpEmis=9 enviada a partir de `desde` (a
+   * âncora é a tentativa, não o documento) — todas, sem teto: o prazo
+   * corre para cada uma, e a que vence primeiro não pode ficar de fora da janela.
+   */
+  listContingenciaNaoAutorizada(desde: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]>;
+  /**
    * BE-INCR-DFE (PR-3, item 28) — busca cross-tenant por `partnerRef`, mesmo desenho de
    * `listPending`: o webhook chega ANTES de o serviço saber a qual escopo pertence (a
    * identidade do documento é reconstruída DEPOIS, a partir do `userId`/`unitId` da linha —
@@ -164,8 +204,23 @@ export interface IFiscalDocumentRepository {
   createSent(scope: AccountingScope, data: CreateSentFiscalDocumentData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts>;
   appendAttempt(scope: AccountingScope, data: AppendAttemptData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentAttempt>;
   transition(scope: AccountingScope, id: string, data: TransitionData, tx?: Prisma.TransactionClient): Promise<FiscalDocument>;
-  /** Próximo número por (escopo, kind, serie) — DENTRO da tx do SENT (ACC-015 por analogia). */
-  nextNumber(scope: AccountingScope, kind: FiscalDocumentKind, serie: number, tx: Prisma.TransactionClient): Promise<bigint>;
+  /**
+   * Próximo número por (escopo, kind, ambiente, serie) — DENTRO da tx do SENT (ACC-015 por analogia). BE-INCR-NFCE item 23
+   * (F-NFCE-4 a): NF-e/NFC-e passam o ambiente do documento; a NFS-e passa `''` (sem ambiente, lacuna no GAP-MAP).
+   */
+  nextNumber(scope: AccountingScope, kind: FiscalDocumentKind, ambiente: SequenceAmbiente, serie: number, tx: Prisma.TransactionClient): Promise<bigint>;
+  /** BE-INCR-NFCE item 25 — as sequências do escopo para o tipo (todas as séries e ambientes), com o último número consumido. */
+  listSequences(scope: AccountingScope, kind: FiscalDocumentKind, tx?: Prisma.TransactionClient): Promise<FiscalSequenceView[]>;
+  /**
+   * BE-INCR-NFCE itens 24–25 — documentos (deletedAt null, qualquer status) do tipo com número, opcionalmente só os da
+   * faixa `[nIni, nFin]` de um (ambiente, serie). Chamado DENTRO da tx da inutilização para a guarda da rej. 241.
+   */
+  listNumbered(
+    scope: AccountingScope,
+    kind: FiscalDocumentKind,
+    faixa?: { ambiente: string; serie: number; nIni: bigint; nFin: bigint },
+    tx?: Prisma.TransactionClient,
+  ): Promise<NumberedDocumentView[]>;
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 
   // ---- BE-INCR-DFE-ANEXO-PENDENTE (BRIEF item 2) — único lugar com `prisma.fiscalDocumentPendingAttachment.*` ----

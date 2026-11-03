@@ -43,6 +43,11 @@ export interface ItemDestinationMapping {
   productRef?: string;
   classId?: string;
   destination?: ItemDestination;
+  // C8 emenda 3.2 (E3): imobilizado direto na despesa — sem classId, destinação IMOBILIZADO.
+  treatment?: 'CAPITALIZE' | 'EXPENSE';
+  expenseAccountId?: string;
+  setDeclared?: boolean;
+  usefulLifeUpToOneYear?: boolean;
 }
 
 export interface ResolvedItemDestination {
@@ -72,7 +77,7 @@ export function resolveDestinations(
     const productDefault = m?.productRef != null ? defaultByProductRef.get(m.productRef) : undefined;
     let destination: ItemDestination = 'REVENDA';
     let origem: ItemDestinationOrigin = 'FALLBACK';
-    if (m?.classId != null) {
+    if (m?.classId != null || m?.treatment === 'EXPENSE') {
       destination = 'IMOBILIZADO';
       origem = 'OVERRIDE';
     } else if (m?.destination != null) {

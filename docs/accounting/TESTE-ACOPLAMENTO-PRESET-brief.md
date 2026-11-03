@@ -299,6 +299,22 @@ ela morrer, a fatia de `importantFields` de `KNOWN_GAPS` some junto (o critério
   `PLUGIN_MANIFEST` no FIX-PLUGINS-VENDA, como o F-TAP-2 já previa.
 - `filters[].field` e `measures[].field` dos pipelines não são varridos (o item 5 pede `*Field`); se o
   FIX-ANALYTICS-RESIDUO quiser a rede completa do pipeline, é extensão do mesmo varredor.
+- **Colunas do detalhe em KPI `mixed`: aceito como está** (dono, questionário, 2026-10-25, opção escolhida "Aceitar e
+  documentar"; tarefa autorizada no chat do FIX-ANALYTICS-RESIDUO: "Esse aqui pode ser resolvido em outra sessão").
+  A regra (b) aceita o campo que existe em pelo menos uma das tabelas. Nos KPIs `mixed`, o `resolveChartDetails` devolve
+  em `recordsByTable` as linhas de `sales` e as de `expenses` (`costSourceTableKey || expensesTableKey`), mas uma
+  lista só de colunas, sem índice por tabela. Colunas que ficam vazias nas linhas de `expenses`:
+  - lucro (Lucro Bruto/Líquido, Margens, os demais pelo *default*): `date`, `totalAmount`, `status`;
+  - Fluxo de Caixa Operacional e os demais `mixed` de caixa pelo *default*: `date`, `totalAmount`, `status`.
+    `paymentStatus` existe nas duas tabelas.
+
+  `amount`, `paymentDate` e `category` da despesa não aparecem. **"Lucro Médio por Cliente" não entra nessa lista.**
+  O `ProfitKpiProcessor` o emite com `tableSource: mainTableSource` e `recordIds: currentPeriodRevenueIds`, e o
+  manifesto `PROCESSOR_KPI_SOURCES` diz `main`. O detalhe dele busca só `sales`, onde os 4 campos existem. O valor
+  (lucro líquido ÷ clientes distintos) usa as despesas, mas as linhas de despesa não entram no detalhe. Hoje nenhuma
+  tela do `my-app` chama a rota. Quem construir a tela de detalhe vai precisar de colunas por tabela. As opções
+  levantadas no questionário foram: o resolver cruzar as colunas com o schema de cada tabela, ou `importantFields`
+  indexado por tabela, o que muda o `ChartPreset`.
 
 ### Gates rodados
 

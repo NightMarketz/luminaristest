@@ -1,0 +1,32 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "AJUSTE SINIEF 19/16 — Conselho Nacional de Política Fazendária CONFAZ",
+      "url": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2016/AJ_019_16",
+      "url_final": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2016/AJ_019_16",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-26T17:09:02-03:00",
+      "sha256": "6692d344259fba1448dcb53b50385d9eb9106cec341af56c09316409feaa3570",
+      "arquivo": "docs/D01_AJ_019_16.html",
+      "texto": "docs/D01_AJ_019_16.txt",
+      "bytes": 126430
+    },
+    {
+      "id": "D02",
+      "titulo": "AJUSTE SINIEF 7/05 — Conselho Nacional de Política Fazendária CONFAZ",
+      "url": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2005/AJ007_05",
+      "url_final": "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2005/AJ007_05",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-26T17:09:02-03:00",
+      "sha256": "f44adf45f3e22df040e5dc588c5aa5d944b0a7a468ea90adecc000e405843670",
+      "arquivo": "docs/D02_AJ007_05.html",
+      "texto": "docs/D02_AJ007_05.txt",
+      "bytes": 194604
+    }
+  ],
+  "buscas": [],
+  "slug": "x10a-pr0-leiaute-saida",
+  "pergunta": "PR-0 do X10a: leiaute de saída NF-e/NFC-e (MOC 7.0 VG + Anexo I), grupo UB da NT 2025.002 v1.52, NT 2025.001 v1.03; reuso de número de nota rejeitada; Aj. SINIEF 19/16 cl. 4ª VII (NFC-e sem destinatário abaixo de R$ 10 mil)",
+  "criado": "2026-10-26T17:08:45-03:00"
+}

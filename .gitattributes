@@ -5,6 +5,8 @@
 .claude/workflows/*.mjs  text eol=lf
 .claude/skills/**/*.mjs  text eol=lf
 my-app/types/contracts/**/*.gen.ts text eol=lf linguist-generated=true
+# XSD oficiais da EFD-Reinf: cópia byte a byte do zip da RFB (CRLF incluso) — sem normalização de fim de linha.
+server/src/lib/reinf/xsd/*.xsd -text
 
 # Artefatos GERADOS: conflito neles nunca se resolve à mão. O driver `regen` mantém o lado
 # atual sem conflito; depois do merge/rebase rode `scripts/regen-generated.sh` e comite.

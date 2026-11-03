@@ -1,4 +1,220 @@
 {
+  "FiscalCheckDto.ts": {
+    "FiscalCheckBodySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "FiscalCheckParamsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "FiscalCheckResponseSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "saleId": {
+          "type": "string"
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "criterio": {
+          "type": "string",
+          "enum": [
+            "PROPORCIONAL_CATALOGO",
+            "CARGA_TRIBUTARIA"
+          ]
+        },
+        "violations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "ITEM_ABAIXO_DO_PISO",
+                  "COMBO_ABAIXO_DO_CUSTO",
+                  "ITEM_ACIMA_DO_CATALOGO",
+                  "PRECO_DIFERENTE_DO_CATALOGO_SEM_DESCONTO",
+                  "DESCONTO_FORA_DO_DOCUMENTO",
+                  "DESCONTO_CONDICIONAL_COMO_INCONDICIONAL",
+                  "RATEIO_NAO_FECHA",
+                  "KIT_SEM_PRINCIPAL",
+                  "SEM_CUSTO",
+                  "ORDEM_DE_CARGA_INDETERMINADA",
+                  "CRITERIO_CARGA_EXIGE_CONTADOR"
+                ]
+              },
+              "itemRef": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "BLOCK",
+                  "WARN"
+                ]
+              },
+              "legalBasis": {
+                "type": "string"
+              },
+              "detail": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "itemRef",
+              "severity",
+              "legalBasis",
+              "detail"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "alocacao": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "itemRef": {
+                "type": "string"
+              },
+              "discountCents": {},
+              "pisoCents": {
+                "anyOf": [
+                  {},
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "cargaBp": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "itemRef",
+              "discountCents",
+              "pisoCents",
+              "cargaBp"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "economiaPotencialCents": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "suggestionId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "saleId",
+        "ok",
+        "criterio",
+        "violations",
+        "alocacao",
+        "economiaPotencialCents",
+        "suggestionId"
+      ],
+      "additionalProperties": false
+    },
+    "FiscalCheckViolationSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "ITEM_ABAIXO_DO_PISO",
+            "COMBO_ABAIXO_DO_CUSTO",
+            "ITEM_ACIMA_DO_CATALOGO",
+            "PRECO_DIFERENTE_DO_CATALOGO_SEM_DESCONTO",
+            "DESCONTO_FORA_DO_DOCUMENTO",
+            "DESCONTO_CONDICIONAL_COMO_INCONDICIONAL",
+            "RATEIO_NAO_FECHA",
+            "KIT_SEM_PRINCIPAL",
+            "SEM_CUSTO",
+            "ORDEM_DE_CARGA_INDETERMINADA",
+            "CRITERIO_CARGA_EXIGE_CONTADOR"
+          ]
+        },
+        "itemRef": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "BLOCK",
+            "WARN"
+          ]
+        },
+        "legalBasis": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "itemRef",
+        "severity",
+        "legalBasis",
+        "detail"
+      ],
+      "additionalProperties": false
+    }
+  },
   "RegisterPaymentDto.ts": {
     "RegisterPaymentSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",

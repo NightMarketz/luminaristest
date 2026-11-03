@@ -15,7 +15,10 @@ import {
   rejeicaoManualFiscalDocument,
   cancelamentoManualFiscalDocument,
   getFichaFiscalDocument,
+  getDanfeFiscalDocument,
   substituirFiscalDocument,
+  inutilizarNumeracao,
+  listInutilizacoesPendentes,
 } from '../controllers/fiscalDocumentController';
 
 /**
@@ -42,9 +45,14 @@ router.post('/documents/:id/cancelar', cancelarFiscalDocument);
 router.post('/documents/:id/substituir', substituirFiscalDocument);
 // BE-INCR-DFE-MANUAL (itens 11–14) — modo manual: o retorno vem do portal público, por upload do XML.
 router.get('/documents/:id/ficha', getFichaFiscalDocument);
+// NFE-DANFE-IBSCBS PR-3 (item 19) — PDF do DANFE da NF-e 55, sob demanda, só do XML autorizado.
+router.get('/documents/:id/danfe', getDanfeFiscalDocument);
 router.post('/documents/:id/retorno-manual', retornoManualUpload, retornoManualFiscalDocument);
 router.post('/documents/:id/rejeicao-manual', rejeicaoManualFiscalDocument);
 router.post('/documents/:id/cancelamento-manual', eventoManualUpload, cancelamentoManualFiscalDocument);
+// BE-INCR-NFCE (nó X10a, itens 24–25) — inutilização de faixa de NF-e/NFC-e e lacunas de numeração (o sistema lista, o operador pede).
+router.post('/inutilizacoes', inutilizarNumeracao);
+router.get('/inutilizacoes/pendentes', listInutilizacoesPendentes);
 // PÚBLICA (F-DFE-12) — listada em publicApiRoutes (middleware/auth.ts); NUNCA GET (HEAD deriva de
 // GET no Express — memória critical-auth-bypass-case-sensitive-guard — por isso só POST aqui).
 router.post('/webhook/:partner', receiveDfeWebhook);

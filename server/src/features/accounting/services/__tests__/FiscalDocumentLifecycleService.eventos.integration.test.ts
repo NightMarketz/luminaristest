@@ -7,7 +7,7 @@
  */
 const mockPort = {
   name: 'null',
-  capabilities: { numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true },
+  capabilities: { kinds: ['NFSE', 'NFE', 'NFCE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: true, inutilizar: false, cce: false },
   emitir: jest.fn(),
   consultar: jest.fn(),
   cancelar: jest.fn(),
@@ -40,6 +40,7 @@ const service = new FiscalDocumentLifecycleService(
   { attachSourceDocument, retireSourceDocument } as never,
   { canEmitFiscalDocument: () => true, canCancelFiscalDocument: () => true } as never,
   { append } as never,
+  { findOverlapping: async () => [] } as never, // BE-INCR-NFCE PR-4: faixas inutilizadas (reenvio)
 );
 
 const CH_ORIGINAL = '3'.repeat(50);

@@ -53,6 +53,21 @@ export const LEGAL_PARAMETER_TABELAS = [
   'IRRF_PF_MENSAL',
   // ISS-TRANSICAO-IBS PR-1 (BRIEF item 2): fator de redução do ISS em 2029–2032 (LC 116 art. 8º-B I–IV, incl. LC 214 art. 508).
   'ISS_TRANSICAO',
+  // BE-INCR-NFCE PR-3 (nó X10a, item 17 pela A9; D-2026-10-26-X10A-EXECUCAO): limites da NFC-e (Aj. SINIEF 19/16 cl. 4ª VII
+  // "a" e § 4º), valor nacional sem discriminador e redução por UF (§ 5º) com o código IBGE da UF.
+  'NFCE_LIMITE',
+  // BE-INCR-NFCE PR-4 (nó X10a, EMENDA-3 F-NFCE-E3-2 a): UF onde o pedido de inutilização "não se aplica" desde 01/11/2026
+  // (Aj. SINIEF 40/26 na NF-e, 38/26 na NFC-e) — aviso na lista de lacunas, não recusa (E3-1 c).
+  'INUT_NAO_SE_APLICA',
+  // BE-INCR-EFICIENCIA-FISCAL PR-2 (item 11; F-EF-5 a; D-2026-10-27-EFICIENCIA-FISCAL-PR2-EXECUCAO): NCM sob ICMS-ST por UF
+  // (IBGE no discriminador) — segregação do Simples (LC 123 art. 18 § 4º-A I). Consumidor = models/segregacaoNcm.ts.
+  'ICMS_ST_NCM_UF',
+  // BE-INCR-EFICIENCIA-FISCAL PR-3 (itens 15–17; D-2026-10-28-EFICIENCIA-FISCAL-PR3-EXECUCAO decisão 1): encargos da folha
+  // (INSS do contribuinte individual, patronal, FGTS, teto do RGPS). Consumidor = models/taxSimulation.ts.
+  'ENCARGO_FOLHA',
+  // EFICIENCIA-FISCAL PR-5 (item 32; F-EF-8/11 a): serviços de saúde com redução de 60 % do IBS/CBS a partir de 2027 (LC 214
+  // art. 130 e Anexo III), chave = prefixo de NBS. Consumidor = models/servicoFiscalAvaliacao.ts.
+  'IBS_CBS_REDUCAO_NBS',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

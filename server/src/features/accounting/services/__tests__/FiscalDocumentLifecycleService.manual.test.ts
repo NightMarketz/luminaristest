@@ -112,6 +112,7 @@ function makeService(doc: ReturnType<typeof manualDoc>, opts: { outroComChave?: 
     postingService as never,
     policy as never,
     auditService as never,
+    { findOverlapping: async () => [] } as never, // BE-INCR-NFCE PR-4: faixas inutilizadas (reenvio)
   );
   return { service, repo, documentAttachmentService, postingService, auditService };
 }

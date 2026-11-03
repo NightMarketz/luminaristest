@@ -120,3 +120,48 @@ describe('CreatePayableModal — braço de inventário (XOR)', () => {
     expect(screen.getByRole('button', { name: 'Registrar' })).toHaveProperty('disabled', true);
   });
 });
+
+describe('CreatePayableModal — deep link do MovementModal (initialInventory)', () => {
+  it('abre no braço estoque com produto e quantidade do link; o payload leva os dois', async () => {
+    render(
+      <CreatePayableModal
+        isOpen
+        onClose={() => {}}
+        unitId="u1"
+        expenseAccounts={expenseAccounts}
+        onSuccess={() => {}}
+        initialInventory={{ productRef: 'prod-2', qty: 4 }}
+      />,
+    );
+    expect(screen.getByRole('radio', { name: 'Compra de estoque' })).toHaveAttribute('aria-checked', 'true');
+    await waitFor(() => expect(screen.getByText('Condicionador')).toBeInTheDocument());
+    expect(screen.getByPlaceholderText('0')).toHaveProperty('value', '4');
+
+    fillCommonFields();
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar' }));
+
+    await waitFor(() => expect(accountsPayableService.createPayable).toHaveBeenCalledTimes(1));
+    const payload = vi.mocked(accountsPayableService.createPayable).mock.calls[0][0];
+    expect(payload.inventoryProductRef).toBe('prod-2');
+    expect(payload.inventoryQty).toBe(4);
+    expect(payload).not.toHaveProperty('expenseAccountId');
+  });
+});
+
+// Achado (C) do runbook H2 (29/10): a dica dizia "Debita 1.1.6 Estoques", mas a compra lança em 1.1.3.01
+// (ESTOQUES_CODE do plano do servidor; o 1.1.6 foi renumerado). A dica tem de nomear a conta que o razão mostra.
+describe('CreatePayableModal — dica do modo estoque nomeia a conta real', () => {
+  it('o default e os dois locales citam 1.1.3.01, nunca 1.1.6', async () => {
+    renderModal();
+    fireEvent.click(screen.getByRole('radio', { name: 'Compra de estoque' }));
+    expect(screen.getByText(/Debita 1\.1\.3\.01 Estoques/)).toBeInTheDocument();
+
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    for (const lng of ['pt', 'en']) {
+      const json = JSON.parse(fs.readFileSync(path.resolve(__dirname, `../../../../public/locales/${lng}/accounting.json`), 'utf8'));
+      const hint: string = json.contasAPagar.createModal.mode.inventoryHint;
+      expect({ lng, hint: hint.includes('1.1.3.01') && !hint.includes('1.1.6') }).toEqual({ lng, hint: true });
+    }
+  });
+});

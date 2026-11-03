@@ -38,7 +38,8 @@
       "politica": "Política contábil",
       "apuracao": "Apuração",
       "pendencias": "Pendências",
-      "cobranca": "Cobrança"
+      "cobranca": "Cobrança",
+      "kit": "Kit de setor"
     },
     "error": {
       "units": "Falha ao carregar as unidades.",
@@ -66,7 +67,9 @@
       "OPEN": "Em aberto",
       "PAYING": "Em pagamento",
       "PAID": "Paga",
-      "CANCELLED": "Cancelada"
+      "CANCELLED": "Cancelada",
+      "PARTIALLY_PAID": "Paga em parte",
+      "DEFERRED": "Adiada"
     },
     "col": {
       "expand": "Expandir",
@@ -135,7 +138,7 @@
       "mode": {
         "expense": "Despesa",
         "inventory": "Compra de estoque",
-        "inventoryHint": "Debita 1.1.6 Estoques e valora o produto pelo custo médio — o valor acima é o TOTAL da compra."
+        "inventoryHint": "Debita 1.1.3.01 Estoques e valora o produto pelo custo médio — o valor acima é o TOTAL da compra."
       },
       "noProducts": "Nenhum produto no catálogo. Cadastre produtos no módulo de estoque."
     },
@@ -144,6 +147,9 @@
       "paidAtLabel": "Data do pagamento",
       "reversalDateLabel": "Data da reversão",
       "methodLabel": "Forma de pagamento",
+      "method": {
+        "Cash": "Dinheiro"
+      },
       "reasonLabel": "Motivo",
       "payTitle": "Registrar pagamento",
       "payConfirm": "Confirmar pagamento",
@@ -243,6 +249,9 @@
       "receivedAtLabel": "Data do recebimento",
       "reversalDateLabel": "Data da reversão",
       "methodLabel": "Forma de recebimento",
+      "method": {
+        "Cash": "Dinheiro"
+      },
       "reasonLabel": "Motivo",
       "receiveTitle": "Registrar recebimento",
       "receiveConfirm": "Confirmar recebimento",
@@ -663,6 +672,7 @@
     "reverseAction": {
       "enabledTitle": "Estornar este lançamento",
       "disabledTitle": "Lançamento já estornado",
+      "notPostedTitle": "Só lançamentos postados podem ser estornados",
       "label": "Estornar"
     },
     "receiptAction": {
@@ -2524,7 +2534,8 @@
         "vDescCond": "Desconto condicionado",
         "vDescIncond": "Desconto incondicionado",
         "vServ": "Valor do Serviço prestado",
-        "xDescServ": "Descrição do Serviço"
+        "xDescServ": "Descrição do Serviço",
+        "totTrib": "Valor aproximado dos tributos"
       },
       "homologacaoSemLink": "Homologação: use o ambiente de produção restrita do portal (endereço a confirmar no runbook — PV-7).",
       "howto": "Use a Emissão Completa do portal. Copie cada valor no campo de mesmo nome; os marcados \"conferido na volta\" são comparados com o XML autorizado.",
@@ -2541,7 +2552,9 @@
         "naoInformado": "Não informado.",
         "prestador": "Marque Prestador.",
         "retidoSim": "Sim, retido pelo tomador.",
-        "tributavel": "Operação tributável."
+        "tributavel": "Operação tributável.",
+        "fedMei": "Sem tributação federal na nota do MEI — não informe.",
+        "totTribMei": "Não informe — facultativo para o MEI."
       },
       "note": {
         "aliquota": "conferência — o portal pode calcular",
@@ -2552,6 +2565,7 @@
       },
       "opSimpNac": {
         "1": "1 — Não optante",
+        "2": "2 — Optante MEI",
         "3": "3 — Optante ME/EPP"
       },
       "portalLink": "Abrir o Emissor Nacional",
@@ -2983,7 +2997,19 @@
       "RBT12_INCOMPLETO": "RBT12 incompleto",
       "SEGREGACAO_MANUAL": "Segregação manual",
       "SUBLIMITE_ICMS_ISS": "Sublimite do ICMS/ISS",
-      "TIEOUT_DIVERGENTE": "Subrazão × razão divergentes"
+      "TIEOUT_DIVERGENTE": "Subrazão × razão divergentes",
+      "SEM_NCM": "Revenda sem NCM no perfil do produto",
+      "SEGREGACAO_DIVERGE": "Segregação manual diverge da NCM",
+      "SEGREGACAO_INDEVIDA": "Segregação monofásica sem NCM que a sustente",
+      "ICMS_ST_NAO_CONFERIDA": "ICMS-ST não conferido para a NCM",
+      "PARCERIA_COTA_SEM_CONTRATO": "Cota do parceiro sem contrato em efeito",
+      "PARCERIA_SEM_COTA": "Parceria em efeito sem cota no mês",
+      "PARCEIRO_SEM_CNPJ": "Profissional-parceiro sem CNPJ declarado",
+      "PARCERIA_CHECKLIST_INCOMPLETO": "Cláusula da parceria não declarada",
+      "INTERDEPENDENCIA_SOCIO": "Sócio com participação que veda o Simples",
+      "INTERDEPENDENCIA_RECEITA_NAO_INFORMADA": "Receita da outra empresa do sócio não informada",
+      "PROJECAO_LIMITE_EPP": "Projeção do ano perto do limite da EPP",
+      "PROJECAO_SUBLIMITE_ICMS_ISS": "Projeção do ano perto do sublimite do ICMS/ISS"
     },
     "alertas": {
       "title": "Alertas"
@@ -3442,6 +3468,21 @@
       "PARTIALLY_REFUNDED": "Estornada em parte",
       "PENDING": "Pendente",
       "REFUNDED": "Estornada"
+    },
+    "list": {
+      "title": "Cobranças da unidade",
+      "filterStatus": "Status",
+      "filterKind": "Tipo",
+      "all": "Todos",
+      "loading": "Carregando cobranças…",
+      "empty": "Nenhuma cobrança nesta unidade com estes filtros.",
+      "error": "Erro ao carregar as cobranças da unidade.",
+      "openReceivable": "Abrir o título no Contas a Receber",
+      "noNumber": "sem nº",
+      "receivableCancelled": "cancelado",
+      "col": {
+        "receivable": "Título"
+      }
     }
   },
   "paymentProvider": {
@@ -3520,6 +3561,91 @@
       "hint": "Cole esta URL no painel do Mercado Pago (Notificações/Webhooks). O webhook só se configura lá, em URL HTTPS de produção.",
       "notProduction": "Atenção: a base da API não é HTTPS público (ou aponta para localhost). O Mercado Pago não alcança esta URL.",
       "title": "URL do webhook"
+    }
+  },
+  "kit": {
+    "loading": "Carregando o kit de setor…",
+    "loadError": "Não foi possível carregar o kit de setor da unidade.",
+    "none": "Esta unidade não tem kit de setor instalado.",
+    "version": "Versão {{installed}}",
+    "versionNewer": "Versão {{installed}} instalada · versão {{latest}} disponível",
+    "lastRunFailed": "A última atualização do kit falhou.",
+    "changelog": "O que muda nas versões novas",
+    "changelogVersion": "Versão {{version}}",
+    "installing": "Instalação do kit em andamento.",
+    "failed": "A instalação do kit parou no meio, no passo {{step}} de 7.",
+    "resume": {
+      "button": "Retomar instalação",
+      "success": "Instalação do kit concluída.",
+      "error": "Não foi possível retomar a instalação do kit.",
+      "confirm": {
+        "title": "Retomar a instalação do kit?",
+        "message": "A instalação continua do passo {{step}}; os passos já concluídos não são refeitos.",
+        "confirmLabel": "Retomar",
+        "cancelLabel": "Cancelar"
+      }
+    },
+    "warnings": {
+      "KIT_REFERENTIAL_SKIPPED_NO_REGIME": "O referencial não foi instalado porque a empresa não tem regime definido.",
+      "KIT_REFERENTIAL_SKIPPED_NO_CATALOG": "Não há referencial publicado para o ano."
+    },
+    "pending": {
+      "count": "Pendências da atualização do kit: {{total}}",
+      "error": "Não foi possível carregar as pendências."
+    },
+    "reasons": {
+      "override": "A conta do papel foi ajustada nesta unidade",
+      "account_deleted_by_user": "A conta foi apagada nesta unidade",
+      "account_changed_in_use": "A conta mudou no kit e já tem lançamentos",
+      "field_set_by_user": "O campo já foi preenchido nesta unidade",
+      "referential_year_frozen": "O referencial do ano já foi usado numa ECD",
+      "referential_mapped_differently": "A conta já tem outro código referencial nesta unidade"
+    },
+    "decide": {
+      "accept": "Aceitar",
+      "reject": "Recusar",
+      "acceptedToast": "Pendência aceita.",
+      "rejectedToast": "Pendência recusada.",
+      "error": "Não foi possível decidir a pendência.",
+      "motivoLabel": "Motivo (10 a 500 caracteres)",
+      "confirm": {
+        "acceptTitle": "Aceitar a pendência {{item}}?",
+        "rejectTitle": "Recusar a pendência {{item}}?",
+        "cancelLabel": "Cancelar"
+      },
+      "effects": {
+        "reject": "Recusar mantém o valor desta unidade; a pendência não volta nesta versão do kit.",
+        "generic": "Esta decisão altera o plano ou o binding da unidade.",
+        "accept": {
+          "override": "Aceitar remove o ajuste da conta deste papel e recompila o binding com a conta do kit.",
+          "account_deleted_by_user": "Aceitar restaura a conta apagada e recompila o binding.",
+          "account_changed_in_use": "Aceitar renomeia a conta para o nome do kit.",
+          "field_set_by_user": "Aceitar grava a conta do kit por cima do valor preenchido nesta unidade.",
+          "referential_year_frozen": "Este item é de um ano congelado: aceitar não é possível, só recusar.",
+          "referential_mapped_differently": "Aceitar troca o código referencial da conta pelo do kit."
+        }
+      },
+      "errors": {
+        "KIT_PENDING_NOT_OPEN": "Esta pendência já foi decidida por outra pessoa; a lista foi atualizada.",
+        "KIT_PENDING_NOT_FOUND": "Pendência não encontrada; a lista foi atualizada.",
+        "KIT_PENDING_FROZEN_YEAR": "Este item é de um ano congelado (ECF transmitida ou período fechado): só dá para recusar.",
+        "COMPILE_DRAFT": "A recompilação do binding reprovou; nada foi aplicado.",
+        "ACCOUNT_NOT_FOUND": "A conta do kit não está viva no plano da unidade.",
+        "KIT_NOT_INSTALLED": "O kit da unidade não está instalado; retome a instalação antes de decidir."
+      }
+    }
+  },
+  "reinf": {
+    "avisos": {
+      "PF_SERVICO_FORA_DA_REINF": "{{quantidade}} retenção(ões) de pessoa física por serviço fora da Reinf: declare fora do sistema até o cadastro de dependentes.",
+      "DIVIDENDO_PJ_FORA_DA_REINF": "{{quantidade}} distribuição(ões) de lucros a sócio PJ fora da Reinf até o contador responder.",
+      "NATUREZA_NAO_CONFERIDA": "{{quantidade}} natureza(s) do rendimento vêm do perfil de retenção e ainda não foram conferidas pelo contador.",
+      "DEFASADO_RETIFICAR": "{{quantidade}} evento(s) de lote anterior com origem estornada: retifique.",
+      "REABRIR_ANTES": "{{quantidade}} evento(s) já transmitido(s): reabra o período antes de retificar."
+    },
+    "erros": {
+      "NATUREZA_RENDIMENTO_SEM_MAPA": "Uma retenção não tem natureza do rendimento publicada: confira o perfil de retenção do fornecedor.",
+      "REINF_SEM_CONTATO": "Indique no perfil fiscal o contador com CPF: ele é o contato do R-1000."
     }
   }
 }

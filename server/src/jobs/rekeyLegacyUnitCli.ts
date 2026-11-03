@@ -49,7 +49,7 @@ export const REKEY_MODELS = [
   'BankStatement', 'BankStatementLine', 'ReconciliationMatch', 'SourceDocument', 'JournalEntrySource',
   'CustomerPackageBalance', 'PackageBalanceMovement', 'Payable', 'PayablePayment', 'Receivable', 'ReceivableReceipt',
   'DimensionDefinition', 'DimensionValue', 'PostingDimension', 'Counterparty', 'InventoryItem', 'AccountingBinding',
-  'FiscalProfile', 'ServiceFiscalProfile', 'FiscalDocument', 'FiscalDocumentSequence', 'BankSettlementItem',
+  'FiscalProfile', 'ServiceFiscalProfile', 'FiscalDocument', 'FiscalDocumentSequence', 'FiscalNumberVoid', 'BankSettlementItem',
   'AccountingScopeSettings', 'FixedAssetClass', 'DepreciationRate', 'FixedAsset', 'ReconcilePendingItem',
   'AccountingContact', 'AccountingDeliveryLog', 'AccountingReview', 'AccountingReviewFinding', 'LalurEntry',
   'LalurParteBAccount', 'LalurParteBMovement', 'LalurParteBClosing',
@@ -80,10 +80,18 @@ export const REKEY_MODELS = [
   'FiscalDocumentPendingAttachment', // BE-INCR-DFE-ANEXO-PENDENTE: a pendência segue o `FiscalDocument` dela (sem hash) → REKEY pelo F-RK-5.
   //   Deixá-la no unitId antigo faria a varredura anexar no escopo errado (o documento não seria achado e a pendência iria a FAILED)
   'IssBeneficioMunicipal', // SIMPLES-PISO-ANEXO-XI bloco 1: benefício municipal de ISS por unidade, sem hash → REKEY pelo F-RK-5
+  // EFICIENCIA-FISCAL PR-1: política, custo de serviço e sugestões são da unidade, sem hash → REKEY pelo F-RK-5.
+  'TaxOptimizationPolicy', 'ServiceCostEvidence', 'TaxOptimizationSuggestion',
   'ProfitDistributionEvent', // IRRF-DISTRIBUICAO PR-2: `unitId` = unidade do lançamento (proveniência), sem hash → REKEY pelo F-RK-5, como o TaxAssessment
   'InterestOnEquityCalculation', // IRRF-DISTRIBUICAO PR-4: `unitId` = unidade do lançamento e do razão lido, sem hash → REKEY pelo F-RK-5
   'WithholdingProfile', // RETENCOES-FONTE PR-1: perfil de retenção da unidade, sem hash → REKEY pelo F-RK-5 (segue a contraparte, que já é REKEY)
   'TaxWithholding', // RETENCOES-FONTE PR-2: retenção da unidade (segue o título e a baixa), sem hash → REKEY pelo F-RK-5
+  // X10a PR-7 (EMENDA-PSC): credencial do PSC e a autorização pendente são da unidade; AAD da cifra = id, não unitId →
+  //   REKEY pelo precedente do FiscalCertificate. Deixá-las no unitId antigo tiraria da unidade re-chaveada a assinatura.
+  'PscCredential', 'PscAuthorization',
+  'NfceCsc', // X10a PR-8: CSC da NFC-e por unidade; AAD da cifra = id → REKEY pelo mesmo precedente
+  // X10a PR-9: contingência da unidade e a nota órfã (segue o FiscalDocument), sem hash → REKEY pelo F-RK-5.
+  'NfceContingencia', 'NfceContingenciaOrfa',
 ] as const;
 
 /**

@@ -27,6 +27,7 @@ jest.mock('../../../../lib/attachmentStorage', () => ({
     return { storageKey: 'u/unit/job/ecf_real.txt', sanitizedName: 'ecf_real.txt' };
   }),
   resolveReadPath: jest.fn((k: string) => `/abs/${k}`),
+  deleteFile: jest.fn(async () => undefined),
 }));
 import * as storage from '../../../../lib/attachmentStorage';
 import { legalParamsSemente } from '@test/helpers/legalParams';
@@ -233,6 +234,18 @@ describe('SpedEcfRealGenerationService.generate', () => {
     expect(lines).toContain('|P001|1|');
   });
 
+  it('toSerializerLine (C8 emenda 3.2, E21b): linha system do Bloco F leva os links M305 com codCtaB e valor de cada conta', () => {
+    const base = makeEntries()[0];
+    const pb = (codCtaB: string) => ({ codCtaB }) as LalurParteBAccount;
+    const e = {
+      ...base, livro: 'lalur', codigo: '161', indRelacao: '1', parteBId: null, parteB: null, accountId: null, account: null, journalLinks: [], valorCents: 250n, origem: 'system',
+      parteBLinks: [{ parteBId: 'a', valorCents: 100n, parteB: pb('DEP-A-I') }, { parteBId: 'b', valorCents: 150n, parteB: pb('DEP-E-I') }],
+    } as LalurEntryWithRelations;
+    const line = SpedEcfRealGenerationService.toSerializerLine(e);
+    expect(line.parteBLinks).toEqual([{ codCtaB: 'DEP-A-I', valorCents: 100 }, { codCtaB: 'DEP-E-I', valorCents: 150 }]);
+    expect(line.codCtaB).toBeUndefined();
+  });
+
   it('toSerializerLine: linha persistida cujo código deixou de ser E no catálogo, ou não vigora no ano, é erro explícito — nunca omitida (classe FAIL-1)', async () => {
     const bad = { ...makeEntries()[0], codigo: '2' } as LalurEntryWithRelations; // 2 = CNA
     expect(() => SpedEcfRealGenerationService.toSerializerLine(bad)).toThrow(ValidationError);
@@ -319,6 +332,47 @@ describe('SpedEcfRealGenerationService.generate', () => {
     expect(findManyParteB).toHaveBeenCalledTimes(1);
     expect(createJob).toHaveBeenCalledTimes(1);
     expect(updateJob).toHaveBeenCalledTimes(1);
+  });
+
+  // GUARD (lacuna 10, cédula D-2026-10-28-LACUNAS-EXECUTA-27-28): o arquivo já foi gravado e a
+  // tx do EXPORTED falha (aqui, a auditoria dentro dela). O rollback desfaz o EXPORTED, e nada
+  // fora da tx volta o job: ele fica PROCESSING para sempre, com o artefato órfão no disco.
+  // Esperado: FAILED gravado FORA da tx que falhou, o arquivo apagado, e o erro relançado.
+  it('keeps compensating and rethrows the ORIGINAL tx error when updateJob(FAILED) itself fails (lacuna 10)', async () => {
+    const { service, updateJob, append } = buildService();
+    append.mockRejectedValueOnce(new Error('audit insert failed'));
+    const passThrough = updateJob.getMockImplementation()!;
+    updateJob.mockImplementation(async (...args: Parameters<typeof passThrough>) => {
+      if ((args as unknown[])[3] === undefined && (args[2] as { status?: string }).status === 'FAILED') {
+        throw new Error('db down');
+      }
+      return passThrough(...args);
+    });
+    const errorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+
+    await expect(service.generate(scope, makeDto())).rejects.toThrow('audit insert failed');
+
+    expect(storage.deleteFile).toHaveBeenCalledWith('u/unit/job/ecf_real.txt');
+    expect(errorSpy).toHaveBeenCalledWith(
+      'export: falha ao marcar FAILED depois da tx — job fica PROCESSING',
+      expect.objectContaining({ jobId: 'job-1', error: expect.objectContaining({ message: 'db down' }) }),
+    );
+    errorSpy.mockRestore();
+  });
+
+  it('does not leave the job PROCESSING when the EXPORTED tx fails after the file was written (lacuna 10)', async () => {
+    const { service, updateJob, append } = buildService();
+    append.mockRejectedValueOnce(new Error('audit insert failed'));
+
+    await expect(service.generate(scope, makeDto())).rejects.toThrow('audit insert failed');
+
+    const outOfTx = updateJob.mock.calls
+      .filter((c) => (c as unknown[])[3] === undefined)
+      .map((c) => c[2] as { status?: string; supersedesJobId?: string | null });
+    const lastOutOfTx = outOfTx[outOfTx.length - 1];
+    expect(lastOutOfTx?.status).toBe('FAILED');
+    expect(lastOutOfTx).toEqual(expect.objectContaining({ supersedesJobId: null }));
+    expect(storage.deleteFile).toHaveBeenCalledWith('u/unit/job/ecf_real.txt');
   });
 
   it('does not leave the job claiming EXPORTED when saveFile fails, and records FAILED (A1)', async () => {

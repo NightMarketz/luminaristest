@@ -7,6 +7,8 @@ name: string
 depreciable: boolean
 costAccountId: string
 accumulatedDepreciationAccountId?: string
+kind?: ("DEPRECIATION" | "AMORTIZATION_LEASEHOLD")
+amortizationExpenseAccountId?: string
 }
 export interface UpdateFixedAssetClassInput {
 unitId: string
@@ -16,6 +18,8 @@ name?: string
 depreciable?: boolean
 costAccountId?: string
 accumulatedDepreciationAccountId?: (string | null)
+kind?: ("DEPRECIATION" | "AMORTIZATION_LEASEHOLD")
+amortizationExpenseAccountId?: (string | null)
 }
 export interface FixedAssetClassScopeQueryInput {
 unitId: string

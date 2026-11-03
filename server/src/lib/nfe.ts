@@ -139,8 +139,8 @@ const parser = new XMLParser({
   isArray: (name) => name === 'det',
 });
 
-/** Texto de um nó como string trimada; objeto/ausência -> ''. */
-function str(v: unknown): string {
+/** Texto de um nó como string trimada; objeto/ausência -> ''. Exportado para o leitor do DANFE (`lib/danfe/danfeModel.ts`). */
+export function str(v: unknown): string {
   if (v == null) return '';
   if (typeof v === 'string') return v.trim();
   if (typeof v === 'number' || typeof v === 'boolean') return String(v);
@@ -152,7 +152,7 @@ function str(v: unknown): string {
 }
 
 /** Campo obrigatório: retorna a string trimada não-vazia ou rejeita loud. */
-function reqStr(v: unknown, field: string): string {
+export function reqStr(v: unknown, field: string): string {
   const s = str(v);
   if (!s) throw new ValidationError(`NF-e inválida: campo obrigatório "${field}" ausente ou vazio.`);
   return s;
@@ -242,7 +242,7 @@ function readItemTaxes(det: Record<string, unknown>): Pick<NfeItem, 'vICMSCents'
 }
 
 /** Campo `13v2` opcional como bigint: ausente -> null (IBS-CBS-2027 PR-1 — o grupo é 0-1, ausência não é zero). */
-function moneyToBigCentsOpt(v: unknown, field: string): bigint | null {
+export function moneyToBigCentsOpt(v: unknown, field: string): bigint | null {
   const s = str(v);
   return s ? BigInt(moneyToCents(s, field)) : null;
 }
@@ -319,37 +319,39 @@ function readTotais(icmsTot: Record<string, unknown>): NfeTotais {
   };
 }
 
+/** Árvore do XML já protegido (DOCTYPE recusado, assinatura verificada), na configuração do `parser` acima. */
+export type NfeTree = Record<string, unknown>;
+
 /**
- * Parse a NF-e 4.00 (modelo 55) XML into a normalized `ParsedNfe`. PURE — no Prisma, no tx, no
- * ledger rule. Rejects loud (`ValidationError`) on any structural or gate failure (D5/mod/tpAmb/
- * chave/DOCTYPE). Accepts root `nfeProc` (nota processada) OR a bare `NFe` (which, lacking a
- * `protNFe`, is rejected as "sem autorização").
+ * NFE-DANFE-IBSCBS PR-1 (BRIEF item 4; F-DANFE-3 b): a leitura protegida que `parseNfe` e o leitor do DANFE
+ * compartilham. Mesmas guardas, na mesma ordem: `<!DOCTYPE` recusado antes do parse (XXE / billion-laughs, F0-2
+ * §8.8) e a assinatura XMLDSig verificada ANTES de extrair qualquer campo (SIG-NFE B4, F-SIG-1 a, sem bypass).
+ * Não confere modelo nem ambiente — sem `opts` de homologação (dono, questionário de 26/10): cada consumidor
+ * aplica o próprio gate.
  */
-/**
- * BE-INCR-LEGAL-PARAMS PR-2 (item 13; F-LP-4 a): `legais` = fotografia com `NFE_CSTAT_AUTORIZADA` (MOC §4.4.1, D5;
- * MOC 7.0 — de 01/11/2026 em diante, o MOC online mantido pelo Paraná, Aj. SINIEF 40/26: conferir no PR-0),
- * montada pelo serviço; o cStat é conferido contra a lista vigente na data do protocolo (`dhRecbto`).
- */
-export function parseNfe(input: string | Buffer, legais: readonly LinhaLegal[], options: ParseNfeOptions = {}): ParsedNfe {
+export function readNfeTree(input: string | Buffer): NfeTree {
   const xml = (typeof input === 'string' ? input : input.toString('utf8')).trim();
 
-  // XXE / billion-laughs (F0-2 §8.8): rejeita DTD antes de qualquer parse. Nenhuma entidade externa.
   if (/<!DOCTYPE/i.test(xml)) {
     throw new ValidationError('NF-e inválida: documento com DTD (<!DOCTYPE>) não é aceito.');
   }
   if (!xml) throw new ValidationError('NF-e inválida: documento vazio.');
 
-  // SIG-NFE (B4): assinatura XMLDSig verificada ANTES de extrair qualquer campo — sem bypass (F-SIG-4 b).
   verifyNfeSignature(xml);
 
-  let root: Record<string, unknown>;
   try {
-    root = parser.parse(xml) as Record<string, unknown>;
+    return parser.parse(xml) as NfeTree;
   } catch (e) {
     throw new ValidationError(`NF-e inválida: XML mal-formado (${(e as Error).message}).`);
   }
+}
 
-  // Raiz: nfeProc (com protocolo) OU NFe avulsa (sem protocolo -> rejeitada no gate D5).
+/** Nós da nota na árvore: raiz `nfeProc` (com protocolo) OU `NFe` avulsa (sem protocolo -> rejeitada no gate D5). */
+export function locateInfNFe(root: NfeTree): {
+  proc: Record<string, unknown> | undefined;
+  infNFe: Record<string, unknown>;
+  ideNode: Record<string, unknown>;
+} {
   const proc = root.nfeProc as Record<string, unknown> | undefined;
   const nfe = (proc?.NFe ?? root.NFe) as Record<string, unknown> | undefined;
   if (!nfe) throw new ValidationError('NF-e inválida: elemento <NFe> não encontrado.');
@@ -359,17 +361,14 @@ export function parseNfe(input: string | Buffer, legais: readonly LinhaLegal[], 
 
   const ideNode = infNFe.ide as Record<string, unknown> | undefined;
   if (!ideNode) throw new ValidationError('NF-e inválida: grupo <ide> não encontrado.');
+  return { proc, infNFe, ideNode };
+}
 
-  const mod = reqStr(ideNode.mod, 'ide/mod');
-  if (mod !== '55') {
-    throw new ValidationError(`NF-e modelo "${mod}" não é suportada — apenas modelo 55 (NF-e).`);
-  }
-
-  const tpAmb = str(ideNode.tpAmb);
-  if (tpAmb === '2' && !options.allowHomologacao) {
-    throw new ValidationError('NF-e de homologação (tpAmb=2) rejeitada — não vira passivo real.');
-  }
-
+/**
+ * Gate da chave de acesso (formato, cDV módulo 11, CNPJ do emitente) — compartilhado com o leitor do DANFE
+ * (NFE-DANFE-IBSCBS PR-1, dono, questionário de 26/10: "os mesmos do parseNfe").
+ */
+export function assertChaveAcesso(infNFe: Record<string, unknown>): string {
   // Chave de acesso (§1): @Id = 'NFe' + 44 posições. BE-INCR-CNPJ-ALFA / F-CNPJ-4 → (b), ratificado
   // 2026-09-07: forma [0-9]{6}[A-Z0-9]{12}[0-9]{26} (NT 2026.004), cDV módulo 11 e coerência das
   // posições 7–20 com emit/CNPJ — cada um rejeita loud. Risco aceito por escrito no BRIEF: rejeitador
@@ -393,7 +392,18 @@ export function parseNfe(input: string | Buffer, legais: readonly LinhaLegal[], 
       `NF-e inválida: CNPJ do emitente na chave (${chaveAcesso.slice(6, 20)}) diverge de emit/CNPJ (${emitCnpjForKey}).`,
     );
   }
+  return chaveAcesso;
+}
 
+/**
+ * Gate D5 do protocolo (BE-INCR-LEGAL-PARAMS PR-2, F-LP-4 a): `protNFe` presente, cStat na tabela
+ * `NFE_CSTAT_AUTORIZADA` vigente na data do protocolo e `chNFe` igual à chave. Compartilhado com o leitor do DANFE.
+ */
+export function assertProtocoloAutorizado(
+  proc: Record<string, unknown> | undefined,
+  chaveAcesso: string,
+  legais: readonly LinhaLegal[],
+): { infProt: Record<string, unknown>; cStat: string; chNFe: string } {
   // Protocolo + gate D5. Ausência de protNFe = sem autorização -> rejeita.
   const protNFe = proc?.protNFe as Record<string, unknown> | undefined;
   const infProt = protNFe?.infProt as Record<string, unknown> | undefined;
@@ -415,6 +425,35 @@ export function parseNfe(input: string | Buffer, legais: readonly LinhaLegal[], 
       `NF-e inválida: chave do @Id (${chaveAcesso}) diverge do protNFe/chNFe (${chNFe}).`,
     );
   }
+  return { infProt, cStat, chNFe };
+}
+
+/**
+ * Parse a NF-e 4.00 (modelo 55) XML into a normalized `ParsedNfe`. PURE — no Prisma, no tx, no
+ * ledger rule. Rejects loud (`ValidationError`) on any structural or gate failure (D5/mod/tpAmb/
+ * chave/DOCTYPE). Accepts root `nfeProc` (nota processada) OR a bare `NFe` (which, lacking a
+ * `protNFe`, is rejected as "sem autorização").
+ */
+/**
+ * BE-INCR-LEGAL-PARAMS PR-2 (item 13; F-LP-4 a): `legais` = fotografia com `NFE_CSTAT_AUTORIZADA` (MOC §4.4.1, D5;
+ * MOC 7.0 — de 01/11/2026 em diante, o MOC online mantido pelo Paraná, Aj. SINIEF 40/26: conferir no PR-0),
+ * montada pelo serviço; o cStat é conferido contra a lista vigente na data do protocolo (`dhRecbto`).
+ */
+export function parseNfe(input: string | Buffer, legais: readonly LinhaLegal[], options: ParseNfeOptions = {}): ParsedNfe {
+  const { proc, infNFe, ideNode } = locateInfNFe(readNfeTree(input));
+
+  const mod = reqStr(ideNode.mod, 'ide/mod');
+  if (mod !== '55') {
+    throw new ValidationError(`NF-e modelo "${mod}" não é suportada — apenas modelo 55 (NF-e).`);
+  }
+
+  const tpAmb = str(ideNode.tpAmb);
+  if (tpAmb === '2' && !options.allowHomologacao) {
+    throw new ValidationError('NF-e de homologação (tpAmb=2) rejeitada — não vira passivo real.');
+  }
+
+  const chaveAcesso = assertChaveAcesso(infNFe);
+  const { infProt, cStat, chNFe } = assertProtocoloAutorizado(proc, chaveAcesso, legais);
 
   const totalNode = infNFe.total as Record<string, unknown> | undefined;
   const icmsTot = totalNode?.ICMSTot as Record<string, unknown> | undefined;

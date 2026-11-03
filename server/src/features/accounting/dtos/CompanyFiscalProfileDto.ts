@@ -156,6 +156,17 @@ export const UpsertCompanyFiscalProfileSchema = z
     // PRESUMIDO-TETO-78MI item 5 (F-PT-2 c): receita total do ano anterior declarada (IN 1.700 art. 59 § 1º), em centavos.
     // Teto do DTO = MAX_SAFE_INTEGER, NÃO `MAX_CENTS` (R$ 21,4 mi, abaixo do próprio teto legal — invariante 9).
     receitaTotalAnoAnteriorCents: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).nullable().default(null),
+    // BE-INCR-EFD-REINF PR-1 (item 4; lacuna B, dono 26/10): `classTrib` do R-1000 do optante — Tabela 08 do leiaute 2.1.2b:
+    // 01/02/03 conforme a CPP (P-REINF-7 ao contador). MEI (04) e Presumido/Real (99) são derivados, não informados.
+    reinfClassTrib: z.enum(['01', '02', '03']).nullable().default(null),
+    // EFICIENCIA-FISCAL PR-5 (item 25; ADR §7 ChecklistHospitalarSchema): checklist do 8 %/12 % hospitalar (Lei 9.249 art. 15
+    // § 1º III "a"). Alvará date-only com calendário validado (memória date-only-regex-nao-valida-calendario).
+    sociedadeEmpresaria: z.boolean().default(false),
+    alvaraSanitarioValidoAte: dateOnly('alvaraSanitarioValidoAte').nullable().default(null),
+    alvaraSourceDocumentId: z.string().min(1).nullable().default(null),
+    // EFICIENCIA-FISCAL PR-5 (item 30; lacuna 4 do dono, 28/10): naturezas declaradas — null = não declarado.
+    declaraLocacaoImovelProprio: z.boolean().nullable().default(null),
+    declaraCessaoMaoDeObraMedica: z.boolean().nullable().default(null),
   })
   .strict()
   .superRefine((v, ctx) => {
@@ -197,6 +208,10 @@ export const UpsertCompanyFiscalProfileSchema = z
       for (const k of ['meiContribuinteIcms', 'meiContribuinteIss', 'meiTransportadorCargas', 'meiOcupacoes'] as const) {
         if (v[k] !== null) ctx.addIssue({ code: 'custom', path: [k], message: 'O enquadramento ICMS/ISS do Anexo XI é do MEI (Res. CGSN 140 art. 101 § 1º).' });
       }
+    }
+    // EFD-REINF PR-1 (item 4) — a classificação 01–03 da Tabela 08 é do optante pelo Simples
+    if (v.regime !== 'SIMPLES' && v.reinfClassTrib !== null) {
+      ctx.addIssue({ code: 'custom', path: ['reinfClassTrib'], message: 'A classificação tributária 01, 02 ou 03 do R-1000 é do optante pelo Simples Nacional (Tabela 08 da EFD-Reinf).' });
     }
     // X14-CAIXA item 7 (F-CX-3 a) — a exclusão é do optante ME/EPP
     if (v.regime !== 'SIMPLES' && v.simplesExclusaoEfeitosEm !== null) {

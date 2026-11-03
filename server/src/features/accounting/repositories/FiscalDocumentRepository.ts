@@ -10,7 +10,10 @@ import type {
   FiscalDocumentKind,
   FiscalDocumentStatus,
   FiscalDocumentWithAttempts,
+  FiscalSequenceView,
   IFiscalDocumentRepository,
+  NumberedDocumentView,
+  SequenceAmbiente,
   TransitionData,
 } from './IFiscalDocumentRepository';
 import { AUTHORIZED_STATUSES } from './IFiscalDocumentRepository';
@@ -113,15 +116,43 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
         dCompet: { startsWith: `${competencia}-` },
         deletedAt: null,
       },
-      _sum: { vServCents: true },
+      _sum: { vServCents: true, vDescIncondCents: true },
     });
-    return r._sum.vServCents ?? 0n;
+    // F-EF-16 a: a receita da nota é vServ − vDescIncond (o desconto destacado não é receita — LC 123 art. 3º § 1º).
+    return (r._sum.vServCents ?? 0n) - (r._sum.vDescIncondCents ?? 0n);
   }
 
   public async listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
     return this.db(tx).fiscalDocument.findMany({
       where: { status: { in: ['SENT', 'PROCESSING'] }, deletedAt: null, updatedAt: { lt: olderThan } },
       orderBy: [{ updatedAt: 'asc' }],
+    });
+  }
+
+  public async listContingencia(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]> {
+    return this.db(tx).fiscalDocument.findMany({
+      where: { status: 'CONTINGENCY', deletedAt: null },
+      include: { attempts: { orderBy: { attemptNo: 'asc' } } },
+      // Rodízio (revisão F): a que não sai é tocada pelo job e vai para o fim — nota parada não toma o teto das outras.
+      orderBy: [{ updatedAt: 'asc' }],
+      take: limit,
+    });
+  }
+
+  public async listContingenciaNaoAutorizada(desde: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]> {
+    return this.db(tx).fiscalDocument.findMany({
+      where: {
+        kind: 'NFCE',
+        status: { in: ['CONTINGENCY', 'SENT', 'PROCESSING', 'REJECTED', 'PENDING_SIGNATURE'] },
+        deletedAt: null,
+        // Revisão J: a janela é a da TENTATIVA de contingência (o documento pode ser antigo e cair em contingência hoje,
+        // no reenvio da rejeitada ou da que esperava a assinatura).
+        attempts: { some: { payloadJson: { contains: '"tpEmis":9' }, sentAt: { gte: desde } } },
+      },
+      include: { attempts: { orderBy: { attemptNo: 'asc' } } },
+      // Revisões E e G: sem teto — a janela `desde` é que limita (a abandonada há muito sai sozinha; a que vence primeiro
+      // nunca fica de fora por haver muitas pendentes depois dela).
+      orderBy: [{ createdAt: 'asc' }],
     });
   }
 
@@ -154,14 +185,14 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
 
   public async createSent(scope: AccountingScope, data: CreateSentFiscalDocumentData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts> {
     const { userId, unitId } = accountingScopeWhere(scope);
-    const { payloadJson, ...doc } = data;
+    const { payloadJson, initialStatus, ...doc } = data;
     const created = await this.db(tx).fiscalDocument.create({
       data: {
         userId,
         unitId,
         ...doc,
         saleKey: data.saleKey ?? data.saleId,
-        status: 'SENT',
+        status: initialStatus ?? 'SENT',
         currentAttemptNo: 1,
         createdById: scope.actorUserId,
       },
@@ -203,14 +234,50 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     return (await this.db(tx).fiscalDocument.findFirst({ where: { id } })) as FiscalDocument;
   }
 
-  public async nextNumber(scope: AccountingScope, kind: FiscalDocumentKind, serie: number, tx: Prisma.TransactionClient): Promise<bigint> {
+  public async nextNumber(
+    scope: AccountingScope,
+    kind: FiscalDocumentKind,
+    ambiente: SequenceAmbiente,
+    serie: number,
+    tx: Prisma.TransactionClient,
+  ): Promise<bigint> {
     const { userId, unitId } = accountingScopeWhere(scope);
     const row = await tx.fiscalDocumentSequence.upsert({
-      where: { userId_unitId_kind_serie: { userId, unitId, kind, serie } },
-      create: { userId, unitId, kind, serie, last: 1n },
+      where: { userId_unitId_kind_ambiente_serie: { userId, unitId, kind, ambiente, serie } },
+      create: { userId, unitId, kind, ambiente, serie, last: 1n },
       update: { last: { increment: 1n } },
     });
     return row.last;
+  }
+
+  public async listSequences(scope: AccountingScope, kind: FiscalDocumentKind, tx?: Prisma.TransactionClient): Promise<FiscalSequenceView[]> {
+    const { userId, unitId } = accountingScopeWhere(scope);
+    const rows = await this.db(tx).fiscalDocumentSequence.findMany({
+      where: { userId, unitId, kind },
+      orderBy: [{ ambiente: 'asc' }, { serie: 'asc' }],
+    });
+    return rows.map((r) => ({ ambiente: r.ambiente, serie: r.serie, last: r.last }));
+  }
+
+  public async listNumbered(
+    scope: AccountingScope,
+    kind: FiscalDocumentKind,
+    faixa?: { ambiente: string; serie: number; nIni: bigint; nFin: bigint },
+    tx?: Prisma.TransactionClient,
+  ): Promise<NumberedDocumentView[]> {
+    const rows = await this.db(tx).fiscalDocument.findMany({
+      where: {
+        ...accountingScopeWhere(scope),
+        kind,
+        deletedAt: null,
+        ...(faixa
+          ? { ambiente: faixa.ambiente, serie: faixa.serie, numero: { gte: faixa.nIni, lte: faixa.nFin } }
+          : { numero: { not: null } }),
+      },
+      select: { id: true, ambiente: true, serie: true, numero: true, status: true },
+      orderBy: [{ ambiente: 'asc' }, { serie: 'asc' }, { numero: 'asc' }],
+    });
+    return rows.map((r) => ({ id: r.id, ambiente: r.ambiente, serie: r.serie, numero: r.numero as bigint, status: r.status as FiscalDocumentStatus }));
   }
 
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {

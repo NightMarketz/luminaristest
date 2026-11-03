@@ -7,7 +7,8 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
-import BeautySalonPreset from '@/features/dynamicTables/presets/systems/BeautySalonPreset';
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: `customers` virou tabela do PES-0 — o singleton compartilhado é o módulo-fonte.
+import { customerModule } from '@/features/dynamicTables/presets/modules/people/CustomerModule';
 
 const app = makeApp();
 let n = 0;
@@ -48,11 +49,11 @@ describe('addedFields do Controle Total não vaza entre tenants', () => {
   });
 
   it('tenant A (custom + addedFields) recebe o campo, e o schema do preset compartilhado não cresce', async () => {
-    const tamanhoAntes = BeautySalonPreset.tables.customers?.schema?.fields.length;
+    const tamanhoAntes = customerModule.schema.fields.length;
     const a = await tenantACriaComCampoExtra('campoDoTenantA1');
     // controle positivo: o campo chega ao tenant A (o caminho de addedFields rodou)
     expect(await camposDeCustomers(a)).toContain('campoDoTenantA1');
-    expect(BeautySalonPreset.tables.customers?.schema?.fields.length).toBe(tamanhoAntes);
+    expect(customerModule.schema.fields.length).toBe(tamanhoAntes);
   });
 
   it('tenant B (quick) depois do tenant A não instala o campo do tenant A', async () => {

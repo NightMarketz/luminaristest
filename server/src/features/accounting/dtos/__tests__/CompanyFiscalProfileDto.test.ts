@@ -135,3 +135,28 @@ describe('UpsertCompanyFiscalProfileSchema — X7 Fase A (BRIEF itens 1, 2, 2b)'
     });
   });
 });
+
+describe('UpsertCompanyFiscalProfileSchema — EFD-REINF PR-1 (item 4; lacuna B)', () => {
+  it('reinfClassTrib: 01/02/03 só no SIMPLES; fora da Tabela 08 ou em outro regime ⇒ recusa; padrão null', () => {
+    for (const reinfClassTrib of ['01', '02', '03']) expect(ok({ regime: 'SIMPLES', reinfClassTrib })).toBe(true);
+    expect(ok({ regime: 'SIMPLES', reinfClassTrib: '04' })).toBe(false);
+    expect(ok({ regime: 'MEI', reinfClassTrib: '01' })).toBe(false);
+    expect(ok({ regime: 'REAL', reinfClassTrib: '01' })).toBe(false);
+    expect(UpsertCompanyFiscalProfileSchema.parse({ ...base, regime: 'SIMPLES' }).reinfClassTrib).toBeNull();
+  });
+});
+
+// EFICIENCIA-FISCAL PR-5 (BRIEF item 25; ADR §7 ChecklistHospitalarSchema) e item 30 (naturezas declaradas).
+describe('UpsertCompanyFiscalProfileSchema — checklist hospitalar (EFICIENCIA-FISCAL item 25)', () => {
+  it('padrões: sociedadeEmpresaria=false, alvará e declarações null', () => {
+    const r = UpsertCompanyFiscalProfileSchema.parse({ ...base, regime: 'PRESUMIDO' });
+    expect(r).toMatchObject({ sociedadeEmpresaria: false, alvaraSanitarioValidoAte: null, alvaraSourceDocumentId: null, declaraLocacaoImovelProprio: null, declaraCessaoMaoDeObraMedica: null });
+  });
+
+  it('alvaraSanitarioValidoAte valida o calendário, não só o regex (2026-02-30 → 400; 2028-02-29 aceito)', () => {
+    expect(ok({ regime: 'PRESUMIDO', alvaraSanitarioValidoAte: '2026-02-30' })).toBe(false);
+    expect(ok({ regime: 'PRESUMIDO', alvaraSanitarioValidoAte: '2026-13-01' })).toBe(false);
+    expect(ok({ regime: 'PRESUMIDO', alvaraSanitarioValidoAte: '2027-02-29' })).toBe(false);
+    expect(ok({ regime: 'PRESUMIDO', alvaraSanitarioValidoAte: '2028-02-29', sociedadeEmpresaria: true, alvaraSourceDocumentId: 'sd-1' })).toBe(true);
+  });
+});

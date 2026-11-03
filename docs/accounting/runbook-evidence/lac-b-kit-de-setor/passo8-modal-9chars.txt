@@ -1,0 +1,7 @@
+Recusar a pendência referential:2025:9.9.9?
+
+Recusar mantém o valor desta unidade; a pendência não volta nesta versão do kit.
+
+Motivo (10 a 500 caracteres)
+Cancelar
+Recusar

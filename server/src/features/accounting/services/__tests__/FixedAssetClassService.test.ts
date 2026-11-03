@@ -22,6 +22,8 @@ const classRow = {
   depreciable: true,
   costAccountId: 'acc-cost',
   accumulatedDepreciationAccountId: 'acc-acc' as string | null,
+  kind: 'DEPRECIATION',
+  amortizationExpenseAccountId: null as string | null,
   createdAt: new Date('2026-09-18T00:00:00Z'),
   updatedAt: new Date('2026-09-18T00:00:00Z'),
   deletedAt: null as Date | null,
@@ -58,16 +60,76 @@ describe('FixedAssetClassService.createClass', () => {
   it('nega ANTES de tocar o repo quando canManageFixedAssets=false', async () => {
     const { service, create } = build({ canManage: false });
     await expect(
-      service.createClass(scope, { unitId: 'unit-1', code: 'MAQ', name: 'Máquinas', depreciable: true, costAccountId: 'acc-cost', accumulatedDepreciationAccountId: 'acc-acc' }),
+      service.createClass(scope, { unitId: 'unit-1', code: 'MAQ', name: 'Máquinas', depreciable: true, costAccountId: 'acc-cost', accumulatedDepreciationAccountId: 'acc-acc', kind: 'DEPRECIATION' }),
     ).rejects.toBeInstanceOf(ForbiddenError);
     expect(create).not.toHaveBeenCalled();
   });
 
   it('valida as contas antes de criar', async () => {
     const { service, create, accountFindById } = build();
-    await service.createClass(scope, { unitId: 'unit-1', code: 'MAQ', name: 'Máquinas', depreciable: true, costAccountId: 'acc-cost', accumulatedDepreciationAccountId: 'acc-acc' });
+    await service.createClass(scope, { unitId: 'unit-1', code: 'MAQ', name: 'Máquinas', depreciable: true, costAccountId: 'acc-cost', accumulatedDepreciationAccountId: 'acc-acc', kind: 'DEPRECIATION' });
     expect(accountFindById).toHaveBeenCalledTimes(2);
     expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it('C8 emenda 3.2 (E9, F-EM-7 → b): grava kind e a conta de amortização, validada no escopo', async () => {
+    const { service, create, accountFindById } = build();
+    await service.createClass(scope, {
+      unitId: 'unit-1', code: 'BENF', name: 'Benfeitorias', depreciable: true, costAccountId: 'acc-cost',
+      accumulatedDepreciationAccountId: 'acc-acc', kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort',
+    });
+    expect(accountFindById).toHaveBeenCalledWith(scope, 'acc-amort');
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' }));
+  });
+
+  it('L1/L2 no update: estado resultante incoerente → 400, update não chamado', async () => {
+    const { service, update } = build();
+    // classe atual: DEPRECIATION, depreciable=true, sem conta de amortização
+    await expect(service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'AMORTIZATION_LEASEHOLD' })).rejects.toThrow(
+      /amortizationExpenseAccountId é obrigatória/,
+    );
+    await expect(
+      service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort', depreciable: false }),
+    ).rejects.toThrow(/exige depreciable=true/);
+    await expect(service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', amortizationExpenseAccountId: 'acc-amort' })).rejects.toThrow(
+      /só se aplica a classe AMORTIZATION_LEASEHOLD/,
+    );
+    expect(update).not.toHaveBeenCalled();
+    await service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' });
+    expect(update).toHaveBeenCalledWith(scope, 'class-1', expect.objectContaining({ kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' }));
+  });
+
+  it('L4 (dono, 26/10): mudar kind de classe com bem vivo → 400; mesmo kind ou classe vazia passa', async () => {
+    const comBem = build({ liveAssets: 1 });
+    await expect(
+      comBem.service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' }),
+    ).rejects.toThrow(/kind não pode ser alterado/);
+    expect(comBem.update).not.toHaveBeenCalled();
+    await comBem.service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'DEPRECIATION', name: 'Máquinas' });
+    expect(comBem.update).toHaveBeenCalledTimes(1);
+
+    const benfComBem = build({ liveAssets: 1, found: { ...classRow, kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' } });
+    await expect(
+      benfComBem.service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'DEPRECIATION', amortizationExpenseAccountId: null }),
+    ).rejects.toThrow(/kind não pode ser alterado/);
+    expect(benfComBem.update).not.toHaveBeenCalled();
+
+    const vazia = build({ liveAssets: 0 });
+    await vazia.service.updateClass(scope, 'class-1', { unitId: 'unit-1', classId: 'class-1', kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort' });
+    expect(vazia.countByClass).toHaveBeenCalledWith(scope, 'class-1');
+    expect(vazia.update).toHaveBeenCalledTimes(1);
+  });
+
+  it('C8 emenda 3.2: conta de amortização que não aceita lançamento → 400, nada criado', async () => {
+    const { service, create, accountFindById } = build();
+    accountFindById.mockImplementation(async (_s: unknown, id: string) => ({ ...accountRow, id, acceptsEntries: id !== 'acc-amort' }));
+    await expect(
+      service.createClass(scope, {
+        unitId: 'unit-1', code: 'BENF', name: 'Benfeitorias', depreciable: true, costAccountId: 'acc-cost',
+        accumulatedDepreciationAccountId: 'acc-acc', kind: 'AMORTIZATION_LEASEHOLD', amortizationExpenseAccountId: 'acc-amort',
+      }),
+    ).rejects.toThrow(/amortizationExpenseAccountId/);
+    expect(create).not.toHaveBeenCalled();
   });
 });
 

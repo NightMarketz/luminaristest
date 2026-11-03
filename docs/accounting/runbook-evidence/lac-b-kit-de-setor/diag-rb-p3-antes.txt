@@ -1,0 +1,14 @@
+Salão de beleza
+
+Versão 6
+
+Pendências da atualização do kit: 2
+
+role:receita-servico
+A conta do papel foi ajustada nesta unidade
+Aceitar
+Recusar
+role:receita-revenda
+A conta do papel foi ajustada nesta unidade
+Aceitar
+Recusar

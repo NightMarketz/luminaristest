@@ -32,3 +32,6 @@ CLAUDE.local.md
 # Índice do vault do plano: gerado na máquina, não versionado (dono, 2026-10-16) — node scripts/plano-vault.mjs index
 docs/plano/_INDEX.md
 docs/plano/_ANCORAS.md
+
+# brainstorming companion (local)
+.superpowers/

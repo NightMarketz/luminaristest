@@ -458,3 +458,25 @@ F-ADN-1 = (a). Decisões: [`D-2026-10-12-QUESTIONARIO-DONO`](../plano/decisoes/D
   terceiro em hardware a PSC credenciado; a guarda em software não tem regra própria, mas choca com 6.1.1.6 "c" e
   DOC-ICP-05 9.3.3.3 (`docs/accounting/pesquisa-lei-2026-10-10/parceria-consumidor-a1.md` F-2). **Advogado antes do
   1º certificado de cliente em produção.**
+
+## 13. EMENDA 2026-10-26 — NFC-e na porta, seleção por tipo, IE do emitente (PR-0 do BE-INCR-NFCE, item 2)
+
+Origem: item 2 do [`BE-INCR-NFCE-brief.md`](../accounting/BE-INCR-NFCE-brief.md) e emendas 1–3. Execução pedida pelo
+dono no chat em 2026-10-26: *"faz o X10a EMENDA-2 PR-1..PR-6 e EMENDA-3 (#757)"*. Registro de decisões já
+ratificadas; nenhuma decisão nova aqui.
+
+1. **`NFCE` entra na porta** (F-PLAN-2 a, 27/09): `DfeKind = 'NFSE' | 'NFE' | 'NFCE'`. Cada adaptador declara os tipos
+   que emite em `capabilities.kinds` (item 4 do BRIEF).
+2. **Seleção por tipo** (F-NFCE-1 c, 02/10): `DFE_PARTNER_<KIND>` / `DFE_PARTNER_ENV_<KIND>` com fallback para
+   `DFE_PARTNER` / `DFE_PARTNER_ENV`; adaptador que não declara o tipo fica desabilitado com motivo nomeado. NFS-e pelo
+   portal (`manual`, decisão de 22/10) e NFC-e por outro adaptador coexistem na mesma instância.
+3. **`icmsContribuinte` continua significando crédito de ICMS na compra** (F-NFCE-2 b): a NF-e/NFC-e usa um campo novo,
+   `inscricaoEstadual` (emit/IE, C17), e o CRT (C21) é derivado do regime. O Simples segue sem crédito de ICMS
+   (LC 123/2006 art. 23).
+4. **Destinatário da NFC-e** — o F-NFCE-7 (b) foi substituído pela A9 de 17/10
+   ([`D-2026-10-17-AMBIGUIDADES-A1-A10`](../plano/decisoes/D-2026-10-17-AMBIGUIDADES-A1-A10.md)); o texto foi relido
+   em 26/10 ([`TRANSCRICAO-MOC70-NFCe-NFe-saida-2026-10-26.md`](../accounting/fontes-oficiais/TRANSCRICAO-MOC70-NFCe-NFe-saida-2026-10-26.md)
+   §9): CPF/CNPJ obrigatório na NFC-e a partir de R$ 10.000,00, em operação não presencial ou a pedido do adquirente
+   (Aj. SINIEF 19/16 cl. 4ª VII); NFC-e vedada a partir de R$ 200.000,00 (§ 4º). F-DFE-7 (b) segue para NFS-e e NF-e 55.
+5. **Inutilização** (F-NFCE-E3-1 c, 17/10): a porta mantém `inutilizar()` em todas as UF; para AC/BA/SP depois de
+   01/11/2026 a SEFAZ decide e o operador vê o aviso (E3-2 a).

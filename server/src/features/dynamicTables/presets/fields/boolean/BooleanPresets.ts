@@ -34,3 +34,14 @@ export const simpleCustomerFlag: ISchemaField = {
   defaultValue: false,
   searchable: false,
 };
+
+// EFICIENCIA-FISCAL PR-1 item 10 (F-EF-4 c): item principal do kit (`kitRef`). Produto APLICADO no serviço é insumo e não
+// entra como linha de venda (P-EF-3).
+export const principalItem: ISchemaField = {
+  name: 'principalItem',
+  label: 'Kit Main Item',
+  type: 'boolean',
+  required: false,
+  defaultValue: false,
+  searchable: false,
+};

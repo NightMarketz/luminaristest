@@ -10,7 +10,7 @@ import {
   simpleCustomerFlag,
   unitId,
 } from '../../fields';
-import { saleStatus, paymentStatus, paymentMethod } from '../../fields/select/SelectPresets';
+import { saleStatus, paymentStatus, paymentMethod, discountKind } from '../../fields/select/SelectPresets';
 import { subtotal, discountAmount, taxAmount, totalAmount } from '../../fields/number/NumberPresets';
 
 /**
@@ -48,6 +48,8 @@ export const salesModule = {
       { ...customerId, required: false },
       subtotal,
       discountAmount,
+      // EFICIENCIA-FISCAL PR-1 item 1 (F-EF-9 a). Linha antiga: null ⇒ UNCONDITIONAL só no relatório, nunca na emissão.
+      discountKind,
       taxAmount,
       totalAmount,
       // --- Revenue segmentation fields for analytics ---

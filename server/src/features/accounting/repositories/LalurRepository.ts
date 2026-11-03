@@ -22,6 +22,7 @@ const ENTRY_RELATIONS = {
   account: { select: { id: true, code: true, nature: true, deletedAt: true } },
   processos: { orderBy: [{ indProc: 'asc' }, { numProc: 'asc' }] },
   journalLinks: { select: { journalEntryId: true, journalEntry: { select: { entryNumber: true } } }, orderBy: { journalEntryId: 'asc' } },
+  parteBLinks: { select: { parteBId: true, valorCents: true, parteB: true }, orderBy: { parteB: { codCtaB: 'asc' } } },
 } satisfies Prisma.LalurEntryInclude;
 
 const CLOSING_INCLUDE = {
@@ -89,6 +90,10 @@ export class LalurRepository implements ILalurRepository {
     if (journalEntryIds.length > 0) {
       await tx.lalurEntryJournalEntry.createMany({ data: journalEntryIds.map((journalEntryId) => ({ entryId, journalEntryId })) });
     }
+  }
+
+  public async createEntryParteBLinks(entryId: string, links: Array<{ parteBId: string; valorCents: bigint }>, tx: Prisma.TransactionClient): Promise<void> {
+    if (links.length > 0) await tx.lalurEntryParteBLink.createMany({ data: links.map((l) => ({ entryId, parteBId: l.parteBId, valorCents: l.valorCents })) });
   }
 
   public async findJournalEntriesForLinks(scope: AccountingScope, ids: string[], tx?: Prisma.TransactionClient) {
@@ -195,7 +200,7 @@ export class LalurRepository implements ILalurRepository {
   }
 
   public async countLiveEntriesByParteB(scope: AccountingScope, parteBId: string, tx?: Prisma.TransactionClient): Promise<number> {
-    return (tx ?? prisma).lalurEntry.count({ where: { ...accountingScopeWhere(scope), parteBId, deletedAt: null } });
+    return (tx ?? prisma).lalurEntry.count({ where: { ...accountingScopeWhere(scope), deletedAt: null, OR: [{ parteBId }, { parteBLinks: { some: { parteBId } } }] } });
   }
 
   // ── Parte B ────────────────────────────────────────────────────────────────

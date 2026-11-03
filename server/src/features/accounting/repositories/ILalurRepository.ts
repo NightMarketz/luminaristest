@@ -59,6 +59,11 @@ export type LalurEntryWithRelations = LalurEntry & {
   processos: LalurProcess[];
   /** M312/M362 — `entryNumber` do lançamento da ECD (I200.NUM_LCTO); null se o lançamento voltou a Draft. */
   journalLinks: Array<{ journalEntryId: string; journalEntry: { entryNumber: number | null } }>;
+  /**
+   * M305/M355 1:N das linhas `origem='system'` do Bloco F (C8 emenda 3.2, E21b, F-EM-14 → a): nelas o `parteBId` fica
+   * null e o M305 sai daqui. Opcional no tipo: linha do usuário nunca tem.
+   */
+  parteBLinks?: Array<{ parteBId: string; valorCents: bigint; parteB: LalurParteBAccount }>;
 };
 
 // ─── ECF Fase 3C — Parte B (ADR EMENDA 2026-09-12, 3ª — D-P2) ───────────────────────────────
@@ -137,6 +142,7 @@ export interface ILalurRepository {
   /** Live lines of a year with parteB + account resolved — the generator's read (item 11: the generator reads the model). */
   findEntriesForYear(scope: AccountingScope, year: number, tx?: Prisma.TransactionClient): Promise<LalurEntryWithRelations[]>;
   updateEntry(scope: AccountingScope, id: string, data: Prisma.LalurEntryUpdateInput, tx?: Prisma.TransactionClient): Promise<LalurEntry>;
+  /** Linhas vivas que apontam para a conta pelo `parteBId` OU por um link M305 do Bloco F (E21b). */
   countLiveEntriesByParteB(scope: AccountingScope, parteBId: string, tx?: Prisma.TransactionClient): Promise<number>;
   /** Live Parte A lines pointing at a ledger account — guard at `Account` soft-delete (BRIEF 3C item 19). */
   countLiveEntriesByAccount(scope: AccountingScope, accountId: string, tx?: Prisma.TransactionClient): Promise<number>;
@@ -145,6 +151,8 @@ export interface ILalurRepository {
   replaceEntryProcesses(entryId: string, processos: LalurProcessoData[], tx: Prisma.TransactionClient): Promise<void>;
   replaceMovementProcesses(movementId: string, processos: LalurProcessoData[], tx: Prisma.TransactionClient): Promise<void>;
   replaceEntryJournalLinks(entryId: string, journalEntryIds: string[], tx: Prisma.TransactionClient): Promise<void>;
+  /** M305/M355 1:N da linha `system` do Bloco F (E21b) — só na criação; a linha é substituída inteira no refechamento. */
+  createEntryParteBLinks(entryId: string, links: Array<{ parteBId: string; valorCents: bigint }>, tx: Prisma.TransactionClient): Promise<void>;
 
   // Parte B movements (M410)
   createMovement(data: CreateLalurParteBMovementData, tx?: Prisma.TransactionClient): Promise<LalurParteBMovement>;

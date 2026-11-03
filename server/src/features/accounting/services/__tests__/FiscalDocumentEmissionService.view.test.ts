@@ -26,7 +26,7 @@ async function view(over: Record<string, unknown>, attempts: ReturnType<typeof a
     cancelledAt: null, errorsJson: null, sourceDocumentId: null, xmlAttachmentId: null, pdfAttachmentId: null, attempts, ...over,
   };
   const repo = { findById: async () => doc, listBySale: async () => [doc] };
-  const svc = new FiscalDocumentEmissionService(repo as never, null as never, null as never, { get: async () => null } as never, null as never, { canReadFiscalDocument: () => true } as never, null as never, legalParamsSemente);
+  const svc = new FiscalDocumentEmissionService(repo as never, null as never, null as never, { get: async () => null } as never, null as never, { canReadFiscalDocument: () => true } as never, null as never, legalParamsSemente, null as never);
   return svc.getById(SCOPE as never, 'd');
 }
 

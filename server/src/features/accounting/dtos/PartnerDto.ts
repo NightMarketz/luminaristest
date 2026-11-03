@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { isValidCpf } from '../../../lib/cpf';
-import { isValidCnpj } from '../../../lib/cnpj';
+import { CNPJ_REGEX, isValidCnpj } from '../../../lib/cnpj';
 import { isValidDateOnly } from '../models/dates';
 
 /**
@@ -16,6 +16,22 @@ export const PartnerIdParamSchema = z.object({ id: z.string().min(1) }).strict()
 /** Item 3 — `?data=` (date-only) escolhe o dia da vigência; sem ele, hoje no fuso do escopo. */
 export const ListPartnersQuerySchema = z.object({ unitId: z.string().min(1), data: dateOnly('data').optional() }).strict();
 
+/**
+ * EFICIENCIA-FISCAL PR-4 item 20 (D-2026-10-28-EFICIENCIA-FISCAL-PR4-EXECUCAO #3) — participação do sócio em OUTRA empresa,
+ * informada no cadastro. Alimenta só o aviso de interdependência (LC 123 art. 3º § 4º III, IV e V). `receitaBrutaAnualCents`
+ * opcional: sem ela o aviso pede o dado (a vedação depende da receita bruta global). Sem PII além do CNPJ da outra empresa.
+ */
+export const OutraParticipacaoSchema = z
+  .object({
+    cnpj: z.string().regex(CNPJ_REGEX, 'CNPJ = 14 posições sem máscara').refine(isValidCnpj, 'CNPJ com dígito verificador inválido'),
+    participacaoBp: z.number().int().min(0).max(10000),
+    empresaNoSimples: z.boolean(),
+    administrador: z.boolean(),
+    receitaBrutaAnualCents: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).nullable().optional(),
+  })
+  .strict();
+export type OutraParticipacao = z.infer<typeof OutraParticipacaoSchema>;
+
 export const CreatePartnerSchema = z
   .object({
     unitId: z.string().min(1),
@@ -25,6 +41,7 @@ export const CreatePartnerSchema = z
     participacaoBp: z.number().int().min(0).max(10000),
     entradaEm: dateOnly('entradaEm'),
     saidaEm: dateOnly('saidaEm').nullable().optional(),
+    outrasParticipacoes: z.array(OutraParticipacaoSchema).max(50).nullable().optional(),
   })
   .strict()
   .superRefine((v, ctx) => {

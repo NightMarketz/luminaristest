@@ -1,0 +1,232 @@
+ITG 2000 (R1) – ESCRITURAÇÃO CONTÁBIL  
+ 
+A letra R mais o número que identifica sua alteração (R1, R2, R3, ...) foram adicionados à sigla da interpretação para 
+identificarem o número da consolidação e facilitarem a pesquisa no site do CFC. A citação desta i nterpretação em 
+outras normas é identificada pela sua sigla sem referência a R1, R2, R3, pois essas referências são sempre da norma 
+em vigor, para que, em cada alteração da interpretação, não haja necessidade de se ajustarem as citações em outras 
+normas. 
+ 
+Sumário Item 
+OBJETIVO 1 
+ALCANCE 2 
+FORMALIDADES DA ESCRITURAÇÃO CONTÁBIL  3 – 36 
+Livro diário e livro razão 14 – 19 
+Escrituração contábil de filial 20 – 25 
+Documentação contábil 26 – 28 
+Contas de compensação 29 – 30 
+Retificação de lançamento contábil  31 – 36 
+ 
+ 
+ 
+Objetivo 
+ 
+1. Esta Interpretação estabelece critérios e procedimentos a serem adotados pela entidade para a 
+escrituração contábil de seus fatos patrimoniais, por meio de qualquer processo, bem como a 
+guarda e a manutenção da documentação e de ar quivos contábeis e a responsabilidade do 
+profissional da contabilidade.  
+ 
+Alcance 
+ 
+2. Esta Interpretação deve ser adotada por todas as entidades, independente da natureza e do 
+porte, na elaboração da escrituração contábil, observadas as exigências da legislaç ão e de 
+outras normas aplicáveis, se houver.  
+ 
+Formalidades da escrituração contábil  
+ 
+3. A escrituração contábil deve ser realizada com observância aos Princípios de Contabilidade. 
+ 
+4. O nível de detalhamento da escrituração contábil deve estar alinhado às nece ssidades de 
+informação de seus usuários. Nesse sentido, esta Interpretação não estabelece o nível de 
+detalhe ou mesmo sugere um plano de contas a ser observado. O detalhamento dos registros 
+contábeis é diretamente proporcional à complexidade das operações da entidade e dos 
+requisitos de informação a ela aplicáveis e, exceto nos casos em que uma autoridade 
+reguladora assim o requeira, não devem necessariamente observar um padrão pré-definido. 
+ 
+5. A escrituração contábil deve ser executada: 
+a) em idioma e em moeda corrente nacionais; 
+b) em forma contábil; 
+c) em ordem cronológica de dia, mês e ano; 
+d) com ausência de espaços em branco, entrelinhas, borrões, rasuras ou emendas; e 
+e) com base em documentos de origem externa ou interna ou, na sua falta, em elementos 
+que comprovem ou evidenciem fatos contábeis. 
+ 
+6. A escrituração em forma contábil de que trata o item 5 deve conter, no mínimo: 
+a) data do registro contábil, ou seja, a data em que o fato contábil ocorreu; 
+b) conta devedora; 
+c) conta credora; 
+d) histórico que represente a essência econ ômica da transação ou o código de histórico 
+padronizado, neste caso baseado em tabela auxiliar inclusa em livro próprio; 
+e) valor do registro contábil; 
+f) informação que permita identificar, de forma unívoca, todos os registros que integram um 
+mesmo lançamento contábil. 
+ 
+7. O registro contábil deve conter o número de identificação do lançamento em ordem 
+sequencial relacionado ao respectivo documento de origem externa ou interna ou, na sua falta, 
+em elementos que comprovem ou evidenciem fatos contábeis. 
+ 
+8. A terminolog ia utilizada no registro contábil deve expressar a essência econômica da 
+transação. 
+ 
+9. Os livros contábeis obrigatórios, entre eles o Livro Diário e o Livro Razão,  em forma não 
+digital, devem revestir-se de formalidades extrínsecas, tais como: 
+a) serem encadernados; 
+b) terem suas folhas numeradas sequencialmente; 
+c) conterem termo de abertura e de encerramento assinados pelo titular ou representante 
+legal da entidade e pelo profissional da contabilidade regularmente habilitado no 
+Conselho Regional de Contabilidade.  
+ 
+10. Os livros contábeis obrigatórios, entre eles o Livro Diário e o Livro Razão, em forma digital, 
+devem revestir-se de formalidades extrínsecas, tais como: 
+a) serem assinados digitalmente pela entidade e pelo profissional da contabilidade 
+regularmente habilitado; 
+b) serem autenticados no registro público competente. 
+b)  quando exigível por legislação específica, serem autenticados no registro público ou 
+entidade competente. (Alterada pela ITG 2000 (R1)) 
+ 
+11. Admite-se o uso de códigos e/ou abreviaturas, nos históricos d os lançamentos, desde que 
+permanentes e uniformes, devendo constar o significado dos códigos e/ou abreviaturas no 
+Livro Diário ou em registro especial revestido das formalidades extrínsecas de que tratam os 
+itens 9 e 10.  
+ 
+12. A escrituração contábil e a emiss ão de relatórios, peças, análises, demonstrativos e 
+demonstrações contábeis são de atribuição e de responsabilidade exclusivas do profissional da 
+contabilidade legalmente habilitado. 
+ 
+13. As demonstrações contábeis devem ser transcritas no Livro Diário, comple tando-se com as 
+assinaturas do titular ou de representante legal da entidade e do profissional da contabilidade 
+legalmente habilitado. 
+ 
+Livro diário e livro razão 
+ 
+14. No Livro Diário devem ser lançadas, em ordem cronológica, com individualização, clareza e 
+referência ao documento probante, todas as operações ocorridas, e quaisquer outros fatos que 
+provoquem variações patrimoniais.  
+ 
+15. Quando o Livro Diário e o Livro Razão forem gerados por processo que utilize fichas ou 
+folhas soltas, deve ser adotado o registro “Balancetes Diários e Balanços”. 
+ 
+16. No caso da entidade adotar processo eletrônico ou mecanizado para a sua escrituração 
+contábil, os formulários de folhas soltas, devem ser numerados mecânica ou tipograficamente 
+e encadernados em forma de livro. 
+ 
+17. Em caso d e escrituração contábil em forma digital, não há necessidade de impressão e 
+encadernação em forma de livro, porém o arquivo magnético autenticado pelo registro público 
+competente deve ser mantido pela entidade. 
+  
+18. Os registros auxiliares, quando adotados, devem obedecer aos preceitos gerais da escrituração 
+contábil. 
+ 
+19. A entidade é responsável pelo registro público de livros contábeis em órgão competente e por 
+averbações exigidas pela legislação de recuperação judicial, sendo atribuição do profissional 
+de contabilidade a comunicação formal dessas exigências à entidade. 
+ 
+Escrituração contábil de filial 
+ 
+20. A entidade que tiver unidade operacional ou de negócios, quer como filial, agência, sucursal 
+ou assemelhada, e que optar por sistema de escrituração descentraliz ado, deve ter registros 
+contábeis que permitam a identificação das transações de cada uma dessas unidades. 
+ 
+21. A escrituração de todas as unidades deve integrar um único sistema contábil. 
+ 
+22. A opção por escrituração descentralizada fica a critério da entidade. 
+ 
+23. Na escrituração descentralizada, deve ser observado o mesmo grau de detalhamento dos 
+registros contábeis da matriz. 
+ 
+24. As contas recíprocas relativas às transações entre matriz e unidades, bem como entre estas, 
+devem ser eliminadas quando da elaboração das demonstrações contábeis da entidade. 
+ 
+25. As despesas e as receitas que não possam ser atribuídas às unidades devem ser registradas na 
+matriz e distribuídas para as unidades de acordo com critérios da administração da entidade. 
+ 
+Documentação contábil 
+ 
+26. Documentação contábil é aquela que comprova os fatos que originam lançamentos na 
+escrituração da entidade e compreende todos os documentos, livros, papéis, registros e outras 
+peças, de origem interna ou externa, que apoiam ou componham a escrituração. 
+ 
+27. A documenta ção contábil é hábil quando revestida das características intrínsecas ou 
+extrínsecas essenciais, definidas na legislação, na técnica -contábil ou aceitas pelos “usos e 
+costumes”. 
+ 
+28. Os documentos em papel podem ser digitalizados e armazenados em meio magnétic o, desde 
+que assinados pelo responsável pela entidade e pelo profissional da contabilidade 
+regularmente habilitado, devendo ser submetidos ao registro público competente. 
+ 
+Contas de compensação 
+ 
+29. Contas de compensação constituem sistema próprio para control e e registro dos fatos 
+relevantes que resultam em assunção de direitos e obrigações da entidade cujos efeitos 
+materializar-se-ão no futuro e que possam se traduzir em modificações no patrimônio da 
+entidade. 
+ 
+30. Exceto quando de uso mandatório por ato de órgão  regulador, a escrituração das contas de 
+compensação não é obrigatória. Nos casos em que não forem utilizadas, a entidade deve 
+assegurar-se que possui outros mecanismos que permitam acumular as informações que de 
+outra maneira estariam controladas nas contas de compensação. 
+ 
+Retificação de lançamento contábil  
+ 
+31. Retificação de lançamento é o processo técnico de correção de registro realizado com erro na 
+escrituração contábil da entidade e pode ser feito por meio de: 
+a) estorno; 
+b) transferência; e 
+c) complementação. 
+ 
+32. Em qualquer das formas citadas no item 31 , o histórico do lançamento deve precisar o motivo 
+da retificação, a data e a localização do lançamento de origem. 
+ 
+33. O estorno consiste em lançamento inverso àquele feito erroneamente, anulando-o totalmente. 
+ 
+34. Lançamento de transferência é aquele que promove a regularização de conta indevidamente 
+debitada ou creditada, por meio da transposição do registro para a conta adequada. 
+ 
+35. Lançamento de complementação é aquele que vem posteriormente complementar, 
+aumentando ou reduzindo o valor anteriormente registrado. 
+ 
+36. Os lançamentos realizados fora da época devida devem consignar, nos seus históricos, as 
+datas efetivas das ocorrências e a razão do registro extemporâneo. 
+ 
+Em razão dessa alteração, as disposições não alteradas d esta Interpretação são mantidas e a 
+sigla da ITG 2000, publicada no DOU, Seção 1, de 22.3.11, passa a ser ITG 2000 (R1). 
+ 
+A alteração desta Interpretação entra em vigor na data de sua publicação. 
+ 
+ 
+Brasília, 5 de dezembro de 2014. 
+ 
+Contador José Martonio Alves Coelho 
+Presidente 
+ 
+NORMA BRASILEIRA DE CONTABILIDADE – ITG 2000 (R1), DE 5 DE DEZEMBRO DE 
+2014 
+ 
+ 
+Altera a Interpretação Técnica ITG 2000 
+que dispõe sobre escrituração contábil. 
+ 
+ 
+O CONSELHO FEDERAL DE CONTABILIDADE , no exercício de suas 
+atribuições legais e regimentais e com fundamento no disposto na alínea “f” do art. 6º do 
+Decreto-Lei n.º 9.295/46, alterado pela Lei n.º 12.249/10, faz saber que foi aprovada em seu 
+Plenário a alteração da seguinte Norma Brasileira de Contabilidade (NBC): 
+ 
+1. Altera a al ínea (b) do item 10 da ITG 2000 – Escrituração Contábil, que passa a 
+vigorar com a seguinte redação: 
+ 
+(b)  quando exigível por legislação específica, serem autenticados no registro público 
+ou entidade competente. 
+ 
+2. Em razão dessa alteração, as disposições n ão alteradas desta Interpretação são mantidas e a 
+sigla da ITG 2000, publicada no DOU, Seção 1, de 22.3.11, passa a ser ITG 2000 (R1). 
+ 
+3. A alteração desta Interpretação entra em vigor na data de sua publicação. 
+ 
+ 
+Brasília, 5 de dezembro de 2014. 
+ 
+Contador José Martonio Alves Coelho 
+Presidente 
+ 
+ 
+ 

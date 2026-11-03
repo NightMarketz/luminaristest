@@ -1,0 +1,142 @@
+Pesquisa avançada por nome do beneficiário no portal do e-CAC Ir para o conteúdo 
+
+SPED — Sistema Público de Escrituração Digital
+
+Fonte Normal
+
+Aumentar Fonte
+
+Diminuir Fonte
+
+Página Inicial
+
+ Conheça o Sped 
+Apresentação
+
+Benefícios
+
+Histórico
+
+Objetivos
+
+Premissas
+
+Universo de atuação
+
+Estatísticas Sped
+
+ Serviços 
+Contribuinte
+
+Atualização de Tabelas
+
+Estatísticas ECD Junta
+
+Entes Conveniados - habilitação de usuários
+
+Consulta de NCM
+
+ Legislação 
+ Parceiros do Projeto 
+Membros, Entidades e Empresas Piloto
+
+ Pesquise no SPED Buscar 
+
+Módulos
+
+Central de Balanços
+
+CT-e
+
+DeRE
+
+ECD
+
+ECF
+
+EFD Contribuições
+
+EFD ICMS IPI
+
+EFD-Reinf
+
+e-Financeira
+
+eSocial
+
+MDF-e
+
+NFC-e
+
+NF-e
+
+NFS-e
+
+Downloads
+
+ Receitanet 
+
+ ReceitanetBX 
+
+ Validador ECD 
+
+ Validador ECF 
+
+ Validador EFD ICMS-IPI 
+
+ Validador EFD-Contribuições 
+
+ Visualizador Sped 
+
+Portais e Secretarias
+
+Portais Estaduais da NF-e
+ Selecione Acre Alagoas Amazonas Bahia Ceará Distrito Federal Espirito Santo Goiás Maranhão Mato Grosso Mato Grosso do Sul Minas Gerais Pará Paraíba Paraná Pernambuco Piauí Rio de Janeiro Rio Grande do Norte Rio Grande do Sul Santa Catarina São Paulo Sergipe Tocantins 
+Secretarias de Fazenda
+ Selecione Acre Alagoas Amapá Amazonas Bahia Ceará Distrito Federal Espirito Santo Goiás Maranhão Mato Grosso Mato Grosso do Sul Minas Gerais Pará Paraíba Paraná Pernambuco Piauí Rio de Janeiro Rio Grande do Norte Rio Grande do Sul Rondônia Roraima Santa Catarina São Paulo Sergipe Tocantins 
+Portais de Documentos Fiscais
+ Selecione MDF-e NF-e CT-e 
+
+Página Inicial
+
+Módulos
+
+EFD-Reinf
+
+Destaques
+
+Pesquisa avançada por nome do beneficiário no portal do e-CAC
+
+EFD-Reinf
+
+ O que é 
+ Downloads 
+Leiautes 
+
+Esquemas XSD
+
+Manual de Orientação
+
+Tabelas
+
+Mensagens do Sistema
+
+Consultas EFD-REINF
+
+Notas Técnicas e Orientativas
+
+Nota Conjunta SEPRT/RFB/SED nº 1/2019
+
+ Legislação 
+ Perguntas Frequentes 
+ Pesquisa avançada por nome do beneficiário no portal do e-CAC 
+
+Publicado em 27/11/2025
+
+Para facilitar o uso do portal web da EFD-Reinf pelos usuários do e-CAC, foi incluída nova opção na pesquisa avançada dos eventos da série R-4000: a busca por nome do beneficiário (no exterior).
+
+Para utilizar a funcionalidade da pesquisa por nome, acessar a opção de menu “Rendimentos Pagos/Creditados (Série R-4000)” -> “Visualizar pagamentos/créditos” e marcar a opção de menu “Pesquisa avançada”. 
+
+Observar que nas opções dos eventos “Beneficiário pessoa física (R-4010)” e “Beneficiário pessoa jurídica (R-4020)” aparecem disponíveis os campos de "Nome do beneficiário", que poderão ser opcionalmente preenchidos caso o CPF ou CNPJ não sejam preenchidos, e vice-versa. A pesquisa funciona mesmo que seja digitado apenas um trecho do nome.
+
+Além disso, caso a pesquisa avançada não seja utilizada, a ordem de exibição dos eventos foi alterada para que aqueles enviados com o nome do beneficiário preenchido apareçam primeiro, antes dos eventos enviados com número de CPF ou CNPJ.

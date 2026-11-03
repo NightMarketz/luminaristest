@@ -53,6 +53,17 @@ export const paymentStatus: ISchemaField = {
   required: true,
 };
 
+// EFICIENCIA-FISCAL PR-1 item 1 (F-EF-9 a): natureza do desconto da venda. Obrigatória no finalize quando há desconto.
+// CONDITIONAL não abate a receita bruta nem é destacado como incondicional (LC 87 art. 13 § 1º II "a"; LC 214 art. 12 § 3º).
+export const discountKind: ISchemaField = {
+  name: 'discountKind',
+  label: 'Discount Kind',
+  type: 'select',
+  options: ['UNCONDITIONAL', 'CONDITIONAL'],
+  required: false,
+  searchable: false,
+};
+
 // --- Products / Services ---
 
 export const usageType: ISchemaField = {

@@ -1,4 +1,4 @@
-import type { FixedAsset, Prisma } from 'generated/prisma';
+import type { FixedAsset, FixedAssetClass, Prisma } from 'generated/prisma';
 import type { FixedAssetStatus } from '../models/FixedAsset.model';
 import type { AccountingScope } from '../scope/AccountingScope';
 
@@ -23,6 +23,9 @@ export interface CreateFixedAssetData {
   payableId?: string | null;
   sourceDocumentId?: string | null;
   sourceItemRef?: string | null;
+  // C8 emenda 3.2 (E8b/E10, F-EM-6 → a) — só em classe AMORTIZATION_LEASEHOLD; ausentes no rascunho de NF-e.
+  leaseEndDate?: Date | null;
+  leaseIndemnifiable?: boolean | null;
 }
 
 export interface UpdateFixedAssetData {
@@ -39,6 +42,8 @@ export interface UpdateFixedAssetData {
   bookAnnualRateBp?: number | null;
   bookRateJustification?: string | null;
   acquiredAt?: Date;
+  leaseEndDate?: Date | null;
+  leaseIndemnifiable?: boolean | null;
 }
 
 /**
@@ -85,6 +90,19 @@ export interface IFixedAssetRepository {
     asOfDate: Date,
     tx?: Prisma.TransactionClient,
   ): Promise<FixedAsset[]>;
+
+  /**
+   * C8 emenda 3.2 P3 (E15) — candidatos do Bloco F no período `[from, to]`: vivos, de classe depreciável, ativados até
+   * `to`, em `ACTIVE`/`FULLY_DEPRECIATED` ou `DISPOSED` com `disposedAt >= from` — o status é o de HOJE: um bem baixado
+   * DEPOIS do período estava vivo nele e entra (fechar o T04 em fevereiro com baixa em janeiro). Com a classe (o `kind`
+   * decide a série fiscal). O filtro do E15 (override/residual/benfeitoria com `nBook < nFiscal`) é do serviço.
+   */
+  findForParteB(
+    scope: AccountingScope,
+    from: Date,
+    to: Date,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Array<FixedAsset & { class: FixedAssetClass }>>;
 
   /** Conta ativos vivos (não soft-deleted) de uma classe, em qualquer status — usado pelo bloqueio
    *  de soft-delete da classe (item 7, "delete com ativo vivo → 400"). */

@@ -143,6 +143,20 @@ export const commission: ISchemaField = {
   searchable: false,
 };
 
+// EFICIENCIA-FISCAL PR-1 item 1 (BRIEF BE-INCR-EFICIENCIA-FISCAL; ADR D4.1): snapshot do preço de catálogo no item.
+// readOnly = a edição pela API genérica não muda; o wizard grava na criação. Com ele presente, `unitPrice` tem de ser igual
+// (o desconto vive em `discountCents`, nunca embutido no preço — I-1).
+export const catalogUnitPrice: ISchemaField = {
+  name: 'catalogUnitPrice',
+  label: 'Catalog Price',
+  type: 'number',
+  required: false,
+  numberFormat: 'currency',
+  validation: { minValue: 0 },
+  readOnly: true,
+  searchable: false,
+};
+
 export const commissionRate: ISchemaField = {
   name: 'rate',
   label: 'Commission Rate %',
@@ -164,6 +178,32 @@ export const quantity: ISchemaField = {
   numberFormat: 'integer',
   defaultValue: 1,
   validation: { minValue: 1 },
+  searchable: false,
+};
+
+// EFICIENCIA-FISCAL PR-1 item 1: desconto incondicional destacado por item, em centavos inteiros (LC 214 art. 12 § 3º:
+// "que conste do respectivo documento fiscal"). Σ dos itens = `discountAmount` da venda (± 1 centavo) — guarda no finalize.
+export const discountCents: ISchemaField = {
+  name: 'discountCents',
+  label: 'Item Discount (cents)',
+  type: 'number',
+  required: false,
+  numberFormat: 'integer',
+  defaultValue: 0,
+  validation: { minValue: 0 },
+  searchable: false,
+};
+
+// EFICIENCIA-FISCAL PR-1 item 1 (ADR D6): custo médio UNITÁRIO do estoque na data da venda — piso do item. Gravado uma
+// vez só pelo SaleFiscalGuardService (isSystem), nunca recalculado (I-4b); a criação pela API não o aceita.
+export const custoSnapshotCents: ISchemaField = {
+  name: 'custoSnapshotCents',
+  label: 'Cost at Sale (cents)',
+  type: 'number',
+  required: false,
+  numberFormat: 'integer',
+  validation: { minValue: 0 },
+  readOnly: true,
   searchable: false,
 };
 

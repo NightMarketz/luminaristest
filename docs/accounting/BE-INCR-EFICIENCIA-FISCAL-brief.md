@@ -8,6 +8,47 @@
 > AskUserQuestion): **F-EF-14..17 todos (a)**, a recomendação do BRIEF. F-EF-16 (a) reabre o F-DFE-15 (a) com o destaque do
 > desconto na NFS-e. **Não é `executa`.**
 
+## Emenda 28/10 — fila de pesquisa de 27/10 (bloco 3; dossiê `pesquisas-legais/fila-2026-10-27-bloco3-eficiencia`)
+
+> **Pedido do dono** (chat, 2026-10-28): *"Faz o fold dos achados da fila de pesquisa de 27/10 (blocos 1 a 6) no vault e
+> nos BRIEFs, junto com os 7 dossiês, num PR sem merge."* Escopo: este BRIEF e a nota do nó. **Só fato de fonte oficial:
+> nenhum fork é ratificado, e não é `executa`.** Resumo da fila: [[PESQUISA-FILA-2026-10-27]].
+
+1. **P-EF-6: em SP, perfumaria e cosméticos (NCM 3303, 3304 e 3305) estão fora da ICMS-ST desde 01/04/2026.** A Portaria
+   SRE 94/2025 revogou o Anexo XI da Portaria CAT 68/2019, a lista paulista do art. 313-E do RICMS/SP, com vigência em
+   01/04/2026 (arts. 1º e 4º [D14]); a Resposta à Consulta 33677/2026 confirma para o NCM 3304.99.10 que as operações
+   internas "não estão mais submetidas" à ST [D12]. O Conv. ICMS 142/2018, Anexo XIX, só lista os itens que **podem** entrar
+   em ST (3303.00.10 a 3305.90.00, CEST 20.007.00 a 20.022.00) [D11]; cada UF adota ou não. **Efeito:** a tabela
+   `ICMS_ST_NCM_UF` (item 11) fica sem linha de SP a partir de 2026-04-01; em SP o PR-2 segrega só o PIS/Cofins monofásico,
+   e segregar ICMS-ST de cosmético depois de 01/04/2026 é o caso do alerta `SEGREGACAO_INDEVIDA` (item 14). Outras UFs
+   entram quando houver cliente nelas (RICMS de cada uma não lido).
+2. **P-EF-8: SUP de SP em 2026.** O regime especial vale para os subitens 4.01, 4.02, 4.06, 4.08, 4.11–4.14, 4.16, 5.01,
+   7.01, 17.13, 17.15 e 17.18, mais economistas (Lei SP 13.701 art. 15, redação da Lei 17.719/2021 [D05]): **salão (6.01,
+   6.02) fica fora; a clínica pode entrar.** Tabela oficial da Fazenda de SP para 2026 [D10], base mensal por profissional:
+   até 5, R$ 2.413,62 (ISS trimestral de R$ 144,81 a 2%, art. 16 I "a", ou R$ 362,04 a 5%); 6 a 10, R$ 6.048,39; 11 a 20,
+   R$ 12.096,79; 21 a 30, R$ 24.193,60; 31 a 50, R$ 36.290,39; 51 a 100, R$ 48.387,19; 101 ou mais, R$ 72.580,80.
+   Vencimento trimestral: 10/04, 10/07, 10/10 e 10/01 [D08]. O "amparo judicial para limitada" do contador tem base no
+   texto (§ 2º VII exclui a sociedade empresária; § 14 exige "a responsabilidade ilimitada do profissional sócio").
+   **Efeito:** a linha SP da `ISS_FIXO_SUP` (item 28) pode sair de `DRAFT` com esses valores. Os códigos "uso restrito"
+   04112 (Medicina) e 03380 (Advocacia), com valor único de R$ 2.656,48, não têm origem explicada: só entram com documento
+   (item 29).
+3. **P-EF-11: esteticista é profissão regulamentada.** A Lei 13.643/2018 "Regulamenta as profissões de Esteticista"
+   [D06]; o art. 40 da Lei 9.250 (16%) "não se aplica [...] às sociedades prestadoras de serviços de profissões legalmente
+   regulamentadas" [D03, p.ú.], repetido no RIR/2018 art. 592 § 4º [D16]. Salão de estética fica fora dos 16%. Cabeleireiro,
+   manicure, depilador e maquiador têm o exercício "reconhecido" pela Lei 12.592/2012 [D02], sem o verbo "regulamenta":
+   leitura segura de 32%, com diferença máxima de R$ 2.880 de IRPJ por ano (16 p.p. × R$ 120 mil × 15%). Pergunta ao
+   contador só se houver cliente real no Presumido com receita de até R$ 120 mil. **Efeito:** o texto de ajuda do item 30
+   (`PROFISSAO_REGULAMENTADA_TIRA_16`) cita a Lei 13.643 art. 1º como lida.
+4. **P-EF-12: o "valor de mercado" está nos arts. 14 e 16 do Regulamento da CBS** (Decreto 12.955/2026 [D07]; o BRIEF citava
+   arts. 12 e 13). Valor de mercado é "o valor praticado em operações comparáveis entre partes não relacionadas" (art. 14),
+   pelas operações dos últimos 3 meses do contribuinte ou de terceiros (§ 1º), com a ordem de reserva do § 3º. O
+   arbitramento cabe quando o documento declara "valor notoriamente inferior ao valor de mercado" (art. 16 I "b"); o
+   desconto incondicional que consta do documento sai da base (art. 13 § 2º III e § 3º). **Efeito:** o comparável do item
+   num combo é a venda avulsa do mesmo item nos 3 meses anteriores; `PROPORCIONAL_CATALOGO` segue de pé; o CARGA continua
+   só com aceite do contador (F-EF-3), e a evidência que a P-EF-1 (resto) pede é essa venda avulsa.
+5. **Lacunas:** RICMS das outras 26 UFs; Regulamento do IBS (Resolução CGIBS 6/2026); o ato conjunto do art. 14 § 7º; a
+   origem dos códigos "uso restrito" da SUP; a RDC Anvisa 50 continua não lida.
+
 ## TLDR (2 linhas)
 
 O nó entra em cinco PRs. Os PRs 1 e 4 já podem receber `executa`:
@@ -394,11 +435,11 @@ Abertos ao ler o código atual contra a emenda de 21/10. **Nenhum se auto-ratifi
 | P-EF-1 | **respondida 21/10:** só proporcional tem respaldo ⇒ padrão emendado. **Resta:** a evidência de custo que o contador quer guardar quando aceitar CARGA (NF de compra × custo médio na data × ficha de custo do serviço) | item 5 (`ServiceCostEvidence.sourceDocumentId` obrigatório?) | contador |
 | P-EF-2 | respondida: receita líquida do incondicional (L8) | — | — |
 | P-EF-3, P-EF-4, P-EF-5, P-EF-9, P-EF-10 | respondidas, confirmação (§1) | — | — |
-| P-EF-6 | dado: Conv. ICMS 142/2018 + protocolos, NCM 3303/3304/3305 — **não conferido** | item 11 (linhas DRAFT) | fonte oficial CONFAZ/SEFAZ-UF |
+| P-EF-6 | ~~dado: Conv. ICMS 142/2018 + protocolos, NCM 3303/3304/3305~~ **conferido 27/10 para SP:** fora da ST desde 01/04/2026 (Portaria SRE 94/2025; RC 33677/2026); outras UFs quando houver cliente (Emenda 28/10 item 1) | item 11 (SP sem linha desde 2026-04-01) | fonte oficial SEFAZ-UF (outras UFs) |
 | P-EF-7 | respondida (critério); **lista por procedimento** com fundamento na Atribuição 4 ainda por cliente | item 26 (`fundamentoHospitalar`) | contador, por tenant |
-| P-EF-8 | respondida (SP: amparo judicial); **valor 2026** não conferido | item 28 (linha DRAFT) | fonte oficial (Lei SP 13.701 art. 15 + decreto de atualização) |
-| P-EF-11 (nova) | esteticista é profissão regulamentada pela Lei 13.643/2018? Em caso afirmativo, salão só de estética perde os 16 % | texto do item 30 | fonte oficial (lei não lida) |
-| P-EF-12 (nova) | Decreto 12.955/2026 arts. 12 e 13 do regulamento (forma do "valor de mercado" no arbitramento) | antes de ligar CARGA em produção | fonte oficial |
+| P-EF-8 | respondida (SP: amparo judicial); ~~valor 2026 não conferido~~ **valor 2026 conferido 27/10** na tabela oficial da Fazenda de SP: R$ 2.413,62 por profissional até 5 (Emenda 28/10 item 2) | item 28 (linha SP sai de DRAFT por PR de dado) | — |
+| P-EF-11 (nova) | ~~esteticista é profissão regulamentada pela Lei 13.643/2018?~~ **Lida 27/10: sim** ("Regulamenta", art. 1º); salão só de estética perde os 16 %. Cabeleireiro (Lei 12.592) fica ambíguo: leitura segura 32 % (Emenda 28/10 item 3) | texto do item 30 | contador só com cliente real no Presumido até R$ 120 mil |
+| P-EF-12 (nova) | ~~Decreto 12.955/2026 arts. 12 e 13~~ **Lido 27/10:** a forma está nos arts. 14 e 16 do Regulamento da CBS (comparável = venda avulsa nos 3 meses anteriores; Emenda 28/10 item 4) | antes de ligar CARGA em produção (segue com aceite do contador) | — |
 
 ## 7. Insumos ausentes
 
@@ -407,7 +448,8 @@ Abertos ao ler o código atual contra a emenda de 21/10. **Nenhum se auto-ratifi
    coberto pela subrazão e pelo `fiscal-check` até o X10a.
 3. **Cálculo de dividendos/JCP** do IRRF-DISTRIBUICAO: o item 17 espera.
 4. **Tabela IBS/CBS 2027** com alíquota publicada: o item 16 (2027) e o item 32 rodam com aviso de `DRAFT`.
-5. RDC Anvisa 50, Conv. ICMS 142/2018, Lei SP 13.701 art. 15 (2026), Lei 13.643/2018, Decreto 12.955/2026: não lidos (§6).
+5. RDC Anvisa 50: não lida (§6). ~~Conv. ICMS 142/2018, Lei SP 13.701 art. 15 (2026), Lei 13.643/2018, Decreto 12.955/2026~~:
+   lidos em 27/10 (Emenda 28/10).
 6. **Wizard Nova Venda** grava `catalogUnitPrice` e `discountCents`: é FE (`FE-INCR-EFICIENCIA-FISCAL`). Até ele, venda pela API
    genérica cai no ramo legado do item 2 (`catalogUnitPrice := unitPrice`, desconto só no cabeçalho, rateio proporcional calculado
    pelo `fiscal-check`).

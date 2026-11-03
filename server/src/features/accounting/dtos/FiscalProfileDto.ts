@@ -95,6 +95,20 @@ const FiscalProfileFields = z
     inscricaoMunicipal: z.string().min(1).max(15).nullable().optional(),
     cnae: z.string().min(1).max(10).nullable().optional(),
     dpsSerie: z.number().int().min(1).max(49999).default(1),
+    // BE-INCR-NFCE (nó X10a, itens 8–9; F-NFCE-2 b): emit/IE (C17: "somente os algarismos", 2–14 — o formato por UF é
+    // insumo pendente) e séries da NF-e 55 / NFC-e 65 (B07: 000–889 = aplicativo do contribuinte). MOC 7.0 Anexo I pp. 9, 13.
+    inscricaoEstadual: z.string().regex(/^\d{2,14}$/, 'inscricaoEstadual: só algarismos, 2 a 14 (emit/IE, C17)').nullable().optional(),
+    nfeSerie: z.number().int().min(0).max(889).default(1),
+    nfceSerie: z.number().int().min(0).max(889).default(1),
+    // BE-INCR-NFCE PR-3 (D-2026-10-26-X10A-EXECUCAO, "Campos no FiscalProfile"): emitente da NF-e/NFC-e, MOC 7.0 Anexo I
+    // pp. 12–13 — C03 xNome 2-60, C06 xLgr 2-60, C07 nro 1-60, C08 xCpl 1-60, C09 xBairro 2-60, C11 xMun 2-60, C13 CEP 8.
+    razaoSocial: z.string().trim().min(2).max(60).nullable().optional(),
+    enderLogradouro: z.string().trim().min(2).max(60).nullable().optional(),
+    enderNumero: z.string().trim().min(1).max(60).nullable().optional(),
+    enderComplemento: z.string().trim().min(1).max(60).nullable().optional(),
+    enderBairro: z.string().trim().min(2).max(60).nullable().optional(),
+    enderMunicipio: z.string().trim().min(2).max(60).nullable().optional(),
+    enderCep: z.string().regex(/^\d{8}$/, 'enderCep: 8 algarismos (C13)').nullable().optional(),
     regEspTrib: z.number().int().min(0).max(9).default(0),
     regApTribSN: z.number().int().min(1).max(3).nullable().optional(),
     // BE-INCR-DFE — D1f configurável (5a–5f), defaults = recomendação do ADR
@@ -138,6 +152,11 @@ const FiscalProfileFields = z
     // Anexo I [114] (obs. de chSubstda): "Prazo máximo parametrizável é 2 anos" ⇒ ≤ 730 dias.
     substPrazoDias: z.number().int().min(0).max(730).nullable().optional(),
     prazoFonte: z.string().min(1).max(500).nullable().optional(),
+    // BE-INCR-NFCE (nó X10a, item 27; EMENDA 2026-10-11 §3 E3-1) — prazo do cancelamento 110111; null ⇒ prazo nacional.
+    // Faixa (dono, questionário de 26/10, "NFC-e 1–30, NF-e ≥ 1"): os 30 min do Aj. SINIEF 19/16 cl. 15ª são teto
+    // nacional (só a UF reduz); a NF-e não tem teto porque a exceção estadual da MOC VG Tabela 5-38 não diz o sentido.
+    nfeCancelPrazoHoras: z.number().int().min(1).nullable().optional(),
+    nfceCancelPrazoMinutos: z.number().int().min(1).max(30).nullable().optional(),
   })
   .strict();
 

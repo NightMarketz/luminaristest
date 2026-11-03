@@ -18,12 +18,14 @@
  *              desfaz
  *              teste: simplesApuracao.integration.test.ts › "item 20: gate dentro da tx — entrada mudou entre o cálculo e o registro ⇒ 409, nada gravado"
  */
-import type { Prisma, ReceitaFiscalLinha, SimplesApuracao } from 'generated/prisma';
+import type { Prisma, ReceitaFiscalLinha, SalaoParceriaContrato, SimplesApuracao } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
-import { ParametroLegalAusenteError, linhaLegalVigente, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
+import { ParametroLegalAusenteError, linhaLegalVigente, type LegalParameterTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
-import { INICIO_LC214, apurar, apurarSimei, janelaRbt12, type ApuracaoSimei, type ApuracaoCalculada, type AtividadeInput, type MesReceita, type NaturezaSimples } from '../models/simplesCalc';
+import { INICIO_LC214, apurar, apurarSimei, janelaRbt12, type ApuracaoInput, type ApuracaoSimei, type ApuracaoCalculada, type AtividadeInput, type MesReceita, type NaturezaSimples, type TributoSimples } from '../models/simplesCalc';
+import { normalizeNcm } from '../models/pisCofinsMonofasicoNcm';
+import type { IProductFiscalProfileRepository } from '../repositories/IProductFiscalProfileRepository';
 import { espelhoPgdas, type EspelhoAtividade } from '../models/simplesEspelho';
 import { mesBounds } from '../models/Lalur.model';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -38,6 +40,9 @@ import { baseCaixaDoPa, naoRecebidasAte, type BucketCaixa, type ItemBaseCaixa, t
 import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
 import type { ISimplesApuracaoRepository } from '../repositories/ISimplesApuracaoRepository';
 import type { ISimplesEntradasRepository } from '../repositories/ISimplesEntradasRepository';
+import type { IPartnerRepository } from '../repositories/IPartnerRepository';
+import type { OutraParticipacao } from '../dtos/PartnerDto';
+import { alertasDeInterdependencia, alertasDeParceria, alertasDeProjecao, receitaProjetadaDoAno, type ContratoParceria, type SocioComParticipacoes } from '../models/taxOptimizationAlertas';
 import type { IIssBeneficioMunicipalRepository } from '../repositories/IIssBeneficioMunicipalRepository';
 import { beneficioDaAtividade, excecaoPisoIss, type BeneficioCadastrado } from '../models/issBeneficio';
 import { toBeneficio } from './IssBeneficioMunicipalService';
@@ -47,7 +52,7 @@ import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
 import type { ReceitaFiscalService } from './ReceitaFiscalService';
 import type { SimplesEntradasService } from './SimplesEntradasService';
-import { excluirDoMotivo, type AlertaSimples, type BaseCaixa, type CodigoAlertaSimples, type ImpedimentoCaixa, type SimplesDasRegistro, type SimplesSegregacaoParcela } from '../dtos/SimplesDto';
+import { excluirDoMotivo, type AlertaSimples, type ChecklistParceria, type BaseCaixa, type CodigoAlertaSimples, type ImpedimentoCaixa, type SimplesDasRegistro, type SimplesSegregacaoParcela } from '../dtos/SimplesDto';
 import { SOURCE_TYPE_SIMPLES_DAS, type DocumentoRef } from '../dtos/SourceDocumentUploadDto';
 import type { SourceDocumentUploadService } from './SourceDocumentUploadService';
 
@@ -161,10 +166,23 @@ interface Montagem {
   regimeApuracao: 'COMPETENCIA' | 'CAIXA';
   baseCaixa: BaseCaixa | null;
   impedimentoCaixa: ImpedimentoCaixa | null;
+  /** EFICIENCIA-FISCAL PR-3 (item 15): a entrada exata que foi ao `apurar` (null quando a atividade ficou sem anexo). */
+  apuracaoInput: ApuracaoInput | null;
+  linhasLegais: LinhaLegal[];
+  /**
+   * EFICIENCIA-FISCAL PR-4 item 23 (D-2026-10-28-EFICIENCIA-FISCAL-PR4-EXECUCAO #6): o DAS da mesma entrada sem as marcas de
+   * segregação (`excluir = []`); null quando nenhuma parcela é segregada ou o cálculo não fechou.
+   */
+  dasSemSegregacaoCents: number | null;
+  /** A base do DAS no PA (competência: receita do mês; caixa: recebido) — a alíquota efetiva do relatório. */
+  receitaPaCents: number;
 }
 
 /** A linha que vira atividade: a do subrazão (competência) ou a composta da base caixa (X14-CAIXA item 8). */
-type LinhaBase = Pick<ReceitaFiscalLinha, 'natureza' | 'cTribNac' | 'receitaCents' | 'cotaProfissionalCents' | 'parceriaContratoId'>;
+type LinhaBase = Pick<ReceitaFiscalLinha, 'natureza' | 'cTribNac' | 'receitaCents' | 'cotaProfissionalCents' | 'parceriaContratoId' | 'excluir' | 'productRef'>;
+/** EFICIENCIA-FISCAL PR-2 (item 13): as marcas gravadas pela subrazão (`segregacaoPorNcm`), em ordem estável. */
+const marcas = (excluir: unknown): TributoSimples[] => (Array.isArray(excluir) ? [...(excluir as TributoSimples[])].sort() : []);
+const chaveMarcas = (m: readonly TributoSimples[]) => m.join('+');
 const MEIOS_CARTAO = new Set(['Debit Card', 'Credit Card']);
 const ART20_CHAVE: Partial<Record<BucketCaixa, keyof BaseCaixa['art20Cents']>> = {
   PARCELA_VENCIDA: 'parcelaVencida',
@@ -184,7 +202,7 @@ function comporItens(itens: readonly ItemBaseCaixa[], vendasPorId: ReadonlyMap<s
     const ls = vendasPorId.get(item.saleId) ?? [];
     const total = ls.reduce((s, l) => s + l.receitaCents, 0n);
     if (!item.venda || ls.length === 0 || total === 0n) {
-      return { item, linhas: [{ natureza: 'SERVICO', cTribNac: null, receitaCents: item.valorCents, cotaProfissionalCents: 0n, parceriaContratoId: null }] };
+      return { item, linhas: [{ natureza: 'SERVICO', cTribNac: null, receitaCents: item.valorCents, cotaProfissionalCents: 0n, parceriaContratoId: null, excluir: [], productRef: null }] };
     }
     let restoR = item.valorCents;
     let restoC = (ls.reduce((s, l) => s + l.cotaProfissionalCents, 0n) * item.valorCents) / total;
@@ -194,7 +212,7 @@ function comporItens(itens: readonly ItemBaseCaixa[], vendasPorId: ReadonlyMap<s
       const c = ultimo ? restoC : (l.cotaProfissionalCents * item.valorCents) / total;
       restoR -= r;
       restoC -= c;
-      return { natureza: l.natureza, cTribNac: l.cTribNac, receitaCents: r, cotaProfissionalCents: c, parceriaContratoId: l.parceriaContratoId };
+      return { natureza: l.natureza, cTribNac: l.cTribNac, receitaCents: r, cotaProfissionalCents: c, parceriaContratoId: l.parceriaContratoId, excluir: l.excluir, productRef: l.productRef };
     });
     return { item, linhas };
   });
@@ -226,10 +244,79 @@ interface MontagemMei {
   limite: bigint;
 }
 
+/** EFICIENCIA-FISCAL PR-2 — o que os avisos de segregação leem do `ProductFiscalProfile`. */
+export interface PerfilProdutoSegregacao {
+  ncm: string;
+  csosn: string | null;
+}
+
+const reais = (c: bigint) => `R$ ${(Number(c) / 100).toFixed(2)}`;
+
+/**
+ * EFICIENCIA-FISCAL PR-2 (itens 13–14; ADR D7, I-8, §12 "segregação errada por NCM") — avisos da segregação, puros sobre as
+ * linhas da base do PA (receita líquida da cota), a declaração manual e o perfil dos produtos:
+ * - `SEM_NCM` (WARNING): revenda sem produto ou sem NCM válida no perfil — nada derivado, a receita vai cheia ao DAS;
+ * - `ICMS_ST_NAO_CONFERIDA` (INFO): produto com CSOSN 500 sem linha PUBLISHED de ST na UF — o ICMS fica no DAS
+ *   (D-2026-10-27-EFICIENCIA-FISCAL-PR2-EXECUCAO, decisão 2);
+ * - `SEGREGACAO_DIVERGE` (WARNING): há declaração manual e ela difere da derivada, por conjunto de tributos — a manual prevalece;
+ * - `SEGREGACAO_INDEVIDA` (WARNING): a manual declara como monofásica mais receita do que a NCM sustenta (derivada + revenda
+ *   sem NCM) — LC 123 art. 29 V (exclusão de ofício).
+ */
+export function alertasDeSegregacao(
+  manual: readonly SimplesSegregacaoParcela[],
+  linhas: readonly LinhaBase[],
+  perfis: ReadonlyMap<string, PerfilProdutoSegregacao>,
+): AlertaSimples[] {
+  const out: AlertaSimples[] = [];
+  const revenda = linhas.filter((l) => l.natureza === 'REVENDA' && !l.parceriaContratoId);
+  const liq = (l: LinhaBase) => l.receitaCents - l.cotaProfissionalCents;
+  const semNcm = revenda.filter((l) => !l.productRef || !normalizeNcm(perfis.get(l.productRef)?.ncm));
+  const semNcmCents = semNcm.reduce((x, l) => x + liq(l), 0n);
+  if (semNcm.length > 0 && semNcmCents > 0n) {
+    out.push({ severity: 'WARNING', codigo: 'SEM_NCM', detalhe: `${reais(semNcmCents)} de revenda sem NCM no perfil fiscal do produto: sem segregação derivada (monofásico/ICMS-ST) — cadastre o perfil ou declare na segregação manual` });
+  }
+  const stNaoConferida = revenda.filter((l) => l.productRef && perfis.get(l.productRef)?.csosn === '500' && !marcas(l.excluir).includes('ICMS'));
+  const stCents = stNaoConferida.reduce((x, l) => x + liq(l), 0n);
+  if (stCents > 0n) {
+    out.push({ severity: 'INFO', codigo: 'ICMS_ST_NAO_CONFERIDA', detalhe: `${reais(stCents)} de revenda com CSOSN 500 sem ICMS-ST conferido para a NCM na UF da unidade: o ICMS fica no DAS — declare na segregação manual se a ST foi retida (LC 123 art. 18 § 4º-A I)` });
+  }
+  if (manual.length === 0) return out;
+
+  const derivada = new Map<string, bigint>();
+  for (const l of linhas) {
+    const m = marcas(l.excluir);
+    if (m.length > 0) derivada.set(chaveMarcas(m), (derivada.get(chaveMarcas(m)) ?? 0n) + liq(l));
+  }
+  const declarada = new Map<string, bigint>();
+  for (const p of manual) {
+    const k = chaveMarcas([...excluirDoMotivo(p.motivo)].sort());
+    declarada.set(k, (declarada.get(k) ?? 0n) + BigInt(p.receitaCents));
+  }
+  const chaves = [...new Set([...derivada.keys(), ...declarada.keys()])].sort();
+  const diverge = chaves.filter((k) => (derivada.get(k) ?? 0n) !== (declarada.get(k) ?? 0n));
+  if (diverge.length > 0) {
+    out.push({
+      severity: 'WARNING',
+      codigo: 'SEGREGACAO_DIVERGE',
+      detalhe: `a segregação manual prevalece sobre a derivada da NCM: ${diverge.map((k) => `${k} manual ${reais(declarada.get(k) ?? 0n)} × derivada ${reais(derivada.get(k) ?? 0n)}`).join('; ')}`,
+    });
+  }
+  const mono = (m: ReadonlyMap<string, bigint>) => [...m.entries()].filter(([k]) => k.split('+').includes('PIS')).reduce((x, [, v]) => x + v, 0n);
+  const sustentada = mono(derivada) + semNcmCents;
+  if (mono(declarada) > sustentada) {
+    out.push({
+      severity: 'WARNING',
+      codigo: 'SEGREGACAO_INDEVIDA',
+      detalhe: `${reais(mono(declarada))} declarados como monofásicos, mas a NCM dos produtos sustenta ${reais(sustentada)}: segregação indevida pode levar à exclusão do Simples (LC 123 art. 29 V)`,
+    });
+  }
+  return out;
+}
+
 export class SimplesApuracaoService {
   constructor(
     private readonly repo: ISimplesApuracaoRepository,
-    private readonly entradasRepo: Pick<ISimplesEntradasRepository, 'findHistorico' | 'findHistoricoTx' | 'findSegregacao' | 'findParceriaMesmoRemovida' | 'sourceDocumentExists'>,
+    private readonly entradasRepo: Pick<ISimplesEntradasRepository, 'findHistorico' | 'findHistoricoTx' | 'findSegregacao' | 'findParceriaMesmoRemovida' | 'listParcerias' | 'sourceDocumentExists'>,
     private readonly receitaRepo: Pick<IReceitaFiscalRepository, 'findByCompetencia' | 'somaPorCompetencia' | 'findVendasEntre' | 'findLinhasDasVendas'>,
     private readonly receitaFiscal: Pick<ReceitaFiscalService, 'tieOut'>,
     private readonly entradas: Pick<SimplesEntradasService, 'segregacaoDaCompetencia'>,
@@ -248,7 +335,18 @@ export class SimplesApuracaoService {
     private readonly documentos: Pick<SourceDocumentUploadService, 'documentosPorId'>,
     /** BE-INCR-SIMPLES-CAIXA PR-2 (item 8): os recebimentos de venda, base do DAS no regime de caixa. */
     private readonly recebimentoRepo: Pick<IReceitaFiscalRecebimentoRepository, 'findByCompetenciaCaixa' | 'findEstornadosNoMes' | 'findBySales'>,
+    /** EFICIENCIA-FISCAL PR-2 (item 13): perfil do produto para os avisos `SEM_NCM` e `ICMS_ST_NAO_CONFERIDA`. */
+    private readonly productFiscalRepo: Pick<IProductFiscalProfileRepository, 'findManyByProductRefs'>,
+    /** EFICIENCIA-FISCAL PR-4 (item 20): sócios e as participações informadas, para o aviso de interdependência. */
+    private readonly partnerRepo: Pick<IPartnerRepository, 'list'>,
   ) {}
+
+  /** EFICIENCIA-FISCAL PR-2 (item 13): NCM e CSOSN dos produtos das linhas de revenda do PA. */
+  private async perfisDosProdutos(scope: AccountingScope, linhas: readonly LinhaBase[], tx?: Prisma.TransactionClient): Promise<Map<string, PerfilProdutoSegregacao>> {
+    const refs = [...new Set(linhas.filter((l) => l.natureza === 'REVENDA' && l.productRef).map((l) => l.productRef as string))];
+    if (refs.length === 0) return new Map();
+    return new Map((await this.productFiscalRepo.findManyByProductRefs(scope, refs, tx)).map((p) => [p.productRef, { ncm: p.ncm, csosn: p.csosn }]));
+  }
 
   /** X14-CAIXA item 4: o controller roda o backfill dos recebimentos sob demanda antes da apuração CAIXA. */
   async regimeApuracaoDoPa(scope: AccountingScope, competencia: string): Promise<'COMPETENCIA' | 'CAIXA' | null> {
@@ -262,6 +360,18 @@ export class SimplesApuracaoService {
     this.assertRead(scope);
     if (await this.ehMei(scope, competencia)) return this.visaoMei(scope, competencia, await this.montarMei(scope, competencia));
     return this.visao(scope, competencia, await this.montar(scope, competencia));
+  }
+
+  /**
+   * EFICIENCIA-FISCAL PR-3 (item 15) — a entrada da apuração do PA como o `apurar` a recebeu, para o simulador do fator r
+   * (`TaxSimulationService`). Nada é gravado. MEI não tem fator r; atividade sem anexo ⇒ 400 nomeado.
+   */
+  async entradaParaSimulacao(scope: AccountingScope, competencia: string): Promise<{ input: ApuracaoInput; linhas: LinhaLegal[]; calculada: ApuracaoCalculada; alertas: AlertaSimples[] }> {
+    this.assertRead(scope);
+    if (await this.ehMei(scope, competencia)) throw new ValidationError(`${competencia}: o MEI recolhe valor fixo pelo SIMEI — sem fator r (LC 123 art. 18-A).`);
+    const m = await this.montar(scope, competencia);
+    if (!m.apuracaoInput) throw new ValidationError(`${competencia}: atividade sem anexo no Simples — corrija o cadastro antes de simular o fator r.`, undefined, 'ATIVIDADE_SEM_ANEXO');
+    return { input: m.apuracaoInput, linhas: m.linhasLegais, calculada: m.calculada, alertas: m.alertas };
   }
 
   /** Item 18 — GET …/apuracoes/:competencia: o cálculo + espelho do PGDAS-D + DAS oficial registrado + divergência. */
@@ -432,10 +542,11 @@ export class SimplesApuracaoService {
         )
       ).map((c) => [c.id, c]),
     );
-    const grupos = new Map<string, { natureza: NaturezaSimples; cTribNac: string | null; receita: bigint }>();
-    const somar = (natureza: NaturezaSimples, cTribNac: string | null, v: bigint) => {
-      const k = `${natureza}|${cTribNac ?? ''}`;
-      const g = grupos.get(k) ?? { natureza, cTribNac, receita: 0n };
+    // EFICIENCIA-FISCAL PR-2 (item 13): o grupo também separa as marcas de segregação da linha (`excluir` derivado da NCM).
+    const grupos = new Map<string, { natureza: NaturezaSimples; cTribNac: string | null; excluir: TributoSimples[]; receita: bigint }>();
+    const somar = (natureza: NaturezaSimples, cTribNac: string | null, v: bigint, excluir: TributoSimples[] = []) => {
+      const k = `${natureza}|${cTribNac ?? ''}|${chaveMarcas(excluir)}`;
+      const g = grupos.get(k) ?? { natureza, cTribNac, excluir, receita: 0n };
       g.receita += v;
       grupos.set(k, g);
     };
@@ -446,7 +557,7 @@ export class SimplesApuracaoService {
         somar(contrato.naturezaCota === 'ALUGUEL_BEM_MOVEL' ? 'LOCACAO_MOVEL' : 'PARCERIA_GESTAO', null, l.receitaCents - l.cotaProfissionalCents);
       } else {
         // Sem contrato achado, a cota já gravada continua fora da receita bruta (mesma regra do total do mês).
-        somar(l.natureza === 'REVENDA' ? 'REVENDA' : 'SERVICO', l.natureza === 'REVENDA' ? null : l.cTribNac, l.receitaCents - l.cotaProfissionalCents);
+        somar(l.natureza === 'REVENDA' ? 'REVENDA' : 'SERVICO', l.natureza === 'REVENDA' ? null : l.cTribNac, l.receitaCents - l.cotaProfissionalCents, marcas(l.excluir));
       }
     }
 
@@ -461,7 +572,7 @@ export class SimplesApuracaoService {
       inicio: perfil.inicioAtividadeEm,
       historico: historico.map((h) => [h.competencia, String(h.receitaBrutaCents), h.folhaCents === null ? null : String(h.folhaCents)]),
       subrazao: [...subrazao.entries()].map(([k, v]) => [k, String(v.receitaCents), String(v.cotaCents)]).sort(),
-      linhasPa: linhasPa.map((l) => [l.id, l.natureza, l.cTribNac, String(l.receitaCents), String(l.cotaProfissionalCents), l.parceriaContratoId]),
+      linhasPa: linhasPa.map((l) => [l.id, l.natureza, l.cTribNac, String(l.receitaCents), String(l.cotaProfissionalCents), l.parceriaContratoId, marcas(l.excluir)]),
       contratos: [...contratos.values()].map((c) => [c.id, c.naturezaCota]).sort(),
       segregacao: seg.parcelas,
       beneficiosIss: { codMun, linhas: cadastrados },
@@ -479,23 +590,52 @@ export class SimplesApuracaoService {
         neg.receita += v;
       }
     }
-    // Review do PR-3 (achado 1): cada parcela segregada é consumida UMA vez, pelos grupos da natureza dela, em ordem.
-    const sobra = seg.parcelas.map((p) => BigInt(p.receitaCents));
-    const entrada: AtividadeInput[] = [];
+    // EFICIENCIA-FISCAL PR-2 (item 13; I-8): as parcelas derivadas da NCM de cada atividade (natureza × cTribNac).
+    const atividades = new Map<string, { natureza: NaturezaSimples; cTribNac: string | null; receita: bigint; derivadas: Map<string, { excluir: TributoSimples[]; receita: bigint }> }>();
     for (const g of lista) {
       if (g.receita <= 0n) continue;
-      let disponivel = g.receita;
-      const parcelas: AtividadeInput['parcelas'] = [];
-      seg.parcelas.forEach((p, i) => {
-        if (p.natureza !== g.natureza || disponivel <= 0n || sobra[i] <= 0n) return;
-        const v = sobra[i] > disponivel ? disponivel : sobra[i];
-        parcelas.push({ receitaCents: Number(v), excluir: excluirDoMotivo((p as SimplesSegregacaoParcela).motivo) });
-        sobra[i] -= v;
-        disponivel -= v;
-      });
-      if (disponivel > 0n) parcelas.push({ receitaCents: Number(disponivel), excluir: [] });
-      entrada.push({ natureza: g.natureza, cTribNac: g.cTribNac, parcelas });
+      const k = `${g.natureza}|${g.cTribNac ?? ''}`;
+      const a = atividades.get(k) ?? { natureza: g.natureza, cTribNac: g.cTribNac, receita: 0n, derivadas: new Map() };
+      a.receita += g.receita;
+      const d = a.derivadas.get(chaveMarcas(g.excluir)) ?? { excluir: g.excluir, receita: 0n };
+      d.receita += g.receita;
+      a.derivadas.set(chaveMarcas(g.excluir), d);
+      atividades.set(k, a);
     }
+    const entrada: AtividadeInput[] = [];
+    if (seg.parcelas.length > 0) {
+      // A declaração manual da competência PREVALECE sobre a derivada (ADR D7, I-8; precedente F-RET-8 a).
+      // Review do PR-3 (achado 1): cada parcela segregada é consumida UMA vez, pelos grupos da natureza dela, em ordem.
+      const sobra = seg.parcelas.map((p) => BigInt(p.receitaCents));
+      for (const a of atividades.values()) {
+        let disponivel = a.receita;
+        const parcelas: AtividadeInput['parcelas'] = [];
+        seg.parcelas.forEach((p, i) => {
+          if (p.natureza !== a.natureza || disponivel <= 0n || sobra[i] <= 0n) return;
+          const v = sobra[i] > disponivel ? disponivel : sobra[i];
+          parcelas.push({ receitaCents: Number(v), excluir: excluirDoMotivo((p as SimplesSegregacaoParcela).motivo) });
+          sobra[i] -= v;
+          disponivel -= v;
+        });
+        if (disponivel > 0n) parcelas.push({ receitaCents: Number(disponivel), excluir: [] });
+        entrada.push({ natureza: a.natureza, cTribNac: a.cTribNac, parcelas });
+      }
+      const naoAplicada = sobra.reduce((x, v) => x + v, 0n);
+      if (naoAplicada > 0n) {
+        alertas.push({ severity: 'WARNING', codigo: 'SEGREGACAO_MANUAL', detalhe: `R$ ${(Number(naoAplicada) / 100).toFixed(2)} declarados na segregação não têm receita da mesma natureza no mês e foram ignorados` });
+      }
+    } else {
+      for (const a of atividades.values()) {
+        entrada.push({ natureza: a.natureza, cTribNac: a.cTribNac, parcelas: [...a.derivadas.values()].map((d) => ({ receitaCents: Number(d.receita), excluir: d.excluir })) });
+      }
+    }
+    const perfisProduto = await this.perfisDosProdutos(scope, linhasBase, tx);
+    alertas.push(...alertasDeSegregacao(seg.parcelas, linhasBase, perfisProduto));
+    // EFICIENCIA-FISCAL PR-4 item 19: salão-parceiro sobre as linhas do PA (competência) e os contratos vivos + os removidos
+    // que as linhas citam.
+    const contratosParceria = new Map<string, ContratoParceria>();
+    for (const c of [...contratos.values(), ...(await this.entradasRepo.listParcerias(scope, tx))]) contratosParceria.set(c.id, toContratoParceria(c));
+    alertas.push(...alertasDeParceria(competencia, linhasPa, [...contratosParceria.values()]));
     for (const a of catalogo) {
       if (!entrada.some((e) => e.natureza === a.natureza && e.cTribNac === a.cTribNac)) entrada.push({ ...a, parcelas: [{ receitaCents: 0, excluir: [] }] });
     }
@@ -513,32 +653,33 @@ export class SimplesApuracaoService {
         e.beneficioIss = { tipo: b.tipo, reducaoBpPorFaixa: b.reducaoBpPorFaixa };
       }
     }
-    const naoAplicada = sobra.reduce((x, v) => x + v, 0n);
-    if (naoAplicada > 0n) {
-      alertas.push({ severity: 'WARNING', codigo: 'SEGREGACAO_MANUAL', detalhe: `R$ ${(Number(naoAplicada) / 100).toFixed(2)} declarados na segregação não têm receita da mesma natureza no mês e foram ignorados` });
-    }
 
     // Item 23 — limites (LC 123 art. 3º I/II, §§ 9º, 9º-A; art. 13-A; Res. CGSN 140 art. 12 §§ 1º–2º).
-    const sublimiteExcedido = this.limites(linhas, competencia, receitas, inicio, alertas);
+    const sublimiteExcedido = this.limites(linhas, competencia, receitas, inicio, alertas, await this.sociosNoMes(scope, competencia, tx));
 
     let calculada: ApuracaoCalculada;
     const receitaPa = caixa ? caixa.baseCents : (receitas.get(competencia) ?? 0n);
     const folhaPa = hist.get(competencia)?.folhaCents ?? null;
+    let apuracaoInput: ApuracaoInput | null = {
+      competencia,
+      historico: historicoMes,
+      inicioAtividade: inicio && inicio <= competencia ? inicio : null,
+      receitaPaCents: Number(receitaPa > 0n ? receitaPa : 0n),
+      folhaPaCents: folhaPa === null ? 0 : Number(folhaPa),
+      sublimiteExcedido,
+      atividades: entrada.length > 0 ? entrada : [{ natureza: 'SERVICO', cTribNac: null, parcelas: [{ receitaCents: 0, excluir: [] }] }],
+    };
+    let dasSemSegregacaoCents: number | null = null;
     try {
-      calculada = apurar(
-        {
-          competencia,
-          historico: historicoMes,
-          inicioAtividade: inicio && inicio <= competencia ? inicio : null,
-          receitaPaCents: Number(receitaPa > 0n ? receitaPa : 0n),
-          folhaPaCents: folhaPa === null ? 0 : Number(folhaPa),
-          sublimiteExcedido,
-          atividades: entrada.length > 0 ? entrada : [{ natureza: 'SERVICO', cTribNac: null, parcelas: [{ receitaCents: 0, excluir: [] }] }],
-        },
-        linhas,
-      );
+      calculada = apurar(apuracaoInput, linhas);
+      // EFICIENCIA-FISCAL PR-4 item 23 (#6): a mesma entrada sem as marcas — a diferença é a economia medida da segregação.
+      if (entrada.some((e) => e.parcelas.some((pc) => pc.excluir.length > 0))) {
+        const semMarcas = apuracaoInput.atividades.map((e) => ({ ...e, parcelas: e.parcelas.map((pc) => ({ ...pc, excluir: [] as TributoSimples[] })) }));
+        dasSemSegregacaoCents = apurar({ ...apuracaoInput, atividades: semMarcas }, linhas).totalCalculadoCents;
+      }
     } catch (e) {
       if ((e as { errorCode?: string }).errorCode !== 'ATIVIDADE_SEM_ANEXO') throw e;
+      apuracaoInput = null;
       alertas.push({ severity: 'WARNING', codigo: 'ATIVIDADE_SEM_ANEXO', detalhe: (e as Error).message });
       calculada = { competencia, regime: 'SIMPLES', rbt12Cents: 0, janelaRbt12: janela, mesesFaltantes: [], atividades: [], totalCalculadoCents: 0, tabela: [] };
     }
@@ -596,7 +737,32 @@ export class SimplesApuracaoService {
       regimeApuracao: caixa ? 'CAIXA' : 'COMPETENCIA',
       baseCaixa,
       impedimentoCaixa,
+      apuracaoInput,
+      linhasLegais: [...linhas],
+      dasSemSegregacaoCents: entrada.length === 0 ? null : dasSemSegregacaoCents,
+      receitaPaCents: Number(receitaPa > 0n ? receitaPa : 0n),
     };
+  }
+
+  /**
+   * EFICIENCIA-FISCAL PR-4 item 23 (D-2026-10-28-EFICIENCIA-FISCAL-PR4-EXECUCAO #6) — o que o relatório de economia mede na
+   * apuração do PA: DAS calculado, DAS sem as marcas de segregação e a receita do PA. `null` fora do ME/EPP do Simples (MEI,
+   * Presumido, Real ou sem perfil): a medida não existe lá. Sem gate próprio: o relatório já checou o dele.
+   */
+  async medidaDaApuracao(scope: AccountingScope, competencia: string): Promise<{ dasCents: number; dasSemSegregacaoCents: number | null; receitaPaCents: number } | null> {
+    const perfil = await this.companyProfileRepo.findByYear(scope, Number(competencia.slice(0, 4)));
+    if (!perfil || perfil.regime !== 'SIMPLES') return null;
+    const m = await this.montar(scope, competencia);
+    return { dasCents: m.calculada.totalCalculadoCents, dasSemSegregacaoCents: m.dasSemSegregacaoCents, receitaPaCents: m.receitaPaCents };
+  }
+
+  /** Item 20 — sócios com vigência em algum dia do mês e as participações informadas. */
+  private async sociosNoMes(scope: AccountingScope, competencia: string, tx?: Prisma.TransactionClient): Promise<SocioComParticipacoes[]> {
+    const inicio = `${competencia}-01`;
+    const fim = `${competencia}-31`;
+    return (await this.partnerRepo.list(scope, tx))
+      .filter((p) => p.entradaEm <= fim && (p.saidaEm === null || p.saidaEm >= inicio))
+      .map((p) => ({ id: p.id, nome: p.nome, tipoPessoa: p.tipoPessoa, outrasParticipacoes: (p.outrasParticipacoes as OutraParticipacao[] | null) ?? null }));
   }
 
   /**
@@ -731,7 +897,14 @@ export class SimplesApuracaoService {
   }
 
   /** Item 23. Devolve se o sublimite do ICMS/ISS (e IBS a partir de 2027) está excedido para o PA. */
-  private limites(linhas: Awaited<ReturnType<LegalParameterService['fotografia']>>, competencia: string, receitas: Receitas, inicio: string | null, alertas: AlertaSimples[]): boolean {
+  private limites(
+    linhas: Awaited<ReturnType<LegalParameterService['fotografia']>>,
+    competencia: string,
+    receitas: Receitas,
+    inicio: string | null,
+    alertas: AlertaSimples[],
+    socios: readonly SocioComParticipacoes[] = [],
+  ): boolean {
     const data = `${competencia}-01`;
     // F-PR4-7 (dono 09/10): sem a linha, falha ruidoso — o zero calava o sublimite e o impedimento.
     const limite = (chave: string) => {
@@ -764,6 +937,15 @@ export class SimplesApuracaoService {
     if (sub > 0n && acumuladoAno > sub) {
       alertas.push({ severity: 'WARNING', codigo: 'SUBLIMITE_ICMS_ISS', detalhe: `receita acumulada em ${ano} ${fmt(acumuladoAno)} acima do sublimite ${fmt(sub)} (LC 123 art. 13-A; Res. CGSN 140 art. 12)` });
     }
+    // EFICIENCIA-FISCAL PR-4 itens 21 e 20 (#4, #3): projeção do ano contra 80% dos limites e a receita bruta global do sócio.
+    const projetado = receitaProjetadaDoAno(acumuladoAno, competencia, inicio);
+    alertas.push(
+      ...alertasDeProjecao(acumuladoAno, projetado, [
+        { codigo: 'PROJECAO_LIMITE_EPP', limiteCents: epp },
+        { codigo: 'PROJECAO_SUBLIMITE_ICMS_ISS', limiteCents: sub },
+      ]),
+    );
+    alertas.push(...alertasDeInterdependencia(socios, projetado ?? acumuladoAno, epp));
     return impedidoEsteAno || impedidoPeloAnterior;
   }
 
@@ -1155,4 +1337,18 @@ export class SimplesApuracaoService {
   private assertRead(scope: AccountingScope): void {
     if (!this.policy.canReadTaxAssessment(scope)) throw new ForbiddenError('Você não tem permissão para ler a apuração do Simples Nacional.');
   }
+}
+
+/** EFICIENCIA-FISCAL PR-4 item 19 — a linha do contrato no formato que o alerta puro lê. */
+function toContratoParceria(c: SalaoParceriaContrato): ContratoParceria {
+  return {
+    id: c.id,
+    profissionalContactId: c.profissionalContactId,
+    homologadoEm: c.homologadoEm,
+    vigenteDesde: c.vigenteDesde,
+    vigenteAte: c.vigenteAte,
+    deletedAt: c.deletedAt,
+    profissionalCnpj: c.profissionalCnpj,
+    checklistDeclarado: (c.checklistDeclarado as ChecklistParceria | null) ?? null,
+  };
 }

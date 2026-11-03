@@ -49,6 +49,65 @@ export function lifeMonths(annualRateBp: number): number {
   return Math.ceil(120000 / annualRateBp);
 }
 
+/**
+ * C8 emenda 3.2, Parte 2 (E9, BE-INCR-FIXED-ASSETS-EMENDA-3-2-brief.md): tipo da classe. `AMORTIZATION_LEASEHOLD` =
+ * benfeitoria em imóvel de terceiro, amortizável só "quando não houver direito ao recebimento de seu valor" (RIR/2018
+ * art. 331 III) e pelos "anos restantes de existência do direito" (art. 333).
+ */
+export const FIXED_ASSET_CLASS_KINDS = ['DEPRECIATION', 'AMORTIZATION_LEASEHOLD'] as const;
+export type FixedAssetClassKind = (typeof FIXED_ASSET_CLASS_KINDS)[number];
+
+/**
+ * Coerência da classe de benfeitoria (lacunas L1/L2 do P2, dono, chat, 2026-10-26, por questionário: "(a) Recusar" e
+ * "(a) Obrigatória na classe"): `AMORTIZATION_LEASEHOLD` exige `depreciable=true` (o runMonth só lê classe depreciável)
+ * e `amortizationExpenseAccountId` (E12, F-EM-7 → b); a conta em classe `DEPRECIATION` seria aceita e ignorada.
+ * Lista vazia = coerente. Usada pelo DTO de criação e pelo update (estado resultante).
+ */
+export function leaseholdClassIssues(
+  kind: FixedAssetClassKind,
+  depreciable: boolean,
+  amortizationExpenseAccountId: string | null,
+): Array<{ path: 'depreciable' | 'amortizationExpenseAccountId'; message: string }> {
+  const issues: Array<{ path: 'depreciable' | 'amortizationExpenseAccountId'; message: string }> = [];
+  if (kind === 'AMORTIZATION_LEASEHOLD') {
+    if (!depreciable) {
+      issues.push({ path: 'depreciable', message: 'Classe AMORTIZATION_LEASEHOLD (benfeitoria) exige depreciable=true — sem isso nunca amortiza.' });
+    }
+    if (!amortizationExpenseAccountId) {
+      issues.push({
+        path: 'amortizationExpenseAccountId',
+        message: 'amortizationExpenseAccountId é obrigatória em classe AMORTIZATION_LEASEHOLD (F-EM-7 → b; referencial 3.01.01.07.01.24).',
+      });
+    }
+  } else if (amortizationExpenseAccountId) {
+    issues.push({
+      path: 'amortizationExpenseAccountId',
+      message: 'amortizationExpenseAccountId só se aplica a classe AMORTIZATION_LEASEHOLD (benfeitoria em imóvel de terceiro).',
+    });
+  }
+  return issues;
+}
+
+/**
+ * E11 (F-EM-5 → b só no contábil, revisto 02/10): prazos da amortização linear da benfeitoria, em meses.
+ * `nFiscal = nContrato` (RIR 333 — prazo restante do contrato); `nBook = min(nContrato, nVida)` (CPC 27 item 56(d):
+ * a vida útil considera o término do contrato), com `nVida = lifeMonths(annualRateBp)` (taxa do Anexo III do bem).
+ * O razão usa `nBook`; `nFiscal` só alimenta o Bloco F (E15, P3).
+ */
+export function amortizationTerms(nContrato: number, annualRateBp: number): { nBook: number; nFiscal: number } {
+  return { nBook: Math.min(nContrato, lifeMonths(annualRateBp)), nFiscal: nContrato };
+}
+
+/**
+ * E11: cumulativa linear até o mês `k` — `min(base × k ÷ n, base)` (floor em BigInt). O resíduo cai no mês `n`
+ * porque `base × n ÷ n = base` exato; a quota do mês é a diferença de duas cumulativas (item 12 do BRIEF-mãe),
+ * nunca soma de quotas arredondadas.
+ */
+export function quotaCumulativaLinear(baseCents: bigint, n: number, k: number): bigint {
+  const cum = (baseCents * BigInt(k)) / BigInt(n);
+  return cum < baseCents ? cum : baseCents;
+}
+
 /** Só os campos que `resolveRateForNcm` lê — `DepreciationRate` inteiro não é necessário aqui. */
 export interface NcmRateCandidate {
   id: string;

@@ -27,7 +27,36 @@ export interface ResolvedFixedAssetItem {
   rateId: string | null;
   legalParameterId?: string | null;
   annualRateBp: number;
+  /** C8 emenda 3.2 (E7): o operador declarou que o item faz parte de um conjunto (IN RFB 1.700 art. 120 § 1º). */
+  setDeclared?: true;
+  /** C8 emenda 3.2 (E5): ausente = CAPITALIZE (todo `rawJson` anterior à emenda). */
+  treatment?: 'CAPITALIZE';
 }
+
+/**
+ * C8 emenda 3.2 (E3/E5): item de imobilizado deduzido DIRETO como despesa (IN RFB 1.700 art. 120) — debita
+ * `accountCode` (a folha de despesa do item) no mesmo reconhecimento e NUNCA vira `FixedAsset`. Vai no `rawJson`
+ * junto com os ativados para a trilha da escolha (PN CST 100/78 item 13); o re-drive do rascunho o filtra.
+ */
+export interface ResolvedExpensedFixedAssetItem {
+  treatment: 'EXPENSE';
+  accountCode: string;
+  cProd: string;
+  sourceItemRef: string;
+  costCents: number;
+  ncm?: string;
+  qty: number;
+  /** E2/E8: `ceil(costCents / qty)` em centavos, como string (BigInt no JSON). */
+  unitCostCents: string;
+  /** E4b: declaração da vida útil ≤ 1 ano (só quando presente). */
+  usefulLifeUpToOneYear?: true;
+}
+
+/** O que o `SourceDocument.rawJson` do reconhecimento guarda em `fixedAssetItems`. */
+export type StoredFixedAssetItem = ResolvedFixedAssetItem | ResolvedExpensedFixedAssetItem;
+
+export const isExpensedFixedAssetItem = (i: StoredFixedAssetItem): i is ResolvedExpensedFixedAssetItem =>
+  i.treatment === 'EXPENSE';
 
 /**
  * IFixedAssetDraftCreator — the seam `PayableService` depends on to create the `FixedAsset`

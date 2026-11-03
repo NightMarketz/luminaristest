@@ -6,7 +6,6 @@ import type { LlmUsage } from './llmUsage';
 // Named constants for per-call output token ceilings (R11 cost guardrails)
 export const MAX_TOKENS_CHAT = 1024;        // RAG chat calls (gpt-4o-mini)
 export const MAX_TOKENS_AGENT = 2048;       // Agent / tool calls (gpt-4o)
-export const MAX_TOKENS_EXTRACTION = 4096;  // Structured-data extraction calls
 
 // Global configuration for token limits and models
 const CONFIG = {
@@ -18,7 +17,7 @@ const CONFIG = {
   MAX_CHARS_PER_CHUNK: 3000,
 
   // Model selection. A OpenAI desativou a família gpt-3.5 (404 model_not_found em 2026-10-24): CHAT e DEFAULT
-  // passaram a 'gpt-4o-mini' (decisão do dono). O retry de extractStructuredData repete o mesmo modelo.
+  // passaram a 'gpt-4o-mini' (decisão do dono).
   MODELS: {
     // Default model for structured data extraction
     DEFAULT: 'gpt-4o-mini',
@@ -65,12 +64,6 @@ class RequestLock {
  * Best-effort repair of malformed JSON returned by an LLM (trailing commas, unquoted keys, smart
  * quotes). Returns the valid/repaired string, or null if it cannot be parsed. Pure — exported for tests.
  */
-/** Loose shape of an LLM structured-data extraction (headers + data are both dynamic JSON). */
-export interface ExtractedStructuredData {
-  headers?: unknown;
-  data?: unknown;
-}
-
 /**
  * Classificação presa a um conjunto fechado (BE-INCR-KIT-SETOR-EMENDA-1 PR-K3, item 7c; L1 do dono, 13/10): structured
  * outputs `json_schema` strict, com `key` = uma das opções ou `null` — a API não pode devolver valor fora da lista.
@@ -345,161 +338,5 @@ export class OpenAIService {
       max_tokens: MAX_TOKENS_CHAT,
     });
     return completion.choices[0]?.message?.content ?? null;
-  }
-
-  /**
-   * Validates if the given text content is structured as a table or spreadsheet.
-   * @param textContent The text extracted from a document.
-   * @returns A boolean indicating if the content is tabular.
-   */
-  public async isTextTabular(textContent: string): Promise<boolean> {
-    const systemPrompt = `Você é um assistente de validação de dados altamente especializado. Sua única tarefa é determinar se o texto fornecido está estruturado como uma tabela, planilha ou formato tabular semelhante. Responda apenas com 'true' se for tabular e 'false' se não for. Não forneça nenhuma explicação ou texto adicional.`;
-
-    const textSample = textContent.substring(0, 4000);
-
-    try {
-      const completion = await this.openai.chat.completions.create({
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: textSample },
-        ],
-        model: CONFIG.MODELS.CHAT,
-        temperature: 0,
-        max_tokens: 5,
-      });
-
-      const response = completion.choices[0]?.message?.content?.trim().toLowerCase();
-
-      return response === 'true';
-
-    } catch (error) {
-      logger.error('Error validating tabular content with OpenAI', { error });
-      // To be safe, if the validation fails, we assume the document is not tabular.
-      return false;
-    }
-  }
-
-  /**
-   * Extracts tabular data from a text string and returns it in a structured JSON format.
-   * @param textContent The text extracted from a document.
-   * @returns An object with headers and data, or null if extraction fails.
-   */
-  /**
-   * Estimates token count based on character length
-   * @param text Text to estimate tokens for
-   * @returns Estimated token count
-   */
-  private estimateTokenCount(text: string): number {
-    // Average of 4 characters per token in English
-    return Math.ceil(text.length / 4);
-  }
-
-  /**
-   * Verifies if the total token count is within global limits
-   * @param totalTokens Estimated total tokens
-   */
-  private verifyTokenLimit(totalTokens: number): void {
-    if (totalTokens > CONFIG.MAX_TOKENS_PER_REQUEST) {
-      throw new Error(`Document exceeds maximum token limit of ${CONFIG.MAX_TOKENS_PER_REQUEST}. ` +
-        `Estimated tokens: ${totalTokens}. Please upload a smaller document.`);
-    }
-  }
-
-  /**
-   * Extracts structured data from text content
-   * @param textContent The extracted text from the file
-   * @returns Object with structured data, or null if extraction fails
-   */
-  public async extractStructuredData(
-    textContent: string,
-    useFallback = false
-  ): Promise<unknown> {
-    const estimatedTokens = this.estimateTokenCount(textContent);
-    logger.info(`Extracting structured data. Estimated tokens: ${estimatedTokens}`);
-    this.verifyTokenLimit(estimatedTokens);
-
-    const model = useFallback ? CONFIG.MODELS.FALLBACK : CONFIG.MODELS.DEFAULT;
-    logger.info(`Using model: ${model}`);
-
-    const systemPrompt = `
-      You are a highly specialized data extraction engine. Your task is to analyze the provided text, identify the tabular data within it, and convert it into a structured JSON object.
-
-      IMPORTANT: First, check if the input contains markers for multiple Excel sheets like "=== MULTI-SHEET EXCEL FILE ===", "=== SHEET 1: SheetName ===" etc.
-
-      For MULTI-SHEET data, use this structure:
-      {
-        "headers": [], // Keep this empty array for backwards compatibility
-        "data": {
-          "sheets": [
-            {
-              "name": "Sheet1Name",
-              "headers": [
-                { "key": "column_key_1", "title": "Column Title 1", "type": "DataType1" }
-              ],
-              "data": [
-                ["row1_col1_value", "row1_col2_value"],
-                ["row2_col1_value", "row2_col2_value"]
-              ]
-            }
-          ]
-        }
-      }
-
-      For SINGLE-SHEET data, use the traditional structure:
-      {
-        "headers": [
-          { "key": "column_key_1", "title": "Column Title 1", "type": "DataType1" }
-        ],
-        "data": [
-          ["row1_col1_value", "row1_col2_value"]
-        ]
-      }
-
-      - "headers": An array of objects, where each object represents a column.
-        - "key": A unique, machine-readable key for the column (e.g., 'user_name'). Use snake_case.
-        - "title": The human-readable title for the column header (e.g., 'User Name').
-        - "type": The inferred data type. MUST be one of: 'TEXT', 'NUMBER', 'CURRENCY', 'PERCENTAGE', 'DATE'.
-      - "data": An array of arrays for single sheets, or an object with a "sheets" array for multi-sheet data.
-
-      Analyze the data carefully. Do not include any explanations or additional text outside of the required JSON object.
-    `;
-
-    try {
-      const completion = await this.openai.chat.completions.create({
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: textContent },
-        ],
-        model: model,
-        response_format: { type: 'json_object' },
-        temperature: 0.1,
-        max_tokens: MAX_TOKENS_EXTRACTION,
-      });
-
-      const responseContent = completion.choices[0]?.message?.content;
-      if (!responseContent) {
-        throw new Error('OpenAI returned an empty response.');
-      }
-
-      try {
-        return JSON.parse(responseContent);
-      } catch (e) {
-        // Só o tamanho: o JSON é o conteúdo extraído do documento (PII).
-        logger.warn('Failed to parse original JSON, attempting to fix.', { error: e, rawJsonLength: responseContent.length });
-        const repaired = tryFixMalformedJson(responseContent);
-        if (repaired) {
-          logger.info('Successfully repaired and parsed malformed JSON.');
-          return JSON.parse(repaired);
-        }
-        throw new Error('Failed to parse and repair JSON response.', { cause: e });
-      }
-    } catch (error) {
-      logger.error(`Error extracting data with model ${model}:`, { error });
-      if (!useFallback && CONFIG.ENABLE_FALLBACK) {
-        logger.info(`Fallback enabled. Retrying with ${CONFIG.MODELS.FALLBACK}...`);
-        return this.extractStructuredData(textContent, true); // Recursive call for fallback
-      }
-      return null;
-    }
   }
 }

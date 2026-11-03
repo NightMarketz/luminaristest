@@ -1,0 +1,41 @@
+Leitura pelo navegador embutido em 2026-10-27 (document.body.innerText; SHA-256 do texto inteiro da página).
+Páginas de fornecedor: valem como dado comercial do dia, não como norma. Linhas abaixo copiadas literalmente.
+
+## VALID (VIDaaS) — https://validcertificadora.com.br/products/e-cnpj-a3-em-nuvem
+SHA-256 abe74e5ef47a4aef2eca72b517e07a73796b84b57164d8b9c9414673b6da872e
+"R$ 238,00" (riscado) / "R$ 208,00"
+"A sua validade é de até 2  anos e 6 meses, com limite anual de assinaturas conforme a validade contratada:"
+"1.000 assinaturas para certificados de 4 meses"
+"6.000 assinaturas por ano para certificados de 12 meses (1 ano), 24 meses (2 anos)"
+
+## DIGITALSIGN (DS Cloud) — https://www.digitalsigncertificadora.com.br/pt/ds-cloud
+SHA-256 ab43dff15fe227dca77f03b2a7f508d2feffb97247490b79a705efbfd4d640fa
+"Sem Limite de Transações e Assinaturas"
+"e-CNPJ A3 em Nuvem" "Validade de 12 meses" "R$ 180,00"
+"e-CNPJ A3 em Nuvem" "Validade de 24 meses" "R$ 220,00"
+
+## SOLUTI (Bird ID) — https://soluti.com.br/certificado-digital/bird-id/
+SHA-256 ffd02f838203ac267aed8454f80785bde718e1ab7b7ea3fcede0fcc17f89463b
+"Escolha entre o Plano Mensal de R$ 34,90/mês ou o Plano Anual de R$ 149,90/ano."
+"O certificado tem validade de 5 anos, mas é necessário manter um plano ativo para realizar assinaturas."
+(A página não traz o e-CNPJ em nuvem nem cota para PJ.)
+
+## CERTISIGN (certificado em nuvem) — https://certisign.com.br/lp/certificado-nuvem
+SHA-256 ba273378ac65a13092206a1b8ba7414ea45d8a437f67e8a2e534d3322115e040
+"Para sua empresa (Pessoa Jurídica) Validade:12 meses Certificado em nuvem e-CNPJ 12x R$ 27,03 à vista R$324,40"
+(Sem menção a cota de assinaturas.)
+
+## SAFEWEB (SafeID) — https://www.safeweb.com.br/produtos/safeid
+SHA-256 9de1cba3b82ce9f691d0cce0570e706a5b8b99d373aa1fd571f3865c6752bbdc
+"Oferece APIs para fácil integração com plataformas usadas pela sua empresa."
+"Controle de uso e histórico completo de todas as transações"
+(Sem preço na página. A home lista o produto "SafeID Integração — Assinatura digital integrada ao seu sistema",
+https://www.safeweb.com.br/produtos/safeidintegracao.)
+
+## SERPRO (NeoID) — https://loja.serpro.gov.br/neoid e https://loja.serpro.gov.br/Certificado
+SHA-256 (texto da página de destino) 57728a793ca644d5f9e2417241088f3c6ca87ef368843ece6c5e7eb143f5eefa
+As duas URLs redirecionam para https://loja.serpro.gov.br/404pt: "404 - Página não encontrada".
+O link "Certificado Digital > Saiba mais" da home da loja aponta para /Certificado, que dá o mesmo 404.
+
+## SYNGULARID e ACDIGITAL
+Sem página de preço de certificado em nuvem achada (busca web de 27/10).

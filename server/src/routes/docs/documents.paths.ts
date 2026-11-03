@@ -84,15 +84,6 @@
  *         '200': { description: Token count estimate }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *
- *   /api/documents/qdrant-status:
- *     get:
- *       summary: Get Qdrant vector collection status
- *       tags: [Documents]
- *       security: [{ bearerAuth: [] }]
- *       responses:
- *         '200': { description: Qdrant collection health and point count }
- *         '401': { $ref: '#/components/responses/UnauthorizedError' }
- *
  *   /api/documents/{id}:
  *     get:
  *       summary: Get a document by ID
@@ -138,19 +129,5 @@
  *         '204': { description: Deleted }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
- *
- *   /api/documents/{id}/qdrant:
- *     get:
- *       summary: Get Qdrant vector points for a specific document
- *       tags: [Documents]
- *       security: [{ bearerAuth: [] }]
- *       parameters:
- *         - in: path
- *           name: id
- *           required: true
- *           schema: { type: string }
- *       responses:
- *         '200': { description: Vector points }
- *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  */
 export {};

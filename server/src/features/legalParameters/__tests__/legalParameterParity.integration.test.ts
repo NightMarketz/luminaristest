@@ -84,7 +84,9 @@ describe('BE-INCR-LEGAL-PARAMS item 6 — paridade tabela em código × banco', 
     }
     expect(comparados).toBe(pares.length * DATAS.length);
     // PRESUMIDO-TETO-78MI item 1: as 2 linhas do teto (em reais) nasceram no banco, sem par na tabela antiga em código.
-    expect(t.linhas.filter((l) => !l.chave.startsWith('PRESUMIDO_TETO_'))).toHaveLength(ANTIGA_APURACAO.length);
+    // EFICIENCIA-FISCAL PR-5 item 26: as 2 linhas HOSPITALAR (8 %/12 %) também nasceram no banco, sem par na tabela antiga.
+    expect(t.linhas.filter((l) => !l.chave.startsWith('PRESUMIDO_TETO_') && l.atividade !== 'HOSPITALAR')).toHaveLength(ANTIGA_APURACAO.length);
+    expect(t.linhas.filter((l) => l.atividade === 'HOSPITALAR').map((l) => [l.chave, l.valor])).toEqual([['PRESUNCAO_IRPJ', 800], ['PRESUNCAO_CSLL', 1200]]);
   });
 
   it('CSLL_ALIQUOTA: indicadores 1 e 4 com mesmo valor e fonte em toda data apurável; indicador ausente segue ausente', async () => {

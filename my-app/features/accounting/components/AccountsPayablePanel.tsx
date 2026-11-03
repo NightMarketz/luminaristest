@@ -13,6 +13,7 @@ import { accountingService, type Account } from '../../../lib/services/accountin
 import { counterpartiesService, type Counterparty } from '../../../lib/services/counterparties.service';
 import { Modal } from '../../../components/ui/Modal';
 import { CreatePayableModal } from './CreatePayableModal';
+import type { InventoryPurchaseSeed } from '../lib/inventoryPurchaseLink';
 import { SubledgerFilterBar, type SubledgerFilterValue } from './SubledgerFilterBar';
 import { StandardPagination } from '../../dashboard/shared/components/StandardPagination';
 import { formatCents } from '../lib/formatCents';
@@ -37,16 +38,20 @@ function sumActive(payments: PayablePayment[]): number {
 
 const STATUS_LABEL: Record<PayableStatus, string> = {
   OPEN: 'Em aberto',
+  PARTIALLY_PAID: 'Paga em parte',
   PAYING: 'Em pagamento',
   PAID: 'Paga',
   CANCELLED: 'Cancelada',
+  DEFERRED: 'Adiada',
 };
 
 const STATUS_CLASS: Record<PayableStatus, string> = {
   OPEN: 'bg-amber-900/40 text-amber-300',
+  PARTIALLY_PAID: 'bg-sky-900/40 text-sky-300',
   PAYING: 'bg-blue-900/40 text-blue-300',
   PAID: 'bg-emerald-900/40 text-emerald-300',
   CANCELLED: 'bg-neutral-700/60 text-neutral-300',
+  DEFERRED: 'bg-neutral-700/50 text-neutral-400',
 };
 
 function StatusBadge({ status }: { status: PayableStatus }) {
@@ -212,6 +217,11 @@ interface AccountsPayablePanelProps {
    * Callers that never pass it get today's behavior unchanged (`{}`).
    */
   initialFilters?: SubledgerFilterValue;
+  /**
+   * Optional SEED (deep link do MovementModal): abre o modal de criação no braço estoque com
+   * produto/quantidade. Mesmo contrato do `initialFilters` — lido só no `useState` inicial.
+   */
+  initialInventoryPurchase?: InventoryPurchaseSeed;
 }
 
 // ── main ─────────────────────────────────────────────────────────────────────
@@ -221,7 +231,7 @@ interface AccountsPayablePanelProps {
  * the recognition posting; per-row commands (pay / cancel / undo payment) each post
  * to the ledger via the AP command endpoints and refetch the trial balance.
  */
-export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPeriods, onNavigateToCounterparties, initialFilters }: AccountsPayablePanelProps) {
+export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPeriods, onNavigateToCounterparties, initialFilters, initialInventoryPurchase }: AccountsPayablePanelProps) {
   // `t` para renderizar, `tRef.current` dentro do fetch — ver `../lib/useAccountingT`.
   const { t, tRef } = useAccountingT();
   const [payables, setPayables] = useState<PayableWithPayments[]>([]);
@@ -236,6 +246,7 @@ export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPerio
 
   // create modal
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createSeed, setCreateSeed] = useState<InventoryPurchaseSeed | undefined>(() => initialInventoryPurchase);
   const [expenseAccounts, setExpenseAccounts] = useState<Account[]>([]);
   const [counterparties, setCounterparties] = useState<Counterparty[]>([]);
 
@@ -302,6 +313,12 @@ export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPerio
       .catch(() => setExpenseAccounts([]))
       .finally(() => setIsCreateOpen(true));
   }
+
+  // Deep link: o SEED abre o modal uma vez, ao montar.
+  useEffect(() => {
+    if (createSeed) openCreate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só no mount
+  }, []);
 
   // ── action open helpers ──────────────────────────────────────────────────────
   function openAction(next: ActionState) {
@@ -474,12 +491,14 @@ export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPerio
       {/* Create modal */}
       <CreatePayableModal
         isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
+        onClose={() => { setIsCreateOpen(false); setCreateSeed(undefined); }}
+        initialInventory={createSeed}
         unitId={unitId}
         expenseAccounts={expenseAccounts}
         counterparties={counterparties}
         onSuccess={() => {
           setIsCreateOpen(false);
+          setCreateSeed(undefined);
           void fetchPayables();
           onLedgerChange?.();
         }}
@@ -544,7 +563,7 @@ export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPerio
               >
                 {PAYMENT_METHODS.map((m) => (
                   <option key={m} value={m}>
-                    {m}
+                    {t('contasAPagar.actionModal.method.' + m, m === 'Cash' ? 'Dinheiro' : m)}
                   </option>
                 ))}
               </select>

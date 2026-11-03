@@ -94,9 +94,13 @@ vi.mock('../components/AgingPanel', () => ({
 // back to null the moment AccountingView's cleanup effect clears `pendingCounterpartyFilter`,
 // which is exactly the behavior this test must NOT observe (the real panels don't do that).
 vi.mock('../components/AccountsPayablePanel', () => ({
-  AccountsPayablePanel: (props: { initialFilters?: { counterpartyId?: string } }) => {
+  AccountsPayablePanel: (props: {
+    initialFilters?: { counterpartyId?: string };
+    initialInventoryPurchase?: { productRef: string; qty?: number };
+  }) => {
     const [seed] = React.useState(() => props.initialFilters ?? null);
-    return <div data-testid="ap-panel">seed:{JSON.stringify(seed)}</div>;
+    const [inventory] = React.useState(() => props.initialInventoryPurchase ?? null);
+    return <div data-testid="ap-panel" data-inventory={JSON.stringify(inventory)}>seed:{JSON.stringify(seed)}</div>;
   },
 }));
 vi.mock('../components/AccountsReceivablePanel', () => ({
@@ -146,6 +150,25 @@ describe('AccountingView — F-AGING-5(b) cross-navigation seed', () => {
     // The pending seed was consumed (cleared) right after the first mount — this remount
     // gets no filter, exactly like any manual visit.
     expect(screen.getByTestId('ap-panel').textContent).toBe('seed:null');
+  });
+});
+
+describe('AccountingView — deep link do MovementModal (Entrada+Compra → Payable de estoque)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+  });
+
+  it('abre direto em Contas a Pagar com produto/quantidade como SEED, limpa a URL e não reaplica na revisita', () => {
+    window.history.pushState({}, '', '/accounting?newInventoryPayable=prod-1&qty=3');
+    render(<AccountingView />);
+
+    expect(screen.getByTestId('ap-panel').getAttribute('data-inventory')).toBe('{"productRef":"prod-1","qty":3}');
+    expect(window.location.search).toBe('');
+
+    fireEvent.click(screen.getByRole('tab', { name: /Contas a Receber/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Contas a Pagar$/ }));
+    expect(screen.getByTestId('ap-panel').getAttribute('data-inventory')).toBe('null');
   });
 });
 

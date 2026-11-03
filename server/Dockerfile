@@ -1,5 +1,5 @@
 # ---- builder ----
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -8,7 +8,9 @@ WORKDIR /app
 # gerado FORA do `docker build` — mas dist/ está no .gitignore (ADR-M2 §4.b, item 2: um PaaS
 # que builda a partir do git não tem dist/ no contexto; aqui resolvido copiando src/ e buildando
 # dentro da imagem, como o my-app/Dockerfile já faz).
-COPY package*.json ./
+# .npmrc junto: traz `legacy-peer-deps=true` (openai@4 pede zod@^3 como peer; o projeto usa zod@4).
+# Sem ele o `npm ci` da imagem morre em ERESOLVE, enquanto o da CI (que lê o .npmrc) passa.
+COPY package*.json .npmrc ./
 COPY prisma ./prisma
 RUN npm ci
 
@@ -24,7 +26,7 @@ COPY src ./src
 RUN npm run build
 
 # ---- runner ----
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 

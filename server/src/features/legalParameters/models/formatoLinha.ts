@@ -18,6 +18,7 @@ import {
   ReducaoArt3AJson,
   TRIBUTOS_CSRF,
 } from '../../accounting/models/retencaoParams';
+import { IcmsStNcmJsonSchema } from '../../accounting/models/segregacaoNcm';
 import type { LegalParameterTabela } from './legalParameter';
 
 /**
@@ -110,6 +111,8 @@ const jsonOk = (schema: z.ZodType, v: unknown, msg: string): string | null => (s
 const bp = (l: LinhaParaFormato) => (l.valorInt ?? -1) >= 0 && (l.valorInt ?? 0) <= 10_000;
 /** BE-INCR-IRRF-DISTRIBUICAO item 5 — chaves da tabela e o tipo de valor de cada uma. */
 const IRRF_DISTRIBUICAO_CHAVES_INT = ['ALIQUOTA_PF_BP', 'LIMITE_MENSAL_PF_CENTS', 'ALIQUOTA_JCP_BP'];
+/** EFICIENCIA-FISCAL PR-3 — chaves em bp da ENCARGO_FOLHA (o teto do RGPS é em centavos). */
+const ENCARGO_FOLHA_CHAVES_BP = ['CI_SEGURADO_BP', 'PATRONAL_BP', 'FGTS_BP'];
 /** D-2026-10-24-LEGAL-PARAMS-SIMPLES-FORMATO — chave = anexo; faixa F1..F6 nas tabelas por faixa (o que `simplesCalc` lê). */
 const anexo = (l: LinhaParaFormato) => ['I', 'II', 'III', 'IV', 'V'].includes(l.chave);
 const faixa = (l: LinhaParaFormato) => /^F[1-6]$/.test(l.discriminador ?? '');
@@ -165,6 +168,32 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
     valor: 'int',
     checar: (l) => so(l.chave === 'FATOR_REDUCAO_BP' && semDisc(l) && bp(l), 'chave FATOR_REDUCAO_BP; valorInt em bp (0..10000)'),
   },
+  // BE-INCR-NFCE PR-3 (item 17): chave = limite em centavos; discriminador = IBGE da UF (2 dígitos) ou nenhum (nacional).
+  NFCE_LIMITE: {
+    valor: 'int',
+    checar: (l) =>
+      so(
+        ['DEST_IDENTIFICADO_CENTS', 'VEDADA_CENTS'].includes(l.chave) && (l.discriminador == null || /^\d{2}$/.test(l.discriminador)) && (l.valorInt ?? 0) > 0,
+        'chave DEST_IDENTIFICADO_CENTS|VEDADA_CENTS; discriminador = IBGE da UF (2 dígitos) ou nenhum; valorInt em centavos > 0',
+      ),
+  },
+  // BE-INCR-NFCE PR-4 (EMENDA-3 E3-2 a): chave = tipo (NFE | NFCE); discriminador = IBGE da UF; valorTexto = o aviso.
+  INUT_NAO_SE_APLICA: {
+    valor: 'texto',
+    checar: (l) =>
+      so(
+        ['NFE', 'NFCE'].includes(l.chave) && /^\d{2}$/.test(l.discriminador ?? '') && (l.valorTexto ?? '').trim().length > 0,
+        'chave NFE|NFCE; discriminador = IBGE da UF (2 dígitos); valorTexto = o aviso',
+      ),
+  },
+  // BE-INCR-EFICIENCIA-FISCAL PR-2 (item 11): chave = prefixo de 4 a 8 dígitos do NCM; discriminador = IBGE da UF;
+  // valorJson = itens e CEST do anexo do Conv. ICMS 142/2018.
+  ICMS_ST_NCM_UF: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^\d{4,8}$/.test(l.chave) && /^\d{2}$/.test(l.discriminador ?? ''), 'chave = prefixo de 4 a 8 dígitos do NCM; discriminador = IBGE da UF (2 dígitos)') ??
+      jsonOk(IcmsStNcmJsonSchema, l.valorJson, 'valorJson = { anexo, itens: ["N.N"], cest: ["NN.NNN.NN"] }'),
+  },
   LEIAUTE_SPED: {
     valor: 'texto',
     checar: (l) =>
@@ -204,6 +233,15 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
   },
   // BE-INCR-IRRF-DISTRIBUICAO item 5: alíquotas em bp, limite mensal em centavos (Lei 9.250 art. 6º-A; Lei 9.249 art. 9º
   // § 2º) e o prazo de aprovação do lucro da transição (date-only, art. 6º-A § 3º II; liminar das ADIs 7.912/7.914).
+  // EFICIENCIA-FISCAL PR-3 (itens 15–17): alíquotas em bp e o teto do RGPS em centavos, sem discriminador.
+  ENCARGO_FOLHA: {
+    valor: 'int',
+    checar: (l) =>
+      so(semDisc(l), 'sem discriminador') ??
+      (l.chave === 'TETO_RGPS_CENTS'
+        ? so((l.valorInt ?? 0) > 0, 'TETO_RGPS_CENTS: valorInt = centavos > 0')
+        : so(ENCARGO_FOLHA_CHAVES_BP.includes(l.chave) && bp(l), 'chave CI_SEGURADO_BP|PATRONAL_BP|FGTS_BP (valorInt em bp 0..10000) ou TETO_RGPS_CENTS')),
+  },
   IRRF_DISTRIBUICAO: {
     valor: (l) => (l.chave === 'TRANSICAO_APROVACAO_ATE' ? 'texto' : 'int'),
     checar: (l) =>
@@ -231,6 +269,12 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
             ((l.chave === 'CBS' && l.discriminador === 'ALIQUOTA') || (l.chave === 'IBS' && ['ALIQUOTA_UF', 'ALIQUOTA_MUN'].includes(l.discriminador ?? ''))) && bp(l),
             'chave CBS com discriminador ALIQUOTA, ou IBS com ALIQUOTA_UF|ALIQUOTA_MUN (ou VENCIMENTO); valorInt em bp (0..10000)',
           ),
+  },
+  // EFICIENCIA-FISCAL PR-5 (item 32): Anexo III da LC 214 — chave = prefixo de NBS (5 a 9 dígitos, sem pontos), sem
+  // discriminador; valorInt = redução em bp.
+  IBS_CBS_REDUCAO_NBS: {
+    valor: 'int',
+    checar: (l) => so(/^\d{5,9}$/.test(l.chave) && semDisc(l) && bp(l) && (l.valorInt ?? 0) > 0, 'chave = prefixo de NBS (5 a 9 dígitos); sem discriminador; valorInt = redução em bp (1..10000)'),
   },
   // IBS-CBS-2027 PR-3 (item 15; dono 21/10): lista de uso ou consumo pessoal (LC 214 art. 57) — chave = prefixo de NCM.
   IBS_CBS_USO_CONSUMO: {

@@ -10,13 +10,14 @@
  *       description: >-
  *         Item 38. data = null quando a unidade não tem kit. changelog = as entradas novas de cada versão depois da
  *         instalada. A atualização em si não tem rota: roda pelo upgradeSectorKitsCli no passo de migração do deploy
- *         (dry-run gravado, depois apply do mesmo deploy).
+ *         (dry-run gravado, depois apply do mesmo deploy). steps = o último passo concluído da instalação (0–7) e os
+ *         avisos do referencial (KIT_REFERENTIAL_SKIPPED_NO_REGIME | KIT_REFERENTIAL_SKIPPED_NO_CATALOG) — EMENDA-2 da LAC-B.
  *       tags: [AccountingKit]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *       responses:
- *         '200': { description: '{ kitKey, kitVersion, latestVersion, status, lastRun: { id, mode, status, fromVersion, toVersion, deployId, startedAt, finishedAt, counts: { additive, forward, conflicts } } | null, openPendingCount, changelog: [{ kitVersion, entries }] } | null' }
+ *         '200': { description: '{ kitKey, kitVersion, latestVersion, status, lastRun: { id, mode, status, fromVersion, toVersion, deployId, startedAt, finishedAt, counts: { additive, forward, conflicts } } | null, openPendingCount, changelog: [{ kitVersion, entries }], steps: { lastCompletedStep, warnings } } | null' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }

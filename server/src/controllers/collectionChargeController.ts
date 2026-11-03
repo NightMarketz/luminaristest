@@ -7,6 +7,7 @@ import {
   CollectionChargeScopeQuerySchema,
   CollectionWebhookParamsSchema,
   CreateChargeSchema,
+  ListCollectionChargesQuerySchema,
 } from '../features/accounting/dtos/CollectionChargeDto';
 
 /**
@@ -53,6 +54,21 @@ export const getPayerSuggestion = async (req: Request, res: Response) => {
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
     const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
     const data = await getFactory().getCollectionChargeService().payerSuggestion(scope, req.params.receivableId);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/** GET /api/collection-charges?unitId&status&kind&page&limit (FE-INCR-PAYMENT-PROVIDER-EMENDA-1 PR-0, 0d) */
+export const listUnitCollectionCharges = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const parsed = ListCollectionChargesQuerySchema.safeParse(req.query);
+    if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'read' });
+    const data = await getFactory().getCollectionChargeService().listByUnit(scope, parsed.data);
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);

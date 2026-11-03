@@ -224,6 +224,18 @@ export class MitNadaAExportarError extends AppError {
 }
 
 /**
+ * BE-INCR-EFD-REINF PR-1 (BRIEF item 8; PRE-ADR D6): a competência não tem o que declarar na Reinf. 422 com código próprio,
+ * molde `MitNadaAExportarError`: `REINF_SEM_FATO` (nenhuma retenção — a Reinf é dispensada sem fato, IN RFB 2.043 art. 4º) ou
+ * `REINF_SEM_EVENTO_GERAVEL` (há fato, mas só de eventos que este PR ainda não gera — os avisos dizem quais).
+ */
+export class ReinfNadaAGerarError extends AppError {
+  constructor(message: string, errorCode: 'REINF_SEM_FATO' | 'REINF_SEM_EVENTO_GERAVEL') {
+    super(message, 422, errorCode);
+    Object.setPrototypeOf(this, ReinfNadaAGerarError.prototype);
+  }
+}
+
+/**
  * BE-INCR-SIMPLES-NACIONAL (nó X14, BRIEF item 4; F-SN-3 → a): atividade sem linha `SIMPLES_ENQUADRAMENTO` vigente —
  * o cálculo não escolhe anexo por conta própria. 422.
  */

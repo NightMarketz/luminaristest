@@ -1597,3 +1597,139 @@ describe('PayableService.createPayable — insumoItems (ITEM-DESTINATION)', () =
     expect(physicalStockSync.reversePurchaseInbound).toHaveBeenCalledTimes(1);
   });
 });
+
+// ── C8 emenda 3.2 P1 (BE-INCR-FIXED-ASSETS-EMENDA-3-2-brief.md E2–E8): imobilizado direto na despesa (IN RFB 1.700 art. 120) ──
+describe('PayableService.createPayable — fixedAssetItems EXPENSE (C8 emenda 3.2)', () => {
+  const despesa = expenseAcc({ id: 'acc-desp', code: '4.2.7', name: 'Bens de pequeno valor' });
+  const comDespesa = (accountRepo: { findById: jest.Mock }) =>
+    accountRepo.findById.mockImplementation((async (_s: unknown, id: string) => (id === 'acc-desp' ? despesa : expenseAcc())) as never);
+  const expenseItem = { treatment: 'EXPENSE', expenseAccountId: 'acc-desp', cProd: 'CAD-1', costCents: 270000, ncm: '9401.71', qty: 3, nItem: 2 };
+  const capitalizeItem = { classId: 'class-maq', cProd: 'MAQ-1', costCents: 85000, ncm: '8452.10', qty: 1, nItem: 1 };
+  const dto = (items: object[], amountCents: number) =>
+    CreatePayableSchema.parse({
+      unitId: 'unit-1', supplierName: 'ACME', documentNumber: 'CHAVE-EXP', description: 'NF-e', issueDate: '2026-06-10',
+      dueDate: '2026-07-10', amountCents, inventoryMultiItem: true, fixedAssetItems: items,
+    });
+  type AuditCall = [unknown, unknown, { eventType: string; payload: Record<string, unknown> }];
+  const payableCreated = (append: jest.Mock) =>
+    (append.mock.calls as unknown as AuditCall[]).map((c) => c[2]).find((e) => e.eventType === 'payable.created')!;
+
+  it('E2/E5 — 3 cadeiras × R$ 900 (linha de R$ 2.700): elegível; debita a despesa no MESMO lançamento e NÃO rascunha', async () => {
+    const { service, postEntry, accountRepo, fixedAssetDraftCreator, depreciationRateRepo } = build();
+    comDespesa(accountRepo);
+    await service.createPayable(scope, dto([expenseItem], 270000));
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    expect(input.lines).toEqual([
+      { accountCode: '4.2.7', debitCents: 270000, creditCents: 0 },
+      { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: 270000 },
+    ]);
+    expect(fixedAssetDraftCreator.createDraftFromPayable).not.toHaveBeenCalled();
+    // E3 (ii): item EXPENSE não resolve classe nem taxa — um NCM sem taxa não derruba a compra.
+    expect(depreciationRateRepo.catalogo).not.toHaveBeenCalled();
+  });
+
+  it('E5 — rawJson guarda o item EXPENSE com treatment e unitário (trilha, PN CST 100/78 item 13)', async () => {
+    const { service, postEntry, accountRepo } = build();
+    comDespesa(accountRepo);
+    await service.createPayable(scope, dto([capitalizeItem, expenseItem], 355000));
+    const input = (postEntry.mock.calls[0] as unknown[])[1] as PostEntryInput;
+    const parsed = JSON.parse(input.sourceDocument!.rawJson as string) as { fixedAssetItems: Record<string, unknown>[] };
+    expect(parsed.fixedAssetItems[1]).toEqual({
+      treatment: 'EXPENSE', accountCode: '4.2.7', cProd: 'CAD-1', sourceItemRef: '2', costCents: 270000, ncm: '9401.71', qty: 3, unitCostCents: '90000',
+    });
+    expect(input.lines).toEqual([
+      { accountCode: '4.1', debitCents: 85000, creditCents: 0 },
+      { accountCode: '4.2.7', debitCents: 270000, creditCents: 0 },
+      { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: 0, creditCents: 355000 },
+    ]);
+  });
+
+  it('E5 — nota com 1 CAPITALIZE + 1 EXPENSE: o rascunho recebe só o CAPITALIZE', async () => {
+    const { service, accountRepo, fixedAssetDraftCreator } = build();
+    comDespesa(accountRepo);
+    await service.createPayable(scope, dto([capitalizeItem, expenseItem], 355000));
+    const items = (fixedAssetDraftCreator.createDraftFromPayable.mock.calls[0] as unknown[])[2] as { cProd: string }[];
+    expect(items.map((i) => i.cProd)).toEqual(['MAQ-1']);
+  });
+
+  it('E2 — 2 linhas somando R$ 2.000, cada uma ≤ R$ 1.200: ambas elegíveis (o limite é por unidade, nunca o total)', async () => {
+    const { service, postEntry, accountRepo } = build();
+    comDespesa(accountRepo);
+    await service.createPayable(scope, dto([
+      { ...expenseItem, cProd: 'A', costCents: 100000, qty: 1, nItem: 1 },
+      { ...expenseItem, cProd: 'B', costCents: 100000, qty: 1, nItem: 2 },
+    ], 200000));
+    expect(postEntry).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['1 item × R$ 1.300', 130000, 1],
+    ['borda 360001 / 3 → unitário 120001', 360001, 3],
+  ])('E4 — %s sem vida útil ≤ 1 ano → 400 citando o art. 120, ANTES de qualquer efeito', async (_n, costCents, qty) => {
+    const { service, postEntry, payableRepo, accountRepo } = build();
+    comDespesa(accountRepo);
+    await expect(service.createPayable(scope, dto([{ ...expenseItem, costCents, qty }], costCents))).rejects.toThrow(/art\. 120/);
+    expect(payableRepo.create).not.toHaveBeenCalled();
+    expect(postEntry).not.toHaveBeenCalled();
+  });
+
+  it('E2 — borda 360000 / 3 → unitário 120000 (= limite): elegível', async () => {
+    const { service, postEntry, accountRepo } = build();
+    comDespesa(accountRepo);
+    await service.createPayable(scope, dto([{ ...expenseItem, costCents: 360000, qty: 3 }], 360000));
+    expect(postEntry).toHaveBeenCalledTimes(1);
+  });
+
+  it('E4b — R$ 5.000 EXPENSE com usefulLifeUpToOneYear → aceito, sem rascunho; a declaração vai na trilha (E8)', async () => {
+    const { service, accountRepo, auditService, fixedAssetDraftCreator } = build();
+    comDespesa(accountRepo);
+    await service.createPayable(scope, dto([{ ...expenseItem, costCents: 500000, qty: 1, usefulLifeUpToOneYear: true }], 500000));
+    expect(fixedAssetDraftCreator.createDraftFromPayable).not.toHaveBeenCalled();
+    expect(JSON.parse(payableCreated(auditService.append).payload.expensedFixedAssetItems as string)).toEqual([
+      { sourceItemRef: '2', cProd: 'CAD-1', costCents: 500000, unitCostCents: '500000', usefulLifeUpToOneYear: true },
+    ]);
+  });
+
+  it('E8 — sem item EXPENSE, o payload do payable.created NÃO ganha a chave (hash de evento antigo intacto)', async () => {
+    const { service, auditService } = build();
+    await service.createPayable(scope, dto([capitalizeItem], 85000));
+    expect(payableCreated(auditService.append).payload).not.toHaveProperty('expensedFixedAssetItems');
+  });
+
+  it('E3 — a conta do item EXPENSE tem de ser folha de despesa do escopo (mesmo gate do expenseAccountId)', async () => {
+    const { service, accountRepo, postEntry } = build();
+    accountRepo.findById.mockImplementation((async () => expenseAcc({ id: 'acc-desp', code: '1.2.1', nature: 'Asset' })) as never);
+    await expect(service.createPayable(scope, dto([expenseItem], 270000))).rejects.toThrow(ValidationError);
+    expect(postEntry).not.toHaveBeenCalled();
+  });
+});
+
+describe('PayableService.redriveMissingDrafts — item EXPENSE não é rascunhado (C8 emenda 3.2 E5)', () => {
+  const run = async (items: object[]) => {
+    const { service, payableRepo, fixedAssetDraftCreator, sourceProvenanceRepo, findEntryBySource } = build();
+    payableRepo.findAllActive.mockResolvedValueOnce([{ ...payableRow(), id: 'pay-x', inventoryMultiItem: true }]);
+    (findEntryBySource as jest.Mock).mockImplementationOnce(async () => ({ id: 'entry-x' }));
+    (sourceProvenanceRepo.findSourcesByEntry as jest.Mock).mockResolvedValueOnce([
+      { sourceDocumentId: 'doc-x', sourceDocument: { id: 'doc-x', rawJson: JSON.stringify({ fixedAssetItems: items }) } },
+    ]);
+    await service.redriveMissingDrafts(scope);
+    return fixedAssetDraftCreator.createDraftFromPayable;
+  };
+  const cap = { classId: 'class-maq', accountCode: '4.1', cProd: 'MAQ-1', sourceItemRef: '1', costCents: 85000, qty: 1, rateId: null, legalParameterId: 'p', annualRateBp: 1000 };
+  const exp = { treatment: 'EXPENSE', accountCode: '4.2.7', cProd: 'CAD-1', sourceItemRef: '2', costCents: 270000, qty: 3, unitCostCents: '90000' };
+
+  it('1 CAPITALIZE + 1 EXPENSE → o redrive rascunha só o CAPITALIZE', async () => {
+    const creator = await run([cap, exp]);
+    expect((creator.mock.calls[0] as unknown[])[2]).toEqual([cap]);
+  });
+
+  it('só EXPENSE → o creator nem é chamado', async () => {
+    const creator = await run([exp]);
+    expect(creator).not.toHaveBeenCalled();
+  });
+
+  it('JSON legado sem treatment = CAPITALIZE', async () => {
+    const creator = await run([cap]);
+    expect((creator.mock.calls[0] as unknown[])[2]).toEqual([cap]);
+  });
+});

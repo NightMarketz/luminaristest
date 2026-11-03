@@ -8,7 +8,6 @@ import chatInstanceRoutes from './chat-instances';
 import chatMessageRoutes from './chat-messages';
 import dashboardRoutes from './dashboard';
 import dashboardLayoutRoutes from './dashboard-layout';
-import structuredDataRoutes from './structured-data';
 import docsRoutes from './docs';
 import analyticsRoutes from './analytics';
 import analyticsDefinitionsRoutes from './analyticsDefinitions';
@@ -35,6 +34,7 @@ import bankSettlementRoutes from './bankSettlements';
 import lalurRoutes from './lalur';
 import taxAssessmentRoutes from './taxAssessments';
 import mitExportRoutes from './mitExports';
+import reinfBatchRoutes from './reinfBatches';
 import simplesRoutes from './simples';
 import legalParameterRoutes from './legalParameters';
 
@@ -69,7 +69,6 @@ router.use('/chat-instances', chatInstanceRoutes);
 router.use('/chat-messages', chatMessageRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/dashboard-layout', dashboardLayoutRoutes);
-router.use('/structured-data', structuredDataRoutes);
 router.use('/docs', docsRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/analytics/definitions', analyticsDefinitionsRoutes);
@@ -77,6 +76,7 @@ router.use('/crm', crmRoutes);
 router.use('/accounting/tax-assessments', taxAssessmentRoutes); // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7) — antes de /accounting
 router.use('/accounting/simples', simplesRoutes); // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14) — antes de /accounting
 router.use('/accounting/mit-exports', mitExportRoutes); // BE-INCR-MIT-EXPORT PR-2 (nó X9) — antes de /accounting
+router.use('/accounting/reinf/batches', reinfBatchRoutes); // BE-INCR-EFD-REINF PR-1 — antes de /accounting
 router.use('/legal-parameters', legalParameterRoutes); // BE-INCR-LEGAL-PARAMS PR-1 — coeficientes de lei da plataforma
 router.use('/accounting', accountingRoutes);
 router.use('/accounting-binding', accountingBindingRoutes);

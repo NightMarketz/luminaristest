@@ -35,6 +35,7 @@ import {
   type KitUpgradeRunSummary,
   type UpgradeUnitInput,
 } from '../dtos/KitUpgradeDto';
+import { KitInstallStepsSchema } from '../dtos/KitInstallationDto';
 import type { KitInstallStatus } from '../models/kitInstallTypes';
 import {
   KIT_UPGRADE_APPLIED,
@@ -124,6 +125,7 @@ export class KitUpgradeService {
       changelog: versions
         .map((k, i) => ({ kitVersion: k.kitVersion, entries: k.changelog.slice(versions[i - 1]?.changelog.length ?? 0) }))
         .filter((c) => c.kitVersion > row.kitVersion),
+      steps: KitInstallStepsSchema.parse(JSON.parse(row.steps)),
     };
   }
 

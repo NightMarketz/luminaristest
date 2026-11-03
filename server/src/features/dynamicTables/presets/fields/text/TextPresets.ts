@@ -218,3 +218,13 @@ export const privacyPolicyVersion: ISchemaField = {
   required: false,
   searchable: false,
 };
+
+// EFICIENCIA-FISCAL PR-1 item 10 (F-EF-4 c): grupo do kit na venda (texto livre do vendedor). O kit é explodido em itens,
+// cada um pela própria natureza; `principalItem` marca o principal (classificação só com sugestão aceita — I-7).
+export const kitRef: ISchemaField = {
+  name: 'kitRef',
+  label: 'Kit',
+  type: 'string',
+  required: false,
+  searchable: false,
+};

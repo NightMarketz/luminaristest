@@ -14,6 +14,7 @@ import { useTranslation } from 'next-i18next';
 import { useCurrency, SUPPORTED_CURRENCIES } from '@/lib/context/CurrencyContext';
 import { MdSwapHoriz, MdInfo, MdAdd, MdRemove } from 'react-icons/md';
 import RelationSelector from '../../../components/forms/RelationSelector';
+import { buildInventoryPurchaseHref } from '../../../../accounting/lib/inventoryPurchaseLink';
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -95,6 +96,12 @@ export function MovementModal({
     // descartado (nunca virava AP, razão nem custo médio: receita-sem-CMV silenciosa). O caminho
     // único de valoração é o Payable de inventário (Contas a Pagar), que também espelha o físico.
     const isPurchaseBlocked = movementType === 'In' && movementReason === 'Purchase';
+    // Redireciona em vez de só bloquear (dono, 2026-10-25): o Payable abre no braço estoque já com
+    // produto e quantidade; fornecedor e valor total se preenchem lá (Counterparty ≠ fornecedor DT).
+    const purchaseHref = buildInventoryPurchaseHref({
+        productRef: String(row?.data.productId || ''),
+        qty: movementQty,
+    });
 
     const handleRegisterMovement = useCallback(async () => {
         if (!row) return;
@@ -248,12 +255,6 @@ export function MovementModal({
                             <p className="text-xs text-sky-800 dark:text-sky-200">
                                 {t('inventory_view:modal.purchase_blocked_message', 'Registre a compra em Contabilidade → Contas a Pagar (tipo "Compra de estoque"): ela lança o título do fornecedor, valora o produto pelo custo médio e dá a entrada física automaticamente.')}
                             </p>
-                            <a
-                                href="/accounting"
-                                className="inline-block text-xs font-bold text-sky-700 dark:text-sky-300 underline hover:text-sky-900 dark:hover:text-sky-100"
-                            >
-                                {t('inventory_view:modal.purchase_blocked_link', 'Abrir Contas a Pagar')}
-                            </a>
                         </div>
                     )}
 
@@ -302,13 +303,22 @@ export function MovementModal({
                     >
                         {t('inventory_view:modal.cancel', 'Desistir')}
                     </button>
-                    <button
-                        onClick={handleRegisterMovement}
-                        className="px-8 py-2.5 rounded-xl bg-blue-600 text-white font-black hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-blue-600/20 text-xs disabled:opacity-50 disabled:hover:scale-100"
-                        disabled={isSubmitting || isPurchaseBlocked}
-                    >
-                        {isSubmitting ? t('inventory_view:modal.submitting', 'Finalizando...') : t('inventory_view:modal.confirm', 'Confirmar Fluxo')}
-                    </button>
+                    {isPurchaseBlocked ? (
+                        <a
+                            href={purchaseHref}
+                            className="px-8 py-2.5 rounded-xl bg-blue-600 text-white font-black hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-blue-600/20 text-xs"
+                        >
+                            {t('inventory_view:modal.purchase_blocked_link', 'Abrir Contas a Pagar')}
+                        </a>
+                    ) : (
+                        <button
+                            onClick={handleRegisterMovement}
+                            className="px-8 py-2.5 rounded-xl bg-blue-600 text-white font-black hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-blue-600/20 text-xs disabled:opacity-50 disabled:hover:scale-100"
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? t('inventory_view:modal.submitting', 'Finalizando...') : t('inventory_view:modal.confirm', 'Confirmar Fluxo')}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>,

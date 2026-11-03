@@ -45,6 +45,8 @@ export interface IProfitDistributionRepository {
   listDaCompetencia(ownerUserId: string, competencia: string, status: readonly string[]): Promise<ProfitDistributionEvent[]>;
   /** Eventos com `dataEvento` em [de, ate] na PJ inteira, nos status pedidos. */
   listNoIntervalo(ownerUserId: string, de: string, ate: string, status: readonly string[], tx?: Prisma.TransactionClient): Promise<ProfitDistributionEvent[]>;
+  /** D-2026-10-28 item 1 — o sócio tem evento vivo (qualquer status; `deletedAt` não nulo não conta)? Gate do DELETE. */
+  existsDoSocio(ownerUserId: string, partnerId: string, tx?: Prisma.TransactionClient): Promise<boolean>;
   /** Commit 2 (CAS): `PENDING_POST` sem lançamento → `POSTED` com `entryId`. false = outra chamada já vinculou. */
   markPosted(ownerUserId: string, id: string, entryId: string): Promise<boolean>;
   /** Item 20 (CAS dentro da tx): `POSTED` → `CANCELLED`. false = o status mudou no meio. */

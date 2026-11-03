@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import { FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
 import { ConfirmModal } from '../../../components/ui/feedback/ConfirmModal';
 import { notify } from '../../../lib/notifications/notify';
-import {
-  accountingBindingService,
-  type ActivateDefaultBindingResultInput,
-} from '../../../lib/services/accountingBinding.service';
+import { accountingBindingService } from '../../../lib/services/accountingBinding.service';
+import { ActivationBlockingList, type ActivationBlockingIssue } from './ActivationBlockingList';
 import { useUnitAccountingActivation } from '../hooks/useUnitAccountingActivation';
 import {
   ACTIVATION_SECTORS,
@@ -16,27 +14,16 @@ import {
 import { resolveError } from '../lib/resolveError';
 import { useAccountingT } from '../lib/useAccountingT';
 
-type BlockingIssue = NonNullable<ActivateDefaultBindingResultInput['blocking']>[number];
+type BlockingIssue = ActivationBlockingIssue;
 
 export interface AccountingActivationBannerProps {
   unitId: string;
   onNavigateToPeriods: () => void;
   /** Só passa quando a aba Pendências existe em `TABS` (item 8): sem ela o link não renderiza. */
   onNavigateToPendencias?: () => void;
+  /** Depois de ativar (EMENDA-2 item 10): quem monta recarrega o kit, para a aba "Kit de setor" aparecer sem trocar de aba. */
+  onActivated?: () => void;
 }
-
-/** Rótulo i18n dos códigos de pré-condição conhecidos (item 6); os demais mostram a `message` do BE. */
-const KNOWN_BLOCKING: Record<string, { key: string; fallback: string }> = {
-  CHART_OF_ACCOUNTS_EMPTY: { key: 'activation.blocking.CHART_OF_ACCOUNTS_EMPTY', fallback: 'O plano de contas da unidade está vazio.' },
-  ACCOUNTING_PERIOD_NOT_OPEN: {
-    key: 'activation.blocking.ACCOUNTING_PERIOD_NOT_OPEN',
-    fallback: 'O período {{period}} está fechado — reabra-o antes de ativar.',
-  },
-  EVENT_COVERAGE_MISSING: {
-    key: 'activation.blocking.EVENT_COVERAGE_MISSING',
-    fallback: 'Há evento da operação sem regra contábil.',
-  },
-};
 
 /**
  * Faixa de ativação da contabilidade da unidade (LAC-B, FE-INCR-BINDING-ACTIVATION-screen-brief itens 3–9; EMENDA-1).
@@ -47,7 +34,7 @@ const KNOWN_BLOCKING: Record<string, { key: string; fallback: string }> = {
  * Bespoke × `components/ui/feedback/Alert`: o `Alert` canônico recebe só uma `message` string (sem slot para seletor,
  * botão e lista de bloqueantes) e usa a paleta clara; a faixa segue o banner local da view (`PendingInvitesBanner`).
  */
-export function AccountingActivationBanner({ unitId, onNavigateToPeriods, onNavigateToPendencias }: AccountingActivationBannerProps) {
+export function AccountingActivationBanner({ unitId, onNavigateToPeriods, onNavigateToPendencias, onActivated }: AccountingActivationBannerProps) {
   const { t } = useAccountingT();
   const activation = useUnitAccountingActivation(unitId);
   const [sector, setSector] = useState<ActivationSector>(DEFAULT_ACTIVATION_SECTOR);
@@ -79,6 +66,7 @@ export function AccountingActivationBanner({ unitId, onNavigateToPeriods, onNavi
       setJustActivated(true);
       notify(t('activation.success', 'Contabilidade automática ativada: as vendas desta unidade passam a gerar lançamento.'), 'success');
       activation.reload();
+      onActivated?.();
     } catch (e: unknown) {
       setConfirmOpen(false);
       setBlocking([]); // a lista de um Draft anterior não é o estado desta tentativa
@@ -107,11 +95,6 @@ export function AccountingActivationBanner({ unitId, onNavigateToPeriods, onNavi
     );
   }
   if (activation.state !== 'inactive') return null;
-
-  const blockingLabel = (issue: BlockingIssue) => {
-    const known = KNOWN_BLOCKING[issue.code];
-    return known ? t(known.key, known.fallback, { period: issue.period ?? '' }) : issue.message;
-  };
 
   return (
     <div role="region" aria-label={t('activation.regionLabel', 'Ativação da contabilidade')} data-testid="accounting-activation-banner" className="mb-6 space-y-3 rounded-2xl border border-amber-900/50 bg-amber-950/20 px-4 py-3 text-sm text-amber-200">
@@ -146,23 +129,7 @@ export function AccountingActivationBanner({ unitId, onNavigateToPeriods, onNavi
         </div>
       </div>
 
-      {blocking.length > 0 && (
-        <div data-testid="accounting-activation-blocking" className="rounded-2xl border border-neutral-800 bg-neutral-900/60 px-3 py-2 text-neutral-200">
-          <p className="mb-1 text-xs font-semibold text-neutral-400">{t('activation.blockingTitle', 'A ativação não foi concluída:')}</p>
-          <ul className="space-y-1">
-            {blocking.map((issue, i) => (
-              <li key={`${issue.code}-${i}`} className="flex flex-wrap items-center gap-2">
-                <span>{blockingLabel(issue)}</span>
-                {issue.code === 'ACCOUNTING_PERIOD_NOT_OPEN' && (
-                  <button type="button" onClick={onNavigateToPeriods} className="text-xs font-semibold text-emerald-400 underline hover:text-emerald-300">
-                    {t('activation.goToPeriods', 'Ir para Períodos')}
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <ActivationBlockingList blocking={blocking} onNavigateToPeriods={onNavigateToPeriods} />
 
       {error && (
         <p role="alert" className="rounded-2xl border border-red-900/50 bg-red-950/30 px-3 py-2 text-red-300">

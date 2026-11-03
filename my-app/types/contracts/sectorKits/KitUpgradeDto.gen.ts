@@ -100,6 +100,10 @@ changelog: {
 kitVersion: number
 entries: string[]
 }[]
+steps: {
+lastCompletedStep: number
+warnings: ("KIT_REFERENTIAL_SKIPPED_NO_REGIME" | "KIT_REFERENTIAL_SKIPPED_NO_CATALOG")[]
+}
 }
 export interface KitUpgradePendingViewInput {
 id: string

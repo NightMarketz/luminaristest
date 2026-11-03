@@ -11,7 +11,7 @@
  *   fora da tx — nada (createDraftFromPayable é read-first e não posta razão)
  *              teste: FixedAssetService.test.ts › "read-first: item que já tem rascunho (mesmo payableId+sourceItemRef) é PULADO — idempotente"
  */
-import type { FixedAsset, Payable } from 'generated/prisma';
+import type { FixedAsset, FixedAssetClass, Payable } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import type {
   ActivateFixedAssetInput,
@@ -83,6 +83,8 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     if (!this.policy.canManageFixedAssets(scope)) throw new ForbiddenError('Você não tem permissão para criar ativos.');
     const klass = await this.classRepo.findById(scope, dto.classId);
     if (!klass) throw new NotFoundError(`Classe de bem '${dto.classId}' não foi encontrada.`);
+    const leaseEndDate = dto.leaseEndDate ? dateOnlyToUtc(dto.leaseEndDate) : null;
+    assertLeaseFields(klass, leaseEndDate, dto.leaseIndemnifiable ?? null, dto.bookAnnualRateBp ?? null, 'complete');
 
     // PR-3 (L-1): `rateId` do DTO aceita id do Anexo de plataforma ou CUSTOM; a taxa vai para a coluna certa do bem.
     // XOR garantido pelo DTO (superRefine) — sem rateId, annualRateBp sempre presente.
@@ -110,6 +112,8 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
           bookRateJustification: dto.bookRateJustification ?? null,
           acquiredAt: new Date(`${dto.acquiredAt}T00:00:00.000Z`),
           createdById: scope.actorUserId,
+          leaseEndDate,
+          leaseIndemnifiable: dto.leaseIndemnifiable ?? null,
         },
         tx,
       );
@@ -131,17 +135,22 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     if (current.status !== 'PENDING_ACTIVATION') {
       throw new ValidationError(`Ativo '${id}' está em status ${current.status}; só PENDING_ACTIVATION pode ser editado.`);
     }
-    if (dto.classId) {
-      const klass = await this.classRepo.findById(scope, dto.classId);
-      if (!klass) throw new NotFoundError(`Classe de bem '${dto.classId}' não foi encontrada.`);
-    }
+    const nextClassId = dto.classId ?? current.classId;
+    const nextClass = await this.classRepo.findById(scope, nextClassId);
+    if (!nextClass) throw new NotFoundError(`Classe de bem '${nextClassId}' não foi encontrada.`);
+    // E8b em PENDING_ACTIVATION: a declaração pode faltar (rascunho de NF-e nasce sem ela — o activate cobra); o que
+    // já é proibido (indenizável, ou campo de locação em classe que não é benfeitoria) é 400 já aqui.
+    const nextLeaseEndDate =
+      dto.leaseEndDate !== undefined ? (dto.leaseEndDate === null ? null : dateOnlyToUtc(dto.leaseEndDate)) : current.leaseEndDate;
+    const nextLeaseIndemnifiable = dto.leaseIndemnifiable !== undefined ? dto.leaseIndemnifiable : current.leaseIndemnifiable;
+    const nextBookRate = dto.bookAnnualRateBp !== undefined ? dto.bookAnnualRateBp : current.bookAnnualRateBp;
+    assertLeaseFields(nextClass, nextLeaseEndDate, nextLeaseIndemnifiable, nextBookRate, 'partial');
     const taxa = dto.rateId ? await this.taxas.resolverTaxa(scope, dto.rateId) : undefined;
     const nextCost = dto.costCents !== undefined ? BigInt(dto.costCents) : current.costCents;
     const nextResidual = dto.residualValueCents !== undefined ? BigInt(dto.residualValueCents) : current.residualValueCents;
     if (nextResidual >= nextCost) {
       throw new ValidationError('residualValueCents deve ser menor que costCents.');
     }
-    const nextBookRate = dto.bookAnnualRateBp !== undefined ? dto.bookAnnualRateBp : current.bookAnnualRateBp;
     const nextBookJustification =
       dto.bookRateJustification !== undefined ? dto.bookRateJustification : current.bookRateJustification;
     if (nextBookRate !== null && !nextBookJustification) {
@@ -161,6 +170,8 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
       ...(dto.annualRateBp !== undefined ? { annualRateBp: dto.annualRateBp } : {}),
       ...(dto.bookAnnualRateBp !== undefined ? { bookAnnualRateBp: dto.bookAnnualRateBp } : {}),
       ...(dto.bookRateJustification !== undefined ? { bookRateJustification: dto.bookRateJustification } : {}),
+      ...(dto.leaseEndDate !== undefined ? { leaseEndDate: nextLeaseEndDate } : {}),
+      ...(dto.leaseIndemnifiable !== undefined ? { leaseIndemnifiable: dto.leaseIndemnifiable } : {}),
     });
   }
 
@@ -186,6 +197,16 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     }
 
     const activatedAtDate = new Date(`${dto.activatedAt}T00:00:00.000Z`);
+    // C8 emenda 3.2: o activate é o portão autoritativo do E8b/E10 — cobre também o rascunho nascido de NF-e, que não
+    // passou pelo createAsset. Depois daqui `leaseEndDate` é imutável (E13: updateAsset só aceita PENDING_ACTIVATION).
+    const klass = await this.classRepo.findById(scope, current.classId);
+    if (!klass) throw new NotFoundError(`Classe de bem '${current.classId}' não foi encontrada.`);
+    assertLeaseFields(klass, current.leaseEndDate, current.leaseIndemnifiable, current.bookAnnualRateBp, 'complete');
+    if (klass.kind === 'AMORTIZATION_LEASEHOLD' && current.leaseEndDate! <= activatedAtDate) {
+      throw new ValidationError(
+        `leaseEndDate (${current.leaseEndDate!.toISOString().slice(0, 10)}) deve ser posterior a activatedAt (${dto.activatedAt}) — benfeitoria amortiza pelo prazo restante do contrato (RIR/2018 art. 333).`,
+      );
+    }
     const earliestOpen = await this.periodRepo.findEarliestOpenOrSoftClosed(scope);
     const isRetroactive = earliestOpen
       ? activatedAtDate < new Date(Date.UTC(earliestOpen.year, earliestOpen.month - 1, 1))
@@ -401,5 +422,57 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     if (!account || account.deletedAt) throw new ValidationError(`${label} '${id}' não existe neste escopo.`);
     if (!account.acceptsEntries) throw new ValidationError(`${label} '${account.code}' não aceita lançamentos (não é folha).`);
     return account;
+  }
+}
+
+function dateOnlyToUtc(dateOnly: string): Date {
+  return new Date(`${dateOnly}T00:00:00.000Z`);
+}
+
+/**
+ * C8 emenda 3.2, E8b (RIR/2018 art. 331 III e 333; Lei 8.245/91 art. 35; Súmula 335 STJ — FLAG-3.2-B): benfeitoria
+ * em imóvel de terceiro só amortiza sem direito a indenização e com contrato de prazo determinado. A declaração é
+ * obrigatória e sem default — no silêncio do contrato a benfeitoria necessária e a útil autorizada são indenizáveis.
+ * `complete` (create/activate) cobra tudo; `partial` (update de rascunho) só rejeita o que já é proibido.
+ * Campo de locação em classe `DEPRECIATION` é 400 (memória param-aceito-e-ignorado-e-bug). Taxa contábil
+ * divergente (`bookAnnualRateBp`, item 8) em benfeitoria é 400 — o E11 tira `nVida` de `annualRateBp` e o `min` do
+ * contrato já é o ajuste contábil (lacuna L3 do P2, dono, chat, 2026-10-26: "(a) Recusar a taxa contábil").
+ */
+function assertLeaseFields(
+  klass: FixedAssetClass,
+  leaseEndDate: Date | null,
+  leaseIndemnifiable: boolean | null,
+  bookAnnualRateBp: number | null,
+  mode: 'complete' | 'partial',
+): void {
+  if (klass.kind !== 'AMORTIZATION_LEASEHOLD') {
+    if (leaseEndDate != null || leaseIndemnifiable != null) {
+      throw new ValidationError(
+        `leaseEndDate/leaseIndemnifiable só se aplicam a classe AMORTIZATION_LEASEHOLD (benfeitoria em imóvel de terceiro); a classe '${klass.code}' é ${klass.kind}.`,
+      );
+    }
+    return;
+  }
+  if (bookAnnualRateBp != null) {
+    throw new ValidationError(
+      'bookAnnualRateBp não se aplica a benfeitoria em imóvel de terceiro: o prazo contábil já é min(contrato, vida útil) sobre annualRateBp (E11).',
+    );
+  }
+  const orientacao = `use uma classe DEPRECIATION (taxa normal do Anexo III — edificação/instalação), RIR/2018 art. 331 III.`;
+  if (leaseIndemnifiable === true) {
+    throw new ValidationError(
+      `Benfeitoria com direito a indenização não é amortizável — ${orientacao}`,
+    );
+  }
+  if (mode === 'partial') return;
+  if (leaseIndemnifiable == null) {
+    throw new ValidationError(
+      'leaseIndemnifiable é declaração obrigatória para benfeitoria em imóvel de terceiro: no silêncio do contrato a benfeitoria necessária e a útil autorizada são indenizáveis (Lei 8.245/91 art. 35; Súmula 335 STJ) — só marque false (sem direito a indenização) se o contrato tiver cláusula expressa de renúncia.',
+    );
+  }
+  if (leaseEndDate == null) {
+    throw new ValidationError(
+      `leaseEndDate é obrigatório para benfeitoria em imóvel de terceiro (contrato de prazo determinado, RIR/2018 art. 333); locação por prazo indeterminado não amortiza — ${orientacao}`,
+    );
   }
 }

@@ -64,7 +64,15 @@ import type { PostingService } from './PostingService';
 import type { IInventoryService } from './IInventoryService';
 import type { IProductRefLookup } from './ProductRefLookup';
 import type { IPhysicalStockSync } from './PhysicalStockSync';
-import type { IFixedAssetDraftCreator, IFixedAssetDraftRedriver, ResolvedFixedAssetItem } from './IFixedAssetDraftCreator';
+import {
+  isExpensedFixedAssetItem,
+  type IFixedAssetDraftCreator,
+  type IFixedAssetDraftRedriver,
+  type ResolvedExpensedFixedAssetItem,
+  type ResolvedFixedAssetItem,
+  type StoredFixedAssetItem,
+} from './IFixedAssetDraftCreator';
+import { FIXED_ASSET_EXPENSE_LIMIT_CENTS, expenseAllowed, unitCostCentsOf } from '../models/fixedAssetLimits';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
 import { resolveOrCreateCounterpartyId } from './counterpartyResolution';
@@ -260,8 +268,11 @@ export class PayableService implements IFixedAssetDraftRedriver {
     // tx (mesmo padrão de recoverableLines) — persistido na linha para o re-drive reconstruir o
     // MESMO entry e para o rascunho (item 22, fora desta PR — ver F-FA-DRAFT-RATE no retorno) ler
     // qty/ncm/cProd por item.
+    // C8 emenda 3.2 (E3–E5): o item EXPENSE sai à parte — debita a própria folha de despesa e não vira rascunho.
     const hasFixedAssetItems = (dto.fixedAssetItems?.length ?? 0) > 0;
-    const fixedAssetLines = hasFixedAssetItems ? await this.resolveFixedAssetLines(scope, dto) : [];
+    const { capitalized: fixedAssetLines, expensed: expensedLines } = hasFixedAssetItems
+      ? await this.resolveFixedAssetLines(scope, dto)
+      : { capitalized: [], expensed: [] };
 
     // ITEM-DESTINATION item 11 (F-ID-3 a): a conta de cada item de insumo é re-conferida aqui como folha
     // Expense do escopo (defesa em profundidade — mesmo gate do `expenseAccountId`), ANTES do tx1.
@@ -373,6 +384,21 @@ export class PayableService implements IFixedAssetDraftRedriver {
             recoverableIbsCbsCents: String(recoverableLines.filter(isIbsCbsRow).reduce((acc, l) => acc + l.amountCents, 0)),
             // ITEM-DESTINATION item 13: o que foi para DESPESA de insumo (precedente do X6 item 13).
             insumoCents: String(insumoLines.reduce((acc, l) => acc + l.costCents, 0)),
+            // C8 emenda 3.2 (E8): imobilizado deduzido como despesa (IN RFB 1.700 art. 120) — unitário e a declaração de vida
+            // útil ≤ 1 ano. Só quando há item EXPENSE: evento sem a chave mantém o hash (canonicalize pula ausente).
+            ...(expensedLines.length > 0
+              ? {
+                  expensedFixedAssetItems: JSON.stringify(
+                    expensedLines.map((l) => ({
+                      sourceItemRef: l.sourceItemRef,
+                      cProd: l.cProd,
+                      costCents: l.costCents,
+                      unitCostCents: l.unitCostCents,
+                      ...(l.usefulLifeUpToOneYear ? { usefulLifeUpToOneYear: true } : {}),
+                    })),
+                  ),
+                }
+              : {}),
             dueDate: dto.dueDate,
             // Debit leg of the recognition: an expense leaf, or 1.1.6 Estoques for an inventory purchase.
             expenseAccountCode: expenseAccount?.code ?? ESTOQUES_CODE,
@@ -394,7 +420,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
     try {
       const entry = await this.posting.postEntry(
         scope,
-        this.buildRecognitionInput(scope, payable, expenseAccount, dto, fixedAssetLines, insumoLines),
+        this.buildRecognitionInput(scope, payable, expenseAccount, dto, fixedAssetLines, insumoLines, expensedLines),
       );
       recognitionEntryId = entry.id;
     } catch (error) {
@@ -1336,12 +1362,14 @@ export class PayableService implements IFixedAssetDraftRedriver {
         const sources = await this.sourceProvenanceRepo.findSourcesByEntry(scope, entry.id);
         const doc = sources[0]?.sourceDocument;
         if (!doc?.rawJson) continue;
-        const parsed = JSON.parse(doc.rawJson) as { fixedAssetItems?: ResolvedFixedAssetItem[] };
-        if (!parsed.fixedAssetItems || parsed.fixedAssetItems.length === 0) continue;
+        const parsed = JSON.parse(doc.rawJson) as { fixedAssetItems?: StoredFixedAssetItem[] };
+        // C8 emenda 3.2 (E5): o item EXPENSE foi para a despesa — re-rascunhá-lo ativaria o que o usuário expensou.
+        const capitalized = (parsed.fixedAssetItems ?? []).filter((i): i is ResolvedFixedAssetItem => !isExpensedFixedAssetItem(i));
+        if (capitalized.length === 0) continue;
         const result = await this.fixedAssetDraftCreator.createDraftFromPayable(
           scope,
           payable,
-          await this.taxaPosLegalParams(scope, parsed.fixedAssetItems),
+          await this.taxaPosLegalParams(scope, capitalized),
           doc.id,
         );
         created += result.created;
@@ -1435,7 +1463,9 @@ export class PayableService implements IFixedAssetDraftRedriver {
     dto: CreatePayableInput,
     fixedAssetLines: ResolvedFixedAssetItem[],
     insumoLines: { accountCode: string; costCents: number }[] = [],
+    expensedLines: ResolvedExpensedFixedAssetItem[] = [],
   ): PostEntryInput {
+    const storedItems: StoredFixedAssetItem[] = [...fixedAssetLines, ...expensedLines];
     return {
       unitId: scope.unitId,
       date: dto.issueDate,
@@ -1450,14 +1480,16 @@ export class PayableService implements IFixedAssetDraftRedriver {
         // BE-INCR-FIXED-ASSETS PR-5 (decisão do dono 23/09): o breakdown do modo 4 vai AQUI (campo
         // já existente do SourceDocument, reuso — NENHUMA coluna nova no Payable). O re-drive do
         // rascunho (`redriveFixedAssetDrafts`) relê este `rawJson` pelo `sourceDocumentId` da entry.
-        rawJson: fixedAssetLines.length > 0 ? JSON.stringify({ fixedAssetItems: fixedAssetLines }) : undefined,
+        // C8 emenda 3.2 (E5): os itens EXPENSE vão junto, com `treatment` — trilha da escolha (PN CST 100/78 item 13).
+        rawJson: storedItems.length > 0 ? JSON.stringify({ fixedAssetItems: storedItems }) : undefined,
       },
       lines: this.recognitionLines(
         payable,
         expenseAccount,
         dto.amountCents,
         this.parseRecoverableLines(payable),
-        this.groupFixedAssetDebits(fixedAssetLines),
+        // C8 emenda 3.2 (E5): o item EXPENSE debita a folha de despesa pelo MESMO agrupamento por `accountCode`.
+        this.groupFixedAssetDebits(storedItems),
         this.groupFixedAssetDebits(insumoLines),
       ),
     };
@@ -1582,10 +1614,42 @@ export class PayableService implements IFixedAssetDraftRedriver {
    * motivo). `sourceItemRef` (chave do rascunho) é o `nItem` da NF-e — nunca `cProd` (2 linhas de
    * imobilizado podem repetir o `cProd`; um índice de fallback cobre a criação manual sem `nItem`).
    */
+  /**
+   * C8 emenda 3.2 (E3–E4b): item `treatment: 'EXPENSE'` (IN RFB 1.700 art. 120) pula classe e taxa (E3 ii — um NCM sem
+   * taxa não derruba uma compra que nem vai ao ativo); a conta é folha de despesa do escopo (mesmo gate do
+   * `expenseAccountId`) e o unitário `ceil(costCents/qty)` acima de R$ 1.200 sem `usefulLifeUpToOneYear` → 400 ANTES do tx1.
+   */
   private async resolveFixedAssetLines(
     scope: AccountingScope,
     dto: CreatePayableInput,
-  ): Promise<ResolvedFixedAssetItem[]> {
+  ): Promise<{ capitalized: ResolvedFixedAssetItem[]; expensed: ResolvedExpensedFixedAssetItem[] }> {
+    const items = dto.fixedAssetItems ?? [];
+    const expensed: ResolvedExpensedFixedAssetItem[] = [];
+    for (const [index, item] of items.entries()) {
+      if (item.treatment !== 'EXPENSE') continue;
+      const qty = item.qty ?? 1;
+      const unitCostCents = unitCostCentsOf(item.costCents, qty);
+      if (!expenseAllowed(unitCostCents, item.usefulLifeUpToOneYear)) {
+        throw new ValidationError(
+          `Item '${item.cProd}': valor unitário ${unitCostCents} centavos acima do limite de ${FIXED_ASSET_EXPENSE_LIMIT_CENTS} para deduzir como despesa (IN RFB 1.700/2017 art. 120) — ative o bem ou declare vida útil de até 1 ano.`,
+          null,
+          'FIXED_ASSET_EXPENSE_OVER_LIMIT',
+        );
+      }
+      const account = await this.resolveExpenseAccount(scope, item.expenseAccountId!);
+      expensed.push({
+        treatment: 'EXPENSE',
+        accountCode: account.code,
+        cProd: item.cProd,
+        sourceItemRef: String(item.nItem ?? index + 1),
+        costCents: item.costCents,
+        ncm: item.ncm,
+        qty,
+        unitCostCents: unitCostCents.toString(),
+        ...(item.usefulLifeUpToOneYear ? { usefulLifeUpToOneYear: true as const } : {}),
+      });
+    }
+    if (!items.some((item) => item.treatment !== 'EXPENSE')) return { capitalized: [], expensed };
     if (!this.fixedAssetClassRepo) {
       throw new ValidationError(
         'Compra com itens de imobilizado requer o catálogo de classes de bem configurado (wiring pendente).',
@@ -1596,14 +1660,13 @@ export class PayableService implements IFixedAssetDraftRedriver {
         'Compra com itens de imobilizado requer o catálogo de taxas de depreciação configurado (wiring pendente).',
       );
     }
-    const items = dto.fixedAssetItems ?? [];
-    if (items.length === 0) return [];
     // O catálogo de taxas VIVAS é lido UMA vez para todos os itens (evita N queries idênticas).
     // BE-INCR-LEGAL-PARAMS PR-3: Anexo III de plataforma (vigente hoje) + CUSTOM vivas do escopo.
     const rates = await this.depreciationRateCatalog.catalogo(scope, false);
     const out: ResolvedFixedAssetItem[] = [];
     for (const [index, item] of items.entries()) {
-      const klass = await this.fixedAssetClassRepo.findById(scope, item.classId);
+      if (item.treatment === 'EXPENSE') continue;
+      const klass = await this.fixedAssetClassRepo.findById(scope, item.classId!);
       if (!klass || klass.deletedAt) {
         throw new ValidationError(`Classe de bem '${item.classId}' não existe nesta unidade.`);
       }
@@ -1631,9 +1694,10 @@ export class PayableService implements IFixedAssetDraftRedriver {
         rateId,
         legalParameterId,
         annualRateBp,
+        ...(item.setDeclared ? { setDeclared: true as const } : {}),
       });
     }
-    return out;
+    return { capitalized: out, expensed };
   }
 
   /**

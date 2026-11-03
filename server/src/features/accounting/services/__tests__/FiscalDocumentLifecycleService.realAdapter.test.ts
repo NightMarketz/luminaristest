@@ -61,6 +61,7 @@ describe('FiscalDocumentLifecycleService + NullEmissor real (sem mock de selectD
       postingService as never,
       policy as never,
       auditService as never,
+      { findOverlapping: async () => [] } as never, // BE-INCR-NFCE PR-4: faixas inutilizadas (reenvio)
     );
 
     await service.consultarUm(SCOPE, 'doc-1');
