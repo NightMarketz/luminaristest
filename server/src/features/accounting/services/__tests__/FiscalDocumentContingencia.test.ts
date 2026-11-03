@@ -329,11 +329,11 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
   it('decisões 7 e 9: SEFAZ ainda fora ⇒ fica CONTINGENCY; faltando ≤ 4 h do fim do 1º dia útil seguinte vira alerta, depois do fim, vencida', async () => {
     sefaz.controle.foraDoAr = true;
     const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE'); // qui 29/10 12:00 (Brasília) ⇒ prazo sex 30/10 23:59:59
-    expect(await contingencia.tick(PASSADO())).toMatchObject({ semComunicacao: 1, pertoDoPrazo: 0, vencidas: 0 });
+    expect(await contingencia.tick(PASSADO())).toMatchObject({ semComunicacao: 1, pertoDoPrazo: 0, vencidas: 0, alertas: [] });
     jest.setSystemTime(new Date('2026-10-30T23:00:00Z')); // sex 20:00 — 3h59m59s antes
-    expect(await contingencia.tick(PASSADO())).toMatchObject({ semComunicacao: 1, pertoDoPrazo: 1, vencidas: 0 });
+    expect(await contingencia.tick(PASSADO())).toMatchObject({ semComunicacao: 1, pertoDoPrazo: 1, vencidas: 0, alertas: [{ evento: 'PERTO_DO_PRAZO', documentId: view.id }] });
     jest.setSystemTime(new Date('2026-10-31T03:30:00Z')); // sáb 00:30 — vencido
-    expect(await contingencia.tick(PASSADO())).toMatchObject({ semComunicacao: 1, pertoDoPrazo: 0, vencidas: 1 });
+    expect(await contingencia.tick(PASSADO())).toMatchObject({ semComunicacao: 1, pertoDoPrazo: 0, vencidas: 1, alertas: [{ evento: 'VENCIDA', documentId: view.id }] });
     expect((await emission.getById(SCOPE, view.id)).status).toBe('CONTINGENCY');
   });
 
@@ -381,7 +381,7 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
     sefaz.controle.perderRespostaAutorizacao = false;
     await contingencia.tick(PASSADO()); // a de contingência sai autorizada
     sefaz.controle.cStatEvento = '501';
-    expect(await contingencia.tick(FUTURO())).toMatchObject({ orfasFalharam: 1 });
+    expect(await contingencia.tick(FUTURO())).toMatchObject({ orfasFalharam: 1, alertas: [{ evento: 'ORFA_FALHOU', documentId: view.id }] });
     expect(cont.orfas[0]).toMatchObject({ status: 'FAILED', ultimoErro: expect.stringContaining('501') });
     expect((await emission.getById(SCOPE, view.id)).pendencias).toContain('contingencia_orfa_falhou');
   });
