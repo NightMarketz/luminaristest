@@ -361,7 +361,7 @@ não tem apuração do Real, e a ECF do Real só traz as linhas `E` do e-Lalur).
 ### 8.1 Achados de fora do escopo da C8: encaminhamento (03/11/2026)
 
 **Autorização:** dono, chat, 03/11: *"Dispara sessão com os achados fora do escopo"* (os três do corpo do #1021).
-Sessão de achados, empilhada no #1021. A autorização cobre instrumentar, pesquisar e registrar. **Não** cobre correção
+Sessão de achados, empilhada no #1021 (teste no #1024; dossiê e este item no PR de docs). A autorização cobre instrumentar, pesquisar e registrar. **Não** cobre correção
 de código nem ratificação de fork.
 
 1. **A ECF Presumido não segrega a receita hospitalar nem a do 16 %.** Vermelho pelo motivo certo em
