@@ -56,6 +56,11 @@ Depois da 1ª correção (`02420458`), duas consequências da escolha 3 foram de
    tardio, e a data efetiva continua no histórico. Lançamento manual segue exigindo a razão digitada. Porquê: sem isso,
    bridges, reconciliação e AP/AR passariam a falhar em período reaberto.
 
+6. **A razão automática vale só para chamada interna** (03/11, depois da 2ª correção em `8f4b1a14`): pelo HTTP o cliente
+   escolhe o `sourceType` e escaparia da razão digitada. A origem automática passa por parâmetro de código; pelo HTTP, a
+   razão é sempre exigida. O acerto da revisão profissional, feito por pessoa, também passa a exigir a razão digitada (C4
+   do handoff).
+
 Ficam como lacuna aberta no GAP-MAP: aprovação de rascunho e estorno em período reaberto, o `reversalPostingDate`
 datetime do reconcile e o tamanho do HIST do I250.
 
