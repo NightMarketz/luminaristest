@@ -36,7 +36,7 @@ antes de disparar C1 ou C6.
 
 ## 4. Correções a disparar
 
-Ordem e paralelismo: **C2, C3 e C5 tocam arquivos separados e podem rodar em paralelo**, uma sessão cada. **C4 só
+Ordem e paralelismo: **C2, C3, C5 e C8 tocam arquivos separados e podem rodar em paralelo**, uma sessão cada. **C4 só
 depois do #907 em `main`** (mesmo `PostingService`). C1 fecha o #907 e vem primeiro.
 
 ### C1 — fechar o #907 (revisor → merge)
@@ -94,6 +94,19 @@ depois do #907 em `main`** (mesmo `PostingService`). C1 fecha o #907 e vem prime
 - **Sessão:** `sessao-feature`, PR-0 → PR-1 → PR-2 do BRIEF (PR-0 e PR-2 condicionais aos forks já ratificados).
 - **Depois:** refazer o passo 14 do RUNBOOK-H2 pela tela, como AI tester, no #982.
 
+### C8 — memória de cálculo com a linha da ECF (P-C1)
+
+- **Origem:** nota §9 (pesquisa de 03/11 no lugar do parecer do contador). **Autorização:** `executa` da emenda por esta
+  delegação. **Sessão:** `sessao-feature` (emenda pequena ao BRIEF X7-C §C3 item 5).
+- **Onde:** `server/src/features/accounting/models/taxAssessmentMemoExport.ts` (`MEMO_COLUMNS`, `linhasDaApuracao`) **[V]**,
+  e uma tabela de correspondência código da memória → (registro, linha) por regime/forma/tributo, com `DT_INI`/`DT_FIM`.
+- **Comportamento:** duas colunas novas, `registroEcf` e `linhaEcf`, depois de `codigo`. Passo sem linha na ECF fica
+  vazio. Correspondência de partida no dossiê [`pc1-memoria-calculo`](../../pesquisas-legais/pc1-memoria-calculo/relatorio.md)
+  §2 (grau inferido).
+- **Teste-guarda:** gerar a ECF Presumido e a memória do mesmo trimestre no seed e conferir, para cada linha com
+  `linhaEcf`, que o valor da memória é igual ao valor do registro/código na ECF. É esse teste que promove a
+  correspondência de inferida a verificada.
+
 ### C6 — achados do H2 (execução de 02–03/11, #982 em `3077cda9`)
 
 Re-semeadura do `dev.db` real com backup (SHA-256 igual), 4 migrações, `db:seed:accounting` **exit 0** com
@@ -141,7 +154,7 @@ Numa sessão nova, nesta ordem:
 1. `gh pr view 907 --json headRefOid,statusCheckRollup` e `gh pr view 982 --json headRefOid,isDraft` para ver o que os
    agentes deixaram.
 2. Revisor do #907 (C1): despachar `revisor-independente` em worktree com a lista do C1 como âncora.
-3. Em paralelo, uma sessão para cada: C2, C3 e C5. Prompt de cada uma: *"Leia
+3. Em paralelo, uma sessão para cada: C2, C3, C5 e C8. Prompt de cada uma: *"Leia
    `docs/accounting/HANDOFF-2026-11-02-delegacao-dono.md` §C<n> e execute pela sessão indicada. Autorização: delegação do
    dono de 02/11 (§2 do handoff)."*
 4. Depois do #907 em `main`: C4.

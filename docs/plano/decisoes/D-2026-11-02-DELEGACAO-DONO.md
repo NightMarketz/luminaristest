@@ -113,3 +113,18 @@ Nenhum deles foi contra a recomendação.
 F-BV-1..7 (D-2026-10-21-CHAT-C-FORKS), F-W3-C1..C3 e F-W3-1, F-REINF-1..13, F-EF-1..17, F-RET-1..19, F-FE-COB-1..8,
 F-FE-POL-1..4, os forks do GOV-CONTADOR, F-ISS-1..7, F-PV-1..11, F-NFCE-12b, F-NFCE-E1-1..9, F-TC-1..7, F-X7-1..14,
 F-MIT-1..3, F-RB9..11 e F-ENC-1, 2, 6, 9..13. Cada um tem a ratificação em `decisoes/`.
+
+## 9. P-C1 — formato da memória de cálculo (03/11; pesquisa no lugar do parecer do contador)
+
+Dono, chat, 03/11: *"Pode seguir rodando aqui pesquisa pra substituir parecer de contador"*. Era a última pergunta
+aberta ao contador ([[D-2026-10-30-TRIAGEM-CONTADOR]]). Dossiê:
+[`pc1-memoria-calculo`](../../../pesquisas-legais/pc1-memoria-calculo/relatorio.md).
+
+- **A lei não fixa formato:** só manda guardar os papéis da apuração até a prescrição (Lei 8.981/1995 art. 45 III; CTN
+  art. 195 parágrafo único).
+- **O layout de conferência é o da ECF:** P200/P300/P400/P500 no Presumido e N620/N630/N660/N670 no Real, uma linha por
+  código da tabela dinâmica (Manual da ECF, leiaute 12; tabelas dinâmicas de 28/05/2026).
+- **Decisão, saída (b) do critério de aceite:** manter o formato longo e acrescentar `registroEcf` e `linhaEcf` a cada
+  passo que tem linha na ECF. A conta contábil já vai em `fonte`, e a data do recolhimento fica com o DARF e a
+  DCTFWeb/MIT ([[X9]]). É emenda ao BRIEF X7-C §C3 item 5, com `executa` por esta delegação (correção C8 do handoff).
+- **O pedido ao contador de 30–31/10 não vai:** ficou sem pergunta. A P-C1 sai do [[X7]] e libera o X9.
