@@ -1545,6 +1545,7 @@
                   "SimplesApuracao",
                   "ReceitaFiscalRecebimento",
                   "SimplesCreditoIncobravel",
+                  "DpModuloAtivacao",
                   "AccountingPolicyVersion"
                 ]
               },

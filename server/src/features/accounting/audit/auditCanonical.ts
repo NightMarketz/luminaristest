@@ -412,6 +412,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // unitId (`CompanyFiscalProfile`): é do nível da empresa e SE REPETE, igual, no evento de cada unidade resetada —
   // nunca some `companyLevel` entre unidades (dono, questionário, 2026-10-16: "Apaga, conta em toda unidade"). Sem PII.
   'accounting.scope_reset': ['removed', 'companyLevel'],
+  // BE-INCR-DP-F0-F1 PR-1 (nó PES-4, item 19) — ativação de submódulo opcional do DP. Ids, chave e competência; sem PII.
+  // O `motivo` (texto livre) fica FORA: é digitado e pode conter qualquer coisa, e o AuditEvent não se apaga (F17).
+  'dp.module_activation.created': ['activationId', 'moduleKey', 'competenciaInicio'],
+  'dp.module_activation.ended': ['activationId', 'moduleKey', 'competenciaFim'],
 };
 
 /**

@@ -32,6 +32,7 @@ import packageAcceptanceRoutes from './packageAcceptances';
 import reconcilePendingRoutes from './reconcilePending';
 import bankSettlementRoutes from './bankSettlements';
 import lalurRoutes from './lalur';
+import dpRoutes from './dp';
 import taxAssessmentRoutes from './taxAssessments';
 import mitExportRoutes from './mitExports';
 import reinfBatchRoutes from './reinfBatches';
@@ -96,6 +97,7 @@ router.use('/package-acceptances', packageAcceptanceRoutes);
 router.use('/reconcile-pending', reconcilePendingRoutes);
 router.use('/bank-settlements', bankSettlementRoutes); // BE-INCR-BANK-SETTLEMENT (nó F7)
 router.use('/lalur', lalurRoutes);
+router.use('/dp', dpRoutes); // BE-INCR-DP-F0-F1 PR-1 (nó PES-4) — Departamento Pessoal, núcleo
 router.use('/payment-accounts', paymentAccountRoutes); // BE-INCR-PAYMENT-PROVIDER (nó F5) PR-1
 router.use('/collection-charges', collectionChargesRouter); // BE-INCR-PAYMENT-PROVIDER (nó F5) PR-2
 router.use('/payment-collection', paymentCollectionWebhookRouter); // PR-2 — webhook PÚBLICO (publicApiRoutes)

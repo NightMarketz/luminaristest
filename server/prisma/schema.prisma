@@ -61,6 +61,7 @@ model User {
   companyFiscalProfiles      CompanyFiscalProfile[] // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13) — perfil da empresa por ano
   companySigners             CompanySigner[] // X13 (F-OBP-9 a) — representante legal / signatários não-contador
   partners                   Partner[] // IRRF-DISTRIBUICAO PR-1 (F-IRD-2, F-IRD-14) — sócios beneficiários da distribuição
+  dpModuloAtivacoes          DpModuloAtivacao[] // BE-INCR-DP-F0-F1 PR-1 (nó PES-4, item 12) — submódulos opcionais do DP
   withholdingProfiles        WithholdingProfile[] // RETENCOES-FONTE PR-1 (item 6) — perfil de retenção por contraparte × natureza
   taxWithholdings            TaxWithholding[] // RETENCOES-FONTE PR-2 (item 13) — retenções feitas (e sofridas no PR-3)
   profitDistributionEvents   ProfitDistributionEvent[] // IRRF-DISTRIBUICAO PR-2 (BRIEF item 10)
@@ -3726,4 +3727,33 @@ model TaxOptimizationSuggestion {
   @@unique([userId, unitId, practice, subjectType, subjectId, pendingSlot])
   @@index([userId, unitId, status])
   @@map("tax_optimization_suggestions")
+}
+
+// ============================================================================
+// DEPARTAMENTO PESSOAL — núcleo (nó PES-4, BE-INCR-DP-F0-F1). Prisma first-class: a lei desenha o esquema (CLT,
+// eSocial, custeio) e a folha exige atomicidade e imutabilidade (ADR-PERSISTENCE-BOUNDARY; PRE-ADR-DP F-DP-1).
+// Dinheiro em centavos BigInt; datas date-only em String (YYYY-MM-DD); competência em String (YYYY-MM).
+// ============================================================================
+
+/// PR-1 (item 12) — ativação de submódulo opcional do DP, por instância (R8: empregador = instância; sem unitId) e com
+/// vigência por competência (D-4). Sem sobreposição por (userId, moduleKey): gate no serviço, dentro da tx (o @@unique
+/// de idempotência morre em apagar→recriar com soft-delete). Desativar grava competenciaFim e nunca apaga dado.
+model DpModuloAtivacao {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moduleKey         String // DP_MODULE_KEYS (features/dp/models/moduleRegistry.ts), validado no DTO
+  competenciaInicio String // YYYY-MM
+  competenciaFim    String? // YYYY-MM inclusive; null = sem fim
+  motivo            String
+  /// Motivo do encerramento (item 13: end recebe motivo; sem coluna, seria parâmetro aceito e ignorado).
+  motivoFim         String?
+  createdById       String
+  endedById         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  @@index([userId, moduleKey])
+  @@map("dp_modulo_ativacoes")
 }

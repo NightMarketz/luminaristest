@@ -211,6 +211,10 @@ import { ProductDestinationService } from '../features/accounting/services/Produ
 import { CompanyFiscalProfileService } from '../features/accounting/services/CompanyFiscalProfileService';
 import { CompanySignerService } from '../features/accounting/services/CompanySignerService';
 import { PartnerService } from '../features/accounting/services/PartnerService';
+import { DpModuleService } from '../features/dp/services/DpModuleService';
+import { DpModuloAtivacaoRepository } from '../features/dp/repositories/DpModuloAtivacaoRepository';
+import { DpPolicy } from '../features/dp/policies/DpPolicy';
+import { DpPortResolver, type DpPortImplementations } from '../features/dp/ports/DpPortResolver';
 import { WithholdingProfileService } from '../features/accounting/services/WithholdingProfileService';
 import { WithholdingService } from '../features/accounting/services/WithholdingService';
 import { ProfitDistributionService } from '../features/accounting/services/ProfitDistributionService';
@@ -379,6 +383,8 @@ import type { IProductDestinationDefaultRepository } from '../features/accountin
 import type { ICompanyFiscalProfileRepository } from '../features/accounting/repositories/ICompanyFiscalProfileRepository';
 import type { ICompanySignerRepository } from '../features/accounting/repositories/ICompanySignerRepository';
 import type { IPartnerRepository } from '../features/accounting/repositories/IPartnerRepository';
+import type { IDpModuloAtivacaoRepository } from '../features/dp/repositories/IDpModuloAtivacaoRepository';
+import type { IDpPolicy } from '../features/dp/policies/IDpPolicy';
 import type { IWithholdingProfileRepository } from '../features/accounting/repositories/IWithholdingProfileRepository';
 import type { ITaxWithholdingReadPort, ITaxWithholdingRepository } from '../features/accounting/repositories/ITaxWithholdingRepository';
 import type { IProfitDistributionRepository } from '../features/accounting/repositories/IProfitDistributionRepository';
@@ -852,6 +858,7 @@ export class ApplicationFactory {
     companyFiscalProfile: ICompanyFiscalProfileRepository; // X13
     companySigner: ICompanySignerRepository; // X13
     partner: IPartnerRepository; // IRRF-DISTRIBUICAO PR-1
+    dpModuloAtivacao: IDpModuloAtivacaoRepository; // BE-INCR-DP-F0-F1 PR-1 (nó PES-4, item 12)
     withholdingProfile: IWithholdingProfileRepository; // RETENCOES-FONTE PR-1 (item 6)
     taxWithholding: ITaxWithholdingRepository; // RETENCOES-FONTE PR-2 (item 13; porta da Reinf, Emenda 22/10 item 2)
     profitDistribution: IProfitDistributionRepository; // IRRF-DISTRIBUICAO PR-2
@@ -903,6 +910,7 @@ export class ApplicationFactory {
     packageBalance: IPackageBalancePolicy;
     packageAcceptance: IPackageAcceptancePolicy; // FE-INCR-PACOTE-VALIDADE
     legalParameter: ILegalParameterPolicy; // BE-INCR-LEGAL-PARAMS PR-1 (item 12: policy própria, escopo plataforma)
+    dp: IDpPolicy; // BE-INCR-DP-F0-F1 PR-1 (item 14, D-7: policy própria do DP)
   };
 
   public readonly services: {
@@ -973,6 +981,8 @@ export class ApplicationFactory {
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
     partner: PartnerService; // IRRF-DISTRIBUICAO PR-1
+    dpModule: DpModuleService; // BE-INCR-DP-F0-F1 PR-1 (itens 12–13)
+    dpPortResolver: DpPortResolver; // BE-INCR-DP-F0-F1 PR-1 (item 17)
     withholdingProfile: WithholdingProfileService; // RETENCOES-FONTE PR-1 (item 6)
     withholding: WithholdingService; // RETENCOES-FONTE PR-2 (itens 10–23)
     profitDistribution: ProfitDistributionService; // IRRF-DISTRIBUICAO PR-2
@@ -1089,6 +1099,7 @@ export class ApplicationFactory {
       companyFiscalProfile: new CompanyFiscalProfileRepository(),
       companySigner: new CompanySignerRepository(),
       partner: new PartnerRepository(),
+      dpModuloAtivacao: new DpModuloAtivacaoRepository(), // BE-INCR-DP-F0-F1 PR-1
       withholdingProfile: new WithholdingProfileRepository(), // RETENCOES-FONTE PR-1 (item 6)
       taxWithholding: new TaxWithholdingRepository(), // RETENCOES-FONTE PR-2 (item 13)
       profitDistribution: new ProfitDistributionRepository(),
@@ -1141,6 +1152,7 @@ export class ApplicationFactory {
       packageBalance: new PackageBalancePolicy(),
       packageAcceptance: new PackageAcceptancePolicy(),
       legalParameter: new LegalParameterPolicy(),
+      dp: new DpPolicy(), // BE-INCR-DP-F0-F1 PR-1 (item 14)
     };
 
     // Services (handling inter-dependencies)
@@ -1678,6 +1690,10 @@ export class ApplicationFactory {
     );
     payableService.setWithholding(withholdingService, this.repositories.taxWithholding);
     depreciationService.setFixedAssetDraftRedriver(payableService);
+    // BE-INCR-DP-F0-F1 PR-1 (itens 17–18): o mapa de implementações dos submódulos opcionais nasce vazio no F0. Este
+    // arquivo é o ÚNICO ponto que importa `features/dp<Nome>/` (regra D1 do check:arch; X1).
+    const dpModuleService = new DpModuleService(this.repositories.dpModuloAtivacao, this.policies.dp, auditService);
+    const dpPortImplementations: DpPortImplementations = new Map();
     const companyFiscalProfileService = new CompanyFiscalProfileService(
       this.repositories.companyFiscalProfile,
       this.repositories.companySigner,
@@ -1779,6 +1795,8 @@ export class ApplicationFactory {
         this.repositories.profitDistribution,
         this.repositories.interestOnEquity,
       ),
+      dpModule: dpModuleService, // BE-INCR-DP-F0-F1 PR-1
+      dpPortResolver: new DpPortResolver(dpPortImplementations, (owner, c) => dpModuleService.modulosAtivosEm(owner, c)),
       // RETENCOES-FONTE PR-1 (item 6): perfil de retenção; fotografia NATUREZA_RENDIMENTO e a leitura dos rascunhos dela.
       withholdingProfile: new WithholdingProfileService(
         this.repositories.withholdingProfile,
@@ -2647,6 +2665,8 @@ export class ApplicationFactory {
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;
   public getPartnerService = (): PartnerService => this.services.partner;
+  public getDpModuleService = (): DpModuleService => this.services.dpModule;
+  public getDpPortResolver = (): DpPortResolver => this.services.dpPortResolver;
   public getWithholdingProfileService = (): WithholdingProfileService => this.services.withholdingProfile;
   public getWithholdingService = (): WithholdingService => this.services.withholding;
   /** RETENCOES-FONTE PR-2 (Emenda 22/10 item 2): a porta que a EFD-REINF lê, sem HTTP. */

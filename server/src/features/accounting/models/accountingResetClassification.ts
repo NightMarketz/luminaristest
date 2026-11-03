@@ -113,6 +113,8 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'ReceitaFiscalRecebimento',
   // X14-CAIXA PR-3 (mesma decisão do dono, 2026-10-16).
   'SimplesCreditoIncobravel',
+  // BE-INCR-DP-F0-F1 PR-1 (nó PES-4): o onboarding não escreve ativação de submódulo do DP ⇒ tabela nova nasce BLOCKING.
+  'DpModuloAtivacao',
 ] as const;
 
 /**

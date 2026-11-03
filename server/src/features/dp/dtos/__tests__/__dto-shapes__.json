@@ -1,0 +1,98 @@
+{
+  "DpModuleDto.ts": {
+    "AtivarModuloSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "moduleKey": {
+          "type": "string",
+          "enum": [
+            "DP-PONTO",
+            "DP-PAG",
+            "DP-BEN",
+            "DP-ADM",
+            "DP-APP",
+            "DP-DES",
+            "DP-GED",
+            "DP-CAT",
+            "DP-BI"
+          ]
+        },
+        "competenciaInicio": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        },
+        "motivo": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "moduleKey",
+        "competenciaInicio",
+        "motivo"
+      ],
+      "additionalProperties": false
+    },
+    "DpIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "DpScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "EncerrarModuloSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "competenciaFim": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        },
+        "motivo": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "competenciaFim",
+        "motivo"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
