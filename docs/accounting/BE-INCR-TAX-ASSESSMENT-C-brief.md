@@ -357,3 +357,48 @@ que o seed não alcança (receita acima do limite da LC 224, adicional > 0, T01/
 `models/__tests__/taxAssessmentEcfLinhas.test.ts`, contra o mesmo oráculo. **Grau:** Presumido T01 verificado (arquivo +
 fórmula); T02–T04, o ramo do § 5º e o Real ficam **inferidos** (conferidos contra a descrição e o DT_INI da aba; o seed
 não tem apuração do Real, e a ECF do Real só traz as linhas `E` do e-Lalur).
+
+### 8.1 Achados de fora do escopo da C8: encaminhamento (03/11/2026)
+
+**Autorização:** dono, chat, 03/11: *"Dispara sessão com os achados fora do escopo"* (os três do corpo do #1021).
+Sessão de achados, empilhada no #1021. A autorização cobre instrumentar, pesquisar e registrar. **Não** cobre correção
+de código nem ratificação de fork.
+
+1. **A ECF Presumido não segrega a receita hospitalar nem a do 16 %.** Vermelho pelo motivo certo em
+   `server/src/controllers/__tests__/ecfPresumidoSegregacao.integration.test.ts`. O mesmo confronto da C8 cai só na base:
+   `P200:10: memória 2240000 ≠ ECF 3200000` e `P400:6: 2400000 ≠ 3200000` (hospitalar); `P200:10: 1600000 ≠ 3200000`
+   (16 %). Linha no GAP-MAP, Nível 5. A correção (`sessao-correcao`) exige autorização própria. Ela toca
+   `SpedEcfGenerationService` (que passa a ler a parte hospitalar como a apuração lê) e `lib/ecf.ts`: P200 4 recebe revenda
+   + hospitalar, P200 6 o 16 % e P400 2 revenda + hospitalar. Toca também a marca de `RECEITA_SERVICO`/`RECEITA_HOSPITALAR`
+   nesta tabela de correspondência.
+2. **Sobra do limite da LC 224: a memória acumula e o PVA não.** Dossiê
+   [`pesquisas-legais/lc224-sobra-limite`](../../pesquisas-legais/lc224-sobra-limite/relatorio.md). **A memória segue a
+   IN RFB 2.305 art. 15 § 4º:** *"trimestres subsequentes"*, no plural, que é a leitura deste item e do X7-A l. 171. A P200
+   25140 (`CNA`) soma só a 25170 do trimestre anterior. Isso contraria o § 4º e a orientação da própria 25170
+   (*"acumulado para período(s) seguinte(s)"*). O § 5º reconcilia o ano, mas o trimestre diverge (DARF × ECF). **Sem
+   correção de código.** Consequência para a regra de leitura acima: com sobra de dois ou mais trimestres, a soma marcada
+   com P200 25140 na memória fica **acima** do 25140 do PVA, e essa divergência é esperada. O teste-guarda da C8 não
+   alcança o caso (T01). A conduta diante da ECF (manter o DARF pela IN ou pagar como o PVA) é a §4.2 do dossiê e só vai ao
+   contador se um cliente acima de R$ 5 mi cair no caso.
+3. **Refinamento proposto — a dedução retida não diz quem reteve** (sem código). Hoje `DeducaoInformada.tipo` é
+   `IRRF | CSLL_RETIDA | OUTRA`. A `CSLL_RETIDA` fica sem linha e o `IRRF` vai sempre à genérica (P300 10 / N630 20 /
+   N620 21). A tabela dinâmica [D02 da pc1] separa por retentor:
+
+   | Retentor (base legal) | CSLL Presumido / Real | IRRF Presumido / Real |
+   |---|---|---|
+   | Órgãos, autarquias e fundações federais (Lei 9.430 art. 64) | P500 9 / N670 15 | P300 12 / N630 21 |
+   | Demais entidades da administração pública federal (Lei 10.833 art. 34) | P500 10 / N670 16 | P300 13 / N630 22 |
+   | Pessoa jurídica de direito privado (Lei 10.833 art. 30) | P500 11 / N670 17 | P300 10 / N630 20 (genérica) |
+   | Órgãos, autarquias e fundações de estados, DF e municípios (Lei 10.833 art. 33) | P500 12 / N670 18 | P300 10 / N630 20 (genérica) |
+
+   **Fork F-C8-R1 (pendente, não ratificado):**
+   - **(a)** campo `retentor` em `DeducaoInformada`, com enum `ORGAO_FEDERAL | ENTIDADE_ADM_FEDERAL | PJ_PRIVADA |
+     ORGAO_ESTADUAL_MUNICIPAL`, obrigatório na `CSLL_RETIDA` e opcional no `IRRF` (ausente = genérica). A tabela de
+     correspondência marca a linha pelo par (tipo, retentor). É o recomendado: mexe só no DTO, no cálculo e nesta tabela, e
+     a dedução já informada continua válida.
+   - **(b)** quatro tipos novos (`CSLL_RETIDA_ART64`…). Multiplica o enum, que já está na tela e no snapshot de DTO.
+   - **(c)** derivar o retentor das retenções sofridas (`TaxWithholding` com `direction = SUFFERED`, que guarda a fonte
+     pagadora em `counterpartyId`). O registro não guarda a natureza do retentor (órgão federal × PJ privada), então
+     precisaria de campo novo ali, e amarra o X7 ao F-RET.
+
+   Nada a codificar até o dono ratificar o fork. O 1º cliente (salão) não tem retenção de órgão público.
