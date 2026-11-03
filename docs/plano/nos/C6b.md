@@ -53,3 +53,7 @@ atualizado: "2026-10-28"
 `SDD:1740`
 
 | **C6b** | plan (BRIEF) | C6 ✅ | resposta 8 (cédula 10/09) |
+
+## Fold 02/11 — forks ratificados por delegação
+
+- [[D-2026-11-02-DELEGACAO-DONO]] §7 (dono, chat, 02/11: *"Faz e me substitui nas decisões"*): F-C6bE-1..11 da emenda 3.4 ratificados pela recomendação. Não é `executa`; o nó segue `done`.
