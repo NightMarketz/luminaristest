@@ -47,6 +47,18 @@ A sessão de correção fica autorizada no mesmo PR (OPS-006 leve), com as três
    única que o sistema mede sem regra nova de prazo. As outras (prazo após o fim do mês, data anterior ao último período
    fechado) ficam fora.
 
+Depois da 1ª correção (`02420458`), duas consequências da escolha 3 foram decididas:
+
+4. **Tela:** o modal de lançamento manual ganha o campo "Razão do registro extemporâneo", opcional e sempre visível.
+   Sem ele, quem reabre o período para corrigir recebe 400 e não tem como responder.
+5. **Gravadores automáticos** (`sourceType` diferente de `manual`): sem razão informada, o serviço grava
+   `lançamento automático (<sourceType>) processado depois do fechamento do período`. Essa é a razão real do registro
+   tardio, e a data efetiva continua no histórico. Lançamento manual segue exigindo a razão digitada. Porquê: sem isso,
+   bridges, reconciliação e AP/AR passariam a falhar em período reaberto.
+
+Ficam como lacuna aberta no GAP-MAP: aprovação de rascunho e estorno em período reaberto, o `reversalPostingDate`
+datetime do reconcile e o tamanho do HIST do I250.
+
 O PR é vermelho pela classe de risco (contabilidade): passa por revisor independente antes do merge.
 
 ## 4. Gate H1 — cobertura referencial na ECD (fold 24/10 do [[H1]])
