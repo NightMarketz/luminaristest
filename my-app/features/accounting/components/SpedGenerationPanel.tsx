@@ -17,8 +17,19 @@ import {
 import { accountingContactsService, type AccountingContact } from '../../../lib/services/accountingContacts.service';
 import { nonEmpty } from '../../../lib/utils/nonEmpty';
 import { QualifAssinanteSelect } from './QualifAssinanteSelect';
-import { resolveError } from '../lib/resolveError';
+import { resolveError, resolveErrorWithCode } from '../lib/resolveError';
+import { EcfY600Editor, y600Message } from './EcfY600Editor';
+import { isEcfYear, useY600Vigencias } from '../hooks/useY600Vigencias';
+import {
+  Y600_RELOAD_CODES,
+  Y600_SERVER_CODES,
+  emptyY600Draft,
+  toY600Payload,
+  validateY600Draft,
+  type Y600Draft,
+} from '../lib/ecfY600';
 import { SpedEcfRealPanel } from './SpedEcfRealPanel';
+import { Field, inputClass } from './spedFormParts';
 
 /**
  * Tabela de UF (0000 campo 07) — reference data mirrored from server SpedEcdDto.UF_CODES.
@@ -31,9 +42,9 @@ export const UF_CODES = [
   'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO',
 ];
 
-/** Exported for `SpedEcfRealPanel.tsx` (Fork F-COMP2-1 → (b)) — same input styling. */
-export const inputClass =
-  'rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none disabled:opacity-50';
+// `inputClass`/`Field` moram em `./spedFormParts` (o `EcfY600Editor` os usa sem importar este painel — U7-no-circular);
+// reexportados aqui para `SpedEcfRealPanel.tsx` (Fork F-COMP2-1 → (b)), que segue importando deste arquivo.
+export { Field, inputClass } from './spedFormParts';
 
 
 /**
@@ -215,22 +226,6 @@ export function ContadorDoCadastroSelect({
   );
 }
 
-/** Exported for `SpedEcfRealPanel.tsx` (Fork F-COMP2-1 → (b)) — same field wrapper. */
-export function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="flex flex-col gap-1 text-xs text-neutral-400">
-      {label}
-      {children}
-    </label>
-  );
-}
-
 /**
  * SPED generation panel (A1b) — owner-facing forms to generate & download the ECD
  * and ECF `.txt` files over the existing generation endpoints. Only the required DTO
@@ -264,6 +259,11 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
   const [ecfSigners, setEcfSigners] = useState<EcfSignerDraft[]>([emptyEcfSigner()]);
   const [ecfBusy, setEcfBusy] = useState(false);
   const [ecfError, setEcfError] = useState<string | null>(null);
+  // Y600 (FE-INCR-ECF-Y600 itens 6 e 9): vigências do ano pela rota de leitura e o complemento só na tela (F-FE-Y600-6 → a).
+  const ecfYearNum = Number(ecfYear);
+  const ecfY600Year = isEcfYear(ecfYearNum) ? ecfYearNum : null;
+  const ecfY600 = useY600Vigencias(unitId, ecfY600Year);
+  const [ecfY600Draft, setEcfY600Draft] = useState<Y600Draft>(emptyY600Draft);
 
   // ── Tabelas de qualificação (BE, F-FE-SG-1 → a) e contadores do cadastro (F-FE-SG-2 → d) ──
   const [qualif, setQualif] = useState<{ ECD: QualifAssinante[]; ECF: QualifAssinante[] }>({ ECD: [], ECF: [] });
@@ -290,6 +290,13 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
   }, [unitId]);
 
   const genericError = () => t('sped.error.generic', 'Ocorreu um erro. Verifique os campos e tente novamente.');
+  /** Item 11 — `ECF_Y600_*` com mensagem própria; complemento faltando/fora do ano relê as vigências. */
+  const ecfServerError = (err: unknown): string => {
+    const { message, code } = resolveErrorWithCode(err, genericError());
+    if (!code || !Y600_SERVER_CODES.includes(code)) return message;
+    if (Y600_RELOAD_CODES.includes(code)) ecfY600.reload();
+    return y600Message(t, `error.${code}`);
+  };
   const signerError = (code: string) =>
     t(`sped.error.${code}`, t('sped.error.signersInvalid', 'Signatários inválidos.'));
 
@@ -362,21 +369,31 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
       setEcfError(signerError('ecfSignerCount'));
       return;
     }
+    if (ecfY600.loading || ecfY600.error !== null) {
+      setEcfError(t('sped.y600.naoCarregado', 'Os sócios do ano ainda não carregaram — aguarde ou tente de novo.'));
+      return;
+    }
+    const y600Issue = validateY600Draft(ecfY600.vigencias, ecfY600Draft, year);
+    if (y600Issue) {
+      setEcfError(y600Message(t, y600Issue));
+      return;
+    }
+    const y600 = toY600Payload(ecfY600.vigencias, ecfY600Draft);
     const body: GenerateEcfPayload = {
       unitId,
       year,
       declarant: toEcfDeclarantPayload(ecfDeclarant),
       fiscal: { indAliqCsll: ecfCsll, indRecReceita: '2' },
       signers,
-      // Y600 (BE-INCR-ECF-Y600): a tela ainda não coleta sócios — o servidor devolve 400 ECF_Y600_*; FE próprio pendente.
-      socios: [],
+      socios: y600.socios,
+      dirigentes: y600.dirigentes,
     };
     if (ecfContactId) body.signerContactIds = [ecfContactId];
     setEcfBusy(true);
     try {
       await spedService.generateAndDownloadEcf(body);
     } catch (err) {
-      setEcfError(resolveError(err, genericError()));
+      setEcfError(ecfServerError(err));
     } finally {
       setEcfBusy(false);
     }
@@ -530,6 +547,7 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
 
         <ContadorDoCadastroSelect t={t} contacts={contacts} value={ecfContactId} onChange={setEcfContactId} />
         <EcfSignersEditor t={t} signers={ecfSigners} setSigners={setEcfSigners} qualifOptions={qualif.ECF} qualifLoading={qualifLoading} />
+        <EcfY600Editor year={ecfY600Year} vigencias={ecfY600} value={ecfY600Draft} onChange={setEcfY600Draft} />
 
         {ecfError && (
           <div className="mt-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">{ecfError}</div>
