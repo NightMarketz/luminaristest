@@ -98,7 +98,7 @@ suposição no código). Nada além da spec.
    de contrato, ANTES da lógica interna.
 3. Implemente comportamento por comportamento, marcando o checklist,
    cada um com seu teste.
-4. Rode a suíte completa do nó + testes de contrato.
+4. Rode os testes do nó (por caminho) + testes de contrato; a suíte inteira é do CI.
 5. Relatório final: checklist com status por item, diff resumido, seção
    "Lacunas de spec" (mesmo vazia) e seção "Achados fora de escopo"
    (mesmo vazia).
@@ -122,11 +122,20 @@ critério de reuso, justificada no relatório.
 
 **Comandos de gate no passo 4:**
 
+`cd server && npx tsc --noEmit`, e depois:
+
 ```bash
-cd server && npx tsc --noEmit && npm run test:integration
+cd server && npx jest <teste-guarda> <testes dos arquivos tocados> --selectProjects unit
+cd server && npx jest <arquivo>.integration.test.ts --selectProjects integration --runInBand   # um arquivo por vez
 ```
 
-Nunca `npx jest --selectProjects integration` cru (29/41 suítes colidem no mesmo SQLite). `cd my-app &&
+**Escopo, não suíte inteira** (dono, chat, 2026-11-03: "isso pesa o pc demais"). O caminho vem **antes** do
+`--selectProjects`: depois dele o jest 30 lê o caminho como nome de projeto e roda as 448 suítes. Suíte inteira
+(`npm run test:integration`, `npm test`, jest ou vitest sem caminho) é do CI do PR e fica bloqueada fora dele sem
+`FULL_SUITE=1` (`scripts/test-scope-guard.cjs`). No relatório/PR, diga quais testes rodaram aqui e que a suíte
+completa é a do CI.
+
+Integração sempre com `--runInBand` (sem ele, as suítes colidem no mesmo SQLite). `cd my-app &&
 npx tsc --noEmit` fecha o outro lado. Se tocar rota/DTO documentado: `npm run docs:generate`.
 
 **Worktree novo:** `npm ci` + `.env` com `OPENAI_API_KEY=ci-dummy-openai-key`.

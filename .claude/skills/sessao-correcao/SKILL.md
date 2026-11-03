@@ -109,11 +109,17 @@ chega no commit `test:` do mesmo PR, e esta sessão entra com o commit `fix:` em
 **Comandos do passo 1 e 3:**
 
 ```bash
-cd server && npm run test:integration
+cd server && npx jest <teste-guarda> <testes dos arquivos tocados> --selectProjects unit
+cd server && npx jest <arquivo>.integration.test.ts --selectProjects integration --runInBand   # um arquivo por vez
 ```
 
-Nunca `npx jest --selectProjects integration` cru — 29 de 41 suítes colidem no mesmo SQLite sem o
-`--runInBand` que o `npm run` passa. Para unit, `npx jest <caminho>`. O `tsc` é gate:
+**Escopo, não suíte inteira** (dono, chat, 2026-11-03: "isso pesa o pc demais"). O caminho vem **antes** do
+`--selectProjects`: depois dele o jest 30 lê o caminho como nome de projeto e roda as 448 suítes. Suíte inteira
+(`npm run test:integration`, `npm test`, jest ou vitest sem caminho) é do CI do PR e fica bloqueada fora dele sem
+`FULL_SUITE=1` (`scripts/test-scope-guard.cjs`). No relatório/PR, diga quais testes rodaram aqui e que a suíte
+completa é a do CI.
+
+Integração sempre com `--runInBand`: sem ele, as suítes colidem no mesmo SQLite. O `tsc` é gate:
 `cd server && npx tsc --noEmit` e `cd my-app && npx tsc --noEmit` — não avance vermelho.
 
 **Worktree novo:** `npm ci` + `.env` com `OPENAI_API_KEY=ci-dummy-openai-key`, senão o passo 1 falha por
