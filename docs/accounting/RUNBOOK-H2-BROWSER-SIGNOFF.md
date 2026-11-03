@@ -1201,17 +1201,73 @@ Assinatura do executor (passo 19): agente claude-opus-5-5, AI tester, sob autori
 
 20. Contabilidade → Conciliação → sub-aba "Baixas por retorno".
     - a) "Varrer extrato": o resumo mostra novos/já existentes/ambíguos/sem título/desatualizados; a lista abre em
-      PENDING. Varrer de novo não duplica (sobe "já existentes"). EVIDÊNCIA: [ ]
+      PENDING. Varrer de novo não duplica (sobe "já existentes"). EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
     - b) Confirmar um item com o meio certo (Pix/TED…): status CONFIRMED, o balancete recarrega e o lançamento aparece.
-      Um item com encargo e sem conta configurada mostra o 400 `charge_account_not_configured` inteiro. EVIDÊNCIA: [ ]
-    - c) Rejeitar outro item com motivo: REJECTED, sem ações. EVIDÊNCIA: [ ]
-    - d) Item FAILED (se houver) mostra a etapa e o motivo; "Reprocessar" disponível. EVIDÊNCIA: [ ]
+      Um item com encargo e sem conta configurada mostra o 400 `charge_account_not_configured` inteiro. EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
+    - c) Rejeitar outro item com motivo: REJECTED, sem ações. EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
+    - d) Item FAILED (se houver) mostra a etapa e o motivo; "Reprocessar" disponível. EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
+
+
+> **Execução 02/11 — passo 20 (agente AI tester; autorização e método no bloco "Execução 02/11 — P0").** `seed-presumido`,
+> Conciliação → "Baixas por retorno", nos dois extratos importados por clique nos passos 2–3 (`H2 OFX` `cmvtx4jbo…` e o do CNAB
+> `cmvtx4li6…`). Na primeira varredura, as 5 linhas UNMATCHED deram só `ambíguos`: `{"created":0,…,"ambiguous":2}` e
+> `{…"ambiguous":3}`. Na regra `pickCandidate` (`BankSettlement.model.ts:182-205`), mais de um título elegível na janela só
+> desempata pelo `documentNumber` igual ao `externalRef` da linha. **Desvio de dado:** para cumprir a pré-condição ("uma conta a
+> pagar aberta que case com uma linha"), foram criadas pela tela, em Contas a Pagar → "Nova Conta" → "Registrar", duas contas
+> com o documento igual ao `externalRef`:
+>
+> ```text
+> POST /api/payables -> 201  req: {…,"supplierName":"FORNECEDOR H2 BAIXAS","description":"H2 passo 20 H2-CNAB-2","issueDate":"2026-10-20","dueDate":"2026-10-28","amountCents":7800,…,"documentNumber":"H2-CNAB-2"}
+> POST /api/payables -> 201  req: {…,"description":"H2 passo 20 H2-OFX-2","issueDate":"2026-10-20","dueDate":"2026-10-27","amountCents":12050,…,"documentNumber":"H2-OFX-2"}
+> ```
+>
+> **a)** "Varrer extrato" duas vezes em cada extrato:
+>
+> ```text
+> OFX   1ª: 03/11/2026, 00:25:43 — novos: 1 · já existentes: 0 · ambíguos: 2 · sem título: 0 · desatualizados: 0   {"created":1,"skippedExisting":0,"ambiguous":2,"none":0,"stale":0}
+>       2ª: 03/11/2026, 00:25:46 — novos: 0 · já existentes: 1 · ambíguos: 2 · sem título: 0 · desatualizados: 0   {"created":0,"skippedExisting":1,…}
+>       27/10/2026  TARIFA BANCARIA H2-OFX-2  -R$ 120,50 pagamento  FORNECEDOR H2 BAIXAS · vence 27/10/2026 · aberto R$ 120,50  R$ 120,50  —  pendente  Confirmar Rejeitar
+> CNAB  1ª: 03/11/2026, 00:25:51 — novos: 1 · já existentes: 0 · ambíguos: 1 · …   {"created":1,"skippedExisting":0,"ambiguous":1,…}
+>       2ª: 03/11/2026, 00:25:54 — novos: 0 · já existentes: 1 · ambíguos: 1 · …   {"created":0,"skippedExisting":1,…}
+>       28/10/2026  PAGTO FORNECEDOR TESTE H2-CNAB-2  -R$ 78,90 pagamento  FORNECEDOR H2 BAIXAS · vence 28/10/2026 · aberto R$ 78,00  R$ 78,00  R$ 0,90  pendente
+> ```
+>
+> A lista abre em `pendente` (status `PENDING`), e a 2ª varredura sobe "já existentes" sem duplicar.
+>
+> **b)** O item com encargo (CNAB, R$ 0,90) foi confirmado com Pix e deu 400, mostrado inteiro no modal. O item do OFX foi
+> confirmado com Pix e deu CONFIRMED, e o balancete recarregou:
+>
+> ```text
+> POST /api/bank-settlements/cmw04l6e30019ciokswrketbs/confirm -> 400  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","method":"Pix"}
+>    res: {"code":"VALIDATION_ERROR","message":"charge_account_not_configured: conta de encargo pago não configurada (PUT /api/accounting/settings — códigos são pendência do contador)."}
+>    modal: charge_account_not_configured: conta de encargo pago não configurada (PUT /api/accounting/settings — códigos são pendência do contador).
+>           Configure a conta de encargo em PUT /api/accounting/settings (ainda sem tela; os códigos são pendência do contador).
+> POST /api/bank-settlements/cmw04l0ip0017ciok765cfxtz/confirm -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","method":"Pix"}
+>    res: {"success":true,"data":{…,"status":"CONFIRMED","titleType":"PAYABLE",…,"proposedCents":12050,"chargeCents":0,…,"title":{"openCents":0,…,"status":"PAID"},"settlementId":"cmw04lzky001bciokfxvf2f4c",…}}
+> GET /api/accounting/trial-balance?unitId=cmuw4yqxg001jcii0iz2yb9rw -> 200
+> lista: 27/10/2026 TARIFA BANCARIA H2-OFX-2 -R$ 120,50 … aberto R$ 0,00  R$ 120,50 — confirmada  03/11/2026, 00:26:29 · lançamento cmw04lzk…
+> ```
+>
+> **c)** No item do CNAB, "Rejeitar" com "Motivo (obrigatório)" → `POST …/cmw04l6e30019ciokswrketbs/reject -> 200`, `"status":"REJECTED"`,
+> `"reason":"H2 02/11 passo 20c: encargo sem conta configurada; rejeitada pelo AI tester"`. A linha fica `rejeitada`, com o
+> motivo e sem botões.
+>
+> **d)** Filtro "falhou" nos dois extratos: "Nenhuma baixa neste recorte". Não há item FAILED, então o ramo condicional ("se
+> houver") não foi exercitado.
+>
+> Prints: [`passo20a-wfx0-varredura.png`](runbook-evidence/H2-2026-11-02/passo20a-wfx0-varredura.png),
+> [`passo20a-8bn8-varredura.png`](runbook-evidence/H2-2026-11-02/passo20a-8bn8-varredura.png),
+> [`passo20b-01-encargo-sem-conta-400.png`](runbook-evidence/H2-2026-11-02/passo20b-01-encargo-sem-conta-400.png),
+> [`passo20b-02-confirmada.png`](runbook-evidence/H2-2026-11-02/passo20b-02-confirmada.png),
+> [`passo20c-01-rejeitada.png`](runbook-evidence/H2-2026-11-02/passo20c-01-rejeitada.png). Console: só o `Failed to load
+> resource … 400`, que é o log do Chrome para o 400 esperado. Leitura do agente: a)–c) conferem com o esperado. d) não se
+> aplica porque não há FAILED. Grau: **verificado**.
 
 Desfecho do passo 20 (marcar UM):
-[ ] PASSOU — a) a d) com evidência conferindo com o esperado
+[x] PASSOU — a) a d) com evidência conferindo com o esperado (d: sem item FAILED, ramo condicional não exercitado; desvio de dado: 2 contas a pagar criadas pela tela para casar com as linhas) *(marcado pelo agente AI tester, 02/11, pela evidência do bloco acima)*
 [ ] FALHOU — item __ divergiu; evidência colada acima
 [ ] BLOQUEADO — pré-condição __ não se sustentava
-Assinatura do executor (passo 20): ____________
+Assinatura do executor (passo 20): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
 ### [EMENDA 2026-10-03] Passo 21 — CRM, usuários, vendas, login e setup com o body tipado (contrato gerado PR-3)
 
