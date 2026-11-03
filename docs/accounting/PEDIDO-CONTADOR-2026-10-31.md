@@ -8,6 +8,12 @@
 > Este arquivo não substitui o de 30/10: a mensagem é a mesma. Ele só registra a reconferência de 31/10 e acrescenta o PE-6
 > ao bloco "o que não estamos pedindo". Os dois convivem.
 
+
+> **03/11 — NÃO ENVIAR.** A P-C1 foi respondida por pesquisa (dono, chat, 03/11: *"Pode seguir rodando aqui pesquisa pra
+> substituir parecer de contador"*): a lei não fixa formato para a memória de cálculo, e o layout de conferência é o da
+> ECF (dossiê `pesquisas-legais/pc1-memoria-calculo`, decisão `D-2026-11-02-DELEGACAO-DONO` §9, PR #1011). O pedido
+> ficou sem pergunta. O texto abaixo fica como histórico.
+
 ## Triagem de 31/10 (os 5 itens que o dono listou)
 
 | Item | Nó | Quem responde | Por quê | Grau |

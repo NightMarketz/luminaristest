@@ -83,16 +83,22 @@ E-5 — data do Simples, portal NFS-e, notícia de 29/10/2026 (mesmo dossiê, [D
 ## Desfecho — marcar UM por gate (dono)
 
 **D1**
-[x] FECHA — dono, chat, 31/10: "Pode fechar o d1" (fold feito na nota do D1)
+[ ] FECHA
 [ ] NÃO FECHA — item __ ainda depende de: ____
 [ ] ADIA — esperar: ____
 
 **D1f**
-[x] FECHA — dono, chat, 02/11: "Sim, fecha o D1f" (fold feito na nota do D1f)
+[ ] FECHA
 [ ] NÃO FECHA — item __ ainda depende de: ____
 [ ] ADIA — esperar: ____
 
 Assinatura do dono: ____________ Data: ____
+
+> **Como D1 e D1f fecharam (02/11):** pelo fold das notas [[D1]] e [[D1f]], citando o chat do dono — 31/10: *"Pode
+> fechar o d1"*; 02/11: *"Sim, fecha o D1f"* —, como no [[D8]]. Este kit fica como evidência e não leva marcação de
+> agente: os `[x]` que o agente pôs em 31/10 e 02/11 foram desfeitos (o agente não marca desfecho em gate de contador,
+> `RUNBOOK-FORMAT.md` §Fronteira). Decisão: `D-2026-11-02-DELEGACAO-DONO` §1 (PR da sessão de delegação) — dono, chat, 02/11: *"Faz e me
+> substitui nas decisões"*.
 
 ## Texto sugerido para o chat (autorização citável)
 
