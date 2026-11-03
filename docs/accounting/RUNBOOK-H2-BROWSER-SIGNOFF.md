@@ -1005,17 +1005,83 @@ Assinatura do executor (passo 16): agente claude-opus-5-5, AI tester, sob autori
 17. Contabilidade → Compliance → Gerar SPED.
     - a) O código do signatário (ECD `COD_ASSIN`, ECF/ECF Real `IDENT_QUALIF`) é um combobox com "código · descrição",
       busca por texto e **sem texto livre**: digitar um código fora da tabela e sair do campo limpa o valor. A ECD
-      oferece `001` (só na J930); a ECF não. EVIDÊNCIA: [ ]
-    - b) Gerar a ECD escolhendo `900` e `205` pelo combobox. Resultado esperado: 2xx. EVIDÊNCIA: [ ]
+      oferece `001` (só na J930); a ECF não. EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
+    - b) Gerar a ECD escolhendo `900` e `205` pelo combobox. Resultado esperado: 2xx. EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
     - c) "Contador do cadastro": escolher o contador e deixar só a linha do responsável legal. Resultado esperado: o
       request leva `signerContactIds: [id]` e 2xx; na ECF com um contador **sem telefone** no cadastro, a tela mostra o
-      400 do servidor ("não tem telefone") inteiro. EVIDÊNCIA: [ ]
+      400 do servidor ("não tem telefone") inteiro. EVIDÊNCIA: [bloco "Execução 02/11" abaixo]
+
+
+> **Execução 02/11 — passo 17 (agente AI tester; autorização e método no bloco "Execução 02/11 — P0").** Os itens a) e b)
+> rodaram no `seed-presumido` (unidade `cmuw4yqxg001jcii0iz2yb9rw`, ECD 2025, como no passo 12). O item c) rodou no
+> `seed-real` (`cmuw4z7zj02ehcii0st3unfr4`), que tem os dois contadores do cadastro (`CONTADOR FICTICIO DE TESTE`, com fone, e
+> `CONTADOR SEM FONE TESTE`). O `seed-presumido` mostra "Nenhum contador cadastrado.".
+>
+> **a)** Os três campos de código são `input[role=combobox]` (`aria-label` "Cód. (900=contador) (J930)" na ECD e "Qualif.
+> (900=contador) (0930)" na ECF e na ECF Real). Listas capturadas do `listbox`:
+>
+> ```text
+> [ECD J930 aberto, vazio] 203·Diretor | 204·Conselheiro de Administração | 205·Administrador | … | 900·Contador/Contabilista | 940·Auditor Independente | 999·Outros | 001·Pessoa Jurídica (e-CNPJ ou e-PJ)
+> [ECD J930 "001"] 001·Pessoa Jurídica (e-CNPJ ou e-PJ)
+> [ECD J930 busca por texto "Admin"] 204·Conselheiro de Administração | 205·Administrador | 206·Administrador do Grupo | 207·… | 220·… | 222·… | 223·Administrador Judicial/Gestor
+> [ECF 0930 aberto, vazio] 203·Diretor | … | 801·Empresário | 900·Contador/Contabilista | 999·Outros          (sem 001)
+> [ECF 0930 "001"] ""
+> [ECD J930 "123"] ""  → após sair do campo: {"value":"123","invalid":"true"} + "Código fora do catálogo — selecione uma linha da lista."
+> [ECF 0930 "001"] → após sair do campo: {"value":"001","invalid":"true","msg":"Código fora do catálogo — selecione uma linha da lista."}
+> ```
+>
+> Leitura: o texto digitado **continua visível** no input, marcado `aria-invalid` com borda vermelha e a mensagem inline. O
+> que é limpo é o valor do formulário. `CatalogCombobox.tsx` `commitText()` faz `onChange('')` e `setNotFound(true)` quando o
+> texto não casa com nenhuma opção ("Text that matches no option is an INLINE error on blur … the value is cleared, never
+> sent"). A primeira tentativa usou `999`, que **está** na tabela ("999·Outros"); o teste válido é o `123`. Prints:
+> [`passo17a-01-combobox-ecd-busca.png`](runbook-evidence/H2-2026-11-02/passo17a-01-combobox-ecd-busca.png),
+> [`passo17a-02-ecd-123-limpo.png`](runbook-evidence/H2-2026-11-02/passo17a-02-ecd-123-limpo.png),
+> [`passo17a-03-ecf-001-fora-do-catalogo.png`](runbook-evidence/H2-2026-11-02/passo17a-03-ecf-001-fora-do-catalogo.png).
+>
+> **b)** ECD 2025 com 900 (contador, não resp. legal) e 205 (resp. legal), os dois escolhidos pelo combobox (`["900 ·
+> Contador/Contabilista","205 · Administrador"]`). Antes do 201 houve duas tentativas: uma deu 400 por "Encerr. exercício"
+> vazio (`"book":["Data deve ser uma data real no formato YYYY-MM-DD"]`), outra deu 400 "Cobertura referencial incompleta" com
+> `mappingVersion` `2026`. Nesse caso a unidade só tem mapeamento `2025`, lido do dev.db em modo só-leitura:
+> `('cmuw4yqxg001jcii0iz2yb9rw', '2025', 42)`. Com `2025`:
+>
+> ```text
+> POST /api/accounting/sped/ecd/generate -> 201
+>    req: {…,"mappingVersion":"2025","year":2025,…,"signers":[{"identNom":"CONTADOR FICTICIO DE TESTE","identCpfCnpj":"23456789173","codAssin":"900","indRespLegal":"N","indCrc":"SP-123456/O-1","email":"contador.teste@example.com","fone":"1148583340","ufCrc":"SP"},{"identNom":"DIRETOR FICTICIO DE TESTE","identCpfCnpj":"12345678062","codAssin":"205","indRespLegal":"S"}]}
+>    res: {"success":true,"data":{"id":"cmw048mi3000eciok3896i0u9","direction":"EXPORT","kind":"EXPORT_SPED_ECD","status":"EXPORTED","fileName":"ecd_08845676000198_2025.txt","sizeBytes":53513,"sha256":"1e7505cb4138378461bc0c6e39627be1ef438dc4de7f707a0d304045cc0ce936","totalRows":991,…}}
+> ```
+>
+> Print: [`passo17b-01-ecd-form-900-205.png`](runbook-evidence/H2-2026-11-02/passo17b-01-ecd-form-900-205.png). O `.txt` não
+> foi baixado: o Chrome headless não gravou o download. O 201 com o sha256 é a evidência.
+>
+> **c)** ECD (`seed-real`, 2025, plano referencial 1): "Contador do cadastro" = `CONTADOR FICTICIO DE TESTE`, com uma só
+> linha à mão, a do responsável legal (205, `S`):
+>
+> ```text
+> POST /api/accounting/sped/ecd/generate -> 201
+>    req: {…,"signers":[{"identNom":"DIRETOR FICTICIO DE TESTE","identCpfCnpj":"12345678062","codAssin":"205","indRespLegal":"S"}],"signerContactIds":["cmvwlx9sq000lcizs3z1p4zng"]}
+>    res: {"success":true,"data":{"id":"cmw049xsf000fciok01aeetpd",…,"status":"EXPORTED","sizeBytes":53589,"sha256":"ef76615e962b9301771014d9c226907580e09fadd498a1be5d058e156ed5d442","totalRows":994,…}}
+> ```
+>
+> ECF Real (2025, `FORMA_TRIB_PER = RRRR`) com "Contador do cadastro" = `CONTADOR SEM FONE TESTE` e a linha 203 à mão:
+>
+> ```text
+> POST /api/accounting/sped/ecf/real/generate -> 400
+>    req: {…,"signers":[{"identNom":"DIRETOR FICTICIO DE TESTE","identCpfCnpj":"12345678062","identQualif":"203","email":"","fone":""}],"socios":[],"signerContactIds":["cmvwly3ta000ncizsty2l1a4a"]}
+>    res: {"code":"VALIDATION_ERROR","message":"O contador 'cmvwly3ta000ncizsty2l1a4a' não tem telefone no cadastro — o registro 0930 da ECF exige FONE."}
+> tela (painel ECF Real): O contador 'cmvwly3ta000ncizsty2l1a4a' não tem telefone no cadastro — o registro 0930 da ECF exige FONE.
+> ```
+>
+> Prints: [`passo17c-01-ecd-contador-do-cadastro.png`](runbook-evidence/H2-2026-11-02/passo17c-01-ecd-contador-do-cadastro.png),
+> [`passo17c-02-ecf-real-contador-sem-fone.png`](runbook-evidence/H2-2026-11-02/passo17c-02-ecf-real-contador-sem-fone.png).
+> Console: só `Failed to load resource: … 400`, que é o log do Chrome para os 400 esperados, sem erro de script. Leitura do
+> agente: a)–c) conferem com o esperado. Grau: **verificado**. A mensagem do servidor cita o **id** do contador, não o nome; é
+> legível, mas fica anotado como achado de tela menor (F-17-1).
 
 Desfecho do passo 17 (marcar UM):
-[ ] PASSOU — a) a c) com evidência conferindo com o esperado
+[x] PASSOU — a) a c) com evidência conferindo com o esperado *(marcado pelo agente AI tester, 02/11, pela evidência do bloco acima)*
 [ ] FALHOU — item __ divergiu; evidência colada acima
 [ ] BLOQUEADO — pré-condição __ não se sustentava
-Assinatura do executor (passo 17): ____________
+Assinatura do executor (passo 17): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
 ### [EMENDA 2026-09-28] Passo 18 — Revisão profissional (FE-INCR-REVIEW)
 
