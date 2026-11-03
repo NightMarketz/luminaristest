@@ -3,22 +3,23 @@ id: "PES-4"
 tipo: "plataforma"
 dominio: "pessoal"
 titulo: "Departamento Pessoal (folha + eSocial) — núcleo first-class sempre ligado + submódulos opcionais com ativação por competência; fase 2 do F-PES-0"
-estado: "planned"
-estado_detalhe: "02/11: nó criado pela sessão 2 do DP sobre o PRE-ADR Accepted (#1009, F-DP-1..14). BRIEF de F0+F1 escrito (BE-INCR-DP-F0-F1-brief.md: 62 itens em PR-0..PR-6); forks F-DPB-1..3 ratificados pelo dono no mesmo dia, todos pela recomendação ([[D-2026-11-02-DP-BRIEF-F0-F1]]); nenhum fork pendente no BRIEF. Sem código, sem 'executa'. F2..F6 e o BRIEF do SST (núcleo, F-DP-13) ainda sem BRIEF; F-FOL-1..9 da ponte contábil pendentes"
+estado: "inflight"
+estado_detalhe: "03/11: sessão 3 executando o BRIEF de F0+F1 (BE-INCR-DP-F0-F1-brief.md), um PR por fatia, empilhados sobre o #1010. Feito: PR-0 #1014 (itens 1–7: feature dp, competência e vigência puras, DpErrorReason, regra D1 no check:arch com emenda datada e prova por plantio). A seguir: PR-1..PR-6. F2..F6 e o BRIEF do SST (núcleo, F-DP-13) ainda sem BRIEF; F-FOL-1..9 da ponte contábil pendentes"
 depende_de: ["[[D-2026-11-02-DP-PRE-ADR]]", "[[D-2026-11-02-DP-BRIEF-F0-F1]]", "[[D-2026-10-12-QUESTIONARIO-DONO]]", "[[LEGAL-PARAMS]]", "[[IRRF-DISTRIBUICAO]]", "[[I6]]"]
-autorizacao: "dono, chat, 2026-11-02: \"Podemos seguir o pre-adr numa sessão, esperar, criar o nó no vault + brief em outra e o executa na terceira\" + \"Sim, abre agora\" (resposta a \"Abro já a sessão 2 (nó PES-4 + BRIEF de F0 e F1) em cima do branch do #1009?\") — nó e BRIEF de F0+F1; forks do BRIEF por questionário ([[D-2026-11-02-DP-BRIEF-F0-F1]]). Não autoriza código: o 'executa' é da sessão 3"
+autorizacao: "dono, chat, 2026-11-03: \"Executa PR-0 a PR-6\" (resposta a \"Abro a sessão 3 com o executa do BRIEF BE-INCR-DP-F0-F1?\") — executa do BRIEF de F0+F1 inteiro ([[D-2026-10-28-FLUXO-AUTONOMO]]); não cobre F2 em diante, o BRIEF do SST nem a ponte contábil (F-FOL-1..9). Antes — dono, chat, 2026-11-02: \"Podemos seguir o pre-adr numa sessão, esperar, criar o nó no vault + brief em outra e o executa na terceira\" + \"Sim, abre agora\" (resposta a \"Abro já a sessão 2 (nó PES-4 + BRIEF de F0 e F1) em cima do branch do #1009?\") — nó e BRIEF de F0+F1; forks do BRIEF por questionário ([[D-2026-11-02-DP-BRIEF-F0-F1]]). Não autoriza código: o 'executa' é da sessão 3"
 perfil_previsto: "opus-medio"
 perfil_evidencia: "BRIEF §9: PR-0/PR-3/PR-5/PR-6 opus-baixo; PR-1/PR-2/PR-4 opus-medio"
 atualizado: "2026-11-03"
 write_set: ["server/src/features/dp/**", "server/src/controllers/dpModuleController.ts", "server/src/controllers/dpCadastrosController.ts", "server/src/controllers/dpVinculoController.ts", "server/src/controllers/__tests__/dp*.ts", "server/src/routes/dp.ts", "server/src/routes/docs/dp.paths.ts", "server/public/openapi.json", "server/src/__tests__/openapi-paths.test.ts", "server/prisma/schema.prisma", "server/prisma/migrations/**", "server/prisma/data/legal_parameters_dp_v1.sql", "server/src/features/legalParameters/models/legalParameter.ts", "server/src/features/legalParameters/models/formatoLinha.ts", "server/src/features/legalParameters/dtos/__tests__/__dto-shapes__.json", "server/src/features/accounting/audit/auditCanonical.ts", "server/test/helpers/templateDb.ts", "server/test/helpers/legalParams.ts", "server/.dependency-cruiser.cjs", "docs/adr/ADR-ARCH-BOUNDARIES.md"]
 registros: ["server/src/lib/factory.ts", "server/src/routes/index.ts"]
-prs: ["#1010"]
+prs: ["#1010", "#1014"]
 ---
 # PES-4 — Departamento Pessoal: núcleo + submódulos
 
-**Estado:** `planned` — 02/11: nó criado pela sessão 2 do DP sobre o PRE-ADR Accepted (#1009, F-DP-1..14). BRIEF de F0+F1 escrito (BE-INCR-DP-F0-F1-brief.md: 62 itens em PR-0..PR-6); forks F-DPB-1..3 ratificados pelo dono no mesmo dia, todos pela recomendação ([[D-2026-11-02-DP-BRIEF-F0-F1]]); nenhum fork pendente no BRIEF. Sem código, sem 'executa'. F2..F6 e o BRIEF do SST (núcleo, F-DP-13) ainda sem BRIEF; F-FOL-1..9 da ponte contábil pendentes  
-**Autorização:** dono, chat, 02/11 — nó + BRIEF de F0 e F1 (sessão 2 de 3). **Não** cobre código: o `executa` é da
-sessão 3, que o dono inicia (ORCH-006; F-DP-9).  
+**Estado:** `inflight` — 03/11: sessão 3 executando o BRIEF de F0+F1 (BE-INCR-DP-F0-F1-brief.md), um PR por fatia, empilhados sobre o #1010. Feito: PR-0 #1014 (itens 1–7: feature dp, competência e vigência puras, DpErrorReason, regra D1 no check:arch com emenda datada e prova por plantio). A seguir: PR-1..PR-6. F2..F6 e o BRIEF do SST (núcleo, F-DP-13) ainda sem BRIEF; F-FOL-1..9 da ponte contábil pendentes  
+**Autorização:** dono, chat, 03/11 — *"Executa PR-0 a PR-6"*: o `executa` do BRIEF de F0+F1 inteiro (sessão 3 de 3;
+[[D-2026-10-28-FLUXO-AUTONOMO]]). Não cobre F2 em diante, o BRIEF do SST nem a ponte contábil. Antes: dono, chat, 02/11 —
+nó + BRIEF de F0 e F1 (sessão 2 de 3).  
 **Depende de:** [[D-2026-11-02-DP-PRE-ADR]] (forks do PRE-ADR), [[D-2026-11-02-DP-BRIEF-F0-F1]] (forks do BRIEF),
 [[D-2026-10-12-QUESTIONARIO-DONO]] (F-PES-0..13), [[LEGAL-PARAMS]] ✅ (tabelas com vigência), [[IRRF-DISTRIBUICAO]] ✅
 (`Partner`, o sócio do pró-labore), [[I6]] ✅ (`AccountingScopeResolver`). Lê, sem depender de estado:
@@ -44,8 +45,8 @@ BYOK, sem contratar PSC (D5 de 30/10); vigência só por data de efeito, com o s
 
 | Fase (spec §11) | BRIEF | Estado |
 |---|---|---|
-| F0 — fundação | [`BE-INCR-DP-F0-F1-brief.md`](../../accounting/BE-INCR-DP-F0-F1-brief.md) PR-0, PR-1 | BRIEF pronto, sem `executa` |
-| F1 — cadastros e tabelas legais | idem, PR-2..PR-6 | BRIEF pronto, sem `executa` |
+| F0 — fundação | [`BE-INCR-DP-F0-F1-brief.md`](../../accounting/BE-INCR-DP-F0-F1-brief.md) PR-0, PR-1 | em execução (03/11): PR-0 #1014 |
+| F1 — cadastros e tabelas legais | idem, PR-2..PR-6 | em execução (03/11) |
 | SST (núcleo, F-DP-13) | `BE-INCR-DP-SST` | sem BRIEF (encaixe no §7 do BRIEF de F0+F1) |
 | F2 — motor mensal | — | sem BRIEF |
 | F3 — folhas especiais | — | sem BRIEF |
