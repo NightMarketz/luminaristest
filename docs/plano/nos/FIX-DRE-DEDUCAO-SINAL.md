@@ -3,7 +3,7 @@ id: "FIX-DRE-DEDUCAO-SINAL"
 tipo: "plataforma"
 dominio: "contabil"
 titulo: "Resultado da DRE soma a dedução da receita (3.2/3.6) em vez de subtrair"
-estado: "inflight"
+estado: "done"
 estado_detalhe: "Aberto 31/10 no preflight do H2 (passos 16–23): o `db:seed:accounting` saiu com exit 1 no tie-out do seed-presumido em 31/10/2026 (balancete fecha, BP não). Causa verificada: `computeDreNet` soma `revenueDeductions`, e a dedução de saldo devedor entra positiva na seção (regra `credit_negative` devolve o saldo cru, débito − crédito). O resultado fica inflado em 2 × a dedução. Cadeia: instrumentação (teste vermelho pelo resultado líquido) → correção. Executa dado pelo dono em 31/10"
 depende_de: []
 autorizacao: "dono, chat, 2026-10-31: \"Pode documentar o bug e disparar uma sessão pra corrigir\" — cobre instrumentação + correção deste nó"
@@ -13,7 +13,7 @@ atualizado: "2026-11-03"
 ---
 # FIX-DRE-DEDUCAO-SINAL — Resultado da DRE soma a dedução da receita
 
-**Estado:** `inflight` — Aberto 31/10 no preflight do H2 (passos 16–23): o `db:seed:accounting` saiu com exit 1 no tie-out do seed-presumido em 31/10/2026 (balancete fecha, BP não). Causa verificada: `computeDreNet` soma `revenueDeductions`, e a dedução de saldo devedor entra positiva na seção (regra `credit_negative` devolve o saldo cru, débito − crédito). O resultado fica inflado em 2 × a dedução. Cadeia: instrumentação (teste vermelho pelo resultado líquido) → correção. Executa dado pelo dono em 31/10  
+**Estado:** `done` — Aberto 31/10 no preflight do H2 (passos 16–23): o `db:seed:accounting` saiu com exit 1 no tie-out do seed-presumido em 31/10/2026 (balancete fecha, BP não). Causa verificada: `computeDreNet` soma `revenueDeductions`, e a dedução de saldo devedor entra positiva na seção (regra `credit_negative` devolve o saldo cru, débito − crédito). O resultado fica inflado em 2 × a dedução. Cadeia: instrumentação (teste vermelho pelo resultado líquido) → correção. Executa dado pelo dono em 31/10  
 **Autorização:** dono, chat, 2026-10-31: *"Pode documentar o bug e disparar uma sessão pra corrigir"* — instrumentação + correção.
 **Depende de:** —
 **Desbloqueia:** o tie-out do `db:seed:accounting` (P0 do [[H2]] e do [[H1]]) com venda devolvida no exercício; DRE/BP corretos na tela.
@@ -61,3 +61,5 @@ atualizado: "2026-11-03"
 - #1005 mergeado em 02/11 (`f5dc79b7`), aprovado por delegação do dono ([[D-2026-11-02-DELEGACAO-DONO]] §2; revisor
   independente APROVA em `1485fc86`, CI 17 verdes). Falta o passo 3 (`db:seed:accounting` no `dev.db` real), que é o P0
   da execução do H2 de 02/11. Estado `inflight` até ele sair com exit 0.
+- 03/11: passo 3 cumprido na execução do H2 (#982, `3077cda9`): `db:seed:accounting` no `dev.db` real saiu **exit 0**,
+  com `balanceSheetBalanced: true` nos cortes de 31/12/2025 e 03/11/2026. Nó `done`.

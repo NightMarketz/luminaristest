@@ -9,7 +9,7 @@
 ## 1. Em duas linhas
 
 As cédulas pendentes foram decididas, o #1005 está em `main` e o H1 não tem passo executável até haver ECD assinada
-**[V]**. Faltam 5 correções de código (C1–C5) e o lote de merge (M1). O risco principal é o #907: ele muda a regra de
+**[V]**. Faltam as correções de código C1–C6, o resto do H2 (C7) e o lote de merge (M1). O risco principal é o #907: ele muda a regra de
 lançamento em período reaberto e mexe em todos os chamadores de `reverseEntry`, então só entra com revisor independente
 **[V]**.
 
@@ -28,7 +28,7 @@ Cada correção abaixo cita a seção da nota de decisão que a criou. Pela rég
 | #1011 nota de decisão + folds + este handoff | aberto, vermelho (cédula e gate H1), só docs | [V] |
 | #1003 kit D1/D1f | `[x]` desfeitos no `b5fed32b`; aberto, vermelho | [V] |
 | #907 ITG 2000 itens 32/36 | 1ª correção em `02420458`, gates verdes; 2ª correção (razão extemporânea na tela e nos automáticos) em andamento num agente desta sessão | [V] 1ª · [A] 2ª |
-| #982 evidência do H2 | passos 1–15 com desfecho; P0 + passos 16–23 + runbooks irmãos em execução num agente desta sessão | [V] 1–15 · [A] resto |
+| #982 evidência do H2 | re-semeadura + passos 1–20 com evidência; desfecho geral FALHOU (passo 14); 21–23 e runbooks irmãos por rodar (C7) | [V] |
 | H1 | tentativa 4: passos 1–5 PASSOU e assinados (29/10); passo 6 pausado até ECD assinada do 1º cliente | [V] |
 
 Se esta sessão terminar antes dos dois agentes, confira com `gh pr view 907` e `gh pr view 982` o que chegou à branch
@@ -94,10 +94,34 @@ depois do #907 em `main`** (mesmo `PostingService`). C1 fecha o #907 e vem prime
 - **Sessão:** `sessao-feature`, PR-0 → PR-1 → PR-2 do BRIEF (PR-0 e PR-2 condicionais aos forks já ratificados).
 - **Depois:** refazer o passo 14 do RUNBOOK-H2 pela tela, como AI tester, no #982.
 
-### C6 — achados do H2
+### C6 — achados do H2 (execução de 02–03/11, #982 em `3077cda9`)
 
-O agente do H2 registra bug como linha de achado no runbook (no #982), sem corrigir. Quando ele voltar, cada achado
-vira uma linha aqui, com arquivo e o par instrumentação → correção. **A anexar.**
+Re-semeadura do `dev.db` real com backup (SHA-256 igual), 4 migrações, `db:seed:accounting` **exit 0** com
+`balanceSheetBalanced: true` em todos os cortes **[V]** — fecha o passo 3 do FIX-DRE-DEDUCAO-SINAL. Passos 16–20 rodados
+pela tela (build de produção de `ac4acf38`): 17 e 20 PASSOU; 16 BLOQUEADO só no item e); 18 e 19 BLOQUEADO. Desfecho
+geral do BROWSER-SIGNOFF: **FALHOU (passo 14)**, assinado como AI tester **[V, relato do agente; SHA conferido]**.
+
+| Achado | O que é | Destino |
+|---|---|---|
+| Y600 na tela | 14, 18 e 19 têm a mesma causa: o painel da ECF não coleta sócios (`SpedEcfRealPanel.tsx:122`), então não há ECF exportada, revisão assinada nem pacote | **C5**; depois refazer 14, 18 e 19 |
+| F-17-1 | o 400 da ECF por "contador sem telefone" mostra o id do contato, não o nome | correção leve (instrumentação → correção) no texto do erro |
+| F-16-e | `canManageLalur` e `canReadLalur` são o mesmo predicado (`AccountingPolicy.ts:91-97`): o ramo só-leitura do e-Lalur não existe | lacuna de política: vai ao [[GOV-CONTADOR]] (perfis do contador), não a fix isolado |
+| F-20-1 | a linha do extrato só casa com a conta a pagar quando a referência é igual ao nº do documento (`BankSettlement.model.ts:199-205`) | regra desenhada, não bug; vira texto de ajuda na tela de conciliação se o dono quiser |
+
+### C7 — resto da execução do H2
+
+Não rodou por falta de contexto, não por pré-condição **[V, relato do agente]**:
+
+- `RUNBOOK-H2-BROWSER-SIGNOFF` passos 21, 22 e 23. O 23 exige dois usuários com atribuição de contador ATIVA.
+- Os runbooks irmãos, nesta ordem: `ATIVACAO-CONTABIL`, `VENDA-PACOTE`, `PACOTE-VALIDADE`, `IMOBILIZADO`,
+  `WIZARD-ENTREVISTA`, `DFE-MANUAL`.
+- Depois do C5: refazer 14, 18 e 19.
+- Assinatura AI tester nos passos 1–5 e 11, que ainda não têm desfecho marcado: marcar pela evidência já colada.
+
+Prompt: o mesmo da execução de 02/11 (branch `claude/gate-copilot-h2-9782b8`, `dev.db` real com backup antes, build de
+produção em `127.0.0.1:3100/4100`, Puppeteer, assinatura `agente claude-opus-5-5, AI tester, sob autorização do dono
+(chat, 2026-11-02)`), começando no passo 21. A re-semeadura **não** precisa ser repetida se nenhuma migração nova
+entrar em `main` antes. Pare num passo fechado perto de 150k de contexto e faça push.
 
 ## 5. Lote de merge (M1) — aprovado por delegação, com condição
 
@@ -121,7 +145,8 @@ Numa sessão nova, nesta ordem:
    `docs/accounting/HANDOFF-2026-11-02-delegacao-dono.md` §C<n> e execute pela sessão indicada. Autorização: delegação do
    dono de 02/11 (§2 do handoff)."*
 4. Depois do #907 em `main`: C4.
-5. Lote M1 pela maestro.
+5. C7 (resto do H2) quando quiser; os passos 14, 18 e 19 só depois do C5.
+6. Lote M1 pela maestro.
 
 ## 7. Arquivos
 
