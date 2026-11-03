@@ -248,11 +248,14 @@ export class DataExchangeExportService {
           headers: [
             'accountCode', 'accountName', 'date', 'entryId', 'entryNumber',
             'description', 'status', 'debitCents', 'creditCents', 'runningBalanceCents',
+            // EMENDA RASTREIO do X7 (item 11, F-RT-1 a): o documento de origem, ao fim (aditivo) —
+            // fecha a cadeia conta → lançamento → documento da memória de cálculo.
+            'sourceType', 'sourceId',
           ],
           rows: rows.map((row) => [
             row.accountCode, row.accountName, row.date.toISOString().slice(0, 10), row.entryId,
             row.entryNumber ?? '', row.description, row.status, row.debitCents, row.creditCents,
-            row.runningBalanceCents,
+            row.runningBalanceCents, row.sourceType, row.sourceId ?? '',
           ]),
         };
         return { table, period };
@@ -427,7 +430,9 @@ export class DataExchangeExportService {
           anosDaJanela(w).map((ano) => this.taxAssessments.findConfirmedByYear(scope.ownerUserId, ano)),
         );
         const apuracoes = selecionarApuracoes(porAno.flat(), w);
-        const dataRows: OutTable['rows'] = apuracoes.flatMap((a) => linhasDaApuracao(a));
+        // EMENDA RASTREIO item 9: o vencimento do DARF sai pela lei no export; feriados lidos uma vez por export.
+        const feriados = apuracoes.length > 0 ? await this.legalParams.fotografia(['FERIADO_NACIONAL']) : [];
+        const dataRows: OutTable['rows'] = apuracoes.flatMap((a) => linhasDaApuracao(a, feriados));
         const table: OutTable = {
           headers: [linhaMeta(w, apuracoes.length, new Date())],
           rows: [[...MEMO_COLUMNS], ...dataRows],

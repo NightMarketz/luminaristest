@@ -189,7 +189,7 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
     ...linhaNaoUso(e.receitaNaoUsoCents, 'mês'),
     ...linhaHospitalar(hosp, 'mês'),
     linha('RECEITA_REVENDA', 'Receita bruta de revenda do mês (conta 3.3)', e.receitaRevendaCents, F_ART2),
-    linha('RECEITA_MES', 'Receita bruta do mês', servico + e.receitaRevendaCents, F_ART2),
+    linha('RECEITA_MES', 'Receita bruta do mês = serviço + não uso + revenda', servico + e.receitaRevendaCents, F_ART2),
   ];
 
   let presServico = mulBp(servico - hosp, pS.valor);
@@ -234,7 +234,7 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
     memoria.push(linha('PRESUNCAO_HOSPITALAR', `Receita de serviço hospitalar × ${pH.valor / 100}%`, presH, pH.fonte));
   }
   memoria.push(
-    linha('BASE', 'Base de cálculo estimada do mês', base, F_ART2),
+    linha('BASE', 'Base de cálculo estimada do mês = Σ presunções', base, F_ART2),
   );
   const imposto = impostoSobreBase(e.tabela, e.tributo, dataFim, base, aliqCsll, 1n);
   memoria.push(...imposto.memoria);
@@ -248,7 +248,7 @@ function memoriaDiferenca(t: TabelaApuracao, d: { total: bigint; linhas: Memoria
   const mesSeguinte = m === 12 ? `01/${ano + 1}` : `${pad2(m + 1)}/${ano}`;
   return [
     ...d.linhas,
-    linha('DIFERENCA_POSTERGADA', `Diferença do imposto postergado (código de receita ${cod})`, d.total, F_16_8),
+    linha('DIFERENCA_POSTERGADA', `Diferença do imposto postergado = Σ diferenças dos períodos (código de receita ${cod})`, d.total, F_16_8),
     linha('DIFERENCA_POSTERGADA_VENCIMENTO', `Vencimento: último dia útil de ${mesSeguinte}, sem acréscimos no prazo (informativo)`, 0n, 'IN RFB 1.700/2017 art. 33 §§ 9º–10'),
   ];
 }
@@ -328,7 +328,7 @@ export function apurarBalancete(e: EntradaBalancete): ResultadoApuracaoAnual {
   if (!e.contasProvisaoConfiguradas) {
     memoria.push(linha('GUARDA_CIRCULARIDADE', 'guarda de circularidade sem contas configuradas', 0n, 'BRIEF X7 item 7'));
   }
-  memoria.push(...ajustes.memoria, linha('MESES_PERIODO', `Meses do período em curso (quantidade, não centavos)`, BigInt(n), 'IN RFB 1.700/2017 art. 29 § 1º; art. 49 II'));
+  memoria.push(...ajustes.memoria, linha('MESES_PERIODO', `Meses do período em curso = ${nomeMes(ativos[0])} a ${e.periodo} (quantidade, não centavos)`, BigInt(n), 'IN RFB 1.700/2017 art. 29 § 1º; art. 49 II'));
   const periodo = impostoSobreBase(e.tabela, e.tributo, dataFim, ajustes.base, aliqCsll, BigInt(n), 'DEVIDO_PERIODO_EM_CURSO');
   memoria.push(...periodo.memoria);
 
@@ -471,13 +471,13 @@ export function apurarAjusteAnual(e: EntradaAjusteAnual): ResultadoApuracaoAnual
   const saldoNegativo = maxZero(-saldo);
   memoria.push(
     linha('SALDO_AJUSTE', 'Devido anual − estimativas pagas − retenções', saldo, F_ART2_4),
-    linha('A_PAGAR', 'Valor a pagar', aPagar, `código de receita ${codigoReceita.codigo} (${codigoReceita.fonte})`),
+    linha('A_PAGAR', 'Valor a pagar = max(0, saldo do ajuste)', aPagar, `código de receita ${codigoReceita.codigo} (${codigoReceita.fonte})`),
   );
   if (aPagar > 0n) {
     memoria.push(linha('VENCIMENTO_QUOTA_UNICA', `Quota única até o último dia útil de março/${e.ano + 1}, Selic desde 1º/fev (informativo)`, 0n, 'Lei 9.430/1996 art. 6º §§ 1º–2º'));
   }
   if (saldoNegativo > 0n) {
-    memoria.push(linha('SALDO_NEGATIVO', 'Saldo negativo — restituição/compensação fora do sistema', saldoNegativo, 'Lei 9.430/1996 art. 6º § 1º II'));
+    memoria.push(linha('SALDO_NEGATIVO', 'Saldo negativo = max(0, estimativas pagas + retenções − devido anual) — restituição/compensação fora do sistema', saldoNegativo, 'Lei 9.430/1996 art. 6º § 1º II'));
   }
   // X7 Fase B PR-3 (item 16, F-TB-3 a): o A00 provisiona só a diferença entre o devido anual e o que os meses já
   // provisionaram (devido + diferença postergada). Com sinal: > 0 ⇒ D despesa / C a recolher; < 0 ⇒ D saldo negativo
