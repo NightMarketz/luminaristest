@@ -382,7 +382,7 @@ export class ReceivableService {
         unitId: scope.unitId,
         lancamentoId: recognition.id,
         reversalPostingDate: dto.reversalDate,
-        reason: dto.reason,
+        reason: dto.reason || `Cancelamento da conta a receber ${receivableId}`,
       });
       reversalEntryId = reversal.id;
     }
@@ -452,7 +452,7 @@ export class ReceivableService {
         unitId: scope.unitId,
         lancamentoId: settlement.id,
         reversalPostingDate: dto.reversalDate,
-        reason: dto.reason,
+        reason: dto.reason || `Cancelamento do recebimento ${receiptId} da conta a receber ${receivableId}`,
       });
       reversalEntryId = reversal.id;
     }

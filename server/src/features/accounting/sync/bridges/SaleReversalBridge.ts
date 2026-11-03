@@ -72,7 +72,8 @@ export async function maybeReverseSale(
     }
 
     const scope = resolveAccountingScopeInternal(actor, unitId);
-    const reason = typeof data.reason === 'string' ? data.reason : undefined;
+    // ITG 2000 item 32: o estorno sempre leva motivo — o da venda, ou o fixo do fluxo.
+    const reason = (typeof data.reason === 'string' && data.reason.trim()) || `Cancelamento da venda ${row.id}`;
 
     if (status === 'Cancelled') {
       const posting = getFactory().getPostingService();

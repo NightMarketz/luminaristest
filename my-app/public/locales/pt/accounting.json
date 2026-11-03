@@ -706,6 +706,7 @@
       "confirm": "Confirmar estorno",
       "reverseEntryOf": "Estornar lançamento de",
       "reversalDateLabel": "Data do estorno",
+      "reasonLabel": "Motivo do estorno",
       "warning": "Um novo lançamento oposto será criado automaticamente na data acima. Esta ação não pode ser desfeita.",
       "periodClosed": "O período para a data selecionada está fechado.",
       "viewPeriods": "Ver Períodos"

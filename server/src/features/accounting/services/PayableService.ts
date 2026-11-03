@@ -534,7 +534,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
     for (const l of linhas) {
       if (!l.settlementId) continue;
       const entry = await this.posting.findEntryBySource(scope, AP_WITHHOLDING_SOURCE_TYPE, l.settlementId);
-      if (entry) await this.posting.reverseEntry(scope, { unitId: scope.unitId, lancamentoId: entry.id, reversalPostingDate: dto.reversalDate, reason: dto.reason });
+      if (entry) await this.posting.reverseEntry(scope, { unitId: scope.unitId, lancamentoId: entry.id, reversalPostingDate: dto.reversalDate, reason: dto.reason || `Cancelamento da retenção na fonte da liquidação ${l.settlementId}` });
     }
   }
 
@@ -970,7 +970,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
         unitId: scope.unitId,
         lancamentoId: recognition.id,
         reversalPostingDate: dto.reversalDate,
-        reason: dto.reason,
+        reason: dto.reason || `Cancelamento da conta a pagar ${payableId}`,
       });
       reversalEntryId = reversal.id;
     }
@@ -1055,7 +1055,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
         unitId: scope.unitId,
         lancamentoId: settlement.id,
         reversalPostingDate: dto.reversalDate,
-        reason: dto.reason,
+        reason: dto.reason || `Cancelamento do pagamento ${paymentId} da conta a pagar ${payableId}`,
       });
       reversalEntryId = reversal.id;
     }

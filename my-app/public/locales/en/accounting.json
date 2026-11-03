@@ -706,6 +706,7 @@
       "confirm": "Confirm reversal",
       "reverseEntryOf": "Reverse entry from",
       "reversalDateLabel": "Reversal date",
+      "reasonLabel": "Reversal reason",
       "warning": "A new offsetting entry will be created automatically on the date above. This action cannot be undone.",
       "periodClosed": "The period for the selected date is closed.",
       "viewPeriods": "View Periods"

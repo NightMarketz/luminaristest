@@ -3355,6 +3355,10 @@
               }
             }
           },
+          "extemporaneousReason": {
+            "type": "string",
+            "description": "Razão do registro extemporâneo (ITG 2000, item 36) — exigida quando a data cai num período já fechado e reaberto"
+          },
           "lines": {
             "type": "array",
             "minItems": 2,
@@ -3368,7 +3372,8 @@
         "type": "object",
         "required": [
           "lancamentoId",
-          "reversalPostingDate"
+          "reversalPostingDate",
+          "reason"
         ],
         "properties": {
           "lancamentoId": {
@@ -3379,7 +3384,8 @@
             "description": "Date-only string YYYY-MM-DD for the reversal entry (and period gate)"
           },
           "reason": {
-            "type": "string"
+            "type": "string",
+            "description": "Motivo da retificação (ITG 2000, item 32) — obrigatório"
           }
         }
       },

@@ -86,6 +86,7 @@ describe('ITG 2000 (R1) — histórico da retificação (item 32) e do extempor�
       const original = await posting().postEntry(scope(), lancamento('serviço de limpeza', ORIGEM, 7000));
 
       await expect(
+        // @ts-expect-error — `reason` é obrigatório no tipo; o caso prova a recusa em runtime de quem o omite.
         posting().reverseEntry(scope(), {
           unitId: UNIT,
           lancamentoId: original.id,

@@ -12827,6 +12827,10 @@
           },
           "additionalProperties": false
         },
+        "extemporaneousReason": {
+          "type": "string",
+          "minLength": 1
+        },
         "lines": {
           "minItems": 2,
           "type": "array",
@@ -12886,13 +12890,15 @@
           "type": "string"
         },
         "reason": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
         "unitId",
         "lancamentoId",
-        "reversalPostingDate"
+        "reversalPostingDate",
+        "reason"
       ]
     },
     "ReportQuerySchema": {
