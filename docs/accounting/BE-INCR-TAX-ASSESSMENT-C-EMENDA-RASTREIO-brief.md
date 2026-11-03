@@ -56,6 +56,9 @@
    usada) e o movimento em centavos. Fonte: o mesmo `groupByAccount` que o cálculo já fez (sem query nova para o
    movimento). (F-RT-1 a, ratificado.) Teste-tabela: trimestre com receita em 2 contas analíticas de 3.1 ⇒ 2
    entradas, e a soma delas = `valorCents` da linha `RECEITA_SERVICO`.
+   **Exceção — `RECEITA_HOSPITALAR` [fork F-RT-7, RATIFICAÇÃO PENDENTE]:** essa linha não é movimento de conta; é a parte
+   da 3.1 nos serviços marcados HOSPITALAR (subrazão por serviço, `linhaHospitalar`). Rastrear por conta apontaria a 3.1
+   inteira. Achado de 03/11, depois da ratificação dos F-RT-1..6; a sessão de execução foi avisada para perguntar ao dono.
 3. **Saldo do balancete.** (F-RT-2 a, ratificado.) Cada entrada de rastreio grava também o saldo da conta no
    fim da janela (`saldoFinalCents`), lido na confirmação e congelado. Teste: lançamento retroativo postado **depois** da
    confirmação não muda o saldo exportado.
@@ -183,7 +186,10 @@ export function vencimentoQuotaUnica(anoCalendario: number, periodo: LalurPeriod
 | F-RT-5 | "Fora, frente própria (Recomendado)" | não |
 | F-RT-6 | "Descrição + fonte (Recomendado)" — mais um teste: toda linha `CALCULO` diz a operação na descrição | não |
 
-Nenhum fork pendente. O BRIEF espera o `executa` do dono.
+**F-RT-7 (aberto em 03/11, depois do `executa`) — RATIFICAÇÃO PENDENTE.** Rastreio da `RECEITA_HOSPITALAR`:
+(a) por serviço (serviço, movimento do serviço no período, conta-mãe 3.1); (b) por conta mesmo, com nota na descrição;
+(c) sem rastreio nessa linha nesta emenda. Recomendação: **(a)**, porque é a única que mostra de onde vem a parte
+hospitalar, e o contador pediu justamente isso. O resto do BRIEF segue com o `executa` do dono (03/11).
 
 ## 4. Pendente de validação externa
 
