@@ -27,7 +27,7 @@ Cada correção abaixo cita a seção da nota de decisão que a criou. Pela rég
 | #1005 FIX-DRE-DEDUCAO-SINAL | MERGED (`f5dc79b7`) | [V] |
 | #1011 nota de decisão + folds + este handoff | aberto, vermelho (cédula e gate H1), só docs | [V] |
 | #1003 kit D1/D1f | `[x]` desfeitos no `b5fed32b`; aberto, vermelho | [V] |
-| #907 ITG 2000 itens 32/36 | 1ª correção em `02420458`, gates verdes; 2ª correção (razão extemporânea na tela e nos automáticos) em andamento num agente desta sessão | [V] 1ª · [A] 2ª |
+| #907 ITG 2000 itens 32/36 | 2 correções em `8f4b1a14`, gates verdes e tela conferida em build de produção; **1 brecha antes do merge** (C1) | [V] |
 | #982 evidência do H2 | re-semeadura + passos 1–20 com evidência; desfecho geral FALHOU (passo 14); 21–23 e runbooks irmãos por rodar (C7) | [V] |
 | H1 | tentativa 4: passos 1–5 PASSOU e assinados (29/10); passo 6 pausado até ECD assinada do 1º cliente | [V] |
 
@@ -39,7 +39,17 @@ antes de disparar C1 ou C6.
 Ordem e paralelismo: **C2, C3, C5 e C8 tocam arquivos separados e podem rodar em paralelo**, uma sessão cada. **C4 só
 depois do #907 em `main`** (mesmo `PostingService`). C1 fecha o #907 e vem primeiro.
 
-### C1 — fechar o #907 (revisor → merge)
+### C1 — fechar o #907 (fix da brecha → revisor → merge)
+
+- **Antes do revisor, 1 correção curta no mesmo PR** (`sessao-correcao`, commit `fix:`). A razão automática do item 36
+  depende do `sourceType`, e o HTTP deixa o cliente escolher: `PostEntrySchema.sourceType` é `z.string().default('manual')`,
+  e o controller repassa o valor. Um POST com `sourceType: 'x'` escapa da razão digitada **[V, relato do agente em
+  `8f4b1a14`]**. **Decisão:** a razão automática vale só para chamada interna. O serviço recebe a origem por parâmetro de
+  código, e o controller nunca a marca como automática; pelo HTTP, a razão é sempre exigida. Teste-guarda: POST HTTP com
+  `sourceType` qualquer em período reaberto sem razão → 400.
+
+#### Depois da brecha
+
 
 - **Origem:** nota §3. **Sessão:** `revisor-independente` (worktree), depois a maestro com o número.
 - **Pronto quando:** o revisor APROVA a cabeça final da branch `claude/itg2000-32-36-instrumentacao` e o PR está MERGED.
@@ -80,6 +90,8 @@ depois do #907 em `main`** (mesmo `PostingService`). C1 fecha o #907 e vem prime
   1. `EntryApprovalService.approveEntry` (`server/src/features/accounting/services/EntryApprovalService.ts:214` **[V]**):
      rascunho aprovado com data em período reaberto deve seguir a regra do item 36. O DTO do rascunho ganha o campo.
   2. `reverseEntry` com data de estorno em período reaberto: mesma regra.
+  2b. Acerto da revisão profissional (`sourceType: review_adjustment`, `ReviewDetailModal`): é feito por pessoa e hoje
+     recebe a razão automática. Ele deve exigir a razão digitada (o DTO do acerto ganha o campo).
   3. O `reverse` da reconciliação (`server/src/jobs/accountingSyncReconcile.job.ts`) manda `reversalPostingDate` com
      hora. Deve mandar data pura (memória `motor-grava-date-como-iso-utc-scopeday-recua-um-dia`).
 - **Só pesquisa, sem código:** o tamanho máximo do campo HIST do I250 no leiaute da ECD, contra o histórico mais
@@ -119,6 +131,7 @@ geral do BROWSER-SIGNOFF: **FALHOU (passo 14)**, assinado como AI tester **[V, r
 | Y600 na tela | 14, 18 e 19 têm a mesma causa: o painel da ECF não coleta sócios (`SpedEcfRealPanel.tsx:122`), então não há ECF exportada, revisão assinada nem pacote | **C5**; depois refazer 14, 18 e 19 |
 | F-17-1 | o 400 da ECF por "contador sem telefone" mostra o id do contato, não o nome | correção leve (instrumentação → correção) no texto do erro |
 | F-16-e | `canManageLalur` e `canReadLalur` são o mesmo predicado (`AccountingPolicy.ts:91-97`): o ramo só-leitura do e-Lalur não existe | lacuna de política: vai ao [[GOV-CONTADOR]] (perfis do contador), não a fix isolado |
+| F-907-T | o toast global de erro do `apiClient` cobre o botão "Postar" do modal de lançamento em 1280×900; o clique cai no fundo e abre "alterações não salvas" (anterior ao #907) | correção leve de FE (posição do toast ou do rodapé do modal) |
 | F-20-1 | a linha do extrato só casa com a conta a pagar quando a referência é igual ao nº do documento (`BankSettlement.model.ts:199-205`) | regra desenhada, não bug; vira texto de ajuda na tela de conciliação se o dono quiser |
 
 ### C7 — resto da execução do H2
