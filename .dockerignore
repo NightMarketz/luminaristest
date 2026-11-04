@@ -1,0 +1,23 @@
+# Contexto do `docker build` = raiz do repo (workspace npm, PR-3 do MONOREPO-WORKSPACES). Junta as regras dos antigos
+# server/.dockerignore e my-app/.dockerignore, que deixaram de valer com o contexto na raiz. Cada Dockerfile copia só o
+# código do próprio app; aqui sai o que nenhum dos dois usa.
+**/node_modules
+**/.next
+**/dist
+**/generated
+**/*.db
+**/*.db-journal
+**/.env
+**/.env.*
+**/coverage
+**/.nyc_output
+**/.turbo
+**/.stryker-tmp
+**/reports
+.git
+.github
+.claude
+docs
+governance
+pesquisas-legais
+scripts

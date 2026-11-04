@@ -35,3 +35,6 @@ docs/plano/_ANCORAS.md
 
 # brainstorming companion (local)
 .superpowers/
+
+# Cache local do Turborepo (turbo.json, PR-3 do MONOREPO-WORKSPACES)
+.turbo/

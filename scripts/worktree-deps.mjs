@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 // Dependências de worktree por depósito compartilhado (dono, chat, 2026-11-04: "criar isso como politica do projeto").
 // Medido em 03–04/11: 27 `npm ci` em 24 h, um por worktree nova, e 101 worktrees com node_modules próprio. Aqui cada
-// versão de lockfile instala UMA vez em `<depósito>/<app>-<sha1 do lockfile>`, e a worktree ganha uma junção para lá.
+// versão do lockfile da raiz instala UMA vez em `<depósito>/ws-<sha1>`, e a worktree ganha junções para lá.
+// Desde o PR-3 do MONOREPO-WORKSPACES (dono, chat, 2026-11-04: "Executa o PR-3") o repo é um workspace npm: um
+// `package-lock.json` só, na raiz. O `node_modules` da raiz tem o server e o que os dois apps compartilham; o
+// `my-app/node_modules` tem o que o my-app resolve em versão diferente. As duas pastas viram junção.
 // O cliente Prisma não é compartilhado: sai em `server/generated/prisma` da própria worktree (`prisma generate`).
 //
-// Uso (na raiz da worktree):  node scripts/worktree-deps.mjs            → server e my-app
-//                              node scripts/worktree-deps.mjs server     → só um
+// Uso (na raiz da worktree):  node scripts/worktree-deps.mjs
+// Argumentos `server`/`my-app` de antes são aceitos e ignorados: o workspace instala inteiro.
 // Depósito: $LUMINARIS_DEPS_STORE ou ~/.luminaris-deps. Apagar o depósito é seguro: a próxima chamada reinstala.
 // Para remover uma worktree, use `git worktree remove` (não `rm -rf`, que pode seguir a junção para o depósito).
+// Não rode `npm ci` na worktree com as junções no lugar: ele apaga o `node_modules`, que é o do depósito.
 import { createHash } from 'node:crypto';
 import { execSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -16,20 +20,17 @@ import path from 'node:path';
 
 const root = process.cwd();
 const store = process.env.LUMINARIS_DEPS_STORE || path.join(os.homedir(), '.luminaris-deps');
-const apps = process.argv.slice(2).length ? process.argv.slice(2) : ['server', 'my-app'];
-// Arquivos que o `npm ci` do depósito precisa além do manifesto (o postinstall do server roda `prisma generate`).
-const EXTRA = { server: ['prisma/schema.prisma'] };
+// O que o `npm ci` do depósito precisa: o lockfile, os manifestos do workspace e o schema (o postinstall do server roda
+// `prisma generate`).
+const ARQUIVOS = ['package.json', 'package-lock.json', 'server/package.json', 'my-app/package.json', 'server/prisma/schema.prisma'];
+// Sem --legacy-peer-deps: com o lockfile da raiz o "Missing: openapi-types" do #949 não aparece (BRIEF §0.4, passo 1).
+const NPM_CI = 'npm ci --no-audit --no-fund';
+// Junções da worktree para o depósito. `server/node_modules` fica vazio (o server inteiro está na raiz), mas existe para
+// que um `node_modules` ausente continue significando "worktree sem dependências".
+const PASTAS = ['node_modules', 'my-app/node_modules', 'server/node_modules'];
 
-// --legacy-peer-deps só no server: o npm 11 local recusa o lockfile dele desde o bump do openai (#949: "Missing:
-// openapi-types"), que o npm do CI aceita, e o server não tem dependência só-peer. No my-app a flag pularia as 34
-// só-peer do lockfile (@fullcalendar/core entre elas) e o `tsc` quebraria.
-const NPM_CI = {
-  server: 'npm ci --no-audit --no-fund --legacy-peer-deps',
-  'my-app': 'npm ci --no-audit --no-fund',
-};
-
-// A chave junta lockfile, package.json e o comando: o `allowScripts` (npm 11) mora no package.json, e a flag muda o que
-// entra no node_modules.
+// A chave junta o lockfile, os manifestos e o comando: o `allowScripts` (npm 11) mora no package.json da raiz, e a flag
+// muda o que entra no node_modules.
 const chave = (cmd, ...fs_) =>
   createHash('sha1').update([cmd, ...fs_.map((f) => fs.readFileSync(f))].join('\0')).digest('hex').slice(0, 12);
 const run = (cmd, cwd) => execSync(cmd, { cwd, stdio: 'inherit' });
@@ -64,38 +65,37 @@ function withLock(dir, fn) {
   }
 }
 
-for (const app of apps) {
-  const appDir = path.join(root, app);
-  const lockFile = path.join(appDir, 'package-lock.json');
-  if (!NPM_CI[app]) throw new Error(`app desconhecido: ${app} (use server ou my-app)`);
-  if (!fs.existsSync(lockFile)) throw new Error(`${app}/package-lock.json não existe: rode na raiz da worktree`);
-  const entry = path.join(store, `${app}-${chave(NPM_CI[app], lockFile, path.join(appDir, 'package.json'))}`);
-  const nm = path.join(appDir, 'node_modules');
+if (!fs.existsSync(path.join(root, 'package-lock.json'))) throw new Error('package-lock.json não existe: rode na raiz da worktree');
+const entry = path.join(store, `ws-${chave(NPM_CI, ...ARQUIVOS.slice(0, 4).map((f) => path.join(root, f)))}`);
 
-  if (isJunctionTo(nm, path.join(entry, 'node_modules'))) {
-    console.log(`${app}: já aponta para ${entry}`);
-  } else {
-    withLock(entry, () => {
-      if (fs.existsSync(path.join(entry, '.ok'))) return;
-      fs.rmSync(entry, { recursive: true, force: true });
-      for (const f of ['package.json', 'package-lock.json', ...(EXTRA[app] ?? [])]) {
-        fs.mkdirSync(path.dirname(path.join(entry, f)), { recursive: true });
-        fs.copyFileSync(path.join(appDir, f), path.join(entry, f));
-      }
-      console.log(`${app}: instalando lockfile novo no depósito ${entry}`);
-      // Os scripts de instalação rodam só para os pacotes do `allowScripts`.
-      run(NPM_CI[app], entry);
-      fs.writeFileSync(path.join(entry, '.ok'), new Date().toISOString());
-    });
+if (PASTAS.every((p) => isJunctionTo(path.join(root, p), path.join(entry, p)))) {
+  console.log(`workspace: já aponta para ${entry}`);
+} else {
+  withLock(entry, () => {
+    if (fs.existsSync(path.join(entry, '.ok'))) return;
+    fs.rmSync(entry, { recursive: true, force: true });
+    for (const f of ARQUIVOS) {
+      fs.mkdirSync(path.dirname(path.join(entry, f)), { recursive: true });
+      fs.copyFileSync(path.join(root, f), path.join(entry, f));
+    }
+    console.log(`workspace: instalando lockfile novo no depósito ${entry}`);
+    // Os scripts de instalação rodam só para os pacotes do `allowScripts` da raiz.
+    run(NPM_CI, entry);
+    for (const p of PASTAS) fs.mkdirSync(path.join(entry, p), { recursive: true });
+    fs.writeFileSync(path.join(entry, '.ok'), new Date().toISOString());
+  });
+  for (const p of PASTAS) {
+    const nm = path.join(root, p);
+    if (isJunctionTo(nm, path.join(entry, p))) continue;
     // Junção para outra entrada (lockfile ou comando mudou): troca só o link, o depósito antigo fica.
     if (fs.lstatSync(nm, { throwIfNoEntry: false })?.isSymbolicLink()) fs.unlinkSync(nm);
     if (fs.existsSync(nm)) {
       // node_modules real de antes (npm ci local): não apaga sozinho, só avisa.
-      console.log(`${app}: já tem node_modules próprio; para usar o depósito, apague-o e rode de novo`);
+      console.log(`${p}: já é uma pasta própria; para usar o depósito, apague-a e rode de novo`);
       continue;
     }
-    fs.symlinkSync(path.join(entry, 'node_modules'), nm, 'junction');
-    console.log(`${app}: node_modules → ${entry}`);
+    fs.symlinkSync(path.join(entry, p), nm, 'junction');
+    console.log(`${p} → ${path.join(entry, p)}`);
   }
-  if (app === 'server') run('npx prisma generate', appDir);
 }
+run('npx prisma generate', path.join(root, 'server'));

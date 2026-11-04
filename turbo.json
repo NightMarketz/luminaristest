@@ -1,0 +1,29 @@
+// Contrato da seção 2 do docs/accounting/MONOREPO-WORKSPACES-brief.md (PR-3; dono, chat, 2026-11-04: "Executa o PR-3").
+// turbo fixo em 2.8.21 (F-MW-10): da 2.9 em diante o binário não roda na máquina de trabalho. Telemetria desligada por
+// TURBO_TELEMETRY_DISABLED=1, no CI e nas sessões. As globs estreitas do contrato são do server (src/, test/, prisma/);
+// o my-app (Pages Router, sem src/) usa os arquivos que o git vê, senão mudar uma página voltaria do cache.
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "tasks": {
+    "typecheck": { "inputs": ["$TURBO_DEFAULT$"], "outputs": [] },
+    "luminaris-server#typecheck": {
+      "inputs": ["src/**", "test/**", "tsconfig*.json", "prisma/schema.prisma"],
+      "outputs": []
+    },
+    "lint": { "inputs": ["$TURBO_DEFAULT$"], "outputs": [] },
+    "luminaris-server#lint": { "inputs": ["src/**", "test/**", "eslint*.{js,mjs}"], "outputs": [] },
+    "test:unit": {
+      "inputs": ["src/**", "test/**", "jest.config.js", "prisma/schema.prisma", "prisma/data/**"],
+      "outputs": [],
+      "env": ["TZ"]
+    },
+    "build": {
+      "inputs": ["$TURBO_DEFAULT$", "!**/__tests__/**"],
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": ["NEXT_PUBLIC_*"]
+    },
+    // O build do server gera dist/ e generated/, que o contrato não cobre: fora do cache.
+    "luminaris-server#build": { "cache": false },
+    "test:integration": { "cache": false }
+  }
+}
