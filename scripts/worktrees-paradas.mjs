@@ -10,6 +10,10 @@
 //
 // Uso:  node scripts/worktrees-paradas.mjs [--dias 7] [--excluir <arquivo com 1 caminho por linha>] [--sem-tamanho] [--json]
 //       (o arquivo de --excluir sai do list_sessions do app: o `cwd` de toda sessão não arquivada)
+//
+// Releia a lista de sessões logo antes de remover: o app reaproveita worktree pronta para sessão nova. Em 04/11 uma
+// worktree listada como parada virou o cwd de uma sessão iniciada minutos depois; o `git worktree remove` sem --force
+// recusou porque ela já tinha arquivo novo. Nunca use --force numa remoção em lote.
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
