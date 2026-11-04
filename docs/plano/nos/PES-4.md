@@ -72,10 +72,11 @@ BYOK, sem contratar PSC (D5 de 30/10); vigência só por data de efeito, com o s
 [[R8]], [[R-postgresql]], [[R-torre-multiempresa]], [[R-motor-dominio]], [[R-motor-regras]];
 [[M5-subrazoes-restantes]] (de onde a folha saiu, pela [[D-2026-11-02-DP-PRE-ADR]]).
 
-## Handoff da execução do BRIEF de F0+F1 (atualizado 03/11, depois do PR-2)
+## Handoff da execução do BRIEF de F0+F1 (atualizado 03/11, depois do PR-3)
 
 A sessão 3 fechou o PR-0 e o PR-1; a continuação dela (sessão 3b) fechou o PR-2 e parou por higiene de contexto
-(CLAUDE.md, ~180k). O `executa` (dono, chat, 03/11: *"Executa PR-0 a PR-6"*) segue valendo para o resto do BRIEF; a
+(CLAUDE.md, ~180k); a sessão 3c gravou os vereditos do #1015 e do #1016, fechou o PR-3 (#1026) e parou pelo mesmo motivo
+antes do PR-4. O `executa` (dono, chat, 03/11: *"Executa PR-0 a PR-6"*) segue valendo para o resto do BRIEF; a
 sessão nova continua com a skill `sessao-feature`.
 
 **Feito**
@@ -85,7 +86,7 @@ sessão nova continua com a skill `sessao-feature`.
 | #1014 | `claude/dp-f0-f1-pr0-421c43` (base `claude/dp-no-pes4-brief-f0-f1-90b7b4`) | 1–7 | vermelha (ADR) | verde | PASSOU |
 | #1015 | `claude/dp-f0-f1-pr1` (base `claude/dp-f0-f1-pr0-421c43`) | 8–19 | vermelha (prisma, contábil) | verde (17/17) | PASSOU (03/11, revisor despachado pela sessão 3b: gates 0, sabotagem do gate de sobreposição pega; 3 latentes abaixo) |
 | #1016 | `claude/dp-f0-f1-pr2-d614b0` (base `claude/dp-f0-f1-pr1`) | 20–27 | vermelha (migração, parâmetro legal) | verde (17/17) | PASSOU (03/11: gates 0; 3 sabotagens — valor da FAIXA_2, vigência do INSS, filtro de data do leitor — pegas; a do filtro só pela integração) |
-| #1026 | `claude/dp-f0-f1-pr3` (base `claude/dp-f0-f1-pr2-d614b0`) | 28–36 | vermelha (migração, contábil) | ver PR | REVISOR_1026 |
+| #1026 | `claude/dp-f0-f1-pr3` (base `claude/dp-f0-f1-pr2-d614b0`) | 28–36 | vermelha (migração, contábil) | verde depois do 4587a22a (REKEY do `DpLotacao`) | PASSOU (03/11: gates 0; sabotagens de código duplicado, `TP_JORNADA`, Tier-0 do discriminador e PII na auditoria pegas; `tx`→cliente global NÃO pego — lacuna de teste, sem defeito) |
 
 **Latentes do revisor do #1015 (não bloqueiam; só aparecem com registro de teste, porque hoje todo opcional é
 `disponivel: false` com `dependsOn: []` — decidir antes de ligar o primeiro opcional com dependência):** (1) `activate`
@@ -94,6 +95,11 @@ estado que o `end` recusaria (segue a letra do item 13); (2) `end` numa ativaç�
 sobrescreve o `motivoFim` (a spec não trata); (3) o `DEPENDENT_ACTIVE` do `end` olha só `dependsOn`, não `requiresOneOf`
 (inferido pela leitura).
 
+**Achado do revisor do #1026 (desenho do §3.2, não do executor; decidir antes de apagar usuário com DP):** apagar o `User`
+falha com FK se ele tiver `DpConvencaoParametro` — o parâmetro não tem `userId` e o `Restrict` para a convenção barra o
+cascade (mesma classe das ~90 FKs `Restrict` do schema). Soft-delete de sindicato com convenção viva e de cargo usado como
+piso passam (spec não trata).
+
 **Pendente:** PR-4 (37–49; leva também a trava D-5 da jornada do item 30, `DP_JORNADA_EM_USO`, que depende de `DpVinculoVersao`), PR-5 (50–55), PR-6 (56–62), cada um empilhado no anterior, com o fold
 aqui no próprio PR e o revisor-independente em cada um (D-2026-10-28, PR vermelho).
 
@@ -101,12 +107,24 @@ aqui no próprio PR e o revisor-independente em cada um (D-2026-10-28, PR vermel
 se foi, rebase sobre `main`):
 
 ```bash
-git fetch origin && git checkout -b claude/dp-f0-f1-pr3 origin/claude/dp-f0-f1-pr2-d614b0
+git fetch origin && git checkout -b claude/dp-f0-f1-pr4 origin/claude/dp-f0-f1-pr3
 cd server && npm ci && npx prisma generate && printf 'OPENAI_API_KEY=ci-dummy-openai-key\n' > .env
 cd ../my-app && npm ci
 ```
 
-**Armadilhas medidas (valem para PR-3..PR-6)**
+**Armadilhas medidas (valem para PR-4..PR-6)**
+
+- **PR-4 herda do PR-3:** a trava D-5 (`DP_JORNADA_EM_USO`: `minutosSemanais`/`tipoJornada` não mudam com versão de vínculo
+  apontando para a jornada) vai no `DpCadastroService.updateJornada`, com método novo no `IDpCadastroRepository` sobre
+  `DpVinculoVersao` e teste 409. Os FKs `Restrict` da versão para lotação/cargo/jornada/sindicato entram no schema do PR-4.
+- **Molde dos CRUDs do PR-3:** `controllers/dpCadastrosController.ts` tem `handler`/`crud` genéricos; o bloco OpenAPI do
+  PR-3 saiu de um gerador Python (fora do repo). Para mesclar o openapi: copie o commitado, rode `npm run docs:generate`,
+  guarde o gerado, restaure o commitado e substitua só as chaves `/api/dp/*` no mesmo lugar (o diff fica só de inserções).
+- **Snapshot de DTO:** salvar os JSON/`.gen.ts` gerados, `git checkout` de tudo e aplicar por chave só o nó cujo
+  conteúdo canônico mudou (o PR-3 fez assim: `DpCadastrosDto.ts` no `dp` e `AccountingResetDto.ts` no `accounting`).
+- **Heredoc com Python longo quebra no Git Bash** (`unexpected EOF`): escreva o script num arquivo e rode `python -I`.
+- **`change_directory` não funciona nesta família de sessões** (worktree isolada): o `isolation: worktree` do revisor falha
+  se o cwd da sessão sair do repo; despache o revisor sem isolation, mandando-o criar o próprio `git worktree add --detach`.
 
 - **Filtro do jest:** `npx jest --selectProjects unit <padrão>` roda a suíte inteira neste ambiente; use
   `--runTestsByPath <arquivos>` (integração: `--selectProjects integration --runInBand --forceExit --runTestsByPath`).
