@@ -193,10 +193,10 @@ export function linhaEcfDoPasso(r: ApuracaoRef, passo: MemoriaLinha, memoria: re
     return r.tributo === 'IRPJ' && passo.descricao.startsWith('IRRF') ? vigente(DEDUCAO_IRRF[modo], r) : null;
   }
   if (modo === 'AJUSTE_ANUAL' && /^ESTIMATIVA_PAGA_A\d{2}$/.test(passo.codigo)) return vigente(ESTIMATIVA_PAGA[r.tributo as 'IRPJ' | 'CSLL'], r);
-  // O 16% (P200 6) leva o acréscimo do serviço para a linha de 1,6% (25230).
-  if (passo.codigo === 'LC224_ACRESCIMO_SERVICO' && r.tributo === 'IRPJ' && memoria.some((m) => m.codigo === 'PRESUNCAO_REDUZIDA_16')) {
-    return vigente(L('P200', '25230', LC224_IRPJ), r);
-  }
+  // O 16% (P200 6) leva o acréscimo do serviço para a linha de 1,6% (25230) e a receita de serviço para a P200 6.
+  const com16 = r.tributo === 'IRPJ' && memoria.some((m) => m.codigo === 'PRESUNCAO_REDUZIDA_16');
+  if (passo.codigo === 'LC224_ACRESCIMO_SERVICO' && com16) return vigente(L('P200', '25230', LC224_IRPJ), r);
+  if ((passo.codigo === 'RECEITA_SERVICO' || passo.codigo === 'RECEITA_NAO_USO') && com16) return vigente(L('P200', '6'), r);
   return vigente(t[passo.codigo], r);
 }
 
@@ -219,5 +219,6 @@ export function linhasEcfDaTabela(): { modo: string; tributo: string; codigo: st
   out.push({ modo: 'AJUSTE_ANUAL', tributo: 'IRPJ', codigo: 'ESTIMATIVA_PAGA_Ann', def: ESTIMATIVA_PAGA.IRPJ });
   out.push({ modo: 'AJUSTE_ANUAL', tributo: 'CSLL', codigo: 'ESTIMATIVA_PAGA_Ann', def: ESTIMATIVA_PAGA.CSLL });
   out.push({ modo: 'PRESUMIDO', tributo: 'IRPJ', codigo: 'LC224_ACRESCIMO_SERVICO:16', def: L('P200', '25230', LC224_IRPJ) });
+  out.push({ modo: 'PRESUMIDO', tributo: 'IRPJ', codigo: 'RECEITA_SERVICO:16', def: L('P200', '6') });
   return out;
 }
