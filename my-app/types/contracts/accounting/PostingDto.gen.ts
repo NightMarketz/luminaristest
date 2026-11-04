@@ -45,6 +45,7 @@ unitId: string
 lancamentoId: string
 reversalPostingDate: string
 reason: string
+extemporaneousReason?: string
 }
 export interface ReportQueryInput {
 unitId: string

@@ -248,6 +248,7 @@ export class InterestOnEquityService {
         lancamentoId: row.entryId,
         reversalPostingDate: row.dataCredito,
         reason: `JCP ${row.id} cancelado`,
+        automaticWriter: true,
       });
     }
     await this.repo.runTransaction(async (tx) => {

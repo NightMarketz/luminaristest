@@ -20,7 +20,7 @@ import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepository';
 import type { AuditService } from './AuditService';
-import type { ImportKind } from '../models/DataExchange.model';
+import type { ImportKind, ValidatedRow } from '../models/DataExchange.model';
 import { validateImport, ImportHeaderError, type AccountLike } from './dataExchangeValidators';
 import {
   toJobResponse,
@@ -50,13 +50,18 @@ export interface IPoster {
   postEntry(
     scope: AccountingScope,
     input: {
-      unitId: string; date: string; description: string; sourceType?: string; sourceId?: string; automaticWriter?: boolean;
+      unitId: string; date: string; description: string; sourceType?: string; sourceId?: string; extemporaneousReason?: string;
       // BE-INCR-8: optional origin descriptor unfolded from the import (D6). externalRef is the
       // human document reference — kept SEPARATE from sourceId (the dedup key stays byte-identical).
       sourceDocument?: { externalRef?: string; documentDate?: string; description?: string; attachmentId?: string; rawJson?: string };
       lines: Array<{ accountCode: string; debitCents: number; creditCents: number }>;
     },
   ): Promise<{ id: string }>;
+}
+
+/** Minimal period read surface for the preview's ITG 2000 item 36 check — satisfied by AccountingPeriodRepository. */
+export interface IPeriodReader {
+  findByYearMonth(scope: AccountingScope, year: number, month: number): Promise<{ status: string; closedAt: Date | null } | null>;
 }
 
 /** XLSX files are ZIP-based (PK magic); everything else is treated as CSV/text. */
@@ -67,7 +72,7 @@ function sniffFormat(buffer: Buffer, name: string): SpreadsheetFormat {
 }
 
 type NormalizedChart = { code: string; name: string; nature: 'Asset' | 'Liability' | 'Equity' | 'Revenue' | 'Expense'; acceptsEntries: boolean };
-type NormalizedLine = { accountCode: string; postingDate: string; description?: string; debitCents: number; creditCents: number; entryKey?: string; externalReference?: string };
+type NormalizedLine = { accountCode: string; postingDate: string; description?: string; debitCents: number; creditCents: number; entryKey?: string; externalReference?: string; extemporaneousReason?: string };
 
 /**
  * Import half of the accounting Data Exchange (BE-INCR-6). Two steps:
@@ -87,6 +92,7 @@ export class DataExchangeImportService {
     private readonly audit: AuditService,
     private readonly accounts: IAccountReader,
     private readonly poster: IPoster,
+    private readonly periods: IPeriodReader,
   ) {}
 
   /** Job summary (scoped). */
@@ -115,6 +121,7 @@ export class DataExchangeImportService {
     scope: AccountingScope,
     kind: ImportKind,
     file: UploadedFile,
+    extemporaneousReason?: string,
   ): Promise<DataExchangeJobResponse> {
     if (!this.policy.canManage(scope)) {
       throw new ForbiddenError('Não autorizado a importar dados contábeis.');
@@ -133,6 +140,9 @@ export class DataExchangeImportService {
     } catch (e) {
       if (e instanceof ImportHeaderError) throw new ValidationError(e.message);
       throw e;
+    }
+    if (kind === 'IMPORT_JOURNAL_ENTRIES' || kind === 'IMPORT_OPENING_BALANCES') {
+      await this.applyExtemporaneousReason(scope, kind, validated, extemporaneousReason?.trim() || undefined);
     }
 
     const validRows = validated.filter((r) => r.status === 'VALID').length;
@@ -285,7 +295,7 @@ export class DataExchangeImportService {
         date: first.postingDate,
         description: 'Saldos iniciais (importação)',
         sourceType: 'ACCOUNTING_OPENING_BALANCE_IMPORT',
-        automaticWriter: true,
+        extemporaneousReason: first.extemporaneousReason,
         // Deterministic on file content (one opening-balance entry per file), mirroring
         // journalSourceId — re-upload of identical bytes dedups on the @@unique.
         sourceId: 'di:' + createHash('sha256').update(`${fileSha}|opening`).digest('hex').slice(0, 40),
@@ -336,7 +346,7 @@ export class DataExchangeImportService {
           date: head.postingDate,
           description: head.description ?? 'Lançamento importado',
           sourceType: 'IMPORT_JOURNAL_ENTRIES',
-          automaticWriter: true,
+          extemporaneousReason: head.extemporaneousReason,
           sourceId: this.journalSourceId(fileSha, key, head.externalReference),
           sourceDocument: {
             externalRef,
@@ -357,6 +367,44 @@ export class DataExchangeImportService {
       }
     }
     return { committed, failed };
+  }
+
+  /**
+   * ITG 2000 (R1) item 36 na prévia (dono, chat, 04/11: a importação exige a razão). Com a razão do job, ela vai em cada
+   * linha válida e o commit a repassa ao postEntry. Sem ela, o lançamento (grupo do entryKey; nos saldos iniciais, o
+   * arquivo inteiro) com data num período fechado e reaberto sai INVÁLIDO já aqui, antes do commit. O gate autoritativo
+   * continua no postEntry (período fechado e reaberto depois do upload → POST_FAILED no commit).
+   */
+  private async applyExtemporaneousReason(
+    scope: AccountingScope,
+    kind: ImportKind,
+    rows: ValidatedRow[],
+    reason: string | undefined,
+  ): Promise<void> {
+    const valid = rows.filter((r) => r.status === 'VALID');
+    if (reason) {
+      for (const r of valid) r.normalizedJson = JSON.stringify({ ...JSON.parse(r.normalizedJson as string), extemporaneousReason: reason });
+      return;
+    }
+    const keyOf = (r: ValidatedRow) => (kind === 'IMPORT_OPENING_BALANCES' ? '*' : r.groupKey ?? `__row_${r.rowNumber}`);
+    const reopened = new Map<string, boolean>();
+    const hit = new Set<string>();
+    for (const r of valid) {
+      const ym = (JSON.parse(r.normalizedJson as string) as NormalizedLine).postingDate.slice(0, 7);
+      if (!reopened.has(ym)) {
+        const period = await this.periods.findByYearMonth(scope, Number(ym.slice(0, 4)), Number(ym.slice(5, 7)));
+        reopened.set(ym, period?.status === 'OPEN' && period.closedAt != null);
+      }
+      if (reopened.get(ym)) hit.add(keyOf(r));
+    }
+    for (const r of valid) {
+      if (!hit.has(keyOf(r))) continue;
+      r.status = 'INVALID';
+      r.errorCode = 'EXTEMPORANEOUS_REASON_REQUIRED';
+      r.errorMessage = 'Data em período já fechado e reaberto: informe a razão do registro extemporâneo no job (ITG 2000, item 36).';
+      r.field = 'postingDate';
+      r.normalizedJson = null;
+    }
   }
 
   /**

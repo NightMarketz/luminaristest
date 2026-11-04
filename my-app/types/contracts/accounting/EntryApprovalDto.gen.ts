@@ -56,6 +56,7 @@ expectedVersion: number
 export interface ApproveEntryInput {
 unitId: string
 expectedVersion: number
+extemporaneousReason?: string
 }
 export interface RejectEntryInput {
 unitId: string

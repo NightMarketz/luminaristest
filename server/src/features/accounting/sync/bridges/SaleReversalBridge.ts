@@ -88,6 +88,7 @@ export async function maybeReverseSale(
           lancamentoId: revenue.id,
           reversalPostingDate: scopeToday(scope),
           reason,
+          automaticWriter: true,
         });
         // X14 PR-3: subrazão fiscal de receita — linhas negativas no dia do ESTORNO (commit 2, não fatal).
         await maybeRecordEstornoFiscal(scope, row.id, 'CANCELAMENTO', () => estorno.reversal.date.toISOString().slice(0, 10));
@@ -103,6 +104,7 @@ export async function maybeReverseSale(
           lancamentoId: settled.id,
           reversalPostingDate: scopeToday(scope),
           reason,
+          automaticWriter: true,
         });
         // X14-CAIXA PR-1 item 5: o recebimento da venda vira REVERTED no dia do estorno — commit 2, não fatal.
         await maybeRecordRecebimento(scope, recebimentoSaleFromRow(scope.ownerUserId, { id: row.id, data }, await isAllPackageSale(scope.ownerUserId, row.id)));
@@ -111,7 +113,7 @@ export async function maybeReverseSale(
       // E-1 / GAP-MAP N5 (CMV): the cost-of-goods of the sale's product lines.
       const cogs = await posting.findEntryBySource(scope, 'sale.cogs', row.id);
       if (cogs) {
-        await posting.reverseEntry(scope, { unitId, lancamentoId: cogs.id, reversalPostingDate: scopeToday(scope), reason });
+        await posting.reverseEntry(scope, { automaticWriter: true, unitId, lancamentoId: cogs.id, reversalPostingDate: scopeToday(scope), reason });
       }
 
       // E-1 (pacote): the balance credit first (tx1), then the 2.1.1 liability (tx2) — a crash between the two is
@@ -123,7 +125,7 @@ export async function maybeReverseSale(
       }
       const packageSold = await posting.findEntryBySource(scope, 'sale.package.sold', row.id);
       if (packageSold) {
-        await posting.reverseEntry(scope, { unitId, lancamentoId: packageSold.id, reversalPostingDate: scopeToday(scope), reason });
+        await posting.reverseEntry(scope, { automaticWriter: true, unitId, lancamentoId: packageSold.id, reversalPostingDate: scopeToday(scope), reason });
       }
       return;
     }

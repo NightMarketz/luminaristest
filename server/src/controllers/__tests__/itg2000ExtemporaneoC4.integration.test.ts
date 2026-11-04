@@ -91,7 +91,7 @@ describe('ITG 2000 (R1) item 36 — aprovação, estorno e importação em perí
       data: { userId: dono.id, unitId: UNIT, year: 2026, month: 7, status: 'OPEN', openedAt: new Date(), openedById: dono.id },
     });
     // Semeia o plano canônico (a validação da importação lê as contas existentes).
-    await posting().postEntry(scope(), { unitId: UNIT, date: '2026-07-01', description: 'abertura do plano', lines: linhas(100) });
+    await posting().postEntry(scope(), { unitId: UNIT, date: '2026-07-01', description: 'abertura do plano', sourceType: 'manual', lines: linhas(100) });
     await getFactory().getPeriodService().softClosePeriod(scope(), junho.id, 'fechamento de junho');
     const reaberto = await getFactory().getPeriodService().reopenPeriod(scope(), junho.id, 'ajuste após o fechamento');
     expect(reaberto.status).toBe('OPEN');
@@ -141,7 +141,7 @@ describe('ITG 2000 (R1) item 36 — aprovação, estorno e importação em perí
   // ------------------------------------------------------------------ 2 · estorno
   describe('2 — estorno com data no período reaberto', () => {
     const original = (descricao: string) =>
-      posting().postEntry(scope(), { unitId: UNIT, date: '2026-06-10', description: descricao, lines: linhas(2700), extemporaneousReason: RAZAO });
+      posting().postEntry(scope(), { unitId: UNIT, date: '2026-06-10', description: descricao, sourceType: 'manual', lines: linhas(2700), extemporaneousReason: RAZAO });
 
     it('CONTROLE: estorno datado num período nunca fechado não exige razão de extemporâneo', async () => {
       const o = await original('compra para estornar em julho');

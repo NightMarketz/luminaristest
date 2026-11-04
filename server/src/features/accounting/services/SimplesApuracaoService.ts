@@ -1293,6 +1293,7 @@ export class SimplesApuracaoService {
       lancamentoId: entry.id,
       reversalPostingDate: fimDoMes(row.competencia),
       reason: `apuração do Simples ${row.id} substituída`,
+      automaticWriter: true,
     });
   }
 

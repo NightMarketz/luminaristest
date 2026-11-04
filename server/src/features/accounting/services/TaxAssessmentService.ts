@@ -702,6 +702,7 @@ export class TaxAssessmentService {
       lancamentoId: entry.id,
       reversalPostingDate: fimDoPeriodo(row.anoCalendario, row.periodo),
       reason: `apuração ${row.id} substituída`,
+      automaticWriter: true,
     });
   }
 

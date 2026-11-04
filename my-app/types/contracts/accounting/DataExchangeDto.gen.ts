@@ -26,6 +26,7 @@ status?: ("VALID" | "INVALID" | "COMMITTED" | "SKIPPED")
 export interface ImportUploadInput {
 kind: ("IMPORT_CHART_OF_ACCOUNTS" | "IMPORT_OPENING_BALANCES" | "IMPORT_JOURNAL_ENTRIES")
 unitId: string
+extemporaneousReason?: string
 }
 export interface CommitImportInput {
 unitId: string

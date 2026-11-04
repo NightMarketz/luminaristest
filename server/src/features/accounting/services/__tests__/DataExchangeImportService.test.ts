@@ -1,4 +1,4 @@
-import { DataExchangeImportService, type IAccountReader, type IPoster } from '../DataExchangeImportService';
+import { DataExchangeImportService, type IAccountReader, type IPeriodReader, type IPoster } from '../DataExchangeImportService';
 import type { IDataExchangeRepository } from '../../repositories/IDataExchangeRepository';
 import type { AuditService } from '../AuditService';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
@@ -81,6 +81,8 @@ function makePoster() {
 }
 
 const audit = { append: jest.fn(async () => undefined) } as unknown as AuditService;
+// Nenhum período fechado e reaberto: a prévia não exige a razão do extemporâneo nestes casos.
+const periods: IPeriodReader = { findByYearMonth: jest.fn(async () => null) };
 const csv = (s: string) => ({ originalname: 'f.csv', mimetype: 'text/csv', buffer: Buffer.from(s, 'utf8') });
 
 beforeEach(() => jest.clearAllMocks());
@@ -89,7 +91,7 @@ describe('DataExchangeImportService — chart of accounts', () => {
   it('creates new accounts and skips existing ones on commit', async () => {
     const { repo } = makeRepo();
     const { poster, createAccount } = makePoster();
-    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster);
+    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
 
     const job = await svc.uploadAndValidate(scope, 'IMPORT_CHART_OF_ACCOUNTS',
       csv('code,name,nature,acceptsEntries,parentCode\n3.1,Fornecedores,Liability,true,\n1.1.01,Banco,Asset,true,\n3.2,Outra,Liability,true,\n'));
@@ -109,7 +111,7 @@ describe('DataExchangeImportService — opening balances', () => {
   it('commits one balanced entry with a deterministic file-based sourceId', async () => {
     const { repo } = makeRepo();
     const { poster, postEntry } = makePoster();
-    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster);
+    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
 
     const job = await svc.uploadAndValidate(scope, 'IMPORT_OPENING_BALANCES', csv(openingCsv));
     expect(job.validRows).toBe(2);
@@ -131,7 +133,7 @@ describe('DataExchangeImportService — opening balances', () => {
     const commitAndCaptureSourceId = async () => {
       const { repo } = makeRepo();
       const { poster, postEntry } = makePoster();
-      const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster);
+      const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
       const job = await svc.uploadAndValidate(scope, 'IMPORT_OPENING_BALANCES', csv(openingCsv));
       await svc.commit(scope, job.id);
       return postEntry.mock.calls[0][1].sourceId;
@@ -148,7 +150,7 @@ describe('DataExchangeImportService — journal entries', () => {
   it('posts one entry per group with sourceId=externalReference', async () => {
     const { repo } = makeRepo();
     const { poster, postEntry } = makePoster();
-    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster);
+    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
 
     const job = await svc.uploadAndValidate(scope, 'IMPORT_JOURNAL_ENTRIES',
       csv('entryKey,documentDate,postingDate,description,accountCode,debitCents,creditCents,lineDescription,externalReference\n' +
@@ -174,7 +176,7 @@ describe('DataExchangeImportService — journal entries', () => {
   it('BE-INCR-8: a blank externalReference unfolds to NO externalRef but keeps the di: dedup key (desconflação)', async () => {
     const { repo } = makeRepo();
     const { poster, postEntry } = makePoster();
-    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster);
+    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
 
     const job = await svc.uploadAndValidate(scope, 'IMPORT_JOURNAL_ENTRIES',
       csv('entryKey,documentDate,postingDate,description,accountCode,debitCents,creditCents,lineDescription,externalReference\n' +
@@ -196,7 +198,7 @@ describe('DataExchangeImportService — journal entries', () => {
   it('is idempotent — a second commit does not re-post', async () => {
     const { repo } = makeRepo();
     const { poster, postEntry } = makePoster();
-    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster);
+    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
 
     const job = await svc.uploadAndValidate(scope, 'IMPORT_JOURNAL_ENTRIES',
       csv('entryKey,documentDate,postingDate,description,accountCode,debitCents,creditCents,lineDescription,externalReference\n' +
@@ -218,7 +220,7 @@ describe('DataExchangeImportService — journal entries', () => {
     const commitFileAndCaptureSourceId = async () => {
       const { repo } = makeRepo();
       const { poster, postEntry } = makePoster();
-      const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster);
+      const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
       const job = await svc.uploadAndValidate(scope, 'IMPORT_JOURNAL_ENTRIES', csv(fileCsv));
       await svc.commit(scope, job.id);
       return postEntry.mock.calls[0][1].sourceId;
