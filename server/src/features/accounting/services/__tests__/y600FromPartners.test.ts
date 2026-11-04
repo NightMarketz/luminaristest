@@ -68,7 +68,7 @@ describe('SpedEcfGenerationService.y600Vigencias (item 1)', () => {
     const list = jest.fn(async () => partners);
     const policy = { canRead: jest.fn(() => true), canReadFiscalProfile: jest.fn(() => canReadFiscalProfile) };
     const service = new SpedEcfGenerationService(
-      {} as never, {} as never, policy as never, {} as never, {} as never, {} as never, {} as never, { list },
+      {} as never, {} as never, policy as never, {} as never, {} as never, {} as never, {} as never, { list }, {} as never, {} as never, {} as never,
     );
     return { service, list, policy };
   };

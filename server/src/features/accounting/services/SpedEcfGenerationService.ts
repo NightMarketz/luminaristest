@@ -20,6 +20,12 @@ import { buildEcfFile, resolveEcfCodVer, serializeEcf, type EcfFileInput, type E
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import { montarY600, selecionarVigenciasDoAno, type Y600PartnerReader } from './y600FromPartners';
 import { somaParticipacaoBp } from '../models/partner';
+import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFiscalProfileRepository';
+import type { IReceitaFiscalRepository } from '../repositories/IReceitaFiscalRepository';
+import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
+import { repartirReceitaHospitalar, type ChecklistHospitalarEmpresa } from '../models/presuncaoHospitalar';
+import { hospitalarComTeto } from '../models/taxAssessmentCalc';
+import { linhaVigente, tabelaApuracaoDe } from '../models/taxAssessmentParams';
 
 /** Quarter windows (T01..T04) for a calendar year. */
 export function quarterWindows(year: number): Array<{ perApur: string; dtIni: string; dtFin: string; from: Date; to: Date }> {
@@ -68,6 +74,13 @@ export class SpedEcfGenerationService {
     private readonly fiscalProfileRepo: Pick<IFiscalProfileRepository, 'findByScope'>,
     /** BE-INCR-ECF-Y600 item 8: vigências do cadastro de sócios (IRRF-DISTRIBUICAO PR-1) para o Y600. */
     private readonly partners: Y600PartnerReader,
+    /**
+     * Achado 1 do #1021 (dono, chat, 03/11: "Autorizo a correção"): a receita hospitalar (8 %/12 %) e a do 16 % saem das
+     * linhas de 32 % como na apuração — o perfil da empresa e a subrazão por serviço. Só leitura.
+     */
+    private readonly companyProfileRepo: Pick<ICompanyFiscalProfileRepository, 'findByYear'>,
+    private readonly receitaFiscalRepo: Pick<IReceitaFiscalRepository, 'findServicosEntreDias'>,
+    private readonly serviceFiscalRepo: Pick<IServiceFiscalProfileRepository, 'findManyByServiceRefs'>,
   ) {}
 
   /**
@@ -99,6 +112,14 @@ export class SpedEcfGenerationService {
     };
   }
 
+  /** Σ da receita dos serviços HOSPITALAR na janela — a mesma leitura de `TaxAssessmentService.receitaHospitalar`. */
+  private async receitaHospitalar(scope: AccountingScope, empresa: ChecklistHospitalarEmpresa, de: Date, ate: Date): Promise<bigint> {
+    const linhas = await this.receitaFiscalRepo.findServicosEntreDias(scope, de.toISOString().slice(0, 10), ate.toISOString().slice(0, 10));
+    const refs = [...new Set(linhas.map((l) => l.serviceRef).filter((r): r is string => r !== null))];
+    if (refs.length === 0) return 0n;
+    return repartirReceitaHospitalar(linhas, await this.serviceFiscalRepo.findManyByServiceRefs(scope, refs), empresa).hospitalarCents;
+  }
+
   public async generate(scope: AccountingScope, dto: SpedEcfRequestDto): Promise<DataExchangeJobResponse> {
     if (!this.policy.canRead(scope)) {
       throw new ForbiddenError('Não autorizado a gerar a ECF.');
@@ -126,11 +147,24 @@ export class SpedEcfGenerationService {
     const yearTo = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
     const deps = { accountRepo: this.accountRepo, postingRepo: this.postingRepo, fiscalProfileRepo: this.fiscalProfileRepo };
     await receitaBrutaPorAtividade(deps, scope, yearFrom, yearTo, accounts);
+    const perfil = await this.companyProfileRepo.findByYear(scope, year);
+    // O 16 % segue as condições da apuração (`regra16`): declaração completa, sem revenda nem hospitalar e acumulada ≤ limite.
+    const tabela16 = perfil?.prestadoraExclusivaServicos && perfil.declaraNaoProfissaoRegulamentada
+      ? tabelaApuracaoDe(await this.legalParams.fotografia(['TAX_ASSESSMENT']))
+      : null;
+    let acumuladaCents = 0n;
+    let revendaAnoCents = 0n;
     const quarters: EcfQuarter[] = [];
     for (const w of windows) {
       const { servicoCents, revendaCents, naoUsoCents } = await receitaBrutaPorAtividadeSemGate(this.postingRepo, scope, accounts, w.from, w.to);
       // BE-INCR-H1-REFERENCIAL-3-4: o P200/P400 não tem linha própria para a 3.4 — entra na base de serviço.
-      quarters.push({ perApur: w.perApur, dtIni: w.dtIni, dtFin: w.dtFin, servicoCents: Math.max(0, servicoCents + naoUsoCents), revendaCents });
+      const servico = Math.max(0, servicoCents + naoUsoCents);
+      const hospitalar = perfil ? hospitalarComTeto(await this.receitaHospitalar(scope, perfil, w.from, w.to), BigInt(servico)) : 0n;
+      acumuladaCents += BigInt(servico + revendaCents);
+      revendaAnoCents += BigInt(revendaCents);
+      const limite = tabela16 ? linhaVigente(tabela16, 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', w.dtFin) : undefined;
+      const reduzida16 = !!limite && hospitalar === 0n && revendaAnoCents === 0n && acumuladaCents <= BigInt(limite.valor);
+      quarters.push({ perApur: w.perApur, dtIni: w.dtIni, dtFin: w.dtFin, servicoCents: servico, revendaCents, hospitalarCents: Number(hospitalar), reduzida16 });
     }
 
     // ── Y600 (BE-INCR-ECF-Y600 itens 8–11): cadastro × complemento do request, já ordenado (item 3) ──

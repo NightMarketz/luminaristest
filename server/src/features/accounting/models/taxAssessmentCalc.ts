@@ -283,6 +283,16 @@ const F_HOSPITALAR = 'Lei 9.249/1995 art. 15 § 1º III "a" e § 2º; art. 20 II
 export function linhaHospitalar(hospitalarCents: bigint, periodoDesc: string): MemoriaLinha[] {
   return hospitalarCents > 0n ? [linha(RECEITA_HOSPITALAR, `Parte da receita de serviço do ${periodoDesc} em serviço hospitalar = min(Σ receita dos serviços hospitalares na subrazão por serviço, receita de serviço)`, hospitalarCents, F_HOSPITALAR)] : [];
 }
+/**
+ * Achado 1 do #1021 (dono, chat, 03/11: "Linha nova"): com hospitalar, a receita de serviço que fica a 32 % — é o valor da
+ * P200 8 / P400 4 da ECF, que leva a hospitalar para a P200 4 / P400 2. Só quando houver, como a linha hospitalar.
+ */
+export const RECEITA_SERVICO_COMUM = 'RECEITA_SERVICO_COMUM';
+export function linhaServicoComum(hospitalarCents: bigint, servicoCents: bigint, periodoDesc: string): MemoriaLinha[] {
+  return hospitalarCents > 0n
+    ? [linha(RECEITA_SERVICO_COMUM, `Receita de serviço do ${periodoDesc} fora do serviço hospitalar (3.1 + 3.4 − hospitalar)`, servicoCents - hospitalarCents, F_HOSPITALAR)]
+    : [];
+}
 export function receitaHospitalarDaMemoria(memoria: MemoriaLinha[], periodo: string): bigint {
   return temLinha(memoria, RECEITA_HOSPITALAR) ? valorLinha(memoria, RECEITA_HOSPITALAR, periodo) : 0n;
 }
@@ -563,6 +573,7 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
     ...linhaNaoUso(e.receitaNaoUsoCents, 'trimestre'),
     linha('RECEITA_REVENDA', 'Receita bruta de revenda do trimestre = max(0, crédito − débito da conta 3.3)', e.receitaRevendaCents, 'IN RFB 1.700/2017 art. 215 caput'),
     ...linhaHospitalar(hosp, 'trimestre'),
+    ...linhaServicoComum(hosp, servico, 'trimestre'),
     ...r16.memoria,
     ...lc.memoria,
   ];

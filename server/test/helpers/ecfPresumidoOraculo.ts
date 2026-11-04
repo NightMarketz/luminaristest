@@ -1,7 +1,7 @@
 /**
  * Emenda C8 (X7-C §C3 item 5) — oráculo da ECF Presumido para o teste-guarda da memória × ECF: as fórmulas das linhas
  * `CNA`/`CA` de P200/P300/P400/P500 da tabela dinâmica (leiaute 12, 28/05/2026 — dossiê `pc1-memoria-calculo` [D02]),
- * transcritas uma a uma, com o texto ao lado, aplicadas às linhas `E` (receita bruta: P200 4/8, P400 2/4). É o que o PVA
+ * transcritas uma a uma, com o texto ao lado, aplicadas às linhas `E` (receita bruta: P200 4/6/8, P400 2/4). É o que o PVA
  * calcula; não usa nada de `taxAssessmentCalc.ts`.
  *
  * Escopo: o 1º trimestre do ano (`PERIODO_PRIMEIRO() = PERIODO_ATUAL()`, ≠ `PERIODO_ULTIMO()`), 3 meses, alíquota CSLL '1'
@@ -14,13 +14,15 @@ const pct = (cents: bigint, porMil: bigint): bigint => arred(cents * porMil, 100
 export function oraculoEcfPresumidoT01(e: ReadonlyMap<string, bigint>, lc224Irpj: boolean): Map<string, bigint> {
   const E = (k: string) => e.get(k) ?? 0n;
   const o = new Map<string, bigint>();
+  // Linhas `E` de receita bruta: ocorrência 0:N — a que o arquivo não traz vale 0 (a memória pode marcar o passo com 0).
+  for (const k of ['P200:4', 'P200:6', 'P200:8', 'P400:2', 'P400:4']) o.set(k, E(k));
   // P200(10) = P200(2)*0,016 + P200(4)*0,08 + P200(6)*0,16 + P200(8)*0,32 + P200(9)*0,384 (se > 0)
-  o.set('P200:10', pct(E('P200:4'), 80n) + pct(E('P200:8'), 320n));
+  o.set('P200:10', pct(E('P200:4'), 80n) + pct(E('P200:6'), 160n) + pct(E('P200:8'), 320n));
   let acrescimos = 0n;
   if (lc224Irpj) {
     // 25110 = SOMA(P200(2:9)); 25140 (1º período) = 1.250.000,00 se SOMA(P200(2:9)) > 0;
     // 25150 = 25110 − 25140 se 25110 > 1.250.000 e > 25140; 25200 (≠ último) = 25110 − 25140 se >
-    const total = E('P200:4') + E('P200:8');
+    const total = E('P200:4') + E('P200:6') + E('P200:8');
     const lim = total > 0n ? 125_000_000n : 0n;
     const exc = total > lim ? total - lim : 0n;
     o.set('P200:25140', lim);

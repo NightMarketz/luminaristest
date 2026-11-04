@@ -2025,6 +2025,9 @@ export class ApplicationFactory {
         legalParameterService, // BE-INCR-LEGAL-PARAMS PR-2: fotografia LEIAUTE_SPED (ECF)
         this.repositories.fiscalProfile, // F-PCB-1R: dedução de PIS/COFINS fora do gate de receita bruta
         this.repositories.partner, // BE-INCR-ECF-Y600: sócios do Y600
+        this.repositories.companyFiscalProfile, // achado 1 do #1021: hospitalar e 16 % fora das linhas de 32 %
+        this.repositories.receitaFiscal,
+        this.repositories.serviceFiscalProfile,
       ),
       // Lucro Real (BRIEF 3B, Fork 6→b + Fork 4→b): o gerador LÊ o e-Lalur do model; o report
       // service SAIU (item 6 — L100/L300 são recuperados pelo PVA do K155/K156, pp.224/232). ECF 3C:

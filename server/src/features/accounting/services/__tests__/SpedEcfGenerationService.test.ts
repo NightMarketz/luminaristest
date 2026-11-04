@@ -125,7 +125,7 @@ function buildService(m: Mocks = {}) {
 
   const partnerList = jest.fn(async (_s: unknown) => m.partners ?? [makePartner()]);
 
-  const service = new SpedEcfGenerationService(accountRepo, postingRepo, policy, repo, audit, legalParamsSemente, fiscalProfileRepo, { list: partnerList });
+  const service = new SpedEcfGenerationService(accountRepo, postingRepo, policy, repo, audit, legalParamsSemente, fiscalProfileRepo, { list: partnerList }, { findByYear: async () => null }, { findServicosEntreDias: async () => [] }, { findManyByServiceRefs: async () => [] });
   return { service, createJob, updateJob, groupByAccount, append, policy, partnerList };
 }
 
