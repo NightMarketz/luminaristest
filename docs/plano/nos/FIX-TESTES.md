@@ -4,7 +4,7 @@ tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Correções de teste pela régua de 04/11: boot pós-rekey, textos da venda de pacote, pipeline do CRM pela pilha real, rotas contábeis sem integração, mensagens com id interno"
 estado: "planned"
-estado_detalhe: "04/11: executa dos 5 BRIEFs e forks ratificados na recomendação (questionário); 5 BRIEFs escritos no PR #1075 (sem merge); Q1–Q5 do PR decididas por questionário ([[D-2026-11-04-APRENDIZADOS-TESTES]]). Nenhum item tem executa."
+estado_detalhe: "04/11: executa dos 5 BRIEFs e forks ratificados na recomendação (questionário); 5 BRIEFs escritos no PR #1075 (sem merge); Q1–Q5 do PR decididas por questionário ([[D-2026-11-04-APRENDIZADOS-TESTES]])."
 autorizacao: "**EXECUTA** (dono, chat, 2026-11-04, questionário): \"Executa, forks na recomendação (Recomendado)\" — executa dos 5 BRIEFs inteiros (todos os lotes), forks ratificados na recomendação, sem merge; o lote 1 do item 5 espera a correção do IMO-1 (mesmo arquivo) · antes: dono, chat, 2026-11-04: \"Já vai atualizando todas os aprendizados nos locais onde são briefs, e onde já estiver implementado, você também já cria briefs de correção de acordo com o aprendizado.\" — só os BRIEFs (sessao-planejamento); sem código, sem 'executa' · dono, chat, 2026-11-04, questionário do #1075: Q5 \"Nó FIX-TESTES (Recomendado)\""
 atualizado: "2026-11-04"
 prs: ["#1075"]
