@@ -60,10 +60,9 @@ Sem sessão nem cartão — entram aqui para não se perder:
 - **PV-B** (roteiro): o passo 7 do PACOTE-VALIDADE manda usar "a tabela genérica (Sales + Sale Items)", que a tela não tem
   (`FinanceView.tsx:37`) — emendar o runbook. **PV-C** (observação): vencimento bloqueado com
   `PACKAGE_EXPIRY_NFSE_PENDING` com DF-e `manual`; parece desenho, só o log foi lido.
-- **Fold do nó X10a não feito:** em main o `docs/plano/nos/X10a.md` ainda tem o fold de 27/10 (`atualizado: 2026-10-29`),
-  mas o #992 (PR-7..PR-9) entrou em 02/11. O texto do fold de 02/11 está **sem commit** na worktree
-  `.claude/worktrees/x10a-pr9-contingencia-d8f492` (`git diff docs/plano/nos/X10a.md`) — não remover essa worktree antes
-  de aproveitar o texto.
+- **Fold do nó X10a — feito em 04/11** (PR do handoff): o `docs/plano/nos/X10a.md` de main estava no fold de 27/10 com
+  #984 e #992 já mergeados em 02/11. O texto sem commit da worktree `x10a-pr9-contingencia-d8f492` era de uma base
+  velha (sem os folds de 30/10, 31/10 e 02/11 de main); por isso só a linha nova foi aplicada em cima de main.
 - **PR-3 (#1051), três pontos a conferir no revisor:** Stryker não sai depois do dry-run; reuso do depósito numa 2ª
   worktree; `allowScripts` do npm 11 com workspace. E o CI da correção do `seedDotenv.integration.test.ts` (`753b741fa`).
 - **Limpeza local:** worktree `C:/Users/smurf/scratch-integracao` e branch local `claude/integracao-lote-2026-11-02` (do
@@ -75,6 +74,12 @@ Sem sessão nem cartão — entram aqui para não se perder:
 - A máquina bateu no limite de memória (bash `fork` 0xC000012D; três sessões caíram com 0xC0000409). Um app por vez.
 - TELA-LOCK: estava em nome de `c7-irmaos-fecho` (sessão arquivada) — órfã; os cartões de tela podem retomá-la.
 - Worktree órfã `.claude/worktrees/h2-y600-build` (detached em `3ed76080`, sem sessão): pode sair com `git worktree remove`.
+- **Arquivar não apaga worktree suja** — as 4 sessões arquivadas "com sobra" mantiveram a pasta. Conteúdo sem commit,
+  conferido em 04/11 e sem valor: `merge-closed-green-prs-c6c1b2` (só `openapi.json.orig` e `__dto-shapes__.json.orig`,
+  restos de conflito), `gifted-shaw-ddc107` (`_worktrees-paradas-2026-11-04.md`, saída do script, superada),
+  `nervous-gagarin-82c97a` (limpa) e `x10a-pr9-contingencia-d8f492` (o `X10a.md`, aproveitado no fold acima). Liberadas
+  para remover com `git worktree remove --force` depois do merge deste PR, junto da `scratch-integracao` e da branch
+  local `claude/integracao-lote-2026-11-02`.
 - Lembrete do dono: Dev Drive (`RUNBOOK-DEV-DRIVE`) é dele.
 
 ## Próximo comando
