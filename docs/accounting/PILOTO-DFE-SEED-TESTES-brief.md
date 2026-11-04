@@ -6,6 +6,12 @@
 > os contratos esboçados e os forks F-PIL-1..9. O **F-PIL-1 foi ratificado pelo questionário do dono de 04/11**
 > ([D-2026-11-04-PILOTO-DFE-SEED](../plano/decisoes/D-2026-11-04-PILOTO-DFE-SEED.md)); **F-PIL-2..9 seguem com RATIFICAÇÃO PENDENTE**. A `sessao-feature` só abre com
 > "executa" do dono, depois dos forks.
+>
+> **Emenda de 04/11 (régua de testes, PR #1075).** O dono respondeu no questionário do #1075
+> ([D-2026-11-04-APRENDIZADOS-TESTES](../plano/decisoes/D-2026-11-04-APRENDIZADOS-TESTES.md)): Q2 *"1–2 na branch, 3 vira
+> b3 (Recomendado)"* e Q3 *"Amarrar + F-PIL-2 (b) (Recomendado)"*. Por isso esta emenda faz três coisas. Fixa a data de
+> referência do item 7 e o modo de cópia do item 13, os dois pela régua A8. Registra o **F-PIL-2 → (b)** como ratificado.
+> E acrescenta a opção **b3** ao F-PIL-5, que continua pendente. Nada mais mudou.
 
 ---
 
@@ -115,7 +121,9 @@ Cada item diz se é **[direto]** (sem fork) ou **[cond:F-PIL-n]**. "Testável" �
    RN E0959 (prefixo do cClassTrib = CST, `D-2026-10-21-LACUNAS-IBS-CBS-PR1.md` L1) e é o mesmo que a execução de 04/11
    aplicou e desfez. Testável: `emissao.completo === true` e `faltantes === []` na resposta do upsert.
 7. **[direto]** **Vendas prontas** (`opts.vendas`, padrão 3): cada uma `Finalized`, com um item `Service` do serviço do
-   item 5, cliente do item 4 e data de hoje no fuso do escopo. A linha é gravada pela `DynamicTableService` (o motor
+   item 5, cliente do item 4 e **data `opts.refDate`** (padrão literal, por exemplo `2026-03-15`; nunca a data
+   corrente, emenda 04/11, régua A8) no fuso do escopo. O teste passa a mesma data, então a competência da DPS e o
+   `dCompet` do item 15 não mudam com o mês e não caem na janela UTC das 00:00–03:00. A linha é gravada pela `DynamicTableService` (o motor
    grava `date` como ISO UTC: memória `motor-grava-date-como-iso-utc-scopeday-recua-um-dia`; é o formato real que o
    L-PR2-1 quebrava) e contabilizada pela `maybeSyncSaleFinalized`. Testável: existe lançamento âncora
    `sale.finalized` para cada `saleId`. A falta dele faz o seed falhar com mensagem nomeada, sem silêncio.
@@ -151,7 +159,9 @@ Cada item diz se é **[direto]** (sem fork) ou **[cond:F-PIL-n]**. "Testável" �
     `server/prisma/scenarios/dfe-manual.db`, que já é ignorado pelo `*.db` do `server/.gitignore`. O comando também
     imprime como subir server e app sobre ele. Só depois roda o item 12. **No fim, o banco é jogado fora**: o comando
     `--drop` trunca o arquivo, sem apagar, pelo mesmo motivo de EBUSY do `pushTestSchema`. A forma de apontar o banco
-    é o F-PIL-3.
+    é o F-PIL-3. **Cópia consistente (emenda 04/11, régua A8):** o modelo é copiado **fechado**, sem conexão aberta
+    sobre ele, ou pela API de backup do SQLite. Copiar um arquivo SQLite aberto pode corromper a cópia. Testável: a
+    cópia passa em `PRAGMA integrity_check` antes do item 12.
 
 ### Fase B — Testes de integração com banco real (sessão de feature; o DFE-1 é instrumentação → correção)
 
@@ -343,7 +353,10 @@ releitura DIVERGENTE não depende do portal, só de um XML com um campo diferent
 - **(c)** Só um helper de teste (`server/test/helpers/scenarios/`), sem CLI. Não serve ao teste de tela nem ao EXT.
 - **Recomendação: (b).** O `:414` continua só com o regime, porque o multi-exercício é outro cenário. O módulo
   compartilhado faz o teste provar o seed, e os próximos 13 seeds do inventário entram no registro.
-- Status: **RATIFICAÇÃO PENDENTE.**
+- Status: **✅ RATIFICADO (b)**, dono, chat, 04/11, questionário do #1075, Q3: *"Amarrar + F-PIL-2 (b) (Recomendado)"*
+  ([D-2026-11-04-APRENDIZADOS-TESTES](../plano/decisoes/D-2026-11-04-APRENDIZADOS-TESTES.md)). Efeito fora deste BRIEF:
+  DFE-ADN-EMISSOR, DFE-ADN-EMENDA-ASSINADOR-LOCAL, DFE-EVENTOS e NFCE-EMENDA-4 estendem o cenário `dfe-manual` do registro,
+  em vez de fixture própria.
 
 ### F-PIL-3 — Como apontar o banco descartável, dado que o `.env` sobrescreve o ambiente (`env.ts:16`)
 - **(a)** Guarda por caminho: o CLI lê o `DATABASE_URL` já resolvido e recusa tudo que não esteja em
@@ -378,6 +391,11 @@ releitura DIVERGENTE não depende do portal, só de um XML com um campo diferent
 - **b. Abrangência.** (b1) só `:816`, `:839` e `:879` (o que a tela mostrou). (b2) todas as ocorrências do mesmo
   texto: `:819`, `:822`, `:1117`, `:1278`, `:1299`. **Recomendação: (b2).** É a mesma classe (memória
   `idempotency-class-fix-discipline`: varredura de classe), e o teste-guarda do item 21 ganha um caso por site.
+  **(b3), emenda 04/11:** a b2 mais `:897–898` (`… lançamento âncora … para a venda '${saleId}'`) e `:925–926`
+  (`documento vivo já existe … (id ${clash.id})`). As duas também levam id interno ao cliente e não estavam na lista
+  (verificado por leitura de `FiscalDocumentEmissionService.ts` em `origin/main` 66f2d5d97). Se a b3 for escolhida, o
+  item 21 ganha mais dois casos. **Recomendação passa a (b3)**, pelo mesmo motivo da b2: fechar a classe inteira no serviço.
+  A varredura das outras classes de serviço fica no `FIX-MENSAGENS-ID-INTERNO` (nó FIX-TESTES).
 - **c. Perfil.** A pendência do perfil traz a **chave técnica** (`falta 'pTotTribMunCent'`), não id interno. Ela fica
   fora do DFE-1 e vai para "Achados fora de escopo". **Recomendação:** fora.
 - Status: **RATIFICAÇÃO PENDENTE.**
