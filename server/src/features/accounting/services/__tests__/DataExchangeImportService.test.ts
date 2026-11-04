@@ -88,6 +88,19 @@ const csv = (s: string) => ({ originalname: 'f.csv', mimetype: 'text/csv', buffe
 beforeEach(() => jest.clearAllMocks());
 
 describe('DataExchangeImportService — chart of accounts', () => {
+  // ITG 2000 item 36: a razão do extemporâneo só vale para lançamentos e saldos iniciais — no plano de contas seria
+  // parâmetro aceito e ignorado (achado do revisor do C4); recusa com 400.
+  it('rejects an extemporaneousReason on a chart-of-accounts upload (nothing to post)', async () => {
+    const { repo } = makeRepo();
+    const { poster } = makePoster();
+    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
+
+    await expect(
+      svc.uploadAndValidate(scope, 'IMPORT_CHART_OF_ACCOUNTS', csv('code,name,nature,acceptsEntries,parentCode\n3.1,Fornecedores,Liability,true,\n'), 'razão'),
+    ).rejects.toThrow(/razão do registro extemporâneo/);
+    expect(repo.createJob).not.toHaveBeenCalled();
+  });
+
   it('creates new accounts and skips existing ones on commit', async () => {
     const { repo } = makeRepo();
     const { poster, createAccount } = makePoster();

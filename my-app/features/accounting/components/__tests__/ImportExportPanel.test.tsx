@@ -101,6 +101,14 @@ describe('ImportExportPanel — onCommitSuccess (FE-INCR6 W1)', () => {
     );
   });
 
+  it('no plano de contas o campo da razão do extemporâneo não aparece (nada é lançado)', () => {
+    const { container } = render(<ImportExportPanel unitId="u1" />);
+    const tipo = container.querySelector('select') as HTMLSelectElement;
+    fireEvent.change(tipo, { target: { value: 'IMPORT_CHART_OF_ACCOUNTS' } });
+
+    expect(screen.queryByLabelText('Razão do registro extemporâneo')).toBeNull();
+  });
+
   it('NÃO chama onCommitSuccess quando nada foi gravado (job FAILED, committedRows = 0)', async () => {
     const spy = vi.fn();
     await uploadAndCommit(job({ status: 'FAILED', committedRows: 0 }), spy);
