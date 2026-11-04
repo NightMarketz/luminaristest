@@ -13,8 +13,16 @@ const dateOnly = (field: string) => z.string().refine(isValidDateOnly, `${field}
 
 export const PartnerScopeSchema = z.object({ unitId: z.string().min(1) }).strict();
 export const PartnerIdParamSchema = z.object({ id: z.string().min(1) }).strict();
-/** Item 3 — `?data=` (date-only) escolhe o dia da vigência; sem ele, hoje no fuso do escopo. */
-export const ListPartnersQuerySchema = z.object({ unitId: z.string().min(1), data: dateOnly('data').optional() }).strict();
+/**
+ * Item 3 — `?data=` (date-only) escolhe o dia da vigência; sem ele, hoje no fuso do escopo.
+ * FE-INCR-ECF-Y600 PR-2 (item 16; dono, chat, 03/11: "Param. novo no GET /partners") — `?todas=true` lista TODAS as
+ * vigências vivas (o cadastro pela tela edita a de quem já saiu); a soma e o aviso continuam sobre as vigentes no dia.
+ * `todas` com `data` é 400: a data filtraria a lista e o pedido de todas seria aceito e ignorado.
+ */
+export const ListPartnersQuerySchema = z
+  .object({ unitId: z.string().min(1), data: dateOnly('data').optional(), todas: z.literal('true').optional() })
+  .strict()
+  .refine((q) => !(q.todas && q.data), { path: ['todas'], message: 'todas=true não combina com data: escolha um dos dois.' });
 
 /**
  * EFICIENCIA-FISCAL PR-4 item 20 (D-2026-10-28-EFICIENCIA-FISCAL-PR4-EXECUCAO #3) — participação do sócio em OUTRA empresa,

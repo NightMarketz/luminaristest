@@ -66,9 +66,11 @@ export interface SpedEcfRealPanelProps {
   qualifLoading: boolean;
   /** Contadores do cadastro (F-FE-SG-2 → d) — o mesmo select da ECF Presumido. */
   contacts: AccountingContact[];
+  /** FE-INCR-ECF-Y600 item 7 — leva ao cadastro de sócios (aba Perfil fiscal). */
+  onIrCadastroSocios?: () => void;
 }
 
-export function SpedEcfRealPanel({ unitId, qualifOptions, qualifLoading, contacts }: SpedEcfRealPanelProps) {
+export function SpedEcfRealPanel({ unitId, qualifOptions, qualifLoading, contacts, onIrCadastroSocios }: SpedEcfRealPanelProps) {
   const [contactId, setContactId] = useState('');
   const { t } = useTranslation('accounting');
   const currentYear = new Date().getFullYear();
@@ -253,7 +255,7 @@ export function SpedEcfRealPanel({ unitId, qualifOptions, qualifLoading, contact
 
       <ContadorDoCadastroSelect t={t} contacts={contacts} value={contactId} onChange={setContactId} />
       <EcfSignersEditor t={t} signers={signers} setSigners={setSigners} qualifOptions={qualifOptions} qualifLoading={qualifLoading} />
-      <EcfY600Editor year={y600Year} vigencias={y600State} value={y600Draft} onChange={setY600Draft} />
+      <EcfY600Editor year={y600Year} vigencias={y600State} value={y600Draft} onChange={setY600Draft} onIrCadastroSocios={onIrCadastroSocios} />
 
       {error && (
         <div className="mt-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">

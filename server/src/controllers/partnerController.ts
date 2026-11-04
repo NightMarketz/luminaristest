@@ -19,7 +19,7 @@ export const listPartners = async (req: Request, res: Response) => {
     if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const q = ListPartnersQuerySchema.safeParse(req.query);
     if (!q.success) return bad(res, q.error.flatten());
-    const data = await getFactory().getPartnerService().list(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'read' }), q.data.data);
+    const data = await getFactory().getPartnerService().list(await getFactory().getAccountingScopeResolver().resolve(user, q.data.unitId, { access: 'read' }), q.data.data, q.data.todas === 'true');
     return res.json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);

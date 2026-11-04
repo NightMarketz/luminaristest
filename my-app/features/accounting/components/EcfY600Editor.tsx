@@ -32,6 +32,8 @@ export interface EcfY600EditorProps {
   vigencias: Y600VigenciasState;
   value: Y600Draft;
   onChange: (next: Y600Draft) => void;
+  /** Item 7 (F-FE-Y600-2 → a) — leva à seção "Sócios" da aba Perfil fiscal; mostrado no aviso de ano sem vigência. */
+  onIrCadastroSocios?: () => void;
 }
 
 /** Rótulos dos 5 valores (campos 13–17 do Y600, p. 573) — só o nome do campo; a ajuda não orienta rateio (P3/P4 do BE). */
@@ -219,7 +221,7 @@ function DirigenteRow({
  * complemento da ECF. Dirigentes: editor de linhas manual (F-FE-Y600-3 → a). Nada persiste (F-FE-Y600-6 → a).
  * O texto de ajuda não orienta o rateio dos valores entre vigências (P3/P4 do BE, pendentes do contador): só cita o campo.
  */
-export function EcfY600Editor({ year, vigencias, value, onChange }: EcfY600EditorProps) {
+export function EcfY600Editor({ year, vigencias, value, onChange, onIrCadastroSocios }: EcfY600EditorProps) {
   const { t } = useTranslation('accounting');
   const tt = t as unknown as TFn;
   const { vigencias: lista, loading, error, reload, somaParticipacaoFimBp } = vigencias;
@@ -257,6 +259,14 @@ export function EcfY600Editor({ year, vigencias, value, onChange }: EcfY600Edito
       {!loading && error === null && year !== null && lista.length === 0 && (
         <div className="rounded-xl border border-amber-900/50 bg-amber-950/20 px-4 py-3 text-sm text-amber-300">
           {tt('sped.y600.semVigencias', 'Nenhum sócio com vigência em {{year}}. Cadastre os sócios ou informe ao menos um dirigente.', { year: String(year) })}
+          {onIrCadastroSocios && (
+            <>
+              {' '}
+              <button type="button" onClick={onIrCadastroSocios} className="underline hover:text-amber-200">
+                {tt('sped.y600.irCadastro', 'Ir para o cadastro de sócios')}
+              </button>
+            </>
+          )}
         </div>
       )}
 

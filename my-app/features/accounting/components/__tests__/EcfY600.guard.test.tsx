@@ -130,6 +130,24 @@ describe('H2 passo 14 — a ECF pela tela leva o Y600 do cadastro (FE-INCR-ECF-Y
   });
 });
 
+describe('item 7 — ano sem vigência leva ao cadastro de sócios (F-FE-Y600-2 → a)', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
+  it('o aviso mostra o atalho e ele chama onIrCadastroSocios', async () => {
+    const { spedService } = await import('../../../../lib/services/sped.service');
+    vi.mocked(spedService.listY600Vigencias).mockResolvedValueOnce({ year: 2025, vigencias: [], somaParticipacaoFimBp: 0 });
+    const ir = vi.fn();
+    render(<SpedEcfRealPanel unitId="u1" qualifOptions={ECF_TABLE} qualifLoading={false} contacts={[]} onIrCadastroSocios={ir} />);
+    await flush();
+    expect(screen.getByText(/Nenhum sócio com vigência em/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Ir para o cadastro de sócios' }));
+    expect(ir).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('useY600Vigencias (item 6)', () => {
   beforeEach(() => vi.clearAllMocks());
 

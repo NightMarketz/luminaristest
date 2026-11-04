@@ -233,7 +233,14 @@ export function ContadorDoCadastroSelect({
  * authored in the CompliancePanel above; an unmapped leaf account does not block the ECD
  * (Manual da ECD 1.17 — C2): the file downloads and the server's `avisos` are shown here.
  */
-export function SpedGenerationPanel({ unitId }: { unitId: string }) {
+export function SpedGenerationPanel({
+  unitId,
+  onIrCadastroSocios,
+}: {
+  unitId: string;
+  /** FE-INCR-ECF-Y600 item 7 — o aviso "sem sócio no ano" do Y600 leva ao cadastro (aba Perfil fiscal). */
+  onIrCadastroSocios?: () => void;
+}) {
   const { t } = useTranslation('accounting');
   const currentYear = new Date().getFullYear();
 
@@ -547,7 +554,7 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
 
         <ContadorDoCadastroSelect t={t} contacts={contacts} value={ecfContactId} onChange={setEcfContactId} />
         <EcfSignersEditor t={t} signers={ecfSigners} setSigners={setEcfSigners} qualifOptions={qualif.ECF} qualifLoading={qualifLoading} />
-        <EcfY600Editor year={ecfY600Year} vigencias={ecfY600} value={ecfY600Draft} onChange={setEcfY600Draft} />
+        <EcfY600Editor year={ecfY600Year} vigencias={ecfY600} value={ecfY600Draft} onChange={setEcfY600Draft} onIrCadastroSocios={onIrCadastroSocios} />
 
         {ecfError && (
           <div className="mt-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">{ecfError}</div>
@@ -565,7 +572,7 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
       </section>
 
       {/* ── ECF Lucro Real (esqueleto, FE-INCR-COMPLIANCE-2) ───────────────────── */}
-      <SpedEcfRealPanel unitId={unitId} qualifOptions={qualif.ECF} qualifLoading={qualifLoading} contacts={contacts} />
+      <SpedEcfRealPanel unitId={unitId} qualifOptions={qualif.ECF} qualifLoading={qualifLoading} contacts={contacts} onIrCadastroSocios={onIrCadastroSocios} />
     </div>
   );
 }
