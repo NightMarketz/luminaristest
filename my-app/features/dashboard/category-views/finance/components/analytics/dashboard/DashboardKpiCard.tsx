@@ -29,11 +29,15 @@ export default function DashboardKpiCard({
     title,
     value,
     change,
-    trend,
     details,
     sparklineData,
     showGraph = true,
+    trend: trendProp,
 }: DashboardKpiCardProps) {
+    // Os chamadores decidem `trend` pela variação crua e mandam o texto arredondado: −0,001% chega como
+    // 'down' + "0.00%". Variação exibida zero é flat — sem seta de queda (nem de alta).
+    const shownChange = Number.parseFloat(change.replace(/[^\d.,+-]/g, '').replace(',', '.'));
+    const trend = shownChange === 0 ? 'flat' : trendProp;
     const isPositive = !change.startsWith('-');
     const trendColor = trend === 'up'
         ? (isPositive ? 'text-emerald-500' : 'text-red-500')

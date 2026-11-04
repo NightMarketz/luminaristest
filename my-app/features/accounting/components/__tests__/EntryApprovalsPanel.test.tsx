@@ -8,6 +8,7 @@ import { render, screen, cleanup, waitFor, fireEvent, within } from '@testing-li
 import { EntryApprovalsPanel } from '../EntryApprovalsPanel';
 import { entryApprovalsService, type ApprovalEntry } from '../../../../lib/services/entryApprovals.service';
 import { accountingService } from '../../../../lib/services/accounting.service';
+import { later } from '../../../../test-utils/later';
 
 vi.mock('../../../../lib/services/entryApprovals.service', () => ({
   entryApprovalsService: {
@@ -348,7 +349,7 @@ describe('EntryApprovalsPanel', () => {
       .mockResolvedValueOnce({ entries: [pending], total: 51 }) // page 1
       // Page 2 (its only row) answers in a macrotask, like a real request: `listPending` is called
       // synchronously in the effect, so a wait on the CALL is not a wait on the ROW (flaked on #426).
-      .mockImplementationOnce(() => new Promise((r) => setTimeout(() => r({ entries: [pendingPage2], total: 51 }), 5)))
+      .mockImplementationOnce(() => later({ entries: [pendingPage2], total: 51 }, 5))
       .mockResolvedValue({ entries: [pending], total: 50 }); // back on page 1 after approve
     vi.mocked(entryApprovalsService.approve).mockResolvedValue(pendingPage2);
 
