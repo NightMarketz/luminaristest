@@ -1,0 +1,283 @@
+# BRIEF — MONOREPO-WORKSPACES (melhorias 5 e 6 de 7)
+
+**Estado:** BRIEF — **forks pendentes de ratificação** (F-MW-1..F-MW-8). Nada aqui está decidido. Nenhum código.
+**Sessão:** `sessao-planejamento`, 04/11/2026.
+
+## Contexto fixo
+
+- **Item a planejar:** a FASE B do pedido de 04/11, que junta as melhorias 5 e 6 "porque as duas exigem workspaces":
+  - pnpm com depósito virtual global no lugar do `worktree-deps.mjs` e do `npm ci`;
+  - cache de resultado de tarefa;
+  - plano de migração em PRs pequenos, com critério de reversão e medição antes/depois.
+- **Autorização:** dono, chat, 2026-11-04: *"Me da um prompt para implementar todas as 7 sugestões"*. A FASE B diz:
+  *"estruturais, pela sessao-planejamento (BRIEF + forks, SEM código)"* … *"Forks em aberto como perguntas para mim.
+  Pare ao entregar o BRIEF."*
+- **Divergência registrada (passo 1):** o item não tem nota de nó em `docs/plano/nos/`. É frente operacional autorizada
+  direto no chat, como a `D-2026-11-04-RECURSOS-LOCAIS`. O BRIEF sai num PR próprio, como os BRIEFs anteriores (#1010),
+  embora a regra 1 do formulário diga "não cria branch" (pendência 2 do próprio template).
+- **Insumos (fato consumado):**
+
+| Artefato | O que fixa |
+|---|---|
+| `D-2026-11-04-RECURSOS-LOCAIS` (#1034) | R1: depósito por lockfile; R2: teste só do que mudou; R3: 2 vagas pesadas (emenda #1040) |
+| `scripts/worktree-deps.mjs` (#1034) | depósito em `~/.luminaris-deps/<app>-<sha>`, chave = comando + lockfile + package.json, junção na worktree, `prisma generate` local |
+| `scripts/session-start-deps.mjs` + `.worktreeinclude` (#1038) | preparação automática da worktree |
+| `scripts/heavy-slot.cjs` (#1037) | semáforo de trabalho pesado |
+| `scripts/test-scope-guard.cjs` (#1019) | suíte inteira só no CI |
+| `allowScripts` em `server/package.json` e `my-app/package.json` (#1034) | server: prisma, @prisma/client, @prisma/engines, @swc/core, unrs-resolver; my-app: esbuild, sharp, unrs-resolver; bloqueados: puppeteer, @scarf/scarf, core-js |
+| `server/.npmrc` | `legacy-peer-deps=true` |
+| `.nvmrc` | `22` (CI); localmente Node 24.20 e npm 11.19 |
+| `.github/workflows/ci.yml` | `actions/setup-node` com `cache: npm` por `cache-dependency-path` de cada app; 22 chamadas `npm ci`/`npx`/`npm run`; cache do jest por shard e do `.next/cache` |
+| `.github/dependabot.yml` | ecossistema `npm` em `/server` e `/my-app`, `docker` em `/server` e `/my-app` |
+| `server/Dockerfile`, `my-app/Dockerfile` | `npm ci`; o do my-app constrói **só com a pasta `my-app/`** |
+| `server/stryker.config.mjs` | `testRunner: 'jest'`, `inPlace: true` (fixtures por caminho relativo) |
+| `server/jest.config.js` | `transformIgnorePatterns: ['/node_modules/(?!(uuid\|@qdrant/js-client-rest)/)']` |
+
+- **Nós vizinhos:** este BRIEF consome o `worktree-deps.mjs` e o hook (que ele substitui) e o `heavy-slot` (que ele
+  mantém). É consumido pelas 5 skills `sessao-*` (124 ocorrências de `npm ci`/`npx`/`npm run` em `.claude/skills`), pelo
+  `CLAUDE.md` e pelo `server/CLAUDE.md`.
+
+## Fontes externas (lidas em 04/11/2026)
+
+- **pnpm** ([global-virtual-store](https://pnpm.io/global-virtual-store), [settings](https://pnpm.io/settings),
+  [build](https://pnpm.io/settings/build); as páginas não mostram data nem versão).
+  - O modo se liga com `virtualStoreType: global` no `pnpm-workspace.yaml`. A doc diz que ele está "currently disabled by
+    default for project installs and marked as experimental" e que "is most useful when you have multiple checkouts …
+    such as when using git worktrees".
+  - Em CI ele "is generally not useful".
+  - Layout: `<store>/links/@/<pkg>/<versão>/<hash>/node_modules/<pkg>`, com um segmento `node_modules` no caminho.
+  - Windows não é citado.
+  - Scripts de instalação: `allowBuilds` substituiu o `onlyBuiltDependencies` "in v11". O padrão bloqueia, com
+    `strictDepBuilds: true`.
+- **Turborepo** ([caching](https://turborepo.dev/docs/crafting-your-repository/caching) e
+  [configuration](https://turborepo.dev/docs/reference/configuration), atualizadas em 02/11/2026).
+  - `inputs` padrão: "all files in the package that are checked into source control". `outputs` vazio guarda só os logs.
+  - `envMode` padrão `strict`. Cache local em `.turbo/cache`.
+  - Em worktree, quando não há `cacheDir`, "Turborepo automatically shares the cache with the main worktree".
+  - Windows não é citado.
+- **Nx** ([cache-task-results](https://nx.dev/docs/features/cache-task-results)). O cache fica em `~/.nx/<id>/cache`,
+  compartilhado entre checkouts, e as entradas ficam "for a week".
+
+## Medição de antes (04/11/2026, máquina carregada: 2–3 outras sessões rodando, ~8,7 GB livres de 31,2 GB)
+
+| Medida | Hoje | Como foi medida |
+|---|---|---|
+| Instalação, worktree nova, lockfile já no depósito | **2,6 s** (`worktree-deps.mjs server`) + `prisma generate` | prova do #1034, worktree `prova-deposito-1034b` |
+| Instalação, lockfile novo no depósito (cache do npm quente) | server 22 s (996 pacotes), my-app 20 s (798) | idem, depois da correção da chave |
+| Hook de sessão numa worktree limpa | 4 s (server + my-app pelo depósito) | prova do #1038 |
+| Disco por worktree | ~0 (junção) + `server/generated/prisma`; antes do depósito, ~351 MB só de `server/node_modules` | uma worktree removida em 04/11 tinha 24.525 arquivos, 351 MB |
+| Disco do depósito | 6 entradas em `~/.luminaris-deps`; **tamanho não medido** (o `du` não terminou com a carga) | — |
+| 2ª rodada sem mudança: `tsc` do server | 9,1 s (1ª: 9,8 s) | `npx tsc --noEmit`, runbook do Dev Drive (#1042) |
+| 2ª rodada sem mudança: 1 arquivo de integração | 5,3 s (1ª: 6,3 s) | `auth.routes.integration.test.ts`, idem |
+
+**Leitura:** o depósito do #1034 já derrubou a instalação por worktree de ~20 s (e 27 `npm ci` por dia) para 2,6 s. O ganho
+que sobra para o pnpm é menor do que parecia quando a melhoria 5 foi pedida. Isso é o F-MW-1.
+
+## 1. Checklist de comportamentos (cada um testável sozinho)
+
+Só entram os que valem **qualquer que seja** o fork. Os que dependem de fork estão marcados com `[F-MW-n]`.
+
+1. **PR-0 — spike, sem merge** `[F-MW-1]`. Numa branch descartável: `pnpm import` nos dois apps e
+   `virtualStoreType: global`. Rodar e medir, um por vez:
+   1. `pnpm install` na 1ª worktree;
+   2. `pnpm install` numa 2ª worktree limpa;
+   3. `prisma generate`;
+   4. `tsc` do server e do my-app;
+   5. jest de 1 arquivo unit e de 1 arquivo de integração;
+   6. `vitest` de 1 arquivo;
+   7. `next build`;
+   8. `stryker run --dryRunOnly`.
+
+   Critério de passar: os oito com o mesmo exit de hoje, e a 2ª worktree em ≤ 2,6 s, que é o tempo do depósito. Senão, o
+   BRIEF para no PR-0 e o depósito fica.
+2. **Workspace na raiz** `[F-MW-2]` — `package.json` raiz privado e `pnpm-workspace.yaml` com `packages: [server, my-app]`.
+   A versão do pnpm vai fixada em `packageManager`. Prova: `pnpm -r exec node -e "1"` passa nos dois.
+3. **Lockfile** `[F-MW-2]` — `pnpm import` a partir dos `package-lock.json` atuais, sem subir versão. Prova: um script de
+   diff lista as versões resolvidas antes e depois, e as duas listas são iguais.
+4. **Scripts de instalação** — o `allowScripts` do #1034 vira `allowBuilds` no `pnpm-workspace.yaml`, com a mesma lista de
+   permitidos e de bloqueados. Prova: `pnpm install` com `strictDepBuilds: true` sai 0, e o puppeteer não baixa Chromium.
+5. **Peer deps** `[F-MW-3]` — o `legacy-peer-deps=true` do server sai. Prova: `pnpm install` passa sem ele, e o
+   `openapi-types` (o "Missing" do #949) aparece resolvido.
+6. **CI** `[F-MW-4]` — `pnpm/action-setup` (SHA fixado, como os outros), `setup-node` com `cache: pnpm`,
+   `pnpm install --frozen-lockfile`, e o global virtual store **desligado** no CI (a doc diz que não serve lá). Prova: o CI
+   do PR fica verde, com o tempo de cada job anotado contra a última run verde da `main`.
+7. **Docker** `[F-MW-2]` — os dois Dockerfiles com `corepack`/pnpm e `--frozen-lockfile`. Prova: o job `docker-build` fica
+   verde. O do my-app hoje constrói só com a pasta dele, e o F-MW-2 decide se o lockfile vai junto.
+8. **Dependabot** `[F-MW-5]` — continua abrindo PR de minor/patch nos dois apps. Prova: um PR do Dependabot depois do merge
+   altera o `pnpm-lock.yaml`.
+9. **Chamadas `npx`/`npm run`** — os 3 scripts do server que chamam npm (`build`, `prebuild`, `test`), as 22 do `ci.yml`, os
+   13 scripts em `scripts/` e `server/scripts/` que chamam `npx`, e as 124 ocorrências nas skills passam a chamar
+   `pnpm`/`pnpm exec`. Prova: `git grep -n -E "npm ci|npx " -- ':!docs/**' ':!*.md'` fica vazio, salvo as exceções listadas
+   no PR.
+10. **Saída do depósito** — `worktree-deps.mjs` e `session-start-deps.mjs` passam a chamar `pnpm install --frozen-lockfile`.
+    Depois, num PR à parte, o `worktree-deps.mjs` é apagado e o R1 da `D-2026-11-04-RECURSOS-LOCAIS` ganha emenda.
+    Prova: a worktree limpa de pé pelo hook, e o tempo do hook medido.
+11. **Cache de tarefa** `[F-MW-6]` `[F-MW-7]` — o executor escolhido no F-MW-6 com tarefas `typecheck`, `lint`, `test:unit`
+    e `build`, cada uma com `inputs` estreitos. Testes usam `outputs: []`; o `build` do my-app usa `outputs: [".next/**",
+    "!.next/cache/**"]`. O cache é local e compartilhado entre worktrees (sem `cacheDir`, no Turborepo). Prova: 2ª rodada
+    sem mudança volta do cache; mudar 1 arquivo de `server/src` invalida `typecheck` e `test:unit` do server e não toca o
+    my-app.
+12. **O que não vem do cache** `[F-MW-7]` — a integração. Ver o fork.
+13. **Medição de depois** — a tabela "Medição de antes", com as mesmas linhas, na mesma condição de carga, mais: tempo da
+    2ª rodada com cache e tamanho de `~/.local/share/pnpm/store` (ou `pnpm store path`) contra o depósito.
+
+## 2. Contratos (esboço materializável)
+
+```yaml
+# pnpm-workspace.yaml (raiz) — esboço; os valores marcados dependem de fork
+packages: [server, my-app]
+virtualStoreType: global          # F-MW-1; no CI, desligado por env ou config
+strictDepBuilds: true
+allowBuilds:                      # = allowScripts do #1034
+  prisma: true
+  '@prisma/client': true
+  '@prisma/engines': true
+  '@swc/core': true
+  unrs-resolver: true
+  esbuild: true
+  sharp: true
+  puppeteer: false                # Chromium fica de fora (como hoje)
+  '@scarf/scarf': false
+  core-js: false
+# strictPeerDependencies: false   # padrão; F-MW-3
+```
+
+```jsonc
+// package.json (raiz)
+{ "private": true, "packageManager": "pnpm@<F-MW-8>", "engines": { "node": ">=22" } }
+```
+
+```jsonc
+// turbo.json — só se o F-MW-6 escolher Turborepo; as globs de inputs são o contrato
+{
+  "tasks": {
+    "typecheck":  { "inputs": ["src/**", "test/**", "tsconfig*.json", "prisma/schema.prisma"], "outputs": [] },
+    "lint":       { "inputs": ["src/**", "test/**", "eslint*.{js,mjs}"], "outputs": [] },
+    "test:unit":  { "inputs": ["src/**", "test/**", "jest.config.js", "prisma/schema.prisma", "prisma/data/**"],
+                    "outputs": [], "env": ["TZ"] },
+    "build":      { "inputs": ["$TURBO_DEFAULT$", "!**/__tests__/**"], "outputs": [".next/**", "!.next/cache/**"],
+                    "env": ["NEXT_PUBLIC_*"] },
+    "test:integration": { "cache": false }  // F-MW-7, recomendação
+  }
+}
+```
+
+## 3. Forks — RATIFICAÇÃO PENDENTE (perguntas ao dono)
+
+**F-MW-1 — Vale migrar para o pnpm agora, com o depósito já resolvendo a instalação?**
+- **(a)** Migrar já, pelo checklist inteiro.
+- **(b)** Só o spike PR-0. Migrar só se ele bater o depósito em tempo e disco, sem quebrar nada.
+- **(c)** Não migrar: fica o depósito do #1034, e o BRIEF segue só com o cache de tarefa (que funciona com npm workspaces).
+
+**Recomendação: (b).**
+- O depósito já levou a 2ª worktree a 2,6 s.
+- O global virtual store é "experimental" e desligado por padrão, e a doc não fala de Windows. Esta máquina é Windows, e
+  ninguém o testou aqui.
+- Spike barato antes de trocar o gerenciador de pacotes do repo inteiro.
+
+**F-MW-2 — Um lockfile só na raiz, ou um por app?**
+- **(a)** Um `pnpm-lock.yaml` na raiz (o padrão do pnpm workspace).
+- **(b)** Um por app (`sharedWorkspaceLockfile: false`).
+
+**Recomendação: (b).**
+- O `my-app/Dockerfile` constrói só com a pasta `my-app/`.
+- O Dependabot hoje trabalha por diretório.
+- `server` e `my-app` não compartilham pacote interno.
+- Com (a), o Docker do my-app precisa mudar de contexto, e um bump de um app reescreve o lockfile do outro.
+
+**F-MW-3 — Tirar o `legacy-peer-deps` do server?**
+- **(a)** Tirar, e corrigir o que o pnpm reclamar.
+- **(b)** Manter o equivalente (`strictPeerDependencies: false`, que já é o padrão, mais `autoInstallPeers`).
+
+**Recomendação: (a), mas só se o PR-0 mostrar que o `pnpm install` passa.** A flag existe por causa do "Missing:
+openapi-types" do npm 11 (#949), que é comportamento do npm, não do pnpm. Insumo ausente: o PR-0 ainda não rodou.
+
+**F-MW-4 — CI: o pnpm entra no mesmo PR do lockfile, ou o CI segue no npm por um tempo?**
+- **(a)** Mesmo PR: lockfile, CI e Docker juntos.
+- **(b)** CI e Docker num PR seguinte, mantendo os dois lockfiles em paralelo nesse intervalo.
+
+**Recomendação: (a).** Dois lockfiles em paralelo divergem no primeiro bump do Dependabot, e o CI deixaria de testar o que
+roda localmente. O PR fica maior, mas é um corte só e se reverte com um `git revert`.
+
+**F-MW-5 — Dependabot com pnpm 11: insumo ausente.**
+- **(a)** Confirmar na doc do GitHub que o ecossistema `npm` do Dependabot entende o `pnpm-lock.yaml` da versão escolhida
+  no F-MW-8, antes do PR de CI.
+- **(b)** Aceitar o risco e medir no primeiro PR do Dependabot.
+
+**Recomendação: (a).** Sem Dependabot, as dependências param de subir em silêncio. Hoje ele abre 2 PRs por semana (#946,
+#949).
+
+**F-MW-6 — Qual executor de cache de tarefa?**
+- **(a)** Turborepo: só config (`turbo.json`), compartilha o cache com a worktree principal sem configurar nada, e tem
+  `envMode: strict` por padrão.
+- **(b)** Nx: cache fora do repo (`~/.nx`), também compartilhado entre checkouts, mas com grafo de projetos e plugins que
+  este repo não usa.
+- **(c)** Nenhum: ligar só o cache nativo das ferramentas (`tsc --incremental` com `tsBuildInfoFile`, o cache do jest, o
+  `.next/cache` que o CI já guarda).
+
+**Recomendação: (a), com (c) antes como PR independente.**
+- O `tsc --incremental` sozinho já ataca a 2ª rodada do `typecheck` (9,1 s hoje) sem ferramenta nova.
+- O Turborepo acrescenta o "não roda de novo o que não mudou" entre tarefas e entre worktrees, que é a regra "não repita
+  gate sem mudança" da R2, agora com mecanismo.
+- O Nx traz mais coisa do que o repo precisa.
+
+**F-MW-7 — A integração (SQLite) pode vir do cache?**
+- **(a)** Nunca (`cache: false`).
+- **(b)** Sim, com `inputs` largos (schema, `prisma/data/**`, `src/**`, `test/**`) e a data do dia na chave.
+
+**Recomendação: (a).** Evidência de que o resultado não depende só dos arquivos:
+- há teste que fica vermelho entre 00:00 e 03:00 UTC (memória `teste-de-hoje-quebra-em-janela-utc`);
+- o banco-modelo de integração é aquecido no `globalSetup` a partir do schema e do ambiente;
+- o jest de integração lê fixtures por caminho relativo (o `inPlace` do Stryker existe por isso);
+- o `server/.env` muda o banco de dados (memória `env-override-defeats-db-flag`).
+
+Um verde em cache esconderia exatamente esses casos. O `test:unit` pode vir do cache, porque não abre banco.
+
+**F-MW-8 — Versão do pnpm e do Node.**
+- **(a)** pnpm 11, que tem `allowBuilds` e o global virtual store documentado nas páginas lidas, fixado em
+  `packageManager` e chegando pelo corepack.
+- **(b)** pnpm 10, mais rodado, mas com `onlyBuiltDependencies`, que a doc diz ter sido removido no 11.
+
+**Recomendação: (a).** Insumo ausente: confirmar que o corepack do Node 22 (CI, `.nvmrc`) e do 24 (local) instala o pnpm 11
+fixado. A diferença entre Node 22 no CI e 24 local já existe hoje e não é deste BRIEF.
+
+## 4. Plano de migração em PRs pequenos
+
+| PR | Conteúdo | Depende de | Classe esperada | Reversão |
+|---|---|---|---|---|
+| PR-A | `tsc --incremental` + `tsBuildInfoFile` nos dois apps, se o F-MW-6 incluir (c) | nada | verde | `git revert` |
+| PR-0 | spike pnpm (branch descartável, **não mergeia**): os 8 comandos do item 1, com tempo e exit | F-MW-1 = (b) | — | nada a reverter |
+| PR-1 | workspace + lockfile(s) + `allowBuilds` + CI + Docker (itens 2–7) | PR-0 passou; F-MW-2..5, 8 | vermelho (CI, deps) | `git revert`; os `package-lock.json` voltam com ele |
+| PR-2 | `worktree-deps.mjs`/hook chamando pnpm; skills, `CLAUDE.md` e `server/CLAUDE.md` (itens 9–10) | PR-1 | vermelho (skills) | `git revert` |
+| PR-3 | `turbo.json` + scripts `turbo run` (itens 11–12) | PR-1 (precisa de workspace) | verde ou vermelho, conforme toque `ci.yml` | `git revert`; apagar `.turbo/` |
+| PR-4 | apagar `worktree-deps.mjs` e emendar o R1 | PR-2 estável por 1 semana | vermelho (cédula) | `git revert` |
+| PR-5 | medição de depois (item 13), sem código | PR-3 | verde | — |
+
+**Critério de reversão do PR-1** (qualquer um reverte):
+- algum dos 8 comandos do PR-0 com exit diferente de hoje;
+- a 2ª worktree instalando em mais que os 2,6 s do depósito;
+- algum job do CI 20% mais lento que a mediana das 5 últimas runs verdes da `main`;
+- o Dependabot sem conseguir atualizar o lockfile;
+- o `docker-build` vermelho.
+
+## 5. Pendências de validação externa
+
+Nenhuma regra contábil, fiscal ou legal envolvida.
+
+## 6. Insumos ausentes
+
+- **pnpm no Windows** com o global virtual store, nesta máquina: nunca rodou. É o PR-0.
+- **Jest com o caminho do global virtual store:** o `transformIgnorePatterns` deve continuar casando, porque o caminho tem
+  `node_modules/uuid`. Não testado.
+- **Next.js com dependência fora da pasta do projeto** (o store fica fora do repo): não testado. Pode exigir
+  `outputFileTracingRoot`.
+- **Stryker com `inPlace: true` e `node_modules` de symlinks:** não testado.
+- **Dependabot com pnpm 11** (F-MW-5) e **corepack com pnpm 11 no Node 22** (F-MW-8): não conferidos na doc.
+- **Tamanho do depósito atual** (`~/.luminaris-deps`): o `du` não terminou com a carga de 04/11.
+
+## 7. Achados fora de escopo
+
+- O CI roda Node 22 (`.nvmrc`) e esta máquina roda Node 24 com npm 11. Essa diferença causou o "Missing: openapi-types"
+  (#949), e este BRIEF não a resolve.
+- O `node --test scripts/*.test.mjs` (heavy-slot, test-scope-guard) não roda no CI.
+- O `.claude/settings.json` está em `deny` para o agente, então o hook do #1038 precisa ser colado pelo dono.
