@@ -175,8 +175,9 @@ export const getSpedQualifAssinante = async (req: Request, res: Response) => {
 /**
  * POST /api/accounting/sped/ecd/generate — generate the SPED ECD (.txt) for a
  * year. Returns the export job summary; the artifact downloads via the existing
- * data-exchange job route (GET /data-exchange/jobs/:jobId/download). A coverage
- * gap surfaces as a 400 ValidationError with `unmappedAccounts` (D5).
+ * data-exchange job route (GET /data-exchange/jobs/:jobId/download). Conta-folha sem
+ * código referencial não bloqueia (Manual da ECD 1.17, mapeamento facultativo — C2): sai sem
+ * I051, volta em `coberturaReferencial.unmappedAccounts` e ganha uma frase em `avisos`.
  */
 export const generateSpedEcd = async (req: Request, res: Response) => {
   try {
@@ -192,10 +193,16 @@ export const generateSpedEcd = async (req: Request, res: Response) => {
 
     const scope = await getFactory().getAccountingScopeResolver().resolve(user, parsed.data.unitId, { access: 'write' });
     const rtf = uploadedRtf(req);
-    const data = await getFactory()
+    const { job, coberturaReferencial } = await getFactory()
       .getSpedGenerationService()
       .generate(scope, parsed.data, rtf ? { buffer: rtf.buffer } : undefined);
-    return res.status(201).json({ success: true, data, perfilFiscal: perfil.perfilFiscal, avisos: perfil.avisos });
+    const semCodigo = coberturaReferencial.unmappedAccounts;
+    const avisos = semCodigo.length === 0 ? perfil.avisos : [
+      ...perfil.avisos,
+      `${semCodigo.length} conta(s) analítica(s) sem código referencial na versão ${coberturaReferencial.mappingVersion} saíram sem I051: ` +
+        `${semCodigo.map((a) => a.code).join(', ')}. Na ECD o mapeamento é facultativo (Manual da ECD, item 1.17); a ECF exige o código.`,
+    ];
+    return res.status(201).json({ success: true, data: job, perfilFiscal: perfil.perfilFiscal, avisos, coberturaReferencial });
   } catch (error) {
     return handleApiError(error, res);
   }

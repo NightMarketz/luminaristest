@@ -13,7 +13,7 @@ import type { EcdSignerDraft as EcdSigner, EcfSignerDraft as EcfSigner } from '.
 // here as well — both panels resolve `../../../../lib/services/sped.service` to the same module.
 vi.mock('../../../../lib/services/sped.service', () => ({
   spedService: {
-    generateAndDownloadEcd: vi.fn(),
+    generateAndDownloadEcd: vi.fn(async () => ({ job: { id: 'job-ecd' }, avisos: [] })),
     generateAndDownloadEcf: vi.fn(),
     generateAndDownloadEcfReal: vi.fn(),
     // FE-INCR-SPED-SIGNERS: a tabela de qualificação vem do BE (recorte das consts transcritas).
@@ -382,6 +382,31 @@ describe('SpedGenerationPanel — contador do cadastro (signerContactIds)', () =
     await waitFor(() => expect(spedService.generateAndDownloadEcd).toHaveBeenCalledTimes(1));
     const payload = vi.mocked(spedService.generateAndDownloadEcd).mock.calls[0][0];
     expect(payload.declarant.codPlanRef).toBe('1');
+  });
+
+  // C2 (Manual da ECD 1.17, mapeamento facultativo): conta sem código referencial não bloqueia — o arquivo baixa
+  // (o service resolve) e o aviso do servidor aparece no painel, sem a caixa de erro.
+  it('ECD: o aviso do servidor (conta sem código referencial) aparece sem bloquear o download', async () => {
+    const { spedService } = await import('../../../../lib/services/sped.service');
+    const aviso = '1 conta(s) analítica(s) sem código referencial na versão RFB-2025 saíram sem I051: 3.9.';
+    vi.mocked(spedService.generateAndDownloadEcd).mockResolvedValueOnce({ job: { id: 'job-ecd' } as never, avisos: [aviso] });
+    render(<SpedGenerationPanel unitId="u1" />);
+    await flush();
+    const section = screen.getByRole('heading', { name: /Gerar SPED ECD/ }).closest('section') as HTMLElement;
+    const ecdForm = within(section);
+    fireEvent.change(ecdForm.getByLabelText('Contador do cadastro (opcional)'), { target: { value: 'ct1' } });
+    fireEvent.change(ecdForm.getByPlaceholderText('2026'), { target: { value: '2026' } });
+    fireEvent.change(ecdForm.getByPlaceholderText('Nome'), { target: { value: 'Sócio' } });
+    fireEvent.change(ecdForm.getByPlaceholderText('CPF/CNPJ'), { target: { value: '52998224725' } });
+    pick(ecdForm.getByPlaceholderText('Cód. (900=contador)'), '205');
+    fireEvent.change(ecdForm.getByDisplayValue('Não resp. legal'), { target: { value: 'S' } });
+    fireEvent.click(ecdForm.getByRole('button', { name: 'Gerar e baixar ECD' }));
+
+    const status = await ecdForm.findByRole('status');
+    expect(status).toHaveTextContent('ECD gerada e baixada, com avisos:');
+    expect(status).toHaveTextContent(aviso);
+    expect(spedService.generateAndDownloadEcd).toHaveBeenCalledTimes(1);
+    expect(section.querySelector('.text-red-300')).toBeNull(); // a caixa de erro do ECD não aparece
   });
 
   it('ECF: o 400 do servidor ("não tem telefone") aparece íntegro', async () => {
