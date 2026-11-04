@@ -105,6 +105,15 @@ describe('SaleDetailPanel — ações da venda vão às rotas dedicadas (LAC-A)'
     expect(screen.getByRole('button', { name: 'Cancelar' })).toBeTruthy();
   });
 
+  // H2 C7 achado 21-2 (03/11): o SalesPlugin recusa com 400 qualquer troca de status de venda paga, exceto finalizar
+  // (`SalesPlugin.ts` beforeUpdate). Decisão: D-2026-11-04-H2-21-2-VENDA-PAGA-SEM-CANCELAR.
+  it('gates de render: venda Finalized e PAGA não mostra Cancelar nem Devolver (a regra recusa os dois)', () => {
+    renderPanel(sale({ paymentStatus: 'Paid' }));
+    expect(screen.queryByRole('button', { name: 'Cancelar' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Devolver' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Pagar' })).toBeNull();
+  });
+
   it('gates de render: venda Returned não mostra nenhuma ação de transição', () => {
     renderPanel(sale({ status: 'Returned', paymentStatus: 'Paid' }));
     expect(screen.queryByRole('button', { name: 'Pagar' })).toBeNull();
