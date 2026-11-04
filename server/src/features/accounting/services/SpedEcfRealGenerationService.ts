@@ -296,8 +296,9 @@ export class SpedEcfRealGenerationService {
     // Fork 7→(a): ano sem leiaute é 400 explícito (a lib lança Error puro; aqui vira ValidationError
     // para a OpenAPI "a year with no known layout is a 400" ser verdade em produção — review I-1).
     let codVer: string;
+    const leiautes = await this.legalParams.fotografia(['LEIAUTE_SPED']);
     try {
-      codVer = resolveEcfCodVer(year, await this.legalParams.fotografia(['LEIAUTE_SPED']), dto.fiscal.codVer);
+      codVer = resolveEcfCodVer(year, leiautes, dto.fiscal.codVer);
     } catch (e) {
       throw new ValidationError(e instanceof Error ? e.message : String(e));
     }
