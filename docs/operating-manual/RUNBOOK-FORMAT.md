@@ -121,6 +121,11 @@ que são o precedente do gênero (13 relatórios de execução com evidência co
 **domínio**, vira ADR ou emenda, não hotfix. A varredura de browser de 2026-07-23 é o precedente: ela
 "falhou" achando 2 bugs de runtime, e foi a sessão mais produtiva do gate.
 
+**Runner Puppeteer de runbook de tela pega vaga de trabalho pesado** (dono, chat, 2026-11-04: "Me da um prompt para
+implementar todas as 7 sugestões"): rode-o por `node scripts/heavy-slot.cjs run --label "runbook <nome>" -- node <runner>.mjs`.
+Sem vaga ele espera e mostra quem ocupa (`node scripts/heavy-slot.cjs status`). O runner não é versionado (vive no
+scratchpad da sessão); quem o versionar chama `require('scripts/heavy-slot.cjs').acquire()` antes de abrir o Chromium.
+
 **Pré-condição de ambiente que costuma ser esquecida:** o `dev.db` populado fica em
 `server/prisma/prisma/dev.db` (o `server/prisma/dev.db` é isca de 0 byte), e telas atrás de `withAuth`
 só valem contra **build de produção**, nunca `next dev`. Servidor de dev longo serve código velho —
