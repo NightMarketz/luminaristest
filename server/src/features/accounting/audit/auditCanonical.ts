@@ -447,6 +447,14 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'dp.vinculo.deleted': ['vinculoId', 'trabalhadorId', 'unitId', 'categoria', 'dataInicio'],
   'dp.vinculo_versao.created': ['vinculoId', 'versaoId', 'vigenteDesde'],
   'dp.vinculo_versao.corrected': ['vinculoId', 'versaoId', 'campos', 'antesSha256', 'depoisSha256', 'chaveVersao'],
+  // BE-INCR-DP-F0-F1 PR-6 (item 61) — afastamento: ids e datas; o `motivo` NUNCA entra (pode ser dado de saúde, e o
+  // AuditEvent não se apaga — F17); a observação também fica fora. Implantação de férias: ids, aquisitivo e dias gozados.
+  'dp.afastamento.created': ['afastamentoId', 'vinculoId', 'inicio', 'fim'],
+  'dp.afastamento.updated': ['afastamentoId', 'vinculoId', 'inicio', 'fim'],
+  'dp.afastamento.deleted': ['afastamentoId', 'vinculoId', 'inicio', 'fim'],
+  'dp.ferias_implantacao.created': ['implantacaoId', 'vinculoId', 'aquisitivoInicio', 'diasGozados'],
+  'dp.ferias_implantacao.updated': ['implantacaoId', 'vinculoId', 'aquisitivoInicio', 'diasGozados'],
+  'dp.ferias_implantacao.deleted': ['implantacaoId', 'vinculoId', 'aquisitivoInicio', 'diasGozados'],
 };
 
 /**

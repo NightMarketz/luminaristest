@@ -912,5 +912,195 @@
       ],
       "additionalProperties": false
     }
+  },
+  "DpAfastamentoFeriasDto.ts": {
+    "CreateAfastamentoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "motivo": {
+          "type": "string",
+          "pattern": "^\\d{2}$"
+        },
+        "inicio": {
+          "type": "string"
+        },
+        "fim": {
+          "type": "string"
+        },
+        "observacao": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "motivo",
+        "inicio"
+      ],
+      "additionalProperties": false
+    },
+    "CreateFeriasImplantacaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aquisitivoInicio": {
+          "type": "string"
+        },
+        "diasGozados": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "fonte": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "unitId",
+        "aquisitivoInicio",
+        "diasGozados",
+        "fonte"
+      ],
+      "additionalProperties": false
+    },
+    "DpAfastamentoIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "afastamentoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        }
+      },
+      "required": [
+        "id",
+        "afastamentoId"
+      ],
+      "additionalProperties": false
+    },
+    "DpFeriasImplantacaoIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "implantacaoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        }
+      },
+      "required": [
+        "id",
+        "implantacaoId"
+      ],
+      "additionalProperties": false
+    },
+    "DpFeriasQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dataRef": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "dataRef"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateAfastamentoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "motivo": {
+          "type": "string",
+          "pattern": "^\\d{2}$"
+        },
+        "inicio": {
+          "type": "string"
+        },
+        "fim": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observacao": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateFeriasImplantacaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "diasGozados": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "fonte": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    }
   }
 }

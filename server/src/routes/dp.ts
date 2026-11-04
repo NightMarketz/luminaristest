@@ -3,6 +3,7 @@ import { activateDpModule, endDpModuleActivation, listDpModuleActivations, listD
 import { dpCargos, dpConvencaoParametros, dpConvencoes, dpJornadas, dpLotacoes, dpSindicatos } from '../controllers/dpCadastrosController';
 import { dpTrabalhadores, dpVinculos } from '../controllers/dpVinculoController';
 import { listDpRubricas } from '../controllers/dpRubricaController';
+import { dpAfastamentos, dpFerias } from '../controllers/dpAfastamentoFeriasController';
 
 /**
  * Departamento Pessoal, núcleo (nó PES-4, BE-INCR-DP-F0-F1). Montada em `/api/dp` (routes/index.ts); registro em 2
@@ -45,5 +46,16 @@ router.patch('/vinculos/:id/versoes/:versaoId', dpVinculos.corrigirVersao);
 
 // PR-5 (item 54) — catálogo de rubricas do núcleo, só leitura.
 router.get('/rubricas', listDpRubricas);
+
+// PR-6 (itens 59–60) — afastamento e férias do vínculo.
+router.get('/vinculos/:id/afastamentos', dpAfastamentos.list);
+router.post('/vinculos/:id/afastamentos', dpAfastamentos.create);
+router.patch('/vinculos/:id/afastamentos/:afastamentoId', dpAfastamentos.update);
+router.delete('/vinculos/:id/afastamentos/:afastamentoId', dpAfastamentos.remove);
+router.get('/vinculos/:id/ferias', dpFerias.get);
+router.get('/vinculos/:id/ferias/implantacao', dpFerias.listImplantacoes);
+router.post('/vinculos/:id/ferias/implantacao', dpFerias.createImplantacao);
+router.patch('/vinculos/:id/ferias/implantacao/:implantacaoId', dpFerias.updateImplantacao);
+router.delete('/vinculos/:id/ferias/implantacao/:implantacaoId', dpFerias.removeImplantacao);
 
 export default router;

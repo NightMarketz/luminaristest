@@ -34,6 +34,18 @@ Registro e portas (`models/moduleRegistry.ts`, `ports/`, PR-1):
   implementação do módulo ativo ou o nulo com o motivo nomeado. O mapa de implementações vem do `lib/factory.ts` (vazio
   no F0).
 
+Afastamento e férias (PR-6), sem `userId` (a posse vem do vínculo, como a versão) e com soft-delete:
+
+- `DpAfastamento` (`dp_afastamentos`): `motivo` vigente na `ESOCIAL_MOTIVO_AFASTAMENTO` (Tabela 18) no `inicio`, `inicio`
+  ≥ admissão, `fim` inclusivo ou em aberto, `observacao`; sem sobreposição no mesmo vínculo (409
+  `DP_AFASTAMENTO_SOBREPOSTO`). Sem CID nem dado clínico; o `motivo` não entra na auditoria.
+- `DpFeriasImplantacao` (`dp_ferias_implantacoes`): dias já gozados (0..30) de um período aquisitivo, com `fonte` e
+  `informadoPorId`; o aquisitivo tem de casar com um período (400 `DP_FERIAS_PERIODO_INEXISTENTE`) e é vivo único por
+  vínculo.
+- `models/ferias.ts`: `periodosDeFerias(dataInicio, dataRef, dataFim?)`, pura, só para natureza `EMPREGO` — aquisitivo de
+  12 meses até a véspera do aniversário do contrato (CLT art. 130), concessivo nos 12 seguintes (art. 134), 29/02 ⇒ 01/03
+  em ano não bissexto. Sem saldo nem faltas no F1.
+
 Catálogo de rubricas (`models/rubricas/`, PR-5):
 
 - `catalogo.ts`: `DP_RUBRICAS` em código (`as const satisfies`, Zod `.strict()`), sem fórmula — `calculo` só nomeia a
@@ -73,6 +85,11 @@ Tipos puros (`models/`, PR-0):
 | GET/POST | `/convencoes/:id/parametros` | Parâmetros da convenção (409 `DP_VERSAO_SOBREPOSTA`; 400 fora da vigência) |
 | PATCH/DELETE | `/convencoes/:id/parametros/:parametroId` | Altera parcial / soft-delete |
 | GET | `/rubricas?unitId=` | Catálogo de rubricas do núcleo (só leitura), com `conferidoPeloContador` |
+| GET/POST | `/vinculos/:id/afastamentos` | Lista / registra afastamento (409 `DP_AFASTAMENTO_SOBREPOSTO`) |
+| PATCH/DELETE | `/vinculos/:id/afastamentos/:afastamentoId` | Altera (`fim: null` reabre) / soft-delete |
+| GET | `/vinculos/:id/ferias?unitId=&dataRef=` | Períodos aquisitivo/concessivo até `dataRef`, com os dias implantados (sem saldo) |
+| GET/POST | `/vinculos/:id/ferias/implantacao` | Lista / implanta dias gozados de um aquisitivo (400 `DP_FERIAS_PERIODO_INEXISTENTE`; 409 duplicado) |
+| PATCH/DELETE | `/vinculos/:id/ferias/implantacao/:implantacaoId` | Altera dias e fonte / soft-delete |
 
 ## Invariants
 

@@ -3920,6 +3920,8 @@ model DpVinculo {
   updatedAt     DateTime          @updatedAt
   deletedAt     DateTime?
   versoes       DpVinculoVersao[]
+  afastamentos  DpAfastamento[]
+  feriasImplantacoes DpFeriasImplantacao[]
 
   @@index([userId, unitId])
   @@map("dp_vinculos")
@@ -3947,4 +3949,40 @@ model DpVinculoVersao {
 
   @@index([vinculoId, vigenteDesde])
   @@map("dp_vinculo_versoes")
+}
+
+// BE-INCR-DP-F0-F1 PR-6 (item 56) — afastamento do vínculo. Sem userId: a posse vem do vínculo, que o serviço resolve
+// antes (como a versão). Sem CID nem outro dado clínico (LGPD, dado de saúde); o `motivo` não entra na auditoria.
+model DpAfastamento {
+  id         String    @id @default(cuid())
+  vinculoId  String
+  vinculo    DpVinculo @relation(fields: [vinculoId], references: [id], onDelete: Restrict)
+  motivo     String // vigente na ESOCIAL_MOTIVO_AFASTAMENTO (Tabela 18) no `inicio`
+  inicio     String // YYYY-MM-DD; ≥ dataInicio do vínculo
+  fim        String? // YYYY-MM-DD inclusive; null = em aberto
+  observacao String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  @@index([vinculoId, inicio])
+  @@map("dp_afastamentos")
+}
+
+// BE-INCR-DP-F0-F1 PR-6 (item 58) — dias de férias já gozados de um período aquisitivo, para quem chega de outro sistema.
+// Viva única por (vinculoId, aquisitivoInicio): gate no serviço, dentro da tx (sem @@unique, por causa do soft-delete).
+model DpFeriasImplantacao {
+  id               String    @id @default(cuid())
+  vinculoId        String
+  vinculo          DpVinculo @relation(fields: [vinculoId], references: [id], onDelete: Restrict)
+  aquisitivoInicio String // YYYY-MM-DD; casa com um período de `periodosDeFerias` (item 57)
+  diasGozados      Int // 0..30
+  fonte            String // ex.: "ficha de férias do sistema anterior"
+  informadoPorId   String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  @@index([vinculoId])
+  @@map("dp_ferias_implantacoes")
 }

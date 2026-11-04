@@ -154,6 +154,9 @@ export async function resetDb(): Promise<void> {
   await prisma.interestOnEquityCalculation.deleteMany(); // IRRF-DISTRIBUICAO PR-4
   // BE-INCR-DP-F0-F1 PR-4 — antes de partners (o trabalhador aponta para o sócio com Restrict) e dos cadastros do PR-3
   // (a versão aponta para lotação, cargo, jornada e sindicato com Restrict): versão → vínculo → trabalhador.
+  // BE-INCR-DP-F0-F1 PR-6 — afastamento e implantação de férias apontam para o vínculo com Restrict: antes dele.
+  await prisma.dpAfastamento.deleteMany();
+  await prisma.dpFeriasImplantacao.deleteMany();
   await prisma.dpVinculoVersao.deleteMany();
   await prisma.dpVinculo.deleteMany();
   await prisma.dpTrabalhador.deleteMany();

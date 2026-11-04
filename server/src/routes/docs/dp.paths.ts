@@ -819,5 +819,182 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *   /api/dp/vinculos/{id}/afastamentos:
+ *     get:
+ *       summary: Leaves (afastamentos) of a contract, alive only, ordered by start
+ *       tags: [DP]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'DpAfastamentoView[]' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { description: 'Contract or unit not found' }
+ *     post:
+ *       summary: Register a leave of the contract
+ *       description: >-
+ *         motivo must be in force in eSocial Table 18 at inicio; inicio >= contract start; no overlap with another live
+ *         leave of the same contract (409 DP_AFASTAMENTO_SOBREPOSTO). No CID or other clinical data. Audited as
+ *         dp.afastamento.created without the motivo.
+ *       tags: [DP]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, motivo, inicio]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 motivo: { type: string, pattern: '^\d{2}$', description: 'eSocial Table 18 code' }
+ *                 inicio: { type: string, format: date }
+ *                 fim: { type: string, format: date, description: 'inclusive; omitted = open' }
+ *                 observacao: { type: string, maxLength: 500 }
+ *       responses:
+ *         '201': { description: 'DpAfastamentoView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { description: 'Contract or unit not found' }
+ *         '409': { description: 'DP_AFASTAMENTO_SOBREPOSTO' }
+ *   /api/dp/vinculos/{id}/afastamentos/{afastamentoId}:
+ *     patch:
+ *       summary: Change a leave (fim null reopens it); the rules of the creation are checked again
+ *       tags: [DP]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: path, name: afastamentoId, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 motivo: { type: string, pattern: '^\d{2}$' }
+ *                 inicio: { type: string, format: date }
+ *                 fim: { type: string, format: date, nullable: true }
+ *                 observacao: { type: string, maxLength: 500, nullable: true }
+ *       responses:
+ *         '200': { description: 'DpAfastamentoView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { description: 'Leave, contract or unit not found' }
+ *         '409': { description: 'DP_AFASTAMENTO_SOBREPOSTO' }
+ *     delete:
+ *       summary: Soft-delete a leave
+ *       tags: [DP]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: path, name: afastamentoId, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '204': { description: 'Deleted' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { description: 'Leave, contract or unit not found' }
+ *   /api/dp/vinculos/{id}/ferias:
+ *     get:
+ *       summary: Vacation periods of an employment contract up to dataRef, with the days taken registered on implantation
+ *       description: >-
+ *         Acquisition period = each 12 months of the contract (CLT art. 130), ending the day before the anniversary;
+ *         concession = the 12 following months (art. 134). Only for nature EMPREGO (S-2200); TSVE returns no period.
+ *         No balance in F1 (it depends on absences, art. 130).
+ *       tags: [DP]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: dataRef, required: true, schema: { type: string, format: date } }
+ *       responses:
+ *         '200': { description: 'DpFeriasView — vinculoId, natureza, dataRef, periodos[] (aquisitivoInicio, aquisitivoFim, concessivoFim, diasGozadosImplantados)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { description: 'Contract or unit not found' }
+ *   /api/dp/vinculos/{id}/ferias/implantacao:
+ *     get:
+ *       summary: Days of vacation already taken, brought from a previous system (alive only)
+ *       tags: [DP]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'DpFeriasImplantacaoView[]' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { description: 'Contract or unit not found' }
+ *     post:
+ *       summary: Register the days taken of one acquisition period
+ *       description: >-
+ *         aquisitivoInicio must be the start of an acquisition period of the contract (400 DP_FERIAS_PERIODO_INEXISTENTE);
+ *         one live record per (contract, aquisitivoInicio) (409). Audited as dp.ferias_implantacao.created.
+ *       tags: [DP]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId, aquisitivoInicio, diasGozados, fonte]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 aquisitivoInicio: { type: string, format: date }
+ *                 diasGozados: { type: integer, minimum: 0, maximum: 30 }
+ *                 fonte: { type: string, maxLength: 200 }
+ *       responses:
+ *         '201': { description: 'DpFeriasImplantacaoView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { description: 'Contract or unit not found' }
+ *         '409': { description: 'Live implantation already exists for the period' }
+ *   /api/dp/vinculos/{id}/ferias/implantacao/{implantacaoId}:
+ *     patch:
+ *       summary: Change days taken or source (the acquisition period does not change)
+ *       tags: [DP]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: path, name: implantacaoId, required: true, schema: { type: string } }
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [unitId]
+ *               properties:
+ *                 unitId: { type: string }
+ *                 diasGozados: { type: integer, minimum: 0, maximum: 30 }
+ *                 fonte: { type: string, maxLength: 200 }
+ *       responses:
+ *         '200': { description: 'DpFeriasImplantacaoView' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { description: 'Implantation, contract or unit not found' }
+ *     delete:
+ *       summary: Soft-delete an implantation
+ *       tags: [DP]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *         - { in: path, name: implantacaoId, required: true, schema: { type: string } }
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '204': { description: 'Deleted' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { description: 'Implantation, contract or unit not found' }
  */
 export {};
