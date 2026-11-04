@@ -32,9 +32,29 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 | X1 | `lib/` (exceto `factory.ts`) não importa lógica de feature (models permitidos) | 0 |
 | X2 | produção não importa teste | 0 |
 | X3 | sem ciclo de import (ciclo que passa por `lib/factory.ts` é isento) | 16 |
+| D1 | núcleo do DP `features/dp/**` não importa submódulo opcional `features/dp<Nome>/**` (F-DP-10). Emenda 2026-11-03 (§1.1) | **0** (em 03/11) |
 | I6 | `src/controllers/` não importa `features/accounting/scope/resolveAccountingScopeInternal.ts` — controller resolve o escopo pelo `AccountingScopeResolver` (F-I6-7; dono, 2026-10-15, [`D-2026-10-15-I6-FORKS`](../plano/decisoes/D-2026-10-15-I6-FORKS.md)) — **exceção nomeada:** `controllers/crmController.ts`, cujo único uso é o hook Won `maybeSyncOpportunityWon` (unitId da oportunidade já gravada → chamador interno, F-I6-1 d; L-I6-3, dono, questionário, 2026-10-16: *"Exceção nomeada"*) | 42 em 16/10 (os controllers ainda não migrados; encolhe nos PR-2…PR-5 do I6 até 0) |
 
 **Imports `type`-only contam.** Interface de repository dentro de policy é exatamente o sinal de policy impura que L5 quer ver.
+
+### 1.1 Emenda 2026-11-03 — D1 (F-DP-10)
+
+- **Decisão:** F-DP-10 → (a), dono, questionário, 02/11/2026: *"Cria a trava"*
+  ([`D-2026-11-02-DP-PRE-ADR`](../plano/decisoes/D-2026-11-02-DP-PRE-ADR.md)). Executada pelo item 6 do
+  [`BE-INCR-DP-F0-F1`](../accounting/BE-INCR-DP-F0-F1-brief.md), no primeiro PR de código do nó PES-4.
+- **Regra:** `D1-dp-core-not-optional`, severidade de erro: `from ^src/features/dp/` (fora testes) →
+  `to ^src/features/dp[A-Z][A-Za-z0-9]*/`. O núcleo do DP nunca importa um submódulo opcional; o opcional entra por porta
+  com adaptador nulo, e só o `lib/factory.ts` (composition root, X1) importa `features/dp<Nome>/`.
+- **Cobertura:** a exceção de 13/10 (§4), como a `B7`: gate estático que lê o código; não é bancada, rodada nem revisor.
+- **Baseline antes/depois:** 28 violações conhecidas antes e 28 depois (o `.dependency-cruiser-known-violations.json` não
+  mudou); a `D1` nasce com 0 e não entra no arquivo.
+- **Prova de que morde (condição que falha, 03/11):** plantados `src/features/dpSondaD1/x.ts` e
+  `src/features/dp/__sondaD1.ts`, este importando aquele ⇒ `npm run check:arch` exit 1 com
+  `error D1-dp-core-not-optional: src/features/dp/__sondaD1.ts → src/features/dpSondaD1/x.ts`. Sem o plantio: exit 0
+  ("no dependency violations found", 28 conhecidas ignoradas). Plantio removido.
+- **Ponto cego declarado:** a regra olha `features/dp/`. Controller e rota do núcleo (`src/controllers/dp*.ts`,
+  `src/routes/dp.ts`) ficam fora e falam só com o `getFactory()`; se um deles passar a chamar serviço de opcional, nenhuma
+  regra pega. A regra entre opcionais (opcional só importa outro opcional declarado em `dependsOn`) também não existe.
 
 ## 2. Fronteiras aprovadas — my-app (`my-app/.dependency-cruiser.cjs`)
 

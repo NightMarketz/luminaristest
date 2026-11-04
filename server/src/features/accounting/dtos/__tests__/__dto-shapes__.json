@@ -1545,6 +1545,14 @@
                   "SimplesApuracao",
                   "ReceitaFiscalRecebimento",
                   "SimplesCreditoIncobravel",
+                  "DpModuloAtivacao",
+                  "DpLotacao",
+                  "DpCargo",
+                  "DpJornada",
+                  "DpSindicato",
+                  "DpConvencaoColetiva",
+                  "DpTrabalhador",
+                  "DpVinculo",
                   "AccountingPolicyVersion"
                 ]
               },

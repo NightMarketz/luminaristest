@@ -412,6 +412,49 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // unitId (`CompanyFiscalProfile`): é do nível da empresa e SE REPETE, igual, no evento de cada unidade resetada —
   // nunca some `companyLevel` entre unidades (dono, questionário, 2026-10-16: "Apaga, conta em toda unidade"). Sem PII.
   'accounting.scope_reset': ['removed', 'companyLevel'],
+  // BE-INCR-DP-F0-F1 PR-1 (nó PES-4, item 19) — ativação de submódulo opcional do DP. Ids, chave e competência; sem PII.
+  // O `motivo` (texto livre) fica FORA: é digitado e pode conter qualquer coisa, e o AuditEvent não se apaga (F17).
+  'dp.module_activation.created': ['activationId', 'moduleKey', 'competenciaInicio'],
+  'dp.module_activation.ended': ['activationId', 'moduleKey', 'competenciaFim'],
+  // BE-INCR-DP-F0-F1 PR-3 (item 36) — cadastros de estrutura: ids, códigos e datas; o piso da convenção em string (dado
+  // da convenção, não de pessoa). Nome de cargo/sindicato, descrição e cláusula ficam fora.
+  'dp.lotacao.created': ['lotacaoId', 'unitId', 'codigo'],
+  'dp.lotacao.updated': ['lotacaoId', 'unitId', 'codigo'],
+  'dp.lotacao.deleted': ['lotacaoId', 'unitId', 'codigo'],
+  'dp.cargo.created': ['cargoId', 'cbo'],
+  'dp.cargo.updated': ['cargoId', 'cbo'],
+  'dp.cargo.deleted': ['cargoId', 'cbo'],
+  'dp.jornada.created': ['jornadaId', 'tipoJornada', 'minutosSemanais'],
+  'dp.jornada.updated': ['jornadaId', 'tipoJornada', 'minutosSemanais'],
+  'dp.jornada.deleted': ['jornadaId', 'tipoJornada', 'minutosSemanais'],
+  'dp.sindicato.created': ['sindicatoId', 'cnpj'],
+  'dp.sindicato.updated': ['sindicatoId', 'cnpj'],
+  'dp.sindicato.deleted': ['sindicatoId', 'cnpj'],
+  'dp.convencao.created': ['convencaoId', 'sindicatoId', 'vigenteDesde', 'vigenteAte'],
+  'dp.convencao.updated': ['convencaoId', 'sindicatoId', 'vigenteDesde', 'vigenteAte'],
+  'dp.convencao.deleted': ['convencaoId', 'sindicatoId', 'vigenteDesde', 'vigenteAte'],
+  'dp.convencao_parametro.created': ['parametroId', 'convencaoId', 'chave', 'discriminador', 'valorInt', 'vigenteDesde', 'vigenteAte'],
+  'dp.convencao_parametro.updated': ['parametroId', 'convencaoId', 'chave', 'discriminador', 'valorInt', 'vigenteDesde', 'vigenteAte'],
+  'dp.convencao_parametro.deleted': ['parametroId', 'convencaoId', 'chave', 'discriminador', 'valorInt', 'vigenteDesde', 'vigenteAte'],
+  // BE-INCR-DP-F0-F1 PR-4 (itens 45 e 49) — trabalhador, vínculo e versões: ids, códigos, datas, flags e hashes. CPF,
+  // nome, nascimento e salário NUNCA entram (F-DPB-3; F17); a correção leva só os campos, o HMAC-SHA256 antes/depois
+  // (chaveiro DP_AUDIT, dono 2026-11-04) e a versão da chave.
+  'dp.trabalhador.created': ['trabalhadorId', 'origem', 'temEmployeeRef', 'temPartner'],
+  'dp.trabalhador.updated': ['trabalhadorId', 'origem', 'temEmployeeRef', 'temPartner'],
+  'dp.trabalhador.deleted': ['trabalhadorId', 'origem', 'temEmployeeRef', 'temPartner'],
+  'dp.trabalhador.corrected': ['trabalhadorId', 'campos', 'antesSha256', 'depoisSha256', 'chaveVersao'],
+  'dp.vinculo.created': ['vinculoId', 'trabalhadorId', 'unitId', 'categoria', 'dataInicio'],
+  'dp.vinculo.deleted': ['vinculoId', 'trabalhadorId', 'unitId', 'categoria', 'dataInicio'],
+  'dp.vinculo_versao.created': ['vinculoId', 'versaoId', 'vigenteDesde'],
+  'dp.vinculo_versao.corrected': ['vinculoId', 'versaoId', 'campos', 'antesSha256', 'depoisSha256', 'chaveVersao'],
+  // BE-INCR-DP-F0-F1 PR-6 (item 61) — afastamento: ids e datas; o `motivo` NUNCA entra (pode ser dado de saúde, e o
+  // AuditEvent não se apaga — F17); a observação também fica fora. Implantação de férias: ids, aquisitivo e dias gozados.
+  'dp.afastamento.created': ['afastamentoId', 'vinculoId', 'inicio', 'fim'],
+  'dp.afastamento.updated': ['afastamentoId', 'vinculoId', 'inicio', 'fim'],
+  'dp.afastamento.deleted': ['afastamentoId', 'vinculoId', 'inicio', 'fim'],
+  'dp.ferias_implantacao.created': ['implantacaoId', 'vinculoId', 'aquisitivoInicio', 'diasGozados'],
+  'dp.ferias_implantacao.updated': ['implantacaoId', 'vinculoId', 'aquisitivoInicio', 'diasGozados'],
+  'dp.ferias_implantacao.deleted': ['implantacaoId', 'vinculoId', 'aquisitivoInicio', 'diasGozados'],
 };
 
 /**

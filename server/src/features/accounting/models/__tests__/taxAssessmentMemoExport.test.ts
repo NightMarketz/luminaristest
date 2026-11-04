@@ -69,12 +69,13 @@ describe('EMENDA RASTREIO item 9 — vencimento do DARF (quota única; Lei 9.430
 });
 
 describe('EMENDA RASTREIO itens 6–8 e 10 — planilha', () => {
-  it('item 6: 27 colunas, as 16 de antes na mesma ordem e as 11 novas ao fim', () => {
-    expect(MEMO_COLUMNS).toHaveLength(27);
+  it('item 6: 29 colunas, as 16 de antes na mesma ordem, as 11 novas e as 2 da ECF (C8) ao fim', () => {
+    expect(MEMO_COLUMNS).toHaveLength(29);
     expect(MEMO_COLUMNS.slice(0, 16)).toEqual([
       'anoCalendario', 'periodo', 'tributo', 'regime', 'forma', 'modo', 'codigoReceita', 'tabelaVersao', 'confirmedAt',
       'apuracaoId', 'substitui', 'tipoLinha', 'codigo', 'descricao', 'valorCents', 'fonte',
     ]);
+    expect(MEMO_COLUMNS.slice(-2)).toEqual(['registroEcf', 'linhaEcf']);
   });
 
   it('item 7: RESUMO×6 → MEMORIA → RASTREIO×2 (uma por conta, codigo da mãe) → MEMORIA → MEMORIA', () => {
@@ -88,7 +89,7 @@ describe('EMENDA RASTREIO itens 6–8 e 10 — planilha', () => {
     // RASTREIO: descricao = nome da conta, valorCents = movimento, fonte = 'razão'; conta, janela e saldo nas colunas novas.
     expect(linhas[7].slice(12)).toEqual([
       'RECEITA_SERVICO', 'Receita de Serviços', '200000', 'razão', '2026-07-31', '', '', 'RAZAO', '', '',
-      '3.1', 'Receita de Serviços', '2026-04-01', '2026-06-30', '450000',
+      '3.1', 'Receita de Serviços', '2026-04-01', '2026-06-30', '450000', '', '',
     ]);
     expect(linhas[8][col('saldoFinalCents')]).toBe(''); // sem saldo gravado ⇒ vazio, não '0'
     // A soma das RASTREIO bate com a MEMORIA-mãe.
@@ -107,7 +108,8 @@ describe('EMENDA RASTREIO itens 6–8 e 10 — planilha', () => {
       '2026', 'T02', 'IRPJ', 'PRESUMIDO', 'TRIMESTRAL', 'PRESUMIDO', '208901', 'lc224-2026-v1', '2026-07-10T12:00:00.000Z',
       'ta-t02', '', 'MEMORIA', 'RECEITA_SERVICO', 'Receita bruta de serviço do trimestre (conta 3.1)', '300000', 'IN 1.700 art. 215',
     ]);
-    expect(linhas[6].slice(19)).toEqual(['', '', '', '', '', '', '', '']);
+    expect(linhas[6].slice(19, 27)).toEqual(['', '', '', '', '', '', '', '']);
+    expect(linhas[6].slice(27)).toEqual(['P200', '8']); // C8: a linha da ECF do passo, mesmo sem rastreio
   });
 
   it('item 8: parametrosIds ordenados e ;-separados + sha256 em toda linha; anterior ao PR-4 ⇒ vazias', () => {

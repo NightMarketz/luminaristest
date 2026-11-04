@@ -109,6 +109,8 @@ Checklist numerado (§1), contratos esboçados (§2), forks F-TC-1..7 listados c
 5. **Forma da planilha:** formato longo, uma linha por `MemoriaLinha`, colunas no §2.1; uma planilha só (E-S1).
    Cabeçalho de cada apuração = linhas de resumo (`base`, `devido`, `deducoes`, `aPagar`, `saldoNegativo`,
    `diferencaPostergada`) **segundo F-TC-6**. Teste-tabela: 1 trimestral Presumido + 1 `A00` com saldo negativo.
+   **Emenda C8 (03/11/2026, ver §8):** duas colunas, `registroEcf` e `linhaEcf`, logo depois de `codigo` — o registro e
+   o código da tabela dinâmica da ECF que confere aquele passo; vazias quando o passo não tem linha na ECF.
 6. **Linha-meta** `# kind=EXPORT_TAX_ASSESSMENT_MEMO; periodStart=…; periodEnd=…; apuracoes=<n>; geradoEm=<ISO>`
    no topo (precedente S9). Teste: 1ª linha começa com `#`.
 7. **Valores em centavos como string inteira** (mesma convenção do `valorCents`), sem float. Teste: valor > 2^53
@@ -175,7 +177,9 @@ type MemoLinhaExport = {
   tabelaVersao: string; confirmedAt: string;       // ISO
   apuracaoId: string; substitui: string;           // supersedesId ?? ''
   tipoLinha: 'RESUMO' | 'MEMORIA';                 // F-TC-6 (a)
-  codigo: string; descricao: string; valorCents: string; fonte: string;
+  codigo: string;
+  registroEcf: string; linhaEcf: string;           // emenda C8 (§8): P200…P500 | N620…N670 + CÓDIGO da tabela dinâmica; '' = sem linha
+  descricao: string; valorCents: string; fonte: string;
 };
 
 // DataExchangeDto.superRefine — aditivo
@@ -244,7 +248,7 @@ próprio "executa".
 
 | # | O quê | Por que está aqui | Quem fecha |
 |---|---|---|---|
-| P-C1 | A forma da planilha de memória (longa, resumo + linhas) serve ao contador | Pedido da triagem 23/09 linha 12 (*"memória de cálculo … XLSX para ele"*); forma não validada | contador |
+| P-C1 | ~~A forma da planilha de memória (longa, resumo + linhas) serve ao contador~~ **Fechada em 03/11 pela emenda C8 (§8)**: a lei não fixa formato; o layout de conferência é o da ECF | Pedido da triagem 23/09 linha 12 (*"memória de cálculo … XLSX para ele"*); pesquisa no lugar do parecer (dossiê `pc1-memoria-calculo`) | ~~contador~~ fechada |
 | P-C2 | Município do ISS = `cLocPrestacao` — **superada 17/10/2026: regra de lei LC 116 art. 3º (ver §Estado legal)** | Regra geral × exceções de incidência da LC 116 art. 3º **não foram lidas nesta sessão** (**A**, assumido); o ADR não cita a LC 116 | contador |
 | P-C3 | ISS do Simples: o relatório lista o ISS da nota, mas o recolhimento é pelo DAS (exceto retido) | `regApTribSN` é *"pendente contador (5e)"* (`schema.prisma:1398`); regra do Simples não está no ADR (**I**) | contador |
 | P-C4 | Nota cancelada não entra na competência (F-TC-3 a) | Inferido; sem fonte primária lida (**I**) | contador |
@@ -311,3 +315,45 @@ estão em `pesquisas-legais/verif-2026-10-17-irpj-csll-correcoes/relatorio.md` (
 
 - **P-C2 vira regra de lei (era grau A, assumido).** LC 116 art. 3º caput [D01] LC 116 (acervo ctresb/leis, compilada, cópia 13/10; <https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2003-07-31;116>): *"considera-se prestado, e o imposto, devido, no local do estabelecimento prestador … exceto nas hipóteses previstas nos incisos I a XXV"*. No código, a coluna `li` da `LC116_SERVICO` decide: EP ⇒ `cLocEmi`; LP ⇒ `cLocPrestacao`. ET (17.05), lista vazia (99.01) ou código fora da lista ficam em `cLocPrestacao`. O F-TC-1 (a), que dizia `cLocPrestacao` para tudo, foi **superado** no PR #755 (`municipioDeIncidencia`, `models/issCompetencia.ts`).
 - **Transição do ISS (não implementada — feature nova, registrada centralmente):** LC 116 art. 8º-B, incluído pelo art. 508 da LC 214 [D04] LC 214 compilada (<https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm>): as alíquotas caem 10/20/30/40% em 2029/2030/2031/2032 e os benefícios caem na mesma proporção (§ 1º). A LC 116 fica revogada em 01/01/2033 (LC 214 art. 543 IV). `ISS_LIMITE` e `issComBeneficio` não têm fim de vigência. Nada muda antes de 2029.
+
+## 8. Emenda C8 — linha da ECF na memória de cálculo (03/11/2026)
+
+**Autorização:** nota [`D-2026-11-02-DELEGACAO-DONO`](../plano/decisoes/D-2026-11-02-DELEGACAO-DONO.md) §9 (dono, chat,
+02/11: *"Faz e me substitui nas decisões"*; 03/11: *"Pode seguir rodando aqui pesquisa pra substituir parecer de
+contador"*) — `executa` desta emenda por delegação (correção C8 do `HANDOFF-2026-11-02-delegacao-dono.md`).
+**Fonte:** dossiê [`pesquisas-legais/pc1-memoria-calculo`](../../pesquisas-legais/pc1-memoria-calculo/relatorio.md): a lei não
+fixa formato da memória (Lei 8.981/1995 art. 45 III [D03]; CTN art. 195 parágrafo único [D04]); a conferência usa as
+linhas da ECF — P200/P300/P400/P500 no Presumido, N620/N630/N660/N670 no Real, uma linha por código da tabela
+dinâmica (Manual da ECF leiaute 12 [D01]; Tabelas Dinâmicas de 28/05/2026 [D02], SHA-256 `366b8d90…`).
+
+**Comportamento (emenda ao item 5):**
+
+- `MEMO_COLUMNS` ganha `registroEcf` e `linhaEcf` logo depois de `codigo`. `linhaEcf` = coluna CÓDIGO da aba (como o
+  catálogo `ecf-l12-linhas.json` guarda: `25140`, `14.10`); o Real usa a aba N630A (PJ em geral).
+- Tabela de correspondência em `server/src/features/accounting/models/taxAssessmentEcfLinhas.ts`, por `modo` × `tributo`,
+  com DT_INI/DT_FIM de cada linha: a linha só sai para a apuração cujo período a toca (LC 224: P200/P300 desde
+  01/01/2026; P400/P500 desde 01/04/2026). Linhas `RESUMO` com linha própria também levam a marca; as outras ficam vazias.
+- **Regra de leitura:** o valor de uma linha da ECF é a soma dos passos da mesma apuração marcados com ela (ex.:
+  `PRESUNCAO_SERVICO` + `PRESUNCAO_REVENDA` → P200 10; `LC224_LIMITE_TRIMESTRE` + `LC224_SOBRA_ANTERIOR` → P200 25140).
+- **Ficam vazios:** passos sem linha (`GUARDA_CIRCULARIDADE`, `MESES_PERIODO`, vencimentos, avisos), `RECEITA_HOSPITALAR`
+  (parte da receita de serviço), `SALDO_NEGATIVO`, as parcelas `DIFERENCA_POSTERGADA_<período>`, a dedução
+  `CSLL_RETIDA` (P500 9/10/11/12 dependem de quem reteve) e os passos do e-Lalur/e-Lacs (`LAIR`, `ADICOES`, … — registros
+  M300/M350, fora dos registros desta decisão). PIS/COFINS não têm ECF.
+
+**Correções à correspondência de partida do dossiê §2 (grau inferido → conferida contra a aba):**
+
+| Passo | Dossiê | Emenda | Por quê (aba [D02]) |
+|---|---|---|---|
+| `DIFERENCA_POSTERGADA` (16%) | P300 17 | **P300 5** (N620 5 na estimativa) | linha 5 = *"Diferença de IR Devida pela Mudança de Coeficiente sobre a Receita Bruta"*, orientação do prestador que usou o 16%; a 17 é postergação por inexatidão de período |
+| `LC224_LIMITE_TRIMESTRE` | P200 25140 | P200 25140 **somado** a `LC224_SOBRA_ANTERIOR` | 25140 = 1.250.000 + 25170 do trimestre anterior |
+| `LC224_EXCEDENTE` | P200 25150 | **P200 25200** | 25200 é a base do acréscimo (no T04, o ramo do § 5º); 25150 é só a do trimestre |
+| `RETIDO_MESES` | P300 10 / P500 11 | vazio | é a soma das retenções já deduzidas nas estimativas (ajuste anual), não linha do Presumido |
+
+**Teste-guarda:** `server/src/controllers/__tests__/taxAssessmentMemoEcf.integration.test.ts` — sobre o seed
+(`seed-presumido`, 2025): apura e confirma o T01/2025, gera a ECF Presumido de 2025 e exporta a memória; para cada linha
+marcada, a soma da memória bate com a linha `E` do arquivo (P200 4/8, P400 2/4) ou, nas linhas que o PVA calcula, com a
+fórmula da tabela dinâmica aplicada às linhas `E` do mesmo arquivo (`test/helpers/ecfPresumidoOraculo.ts`). O cenário
+que o seed não alcança (receita acima do limite da LC 224, adicional > 0, T01/2026) está em
+`models/__tests__/taxAssessmentEcfLinhas.test.ts`, contra o mesmo oráculo. **Grau:** Presumido T01 verificado (arquivo +
+fórmula); T02–T04, o ramo do § 5º e o Real ficam **inferidos** (conferidos contra a descrição e o DT_INI da aba; o seed
+não tem apuração do Real, e a ECF do Real só traz as linhas `E` do e-Lalur).

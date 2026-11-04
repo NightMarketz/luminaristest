@@ -22,6 +22,23 @@ test('schema, auth, CLAUDE.md aninhado, cédula e gate são vermelhos', () => {
   }
 });
 
+test('fiscal fora de features/accounting é vermelho: os arquivos do #1017, #908 e #1012', () => {
+  for (const f of ['server/src/controllers/spedController.ts',
+    'server/src/controllers/__tests__/accountingContactController.integration.test.ts',
+    'server/src/lib/mit.ts', 'server/src/lib/__tests__/mit.test.ts', 'server/src/lib/sped.ts',
+    'server/src/lib/reinf/xsd/README.md', 'server/src/features/sales/models/fiscalGuard.ts',
+    'server/src/jobs/AccountingSyncScheduler.ts', 'my-app/lib/services/accounting.service.ts',
+    'scripts/classe-risco.mjs', 'scripts/paralelo.mjs']) {
+    assert.equal(classificar({ arquivos: [f] }).classe, 'vermelho', f);
+  }
+});
+
+test('vizinho não fiscal continua verde: controller, rota, lib e serviço FE de CRM', () => {
+  const r = classificar({ arquivos: ['server/src/controllers/crmController.ts', 'server/src/routes/crm.ts',
+    'server/src/lib/logger.ts', 'my-app/lib/services/crm.service.ts', 'server/src/routes/docs/accounting.sped.paths.ts'] });
+  assert.equal(r.classe, 'verde', r.motivos.join('; '));
+});
+
 test('dependência: major é vermelho, minor/patch e grupo são verdes', () => {
   assert.ok(bumpMajor('chore(deps): Bump openai from 4.104.0 to 7.43.0 in /server'));
   assert.ok(!bumpMajor('chore(deps): Bump zod from 4.1.0 to 4.3.2 in /server'));
