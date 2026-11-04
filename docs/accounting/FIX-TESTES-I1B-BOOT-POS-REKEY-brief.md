@@ -1,6 +1,7 @@
 # BRIEF — FIX-TESTES-I1B-BOOT-POS-REKEY (nó I1b): o boot relê o binding re-chaveado, provado por teste
 
-> **Estado:** BRIEF de correção, 04/11/2026. Sem código e sem `executa`. Os forks estão em **RATIFICAÇÃO PENDENTE**.
+> **Estado:** BRIEF de correção, 04/11/2026. **EXECUTA** (dono, chat, 04/11, questionário: *"Executa, forks na recomendação
+> (Recomendado)"*): vale para o BRIEF inteiro, sem merge, e todos os forks estão ratificados na recomendação.
 > Régua: [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md) (A1, A2, A5, A6).
 
 ## 0. Contexto fixo
@@ -64,12 +65,14 @@ Gates do diff: `tsc` do server com `tsconfig.test.json`. Rodar local só o arqui
 - (a) No `rekeyLegacyUnitCli.integration.test.ts`, como 15º caso. Reaproveita `onboardedOwner`, `seedLegacy` e `backup`.
 - (b) Arquivo irmão. O shard fica mais leve, mas os helpers locais são duplicados ou extraídos.
 - **Recomendação:** (a). O arquivo já tem os helpers, e extrair muda arquivo além do item.
+- **Status: ✅ RATIFICADO (a)**, dono, chat, 04/11, questionário: *"Executa, forks na recomendação (Recomendado)"* ([D-2026-11-04-APRENDIZADOS-TESTES](../plano/decisoes/D-2026-11-04-APRENDIZADOS-TESTES.md)).
 
 ### F-I1B-2 — Como obter um alimentador "recém-bootado"
 - (a) `ApplicationFactory` novo por construtor ou reset, se o código permitir (a sessão confere em `lib/factory.ts`).
 - (b) `AccountingBindingFeederService` direto sobre o repositório real, sem a factory.
 - **Recomendação:** (a), porque é o que o `server.ts` chama. Se não houver reset sem tocar código de produção, (b), e o
   BRIEF registra que o `server.ts` em si continua sem teste (como o molde já declara).
+- **Status: ✅ RATIFICADO (a), com a queda para (b) prevista na recomendação**, dono, chat, 04/11, questionário: *"Executa, forks na recomendação (Recomendado)"* ([D-2026-11-04-APRENDIZADOS-TESTES](../plano/decisoes/D-2026-11-04-APRENDIZADOS-TESTES.md)).
 
 ## 4. Pendente de validação externa
 

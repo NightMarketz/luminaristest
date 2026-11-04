@@ -35,5 +35,15 @@ as daqui. Para Q2, Q3 e Q5, o dono resolveu a diferença num questionário nesta
 | Q3 | "Fica ratificado (b)" | O F-PIL-2 → (b) fica. A dependência está explícita nos blocos do DFE-ADN-EMISSOR, do ASSINADOR-LOCAL e do DFE-EVENTOS. |
 | Q5 | "As duas coisas" | A nota [[FIX-TESTES]] fica, e cada nó dono recebe uma linha (fold): [[I1b]], [[H2]], [[I8]] e [[FIX-AUTH-CONTA]] (este, com a refutação do "sem teste" da troca de senha). O aperto do IMO-1 está anotado no fold de 04/11 do [[H2]]. |
 
-**O que esta decisão não autoriza:** código, `executa` de qualquer item e merge. Os forks restantes dos BRIEFs novos (F-I1B,
-F-VPT, F-CRM, F-RF-2/3, F-MSG) continuam pendentes.
+## Executa e forks (04/11, mais tarde no mesmo dia)
+
+Pergunta do questionário: os 5 itens do [[FIX-TESTES]] não têm `executa` e têm forks pendentes; como escrever os prompts
+das sessões? Resposta do dono (literal): **"Executa, forks na recomendação (Recomendado)"**.
+
+- **Executa** dos 5 BRIEFs inteiros, todos os lotes, um PR por lote, **sem merge**.
+- **Forks ratificados na recomendação:** F-I1B-1 (a), F-I1B-2 (a) com a queda para (b); F-VPT-1 (a), F-VPT-2 (b), F-VPT-3 (a);
+  F-CRM-1 (a) com a queda para (b), F-CRM-2 (a); F-RF-2 (a), F-RF-3 (b); F-MSG-1 (a), F-MSG-2 (a1), F-MSG-3 (a).
+- **Ordem:** o lote 1 do `FIX-MENSAGENS-ID-INTERNO` (imobilizado) espera a correção do IMO-1 (#1053) entrar, porque toca o mesmo
+  serviço e o mesmo arquivo de teste.
+
+**O que esta decisão não autoriza:** merge, nem os itens fora dos 5 BRIEFs.

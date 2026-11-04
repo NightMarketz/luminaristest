@@ -1,6 +1,7 @@
 # BRIEF — FIX-TESTES-VENDA-PACOTE-TEXTOS: os avisos da venda de pacote testados pelo texto que a tela mostra
 
-> **Estado:** BRIEF de correção, 04/11/2026. Sem código e sem `executa`. Os forks estão em **RATIFICAÇÃO PENDENTE**.
+> **Estado:** BRIEF de correção, 04/11/2026. **EXECUTA** (dono, chat, 04/11, questionário: *"Executa, forks na recomendação
+> (Recomendado)"*): vale para o BRIEF inteiro, sem merge, e todos os forks estão ratificados na recomendação.
 > Régua: [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md) (A1, A3, A5).
 
 ## 0. Contexto fixo
@@ -51,16 +52,19 @@ Gates do diff: `cd my-app && npm run test:types`; rodar local só o arquivo: `np
 - (a) Do JSON real de `public/locales/pt` (a asserção quebra se alguém mudar o texto sem mudar o teste).
 - (b) Do texto padrão do segundo elemento da tupla (prova o fallback, não a tradução).
 - **Recomendação:** (a). É o que a tela mostra em pt.
+- **Status: ✅ RATIFICADO (a)**, dono, chat, 04/11, questionário: *"Executa, forks na recomendação (Recomendado)"* ([D-2026-11-04-APRENDIZADOS-TESTES](../plano/decisoes/D-2026-11-04-APRENDIZADOS-TESTES.md)).
 
 ### F-VPT-2 — Aposentar o RUNBOOK-H2-VENDA-PACOTE
 - (a) Depois de 1–3 e do roteiro de tela do item 4, marcar o runbook como aposentado, citando os testes.
 - (b) Manter o runbook até haver seed de cenário de venda (inventário §7, item 3).
 - **Recomendação:** (b). O item 4 precisa do cenário; sem ele, o runbook continua sendo a única prova da tela.
+- **Status: ✅ RATIFICADO (b)**, dono, chat, 04/11, questionário: *"Executa, forks na recomendação (Recomendado)"* ([D-2026-11-04-APRENDIZADOS-TESTES](../plano/decisoes/D-2026-11-04-APRENDIZADOS-TESTES.md)).
 
 ### F-VPT-3 — Exportar `PACKAGE_ISSUE_KEYS`
 - (a) Exportar a constante (uma palavra em código de produção).
 - (b) Repetir as 5 chaves no teste.
 - **Recomendação:** (a). (b) deixa o teste passar com uma chave que o componente não usa.
+- **Status: ✅ RATIFICADO (a)**, dono, chat, 04/11, questionário: *"Executa, forks na recomendação (Recomendado)"* ([D-2026-11-04-APRENDIZADOS-TESTES](../plano/decisoes/D-2026-11-04-APRENDIZADOS-TESTES.md)).
 
 ## 4. Pendente de validação externa
 

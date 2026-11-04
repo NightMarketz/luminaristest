@@ -1,6 +1,7 @@
 # BRIEF — FIX-MENSAGENS-ID-INTERNO (nó FIX-TESTES, item 5): mensagem ao cliente nomeia o dado, não o id
 
-> **Estado:** BRIEF de correção, 04/11/2026. Sem código e sem `executa`. Os forks estão em **RATIFICAÇÃO PENDENTE**.
+> **Estado:** BRIEF de correção, 04/11/2026. **EXECUTA** (dono, chat, 04/11, questionário: *"Executa, forks na recomendação
+> (Recomendado)"*): vale para o BRIEF inteiro, sem merge, e todos os forks estão ratificados na recomendação.
 > Régua: [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md), A3 ("mensagem que
 > nomeia o dado, nunca id interno") e A2.
 
@@ -61,17 +62,20 @@ Nenhum contrato novo. A forma da mensagem segue o F-MSG-2. Gates do diff: `tsc` 
 - (b) Todo id, sem exceção, inclusive o eco da URL.
 - **Recomendação:** (a). O eco da URL ajuda a depurar e não esconde nada do usuário. O que o usuário não reconhece é o id de
   **outro** registro (classe, conta, venda) ou o do registro que ele vê pelo código.
+- **Status: ✅ RATIFICADO (a)**, dono, chat, 04/11, questionário: *"Executa, forks na recomendação (Recomendado)"* ([D-2026-11-04-APRENDIZADOS-TESTES](../plano/decisoes/D-2026-11-04-APRENDIZADOS-TESTES.md)).
 
 ### F-MSG-2 — Forma da mensagem
 - (a1) Só o rótulo (`Ativo 'A-CONC — Notebook' …`), com o id só se o rótulo estiver vazio. É a forma a1 do F-PIL-5.
 - (a2) Rótulo + id entre parênteses.
 - **Recomendação:** (a1), alinhada ao F-PIL-5 do DFE-1, para a tela ter um padrão só.
+- **Status: ✅ RATIFICADO (a1)**, dono, chat, 04/11, questionário: *"Executa, forks na recomendação (Recomendado)"* ([D-2026-11-04-APRENDIZADOS-TESTES](../plano/decisoes/D-2026-11-04-APRENDIZADOS-TESTES.md)).
 
 ### F-MSG-3 — Ordem dos lotes depois do imobilizado
 - (a) Por exposição na tela: primeiro o que o operador usa no dia (AP/AR, cobrança, venda, pacote), depois os fechamentos
   (LALUR, distribuição, JCP, revisão, entrega).
 - (b) Pela contagem de sites, do maior para o menor.
 - **Recomendação:** (a). O dano é a mensagem que o operador lê, não o número de `throw`.
+- **Status: ✅ RATIFICADO (a)**, dono, chat, 04/11, questionário: *"Executa, forks na recomendação (Recomendado)"* ([D-2026-11-04-APRENDIZADOS-TESTES](../plano/decisoes/D-2026-11-04-APRENDIZADOS-TESTES.md)).
 
 ## 4. Pendente de validação externa
 

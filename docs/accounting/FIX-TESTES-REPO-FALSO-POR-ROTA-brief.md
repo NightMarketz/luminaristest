@@ -1,6 +1,7 @@
 # BRIEF — FIX-TESTES-REPO-FALSO-POR-ROTA: toda rota contábil com um teste de integração no caminho feliz
 
-> **Estado:** BRIEF de correção, 04/11/2026. Sem código e sem `executa`. Os forks estão em **RATIFICAÇÃO PENDENTE**.
+> **Estado:** BRIEF de correção, 04/11/2026. **EXECUTA** (dono, chat, 04/11, questionário: *"Executa, forks na recomendação
+> (Recomendado)"*): vale para o BRIEF inteiro, sem merge, e todos os forks estão ratificados na recomendação.
 > Régua: [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md) (A1, A2, A6).
 > **Não é gate nem aparato de auditoria** (regra ⛔ do CLAUDE.md): a medição do item 1 é uma tabela feita uma vez, num doc,
 > e não entra no CI.
@@ -67,11 +68,13 @@ com `--runInBand`.
 - (b) Um PR por área (imobilizado, fiscal, fechamento…).
 - **Recomendação:** (a). O PR fica revisável e o tempo de integração cresce aos poucos (o CI de integração é o caminho
   crítico medido na PESQUISA-TESTES-2).
+- **Status: ✅ RATIFICADO (a)**, dono, chat, 04/11, questionário: *"Executa, forks na recomendação (Recomendado)"* ([D-2026-11-04-APRENDIZADOS-TESTES](../plano/decisoes/D-2026-11-04-APRENDIZADOS-TESTES.md)).
 
 ### F-RF-3 — Remover unit que só conta chamadas
 - (a) Remover no mesmo PR, quando a integração nova cobre o mesmo comportamento.
 - (b) Nunca remover neste BRIEF.
 - **Recomendação:** (b). Remoção é decisão caso a caso do dono; aqui só se acrescenta.
+- **Status: ✅ RATIFICADO (b)**, dono, chat, 04/11, questionário: *"Executa, forks na recomendação (Recomendado)"* ([D-2026-11-04-APRENDIZADOS-TESTES](../plano/decisoes/D-2026-11-04-APRENDIZADOS-TESTES.md)).
 
 ## 4. Pendente de validação externa
 
