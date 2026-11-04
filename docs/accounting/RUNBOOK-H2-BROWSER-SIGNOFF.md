@@ -781,6 +781,88 @@ Desfecho dos passos 12–14 (marcar UM):
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passos 12–14): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02) — atesta a conferência da evidência colada na execução de 29–30/10; desfecho marcado pelo dono (conferido em 02/11: corpos dos POST 201/400 de ECD/ECF acima e os prints passo13-01, passo14-01…03).
 
+> **Execução 04/11 — passo 14 refeito depois do Y600 (agente AI tester).** Autorização: dono, chat, 2026-11-02:
+> *"gates humanos H1 e H2, as cédulas de decisão pendentes e o #907. Faz e me substitui nas decisões"*
+> (`docs/plano/decisoes/D-2026-11-02-DELEGACAO-DONO.md` §6, H2 como AI tester). Assinatura pela regra de
+> `RUNBOOK-FORMAT.md` §Fronteira (emenda 2026-10-29). O que mudou desde o FALHOU de 29/10: o editor do Y600 nos dois painéis
+> da ECF (#1023) e o cadastro de sócios na aba Perfil fiscal (#1027) entraram em `main` em 04/11. Ambiente e método no
+> Registro ("Execução 04/11, passos 14, 18 e 19"). Dados fictícios iguais aos de 29/10: CNPJ `08845676000198`, contador
+> `900` (CPF `23456789173`, CRC `SP-123456/O-1`) e diretor `203` (CPF `12345678062`), os dois códigos escolhidos no combobox.
+> Os `.txt` foram baixados pelo próprio clique, numa pasta fora do repo.
+>
+> **a) ECF Presumido** (`seed-presumido`, unidade `seed-unit-presumido`, 2025). O editor do Y600 listou o sócio do cadastro
+> (`SOCIO TESTE H1`, CPF `•••7735`, PF residente, 100%). O agente completou QUALIF `01` e os cinco valores com `0,00`:
+>
+> ```text
+> POST /api/accounting/sped/ecf/generate -> 201
+>    req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","year":2025,"declarant":{"cnpj":"08845676000198","nome":"CORPOREOS - SERVICOS TERAPEUTICOS S.A.","codNat":"2054",…},"fiscal":{"indAliqCsll":"1","indRecReceita":"2"},"signers":[{"identNom":"CONTADOR FICTICIO DE TESTE","identCpfCnpj":"23456789173","identQualif":"900","email":"contador.teste@example.com","fone":"1148583340","indCrc":"SP-123456/O-1"},{"identNom":"DIRETOR FICTICIO DE TESTE","identCpfCnpj":"12345678062","identQualif":"203","email":"diretor.teste@example.com","fone":"1140000000"}],"socios":[{"partnerId":"cmvttnb71000cci9cinonvsp9","qualif":"01","valores":{"remTrabCents":0,"lucDivCents":0,"jurCapCents":0,"demRendCents":0,"irRetCents":0}}],"dirigentes":[]}
+>    res: {"success":true,"data":{"id":"cmw2ai8ca0004citgdvgi0lo3","direction":"EXPORT","kind":"EXPORT_SPED_ECF","status":"EXPORTED","fileName":"ecf_08845676000198_2025.txt","mimeType":"text/plain","sizeBytes":2199,"sha256":"f37067e76e5851f69ee1cc4223f62b72eb7794bbc8baacb814bbe4ecc910b4c9","totalRows":111,…,"periodStart":"2025-01-01","periodEnd":"2025-12-31"},"perfilFiscal":{"aplicado":false,"sobrescritos":[]},"avisos":["perfil fiscal da empresa ausente para 2025: a geração usou só o corpo da requisição (F-XP-1 c)."]}
+> $ sha256sum ecf_08845676000198_2025.txt; wc -l; grep -E "^\|(0000|0010|0930|Y600|9999)\|"   (Latin-1 lido como UTF-8)
+> f37067e76e5851f69ee1cc4223f62b72eb7794bbc8baacb814bbe4ecc910b4c9  ecf_08845676000198_2025.txt
+> 111
+> |0000|LECF|0012|08845676000198|CORPOREOS - SERVICOS TERAPEUTICOS S.A.|0|0|||01012025|31122025|N||0||
+> |0010||N|5|T|01|PPPP||C||||2|
+> |0930|CONTADOR FICTICIO DE TESTE|23456789173|900|SP-123456/O-1|contador.teste@example.com|1148583340|
+> |0930|DIRETOR FICTICIO DE TESTE|12345678062|203||diretor.teste@example.com|1140000000|
+> |Y600|01012020||105|PF|11144477735|SOCIO TESTE H1|01|100|100|||0,00|0,00|0,00|0,00|0,00|
+> |9999|111|
+> ```
+>
+> O sha256 do arquivo baixado é igual ao da resposta. Prints:
+> [`passo14a-01-ecf-presumido-preenchida.png`](runbook-evidence/H2-2026-11-04/passo14a-01-ecf-presumido-preenchida.png) (página
+> inteira com o formulário preenchido), [`passo14a-02-ecf-presumido-resultado.png`](runbook-evidence/H2-2026-11-04/passo14a-02-ecf-presumido-resultado.png).
+> Network completo: [`passo14a-network.txt`](runbook-evidence/H2-2026-11-04/passo14a-network.txt).
+>
+> **b) Desvio de dado (pré-condição da ECF Real):** o `seed-real` não tinha sócio (medido no dev.db, só leitura: `partners`
+> só com o `SOCIO TESTE H1` do `seed-presumido`). O agente cadastrou um pela aba Perfil fiscal → Sócios → "Novo sócio":
+>
+> ```text
+> POST /api/accounting/partners -> 201
+>    req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","nome":"SOCIA TESTE H2 REAL","taxId":"39053344705","residenteBrasil":true,"participacaoBp":10000,"entradaEm":"2020-01-01","saidaEm":null}
+>    res: {"success":true,"data":{"id":"cmw2aq0xi000acitghakkgbr8","nome":"SOCIA TESTE H2 REAL","taxId":"39053344705","tipoPessoa":"PF","residenteBrasil":true,"participacaoBp":10000,"entradaEm":"2020-01-01","saidaEm":null,"outrasParticipacoes":null,…}}
+> [lista depois] SOCIA TESTE H2 REAL	39053344705	PF	Brasil	100%	01/01/2020	—	Editar Remover
+> ```
+>
+> Prints: [`passo14b-01-novo-socio-seed-real.png`](runbook-evidence/H2-2026-11-04/passo14b-01-novo-socio-seed-real.png),
+> [`passo14b-02-socios-seed-real.png`](runbook-evidence/H2-2026-11-04/passo14b-02-socios-seed-real.png).
+>
+> **c) ECF Real** (`seed-real`, unidade `seed-unit-real`, 2025, `FORMA_TRIB = 1`, `FORMA_TRIB_PER = RRRR`; a Parte B de 2025
+> está fechada desde 29/10). Mesmos signatários. Y600 da `SOCIA TESTE H2 REAL` com QUALIF `01` e valores `0,00`:
+>
+> ```text
+> POST /api/accounting/sped/ecf/real/generate -> 201
+>    req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2025,"declarant":{"cnpj":"08845676000198",…},"fiscal":{"formaTrib":"1","formaTribPer":"RRRR","indAliqCsll":"1","indRecReceita":"2"},"signers":[{…"identQualif":"900",…"indCrc":"SP-123456/O-1"},{…"identQualif":"203",…}],"socios":[{"partnerId":"cmw2aq0xi000acitghakkgbr8","qualif":"01","valores":{"remTrabCents":0,"lucDivCents":0,"jurCapCents":0,"demRendCents":0,"irRetCents":0}}],"dirigentes":[]}
+>    res: {"success":true,"data":{"id":"cmw2aqxu0000bcitg482720jh","direction":"EXPORT","kind":"EXPORT_SPED_ECF_REAL","status":"EXPORTED","fileName":"ecf_real_08845676000198_2025.txt","mimeType":"text/plain","sizeBytes":2127,"sha256":"5001f61e69db52f336b5e0ea26d67a1f2568419c867121271ed6955f8e68eea5","totalRows":103,…,"periodStart":"2025-01-01","periodEnd":"2025-12-31"},"perfilFiscal":{"aplicado":false,"sobrescritos":[]},"avisos":["perfil fiscal da empresa ausente para 2025: a geração usou só o corpo da requisição (F-XP-1 c)."]}
+> $ sha256sum ecf_real_08845676000198_2025.txt; wc -l; grep …   (Latin-1 lido como UTF-8)
+> 5001f61e69db52f336b5e0ea26d67a1f2568419c867121271ed6955f8e68eea5  ecf_real_08845676000198_2025.txt
+> 103
+> |0000|LECF|0012|08845676000198|CORPOREOS - SERVICOS TERAPEUTICOS S.A.|0|0|||01012025|31122025|N||0||
+> |0010||N|1|T|01|RRRR||C||||2|
+> |0930|CONTADOR FICTICIO DE TESTE|23456789173|900|SP-123456/O-1|contador.teste@example.com|1148583340|
+> |0930|DIRETOR FICTICIO DE TESTE|12345678062|203||diretor.teste@example.com|1140000000|
+> |Y600|01012020||105|PF|39053344705|SOCIA TESTE H2 REAL|01|100|100|||0,00|0,00|0,00|0,00|0,00|
+> |9999|103|
+> ```
+>
+> Prints: [`passo14c-01-ecf-real-preenchida.png`](runbook-evidence/H2-2026-11-04/passo14c-01-ecf-real-preenchida.png),
+> [`passo14c-02-ecf-real-resultado.png`](runbook-evidence/H2-2026-11-04/passo14c-02-ecf-real-resultado.png). Network:
+> [`passo14c-network.txt`](runbook-evidence/H2-2026-11-04/passo14c-network.txt). Nenhum erro no console nas três passadas.
+>
+> **F-ECF medido de novo:** a página não tem mais rolagem horizontal (`documentElement`: `scrollWidth` 1280 = `clientWidth`
+> 1280). As duas seções da ECF ainda têm conteúdo mais largo que o card (`section`: `scrollWidth` 1019 > `clientWidth` 958,
+> nas duas). Grau: **verificado** para a medida. Se algo fica cortado à vista é **inferido**, porque não foi conferido pixel a pixel.
+>
+> Leitura do agente: as duas ECFs saíram pela tela com 201, `.txt` baixado e sha256 igual ao da resposta. Os 0930 trazem o
+> 900 com CRC e o 203, e o Y600 traz o sócio do cadastro com o complemento digitado. "Nenhum 400" se cumpriu. Grau:
+> **verificado** (Network, arquivo e tela). Com 12 e 13 já conferidos em 29/10, o bloco 12–14 passa a conferir nesta
+> reexecução. O quadro do desfecho geral fica com a orquestradora.
+
+Desfecho do passo 14 na reexecução de 04/11 (marcar UM):
+[x] PASSOU — ECF Presumido e ECF Real geradas pela tela, 201 e `.txt` baixados *(marcado pelo agente AI tester, 04/11, pela evidência do bloco acima)*
+[ ] FALHOU — __ divergiu; evidência colada acima
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 14, reexecução 04/11): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
+
 ### [EMENDA 2026-09-28] Passo 15 — telas contábeis com o body tipado (contrato gerado PR-2)
 
 > Preparado por agente em 2026-09-28, **em branco** (`PLANO-FE-CONTRACT-TYPES-2026-09-28.md` §7). O PR-2
@@ -1168,6 +1250,110 @@ Desfecho do passo 18 (marcar UM):
 [x] BLOQUEADO — pré-condição "ECD e ECF do exercício geradas pela tela" — nenhuma ECF sai pela tela (ECF_Y600_SEM_SOCIOS; causa do FALHOU do passo 14, nó FE-INCR-ECF-Y600) não se sustentava *(marcado pelo agente AI tester, 02/11, pela evidência do bloco acima)*
 Assinatura do executor (passo 18): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
+> **Execução 04/11 — passo 18 refeito (agente AI tester; autorização e método no bloco "Execução 04/11 — passo 14").**
+> `seed-real`, Compliance → Revisão profissional. A pré-condição agora se sustenta: a ECF Real 2025 `cmw2aqxu…` saiu pela tela
+> no passo 14 c).
+>
+> **a)** "Abrir revisão", Exercício 2025. Os selects listam as ECD e a ECF Real EXPORTED do ano:
+>
+> ```text
+> select "Arquivo da ECD (EXPORTED)": — nenhum — | cmw049xs… · ECD · 03/11/2026, 00:17:07 | cmvwlzja… · ECD · 31/10/2026, 13:21:50 | cmvwlvx4… · ECD · 31/10/2026, 13:19:01
+> select "Arquivo da ECF (EXPORTED)": — nenhum — | cmw2aqxu… · ECF_REAL · 04/11/2026, 12:53:50
+> POST /api/accounting/reviews -> 201
+>    req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","year":2025,"ecdJobId":"cmw049xsf000fciok01aeetpd","ecfJobId":"cmw2aqxu0000bcitg482720jh"}
+>    res: {"success":true,"data":{"id":"cmw2azf31000lcitgkgexa0h5",…,"status":"OPEN",…}}
+> [abrir de novo o mesmo par]
+> POST /api/accounting/reviews -> 409
+>    res: {"code":"REVIEW_ALREADY_OPEN","message":"Já existe a revisão 'cmw2azf31000lcitgkgexa0h5' (OPEN) para este par de jobs."}
+> GET /api/accounting/reviews?unitId=cmuw4z7zj02ehcii0st3unfr4&year=2025 -> 304   (a lista recarrega depois do 409)
+> [tela] modal: "Já existe a revisão 'cmw2azf31000lcitgkgexa0h5' (OPEN) para este par de jobs." · lista: 2025 | cmw049xs… · cmw2aqxu… | aberta
+> ```
+>
+> Prints: [`passo18a-01-abrir-revisao-modal.png`](runbook-evidence/H2-2026-11-04/passo18a-01-abrir-revisao-modal.png),
+> [`passo18a-02-reabrir-409.png`](runbook-evidence/H2-2026-11-04/passo18a-02-reabrir-409.png). Confere.
+>
+> **b)** No detalhe, "Adicionar achado" duas vezes: BLOCKER I050 (localizador `4.1`) e NOTE I200 (localizador = id do
+> lançamento 110 do seed, "despesas operacionais 07/2025", `cmuw4zdql033pcii05ojje205`):
+>
+> ```text
+> POST /api/accounting/reviews/cmw2azf31000lcitgkgexa0h5/findings -> 201   req: {…,"register":"I050","locator":"4.1",…,"severity":"BLOCKER"}
+> POST /api/accounting/reviews/cmw2azf31000lcitgkgexa0h5/findings -> 201   req: {…,"register":"I200","locator":"cmuw4zdql033pcii05ojje205",…,"severity":"NOTE"}
+> [DOM] Assinar disabled=true · blockers=1   [tela] "1 BLOCKER abertos"
+> ```
+>
+> Print: [`passo18b-01-achados-assinar-desabilitado.png`](runbook-evidence/H2-2026-11-04/passo18b-01-achados-assinar-desabilitado.png). Confere.
+>
+> **c)** BLOCKER por "Apontar dado editado" → Tipo `account`, conta `4.1`. Depois, o link "Abrir account cmuw4z86… no painel
+> dono" leva à aba Plano de Contas. NOTE por "Lançar acerto": a caixa "Estornar também o lançamento original (I200)" aparece
+> (só no I200), data 2026-11-04 (período OPEN), D 4.1 / C 1.1.1.01 R$ 136,18, as mesmas linhas do original. O efeito líquido no
+> razão é zero.
+>
+> ```text
+> POST /api/accounting/reviews/cmw2azf31000lcitgkgexa0h5/findings/cmw2b1iix000ncitgw276shzc/resolve -> 200
+>    req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","resolution":"DATA_EDIT","targetType":"account","targetId":"cmuw4z86w02gzcii0ap38iwyi"}
+> [link] aba ativa: Plano de Contas · diálogo aberto: false
+> POST /api/accounting/reviews/cmw2azf31000lcitgkgexa0h5/findings/cmw2b1mny000pcitgx1cn75bc/adjustment -> 201
+>    req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","postingDate":"2026-11-04","description":"H2 18c acerto do lancamento 110 (reclassificacao de teste, AI tester)","lines":[{"accountCode":"4.1","debitCents":13618,"creditCents":0},{"accountCode":"1.1.1.01","debitCents":0,"creditCents":13618}],"reverseOriginal":true}
+>    res: {…"resolution":"ADJUSTMENT_ENTRY","resolutionTargetType":"journal_entry","resolutionTargetId":"cmw2b5p0m0011citgb9a6b6vj",…,"entryId":"cmw2b5p0m0011citgb9a6b6vj"}
+> [dev.db, só leitura] 110 | 2025 | 2025-07-20 | seed     | Reversed | reversedById cmw2b5ozq000vcitgeeh7blqn
+>                      202 | 2026 | 2026-11-04 | reversal | Posted   | D 1.1.1.01 13618 / C 4.1 13618
+>                      203 | 2026 | 2026-11-04 | review_adjustment | Posted | D 4.1 13618 / C 1.1.1.01 13618
+> ```
+>
+> Prints: [`passo18c-01-apontar-dado-editado.png`](runbook-evidence/H2-2026-11-04/passo18c-01-apontar-dado-editado.png),
+> [`passo18c-02-lancar-acerto-i200.png`](runbook-evidence/H2-2026-11-04/passo18c-02-lancar-acerto-i200.png),
+> [`passo18c-03-achados-resolvidos.png`](runbook-evidence/H2-2026-11-04/passo18c-03-achados-resolvidos.png),
+> [`passo18c-04-link-plano-de-contas.png`](runbook-evidence/H2-2026-11-04/passo18c-04-link-plano-de-contas.png). Confere.
+> Nota de método: no primeiro roteiro, o clique em "Lançar acerto" pegou o botão da linha, não o do modal. Nenhum request saiu.
+> O acerto foi refeito no clique do botão do modal (o 201 acima).
+>
+> **d)** "Assinar" (nome, CRC `SP-123456/O-1`, declaração) deu 409 `REVIEW_STALE`, com "Trocar jobs" no modal. O agente regerou
+> pela tela a ECD (como no 17c: contador do cadastro + 205 resp. legal, mapeamento `2025`) e a ECF Real (mesmos dados do 14 c),
+> trocou os jobs e assinou:
+>
+> ```text
+> POST /api/accounting/reviews/cmw2azf31000lcitgkgexa0h5/sign-off -> 409
+>    res: {"code":"REVIEW_STALE","message":"Sign-off bloqueado: 0 BLOCKER sem resolução []; 2 achado(s) resolvido(s) depois da geração [cmw2b1iix000ncitgw276shzc, cmw2b1mny000pcitgx1cn75bc] — regere e troque os jobs (PATCH /jobs)."}
+> POST /api/accounting/sped/ecd/generate -> 201   res: {…"id":"cmw2b8rfs0016citgi1zgvdzd",…,"sha256":"983aa26e954018272799a7cd17615356685de22547983234853dcc0246b9689f","totalRows":994,…,"coberturaReferencial":{"mappingVersion":"2025","unmappedAccounts":[]}}
+> POST /api/accounting/sped/ecf/real/generate -> 201   res: {…"id":"cmw2b9cvy0017citgwbj2u4nk",…,"sha256":"5001f61e69db52f336b5e0ea26d67a1f2568419c867121271ed6955f8e68eea5",…}
+> PATCH /api/accounting/reviews/cmw2azf31000lcitgkgexa0h5/jobs -> 200
+>    req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","ecdJobId":"cmw2b8rfs0016citgi1zgvdzd","ecfJobId":"cmw2b9cvy0017citgwbj2u4nk"}
+> POST /api/accounting/reviews/cmw2azf31000lcitgkgexa0h5/sign-off -> 200
+>    res: {…"status":"SIGNED_OFF","reviewerName":"CONTADOR FICTICIO DE TESTE","reviewerCrc":"SP-123456/O-1","statement":"Revisei o par ECD/ECF 2025 (execução de teste do H2, AI tester).",…}
+> [lista] 2025 | cmw2b8rf… · cmw2b9cv… | assinada | 04/11/2026, 13:00:25 | CONTADOR FICTICIO DE TESTE · SP-123456/O-1
+> ```
+>
+> Prints: [`passo18d-01-assinar-409-review-stale.png`](runbook-evidence/H2-2026-11-04/passo18d-01-assinar-409-review-stale.png),
+> [`passo18d-02-ecd-regerada-form.png`](runbook-evidence/H2-2026-11-04/passo18d-02-ecd-regerada-form.png),
+> [`passo18d-04-ecf-real-regerada.png`](runbook-evidence/H2-2026-11-04/passo18d-04-ecf-real-regerada.png),
+> [`passo18d-05-trocar-jobs.png`](runbook-evidence/H2-2026-11-04/passo18d-05-trocar-jobs.png),
+> [`passo18d-06-assinada.png`](runbook-evidence/H2-2026-11-04/passo18d-06-assinada.png). Confere. A ECF regerada tem o mesmo
+> sha256 da primeira (`5001f61e…`): o estorno e o acerto caíram em 2026, então o 2025 não mudou. Mesmo assim o servidor exige a
+> regeração, porque a regra olha a data da resolução e não o conteúdo. É desenho (F-FE-RV-3: "só o BE decide").
+>
+> **e)** Outra revisão (ECD `cmvwlzja…` + ECF `cmw2aqxu…`), "Rejeitar" com motivo:
+>
+> ```text
+> POST /api/accounting/reviews -> 201   res: {…"id":"cmw2bbk8u0019citggga6ntf2",…,"status":"OPEN"…}
+> POST /api/accounting/reviews/cmw2bbk8u0019citggga6ntf2/reject -> 200
+>    req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","reason":"H2 18e: par de teste rejeitado de propósito (ECD de 31/10 com a ECF Real de 04/11), AI tester."}
+>    res: {…"status":"REJECTED",…,"closeReason":"H2 18e: par de teste rejeitado de propósito (ECD de 31/10 com a ECF Real de 04/11), AI tester.",…}
+> [tela] "rejeitada" · "Revisão rejeitada: o pacote deste par não pode ser entregue (REVIEW_REJECTED)." · botões no detalhe: ["Baixar ECD","Baixar ECF"]
+> ```
+>
+> Print: [`passo18e-01-rejeitada.png`](runbook-evidence/H2-2026-11-04/passo18e-01-rejeitada.png). Confere: depois de rejeitar não
+> sobra ação, só download.
+>
+> Leitura do agente: a) a e) conferem com o esperado. Grau: **verificado** (Network, tela e dev.db em modo só-leitura).
+> Achado novo (menor, texto): as mensagens de 409 citam ids internos (`REVIEW_ALREADY_OPEN` com o id da revisão, `REVIEW_STALE`
+> com os ids dos achados), da mesma classe do F-17-1. Vai como **18-1** no consolidado.
+
+Desfecho do passo 18 na reexecução de 04/11 (marcar UM):
+[x] PASSOU — a) a e) com evidência conferindo com o esperado *(marcado pelo agente AI tester, 04/11, pela evidência do bloco acima)*
+[ ] FALHOU — item __ divergiu; evidência colada acima
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 18, reexecução 04/11): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
+
 ### [EMENDA 2026-09-28] Passo 19 — Entrega ao contador (FE-INCR-DELIVERY PR-D1/PR-D2)
 
 > Preparado por agente em 2026-09-28, **em branco** (BRIEF `FE-INCR-DELIVERY-brief.md` §1). Pré-condições dos passos
@@ -1225,6 +1411,105 @@ Desfecho do passo 19 (marcar UM):
 [ ] FALHOU — item __ divergiu; evidência colada acima
 [x] BLOQUEADO — pré-condição "revisão do par ECD/ECF assinada" (passo 18 BLOQUEADO; sem ECF EXPORTED o "Validar pacote" fica desabilitado) não se sustentava; a) confere com o esperado *(marcado pelo agente AI tester, 02/11, pela evidência do bloco acima)*
 Assinatura do executor (passo 19): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
+
+> **Execução 04/11 — passo 19 refeito (agente AI tester; autorização e método no bloco "Execução 04/11 — passo 14").**
+> `seed-real`, Compliance → Entrega ao contador. Pré-condições: a revisão do par ECD `cmw2b8rf…` / ECF `cmw2b9cv…` está
+> **assinada** (18 d), e os 12 meses de 2025 estão `HARD_CLOSED` (dev.db em modo só-leitura: `accounting_periods` 2025 da
+> unidade = 12 × `HARD_CLOSED`).
+>
+> **a)** "Novo contador" com certidão e validade, depois "Editar" limpando as duas, depois "Perfil de pacote" só com "Balancete":
+>
+> ```text
+> POST /api/accounting/contacts -> 201
+>    req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","name":"CONTADOR H2 19 AI TESTER","email":"contador.h2-19@example.com","cpf":"71460238184","crcNumber":"RJ-054321/O-7","crcUf":"RJ","phone":"2130000000","crcCertificate":"RJ/2026/000777","crcCertificateValidUntil":"2026-12-31"}
+> PATCH /api/accounting/contacts/cmw2be2l3001fcitgbvhpuajx -> 200
+>    req: {…,"crcNumber":"RJ-054321/O-7","crcUf":"RJ","crcCertificate":null,"crcCertificateValidUntil":null}
+> PUT /api/accounting/delivery/profile?unitId=cmuw4z7zj02ehcii0st3unfr4&contactId=cmw2be2l3001fcitgbvhpuajx -> 200
+>    req: {"kinds":["EXPORT_TRIAL_BALANCE"]}   res: {"success":true,"data":{"kinds":["EXPORT_TRIAL_BALANCE"]}}
+> [linha] CONTADOR H2 19 AI TESTER	contador.h2-19@example.com	RJ-054321/O-7 · RJ	—	Editar Perfil de pacote Arquivar
+> ```
+>
+> Prints: [`passo19a-01-novo-contador.png`](runbook-evidence/H2-2026-11-04/passo19a-01-novo-contador.png),
+> [`passo19a-02-contadores.png`](runbook-evidence/H2-2026-11-04/passo19a-02-contadores.png). Confere.
+>
+> **b)** O balancete do exercício precisa existir EXPORTED **com período**, porque os extras são "só relatórios gerados com
+> período". O agente gerou pela aba Importação/Exportação, que é o único lugar da tela que exporta balancete. Ali o campo
+> "Data" só aparece para BP e DRE, e o balancete sai sem data:
+>
+> ```text
+> POST /api/accounting/data-exchange/exports -> 201
+>    req: {"kind":"EXPORT_TRIAL_BALANCE","format":"xlsx","unitId":"cmuw4z7zj02ehcii0st3unfr4"}
+>    res: {"success":true,"data":{"id":"cmw2bgsb7001gcitg7u84s72i",…,"kind":"EXPORT_TRIAL_BALANCE","status":"EXPORTED",…,"periodStart":null,"periodEnd":null}}
+> [Montar pacote, Exercício 2025, contador acima] extras: (nenhum) · "Nenhum relatório EXPORTED no exercício — gere na aba Importação/Exportação."
+> ```
+>
+> Com isso o "balancete do exercício vem pré-marcado pelo perfil" **não se cumpre**: não há balancete do exercício para marcar.
+> Causa no código de `main` (`5acacc5d`): `my-app/features/accounting/components/ImportExportPanel.tsx:81` define
+> `needsAsOf = exportKind === 'EXPORT_BALANCE_SHEET' || exportKind === 'EXPORT_INCOME_STATEMENT'` e manda `asOf` só nesses
+> casos (`:158`). Já o servidor aceita `asOf` no balancete e grava o período `[01/01 do ano, asOf]`
+> (`server/src/features/accounting/services/DataExchangeExportService.ts:207-217`). Sem `asOf`, sai `NO_PERIOD`, e a lista de
+> extras do pacote filtra por exercício (`DeliveryPanel.tsx:324-331`), então esse balancete nunca entra. Nenhuma outra tela
+> exporta `EXPORT_TRIAL_BALANCE` (busca no `my-app`). Print:
+> [`passo19b-00-balancete-sem-data.png`](runbook-evidence/H2-2026-11-04/passo19b-00-balancete-sem-data.png). Vai como
+> **19-1** no consolidado.
+>
+> O resto do b) foi exercitado: o par sem revisão e o par com revisão rejeitada são recusados, com o link, e o par assinado
+> valida, com o manifesto só com ECD e ECF:
+>
+> ```text
+> POST /api/accounting/delivery/build -> 409   req: {…,"ecdJobId":"cmvwlvx4w000jcizsvcztwi0m","ecfJobId":"cmw2aqxu0000bcitg482720jh","extraJobIds":[]}
+>    res: {"code":"REVIEW_REQUIRED","message":"Este par de jobs não tem revisão profissional assinada (POST /api/accounting/reviews)."}
+>    [tela] a mensagem + o link "Revisão profissional ↑"
+> POST /api/accounting/delivery/build -> 409   req: {…,"ecdJobId":"cmvwlzjab000ocizs6kg7l2o8","ecfJobId":"cmw2aqxu0000bcitg482720jh","extraJobIds":[]}
+>    res: {"code":"REVIEW_REJECTED","message":"A revisão 'cmw2bbk8u0019citggga6ntf2' deste par foi REJEITADA (H2 18e: …) — o pacote não deve ser entregue."}
+> POST /api/accounting/delivery/build -> 200   req: {…,"ecdJobId":"cmw2b8rfs0016citgi1zgvdzd","ecfJobId":"cmw2b9cvy0017citgwbj2u4nk","extraJobIds":[]}
+>    res: {"success":true,"data":{"scope":{…,"ledgerCode":"DEFAULT"},"period":{"start":"2025-01-01","end":"2025-12-31"},…,"files":[{"kind":"EXPORT_SPED_ECD","jobId":"cmw2b8rfs0016citgi1zgvdzd","sha256":"983aa26e…689f"},{"kind":"EXPORT_SPED_ECF_REAL","jobId":"cmw2b9cvy0017citgwbj2u4nk","sha256":"5001f61e…eea5"}],…}}
+> [manifesto na tela] 1. ECD · cmw2b8rf… · 983aa26e9540 || 2. ECF (Lucro Real) · cmw2b9cv… · 5001f61e69db
+> ```
+>
+> Prints: [`passo19b-01-sem-revisao-409.png`](runbook-evidence/H2-2026-11-04/passo19b-01-sem-revisao-409.png),
+> [`passo19b-02-manifesto.png`](runbook-evidence/H2-2026-11-04/passo19b-02-manifesto.png),
+> [`passo19b-03-link-revisao.png`](runbook-evidence/H2-2026-11-04/passo19b-03-link-revisao.png). Nota de método: no Chromium
+> headless, clicar em "Revisão profissional ↑" não rolou a página. Um `scrollIntoView({behavior:'smooth'})` chamado direto
+> também não rolou, e o instantâneo rolou (painel em `top=0`). Por isso o não-rolar foi lido como artefato do runner, não como
+> bug (**inferido**). O link existe nos dois 409.
+>
+> **c)** "Baixar" nas duas linhas do manifesto, sha256 conferido, "Confirmo que despachei…" e "Registrar despacho":
+>
+> ```text
+> $ sha256sum export_sped_ecd-cmw2b8rf.txt export_sped_ecf_real-cmw2b9cv.txt   (baixados pelo clique, fora do repo)
+> 983aa26e954018272799a7cd17615356685de22547983234853dcc0246b9689f *export_sped_ecd-cmw2b8rf.txt
+> 5001f61e69db52f336b5e0ea26d67a1f2568419c867121271ed6955f8e68eea5 *export_sped_ecf_real-cmw2b9cv.txt
+> POST /api/accounting/delivery/confirm -> 201
+>    req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","ecdJobId":"cmw2b8rfs0016citgi1zgvdzd","ecfJobId":"cmw2b9cvy0017citgwbj2u4nk","contactId":"cmw2be2l3001fcitgbvhpuajx","confirmed":true,"extraJobIds":[]}
+>    res: {"success":true,"data":{"deliveryId":"cmw2bii05001ocitgluzahqfi","status":"SENT","statusMeaning":"SENT = o operador confirmou que despachou o pacote; o servidor não envia nem confirma recebimento.","contact":{"name":"CONTADOR H2 19 AI TESTER","crcNumber":"RJ-054321/O-7","crcUf":"RJ"},"signer":{"identNom":"CONTADOR H2 19 AI TESTER","identCpfCnpj":"71460238184","identQualif":"Contador","codAssin":"900","indCrc":"RJ-054321/O-7",…,"indRespLegal":"N"},"manifest":{…}}}
+> [recibo na tela] SENT — SENT = o operador confirmou que despachou o pacote; o servidor não envia nem confirma recebimento. · CONTADOR H2 19 AI TESTER · RJ-054321/O-7/RJ · Signatário (J930) … codAssin: 900 …
+> ```
+>
+> Os dois sha256 batem com o manifesto. Print: [`passo19c-01-recibo.png`](runbook-evidence/H2-2026-11-04/passo19c-01-recibo.png).
+> Confere para o pacote validado (sem os extras, pelo b).
+>
+> **d)** Entregas e detalhe:
+>
+> ```text
+> [Entregas] 01/01/2025 – 31/12/2025 | CONTADOR H2 19 AI TESTER | SENT | 1 | 04/11/2026, 13:15:16 | Detalhe
+> botões na tabela de entregas: ["Detalhe"] · Reprocessar presente=false
+> [Detalhe] Entrega cmw2bii0… / 01/01/2025 – 31/12/2025 · SENT · 1 / ECD sha256 983aa26e9540 · ECF sha256 5001f61e69db / 0. ECD · cmw2b8rf… · 983aa26e9540 / 1. ECF (Lucro Real) · cmw2b9cv… · 5001f61e69db
+> ```
+>
+> Prints: [`passo19d-01-entregas.png`](runbook-evidence/H2-2026-11-04/passo19d-01-entregas.png),
+> [`passo19d-02-detalhe-entrega.png`](runbook-evidence/H2-2026-11-04/passo19d-02-detalhe-entrega.png). Confere: em `SENT` não
+> há "Reprocessar". O ramo `FAILED` não foi exercitado, porque a tela não produz um `FAILED`.
+>
+> Leitura do agente: a), c) e d) conferem. O b) diverge num ponto: o balancete do exercício não vem pré-marcado, porque a tela
+> não gera balancete com período (19-1). O resto do b), os 409 de revisão e o manifesto do par assinado, confere. Grau:
+> **verificado** (tela, Network, sha256 dos arquivos e leitura do código de `main`).
+
+Desfecho do passo 19 na reexecução de 04/11 (marcar UM):
+[ ] PASSOU — a) a d) com evidência conferindo com o esperado
+[x] FALHOU — item b) divergiu: o balancete do exercício não vem pré-marcado pelo perfil, porque a tela não exporta balancete com período (achado 19-1); a), c) e d) conferem; evidência colada acima *(marcado pelo agente AI tester, 04/11, pela evidência do bloco acima)*
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 19, reexecução 04/11): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
 ### [EMENDA 2026-09-29] Passo 20 — Baixas por retorno bancário (FE-INCR-BANK-SETTLEMENT)
 
@@ -2191,14 +2476,14 @@ Assinatura do executor (passo 23): agente claude-opus-5-5, AI tester, sob autori
 > resumo. Grau: **verificado** quando o achado foi visto na tela ou lido no código de `origin/main` hoje; **inferido** quando
 > só o achado de origem o sustenta e não há commit em `main` que o cite.
 
-**Abertos, sem PR (13):**
+**Abertos, sem PR (15; 19-1 e 18-1 entraram na reexecução de 04/11 dos passos 14, 18 e 19):**
 
 | Id | Passo | O que é | Onde | Tipo | Grau | Próximo passo |
 |---|---|---|---|---|---|---|
 | 4-Posted | 4/5 | O recibo PDF, em PT, mostra o status do lançamento cru ("Posted") | `server/src/lib/receiptHtml.ts:108` (`ReceiptService.ts:68` passa `entry.status`) | rótulo | verificado (código de `main`) | teste do `receiptHtml` com status pt → rótulo traduzido |
 | E | 6–10 | "Próximo" do modal Nova Venda vira "Salvar Rascunho" no mesmo elemento; um clique duplo grava o rascunho | modal Nova Venda (`useSalesCreateForm`) | fluxo | inferido (risco do clique duplo não testado em 30/10) | instrumentar o clique duplo antes de corrigir |
 | F-diário | 11 | Nas linhas expandidas de Lançamentos, a coluna Crédito fica fora do card (`overflow-hidden`, `scrollWidth` 1088 > `clientWidth` 958) | aba Contabilidade → Lançamentos | layout | inferido | teste de layout no Chromium (`scrollWidth ≤ clientWidth`) → rolagem ou quebra |
-| F-ECF | 14 | A linha de signatário dos dois painéis da ECF passa da largura do card; a página ganha rolagem horizontal | painéis ECF Presumido e Real | layout | inferido | junto com o Y600 (os painéis mudam no #1023/#1027) |
+| F-ECF | 14 | Depois do Y600 (04/11), a página não rola mais na horizontal (`scrollWidth` 1280 = `clientWidth`), mas o conteúdo das duas seções da ECF ainda passa da largura do card (`scrollWidth` 1019 > `clientWidth` 958) | painéis ECF Presumido e Real | layout | verificado (medida, 04/11); corte visível inferido | teste de layout no Chromium (`section.scrollWidth ≤ clientWidth`) → ajuste da grade |
 | H | 15 a) | A resposta do cancelamento de pagamento traz `updatedAt` velho (20:06:43.262Z × 20:06:57.856 no dev.db) | `POST /payables/:id/payments/:pid/cancel` | contrato | inferido | teste de integração: resposta = linha relida depois da tx |
 | 400-?? | 11, 15 | 2× "Failed to load resource: 400" de origem não identificada (29/10); não se repetiram na passada de 30/10 | — | desconhecido | inferido | só reabrir se reaparecer, com Network |
 | 15-g | 15 g) | A 1ª abertura de "Sugestões" depois de postar mostrou "Nenhum candidato"; depois de "Atualizar" listou | aba Conciliação | fluxo | inferido (não confirmado se o GET saiu antes do POST) | reproduzir com Network antes de abrir lacuna |
@@ -2208,6 +2493,8 @@ Assinatura do executor (passo 23): agente claude-opus-5-5, AI tester, sob autori
 | 22-4 | 22 g) | `01.07.01` é "Suporte técnico em informática", não corte de cabelo; o código ficou por uso no 23 e no DFE-MANUAL | dado de teste do `seed-presumido` | dado | verificado (03/11) | trocar pelo item do salão quando o DFE-MANUAL rodar (06.01 inferido, conferir na lista nacional) |
 | 22-5 | 22 f) | O selo diz "Perfil da unidade completo", não "Pronto para emitir NFS-e" | `FiscalProfilePanel.tsx:173` | texto do runbook | verificado (04/11) | emenda do 22 f) |
 | 22-6 | 22 f) | O aviso D1f só existe em perfil anterior à migração `20260917200000`; em dado novo só a metade "some" é exercitável | `FiscalProfileService.ts:417` | texto do runbook | verificado (04/11) | emenda do 22 f) |
+| 19-1 | 19 b) | A tela não exporta balancete com período: o campo "Data" só aparece para BP/DRE, então o balancete sai com `periodStart: null`, nunca entra nos extras do pacote e o perfil "Balancete" não pré-marca nada. O servidor já aceita `asOf` no balancete | `my-app/features/accounting/components/ImportExportPanel.tsx:81` e `:158` (servidor: `DataExchangeExportService.ts:207-217`; filtro: `DeliveryPanel.tsx:324-331`) | bug de tela | verificado (04/11, tela + código de `main`) | teste vitest do `ImportExportPanel` (Balancete mostra "Data" e manda `asOf`) → correção |
+| 18-1 | 18 a), d) | As mensagens de 409 da revisão citam ids internos: `REVIEW_ALREADY_OPEN` traz o id da revisão, `REVIEW_STALE` os ids dos achados e `REVIEW_REJECTED` o id da revisão. Mesma classe do F-17-1 | `server/src/features/accounting/services/AccountingReviewService.ts:417` (`REVIEW_STALE`), `:491` (`REVIEW_REJECTED`), `:519` (`REVIEW_ALREADY_OPEN`) | texto | verificado (04/11, tela) | decidir o texto (nome/ano/registro em vez do id) → teste da mensagem → correção |
 
 **Abertos por desenho ou política (não são bug; ficam como registro para o operador):** **F-16-e** — `canManageLalur` ≡
 `canReadLalur` (`AccountingPolicy.ts:91-97`), o ramo só-leitura do e-Lalur espera o GOV-CONTADOR. **F-20-1** — sem
@@ -2219,11 +2506,10 @@ documento).
   21-3 (Converter/Criar Oportunidade sem módulo), 21-4 = 23-x1 (dois dashboards no 1º login), 22-2 (séries NF-e/NFC-e voltam a 1),
   22-3 (400 repete o campo), 23-pre-2 (convite sem o contato novo), 23-h1 (faixa pendente fica). 23-g fechado por decisão
   anterior, sem código (`D-2026-11-04-H2-23-G-PROPOSTA-ORFA.md`).
-- **Y600** (causa do FALHOU do 14 e dos BLOQUEADOS do 18 e do 19): PR-0 mergeado (#1022); PR-1 (#1023) e PR-2 (#1027) abertos.
-
 **Já resolvidos (fora da contagem):** A–D (#985, mergeado 30/10); G, I e J (#988, mergeado 30/10; a metade "Estornado
 ainda mostra Estornar" do I já saía desabilitada); F-17-1 (#1017, mergeado 04/11); passo 8 (EMENDA 2026-10-30); 22-1 e
-23-pre-1 (emendados em 04/11 neste runbook).
+23-pre-1 (emendados em 04/11 neste runbook); **Y600**, a causa do FALHOU do 14 e dos BLOQUEADOS do 18 e do 19 (PR-0 #1022,
+PR-1 #1023 e PR-2 #1027 em `main` em 04/11; na reexecução de 04/11, o 14 e o 18 PASSARAM, e o 19 FALHOU pelo 19-1).
 
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
@@ -2268,4 +2554,27 @@ ainda mostra Estornar" do I já saía desabilitada); F-17-1 (#1017, mergeado 04/
   `next start -H 127.0.0.1 -p 3100`. As portas 3000/5000 do dono não foram tocadas. Evidência em `runbook-evidence/H2-2026-11-04/`.
   Escritas: o seed falhou sem gravar; usuários `h2-ai-u3` (pela tela, 22) e `h2-ai-u4` (pelo admin, 21 d); unidade e perfil
   fiscal do U3. Autorização: dono, chat, 2026-11-02: *"gates humanos H1 e H2, as cédulas de decisão pendentes e o #907. Faz e me substitui nas decisões"*; e dono, chat, 2026-11-04: *"Pode disparar uma sessão pra corrigir os achados e outra para cada não feito"*.
+- **Execução 04/11, passos 14, 18 e 19 (reexecução depois do Y600), ambiente:** a trava de tela não tinha dono vivo. O
+  arquivo de protocolo das sessões anteriores não existe mais em disco, e a orquestradora passou a tela a esta sessão. Dois
+  processos órfãos em `:4100` e `127.0.0.1:3100`, iniciados às 10:13 por uma sessão de tela já encerrada, foram derrubados. O
+  `:3000` do dono não foi tocado. Antes da primeira escrita: `PRAGMA integrity_check` → `[('ok',)]` e backup por cópia de bytes
+  em `server/prisma/backups/h2-14-18-19-2026-11-04-20261104-124201/`, com sha256 igual na origem e na cópia: `dev.db`
+  `ed136ddc…bb54d4`, `-wal` `f8ce3e13…d6ca8a2`, `-shm` `ca758e2a…f541c24f312805f9ec4afb567df55575b8e41f`. Depois, `npx prisma
+  migrate deploy` aplicou as 6 pendentes (`20261103120000_dp_modulo_ativacoes`, `20261103120000_tax_assessment_rastreio`,
+  `20261103130000_legal_parameters_dp`, `20261103140000_dp_cadastros_estrutura`, `20261103150000_dp_trabalhador_vinculo`,
+  `20261104120000_dp_afastamento_ferias`), e `migrate status` → "152 migrations found … Database schema is up to date!".
+  `integrity_check` deu `ok` depois da migração e de novo no fim, com os servidores já parados. Build de produção do commit
+  exato de `origin/main` (`5acacc5d`), com dependências por `node scripts/worktree-deps.mjs`: server `npm run build` (exit 0)
+  e `node dist/server.js` em `:4100`, com `DATABASE_URL` absoluto do dev.db real, `ALLOWED_ORIGIN=http://127.0.0.1:3100`, JWT de
+  teste gerado na sessão e `OPENAI_API_KEY=ci-dummy-openai-key`; my-app `next build` (exit 0) com
+  `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:4100/api` e `next start -H 127.0.0.1 -p 3100`. Tela por runner Puppeteer headless
+  (1280×900, um Chromium por vez), com login pelo formulário e a senha do seed lida de `server/.env`, sem imprimi-la. **Desvio
+  de método:** as passadas do 14 e do 18 rodaram sem `node scripts/heavy-slot.cjs` (0/2 vagas ocupadas na hora; só esta tela
+  de pé). As do 19 rodaram pelo `heavy-slot`. Escritas no dev.db, todas pela tela: ECF Presumido 2025 (`seed-presumido`); sócio
+  `SOCIA TESTE H2 REAL` (desvio de dado, 14 b); duas ECF Real e uma ECD 2025 (`seed-real`); revisões `cmw2azf3…` (assinada) e
+  `cmw2bbk8…` (rejeitada) com dois achados; estorno nº 202 e acerto nº 203 em 2026-11-04 (efeito líquido zero no razão; o
+  lançamento 110 de 2025 ficou `Reversed`); contato `CONTADOR H2 19 AI TESTER` com perfil "Balancete"; balancete exportado sem
+  período; entrega `cmw2bii0…` `SENT`. No fim: server, app e Chromium derrubados, `3100`/`4100` livres, trava solta. Evidência
+  em `runbook-evidence/H2-2026-11-04/` (prefixos `passo14`, `passo18`, `passo19`). Autorização: dono, chat, 2026-11-02 (citada
+  no bloco do passo 14).
 - Assinatura do executor: agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)

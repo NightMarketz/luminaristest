@@ -1,0 +1,23 @@
+Revisão profissional
+
+Achado → ponteiro/acerto → regeração → sign-off (o arquivo nunca é editado).
+
+Abrir revisão
+2026
+2025
+2024
+2023
+2022
+2021
+2020
+2019
+2018
+2017
+2016
+2015
+Todos os status
+aberta
+assinada
+rejeitada
+Exercício	Arquivos (ECD · ECF)	Status	Aberta em	Assinada por / motivo	Ações
+2025	cmw049xs… · cmw2aqxu…	aberta	04/11/2026, 13:00:25	—	Abrir
