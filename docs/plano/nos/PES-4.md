@@ -9,10 +9,10 @@ depende_de: ["[[D-2026-11-02-DP-PRE-ADR]]", "[[D-2026-11-02-DP-BRIEF-F0-F1]]", "
 autorizacao: "dono, chat, 2026-11-03: \"Executa PR-0 a PR-6\" (resposta a \"Abro a sessão 3 com o executa do BRIEF BE-INCR-DP-F0-F1?\") — executa do BRIEF de F0+F1 inteiro ([[D-2026-10-28-FLUXO-AUTONOMO]]); não cobre F2 em diante, o BRIEF do SST nem a ponte contábil (F-FOL-1..9). Antes — dono, chat, 2026-11-02: \"Podemos seguir o pre-adr numa sessão, esperar, criar o nó no vault + brief em outra e o executa na terceira\" + \"Sim, abre agora\" (resposta a \"Abro já a sessão 2 (nó PES-4 + BRIEF de F0 e F1) em cima do branch do #1009?\") — nó e BRIEF de F0+F1; forks do BRIEF por questionário ([[D-2026-11-02-DP-BRIEF-F0-F1]]). Não autoriza código: o 'executa' é da sessão 3"
 perfil_previsto: "opus-medio"
 perfil_evidencia: "BRIEF §9: PR-0/PR-3/PR-5/PR-6 opus-baixo; PR-1/PR-2/PR-4 opus-medio"
-atualizado: "2026-11-03"
+atualizado: "2026-11-04"
 write_set: ["server/src/features/dp/**", "server/src/controllers/dpModuleController.ts", "server/src/controllers/dpCadastrosController.ts", "server/src/controllers/dpVinculoController.ts", "server/src/controllers/__tests__/dp*.ts", "server/src/routes/dp.ts", "server/src/routes/docs/dp.paths.ts", "server/public/openapi.json", "server/src/__tests__/openapi-paths.test.ts", "server/prisma/schema.prisma", "server/prisma/migrations/**", "server/prisma/data/legal_parameters_dp_v1.sql", "server/src/features/legalParameters/models/legalParameter.ts", "server/src/features/legalParameters/models/formatoLinha.ts", "server/src/features/legalParameters/dtos/__tests__/__dto-shapes__.json", "server/src/features/accounting/audit/auditCanonical.ts", "server/test/helpers/templateDb.ts", "server/test/helpers/legalParams.ts", "server/.dependency-cruiser.cjs", "docs/adr/ADR-ARCH-BOUNDARIES.md"]
 registros: ["server/src/lib/factory.ts", "server/src/routes/index.ts"]
-prs: ["#1010", "#1014", "#1015", "#1016"]
+prs: ["#1010", "#1014", "#1015", "#1016", "#1026"]
 ---
 # PES-4 — Departamento Pessoal: núcleo + submódulos
 
@@ -46,7 +46,7 @@ BYOK, sem contratar PSC (D5 de 30/10); vigência só por data de efeito, com o s
 | Fase (spec §11) | BRIEF | Estado |
 |---|---|---|
 | F0 — fundação | [`BE-INCR-DP-F0-F1-brief.md`](../../accounting/BE-INCR-DP-F0-F1-brief.md) PR-0, PR-1 | código em PR (03/11): PR-0 #1014, PR-1 #1015 |
-| F1 — cadastros e tabelas legais | idem, PR-2..PR-6 | em execução (03/11): PR-2 #1016; PR-3..PR-6 a fazer |
+| F1 — cadastros e tabelas legais | idem, PR-2..PR-6 | em execução (03/11): PR-2 #1016, PR-3 #1026; PR-4..PR-6 a fazer |
 | SST (núcleo, F-DP-13) | `BE-INCR-DP-SST` | sem BRIEF (encaixe no §7 do BRIEF de F0+F1) |
 | F2 — motor mensal | — | sem BRIEF |
 | F3 — folhas especiais | — | sem BRIEF |
@@ -85,6 +85,7 @@ sessão nova continua com a skill `sessao-feature`.
 | #1014 | `claude/dp-f0-f1-pr0-421c43` (base `claude/dp-no-pes4-brief-f0-f1-90b7b4`) | 1–7 | vermelha (ADR) | verde | PASSOU |
 | #1015 | `claude/dp-f0-f1-pr1` (base `claude/dp-f0-f1-pr0-421c43`) | 8–19 | vermelha (prisma, contábil) | verde (17/17) | PASSOU (03/11, revisor despachado pela sessão 3b: gates 0, sabotagem do gate de sobreposição pega; 3 latentes abaixo) |
 | #1016 | `claude/dp-f0-f1-pr2-d614b0` (base `claude/dp-f0-f1-pr1`) | 20–27 | vermelha (migração, parâmetro legal) | verde (17/17) | PASSOU (03/11: gates 0; 3 sabotagens — valor da FAIXA_2, vigência do INSS, filtro de data do leitor — pegas; a do filtro só pela integração) |
+| #1026 | `claude/dp-f0-f1-pr3` (base `claude/dp-f0-f1-pr2-d614b0`) | 28–36 | vermelha (migração, contábil) | ver PR | REVISOR_1026 |
 
 **Latentes do revisor do #1015 (não bloqueiam; só aparecem com registro de teste, porque hoje todo opcional é
 `disponivel: false` com `dependsOn: []` — decidir antes de ligar o primeiro opcional com dependência):** (1) `activate`
@@ -93,7 +94,7 @@ estado que o `end` recusaria (segue a letra do item 13); (2) `end` numa ativaç�
 sobrescreve o `motivoFim` (a spec não trata); (3) o `DEPENDENT_ACTIVE` do `end` olha só `dependsOn`, não `requiresOneOf`
 (inferido pela leitura).
 
-**Pendente:** PR-3 (itens 28–36), PR-4 (37–49), PR-5 (50–55), PR-6 (56–62), cada um empilhado no anterior, com o fold
+**Pendente:** PR-4 (37–49; leva também a trava D-5 da jornada do item 30, `DP_JORNADA_EM_USO`, que depende de `DpVinculoVersao`), PR-5 (50–55), PR-6 (56–62), cada um empilhado no anterior, com o fold
 aqui no próprio PR e o revisor-independente em cada um (D-2026-10-28, PR vermelho).
 
 **Próximo comando exato** (num worktree novo, depois de conferir com `gh pr view` se algum PR de baixo foi mergeado —
