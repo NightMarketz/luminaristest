@@ -15,6 +15,7 @@
  */
 import type { RulePlugin } from '../RuleTypes';
 import { ValidationError } from '../../../../lib/errors';
+import { classifySaleItem } from '../../../../lib/saleLine';
 import { tableMatches } from '../shared/tableFinder';
 import { SALE_KEYS } from './sales/shared';
 import {
@@ -150,7 +151,7 @@ export const SalesPlugin: RulePlugin = {
       let subtotal = 0;
       for (const it of items) {
         const isProduct = (it.data?.type ? String(it.data.type) === 'Product' : !!it.data?.productId);
-        const qty = isProduct ? Number(it.data?.quantity || 1) : 1;
+        const qty = isProduct || classifySaleItem(it.data ?? {}) === 'Package' ? Number(it.data?.quantity || 1) : 1;
         const price = Number(it.data?.unitPrice || 0);
         subtotal += qty * price;
       }
@@ -320,7 +321,7 @@ export const SalesPlugin: RulePlugin = {
     let subtotal = 0;
     for (const it of items) {
       const isProduct = (it.data?.type ? String(it.data.type) === 'Product' : !!it.data?.productId);
-      const qty = isProduct ? Number(it.data?.quantity || 1) : 1;
+      const qty = isProduct || classifySaleItem(it.data ?? {}) === 'Package' ? Number(it.data?.quantity || 1) : 1;
       const price = Number(it.data?.unitPrice || 0);
       subtotal += qty * price;
     }
