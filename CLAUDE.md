@@ -130,7 +130,9 @@ morde só no código solto; em dúvida, **o contrato prevalece**.
 - **Worktree nova:** `node scripts/worktree-deps.mjs` (depósito compartilhado por lockfile), não `npm ci`. Remover worktree
   com `git worktree remove`, nunca `rm -rf`.
 - **Sessão aberta por sessão não abre outra:** propõe o cartão. Prefira continuar a sessão que tem o contexto (`SendMessage`).
-  No máximo 3 sessões em trabalho pesado (teste, build, navegador) ao mesmo tempo.
+- **Onde roda (emenda R3, 04/11):** tarefa curta na mesma worktree, sem instalação → **subagente**; tarefa que o dono
+  acompanha à parte → **sessão** (cartão); trabalho pesado → **sessão na nuvem**, quando o dono pedir. Fan-out: até
+  **3 subagentes** simultâneos e **3 cartões** por turno. Trabalho pesado: **2 vagas por máquina** (`scripts/heavy-slot.cjs`).
 - **Cache de prompt (1 h):** pausa longa no meio da tarefa → handoff e feche. Brief aponta arquivos, não cola conteúdo;
   saída de comando com `tail`/`grep`.
 

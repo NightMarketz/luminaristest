@@ -23,7 +23,7 @@ transporte. Integração que "aproveita pra arrumar" destrói a rastreabilidade 
 
 | Situação | Sessão correta |
 |---|---|
-| O conteúdo ainda tem pendência de review | Sessão de review (agente separado, worktree isolado) |
+| O conteúdo ainda tem pendência de review | Sessão de review (agente separado, worktree isolado), **proposta como cartão** — esta sessão não a abre (R3 de `D-2026-11-04-RECURSOS-LOCAIS`) |
 | A branch não existe ainda — o trabalho não foi feito | `sessao-planejamento` → `sessao-feature` |
 | O gate falhou depois do merge e "só falta um ajuste" | **Nenhuma** — regra 5: pare e reporte; o diagnóstico é do dono |
 | Gate humano ou dado externo trava o merge (ex.: fixture real da NF-e) | **Nenhuma** — runbook humano; ver `docs/operating-manual/RUNBOOK-FORMAT.md` |
