@@ -55,6 +55,10 @@ describe('DpAfastamentoFeriasService (itens 56–62)', () => {
       fiscalProfiles: new CompanyFiscalProfileRepository(),
       legalParams: legal,
       employees: { employeeRowExists: async () => false },
+      // Só a correção do PR-4 cifra com o chaveiro; este teste não corrige nada.
+      auditKeyring: () => {
+        throw new Error('chaveiro não usado no PR-6');
+      },
     });
     svc = new DpAfastamentoFeriasService(new DpAfastamentoFeriasRepository(), vincRepo, new DpPolicy(), audit, legal);
     const lotacaoId = (await cad.createLotacao(scopeDe(dono), { ...u(dono), codigo: 'L1', descricao: 'Loja' })).id;
