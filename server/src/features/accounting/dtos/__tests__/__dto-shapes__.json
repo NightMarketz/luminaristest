@@ -10396,6 +10396,30 @@
           "type": "integer",
           "minimum": -9007199254740991,
           "maximum": 9007199254740991
+        },
+        "alertas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "evento": {
+                "type": "string",
+                "enum": [
+                  "PERTO_DO_PRAZO",
+                  "VENCIDA",
+                  "ORFA_FALHOU"
+                ]
+              },
+              "documentId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "evento",
+              "documentId"
+            ],
+            "additionalProperties": false
+          }
         }
       },
       "required": [
@@ -10406,7 +10430,8 @@
         "saidasAutomaticas",
         "orfasResolvidas",
         "orfasFalharam",
-        "failed"
+        "failed",
+        "alertas"
       ],
       "additionalProperties": false
     },
