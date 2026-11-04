@@ -1774,26 +1774,272 @@ Assinatura do executor (passo 22): agente claude-opus-5-5, AI tester, sob autori
 23. Resultado esperado em todas: 2xx nas escritas, console sem erro.
     - a) **Dono, Perfil fiscal:** o botão diz "Enviar ao contador para aprovação" e o aviso mostra o nome e o CRC do
       contador. Mudar "Crédito sobre compra de fornecedor do Simples" e enviar → 201; o formulário volta ao vigente
-      (desmarcado) e aparece a faixa da proposta v{n}. EVIDÊNCIA: [corpo do POST — sem `unitId` dentro de `payload` — + print]
+      (desmarcado) e aparece a faixa da proposta v{n}. EVIDÊNCIA: [bloco "Execução 03/11 — passo 23" abaixo]
     - b) **Dono, Imobilizado → Contas:** mudar a despesa de depreciação e enviar → 201; a mensagem diz "Contas enviadas
-      ao contador", nunca "Contas salvas". EVIDÊNCIA: [corpo do POST com só as 3 chaves do imobilizado]
+      ao contador", nunca "Contas salvas". EVIDÊNCIA: [bloco "Execução 03/11 — passo 23" abaixo]
     - c) **Dono, Perfil fiscal de novo:** enviar outra proposta → a faixa troca para v{n+1}; na aba **Política
-      contábil**, a anterior aparece "Substituída". EVIDÊNCIA: [print]
+      contábil**, a anterior aparece "Substituída". EVIDÊNCIA: [bloco "Execução 03/11 — passo 23" abaixo]
     - d) **Contador, modo cliente:** a faixa do modo cliente mostra "2 proposta(s) de política aguardando sua decisão";
-      a aba **Política contábil** aparece; o detalhe mostra o diff com o rótulo das contas. EVIDÊNCIA: [Network **sem**
-      `GET /accounts`, `/fiscal-profile` ou `/settings` nesta sessão de tela; toda chamada com `ownerUserId`]
-    - e) **Contador aprova** a do perfil → "Aplicada"; o dono recarrega e vê o campo marcado no perfil. EVIDÊNCIA: [ ]
-    - f) **Contador rejeita** a das contas com motivo → "Rejeitada"; o dono vê o motivo na lista. EVIDÊNCIA: [ ]
+      a aba **Política contábil** aparece; o detalhe mostra o diff com o rótulo das contas. EVIDÊNCIA: [bloco "Execução 03/11 — passo 23" abaixo]
+    - e) **Contador aprova** a do perfil → "Aplicada"; o dono recarrega e vê o campo marcado no perfil. EVIDÊNCIA: [bloco "Execução 03/11 — passo 23" abaixo]
+    - f) **Contador rejeita** a das contas com motivo → "Rejeitada"; o dono vê o motivo na lista. EVIDÊNCIA: [bloco "Execução 03/11 — passo 23" abaixo]
     - g) **Corrida:** com o detalhe aberto no contador, o dono envia nova proposta; o contador aprova a antiga → texto
-      "Esta proposta mudou…" e recarga (409 `POLICY_VERSION_STATUS_CHANGED`). EVIDÊNCIA: [ ]
+      "Esta proposta mudou…" e recarga (409 `POLICY_VERSION_STATUS_CHANGED`). EVIDÊNCIA: [bloco "Execução 03/11 — passo 23" abaixo]
     - h) **Sem contador:** encerrar a atribuição; o dono salva o perfil direto (PUT 200), e a lista mostra a versão como
-      "aplicada direto (sem contador)". EVIDÊNCIA: [ ]
+      "aplicada direto (sem contador)". EVIDÊNCIA: [bloco "Execução 03/11 — passo 23" abaixo]
+
+> **Execução 03/11 — passo 23** (AI tester, sob autorização do dono no chat em 2026-11-02). Build de produção em
+> `http://127.0.0.1:3100`, API em `127.0.0.1:4100`, worktree `agent-af93873e91c9b426b`, commit `3077cda9`, banco
+> `server/prisma/prisma/dev.db` (o real). Dono: `seed-presumido`, unidade `cmuw4yqxg001jcii0iz2yb9rw` (seed-unit-presumido),
+> perfil fiscal em Lucro Presumido desde o passo 22. Contador: `h2c7contador`, criado nesta execução. A tela foi rodada
+> por Puppeteer headless (perfis `p23dono` e `p23cont`), sempre com um Chromium por vez. Na corrida do g) foi um Chromium
+> só, com dois contextos isolados. Os cliques são de DOM, e a Network vem dos eventos de resposta. O filtro foi por
+> `/api`, que é mais largo que `policy-versions`.
+>
+> **Pré-condições lidas no banco antes de começar (só leitura):**
+> - `accountant_assignments` estava vazia (`count(*) = 0`), e não existia usuário `h2c7contador`.
+> - `accounting_contacts` não tinha nenhuma linha da unidade.
+> - `accounting_policy_versions` da unidade: `FISCAL_PROFILE` v1–v10, todas APPLIED e diretas. Não havia `SCOPE_SETTINGS`.
+> - `accounting_scope_settings` não tinha linha da unidade.
+> - `fiscal_profiles`: `PRESUMIDO`/`CUMULATIVO`, `pisCofinsCreditFromSimplesSupplier=0`, `codMun=3550308`, `dpsSerie=7`,
+>   `issAliquotaBp=200`, `pTotTribFedCent=1550` e `emissaoForaDoMes=BLOQUEAR`.
+>
+> **Desvio de dado (pré-condição criada pela tela):**
+> 1. **Cadastro do contador** em `/users/signup`: nome "Contador H2 C7", usuário `h2c7contador`, e-mail
+>    `h2-c7-contador@luminaris.test` e uma senha de teste gerada.
+>    `POST /api/users -> 201  req: {"name":"Contador H2 C7","username":"h2c7contador","email":"h2-c7-contador@luminaris.test","password":"<redigida>"}`.
+>    A conta nasceu com `locale:"en"`. O idioma foi trocado para Português (BR) pelo seletor do cabeçalho:
+>    `PATCH /api/users/me/preferences -> 200  req: {"locale":"pt"}`.
+> 2. **Contato na unidade do dono.** O convite do #515 não pede CRC: ele exige um contato do cadastro da unidade
+>    (`accountingContactId`), e o CRC da atribuição é copiado desse contato. Por isso o contato foi criado antes, em
+>    Compliance → Contadores → "Novo contador":
+>    `POST /api/accounting/contacts -> 201  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","name":"CONTADOR H2 C7 AI TESTER","email":"h2-c7-contador@luminaris.test","cpf":"52998224725","crcNumber":"SP-123456/O-8","crcUf":"SP","phone":"11930000007"}`
+>    `res: {"success":true,"data":{"id":"cmw18trpt00meci9cz55eck1t",…,"crcNumber":"SP-123456/O-8","crcUf":"SP",…}}`.
+>    O CRC segue o formato do CFC, conferido em `server/src/features/accounting/models/AccountingContact.model.ts:60`.
+>    O desvio foi aprovado pelo coordenador.
+> 3. **Convite** (dono), em Compliance → "Convidar":
+>    `POST /api/accounting/accountant-assignments -> 201  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","accountingContactId":"cmw18trpt00meci9cz55eck1t","accountantEmail":"h2-c7-contador@luminaris.test"}`
+>    `res: {"success":true,"data":{"id":"cmw18uw8a00mgci9crip7l33i",…,"status":"PENDING",…,"crcNumber":"SP-123456/O-8","crcUf":"SP",…}}`.
+>    Tela: `Convite pendente: CONTADOR H2 C7 AI TESTER · SP-123456/O-8 — aguardando o aceite do contador.`
+>    Na primeira tentativa, o seletor "Contador do cadastro" do modal não listava o contato recém-criado (achado 23-pre-2,
+>    print `passo23-pre-02-convite.png`). O POST só saiu depois de recarregar a página.
+> 4. **Aceite** (contador): banner "Convites de contador responsável / seed-presumido@seed.local · cmuw4yqx…" → "Aceitar".
+>    O modal mostra o texto da Res. CFC 1.590, e a declaração foi marcada:
+>    `POST /api/accounting/accountant-assignments/cmw18uw8a00mgci9crip7l33i/accept -> 200  req: {"declaresWrittenContract":true}`
+>    `res: {…,"status":"ACTIVE",…,"activeFrom":"2026-11-03T22:15:13.581Z",…}`. Ao recarregar, o contador cai no modo cliente
+>    (ele não tem unidade própria). As abas são `["Períodos","Compliance","Política contábil"]`, e a faixa diz
+>    `Você está no livro de seed-presumido@seed.local — unidade cmuw4yqx…`.
+>
+> **a)** Dono → Perfil fiscal. O botão diz **"Enviar ao contador para aprovação"**, e o aviso diz:
+> `Este escopo tem contador responsável ativo (CONTADOR H2 C7 AI TESTER, SP-123456/O-8). A mudança só vale depois que ele aprovar.`
+> "Crédito sobre compra de fornecedor do Simples" foi trocado de `false` para `true`, e depois foi clicado "Enviar":
+>
+> ```text
+> POST /api/accounting/policy-versions -> 201  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","target":"FISCAL_PROFILE","payload":{"regimeTributario":"PRESUMIDO","icmsContribuinte":false,"pisCofinsRegime":"CUMULATIVO","pisCofinsCreditExcludesIcms":true,"pisCofinsCreditIncludesIpi":false,"pisCofinsCreditFromSimplesSupplier":true,…,"codMun":"3550308",…,"dpsSerie":7,…,"issAliquotaBp":200,…,"pTotTribFedCent":1550,"pTotTribEstCent":null,"pTotTribMunCent":null,"pTotTribSNCent":null,"emissaoForaDoMes":"BLOQUEAR"}}
+>    res: {"success":true,"data":{"id":"cmw18y6d000mici9cgzpilxyq","unitId":"cmuw4yqxg001jcii0iz2yb9rw","target":"FISCAL_PROFILE","version":11,"status":"PROPOSED","payload":{…
+> ```
+>
+> O `unitId` vai só no topo e **não** aparece dentro de `payload`. Depois do envio, o checkbox volta a `false`, que é o
+> vigente. A tela mostra `Proposta v11 aguardando o contador desde 03/11/2026. Enviar outra substitui esta por inteiro. / Ver proposta`
+> e `Proposta v11 enviada. O perfil abaixo continua o vigente até a aprovação.`
+>
+> **b)** Imobilizado → Contas. "Despesa de depreciação" = `4.1 — Despesas Operacionais`, depois "Enviar ao contador para aprovação":
+>
+> ```text
+> POST /api/accounting/policy-versions -> 201  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","target":"SCOPE_SETTINGS","payload":{"depreciationExpenseAccountId":"cmuw4yr6l0041cii0cs2ql8cd","disposalGainAccountId":null,"disposalLossAccountId":null}}
+>    res: {"success":true,"data":{"id":"cmw18yhg800mkci9cuabm6shi",…,"target":"SCOPE_SETTINGS","version":1,"status":"PROPOSED",…}}
+> ```
+>
+> O `payload` leva só as 3 chaves do imobilizado. A mensagem é `Contas enviadas ao contador (proposta v1). As contas acima continuam as vigentes até a aprovação.`,
+> e "Contas salvas" **não** aparece (`assertAbsent` deu `presente=false`). A faixa mostra
+> `Proposta v1 aguardando o contador desde 03/11/2026. Ela é parcial: só as contas enviadas mudam. Enviar outra substitui esta.`
+>
+> **c)** Perfil fiscal de novo. O crédito foi marcado mais uma vez e a proposta foi enviada
+> (`POST /api/accounting/policy-versions -> 201`, `"version":12,"status":"PROPOSED"`, com o mesmo corpo do a)). A faixa troca
+> para `Proposta v12 aguardando o contador desde 03/11/2026…`. A aba **Política contábil** lista:
+>
+> ```text
+> Perfil fiscal | v12 | Aguardando o contador | 03/11/2026 | — | — | Ver
+> Contas do escopo | v1 | Aguardando o contador | 03/11/2026 | — | — | Ver
+> Perfil fiscal | v11 | Substituída | 03/11/2026 | — | — | Ver
+> Perfil fiscal | v10 | Aplicada | 03/11/2026 | aplicada direto (sem contador) | — | Ver
+> …(v9–v1 iguais a v10)
+> ```
+>
+> **d)** Contador, numa sessão nova: logout, login e `/accounting`. O modo cliente abre por padrão. A faixa mostra
+> `Você está no livro de seed-presumido@seed.local — unidade cmuw4yqx… / 2 proposta(s) de política aguardando sua decisão / Encerrar atribuição`,
+> e as abas são `["Períodos","Compliance","Política contábil"]`. O botão da faixa leva à aba Política, que mostra as mesmas linhas do c).
+> O detalhe de "Contas do escopo v1" mostra `Despesa de depreciação | — | 4.1 — Despesas Operacionais`, e o rótulo vem do
+> próprio detalhe (`"accountLabels":{"cmuw4yr6l0041cii0cs2ql8cd":"4.1 — Despesas Operacionais"}`). O detalhe do perfil
+> v12 mostra `Crédito sobre compra de fornecedor do Simples | Não | Sim` e "Mostrar campos sem mudança (34)".
+> Network da sessão inteira, com `quietGet:false`, em `passo23def-network-contador.txt`. A sessão vai do login ao fim do f).
+>
+> ```text
+> 23 requisições: 5 GET /api/auth/me · 3 GET /api/dashboard-layout · 1 GET /api/dynamic-tables · 1 POST /api/auth/login
+>   1 GET /api/accounting/accountant-assignments/mine                          (carteira do próprio contador)
+>   1 GET /api/accounting/cmuw4yqxg001jcii0iz2yb9rw/periods?year=2026&ownerUserId=cmufn7n590000cixkxbls0agh
+>   4 GET /api/accounting/policy-versions?unitId=…[&status=PROPOSED]&ownerUserId=cmufn7n590000cixkxbls0agh
+>   5 GET /api/accounting/policy-versions/<id>?unitId=…&ownerUserId=cmufn7n590000cixkxbls0agh
+>   1 POST …/approve e 1 POST …/reject, ambos com "ownerUserId":"cmufn7n590000cixkxbls0agh" no corpo
+> GET com /accounts, /fiscal-profile ou /settings: 0
+> ```
+>
+> As 12 chamadas ao livro do cliente levam o `ownerUserId`. A única sem ele é o `/mine`, que é a carteira do próprio
+> contador e não uma leitura do livro do dono.
+>
+> **e)** O contador aprova a v12: "Aprovar", depois "Aprovar e aplicar".
+>
+> ```text
+> POST /api/accounting/policy-versions/cmw18ypat00mmci9cjw0679kw/approve -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","ownerUserId":"cmufn7n590000cixkxbls0agh"}
+>    res: {"success":true,"data":{"id":"cmw18ypat00mmci9cjw0679kw",…,"version":12,"status":"APPLIED",…,"appliedSnapshot":{…,"pisCofinsCreditFromSimplesSupplier":true,…
+> ```
+>
+> O detalhe passa a dizer "Comparado com o que esta versão aplicou." A linha fica `Perfil fiscal | v12 | Aplicada | 03/11/2026 | você`.
+> O dono recarrega o Perfil fiscal e vê `credito Simples marcado: true`. Nenhuma faixa de proposta pendente aparece
+> (contagem 0). Na lista do dono, a coluna "Quem decidiu" mostra `CONTADOR H2 C7 AI TESTER (SP-123456/O-8)`.
+>
+> **f)** O contador rejeita a "Contas do escopo v1": "Rejeitar", motivo, depois "Rejeitar com este motivo".
+>
+> ```text
+> POST /api/accounting/policy-versions/cmw18yhg800mkci9cuabm6shi/reject -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","ownerUserId":"cmufn7n590000cixkxbls0agh","reason":"H2 passo 23 f): conta 4.1 é genérica; use uma conta própria de depreciação."}
+>    res: {"success":true,"data":{…,"status":"REJECTED",…,"decidedById":"cmw18t0fk00maci9cne7czj5g","assignmentId":"cmw18uw8a00mgci9crip7l33i","decisionReason":"H2 passo 23 f): conta 4.1 é genérica; use uma conta própria de depreciação.",…}}
+> ```
+>
+> Na lista do dono aparece `Contas do escopo | v1 | Rejeitada | 03/11/2026 | CONTADOR H2 C7 AI TESTER (SP-123456/O-8) | H2 passo 23 f): conta 4.1 é genérica; use uma conta própria de depreciação.`
+> `accounting_scope_settings` continua sem linha da unidade, então nada foi aplicado.
+>
+> **g)** Corrida, com um Chromium e dois contextos (`p23-race.mjs`). Network em `passo23g-network.txt`.
+> 1. O dono troca o crédito de `true` para `false` e envia a proposta X: `POST /api/accounting/policy-versions -> 201`, faixa `Proposta v13 aguardando o contador…`.
+> 2. O contador abre o detalhe da v13 (`Perfil fiscal | v13 | Aguardando o contador`). O modal fica aberto.
+> 3. Com o modal ainda aberto no contador, o dono envia a proposta Y (`-> 201`, faixa `Proposta v14 aguardando o contador…`).
+> 4. O contador, no modal da v13, clica "Aprovar" e depois "Aprovar e aplicar":
+>
+> ```text
+> [contador] POST /api/accounting/policy-versions/cmw1958nu00mqci9cv82ixogx/approve -> 409  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","ownerUserId":"cmufn7n590000cixkxbls0agh"}
+>    res: {"code":"POLICY_VERSION_STATUS_CHANGED","message":"A versão de política 'cmw1958nu00mqci9cv82ixogx' mudou de estado (esperado PROPOSED) — recarregue e tente de novo."}
+> [contador] GET /api/accounting/policy-versions/cmw1958nu00mqci9cv82ixogx?unitId=…&ownerUserId=… -> 200   res: {…,"version":13,"status":"SUPERSEDED",…
+> modal (role=alert): Esta proposta mudou (o dono enviou outra ou ela já foi decidida); recarregado.
+> lista: Perfil fiscal | v14 | Aguardando o contador … · Perfil fiscal | v13 | Substituída …
+> ```
+>
+> Os botões de decisão somem, porque a v13 está SUPERSEDED. No console aparece só
+> `Failed to load resource: … 409 (Conflict)`, o log do Chrome para o 409 esperado.
+>
+> **h)** Dono → Compliance → "Encerrar atribuição", com o aviso `Encerrar devolve a você a reabertura e a assinatura de todos os períodos…`
+> e um motivo:
+>
+> ```text
+> POST /api/accounting/accountant-assignments/cmw18uw8a00mgci9crip7l33i/end -> 200  req: {"reason":"H2 passo 23 h): fim do teste com contador; o dono volta a salvar direto."}
+>    res: {"success":true,"data":{…,"status":"ENDED",…,"activeUntil":"2026-11-03T22:22:31.932Z","endReason":"H2 passo 23 h): fim do teste com contador; o dono volta a salvar direto.",…}}
+> ```
+>
+> A seção passa a dizer "Sem contador responsável neste escopo.", e no Perfil fiscal o botão volta a "Salvar perfil" (o
+> texto "Enviar ao contador…" está ausente). A v14 da corrida continua pendente, e a tela mostra
+> `Proposta v14 aguardando o contador desde 03/11/2026…` mesmo sem contador (achado 23-g). O crédito foi desmarcado, para
+> voltar ao valor original 0, e o regime continuou `PRESUMIDO`. Depois, "Salvar perfil":
+>
+> ```text
+> PUT /api/accounting/fiscal-profile -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","regimeTributario":"PRESUMIDO","icmsContribuinte":false,"pisCofinsRegime":"CUMULATIVO",…,"pisCofinsCreditFromSimplesSupplier":false,…,"emissaoForaDoMes":"BLOQUEAR"}
+>    res: {"success":true,"data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","regimeTributario":"PRESUMIDO",…,"pisCofinsCreditFromSimplesSupplier":false,…
+> ```
+>
+> A aba Política contábil mostra `Perfil fiscal | v15 | Aplicada | 03/11/2026 | aplicada direto (sem contador)` e
+> `Perfil fiscal | v14 | Substituída`. O PUT direto substituiu a órfã v14, que é o item 11 de `policyVersionApply.ts:28-55`.
+> Mesmo assim, a faixa `Proposta v14 aguardando o contador…` **continua** na tela do Perfil fiscal depois do PUT 200 (achado 23-h1).
+>
+> **Banco depois (só leitura):**
+> - Atribuição `cmw18uw8a00mgci9crip7l33i` ENDED, com `activeFrom` e `activeUntil` preenchidos.
+> - `FISCAL_PROFILE`: v11 SUPERSEDED, v12 APPLIED (com `assignmentId`), v13 e v14 SUPERSEDED, v15 APPLIED direta.
+>   `SCOPE_SETTINGS` v1 REJECTED. Nenhuma versão PROPOSED na unidade.
+> - `fiscal_profiles`: `PRESUMIDO`/`CUMULATIVO`, `pisCofinsCreditFromSimplesSupplier=0`, `codMun=3550308`, `dpsSerie=7`,
+>   `issAliquotaBp=200`, `pTotTribFedCent=1550`, `BLOQUEAR` e `nfeSerie`/`nfceSerie`=1. São os mesmos valores do começo.
+> - `accounting_scope_settings` continua sem linha.
+> - Desvios que ficam no banco: o usuário `h2c7contador` (locale `pt`), o contato `cmw18trpt00meci9cz55eck1t` e a atribuição ENDED.
+>
+> Prints:
+> - Pré-condição: [`passo23-pre-01-novo-contador.png`](runbook-evidence/H2-2026-11-03/passo23-pre-01-novo-contador.png),
+>   [`passo23-pre-02-convite.png`](runbook-evidence/H2-2026-11-03/passo23-pre-02-convite.png) (seletor vazio, achado 23-pre-2),
+>   [`passo23-pre-02b-convite-apos-recarga.png`](runbook-evidence/H2-2026-11-03/passo23-pre-02b-convite-apos-recarga.png),
+>   [`passo23-pre-03-convite-pendente.png`](runbook-evidence/H2-2026-11-03/passo23-pre-03-convite-pendente.png),
+>   [`passo23-pre-04-aceite.png`](runbook-evidence/H2-2026-11-03/passo23-pre-04-aceite.png),
+>   [`passo23-pre-05-modo-cliente.png`](runbook-evidence/H2-2026-11-03/passo23-pre-05-modo-cliente.png).
+> - a) a c): [`passo23a-01-marcado-antes-de-enviar.png`](runbook-evidence/H2-2026-11-03/passo23a-01-marcado-antes-de-enviar.png),
+>   [`passo23a-02-faixa-proposta.png`](runbook-evidence/H2-2026-11-03/passo23a-02-faixa-proposta.png),
+>   [`passo23b-01-contas-enviadas.png`](runbook-evidence/H2-2026-11-03/passo23b-01-contas-enviadas.png),
+>   [`passo23c-01-faixa-nova-versao.png`](runbook-evidence/H2-2026-11-03/passo23c-01-faixa-nova-versao.png),
+>   [`passo23c-02-lista-substituida.png`](runbook-evidence/H2-2026-11-03/passo23c-02-lista-substituida.png).
+> - d) a f): [`passo23d-01-faixa-modo-cliente.png`](runbook-evidence/H2-2026-11-03/passo23d-01-faixa-modo-cliente.png),
+>   [`passo23d-02-aba-politica.png`](runbook-evidence/H2-2026-11-03/passo23d-02-aba-politica.png),
+>   [`passo23d-03-detalhe-contas-rotulo.png`](runbook-evidence/H2-2026-11-03/passo23d-03-detalhe-contas-rotulo.png),
+>   [`passo23d-04-detalhe-perfil.png`](runbook-evidence/H2-2026-11-03/passo23d-04-detalhe-perfil.png),
+>   [`passo23e-01-aplicada.png`](runbook-evidence/H2-2026-11-03/passo23e-01-aplicada.png),
+>   [`passo23e-02-dono-campo-marcado.png`](runbook-evidence/H2-2026-11-03/passo23e-02-dono-campo-marcado.png),
+>   [`passo23f-01-rejeitada.png`](runbook-evidence/H2-2026-11-03/passo23f-01-rejeitada.png),
+>   [`passo23f-02-lista-contador.png`](runbook-evidence/H2-2026-11-03/passo23f-02-lista-contador.png),
+>   [`passo23f-03-dono-ve-motivo.png`](runbook-evidence/H2-2026-11-03/passo23f-03-dono-ve-motivo.png).
+> - g): [`passo23g-01-contador-detalhe-aberto.png`](runbook-evidence/H2-2026-11-03/passo23g-01-contador-detalhe-aberto.png),
+>   [`passo23g-02-dono-nova-proposta.png`](runbook-evidence/H2-2026-11-03/passo23g-02-dono-nova-proposta.png),
+>   [`passo23g-03-contador-409.png`](runbook-evidence/H2-2026-11-03/passo23g-03-contador-409.png),
+>   [`passo23g-04-contador-lista-depois.png`](runbook-evidence/H2-2026-11-03/passo23g-04-contador-lista-depois.png).
+> - h): [`passo23h-01-atribuicao-encerrada.png`](runbook-evidence/H2-2026-11-03/passo23h-01-atribuicao-encerrada.png),
+>   [`passo23h-01b-perfil-sem-contador-com-v14-pendente.png`](runbook-evidence/H2-2026-11-03/passo23h-01b-perfil-sem-contador-com-v14-pendente.png),
+>   [`passo23h-02-salvo-direto.png`](runbook-evidence/H2-2026-11-03/passo23h-02-salvo-direto.png),
+>   [`passo23h-03-lista-aplicada-direto.png`](runbook-evidence/H2-2026-11-03/passo23h-03-lista-aplicada-direto.png).
+>
+> Network completa, na mesma pasta: `passo23-pre-network-signup.txt`, `passo23-pre-network-convite.txt`, `passo23-pre-network-convite-2.txt`,
+> `passo23-pre-network-aceite.txt`, `passo23abc-network.txt`, `passo23def-network-contador.txt`, `passo23ef-network-dono.txt`,
+> `passo23g-network.txt` e `passo23h-network.txt`. Os JWTs das respostas de login foram trocados por `<redigido>`, e as
+> senhas saem `<redigida>`. Todas as escritas deram 2xx, menos o 409 esperado do g). O único erro de console foi o log do
+> Chrome para esse 409.
+>
+> Leitura do agente: a) a h) conferem com o esperado. As ressalvas são três, e nenhuma muda o desfecho:
+> - O texto da pré-condição omite o contato do cadastro (23-pre-1).
+> - O convite só lista o contato depois de recarregar (23-pre-2).
+> - A faixa da proposta substituída continua no Perfil fiscal depois do PUT direto do h) (23-h1). É defeito de tela, e o
+>   esperado do h) (PUT 200 e "aplicada direto (sem contador)") confere.
+>
+> Grau: **verificado** (tela, Network e banco antes e depois).
+
+Achados do passo 23 (não corrigidos):
+- **23-pre-1 (texto do runbook, verificado):** a pré-condição "convite + aceite pelas telas do #515" não diz que o convite
+  exige antes um **contato do cadastro** na unidade, em Compliance → Contadores. O CRC da atribuição vem desse contato, e o
+  convite não pede CRC nem UF (`server/src/features/accounting/services/AccountantAssignmentService.ts:90-113`;
+  `my-app/features/accounting/governance/AssignmentModals.tsx:38-90`). O que falta é emendar a pré-condição do 23.
+- **23-pre-2 (bug de tela, verificado):** o modal "Convidar" usa a lista de contatos carregada na montagem da seção
+  (`my-app/features/accounting/governance/AccountantAssignmentSection.tsx:53,59`). Um contato criado logo abaixo, em
+  `DeliveryPanel.tsx:77` (que só recarrega a própria lista), não aparece no seletor até a página ser recarregada. O
+  `__fill` deu `SEM OPCAO CONTADOR H2 C7 AI TESTER` (print `passo23-pre-02-convite.png`). Sequência:
+  - Instrumentação: um teste do `AccountingView` na aba Compliance que cria um contato pelo "Novo contador", abre "Convidar"
+    e espera o contato no `<select>`. Hoje o teste fica vermelho.
+  - Correção: a seção relê os contatos ao abrir o modal, ou o `DeliveryPanel` avisa o pai pelo `onChanged`.
+- **23-g (risco de dado, verificado e com o alcance revisto):** encerrar a atribuição
+  (`AccountantAssignmentService.ts:179-214`) não mexe na proposta PROPOSED do escopo. Depois do `end`, a v14 ficou
+  pendente sem ninguém que pudesse decidir, e a tela do dono mostrava "Proposta v14 aguardando o contador…" (print
+  `passo23h-01b-…`). Ela só virou SUPERSEDED no PUT direto seguinte do **mesmo alvo** (item 11, `policyVersionApply.ts:28-55`).
+  - Inferido, não exercitado: uma órfã de `SCOPE_SETTINGS` fica pendente até alguém salvar as contas.
+  - Não é bug de contrato, porque o item 11 está desenhado assim. A pergunta ao dono é se o `end` deve fechar as
+    pendentes (SUPERSEDED/REJECTED) na mesma transação.
+- **23-h1 (bug de tela, verificado):** depois do PUT 200 do h), a faixa "Proposta v14 aguardando o contador…" continua no
+  Perfil fiscal, embora a v14 já esteja SUPERSEDED na lista e no banco. O ramo `put` do `useGovernedSave` não chama
+  `reloadPending()` (`my-app/features/accounting/governance/useGovernedSave.ts:102-103`, contra a linha 100 do ramo `propose`).
+  Sequência:
+  - Instrumentação: um teste do hook com uma PROPOSED pendente e `active=null`. Depois do `submit` (PUT), ele espera
+    `pending === null` quando o `list` passa a voltar vazio. Hoje o teste fica vermelho.
+  - Correção: `await reloadPending()` depois do `put`.
+- **23-x1 (fora do escopo, verificado, só registro):** o primeiro login da conta nova criou **dois** dashboards
+  (`POST /api/dashboard-layout -> 201` duas vezes, ids `cmw18t4fo00mbci9crcf89027` e `cmw18t4fp00mcci9cwsws7czp`,
+  em `passo23-pre-network-signup.txt`). É uma corrida de criação inicial no cliente do dashboard, e cabe ao dono do
+  passo 21 e do dashboard.
 
 Desfecho do passo 23 (marcar UM):
-[ ] PASSOU — a) a h) com evidência conferindo com o esperado
+[x] PASSOU — a) a h) com evidência conferindo com o esperado. O 409 do g) veio com o texto certo, e o h) deu PUT 200 com
+    "aplicada direto (sem contador)". Os achados 23-pre-2 e 23-h1 são defeitos de tela que não mudam nenhum esperado do 23.
+    O 23-pre-1 é texto do runbook, e o 23-g é uma pergunta de desenho. Desvios de dado: o usuário `h2c7contador`
+    (locale pt), o contato `CONTADOR H2 C7 AI TESTER` e a atribuição, que hoje está ENDED. O perfil fiscal terminou igual
+    ao do começo, em Presumido. *(marcado pelo agente AI tester, 03/11, pela evidência do bloco acima)*
 [ ] FALHOU — item __ divergiu; evidência colada acima
 [ ] BLOQUEADO — pré-condição __ não se sustentava
-Assinatura do executor (passo 23): ____________
+Assinatura do executor (passo 23): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
@@ -1801,10 +2047,10 @@ Assinatura do executor (passo 23): ____________
     NENHUM passo seguinte foi executado após a falha *(marcado pelo agente AI tester, 02/11, pela evidência dos blocos acima)*
     **Desvio do roteiro, escrito ao lado do desfecho:** a cláusula "nenhum passo seguinte executado" **não** vale nesta
     execução. O dono seguiu depois do 14 (passo 15, em 29/10) e o agente rodou 16–20 em 02/11 sob a delegação
-    (`D-2026-11-02-DELEGACAO-DONO` §6). Quadro por passo: 1–5 e 11 sem desfecho marcado · 6–10 PASSOU (dono, sob a emenda
+    (`D-2026-11-02-DELEGACAO-DONO` §6). Quadro por passo (atualizado na execução C7, 03/11): 1–5 PASSOU (agente, pela evidência de 29/10; 2–3 com ressalva do "por clique") · 6–10 PASSOU (dono, sob a emenda
     do passo 8) · 12–14 FALHOU (14: ECF 400 Y600) · 15 PASSOU (dono) · 16 BLOQUEADO (16 e) · 17 PASSOU · 18 BLOQUEADO
-    (sem ECF EXPORTED) · 19 BLOQUEADO (sem revisão assinada; 19 a) confere) · 20 PASSOU · **21–23 não executados em 02/11**
-    (fôlego da sessão). 18, 19 e o FALHOU do 14 têm a mesma causa: a tela ainda não coleta sócios para o Y600
+    (sem ECF EXPORTED) · 19 BLOQUEADO (sem revisão assinada; 19 a) confere) · 11 PASSOU (agente, 03/11) · 20 PASSOU · 21 FALHOU (21 d: perfil não troca e-mail/senha, 401 sem `currentPassword`) ·
+    22 BLOQUEADO (22 b: a unidade já tinha perfil) · 23 PASSOU (execução C7, 03/11). 18, 19 e o FALHOU do 14 têm a mesma causa: a tela ainda não coleta sócios para o Y600
     (nó FE-INCR-ECF-Y600).
 [ ] BLOQUEADO — pré-condição __ não se sustentava; execução nem começou
 
@@ -1819,4 +2065,13 @@ Assinatura do executor (passo 23): ____________
 - Atualização do artefato de rastreio: nota `docs/plano/gates/H2.md`, "Fold 02/11" (estado segue `human-open`). Texto original: [§5.1 Bloco A item 4 do master map + data — cobre AMBOS:
   o browser sign-off original (passos 1–5) E, desde a emenda 2026-08-22, o fluxo de salão
   pós-swap do binding (passos 6–11, intérprete `SALON_BINDING_V1`/`04582d8a`/PR #211)]
+- **Execução C7 (03/11), ambiente:** branch `claude/gate-copilot-h2-9782b8` a partir de `3077cda9`. Nenhuma migração nova em `main`
+  desde `f5dc79b7` (`prisma migrate status`: 146 migrations, "Database schema is up to date!"), então não houve re-semeadura. Antes
+  da primeira escrita, um backup por cópia de bytes em `server/prisma/backups/h2-c7-2026-11-03-20261103-172851/` (sha256 igual
+  na origem e na cópia: `dev.db` c181fa73…0bb7a80, `-wal` 0f87adc8…bb87bc, `-shm` 5e5f685d…f1979d). Depois da queda do app,
+  `PRAGMA integrity_check` → `[('ok',)]`. Build de produção do mesmo código (`npm run build` exit 0, `next build` exit 0)
+  em `127.0.0.1:3100`/`:4100` contra o dev.db real. Tela rodada por Puppeteer headless, um Chromium por vez, com os passos
+  21, 22 e 23 executados por subagentes do mesmo modelo, e evidência em `runbook-evidence/H2-2026-11-03/`. Os runbooks
+  irmãos (ATIVACAO-CONTABIL, VENDA-PACOTE, PACOTE-VALIDADE, IMOBILIZADO, WIZARD-ENTREVISTA, DFE-MANUAL) **não** rodaram
+  nesta execução (teto de contexto). Os passos 14, 18 e 19 aguardam o Y600 (C5) em `main`.
 - Assinatura do executor: agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
