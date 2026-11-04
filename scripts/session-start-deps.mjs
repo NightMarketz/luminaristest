@@ -5,6 +5,8 @@
 //
 // O stdout de um hook SessionStart entra no contexto da sessão: com tudo pronto, não imprime nada; quando instala,
 // imprime uma linha só, e a saída do npm vai para um log em os.tmpdir(). Falha não bloqueia a sessão (exit 0 com aviso).
+// Pasta própria (não junção) num dos três `node_modules` imprime um AVISO a cada sessão: o worktree-deps a preserva e
+// avisa só no log, e ela vence a junção na resolução do Node (o server leria pacotes do layout de antes).
 import { execSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -18,8 +20,21 @@ try {
 }
 
 // Workspace npm (PR-3 do MONOREPO-WORKSPACES): o worktree-deps liga as três pastas de uma vez, a partir do lockfile da raiz.
-const faltando = ['node_modules', 'my-app/node_modules', 'server/node_modules'].filter((p) => !fs.existsSync(path.join(root, p)));
-if (!faltando.length) process.exit(0);
+const PASTAS = ['node_modules', 'my-app/node_modules', 'server/node_modules'];
+function avisaPastaPropria() {
+  const proprias = PASTAS.filter((p) => fs.lstatSync(path.join(root, p), { throwIfNoEntry: false })?.isSymbolicLink() === false);
+  if (proprias.length) {
+    console.log(
+      `AVISO: pasta própria (não junção do depósito) em ${proprias.join(', ')}: ela vence o depósito na resolução do Node. ` +
+        'Apague-a e rode node scripts/worktree-deps.mjs na raiz.',
+    );
+  }
+}
+const faltando = PASTAS.filter((p) => !fs.existsSync(path.join(root, p)));
+if (!faltando.length) {
+  avisaPastaPropria();
+  process.exit(0);
+}
 
 const log = path.join(os.tmpdir(), `luminaris-worktree-deps-${path.basename(root)}.log`);
 const fd = fs.openSync(log, 'w');
@@ -35,3 +50,4 @@ console.log(
     ? `Dependências da worktree (${faltando.join(', ')}) ligadas ao depósito em ${s} s pelo scripts/worktree-deps.mjs (log: ${log}).`
     : `AVISO: scripts/worktree-deps.mjs falhou (exit ${r.status}) para ${faltando.join(', ')}; veja ${log} e rode-o na raiz da worktree.`,
 );
+avisaPastaPropria();

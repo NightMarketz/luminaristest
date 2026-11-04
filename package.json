@@ -22,6 +22,7 @@
     "@swc/core@1.16.2": true,
     "unrs-resolver@1.11.1": true,
     "esbuild@0.27.7": true,
-    "sharp@0.34.4": true
+    "sharp@0.34.4": true,
+    "puppeteer@25.3.0": true
   }
 }

@@ -10,7 +10,9 @@
 // Uso (na raiz da worktree):  node scripts/worktree-deps.mjs
 // Argumentos `server`/`my-app` de antes são aceitos e ignorados: o workspace instala inteiro.
 // Depósito: $LUMINARIS_DEPS_STORE ou ~/.luminaris-deps. Apagar o depósito é seguro: a próxima chamada reinstala.
-// Para remover uma worktree, use `git worktree remove` (não `rm -rf`, que pode seguir a junção para o depósito).
+// Para remover uma worktree, use `git worktree remove` (não `rm -rf`, que pode seguir a junção para o depósito). Ele
+// não segue a junção, mas a deixa para trás com as pastas-mãe (medido em 04/11: depósito intacto); a sobra sai com
+// `rmdir <junção>` sem `/S`, que tira só o link.
 // Não rode `npm ci` na worktree com as junções no lugar: ele apaga o `node_modules`, que é o do depósito.
 import { createHash } from 'node:crypto';
 import { execSync } from 'node:child_process';

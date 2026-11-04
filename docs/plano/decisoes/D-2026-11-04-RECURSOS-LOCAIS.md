@@ -49,6 +49,10 @@ Autorização: dono, chat, 2026-11-04: "Executa o PR-3" (`docs/accounting/MONORE
   `node_modules`, `my-app/node_modules` e `server/node_modules` (esta vazia, porque o npm iça o server inteiro para a raiz).
   As entradas `<app>-<sha1>` de antes ficam órfãs no depósito e podem ser apagadas.
 - O `allowScripts` do npm 11 mora no `package.json` da raiz: no `package.json` de um app ele é ignorado.
+  O `puppeteer` entra nele (dono, chat, 2026-11-04, achado O2 da verificação do #1051: "allowScripts"): o PDF de recibo
+  (`server/src/lib/pdf.ts`) usa o Chrome que o postinstall baixa para `~/.cache/puppeteer`. Sem ele, máquina limpa ou
+  bump do puppeteer deixava o PDF sem navegador. O cache é global e o postinstall pula a versão que já existe. Bump do
+  puppeteer pede bump da entrada, como o do prisma.
 - **Não rode `npm ci` na worktree com as junções no lugar:** ele segue a junção e apaga o conteúdo da entrada do depósito,
   que as outras worktrees usam (testado em 04/11 num workspace de rascunho: o arquivo-marcador dentro do depósito sumiu).
   Lockfile novo entra pelo script, que instala a entrada nova.
