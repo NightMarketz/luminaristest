@@ -10,6 +10,7 @@
     "lint:gate": "eslint . --config eslint.gate.config.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:changed": "vitest run --changed origin/main",
     "test:types": "tsc -p tsconfig.vitest.json --noEmit",
     "check:arch": "depcruise pages features components lib types --config .dependency-cruiser.cjs --ignore-known .dependency-cruiser-known-violations.json --output-type err",
     "check:arch:baseline": "depcruise pages features components lib types --config .dependency-cruiser.cjs --output-type baseline --output-to .dependency-cruiser-known-violations.json",

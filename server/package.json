@@ -33,6 +33,7 @@
     "test:unit": "jest --selectProjects unit --forceExit",
     "test:integration": "node scripts/test-integration-sharded.mjs",
     "test:integration:single": "jest --selectProjects integration --runInBand --forceExit",
+    "test:changed": "jest --changedSince=origin/main --selectProjects unit --forceExit",
     "test:coverage": "jest --coverage --runInBand --forceExit",
     "test:watch": "jest --selectProjects unit --watch",
     "test:leaks": "node --max-old-space-size=6144 node_modules/jest/bin/jest.js --detectOpenHandles --runInBand",

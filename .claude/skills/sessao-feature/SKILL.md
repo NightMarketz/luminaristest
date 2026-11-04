@@ -138,7 +138,7 @@ completa é a do CI.
 Integração sempre com `--runInBand` (sem ele, as suítes colidem no mesmo SQLite). `cd my-app &&
 npx tsc --noEmit` fecha o outro lado. Se tocar rota/DTO documentado: `npm run docs:generate`.
 
-**Worktree novo:** `npm ci` + `.env` com `OPENAI_API_KEY=ci-dummy-openai-key`.
+**Worktree novo:** `node scripts/worktree-deps.mjs` (depósito compartilhado, não `npm ci`) + `.env` com `OPENAI_API_KEY=ci-dummy-openai-key`.
 
 **Gates que o diff aciona — leia junto com a regra 5.** Eles não são verificação adicional; são
 consequência mecânica da mudança, e o CI cobra:

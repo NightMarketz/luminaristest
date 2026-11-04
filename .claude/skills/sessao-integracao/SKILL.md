@@ -99,7 +99,7 @@ do estritamente exigido pela resolução de conflitos.
 ## Notas de operação neste repo (aditivas — não alteram as regras acima)
 
 **O baseline do passo 1 tem um pré-requisito próprio.** Em worktree novo o gate falha por ambiente, não
-por código, e aí o baseline mente: rode `npm ci` e crie o `.env` com `OPENAI_API_KEY=ci-dummy-openai-key`
+por código, e aí o baseline mente: rode `node scripts/worktree-deps.mjs` (depósito compartilhado, não `npm ci`) e crie o `.env` com `OPENAI_API_KEY=ci-dummy-openai-key`
 **antes** de medir. O client Prisma junctionado do main é stale.
 
 **Gate de saída — os comandos que costumam entrar:**

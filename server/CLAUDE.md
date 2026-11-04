@@ -22,5 +22,5 @@ Docs de referência (leia sob demanda — não carregam sozinhos):
 Sintoma: erro de tipo/model inexistente no client Prisma (ex.: coluna que não está no `schema.prisma`
 de `main`), ou comportamento defasado depois de uma mudança de schema, sem relação óbvia com o que foi
 tocado. Causa: worktree novo **não herda** `node_modules` nem `.env`, e o client Prisma gerado é o de
-outro worktree/branch (schema divergente). Remédio: `npm ci` + `npx prisma generate` em **todo** worktree
+outro worktree/branch (schema divergente). Remédio: `node scripts/worktree-deps.mjs` na raiz (dependências do depósito compartilhado por lockfile + `prisma generate` local) em **todo** worktree
 novo, antes de rodar teste ou servidor (ver `worktree-deps-stale-prisma-client` na memória do projeto).

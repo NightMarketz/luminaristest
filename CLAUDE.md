@@ -113,6 +113,8 @@ morde só no código solto; em dúvida, **o contrato prevalece**.
 - **Teste local só com escopo** (dono, 2026-11-03: "isso pesa o pc demais"): `npx jest <caminho> --selectProjects unit`
   (o caminho **antes** do `--selectProjects`, senão roda tudo); integração um arquivo por vez com `--runInBand`;
   `npx vitest run <caminho>`. Suíte inteira é do CI — bloqueada localmente sem `FULL_SUITE=1` (`scripts/test-scope-guard.cjs`).
+  "Tudo que depende do que mudei": `npm run test:changed` (unit e front; na integração não existe — puxa quase tudo).
+  Não repita gate sem ter editado o código que ele cobre.
 - Telas atrás de `withAuth` → verifique contra **build de produção**, não `next dev`.
 - Tocou `.claude/skills/**` → `node .claude/skills/skill-audit/skill-audit.mjs run` antes de fechar
   (0 findings é gate). Gate cujo predicado lê ambiente se prova **na condição que falha** — detalhe
@@ -123,6 +125,14 @@ morde só no código solto; em dúvida, **o contrato prevalece**.
 - Contexto passou de ~180k tokens, ou fechou um nó/PR → feche a etapa, escreva o handoff (feito · pendente · próximo comando exato · arquivos) e peça sessão nova. Não emende outra tarefa nem espere a compactação.
 - Pausa > 60 min com contexto > 150k → retome em sessão nova a partir do handoff.
 - Arquivo grande já lido e não editado → não releia; cite o trecho que está no contexto.
+
+## Recursos da máquina (dono, 2026-11-04 — `docs/plano/decisoes/D-2026-11-04-RECURSOS-LOCAIS.md`)
+- **Worktree nova:** `node scripts/worktree-deps.mjs` (depósito compartilhado por lockfile), não `npm ci`. Remover worktree
+  com `git worktree remove`, nunca `rm -rf`.
+- **Sessão aberta por sessão não abre outra:** propõe o cartão. Prefira continuar a sessão que tem o contexto (`SendMessage`).
+  No máximo 3 sessões em trabalho pesado (teste, build, navegador) ao mesmo tempo.
+- **Cache de prompt (1 h):** pausa longa no meio da tarefa → handoff e feche. Brief aponta arquivos, não cola conteúdo;
+  saída de comando com `tail`/`grep`.
 
 ## Merge por classe de risco (dono, 2026-10-28)
 `node scripts/classe-risco.mjs pr <n>` decide. **Verde** → a sessão maestro (`.claude/prompts/maestro.md`) mergeia

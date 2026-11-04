@@ -122,7 +122,7 @@ completa é a do CI.
 Integração sempre com `--runInBand`: sem ele, as suítes colidem no mesmo SQLite. O `tsc` é gate:
 `cd server && npx tsc --noEmit` e `cd my-app && npx tsc --noEmit` — não avance vermelho.
 
-**Worktree novo:** `npm ci` + `.env` com `OPENAI_API_KEY=ci-dummy-openai-key`, senão o passo 1 falha por
+**Worktree novo:** `node scripts/worktree-deps.mjs` (depósito compartilhado, não `npm ci`) + `.env` com `OPENAI_API_KEY=ci-dummy-openai-key`, senão o passo 1 falha por
 motivo espúrio e você reporta divergência que não existe.
 
 **Gates que o diff aciona não são "verificação extra" da regra 4** — são consequência mecânica da
