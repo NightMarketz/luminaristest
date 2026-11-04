@@ -210,7 +210,7 @@ export class VectorRepository implements IVectorRepository {
         duration: Date.now() - startTime,
       });
       endTimer({ success: false });
-      throw new ServiceError(`Falha ao buscar vetores: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      throw new ServiceError('Falha ao buscar vetores.');
     }
   }
 

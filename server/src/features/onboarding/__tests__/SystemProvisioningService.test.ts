@@ -13,6 +13,7 @@ import {
   OnboardingRolledBackError,
   OnboardingRollbackFailedError,
   SystemResetBlockedByAccountingError,
+  ValidationError,
 } from '../../../lib/errors';
 import type { UserContext } from '../../../types/UserContext';
 import { Role } from '../../users/models/User.model';
@@ -39,8 +40,9 @@ const input = (fiscal?: ProvisionInput['fiscal'], sectorKey?: string | null): Pr
 
 function build(opts: {
   tablesBefore?: number;
-  unitFails?: boolean;
-  fiscalFails?: boolean;
+  /** `true` ⇒ erro de domínio (`ValidationError`, mensagem nossa); um `Error` ⇒ lança esse erro cru. */
+  unitFails?: boolean | Error;
+  fiscalFails?: boolean | Error;
   unitFiscalFails?: boolean;
   purgeFails?: boolean;
   policy?: ISystemProvisioningPolicy;
@@ -61,7 +63,8 @@ function build(opts: {
     }),
     createTableData: jest.fn(async () => {
       calls.push('unit');
-      if (opts.unitFails) throw new Error('falha injetada');
+      if (opts.unitFails instanceof Error) throw opts.unitFails;
+      if (opts.unitFails) throw new ValidationError('falha injetada');
       return { id: 'unit-1' };
     }),
     deleteAllTablesForUser: jest.fn(async () => {
@@ -72,7 +75,8 @@ function build(opts: {
   const fiscal = {
     upsert: jest.fn(async () => {
       calls.push('fiscal');
-      if (opts.fiscalFails) throw new Error('perfil recusado');
+      if (opts.fiscalFails instanceof Error) throw opts.fiscalFails;
+      if (opts.fiscalFails) throw new ValidationError('perfil recusado');
       return { inativa: false, condicoes: {} };
     }),
     // BE-INCR-LEGAL-PARAMS PR-2: a matriz vem do serviço da contabilidade (fotografia OBRIGACAO_REGIME) — aqui, a semente.
@@ -171,6 +175,19 @@ describe('SystemProvisioningService.provision', () => {
     expect(err.message).toBe('Não foi possível criar o perfil fiscal da empresa (perfil recusado). A instalação foi desfeita; tente novamente.');
     expect(calls.slice(-3)).toEqual(['purge:tables', 'purge:graph', 'purge:proposals']);
     expect(calls.filter((c) => c.startsWith('reset:'))).toEqual([]);
+  });
+
+  // ERRO-CRU-AO-CLIENTE (GAP-MAP, dono 2026-11-04): o texto do 500 vai ao cliente; erro que não é nosso (Prisma,
+  // banco, rede) fica só no log — a mensagem pública não pode carregar o texto interno.
+  it('erro interno cru na unidade ou no perfil ⇒ a mensagem do OnboardingRolledBackError não carrega o texto interno', async () => {
+    const interno = 'Invalid `prisma.dynamicTableData.create()` invocation: SQLITE_BUSY: database is locked';
+    for (const opts of [{ unitFails: new Error(interno) }, { fiscalFails: new Error(interno) }]) {
+      const { service } = build(opts);
+      const err = await service.provision(ctx, input({ regime: 'REAL' })).catch((e) => e);
+      expect(err).toBeInstanceOf(OnboardingRolledBackError);
+      expect(err.message).not.toContain('prisma');
+      expect(err.message).not.toContain('SQLITE_BUSY');
+    }
   });
 
   it('NAO_SEI e bloco ausente ⇒ `pendente`, nada é criado no perfil fiscal', async () => {

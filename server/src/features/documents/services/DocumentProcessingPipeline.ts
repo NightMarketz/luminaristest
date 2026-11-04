@@ -7,7 +7,7 @@ import { DocumentContext } from '../models/DocumentContext';
 import { logger } from '@/lib/logger';
 import { v5 as uuidv5 } from 'uuid';
 import type { IUserRepository } from '../../users/repositories/IUserRepository';
-import { NotFoundError } from '@/lib/errors';
+import { AppError, NotFoundError } from '@/lib/errors';
 
 // Namespace UUID para gerar UUIDs determinísticos para os chunks. Deve ser um UUID válido.
 const CHUNK_ID_NAMESPACE = 'f6db7260-569b-4559-835a-484f913119a4';
@@ -95,7 +95,7 @@ export class DocumentProcessingPipeline {
         chunkRecords.push({ id: chunk.id, text: chunkText, index: i });
       } catch (error) {
         context.processing.failedChunks++;
-        const errorMessage = error instanceof Error ? error.message : 'Unknown chunk processing error';
+        const errorMessage = 'Failed to persist a document chunk.';
         logger.error(`Error persisting chunk ${i} of document ${document.id}`, { error });
         context.errors = context.errors || [];
         context.errors.push({ code: 'CHUNK_PROCESSING_ERROR', message: errorMessage, timestamp: new Date().toISOString() });
@@ -114,12 +114,12 @@ export class DocumentProcessingPipeline {
     try {
       vectors = await this.processingService.generateEmbeddings(chunkRecords.map(c => c.text));
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown embedding error';
+      const errorMessage = 'Failed to generate the document embeddings.';
       logger.error(`Batch embedding failed for document ${document.id}`, { error });
       context.processing.failedChunks += chunkRecords.length;
       context.errors = context.errors || [];
       context.errors.push({ code: 'CHUNK_PROCESSING_ERROR', message: errorMessage, timestamp: new Date().toISOString() });
-      throw new Error(`Batch embedding failed: ${errorMessage}`);
+      throw new Error(errorMessage);
     }
 
     // Build vector points and upsert in batches of 10
@@ -158,7 +158,7 @@ export class DocumentProcessingPipeline {
   ): Promise<void> {
     context.processing.duration = Date.now() - startTime;
     context.processing.endTime = new Date().toISOString();
-    const errorMessage = error instanceof Error ? error.message : 'Unknown processing error';
+    const errorMessage = error instanceof AppError ? error.message : 'Document processing failed.';
     context.errors = context.errors || [];
     context.errors.push({
       code: 'FATAL_PROCESSING_ERROR',

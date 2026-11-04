@@ -172,8 +172,9 @@ export class SpedEcfGenerationService {
 
     // Item 25: ano sem leiaute é 400 explícito (a lib lança Error puro — mesmo tratamento do SpedEcfRealGenerationService).
     let codVer: string;
+    const leiautes = await this.legalParams.fotografia(['LEIAUTE_SPED']);
     try {
-      codVer = resolveEcfCodVer(year, await this.legalParams.fotografia(['LEIAUTE_SPED']));
+      codVer = resolveEcfCodVer(year, leiautes);
     } catch (e) {
       throw new ValidationError(e instanceof Error ? e.message : String(e));
     }
