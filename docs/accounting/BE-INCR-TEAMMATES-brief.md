@@ -447,3 +447,24 @@ o limite de taxa do webhook ficam para a sessão de feature propor com medida.
 | PR-10 | 40–43 | PR-3, PR-7, pesquisa LGPD | PR-5, PR-6, PR-9 |
 
 Canais (PR-6), webhook (PR-9) e MCP (PR-10) vêm por último de propósito: podem ser cortados sem desfazer a base.
+
+## 8. Emenda de 04/11 — achados da leitura do Open Notebook
+
+Origem: leitura comparativa do código do Open Notebook (lfnovo/open-notebook, MIT) contra este BRIEF, a pedido do dono
+(chat, 04/11). Autorização: dono, chat 2026-11-04: "Sim, abre a correção, mas de todos, nao só dos 5".
+
+### 8.1 Prova acrescentada (sem decisão nova)
+
+- **Item 40 — SSRF não se fecha pela URL escrita.** O item recusa `localhost`, IP privado e link-local olhando o texto
+  da URL, no CRUD. Um hostname que resolve para IP interno (ex.: `127.0.0.1.nip.io`) passa, e um DNS que muda depois
+  do cadastro também (rebinding). O Open Notebook (`open_notebook/utils/url_validation.py`) resolve o DNS e recusa se
+  qualquer IP resolvido for perigoso, valida de novo antes de cada uso e fixa o IP conferido na conexão (mantendo
+  `Host`/SNI no nome original). O `lib/outboundHttp.ts` só registra a chamada, não barra destino (conferido em 04/11):
+  é o lugar natural da guarda. **Prova:** hostname que resolve para `127.0.0.1` → 400 no CRUD; servidor cujo DNS
+  passa a apontar para IP interno depois do cadastro é recusado na chamada; redirect para IP interno é recusado.
+
+### 8.2 Fork pendente (decisão do dono)
+
+| # | Pergunta | Por que importa |
+|---|---|---|
+| F-TM-E1 | Prazo da chamada da porta `LlmProvider` (o BRIEF só dá timeout ao cliente MCP, item 41). Proposta: 180 s, configurável por env | Sem prazo, um provedor travado segura o turno do teammate ou o worker de documentos (RAG item 26) sem limite. O Open Notebook subiu o padrão de 60 s para 180 s porque 60 s cortava respostas longas (`tests/test_llm_timeout_default.py`); o embedding atual usa 30 s (`lib/vector/embedding.ts`) |

@@ -383,3 +383,39 @@ F-RAG-B2b e F-RAG-B6 nasceram da resposta do F-RAG-B2 e foram perguntados no mes
 
 O RAG-PR-A e o RAG-PR-B podem ir antes do TEAMMATES ou entre os PRs dele, mas nunca **ao mesmo tempo** que um PR do
 TEAMMATES que toque os mesmos arquivos.
+
+## 8. Emenda de 04/11 — achados da leitura do Open Notebook
+
+Origem: leitura comparativa do código do Open Notebook (lfnovo/open-notebook, MIT) contra este BRIEF, a pedido do dono
+(chat, 04/11). Autorização: dono, chat 2026-11-04: "Sim, abre a correção, mas de todos, nao só dos 5". As provas
+abaixo garantem o que já está ratificado (F-RAG-8, F-RAG-B4, LGPD art. 18 VI) e entram nos itens citados. O que pede
+decisão nova está em §8.2, como fork pendente: o item afetado não começa sem a resposta.
+
+### 8.1 Provas acrescentadas (sem decisão nova)
+
+- **Item 25 — o retry tem de existir de fato.** Hoje o `DocumentProcessingPipeline.processDocument` captura toda
+  exceção, grava `ERROR` e **não relança** (conferido em 04/11). Embrulhado pelo worker do BullMQ, o job sempre
+  "dá certo" e as 3 tentativas do F-RAG-8 nunca rodam. O Open Notebook tem o mesmo defeito documentado no próprio
+  código (`stop_on` morto em `commands/embedding_commands.py`). **Prova:** erro transitório na 1ª tentativa e sucesso
+  na 2ª deixam o documento `COMPLETED`, com 2 execuções registradas; na falha final, `FAILED` + `alert` uma vez só.
+- **Item 8 — reprocessar é idempotente.** O `IChunkRepository` só tem `create` e o pipeline cria um `Chunk` por trecho
+  sem apagar os anteriores (conferido em 04/11). Com o retry do item 25, cada tentativa duplica os trechos e a busca
+  devolve o mesmo trecho repetido. O Open Notebook apaga antes de inserir e, se o lote falha no meio, apaga a parte
+  gravada. **Prova:** processar o mesmo documento duas vezes deixa N `Chunk` e N linhas na `vec0`, não 2N; falha no
+  meio do lote de vetores não deixa vetor com o carimbo atual visível na busca (no caminho (2) do item 9, a `vec0` está
+  fora da transação do Prisma).
+- **Itens 23 e 25 — arquivo do `DOCUMENTS_DIR` não fica órfão.** Reusar o padrão TX-001 que já existe
+  (`SourceDocumentUploadService`: disco gravado e tx falhou ⇒ `deleteFile`, idempotente a `ENOENT`). **Prova:** upload
+  com o enfileiramento ou o banco falhando depois da gravação não deixa arquivo; apagar o documento com job pendente
+  apaga o arquivo e o job vira no-op (documento ausente = erro permanente, sem nova tentativa).
+- **Item 26 — `processingError` é texto fixo.** O aviso `CONTEXTO:` e qualquer falha gravada nesse campo usam código e
+  texto nossos; a mensagem do provedor vai só ao log. Mesma regra que o PR do ERRO-CRU-AO-CLIENTE (GAP-MAP, 04/11)
+  aplicou ao pipeline atual.
+
+### 8.2 Forks pendentes (decisão do dono)
+
+| # | Pergunta | Por que importa |
+|---|---|---|
+| F-RAG-E1 | Quais erros do provedor contam como permanentes (não repetem)? Proposta: chave inválida (401/403), contexto excedido, documento sem texto, documento apagado e `AWAITING_BUDGET`; repetem 429, 5xx e timeout | Sem a separação, uma chave errada gasta 3 tentativas, dispara o alerta e apaga o arquivo (F-RAG-8) |
+| F-RAG-E2 | Teto de tokens do texto enviado na geração do contexto (item 26), e se o excedente é cortado (com aviso de "texto cortado") ou o contexto não é gerado | O upload aceita 50 MB (`MAX_FILE_SIZE`); sem teto, documento grande estoura a janela do modelo e a tentativa ainda conta no orçamento (F-RAG-B2) |
+| F-RAG-E3 | Sem Redis (F-RAG-7), a fila em memória se perde num restart. O arquivo que ficou no `DOCUMENTS_DIR` é apagado por uma varredura no boot, ou o documento volta à fila no boot? | Hoje nenhum caminho apaga esse arquivo, que pode ter dado pessoal |
