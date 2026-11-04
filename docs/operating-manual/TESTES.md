@@ -46,8 +46,8 @@ usando).
 | serviço com repositório, rota, controller, transação | o(s) `*.integration.test.ts` do domínio, um por vez: `npx jest <arquivo> --selectProjects integration --runInBand` | o resto da integração |
 | `schema.prisma` ou migração | `cd server && npm run smoke:migration` + o teste de integração da migração | tudo |
 | DTO do server | o teste do DTO + `UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit --testPathPatterns dtoShapeSnapshot` e commite o JSON + os `.gen.ts` | — |
-| componente ou hook do front | `cd my-app && npx vitest run <pasta>` ou `npm run test:changed` | suíte inteira (com `TZ=America/Sao_Paulo`) |
-| data/fuso no front | o mesmo, com `TZ=America/Sao_Paulo` no ambiente (o CI fixa; a sua máquina pode não fixar) | — |
+| componente ou hook do front | `cd my-app && npx vitest run <pasta>` ou `npm run test:changed` | suíte inteira |
+| data/fuso no front | o mesmo; o `vitest.config.ts` fixa `TZ=America/Sao_Paulo` em toda execução, local e CI (PR NightMarketz/luminaristest#1070) | — |
 | tipos do front | `cd my-app && npx tsc --noEmit` e `npm run test:types` | build |
 | `scripts/*.mjs` / `*.cjs` da raiz | `node --test scripts/<nome>.test.mjs` | **ninguém roda hoje** (pesquisa §6.2) |
 | `.claude/skills/**` | `node .claude/skills/skill-audit/skill-audit.mjs run` (0 findings) | o mesmo |

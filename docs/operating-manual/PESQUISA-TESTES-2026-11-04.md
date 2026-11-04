@@ -67,6 +67,8 @@ o comentário de lá diz que ela "puxa quase tudo", porque todo arquivo de integ
    [externo: Jest CLI]. É uma heurística [inferido]: o CI continua sendo a rede de segurança.
 3. **Fuso fixo no front local.** Fixar `TZ=America/Sao_Paulo` no próprio `vitest.config.ts` faz os ~20 testes de
    date-only morderem no local como mordem no CI. Hoje eles passam ou falham conforme o fuso da máquina [lido/inferido].
+   Feito em 04/11 (PR NightMarketz/luminaristest#1070) [verificado: com `TZ=UTC` no shell e o bug de `dates.ts:43`
+   reintroduzido, a config nova reprova 5 testes e a de main passa 8/8].
 4. **Executor × prova-runner.** O veredito é do prova-runner por desenho, e isso fica. Proposta: o executor deixa de
    rodar a passada final de confirmação e entrega os comandos, e quem roda a versão que vale é o prova-runner. Isso
    tira uma execução completa por entrega [inferido; mexe em `.claude/agents/executor.md`].
@@ -96,8 +98,11 @@ Está saudável: swc, `maxWorkers 25%` e cache no CI. O que sobra:
 3. **Pares unit × integração que testam a mesma regra** (`httpTiming`, `presumidoTeto`, `partner`,
    `requestContext` e mais 20 pares com o mesmo nome) [lido/inferido]. Regra proposta: **integração prova a ligação**
    (status HTTP, persistência, transação); **unit prova a regra**. Apagar ou enxugar teste é decisão do dono (§8).
-4. **`requestContext.integration.test.ts` faz `pushTestSchema` sem usar banco** [lido]: é candidato a virar unit.
-5. **`test:leaks` sem chamador** [inferido]: o CI faz o mesmo nos shards. Pode sair do `package.json`.
+4. ~~**`requestContext.integration.test.ts` faz `pushTestSchema` sem usar banco** [lido]: é candidato a virar unit.~~
+   **Errado** (conferido em 04/11, #1070): o caso autenticado passa por `server/src/middleware/auth.ts:140`, que lê
+   `getTokenVersion` no banco; sem o schema, a resposta é 401 em vez de 403. Fica na integração.
+5. **`test:leaks` sem chamador** [verificado por grep em 04/11]: o CI faz o mesmo nos shards. Saiu do `package.json`
+   no PR NightMarketz/luminaristest#1070.
 
 ## 5. Front (Vitest)
 
@@ -230,7 +235,9 @@ Windows [externo]. É aparato novo no CI: decisão do dono (§8).
    04/11 (PR NightMarketz/luminaristest#1064).
 2. Seed de cenário por runbook em banco descartável + emenda "quem põe de pé" no RUNBOOK-FORMAT (§7.1). Depende do
    inventário da sessão DFE-MANUAL para escolher os cenários.
-3. `TZ` fixo no vitest local; `test:leaks` fora; `requestContext` para unit.
+3. ~~`TZ` fixo no vitest local; `test:leaks` fora; `requestContext` para unit.~~ Feito em 04/11 (PR
+   NightMarketz/luminaristest#1070): TZ e `test:leaks` sim; o `requestContext` fica na integração porque o auth lê
+   `tokenVersion` no banco (§4 item 4).
 4. Vitest em job paralelo; cache de `node_modules` e prisma no CI.
 5. Ops `upload`, `assertNet` e `sql` no runner, mais roteiros base, só para o que sobrar de tela.
 6. Sequencer por duração; `test:affected` de integração por domínio; medir o `resetDb` em lote.
