@@ -101,6 +101,8 @@ export function useGovernedSave<B>(opts: GovernedSaveOptions<B>): GovernedSave<B
         } else {
           await optsRef.current.put(body);
           setSavedDirect(true);
+          // O PUT direto marca a PROPOSED órfã como SUPERSEDED no servidor (BRIEF POLICY-VERSION item 11; H2 23-h1).
+          await reloadPending();
         }
       } catch (err: unknown) {
         const { message, code } = resolveGovernanceError(err, tRef.current, optsRef.current.saveErrorFallback);
