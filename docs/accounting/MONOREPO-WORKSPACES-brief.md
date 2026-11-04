@@ -1,6 +1,21 @@
 # BRIEF — MONOREPO-WORKSPACES (melhorias 5 e 6 de 7)
 
-**Estado:** BRIEF — **forks pendentes de ratificação** (F-MW-1..F-MW-8). Nada aqui está decidido. Nenhum código.
+**Estado:** BRIEF — **forks ratificados** (F-MW-1..F-MW-8, dono, chat, 2026-11-04, por questionário). Nenhum código.
+O próximo passo autorizado é **só o spike PR-0** (F-MW-1 = b). O PR-1 em diante depende do resultado dele e de um
+`executa` do dono.
+
+## 0. Ratificação (dono, chat, 2026-11-04)
+
+| Fork | Resposta do dono (literal) | Recomendação | Efeito no BRIEF |
+|---|---|---|---|
+| F-MW-1 | "Só o spike (Recomendado)" | igual | só o PR-0 está liberado; migrar depende do resultado |
+| F-MW-2 | "Um só na raiz" | **contra** (era um por app) | um `pnpm-lock.yaml` na raiz; o `my-app/Dockerfile` passa a construir com contexto na raiz (item 7); Dependabot em `/` (item 8) |
+| F-MW-3 | "Tirar se o spike passar (Recomendado)" | igual | o `server/.npmrc` sai no PR-1 se o PR-0 instalar sem ele; se não, volta como pergunta |
+| F-MW-4 | "Mesmo PR (Recomendado)" | igual | lockfile, CI e Docker num PR só (PR-1) |
+| F-MW-5 | "Conferir na doc antes (Recomendado)" | igual | antes do PR-1, confirmar na doc do GitHub o suporte do Dependabot ao pnpm 11; sem suporte, volta como pergunta |
+| F-MW-6 | "Turborepo + incremental (Recomendado)" | igual | PR-A (`tsc --incremental`) independente; PR-3 com `turbo.json` |
+| F-MW-7 | "Nunca (Recomendado)" | igual | `test:integration` com `cache: false` |
+| F-MW-8 | "pnpm 11 (Recomendado)" | igual | `packageManager: pnpm@11.x` pelo corepack; o PR-0 confirma o corepack no Node 22 |
 **Sessão:** `sessao-planejamento`, 04/11/2026.
 
 ## Contexto fixo
@@ -101,10 +116,14 @@ Só entram os que valem **qualquer que seja** o fork. Os que dependem de fork es
 6. **CI** `[F-MW-4]` — `pnpm/action-setup` (SHA fixado, como os outros), `setup-node` com `cache: pnpm`,
    `pnpm install --frozen-lockfile`, e o global virtual store **desligado** no CI (a doc diz que não serve lá). Prova: o CI
    do PR fica verde, com o tempo de cada job anotado contra a última run verde da `main`.
-7. **Docker** `[F-MW-2]` — os dois Dockerfiles com `corepack`/pnpm e `--frozen-lockfile`. Prova: o job `docker-build` fica
-   verde. O do my-app hoje constrói só com a pasta dele, e o F-MW-2 decide se o lockfile vai junto.
-8. **Dependabot** `[F-MW-5]` — continua abrindo PR de minor/patch nos dois apps. Prova: um PR do Dependabot depois do merge
-   altera o `pnpm-lock.yaml`.
+7. **Docker** `[F-MW-2 = lockfile na raiz]` — os dois Dockerfiles com `corepack`/pnpm e `--frozen-lockfile`. Como o
+   lockfile fica na raiz, o build passa a ter contexto na raiz: o `docker-compose.yml` e o job `docker-build` do `ci.yml`
+   mudam o `context`, e o Dockerfile copia `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `package.json` da raiz e só a pasta do
+   app (`pnpm install --frozen-lockfile --filter <app>...`). Um `.dockerignore` na raiz tira a outra pasta e os
+   `node_modules`. Prova: o job `docker-build` fica verde e a imagem do my-app não contém `server/`.
+8. **Dependabot** `[F-MW-2]` `[F-MW-5]` — o ecossistema `npm` passa de `/server` e `/my-app` para `directory: /`, onde
+   está o lockfile, mantendo os grupos de minor/patch. Prova: um PR do Dependabot depois do merge altera o
+   `pnpm-lock.yaml`.
 9. **Chamadas `npx`/`npm run`** — os 3 scripts do server que chamam npm (`build`, `prebuild`, `test`), as 22 do `ci.yml`, os
    13 scripts em `scripts/` e `server/scripts/` que chamam `npx`, e as 124 ocorrências nas skills passam a chamar
    `pnpm`/`pnpm exec`. Prova: `git grep -n -E "npm ci|npx " -- ':!docs/**' ':!*.md'` fica vazio, salvo as exceções listadas
@@ -162,7 +181,7 @@ allowBuilds:                      # = allowScripts do #1034
 }
 ```
 
-## 3. Forks — RATIFICAÇÃO PENDENTE (perguntas ao dono)
+## 3. Forks — RATIFICADOS em 2026-11-04 (respostas na seção 0)
 
 **F-MW-1 — Vale migrar para o pnpm agora, com o depósito já resolvendo a instalação?**
 - **(a)** Migrar já, pelo checklist inteiro.
@@ -184,6 +203,9 @@ allowBuilds:                      # = allowScripts do #1034
 - O Dependabot hoje trabalha por diretório.
 - `server` e `my-app` não compartilham pacote interno.
 - Com (a), o Docker do my-app precisa mudar de contexto, e um bump de um app reescreve o lockfile do outro.
+
+**→ Ratificado: (a), um lockfile na raiz, contra a recomendação** (dono: "Um só na raiz"). O custo fica no checklist:
+o item 7 muda o contexto do Docker e o item 8 move o Dependabot para `/`.
 
 **F-MW-3 — Tirar o `legacy-peer-deps` do server?**
 - **(a)** Tirar, e corrigir o que o pnpm reclamar.
@@ -247,7 +269,7 @@ fixado. A diferença entre Node 22 no CI e 24 local já existe hoje e não é de
 |---|---|---|---|---|
 | PR-A | `tsc --incremental` + `tsBuildInfoFile` nos dois apps, se o F-MW-6 incluir (c) | nada | verde | `git revert` |
 | PR-0 | spike pnpm (branch descartável, **não mergeia**): os 8 comandos do item 1, com tempo e exit | F-MW-1 = (b) | — | nada a reverter |
-| PR-1 | workspace + lockfile(s) + `allowBuilds` + CI + Docker (itens 2–7) | PR-0 passou; F-MW-2..5, 8 | vermelho (CI, deps) | `git revert`; os `package-lock.json` voltam com ele |
+| PR-1 | workspace + `pnpm-lock.yaml` na raiz + `allowBuilds` + CI + Docker com contexto na raiz + Dependabot em `/` (itens 2–8) | PR-0 passou; doc do Dependabot conferida (F-MW-5) | vermelho (CI, deps) | `git revert`; os `package-lock.json` voltam com ele |
 | PR-2 | `worktree-deps.mjs`/hook chamando pnpm; skills, `CLAUDE.md` e `server/CLAUDE.md` (itens 9–10) | PR-1 | vermelho (skills) | `git revert` |
 | PR-3 | `turbo.json` + scripts `turbo run` (itens 11–12) | PR-1 (precisa de workspace) | verde ou vermelho, conforme toque `ci.yml` | `git revert`; apagar `.turbo/` |
 | PR-4 | apagar `worktree-deps.mjs` e emendar o R1 | PR-2 estável por 1 semana | vermelho (cédula) | `git revert` |
