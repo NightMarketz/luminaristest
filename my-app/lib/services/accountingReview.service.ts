@@ -113,6 +113,7 @@ export const accountingReviewService = {
     const res = await apiClient.post<Envelope<{ finding: AccountingReviewFinding; entryId: string }>>(
       `/accounting/reviews/${enc(id)}/findings/${enc(findingId)}/adjustment`,
       body,
+      { silent: true }, // só o JournalEntryModal chama; ele mostra o erro (achado F-907-T do H2, 2026-11-02)
     );
     notify('Lançamento de acerto registrado.', 'success', CTX);
     return res.data;

@@ -75,7 +75,9 @@ export const entryApprovalsService = {
 
   /** Create a Draft entry with its legs. No number, no ledger impact yet (ACC-015). */
   async createDraft(payload: CreateDraftPayload): Promise<ApprovalEntry> {
-    const res = await apiClient.post<ApiEnvelope<ApprovalEntry>>('/entry-approvals/drafts', payload);
+    // silent: o único chamador é o JournalEntryModal, que mostra o erro dentro dele; o toast repetido cobria o
+    // botão "Postar" (achado F-907-T do H2, 2026-11-02).
+    const res = await apiClient.post<ApiEnvelope<ApprovalEntry>>('/entry-approvals/drafts', payload, { silent: true });
     notify('Rascunho criado.', 'success', CTX);
     return res.data;
   },
@@ -85,6 +87,7 @@ export const entryApprovalsService = {
     const res = await apiClient.put<ApiEnvelope<ApprovalEntry>>(
       `/entry-approvals/drafts/${encodeURIComponent(id)}`,
       payload,
+      { silent: true }, // mesmo motivo do createDraft
     );
     notify('Rascunho atualizado.', 'success', CTX);
     return res.data;
