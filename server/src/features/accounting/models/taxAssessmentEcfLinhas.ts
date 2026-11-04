@@ -1,4 +1,4 @@
-import type { MemoriaLinha, ModoApuracao } from './taxAssessmentCalc';
+import { RECEITA_SERVICO_COMUM, type MemoriaLinha, type ModoApuracao } from './taxAssessmentCalc';
 import { periodoBounds, type LalurPeriodo } from './Lalur.model';
 
 /**
@@ -15,7 +15,7 @@ import { periodoBounds, type LalurPeriodo } from './Lalur.model';
  *
  * Fora da tabela, de propósito (vazios): os passos do e-Lalur/e-Lacs (`LAIR`, `ADICOES`, `EXCLUSOES`, `LUCRO_AJUSTADO`,
  * `COMPENSACAO*` — registros M300/M350, fora dos registros da decisão §9); `GUARDA_CIRCULARIDADE`, `MESES_PERIODO`,
- * vencimentos e avisos; `RECEITA_HOSPITALAR` (é parte da receita de serviço, não linha própria); a dedução
+ * vencimentos e avisos; `RECEITA_HOSPITALAR` sem `RECEITA_SERVICO_COMUM` (memória anterior ao #1024); a dedução
  * `CSLL_RETIDA` (P500 9/10/11/12 dependem de quem reteve — o tipo não diz); as parcelas `DIFERENCA_POSTERGADA_<período>`
  * (o total vai em `DIFERENCA_POSTERGADA`); `SALDO_NEGATIVO` (a linha "a pagar" da ECF é com sinal, a memória separa).
  */
@@ -44,6 +44,7 @@ const PRESUMIDO_IRPJ: Tabela = {
   RECEITA_SERVICO: L('P200', '8'), // Receita Bruta Sujeita ao Percentual de 32%
   RECEITA_NAO_USO: L('P200', '8'), // a 3.4 entra na base de serviço (SpedEcfGenerationService, BE-INCR-H1-REFERENCIAL-3-4)
   RECEITA_REVENDA: L('P200', '4'), // … 8%
+  RECEITA_SERVICO_COMUM: L('P200', '8'), // com hospitalar: o serviço a 32 % (a hospitalar vai à P200 4, abaixo)
   PRESUNCAO_SERVICO: L('P200', '10'), // RESULTADO DA APLICAÇÃO DOS PERCENTUAIS SOBRE A RECEITA BRUTA AJUSTADO
   PRESUNCAO_REDUZIDA_16: L('P200', '10'),
   PRESUNCAO_REVENDA: L('P200', '10'),
@@ -70,6 +71,7 @@ const PRESUMIDO_CSLL: Tabela = {
   RECEITA_SERVICO: L('P400', '4'), // Receita Bruta Sujeita ao Percentual de 32%
   RECEITA_NAO_USO: L('P400', '4'),
   RECEITA_REVENDA: L('P400', '2'), // … 12%
+  RECEITA_SERVICO_COMUM: L('P400', '4'),
   PRESUNCAO_SERVICO: L('P400', '6'), // RESULTADO DA APLICAÇÃO DOS PERCENTUAIS SOBRE A RECEITA BRUTA AJUSTADO
   PRESUNCAO_REVENDA: L('P400', '6'),
   PRESUNCAO_HOSPITALAR: L('P400', '6'),
@@ -197,6 +199,10 @@ export function linhaEcfDoPasso(r: ApuracaoRef, passo: MemoriaLinha, memoria: re
   const com16 = r.tributo === 'IRPJ' && memoria.some((m) => m.codigo === 'PRESUNCAO_REDUZIDA_16');
   if (passo.codigo === 'LC224_ACRESCIMO_SERVICO' && com16) return vigente(L('P200', '25230', LC224_IRPJ), r);
   if ((passo.codigo === 'RECEITA_SERVICO' || passo.codigo === 'RECEITA_NAO_USO') && com16) return vigente(L('P200', '6'), r);
+  // Com hospitalar, a P200 8 / P400 4 é a `RECEITA_SERVICO_COMUM` e a hospitalar vai com a revenda (8 %/12 %).
+  const comHospitalar = memoria.some((m) => m.codigo === RECEITA_SERVICO_COMUM);
+  if ((passo.codigo === 'RECEITA_SERVICO' || passo.codigo === 'RECEITA_NAO_USO') && comHospitalar) return null;
+  if (passo.codigo === 'RECEITA_HOSPITALAR') return comHospitalar ? vigente(t.RECEITA_REVENDA, r) : null;
   return vigente(t[passo.codigo], r);
 }
 
@@ -220,5 +226,7 @@ export function linhasEcfDaTabela(): { modo: string; tributo: string; codigo: st
   out.push({ modo: 'AJUSTE_ANUAL', tributo: 'CSLL', codigo: 'ESTIMATIVA_PAGA_Ann', def: ESTIMATIVA_PAGA.CSLL });
   out.push({ modo: 'PRESUMIDO', tributo: 'IRPJ', codigo: 'LC224_ACRESCIMO_SERVICO:16', def: L('P200', '25230', LC224_IRPJ) });
   out.push({ modo: 'PRESUMIDO', tributo: 'IRPJ', codigo: 'RECEITA_SERVICO:16', def: L('P200', '6') });
+  out.push({ modo: 'PRESUMIDO', tributo: 'IRPJ', codigo: 'RECEITA_HOSPITALAR', def: L('P200', '4') });
+  out.push({ modo: 'PRESUMIDO', tributo: 'CSLL', codigo: 'RECEITA_HOSPITALAR', def: L('P400', '2') });
   return out;
 }
