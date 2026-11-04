@@ -65,7 +65,7 @@ resta depois de seed + testes.
 | M2-DEPLOY-SMOKE | não executado | P1–P5, 3–7, R0–R5 (VPS, cofre, Redis no host) | todos | R4/R5 cabem em teste com Redis de container | — | tudo: é implantação |
 | DEV-DRIVE | — | máquina do dono | — | — | — | fora do escopo de produto |
 
-**Leitura.** De 20 runbooks (sem o `RUNBOOK-FORMAT` e o rascunho do I1B; o DEV-DRIVE é da máquina do dono e fica fora):
+**Leitura.** São 19 runbooks de produto: a tabela lista 20, mas o DEV-DRIVE é da máquina do dono e fica fora (também ficam fora o `RUNBOOK-FORMAT` e o rascunho do I1B).
 - **4 podem ser aposentados** depois de seed + testes (ATIVACAO, VENDA-PACOTE, KANBAN, LAC-B).
 - **9 encolhem** para minutos de oráculo externo (DFE, IMOBILIZADO, PACOTE-VALIDADE, WIZARD, W3, W7, BROWSER-SIGNOFF,
   H1, H3).
@@ -75,8 +75,8 @@ resta depois de seed + testes.
 
 Ordenado por risco. Cada item é "instrumentação → correção" quando há bug, ou só teste quando o código está certo.
 
-1. **Seed de cenário por runbook**, em banco descartável e idempotente. Destrava sozinho as pré-condições de 14 dos 20
-   runbooks (coluna "Seed necessário"). O seed é dado de teste, não aparato de auditoria.
+1. **Seed de cenário por runbook**, em banco descartável e idempotente. Destrava sozinho as pré-condições de 14 dos 19
+   runbooks (coluna "Seed necessário"; 2 desses seeds já existem: o multi-exercício do H1 e o `scripts/seed-clinic-tenant.mjs` do H3). O seed é dado de teste, não aparato de auditoria.
 2. **IMO-1**: teste de serviço que ativa o bem (`version` 1→2) e reativa com `version: 1`, esperando `ConflictError`;
    idem para `disposeAsset`. Hoje reprova. Verificado.
 3. **DFE, caminho feliz pela pilha real**: preview com 1 documento e tie-out com o razão; "Confirmar" → ficha (P8);
