@@ -133,3 +133,15 @@ aberta ao contador ([[D-2026-10-30-TRIAGEM-CONTADOR]]). Dossiê:
   passo que tem linha na ECF. A conta contábil já vai em `fonte`, e a data do recolhimento fica com o DARF e a
   DCTFWeb/MIT ([[X9]]). É emenda ao BRIEF X7-C §C3 item 5, com `executa` por esta delegação (correção C8 do handoff).
 - **O pedido ao contador de 30–31/10 não vai:** ficou sem pergunta. A P-C1 sai do [[X7]] e libera o X9.
+
+## 10. Correção dos achados do #1021 (03/11)
+
+Pergunta feita no chat, 03/11: "Autorizo a correção dos três achados do #1021?". Resposta do dono: *"Sim, autoriza"*.
+Ficam autorizadas a instrumentação e a correção dos três achados do teste-guarda da C8 (#1021):
+
+1. a ECF Presumido não segrega a receita hospitalar nem a de 16% (P200 4/6/8 e P400 2/4);
+2. a sobra da LC 224;
+3. a CSLL retida.
+
+O trabalho fica com a sessão "Achados do C8" (PR #1024, empilhado no #1021). Fork novo de regra não está coberto e vira
+pergunta.
