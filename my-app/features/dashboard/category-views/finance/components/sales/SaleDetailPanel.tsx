@@ -125,7 +125,8 @@ export default function SaleDetailPanel({
                             {t('common:finalize', 'Finalizar')}
                         </button>
                     )}
-                    {!isCancelled && !isReturned && (
+                    {/* Venda paga: o SalesPlugin recusa Cancelar/Devolver (D-2026-11-04-H2-21-2-VENDA-PAGA-SEM-CANCELAR). */}
+                    {!isCancelled && !isReturned && !isPaid && (
                         <button
                             disabled={isUpdating === sale.id}
                             onClick={() => onRequestCancel(sale)}
@@ -134,7 +135,7 @@ export default function SaleDetailPanel({
                             {t('common:cancel', 'Cancelar')}
                         </button>
                     )}
-                    {isFinalized && !isReturned && (
+                    {isFinalized && !isReturned && !isPaid && (
                         <button
                             disabled={isUpdating === sale.id}
                             onClick={() => onRequestReturn(sale)}
