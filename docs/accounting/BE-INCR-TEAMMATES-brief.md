@@ -463,8 +463,13 @@ Origem: leitura comparativa do código do Open Notebook (lfnovo/open-notebook, M
   é o lugar natural da guarda. **Prova:** hostname que resolve para `127.0.0.1` → 400 no CRUD; servidor cujo DNS
   passa a apontar para IP interno depois do cadastro é recusado na chamada; redirect para IP interno é recusado.
 
-### 8.2 Fork pendente (decisão do dono)
+### 8.2 Fork — ratificado (dono, chat, questionário, 2026-11-04)
 
 | # | Pergunta | Por que importa |
 |---|---|---|
 | F-TM-E1 | Prazo da chamada da porta `LlmProvider` (o BRIEF só dá timeout ao cliente MCP, item 41). Proposta: 180 s, configurável por env | Sem prazo, um provedor travado segura o turno do teammate ou o worker de documentos (RAG item 26) sem limite. O Open Notebook subiu o padrão de 60 s para 180 s porque 60 s cortava respostas longas (`tests/test_llm_timeout_default.py`); o embedding atual usa 30 s (`lib/vector/embedding.ts`) |
+
+Resposta (AskUserQuestion, recomendada como 1ª opção): F-TM-E1 → "180 s, por env (Recomendado)". A porta `LlmProvider`
+passa a ter prazo padrão de 180 s por chamada, configurável por variável de ambiente; estourado o prazo, a chamada
+falha com erro tipado e conta como transitória (F-RAG-E1). **Prova:** provedor falso que não responde → o turno falha
+no prazo configurado, sem travar o worker.

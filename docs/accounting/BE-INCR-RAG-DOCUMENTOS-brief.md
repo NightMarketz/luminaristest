@@ -412,10 +412,18 @@ decisão nova está em §8.2, como fork pendente: o item afetado não começa se
   texto nossos; a mensagem do provedor vai só ao log. Mesma regra que o PR do ERRO-CRU-AO-CLIENTE (GAP-MAP, 04/11)
   aplicou ao pipeline atual.
 
-### 8.2 Forks pendentes (decisão do dono)
+### 8.2 Forks — ratificados (dono, chat, questionário, 2026-11-04)
 
 | # | Pergunta | Por que importa |
 |---|---|---|
 | F-RAG-E1 | Quais erros do provedor contam como permanentes (não repetem)? Proposta: chave inválida (401/403), contexto excedido, documento sem texto, documento apagado e `AWAITING_BUDGET`; repetem 429, 5xx e timeout | Sem a separação, uma chave errada gasta 3 tentativas, dispara o alerta e apaga o arquivo (F-RAG-8) |
 | F-RAG-E2 | Teto de tokens do texto enviado na geração do contexto (item 26), e se o excedente é cortado (com aviso de "texto cortado") ou o contexto não é gerado | O upload aceita 50 MB (`MAX_FILE_SIZE`); sem teto, documento grande estoura a janela do modelo e a tentativa ainda conta no orçamento (F-RAG-B2) |
 | F-RAG-E3 | Sem Redis (F-RAG-7), a fila em memória se perde num restart. O arquivo que ficou no `DOCUMENTS_DIR` é apagado por uma varredura no boot, ou o documento volta à fila no boot? | Hoje nenhum caminho apaga esse arquivo, que pode ter dado pessoal |
+
+Respostas (AskUserQuestion, recomendada como 1ª opção):
+
+| # | Resposta literal | Efeito |
+|---|---|---|
+| F-RAG-E1 | "Lista proposta (Recomendado)" | Não repetem: 401/403, contexto excedido, documento sem texto, documento apagado e `AWAITING_BUDGET`. Repetem: 429, 5xx e timeout. **Prova (item 25):** 401 → uma execução só, `FAILED` sem nova tentativa; 503 na 1ª e sucesso na 2ª → `COMPLETED` |
+| F-RAG-E2 | "Corta e avisa (Recomendado)" | O item 26 envia só o começo do texto até o teto (ordem de 100 mil tokens, valor fixado no PR com a janela do menor modelo suportado), marcado como cortado. **Prova:** documento acima do teto gera contexto com o aviso de corte e nunca recebe erro de contexto excedido |
+| F-RAG-E3 | "Volta para a fila (Recomendado)" | No boot, documento em `PROCESSING` com arquivo no `DOCUMENTS_DIR` e sem job volta à fila; o arquivo some no fim do job. **Prova:** restart com fila em memória → o documento termina `COMPLETED` e o arquivo é apagado |
