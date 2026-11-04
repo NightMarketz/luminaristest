@@ -81,6 +81,14 @@ describe('toUpsertFiscalProfile (item 5)', () => {
     ]);
   });
 
+  // H2 C7 achado 22-2 (03/11, PR #982): o corpo não levava nfeSerie/nfceSerie e o `.default(1)` do DTO os voltava a 1
+  // a cada "Salvar" do formulário — a série 5 gravada virava 1 sem ninguém editar.
+  it('série da NF-e e da NFC-e gravadas (5 e 3) voltam intactas no corpo do formulário hidratado e não editado', () => {
+    const built = toUpsertFiscalProfile('u1', toFiscalProfileForm(view({ nfeSerie: 5, nfceSerie: 3 })));
+    if (!built.ok) throw new Error('esperava ok');
+    expect(built.body).toMatchObject({ nfeSerie: 5, nfceSerie: 3 });
+  });
+
   it('SIMPLES força icmsContribuinte=false e pisCofinsRegime=SIMPLES e zera pTotTrib{Fed,Est,Mun}', () => {
     const f = { ...toFiscalProfileForm(view()), icmsContribuinte: true, pTotTribFed: '1,00', pTotTribEst: '2,00', pTotTribMun: '3,00' };
     const built = toUpsertFiscalProfile('u1', f);
