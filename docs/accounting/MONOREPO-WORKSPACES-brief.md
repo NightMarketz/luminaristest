@@ -234,12 +234,17 @@ anterior.
   - o `allowScripts` do npm 11 no workspace: o `npm install` avisou que `sharp`, `esbuild` e `core-js` têm script não
     aprovado, e falta saber se a lista passa dos `package.json` dos apps para o da raiz.
 
-**F-MW-11 — RATIFICAÇÃO PENDENTE: como nasce o lockfile da raiz no PR-3?**
+**F-MW-11 — RATIFICADO: como nasce o lockfile da raiz no PR-3?**
 - (a) Mesclado pelo script do spike, sem subir nenhuma versão.
 - (b) Gerado pelo npm (`npm install --package-lock-only`), aceitando os bumps de uma vez (19 diretos e 359 transitivos), com
   o CI inteiro como prova.
 - **Recomendação: (a).** O PR-3 fica só estrutural, e os bumps continuam vindo pelo Dependabot, um grupo por vez. O script
   de mescla entra no PR como ferramenta de uso único e sai depois.
+- **→ Ratificado: (a), mesclado** (dono, chat, 2026-11-04: "Mesclado"). O PR-3 gera o `package-lock.json` da raiz pela
+  mescla. A prova é o comparador do spike: 875/875 e 866/866 iguais aos lockfiles de hoje, mais `npm ci` exit 0. O PR-3
+  também traz `packageManager` na raiz, a telemetria do turbo desligada e o script `typecheck` nos dois apps. Ele ainda
+  depende de um `executa` e deixa em aberto o Stryker na saída, o reuso do depósito rechaveado e o `allowScripts` no
+  workspace.
 
 ## 1. Checklist de comportamentos (cada um testável sozinho)
 
