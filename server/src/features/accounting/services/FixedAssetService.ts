@@ -303,6 +303,7 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
       date: dto.disposedAt,
       description: `Baixa do ativo ${asset.code} — ${klass.name}`,
       sourceType: 'fixed_asset.disposal',
+      automaticWriter: true,
       sourceId: id,
       lines,
     });

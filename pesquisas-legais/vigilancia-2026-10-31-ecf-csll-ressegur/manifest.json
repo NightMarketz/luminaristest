@@ -1,0 +1,56 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Manuais",
+      "url": "http://sped.rfb.gov.br/pasta/show/1644",
+      "url_final": "http://sped.rfb.gov.br/pasta/show/1644",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-31T12:41:32-03:00",
+      "sha256": "d63a09d5e50a2fd7e42bde6d83fd32ed5cf8384b8a6c080529674ebeb6409c31",
+      "arquivo": "docs/D01_1644.html",
+      "texto": "docs/D01_1644.txt",
+      "bytes": 40577
+    },
+    {
+      "id": "D02",
+      "titulo": "Legislação",
+      "url": "http://sped.rfb.gov.br/item/show/442",
+      "url_final": "http://sped.rfb.gov.br/pastalegislacao/show/442",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-31T12:41:51-03:00",
+      "sha256": "e8fef4c183ed6abad7108465d7c35c2fe9c5eb6528405c243c6661a3206010c1",
+      "arquivo": "docs/D02_442.html",
+      "texto": "docs/D02_442.txt",
+      "bytes": 41326
+    },
+    {
+      "id": "D03",
+      "titulo": "Downloads",
+      "url": "http://sped.rfb.gov.br/pasta/show/1287",
+      "url_final": "http://sped.rfb.gov.br/pasta/show/1287",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-31T12:41:51-03:00",
+      "sha256": "e4d2750130bfe32afafbfb43fd1543e3c85ca62e660e4271a6f904e2a004ee9b",
+      "arquivo": "docs/D03_1287.html",
+      "texto": "docs/D03_1287.txt",
+      "bytes": 27267
+    },
+    {
+      "id": "D04",
+      "titulo": "SIJUT — ADE de 2026 com o termo ECF (busca)",
+      "url": "https://normas.receita.fazenda.gov.br/pesquisa",
+      "url_final": "https://normas.receita.fazenda.gov.br/pesquisa",
+      "orgao": "Receita Federal (SIJUT), lido pelo navegador embutido",
+      "baixado_em": "2026-10-31T13:30:00-03:00",
+      "sha256": "c708bdbb3d9bd439a02915451c768f6b0fb47eaba075a684adf988889fc815d4",
+      "arquivo": "docs/D04_sijut-ade-2026-ecf-navegador.txt",
+      "texto": "docs/D04_sijut-ade-2026-ecf-navegador.txt",
+      "bytes": 553
+    }
+  ],
+  "buscas": [],
+  "slug": "vigilancia-2026-10-31-ecf-csll-ressegur",
+  "pergunta": "Saiu ADE Cofis com leiaute novo da ECF (13) e código IND_ALIQ_CSLL para CSLL de 9% de resseguradora (Lei 15.525/2026)? Mudou algo desde 17/10/2026?",
+  "criado": "2026-10-31T12:14:34-03:00"
+}

@@ -50,7 +50,7 @@ export interface IPoster {
   postEntry(
     scope: AccountingScope,
     input: {
-      unitId: string; date: string; description: string; sourceType?: string; sourceId?: string;
+      unitId: string; date: string; description: string; sourceType?: string; sourceId?: string; automaticWriter?: boolean;
       // BE-INCR-8: optional origin descriptor unfolded from the import (D6). externalRef is the
       // human document reference — kept SEPARATE from sourceId (the dedup key stays byte-identical).
       sourceDocument?: { externalRef?: string; documentDate?: string; description?: string; attachmentId?: string; rawJson?: string };
@@ -285,6 +285,7 @@ export class DataExchangeImportService {
         date: first.postingDate,
         description: 'Saldos iniciais (importação)',
         sourceType: 'ACCOUNTING_OPENING_BALANCE_IMPORT',
+        automaticWriter: true,
         // Deterministic on file content (one opening-balance entry per file), mirroring
         // journalSourceId — re-upload of identical bytes dedups on the @@unique.
         sourceId: 'di:' + createHash('sha256').update(`${fileSha}|opening`).digest('hex').slice(0, 40),
@@ -335,6 +336,7 @@ export class DataExchangeImportService {
           date: head.postingDate,
           description: head.description ?? 'Lançamento importado',
           sourceType: 'IMPORT_JOURNAL_ENTRIES',
+          automaticWriter: true,
           sourceId: this.journalSourceId(fileSha, key, head.externalReference),
           sourceDocument: {
             externalRef,

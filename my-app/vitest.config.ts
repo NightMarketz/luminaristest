@@ -1,6 +1,13 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+
+// Suíte inteira só no CI ou com FULL_SUITE=1 (dono, 03/11: "isso pesa o pc demais"); regra em scripts/test-scope-guard.cjs.
+const { guardFullSuite } = createRequire(import.meta.url)('../scripts/test-scope-guard.cjs') as {
+  guardFullSuite: (runner: 'jest' | 'vitest') => void;
+};
+guardFullSuite('vitest');
 
 // Frontend test runner (Vitest + Testing Library). Mirrors the tsconfig
 // path alias `@/* -> ./*` so tests can import the same way app code does.

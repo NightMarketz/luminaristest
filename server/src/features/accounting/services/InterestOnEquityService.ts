@@ -344,6 +344,7 @@ export class InterestOnEquityService {
           date: atual.dataCredito,
           description: `Juros sobre o capital próprio ${atual.periodo}/${atual.anoCalendario} (${atual.forma}) — cálculo ${atual.id}`,
           sourceType: JCP_SOURCE_TYPE,
+          automaticWriter: true,
           sourceId: atual.id,
           lines: await this.linhas(s, { ...contas, debitoAccountId: atual.debitoAccountId }, atual.totalCents, atual.irrfCents),
         });

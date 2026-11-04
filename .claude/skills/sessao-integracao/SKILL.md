@@ -104,11 +104,20 @@ por código, e aí o baseline mente: rode `npm ci` e crie o `.env` com `OPENAI_A
 
 **Gate de saída — os comandos que costumam entrar:**
 
+`cd server && npx tsc --noEmit`, e os testes dos arquivos que o transporte tocou:
+
 ```bash
-cd server && npx tsc --noEmit && npm run test:integration
+cd server && npx jest <teste-guarda> <testes dos arquivos tocados> --selectProjects unit
+cd server && npx jest <arquivo>.integration.test.ts --selectProjects integration --runInBand   # um arquivo por vez
 ```
 
-`npx jest --selectProjects integration` cru faz 29 de 41 suítes colidirem no mesmo SQLite. Some
+**Escopo, não suíte inteira** (dono, chat, 2026-11-03: "isso pesa o pc demais"). O caminho vem **antes** do
+`--selectProjects`: depois dele o jest 30 lê o caminho como nome de projeto e roda as 448 suítes. Suíte inteira
+(`npm run test:integration`, `npm test`, jest ou vitest sem caminho) é do CI do PR e fica bloqueada fora dele sem
+`FULL_SUITE=1` (`scripts/test-scope-guard.cjs`). No relatório/PR, diga quais testes rodaram aqui e que a suíte
+completa é a do CI.
+
+Integração sempre com `--runInBand` (sem ele, as suítes colidem no mesmo SQLite). Some
 `cd my-app && npx tsc --noEmit`, `npm run docs:generate` (se tocou rota/DTO documentado),
 `npm run smoke:migration` (se a origem traz migração) e `node scripts/plano-vault.mjs check` (se a origem
 toca `docs/plano/`).

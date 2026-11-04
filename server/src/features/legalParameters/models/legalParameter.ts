@@ -68,6 +68,14 @@ export const LEGAL_PARAMETER_TABELAS = [
   // EFICIENCIA-FISCAL PR-5 (item 32; F-EF-8/11 a): serviços de saúde com redução de 60 % do IBS/CBS a partir de 2027 (LC 214
   // art. 130 e Anexo III), chave = prefixo de NBS. Consumidor = models/servicoFiscalAvaliacao.ts.
   'IBS_CBS_REDUCAO_NBS',
+  // BE-INCR-DP-F0-F1 PR-2 (nó PES-4, itens 20 e 23): tabela progressiva do INSS do empregado (EC 103 art. 28) e as tabelas
+  // do eSocial como dado (precedente NATUREZA_RENDIMENTO). Consumidor = features/dp/models/parametrosFolha.ts e o
+  // cadastro do DP (categoria do vínculo, natureza e incidência das rubricas, motivo do afastamento).
+  'INSS_EMPREGADO',
+  'ESOCIAL_CATEGORIA',
+  'ESOCIAL_NATUREZA_RUBRICA',
+  'ESOCIAL_INCIDENCIA_RUBRICA',
+  'ESOCIAL_MOTIVO_AFASTAMENTO',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

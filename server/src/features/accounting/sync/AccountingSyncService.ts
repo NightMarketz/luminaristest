@@ -150,7 +150,7 @@ export class AccountingSyncService implements AccountingSyncPort {
     for (let attempt = 1; attempt <= this.maxAttempts; attempt++) {
       try {
         // postEntry owns the balance invariant, atomicity AND idempotency.
-        const entry = await this.postingService.postEntry(scope, input);
+        const entry = await this.postingService.postEntry(scope, { ...input, automaticWriter: true });
         return { entryId: entry.id };
       } catch (error) {
         // ValidationError (and any non-transient fault) is deterministic — do not retry.

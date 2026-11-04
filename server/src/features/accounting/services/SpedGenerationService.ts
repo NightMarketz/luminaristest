@@ -11,7 +11,7 @@ import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepository';
 import type { AuditService } from './AuditService';
-import type { ReferentialMappingService } from './ReferentialMappingService';
+import type { ReferentialMappingService, UnmappedReferentialAccount } from './ReferentialMappingService';
 import type { AccountingReportService } from './AccountingReportService';
 import { toJobResponse, type DataExchangeJobResponse } from './dataExchangeMappers';
 import type { SpedEcdRequestDto } from '../dtos/SpedEcdDto';
@@ -72,6 +72,12 @@ function parentCode(code: string): string | undefined {
 
 const TWO = (n: number) => String(n).padStart(2, '0');
 
+/** Resultado da geração da ECD: o job e a cobertura referencial da versão (aviso, nunca bloqueio — Manual da ECD 1.17). */
+export interface SpedEcdGeneration {
+  job: DataExchangeJobResponse;
+  coberturaReferencial: { mappingVersion: string; unmappedAccounts: UnmappedReferentialAccount[] };
+}
+
 /**
  * SPED ECD (SPED Contábil) file generation (ADR-INCR-SPED-ECD). READ-ONLY over
  * the ledger + ONE metadata write (the export job): NO Posting/JournalEntry
@@ -80,8 +86,10 @@ const TWO = (n: number) => String(n).padStart(2, '0');
  * persists the `.txt` via the reused disk store and records an EXPORT job +
  * `sped.ecd_generated` audit in one tx (mirrors DataExchangeExportService).
  *
- * Coverage gate (D5): a leaf account with no referential mapping in the version
- * blocks generation with a ValidationError — no partial file is produced.
+ * Cobertura referencial (C2, D-2026-11-02-DELEGACAO-DONO §4): conta-folha sem mapeamento na versão NÃO
+ * bloqueia — sai sem I051 e volta em `coberturaReferencial.unmappedAccounts` (aviso). O Manual da ECD
+ * (leiaute maio/2026), item 1.17: "O mapeamento para os planos de contas referenciais é facultativo"
+ * ([D09] de pesquisas-legais/gates-humanos-lei). Substitui o gate D5, que dava 400.
  *
  * Value reconciliation (BE-INCR-SPED-APURACAO): for an ENCERRADO exercise the closing
  * entry (encerramento) zeroes the result accounts into retained earnings, so I155(dez)=0,
@@ -124,7 +132,7 @@ export class SpedGenerationService {
     // (J801.ARQ_RTF) — só presente quando `dto.verificationTerm` existe (substituta). O DTO Zod
     // não carrega binário (D2); o controller resolve o `req.file` e passa aqui.
     rtfFile?: { buffer: Buffer },
-  ): Promise<DataExchangeJobResponse> {
+  ): Promise<SpedEcdGeneration> {
     if (!this.policy.canRead(scope)) {
       throw new ForbiddenError('Não autorizado a gerar a ECD.');
     }
@@ -147,14 +155,9 @@ export class SpedGenerationService {
       );
     }
 
-    // ── Coverage gate (D5) — bloqueia a geração se houver conta-folha sem mapeamento.
+    // ── Cobertura referencial — só aviso: na ECD o mapeamento é facultativo (Manual da ECD 1.17, [D09]);
+    // a folha sem código sai sem I051. Na ECF o código é exigido pelo PVA; o gate da ECF não muda (C2).
     const coverage = await this.referential.coverage(scope, dto.mappingVersion);
-    if (!coverage.ready) {
-      throw new ValidationError(
-        'Cobertura referencial incompleta: mapeie todas as contas analíticas antes de gerar a ECD.',
-        { unmappedAccounts: coverage.unmappedAccounts, mappingVersion: dto.mappingVersion },
-      );
-    }
     // L5 (RUNBOOK-H1, PVA 13/10): com mapeamento (I051), o PVA exige o 0000.COD_PLAN_REF (Manual ECD L9 p. 63, nota 21).
     if (coverage.totals.mappedCount > 0 && !dto.declarant.codPlanRef) {
       throw new ValidationError(
@@ -339,7 +342,10 @@ export class SpedGenerationService {
     });
 
     endTimer({ success: true, jobId: job.id, kind: job.kind, unitId: scope.unitId });
-    return toJobResponse(updated);
+    return {
+      job: toJobResponse(updated),
+      coberturaReferencial: { mappingVersion: dto.mappingVersion, unmappedAccounts: coverage.unmappedAccounts },
+    };
   }
 
   /** Composes the full `EcdFileInput` from the ledger reads. Pure of I/O concerns. */

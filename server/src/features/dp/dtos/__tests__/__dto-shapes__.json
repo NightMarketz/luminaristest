@@ -1,0 +1,1106 @@
+{
+  "DpModuleDto.ts": {
+    "AtivarModuloSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "moduleKey": {
+          "type": "string",
+          "enum": [
+            "DP-PONTO",
+            "DP-PAG",
+            "DP-BEN",
+            "DP-ADM",
+            "DP-APP",
+            "DP-DES",
+            "DP-GED",
+            "DP-CAT",
+            "DP-BI"
+          ]
+        },
+        "competenciaInicio": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        },
+        "motivo": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "moduleKey",
+        "competenciaInicio",
+        "motivo"
+      ],
+      "additionalProperties": false
+    },
+    "DpIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "DpScopeQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "EncerrarModuloSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "competenciaFim": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        },
+        "motivo": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "competenciaFim",
+        "motivo"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "DpCadastrosDto.ts": {
+    "CreateCargoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "cbo": {
+          "type": "string",
+          "pattern": "^\\d{6}$"
+        }
+      },
+      "required": [
+        "unitId",
+        "nome",
+        "cbo"
+      ],
+      "additionalProperties": false
+    },
+    "CreateConvencaoParametroSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chave": {
+          "type": "string",
+          "enum": [
+            "PISO_SALARIAL_CENTS"
+          ]
+        },
+        "discriminador": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "valorInt": {},
+        "clausula": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "vigenteDesde": {
+          "type": "string"
+        },
+        "vigenteAte": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "chave",
+        "discriminador",
+        "valorInt",
+        "clausula",
+        "vigenteDesde"
+      ],
+      "additionalProperties": false
+    },
+    "CreateConvencaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sindicatoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "identificacao": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "vigenteDesde": {
+          "type": "string"
+        },
+        "vigenteAte": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fonte": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "sindicatoId",
+        "identificacao",
+        "vigenteDesde",
+        "fonte"
+      ],
+      "additionalProperties": false
+    },
+    "CreateJornadaSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "minutosSemanais": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 10080
+        },
+        "tipoJornada": {
+          "type": "string",
+          "enum": [
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "9"
+          ]
+        },
+        "descricao": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 999
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "nome",
+        "minutosSemanais",
+        "tipoJornada"
+      ],
+      "additionalProperties": false
+    },
+    "CreateLotacaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "codigo": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30
+        },
+        "descricao": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "unitId",
+        "codigo",
+        "descricao"
+      ],
+      "additionalProperties": false
+    },
+    "CreateSindicatoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cnpj": {
+          "type": "string"
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "unitId",
+        "cnpj",
+        "nome"
+      ],
+      "additionalProperties": false
+    },
+    "DpListQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "limit": {
+          "default": 50,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "DpParametroIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "parametroId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        }
+      },
+      "required": [
+        "id",
+        "parametroId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateCargoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "cbo": {
+          "type": "string",
+          "pattern": "^\\d{6}$"
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateConvencaoParametroSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "valorInt": {},
+        "clausula": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "vigenteDesde": {
+          "type": "string"
+        },
+        "vigenteAte": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateConvencaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "identificacao": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "vigenteDesde": {
+          "type": "string"
+        },
+        "vigenteAte": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fonte": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateJornadaSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "minutosSemanais": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 10080
+        },
+        "tipoJornada": {
+          "type": "string",
+          "enum": [
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "9"
+          ]
+        },
+        "descricao": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 999
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateLotacaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "codigo": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30
+        },
+        "descricao": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateSindicatoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cnpj": {
+          "type": "string"
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "DpVinculoDto.ts": {
+    "CorrigirVersaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lotacaoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "cargoId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jornadaId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sindicatoId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "salarioCents": {},
+        "unidadeSalario": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "CreateTrabalhadorSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cpf": {
+          "type": "string",
+          "pattern": "^\\d{11}$"
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "nascimento": {
+          "type": "string"
+        },
+        "pcd": {
+          "default": false,
+          "type": "boolean"
+        },
+        "employeeRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "partnerId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        }
+      },
+      "required": [
+        "unitId",
+        "cpf",
+        "nome",
+        "nascimento"
+      ],
+      "additionalProperties": false
+    },
+    "CreateVersaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vigenteDesde": {
+          "type": "string"
+        },
+        "lotacaoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "cargoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "jornadaId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "sindicatoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "salarioCents": {},
+        "unidadeSalario": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "vigenteDesde",
+        "lotacaoId",
+        "salarioCents",
+        "unidadeSalario"
+      ],
+      "additionalProperties": false
+    },
+    "CreateVinculoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trabalhadorId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "matricula": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30
+        },
+        "categoria": {
+          "type": "string",
+          "pattern": "^\\d{3}$"
+        },
+        "dataInicio": {
+          "type": "string"
+        },
+        "dataTermino": {
+          "type": "string"
+        },
+        "versao": {
+          "type": "object",
+          "properties": {
+            "lotacaoId": {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            "cargoId": {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            "jornadaId": {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            "sindicatoId": {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            "salarioCents": {},
+            "unidadeSalario": {
+              "type": "string",
+              "enum": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7"
+              ]
+            }
+          },
+          "required": [
+            "lotacaoId",
+            "salarioCents",
+            "unidadeSalario"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "unitId",
+        "trabalhadorId",
+        "matricula",
+        "categoria",
+        "dataInicio",
+        "versao"
+      ],
+      "additionalProperties": false
+    },
+    "DpVersaoIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "versaoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        }
+      },
+      "required": [
+        "id",
+        "versaoId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateTrabalhadorSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cpf": {
+          "type": "string",
+          "pattern": "^\\d{11}$"
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "nascimento": {
+          "type": "string"
+        },
+        "pcd": {
+          "type": "boolean"
+        },
+        "employeeRef": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "partnerId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "VersaoVinculoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "lotacaoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "cargoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "jornadaId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "sindicatoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "salarioCents": {},
+        "unidadeSalario": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ]
+        }
+      },
+      "required": [
+        "lotacaoId",
+        "salarioCents",
+        "unidadeSalario"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "DpAfastamentoFeriasDto.ts": {
+    "CreateAfastamentoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "motivo": {
+          "type": "string",
+          "pattern": "^\\d{2}$"
+        },
+        "inicio": {
+          "type": "string"
+        },
+        "fim": {
+          "type": "string"
+        },
+        "observacao": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "motivo",
+        "inicio"
+      ],
+      "additionalProperties": false
+    },
+    "CreateFeriasImplantacaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aquisitivoInicio": {
+          "type": "string"
+        },
+        "diasGozados": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "fonte": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "unitId",
+        "aquisitivoInicio",
+        "diasGozados",
+        "fonte"
+      ],
+      "additionalProperties": false
+    },
+    "DpAfastamentoIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "afastamentoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        }
+      },
+      "required": [
+        "id",
+        "afastamentoId"
+      ],
+      "additionalProperties": false
+    },
+    "DpFeriasImplantacaoIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "implantacaoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        }
+      },
+      "required": [
+        "id",
+        "implantacaoId"
+      ],
+      "additionalProperties": false
+    },
+    "DpFeriasQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dataRef": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "dataRef"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateAfastamentoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "motivo": {
+          "type": "string",
+          "pattern": "^\\d{2}$"
+        },
+        "inicio": {
+          "type": "string"
+        },
+        "fim": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observacao": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateFeriasImplantacaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "diasGozados": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "fonte": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

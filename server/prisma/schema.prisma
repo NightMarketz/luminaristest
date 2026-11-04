@@ -61,6 +61,14 @@ model User {
   companyFiscalProfiles      CompanyFiscalProfile[] // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13) — perfil da empresa por ano
   companySigners             CompanySigner[] // X13 (F-OBP-9 a) — representante legal / signatários não-contador
   partners                   Partner[] // IRRF-DISTRIBUICAO PR-1 (F-IRD-2, F-IRD-14) — sócios beneficiários da distribuição
+  dpModuloAtivacoes          DpModuloAtivacao[] // BE-INCR-DP-F0-F1 PR-1 (nó PES-4, item 12) — submódulos opcionais do DP
+  dpLotacoes                 DpLotacao[] // BE-INCR-DP-F0-F1 PR-3 (item 28)
+  dpCargos                   DpCargo[] // BE-INCR-DP-F0-F1 PR-3 (item 29)
+  dpJornadas                 DpJornada[] // BE-INCR-DP-F0-F1 PR-3 (item 30)
+  dpSindicatos               DpSindicato[] // BE-INCR-DP-F0-F1 PR-3 (item 31)
+  dpConvencoesColetivas      DpConvencaoColetiva[] // BE-INCR-DP-F0-F1 PR-3 (item 32)
+  dpTrabalhadores            DpTrabalhador[] // BE-INCR-DP-F0-F1 PR-4 (item 37)
+  dpVinculos                 DpVinculo[] // BE-INCR-DP-F0-F1 PR-4 (item 39)
   withholdingProfiles        WithholdingProfile[] // RETENCOES-FONTE PR-1 (item 6) — perfil de retenção por contraparte × natureza
   taxWithholdings            TaxWithholding[] // RETENCOES-FONTE PR-2 (item 13) — retenções feitas (e sofridas no PR-3)
   profitDistributionEvents   ProfitDistributionEvent[] // IRRF-DISTRIBUICAO PR-2 (BRIEF item 10)
@@ -1872,6 +1880,7 @@ model Partner {
   deletedAt       DateTime?
   profitDistributionEvents ProfitDistributionEvent[]
   interestOnEquityAllocations InterestOnEquityAllocation[]
+  dpTrabalhadores DpTrabalhador[] // BE-INCR-DP-F0-F1 PR-4 (item 44): sócio do pró-labore
 
   @@index([userId, taxId])
   @@map("partners")
@@ -3171,6 +3180,9 @@ model TaxAssessment {
   entradaInformada         Json?
   // PR-4 (item 10): aviso visível da mudança de parâmetro legal ("reconfirme" ou "valor mudou depois do pagamento").
   avisoParametroLegal      String?
+  // EMENDA RASTREIO (item 1, F-RT-4 b, dono 03/11 "Coluna nova"): origem de cada linha da memória — RastreioApuracaoSchema.
+  // Null nas apurações anteriores à emenda (e nas de PIS/COFINS).
+  rastreio                 Json?
   status                   String // CONFIRMED | SUPERSEDED
   supersedesId             String?
   provisaoEntryId          String? // PR-3 (commit 3 da provisão)
@@ -3723,4 +3735,254 @@ model TaxOptimizationSuggestion {
   @@unique([userId, unitId, practice, subjectType, subjectId, pendingSlot])
   @@index([userId, unitId, status])
   @@map("tax_optimization_suggestions")
+}
+
+// ============================================================================
+// DEPARTAMENTO PESSOAL — núcleo (nó PES-4, BE-INCR-DP-F0-F1). Prisma first-class: a lei desenha o esquema (CLT,
+// eSocial, custeio) e a folha exige atomicidade e imutabilidade (ADR-PERSISTENCE-BOUNDARY; PRE-ADR-DP F-DP-1).
+// Dinheiro em centavos BigInt; datas date-only em String (YYYY-MM-DD); competência em String (YYYY-MM).
+// ============================================================================
+
+/// PR-1 (item 12) — ativação de submódulo opcional do DP, por instância (R8: empregador = instância; sem unitId) e com
+/// vigência por competência (D-4). Sem sobreposição por (userId, moduleKey): gate no serviço, dentro da tx (o @@unique
+/// de idempotência morre em apagar→recriar com soft-delete). Desativar grava competenciaFim e nunca apaga dado.
+model DpModuloAtivacao {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moduleKey         String // DP_MODULE_KEYS (features/dp/models/moduleRegistry.ts), validado no DTO
+  competenciaInicio String // YYYY-MM
+  competenciaFim    String? // YYYY-MM inclusive; null = sem fim
+  motivo            String
+  /// Motivo do encerramento (item 13: end recebe motivo; sem coluna, seria parâmetro aceito e ignorado).
+  motivoFim         String?
+  createdById       String
+  endedById         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  @@index([userId, moduleKey])
+  @@map("dp_modulo_ativacoes")
+}
+
+// BE-INCR-DP-F0-F1 PR-3 (itens 28–33) — cadastros de estrutura do DP, por instância (R8). Soft-delete; unicidade de
+// registro vivo por gate no serviço dentro da tx (F19), nunca @@unique.
+
+/// Lotação (conceito do S-1020). `unitId` = estabelecimento (R8, F-DP-2). FPAS, terceiros e tipo ficam para F2/F4.
+model DpLotacao {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId    String // estabelecimento = unidade (linha de units)
+  codigo    String // codLotacao "C 1 1-30" [D09]; vivo único por instância
+  descricao String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  versoes   DpVinculoVersao[] // PR-4 (item 43), Restrict
+
+  @@index([userId, codigo])
+  @@map("dp_lotacoes")
+}
+
+model DpCargo {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nome      String
+  cbo       String // CBOCargo "C 1 6" [D09]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  versoes   DpVinculoVersao[] // PR-4 (item 43), Restrict
+
+  @@index([userId])
+  @@map("dp_cargos")
+}
+
+/// Jornada (horContratual do S-2200). `minutosSemanais` e `tipoJornada` travam quando uma versão de vínculo a referencia (D-5).
+model DpJornada {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nome            String
+  minutosSemanais Int // > 0
+  tipoJornada     String // domínio tpJornada do S-2200 [D09] (features/dp/models/cadastros.ts)
+  descricao       String? // horário contratual, como o dscJorn
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  versoes         DpVinculoVersao[] // PR-4 (item 43), Restrict — a referência trava minutosSemanais/tipoJornada (D-5)
+
+  @@index([userId])
+  @@map("dp_jornadas")
+}
+
+model DpSindicato {
+  id        String                @id @default(cuid())
+  userId    String
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cnpj      String // 14 posições com DV (lib/cnpj); vivo único por instância
+  nome      String
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  deletedAt DateTime?
+  convencoes DpConvencaoColetiva[]
+  versoes   DpVinculoVersao[] // PR-4 (item 43), Restrict
+
+  @@index([userId, cnpj])
+  @@map("dp_sindicatos")
+}
+
+/// Convenção ou acordo coletivo (F-PES-8 → a): a cláusula é dado com fonte e vigência.
+model DpConvencaoColetiva {
+  id            String                 @id @default(cuid())
+  userId        String
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sindicatoId   String
+  sindicato     DpSindicato            @relation(fields: [sindicatoId], references: [id], onDelete: Restrict)
+  identificacao String // texto livre, ex.: o registro do instrumento
+  vigenteDesde  String // YYYY-MM-DD
+  vigenteAte    String? // YYYY-MM-DD inclusive; null = sem fim
+  fonte         String
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  deletedAt     DateTime?
+  parametros    DpConvencaoParametro[]
+
+  @@index([userId, sindicatoId])
+  @@map("dp_convencoes_coletivas")
+}
+
+/// Parâmetro da convenção (item 33): `chave` ∈ CCT_CHAVES; vigência dentro da convenção, sem sobreposição por
+/// (convencaoId, chave, discriminador), com gate na tx.
+model DpConvencaoParametro {
+  id            String              @id @default(cuid())
+  convencaoId   String
+  convencao     DpConvencaoColetiva @relation(fields: [convencaoId], references: [id], onDelete: Restrict)
+  chave         String // CCT_CHAVES (features/dp/models/cadastros.ts)
+  discriminador String? // PISO_SALARIAL_CENTS: cargoId
+  valorInt      BigInt // centavos ou bp, pela chave
+  clausula      String // texto da cláusula
+  vigenteDesde  String // YYYY-MM-DD
+  vigenteAte    String? // YYYY-MM-DD inclusive
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  deletedAt     DateTime?
+
+  @@index([convencaoId, chave])
+  @@map("dp_convencao_parametros")
+}
+
+// BE-INCR-DP-F0-F1 PR-4 (itens 37–49) — trabalhador, vínculo e versões do vínculo, por instância (R8). Unicidade de
+// registro vivo (CPF, matrícula) por gate no serviço dentro da tx (F19), nunca @@unique.
+
+/// Trabalhador (pessoa). CPF, nome e nascimento são PII: nunca entram na auditoria (F-DPB-3; F17).
+model DpTrabalhador {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cpf         String // PII — 11 dígitos com DV (lib/cpf); vivo único por instância (gate na tx)
+  nome        String // PII
+  nascimento  String // YYYY-MM-DD (PII)
+  pcd         Boolean     @default(false) // CLT art. 428 §§ 3º e 5º [D05]
+  /// *Ref (ADR-PERSISTENCE-BOUNDARY, F-DP-1 → a): linha do preset `employees` do Core. Guarda contra órfão = verificação
+  /// no read (`pessoaOperacionalRemovida`, D-6); nenhum cálculo do DP lê `employees`.
+  employeeRef String?
+  partnerId   String? // sócio (Partner PF com taxId = cpf) — exigido para a categoria 723 (item 44)
+  partner     Partner?    @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  origem      String // DIGITADA | IMPORTADA_ESOCIAL (F-DP-12); o F1 só grava DIGITADA
+  createdById String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
+  vinculos    DpVinculo[]
+
+  @@index([userId, cpf])
+  @@map("dp_trabalhadores")
+}
+
+/// Vínculo (identidade). `natureza` (EMPREGO | TSVE) é derivada do `evento` da categoria na ESOCIAL_CATEGORIA, não gravada.
+model DpVinculo {
+  id            String            @id @default(cuid())
+  userId        String
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trabalhadorId String
+  trabalhador   DpTrabalhador     @relation(fields: [trabalhadorId], references: [id], onDelete: Restrict)
+  unitId        String // estabelecimento = unidade (R8)
+  matricula     String // "C 1 1-30" no S-2200 [D09]; viva única por instância (gate na tx)
+  categoria     String // CATEGORIAS_NUCLEO (F-DPB-1)
+  dataInicio    String // YYYY-MM-DD
+  dataTermino   String? // YYYY-MM-DD; obrigatória para 103
+  origem        String // DIGITADA | IMPORTADA_ESOCIAL
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  deletedAt     DateTime?
+  versoes       DpVinculoVersao[]
+  afastamentos  DpAfastamento[]
+  feriasImplantacoes DpFeriasImplantacao[]
+
+  @@index([userId, unitId])
+  @@map("dp_vinculos")
+}
+
+/// Versão do vínculo (F-DP-8 → b): só data de efeito; cobertura contínua desde `dataInicio`, sem sobreposição (gate na tx).
+model DpVinculoVersao {
+  id             String       @id @default(cuid())
+  vinculoId      String
+  vinculo        DpVinculo    @relation(fields: [vinculoId], references: [id], onDelete: Restrict)
+  vigenteDesde   String // YYYY-MM-DD
+  vigenteAte     String? // YYYY-MM-DD inclusive; null = sem fim
+  lotacaoId      String
+  lotacao        DpLotacao    @relation(fields: [lotacaoId], references: [id], onDelete: Restrict)
+  cargoId        String? // obrigatório na natureza EMPREGO
+  cargo          DpCargo?     @relation(fields: [cargoId], references: [id], onDelete: Restrict)
+  jornadaId      String? // obrigatória na natureza EMPREGO
+  jornada        DpJornada?   @relation(fields: [jornadaId], references: [id], onDelete: Restrict)
+  sindicatoId    String?
+  sindicato      DpSindicato? @relation(fields: [sindicatoId], references: [id], onDelete: Restrict)
+  salarioCents   BigInt // salário contratual, pró-labore ou bolsa
+  unidadeSalario String // undSalFixo do S-2200 [D09] (features/dp/models/vinculo.ts)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([vinculoId, vigenteDesde])
+  @@map("dp_vinculo_versoes")
+}
+
+// BE-INCR-DP-F0-F1 PR-6 (item 56) — afastamento do vínculo. Sem userId: a posse vem do vínculo, que o serviço resolve
+// antes (como a versão). Sem CID nem outro dado clínico (LGPD, dado de saúde); o `motivo` não entra na auditoria.
+model DpAfastamento {
+  id         String    @id @default(cuid())
+  vinculoId  String
+  vinculo    DpVinculo @relation(fields: [vinculoId], references: [id], onDelete: Restrict)
+  motivo     String // vigente na ESOCIAL_MOTIVO_AFASTAMENTO (Tabela 18) no `inicio`
+  inicio     String // YYYY-MM-DD; ≥ dataInicio do vínculo
+  fim        String? // YYYY-MM-DD inclusive; null = em aberto
+  observacao String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  @@index([vinculoId, inicio])
+  @@map("dp_afastamentos")
+}
+
+// BE-INCR-DP-F0-F1 PR-6 (item 58) — dias de férias já gozados de um período aquisitivo, para quem chega de outro sistema.
+// Viva única por (vinculoId, aquisitivoInicio): gate no serviço, dentro da tx (sem @@unique, por causa do soft-delete).
+model DpFeriasImplantacao {
+  id               String    @id @default(cuid())
+  vinculoId        String
+  vinculo          DpVinculo @relation(fields: [vinculoId], references: [id], onDelete: Restrict)
+  aquisitivoInicio String // YYYY-MM-DD; casa com um período de `periodosDeFerias` (item 57)
+  diasGozados      Int // 0..30
+  fonte            String // ex.: "ficha de férias do sistema anterior"
+  informadoPorId   String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  @@index([vinculoId])
+  @@map("dp_ferias_implantacoes")
 }

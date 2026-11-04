@@ -14,11 +14,12 @@ import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRep
 import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepository';
 import type { AuditService } from './AuditService';
 import { toJobResponse, type DataExchangeJobResponse } from './dataExchangeMappers';
-import type { SpedEcfRequestDto } from '../dtos/SpedEcfDto';
+import type { SpedEcfRequestDto, Y600VigenciasView } from '../dtos/SpedEcfDto';
 import { receitaBrutaPorAtividade, receitaBrutaPorAtividadeSemGate } from './receitaBrutaPorAtividade';
 import { buildEcfFile, resolveEcfCodVer, serializeEcf, type EcfFileInput, type EcfQuarter } from '../../../lib/ecf';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
-import { montarY600, type Y600PartnerReader } from './y600FromPartners';
+import { montarY600, selecionarVigenciasDoAno, type Y600PartnerReader } from './y600FromPartners';
+import { somaParticipacaoBp } from '../models/partner';
 
 /** Quarter windows (T01..T04) for a calendar year. */
 export function quarterWindows(year: number): Array<{ perApur: string; dtIni: string; dtFin: string; from: Date; to: Date }> {
@@ -68,6 +69,35 @@ export class SpedEcfGenerationService {
     /** BE-INCR-ECF-Y600 item 8: vigências do cadastro de sócios (IRRF-DISTRIBUICAO PR-1) para o Y600. */
     private readonly partners: Y600PartnerReader,
   ) {}
+
+  /**
+   * FE-INCR-ECF-Y600 PR-0 (item 1; F-FE-Y600-1 → b): as vigências que o `montarY600` vai exigir no ano, pela MESMA
+   * seleção (`selecionarVigenciasDoAno`), para a tela pedir o complemento de cada uma antes do POST. Vale para o
+   * Presumido e o Real (o Real chama o mesmo `montarY600`). Leitura pura, sem auditoria. Policy: a mesma da listagem
+   * do cadastro de sócios (`PartnerService.list`). O CPF/CNPJ sai só com os 4 últimos dígitos.
+   */
+  public async y600Vigencias(scope: AccountingScope, year: number): Promise<Y600VigenciasView> {
+    if (!this.policy.canReadFiscalProfile(scope)) {
+      throw new ForbiddenError('Você não tem permissão para ler os sócios da empresa.');
+    }
+    const doAno = selecionarVigenciasDoAno(await this.partners.list(scope), year);
+    return {
+      year,
+      vigencias: doAno.map(({ partner: p, vigenteNoFim, dtFimSoc }) => ({
+        partnerId: p.id,
+        nome: p.nome,
+        taxIdFinal: p.taxId.slice(-4),
+        tipoPessoa: p.tipoPessoa as 'PF' | 'PJ',
+        residenteBrasil: p.residenteBrasil,
+        participacaoBp: p.participacaoBp,
+        entradaEm: p.entradaEm,
+        saidaEm: p.saidaEm,
+        dtFimSoc,
+        vigenteNoFim,
+      })),
+      somaParticipacaoFimBp: somaParticipacaoBp(doAno.filter((v) => v.vigenteNoFim).map((v) => v.partner)),
+    };
+  }
 
   public async generate(scope: AccountingScope, dto: SpedEcfRequestDto): Promise<DataExchangeJobResponse> {
     if (!this.policy.canRead(scope)) {

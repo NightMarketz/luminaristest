@@ -364,6 +364,7 @@ describe('PostingService', () => {
       id: 'entry-1',
       userId: 'u1',
       unitId,
+      date: new Date('2026-06-15'),
       status: 'Posted',
       reversedById: null,
       postings: [
@@ -388,7 +389,7 @@ describe('PostingService', () => {
       const { reversal: rev, original: orig } = await svc.reverseEntry(scope, {
         unitId,
         lancamentoId: 'entry-1',
-        reversalPostingDate: '2026-06-23',
+        reversalPostingDate: '2026-06-23', reason: 'motivo de teste',
       });
 
       expect($transaction).toHaveBeenCalledTimes(1);
@@ -441,7 +442,7 @@ describe('PostingService', () => {
       await svc.reverseEntry(scope, {
         unitId,
         lancamentoId: 'entry-1',
-        reversalPostingDate: '2026-12-31',
+        reversalPostingDate: '2026-12-31', reason: 'motivo de teste',
       });
 
       // (a) reversal inherits sourceType='closing' so it too is excluded from the DRE.
@@ -467,7 +468,7 @@ describe('PostingService', () => {
       const { svc, journalEntryRepo } = buildService({
         journalEntryRepo: { findById, findBySource: jest.fn(async () => null), create: jest.fn(async () => reversal) },
       });
-      await svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23' });
+      await svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23', reason: 'motivo de teste' });
       expect(journalEntryRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ sourceType: 'reversal' }),
         txHandle,
@@ -480,7 +481,7 @@ describe('PostingService', () => {
         journalEntryRepo: { findById: jest.fn(async () => ({ ...original, status: 'Draft' })) },
       });
       await expect(
-        svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23' }),
+        svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23', reason: 'motivo de teste' }),
       ).rejects.toBeInstanceOf(ValidationError);
       expect($transaction).not.toHaveBeenCalled();
       expect(journalEntryRepo.create).not.toHaveBeenCalled();
@@ -491,7 +492,7 @@ describe('PostingService', () => {
         journalEntryRepo: { findById: jest.fn(async () => ({ ...original, status: 'Reconciled' })) },
       });
       await expect(
-        svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23' }),
+        svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23', reason: 'motivo de teste' }),
       ).rejects.toThrow(/desfaça a conciliação/);
       expect($transaction).not.toHaveBeenCalled();
       expect(journalEntryRepo.create).not.toHaveBeenCalled();
@@ -503,7 +504,7 @@ describe('PostingService', () => {
         journalEntryRepo: { findById },
       });
       await expect(
-        svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23' }),
+        svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23', reason: 'motivo de teste' }),
       ).rejects.toBeInstanceOf(NotFoundError);
       expect(journalEntryRepo.findById).toHaveBeenCalledWith(scope, 'entry-1');
       expect($transaction).not.toHaveBeenCalled();
@@ -521,7 +522,7 @@ describe('PostingService', () => {
       const { svc, journalEntryRepo } = buildService({
         journalEntryRepo: { findById, findBySource: jest.fn(async () => null) },
       });
-      const { reversal } = await svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23' });
+      const { reversal } = await svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23', reason: 'motivo de teste' });
       expect(reversal).toBe(prior);
       expect($transaction).not.toHaveBeenCalled();
       expect(journalEntryRepo.create).not.toHaveBeenCalled();
@@ -535,7 +536,7 @@ describe('PostingService', () => {
           findBySource: jest.fn(async () => prior),
         },
       });
-      const { reversal } = await svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23' });
+      const { reversal } = await svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23', reason: 'motivo de teste' });
       expect(reversal).toBe(prior);
       expect(journalEntryRepo.findBySource).toHaveBeenCalledWith(scope, 'reversal', 'entry-1');
       expect($transaction).not.toHaveBeenCalled();
@@ -557,7 +558,7 @@ describe('PostingService', () => {
         },
       });
       await expect(
-        svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23' }),
+        svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23', reason: 'motivo de teste' }),
       ).rejects.toBeInstanceOf(ValidationError);
       expect($transaction).not.toHaveBeenCalled();
     });
@@ -565,7 +566,7 @@ describe('PostingService', () => {
     it('throws ForbiddenError when policy.canPost is false', async () => {
       const { svc, journalEntryRepo } = buildService({ policy: { canPost: jest.fn(() => false) } });
       await expect(
-        svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23' }),
+        svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23', reason: 'motivo de teste' }),
       ).rejects.toBeInstanceOf(ForbiddenError);
       expect(journalEntryRepo.findById).not.toHaveBeenCalled();
     });
@@ -647,7 +648,7 @@ describe('PostingService', () => {
         },
       });
       await expect(
-        svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23' }),
+        svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23', reason: 'motivo de teste' }),
       ).rejects.toBeInstanceOf(AccountingPeriodNotOpenError);
       expect($transaction).not.toHaveBeenCalled();
     });
@@ -780,6 +781,7 @@ describe('PostingService', () => {
         id: 'entry-1',
         userId: 'u1',
         unitId,
+        date: new Date('2026-06-15'),
         status: 'Posted',
         reversedById: null,
         postings: [
@@ -796,7 +798,7 @@ describe('PostingService', () => {
             create: jest.fn(async (data: any) => ({ id: 'reversal-1', ...data, postings: [] })),
           },
         });
-        await svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23' });
+        await svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23', reason: 'motivo de teste' });
         expect(auditService.append).toHaveBeenCalledTimes(1);
         const call = (auditService.append.mock.calls as any[])[0];
         expect(call[2]).toMatchObject({
@@ -971,6 +973,7 @@ describe('PostingService', () => {
     it('reverseEntry: calls nextEntryNumber for reversal date and passes fiscalYear/entryNumber', async () => {
       const original = {
         id: 'orig-1',
+        date: new Date('2026-06-15'),
         status: 'Posted',
         reversedById: null,
         fiscalYear: 2026,
@@ -987,7 +990,7 @@ describe('PostingService', () => {
         },
         postingRepo: { nextEntryNumber: jest.fn(async () => 11) },
       });
-      await svc.reverseEntry(scope, { unitId, lancamentoId: 'orig-1', reversalPostingDate: '2026-06-24' });
+      await svc.reverseEntry(scope, { unitId, lancamentoId: 'orig-1', reversalPostingDate: '2026-06-24', reason: 'motivo de teste' });
 
       expect(postingRepo.nextEntryNumber).toHaveBeenCalledWith(scope, 2026, txHandle);
       expect(journalEntryRepo.create).toHaveBeenCalledWith(
@@ -1092,7 +1095,7 @@ describe('PostingService', () => {
 
     it('reversal records NO origin (estorno is internal, never carries a descriptor)', async () => {
       const original = {
-        id: 'orig-1', status: 'Posted', reversedById: null,
+        id: 'orig-1', date: new Date('2026-06-15'), status: 'Posted', reversedById: null,
         postings: [
           { accountId: 'a1', debitCents: 10000, creditCents: 0 },
           { accountId: 'a2', debitCents: 0, creditCents: 10000 },
@@ -1108,7 +1111,7 @@ describe('PostingService', () => {
           findByEntryId: jest.fn(async () => original.postings),
         },
       });
-      await svc.reverseEntry(scope, { unitId, lancamentoId: 'orig-1', reversalPostingDate: '2026-06-24' });
+      await svc.reverseEntry(scope, { unitId, lancamentoId: 'orig-1', reversalPostingDate: '2026-06-24', reason: 'motivo de teste' });
       expect(sourceProvenanceRepo.createSourceDocument).not.toHaveBeenCalled();
       expect(sourceProvenanceRepo.linkEntry).not.toHaveBeenCalled();
     });
@@ -1298,7 +1301,7 @@ describe('PostingService', () => {
 
     it('reverseEntry: COPIES the original leg tags onto the mirror (SEC-B1-2) so estorno inherits them', async () => {
       const original = {
-        id: 'entry-1', userId: 'u1', unitId, status: 'Posted', sourceType: 'manual', reversedById: null,
+        id: 'entry-1', userId: 'u1', unitId, date: new Date('2026-06-15'), status: 'Posted', sourceType: 'manual', reversedById: null,
         fiscalYear: 2026,
         postings: [
           { id: 'p1', accountId: 'acc-1.1.1', debitCents: 10000, creditCents: 0 },
@@ -1330,7 +1333,7 @@ describe('PostingService', () => {
           create: jest.fn(async () => reversal),
         },
       });
-      await svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23' });
+      await svc.reverseEntry(scope, { unitId, lancamentoId: 'entry-1', reversalPostingDate: '2026-06-23', reason: 'motivo de teste' });
       // Exactly ONE tag copied (from p2), onto a mirror leg — the reversal inherited the original's tag.
       expect(dimensionRepo.createPostingDimension).toHaveBeenCalledTimes(1);
       expect(dimensionRepo.createPostingDimension).toHaveBeenCalledWith(

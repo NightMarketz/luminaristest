@@ -52,7 +52,10 @@ import type { PostingService } from './PostingService';
 import type { AccountingReportService } from './AccountingReportService';
 import type { TaxAssessmentConfirmInput, TaxAssessmentListQuery, TaxAssessmentPreviewInput } from '../dtos/TaxAssessmentDto';
 import { formaEfetiva } from './CompanyFiscalProfileService';
-import { receitaBrutaPorAtividade } from './receitaBrutaPorAtividade';
+import { receitaBrutaPorAtividade, REVENDA_ACCOUNT_CODE, SERVICO_ACCOUNT_CODE, type ReceitaPorAtividade } from './receitaBrutaPorAtividade';
+import { RECEITA_NAO_USO_CODE } from '../fixtures/ChartOfAccountsFixture';
+import { CLOSING_SOURCE_TYPE } from '../models/closing';
+import { montarRastreio, validarRastreio, type ContextoRastreio, type MovimentoConta, type RastreioApuracao } from '../models/taxAssessmentRastreio';
 import { repartirReceitaHospitalar, type ChecklistHospitalarEmpresa } from '../models/presuncaoHospitalar';
 import type { IReceitaFiscalRepository } from '../repositories/IReceitaFiscalRepository';
 import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
@@ -264,7 +267,29 @@ interface Calculo {
   parametros: ParametrosUsados;
   /** PRESUMIDO-TETO-78MI item 9c: receita de Y−1 acima do teto ⇒ a confirmação recusa (null fora do Presumido). */
   tetoExcedido: TetoPresumidoResultado | null;
+  /** EMENDA RASTREIO (item 2, F-RT-1 a): janela lida e as contas de cada linha `RAZAO` — da mesma leitura do cálculo. */
+  razao: ContextoRastreio['razao'];
+  /** EMENDA RASTREIO (item 4): as confirmadas anteriores que o cálculo leu, para a origem das linhas `MEMORIA_ANTERIOR`. */
+  anteriores: { id: string; periodo: string; tributo: string }[];
 }
+
+/** Item 2: a linha da memória de cada conta de presunção (`receitaBrutaPorAtividade` lê só 3.1, 3.3 e 3.4). */
+const LINHA_DA_CONTA_DE_RECEITA: Record<string, string> = {
+  [SERVICO_ACCOUNT_CODE]: 'RECEITA_SERVICO',
+  [REVENDA_ACCOUNT_CODE]: 'RECEITA_REVENDA',
+  [RECEITA_NAO_USO_CODE]: 'RECEITA_NAO_USO',
+};
+const contasDaReceita = (rec: Pick<ReceitaPorAtividade, 'contas'>): Record<string, MovimentoConta[]> => {
+  const out: Record<string, MovimentoConta[]> = {};
+  for (const c of rec.contas) {
+    const codigo = LINHA_DA_CONTA_DE_RECEITA[c.code];
+    if (codigo) (out[codigo] ??= []).push({ accountId: c.accountId, accountCode: c.code, accountName: c.name, movimentoCents: BigInt(c.netCents) });
+  }
+  return out;
+};
+const contasDoResultado = (contas: { accountId: string; code: string; name: string; cents: number }[]): MovimentoConta[] =>
+  contas.map((c) => ({ accountId: c.accountId, accountCode: c.code, accountName: c.name, movimentoCents: BigInt(c.cents) }));
+const dia = (d: Date): string => d.toISOString().slice(0, 10); // janelas UTC: o dia date-only é o prefixo ISO
 
 /**
  * PR-4 (item 10; dono 07/10 "Gravar a entrada") — o que o usuário informou na confirmação do X7, sem o que é do pedido
@@ -390,6 +415,7 @@ export class TaxAssessmentService {
     }
     const { anoCalendario: ano, periodo } = input;
     const owner = scope.ownerUserId;
+    const rastreio = await this.rastreioDaConfirmacao(scope, ano, c);
 
     const r = await this.repo.runTransaction(async (tx) => {
       const perfilTx = await this.companyProfileRepo.findByYear(scope, ano, tx);
@@ -502,6 +528,7 @@ export class TaxAssessmentService {
             parametrosSha256: c.parametros.sha256,
             entradaInformada: entradaX7(input) as Prisma.InputJsonValue,
             avisoParametroLegal: aviso,
+            rastreio: rastreio[t] as Prisma.InputJsonValue,
             status: 'CONFIRMED',
             supersedesId: substituida?.id ?? null,
             confirmedById: scope.actorUserId,
@@ -549,6 +576,34 @@ export class TaxAssessmentService {
 
     const [irpj, csll] = await this.provisionarAposConfirmacao(scope, r.cair, [r.gravadas.IRPJ, r.gravadas.CSLL]);
     return { irpj: toView(irpj), csll: toView(csll), reconfirmar: r.reconfirmar };
+  }
+
+  /**
+   * EMENDA RASTREIO (itens 1–5): a origem de cada linha da memória dos 2 tributos, montada FORA da tx (como o cálculo) e
+   * validada antes de gravar. Item 3 (F-RT-2 a): o saldo de cada conta do rastreio no fim da janela = movimento do
+   * exercício (1º/jan do ano-calendário até o fim da janela), sem o lançamento de encerramento — o saldo da conta de
+   * resultado no balancete antes do encerramento (insumo I3; crédito − débito, o sinal de todas as regras da DRE).
+   * Uma leitura a mais, congelada na coluna: lançamento retroativo posterior não muda o que foi confirmado.
+   */
+  private async rastreioDaConfirmacao(scope: AccountingScope, ano: number, c: Calculo): Promise<Record<TributoApuracao, RastreioApuracao>> {
+    const contas = Object.values(c.razao.contasPorCodigo).flat();
+    let saldoFinalPorConta: Map<string, bigint> | undefined;
+    if (contas.length > 0) {
+      const totais = await this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, {
+        from: new Date(Date.UTC(ano, 0, 1)),
+        to: new Date(`${c.razao.to}T23:59:59.999Z`),
+        excludeSourceTypes: [CLOSING_SOURCE_TYPE],
+      });
+      const ids = new Set(contas.map((m) => m.accountId));
+      saldoFinalPorConta = new Map(totais.filter((t) => ids.has(t.accountId)).map((t) => [t.accountId, BigInt(t.creditCents - t.debitCents)]));
+    }
+    const out = {} as Record<TributoApuracao, RastreioApuracao>;
+    for (const t of TRIBUTOS) {
+      const memoria = (t === 'IRPJ' ? c.irpj : c.csll).memoria;
+      const rastreio = montarRastreio(memoria, { razao: c.razao, saldoFinalPorConta, anteriores: c.anteriores.filter((a) => a.tributo === t) });
+      out[t] = validarRastreio(rastreio, memoria);
+    }
+    return out;
   }
 
   /**
@@ -628,6 +683,7 @@ export class TaxAssessmentService {
         date: fimDoPeriodo(row.anoCalendario, row.periodo),
         description: `Provisão de ${row.tributo}${row.periodo === 'A00' ? ' (ajuste anual)' : ''} — ${row.periodo}/${row.anoCalendario} (apuração ${row.id})`,
         sourceType: TAX_ASSESSMENT_PROVISION_SOURCE_TYPE,
+        automaticWriter: true,
         sourceId: row.id,
         lines,
       });
@@ -789,21 +845,25 @@ export class TaxAssessmentService {
       anterioresRows.filter((r) => r.tributo === t).map((r) => ({ periodo: r.periodo as PeriodoTrimestral, memoria: MemoriaCalculoSchema.parse(r.memoria) }));
     const deducoes = input.deducoes;
     const anterioresIds = anterioresRows.map((r) => r.id);
+    const anterioresLidas = anterioresRows.map((r) => ({ id: r.id, periodo: r.periodo, tributo: r.tributo }));
+    const razao = (contasPorCodigo: Record<string, MovimentoConta[]>): ContextoRastreio['razao'] => ({ from: dia(w.from), to: dia(w.to), contasPorCodigo });
 
     if (anual) {
-      const r = await this.calcularAnual(scope, input, perfil, w, despesaIds, anterioresRows, avisos, tabela);
-      return { perfil, forma, ...r, provisaoContasConfiguradas, avisos, anterioresIds, parametros, tetoExcedido: null };
+      const { contasPorCodigo, ...r } = await this.calcularAnual(scope, input, perfil, w, despesaIds, anterioresRows, avisos, tabela);
+      return { perfil, forma, ...r, provisaoContasConfiguradas, avisos, anterioresIds, parametros, tetoExcedido: null, razao: razao(contasPorCodigo), anteriores: anterioresLidas };
     }
 
     let irpj: ResultadoApuracaoAnual;
     let csll: ResultadoApuracaoAnual;
     let tetoExcedido: TetoPresumidoResultado | null = null;
+    let contasPorCodigo: Record<string, MovimentoConta[]>;
     if (perfil.regime === 'PRESUMIDO') {
       // PRESUMIDO-TETO-78MI item 9b: o mesmo aviso das obrigações na prévia; EXCEDIDO segue para o 400 da confirmação.
       const teto = await this.presumidoTeto.avaliar(scope, ano);
       avisos.push(...teto.avisos);
       if (teto.situacao === 'EXCEDIDO') tetoExcedido = teto;
       const rec = await receitaBrutaPorAtividade({ accountRepo: this.accountRepo, postingRepo: this.postingRepo, fiscalProfileRepo: this.fiscalProfileRepo }, scope, w.from, w.to);
+      contasPorCodigo = contasDaReceita(rec);
       const base = {
         tabela,
         ano,
@@ -821,7 +881,9 @@ export class TaxAssessmentService {
     } else {
       const contasDespesa = despesaIds.length === 2;
       if (!contasDespesa) avisos.push('guarda de circularidade sem contas configuradas: o resultado inclui eventual despesa de IRPJ/CSLL já lançada (BRIEF X7 item 7).');
-      const resultado = BigInt(await this.reportService.resultadoAntesIrpjCsll(scope, w.from, w.to, despesaIds));
+      const res = await this.reportService.resultadoAntesIrpjCsllPorConta(scope, w.from, w.to, despesaIds);
+      const resultado = BigInt(res.netCents);
+      contasPorCodigo = { LAIR: contasDoResultado(res.contas) };
       const parteBFechada = !!(await this.lalurRepo.findClosing(scope, ano, periodo));
       const linhas = async (livro: string) =>
         (await this.lalurRepo.findManyEntries(scope, { year: ano, quarter: periodo, livro, includeArchived: false })).map((l) => ({ codigo: l.codigo, valorCents: l.valorCents }));
@@ -829,7 +891,7 @@ export class TaxAssessmentService {
       irpj = { ...apurarRealTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'IRPJ', linhasParteA: await linhas('lalur') }), diferencaPostergadaCents: 0n };
       csll = { ...apurarRealTrimestral({ ...base, periodo: periodo as PeriodoTrimestral, tributo: 'CSLL', linhasParteA: await linhas('lacs') }), diferencaPostergadaCents: 0n };
     }
-    return { perfil, forma, irpj, csll, provisaoContasConfiguradas, avisos, anterioresIds, parametros, tetoExcedido };
+    return { perfil, forma, irpj, csll, provisaoContasConfiguradas, avisos, anterioresIds, parametros, tetoExcedido, razao: razao(contasPorCodigo), anteriores: anterioresLidas };
   }
 
   /**
@@ -845,16 +907,24 @@ export class TaxAssessmentService {
     anterioresRows: TaxAssessment[],
     avisos: string[],
     tabela: TabelaApuracao,
-  ): Promise<{ irpj: ResultadoApuracaoAnual; csll: ResultadoApuracaoAnual }> {
+  ): Promise<{ irpj: ResultadoApuracaoAnual; csll: ResultadoApuracaoAnual; contasPorCodigo: Record<string, MovimentoConta[]> }> {
     const { anoCalendario: ano, periodo, deducoes } = input;
     const meses = (t: TributoApuracao): MesConfirmado[] => anterioresRows.filter((r) => r.tributo === t && isLalurMes(r.periodo)).map(toMesConfirmado);
     const contasDespesa = despesaIds.length === 2;
     const realDoPeriodo = async () => {
       if (!contasDespesa) avisos.push('guarda de circularidade sem contas configuradas: o resultado inclui eventual despesa de IRPJ/CSLL já lançada (BRIEF X7 item 7).');
-      const resultado = BigInt(await this.reportService.resultadoAntesIrpjCsll(scope, w.from, w.to, despesaIds));
+      const res = await this.reportService.resultadoAntesIrpjCsllPorConta(scope, w.from, w.to, despesaIds);
       const linhas = async (livro: string) =>
         (await this.lalurRepo.findManyEntries(scope, { year: ano, quarter: periodo, livro, includeArchived: false })).map((l) => ({ codigo: l.codigo, valorCents: l.valorCents }));
-      return { resultadoAntesCents: resultado, contasProvisaoConfiguradas: contasDespesa, linhasIrpj: await linhas('lalur'), linhasCsll: await linhas('lacs') };
+      // EMENDA RASTREIO (item 2): o LAIR do ajuste (`LAIR`) e o do balancete (`LAIR_PERIODO_EM_CURSO`) vêm das mesmas contas.
+      const contas = contasDoResultado(res.contas);
+      return {
+        resultadoAntesCents: BigInt(res.netCents),
+        contasProvisaoConfiguradas: contasDespesa,
+        linhasIrpj: await linhas('lalur'),
+        linhasCsll: await linhas('lacs'),
+        contasPorCodigo: { LAIR: contas, LAIR_PERIODO_EM_CURSO: contas },
+      };
     };
 
     if (periodo === 'A00') {
@@ -869,15 +939,17 @@ export class TaxAssessmentService {
           avisos.push(`${t}: ajuste abaixo do provisionado nos meses e conta de saldo negativo a compensar não configurada — a provisão ficará pendente (BRIEF X7 B item 16).`);
         }
       }
-      return { irpj, csll };
+      return { irpj, csll, contasPorCodigo: r.contasPorCodigo };
     }
 
     const mes = periodo as LalurMes;
     const m = Number(mes.slice(1));
     // Item 9 (e decisão 1 do PR-3): só o IRPJ do prestador exclusivo lê a receita dos meses anteriores do ano.
+    let contasDoMes: Record<string, MovimentoConta[]> = {};
     const receitaDoMes = async (k: number): Promise<ReceitaMes> => {
       const b = mesBounds(ano, k);
       const rec = await receitaBrutaPorAtividade({ accountRepo: this.accountRepo, postingRepo: this.postingRepo, fiscalProfileRepo: this.fiscalProfileRepo }, scope, b.from, b.to);
+      if (k === m) contasDoMes = contasDaReceita(rec); // EMENDA RASTREIO (item 2): só o mês apurado tem linha RECEITA_*
       return { periodo: nomeMes(k), servicoCents: BigInt(rec.servicoCents), revendaCents: BigInt(rec.revendaCents), naoUsoCents: BigInt(rec.naoUsoCents) };
     };
     const receitasAnteriores = async (): Promise<ReceitaMes[]> => {
@@ -895,6 +967,7 @@ export class TaxAssessmentService {
       return {
         irpj: apurarEstimativaReceitaBruta({ ...base, tributo: 'IRPJ', confirmados: meses('IRPJ') }),
         csll: apurarEstimativaReceitaBruta({ ...base, tributo: 'CSLL', confirmados: meses('CSLL') }),
+        contasPorCodigo: contasDoMes,
       };
     }
 
@@ -907,6 +980,7 @@ export class TaxAssessmentService {
     return {
       irpj: apurarBalancete({ ...base, tributo: 'IRPJ', linhasParteA: r.linhasIrpj, anteriores: meses('IRPJ'), ...receita }),
       csll: apurarBalancete({ ...base, tributo: 'CSLL', linhasParteA: r.linhasCsll, anteriores: meses('CSLL') }),
+      contasPorCodigo: r.contasPorCodigo,
     };
   }
 

@@ -1915,6 +1915,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
         unitId,
         lancamentoId: entryId,
         reversalPostingDate: new Date().toISOString(),
+        reason: 'Cancelamento da venda — estorno refeito pela reconciliação contábil',
       });
     };
 
@@ -2424,6 +2425,7 @@ export async function retryOneReconcilePendingItem(
       unitId,
       lancamentoId: entryId,
       reversalPostingDate: new Date().toISOString(),
+      reason: 'Cancelamento da venda — estorno refeito pela reconciliação contábil',
     });
   };
 
