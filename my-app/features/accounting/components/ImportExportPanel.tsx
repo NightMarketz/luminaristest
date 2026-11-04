@@ -62,6 +62,8 @@ export function ImportExportPanel({
   const [templateFormat, setTemplateFormat] = useState<SpreadsheetFormat>('csv');
   // ITG 2000 item 36 — razão do registro extemporâneo do job (lançamentos e saldos iniciais em período reaberto).
   const [extemporaneousReason, setExtemporaneousReason] = useState('');
+  // O plano de contas não lança nada: o servidor recusa a razão nesse tipo.
+  const postsEntries = importKind !== 'IMPORT_CHART_OF_ACCOUNTS';
   const [uploading, setUploading] = useState(false);
   const [committing, setCommitting] = useState(false);
   const [job, setJob] = useState<DataExchangeJob | null>(null);
@@ -96,7 +98,7 @@ export function ImportExportPanel({
     setJob(null);
     setRows([]);
     try {
-      const created = await dataExchangeService.importFile(importKind, unitId, file, extemporaneousReason.trim() || undefined);
+      const created = await dataExchangeService.importFile(importKind, unitId, file, (postsEntries && extemporaneousReason.trim()) || undefined);
       setJob(created);
       await refreshRows(created.id);
     } catch (err) {
@@ -200,17 +202,19 @@ export function ImportExportPanel({
             <FiDownload size={15} /> {t('importExport.import.downloadTemplate', 'Baixar modelo')}
           </button>
 
-          <label htmlFor="import-extemporaneous-reason" className="flex items-center gap-2 text-sm text-neutral-400">
-            {t('journalEntryModal.field.extemporaneousReason', 'Razão do registro extemporâneo')}
-            <input
-              id="import-extemporaneous-reason"
-              type="text"
-              value={extemporaneousReason}
-              onChange={(e) => setExtemporaneousReason(e.target.value)}
-              title={t('journalEntryModal.field.extemporaneousReasonHelp', 'Opcional. Exigida quando a data cai num período que já foi fechado.')}
-              className={inputClass}
-            />
-          </label>
+          {postsEntries && (
+            <label htmlFor="import-extemporaneous-reason" className="flex items-center gap-2 text-sm text-neutral-400">
+              {t('journalEntryModal.field.extemporaneousReason', 'Razão do registro extemporâneo')}
+              <input
+                id="import-extemporaneous-reason"
+                type="text"
+                value={extemporaneousReason}
+                onChange={(e) => setExtemporaneousReason(e.target.value)}
+                title={t('journalEntryModal.field.extemporaneousReasonHelp', 'Opcional. Exigida quando a data cai num período que já foi fechado.')}
+                className={inputClass}
+              />
+            </label>
+          )}
 
           <input ref={fileRef} type="file" accept=".csv,.xlsx" onChange={handleFileSelected} className="hidden" />
           <button

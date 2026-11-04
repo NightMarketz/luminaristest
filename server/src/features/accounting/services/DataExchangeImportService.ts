@@ -126,6 +126,9 @@ export class DataExchangeImportService {
     if (!this.policy.canManage(scope)) {
       throw new ForbiddenError('Não autorizado a importar dados contábeis.');
     }
+    if (extemporaneousReason !== undefined && kind === 'IMPORT_CHART_OF_ACCOUNTS') {
+      throw new ValidationError('A razão do registro extemporâneo só vale para lançamentos e saldos iniciais.');
+    }
 
     const format = sniffFormat(file.buffer, file.originalname);
     const table = await parseTable(file.buffer, format);
