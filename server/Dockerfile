@@ -7,7 +7,7 @@ WORKDIR /app
 # Entram o manifesto da raiz, o lockfile e os manifestos dos dois apps (o `npm ci` confere o lockfile contra todos), mas
 # só o código do server; `-w luminaris-server` instala só as dependências dele. O .dockerignore da raiz tira os
 # node_modules e o resto do repo. O `legacy-peer-deps` do server/.npmrc saiu: com o lockfile da raiz o `npm ci` passa
-# sem ele (BRIEF §0.4, passo 1).
+# sem ele (BRIEF §0.5, passo 1).
 # prisma ANTES do npm ci: o postinstall do server roda "prisma generate", que falha sem prisma/schema.prisma no disco.
 # Sem este estágio de build, a imagem dependia de um `dist/` gerado FORA do `docker build` — mas dist/ está no
 # .gitignore (ADR-M2 §4.b, item 2: um PaaS que builda a partir do git não tem dist/ no contexto; aqui resolvido
