@@ -86,7 +86,7 @@ sessão nova continua com a skill `sessao-feature`.
 | #1014 | `claude/dp-f0-f1-pr0-421c43` (base `claude/dp-no-pes4-brief-f0-f1-90b7b4`) | 1–7 | vermelha (ADR) | verde | PASSOU |
 | #1015 | `claude/dp-f0-f1-pr1` (base `claude/dp-f0-f1-pr0-421c43`) | 8–19 | vermelha (prisma, contábil) | verde (17/17) | PASSOU (03/11, revisor despachado pela sessão 3b: gates 0, sabotagem do gate de sobreposição pega; 3 latentes abaixo) |
 | #1016 | `claude/dp-f0-f1-pr2-d614b0` (base `claude/dp-f0-f1-pr1`) | 20–27 | vermelha (migração, parâmetro legal) | verde (17/17) | PASSOU (03/11: gates 0; 3 sabotagens — valor da FAIXA_2, vigência do INSS, filtro de data do leitor — pegas; a do filtro só pela integração) |
-| #1026 | `claude/dp-f0-f1-pr3` (base `claude/dp-f0-f1-pr2-d614b0`) | 28–36 | vermelha (migração, contábil) | verde depois do 4587a22a (REKEY do `DpLotacao`) | PASSOU (03/11: gates 0; sabotagens de código duplicado, `TP_JORNADA`, Tier-0 do discriminador e PII na auditoria pegas; `tx`→cliente global NÃO pego — lacuna de teste, sem defeito) |
+| #1026 | `claude/dp-f0-f1-pr3` (base `claude/dp-f0-f1-pr2-d614b0`) | 28–36 | vermelha (migração, contábil) | 41382d38 vermelho (inventário do rekey; corrigido no 4587a22a), CI do head novo em curso em 03/11 — conferir com `gh pr checks 1026` | PASSOU (03/11: gates 0; sabotagens de código duplicado, `TP_JORNADA`, Tier-0 do discriminador e PII na auditoria pegas; `tx`→cliente global NÃO pego — lacuna de teste, sem defeito) |
 
 **Latentes do revisor do #1015 (não bloqueiam; só aparecem com registro de teste, porque hoje todo opcional é
 `disponivel: false` com `dependsOn: []` — decidir antes de ligar o primeiro opcional com dependência):** (1) `activate`
