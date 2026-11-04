@@ -2,7 +2,8 @@
 
 **Estado:** BRIEF — **melhoria 5 (pnpm) PARADA** pelo dono depois do spike (chat, 2026-11-04: "Sim, parar o pnpm").
 Fica o depósito do #1034. Segue só a **melhoria 6 (cache de tarefa)**: o PR-A (`tsc --incremental`) está pronto para um
-`executa`, e o Turborepo voltou a ser pergunta (F-MW-9), porque ele dependia do workspace do pnpm. Nenhum código.
+`executa`. O F-MW-9 foi ratificado como npm workspaces + Turborepo, mas o turbo ≥ 2.9 não roda nesta CPU, e o
+F-MW-10 está pendente (seção 0.3). Nenhum código.
 
 ## 0.2 Decisão depois do spike (dono, chat, 2026-11-04: "Sim, parar o pnpm")
 
@@ -20,6 +21,44 @@ Fica o depósito do #1034. Segue só a **melhoria 6 (cache de tarefa)**: o PR-A 
   - (c) um executor que não exija workspace.
   - **Recomendação: (b).** O PR-A ataca a 2ª rodada do `tsc` (9,1 s) sem mexer em instalação. O ganho do Turborepo entre
     tarefas não paga desmontar o depósito que acabou de ser provado.
+  - **→ Ratificado: (a), npm workspaces + Turborepo, contra a recomendação** (dono, chat, 2026-11-04: "npm workspaces +
+    turbo"). Plano na seção 0.3.
+
+## 0.3 Caminho ratificado no F-MW-9: npm workspaces + Turborepo (nenhum código ainda)
+
+**Restrição medida em 04/11 (`npx -y turbo@<v> --version` nesta máquina):** o Turborepo é binário nativo, e da 2.9 em
+diante ele não roda nesta CPU, com o mesmo erro do pnpm 12 (`Fatal Error: HW capability … requested: 0x20000000`).
+
+| Versão | Resultado |
+|---|---|
+| 2.3.4, 2.5.8, 2.6.3, 2.7.6, 2.8.21 | roda |
+| 2.9.18, 2.10.13, 2.11.10 (a mais nova) | **não roda** |
+
+Daí o fork novo:
+
+- **F-MW-10 — RATIFICAÇÃO PENDENTE: aceitar o Turborepo preso na 2.8.21?**
+  - (a) Fixar `turbo@2.8.21` e pôr no Dependabot um `ignore` para `>= 2.9`. Fica sem correção nova enquanto a máquina for
+    esta. O CI (Linux) poderia rodar a mais nova, mas aí os dois divergem.
+  - (b) Nx, que também tem núcleo nativo e não foi testado nesta CPU. Testar antes de escolher.
+  - (c) Voltar ao F-MW-9 (b): só o cache nativo.
+  - **Recomendação: (c), ou então (a) com data para revisar.** Uma ferramenta de build presa em versão antiga por causa
+    da CPU de uma máquina é dívida que cresce a cada release.
+
+**Itens do caminho (só valem com o F-MW-10 resolvido a favor do Turborepo):**
+
+14. **Workspace npm** — `package.json` da raiz com `"private": true` e `"workspaces": ["server", "my-app"]`.
+15. **Lockfile único na raiz** — o npm de workspace quer um só `package-lock.json`. **Insumo ausente:** se o
+    `npm install --package-lock-only` na raiz preserva as versões dos dois lockfiles de hoje (o `pnpm import` não
+    preservava). Prova: o mesmo comparador de diretos do spike (62/62 e 45/45).
+16. **Hoisting** — o npm de workspace iça para o `node_modules` da raiz. As dependências fantasmas continuam resolvendo,
+    e o cartão "Declarar dependências fantasmas" segue valendo para não depender disso.
+17. **Depósito do #1034 rechaveado** — uma entrada por lockfile da raiz, e a junção passa a ser o `node_modules` da raiz
+    (mais as pastas por app que o npm criar). Muda o `worktree-deps.mjs`, o `session-start-deps.mjs` e o R1.
+18. **CI, Docker, Dependabot** — `cache-dependency-path: package-lock.json`, `npm ci` na raiz, Dockerfiles com contexto na
+    raiz, e Dependabot em `/`. São os mesmos efeitos que o F-MW-2 teria tido no pnpm.
+19. **`turbo.json`** — o contrato da seção 2, com `test:integration` em `cache: false` (F-MW-7).
+20. **Primeiro passo: um spike**, como o PR-0, mas com npm. Itens 15 e 17 e os 8 comandos do item 1, mais
+    `turbo run typecheck` duas vezes, a 2ª vinda do cache. Precisa do seu `executa`.
 
 ## 0. Ratificação (dono, chat, 2026-11-04)
 
@@ -333,7 +372,7 @@ fixado. A diferença entre Node 22 no CI e 24 local já existe hoje e não é de
 | ~~PR-0~~ (arquivado) | spike pnpm (branch descartável, **não mergeia**): os 8 comandos do item 1, com tempo e exit | F-MW-1 = (b) | — | nada a reverter |
 | ~~PR-1~~ (arquivado) | workspace + `pnpm-lock.yaml` na raiz + `allowBuilds` + CI + Docker com contexto na raiz + Dependabot em `/` (itens 2–8) | PR-0 passou; doc do Dependabot conferida (F-MW-5) | vermelho (CI, deps) | `git revert`; os `package-lock.json` voltam com ele |
 | ~~PR-2~~ (arquivado) | `worktree-deps.mjs`/hook chamando pnpm; skills, `CLAUDE.md` e `server/CLAUDE.md` (itens 9–10) | PR-1 | vermelho (skills) | `git revert` |
-| PR-3 | `turbo.json` + scripts `turbo run` (itens 11–12) — **depende do F-MW-9** | workspace (F-MW-9) | verde ou vermelho, conforme toque `ci.yml` | `git revert`; apagar `.turbo/` |
+| PR-3 | `turbo.json` + npm workspaces (itens 14–20, seção 0.3) — **depende do F-MW-10 e de um spike** | F-MW-10 | verde ou vermelho, conforme toque `ci.yml` | `git revert`; apagar `.turbo/` |
 | ~~PR-4~~ (arquivado) | apagar `worktree-deps.mjs` e emendar o R1 | PR-2 estável por 1 semana | vermelho (cédula) | `git revert` |
 | PR-5 | medição de depois (item 13), sem código | PR-3 | verde | — |
 
