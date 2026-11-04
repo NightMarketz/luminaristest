@@ -247,6 +247,15 @@ teste que o prova. Nenhum item exige token real nem rede externa.
   1 cancelamento; 1 tentativa com o token da matriz numa filial ⇒ faltante do ADL-6 (se o cliente tiver filial). A
   EVIDÊNCIA é a saída literal; desfecho e assinatura são do dono.
 
+### Régua de testes (APRENDIZADOS-TESTES-2026-11-04)
+
+> Patch de 04/11. Pedido do dono (chat, 04/11): *"Já vai atualizando todas os aprendizados nos locais onde são briefs"*. Não muda item, contrato nem fork ratificado: acrescenta ao critério de aceite **só o que falta** da régua A1–A8 de [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md). Onde um ponto pediria mudar algo ratificado, ele está no corpo do PR como pergunta ao dono.
+
+- **A4 — cenário com dono.** Tenant pelo cenário `dfe-manual` do PILOTO-DFE (#1067), não por fixture paralela.
+- **A6 — pilha real.** A integração `--runInBand` (l. 180) entra pela HTTP com o assinador falso em processo e **relê** o documento.
+- **A3 — uma falta por vez.** Assinador fora do ar, versão antiga, host fora da lista: cada caso com mensagem que nomeia a unidade e o assinador.
+- **A5.** Token e certificado reais ficam só no runbook; a saída real vira fixture.
+
 ## 4. Contratos (esboço materializável)
 
 ### 4.1 Acréscimos ao protocolo `v1` da EMENDA-4 (§4.2 dela; ramo recomendado do F-ADL-1)

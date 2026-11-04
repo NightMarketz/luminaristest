@@ -202,6 +202,16 @@ snapshot de DTO só com chave nova · guarda de path-count do OpenAPI (rotas nov
 `npm run test:integration` para migração e fila · dependências novas (`bullmq`, `@anthropic-ai/sdk`, `@google/genai`,
 `@modelcontextprotocol/sdk`) com versão fixada no `package.json`.
 
+### Régua de testes (APRENDIZADOS-TESTES-2026-11-04)
+
+> Patch de 04/11. Pedido do dono (chat, 04/11): *"Já vai atualizando todas os aprendizados nos locais onde são briefs"*. Não muda item, contrato nem fork ratificado: acrescenta ao critério de aceite **só o que falta** da régua A1–A8 de [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md). Onde um ponto pediria mudar algo ratificado, ele está no corpo do PR como pergunta ao dono.
+
+- **A4 / A8 — cenário com dono.** Os testes de integração montam o tenant por um cenário nomeado (usuário, 2 teammates com papéis e alçadas diferentes, 1 rotina agendada), com **data de referência literal** e relógio injetado nas rotinas. Nada de `Date.now()` no teste. Quando o registro de cenários do PILOTO-DFE existir (F-PIL-2, #1067), o cenário entra lá.
+- **A2 — estado do bug.** A guarda de alçada se testa com o teammate **sem** a alçada tentando a ação de outro papel. A idempotência por `turnId` se testa com o 2º job chegando **depois** de o 1º já ter concluído e gravado, não só com dois enfileiramentos seguidos.
+- **A3 — uma falta por vez.** Sem chave do provedor, papel sem alçada, canal desligado, provedor fora da lista: cada recusa num caso, com mensagem que nomeia o teammate e o provedor pelo nome exibido, nunca por id.
+- **A6 — pilha real.** Ao menos um teste HTTP (`makeApp` + `authHeader`) por rota nova, com repositório real e **2ª leitura** (o `GET` depois do `POST`). O provedor falso fica só na borda do adaptador.
+- **A5 — o que sobra para fora.** A chave real de cada provedor e o Redis do M2 são uma fumaça única no runbook M2. A resposta real gravada vira fixture ao lado das atuais (l. 52).
+
 ## 2. Contratos (esboço materializável)
 
 ### 2.1 Prisma (PR-0)

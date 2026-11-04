@@ -542,6 +542,16 @@ líquida) e "estilo Sicredi" (sem data do crédito) seguem a **pista** do OCA e 
     `writeOffDays` (observação do segmento P). Retornos 19/20/23/24/25 traduzidos (25 ⇒ `EXPIRED` com motivo).
     Nenhuma dessas transições lança no razão.
 
+### Régua de testes (APRENDIZADOS-TESTES-2026-11-04)
+
+> Patch de 04/11. Pedido do dono (chat, 04/11): *"Já vai atualizando todas os aprendizados nos locais onde são briefs"*. Não muda item, contrato nem fork ratificado: acrescenta ao critério de aceite **só o que falta** da régua A1–A8 de [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md). Onde um ponto pediria mudar algo ratificado, ele está no corpo do PR como pergunta ao dono.
+
+- **A5 — oráculo vira fixture.** A homologação com o banco (§6.3) é o único EXT. O retorno real colado no runbook vira fixture versionada, ao lado das sintéticas (l. 434).
+- **A7 — esperados fixos.** Além das posições (l. 452), o retorno se confere contra esperados fixos: saldo de cada título e razão inalterado (item 18).
+- **A4 / A8 — cenário com dono.** Cenário com unidade, convênio e 3 títulos (aberto, parcial, vencido), com data de referência literal, porque vencimento e juros dependem dela.
+- **A3 — uma falta por vez.** Sem convênio, sem carteira, sacado sem CPF/CNPJ: cada um com mensagem que nomeia o título pelo número e o cliente pelo nome.
+- **A6 — pilha real.** Geração e upload de retorno pela HTTP com repositório real, e 2ª leitura da remessa e do título.
+
 ## 8. Insumos ausentes (pausados, não varridos — regra 2)
 
 1. **PDF da 10.11:** o portal só lista a 11.0. Usei o log da 11.0 (L3) e a 10.1 de terceiro (L4). Se o dono quiser a

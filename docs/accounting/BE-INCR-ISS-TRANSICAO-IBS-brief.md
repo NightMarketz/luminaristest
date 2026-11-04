@@ -162,6 +162,17 @@ de tabela usa o canônico `linhaLegalVigente` / `linhasEmCacheSincrono` do LEGAL
     - `auditCanonical.ts` **não** muda (nenhum eventType novo; o perfil fiscal já audita `issAliquotaBp`);
     - `tsc` limpo; `check:arch` limpo.
 
+### Régua de testes (APRENDIZADOS-TESTES-2026-11-04)
+
+> Patch de 04/11. Pedido do dono (chat, 04/11): *"Já vai atualizando todas os aprendizados nos locais onde são briefs"*. Não muda item, contrato nem fork ratificado: acrescenta ao critério de aceite **só o que falta** da régua A1–A8 de [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md). Onde um ponto pediria mudar algo ratificado, ele está no corpo do PR como pergunta ao dono.
+
+Vale para o **PR-2** (itens 8–14), que ainda não foi executado.
+- **A7 — esperados fixos.** Uma tabela de esperados (ano 2029–2032 × regime × piso → alíquota em bp e ISS em centavos), comparada inteira, além dos casos pontuais.
+- **A4 / A8 — cenário com dono.** Cenário com 1 unidade no Presumido e 1 no Simples, perfis completos e competências literais (2028-12, 2029-01, 2032-12, 2033-01). Nada relativo a hoje.
+- **A2 — estado do bug.** O pacote que cruza o ano (P-ISS-3) se testa com pacote **vendido em 2028-12 e consumido em 2029-01**, não vendido e consumido no mesmo ano.
+- **A3 — uma falta por vez.** Sem linha vigente do IBS, sem fator, sem piso: cada uma com erro nomeado que cita a competência.
+- **A6 — pilha real.** Um teste HTTP pela prévia de emissão que **relê** o `pAliq` do payload salvo, não só a função pura.
+
 ## 4. Contratos esboçados
 
 ### 4.1 Linhas de `legal_parameters` (PR-1, PR-2)

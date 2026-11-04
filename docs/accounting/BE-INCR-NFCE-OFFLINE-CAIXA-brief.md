@@ -385,6 +385,16 @@ num ramo · `[legal:…]` regra com artefato citado. Numeração OFF-n, para nã
   4. conferir a venda e o lançamento no razão;
   5. desligar o processo no meio de uma venda e conferir que não sobra buraco na série.
 
+### Régua de testes (APRENDIZADOS-TESTES-2026-11-04)
+
+> Patch de 04/11. Pedido do dono (chat, 04/11): *"Já vai atualizando todas os aprendizados nos locais onde são briefs"*. Não muda item, contrato nem fork ratificado: acrescenta ao critério de aceite **só o que falta** da régua A1–A8 de [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md). Onde um ponto pediria mudar algo ratificado, ele está no corpo do PR como pergunta ao dono.
+
+- **A2 — estado do bug.** A idempotência por `offlineId` (l. 246) se testa com o reenvio chegando **depois** de o primeiro já ter virado documento e disparado as pontes. Esse é o caso da l. 168, que hoje não tem teste.
+- **A7 — esperados fixos.** As fixtures douradas (OFF-13) trazem valores esperados fixos de total, tributos e numeração por lote, comparados inteiros.
+- **A8 — data fixa.** Relógio injetado no caixa e no servidor; data de referência literal nas fixtures.
+- **A3 — uma falta por vez.** Série não reservada, número abaixo do último recebido, hash divergente: cada um num caso, com mensagem que nomeia o caixa e o número.
+- **A5.** A SEFAZ real em contingência fica EXT; a resposta real vira fixture.
+
 ## 4. Contratos (esboço materializável)
 
 ### 4.1 Porta da montagem compartilhada (ramo F-OFF-3 b)

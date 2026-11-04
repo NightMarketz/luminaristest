@@ -749,6 +749,7 @@ contábil, não deste BRIEF.
 | Limite legal da jornada | F5 (verificações) | Jornada com `minutosSemanais` e `tipoJornada` |
 | Campos do S-2200/S-2300 só do eSocial (raça, instrução, endereço…) e o S-1000/S-1005 | F4 | Trabalhador e vínculo, com espaço por migração aditiva |
 | Dependentes (dedução do IRRF, salário-família) | F2 | — |
+| **Régua de testes do F2** (`docs/operating-manual/APRENDIZADOS-TESTES-2026-11-04.md`, A1–A8; pedido do dono, chat, 04/11; inventário §6 do PR #1065) | BRIEF do F2, na seção de testes, desde o primeiro rascunho | Os 4 serviços com repositório e as 5 rotas `dp*` já têm integração própria (verificado por `git ls-files`, 04/11). O F2 nasce com: **seed de cenário DP** em banco descartável (empresa, 2+ empregados com vínculos de categorias diferentes, uma competência fechável; A4), com **data de referência literal** (A8); **caminho feliz pela HTTP** do cálculo até o snapshot relido (A6); **uma falta por vez** com o dado nomeado (sem vínculo, sem parâmetro vigente na competência, sem jornada; A3); **folha contra valores esperados fixos** por rubrica, base e total em centavos (A7); e, como EXT, só a conferência do contador e o eSocial real (A5) |
 
 ## 8. Achados fora de escopo (registrados, não planejados)
 

@@ -200,6 +200,16 @@ para todo `*Scheduler.ts`/`*Worker.ts` novo · `npm run test:integration` para m
 novas com versão fixada: `sqlite-vec` e, no caminho (1) ou (2), `better-sqlite3`/adapter do Prisma. O `@google/genai`
 vem do TEAMMATES.
 
+### Régua de testes (APRENDIZADOS-TESTES-2026-11-04)
+
+> Patch de 04/11. Pedido do dono (chat, 04/11): *"Já vai atualizando todas os aprendizados nos locais onde são briefs"*. Não muda item, contrato nem fork ratificado: acrescenta ao critério de aceite **só o que falta** da régua A1–A8 de [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md). Onde um ponto pediria mudar algo ratificado, ele está no corpo do PR como pergunta ao dono.
+
+- **A4 / A8 — cenário com dono.** Cenário nomeado com 2 donos e 3 documentos (um do outro dono), data de referência literal e **embedding falso determinístico** (vetor derivado do texto), para o KNN dar sempre a mesma ordem.
+- **A2 — estado do bug.** O isolamento por dono se testa com o documento do outro dono sendo o **vizinho mais próximo** da consulta. Se ele estiver longe, o filtro nunca é exercido e o teste passa sem provar nada.
+- **A3 — uma falta por vez.** Sem chave do usuário e sem reserva; documento sem texto extraído; `vec0` não carregada: cada caso com mensagem nomeada (o documento pelo nome do arquivo, nunca pelo id).
+- **A6 — pilha real.** A indexação já tem integração com repositório real (l. 76). A **busca** também: pela rota HTTP e pela ferramenta do agente, sobre o mesmo banco, com o resultado relido.
+- **A5 — o que sobra para fora.** A fumaça com o embedding real (chave do dono) fica no runbook; a resposta vira fixture, como a de 768 posições (l. 129).
+
 ## 2. Contratos (esboço materializável)
 
 ### 2.1 Prisma
