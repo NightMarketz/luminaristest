@@ -88,6 +88,44 @@ O próximo passo autorizado é **só o spike PR-0** (F-MW-1 = b). O PR-1 em dian
 **Leitura:** o depósito do #1034 já derrubou a instalação por worktree de ~20 s (e 27 `npm ci` por dia) para 2,6 s. O ganho
 que sobra para o pnpm é menor do que parecia quando a melhoria 5 foi pedida. Isso é o F-MW-1.
 
+## 0.1 Resultado do spike PR-0 (04/11/2026, pnpm 11.28.9, Windows 11, Node 24.20)
+
+Rodado em worktrees descartáveis (`spike-pnpm-a/b/c`, branch local `spike/pnpm-pr0-local`, nunca publicada), com o
+`pnpm-workspace.yaml` do contrato da seção 2. **Parcial:** parou no item 5b porque o hook do projeto proíbe esta sessão
+de editar arquivo de outra worktree (era preciso mudar o `jest.config.js` do spike). `next build` e `stryker` não rodaram.
+
+| # | Comando | Depósito global **ligado** | Depósito global **desligado** (pnpm clássico) |
+|---|---|---|---|
+| 0 | Converter os lockfiles (F-MW-2 = raiz) | `pnpm import` **não converte** para um lockfile só: usa o do app onde roda e resolve o outro do zero (28 diretos do server ou 14 do my-app mudariam). Mesclando à mão os dois lockfiles por app (script do spike): `--frozen-lockfile` aceita, 62/62 e 45/45 diretos iguais; 19 snapshots de mesma versão com transitivas diferentes ficaram com a do server | igual |
+| 1 | `pnpm install` na 1ª worktree | 40 s, exit 0; `strictDepBuilds` passou com a lista do `allowScripts`; `prisma generate` no postinstall | — |
+| 2 | `pnpm install` numa worktree limpa | **4,2 s e 3,6 s**, exit 0, nada baixado (depósito do #1034, mesma condição, server + my-app: **3,8 s**) | **21,8 s**, `node_modules` da worktree com 1,2 GB contados pelo `du` (o pnpm usa clone/hardlink no Windows; o disco real é menor, não medido) |
+| 3 | `prisma generate` | ok (postinstall) | ok |
+| 4a | `tsc` do server | exit 2: `dotenv` não está no `server/package.json` (dependência fantasma); com `publicHoistPattern: [dotenv]`, **0 erros** | 0 erros (com o mesmo hoist) |
+| 4b | `tsc` do my-app | exit 2, **5–6 erros** de tipo depois do hoist de `@dnd-kit/*`, `@fullcalendar/*`, `styled-jsx` (fantasmas): o `contentStyle` do recharts e o `<style jsx>` não acham o `@types/react` do projeto pelo caminho do depósito global; `addMissingPeerTypes: true` não resolve | **0 erros** |
+| 5a | jest unit, `PostingService.test.ts` | — | 92 passed, exit 0 |
+| 5b | jest integração, `auth.routes.integration.test.ts` | — | exit 1: `uuid` (só ESM) não transformado, porque o `transformIgnorePatterns` não reconhece `node_modules/.pnpm/<pkg>/node_modules/`. Correção candidata, **não testada** (bloqueio do hook): `'/node_modules/(?!(\.pnpm/[^/]+/node_modules/)?(uuid\|@qdrant/js-client-rest)/)'` |
+| 6 | vitest, `__tests__/users/fixAuthContaLote4.test.tsx` | — | 3 passed, exit 0 |
+| 7 | `next build` | não rodou | não rodou |
+| 8 | `stryker run --dryRunOnly` | não rodou | não rodou |
+
+**Leitura contra o critério do item 1:**
+- **Correção do critério:** o "≤ 2,6 s" comparava com o depósito só do server. Na mesma condição, server + my-app, o
+  depósito leva 3,8 s.
+- **Depósito global ligado:** empata com o depósito (3,6–4,2 s contra 3,8 s), mas **quebra o `tsc` do my-app**. Reprova.
+- **Depósito global desligado:** passa no que rodou, com 3 correções (hoist das dependências fantasmas e a regex do
+  jest). Leva 21,8 s por worktree, contra 3,8 s do depósito. Reprova no tempo.
+- **Pelo critério ratificado, o spike reprova nas duas configurações.** A decisão de parar a migração ou de testar outra
+  coisa é do dono.
+
+**Achados que valem com ou sem pnpm** (fora do escopo; viram cartão ou linha de relatório):
+- **Dependências fantasmas:** o código importa pacote que não está no próprio `package.json` e só funciona porque o npm
+  iça tudo para a raiz:
+  - server: `dotenv` (`src/config/env.ts`);
+  - my-app: `@dnd-kit/utilities`, `@fullcalendar/core` (locales) e os tipos de `styled-jsx`.
+
+**Fato novo para o F-MW-8:** o pnpm mais recente é o **12.16.1** (`npm view pnpm dist-tags`, 04/11). O fork comparou só o
+10 com o 11. O spike não testou o 12.
+
 ## 1. Checklist de comportamentos (cada um testável sozinho)
 
 Só entram os que valem **qualquer que seja** o fork. Os que dependem de fork estão marcados com `[F-MW-n]`.
