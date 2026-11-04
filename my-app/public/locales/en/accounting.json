@@ -707,6 +707,7 @@
       "confirm": "Confirm reversal",
       "reverseEntryOf": "Reverse entry from",
       "reversalDateLabel": "Reversal date",
+      "reasonLabel": "Reversal reason",
       "warning": "A new offsetting entry will be created automatically on the date above. This action cannot be undone.",
       "periodClosed": "The period for the selected date is closed.",
       "viewPeriods": "View Periods"
@@ -750,7 +751,9 @@
       "date": "Date",
       "description": "Description",
       "descriptionPlaceholder": "Entry memo…",
-      "selectAccount": "— select account —"
+      "selectAccount": "— select account —",
+      "extemporaneousReason": "Reason for the late (extemporaneous) entry",
+      "extemporaneousReasonHelp": "Optional. Required when the date falls in a period that has already been closed."
     },
     "column": {
       "account": "Account",

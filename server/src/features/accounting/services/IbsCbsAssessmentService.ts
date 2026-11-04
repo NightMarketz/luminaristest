@@ -344,6 +344,7 @@ export class IbsCbsAssessmentService {
         date: fimDoMes(row.anoCalendario, row.mes),
         description: `${row.tributo} ${mm(row.mes)}/${row.anoCalendario}: receita → ${rotulo} (apuração ${row.id})`,
         sourceType: IBS_CBS_PROVISION_SOURCE_TYPE,
+        automaticWriter: true,
         sourceId: row.id,
         lines,
       });

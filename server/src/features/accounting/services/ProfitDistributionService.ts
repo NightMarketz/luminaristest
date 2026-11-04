@@ -414,6 +414,7 @@ export class ProfitDistributionService {
         date: row.dataEvento,
         description: `Distribuição de lucros (${row.evento}) — sócio ${row.partnerId}, evento ${row.id}`,
         sourceType: PROFIT_DISTRIBUTION_SOURCE_TYPE,
+        automaticWriter: true,
         sourceId: row.id,
         lines: await this.linhas(p, row.debitoAccountId, row.brutoCents, row.irrfCents),
       });

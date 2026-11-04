@@ -252,6 +252,7 @@ export class DepreciationService {
       date: dateStr,
       description: `${isAmortization ? 'Amortização' : 'Depreciação'} de ${asset.code} — ${klass.name} (${yearMonth})`,
       sourceType: DEPRECIATION_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId,
       lines: [
         { accountCode: despesaAccount.code, debitCents: Number(quota), creditCents: 0 },
