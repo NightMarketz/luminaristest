@@ -129,6 +129,30 @@ describe('ReviewPanel', () => {
     expect(screen.getByLabelText(/Estornar também o lançamento original/)).toBeTruthy();
   });
 
+  // TESTE-GUARDA — ITG 2000 item 36, C4 item 2b: o acerto é humano; em período reaberto o servidor exige a razão
+  // digitada, então o editor do acerto mostra o campo e o body o leva.
+  it('acerto: o campo "Razão do registro extemporâneo" aparece e a razão digitada vai no body do acerto', async () => {
+    vi.mocked(accountingReviewService.postAdjustment).mockResolvedValue({ finding: finding({}), entryId: 'e1' } as never);
+    const d = await openDetail([finding({ id: 'f1', register: 'I050' })]);
+    fireEvent.click(within(d.getByTestId('finding-f1')).getByRole('button', { name: 'Lançar acerto' }));
+
+    await waitFor(() => expect(document.querySelectorAll('select option[value="1.1"]').length).toBeGreaterThan(0));
+    for (const select of Array.from(document.querySelectorAll('select')) as HTMLSelectElement[]) {
+      fireEvent.change(select, { target: { value: '1.1' } });
+    }
+    for (const input of screen.getAllByPlaceholderText('0,00')) fireEvent.change(input, { target: { value: '10,00' } });
+    fireEvent.change(screen.getByLabelText('Razão do registro extemporâneo'), { target: { value: ' achado depois do fechamento ' } });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Lançar acerto' }).at(-1) as HTMLElement);
+
+    await waitFor(() =>
+      expect(accountingReviewService.postAdjustment).toHaveBeenCalledWith(
+        'r1',
+        'f1',
+        expect.objectContaining({ unitId: 'u1', extemporaneousReason: 'achado depois do fechamento' }),
+      ),
+    );
+  });
+
   it('409 REVIEW_STALE no sign-off: mensagem íntegra + "Trocar jobs"', async () => {
     vi.mocked(accountingReviewService.signOff).mockRejectedValue({ success: false, error: 'Revisão desatualizada — regere e troque os jobs (PATCH /jobs).', code: 'REVIEW_STALE', status: 409 });
     const d = await openDetail([finding({ severity: 'NOTE', resolution: 'NO_ACTION', resolutionNote: 'n', resolvedAt: '2025-06-02T00:00:00.000Z' })]);

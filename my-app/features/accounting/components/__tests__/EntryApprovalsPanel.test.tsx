@@ -116,6 +116,28 @@ describe('EntryApprovalsPanel', () => {
     );
   });
 
+  // TESTE-GUARDA — ITG 2000 item 36, C4 item 1: aprovar rascunho datado num período fechado e reaberto exige a razão
+  // do registro extemporâneo no servidor; o modal "Aprovar e postar" tem o campo e o body o leva.
+  it('approve: the typed extemporaneous-entry reason goes in the approve body', async () => {
+    vi.mocked(accountingService.listEntries).mockResolvedValue({ entries: [], total: 0 });
+    vi.mocked(entryApprovalsService.listPending).mockResolvedValue({ entries: [pending], total: 1 });
+    vi.mocked(entryApprovalsService.approve).mockResolvedValue(pending);
+
+    render(<EntryApprovalsPanel unitId="u1" />);
+    fireEvent.click(await screen.findByText('Aprovar'));
+    await screen.findAllByText('Aprovar e postar');
+    fireEvent.change(screen.getByLabelText('Razão do registro extemporâneo'), { target: { value: ' aprovado depois do fechamento ' } });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Aprovar e postar' }).at(-1) as HTMLElement);
+
+    await waitFor(() =>
+      expect(entryApprovalsService.approve).toHaveBeenCalledWith('e-pending', {
+        unitId: 'u1',
+        expectedVersion: 5,
+        extemporaneousReason: 'aprovado depois do fechamento',
+      }),
+    );
+  });
+
   it('turns a 409 CONFLICT into the stale-version message, not the generic one', async () => {
     vi.mocked(accountingService.listEntries).mockResolvedValue({ entries: [], total: 0 });
     vi.mocked(entryApprovalsService.listPending).mockResolvedValue({ entries: [pending], total: 1 });
