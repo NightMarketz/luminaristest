@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach, afterEach, afterAll } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 
 (globalThis as unknown as { React: typeof React }).React = React;
 import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/react';
@@ -52,14 +52,9 @@ const diag = (o: Partial<LalurParteBBalancesDiagnostic> = {}): LalurParteBBalanc
 
 // O diagnóstico responde como request real (padrão do #434): salto de 0 ms + 50 ms — a chamada sai no
 // effect, a resposta chega depois. Sem isso o mock resolve na microtask e esconde a corrida da CI do #436.
-// `inflight` guarda as respostas ainda em voo — o afterEach do describe as drena; o afterAll assere zero.
-const inflight = new Set<Promise<unknown>>();
-const later = <T,>(value: T) => {
-  const p = new Promise<T>((resolve) => setTimeout(() => setTimeout(() => resolve(value), 50), 0));
-  inflight.add(p);
-  void p.finally(() => inflight.delete(p));
-  return p;
-};
+// O `later()` compartilhado registra as respostas em voo; o afterEach global (vitest.setup.ts) as drena e o
+// afterAll abaixo assere zero.
+import { later, inflightCount } from '../../../../test-utils/later';
 
 function renderSection(props: Partial<React.ComponentProps<typeof LalurParteBMovementsSection>> = {}) {
   const onShowEntry = vi.fn();
@@ -91,14 +86,10 @@ describe('LalurParteBMovementsSection', () => {
 
   // Flake do #439/#455: resposta que assenta depois do teardown do jsdom chama setDiag com `window` já
   // removido — `ReferenceError: window is not defined` não tratado (`:78` via `:95`), exit 1 com tudo verde.
-  // Drena ANTES do teardown: o setState tardio roda com o jsdom vivo.
-  afterEach(async () => {
-    await Promise.allSettled([...inflight]);
-  });
-
-  // Guarda permanente (GAP-MAP N4): sem o dreno acima, as respostas do último caso ficam em voo.
+  // O dreno ANTES do teardown é o afterEach global do vitest.setup.ts. Guarda permanente (GAP-MAP N4): sem ele,
+  // as respostas do último caso ficam em voo.
   afterAll(() => {
-    expect(inflight.size, 'resposta simulada ainda em voo ao fim do arquivo — assenta depois do teardown do jsdom').toBe(0);
+    expect(inflightCount(), 'resposta simulada ainda em voo ao fim do arquivo — assenta depois do teardown do jsdom').toBe(0);
   });
 
   it('lista os movimentos; origem system não tem Editar, só Arquivar', async () => {

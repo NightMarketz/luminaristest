@@ -36,7 +36,7 @@ const padrao = [
  * timer started at the call gets absorbed by slow synchronous work under load (in the full-suite run a
  * plain 50 ms let 5 of the 12 guarded e-Lalur cases pass).
  */
-const later = <T,>(value: T) => new Promise<T>((resolve) => setTimeout(() => setTimeout(() => resolve(value), 50), 0));
+import { later } from '../../../../test-utils/later'; // drenado pelo afterEach global (vitest.setup.ts)
 
 async function fillRequired(codPbRfb = '1000') {
   fireEvent.change(screen.getByPlaceholderText('PF-2024'), { target: { value: 'PF-2024' } });

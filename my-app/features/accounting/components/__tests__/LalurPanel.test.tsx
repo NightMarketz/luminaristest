@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 (globalThis as unknown as { React: typeof React }).React = React;
 import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/react';
@@ -51,7 +51,7 @@ const padraoRows = [{ codigo: '1000', descricao: 'Prejuízo Fiscal Operacional',
  * the test's first yield: a plain timer started at the call gets absorbed by slow synchronous work under load
  * (in the full-suite run a plain 50 ms let 5 of the 12 guarded e-Lalur cases pass).
  */
-const later = <T,>(value: T) => new Promise<T>((resolve) => setTimeout(() => setTimeout(() => resolve(value), 50), 0));
+import { later } from '../../../../test-utils/later'; // drenado pelo afterEach global (vitest.setup.ts)
 
 describe('LalurPanel', () => {
   beforeEach(() => {
@@ -64,14 +64,6 @@ describe('LalurPanel', () => {
     vi.mocked(accountingService.getAccounts).mockResolvedValue({ accounts: [] });
     vi.mocked(lalurService.listMovements).mockResolvedValue([]);
     vi.mocked(lalurService.getParteBBalances).mockResolvedValue({ year: 2025, periods: [], divergences: [], warnings: [] });
-  });
-
-  // Dreno: o `later()` resolve ~50 ms depois da chamada; um caso que termina antes deixa o `setPadrao` pendente, e no
-  // último caso do arquivo ele cai com o jsdom já desmontado ("window is not defined", CI do #1071). Desmonta e espera
-  // as respostas pendentes antes do próximo caso / do teardown.
-  afterEach(async () => {
-    cleanup();
-    await new Promise((resolve) => setTimeout(resolve, 100));
   });
 
   it('renders the section with both sub-sections, the empty states and the exercício from scopeToday (never UTC)', async () => {

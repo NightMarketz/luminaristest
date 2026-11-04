@@ -34,7 +34,7 @@ const catalogN = [{ codigo: '1', descricao: 'Linha N', tipo: 'E' as const, vigen
  * timer started at the call gets absorbed by slow synchronous work under load (in the full-suite run a
  * plain 50 ms let 5 of the 12 guarded e-Lalur cases pass).
  */
-const later = <T,>(value: T) => new Promise<T>((resolve) => setTimeout(() => setTimeout(() => resolve(value), 50), 0));
+import { later } from '../../../../test-utils/later'; // drenado pelo afterEach global (vitest.setup.ts)
 
 const parteB = (over: Partial<LalurParteBAccount>): LalurParteBAccount => ({
   id: 'b', userId: 'o1', unitId: 'u1', codCtaB: 'PF', descricao: 'Prejuízo', dtCriacao: '2024-12-31T00:00:00.000Z',
