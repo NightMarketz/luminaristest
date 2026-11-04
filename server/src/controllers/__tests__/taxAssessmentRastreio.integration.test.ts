@@ -159,6 +159,6 @@ describe('EMENDA RASTREIO — confirmação grava o rastreio; export lê o conge
     });
     const linhas = await exportar(dono, '2026-01-01', '2026-03-31');
     expect(linhas.map((l) => l[col('tipoLinha')])).toEqual([...Array(6).fill('RESUMO'), 'MEMORIA']);
-    expect(linhas[6].slice(col('origemTipo'))).toEqual(['', '', '', '', '', '', '', '']);
+    expect(linhas[6].slice(col('origemTipo'))).toEqual(['', '', '', '', '', '', '', '', '', '']); // C8: + registroEcf e linhaEcf (vazias: apuração sem linha da ECF)
   });
 });

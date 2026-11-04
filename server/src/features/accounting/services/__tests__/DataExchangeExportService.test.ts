@@ -772,11 +772,12 @@ describe('EXPORT_TAX_ASSESSMENT_MEMO (X7 Fase C PR-1)', () => {
     'anoCalendario', 'periodo', 'tributo', 'regime', 'forma', 'modo', 'codigoReceita', 'tabelaVersao', 'confirmedAt',
     'apuracaoId', 'substitui', 'tipoLinha', 'codigo', 'descricao', 'valorCents', 'fonte',
   ];
-  // EMENDA RASTREIO item 6 (contrato §2.2): as 11 colunas novas ao fim, as 16 de antes na mesma ordem.
+  // EMENDA RASTREIO item 6 (contrato §2.2): as 11 colunas novas ao fim, as 16 de antes na mesma ordem. Emenda C8: as
+  // duas colunas da ECF ao fim de tudo.
   const COLS = [
     ...COLS_ANTES_DA_EMENDA,
     'vencimentoDarf', 'parametrosIds', 'parametrosSha256', 'origemTipo', 'origemApuracaoId', 'origemPeriodo',
-    'accountCode', 'accountName', 'origemFrom', 'origemTo', 'saldoFinalCents',
+    'accountCode', 'accountName', 'origemFrom', 'origemTo', 'saldoFinalCents', 'registroEcf', 'linhaEcf',
   ];
 
   it('itens 5/6/8: trimestral Presumido + A00 com saldo negativo — meta, colunas, RESUMO antes da MEMORIA, substitui', async () => {
@@ -793,21 +794,22 @@ describe('EXPORT_TAX_ASSESSMENT_MEMO (X7 Fase C PR-1)', () => {
     const body = table.rows.slice(1);
     expect(body).toHaveLength(14); // (6 RESUMO + 1 MEMORIA) × 2
     // A00 vem antes de T01 (ordem por período).
-    expect(body.slice(0, 6).map((r) => [r[1], r[11], r[12], r[14]])).toEqual([
-      ['A00', 'RESUMO', 'base', '100000'], ['A00', 'RESUMO', 'devido', '15000'], ['A00', 'RESUMO', 'deducoes', '0'],
-      ['A00', 'RESUMO', 'aPagar', '0'], ['A00', 'RESUMO', 'saldoNegativo', '4200'], ['A00', 'RESUMO', 'diferencaPostergada', '0'],
+    // Emenda C8: o RESUMO do ajuste anual do IRPJ aponta a base e o a pagar do N630; o resto não tem linha.
+    expect(body.slice(0, 6).map((r) => [r[1], r[11], r[12], r[27], r[28], r[14]])).toEqual([
+      ['A00', 'RESUMO', 'base', 'N630', '1', '100000'], ['A00', 'RESUMO', 'devido', '', '', '15000'], ['A00', 'RESUMO', 'deducoes', '', '', '0'],
+      ['A00', 'RESUMO', 'aPagar', 'N630', '26', '0'], ['A00', 'RESUMO', 'saldoNegativo', '', '', '4200'], ['A00', 'RESUMO', 'diferencaPostergada', '', '', '0'],
     ]);
     // EMENDA RASTREIO item 6: apuração anterior à emenda (rastreio nulo) — as 16 colunas de antes idênticas, as de origem
     // vazias; o vencimento (item 9) sai pela lei mesmo assim (A00/2026 ⇒ 31/03/2027; T01/2026 ⇒ 30/04/2026).
     expect(body[6]).toEqual([
       '2026', 'A00', 'IRPJ', 'REAL', 'ANUAL', 'AJUSTE_ANUAL', '243001', 'lc224-2026-v1', '2026-04-10T12:00:00.000Z',
       'ta-a00', 'ta-a00-old', 'MEMORIA', 'SN', 'Saldo negativo', '-4200', 'ajuste',
-      '2027-03-31', '', '', '', '', '', '', '', '', '', '',
+      '2027-03-31', '', '', '', '', '', '', '', '', '', '', '', '',
     ]);
     expect(body[13]).toEqual([
       '2026', 'T01', 'IRPJ', 'PRESUMIDO', 'TRIMESTRAL', 'PRESUMIDO', '208901', 'lc224-2026-v1', '2026-04-10T12:00:00.000Z',
       'ta-1', '', 'MEMORIA', 'RB', 'Receita bruta', '1250000', 'razão 3.1',
-      '2026-04-30', '', '', '', '', '', '', '', '', '', '',
+      '2026-04-30', '', '', '', '', '', '', '', '', '', '', '', '',
     ]);
     expect(createJob.mock.calls[0][0]).toMatchObject({
       kind: 'EXPORT_TAX_ASSESSMENT_MEMO',
