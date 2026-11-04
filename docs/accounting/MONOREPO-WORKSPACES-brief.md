@@ -124,7 +124,14 @@ de editar arquivo de outra worktree (era preciso mudar o `jest.config.js` do spi
   - my-app: `@dnd-kit/utilities`, `@fullcalendar/core` (locales) e os tipos de `styled-jsx`.
 
 **Fato novo para o F-MW-8:** o pnpm mais recente é o **12.16.1** (`npm view pnpm dist-tags`, 04/11). O fork comparou só o
-10 com o 11. O spike não testou o 12.
+10 com o 11.
+
+**pnpm 12 (dono, chat, 04/11: "Testar o pnpm 12"): não roda nesta máquina.**
+- O pacote `pnpm@12.16.1` só traz binário nativo (`optionalDependencies`: `@pnpm/exe.win32-x64` e afins).
+- `corepack pnpm@12.16.1 --version` e `npx pnpm@12.16.1 --version` saem com `Fatal Error: HW capability found:
+  0x178BFBFF 0xFED8320B, but HW capability requested: 0x20000000 0x00`.
+- O binário exige uma capacidade de CPU que este processador não tem. Nenhum comando do spike chegou a rodar.
+- Consequência: o pnpm 12 também fica fora para qualquer colaborador com CPU parecida. Só o pnpm 11 (JS) roda aqui.
 
 ## 1. Checklist de comportamentos (cada um testável sozinho)
 
