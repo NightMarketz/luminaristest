@@ -6,6 +6,11 @@
     // emit level or class-field semantics. Node 22 provides all ES2022 runtime APIs.
     "lib": ["ES2022"],
     "outDir": "./dist",
+    // Cache nativo do tsc (PR-A de docs/accounting/MONOREPO-WORKSPACES-brief.md, F-MW-6): a 2ª rodada sem mudança
+    // reaproveita a checagem. O buildinfo mora DENTRO do dist/ de propósito: com ele fora, apagar o dist/ e rodar
+    // `npm run build` deixaria o tsc achar que nada mudou e não emitir nada. Ignorado por `*.tsbuildinfo` no .gitignore.
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
     "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,

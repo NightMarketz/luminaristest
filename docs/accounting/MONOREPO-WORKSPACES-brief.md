@@ -1,9 +1,9 @@
 # BRIEF — MONOREPO-WORKSPACES (melhorias 5 e 6 de 7)
 
 **Estado:** BRIEF — **melhoria 5 (pnpm) PARADA** pelo dono depois do spike (chat, 2026-11-04: "Sim, parar o pnpm").
-Fica o depósito do #1034. Segue só a **melhoria 6 (cache de tarefa)**: o PR-A (`tsc --incremental`) está pronto para um
-`executa`. F-MW-9 = npm workspaces + Turborepo; F-MW-10 = turbo fixo em 2.8.21 (o ≥ 2.9 não roda nesta CPU). O próximo
-passo é o spike do item 20 (seção 0.3), que precisa de `executa`. Nenhum código.
+Fica o depósito do #1034. Segue só a **melhoria 6 (cache de tarefa)**: o PR-A (`tsc --incremental`) foi **executado**
+(seção 0.4). F-MW-9 = npm workspaces + Turborepo; F-MW-10 = turbo fixo em 2.8.21 (o ≥ 2.9 não roda nesta CPU), com
+revisão em 2027-02-01. O próximo passo é o spike do item 20 (seção 0.3), **liberado para depois do merge do PR-A**.
 
 ## 0.2 Decisão depois do spike (dono, chat, 2026-11-04: "Sim, parar o pnpm")
 
@@ -47,8 +47,9 @@ Daí o fork novo:
     no checklist:
     - `turbo` exato em `2.8.21` no `package.json` da raiz (sem `^`), igual no CI e local: uma versão só, sem divergência;
     - `ignore` no `.github/dependabot.yml` para `turbo` com `versions: [">= 2.9.0"]`, com comentário apontando esta seção;
-    - **data de revisão: não definida pelo dono.** Fica como pendência: reabrir quando a máquina de trabalho mudar, ou
-      quando uma release do turbo voltar a rodar aqui (`npx -y turbo@<nova> --version`).
+    - **data de revisão: 2027-02-01** (dono, chat, 2026-11-04: "Data fixa: 2027-02-01"). Os gatilhos seguem valendo e
+      reabrem antes da data: a máquina de trabalho mudar, ou uma release do turbo voltar a rodar aqui
+      (`npx -y turbo@<nova> --version`).
 
 **Itens do caminho (F-MW-10 = (a), fixar a 2.8.21):**
 
@@ -65,7 +66,39 @@ Daí o fork novo:
 19. **`turbo.json`** — o contrato da seção 2, com `test:integration` em `cache: false` (F-MW-7). `turbo` fixo em
     `2.8.21` e o `ignore` do Dependabot (F-MW-10). Prova: `npx turbo --version` → `2.8.21` local e no CI.
 20. **Primeiro passo: um spike**, como o PR-0, mas com npm. Itens 15 e 17 e os 8 comandos do item 1, mais
-    `turbo run typecheck` duas vezes, a 2ª vinda do cache. Precisa do seu `executa`.
+    `turbo run typecheck` duas vezes, a 2ª vinda do cache. **Liberado depois do merge do PR-A** (dono, chat, 2026-11-04:
+    "executa, depois do PR-A"). As medidas de base do `tsc` passam a ser as da seção 0.4, já com o cache nativo.
+
+## 0.4 PR-A executado (dono, chat, 2026-11-04: "executa PR-A (Recomendado)")
+
+**O que mudou:**
+- `server/tsconfig.json`: `incremental: true` e `tsBuildInfoFile: ./dist/tsconfig.tsbuildinfo`.
+- `server/tsconfig.test.json`: `tsBuildInfoFile: ./dist/tsconfig.test.tsbuildinfo`, arquivo próprio. Herdado, as duas
+  checagens sobrescreveriam o mesmo cache a cada rodada.
+- `my-app/tsconfig.json` e `tsconfig.vitest.json`: o my-app **já tinha** `incremental: true` (a medida de 9,1 s era só do
+  server). Ganharam o `tsBuildInfoFile` explícito, no mesmo caminho padrão de antes, então nada muda no comportamento. O
+  `next build` não usa esse caminho: ele força o seu em `.next/cache/.tsbuildinfo`
+  (`next/dist/lib/typescript/runTypeCheck.js`).
+- O `.tsbuildinfo` não é versionado: `*.tsbuildinfo` já estava no `.gitignore` da raiz e no do my-app.
+
+**Por que o buildinfo do server fica dentro do `dist/`:** com ele fora, apagar o `dist/` e rodar o build deixa o `tsc`
+achar que nada mudou, e ele não emite nada. Medido (04/11, `npx tsc --tsBuildInfoFile ./fora.tsbuildinfo` duas vezes, com
+`rm -rf dist` entre elas): 1.167 `.js` no 1º build e **0** no 2º, com exit 0. Com o buildinfo dentro do `dist/`, o mesmo
+roteiro dá 1.167 e 1.167. A imagem Docker não leva buildinfo velho, porque copia só `src/` e `tsconfig.json`.
+
+**Medida** (04/11, Windows 11, Node 24.20, TypeScript 5.9.2, máquina com outras sessões rodando; `time` do bash):
+
+| Comando | Antes, 1ª / 2ª | Depois, 1ª / 2ª |
+|---|---|---|
+| `cd server && npx tsc --noEmit` | 10,3 s / **10,4 s** | 11,5 s / **4,5 s** |
+| `cd server && npx tsc --noEmit -p tsconfig.test.json` | não medido | 19,5 s / 5,8 s |
+| `cd my-app && npx tsc --noEmit` | 9,1 s / 3,2 s (já era incremental) | 9,5 s / 3,4 s |
+| `cd my-app && npm run test:types` | não medido | 9,7 s / 3,1 s |
+
+Todos com exit 0. A 1ª rodada fica um pouco mais lenta, porque grava o cache.
+
+**O cache não esconde erro:** um erro de tipo posto de propósito com o cache quente (`src/server.ts` no `tsc --noEmit`, e
+um arquivo de teste no `-p tsconfig.test.json`) deu exit 2 com TS2322 nos dois. Restaurado o arquivo, exit 0.
 
 ## 0. Ratificação (dono, chat, 2026-11-04)
 
@@ -375,7 +408,7 @@ fixado. A diferença entre Node 22 no CI e 24 local já existe hoje e não é de
 
 | PR | Conteúdo | Depende de | Classe esperada | Reversão |
 |---|---|---|---|---|
-| PR-A | `tsc --incremental` + `tsBuildInfoFile` nos dois apps (F-MW-6) — **ativo** | nada | verde | `git revert` |
+| PR-A | `tsc --incremental` + `tsBuildInfoFile` nos dois apps (F-MW-6) — **executado** (seção 0.4) | nada | verde | `git revert` |
 | ~~PR-0~~ (arquivado) | spike pnpm (branch descartável, **não mergeia**): os 8 comandos do item 1, com tempo e exit | F-MW-1 = (b) | — | nada a reverter |
 | ~~PR-1~~ (arquivado) | workspace + `pnpm-lock.yaml` na raiz + `allowBuilds` + CI + Docker com contexto na raiz + Dependabot em `/` (itens 2–8) | PR-0 passou; doc do Dependabot conferida (F-MW-5) | vermelho (CI, deps) | `git revert`; os `package-lock.json` voltam com ele |
 | ~~PR-2~~ (arquivado) | `worktree-deps.mjs`/hook chamando pnpm; skills, `CLAUDE.md` e `server/CLAUDE.md` (itens 9–10) | PR-1 | vermelho (skills) | `git revert` |
