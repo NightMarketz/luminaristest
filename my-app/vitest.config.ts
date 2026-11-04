@@ -9,6 +9,11 @@ const { guardFullSuite } = createRequire(import.meta.url)('../scripts/test-scope
 };
 guardFullSuite('vitest');
 
+// Fuso fixo em UTC-3, igual ao CI: os guards de date-only (UTC-shift, PRs #50/#52) só mordem fora de UTC, e
+// sem isto passavam ou falhavam conforme o fuso da máquina. Os workers (forks) herdam o process.env deste
+// processo. Atribuição incondicional: um TZ=UTC herdado do shell ou do runner não pode desligar os guards.
+process.env.TZ = 'America/Sao_Paulo';
+
 // Frontend test runner (Vitest + Testing Library). Mirrors the tsconfig
 // path alias `@/* -> ./*` so tests can import the same way app code does.
 export default defineConfig({

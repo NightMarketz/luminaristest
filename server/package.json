@@ -37,7 +37,6 @@
     "test:changed": "jest --changedSince=origin/main --selectProjects unit --forceExit",
     "test:coverage": "jest --coverage --runInBand --forceExit",
     "test:watch": "jest --selectProjects unit --watch",
-    "test:leaks": "node --max-old-space-size=6144 ../node_modules/jest/bin/jest.js --detectOpenHandles --runInBand",
     "check:arch": "depcruise src --config .dependency-cruiser.cjs --ignore-known .dependency-cruiser-known-violations.json --output-type err",
     "check:arch:baseline": "depcruise src --config .dependency-cruiser.cjs --output-type baseline --output-to .dependency-cruiser-known-violations.json",
     "check:dead": "knip --no-exit-code",
