@@ -2183,6 +2183,48 @@ Desfecho do passo 23 (marcar UM):
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passo 23): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
+## Achados em aberto — consolidado (04/11)
+
+> Condensado pelo agente AI tester em 04/11, sob autorização do dono (chat, 2026-11-02 e 2026-11-04), a partir dos achados
+> espalhados nos passos acima. Critério de "aberto": não corrigido em `origin/main` **e** sem PR de correção. Medido com `gh pr
+> list`/`git log origin/main` em 04/11 ~02:00 BRT. O detalhe de cada achado continua no passo de origem; aqui fica só o
+> resumo. Grau: **verificado** quando o achado foi visto na tela ou lido no código de `origin/main` hoje; **inferido** quando
+> só o achado de origem o sustenta e não há commit em `main` que o cite.
+
+**Abertos, sem PR (13):**
+
+| Id | Passo | O que é | Onde | Tipo | Grau | Próximo passo |
+|---|---|---|---|---|---|---|
+| 4-Posted | 4/5 | O recibo PDF, em PT, mostra o status do lançamento cru ("Posted") | `server/src/lib/receiptHtml.ts:108` (`ReceiptService.ts:68` passa `entry.status`) | rótulo | verificado (código de `main`) | teste do `receiptHtml` com status pt → rótulo traduzido |
+| E | 6–10 | "Próximo" do modal Nova Venda vira "Salvar Rascunho" no mesmo elemento; um clique duplo grava o rascunho | modal Nova Venda (`useSalesCreateForm`) | fluxo | inferido (risco do clique duplo não testado em 30/10) | instrumentar o clique duplo antes de corrigir |
+| F-diário | 11 | Nas linhas expandidas de Lançamentos, a coluna Crédito fica fora do card (`overflow-hidden`, `scrollWidth` 1088 > `clientWidth` 958) | aba Contabilidade → Lançamentos | layout | inferido | teste de layout no Chromium (`scrollWidth ≤ clientWidth`) → rolagem ou quebra |
+| F-ECF | 14 | A linha de signatário dos dois painéis da ECF passa da largura do card; a página ganha rolagem horizontal | painéis ECF Presumido e Real | layout | inferido | junto com o Y600 (os painéis mudam no #1023/#1027) |
+| H | 15 a) | A resposta do cancelamento de pagamento traz `updatedAt` velho (20:06:43.262Z × 20:06:57.856 no dev.db) | `POST /payables/:id/payments/:pid/cancel` | contrato | inferido | teste de integração: resposta = linha relida depois da tx |
+| 400-?? | 11, 15 | 2× "Failed to load resource: 400" de origem não identificada (29/10); não se repetiram na passada de 30/10 | — | desconhecido | inferido | só reabrir se reaparecer, com Network |
+| 15-g | 15 g) | A 1ª abertura de "Sugestões" depois de postar mostrou "Nenhum candidato"; depois de "Atualizar" listou | aba Conciliação | fluxo | inferido (não confirmado se o GET saiu antes do POST) | reproduzir com Network antes de abrir lacuna |
+| Pacote-val | 6–10 | A 2ª compra do mesmo pacote soma no saldo existente e estende a validade do **saldo inteiro** (29/10/2027 → 30/10/2027) | saldo de pacote | regra | inferido pelo dado (código não lido) | conferir no runbook PACOTE-VALIDADE (#1035) se é desenho ou bug |
+| 21-5 (F11) | 21 c) | "Finalizar Venda" do modal grava venda `Finalized` sem itens; ainda reproduz em `3077cda9` | `useSalesCreateForm.ts:270`, `FinanceService.ts:42-54`, `saleItems.ts:173-180` | bug conhecido | verificado (03/11) | já emendado em 05/10 como contorno; falta instrumentação → correção |
+| 21-6 | 21 d) | O seed não cria um 2º admin: `username: 'admin'` fixo → P2002 com `SEED_ADMIN_EMAIL` novo | `server/prisma/seed.ts:28-34` | ambiente de teste | verificado (04/11) | teste do seed → username do e-mail ou `SEED_ADMIN_USERNAME` |
+| 22-4 | 22 g) | `01.07.01` é "Suporte técnico em informática", não corte de cabelo; o código ficou por uso no 23 e no DFE-MANUAL | dado de teste do `seed-presumido` | dado | verificado (03/11) | trocar pelo item do salão quando o DFE-MANUAL rodar (06.01 inferido, conferir na lista nacional) |
+| 22-5 | 22 f) | O selo diz "Perfil da unidade completo", não "Pronto para emitir NFS-e" | `FiscalProfilePanel.tsx:173` | texto do runbook | verificado (04/11) | emenda do 22 f) |
+| 22-6 | 22 f) | O aviso D1f só existe em perfil anterior à migração `20260917200000`; em dado novo só a metade "some" é exercitável | `FiscalProfileService.ts:417` | texto do runbook | verificado (04/11) | emenda do 22 f) |
+
+**Abertos por desenho ou política (não são bug; ficam como registro para o operador):** **F-16-e** — `canManageLalur` ≡
+`canReadLalur` (`AccountingPolicy.ts:91-97`), o ramo só-leitura do e-Lalur espera o GOV-CONTADOR. **F-20-1** — sem
+`documentNumber` = `externalRef`, as linhas dos extratos saem "ambíguas" (`BankSettlement.model.ts:199-205`, desempate só por
+documento).
+
+**Com PR aberto, ainda não em `main` (não remarcar os passos até o merge):**
+- **#1031** (vermelho, aguarda revisor e lote do dono): 21-1 (perfil sem senha atual), 21-2 (Cancelar/Devolver em venda paga),
+  21-3 (Converter/Criar Oportunidade sem módulo), 21-4 = 23-x1 (dois dashboards no 1º login), 22-2 (séries NF-e/NFC-e voltam a 1),
+  22-3 (400 repete o campo), 23-pre-2 (convite sem o contato novo), 23-h1 (faixa pendente fica). 23-g fechado por decisão
+  anterior, sem código (`D-2026-11-04-H2-23-G-PROPOSTA-ORFA.md`).
+- **Y600** (causa do FALHOU do 14 e dos BLOQUEADOS do 18 e do 19): PR-0 mergeado (#1022); PR-1 (#1023) e PR-2 (#1027) abertos.
+
+**Já resolvidos (fora da contagem):** A–D (#985, mergeado 30/10); G, I e J (#988, mergeado 30/10; a metade "Estornado
+ainda mostra Estornar" do I já saía desabilitada); F-17-1 (#1017, mergeado 04/11); passo 8 (EMENDA 2026-10-30); 22-1 e
+23-pre-1 (emendados em 04/11 neste runbook).
+
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
 [x] FALHOU — passo 14 divergiu; evidência da divergência colada acima;
