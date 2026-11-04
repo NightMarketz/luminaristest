@@ -400,9 +400,10 @@
     "generating": "Gerando…",
     "ecd": {
       "title": "Gerar SPED ECD",
-      "description": "Escrituração Contábil Digital. Exige o mapeamento referencial completo (badge \"Pronto\" acima).",
+      "description": "Escrituração Contábil Digital. Conta sem código referencial não bloqueia: sai sem I051, com aviso (o mapeamento é facultativo na ECD; a ECF exige).",
       "book": "Livro (termo)",
-      "submit": "Gerar e baixar ECD"
+      "submit": "Gerar e baixar ECD",
+      "avisos": "ECD gerada e baixada, com avisos:"
     },
     "ecf": {
       "title": "Gerar SPED ECF",
@@ -706,6 +707,7 @@
       "confirm": "Confirmar estorno",
       "reverseEntryOf": "Estornar lançamento de",
       "reversalDateLabel": "Data do estorno",
+      "reasonLabel": "Motivo do estorno",
       "warning": "Um novo lançamento oposto será criado automaticamente na data acima. Esta ação não pode ser desfeita.",
       "periodClosed": "O período para a data selecionada está fechado.",
       "viewPeriods": "Ver Períodos"
@@ -749,7 +751,9 @@
       "date": "Data",
       "description": "Descrição",
       "descriptionPlaceholder": "Histórico do lançamento…",
-      "selectAccount": "— selecione a conta —"
+      "selectAccount": "— selecione a conta —",
+      "extemporaneousReason": "Razão do registro extemporâneo",
+      "extemporaneousReasonHelp": "Opcional. Exigida quando a data cai num período que já foi fechado."
     },
     "column": {
       "account": "Conta",

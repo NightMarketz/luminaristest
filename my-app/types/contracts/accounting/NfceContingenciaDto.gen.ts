@@ -9,6 +9,10 @@ saidasAutomaticas: number
 orfasResolvidas: number
 orfasFalharam: number
 failed: number
+alertas: {
+evento: ("PERTO_DO_PRAZO" | "VENCIDA" | "ORFA_FALHOU")
+documentId: string
+}[]
 }
 export interface NfceContingenciaViewInput {
 unitId: string

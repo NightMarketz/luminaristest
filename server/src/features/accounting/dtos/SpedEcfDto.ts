@@ -280,3 +280,42 @@ export type SpedEcfDeclarantDto = z.infer<typeof DeclarantSchema>;
 export type SpedEcfSignerDto = z.infer<typeof SignerSchema>;
 export type SocioEcfDto = z.infer<typeof SocioEcfSchema>;
 export type DirigenteEcfDto = z.infer<typeof DirigenteEcfSchema>;
+
+// ─── Leitura das vigências do Y600 para a tela (FE-INCR-ECF-Y600 PR-0, item 1; F-FE-Y600-1 → b, D-2026-10-29) ───
+
+/** `GET /accounting/sped/ecf/y600/vigencias?unitId&year` — o ano na mesma faixa do request de geração. */
+export const Y600VigenciasQuerySchema = z
+  .object({ unitId: z.string().min(1), year: z.coerce.number().int().gte(2015).lte(2100) })
+  .strict();
+
+/**
+ * Uma vigência que o `montarY600` vai exigir no ano, calculada pela mesma função (`selecionarVigenciasDoAno`).
+ * PII: o CPF/CNPJ sai só com os 4 últimos dígitos — a tela identifica a linha, não precisa do número.
+ */
+export const Y600VigenciaViewSchema = z
+  .object({
+    partnerId: z.string(),
+    nome: z.string(),
+    taxIdFinal: z.string(),
+    tipoPessoa: z.enum(['PF', 'PJ']),
+    residenteBrasil: z.boolean(),
+    participacaoBp: z.number().int(),
+    entradaEm: z.string(),
+    saidaEm: z.string().nullable(),
+    dtFimSoc: z.string().nullable(),
+    vigenteNoFim: z.boolean(),
+  })
+  .strict();
+
+export const Y600VigenciasViewSchema = z
+  .object({
+    year: z.number().int(),
+    vigencias: z.array(Y600VigenciaViewSchema),
+    /** Soma das participações vigentes em 31/12 — só informativa (F-Y600-8: não bloqueia). */
+    somaParticipacaoFimBp: z.number().int(),
+  })
+  .strict();
+
+export type Y600VigenciasQuery = z.infer<typeof Y600VigenciasQuerySchema>;
+export type Y600VigenciaView = z.infer<typeof Y600VigenciaViewSchema>;
+export type Y600VigenciasView = z.infer<typeof Y600VigenciasViewSchema>;

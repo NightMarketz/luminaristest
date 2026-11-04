@@ -139,7 +139,7 @@ function buildService(m: Mocks = {}) {
       ready,
     })),
     listMappings: jest.fn(async () => [
-      { accountId: 'caixa', referentialCode: '1.01.01.00.00', mappingVersion: 'v1' },
+      ...(ready ? [{ accountId: 'caixa', referentialCode: '1.01.01.00.00', mappingVersion: 'v1' }] : []),
       { accountId: 'rec', referentialCode: '3.01.01.00.00', mappingVersion: 'v1' },
     ]),
   } as never;
@@ -224,12 +224,17 @@ beforeEach(() => {
 });
 
 describe('SpedGenerationService.generate', () => {
-  it('blocks with ValidationError + unmappedAccounts when coverage is incomplete (D5)', async () => {
+  it('C2: cobertura incompleta não bloqueia — a folha sem código sai sem I051 e volta em coberturaReferencial (Manual da ECD 1.17)', async () => {
     const { service, createJob } = buildService({ ready: false });
-    await expect(service.generate(scope, makeDto())).rejects.toBeInstanceOf(ValidationError);
-    // No file, no job when coverage fails.
-    expect(createJob).not.toHaveBeenCalled();
-    expect(savedBuffers).toHaveLength(0);
+    const r = await service.generate(scope, makeDto());
+    expect(createJob).toHaveBeenCalledTimes(1);
+    expect(r.coberturaReferencial).toEqual({
+      mappingVersion: 'v1',
+      unmappedAccounts: [{ accountId: 'caixa', code: '1.1', name: 'Caixa', nature: 'Asset' }],
+    });
+    const lines = producedLines();
+    const caixa = lines.findIndex((l) => l.startsWith('|I050|') && l.includes('|1.1|'));
+    expect(lines[caixa + 1].startsWith('|I051|')).toBe(false);
   });
 
   it('rejects with ForbiddenError when policy denies read (tenancy)', async () => {

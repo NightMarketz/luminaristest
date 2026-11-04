@@ -8,7 +8,7 @@ import type { FiscalProfileView } from '../../../../lib/services/fiscalProfile.s
  * (logo, nenhuma das 6 chaves que o espelho do FE não tem — E-6); a de contas leva só as 3 do imobilizado; o diff
  * mostra só chaves do `payload`, conta sem rótulo vira "conta não encontrada", e a base de uma APPLIED é o snapshot.
  */
-const t: TFn = (_k, fb, vars) => fb.replace(/\{\{(\w+)\}\}/g, (_m, n: string) => vars?.[n] ?? '');
+const t: TFn = (_k: string, fb: string, vars?: Record<string, string>) => fb.replace(/\{\{(\w+)\}\}/g, (_m, n: string) => vars?.[n] ?? '');
 
 const view: FiscalProfileView = {
   unitId: 'u1', regimeTributario: 'SIMPLES', icmsContribuinte: false, pisCofinsRegime: 'SIMPLES',

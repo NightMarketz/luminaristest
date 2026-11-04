@@ -259,6 +259,36 @@ describe('/api/accounting/contacts + /delivery — contrato HTTP', () => {
     expect(noContador.status).toBe(400);
   });
 
+  // F-17-1 (H2 passo 17, handoff 2026-11-02 §C6): o 400 do "contador sem telefone" mostrava o id do
+  // contato — o operador não sabe qual cadastro corrigir. A mensagem nomeia o contato pelo NOME.
+  it('contador sem telefone: o 400 da ECF nomeia o contato pelo nome, não pelo id (F-17-1)', async () => {
+    const semFone = await request(app)
+      .post('/api/accounting/contacts')
+      .set(authHeader(dono))
+      .send(contatoBody({ name: 'Escritorio Sem Fone F171' }));
+    const semFoneId = semFone.body.data.id as string;
+    const res = await request(app)
+      .post('/api/accounting/sped/ecf/real/generate')
+      .set(authHeader(dono))
+      .send(ecfRealBody({ signerContactIds: [semFoneId] }));
+    expect(res.status).toBe(400);
+    const message = String(res.body.message);
+    expect(message).toMatch(/telefone/);
+    expect(message).not.toContain(semFoneId);
+    expect(message).toContain('Escritorio Sem Fone F171');
+
+    // controle: o mesmo cadastro com telefone gera a ECF normalmente
+    const comFone = await request(app)
+      .post('/api/accounting/contacts')
+      .set(authHeader(dono))
+      .send(contatoBody({ name: 'Escritorio Com Fone F171', phone: '(61) 3333-4444' }));
+    const gen = await request(app)
+      .post('/api/accounting/sped/ecf/real/generate')
+      .set(authHeader(dono))
+      .send(ecfRealBody({ signerContactIds: [comFone.body.data.id] }));
+    expect(gen.status).toBe(201);
+  });
+
   // ------------------------------------------------------------------ review F1 — item 20 do BRIEF
   /**
    * Rate limit POR ESCOPO no comando `confirmDelivery`. O limiter global de `app.ts` é por IP e

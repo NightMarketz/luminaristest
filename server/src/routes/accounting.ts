@@ -83,6 +83,7 @@ import {
   generateSpedEcfReal,
   spedEcdRtfUpload,
   getSpedQualifAssinante,
+  getSpedEcfY600Vigencias,
 } from '../controllers/spedController';
 import { closeExercise } from '../controllers/closingController';
 
@@ -336,6 +337,9 @@ router.get('/sped/qualif-assinante', getSpedQualifAssinante);
 // `spedEcdRtfUpload` (multer) é NO-OP num corpo JSON puro (ECD original) — só ativa quando o
 // cliente sobe o .rtf do Termo de Verificação (ECD substituta, Passo 19-20).
 router.post('/sped/ecd/generate', spedEcdRtfUpload, generateSpedEcd);
+
+// Y600: vigências do cadastro de sócios que a ECF do ano exige (FE-INCR-ECF-Y600 PR-0) — leitura para a tela.
+router.get('/sped/ecf/y600/vigencias', getSpedEcfY600Vigencias);
 
 // SPED Fiscal (ECF) — Lucro Presumido; generate the `.txt` (download reuses the job route).
 router.post('/sped/ecf/generate', generateSpedEcf);

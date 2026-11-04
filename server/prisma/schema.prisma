@@ -3171,6 +3171,9 @@ model TaxAssessment {
   entradaInformada         Json?
   // PR-4 (item 10): aviso visível da mudança de parâmetro legal ("reconfirme" ou "valor mudou depois do pagamento").
   avisoParametroLegal      String?
+  // EMENDA RASTREIO (item 1, F-RT-4 b, dono 03/11 "Coluna nova"): origem de cada linha da memória — RastreioApuracaoSchema.
+  // Null nas apurações anteriores à emenda (e nas de PIS/COFINS).
+  rastreio                 Json?
   status                   String // CONFIRMED | SUPERSEDED
   supersedesId             String?
   provisaoEntryId          String? // PR-3 (commit 3 da provisão)

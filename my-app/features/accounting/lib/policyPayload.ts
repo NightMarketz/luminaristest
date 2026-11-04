@@ -43,7 +43,15 @@ export function toProviderFeeProposal(patch: ProviderFeeAccountPatch): SettingsP
 
 // ─────────────────────────────────────────────────────────────── diff
 
-export type TFn = (key: string, fallback: string, vars?: Record<string, string>) => string;
+/**
+ * Assinatura mínima do `t` do i18n que as funções puras aceitam. Duas sobrecargas (com e sem `vars`) em vez de
+ * `vars?` opcional: o `TFunction` do i18next 26 declara `[key, default]` e `[key, default, options]` como
+ * sobrecargas separadas e não casa com um parâmetro opcional único.
+ */
+export interface TFn {
+  (key: string, fallback: string): string;
+  (key: string, fallback: string, vars: Record<string, string>): string;
+}
 
 export interface PolicyDiffRow {
   key: string;

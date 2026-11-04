@@ -136,12 +136,21 @@ export class PostingService {
     tx: Prisma.TransactionClient,
     scope: AccountingScope,
     dateStr: string,
-  ): Promise<void> {
+  ): Promise<{ jaFechado: boolean }> {
     const { year, month } = this.extractYearMonth(dateStr);
     const period = await this.periodRepo.findByYearMonth(scope, year, month, tx);
     if (!period || period.status !== 'OPEN') {
       throw new AccountingPeriodNotOpenError(year, month);
     }
+    // `closedAt` só é gravado ao fechar (setStatus) e a reabertura não o limpa: OPEN com closedAt = fechado e reaberto,
+    // pelos dois caminhos (reopenPeriod e openPeriod a partir de SOFT_CLOSED).
+    return { jaFechado: period.closedAt != null };
+  }
+
+  /** Data date-only (ou Date gravada à meia-noite UTC) em dd/mm/aaaa, lida como escrita — sem recuo de fuso. */
+  private dataBr(value: string | Date): string {
+    const [y, m, d] = (typeof value === 'string' ? value : value.toISOString()).slice(0, 10).split('-');
+    return `${d}/${m}/${y}`;
   }
 
   /**
@@ -335,7 +344,27 @@ export class PostingService {
       // ATOMIC — entry header + all legs commit/roll back together.
       const entry = await this.postingRepo.runTransaction(async (tx) => {
         // AUTHORITATIVE PERIOD GATE — inside the tx, before Posted. Closes the TOCTOU window.
-        await this.assertPeriodOpenTx(tx, scope, input.date);
+        const { jaFechado } = await this.assertPeriodOpenTx(tx, scope, input.date);
+
+        // ITG 2000 (R1) item 36 — período já fechado e reaberto = fora da época devida: o histórico consigna a data
+        // efetiva da ocorrência e a razão do registro extemporâneo (D-2026-11-02-DELEGACAO-DONO).
+        let description = input.description;
+        if (jaFechado) {
+          // Gravador automático (chamada interna, `automaticWriter`) sem razão: a razão real do registro tardio é o
+          // processamento depois do fechamento. Pelo HTTP a razão digitada é sempre exigida — o `sourceType` vem do
+          // cliente e não decide nada aqui (D-2026-11-02-DELEGACAO-DONO §3.6).
+          const razao =
+            input.extemporaneousReason?.trim() ||
+            (input.automaticWriter
+              ? `lançamento automático (${sourceType}) processado depois do fechamento do período`
+              : undefined);
+          if (!razao) {
+            throw new ValidationError(
+              'Lançamento em período já fechado e reaberto: informe a razão do registro extemporâneo (ITG 2000, item 36).',
+            );
+          }
+          description = `${input.description} — registro extemporâneo; ocorrência em ${this.dataBr(input.date)}; razão: ${razao}`;
+        }
 
         // MANDATORY-DIMENSION GATE (SEC-B1-1, INCR-DIM-COMPLETENESS) — in-tx (T6), authoritative at
         // commit: a leg to a `requiresDimension` account with NO tag is rejected + rolls back. This
@@ -361,7 +390,7 @@ export class PostingService {
             userId,
             unitId,
             date: new Date(input.date),
-            description: input.description,
+            description,
             status: 'Posted',
             sourceType,
             sourceId: input.sourceId ?? null,
@@ -537,6 +566,11 @@ export class PostingService {
     if (!this.policy.canPost(scope)) {
       throw new ForbiddenError('Você não tem permissão para estornar lançamentos.');
     }
+    // ITG 2000 (R1) item 32 — o histórico do estorno deve precisar o motivo da retificação.
+    const motivo = input.reason?.trim();
+    if (!motivo) {
+      throw new ValidationError('Informe o motivo do estorno (ITG 2000, item 32).');
+    }
     const { userId, unitId } = accountingScopeWhere(scope);
 
     // PERIOD GATE — gate on the REVERSAL date (not the original entry date).
@@ -614,7 +648,12 @@ export class PostingService {
             userId,
             unitId,
             date: new Date(input.reversalPostingDate),
-            description: input.reason ? `Estorno de ${original.id} — ${input.reason}` : `Estorno de ${original.id}`,
+            // Item 32: motivo, data e localização da origem (nº no Diário como a tela mostra; sem número, o id).
+            description: `Estorno do lançamento ${
+              original.fiscalYear != null && original.entryNumber != null
+                ? `${original.fiscalYear}/${String(original.entryNumber).padStart(4, '0')} (id ${original.id})`
+                : original.id
+            } de ${this.dataBr(original.date)} — motivo: ${motivo}`,
             status: 'Posted',
             sourceType: reversalSourceType,
             sourceId: original.id,

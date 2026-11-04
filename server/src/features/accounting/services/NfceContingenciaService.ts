@@ -194,7 +194,7 @@ export class NfceContingenciaService {
   /** Decisões 6 e 7 — transmite as `CONTINGENCY`, alerta o prazo e resolve as órfãs mais velhas que `olderThan`. */
   async tick(olderThan: Date): Promise<ContingenciaTickSummary> {
     const s: ContingenciaTickSummary = {
-      transmitidas: 0, semComunicacao: 0, pertoDoPrazo: 0, vencidas: 0, saidasAutomaticas: 0, orfasResolvidas: 0, orfasFalharam: 0, failed: 0,
+      transmitidas: 0, semComunicacao: 0, pertoDoPrazo: 0, vencidas: 0, saidasAutomaticas: 0, orfasResolvidas: 0, orfasFalharam: 0, failed: 0, alertas: [],
     };
     for (const doc of await this.docRepo.listContingencia(TICK_LIMIT)) {
       await this.transmitirUma(doc, s);
@@ -308,6 +308,7 @@ export class NfceContingenciaService {
     if (!alerta) return;
     if (alerta === 'PERTO') s.pertoDoPrazo++;
     else s.vencidas++;
+    s.alertas.push({ evento: alerta === 'PERTO' ? 'PERTO_DO_PRAZO' : 'VENCIDA', documentId });
     logger.error('dfe_contingencia_prazo: NFC-e de contingência sem autorização perto do prazo ou vencida — ação humana', {
       documentId,
       unitId: doc.unitId,
@@ -412,6 +413,7 @@ export class NfceContingenciaService {
   private async falhou(orfa: NfceContingenciaOrfa, motivo: string, s: ContingenciaTickSummary, voidId?: string): Promise<void> {
     await this.repo.updateOrfa(orfa.id, { status: 'FAILED', tentativas: orfa.tentativas + 1, ultimoErro: motivo.slice(0, 500), ...(voidId ? { voidId } : {}) });
     s.orfasFalharam++;
+    s.alertas.push({ evento: 'ORFA_FALHOU', documentId: orfa.documentId });
     logger.error('dfe_contingencia_orfa: a NFC-e normal órfã não foi cancelada nem inutilizada — ação humana', { orfaId: orfa.id, documentId: orfa.documentId });
   }
 

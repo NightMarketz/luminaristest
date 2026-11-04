@@ -156,3 +156,35 @@ jurCapCents: number
 demRendCents: number
 irRetCents: number
 }
+export interface Y600VigenciaViewInput {
+partnerId: string
+nome: string
+taxIdFinal: string
+tipoPessoa: ("PF" | "PJ")
+residenteBrasil: boolean
+participacaoBp: number
+entradaEm: string
+saidaEm: (string | null)
+dtFimSoc: (string | null)
+vigenteNoFim: boolean
+}
+export interface Y600VigenciasQueryInput {
+unitId: string
+year: number
+}
+export interface Y600VigenciasViewInput {
+year: number
+vigencias: {
+partnerId: string
+nome: string
+taxIdFinal: string
+tipoPessoa: ("PF" | "PJ")
+residenteBrasil: boolean
+participacaoBp: number
+entradaEm: string
+saidaEm: (string | null)
+dtFimSoc: (string | null)
+vigenteNoFim: boolean
+}[]
+somaParticipacaoFimBp: number
+}

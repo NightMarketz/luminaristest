@@ -71,8 +71,8 @@ seguinte**, que vai bater na regra 3 dela e parar.
 Um teste novo que FALHA PELO MOTIVO DA LACUNA: a asserção que quebra é
 a que expressa o comportamento correto esperado acima, e a mensagem de
 falha evidencia a lacuna (não erro de import, não fixture quebrada, não
-timeout de ambiente). Critério de verificação: a suíte inteira roda, o
-teste novo é o único vermelho NOVO (o ruído pré-existente registrado no
+timeout de ambiente). Critério de verificação: os testes do escopo rodam (o novo + os do
+mesmo módulo), o teste novo é o único vermelho NOVO (o ruído pré-existente registrado no
 passo 1 não conta), e o motivo da falha é a asserção final — não a
 preparação. Nenhuma linha de código de aplicação é alterada.
 
@@ -129,11 +129,17 @@ morde, e zero mudança em código de aplicação.
 sessão seguinte:
 
 ```bash
-cd server && npm run test:integration
+cd server && npx jest <teste-guarda> <testes dos arquivos tocados> --selectProjects unit
+cd server && npx jest <arquivo>.integration.test.ts --selectProjects integration --runInBand   # um arquivo por vez
 ```
 
-`npx jest --selectProjects integration` **cru** faz 29 de 41 suítes colidirem no mesmo SQLite — o
-`npm run` passa `--runInBand`. Para unit, `npx jest` normal. Antes de reportar regressão, **isole a suíte**.
+**Escopo, não suíte inteira** (dono, chat, 2026-11-03: "isso pesa o pc demais"). O caminho vem **antes** do
+`--selectProjects`: depois dele o jest 30 lê o caminho como nome de projeto e roda as 448 suítes. Suíte inteira
+(`npm run test:integration`, `npm test`, jest ou vitest sem caminho) é do CI do PR e fica bloqueada fora dele sem
+`FULL_SUITE=1` (`scripts/test-scope-guard.cjs`). No relatório/PR, diga quais testes rodaram aqui e que a suíte
+completa é a do CI.
+
+Integração sempre com `--runInBand`: sem ele, as suítes colidem no mesmo SQLite. Antes de reportar regressão, **isole a suíte**.
 
 **Worktree novo não tem ambiente.** Se a sessão roda em worktree isolado (default do projeto), o passo 1
 falha por motivo espúrio sem: `npm ci` (o `node_modules` não é herdado e o client Prisma junctionado do

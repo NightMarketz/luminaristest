@@ -3355,6 +3355,10 @@
               }
             }
           },
+          "extemporaneousReason": {
+            "type": "string",
+            "description": "Razão do registro extemporâneo (ITG 2000, item 36) — exigida quando a data cai num período já fechado e reaberto"
+          },
           "lines": {
             "type": "array",
             "minItems": 2,
@@ -3368,7 +3372,8 @@
         "type": "object",
         "required": [
           "lancamentoId",
-          "reversalPostingDate"
+          "reversalPostingDate",
+          "reason"
         ],
         "properties": {
           "lancamentoId": {
@@ -3379,7 +3384,8 @@
             "description": "Date-only string YYYY-MM-DD for the reversal entry (and period gate)"
           },
           "reason": {
-            "type": "string"
+            "type": "string",
+            "description": "Motivo da retificação (ITG 2000, item 32) — obrigatório"
           }
         }
       },
@@ -18283,7 +18289,7 @@
     "/api/accounting/sped/ecd/generate": {
       "post": {
         "summary": "Generate the SPED Contábil (ECD) .txt file for a year",
-        "description": "Composes the ECD (Livro Diário Geral, tipo G) for the given year from the ledger (chart, referential mapping, monthly balances, journal, BP/DRE) and persists a plain-text (ISO-8859-1) artifact as an EXPORT job. Download via /data-exchange/jobs/{jobId}/download. Blocks with 400 + unmappedAccounts if any leaf account is unmapped in the referential version (coverage gate). BE-INCR-FIXED-ASSETS PR-4 (retificação versionada, item 26-31): a ECD SUBSTITUTA (declarant.indFinEsc=1) exige declarant.codHashSub (40 hex), supersedesJobId (o job EXPORTED sendo substituído) e verificationTerm (J801+J932); o .rtf do Termo chega por multipart/form-data (campo \"rtf\", até 30 MB) — a ECD original continua indo por application/json puro (o multer é no-op fora de multipart). X13 PR-2 - with a company fiscal profile for the year, missing declarant/book/signer fields are prefilled from it (body wins, listed in perfilFiscal.sobrescritos); avisos carries the large-company warning (Lei 11.638 art. 3) and the missing-profile notice. The ECD is never refused by regime.",
+        "description": "Composes the ECD (Livro Diário Geral, tipo G) for the given year from the ledger (chart, referential mapping, monthly balances, journal, BP/DRE) and persists a plain-text (ISO-8859-1) artifact as an EXPORT job. Download via /data-exchange/jobs/{jobId}/download. A leaf account unmapped in the referential version does NOT block (C2 - Manual da ECD item 1.17, mapping is optional in the ECD): it ships without I051, is listed in coberturaReferencial.unmappedAccounts and gets a line in avisos. BE-INCR-FIXED-ASSETS PR-4 (retificação versionada, item 26-31): a ECD SUBSTITUTA (declarant.indFinEsc=1) exige declarant.codHashSub (40 hex), supersedesJobId (o job EXPORTED sendo substituído) e verificationTerm (J801+J932); o .rtf do Termo chega por multipart/form-data (campo \"rtf\", até 30 MB) — a ECD original continua indo por application/json puro (o multer é no-op fora de multipart). X13 PR-2 - with a company fiscal profile for the year, missing declarant/book/signer fields are prefilled from it (body wins, listed in perfilFiscal.sobrescritos); avisos carries the large-company warning (Lei 11.638 art. 3) and the missing-profile notice. The ECD is never refused by regime.",
         "tags": [
           "Accounting"
         ],
@@ -18629,6 +18635,57 @@
         "responses": {
           "200": {
             "description": "[{ code, description }] - code is 3 digits"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
+    "/api/accounting/sped/ecf/y600/vigencias": {
+      "get": {
+        "summary": "Partner terms (vigencias) the ECF Y600 of a year requires, for the SPED screen",
+        "description": "FE-INCR-ECF-Y600 PR-0 (F-FE-Y600-1 - b). Read-only. Lists the live Partner terms that cross the year, computed by the same selection the ECF generator uses (selecionarVigenciasDoAno), so the screen asks for the ECF complement of exactly the partnerIds the generate call will require. dtFimSoc is the actual exit in the year (null on a participation change). The tax id is returned as its last 4 digits only (taxIdFinal). somaParticipacaoFimBp is informative (F-Y600-8, not blocking). Same read policy as the partners list.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "year",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 2015,
+              "maximum": 2100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ year, vigencias: [{ partnerId, nome, taxIdFinal, tipoPessoa, residenteBrasil, participacaoBp, entradaEm, saidaEm, dtFimSoc, vigenteNoFim }], somaParticipacaoFimBp }"
           },
           "400": {
             "$ref": "#/components/responses/BadRequestError"

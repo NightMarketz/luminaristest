@@ -359,7 +359,7 @@ export async function seedTenant(
 
       for (const e of plan.entries) {
         const before = await prisma.journalEntry.count({ where: { userId, unitId: unitId, sourceType: SEED_SOURCE_TYPE, sourceId: e.sourceId } });
-        await services.posting.postEntry(scope, { ...e, unitId: unitId });
+        await services.posting.postEntry(scope, { ...e, unitId: unitId, automaticWriter: true });
         if (before === 0) report.entriesCreated++;
         else report.entriesExisting++;
       }
