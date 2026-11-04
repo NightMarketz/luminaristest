@@ -16,7 +16,7 @@ import { periodoBounds, type LalurPeriodo } from './Lalur.model';
  * Fora da tabela, de propósito (vazios): os passos do e-Lalur/e-Lacs (`LAIR`, `ADICOES`, `EXCLUSOES`, `LUCRO_AJUSTADO`,
  * `COMPENSACAO*` — registros M300/M350, fora dos registros da decisão §9); `GUARDA_CIRCULARIDADE`, `MESES_PERIODO`,
  * vencimentos e avisos; com hospitalar, a `RECEITA_SERVICO`/`RECEITA_NAO_USO` (a P200 8 é a `RECEITA_SERVICO_COMUM`); a dedução
- * `CSLL_RETIDA` (P500 9/10/11/12 dependem de quem reteve — o tipo não diz); as parcelas `DIFERENCA_POSTERGADA_<período>`
+ * `CSLL_RETIDA` sem retentor (memória anterior ao F-C8-R1 a); as parcelas `DIFERENCA_POSTERGADA_<período>`
  * (o total vai em `DIFERENCA_POSTERGADA`); `SALDO_NEGATIVO` (a linha "a pagar" da ECF é com sinal, a memória separa).
  */
 
@@ -139,13 +139,27 @@ const POR_MODO: Record<ModoApuracao, { IRPJ: Tabela; CSLL: Tabela }> = {
   BALANCETE_SUSPENSAO_REDUCAO: { IRPJ: BALANCETE_IRPJ, CSLL: BALANCETE_CSLL },
 };
 
-/** Dedução `IRRF` (o tipo abre a descrição — `somarDeducoes`): a linha genérica do IRRF de cada registro. */
-const DEDUCAO_IRRF: Partial<Record<ModoApuracao, LinhaEcfDef>> = {
-  PRESUMIDO: L('P300', '10'), // (-) Imposto de Renda Retido na Fonte
-  REAL_TRIMESTRAL: L('N630', '20'),
-  AJUSTE_ANUAL: L('N630', '20'),
-  ESTIMATIVA_RECEITA: L('N620', '21'),
-  BALANCETE_SUSPENSAO_REDUCAO: L('N620', '21'),
+/**
+ * Dedução retida (`tipo/retentor` abre a descrição — `somarDeducoes`; F-C8-R1 a, dono, chat, 03/11). IRRF: a linha genérica
+ * ("(-) Imposto de Renda Retido na Fonte") e as dos órgãos federais (Lei 9.430 art. 64) e demais entidades federais (Lei
+ * 10.833 art. 34); IRRF sem retentor, de PJ privada ou de estado/município fica na genérica. CSLL: uma linha por retentor
+ * (arts. 64; 34, 30 e 33).
+ */
+const RETIDA = (irrf: string, [generica, orgao, entidade]: string[], csll: string, [c64, c34, c30, c33]: string[]): Record<string, LinhaEcfDef> => ({
+  IRRF: L(irrf, generica),
+  'IRRF/ORGAO_FEDERAL': L(irrf, orgao),
+  'IRRF/ENTIDADE_ADM_FEDERAL': L(irrf, entidade),
+  'CSLL_RETIDA/ORGAO_FEDERAL': L(csll, c64),
+  'CSLL_RETIDA/ENTIDADE_ADM_FEDERAL': L(csll, c34),
+  'CSLL_RETIDA/PJ_PRIVADA': L(csll, c30),
+  'CSLL_RETIDA/ORGAO_ESTADUAL_MUNICIPAL': L(csll, c33),
+});
+const DEDUCAO_RETIDA: Record<ModoApuracao, Record<string, LinhaEcfDef>> = {
+  PRESUMIDO: RETIDA('P300', ['10', '12', '13'], 'P500', ['9', '10', '11', '12']),
+  REAL_TRIMESTRAL: RETIDA('N630', ['20', '21', '22'], 'N670', ['15', '16', '17', '18']),
+  AJUSTE_ANUAL: RETIDA('N630', ['20', '21', '22'], 'N670', ['15', '16', '17', '18']),
+  ESTIMATIVA_RECEITA: RETIDA('N620', ['21', '23', '24'], 'N660', ['14', '15', '16', '17']),
+  BALANCETE_SUSPENSAO_REDUCAO: RETIDA('N620', ['21', '23', '24'], 'N660', ['14', '15', '16', '17']),
 };
 /** Ajuste anual: as estimativas pagas, mês a mês (`ESTIMATIVA_PAGA_A01`…), somam na linha "pago por estimativa". */
 const ESTIMATIVA_PAGA = { IRPJ: L('N630', '24'), CSLL: L('N670', '19') };
@@ -192,7 +206,10 @@ export function linhaEcfDoPasso(r: ApuracaoRef, passo: MemoriaLinha, memoria: re
   if (!t) return null;
   const modo = r.modo as ModoApuracao;
   if (/^DEDUCAO_\d+$/.test(passo.codigo)) {
-    return r.tributo === 'IRPJ' && passo.descricao.startsWith('IRRF') ? vigente(DEDUCAO_IRRF[modo], r) : null;
+    const chave = /^(IRRF|CSLL_RETIDA)(\/[A-Z_]+)?/.exec(passo.descricao);
+    if (!chave || (chave[1] === 'IRRF') !== (r.tributo === 'IRPJ')) return null;
+    const t2 = DEDUCAO_RETIDA[modo];
+    return vigente(t2[chave[0]] ?? (chave[1] === 'IRRF' ? t2.IRRF : undefined), r);
   }
   if (modo === 'AJUSTE_ANUAL' && /^ESTIMATIVA_PAGA_A\d{2}$/.test(passo.codigo)) return vigente(ESTIMATIVA_PAGA[r.tributo as 'IRPJ' | 'CSLL'], r);
   // O 16% (P200 6) leva o acréscimo do serviço para a linha de 1,6% (25230) e a receita de serviço para a P200 6.
@@ -222,7 +239,9 @@ export function linhasEcfDaTabela(): { modo: string; tributo: string; codigo: st
       for (const [codigo, def] of Object.entries(RESUMO[modo as ModoApuracao][tributo])) out.push({ modo, tributo, codigo: `RESUMO:${codigo}`, def });
     }
   }
-  for (const [modo, def] of Object.entries(DEDUCAO_IRRF)) out.push({ modo, tributo: 'IRPJ', codigo: 'DEDUCAO_n:IRRF', def: def! });
+  for (const [modo, porChave] of Object.entries(DEDUCAO_RETIDA)) {
+    for (const [chave, def] of Object.entries(porChave)) out.push({ modo, tributo: chave.startsWith('IRRF') ? 'IRPJ' : 'CSLL', codigo: `DEDUCAO_n:${chave}`, def });
+  }
   out.push({ modo: 'AJUSTE_ANUAL', tributo: 'IRPJ', codigo: 'ESTIMATIVA_PAGA_Ann', def: ESTIMATIVA_PAGA.IRPJ });
   out.push({ modo: 'AJUSTE_ANUAL', tributo: 'CSLL', codigo: 'ESTIMATIVA_PAGA_Ann', def: ESTIMATIVA_PAGA.CSLL });
   out.push({ modo: 'PRESUMIDO', tributo: 'IRPJ', codigo: 'LC224_ACRESCIMO_SERVICO:16', def: L('P200', '25230', LC224_IRPJ) });

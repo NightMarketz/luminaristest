@@ -39,12 +39,20 @@ export type TributoApuracao = 'IRPJ' | 'CSLL';
 /** Fase B (BRIEF B item 11; nomes do ADR §6): + os 3 modos do Real anual. */
 export type ModoApuracao = 'PRESUMIDO' | 'REAL_TRIMESTRAL' | 'ESTIMATIVA_RECEITA' | 'BALANCETE_SUSPENSAO_REDUCAO' | 'AJUSTE_ANUAL';
 
+/**
+ * Quem reteve (F-C8-R1 a, dono, chat, 03/11: "Sim, opção (a)"): a linha da ECF da dedução retida depende dele — Lei 9.430
+ * art. 64 (órgão federal), Lei 10.833 art. 34 (demais entidades federais), art. 30 (PJ privada), art. 33 (estados, DF, municípios).
+ */
+export const RETENTORES = ['ORGAO_FEDERAL', 'ENTIDADE_ADM_FEDERAL', 'PJ_PRIVADA', 'ORGAO_ESTADUAL_MUNICIPAL'] as const;
+export type RetentorDeducao = (typeof RETENTORES)[number];
+
 /** Dedução informada pelo operador (F-X7-11 a; shape do `TaxAssessmentPreviewSchema.deducoes` do contrato §2). */
 export interface DeducaoInformada {
   tributo: TributoApuracao;
   tipo: 'IRRF' | 'CSLL_RETIDA' | 'OUTRA';
   valorCents: string;
   documento?: string;
+  retentor?: RetentorDeducao; // obrigatório na CSLL_RETIDA, opcional no IRRF (ausente = linha genérica)
 }
 
 /** Memória CONFIRMADA de um trimestre anterior do mesmo tributo e ano (F-TA-3 a: a fonte é a memória, não o razão). */
@@ -770,7 +778,9 @@ export function somarDeducoes(tributo: TributoApuracao, deducoes: DeducaoInforma
     .forEach((d, i) => {
       const v = BigInt(d.valorCents);
       total += v;
-      memoria.push(linha(`DEDUCAO_${i + 1}`, `${d.tipo}${d.documento ? ` — ${d.documento}` : ''}`, v, 'Lei 9.430/1996 art. 2º § 4º III; ADR F-X7-11 (a)'));
+      // `tipo/retentor` abre a descrição: é dela que a tabela de correspondência lê a linha da ECF (F-C8-R1 a).
+      const rotulo = d.retentor ? `${d.tipo}/${d.retentor}` : d.tipo;
+      memoria.push(linha(`DEDUCAO_${i + 1}`, `${rotulo}${d.documento ? ` — ${d.documento}` : ''}`, v, 'Lei 9.430/1996 art. 2º § 4º III; ADR F-X7-11 (a)'));
     });
   return total;
 }

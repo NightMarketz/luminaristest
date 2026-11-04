@@ -19093,6 +19093,15 @@
         "documento": {
           "type": "string",
           "maxLength": 120
+        },
+        "retentor": {
+          "type": "string",
+          "enum": [
+            "ORGAO_FEDERAL",
+            "ENTIDADE_ADM_FEDERAL",
+            "PJ_PRIVADA",
+            "ORGAO_ESTADUAL_MUNICIPAL"
+          ]
         }
       },
       "required": [
@@ -19166,6 +19175,15 @@
               "documento": {
                 "type": "string",
                 "maxLength": 120
+              },
+              "retentor": {
+                "type": "string",
+                "enum": [
+                  "ORGAO_FEDERAL",
+                  "ENTIDADE_ADM_FEDERAL",
+                  "PJ_PRIVADA",
+                  "ORGAO_ESTADUAL_MUNICIPAL"
+                ]
               }
             },
             "required": [
@@ -19298,6 +19316,15 @@
               "documento": {
                 "type": "string",
                 "maxLength": 120
+              },
+              "retentor": {
+                "type": "string",
+                "enum": [
+                  "ORGAO_FEDERAL",
+                  "ENTIDADE_ADM_FEDERAL",
+                  "PJ_PRIVADA",
+                  "ORGAO_ESTADUAL_MUNICIPAL"
+                ]
               }
             },
             "required": [

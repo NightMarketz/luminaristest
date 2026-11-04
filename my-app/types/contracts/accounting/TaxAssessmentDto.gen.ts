@@ -10,6 +10,7 @@ tributo: ("IRPJ" | "CSLL")
 tipo: ("IRRF" | "CSLL_RETIDA" | "OUTRA")
 valorCents: string
 documento?: string
+retentor?: ("ORGAO_FEDERAL" | "ENTIDADE_ADM_FEDERAL" | "PJ_PRIVADA" | "ORGAO_ESTADUAL_MUNICIPAL")
 }
 export interface TaxAssessmentPreviewInput {
 unitId: string
@@ -23,6 +24,7 @@ tributo: ("IRPJ" | "CSLL")
 tipo: ("IRRF" | "CSLL_RETIDA" | "OUTRA")
 valorCents: string
 documento?: string
+retentor?: ("ORGAO_FEDERAL" | "ENTIDADE_ADM_FEDERAL" | "PJ_PRIVADA" | "ORGAO_ESTADUAL_MUNICIPAL")
 }[]
 modoMensal?: ("RECEITA_BRUTA" | "BALANCETE")
 /**
@@ -46,6 +48,7 @@ tributo: ("IRPJ" | "CSLL")
 tipo: ("IRRF" | "CSLL_RETIDA" | "OUTRA")
 valorCents: string
 documento?: string
+retentor?: ("ORGAO_FEDERAL" | "ENTIDADE_ADM_FEDERAL" | "PJ_PRIVADA" | "ORGAO_ESTADUAL_MUNICIPAL")
 }[]
 modoMensal?: ("RECEITA_BRUTA" | "BALANCETE")
 /**
