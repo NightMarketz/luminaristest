@@ -62,6 +62,11 @@ model User {
   companySigners             CompanySigner[] // X13 (F-OBP-9 a) — representante legal / signatários não-contador
   partners                   Partner[] // IRRF-DISTRIBUICAO PR-1 (F-IRD-2, F-IRD-14) — sócios beneficiários da distribuição
   dpModuloAtivacoes          DpModuloAtivacao[] // BE-INCR-DP-F0-F1 PR-1 (nó PES-4, item 12) — submódulos opcionais do DP
+  dpLotacoes                 DpLotacao[] // BE-INCR-DP-F0-F1 PR-3 (item 28)
+  dpCargos                   DpCargo[] // BE-INCR-DP-F0-F1 PR-3 (item 29)
+  dpJornadas                 DpJornada[] // BE-INCR-DP-F0-F1 PR-3 (item 30)
+  dpSindicatos               DpSindicato[] // BE-INCR-DP-F0-F1 PR-3 (item 31)
+  dpConvencoesColetivas      DpConvencaoColetiva[] // BE-INCR-DP-F0-F1 PR-3 (item 32)
   withholdingProfiles        WithholdingProfile[] // RETENCOES-FONTE PR-1 (item 6) — perfil de retenção por contraparte × natureza
   taxWithholdings            TaxWithholding[] // RETENCOES-FONTE PR-2 (item 13) — retenções feitas (e sofridas no PR-3)
   profitDistributionEvents   ProfitDistributionEvent[] // IRRF-DISTRIBUICAO PR-2 (BRIEF item 10)
@@ -3756,4 +3761,109 @@ model DpModuloAtivacao {
 
   @@index([userId, moduleKey])
   @@map("dp_modulo_ativacoes")
+}
+
+// BE-INCR-DP-F0-F1 PR-3 (itens 28–33) — cadastros de estrutura do DP, por instância (R8). Soft-delete; unicidade de
+// registro vivo por gate no serviço dentro da tx (F19), nunca @@unique.
+
+/// Lotação (conceito do S-1020). `unitId` = estabelecimento (R8, F-DP-2). FPAS, terceiros e tipo ficam para F2/F4.
+model DpLotacao {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId    String // estabelecimento = unidade (linha de units)
+  codigo    String // codLotacao "C 1 1-30" [D09]; vivo único por instância
+  descricao String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId, codigo])
+  @@map("dp_lotacoes")
+}
+
+model DpCargo {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nome      String
+  cbo       String // CBOCargo "C 1 6" [D09]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([userId])
+  @@map("dp_cargos")
+}
+
+/// Jornada (horContratual do S-2200). `minutosSemanais` e `tipoJornada` travam quando uma versão de vínculo a referencia (D-5).
+model DpJornada {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nome            String
+  minutosSemanais Int // > 0
+  tipoJornada     String // domínio tpJornada do S-2200 [D09] (features/dp/models/cadastros.ts)
+  descricao       String? // horário contratual, como o dscJorn
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  @@index([userId])
+  @@map("dp_jornadas")
+}
+
+model DpSindicato {
+  id        String                @id @default(cuid())
+  userId    String
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cnpj      String // 14 posições com DV (lib/cnpj); vivo único por instância
+  nome      String
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  deletedAt DateTime?
+  convencoes DpConvencaoColetiva[]
+
+  @@index([userId, cnpj])
+  @@map("dp_sindicatos")
+}
+
+/// Convenção ou acordo coletivo (F-PES-8 → a): a cláusula é dado com fonte e vigência.
+model DpConvencaoColetiva {
+  id            String                 @id @default(cuid())
+  userId        String
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sindicatoId   String
+  sindicato     DpSindicato            @relation(fields: [sindicatoId], references: [id], onDelete: Restrict)
+  identificacao String // texto livre, ex.: o registro do instrumento
+  vigenteDesde  String // YYYY-MM-DD
+  vigenteAte    String? // YYYY-MM-DD inclusive; null = sem fim
+  fonte         String
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  deletedAt     DateTime?
+  parametros    DpConvencaoParametro[]
+
+  @@index([userId, sindicatoId])
+  @@map("dp_convencoes_coletivas")
+}
+
+/// Parâmetro da convenção (item 33): `chave` ∈ CCT_CHAVES; vigência dentro da convenção, sem sobreposição por
+/// (convencaoId, chave, discriminador), com gate na tx.
+model DpConvencaoParametro {
+  id            String              @id @default(cuid())
+  convencaoId   String
+  convencao     DpConvencaoColetiva @relation(fields: [convencaoId], references: [id], onDelete: Restrict)
+  chave         String // CCT_CHAVES (features/dp/models/cadastros.ts)
+  discriminador String? // PISO_SALARIAL_CENTS: cargoId
+  valorInt      BigInt // centavos ou bp, pela chave
+  clausula      String // texto da cláusula
+  vigenteDesde  String // YYYY-MM-DD
+  vigenteAte    String? // YYYY-MM-DD inclusive
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  deletedAt     DateTime?
+
+  @@index([convencaoId, chave])
+  @@map("dp_convencao_parametros")
 }

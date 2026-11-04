@@ -115,6 +115,12 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'SimplesCreditoIncobravel',
   // BE-INCR-DP-F0-F1 PR-1 (nó PES-4): o onboarding não escreve ativação de submódulo do DP ⇒ tabela nova nasce BLOCKING.
   'DpModuloAtivacao',
+  // BE-INCR-DP-F0-F1 PR-3: cadastros de estrutura do DP, mesma regra (tabela nova nasce BLOCKING).
+  'DpLotacao',
+  'DpCargo',
+  'DpJornada',
+  'DpSindicato',
+  'DpConvencaoColetiva',
 ] as const;
 
 /**

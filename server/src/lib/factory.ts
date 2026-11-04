@@ -213,6 +213,8 @@ import { CompanySignerService } from '../features/accounting/services/CompanySig
 import { PartnerService } from '../features/accounting/services/PartnerService';
 import { DpModuleService } from '../features/dp/services/DpModuleService';
 import { DpModuloAtivacaoRepository } from '../features/dp/repositories/DpModuloAtivacaoRepository';
+import { DpCadastroService } from '../features/dp/services/DpCadastroService';
+import { DpCadastroRepository } from '../features/dp/repositories/DpCadastroRepository';
 import { DpPolicy } from '../features/dp/policies/DpPolicy';
 import { DpPortResolver, type DpPortImplementations } from '../features/dp/ports/DpPortResolver';
 import { WithholdingProfileService } from '../features/accounting/services/WithholdingProfileService';
@@ -384,6 +386,7 @@ import type { ICompanyFiscalProfileRepository } from '../features/accounting/rep
 import type { ICompanySignerRepository } from '../features/accounting/repositories/ICompanySignerRepository';
 import type { IPartnerRepository } from '../features/accounting/repositories/IPartnerRepository';
 import type { IDpModuloAtivacaoRepository } from '../features/dp/repositories/IDpModuloAtivacaoRepository';
+import type { IDpCadastroRepository } from '../features/dp/repositories/IDpCadastroRepository';
 import type { IDpPolicy } from '../features/dp/policies/IDpPolicy';
 import type { IWithholdingProfileRepository } from '../features/accounting/repositories/IWithholdingProfileRepository';
 import type { ITaxWithholdingReadPort, ITaxWithholdingRepository } from '../features/accounting/repositories/ITaxWithholdingRepository';
@@ -859,6 +862,7 @@ export class ApplicationFactory {
     companySigner: ICompanySignerRepository; // X13
     partner: IPartnerRepository; // IRRF-DISTRIBUICAO PR-1
     dpModuloAtivacao: IDpModuloAtivacaoRepository; // BE-INCR-DP-F0-F1 PR-1 (nó PES-4, item 12)
+    dpCadastro: IDpCadastroRepository; // BE-INCR-DP-F0-F1 PR-3 (itens 28–33)
     withholdingProfile: IWithholdingProfileRepository; // RETENCOES-FONTE PR-1 (item 6)
     taxWithholding: ITaxWithholdingRepository; // RETENCOES-FONTE PR-2 (item 13; porta da Reinf, Emenda 22/10 item 2)
     profitDistribution: IProfitDistributionRepository; // IRRF-DISTRIBUICAO PR-2
@@ -983,6 +987,7 @@ export class ApplicationFactory {
     partner: PartnerService; // IRRF-DISTRIBUICAO PR-1
     dpModule: DpModuleService; // BE-INCR-DP-F0-F1 PR-1 (itens 12–13)
     dpPortResolver: DpPortResolver; // BE-INCR-DP-F0-F1 PR-1 (item 17)
+    dpCadastro: DpCadastroService; // BE-INCR-DP-F0-F1 PR-3 (itens 28–36)
     withholdingProfile: WithholdingProfileService; // RETENCOES-FONTE PR-1 (item 6)
     withholding: WithholdingService; // RETENCOES-FONTE PR-2 (itens 10–23)
     profitDistribution: ProfitDistributionService; // IRRF-DISTRIBUICAO PR-2
@@ -1100,6 +1105,7 @@ export class ApplicationFactory {
       companySigner: new CompanySignerRepository(),
       partner: new PartnerRepository(),
       dpModuloAtivacao: new DpModuloAtivacaoRepository(), // BE-INCR-DP-F0-F1 PR-1
+      dpCadastro: new DpCadastroRepository(), // BE-INCR-DP-F0-F1 PR-3
       withholdingProfile: new WithholdingProfileRepository(), // RETENCOES-FONTE PR-1 (item 6)
       taxWithholding: new TaxWithholdingRepository(), // RETENCOES-FONTE PR-2 (item 13)
       profitDistribution: new ProfitDistributionRepository(),
@@ -1797,6 +1803,7 @@ export class ApplicationFactory {
       ),
       dpModule: dpModuleService, // BE-INCR-DP-F0-F1 PR-1
       dpPortResolver: new DpPortResolver(dpPortImplementations, (owner, c) => dpModuleService.modulosAtivosEm(owner, c)),
+      dpCadastro: new DpCadastroService(this.repositories.dpCadastro, this.policies.dp, auditService), // BE-INCR-DP-F0-F1 PR-3
       // RETENCOES-FONTE PR-1 (item 6): perfil de retenção; fotografia NATUREZA_RENDIMENTO e a leitura dos rascunhos dela.
       withholdingProfile: new WithholdingProfileService(
         this.repositories.withholdingProfile,
@@ -2667,6 +2674,7 @@ export class ApplicationFactory {
   public getPartnerService = (): PartnerService => this.services.partner;
   public getDpModuleService = (): DpModuleService => this.services.dpModule;
   public getDpPortResolver = (): DpPortResolver => this.services.dpPortResolver;
+  public getDpCadastroService = (): DpCadastroService => this.services.dpCadastro;
   public getWithholdingProfileService = (): WithholdingProfileService => this.services.withholdingProfile;
   public getWithholdingService = (): WithholdingService => this.services.withholding;
   /** RETENCOES-FONTE PR-2 (Emenda 22/10 item 2): a porta que a EFD-REINF lê, sem HTTP. */

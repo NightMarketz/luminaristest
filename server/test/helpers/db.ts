@@ -154,6 +154,13 @@ export async function resetDb(): Promise<void> {
   await prisma.interestOnEquityCalculation.deleteMany(); // IRRF-DISTRIBUICAO PR-4
   await prisma.partner.deleteMany(); // IRRF-DISTRIBUICAO PR-1
   await prisma.dpModuloAtivacao.deleteMany(); // BE-INCR-DP-F0-F1 PR-1 — folha (só FK para User)
+  // BE-INCR-DP-F0-F1 PR-3 — filhos antes dos pais (FK Restrict: parâmetro → convenção → sindicato).
+  await prisma.dpConvencaoParametro.deleteMany();
+  await prisma.dpConvencaoColetiva.deleteMany();
+  await prisma.dpSindicato.deleteMany();
+  await prisma.dpJornada.deleteMany();
+  await prisma.dpCargo.deleteMany();
+  await prisma.dpLotacao.deleteMany();
   await prisma.accountingContact.deleteMany(); // depois do accountingDeliveryLog (FK Restrict)
 
   // BE-INCR-FIXED-ASSETS (nó C8): fixedAssetClass tem FK Restrict para account — cai antes dele;

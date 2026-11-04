@@ -1546,6 +1546,11 @@
                   "ReceitaFiscalRecebimento",
                   "SimplesCreditoIncobravel",
                   "DpModuloAtivacao",
+                  "DpLotacao",
+                  "DpCargo",
+                  "DpJornada",
+                  "DpSindicato",
+                  "DpConvencaoColetiva",
                   "AccountingPolicyVersion"
                 ]
               },

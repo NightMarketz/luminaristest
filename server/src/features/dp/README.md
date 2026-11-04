@@ -18,6 +18,12 @@ execução em [`BE-INCR-DP-F0-F1-brief.md`](../../../../docs/accounting/BE-INCR-
 - `DpModuloAtivacao` (`dp_modulo_ativacoes`, PR-1): ativação de submódulo opcional por instância (só `userId`, R8) e
   por competência (`competenciaInicio`/`competenciaFim` inclusiva, `null` = sem fim), com `motivo`, `motivoFim`,
   `createdById`, `endedById` e soft-delete. Encerrar grava o fim; nada se apaga.
+- Cadastros de estrutura (PR-3), todos por instância e com soft-delete: `DpLotacao` (`unitId` = estabelecimento,
+  `codigo` vivo único), `DpCargo` (CBO de 6 dígitos), `DpJornada` (`minutosSemanais`, `tipoJornada` do domínio
+  `TP_JORNADA` do S-2200), `DpSindicato` (CNPJ vivo único), `DpConvencaoColetiva` (vigência e `fonte`) e
+  `DpConvencaoParametro` (`chave` ∈ `CCT_CHAVES` = `PISO_SALARIAL_CENTS`, `discriminador` = `cargoId`, `valorInt`
+  `BigInt`, `clausula`, vigência dentro da convenção e sem sobreposição). `models/cadastros.ts` tem os domínios e o
+  leitor puro `parametroCctVigente`.
 
 Registro e portas (`models/moduleRegistry.ts`, `ports/`, PR-1):
 
@@ -53,12 +59,18 @@ Tipos puros (`models/`, PR-0):
 | GET | `/modules/activations?unitId=` | Ativações da instância |
 | POST | `/modules/activations` | Ativa a partir de uma competência (409 indisponível/sobreposta; 400 dependência faltante) |
 | POST | `/modules/activations/:id/end` | Encerra numa competência (409 com dependente ativo depois do fim) |
+| GET/POST | `/{lotacoes,cargos,jornadas,sindicatos,convencoes}` | Lista (`limit` ≤ 200) / cria (409 `DP_CODIGO_DUPLICADO` em código de lotação e CNPJ) |
+| GET/PATCH/DELETE | `/{lotacoes,cargos,jornadas,sindicatos,convencoes}/:id` | Lê / altera parcial / soft-delete |
+| GET/POST | `/convencoes/:id/parametros` | Parâmetros da convenção (409 `DP_VERSAO_SOBREPOSTA`; 400 fora da vigência) |
+| PATCH/DELETE | `/convencoes/:id/parametros/:parametroId` | Altera parcial / soft-delete |
 
 ## Invariants
 
 - Vigência sem sobreposição: o gate é do serviço, dentro da tx; `semSobreposicao`/`sobrepoe` são o predicado.
 - Ativação: resolução do item 11, sobreposição e dependente ativo checados dentro da tx; auditoria
   `dp.module_activation.created/ended` na mesma tx, sem o texto do motivo.
+- Cadastros: unicidade viva e vigência do parâmetro checadas dentro da tx; auditoria `dp.<cadastro>.created/updated/
+  deleted` com ids, códigos e datas (o piso em string); nome, descrição e cláusula ficam fora.
 - Dinheiro em centavos `BigInt`; datas date-only em `String` validadas por `isValidDateOnly` (regex não valida
   calendário).
 - PII (CPF, nome, nascimento, salário, motivo de afastamento) nunca entra no `AuditEvent` (F-DPB-3).

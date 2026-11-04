@@ -416,6 +416,26 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // O `motivo` (texto livre) fica FORA: é digitado e pode conter qualquer coisa, e o AuditEvent não se apaga (F17).
   'dp.module_activation.created': ['activationId', 'moduleKey', 'competenciaInicio'],
   'dp.module_activation.ended': ['activationId', 'moduleKey', 'competenciaFim'],
+  // BE-INCR-DP-F0-F1 PR-3 (item 36) — cadastros de estrutura: ids, códigos e datas; o piso da convenção em string (dado
+  // da convenção, não de pessoa). Nome de cargo/sindicato, descrição e cláusula ficam fora.
+  'dp.lotacao.created': ['lotacaoId', 'unitId', 'codigo'],
+  'dp.lotacao.updated': ['lotacaoId', 'unitId', 'codigo'],
+  'dp.lotacao.deleted': ['lotacaoId', 'unitId', 'codigo'],
+  'dp.cargo.created': ['cargoId', 'cbo'],
+  'dp.cargo.updated': ['cargoId', 'cbo'],
+  'dp.cargo.deleted': ['cargoId', 'cbo'],
+  'dp.jornada.created': ['jornadaId', 'tipoJornada', 'minutosSemanais'],
+  'dp.jornada.updated': ['jornadaId', 'tipoJornada', 'minutosSemanais'],
+  'dp.jornada.deleted': ['jornadaId', 'tipoJornada', 'minutosSemanais'],
+  'dp.sindicato.created': ['sindicatoId', 'cnpj'],
+  'dp.sindicato.updated': ['sindicatoId', 'cnpj'],
+  'dp.sindicato.deleted': ['sindicatoId', 'cnpj'],
+  'dp.convencao.created': ['convencaoId', 'sindicatoId', 'vigenteDesde', 'vigenteAte'],
+  'dp.convencao.updated': ['convencaoId', 'sindicatoId', 'vigenteDesde', 'vigenteAte'],
+  'dp.convencao.deleted': ['convencaoId', 'sindicatoId', 'vigenteDesde', 'vigenteAte'],
+  'dp.convencao_parametro.created': ['parametroId', 'convencaoId', 'chave', 'discriminador', 'valorInt', 'vigenteDesde', 'vigenteAte'],
+  'dp.convencao_parametro.updated': ['parametroId', 'convencaoId', 'chave', 'discriminador', 'valorInt', 'vigenteDesde', 'vigenteAte'],
+  'dp.convencao_parametro.deleted': ['parametroId', 'convencaoId', 'chave', 'discriminador', 'valorInt', 'vigenteDesde', 'vigenteAte'],
 };
 
 /**
