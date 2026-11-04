@@ -215,6 +215,11 @@ Pergunta Reformulada:
           messages.push(response as OpenAI.Chat.Completions.ChatCompletionAssistantMessageParam);
 
           for (const toolCall of response.tool_calls) {
+            // openai 7: tool_calls é união function | custom; só registramos tools do tipo function.
+            if (toolCall.type !== 'function') {
+              logger.warn('Ignoring non-function tool call', { toolCallType: toolCall.type });
+              continue;
+            }
             let toolArgs: Record<string, unknown>;
             try {
               toolArgs = JSON.parse(toolCall.function.arguments);
