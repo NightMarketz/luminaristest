@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { activateDpModule, endDpModuleActivation, listDpModuleActivations, listDpModules } from '../controllers/dpModuleController';
 import { dpCargos, dpConvencaoParametros, dpConvencoes, dpJornadas, dpLotacoes, dpSindicatos } from '../controllers/dpCadastrosController';
 import { dpTrabalhadores, dpVinculos } from '../controllers/dpVinculoController';
+import { listDpRubricas } from '../controllers/dpRubricaController';
 
 /**
  * Departamento Pessoal, núcleo (nó PES-4, BE-INCR-DP-F0-F1). Montada em `/api/dp` (routes/index.ts); registro em 2
@@ -41,5 +42,8 @@ router.get('/vinculos/:id', dpVinculos.get);
 router.delete('/vinculos/:id', dpVinculos.remove);
 router.post('/vinculos/:id/versoes', dpVinculos.createVersao);
 router.patch('/vinculos/:id/versoes/:versaoId', dpVinculos.corrigirVersao);
+
+// PR-5 (item 54) — catálogo de rubricas do núcleo, só leitura.
+router.get('/rubricas', listDpRubricas);
 
 export default router;

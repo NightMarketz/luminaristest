@@ -217,6 +217,7 @@ import { DpCadastroService } from '../features/dp/services/DpCadastroService';
 import { DpCadastroRepository } from '../features/dp/repositories/DpCadastroRepository';
 import { DpVinculoService } from '../features/dp/services/DpVinculoService';
 import { DpVinculoRepository } from '../features/dp/repositories/DpVinculoRepository';
+import { DpRubricaService } from '../features/dp/services/DpRubricaService';
 import type { EmployeeRowLookup } from '../features/dp/ports/EmployeeRowLookup';
 import { DP_AUDIT_KEYRING } from '../features/dp/models/vinculo';
 import { loadKeyring } from './secretBox';
@@ -996,6 +997,7 @@ export class ApplicationFactory {
     dpPortResolver: DpPortResolver; // BE-INCR-DP-F0-F1 PR-1 (item 17)
     dpCadastro: DpCadastroService; // BE-INCR-DP-F0-F1 PR-3 (itens 28–36)
     dpVinculo: DpVinculoService; // BE-INCR-DP-F0-F1 PR-4 (itens 37–49)
+    dpRubrica: DpRubricaService; // BE-INCR-DP-F0-F1 PR-5 (item 54)
     withholdingProfile: WithholdingProfileService; // RETENCOES-FONTE PR-1 (item 6)
     withholding: WithholdingService; // RETENCOES-FONTE PR-2 (itens 10–23)
     profitDistribution: ProfitDistributionService; // IRRF-DISTRIBUICAO PR-2
@@ -1823,6 +1825,7 @@ export class ApplicationFactory {
       dpModule: dpModuleService, // BE-INCR-DP-F0-F1 PR-1
       dpPortResolver: new DpPortResolver(dpPortImplementations, (owner, c) => dpModuleService.modulosAtivosEm(owner, c)),
       dpCadastro: new DpCadastroService(this.repositories.dpCadastro, this.policies.dp, auditService), // BE-INCR-DP-F0-F1 PR-3
+      dpRubrica: new DpRubricaService(this.policies.dp), // BE-INCR-DP-F0-F1 PR-5
       // BE-INCR-DP-F0-F1 PR-4: reusa o sócio (D-9), o regime do ano e a fotografia legal; `employees` pela porta (D-2, D-6).
       dpVinculo: new DpVinculoService(this.repositories.dpVinculo, this.repositories.dpCadastro, this.policies.dp, auditService, {
         partners: this.repositories.partner,
@@ -2703,6 +2706,7 @@ export class ApplicationFactory {
   public getDpPortResolver = (): DpPortResolver => this.services.dpPortResolver;
   public getDpCadastroService = (): DpCadastroService => this.services.dpCadastro;
   public getDpVinculoService = (): DpVinculoService => this.services.dpVinculo;
+  public getDpRubricaService = (): DpRubricaService => this.services.dpRubrica;
   public getWithholdingProfileService = (): WithholdingProfileService => this.services.withholdingProfile;
   public getWithholdingService = (): WithholdingService => this.services.withholding;
   /** RETENCOES-FONTE PR-2 (Emenda 22/10 item 2): a porta que a EFD-REINF lê, sem HTTP. */

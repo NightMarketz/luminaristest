@@ -803,5 +803,21 @@
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { description: 'Version, contract, cadastro or unit not found' }
+ *   /api/dp/rubricas:
+ *     get:
+ *       summary: Catalog of the DP core payroll items (rubricas) — code data, read only
+ *       description: >-
+ *         Each item carries the eSocial nature (Table 03) and the CP/IRRF/FGTS incidence codes chosen from the loaded
+ *         tables; conferidoPeloContador stays false until the accountant reviews the choice. Published items are frozen
+ *         (a change of nature or incidence is a new code).
+ *       tags: [DP]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: 'DpRubricasView — conferidoPeloContador and rubricas[] (codigo, nome, tipo, natureza, incidencia {cp, irrf, fgts}, categorias, calculo)' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
  */
 export {};

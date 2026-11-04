@@ -34,6 +34,15 @@ Registro e portas (`models/moduleRegistry.ts`, `ports/`, PR-1):
   implementação do módulo ativo ou o nulo com o motivo nomeado. O mapa de implementações vem do `lib/factory.ts` (vazio
   no F0).
 
+Catálogo de rubricas (`models/rubricas/`, PR-5):
+
+- `catalogo.ts`: `DP_RUBRICAS` em código (`as const satisfies`, Zod `.strict()`), sem fórmula — `calculo` só nomeia a
+  família (`CONTRATUAL | LEGAL | INFORMADO`); a função que calcula é do F2. Natureza (Tabela 03) e incidências
+  (`codIncCP`, `codIncIRRF`, `codIncFGTS`) escolhidas nas cargas do PR-2, com a linha do dossiê citada; o enquadramento
+  vai ao contador e fica `RUBRICAS_CONFERIDAS_PELO_CONTADOR = false` até a resposta.
+- `published.json`: SHA-256 de `{codigo, natureza, incidencia}` de cada rubrica publicada. Mudar o enquadramento de uma
+  publicada quebra o teste; a mudança vira código novo.
+
 Tipos puros (`models/`, PR-0):
 
 - `competencia.ts`: `Competencia` (`YYYY-MM`), `primeiroDia`, `ultimoDia` (calendário real), `competenciaDe`, `proxima`,
@@ -63,6 +72,7 @@ Tipos puros (`models/`, PR-0):
 | GET/PATCH/DELETE | `/{lotacoes,cargos,jornadas,sindicatos,convencoes}/:id` | Lê / altera parcial / soft-delete |
 | GET/POST | `/convencoes/:id/parametros` | Parâmetros da convenção (409 `DP_VERSAO_SOBREPOSTA`; 400 fora da vigência) |
 | PATCH/DELETE | `/convencoes/:id/parametros/:parametroId` | Altera parcial / soft-delete |
+| GET | `/rubricas?unitId=` | Catálogo de rubricas do núcleo (só leitura), com `conferidoPeloContador` |
 
 ## Invariants
 
