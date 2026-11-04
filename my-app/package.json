@@ -10,6 +10,7 @@
     "lint:gate": "eslint . --config eslint.gate.config.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:changed": "vitest run --changed origin/main",
     "test:types": "tsc -p tsconfig.vitest.json --noEmit",
     "check:arch": "depcruise pages features components lib types --config .dependency-cruiser.cjs --ignore-known .dependency-cruiser-known-violations.json --output-type err",
     "check:arch:baseline": "depcruise pages features components lib types --config .dependency-cruiser.cjs --output-type baseline --output-to .dependency-cruiser-known-violations.json",
@@ -67,5 +68,10 @@
     "typescript": "^5",
     "typescript-eslint": "^8.72.0",
     "vitest": "^3.2.6"
+  },
+  "allowScripts": {
+    "esbuild@0.27.7": true,
+    "sharp@0.34.4": true,
+    "unrs-resolver@1.11.1": true
   }
 }
