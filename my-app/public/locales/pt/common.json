@@ -90,6 +90,8 @@
   "newPasswordOptionalLabel": "Nova Senha (opcional)",
   "passwordPlaceholderProfile": "Deixe em branco para manter a senha atual",
   "passwordHelpTextProfile": "Mínimo de 6 caracteres se for alterar a senha.",
+  "currentPasswordLabel": "Senha atual",
+  "currentPasswordHelpTextProfile": "Obrigatória para trocar a senha ou o e-mail.",
   "cancelButton": "Cancelar",
   "saveChangesButton": "Salvar Alterações",
   "savingChangesButton": "Salvando...",

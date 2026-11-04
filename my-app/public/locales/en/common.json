@@ -90,6 +90,8 @@
   "newPasswordOptionalLabel": "New Password (optional)",
   "passwordPlaceholderProfile": "Leave blank to keep current password",
   "passwordHelpTextProfile": "Minimum 6 characters if changing password.",
+  "currentPasswordLabel": "Current password",
+  "currentPasswordHelpTextProfile": "Required to change your password or email.",
   "cancelButton": "Cancel",
   "saveChangesButton": "Save Changes",
   "savingChangesButton": "Saving...",

@@ -7,7 +7,7 @@ import type { IUser } from '../models/User.model';
 import { Role } from '../models/User.model';
 import type { UserContext } from '../../../types/UserContext';
 import { Prisma } from 'generated/prisma';
-import { ForbiddenError, NotFoundError, UnauthorizedError, ValidationError, ConflictError } from '../../../lib/errors';
+import { AppError, ForbiddenError, NotFoundError, UnauthorizedError, ValidationError, ConflictError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import * as storage from '../../../lib/attachmentStorage';
 
@@ -194,11 +194,12 @@ export class UserService {
 
     // §3.4 #6 — changing one's own password or email requires the current password.
     // An ADMIN editing another user is exempt.
+    // 400, not 401: the session is valid — a 401 here made the client treat it as an expired session (H2 21-1).
     const isSelf = actor.userId === id;
     if (isSelf && (data.password || data.email !== undefined)) {
       const withHash = await this.userRepository.getUserByUsername(existingUser.username);
       if (!data.currentPassword || !withHash || !(await bcrypt.compare(data.currentPassword, withHash.password))) {
-        throw new UnauthorizedError('Current password is required to change password or email');
+        throw new AppError('Current password is required to change password or email', 400, 'CURRENT_PASSWORD_INVALID');
       }
     }
 
