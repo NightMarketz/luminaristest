@@ -16,6 +16,7 @@ import { ReconciliationPanel } from './components/ReconciliationPanel';
 import { PaymentProviderPanel } from './components/PaymentProviderPanel';
 import { NfePanel } from './components/NfePanel';
 import { CompliancePanel } from './components/CompliancePanel';
+import { PartnersSection } from './components/PartnersSection';
 import { SpedGenerationPanel } from './components/SpedGenerationPanel';
 import { ReviewPanel } from './components/ReviewPanel';
 import { DeliveryPanel } from './components/DeliveryPanel';
@@ -581,7 +582,7 @@ export function AccountingView() {
           <div className="space-y-8">
             <CompliancePanel unitId={unitId} />
             <LalurPanel unitId={unitId} />
-            <SpedGenerationPanel unitId={unitId} />
+            <SpedGenerationPanel unitId={unitId} onIrCadastroSocios={() => setActiveTab('perfil-fiscal')} />
             <ReviewPanel unitId={unitId} onNavigateTab={(tab) => setActiveTab(tab)} />
             <AccountantAssignmentSection unitId={unitId} />
             <DeliveryPanel unitId={unitId} onNavigateTab={(tab) => setActiveTab(tab)} />
@@ -603,6 +604,7 @@ export function AccountingView() {
       {activeTab === 'perfil-fiscal' && unitId && (
         <div className="space-y-8">
           <FiscalProfilePanel unitId={unitId} />
+          <PartnersSection unitId={unitId} />
           <MeiEnquadramentoSection unitId={unitId} anoInicial={meiAno} />
           <PresumidoServicosSection unitId={unitId} />
           <ServiceFiscalProfilesPanel unitId={unitId} />

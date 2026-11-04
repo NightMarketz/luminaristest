@@ -50,15 +50,20 @@ export class PartnerService {
     private readonly jcp: Pick<IInterestOnEquityRepository, 'existsAlocacaoDoSocio'>,
   ) {}
 
-  /** Item 3 — sócios vigentes na `data` (hoje no fuso do escopo, sem ela) e a soma das participações. */
-  async list(scope: AccountingScope, data?: string): Promise<PartnerListView> {
+  /**
+   * Item 3 — sócios vigentes na `data` (hoje no fuso do escopo, sem ela) e a soma das participações.
+   * FE-INCR-ECF-Y600 PR-2 (item 16): com `todas`, `socios` traz todas as vigências vivas (inclusive as encerradas e as
+   * futuras); `data`, a soma e o aviso seguem sobre as vigentes no dia.
+   */
+  async list(scope: AccountingScope, data?: string, todas = false): Promise<PartnerListView> {
     this.assertRead(scope);
     const dia = data ?? scopeToday(scope);
-    const socios = (await this.repo.list(scope)).filter((p) => vigenteEm(p, dia));
-    const soma = somaParticipacaoBp(socios);
+    const vivos = await this.repo.list(scope);
+    const vigentes = vivos.filter((p) => vigenteEm(p, dia));
+    const soma = somaParticipacaoBp(vigentes);
     return {
       data: dia,
-      socios: socios.map(toView),
+      socios: (todas ? vivos : vigentes).map(toView),
       somaParticipacaoBp: soma,
       aviso:
         soma === PARTICIPACAO_TOTAL_BP

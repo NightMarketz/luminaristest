@@ -19,6 +19,7 @@ receitaBrutaAnualCents?: (number | null)
 export interface ListPartnersQueryInput {
 unitId: string
 data?: string
+todas?: "true"
 }
 export interface PartnerIdParamInput {
 id: string

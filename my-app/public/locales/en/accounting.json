@@ -581,7 +581,8 @@
           "01": "Procurador",
           "06": "Outro"
         }
-      }
+      },
+      "irCadastro": "Go to the partner register"
     }
   },
   "trialBalance": {
@@ -3738,6 +3739,58 @@
     "erros": {
       "NATUREZA_RENDIMENTO_SEM_MAPA": "A withholding has no published income nature code: check the supplier withholding profile.",
       "REINF_SEM_CONTATO": "Set the accountant with a CPF in the fiscal profile: they are the R-1000 contact."
+    }
+  },
+  "partners": {
+    "title": "Partners",
+    "description": "Registry of the company's partners and of each one's terms — used by the ECF (Y600) and by profit and interest-on-equity distributions.",
+    "filtroData": "In force on (empty = all terms)",
+    "new": "New partner",
+    "loading": "Loading…",
+    "empty": "No partner registered.",
+    "col": {
+      "nome": "Name",
+      "taxId": "CPF/CNPJ",
+      "tipo": "Type",
+      "residencia": "Residence",
+      "participacao": "Share",
+      "entrada": "Entry",
+      "saida": "Exit",
+      "acoes": "Actions"
+    },
+    "residente": "Brazil",
+    "naoResidente": "Abroad",
+    "edit": "Edit",
+    "remove": "Remove",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "removing": "Removing…",
+    "modal": {
+      "newTitle": "New partner",
+      "editTitle": "Edit partner"
+    },
+    "removeModal": {
+      "title": "Remove partner",
+      "confirm": "Confirm removal",
+      "note": "Removing is for a wrong entry. If the partner left the company, edit and set the exit date."
+    },
+    "field": {
+      "nome": "Name",
+      "taxId": "CPF or CNPJ (digits only)",
+      "residencia": "Residence",
+      "participacao": "Share of capital (%)",
+      "entrada": "Entry",
+      "saida": "Exit (optional)"
+    },
+    "error": {
+      "load": "Could not load the partners.",
+      "save": "Could not save the partner.",
+      "remove": "Could not remove the partner.",
+      "nomeObrigatorio": "Enter the partner's name.",
+      "taxIdFormato": "CPF (11 digits) or CNPJ (14 digits), numbers only.",
+      "participacaoInvalida": "Invalid share: a percentage between 0 and 100.",
+      "entradaObrigatoria": "Enter the entry date."
     }
   }
 }

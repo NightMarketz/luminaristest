@@ -95,6 +95,25 @@ describe('IRRF-DISTRIBUICAO PR-1 — sócios (itens 1–4)', () => {
     expect([r.status, r.body.data.residenteBrasil]).toEqual([201, false]);
   });
 
+  // FE-INCR-ECF-Y600 PR-2 (item 16; dono, chat, 03/11: "Param. novo no GET /partners") — a tela de cadastro lista tudo.
+  it('PR-2: ?todas=true traz todas as vigências vivas (encerrada e futura); data, soma e aviso seguem os de hoje; todas+data → 400', async () => {
+    const q = (query: Record<string, string>) => request(app).get(BASE).set(authHeader(dono)).query({ unitId: UNIT, ...query });
+    const todas = await q({ todas: 'true' });
+    const hoje = await q({});
+    expect(todas.status).toBe(200);
+    const ids = (r: typeof todas) => (r.body.data.socios as Array<{ id: string }>).map((x) => x.id);
+    expect(ids(todas)).toEqual(expect.arrayContaining(ids(hoje)));
+    expect(ids(todas).length).toBe(await prisma.partner.count({ where: { userId: dono.id, deletedAt: null } }));
+    const socios = todas.body.data.socios as Array<{ saidaEm: string | null; entradaEm: string }>;
+    expect(socios.some((x) => x.saidaEm === '2026-03-31')).toBe(true); // encerrada
+    expect(socios.some((x) => x.entradaEm === '2027-01-01')).toBe(true); // futura
+    expect([todas.body.data.data, todas.body.data.somaParticipacaoBp, todas.body.data.aviso]).toEqual([
+      hoje.body.data.data, hoje.body.data.somaParticipacaoBp, hoje.body.data.aviso,
+    ]);
+    expect((await q({ todas: 'true', data: '2026-03-15' })).status).toBe(400);
+    expect((await q({ todas: 'false' })).status).toBe(400);
+  });
+
   it('tenancy e soft-delete: id de outra PJ → 404; DELETE some da lista e libera a vigência', async () => {
     const r = await post({ ...SOCIO, taxId: '71428793860', participacaoBp: 0 });
     const id = r.body.data.id as string;

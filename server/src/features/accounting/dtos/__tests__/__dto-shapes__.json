@@ -11461,6 +11461,10 @@
         },
         "data": {
           "type": "string"
+        },
+        "todas": {
+          "type": "string",
+          "const": "true"
         }
       },
       "required": [

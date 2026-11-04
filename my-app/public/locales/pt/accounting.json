@@ -581,7 +581,8 @@
           "01": "Procurador",
           "06": "Outro"
         }
-      }
+      },
+      "irCadastro": "Ir para o cadastro de sócios"
     }
   },
   "trialBalance": {
@@ -3738,6 +3739,58 @@
     "erros": {
       "NATUREZA_RENDIMENTO_SEM_MAPA": "Uma retenção não tem natureza do rendimento publicada: confira o perfil de retenção do fornecedor.",
       "REINF_SEM_CONTATO": "Indique no perfil fiscal o contador com CPF: ele é o contato do R-1000."
+    }
+  },
+  "partners": {
+    "title": "Sócios",
+    "description": "Cadastro dos sócios da empresa e das vigências de cada um — usado pela ECF (Y600) e pela distribuição de lucros e JCP.",
+    "filtroData": "Vigentes em (vazio = todas as vigências)",
+    "new": "Novo sócio",
+    "loading": "Carregando…",
+    "empty": "Nenhum sócio cadastrado.",
+    "col": {
+      "nome": "Nome",
+      "taxId": "CPF/CNPJ",
+      "tipo": "Tipo",
+      "residencia": "Residência",
+      "participacao": "Participação",
+      "entrada": "Entrada",
+      "saida": "Saída",
+      "acoes": "Ações"
+    },
+    "residente": "Brasil",
+    "naoResidente": "Exterior",
+    "edit": "Editar",
+    "remove": "Remover",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "saving": "Salvando…",
+    "removing": "Removendo…",
+    "modal": {
+      "newTitle": "Novo sócio",
+      "editTitle": "Editar sócio"
+    },
+    "removeModal": {
+      "title": "Remover sócio",
+      "confirm": "Confirmar remoção",
+      "note": "Remover é para cadastro errado. Se o sócio saiu da sociedade, edite e informe a data de saída."
+    },
+    "field": {
+      "nome": "Nome",
+      "taxId": "CPF ou CNPJ (só dígitos)",
+      "residencia": "Residência",
+      "participacao": "Participação no capital (%)",
+      "entrada": "Entrada",
+      "saida": "Saída (opcional)"
+    },
+    "error": {
+      "load": "Erro ao carregar os sócios.",
+      "save": "Não foi possível salvar o sócio.",
+      "remove": "Não foi possível remover o sócio.",
+      "nomeObrigatorio": "Informe o nome do sócio.",
+      "taxIdFormato": "CPF (11 dígitos) ou CNPJ (14 dígitos), só números.",
+      "participacaoInvalida": "Participação inválida: um percentual entre 0 e 100.",
+      "entradaObrigatoria": "Informe a data de entrada."
     }
   }
 }
