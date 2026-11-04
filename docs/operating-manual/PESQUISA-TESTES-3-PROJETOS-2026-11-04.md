@@ -148,8 +148,9 @@ decisão do dono (§7).
 ## 5. Mutação e análise de impacto (tema 5)
 
 - **Stryker incremental.** Já está no Luminaris (`@stryker-mutator/core` 8.7.1 no lockfile [lido: lockfile]). A doc fala
-  de `--incremental`, do relatório em `reports/stryker-incremental.json`, e de reuso de "Killed" quando o teste culpado
-  não mudou [lido]. A detecção de mudança de teste depende do runner: Jest e Vitest usam localização, então vale
+  de `--incremental` e de reuso de "Killed" quando o teste culpado
+  não mudou [lido]. O nosso já está ligado em `server/stryker.config.mjs:54-55`, com o relatório em
+  `reports/mutation/stryker-incremental.json` (o caminho padrão da doc é outro) [lido]. A detecção de mudança de teste depende do runner: Jest e Vitest usam localização, então vale
   conferir se o reuso é fino ou conservador no nosso caso.
 - **Cache do relatório.** Se o `reports/` não for cacheado no CI, o incremental roda do zero a cada job. Hoje o
   mutation roda fora do CI [lido na rodada 1]. Ver se o cache seria viável é uma pergunta aberta, não uma recomendação.
