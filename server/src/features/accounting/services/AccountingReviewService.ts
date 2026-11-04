@@ -314,7 +314,7 @@ export class AccountingReviewService {
       date: dto.postingDate,
       description: adjustmentDescription(review.id, seq, dto.description),
       sourceType: REVIEW_ADJUSTMENT_SOURCE_TYPE,
-      automaticWriter: true,
+      extemporaneousReason: dto.extemporaneousReason,
       sourceId: finding.id,
       lines: dto.lines,
     };
@@ -332,6 +332,7 @@ export class AccountingReviewService {
         lancamentoId: finding.locator,
         reversalPostingDate: dto.postingDate,
         reason: `Estorno — revisão ${review.id}, achado ${finding.id}`,
+        extemporaneousReason: dto.extemporaneousReason,
       });
     }
 

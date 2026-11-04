@@ -275,6 +275,8 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
   const [isReversing, setIsReversing] = useState(false);
   // ITG 2000 item 32: o estorno exige o motivo da retificação (o servidor recusa sem ele).
   const [reverseReason, setReverseReason] = useState('');
+  // ITG 2000 item 36: data do estorno num período fechado e reaberto exige a razão do registro extemporâneo.
+  const [reverseExtemporaneousReason, setReverseExtemporaneousReason] = useState('');
   const [receiptBusyId, setReceiptBusyId] = useState<string | null>(null);
   // ── audit chain verification (FE-INCR-AUDIT-PROVENANCE, F-FEAP-1a) ─────────
   const [isVerifyingChain, setIsVerifyingChain] = useState(false);
@@ -314,7 +316,14 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
     setError(null);
     setPeriodError(false);
     try {
-      await accountingService.reverseEntry({ unitId, lancamentoId: confirmReverseId, reversalPostingDate: reversalDate, reason: reverseReason.trim() });
+      const extemporaneousReason = reverseExtemporaneousReason.trim();
+      await accountingService.reverseEntry({
+        unitId,
+        lancamentoId: confirmReverseId,
+        reversalPostingDate: reversalDate,
+        reason: reverseReason.trim(),
+        ...(extemporaneousReason && { extemporaneousReason }),
+      });
       setConfirmReverseId(null);
       await fetchEntries();
       onReversalComplete?.();
@@ -441,7 +450,7 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
                 <JournalEntryRow
                   key={entry.id}
                   entry={entry}
-                  onReverseClick={(id) => { setReverseReason(''); setConfirmReverseId(id); }}
+                  onReverseClick={(id) => { setReverseReason(''); setReverseExtemporaneousReason(''); setConfirmReverseId(id); }}
                   onReceiptClick={(id) => void handleDownloadReceipt(id)}
                   onProvenanceClick={(id) => void handleShowProvenance(id)}
                   receiptBusyId={receiptBusyId}
@@ -527,6 +536,21 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
               onChange={(e) => setReverseReason(e.target.value)}
               className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 focus:border-red-500 focus:outline-none"
             />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="reverse-extemporaneous-reason" className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
+              {t('journalEntryModal.field.extemporaneousReason', 'Razão do registro extemporâneo')}
+            </label>
+            <input
+              id="reverse-extemporaneous-reason"
+              type="text"
+              value={reverseExtemporaneousReason}
+              onChange={(e) => setReverseExtemporaneousReason(e.target.value)}
+              className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 focus:border-red-500 focus:outline-none"
+            />
+            <p className="text-xs text-neutral-500">
+              {t('journalEntryModal.field.extemporaneousReasonHelp', 'Opcional. Exigida quando a data cai num período que já foi fechado.')}
+            </p>
           </div>
           <p className="text-neutral-400">
             {t('journalEntries.confirmModal.warning', 'Um novo lançamento oposto será criado automaticamente na data acima. Esta ação não pode ser desfeita.')}

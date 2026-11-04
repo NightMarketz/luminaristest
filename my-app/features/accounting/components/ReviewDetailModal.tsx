@@ -450,10 +450,13 @@ function AdjustmentModal({
 }) {
   const { t } = useAccountingT();
   const [reverseOriginal, setReverseOriginal] = useState(false);
+  // ITG 2000 item 36: o acerto é feito por pessoa — em período fechado e reaberto, a razão é a digitada.
+  const [extemporaneousReason, setExtemporaneousReason] = useState('');
   const isI200 = finding.register === 'I200';
   const submit = async (value: JournalEntrySubmitValue) => {
     const body: AdjustmentEntryInput = { unitId, postingDate: value.date, description: value.description, lines: value.lines };
     if (isI200) body.reverseOriginal = reverseOriginal;
+    if (extemporaneousReason.trim()) body.extemporaneousReason = extemporaneousReason.trim();
     return accountingReviewService.postAdjustment(reviewId, finding.id, body);
   };
   return (
@@ -475,6 +478,19 @@ function AdjustmentModal({
               {t('review.adjustment.reverseOriginal', 'Estornar também o lançamento original (I200)')}
             </label>
           )}
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="adjustment-extemporaneous-reason" className="font-semibold uppercase tracking-widest">
+              {t('journalEntryModal.field.extemporaneousReason', 'Razão do registro extemporâneo')}
+            </label>
+            <input
+              id="adjustment-extemporaneous-reason"
+              type="text"
+              value={extemporaneousReason}
+              onChange={(e) => setExtemporaneousReason(e.target.value)}
+              className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none"
+            />
+            <p className="text-neutral-500">{t('journalEntryModal.field.extemporaneousReasonHelp', 'Opcional. Exigida quando a data cai num período que já foi fechado.')}</p>
+          </div>
         </div>
       }
     />

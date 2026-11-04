@@ -86,6 +86,29 @@ describe('ImportExportPanel — onCommitSuccess (FE-INCR6 W1)', () => {
     await waitFor(() => expect(spy).toHaveBeenCalledTimes(1));
   });
 
+  // TESTE-GUARDA — ITG 2000 item 36, C4 item 4 (decisão do dono, 04/11): a importação com data num período fechado e
+  // reaberto exige a razão do registro extemporâneo; o job a recebe no upload, para a prévia já julgar a linha.
+  it('a razão do registro extemporâneo digitada vai no upload do job', async () => {
+    vi.mocked(dataExchangeService.importFile).mockResolvedValue(job());
+    const { container } = render(<ImportExportPanel unitId="u1" />);
+
+    fireEvent.change(screen.getByLabelText('Razão do registro extemporâneo'), { target: { value: ' notas recebidas depois do fechamento ' } });
+    const file = new File(['a,b'], 'x.csv', { type: 'text/csv' });
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(dataExchangeService.importFile).toHaveBeenCalledWith('IMPORT_JOURNAL_ENTRIES', 'u1', file, 'notas recebidas depois do fechamento'),
+    );
+  });
+
+  it('no plano de contas o campo da razão do extemporâneo não aparece (nada é lançado)', () => {
+    const { container } = render(<ImportExportPanel unitId="u1" />);
+    const tipo = container.querySelector('select') as HTMLSelectElement;
+    fireEvent.change(tipo, { target: { value: 'IMPORT_CHART_OF_ACCOUNTS' } });
+
+    expect(screen.queryByLabelText('Razão do registro extemporâneo')).toBeNull();
+  });
+
   it('NÃO chama onCommitSuccess quando nada foi gravado (job FAILED, committedRows = 0)', async () => {
     const spy = vi.fn();
     await uploadAndCommit(job({ status: 'FAILED', committedRows: 0 }), spy);

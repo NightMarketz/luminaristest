@@ -171,6 +171,8 @@ export type JobRowsQueryDto = z.infer<typeof JobRowsQuerySchema>;
 export const ImportUploadSchema = z.object({
   kind: z.enum(IMPORT_KINDS),
   unitId: z.string().min(1),
+  // ITG 2000 (R1) item 36: razão do registro extemporâneo do job (lançamentos e saldos iniciais em período reaberto).
+  extemporaneousReason: z.string().trim().min(1).optional(),
 });
 export type ImportUploadDto = z.infer<typeof ImportUploadSchema>;
 

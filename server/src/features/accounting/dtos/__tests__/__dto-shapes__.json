@@ -1772,6 +1772,10 @@
         },
         "reverseOriginal": {
           "type": "boolean"
+        },
+        "extemporaneousReason": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -4043,6 +4047,10 @@
         "unitId": {
           "type": "string",
           "minLength": 1
+        },
+        "extemporaneousReason": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -5632,6 +5640,10 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 9007199254740991
+        },
+        "extemporaneousReason": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -12923,6 +12935,10 @@
           "type": "string"
         },
         "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "extemporaneousReason": {
           "type": "string",
           "minLength": 1
         }

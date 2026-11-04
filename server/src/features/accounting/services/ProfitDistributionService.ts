@@ -260,6 +260,7 @@ export class ProfitDistributionService {
         lancamentoId: row.entryId,
         reversalPostingDate: row.dataEvento,
         reason: `distribuição de lucros ${row.id} cancelada`,
+        automaticWriter: true,
       });
     }
     await this.repo.runTransaction(async (tx) => {

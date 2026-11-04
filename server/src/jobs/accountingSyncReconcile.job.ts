@@ -1914,8 +1914,9 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
       await posting.reverseEntry(scope, {
         unitId,
         lancamentoId: entryId,
-        reversalPostingDate: new Date().toISOString(),
+        reversalPostingDate: scopeToday(scope),
         reason: 'Cancelamento da venda — estorno refeito pela reconciliação contábil',
+        automaticWriter: true,
       });
     };
 
@@ -2424,8 +2425,9 @@ export async function retryOneReconcilePendingItem(
     await posting.reverseEntry(s, {
       unitId,
       lancamentoId: entryId,
-      reversalPostingDate: new Date().toISOString(),
+      reversalPostingDate: scopeToday(s),
       reason: 'Cancelamento da venda — estorno refeito pela reconciliação contábil',
+      automaticWriter: true,
     });
   };
 

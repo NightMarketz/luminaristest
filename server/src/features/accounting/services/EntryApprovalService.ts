@@ -241,7 +241,14 @@ export class EntryApprovalService {
 
     await this.postingRepo.runTransaction(async (tx) => {
       // Authoritative period gate — inside the tx, before the Posted write (T6/ACC-011).
-      await this.assertPeriodOpenTx(tx, scope, entry.date);
+      const { jaFechado } = await this.assertPeriodOpenTx(tx, scope, entry.date);
+      // ITG 2000 (R1) item 36 — mesma regra do PostingService.postEntry; aprovar é ato humano, sem razão automática.
+      const razao = dto.extemporaneousReason?.trim();
+      if (jaFechado && !razao) {
+        throw new ValidationError(
+          'Lançamento em período já fechado e reaberto: informe a razão do registro extemporâneo (ITG 2000, item 36).',
+        );
+      }
 
       // Tamper check (ACC-023): the frozen hash must still match the current legs. A submitted
       // entry ALWAYS carries a hash (frozen at submit); its absence means a corrupt/out-of-band
@@ -293,6 +300,9 @@ export class EntryApprovalService {
           fiscalYear,
           entryNumber,
           version: newVersion,
+          ...(jaFechado && {
+            description: `${entry.description} — registro extemporâneo; ocorrência em ${entry.date.toISOString().slice(0, 10).split('-').reverse().join('/')}; razão: ${razao}`,
+          }),
         },
         tx,
       );
@@ -487,11 +497,13 @@ export class EntryApprovalService {
     tx: Prisma.TransactionClient,
     scope: AccountingScope,
     date: Date,
-  ): Promise<void> {
+  ): Promise<{ jaFechado: boolean }> {
     const { year, month } = this.extractYearMonth(date);
     const period = await this.periodRepo.findByYearMonth(scope, year, month, tx);
     if (!period || period.status !== 'OPEN') {
       throw new AccountingPeriodNotOpenError(year, month);
     }
+    // OPEN com closedAt = fechado e reaberto (a reabertura não limpa o closedAt), como no PostingService.
+    return { jaFechado: period.closedAt != null };
   }
 }

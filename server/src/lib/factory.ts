@@ -1992,6 +1992,7 @@ export class ApplicationFactory {
         auditService,
         postingService,
         postingService,
+        this.repositories.accountingPeriod, // ITG 2000 item 36: período fechado e reaberto na prévia
       ),
       receipt: new ReceiptService(
         this.repositories.journalEntry,

@@ -363,6 +363,7 @@ export class IbsCbsAssessmentService {
       lancamentoId: entry.id,
       reversalPostingDate: fimDoMes(row.anoCalendario, row.mes),
       reason: `apuração ${row.id} substituída`,
+      automaticWriter: true,
     });
   }
 

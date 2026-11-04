@@ -874,6 +874,10 @@
           "reverseOriginal": {
             "type": "boolean",
             "description": "Só quando register='I200' — estorna o lançamento apontado pelo locator antes do acerto"
+          },
+          "extemporaneousReason": {
+            "type": "string",
+            "description": "Razão do registro extemporâneo (ITG 2000, item 36) — exigida quando a data cai num período já fechado e reaberto"
           }
         }
       },
@@ -1471,6 +1475,10 @@
           "expectedVersion": {
             "type": "integer",
             "minimum": 1
+          },
+          "extemporaneousReason": {
+            "type": "string",
+            "description": "Razão do registro extemporâneo (ITG 2000, item 36) — exigida quando a data do rascunho cai num período já fechado e reaberto"
           }
         }
       },
@@ -3386,6 +3394,10 @@
           "reason": {
             "type": "string",
             "description": "Motivo da retificação (ITG 2000, item 32) — obrigatório"
+          },
+          "extemporaneousReason": {
+            "type": "string",
+            "description": "Razão do registro extemporâneo (ITG 2000, item 36) — exigida quando a data do estorno cai num período já fechado e reaberto"
           }
         }
       },
@@ -9614,6 +9626,10 @@
                     "type": "string",
                     "format": "binary",
                     "description": "CSV or XLSX"
+                  },
+                  "extemporaneousReason": {
+                    "type": "string",
+                    "description": "Razão do registro extemporâneo (ITG 2000, item 36). Sem ela, lançamento ou saldo inicial com data num período fechado e reaberto sai INVÁLIDO (EXTEMPORANEOUS_REASON_REQUIRED) na prévia"
                   }
                 }
               }

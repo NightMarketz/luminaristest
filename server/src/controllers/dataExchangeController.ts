@@ -141,7 +141,7 @@ export const createDataExchangeImport = async (req: Request, res: Response) => {
         originalname: file.originalname,
         mimetype: file.mimetype,
         buffer: file.buffer,
-      });
+      }, parsed.data.extemporaneousReason);
 
     return res.status(201).json({ success: true, data });
   } catch (error) {

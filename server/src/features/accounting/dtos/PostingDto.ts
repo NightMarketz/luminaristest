@@ -124,6 +124,7 @@ export const PostEntrySchema = z.object({
  *         lancamentoId:        { type: string }
  *         reversalPostingDate: { type: string, description: "Date-only string YYYY-MM-DD for the reversal entry (and period gate)" }
  *         reason:              { type: string, description: "Motivo da retificação (ITG 2000, item 32) — obrigatório" }
+ *         extemporaneousReason: { type: string, description: "Razão do registro extemporâneo (ITG 2000, item 36) — exigida quando a data do estorno cai num período já fechado e reaberto" }
  */
 export const ReverseEntrySchema = z.object({
   unitId: z.string().min(1),
@@ -131,6 +132,8 @@ export const ReverseEntrySchema = z.object({
   reversalPostingDate: z.string().refine(isValidDateOnly, 'reversalPostingDate deve ser uma data real YYYY-MM-DD'),
   // ITG 2000 (R1) item 32: o histórico do estorno precisa o motivo da retificação.
   reason: z.string().trim().min(1, 'Informe o motivo do estorno'),
+  // ITG 2000 (R1) item 36: razão do registro extemporâneo quando a data do estorno cai num período fechado e reaberto.
+  extemporaneousReason: z.string().trim().min(1).optional(),
 });
 
 /** @openapi
@@ -256,7 +259,10 @@ export type PostEntryInput = z.infer<typeof PostEntrySchema> & {
    */
   automaticWriter?: boolean;
 };
-export type ReverseEntryInput = z.infer<typeof ReverseEntrySchema>;
+export type ReverseEntryInput = z.infer<typeof ReverseEntrySchema> & {
+  /** INTERNO — o mesmo marcador de `PostEntryInput.automaticWriter`, para o estorno de um gravador interno. */
+  automaticWriter?: boolean;
+};
 export type ReportQueryInput = z.infer<typeof ReportQuerySchema>;
 export type ListAccountsQueryInput = z.infer<typeof ListAccountsQuerySchema>;
 export type ListEntriesQueryInput = z.infer<typeof ListEntriesQuerySchema>;

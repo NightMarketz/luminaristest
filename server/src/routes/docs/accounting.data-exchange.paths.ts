@@ -184,6 +184,7 @@
  *                 kind:   { type: string, enum: [IMPORT_CHART_OF_ACCOUNTS, IMPORT_OPENING_BALANCES, IMPORT_JOURNAL_ENTRIES] }
  *                 unitId: { type: string }
  *                 file:   { type: string, format: binary, description: CSV or XLSX }
+ *                 extemporaneousReason: { type: string, description: "Razão do registro extemporâneo (ITG 2000, item 36). Sem ela, lançamento ou saldo inicial com data num período fechado e reaberto sai INVÁLIDO (EXTEMPORANEOUS_REASON_REQUIRED) na prévia" }
  *       responses:
  *         '201':
  *           description: Import validated and staged
