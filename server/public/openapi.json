@@ -18645,6 +18645,57 @@
         }
       }
     },
+    "/api/accounting/sped/ecf/y600/vigencias": {
+      "get": {
+        "summary": "Partner terms (vigencias) the ECF Y600 of a year requires, for the SPED screen",
+        "description": "FE-INCR-ECF-Y600 PR-0 (F-FE-Y600-1 - b). Read-only. Lists the live Partner terms that cross the year, computed by the same selection the ECF generator uses (selecionarVigenciasDoAno), so the screen asks for the ECF complement of exactly the partnerIds the generate call will require. dtFimSoc is the actual exit in the year (null on a participation change). The tax id is returned as its last 4 digits only (taxIdFinal). somaParticipacaoFimBp is informative (F-Y600-8, not blocking). Same read policy as the partners list.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "year",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 2015,
+              "maximum": 2100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ year, vigencias: [{ partnerId, nome, taxIdFinal, tipoPessoa, residenteBrasil, participacaoBp, entradaEm, saidaEm, dtFimSoc, vigenteNoFim }], somaParticipacaoFimBp }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      }
+    },
     "/api/accounting/sped/ecf/generate": {
       "post": {
         "summary": "Generate the SPED Fiscal (ECF) .txt file for a year (Lucro Presumido)",

@@ -18311,6 +18311,188 @@
         "irRetCents"
       ],
       "additionalProperties": false
+    },
+    "Y600VigenciaViewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "partnerId": {
+          "type": "string"
+        },
+        "nome": {
+          "type": "string"
+        },
+        "taxIdFinal": {
+          "type": "string"
+        },
+        "tipoPessoa": {
+          "type": "string",
+          "enum": [
+            "PF",
+            "PJ"
+          ]
+        },
+        "residenteBrasil": {
+          "type": "boolean"
+        },
+        "participacaoBp": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "entradaEm": {
+          "type": "string"
+        },
+        "saidaEm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dtFimSoc": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "vigenteNoFim": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "partnerId",
+        "nome",
+        "taxIdFinal",
+        "tipoPessoa",
+        "residenteBrasil",
+        "participacaoBp",
+        "entradaEm",
+        "saidaEm",
+        "dtFimSoc",
+        "vigenteNoFim"
+      ],
+      "additionalProperties": false
+    },
+    "Y600VigenciasQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": 2015,
+          "maximum": 2100
+        }
+      },
+      "required": [
+        "unitId",
+        "year"
+      ],
+      "additionalProperties": false
+    },
+    "Y600VigenciasViewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "year": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "vigencias": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "partnerId": {
+                "type": "string"
+              },
+              "nome": {
+                "type": "string"
+              },
+              "taxIdFinal": {
+                "type": "string"
+              },
+              "tipoPessoa": {
+                "type": "string",
+                "enum": [
+                  "PF",
+                  "PJ"
+                ]
+              },
+              "residenteBrasil": {
+                "type": "boolean"
+              },
+              "participacaoBp": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "entradaEm": {
+                "type": "string"
+              },
+              "saidaEm": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "dtFimSoc": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "vigenteNoFim": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "partnerId",
+              "nome",
+              "taxIdFinal",
+              "tipoPessoa",
+              "residenteBrasil",
+              "participacaoBp",
+              "entradaEm",
+              "saidaEm",
+              "dtFimSoc",
+              "vigenteNoFim"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "somaParticipacaoFimBp": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "year",
+        "vigencias",
+        "somaParticipacaoFimBp"
+      ],
+      "additionalProperties": false
     }
   },
   "SpedEcfRealDto.ts": {
