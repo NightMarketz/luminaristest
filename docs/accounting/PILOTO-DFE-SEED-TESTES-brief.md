@@ -3,7 +3,8 @@
 > Produzido em `sessao-planejamento` (2026-11-04). Item 1 da §7 ("Ordem de ataque proposta") de
 > `docs/operating-manual/INVENTARIO-TESTES-RUNBOOKS-2026-11-04.md` (PR draft NightMarketz/luminaristest#1065, branch
 > `claude/inventario-testes-runbooks`, ainda fora de `main`). **Este documento NÃO escreve código.** Traz o checklist,
-> os contratos esboçados e os forks F-PIL-1..9, **todos com RATIFICAÇÃO PENDENTE**. A `sessao-feature` só abre com
+> os contratos esboçados e os forks F-PIL-1..9. O **F-PIL-1 foi ratificado pelo questionário do dono de 04/11**
+> ([D-2026-11-04-PILOTO-DFE-SEED](../plano/decisoes/D-2026-11-04-PILOTO-DFE-SEED.md)); **F-PIL-2..9 seguem com RATIFICAÇÃO PENDENTE**. A `sessao-feature` só abre com
 > "executa" do dono, depois dos forks.
 
 ---
@@ -20,9 +21,19 @@
   runbooks foram considerados humanos e manuais e estavam travando um monte de tarefas, sendo que na realidade eles eram
   inúteis"*. **Cobre:** este BRIEF. **Não cobre:** código, a emenda do `RUNBOOK-FORMAT`, os seeds dos outros 13
   runbooks, nem o IMO-1 (item 2 da §7, que tem sessão própria).
-  **Divergência registrada:** o `PESQUISA-TESTES` §7.1 diz *"Decisão do dono (chat, 04/11): seed em banco descartável,
-  com piloto no DFE-MANUAL"*, mas o inventário (§7) e o pedido desta sessão dizem que o seed descartável **não** foi
-  ratificado. Por isso ele entra como fork F-PIL-1, para o dono confirmar, e não como fato.
+  **Questionário do dono (chat, 04/11), respostas literais** repassadas pela sessão "Playwright: screenshot, CLI e
+  DevTools" (local_7680184c) e pela sessão do DFE-MANUAL, em adendo a esta:
+  - banco do seed: *"Descartável (Recomendado)"*, uma cópia do banco-modelo da integração, criada a cada execução e
+    jogada fora, sem tocar o dev.db real;
+  - escopo: *"Piloto no DFE-MANUAL (Recomendado)"*, com seed do DFE (unidade com CNPJ, cliente com CPF, serviço com NBS,
+    perfil fiscal completo), testes do caminho feliz e runbook reescrito só com o portal;
+  - fluxo: *"BRIEF primeiro (Recomendado)"*: o BRIEF diz o formato do seed, onde vive, o comando e os forks; o dono
+    ratifica, e o executa roda depois;
+  - quem faz: *"Sessão do DFE-MANUAL (Recomendado)"*, por handoff a esta sessão.
+
+  **Limite:** planejar, não codar. Registro: [D-2026-11-04-PILOTO-DFE-SEED](../plano/decisoes/D-2026-11-04-PILOTO-DFE-SEED.md) e campo `autorizacao` da nota
+  [FE-INCR-DFE](../plano/nos/FE-INCR-DFE.md). A delegação de 02/11 ([D-2026-11-02-DELEGACAO-DONO](../plano/decisoes/D-2026-11-02-DELEGACAO-DONO.md)) cobre as cédulas que estavam pendentes
+  **em 02/11** e não alcança os forks novos deste BRIEF.
 - **Insumos lidos nesta sessão (grau: verificado, salvo indicação):**
   - Execução de 04/11 do runbook (`72315294` em `claude/c7-runbooks-irmaos-4759d6`). Desfecho **BLOQUEADO** em P4/P5/P6
     (unidade sem CNPJ, serviço sem cNBS, cliente sem CPF, perfil sem tributos aproximados est./mun. nem CST/cClassTrib)
@@ -135,9 +146,12 @@ Cada item diz se é **[direto]** (sem fork) ou **[cond:F-PIL-n]**. "Testável" �
     Testável: os quatro casos de recusa num teste de unidade do `runCli`, que é puro como o
     `assertSafeEnvironment`. O de **(c) roda na condição que falha**: um `DATABASE_URL` apontando o dev.db real tem de
     sair 1 (memória `gate-predicate-environment-class`).
-13. **[cond:F-PIL-3]** **Criação do banco descartável**: um comando cria `server/prisma/scenarios/dfe-manual.db` do
-    zero (já ignorado pelo `*.db` do `server/.gitignore`) e imprime como subir server e app sobre ele. Só depois roda
-    o item 12.
+13. **[direto, F-PIL-1 ✅] + [cond:F-PIL-3]** **Criação do banco descartável**: a cada execução, um comando copia o
+    banco-modelo da integração (`templateDb()`: schema + parâmetros legais, sem os quais o `lc116()` volta vazio) para
+    `server/prisma/scenarios/dfe-manual.db`, que já é ignorado pelo `*.db` do `server/.gitignore`. O comando também
+    imprime como subir server e app sobre ele. Só depois roda o item 12. **No fim, o banco é jogado fora**: o comando
+    `--drop` trunca o arquivo, sem apagar, pelo mesmo motivo de EBUSY do `pushTestSchema`. A forma de apontar o banco
+    é o F-PIL-3.
 
 ### Fase B — Testes de integração com banco real (sessão de feature; o DFE-1 é instrumentação → correção)
 
@@ -313,11 +327,12 @@ releitura DIVERGENTE não depende do portal, só de um XML com um campo diferent
 - **(a)** Só em banco descartável (`server/prisma/scenarios/<cenário>.db`). O CLI recusa o dev.db real.
 - **(b)** No dev.db real, com `--i-have-a-backup`, como o `seedAccountingFixtureCli`.
 - **(c)** Os dois, com a recusa do (a) desligável por flag.
-- **Recomendação: (a).** A execução de 04/11 alterou e desfez o perfil do dev.db real, e o backup virou rito. O
-  cenário não precisa do histórico do dev.db, e o tenant `cenario-dfe` não se mistura com `seed-presumido`. O custo é
-  que o dono não vê o cenário no banco do dia a dia. **Nota:** o `PESQUISA-TESTES` §7.1 registra (a) como "decisão do
-  dono (chat, 04/11)". Se for isso, basta o dono confirmar.
-- Status: **RATIFICAÇÃO PENDENTE.**
+- Recomendação: (a). A execução de 04/11 alterou e desfez o perfil do dev.db real, e o backup virou rito.
+- Status: **✅ RATIFICADO (a), dono, questionário no chat, 04/11:** *"Descartável (Recomendado)"*: uma cópia do
+  banco-modelo da integração, criada a cada execução e jogada fora, sem tocar o dev.db real
+  ([D-2026-11-04-PILOTO-DFE-SEED](../plano/decisoes/D-2026-11-04-PILOTO-DFE-SEED.md)). Efeitos: o item 13 copia o `templateDb()` a cada execução, e por isso a opção
+  (b) do F-PIL-3 (`migrate deploy`) cai. A idempotência do item 10 continua valendo para a reexecução dentro da mesma
+  execução, por exemplo depois de uma queda no meio.
 
 ### F-PIL-2 — Onde vive o seed
 - **(a)** Flag `--scenario dfe` no `seedAccountingFixtureCli.ts`, ao lado do `:414`. O custo: herda o multi-exercício,
@@ -335,12 +350,14 @@ releitura DIVERGENTE não depende do portal, só de um XML com um campo diferent
   `server/prisma/scenarios/`. O operador aponta o `server/.env` **da worktree** para o cenário, como fez a execução de
   04/11, e um script `scripts/seed-scenario.mjs --fresh` cria o banco copiando o `templateDb()` (schema + parâmetros
   legais, sem os quais o `lc116()` volta vazio) e imprime a linha do `.env`.
-- **(b)** O mesmo (a), mas o script cria o banco com `prisma migrate deploy` + os SQL de parâmetros legais. É mais
-  próximo do dev.db, porque o `migrate status` fica "up to date", e custa mais um caminho de schema.
+- ~~**(b)** O mesmo (a), mas o script cria o banco com `prisma migrate deploy` + os SQL de parâmetros legais.~~
+  Caiu com o F-PIL-1 ✅ ("cópia do banco-modelo da integração"). Se o I-2 mostrar que o server não sobe sobre o
+  modelo, isso volta ao dono como fork novo.
 - **(c)** Variável nova que desliga o `override` no `env.ts`. Toca o boot de tudo e pede ADR (memória
   `env-override-defeats-db-flag`).
 - **Recomendação: (a)**, com uma pergunta aberta: o server de produção sobe sobre um banco de `db push`? Se o boot
-  ou o `migrate status` reclamar, vale (b) (insumo ausente I-2).
+  reclamar, a questão volta ao dono (insumo ausente I-2). O runner de tela segue sob a TELA-LOCK da pasta de notas do
+  grupo.
 - Status: **RATIFICAÇÃO PENDENTE.**
 
 ### F-PIL-4 — O teste de tela entra no CI?
@@ -438,7 +455,7 @@ releitura DIVERGENTE não depende do portal, só de um XML com um campo diferent
 
 | PR | Sessão | Itens | Depende de | Gate |
 |---|---|---|---|---|
-| PR-1 | `sessao-feature` | 1–13 (seed + CLI) e 14–20 (integração verde) | F-PIL-1/2/3/8 | `tsc` (app e `test:types`), `npx jest <cli.test> --selectProjects unit`, o arquivo de integração com `--runInBand`, `check:arch` |
+| PR-1 | `sessao-feature` | 1–13 (seed + CLI) e 14–20 (integração verde) | F-PIL-2/3/8 (F-PIL-1 ✅) | `tsc` (app e `test:types`), `npx jest <cli.test> --selectProjects unit`, o arquivo de integração com `--runInBand`, `check:arch` |
 | PR-2 | `sessao-instrumentacao` | 21 (vermelho de propósito, não mergear) | PR-1 em `main`, F-PIL-5 | o teste reprova pelo id/tabela no texto |
 | PR-3 | `sessao-correcao` | 22 | PR-2 | o teste do PR-2 fica verde; `FiscalDocumentEmissionService.test.ts` segue verde |
 | PR-4 | `sessao-feature` | 23–27, 29 | #1064 e PR-3 em `main`, F-PIL-4/6/7 | o runner sai 0 nos dois roteiros, sobre o banco descartável, em build de produção |
@@ -460,5 +477,6 @@ segue instrumentação → correção. Não se conserta dentro do PR-1.
 4. **Checagem que falharia se eu estivesse errado:** a autoconferência do seed (item 9) e a recusa do dev.db real
    provada na condição que falha (item 12 c). Os itens 21 (a)–(c) reprovam hoje pelo motivo registrado na execução de
    04/11.
-5. **Duas primeiras linhas:** o BRIEF é do piloto, não ratifica nada e depende de 9 forks, com o banco descartável
-   (F-PIL-1) e o acesso à homologação (F-PIL-9) como bloqueios principais.
+5. **Duas primeiras linhas:** o BRIEF é do piloto e não ratifica nada por conta própria. O F-PIL-1 (banco
+   descartável) foi ratificado pelo questionário do dono. Restam 8 forks pendentes, e o acesso à homologação (F-PIL-9)
+   é o bloqueio principal da parte EXT.
