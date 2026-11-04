@@ -4,6 +4,7 @@ import type { AuditService } from '../AuditService';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
 import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import type { AccountingDataExchangeJob, AccountingDataExchangeRow } from 'generated/prisma';
+import { ValidationError } from '../../../../lib/errors';
 
 jest.mock('../../../../lib/attachmentStorage', () => ({
   saveFile: jest.fn(async () => ({ storageKey: 'u/unit/job/rand_import.csv', sanitizedName: 'import.csv' })),
@@ -114,6 +115,26 @@ describe('DataExchangeImportService — chart of accounts', () => {
     expect(createAccount).toHaveBeenCalledTimes(2); // 3.1 and 3.2 new; 1.1.01 skipped
     expect(committed.committedRows).toBe(2);
     expect(committed.status).toBe('COMMITTED');
+  });
+
+  // ERRO-CRU-AO-CLIENTE (GAP-MAP, dono 2026-11-04): `row.errorMessage` sai no DTO da importação. O motivo de domínio
+  // (AppError nosso) continua visível na linha; erro que não é nosso (banco, bug) fica só no log.
+  it('createAccount falha com erro interno ⇒ errorMessage da linha sem o texto interno; erro de domínio passa', async () => {
+    const { repo, rows } = makeRepo();
+    const { poster, createAccount } = makePoster();
+    createAccount
+      .mockRejectedValueOnce(new Error('Invalid `prisma.account.create()` invocation: SQLITE_BUSY: database is locked'))
+      .mockRejectedValueOnce(new ValidationError('Conta-pai 3 não aceita filhas.'));
+    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
+
+    const job = await svc.uploadAndValidate(scope, 'IMPORT_CHART_OF_ACCOUNTS',
+      csv('code,name,nature,acceptsEntries,parentCode\n3.1,Fornecedores,Liability,true,\n3.2,Outra,Liability,true,\n'));
+    await svc.commit(scope, job.id).catch(() => undefined);
+
+    const msgs = (rows.get(job.id) ?? []).map((r) => r.errorMessage);
+    expect(msgs.join(' | ')).not.toContain('prisma');
+    expect(msgs.join(' | ')).not.toContain('SQLITE_BUSY');
+    expect(msgs).toContain('Conta-pai 3 não aceita filhas.');
   });
 });
 
