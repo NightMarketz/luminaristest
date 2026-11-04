@@ -138,6 +138,27 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
     expect(res.status).toBe(409);
   });
 
+  // IMO-1 (RUNBOOK-H2-IMOBILIZADO passo 5; FE-INCR-FIXED-ASSETS-brief.md:38 e item 14 — "409 de CAS"). Outra aba já
+  // ativou o bem (status E version mudaram); quem chega com o version VELHO tem de receber o 409 de CAS, que é o que faz
+  // o FE recarregar a lista — hoje o serviço checa o status antes do version e devolve 400.
+  it('IMO-1: activate com o version lido antes de outra ativação (1, banco em 2) é 409 (CAS), não 400 de status', async () => {
+    const klass = await request(app).post('/api/accounting/fixed-asset-classes').set(authHeader(dono)).send({ unitId: UNIT, code: 'IMO1-ACT', name: 'x', depreciable: false, costAccountId });
+    const asset = await request(app)
+      .post('/api/accounting/fixed-assets')
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, classId: klass.body.data.id, code: 'A-IMO1-ACT', description: 'x', costCents: 1000, residualValueCents: 0, acquiredAt: '2026-01-01', annualRateBp: 1000 });
+    const assetId = asset.body.data.id as string;
+    const primeira = await request(app).post(`/api/accounting/fixed-assets/${assetId}/activate`).set(authHeader(dono)).send({ unitId: UNIT, assetId, activatedAt: '2026-01-01', version: 1 });
+    expect(primeira.status).toBe(200);
+    expect(primeira.body.data.version).toBe(2);
+
+    const segunda = await request(app)
+      .post(`/api/accounting/fixed-assets/${assetId}/activate`)
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, assetId, activatedAt: '2026-01-01', version: 1 });
+    expect({ status: segunda.status, message: segunda.body.message }).toEqual({ status: 409, message: expect.stringContaining('version divergente') });
+  });
+
   it('assetId do corpo divergente do :id é 400 — nunca um dos dois ignorado', async () => {
     const res = await request(app)
       .put('/api/accounting/fixed-assets/qualquer-id')
