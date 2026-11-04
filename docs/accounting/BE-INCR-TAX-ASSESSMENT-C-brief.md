@@ -367,10 +367,13 @@ de código nem ratificação de fork.
 1. **A ECF Presumido não segrega a receita hospitalar nem a do 16 %.** Vermelho pelo motivo certo em
    `server/src/controllers/__tests__/ecfPresumidoSegregacao.integration.test.ts`. O mesmo confronto da C8 cai só na base:
    `P200:10: memória 2240000 ≠ ECF 3200000` e `P400:6: 2400000 ≠ 3200000` (hospitalar); `P200:10: 1600000 ≠ 3200000`
-   (16 %). Linha no GAP-MAP, Nível 5. A correção (`sessao-correcao`) exige autorização própria. Ela toca
-   `SpedEcfGenerationService` (que passa a ler a parte hospitalar como a apuração lê) e `lib/ecf.ts`: P200 4 recebe revenda
-   + hospitalar, P200 6 o 16 % e P400 2 revenda + hospitalar. Toca também a marca de `RECEITA_SERVICO`/`RECEITA_HOSPITALAR`
-   nesta tabela de correspondência.
+   (16 %). Linha no GAP-MAP, Nível 5. **Corrigido no #1024** (dono, chat, 03/11: *"Autorizo a correção"*):
+   `SpedEcfGenerationService` lê a parte hospitalar como a apuração lê e aplica o 16 % nas condições da `regra16`;
+   `lib/ecf.ts` põe revenda + hospitalar na P200 4 / P400 2 e o 16 % na P200 6. **Fork F-C8-H, ratificado** (dono, chat,
+   03/11, questionário: *"Linha nova (Recomendado)"*; as outras opções eram a marca com sinal e deixar sem marca): com
+   hospitalar, a memória trimestral ganha `RECEITA_SERVICO_COMUM` (3.1 + 3.4 − hospitalar), marcada P200 8 / P400 4; a
+   `RECEITA_HOSPITALAR` marca a P200 4 / P400 2 e a `RECEITA_SERVICO`/`RECEITA_NAO_USO` ficam sem linha nesse caso. A regra
+   de leitura (soma das marcadas) não muda. Os dois casos do teste-guarda verdes.
 2. **Sobra do limite da LC 224: a memória acumula e o PVA não.** Dossiê
    [`pesquisas-legais/lc224-sobra-limite`](../../pesquisas-legais/lc224-sobra-limite/relatorio.md). **A memória segue a
    IN RFB 2.305 art. 15 § 4º:** *"trimestres subsequentes"*, no plural, que é a leitura deste item e do X7-A l. 171. A P200
