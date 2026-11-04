@@ -13,7 +13,9 @@
 **/.nyc_output
 **/.turbo
 **/.stryker-tmp
-**/reports
+# reports/ só na raiz e no server (my-app/features/crm/components/reports é código)
+reports
+server/reports
 .git
 .github
 .claude

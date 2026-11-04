@@ -41,7 +41,7 @@ const server = semComentarios(serviceBlock('server'));
 
 describe('docker-compose.yml · nó OBS, Fase B', () => {
   it('controle: o serviço server é recortado', () => {
-    expect(server).toContain('dockerfile: Dockerfile');
+    expect(server).toContain('dockerfile: server/Dockerfile');
   });
 
   it('item 15: ALERT_WEBHOOK_URL é obrigatória (`:?`), não só repassada', () => {
