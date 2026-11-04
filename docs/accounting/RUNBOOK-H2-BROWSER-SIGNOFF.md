@@ -1479,6 +1479,44 @@ Assinatura do executor (passo 20): agente claude-opus-5-5, AI tester, sob autori
 > [`passo21d-03-preferencias.png`](runbook-evidence/H2-2026-11-03/passo21d-03-preferencias.png),
 > [`passo21d-04-users-create-user-comum.png`](runbook-evidence/H2-2026-11-03/passo21d-04-users-create-user-comum.png). Grau: **verificado**.
 >
+> **Execução 04/11 — 21 d) "criar (admin)"** (agente AI tester, claude-opus-5-5, sob autorização do dono, chat, 2026-11-02: *"gates humanos H1 e H2, as cédulas de decisão pendentes e o #907. Faz e me substitui nas decisões"*; e dono, chat, 2026-11-04: *"Pode disparar uma sessão pra corrigir os achados e outra para cada não feito"*). Build de produção `http://127.0.0.1:3100` + API `127.0.0.1:4100` da worktree `agent-af93873e91c9b426b`, commit `3077cda9` (o mesmo da execução de 03/11), contra o `dev.db` real. Runner Puppeteer (`rb.mjs`), um Chromium por vez, sob a trava de tela. Senhas aparecem como `<redigida>` e o JWT da resposta de login foi trocado por `…`/`<jwt>` nos arquivos de Network.
+>
+> Caminho (a), admin de teste novo pelo seed: `npx ts-node prisma/seed.ts` com `SEED_ADMIN_EMAIL=h2-ai-admin@luminaris.test` e
+> `SEED_ADMIN_PASSWORD` gerada na sessão, contra o dev.db real (depois do backup). O seed só faz `prisma.user.upsert` do admin
+> (`server/prisma/seed.ts:20-35`), mas o `create` grava `username: 'admin'` fixo, que já existe (`admin@luminaris.test`). Saída literal:
+>
+> ```text
+> 🌱 Seeding database...
+> ❌ Error during seeding: PrismaClientKnownRequestError:
+> Invalid `prisma.user.upsert()` invocation in …\server\prisma\seed.ts:20:37
+> Unique constraint failed on the fields: (`username`)
+>   code: 'P2002',
+>   meta: { modelName: 'User', target: [ 'username' ] },
+> exit=1
+> ```
+>
+> Nada foi gravado: `select email,username,role from User where role='ADMIN'` continuou só com `admin@luminaris.test | admin | ADMIN`
+> (achado 21-6). Caminho (b): o dono autorizou no chat (04/11) o runner a usar o par `SEED_ADMIN_EMAIL`/`SEED_ADMIN_PASSWORD` do
+> `server/.env` local, lido pelo runner sem imprimir. O hash do admin não foi alterado. Pela tela, como admin:
+>
+> ```text
+> POST /api/auth/login -> 200  req: {"identifier":"admin@luminaris.test","password":"<redigida>","rememberMe":false}
+> /users/create (abre como ADMIN): Full Name, Username, Email Address, Role {USER:User;ADMIN:Admin}, Senha Inicial → "Create User"
+> POST /api/users -> 201  req: {"name":"H2 AI U4","username":"h2-ai-u4","email":"h2-ai-u4@luminaris.test","password":"<redigida>","role":"USER"}
+>    res: {"success":true,"data":{"id":"cmw1mqmt00000ci0c83fdixno","name":"H2 AI U4","username":"h2-ai-u4","email":"h2-ai-u4@luminaris.test","role":"USER","locale":"en","currency":"BRL",…}}
+>    tela: User "H2 AI U4" successfully created with role USER!
+> /users: H H2 AI U4 @h2-ai-u4 h2-ai-u4@luminaris.test USER
+> POST /api/auth/login -> 200  req: {"identifier":"h2-ai-u4","password":"<redigida>","rememberMe":false}      (o usuário criado entra)
+> ```
+>
+> O body do POST leva só as chaves do contrato (`role` incluso, sem chave vazia) e volta 201. Isso é o esperado do "criar (admin)".
+> Prints: [`passo21d-06-criar-admin-preenchido.png`](runbook-evidence/H2-2026-11-04/passo21d-06-criar-admin-preenchido.png),
+> [`passo21d-07-criar-admin-criado.png`](runbook-evidence/H2-2026-11-04/passo21d-07-criar-admin-criado.png),
+> [`passo21d-08-lista-usuarios.png`](runbook-evidence/H2-2026-11-04/passo21d-08-lista-usuarios.png); Network em
+> `runbook-evidence/H2-2026-11-04/passo21d-network-criar-admin.txt`. O 1º login do U4 repetiu o `POST /api/dashboard-layout -> 201`
+> duplo (achado 4, já registrado). Grau: **verificado**. A troca de e-mail/senha pelo perfil **não** foi refeita: segue FALHOU até a
+> correção do achado 1 entrar em `main`.
+>
 > **e)** Cadastro e login:
 >
 > ```text
@@ -1549,12 +1587,20 @@ Achados do passo 21 (não corrigidos):
 5. **"Finalizar Venda" do modal Nova Venda (conhecido, F11).** Ainda reproduz em `3077cda9`: venda `Finalized` sem itens
    (`useSalesCreateForm.ts:270` + `FinanceService.ts:42-54` + `saleItems.ts:173-180`). Não é achado novo, a emenda de
    2026-10-05 do runbook já cobre.
+6. **[04/11] Seed não cria um segundo admin.** `server/prisma/seed.ts:28-34` grava `username: 'admin'` fixo no `create` do
+   upsert. Com outro `SEED_ADMIN_EMAIL`, o `where` não acha o e-mail e o `create` morre em P2002 no `username` (saída literal
+   no bloco de 04/11 acima). O `.env.example` sugere que trocar o e-mail basta, e não basta. Sequência: instrumentação
+   (teste do seed com um admin `admin` já existente e `SEED_ADMIN_EMAIL` novo, esperando 2 admins; hoje P2002) → correção
+   (username derivado do e-mail, ou `SEED_ADMIN_USERNAME`). Gravidade baixa: só ambiente de teste.
 
 Desfecho do passo 21 (marcar UM):
 [ ] PASSOU — a) a f) com evidência conferindo com o esperado
 [x] FALHOU — item **d)** divergiu: `PUT /users/:id` com e-mail+senha → 401 "Current password is required…", e a tela do perfil não tem campo de senha atual (a sessão cai). "Criar (admin)" não executado por falta de credencial de admin. a), b), c), e), f) conferem (com desvios de dado registrados).
 [ ] BLOQUEADO — pré-condição __ não se sustentava
     *(marcado pelo agente AI tester, 03/11, pela evidência do bloco acima) — por item: a) PASSOU (conversão só no tenant com CRM-2A/2B; no seed-presumido 409 de módulo) · b) PASSOU (no U1) · c) PASSOU (devolver sem motivo em venda pendente; na paga, 400 de regra) · d) FALHOU (e-mail/senha 401; criar admin não executado; idioma Navbar, nome e preferências 200) · e) PASSOU · f) PASSOU. *
+    *Atualização 04/11 (agente AI tester, sob autorização do dono, chat, 2026-11-02 e 2026-11-04):* o "criar (admin)" do d)
+    **rodou e confere** (`POST /api/users -> 201` com `role`, bloco de 04/11). O desfecho continua **FALHOU no d)** só pela
+    edição de e-mail/senha do perfil (achado 1), que não foi remarcada e espera a correção em `main`.
 Assinatura do executor (passo 21): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
 ### [EMENDA 2026-10-05] Passo 22 — Perfil fiscal da unidade e dos serviços (FE-INCR-DFE PR-0)
@@ -1745,6 +1791,76 @@ Assinatura do executor (passo 21): agente claude-opus-5-5, AI tester, sob autori
 > confirmado. O ramo "modo cliente" do a) e o j) não se aplicam, porque não há contador. Grau: **verificado** (tela,
 > Network e diff do banco).
 
+> **Execução 04/11 — passo 22 b) e saída do aviso D1f do f)** (agente AI tester, claude-opus-5-5, sob autorização do dono, chat, 2026-11-02: *"gates humanos H1 e H2, as cédulas de decisão pendentes e o #907. Faz e me substitui nas decisões"*; e dono, chat, 2026-11-04: *"Pode disparar uma sessão pra corrigir os achados e outra para cada não feito"*). Build de produção `http://127.0.0.1:3100` + API `127.0.0.1:4100` da worktree `agent-af93873e91c9b426b`, commit `3077cda9` (o mesmo da execução de 03/11), contra o `dev.db` real. Runner Puppeteer (`rb.mjs`), um Chromium por vez, sob a trava de tela. Senhas aparecem como `<redigida>` e o JWT da resposta de login foi trocado por `…`/`<jwt>` nos arquivos de Network.
+>
+> **Pré-condição, unidade sem perfil, criada pela tela (desvio de dado):** o `seed-presumido` tem uma única unidade e ela já tem
+> perfil. Então foi cadastrado um usuário novo, `h2-ai-u3`, e no setup rápido (Módulo CRM) a pergunta fiscal ficou em
+> **"I don't know — the accountant will tell"** (`NAO_SEI`). Com `NAO_SEI`, `deriveUnitFiscalProfile` devolve `null` e nenhum
+> perfil da unidade nasce (`server/src/features/onboarding/services/deriveUnitFiscalProfile.ts:34-53`).
+>
+> ```text
+> POST /api/users -> 201  req: {"name":"H2 AI U3","username":"h2-ai-u3","email":"h2-ai-u3@luminaris.test","password":"<redigida>"}
+>    res: {"success":true,"data":{"id":"cmw1m80is0000ciicfw1g8gc1",…,"role":"USER","locale":"en",…}}
+> POST /api/auth/login -> 200  req: {"identifier":"h2-ai-u3","password":"<redigida>","rememberMe":false}
+> POST /api/dashboard/create -> 201  req: {"mode":"quick","suiteKey":"crmModule","unit":{"name":"Unidade H2 AI U3"},"fiscal":{"regime":"NAO_SEI","grandePorte":null}}
+>    res: {"success":true,"message":"Dashboard e tabelas criados com sucesso!","data":{"suiteKey":"crmModule","unitId":"cmw1m8gbx002aciicxy3sj6us","fiscal":{"status":"pendente","ano":2026},…}}
+> banco (só leitura): select count(*) from fiscal_profiles where unitId='cmw1m8gbx002aciicxy3sj6us' → 0
+> idioma pela Navbar: PATCH /api/users/me/preferences -> 200  req: {"locale":"pt"}   → /pt/accounting lang=pt
+> ```
+>
+> **b)** Contabilidade → aba **Perfil fiscal** da "Unidade H2 AI U3":
+>
+> ```text
+> GET /api/accounting/fiscal-profile?unitId=cmw1m8gbx002aciicxy3sj6us -> 404
+>    res: {"success":false,"error":"fiscal_profile_missing","message":"Perfil fiscal da unidade não cadastrado."}
+> aviso: Sem perfil fiscal: nenhuma venda emite NFS-e até você salvar este formulário.
+> toasts (ERRO): "Perfil fiscal da unidade não cadastrado." · "Perfil fiscal da empresa não cadastrado para 2026."
+> formulário: {"Regime tributário":"","Regime de PIS/COFINS":" (desabilitado)","Contribuinte de ICMS":"false",
+>   "Município do emitente (código IBGE, 7 dígitos)":"","Inscrição municipal":"","CNAE":"","Regime especial de tributação (0–9)":"0",
+>   "Série da DPS":"1","Alíquota do ISS (%)":"","ISS retido pelo tomador pessoa jurídica":"false","Informar IBS/CBS na NFS-e":"false",
+>   "Competência fora do mês":"AVISAR","Fato gerador do pacote":"CONSUMO","Conta no parceiro emissor":"",…}
+> "Valores do contador ainda não confirmados (D1f)": ausente
+> ```
+>
+> O formulário abre em branco. Regime, município, ISS e conta estão vazios, e série 1, regime especial 0, Avisar e Consumo são
+> os defaults do formulário. O aviso "nenhuma venda emite NFS-e" aparece, e o toast vermelho do 404 também (anotado, como o
+> runbook pede). O segundo toast e as faixas "Perfil fiscal de 2026 não cadastrado" dos painéis MEI e Prestadora vêm do
+> `GET /api/accounting/company-fiscal-profile/2026 -> 404`, porque o `NAO_SEI` também não cria o perfil da empresa. É
+> coerente com o setup e não é escopo do 22. No print, o "2,00" do ISS é o placeholder: o valor do campo é `""`.
+>
+> **f), aviso D1f.** Preenchido em **Simples Nacional**: município `3550308`, série `7`, ISS `2,00`, tributos aproximados do
+> Simples `15,50` e Bloquear. Clique em "Salvar perfil", o primeiro salvamento desta unidade:
+>
+> ```text
+> PUT /api/accounting/fiscal-profile -> 200  req: {"unitId":"cmw1m8gbx002aciicxy3sj6us","regimeTributario":"SIMPLES","icmsContribuinte":false,"pisCofinsRegime":"SIMPLES",…,"codMun":"3550308",…,"dpsSerie":7,"regEspTrib":0,"regApTribSN":null,"issAliquotaBp":200,…,"pTotTribFedCent":null,"pTotTribEstCent":null,"pTotTribMunCent":null,"pTotTribSNCent":1550,"emissaoForaDoMes":"BLOQUEAR"}
+>    res: {"success":true,"data":{"unitId":"cmw1m8gbx002aciicxy3sj6us","regimeTributario":"SIMPLES",…,"d1fConfirmado":true,"emissao":{"completo":true,"faltantes":[],"pendingExternalValidation":[],"opSimpNac":3},"updatedAt":"2026-11-04T04:33:01.086Z"}}
+> tela depois do PUT: "Perfil da unidade completo"; "Sem perfil fiscal" ausente; "Valores do contador ainda não confirmados (D1f)" ausente
+> F5 + aba de novo: GET /api/accounting/fiscal-profile?unitId=cmw1m8gbx002aciicxy3sj6us -> 200; selo "Perfil da unidade completo"; D1f ausente
+> banco (só leitura): SIMPLES | 3550308 | 7 | 200 | pTotTribSNCent 1550 | pTotTribFedCent None | BLOQUEAR | d1fConfirmado 1
+> ```
+>
+> Depois do primeiro salvamento o aviso D1f não está na tela, a resposta traz `pendingExternalValidation: []` e o banco tem
+> `d1fConfirmado = 1`. Isso confere com "some depois do primeiro salvamento". A metade "aparece antes" não é observável numa
+> unidade nova. Sem perfil, o GET dá 404 e a tela mostra o aviso de "Sem perfil fiscal", não o D1f. E toda escrita do serviço
+> grava `d1fConfirmado = true` (`FiscalProfileService.ts:417`, `opts.d1fConfirmado ?? true`, inclusive a do onboarding). O
+> `false` só existe como default da migração `20260917200000` para perfis antigos (achado 22-6). O PUT em Simples também confere a
+> emenda 22-1: o 15,50 sai em `pTotTribSNCent: 1550`, com Federal/Estadual/Municipal `null`. O selo diz "Perfil da unidade completo",
+> e não "Pronto para emitir NFS-e" como no texto do f) (achado 22-5, texto).
+>
+> Prints: [`passo22-pre-01-setup-nao-sei.png`](runbook-evidence/H2-2026-11-04/passo22-pre-01-setup-nao-sei.png),
+> [`passo22b-01-sem-perfil.png`](runbook-evidence/H2-2026-11-04/passo22b-01-sem-perfil.png),
+> [`passo22f-01-preenchido.png`](runbook-evidence/H2-2026-11-04/passo22f-01-preenchido.png),
+> [`passo22f-02-salvo.png`](runbook-evidence/H2-2026-11-04/passo22f-02-salvo.png),
+> [`passo22f-03-recarregado.png`](runbook-evidence/H2-2026-11-04/passo22f-03-recarregado.png). Texto da seção em `passo22b-01-sem-perfil.txt`,
+> `passo22f-02-salvo.txt` e `passo22f-03-recarregado.txt`; Network em `passo22-pre-network-u3.txt` e `passo22bf-network.txt` (mesma pasta).
+> Console: só os `Failed to load resource … 404` dos GETs de perfil acima, que são os 404 esperados. Grau: **verificado** (tela,
+> Network e leitura do banco). A afirmação "o D1f não aparece em dado novo" é **verificada** pela leitura do código citado e por
+> esta execução.
+>
+> **Desvios de dado (04/11):** usuário `h2-ai-u3` com a "Unidade H2 AI U3" (`cmw1m8gbx002aciicxy3sj6us`, suíte CRM), cujo perfil
+> fiscal ficou em Simples, 3550308, série 7, ISS 2,00, SN 15,50 e Bloquear; locale do U3 em `pt`. Credenciais de teste no arquivo local ignorado
+> pelo git `server/.env.h2-ai-tester.local` (fora do repositório, sem valor neste texto).
+
 Achados do passo 22 (não corrigidos):
 - **22-1 (texto do runbook, d):** o esperado `pTotTribSNCent: 1550` só vale no Simples. Em Presumido/Real, o mesmo 15,50 sai
   como `pTotTribFedCent: 1550` (`my-app/features/accounting/lib/fiscalProfileForm.ts:204-207`), e o corpo está certo. O que
@@ -1758,11 +1874,21 @@ Achados do passo 22 (não corrigidos):
   `my-app/lib/api/zodFlatten.ts:19` prefixa o nome e a mensagem do servidor já começa com ele.
 - **22-4 (dado de teste):** `01.07.01` é "Suporte técnico em informática", não corte de cabelo (o item 06.01 é inferido, não
   conferido). Foi mantido porque o passo 23 e o DFE-MANUAL usam esse código.
+- **22-5 (texto do runbook, f, verificado 04/11):** o selo de perfil completo diz "Perfil da unidade completo"
+  (`FiscalProfilePanel.tsx:173`, `locales/pt/accounting.json:2292`), não "Pronto para emitir NFS-e". O significado é o mesmo
+  (`emissao.completo`). O que falta é ajustar o texto do 22 f) na próxima emenda.
+- **22-6 (texto do runbook, f, verificado 04/11):** o aviso D1f só aparece em perfil gravado **antes** da migração
+  `20260917200000` (default `false`). Toda escrita do `FiscalProfileService` grava `d1fConfirmado = true` (`:417`), inclusive
+  a do onboarding. Então, em dado novo, a metade "o aviso aparece" do f) não é exercitável, e só a "some depois do primeiro
+  salvamento" é. Não é bug: é desenho do item 7 do FE-INCR-DFE. O f) deveria dizer "ausente depois do 1º salvamento; só aparece em perfil legado".
 
 Desfecho do passo 22 (marcar UM):
-[ ] PASSOU — a) a j) com evidência conferindo com o esperado
+[x] PASSOU — a) a j) com evidência conferindo com o esperado *(marcado pelo agente AI tester, 04/11, pela evidência dos blocos de
+    03/11 e 04/11)*. b) e a saída do aviso D1f do f) rodaram em 04/11 numa unidade sem perfil e conferem. O j) e o ramo
+    "modo cliente" do a) não se aplicam a este tenant e estão cobertos pelo passo 23 a). Ressalvas de texto: 22-1 (emendado),
+    22-5 e 22-6.
 [ ] FALHOU — item __ divergiu; evidência colada acima
-[x] BLOQUEADO — a pré-condição do **b)** ("unidade **sem** perfil") não se sustentava. A única unidade do `seed-presumido` já
+[ ] BLOQUEADO *(desfecho de 03/11, superado em 04/11 pelo PASSOU acima; texto mantido)* — a pré-condição do **b)** ("unidade **sem** perfil") não se sustentava. A única unidade do `seed-presumido` já
     tinha perfil fiscal, com o D1f confirmado, então nem o b) nem a saída do aviso D1f no f) puderam ser vistos. Os itens a),
     c) a i) conferem (no f), o selo e "O que falta"). O j) não se aplica: não há contador ACTIVE, e ele fica coberto pelo 23 a).
     Não houve divergência de código. Vira PASSOU quando b) e f-D1f rodarem numa unidade sem perfil. Desvio de dado: o perfil
@@ -2066,7 +2192,8 @@ Assinatura do executor (passo 23): agente claude-opus-5-5, AI tester, sob autori
     (`D-2026-11-02-DELEGACAO-DONO` §6). Quadro por passo (atualizado na execução C7, 03/11): 1–5 PASSOU (agente, pela evidência de 29/10; 2–3 com ressalva do "por clique") · 6–10 PASSOU (dono, sob a emenda
     do passo 8) · 12–14 FALHOU (14: ECF 400 Y600) · 15 PASSOU (dono) · 16 BLOQUEADO (16 e) · 17 PASSOU · 18 BLOQUEADO
     (sem ECF EXPORTED) · 19 BLOQUEADO (sem revisão assinada; 19 a) confere) · 11 PASSOU (agente, 03/11) · 20 PASSOU · 21 FALHOU (21 d: perfil não troca e-mail/senha, 401 sem `currentPassword`) ·
-    22 BLOQUEADO (22 b: a unidade já tinha perfil) · 23 PASSOU (execução C7, 03/11). 18, 19 e o FALHOU do 14 têm a mesma causa: a tela ainda não coleta sócios para o Y600
+    22 PASSOU (04/11: b e f-D1f numa unidade nova sem perfil; em 03/11 estava BLOQUEADO) · 23 PASSOU (execução C7, 03/11).
+    Em 04/11, o "criar (admin)" do 21 d) rodou e confere; o 21 segue FALHOU só pela edição de e-mail/senha. 18, 19 e o FALHOU do 14 têm a mesma causa: a tela ainda não coleta sócios para o Y600
     (nó FE-INCR-ECF-Y600).
 [ ] BLOQUEADO — pré-condição __ não se sustentava; execução nem começou
 
@@ -2090,4 +2217,13 @@ Assinatura do executor (passo 23): agente claude-opus-5-5, AI tester, sob autori
   21, 22 e 23 executados por subagentes do mesmo modelo, e evidência em `runbook-evidence/H2-2026-11-03/`. Os runbooks
   irmãos (ATIVACAO-CONTABIL, VENDA-PACOTE, PACOTE-VALIDADE, IMOBILIZADO, WIZARD-ENTREVISTA, DFE-MANUAL) **não** rodaram
   nesta execução (teto de contexto). Os passos 14, 18 e 19 aguardam o Y600 (C5) em `main`.
+- **Execução 04/11 (resíduos 21 d e 22 b/f), ambiente:** branch `claude/gate-copilot-h2-9782b8`, o mesmo código de tela
+  (`3077cda9`, worktree `agent-af93873e91c9b426b`, builds já prontos). Trava de tela tomada duas vezes (01:24–01:36 e 01:38–01:42 BRT).
+  Antes da primeira escrita, backup por cópia de bytes em `server/prisma/backups/h2-residuos-2026-11-04-20261104-012428/`, com sha256
+  igual na origem e na cópia: `dev.db` d7cec9a1…c9c3803, `-wal` c01d833f…ea066b9, `-shm` 8dd4c603…c0ba683a9e11cf. `PRAGMA
+  integrity_check` deu `ok` antes, entre as duas subidas e no fim. A API rodou com `DATABASE_URL` absoluto do dev.db real, `PORT=4100`,
+  `ALLOWED_ORIGIN=http://127.0.0.1:3100`, JWT de teste gerado na sessão e `OPENAI_API_KEY=ci-dummy-openai-key`, e o app com
+  `next start -H 127.0.0.1 -p 3100`. As portas 3000/5000 do dono não foram tocadas. Evidência em `runbook-evidence/H2-2026-11-04/`.
+  Escritas: o seed falhou sem gravar; usuários `h2-ai-u3` (pela tela, 22) e `h2-ai-u4` (pelo admin, 21 d); unidade e perfil
+  fiscal do U3. Autorização: dono, chat, 2026-11-02: *"gates humanos H1 e H2, as cédulas de decisão pendentes e o #907. Faz e me substitui nas decisões"*; e dono, chat, 2026-11-04: *"Pode disparar uma sessão pra corrigir os achados e outra para cada não feito"*.
 - Assinatura do executor: agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
