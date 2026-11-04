@@ -1,0 +1,26 @@
+[
+  {
+    "codigo": "SALARIO_BASE",
+    "sha256": "263c62c8be1eb78147201b45b313291db7c93737e3e3b10a12abb273bbcc7f9c"
+  },
+  {
+    "codigo": "BOLSA_ESTAGIO",
+    "sha256": "2f8f0811dd375dde37432a48c1bdd0a5048bb17a2def34b97502b5fe68e13247"
+  },
+  {
+    "codigo": "PRO_LABORE",
+    "sha256": "42c2a67b29de2413fc8e5802aa20965332ae09b0dca466359fd8eaaca5ab186d"
+  },
+  {
+    "codigo": "INSS_SEGURADO",
+    "sha256": "4090a49fe587225a1dbc0b306cda9d3b4c370702349f41878da10857fe99004b"
+  },
+  {
+    "codigo": "IRRF",
+    "sha256": "ba8fb6955ece35aaba785d6a9e25184ef5e4a871e0aac41502d647bc0585eb88"
+  },
+  {
+    "codigo": "FGTS_MES",
+    "sha256": "d5d783ab7930f0df53f2db1b317540237254bfdb0f86052ede66ae2095608a81"
+  }
+]

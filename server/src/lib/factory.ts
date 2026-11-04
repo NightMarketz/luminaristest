@@ -211,6 +211,20 @@ import { ProductDestinationService } from '../features/accounting/services/Produ
 import { CompanyFiscalProfileService } from '../features/accounting/services/CompanyFiscalProfileService';
 import { CompanySignerService } from '../features/accounting/services/CompanySignerService';
 import { PartnerService } from '../features/accounting/services/PartnerService';
+import { DpModuleService } from '../features/dp/services/DpModuleService';
+import { DpModuloAtivacaoRepository } from '../features/dp/repositories/DpModuloAtivacaoRepository';
+import { DpCadastroService } from '../features/dp/services/DpCadastroService';
+import { DpCadastroRepository } from '../features/dp/repositories/DpCadastroRepository';
+import { DpVinculoService } from '../features/dp/services/DpVinculoService';
+import { DpVinculoRepository } from '../features/dp/repositories/DpVinculoRepository';
+import { DpRubricaService } from '../features/dp/services/DpRubricaService';
+import { DpAfastamentoFeriasService } from '../features/dp/services/DpAfastamentoFeriasService';
+import { DpAfastamentoFeriasRepository } from '../features/dp/repositories/DpAfastamentoFeriasRepository';
+import type { EmployeeRowLookup } from '../features/dp/ports/EmployeeRowLookup';
+import { DP_AUDIT_KEYRING } from '../features/dp/models/vinculo';
+import { loadKeyring } from './secretBox';
+import { DpPolicy } from '../features/dp/policies/DpPolicy';
+import { DpPortResolver, type DpPortImplementations } from '../features/dp/ports/DpPortResolver';
 import { WithholdingProfileService } from '../features/accounting/services/WithholdingProfileService';
 import { WithholdingService } from '../features/accounting/services/WithholdingService';
 import { ProfitDistributionService } from '../features/accounting/services/ProfitDistributionService';
@@ -379,6 +393,11 @@ import type { IProductDestinationDefaultRepository } from '../features/accountin
 import type { ICompanyFiscalProfileRepository } from '../features/accounting/repositories/ICompanyFiscalProfileRepository';
 import type { ICompanySignerRepository } from '../features/accounting/repositories/ICompanySignerRepository';
 import type { IPartnerRepository } from '../features/accounting/repositories/IPartnerRepository';
+import type { IDpModuloAtivacaoRepository } from '../features/dp/repositories/IDpModuloAtivacaoRepository';
+import type { IDpCadastroRepository } from '../features/dp/repositories/IDpCadastroRepository';
+import type { IDpVinculoRepository } from '../features/dp/repositories/IDpVinculoRepository';
+import type { IDpAfastamentoFeriasRepository } from '../features/dp/repositories/IDpAfastamentoFeriasRepository';
+import type { IDpPolicy } from '../features/dp/policies/IDpPolicy';
 import type { IWithholdingProfileRepository } from '../features/accounting/repositories/IWithholdingProfileRepository';
 import type { ITaxWithholdingReadPort, ITaxWithholdingRepository } from '../features/accounting/repositories/ITaxWithholdingRepository';
 import type { IProfitDistributionRepository } from '../features/accounting/repositories/IProfitDistributionRepository';
@@ -852,6 +871,10 @@ export class ApplicationFactory {
     companyFiscalProfile: ICompanyFiscalProfileRepository; // X13
     companySigner: ICompanySignerRepository; // X13
     partner: IPartnerRepository; // IRRF-DISTRIBUICAO PR-1
+    dpModuloAtivacao: IDpModuloAtivacaoRepository; // BE-INCR-DP-F0-F1 PR-1 (nó PES-4, item 12)
+    dpCadastro: IDpCadastroRepository; // BE-INCR-DP-F0-F1 PR-3 (itens 28–33)
+    dpVinculo: IDpVinculoRepository; // BE-INCR-DP-F0-F1 PR-4 (itens 37–48)
+    dpAfastamentoFerias: IDpAfastamentoFeriasRepository; // BE-INCR-DP-F0-F1 PR-6 (itens 56 e 58)
     withholdingProfile: IWithholdingProfileRepository; // RETENCOES-FONTE PR-1 (item 6)
     taxWithholding: ITaxWithholdingRepository; // RETENCOES-FONTE PR-2 (item 13; porta da Reinf, Emenda 22/10 item 2)
     profitDistribution: IProfitDistributionRepository; // IRRF-DISTRIBUICAO PR-2
@@ -903,6 +926,7 @@ export class ApplicationFactory {
     packageBalance: IPackageBalancePolicy;
     packageAcceptance: IPackageAcceptancePolicy; // FE-INCR-PACOTE-VALIDADE
     legalParameter: ILegalParameterPolicy; // BE-INCR-LEGAL-PARAMS PR-1 (item 12: policy própria, escopo plataforma)
+    dp: IDpPolicy; // BE-INCR-DP-F0-F1 PR-1 (item 14, D-7: policy própria do DP)
   };
 
   public readonly services: {
@@ -973,6 +997,12 @@ export class ApplicationFactory {
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
     partner: PartnerService; // IRRF-DISTRIBUICAO PR-1
+    dpModule: DpModuleService; // BE-INCR-DP-F0-F1 PR-1 (itens 12–13)
+    dpPortResolver: DpPortResolver; // BE-INCR-DP-F0-F1 PR-1 (item 17)
+    dpCadastro: DpCadastroService; // BE-INCR-DP-F0-F1 PR-3 (itens 28–36)
+    dpVinculo: DpVinculoService; // BE-INCR-DP-F0-F1 PR-4 (itens 37–49)
+    dpRubrica: DpRubricaService; // BE-INCR-DP-F0-F1 PR-5 (item 54)
+    dpAfastamentoFerias: DpAfastamentoFeriasService; // BE-INCR-DP-F0-F1 PR-6 (itens 56–61)
     withholdingProfile: WithholdingProfileService; // RETENCOES-FONTE PR-1 (item 6)
     withholding: WithholdingService; // RETENCOES-FONTE PR-2 (itens 10–23)
     profitDistribution: ProfitDistributionService; // IRRF-DISTRIBUICAO PR-2
@@ -1089,6 +1119,10 @@ export class ApplicationFactory {
       companyFiscalProfile: new CompanyFiscalProfileRepository(),
       companySigner: new CompanySignerRepository(),
       partner: new PartnerRepository(),
+      dpModuloAtivacao: new DpModuloAtivacaoRepository(), // BE-INCR-DP-F0-F1 PR-1
+      dpCadastro: new DpCadastroRepository(), // BE-INCR-DP-F0-F1 PR-3
+      dpVinculo: new DpVinculoRepository(), // BE-INCR-DP-F0-F1 PR-4
+      dpAfastamentoFerias: new DpAfastamentoFeriasRepository(), // BE-INCR-DP-F0-F1 PR-6
       withholdingProfile: new WithholdingProfileRepository(), // RETENCOES-FONTE PR-1 (item 6)
       taxWithholding: new TaxWithholdingRepository(), // RETENCOES-FONTE PR-2 (item 13)
       profitDistribution: new ProfitDistributionRepository(),
@@ -1141,6 +1175,7 @@ export class ApplicationFactory {
       packageBalance: new PackageBalancePolicy(),
       packageAcceptance: new PackageAcceptancePolicy(),
       legalParameter: new LegalParameterPolicy(),
+      dp: new DpPolicy(), // BE-INCR-DP-F0-F1 PR-1 (item 14)
     };
 
     // Services (handling inter-dependencies)
@@ -1678,6 +1713,20 @@ export class ApplicationFactory {
     );
     payableService.setWithholding(withholdingService, this.repositories.taxWithholding);
     depreciationService.setFixedAssetDraftRedriver(payableService);
+    // BE-INCR-DP-F0-F1 PR-1 (itens 17–18): o mapa de implementações dos submódulos opcionais nasce vazio no F0. Este
+    // arquivo é o ÚNICO ponto que importa `features/dp<Nome>/` (regra D1 do check:arch; X1).
+    const dpModuleService = new DpModuleService(this.repositories.dpModuloAtivacao, this.policies.dp, auditService);
+    const dpPortImplementations: DpPortImplementations = new Map();
+    // BE-INCR-DP-F0-F1 PR-4 (item 38): porta EmployeeRowLookup sobre o motor — a linha precisa ser da tabela `employees`
+    // DESTE dono (findDataById é global por id; mesma guarda do DynamicTableProductRefLookup).
+    const dpEmployeeRowLookup: EmployeeRowLookup = {
+      employeeRowExists: async (ownerUserId, employeeRef) => {
+        const table = await this.repositories.dynamicTable.findTableByInternalName(ownerUserId, 'employees');
+        if (!table) return false;
+        const row = await this.repositories.dynamicTable.findDataById(employeeRef);
+        return row != null && row.dynamicTableId === table.id;
+      },
+    };
     const companyFiscalProfileService = new CompanyFiscalProfileService(
       this.repositories.companyFiscalProfile,
       this.repositories.companySigner,
@@ -1779,6 +1828,26 @@ export class ApplicationFactory {
         this.repositories.profitDistribution,
         this.repositories.interestOnEquity,
       ),
+      dpModule: dpModuleService, // BE-INCR-DP-F0-F1 PR-1
+      dpPortResolver: new DpPortResolver(dpPortImplementations, (owner, c) => dpModuleService.modulosAtivosEm(owner, c)),
+      dpCadastro: new DpCadastroService(this.repositories.dpCadastro, this.policies.dp, auditService), // BE-INCR-DP-F0-F1 PR-3
+      dpRubrica: new DpRubricaService(this.policies.dp), // BE-INCR-DP-F0-F1 PR-5
+      // BE-INCR-DP-F0-F1 PR-6: a posse vem do vínculo (repositório do PR-4); motivo e categoria pela fotografia legal.
+      dpAfastamentoFerias: new DpAfastamentoFeriasService(
+        this.repositories.dpAfastamentoFerias,
+        this.repositories.dpVinculo,
+        this.policies.dp,
+        auditService,
+        legalParameterService,
+      ),
+      // BE-INCR-DP-F0-F1 PR-4: reusa o sócio (D-9), o regime do ano e a fotografia legal; `employees` pela porta (D-2, D-6).
+      dpVinculo: new DpVinculoService(this.repositories.dpVinculo, this.repositories.dpCadastro, this.policies.dp, auditService, {
+        partners: this.repositories.partner,
+        fiscalProfiles: this.repositories.companyFiscalProfile,
+        legalParams: legalParameterService,
+        employees: dpEmployeeRowLookup,
+        auditKeyring: () => loadKeyring(process.env, DP_AUDIT_KEYRING), // lido na hora do uso (503 sem chave)
+      }),
       // RETENCOES-FONTE PR-1 (item 6): perfil de retenção; fotografia NATUREZA_RENDIMENTO e a leitura dos rascunhos dela.
       withholdingProfile: new WithholdingProfileService(
         this.repositories.withholdingProfile,
@@ -2647,6 +2716,12 @@ export class ApplicationFactory {
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;
   public getPartnerService = (): PartnerService => this.services.partner;
+  public getDpModuleService = (): DpModuleService => this.services.dpModule;
+  public getDpPortResolver = (): DpPortResolver => this.services.dpPortResolver;
+  public getDpCadastroService = (): DpCadastroService => this.services.dpCadastro;
+  public getDpVinculoService = (): DpVinculoService => this.services.dpVinculo;
+  public getDpRubricaService = (): DpRubricaService => this.services.dpRubrica;
+  public getDpAfastamentoFeriasService = (): DpAfastamentoFeriasService => this.services.dpAfastamentoFerias;
   public getWithholdingProfileService = (): WithholdingProfileService => this.services.withholdingProfile;
   public getWithholdingService = (): WithholdingService => this.services.withholding;
   /** RETENCOES-FONTE PR-2 (Emenda 22/10 item 2): a porta que a EFD-REINF lê, sem HTTP. */
