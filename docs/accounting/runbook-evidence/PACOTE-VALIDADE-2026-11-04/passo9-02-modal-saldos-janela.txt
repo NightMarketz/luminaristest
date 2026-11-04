@@ -1,0 +1,20 @@
+Registrar pagamento
+
+FORMULÁRIO ADMINISTRATIVO
+
+Total da venda: R$ 80,00
+Forma de pagamento *
+Selecione…
+Dinheiro
+Pix
+Cartão de crédito
+Cartão de débito
+Saldo de pacote
+Pacote *
+Selecione o pacote…
+Pacote H2 — saldo R$ 1.000,00 — vence em 04/11/2027
+Pacote C7 Vencido — saldo R$ 100,00 — vencido em 20/10/2026
+Pacote C7 Sem validade — saldo R$ 120,00 — sem validade
+Referência (opcional)
+Cancelar
+Confirmar pagamento
