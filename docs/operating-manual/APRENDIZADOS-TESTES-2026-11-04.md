@@ -55,7 +55,9 @@ Ver a tabela do corpo do PR que introduziu este doc. Resumo por tipo:
   IRRF-DISTRIBUICAO, EFICIENCIA-FISCAL, MIT-EXPORT.
 - **BRIEFs de correção novos:** `docs/accounting/FIX-TESTES-I1B-BOOT-POS-REKEY-brief.md`,
   `docs/accounting/FIX-TESTES-VENDA-PACOTE-TEXTOS-brief.md`, `docs/accounting/FIX-TESTES-REPO-FALSO-POR-ROTA-brief.md` e
-  `docs/crm/FIX-TESTES-CRM-PIPELINE-PILHA-REAL-brief.md`.
+  `docs/crm/FIX-TESTES-CRM-PIPELINE-PILHA-REAL-brief.md`; e, pela Q4 do questionário de 04/11,
+  `docs/accounting/FIX-MENSAGENS-ID-INTERNO-brief.md` (varredura de classe, com o imobilizado no 1º lote). Todos estão na
+  nota `docs/plano/nos/FIX-TESTES.md`, e as respostas do dono estão em `docs/plano/decisoes/D-2026-11-04-APRENDIZADOS-TESTES.md`.
 - **Não duplicados (já têm dono):** PILOTO-DFE (#1067: seed DFE, DFE pela pilha real e DFE-1 já estão lá) e IMO-1
   (#1053 + sessão de correção autorizada no H2).
 

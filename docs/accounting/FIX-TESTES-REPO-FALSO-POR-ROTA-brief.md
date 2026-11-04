@@ -58,6 +58,9 @@ com `--runInBand`.
 - (b) Sim, em `scripts/`, sem entrar no CI.
 - **Recomendação:** (a). Script versionado tende a virar gate, e a regra ⛔ veda aparato novo enquanto o Bloco A estiver
   aberto.
+- **Status: ✅ RATIFICADO (a)**, dono, chat, 04/11, questionário do #1075, Q1: *"É inventário (Recomendado)"*
+  ([D-2026-11-04-APRENDIZADOS-TESTES](../plano/decisoes/D-2026-11-04-APRENDIZADOS-TESTES.md)). A medição do item 1 é
+  inventário, não gate nem rodada.
 
 ### F-RF-2 — Tamanho do lote
 - (a) Até 8 rotas por PR (o tamanho dos lotes do FIX-AUTH-CONTA).
