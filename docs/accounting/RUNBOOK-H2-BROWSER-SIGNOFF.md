@@ -1577,6 +1577,13 @@ Assinatura do executor (passo 21): agente claude-opus-5-5, AI tester, sob autori
       "Competência fora do mês" = **Bloquear**; salvar. No Network: PUT com `issAliquotaBp: 200`, `pTotTribSNCent:
       1550`, `dpsSerie: 7`, `emissaoForaDoMes: "BLOQUEAR"` e **todos** os demais campos do perfil presentes.
       EVIDÊNCIA: [bloco "Execução 03/11 — passo 22" abaixo]
+      **[EMENDA 2026-11-04 — achado 22-1; agente AI tester, sob delegação do dono, chat, 2026-11-02: "gates humanos H1 e H2, as cédulas de decisão pendentes e o #907. Faz e me substitui nas decisões"; e dono, chat, 2026-11-04: "Pode disparar uma sessão pra corrigir os achados e outra para cada não feito"]** o campo do
+      15,50 depende do regime. No **Simples Nacional** ele vai em `pTotTribSNCent: 1550` (com Federal/Estadual/Municipal
+      `null`); em **Lucro Presumido/Real** o campo do Simples não existe na tela, o 15,50 entra no **Federal** e o PUT leva
+      `pTotTribFedCent: 1550` com `pTotTribSNCent: null` (`my-app/features/accounting/lib/fiscalProfileForm.ts:204-207`).
+      O esperado do d) passa a ser: PUT com `issAliquotaBp: 200`, `dpsSerie: 7`, `emissaoForaDoMes: "BLOQUEAR"`, o
+      15,50 no campo do regime escolhido (`pTotTribSNCent` no Simples, `pTotTribFedCent` em Presumido/Real) e **todos** os
+      demais campos do perfil presentes.
     - e) Recarregar a página (F5), reabrir a aba: os valores voltam; salvar de novo sem mexer em nada — o corpo do PUT
       é o mesmo e série 7 / Bloquear continuam. EVIDÊNCIA: [bloco "Execução 03/11 — passo 22" abaixo]
     - f) O selo "Pronto para emitir NFS-e" ou a lista "O que falta" confere com o que foi preenchido; o aviso de valores
@@ -1770,6 +1777,15 @@ Assinatura do executor (passo 22): agente claude-opus-5-5, AI tester, sob autori
 > ou posterior; `dev.db` real (`server/prisma/prisma/dev.db`); dois usuários (dono com unidade e perfil fiscal,
 > contador com conta) e uma atribuição ACTIVE entre eles (convite + aceite pelas telas do #515); DevTools com o Network
 > filtrado em `policy-versions`.
+>
+> **[EMENDA 2026-11-04 — achado 23-pre-1; agente AI tester, sob delegação do dono, chat, 2026-11-02: "gates humanos H1 e H2, as cédulas de decisão pendentes e o #907. Faz e me substitui nas decisões"; e dono, chat, 2026-11-04: "Pode disparar uma sessão pra corrigir os achados e outra para cada não feito"]** o convite
+> exige, antes, um **contato de contador cadastrado** pelo dono (Contabilidade → cadastro do contador, com nome e CRC) e
+> um **usuário com conta** no e-mail do convite. O `POST` do convite leva `accountingContactId` + `accountantEmail`; sem o
+> contato dá 404 e sem o usuário dá 400 `ACCOUNTANT_USER_NOT_FOUND`. O CRC que aparece no aviso do a) e na lista do f)
+> **vem do contato**, copiado para a atribuição no convite (`crcNumber`/`crcUf`, snapshot I-11 —
+> `server/src/features/accounting/services/AccountantAssignmentService.ts:90-113`), não do usuário do contador. Ordem da
+> pré-condição: (1) contador cria a conta (`/users/signup`); (2) dono cadastra o contato com o CRC; (3) dono convida
+> escolhendo esse contato e o e-mail da conta; (4) contador aceita.
 
 23. Resultado esperado em todas: 2xx nas escritas, console sem erro.
     - a) **Dono, Perfil fiscal:** o botão diz "Enviar ao contador para aprovação" e o aviso mostra o nome e o CRC do
