@@ -4,7 +4,7 @@ tipo: "plataforma"
 dominio: "pessoal"
 titulo: "Departamento Pessoal (folha + eSocial) — núcleo first-class sempre ligado + submódulos opcionais com ativação por competência; fase 2 do F-PES-0"
 estado: "inflight"
-estado_detalhe: "04/11: sessão 3d executando o BRIEF de F0+F1 (BE-INCR-DP-F0-F1-brief.md), um PR por fatia. O #1009 (PRE-ADR) entrou na main; a pilha #1010..#1026 foi rebaseada sobre a main e o #1010 passou a ter base main. Feito: PR-0 #1014, PR-1 #1015, PR-2 #1016, PR-3 #1026 (revisor PASSOU em todos) e PR-4 #1032 (itens 37–49 + trava D-5 da jornada). PR-5 e PR-6 seguem pelo handoff no fim desta nota. F2..F6 e o BRIEF do SST (núcleo, F-DP-13) ainda sem BRIEF; F-FOL-1..9 da ponte contábil pendentes"
+estado_detalhe: "04/11: sessão 3d executando o BRIEF de F0+F1 (BE-INCR-DP-F0-F1-brief.md), um PR por fatia. O #1009 (PRE-ADR) entrou na main; a pilha #1010..#1026 foi rebaseada sobre a main e o #1010 passou a ter base main. Feito: PR-0 #1014, PR-1 #1015, PR-2 #1016, PR-3 #1026 (revisor PASSOU em todos) PR-4 #1032 (itens 37–49 + trava D-5 da jornada) e PR-5 #1036 (itens 50–55: catálogo de rubricas em código, `GET /api/dp/rubricas`). PR-6 segue pelo handoff no fim desta nota. F2..F6 e o BRIEF do SST (núcleo, F-DP-13) ainda sem BRIEF; F-FOL-1..9 da ponte contábil pendentes"
 depende_de: ["[[D-2026-11-02-DP-PRE-ADR]]", "[[D-2026-11-02-DP-BRIEF-F0-F1]]", "[[D-2026-10-12-QUESTIONARIO-DONO]]", "[[LEGAL-PARAMS]]", "[[IRRF-DISTRIBUICAO]]", "[[I6]]"]
 autorizacao: "dono, chat, 2026-11-03: \"Executa PR-0 a PR-6\" (resposta a \"Abro a sessão 3 com o executa do BRIEF BE-INCR-DP-F0-F1?\") — executa do BRIEF de F0+F1 inteiro ([[D-2026-10-28-FLUXO-AUTONOMO]]); não cobre F2 em diante, o BRIEF do SST nem a ponte contábil (F-FOL-1..9). Antes — dono, chat, 2026-11-02: \"Podemos seguir o pre-adr numa sessão, esperar, criar o nó no vault + brief em outra e o executa na terceira\" + \"Sim, abre agora\" (resposta a \"Abro já a sessão 2 (nó PES-4 + BRIEF de F0 e F1) em cima do branch do #1009?\") — nó e BRIEF de F0+F1; forks do BRIEF por questionário ([[D-2026-11-02-DP-BRIEF-F0-F1]]). Não autoriza código: o 'executa' é da sessão 3"
 perfil_previsto: "opus-medio"
@@ -12,11 +12,11 @@ perfil_evidencia: "BRIEF §9: PR-0/PR-3/PR-5/PR-6 opus-baixo; PR-1/PR-2/PR-4 opu
 atualizado: "2026-11-04"
 write_set: ["server/src/features/dp/**", "server/src/controllers/dpModuleController.ts", "server/src/controllers/dpCadastrosController.ts", "server/src/controllers/dpVinculoController.ts", "server/src/controllers/__tests__/dp*.ts", "server/src/routes/dp.ts", "server/src/routes/docs/dp.paths.ts", "server/public/openapi.json", "server/src/__tests__/openapi-paths.test.ts", "server/prisma/schema.prisma", "server/prisma/migrations/**", "server/prisma/data/legal_parameters_dp_v1.sql", "server/src/features/legalParameters/models/legalParameter.ts", "server/src/features/legalParameters/models/formatoLinha.ts", "server/src/features/legalParameters/dtos/__tests__/__dto-shapes__.json", "server/src/features/accounting/audit/auditCanonical.ts", "server/test/helpers/templateDb.ts", "server/test/helpers/legalParams.ts", "server/.dependency-cruiser.cjs", "docs/adr/ADR-ARCH-BOUNDARIES.md"]
 registros: ["server/src/lib/factory.ts", "server/src/routes/index.ts"]
-prs: ["#1010", "#1014", "#1015", "#1016", "#1026", "#1032"]
+prs: ["#1010", "#1014", "#1015", "#1016", "#1026", "#1032", "#1036"]
 ---
 # PES-4 — Departamento Pessoal: núcleo + submódulos
 
-**Estado:** `inflight` — 03/11: sessão 3 executando o BRIEF de F0+F1 (BE-INCR-DP-F0-F1-brief.md), um PR por fatia, empilhados sobre o #1010. Feito: PR-0 #1014 (itens 1–7; revisor-independente PASSOU), PR-1 #1015 (itens 8–19: registro dos 9 submódulos, ativação por competência em /api/dp/modules, porta JORNADA_APURADA com adaptador nulo) e PR-2 #1016 (itens 20–27: INSS_EMPREGADO 2026, FGTS do aprendiz, 4 tabelas do eSocial transcritas por script, leitor parametrosFolha). PR-3..PR-6 seguem em sessão nova pelo handoff no fim desta nota. F2..F6 e o BRIEF do SST (núcleo, F-DP-13) ainda sem BRIEF; F-FOL-1..9 da ponte contábil pendentes  
+**Estado:** `inflight` — 04/11: sessão 3d executando o BRIEF de F0+F1 (BE-INCR-DP-F0-F1-brief.md), um PR por fatia. O #1009 (PRE-ADR) entrou na main; a pilha #1010..#1026 foi rebaseada sobre a main e o #1010 passou a ter base main. Feito: PR-0 #1014, PR-1 #1015, PR-2 #1016, PR-3 #1026 (revisor PASSOU em todos) e PR-4 #1032 (itens 37–49 + trava D-5 da jornada). PR-5 e PR-6 seguem pelo handoff no fim desta nota. F2..F6 e o BRIEF do SST (núcleo, F-DP-13) ainda sem BRIEF; F-FOL-1..9 da ponte contábil pendentes  
 **Autorização:** dono, chat, 03/11 — *"Executa PR-0 a PR-6"*: o `executa` do BRIEF de F0+F1 inteiro (sessão 3 de 3;
 [[D-2026-10-28-FLUXO-AUTONOMO]]). Não cobre F2 em diante, o BRIEF do SST nem a ponte contábil. Antes: dono, chat, 02/11 —
 nó + BRIEF de F0 e F1 (sessão 2 de 3).  
@@ -89,6 +89,7 @@ sessão nova continua com a skill `sessao-feature`.
 | #1016 | `claude/dp-f0-f1-pr2-d614b0` (base `claude/dp-f0-f1-pr1`) | 20–27 | vermelha (migração, parâmetro legal) | verde (17/17) | PASSOU (03/11: gates 0; 3 sabotagens — valor da FAIXA_2, vigência do INSS, filtro de data do leitor — pegas; a do filtro só pela integração) |
 | #1026 | `claude/dp-f0-f1-pr3` (base `claude/dp-f0-f1-pr2-d614b0`) | 28–36 | vermelha (migração, contábil) | verde em 058c28fd (17/17, 03/11); head rebaseado 74e8105e em 04/11, CI de novo | PASSOU (03/11: gates 0; sabotagens de código duplicado, `TP_JORNADA`, Tier-0 do discriminador e PII na auditoria pegas; `tx`→cliente global NÃO pego — lacuna de teste, sem defeito) |
 | #1032 | `claude/dp-f0-f1-pr4` (base `claude/dp-f0-f1-pr3`) | 37–49 + D-5 do item 30 | vermelha (migração, contábil) | gates locais verdes; CI do 8f762a3d vermelho (inventário do rekey: `DpVinculo` tem `unitId`; corrigido no 223da9fa), CI do head novo em curso em 04/11 — conferir com `gh pr checks 1032` | PASSOU (04/11, em 223da9fa: gates 0; 5 sabotagens — fechamento da véspera, PII na allowlist, D-5, guarda cross-tenant do `EmployeeRowLookup`, prazo do aprendiz — pegas, salvo a guarda cross-tenant, que o teste de rota não exercitava; o teste foi corrigido e passou a pegar) |
+| #1036 | `claude/dp-f0-f1-pr5` (base `claude/dp-f0-f1-pr4`) | 50–55 | vermelha (só o título; sem migração) | gates locais verdes; CI em curso em 04/11 — conferir com `gh pr checks 1036` | a despachar |
 
 **Latentes do revisor do #1015 (não bloqueiam; só aparecem com registro de teste, porque hoje todo opcional é
 `disponivel: false` com `dependsOn: []` — decidir antes de ligar o primeiro opcional com dependência):** (1) `activate`
@@ -110,14 +111,14 @@ piso passam (spec não trata).
 
 **Lacunas de spec do PR-4 (registradas no corpo do #1032, sem bloquear; o revisor concordou com as 4):** aniversário em 29/02; `PATCH` do trabalhador emite `updated` + `corrected`; unidade 7 com salário > 0; categoria do núcleo sem linha vigente na Tabela 01 dá 400 sem `reason`.
 
-**Pendente:** PR-5 (50–55) e PR-6 (56–62), cada um empilhado no anterior, com o fold
+**Pendente:** PR-6 (56–62), empilhado no PR-5 (#1036), com o fold
 aqui no próprio PR e o revisor-independente em cada um (D-2026-10-28, PR vermelho).
 
 **Próximo comando exato** (num worktree novo, depois de conferir com `gh pr view` se algum PR de baixo foi mergeado —
 se foi, rebase sobre `main`):
 
 ```bash
-git fetch origin && git checkout -b claude/dp-f0-f1-pr5 origin/claude/dp-f0-f1-pr4
+git fetch origin && git checkout -b claude/dp-f0-f1-pr6 origin/claude/dp-f0-f1-pr5
 cd server && npm ci && npx prisma generate && printf 'OPENAI_API_KEY=ci-dummy-openai-key\n' > .env
 cd ../my-app && npm ci
 ```
