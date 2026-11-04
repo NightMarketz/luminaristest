@@ -145,3 +145,8 @@ Ficam autorizadas a instrumentação e a correção dos três achados do teste-g
 
 O trabalho fica com a sessão "Achados do C8" (PR #1024, empilhado no #1021). Fork novo de regra não está coberto e vira
 pergunta.
+- **F-C8-R1 ratificado na opção (a):** pergunta feita no chat, 03/11: "Ratifico o F-C8-R1 com a opção (a), campo
+  `retentor`?". Resposta do dono: *"Sim, opção (a)"*. A dedução informada ganha o campo `retentor`: obrigatório na
+  `CSLL_RETIDA`, opcional no `IRRF`. Ele leva cada valor à linha da ECF por retentor (P300 12/13, P500 9–12,
+  N630 21/22, N670 15–18). Correção num PR empilhado no #1024. O achado 2 (sobra da LC 224) não pede código: a memória
+  segue a IN 2.305 art. 15 § 4º (#1025).
