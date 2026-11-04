@@ -1,0 +1,64 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei Complementar nº 224 de 26/12/2025",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2025/lcp-224-2025-12-26.md",
+      "url_final": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2025/lcp-224-2025-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2025-12-26;224",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-03T19:22:15-03:00",
+      "sha256": "6d2c451c17be08da1e811f15c80f188b47b66c7d3811220ade0fb69ee8b0a07c",
+      "arquivo": "docs/D01_lcp-224-2025-12-26.md",
+      "texto": "docs/D01_lcp-224-2025-12-26.txt",
+      "bytes": 25875
+    },
+    {
+      "id": "D02",
+      "titulo": "D02_multivigente",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/148694/visao/multivigente",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/148694/visao/multivigente",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-03T19:22:37-03:00",
+      "sha256": "635eb830122e9cb95bfda0d34b600c469cda97e0368564bc5219f07591e0c797",
+      "arquivo": "docs/D02_multivigente.html",
+      "texto": "docs/D02_multivigente.txt",
+      "bytes": 339406
+    },
+    {
+      "id": "D03",
+      "titulo": "D03_perguntas-e-respostas-reducao-dos-incentivos-e-beneficios-tr",
+      "url": "https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/perguntas-e-respostas/beneficios-fiscais/perguntas-e-respostas-reducao-dos-incentivos-e-beneficios-tributarios-v5-final.pdf",
+      "url_final": "https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/perguntas-e-respostas/beneficios-fiscais/perguntas-e-respostas-reducao-dos-incentivos-e-beneficios-tributarios-v5-final.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-03T19:24:12-03:00",
+      "sha256": "72c14639c7aa75402a7157b4edba0f3d94dabcae75706dbe30c68ed5cf4de9b8",
+      "arquivo": "docs/D03_perguntas-e-respostas-reducao-dos-incentivos-e-beneficios-tr.pdf",
+      "texto": "docs/D03_perguntas-e-respostas-reducao-dos-incentivos-e-beneficios-tr.txt",
+      "bytes": 843830
+    },
+    {
+      "id": "D04",
+      "titulo": "Lcp 224",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp224.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp224.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-03T19:27:21-03:00",
+      "sha256": "7f16d18bd7f4d02bd9222493743d43992a7d50023e44ffad074165866eabf12a",
+      "arquivo": "docs/D04_lcp224-htm.html",
+      "texto": "docs/D04_lcp224-htm.txt",
+      "bytes": 87083
+    }
+  ],
+  "buscas": [],
+  "slug": "lc224-sobra-limite",
+  "pergunta": "LC 224/2025 e IN RFB 2.305/2025 art. 15 §§ 4º-5º: a diferença não usada do limite trimestral (R$ 1,25 mi) acumula de trimestre em trimestre (memória: sobra = limite + sobra anterior − receita) ou só passa ao trimestre seguinte (tabela dinâmica da ECF: 25140 = 1,25 mi + 25170 do trimestre anterior, 25170 = 1,25 mi − receita)? O ajuste do § 5º no T04 reconcilia o ano?",
+  "criado": "2026-11-03T19:22:04-03:00"
+}

@@ -1,0 +1,43 @@
+Extraído de pesquisas-legais/pc1-memoria-calculo/docs/D02_Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_.html (XLSX), aba P200, linhas 25110–25200: CODIGO | DESCRICAO | DT_INI | TIPO | FORMULA | ORIENTACOES
+
+25110 | Total de Receita Bruta no Trimestre | 01012026 | CNA | SOMA(P200(2:9)) | Somatório das receitas brutas informadas nas linhas 2 a 9.
+
+25120 | Total de Receita Bruta Acumulada - Período(s) Anterior(es) | 01012026 | CNA | CASO(PERIODO_ATUAL())IGUAL("T01")0FIM_IGUAL IGUAL("T02")SOMA(P200(2:9;"T01"))FIM_IGUAL IGUAL("T03")(SOMA(P200(2:9;"T01"))+SOMA(P200(2:9;"T02")))FIM_IGUAL IGUAL("T04")(SOMA(P200(2:9;"T01"))+SOMA(P200(2:9;"T02"))+SOMA(P200(2:9;"T03")))FIM_IGUAL CASO_CONTRARIO 0FIM_CASO | Somatório das receitas brutas informadas nas linhas 2 a 9 dos períodos anteriores ao atual.
+
+25130 | Total de Receita Bruta Acumulada | 01012026 | CNA | (P200("25.110")) + P200("25.120") | Somatório das receitas brutas informadas nas linhas 2 a 9 dos períodos anteriores ao atual com o período atual.
+
+25140 | Limite Individual no Trimestre | 01012026 | CNA | SE( SOMA (P200(2:9))>0) ENTAO SE(PERIODO_PRIMEIRO() = PERIODO_ATUAL()) ENTAO 1250000 SENAO SE("T02" = PERIODO_ATUAL()) ENTAO 1250000 + P200("25.170";"T01")SENAO SE("T03" = PERIODO_ATUAL()) ENTAO 1250000 + P200("25.170";"T02")SENAO SE("T04" = PERIODO_ATUAL()) ENTAO 1250000 + P200("25.170";"T03")SENAO 0 FIM_SE FIM_SE FIM_SE FIM_SE SENAO 0 FIM_SE | Limite que não há incidência do adicional de 10% determinado no art. 14 da IN RFB nº 2.305, de 31 de dezembro de 2025.
+
+A regra é que o valor seja de R$ 1.250.000,00. Porém, é possível que esse valor sofra ajustes, caso não utilizado em trimestre anterior.
+
+Art. 14. No caso de pessoa jurídica tributada com base no lucro presumido, deverá ser observado o acréscimo em 10% (dez por cento) nos percentuais de presunção previstos na legislação do IRPJ e da CSLL. 
+
+Art. 15. O acréscimo previsto no art. 14 somente se aplica aos percentuais de presunção incidentes sobre a parcela da receita bruta total que exceder o valor de R$ 5.000.000,00 (cinco milhões de reais) no respectivo ano-calendário.
+
+§ 2º O limite proporcional de que trata o inciso I do § 1º corresponde a R$ 1.250.000,00 (um milhão, duzentos e cinquenta mil reais) por trimestre e deve ser verificado considerando a receita bruta do respectivo trimestre. 
+(...)
+§ 4º No trimestre em que a receita bruta for inferior ao limite proporcional previsto no § 2º, a diferença poderá ser considerada para fins de apuração do limite aplicável aos trimestres subsequentes do mesmo ano-calendário. 
+
+25150 | Parcela Excedente ao Limite Individual no Trimestre | 01012026 | CNA | SE(P200("25.110")>1250000) ENTAO SE (P200("25.110") > P200("25.140")) ENTAO (P200("25.110")-P200("25.140")) SENAO 0 FIM_SE SENAO 0 FIM_SE | Valor que excede o limite individual no trimestre.
+
+25160 | Parcela Excedente ao Limite no(s) Trimestre(s) Anterior(es) | 01012026 | CNA | SE( PERIODO_ATUAL()<> PERIODO_PRIMEIRO ()) ENTAO SOMA(P200("25.150";PERIODO_PRIMEIRO() : PERIODO_ANTERIOR())) SENAO 0 FIM_SE | Valor cumulativo que excede o limite no(s) trimestre(s) anterior(es)
+
+25170 | Variação Positiva do Limite no Trimestre | 01012026 | CNA | SE((1250000 > P200("25.110")) E (SOMA(P200(2:9))>0)) ENTAO(1250000 - P200("25.110")) SENAO 0 FIM_SE | Quando não atingido o limite individual no trimestre, a diferença entre a soma das linhas 2 a 9 e o limite individual no trimestre pode ser acumulado para período(s) seguinte(s).
+
+25180 | Limite Anual | 01012026 | CNA | (CONTAR(P030(*))*1250000) | Valor do limite anual. 
+
+Em regra, o valor é de R$ 5.000.000,00, porém esse valor pode ser inferior a depender da quantidade de períodos de apuração existentes.
+
+Art. 15. O acréscimo previsto no art. 14 somente se aplica aos percentuais de presunção incidentes sobre a parcela da receita bruta total que exceder o valor de R$ 5.000.000,00 (cinco milhões de reais) no respectivo ano-calendário. 
+
+(...)
+
+§ 9º No caso de início ou encerramento de atividades no curso do ano-calendário, o limite anual previsto no caput deverá ser calculado proporcionalmente, considerando o número de trimestres efetivamente em atividade, multiplicado pelo limite estabelecido no § 2º.
+
+
+25190 | Parcela Excedente ao Limite Anual | 01012026 | CNA | SE(P200("25.130";PERIODO_ULTIMO()) > P200("25.180";PERIODO_ULTIMO())) ENTAO (P200("25.130";PERIODO_ULTIMO()) - P200("25.180";PERIODO_ULTIMO())) SENAO 0 FIM_SE | Valor que excede o limite anual.
+
+25200 | Base de Cálculo do Adicional da Receita Bruta | 01012026 | CNA | SE( PERIODO_ATUAL ()<> PERIODO_ULTIMO ()) ENTAO SE(P200("25.110")>P200("25.140")) ENTAO P200("25.110")-P200("25.140") SENAO 0 FIM_SE SENAO  SE ((P200("25.130";PERIODO_ULTIMO()) > P200("25.180";PERIODO_ULTIMO())) E (P200("25.150";PERIODO_ULTIMO()) > P200("25.160";PERIODO_ULTIMO()))) ENTAO (P200("25.130";PERIODO_ULTIMO()) - P200("25.180";PERIODO_ULTIMO())) SENAO SE((P200("25.150")>P200("25.160"))) ENTAO SE(P200("25.110")>P200("25.140")) ENTAO P200("25.110")-P200("25.140") SENAO SE (P200("25.130") > P200("25.180")) ENTAO P200("25.130")-P200("25.180") SENAO 0 FIM_SE FIM_SE SENAO 0 FIM_SE FIM_SE FIM_SE | Valor que servirá de base de cálculo, a partir de eventual proporção de receitas brutas - linhas 2 a 9, para cálculo dos adicionais.
+
+Em determinadas situações esse valor pode ser divergente do valor que excede o limite individual no trimestre.
+
