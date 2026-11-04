@@ -92,6 +92,7 @@ export const REKEY_MODELS = [
   'NfceCsc', // X10a PR-8: CSC da NFC-e por unidade; AAD da cifra = id → REKEY pelo mesmo precedente
   // X10a PR-9: contingência da unidade e a nota órfã (segue o FiscalDocument), sem hash → REKEY pelo F-RK-5.
   'NfceContingencia', 'NfceContingenciaOrfa',
+  'DpLotacao', // BE-INCR-DP-F0-F1 PR-3: lotação do DP no estabelecimento (unitId), sem hash → REKEY pelo F-RK-5
 ] as const;
 
 /**
