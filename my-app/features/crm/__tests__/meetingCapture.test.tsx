@@ -14,7 +14,10 @@ vi.mock('../../../lib/context/CrmContext', () => ({
 vi.mock('../../../lib/context/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
 vi.mock('../../../lib/notifications/notify', () => ({ notify: vi.fn() }));
 vi.mock('../../../lib/services/dynamic-table.service', () => ({
-  DynamicTableService: { getTableById: vi.fn(async () => ({ success: true, data: { schema: { fields: [] } } })) },
+  DynamicTableService: {
+    getTableById: vi.fn(async () => ({ success: true, data: { schema: { fields: [] } } })),
+    getTables: vi.fn(async () => ({ success: true, data: [] })), // Lead360Modal lê os módulos instalados (H2 21-3)
+  },
 }));
 vi.mock('../../../lib/services/crm.service', () => ({
   CrmService: { advanceStage: vi.fn(async () => ({ success: true })) },

@@ -22,7 +22,7 @@ const view = (over: Partial<FiscalProfileView> = {}): FiscalProfileView => ({
   insumoExpenseAccountId: 'acc-insumo', irpjDespesaAccountId: 'acc-irpj-d', csllDespesaAccountId: null,
   irpjRecolherAccountId: 'acc-irpj-r', csllRecolherAccountId: null,
   partnerAccountRef: 'conta-123', codMun: '3550308', inscricaoMunicipal: '1234567', cnae: '9602501',
-  dpsSerie: 7, regEspTrib: 3, regApTribSN: 2, issAliquotaBp: 200, issRetidoTomadorPj: true,
+  dpsSerie: 7, nfeSerie: 1, nfceSerie: 1, regEspTrib: 3, regApTribSN: 2, issAliquotaBp: 200, issRetidoTomadorPj: true,
   pacoteFatoGerador: 'VENDA', pacoteCTribNac: '060101', pacoteCNBS: '123456789',
   ibsCbsInformar: false, ibsCbsCst: '000', ibsCbsClassTrib: '000001',
   pTotTribFedCent: null, pTotTribEstCent: null, pTotTribMunCent: null, pTotTribSNCent: 1550,
@@ -74,11 +74,19 @@ describe('toUpsertFiscalProfile (item 5)', () => {
       'cnae', 'codMun', 'csllDespesaAccountId', 'csllRecolherAccountId', 'dpsSerie', 'emissaoForaDoMes', 'ibsCbsClassTrib',
       'ibsCbsCst', 'ibsCbsInformar', 'icmsContribuinte', 'icmsRecuperavelAccountId', 'inscricaoMunicipal',
       'insumoExpenseAccountId', 'irpjDespesaAccountId', 'irpjRecolherAccountId', 'issAliquotaBp', 'issRetidoTomadorPj',
-      'pTotTribEstCent', 'pTotTribFedCent', 'pTotTribMunCent', 'pTotTribSNCent', 'pacoteCNBS', 'pacoteCTribNac',
+      'nfceSerie', 'nfeSerie', 'pTotTribEstCent', 'pTotTribFedCent', 'pTotTribMunCent', 'pTotTribSNCent', 'pacoteCNBS', 'pacoteCTribNac',
       'pacoteFatoGerador', 'partnerAccountRef', 'pisCofinsCreditExcludesIcms', 'pisCofinsCreditFromSimplesSupplier',
       'pisCofinsCreditIncludesIpi', 'pisCofinsRecuperavelAccountId', 'pisCofinsRegime', 'regApTribSN', 'regEspTrib',
       'regimeTributario', 'unitId',
     ]);
+  });
+
+  // H2 C7 achado 22-2 (03/11, PR #982): o corpo não levava nfeSerie/nfceSerie e o `.default(1)` do DTO os voltava a 1
+  // a cada "Salvar" do formulário — a série 5 gravada virava 1 sem ninguém editar.
+  it('série da NF-e e da NFC-e gravadas (5 e 3) voltam intactas no corpo do formulário hidratado e não editado', () => {
+    const built = toUpsertFiscalProfile('u1', toFiscalProfileForm(view({ nfeSerie: 5, nfceSerie: 3 })));
+    if (!built.ok) throw new Error('esperava ok');
+    expect(built.body).toMatchObject({ nfeSerie: 5, nfceSerie: 3 });
   });
 
   it('SIMPLES força icmsContribuinte=false e pisCofinsRegime=SIMPLES e zera pTotTrib{Fed,Est,Mun}', () => {

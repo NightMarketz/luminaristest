@@ -38,7 +38,7 @@ const view = (over: Partial<FiscalProfileView> = {}): FiscalProfileView => ({
   icmsRecuperavelAccountId: null, pisCofinsRecuperavelAccountId: null, insumoExpenseAccountId: null,
   irpjDespesaAccountId: null, csllDespesaAccountId: null, irpjRecolherAccountId: null, csllRecolherAccountId: null,
   partnerAccountRef: null, codMun: '3550308', inscricaoMunicipal: null, cnae: null,
-  dpsSerie: 7, regEspTrib: 0, regApTribSN: 1, issAliquotaBp: 200, issRetidoTomadorPj: false,
+  dpsSerie: 7, nfeSerie: 1, nfceSerie: 1, regEspTrib: 0, regApTribSN: 1, issAliquotaBp: 200, issRetidoTomadorPj: false,
   pacoteFatoGerador: 'CONSUMO', pacoteCTribNac: null, pacoteCNBS: null,
   ibsCbsInformar: false, ibsCbsCst: null, ibsCbsClassTrib: null,
   pTotTribFedCent: null, pTotTribEstCent: null, pTotTribMunCent: null, pTotTribSNCent: 1550,

@@ -41,6 +41,15 @@ export function AccountantAssignmentSection({ unitId }: AccountantAssignmentSect
   const [inviting, setInviting] = useState(false);
   const [ending, setEnding] = useState<AccountantAssignmentView | null>(null);
 
+  const loadContacts = useCallback(async () => {
+    if (!unitId) return;
+    try {
+      setContacts((await accountingContactsService.listContacts(unitId)).filter((c) => c.deletedAt === null));
+    } catch {
+      setContacts([]);
+    }
+  }, [unitId]);
+
   const load = useCallback(async () => {
     if (!unitId) return;
     try {
@@ -49,12 +58,8 @@ export function AccountantAssignmentSection({ unitId }: AccountantAssignmentSect
     } catch (err: unknown) {
       setError(resolveError(err, tRef.current('governance.error.load', 'Erro ao carregar as atribuições do contador.')));
     }
-    try {
-      setContacts((await accountingContactsService.listContacts(unitId)).filter((c) => c.deletedAt === null));
-    } catch {
-      setContacts([]);
-    }
-  }, [unitId, tRef]);
+    await loadContacts();
+  }, [unitId, tRef, loadContacts]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -72,7 +77,11 @@ export function AccountantAssignmentSection({ unitId }: AccountantAssignmentSect
         </div>
         <button
           type="button"
-          onClick={() => setInviting(true)}
+          onClick={() => {
+            // O contato pode ter sido cadastrado depois de a seção carregar (H2 23-pre-2).
+            setInviting(true);
+            void loadContacts();
+          }}
           disabled={!!pending}
           className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
         >

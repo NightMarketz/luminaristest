@@ -38,6 +38,7 @@ interface UserProfileFormData {
   email: string;
   username: string;
   password?: string;
+  currentPassword?: string;
 }
 
 type UserProfileUpdatePayload = Partial<Omit<UpdateUserDto, 'role'> & { username?: string; email?: string }>;
@@ -156,6 +157,9 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
       payload.password = formData.password;
     }
 
+    // O servidor exige a senha atual para trocar a própria senha ou o e-mail (FIX-AUTH-CONTA §3.4 #6).
+    if ((payload.password || payload.email) && formData.currentPassword) payload.currentPassword = formData.currentPassword;
+
     if (Object.keys(payload).length === 0) {
       setSuccess(t('noChangesDetected', "No changes detected."));
       setFormLoading(false);
@@ -173,6 +177,7 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
       if (updatedUser.email !== undefined) newFormData.email = updatedUser.email;
       if (updatedUser.username !== undefined) newFormData.username = updatedUser.username;
       newFormData.password = '';
+      newFormData.currentPassword = '';
       setFormData(newFormData);
 
       if (updatedUser && updateAuthContext) {
@@ -452,9 +457,26 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
                   </div>
                 </div>
 
-                <div className="p-6">
+                <div className="p-6 space-y-5">
                   <div>
-                    <label htmlFor="password" className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    <label htmlFor="currentPassword" className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                      {t('currentPasswordLabel', 'Senha atual')}
+                    </label>
+                    <input
+                      type="password"
+                      name="currentPassword"
+                      id="currentPassword"
+                      autoComplete="current-password"
+                      className="block w-full px-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
+                      value={formData.currentPassword ?? ''}
+                      onChange={handleChange}
+                    />
+                    <p className="mt-2 text-[11px] text-gray-400 font-medium">
+                      {t('currentPasswordHelpTextProfile', 'Obrigatória para trocar a senha ou o e-mail.')}
+                    </p>
+                  </div>
+                  <div>
+                    <label htmlFor="password"className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                       {t('newPasswordOptionalLabel', 'Nova Senha (opcional)')}
                     </label>
                     <input
