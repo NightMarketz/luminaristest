@@ -3011,7 +3011,7 @@
     },
     "confirm": {
       "title": "Activate accounting for this unit?",
-      "message": "Sector: {{sector}}. On confirm, (1) the default chart of accounts is installed if the unit's chart is empty and (2) the current month's period is opened if it does not exist yet.",
+      "message": "Sector: {{sector}}. On confirm, (1) the default chart of accounts is checked (it is usually installed on the first visit to Accounting; if it is still empty, it is installed now) and (2) the current month's period is opened if it does not exist yet.",
       "confirmLabel": "Activate",
       "cancelLabel": "Cancel"
     },
