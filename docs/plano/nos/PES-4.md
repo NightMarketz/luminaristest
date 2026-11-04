@@ -3,8 +3,8 @@ id: "PES-4"
 tipo: "plataforma"
 dominio: "pessoal"
 titulo: "Departamento Pessoal (folha + eSocial) — núcleo first-class sempre ligado + submódulos opcionais com ativação por competência; fase 2 do F-PES-0"
-estado: "inflight"
-estado_detalhe: "04/11: sessão 3d executando o BRIEF de F0+F1 (BE-INCR-DP-F0-F1-brief.md), um PR por fatia. O #1009 (PRE-ADR) entrou na main; a pilha #1010..#1026 foi rebaseada sobre a main e o #1010 passou a ter base main. Feito: PR-0 #1014, PR-1 #1015, PR-2 #1016, PR-3 #1026 (revisor PASSOU em todos) PR-4 #1032 (itens 37–49 + trava D-5 da jornada) e PR-5 #1036 (itens 50–55: catálogo de rubricas em código, `GET /api/dp/rubricas`). PR-6 #1041 (itens 56–62: afastamento, períodos de férias e implantação de saldo). Os 7 PRs do BRIEF estão abertos; falta o lote de merge do dono. F2..F6 e o BRIEF do SST (núcleo, F-DP-13) ainda sem BRIEF; F-FOL-1..9 da ponte contábil pendentes"
+estado: "planned"
+estado_detalhe: "04/11: F0+F1 entregues na main (681ec26a): o lote #1010..#1041 entrou num squash só pelo #1041, por ordem do dono (\"Pode mergear o lote então, junta tudo num só\"); #1010, #1014, #1015, #1016, #1026, #1032 e #1036 foram fechados sem merge porque o conteúdo deles está contido no #1041. Próximo: BRIEF do F2 (sessão de planejamento) e autorização nova do dono para o executa. F3..F6, o BRIEF do SST (núcleo, F-DP-13) e a ponte contábil (F-FOL-1..9) seguem pendentes"
 depende_de: ["[[D-2026-11-02-DP-PRE-ADR]]", "[[D-2026-11-02-DP-BRIEF-F0-F1]]", "[[D-2026-10-12-QUESTIONARIO-DONO]]", "[[LEGAL-PARAMS]]", "[[IRRF-DISTRIBUICAO]]", "[[I6]]"]
 autorizacao: "dono, chat, 2026-11-03: \"Executa PR-0 a PR-6\" (resposta a \"Abro a sessão 3 com o executa do BRIEF BE-INCR-DP-F0-F1?\") — executa do BRIEF de F0+F1 inteiro ([[D-2026-10-28-FLUXO-AUTONOMO]]); não cobre F2 em diante, o BRIEF do SST nem a ponte contábil (F-FOL-1..9). Antes — dono, chat, 2026-11-02: \"Podemos seguir o pre-adr numa sessão, esperar, criar o nó no vault + brief em outra e o executa na terceira\" + \"Sim, abre agora\" (resposta a \"Abro já a sessão 2 (nó PES-4 + BRIEF de F0 e F1) em cima do branch do #1009?\") — nó e BRIEF de F0+F1; forks do BRIEF por questionário ([[D-2026-11-02-DP-BRIEF-F0-F1]]). Não autoriza código: o 'executa' é da sessão 3"
 perfil_previsto: "opus-medio"
@@ -16,7 +16,7 @@ prs: ["#1010", "#1014", "#1015", "#1016", "#1026", "#1032", "#1036", "#1041"]
 ---
 # PES-4 — Departamento Pessoal: núcleo + submódulos
 
-**Estado:** `inflight` — 04/11: sessão 3d executando o BRIEF de F0+F1 (BE-INCR-DP-F0-F1-brief.md), um PR por fatia. O #1009 (PRE-ADR) entrou na main; a pilha #1010..#1026 foi rebaseada sobre a main e o #1010 passou a ter base main. Feito: PR-0 #1014, PR-1 #1015, PR-2 #1016, PR-3 #1026 (revisor PASSOU em todos) PR-4 #1032 (itens 37–49 + trava D-5 da jornada) e PR-5 #1036 (itens 50–55: catálogo de rubricas em código, `GET /api/dp/rubricas`). PR-6 #1041 (itens 56–62: afastamento, períodos de férias e implantação de saldo). Os 7 PRs do BRIEF estão abertos; falta o lote de merge do dono. F2..F6 e o BRIEF do SST (núcleo, F-DP-13) ainda sem BRIEF; F-FOL-1..9 da ponte contábil pendentes  
+**Estado:** `planned` — 04/11: F0+F1 entregues na main (681ec26a): o lote #1010..#1041 entrou num squash só pelo #1041, por ordem do dono ("Pode mergear o lote então, junta tudo num só"); #1010, #1014, #1015, #1016, #1026, #1032 e #1036 foram fechados sem merge porque o conteúdo deles está contido no #1041. Próximo: BRIEF do F2 (sessão de planejamento) e autorização nova do dono para o executa. F3..F6, o BRIEF do SST (núcleo, F-DP-13) e a ponte contábil (F-FOL-1..9) seguem pendentes  
 **Autorização:** dono, chat, 03/11 — *"Executa PR-0 a PR-6"*: o `executa` do BRIEF de F0+F1 inteiro (sessão 3 de 3;
 [[D-2026-10-28-FLUXO-AUTONOMO]]). Não cobre F2 em diante, o BRIEF do SST nem a ponte contábil. Antes: dono, chat, 02/11 —
 nó + BRIEF de F0 e F1 (sessão 2 de 3).  
@@ -112,8 +112,9 @@ piso passam (spec não trata).
 
 **Lacunas de spec do PR-4 (registradas no corpo do #1032, sem bloquear; o revisor concordou com as 4):** aniversário em 29/02; `PATCH` do trabalhador emite `updated` + `corrected`; unidade 7 com salário > 0; categoria do núcleo sem linha vigente na Tabela 01 dá 400 sem `reason`.
 
-**Pendente (dono):** o lote de merge na ordem #1010 → #1014 → #1015 → #1016 → #1026 → #1032 → #1036 → #1041. O `executa`
-do BRIEF de F0+F1 acabou: F2 em diante, o BRIEF do SST e a ponte contábil precisam de autorização nova.
+**Entregue (04/11):** o lote entrou na main como 681ec26a, squash do #1041 com os 8 PRs (gates verdes e revisor PASSOU em todos). Os outros 7 aparecem como *Closed* no GitHub, e não *Merged*, porque foram absorvidos pelo #1041; o head de cada um foi conferido como contido no que entrou. Os branches ficaram no remoto.
+
+**Pendente:** o BRIEF do F2 (`sessao-planejamento`) e o `executa` dele, que pede autorização nova do dono. O `executa` de 03/11 cobria só F0+F1.
 
 **Lacunas de spec do PR-6 (registradas no corpo do #1041, sem bloquear):** `dataRef` obrigatória no `GET /ferias`
 (o BRIEF não diz de onde vem); "até `dataRef`" lido como "aquisitivo que começa até `dataRef`" (inclui o período em
