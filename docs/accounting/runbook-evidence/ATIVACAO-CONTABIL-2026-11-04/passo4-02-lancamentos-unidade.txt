@@ -1,0 +1,45 @@
+Contabilidade
+
+Razão de partida dobrada — balancete por unidade
+
+Unidade
+Unidade C7 Ativacao
+seed-unit-presumido
+Balancete
+Períodos
+Lançamentos
+Aprovações
+Contas a Pagar
+Contas a Receber
+Aging
+Fluxo de Caixa Projetado
+Contrapartes
+Razão
+Plano de Contas
+BP
+DRE
+DFC
+Comparativo
+Livro Diário
+Importação/Exportação
+Conciliação
+NF-e
+Compliance
+Dimensões
+Imobilizado
+Perfil fiscal
+Parâmetros legais
+Política contábil
+Apuração
+Pendências
+Cobrança
+Kit de setor
+Verificar cadeia de auditoria
+	Nº	Data	Descrição	Débitos	Créditos	Status	Ações
+
+	2026/0001	04/11/2026	
+Receita salão — Venda cmw1jt7q2005jcio0ob5flzox
+	R$ 80,00	R$ 80,00	Postado	
+Recibo (PDF)
+Estornar
+Proveniência
