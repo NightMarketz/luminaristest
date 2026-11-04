@@ -22,5 +22,18 @@ questionário das perguntas Q1–Q5 do PR #1075, no mesmo dia. A régua é a de
 | Q4 | Teste concorrente do IMO-1 e mensagens com id | "Apertar para [200,409] (Recomendado), Varredura de classe (Recomendado), BRIEF só do imobilizado" → detalhe: "Varredura, imobilizado 1º lote (Recomendado)" | (a) A sessão de correção do IMO-1 aperta `fixedAssetController.integration.test.ts:288–289` para `[200, 409]` no mesmo PR da correção. (b) Um BRIEF de classe, `FIX-MENSAGENS-ID-INTERNO`, com o imobilizado no 1º lote. O DFE-1 segue no piloto (F-PIL-5). |
 | Q5 | Onde os BRIEFs de correção entram no vault | "Nó FIX-TESTES (Recomendado)" | A nota [[FIX-TESTES]], no molde do [[FIX-AUTH-CONTA]], fica `planned`. Ela **não** tem `executa`: cada item pede o seu. |
 
+## Conciliação com o questionário da sessão "Playwright" (04/11)
+
+As mesmas Q1–Q5 também foram respondidas num questionário da sessão "Playwright: screenshot, CLI e DevTools", que repassou
+as respostas por mensagem: Q1 *"Cabe: é inventário (Recomendado)"*; Q2 *"Acrescentar no #1067 agora"*; Q3 *"Um cenário
+compartilhado"*; Q4 *"Um 409 e um 200 (Recomendado)"*; Q5 *"Ligar aos nós existentes (Recomendado)"*. Q1 e Q4 coincidem com
+as daqui. Para Q2, Q3 e Q5, o dono resolveu a diferença num questionário nesta sessão, no mesmo dia:
+
+| # | Resposta do dono (literal) | Efeito |
+|---|---|---|
+| Q2 | "Está bom (b3 pendente)" | Fica como está no #1067: pontos 1 e 2 no texto, o ponto 3 como opção b3 do F-PIL-5, pendente. |
+| Q3 | "Fica ratificado (b)" | O F-PIL-2 → (b) fica. A dependência está explícita nos blocos do DFE-ADN-EMISSOR, do ASSINADOR-LOCAL e do DFE-EVENTOS. |
+| Q5 | "As duas coisas" | A nota [[FIX-TESTES]] fica, e cada nó dono recebe uma linha (fold): [[I1b]], [[H2]], [[I8]] e [[FIX-AUTH-CONTA]] (este, com a refutação do "sem teste" da troca de senha). O aperto do IMO-1 está anotado no fold de 04/11 do [[H2]]. |
+
 **O que esta decisão não autoriza:** código, `executa` de qualquer item e merge. Os forks restantes dos BRIEFs novos (F-I1B,
 F-VPT, F-CRM, F-RF-2/3, F-MSG) continuam pendentes.

@@ -299,7 +299,7 @@ corrige sem mudar o comportamento. Cada item termina no teste que o prova. Nenhu
 
 > Patch de 04/11. Pedido do dono (chat, 04/11): *"Já vai atualizando todas os aprendizados nos locais onde são briefs"*. Não muda item, contrato nem fork ratificado: acrescenta ao critério de aceite **só o que falta** da régua A1–A8 de [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md). Onde um ponto pediria mudar algo ratificado, ele está no corpo do PR como pergunta ao dono.
 
-- **A4 — cenário com dono.** Os testes de integração montam o emitente pelo cenário `dfe-manual` do PILOTO-DFE (#1067, F-PIL-2, com `--regime`), em vez de uma fixture própria: um cenário só para o DF-e.
+- **A4 — cenário com dono.** Os testes de integração montam o emitente pelo cenário `dfe-manual` do PILOTO-DFE (#1067, F-PIL-2, com `--regime`), em vez de uma fixture própria: um cenário só para o DF-e. **Dependência explícita (Q3, 04/11):** vale com o F-PIL-2 → (b), ratificado no #1067 em 04/11; se o registro de cenários do piloto não for executado antes desta fatia, esta fatia monta o emitente por fixture própria e o bloco é corrigido no fold.
 - **A3 — mensagem nomeada.** As recusas do certificado (l. 169–170) já são uma por vez; a mensagem nomeia a **unidade** pelo nome, não pelo `unitId` (mesma classe do DFE-1).
 - **A5 — oráculo vira fixture.** Só a homologação real (Emissor Nacional, D5) fica no runbook. A 1ª resposta real (XML autorizado, rejeição com código) vira fixture e entra nos testes de leitura ao lado das sintéticas.
 - **A6 — pilha real.** Caminho feliz prévia → Confirmar → ficha → retorno pela HTTP, com o adaptador `adn` contra o servidor mTLS local, e o documento relido.
