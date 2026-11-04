@@ -93,7 +93,8 @@ function tamanho(dir) {
   return total;
 }
 function nodeModules(wt) {
-  const tipos = ['server', 'my-app'].map((app) => {
+  // '' = a raiz: no workspace npm (#1051) o node_modules principal mora nela.
+  const tipos = ['', 'server', 'my-app'].map((app) => {
     const st = fs.lstatSync(path.join(wt, app, 'node_modules'), { throwIfNoEntry: false });
     return !st ? null : st.isSymbolicLink() ? 'junção' : 'real';
   });

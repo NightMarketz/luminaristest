@@ -1,10 +1,14 @@
 // Roda a integração local como o CI: 4 shards em sequência, cada um num processo novo com heap de 8 GB.
 // Num processo só, o heap estoura por volta do arquivo 110–120 (ts-jest e swc). Args extras vão pro jest.
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const SHARDS = Number(process.env.INTEGRATION_SHARDS ?? 4);
-const jestBin = fileURLToPath(new URL('../node_modules/jest/bin/jest.js', import.meta.url));
+// Workspace npm: o jest fica içado no node_modules da raiz; server/node_modules é a junção vazia (worktree-deps.mjs).
+const jestBin = ['../node_modules', '../../node_modules']
+  .map((d) => fileURLToPath(new URL(`${d}/jest/bin/jest.js`, import.meta.url)))
+  .find((f) => fs.existsSync(f));
 const extra = process.argv.slice(2);
 const failed = [];
 
@@ -15,6 +19,10 @@ if (!process.env.CI && process.env.FULL_SUITE !== '1') {
       'Rode um arquivo por vez: npx jest <arquivo> --selectProjects integration --runInBand\n' +
       'A suíte completa roda no CI do PR. Para rodar tudo aqui mesmo assim: FULL_SUITE=1 npm run test:integration',
   );
+  process.exit(1);
+}
+if (!jestBin) {
+  console.error('jest não está em server/node_modules nem no node_modules da raiz: rode node scripts/worktree-deps.mjs na raiz.');
   process.exit(1);
 }
 

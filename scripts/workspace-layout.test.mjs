@@ -83,7 +83,8 @@ test('A2: nas sessões seguintes (nada faltando) o aviso continua, em vez de sai
   juncao(path.join(raiz, '.deposito', 'my-app', 'node_modules'), path.join(raiz, 'my-app', 'node_modules'));
   const r = hook(raiz);
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /server\/node_modules.*pasta própria/);
+  assert.match(r.stdout, /pasta própria/);
+  assert.match(r.stdout, /server\/node_modules/);
 });
 
 test('A2: worktree toda em junção continua silenciosa', () => {
