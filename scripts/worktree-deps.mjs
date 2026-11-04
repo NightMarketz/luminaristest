@@ -23,7 +23,7 @@ const store = process.env.LUMINARIS_DEPS_STORE || path.join(os.homedir(), '.lumi
 // O que o `npm ci` do depósito precisa: o lockfile, os manifestos do workspace e o schema (o postinstall do server roda
 // `prisma generate`).
 const ARQUIVOS = ['package.json', 'package-lock.json', 'server/package.json', 'my-app/package.json', 'server/prisma/schema.prisma'];
-// Sem --legacy-peer-deps: com o lockfile da raiz o "Missing: openapi-types" do #949 não aparece (BRIEF §0.4, passo 1).
+// Sem --legacy-peer-deps: com o lockfile da raiz o "Missing: openapi-types" do #949 não aparece (BRIEF §0.5, passo 1).
 const NPM_CI = 'npm ci --no-audit --no-fund';
 // Junções da worktree para o depósito. `server/node_modules` fica vazio (o server inteiro está na raiz), mas existe para
 // que um `node_modules` ausente continue significando "worktree sem dependências".

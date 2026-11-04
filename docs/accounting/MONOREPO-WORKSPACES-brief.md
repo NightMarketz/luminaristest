@@ -3,7 +3,8 @@
 **Estado:** BRIEF — **melhoria 5 (pnpm) PARADA** pelo dono depois do spike (chat, 2026-11-04: "Sim, parar o pnpm").
 Fica o depósito do #1034. Segue só a **melhoria 6 (cache de tarefa)**: o PR-A (`tsc --incremental`) foi **executado**
 (seção 0.4). F-MW-9 = npm workspaces + Turborepo; F-MW-10 = turbo fixo em 2.8.21 (o ≥ 2.9 não roda nesta CPU), com
-revisão em 2027-02-01. O próximo passo é o spike do item 20 (seção 0.3), **liberado para depois do merge do PR-A**.
+revisão em 2027-02-01. O spike do item 20 rodou (seção 0.5, F-MW-11 = lockfile mesclado) e o **PR-3 foi mergeado**
+(#1051, `aa9d38b4`): o repo é workspace npm com turbo 2.8.21. O próximo passo é o PR-5 (medição de depois, item 13).
 
 ## 0.2 Decisão depois do spike (dono, chat, 2026-11-04: "Sim, parar o pnpm")
 
@@ -24,7 +25,7 @@ revisão em 2027-02-01. O próximo passo é o spike do item 20 (seção 0.3), **
   - **→ Ratificado: (a), npm workspaces + Turborepo, contra a recomendação** (dono, chat, 2026-11-04: "npm workspaces +
     turbo"). Plano na seção 0.3.
 
-## 0.3 Caminho ratificado no F-MW-9: npm workspaces + Turborepo (nenhum código ainda)
+## 0.3 Caminho ratificado no F-MW-9: npm workspaces + Turborepo (executado no PR-3, #1051)
 
 **Restrição medida em 04/11 (`npx -y turbo@<v> --version` nesta máquina):** o Turborepo é binário nativo, e da 2.9 em
 diante ele não roda nesta CPU, com o mesmo erro do pnpm 12 (`Fatal Error: HW capability … requested: 0x20000000`).
@@ -229,7 +230,7 @@ de editar arquivo de outra worktree (era preciso mudar o `jest.config.js` do spi
 - O binário exige uma capacidade de CPU que este processador não tem. Nenhum comando do spike chegou a rodar.
 - Consequência: o pnpm 12 também fica fora para qualquer colaborador com CPU parecida. Só o pnpm 11 (JS) roda aqui.
 
-## 0.4 Resultado do spike de npm workspaces + turbo 2.8.21 (04/11/2026; dono, chat: "Executa o spike")
+## 0.5 Resultado do spike de npm workspaces + turbo 2.8.21 (04/11/2026; dono, chat: "Executa o spike")
 
 Rodado **nesta worktree** (`gifted-shaw-ddc107`, por causa do hook que proíbe escrever em outra), numa branch local
 descartável a partir da `main` (`23d3eee1`), com Node 24.20 e npm 11.19. Nada foi versionado, e a worktree voltou ao estado
@@ -278,6 +279,10 @@ anterior.
   também traz `packageManager` na raiz, a telemetria do turbo desligada e o script `typecheck` nos dois apps. Ele ainda
   depende de um `executa` e deixa em aberto o Stryker na saída, o reuso do depósito rechaveado e o `allowScripts` no
   workspace.
+- **→ Executado no PR-3** (dono, chat, 2026-11-04: "Executa o PR-3"; #1051, mergeado em `aa9d38b4`). Os três abertos,
+  segundo a tabela de prova do corpo do #1051: o Stryker `--dryRunOnly` saiu sozinho no workspace e na `main` (o
+  travamento do spike não se reproduziu); o reuso do depósito rechaveado levou 2,6 s; o `allowScripts` fica no
+  `package.json` da raiz.
 
 ## 1. Checklist de comportamentos (cada um testável sozinho)
 
@@ -462,7 +467,7 @@ fixado. A diferença entre Node 22 no CI e 24 local já existe hoje e não é de
 | ~~PR-0~~ (arquivado) | spike pnpm (branch descartável, **não mergeia**): os 8 comandos do item 1, com tempo e exit | F-MW-1 = (b) | — | nada a reverter |
 | ~~PR-1~~ (arquivado) | workspace + `pnpm-lock.yaml` na raiz + `allowBuilds` + CI + Docker com contexto na raiz + Dependabot em `/` (itens 2–8) | PR-0 passou; doc do Dependabot conferida (F-MW-5) | vermelho (CI, deps) | `git revert`; os `package-lock.json` voltam com ele |
 | ~~PR-2~~ (arquivado) | `worktree-deps.mjs`/hook chamando pnpm; skills, `CLAUDE.md` e `server/CLAUDE.md` (itens 9–10) | PR-1 | vermelho (skills) | `git revert` |
-| PR-3 | `turbo.json` + npm workspaces (itens 14–20, seção 0.3), turbo 2.8.21 — **depende do spike do item 20** | spike | verde ou vermelho, conforme toque `ci.yml` | `git revert`; apagar `.turbo/` |
+| PR-3 | `turbo.json` + npm workspaces (itens 14–20, seção 0.3), turbo 2.8.21 — **executado** (#1051; spike na seção 0.5) | spike | verde ou vermelho, conforme toque `ci.yml` | `git revert`; apagar `.turbo/` |
 | ~~PR-4~~ (arquivado) | apagar `worktree-deps.mjs` e emendar o R1 | PR-2 estável por 1 semana | vermelho (cédula) | `git revert` |
 | PR-5 | medição de depois (item 13), sem código | PR-3 | verde | — |
 
