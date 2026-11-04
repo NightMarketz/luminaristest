@@ -93,6 +93,7 @@ export const REKEY_MODELS = [
   // X10a PR-9: contingência da unidade e a nota órfã (segue o FiscalDocument), sem hash → REKEY pelo F-RK-5.
   'NfceContingencia', 'NfceContingenciaOrfa',
   'DpLotacao', // BE-INCR-DP-F0-F1 PR-3: lotação do DP no estabelecimento (unitId), sem hash → REKEY pelo F-RK-5
+  'DpVinculo', // BE-INCR-DP-F0-F1 PR-4: vínculo do DP no estabelecimento (unitId), sem hash → REKEY pelo F-RK-5
 ] as const;
 
 /**
