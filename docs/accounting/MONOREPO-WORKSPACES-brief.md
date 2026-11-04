@@ -2,8 +2,8 @@
 
 **Estado:** BRIEF — **melhoria 5 (pnpm) PARADA** pelo dono depois do spike (chat, 2026-11-04: "Sim, parar o pnpm").
 Fica o depósito do #1034. Segue só a **melhoria 6 (cache de tarefa)**: o PR-A (`tsc --incremental`) está pronto para um
-`executa`. O F-MW-9 foi ratificado como npm workspaces + Turborepo, mas o turbo ≥ 2.9 não roda nesta CPU, e o
-F-MW-10 está pendente (seção 0.3). Nenhum código.
+`executa`. F-MW-9 = npm workspaces + Turborepo; F-MW-10 = turbo fixo em 2.8.21 (o ≥ 2.9 não roda nesta CPU). O próximo
+passo é o spike do item 20 (seção 0.3), que precisa de `executa`. Nenhum código.
 
 ## 0.2 Decisão depois do spike (dono, chat, 2026-11-04: "Sim, parar o pnpm")
 
@@ -43,8 +43,14 @@ Daí o fork novo:
   - (c) Voltar ao F-MW-9 (b): só o cache nativo.
   - **Recomendação: (c), ou então (a) com data para revisar.** Uma ferramenta de build presa em versão antiga por causa
     da CPU de uma máquina é dívida que cresce a cada release.
+  - **→ Ratificado: (a), fixar `turbo@2.8.21`** (dono, chat, 2026-11-04: "Fixar turbo 2.8.21"). Consequências que entram
+    no checklist:
+    - `turbo` exato em `2.8.21` no `package.json` da raiz (sem `^`), igual no CI e local: uma versão só, sem divergência;
+    - `ignore` no `.github/dependabot.yml` para `turbo` com `versions: [">= 2.9.0"]`, com comentário apontando esta seção;
+    - **data de revisão: não definida pelo dono.** Fica como pendência: reabrir quando a máquina de trabalho mudar, ou
+      quando uma release do turbo voltar a rodar aqui (`npx -y turbo@<nova> --version`).
 
-**Itens do caminho (só valem com o F-MW-10 resolvido a favor do Turborepo):**
+**Itens do caminho (F-MW-10 = (a), fixar a 2.8.21):**
 
 14. **Workspace npm** — `package.json` da raiz com `"private": true` e `"workspaces": ["server", "my-app"]`.
 15. **Lockfile único na raiz** — o npm de workspace quer um só `package-lock.json`. **Insumo ausente:** se o
@@ -56,7 +62,8 @@ Daí o fork novo:
     (mais as pastas por app que o npm criar). Muda o `worktree-deps.mjs`, o `session-start-deps.mjs` e o R1.
 18. **CI, Docker, Dependabot** — `cache-dependency-path: package-lock.json`, `npm ci` na raiz, Dockerfiles com contexto na
     raiz, e Dependabot em `/`. São os mesmos efeitos que o F-MW-2 teria tido no pnpm.
-19. **`turbo.json`** — o contrato da seção 2, com `test:integration` em `cache: false` (F-MW-7).
+19. **`turbo.json`** — o contrato da seção 2, com `test:integration` em `cache: false` (F-MW-7). `turbo` fixo em
+    `2.8.21` e o `ignore` do Dependabot (F-MW-10). Prova: `npx turbo --version` → `2.8.21` local e no CI.
 20. **Primeiro passo: um spike**, como o PR-0, mas com npm. Itens 15 e 17 e os 8 comandos do item 1, mais
     `turbo run typecheck` duas vezes, a 2ª vinda do cache. Precisa do seu `executa`.
 
@@ -372,7 +379,7 @@ fixado. A diferença entre Node 22 no CI e 24 local já existe hoje e não é de
 | ~~PR-0~~ (arquivado) | spike pnpm (branch descartável, **não mergeia**): os 8 comandos do item 1, com tempo e exit | F-MW-1 = (b) | — | nada a reverter |
 | ~~PR-1~~ (arquivado) | workspace + `pnpm-lock.yaml` na raiz + `allowBuilds` + CI + Docker com contexto na raiz + Dependabot em `/` (itens 2–8) | PR-0 passou; doc do Dependabot conferida (F-MW-5) | vermelho (CI, deps) | `git revert`; os `package-lock.json` voltam com ele |
 | ~~PR-2~~ (arquivado) | `worktree-deps.mjs`/hook chamando pnpm; skills, `CLAUDE.md` e `server/CLAUDE.md` (itens 9–10) | PR-1 | vermelho (skills) | `git revert` |
-| PR-3 | `turbo.json` + npm workspaces (itens 14–20, seção 0.3) — **depende do F-MW-10 e de um spike** | F-MW-10 | verde ou vermelho, conforme toque `ci.yml` | `git revert`; apagar `.turbo/` |
+| PR-3 | `turbo.json` + npm workspaces (itens 14–20, seção 0.3), turbo 2.8.21 — **depende do spike do item 20** | spike | verde ou vermelho, conforme toque `ci.yml` | `git revert`; apagar `.turbo/` |
 | ~~PR-4~~ (arquivado) | apagar `worktree-deps.mjs` e emendar o R1 | PR-2 estável por 1 semana | vermelho (cédula) | `git revert` |
 | PR-5 | medição de depois (item 13), sem código | PR-3 | verde | — |
 
