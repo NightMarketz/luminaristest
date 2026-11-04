@@ -4,6 +4,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "rootDir": ".",
+    // Arquivo próprio: herdar o do tsconfig.json faria as duas checagens sobrescreverem o mesmo cache a cada rodada.
+    "tsBuildInfoFile": "./dist/tsconfig.test.tsbuildinfo",
     "allowJs": true,
     "paths": {
       "@/*": ["./src/*"],
