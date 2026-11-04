@@ -1,0 +1,572 @@
+Documentação Técnica — eSocial Ir para o Conteúdo 1 Ir para a Página Inicial 2 Ir para o menu de Navegação 3 Ir para a Busca 4 Ir para o Mapa do site 5 Atenção! Seu navegador não pode executar javascript. Alguns recursos podem não funcionar corretamente. 
+
+ Abrir menu principal de navegação 
+ eSocial 
+
+ Termos mais buscados 
+
+ Desenrola Brasil 
+
+ assinatura 
+
+ mei 
+
+ enem 
+
+ imposto de renda 
+
+ Termos mais buscados 
+
+ Desenrola Brasil 
+
+ assinatura 
+
+ mei 
+
+Acesso ao sistema 
+ Acesse o eSocial 
+
+ Orientações de acesso ao eSocial por meio do Gov.br 
+
+ Semáforo 
+
+ Cronograma de implantação 
+
+ Produção Restrita - Ambiente de Testes 
+
+ Orientações - Procuração Eletrônica e Assinatura Digital 
+
+Empregador Doméstico 
+ Manual do Doméstico 
+
+ Perguntas Frequentes 
+ Histórico das Perguntas Frequentes - Empregador Doméstico 
+
+ App eSocial Doméstico 
+
+ Orientações 
+ Como Acessar o eSocial 
+
+ Consultar Guias Pagas 
+
+ Documento de Arrecadação do eSocial - DAE 
+
+ Direitos do Trabalhador Doméstico 
+
+ Guia FGTS - Recolhimento Anterior a 10/2015 
+
+ FGTS para Empregador Doméstico 
+
+ Saque FGTS 
+
+ Seguro Desemprego 
+
+ Recebimento de benefícios do INSS pelo trabalhador doméstico 
+
+ Tutoriais em vídeo 
+
+ O que muda com o Novo eSocial Simplificado 
+
+ Manual Web Processo Trabalhista 
+
+Empresas e Órgãos Públicos 
+ Manual WEB GERAL / SST 
+
+ Perguntas Frequentes 
+
+ Orientações 
+
+ Consulta Qualificação Cadastral 
+
+ Manual WEB Processo Trabalhista 
+
+ Videoaulas Processos Trabalhistas 
+
+Microempreendedor Individual 
+ Manual WEB MEI 
+
+ Perguntas Frequentes 
+
+ Portal do Empreendedor 
+
+Segurado Especial 
+ Manual do Segurado Especial 
+
+Notícias 
+ Doméstico 
+
+ Empresas 
+
+ Coronavírus - COVID 19 
+
+ Todas as Notícias 
+
+Documentação Técnica 
+ Leiautes eSocial versão S-1.3 - NT 07/2026 
+
+ Leiautes eSocial versão S-1.3 - NT 07/2026. rev. 24/09/2026 
+
+ Leiautes eSocial versão S-1.3 - NT 07/2026. rev. 20/10/2026 
+
+Centrais de conteúdo 
+ Conheça o eSocial 
+
+ Legislação 
+ Empregador Doméstico 
+
+ Empresas 
+
+ MEI 
+
+ CORONAVíRUS - Orientações 
+
+Canais de Atendimento 
+ Fale Conosco 
+
+ Central 0800 730 0888 
+
+ Serviço de Informação ao Cidadão - SIC 
+
+ Ouvidoria 
+
+ Imprensa 
+
+Tabelas do eSocial 
+ Consulta tabelas do eSocial 
+
+ GOV.BR 
+ Serviços 
+ Buscar serviços por 
+ Categorias 
+
+ Órgãos 
+
+ Estados 
+
+ Serviços por público alvo 
+ Cidadãos 
+
+ Empresas 
+
+ Órgãos e Entidades Públicas 
+
+ Demais segmentos (ONGs, organizações sociais, etc) 
+
+ Servidor Público 
+
+ Temas em Destaque 
+ Orçamento Nacional 
+
+ Redes de Atendimento da Administração Pública Federal 
+
+ Proteção de Dados Pessoais 
+
+ Serviços para Imigrantes 
+
+ Política e Orçamento Educacionais 
+
+ Educação Profissional e Tecnológica 
+
+ Educação Profissional para Jovens e Adultos 
+
+ Trabalho e Emprego 
+
+ Serviços para Pessoas com Deficiência 
+
+ Combate à Discriminação Racial 
+
+ Política de Proteção Social 
+
+ Política para Mulheres 
+
+ Saúde Reprodutiva da Mulher 
+
+ Cuidados na Primeira Infância 
+
+ Habitação Popular 
+
+ Controle de Poluição e Resíduos Sólidos 
+
+ Notícias 
+ Saúde 
+
+ Agricultura e Pecuária 
+
+ Cidadania e Assistência Social 
+
+ Ciência e Tecnologia 
+
+ Comunicação 
+
+ Cultura e Esporte 
+
+ Economia e Gestão Pública 
+
+ Educação e Pesquisa 
+
+ Energia 
+
+ Forças Armadas e Defesa Civil 
+
+ Infraestrutura 
+
+ Justiça e Segurança 
+
+ Meio Ambiente 
+
+ Trabalho e Previdência 
+ FGTS 
+
+ Direitos do Trabalhador 
+
+ Turismo 
+ Direitos do Viajante 
+
+ Viaje o Brasil 
+
+ Galeria de Aplicativos 
+
+ Acompanhe o Planalto 
+
+ Navegação 
+ Acessibilidade 
+
+ Mapa do Site 
+
+ Termo de Uso e Aviso de Privacidade 
+
+ Consultar minhas solicitações 
+
+ Órgãos do Governo 
+
+ Por dentro do Gov.br 
+ Dúvidas Frequentes em relação ao Portal gov.br 
+
+ Dúvidas Frequentes da conta gov.br 
+
+ Ajuda para Navegar o Portal 
+
+ Conheça os elementos do Portal 
+
+ Política de e-participação 
+
+ Termos de Uso 
+
+ Governo Digital 
+
+ Guia de Edição de Serviços do Portal Gov.br 
+
+ Canais do Executivo Federal 
+
+ Dados da Administração Pública Federal 
+ Dados Abertos 
+
+ Painel Estatístico de Pessoal 
+
+ Painel de Compras da Administração Pública Federal 
+
+ Acesso à Informação 
+
+ Empresas e Negócios 
+
+Links Úteis
+
+ Galeria de Aplicativos 
+
+ Participe 
+
+ Galeria de Aplicativos 
+
+ Participe 
+
+ Ajude a melhorar o gov.br 
+
+Redes sociais
+
+ Twitter 
+
+ YouTube 
+
+ Facebook 
+
+ Flickr 
+
+ Você está aqui: Página Inicial Documentação Técnica 
+
+Documentação Técnica
+
+ Info 
+
+Documentação Técnica
+
+ Leiautes eSocial versão 1.3 - NT 06/2026 rev. 09/04/2026 - formato HTML 
+
+ Leiautes eSocial versão 1.3 - NT 06/2026 rev. 09/04/2026 - formato PDF 
+
+ Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 06/2026) - produção em 27/04/2026 
+
+ Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 06/2026) - CNPJ alfanumérico - produção em 01/07/2026 
+
+ Manual de Orientação do eSocial v. S-1.3 - consolidada até NO 12/2026 
+
+ Leiautes eSocial versão 1.3 - NT 07/2026 rev. - formato HTML 
+
+ Leiautes eSocial versão 1.3 - NT 07/2026 rev. - formato PDF 
+
+ Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) - produção em 26/10/2026 
+
+ Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) - produção em 23/11/2026 
+
+ Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) - produção em 14/12/2026 
+
+ Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) - produção em 18/01/2027 
+
+NOTAS TÉCNICAS V. S-1.3
+
+Nota Técnica v. S-1.3 07/2026 rev. 20/10/2026
+
+Nota Técnica v. S-1.3 07/2026 rev. 24/09/2026
+
+Nota Técnica v. S-1.3 07/2026
+
+Nota Técnica v. S-1.3 06/2026 rev. 09/04/2026
+
+Nota Técnica v. S-1.3 06/2026
+
+Nota Técnica v. S-1.3 05/2025
+
+Nota Técnica v. S-1.3 04/2025 rev. 26/08/2025
+
+Nota Técnica v. S-1.3 04/2025
+
+Nota Técnica v. S-1.3 03/2025 
+
+Nota Técnica v. S-1.3 02/2024 - rev. 29/10/2024
+
+Nota Técnica v. S-1.3 02/2024
+
+Nota Técnica v. S-1.3 01/2024 - rev. 03/10/2024
+
+Nota Técnica v. S-1.3 01/2024
+
+Manuais
+
+MANUAL DE ORIENTAÇÃO DO ESOCIAL SIMPLIFICADO v. S-1.3 consolidado até NO nº 12/2026
+
+- Manual de Orientação do eSocial Simplificado v. S-1.3 consolidado até NO nº 12/2026 - com marcações
+
+MANUAL DO ESOCIAL WEB GERAL - EMPRESAS
+
+MANUAL DO ESOCIAL WEB MEI (MICROEMPREENDEDOR INDIVIDUAL)
+
+MANUAL DO ESOCIAL PARA O EMPREGADOR DOMÉSTICO
+
+MANUAL DO SEGURADO ESPECIAL
+
+MANUAL DO ESOCIAL WEB PROCESSO TRABALHISTA
+
+MANUAL DO ESOCIAL WEB PARA SERVIDORES DA JUSTIÇA DO TRABALHO
+
+MANUAL DO ESOCIAL WEB RELATÓRIOS GERENCIAIS
+
+Notas Orientativas v. S-1.3
+
+Nota Orientativa v. S-1.3 12/2026 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 12.2026”
+
+Nota Orientativa v. S-1.3 11/2026 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 11.2026”
+
+Nota Orientativa v. S-1.3 10/2026 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 10.2026”
+
+Nota Orientativa v. S-1.3 09/2026 (atualizada)- Apresenta os ajustes necessários nos eventos do eSocial para os contribuintes do Serviço Social da Indústria (SESI) e do Serviço Nacional de Aprendizagem Industrial (SENAI) que mantinham convênio para a arrecadação direta dessas contribuições, incluindo a contribuição adicional devida ao SENAI
+
+Nota Orientativa v. S-1.3 08/2026 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 08.2026”
+
+Nota Orientativa v. S-1.3 07/2026 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 07.2026"
+
+Nota Orientativa v. S-1.3 06/2025 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 06.2025"
+
+Nota Orientativa v. S-1.3 05/2025 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 05.2025”
+
+Nota Orientativa v. S-1.3 04/2025 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 04.2025"
+
+Nota Orientativa v. S-1.3. 03/2025 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 03.2025”
+
+Nota Orientativa v. S-1.3. 02/2024 - Alterações da versão do “MOS S-1.3 consolidada até a NO S-1.3 02.2024”
+
+Nota Orientativa v. S-1.3 01/2024 - (revisada em 29/10/2024) - Apresenta orientações necessárias para atender ao disposto na Lei nº 14.973, de 16 de setembro de 2024, que instituiu a reoneração gradual da folha de pagamento, a não incidência de contribuição patronal sobre as parcelas de 13º salário para empresas desoneradas e o retorno gradual da alíquota de 20% para os municípios com baixo índice populacional
+
+Desenvolvedor
+
+Leiautes do eSocial v. S-1.3 NT 07/2026 rev. 20/10/2026 - formato PDF
+
+- Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) - produção em 26/10/2026
+
+- Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) - produção em 23/11/2026
+
+- Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) - produção em 14/12/2026
+
+- Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.). - produção em 18/01/2027
+
+Leiautes do eSocial v. S-1.3 (até NT 06/2026 rev. 09/04/2026) - formato PDF
+
+- Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 06/2026 rev. 09/04/2026) - produção em 13/02/2026
+
+- Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 06/2026 rev. 09/04/2026) - produção em 27/04/2026 
+
+Leiautes do eSocial v. S-1.3 (até NT 05/2025) - formato PDF
+
+- Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 05/2025) - produção em 24/11/2025
+
+ Manual de Orientação do Desenvolvedor do eSocial v.1.16 
+
+ Mensagens do Sistema - v. 2.5 
+
+ Pacote de Comunicação eSocial v.1.6 
+
+ Entes Federativos Responsáveis 
+
+ Pacote de Comunicação eSocial v.1.6 - Alfa 
+
+Histórico de versões do sistema
+
+Versões anteriores da Documentação Técnica
+
+Acesso ao sistema 
+ Acesse o eSocial 
+
+ Orientações de acesso ao eSocial por meio do Gov.br 
+
+ Semáforo 
+
+ Cronograma de implantação 
+
+ Produção Restrita - Ambiente de Testes 
+
+ Orientações - Procuração Eletrônica e Assinatura Digital 
+
+Empregador Doméstico 
+ Manual do Doméstico 
+
+ Perguntas Frequentes 
+ Histórico das Perguntas Frequentes - Empregador Doméstico 
+
+ App eSocial Doméstico 
+
+ Orientações 
+ Como Acessar o eSocial 
+
+ Consultar Guias Pagas 
+
+ Documento de Arrecadação do eSocial - DAE 
+
+ Direitos do Trabalhador Doméstico 
+
+ Guia FGTS - Recolhimento Anterior a 10/2015 
+
+ FGTS para Empregador Doméstico 
+
+ Saque FGTS 
+
+ Seguro Desemprego 
+
+ Recebimento de benefícios do INSS pelo trabalhador doméstico 
+
+ Tutoriais em vídeo 
+
+ O que muda com o Novo eSocial Simplificado 
+
+ Manual Web Processo Trabalhista 
+
+Empresas e Órgãos Públicos 
+ Manual WEB GERAL / SST 
+
+ Perguntas Frequentes 
+
+ Orientações 
+
+ Consulta Qualificação Cadastral 
+
+ Manual WEB Processo Trabalhista 
+
+ Videoaulas Processos Trabalhistas 
+
+Microempreendedor Individual 
+ Manual WEB MEI 
+
+ Perguntas Frequentes 
+
+ Portal do Empreendedor 
+
+Segurado Especial 
+ Manual do Segurado Especial 
+
+Notícias 
+ Doméstico 
+
+ Empresas 
+
+ Coronavírus - COVID 19 
+
+ Todas as Notícias 
+
+Documentação Técnica 
+ Leiautes eSocial versão S-1.3 - NT 07/2026 
+
+ Leiautes eSocial versão S-1.3 - NT 07/2026. rev. 24/09/2026 
+
+ Leiautes eSocial versão S-1.3 - NT 07/2026. rev. 20/10/2026 
+
+Centrais de conteúdo 
+ Conheça o eSocial 
+
+ Legislação 
+ Empregador Doméstico 
+
+ Empresas 
+
+ MEI 
+
+ CORONAVíRUS - Orientações 
+
+Canais de Atendimento 
+ Fale Conosco 
+
+ Central 0800 730 0888 
+
+ Serviço de Informação ao Cidadão - SIC 
+
+ Ouvidoria 
+
+ Imprensa 
+
+Tabelas do eSocial 
+ Consulta tabelas do eSocial 
+
+ Redefinir Cookies 
+
+Redes sociais
+
+ Twitter 
+
+ YouTube 
+
+ Facebook 
+
+ Flickr 
+
+ Acesso àInformação 
+
+ Todo o conteúdo deste site está publicado sob a licença Creative Commons Atribuição-SemDerivações 3.0 Não Adaptada. 
+ Voltar ao topo da página 
+
+ Rejeitar 
+
+ Fale Agora Refazer a busca 
+
+Ajude a melhorar o gov.br
+
+Ao compartilhar sua opinião, você nos ajuda a identificar problemas e a melhorar a navegação para você.
+
+ Agora não Responder pesquisa 
+
+ Não exibir esta mensagem novamente.

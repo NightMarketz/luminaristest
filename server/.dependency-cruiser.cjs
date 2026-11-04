@@ -89,6 +89,17 @@ module.exports = {
       from: { path: '^src/controllers/', pathNot: `(${TEST}|^src/controllers/crmController\.ts$)` },
       to: { path: '^src/features/accounting/scope/resolveAccountingScopeInternal\.ts$' },
     },
+    // ---- PES-4, Departamento Pessoal (BE-INCR-DP-F0-F1 item 6) ----
+    {
+      name: 'D1-dp-core-not-optional',
+      severity: 'error',
+      comment:
+        'F-DP-10 (dono, 2026-11-02, "Cria a trava"): o núcleo do DP (features/dp/) não importa submódulo opcional ' +
+        '(features/dp<Nome>/). Opcional entra por porta com adaptador nulo, montada só no lib/factory.ts. Ponto cego: ' +
+        'controllers/dp*.ts e routes/dp.ts ficam fora da regra e falam só com o getFactory().',
+      from: { path: '^src/features/dp/', pathNot: TEST },
+      to: { path: '^src/features/dp[A-Z][A-Za-z0-9]*/' },
+    },
     // ---- fiscal/contábil puro ----
     {
       name: 'F1-fiscal-lib-is-pure',

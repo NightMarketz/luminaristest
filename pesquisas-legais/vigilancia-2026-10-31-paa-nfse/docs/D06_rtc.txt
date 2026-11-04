@@ -1,0 +1,562 @@
+RTC — Portal da Nota Fiscal de Serviço eletrônica Ir para o Conteúdo 1 Ir para a Página Inicial 2 Ir para o menu de Navegação 3 Ir para a Busca 4 Ir para o Mapa do site 5 Atenção! Seu navegador não pode executar javascript. Alguns recursos podem não funcionar corretamente. 
+
+ Abrir menu principal de navegação 
+ Portal da Nota Fiscal de Serviço eletrônica 
+
+ Termos mais buscados 
+
+ Desenrola Brasil 
+
+ assinatura 
+
+ mei 
+
+ imposto de renda 
+
+ enem 
+
+ Termos mais buscados 
+
+ Desenrola Brasil 
+
+ assinatura 
+
+ mei 
+
+MEI e demais empresas 
+ Emissor de NFS-e WEB 
+
+ Consultar Nota Fiscal 
+
+ Acesso aos Sistemas 
+ Consultar Nota Fiscal 
+
+ Prestador de Serviços 
+
+ Município 
+
+ Cidadão 
+
+ Consultar Nota Fiscal 
+
+ Lista de Serviços Anexa à Lei Complementar nº 116, de 31 de julho de 2003 
+
+Consumidor dos serviços 
+ Consultar Nota Fiscal 
+
+ Apps NFSe Mobile 
+
+Municípios 
+ Conheça a NFS-e 
+ O que é a NFS-e 
+
+ Histórico da NFS-e 
+
+ O padrão nacional da NFS-e 
+
+ O que é SPED 
+
+ Benefícios 
+
+ Produtos disponíveis 
+ Ambiente de Dados Nacional 
+
+ Emissor NFS-e WEB 
+
+ APP emissor de NFS-e 
+
+ APP Cidadão (NFSe Cidadao) 
+
+ Secretaria de Finanças Nacional 
+
+ Guia de Recolhimento 
+
+ Portal NFS-e 
+
+ Webservices Municipais 
+
+ Webservices empresariais 
+
+ Webservices conveniados 
+
+ EFD ISS 
+
+ API de integração 
+
+ Painel Administrativo Municipal 
+
+ Como conveniar-se 
+ Como conveniar-se 
+
+ Como implementar a NFS-e 
+ Implementação da NFS-e - ADN 
+
+ Implementação da NFS-e - Emissores Públicos 
+
+ Monitoramento das Adesões à NFS-e 
+
+ Plano de Implantação da NFS-e 
+
+ Painel Municipal (parametrização) 
+
+NFS-e Via 
+ Solicitação de cadastramento no Portal das Concessionárias de Exploração de Vias 
+
+ Documentação técnica 
+ Manuais e anexos 
+
+ Leiautes 
+
+ Arquivos dos esquemas XSD 
+
+ Notas técnicas 
+
+ Versões anteriores da documentação 
+
+ Links 
+
+Canais de Atendimento
+
+Biblioteca 
+ Portarias e Resoluções do CGNFS-e 
+
+ Documentação técnica 
+ Atualizações e Implantações 
+
+ Documentação Atual (Produção) 
+
+ Documentação Técnica (Homologação/testes) 
+
+ APIs - Prod. Restrita e Produção 
+
+ RTC 
+
+ Leiaute e esquemas antigos (julho de 2022 a 28/09/2025) 
+
+ Logos da NFS-e 
+
+ Links com Passo a Passo 
+
+ Legislação Aplicável ao MEI 
+
+ Eventos NFS-e 
+
+ Alíquotas de ISSQN 
+
+Perguntas Frequentes
+
+Privacidade e Proteção de Dados
+
+ GOV.BR 
+ Serviços 
+ Buscar serviços por 
+ Categorias 
+
+ Órgãos 
+
+ Estados 
+
+ Serviços por público alvo 
+ Cidadãos 
+
+ Empresas 
+
+ Órgãos e Entidades Públicas 
+
+ Demais segmentos (ONGs, organizações sociais, etc) 
+
+ Servidor Público 
+
+ Temas em Destaque 
+ Orçamento Nacional 
+
+ Redes de Atendimento da Administração Pública Federal 
+
+ Proteção de Dados Pessoais 
+
+ Serviços para Imigrantes 
+
+ Política e Orçamento Educacionais 
+
+ Educação Profissional e Tecnológica 
+
+ Educação Profissional para Jovens e Adultos 
+
+ Trabalho e Emprego 
+
+ Serviços para Pessoas com Deficiência 
+
+ Combate à Discriminação Racial 
+
+ Política de Proteção Social 
+
+ Política para Mulheres 
+
+ Saúde Reprodutiva da Mulher 
+
+ Cuidados na Primeira Infância 
+
+ Habitação Popular 
+
+ Controle de Poluição e Resíduos Sólidos 
+
+ Notícias 
+ Saúde 
+
+ Agricultura e Pecuária 
+
+ Cidadania e Assistência Social 
+
+ Ciência e Tecnologia 
+
+ Comunicação 
+
+ Cultura e Esporte 
+
+ Economia e Gestão Pública 
+
+ Educação e Pesquisa 
+
+ Energia 
+
+ Forças Armadas e Defesa Civil 
+
+ Infraestrutura 
+
+ Justiça e Segurança 
+
+ Meio Ambiente 
+
+ Trabalho e Previdência 
+ FGTS 
+
+ Direitos do Trabalhador 
+
+ Turismo 
+ Direitos do Viajante 
+
+ Viaje o Brasil 
+
+ Galeria de Aplicativos 
+
+ Acompanhe o Planalto 
+
+ Navegação 
+ Acessibilidade 
+
+ Mapa do Site 
+
+ Termo de Uso e Aviso de Privacidade 
+
+ Consultar minhas solicitações 
+
+ Órgãos do Governo 
+
+ Por dentro do Gov.br 
+ Dúvidas Frequentes em relação ao Portal gov.br 
+
+ Dúvidas Frequentes da conta gov.br 
+
+ Ajuda para Navegar o Portal 
+
+ Conheça os elementos do Portal 
+
+ Política de e-participação 
+
+ Termos de Uso 
+
+ Governo Digital 
+
+ Guia de Edição de Serviços do Portal Gov.br 
+
+ Canais do Executivo Federal 
+
+ Dados da Administração Pública Federal 
+ Dados Abertos 
+
+ Painel Estatístico de Pessoal 
+
+ Painel de Compras da Administração Pública Federal 
+
+ Acesso à Informação 
+
+ Empresas e Negócios 
+
+Links Úteis
+
+ Galeria de Aplicativos 
+
+ Participe 
+
+ Galeria de Aplicativos 
+
+ Participe 
+
+ Ajude a melhorar o gov.br 
+
+Redes sociais
+
+ Twitter 
+
+ YouTube 
+
+ Facebook 
+
+ Flickr 
+
+ Você está aqui: Página Inicial Biblioteca Documentação técnica RTC 
+
+ Info 
+
+RTC
+
+Documentação Técnica com Atualizações da Reforma Tributária do Consumo: Grupos "IBSCBS".
+
+ Compartilhe: Compartilhe por Facebook Compartilhe por Twitter Compartilhe por LinkedIn Compartilhe por WhatsApp link para Copiar para área de transferência 
+
+ Publicado em 10/12/2025 19h54 Atualizado em 26/10/2026 15h52 
+
+Anexo VIII versão 1.02.00 (26/10/2026) - Correlação entre Item de Serv., NBS, cClassTrib e cIndOp (AnexoVII)
+
+ATENÇÃO: Este Anexo é apenas um trabalho inicial, ainda em desenvolvimento;
+
+NÃO HÁ REGRAS DE NEGÓCIO BASEADAS NESTE ANEXO NO AMBIENTE DO PILOTO RTC (PRODUÇÃO RESTRITA) NEM EM PRODUÇÃO;
+
+Estamos recebendo sugestões acerca de suas informações. Elas podem ser endereçadas para a caixa municipios.nfs-e@rfb.gov.br (sugere-se dispor "AnexoVIII" no título do e-mail).
+
+Nota Técnica 010 SE/CGNFS-e nº 010 versão 1.00
+
+Nota Técnica da Secretaria-Executiva do Comitê Gestor da NFS-e (SE/NFS-e) que dispõe sobre as adequações do leiaute da NFS-e Via e do Evento de Manifestação do Adquirente.
+
+A documentação relacionada está neste link.
+
+Nota Técnica SE/CGNFS-e nº 009 versão 1.01 (01/10/2026)
+
+Nota Técnica da Secretaria-Executiva do Comitê Gestor da NFS-e (SE/NFS-e) que dispõe sobre as adequações do layout da NFS-e, dado o contexto da Reforma Tributária do Consumo.
+
+AnexoVI-LeiautesRN_RTC_IBSCBS-v1.04.01 - NT009 v1.01
+
+AnexoVII-IndOp_IBSCBS_v1.03.00 - NT009 v1.01
+
+Nota Técnica SE/CGNFS-e nº 008
+
+Nota Técnica da Secretaria-Executiva do Comitê Gestor da NFS-e (SE/NFS-e) que dispõe sobre o DANFSe.
+
+Anexo VIII versão 1.01.00 - Correlação entre Item de Serv., NBS, cClassTrib e cIndOp (AnexoVII)
+
+Este Anexo é apenas um trabalho inicial, ainda em desenvolvimento;
+
+Não há regras de negócio baseadas neste anexo no ambiente do Piloto RTC (Produção Restrita) nem em Produção;
+
+Estamos recebendo sugestões acerca de suas informações. Elas podem ser endereçadas para a caixa municipios.nfs-e@rfb.gov.br (sugere-se dispor "AnexoVIII" no título do e-mail).
+
+Nota Técnica SE/CGNFS-e nº 007
+
+Nota Técnica da Secretaria-Executiva do Comitê Gestor da NFS-e (SE/NFS-e) que dispõe sobre as adequações do layout da NFS-e e esclarecimentos acerca da plataforma NFS-e.
+
+AnexoVI-LeiautesRN_RTC_IBSCBS-V1.03.00 – NT007
+
+AnexoVII-IndOp_IBSCBS_V1.01.00
+
+Nota Técnica SE/CGNFS-e nº 006
+
+Nota Técnica da Secretaria-Executiva do Comitê Gestor da NFS-e (SE/NFS-e) que dispõe sobre as adequações do layout da NFS-e Via, dado o contexto da Reforma Tributária do Consumo.
+
+A documentação relacionada está neste link.
+
+AnexoVIII versão 1.00.00 - Correlação entre Item de Serviço, NBS, cClassTrib e cIndOp (AnexoVII)
+
+Este Anexo é apenas um trabalho inicial, ainda em desenvolvimento;
+
+Não há regras de negócio baseadas neste anexo no ambiente do Piloto RTC (Produção Restrita) e nem haverá em Produção, quando o ambiente RTC estiver disponível em 1º de janeiro de 2026;
+
+Estamos recebendo sugestões acerca de suas informações. Elas podem ser endereçadas para a caixa municipios.nfs-e@rfb.gov.br (sugere-se dispor "AnexoVIII" no título do e-mail).
+
+Nota Técnica SE/CGNFS-e nº 005
+
+Nota Técnica da Secretaria-Executiva do Comitê Gestor da NFS-e (SE/NFS-e) que dispõe sobre as adequações do layout da NFS-e, dado o contexto da Reforma Tributária do Consumo.
+
+Esta versão NÃO estará disponível em ambiente de Produção em janeiro de 2026. A data de sua futura disponibilização será publicada neste portal.
+
+AnexoVI-LeiautesRN_RTC_IBSCBS-V1.02.01 - NT005
+
+Nota Técnica SE/CGNFS-e nº 004
+
+Nota Técnica da Secretaria-Executiva do Comitê Gestor da NFS-e (SE/NFS-e) que dispõe sobre as adequações do layout da NFS-e, dado o contexto da Reforma Tributária do Consumo.
+
+Esta versão está disponível no ambiente de Produção Restrita (homologação/testes) desde 10 de dezembro de 2025, sendo a versão do piloto disponível para testes. Sua documentação completa pode ser acessada aqui;
+
+Esta versão será disponibilizada no ambiente de produção da NFS-e a partir de 5 de janeiro de 2026.
+
+AnexoVI-LeiautesRN_RTC_IBSCBS-V1.01.03 - NT004
+
+AnexoVII-IndOp_IBSCBS_V1.00.00
+
+Esquemas XSD - AnexoVI-LeiautesRN_RTC_IBSCBS-V1.01.03 - NT004
+
+Nota Técnica SE/CGNFS-e nº 003
+
+Nota Técnica da Secretaria-Executiva do Comitê Gestor da NFS-e (SE/NFS-e) que dispõe sobre as adequações do layout da NFS-e, dado o contexto da Reforma Tributária do Consumo.
+
+Nota Técnica SE/CGNFS-e nº 002
+
+Nota Técnica da Secretaria-Executiva do Comitê Gestor da NFS-e (SE/NFS-e) que dispõe sobre as adequações do layout da NFS-e, dado o contexto da Reforma Tributária do Consumo.
+
+Nota Técnica SE/CGNFS-e nº 001
+
+Nota Técnica da Secretaria-Executiva do Comitê Gestor da NFS-e (SE/NFS-e) que dispõe sobre as adequações do layout da NFS-e, dado o contexto da Reforma Tributária do Consumo.
+
+ Compartilhe: Compartilhe por Facebook Compartilhe por Twitter Compartilhe por LinkedIn Compartilhe por WhatsApp link para Copiar para área de transferência 
+
+MEI e demais empresas 
+ Emissor de NFS-e WEB 
+
+ Consultar Nota Fiscal 
+
+ Acesso aos Sistemas 
+ Consultar Nota Fiscal 
+
+ Prestador de Serviços 
+
+ Município 
+
+ Cidadão 
+
+ Consultar Nota Fiscal 
+
+ Lista de Serviços Anexa à Lei Complementar nº 116, de 31 de julho de 2003 
+
+Consumidor dos serviços 
+ Consultar Nota Fiscal 
+
+ Apps NFSe Mobile 
+
+Municípios 
+ Conheça a NFS-e 
+ O que é a NFS-e 
+
+ Histórico da NFS-e 
+
+ O padrão nacional da NFS-e 
+
+ O que é SPED 
+
+ Benefícios 
+
+ Produtos disponíveis 
+ Ambiente de Dados Nacional 
+
+ Emissor NFS-e WEB 
+
+ APP emissor de NFS-e 
+
+ APP Cidadão (NFSe Cidadao) 
+
+ Secretaria de Finanças Nacional 
+
+ Guia de Recolhimento 
+
+ Portal NFS-e 
+
+ Webservices Municipais 
+
+ Webservices empresariais 
+
+ Webservices conveniados 
+
+ EFD ISS 
+
+ API de integração 
+
+ Painel Administrativo Municipal 
+
+ Como conveniar-se 
+ Como conveniar-se 
+
+ Como implementar a NFS-e 
+ Implementação da NFS-e - ADN 
+
+ Implementação da NFS-e - Emissores Públicos 
+
+ Monitoramento das Adesões à NFS-e 
+
+ Plano de Implantação da NFS-e 
+
+ Painel Municipal (parametrização) 
+
+NFS-e Via 
+ Solicitação de cadastramento no Portal das Concessionárias de Exploração de Vias 
+
+ Documentação técnica 
+ Manuais e anexos 
+
+ Leiautes 
+
+ Arquivos dos esquemas XSD 
+
+ Notas técnicas 
+
+ Versões anteriores da documentação 
+
+ Links 
+
+Canais de Atendimento
+
+Biblioteca 
+ Portarias e Resoluções do CGNFS-e 
+
+ Documentação técnica 
+ Atualizações e Implantações 
+
+ Documentação Atual (Produção) 
+
+ Documentação Técnica (Homologação/testes) 
+
+ APIs - Prod. Restrita e Produção 
+
+ RTC 
+
+ Leiaute e esquemas antigos (julho de 2022 a 28/09/2025) 
+
+ Logos da NFS-e 
+
+ Links com Passo a Passo 
+
+ Legislação Aplicável ao MEI 
+
+ Eventos NFS-e 
+
+ Alíquotas de ISSQN 
+
+Perguntas Frequentes
+
+Privacidade e Proteção de Dados
+
+ Redefinir Cookies 
+
+Redes sociais
+
+ Twitter 
+
+ YouTube 
+
+ Facebook 
+
+ Flickr 
+
+ Acesso àInformação 
+
+ Todo o conteúdo deste site está publicado sob a licença Creative Commons Atribuição-SemDerivações 3.0 Não Adaptada. 
+ Voltar ao topo da página 
+
+ Rejeitar 
+
+ Fale Agora Refazer a busca 
+
+Ajude a melhorar o gov.br
+
+Ao compartilhar sua opinião, você nos ajuda a identificar problemas e a melhorar a navegação para você.
+
+ Agora não Responder pesquisa 
+
+ Não exibir esta mensagem novamente.

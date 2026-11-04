@@ -1,6 +1,7 @@
 import type { TaxAssessment } from 'generated/prisma';
 import { MemoriaCalculoSchema } from './taxAssessmentCalc';
 import { isLalurMes, isLalurQuarter, periodoBounds, type LalurPeriodo } from './Lalur.model';
+import { linhaEcfDoPasso, linhaEcfDoResumo, type LinhaEcf } from './taxAssessmentEcfLinhas';
 import { RastreioApuracaoSchema, type RastreioLinha } from './taxAssessmentRastreio';
 import { ultimoDiaUtilDoMesSeguinte } from '../../../lib/ibsCbsApuracao';
 
@@ -20,7 +21,8 @@ export type Feriados = Parameters<typeof ultimoDiaUtilDoMesSeguinte>[2];
 
 /**
  * Colunas da planilha (BRIEF C §2.1, `MemoLinhaExport`), na ordem. EMENDA RASTREIO (item 6, contrato §2.2): as 11 novas
- * entram ao FIM — as 16 primeiras ficam idênticas às de antes da emenda.
+ * entram ao FIM — as 16 primeiras ficam idênticas às de antes da emenda. Emenda C8 (03/11, nota D-2026-11-02-DELEGACAO-DONO §9):
+ * `registroEcf` e `linhaEcf` também ao FIM, depois das colunas do RASTREIO — vazias quando o passo não tem linha na ECF.
  */
 export const MEMO_COLUMNS = [
   'anoCalendario', 'periodo', 'tributo', 'regime', 'forma', 'modo', 'codigoReceita',
@@ -28,7 +30,10 @@ export const MEMO_COLUMNS = [
   'codigo', 'descricao', 'valorCents', 'fonte',
   'vencimentoDarf', 'parametrosIds', 'parametrosSha256', 'origemTipo', 'origemApuracaoId', 'origemPeriodo',
   'accountCode', 'accountName', 'origemFrom', 'origemTo', 'saldoFinalCents',
+  'registroEcf', 'linhaEcf',
 ] as const;
+
+const ecf = (l: LinhaEcf | null): [string, string] => (l ? [l.registro, l.linha] : ['', '']);
 
 /** F-TC-6 (a): linhas `RESUMO` lidas das colunas do model (S1), antes das `MEMORIA` da mesma apuração. */
 const RESUMO_COLUNAS = [
@@ -118,6 +123,7 @@ function parametrosIdsDe(r: TaxAssessment): string {
  * EMENDA RASTREIO (itens 6–9): `RESUMO*` → (`MEMORIA` → `RASTREIO*`)*; uma `RASTREIO` por conta da linha-mãe, com
  * `codigo` = o da mãe, `descricao` = nome da conta, `valorCents` = movimento, `fonte` = 'razão'. Apuração anterior à
  * emenda (`rastreio` nulo) sai sem `RASTREIO` e com as colunas de origem vazias; vencimento e parâmetros vêm do model.
+ * Emenda C8: `registroEcf`/`linhaEcf` ao fim de cada `RESUMO` e `MEMORIA`; `RASTREIO` não é passo da ECF, sai vazio.
  */
 export function linhasDaApuracao(r: TaxAssessment, feriados: Feriados): string[][] {
   const parsed = MemoriaCalculoSchema.safeParse(r.memoria);
@@ -137,16 +143,19 @@ export function linhasDaApuracao(r: TaxAssessment, feriados: Feriados): string[]
   const resumo = RESUMO_COLUNAS.map(([codigo, coluna]) => [
     ...prefixo, 'RESUMO', codigo, coluna, (r[coluna] as bigint).toString(), `TaxAssessment.${coluna}`,
     ...daApuracao, '', '', '', ...semConta,
+    ...ecf(linhaEcfDoResumo(r, codigo)),
   ]);
   const memoria = parsed.data.flatMap((l) => {
     const o = rastreio?.get(l.codigo);
     const mae = [
       ...prefixo, 'MEMORIA', l.codigo, l.descricao, l.valorCents, l.fonte,
       ...daApuracao, o?.origemTipo ?? '', o?.origemApuracaoId ?? '', o?.origemPeriodo ?? '', ...semConta,
+      ...ecf(linhaEcfDoPasso(r, l, parsed.data)),
     ];
     const contas = (o?.contas ?? []).map((c) => [
       ...prefixo, 'RASTREIO', l.codigo, c.accountName, c.movimentoCents, 'razão',
       ...daApuracao, 'RAZAO', '', '', c.accountCode, c.accountName, c.from, c.to, c.saldoFinalCents ?? '',
+      '', '',
     ]);
     return [mae, ...contas];
   });

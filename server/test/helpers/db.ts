@@ -152,7 +152,23 @@ export async function resetDb(): Promise<void> {
   await prisma.profitDistributionEvent.deleteMany(); // IRRF-DISTRIBUICAO PR-2 (antes de partners: FK Restrict)
   await prisma.interestOnEquityAllocation.deleteMany(); // IRRF-DISTRIBUICAO PR-4 (antes do cálculo e dos partners: FK Restrict)
   await prisma.interestOnEquityCalculation.deleteMany(); // IRRF-DISTRIBUICAO PR-4
+  // BE-INCR-DP-F0-F1 PR-4 — antes de partners (o trabalhador aponta para o sócio com Restrict) e dos cadastros do PR-3
+  // (a versão aponta para lotação, cargo, jornada e sindicato com Restrict): versão → vínculo → trabalhador.
+  // BE-INCR-DP-F0-F1 PR-6 — afastamento e implantação de férias apontam para o vínculo com Restrict: antes dele.
+  await prisma.dpAfastamento.deleteMany();
+  await prisma.dpFeriasImplantacao.deleteMany();
+  await prisma.dpVinculoVersao.deleteMany();
+  await prisma.dpVinculo.deleteMany();
+  await prisma.dpTrabalhador.deleteMany();
   await prisma.partner.deleteMany(); // IRRF-DISTRIBUICAO PR-1
+  await prisma.dpModuloAtivacao.deleteMany(); // BE-INCR-DP-F0-F1 PR-1 — folha (só FK para User)
+  // BE-INCR-DP-F0-F1 PR-3 — filhos antes dos pais (FK Restrict: parâmetro → convenção → sindicato).
+  await prisma.dpConvencaoParametro.deleteMany();
+  await prisma.dpConvencaoColetiva.deleteMany();
+  await prisma.dpSindicato.deleteMany();
+  await prisma.dpJornada.deleteMany();
+  await prisma.dpCargo.deleteMany();
+  await prisma.dpLotacao.deleteMany();
   await prisma.accountingContact.deleteMany(); // depois do accountingDeliveryLog (FK Restrict)
 
   // BE-INCR-FIXED-ASSETS (nó C8): fixedAssetClass tem FK Restrict para account — cai antes dele;

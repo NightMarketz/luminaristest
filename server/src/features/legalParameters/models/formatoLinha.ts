@@ -96,6 +96,13 @@ export const MeiAnexoXiJson = z
   .object({ ocupacao: texto, cnae: z.string().regex(/^\d{4}-\d\/\d{2}$/), descricaoCnae: texto, iss: z.boolean(), icms: z.boolean() })
   .strict();
 
+/** BE-INCR-DP-F0-F1 item 20 — faixa do INSS do empregado. `ateCents: null` = até o teto do RGPS (`TETO_RGPS_CENTS`). */
+export const InssEmpregadoFaixaJson = z.object({ ateCents: z.number().int().positive().nullable(), aliquotaBp: z.number().int().min(0).max(10_000) }).strict();
+/** Item 23 — Tabela 01: `evento` pela REGRA_COMPATIB_CATEG_EVENTO do leiaute (S-2200 = emprego; S-2300 = TSVE). */
+export const EsocialCategoriaJson = z.object({ grupo: texto, descricao: texto, evento: z.enum(['S-2200', 'S-2300']).nullable() }).strict();
+export const EsocialNaturezaRubricaJson = z.object({ nome: texto, descricao: texto }).strict();
+export const EsocialDescricaoJson = z.object({ descricao: texto }).strict();
+
 type Valor = 'int' | 'texto' | 'json';
 interface Regra {
   /** Função quando a tabela mistura chaves de valor inteiro e de texto (IRRF_DISTRIBUICAO). */
@@ -111,8 +118,8 @@ const jsonOk = (schema: z.ZodType, v: unknown, msg: string): string | null => (s
 const bp = (l: LinhaParaFormato) => (l.valorInt ?? -1) >= 0 && (l.valorInt ?? 0) <= 10_000;
 /** BE-INCR-IRRF-DISTRIBUICAO item 5 — chaves da tabela e o tipo de valor de cada uma. */
 const IRRF_DISTRIBUICAO_CHAVES_INT = ['ALIQUOTA_PF_BP', 'LIMITE_MENSAL_PF_CENTS', 'ALIQUOTA_JCP_BP'];
-/** EFICIENCIA-FISCAL PR-3 — chaves em bp da ENCARGO_FOLHA (o teto do RGPS é em centavos). */
-const ENCARGO_FOLHA_CHAVES_BP = ['CI_SEGURADO_BP', 'PATRONAL_BP', 'FGTS_BP'];
+/** EFICIENCIA-FISCAL PR-3 — chaves em bp da ENCARGO_FOLHA (o teto do RGPS é em centavos). DP-F0-F1 item 22: + FGTS do aprendiz. */
+const ENCARGO_FOLHA_CHAVES_BP = ['CI_SEGURADO_BP', 'PATRONAL_BP', 'FGTS_BP', 'FGTS_APRENDIZ_BP'];
 /** D-2026-10-24-LEGAL-PARAMS-SIMPLES-FORMATO — chave = anexo; faixa F1..F6 nas tabelas por faixa (o que `simplesCalc` lê). */
 const anexo = (l: LinhaParaFormato) => ['I', 'II', 'III', 'IV', 'V'].includes(l.chave);
 const faixa = (l: LinhaParaFormato) => /^F[1-6]$/.test(l.discriminador ?? '');
@@ -240,7 +247,41 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
       so(semDisc(l), 'sem discriminador') ??
       (l.chave === 'TETO_RGPS_CENTS'
         ? so((l.valorInt ?? 0) > 0, 'TETO_RGPS_CENTS: valorInt = centavos > 0')
-        : so(ENCARGO_FOLHA_CHAVES_BP.includes(l.chave) && bp(l), 'chave CI_SEGURADO_BP|PATRONAL_BP|FGTS_BP (valorInt em bp 0..10000) ou TETO_RGPS_CENTS')),
+        : so(ENCARGO_FOLHA_CHAVES_BP.includes(l.chave) && bp(l), 'chave CI_SEGURADO_BP|PATRONAL_BP|FGTS_BP|FGTS_APRENDIZ_BP (valorInt em bp 0..10000) ou TETO_RGPS_CENTS')),
+  },
+  // DP-F0-F1 item 20: faixas progressivas (EC 103 art. 28 caput e § 1º); a última vai até o teto (`ateCents: null`).
+  INSS_EMPREGADO: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^FAIXA_[1-9]$/.test(l.chave) && semDisc(l), 'chave FAIXA_1..9, sem discriminador') ??
+      jsonOk(InssEmpregadoFaixaJson, l.valorJson, 'valorJson = { ateCents: inteiro > 0 | null, aliquotaBp: 0..10000 }'),
+  },
+  // DP-F0-F1 item 23: tabelas do eSocial (S-1.3), chave = código da tabela, transcritas por script do HTML oficial.
+  ESOCIAL_CATEGORIA: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^\d{3}$/.test(l.chave) && semDisc(l), 'chave = código de 3 dígitos da Tabela 01, sem discriminador') ??
+      jsonOk(EsocialCategoriaJson, l.valorJson, 'valorJson = { grupo, descricao, evento: S-2200 | S-2300 | null }'),
+  },
+  ESOCIAL_NATUREZA_RUBRICA: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^\d{4}$/.test(l.chave) && semDisc(l), 'chave = código de 4 dígitos da Tabela 03, sem discriminador') ??
+      jsonOk(EsocialNaturezaRubricaJson, l.valorJson, 'valorJson = { nome, descricao }'),
+  },
+  ESOCIAL_INCIDENCIA_RUBRICA: {
+    valor: 'json',
+    checar: (l) =>
+      so(
+        (['CP', 'FGTS'].includes(l.discriminador ?? '') && /^\d{2}$/.test(l.chave)) || (l.discriminador === 'IRRF' && /^\d{1,4}$/.test(l.chave)),
+        'discriminador CP|FGTS (chave de 2 dígitos do S-1010) ou IRRF (chave de 1 a 4 dígitos da Tabela 21)',
+      ) ?? jsonOk(EsocialDescricaoJson, l.valorJson, 'valorJson = { descricao }'),
+  },
+  ESOCIAL_MOTIVO_AFASTAMENTO: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^\d{2}$/.test(l.chave) && semDisc(l), 'chave = código de 2 dígitos da Tabela 18, sem discriminador') ??
+      jsonOk(EsocialDescricaoJson, l.valorJson, 'valorJson = { descricao }'),
   },
   IRRF_DISTRIBUICAO: {
     valor: (l) => (l.chave === 'TRANSICAO_APROVACAO_ATE' ? 'texto' : 'int'),
