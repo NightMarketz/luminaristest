@@ -45,6 +45,31 @@ revisor-independente do #1051. Máximo 3 pesados ao mesmo tempo; telas uma por v
 - PV-A (PACOTE-VALIDADE passo 6): o roteiro mede na janela de 5 min do job ou a tela mostra o saldo vencido zerado?
 - A-1 (texto da ativação contábil, "se estiver vazio"): só texto.
 
+## Pendências achadas nas sessões arquivadas (leitura do fim de 14 transcripts, 04/11)
+
+Sem sessão nem cartão — entram aqui para não se perder:
+
+- **#982 voltou a draft** (04/11): tinha saído do draft antes do desfecho geral do H2; só sai quando o H2 PASSAR.
+- **13 achados do H2 sem PR** — seção "Achados em aberto — consolidado (04/11)" do runbook H2 no #982 (`c9632a03`):
+  4-Posted (`receiptHtml.ts:108`), E, F-diário, F-ECF, H, 400-??, 15-g, Pacote-val, 21-5 (F11), 21-6 (seed não cria 2º
+  admin), 22-4, 22-5, 22-6. Cada um vira instrumentação → correção.
+- **VP-2** (F11): "Finalizar Venda" do modal cria a venda `Finalized` antes dos itens
+  (`my-app/features/dashboard/category-views/finance/services/FinanceService.ts:42`).
+- **VP-3** (i18n): `KEY 'ACTIONS (PT)' RETURNED AN OBJECT` na tabela Packages (`my-app/public/locales/pt/common.json:586`,
+  `actions` é objeto); `DISCOUNT`/`TAXES`/`IS NEW CUSTOMER`/`IS LOYAL CUSTOMER` sem tradução no detalhe da venda.
+- **PV-B** (roteiro): o passo 7 do PACOTE-VALIDADE manda usar "a tabela genérica (Sales + Sale Items)", que a tela não tem
+  (`FinanceView.tsx:37`) — emendar o runbook. **PV-C** (observação): vencimento bloqueado com
+  `PACKAGE_EXPIRY_NFSE_PENDING` com DF-e `manual`; parece desenho, só o log foi lido.
+- **Fold do nó X10a não feito:** em main o `docs/plano/nos/X10a.md` ainda tem o fold de 27/10 (`atualizado: 2026-10-29`),
+  mas o #992 (PR-7..PR-9) entrou em 02/11. O texto do fold de 02/11 está **sem commit** na worktree
+  `.claude/worktrees/x10a-pr9-contingencia-d8f492` (`git diff docs/plano/nos/X10a.md`) — não remover essa worktree antes
+  de aproveitar o texto.
+- **PR-3 (#1051), três pontos a conferir no revisor:** Stryker não sai depois do dry-run; reuso do depósito numa 2ª
+  worktree; `allowScripts` do npm 11 com workspace. E o CI da correção do `seedDotenv.integration.test.ts` (`753b741fa`).
+- **Limpeza local:** worktree `C:/Users/smurf/scratch-integracao` e branch local `claude/integracao-lote-2026-11-02` (do
+  lote de 02/11, já mergeado).
+- **Dependabot:** #944 e #952 abertos (subagentes pararam sem terminar); pela regra, não mergear.
+
 ## Ambiente
 
 - A máquina bateu no limite de memória (bash `fork` 0xC000012D; três sessões caíram com 0xC0000409). Um app por vez.
