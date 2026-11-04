@@ -218,6 +218,8 @@ import { DpCadastroRepository } from '../features/dp/repositories/DpCadastroRepo
 import { DpVinculoService } from '../features/dp/services/DpVinculoService';
 import { DpVinculoRepository } from '../features/dp/repositories/DpVinculoRepository';
 import type { EmployeeRowLookup } from '../features/dp/ports/EmployeeRowLookup';
+import { DP_AUDIT_KEYRING } from '../features/dp/models/vinculo';
+import { loadKeyring } from './secretBox';
 import { DpPolicy } from '../features/dp/policies/DpPolicy';
 import { DpPortResolver, type DpPortImplementations } from '../features/dp/ports/DpPortResolver';
 import { WithholdingProfileService } from '../features/accounting/services/WithholdingProfileService';
@@ -1827,6 +1829,7 @@ export class ApplicationFactory {
         fiscalProfiles: this.repositories.companyFiscalProfile,
         legalParams: legalParameterService,
         employees: dpEmployeeRowLookup,
+        auditKeyring: () => loadKeyring(process.env, DP_AUDIT_KEYRING), // lido na hora do uso (503 sem chave)
       }),
       // RETENCOES-FONTE PR-1 (item 6): perfil de retenção; fotografia NATUREZA_RENDIMENTO e a leitura dos rascunhos dela.
       withholdingProfile: new WithholdingProfileService(

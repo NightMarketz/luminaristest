@@ -3,6 +3,7 @@
  * do DTO e do `reason`, Tier-0 (404 de unidade e de registro alheio), envelope, 201/204, `salarioCents` em string e a
  * porta `EmployeeRowLookup` do factory sobre o motor (linha de `employees` do dono, apagada depois ⇒ marca no read).
  */
+import { randomBytes } from 'crypto';
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { authHeader, makeApp, pushTestSchema, seedUnit } from '@test/helpers';
@@ -23,6 +24,8 @@ async function employeesRow(userId: string): Promise<string> {
 
 describe('/api/dp trabalhador, vínculo e versões (item 46)', () => {
   beforeAll(async () => {
+    process.env.DP_AUDIT_KEYS = `1:${randomBytes(32).toString('base64')}`;
+    process.env.DP_AUDIT_KEY_ACTIVE = '1';
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'dpvr', username: 'dpvr-dono', email: 'dpvr@test.local', password: 'x', role: 'USER' } });
     await seedUnit({ userId: dono.id, id: UNIT });
@@ -30,6 +33,8 @@ describe('/api/dp trabalhador, vínculo e versões (item 46)', () => {
     await seedUnit({ userId: outro.id, id: UNIT_OUTRO });
   }, 120000);
   afterAll(async () => {
+    delete process.env.DP_AUDIT_KEYS;
+    delete process.env.DP_AUDIT_KEY_ACTIVE;
     await prisma.$disconnect();
   });
 

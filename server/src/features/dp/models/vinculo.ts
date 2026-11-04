@@ -3,7 +3,8 @@
  *
  * Datas date-only (`YYYY-MM-DD`): a comparação é de string, como em `vigencia.ts`.
  */
-import { createHash } from 'crypto';
+import { createHmac } from 'crypto';
+import type { KeyringSpec } from '../../../lib/secretBox';
 import { dpValidationError } from './erros';
 import { versaoVigente, type Vigencia } from './vigencia';
 
@@ -88,16 +89,25 @@ export function assertIdadeEPrazo(d: DadosIdade): void {
 }
 
 /**
- * Item 45 (F-DPB-3, "audit sem valores") — SHA-256 do JSON canônico (chaves ordenadas, BigInt em string) dos campos
- * alterados. O hash muda quando o valor muda e não revela o valor.
+ * Chaveiro da auditoria do DP (dono, chat, 2026-11-04: "Trocar por HMAC" + "Chaveiro próprio" + "Recusa com 503"):
+ * `DP_AUDIT_KEYS` / `DP_AUDIT_KEY_ACTIVE`, no formato versionado do `loadKeyring` (`lib/secretBox`). Sem ele, a correção
+ * de trabalhador ou de versão recusa com 503 antes de gravar; criar e ler seguem funcionando.
  */
-export function hashCampos(registro: Record<string, unknown>, campos: readonly string[]): string {
+export const DP_AUDIT_KEY_MISSING = 'dp_audit_key_missing';
+export const DP_AUDIT_KEYRING: KeyringSpec = { prefix: 'DP_AUDIT', missingCode: DP_AUDIT_KEY_MISSING, label: 'da auditoria do DP' };
+
+/**
+ * Item 45 (F-DPB-3, "audit sem valores") — HMAC-SHA256, com a chave do chaveiro do DP, do JSON canônico (chaves
+ * ordenadas, BigInt em string) dos campos alterados. O hash muda quando o valor muda e não revela o valor. Sem a chave,
+ * não se reverte por força bruta: SHA-256 sem sal devolvia salário e nascimento em menos de 0,3 s (revisor do #1032).
+ */
+export function hashCampos(registro: Record<string, unknown>, campos: readonly string[], chave: Buffer): string {
   const canon: Record<string, string | boolean | number | null> = {};
   for (const k of [...campos].sort()) {
     const v = registro[k];
     canon[k] = typeof v === 'bigint' ? v.toString() : v === undefined ? null : (v as string | boolean | number | null);
   }
-  return createHash('sha256').update(JSON.stringify(canon)).digest('hex');
+  return createHmac('sha256', chave).update(JSON.stringify(canon)).digest('hex');
 }
 
 /** Campos de `patch` (definidos) cujo valor difere do `atual`. */

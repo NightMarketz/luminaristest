@@ -437,15 +437,16 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'dp.convencao_parametro.updated': ['parametroId', 'convencaoId', 'chave', 'discriminador', 'valorInt', 'vigenteDesde', 'vigenteAte'],
   'dp.convencao_parametro.deleted': ['parametroId', 'convencaoId', 'chave', 'discriminador', 'valorInt', 'vigenteDesde', 'vigenteAte'],
   // BE-INCR-DP-F0-F1 PR-4 (itens 45 e 49) — trabalhador, vínculo e versões: ids, códigos, datas, flags e hashes. CPF,
-  // nome, nascimento e salário NUNCA entram (F-DPB-3; F17); a correção leva só os campos e o SHA-256 antes/depois.
+  // nome, nascimento e salário NUNCA entram (F-DPB-3; F17); a correção leva só os campos, o HMAC-SHA256 antes/depois
+  // (chaveiro DP_AUDIT, dono 2026-11-04) e a versão da chave.
   'dp.trabalhador.created': ['trabalhadorId', 'origem', 'temEmployeeRef', 'temPartner'],
   'dp.trabalhador.updated': ['trabalhadorId', 'origem', 'temEmployeeRef', 'temPartner'],
   'dp.trabalhador.deleted': ['trabalhadorId', 'origem', 'temEmployeeRef', 'temPartner'],
-  'dp.trabalhador.corrected': ['trabalhadorId', 'campos', 'antesSha256', 'depoisSha256'],
+  'dp.trabalhador.corrected': ['trabalhadorId', 'campos', 'antesSha256', 'depoisSha256', 'chaveVersao'],
   'dp.vinculo.created': ['vinculoId', 'trabalhadorId', 'unitId', 'categoria', 'dataInicio'],
   'dp.vinculo.deleted': ['vinculoId', 'trabalhadorId', 'unitId', 'categoria', 'dataInicio'],
   'dp.vinculo_versao.created': ['vinculoId', 'versaoId', 'vigenteDesde'],
-  'dp.vinculo_versao.corrected': ['vinculoId', 'versaoId', 'campos', 'antesSha256', 'depoisSha256'],
+  'dp.vinculo_versao.corrected': ['vinculoId', 'versaoId', 'campos', 'antesSha256', 'depoisSha256', 'chaveVersao'],
 };
 
 /**

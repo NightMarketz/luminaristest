@@ -3,13 +3,15 @@
  * ESOCIAL_CATEGORIA da carga real: CPF e matrícula vivos únicos, `employeeRef` pela porta, núcleo de categorias, idade,
  * pró-labore × sócio × MEI, cobertura contínua das versões, correção auditada sem valores e `vinculoNaData`.
  */
+import { randomBytes } from 'crypto';
 import prisma from '@/lib/prisma';
 import { getFactory } from '@/lib/factory';
 import { pushTestSchema, resetDb } from '@test/helpers';
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { CompanyFiscalProfileRepository } from '@/features/accounting/repositories/CompanyFiscalProfileRepository';
 import { PartnerRepository } from '@/features/accounting/repositories/PartnerRepository';
-import type { AppError } from '@/lib/errors';
+import { AppError } from '@/lib/errors';
+import type { Keyring } from '@/lib/secretBox';
 import { DpPolicy } from '../../policies/DpPolicy';
 import type { EmployeeRowLookup } from '../../ports/EmployeeRowLookup';
 import { DpCadastroRepository } from '../../repositories/DpCadastroRepository';
@@ -37,6 +39,8 @@ describe('DpVinculoService (itens 37–49, D-5)', () => {
   let svc: DpVinculoService;
   let cad: DpCadastroService;
   let linhasEmployees: Set<string>;
+  // Chaveiro de teste do HMAC (item 45); `null` simula o ambiente sem DP_AUDIT_KEYS.
+  let chaveiro: Keyring | null;
   const scopeDe = (userId: string) => resolveAccountingScopeInternal({ userId }, `unit-${userId}`);
   const u = (userId: string) => ({ unitId: `unit-${userId}` });
   // Porta do item 38 sobre um conjunto em memória; a implementação sobre o motor é do factory (teste de rota).
@@ -51,6 +55,7 @@ describe('DpVinculoService (itens 37–49, D-5)', () => {
   beforeEach(async () => {
     await resetDb();
     linhasEmployees = new Set(['emp-1']);
+    chaveiro = { activeVersion: 2, keys: new Map([[2, randomBytes(32)]]) };
     dono = (await prisma.user.create({ data: { name: 'dpv', username: 'dpv-dono', email: 'dpv@test.local', password: 'x', role: 'USER' } })).id;
     outro = (await prisma.user.create({ data: { name: 'dpv2', username: 'dpv-outro', email: 'dpv2@test.local', password: 'x', role: 'USER' } })).id;
     const cadRepo = new DpCadastroRepository();
@@ -60,6 +65,10 @@ describe('DpVinculoService (itens 37–49, D-5)', () => {
       fiscalProfiles: new CompanyFiscalProfileRepository(),
       legalParams: getFactory().getLegalParameterService(),
       employees,
+      auditKeyring: () => {
+        if (!chaveiro) throw new AppError('Chave de cifra da auditoria do DP não provisionada.', 503, 'dp_audit_key_missing');
+        return chaveiro;
+      },
     });
     lotacaoId = (await cad.createLotacao(scopeDe(dono), { ...u(dono), codigo: 'L1', descricao: 'Loja' })).id;
     cargoId = (await cad.createCargo(scopeDe(dono), { ...u(dono), nome: 'Manicure', cbo: '516120' })).id;
@@ -189,7 +198,7 @@ describe('DpVinculoService (itens 37–49, D-5)', () => {
       'dp.trabalhador.updated', 'dp.trabalhador.corrected',
     ]);
     const corr = JSON.parse(String(ev.find((e) => e.eventType === 'dp.vinculo_versao.corrected')!.payload));
-    expect(corr).toMatchObject({ vinculoId: v.id, versaoId: ver.id, campos: 'salarioCents' });
+    expect(corr).toMatchObject({ vinculoId: v.id, versaoId: ver.id, campos: 'salarioCents', chaveVersao: '2' });
     expect(corr.antesSha256).toMatch(/^[0-9a-f]{64}$/);
     expect(corr.depoisSha256).not.toBe(corr.antesSha256);
     const corrT = JSON.parse(String(ev.find((e) => e.eventType === 'dp.trabalhador.corrected')!.payload));
@@ -209,6 +218,18 @@ describe('DpVinculoService (itens 37–49, D-5)', () => {
     );
     const cru = await prisma.auditEvent.findFirst({ where: { eventType: 'dp.vinculo_versao.corrected', payload: { contains: '"campos":"x"' } } });
     expect(String(cru?.payload)).not.toMatch(/salarioCents|cpf|nome|999999|Vazou/);
+  });
+
+  it('item 45 (dono, 2026-11-04: "Recusa com 503") — sem o chaveiro do DP, a correção recusa e nada é gravado; criar segue', async () => {
+    const t = await trab();
+    const v = await vinc(t.id);
+    chaveiro = null;
+    expect(await erro(svc.corrigirVersao(scopeDe(dono), v.id, v.versoes[0].id, { ...u(dono), salarioCents: 999n }))).toEqual({ status: 503, code: 'dp_audit_key_missing' });
+    expect(await erro(svc.updateTrabalhador(scopeDe(dono), t.id, { ...u(dono), nome: 'Outra' }))).toEqual({ status: 503, code: 'dp_audit_key_missing' });
+    expect((await prisma.dpVinculoVersao.findUniqueOrThrow({ where: { id: v.versoes[0].id } })).salarioCents).toBe(300000n);
+    expect((await prisma.dpTrabalhador.findUniqueOrThrow({ where: { id: t.id } })).nome).toBe('Ana');
+    expect(await prisma.auditEvent.count({ where: { eventType: { endsWith: '.corrected' } } })).toBe(0);
+    await trab(CPF2); // criar não depende da chave
   });
 
   it('item 30 (D-5) — jornada referenciada por versão: minutosSemanais/tipoJornada ⇒ 409 DP_JORNADA_EM_USO; nome muda', async () => {

@@ -1,5 +1,6 @@
 import type { DpTrabalhador, DpVinculo, DpVinculoVersao, Prisma } from 'generated/prisma';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
+import type { Keyring } from '../../../lib/secretBox';
 import type { ICompanyFiscalProfileRepository } from '../../accounting/repositories/ICompanyFiscalProfileRepository';
 import type { IPartnerRepository } from '../../accounting/repositories/IPartnerRepository';
 import type { AccountingScope } from '../../accounting/scope/AccountingScope';
@@ -67,6 +68,8 @@ export interface DpVinculoDeps {
   fiscalProfiles: Pick<ICompanyFiscalProfileRepository, 'findByYear'>;
   legalParams: Pick<LegalParameterService, 'fotografia'>;
   employees: EmployeeRowLookup;
+  /** Chaveiro do HMAC da correção (item 45); lança 503 `dp_audit_key_missing` sem as variáveis (`DP_AUDIT_KEYRING`). */
+  auditKeyring: () => Keyring;
 }
 
 /**
@@ -74,7 +77,8 @@ export interface DpVinculoDeps {
  * Policy primeiro; unicidade de registro vivo (CPF, matrícula), a cobertura contínua das versões e as referências aos
  * cadastros são gates DENTRO da tx, sobre o `tx` propagado aos repositórios (F19; memória authoritative-gate-inside-tx),
  * e a auditoria grava na mesma tx. O vínculo nasce com a 1ª versão na mesma tx; a versão nova fecha a anterior na
- * véspera, na mesma tx. Correção é no lugar, auditada sem valores (F-DP-8 → b; F-DPB-3).
+ * véspera, na mesma tx. Correção é no lugar, auditada sem valores por HMAC com o chaveiro do DP (F-DP-8 → b; F-DPB-3;
+ * dono, 2026-11-04).
  */
 export class DpVinculoService {
   constructor(
@@ -121,6 +125,7 @@ export class DpVinculoService {
   }
   async updateTrabalhador(scope: AccountingScope, id: string, input: UpdateTrabalhadorInput): Promise<DpTrabalhadorView> {
     this.assertManage(scope);
+    const chave = this.chaveAuditoria(); // 503 antes de qualquer escrita (falha fechada)
     const row = await this.repo.runTransaction(async (tx) => {
       const atual = achado(await this.repo.findTrabalhador(scope.ownerUserId, id, tx), 'Trabalhador');
       if (input.cpf !== undefined) await this.assertCpfLivre(scope, input.cpf, id, tx);
@@ -135,8 +140,9 @@ export class DpVinculoService {
         await this.audit(tx, scope, 'dp.trabalhador.corrected', 'dp_trabalhador', id, {
           trabalhadorId: id,
           campos: campos.join(','),
-          antesSha256: hashCampos(atual, campos),
-          depoisSha256: hashCampos(r, campos),
+          antesSha256: hashCampos(atual, campos, chave.key),
+          depoisSha256: hashCampos(r, campos, chave.key),
+          chaveVersao: String(chave.version),
         });
       }
       return r;
@@ -226,6 +232,7 @@ export class DpVinculoService {
   }
   async corrigirVersao(scope: AccountingScope, vinculoId: string, versaoId: string, input: CorrigirVersaoInput): Promise<DpVersaoView> {
     this.assertManage(scope);
+    const chave = this.chaveAuditoria(); // 503 antes de qualquer escrita (falha fechada)
     return this.repo.runTransaction(async (tx) => {
       const v = achado(await this.repo.findVinculo(scope.ownerUserId, vinculoId, tx), 'Vínculo');
       const atual = achado(await this.repo.findVersao(vinculoId, versaoId, tx), 'Versão do vínculo');
@@ -252,8 +259,9 @@ export class DpVinculoService {
           vinculoId,
           versaoId,
           campos: campos.join(','),
-          antesSha256: hashCampos(atual, campos),
-          depoisSha256: hashCampos(r, campos),
+          antesSha256: hashCampos(atual, campos, chave.key),
+          depoisSha256: hashCampos(r, campos, chave.key),
+          chaveVersao: String(chave.version),
         });
       }
       return viewVersao(r);
@@ -369,6 +377,12 @@ export class DpVinculoService {
   }
   private async audit(tx: Tx, scope: AccountingScope, eventType: DpVinculoEvent, targetType: string, targetId: string, payload: Record<string, string | null>) {
     await this.auditService.append(tx, scope, { actorUserId: scope.actorUserId, eventType, targetType, targetId, payload });
+  }
+
+  /** Chave ativa do chaveiro da auditoria do DP e a versão dela (vai no evento: rotação não quebra a comparação). */
+  private chaveAuditoria(): { key: Buffer; version: number } {
+    const k = this.deps.auditKeyring();
+    return { key: k.keys.get(k.activeVersion)!, version: k.activeVersion };
   }
 
   private async viewTrabalhador(scope: AccountingScope, r: DpTrabalhador): Promise<DpTrabalhadorView> {

@@ -2,6 +2,7 @@
  * BE-INCR-DP-F0-F1 itens 39–45 e 47 (PR-4) — domínio `undSalFixo` conferido contra o leiaute do dossiê [D09], natureza
  * pelo evento, idade e prazo do aprendiz (bordas), idade mínima do 101, hash da correção e `vinculoNaData`.
  */
+import { createHash, randomBytes } from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import type { AppError } from '../../../../lib/errors';
@@ -92,15 +93,19 @@ describe('vínculo do DP (itens 39–45, 47)', () => {
     expect(reason(() => assertIdadeEPrazo({ ...geral, categoria: '901', dataInicio: '2026-05-09' }))).toBeNull();
   });
 
-  it('item 45 — hash dos campos alterados: muda com o valor, não revela o valor, ignora campo não alterado', () => {
+  it('item 45 — HMAC dos campos alterados: muda com o valor e com a chave, não revela o valor, ignora campo não alterado', () => {
+    const chave = randomBytes(32);
     const antes = { salarioCents: 300000n, cargoId: 'c1', unidadeSalario: '5' };
     const depois = { salarioCents: 350000n, cargoId: 'c1', unidadeSalario: '5' };
     expect(camposAlterados(antes, { salarioCents: 350000n, cargoId: 'c1' })).toEqual(['salarioCents']);
-    const h1 = hashCampos(antes, ['salarioCents']);
+    const h1 = hashCampos(antes, ['salarioCents'], chave);
     expect(h1).toMatch(/^[0-9a-f]{64}$/);
-    expect(hashCampos(depois, ['salarioCents'])).not.toBe(h1);
-    expect(hashCampos({ ...antes, cargoId: 'outro' }, ['salarioCents'])).toBe(h1);
+    expect(hashCampos(depois, ['salarioCents'], chave)).not.toBe(h1);
+    expect(hashCampos({ ...antes, cargoId: 'outro' }, ['salarioCents'], chave)).toBe(h1);
     expect(h1).not.toContain('300000');
+    // Dono, 2026-11-04 ("Trocar por HMAC"): sem a chave, enumerar o valor não acha o hash — o SHA-256 puro achava.
+    expect(hashCampos(antes, ['salarioCents'], randomBytes(32))).not.toBe(h1);
+    expect(createHash('sha256').update(JSON.stringify({ salarioCents: '300000' })).digest('hex')).not.toBe(h1);
   });
 
   it('item 47 — vinculoNaData: versão vigente com cadastros resolvidos; antes do início ⇒ null; sobreposta ⇒ erro', () => {
