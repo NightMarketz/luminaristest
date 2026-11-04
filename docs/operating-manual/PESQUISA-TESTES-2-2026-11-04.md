@@ -197,6 +197,71 @@ juntos, num PR próprio, porque mexem em `db.ts`. Efeito esperado de P1 + P2 + P
 mais ~70 s de preparo, coverage em ~20 s, e o frontend de 499 s para ~310 s. A parede vai de 605–714 s para ~430–450 s
 [inferido].
 
+### Segunda passada (mesma data): o que ainda sobrava
+
+Medido depois da primeira versão deste documento. Cada número é de **uma execução** local (Windows, 16 núcleos),
+salvo indicação. A variação entre execuções iguais chegou a ~15 %.
+
+#### P9. WAL no banco de teste — corta ~38 % de um arquivo pesado
+
+- **Fato:** sob Jest, `src/lib/prisma.ts:20` pula os PRAGMAs [lido]. O banco de teste roda então no modo padrão do
+  SQLite, com journal `DELETE` e `synchronous` FULL: cada commit força gravação no disco. Produção roda em WAL.
+- **Medida:** pus `PRAGMA journal_mode = WAL` + `synchronous = NORMAL` no `beforeAll` de
+  `seedAccountingFixtureCli` e rodei uma vez: o arquivo caiu de **70,0 s para 43,7 s**. Por teste: 27,8 → 17,9 s,
+  21,0 → 13,2 s e 13,4 → 9,7 s. Com `MEMORY` + `OFF`, deu 61,7 s. O `synchronous` vale por conexão, e o pool do
+  Prisma pode ter aberto outras que ficaram sem o PRAGMA [medido; a causa é inferida].
+- **Mudança:** o `journal_mode = WAL` fica gravado no próprio arquivo. Basta aplicá-lo uma vez no banco-modelo
+  (`templateDb.ts`), e toda cópia nasce em WAL. O `pushTestSchema` já trunca os `-wal`/`-shm` velhos (`db.ts:24-29`)
+  [lido]. Para o `synchronous = NORMAL` valer em toda conexão, é preciso um init com await sob teste, que o comentário
+  de `lib/prisma.ts` já prevê ("Add an awaited init() if a test ever does") [lido]. De quebra, o teste fica mais
+  perto de produção.
+- **Ganho no CI:** fsync no Linux do runner custa menos que no Windows, então o ganho deve ser menor que 38 % e
+  concentrado nos arquivos que gravam muito (seed, fechamento, `rekeyLegacyUnitCli`) [inferido]. Junto com o P2 e o P3,
+  isso ataca o shard 4/4 pelos três lados.
+- **Prova:** `npx jest src/jobs/__tests__/seedAccountingFixtureCli.integration.test.ts --selectProjects integration
+  --runInBand --verbose`, antes e depois; no CI, o `Time:` dos 4 shards.
+
+#### P10. O server faz typecheck do `src/` duas vezes no CI
+
+- **Fato:** `tsconfig.test.json` estende o `tsconfig.json` e inclui `src/**/*` (`server/tsconfig.test.json:17-18`)
+  [lido]. O job `server-static` roda `tsc --noEmit` (16–22 s) e depois `tsc -p tsconfig.test.json` (32–45 s), que
+  checa o `src/` de novo [medido o tempo; a sobreposição é lida].
+- **Mudança:** rodar só o segundo, depois de conferir que nenhuma opção do `tsconfig.json` (ex. `rootDir`) pega erro
+  que o de teste deixa passar [inferido]. Outra opção é cachear o `tsbuildinfo` no CI: os dois configs já têm
+  `incremental` + `tsBuildInfoFile` em `dist/` [lido], mas o CI não guarda o `dist/`.
+- **Ganho:** 16–22 s, fora do caminho crítico. Fica no fim da fila.
+
+#### Custo medido do `--coverage` e do `--detectOpenHandles` (83 arquivos de unit, 1 worker, cache quente)
+
+| Variante | Tempo |
+|---|---|
+| sem nada | 49,5 s |
+| `--coverage` (provider padrão, babel) | 57,8 s e 66,9 s (duas execuções): +17 % a +35 % |
+| `--coverage --coverageProvider=v8` | **201,1 s, 4× mais lento.** Não trocar |
+| `--detectOpenHandles` | 59,9 s: +21 % |
+
+O CI usa os dois em todo shard (`ci.yml`, passo "Run tests + assert no leaked handles") [lido]. Os dois juntos devem
+custar ~35–50 % do tempo de teste de unit [inferido; não medi a combinação]. A cobertura alimenta o piso, então fica. O
+`--detectOpenHandles` é o tripwire do TECH-DEBT-TEST-001. Tirá-lo de algum lugar troca garantia por tempo e é decisão
+do dono (§5, item 6).
+
+#### Investigado e descartado
+
+- **Chave RSA do node-forge nos testes de SEFAZ** (`test/helpers/fakeSefaz.ts:28`, comentário "~1 s por chave"):
+  medido hoje, são 63 ms para 3 chaves de 2048 bits, porque o forge usa o crypto nativo do Node [medido]. Não é isso
+  que deixa `FiscalDocumentContingencia` (13,4 s local) e `SefazNfeEmissor` lentos. No `--verbose`, o tempo de
+  `FiscalDocumentContingencia` se espalha por muitos testes de 300–800 ms, sem um ponto quente [medido]. A causa
+  provável é a assinatura XML, mas falta perfilar.
+
+#### Ainda não investigado (próxima rodada, se valer)
+
+- Banco de teste em `/dev/shm` (RAM) no runner Linux: soma com o P9 ou o substitui [inferido].
+- `pool: 'threads'` × `'forks'` no vitest. A doc diz que `forks` (o padrão) pode ser um pouco mais lento [externo].
+- Perfil (`--cpu-prof`) dos 3 arquivos de unit acima de 10 s.
+- Prisma com driver adapter ou query compiler (sem o engine em Rust) no SQLite. Não conferi o estado na 6.16.
+- O custo de ~23 s de partida por execução local de integração: processo de 93 s contra 70 s de arquivo no seed
+  (§1.4), entre transform frio, `globalSetup` e vaga [medido o total; a divisão não].
+
 ---
 
 ## 3. O que esta rodada corrige da rodada 1
@@ -237,6 +302,10 @@ mais ~70 s de preparo, coverage em ~20 s, e o frontend de 499 s para ~310 s. A p
    varredura dos testes que montam caminho de banco próprio?"
 5. **Docker advisory filtrado (P8).** Ganha só fila de runner, e o build de imagem deixa de rodar em PR que não toca
    nada dela.
+6. **`--detectOpenHandles` em todo shard custa ~+21 % no unit** (medido). Leitura A: mantém como está, porque é a
+   garantia do TECH-DEBT-TEST-001. Leitura B: roda só nos shards de integração e no push da main, onde os handles
+   reais (Prisma, servidor HTTP) aparecem. O risco da B é um vazamento novo num teste de unit só aparecer depois do
+   merge. A mais segura é a A, até o P1 baratear o unit, e aí a diferença em segundos fica pequena.
 
 ## 6. Comandos usados (reproduzíveis)
 
