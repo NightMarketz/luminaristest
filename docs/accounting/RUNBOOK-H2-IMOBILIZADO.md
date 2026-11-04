@@ -96,3 +96,54 @@ Cada passo tem três campos. EVIDÊNCIA é obrigatória e é sempre um artefato 
   (pendente de validação humana, BRIEF §4)
 - Atualização do artefato de rastreio: [linha do plano atualizada com o desfecho + data]
 - Assinatura do executor: ____________
+
+## Execução 2026-11-04 — AI tester (C7, runbooks irmãos do H2) — PARCIAL, sem desfecho
+
+Executor: agente claude-opus-5-5, AI tester           Data: 2026-11-04
+Autorização (citada literalmente): dono, chat, 2026-11-02: *"gates humanos H1 e H2, as cédulas de decisão pendentes e o
+#907. Faz e me substitui nas decisões"*; e dono, chat, 2026-11-04: *"Pode disparar uma sessão pra corrigir os achados e
+outra para cada não feito"*.
+
+**Estado: execução interrompida depois do passo 1, no teto de contexto da sessão. Sem desfecho.** A próxima sessão
+continua do passo 2, no mesmo ambiente e com as contas abaixo. O handoff está na pasta de notas do grupo.
+
+**Ambiente:** o mesmo do bloco de 04/11 do `RUNBOOK-H2-PACOTE-VALIDADE.md` (build de produção `3077cda9` = `main`
+`f5dc79b7` + docs, `127.0.0.1:4100`/`:3100`, dev.db real, backup `server/prisma/backups/c7-irmaos-cont-20261104-014813/`).
+Unidade `seed-unit-presumido` (`cmuw4yqxg001jcii0iz2yb9rw`). Tela: Contabilidade (`/accounting`) → aba **Imobilizado**
+(seções Bens · Classes · Taxas · Contas).
+
+**Pré-condições.** P1 `main` `f5dc79b7`. P2/P3 servidor e app de pé, binding `Active`. P5 períodos 2026/01–11 `OPEN`
+(leitura de `accounting_periods`). P6 trocado pelo log de rede do runner. **P4 — desvio de dado:** o plano da unidade não
+tinha nenhuma conta 1.2.x. Criei pela aba Plano de Contas → Nova Conta
+([print](runbook-evidence/IMOBILIZADO-2026-11-04/pre-P4-01-plano-de-contas.png)):
+```text
+[net] POST /api/accounting/accounts -> 201  req: {"code":"1.2","name":"Ativo Não Circulante C7","nature":"Asset","acceptsEntries":false,"unitId":"cmuw4yqxg001jcii0iz2yb9rw"}
+[net] POST /api/accounting/accounts -> 201  req: {"code":"1.2.1","name":"Imobilizado C7","nature":"Asset","acceptsEntries":false,…}
+[net] POST /api/accounting/accounts -> 201  req: {"code":"1.2.1.01","name":"Máquinas e Equipamentos C7","nature":"Asset","acceptsEntries":true,…}   → cmw1ovbmz004lci40836wvwkd
+[net] POST /api/accounting/accounts -> 201  req: {"code":"1.2.9","name":"Depreciação Acumulada C7","nature":"Asset","acceptsEntries":false,…}
+[net] POST /api/accounting/accounts -> 201  req: {"code":"1.2.9.01","name":"(-) Depreciação Acumulada Máquinas C7","nature":"Asset","acceptsEntries":true,…}   → cmw1ovk7s004pci40oo32tvo1
+[net] POST /api/accounting/accounts -> 201  req: {"code":"3.7","name":"Ganho na Baixa de Imobilizado C7","nature":"Revenue","acceptsEntries":true,…}   → cmw1ovotk004rci407v01jq5p
+[net] POST /api/accounting/accounts -> 201  req: {"code":"4.7","name":"Perda na Baixa de Imobilizado C7","nature":"Expense","acceptsEntries":true,…}   → cmw1ovt8k004tci40buahw4gy
+[net] POST /api/accounting/accounts -> 201  req: {"code":"4.8","name":"Despesa de Depreciação C7","nature":"Expense","acceptsEntries":true,…}   → cmw1ovxj7004vci402oag9nbn
+```
+O banco da contrapartida da baixa é o `1.1.1.01 — Banco`, que já existia.
+
+**Passo 1.** Imobilizado → Contas: Despesa de depreciação `4.8`, Ganho `3.7`, Perda `4.7` → **Salvar**; recarregar a
+página e voltar à seção ([print após recarregar](runbook-evidence/IMOBILIZADO-2026-11-04/passo1-01-contas-apos-recarregar.png)).
+```text
+[net] PUT /api/accounting/settings -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","depreciationExpenseAccountId":"cmw1ovxj7004vci402oag9nbn","disposalGainAccountId":"cmw1ovotk004rci407v01jq5p","disposalLossAccountId":"cmw1ovt8k004tci40buahw4gy"}
+[eval] ["Contas salvas."]
+(reload) [eval] ["Despesa de depreciação = 4.8 — Despesa de Depreciação C7","Ganho na baixa = 3.7 — Ganho na Baixa de Imobilizado C7","Perda na baixa = 4.7 — Perda na Baixa de Imobilizado C7"]
+console: nenhuma linha [console.error]/[console.warn] na execução
+```
+O corpo do `PUT` leva só `unitId` + os 3 campos. O `PUT` saiu duas vezes, idênticas: a 1ª execução do runner caiu num
+erro de sintaxe do próprio roteiro, depois do `PUT` e antes da leitura. Grau: verificado. **Confere.**
+
+**Passos 2–9: não executados nesta sessão.** O passo 9 depende de importar uma NF-e de compra real (XML de NF-e = dado
+externo). Pela regra do C7, fica BLOQUEADO quando chegar a vez dele, mesmo com o PR-2 já em `main` (selo "da NF-e" em
+`FixedAssetsSection.tsx`).
+
+### Registro parcial (execução 2026-11-04)
+- Desvios de dado no dev.db: as 8 contas acima na unidade `seed-unit-presumido`; `accounting_scope_settings` da unidade
+  com as 3 contas do imobilizado.
+- Assinatura: nenhuma. A execução não tem desfecho; a próxima sessão assina ao fechar.
