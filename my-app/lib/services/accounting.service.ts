@@ -664,7 +664,9 @@ function buildQuery(params: Record<string, string | undefined>): string {
 export const accountingService = {
   /** Post a balanced double-entry journal entry (Σdébito === Σcrédito). */
   async postEntry(payload: PostEntryPayload): Promise<JournalEntry> {
-    const res = await apiClient.post<ApiEnvelope<JournalEntry>>('/accounting/post', payload);
+    // silent: o único chamador é o JournalEntryModal, que mostra o erro dentro dele; o toast repetido cobria o
+    // botão "Postar" (achado F-907-T do H2, 2026-11-02).
+    const res = await apiClient.post<ApiEnvelope<JournalEntry>>('/accounting/post', payload, { silent: true });
     notify('Lançamento postado com sucesso.', 'success', 'Contabilidade');
     return res.data;
   },

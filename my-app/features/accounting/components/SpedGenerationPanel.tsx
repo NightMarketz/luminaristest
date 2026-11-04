@@ -234,8 +234,9 @@ export function Field({
 /**
  * SPED generation panel (A1b) — owner-facing forms to generate & download the ECD
  * and ECF `.txt` files over the existing generation endpoints. Only the required DTO
- * fields are collected; the backend defaults the rest. ECD needs a ready referential
- * mapping (authored in the CompliancePanel above) — a coverage gap returns 400.
+ * fields are collected; the backend defaults the rest. The ECD's referential mapping is
+ * authored in the CompliancePanel above; an unmapped leaf account does not block the ECD
+ * (Manual da ECD 1.17 — C2): the file downloads and the server's `avisos` are shown here.
  */
 export function SpedGenerationPanel({ unitId }: { unitId: string }) {
   const { t } = useTranslation('accounting');
@@ -251,6 +252,7 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
   const [ecdSigners, setEcdSigners] = useState<EcdSignerDraft[]>([emptyEcdSigner()]);
   const [ecdBusy, setEcdBusy] = useState(false);
   const [ecdError, setEcdError] = useState<string | null>(null);
+  const [ecdAvisos, setEcdAvisos] = useState<string[]>([]);
 
   // ── ECF state ──────────────────────────────────────────────────────────────
   const [ecfYear, setEcfYear] = useState(String(currentYear - 1));
@@ -303,6 +305,7 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
 
   async function handleGenerateEcd() {
     setEcdError(null);
+    setEcdAvisos([]);
     const year = Number(ecdYear);
     if (!Number.isInteger(year) || year < 2000 || year > 2100) {
       setEcdError(t('sped.error.year', 'Informe um ano válido.'));
@@ -333,7 +336,8 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
     if (ecdContactId) body.signerContactIds = [ecdContactId];
     setEcdBusy(true);
     try {
-      await spedService.generateAndDownloadEcd(body);
+      const { avisos } = await spedService.generateAndDownloadEcd(body);
+      setEcdAvisos(avisos);
     } catch (err) {
       setEcdError(resolveError(err, genericError()));
     } finally {
@@ -387,7 +391,7 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
       <section className="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5">
         <h2 className="mb-1 text-lg font-semibold text-neutral-200">{t('sped.ecd.title', 'Gerar SPED ECD')}</h2>
         <p className="mb-4 text-sm text-neutral-500">
-          {t('sped.ecd.description', 'Escrituração Contábil Digital. Exige o mapeamento referencial completo (badge "Pronto" acima).')}
+          {t('sped.ecd.description', 'Escrituração Contábil Digital. Conta sem código referencial não bloqueia: sai sem I051, com aviso (o mapeamento é facultativo na ECD; a ECF exige).')}
         </p>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -452,6 +456,14 @@ export function SpedGenerationPanel({ unitId }: { unitId: string }) {
 
         {ecdError && (
           <div className="mt-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">{ecdError}</div>
+        )}
+        {ecdAvisos.length > 0 && (
+          <div role="status" className="mt-4 rounded-xl border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-300">
+            <p className="font-medium">{t('sped.ecd.avisos', 'ECD gerada e baixada, com avisos:')}</p>
+            <ul className="mt-1 list-disc pl-5">
+              {ecdAvisos.map((a) => <li key={a}>{a}</li>)}
+            </ul>
+          </div>
         )}
 
         <button

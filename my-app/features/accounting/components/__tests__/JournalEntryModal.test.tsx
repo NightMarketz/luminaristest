@@ -2,8 +2,9 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 (globalThis as unknown as { React: typeof React }).React = React;
-import { render, screen, cleanup } from '@testing-library/react';
+import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { JournalEntryModal, type AccountOption } from '../JournalEntryModal';
+import { accountingService } from '../../../../lib/services/accounting.service';
 import type { DimensionCatalogEntry } from '../../../../lib/services/dimensions.service';
 
 vi.mock('../../../../lib/services/accounting.service', () => ({
@@ -63,6 +64,55 @@ describe('JournalEntryModal dimension tagging', () => {
       <JournalEntryModal isOpen onClose={() => {}} unitId="u1" accounts={accounts} onSuccess={() => {}} />,
     );
     expect(screen.queryByText('Dimensões')).toBeNull();
+  });
+});
+
+// ── ITG 2000 item 36 (#907, correção 2): razão do registro extemporâneo no lançamento manual ──
+describe('JournalEntryModal — razão do registro extemporâneo', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+  });
+
+  function preencherBalanceado() {
+    const selects = Array.from(document.querySelectorAll('select')) as HTMLSelectElement[];
+    fireEvent.change(selects[0], { target: { value: '1.1.1' } });
+    fireEvent.change(selects[1], { target: { value: '3.1' } });
+    for (const input of screen.getAllByPlaceholderText('0,00')) {
+      fireEvent.change(input, { target: { value: '10,00' } });
+    }
+  }
+
+  it('o campo aparece e a razão digitada vai no body do postEntry', async () => {
+    vi.mocked(accountingService.postEntry).mockResolvedValue({} as never);
+    render(<JournalEntryModal isOpen onClose={() => {}} unitId="u1" accounts={accounts} onSuccess={() => {}} />);
+    expect(screen.getByText('Exigida quando a data cai num período que já foi fechado.', { exact: false })).toBeTruthy();
+
+    preencherBalanceado();
+    fireEvent.change(screen.getByLabelText('Razão do registro extemporâneo'), {
+      target: { value: '  ajuste de provisão após o fechamento  ' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Postar' }));
+
+    await waitFor(() =>
+      expect(accountingService.postEntry).toHaveBeenCalledWith(
+        expect.objectContaining({ unitId: 'u1', extemporaneousReason: 'ajuste de provisão após o fechamento' }),
+      ),
+    );
+  });
+
+  it('sem razão, o body não leva a chave; o 400 do servidor aparece no modal', async () => {
+    vi.mocked(accountingService.postEntry).mockRejectedValue({
+      status: 400,
+      error: 'Lançamento em período já fechado e reaberto: informe a razão do registro extemporâneo (ITG 2000, item 36).',
+    });
+    render(<JournalEntryModal isOpen onClose={() => {}} unitId="u1" accounts={accounts} onSuccess={() => {}} />);
+
+    preencherBalanceado();
+    fireEvent.click(screen.getByRole('button', { name: 'Postar' }));
+
+    expect(await screen.findByText(/informe a razão do registro extemporâneo/)).toBeTruthy();
+    expect(vi.mocked(accountingService.postEntry).mock.calls[0][0]).not.toHaveProperty('extemporaneousReason');
   });
 });
 

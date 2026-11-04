@@ -435,6 +435,28 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
       expect(call.periodEnd).toEqual(new Date('2026-01-31T00:00:00.000Z'));
     });
 
+    it('EMENDA RASTREIO do X7 (item 11, F-RT-1 a): razão geral ganha sourceType e sourceId ao fim das colunas', async () => {
+      const { repo } = makeRepo();
+      const reports = makeReports();
+      (reports.generalLedger as jest.Mock).mockResolvedValueOnce([
+        {
+          accountCode: '3.1', accountName: 'Receita de Serviços', date: new Date('2026-01-12T00:00:00.000Z'), entryId: 'e1',
+          entryNumber: 10, description: 'venda 1', status: 'Posted', debitCents: 0, creditCents: 2000, runningBalanceCents: -2000,
+          sourceType: 'SALE', sourceId: 'sale-1',
+        },
+      ]);
+      const svc = new DataExchangeExportService(reports, new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo(), makeTaxReader(), makeIssReader(), legalParamsSemente, makeIbsCbsReader(), makeEconomiaReader());
+
+      await svc.export(scope, { kind: 'EXPORT_GENERAL_LEDGER', format: 'xlsx', unitId: 'unit-1', periodStart: '2026-01-01', periodEnd: '2026-01-31' });
+      const buf = (storage.saveFile as jest.Mock).mock.calls[0][4] as Buffer;
+      const table = await parseTable(buf, 'xlsx');
+      expect(table.headers).toEqual([
+        'accountCode', 'accountName', 'date', 'entryId', 'entryNumber', 'description', 'status', 'debitCents', 'creditCents',
+        'runningBalanceCents', 'sourceType', 'sourceId',
+      ]);
+      expect(table.rows[0].slice(10)).toEqual(['SALE', 'sale-1']);
+    });
+
     // Adversarial (OPS-001): a razão geral sem accountCode E sem janela passa no DTO (Passo 5 T:
     // "razão sem accountCode → válido" é regra de FORMA), mas `generalLedger` exige `window` não-
     // opcional (`findManyForExport` não tem modo "sem bound") — a CONSTRUÇÃO do artefato tem de
@@ -728,7 +750,7 @@ describe('EXPORT_TAX_ASSESSMENT_MEMO (X7 Fase C PR-1)', () => {
       diferencaPostergadaCents: 0n,
       memoria: [{ codigo: 'RB', descricao: 'Receita bruta', valorCents: '1250000', fonte: 'razão 3.1' }],
       tabelaVersao: 'lc224-2026-v1', parametrosIds: null, parametrosSha256: null, entradaInformada: null,
-      avisoParametroLegal: null, status: 'CONFIRMED', supersedesId: null, provisaoEntryId: null,
+      avisoParametroLegal: null, rastreio: null, status: 'CONFIRMED', supersedesId: null, provisaoEntryId: null,
       confirmedById: 'owner-1', confirmedAt: new Date('2026-04-10T12:00:00.000Z'),
       createdAt: new Date('2026-04-10T12:00:00.000Z'), updatedAt: new Date('2026-04-10T12:00:00.000Z'), deletedAt: null,
       ...over,
@@ -746,9 +768,16 @@ describe('EXPORT_TAX_ASSESSMENT_MEMO (X7 Fase C PR-1)', () => {
     return { table, reader, createJob };
   }
 
-  const COLS = [
+  const COLS_ANTES_DA_EMENDA = [
     'anoCalendario', 'periodo', 'tributo', 'regime', 'forma', 'modo', 'codigoReceita', 'tabelaVersao', 'confirmedAt',
-    'apuracaoId', 'substitui', 'tipoLinha', 'codigo', 'registroEcf', 'linhaEcf', 'descricao', 'valorCents', 'fonte',
+    'apuracaoId', 'substitui', 'tipoLinha', 'codigo', 'descricao', 'valorCents', 'fonte',
+  ];
+  // EMENDA RASTREIO item 6 (contrato §2.2): as 11 colunas novas ao fim, as 16 de antes na mesma ordem. Emenda C8: as
+  // duas colunas da ECF ao fim de tudo.
+  const COLS = [
+    ...COLS_ANTES_DA_EMENDA,
+    'vencimentoDarf', 'parametrosIds', 'parametrosSha256', 'origemTipo', 'origemApuracaoId', 'origemPeriodo',
+    'accountCode', 'accountName', 'origemFrom', 'origemTo', 'saldoFinalCents', 'registroEcf', 'linhaEcf',
   ];
 
   it('itens 5/6/8: trimestral Presumido + A00 com saldo negativo — meta, colunas, RESUMO antes da MEMORIA, substitui', async () => {
@@ -760,23 +789,27 @@ describe('EXPORT_TAX_ASSESSMENT_MEMO (X7 Fase C PR-1)', () => {
     });
     const { table, createJob } = await exportar([a00, t01], '2026-01-01', '2026-12-31');
 
-    expect(table.headers[0]).toMatch(/^# kind=EXPORT_TAX_ASSESSMENT_MEMO; periodStart=2026-01-01; periodEnd=2026-12-31; apuracoes=2; geradoEm=\d{4}-/);
+    expect(table.headers[0]).toMatch(/^# kind=EXPORT_TAX_ASSESSMENT_MEMO; periodStart=2026-01-01; periodEnd=2026-12-31; apuracoes=2; geradoEm=\d{4}-.*; rastreio=v1$/);
     expect(table.rows[0]).toEqual(COLS);
     const body = table.rows.slice(1);
     expect(body).toHaveLength(14); // (6 RESUMO + 1 MEMORIA) × 2
     // A00 vem antes de T01 (ordem por período).
     // Emenda C8: o RESUMO do ajuste anual do IRPJ aponta a base e o a pagar do N630; o resto não tem linha.
-    expect(body.slice(0, 6).map((r) => [r[1], r[11], r[12], r[13], r[14], r[16]])).toEqual([
+    expect(body.slice(0, 6).map((r) => [r[1], r[11], r[12], r[27], r[28], r[14]])).toEqual([
       ['A00', 'RESUMO', 'base', 'N630', '1', '100000'], ['A00', 'RESUMO', 'devido', '', '', '15000'], ['A00', 'RESUMO', 'deducoes', '', '', '0'],
       ['A00', 'RESUMO', 'aPagar', 'N630', '26', '0'], ['A00', 'RESUMO', 'saldoNegativo', '', '', '4200'], ['A00', 'RESUMO', 'diferencaPostergada', '', '', '0'],
     ]);
+    // EMENDA RASTREIO item 6: apuração anterior à emenda (rastreio nulo) — as 16 colunas de antes idênticas, as de origem
+    // vazias; o vencimento (item 9) sai pela lei mesmo assim (A00/2026 ⇒ 31/03/2027; T01/2026 ⇒ 30/04/2026).
     expect(body[6]).toEqual([
       '2026', 'A00', 'IRPJ', 'REAL', 'ANUAL', 'AJUSTE_ANUAL', '243001', 'lc224-2026-v1', '2026-04-10T12:00:00.000Z',
-      'ta-a00', 'ta-a00-old', 'MEMORIA', 'SN', '', '', 'Saldo negativo', '-4200', 'ajuste',
+      'ta-a00', 'ta-a00-old', 'MEMORIA', 'SN', 'Saldo negativo', '-4200', 'ajuste',
+      '2027-03-31', '', '', '', '', '', '', '', '', '', '', '', '',
     ]);
     expect(body[13]).toEqual([
       '2026', 'T01', 'IRPJ', 'PRESUMIDO', 'TRIMESTRAL', 'PRESUMIDO', '208901', 'lc224-2026-v1', '2026-04-10T12:00:00.000Z',
-      'ta-1', '', 'MEMORIA', 'RB', '', '', 'Receita bruta', '1250000', 'razão 3.1',
+      'ta-1', '', 'MEMORIA', 'RB', 'Receita bruta', '1250000', 'razão 3.1',
+      '2026-04-30', '', '', '', '', '', '', '', '', '', '', '', '',
     ]);
     expect(createJob.mock.calls[0][0]).toMatchObject({
       kind: 'EXPORT_TAX_ASSESSMENT_MEMO',
@@ -822,8 +855,8 @@ describe('EXPORT_TAX_ASSESSMENT_MEMO (X7 Fase C PR-1)', () => {
       '2026-01-01', '2026-03-31',
     );
     const body = table.rows.slice(1);
-    expect(body[0][16]).toBe('9007199254740993');
-    expect(body[6][16]).toBe('9007199254740993');
+    expect(body[0][14]).toBe('9007199254740993');
+    expect(body[6][14]).toBe('9007199254740993');
   });
 
   it('item 10: não filtra por tributo', async () => {

@@ -1268,6 +1268,7 @@ export class SimplesApuracaoService {
           date: fimDoMes(nova.competencia),
           description: `Provisão do DAS do Simples Nacional — ${nova.competencia} (DAS ${nova.numeroDocumento}, apuração ${nova.id})`,
           sourceType: SIMPLES_DAS_PROVISION_SOURCE_TYPE,
+          automaticWriter: true,
           sourceId: nova.id,
           lines: [
             { accountCode: deducao, debitCents: valor, creditCents: 0 },

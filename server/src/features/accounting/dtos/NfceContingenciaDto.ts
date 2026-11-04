@@ -43,6 +43,8 @@ export const ContingenciaTickSummarySchema = z
     orfasResolvidas: z.number().int(),
     orfasFalharam: z.number().int(),
     failed: z.number().int(),
+    /** C3 (handoff 02/11): qual nota gerou cada alerta — o scheduler avisa 1 vez por nota, por evento e por dia. */
+    alertas: z.array(z.object({ evento: z.enum(['PERTO_DO_PRAZO', 'VENCIDA', 'ORFA_FALHOU']), documentId: z.string() }).strict()),
   })
   .strict();
 export type ContingenciaTickSummary = z.infer<typeof ContingenciaTickSummarySchema>;

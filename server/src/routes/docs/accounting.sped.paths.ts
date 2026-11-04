@@ -11,8 +11,9 @@
  *         Composes the ECD (Livro Diário Geral, tipo G) for the given year from the ledger
  *         (chart, referential mapping, monthly balances, journal, BP/DRE) and persists a
  *         plain-text (ISO-8859-1) artifact as an EXPORT job. Download via
- *         /data-exchange/jobs/{jobId}/download. Blocks with 400 + unmappedAccounts if any
- *         leaf account is unmapped in the referential version (coverage gate).
+ *         /data-exchange/jobs/{jobId}/download. A leaf account unmapped in the referential version
+ *         does NOT block (C2 - Manual da ECD item 1.17, mapping is optional in the ECD): it ships
+ *         without I051, is listed in coberturaReferencial.unmappedAccounts and gets a line in avisos.
  *         BE-INCR-FIXED-ASSETS PR-4 (retificação versionada, item 26-31): a ECD SUBSTITUTA
  *         (declarant.indFinEsc=1) exige declarant.codHashSub (40 hex), supersedesJobId (o job
  *         EXPORTED sendo substituído) e verificationTerm (J801+J932); o .rtf do Termo chega por
@@ -131,6 +132,28 @@
  *         - { in: query, name: layout, required: true, schema: { type: string, enum: [ECD, ECF] } }
  *       responses:
  *         '200': { description: '[{ code, description }] - code is 3 digits' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
+ *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '403': { $ref: '#/components/responses/ForbiddenError' }
+ *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *
+ *   /api/accounting/sped/ecf/y600/vigencias:
+ *     get:
+ *       summary: Partner terms (vigencias) the ECF Y600 of a year requires, for the SPED screen
+ *       description: >-
+ *         FE-INCR-ECF-Y600 PR-0 (F-FE-Y600-1 - b). Read-only. Lists the live Partner terms that cross the year,
+ *         computed by the same selection the ECF generator uses (selecionarVigenciasDoAno), so the screen asks
+ *         for the ECF complement of exactly the partnerIds the generate call will require. dtFimSoc is the
+ *         actual exit in the year (null on a participation change). The tax id is returned as its last 4
+ *         digits only (taxIdFinal). somaParticipacaoFimBp is informative (F-Y600-8, not blocking). Same read
+ *         policy as the partners list.
+ *       tags: [Accounting]
+ *       security: [{ bearerAuth: [] }]
+ *       parameters:
+ *         - { in: query, name: unitId, required: true, schema: { type: string } }
+ *         - { in: query, name: year, required: true, schema: { type: integer, minimum: 2015, maximum: 2100 } }
+ *       responses:
+ *         '200': { description: '{ year, vigencias: [{ partnerId, nome, taxIdFinal, tipoPessoa, residenteBrasil, participacaoBp, entradaEm, saidaEm, dtFimSoc, vigenteNoFim }], somaParticipacaoFimBp }' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }

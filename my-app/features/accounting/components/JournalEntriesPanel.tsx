@@ -273,6 +273,8 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
   const [confirmReverseId, setConfirmReverseId] = useState<string | null>(null);
   const [reversalDate, setReversalDate] = useState(scopeToday);
   const [isReversing, setIsReversing] = useState(false);
+  // ITG 2000 item 32: o estorno exige o motivo da retificação (o servidor recusa sem ele).
+  const [reverseReason, setReverseReason] = useState('');
   const [receiptBusyId, setReceiptBusyId] = useState<string | null>(null);
   // ── audit chain verification (FE-INCR-AUDIT-PROVENANCE, F-FEAP-1a) ─────────
   const [isVerifyingChain, setIsVerifyingChain] = useState(false);
@@ -312,7 +314,7 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
     setError(null);
     setPeriodError(false);
     try {
-      await accountingService.reverseEntry({ unitId, lancamentoId: confirmReverseId, reversalPostingDate: reversalDate });
+      await accountingService.reverseEntry({ unitId, lancamentoId: confirmReverseId, reversalPostingDate: reversalDate, reason: reverseReason.trim() });
       setConfirmReverseId(null);
       await fetchEntries();
       onReversalComplete?.();
@@ -439,7 +441,7 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
                 <JournalEntryRow
                   key={entry.id}
                   entry={entry}
-                  onReverseClick={(id) => setConfirmReverseId(id)}
+                  onReverseClick={(id) => { setReverseReason(''); setConfirmReverseId(id); }}
                   onReceiptClick={(id) => void handleDownloadReceipt(id)}
                   onProvenanceClick={(id) => void handleShowProvenance(id)}
                   receiptBusyId={receiptBusyId}
@@ -471,7 +473,7 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
             </button>
             <button
               onClick={() => void handleConfirmReverse()}
-              disabled={isReversing}
+              disabled={isReversing || !reverseReason.trim()}
               className="inline-flex items-center gap-2 rounded-xl bg-red-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-50"
             >
               {isReversing ? (
@@ -511,6 +513,18 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
               type="date"
               value={reversalDate}
               onChange={(e) => setReversalDate(e.target.value)}
+              className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 focus:border-red-500 focus:outline-none"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="reverse-reason" className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
+              {t('journalEntries.confirmModal.reasonLabel', 'Motivo do estorno')}
+            </label>
+            <input
+              id="reverse-reason"
+              type="text"
+              value={reverseReason}
+              onChange={(e) => setReverseReason(e.target.value)}
               className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 focus:border-red-500 focus:outline-none"
             />
           </div>

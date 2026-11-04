@@ -1,7 +1,6 @@
+import type { TFn } from '../lib/policyPayload';
 import { resolveErrorWithCode } from '../lib/resolveError';
 import { GOVERNANCE_ERROR_FALLBACK, GOVERNANCE_ERROR_KEYS } from './GovernanceScope';
-
-type TFn = (key: string, fallback: string, vars?: Record<string, string>) => string;
 
 /**
  * Tradução do `code` nomeado do servidor (BRIEF §1) para a mensagem da tela; `code` fora do mapa cai na mensagem

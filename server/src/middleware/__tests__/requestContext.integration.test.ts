@@ -47,8 +47,10 @@ describe('requestContextMiddleware (real app, supertest)', () => {
     const kept = await request(app).get('/health').set('x-request-id', 'abc-12345678');
     expect(kept.headers['x-request-id']).toBe('abc-12345678');
 
-    const replaced = await request(app).get('/health').set('x-request-id', 'bad id {"level":"error"}');
-    expect(replaced.headers['x-request-id']).not.toContain('bad');
+    const invalid = 'bad id {"level":"error"}';
+    const replaced = await request(app).get('/health').set('x-request-id', invalid);
+    // Não `.not.toContain('bad')`: "bad" é hexa válido e um UUID novo pode trazê-lo (CI do #1019, 03/11: "…-bad2-…").
+    expect(replaced.headers['x-request-id']).not.toBe(invalid);
     expect(replaced.headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/);
   });
 

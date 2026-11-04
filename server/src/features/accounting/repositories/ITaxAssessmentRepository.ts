@@ -27,6 +27,8 @@ export interface CreateTaxAssessmentData {
   entradaInformada?: Prisma.InputJsonValue;
   /** PR-4 (item 10): aviso visível da mudança de parâmetro legal. */
   avisoParametroLegal?: string | null;
+  /** EMENDA RASTREIO (item 1, F-RT-4 b): origem de cada linha da memória — `RastreioApuracaoSchema`. */
+  rastreio?: Prisma.InputJsonValue;
   status: string;
   supersedesId: string | null;
   confirmedById: string;

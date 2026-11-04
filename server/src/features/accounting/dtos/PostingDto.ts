@@ -42,6 +42,7 @@ import { isValidDateOnly } from '../models/dates';
  *             description:  { type: string }
  *             attachmentId: { type: string, description: "DocumentAttachment id of the raw file (INCR-5), when any" }
  *             rawJson:      { type: string, description: "Optional JSON snapshot of the origin" }
+ *         extemporaneousReason: { type: string, description: "Razão do registro extemporâneo (ITG 2000, item 36) — exigida quando a data cai num período já fechado e reaberto" }
  *         lines:
  *           type: array
  *           minItems: 2
@@ -107,6 +108,9 @@ export const PostEntrySchema = z.object({
     })
     .strict()
     .optional(),
+  // ITG 2000 (R1) item 36: razão do registro extemporâneo — o PostingService a exige quando a data cai num período
+  // já fechado e reaberto.
+  extemporaneousReason: z.string().trim().min(1).optional(),
   lines: z.array(PostEntryLineSchema).min(2),
 });
 
@@ -115,17 +119,18 @@ export const PostEntrySchema = z.object({
  *   schemas:
  *     ReverseEntryInput:
  *       type: object
- *       required: [lancamentoId, reversalPostingDate]
+ *       required: [lancamentoId, reversalPostingDate, reason]
  *       properties:
  *         lancamentoId:        { type: string }
  *         reversalPostingDate: { type: string, description: "Date-only string YYYY-MM-DD for the reversal entry (and period gate)" }
- *         reason:              { type: string }
+ *         reason:              { type: string, description: "Motivo da retificação (ITG 2000, item 32) — obrigatório" }
  */
 export const ReverseEntrySchema = z.object({
   unitId: z.string().min(1),
   lancamentoId: z.string().min(1),
   reversalPostingDate: z.string().refine(isValidDateOnly, 'reversalPostingDate deve ser uma data real YYYY-MM-DD'),
-  reason: z.string().optional(),
+  // ITG 2000 (R1) item 32: o histórico do estorno precisa o motivo da retificação.
+  reason: z.string().trim().min(1, 'Informe o motivo do estorno'),
 });
 
 /** @openapi
@@ -243,6 +248,13 @@ export type PostEntryInput = z.infer<typeof PostEntrySchema> & {
    * do `auditDescription` (o parse do controller descarta a chave).
    */
   bindingRef?: { bindingId: string; bindingVersion: number };
+  /**
+   * INTERNO — ITG 2000 (R1) item 36: gravador automático (bridge, subrazão, apuração, job). Em período fechado e
+   * reaberto, sem `extemporaneousReason`, o `PostingService` consigna a razão automática em vez de recusar. Fora do
+   * `PostEntrySchema` pelo mesmo motivo do `auditDescription`: o parse do controller descarta a chave, então pelo HTTP a
+   * razão é sempre exigida, qualquer que seja o `sourceType` (D-2026-11-02-DELEGACAO-DONO §3.6).
+   */
+  automaticWriter?: boolean;
 };
 export type ReverseEntryInput = z.infer<typeof ReverseEntrySchema>;
 export type ReportQueryInput = z.infer<typeof ReportQuerySchema>;

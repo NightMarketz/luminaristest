@@ -314,6 +314,7 @@ export class AccountingReviewService {
       date: dto.postingDate,
       description: adjustmentDescription(review.id, seq, dto.description),
       sourceType: REVIEW_ADJUSTMENT_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: finding.id,
       lines: dto.lines,
     };
