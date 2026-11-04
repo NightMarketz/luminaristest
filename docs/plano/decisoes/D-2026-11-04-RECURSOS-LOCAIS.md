@@ -55,7 +55,29 @@ atualizado: "2026-11-04"
   Achado fora do escopo vira linha no relatório ou cartão, nunca sessão nova por conta própria.
 - **Continue a sessão que tem o contexto** (`SendMessage`) em vez de abrir outra para o mesmo assunto. Sessão nova é
   worktree nova, `prisma generate` e cache frio.
-- **No máximo 3 sessões fazendo trabalho pesado** (teste, build, navegador) ao mesmo tempo. A quarta espera ou só lê.
+- **No máximo 2 trabalhos pesados por máquina ao mesmo tempo** (jest de integração, `next build`, runner Puppeteer):
+  o `scripts/heavy-slot.cjs` dá as vagas (`LUMINARIS_HEAVY_SLOTS`, padrão 2), e o terceiro espera mostrando quem ocupa.
+  Era "3 sessões" até a emenda de 04/11 abaixo.
+
+#### Emenda 2026-11-04 — onde cada trabalho roda e quanto uma sessão abre
+
+Autorização: dono, chat, 2026-11-04: "Me da um prompt para implementar todas as 7 sugestões". Números ratificados pelo dono no mesmo
+chat: fan-out "3 subag. · 3 cartões"; vagas pesadas "2 nos dois".
+
+| O trabalho é… | Roda em | Por quê |
+|---|---|---|
+| Curto, na mesma worktree, sem instalação (ler, buscar, conferir doc, um teste com escopo) | **subagente** da sessão | herda a worktree e as dependências; nada de `npm ci`, `prisma generate` nem cache frio |
+| Uma tarefa que o dono acompanha à parte (branch e PR próprios, outro nó do plano) | **sessão** local, proposta como **cartão** | worktree própria; o dono inicia, abre e para |
+| Pesado (suíte inteira, várias integrações, build e varredura longos) | **sessão na nuvem**, quando o dono pedir | não disputa RAM nem as 2 vagas da máquina |
+
+- **Fan-out:** no máximo **3 subagentes** ao mesmo tempo por sessão, e no máximo **3 cartões** de sessão propostos
+  por turno. O resto vai para a fila do relatório.
+- **Subagente não instala:** sem `npm ci`, `worktree-deps.mjs`, `prisma generate` ou build. Se a tarefa precisa disso,
+  ela não é de subagente.
+- **Sessão filha só propõe cartão** (já estava acima, e vale também para o coordenador aberto por sessão). O dono clica,
+  ou digita "inicia" na sessão que propôs.
+- **Sessão na nuvem só quando o dono pede.** Ela parte da branch publicada e não manda nota de volta: o resultado se lê
+  no transcript dela.
 
 ### R4 — Cache de prompt e contexto
 
@@ -75,4 +97,5 @@ atualizado: "2026-11-04"
 | R2 suíte inteira | `scripts/test-scope-guard.cjs` no jest, vitest e shards | #1019 |
 | R2 do que mudou | `npm run test:changed` no `server` e no `my-app` | este PR |
 | R2, R3, R4 | texto no `CLAUDE.md` e nas skills de sessão | este PR e #1019 |
-| R3 limite de 3 pesadas | sem mecanismo (regra de conduta) | — |
+| R3 limite de 2 pesadas | `scripts/heavy-slot.cjs` no globalSetup da integração, no `npm run build` do my-app e no `run --` do runner de runbook | melhoria 1/7 (#1037) |
+| R3 subagente × sessão × nuvem, fan-out 3 + 3 | sem mecanismo (regra de conduta) | melhoria 7/7 |

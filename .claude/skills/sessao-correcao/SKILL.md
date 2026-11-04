@@ -132,7 +132,8 @@ i18n (se tocar string de UI). Atualizá-los **é** parte da correção mínima; 
 minimalismo, é diff incompleto.
 
 **Cuidado com a classe do achado.** Bug de chave de idempotência, de data-only e de renderização de data
-são **classes** neste repo, não casos isolados — mas varrer a classe inteira é trabalho de outra sessão.
+são **classes** neste repo, não casos isolados — mas varrer a classe inteira é trabalho de outra sessão, que esta
+**propõe como cartão** (o dono inicia; esta sessão não abre sessão, R3 de `D-2026-11-04-RECURSOS-LOCAIS`).
 Aqui: conserte o caso do teste-guarda, e registre a suspeita de classe em "Achados fora de escopo".
 
 **Fix que muda o predicado do gate, não o alvo, é fork de política.** Se o diff mínimo que faz o
