@@ -31,6 +31,10 @@ atualizado: "2026-11-04"
 - Worktree nova roda `node scripts/worktree-deps.mjs` na raiz, e não `npm ci`. Cada versão de lockfile instala uma vez em
   `~/.luminaris-deps/<app>-<sha1>`, e a worktree ganha uma junção para lá. O cliente Prisma continua por worktree
   (`server/generated/prisma`, via `prisma generate`), então schema de branch diferente não vaza.
+- **Automático desde 04/11** (dono, chat, 2026-11-04: "Me da um prompt para implementar todas as 7 sugestões"): o hook
+  `SessionStart` roda `node scripts/session-start-deps.mjs`, que chama o `worktree-deps.mjs` quando falta `node_modules`
+  (calado quando já está pronto), e o `.worktreeinclude` copia `server/.env` e `my-app/.env.local` do checkout principal.
+  Não use o hook `WorktreeCreate`: ele substitui a criação e desliga o `.worktreeinclude`.
 - `npm ci` local só quando o PR muda o `package-lock.json` — e mesmo aí pelo script, que instala o lockfile novo no
   depósito uma única vez.
 - Para remover worktree: `git worktree remove`, nunca `rm -rf` (pode seguir a junção). Apagar o depósito é seguro: ele
@@ -94,6 +98,7 @@ chat: fan-out "3 subag. · 3 cartões"; vagas pesadas "2 nos dois".
 | Regra | Mecanismo | Onde |
 |---|---|---|
 | R1 | `scripts/worktree-deps.mjs` | este PR |
+| R1 automático | hook `SessionStart` → `scripts/session-start-deps.mjs`; `.worktreeinclude` | melhoria 2/7 |
 | R2 suíte inteira | `scripts/test-scope-guard.cjs` no jest, vitest e shards | #1019 |
 | R2 do que mudou | `npm run test:changed` no `server` e no `my-app` | este PR |
 | R2, R3, R4 | texto no `CLAUDE.md` e nas skills de sessão | este PR e #1019 |
