@@ -91,6 +91,8 @@ function makeEntries(): LalurEntryWithRelations[] {
 
 interface Mocks {
   canRead?: boolean;
+  /** ERRO-CRU-AO-CLIENTE: substitui a semente (ex.: `fotografia` que falha como o banco falharia). */
+  legalParams?: typeof legalParamsSemente;
   entries?: LalurEntryWithRelations[];
   parteB?: LalurParteBAccount[];
   /** ECF 3C: fechamentos do exercício (default: os 4, sem saldos — o suficiente para a geração passar). */
@@ -144,7 +146,7 @@ function buildService(m: Mocks = {}) {
 
   const partnerList = jest.fn(async (_s: unknown) => (m.partners ?? [PARTNER_REAL]) as never);
 
-  const service = new SpedEcfRealGenerationService(lalurRepo, policy, repo, audit, lalurService, profiles, assessments, legalParamsSemente, { list: partnerList });
+  const service = new SpedEcfRealGenerationService(lalurRepo, policy, repo, audit, lalurService, profiles, assessments, m.legalParams ?? legalParamsSemente, { list: partnerList });
   return { service, partnerList, createJob, updateJob, findEntriesForYear, findManyParteB, findClosingsForYear, findMovementsForYear, diagnoseYear, openingBalances, append, policy };
 }
 
@@ -176,6 +178,16 @@ describe('SpedEcfRealGenerationService.generate', () => {
     await service.generate(scope, makeDto({ year: 2026, fiscal: { formaTrib: '1', formaTribPer: 'RRRR', formaApur: 'T', indAliqCsll: '1', indRecReceita: '2', codVer: '0013' } }));
     expect(producedLines()[0]).toMatch(/^\|0000\|LECF\|0013\|/);
     expect(producedLines()[0]).toContain('|01012026|31122026|');
+  });
+
+  // ERRO-CRU-AO-CLIENTE (GAP-MAP, dono 2026-11-04): o `try` do item 4 só pode traduzir o erro de leiaute; falha do
+  // banco na fotografia não é "ano sem leiaute" — não vira 400 com o texto do banco.
+  it('falha do banco na fotografia LEIAUTE_SPED ⇒ NÃO vira ValidationError (400) com o texto do banco', async () => {
+    const falha = new Error('SQLITE_BUSY: database is locked');
+    const legalParams = { ...legalParamsSemente, fotografia: jest.fn(async () => { throw falha; }) } as typeof legalParamsSemente;
+    const { service } = buildService({ legalParams });
+    const err = await service.generate(scope, makeDto()).catch((e) => e);
+    expect(err).not.toBeInstanceOf(ValidationError);
   });
 
   it('item 11: o gerador LÊ do model — findEntriesForYear(scope, year) + findManyParteB(scope, live) — e o DTO não carrega ajustes', async () => {

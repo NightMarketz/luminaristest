@@ -73,6 +73,8 @@ function makeDto(over: Partial<Record<keyof SpedEcfRequestDto, unknown>> = {}): 
 
 interface Mocks {
   canRead?: boolean;
+  /** ERRO-CRU-AO-CLIENTE: substitui a semente (ex.: `fotografia` que falha como o banco falharia). */
+  legalParams?: typeof legalParamsSemente;
   accounts?: Account[];
   extraRevenueMove?: boolean; // add movement on a non-3.1/3.3 revenue account
   extraRevenueAccountId?: string; // which account receives that movement (default rec39)
@@ -125,7 +127,7 @@ function buildService(m: Mocks = {}) {
 
   const partnerList = jest.fn(async (_s: unknown) => m.partners ?? [makePartner()]);
 
-  const service = new SpedEcfGenerationService(accountRepo, postingRepo, policy, repo, audit, legalParamsSemente, fiscalProfileRepo, { list: partnerList }, { findByYear: async () => null }, { findServicosEntreDias: async () => [] }, { findManyByServiceRefs: async () => [] });
+  const service = new SpedEcfGenerationService(accountRepo, postingRepo, policy, repo, audit, m.legalParams ?? legalParamsSemente, fiscalProfileRepo, { list: partnerList }, { findByYear: async () => null }, { findServicosEntreDias: async () => [] }, { findManyByServiceRefs: async () => [] });
   return { service, createJob, updateJob, groupByAccount, append, policy, partnerList };
 }
 
@@ -146,6 +148,16 @@ describe('SpedEcfGenerationService.generate', () => {
     await expect(service.generate(scope, makeDto())).rejects.toBeInstanceOf(ForbiddenError);
     expect(createJob).not.toHaveBeenCalled();
     expect(savedBuffers).toHaveLength(0);
+  });
+
+  // ERRO-CRU-AO-CLIENTE (GAP-MAP, dono 2026-11-04): o `try` do item 25 só pode traduzir o erro de leiaute; falha do
+  // banco na fotografia não é "ano sem leiaute" — não vira 400 com o texto do banco.
+  it('falha do banco na fotografia LEIAUTE_SPED ⇒ NÃO vira ValidationError (400) com o texto do banco', async () => {
+    const falha = new Error('SQLITE_BUSY: database is locked');
+    const legalParams = { ...legalParamsSemente, fotografia: jest.fn(async () => { throw falha; }) } as typeof legalParamsSemente;
+    const { service } = buildService({ legalParams });
+    const err = await service.generate(scope, makeDto()).catch((e) => e);
+    expect(err).not.toBeInstanceOf(ValidationError);
   });
 
   it('blocks with ValidationError + unmappedRevenueAccounts when a Revenue account is not 3.1/3.3 (exhaustiveness gate)', async () => {

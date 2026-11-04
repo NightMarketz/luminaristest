@@ -522,7 +522,7 @@ export class CollectionChargeService {
         PROVIDER_UNAVAILABLE,
       );
     }
-    return error instanceof AppError ? error : new AppError(error instanceof Error ? error.message : String(error), 500);
+    return error instanceof AppError ? error : new AppError('Falha inesperada na cobrança; tente de novo.', 500);
   }
 
   /** Público desde o PR-3: o job do relatório (P3-5) aplica o mesmo P2-4. */

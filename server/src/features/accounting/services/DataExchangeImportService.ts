@@ -13,7 +13,15 @@
  *              teste: [sem teste — GAP-MAP]
  */
 import { createHash } from 'node:crypto';
-import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
+import { AppError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
+import { logger } from '@/lib/logger';
+
+/** ERRO-CRU-AO-CLIENTE: `row.errorMessage` sai no DTO — o motivo de domínio passa; o resto fica só no log. */
+function rowErrorMessage(e: unknown): string {
+  if (e instanceof AppError) return e.message;
+  logger.warn('Data exchange import: row failed with an internal error', { error: e });
+  return 'Falha interna ao gravar a linha.';
+}
 import * as storage from '../../../lib/attachmentStorage';
 import { parseTable, type SpreadsheetFormat } from '../../../lib/spreadsheet';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -232,7 +240,7 @@ export class DataExchangeImportService {
           committed++;
         } catch (e) {
           failedCount++;
-          await this.repo.updateRow(scope, row.id, { errorCode: 'CREATE_FAILED', errorMessage: (e as Error).message });
+          await this.repo.updateRow(scope, row.id, { errorCode: 'CREATE_FAILED', errorMessage: rowErrorMessage(e) });
         }
       }
     } else if (kind === 'IMPORT_OPENING_BALANCES') {
@@ -313,7 +321,7 @@ export class DataExchangeImportService {
       // bare .catch — otherwise the most-used import's failure is opaque. Rows stay VALID
       // (only errorCode/message set), so a re-commit retries once the period is opened.
       for (const row of validRows) {
-        await this.repo.updateRow(scope, row.id, { errorCode: 'POST_FAILED', errorMessage: (e as Error).message });
+        await this.repo.updateRow(scope, row.id, { errorCode: 'POST_FAILED', errorMessage: rowErrorMessage(e) });
       }
       return { committed: 0, failed: validRows.length };
     }
@@ -365,7 +373,7 @@ export class DataExchangeImportService {
       } catch (e) {
         failed += group.length;
         for (const row of group) {
-          await this.repo.updateRow(scope, row.id, { errorCode: 'POST_FAILED', errorMessage: (e as Error).message });
+          await this.repo.updateRow(scope, row.id, { errorCode: 'POST_FAILED', errorMessage: rowErrorMessage(e) });
         }
       }
     }

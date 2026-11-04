@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 (globalThis as unknown as { React: typeof React }).React = React;
 import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/react';
@@ -51,22 +51,9 @@ const padraoRows = [{ codigo: '1000', descricao: 'Prejuízo Fiscal Operacional',
  * the test's first yield: a plain timer started at the call gets absorbed by slow synchronous work under load
  * (in the full-suite run a plain 50 ms let 5 of the 12 guarded e-Lalur cases pass).
  */
-const pendingLater = new Set<Promise<unknown>>();
-const later = <T,>(value: T) => {
-  const p = new Promise<T>((resolve) => setTimeout(() => setTimeout(() => resolve(value), 50), 0));
-  pendingLater.add(p);
-  return p;
-};
+import { later } from '../../../../test-utils/later'; // drenado pelo afterEach global (vitest.setup.ts)
 
 describe('LalurPanel', () => {
-  // Dreno: uma resposta `later` que chega depois do fim do caso faz setState com o jsdom já desmontado
-  // (CI do #1070, 04/11: "ReferenceError: window is not defined" em LalurPanel.tsx:120). Espera antes do cleanup.
-  afterEach(async () => {
-    await Promise.allSettled([...pendingLater]);
-    pendingLater.clear();
-    cleanup();
-  });
-
   beforeEach(() => {
     vi.clearAllMocks();
     cleanup();
