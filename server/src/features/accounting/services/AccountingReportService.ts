@@ -78,6 +78,9 @@ export interface GeneralLedgerRow {
   debitCents: number;
   creditCents: number;
   runningBalanceCents: number;
+  /** EMENDA RASTREIO do X7 (item 11): documento de origem do lançamento; '' / null na linha de abertura. */
+  sourceType: string;
+  sourceId: string | null;
 }
 
 // ─── BP / DRE shared types ────────────────────────────────────────────────────
@@ -615,6 +618,8 @@ export class AccountingReportService {
           debitCents: 0,
           creditCents: 0,
           runningBalanceCents: running,
+          sourceType: '',
+          sourceId: null,
         });
         for (const { entry, leg } of legsByAccount.get(accountId) ?? []) {
           const debitCents = centsFromDb(leg.debitCents);
@@ -631,6 +636,8 @@ export class AccountingReportService {
             debitCents,
             creditCents,
             runningBalanceCents: running,
+            sourceType: entry.sourceType,
+            sourceId: entry.sourceId,
           });
         }
       }
@@ -738,9 +745,30 @@ export class AccountingReportService {
     if (!this.policy.canRead(scope)) {
       throw new ForbiddenError('Você não tem permissão para ler o resultado do período.');
     }
+    return (await this.resultadoAntesIrpjCsllPorConta(scope, from, to, excluirAccountIds)).netCents;
+  }
+
+  /**
+   * EMENDA RASTREIO do X7 (item 2, F-RT-1 a): o mesmo resultado de `resultadoAntesIrpjCsll`, com a contribuição de cada
+   * conta analítica (sinal da DRE: todas as regras dão crédito − débito) — uma leitura, a soma das contas é o `netCents`.
+   */
+  async resultadoAntesIrpjCsllPorConta(
+    scope: AccountingScope,
+    from: Date,
+    to: Date,
+    excluirAccountIds: readonly string[],
+  ): Promise<{ netCents: number; contas: { accountId: string; code: string; name: string; cents: number }[] }> {
+    if (!this.policy.canRead(scope)) {
+      throw new ForbiddenError('Você não tem permissão para ler o resultado do período.');
+    }
     const excluir = new Set(excluirAccountIds);
-    const rows = await this.getAccountBalances(scope, from, to, [CLOSING_SOURCE_TYPE]);
-    return this.computeDreNet(rows.filter((r) => !excluir.has(r.accountId))).netCents;
+    const rows = (await this.getAccountBalances(scope, from, to, [CLOSING_SOURCE_TYPE])).filter((r) => !excluir.has(r.accountId));
+    const contas = rows.flatMap((r) => {
+      const rule = findMappingRule(r.nature, r.code, 'DRE');
+      const cents = rule ? applySign(r.balanceCents, rule.sign) : 0;
+      return cents !== 0 ? [{ accountId: r.accountId, code: r.code, name: r.name, cents }] : [];
+    });
+    return { netCents: this.computeDreNet(rows).netCents, contas };
   }
 
   /**
