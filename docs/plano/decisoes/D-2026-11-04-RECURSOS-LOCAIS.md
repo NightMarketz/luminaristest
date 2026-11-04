@@ -52,7 +52,8 @@ Autorização: dono, chat, 2026-11-04: "Executa o PR-3" (`docs/accounting/MONORE
 - **Não rode `npm ci` na worktree com as junções no lugar:** ele segue a junção e apaga o conteúdo da entrada do depósito,
   que as outras worktrees usam (testado em 04/11 num workspace de rascunho: o arquivo-marcador dentro do depósito sumiu).
   Lockfile novo entra pelo script, que instala a entrada nova.
-- O `worktree-deps.mjs` aceita e ignora os argumentos `server`/`my-app` de antes: o workspace instala inteiro.
+- O `worktree-deps.mjs` aceita e ignora os argumentos `server`/`my-app` de antes: o workspace instala inteiro. O hook
+  `session-start-deps.mjs` passa a olhar as três pastas e chama o script sem argumento.
 
 ### R2 — Teste só do que está sendo mexido
 
