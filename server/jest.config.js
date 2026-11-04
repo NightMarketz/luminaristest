@@ -42,6 +42,9 @@ const base = {
     transformIgnorePatterns: ['/node_modules/(?!(uuid|@qdrant/js-client-rest)/)'],
 };
 
+// Suíte inteira só no CI ou com FULL_SUITE=1 (dono, 03/11: "isso pesa o pc demais"); regra em scripts/test-scope-guard.cjs.
+require('../scripts/test-scope-guard.cjs').guardFullSuite('jest');
+
 module.exports = {
     // Sem teto, o jest abre núcleos−1 workers (15 nesta máquina, ~700 MB cada): duas sessões testando juntas
     // esgotam 31 GB e travam o PC (medido 29/10). 25% = 4 workers aqui; no CI (2–4 núcleos) dá 1. Integração já é --runInBand.

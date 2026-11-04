@@ -16,7 +16,8 @@ pause, nunca escolha.
    Liste o checklist numerado ANTES de escrever código.
 2. Materialize contratos (Zod `.strict()` no backend) antes da lógica.
 3. Implemente um comportamento por vez, cada um com seu teste.
-4. Rode os gates que o diff aciona (`cd server && npx tsc --noEmit`, `npm run test:integration`,
+4. Rode os gates que o diff aciona (`cd server && npx tsc --noEmit`, os testes tocados por caminho — `npx jest <caminho> --selectProjects unit`;
+   integração `npx jest <arquivo> --selectProjects integration --runInBand`, nunca a suíte inteira, que é do CI —
    `cd my-app && npx tsc --noEmit`, `npm run docs:generate` se tocou rota/DTO). **Grave cada comando
    com log e exit code reais:**
    ```bash
