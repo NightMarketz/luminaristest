@@ -1,8 +1,25 @@
 # BRIEF — MONOREPO-WORKSPACES (melhorias 5 e 6 de 7)
 
-**Estado:** BRIEF — **forks ratificados** (F-MW-1..F-MW-8, dono, chat, 2026-11-04, por questionário). Nenhum código.
-O próximo passo autorizado é **só o spike PR-0** (F-MW-1 = b). O PR-1 em diante depende do resultado dele e de um
-`executa` do dono.
+**Estado:** BRIEF — **melhoria 5 (pnpm) PARADA** pelo dono depois do spike (chat, 2026-11-04: "Sim, parar o pnpm").
+Fica o depósito do #1034. Segue só a **melhoria 6 (cache de tarefa)**: o PR-A (`tsc --incremental`) está pronto para um
+`executa`, e o Turborepo voltou a ser pergunta (F-MW-9), porque ele dependia do workspace do pnpm. Nenhum código.
+
+## 0.2 Decisão depois do spike (dono, chat, 2026-11-04: "Sim, parar o pnpm")
+
+- **Melhoria 5 parada.** Os itens 1–10 e os PRs PR-0, PR-1, PR-2 e PR-4 ficam **arquivados**, e o texto continua abaixo
+  como registro. O que destrava uma reabertura: um pnpm em JS (não binário nativo) em que o depósito global resolva os
+  tipos do my-app, ou o depósito do #1034 deixar de servir.
+- **Ficam valendo:** F-MW-6 (cache nativo primeiro, depois um executor) e F-MW-7 (integração nunca vem do cache). Os forks
+  F-MW-2, 3, 4, 5 e 8 só valiam para o pnpm e saem de cena.
+- **F-MW-9 — RATIFICAÇÃO PENDENTE: o Turborepo sem pnpm.** O Turborepo precisa de um workspace de gerenciador de pacotes.
+  Com npm, isso quer dizer `"workspaces"` no `package.json` da raiz, e o npm passa a querer **um** `package-lock.json` na
+  raiz. Isso desmancha os dois lockfiles por app, o depósito do #1034 (que tem uma chave por lockfile de app) e o
+  Dependabot por diretório.
+  - (a) npm workspaces + Turborepo, refazendo o depósito com uma chave para o lockfile da raiz;
+  - (b) só o cache nativo (PR-A), e o Turborepo fica para quando houver workspace;
+  - (c) um executor que não exija workspace.
+  - **Recomendação: (b).** O PR-A ataca a 2ª rodada do `tsc` (9,1 s) sem mexer em instalação. O ganho do Turborepo entre
+    tarefas não paga desmontar o depósito que acabou de ser provado.
 
 ## 0. Ratificação (dono, chat, 2026-11-04)
 
@@ -312,12 +329,12 @@ fixado. A diferença entre Node 22 no CI e 24 local já existe hoje e não é de
 
 | PR | Conteúdo | Depende de | Classe esperada | Reversão |
 |---|---|---|---|---|
-| PR-A | `tsc --incremental` + `tsBuildInfoFile` nos dois apps, se o F-MW-6 incluir (c) | nada | verde | `git revert` |
-| PR-0 | spike pnpm (branch descartável, **não mergeia**): os 8 comandos do item 1, com tempo e exit | F-MW-1 = (b) | — | nada a reverter |
-| PR-1 | workspace + `pnpm-lock.yaml` na raiz + `allowBuilds` + CI + Docker com contexto na raiz + Dependabot em `/` (itens 2–8) | PR-0 passou; doc do Dependabot conferida (F-MW-5) | vermelho (CI, deps) | `git revert`; os `package-lock.json` voltam com ele |
-| PR-2 | `worktree-deps.mjs`/hook chamando pnpm; skills, `CLAUDE.md` e `server/CLAUDE.md` (itens 9–10) | PR-1 | vermelho (skills) | `git revert` |
-| PR-3 | `turbo.json` + scripts `turbo run` (itens 11–12) | PR-1 (precisa de workspace) | verde ou vermelho, conforme toque `ci.yml` | `git revert`; apagar `.turbo/` |
-| PR-4 | apagar `worktree-deps.mjs` e emendar o R1 | PR-2 estável por 1 semana | vermelho (cédula) | `git revert` |
+| PR-A | `tsc --incremental` + `tsBuildInfoFile` nos dois apps (F-MW-6) — **ativo** | nada | verde | `git revert` |
+| ~~PR-0~~ (arquivado) | spike pnpm (branch descartável, **não mergeia**): os 8 comandos do item 1, com tempo e exit | F-MW-1 = (b) | — | nada a reverter |
+| ~~PR-1~~ (arquivado) | workspace + `pnpm-lock.yaml` na raiz + `allowBuilds` + CI + Docker com contexto na raiz + Dependabot em `/` (itens 2–8) | PR-0 passou; doc do Dependabot conferida (F-MW-5) | vermelho (CI, deps) | `git revert`; os `package-lock.json` voltam com ele |
+| ~~PR-2~~ (arquivado) | `worktree-deps.mjs`/hook chamando pnpm; skills, `CLAUDE.md` e `server/CLAUDE.md` (itens 9–10) | PR-1 | vermelho (skills) | `git revert` |
+| PR-3 | `turbo.json` + scripts `turbo run` (itens 11–12) — **depende do F-MW-9** | workspace (F-MW-9) | verde ou vermelho, conforme toque `ci.yml` | `git revert`; apagar `.turbo/` |
+| ~~PR-4~~ (arquivado) | apagar `worktree-deps.mjs` e emendar o R1 | PR-2 estável por 1 semana | vermelho (cédula) | `git revert` |
 | PR-5 | medição de depois (item 13), sem código | PR-3 | verde | — |
 
 **Critério de reversão do PR-1** (qualquer um reverte):
