@@ -14,7 +14,7 @@ import { isBelowCatalog, lineQuantity, type PackageCatalog, type PackageSaleIssu
 // Module-level constants
 // ─────────────────────────────────────────────────────────────
 
-const SELECTOR_CLASS = 'w-full min-w-[140px] px-3 py-2 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 text-sm text-gray-900 dark:text-white transition-all duration-200';
+const SELECTOR_CLASS = 'w-full min-w-[136px] px-3 py-2 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 text-sm text-gray-900 dark:text-white transition-all duration-200';
 
 const TH_CLASS = 'px-3 py-3 text-left text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400';
 
@@ -152,7 +152,7 @@ export function SaleItemsManager({
                                         {t('finance_view:sales.items.quantity', 'Qtd')}
                                     </th>
                                     {isService && !!employeeTargetTable && (
-                                        <th className={`${TH_CLASS} w-44`}>
+                                        <th className={`${TH_CLASS} w-40`}>
                                             {t('finance_view:sales.items.responsible', 'Responsável')}
                                         </th>
                                     )}
@@ -234,7 +234,7 @@ export function SaleItemsManager({
 
                                             {/* Responsible employee — services only */}
                                             {isService && !!employeeTargetTable && (
-                                                <td className="px-3 py-2 w-44">
+                                                <td className="px-3 py-2 w-40">
                                                     <RelationSelector
                                                         name="responsibleEmployeeId"
                                                         value={item.responsibleEmployeeId || ''}
@@ -248,7 +248,7 @@ export function SaleItemsManager({
                                             )}
 
                                             {/* Unit price */}
-                                            <td className="px-3 py-2 w-36 min-w-[7.5rem]">
+                                            <td className="px-3 py-2 w-36 min-w-[8rem]">
                                                 <CurrencyInput
                                                     value={item.unitPrice || 0}
                                                     onChange={price => onUpdateItem(item.id, { unitPrice: price })}
@@ -261,19 +261,24 @@ export function SaleItemsManager({
                                             </td>
 
                                             {/* Line total */}
-                                            <td className="px-3 py-2 w-28 text-right font-bold text-gray-900 dark:text-gray-100 tabular-nums">
-                                                {formatCurrency(lineTotal)}
+                                            <td className="px-3 py-2 w-28">
+                                                {/* Mesma altura dos campos da linha: o total fica centrado com eles, não colado no topo */}
+                                                <div className="h-[38px] flex items-center justify-end whitespace-nowrap font-bold text-gray-900 dark:text-gray-100 tabular-nums">
+                                                    {formatCurrency(lineTotal)}
+                                                </div>
                                             </td>
 
                                             {/* Remove */}
-                                            <td className="px-1 py-2 w-10 text-center">
-                                                <button
-                                                    onClick={() => onRemoveItem(item.id)}
-                                                    className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
-                                                    title={t('common:remove', 'Remover')}
-                                                >
-                                                    <HiX size={16} />
-                                                </button>
+                                            <td className="px-1 py-2 w-10">
+                                                <div className="h-[38px] flex items-center justify-center">
+                                                    <button
+                                                        onClick={() => onRemoveItem(item.id)}
+                                                        className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
+                                                        title={t('common:remove', 'Remover')}
+                                                    >
+                                                        <HiX size={16} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     );
