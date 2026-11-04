@@ -17,13 +17,14 @@ try {
   process.exit(0); // fora de um checkout git: nada a fazer
 }
 
-const faltando = ['server', 'my-app'].filter((app) => !fs.existsSync(path.join(root, app, 'node_modules')));
+// Workspace npm (PR-3 do MONOREPO-WORKSPACES): o worktree-deps liga as três pastas de uma vez, a partir do lockfile da raiz.
+const faltando = ['node_modules', 'my-app/node_modules', 'server/node_modules'].filter((p) => !fs.existsSync(path.join(root, p)));
 if (!faltando.length) process.exit(0);
 
 const log = path.join(os.tmpdir(), `luminaris-worktree-deps-${path.basename(root)}.log`);
 const fd = fs.openSync(log, 'w');
 const t0 = Date.now();
-const r = spawnSync(process.execPath, [path.join(root, 'scripts', 'worktree-deps.mjs'), ...faltando], {
+const r = spawnSync(process.execPath, [path.join(root, 'scripts', 'worktree-deps.mjs')], {
   cwd: root,
   stdio: ['ignore', fd, fd],
 });

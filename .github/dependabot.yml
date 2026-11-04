@@ -4,29 +4,22 @@ version: 2
 # Major de @types/node e da imagem node fica de fora: a versão do runtime é decisão do .nvmrc
 # (hoje 22), não do Dependabot — tipos de Node 24 num runtime 22 deixam passar API que não existe.
 updates:
+  # Workspace npm (PR-3 do MONOREPO-WORKSPACES): o lockfile é um só, na raiz, e cobre server/ e my-app/.
   - package-ecosystem: npm
-    directory: /server
+    directory: /
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
     groups:
-      server-minor-patch:
+      npm-minor-patch:
         update-types: [minor, patch]
     ignore:
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
-
-  - package-ecosystem: npm
-    directory: /my-app
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
-    groups:
-      my-app-minor-patch:
-        update-types: [minor, patch]
-    ignore:
-      - dependency-name: "@types/node"
-        update-types: ["version-update:semver-major"]
+      # turbo fixo em 2.8.21: da 2.9 em diante o binário não roda na máquina de trabalho (F-MW-10, seção 0.3 do
+      # docs/accounting/MONOREPO-WORKSPACES-brief.md). Reabrir quando a máquina mudar ou uma release nova rodar nela.
+      - dependency-name: turbo
+        versions: [">= 2.9.0"]
 
   # Mantém os SHAs fixados no ci.yml atualizados (o comentário "# vX.Y.Z" é reescrito junto).
   - package-ecosystem: github-actions

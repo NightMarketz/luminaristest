@@ -61,7 +61,10 @@ export default {
 export function runStryker(configPath, logPath) {
   return new Promise((resolve) => {
     const log = fs.createWriteStream(logPath, { flags: 'a' });
-    const bin = path.join(SERVER, 'node_modules', '@stryker-mutator', 'core', 'bin', 'stryker.js');
+    // Workspace npm: o Stryker fica içado no node_modules da raiz.
+    const bin = [SERVER, path.join(SERVER, '..')]
+      .map((d) => path.join(d, 'node_modules', '@stryker-mutator', 'core', 'bin', 'stryker.js'))
+      .find((f) => fs.existsSync(f));
     const child = spawn(process.execPath, [bin, 'run', configPath], {
       cwd: SERVER,
       stdio: ['ignore', 'pipe', 'pipe'],

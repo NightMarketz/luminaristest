@@ -41,8 +41,11 @@ function target(filePath) {
 }
 
 function cruise({ pkg, pkgDir, rel }) {
-  const bin = path.join(pkgDir, 'node_modules', 'dependency-cruiser', 'bin', 'dependency-cruise.mjs');
-  if (!existsSync(bin)) return `[arch-hook] ${pkg}: dependency-cruiser ausente (rode npm ci em ${pkg}/).`;
+  // Workspace npm: o pacote fica no node_modules do app ou, içado, no da raiz.
+  const bin = [pkgDir, ROOT]
+    .map((d) => path.join(d, 'node_modules', 'dependency-cruiser', 'bin', 'dependency-cruise.mjs'))
+    .find((f) => existsSync(f));
+  if (!bin) return `[arch-hook] ${pkg}: dependency-cruiser ausente (rode node scripts/worktree-deps.mjs na raiz).`;
   const r = spawnSync(
     process.execPath,
     [bin, rel, '--config', '.dependency-cruiser.cjs',

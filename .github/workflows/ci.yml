@@ -15,6 +15,10 @@ permissions:
 
 # Cancela a run superada só em PR. Na main, cancelar fazia duas pushes seguidas matarem a run da
 # primeira — e o commit dela ficava sem CI nenhuma. Na main a run nova espera a anterior terminar.
+# Turborepo (turbo.json, PR-3 do MONOREPO-WORKSPACES): telemetria anônima vem ligada por padrão; aqui fica desligada.
+env:
+  TURBO_TELEMETRY_DISABLED: '1'
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -83,10 +87,16 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: server/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
+        working-directory: .
         run: npm ci
+
+      # turbo fixo em 2.8.21 (F-MW-10 do MONOREPO-WORKSPACES): a 2.9+ não roda na máquina de trabalho, e CI e local
+      # usam a mesma versão.
+      - name: Turbo version (fixed 2.8.21)
+        run: test "$(npx turbo --version)" = "2.8.21"
 
       # Sem postinstall no server/ → `npm ci` NÃO gera o client. tsc contra um client stale
       # produz os 35 erros de accounting/repositories/ReconciliationRepository.ts (schema TEM
@@ -170,9 +180,10 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: server/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
+        working-directory: .
         run: npm ci
 
       - name: Generate Prisma Client
@@ -186,9 +197,9 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: server/.jest-cache
-          key: jest-${{ runner.os }}-${{ matrix.project }}-${{ matrix.shard }}-${{ hashFiles('server/package-lock.json') }}-${{ github.sha }}
+          key: jest-${{ runner.os }}-${{ matrix.project }}-${{ matrix.shard }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
           restore-keys: |
-            jest-${{ runner.os }}-${{ matrix.project }}-${{ matrix.shard }}-${{ hashFiles('server/package-lock.json') }}-
+            jest-${{ runner.os }}-${{ matrix.project }}-${{ matrix.shard }}-${{ hashFiles('package-lock.json') }}-
 
       - name: Run tests + assert no leaked handles
         shell: bash
@@ -234,8 +245,9 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: server/package-lock.json
+          cache-dependency-path: package-lock.json
       - name: Install dependencies
+        working-directory: .
         run: npm ci
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -277,7 +289,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: my-app/package-lock.json
+          cache-dependency-path: package-lock.json
 
       # Cache incremental do `next build`. Fica ANTES do `npm ci`: o hashFiles abaixo varreria o
       # node_modules inteiro se ele já existisse. Chave pelos fontes; restore-keys recupera o último
@@ -286,11 +298,12 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: my-app/.next/cache
-          key: nextjs-${{ runner.os }}-${{ hashFiles('my-app/package-lock.json') }}-${{ hashFiles('my-app/**/*.js', 'my-app/**/*.jsx', 'my-app/**/*.ts', 'my-app/**/*.tsx', 'my-app/**/*.css') }}
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('my-app/**/*.js', 'my-app/**/*.jsx', 'my-app/**/*.ts', 'my-app/**/*.tsx', 'my-app/**/*.css') }}
           restore-keys: |
-            nextjs-${{ runner.os }}-${{ hashFiles('my-app/package-lock.json') }}-
+            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
 
       - name: Install dependencies
+        working-directory: .
         run: npm ci
 
       - name: Lint (layer-gate)
@@ -360,7 +373,9 @@ jobs:
       - name: Build ${{ matrix.image }} (sem push)
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
-          context: ${{ matrix.image }}
+          # Contexto na raiz: o lockfile do workspace npm é um só (PR-3 do MONOREPO-WORKSPACES).
+          context: .
+          file: ${{ matrix.image }}/Dockerfile
           push: false
           build-args: |
             NEXT_PUBLIC_API_BASE_URL=https://api.ci.invalid
@@ -385,10 +400,9 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-          cache-dependency-path: server/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install server deps (typescript for AST assertions)
-        working-directory: server
+      - name: Install workspace deps (typescript for AST assertions)
         run: npm ci
 
       - name: skill-audit run --all (0 findings required)

@@ -7,8 +7,9 @@ services:
     # topology.md §2 decisão 4 (ratificada pelo dono): migração é etapa SEPARADA do pipeline, nunca
     # entrypoint/CMD que migra no boot — não reintroduza essa chamada aqui.
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      # Contexto na raiz: o lockfile do workspace npm é um só, na raiz (PR-3 do MONOREPO-WORKSPACES).
+      context: .
+      dockerfile: server/Dockerfile
     ports:
       - "3001:3001"
     environment:
@@ -54,8 +55,9 @@ services:
 
   frontend:
     build:
-      context: ./my-app
-      dockerfile: Dockerfile
+      # Contexto na raiz: o lockfile do workspace npm é um só, na raiz (PR-3 do MONOREPO-WORKSPACES).
+      context: .
+      dockerfile: my-app/Dockerfile
       args:
         # DUAS coisas estavam erradas aqui, e consertar só a primeira declararia vitória:
         # (1) o nome. O código lê NEXT_PUBLIC_API_BASE_URL em 19 arquivos; ninguém lê

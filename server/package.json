@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/server.ts",
     "build": "npx prisma generate && tsc && tsc-alias",
+    "typecheck": "tsc --noEmit",
     "start": "node dist/server.js",
     "postinstall": "prisma generate",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
@@ -36,7 +37,7 @@
     "test:changed": "jest --changedSince=origin/main --selectProjects unit --forceExit",
     "test:coverage": "jest --coverage --runInBand --forceExit",
     "test:watch": "jest --selectProjects unit --watch",
-    "test:leaks": "node --max-old-space-size=6144 node_modules/jest/bin/jest.js --detectOpenHandles --runInBand",
+    "test:leaks": "node --max-old-space-size=6144 ../node_modules/jest/bin/jest.js --detectOpenHandles --runInBand",
     "check:arch": "depcruise src --config .dependency-cruiser.cjs --ignore-known .dependency-cruiser-known-violations.json --output-type err",
     "check:arch:baseline": "depcruise src --config .dependency-cruiser.cjs --output-type baseline --output-to .dependency-cruiser-known-violations.json",
     "check:dead": "knip --no-exit-code",
@@ -114,12 +115,5 @@
   },
   "engines": {
     "node": ">=22"
-  },
-  "allowScripts": {
-    "prisma@6.16.2": true,
-    "@prisma/client@6.16.2": true,
-    "@prisma/engines@6.16.2": true,
-    "@swc/core@1.16.2": true,
-    "unrs-resolver@1.11.1": true
   }
 }

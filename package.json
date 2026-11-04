@@ -1,0 +1,27 @@
+{
+  "name": "luminaris-monorepo",
+  "private": true,
+  "workspaces": [
+    "server",
+    "my-app"
+  ],
+  "packageManager": "npm@11.19.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "turbo": "2.8.21"
+  },
+  "allowScripts": {
+    "prisma@6.16.2": true,
+    "@prisma/client@6.16.2": true,
+    "@prisma/engines@6.16.2": true,
+    "@swc/core@1.16.2": true,
+    "unrs-resolver@1.11.1": true,
+    "esbuild@0.27.7": true,
+    "sharp@0.34.4": true
+  }
+}

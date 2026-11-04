@@ -40,6 +40,21 @@ atualizado: "2026-11-04"
 - Para remover worktree: `git worktree remove`, nunca `rm -rf` (pode seguir a junção). Apagar o depósito é seguro: ele
   se refaz na próxima chamada.
 
+#### Emenda 2026-11-04 — R1 no workspace npm (PR-3 do MONOREPO-WORKSPACES)
+
+Autorização: dono, chat, 2026-11-04: "Executa o PR-3" (`docs/accounting/MONOREPO-WORKSPACES-brief.md`, item 17).
+
+- O repo virou workspace npm: um `package-lock.json` só, na raiz. A entrada do depósito passa a ser uma por lockfile da
+  raiz, `~/.luminaris-deps/ws-<sha1>` (lockfile, os três `package.json` e o comando), e a worktree ganha três junções:
+  `node_modules`, `my-app/node_modules` e `server/node_modules` (esta vazia, porque o npm iça o server inteiro para a raiz).
+  As entradas `<app>-<sha1>` de antes ficam órfãs no depósito e podem ser apagadas.
+- O `allowScripts` do npm 11 mora no `package.json` da raiz: no `package.json` de um app ele é ignorado.
+- **Não rode `npm ci` na worktree com as junções no lugar:** ele segue a junção e apaga o conteúdo da entrada do depósito,
+  que as outras worktrees usam (testado em 04/11 num workspace de rascunho: o arquivo-marcador dentro do depósito sumiu).
+  Lockfile novo entra pelo script, que instala a entrada nova.
+- O `worktree-deps.mjs` aceita e ignora os argumentos `server`/`my-app` de antes: o workspace instala inteiro. O hook
+  `session-start-deps.mjs` passa a olhar as três pastas e chama o script sem argumento.
+
 ### R2 — Teste só do que está sendo mexido
 
 - **Unit:** o teste-guarda e os testes dos arquivos tocados, por caminho — `npx jest <caminho> --selectProjects unit`
