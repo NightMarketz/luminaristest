@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PERIODOS_TRIMESTRAIS } from '../models/taxAssessmentCalc';
+import { PERIODOS_TRIMESTRAIS, RETENTORES } from '../models/taxAssessmentCalc';
 import { LALUR_MESES } from '../models/Lalur.model';
 import { PERIODOS_PIS_COFINS } from '../models/pisCofinsCalc';
 
@@ -25,9 +25,12 @@ export const TaxAssessmentDeducaoSchema = z
     tipo: z.enum(['IRRF', 'CSLL_RETIDA', 'OUTRA']),
     valorCents: Cents,
     documento: z.string().max(120).optional(),
+    retentor: z.enum(RETENTORES).optional(), // F-C8-R1 (a): quem reteve escolhe a linha da ECF
   })
   .strict()
   .refine((d) => d.tipo !== 'OUTRA' || !!d.documento, { message: 'OUTRA exige documento' })
+  .refine((d) => d.tipo !== 'CSLL_RETIDA' || !!d.retentor, { message: 'CSLL_RETIDA exige retentor' })
+  .refine((d) => d.tipo !== 'OUTRA' || !d.retentor, { message: 'retentor só em IRRF ou CSLL_RETIDA' })
   .refine((d) => (d.tipo === 'IRRF') === (d.tributo === 'IRPJ') || d.tipo === 'OUTRA', { message: 'IRRF↔IRPJ, CSLL_RETIDA↔CSLL' });
 
 /** @openapi
@@ -63,6 +66,7 @@ export const TaxAssessmentDeducaoSchema = z
  *               tipo:       { type: string, enum: [IRRF, CSLL_RETIDA, OUTRA], description: "IRRF só no IRPJ, CSLL_RETIDA só na CSLL; OUTRA exige documento" }
  *               valorCents: { type: string, pattern: "^[0-9]+$" }
  *               documento:  { type: string, maxLength: 120 }
+ *               retentor:   { type: string, enum: [ORGAO_FEDERAL, ENTIDADE_ADM_FEDERAL, PJ_PRIVADA, ORGAO_ESTADUAL_MUNICIPAL], description: "Quem reteve: obrigatório na CSLL_RETIDA, opcional no IRRF (ausente = linha genérica da ECF), proibido na OUTRA" }
  *     TaxAssessmentConfirmInput:
  *       allOf:
  *         - $ref: '#/components/schemas/TaxAssessmentPreviewInput'

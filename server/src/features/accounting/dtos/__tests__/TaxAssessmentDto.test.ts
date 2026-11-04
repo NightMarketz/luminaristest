@@ -16,7 +16,12 @@ describe('TaxAssessmentDto', () => {
     expect(d({ tributo: 'IRPJ', tipo: 'IRRF', valorCents: '100' })).toBe(true);
     expect(d({ tributo: 'CSLL', tipo: 'IRRF', valorCents: '100' })).toBe(false);
     expect(d({ tributo: 'IRPJ', tipo: 'CSLL_RETIDA', valorCents: '100' })).toBe(false);
-    expect(d({ tributo: 'CSLL', tipo: 'CSLL_RETIDA', valorCents: '100' })).toBe(true);
+    // F-C8-R1 (a), dono, chat, 03/11: a CSLL retida diz quem reteve; o IRRF pode dizer; a OUTRA não.
+    expect(d({ tributo: 'CSLL', tipo: 'CSLL_RETIDA', valorCents: '100' })).toBe(false);
+    expect(d({ tributo: 'CSLL', tipo: 'CSLL_RETIDA', valorCents: '100', retentor: 'PJ_PRIVADA' })).toBe(true);
+    expect(d({ tributo: 'IRPJ', tipo: 'IRRF', valorCents: '100', retentor: 'ORGAO_FEDERAL' })).toBe(true);
+    expect(d({ tributo: 'IRPJ', tipo: 'IRRF', valorCents: '100', retentor: 'OUTRO' })).toBe(false);
+    expect(d({ tributo: 'CSLL', tipo: 'OUTRA', valorCents: '100', documento: 'DARF 123', retentor: 'PJ_PRIVADA' })).toBe(false);
     expect(d({ tributo: 'CSLL', tipo: 'OUTRA', valorCents: '100' })).toBe(false);
     expect(d({ tributo: 'CSLL', tipo: 'OUTRA', valorCents: '100', documento: 'DARF 123' })).toBe(true);
     expect(d({ tributo: 'IRPJ', tipo: 'IRRF', valorCents: '-1' })).toBe(false);

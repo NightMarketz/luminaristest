@@ -6,7 +6,7 @@
  * mesmo oráculo das fórmulas da tabela dinâmica.
  */
 import { ECF_L12_CATALOG, type EcfAbaLinhas } from '../Lalur.model';
-import { apurarPresumidoTrimestral, linha, type PerfilApuracaoPresumido, type ResultadoApuracao } from '../taxAssessmentCalc';
+import { apurarPresumidoTrimestral, linha, somarDeducoes, type DeducaoInformada, type MemoriaLinha, type ModoApuracao, type PerfilApuracaoPresumido, type ResultadoApuracao } from '../taxAssessmentCalc';
 import { linhaEcfDoPasso, linhaEcfDoResumo, linhasEcfDaTabela, type ApuracaoRef } from '../taxAssessmentEcfLinhas';
 import { tabelaApuracaoSemente } from '@test/helpers/legalParams';
 import { confrontarMemoriaComEcf, oraculoEcfPresumidoT01 } from '@test/helpers/ecfPresumidoOraculo';
@@ -20,6 +20,38 @@ const ref = (over: Partial<ApuracaoRef> = {}): ApuracaoRef => ({ anoCalendario: 
 const passo = (codigo: string, descricao = codigo) => linha(codigo, descricao, 0n, 'teste');
 
 describe('C8 — tabela memória de cálculo → linha da ECF', () => {
+  // Achado 3 do #1021 (F-C8-R1 a, dono, chat, 03/11: "Sim, opção (a)"): a dedução retida leva o retentor, e a linha da ECF
+  // depende dele (tabela dinâmica L12, abas P300/P500/N620/N630A/N660/N670). IRRF sem retentor = linha genérica.
+  it('dedução retida com retentor: cada (tipo, retentor) cai na linha da ECF do retentor, por modo', () => {
+    const casos: [ModoApuracao, 'IRPJ' | 'CSLL', string, string | undefined, string][] = [
+      ['PRESUMIDO', 'IRPJ', 'IRRF', undefined, 'P300:10'],
+      ['PRESUMIDO', 'IRPJ', 'IRRF', 'ORGAO_FEDERAL', 'P300:12'],
+      ['PRESUMIDO', 'IRPJ', 'IRRF', 'ENTIDADE_ADM_FEDERAL', 'P300:13'],
+      ['PRESUMIDO', 'IRPJ', 'IRRF', 'PJ_PRIVADA', 'P300:10'],
+      ['PRESUMIDO', 'IRPJ', 'IRRF', 'ORGAO_ESTADUAL_MUNICIPAL', 'P300:10'],
+      ['PRESUMIDO', 'CSLL', 'CSLL_RETIDA', 'ORGAO_FEDERAL', 'P500:9'],
+      ['PRESUMIDO', 'CSLL', 'CSLL_RETIDA', 'ENTIDADE_ADM_FEDERAL', 'P500:10'],
+      ['PRESUMIDO', 'CSLL', 'CSLL_RETIDA', 'PJ_PRIVADA', 'P500:11'],
+      ['PRESUMIDO', 'CSLL', 'CSLL_RETIDA', 'ORGAO_ESTADUAL_MUNICIPAL', 'P500:12'],
+      ['REAL_TRIMESTRAL', 'IRPJ', 'IRRF', 'ORGAO_FEDERAL', 'N630:21'],
+      ['AJUSTE_ANUAL', 'IRPJ', 'IRRF', 'ENTIDADE_ADM_FEDERAL', 'N630:22'],
+      ['REAL_TRIMESTRAL', 'CSLL', 'CSLL_RETIDA', 'PJ_PRIVADA', 'N670:17'],
+      ['AJUSTE_ANUAL', 'CSLL', 'CSLL_RETIDA', 'ORGAO_ESTADUAL_MUNICIPAL', 'N670:18'],
+      ['ESTIMATIVA_RECEITA', 'IRPJ', 'IRRF', 'ORGAO_FEDERAL', 'N620:23'],
+      ['BALANCETE_SUSPENSAO_REDUCAO', 'IRPJ', 'IRRF', 'ENTIDADE_ADM_FEDERAL', 'N620:24'],
+      ['ESTIMATIVA_RECEITA', 'CSLL', 'CSLL_RETIDA', 'ORGAO_FEDERAL', 'N660:14'],
+      ['BALANCETE_SUSPENSAO_REDUCAO', 'CSLL', 'CSLL_RETIDA', 'PJ_PRIVADA', 'N660:16'],
+    ];
+    for (const [modo, tributo, tipo, retentor, esperado] of casos) {
+      const deducao = { tributo, tipo, valorCents: '100', documento: 'NF 7', ...(retentor ? { retentor } : {}) };
+      const memoria: MemoriaLinha[] = [];
+      somarDeducoes(tributo, [deducao as DeducaoInformada], memoria);
+      const periodo = modo === 'PRESUMIDO' || modo === 'REAL_TRIMESTRAL' ? 'T01' : modo === 'AJUSTE_ANUAL' ? 'A00' : 'A01';
+      const l = linhaEcfDoPasso(ref({ modo, tributo, periodo }), memoria[0], memoria);
+      expect([modo, tipo, retentor ?? '—', l ? `${l.registro}:${l.linha}` : null]).toEqual([modo, tipo, retentor ?? '—', esperado]);
+    }
+  });
+
   it('as linhas do Real (N620/N630/N660/N670) existem na aba da tabela dinâmica, não são rótulo e têm o DT_INI/DT_FIM da aba', () => {
     const ABA: Record<string, EcfAbaLinhas> = { N620: 'N620', N630: 'N630A', N660: 'N660', N670: 'N670' };
     const reais = linhasEcfDaTabela().filter((l) => l.def.registro.startsWith('N'));
