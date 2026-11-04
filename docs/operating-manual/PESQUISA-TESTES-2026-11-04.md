@@ -165,7 +165,10 @@ manuais e estavam travando um monte de tarefas, sendo que na realidade eles eram
 **Divisão de trabalho combinada:** o inventário por runbook e por área (o que tem teste correto e o que não tem,
 incluindo o DP) é da sessão DFE-MANUAL, em `docs/operating-manual/INVENTARIO-TESTES-RUNBOOKS-2026-11-04.md`
 (PR draft NightMarketz/luminaristest#1065). Pela tabela dele: 19 runbooks de produto, dos quais 4 podem ser
-aposentados depois de seed + testes, 9 encolhem para minutos de oráculo externo e 6 ficam humanos ou operacionais. Esta pesquisa fica com o
+aposentados depois de seed + testes, 9 encolhem para minutos de oráculo externo e 6 ficam humanos ou operacionais.
+14 dos 19 precisam de seed de cenário, e 2 desses seeds já existem (multi-exercício do H1, `seed-clinic-tenant.mjs`
+do H3). **Decisão do dono (chat, 04/11):** seed em banco descartável, com piloto no DFE-MANUAL; primeiro o BRIEF,
+a cargo da sessão DFE-MANUAL. Esta pesquisa fica com o
 método de cada etapa. Cada documento cita o outro. As quatro repetições de §7 (ATIVACAO, IMOBILIZADO, I1B,
 PACOTE-VALIDADE) serão reconferidas linha a linha lá.
 
