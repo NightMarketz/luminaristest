@@ -229,6 +229,56 @@ de editar arquivo de outra worktree (era preciso mudar o `jest.config.js` do spi
 - O binário exige uma capacidade de CPU que este processador não tem. Nenhum comando do spike chegou a rodar.
 - Consequência: o pnpm 12 também fica fora para qualquer colaborador com CPU parecida. Só o pnpm 11 (JS) roda aqui.
 
+## 0.4 Resultado do spike de npm workspaces + turbo 2.8.21 (04/11/2026; dono, chat: "Executa o spike")
+
+Rodado **nesta worktree** (`gifted-shaw-ddc107`, por causa do hook que proíbe escrever em outra), numa branch local
+descartável a partir da `main` (`23d3eee1`), com Node 24.20 e npm 11.19. Nada foi versionado, e a worktree voltou ao estado
+anterior.
+
+| # | Passo | Resultado |
+|---|---|---|
+| 15a | `npm install --package-lock-only` na raiz, com `"workspaces": ["server","my-app"]` | exit 0 em 31 s, mas **re-resolve**: server com 5 diretos e 59 transitivos diferentes (ex.: `openai` 7.43.0→7.50.0, `typescript` 5.9.2→5.9.3); my-app com 14 diretos e 300 transitivos |
+| 15b | **Mescla dos dois `package-lock.json`** no lockfile da raiz (script do spike: o server fica na raiz; do my-app, o que for igual em versão e integridade é compartilhado e o resto vai para `my-app/node_modules`) | **server 875/875 e my-app 866/866 pacotes de topo iguais aos de hoje**; 263 compartilhados e 603 realocados |
+| 1 | `npm ci` na raiz com o lockfile mesclado | exit 0 em 40 s, 1.534 pacotes, **sem `--legacy-peer-deps`** (o "Missing: openapi-types" do #949 não aparece) |
+| 3 | `npx prisma generate` | exit 0, 2,8 s |
+| 4a | `npx tsc --noEmit` (server) | exit 0, 0 erros, 11,5 s |
+| 4b | `npx tsc --noEmit` e `npm run test:types` (my-app) | exit 0 e exit 0, 0 erros (as dependências fantasmas resolvem pelo hoisting; o #1045 as declara de vez) |
+| 5a | jest unit `PostingService.test.ts` | 92 passed, exit 0 |
+| 5b | jest integração `auth.routes.integration.test.ts` | 5 passed, exit 0 (27 s, com o banco-modelo frio). O `transformIgnorePatterns` atual funciona: o npm não usa o caminho `.pnpm` |
+| 6 | vitest `__tests__/users/fixAuthContaLote4.test.tsx` | 3 passed, exit 0 |
+| 7 | `npx next build` | exit 0 em 37 s |
+| 8 | Stryker `--dryRunOnly`, com escopo de 1 arquivo e 1 teste | **o dry-run passou** (92 testes) **e o processo não saiu**: ficou vivo mais de 9 min com 2 filhos e deixou o `PostingService.ts` instrumentado (modo `inPlace`). Restaurado com `git checkout`, e a árvore do processo encerrada. **Não se sabe** se o travamento vem do workspace ou também acontece na `main`: falta a mesma rodada de controle |
+| 19 | `turbo run typecheck` (turbo 2.8.21, dois apps) | 1ª: 2 tarefas executadas, 11,0 s; **2ª, sem mudança: 2/2 do cache, 1,3 s** ("FULL TURBO"); com um arquivo do server mudado: server com cache miss e my-app com cache hit |
+| 17 | Depósito rechaveado e reuso numa 2ª worktree | **não medido**: exige mudar o `worktree-deps.mjs` e outra worktree, e o hook bloqueia escrever fora desta |
+
+**O que o turbo exige e o BRIEF ainda não tinha:**
+- campo `packageManager` no `package.json` da raiz (`Could not resolve workspaces. Missing packageManager field`);
+- **telemetria anônima ligada por padrão**: desligar no repositório (variável `TURBO_TELEMETRY_DISABLED=1` no CI e no
+  ambiente das sessões, ou `turbo telemetry disable`). No spike, desligada pela variável;
+- um script `typecheck` em cada app (hoje não existe; no spike, entrou temporariamente com `npm pkg set`).
+
+**Leitura:**
+- O caminho npm workspaces + turbo 2.8.21 **funciona em tudo o que rodou**, desde que o lockfile da raiz seja **mesclado**,
+  e não gerado, se o objetivo é não subir versão.
+- O cache de tarefa entrega o prometido: a 2ª rodada do `typecheck` cai de 11,0 s para 1,3 s.
+- Em aberto:
+  - o travamento do Stryker na saída;
+  - o reuso do depósito rechaveado (item 17);
+  - o `allowScripts` do npm 11 no workspace: o `npm install` avisou que `sharp`, `esbuild` e `core-js` têm script não
+    aprovado, e falta saber se a lista passa dos `package.json` dos apps para o da raiz.
+
+**F-MW-11 — RATIFICADO: como nasce o lockfile da raiz no PR-3?**
+- (a) Mesclado pelo script do spike, sem subir nenhuma versão.
+- (b) Gerado pelo npm (`npm install --package-lock-only`), aceitando os bumps de uma vez (19 diretos e 359 transitivos), com
+  o CI inteiro como prova.
+- **Recomendação: (a).** O PR-3 fica só estrutural, e os bumps continuam vindo pelo Dependabot, um grupo por vez. O script
+  de mescla entra no PR como ferramenta de uso único e sai depois.
+- **→ Ratificado: (a), mesclado** (dono, chat, 2026-11-04: "Mesclado"). O PR-3 gera o `package-lock.json` da raiz pela
+  mescla. A prova é o comparador do spike: 875/875 e 866/866 iguais aos lockfiles de hoje, mais `npm ci` exit 0. O PR-3
+  também traz `packageManager` na raiz, a telemetria do turbo desligada e o script `typecheck` nos dois apps. Ele ainda
+  depende de um `executa` e deixa em aberto o Stryker na saída, o reuso do depósito rechaveado e o `allowScripts` no
+  workspace.
+
 ## 1. Checklist de comportamentos (cada um testável sozinho)
 
 Só entram os que valem **qualquer que seja** o fork. Os que dependem de fork estão marcados com `[F-MW-n]`.
