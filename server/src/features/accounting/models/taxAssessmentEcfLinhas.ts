@@ -15,7 +15,7 @@ import { periodoBounds, type LalurPeriodo } from './Lalur.model';
  *
  * Fora da tabela, de propósito (vazios): os passos do e-Lalur/e-Lacs (`LAIR`, `ADICOES`, `EXCLUSOES`, `LUCRO_AJUSTADO`,
  * `COMPENSACAO*` — registros M300/M350, fora dos registros da decisão §9); `GUARDA_CIRCULARIDADE`, `MESES_PERIODO`,
- * vencimentos e avisos; `RECEITA_HOSPITALAR` sem `RECEITA_SERVICO_COMUM` (memória anterior ao #1024); a dedução
+ * vencimentos e avisos; com hospitalar, a `RECEITA_SERVICO`/`RECEITA_NAO_USO` (a P200 8 é a `RECEITA_SERVICO_COMUM`); a dedução
  * `CSLL_RETIDA` (P500 9/10/11/12 dependem de quem reteve — o tipo não diz); as parcelas `DIFERENCA_POSTERGADA_<período>`
  * (o total vai em `DIFERENCA_POSTERGADA`); `SALDO_NEGATIVO` (a linha "a pagar" da ECF é com sinal, a memória separa).
  */
@@ -199,10 +199,11 @@ export function linhaEcfDoPasso(r: ApuracaoRef, passo: MemoriaLinha, memoria: re
   const com16 = r.tributo === 'IRPJ' && memoria.some((m) => m.codigo === 'PRESUNCAO_REDUZIDA_16');
   if (passo.codigo === 'LC224_ACRESCIMO_SERVICO' && com16) return vigente(L('P200', '25230', LC224_IRPJ), r);
   if ((passo.codigo === 'RECEITA_SERVICO' || passo.codigo === 'RECEITA_NAO_USO') && com16) return vigente(L('P200', '6'), r);
-  // Com hospitalar, a P200 8 / P400 4 é a `RECEITA_SERVICO_COMUM` e a hospitalar vai com a revenda (8 %/12 %).
-  const comHospitalar = memoria.some((m) => m.codigo === RECEITA_SERVICO_COMUM);
+  // Com hospitalar, a P200 8 / P400 4 é a `RECEITA_SERVICO_COMUM` e a hospitalar vai com a revenda (8 %/12 %). Memória
+  // anterior ao #1024 (hospitalar sem a comum): a P200 8 fica vazia — a 3.1 inteira ali seria número errado.
+  const comHospitalar = memoria.some((m) => m.codigo === 'RECEITA_HOSPITALAR');
   if ((passo.codigo === 'RECEITA_SERVICO' || passo.codigo === 'RECEITA_NAO_USO') && comHospitalar) return null;
-  if (passo.codigo === 'RECEITA_HOSPITALAR') return comHospitalar ? vigente(t.RECEITA_REVENDA, r) : null;
+  if (passo.codigo === 'RECEITA_HOSPITALAR') return vigente(t.RECEITA_REVENDA, r);
   return vigente(t[passo.codigo], r);
 }
 

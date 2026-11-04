@@ -45,6 +45,15 @@ describe('C8 — tabela memória de cálculo → linha da ECF', () => {
     expect(linhaEcfDoPasso(ref(), passo('DEDUCAO_1', 'IRRF — NF 12'), [])).toEqual({ registro: 'P300', linha: '10' });
     expect(linhaEcfDoPasso(ref({ tributo: 'CSLL' }), passo('DEDUCAO_1', 'CSLL_RETIDA'), [])).toBeNull();
     expect(linhaEcfDoPasso(ref(), passo('DEDUCAO_2', 'OUTRA'), [])).toBeNull();
+    // Hospitalar: a P200 8 é a comum; memória anterior ao #1024 (sem a comum) deixa a P200 8 vazia, nunca a 3.1 inteira.
+    const hospNova = [passo('RECEITA_SERVICO'), passo('RECEITA_HOSPITALAR'), passo('RECEITA_SERVICO_COMUM')];
+    const hospAntiga = [passo('RECEITA_SERVICO'), passo('RECEITA_HOSPITALAR')];
+    expect(linhaEcfDoPasso(ref(), passo('RECEITA_SERVICO_COMUM'), hospNova)).toEqual({ registro: 'P200', linha: '8' });
+    expect(linhaEcfDoPasso(ref({ tributo: 'CSLL', periodo: 'T02' }), passo('RECEITA_HOSPITALAR'), hospNova)).toEqual({ registro: 'P400', linha: '2' });
+    for (const m of [hospNova, hospAntiga]) {
+      expect(linhaEcfDoPasso(ref(), passo('RECEITA_SERVICO'), m)).toBeNull();
+      expect(linhaEcfDoPasso(ref(), passo('RECEITA_HOSPITALAR'), m)).toEqual({ registro: 'P200', linha: '4' });
+    }
     const com16 = [passo('PRESUNCAO_REDUZIDA_16')];
     expect(linhaEcfDoPasso(ref(), passo('LC224_ACRESCIMO_SERVICO'), com16)).toEqual({ registro: 'P200', linha: '25230' });
     expect(linhaEcfDoPasso(ref(), passo('LC224_ACRESCIMO_SERVICO'), [])).toEqual({ registro: 'P200', linha: '25240' });
