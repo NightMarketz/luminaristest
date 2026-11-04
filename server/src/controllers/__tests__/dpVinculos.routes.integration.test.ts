@@ -51,11 +51,12 @@ describe('/api/dp trabalhador, vínculo e versões (item 46)', () => {
     const corpo = { unitId: UNIT, cpf: CPF, nome: 'Ana', nascimento: '1990-03-10' };
     expect((await request(app).post('/api/dp/trabalhadores').set(auth).send({ ...corpo, cpf: '52998224724' })).status).toBe(400);
     expect((await request(app).post('/api/dp/trabalhadores').set(auth).send({ ...corpo, unitId: UNIT_OUTRO })).status).toBe(404);
-    // Linha de `employees` de OUTRO dono ⇒ 400 com o reason (guarda cross-tenant da porta).
+    // Linha de `employees` de OUTRO dono ⇒ 400 com o reason (guarda cross-tenant da porta). A tabela do dono existe ANTES,
+    // para o 400 sair do `row.dynamicTableId === table.id`, e não do "dono sem tabela" (achado 1 do revisor do #1032).
+    const linha = await employeesRow(dono.id);
     const alheia = await employeesRow(outro.id);
     const r400 = await request(app).post('/api/dp/trabalhadores').set(auth).send({ ...corpo, employeeRef: alheia });
     expect([r400.status, r400.body.code]).toEqual([400, 'DP_EMPLOYEE_REF_INVALIDO']);
-    const linha = await employeesRow(dono.id);
     const t = await request(app).post('/api/dp/trabalhadores').set(auth).send({ ...corpo, employeeRef: linha });
     expect([t.status, t.body.success, t.body.data.pessoaOperacionalRemovida]).toEqual([201, true, false]);
     const id = t.body.data.id;

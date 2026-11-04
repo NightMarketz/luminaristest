@@ -88,7 +88,7 @@ sessão nova continua com a skill `sessao-feature`.
 | #1015 | `claude/dp-f0-f1-pr1` (base `claude/dp-f0-f1-pr0-421c43`) | 8–19 | vermelha (prisma, contábil) | verde (17/17) | PASSOU (03/11, revisor despachado pela sessão 3b: gates 0, sabotagem do gate de sobreposição pega; 3 latentes abaixo) |
 | #1016 | `claude/dp-f0-f1-pr2-d614b0` (base `claude/dp-f0-f1-pr1`) | 20–27 | vermelha (migração, parâmetro legal) | verde (17/17) | PASSOU (03/11: gates 0; 3 sabotagens — valor da FAIXA_2, vigência do INSS, filtro de data do leitor — pegas; a do filtro só pela integração) |
 | #1026 | `claude/dp-f0-f1-pr3` (base `claude/dp-f0-f1-pr2-d614b0`) | 28–36 | vermelha (migração, contábil) | verde em 058c28fd (17/17, 03/11); head rebaseado 74e8105e em 04/11, CI de novo | PASSOU (03/11: gates 0; sabotagens de código duplicado, `TP_JORNADA`, Tier-0 do discriminador e PII na auditoria pegas; `tx`→cliente global NÃO pego — lacuna de teste, sem defeito) |
-| #1032 | `claude/dp-f0-f1-pr4` (base `claude/dp-f0-f1-pr3`) | 37–49 + D-5 do item 30 | vermelha (migração, contábil) | gates locais verdes; CI em curso em 04/11 — conferir com `gh pr checks 1032` | ver o corpo do #1032 e a linha abaixo |
+| #1032 | `claude/dp-f0-f1-pr4` (base `claude/dp-f0-f1-pr3`) | 37–49 + D-5 do item 30 | vermelha (migração, contábil) | gates locais verdes; CI do 8f762a3d vermelho (inventário do rekey: `DpVinculo` tem `unitId`; corrigido no 223da9fa), CI do head novo em curso em 04/11 — conferir com `gh pr checks 1032` | PASSOU (04/11, em 223da9fa: gates 0; 5 sabotagens — fechamento da véspera, PII na allowlist, D-5, guarda cross-tenant do `EmployeeRowLookup`, prazo do aprendiz — pegas, salvo a guarda cross-tenant, que o teste de rota não exercitava; o teste foi corrigido e passou a pegar) |
 
 **Latentes do revisor do #1015 (não bloqueiam; só aparecem com registro de teste, porque hoje todo opcional é
 `disponivel: false` com `dependsOn: []` — decidir antes de ligar o primeiro opcional com dependência):** (1) `activate`
@@ -104,7 +104,11 @@ piso passam (spec não trata).
 
 **Rebase de 04/11 (merge do #1009):** `rebase --onto origin/main` em cada degrau, com `--force-with-lease`. O driver `merge=regen` do `.gitattributes` mantém um lado sem avisar e tinha apagado o lado da pilha no `server/public/openapi.json` e no `__dto-shapes__.json` de `accounting`. A cascata foi refeita com `git -c merge.regen.driver="git merge-file -L ours -L base -L theirs %A %O %B" rebase --onto`, e o diff de cada degrau nos arquivos gerados foi conferido por script contra o de antes. **Num próximo rebase de pilha, use esse `-c`.**
 
-**Lacunas de spec do PR-4 (registradas no corpo do #1032, sem bloquear):** aniversário em 29/02; `PATCH` do trabalhador emite `updated` + `corrected`; unidade 7 com salário > 0; categoria do núcleo sem linha vigente na Tabela 01 dá 400 sem `reason`.
+**Achados do revisor do #1032 que ficam para o dono (não bloqueiam o merge):**
+1. *Hash reversível* (defeito do item 45 / F-DPB-3, não da execução): o `hashCampos` é SHA-256 sem sal, como o BRIEF manda. Para um campo só (`salarioCents`, `nascimento`, `cpf`), o valor sai por força bruta (o revisor recuperou o salário em 288 ms e o nascimento em 57 ms). Isso esvazia o "sem os valores" do §3.7. Saída sugerida pelo revisor: HMAC com segredo do servidor. **Fork novo, a perguntar ao dono.**
+2. O `PATCH` do trabalhador não revalida os vínculos que já existem. Trocar `nascimento` ou `pcd` pode tirar um aprendiz do item 41; trocar o `cpf` ou zerar o `partnerId` pode deixar um 723 sem o sócio. A spec só fala da criação; vira pergunta ao dono.
+
+**Lacunas de spec do PR-4 (registradas no corpo do #1032, sem bloquear; o revisor concordou com as 4):** aniversário em 29/02; `PATCH` do trabalhador emite `updated` + `corrected`; unidade 7 com salário > 0; categoria do núcleo sem linha vigente na Tabela 01 dá 400 sem `reason`.
 
 **Pendente:** PR-5 (50–55) e PR-6 (56–62), cada um empilhado no anterior, com o fold
 aqui no próprio PR e o revisor-independente em cada um (D-2026-10-28, PR vermelho).
