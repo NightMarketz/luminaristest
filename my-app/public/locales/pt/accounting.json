@@ -475,7 +475,13 @@
       "ecfSignerCount": "A ECF aceita 1 ou 2 signatários.",
       "ecfContador": "A ECF exige um signatário contador (qualificação 900) e um não-contador.",
       "ecfContadorCrc": "O signatário contador (900) exige CPF de 11 dígitos e CRC.",
-      "ecdContadorCrc": "O signatário contador (900) exige CPF de 11 dígitos, CRC, UF do CRC, e-mail e fone."
+      "ecdContadorCrc": "O signatário contador (900) exige CPF de 11 dígitos, CRC, UF do CRC, e-mail e fone.",
+      "ECF_Y600_COMPLEMENTO_FALTANDO": "O cadastro de sócios mudou: há sócio do ano sem complemento. A lista foi recarregada — complete a linha nova e gere de novo.",
+      "ECF_Y600_PARTNER_FORA_DO_ANO": "O cadastro de sócios mudou: um sócio da lista não tem mais vigência no ano. A lista foi recarregada — gere de novo.",
+      "ECF_Y600_PAIS_INCOERENTE": "O país informado não bate com a residência do sócio no cadastro (residente sai com 105; não residente exige o país).",
+      "ECF_Y600_QUALIF_INCOERENTE": "A qualificação de um sócio ou do representante legal não vale para esse caso no Manual da ECF (p. 574).",
+      "ECF_Y600_SEM_SOCIOS": "A ECF exige ao menos um sócio, titular ou dirigente no Y600.",
+      "ECF_Y600_LIMITE": "O Y600 passou do número de linhas que a ECF aceita."
     },
     "qualif": {
       "contadorCadastro": "Contador do cadastro (opcional)",
@@ -494,6 +500,88 @@
       "8": "Entidades Fechadas de Previdência Complementar",
       "9": "Partidos Políticos",
       "10": "Financeiras - Lucro Presumido"
+    },
+    "y600": {
+      "title": "Sócios, titular e dirigentes (Y600)",
+      "help": "Os sócios vêm do cadastro; complete a qualificação e os 5 valores do ano (campos 13 a 17 do Y600). Valor vazio não vira zero: digite 0,00.",
+      "carregando": "Carregando os sócios do ano…",
+      "erroCarga": "Erro ao carregar os sócios do ano.",
+      "tentarDeNovo": "Tentar de novo",
+      "semVigencias": "Nenhum sócio com vigência em {{year}}. Cadastre os sócios ou informe ao menos um dirigente.",
+      "somaFim": "Soma das participações vigentes em 31/12: {{soma}} (informativo, não bloqueia).",
+      "dirigentes": "Dirigentes e conselheiros não sócios",
+      "dirAdicionar": "Incluir dirigente",
+      "dirRemover": "Excluir dirigente",
+      "dirNome": "Nome",
+      "dirCpf": "CPF",
+      "dtAltSoc": "Início (DT_ALT_SOC)",
+      "dtFimSoc": "Fim no ano (DT_FIM_SOC, opcional)",
+      "qualif": "Qualificação (QUALIF)",
+      "selecione": "— selecione —",
+      "pais": "País (tabela do Sped, 3 dígitos)",
+      "percVot": "Capital votante % (opcional)",
+      "repCpf": "CPF do representante legal (opcional)",
+      "repQualif": "Qualif. do representante",
+      "residente": "residente",
+      "naoResidente": "não residente",
+      "participacao": "Participação",
+      "semSaida": "sem saída",
+      "naoCarregado": "Os sócios do ano ainda não carregaram — aguarde ou tente de novo.",
+      "invalido": "Y600 incompleto.",
+      "valor": {
+        "remTrab": "Remuneração do trabalho (VL_REM_TRAB)",
+        "lucDiv": "Lucros/dividendos (VL_LUC_DIV)",
+        "jurCap": "Juros s/ capital próprio (VL_JUR_CAP)",
+        "demRend": "Demais rendimentos (VL_DEM_REND)",
+        "irRet": "IR retido na fonte (VL_IR_RET)"
+      },
+      "semOcorrencia": "A ECF exige ao menos um sócio, titular ou dirigente no Y600: cadastre os sócios ou adicione um dirigente.",
+      "qualifObrigatoria": "Escolha a qualificação (QUALIF) de cada sócio e dirigente.",
+      "qualifIncoerente": "Qualificação fora da tabela para esse caso (residência × PF/PJ) — escolha uma das opções da lista.",
+      "valorObrigatorio": "Preencha os 5 valores do Y600 de cada sócio e dirigente (zero se não houve: 0,00).",
+      "valorInvalido": "Valor em R$ inválido no Y600 — use o formato 1.234,56.",
+      "paisObrigatorio": "Informe o país (código do Sped, 3 dígitos) do sócio não residente.",
+      "paisInvalido": "País inválido: 3 dígitos da tabela do Sped, diferente de 105 (Brasil).",
+      "representanteIncompleto": "Representante legal: informe o CPF e a qualificação juntos, ou deixe os dois em branco.",
+      "cpfInvalido": "CPF inválido no Y600 (dirigente ou representante legal).",
+      "dtFimForaDoAno": "A data de fim do dirigente tem de cair no ano da ECF.",
+      "dtFimAntesDoInicio": "A data de fim do dirigente não pode ser anterior à de início.",
+      "percVotInvalido": "Capital votante inválido: um percentual entre 0 e 100.",
+      "qualifDesc": {
+        "_fonte": "Manual ECF Leiaute 12 (maio/2026), Y600 campo 8, p. 572 — texto do manual, não traduzido",
+        "01": "Acionista Pessoa Física Domiciliado no Brasil",
+        "02": "Sócio Pessoa Física Domiciliado no Brasil",
+        "03": "Acionista Pessoa Jurídica Domiciliado no Brasil",
+        "04": "Sócio Pessoa Jurídica Domiciliado no Brasil",
+        "05": "Acionista Pessoa Física Residente ou Domiciliado no Exterior",
+        "06": "Sócio Pessoa Física Residente ou Domiciliado no Exterior",
+        "07": "Acionista Pessoa Jurídica Residente ou Domiciliado no Exterior",
+        "08": "Sócio Pessoa Jurídica Residente ou Domiciliado no Exterior",
+        "09": "Titular",
+        "10": "Administrador sem Vínculo Empregatício",
+        "11": "Diretor sem Vínculo Empregatício",
+        "12": "Presidente sem Vínculo Empregatício",
+        "13": "Administrador com Vínculo Empregatício",
+        "14": "Conselheiro de Administração ou Fiscal",
+        "15": "Diretor com Vínculo Empregatício",
+        "16": "Fundador",
+        "17": "Presidente com Vínculo Empregatício"
+      },
+      "qualifRepLegDesc": {
+        "_fonte": "Manual ECF Leiaute 12 (maio/2026), Y600 campo 12, p. 573 — texto do manual, não traduzido",
+        "PF": {
+          "01": "Procurador",
+          "02": "Curador",
+          "03": "Mãe",
+          "04": "Pai",
+          "05": "Tutor",
+          "06": "Outro"
+        },
+        "PJ": {
+          "01": "Procurador",
+          "06": "Outro"
+        }
+      }
     }
   },
   "trialBalance": {

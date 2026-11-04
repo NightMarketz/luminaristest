@@ -23,7 +23,17 @@ import {
 } from './SpedGenerationPanel';
 import type { AccountingContact } from '../../../lib/services/accountingContacts.service';
 import { nonEmpty } from '../../../lib/utils/nonEmpty';
-import { resolveError } from '../lib/resolveError';
+import { resolveErrorWithCode } from '../lib/resolveError';
+import { EcfY600Editor, y600Message } from './EcfY600Editor';
+import { isEcfYear, useY600Vigencias } from '../hooks/useY600Vigencias';
+import {
+  Y600_RELOAD_CODES,
+  Y600_SERVER_CODES,
+  emptyY600Draft,
+  toY600Payload,
+  validateY600Draft,
+  type Y600Draft,
+} from '../lib/ecfY600';
 
 /**
  * SPED ECF generation panel — Lucro REAL (FE-INCR-COMPLIANCE-2, ADR-INCR-SPED-ECF-FASE3).
@@ -76,8 +86,20 @@ export function SpedEcfRealPanel({ unitId, qualifOptions, qualifLoading, contact
   const [signers, setSigners] = useState<EcfSignerDraft[]>([emptyEcfSigner()]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Y600 (FE-INCR-ECF-Y600 item 10): o mesmo editor e a mesma rota de leitura do Presumido (o BE reusa SocioEcfSchema).
+  const yearNum = Number(year);
+  const y600Year = isEcfYear(yearNum) ? yearNum : null;
+  const y600State = useY600Vigencias(unitId, y600Year);
+  const [y600Draft, setY600Draft] = useState<Y600Draft>(emptyY600Draft);
 
   const genericError = () => t('sped.error.generic', 'Ocorreu um erro. Verifique os campos e tente novamente.');
+  /** Item 11 — `ECF_Y600_*` com mensagem própria; complemento faltando/fora do ano relê as vigências. */
+  const serverError = (err: unknown): string => {
+    const { message, code } = resolveErrorWithCode(err, genericError());
+    if (!code || !Y600_SERVER_CODES.includes(code)) return message;
+    if (Y600_RELOAD_CODES.includes(code)) y600State.reload();
+    return y600Message(t, `error.${code}`);
+  };
   const signerError = (code: string) =>
     t(`sped.error.${code}`, t('sped.error.signersInvalid', 'Signatários inválidos.'));
 
@@ -108,6 +130,16 @@ export function SpedEcfRealPanel({ unitId, qualifOptions, qualifLoading, contact
       setError(signerError('ecfSignerCount'));
       return;
     }
+    if (y600State.loading || y600State.error !== null) {
+      setError(t('sped.y600.naoCarregado', 'Os sócios do ano ainda não carregaram — aguarde ou tente de novo.'));
+      return;
+    }
+    const y600Issue = validateY600Draft(y600State.vigencias, y600Draft, y);
+    if (y600Issue) {
+      setError(y600Message(t, y600Issue));
+      return;
+    }
+    const y600 = toY600Payload(y600State.vigencias, y600Draft);
     const body: GenerateEcfRealPayload = {
       unitId,
       year: y,
@@ -119,15 +151,15 @@ export function SpedEcfRealPanel({ unitId, qualifOptions, qualifLoading, contact
         indRecReceita: '2',
       },
       signers: payloadSigners,
-      // Y600 (BE-INCR-ECF-Y600): a tela ainda não coleta sócios — o servidor devolve 400 ECF_Y600_*; FE próprio pendente.
-      socios: [],
+      socios: y600.socios,
+      dirigentes: y600.dirigentes,
     };
     if (contactId) body.signerContactIds = [contactId];
     setBusy(true);
     try {
       await spedService.generateAndDownloadEcfReal(body);
     } catch (err) {
-      setError(resolveError(err, genericError()));
+      setError(serverError(err));
     } finally {
       setBusy(false);
     }
@@ -221,6 +253,7 @@ export function SpedEcfRealPanel({ unitId, qualifOptions, qualifLoading, contact
 
       <ContadorDoCadastroSelect t={t} contacts={contacts} value={contactId} onChange={setContactId} />
       <EcfSignersEditor t={t} signers={signers} setSigners={setSigners} qualifOptions={qualifOptions} qualifLoading={qualifLoading} />
+      <EcfY600Editor year={y600Year} vigencias={y600State} value={y600Draft} onChange={setY600Draft} />
 
       {error && (
         <div className="mt-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
