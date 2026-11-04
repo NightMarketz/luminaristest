@@ -33548,6 +33548,9 @@
           },
           "404": {
             "description": "Record or unit not found"
+          },
+          "409": {
+            "description": "DP_JORNADA_EM_USO — referenced by a contract version: minutosSemanais and tipoJornada are locked (D-5)"
           }
         }
       },
@@ -34396,6 +34399,744 @@
           },
           "404": {
             "description": "Parameter, agreement or unit not found"
+          }
+        }
+      }
+    },
+    "/api/dp/trabalhadores": {
+      "get": {
+        "summary": "List DP workers of the instance",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DpTrabalhadorView[] (pessoaOperacionalRemovida = employeeRef row deleted)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a DP worker (origem DIGITADA; audited without CPF, name or birth date)",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "cpf",
+                  "nome",
+                  "nascimento"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "cpf": {
+                    "type": "string",
+                    "pattern": "^\\d{11}$",
+                    "description": "CPF with valid check digits (PII; never audited)"
+                  },
+                  "nome": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "nascimento": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "pcd": {
+                    "type": "boolean"
+                  },
+                  "employeeRef": {
+                    "type": "string",
+                    "description": "row of the Core employees table of the owner"
+                  },
+                  "partnerId": {
+                    "type": "string",
+                    "description": "partner (socio) - required for category 723"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "DpTrabalhadorView"
+          },
+          "400": {
+            "description": "Validation error | DP_EMPLOYEE_REF_INVALIDO"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Unit or partner not found"
+          },
+          "409": {
+            "description": "DP_CPF_DUPLICADO"
+          }
+        }
+      }
+    },
+    "/api/dp/trabalhadores/{id}": {
+      "get": {
+        "summary": "Get one DP worker",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DpTrabalhadorView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Worker or unit not found (other owner => 404)"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Correct a DP worker in place (absent fields are kept; audited as updated + corrected with field names and SHA-256 only)",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "cpf": {
+                    "type": "string",
+                    "pattern": "^\\d{11}$",
+                    "description": "CPF with valid check digits (PII; never audited)"
+                  },
+                  "nome": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "nascimento": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "pcd": {
+                    "type": "boolean"
+                  },
+                  "employeeRef": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "partnerId": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "DpTrabalhadorView"
+          },
+          "400": {
+            "description": "Validation error | DP_EMPLOYEE_REF_INVALIDO"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Worker, partner or unit not found"
+          },
+          "409": {
+            "description": "DP_CPF_DUPLICADO"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete a DP worker",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Worker or unit not found"
+          },
+          "409": {
+            "description": "DP_TRABALHADOR_COM_VINCULO"
+          }
+        }
+      }
+    },
+    "/api/dp/vinculos": {
+      "get": {
+        "summary": "List DP employment contracts (vinculos) of the instance",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DpVinculoView[]"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a DP contract and its first version in one transaction",
+        "description": "Category outside the core (101, 103, 901, 723) -> 400 DP_CATEGORIA_FORA_DO_NUCLEO (points to DP-CAT). 103: DP_APRENDIZ_IDADE / DP_APRENDIZ_PRAZO; 101 under 16 -> DP_IDADE_MINIMA; 723 needs a PF partner with the same CPF inside the partnership period and no MEI in the year (DP_PRO_LABORE_*). The version starts at dataInicio.",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "trabalhadorId",
+                  "matricula",
+                  "categoria",
+                  "dataInicio",
+                  "versao"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "trabalhadorId": {
+                    "type": "string"
+                  },
+                  "matricula": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 30
+                  },
+                  "categoria": {
+                    "type": "string",
+                    "pattern": "^\\d{3}$"
+                  },
+                  "dataInicio": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "dataTermino": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "versao": {
+                    "type": "object",
+                    "required": [
+                      "lotacaoId",
+                      "salarioCents",
+                      "unidadeSalario"
+                    ],
+                    "properties": {
+                      "lotacaoId": {
+                        "type": "string"
+                      },
+                      "cargoId": {
+                        "type": "string",
+                        "description": "required for EMPREGO (S-2200)"
+                      },
+                      "jornadaId": {
+                        "type": "string",
+                        "description": "required for EMPREGO (S-2200)"
+                      },
+                      "sindicatoId": {
+                        "type": "string"
+                      },
+                      "salarioCents": {
+                        "type": "string",
+                        "pattern": "^\\d+$",
+                        "description": "contract salary, pro-labore or stipend in cents, > 0"
+                      },
+                      "unidadeSalario": {
+                        "type": "string",
+                        "enum": [
+                          "1",
+                          "2",
+                          "3",
+                          "4",
+                          "5",
+                          "6",
+                          "7"
+                        ],
+                        "description": "undSalFixo of S-2200"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "DpVinculoView with versoes[] (salarioCents as string)"
+          },
+          "400": {
+            "description": "Validation error | DP_CATEGORIA_FORA_DO_NUCLEO | DP_APRENDIZ_* | DP_IDADE_MINIMA | DP_PRO_LABORE_*"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Worker, cadastro or unit not found"
+          },
+          "409": {
+            "description": "DP_MATRICULA_DUPLICADA"
+          }
+        }
+      }
+    },
+    "/api/dp/vinculos/{id}": {
+      "get": {
+        "summary": "Get one DP contract with all its versions",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DpVinculoView with versoes[]"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Contract or unit not found (other owner => 404)"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete a DP contract (free in F1)",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Contract or unit not found"
+          }
+        }
+      }
+    },
+    "/api/dp/vinculos/{id}/versoes": {
+      "post": {
+        "summary": "Create a new contract version; it closes the previous one on the eve, in the same transaction",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "vigenteDesde",
+                  "lotacaoId",
+                  "salarioCents",
+                  "unidadeSalario"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "vigenteDesde": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "lotacaoId": {
+                    "type": "string"
+                  },
+                  "cargoId": {
+                    "type": "string",
+                    "description": "required for EMPREGO (S-2200)"
+                  },
+                  "jornadaId": {
+                    "type": "string",
+                    "description": "required for EMPREGO (S-2200)"
+                  },
+                  "sindicatoId": {
+                    "type": "string"
+                  },
+                  "salarioCents": {
+                    "type": "string",
+                    "pattern": "^\\d+$",
+                    "description": "contract salary, pro-labore or stipend in cents, > 0"
+                  },
+                  "unidadeSalario": {
+                    "type": "string",
+                    "enum": [
+                      "1",
+                      "2",
+                      "3",
+                      "4",
+                      "5",
+                      "6",
+                      "7"
+                    ],
+                    "description": "undSalFixo of S-2200"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "DpVersaoView"
+          },
+          "400": {
+            "description": "Validation error | DP_VERSAO_ANTES_DO_INICIO"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Contract, cadastro or unit not found"
+          },
+          "409": {
+            "description": "DP_VERSAO_SOBREPOSTA"
+          }
+        }
+      }
+    },
+    "/api/dp/vinculos/{id}/versoes/{versaoId}": {
+      "patch": {
+        "summary": "Correct a contract version in place (audited with field names and SHA-256 only, never the values)",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versaoId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "lotacaoId": {
+                    "type": "string"
+                  },
+                  "cargoId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "jornadaId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "sindicatoId": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "salarioCents": {
+                    "type": "string",
+                    "pattern": "^\\d+$",
+                    "description": "contract salary, pro-labore or stipend in cents, > 0"
+                  },
+                  "unidadeSalario": {
+                    "type": "string",
+                    "enum": [
+                      "1",
+                      "2",
+                      "3",
+                      "4",
+                      "5",
+                      "6",
+                      "7"
+                    ],
+                    "description": "undSalFixo of S-2200"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "DpVersaoView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Version, contract, cadastro or unit not found"
           }
         }
       }

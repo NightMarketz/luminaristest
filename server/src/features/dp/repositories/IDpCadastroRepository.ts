@@ -39,6 +39,8 @@ export interface IDpCadastroRepository {
   createJornada(ownerUserId: string, data: DpJornadaData, tx: Tx): Promise<DpJornada>;
   updateJornada(id: string, data: Partial<DpJornadaData>, tx: Tx): Promise<DpJornada>;
   deleteJornada(id: string, tx: Tx): Promise<DpJornada>;
+  /** Item 30 (D-5) — alguma versão de vínculo (vivo ou apagado: a versão não se apaga) referencia a jornada (trava `minutosSemanais`/`tipoJornada`). */
+  jornadaEmUso(jornadaId: string, tx: Tx): Promise<boolean>;
 
   listSindicatos(ownerUserId: string, limit: number): Promise<DpSindicato[]>;
   findSindicato(ownerUserId: string, id: string, tx?: Tx): Promise<DpSindicato | null>;

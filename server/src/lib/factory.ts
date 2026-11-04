@@ -215,6 +215,9 @@ import { DpModuleService } from '../features/dp/services/DpModuleService';
 import { DpModuloAtivacaoRepository } from '../features/dp/repositories/DpModuloAtivacaoRepository';
 import { DpCadastroService } from '../features/dp/services/DpCadastroService';
 import { DpCadastroRepository } from '../features/dp/repositories/DpCadastroRepository';
+import { DpVinculoService } from '../features/dp/services/DpVinculoService';
+import { DpVinculoRepository } from '../features/dp/repositories/DpVinculoRepository';
+import type { EmployeeRowLookup } from '../features/dp/ports/EmployeeRowLookup';
 import { DpPolicy } from '../features/dp/policies/DpPolicy';
 import { DpPortResolver, type DpPortImplementations } from '../features/dp/ports/DpPortResolver';
 import { WithholdingProfileService } from '../features/accounting/services/WithholdingProfileService';
@@ -387,6 +390,7 @@ import type { ICompanySignerRepository } from '../features/accounting/repositori
 import type { IPartnerRepository } from '../features/accounting/repositories/IPartnerRepository';
 import type { IDpModuloAtivacaoRepository } from '../features/dp/repositories/IDpModuloAtivacaoRepository';
 import type { IDpCadastroRepository } from '../features/dp/repositories/IDpCadastroRepository';
+import type { IDpVinculoRepository } from '../features/dp/repositories/IDpVinculoRepository';
 import type { IDpPolicy } from '../features/dp/policies/IDpPolicy';
 import type { IWithholdingProfileRepository } from '../features/accounting/repositories/IWithholdingProfileRepository';
 import type { ITaxWithholdingReadPort, ITaxWithholdingRepository } from '../features/accounting/repositories/ITaxWithholdingRepository';
@@ -863,6 +867,7 @@ export class ApplicationFactory {
     partner: IPartnerRepository; // IRRF-DISTRIBUICAO PR-1
     dpModuloAtivacao: IDpModuloAtivacaoRepository; // BE-INCR-DP-F0-F1 PR-1 (nó PES-4, item 12)
     dpCadastro: IDpCadastroRepository; // BE-INCR-DP-F0-F1 PR-3 (itens 28–33)
+    dpVinculo: IDpVinculoRepository; // BE-INCR-DP-F0-F1 PR-4 (itens 37–48)
     withholdingProfile: IWithholdingProfileRepository; // RETENCOES-FONTE PR-1 (item 6)
     taxWithholding: ITaxWithholdingRepository; // RETENCOES-FONTE PR-2 (item 13; porta da Reinf, Emenda 22/10 item 2)
     profitDistribution: IProfitDistributionRepository; // IRRF-DISTRIBUICAO PR-2
@@ -988,6 +993,7 @@ export class ApplicationFactory {
     dpModule: DpModuleService; // BE-INCR-DP-F0-F1 PR-1 (itens 12–13)
     dpPortResolver: DpPortResolver; // BE-INCR-DP-F0-F1 PR-1 (item 17)
     dpCadastro: DpCadastroService; // BE-INCR-DP-F0-F1 PR-3 (itens 28–36)
+    dpVinculo: DpVinculoService; // BE-INCR-DP-F0-F1 PR-4 (itens 37–49)
     withholdingProfile: WithholdingProfileService; // RETENCOES-FONTE PR-1 (item 6)
     withholding: WithholdingService; // RETENCOES-FONTE PR-2 (itens 10–23)
     profitDistribution: ProfitDistributionService; // IRRF-DISTRIBUICAO PR-2
@@ -1106,6 +1112,7 @@ export class ApplicationFactory {
       partner: new PartnerRepository(),
       dpModuloAtivacao: new DpModuloAtivacaoRepository(), // BE-INCR-DP-F0-F1 PR-1
       dpCadastro: new DpCadastroRepository(), // BE-INCR-DP-F0-F1 PR-3
+      dpVinculo: new DpVinculoRepository(), // BE-INCR-DP-F0-F1 PR-4
       withholdingProfile: new WithholdingProfileRepository(), // RETENCOES-FONTE PR-1 (item 6)
       taxWithholding: new TaxWithholdingRepository(), // RETENCOES-FONTE PR-2 (item 13)
       profitDistribution: new ProfitDistributionRepository(),
@@ -1700,6 +1707,16 @@ export class ApplicationFactory {
     // arquivo é o ÚNICO ponto que importa `features/dp<Nome>/` (regra D1 do check:arch; X1).
     const dpModuleService = new DpModuleService(this.repositories.dpModuloAtivacao, this.policies.dp, auditService);
     const dpPortImplementations: DpPortImplementations = new Map();
+    // BE-INCR-DP-F0-F1 PR-4 (item 38): porta EmployeeRowLookup sobre o motor — a linha precisa ser da tabela `employees`
+    // DESTE dono (findDataById é global por id; mesma guarda do DynamicTableProductRefLookup).
+    const dpEmployeeRowLookup: EmployeeRowLookup = {
+      employeeRowExists: async (ownerUserId, employeeRef) => {
+        const table = await this.repositories.dynamicTable.findTableByInternalName(ownerUserId, 'employees');
+        if (!table) return false;
+        const row = await this.repositories.dynamicTable.findDataById(employeeRef);
+        return row != null && row.dynamicTableId === table.id;
+      },
+    };
     const companyFiscalProfileService = new CompanyFiscalProfileService(
       this.repositories.companyFiscalProfile,
       this.repositories.companySigner,
@@ -1804,6 +1821,13 @@ export class ApplicationFactory {
       dpModule: dpModuleService, // BE-INCR-DP-F0-F1 PR-1
       dpPortResolver: new DpPortResolver(dpPortImplementations, (owner, c) => dpModuleService.modulosAtivosEm(owner, c)),
       dpCadastro: new DpCadastroService(this.repositories.dpCadastro, this.policies.dp, auditService), // BE-INCR-DP-F0-F1 PR-3
+      // BE-INCR-DP-F0-F1 PR-4: reusa o sócio (D-9), o regime do ano e a fotografia legal; `employees` pela porta (D-2, D-6).
+      dpVinculo: new DpVinculoService(this.repositories.dpVinculo, this.repositories.dpCadastro, this.policies.dp, auditService, {
+        partners: this.repositories.partner,
+        fiscalProfiles: this.repositories.companyFiscalProfile,
+        legalParams: legalParameterService,
+        employees: dpEmployeeRowLookup,
+      }),
       // RETENCOES-FONTE PR-1 (item 6): perfil de retenção; fotografia NATUREZA_RENDIMENTO e a leitura dos rascunhos dela.
       withholdingProfile: new WithholdingProfileService(
         this.repositories.withholdingProfile,
@@ -2675,6 +2699,7 @@ export class ApplicationFactory {
   public getDpModuleService = (): DpModuleService => this.services.dpModule;
   public getDpPortResolver = (): DpPortResolver => this.services.dpPortResolver;
   public getDpCadastroService = (): DpCadastroService => this.services.dpCadastro;
+  public getDpVinculoService = (): DpVinculoService => this.services.dpVinculo;
   public getWithholdingProfileService = (): WithholdingProfileService => this.services.withholdingProfile;
   public getWithholdingService = (): WithholdingService => this.services.withholding;
   /** RETENCOES-FONTE PR-2 (Emenda 22/10 item 2): a porta que a EFD-REINF lê, sem HTTP. */

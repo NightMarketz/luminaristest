@@ -121,6 +121,9 @@ export const ACCOUNTING_RESET_BLOCKING = [
   'DpJornada',
   'DpSindicato',
   'DpConvencaoColetiva',
+  // BE-INCR-DP-F0-F1 PR-4: trabalhador e vínculo, mesma regra (tabela nova nasce BLOCKING).
+  'DpTrabalhador',
+  'DpVinculo',
 ] as const;
 
 /**

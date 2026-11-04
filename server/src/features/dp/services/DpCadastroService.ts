@@ -55,8 +55,7 @@ export type DpConvencaoParametroView = Omit<DpConvencaoParametro, 'valorInt' | '
  * propagado ao repositório (F19; memória authoritative-gate-inside-tx), e a auditoria grava na mesma tx. Apagar é
  * soft-delete, então apagar e recriar com o mesmo código funciona.
  *
- * A trava de cálculo da jornada (item 30, D-5: `DP_JORNADA_EM_USO`) depende da versão de vínculo, que nasce no PR-4;
- * entra lá, com o teste.
+ * A trava de cálculo da jornada (item 30, D-5: `DP_JORNADA_EM_USO`) entrou no PR-4, com a versão de vínculo.
  */
 export class DpCadastroService {
   constructor(
@@ -160,7 +159,18 @@ export class DpCadastroService {
   async updateJornada(scope: AccountingScope, id: string, input: UpdateJornadaInput): Promise<DpJornadaView> {
     this.assertManage(scope);
     return this.repo.runTransaction(async (tx) => {
-      achado(await this.repo.findJornada(scope.ownerUserId, id, tx), 'Jornada');
+      const atual = achado(await this.repo.findJornada(scope.ownerUserId, id, tx), 'Jornada');
+      // Item 30 (D-5): referenciada por versão de vínculo, os campos de cálculo não mudam — mudança = jornada nova +
+      // versão nova do vínculo. Gate dentro da tx (memória authoritative-gate-inside-tx).
+      const mudaCalculo =
+        (input.minutosSemanais !== undefined && input.minutosSemanais !== atual.minutosSemanais) ||
+        (input.tipoJornada !== undefined && input.tipoJornada !== atual.tipoJornada);
+      if (mudaCalculo && (await this.repo.jornadaEmUso(id, tx))) {
+        throw dpConflictError(
+          'DP_JORNADA_EM_USO',
+          'A jornada já é usada por versão de vínculo: minutosSemanais e tipoJornada não mudam. Cadastre jornada nova e crie versão nova do vínculo.',
+        );
+      }
       const row = await this.repo.updateJornada(
         id,
         { nome: input.nome, minutosSemanais: input.minutosSemanais, tipoJornada: input.tipoJornada, descricao: input.descricao },

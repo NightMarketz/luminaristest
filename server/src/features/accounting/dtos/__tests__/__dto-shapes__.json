@@ -1551,6 +1551,8 @@
                   "DpJornada",
                   "DpSindicato",
                   "DpConvencaoColetiva",
+                  "DpTrabalhador",
+                  "DpVinculo",
                   "AccountingPolicyVersion"
                 ]
               },

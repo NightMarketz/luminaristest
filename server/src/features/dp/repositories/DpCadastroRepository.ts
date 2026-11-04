@@ -73,6 +73,9 @@ export class DpCadastroRepository implements IDpCadastroRepository {
   public async deleteJornada(id: string, tx: Tx): Promise<DpJornada> {
     return tx.dpJornada.update({ where: { id }, data: morto() });
   }
+  public async jornadaEmUso(jornadaId: string, tx: Tx): Promise<boolean> {
+    return (await tx.dpVinculoVersao.count({ where: { jornadaId } })) > 0;
+  }
 
   // ── sindicato ──
   public async listSindicatos(ownerUserId: string, limit: number): Promise<DpSindicato[]> {

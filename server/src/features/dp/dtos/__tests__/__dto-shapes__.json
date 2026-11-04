@@ -545,5 +545,372 @@
       ],
       "additionalProperties": false
     }
+  },
+  "DpVinculoDto.ts": {
+    "CorrigirVersaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lotacaoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "cargoId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "jornadaId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sindicatoId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "salarioCents": {},
+        "unidadeSalario": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "CreateTrabalhadorSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cpf": {
+          "type": "string",
+          "pattern": "^\\d{11}$"
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "nascimento": {
+          "type": "string"
+        },
+        "pcd": {
+          "default": false,
+          "type": "boolean"
+        },
+        "employeeRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "partnerId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        }
+      },
+      "required": [
+        "unitId",
+        "cpf",
+        "nome",
+        "nascimento"
+      ],
+      "additionalProperties": false
+    },
+    "CreateVersaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vigenteDesde": {
+          "type": "string"
+        },
+        "lotacaoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "cargoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "jornadaId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "sindicatoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "salarioCents": {},
+        "unidadeSalario": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ]
+        }
+      },
+      "required": [
+        "unitId",
+        "vigenteDesde",
+        "lotacaoId",
+        "salarioCents",
+        "unidadeSalario"
+      ],
+      "additionalProperties": false
+    },
+    "CreateVinculoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trabalhadorId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "matricula": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 30
+        },
+        "categoria": {
+          "type": "string",
+          "pattern": "^\\d{3}$"
+        },
+        "dataInicio": {
+          "type": "string"
+        },
+        "dataTermino": {
+          "type": "string"
+        },
+        "versao": {
+          "type": "object",
+          "properties": {
+            "lotacaoId": {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            "cargoId": {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            "jornadaId": {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            "sindicatoId": {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            "salarioCents": {},
+            "unidadeSalario": {
+              "type": "string",
+              "enum": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7"
+              ]
+            }
+          },
+          "required": [
+            "lotacaoId",
+            "salarioCents",
+            "unidadeSalario"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "unitId",
+        "trabalhadorId",
+        "matricula",
+        "categoria",
+        "dataInicio",
+        "versao"
+      ],
+      "additionalProperties": false
+    },
+    "DpVersaoIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "versaoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        }
+      },
+      "required": [
+        "id",
+        "versaoId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateTrabalhadorSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cpf": {
+          "type": "string",
+          "pattern": "^\\d{11}$"
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "nascimento": {
+          "type": "string"
+        },
+        "pcd": {
+          "type": "boolean"
+        },
+        "employeeRef": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "partnerId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "cuid",
+              "pattern": "^[cC][^\\s-]{8,}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "VersaoVinculoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "lotacaoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "cargoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "jornadaId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "sindicatoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][^\\s-]{8,}$"
+        },
+        "salarioCents": {},
+        "unidadeSalario": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7"
+          ]
+        }
+      },
+      "required": [
+        "lotacaoId",
+        "salarioCents",
+        "unidadeSalario"
+      ],
+      "additionalProperties": false
+    }
   }
 }
