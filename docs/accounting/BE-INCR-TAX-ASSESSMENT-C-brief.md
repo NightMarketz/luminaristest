@@ -394,7 +394,8 @@ de código nem ratificação de fork.
    | Pessoa jurídica de direito privado (Lei 10.833 art. 30) | P500 11 / N670 17 | P300 10 / N630 20 (genérica) |
    | Órgãos, autarquias e fundações de estados, DF e municípios (Lei 10.833 art. 33) | P500 12 / N670 18 | P300 10 / N630 20 (genérica) |
 
-   **Fork F-C8-R1 (pendente, não ratificado):**
+   **Fork F-C8-R1 → (a), RATIFICADO** (dono, chat, 03/11: *"Sim, opção (a)"*; correção autorizada, dono, chat, 03/11:
+   *"Sim, autoriza"*, nota `D-2026-11-02-DELEGACAO-DONO` §10):
    - **(a)** campo `retentor` em `DeducaoInformada`, com enum `ORGAO_FEDERAL | ENTIDADE_ADM_FEDERAL | PJ_PRIVADA |
      ORGAO_ESTADUAL_MUNICIPAL`, obrigatório na `CSLL_RETIDA` e opcional no `IRRF` (ausente = genérica). A tabela de
      correspondência marca a linha pelo par (tipo, retentor). É o recomendado: mexe só no DTO, no cálculo e nesta tabela, e
@@ -404,4 +405,7 @@ de código nem ratificação de fork.
      pagadora em `counterpartyId`). O registro não guarda a natureza do retentor (órgão federal × PJ privada), então
      precisaria de campo novo ali, e amarra o X7 ao F-RET.
 
-   Nada a codificar até o dono ratificar o fork. O 1º cliente (salão) não tem retenção de órgão público.
+   **Corrigido no #1028** (empilhado no #1024): `DeducaoInformada.retentor`, obrigatório na `CSLL_RETIDA`, opcional no
+   `IRRF`, proibido na `OUTRA` (400). `somarDeducoes` grava `tipo/retentor` na descrição. A tabela marca a linha por
+   (tipo, retentor) em todos os modos: P300 10/12/13, P500 9–12; N630A 20–22, N670 15–18; N620 21/23/24, N660 14–17.
+   A CSLL retida já confirmada sem retentor segue sem linha.
