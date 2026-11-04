@@ -113,5 +113,12 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "allowScripts": {
+    "prisma@6.16.2": true,
+    "@prisma/client@6.16.2": true,
+    "@prisma/engines@6.16.2": true,
+    "@swc/core@1.16.2": true,
+    "unrs-resolver@1.11.1": true
   }
 }
