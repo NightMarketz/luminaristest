@@ -12,6 +12,13 @@
 - O número é **teto da regex, não medida da classe**: `throw` em várias linhas fica de fora (ex.: `FixedAssetService.ts:372`,
   `Classe de bem '${item.classId}' … payable '${payable.id}'`), e id interpolado sem aspas também.
 
+- **Lote 2 (05/11, mesma sessão do teste-guarda):** os 37 sites da regex foram reclassificados lendo cada um, e mais 5 sites
+  que a regex não alcança foram achados (throw em várias linhas, id em expressão condicional, id dentro de classe de erro).
+  A heurística errou em 1 sentido: `PayableService.ts:1675` ("Classe de bem '${item.classId}'") parecia id de outro registro e é eco do corpo (fica).
+  Rótulos (dono, chat, 05/11): cobrança = tipo + valor (`Pix de R$ 100,00`; uma página de cobrança fica para depois); venda = cliente + data.
+  Os 12 "corrigir" do lote 2 estão corrigidos (guardas do #1093 verdes); `describeCharge` (modelo da cobrança) e `describeSale` (`SaleFiscalGuardService.ts`) são os rótulos.
+  Não é erro, e por isso fora do lote: `reason:` de estorno com cuid no texto do lançamento (`PayableService.ts:537,974,1060`, `ReceivableService.ts` do recebimento).
+
 ## Regra de classificação (F-MSG-1 a + F-MSG-2 a1)
 
 - **fica:** o id é eco do que o cliente mandou (`:id` da URL ou id no corpo) **e** o registro não foi achado, então não há
@@ -28,10 +35,10 @@ do teste-guarda.
 
 ## Resumo por lote (F-MSG-3 a: por exposição na tela)
 
-| Lote | Sites | corrigir (lote 1 verificado; demais inferidos) |
+| Lote | Sites | corrigir (lotes 1 e 2 verificados; demais inferidos) |
 |---|---|---|
 | 1 imobilizado | 18 | 14 |
-| 2 operação (AP/AR, cobrança, venda, pacote) | 37 | 5 |
+| 2 operação (AP/AR, cobrança, venda, pacote) | 42 (37 da regex + 5 fora dela) | 12 (verificado) |
 | 3 fechamento (LALUR, distribuição, JCP, revisão, entrega) | 51 | 20 |
 | 4+ demais | 120 | 19 |
 
@@ -60,43 +67,48 @@ lote 3 com `Lalur|ProfitDistribution|InterestOnEquity|AccountingReview|Accountin
 | 1 | `src/features/accounting/services/FixedAssetService.ts:252` | NotFoundError | Classe de bem '${asset.classId}' não foi encontrada. | `asset.classId` | corrigir | id de outro registro (asset.classId); nomear pelo registro dono |
 | 1 | `src/features/accounting/services/FixedAssetService.ts:322` | ConflictError | Ativo '${id}' foi alterado por outra operação (version divergente) — releia e tente de novo. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
 | 1 | `src/features/accounting/services/FixedAssetService.ts:425` | ValidationError | ${label} '${id}' não existe neste escopo. | `id` | corrigir | verificado: id interno (conta da classe ou das settings); nomear pelo dono. counterpartAccountId do corpo = eco, fica |
-| 2 | `src/features/accounting/services/CollectionChargeService.ts:141` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/CollectionChargeService.ts:150` | ConflictError | ${CHARGE_LIVE_EXISTS}: o título já tem a cobrança viva '${live.id}' (${live.status}). | `live.id` | corrigir | id de outro registro (live.id); nomear pelo rótulo |
-| 2 | `src/features/accounting/services/CollectionChargeService.ts:334` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/CollectionChargeService.ts:371` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/CollectionChargeService.ts:556` | NotFoundError | Cobrança '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/CollectionChargeService.ts:562` | NotFoundError | Cobrança '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/CollectionChargeService.ts:568` | NotFoundError | Conta de pagamento '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/PayableService.ts:224` | NotFoundError | Conta a pagar '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/PayableService.ts:707` | NotFoundError | Conta a pagar '${payableId}' não foi encontrada. | `payableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/PayableService.ts:871` | NotFoundError | Conta a pagar '${input.payableId}' não foi encontrada. | `input.payableId` | fica | eco do id do corpo; não achado, sem rótulo |
-| 2 | `src/features/accounting/services/PayableService.ts:875` | ValidationError | Comprovante '${input.sourceDocumentId}' não existe neste escopo — a apropriação exige o documento da extinção (F-IBS-4 a). | `input.sourceDocumentId` | fica | eco do id do corpo; não achado, sem rótulo |
-| 2 | `src/features/accounting/services/PayableService.ts:907` | NotFoundError | Conta a pagar '${payableId}' não foi encontrada. | `payableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/PayableService.ts:1025` | NotFoundError | Pagamento '${paymentId}' não foi encontrado. | `paymentId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/PayableService.ts:1046` | NotFoundError | Conta a pagar '${payableId}' não foi encontrada. | `payableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/PayableService.ts:1078` | NotFoundError | Pagamento '${paymentId}' não foi encontrado. | `paymentId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/PayableService.ts:1093` | NotFoundError | Conta a pagar '${payableId}' não foi encontrada. | `payableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/PayableService.ts:1597` | ValidationError | Conta a recuperar '${accountId}' não existe neste escopo. | `accountId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/PayableService.ts:1675` | ValidationError | Classe de bem '${item.classId}' não existe nesta unidade. | `item.classId` | corrigir | id de outro registro (item.classId); nomear pelo registro dono |
-| 2 | `src/features/accounting/services/PayableService.ts:1679` | ValidationError | Conta do bem '${klass.costAccountId}' (classe '${klass.code}') não existe neste escopo. | `klass.costAccountId` | corrigir | id de outro registro (klass.costAccountId); nomear pelo registro dono |
-| 2 | `src/features/accounting/services/PaymentAccountService.ts:88` | ValidationError | Conta contábil '${dto.glAccountId}' não existe neste escopo. | `dto.glAccountId` | fica | eco do id do corpo; não achado, sem rótulo |
-| 2 | `src/features/accounting/services/PaymentAccountService.ts:213` | NotFoundError | Conta de pagamento '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/ReceivableService.ts:128` | NotFoundError | Conta a receber '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/ReceivableService.ts:241` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/ReceivableService.ts:355` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/ReceivableService.ts:435` | NotFoundError | Recebimento '${receiptId}' não foi encontrado. | `receiptId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/ReceivableService.ts:442` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/ReceivableService.ts:468` | NotFoundError | Recebimento '${receiptId}' não foi encontrado. | `receiptId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/ReceivableService.ts:479` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/accounting/services/ReceivableService.ts:646` | ValidationError | provider_balance_requires_payment_account: a conta '${debitAccountId}' da conta de provedor não é folha ativa do escopo. | `debitAccountId` | corrigir | registro já carregado/visto pelo rótulo; trocar debitAccountId pelo rótulo |
-| 2 | `src/features/packages/services/PackageAcceptanceService.ts:191` | NotFoundError | Venda '${saleId}' não encontrada. | `saleId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/packages/services/PackageAcceptanceService.ts:217` | NotFoundError | Pacote '${packageId}' não encontrado no catálogo. | `packageId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/sales/services/RegisterPaymentService.ts:55` | NotFoundError | Sale '${input.saleId}' não foi encontrada. | `input.saleId` | fica | eco do id do corpo; não achado, sem rótulo |
-| 2 | `src/features/sales/services/RegisterPaymentService.ts:160` | ValidationError | Valor da venda '${saleId}' inválido para consumo de saldo de pacote. | `saleId` | corrigir | registro já carregado/visto pelo rótulo; trocar saleId pelo rótulo |
-| 2 | `src/features/sales/services/SaleFiscalGuardService.ts:109` | NotFoundError | Venda '${saleId}' sem unidade. | `saleId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/sales/services/SaleFiscalGuardService.ts:121` | NotFoundError | Sale '${saleId}' não foi encontrada. | `saleId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/sales/services/SaleFiscalGuardService.ts:226` | NotFoundError | Sale '${saleId}' não foi encontrada. | `saleId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
-| 2 | `src/features/sales/services/SalesCancellationService.ts:64` | NotFoundError | Sale '${input.saleId}' não foi encontrada. | `input.saleId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/CollectionChargeService.ts:141` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | verificado: eco do :id da URL (POST /receivables/:id/charges); não achado, sem rótulo |
+| 2 | `src/features/accounting/services/CollectionChargeService.ts:150` | ConflictError | ${CHARGE_LIVE_EXISTS}: o título já tem a cobrança viva '${live.id}' (${live.status}). | `live.id` | corrigir | verificado: live.id é o id de OUTRA entidade (a cobrança viva); nomear por tipo + valor (dono, 05/11) |
+| 2 | `src/features/accounting/services/CollectionChargeService.ts:334` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | verificado: eco do :id da URL (cobranças do título); não achado, sem rótulo |
+| 2 | `src/features/accounting/services/CollectionChargeService.ts:371` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | verificado: eco do :id da URL (sugestão do pagador do título); não achado, sem rótulo |
+| 2 | `src/features/accounting/services/CollectionChargeService.ts:556` | NotFoundError | Cobrança '${id}' não foi encontrada. | `id` | fica | verificado: require(scope, id) só recebe o :id da URL (get/cancel); não achado, sem rótulo |
+| 2 | `src/features/accounting/services/CollectionChargeService.ts:562` | NotFoundError | Cobrança '${id}' não foi encontrada. | `id` | corrigir | verificado: requireAny só recebe id interno (charge.id/chargeId já lidos na mesma requisição); só a corrida de exclusão chega aqui; nomear pela cobrança em mãos |
+| 2 | `src/features/accounting/services/CollectionChargeService.ts:568` | NotFoundError | Conta de pagamento '${id}' não foi encontrada. | `id` | corrigir | verificado: o id é charge.paymentAccountId (interno); conta sumida nomeia a cobrança dona |
+| 2 | `src/features/accounting/services/PayableService.ts:224` | NotFoundError | Conta a pagar '${id}' não foi encontrada. | `id` | fica | verificado: eco do :id da URL; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/PayableService.ts:707` | NotFoundError | Conta a pagar '${payableId}' não foi encontrada. | `payableId` | fica | verificado: eco do :id da URL (liquidar); não achado, sem rótulo |
+| 2 | `src/features/accounting/services/PayableService.ts:871` | NotFoundError | Conta a pagar '${input.payableId}' não foi encontrada. | `input.payableId` | fica | verificado: eco do payableId do corpo (apropriar crédito); não achado, sem rótulo |
+| 2 | `src/features/accounting/services/PayableService.ts:875` | ValidationError | Comprovante '${input.sourceDocumentId}' não existe neste escopo — a apropriação exige o documento da extinção (F-IBS-4 a). | `input.sourceDocumentId` | fica | verificado: eco do sourceDocumentId do corpo; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/PayableService.ts:907` | NotFoundError | Conta a pagar '${payableId}' não foi encontrada. | `payableId` | fica | verificado: eco do :id da URL (cancelar); não achado, sem rótulo |
+| 2 | `src/features/accounting/services/PayableService.ts:1025` | NotFoundError | Pagamento '${paymentId}' não foi encontrado. | `paymentId` | fica | verificado: eco do paymentId da URL; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/PayableService.ts:1046` | NotFoundError | Conta a pagar '${payableId}' não foi encontrada. | `payableId` | fica | verificado: eco do :id da URL (cancelar pagamento); não achado, sem rótulo |
+| 2 | `src/features/accounting/services/PayableService.ts:1078` | NotFoundError | Pagamento '${paymentId}' não foi encontrado. | `paymentId` | fica | verificado: eco do paymentId da URL, dentro da tx; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/PayableService.ts:1093` | NotFoundError | Conta a pagar '${payableId}' não foi encontrada. | `payableId` | fica | verificado: eco do :id da URL, dentro da tx; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/PayableService.ts:1597` | ValidationError | Conta a recuperar '${accountId}' não existe neste escopo. | `accountId` | fica | verificado: accountId vem de recoverableTaxLines[] do corpo; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/PayableService.ts:1675` | ValidationError | Classe de bem '${item.classId}' não existe nesta unidade. | `item.classId` | fica | verificado: item.classId vem de fixedAssetItems[] do corpo; não achado, sem rótulo (a heurística errou: "outro registro") |
+| 2 | `src/features/accounting/services/PayableService.ts:1679` | ValidationError | Conta do bem '${klass.costAccountId}' (classe '${klass.code}') não existe neste escopo. | `klass.costAccountId` | corrigir | verificado: klass.costAccountId é interno (a classe foi achada, a conta dela sumiu); nomear a classe por código — nome |
+| 2 | `src/features/accounting/services/PaymentAccountService.ts:88` | ValidationError | Conta contábil '${dto.glAccountId}' não existe neste escopo. | `dto.glAccountId` | fica | verificado: eco do glAccountId do corpo; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/PaymentAccountService.ts:213` | NotFoundError | Conta de pagamento '${id}' não foi encontrada. | `id` | fica | verificado: eco do :id da URL; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/ReceivableService.ts:128` | NotFoundError | Conta a receber '${id}' não foi encontrada. | `id` | fica | verificado: eco do :id da URL; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/ReceivableService.ts:241` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | verificado: eco do :id da URL (receber); não achado, sem rótulo |
+| 2 | `src/features/accounting/services/ReceivableService.ts:355` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | verificado: eco do :id da URL (cancelar); não achado, sem rótulo |
+| 2 | `src/features/accounting/services/ReceivableService.ts:435` | NotFoundError | Recebimento '${receiptId}' não foi encontrado. | `receiptId` | fica | verificado: eco do receiptId da URL; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/ReceivableService.ts:442` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | verificado: eco do :id da URL (cancelar recebimento); não achado, sem rótulo |
+| 2 | `src/features/accounting/services/ReceivableService.ts:468` | NotFoundError | Recebimento '${receiptId}' não foi encontrado. | `receiptId` | fica | verificado: eco do receiptId da URL, dentro da tx; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/ReceivableService.ts:479` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | verificado: eco do :id da URL, dentro da tx; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/ReceivableService.ts:646` | ValidationError | provider_balance_requires_payment_account: a conta '${debitAccountId}' da conta de provedor não é folha ativa do escopo. | `debitAccountId` | corrigir | verificado: debitAccountId nunca vem do corpo (F7 usa gl.id da conta de provedor / conta de IBS-CBS das settings; o reconcile usa o recibo gravado); nomear a conta por código — nome |
+| 2 | `src/features/packages/services/PackageAcceptanceService.ts:191` | NotFoundError | Venda '${saleId}' não encontrada. | `saleId` | fica | verificado: eco do saleId do corpo/URL; não achado, sem rótulo |
+| 2 | `src/features/packages/services/PackageAcceptanceService.ts:217` | NotFoundError | Pacote '${packageId}' não encontrado no catálogo. | `packageId` | fica | verificado: eco do packageId da query; não achado, sem rótulo |
+| 2 | `src/features/sales/services/RegisterPaymentService.ts:55` | NotFoundError | Sale '${input.saleId}' não foi encontrada. | `input.saleId` | fica | verificado: eco do saleId do corpo; não achado, sem rótulo |
+| 2 | `src/features/sales/services/RegisterPaymentService.ts:160` | ValidationError | Valor da venda '${saleId}' inválido para consumo de saldo de pacote. | `saleId` | corrigir | verificado: a venda FOI achada (saleId do corpo só ecoa); nomear por cliente + data (dono, 05/11) |
+| 2 | `src/features/sales/services/SaleFiscalGuardService.ts:109` | NotFoundError | Venda '${saleId}' sem unidade. | `saleId` | corrigir | verificado: a venda foi achada e não tem unidade; nomear por cliente + data (dono, 05/11) |
+| 2 | `src/features/sales/services/SaleFiscalGuardService.ts:121` | NotFoundError | Sale '${saleId}' não foi encontrada. | `saleId` | fica | verificado: venda achada de OUTRA unidade tratada como inexistente (anti-enumeração) — o rótulo vazaria dado dela; eco do :id da URL |
+| 2 | `src/features/sales/services/SaleFiscalGuardService.ts:226` | NotFoundError | Sale '${saleId}' não foi encontrada. | `saleId` | fica | verificado: eco do :id da URL; não achado, sem rótulo |
+| 2 | `src/features/sales/services/SalesCancellationService.ts:64` | NotFoundError | Sale '${input.saleId}' não foi encontrada. | `input.saleId` | fica | verificado: eco do saleId do corpo; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/CollectionChargeService.ts:520` | AppError | Mercado Pago indisponível (…). A cobrança '${chargeId}' será reenviada automaticamente. | `chargeId` | corrigir | verificado, FORA da regex (id em expressão condicional): chargeId interno; nomear por tipo + valor |
+| 2 | `src/features/accounting/services/ReceivableService.ts:655` | ConflictError | ${RECEIVABLE_HAS_LIVE_CHARGE}: o título tem a cobrança '${live.id}' (${live.status}) no provedor; cancele-a antes. | `live.id` | corrigir | verificado, FORA da regex (throw em várias linhas): id de OUTRA entidade; nomear por tipo + valor |
+| 2 | `src/features/accounting/services/PaymentAccountService.ts:221` | ConflictError | ${PAYMENT_ACCOUNT_ALREADY_ACTIVE}: já existe conta ${account.provider} ativa neste escopo ('${other.id}'); desative-a antes. | `other.id` | corrigir | verificado, FORA da regex (throw em várias linhas): id de OUTRA conta; nomear pelo apelido (label) |
+| 2 | `src/lib/errors.ts:439` (chamado em `PackageAcceptanceService.ts:96,151`) | PackageWithoutValidityError | O pacote ${packageId} não tem validade: … | `packageId` | corrigir | verificado, FORA da regex (classe de erro): facts.packageId vem dos itens da venda, não do pedido; nomear pelo nome do pacote |
+| 2 | `src/features/sales/services/RegisterPaymentService.ts:164` | ValidationError | Valor da venda '${saleId}' fora da faixa válida para consumo de saldo de pacote. | `saleId` | corrigir | verificado, FORA da regex (throw em várias linhas): a venda foi achada; nomear por cliente + data |
 | 3 | `src/features/accounting/services/AccountingDeliveryService.ts:323` | NotFoundError | Contador '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
 | 3 | `src/features/accounting/services/AccountingDeliveryService.ts:332` | NotFoundError | Entrega '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
 | 3 | `src/features/accounting/services/AccountingDeliveryService.ts:367` | NotFoundError | Job da ECD '${ecdJobId}' não foi encontrado. | `ecdJobId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |

@@ -403,4 +403,32 @@ describe('BE-INCR-PACOTE-VALIDADE — ponta a ponta (SQLite real)', () => {
     const bad = await request(app).get('/api/package-balances').set(authHeader(user)).query({ unitId: UNIT_A, expiresOnOrBefore: '2026-02-30' });
     expect(bad.status).toBe(400);
   });
+
+  // FIX-MENSAGENS-ID-INTERNO lote 2 (FIX-TESTES item 5): a venda foi achada (o `saleId` do corpo só ecoa); sem número nem
+  // nome, o rótulo é `venda de <cliente> em <dd/mm/aaaa>` (dono, 05/11), nunca o cuid. Um caso por mensagem de `toCents`.
+  it('RegisterPaymentService:160 — pagar com saldo de pacote venda de total inválido (400) nomeia cliente + data, não o cuid', async () => {
+    const sale = await row('sales', { status: 'Finalized', unitId: UNIT_A, customerId: customer, totalAmount: 'abc', currency: 'BRL', date: today, paymentStatus: 'Pending' });
+    const res = await request(app).post('/api/sales/pay').set(authHeader(user)).send({ tableId: tables.sales, saleId: sale.id, paymentMethod: 'Package Balance', packageId: pkg30 });
+    const msg = String(res.body.message);
+    const dia = today.split('-').reverse().join('/');
+    expect({ status: res.status, nomeiaRotulo: msg.includes(`venda de Cliente em ${dia}`), cuidNaMensagem: [sale.id].filter((id) => msg.includes(id)), msg }).toEqual({
+      status: 400,
+      nomeiaRotulo: true,
+      cuidNaMensagem: [],
+      msg,
+    });
+  });
+
+  it('RegisterPaymentService:164 — pagar com saldo de pacote venda de total zerado (400) nomeia cliente + data, não o cuid', async () => {
+    const sale = await row('sales', { status: 'Finalized', unitId: UNIT_A, customerId: customer, totalAmount: 0, currency: 'BRL', date: today, paymentStatus: 'Pending' });
+    const res = await request(app).post('/api/sales/pay').set(authHeader(user)).send({ tableId: tables.sales, saleId: sale.id, paymentMethod: 'Package Balance', packageId: pkg30 });
+    const msg = String(res.body.message);
+    const dia = today.split('-').reverse().join('/');
+    expect({ status: res.status, nomeiaRotulo: msg.includes(`venda de Cliente em ${dia}`), cuidNaMensagem: [sale.id].filter((id) => msg.includes(id)), msg }).toEqual({
+      status: 400,
+      nomeiaRotulo: true,
+      cuidNaMensagem: [],
+      msg,
+    });
+  });
 });

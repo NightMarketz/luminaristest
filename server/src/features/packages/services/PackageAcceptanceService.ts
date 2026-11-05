@@ -93,7 +93,7 @@ export class PackageAcceptanceService {
     }
     const facts = await this.loadPackageSaleFacts(scope, input.saleId);
     const notice = await this.notice(scope, facts.saleDate, facts.validityDays);
-    if (!notice) throw new PackageWithoutValidityError(facts.packageId);
+    if (!notice) throw new PackageWithoutValidityError(await this.nameInTable(scope, 'packages', facts.packageId));
 
     if (await this.repo.findBySale(scope, input.saleId)) throw new PackageAcceptanceExistsError(input.saleId);
     if (input.textSha256 !== notice.textSha256) throw new PackageNoticeChangedError(input.saleId);
@@ -148,7 +148,7 @@ export class PackageAcceptanceService {
       };
     } else {
       const notice: ValidityNotice | null = await this.notice(scope, facts.saleDate, facts.validityDays);
-      if (!notice) throw new PackageWithoutValidityError(facts.packageId);
+      if (!notice) throw new PackageWithoutValidityError(await this.nameInTable(scope, 'packages', facts.packageId));
       clause = notice.text;
     }
 

@@ -1676,7 +1676,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
       }
       const account = await this.accountRepo.findById(scope, klass.costAccountId);
       if (!account || account.deletedAt) {
-        throw new ValidationError(`Conta do bem '${klass.costAccountId}' (classe '${klass.code}') não existe neste escopo.`);
+        throw new ValidationError(`Conta do bem da classe '${[klass.code, klass.name].filter(Boolean).join(' — ') || klass.id}' não existe neste escopo.`);
       }
       if (!account.acceptsEntries) {
         throw new ValidationError(`Conta do bem '${account.code}' (classe '${klass.code}') não aceita lançamentos (não é folha).`);
