@@ -29,6 +29,10 @@ própria mensagem de erro do onboarding indica (F-BA-4 a).
 ## Decisão
 
 **Manter a faixa e ajustar o texto** (só texto, sem mudar comportamento): o efeito (1) passa a dizer que o plano é
-conferido, que em geral já foi instalado no primeiro acesso à Contabilidade, e que só é instalado agora se ainda estiver
-vazio. Mudança em `my-app/public/locales/{pt,en}/accounting.json` (`activation.confirm.message`) e no texto de reserva
+conferido, que costuma já ter sido instalado quando alguma tela da Contabilidade lista as contas, e que só é instalado
+agora se ainda estiver vazio.
+
+Correção do revisor-independente (05/11, dono: "Corrige 1069"): a primeira redação dizia "no primeiro acesso à
+Contabilidade", mas a aba que abre primeiro (Balancete, `getTrialBalance`) lê sem semear. O plano só é semeado por
+`listAccounts`, pelo `postEntry` e pela própria ativação. Mudança em `my-app/public/locales/{pt,en}/accounting.json` (`activation.confirm.message`) e no texto de reserva
 de `AccountingActivationBanner.tsx`.

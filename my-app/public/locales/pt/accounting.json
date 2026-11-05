@@ -3011,7 +3011,7 @@
     },
     "confirm": {
       "title": "Ativar a contabilidade desta unidade?",
-      "message": "Setor: {{sector}}. Ao confirmar, (1) o plano de contas padrão é conferido (em geral ele já foi instalado no primeiro acesso à Contabilidade; se ainda estiver vazio, é instalado agora) e (2) o período do mês corrente é aberto se ainda não existir.",
+      "message": "Setor: {{sector}}. Ao confirmar, (1) o plano de contas padrão é conferido (costuma já ter sido instalado quando alguma tela da Contabilidade lista as contas; se ainda estiver vazio, é instalado agora) e (2) o período do mês corrente é aberto se ainda não existir.",
       "confirmLabel": "Ativar",
       "cancelLabel": "Cancelar"
     },
