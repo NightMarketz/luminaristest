@@ -11,7 +11,7 @@ import path from 'path';
 import { sanitizeUserInput, wrapSystemPrompt } from '@/lib/PromptSanitizer';
 
 const search = jest.fn();
-jest.mock('@/lib/vector/qdrant', () => ({ qdrant: { search: (...a: unknown[]) => search(...a) } }));
+jest.mock('@/lib/vector/qdrant', () => ({ qdrant: { query: (...a: unknown[]) => search(...a) } }));
 
 import { VectorRepository } from '../repositories/VectorRepository';
 
@@ -67,7 +67,7 @@ describe('#25 — PromptSanitizer', () => {
 });
 
 describe('#25 — a busca vetorial filtra pelo userId do chamador', () => {
-  beforeEach(() => search.mockReset().mockResolvedValue([]));
+  beforeEach(() => search.mockReset().mockResolvedValue({ points: [] }));
 
   const mustOf = () => (search.mock.calls[0][1] as { filter: { must: unknown[] } }).filter.must;
   const vector = Array.from({ length: 1536 }, () => 0.1);

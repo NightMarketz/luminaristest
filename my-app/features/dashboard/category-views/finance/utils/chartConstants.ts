@@ -5,6 +5,10 @@
  */
 
 import React from 'react';
+import type { Tooltip } from 'recharts';
+
+/** recharts 3 tipa `contentStyle` com o csstype dele (não com `React.CSSProperties`). */
+export type ChartTooltipStyle = NonNullable<React.ComponentProps<typeof Tooltip>['contentStyle']>;
 
 export const CHART_COLORS = {
   primary: [
@@ -29,7 +33,7 @@ export const CHART_MARGINS = { top: 10, right: 20, left: 0, bottom: 24 } as cons
 /**
  * Get standard Recharts tooltip styles based on current theme
  */
-export function getTooltipStyles(isDark: boolean): React.CSSProperties {
+export function getTooltipStyles(isDark: boolean): ChartTooltipStyle {
   if (isDark) {
     // Dark mode: light background with dark text for contrast
     return {

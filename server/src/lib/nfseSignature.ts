@@ -1,5 +1,5 @@
 import { X509Certificate } from 'crypto';
-import { DOMParser } from '@xmldom/xmldom';
+import { DOMParser, type Element, type Node } from '@xmldom/xmldom';
 import { SignedXml } from 'xml-crypto';
 import { ValidationError } from './errors';
 import { elementChildren, readCertFacts } from './nfeSignature';
@@ -66,13 +66,18 @@ export function verifyNfseEventoSignature(xml: string): NfseSignatureCheck {
 
 function verifySignedGroup(xml: string, rootName: string, infName: string): NfseSignatureCheck {
   const parseErrors: string[] = [];
-  const doc = new DOMParser({
-    locator: {},
-    errorHandler: { warning: () => undefined, error: (m) => parseErrors.push(m), fatalError: (m) => parseErrors.push(m) },
-  }).parseFromString(xml, 'text/xml');
-  if (parseErrors.length || !doc?.documentElement) fail(`XML mal-formado (${parseErrors[0] ?? 'sem elemento raiz'}).`);
-
-  const nfse = doc.documentElement;
+  // xmldom 0.9: fatalError (ex.: XML truncado) LANÇA ParseError depois do onError — converte no mesmo erro de documento mal-formado.
+  let doc: ReturnType<DOMParser['parseFromString']> | undefined;
+  try {
+    doc = new DOMParser({
+      locator: true,
+      onError: (level, m) => { if (level !== 'warning') parseErrors.push(m); },
+    }).parseFromString(xml, 'text/xml');
+  } catch (e) {
+    if (!parseErrors.length) parseErrors.push(e instanceof Error ? e.message : String(e));
+  }
+  const nfse = doc?.documentElement;
+  if (parseErrors.length || !doc || !nfse) return fail(`XML mal-formado (${parseErrors[0] ?? 'sem elemento raiz'}).`);
   if (nfse.localName !== rootName) fail(`elemento raiz <${rootName}> não encontrado.`);
   const infNFSe = onlyChild(nfse, infName, rootName);
   const id = infNFSe.getAttribute('Id') ?? '';

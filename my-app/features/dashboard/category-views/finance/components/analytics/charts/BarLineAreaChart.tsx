@@ -138,7 +138,7 @@ export default function BarLineAreaChart({
     };
 
     const tooltipProps = {
-      formatter: (value: number) => formatValue(value, currency),
+      formatter: (value: unknown) => formatValue(Number(value), currency),
       contentStyle: tooltipStyles,
       itemStyle: {
         color: isDark ? '#111827' /* lumi-text */ : '#f3f4f6' /* lumi-surface */,

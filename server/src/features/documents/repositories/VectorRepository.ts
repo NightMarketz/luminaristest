@@ -18,7 +18,7 @@ interface QdrantFilter {
 }
 
 interface SearchRequest {
-  vector: number[];
+  query: number[];
   limit?: number;
   filter?: QdrantFilter;
   with_payload?: boolean;
@@ -178,14 +178,14 @@ export class VectorRepository implements IVectorRepository {
       }
 
       const searchParams: SearchRequest = {
-        vector,
+        query: vector,
         limit,
         filter: qdrantFilter,
         with_payload: true,
         with_vector: false,
       };
 
-      const response = await qdrant.search(COLLECTION_NAME, searchParams);
+      const { points: response } = await qdrant.query(COLLECTION_NAME, searchParams);
 
       logger.debug('Busca por vetores filtrada concluída', {
         resultsCount: response.length,
@@ -256,7 +256,7 @@ export class VectorRepository implements IVectorRepository {
 
     try {
       const searchParams: SearchRequest = {
-        vector,
+        query: vector,
         limit,
         filter: {
           must: [
@@ -270,7 +270,7 @@ export class VectorRepository implements IVectorRepository {
         with_vector: false,
       };
 
-      const response = await qdrant.search(COLLECTION_NAME, searchParams);
+      const { points: response } = await qdrant.query(COLLECTION_NAME, searchParams);
 
       logger.debug('Busca por vetores concluída', {
         resultsCount: response.length,
