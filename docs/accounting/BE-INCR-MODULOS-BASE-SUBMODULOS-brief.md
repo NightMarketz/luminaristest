@@ -381,6 +381,16 @@ Restam:
 | `npm run test:integration` (com `--runInBand`) para os `*.int.test.ts` | 2, 3, 5 |
 | `node scripts/classe-risco.mjs pr <n>` — PR-5 mexe em trava contábil, esperado **vermelho** | 5 |
 
+### Régua de testes (APRENDIZADOS-TESTES-2026-11-04)
+
+> Patch de 04/11. Pedido do dono (chat, 04/11): *"Já vai atualizando todas os aprendizados nos locais onde são briefs"*. Não muda item, contrato nem fork ratificado: acrescenta ao critério de aceite **só o que falta** da régua A1–A8 de [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md). Onde um ponto pediria mudar algo ratificado, ele está no corpo do PR como pergunta ao dono.
+
+- **A4 — cenário com dono.** `ModuleInstallService.int` e `dashboardController.modules.int` montam o tenant por cenário nomeado ("salão sem ESTOQUE", "salão com VEN-PAC instalado depois"), reaproveitável pelo seed de cenário do PILOTO-DFE (F-PIL-2, #1067) quando ele existir.
+- **A2 — estado do bug.** "Instala VEN-PAC depois" se testa com **linhas antigas** na tabela que muda, não com tabela vazia: é ali que mora o sombreamento do item da l. 183.
+- **A3 — uma falta por vez.** Submódulo sem a base; base desligada com submódulo ligado: cada recusa num caso, nomeando o módulo pelo nome exibido.
+- **A6 — pilha real.** Um teste HTTP cria o dashboard com o mapa-alvo e **relê** as tabelas instaladas.
+- **A1.** A fotografia `suitePayloadBaseline` é a prova do payload; a integração não a repete.
+
 ## 9. Tamanho e perfil
 
 | PR | Itens | Arquivos (estimado) | Perfil |

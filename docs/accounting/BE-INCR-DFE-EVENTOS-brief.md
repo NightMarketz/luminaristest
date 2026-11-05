@@ -275,6 +275,17 @@ ambiente do env" (ABERTO; mapa de cobertura §4) e F-FE-DFE-9 (fork pendente).
 
 ---
 
+### Régua de testes (APRENDIZADOS-TESTES-2026-11-04)
+
+> Patch de 04/11. Pedido do dono (chat, 04/11): *"Já vai atualizando todas os aprendizados nos locais onde são briefs"*. Não muda item, contrato nem fork ratificado: acrescenta ao critério de aceite **só o que falta** da régua A1–A8 de [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md). Onde um ponto pediria mudar algo ratificado, ele está no corpo do PR como pergunta ao dono.
+
+Vale para o **PR-2** e o **PR-3**, que ainda não foram executados.
+- **A2 — estado do bug.** O polling (item 18) se testa com documento `AUTHORIZED` cancelado **fora** do Luminaris (o evento chega sem pedido local) e com documento que já tem `cancelRequestedAt` (item 19).
+- **A3 — uma falta por vez.** Evento desconhecido e evento fora do teto, cada um num caso, com mensagem que nomeia o documento por número e série, nunca por id.
+- **A4 — cenário com dono.** Documento `AUTHORIZED` pronto, como extensão do cenário `dfe-manual` do PILOTO-DFE (#1067). **Dependência explícita (Q3, 04/11):** vale com o F-PIL-2 → (b), ratificado no #1067 em 04/11; se o registro de cenários do piloto não for executado antes desta fatia, esta fatia monta o emitente por fixture própria e o bloco é corrigido no fold.
+- **A5.** Os eventos reais do portal (HTML, F-FE-DFE-9) ficam EXT; o XML real de evento vira fixture.
+- **A6.** O job roda sobre repositório real, e a 2ª leitura do documento mostra `CANCELLED`.
+
 ## 4. Contratos (esboço materializável)
 
 ```prisma

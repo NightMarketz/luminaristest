@@ -166,6 +166,16 @@ O PR-5 depende de todos (F-LP-5).
 23. Verificação em build de produção (a tela fica atrás de `withAuth`), feita pelo agente no PR-5, com print e
     texto. O sign-off de browser é do dono e entra numa seção nova do `RUNBOOK-H2-WIZARD-ENTREVISTA` (§4).
 
+### Régua de testes (APRENDIZADOS-TESTES-2026-11-04)
+
+> Patch de 04/11. Pedido do dono (chat, 04/11): *"Já vai atualizando todas os aprendizados nos locais onde são briefs"*. Não muda item, contrato nem fork ratificado: acrescenta ao critério de aceite **só o que falta** da régua A1–A8 de [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md). Onde um ponto pediria mudar algo ratificado, ele está no corpo do PR como pergunta ao dono.
+
+- **A1 — uma camada por prova.** A geração de linhas (`buildSampleRows`) é unit; a equivalência prévia × create (itens 9 e 12) é integração; a montagem sob `PreviewDataSource` é vitest. Os mesmos valores não se repetem nas três camadas.
+- **A2 — estado do bug.** O teste-guarda do item 1 congela os corpos de erro também de um rascunho que **hoje falha** no create, não só de rascunho válido.
+- **A3 — uma falta por vez.** Rascunho sem tabela, campo sem tipo, relação para tabela inexistente: cada um num caso, com mensagem que nomeia a tabela ou o campo pelo rótulo.
+- **A8 — data fixa.** Semente **e** data de referência literais no `buildSampleRows`: datas de exemplo relativas à data de referência, nunca a hoje.
+- **A5 — o que sobra para fora.** No `RUNBOOK-H2-WIZARD-ENTREVISTA`, fica só a conversa com o LLM real (fumaça). Os passos de prévia viram teste de tela quando o dono decidir o LLM falso do wizard (decisão aberta no inventário de testes, §7).
+
 ## 2. Contratos (esboço)
 
 ```ts
