@@ -234,4 +234,76 @@ describe('IRRF-DISTRIBUICAO PR-4 — confirmação, lançamento, e-Lalur e cance
     expect(s.status).toBe(200);
     expect(s.body.data).toEqual({ competencia: '2026-03', codigoReceita: '5706', totalCents: 175_000, darfs: [{ decendio: 3, vencimento: '2026-04-03', totalCents: 175_000, calculos: [r.body.data.id] }] });
   });
+
+  // FIX-MENSAGENS-ID-INTERNO lote 3 (FIX-TESTES item 5; F-MSG-1 a, F-MSG-2 a1). Rótulo ratificado pelo dono (chat, 05/11, regra 5:
+  // o JCP não tem tela): "JCP <período>/<ano> (<forma>)" — o mesmo texto do histórico do lançamento. O cuid do cálculo e o do
+  // lançamento nunca entram na mensagem; conta do perfil fiscal sumida nomeia o papel dela, não o cuid.
+  describe('FIX-MENSAGENS-ID-INTERNO lote 3 — a mensagem nomeia o JCP por período/ano/forma, nunca pelo cuid', () => {
+    /** Status certo, a mensagem contém o rótulo e não contém nenhum dos cuids. A `msg` vai no objeto para o diff mostrá-la. */
+    const nomeiaSemId = (res: request.Response, status: number, rotulo: string, ...ids: string[]) => {
+      const msg = String(res.body.message);
+      expect({ status: res.status, nomeiaRotulo: msg.includes(rotulo), cuidNaMensagem: ids.filter((id) => msg.includes(id)), msg }).toEqual({
+        status,
+        nomeiaRotulo: true,
+        cuidNaMensagem: [],
+        msg,
+      });
+    };
+    const reconciliar = (dono: Dono, id: string) => request(app).post(`${BASE}/${id}/lancamento`).set(authHeader(dono)).send({ unitId: dono.unitId });
+
+    it('InterestOnEquityService:166 — 2º JCP no mesmo período (409) nomeia o JCP vivo, não o cuid do cálculo', async () => {
+      const dono = await cenario();
+      const primeiro = await confirmar(dono);
+      expect(primeiro.r.status).toBe(201);
+      const { r } = await confirmar(dono, { totalCents: 500_000 });
+      expect(r.body.code).toBe('JCP_JA_CONFIRMADO_NO_PERIODO');
+      nomeiaSemId(r, 409, 'JCP T01/2026 (DESPESA)', primeiro.r.body.data.id);
+    });
+
+    it('InterestOnEquityService:261 — JCP que mudou de status durante o cancelamento (409) nomeia o JCP, não o cuid', async () => {
+      const dono = await cenario();
+      const { r } = await confirmar(dono, { totalCents: 6_000_000 });
+      const spy = jest.spyOn(InterestOnEquityRepository.prototype, 'markCancelled').mockResolvedValueOnce(false);
+      try {
+        const res = await request(app).post(`${BASE}/${r.body.data.id}/cancel`).set(authHeader(dono)).send({ unitId: dono.unitId });
+        nomeiaSemId(res, 409, 'JCP T01/2026 (DESPESA)', r.body.data.id);
+      } finally {
+        spy.mockRestore();
+      }
+    });
+
+    it('InterestOnEquityService:320 — conta de JCP a pagar do perfil fiscal apagada (404) nomeia o papel da conta, não o cuid', async () => {
+      const dono = await cenario();
+      await prisma.account.update({ where: { id: dono.ids['2.1.7.02'] }, data: { deletedAt: new Date() } });
+      const { r } = await confirmar(dono); // a validação do lançamento antes de gravar o cálculo já lê a conta
+      nomeiaSemId(r, 404, 'JCP a pagar', dono.ids['2.1.7.02']);
+    });
+
+    it('InterestOnEquityService:339 — lançamento do JCP estornado fora do fluxo (400) nomeia o JCP, não o cuid do cálculo nem do lançamento', async () => {
+      const dono = await cenario();
+      const spy = jest.spyOn(InterestOnEquityRepository.prototype, 'markPosted').mockRejectedValueOnce(new Error('crash entre commits'));
+      const { r } = await confirmar(dono);
+      spy.mockRestore();
+      expect(r.body.data.status).toBe('PENDING_POST');
+      const [lancamento] = await lancamentos(dono);
+      await prisma.journalEntry.update({ where: { id: lancamento.id }, data: { status: 'Reversed' } });
+      const res = await reconciliar(dono, r.body.data.id);
+      nomeiaSemId(res, 400, 'JCP T01/2026 (DESPESA)', r.body.data.id, lancamento.id);
+    });
+
+    it('InterestOnEquityService:391 — Parte A do JCP já gravada por outra chamada (409) nomeia o JCP, não o cuid', async () => {
+      const dono = await cenario();
+      const crash = jest.spyOn(InterestOnEquityRepository.prototype, 'setLalurEntryIds').mockRejectedValueOnce(new Error('crash na Parte A'));
+      const { r } = await confirmar(dono, { totalCents: 6_000_000 });
+      crash.mockRestore();
+      expect(r.body.data.status).toBe('POSTED');
+      const spy = jest.spyOn(InterestOnEquityRepository.prototype, 'setLalurEntryIds').mockResolvedValueOnce(false);
+      try {
+        const res = await reconciliar(dono, r.body.data.id);
+        nomeiaSemId(res, 409, 'JCP T01/2026 (DESPESA)', r.body.data.id);
+      } finally {
+        spy.mockRestore();
+      }
+    });
+  });
 });
