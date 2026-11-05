@@ -306,7 +306,7 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
       expect({ status: segunda.status, message: segunda.body.message }).toEqual({ status: 409, message: expect.stringContaining('version divergente') });
     });
 
-    it('OPS-001 adversarial: 2 baixas CONCORRENTES (mesma version, mês sem quota postada) — só 1 vence, a outra 400/409, 1 entry de baixa só', async () => {
+    it('OPS-001 adversarial: 2 baixas CONCORRENTES (mesma version, mês sem quota postada) — só 1 vence, a outra 409, 1 entry de baixa só', async () => {
       const klass = await request(app)
         .post('/api/accounting/fixed-asset-classes')
         .set(authHeader(dono))
@@ -325,12 +325,11 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
           .send({ unitId: UNIT, assetId, disposedAt: '2026-01-31', proceedsCents: 99_167, counterpartAccountId: cashAccountId, version: 2 }); // activate() já incrementou p/ 2; NBV pós-quota (100.000-833) → sem ganho/perda
       const [a, b] = await Promise.all([disposeCall(), disposeCall()]);
       const statuses = [a.status, b.status].sort();
-      // Windows serializa SQLite (classe windows-serializa-sqlite-ci-linux-nao) — localmente as
-      // duas podem serializar como 200+400; o invariante que NÃO pode falhar em nenhum dos dois SOs
-      // é "só 1 sucesso, 1 entry de baixa" (a quota do mês, por sua vez, é idempotente por sourceId
-      // e nunca duplica em nenhum dos dois casos — read-first + P2002 race-close).
-      expect(statuses[0]).toBe(200);
-      expect([400, 409]).toContain(statuses[1]);
+      // Windows serializa SQLite (classe windows-serializa-sqlite-ci-linux-nao). Com o CAS de version antes da
+      // checagem de status (IMO-1, dono 04/11: "Apertar para [200,409]"), a 2ª baixa dá 409 tanto serializada
+      // (chega com version 2, banco já adiante) quanto concorrente (perde o CAS final). Invariante: só 1 sucesso,
+      // 1 entry de baixa (a quota do mês é idempotente por sourceId — read-first + P2002 race-close).
+      expect(statuses).toEqual([200, 409]);
       expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.disposal', sourceId: assetId } })).toBe(1);
       expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.depreciation', sourceId: `${assetId}:2026-01` } })).toBe(1);
     });
