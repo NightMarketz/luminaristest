@@ -192,6 +192,9 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
   async activateAsset(scope: AccountingScope, id: string, dto: ActivateFixedAssetInput): Promise<FixedAsset> {
     if (!this.policy.canManageFixedAssets(scope)) throw new ForbiddenError('Você não tem permissão para ativar ativos.');
     const current = await this.requireAsset(scope, id);
+    if (current.version !== dto.version) {
+      throw new ConflictError(`Ativo '${id}' foi alterado por outra operação (version divergente) — releia e tente de novo.`);
+    }
     if (current.status !== 'PENDING_ACTIVATION') {
       throw new ValidationError(`Ativo '${id}' está em status ${current.status}; só PENDING_ACTIVATION pode ser ativado.`);
     }
@@ -235,6 +238,13 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
   async disposeAsset(scope: AccountingScope, id: string, dto: DisposeFixedAssetInput): Promise<FixedAsset> {
     if (!this.policy.canManageFixedAssets(scope)) throw new ForbiddenError('Você não tem permissão para baixar ativos.');
     let asset = await this.requireAsset(scope, id);
+    // CAS de leitura: o `version` que o CLIENTE leu antes de chamar dispose precisa bater AGORA,
+    // antes de qualquer efeito colateral (a postagem sequencial abaixo vai avançar o version deste
+    // mesmo ativo por conta própria — checar depois dela compararia com um valor que a própria
+    // chamada já mudou, nunca o de um ator externo).
+    if (asset.version !== dto.version) {
+      throw new ConflictError(`Ativo '${id}' foi alterado por outra operação (version divergente) — releia e tente de novo.`);
+    }
     if (asset.status !== 'ACTIVE') {
       throw new ValidationError(`Ativo '${id}' está em status ${asset.status}; só ACTIVE pode ser baixado.`);
     }
@@ -244,14 +254,6 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     const disposedAtDate = new Date(`${dto.disposedAt}T00:00:00.000Z`);
     if (!asset.activatedAt || disposedAtDate < asset.activatedAt) {
       throw new ValidationError(`disposedAt (${dto.disposedAt}) não pode ser anterior a activatedAt.`);
-    }
-
-    // CAS de leitura: o `version` que o CLIENTE leu antes de chamar dispose precisa bater AGORA,
-    // antes de qualquer efeito colateral (a postagem sequencial abaixo vai avançar o version deste
-    // mesmo ativo por conta própria — checar depois dela compararia com um valor que a própria
-    // chamada já mudou, nunca o de um ator externo).
-    if (asset.version !== dto.version) {
-      throw new ConflictError(`Ativo '${id}' foi alterado por outra operação (version divergente) — releia e tente de novo.`);
     }
 
     // Baixa sequencial (execution-plan Passo 14): posta a quota do mês de disposedAt antes do

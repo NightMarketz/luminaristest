@@ -138,6 +138,27 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
     expect(res.status).toBe(409);
   });
 
+  // IMO-1 (RUNBOOK-H2-IMOBILIZADO passo 5; FE-INCR-FIXED-ASSETS-brief.md:38 e item 14 — "409 de CAS"). Outra aba já
+  // ativou o bem (status E version mudaram); quem chega com o version VELHO tem de receber o 409 de CAS, que é o que faz
+  // o FE recarregar a lista — hoje o serviço checa o status antes do version e devolve 400.
+  it('IMO-1: activate com o version lido antes de outra ativação (1, banco em 2) é 409 (CAS), não 400 de status', async () => {
+    const klass = await request(app).post('/api/accounting/fixed-asset-classes').set(authHeader(dono)).send({ unitId: UNIT, code: 'IMO1-ACT', name: 'x', depreciable: false, costAccountId });
+    const asset = await request(app)
+      .post('/api/accounting/fixed-assets')
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, classId: klass.body.data.id, code: 'A-IMO1-ACT', description: 'x', costCents: 1000, residualValueCents: 0, acquiredAt: '2026-01-01', annualRateBp: 1000 });
+    const assetId = asset.body.data.id as string;
+    const primeira = await request(app).post(`/api/accounting/fixed-assets/${assetId}/activate`).set(authHeader(dono)).send({ unitId: UNIT, assetId, activatedAt: '2026-01-01', version: 1 });
+    expect(primeira.status).toBe(200);
+    expect(primeira.body.data.version).toBe(2);
+
+    const segunda = await request(app)
+      .post(`/api/accounting/fixed-assets/${assetId}/activate`)
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, assetId, activatedAt: '2026-01-01', version: 1 });
+    expect({ status: segunda.status, message: segunda.body.message }).toEqual({ status: 409, message: expect.stringContaining('version divergente') });
+  });
+
   it('assetId do corpo divergente do :id é 400 — nunca um dos dois ignorado', async () => {
     const res = await request(app)
       .put('/api/accounting/fixed-assets/qualquer-id')
@@ -253,16 +274,39 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
       expect(Number(byCode.get('1.1.1')?.debitCents)).toBe(100_000); // caixa recebido
       expect(Number(byCode.get('3.9')?.creditCents)).toBe(833); // ganho
 
-      // Chamada sequencial SUBSEQUENTE (já DISPOSED) é 400 pelo guard de status.
+      // Chamada sequencial SUBSEQUENTE (já DISPOSED) com o version velho é recusada e não posta 2ª baixa. O status
+      // dela (409 de CAS, dono 04/11: "409 (BRIEF item 14)") é o caso IMO-1 de baixa logo abaixo — aqui fica só o
+      // invariante de não duplicar.
       const again = await request(app)
         .post(`/api/accounting/fixed-assets/${assetId}/dispose`)
         .set(authHeader(dono))
         .send({ unitId: UNIT, assetId, disposedAt: '2026-01-31', proceedsCents: 100_000, counterpartAccountId: cashAccountId, version: afterRun!.version });
-      expect(again.status).toBe(400);
+      expect(again.status).not.toBe(200);
       expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.disposal', sourceId: assetId } })).toBe(1);
     });
 
-    it('OPS-001 adversarial: 2 baixas CONCORRENTES (mesma version, mês sem quota postada) — só 1 vence, a outra 400/409, 1 entry de baixa só', async () => {
+    // IMO-1, baixa (dono, chat, 04/11: "409 (BRIEF item 14)" — FE-INCR-FIXED-ASSETS-brief.md item 14, "409 de CAS
+    // (ativar/baixar)"). Outra aba já baixou o bem (status E version mudaram); quem chega com o version VELHO tem de
+    // receber o 409 de CAS — hoje o serviço checa o status antes do version e devolve 400.
+    it('IMO-1: dispose com o version lido antes de outra baixa (2, banco em 3) é 409 (CAS), não 400 de status', async () => {
+      const klass = await request(app).post('/api/accounting/fixed-asset-classes').set(authHeader(dono)).send({ unitId: UNIT, code: 'IMO1-DISP', name: 'x', depreciable: false, costAccountId });
+      const asset = await request(app)
+        .post('/api/accounting/fixed-assets')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, classId: klass.body.data.id, code: 'A-IMO1-DISP', description: 'x', costCents: 50_000, residualValueCents: 0, acquiredAt: '2026-01-01', annualRateBp: 1000 });
+      const assetId = asset.body.data.id as string;
+      const ativa = await request(app).post(`/api/accounting/fixed-assets/${assetId}/activate`).set(authHeader(dono)).send({ unitId: UNIT, assetId, activatedAt: '2026-01-01', version: 1 });
+      expect(ativa.body.data.version).toBe(2);
+      const baixa = { unitId: UNIT, assetId, disposedAt: '2026-01-31', proceedsCents: 50_000, counterpartAccountId: cashAccountId, version: 2 };
+      const primeira = await request(app).post(`/api/accounting/fixed-assets/${assetId}/dispose`).set(authHeader(dono)).send(baixa);
+      expect(primeira.status).toBe(200);
+      expect(primeira.body.data.version).toBeGreaterThan(2);
+
+      const segunda = await request(app).post(`/api/accounting/fixed-assets/${assetId}/dispose`).set(authHeader(dono)).send(baixa);
+      expect({ status: segunda.status, message: segunda.body.message }).toEqual({ status: 409, message: expect.stringContaining('version divergente') });
+    });
+
+    it('OPS-001 adversarial: 2 baixas CONCORRENTES (mesma version, mês sem quota postada) — só 1 vence, a outra 409, 1 entry de baixa só', async () => {
       const klass = await request(app)
         .post('/api/accounting/fixed-asset-classes')
         .set(authHeader(dono))
@@ -281,12 +325,11 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
           .send({ unitId: UNIT, assetId, disposedAt: '2026-01-31', proceedsCents: 99_167, counterpartAccountId: cashAccountId, version: 2 }); // activate() já incrementou p/ 2; NBV pós-quota (100.000-833) → sem ganho/perda
       const [a, b] = await Promise.all([disposeCall(), disposeCall()]);
       const statuses = [a.status, b.status].sort();
-      // Windows serializa SQLite (classe windows-serializa-sqlite-ci-linux-nao) — localmente as
-      // duas podem serializar como 200+400; o invariante que NÃO pode falhar em nenhum dos dois SOs
-      // é "só 1 sucesso, 1 entry de baixa" (a quota do mês, por sua vez, é idempotente por sourceId
-      // e nunca duplica em nenhum dos dois casos — read-first + P2002 race-close).
-      expect(statuses[0]).toBe(200);
-      expect([400, 409]).toContain(statuses[1]);
+      // Windows serializa SQLite (classe windows-serializa-sqlite-ci-linux-nao). Com o CAS de version antes da
+      // checagem de status (IMO-1, dono 04/11: "Apertar para [200,409]"), a 2ª baixa dá 409 tanto serializada
+      // (chega com version 2, banco já adiante) quanto concorrente (perde o CAS final). Invariante: só 1 sucesso,
+      // 1 entry de baixa (a quota do mês é idempotente por sourceId — read-first + P2002 race-close).
+      expect(statuses).toEqual([200, 409]);
       expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.disposal', sourceId: assetId } })).toBe(1);
       expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.depreciation', sourceId: `${assetId}:2026-01` } })).toBe(1);
     });
