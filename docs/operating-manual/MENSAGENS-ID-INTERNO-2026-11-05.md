@@ -1,0 +1,270 @@
+# Inventário — mensagens ao cliente com id interno (FIX-TESTES item 5, passo 1)
+
+> **05/11/2026**, `origin/main` 908870c3f. BRIEF: `docs/accounting/FIX-MENSAGENS-ID-INTERNO-brief.md` (PR #1075, ainda sem
+> merge). Autorização: dono, chat, 04/11, questionário: *"Executa, forks na recomendação (Recomendado)"*, registrada na nota
+> `docs/plano/nos/FIX-TESTES.md` do mesmo PR. Forks: F-MSG-1 (a), F-MSG-2 (a1), F-MSG-3 (a).
+
+## Como foi medido
+
+- Script no scratchpad da sessão (não versionado, como pede o BRIEF): varre `server/src/features/**/*.ts` fora de `__tests__`
+  com a regex do BRIEF, `new XError(\`…'${…Id|id|Ref}'…\`)` **numa linha só**.
+- **226 sites** (o BRIEF contou 228 em 66f5569ccd; a diferença é o código que mudou desde então, não foi conferida site a site).
+- O número é **teto da regex, não medida da classe**: `throw` em várias linhas fica de fora (ex.: `FixedAssetService.ts:372`,
+  `Classe de bem '${item.classId}' … payable '${payable.id}'`), e id interpolado sem aspas também.
+
+## Regra de classificação (F-MSG-1 a + F-MSG-2 a1)
+
+- **fica:** o id é eco do que o cliente mandou (`:id` da URL ou id no corpo) **e** o registro não foi achado, então não há
+  rótulo para pôr no lugar (F-MSG-2: o id só aparece quando o rótulo está vazio).
+- **corrigir:** o registro já foi carregado (o usuário o vê pelo código/nome) ou o id é de **outro** registro que o usuário
+  não mandou (classe, conta, venda). A mensagem passa a nomear pelo rótulo: código + descrição/nome.
+- **revisar:** id do corpo fora de um "não achado"; o lote decide lendo o site.
+
+**Grau:** o lote 1 (imobilizado) está **verificado** por leitura de cada site (coluna Motivo começa com "verificado"). Os
+demais estão **inferidos** pela forma do `throw` (tipo do erro + expressão interpolada). A heurística erra num caso
+conhecido: `NotFoundError` com parâmetro nu (`id`) conta como eco, mas o mesmo método pode ser chamado por dentro com id
+interno (foi o que aconteceu no `FixedAssetService.ts:425`). Cada lote reclassifica os seus sites lendo o código antes
+do teste-guarda.
+
+## Resumo por lote (F-MSG-3 a: por exposição na tela)
+
+| Lote | Sites | corrigir (lote 1 verificado; demais inferidos) |
+|---|---|---|
+| 1 imobilizado | 18 | 14 |
+| 2 operação (AP/AR, cobrança, venda, pacote) | 37 | 5 |
+| 3 fechamento (LALUR, distribuição, JCP, revisão, entrega) | 51 | 20 |
+| 4+ demais | 120 | 19 |
+
+Lote 2 casa o nome do arquivo com `Payable|Receivable|Billing|Charge|Collection|Boleto|Pix|Payment|Sale|Package|Settlement`;
+lote 3 com `Lalur|ProfitDistribution|InterestOnEquity|AccountingReview|AccountingDelivery`. Cada PR leva até 8 serviços.
+
+## Sites
+
+| Lote | Arquivo:linha | Erro | Texto | Id (`${…}`) | F-MSG-1 | Motivo |
+|---|---|---|---|---|---|---|
+| 1 | `src/features/accounting/services/FixedAssetClassService.ts:44` | NotFoundError | Classe de bem '${id}' não foi encontrada. | `id` | fica | verificado: eco do :id da URL (get/update/delete); não achado, sem rótulo |
+| 1 | `src/features/accounting/services/FixedAssetClassService.ts:134` | ValidationError | Classe '${id}' tem ${liveAssets} ativo(s) vivo(s) — remova ou baixe-os antes. | `id` | corrigir | verificado: classe já carregada (requireClass); nomear por code — name |
+| 1 | `src/features/accounting/services/FixedAssetClassService.ts:141` | ValidationError | ${label} '${id}' não existe neste escopo. | `id` | fica | verificado: eco do id de conta do corpo (create/update); não achado, sem rótulo |
+| 1 | `src/features/accounting/services/FixedAssetService.ts:77` | NotFoundError | Ativo '${id}' não foi encontrado. | `id` | fica | verificado: eco do :id da URL; não achado, sem rótulo |
+| 1 | `src/features/accounting/services/FixedAssetService.ts:85` | NotFoundError | Classe de bem '${dto.classId}' não foi encontrada. | `dto.classId` | fica | verificado: eco do classId do corpo; não achado, sem rótulo |
+| 1 | `src/features/accounting/services/FixedAssetService.ts:136` | ValidationError | Ativo '${id}' está em status ${current.status}; só PENDING_ACTIVATION pode ser editado. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 1 | `src/features/accounting/services/FixedAssetService.ts:140` | NotFoundError | Classe de bem '${nextClassId}' não foi encontrada. | `nextClassId` | corrigir | verificado: sem classId no corpo o id é current.classId (interno); nomear pelo ativo. Com classId no corpo, eco fica |
+| 1 | `src/features/accounting/services/FixedAssetService.ts:183` | ValidationError | Ativo '${id}' está em status ${current.status}; não pode ser removido. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 1 | `src/features/accounting/services/FixedAssetService.ts:186` | ValidationError | Ativo '${id}' já tem quota de depreciação postada — não pode ser removido. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 1 | `src/features/accounting/services/FixedAssetService.ts:196` | ConflictError | Ativo '${id}' foi alterado por outra operação (version divergente) — releia e tente de novo. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 1 | `src/features/accounting/services/FixedAssetService.ts:199` | ValidationError | Ativo '${id}' está em status ${current.status}; só PENDING_ACTIVATION pode ser ativado. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 1 | `src/features/accounting/services/FixedAssetService.ts:206` | NotFoundError | Classe de bem '${current.classId}' não foi encontrada. | `current.classId` | corrigir | id de outro registro (current.classId); nomear pelo registro dono |
+| 1 | `src/features/accounting/services/FixedAssetService.ts:226` | ConflictError | Ativo '${id}' foi alterado por outra operação (version divergente) — releia e tente de novo. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 1 | `src/features/accounting/services/FixedAssetService.ts:246` | ConflictError | Ativo '${id}' foi alterado por outra operação (version divergente) — releia e tente de novo. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 1 | `src/features/accounting/services/FixedAssetService.ts:249` | ValidationError | Ativo '${id}' está em status ${asset.status}; só ACTIVE pode ser baixado. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 1 | `src/features/accounting/services/FixedAssetService.ts:252` | NotFoundError | Classe de bem '${asset.classId}' não foi encontrada. | `asset.classId` | corrigir | id de outro registro (asset.classId); nomear pelo registro dono |
+| 1 | `src/features/accounting/services/FixedAssetService.ts:322` | ConflictError | Ativo '${id}' foi alterado por outra operação (version divergente) — releia e tente de novo. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 1 | `src/features/accounting/services/FixedAssetService.ts:425` | ValidationError | ${label} '${id}' não existe neste escopo. | `id` | corrigir | verificado: id interno (conta da classe ou das settings); nomear pelo dono. counterpartAccountId do corpo = eco, fica |
+| 2 | `src/features/accounting/services/CollectionChargeService.ts:141` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/CollectionChargeService.ts:150` | ConflictError | ${CHARGE_LIVE_EXISTS}: o título já tem a cobrança viva '${live.id}' (${live.status}). | `live.id` | corrigir | id de outro registro (live.id); nomear pelo rótulo |
+| 2 | `src/features/accounting/services/CollectionChargeService.ts:334` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/CollectionChargeService.ts:371` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/CollectionChargeService.ts:556` | NotFoundError | Cobrança '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/CollectionChargeService.ts:562` | NotFoundError | Cobrança '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/CollectionChargeService.ts:568` | NotFoundError | Conta de pagamento '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/PayableService.ts:224` | NotFoundError | Conta a pagar '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/PayableService.ts:707` | NotFoundError | Conta a pagar '${payableId}' não foi encontrada. | `payableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/PayableService.ts:871` | NotFoundError | Conta a pagar '${input.payableId}' não foi encontrada. | `input.payableId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/PayableService.ts:875` | ValidationError | Comprovante '${input.sourceDocumentId}' não existe neste escopo — a apropriação exige o documento da extinção (F-IBS-4 a). | `input.sourceDocumentId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/PayableService.ts:907` | NotFoundError | Conta a pagar '${payableId}' não foi encontrada. | `payableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/PayableService.ts:1025` | NotFoundError | Pagamento '${paymentId}' não foi encontrado. | `paymentId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/PayableService.ts:1046` | NotFoundError | Conta a pagar '${payableId}' não foi encontrada. | `payableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/PayableService.ts:1078` | NotFoundError | Pagamento '${paymentId}' não foi encontrado. | `paymentId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/PayableService.ts:1093` | NotFoundError | Conta a pagar '${payableId}' não foi encontrada. | `payableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/PayableService.ts:1597` | ValidationError | Conta a recuperar '${accountId}' não existe neste escopo. | `accountId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/PayableService.ts:1675` | ValidationError | Classe de bem '${item.classId}' não existe nesta unidade. | `item.classId` | corrigir | id de outro registro (item.classId); nomear pelo registro dono |
+| 2 | `src/features/accounting/services/PayableService.ts:1679` | ValidationError | Conta do bem '${klass.costAccountId}' (classe '${klass.code}') não existe neste escopo. | `klass.costAccountId` | corrigir | id de outro registro (klass.costAccountId); nomear pelo registro dono |
+| 2 | `src/features/accounting/services/PaymentAccountService.ts:88` | ValidationError | Conta contábil '${dto.glAccountId}' não existe neste escopo. | `dto.glAccountId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 2 | `src/features/accounting/services/PaymentAccountService.ts:213` | NotFoundError | Conta de pagamento '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/ReceivableService.ts:128` | NotFoundError | Conta a receber '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/ReceivableService.ts:241` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/ReceivableService.ts:355` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/ReceivableService.ts:435` | NotFoundError | Recebimento '${receiptId}' não foi encontrado. | `receiptId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/ReceivableService.ts:442` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/ReceivableService.ts:468` | NotFoundError | Recebimento '${receiptId}' não foi encontrado. | `receiptId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/ReceivableService.ts:479` | NotFoundError | Conta a receber '${receivableId}' não foi encontrada. | `receivableId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/accounting/services/ReceivableService.ts:646` | ValidationError | provider_balance_requires_payment_account: a conta '${debitAccountId}' da conta de provedor não é folha ativa do escopo. | `debitAccountId` | corrigir | registro já carregado/visto pelo rótulo; trocar debitAccountId pelo rótulo |
+| 2 | `src/features/packages/services/PackageAcceptanceService.ts:191` | NotFoundError | Venda '${saleId}' não encontrada. | `saleId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/packages/services/PackageAcceptanceService.ts:217` | NotFoundError | Pacote '${packageId}' não encontrado no catálogo. | `packageId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/sales/services/RegisterPaymentService.ts:55` | NotFoundError | Sale '${input.saleId}' não foi encontrada. | `input.saleId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 2 | `src/features/sales/services/RegisterPaymentService.ts:160` | ValidationError | Valor da venda '${saleId}' inválido para consumo de saldo de pacote. | `saleId` | corrigir | registro já carregado/visto pelo rótulo; trocar saleId pelo rótulo |
+| 2 | `src/features/sales/services/SaleFiscalGuardService.ts:109` | NotFoundError | Venda '${saleId}' sem unidade. | `saleId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/sales/services/SaleFiscalGuardService.ts:121` | NotFoundError | Sale '${saleId}' não foi encontrada. | `saleId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/sales/services/SaleFiscalGuardService.ts:226` | NotFoundError | Sale '${saleId}' não foi encontrada. | `saleId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 2 | `src/features/sales/services/SalesCancellationService.ts:64` | NotFoundError | Sale '${input.saleId}' não foi encontrada. | `input.saleId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 3 | `src/features/accounting/services/AccountingDeliveryService.ts:323` | NotFoundError | Contador '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/AccountingDeliveryService.ts:332` | NotFoundError | Entrega '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/AccountingDeliveryService.ts:367` | NotFoundError | Job da ECD '${ecdJobId}' não foi encontrado. | `ecdJobId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/AccountingDeliveryService.ts:369` | NotFoundError | Job da ECF '${ecfJobId}' não foi encontrado. | `ecfJobId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/AccountingDeliveryService.ts:372` | ValidationError | O job '${ecdJobId}' não é uma ECD (kind=${ecd.kind}). | `ecdJobId` | corrigir | registro já carregado/visto pelo rótulo; trocar ecdJobId pelo rótulo |
+| 3 | `src/features/accounting/services/AccountingDeliveryService.ts:375` | ValidationError | O job '${ecfJobId}' não é uma ECF (kind=${ecf.kind}). | `ecfJobId` | corrigir | registro já carregado/visto pelo rótulo; trocar ecfJobId pelo rótulo |
+| 3 | `src/features/accounting/services/AccountingDeliveryService.ts:435` | ValidationError | O job extra '${id}' foi informado mais de uma vez em extraJobIds. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 3 | `src/features/accounting/services/AccountingDeliveryService.ts:440` | NotFoundError | Job extra '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/AccountingDeliveryService.ts:447` | ValidationError | O job extra '${id}' não tem sha256 gravado. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 3 | `src/features/accounting/services/AccountingReviewService.ts:253` | ConflictError | Achado '${finding.id}' já está resolvido (${finding.resolution}). | `finding.id` | corrigir | id de outro registro (finding.id); nomear pelo rótulo |
+| 3 | `src/features/accounting/services/AccountingReviewService.ts:305` | ConflictError | Achado '${finding.id}' já está resolvido (${finding.resolution}). | `finding.id` | corrigir | id de outro registro (finding.id); nomear pelo rótulo |
+| 3 | `src/features/accounting/services/AccountingReviewService.ts:412` | NotFoundError | Revisão '${review.id}' não foi encontrada. | `review.id` | corrigir | id de outro registro (review.id); nomear pelo registro dono |
+| 3 | `src/features/accounting/services/AccountingReviewService.ts:515` | ConflictError | Revisão '${review.id}' não está OPEN (status=${review.status}). | `review.id` | corrigir | id de outro registro (review.id); nomear pelo rótulo |
+| 3 | `src/features/accounting/services/AccountingReviewService.ts:528` | NotFoundError | Revisão '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/AccountingReviewService.ts:534` | NotFoundError | Achado '${findingId}' não foi encontrado nesta revisão. | `findingId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/AccountingReviewService.ts:549` | NotFoundError | Job da ${kind} '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/AccountingReviewService.ts:551` | ValidationError | O job '${id}' não é uma ${kind} (kind=${job.kind}). | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 3 | `src/features/accounting/services/AccountingReviewService.ts:553` | ValidationError | O job '${id}' não está EXPORTED (status=${job.status}) — o arquivo ainda não existe. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/AccountingReviewService.ts:556` | ValidationError | O job '${id}' não tem período gravado — regere o arquivo para revisá-lo. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 3 | `src/features/accounting/services/AccountingReviewService.ts:578` | ValidationError | Alvo ${targetType} '${targetId}' não existe neste escopo. | `targetId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/InterestOnEquityService.ts:230` | NotFoundError | JCP '${id}' não encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/InterestOnEquityService.ts:261` | ConflictError | O JCP '${id}' mudou de status durante o cancelamento. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 3 | `src/features/accounting/services/InterestOnEquityService.ts:293` | NotFoundError | JCP '${id}' não encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/InterestOnEquityService.ts:320` | NotFoundError | Conta '${id}' não encontrada nesta unidade. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/InterestOnEquityService.ts:339` | ValidationError | O lançamento do JCP '${atual.id}' (${entry.id}) foi estornado fora do fluxo. | `atual.id` | corrigir | id de outro registro (atual.id); nomear pelo rótulo |
+| 3 | `src/features/accounting/services/InterestOnEquityService.ts:391` | ConflictError | A Parte A do JCP '${row.id}' já foi gravada. | `row.id` | corrigir | id de outro registro (row.id); nomear pelo rótulo |
+| 3 | `src/features/accounting/services/InterestOnEquityService.ts:405` | NotFoundError | JCP '${id}' não encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/InterestOnEquityService.ts:456` | NotFoundError | Conta '${input.debitoPlAccountId}' não encontrada nesta unidade. | `input.debitoPlAccountId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 3 | `src/features/accounting/services/LalurService.ts:307` | NotFoundError | Conta da Parte B '${line.parteBId}' não foi encontrada. | `line.parteBId` | corrigir | id de outro registro (line.parteBId); nomear pelo registro dono |
+| 3 | `src/features/accounting/services/LalurService.ts:317` | NotFoundError | Conta contábil '${line.accountId}' não foi encontrada. | `line.accountId` | corrigir | id de outro registro (line.accountId); nomear pelo registro dono |
+| 3 | `src/features/accounting/services/LalurService.ts:349` | NotFoundError | Lançamento contábil '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/LalurService.ts:351` | ValidationError | Lançamento contábil '${id}' ainda não foi postado (sem NUM_LCTO) — só lançamentos postados entram no M312/M362 (Manual p.254). | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 3 | `src/features/accounting/services/LalurService.ts:354` | ValidationError | Lançamento contábil '${id}' (${j.date.toISOString().slice(0, 10)}) está fora do período ${quarter}/${year} do ajuste (M312: lançamentos do p | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 3 | `src/features/accounting/services/LalurService.ts:407` | NotFoundError | Ajuste '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/LalurService.ts:473` | NotFoundError | Ajuste '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/LalurService.ts:544` | NotFoundError | Ajuste '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/LalurService.ts:638` | NotFoundError | Conta da Parte B '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/LalurService.ts:669` | NotFoundError | Conta da Parte B '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/LalurService.ts:711` | NotFoundError | Conta da Parte B (contrapartida) '${contrapartidaId}' não foi encontrada. | `contrapartidaId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/LalurService.ts:731` | NotFoundError | Conta da Parte B '${dto.parteBId}' não foi encontrada. | `dto.parteBId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 3 | `src/features/accounting/services/LalurService.ts:766` | NotFoundError | Movimento da Parte B '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/LalurService.ts:783` | NotFoundError | Conta da Parte B '${existing.parteBId}' não foi encontrada. | `existing.parteBId` | corrigir | id de outro registro (existing.parteBId); nomear pelo registro dono |
+| 3 | `src/features/accounting/services/LalurService.ts:812` | NotFoundError | Movimento da Parte B '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/ProfitDistributionService.ts:242` | NotFoundError | Distribuição '${id}' não encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/ProfitDistributionService.ts:269` | ConflictError | A distribuição '${id}' mudou de status durante o cancelamento. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 3 | `src/features/accounting/services/ProfitDistributionService.ts:299` | NotFoundError | Distribuição '${id}' não encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/ProfitDistributionService.ts:307` | NotFoundError | Sócio '${input.partnerId}' não encontrado. | `input.partnerId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 3 | `src/features/accounting/services/ProfitDistributionService.ts:349` | NotFoundError | Ato de aprovação '${input.atoSourceDocumentId}' não encontrado nesta unidade. | `input.atoSourceDocumentId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 3 | `src/features/accounting/services/ProfitDistributionService.ts:408` | ValidationError | O lançamento da distribuição '${row.id}' (${entry.id}) foi estornado fora do fluxo. | `row.id` | corrigir | id de outro registro (row.id); nomear pelo rótulo |
+| 3 | `src/features/accounting/services/ProfitDistributionService.ts:449` | NotFoundError | Distribuição '${id}' não encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 3 | `src/features/accounting/services/ProfitDistributionService.ts:464` | NotFoundError | Conta '${id}' não encontrada nesta unidade. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/repositories/DataExchangeRepository.ts:119` | NotFoundError | Job de importação/exportação '${id}' não encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/repositories/DataExchangeRepository.ts:125` | NotFoundError | Job '${id}' não encontrado após atualização. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/repositories/DataExchangeRepository.ts:172` | NotFoundError | Linha de importação '${id}' não encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/repositories/DocumentAttachmentRepository.ts:84` | NotFoundError | Anexo '${id}' não encontrado para exclusão. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/repositories/JournalEntryRepository.ts:122` | NotFoundError | Lançamento '${id}' não encontrado para atualizar status. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/repositories/JournalEntryRepository.ts:183` | NotFoundError | Lançamento '${id}' não encontrado para vincular estorno. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/repositories/JournalEntryRepository.ts:198` | NotFoundError | Lançamento '${id}' não encontrado para renomear sourceId. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/repositories/ReconciliationRepository.ts:118` | NotFoundError | Extrato '${id}' não encontrado para exclusão. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/AccountantAssignmentService.ts:91` | NotFoundError | Contador '${dto.accountingContactId}' não foi encontrado. | `dto.accountingContactId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/accounting/services/AccountantAssignmentService.ts:138` | NotFoundError | Atribuição '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/AccountantAssignmentService.ts:183` | NotFoundError | Atribuição '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/AccountantAssignmentService.ts:186` | ConflictError | A atribuição '${id}' já está encerrada. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 4+ | `src/features/accounting/services/AccountingContactService.ts:63` | NotFoundError | Contador '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/AccountingContactService.ts:131` | NotFoundError | Contador '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/AccountingContactService.ts:177` | NotFoundError | Contador '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/AccountingPolicyVersionService.ts:150` | NotFoundError | Versão de política '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/AccountingPolicyVersionService.ts:166` | NotFoundError | Versão de política '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/AccountingPolicyVersionService.ts:196` | NotFoundError | Versão de política '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/AccountingScopeSettingsService.ts:162` | ValidationError | Conta da Parte B '${input.depreciationParteBAccountId}' não existe neste escopo. | `input.depreciationParteBAccountId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/accounting/services/AccountingScopeSettingsService.ts:212` | ValidationError | Conta de ${label} '${id}' não existe neste escopo. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/CompanyFiscalProfileService.ts:419` | NotFoundError | Contador '${data.contadorContactId}' não encontrado neste escopo. | `data.contadorContactId` | corrigir | id de outro registro (data.contadorContactId); nomear pelo registro dono |
+| 4+ | `src/features/accounting/services/CompanyFiscalProfileService.ts:422` | NotFoundError | Signatário '${data.representanteLegalSignerId}' não encontrado. | `data.representanteLegalSignerId` | corrigir | id de outro registro (data.representanteLegalSignerId); nomear pelo registro dono |
+| 4+ | `src/features/accounting/services/CompanyFiscalProfileService.ts:430` | NotFoundError | Conta '${id}' do mapa do PL (${grupo}) não encontrada neste escopo. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/CounterpartyService.ts:69` | NotFoundError | Contraparte '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/CounterpartyService.ts:137` | NotFoundError | Contraparte '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/CounterpartyService.ts:180` | NotFoundError | Contraparte '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/CounterpartyService.ts:201` | ValidationError | declaracaoOptanteDocumentId '${documentId}' não é um documento desta unidade. | `documentId` | corrigir | registro já carregado/visto pelo rótulo; trocar documentId pelo rótulo |
+| 4+ | `src/features/accounting/services/DanfeService.ts:45` | NotFoundError | Documento fiscal '${fiscalDocumentId}' não encontrado. | `fiscalDocumentId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/DataExchangeExportService.ts:704` | NotFoundError | Job '${jobId}' não encontrado. | `jobId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/DepreciationRateService.ts:73` | NotFoundError | Taxa de depreciação '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/DepreciationRateService.ts:125` | NotFoundError | Taxa de depreciação '${id}' não foi encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/DepreciationService.ts:144` | NotFoundError | Classe de bem '${classId}' não foi encontrada. | `classId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/DepreciationService.ts:187` | NotFoundError | Ativo '${assetId}' não foi encontrado. | `assetId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/DepreciationService.ts:189` | NotFoundError | Classe de bem '${asset.classId}' não foi encontrada. | `asset.classId` | corrigir | id de outro registro (asset.classId); nomear pelo registro dono |
+| 4+ | `src/features/accounting/services/DepreciationService.ts:287` | ConflictError | Ativo '${asset.id}' foi alterado por outra operação durante a depreciação — releia e tente de novo. | `asset.id` | corrigir | id de outro registro (asset.id); nomear pelo rótulo |
+| 4+ | `src/features/accounting/services/DepreciationService.ts:344` | ValidationError | ${label} '${id}' não existe neste escopo. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/DimensionReportService.ts:293` | NotFoundError | Eixo de dimensão '${query.definitionId}' não foi encontrado. | `query.definitionId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/accounting/services/DimensionService.ts:106` | NotFoundError | Eixo de dimensão '${definitionId}' não foi encontrado. | `definitionId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/DimensionService.ts:147` | NotFoundError | Eixo de dimensão '${dto.definitionId}' não foi encontrado. | `dto.definitionId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/accounting/services/DimensionService.ts:156` | NotFoundError | Valor-pai '${dto.parentId}' não foi encontrado. | `dto.parentId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/accounting/services/DimensionService.ts:212` | NotFoundError | Valor de dimensão '${valueId}' não foi encontrado. | `valueId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/dimensionTagging.ts:39` | ValidationError | Valor de dimensão '${valueId}' não existe nesta unidade. | `valueId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/EntryApprovalService.ts:129` | NotFoundError | Lançamento '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/EntryApprovalService.ts:174` | NotFoundError | Lançamento '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/EntryApprovalService.ts:223` | NotFoundError | Lançamento '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/EntryApprovalService.ts:338` | NotFoundError | Lançamento '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/EntryApprovalService.ts:476` | NotFoundError | Lançamento '${id}' não foi encontrado após a operação. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/FiscalDocumentEmissionService.ts:607` | ValidationError | Documento fiscal '${id}' não encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/FiscalDocumentEmissionService.ts:616` | ValidationError | Documento fiscal '${id}' não encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/FiscalDocumentEmissionService.ts:897` | ValidationError | emissao_bloqueada: lançamento âncora '${anchorSourceType}' não encontrado para a venda '${saleId}'. | `saleId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/FiscalDocumentLifecycleService.ts:279` | ValidationError | Documento fiscal '${documentId}' não encontrado. | `documentId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/FiscalDocumentLifecycleService.ts:350` | ValidationError | Documento fiscal '${documentId}' não encontrado. | `documentId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/FiscalDocumentLifecycleService.ts:570` | ValidationError | Documento fiscal '${documentId}' não encontrado. | `documentId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/FiscalDocumentLifecycleService.ts:910` | ValidationError | Documento fiscal '${documentId}' não encontrado. | `documentId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/FiscalDocumentLifecycleService.ts:995` | ValidationError | Documento fiscal '${documentId}' não encontrado. | `documentId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/FiscalProfileService.ts:497` | ValidationError | Conta de ${label} '${id}' não existe neste escopo. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/FiscalProfileService.ts:508` | ValidationError | Conta de ${label} '${id}' não existe neste escopo. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/FiscalProfileService.ts:519` | ValidationError | Conta de ${label} '${id}' não existe neste escopo. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/FiscalProfileService.ts:529` | ValidationError | Conta de ${label} '${id}' não existe neste escopo. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/IbsCbsAssessmentService.ts:168` | NotFoundError | Apuração de IBS/CBS '${id}' não encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/IbsCbsAssessmentService.ts:277` | NotFoundError | Apuração de IBS/CBS '${id}' não encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/IbsCbsAssessmentService.ts:317` | ValidationError | A reclassificação da apuração '${row.id}' (${entry.id}) foi estornada fora do fluxo — substitua a apuração para lançar de novo. | `row.id` | corrigir | id de outro registro (row.id); nomear pelo rótulo |
+| 4+ | `src/features/accounting/services/IbsCbsAssessmentService.ts:327` | ValidationError | apuração '${row.id}': reclassificação (${servico} + ${revenda}) difere dos débitos dos documentos (${documentos}). | `row.id` | corrigir | id de outro registro (row.id); nomear pelo rótulo |
+| 4+ | `src/features/accounting/services/IbsCbsAssessmentService.ts:374` | ValidationError | Conta de ${rotulo} '${id}' não existe neste escopo. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/InventoryService.ts:120` | NotFoundError | Item de estoque '${id}' não foi encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/InventoryService.ts:237` | ValidationError | Estoque insuficiente: produto '${productRef}' não tem estoque valorado. | `productRef` | corrigir | registro já carregado/visto pelo rótulo; trocar productRef pelo rótulo |
+| 4+ | `src/features/accounting/services/InventoryService.ts:252` | ValidationError | Estoque insuficiente para o produto '${productRef}'. | `productRef` | corrigir | registro já carregado/visto pelo rótulo; trocar productRef pelo rótulo |
+| 4+ | `src/features/accounting/services/InventoryService.ts:261` | ValidationError | Estoque insuficiente para o produto '${productRef}'. | `productRef` | corrigir | registro já carregado/visto pelo rótulo; trocar productRef pelo rótulo |
+| 4+ | `src/features/accounting/services/IssBeneficioMunicipalService.ts:48` | NotFoundError | Benefício municipal de ISS '${id}' não encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/IssBeneficioMunicipalService.ts:67` | NotFoundError | Benefício municipal de ISS '${id}' não encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/IssBeneficioMunicipalService.ts:79` | NotFoundError | Benefício municipal de ISS '${id}' não encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/PeriodService.ts:67` | ValidationError | Período '${periodId}' não encontrado. | `periodId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/PeriodService.ts:104` | ValidationError | Período '${periodId}' não encontrado. | `periodId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/PeriodService.ts:136` | ValidationError | Período '${periodId}' não encontrado. | `periodId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/PeriodService.ts:166` | ValidationError | Período '${periodId}' não encontrado. | `periodId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/PostingService.ts:588` | NotFoundError | Lançamento '${input.lancamentoId}' não foi encontrado. | `input.lancamentoId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/accounting/services/PostingService.ts:817` | NotFoundError | Lançamento '${entryId}' não foi encontrado. | `entryId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/PostingService.ts:1030` | NotFoundError | Conta '${accountId}' não encontrada. | `accountId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/PostingService.ts:1090` | NotFoundError | Conta '${accountId}' não encontrada. | `accountId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/ProductDestinationService.ts:37` | ValidationError | Produto '${input.productRef}' não encontrado no catálogo desta conta. | `input.productRef` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/accounting/services/ProductDestinationService.ts:56` | NotFoundError | Destinação padrão do produto '${productRef}' não cadastrada. | `productRef` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/ProductFiscalProfileService.ts:52` | NotFoundError | Perfil fiscal do produto '${productRef}' não cadastrado. | `productRef` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/ProductFiscalProfileService.ts:88` | NotFoundError | Perfil fiscal do produto '${productRef}' não cadastrado. | `productRef` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/ReceitaFiscalRecebimentoService.ts:42` | ValidationError | Valor inválido para o recebimento da venda '${r.saleId}'. | `r.saleId` | corrigir | id de outro registro (r.saleId); nomear pelo rótulo |
+| 4+ | `src/features/accounting/services/ReconciliationService.ts:590` | NotFoundError | Posting '${postingId}' não encontrado. | `postingId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/ServiceFiscalProfileService.ts:66` | NotFoundError | Perfil fiscal do serviço '${serviceRef}' não cadastrado. | `serviceRef` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/ServiceFiscalProfileService.ts:119` | NotFoundError | Perfil fiscal do serviço '${serviceRef}' não cadastrado. | `serviceRef` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/SimplesApuracaoService.ts:392` | NotFoundError | Documento de origem '${sourceDocumentId}' não encontrado nesta unidade. | `sourceDocumentId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/SimplesApuracaoService.ts:1303` | ValidationError | Conta de ${rotulo} '${id}' não existe neste escopo. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/SimplesEntradasService.ts:45` | NotFoundError | Documento de origem '${sourceDocumentId}' não encontrado nesta unidade. | `sourceDocumentId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/SimplesEntradasService.ts:124` | NotFoundError | Contrato de parceria '${id}' não encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/SimplesEntradasService.ts:135` | NotFoundError | Contrato de parceria '${id}' não encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/SimplesRegistroCaixaService.ts:107` | ValidationError | Valor incobrável maior que o saldo a receber da venda '${input.saleId}' (saldo ${saldo} centavos). | `input.saleId` | revisar | id do corpo (input.saleId) fora de not-found; ver se há rótulo carregado |
+| 4+ | `src/features/accounting/services/SimplesRegistroCaixaService.ts:131` | NotFoundError | Crédito incobrável '${id}' não encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/SimplesRegistroCaixaService.ts:146` | NotFoundError | Venda '${saleId}' não encontrada no subrazão de receita. | `saleId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/SpedEcfRealGenerationService.ts:206` | ValidationError | Ajuste ${e.id}: lançamento '${l.journalEntryId}' sem NUM_LCTO — não pode sair no M312/M362 (p.254). | `l.journalEntryId` | corrigir | id de outro registro (l.journalEntryId); nomear pelo rótulo |
+| 4+ | `src/features/accounting/services/spedRectificationGate.ts:26` | NotFoundError | Job '${supersedesJobId}' não foi encontrado. | `supersedesJobId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/spedRectificationGate.ts:39` | ValidationError | O job '${supersedesJobId}' não tem período gravado. | `supersedesJobId` | corrigir | registro já carregado/visto pelo rótulo; trocar supersedesJobId pelo rótulo |
+| 4+ | `src/features/accounting/services/TaxAssessmentService.ts:646` | NotFoundError | Apuração '${id}' não encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/TaxAssessmentService.ts:676` | ValidationError | A provisão da apuração '${row.id}' (${entry.id}) foi estornada fora do fluxo — substitua a apuração para provisionar de novo. | `row.id` | corrigir | id de outro registro (row.id); nomear pelo rótulo |
+| 4+ | `src/features/accounting/services/TaxAssessmentService.ts:783` | ValidationError | Conta de ${rotulo} '${id}' não existe neste escopo. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/TaxAssessmentService.ts:798` | NotFoundError | Apuração '${id}' não encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/TaxOptimizationService.ts:237` | NotFoundError | Custo de serviço '${id}' não encontrado. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/TaxOptimizationService.ts:296` | ConflictError | Sugestão '${id}' já foi decidida ou substituída. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 4+ | `src/features/accounting/services/TaxOptimizationService.ts:337` | ConflictError | Sugestão '${id}' já foi decidida ou substituída. | `id` | corrigir | registro já carregado/visto pelo rótulo; trocar id pelo rótulo |
+| 4+ | `src/features/accounting/services/TaxOptimizationService.ts:450` | NotFoundError | Sugestão '${id}' não encontrada. | `id` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/accounting/services/TaxSimulationService.ts:326` | NotFoundError | Sócio '${q.partnerId}' não encontrado. | `q.partnerId` | corrigir | id de outro registro (q.partnerId); nomear pelo registro dono |
+| 4+ | `src/features/accounting/services/WithholdingProfileService.ts:107` | NotFoundError | Contraparte '${counterpartyId}' não foi encontrada. | `counterpartyId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/crm/services/CrmPipelineService.ts:63` | NotFoundError | Lead '${input.leadId}' não foi encontrado. | `input.leadId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/crm/services/CrmPipelineService.ts:70` | NotFoundError | Etapa '${input.stageId}' não foi encontrada. | `input.stageId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/crm/services/CrmPipelineService.ts:159` | NotFoundError | Lead '${input.leadId}' não foi encontrado. | `input.leadId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/crm/services/CrmPipelineService.ts:167` | NotFoundError | Lead '${input.leadId}' não foi encontrado. | `input.leadId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/crm/services/CrmPipelineService.ts:263` | NotFoundError | Lead '${input.leadId}' não foi encontrado. | `input.leadId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/crm/services/CrmPipelineService.ts:302` | NotFoundError | Lead '${input.leadId}' não foi encontrado. | `input.leadId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/crm/services/CrmPipelineService.ts:347` | NotFoundError | Opportunity '${input.opportunityId}' não foi encontrada. | `input.opportunityId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/crm/services/CrmPipelineService.ts:359` | NotFoundError | Etapa '${input.stageId}' não foi encontrada. | `input.stageId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/crm/services/CrmPipelineService.ts:417` | NotFoundError | Lead '${input.leadId}' não foi encontrado. | `input.leadId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/crm/services/CrmPipelineService.ts:422` | NotFoundError | Lead '${input.leadId}' não foi encontrado. | `input.leadId` | fica | eco do id do corpo; não achado, sem rótulo |
+| 4+ | `src/features/sectorKits/services/KitTraceService.ts:28` | NotFoundError | Nenhum lançamento para o evento '${sourceType}' / '${sourceId}' nesta unidade. | `sourceId` | fica | eco do id do pedido; não achado, sem rótulo (F-MSG-2) |
+| 4+ | `src/features/sectorKits/services/KitUpgradeService.ts:138` | ValidationError | KIT_NOT_INSTALLED: a unidade '${scope.unitId}' não tem kit instalado para atualizar. | `scope.unitId` | corrigir | id de outro registro (scope.unitId); nomear pelo rótulo |
