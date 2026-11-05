@@ -61,7 +61,7 @@ export function saleVariantsFor(saleItemsTable?: IDynamicTable | null): SaleVari
     return hasPackage ? ['products', 'services', 'packages'] : ['products', 'services'];
 }
 
-const PACKAGE_ISSUE_KEYS: Record<PackageSaleIssue, [string, string]> = {
+export const PACKAGE_ISSUE_KEYS: Record<PackageSaleIssue, [string, string]> = {
     customer_required: ['finance_view:sales.package.customer_required', 'Pacote precisa de cliente cadastrado: o saldo fica no nome dele.'],
     mixed_packages: ['finance_view:sales.package.one_package', 'Uma venda leva um único pacote. Para outro pacote, crie outra venda.'],
     package_not_in_catalog: ['finance_view:sales.package.not_in_catalog', 'O preço deste pacote no catálogo ainda não carregou. Aguarde ou recarregue a página.'],
