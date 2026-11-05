@@ -8,6 +8,7 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
+import { DepreciationService } from '@/features/accounting/services/DepreciationService';
 
 const app = makeApp();
 const UNIT = 'unit-fixed-assets-http';
@@ -332,6 +333,89 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
       expect(statuses).toEqual([200, 409]);
       expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.disposal', sourceId: assetId } })).toBe(1);
       expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.depreciation', sourceId: `${assetId}:2026-01` } })).toBe(1);
+    });
+
+    // IMO-2 (dono, chat, 05/11: "Autorizo o IMO-2") — teste-guarda, VERMELHO até a sessão de correção. Janela
+    // concorrente que o teste acima não força: a perdedora (B) passa o CAS de leitura e o status ACTIVE com o
+    // version 2, e só então a vencedora (A) completa a baixa inteira. B relê o ativo depois de
+    // `postQuotaForDisposal` (FixedAssetService.disposeAsset), pega o version NOVO e o CAS final
+    // (`FixedAssetRepository.dispose`, que filtra só `version`, não `status: 'ACTIVE'`) passa — 200 de novo,
+    // regrava DISPOSED e audita a baixa 2×. A ordem é forçada pelo spy (sem sleep): na 1ª entrada em
+    // `postQuotaForDisposal` (a de B) a baixa A roda até o fim; a entrada de A passa direto.
+    it('IMO-2: 2ª baixa que relê o ativo DEPOIS do commit da 1ª é 409, não 200 (status re-checado no CAS final)', async () => {
+      const klass = await request(app)
+        .post('/api/accounting/fixed-asset-classes')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, code: 'IMO2-DISP', name: 'x', depreciable: true, costAccountId, accumulatedDepreciationAccountId: accDepAccountId });
+      const asset = await request(app)
+        .post('/api/accounting/fixed-assets')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, classId: klass.body.data.id, code: 'A-IMO2', description: 'x', costCents: 100_000, residualValueCents: 0, acquiredAt: '2026-01-01', annualRateBp: 1000 });
+      const assetId = asset.body.data.id as string;
+      const ativa = await request(app).post(`/api/accounting/fixed-assets/${assetId}/activate`).set(authHeader(dono)).send({ unitId: UNIT, assetId, activatedAt: '2026-01-01', version: 1 });
+      expect(ativa.body.data.version).toBe(2);
+
+      const disposeCall = () =>
+        request(app)
+          .post(`/api/accounting/fixed-assets/${assetId}/dispose`)
+          .set(authHeader(dono))
+          .send({ unitId: UNIT, assetId, disposedAt: '2026-01-31', proceedsCents: 99_167, counterpartAccountId: cashAccountId, version: 2 });
+
+      const original = DepreciationService.prototype.postQuotaForDisposal;
+      let primeiraEntrada = true;
+      let resA: Awaited<ReturnType<typeof disposeCall>> | undefined;
+      const spy = jest.spyOn(DepreciationService.prototype, 'postQuotaForDisposal').mockImplementation(async function (
+        this: DepreciationService,
+        ...args: Parameters<DepreciationService['postQuotaForDisposal']>
+      ) {
+        if (primeiraEntrada) {
+          primeiraEntrada = false; // B chegou aqui com version 2 e status ACTIVE já conferidos
+          resA = await disposeCall(); // A baixa inteira (tx1 + tx2 commitadas) antes de B reler o ativo
+        }
+        return original.apply(this, args);
+      });
+      let resB: Awaited<ReturnType<typeof disposeCall>>;
+      try {
+        resB = await disposeCall();
+      } finally {
+        spy.mockRestore();
+      }
+
+      expect(resA?.status).toBe(200); // preparação: a vencedora baixou
+      expect(resB.status).toBe(409); // hoje: 200 — a perdedora regrava DISPOSED e audita de novo
+      expect(await prisma.auditEvent.count({ where: { eventType: 'fixed_asset.disposed', targetId: assetId } })).toBe(1);
+    });
+
+    // IMO-2, guarda do filtro do CAS final (review do #1084): a quota que a PRÓPRIA baixa posta pode esgotar a base e
+    // mover o bem para FULLY_DEPRECIATED (DepreciationService.postQuotaForDisposal) antes do `assetRepo.dispose`. Um
+    // filtro só `status: 'ACTIVE'` no CAS daria 409 falso aqui — este caso reprova essa troca.
+    it('IMO-2: baixa no mês em que a própria quota esgota a base é 200 (CAS aceita FULLY_DEPRECIATED), 1 quota e 1 baixa', async () => {
+      const klass = await request(app)
+        .post('/api/accounting/fixed-asset-classes')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, code: 'IMO2-ULTIMO', name: 'x', depreciable: true, costAccountId, accumulatedDepreciationAccountId: accDepAccountId });
+      const asset = await request(app)
+        .post('/api/accounting/fixed-assets')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, classId: klass.body.data.id, code: 'A-IMO2-ULTIMO', description: 'x', costCents: 1_200, residualValueCents: 0, acquiredAt: '2025-02-01', annualRateBp: 10_000 });
+      const assetId = asset.body.data.id as string;
+      // Retroativo (antes do 1º período OPEN, 2026-01): 11 quotas de 100 já acumuladas; falta a última, a de 2026-01.
+      const ativa = await request(app)
+        .post(`/api/accounting/fixed-assets/${assetId}/activate`)
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, assetId, activatedAt: '2025-02-01', openingAccumulatedCents: 1_100, version: 1 });
+      expect(ativa.status).toBe(200);
+
+      const res = await request(app)
+        .post(`/api/accounting/fixed-assets/${assetId}/dispose`)
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, assetId, disposedAt: '2026-01-31', proceedsCents: 0, version: ativa.body.data.version });
+
+      expect({ status: res.status, assetStatus: res.body.data?.status }).toEqual({ status: 200, assetStatus: 'DISPOSED' });
+      const depois = await prisma.fixedAsset.findUnique({ where: { id: assetId } });
+      expect(depois!.accumulatedDepreciationCents).toBe(1_200n); // a quota de 2026-01 esgotou a base antes do CAS
+      expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.depreciation', sourceId: `${assetId}:2026-01` } })).toBe(1);
+      expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.disposal', sourceId: assetId } })).toBe(1);
     });
   });
 

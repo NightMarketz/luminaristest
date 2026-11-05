@@ -159,7 +159,7 @@ export class FixedAssetRepository implements IFixedAssetRepository {
     const client = tx ?? prisma;
     const { userId, unitId } = accountingScopeWhere(scope);
     const result = await client.fixedAsset.updateMany({
-      where: { id, userId, unitId, version: expectedVersion },
+      where: { id, userId, unitId, version: expectedVersion, status: { in: ['ACTIVE', 'FULLY_DEPRECIATED'] } },
       data: {
         status: 'DISPOSED',
         disposedAt: data.disposedAt,
