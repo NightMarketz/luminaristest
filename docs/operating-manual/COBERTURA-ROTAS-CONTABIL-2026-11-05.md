@@ -6,7 +6,7 @@
 
 ## Resultado
 
-**256 rotas, 188 com `request(app)` em `*.integration.test.ts`, 68 sem** (medição de 05/11). **Depois do lote 1: 199 com, 57 sem. Depois do lote 2: 210 com, 46 sem** (8 escritas + 3 leituras que são a 2ª leitura do lote). **Depois do lote 3: 220 com, 36 sem** (8 escritas + 2 leituras de 2ª leitura). **Depois do lote 4: 228 com, 28 sem** (8 leituras/relatórios com esperados fixos). **Depois do lote 5: 236 com, 20 sem** (1 escrita cadastral que a medição contou como leitura — `POST /simples/simulacoes/fator-r/sugestao` grava a sugestão do SYSTEM — e 7 leituras). As 20 restantes: 16 do DF-e (PILOTO-DFE) e 4 leituras (recibo PDF do lançamento, jobs de intercâmbio, esqueleto referencial, JCP por id). As 68 da medição, por classe:
+**256 rotas, 188 com `request(app)` em `*.integration.test.ts`, 68 sem** (medição de 05/11). **Depois do lote 1: 199 com, 57 sem. Depois do lote 2: 210 com, 46 sem** (8 escritas + 3 leituras que são a 2ª leitura do lote). **Depois do lote 3: 220 com, 36 sem** (8 escritas + 2 leituras de 2ª leitura). **Depois do lote 4: 228 com, 28 sem** (8 leituras/relatórios com esperados fixos). **Depois do lote 5: 236 com, 20 sem** (1 escrita cadastral que a medição contou como leitura — `POST /simples/simulacoes/fator-r/sugestao` grava a sugestão do SYSTEM — e 7 leituras). **Depois do lote 6: 240 com, 16 sem** (4 leituras: recibo PDF do lançamento, jobs de intercâmbio, esqueleto referencial, JCP por id). **`/api/accounting` fecha em 0 "não"**; as 16 restantes são todas do DF-e (`/api/nfe/dfe`, PILOTO-DFE #1067, Fase B). As 68 da medição, por classe:
 
 | Classe | Rotas | Onde |
 |---|---|---|
@@ -14,7 +14,7 @@
 | Emissão de saída (`/api/nfe/dfe`), escrita fiscal | 11 | PILOTO-DFE (#1067, Fase B), fora dos lotes daqui |
 | Emissão de saída (`/api/nfe/dfe`), leitura | 5 | idem |
 | Escrita cadastral | 18 | Lotes 2–3 (`POST /reviews` e `POST /reviews/:id/findings` já passaram pelo cenário do lote 1: faltam 16). Lote 2 (**feito**: `rotasSemIntegracao.lote2.integration.test.ts`): de-para referencial PUT/batch/copy/DELETE, import do catálogo, perfil fiscal do serviço PUT/DELETE, DELETE de PSC. Lote 3 (**feito**: `rotasSemIntegracao.lote3.integration.test.ts`): anexo POST/DELETE, documento de origem no lançamento, extrato DELETE, linha ignore, achado resolve, PATCH dos jobs da revisão, PATCH de classe de bem — **faltam 0** |
-| Leitura e relatório (A7: esperados fixos) | 26 | Lotes 4 em diante (`GET /reviews/:id` é a 2ª leitura do lote 1; `GET /referential/mappings`, `GET /referential/catalog` e `GET /service-fiscal-profiles/:serviceRef`, do lote 2; `GET /journal-entries/:entryId/source-documents` e `GET /reconciliation/statements`, do lote 3. Lote 4 (**feito**: `rotasSemIntegracao.lote4.integration.test.ts`): razão, BP, DRE, DFC, balancete comparativo, Livro Diário, aging, detalhe da entrega. Lote 5 (**feito**: `rotasSemIntegracao.lote5.integration.test.ts`): linhas do extrato, sugestões da linha, pendências da conciliação, lista de revisões, lista de perfis fiscais de serviço, anexos do lançamento, signatário por id — e o `POST …/fator-r/sugestao`, que é escrita cadastral, não leitura — faltam 4) |
+| Leitura e relatório (A7: esperados fixos) | 26 | Lotes 4 em diante (`GET /reviews/:id` é a 2ª leitura do lote 1; `GET /referential/mappings`, `GET /referential/catalog` e `GET /service-fiscal-profiles/:serviceRef`, do lote 2; `GET /journal-entries/:entryId/source-documents` e `GET /reconciliation/statements`, do lote 3. Lote 4 (**feito**: `rotasSemIntegracao.lote4.integration.test.ts`): razão, BP, DRE, DFC, balancete comparativo, Livro Diário, aging, detalhe da entrega. Lote 5 (**feito**: `rotasSemIntegracao.lote5.integration.test.ts`): linhas do extrato, sugestões da linha, pendências da conciliação, lista de revisões, lista de perfis fiscais de serviço, anexos do lançamento, signatário por id — e o `POST …/fator-r/sugestao`, que é escrita cadastral, não leitura. Lote 6 (**feito**: `rotasSemIntegracao.lote6.integration.test.ts`): comprovante PDF do lançamento (conteúdo pelo `htmlToPdf` stubado — o Jest mapeia `puppeteer` para `test/mocks/puppeteer.ts`), lista de jobs de intercâmbio, esqueleto referencial, JCP por id — **faltam 0**) |
 
 ## Critério (o que "sim" quer dizer)
 
@@ -92,7 +92,7 @@
 | 48 | DELETE | `/api/accounting/accounts/:id` | server/src/routes/accounting.ts:276 | sim (server/src/controllers/__tests__/accountingController.chartOfAccounts.integration.test.ts:182; +2) |  |
 | 49 | PATCH | `/api/accounting/accounts/:id/requires-dimension` | server/src/routes/accounting.ts:277 | sim (server/src/controllers/__tests__/accountingController.chartOfAccounts.integration.test.ts:223; +1) |  |
 | 50 | GET | `/api/accounting/entries` | server/src/routes/accounting.ts:280 | sim (server/src/controllers/__tests__/accountingController.integration.test.ts:261; +2) |  |
-| 51 | GET | `/api/accounting/journal-entries/:entryId/receipt` | server/src/routes/accounting.ts:281 | **não** | Lote 4+ — leitura/relatório (A7) |
+| 51 | GET | `/api/accounting/journal-entries/:entryId/receipt` | server/src/routes/accounting.ts:281 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote6.integration.test.ts:78) | lote 6 |
 | 52 | POST | `/api/accounting/attachments` | server/src/routes/accounting.ts:284 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote3.integration.test.ts:85) | lote 3 |
 | 53 | GET | `/api/accounting/attachments/:id` | server/src/routes/accounting.ts:285 | sim (server/src/controllers/__tests__/unitGuard.accounting.integration.test.ts:122; +2) |  |
 | 54 | DELETE | `/api/accounting/attachments/:id` | server/src/routes/accounting.ts:286 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote3.integration.test.ts:91) | lote 3 |
@@ -118,7 +118,7 @@
 | 74 | POST | `/api/accounting/source-documents` | server/src/routes/accounting.ts:318 | sim (server/src/controllers/__tests__/unitGuard.accounting.integration.test.ts:101; +4) |  |
 | 75 | POST | `/api/accounting/data-exchange/exports` | server/src/routes/accounting.ts:321 | sim (server/src/controllers/__tests__/ecfPresumidoSegregacao.integration.test.ts:126; +7) |  |
 | 76 | POST | `/api/accounting/data-exchange/imports` | server/src/routes/accounting.ts:322 | sim (server/src/controllers/__tests__/itg2000ExtemporaneoC4.integration.test.ts:69) |  |
-| 77 | GET | `/api/accounting/data-exchange/jobs` | server/src/routes/accounting.ts:325 | **não** | Lote 4+ — leitura/relatório (A7) |
+| 77 | GET | `/api/accounting/data-exchange/jobs` | server/src/routes/accounting.ts:325 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote6.integration.test.ts:145) | lote 6 |
 | 78 | GET | `/api/accounting/data-exchange/jobs/:jobId` | server/src/routes/accounting.ts:326 | sim (server/src/controllers/__tests__/spedController.ecfReal.integration.test.ts:116; +1) |  |
 | 79 | GET | `/api/accounting/data-exchange/jobs/:jobId/rows` | server/src/routes/accounting.ts:327 | sim (server/src/controllers/__tests__/itg2000ExtemporaneoC4.integration.test.ts:78) |  |
 | 80 | GET | `/api/accounting/data-exchange/jobs/:jobId/download` | server/src/routes/accounting.ts:328 | sim (server/src/controllers/__tests__/accountingContactController.integration.test.ts:153; +14) |  |
@@ -146,7 +146,7 @@
 | 102 | DELETE | `/api/accounting/referential/mappings` | server/src/routes/accounting.ts:371 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote2.integration.test.ts:88) | lote 2 |
 | 103 | GET | `/api/accounting/referential/mappings` | server/src/routes/accounting.ts:372 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote2.integration.test.ts:41) | 2ª leitura do lote 2 |
 | 104 | GET | `/api/accounting/referential/coverage` | server/src/routes/accounting.ts:373 | sim (server/src/controllers/__tests__/irrfPlanoPadrao.integration.test.ts:71) |  |
-| 105 | GET | `/api/accounting/referential/skeleton` | server/src/routes/accounting.ts:374 | **não** | Lote 4+ — leitura/relatório (A7) |
+| 105 | GET | `/api/accounting/referential/skeleton` | server/src/routes/accounting.ts:374 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote6.integration.test.ts:207) | lote 6 |
 | 106 | POST | `/api/accounting/referential/catalog/import` | server/src/routes/accounting.ts:376 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote2.integration.test.ts:55) | lote 2 |
 | 107 | GET | `/api/accounting/referential/catalog` | server/src/routes/accounting.ts:377 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote2.integration.test.ts:207) | 2ª leitura do lote 2 |
 | 108 | GET | `/api/accounting/contacts` | server/src/routes/accounting.ts:407 | sim (server/src/controllers/__tests__/accountingContactController.integration.test.ts:56; +1) |  |
@@ -247,7 +247,7 @@
 | 203 | POST | `/api/accounting/jcp/preview` | server/src/routes/accounting.ts:533 | sim (server/src/__tests__/jcpConfirm.integration.test.ts:101; +1) |  |
 | 204 | POST | `/api/accounting/jcp` | server/src/routes/accounting.ts:535 | sim (server/src/__tests__/jcpConfirm.integration.test.ts:105; +1) |  |
 | 205 | GET | `/api/accounting/jcp/irrf` | server/src/routes/accounting.ts:536 | sim (server/src/__tests__/jcpConfirm.integration.test.ts:233) |  |
-| 206 | GET | `/api/accounting/jcp/:id` | server/src/routes/accounting.ts:537 | **não** | Lote 4+ — leitura/relatório (A7) |
+| 206 | GET | `/api/accounting/jcp/:id` | server/src/routes/accounting.ts:537 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote6.integration.test.ts:309) | lote 6 |
 | 207 | POST | `/api/accounting/jcp/:id/lancamento` | server/src/routes/accounting.ts:538 | sim (server/src/__tests__/jcpConfirm.integration.test.ts:188; +1) |  |
 | 208 | POST | `/api/accounting/jcp/:id/cancel` | server/src/routes/accounting.ts:539 | sim (server/src/__tests__/jcpConfirm.integration.test.ts:215) |  |
 | 209 | GET | `/api/accounting/depreciation-rates` | server/src/routes/accounting.ts:543 | sim (server/src/controllers/__tests__/depreciationRateController.integration.test.ts:39; +9) |  |
