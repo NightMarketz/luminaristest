@@ -150,7 +150,7 @@ describe('POST /api/lalur/parte-b/close — Bloco F com ativo override (C8 emend
     expect(manual.status).toBe(201);
     const res = await request(app).post('/api/lalur/parte-b/close').set(authHeader(dono)).send(T01);
     expect(res.status).toBe(400);
-    expect(JSON.stringify(res.body)).toContain(`ajuste ${manual.body.data.id} do usuário na linha 86 do lalur`);
+    expect(JSON.stringify(res.body)).toContain('ajuste do usuário na linha 86 do lalur'); // sem o cuid (FIX-MENSAGENS-ID-INTERNO lote 3)
     expect((await request(app).post(`/api/lalur/entries/${manual.body.data.id}/archive`).set(authHeader(dono)).send({ unitId: UNIT })).status).toBe(200);
   });
 

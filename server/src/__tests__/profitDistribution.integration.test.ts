@@ -262,14 +262,14 @@ describe('IRRF-DISTRIBUICAO PR-2 — distribuição de lucros com IRRF', () => {
     expect([r.status, r.body.data.irrfCents]).toEqual([201, 600_000]);
   });
 
-  it('item 20 (F-IRD-8): cancelar o do meio → 409 com o id do último; o último → estorno e CANCELLED', async () => {
+  it('item 20 (F-IRD-8): cancelar o do meio → 409 nomeando o último pelo sócio + data; o último → estorno e CANCELLED', async () => {
     const dono = await cenario();
     const a = await criar(dono, corpo(dono, dono.socio));
     const b = await criar(dono, corpo(dono, dono.socio, { dataEvento: '2026-03-20' }));
     const cancelar = (id: string) => request(app).post(`${BASE}/${id}/cancel`).set(authHeader(dono)).send({ unitId: dono.unitId, motivo: 'erro de digitação' });
     const meio = await cancelar(a.body.data.id);
     expect([meio.status, meio.body.code]).toEqual([409, 'NAO_E_O_ULTIMO_DO_MES']);
-    expect(meio.body.message).toContain(b.body.data.id);
+    expect(meio.body.message).toContain('distribuição a Sócio Teste em 20/03/2026'); // sem o cuid (FIX-MENSAGENS-ID-INTERNO lote 3)
     expect((await prisma.journalEntry.findUnique({ where: { id: a.body.data.entryId } }))?.status).toBe('Posted');
 
     const ult = await cancelar(b.body.data.id);

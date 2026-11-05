@@ -6,6 +6,7 @@ import {
   DELIVERABLE_EXPORT_KINDS,
   DELIVERY_PACKAGE_BUILT,
   DELIVERY_SENT,
+  describeExportJob,
   monthsCovered,
   toDateOnly,
   type DeliverableExportKind,
@@ -205,7 +206,7 @@ export class AccountingDeliveryService {
       if (existing) {
         // F-C6b-4 (a): o núcleo já foi entregue. Extras DIFERENTES do conjunto gravado é conflito
         // nomeado — nunca "acrescenta item a pacote SENT"; mesmo conjunto segue o caminho normal.
-        await this.assertExtrasMatchExisting(scope, existing, extras, tx);
+        await this.assertExtrasMatchExisting(scope, existing, extras, tx, { ecd, ecf, contact });
         return { delivery: await this.markSent(scope, existing, manifest, tx), manifest };
       }
 
@@ -244,7 +245,7 @@ export class AccountingDeliveryService {
             tx,
           );
           if (winner) {
-            await this.assertExtrasMatchExisting(scope, winner, extras, tx);
+            await this.assertExtrasMatchExisting(scope, winner, extras, tx, { ecd, ecf, contact });
             // Review F5: a vencedora passa pelo MESMO caminho de promoção da linha pré-existente —
             // devolvê-la crua responderia `status: 'QUEUED'` junto de "o operador confirmou…".
             return { delivery: await this.markSent(scope, winner, manifest, tx), manifest };
@@ -352,7 +353,7 @@ export class AccountingDeliveryService {
   private assertEcfRectificationSatisfied(ecd: AccountingDataExchangeJob): void {
     if (ecd.ecfRectificationRequired && !ecd.ecfRectificationWaivedAt) {
       throw new ValidationError(
-        `A ECD '${ecd.id}' é substituta e exige uma ECF retificadora do mesmo ano (ou dispensa) antes ` +
+        `A ${describeExportJob(ecd)} é substituta e exige uma ECF retificadora do mesmo ano (ou dispensa) antes ` +
           'de montar o pacote ao contador (item 22).',
       );
     }
@@ -369,25 +370,25 @@ export class AccountingDeliveryService {
     if (!ecf) throw new NotFoundError(`Job da ECF '${ecfJobId}' não foi encontrado.`);
 
     if (ecd.kind !== ECD_JOB_KIND) {
-      throw new ValidationError(`O job '${ecdJobId}' não é uma ECD (kind=${ecd.kind}).`);
+      throw new ValidationError(`O job ${describeExportJob(ecd)} não é uma ECD (kind=${ecd.kind}).`);
     }
     if (!ECF_JOB_KINDS.includes(ecf.kind)) {
-      throw new ValidationError(`O job '${ecfJobId}' não é uma ECF (kind=${ecf.kind}).`);
+      throw new ValidationError(`O job ${describeExportJob(ecf)} não é uma ECF (kind=${ecf.kind}).`);
     }
     for (const job of [ecd, ecf]) {
       if (job.status !== EXPORTED) {
         throw new ValidationError(
-          `O job '${job.id}' não está EXPORTED (status=${job.status}) — o arquivo ainda não existe.`,
+          `O job ${describeExportJob(job)} não está EXPORTED (status=${job.status}) — o arquivo ainda não existe.`,
         );
       }
       if (!job.sha256) {
         throw new ValidationError(
-          `O job '${job.id}' não tem sha256 gravado — sem ele o manifesto não prova integridade.`,
+          `O job ${describeExportJob(job)} não tem sha256 gravado — sem ele o manifesto não prova integridade.`,
         );
       }
       if (!job.periodStart || !job.periodEnd) {
         throw new ValidationError(
-          `O job '${job.id}' não tem período gravado (gerado antes da migração de período) — ` +
+          `O job ${describeExportJob(job)} não tem período gravado (gerado antes da migração de período) — ` +
             'regere o arquivo para entregá-lo.',
         );
       }
@@ -440,21 +441,21 @@ export class AccountingDeliveryService {
       if (!job) throw new NotFoundError(`Job extra '${id}' não foi encontrado.`);
       if (job.status !== EXPORTED) {
         throw new ValidationError(
-          `O job extra '${id}' não está EXPORTED (status=${job.status}) — o arquivo ainda não existe.`,
+          `O job extra ${describeExportJob(job)} não está EXPORTED (status=${job.status}) — o arquivo ainda não existe.`,
         );
       }
       if (!job.sha256) {
-        throw new ValidationError(`O job extra '${id}' não tem sha256 gravado.`);
+        throw new ValidationError(`O job extra ${describeExportJob(job)} não tem sha256 gravado.`);
       }
       if (!DELIVERABLE_KIND_SET.has(job.kind)) {
         throw new ValidationError(
-          `O job extra '${id}' tem kind '${job.kind}' — não é um demonstrativo entregável ` +
+          `O job extra ${describeExportJob(job)} tem kind '${job.kind}' — não é um demonstrativo entregável ` +
             '(SPED é o núcleo obrigatório, nunca um extra).',
         );
       }
       if (!job.periodStart || !job.periodEnd) {
         throw new ValidationError(
-          `O job extra '${id}' não tem período gravado — regere o arquivo com asOf/janela antes ` +
+          `O job extra ${describeExportJob(job)} não tem período gravado — regere o arquivo com asOf/janela antes ` +
             'de anexá-lo ao pacote.',
         );
       }
@@ -468,7 +469,7 @@ export class AccountingDeliveryService {
         throw new AppError(
           `Já existe um extra do kind '${job.kind}' cobrindo ${toDateOnly(clash.start)}..` +
             `${toDateOnly(clash.end)} neste pacote, que se cruza com ${toDateOnly(extraStart)}..` +
-            `${toDateOnly(extraEnd)} do job '${id}' — o mesmo demonstrativo só entra de novo com ` +
+            `${toDateOnly(extraEnd)} do job ${describeExportJob(job)} — o mesmo demonstrativo só entra de novo com ` +
             'período disjunto.',
           400,
           'DUPLICATE_KIND',
@@ -477,7 +478,7 @@ export class AccountingDeliveryService {
       seenPeriodsByKind.set(job.kind, [...seenPeriods, { start: extraStart, end: extraEnd }]);
       if (extraStart.getTime() < period.start.getTime() || extraEnd.getTime() > period.end.getTime()) {
         throw new AppError(
-          `O job extra '${id}' cobre ${toDateOnly(extraStart)}..${toDateOnly(extraEnd)}, fora do ` +
+          `O job extra ${describeExportJob(job)} cobre ${toDateOnly(extraStart)}..${toDateOnly(extraEnd)}, fora do ` +
             `período do pacote ${toDateOnly(period.start)}..${toDateOnly(period.end)}.`,
           400,
           'EXTRA_PERIOD_OUT_OF_RANGE',
@@ -500,6 +501,7 @@ export class AccountingDeliveryService {
     existing: AccountingDeliveryLog,
     extras: ResolvedExtra[],
     tx: Prisma.TransactionClient,
+    nucleo: { ecd: AccountingDataExchangeJob; ecf: AccountingDataExchangeJob; contact: AccountingContact },
   ): Promise<void> {
     const items = await this.deliveryRepo.listItems(scope, existing.id, tx);
     const existingExtraIds = new Set(items.filter((i) => i.position >= 2).map((i) => i.jobId));
@@ -509,9 +511,9 @@ export class AccountingDeliveryService {
       [...requestedIds].every((id) => existingExtraIds.has(id));
     if (!same) {
       throw new ConflictError(
-        `O núcleo (ecdJobId=${existing.ecdJobId}, ecfJobId=${existing.ecfJobId}) já foi entregue ` +
-          `ao contato '${existing.contactId}' com um conjunto diferente de extras ` +
-          `(deliveryId=${existing.id}). Gere uma nova versão do núcleo para reentregar com outros extras.`,
+        `O núcleo (${describeExportJob(nucleo.ecd)} e ${describeExportJob(nucleo.ecf)}) já foi entregue ` +
+          `ao contador '${nucleo.contact.name}' com um conjunto diferente de extras. ` +
+          'Gere uma nova versão do núcleo para reentregar com outros extras.',
         'PACKAGE_ALREADY_DELIVERED',
       );
     }
