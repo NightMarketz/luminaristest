@@ -1,0 +1,166 @@
+Categorias
+Todas as Tabelas
+Comercial
+Produtos
+1
+Serviços
+1
+Estoque
+2
+Financeiro
+7
+Pessoas
+3
+Leads
+5
+Planejamento
+1
+Kanban
+1
+Operações
+4
+Marketing
+Negócios
+2
+Administrativo
+Outros
+Excluir Sistema
+Financeiro
+Nova Venda
+Análises
+Vendas
+Despesas
+Outros
+BUSCAR
+STATUS
+Todos
+Rascunho
+Finalizada
+Cancelada
+PERÍODO
+Todos
+Este mês
+Mês passado
+Últimos 3 meses
+Este ano
+VENDAS
+18
+TOTAL PAGO
+R$ 1.020,00
+Lista de vendas
+DATA	CLIENTE	STATUS	PAGAMENTO	SUBTOTAL	TOTAL	AÇÕES
+04/11/2026	Cliente H2	
+Finalizada
+Acima do catálogo
+	Pendente	R$ 320,00	R$ 320,00	
+
+04/11/2026	Cliente H2	
+Cancelada
+	Pendente	R$ 300,00	R$ 300,00	
+
+04/11/2026	Cliente H2	
+Cancelada
+Acima do catálogo
+	Pendente	R$ 320,00	R$ 320,00	
+
+04/11/2026	Cliente H2	
+Finalizada
+	Pendente	R$ 80,00	R$ 80,00	
+
+03/11/2026	Cliente H2	
+Devolvida
+	Pendente	R$ 80,00	R$ 80,00	
+
+03/11/2026	Cliente H2	
+Finalizada
+	Paga	R$ 80,00	R$ 80,00	
+
+03/11/2026	Cliente H2	
+Finalizada
+	Paga	R$ 80,00	R$ 80,00	
+
+03/11/2026	Cliente H2	
+Cancelada
+	Pendente	R$ 80,00	R$ 80,00	
+
+03/11/2026	Cliente H2	
+Devolvida
+	Pendente	R$ 80,00	R$ 80,00	
+
+03/11/2026	Cliente H2	
+Cancelada
+	Pendente	R$ 0,00	R$ 0,00	
+
+30/10/2026	Cliente H2	
+Finalizada
+	Paga	R$ 80,00	R$ 80,00	
+
+30/10/2026	Cliente H2	
+Finalizada
+	Paga	R$ 50,00	R$ 50,00	
+
+30/10/2026	Cliente H2	
+Finalizada
+	Paga	R$ 300,00	R$ 300,00	
+
+30/10/2026	Cliente H2	
+Devolvida
+	Pendente	R$ 80,00	R$ 80,00	
+
+29/10/2026	Cliente H2	
+Finalizada
+	Paga	R$ 80,00	R$ 80,00	
+
+29/10/2026	Cliente H2	
+Finalizada
+	Paga	R$ 50,00	R$ 50,00	
+
+29/10/2026	Cliente H2	
+Finalizada
+	Paga	R$ 300,00	R$ 300,00	
+
+29/10/2026	Cliente H2	
+Devolvida
+	Pendente	R$ 80,00	R$ 80,00	
+Detalhes
+Cancelar
+Devolver
+Emitir NFS-e
+Pagar
+Data
+04/11/2026
+Finalizada
+Pendente
+Acima do catálogo
+Cliente
+Cliente H2
+Unidade
+seed-unit-presumido
+Subtotal
+R$ 320,00
+Total
+R$ 320,00
+Validade do pacote
+Baixar comprovante (PDF)
+
+Válido até 04/11/2027
+
+VALIDADE DO PACOTE: este pacote vale por 365 dias corridos a contar da data da compra (04/11/2026). Último dia para usar: 04/11/2027. Se o prazo terminar em feriado nacional, ele vai até o dia útil seguinte, e a data acima já considera isso. O saldo não usado até essa data não será devolvido nem trocado por dinheiro.
+
+Aceite registrado por Seed PRESUMIDO em 04/11/2026, 01:03:54 (texto v1)
+
+Documentos fiscais
+
+Nenhum documento fiscal emitido para esta venda.
+
+DISCOUNT
+R$ 0,00
+TAXES
+R$ 0,00
+IS NEW CUSTOMER
+Não
+IS LOYAL CUSTOMER
+Sim
+Itens
+Tipo	Produto/Serviço	Qtd	Preço
+Pacote	Pacote H2	2	R$ 320,00

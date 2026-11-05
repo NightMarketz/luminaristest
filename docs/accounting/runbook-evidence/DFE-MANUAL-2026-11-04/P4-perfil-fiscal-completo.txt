@@ -1,0 +1,156 @@
+Luminaris
+🇧🇷
+PT
+seed-presumido
+S
+Contabilidade
+
+Razão de partida dobrada — balancete por unidade
+
+Unidade
+Unidade C7 Ativacao
+seed-unit-presumido
+Balancete
+Períodos
+Lançamentos
+Aprovações
+Contas a Pagar
+Contas a Receber
+Aging
+Fluxo de Caixa Projetado
+Contrapartes
+Razão
+Plano de Contas
+BP
+DRE
+DFC
+Comparativo
+Livro Diário
+Importação/Exportação
+Conciliação
+NF-e
+Compliance
+Dimensões
+Imobilizado
+Perfil fiscal
+Parâmetros legais
+Política contábil
+Apuração
+Pendências
+Cobrança
+Kit de setor
+Perfil fiscal da unidade
+
+Serve à NF-e de compra (custo) e à NFS-e de venda. Salvar substitui o perfil inteiro.
+
+Perfil da unidade completo
+REGIME
+Regime tributário
+— selecione —
+Simples Nacional
+Lucro Presumido
+Lucro Real
+Regime de PIS/COFINS
+— selecione —
+Cumulativo
+Não cumulativo
+Contribuinte de ICMS
+EMITENTE DA NFS-E
+Município do emitente (código IBGE, 7 dígitos)
+Inscrição municipal
+CNAE
+Regime especial de tributação (0–9)
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+Série da DPS
+
+No modo manual o portal numera a DPS (Guia do Emissor Web, G3) — a série só vale para outro parceiro.
+
+ISS
+Alíquota do ISS (%)
+ISS retido pelo tomador pessoa jurídica
+TRIBUTOS APROXIMADOS (%)
+Federal
+Estadual
+Municipal
+IBS/CBS
+Informar IBS/CBS na NFS-e
+CST (3 dígitos)
+cClassTrib (6 dígitos, começa pelo CST)
+EMISSÃO
+Competência fora do mês
+Avisar
+Bloquear
+Fato gerador do pacote
+Consumo
+Venda
+Conta no parceiro emissor
+CUSTO DE COMPRA (NF-E)
+Crédito de PIS/COFINS exclui o ICMS da base
+Crédito de PIS/COFINS inclui o IPI (regra fixa: não)
+Crédito sobre compra de fornecedor do Simples
+Conta de ICMS a recuperar
+— nenhuma —
+1.1.1.01 — Banco
+1.1.1.02 — Caixa
+1.1.2.01 — A Receber
+1.1.2.02 — A Receber Cartão / Adquirente
+1.1.2.03 — Clientes a Receber
+1.1.3.01 — Estoques
+1.1.9.01 — IBS a Recuperar
+1.1.9.02 — CBS a Recuperar
+1.2.1.01 — Máquinas e Equipamentos C7
+1.2.9.01 — (-) Depreciação Acumulada Máquinas C7
+Conta de PIS/COFINS a recuperar
+— nenhuma —
+1.1.1.01 — Banco
+1.1.1.02 — Caixa
+1.1.2.01 — A Receber
+1.1.2.02 — A Receber Cartão / Adquirente
+1.1.2.03 — Clientes a Receber
+1.1.3.01 — Estoques
+1.1.9.01 — IBS a Recuperar
+1.1.9.02 — CBS a Recuperar
+1.2.1.01 — Máquinas e Equipamentos C7
+1.2.9.01 — (-) Depreciação Acumulada Máquinas C7
+Salvar perfil
+Sócios
+
+Cadastro dos sócios da empresa e das vigências de cada um — usado pela ECF (Y600) e pela distribuição de lucros e JCP.
+
+Vigentes em (vazio = todas as vigências)
+Novo sócio
+Nome	CPF/CNPJ	Tipo	Residência	Participação	Entrada	Saída	Ações
+SOCIO TESTE H1	11144477735	PF	Brasil	100%	01/01/2020	—	
+Editar 
+Remover
+Enquadramento do MEI (Anexo XI)
+Ano-calendário
+
+Perfil fiscal da empresa no ano: o SIMEI só calcula com o enquadramento ICMS/ISS declarado (Res. CGSN 140 art. 101 § 1º). Salvar regrava o perfil do ano com estes campos trocados.
+
+O perfil de 2026 é PRESUMIDO: o enquadramento do Anexo XI é só do MEI.
+
+Prestadora exclusiva de serviços (Presumido/Real)
+Ano-calendário
+Prestadora exclusiva de serviços
+Receita bruta anual até R$ 120 mil, só de serviços: presunção de 16% no IRPJ (IN RFB 1.700/2017 art. 215 § 10).
+Salvar prestação de serviços
+Perfis fiscais dos serviços
+
+Código de tributação nacional, NBS e local da prestação de cada serviço. Sem perfil, a venda do serviço não emite NFS-e.
+
+Serviço	Código de tributação	NBS	Indicador da operação	Ações
+Corte H2	010701
+Suporte técnico em informática, inclusive instalação, configuração e manutenção de programas de computação e bancos de dados.
+	—	030101	
+Editar
+Excluir
