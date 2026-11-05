@@ -146,6 +146,21 @@ describe('F5 PR-1 — PaymentAccount + cifra da credencial', () => {
     expect((await putCredential(doOutro.body.data.id, outro, UNIT_B)).status).toBe(200);
   });
 
+  // FIX-MENSAGENS-ID-INTERNO lote 2 (FIX-TESTES item 5): a conta que já está ativa é de OUTRO registro, que o usuário não
+  // mandou; a tela a mostra pelo apelido (`label`), então a mensagem a nomeia por ele, nunca pelo cuid.
+  it('PaymentAccountService:221 — ativar 2ª conta do provedor (409) nomeia a que já está ativa pelo apelido, não pelo cuid', async () => {
+    const ativa = await prisma.paymentAccount.findUniqueOrThrow({ where: { id: a1 } });
+    expect(ativa.status).toBe('ACTIVE');
+    const res = await putCredential(a2);
+    const msg = String(res.body.message);
+    expect({ status: res.status, nomeiaRotulo: msg.includes(`'${ativa.label}'`), cuidNaMensagem: [a1, a2].filter((id) => msg.includes(id)), msg }).toEqual({
+      status: 409,
+      nomeiaRotulo: true,
+      cuidNaMensagem: [],
+      msg,
+    });
+  });
+
   it('PATCH: só ACTIVE↔DISABLED (o resto 409), label ⇒ .updated, glAccountId imutável (P1-9/P1-10)', async () => {
     expect((await patch(a2, { status: 'DISABLED' })).status).toBe(409); // DRAFT → DISABLED
     expect((await patch(a2, { status: 'ACTIVE' })).status).toBe(409); // DRAFT → ACTIVE (só a credencial ativa)
