@@ -216,6 +216,21 @@ describe('CRM pipeline pela pilha real (FIX-TESTES item 3)', () => {
       // contagem, então aqui só a atividade do serviço é exigida (a duplicata está no relatório do PR, achado a ratificar).
       expect(noShows.map((a) => a.data.message)).toContain('No-show — stage reverted');
     });
+
+    // Teste-guarda (sessao-instrumentacao; dono, chat, 04/11/2026: "Sim, instrumenta"). Um no-show é UM evento: o
+    // serviço (CrmPipelineService.recordNoShow) grava a atividade e o revert dispara o LeadsPlugin (:241), que grava
+    // outra 'meeting_no_show' para a mesma transição — o KPI de atividades por tipo conta 2. Vermelho até a correção.
+    it('GAP no-show duplicado: no-show com revert → exatamente UMA atividade meeting_no_show para o lead', async () => {
+      const leadId = await criarLinha(c.user, c.t.leads, {
+        unitId: c.unitId, pipelineId: c.pipelineId, stageId: c.stages.meeting, leadName: 'Gina Prado', status: 'Open',
+      });
+      const r = await post(c.user, 'no-show', { leadId, option: 'revert', previousStageId: c.stages.init });
+      expect(r.status).toBe(200);
+      expect((await linha(leadId)).data.stageId).toBe(c.stages.init);
+
+      const noShows = (await linhas(c.t.leadActivities)).filter((a) => a.data.leadId === leadId && a.data.type === 'meeting_no_show');
+      expect(noShows.map((a) => a.data.message)).toEqual(['No-show — stage reverted']);
+    });
   });
 
   describe('convert-lead', () => {
