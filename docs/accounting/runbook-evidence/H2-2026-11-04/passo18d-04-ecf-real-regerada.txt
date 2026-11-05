@@ -1,0 +1,98 @@
+Gerar SPED ECF (Lucro Real)
+
+Escrituração Contábil Fiscal — Lucro Real. O PVA recupera os blocos da ECD ativa.
+
+Esqueleto — blocos L, M e N saem vazios; HASH_ECF_ANTERIOR sempre vazio; Forks 2, 3 e 4 do ADR ainda pendentes de ratificação e do Manual do Leiaute 12.
+Ano
+CNPJ
+Nome empresarial
+Nat. jurídica
+CNAE-Fiscal
+Endereço
+Bairro
+UF
+AC
+AL
+AM
+AP
+BA
+CE
+DF
+ES
+GO
+MA
+MG
+MS
+MT
+PA
+PB
+PE
+PI
+PR
+RJ
+RN
+RO
+RR
+RS
+SC
+SE
+SP
+TO
+Cód. município (IBGE)
+CEP
+E-mail
+Alíquota CSLL
+9%
+15%
+Forma de tributação (0010)
+Forma trib. do período (0010, 4 posições)
+Contador do cadastro (opcional)
+— preencher o contador à mão —
+CONTADOR FICTICIO DE TESTE — CRC SP-123456/O-1
+CONTADOR SEM FONE TESTE — CRC SP-654321/O-2
+CONTADORA H2 AI TESTER — CRC MG-012345/O-6
+Signatários (0930, máx 2)
+Adicionar
+Sócios, titular e dirigentes (Y600)
+
+Os sócios vêm do cadastro; complete a qualificação e os 5 valores do ano (campos 13 a 17 do Y600). Valor vazio não vira zero: digite 0,00.
+
+SOCIA TESTE H2 REAL
+CPF •••4705
+PF · residente
+Participação 100%
+01/01/2020 → sem saída
+Qualificação (QUALIF)
+— selecione —
+01 — Acionista Pessoa Física Domiciliado no Brasil
+02 — Sócio Pessoa Física Domiciliado no Brasil
+09 — Titular
+10 — Administrador sem Vínculo Empregatício
+11 — Diretor sem Vínculo Empregatício
+12 — Presidente sem Vínculo Empregatício
+13 — Administrador com Vínculo Empregatício
+14 — Conselheiro de Administração ou Fiscal
+15 — Diretor com Vínculo Empregatício
+16 — Fundador
+17 — Presidente com Vínculo Empregatício
+Capital votante % (opcional)
+CPF do representante legal (opcional)
+Qualif. do representante
+— selecione —
+01 — Procurador
+02 — Curador
+03 — Mãe
+04 — Pai
+05 — Tutor
+06 — Outro
+Remuneração do trabalho (VL_REM_TRAB)
+Lucros/dividendos (VL_LUC_DIV)
+Juros s/ capital próprio (VL_JUR_CAP)
+Demais rendimentos (VL_DEM_REND)
+IR retido na fonte (VL_IR_RET)
+
+Soma das participações vigentes em 31/12: 100% (informativo, não bloqueia).
+
+Dirigentes e conselheiros não sócios
+Incluir dirigente
+Gerar e baixar ECF (Real)

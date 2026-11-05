@@ -1,0 +1,72 @@
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmufn7n590000cixkxbls0agh","name":"Seed PRESUMIDO","username":"seed-presumido","email":"seed-presumido@seed.local","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-09-24T14:44:20.589Z","updatedAt":"2026-10-29T20:01:27.739Z"}}
+GET /api/accounting/accountant-assignments/mine -> 304
+   res: {"success":true,"data":[]}
+GET /api/dynamic-tables -> 304
+   res: {"success":true,"data":[{"id":"cmuw4yqvt001hcii02qfnzloy","userId":"cmufn7n590000cixkxbls0agh","name":"Commissions","internalName":"commissions","category":"finance","schema":{"defaultDisplayField":"status","fields":[{"name":"employeeId","label":"Employee (Commission)","type":"relation","required":true,"relation":{"targetTable":"cmuw4yqv30003cii0uisuxvww"},"description":"ID of the employee who performed the service, used for commission calculation.","searchable":false},{"name":"saleId","label":"Sale","type":"relation","required":true,"relation":{"targetTable":"cmuw4yqvn000zcii0dqy91u0x"},"sear
+GET /api/dynamic-tables/cmuw4yqut0001cii02g0qg04n/data -> 200
+   res: {"success":true,"data":[{"id":"cmuw4yqxg001jcii0iz2yb9rw","dynamicTableId":"cmuw4yqut0001cii02g0qg04n","data":{"name":"seed-unit-presumido","isActive":true},"createdAt":"2026-10-06T03:45:37.492Z","updatedAt":"2026-10-06T03:45:37.492Z","deletedAt":null}]}
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmufn7n590000cixkxbls0agh","name":"Seed PRESUMIDO","username":"seed-presumido","email":"seed-presumido@seed.local","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-09-24T14:44:20.589Z","updatedAt":"2026-10-29T20:01:27.739Z"}}
+GET /api/accounting-binding?unitId=cmuw4yqxg001jcii0iz2yb9rw&status=Active -> 304
+   res: {"success":true,"data":[{"id":"cmv92duvt0039cips9jmstko4","userId":"cmufn7n590000cixkxbls0agh","unitId":"cmuw4yqxg001jcii0iz2yb9rw","sectorKey":"beautySalon","bindingVersion":2,"compiledAt":"2026-10-15T04:54:23.878Z","compiledFromHash":"sha256:9f91c74aeaf117b4bcefe65104c221e841fd9fb30abf40c8338bf30af41caaec","payload":"{\"sectorKey\":\"beautySalon\",\"bindingVersion\":2,\"compiledAt\":\"2026-10-15T04:54:23.878Z\",\"compiledFromHash\":\"sha256:9f91c74aeaf117b4bcefe65104c221e841fd9fb30abf40c8338bf30af41caaec\",\"eventBindings\":[{\"eventKey\":\"sale.finalized\",\"archetypeKey\":\"revenue_recogni
+GET /api/accounting-kit?unitId=cmuw4yqxg001jcii0iz2yb9rw -> 304
+   res: {"success":true,"data":{"kitKey":"beautySalon","kitVersion":6,"latestVersion":6,"status":"INSTALLED","lastRun":{"id":"cmv92dutc001fcips4qatlea2","mode":"APPLY","status":"APPLIED","fromVersion":1,"toVersion":5,"deployId":"migrate-plano-4-niveis-2026-10-15","startedAt":"2026-10-15T04:54:23.808Z","finishedAt":"2026-10-15T04:54:23.858Z","counts":{"additive":16,"forward":0,"conflicts":8}},"openPendingCount":8,"changelog":[],"steps":{"lastCompletedStep":7,"warnings":[]}}}
+GET /api/accounting/trial-balance?unitId=cmuw4yqxg001jcii0iz2yb9rw -> 304
+   res: {"success":true,"data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","rows":[{"accountId":"cmuw4yr3r0033cii07aq3w7uf","code":"1.1.1.01","name":"Banco","nature":"Asset","debitCents":34818058,"creditCents":19317897,"balanceCents":15500161},{"accountId":"cmuw4yr440037cii0mo9blpzx","code":"1.1.1.02","name":"Caixa","nature":"Asset","debitCents":5908112,"creditCents":5848112,"balanceCents":60000},{"accountId":"cmuw4yr3y0035cii006jp0rgw","code":"1.1.2.01","name":"A Receber","nature":"Asset","debitCents":150000,"creditCents":150000,"balanceCents":0},{"accountId":"cmuw4yr4b0039cii05eaq0tc3","code":"1.1.2.02","
+GET /api/lalur/parte-b/movements?unitId=cmuw4yqxg001jcii0iz2yb9rw&year=2026 -> 304
+   res: {"success":true,"data":[]}
+GET /api/lalur/entries?unitId=cmuw4yqxg001jcii0iz2yb9rw&year=2026 -> 304
+   res: {"success":true,"data":[]}
+GET /api/lalur/catalog?unitId=cmuw4yqxg001jcii0iz2yb9rw&aba=PARTEB_PADRAO -> 304
+   res: {"success":true,"data":{"rows":[{"codigo":"1000","descricao":"Prejuízo Fiscal Operacional - Atividade Geral","tributo":"I"},{"codigo":"1001","descricao":"Prejuízo Fiscal - Não Operacional","tributo":"I"},{"codigo":"1002","descricao":"Prejuízo Fiscal - Atividade Rural","tributo":"I"},{"codigo":"1003","descricao":"Base de Cálculo Negativa da CSLL - Atividade Geral","tributo":"C"},{"codigo":"1004","descricao":"Base de Cálculo Negativa da CSLL - Atividade Rural","tributo":"C"},{"codigo":"1005","descricao":"Provisões ou Perdas Estimadas Não Dedutíveis","tributo":"A"},{"codigo":"1010","descricao":"I
+GET /api/lalur/parte-b?unitId=cmuw4yqxg001jcii0iz2yb9rw -> 304
+   res: {"success":true,"data":[]}
+GET /api/accounting/sped/qualif-assinante?unitId=cmuw4yqxg001jcii0iz2yb9rw&layout=ECD -> 304
+   res: {"success":true,"data":[{"code":"203","description":"Diretor"},{"code":"204","description":"Conselheiro de Administração"},{"code":"205","description":"Administrador"},{"code":"206","description":"Administrador do Grupo"},{"code":"207","description":"Administrador de Sociedade Filiada"},{"code":"220","description":"Administrador Judicial – Pessoa Física"},{"code":"222","description":"Administrador Judicial – Pessoa Jurídica - Profissional Responsável"},{"code":"223","description":"Administrador Judicial/Gestor"},{"code":"226","description":"Gestor Judicial"},{"code":"309","description":"Procur
+GET /api/accounting/sped/qualif-assinante?unitId=cmuw4yqxg001jcii0iz2yb9rw&layout=ECF -> 304
+   res: {"success":true,"data":[{"code":"203","description":"Diretor"},{"code":"204","description":"Conselheiro de Administração"},{"code":"205","description":"Administrador"},{"code":"206","description":"Administrador do Grupo"},{"code":"207","description":"Administrador de Sociedade Filiada"},{"code":"220","description":"Administrador Judicial – Pessoa Física"},{"code":"222","description":"Administrador Judicial – Pessoa Jurídica - Profissional Responsável"},{"code":"223","description":"Administrador Judicial/Gestor"},{"code":"226","description":"Gestor Judicial"},{"code":"309","description":"Procur
+GET /api/accounting/contacts?unitId=cmuw4yqxg001jcii0iz2yb9rw -> 304
+   res: {"success":true,"data":[{"id":"cmw18trpt00meci9cz55eck1t","userId":"cmufn7n590000cixkxbls0agh","unitId":"cmuw4yqxg001jcii0iz2yb9rw","name":"CONTADOR H2 C7 AI TESTER","email":"h2-c7-contador@luminaris.test","cpf":"52998224725","phone":"11930000007","crcNumber":"SP-123456/O-8","crcUf":"SP","crcCertificate":null,"crcCertificateValidUntil":null,"createdById":"cmufn7n590000cixkxbls0agh","createdAt":"2026-11-03T22:12:16.914Z","updatedAt":"2026-11-03T22:12:16.914Z","deletedAt":null,"packageProfile":null}]}
+GET /api/accounting/accountant-assignments?unitId=cmuw4yqxg001jcii0iz2yb9rw -> 304
+   res: {"success":true,"data":[]}
+GET /api/accounting/reviews?unitId=cmuw4yqxg001jcii0iz2yb9rw&year=2026 -> 304
+   res: {"success":true,"data":[]}
+GET /api/accounting/data-exchange/jobs?unitId=cmuw4yqxg001jcii0iz2yb9rw&direction=EXPORT&kind=EXPORT_SPED_ECD&status=EXPORTED&year=2026&limit=100 -> 304
+   res: {"success":true,"data":{"items":[],"total":0,"page":1,"limit":100}}
+GET /api/lalur/parte-b/balances?unitId=cmuw4yqxg001jcii0iz2yb9rw&year=2026 -> 304
+   res: {"success":true,"data":{"year":2026,"periods":[{"quarter":"T01","closed":false,"accounts":[]},{"quarter":"T02","closed":false,"accounts":[]},{"quarter":"T03","closed":false,"accounts":[]},{"quarter":"T04","closed":false,"accounts":[]}],"divergences":[],"warnings":[]}}
+GET /api/accounting/data-exchange/jobs?unitId=cmuw4yqxg001jcii0iz2yb9rw&direction=EXPORT&kind=EXPORT_SPED_ECF&status=EXPORTED&year=2026&limit=100 -> 304
+   res: {"success":true,"data":{"items":[],"total":0,"page":1,"limit":100}}
+GET /api/accounting/data-exchange/jobs?unitId=cmuw4yqxg001jcii0iz2yb9rw&direction=EXPORT&kind=EXPORT_SPED_ECF_REAL&status=EXPORTED&year=2026&limit=100 -> 304
+   res: {"success":true,"data":{"items":[],"total":0,"page":1,"limit":100}}
+GET /api/accounting/data-exchange/jobs?unitId=cmuw4yqxg001jcii0iz2yb9rw&direction=EXPORT&status=EXPORTED&year=2026&limit=100 -> 304
+   res: {"success":true,"data":{"items":[],"total":0,"page":1,"limit":100}}
+GET /api/accounting/delivery?unitId=cmuw4yqxg001jcii0iz2yb9rw&limit=50 -> 304
+   res: {"success":true,"data":{"items":[],"total":0,"page":1,"limit":50}}
+GET /api/accounting/contacts?unitId=cmuw4yqxg001jcii0iz2yb9rw -> 304
+   res: {"success":true,"data":[{"id":"cmw18trpt00meci9cz55eck1t","userId":"cmufn7n590000cixkxbls0agh","unitId":"cmuw4yqxg001jcii0iz2yb9rw","name":"CONTADOR H2 C7 AI TESTER","email":"h2-c7-contador@luminaris.test","cpf":"52998224725","phone":"11930000007","crcNumber":"SP-123456/O-8","crcUf":"SP","crcCertificate":null,"crcCertificateValidUntil":null,"createdById":"cmufn7n590000cixkxbls0agh","createdAt":"2026-11-03T22:12:16.914Z","updatedAt":"2026-11-03T22:12:16.914Z","deletedAt":null,"packageProfile":null}]}
+GET /api/accounting/accountant-assignments?unitId=cmuw4yqxg001jcii0iz2yb9rw -> 304
+   res: {"success":true,"data":[]}
+GET /api/lalur/parte-b/movements?unitId=cmuw4yqxg001jcii0iz2yb9rw&year=2026 -> 304
+   res: {"success":true,"data":[]}
+GET /api/accounting/contacts?unitId=cmuw4yqxg001jcii0iz2yb9rw -> 304
+   res: {"success":true,"data":[{"id":"cmw18trpt00meci9cz55eck1t","userId":"cmufn7n590000cixkxbls0agh","unitId":"cmuw4yqxg001jcii0iz2yb9rw","name":"CONTADOR H2 C7 AI TESTER","email":"h2-c7-contador@luminaris.test","cpf":"52998224725","phone":"11930000007","crcNumber":"SP-123456/O-8","crcUf":"SP","crcCertificate":null,"crcCertificateValidUntil":null,"createdById":"cmufn7n590000cixkxbls0agh","createdAt":"2026-11-03T22:12:16.914Z","updatedAt":"2026-11-03T22:12:16.914Z","deletedAt":null,"packageProfile":null}]}
+GET /api/lalur/parte-b/balances?unitId=cmuw4yqxg001jcii0iz2yb9rw&year=2026 -> 304
+   res: {"success":true,"data":{"year":2026,"periods":[{"quarter":"T01","closed":false,"accounts":[]},{"quarter":"T02","closed":false,"accounts":[]},{"quarter":"T03","closed":false,"accounts":[]},{"quarter":"T04","closed":false,"accounts":[]}],"divergences":[],"warnings":[]}}
+GET /api/accounting/accounts?unitId=cmuw4yqxg001jcii0iz2yb9rw -> 304
+   res: {"success":true,"data":{"accounts":[{"id":"cmuw4yr3n0031cii0dbjurbqx","userId":"cmufn7n590000cixkxbls0agh","unitId":"cmuw4yqxg001jcii0iz2yb9rw","code":"1","name":"Ativo","nature":"Asset","acceptsEntries":false,"requiresDimension":false,"createdAt":"2026-10-06T03:45:37.715Z","updatedAt":"2026-10-06T03:45:37.715Z","deletedAt":null},{"id":"cmv92duv0002hcipsnw1vy3mm","userId":"cmufn7n590000cixkxbls0agh","unitId":"cmuw4yqxg001jcii0iz2yb9rw","code":"1.1","name":"Ativo Circulante","nature":"Asset","acceptsEntries":false,"requiresDimension":false,"createdAt":"2026-10-15T04:54:23.868Z","updatedAt":"202
+GET /api/lalur/parte-b/movements?unitId=cmuw4yqxg001jcii0iz2yb9rw&year=2026 -> 304
+   res: {"success":true,"data":[]}
+GET /api/lalur/parte-b/movements?unitId=cmuw4yqxg001jcii0iz2yb9rw&year=2026 -> 304
+   res: {"success":true,"data":[]}
+GET /api/lalur/parte-b/balances?unitId=cmuw4yqxg001jcii0iz2yb9rw&year=2026 -> 304
+   res: {"success":true,"data":{"year":2026,"periods":[{"quarter":"T01","closed":false,"accounts":[]},{"quarter":"T02","closed":false,"accounts":[]},{"quarter":"T03","closed":false,"accounts":[]},{"quarter":"T04","closed":false,"accounts":[]}],"divergences":[],"warnings":[]}}
+GET /api/lalur/parte-b/balances?unitId=cmuw4yqxg001jcii0iz2yb9rw&year=2026 -> 304
+   res: {"success":true,"data":{"year":2026,"periods":[{"quarter":"T01","closed":false,"accounts":[]},{"quarter":"T02","closed":false,"accounts":[]},{"quarter":"T03","closed":false,"accounts":[]},{"quarter":"T04","closed":false,"accounts":[]}],"divergences":[],"warnings":[]}}
+POST /api/accounting/accountant-assignments -> 201  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","accountingContactId":"cmw18trpt00meci9cz55eck1t","accountantEmail":"h2-c7-contador@luminaris.test"}
+   res: {"success":true,"data":{"id":"cmw18uw8a00mgci9crip7l33i","unitId":"cmuw4yqxg001jcii0iz2yb9rw","status":"PENDING","accountingContactId":"cmw18trpt00meci9cz55eck1t","accountantUserId":"cmw18t0fk00maci9cne7czj5g","crcNumber":"SP-123456/O-8","crcUf":"SP","activeFrom":null,"activeUntil":null,"endReason":null,"createdAt":"2026-11-03T22:13:09.418Z"}}
+GET /api/accounting/accountant-assignments?unitId=cmuw4yqxg001jcii0iz2yb9rw -> 200
+   res: {"success":true,"data":[{"id":"cmw18uw8a00mgci9crip7l33i","unitId":"cmuw4yqxg001jcii0iz2yb9rw","status":"PENDING","accountingContactId":"cmw18trpt00meci9cz55eck1t","accountantUserId":"cmw18t0fk00maci9cne7czj5g","crcNumber":"SP-123456/O-8","crcUf":"SP","activeFrom":null,"activeUntil":null,"endReason":null,"createdAt":"2026-11-03T22:13:09.418Z"}]}
+GET /api/accounting/contacts?unitId=cmuw4yqxg001jcii0iz2yb9rw -> 304
+   res: {"success":true,"data":[{"id":"cmw18trpt00meci9cz55eck1t","userId":"cmufn7n590000cixkxbls0agh","unitId":"cmuw4yqxg001jcii0iz2yb9rw","name":"CONTADOR H2 C7 AI TESTER","email":"h2-c7-contador@luminaris.test","cpf":"52998224725","phone":"11930000007","crcNumber":"SP-123456/O-8","crcUf":"SP","crcCertificate":null,"crcCertificateValidUntil":null,"createdById":"cmufn7n590000cixkxbls0agh","createdAt":"2026-11-03T22:12:16.914Z","updatedAt":"2026-11-03T22:12:16.914Z","deletedAt":null,"packageProfile":null}]}

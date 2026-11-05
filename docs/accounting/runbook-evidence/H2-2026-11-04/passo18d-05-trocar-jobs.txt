@@ -1,0 +1,639 @@
+Luminaris
+🇧🇷
+PT
+seed-real
+S
+Contabilidade
+
+Razão de partida dobrada — balancete por unidade
+
+Unidade
+seed-unit-real
+Balancete
+Períodos
+Lançamentos
+Aprovações
+Contas a Pagar
+Contas a Receber
+Aging
+Fluxo de Caixa Projetado
+Contrapartes
+Razão
+Plano de Contas
+BP
+DRE
+DFC
+Comparativo
+Livro Diário
+Importação/Exportação
+Conciliação
+NF-e
+Compliance
+Dimensões
+Imobilizado
+Perfil fiscal
+Parâmetros legais
+Política contábil
+Apuração
+Pendências
+Cobrança
+Kit de setor
+Mapeamento Referencial (RFB)
+
+Associe cada conta analítica ao código do plano referencial da Receita. Todas as contas precisam de código antes de gerar a ECD.
+
+Versão
+Carregar cobertura
+e-Lalur / e-Lacs
+
+Parte A (M300/M350) · Parte B (M010) — cadastro dos ajustes do lucro real que a ECF (Blocos M/N) lê.
+
+0 ajustes · 2 contas da Parte B no exercício 2026
+
+Gerar ECF Real
+Parte B — contas (M010)
+Nova conta da Parte B
+Todos os tributos
+I — IRPJ (e-Lalur)
+C — CSLL (e-Lacs)
+Mostrar arquivados
+Código	Descrição	Tributo	Padrão RFB	Criação	Limite	Saldo inicial	Ações
+PB-H2-1	H2 15c prejuizo fiscal (editada)	I	1000Prejuízo Fiscal Operacional - Atividade Geral	31/03/2026	—	R$ 0,00 D	
+Editar
+Arquivar
+
+PB-H2-2	H2 16 contrapartida	I	1000Prejuízo Fiscal Operacional - Atividade Geral	31/03/2026	—	R$ 0,00 D	
+Editar
+Arquivar
+Movimentos da Parte B (M410)
+Novo movimento
+2026
+2025
+2024
+2023
+2022
+2021
+2020
+2019
+2018
+2017
+2016
+2015
+Todos os trimestres
+T01
+T02
+T03
+T04
+Todas as contas
+PB-H2-1 (I)
+PB-H2-2 (I)
+Trim.	Conta	Ind.	Valor	Contrapartida	Histórico	Lanç. ant.	Origem	Ações
+T01	PB-H2-1	CR	R$ 100,00	PB-H2-2	H2 passo 16a CR com contrapartida	N	usuário	
+Editar
+Arquivar
+
+T01	PB-H2-1	PF	R$ 50,00	—	H2 passo 16a PF sem contrapartida	N	usuário	
+Editar
+Arquivar
+
+T02	PB-H2-1	CR	R$ 120,00	PB-H2-2	H2 02/11 passo 16a CR com contrapartida (AI tester)	N	usuário	
+Editar
+Arquivar
+
+T02	PB-H2-1	PF	R$ 30,00	—	H2 02/11 passo 16a PF sem contrapartida (AI tester)	N	usuário	
+Editar
+Arquivar
+FECHAMENTO DO TRIMESTRE — 2026
+T01
+fechado
+03/11/2026
+Reabrir T01
+T02
+aberto
+Fechar T02
+T03
+aberto
+Fechar T03
+T04
+aberto
+Fechar T04
+DIAGNÓSTICO DE SALDOS — MATERIALIZADO × RECOMPUTADO
+Trim.	Conta	Saldo inicial	Lanç. Parte A	Lanç. Parte B	Saldo final
+T01	PB-H2-1 (I)	
+R$ 0,00
+R$ 0,00
+	
+R$ 0,00
+R$ 0,00
+	
+-R$ 50,00
+-R$ 50,00
+	
+-R$ 50,00
+-R$ 50,00
+
+T01	PB-H2-2 (I)	
+R$ 0,00
+R$ 0,00
+	
+R$ 0,00
+R$ 0,00
+	
+R$ 100,00
+R$ 100,00
+	
+R$ 100,00
+R$ 100,00
+
+T02	PB-H2-1 (I)	
+-R$ 50,00
+	
+R$ 0,00
+	
+-R$ 90,00
+	
+-R$ 140,00
+
+T02	PB-H2-2 (I)	
+R$ 100,00
+	
+R$ 0,00
+	
+R$ 120,00
+	
+R$ 220,00
+
+T03	PB-H2-1 (I)	
+-R$ 140,00
+	
+R$ 0,00
+	
+R$ 0,00
+	
+-R$ 140,00
+
+T03	PB-H2-2 (I)	
+R$ 220,00
+	
+R$ 0,00
+	
+R$ 0,00
+	
+R$ 220,00
+
+T04	PB-H2-1 (I)	
+-R$ 140,00
+	
+R$ 0,00
+	
+R$ 0,00
+	
+-R$ 140,00
+
+T04	PB-H2-2 (I)	
+R$ 220,00
+	
+R$ 0,00
+	
+R$ 0,00
+	
+R$ 220,00
+
+Linha de cima: recomputado a partir dos lançamentos. Linha de baixo (trimestres fechados): materializado no fechamento.
+
+Parte A — ajustes (M300/M350) e linhas E do Bloco N
+Novo ajuste
+2026
+2025
+2024
+2023
+2022
+2021
+2020
+2019
+2018
+2017
+2016
+2015
+Todos os trimestres
+T01
+T02
+T03
+T04
+Todos os livros
+e-Lalur (M300 · IRPJ)
+e-Lacs (M350 · CSLL)
+N500
+N630
+N670
+Mostrar arquivados
+Nenhum ajuste registrado neste exercício.
+Gerar SPED ECD
+
+Escrituração Contábil Digital. Conta sem código referencial não bloqueia: sai sem I051, com aviso (o mapeamento é facultativo na ECD; a ECF exige).
+
+Ano
+Versão mapeamento
+CNPJ
+Nome empresarial
+UF
+AC
+AL
+AM
+AP
+BA
+CE
+DF
+ES
+GO
+MA
+MG
+MS
+MT
+PA
+PB
+PE
+PI
+PR
+RJ
+RN
+RO
+RR
+RS
+SC
+SE
+SP
+TO
+Cód. município (IBGE)
+Possui NIRE
+Não
+Sim
+Grande porte
+Não
+Sim
+Plano referencial
+Selecione
+1 - PJ em Geral - Lucro Real
+2 - PJ em Geral - Lucro Presumido
+3 - Financeiras - Lucro Real
+4 - Seguradoras - Lucro Real
+5 - Imunes e Isentas em Geral
+6 - Imunes e Isentas - Financeiras
+7 - Imunes e Isentas - Seguradoras
+8 - Entidades Fechadas de Previdência Complementar
+9 - Partidos Políticos
+10 - Financeiras - Lucro Presumido
+Livro (termo)
+Nº de ordem
+Natureza do livro
+Encerr. exercício
+Contador do cadastro (opcional)
+— preencher o contador à mão —
+CONTADOR FICTICIO DE TESTE — CRC SP-123456/O-1
+CONTADOR SEM FONE TESTE — CRC SP-654321/O-2
+CONTADORA H2 AI TESTER — CRC MG-012345/O-6
+Signatários (J930)
+Adicionar
+Não resp. legal
+Resp. legal
+UF do CRC
+AC
+AL
+AM
+AP
+BA
+CE
+DF
+ES
+GO
+MA
+MG
+MS
+MT
+PA
+PB
+PE
+PI
+PR
+RJ
+RN
+RO
+RR
+RS
+SC
+SE
+SP
+TO
+Gerar e baixar ECD
+Gerar SPED ECF
+
+Escrituração Contábil Fiscal (Lucro Presumido). O PVA recupera os blocos da ECD ativa.
+
+Ano
+CNPJ
+Nome empresarial
+Nat. jurídica
+CNAE-Fiscal
+Endereço
+Bairro
+UF
+AC
+AL
+AM
+AP
+BA
+CE
+DF
+ES
+GO
+MA
+MG
+MS
+MT
+PA
+PB
+PE
+PI
+PR
+RJ
+RN
+RO
+RR
+RS
+SC
+SE
+SP
+TO
+Cód. município (IBGE)
+CEP
+E-mail
+Alíquota CSLL
+9%
+15%
+Contador do cadastro (opcional)
+— preencher o contador à mão —
+CONTADOR FICTICIO DE TESTE — CRC SP-123456/O-1
+CONTADOR SEM FONE TESTE — CRC SP-654321/O-2
+CONTADORA H2 AI TESTER — CRC MG-012345/O-6
+Signatários (0930, máx 2)
+Adicionar
+Sócios, titular e dirigentes (Y600)
+
+Os sócios vêm do cadastro; complete a qualificação e os 5 valores do ano (campos 13 a 17 do Y600). Valor vazio não vira zero: digite 0,00.
+
+SOCIA TESTE H2 REAL
+CPF •••4705
+PF · residente
+Participação 100%
+01/01/2020 → sem saída
+Qualificação (QUALIF)
+— selecione —
+01 — Acionista Pessoa Física Domiciliado no Brasil
+02 — Sócio Pessoa Física Domiciliado no Brasil
+09 — Titular
+10 — Administrador sem Vínculo Empregatício
+11 — Diretor sem Vínculo Empregatício
+12 — Presidente sem Vínculo Empregatício
+13 — Administrador com Vínculo Empregatício
+14 — Conselheiro de Administração ou Fiscal
+15 — Diretor com Vínculo Empregatício
+16 — Fundador
+17 — Presidente com Vínculo Empregatício
+Capital votante % (opcional)
+CPF do representante legal (opcional)
+Qualif. do representante
+— selecione —
+01 — Procurador
+02 — Curador
+03 — Mãe
+04 — Pai
+05 — Tutor
+06 — Outro
+Remuneração do trabalho (VL_REM_TRAB)
+Lucros/dividendos (VL_LUC_DIV)
+Juros s/ capital próprio (VL_JUR_CAP)
+Demais rendimentos (VL_DEM_REND)
+IR retido na fonte (VL_IR_RET)
+
+Soma das participações vigentes em 31/12: 100% (informativo, não bloqueia).
+
+Dirigentes e conselheiros não sócios
+Incluir dirigente
+Gerar e baixar ECF
+Gerar SPED ECF (Lucro Real)
+
+Escrituração Contábil Fiscal — Lucro Real. O PVA recupera os blocos da ECD ativa.
+
+Esqueleto — blocos L, M e N saem vazios; HASH_ECF_ANTERIOR sempre vazio; Forks 2, 3 e 4 do ADR ainda pendentes de ratificação e do Manual do Leiaute 12.
+Ano
+CNPJ
+Nome empresarial
+Nat. jurídica
+CNAE-Fiscal
+Endereço
+Bairro
+UF
+AC
+AL
+AM
+AP
+BA
+CE
+DF
+ES
+GO
+MA
+MG
+MS
+MT
+PA
+PB
+PE
+PI
+PR
+RJ
+RN
+RO
+RR
+RS
+SC
+SE
+SP
+TO
+Cód. município (IBGE)
+CEP
+E-mail
+Alíquota CSLL
+9%
+15%
+Forma de tributação (0010)
+Forma trib. do período (0010, 4 posições)
+Contador do cadastro (opcional)
+— preencher o contador à mão —
+CONTADOR FICTICIO DE TESTE — CRC SP-123456/O-1
+CONTADOR SEM FONE TESTE — CRC SP-654321/O-2
+CONTADORA H2 AI TESTER — CRC MG-012345/O-6
+Signatários (0930, máx 2)
+Adicionar
+Sócios, titular e dirigentes (Y600)
+
+Os sócios vêm do cadastro; complete a qualificação e os 5 valores do ano (campos 13 a 17 do Y600). Valor vazio não vira zero: digite 0,00.
+
+SOCIA TESTE H2 REAL
+CPF •••4705
+PF · residente
+Participação 100%
+01/01/2020 → sem saída
+Qualificação (QUALIF)
+— selecione —
+01 — Acionista Pessoa Física Domiciliado no Brasil
+02 — Sócio Pessoa Física Domiciliado no Brasil
+09 — Titular
+10 — Administrador sem Vínculo Empregatício
+11 — Diretor sem Vínculo Empregatício
+12 — Presidente sem Vínculo Empregatício
+13 — Administrador com Vínculo Empregatício
+14 — Conselheiro de Administração ou Fiscal
+15 — Diretor com Vínculo Empregatício
+16 — Fundador
+17 — Presidente com Vínculo Empregatício
+Capital votante % (opcional)
+CPF do representante legal (opcional)
+Qualif. do representante
+— selecione —
+01 — Procurador
+02 — Curador
+03 — Mãe
+04 — Pai
+05 — Tutor
+06 — Outro
+Remuneração do trabalho (VL_REM_TRAB)
+Lucros/dividendos (VL_LUC_DIV)
+Juros s/ capital próprio (VL_JUR_CAP)
+Demais rendimentos (VL_DEM_REND)
+IR retido na fonte (VL_IR_RET)
+
+Soma das participações vigentes em 31/12: 100% (informativo, não bloqueia).
+
+Dirigentes e conselheiros não sócios
+Incluir dirigente
+Gerar e baixar ECF (Real)
+Revisão profissional
+
+Achado → ponteiro/acerto → regeração → sign-off (o arquivo nunca é editado).
+
+Abrir revisão
+2026
+2025
+2024
+2023
+2022
+2021
+2020
+2019
+2018
+2017
+2016
+2015
+Todos os status
+aberta
+assinada
+rejeitada
+Exercício	Arquivos (ECD · ECF)	Status	Aberta em	Assinada por / motivo	Ações
+2025	cmw049xs… · cmw2aqxu…	aberta	04/11/2026, 13:00:25	—	Abrir
+Contador responsável
+
+Com um contador ativo, só ele reabre períodos e assina revisões deste escopo.
+
+Convidar
+
+Sem contador responsável neste escopo.
+
+Entrega ao contador
+
+O sistema não envia nada — registra que você despachou o pacote pelo seu canal.
+
+Contadores
+Novo contador
+Nome	E-mail	CRC	Certidão (validade)	Ações
+CONTADOR FICTICIO DE TESTE	contador.teste@example.com	SP-123456/O-1 · SP	SP/2026/000123 (31/12/2026)	
+Editar
+Perfil de pacote
+Arquivar
+
+CONTADOR SEM FONE TESTE	semfone.teste@example.com	SP-654321/O-2 · SP	—	
+Editar
+Perfil de pacote
+Arquivar
+
+CONTADORA H2 AI TESTER	contadora.h2@example.com	MG-012345/O-6 · MG	—	
+Editar
+Perfil de pacote
+Arquivar
+Montar pacote
+Exercício
+Contador destinatário
+Selecione…
+CONTADOR FICTICIO DE TESTE — SP-123456/O-1
+CONTADOR SEM FONE TESTE — SP-654321/O-2
+CONTADORA H2 AI TESTER — MG-012345/O-6
+Arquivo da ECD (EXPORTED)
+— nenhum —
+Arquivo da ECF (EXPORTED)
+— nenhum —
+Extras (máx. 20) — só relatórios gerados com período
+
+Nenhum relatório EXPORTED no exercício — gere na aba Importação/Exportação.
+
+Validar pacote
+Entregas
+Todos os status
+QUEUED
+SENT
+FAILED
+Nenhuma entrega registrada.
+
+Revisão 2025
+
+FORMULÁRIO ADMINISTRATIVO
+
+ECD cmw049xs… · ECF cmw2aqxu…
+aberta
+0 BLOCKER abertos
+Baixar ECD
+Baixar ECF
+Adicionar achado
+Trocar jobs
+Assinar
+Rejeitar
+Registro	Localizador	Descrição	Severidade	Estado	Ações
+I050 plano de contas	4.1	
+H2 18b: conta 4.1 com natureza a conferir no plano referencial (achado de teste, AI tester)
+	BLOCKER	
+dado editado · 04/11/2026, 13:04:28
+Abrir account cmuw4z86… no painel dono
+	
+I200 lançamento	cmuw4zdql033pcii05ojje205	
+H2 18b: lançamento 110 (despesas operacionais 07/2025) a reclassificar (achado de teste, AI tester)
+	NOTE	
+lançamento de acerto · 04/11/2026, 13:05:18
+Abrir journal_entry cmw2b5p0… no painel dono
+entry.posted · 04/11/2026, 13:05:18
+	
+Trocar jobs
+
+FORMULÁRIO ADMINISTRATIVO
+
+O par antigo fica registrado no evento review.jobs_replaced.
+
+Arquivo da ECD (EXPORTED)
+— nenhum —
+cmw2b8rf… · ECD · 04/11/2026, 13:07:41
+cmw049xs… · ECD · 03/11/2026, 00:17:07
+cmvwlzja… · ECD · 31/10/2026, 13:21:50
+cmvwlvx4… · ECD · 31/10/2026, 13:19:01
+Arquivo da ECF (EXPORTED)
+— nenhum —
+cmw2b9cv… · ECF_REAL · 04/11/2026, 13:08:09
+cmw2aqxu… · ECF_REAL · 04/11/2026, 12:53:50
+Confirmar

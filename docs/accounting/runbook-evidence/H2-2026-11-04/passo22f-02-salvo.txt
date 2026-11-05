@@ -1,0 +1,81 @@
+Perfil fiscal da unidade
+
+Serve à NF-e de compra (custo) e à NFS-e de venda. Salvar substitui o perfil inteiro.
+
+Perfil da unidade completo
+REGIME
+Regime tributário
+— selecione —
+Simples Nacional
+Lucro Presumido
+Lucro Real
+Regime de PIS/COFINS
+Simples
+Contribuinte de ICMS
+
+Simples Nacional: ICMS fora e PIS/COFINS pelo Simples — regra atual do sistema; revisão no X10a.
+
+EMITENTE DA NFS-E
+Município do emitente (código IBGE, 7 dígitos)
+Inscrição municipal
+CNAE
+Regime especial de tributação (0–9)
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+Regime de apuração pelo Simples
+— selecione —
+1 — tudo pelo Simples
+2 — federais pelo Simples e ISS pela NFS-e
+3 — tudo pela NFS-e
+Série da DPS
+
+No modo manual o portal numera a DPS (Guia do Emissor Web, G3) — a série só vale para outro parceiro.
+
+ISS
+Alíquota do ISS (%)
+ISS retido pelo tomador pessoa jurídica
+TRIBUTOS APROXIMADOS (%)
+Simples Nacional
+IBS/CBS
+Informar IBS/CBS na NFS-e
+EMISSÃO
+Competência fora do mês
+Avisar
+Bloquear
+Fato gerador do pacote
+Consumo
+Venda
+Conta no parceiro emissor
+CUSTO DE COMPRA (NF-E)
+Crédito de PIS/COFINS exclui o ICMS da base
+Crédito de PIS/COFINS inclui o IPI (regra fixa: não)
+Crédito sobre compra de fornecedor do Simples
+Conta de ICMS a recuperar
+— nenhuma —
+1.1.1.01 — Banco
+1.1.1.02 — Caixa
+1.1.2.01 — A Receber
+1.1.2.02 — A Receber Cartão / Adquirente
+1.1.2.03 — Clientes a Receber
+1.1.3.01 — Mercadorias para Revenda
+1.1.9.01 — IBS a Recuperar
+1.1.9.02 — CBS a Recuperar
+Conta de PIS/COFINS a recuperar
+— nenhuma —
+1.1.1.01 — Banco
+1.1.1.02 — Caixa
+1.1.2.01 — A Receber
+1.1.2.02 — A Receber Cartão / Adquirente
+1.1.2.03 — Clientes a Receber
+1.1.3.01 — Mercadorias para Revenda
+1.1.9.01 — IBS a Recuperar
+1.1.9.02 — CBS a Recuperar
+Salvar perfil

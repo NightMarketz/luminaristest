@@ -1,0 +1,234 @@
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmufn7n590000cixkxbls0agh","name":"Seed PRESUMIDO","username":"seed-presumido","email":"seed-presumido@seed.local","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-09-24T14:44:20.589Z","updatedAt":"2026-10-29T20:01:27.739Z"}}
+GET /api/dynamic-tables -> 304
+   res: {"success":true,"data":[{"id":"cmuw4yqvt001hcii02qfnzloy","userId":"cmufn7n590000cixkxbls0agh","name":"Commissions","internalName":"commissions","category":"finance","schema":{"defaultDisplayField":"status","fields":[{"name":"employeeId","label":"Employee (Commission)","type":"relation","required":t
+GET /api/dashboard/sidebar -> 304
+   res: {"success":true,"data":[{"key":"commercial","displayName":"Comercial","i18nKey":"categories.commercial","icon":"store","count":0},{"key":"products","displayName":"Produtos","i18nKey":"categories.products","count":1},{"key":"services","displayName":"Serviços","i18nKey":"categories.services","count":1
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmufn7n590000cixkxbls0agh","name":"Seed PRESUMIDO","username":"seed-presumido","email":"seed-presumido@seed.local","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-09-24T14:44:20.589Z","updatedAt":"2026-10-29T20:01:27.739Z"}}
+GET /api/dynamic-tables -> 304
+   res: {"success":true,"data":[{"id":"cmuw4yqvt001hcii02qfnzloy","userId":"cmufn7n590000cixkxbls0agh","name":"Commissions","internalName":"commissions","category":"finance","schema":{"defaultDisplayField":"status","fields":[{"name":"employeeId","label":"Employee (Commission)","type":"relation","required":t
+GET /api/analytics/presets?datePreset=thisMonth -> 304
+   res: {"success":true,"data":[{"key":"beautySalon.sales","title":"Vendas Globais","charts":[{"key":"sales.revenueKpis","title":"KPIs de Receita (Vendas)","type":"bar","processor":"revenueKpis","params":{"period":"month","monthsWindow":12,"excludeStatuses":["Cancelled"],"options":{"currency":"BRL","default
+GET /api/analytics/data?key=sales.profitByCustomer&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.profitByCustomer","title":"3.x Lucro por Cliente (Rateado por Receita)","type":"bar","processor":"profitByDimension","params":{"period":"month","metricMode":"profit","excludeStatuses":["Cancelled"],"options":{"currency":"BRL","analysisKind":"comparison",
+GET /api/analytics/data?key=sales.profitKpis&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.profitKpis","title":"KPIs de Lucros e Margens","type":"bar","processor":"profitKpis","params":{"period":"month","monthsWindow":12,"options":{"currency":"BRL","defaultImportantFields":["date","totalAmount","status"],"importantFields":{"Lucro Bruto":["date
+GET /api/analytics/data?key=sales.costByCustomer&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.costByCustomer","title":"3.x Custo Rateado por Cliente","type":"bar","processor":"profitByDimension","params":{"period":"month","metricMode":"cost","excludeStatuses":["Cancelled"],"options":{"currency":"BRL","analysisKind":"comparison","metricLabel":"Cus
+GET /api/analytics/data?key=sales.profitByCampaign&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.profitByCampaign","title":"3.x Rentabilidade por Campanha (Lucro Rateado)","type":"bar","processor":"profitByDimension","params":{"period":"month","metricMode":"profit","excludeStatuses":["Cancelled"],"options":{"currency":"BRL","analysisKind":"compariso
+GET /api/analytics/data?key=sales.productCostKpis&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.productCostKpis","title":"1.6 Custos de Produtos","type":"bar","processor":"productCostKpis","params":{"period":"month","monthsWindow":12,"options":{"currency":"BRL"},"saleTableKey":"@@PRESET_TABLE_KEY::sales","saleItemsTableKey":"@@PRESET_TABLE_KEY::sal
+GET /api/analytics/data?key=sales.revenueByType&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueByType","title":"1.2 Receita por Origem – Operacional vs Não Operacional","type":"donut","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"composition","metricLabel":"Receita por Tipo","labelMap":{"Operational":
+GET /api/analytics/data?key=sales.revenueGrossEvolution&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueGrossEvolution","title":"1.1 Receita Global – Receita Bruta (Linha Mensal)","type":"line","processor":"temporalAggregation","params":{"period":"month","limit":12,"options":{"currency":"BRL","isTemporal":true,"analysisKind":"evolution","metricLabel
+GET /api/analytics/data?key=sales.revenueNewVsRecurring&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueNewVsRecurring","title":"1.2 Receita por Origem – Receita Nova vs Recorrente","type":"donut","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"composition","metricLabel":"Composição da Receita","labelMap":{"true
+GET /api/analytics/data?key=sales.revenueNetEvolution&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueNetEvolution","title":"1.1 Receita Global – Receita Líquida (Linha Mensal)","type":"line","processor":"formulaCalculation","params":{"groupBy":"period","options":{"currency":"BRL","isTemporal":true,"analysisKind":"evolution","metricLabel":"Receita
+GET /api/analytics/data?key=sales.revenueByChannel&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueByChannel","title":"1.5 Receita por Categoria – Receita por Canal","type":"donut","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"composition","metricLabel":"Participação por Canal","labelMap":{"InStore":"Loja
+GET /api/analytics/data?key=sales.revenueByCustomerTop&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueByCustomerTop","title":"1.3 Receita por Cliente – Top 10 Clientes por Receita","type":"bar","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"comparison","metricLabel":"Receita Acumulada","layout":"full"},"pipel
+GET /api/analytics/data?key=sales.revenueByBusinessDay&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueByBusinessDay","title":"1.4 Receita por Tempo – Receita por Dia (Tendência)","type":"line","processor":"temporalAggregation","params":{"period":"day","limit":30,"options":{"currency":"BRL","isTemporal":true,"analysisKind":"evolution"},"excludeStat
+GET /api/analytics/data?key=sales.cashflowKpis&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.cashflowKpis","title":"4. CAIXA – KPIs de Fluxo de Caixa e Solvência","type":"bar","processor":"cashflowKpis","params":{"period":"month","monthsWindow":12,"excludeStatuses":["Cancelled"],"options":{"currency":"BRL","defaultImportantFields":["date","total
+GET /api/analytics/data?key=sales.revenueKpis&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueKpis","title":"KPIs de Receita (Vendas)","type":"bar","processor":"revenueKpis","params":{"period":"month","monthsWindow":12,"excludeStatuses":["Cancelled"],"options":{"currency":"BRL","defaultImportantFields":["date","totalAmount","status","payme
+GET /api/analytics/data?key=saleItems.servicesMonthlyReceived&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"saleItems.servicesMonthlyReceived","title":"Serviços - Total Recebido por Mês","type":"line","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","isTemporal":true},"deriveItemType":true,"pipeline":{"source":{"kind":"presetTable","key":"@@PRES
+GET /api/analytics/data?key=saleItems.productsMonthlyReceived&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"saleItems.productsMonthlyReceived","title":"Produtos - Total Recebido por Mês","type":"line","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","isTemporal":true},"deriveItemType":true,"pipeline":{"source":{"kind":"presetTable","key":"@@PRES
+GET /api/analytics/data?key=saleItems.typeComparison&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"saleItems.typeComparison","title":"Serviços x Produtos (Recebido)","type":"donut","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"comparison","labelMap":{"Service":"Serviços","Product":"Produtos"}},"labelMap":{"Service":"S
+GET /api/analytics/data?key=saleItems.productsProfitMonthly&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"saleItems.productsProfitMonthly","title":"Produtos - Lucro Mensal","type":"line","processor":"salesProfitByProductOverTime","params":{"period":"month","monthsWindow":12,"includePaymentStatuses":["Paid"],"stockCostIsTotal":true,"options":{"currency":"BRL","isTe
+GET /api/analytics/data?key=sales.profitByCustomer&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.profitByCustomer","title":"3.x Lucro por Cliente (Rateado por Receita)","type":"bar","processor":"profitByDimension","params":{"period":"month","metricMode":"profit","excludeStatuses":["Cancelled"],"options":{"currency":"BRL","analysisKind":"comparison",
+GET /api/analytics/data?key=sales.profitKpis&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.profitKpis","title":"KPIs de Lucros e Margens","type":"bar","processor":"profitKpis","params":{"period":"month","monthsWindow":12,"options":{"currency":"BRL","defaultImportantFields":["date","totalAmount","status"],"importantFields":{"Lucro Bruto":["date
+GET /api/analytics/data?key=sales.costByCustomer&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.costByCustomer","title":"3.x Custo Rateado por Cliente","type":"bar","processor":"profitByDimension","params":{"period":"month","metricMode":"cost","excludeStatuses":["Cancelled"],"options":{"currency":"BRL","analysisKind":"comparison","metricLabel":"Cus
+GET /api/analytics/data?key=saleItems.serviceEstimatedCost&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"saleItems.serviceEstimatedCost","title":"3.x Custo Estimado por Serviço (Tempo x Custo Mensal)","type":"bar","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"comparison","metricLabel":"Custo de execução por serviço (aprox.)
+GET /api/analytics/data?key=sales.profitByCampaign&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.profitByCampaign","title":"3.x Rentabilidade por Campanha (Lucro Rateado)","type":"bar","processor":"profitByDimension","params":{"period":"month","metricMode":"profit","excludeStatuses":["Cancelled"],"options":{"currency":"BRL","analysisKind":"compariso
+GET /api/analytics/data?key=expenses.costKpis&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"expenses.costKpis","title":"2. CUSTOS - KPIs de Custos (Despesas)","type":"bar","processor":"costKpis","params":{"period":"month","monthsWindow":12,"options":{"currency":"BRL","defaultImportantFields":["paymentDate","amount","category","isPlanned","paymentStat
+GET /api/analytics/data?key=sales.revenueByType&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueByType","title":"1.2 Receita por Origem – Operacional vs Não Operacional","type":"donut","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"composition","metricLabel":"Receita por Tipo","labelMap":{"Operational":
+GET /api/analytics/data?key=expenses.costFixedVsVariable&datePreset=thisMonth -> 304
+   res: {"success":true,"data":{"chart":{"key":"expenses.costFixedVsVariable","title":"2.1 Custos Fixos – Participação vs Variáveis","type":"donut","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"composition","metricLabel":"Participação"},"pipeline":{"source":{"kind":"p
+GET /api/analytics/data?key=saleItems.serviceEstimatedProfit&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"saleItems.serviceEstimatedProfit","title":"3.x Lucro Estimado por Serviço (Receita - Custo Estimado)","type":"bar","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"comparison","metricLabel":"Lucro estimado por serviço (apro
+GET /api/analytics/data?key=expenses.costTotalEvolution&datePreset=thisMonth -> 304
+   res: {"success":true,"data":{"chart":{"key":"expenses.costTotalEvolution","title":"2.4 Estrutura de Custos – Custo Total (Evolução Mensal)","type":"line","processor":"temporalAggregation","params":{"period":"month","limit":12,"options":{"currency":"BRL","isTemporal":true,"analysisKind":"evolution","metri
+GET /api/analytics/data?key=saleItems.employeeServiceProfit&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"saleItems.employeeServiceProfit","title":"3.x Retorno por Esforço - Lucro Estimado por Colaborador","type":"bar","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"comparison","metricLabel":"Lucro líquido aproximado por colab
+GET /api/analytics/data?key=sales.revenueGrossEvolution&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueGrossEvolution","title":"1.1 Receita Global – Receita Bruta (Linha Mensal)","type":"line","processor":"temporalAggregation","params":{"period":"month","limit":12,"options":{"currency":"BRL","isTemporal":true,"analysisKind":"evolution","metricLabel
+GET /api/analytics/data?key=expenses.costByCategory&datePreset=thisMonth -> 304
+   res: {"success":true,"data":{"chart":{"key":"expenses.costByCategory","title":"2.4 Estrutura de Custos – Custo por Categoria","type":"bar","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"composition","metricLabel":"Custo por Categoria"},"pipeline":{"source":{"kind":"
+GET /api/analytics/data?key=expenses.costPlannedVsUnplanned&datePreset=thisMonth -> 304
+   res: {"success":true,"data":{"chart":{"key":"expenses.costPlannedVsUnplanned","title":"2.4 Estrutura de Custos – Planejado vs Não Planejado","type":"donut","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"comparison","metricLabel":"Planejamento","colors":["#10b981","#
+GET /api/analytics/data?key=sales.productCostKpis&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.productCostKpis","title":"1.6 Custos de Produtos","type":"bar","processor":"productCostKpis","params":{"period":"month","monthsWindow":12,"options":{"currency":"BRL"},"saleTableKey":"@@PRESET_TABLE_KEY::sales","saleItemsTableKey":"@@PRESET_TABLE_KEY::sal
+GET /api/analytics/data?key=sales.revenueNewVsRecurring&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueNewVsRecurring","title":"1.2 Receita por Origem – Receita Nova vs Recorrente","type":"donut","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"composition","metricLabel":"Composição da Receita","labelMap":{"true
+GET /api/analytics/data?key=sales.revenueByChannel&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueByChannel","title":"1.5 Receita por Categoria – Receita por Canal","type":"donut","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"composition","metricLabel":"Participação por Canal","labelMap":{"InStore":"Loja
+GET /api/analytics/data?key=sales.revenueByCustomerTop&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueByCustomerTop","title":"1.3 Receita por Cliente – Top 10 Clientes por Receita","type":"bar","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"comparison","metricLabel":"Receita Acumulada","layout":"full"},"pipel
+GET /api/analytics/data?key=sales.revenueNetEvolution&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueNetEvolution","title":"1.1 Receita Global – Receita Líquida (Linha Mensal)","type":"line","processor":"formulaCalculation","params":{"groupBy":"period","options":{"currency":"BRL","isTemporal":true,"analysisKind":"evolution","metricLabel":"Receita
+GET /api/analytics/data?key=sales.revenueByBusinessDay&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueByBusinessDay","title":"1.4 Receita por Tempo – Receita por Dia (Tendência)","type":"line","processor":"temporalAggregation","params":{"period":"day","limit":30,"options":{"currency":"BRL","isTemporal":true,"analysisKind":"evolution"},"excludeStat
+GET /api/analytics/data?key=saleItems.servicesMonthlyReceived&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"saleItems.servicesMonthlyReceived","title":"Serviços - Total Recebido por Mês","type":"line","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","isTemporal":true},"deriveItemType":true,"pipeline":{"source":{"kind":"presetTable","key":"@@PRES
+GET /api/analytics/data?key=sales.cashflowKpis&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.cashflowKpis","title":"4. CAIXA – KPIs de Fluxo de Caixa e Solvência","type":"bar","processor":"cashflowKpis","params":{"period":"month","monthsWindow":12,"excludeStatuses":["Cancelled"],"options":{"currency":"BRL","defaultImportantFields":["date","total
+GET /api/analytics/data?key=saleItems.productsMonthlyReceived&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"saleItems.productsMonthlyReceived","title":"Produtos - Total Recebido por Mês","type":"line","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","isTemporal":true},"deriveItemType":true,"pipeline":{"source":{"kind":"presetTable","key":"@@PRES
+GET /api/analytics/data?key=expenses.costKpis&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"expenses.costKpis","title":"2. CUSTOS - KPIs de Custos (Despesas)","type":"bar","processor":"costKpis","params":{"period":"month","monthsWindow":12,"options":{"currency":"BRL","defaultImportantFields":["paymentDate","amount","category","isPlanned","paymentStat
+GET /api/analytics/data?key=expenses.costFixedVsVariable&datePreset=thisMonth -> 304
+   res: {"success":true,"data":{"chart":{"key":"expenses.costFixedVsVariable","title":"2.1 Custos Fixos – Participação vs Variáveis","type":"donut","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"composition","metricLabel":"Participação"},"pipeline":{"source":{"kind":"p
+GET /api/analytics/data?key=expenses.costTotalEvolution&datePreset=thisMonth -> 304
+   res: {"success":true,"data":{"chart":{"key":"expenses.costTotalEvolution","title":"2.4 Estrutura de Custos – Custo Total (Evolução Mensal)","type":"line","processor":"temporalAggregation","params":{"period":"month","limit":12,"options":{"currency":"BRL","isTemporal":true,"analysisKind":"evolution","metri
+GET /api/analytics/data?key=saleItems.productsProfitMonthly&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"saleItems.productsProfitMonthly","title":"Produtos - Lucro Mensal","type":"line","processor":"salesProfitByProductOverTime","params":{"period":"month","monthsWindow":12,"includePaymentStatuses":["Paid"],"stockCostIsTotal":true,"options":{"currency":"BRL","isTe
+GET /api/analytics/data?key=saleItems.typeComparison&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"saleItems.typeComparison","title":"Serviços x Produtos (Recebido)","type":"donut","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"comparison","labelMap":{"Service":"Serviços","Product":"Produtos"}},"labelMap":{"Service":"S
+GET /api/analytics/data?key=expenses.costByCategory&datePreset=thisMonth -> 304
+   res: {"success":true,"data":{"chart":{"key":"expenses.costByCategory","title":"2.4 Estrutura de Custos – Custo por Categoria","type":"bar","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"composition","metricLabel":"Custo por Categoria"},"pipeline":{"source":{"kind":"
+GET /api/analytics/data?key=saleItems.serviceEstimatedCost&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"saleItems.serviceEstimatedCost","title":"3.x Custo Estimado por Serviço (Tempo x Custo Mensal)","type":"bar","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"comparison","metricLabel":"Custo de execução por serviço (aprox.)
+GET /api/analytics/data?key=expenses.costPlannedVsUnplanned&datePreset=thisMonth -> 304
+   res: {"success":true,"data":{"chart":{"key":"expenses.costPlannedVsUnplanned","title":"2.4 Estrutura de Custos – Planejado vs Não Planejado","type":"donut","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"comparison","metricLabel":"Planejamento","colors":["#10b981","#
+GET /api/analytics/data?key=saleItems.serviceEstimatedProfit&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"saleItems.serviceEstimatedProfit","title":"3.x Lucro Estimado por Serviço (Receita - Custo Estimado)","type":"bar","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"comparison","metricLabel":"Lucro estimado por serviço (apro
+GET /api/analytics/data?key=saleItems.employeeServiceProfit&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"saleItems.employeeServiceProfit","title":"3.x Retorno por Esforço - Lucro Estimado por Colaborador","type":"bar","processor":"aggregatePipeline","params":{"options":{"currency":"BRL","analysisKind":"comparison","metricLabel":"Lucro líquido aproximado por colab
+GET /api/analytics/data?key=sales.revenueKpis&datePreset=thisMonth -> 200
+   res: {"success":true,"data":{"chart":{"key":"sales.revenueKpis","title":"KPIs de Receita (Vendas)","type":"bar","processor":"revenueKpis","params":{"period":"month","monthsWindow":12,"excludeStatuses":["Cancelled"],"options":{"currency":"BRL","defaultImportantFields":["date","totalAmount","status","payme
+GET /api/dynamic-tables/cmuw4yqvo0011cii0biovlxj9 -> 304
+   res: {"success":true,"data":{"id":"cmuw4yqvo0011cii0biovlxj9","userId":"cmufn7n590000cixkxbls0agh","name":"Sale Items","internalName":"saleItems","category":"finance","schema":{"defaultDisplayField":"description","ui":{"presentation":"embedded"},"fields":[{"name":"saleId","label":"Sale","type":"relation"
+GET /api/dynamic-tables/cmuw4yqvk000vcii0bif65kj7 -> 304
+   res: {"success":true,"data":{"id":"cmuw4yqvk000vcii0bif65kj7","userId":"cmufn7n590000cixkxbls0agh","name":"Product Units","internalName":"productUnits","category":"inventory","schema":{"defaultDisplayField":"productId","fields":[{"name":"productId","label":"Product","type":"relation","required":true,"rel
+GET /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x -> 304
+   res: {"success":true,"data":{"id":"cmuw4yqvn000zcii0dqy91u0x","userId":"cmufn7n590000cixkxbls0agh","name":"Sales","internalName":"sales","category":"finance","schema":{"defaultDisplayField":"date","fields":[{"name":"unitId","label":"Unit","type":"relation","required":true,"relation":{"targetTable":"cmuw4
+GET /api/dynamic-tables/cmuw4yqut0001cii02g0qg04n/data -> 200
+   res: {"success":true,"data":[{"id":"cmuw4yqxg001jcii0iz2yb9rw","dynamicTableId":"cmuw4yqut0001cii02g0qg04n","data":{"name":"seed-unit-presumido","isActive":true},"createdAt":"2026-10-06T03:45:37.492Z","updatedAt":"2026-10-06T03:45:37.492Z","deletedAt":null}]}
+GET /api/dynamic-tables/cmuw4yqvf000lcii0754mpwu5/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu6b000pci9c3yk4b6n2","dynamicTableId":"cmuw4yqvf000lcii0754mpwu5","data":{"mainUnitId":"cmuw4yqxg001jcii0iz2yb9rw","name":"Cliente H2","email":"cliente.h2@example.com","totalSalesCount":6,"totalSalesAmount":860,"firstSaleAt":"2026-10-29T00:00:00.000Z","lastSaleAt
+GET /api/dynamic-tables/cmuw4yqvq0017cii0z3ufth53/data -> 200
+   res: {"success":true,"data":[]}
+GET /api/dynamic-tables/cmuw4yqvk000vcii0bif65kj7/data?page=1&limit=200 -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu7q0011ci9c7cf7g43k","dynamicTableId":"cmuw4yqvk000vcii0bif65kj7","data":{"productId":"cmvtxuu7l000xci9crbmlvkqu","unitId":"cmuw4yqxg001jcii0iz2yb9rw","stock":8,"reserved":0},"createdAt":"2026-10-29T19:30:47.798Z","updatedAt":"2026-10-30T03:05:04.094Z","deletedAt
+GET /api/dynamic-tables/cmuw4yqvo0011cii0biovlxj9/data?page=1&limit=200 -> 200
+   res: {"success":true,"data":[{"id":"cmw16qwv8001hci9c6dtr6yuo","dynamicTableId":"cmuw4yqvo0011cii0biovlxj9","data":{"saleId":"cmw16qwuw001dci9cpkw5s2kn","type":"Service","serviceId":"cmvtxuu71000tci9chpnj578o","quantity":1,"unitPrice":80,"requiresAppointment":false,"commission":0},"createdAt":"2026-11-03
+GET /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data?page=1&limit=200 -> 200
+   res: {"success":true,"data":[{"id":"cmw16qwuw001dci9cpkw5s2kn","dynamicTableId":"cmuw4yqvn000zcii0dqy91u0x","data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","date":"2026-11-03T00:00:00.000Z","status":"Draft","paymentStatus":"Pending","paymentMethod":"Pix","paymentTermDays":30,"simpleCustomer":false,"customer
+GET /api/dynamic-tables/cmuw4yqvj000tcii0qwq182y9/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu7l000xci9crbmlvkqu","dynamicTableId":"cmuw4yqvj000tcii0qwq182y9","data":{"name":"Shampoo H2","sku":"H2-SHAMPOO","usageType":"Sale"},"createdAt":"2026-10-29T19:30:47.793Z","updatedAt":"2026-10-29T19:30:47.793Z","deletedAt":null}]}
+GET /api/dynamic-tables/cmuw4yqvh000pcii0rg2aw5iq/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu71000tci9chpnj578o","dynamicTableId":"cmuw4yqvh000pcii0rg2aw5iq","data":{"name":"Corte H2","category":"Cabelo","price":80,"duration":30,"isActive":true},"createdAt":"2026-10-29T19:30:47.774Z","updatedAt":"2026-10-29T19:30:47.774Z","deletedAt":null}]}
+GET /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data -> 200
+   res: {"success":true,"data":[{"id":"cmw16qwuw001dci9cpkw5s2kn","dynamicTableId":"cmuw4yqvn000zcii0dqy91u0x","data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","date":"2026-11-03T00:00:00.000Z","status":"Draft","paymentStatus":"Pending","paymentMethod":"Pix","paymentTermDays":30,"simpleCustomer":false,"customer
+GET /api/dynamic-tables/cmuw4yqvi000rcii0tmjxkd13/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu8f0015ci9c87vo9g6f","dynamicTableId":"cmuw4yqvi000rcii0tmjxkd13","data":{"name":"Pacote H2","price":300,"validityDays":365,"active":true},"createdAt":"2026-10-29T19:30:47.823Z","updatedAt":"2026-10-29T19:30:47.823Z","deletedAt":null}]}
+GET /api/dynamic-tables/cmuw4yqvl000xcii0dkthgzre/data -> 200
+   res: {"success":true,"data":[]}
+GET /api/dynamic-tables/cmuw4yqv30003cii0uisuxvww/data -> 200
+   res: {"success":true,"data":[]}
+PUT /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data/cmw16qwuw001dci9cpkw5s2kn -> 200  req: {"data":{"status":"Finalized"}}
+   res: {"success":true,"data":{"id":"cmw16qwuw001dci9cpkw5s2kn","dynamicTableId":"cmuw4yqvn000zcii0dqy91u0x","data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","date":"2026-11-03T00:00:00.000Z","status":"Finalized","paymentStatus":"Pending","paymentMethod":"Pix","paymentTermDays":30,"simpleCustomer":false,"custo
+GET /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x -> 304
+   res: {"success":true,"data":{"id":"cmuw4yqvn000zcii0dqy91u0x","userId":"cmufn7n590000cixkxbls0agh","name":"Sales","internalName":"sales","category":"finance","schema":{"defaultDisplayField":"date","fields":[{"name":"unitId","label":"Unit","type":"relation","required":true,"relation":{"targetTable":"cmuw4
+GET /api/dynamic-tables/cmuw4yqvo0011cii0biovlxj9 -> 304
+   res: {"success":true,"data":{"id":"cmuw4yqvo0011cii0biovlxj9","userId":"cmufn7n590000cixkxbls0agh","name":"Sale Items","internalName":"saleItems","category":"finance","schema":{"defaultDisplayField":"description","ui":{"presentation":"embedded"},"fields":[{"name":"saleId","label":"Sale","type":"relation"
+GET /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data?page=1&limit=200 -> 200
+   res: {"success":true,"data":[{"id":"cmw16qwuw001dci9cpkw5s2kn","dynamicTableId":"cmuw4yqvn000zcii0dqy91u0x","data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","date":"2026-11-03T00:00:00.000Z","status":"Finalized","paymentStatus":"Pending","paymentMethod":"Pix","paymentTermDays":30,"simpleCustomer":false,"cust
+GET /api/dynamic-tables/cmuw4yqvo0011cii0biovlxj9/data?page=1&limit=200 -> 200
+   res: {"success":true,"data":[{"id":"cmw16qwv8001hci9c6dtr6yuo","dynamicTableId":"cmuw4yqvo0011cii0biovlxj9","data":{"saleId":"cmw16qwuw001dci9cpkw5s2kn","type":"Service","serviceId":"cmvtxuu71000tci9chpnj578o","quantity":1,"unitPrice":80,"requiresAppointment":false,"commission":0},"createdAt":"2026-11-03
+GET /api/dynamic-tables/cmuw4yqvj000tcii0qwq182y9/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu7l000xci9crbmlvkqu","dynamicTableId":"cmuw4yqvj000tcii0qwq182y9","data":{"name":"Shampoo H2","sku":"H2-SHAMPOO","usageType":"Sale"},"createdAt":"2026-10-29T19:30:47.793Z","updatedAt":"2026-10-29T19:30:47.793Z","deletedAt":null}]}
+GET /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data -> 200
+   res: {"success":true,"data":[{"id":"cmw16qwuw001dci9cpkw5s2kn","dynamicTableId":"cmuw4yqvn000zcii0dqy91u0x","data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","date":"2026-11-03T00:00:00.000Z","status":"Finalized","paymentStatus":"Pending","paymentMethod":"Pix","paymentTermDays":30,"simpleCustomer":false,"cust
+GET /api/dynamic-tables/cmuw4yqvh000pcii0rg2aw5iq/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu71000tci9chpnj578o","dynamicTableId":"cmuw4yqvh000pcii0rg2aw5iq","data":{"name":"Corte H2","category":"Cabelo","price":80,"duration":30,"isActive":true},"createdAt":"2026-10-29T19:30:47.774Z","updatedAt":"2026-10-29T19:30:47.774Z","deletedAt":null}]}
+GET /api/dynamic-tables/cmuw4yqvi000rcii0tmjxkd13/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu8f0015ci9c87vo9g6f","dynamicTableId":"cmuw4yqvi000rcii0tmjxkd13","data":{"name":"Pacote H2","price":300,"validityDays":365,"active":true},"createdAt":"2026-10-29T19:30:47.823Z","updatedAt":"2026-10-29T19:30:47.823Z","deletedAt":null}]}
+GET /api/dynamic-tables/cmuw4yqvl000xcii0dkthgzre/data -> 200
+   res: {"success":true,"data":[]}
+GET /api/dynamic-tables/cmuw4yqv30003cii0uisuxvww/data -> 200
+   res: {"success":true,"data":[]}
+PUT /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data/cmw16q6al0015ci9c9xjufije -> 200  req: {"data":{"status":"Finalized"}}
+   res: {"success":true,"data":{"id":"cmw16q6al0015ci9c9xjufije","dynamicTableId":"cmuw4yqvn000zcii0dqy91u0x","data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","date":"2026-11-03T00:00:00.000Z","status":"Finalized","paymentStatus":"Pending","paymentMethod":"Pix","paymentTermDays":30,"simpleCustomer":false,"custo
+GET /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x -> 304
+   res: {"success":true,"data":{"id":"cmuw4yqvn000zcii0dqy91u0x","userId":"cmufn7n590000cixkxbls0agh","name":"Sales","internalName":"sales","category":"finance","schema":{"defaultDisplayField":"date","fields":[{"name":"unitId","label":"Unit","type":"relation","required":true,"relation":{"targetTable":"cmuw4
+GET /api/dynamic-tables/cmuw4yqvo0011cii0biovlxj9 -> 304
+   res: {"success":true,"data":{"id":"cmuw4yqvo0011cii0biovlxj9","userId":"cmufn7n590000cixkxbls0agh","name":"Sale Items","internalName":"saleItems","category":"finance","schema":{"defaultDisplayField":"description","ui":{"presentation":"embedded"},"fields":[{"name":"saleId","label":"Sale","type":"relation"
+GET /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data?page=1&limit=200 -> 200
+   res: {"success":true,"data":[{"id":"cmw16qwuw001dci9cpkw5s2kn","dynamicTableId":"cmuw4yqvn000zcii0dqy91u0x","data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","date":"2026-11-03T00:00:00.000Z","status":"Finalized","paymentStatus":"Pending","paymentMethod":"Pix","paymentTermDays":30,"simpleCustomer":false,"cust
+GET /api/dynamic-tables/cmuw4yqvo0011cii0biovlxj9/data?page=1&limit=200 -> 200
+   res: {"success":true,"data":[{"id":"cmw16qwv8001hci9c6dtr6yuo","dynamicTableId":"cmuw4yqvo0011cii0biovlxj9","data":{"saleId":"cmw16qwuw001dci9cpkw5s2kn","type":"Service","serviceId":"cmvtxuu71000tci9chpnj578o","quantity":1,"unitPrice":80,"requiresAppointment":false,"commission":0},"createdAt":"2026-11-03
+GET /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data -> 200
+   res: {"success":true,"data":[{"id":"cmw16qwuw001dci9cpkw5s2kn","dynamicTableId":"cmuw4yqvn000zcii0dqy91u0x","data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","date":"2026-11-03T00:00:00.000Z","status":"Finalized","paymentStatus":"Pending","paymentMethod":"Pix","paymentTermDays":30,"simpleCustomer":false,"cust
+GET /api/dynamic-tables/cmuw4yqvj000tcii0qwq182y9/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu7l000xci9crbmlvkqu","dynamicTableId":"cmuw4yqvj000tcii0qwq182y9","data":{"name":"Shampoo H2","sku":"H2-SHAMPOO","usageType":"Sale"},"createdAt":"2026-10-29T19:30:47.793Z","updatedAt":"2026-10-29T19:30:47.793Z","deletedAt":null}]}
+GET /api/dynamic-tables/cmuw4yqvh000pcii0rg2aw5iq/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu71000tci9chpnj578o","dynamicTableId":"cmuw4yqvh000pcii0rg2aw5iq","data":{"name":"Corte H2","category":"Cabelo","price":80,"duration":30,"isActive":true},"createdAt":"2026-10-29T19:30:47.774Z","updatedAt":"2026-10-29T19:30:47.774Z","deletedAt":null}]}
+GET /api/dynamic-tables/cmuw4yqvl000xcii0dkthgzre/data -> 200
+   res: {"success":true,"data":[]}
+GET /api/dynamic-tables/cmuw4yqvi000rcii0tmjxkd13/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu8f0015ci9c87vo9g6f","dynamicTableId":"cmuw4yqvi000rcii0tmjxkd13","data":{"name":"Pacote H2","price":300,"validityDays":365,"active":true},"createdAt":"2026-10-29T19:30:47.823Z","updatedAt":"2026-10-29T19:30:47.823Z","deletedAt":null}]}
+GET /api/dynamic-tables/cmuw4yqv30003cii0uisuxvww/data -> 200
+   res: {"success":true,"data":[]}
+PUT /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data/cmw16pfri000xci9c80i1ckrh -> 200  req: {"data":{"status":"Finalized"}}
+   res: {"success":true,"data":{"id":"cmw16pfri000xci9c80i1ckrh","dynamicTableId":"cmuw4yqvn000zcii0dqy91u0x","data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","date":"2026-11-03T00:00:00.000Z","status":"Finalized","paymentStatus":"Pending","paymentMethod":"Pix","paymentTermDays":30,"simpleCustomer":false,"custo
+GET /api/dynamic-tables/cmuw4yqvo0011cii0biovlxj9 -> 304
+   res: {"success":true,"data":{"id":"cmuw4yqvo0011cii0biovlxj9","userId":"cmufn7n590000cixkxbls0agh","name":"Sale Items","internalName":"saleItems","category":"finance","schema":{"defaultDisplayField":"description","ui":{"presentation":"embedded"},"fields":[{"name":"saleId","label":"Sale","type":"relation"
+GET /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x -> 304
+   res: {"success":true,"data":{"id":"cmuw4yqvn000zcii0dqy91u0x","userId":"cmufn7n590000cixkxbls0agh","name":"Sales","internalName":"sales","category":"finance","schema":{"defaultDisplayField":"date","fields":[{"name":"unitId","label":"Unit","type":"relation","required":true,"relation":{"targetTable":"cmuw4
+GET /api/dynamic-tables/cmuw4yqvo0011cii0biovlxj9/data?page=1&limit=200 -> 200
+   res: {"success":true,"data":[{"id":"cmw16qwv8001hci9c6dtr6yuo","dynamicTableId":"cmuw4yqvo0011cii0biovlxj9","data":{"saleId":"cmw16qwuw001dci9cpkw5s2kn","type":"Service","serviceId":"cmvtxuu71000tci9chpnj578o","quantity":1,"unitPrice":80,"requiresAppointment":false,"commission":0},"createdAt":"2026-11-03
+GET /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data -> 200
+   res: {"success":true,"data":[{"id":"cmw16qwuw001dci9cpkw5s2kn","dynamicTableId":"cmuw4yqvn000zcii0dqy91u0x","data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","date":"2026-11-03T00:00:00.000Z","status":"Finalized","paymentStatus":"Pending","paymentMethod":"Pix","paymentTermDays":30,"simpleCustomer":false,"cust
+GET /api/dynamic-tables/cmuw4yqvj000tcii0qwq182y9/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu7l000xci9crbmlvkqu","dynamicTableId":"cmuw4yqvj000tcii0qwq182y9","data":{"name":"Shampoo H2","sku":"H2-SHAMPOO","usageType":"Sale"},"createdAt":"2026-10-29T19:30:47.793Z","updatedAt":"2026-10-29T19:30:47.793Z","deletedAt":null}]}
+GET /api/dynamic-tables/cmuw4yqvh000pcii0rg2aw5iq/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu71000tci9chpnj578o","dynamicTableId":"cmuw4yqvh000pcii0rg2aw5iq","data":{"name":"Corte H2","category":"Cabelo","price":80,"duration":30,"isActive":true},"createdAt":"2026-10-29T19:30:47.774Z","updatedAt":"2026-10-29T19:30:47.774Z","deletedAt":null}]}
+GET /api/dynamic-tables/cmuw4yqvl000xcii0dkthgzre/data -> 200
+   res: {"success":true,"data":[]}
+GET /api/dynamic-tables/cmuw4yqvi000rcii0tmjxkd13/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu8f0015ci9c87vo9g6f","dynamicTableId":"cmuw4yqvi000rcii0tmjxkd13","data":{"name":"Pacote H2","price":300,"validityDays":365,"active":true},"createdAt":"2026-10-29T19:30:47.823Z","updatedAt":"2026-10-29T19:30:47.823Z","deletedAt":null}]}
+GET /api/dynamic-tables/cmuw4yqv30003cii0uisuxvww/data -> 200
+   res: {"success":true,"data":[]}
+GET /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data?page=1&limit=200 -> 200
+   res: {"success":true,"data":[{"id":"cmw16qwuw001dci9cpkw5s2kn","dynamicTableId":"cmuw4yqvn000zcii0dqy91u0x","data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","date":"2026-11-03T00:00:00.000Z","status":"Finalized","paymentStatus":"Pending","paymentMethod":"Pix","paymentTermDays":30,"simpleCustomer":false,"cust
+PUT /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data/cmw16op8g000pci9cykapn6uv -> 200  req: {"data":{"status":"Finalized"}}
+   res: {"success":true,"data":{"id":"cmw16op8g000pci9cykapn6uv","dynamicTableId":"cmuw4yqvn000zcii0dqy91u0x","data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","date":"2026-11-03T00:00:00.000Z","status":"Finalized","paymentStatus":"Pending","paymentMethod":"Pix","paymentTermDays":30,"simpleCustomer":false,"custo
+GET /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x -> 304
+   res: {"success":true,"data":{"id":"cmuw4yqvn000zcii0dqy91u0x","userId":"cmufn7n590000cixkxbls0agh","name":"Sales","internalName":"sales","category":"finance","schema":{"defaultDisplayField":"date","fields":[{"name":"unitId","label":"Unit","type":"relation","required":true,"relation":{"targetTable":"cmuw4
+GET /api/dynamic-tables/cmuw4yqvo0011cii0biovlxj9 -> 304
+   res: {"success":true,"data":{"id":"cmuw4yqvo0011cii0biovlxj9","userId":"cmufn7n590000cixkxbls0agh","name":"Sale Items","internalName":"saleItems","category":"finance","schema":{"defaultDisplayField":"description","ui":{"presentation":"embedded"},"fields":[{"name":"saleId","label":"Sale","type":"relation"
+GET /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data?page=1&limit=200 -> 200
+   res: {"success":true,"data":[{"id":"cmw16qwuw001dci9cpkw5s2kn","dynamicTableId":"cmuw4yqvn000zcii0dqy91u0x","data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","date":"2026-11-03T00:00:00.000Z","status":"Finalized","paymentStatus":"Pending","paymentMethod":"Pix","paymentTermDays":30,"simpleCustomer":false,"cust
+GET /api/dynamic-tables/cmuw4yqvo0011cii0biovlxj9/data?page=1&limit=200 -> 200
+   res: {"success":true,"data":[{"id":"cmw16qwv8001hci9c6dtr6yuo","dynamicTableId":"cmuw4yqvo0011cii0biovlxj9","data":{"saleId":"cmw16qwuw001dci9cpkw5s2kn","type":"Service","serviceId":"cmvtxuu71000tci9chpnj578o","quantity":1,"unitPrice":80,"requiresAppointment":false,"commission":0},"createdAt":"2026-11-03
+GET /api/dynamic-tables/cmuw4yqvj000tcii0qwq182y9/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu7l000xci9crbmlvkqu","dynamicTableId":"cmuw4yqvj000tcii0qwq182y9","data":{"name":"Shampoo H2","sku":"H2-SHAMPOO","usageType":"Sale"},"createdAt":"2026-10-29T19:30:47.793Z","updatedAt":"2026-10-29T19:30:47.793Z","deletedAt":null}]}
+GET /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data -> 200
+   res: {"success":true,"data":[{"id":"cmw16qwuw001dci9cpkw5s2kn","dynamicTableId":"cmuw4yqvn000zcii0dqy91u0x","data":{"unitId":"cmuw4yqxg001jcii0iz2yb9rw","date":"2026-11-03T00:00:00.000Z","status":"Finalized","paymentStatus":"Pending","paymentMethod":"Pix","paymentTermDays":30,"simpleCustomer":false,"cust
+GET /api/dynamic-tables/cmuw4yqvh000pcii0rg2aw5iq/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu71000tci9chpnj578o","dynamicTableId":"cmuw4yqvh000pcii0rg2aw5iq","data":{"name":"Corte H2","category":"Cabelo","price":80,"duration":30,"isActive":true},"createdAt":"2026-10-29T19:30:47.774Z","updatedAt":"2026-10-29T19:30:47.774Z","deletedAt":null}]}
+GET /api/dynamic-tables/cmuw4yqvl000xcii0dkthgzre/data -> 200
+   res: {"success":true,"data":[]}
+GET /api/dynamic-tables/cmuw4yqv30003cii0uisuxvww/data -> 200
+   res: {"success":true,"data":[]}
+GET /api/dynamic-tables/cmuw4yqvi000rcii0tmjxkd13/data -> 200
+   res: {"success":true,"data":[{"id":"cmvtxuu8f0015ci9c87vo9g6f","dynamicTableId":"cmuw4yqvi000rcii0tmjxkd13","data":{"name":"Pacote H2","price":300,"validityDays":365,"active":true},"createdAt":"2026-10-29T19:30:47.823Z","updatedAt":"2026-10-29T19:30:47.823Z","deletedAt":null}]}
