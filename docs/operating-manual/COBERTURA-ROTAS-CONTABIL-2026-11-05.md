@@ -6,15 +6,15 @@
 
 ## Resultado
 
-**256 rotas, 188 com `request(app)` em `*.integration.test.ts`, 68 sem.** As 68, por classe:
+**256 rotas, 188 com `request(app)` em `*.integration.test.ts`, 68 sem** (medição de 05/11). **Depois do lote 1: 199 com, 57 sem. Depois do lote 2: 210 com, 46 sem** (8 escritas + 3 leituras que são a 2ª leitura do lote). **Depois do lote 3: 220 com, 36 sem** (8 escritas + 2 leituras de 2ª leitura). **Depois do lote 4: 228 com, 28 sem** (8 leituras/relatórios com esperados fixos). **Depois do lote 5: 236 com, 20 sem** (1 escrita cadastral que a medição contou como leitura — `POST /simples/simulacoes/fator-r/sugestao` grava a sugestão do SYSTEM — e 7 leituras). **Depois do lote 6: 240 com, 16 sem** (4 leituras: recibo PDF do lançamento, jobs de intercâmbio, esqueleto referencial, JCP por id). **`/api/accounting` fecha em 0 "não"**; as 16 restantes são todas do DF-e (`/api/nfe/dfe`, PILOTO-DFE #1067, Fase B). As 68 da medição, por classe:
 
 | Classe | Rotas | Onde |
 |---|---|---|
-| Escrita no razão, no período ou em documento fiscal | 8 | Lote 1 deste BRIEF |
+| Escrita no razão, no período ou em documento fiscal | 8 | Lote 1 deste BRIEF (**feito**: `rotasSemIntegracao.lote1.integration.test.ts`) |
 | Emissão de saída (`/api/nfe/dfe`), escrita fiscal | 11 | PILOTO-DFE (#1067, Fase B), fora dos lotes daqui |
 | Emissão de saída (`/api/nfe/dfe`), leitura | 5 | idem |
-| Escrita cadastral | 18 | Lotes 2–3 |
-| Leitura e relatório (A7: esperados fixos) | 26 | Lotes 4 em diante |
+| Escrita cadastral | 18 | Lotes 2–3 (`POST /reviews` e `POST /reviews/:id/findings` já passaram pelo cenário do lote 1: faltam 16). Lote 2 (**feito**: `rotasSemIntegracao.lote2.integration.test.ts`): de-para referencial PUT/batch/copy/DELETE, import do catálogo, perfil fiscal do serviço PUT/DELETE, DELETE de PSC. Lote 3 (**feito**: `rotasSemIntegracao.lote3.integration.test.ts`): anexo POST/DELETE, documento de origem no lançamento, extrato DELETE, linha ignore, achado resolve, PATCH dos jobs da revisão, PATCH de classe de bem — **faltam 0** |
+| Leitura e relatório (A7: esperados fixos) | 26 | Lotes 4 em diante (`GET /reviews/:id` é a 2ª leitura do lote 1; `GET /referential/mappings`, `GET /referential/catalog` e `GET /service-fiscal-profiles/:serviceRef`, do lote 2; `GET /journal-entries/:entryId/source-documents` e `GET /reconciliation/statements`, do lote 3. Lote 4 (**feito**: `rotasSemIntegracao.lote4.integration.test.ts`): razão, BP, DRE, DFC, balancete comparativo, Livro Diário, aging, detalhe da entrega. Lote 5 (**feito**: `rotasSemIntegracao.lote5.integration.test.ts`): linhas do extrato, sugestões da linha, pendências da conciliação, lista de revisões, lista de perfis fiscais de serviço, anexos do lançamento, signatário por id — e o `POST …/fator-r/sugestao`, que é escrita cadastral, não leitura. Lote 6 (**feito**: `rotasSemIntegracao.lote6.integration.test.ts`): comprovante PDF do lançamento (conteúdo pelo `htmlToPdf` stubado — o Jest mapeia `puppeteer` para `test/mocks/puppeteer.ts`), lista de jobs de intercâmbio, esqueleto referencial, JCP por id — **faltam 0**) |
 
 ## Critério (o que "sim" quer dizer)
 
@@ -77,13 +77,13 @@
 | 33 | POST | `/api/accounting/post` | server/src/routes/accounting.ts:257 | sim (server/src/controllers/__tests__/accountingController.audit.integration.test.ts:57; +8) |  |
 | 34 | POST | `/api/accounting/reverse` | server/src/routes/accounting.ts:258 | sim (server/src/controllers/__tests__/accountingController.integration.test.ts:293; +4) |  |
 | 35 | GET | `/api/accounting/trial-balance` | server/src/routes/accounting.ts:261 | sim (server/src/controllers/__tests__/accountingController.integration.test.ts:391) |  |
-| 36 | GET | `/api/accounting/ledger` | server/src/routes/accounting.ts:262 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 37 | GET | `/api/accounting/balance-sheet` | server/src/routes/accounting.ts:263 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 38 | GET | `/api/accounting/income-statement` | server/src/routes/accounting.ts:264 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 39 | GET | `/api/accounting/reports/cash-flow` | server/src/routes/accounting.ts:265 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 40 | GET | `/api/accounting/reports/period-comparison` | server/src/routes/accounting.ts:266 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 41 | GET | `/api/accounting/reports/daily-journal` | server/src/routes/accounting.ts:267 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 42 | GET | `/api/accounting/reports/aging` | server/src/routes/accounting.ts:268 | **não** | Lote 4+ — leitura/relatório (A7) |
+| 36 | GET | `/api/accounting/ledger` | server/src/routes/accounting.ts:262 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote4.integration.test.ts:92) | lote 4 |
+| 37 | GET | `/api/accounting/balance-sheet` | server/src/routes/accounting.ts:263 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote4.integration.test.ts:121) | lote 4 |
+| 38 | GET | `/api/accounting/income-statement` | server/src/routes/accounting.ts:264 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote4.integration.test.ts:147) | lote 4 |
+| 39 | GET | `/api/accounting/reports/cash-flow` | server/src/routes/accounting.ts:265 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote4.integration.test.ts:166) | lote 4 |
+| 40 | GET | `/api/accounting/reports/period-comparison` | server/src/routes/accounting.ts:266 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote4.integration.test.ts:198) | lote 4 |
+| 41 | GET | `/api/accounting/reports/daily-journal` | server/src/routes/accounting.ts:267 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote4.integration.test.ts:235) | lote 4 |
+| 42 | GET | `/api/accounting/reports/aging` | server/src/routes/accounting.ts:268 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote4.integration.test.ts:296) | lote 4 |
 | 43 | GET | `/api/accounting/reports/cash-forecast` | server/src/routes/accounting.ts:269 | sim (server/src/controllers/__tests__/accountingController.cashForecast.integration.test.ts:87; +1) |  |
 | 44 | GET | `/api/accounting/reports/tie-out` | server/src/routes/accounting.ts:270 | sim (server/src/controllers/__tests__/retencoesFontePr2.integration.test.ts:483) |  |
 | 45 | GET | `/api/accounting/audit/verify-chain` | server/src/routes/accounting.ts:271 | sim (server/src/controllers/__tests__/accountantAssignment.integration.test.ts:135; +4) |  |
@@ -92,11 +92,11 @@
 | 48 | DELETE | `/api/accounting/accounts/:id` | server/src/routes/accounting.ts:276 | sim (server/src/controllers/__tests__/accountingController.chartOfAccounts.integration.test.ts:182; +2) |  |
 | 49 | PATCH | `/api/accounting/accounts/:id/requires-dimension` | server/src/routes/accounting.ts:277 | sim (server/src/controllers/__tests__/accountingController.chartOfAccounts.integration.test.ts:223; +1) |  |
 | 50 | GET | `/api/accounting/entries` | server/src/routes/accounting.ts:280 | sim (server/src/controllers/__tests__/accountingController.integration.test.ts:261; +2) |  |
-| 51 | GET | `/api/accounting/journal-entries/:entryId/receipt` | server/src/routes/accounting.ts:281 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 52 | POST | `/api/accounting/attachments` | server/src/routes/accounting.ts:284 | **não** | Lotes 2–3 — escrita cadastral |
+| 51 | GET | `/api/accounting/journal-entries/:entryId/receipt` | server/src/routes/accounting.ts:281 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote6.integration.test.ts:78) | lote 6 |
+| 52 | POST | `/api/accounting/attachments` | server/src/routes/accounting.ts:284 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote3.integration.test.ts:85) | lote 3 |
 | 53 | GET | `/api/accounting/attachments/:id` | server/src/routes/accounting.ts:285 | sim (server/src/controllers/__tests__/unitGuard.accounting.integration.test.ts:122; +2) |  |
-| 54 | DELETE | `/api/accounting/attachments/:id` | server/src/routes/accounting.ts:286 | **não** | Lotes 2–3 — escrita cadastral |
-| 55 | GET | `/api/accounting/journal-entries/:journalEntryId/attachments` | server/src/routes/accounting.ts:287 | **não** | Lote 4+ — leitura/relatório (A7) |
+| 54 | DELETE | `/api/accounting/attachments/:id` | server/src/routes/accounting.ts:286 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote3.integration.test.ts:91) | lote 3 |
+| 55 | GET | `/api/accounting/journal-entries/:journalEntryId/attachments` | server/src/routes/accounting.ts:287 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote5.integration.test.ts:402) | lote 5 |
 | 56 | PUT | `/api/accounting/fiscal-certificates/:unitId` | server/src/routes/accounting.ts:290 | sim (server/src/controllers/__tests__/fiscalCertificate.integration.test.ts:28) |  |
 | 57 | GET | `/api/accounting/fiscal-certificates/:unitId` | server/src/routes/accounting.ts:291 | sim (server/src/controllers/__tests__/fiscalCertificate.integration.test.ts:110; +2) |  |
 | 58 | DELETE | `/api/accounting/fiscal-certificates/:unitId` | server/src/routes/accounting.ts:292 | sim (server/src/controllers/__tests__/fiscalCertificate.integration.test.ts:130; +1) |  |
@@ -112,43 +112,43 @@
 | 68 | GET | `/api/accounting/psc-providers` | server/src/routes/accounting.ts:307 | sim (server/src/controllers/__tests__/pscCredential.integration.test.ts:122) |  |
 | 69 | POST | `/api/accounting/psc-providers` | server/src/routes/accounting.ts:308 | sim (server/src/controllers/__tests__/pscCredential.integration.test.ts:108; +3) |  |
 | 70 | PATCH | `/api/accounting/psc-providers/:id` | server/src/routes/accounting.ts:309 | sim (server/src/controllers/__tests__/pscCredential.integration.test.ts:145) |  |
-| 71 | DELETE | `/api/accounting/psc-providers/:id` | server/src/routes/accounting.ts:310 | **não** | Lotes 2–3 — escrita cadastral |
-| 72 | POST | `/api/accounting/journal-entries/:entryId/source-documents` | server/src/routes/accounting.ts:315 | **não** | Lotes 2–3 — escrita cadastral |
-| 73 | GET | `/api/accounting/journal-entries/:entryId/source-documents` | server/src/routes/accounting.ts:316 | **não** | Lote 4+ — leitura/relatório (A7) |
+| 71 | DELETE | `/api/accounting/psc-providers/:id` | server/src/routes/accounting.ts:310 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote2.integration.test.ts:319) | lote 2 |
+| 72 | POST | `/api/accounting/journal-entries/:entryId/source-documents` | server/src/routes/accounting.ts:315 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote3.integration.test.ts:157) | lote 3 |
+| 73 | GET | `/api/accounting/journal-entries/:entryId/source-documents` | server/src/routes/accounting.ts:316 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote3.integration.test.ts:161) | lote 3 (2ª leitura) |
 | 74 | POST | `/api/accounting/source-documents` | server/src/routes/accounting.ts:318 | sim (server/src/controllers/__tests__/unitGuard.accounting.integration.test.ts:101; +4) |  |
 | 75 | POST | `/api/accounting/data-exchange/exports` | server/src/routes/accounting.ts:321 | sim (server/src/controllers/__tests__/ecfPresumidoSegregacao.integration.test.ts:126; +7) |  |
 | 76 | POST | `/api/accounting/data-exchange/imports` | server/src/routes/accounting.ts:322 | sim (server/src/controllers/__tests__/itg2000ExtemporaneoC4.integration.test.ts:69) |  |
-| 77 | GET | `/api/accounting/data-exchange/jobs` | server/src/routes/accounting.ts:325 | **não** | Lote 4+ — leitura/relatório (A7) |
+| 77 | GET | `/api/accounting/data-exchange/jobs` | server/src/routes/accounting.ts:325 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote6.integration.test.ts:145) | lote 6 |
 | 78 | GET | `/api/accounting/data-exchange/jobs/:jobId` | server/src/routes/accounting.ts:326 | sim (server/src/controllers/__tests__/spedController.ecfReal.integration.test.ts:116; +1) |  |
 | 79 | GET | `/api/accounting/data-exchange/jobs/:jobId/rows` | server/src/routes/accounting.ts:327 | sim (server/src/controllers/__tests__/itg2000ExtemporaneoC4.integration.test.ts:78) |  |
 | 80 | GET | `/api/accounting/data-exchange/jobs/:jobId/download` | server/src/routes/accounting.ts:328 | sim (server/src/controllers/__tests__/accountingContactController.integration.test.ts:153; +14) |  |
 | 81 | POST | `/api/accounting/data-exchange/jobs/:jobId/commit` | server/src/routes/accounting.ts:329 | sim (server/src/controllers/__tests__/itg2000ExtemporaneoC4.integration.test.ts:239) |  |
-| 82 | POST | `/api/accounting/data-exchange/jobs/:jobId/waive-ecf-rectification` | server/src/routes/accounting.ts:331 | **não** | Lote 1 — escrita no razão/período/fiscal |
+| 82 | POST | `/api/accounting/data-exchange/jobs/:jobId/waive-ecf-rectification` | server/src/routes/accounting.ts:331 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote1.integration.test.ts:353) | lote 1 |
 | 83 | GET | `/api/accounting/sped/qualif-assinante` | server/src/routes/accounting.ts:334 | sim (server/src/controllers/__tests__/spedQualifAssinante.integration.test.ts:30; +4) |  |
 | 84 | POST | `/api/accounting/sped/ecd/generate` | server/src/routes/accounting.ts:339 | sim (server/src/controllers/__tests__/accountingContactController.integration.test.ts:193; +4) |  |
 | 85 | GET | `/api/accounting/sped/ecf/y600/vigencias` | server/src/routes/accounting.ts:342 | sim (server/src/features/accounting/services/__tests__/y600Vigencias.integration.test.ts:29) |  |
 | 86 | POST | `/api/accounting/sped/ecf/generate` | server/src/routes/accounting.ts:345 | sim (server/src/controllers/__tests__/companyFiscalProfile.sped.integration.test.ts:29 (helper); +2) |  |
 | 87 | POST | `/api/accounting/sped/ecf/real/generate` | server/src/routes/accounting.ts:348 | sim (server/src/controllers/__tests__/accountingContactController.integration.test.ts:143; +8) |  |
-| 88 | POST | `/api/accounting/closing/exercise` | server/src/routes/accounting.ts:352 | **não** | Lote 1 — escrita no razão/período/fiscal |
+| 88 | POST | `/api/accounting/closing/exercise` | server/src/routes/accounting.ts:352 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote1.integration.test.ts:106) | lote 1 |
 | 89 | POST | `/api/accounting/reconciliation/statements` | server/src/routes/accounting.ts:355 | sim (server/src/controllers/__tests__/releaseReport.integration.test.ts:56) |  |
-| 90 | GET | `/api/accounting/reconciliation/statements` | server/src/routes/accounting.ts:356 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 91 | GET | `/api/accounting/reconciliation/statements/:id/lines` | server/src/routes/accounting.ts:357 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 92 | DELETE | `/api/accounting/reconciliation/statements/:id` | server/src/routes/accounting.ts:358 | **não** | Lotes 2–3 — escrita cadastral |
-| 93 | POST | `/api/accounting/reconciliation/statements/:id/auto-match` | server/src/routes/accounting.ts:359 | **não** | Lote 1 — escrita no razão/período/fiscal |
-| 94 | GET | `/api/accounting/reconciliation/lines/:id/suggestions` | server/src/routes/accounting.ts:360 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 95 | POST | `/api/accounting/reconciliation/lines/:id/ignore` | server/src/routes/accounting.ts:361 | **não** | Lotes 2–3 — escrita cadastral |
-| 96 | POST | `/api/accounting/reconciliation/matches` | server/src/routes/accounting.ts:362 | **não** | Lote 1 — escrita no razão/período/fiscal |
-| 97 | POST | `/api/accounting/reconciliation/matches/:id/unmatch` | server/src/routes/accounting.ts:363 | **não** | Lote 1 — escrita no razão/período/fiscal |
-| 98 | GET | `/api/accounting/reconciliation/pending` | server/src/routes/accounting.ts:364 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 99 | PUT | `/api/accounting/referential/mappings` | server/src/routes/accounting.ts:368 | **não** | Lotes 2–3 — escrita cadastral |
-| 100 | POST | `/api/accounting/referential/mappings/batch` | server/src/routes/accounting.ts:369 | **não** | Lotes 2–3 — escrita cadastral |
-| 101 | POST | `/api/accounting/referential/mappings/copy` | server/src/routes/accounting.ts:370 | **não** | Lotes 2–3 — escrita cadastral |
-| 102 | DELETE | `/api/accounting/referential/mappings` | server/src/routes/accounting.ts:371 | **não** | Lotes 2–3 — escrita cadastral |
-| 103 | GET | `/api/accounting/referential/mappings` | server/src/routes/accounting.ts:372 | **não** | Lote 4+ — leitura/relatório (A7) |
+| 90 | GET | `/api/accounting/reconciliation/statements` | server/src/routes/accounting.ts:356 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote3.integration.test.ts:244) | lote 3 (2ª leitura) |
+| 91 | GET | `/api/accounting/reconciliation/statements/:id/lines` | server/src/routes/accounting.ts:357 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote5.integration.test.ts:169) | lote 5 |
+| 92 | DELETE | `/api/accounting/reconciliation/statements/:id` | server/src/routes/accounting.ts:358 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote3.integration.test.ts:229) | lote 3 |
+| 93 | POST | `/api/accounting/reconciliation/statements/:id/auto-match` | server/src/routes/accounting.ts:359 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote1.integration.test.ts:272) | lote 1 |
+| 94 | GET | `/api/accounting/reconciliation/lines/:id/suggestions` | server/src/routes/accounting.ts:360 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote5.integration.test.ts:170) | lote 5 |
+| 95 | POST | `/api/accounting/reconciliation/lines/:id/ignore` | server/src/routes/accounting.ts:361 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote3.integration.test.ts:231) | lote 3 |
+| 96 | POST | `/api/accounting/reconciliation/matches` | server/src/routes/accounting.ts:362 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote1.integration.test.ts:274) | lote 1 |
+| 97 | POST | `/api/accounting/reconciliation/matches/:id/unmatch` | server/src/routes/accounting.ts:363 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote1.integration.test.ts:276) | lote 1 |
+| 98 | GET | `/api/accounting/reconciliation/pending` | server/src/routes/accounting.ts:364 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote5.integration.test.ts:172) | lote 5 |
+| 99 | PUT | `/api/accounting/referential/mappings` | server/src/routes/accounting.ts:368 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote2.integration.test.ts:80) | lote 2 |
+| 100 | POST | `/api/accounting/referential/mappings/batch` | server/src/routes/accounting.ts:369 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote2.integration.test.ts:84) | lote 2 |
+| 101 | POST | `/api/accounting/referential/mappings/copy` | server/src/routes/accounting.ts:370 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote2.integration.test.ts:86) | lote 2 |
+| 102 | DELETE | `/api/accounting/referential/mappings` | server/src/routes/accounting.ts:371 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote2.integration.test.ts:88) | lote 2 |
+| 103 | GET | `/api/accounting/referential/mappings` | server/src/routes/accounting.ts:372 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote2.integration.test.ts:41) | 2ª leitura do lote 2 |
 | 104 | GET | `/api/accounting/referential/coverage` | server/src/routes/accounting.ts:373 | sim (server/src/controllers/__tests__/irrfPlanoPadrao.integration.test.ts:71) |  |
-| 105 | GET | `/api/accounting/referential/skeleton` | server/src/routes/accounting.ts:374 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 106 | POST | `/api/accounting/referential/catalog/import` | server/src/routes/accounting.ts:376 | **não** | Lotes 2–3 — escrita cadastral |
-| 107 | GET | `/api/accounting/referential/catalog` | server/src/routes/accounting.ts:377 | **não** | Lote 4+ — leitura/relatório (A7) |
+| 105 | GET | `/api/accounting/referential/skeleton` | server/src/routes/accounting.ts:374 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote6.integration.test.ts:207) | lote 6 |
+| 106 | POST | `/api/accounting/referential/catalog/import` | server/src/routes/accounting.ts:376 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote2.integration.test.ts:55) | lote 2 |
+| 107 | GET | `/api/accounting/referential/catalog` | server/src/routes/accounting.ts:377 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote2.integration.test.ts:207) | 2ª leitura do lote 2 |
 | 108 | GET | `/api/accounting/contacts` | server/src/routes/accounting.ts:407 | sim (server/src/controllers/__tests__/accountingContactController.integration.test.ts:56; +1) |  |
 | 109 | POST | `/api/accounting/contacts` | server/src/routes/accounting.ts:408 | sim (server/src/controllers/__tests__/accountingContactController.integration.test.ts:57; +16) |  |
 | 110 | PATCH | `/api/accounting/contacts/:id` | server/src/routes/accounting.ts:409 | sim (server/src/controllers/__tests__/accountingContactController.integration.test.ts:86; +1) |  |
@@ -159,16 +159,16 @@
 | 115 | GET | `/api/accounting/delivery/profile` | server/src/routes/accounting.ts:417 | sim (server/src/controllers/__tests__/accountingContactController.integration.test.ts:360; +3) |  |
 | 116 | PUT | `/api/accounting/delivery/profile` | server/src/routes/accounting.ts:418 | sim (server/src/controllers/__tests__/accountingContactController.integration.test.ts:373; +2) |  |
 | 117 | POST | `/api/accounting/delivery/:id/retry` | server/src/routes/accounting.ts:419 | sim (server/src/controllers/__tests__/accountingContactController.integration.test.ts:103) |  |
-| 118 | GET | `/api/accounting/delivery/:id` | server/src/routes/accounting.ts:420 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 119 | POST | `/api/accounting/reviews` | server/src/routes/accounting.ts:424 | **não** | Lotes 2–3 — escrita cadastral |
-| 120 | GET | `/api/accounting/reviews` | server/src/routes/accounting.ts:425 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 121 | GET | `/api/accounting/reviews/:id` | server/src/routes/accounting.ts:426 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 122 | POST | `/api/accounting/reviews/:id/findings` | server/src/routes/accounting.ts:427 | **não** | Lotes 2–3 — escrita cadastral |
-| 123 | POST | `/api/accounting/reviews/:id/findings/:findingId/resolve` | server/src/routes/accounting.ts:428 | **não** | Lotes 2–3 — escrita cadastral |
-| 124 | POST | `/api/accounting/reviews/:id/findings/:findingId/adjustment` | server/src/routes/accounting.ts:429 | **não** | Lote 1 — escrita no razão/período/fiscal |
-| 125 | PATCH | `/api/accounting/reviews/:id/jobs` | server/src/routes/accounting.ts:430 | **não** | Lotes 2–3 — escrita cadastral |
-| 126 | POST | `/api/accounting/reviews/:id/sign-off` | server/src/routes/accounting.ts:431 | **não** | Lote 1 — escrita no razão/período/fiscal |
-| 127 | POST | `/api/accounting/reviews/:id/reject` | server/src/routes/accounting.ts:432 | **não** | Lote 1 — escrita no razão/período/fiscal |
+| 118 | GET | `/api/accounting/delivery/:id` | server/src/routes/accounting.ts:420 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote4.integration.test.ts:365) | lote 4 |
+| 119 | POST | `/api/accounting/reviews` | server/src/routes/accounting.ts:424 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote1.integration.test.ts:136) | cenário do lote 1 |
+| 120 | GET | `/api/accounting/reviews` | server/src/routes/accounting.ts:425 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote5.integration.test.ts:311) | lote 5 |
+| 121 | GET | `/api/accounting/reviews/:id` | server/src/routes/accounting.ts:426 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote1.integration.test.ts:149) | cenário do lote 1 |
+| 122 | POST | `/api/accounting/reviews/:id/findings` | server/src/routes/accounting.ts:427 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote1.integration.test.ts:142) | cenário do lote 1 |
+| 123 | POST | `/api/accounting/reviews/:id/findings/:findingId/resolve` | server/src/routes/accounting.ts:428 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote3.integration.test.ts:307) | lote 3 |
+| 124 | POST | `/api/accounting/reviews/:id/findings/:findingId/adjustment` | server/src/routes/accounting.ts:429 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote1.integration.test.ts:155) | lote 1 |
+| 125 | PATCH | `/api/accounting/reviews/:id/jobs` | server/src/routes/accounting.ts:430 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote3.integration.test.ts:311) | lote 3 |
+| 126 | POST | `/api/accounting/reviews/:id/sign-off` | server/src/routes/accounting.ts:431 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote1.integration.test.ts:168) | lote 1 |
+| 127 | POST | `/api/accounting/reviews/:id/reject` | server/src/routes/accounting.ts:432 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote1.integration.test.ts:172) | lote 1 |
 | 128 | POST | `/api/accounting/accountant-assignments` | server/src/routes/accounting.ts:436 | sim (server/src/controllers/__tests__/accountantAssignment.integration.test.ts:49; +4) |  |
 | 129 | GET | `/api/accounting/accountant-assignments` | server/src/routes/accounting.ts:437 | sim (server/src/controllers/__tests__/accountantAssignment.integration.test.ts:208) |  |
 | 130 | GET | `/api/accounting/accountant-assignments/mine` | server/src/routes/accounting.ts:438 | sim (server/src/controllers/__tests__/accountantAssignment.integration.test.ts:191) |  |
@@ -183,10 +183,10 @@
 | 139 | PUT | `/api/accounting/settings` | server/src/routes/accounting.ts:452 | sim (server/src/controllers/__tests__/accountingPolicyVersion.integration.test.ts:84; +9) |  |
 | 140 | GET | `/api/accounting/fiscal-profile` | server/src/routes/accounting.ts:455 | sim (server/src/controllers/__tests__/companyFiscalProfile.sped.integration.test.ts:155; +3) |  |
 | 141 | PUT | `/api/accounting/fiscal-profile` | server/src/routes/accounting.ts:456 | sim (server/src/controllers/__tests__/accountingPolicyVersion.integration.test.ts:80; +21) |  |
-| 142 | GET | `/api/accounting/service-fiscal-profiles` | server/src/routes/accounting.ts:458 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 143 | GET | `/api/accounting/service-fiscal-profiles/:serviceRef` | server/src/routes/accounting.ts:459 | **não** | Lote 4+ — leitura/relatório (A7) |
-| 144 | PUT | `/api/accounting/service-fiscal-profiles/:serviceRef` | server/src/routes/accounting.ts:460 | **não** | Lotes 2–3 — escrita cadastral |
-| 145 | DELETE | `/api/accounting/service-fiscal-profiles/:serviceRef` | server/src/routes/accounting.ts:461 | **não** | Lotes 2–3 — escrita cadastral |
+| 142 | GET | `/api/accounting/service-fiscal-profiles` | server/src/routes/accounting.ts:458 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote5.integration.test.ts:354) | lote 5 |
+| 143 | GET | `/api/accounting/service-fiscal-profiles/:serviceRef` | server/src/routes/accounting.ts:459 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote2.integration.test.ts:254) | 2ª leitura do lote 2 |
+| 144 | PUT | `/api/accounting/service-fiscal-profiles/:serviceRef` | server/src/routes/accounting.ts:460 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote2.integration.test.ts:253) | lote 2 |
+| 145 | DELETE | `/api/accounting/service-fiscal-profiles/:serviceRef` | server/src/routes/accounting.ts:461 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote2.integration.test.ts:255) | lote 2 |
 | 146 | GET | `/api/accounting/product-fiscal-profiles` | server/src/routes/accounting.ts:463 | sim (server/src/features/accounting/services/__tests__/productFiscalProfile.integration.test.ts:58) |  |
 | 147 | GET | `/api/accounting/product-fiscal-profiles/:productRef` | server/src/routes/accounting.ts:464 | sim (server/src/features/accounting/services/__tests__/productFiscalProfile.integration.test.ts:43; +2) |  |
 | 148 | PUT | `/api/accounting/product-fiscal-profiles/:productRef` | server/src/routes/accounting.ts:465 | sim (server/src/features/accounting/services/__tests__/productFiscalProfile.integration.test.ts:36; +5) |  |
@@ -205,7 +205,7 @@
 | 161 | POST | `/api/accounting/tax-optimization/suggestions/:id/accept` | server/src/routes/accounting.ts:480 | sim (server/src/features/accounting/services/__tests__/taxOptimization.integration.test.ts:43 (helper); +1) |  |
 | 162 | POST | `/api/accounting/tax-optimization/suggestions/:id/reject` | server/src/routes/accounting.ts:481 | sim (server/src/features/accounting/services/__tests__/taxOptimization.integration.test.ts:43 (helper)) |  |
 | 163 | GET | `/api/accounting/simples/simulacoes/fator-r` | server/src/routes/accounting.ts:484 | sim (server/src/features/accounting/services/__tests__/taxSimulation.integration.test.ts:100; +2) |  |
-| 164 | POST | `/api/accounting/simples/simulacoes/fator-r/sugestao` | server/src/routes/accounting.ts:485 | **não** | Lote 4+ — leitura/relatório (A7) |
+| 164 | POST | `/api/accounting/simples/simulacoes/fator-r/sugestao` | server/src/routes/accounting.ts:485 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote5.integration.test.ts:80) | lote 5 |
 | 165 | GET | `/api/accounting/simulacoes/regime` | server/src/routes/accounting.ts:486 | sim (server/src/features/accounting/services/__tests__/taxSimulation.integration.test.ts:78; +1) |  |
 | 166 | POST | `/api/accounting/simulacoes/regime/sugestao` | server/src/routes/accounting.ts:487 | sim (server/src/features/accounting/services/__tests__/taxSimulation.integration.test.ts:85) |  |
 | 167 | GET | `/api/accounting/simulacoes/remuneracao-socio` | server/src/routes/accounting.ts:488 | sim (server/src/features/accounting/services/__tests__/taxSimulation.integration.test.ts:34; +4) |  |
@@ -223,7 +223,7 @@
 | 179 | DELETE | `/api/accounting/company-fiscal-profile/:ano` | server/src/routes/accounting.ts:504 | sim (server/src/controllers/__tests__/companyFiscalProfile.formaLalur.integration.test.ts:72; +3) |  |
 | 180 | GET | `/api/accounting/company-signers` | server/src/routes/accounting.ts:505 | sim (server/src/controllers/__tests__/companyFiscalProfile.integration.test.ts:81) |  |
 | 181 | POST | `/api/accounting/company-signers` | server/src/routes/accounting.ts:506 | sim (server/src/controllers/__tests__/companyFiscalProfile.integration.test.ts:77; +3) |  |
-| 182 | GET | `/api/accounting/company-signers/:id` | server/src/routes/accounting.ts:507 | **não** | Lote 4+ — leitura/relatório (A7) |
+| 182 | GET | `/api/accounting/company-signers/:id` | server/src/routes/accounting.ts:507 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote5.integration.test.ts:439) | lote 5 |
 | 183 | PUT | `/api/accounting/company-signers/:id` | server/src/routes/accounting.ts:508 | sim (server/src/controllers/__tests__/companyFiscalProfile.integration.test.ts:83) |  |
 | 184 | DELETE | `/api/accounting/company-signers/:id` | server/src/routes/accounting.ts:509 | sim (server/src/controllers/__tests__/companyFiscalProfile.integration.test.ts:161) |  |
 | 185 | GET | `/api/accounting/partners` | server/src/routes/accounting.ts:511 | sim (server/src/controllers/__tests__/partner.integration.test.ts:21; +1) |  |
@@ -247,7 +247,7 @@
 | 203 | POST | `/api/accounting/jcp/preview` | server/src/routes/accounting.ts:533 | sim (server/src/__tests__/jcpConfirm.integration.test.ts:101; +1) |  |
 | 204 | POST | `/api/accounting/jcp` | server/src/routes/accounting.ts:535 | sim (server/src/__tests__/jcpConfirm.integration.test.ts:105; +1) |  |
 | 205 | GET | `/api/accounting/jcp/irrf` | server/src/routes/accounting.ts:536 | sim (server/src/__tests__/jcpConfirm.integration.test.ts:233) |  |
-| 206 | GET | `/api/accounting/jcp/:id` | server/src/routes/accounting.ts:537 | **não** | Lote 4+ — leitura/relatório (A7) |
+| 206 | GET | `/api/accounting/jcp/:id` | server/src/routes/accounting.ts:537 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote6.integration.test.ts:309) | lote 6 |
 | 207 | POST | `/api/accounting/jcp/:id/lancamento` | server/src/routes/accounting.ts:538 | sim (server/src/__tests__/jcpConfirm.integration.test.ts:188; +1) |  |
 | 208 | POST | `/api/accounting/jcp/:id/cancel` | server/src/routes/accounting.ts:539 | sim (server/src/__tests__/jcpConfirm.integration.test.ts:215) |  |
 | 209 | GET | `/api/accounting/depreciation-rates` | server/src/routes/accounting.ts:543 | sim (server/src/controllers/__tests__/depreciationRateController.integration.test.ts:39; +9) |  |
@@ -255,7 +255,7 @@
 | 211 | POST | `/api/accounting/depreciation-rates/:id/hide` | server/src/routes/accounting.ts:545 | sim (server/src/controllers/__tests__/depreciationRateController.integration.test.ts:41; +4) |  |
 | 212 | GET | `/api/accounting/fixed-asset-classes` | server/src/routes/accounting.ts:548 | sim (server/src/controllers/__tests__/fixedAssetController.integration.test.ts:61) |  |
 | 213 | POST | `/api/accounting/fixed-asset-classes` | server/src/routes/accounting.ts:549 | sim (server/src/controllers/__tests__/fixedAssetController.integration.test.ts:67; +12) |  |
-| 214 | PATCH | `/api/accounting/fixed-asset-classes/:id` | server/src/routes/accounting.ts:550 | **não** | Lotes 2–3 — escrita cadastral |
+| 214 | PATCH | `/api/accounting/fixed-asset-classes/:id` | server/src/routes/accounting.ts:550 | sim (server/src/controllers/__tests__/rotasSemIntegracao.lote3.integration.test.ts:398) | lote 3 |
 | 215 | DELETE | `/api/accounting/fixed-asset-classes/:id` | server/src/routes/accounting.ts:551 | sim (server/src/controllers/__tests__/fixedAssetController.integration.test.ts:114; +1) |  |
 | 216 | POST | `/api/accounting/fixed-assets/depreciation/run` | server/src/routes/accounting.ts:555 | sim (server/src/controllers/__tests__/fixedAssetController.integration.test.ts:225; +7) |  |
 | 217 | POST | `/api/accounting/fixed-assets/reconcile` | server/src/routes/accounting.ts:556 | sim (server/src/controllers/__tests__/fixedAssetController.integration.test.ts:374; +2) |  |
