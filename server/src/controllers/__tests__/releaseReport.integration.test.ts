@@ -236,6 +236,25 @@ describe('F5 PR-3 — relatório de liberações → extrato da PaymentAccount �
     expect(await prisma.receivableReceipt.count({ where: { receivableId: rec.B } })).toBe(0);
   });
 
+  // FIX-MENSAGENS-ID-INTERNO lote 2 (FIX-TESTES item 5): a conta de débito do recibo ProviderBalance nunca vem do pedido (é a
+  // folha da conta de provedor, lida do banco); a mensagem a nomeia por `código — nome`, nunca pelo cuid.
+  it('ReceivableService:646 — confirm ProviderBalance com a folha do provedor já sem lançamento (400) nomeia a conta, não o cuid', async () => {
+    const b = await prisma.bankSettlementItem.findFirstOrThrow({ where: { statementLineId: lineByRef['PAY01BBB:payment'] } });
+    await prisma.account.update({ where: { id: glMp }, data: { acceptsEntries: false } });
+    try {
+      const res = await confirm(b.id, 'ProviderBalance');
+      const msg = String(res.body.message);
+      expect({ status: res.status, nomeiaRotulo: msg.includes('1.1.9 — Conta 1.1.9'), cuidNaMensagem: [glMp].filter((id) => msg.includes(id)), msg }).toEqual({
+        status: 400,
+        nomeiaRotulo: true,
+        cuidNaMensagem: [],
+        msg,
+      });
+    } finally {
+      await prisma.account.update({ where: { id: glMp }, data: { acceptsEntries: true } });
+    }
+  });
+
   it('P3-9: ProviderBalance fora do F7 (recibo avulso) ⇒ 400 provider_balance_requires_payment_account', async () => {
     const res = await request(app)
       .post(`/api/receivables/${rec.C}/receive`)

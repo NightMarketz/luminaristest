@@ -124,6 +124,23 @@ describe('item 6 — fiscal-check na venda finalizada', () => {
     expect((await put(tables.saleItems, itemIds[0], { custoSnapshotCents: 1 })).status).toBe(400);
   });
 
+  // FIX-MENSAGENS-ID-INTERNO lote 2 (FIX-TESTES item 5): a venda foi achada (o operador a abriu pela tela); a venda não tem
+  // número nem nome, então o rótulo é `venda de <cliente> em <dd/mm/aaaa>` (dono, 05/11), nunca o cuid.
+  it('SaleFiscalGuardService:109 — fiscal-check de venda sem unidade (404) nomeia cliente + data, não o cuid', async () => {
+    const { saleId } = await vendaCom({}, [{ unitPrice: 50 }]);
+    const linha = await prisma.dynamicTableData.findUniqueOrThrow({ where: { id: saleId } });
+    const { unitId: _semUnidade, ...dados } = linha.data as Record<string, unknown>;
+    await prisma.dynamicTableData.update({ where: { id: saleId }, data: { data: dados as never } });
+    const res = await request(app).post(`/api/sales/${saleId}/fiscal-check`).set(authHeader(user)).send({});
+    const msg = String(res.body.message);
+    expect({ status: res.status, nomeiaRotulo: msg.includes('venda de Ana Souza em 19/10/2026'), cuidNaMensagem: [saleId].filter((id) => msg.includes(id)), msg }).toEqual({
+      status: 404,
+      nomeiaRotulo: true,
+      cuidNaMensagem: [],
+      msg,
+    });
+  });
+
   it('corpo com chave desconhecida ⇒ 400; venda inexistente ⇒ 404', async () => {
     const { saleId } = await vendaCom({}, [{ unitPrice: 50 }]);
     expect((await request(app).post(`/api/sales/${saleId}/fiscal-check`).set(authHeader(user)).send({ x: 1 })).status).toBe(400);
