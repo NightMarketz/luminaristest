@@ -194,6 +194,15 @@ num ramo. Cada item tem o teste que o prova. Numeração AL-n para não colidir 
   `RUNBOOK-D5-A3-ASSINADOR-LOCAL.md`, com passos novos: "parear o assinador" e "remover o token no meio do envio ⇒
   `PENDING_SIGNATURE`, recolocar ⇒ autoriza uma vez". O passo 4 mantém a checagem da rejeição 972 (§8.5 item 1 do D5).
 
+### Régua de testes (APRENDIZADOS-TESTES-2026-11-04)
+
+> Patch de 04/11. Pedido do dono (chat, 04/11): *"Já vai atualizando todas os aprendizados nos locais onde são briefs"*. Não muda item, contrato nem fork ratificado: acrescenta ao critério de aceite **só o que falta** da régua A1–A8 de [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md). Onde um ponto pediria mudar algo ratificado, ele está no corpo do PR como pergunta ao dono.
+
+- **A6 — pilha real.** Caminho feliz pela HTTP com o assinador falso em processo e a 2ª leitura do documento.
+- **A3 — mensagem nomeada.** As recusas da l. 103 nomeiam a unidade e o caixa pelo nome, não por id.
+- **A4.** Tenant por cenário nomeado com NFC-e (extensão do registro de cenários do PILOTO-DFE, #1067, quando existir).
+- **A5.** Token e PSC reais ficam no runbook; a saída real vira fixture.
+
 ## 4. Contratos (esboço materializável)
 
 ### 4.1 Porta e transporte no servidor

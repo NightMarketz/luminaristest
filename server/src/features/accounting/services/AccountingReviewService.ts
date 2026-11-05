@@ -36,9 +36,12 @@ import {
   REVIEW_REJECTED,
   REVIEW_SIGNED_OFF,
   adjustmentDescription,
+  describeFinding,
+  describeReview,
   staleFindings,
   type ResolutionTarget,
 } from '../models/AccountingReview.model';
+import { describeExportJob } from '../models/AccountingDelivery.model';
 import type {
   AddFindingInput,
   AdjustmentEntryInput,
@@ -250,7 +253,7 @@ export class AccountingReviewService {
     this.assertOpen(review);
     const finding = await this.requireFinding(scope, review.id, findingId);
     if (finding.resolution) {
-      throw new ConflictError(`Achado '${finding.id}' já está resolvido (${finding.resolution}).`, 'FINDING_ALREADY_RESOLVED');
+      throw new ConflictError(`O ${describeFinding(finding)} já está resolvido (${finding.resolution}).`, 'FINDING_ALREADY_RESOLVED');
     }
     let targetType: string | null = null;
     let targetId: string | null = null;
@@ -302,7 +305,7 @@ export class AccountingReviewService {
       return { finding, entryId: finding.resolutionTargetId };
     }
     if (finding.resolution) {
-      throw new ConflictError(`Achado '${finding.id}' já está resolvido (${finding.resolution}).`, 'FINDING_ALREADY_RESOLVED');
+      throw new ConflictError(`O ${describeFinding(finding)} já está resolvido (${finding.resolution}).`, 'FINDING_ALREADY_RESOLVED');
     }
 
     // Item 6: estorno só quando o achado aponta um lançamento (register='I200', locator=entryId), e
@@ -409,7 +412,7 @@ export class AccountingReviewService {
       // GATE AUTORITATIVO — relê achados dentro da tx: um achado adicionado entre a leitura e o
       // sign-off não pode passar.
       const fresh = await this.reviewRepo.findById(scope, review.id, tx);
-      if (!fresh) throw new NotFoundError(`Revisão '${review.id}' não foi encontrada.`);
+      if (!fresh) throw new NotFoundError(`A ${describeReview(review)} não foi encontrada.`);
       this.assertOpen(fresh);
       const stale = staleFindings(jobs, fresh.findings);
       if (stale.unresolvedBlockers.length || stale.resolvedAfterGeneration.length) {
@@ -490,13 +493,13 @@ export class AccountingReviewService {
     if (exact?.status === SIGNED_OFF) return;
     if (exact?.status === REJECTED) {
       throw new ConflictError(
-        `A revisão '${exact.id}' deste par foi REJEITADA (${exact.closeReason ?? 'sem motivo'}) — o pacote não deve ser entregue.`,
+        `A ${describeReview(exact)} deste par foi REJEITADA (${exact.closeReason ?? 'sem motivo'}) — o pacote não deve ser entregue.`,
         'REVIEW_REJECTED',
       );
     }
     throw new ConflictError(
       exact
-        ? `A revisão '${exact.id}' deste par ainda está ${exact.status} — assine antes de entregar.`
+        ? `A ${describeReview(exact)} deste par ainda está ${exact.status} — assine antes de entregar.`
         : 'Este par de jobs não tem revisão profissional assinada (POST /api/accounting/reviews).',
       'REVIEW_REQUIRED',
     );
@@ -512,13 +515,13 @@ export class AccountingReviewService {
 
   private assertOpen(review: AccountingReview): void {
     if (review.status !== OPEN) {
-      throw new ConflictError(`Revisão '${review.id}' não está OPEN (status=${review.status}).`, 'REVIEW_NOT_OPEN');
+      throw new ConflictError(`A ${describeReview(review)} não está OPEN (status=${review.status}).`, 'REVIEW_NOT_OPEN');
     }
   }
 
   private alreadyOpen(existing: AccountingReview): ConflictError {
     return new ConflictError(
-      `Já existe a revisão '${existing.id}' (${existing.status}) para este par de jobs.`,
+      `Já existe a ${describeReview(existing)} (${existing.status}) para este par de jobs.`,
       'REVIEW_ALREADY_OPEN',
     );
   }
@@ -548,16 +551,16 @@ export class AccountingReviewService {
     const job = await this.dataExchangeRepo.findJobById(scope, id);
     if (!job) throw new NotFoundError(`Job da ${kind} '${id}' não foi encontrado.`);
     const kindOk = kind === 'ECD' ? job.kind === ECD_JOB_KIND : ECF_JOB_KINDS.includes(job.kind);
-    if (!kindOk) throw new ValidationError(`O job '${id}' não é uma ${kind} (kind=${job.kind}).`);
+    if (!kindOk) throw new ValidationError(`O job ${describeExportJob(job)} não é uma ${kind} (kind=${job.kind}).`);
     if (job.status !== EXPORTED) {
-      throw new ValidationError(`O job '${id}' não está EXPORTED (status=${job.status}) — o arquivo ainda não existe.`);
+      throw new ValidationError(`O job ${describeExportJob(job)} não está EXPORTED (status=${job.status}) — o arquivo ainda não existe.`);
     }
     if (!job.periodStart) {
-      throw new ValidationError(`O job '${id}' não tem período gravado — regere o arquivo para revisá-lo.`);
+      throw new ValidationError(`O job ${describeExportJob(job)} não tem período gravado — regere o arquivo para revisá-lo.`);
     }
     if (job.periodStart.getUTCFullYear() !== year) {
       throw new ValidationError(
-        `O job '${id}' cobre ${job.periodStart.getUTCFullYear()}, não ${year} — a revisão é de um exercício só.`,
+        `O job ${describeExportJob(job)} cobre ${job.periodStart.getUTCFullYear()}, não ${year} — a revisão é de um exercício só.`,
       );
     }
     return job;

@@ -190,7 +190,7 @@ export interface ILalurRepository {
   updateParteB(scope: AccountingScope, id: string, data: Prisma.LalurParteBAccountUpdateInput, tx?: Prisma.TransactionClient): Promise<LalurParteBAccount>;
 
   /** M312/M362 — `journalEntryIds` do DTO resolvidos no escopo: id, entryNumber (null = não postado), date. */
-  findJournalEntriesForLinks(scope: AccountingScope, ids: string[], tx?: Prisma.TransactionClient): Promise<Array<{ id: string; entryNumber: number | null; date: Date }>>;
+  findJournalEntriesForLinks(scope: AccountingScope, ids: string[], tx?: Prisma.TransactionClient): Promise<Array<{ id: string; entryNumber: number | null; date: Date; description: string }>>;
 
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

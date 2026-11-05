@@ -133,6 +133,17 @@ interface FormaDoAno {
 export const deletedLalurCodigo = (id: string, codigo: string) => `deleted:${id}:${codigo}`;
 export const deletedLalurCodCtaB = (id: string, codCtaB: string) => `deleted:${id}:${codCtaB}`;
 
+/**
+ * FIX-MENSAGENS-ID-INTERNO lote 3 (F-MSG-2 a1; dono, chat, 05/11). Rótulos das mensagens: o ajuste é o que a tela mostra (livro + código +
+ * período); o lançamento contábil é nº + data + descrição ("sem número" no rascunho). O cuid nunca entra.
+ */
+export const describeAjuste = (e: { livro: string; codigo: string; quarter: string; year: number }) =>
+  `ajuste '${e.codigo}' (${e.livro}, ${e.quarter}/${e.year})`;
+const describeLancamento = (j: { entryNumber: number | null; date: Date; description: string }) => {
+  const dmy = `${String(j.date.getUTCDate()).padStart(2, '0')}/${String(j.date.getUTCMonth() + 1).padStart(2, '0')}/${j.date.getUTCFullYear()}`;
+  return `${j.entryNumber === null ? 'lançamento sem número' : `lançamento nº ${j.entryNumber}`} de ${dmy} — ${j.description}`;
+};
+
 /** One row of GET /lalur/catalog (FE-INCR-LALUR §2.2): a linha E do livro, or a PARTEB_PADRAO code. */
 export type LalurCatalogRow =
   | { codigo: string; descricao: string; tipo: 'E'; tipoLanc?: 'A' | 'E' | 'P' | 'L'; vigencia: { de: string | null; ate: string | null } }
@@ -293,6 +304,8 @@ export class LalurService {
     scope: AccountingScope,
     line: { livro: LalurLivro; codigo: string; year: number; indRelacao: string | null; parteBId: string | null; accountId: string | null },
     tx?: Prisma.TransactionClient,
+    /** Rótulo do ajuste quando o id da conta NÃO veio do corpo (PATCH sem o campo: é o do ajuste já gravado, interno). */
+    dono?: { parteB?: string; account?: string },
   ): Promise<void> {
     const row = LalurService.resolveLinha(line.livro, line.codigo, line.year);
     if (!isParteALivro(line.livro)) return;
@@ -304,7 +317,7 @@ export class LalurService {
     }
     if (line.parteBId) {
       const parteB = await this.repo.findParteBById(scope, line.parteBId, tx);
-      if (!parteB || parteB.deletedAt) throw new NotFoundError(`Conta da Parte B '${line.parteBId}' não foi encontrada.`);
+      if (!parteB || parteB.deletedAt) throw new NotFoundError(dono?.parteB ? `Conta da Parte B do ${dono.parteB} não foi encontrada.` : `Conta da Parte B '${line.parteBId}' não foi encontrada.`);
       const expected = LIVRO_TRIBUTO[line.livro];
       if (parteB.codTributo !== expected) {
         throw new ValidationError(
@@ -314,7 +327,7 @@ export class LalurService {
     }
     if (line.accountId) {
       const account = await this.accountRepo.findById(scope, line.accountId, tx);
-      if (!account) throw new NotFoundError(`Conta contábil '${line.accountId}' não foi encontrada.`);
+      if (!account) throw new NotFoundError(dono?.account ? `Conta contábil do ${dono.account} não foi encontrada.` : `Conta contábil '${line.accountId}' não foi encontrada.`);
       // BRIEF 3C item 18: a regra do sinal do M310 (p.246) só define COD_NAT 1,2,3 (patrimonial) e 4
       // (resultado); natureza fora do domínio vira '09' e seria tratada como patrimonial em silêncio.
       const codNat = natureToCodNat(account.nature);
@@ -348,10 +361,10 @@ export class LalurService {
       const j = byId.get(id);
       if (!j) throw new NotFoundError(`Lançamento contábil '${id}' não foi encontrado.`);
       if (j.entryNumber === null) {
-        throw new ValidationError(`Lançamento contábil '${id}' ainda não foi postado (sem NUM_LCTO) — só lançamentos postados entram no M312/M362 (Manual p.254).`);
+        throw new ValidationError(`O ${describeLancamento(j)} ainda não foi postado (sem NUM_LCTO) — só lançamentos postados entram no M312/M362 (Manual p.254).`);
       }
       if (j.date < w.from || j.date > w.to) {
-        throw new ValidationError(`Lançamento contábil '${id}' (${j.date.toISOString().slice(0, 10)}) está fora do período ${quarter}/${year} do ajuste (M312: lançamentos do período do M030, p.254).`);
+        throw new ValidationError(`O ${describeLancamento(j)} está fora do período ${quarter}/${year} do ajuste (M312: lançamentos do período do M030, p.254).`);
       }
     }
   }
@@ -508,7 +521,10 @@ export class LalurService {
 
     return this.repo.runTransaction(async (tx) => {
       const { inicioAtividadeEm } = await this.assertPeriodoDoAno(scope, existing.year, existing.quarter, tx); // X7 item 12
-      await this.validateLineRefs(scope, refs, tx); // item 16
+      await this.validateLineRefs(scope, refs, tx, {
+        parteB: dto.parteBId === undefined ? describeAjuste(existing) : undefined,
+        account: dto.accountId === undefined ? describeAjuste(existing) : undefined,
+      }); // item 16
       await this.validateJournalLinks(scope, dto.journalEntryIds ?? [], existing.year, existing.quarter, inicioAtividadeEm, tx);
       const updated = await this.repo.updateEntry(
         scope,
@@ -780,7 +796,7 @@ export class LalurService {
     return this.repo.runTransaction(async (tx) => {
       await this.assertPeriodoDoAno(scope, existing.year, existing.quarter, tx); // X7 item 12
       const conta = await this.repo.findParteBById(scope, existing.parteBId, tx);
-      if (!conta || conta.deletedAt) throw new NotFoundError(`Conta da Parte B '${existing.parteBId}' não foi encontrada.`);
+      if (!conta || conta.deletedAt) throw new NotFoundError(`A conta do movimento da Parte B '${existing.historico}' (${existing.quarter}/${existing.year}) não foi encontrada.`);
       if (merged.contrapartidaId) await this.validateContrapartida(scope, conta, merged.contrapartidaId, tx);
       const updated = await this.repo.updateMovement(
         scope,
@@ -890,7 +906,7 @@ export class LalurService {
       const links = e.parteBLinks ?? [];
       if ((!e.parteBId && links.length === 0) || !isParteALivro(e.livro) || !out.has(e.quarter as LalurPeriodo)) continue;
       const row = findLinha(e.livro, e.codigo);
-      if (!row?.tipoLanc || row.tipoLanc === 'R') throw new ValidationError(`Ajuste ${e.id}: código '${e.codigo}' sem TIPO_LANCAMENTO no catálogo (livro ${e.livro}).`);
+      if (!row?.tipoLanc || row.tipoLanc === 'R') throw new ValidationError(`O ${describeAjuste(e)} não tem TIPO_LANCAMENTO no catálogo.`);
       const movesA = out.get(e.quarter as LalurPeriodo)!.movesA;
       // Bloco F (E21b): a linha `system` leva o M305 nos links (um por conta), não no `parteBId`.
       if (links.length > 0) for (const l of links) movesA.push({ parteBId: l.parteBId, tipoLanc: row.tipoLanc, valorCents: l.valorCents });
@@ -997,7 +1013,7 @@ export class LalurService {
         const manual = doPeriodo.find((e) => e.origem !== 'system' && e.livro === livro && e.codigo === codigo);
         if (manual) {
           throw new ValidationError(
-            `Já existe o ajuste ${manual.id} do usuário na linha ${codigo} do ${livro} em ${periodo}/${year}, e o fechamento precisa gravar a diferença de depreciação nessa linha: arquive o ajuste manual e refeche (C8 emenda 3.2, E22; F-EM-12 → a).`,
+            `Já existe um ajuste do usuário na linha ${codigo} do ${livro} em ${periodo}/${year}, e o fechamento precisa gravar a diferença de depreciação nessa linha: arquive o ajuste manual e refeche (C8 emenda 3.2, E22; F-EM-12 → a).`,
           );
         }
         const porConta = new Map<BlocoFConta, bigint>();

@@ -30,3 +30,7 @@ registrado a pedido do dono (chat, 2026-10-19: "Já incorpora nos planos do vaul
 7. README × middleware divergem em `GET /users/:id`; a tela de edição quebra para USER.
 
 Fora deste nó (decisão de produto, sem nó): transporte de e-mail e "esqueci a senha"; página `/users/subscription` (mock).
+
+## Fold 04/11 — régua de testes ([[D-2026-11-04-APRENDIZADOS-TESTES]])
+
+- O inventário de testes (#1065, §5) dizia que a troca de senha (§3.4 item 4, passo 21 d do H2) estava "sem teste (inferido)". **Não se sustenta:** `fixAuthConta.integration.test.ts:61–81` e `UserService.integration.test.ts:183–193` cobrem a troca pela pilha real (verificado por leitura, 04/11). Por isso não há BRIEF de correção de auth no [[FIX-TESTES]]. Estado e autorização deste nó **não mudam**.
