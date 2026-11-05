@@ -17,10 +17,12 @@ export interface PackageCatalogEntry {
 
 export type PackageCatalog = Record<string, PackageCatalogEntry>;
 
-/** Quantidade que conta no subtotal: serviço é sempre 1; produto e pacote (F-FE-VP-3 b) usam a quantidade. */
+/**
+ * Quantidade que conta no subtotal: toda linha usa a quantidade — produto, pacote (F-FE-VP-3 b) e serviço
+ * (D-2026-11-04-VENDA-QUANTIDADE-SERVICO-E-PV-A), igual ao SalesPlugin e às pontes contábeis.
+ */
 export function lineQuantity(item: { itemType?: SaleItemKind; type?: SaleItemKind; serviceId?: string; quantity?: number }): number {
-    const kind = item.itemType ?? item.type ?? (item.serviceId ? 'Service' : undefined);
-    return kind === 'Service' ? 1 : Number(item.quantity || 1);
+    return Number(item.quantity || 1);
 }
 
 const toCents = (v: number) => Math.round(Number(v || 0) * 100);
