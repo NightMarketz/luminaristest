@@ -128,10 +128,10 @@ export class FixedAssetClassService {
     if (!this.policy.canManageFixedAssets(scope)) {
       throw new ForbiddenError('Você não tem permissão para remover classes de bem.');
     }
-    await this.requireClass(scope, id);
+    const current = await this.requireClass(scope, id);
     const liveAssets = await this.assetRepo.countByClass(scope, id);
     if (liveAssets > 0) {
-      throw new ValidationError(`Classe '${id}' tem ${liveAssets} ativo(s) vivo(s) — remova ou baixe-os antes.`);
+      throw new ValidationError(`Classe '${[current.code, current.name].filter(Boolean).join(' — ') || id}' tem ${liveAssets} ativo(s) vivo(s) — remova ou baixe-os antes.`);
     }
     return this.classRepo.softDelete(scope, id);
   }

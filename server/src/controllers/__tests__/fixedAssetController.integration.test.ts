@@ -447,4 +447,164 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
       expect(fixed!.accumulatedDepreciationCents).toBe(833n);
     });
   });
+
+  // FIX-TESTES item 5, lote 1 (FIX-MENSAGENS-ID-INTERNO-brief.md itens 3–4; inventário em
+  // docs/operating-manual/MENSAGENS-ID-INTERNO-2026-11-05.md). A mensagem que sai do handleApiError é a que o operador lê:
+  // ela nomeia o bem pelo rótulo `código — descrição` e a classe por `código — nome` (F-MSG-2 a1), nunca pelo cuid de
+  // um registro que o usuário vê pelo código ou não mandou (F-MSG-1 a). Um caso por site "corrigir" do inventário.
+  describe('FIX-MENSAGENS-ID-INTERNO lote 1 — a mensagem nomeia o bem/classe pelo rótulo, nunca pelo cuid', () => {
+    const novaClasse = async (code: string, name: string, extra: Record<string, unknown> = {}) => {
+      const r = await request(app)
+        .post('/api/accounting/fixed-asset-classes')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, code, name, depreciable: false, costAccountId, ...extra });
+      expect(r.status).toBe(201);
+      return r.body.data.id as string;
+    };
+    const novoAtivo = async (classId: string, code: string, description: string, costCents = 1000) => {
+      const r = await request(app)
+        .post('/api/accounting/fixed-assets')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, classId, code, description, costCents, residualValueCents: 0, acquiredAt: '2026-01-01', annualRateBp: 1000 });
+      expect(r.status).toBe(201);
+      return r.body.data.id as string;
+    };
+    const ativar = (assetId: string, version = 1) =>
+      request(app).post(`/api/accounting/fixed-assets/${assetId}/activate`).set(authHeader(dono)).send({ unitId: UNIT, assetId, activatedAt: '2026-01-01', version });
+    const baixar = (assetId: string, version: number, proceedsCents = 1000) =>
+      request(app)
+        .post(`/api/accounting/fixed-assets/${assetId}/dispose`)
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, assetId, disposedAt: '2026-01-31', proceedsCents, counterpartAccountId: cashAccountId, version });
+    /** Status certo, a mensagem contém o rótulo e não contém nenhum dos cuids. A `msg` vai no objeto para o diff mostrá-la. */
+    const nomeiaSemId = (res: request.Response, status: number, rotulo: string, ...ids: string[]) => {
+      const msg = String(res.body.message);
+      expect({ status: res.status, nomeiaRotulo: msg.includes(rotulo), cuidNaMensagem: ids.filter((id) => msg.includes(id)), msg }).toEqual({
+        status,
+        nomeiaRotulo: true,
+        cuidNaMensagem: [],
+        msg,
+      });
+    };
+
+    it('FixedAssetService:136 — editar bem ACTIVE (400) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-EDIT', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-EDIT', 'Mesa');
+      expect((await ativar(assetId)).status).toBe(200);
+      const res = await request(app).put(`/api/accounting/fixed-assets/${assetId}`).set(authHeader(dono)).send({ unitId: UNIT, assetId, description: 'Mesa nova' });
+      nomeiaSemId(res, 400, 'A-MSG-EDIT — Mesa', assetId);
+    });
+
+    it('FixedAssetService:140 — editar bem cuja classe sumiu, sem classId no corpo (404), nomeia o bem, não o cuid da classe', async () => {
+      const classId = await novaClasse('IMSG-EDCL', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-EDCL', 'Cadeira');
+      await prisma.fixedAssetClass.update({ where: { id: classId }, data: { deletedAt: new Date() } });
+      const res = await request(app).put(`/api/accounting/fixed-assets/${assetId}`).set(authHeader(dono)).send({ unitId: UNIT, assetId, description: 'Cadeira nova' });
+      nomeiaSemId(res, 404, 'A-MSG-EDCL — Cadeira', classId, assetId);
+    });
+
+    it('FixedAssetService:183 — remover bem FULLY_DEPRECIATED (400) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-DELS', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-DELS', 'Armário');
+      await prisma.fixedAsset.update({ where: { id: assetId }, data: { status: 'FULLY_DEPRECIATED' } });
+      const res = await request(app).delete(`/api/accounting/fixed-assets/${assetId}`).set(authHeader(dono)).send({ unitId: UNIT, assetId });
+      nomeiaSemId(res, 400, 'A-MSG-DELS — Armário', assetId);
+    });
+
+    it('FixedAssetService:186 — remover bem com quota postada (400) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-DELQ', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-DELQ', 'Estante');
+      expect((await ativar(assetId)).status).toBe(200);
+      await prisma.fixedAsset.update({ where: { id: assetId }, data: { accumulatedDepreciationCents: 100n } });
+      const res = await request(app).delete(`/api/accounting/fixed-assets/${assetId}`).set(authHeader(dono)).send({ unitId: UNIT, assetId });
+      nomeiaSemId(res, 400, 'A-MSG-DELQ — Estante', assetId);
+    });
+
+    it('FixedAssetService:196 — ativar com version divergente (409) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-ACAS', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-ACAS', 'Balcão');
+      nomeiaSemId(await ativar(assetId, 999), 409, 'A-MSG-ACAS — Balcão', assetId);
+    });
+
+    it('FixedAssetService:199 — ativar bem já ACTIVE com o version atual (400) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-ASTA', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-ASTA', 'Gaveteiro');
+      expect((await ativar(assetId)).status).toBe(200);
+      nomeiaSemId(await ativar(assetId, 2), 400, 'A-MSG-ASTA — Gaveteiro', assetId);
+    });
+
+    it('FixedAssetService:206 — ativar bem cuja classe sumiu (404) nomeia o bem, não o cuid da classe', async () => {
+      const classId = await novaClasse('IMSG-ACL', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-ACL', 'Sofá');
+      await prisma.fixedAssetClass.update({ where: { id: classId }, data: { deletedAt: new Date() } });
+      nomeiaSemId(await ativar(assetId), 404, 'A-MSG-ACL — Sofá', classId, assetId);
+    });
+
+    it('FixedAssetService:196/226 — 2 ativações concorrentes: a que perde (409) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-ACON', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-ACON', 'Poltrona');
+      const [a, b] = await Promise.all([ativar(assetId), ativar(assetId)]);
+      expect([a.status, b.status].sort()).toEqual([200, 409]);
+      nomeiaSemId(a.status === 409 ? a : b, 409, 'A-MSG-ACON — Poltrona', assetId);
+    });
+
+    it('FixedAssetService:246 — baixar com version divergente (409) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-DCAS', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-DCAS', 'Bancada');
+      expect((await ativar(assetId)).status).toBe(200);
+      nomeiaSemId(await baixar(assetId, 999), 409, 'A-MSG-DCAS — Bancada', assetId);
+    });
+
+    it('FixedAssetService:249 — baixar bem PENDING_ACTIVATION (400) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-DSTA', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-DSTA', 'Prateleira');
+      nomeiaSemId(await baixar(assetId, 1), 400, 'A-MSG-DSTA — Prateleira', assetId);
+    });
+
+    it('FixedAssetService:252 — baixar bem cuja classe sumiu (404) nomeia o bem, não o cuid da classe', async () => {
+      const classId = await novaClasse('IMSG-DCL', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-DCL', 'Biombo');
+      expect((await ativar(assetId)).status).toBe(200);
+      await prisma.fixedAssetClass.update({ where: { id: classId }, data: { deletedAt: new Date() } });
+      nomeiaSemId(await baixar(assetId, 2), 404, 'A-MSG-DCL — Biombo', classId, assetId);
+    });
+
+    it('FixedAssetService:246/322 — 2 baixas concorrentes: a que perde (409) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-DCON', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-DCON', 'Aparador');
+      expect((await ativar(assetId)).status).toBe(200);
+      const [a, b] = await Promise.all([baixar(assetId, 2), baixar(assetId, 2)]);
+      expect([a.status, b.status].sort()).toEqual([200, 409]);
+      nomeiaSemId(a.status === 409 ? a : b, 409, 'A-MSG-DCON — Aparador', assetId);
+    });
+
+    it('FixedAssetService:425 — baixar bem cuja conta do bem (da classe) sumiu (400) nomeia a classe, não o cuid da conta', async () => {
+      const contaPropria = await criarConta('1.2.7', 'Asset');
+      const classId = await novaClasse('IMSG-CONTA', 'Móveis', { costAccountId: contaPropria.id });
+      const assetId = await novoAtivo(classId, 'A-MSG-CONTA', 'Divisória');
+      expect((await ativar(assetId)).status).toBe(200);
+      await prisma.account.update({ where: { id: contaPropria.id }, data: { deletedAt: new Date() } });
+      nomeiaSemId(await baixar(assetId, 2), 400, 'IMSG-CONTA — Móveis', contaPropria.id, classId, assetId);
+    });
+
+    it('FixedAssetService:425 — baixar com a conta de ganho das settings sumida (400) nomeia o bem, não o cuid da conta', async () => {
+      const gain = await prisma.account.findFirstOrThrow({ where: { userId: dono.id, unitId: UNIT, code: '3.9' } });
+      const classId = await novaClasse('IMSG-GANHO', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-GANHO', 'Painel');
+      expect((await ativar(assetId)).status).toBe(200);
+      await prisma.account.update({ where: { id: gain.id }, data: { deletedAt: new Date() } });
+      try {
+        nomeiaSemId(await baixar(assetId, 2, 2000), 400, 'A-MSG-GANHO — Painel', gain.id, assetId);
+      } finally {
+        await prisma.account.update({ where: { id: gain.id }, data: { deletedAt: null } });
+      }
+    });
+
+    it('FixedAssetClassService:134 — remover classe com bem vivo (400) nomeia a classe', async () => {
+      const classId = await novaClasse('IMSG-CDEL', 'Equipamentos de copa');
+      await novoAtivo(classId, 'A-MSG-CDEL', 'Geladeira');
+      const res = await request(app).delete(`/api/accounting/fixed-asset-classes/${classId}`).set(authHeader(dono)).send({ unitId: UNIT, classId });
+      nomeiaSemId(res, 400, 'IMSG-CDEL — Equipamentos de copa', classId);
+    });
+  });
 });
