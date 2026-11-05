@@ -8,6 +8,7 @@ import { maybeSyncSaleSettled } from '../../accounting/sync/bridges/SaleSettleme
 import { resolveAccountingScopeInternal } from '../../accounting/scope/resolveAccountingScopeInternal';
 import type { PackageBalanceService } from '../../packages/services/PackageBalanceService';
 import type { RegisterPaymentInput } from '../dtos/RegisterPaymentDto';
+import { describeSale } from './SaleFiscalGuardService';
 
 /**
  * RegisterPaymentService — server-side orchestration of the sale payment transition
@@ -100,7 +101,7 @@ export class RegisterPaymentService {
       }
       if (!unitId) throw new ValidationError('Venda sem unitId — saldo de pacote não pode ser consumido.');
       if (!customerId) throw new ValidationError('Venda sem cliente — saldo de pacote não pode ser consumido.');
-      const amountCents = this.toCents(data.totalAmount, input.saleId);
+      const amountCents = await this.toCents(data.totalAmount, () => describeSale(this.repository, user.userId, input.saleId, data));
       const scope = resolveAccountingScopeInternal(user, unitId);
       await this.packageBalanceService.assertSufficient(scope, customerId, input.packageId, amountCents);
     }
@@ -155,14 +156,14 @@ export class RegisterPaymentService {
   }
 
   /** Money boundary: a DynamicTable float `totalAmount` → positive safe-integer cents. */
-  private toCents(totalAmount: unknown, saleId: string): number {
+  private async toCents(totalAmount: unknown, saleLabel: () => Promise<string>): Promise<number> {
     if (typeof totalAmount !== 'number' || !Number.isFinite(totalAmount)) {
-      throw new ValidationError(`Valor da venda '${saleId}' inválido para consumo de saldo de pacote.`);
+      throw new ValidationError(`Valor da ${await saleLabel()} inválido para consumo de saldo de pacote.`);
     }
     const cents = Math.round(totalAmount * 100);
     if (!Number.isSafeInteger(cents) || cents <= 0) {
       throw new ValidationError(
-        `Valor da venda '${saleId}' fora da faixa válida para consumo de saldo de pacote.`,
+        `Valor da ${await saleLabel()} fora da faixa válida para consumo de saldo de pacote.`,
       );
     }
     return cents;
@@ -185,7 +186,7 @@ export class RegisterPaymentService {
         });
         return;
       }
-      const amountCents = this.toCents(args.totalAmount, args.saleId);
+      const amountCents = await this.toCents(args.totalAmount, async () => `venda '${args.saleId}'`);
       const scope = resolveAccountingScopeInternal(user, args.unitId);
       await this.packageBalanceService.debitForConsumption(scope, {
         customerId: args.customerId,

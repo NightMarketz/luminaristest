@@ -16,6 +16,7 @@
   que a regex não alcança foram achados (throw em várias linhas, id em expressão condicional, id dentro de classe de erro).
   A heurística errou em 1 sentido: `PayableService.ts:1675` ("Classe de bem '${item.classId}'") parecia id de outro registro e é eco do corpo (fica).
   Rótulos (dono, chat, 05/11): cobrança = tipo + valor (`Pix de R$ 100,00`; uma página de cobrança fica para depois); venda = cliente + data.
+  Os 12 "corrigir" do lote 2 estão corrigidos (guardas do #1093 verdes); `describeCharge` (modelo da cobrança) e `describeSale` (`SaleFiscalGuardService.ts`) são os rótulos.
   Não é erro, e por isso fora do lote: `reason:` de estorno com cuid no texto do lançamento (`PayableService.ts:537,974,1060`, `ReceivableService.ts` do recebimento).
 
 ## Regra de classificação (F-MSG-1 a + F-MSG-2 a1)
