@@ -385,6 +385,38 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
       expect(resB.status).toBe(409); // hoje: 200 — a perdedora regrava DISPOSED e audita de novo
       expect(await prisma.auditEvent.count({ where: { eventType: 'fixed_asset.disposed', targetId: assetId } })).toBe(1);
     });
+
+    // IMO-2, guarda do filtro do CAS final (review do #1084): a quota que a PRÓPRIA baixa posta pode esgotar a base e
+    // mover o bem para FULLY_DEPRECIATED (DepreciationService.postQuotaForDisposal) antes do `assetRepo.dispose`. Um
+    // filtro só `status: 'ACTIVE'` no CAS daria 409 falso aqui — este caso reprova essa troca.
+    it('IMO-2: baixa no mês em que a própria quota esgota a base é 200 (CAS aceita FULLY_DEPRECIATED), 1 quota e 1 baixa', async () => {
+      const klass = await request(app)
+        .post('/api/accounting/fixed-asset-classes')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, code: 'IMO2-ULTIMO', name: 'x', depreciable: true, costAccountId, accumulatedDepreciationAccountId: accDepAccountId });
+      const asset = await request(app)
+        .post('/api/accounting/fixed-assets')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, classId: klass.body.data.id, code: 'A-IMO2-ULTIMO', description: 'x', costCents: 1_200, residualValueCents: 0, acquiredAt: '2025-02-01', annualRateBp: 10_000 });
+      const assetId = asset.body.data.id as string;
+      // Retroativo (antes do 1º período OPEN, 2026-01): 11 quotas de 100 já acumuladas; falta a última, a de 2026-01.
+      const ativa = await request(app)
+        .post(`/api/accounting/fixed-assets/${assetId}/activate`)
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, assetId, activatedAt: '2025-02-01', openingAccumulatedCents: 1_100, version: 1 });
+      expect(ativa.status).toBe(200);
+
+      const res = await request(app)
+        .post(`/api/accounting/fixed-assets/${assetId}/dispose`)
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, assetId, disposedAt: '2026-01-31', proceedsCents: 0, version: ativa.body.data.version });
+
+      expect({ status: res.status, assetStatus: res.body.data?.status }).toEqual({ status: 200, assetStatus: 'DISPOSED' });
+      const depois = await prisma.fixedAsset.findUnique({ where: { id: assetId } });
+      expect(depois!.accumulatedDepreciationCents).toBe(1_200n); // a quota de 2026-01 esgotou a base antes do CAS
+      expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.depreciation', sourceId: `${assetId}:2026-01` } })).toBe(1);
+      expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.disposal', sourceId: assetId } })).toBe(1);
+    });
   });
 
   describe('/api/accounting/fixed-assets/depreciation/run (PR-3, item 12)', () => {
