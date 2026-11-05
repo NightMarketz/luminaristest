@@ -154,6 +154,33 @@ describe('POST /api/lalur/parte-b/close — Bloco F com ativo override (C8 emend
     expect((await request(app).post(`/api/lalur/entries/${manual.body.data.id}/archive`).set(authHeader(dono)).send({ unitId: UNIT })).status).toBe(200);
   });
 
+  // FIX-MENSAGENS-ID-INTERNO lote 3 (FIX-TESTES item 5; F-MSG-1 a, F-MSG-2 a1): o ajuste manual é nomeado pela linha, pelo livro e
+  // pelo período (o que a tela mostra), nunca pelo cuid. O E22 acima ainda prova o 400; este prova o texto.
+  it('LalurService:1000 — E22 nomeia o ajuste do usuário pela linha/livro/período, não pelo cuid', async () => {
+    await request(app).post('/api/lalur/parte-b/reopen').set(authHeader(dono)).send(T01);
+    for (const e of await prisma.lalurEntry.findMany({ where: { unitId: UNIT, origem: 'system', deletedAt: null, livro: 'lalur' } })) {
+      expect((await request(app).post(`/api/lalur/entries/${e.id}/archive`).set(authHeader(dono)).send({ unitId: UNIT })).status).toBe(200);
+    }
+    const manual = await request(app)
+      .post('/api/lalur/entries')
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, year: 2025, quarter: 'T01', livro: 'lalur', codigo: '86', valorCents: 100, indRelacao: '1', parteBId: pb.i1071 });
+    expect(manual.status).toBe(201);
+    try {
+      const res = await request(app).post('/api/lalur/parte-b/close').set(authHeader(dono)).send(T01);
+      const msg = String(res.body.message);
+      expect({ status: res.status, nomeiaRotulo: msg.includes('ajuste do usuário na linha 86 do lalur em T01/2025'), cuidNaMensagem: msg.includes(manual.body.data.id) ? [manual.body.data.id] : [], msg }).toEqual({
+        status: 400,
+        nomeiaRotulo: true,
+        cuidNaMensagem: [],
+        msg,
+      });
+    } finally {
+      // o estado que o teste seguinte (review D1) herda: o ajuste manual arquivado, falhe ou não a asserção
+      expect((await request(app).post(`/api/lalur/entries/${manual.body.data.id}/archive`).set(authHeader(dono)).send({ unitId: UNIT })).status).toBe(200);
+    }
+  });
+
   it('review D1: bem baixado DEPOIS do período (abril) segue no fechamento do T01 — refechar regrava a adição 86 de 30,00', async () => {
     await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: UNIT, year: 2025, month: 4, status: 'OPEN', openedAt: new Date(), openedById: dono.id } });
     const bem = await prisma.fixedAsset.findFirstOrThrow({ where: { unitId: UNIT, code: 'CADEIRA' } });

@@ -296,4 +296,62 @@ describe('IRRF-DISTRIBUICAO PR-2 — distribuição de lucros com IRRF', () => {
     expect((await request(app).get(`${BASE}/${a.body.data.id}`).set(authHeader(outro)).query({ unitId: outro.unitId })).status).toBe(404);
     expect((await criar(outro, corpo(outro, dono.socio))).status).toBe(404);
   });
+
+  // FIX-MENSAGENS-ID-INTERNO lote 3 (FIX-TESTES item 5; F-MSG-1 a, F-MSG-2 a1). Rótulo ratificado pelo dono (chat, 05/11, regra 5:
+  // a distribuição não tem tela): "distribuição a <nome do sócio> em dd/mm/aaaa". Conta do perfil fiscal sumida nomeia o papel dela.
+  describe('FIX-MENSAGENS-ID-INTERNO lote 3 — a mensagem nomeia a distribuição por sócio + data, nunca pelo cuid', () => {
+    /** Status certo, a mensagem contém o rótulo e não contém nenhum dos cuids. A `msg` vai no objeto para o diff mostrá-la. */
+    const nomeiaSemId = (res: request.Response, status: number, rotulo: string, ...ids: string[]) => {
+      const msg = String(res.body.message);
+      expect({ status: res.status, nomeiaRotulo: msg.includes(rotulo), cuidNaMensagem: ids.filter((id) => msg.includes(id)), msg }).toEqual({
+        status,
+        nomeiaRotulo: true,
+        cuidNaMensagem: [],
+        msg,
+      });
+    };
+    const cancelar = (dono: Dono, id: string) => request(app).post(`${BASE}/${id}/cancel`).set(authHeader(dono)).send({ unitId: dono.unitId, motivo: 'erro de digitação' });
+
+    it('ProfitDistributionService:269 — distribuição que mudou de status durante o cancelamento (409) nomeia a distribuição, não o cuid', async () => {
+      const dono = await cenario();
+      const a = await criar(dono, corpo(dono, dono.socio));
+      expect(a.status).toBe(201);
+      const spy = jest.spyOn(ProfitDistributionRepository.prototype, 'markCancelled').mockResolvedValueOnce(false);
+      try {
+        const res = await cancelar(dono, a.body.data.id);
+        nomeiaSemId(res, 409, 'distribuição a Sócio Teste em 10/03/2026', a.body.data.id);
+      } finally {
+        spy.mockRestore();
+      }
+    });
+
+    it('ProfitDistributionService:408 — lançamento da distribuição estornado fora do fluxo (400) nomeia a distribuição, não o cuid do evento nem do lançamento', async () => {
+      const dono = await cenario();
+      const spy = jest.spyOn(ProfitDistributionRepository.prototype, 'markPosted').mockRejectedValueOnce(new Error('crash entre commits'));
+      const r = await criar(dono, corpo(dono, dono.socio));
+      spy.mockRestore();
+      expect(r.body.data.status).toBe('PENDING_POST');
+      const [lancamento] = await lancamentos(dono);
+      await prisma.journalEntry.update({ where: { id: lancamento.id }, data: { status: 'Reversed' } });
+      const res = await request(app).post(`${BASE}/${r.body.data.id}/lancamento`).set(authHeader(dono)).send({ unitId: dono.unitId });
+      nomeiaSemId(res, 400, 'distribuição a Sócio Teste em 10/03/2026', r.body.data.id, lancamento.id);
+    });
+
+    it('ProfitDistributionService:455 — cancelar o do meio (409) nomeia a distribuição que tem de ser cancelada antes, não o cuid dela', async () => {
+      const dono = await cenario();
+      const a = await criar(dono, corpo(dono, dono.socio));
+      const b = await criar(dono, corpo(dono, dono.socio, { dataEvento: '2026-03-20' }));
+      const res = await cancelar(dono, a.body.data.id);
+      expect(res.body.code).toBe('NAO_E_O_ULTIMO_DO_MES');
+      nomeiaSemId(res, 409, 'distribuição a Sócio Teste em 20/03/2026', a.body.data.id, b.body.data.id);
+    });
+
+    it('ProfitDistributionService:464 — conta de dividendos a pagar do perfil fiscal apagada (404) nomeia o papel da conta, não o cuid', async () => {
+      const dono = await cenario();
+      await prisma.account.update({ where: { id: dono.ids['2.1.7.01'] }, data: { deletedAt: new Date() } });
+      const { contraAccountId: _c, ...semContra } = corpo(dono, dono.socio, { evento: 'CREDITO' });
+      const res = await criar(dono, semContra);
+      nomeiaSemId(res, 404, 'dividendos a pagar', dono.ids['2.1.7.01']);
+    });
+  });
 });

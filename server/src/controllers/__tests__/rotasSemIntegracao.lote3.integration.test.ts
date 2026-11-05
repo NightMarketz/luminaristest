@@ -14,6 +14,7 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
+import { AccountingReviewRepository } from '@/features/accounting/repositories/AccountingReviewRepository';
 
 const app = makeApp();
 type U = { id: string; username: string };
@@ -429,5 +430,160 @@ describe('PATCH /api/accounting/fixed-asset-classes/:id', () => {
     const res = await editar(id, { depreciable: true });
     expect(res.status).toBe(400);
     expect(await lerClasse(id)).toMatchObject({ depreciable: false, accumulatedDepreciationAccountId: null });
+  });
+});
+
+// ── FIX-MENSAGENS-ID-INTERNO lote 3 (FIX-TESTES item 5; F-MSG-1 a, F-MSG-2 a1) ───────────────────────────────────────────
+// Rótulos ratificados pelo dono (chat, 05/11, regra 5): job ECD/ECF = "<tipo> de dd/mm/aaaa a dd/mm/aaaa" (sem período:
+// "<tipo> gerada em dd/mm/aaaa"); revisão = "revisão do exercício <ano>"; achado = "achado <registro> — <descrição>".
+// Eco do id do pedido sem registro achado FICA; id de registro já carregado (job, revisão, achado) é nomeado pelo rótulo.
+describe('FIX-MENSAGENS-ID-INTERNO lote 3 — revisão: a mensagem nomeia o job, a revisão e o achado, nunca pelo cuid', () => {
+  const UNIT = 'unit-l3-msg-review';
+  let dono: U;
+
+  /** Status certo, a mensagem contém o rótulo e não contém nenhum dos cuids. A `msg` vai no objeto para o diff mostrá-la. */
+  const nomeiaSemId = (res: request.Response, status: number, rotulo: string, ...ids: string[]) => {
+    const msg = String(res.body.message);
+    expect({ status: res.status, nomeiaRotulo: msg.includes(rotulo), cuidNaMensagem: ids.filter((id) => msg.includes(id)), msg }).toEqual({
+      status,
+      nomeiaRotulo: true,
+      cuidNaMensagem: [],
+      msg,
+    });
+  };
+  const dmy = (d: Date) => `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}/${d.getUTCFullYear()}`;
+  const criarJob = (over: Record<string, unknown> = {}) =>
+    prisma.accountingDataExchangeJob.create({
+      data: {
+        userId: dono.id,
+        unitId: UNIT,
+        direction: 'EXPORT',
+        kind: 'EXPORT_SPED_ECD',
+        status: 'EXPORTED',
+        requestedById: dono.id,
+        sha256: 'c'.repeat(64),
+        periodStart: new Date(Date.UTC(2026, 0, 1)),
+        periodEnd: new Date(Date.UTC(2026, 11, 31)),
+        ...over,
+      },
+    });
+  const abrir = (ecdJobId: string, year = 2026) => request(app).post('/api/accounting/reviews').set(authHeader(dono)).send({ unitId: UNIT, year, ecdJobId });
+  const abrirOk = async () => {
+    const job = await criarJob();
+    const res = await abrir(job.id);
+    expect(res.status).toBe(201);
+    return res.body.data.id as string;
+  };
+  const novoAchado = async (reviewId: string) => {
+    const res = await request(app)
+      .post(`/api/accounting/reviews/${reviewId}/findings`)
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, register: 'I250', locator: 'linha 7', description: 'histórico a conferir', severity: 'NOTE' });
+    expect(res.status).toBe(201);
+    return res.body.data.id as string;
+  };
+  const resolver = (reviewId: string, findingId: string) =>
+    request(app)
+      .post(`/api/accounting/reviews/${reviewId}/findings/${findingId}/resolve`)
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, resolution: 'NO_ACTION', resolutionNote: 'conferido' });
+
+  beforeAll(async () => {
+    dono = await criarDono('l3-msg-review');
+    await seedUnit({ userId: dono.id, id: UNIT });
+  }, 120000);
+
+  it('AccountingReviewService:551 — job que não é ECD (400) nomeia o job por tipo + período, não o cuid', async () => {
+    const ecf = await criarJob({ kind: 'EXPORT_SPED_ECF' });
+    const res = await abrir(ecf.id);
+    nomeiaSemId(res, 400, 'ECF de 01/01/2026 a 31/12/2026', ecf.id);
+  });
+
+  it('AccountingReviewService:553 — job que não está EXPORTED (400) nomeia o job por tipo + período, não o cuid', async () => {
+    const job = await criarJob({ status: 'FAILED' });
+    const res = await abrir(job.id);
+    nomeiaSemId(res, 400, 'ECD de 01/01/2026 a 31/12/2026', job.id);
+  });
+
+  it('AccountingReviewService:556 — job sem período gravado (400) nomeia o job pela data de geração, não o cuid', async () => {
+    const job = await criarJob({ periodStart: null, periodEnd: null });
+    const res = await abrir(job.id);
+    nomeiaSemId(res, 400, `ECD gerada em ${dmy(job.createdAt)}`, job.id);
+  });
+
+  it('AccountingReviewService:560 — job de outro exercício (400) nomeia o job por tipo + período, não o cuid', async () => {
+    const job = await criarJob({ periodStart: new Date(Date.UTC(2025, 0, 1)), periodEnd: new Date(Date.UTC(2025, 11, 31)) });
+    const res = await abrir(job.id, 2026);
+    nomeiaSemId(res, 400, 'ECD de 01/01/2025 a 31/12/2025', job.id);
+  });
+
+  it('AccountingReviewService:521 — 2ª revisão aberta para o mesmo par (409) nomeia a revisão do exercício, não o cuid', async () => {
+    const job = await criarJob();
+    const primeira = await abrir(job.id);
+    expect(primeira.status).toBe(201);
+    const res = await abrir(job.id);
+    expect(res.body.code).toBe('REVIEW_ALREADY_OPEN');
+    nomeiaSemId(res, 409, 'revisão do exercício 2026', primeira.body.data.id, job.id);
+  });
+
+  it('AccountingReviewService:515 — achado numa revisão já encerrada (409) nomeia a revisão do exercício, não o cuid', async () => {
+    const reviewId = await abrirOk();
+    const rej = await request(app).post(`/api/accounting/reviews/${reviewId}/reject`).set(authHeader(dono)).send({ unitId: UNIT, reason: 'fim do teste' });
+    expect(rej.status).toBe(200);
+    const res = await request(app)
+      .post(`/api/accounting/reviews/${reviewId}/findings`)
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, register: 'I250', locator: 'linha 7', description: 'tarde demais', severity: 'NOTE' });
+    expect(res.body.code).toBe('REVIEW_NOT_OPEN');
+    nomeiaSemId(res, 409, 'revisão do exercício 2026', reviewId);
+  });
+
+  it('AccountingReviewService:253 — resolver achado já resolvido (409) nomeia o achado por registro + descrição, não o cuid', async () => {
+    const reviewId = await abrirOk();
+    const findingId = await novoAchado(reviewId);
+    expect((await resolver(reviewId, findingId)).status).toBe(200);
+    const res = await resolver(reviewId, findingId);
+    expect(res.body.code).toBe('FINDING_ALREADY_RESOLVED');
+    nomeiaSemId(res, 409, 'achado I250 — histórico a conferir', findingId, reviewId);
+  });
+
+  it('AccountingReviewService:305 — acerto sobre achado já resolvido por outro caminho (409) nomeia o achado, não o cuid', async () => {
+    const reviewId = await abrirOk();
+    const findingId = await novoAchado(reviewId);
+    expect((await resolver(reviewId, findingId)).status).toBe(200);
+    const res = await request(app)
+      .post(`/api/accounting/reviews/${reviewId}/findings/${findingId}/adjustment`)
+      .set(authHeader(dono))
+      .send({
+        unitId: UNIT,
+        postingDate: '2026-03-10',
+        description: 'acerto da revisão',
+        lines: [
+          { accountCode: '4.1', debitCents: 1000, creditCents: 0 },
+          { accountCode: '1.1.1.01', debitCents: 0, creditCents: 1000 },
+        ],
+      });
+    expect(res.body.code).toBe('FINDING_ALREADY_RESOLVED');
+    nomeiaSemId(res, 409, 'achado I250 — histórico a conferir', findingId, reviewId);
+  });
+
+  it('AccountingReviewService:412 — revisão sumida entre a leitura e a tx do sign-off (404) nomeia a revisão do exercício, não o cuid', async () => {
+    const reviewId = await abrirOk();
+    const original = AccountingReviewRepository.prototype.findById;
+    let chamadas = 0;
+    // 1ª leitura (preflight) real; a 2ª, dentro da tx (gate autoritativo), acha a revisão apagada por outra requisição.
+    const spy = jest.spyOn(AccountingReviewRepository.prototype, 'findById').mockImplementation(function (this: AccountingReviewRepository, ...args) {
+      chamadas += 1;
+      return chamadas === 2 ? Promise.resolve(null) : original.apply(this, args);
+    });
+    try {
+      const res = await request(app)
+        .post(`/api/accounting/reviews/${reviewId}/sign-off`)
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, reviewerName: 'Contadora Teste', reviewerCrc: 'SP-000777/O-1', statement: 'Revisei a ECD de 2026.' });
+      nomeiaSemId(res, 404, 'revisão do exercício 2026', reviewId);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

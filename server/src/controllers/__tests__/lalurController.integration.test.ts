@@ -397,3 +397,109 @@ describe('/api/lalur — Parte B 3C (movimentos M410, fechamento trimestral, dia
     expect((await prisma.account.findUnique({ where: { id: contaDespesa.id } }))!.deletedAt).toBeNull();
   });
 });
+
+// FIX-MENSAGENS-ID-INTERNO lote 3 (FIX-TESTES item 5; F-MSG-1 a, F-MSG-2 a1). Rótulos: ajuste = "ajuste '<código>' (<livro>, <período>/<ano>)"
+// (a tela o mostra por livro + código); movimento = "movimento da Parte B '<histórico>' (<período>/<ano>)"; lançamento contábil =
+// "lançamento nº N de dd/mm/aaaa — <descrição>" (ou "lançamento sem número …" no rascunho), ratificado pelo dono (chat, 05/11, regra 5).
+// Eco do id do pedido sem registro achado FICA; só o id que veio do registro já carregado (ajuste/movimento) é interno.
+describe('FIX-MENSAGENS-ID-INTERNO lote 3 — e-Lalur: a mensagem nomeia o ajuste, o movimento e o lançamento, nunca pelo cuid', () => {
+  const UNIT_MSG = 'unit-lalur-msg';
+  let contaMsg: { id: string };
+
+  /** Status certo, a mensagem contém o rótulo e não contém nenhum dos cuids. A `msg` vai no objeto para o diff mostrá-la. */
+  const nomeiaSemId = (res: request.Response, status: number, rotulo: string, ...ids: string[]) => {
+    const msg = String(res.body.message);
+    expect({ status: res.status, nomeiaRotulo: msg.includes(rotulo), cuidNaMensagem: ids.filter((id) => msg.includes(id)), msg }).toEqual({
+      status,
+      nomeiaRotulo: true,
+      cuidNaMensagem: [],
+      msg,
+    });
+  };
+  const contaParteB = async (codCtaB: string) => {
+    const r = await request(app).post('/api/lalur/parte-b').set(authHeader(dono)).send(parteBBody({ unitId: UNIT_MSG, codCtaB }));
+    expect(r.status).toBe(201);
+    return r.body.data as { id: string };
+  };
+  const ajusteComConta = async (codigo: string) => {
+    const r = await request(app)
+      .post('/api/lalur/entries')
+      .set(authHeader(dono))
+      .send(entryBody({ unitId: UNIT_MSG, codigo, indRelacao: '2', accountId: contaMsg.id, histLancamento: undefined }));
+    expect(r.status).toBe(201);
+    return r.body.data as { id: string };
+  };
+  const patchAjuste = (id: string, body: Record<string, unknown>) =>
+    request(app).patch(`/api/lalur/entries/${id}`).set(authHeader(dono)).send({ unitId: UNIT_MSG, ...body });
+
+  beforeAll(async () => {
+    await seedUnit({ userId: dono.id, id: UNIT_MSG });
+    contaMsg = await prisma.account.create({ data: { userId: dono.id, unitId: UNIT_MSG, code: '4.1.7', name: 'Despesas MSG', nature: 'Expense' } });
+  }, 120000);
+
+  it("LalurService:307 — PATCH sem parteBId com a conta da Parte B do ajuste arquivada (404) nomeia o ajuste, não o cuid da conta", async () => {
+    const pb = await contaParteB('MSG-307');
+    const e = await request(app)
+      .post('/api/lalur/entries')
+      .set(authHeader(dono))
+      .send(entryBody({ unitId: UNIT_MSG, codigo: '7', indRelacao: '1', parteBId: pb.id }));
+    expect(e.status).toBe(201);
+    await prisma.lalurParteBAccount.update({ where: { id: pb.id }, data: { deletedAt: new Date() } });
+    const res = await patchAjuste(e.body.data.id, { valorCents: 200 });
+    nomeiaSemId(res, 404, "ajuste '7' (lalur, T01/2025)", pb.id, e.body.data.id);
+  });
+
+  it("LalurService:317 — PATCH sem accountId com a conta contábil do ajuste apagada (404) nomeia o ajuste, não o cuid da conta", async () => {
+    const e = await ajusteComConta('8');
+    await prisma.account.update({ where: { id: contaMsg.id }, data: { deletedAt: new Date() } });
+    try {
+      const res = await patchAjuste(e.id, { valorCents: 200 });
+      nomeiaSemId(res, 404, "ajuste '8' (lalur, T01/2025)", contaMsg.id, e.id);
+    } finally {
+      await prisma.account.update({ where: { id: contaMsg.id }, data: { deletedAt: null } });
+    }
+  });
+
+  it('LalurService:351 — vínculo M312 com lançamento ainda sem número (400) nomeia o lançamento, não o cuid', async () => {
+    const e = await ajusteComConta('20');
+    const rascunho = await prisma.journalEntry.create({
+      data: { userId: dono.id, unitId: UNIT_MSG, date: new Date(Date.UTC(2025, 2, 15)), description: 'Provisão MSG', status: 'Draft' },
+    });
+    const res = await patchAjuste(e.id, { journalEntryIds: [rascunho.id] });
+    nomeiaSemId(res, 400, 'lançamento sem número de 15/03/2025 — Provisão MSG', rascunho.id, e.id);
+  });
+
+  it('LalurService:354 — vínculo M312 com lançamento fora do período do ajuste (400) nomeia o lançamento, não o cuid', async () => {
+    const e = await ajusteComConta('166.03');
+    const postado = await prisma.journalEntry.create({
+      data: {
+        userId: dono.id, unitId: UNIT_MSG, date: new Date(Date.UTC(2025, 5, 30)), description: 'Pagamento MSG', status: 'Posted', fiscalYear: 2025, entryNumber: 7,
+      },
+    });
+    const res = await patchAjuste(e.id, { journalEntryIds: [postado.id] });
+    nomeiaSemId(res, 400, 'lançamento nº 7 de 30/06/2025 — Pagamento MSG', postado.id, e.id);
+  });
+
+  it("LalurService:783 — PATCH de movimento com a conta da Parte B arquivada (404) nomeia o movimento, não o cuid da conta", async () => {
+    const pb = await contaParteB('MSG-783');
+    const mv = await request(app)
+      .post('/api/lalur/parte-b/movements')
+      .set(authHeader(dono))
+      .send({ unitId: UNIT_MSG, parteBId: pb.id, year: 2025, quarter: 'T01', indicador: 'DB', valorCents: 1000, historico: 'Ajuste MSG', indLanAnt: 'N' });
+    expect(mv.status).toBe(201);
+    await prisma.lalurParteBAccount.update({ where: { id: pb.id }, data: { deletedAt: new Date() } });
+    const res = await request(app).patch(`/api/lalur/parte-b/movements/${mv.body.data.id}`).set(authHeader(dono)).send({ unitId: UNIT_MSG, historico: 'revisado' });
+    nomeiaSemId(res, 404, "movimento da Parte B 'Ajuste MSG' (T01/2025)", pb.id, mv.body.data.id);
+  });
+
+  it("LalurService:893 — ajuste vivo com código sem TIPO_LANCAMENTO no catálogo (400) nomeia o ajuste, não o cuid", async () => {
+    const pb = await contaParteB('MSG-893');
+    const e = await prisma.lalurEntry.create({
+      data: {
+        userId: dono.id, unitId: UNIT_MSG, year: 2026, quarter: 'T01', livro: 'lalur', codigo: 'ZZ-MSG', valorCents: 10n, indRelacao: '1', parteBId: pb.id, origem: 'user',
+      },
+    });
+    const res = await request(app).get('/api/lalur/parte-b/balances').set(authHeader(dono)).query({ unitId: UNIT_MSG, year: 2026 });
+    nomeiaSemId(res, 400, "ajuste 'ZZ-MSG' (lalur, T01/2026)", e.id, pb.id);
+  });
+});
