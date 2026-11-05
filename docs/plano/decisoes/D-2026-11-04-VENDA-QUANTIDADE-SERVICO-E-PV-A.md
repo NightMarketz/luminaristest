@@ -30,6 +30,23 @@ Efeito: a regra das pontes contábeis (`quantity × unitPrice`) passa a ser a ú
 Fora: o modal Nova Venda continua sem campo de quantidade na aba de serviços (`SaleItemsManager.tsx`, `hasQuantity`), e a
 linha nasce com `quantity: 1` — a mudança só aparece em linha gravada com quantidade > 1 (API, tabela, importação).
 
+### Emenda 1a — o modal mostra a quantidade do serviço (dono, chat, 2026-11-04)
+
+Autorização: *"Tudo bem, podemos colocar então a quantidade. No motor genérico e no salão realmente colocar uma sugestão.
+Não esconder o campo. Esconder o campo é uma questão do usuário querer ou não colocar mais de uma sessão como venda de
+pacote ou não."* e *"Pode seguir"*.
+
+Substitui o "Fora" acima:
+
+- O modal Nova Venda tem o campo de quantidade nos três tipos, inclusive serviço (`SaleItemsManager.tsx`), com 1 como valor
+  inicial. O campo nunca é escondido nem convertido em pacote.
+- Quantidade ≥ 2 não caracteriza pacote. Pacote é pré-pago e consumido depois (passivo 2.1.1, `SalePackageSoldMapper`);
+  serviço com quantidade é entregue no ato (hora, diária, unidade, m²) e é receita na venda. Vender como pacote é escolha do
+  operador.
+- Onde a venda aceita pacote (schema com `packageId`), serviço com quantidade ≥ 2 mostra só a sugestão *"Mais de uma sessão
+  para consumir depois? Venda como pacote."*.
+- Teste-guarda: `my-app/.../finance/components/sales/__tests__/SaleItemsManager.serviceQuantity.test.tsx`.
+
 ## 2 — PV-A: o roteiro mede na janela do job
 
 Pergunta: *"PV-A (PACOTE-VALIDADE passo 6): o roteiro mede na janela de 5 min do job ou a tela mostra o saldo vencido
