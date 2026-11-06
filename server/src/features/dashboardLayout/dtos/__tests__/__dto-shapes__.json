@@ -7,12 +7,12 @@
         "id": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "userId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "name": {
           "type": "string",

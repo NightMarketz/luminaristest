@@ -7,7 +7,7 @@
         "instanceId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "page": {
           "default": 1,
@@ -33,7 +33,7 @@
         "id": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "content": {
           "type": "string",
@@ -51,7 +51,7 @@
         "chatInstanceId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "createdAt": {},
         "updatedAt": {},
@@ -80,13 +80,9 @@
           ]
         },
         "model": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         }
       },
@@ -114,7 +110,7 @@
         "chatInstanceId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "documentIds": {
           "type": "array",
@@ -140,7 +136,7 @@
         "chatInstanceId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "documentIds": {
           "type": "array",
@@ -157,7 +153,7 @@
         "id": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "content": {
           "type": "string",
