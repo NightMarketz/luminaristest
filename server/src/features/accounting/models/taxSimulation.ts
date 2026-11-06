@@ -168,7 +168,8 @@ export interface EntradaRegime {
   inicioAtividade: string | null;
   perfil: PerfilApuracaoPresumido & { lucroRealObrigatorio: boolean | null };
   resultadoAntesPorTrimestre: readonly bigint[];
-  issAliquotaBp: number;
+  /** `null` ⇒ ISS fora do Simples não conferido (perfil sem alíquota e `ISS_LIMITE` sem linha): Presumido e Real ficam indisponíveis. */
+  issAliquotaBp: number | null;
   sublimiteCents: bigint;
   linhas: readonly LinhaLegal[];
   tabelaApuracao: TabelaApuracao;
@@ -212,12 +213,16 @@ const fimDoMes = (comp: string): string => {
 };
 const msg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
+const MOTIVO_ISS_NAO_CONFERIDO = 'ISS_LIMITE/ALIQUOTA_MAX_BP sem linha vigente: o perfil fiscal não informa a alíquota de ISS do município e a tabela não traz o máximo — o ISS fora do Simples não foi conferido';
+
 /** O que não muda entre Presumido e Real: CPP sobre a folha, ISS e o tributo sobre o consumo (PIS/COFINS até 2026; CBS/IBS a partir de 2027). */
 function cargaComum(e: EntradaRegime, modalidade: 'CUMULATIVO' | 'NAO_CUMULATIVO', c: Componentes): void {
+  const issBp = e.issAliquotaBp;
+  if (issBp === null) throw new Error(MOTIVO_ISS_NAO_CONFERIDO);
   for (const m of e.meses) {
     const receita = m.servicoCents + m.naoUsoCents + m.revendaCents;
     if (m.folhaCents !== null) c.cpp += mulBp(m.folhaCents, e.encargos.patronalBp);
-    c.iss += mulBp(m.servicoCents + m.naoUsoCents > 0n ? m.servicoCents + m.naoUsoCents : 0n, e.issAliquotaBp);
+    c.iss += mulBp(m.servicoCents + m.naoUsoCents > 0n ? m.servicoCents + m.naoUsoCents : 0n, issBp);
     if (e.ano < 2027) {
       const r = apurarPisCofinsMensal({
         tabela: e.tabelaPisCofins,

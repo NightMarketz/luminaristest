@@ -5,7 +5,7 @@
  * aviso quando a tabela não tem linha. Os simuladores puros e a receita do razão são trocados por stubs: o que se prova é o
  * que o serviço decide, não a aritmética dos cenários (essa tem suíte própria em models/__tests__/taxSimulation.test.ts).
  */
-import { ISS_ALIQUOTA_MAX_FALLBACK_BP, LIMIAR_ALERTA_SUBLIMITE_PCT, TaxSimulationService } from '../TaxSimulationService';
+import { LIMIAR_ALERTA_SUBLIMITE_PCT, TaxSimulationService } from '../TaxSimulationService';
 import type { LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import type { EntradaRegime } from '../../models/taxSimulation';
 import { simularRegimeAno } from '../../models/taxSimulation';
@@ -60,8 +60,8 @@ function montar(linhas: LinhaLegal[], receitaCents: bigint, issAliquotaBp: numbe
 }
 
 describe('TaxSimulationService.regime — alerta de 80% do sublimite', () => {
-  it('as constantes nomeadas mantêm os valores de antes da extração', () => {
-    expect([LIMIAR_ALERTA_SUBLIMITE_PCT, ISS_ALIQUOTA_MAX_FALLBACK_BP]).toEqual([80, 500]);
+  it('a constante nomeada mantém o valor de antes da extração', () => {
+    expect(LIMIAR_ALERTA_SUBLIMITE_PCT).toBe(80);
   });
 
   const linhas = [linha('SIMPLES_LIMITE', 'SUBLIMITE', SUBLIMITE), linha('SIMPLES_LIMITE', 'EPP', 480_000_000)];

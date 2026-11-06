@@ -117,13 +117,6 @@ const viewAno = (s: SimulacaoAnoCalc) => ({
 export const LIMIAR_ALERTA_SUBLIMITE_PCT = 80;
 
 /**
- * Alíquota máxima de ISS (em pontos-base) usada SÓ quando a tabela `ISS_LIMITE/ALIQUOTA_MAX_BP` não tem linha vigente
- * (`SemLinhaVigenteError` em `issAliquotaMaxBp`): 5% — LC 116/2003 art. 8º II. Duplica o parâmetro legal e esconde seed
- * faltando; remover o fallback é fork pendente do dono (devolver "não conferido" com aviso, padrão `models/presumidoTeto.ts`).
- */
-export const ISS_ALIQUOTA_MAX_FALLBACK_BP = 500;
-
-/**
  * EFICIENCIA-FISCAL PR-3 itens 15–18 (BRIEF BE-INCR-EFICIENCIA-FISCAL; ADR-INCR-EFICIENCIA-FISCAL D8) — monta a entrada dos
  * simuladores a partir do razão, do subrazão e do histórico do Simples, e chama as funções puras de `models/taxSimulation`.
  * FIRST-CLASS PRISMA; não chama `postEntry`; os GETs não gravam nada (D3). O POST `…/sugestao` grava a sugestão do SYSTEM
@@ -198,11 +191,12 @@ export class TaxSimulationService {
     if (issAliquotaBp === null) {
       try {
         issAliquotaBp = issAliquotaMaxBp(linhas, `${ano}-12-31`);
+        avisos.push(`ISS fora do Simples pela alíquota máxima (${issAliquotaBp / 100}% — LC 116/2003 art. 8º II): o perfil fiscal da unidade não informa a alíquota do município`);
       } catch (e) {
         if (!(e instanceof SemLinhaVigenteError)) throw e;
-        issAliquotaBp = ISS_ALIQUOTA_MAX_FALLBACK_BP;
+        // Sem a alíquota do perfil nem o teto da tabela, o ISS não é conferido: Presumido e Real ficam indisponíveis (não se inventa 5%).
+        avisos.push(`ISS fora do Simples não conferido: ISS_LIMITE/ALIQUOTA_MAX_BP sem linha vigente em ${ano}-12-31 e o perfil fiscal da unidade não informa a alíquota do município — Presumido e Real ficam indisponíveis`);
       }
-      avisos.push(`ISS fora do Simples pela alíquota máxima (${issAliquotaBp / 100}% — LC 116/2003 art. 8º II): o perfil fiscal da unidade não informa a alíquota do município`);
     }
     if (!perfil?.ecfIndAliqCsll) avisos.push('CSLL fora do Simples a 9% (ecfIndAliqCsll = 1): o perfil fiscal do ano não informa o indicador');
     if (perfil?.ecfIndRecReceita === '1') avisos.push('Presumido simulado pelo regime de competência: o perfil do ano está no caixa');

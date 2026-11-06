@@ -200,7 +200,7 @@ describe('item 16 — simulador de regime (F-EF-7 a; decisão 3)', () => {
   });
 
   it('sem alíquota de ISS conferível (perfil sem ISS e ISS_LIMITE sem linha): Presumido e Real ficam indisponíveis com o motivo; o Simples segue e é o melhor', () => {
-    const sem = simularRegimeAno({ ...entradaRegime(2026), issAliquotaBp: null as unknown as number });
+    const sem = simularRegimeAno({ ...entradaRegime(2026), issAliquotaBp: null });
     for (const r of ['PRESUMIDO', 'REAL']) {
       const cen = sem.cenarios.find((x) => x.regime === r)!;
       expect(cen.disponivel).toBe(false);
