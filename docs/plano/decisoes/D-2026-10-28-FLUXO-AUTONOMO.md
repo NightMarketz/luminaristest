@@ -30,3 +30,9 @@ filha. Nenhum desses toques mudava o resultado quando a resposta era a recomenda
 - Fork de produto, de lei ou de arquitetura: pergunta ao dono, nunca auto-ratificado.
 - A maestro não mergeia vermelho, não muda a lista `VERMELHO` do `classe-risco.mjs` (só o dono, por cédula) e não faz deploy.
 - Revisor-independente com veredito FALHOU: o PR não entra no lote como "pronto"; entra com o achado.
+
+## Emenda
+
+- 06/11: a resposta 3 (revisor só no vermelho) passa a valer só no vermelho de código (`revisor: obrigatório` do
+  `classe-risco.mjs`), com teto de 3 rodadas, re-revisão só do diff novo, pré-existente em trilho próprio e a coluna
+  destino no lote — [D-2026-11-06-REVISAO-CONVERGENCIA](D-2026-11-06-REVISAO-CONVERGENCIA.md).
