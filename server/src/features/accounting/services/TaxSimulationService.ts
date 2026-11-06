@@ -110,6 +110,20 @@ const viewAno = (s: SimulacaoAnoCalc) => ({
 });
 
 /**
+ * Limiar (em % do sublimite do Simples) a partir do qual a simulação de regime avisa que a receita se aproxima do sublimite.
+ * É régua do PRODUTO, não número de lei: a LC 123 art. 13-A fixa só o sublimite (linha `SIMPLES_LIMITE/SUBLIMITE`), não um
+ * patamar de alerta. Vale 0 < pct ≤ 100 (comparação inteira, sem fração).
+ */
+export const LIMIAR_ALERTA_SUBLIMITE_PCT = 80;
+
+/**
+ * Alíquota máxima de ISS (em pontos-base) usada SÓ quando a tabela `ISS_LIMITE/ALIQUOTA_MAX_BP` não tem linha vigente
+ * (`SemLinhaVigenteError` em `issAliquotaMaxBp`): 5% — LC 116/2003 art. 8º II. Duplica o parâmetro legal e esconde seed
+ * faltando; remover o fallback é fork pendente do dono (devolver "não conferido" com aviso, padrão `models/presumidoTeto.ts`).
+ */
+export const ISS_ALIQUOTA_MAX_FALLBACK_BP = 500;
+
+/**
  * EFICIENCIA-FISCAL PR-3 itens 15–18 (BRIEF BE-INCR-EFICIENCIA-FISCAL; ADR-INCR-EFICIENCIA-FISCAL D8) — monta a entrada dos
  * simuladores a partir do razão, do subrazão e do histórico do Simples, e chama as funções puras de `models/taxSimulation`.
  * FIRST-CLASS PRISMA; não chama `postEntry`; os GETs não gravam nada (D3). O POST `…/sugestao` grava a sugestão do SYSTEM
@@ -186,7 +200,7 @@ export class TaxSimulationService {
         issAliquotaBp = issAliquotaMaxBp(linhas, `${ano}-12-31`);
       } catch (e) {
         if (!(e instanceof SemLinhaVigenteError)) throw e;
-        issAliquotaBp = 500; // LC 116 art. 8º II
+        issAliquotaBp = ISS_ALIQUOTA_MAX_FALLBACK_BP;
       }
       avisos.push(`ISS fora do Simples pela alíquota máxima (${issAliquotaBp / 100}% — LC 116/2003 art. 8º II): o perfil fiscal da unidade não informa a alíquota do município`);
     }
@@ -293,8 +307,8 @@ export class TaxSimulationService {
       alertas.push({ codigo: 'LIMITE_EPP_EXCEDIDO', detalhe: `receita de ${ano} ${fmt(receita)} acima do limite da EPP ${fmt(BigInt(epp))} — fora do Simples (LC 123 art. 3º II)` });
     } else if (sublimite && receita > BigInt(sublimite)) {
       alertas.push({ codigo: 'SUBLIMITE_EXCEDIDO', detalhe: `receita de ${ano} ${fmt(receita)} acima do sublimite ${fmt(BigInt(sublimite))}: ICMS e ISS (e o IBS a partir de 2027) saem do DAS (LC 123 art. 13-A)` });
-    } else if (sublimite && receita * 10n >= BigInt(sublimite) * 8n) {
-      alertas.push({ codigo: 'SUBLIMITE_80', detalhe: `receita de ${ano} ${fmt(receita)} em 80% ou mais do sublimite ${fmt(BigInt(sublimite))} (LC 123 art. 13-A)` });
+    } else if (sublimite && receita * 100n >= BigInt(sublimite) * BigInt(LIMIAR_ALERTA_SUBLIMITE_PCT)) {
+      alertas.push({ codigo: 'SUBLIMITE_80', detalhe: `receita de ${ano} ${fmt(receita)} em ${LIMIAR_ALERTA_SUBLIMITE_PCT}% ou mais do sublimite ${fmt(BigInt(sublimite))} (LC 123 art. 13-A)` });
     }
     alertas.push({
       codigo: 'JANELA_OPCAO',
