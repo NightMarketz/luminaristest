@@ -267,7 +267,7 @@ export function KanbanCardDetailModal({
 
                                                 return (
                                                     <div key={field.name} className="flex flex-col gap-1 relative group/field">
-                                                        <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{field.label || field.name}</span>
+                                                        <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{String(t(`database:fields.${field.name}`, field.label || field.name))}</span>
                                                         <div className="text-sm font-medium text-gray-800 dark:text-gray-100 flex items-center gap-2">
                                                             {isEditing ? (
                                                                 <div className="flex items-center gap-1 w-full animate-in fade-in duration-200">
