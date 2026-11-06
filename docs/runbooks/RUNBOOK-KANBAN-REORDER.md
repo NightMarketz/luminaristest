@@ -413,8 +413,8 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
    o passo diverge — rótulos dos campos em EN com a tela em PT.** Idioma de partida: PT (`<html lang="pt">`,
    `/pt/dashboard?category=kanban`); depois troca para "English (US)" pelo seletor do topo. Card "A fazer 2", sem
    descrição. O runner compara o texto do diálogo com os valores de `database:kanban_card.*` do outro idioma, palavra
-   inteira, e lê os rótulos (`span.uppercase`). Log `docs/accounting/runbook-evidence/kanban-reorder-2026-11-06/p9.log`. Prints `p9-idioma1-detalhe.png`, `p9-idioma1-edicao.png`,
-   `p9-idioma2-detalhe.png` e `p9-idioma2-edicao.png`.
+   inteira, e lê os rótulos (`span.uppercase`). Log `docs/accounting/runbook-evidence/kanban-reorder-2026-11-06/p9.log`. Prints `p9-r1-idioma1-detalhe.png`, `p9-r1-idioma1-edicao.png`,
+   `p9-r1-idioma2-detalhe.png` e `p9-r1-idioma2-edicao.png`.
    ```
    --- inspetor: abertura do overlay (nos dois idiomas) ---
    <div role="dialog" aria-modal="true" class="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto p-4 sm:p-6 md:p-12 lg:p-20">
@@ -446,6 +446,34 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
    tem `assigneeId`, `leadId` nem `reminderAt`. "Medium" e "To Do" são valores gravados no card e ficam como estão. O Esc
    continua sem fechar (achado de 28/10); o clique fora fecha, e o roteiro aceita.
 
+   **Continuação de 2026-11-06, passos 9 e 10, com o fix dos rótulos no build (`551ca003e`): confere.** Comando do dono no
+   chat, 2026-11-06: "Sim, instrumentar e corrigir". O guarda `KanbanCardDetailModal.rotulosCampo.test.tsx` estava vermelho
+   no `test:` e ficou verde no `fix:`. Pré-condições: front reconstruído
+   (`NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:4150/api npm run build` → `next build exit=0`); back e front reiniciados do mesmo
+   commit, com a mesma cópia de banco (`kro-rb.db`); `$ curl -s 127.0.0.1:4150/health →
+   {"status":"degraded","uptime":11.6273475,"checks":{"database":"ok","qdrant":"error"}}`; `front 200`. O runner agora confere
+   também os rótulos: cada um tem de ser `database:fields.<nome>` do idioma ativo. Logs `docs/accounting/runbook-evidence/kanban-reorder-2026-11-06/p9-continuacao.log` e
+   `p9-continuacao-en-limpo.log`. Prints `p9-idioma1-detalhe.png`, `p9-idioma1-edicao.png`, `p9-idioma2-detalhe.png`,
+   `p9-idioma2-edicao.png`, `p9-en-limpo-detalhe.png` e `p9-en-limpo-edicao.png`.
+   ```
+   <div role="dialog" aria-modal="true" class="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto p-4 sm:p-6 md:p-12 lg:p-20">
+   --- PT (lang=pt, partida) — card "A fazer 2" ---
+   A fazer 2 / Na lista To Do / PRIORIDADE / Medium / DESCRIÇÃO / Adicione uma descrição mais detalhada... /
+   INFORMAÇÕES DETALHADAS / RESPONSÁVEL / Vazio / DATA / 05/11/2026 / LEAD / Vazio / LEMBRETE EM / Vazio /
+   AÇÕES RÁPIDAS / Excluir / CRIADO EM / 06/11/2026
+   placeholder: "Adicione uma descrição mais detalhada..." ; rotulos_faltando: [] ; texto do EN: []
+   --- troca pelo seletor do topo -> English (US); F5 (o estado de edição do modal não passa da recarga) — card "A fazer 3" ---
+   A fazer 3 / In list To Do / PRIORITY / Medium / DESCRIPTION / Add a more detailed description... /
+   DETAILED INFORMATION / ASSIGNEE / Empty / DATE / 05/11/2026 / LEAD / Empty / REMINDER AT / Empty /
+   QUICK ACTIONS / Delete / CREATED AT / 06/11/2026
+   placeholder: "Add a more detailed description..." ; rotulos_faltando: [] ; texto do PT: []
+   nos dois: após Esc, [role=dialog] presente: true ; após clique fora (20,880): false
+   console.error: (nenhum)
+   ```
+   Nos dois idiomas, todo texto fixo do diálogo (seções, rótulos, ações, placeholder e campo vazio) está no idioma ativo.
+   "Lead" é o termo usado no próprio pt ("Nome do Lead", "Leads"). Mudança visível em EN: o rótulo do campo `date` passa a
+   ser "DATE", e não mais "DUE DATE", porque `database:fields.date` vence o rótulo do schema. É a mesma regra do `GenericTable`.
+
 10. Lote 4 (#813): numa tabela com coluna de relação (ex.: cliente), limpe o localStorage do site e abra
     a tabela.
     Resultado esperado: a coluna de relação aparece visível, e não oculta até alguém ligá-la à mão.
@@ -453,6 +481,18 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
     Rodada de 2026-10-28: não executado (regra do FALHOU: o passo 7 divergiu).
     Continuação de 2026-10-28: não executado (regra do FALHOU: o passo 9 divergiu).
     Rodada de 2026-11-06: não executado (regra do FALHOU: o passo 9 divergiu, rótulos dos campos em EN com a tela em PT).
+    **Continuação de 2026-11-06: confere.** Tabela "Units" (categoria business, preset, relação `managerId` → rótulo "Manager"),
+    tela em EN. Log `docs/accounting/runbook-evidence/kanban-reorder-2026-11-06/p10.log`; tela `p10-units.png`.
+    ```
+    localStorage: 2 chaves antes do clear -> 0 depois
+    lang=en url=/dashboard?category=business ; aba "Units" aberta pelo clique
+    chaves de coluna no localStorage depois da carga: ["theme","filter-bar-generic-tabbed"]  (nenhuma configuração de colunas)
+    cabeçalhos: ["NAME","CNPJ","ADDRESS","CITY","STATE","MANAGER","TYPE","IS ACTIVE","KEY 'ACTIONS (EN)' RETURNED AN OBJECT INSTEAD OF STRING."]
+    console.error: (nenhum)
+    ```
+    A coluna de relação MANAGER está entre as colunas visíveis sem ninguém ligá-la. Na largura de 1280 px ela fica à
+    direita e se alcança pela rolagem horizontal da tabela. A 1ª tentativa caiu na aba "Stakeholders", que está vazia e não
+    tem relação (`p10-tentativa-aba.log`): foi erro do roteiro, corrigido com o clique na aba.
 
 ## Desfecho da rodada de 2026-10-24/25 (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
@@ -538,3 +578,20 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
 - Atualização do artefato de rastreio: `docs/plano/nos/FE-INCR-KANBAN-REORDER.md`, fold no PR desta rodada
 - Assinatura do executor: agente Claude Opus 5.5, persona revisor, sob comando do dono (questionário de 2026-11-06,
   "Corrigir e agente roda (Recomendado)", D-2026-11-06-PARADOS-NO-DONO §3). Não é assinatura humana
+
+## Desfecho da continuação de 2026-11-06, passos 9 e 10 (marcar UM)
+[x] PASSOU — o passo 9 (com os rótulos de campo corrigidos) e o passo 10 conferem, com a evidência colada acima. Somados à
+    rodada de 06/11 (6b confere, com a ressalva do card pego fora do centro) e, pelos registros acima, às rodadas
+    anteriores (1–3 em 24/10; 4–5 em 27/10; 6 e 7 em 28/10; 8 N/A), não resta passo divergente
+[ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;
+    NENHUM passo seguinte foi executado após a falha
+[ ] BLOQUEADO — pré-condição __ não se sustentava; execução nem começou
+
+## Registro da continuação de 2026-11-06
+- Achados no caminho (fora do escopo deste runbook): agente, 2026-11-06 — (1) o cabeçalho da coluna de ações da tabela
+  (EN) mostra `KEY 'ACTIONS (EN)' RETURNED AN OBJECT INSTEAD OF STRING.`: a chave i18n usada no cabeçalho aponta para um
+  objeto. (2) Os achados 1 (6b, ponteiro × centro do card), 3, 4 e 5 da rodada de 06/11 seguem abertos; o achado 2 (rótulos)
+  foi corrigido nesta continuação.
+- Atualização do artefato de rastreio: `docs/plano/nos/FE-INCR-KANBAN-REORDER.md`, fold no #1112
+- Assinatura do executor: agente Claude Opus 5.5, persona revisor, sob comando do dono (chat, 2026-11-06: "Sim, instrumentar
+  e corrigir"). Não é assinatura humana

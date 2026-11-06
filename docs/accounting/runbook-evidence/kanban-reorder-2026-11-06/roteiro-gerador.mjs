@@ -108,6 +108,7 @@ const p10 = {
     ev(`const n=Object.keys(localStorage).length;localStorage.clear();return 'localStorage: '+n+' chaves antes do clear -> '+localStorage.length+' depois';`),
     { op: 'goto', url: '/dashboard?category=business', wait: 4000 },
     ev(`return 'lang='+document.documentElement.lang+' url='+location.pathname+location.search+' chaves de coluna no localStorage: '+JSON.stringify(Object.keys(localStorage));`),
+    { op: 'click', sel: 'button,[role=tab],a', text: 'Units', wait: 3000 },
     { op: 'shot', name: 'p10-units' },
     ev(`const heads=[...document.querySelectorAll('thead th, [role="columnheader"]')].map(e=>e.innerText.trim()).filter(Boolean);
  const ok=heads.some(h=>/^manager$/i.test(h)||/gerente|respons/i.test(h));if(!ok)throw new Error('coluna de relação Manager ausente: '+JSON.stringify(heads));return 'cabeçalhos visíveis: '+JSON.stringify(heads);`),
@@ -177,11 +178,13 @@ const chk = (tag) => ev(`const lang=document.documentElement.lang;const other=la
  const has=v=>{const w=v.toLowerCase();let i=low.indexOf(w);while(i>=0){if(!L(low[i-1])&&!L(low[i+w.length]))return true;i=low.indexOf(w,i+1);}return false;};
  const forasteiros=Object.entries(oth.kanban_card).filter(([k,v])=>v!==mine.kanban_card[k]&&has(v)).map(([k,v])=>'kanban_card.'+k+'='+v);
  const vaz=[...d.querySelectorAll('div')].find(x=>x.className.includes('italic'));
+ const vazTxt=vaz?vaz.innerText:null;
  if(vaz){vaz.click();await new Promise(r=>setTimeout(r,600));}
  const ta=d.querySelector('textarea');const ph=ta&&ta.getAttribute('placeholder');
  const rotulos=[...d.querySelectorAll('span.uppercase')].map(s=>s.innerText.trim()).filter(Boolean);
- const res={lang,overlay:d.outerHTML.slice(0,d.outerHTML.indexOf('>')+1),campo_vazio:vaz?vaz.innerText:'(já em edição)',placeholder:ph,rotulos,texto:txt.split(String.fromCharCode(10)).filter(Boolean).join(' / '),forasteiros};
- const erros=[];if(forasteiros.length)erros.push('texto do outro idioma');if(ph!==mine.kanban_card.description_placeholder)erros.push('placeholder');if(vaz&&vaz.innerText!==mine.kanban_card.description_placeholder)erros.push('campo vazio');
+ const res={lang,overlay:d.outerHTML.slice(0,d.outerHTML.indexOf('>')+1),campo_vazio:vaz?vazTxt:'(já em edição)',placeholder:ph,rotulos,texto:txt.split(String.fromCharCode(10)).filter(Boolean).join(' / '),forasteiros};
+ const campos=['assigneeId','date','leadId','reminderAt'];const rotEsperados=campos.map(n=>mine.fields[n]);const rotFaltando=rotEsperados.filter(r=>!rotulos.some(x=>x.toLowerCase()===String(r).toLowerCase()));res.rotulos_esperados=rotEsperados;res.rotulos_faltando=rotFaltando;
+ const erros=[];if(forasteiros.length)erros.push('texto do outro idioma');if(rotFaltando.length)erros.push('rótulos de campo');if(ph!==mine.kanban_card.description_placeholder)erros.push('placeholder');if(vaz&&vazTxt!==mine.kanban_card.description_placeholder)erros.push('campo vazio');
  window.__p9=res;return '${tag}: '+(erros.length?'DIVERGE ('+erros.join(', ')+') ':'')+JSON.stringify(res);`);
 const escCheck = [{ op: 'key', key: 'Escape', wait: 1500 }, ev(`return 'após Esc, [role=dialog] presente: '+!!document.querySelector('[role="dialog"]');`)];
 const toggleLang = ev(`const to=document.documentElement.lang==='pt'?'English (US)':'Português (BR)';document.querySelector('button[aria-label="Change language"]').click();await new Promise(r=>setTimeout(r,500));
@@ -199,3 +202,19 @@ const p9b = {
   ],
 };
 fs.writeFileSync(new URL('./rb-p9b.json', import.meta.url), JSON.stringify(p9b, null, 1));
+
+const p9en = { ...base, tag: 'p9en', steps: [
+  { op: 'goto', url: '/en/dashboard?category=kanban', wait: 3000 }, { op: 'waitText', text: 'TO DO', ms: 20000 },
+  ev(`return 'lang: '+document.documentElement.lang+' url: '+location.pathname+location.search;`),
+  realClick('A fazer 3'), dlgOpen, { op: 'shot', name: 'p9-en-limpo-detalhe' }, chk('EN, abertura limpa'),
+  ...outside,
+] };
+fs.writeFileSync(new URL('./rb-p9en.json', import.meta.url), JSON.stringify(p9en, null, 1));
+
+const p9en2 = { ...base, tag: 'p9en', steps: [
+  ...goKanban, toggleLang, { op: 'reload', wait: 3000 }, { op: 'waitText', text: 'TO DO', ms: 20000 },
+  ev(`return 'após F5 — lang: '+document.documentElement.lang+' url: '+location.pathname+location.search;`),
+  realClick('A fazer 3'), dlgOpen, { op: 'shot', name: 'p9-en-limpo-detalhe' }, chk('EN, abertura limpa'), { op: 'shot', name: 'p9-en-limpo-edicao' },
+  ...outside,
+] };
+fs.writeFileSync(new URL('./rb-p9en.json', import.meta.url), JSON.stringify(p9en2, null, 1));
