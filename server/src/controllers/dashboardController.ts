@@ -220,7 +220,11 @@ async function handleCustomCreation(
     try {
       keptModules = applyModuleRemovals(installedModules, removedTables);
     } catch (err) {
-      if (tableLock) throwRemovalRefusals([tableLock]);
+      // Dono, 2026-11-06 ("Sim, entra"): DEPENDENT_MODULE_KEPT entra na mesma lista que a trava de tabela.
+      const dependent = err instanceof ValidationError && (err.details as Record<string, unknown> | null)?.reason === 'DEPENDENT_MODULE_KEPT'
+        ? { message: err.message, details: err.details as Record<string, unknown> }
+        : null;
+      if (tableLock) throwRemovalRefusals(dependent ? [tableLock, dependent] : [tableLock]);
       throw err;
     }
     const bridgeMissing = findMissingBridgeModule(keptModules, originalPreset.bridges ?? []);

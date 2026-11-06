@@ -326,9 +326,15 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     for (const [tabelaRemovida, lock] of casos) {
       const u = await novoUsuario();
       const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: [tabelaRemovida], unit: { name: 'M' } });
-      expect({ tabelaRemovida, status: r.status, details: r.body.details }).toEqual({
+      // Lacuna 4 (dono, 2026-11-06, "Sim, entra"): nos dois casos o módulo da tabela tem dependente mantido →
+      // `reasons` traz o DEPENDENT_MODULE_KEPT junto; o 1º motivo (topo de `details`) segue a trava.
+      const { reasons, ...topo } = r.body.details;
+      expect({ tabelaRemovida, status: r.status, details: topo }).toEqual({
         tabelaRemovida, status: 400, details: { reason: 'TABLE_LOCKED', table: tabelaRemovida, lock },
       });
+      expect((reasons ?? []).map((x: { reason: string }) => x.reason)).toEqual(
+        ['TABLE_LOCKED', 'DEPENDENT_MODULE_KEPT'],
+      );
       expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
     }
   });
@@ -362,9 +368,14 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: ['customers', 'suppliers'], unit: { name: 'M' } });
     expect(r.status).toBe(400);
     expect(r.body.details).toMatchObject({ reason: 'TABLE_LOCKED', table: 'customers', lock: { reason: 'ACCOUNTING' } });
-    // LACUNA 4 do retorno: com VENDAS mantida, PES-0 nem sai (`applyModuleRemovals` → DEPENDENT_MODULE_KEPT, VEN-0
-    // depende dele), então a ponte não chega a faltar e o 400 sai só com a trava. Juntar o 3º motivo não foi decidido.
-    expect(r.body.details.reasons).toBeUndefined();
+    // Lacuna 4, dono 2026-11-06 ("Sim, entra"): com VENDAS mantida, PES-0 não sai (`applyModuleRemovals` →
+    // DEPENDENT_MODULE_KEPT, VEN-0 depende dele) e entra na lista. A ponte não falta (PES-0 fica), então
+    // BRIDGE_REQUIRES_MODULE NÃO aparece — é o que a regra produz.
+    expect(r.body.details.reasons).toEqual([
+      expect.objectContaining({ reason: 'TABLE_LOCKED', table: 'customers', lock: expect.objectContaining({ reason: 'ACCOUNTING' }) }),
+      expect.objectContaining({ reason: 'DEPENDENT_MODULE_KEPT', moduleKey: 'PES-0', dependents: expect.arrayContaining(['VEN-0']), message: expect.any(String) }),
+    ]);
+    expect(r.body.error ?? r.body.message).toContain("O módulo 'PES-0' não pode ser removido");
     expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
   });
 
