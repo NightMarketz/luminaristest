@@ -197,9 +197,9 @@ export interface Reg0020Input {
 
 /**
  * Código padrão de `0020.IND_ALIQ_CSLL` quando o perfil fiscal não informa: `'1'` = alíquota de 9% da CSLL (Lucro Presumido).
- * Fonte: Manual de Orientação do Leiaute 12 da ECF (Anexo ao ADE Cofis 02/2026), registro 0020, campo IND_ALIQ_CSLL —
- * lida aqui pela transcrição de `docs/accounting/BE-INCR-CSLL-ALIQUOTA-LC224-brief.md` (§ fontes, S3); o PDF do manual
- * não foi reaberto nesta extração (valor idêntico ao que já estava no código).
+ * Fonte: Manual de Orientação do Leiaute 12 da ECF (Anexo ao ADE Cofis 02/2026, atualização jul/2026, 622 p.), registro
+ * 0020, campo IND_ALIQ_CSLL ("1 – Alíquota de 9%") e REGRA_PREENCHIMENTO_IND_ALIQ_CSSL (ano ≥ 2019 ⇒ "1" (9%) ou "4" (15%)).
+ * Conferido no PDF em 06/11/2026: gov.br/sped/…/manual_ecf_leiaute_12_20_05_2026_ac_2025_sit_esp_2026.pdf, sha256 f583475c….
  */
 export const IND_ALIQ_CSLL_PADRAO = '1';
 
