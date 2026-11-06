@@ -4,9 +4,9 @@ tipo: "plataforma"
 dominio: "pessoal"
 titulo: "Departamento Pessoal (folha + eSocial) — núcleo first-class sempre ligado + submódulos opcionais com ativação por competência; fase 2 do F-PES-0"
 estado: "planned"
-estado_detalhe: "05/11: BRIEF do F2 (motor mensal) escrito em docs/accounting/BE-INCR-DP-F2-brief.md (76 itens, PR-0R + PR-0..PR-6; revisto em 06/11 pela regra de parâmetro do dono: número de lei e escala viram dado com vigência, código só com a forma da regra), forks F-DPF-1..13 com RATIFICAÇÃO PENDENTE; achado: EC 141/2026 (42 h em 16/12/2026, 40 h em 16/12/2027, 2 dias de DSR) muda o divisor do salário-hora e o DSR (F-DPF-1/2). Próximo: o dono ratifica os forks; depois, autorização nova para o executa. Antes — 04/11: F0+F1 entregues na main (681ec26a), squash do #1041. F3..F6, o BRIEF do SST (núcleo, F-DP-13) e a ponte contábil (F-FOL-1..9) seguem pendentes"
-depende_de: ["[[D-2026-11-02-DP-PRE-ADR]]", "[[D-2026-11-02-DP-BRIEF-F0-F1]]", "[[D-2026-10-12-QUESTIONARIO-DONO]]", "[[LEGAL-PARAMS]]", "[[IRRF-DISTRIBUICAO]]", "[[I6]]"]
-autorizacao: "dono, chat, 2026-11-06: \"pode planejar de acordo com suas sugestões\" (regra de parâmetro: número de lei e escala como dado; BRIEF do F2 §0.1 e PR-0R) — só o BRIEF. Antes — dono, chat, 2026-11-05: \"Sim, planeja o F2\" (resposta a \"Abro a sessão de planejamento do BRIEF do F2 (só o BRIEF, sem código)?\") — só o BRIEF do F2; não é executa. Antes — dono, chat, 2026-11-03: \"Executa PR-0 a PR-6\" (resposta a \"Abro a sessão 3 com o executa do BRIEF BE-INCR-DP-F0-F1?\") — executa do BRIEF de F0+F1 inteiro ([[D-2026-10-28-FLUXO-AUTONOMO]]); não cobre F2 em diante, o BRIEF do SST nem a ponte contábil (F-FOL-1..9). Antes — dono, chat, 2026-11-02: \"Podemos seguir o pre-adr numa sessão, esperar, criar o nó no vault + brief em outra e o executa na terceira\" + \"Sim, abre agora\" (resposta a \"Abro já a sessão 2 (nó PES-4 + BRIEF de F0 e F1) em cima do branch do #1009?\") — nó e BRIEF de F0+F1; forks do BRIEF por questionário ([[D-2026-11-02-DP-BRIEF-F0-F1]]). Não autoriza código: o 'executa' é da sessão 3"
+estado_detalhe: "05/11: BRIEF do F2 (motor mensal) escrito em docs/accounting/BE-INCR-DP-F2-brief.md (78 itens, PR-0R + PR-0..PR-6; revisto em 06/11 pela regra de parâmetro do dono: número de lei e escala viram dado com vigência, código só com a forma da regra), forks F-DPF-1..13 DECIDIDOS pelo dono em 06/11 (três contra a recomendação: F-DPF-1 divisor pela escala, F-DPF-7 salário-família calcula e avisa, F-DPF-8 outro emprego já no F2; [[D-2026-11-06-DP-BRIEF-F2]]); achado: EC 141/2026 (42 h em 16/12/2026, 40 h em 16/12/2027, 2 dias de DSR) muda o divisor do salário-hora e o DSR (F-DPF-1/2). Próximo: autorização nova do dono para o executa do F2. Antes — 04/11: F0+F1 entregues na main (681ec26a), squash do #1041. F3..F6, o BRIEF do SST (núcleo, F-DP-13) e a ponte contábil (F-FOL-1..9) seguem pendentes"
+depende_de: ["[[D-2026-11-02-DP-PRE-ADR]]", "[[D-2026-11-06-DP-BRIEF-F2]]", "[[D-2026-11-02-DP-BRIEF-F0-F1]]", "[[D-2026-10-12-QUESTIONARIO-DONO]]", "[[LEGAL-PARAMS]]", "[[IRRF-DISTRIBUICAO]]", "[[I6]]"]
+autorizacao: "dono, chat, 2026-11-06: \"pode planejar de acordo com suas sugestões\" (regra de parâmetro: número de lei e escala como dado; BRIEF do F2 §0.1 e PR-0R) + questionário dos forks F-DPF-1..13 ([[D-2026-11-06-DP-BRIEF-F2]]) — só o BRIEF; não é executa. Antes — dono, chat, 2026-11-05: \"Sim, planeja o F2\" (resposta a \"Abro a sessão de planejamento do BRIEF do F2 (só o BRIEF, sem código)?\") — só o BRIEF do F2; não é executa. Antes — dono, chat, 2026-11-03: \"Executa PR-0 a PR-6\" (resposta a \"Abro a sessão 3 com o executa do BRIEF BE-INCR-DP-F0-F1?\") — executa do BRIEF de F0+F1 inteiro ([[D-2026-10-28-FLUXO-AUTONOMO]]); não cobre F2 em diante, o BRIEF do SST nem a ponte contábil (F-FOL-1..9). Antes — dono, chat, 2026-11-02: \"Podemos seguir o pre-adr numa sessão, esperar, criar o nó no vault + brief em outra e o executa na terceira\" + \"Sim, abre agora\" (resposta a \"Abro já a sessão 2 (nó PES-4 + BRIEF de F0 e F1) em cima do branch do #1009?\") — nó e BRIEF de F0+F1; forks do BRIEF por questionário ([[D-2026-11-02-DP-BRIEF-F0-F1]]). Não autoriza código: o 'executa' é da sessão 3"
 perfil_previsto: "opus-medio"
 perfil_evidencia: "BRIEF §9: PR-0/PR-3/PR-5/PR-6 opus-baixo; PR-1/PR-2/PR-4 opus-medio"
 atualizado: "2026-11-06"
@@ -16,7 +16,7 @@ prs: ["#1010", "#1014", "#1015", "#1016", "#1026", "#1032", "#1036", "#1041"]
 ---
 # PES-4 — Departamento Pessoal: núcleo + submódulos
 
-**Estado:** `planned` — 05/11: BRIEF do F2 (motor mensal) escrito em docs/accounting/BE-INCR-DP-F2-brief.md (76 itens, PR-0R + PR-0..PR-6; revisto em 06/11 pela regra de parâmetro do dono: número de lei e escala viram dado com vigência, código só com a forma da regra), forks F-DPF-1..13 com RATIFICAÇÃO PENDENTE; achado: EC 141/2026 (42 h em 16/12/2026, 40 h em 16/12/2027, 2 dias de DSR) muda o divisor do salário-hora e o DSR (F-DPF-1/2). Próximo: o dono ratifica os forks; depois, autorização nova para o executa. Antes — 04/11: F0+F1 entregues na main (681ec26a), squash do #1041. F3..F6, o BRIEF do SST (núcleo, F-DP-13) e a ponte contábil (F-FOL-1..9) seguem pendentes  
+**Estado:** `planned` — 05/11: BRIEF do F2 (motor mensal) escrito em docs/accounting/BE-INCR-DP-F2-brief.md (78 itens, PR-0R + PR-0..PR-6; revisto em 06/11 pela regra de parâmetro do dono: número de lei e escala viram dado com vigência, código só com a forma da regra), forks F-DPF-1..13 DECIDIDOS pelo dono em 06/11 (três contra a recomendação: F-DPF-1 divisor pela escala, F-DPF-7 salário-família calcula e avisa, F-DPF-8 outro emprego já no F2; [[D-2026-11-06-DP-BRIEF-F2]]); achado: EC 141/2026 (42 h em 16/12/2026, 40 h em 16/12/2027, 2 dias de DSR) muda o divisor do salário-hora e o DSR (F-DPF-1/2). Próximo: autorização nova do dono para o executa do F2. Antes — 04/11: F0+F1 entregues na main (681ec26a), squash do #1041. F3..F6, o BRIEF do SST (núcleo, F-DP-13) e a ponte contábil (F-FOL-1..9) seguem pendentes  
 **Autorização:** dono, chat, 03/11 — *"Executa PR-0 a PR-6"*: o `executa` do BRIEF de F0+F1 inteiro (sessão 3 de 3;
 [[D-2026-10-28-FLUXO-AUTONOMO]]). Não cobre F2 em diante, o BRIEF do SST nem a ponte contábil. Antes: dono, chat, 02/11 —
 nó + BRIEF de F0 e F1 (sessão 2 de 3).  
@@ -48,7 +48,7 @@ BYOK, sem contratar PSC (D5 de 30/10); vigência só por data de efeito, com o s
 | F0 — fundação | [`BE-INCR-DP-F0-F1-brief.md`](../../accounting/BE-INCR-DP-F0-F1-brief.md) PR-0, PR-1 | código em PR (03/11): PR-0 #1014, PR-1 #1015 |
 | F1 — cadastros e tabelas legais | idem, PR-2..PR-6 | em execução (03/11): PR-2 #1016, PR-3 #1026; PR-4..PR-6 a fazer |
 | SST (núcleo, F-DP-13) | `BE-INCR-DP-SST` | sem BRIEF (encaixe no §7 do BRIEF de F0+F1) |
-| F2 — motor mensal | [`BE-INCR-DP-F2-brief.md`](../../accounting/BE-INCR-DP-F2-brief.md) PR-0R, PR-0..PR-6 | BRIEF escrito (05/11, revisto 06/11); forks F-DPF-1..13 pendentes; sem `executa` |
+| F2 — motor mensal | [`BE-INCR-DP-F2-brief.md`](../../accounting/BE-INCR-DP-F2-brief.md) PR-0R, PR-0..PR-6 | BRIEF escrito (05/11, revisto 06/11); forks F-DPF-1..13 decididos (06/11); sem `executa` |
 | F3 — folhas especiais | — | sem BRIEF |
 | F4 — eSocial (pipeline agnóstico, `Null`/`Manual` primeiro, F-DP-3) | — | sem BRIEF |
 | F5 — fechamento, guias, ponte contábil (F-FOL-1..9 pendentes) | — | sem BRIEF |
@@ -56,8 +56,8 @@ BYOK, sem contratar PSC (D5 de 30/10); vigência só por data de efeito, com o s
 
 ## Docs
 
-- [`BE-INCR-DP-F2-brief.md`](../../accounting/BE-INCR-DP-F2-brief.md) — 05/11, revisto 06/11: 76 itens em PR-0R + PR-0..PR-6 (§0.1: regras legais e escala como dado); forks
-  F-DPF-1..13 com RATIFICAÇÃO PENDENTE; dossiê `pesquisas-legais/brief-pes4-f2/` (inclui a EC 141/2026)
+- [`BE-INCR-DP-F2-brief.md`](../../accounting/BE-INCR-DP-F2-brief.md) — 05/11, revisto 06/11: 78 itens em PR-0R + PR-0..PR-6 (§0.1: regras legais e escala como dado); forks
+  F-DPF-1..13 decididos em 06/11 ([[D-2026-11-06-DP-BRIEF-F2]]); dossiê `pesquisas-legais/brief-pes4-f2/` (inclui a EC 141/2026)
 - [`BE-INCR-DP-F0-F1-brief.md`](../../accounting/BE-INCR-DP-F0-F1-brief.md) — 02/11: 62 itens em PR-0..PR-6; forks
   F-DPB-1..3 ratificados, D-1..D-9 pela casa; §7 lista os encaixes das fases seguintes
 - [`PRE-ADR-DP-DEPARTAMENTO-PESSOAL.md`](../../adr/PRE-ADR-DP-DEPARTAMENTO-PESSOAL.md) — Accepted 02/11, F-DP-1..14
@@ -116,7 +116,7 @@ piso passam (spec não trata).
 
 **Entregue (04/11):** o lote entrou na main como 681ec26a, squash do #1041 com os 8 PRs (gates verdes e revisor PASSOU em todos). Os outros 7 aparecem como *Closed* no GitHub, e não *Merged*, porque foram absorvidos pelo #1041; o head de cada um foi conferido como contido no que entrou. Os branches ficaram no remoto.
 
-**Pendente:** a ratificação dos forks F-DPF-1..13 do BRIEF do F2 (escrito em 05/11) e o `executa` dele, que pede autorização nova do dono. O `executa` de 03/11 cobria só F0+F1.
+**Pendente:** o `executa` do BRIEF do F2 (forks F-DPF-1..13 decididos em 06/11), que pede autorização nova do dono. O `executa` de 03/11 cobria só F0+F1.
 
 **Lacunas de spec do PR-6 (registradas no corpo do #1041, sem bloquear):** `dataRef` obrigatória no `GET /ferias`
 (o BRIEF não diz de onde vem); "até `dataRef`" lido como "aquisitivo que começa até `dataRef`" (inclui o período em
