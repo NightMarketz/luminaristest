@@ -15,7 +15,7 @@ export default function ModuleChecklist({ options, selected, disabled, onToggle 
   const locale: 'pt' | 'en' = i18n?.language?.startsWith('en') ? 'en' : 'pt';
 
   return (
-    <fieldset className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900">
+    <fieldset className="mt-4 max-h-40 min-h-0 shrink overflow-y-auto rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-900">
       <legend className="px-1 text-sm font-semibold text-neutral-800 dark:text-neutral-200">{t('interviewModulesTitle')}</legend>
       <p className="mb-3 text-xs text-neutral-600 dark:text-neutral-400">{t('interviewModulesHint')}</p>
       <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">

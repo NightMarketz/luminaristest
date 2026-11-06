@@ -10,7 +10,7 @@ interface ChatAreaProps {
 
 function ChatArea({ messages, isLoading, chatEndRef }: ChatAreaProps) {
   return (
-    <div className="flex-grow overflow-y-auto p-4 space-y-4">
+    <div className="flex-grow min-h-32 overflow-y-auto p-4 space-y-4">
       {messages.map((msg, index) => (
         <div key={index} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
           <div className={`max-w-lg px-4 py-2 rounded-2xl ${msg.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-900 dark:text-white'}`}>
