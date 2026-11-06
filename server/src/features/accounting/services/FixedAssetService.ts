@@ -37,6 +37,10 @@ export const FIXED_ASSET_CREATED = 'fixed_asset.created';
 export const FIXED_ASSET_ACTIVATED = 'fixed_asset.activated';
 export const FIXED_ASSET_DISPOSED = 'fixed_asset.disposed';
 
+/** F-MSG-2 (a1): o bem e a classe pelo rótulo que o usuário vê; o id só se o rótulo estiver vazio. */
+const rotuloAtivo = (a: Pick<FixedAsset, 'id' | 'code' | 'description'>) => [a.code, a.description].filter(Boolean).join(' — ') || a.id;
+const rotuloClasse = (c: Pick<FixedAssetClass, 'id' | 'code' | 'name'>) => [c.code, c.name].filter(Boolean).join(' — ') || c.id;
+
 /**
  * FixedAssetService — bem do imobilizado (BE-INCR-FIXED-ASSETS, nó C8, Blocos B + D). FIRST-CLASS
  * PRISMA. ACC-016: comandos, nunca `PATCH status` — `activate`/`dispose` são os únicos caminhos que
@@ -133,11 +137,15 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     if (!this.policy.canManageFixedAssets(scope)) throw new ForbiddenError('Você não tem permissão para editar ativos.');
     const current = await this.requireAsset(scope, id);
     if (current.status !== 'PENDING_ACTIVATION') {
-      throw new ValidationError(`Ativo '${id}' está em status ${current.status}; só PENDING_ACTIVATION pode ser editado.`);
+      throw new ValidationError(`Ativo '${rotuloAtivo(current)}' está em status ${current.status}; só PENDING_ACTIVATION pode ser editado.`);
     }
     const nextClassId = dto.classId ?? current.classId;
     const nextClass = await this.classRepo.findById(scope, nextClassId);
-    if (!nextClass) throw new NotFoundError(`Classe de bem '${nextClassId}' não foi encontrada.`);
+    if (!nextClass) {
+      throw new NotFoundError(
+        dto.classId ? `Classe de bem '${dto.classId}' não foi encontrada.` : `Classe de bem do ativo '${rotuloAtivo(current)}' não foi encontrada.`,
+      );
+    }
     // E8b em PENDING_ACTIVATION: a declaração pode faltar (rascunho de NF-e nasce sem ela — o activate cobra); o que
     // já é proibido (indenizável, ou campo de locação em classe que não é benfeitoria) é 400 já aqui.
     const nextLeaseEndDate =
@@ -180,10 +188,10 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     if (!this.policy.canManageFixedAssets(scope)) throw new ForbiddenError('Você não tem permissão para remover ativos.');
     const current = await this.requireAsset(scope, id);
     if (current.status === 'DISPOSED' || current.status === 'FULLY_DEPRECIATED') {
-      throw new ValidationError(`Ativo '${id}' está em status ${current.status}; não pode ser removido.`);
+      throw new ValidationError(`Ativo '${rotuloAtivo(current)}' está em status ${current.status}; não pode ser removido.`);
     }
     if (current.accumulatedDepreciationCents > 0n) {
-      throw new ValidationError(`Ativo '${id}' já tem quota de depreciação postada — não pode ser removido.`);
+      throw new ValidationError(`Ativo '${rotuloAtivo(current)}' já tem quota de depreciação postada — não pode ser removido.`);
     }
     return this.assetRepo.softDelete(scope, id);
   }
@@ -192,15 +200,18 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
   async activateAsset(scope: AccountingScope, id: string, dto: ActivateFixedAssetInput): Promise<FixedAsset> {
     if (!this.policy.canManageFixedAssets(scope)) throw new ForbiddenError('Você não tem permissão para ativar ativos.');
     const current = await this.requireAsset(scope, id);
+    if (current.version !== dto.version) {
+      throw new ConflictError(`Ativo '${rotuloAtivo(current)}' foi alterado por outra operação (version divergente) — releia e tente de novo.`);
+    }
     if (current.status !== 'PENDING_ACTIVATION') {
-      throw new ValidationError(`Ativo '${id}' está em status ${current.status}; só PENDING_ACTIVATION pode ser ativado.`);
+      throw new ValidationError(`Ativo '${rotuloAtivo(current)}' está em status ${current.status}; só PENDING_ACTIVATION pode ser ativado.`);
     }
 
     const activatedAtDate = new Date(`${dto.activatedAt}T00:00:00.000Z`);
     // C8 emenda 3.2: o activate é o portão autoritativo do E8b/E10 — cobre também o rascunho nascido de NF-e, que não
     // passou pelo createAsset. Depois daqui `leaseEndDate` é imutável (E13: updateAsset só aceita PENDING_ACTIVATION).
     const klass = await this.classRepo.findById(scope, current.classId);
-    if (!klass) throw new NotFoundError(`Classe de bem '${current.classId}' não foi encontrada.`);
+    if (!klass) throw new NotFoundError(`Classe de bem do ativo '${rotuloAtivo(current)}' não foi encontrada.`);
     assertLeaseFields(klass, current.leaseEndDate, current.leaseIndemnifiable, current.bookAnnualRateBp, 'complete');
     if (klass.kind === 'AMORTIZATION_LEASEHOLD' && current.leaseEndDate! <= activatedAtDate) {
       throw new ValidationError(
@@ -220,7 +231,7 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
 
     return this.assetRepo.runTransaction(async (tx) => {
       const updated = await this.assetRepo.activate(scope, id, { activatedAt: activatedAtDate, openingAccumulatedCents }, dto.version, tx);
-      if (!updated) throw new ConflictError(`Ativo '${id}' foi alterado por outra operação (version divergente) — releia e tente de novo.`);
+      if (!updated) throw new ConflictError(`Ativo '${rotuloAtivo(current)}' foi alterado por outra operação (version divergente) — releia e tente de novo.`);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
         eventType: FIXED_ASSET_ACTIVATED,
@@ -235,23 +246,22 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
   async disposeAsset(scope: AccountingScope, id: string, dto: DisposeFixedAssetInput): Promise<FixedAsset> {
     if (!this.policy.canManageFixedAssets(scope)) throw new ForbiddenError('Você não tem permissão para baixar ativos.');
     let asset = await this.requireAsset(scope, id);
-    if (asset.status !== 'ACTIVE') {
-      throw new ValidationError(`Ativo '${id}' está em status ${asset.status}; só ACTIVE pode ser baixado.`);
-    }
-    const klass = await this.classRepo.findById(scope, asset.classId);
-    if (!klass) throw new NotFoundError(`Classe de bem '${asset.classId}' não foi encontrada.`);
-
-    const disposedAtDate = new Date(`${dto.disposedAt}T00:00:00.000Z`);
-    if (!asset.activatedAt || disposedAtDate < asset.activatedAt) {
-      throw new ValidationError(`disposedAt (${dto.disposedAt}) não pode ser anterior a activatedAt.`);
-    }
-
     // CAS de leitura: o `version` que o CLIENTE leu antes de chamar dispose precisa bater AGORA,
     // antes de qualquer efeito colateral (a postagem sequencial abaixo vai avançar o version deste
     // mesmo ativo por conta própria — checar depois dela compararia com um valor que a própria
     // chamada já mudou, nunca o de um ator externo).
     if (asset.version !== dto.version) {
-      throw new ConflictError(`Ativo '${id}' foi alterado por outra operação (version divergente) — releia e tente de novo.`);
+      throw new ConflictError(`Ativo '${rotuloAtivo(asset)}' foi alterado por outra operação (version divergente) — releia e tente de novo.`);
+    }
+    if (asset.status !== 'ACTIVE') {
+      throw new ValidationError(`Ativo '${rotuloAtivo(asset)}' está em status ${asset.status}; só ACTIVE pode ser baixado.`);
+    }
+    const klass = await this.classRepo.findById(scope, asset.classId);
+    if (!klass) throw new NotFoundError(`Classe de bem do ativo '${rotuloAtivo(asset)}' não foi encontrada.`);
+
+    const disposedAtDate = new Date(`${dto.disposedAt}T00:00:00.000Z`);
+    if (!asset.activatedAt || disposedAtDate < asset.activatedAt) {
+      throw new ValidationError(`disposedAt (${dto.disposedAt}) não pode ser anterior a activatedAt.`);
     }
 
     // Baixa sequencial (execution-plan Passo 14): posta a quota do mês de disposedAt antes do
@@ -268,13 +278,13 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     const proceedsCents = BigInt(dto.proceedsCents);
     const gainOrLoss = proceedsCents - netBookValueCents; // > 0 ganho, < 0 perda, 0 nenhuma
 
-    const costAccount = await this.requireEntryAccount(scope, klass.costAccountId, 'conta do bem (costAccountId)');
+    const costAccount = await this.requireEntryAccount(scope, klass.costAccountId, 'conta do bem (costAccountId)', `da classe '${rotuloClasse(klass)}'`);
     const lines: { accountCode: string; debitCents: number; creditCents: number }[] = [];
     if (asset.accumulatedDepreciationCents > 0n) {
       if (!klass.accumulatedDepreciationAccountId) {
         throw new ValidationError(`Classe '${klass.code}' não tem accumulatedDepreciationAccountId configurada.`);
       }
-      const accumulatedAccount = await this.requireEntryAccount(scope, klass.accumulatedDepreciationAccountId, 'conta de depreciação acumulada');
+      const accumulatedAccount = await this.requireEntryAccount(scope, klass.accumulatedDepreciationAccountId, 'conta de depreciação acumulada', `da classe '${rotuloClasse(klass)}'`);
       lines.push({ accountCode: accumulatedAccount.code, debitCents: Number(asset.accumulatedDepreciationCents), creditCents: 0 });
     }
     lines.push({ accountCode: costAccount.code, debitCents: 0, creditCents: Number(asset.costCents) });
@@ -288,11 +298,11 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     const settings = await this.settingsService.get(scope);
     if (gainOrLoss > 0n) {
       if (!settings.disposalGainAccountId) throw new ValidationError('disposalGainAccountId não configurado em AccountingScopeSettings.');
-      const gainAccount = await this.requireEntryAccount(scope, settings.disposalGainAccountId, 'ganho na baixa');
+      const gainAccount = await this.requireEntryAccount(scope, settings.disposalGainAccountId, 'ganho na baixa', `das configurações contábeis (baixa do ativo '${rotuloAtivo(asset)}')`);
       lines.push({ accountCode: gainAccount.code, debitCents: 0, creditCents: Number(gainOrLoss) });
     } else if (gainOrLoss < 0n) {
       if (!settings.disposalLossAccountId) throw new ValidationError('disposalLossAccountId não configurado em AccountingScopeSettings.');
-      const lossAccount = await this.requireEntryAccount(scope, settings.disposalLossAccountId, 'perda na baixa');
+      const lossAccount = await this.requireEntryAccount(scope, settings.disposalLossAccountId, 'perda na baixa', `das configurações contábeis (baixa do ativo '${rotuloAtivo(asset)}')`);
       lines.push({ accountCode: lossAccount.code, debitCents: Number(-gainOrLoss), creditCents: 0 });
     }
 
@@ -317,7 +327,7 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     // valor mais recente lido antes do CAS final.
     return this.assetRepo.runTransaction(async (tx) => {
       const updated = await this.assetRepo.dispose(scope, id, { disposedAt: disposedAtDate, disposalEntryId: entry.id }, asset.version, tx);
-      if (!updated) throw new ConflictError(`Ativo '${id}' foi alterado por outra operação (version divergente) — releia e tente de novo.`);
+      if (!updated) throw new ConflictError(`Ativo '${rotuloAtivo(asset)}' foi alterado por outra operação (version divergente) — releia e tente de novo.`);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
         eventType: FIXED_ASSET_DISPOSED,
@@ -418,9 +428,12 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     return `NFE-${doc}-${sourceItemRef}`.slice(0, 190); // folga sob qualquer teto de coluna razoável
   }
 
-  private async requireEntryAccount(scope: AccountingScope, id: string, label: string) {
+  /** `dono`: quem guarda o id (classe, settings) quando o id é interno; sem ele, o id veio do corpo e o eco fica (F-MSG-1 a). */
+  private async requireEntryAccount(scope: AccountingScope, id: string, label: string, dono?: string) {
     const account = await this.accountRepo.findById(scope, id);
-    if (!account || account.deletedAt) throw new ValidationError(`${label} '${id}' não existe neste escopo.`);
+    if (!account || account.deletedAt) {
+      throw new ValidationError(dono ? `${label} ${dono} não existe neste escopo.` : `${label} '${id}' não existe neste escopo.`);
+    }
     if (!account.acceptsEntries) throw new ValidationError(`${label} '${account.code}' não aceita lançamentos (não é folha).`);
     return account;
   }

@@ -29,10 +29,12 @@ const mp = {
   bodies: [] as Record<string, unknown>[],
   nextCreate: null as null | 'network_after_store' | 'network' | 400 | 401,
   nextCancel: null as null | 409,
+  /** Gancho do teste: roda no meio do cancelamento no provedor (simula a corrida de exclusão dentro da requisição). */
+  afterCancel: null as null | (() => Promise<void>),
   seq: 0,
   reset() {
     this.keys = []; // ordens persistem entre os testes (o MP não esquece)
-    this.bodies = []; this.nextCreate = null; this.nextCancel = null;
+    this.bodies = []; this.nextCreate = null; this.nextCancel = null; this.afterCancel = null;
   },
 };
 function orderJson(o: FakeOrder) {
@@ -72,6 +74,7 @@ async function fakeFetch(input: string | URL | Request, init?: RequestInit): Pro
     const o = mp.orders.get(cancel[1])!;
     if (mp.nextCancel === 409) { mp.nextCancel = null; return json(409, { errors: [{ code: 'cannot_cancel_order' }] }); }
     o.status = 'canceled'; o.status_detail = 'canceled';
+    await mp.afterCancel?.();
     return json(200, orderJson(o));
   }
   const get = url.match(/\/v1\/orders\/([^/]+)$/);
@@ -463,6 +466,75 @@ describe('F5 PR-2 — CollectionCharge + adaptador MP + webhook', () => {
     const t = await novoTitulo({ cp: cpSemCobrancaId });
     const r2 = await request(app).get(`/api/receivables/${t.id}/charges/payer-suggestion?unitId=${UNIT}`).set(authHeader(dono));
     expect(r2.body.data).toEqual({ identification: { number: '11222333000181' } });
+  });
+
+  // FIX-MENSAGENS-ID-INTERNO lote 2 (FIX-TESTES item 5; inventário em docs/operating-manual/MENSAGENS-ID-INTERNO-2026-11-05.md).
+  // A mensagem que sai do handleApiError é a que o operador lê: a cobrança é nomeada por TIPO + VALOR (rótulo ratificado pelo
+  // dono em 05/11; a tela a mostra por tipo/valor/vencimento/status), nunca pelo cuid nem pelo cuid da conta de pagamento.
+  describe('FIX-MENSAGENS-ID-INTERNO lote 2 — a mensagem nomeia a cobrança por tipo + valor, nunca pelo cuid', () => {
+    /** Status certo, a mensagem contém o rótulo e não contém nenhum dos cuids. A `msg` vai no objeto para o diff mostrá-la. */
+    const nomeiaSemId = (res: request.Response, status: number, rotulo: string, ...ids: string[]) => {
+      const msg = String(res.body.message);
+      expect({ status: res.status, nomeiaRotulo: msg.includes(rotulo), cuidNaMensagem: ids.filter((id) => msg.includes(id)), msg }).toEqual({
+        status,
+        nomeiaRotulo: true,
+        cuidNaMensagem: [],
+        msg,
+      });
+    };
+    const cancelar = (chargeId: string) => request(app).post(`/api/collection-charges/${chargeId}/cancel`).set(authHeader(dono)).send({ unitId: UNIT });
+
+    it('CollectionChargeService:150 — 2ª cobrança viva no título (409) nomeia a viva, não o cuid dela', async () => {
+      const t = await novoTitulo({ amount: 10000n });
+      const primeira = await cobrar(t.id, { kind: 'PIX', payer: payerPix });
+      expect(primeira.status).toBe(201);
+      const res = await cobrar(t.id, { kind: 'PIX', payer: payerPix });
+      nomeiaSemId(res, 409, 'Pix de R$ 100,00', primeira.body.data.id);
+    });
+
+    it('ReceivableService:655 — cancelar título com cobrança viva (409) nomeia a cobrança, não o cuid dela', async () => {
+      const t = await novoTitulo({ amount: 25050n });
+      const c = await cobrar(t.id, { kind: 'PIX', payer: payerPix });
+      expect(c.status).toBe(201);
+      const res = await request(app).post(`/api/receivables/${t.id}/cancel`).set(authHeader(dono)).send({ unitId: UNIT, reversalDate: '2026-10-09' });
+      nomeiaSemId(res, 409, 'Pix de R$ 250,50', c.body.data.id);
+    });
+
+    it('CollectionChargeService:520 — MP fora do ar na criação (502) nomeia a cobrança que será reenviada, não o cuid', async () => {
+      const t = await novoTitulo({ amount: 10000n });
+      mp.nextCreate = 'network';
+      const res = await cobrar(t.id, { kind: 'BOLETO', payer: { ...payerPix, address } });
+      const row = await prisma.collectionCharge.findFirstOrThrow({ where: { receivableId: t.id } });
+      expect(res.body.code).toBe('provider_unavailable');
+      nomeiaSemId(res, 502, 'Boleto de R$ 100,00', row.id);
+    });
+
+    it('CollectionChargeService:568 — cancelar cobrança cuja conta de pagamento sumiu (404) nomeia a cobrança, não o cuid da conta', async () => {
+      const t = await novoTitulo({ amount: 10000n });
+      const c = await prisma.collectionCharge.create({
+        data: {
+          userId: dono.id, unitId: UNIT, paymentAccountId: outraContaId, receivableId: t.id, kind: 'PIX', amountCents: 10000n,
+          expiresAt: new Date('2026-10-30T00:00:00Z'), status: 'PENDING', providerRef: 'ORD-MSG-568', payerSnapshotJson: '{}',
+        },
+      });
+      await prisma.paymentAccount.update({ where: { id: outraContaId }, data: { deletedAt: new Date() } });
+      try {
+        const res = await cancelar(c.id);
+        nomeiaSemId(res, 404, 'Pix de R$ 100,00', c.id, outraContaId);
+      } finally {
+        await prisma.paymentAccount.update({ where: { id: outraContaId }, data: { deletedAt: null } });
+      }
+    });
+
+    it('CollectionChargeService:562 — cobrança removida no meio do cancelamento (404) nomeia a cobrança, não o cuid', async () => {
+      const t = await novoTitulo({ amount: 10000n });
+      const c = (await cobrar(t.id, { kind: 'PIX', payer: payerPix })).body.data;
+      mp.afterCancel = async () => {
+        await prisma.collectionCharge.update({ where: { id: c.id }, data: { deletedAt: new Date() } });
+      };
+      const res = await cancelar(c.id);
+      nomeiaSemId(res, 404, 'Pix de R$ 100,00', c.id);
+    });
   });
 
   it('P2-4 (F8 a): 401 do MP ⇒ conta CREDENTIAL_INVALID com audit próprio e 502 provider_credential_invalid', async () => {

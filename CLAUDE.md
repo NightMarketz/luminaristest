@@ -110,6 +110,7 @@ morde só no código solto; em dúvida, **o contrato prevalece**.
 
 - `tsc` limpo é gate: `cd server && npx tsc --noEmit` e `cd my-app && npx tsc --noEmit` — não avance vermelho.
 - `neutral-*`, **nunca** `zinc-*`; cards `rounded-2xl`/`3xl`; zero `any` evitável.
+- **Que teste prova o quê e "mudei X, rodo Y" → `docs/operating-manual/TESTES.md`.**
 - **Teste local só com escopo** (dono, 2026-11-03: "isso pesa o pc demais"): `npx jest <caminho> --selectProjects unit`
   (o caminho **antes** do `--selectProjects`, senão roda tudo); integração um arquivo por vez com `--runInBand`;
   `npx vitest run <caminho>`. Suíte inteira é do CI — bloqueada localmente sem `FULL_SUITE=1` (`scripts/test-scope-guard.cjs`).

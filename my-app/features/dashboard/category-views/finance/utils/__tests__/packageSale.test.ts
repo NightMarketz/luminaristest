@@ -10,15 +10,16 @@ const pkg = (over: Partial<NewSaleItem> = {}): NewSaleItem => ({
     id: 't1', itemType: 'Package', packageId: 'pkgA', quantity: 1, unitPrice: 300, ...over,
 });
 
-describe('lineQuantity (F-FE-VP-3 b: quantidade N do pacote conta)', () => {
-    it('pacote e produto usam a quantidade; serviço é sempre 1', () => {
+describe('lineQuantity (F-FE-VP-3 b + D-2026-11-04: toda linha conta a quantidade)', () => {
+    it('pacote, produto e serviço usam a quantidade', () => {
         expect(lineQuantity({ itemType: 'Package', quantity: 3 })).toBe(3);
         expect(lineQuantity({ itemType: 'Product', quantity: 2 })).toBe(2);
-        expect(lineQuantity({ itemType: 'Service', quantity: 4 })).toBe(1);
+        expect(lineQuantity({ itemType: 'Service', quantity: 4 })).toBe(4);
     });
-    it('linha gravada sem tipo: serviceId → 1; packageId → quantidade', () => {
-        expect(lineQuantity({ serviceId: 's1', quantity: 5 })).toBe(1);
+    it('linha gravada sem tipo ou sem quantidade: serviceId usa a quantidade; ausente → 1', () => {
+        expect(lineQuantity({ serviceId: 's1', quantity: 5 })).toBe(5);
         expect(lineQuantity({ type: 'Package', quantity: 2 })).toBe(2);
+        expect(lineQuantity({ serviceId: 's1' })).toBe(1);
     });
 });
 

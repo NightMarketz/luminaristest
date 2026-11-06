@@ -96,3 +96,138 @@ Cada passo tem três campos. EVIDÊNCIA é obrigatória e é sempre um artefato 
 - Achados no caminho (fora do escopo deste runbook): [lista ou "nenhum"]
 - Atualização do artefato de rastreio: [linha do plano/mapa atualizada com o desfecho + data]
 - Assinatura do executor: ____________
+
+---
+
+## Execução 2026-11-04 — AI tester (C7, runbooks irmãos do H2)
+
+Executor: agente claude-opus-5-5, AI tester           Data: 2026-11-04
+Autorização (citada literalmente): dono, chat, 2026-11-02: *"gates humanos H1 e H2, as cédulas de decisão pendentes e o
+#907. Faz e me substitui nas decisões"*; e dono, chat, 2026-11-04: *"Pode disparar uma sessão pra corrigir os achados e
+outra para cada não feito"*.
+
+**Ambiente:** o mesmo do bloco de 04/11 do `RUNBOOK-H2-ATIVACAO-CONTABIL.md` (build de produção `3077cda9` = `main`
+`f5dc79b7` + docs, `127.0.0.1:4100`/`:3100`, dev.db real, backup
+`server/prisma/backups/c7-irmaos-2026-11-04-20261104-001134/` com sha256 conferido e `integrity_check ok`). Usuário
+`seed-presumido`, unidade `seed-unit-presumido`, cliente `Cliente H2`. DevTools trocado pelo log de rede do runner (`[net]`).
+
+**Pré-condições.** P1 `main` (`f5dc79b7`). P2/P3 servidor e app de pé. P4 o seletor mostra Produtos / Serviços / Pacotes
+(passo 1). P6 `aboveCatalogPrice` no schema de Sales (`instr(schema,'aboveCatalogPrice')>0` → `1`). P7 ok. **P5 — desvio de
+dado:** o catálogo só tinha `Pacote H2` (300,00, 365 dias, ativo). Criei pela tela (Financeiro → Outros → Packages) o
+inativo e dois ativos que o `RUNBOOK-H2-PACOTE-VALIDADE.md` também usa
+([print](runbook-evidence/VENDA-PACOTE-2026-11-04/pre-01-catalogo-pacotes.png)):
+```text
+[net] POST /api/dynamic-tables/cmuw4yqvi000rcii0tmjxkd13/data -> 201  req: {"data":{"name":"Pacote C7 Inativo","price":200,"active":false}}
+[net] POST /api/dynamic-tables/cmuw4yqvi000rcii0tmjxkd13/data -> 201  req: {"data":{"name":"Pacote C7 30 dias","price":150,"validityDays":30,"active":true}}
+[net] POST /api/dynamic-tables/cmuw4yqvi000rcii0tmjxkd13/data -> 201  req: {"data":{"name":"Pacote C7 Sem validade","price":120,"active":true}}
+```
+Como o `Pacote H2` tem validade (365 dias), o modal mostra o bloco "Validade do pacote" e pede o aceite (FE-INCR-PACOTE-VALIDADE,
+posterior a este runbook). Marquei o aceite em toda venda; o `POST /api/package-acceptances` aparece no Network.
+
+**Passo 1.** Nova Venda → Pacotes ([print](runbook-evidence/VENDA-PACOTE-2026-11-04/passo1-01-cabecalho-pacote.png)).
+```text
+[eval] {"frase":true,"avulso":false}
+CLIENTE
+Pacote precisa de cliente cadastrado: o saldo fica no nome dele.
+Selecione...
+```
+Grau: verificado. **Confere.**
+
+**Passo 2.** Unidade + cliente; Itens → "Adicionar pacote"; seletor aberto
+([print](runbook-evidence/VENDA-PACOTE-2026-11-04/passo2-01-seletor-aberto.png) ·
+[linha](runbook-evidence/VENDA-PACOTE-2026-11-04/passo2-02-linha-preco.png)).
+```text
+[eval] Pacote C7 Sem validade | Pacote C7 30 dias | Pacote H2        (o "Pacote C7 Inativo" não aparece)
+Pacote H2		R$ 300,00
+```
+Grau: verificado. **Confere.**
+
+**Passo 3.** Preço `250,00` → aviso na linha; "Finalizar Venda" com o aviso: nenhum `[net]` sai (recusa local); preço
+`300,00` + Desconto `50,00` → total `250,00` e os botões habilitados
+([aviso](runbook-evidence/VENDA-PACOTE-2026-11-04/passo3-01-aviso-preco-menor.png) ·
+[após o clique](runbook-evidence/VENDA-PACOTE-2026-11-04/passo3-02-finalizar-recusa.png) ·
+[total](runbook-evidence/VENDA-PACOTE-2026-11-04/passo3-03-total-com-desconto.png)).
+```text
+[eval] … Pacote H2 / Para cobrar menos que o catálogo, use o campo Desconto. / R$ 250,00 / … TOTAL / R$ 250,00 …
+(clique em Finalizar Venda: nenhuma linha [net]; o aviso fica na linha)
+[eval] 0:1 | 1:R$ 300,00 | 2:R$ 50,00
+[eval] … Subtotal / R$ 300,00 / Desconto / TOTAL / R$ 250,00 …
+[eval] Salvar Rascunho:disabled=false | Finalizar Venda:disabled=false
+```
+Grau: verificado. **Confere**, com uma nota: a recusa do "Finalizar Venda" não mostra a frase num toast ou faixa nova; a
+frase que fica visível é a da linha. O roteiro diz "recusa com a mesma frase"; li como conferindo (nada é enviado, a frase
+está na tela). Grau dessa leitura: inferido.
+
+**Passo 4.** 2ª linha com `Pacote C7 30 dias` e "Finalizar Venda"
+([print](runbook-evidence/VENDA-PACOTE-2026-11-04/passo4-01-um-pacote-por-venda.png)).
+```text
+[eval] {"msg":true,"novasReq":[]}     ← "Uma venda leva um único pacote. Para outro pacote, crie outra venda." e nenhuma requisição nova
+```
+Grau: verificado. **Confere.** (O modal foi descartado em seguida; o passo 5 abre um novo.)
+
+**Desvio de dado antes do passo 5 (erro do runner, não do app).** Na 1ª tentativa o campo Qtd não aceitou a limpeza por
+setter e o runner digitou `2` em cima de `1`: saíram dois rascunhos errados (qtd 12 e 11). Cancelei os dois pela lista:
+```text
+[net] PUT /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data/cmw1kxh65006hcio0uqoehxao -> 200  req: {"data":{"status":"Cancelled"}}
+[net] PUT /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data/cmw1kyak0006qcio0n9wa1fzw -> 200  req: {"data":{"status":"Cancelled"}}
+[eval] ["04/11/2026 Cliente H2 Cancelada Pendente R$ 300,00 R$ 300,00","04/11/2026 Cliente H2 Cancelada Acima do catálogo Pendente R$ 320,00 R$ 320,00",…]
+```
+Os totais desses rascunhos eram 3.300,00 e 3.840,00 antes do PUT; o PUT de status os reescreveu para 300,00 e 320,00. Foi
+essa reescrita que levou ao achado VP-1, reproduzido no passo 5.
+
+**Passo 5 — FALHOU.** Desconto 0, Qtd 2 (botão "+"), preço `320,00`; caminho da emenda F11 (o defeito segue em `main`:
+`my-app/features/dashboard/category-views/finance/services/FinanceService.ts:42` cria a venda antes dos itens):
+**Salvar Rascunho** e **Finalizar** pela lista
+([itens](runbook-evidence/VENDA-PACOTE-2026-11-04/passo5-01-itens-qtd2-320.png) ·
+[lista](runbook-evidence/VENDA-PACOTE-2026-11-04/passo5-02-lista-acima-catalogo.png) ·
+[detalhe](runbook-evidence/VENDA-PACOTE-2026-11-04/passo5-03-detalhe.png)).
+```text
+[eval] 0:2 | 1:R$ 320,00 | 2:R$ 0,00
+[eval] … R$ 640,00 / Subtotal / R$ 640,00 / TOTAL / R$ 640,00
+[net] POST /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data -> 201  req: {"data":{"date":"2026-11-04","customerId":"cmvtxuu6b000pci9c3yk4b6n2","simpleCustomer":false,"unitId":"cmuw4yqxg001jcii0iz2yb9rw","status":"Draft","paymentStatus":"Pending","subtotal":640,"totalAmount":640,"paymentMethod":"Pix","aboveCatalogPrice":true}}
+[net] POST /api/dynamic-tables/cmuw4yqvo0011cii0biovlxj9/data -> 201  req: {"data":{"saleId":"cmw1ldyi70077cio0ammofgtc","packageId":"cmvtxuu8f0015ci9c87vo9g6f","type":"Package","quantity":2,"unitPrice":320}}
+[net] POST /api/package-acceptances -> 201  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","saleId":"cmw1ldyi70077cio0ammofgtc","textVersion":"v1","textSha256":"22b9a5380026457e617c806538c6c717ed68bdcbf39342dcf97b36bfbbfb2437"}
+[eval] ["04/11/2026 Cliente H2 Rascunho Acima do catálogo Pendente R$ 640,00 R$ 640,00", …]
+[net] PUT /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data/cmw1ldyi70077cio0ammofgtc -> 200  req: {"data":{"status":"Finalized"}}
+[eval] ["04/11/2026 Cliente H2 Finalizada Acima do catálogo Pendente R$ 320,00 R$ 320,00", …]
+detalhe: Finalizada · Pendente · Acima do catálogo … Subtotal R$ 320,00 · Total R$ 320,00
+         Itens: Tipo Pacote | Produto/Serviço Pacote H2 | Qtd 2 | Preço R$ 320,00
+banco (leitura):
+journal_entries: cmw1le47n007mcio02e4vuatr | sale.package.sold | Posted | débito 64000 | crédito 64000
+customer_package_balances (Cliente H2, Pacote H2): balanceCents 100000
+```
+O que confere: subtotal 640,00 no modal, os dois corpos de `POST` exatamente como o roteiro pede, a etiqueta "Acima do
+catálogo" na lista e o item como **Pacote** com o nome no detalhe. O que diverge: ao finalizar, a venda passa a valer
+**R$ 320,00** na lista e no detalhe, contra os R$ 640,00 do item e do razão (o lançamento `sale.package.sold` é de 640,00 e
+o saldo do cliente subiu 640,00). O documento de venda e o razão ficam com valores diferentes. Grau: verificado (tela + banco).
+
+**Passos 6–9: não executados** (regra do FALHOU).
+
+### Desfecho (execução 2026-11-04)
+[x] FALHOU — passo 5 divergiu: a venda de pacote com Qtd 2 fica com subtotal/total R$ 320,00 depois do `PUT` de
+finalização, contra R$ 640,00 do item e do lançamento. Evidência acima. Nenhum passo seguinte foi executado.
+
+### Registro (execução 2026-11-04)
+- **VP-1 (alto: documento de venda × razão)** — `server/src/features/dynamicTables/rules/plugins/SalesPlugin.ts:323` (e o
+  mesmo cálculo em `:153`, na validação de desconto da finalização): `const qty = isProduct ? Number(it.data?.quantity || 1) : 1;`
+  conta quantidade só para `Product`; pacote (e serviço) vale sempre 1. O `afterUpdate` roda a cada `PUT` da venda (status ou
+  pagamento) e regrava `subtotal`/`totalAmount` com esse cálculo (`:330`). Efeitos: venda de pacote com Qtd > 1 perde valor ao
+  finalizar, ao cancelar e ao pagar; a validação "Desconto não pode ser maior que o subtotal" (`:157`) usa o subtotal errado.
+  Instrumentação → correção: teste de integração do `SalesPlugin` que cria venda + item `type: 'Package'`, `quantity: 2`,
+  `unitPrice: 320`, faz `PUT {status:'Finalized'}` e espera `subtotal === 640` (hoje dá 320); depois a correção no cálculo do
+  `qty` (decidir se serviço também conta quantidade — o modal de serviço não tem campo Qtd hoje; inferido).
+- **VP-2 (conhecido, segue aberto)** — F11: "Finalizar Venda" do modal cria a venda `Finalized` antes dos itens
+  (`FinanceService.ts:42`, `useSalesCreateForm.ts:270`). A emenda 2026-10-05 continua valendo.
+- **VP-3 (baixo, i18n)** — o cabeçalho da tabela genérica Packages mostra `KEY 'ACTIONS (PT)' RETURNED AN OBJECT INSTEAD OF
+  STRING.` e a coluna `ACTIVE` sem tradução; o detalhe da venda mostra `DISCOUNT` e `TAXES` em inglês
+  ([print](runbook-evidence/VENDA-PACOTE-2026-11-04/pre-01-catalogo-pacotes.png),
+  [detalhe](runbook-evidence/VENDA-PACOTE-2026-11-04/passo5-03-detalhe.txt)). `common.json` tem `"actions"` como objeto
+  (`my-app/public/locales/pt/common.json:586`); quem chama `t('actions')` como string não foi localizado nesta sessão.
+  Instrumentação → correção: teste do cabeçalho da tabela genérica que reprova chave i18n devolvendo objeto.
+- Desvios de dado no dev.db: pacotes `Pacote C7 Inativo`, `Pacote C7 30 dias`, `Pacote C7 Sem validade`; vendas canceladas
+  `cmw1kxh65006hcio0uqoehxao` e `cmw1kyak0006qcio0n9wa1fzw` (com aceite gravado); venda finalizada
+  `cmw1ldyi70077cio0ammofgtc` (subtotal 320 gravado pelo VP-1), lançamento `cmw1le47n007mcio02e4vuatr` e saldo do
+  `Cliente H2` no `Pacote H2` +640,00.
+- Rastreio: nota `FE-INCR-VENDA-PACOTE` fica para o fold do dono.
+- Assinatura do executor: agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02). A assinatura
+  atesta a execução e a conferência da evidência; não substitui oráculo externo.

@@ -62,6 +62,7 @@
       "type": "Type",
       "name": "Product/Service",
       "quantity": "Qty",
+      "service_quantity_package_hint": "More than one session to use later? Sell it as a package.",
       "price": "Price",
       "none_found": "No items.",
       "package": "Package",

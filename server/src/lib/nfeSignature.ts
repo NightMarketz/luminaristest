@@ -1,5 +1,5 @@
 import { X509Certificate } from 'crypto';
-import { DOMParser } from '@xmldom/xmldom';
+import { DOMParser, type Element, type Node } from '@xmldom/xmldom';
 import { SignedXml } from 'xml-crypto';
 import { ValidationError } from './errors';
 
@@ -161,10 +161,16 @@ export function readCertFacts(der: Buffer): CertFacts {
  */
 export function verifyNfeSignature(xml: string): SignatureCheck {
   const parseErrors: string[] = [];
-  const doc = new DOMParser({
-    locator: {},
-    errorHandler: { warning: () => undefined, error: (m) => parseErrors.push(m), fatalError: (m) => parseErrors.push(m) },
-  }).parseFromString(xml, 'text/xml');
+  // xmldom 0.9: fatalError (ex.: XML truncado) LANÇA ParseError depois do onError — converte no mesmo erro de documento mal-formado.
+  let doc: ReturnType<DOMParser['parseFromString']> | undefined;
+  try {
+    doc = new DOMParser({
+      locator: true,
+      onError: (level, m) => { if (level !== 'warning') parseErrors.push(m); },
+    }).parseFromString(xml, 'text/xml');
+  } catch (e) {
+    if (!parseErrors.length) parseErrors.push(e instanceof Error ? e.message : String(e));
+  }
   if (parseErrors.length || !doc?.documentElement) {
     throw new ValidationError(`NF-e inválida: XML mal-formado (${parseErrors[0] ?? 'sem elemento raiz'}).`);
   }

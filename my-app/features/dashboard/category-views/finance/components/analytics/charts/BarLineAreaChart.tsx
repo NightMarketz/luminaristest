@@ -25,6 +25,9 @@ import { getTooltipStyles, CHART_COLORS, CHART_MARGINS } from '@/features/dashbo
 import { formatCompactNumber } from '@/features/dashboard/category-views/finance/utils/kpiHelpers';
 import { useFormatCurrency } from '@/lib/context/CurrencyContext';
 
+/** recharts 3 tipa `contentStyle` com o csstype dele, não com `React.CSSProperties`. */
+type TooltipContentStyle = NonNullable<React.ComponentProps<typeof Tooltip>['contentStyle']>;
+
 
 export interface BarLineAreaChartProps {
   data: ChartDataPoint[];
@@ -78,7 +81,7 @@ export default function BarLineAreaChart({
   };
 
   const isDark = theme === 'dark';
-  const tooltipStyles = getTooltipStyles(isDark);
+  const tooltipStyles = getTooltipStyles(isDark) as TooltipContentStyle;
   const [periodOverride, setPeriodOverride] = useState<string | null>(null);
   const activePeriod = periodOverride || currentPeriod;
 
@@ -138,7 +141,7 @@ export default function BarLineAreaChart({
     };
 
     const tooltipProps = {
-      formatter: (value: number) => formatValue(value, currency),
+      formatter: (value: unknown) => formatValue(Number(value), currency),
       contentStyle: tooltipStyles,
       itemStyle: {
         color: isDark ? '#111827' /* lumi-text */ : '#f3f4f6' /* lumi-surface */,

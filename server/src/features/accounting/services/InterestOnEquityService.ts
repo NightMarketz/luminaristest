@@ -163,7 +163,7 @@ export class InterestOnEquityService {
         throw new ConflictError('A prévia mudou desde que foi calculada (saldo, TJLP, sócios ou perfil): refaça a prévia e confirme de novo.', 'PREVIA_DESATUALIZADA');
       }
       const vivo = await this.repo.findVivo(s.ownerUserId, input.anoCalendario, input.periodo, tx);
-      if (vivo) throw new ConflictError(`Já há JCP confirmado em ${input.periodo}/${input.anoCalendario} (cálculo ${vivo.id}): cancele-o antes.`, 'JCP_JA_CONFIRMADO_NO_PERIODO');
+      if (vivo) throw new ConflictError(`Já há ${describeJcp(vivo)} confirmado: cancele-o antes.`, 'JCP_JA_CONFIRMADO_NO_PERIODO');
       const irrf = somaIrrf(c);
       const created = await this.repo.create(
         s.ownerUserId,
@@ -258,7 +258,7 @@ export class InterestOnEquityService {
         const e = await this.lalurRepo.findEntryById(s, lid, tx);
         if (e && !e.deletedAt) await this.lalurRepo.updateEntry(s, lid, { deletedAt: new Date(), codigo: deletedLalurCodigo(lid, e.codigo) }, tx);
       }
-      if (!(await this.repo.markCancelled(owner, id, scope.actorUserId, tx))) throw new ConflictError(`O JCP '${id}' mudou de status durante o cancelamento.`);
+      if (!(await this.repo.markCancelled(owner, id, scope.actorUserId, tx))) throw new ConflictError(`O ${describeJcp(row)} mudou de status durante o cancelamento.`);
       await this.auditService.append(tx, s, {
         actorUserId: scope.actorUserId,
         eventType: JCP_CANCELLED,
@@ -315,16 +315,17 @@ export class InterestOnEquityService {
     total: bigint,
     irrf: bigint,
   ): Promise<Array<{ accountCode: string; debitCents: number; creditCents: number }>> {
-    const codigo = async (id: string) => {
+    // Os três ids vêm do cálculo gravado ou do perfil fiscal (nunca do pedido): conta sumida nomeia o papel dela, não o cuid.
+    const codigo = async (id: string, papel: string) => {
       const conta = await this.accountRepo.findById(s, id);
-      if (!conta || conta.deletedAt) throw new NotFoundError(`Conta '${id}' não encontrada nesta unidade.`);
+      if (!conta || conta.deletedAt) throw new NotFoundError(`Conta de ${papel} não encontrada nesta unidade.`);
       return conta.code;
     };
     const lines = [
-      { accountCode: await codigo(contas.debitoAccountId), debitCents: Number(total), creditCents: 0 },
-      { accountCode: await codigo(contas.jcpPagarAccountId), debitCents: 0, creditCents: Number(total - irrf) },
+      { accountCode: await codigo(contas.debitoAccountId, 'débito do JCP'), debitCents: Number(total), creditCents: 0 },
+      { accountCode: await codigo(contas.jcpPagarAccountId, 'JCP a pagar'), debitCents: 0, creditCents: Number(total - irrf) },
     ];
-    if (irrf > 0n) lines.push({ accountCode: await codigo(contas.irrfRecolherAccountId), debitCents: 0, creditCents: Number(irrf) });
+    if (irrf > 0n) lines.push({ accountCode: await codigo(contas.irrfRecolherAccountId, 'IRRF a recolher'), debitCents: 0, creditCents: Number(irrf) });
     return lines;
   }
 
@@ -336,7 +337,7 @@ export class InterestOnEquityService {
     if (atual.status === 'PENDING_POST') {
       let entry = await this.postingService.findEntryBySource(s, JCP_SOURCE_TYPE, atual.id);
       if (entry && (entry.reversedById || entry.status !== 'Posted')) {
-        throw new ValidationError(`O lançamento do JCP '${atual.id}' (${entry.id}) foi estornado fora do fluxo.`);
+        throw new ValidationError(`O lançamento do ${describeJcp(atual)} foi estornado fora do fluxo.`);
       }
       if (!entry) {
         const contas = await this.contasDoLancamento(s, { forma: atual.forma as FormaJcp, debitoPlAccountId: atual.debitoAccountId });
@@ -388,7 +389,7 @@ export class InterestOnEquityService {
         await this.lalurRepo.replaceEntryJournalLinks(e.id, [entryId], tx);
         ids.push(e.id);
       }
-      if (!(await this.repo.setLalurEntryIds(s.ownerUserId, row.id, ids, tx))) throw new ConflictError(`A Parte A do JCP '${row.id}' já foi gravada.`);
+      if (!(await this.repo.setLalurEntryIds(s.ownerUserId, row.id, ids, tx))) throw new ConflictError(`A Parte A do ${describeJcp(row)} já foi gravada.`);
       await this.auditService.append(tx, s, {
         actorUserId: s.actorUserId,
         eventType: JCP_LALUR_RECORDED,
@@ -572,6 +573,11 @@ export function codigosJcp(livro: 'lalur' | 'lacs', ano: number): { exclusao: st
     return linha.codigo;
   };
   return { exclusao: achar(DESCRICAO_EXCLUSAO_JCP, 'E'), adicaoExcesso: achar(DESCRICAO_ADICAO_EXCESSO_JCP, 'A') };
+}
+
+/** FIX-MENSAGENS-ID-INTERNO lote 3 (F-MSG-2 a1; dono, chat, 05/11): o JCP não tem tela; é nomeado por período/ano/forma, como no histórico do lançamento. */
+function describeJcp(row: { periodo: string; anoCalendario: number; forma: string }): string {
+  return `JCP ${row.periodo}/${row.anoCalendario} (${row.forma})`;
 }
 
 function somaIrrf(c: CalculoJcp): bigint {

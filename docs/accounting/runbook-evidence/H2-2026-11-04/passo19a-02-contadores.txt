@@ -1,0 +1,49 @@
+Entrega ao contador
+
+O sistema não envia nada — registra que você despachou o pacote pelo seu canal.
+
+Contadores
+Novo contador
+Nome	E-mail	CRC	Certidão (validade)	Ações
+CONTADOR FICTICIO DE TESTE	contador.teste@example.com	SP-123456/O-1 · SP	SP/2026/000123 (31/12/2026)	
+Editar
+Perfil de pacote
+Arquivar
+
+CONTADOR H2 19 AI TESTER	contador.h2-19@example.com	RJ-054321/O-7 · RJ	—	
+Editar
+Perfil de pacote
+Arquivar
+
+CONTADOR SEM FONE TESTE	semfone.teste@example.com	SP-654321/O-2 · SP	—	
+Editar
+Perfil de pacote
+Arquivar
+
+CONTADORA H2 AI TESTER	contadora.h2@example.com	MG-012345/O-6 · MG	—	
+Editar
+Perfil de pacote
+Arquivar
+Montar pacote
+Exercício
+Contador destinatário
+Selecione…
+CONTADOR FICTICIO DE TESTE — SP-123456/O-1
+CONTADOR H2 19 AI TESTER — RJ-054321/O-7
+CONTADOR SEM FONE TESTE — SP-654321/O-2
+CONTADORA H2 AI TESTER — MG-012345/O-6
+Arquivo da ECD (EXPORTED)
+— nenhum —
+Arquivo da ECF (EXPORTED)
+— nenhum —
+Extras (máx. 20) — só relatórios gerados com período
+
+Nenhum relatório EXPORTED no exercício — gere na aba Importação/Exportação.
+
+Validar pacote
+Entregas
+Todos os status
+QUEUED
+SENT
+FAILED
+Nenhuma entrega registrada.

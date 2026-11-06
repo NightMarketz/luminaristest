@@ -93,7 +93,7 @@
         "createdBy": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "createdAt": {
           "anyOf": [
@@ -219,7 +219,7 @@
         "createdBy": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "createdAt": {
           "anyOf": [

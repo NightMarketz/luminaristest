@@ -137,6 +137,22 @@ export function toDateOnly(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** `Date` (UTC) → `dd/mm/aaaa`, o formato que a tela mostra. */
+export function toDateBr(d: Date): string {
+  return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}/${d.getUTCFullYear()}`;
+}
+
+/**
+ * FIX-MENSAGENS-ID-INTERNO lote 3 (F-MSG-2 a1; rótulo do dono, chat, 05/11): o arquivo exportado é nomeado por tipo + período
+ * ("ECD de 01/01/2026 a 31/12/2026"), nunca pelo cuid; sem período gravado, pela data de geração ("ECD gerada em 05/11/2026").
+ */
+export function describeExportJob(job: { kind: string; periodStart: Date | null; periodEnd: Date | null; createdAt: Date }): string {
+  const tipo = job.kind.replace(/^EXPORT_(SPED_)?/, '');
+  return job.periodStart && job.periodEnd
+    ? `${tipo} de ${toDateBr(job.periodStart)} a ${toDateBr(job.periodEnd)}`
+    : `${tipo} gerada em ${toDateBr(job.createdAt)}`;
+}
+
 /**
  * Os meses `{year, month}` cobertos por um período date-only, inclusive nas duas pontas. O gate de
  * período (F-CD7-a, item 7) exige TODOS eles `HARD_CLOSED`: "12 meses seguidos sempre, ou período

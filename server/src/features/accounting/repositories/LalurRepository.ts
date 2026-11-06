@@ -100,7 +100,7 @@ export class LalurRepository implements ILalurRepository {
     if (ids.length === 0) return [];
     return (tx ?? prisma).journalEntry.findMany({
       where: { id: { in: ids }, ...accountingScopeWhere(scope) },
-      select: { id: true, entryNumber: true, date: true },
+      select: { id: true, entryNumber: true, date: true, description: true },
     });
   }
 

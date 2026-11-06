@@ -72,6 +72,30 @@ export interface FiscalCheckOptions {
 }
 
 /**
+ * Rótulo da venda nas mensagens ao operador: `venda de <cliente> em <dd/mm/aaaa>` (dono, chat, 05/11 — a venda não tem número
+ * nem nome). Cliente = nome na tabela `customers` do dono (pertencimento checado) ou `simpleCustomerName`; sem nenhum dos dois
+ * ou sem data cai para o que sobrar, e sem nada vira `venda '<id>'` (o id só sem rótulo, F-MSG-2).
+ */
+export async function describeSale(
+  repository: Pick<IDynamicTableRepository, 'findTableByInternalName' | 'findDataById'>,
+  ownerUserId: string,
+  saleId: string,
+  data: Record<string, unknown>,
+): Promise<string> {
+  let customer = typeof data.simpleCustomerName === 'string' ? data.simpleCustomerName : '';
+  if (typeof data.customerId === 'string' && data.customerId) {
+    const table = await repository.findTableByInternalName(ownerUserId, 'customers');
+    const row = table ? await repository.findDataById(data.customerId) : null;
+    const name = table && row && row.dynamicTableId === table.id ? (row.data as Record<string, unknown> | null)?.name : undefined;
+    if (typeof name === 'string' && name) customer = name;
+  }
+  const day = typeof data.date === 'string' ? /^(\d{4})-(\d{2})-(\d{2})/.exec(data.date) : null;
+  const date = day ? `${day[3]}/${day[2]}/${day[1]}` : '';
+  const parts = [customer, date && (customer ? `em ${date}` : date)].filter(Boolean);
+  return parts.length > 0 ? `venda de ${parts.join(' ')}` : `venda '${saleId}'`;
+}
+
+/**
  * EFICIENCIA-FISCAL PR-1 itens 6, 8 e 10 (BRIEF BE-INCR-EFICIENCIA-FISCAL; ADR-INCR-EFICIENCIA-FISCAL D4.2, D5, D6) — guarda
  * fiscal da venda no seam Prisma-side de `features/sales` (molde RegisterPaymentService): lê a venda e os itens pelo
  * REPOSITÓRIO do DynamicTable (nunca pelo motor — §2.1), aplica o piso, a alocação e as invariantes puras e devolve o
@@ -106,7 +130,9 @@ export class SaleFiscalGuardService {
   async unitIdOfSale(ownerUserId: string, saleId: string): Promise<string> {
     const { sale } = await this.loadSale(ownerUserId, saleId);
     const unitId = sale.unitId;
-    if (typeof unitId !== 'string' || !unitId) throw new NotFoundError(`Venda '${saleId}' sem unidade.`);
+    if (typeof unitId !== 'string' || !unitId) {
+      throw new NotFoundError(`A ${await describeSale(this.repository, ownerUserId, saleId, sale)} está sem unidade.`);
+    }
     return unitId;
   }
 

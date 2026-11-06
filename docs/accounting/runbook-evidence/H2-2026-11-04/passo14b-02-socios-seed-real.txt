@@ -1,0 +1,10 @@
+Sócios
+
+Cadastro dos sócios da empresa e das vigências de cada um — usado pela ECF (Y600) e pela distribuição de lucros e JCP.
+
+Vigentes em (vazio = todas as vigências)
+Novo sócio
+Nome	CPF/CNPJ	Tipo	Residência	Participação	Entrada	Saída	Ações
+SOCIA TESTE H2 REAL	39053344705	PF	Brasil	100%	01/01/2020	—	
+Editar 
+Remover

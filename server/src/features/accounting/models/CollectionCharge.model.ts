@@ -7,6 +7,8 @@
  * NENHUM status desta máquina tem efeito no razão (PP-D5, resposta 20 da entrevista de 10/09; P2-8).
  */
 
+import { brl } from './presumidoTeto';
+
 export const CHARGE_KINDS = ['BOLETO', 'PIX'] as const;
 export type ChargeKind = (typeof CHARGE_KINDS)[number];
 
@@ -96,4 +98,12 @@ export function mapMercadoPagoStatus(status: string, detail: string): { status: 
     default:
       return { status: 'PENDING', known: false };
   }
+}
+
+/**
+ * Rótulo da cobrança nas mensagens ao operador — tipo + valor (`Pix de R$ 100,00`; dono, chat, 05/11): a cobrança não tem
+ * código nem nome e a tela a mostra por tipo/valor, então o cuid nunca vai na mensagem (FIX-MENSAGENS-ID-INTERNO).
+ */
+export function describeCharge(charge: { kind: string; amountCents: bigint }): string {
+  return `${charge.kind === 'PIX' ? 'Pix' : 'Boleto'} de ${brl(charge.amountCents)}`;
 }

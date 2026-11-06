@@ -304,14 +304,19 @@ export class CrmPipelineService {
 
     // Atomic: activity log + optional lead stage/schedule update commit/rollback together.
     await this.dynamicTableService.runInTransaction(async (tx) => {
-      await this.dynamicTableService.createTableData(user, activitiesTableId, {
-        data: {
-          leadId: input.leadId,
-          type: 'meeting_no_show',
-          message: input.option === 'reschedule' ? 'No-show — meeting rescheduled' : 'No-show — stage reverted',
-          payload: { when: input.rescheduleAt ?? undefined },
-        },
-      }, { tx });
+      // Revert: the LeadsPlugin logs the meeting_no_show itself when the lead steps back from the meeting stage
+      // (dono, chat, 05/11/2026: "Serviço cede") — logging here too would record one no-show twice.
+      const pluginLogsNoShow = input.option === 'revert' && !!input.previousStageId;
+      if (!pluginLogsNoShow) {
+        await this.dynamicTableService.createTableData(user, activitiesTableId, {
+          data: {
+            leadId: input.leadId,
+            type: 'meeting_no_show',
+            message: input.option === 'reschedule' ? 'No-show — meeting rescheduled' : 'No-show — stage reverted',
+            payload: { when: input.rescheduleAt ?? undefined },
+          },
+        }, { tx });
+      }
 
       if (input.option === 'reschedule' && input.rescheduleAt) {
         await this.dynamicTableService.updateTableData(user, input.leadId, { data: { nextActionAt: input.rescheduleAt } }, { tx });

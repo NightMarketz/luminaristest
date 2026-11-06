@@ -218,7 +218,7 @@ export class PaymentAccountService {
     const other = await this.repo.findOtherActive(scope, account.provider, account.id, tx);
     if (other) {
       throw new ConflictError(
-        `${PAYMENT_ACCOUNT_ALREADY_ACTIVE}: já existe conta ${account.provider} ativa neste escopo ('${other.id}'); desative-a antes.`,
+        `${PAYMENT_ACCOUNT_ALREADY_ACTIVE}: já existe conta ${account.provider} ativa neste escopo ('${other.label || other.id}'); desative-a antes.`,
         PAYMENT_ACCOUNT_ALREADY_ACTIVE,
       );
     }

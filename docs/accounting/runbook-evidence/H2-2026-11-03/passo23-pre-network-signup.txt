@@ -1,0 +1,14 @@
+POST /api/users -> 201  req: {"name":"Contador H2 C7","username":"h2c7contador","email":"h2-c7-contador@luminaris.test","password":"<redigida>"}
+   res: {"success":true,"data":{"id":"cmw18t0fk00maci9cne7czj5g","name":"Contador H2 C7","username":"h2c7contador","email":"h2-c7-contador@luminaris.test","role":"USER","locale":"en","currency":"BRL","createdAt":"2026-11-03T22:11:41.553Z","updatedAt":"2026-11-03T22:11:41.553Z"}}
+POST /api/auth/login -> 200  req: {"identifier":"h2c7contador","password":"<redigida>","rememberMe":false}
+   res: {"success":true,"data":{"user":{"id":"cmw18t0fk00maci9cne7czj5g","name":"Contador H2 C7","username":"h2c7contador","email":"h2-c7-contador@luminaris.test","role":"USER","locale":"en","currency":"BRL","createdAt":"2026-11-03T22:11:41.553Z","updatedAt":"2026-11-03T22:11:41.553Z"},"token":"<redigido>
+GET /api/auth/me -> 200
+   res: {"success":true,"data":{"id":"cmw18t0fk00maci9cne7czj5g","name":"Contador H2 C7","username":"h2c7contador","email":"h2-c7-contador@luminaris.test","role":"USER","locale":"en","currency":"BRL","createdAt":"2026-11-03T22:11:41.553Z","updatedAt":"2026-11-03T22:11:41.553Z"}}
+GET /api/dashboard-layout -> 200
+   res: {"success":true,"data":[]}
+GET /api/dashboard-layout -> 304
+   res: {"success":true,"data":[]}
+POST /api/dashboard-layout -> 201  req: {"name":"Dashboard","type":"GRID","config":{"positions":[],"columns":12,"widgets":[]}}
+   res: {"success":true,"data":{"id":"cmw18t4fo00mbci9crcf89027","userId":"cmw18t0fk00maci9cne7czj5g","name":"Dashboard","isActive":true,"type":"GRID","config":{"columns":12,"widgets":[],"positions":[]},"createdAt":"2026-11-03T22:11:46.740Z","updatedAt":"2026-11-03T22:11:46.740Z"}}
+POST /api/dashboard-layout -> 201  req: {"name":"Dashboard","type":"GRID","config":{"positions":[],"columns":12,"widgets":[]}}
+   res: {"success":true,"data":{"id":"cmw18t4fp00mcci9cwsws7czp","userId":"cmw18t0fk00maci9cne7czj5g","name":"Dashboard","isActive":true,"type":"GRID","config":{"columns":12,"widgets":[],"positions":[]},"createdAt":"2026-11-03T22:11:46.742Z","updatedAt":"2026-11-03T22:11:46.742Z"}}

@@ -122,9 +122,11 @@ que são o precedente do gênero (13 relatórios de execução com evidência co
 "falhou" achando 2 bugs de runtime, e foi a sessão mais produtiva do gate.
 
 **Runner Puppeteer de runbook de tela pega vaga de trabalho pesado** (dono, chat, 2026-11-04: "Me da um prompt para
-implementar todas as 7 sugestões"): rode-o por `node scripts/heavy-slot.cjs run --label "runbook <nome>" -- node <runner>.mjs`.
-Sem vaga ele espera e mostra quem ocupa (`node scripts/heavy-slot.cjs status`). O runner não é versionado (vive no
-scratchpad da sessão); quem o versionar chama `require('scripts/heavy-slot.cjs').acquire()` antes de abrir o Chromium.
+implementar todas as 7 sugestões"). Desde 04/11 o runner é versionado: `node scripts/runbook-tela.mjs <roteiro.json>`
+(roteiro, ops e variáveis no cabeçalho do script). Ele pega a vaga sozinho; sem vaga, espera e mostra quem ocupa
+(`node scripts/heavy-slot.cjs status`). Roda sem janela, no headless shell do cache do Playwright (~280 MB; guia em
+`~/.claude/tools/navegador/GUIA.md`), e sai com 1 no primeiro passo com `[ERRO]`. Não reescreva o runner no
+scratchpad; op nova entra no script.
 
 **Pré-condição de ambiente que costuma ser esquecida:** o `dev.db` populado fica em
 `server/prisma/prisma/dev.db` (o `server/prisma/dev.db` é isca de 0 byte), e telas atrás de `withAuth`

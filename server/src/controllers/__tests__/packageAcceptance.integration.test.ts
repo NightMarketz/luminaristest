@@ -126,6 +126,20 @@ describe('package-acceptances (FE-INCR-PACOTE-VALIDADE)', () => {
       expect(notPkg.status).toBe(400);
     });
 
+    // FIX-MENSAGENS-ID-INTERNO lote 2 (FIX-TESTES item 5): o pacote vem dos itens da venda, não do pedido; a tela o mostra
+    // pelo nome, então o 400 o nomeia por ele, nunca pelo cuid.
+    it('PackageWithoutValidityError (PackageAcceptanceService:96) — pacote sem validade (400) nomeia o pacote pelo nome, não pelo cuid', async () => {
+      const s = await packageSale(pkgNoValidity);
+      const res = await request(app).post('/api/package-acceptances').set(authHeader(user)).send({ unitId, saleId: s, textVersion: 'v1', textSha256: 'c'.repeat(64) });
+      const msg = String(res.body.message);
+      expect({ status: res.status, nomeiaRotulo: msg.includes('Pacote livre'), cuidNaMensagem: [pkgNoValidity, s].filter((id) => msg.includes(id)), msg }).toEqual({
+        status: 400,
+        nomeiaRotulo: true,
+        cuidNaMensagem: [],
+        msg,
+      });
+    });
+
     it('venda de outro tenant ou de outra unidade → 404; chave extra no body → 400; sem token → 401', async () => {
       const s = await packageSale(pkg30);
       const foreign = await request(app).post('/api/package-acceptances').set(authHeader(intruder)).send({ unitId, saleId: s, textVersion: 'v1', textSha256: notice().textSha256 });

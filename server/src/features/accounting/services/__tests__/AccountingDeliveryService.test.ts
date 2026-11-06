@@ -602,14 +602,17 @@ describe('AccountingDeliveryService', () => {
       expect(update).toHaveBeenCalledTimes(1); // QUEUED → SENT, mesmo caminho de sempre
     });
 
-    it('entrega já existente + conjunto de extras DIFERENTE é 409 PACKAGE_ALREADY_DELIVERED com o deliveryId', async () => {
+    it('entrega já existente + conjunto de extras DIFERENTE é 409 PACKAGE_ALREADY_DELIVERED nomeando o núcleo e o contador, sem os ids (FIX-MENSAGENS-ID-INTERNO lote 3)', async () => {
       const { service } = withExistingAndExtras();
       await expect(
         service.confirmDelivery(scope, { ...confirmDto, extraJobIds: ['extra-2'] }),
       ).rejects.toMatchObject({ errorCode: 'PACKAGE_ALREADY_DELIVERED' });
       await expect(
         service.confirmDelivery(scope, { ...confirmDto, extraJobIds: ['extra-2'] }),
-      ).rejects.toThrow(/delivery-1/);
+      ).rejects.toThrow(/já foi entregue ao contador/);
+      await expect(
+        service.confirmDelivery(scope, { ...confirmDto, extraJobIds: ['extra-2'] }),
+      ).rejects.not.toThrow(/delivery-1/);
     });
   });
 

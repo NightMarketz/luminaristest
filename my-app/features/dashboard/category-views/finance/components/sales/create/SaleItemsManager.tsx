@@ -14,9 +14,9 @@ import { isBelowCatalog, lineQuantity, type PackageCatalog, type PackageSaleIssu
 // Module-level constants
 // ─────────────────────────────────────────────────────────────
 
-const SELECTOR_CLASS = 'w-full min-w-[140px] px-3 py-2 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 text-sm text-gray-900 dark:text-white transition-all duration-200';
+const SELECTOR_CLASS = 'w-full min-w-[136px] px-3 py-2 bg-white dark:bg-neutral-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 text-sm text-gray-900 dark:text-white transition-all duration-200';
 
-const TH_CLASS = 'px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400';
+const TH_CLASS = 'px-3 py-3 text-left text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400';
 
 // Pacote inativo não é escolhível (BRIEF item 3; I1 = filtro opcional no RelationSelector, dono 05/10).
 // Módulo-level: referência estável, o seletor não refaz a carga a cada render.
@@ -53,7 +53,7 @@ interface SaleItemsManagerProps {
 /**
  * SaleItemsManager — ERP-grade table for sale items.
  * Products: Produto | Qtd | Preço Unit. | Total | [×]
- * Services: Serviço | Responsável | Preço | Total | [×]
+ * Services: Serviço | Qtd | Responsável | Preço | Total | [×]
  * Packages: Pacote | Qtd | Preço Unit. | Total | [×]
  */
 export function SaleItemsManager({
@@ -77,7 +77,7 @@ export function SaleItemsManager({
     const { t } = useTranslation(['finance_view', 'common']);
     const isProduct = variant === 'products';
     const isPackage = variant === 'packages';
-    const hasQuantity = !!(isProduct || isPackage);
+    const isService = variant === 'services';
 
     // Memoizado — recalcula só quando o schema da tabela de itens muda
     const { productTargetTable, serviceTargetTable, packageTargetTable, employeeTargetTable } = useMemo(() => ({
@@ -86,6 +86,9 @@ export function SaleItemsManager({
         packageTargetTable:  saleItemsFields.find(f => f.name === 'packageId')?.relation?.targetTable ?? '',
         employeeTargetTable: saleItemsFields.find(f => f.name === 'responsibleEmployeeId')?.relation?.targetTable ?? '',
     }), [saleItemsFields]);
+
+    // Sugestão de pacote: só onde o schema da venda tem pacote (packageId) e algum serviço tem quantidade ≥ 2.
+    const suggestPackage = isService && !!packageTargetTable && items.some(item => lineQuantity(item) >= 2);
 
     // Pacote escolhido antes de o catálogo chegar: preenche o preço quando ele chega (só se ainda vazio)
     useEffect(() => {
@@ -145,13 +148,11 @@ export function SaleItemsManager({
                                             ? t('finance_view:sales.items.product', 'Produto')
                                             : t('finance_view:sales.items.service', 'Serviço')}
                                     </th>
-                                    {hasQuantity && (
-                                        <th className={`${TH_CLASS} w-28`}>
-                                            {t('finance_view:sales.items.quantity', 'Qtd')}
-                                        </th>
-                                    )}
-                                    {variant === 'services' && !!employeeTargetTable && (
-                                        <th className={`${TH_CLASS} w-44`}>
+                                    <th className={`${TH_CLASS} w-32`}>
+                                        {t('finance_view:sales.items.quantity', 'Qtd')}
+                                    </th>
+                                    {isService && !!employeeTargetTable && (
+                                        <th className={`${TH_CLASS} w-40`}>
                                             {t('finance_view:sales.items.responsible', 'Responsável')}
                                         </th>
                                     )}
@@ -176,7 +177,7 @@ export function SaleItemsManager({
                                     return (
                                         <tr key={item.id} className="group hover:bg-blue-50/20 dark:hover:bg-neutral-700/20 transition-colors align-top">
                                             {/* Product / Service selector */}
-                                            <td className="px-4 py-2 align-top">
+                                            <td className="px-3 py-2 align-top">
                                                 <RelationSelector
                                                     name={isPackage ? 'packageId' : isProduct ? 'productId' : 'serviceId'}
                                                     value={(isPackage ? item.packageId : isProduct ? item.productId : item.serviceId) || ''}
@@ -222,20 +223,18 @@ export function SaleItemsManager({
                                                 )}
                                             </td>
 
-                                            {/* Quantity — products and packages (F-FE-VP-3 b) */}
-                                            {hasQuantity && (
-                                                <td className="px-4 py-2 w-28">
-                                                    <QuantityInput
-                                                        value={item.quantity || 1}
-                                                        onChange={qty => onUpdateItem(item.id, { quantity: qty })}
-                                                        min={1}
-                                                    />
-                                                </td>
-                                            )}
+                                            {/* Quantity — os três tipos (F-FE-VP-3 b; serviço: D-2026-11-04-VENDA-QUANTIDADE-SERVICO-E-PV-A) */}
+                                            <td className="px-3 py-2 w-32 min-w-[8rem]">
+                                                <QuantityInput
+                                                    value={item.quantity || 1}
+                                                    onChange={qty => onUpdateItem(item.id, { quantity: qty })}
+                                                    min={1}
+                                                />
+                                            </td>
 
                                             {/* Responsible employee — services only */}
-                                            {variant === 'services' && !!employeeTargetTable && (
-                                                <td className="px-4 py-2 w-44">
+                                            {isService && !!employeeTargetTable && (
+                                                <td className="px-3 py-2 w-40">
                                                     <RelationSelector
                                                         name="responsibleEmployeeId"
                                                         value={item.responsibleEmployeeId || ''}
@@ -249,7 +248,7 @@ export function SaleItemsManager({
                                             )}
 
                                             {/* Unit price */}
-                                            <td className="px-4 py-2 w-36">
+                                            <td className="px-3 py-2 w-36 min-w-[8rem]">
                                                 <CurrencyInput
                                                     value={item.unitPrice || 0}
                                                     onChange={price => onUpdateItem(item.id, { unitPrice: price })}
@@ -262,19 +261,24 @@ export function SaleItemsManager({
                                             </td>
 
                                             {/* Line total */}
-                                            <td className="px-4 py-2 w-28 text-right font-bold text-gray-900 dark:text-gray-100 tabular-nums">
-                                                {formatCurrency(lineTotal)}
+                                            <td className="px-3 py-2 w-28">
+                                                {/* Mesma altura dos campos da linha: o total fica centrado com eles, não colado no topo */}
+                                                <div className="h-[38px] flex items-center justify-end whitespace-nowrap font-bold text-gray-900 dark:text-gray-100 tabular-nums">
+                                                    {formatCurrency(lineTotal)}
+                                                </div>
                                             </td>
 
                                             {/* Remove */}
-                                            <td className="px-3 py-2 w-10 text-center">
-                                                <button
-                                                    onClick={() => onRemoveItem(item.id)}
-                                                    className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
-                                                    title={t('common:remove', 'Remover')}
-                                                >
-                                                    <HiX size={16} />
-                                                </button>
+                                            <td className="px-1 py-2 w-10">
+                                                <div className="h-[38px] flex items-center justify-center">
+                                                    <button
+                                                        onClick={() => onRemoveItem(item.id)}
+                                                        className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 dark:text-gray-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
+                                                        title={t('common:remove', 'Remover')}
+                                                    >
+                                                        <HiX size={16} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     );
@@ -293,6 +297,12 @@ export function SaleItemsManager({
                         </span>
                         {addLabel}
                     </button>
+                    {/* Serviço repetido onde a venda aceita pacote: só sugere — o campo nunca some nem converte (dono, 04/11) */}
+                    {suggestPackage && (
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 px-1">
+                            {t('finance_view:sales.items.service_quantity_package_hint', 'Mais de uma sessão para consumir depois? Venda como pacote.')}
+                        </p>
+                    )}
                     {isPackage && packageIssue === 'mixed_packages' && (
                         <p className="text-xs font-semibold text-red-500 dark:text-red-400 px-1">
                             {t('finance_view:sales.package.one_package', 'Uma venda leva um único pacote. Para outro pacote, crie outra venda.')}

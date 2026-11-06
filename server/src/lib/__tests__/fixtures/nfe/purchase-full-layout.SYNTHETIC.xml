@@ -7,7 +7,7 @@
      infRespTec, protNFe com digVal — para o parser provar que lê o que importa no meio do ruído real.
      CNPJs com DV válido e chave com cDV módulo 11 válido, todos inventados (nenhum dado real).
      <Signature> com chave de TESTE (helper do SIG-NFE, F-SIG-4 b) — passa na verificação do parseNfe, mas NÃO
-     é ICP-Brasil. Depois de editar o <infNFe>, re-assine: `npx ts-node --transpile-only
+     é ICP-Brasil. Depois de editar o <infNFe>, re-assine: `npx ts-node -T
      test/helpers/nfeSignature.ts src/lib/__tests__/fixtures/nfe/purchase-full-layout.SYNTHETIC.xml`.
      PONTA SOLTA DECLARADA (D2, 1º cliente): assinatura ICP-Brasil real e o leiaute de um emissor real
      (aqui é o do MOC transcrito — lição I052).

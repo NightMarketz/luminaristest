@@ -279,6 +279,17 @@ o XSD e as tabelas. Correções que este BRIEF já incorpora (sem fork, porque �
   path-count (`routes/docs/accounting.reinf.paths.ts`); i18n pt/en; `check:arch` (lib pura sem import de `features/`);
   `resetDb` limpa `reinf_batches` (`test/helpers/db.ts`); `tsc` dos dois lados.
 
+### Régua de testes (APRENDIZADOS-TESTES-2026-11-04)
+
+> Patch de 04/11. Pedido do dono (chat, 04/11): *"Já vai atualizando todas os aprendizados nos locais onde são briefs"*. Não muda item, contrato nem fork ratificado: acrescenta ao critério de aceite **só o que falta** da régua A1–A8 de [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md). Onde um ponto pediria mudar algo ratificado, ele está no corpo do PR como pergunta ao dono.
+
+Vale para o **PR-4** (itens 25–28), que ainda não foi executado.
+- **A5 — oráculo vira fixture.** O item 28 (P-REINF-1) é o único EXT. O 1º lote aceito na produção restrita (protocolo e recibo por evento) vira fixture versionada, e o teste do adaptador passa a ler a resposta real gravada.
+- **A2 — estado do bug.** A retificação (item 27) se testa com período **já fechado e com recibo**, e o evento alterado depois, não com período aberto.
+- **A3 — uma falta por vez.** Recibo ausente; certificado de outra unidade; evento sem origem (→ R-9000): cada um com mensagem que nomeia o evento e o beneficiário pelo nome, sem CPF/CNPJ.
+- **A6 — pilha real.** Transmissão pela rota real contra servidor falso local, com **2ª leitura** do `ReinfBatch` no banco (status e `nrRecibo` por evento).
+- **A8.** Competência literal no cenário; relógio injetado no polling.
+
 ## 5. Contratos esboçados
 
 ### 5.1 Contratos de entrada: **conferidos contra o §5.4 do BRIEF de RETENCOES-FONTE** (emenda 22/10)

@@ -62,6 +62,7 @@
       "type": "Tipo",
       "name": "Produto/Serviço",
       "quantity": "Qtd",
+      "service_quantity_package_hint": "Mais de uma sessão para consumir depois? Venda como pacote.",
       "price": "Preço",
       "none_found": "Nenhum item.",
       "package": "Pacote",

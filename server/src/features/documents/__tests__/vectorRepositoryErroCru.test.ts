@@ -5,7 +5,7 @@
 const INTERNO = 'Bad Request: Wrong input: Collection `documents` not found at http://qdrant.internal:6333';
 
 jest.mock('@/lib/vector/qdrant', () => ({
-  qdrant: { search: jest.fn(async () => { throw new Error(INTERNO); }) },
+  qdrant: { query: jest.fn(async () => { throw new Error(INTERNO); }) },
 }));
 
 import { VectorRepository } from '../repositories/VectorRepository';

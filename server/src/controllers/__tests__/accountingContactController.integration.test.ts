@@ -428,3 +428,170 @@ describe('/api/accounting/contacts + /delivery — contrato HTTP', () => {
     });
   });
 });
+
+// ── FIX-MENSAGENS-ID-INTERNO lote 3 (FIX-TESTES item 5; F-MSG-1 a, F-MSG-2 a1) ───────────────────────────────────────────
+// Rótulos ratificados pelo dono (chat, 05/11, regra 5): job = "<tipo> de dd/mm/aaaa a dd/mm/aaaa" (sem período: "<tipo> gerada em
+// dd/mm/aaaa"); revisão = "revisão do exercício <ano>"; contato = o nome; entrega = "entrega de dd/mm/aaaa a dd/mm/aaaa".
+// Eco do id do pedido sem registro achado FICA; id de job/revisão/contato JÁ carregado é nomeado pelo rótulo.
+// Fixtures por `prisma.*` (montar uma ECD/ECF reais não é o que estas mensagens testam; mesmo atalho do `deliveryList`).
+describe('FIX-MENSAGENS-ID-INTERNO lote 3 — entrega: a mensagem nomeia o job, a revisão e a entrega, nunca pelo cuid', () => {
+  const UNIT = 'unit-delivery-msg';
+  let donoMsg: { id: string; username: string };
+  let contato: { id: string };
+
+  /** Status certo, a mensagem contém o rótulo e não contém nenhum dos cuids. A `msg` vai no objeto para o diff mostrá-la. */
+  const nomeiaSemId = (res: request.Response, status: number, rotulo: string, ...ids: string[]) => {
+    const msg = String(res.body.message);
+    expect({ status: res.status, nomeiaRotulo: msg.includes(rotulo), cuidNaMensagem: ids.filter((id) => msg.includes(id)), msg }).toEqual({
+      status,
+      nomeiaRotulo: true,
+      cuidNaMensagem: [],
+      msg,
+    });
+  };
+  const dmy = (d: Date) => `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}/${d.getUTCFullYear()}`;
+  const ANO = { start: new Date(Date.UTC(2026, 0, 1)), end: new Date(Date.UTC(2026, 11, 31)) };
+  const criarJob = (kind: string, over: Record<string, unknown> = {}) =>
+    prisma.accountingDataExchangeJob.create({
+      data: {
+        userId: donoMsg.id,
+        unitId: UNIT,
+        direction: 'EXPORT',
+        kind,
+        status: 'EXPORTED',
+        requestedById: donoMsg.id,
+        sha256: 'd'.repeat(64),
+        periodStart: ANO.start,
+        periodEnd: ANO.end,
+        ...over,
+      },
+    });
+  const par = async (ecdOver: Record<string, unknown> = {}, ecfOver: Record<string, unknown> = {}) => ({
+    ecd: await criarJob('EXPORT_SPED_ECD', ecdOver),
+    ecf: await criarJob('EXPORT_SPED_ECF', ecfOver),
+  });
+  const revisao = (ecdJobId: string, ecfJobId: string, status: 'OPEN' | 'SIGNED_OFF' | 'REJECTED') =>
+    prisma.accountingReview.create({
+      data: { userId: donoMsg.id, unitId: UNIT, year: 2026, ecdJobId, ecfJobId, status, reviewerUserId: donoMsg.id, closeReason: status === 'REJECTED' ? 'saldo errado' : null },
+    });
+  const build = (ecdJobId: string, ecfJobId: string, extraJobIds: string[] = []) =>
+    request(app).post('/api/accounting/delivery/build').set(authHeader(donoMsg)).send({ unitId: UNIT, ecdJobId, ecfJobId, extraJobIds });
+  const confirm = (ecdJobId: string, ecfJobId: string, extraJobIds: string[] = []) =>
+    request(app).post('/api/accounting/delivery/confirm').set(authHeader(donoMsg)).send({ unitId: UNIT, ecdJobId, ecfJobId, contactId: contato.id, confirmed: true, extraJobIds });
+  /** Par com revisão assinada: o único jeito de chegar nos extras. */
+  const parAssinado = async () => {
+    const p = await par();
+    await revisao(p.ecd.id, p.ecf.id, 'SIGNED_OFF');
+    return p;
+  };
+
+  beforeAll(async () => {
+    pushTestSchema();
+    donoMsg = await prisma.user.create({ data: { name: 'delivery-msg', username: 'delivery-msg', email: 'delivery-msg@test.local', password: 'x', role: 'USER' } });
+    await seedUnit({ userId: donoMsg.id, id: UNIT });
+    for (let month = 1; month <= 12; month++) {
+      await prisma.accountingPeriod.create({ data: { userId: donoMsg.id, unitId: UNIT, year: 2026, month, status: 'HARD_CLOSED', openedAt: new Date() } });
+    }
+    contato = await prisma.accountingContact.create({
+      data: { userId: donoMsg.id, unitId: UNIT, name: 'Contadora Msg', email: 'c@x.com', cpf: '52998224725', crcNumber: 'SP-000777/O-1', crcUf: 'SP' },
+    });
+  }, 120000);
+
+  it('AccountingDeliveryService:355 — ECD substituta sem ECF retificadora (400) nomeia o job por tipo + período, não o cuid', async () => {
+    const { ecd, ecf } = await par({ ecfRectificationRequired: true });
+    nomeiaSemId(await build(ecd.id, ecf.id), 400, 'ECD de 01/01/2026 a 31/12/2026', ecd.id);
+  });
+
+  it('AccountingDeliveryService:372 — job que não é ECD (400) nomeia o job por tipo + período, não o cuid', async () => {
+    const p = await par();
+    nomeiaSemId(await build(p.ecf.id, p.ecf.id), 400, 'ECF de 01/01/2026 a 31/12/2026', p.ecf.id);
+  });
+
+  it('AccountingDeliveryService:375 — job que não é ECF (400) nomeia o job por tipo + período, não o cuid', async () => {
+    const p = await par();
+    nomeiaSemId(await build(p.ecd.id, p.ecd.id), 400, 'ECD de 01/01/2026 a 31/12/2026', p.ecd.id);
+  });
+
+  it('AccountingDeliveryService:380 — job que não está EXPORTED (400) nomeia o job por tipo + período, não o cuid', async () => {
+    const { ecd, ecf } = await par({ status: 'FAILED' });
+    nomeiaSemId(await build(ecd.id, ecf.id), 400, 'ECD de 01/01/2026 a 31/12/2026', ecd.id);
+  });
+
+  it('AccountingDeliveryService:385 — job sem sha256 gravado (400) nomeia o job por tipo + período, não o cuid', async () => {
+    const { ecd, ecf } = await par({}, { sha256: null });
+    nomeiaSemId(await build(ecd.id, ecf.id), 400, 'ECF de 01/01/2026 a 31/12/2026', ecf.id);
+  });
+
+  it('AccountingDeliveryService:390 — job sem período gravado (400) nomeia o job pela data de geração, não o cuid', async () => {
+    const { ecd, ecf } = await par({ periodStart: null, periodEnd: null });
+    nomeiaSemId(await build(ecd.id, ecf.id), 400, `ECD gerada em ${dmy(ecd.createdAt)}`, ecd.id);
+  });
+
+  it('AccountingReviewService:493 — par com revisão REJEITADA (409) nomeia a revisão do exercício, não o cuid', async () => {
+    const { ecd, ecf } = await par();
+    const r = await revisao(ecd.id, ecf.id, 'REJECTED');
+    const res = await build(ecd.id, ecf.id);
+    expect(res.body.code).toBe('REVIEW_REJECTED');
+    nomeiaSemId(res, 409, 'revisão do exercício 2026', r.id, ecd.id, ecf.id);
+  });
+
+  it('AccountingReviewService:499 — par com revisão ainda OPEN (409) nomeia a revisão do exercício, não o cuid', async () => {
+    const { ecd, ecf } = await par();
+    const r = await revisao(ecd.id, ecf.id, 'OPEN');
+    const res = await build(ecd.id, ecf.id);
+    expect(res.body.code).toBe('REVIEW_REQUIRED');
+    nomeiaSemId(res, 409, 'revisão do exercício 2026', r.id, ecd.id, ecf.id);
+  });
+
+  it('AccountingDeliveryService:443 — extra que não está EXPORTED (400) nomeia o extra por tipo + período, não o cuid', async () => {
+    const { ecd, ecf } = await parAssinado();
+    const extra = await criarJob('EXPORT_TRIAL_BALANCE', { status: 'FAILED' });
+    nomeiaSemId(await build(ecd.id, ecf.id, [extra.id]), 400, 'TRIAL_BALANCE de 01/01/2026 a 31/12/2026', extra.id);
+  });
+
+  it('AccountingDeliveryService:447 — extra sem sha256 gravado (400) nomeia o extra por tipo + período, não o cuid', async () => {
+    const { ecd, ecf } = await parAssinado();
+    const extra = await criarJob('EXPORT_TRIAL_BALANCE', { sha256: null });
+    nomeiaSemId(await build(ecd.id, ecf.id, [extra.id]), 400, 'TRIAL_BALANCE de 01/01/2026 a 31/12/2026', extra.id);
+  });
+
+  it('AccountingDeliveryService:451 — extra de tipo não entregável (400) nomeia o extra por tipo + período, não o cuid', async () => {
+    const { ecd, ecf } = await parAssinado();
+    const extra = await criarJob('EXPORT_SPED_ECD');
+    nomeiaSemId(await build(ecd.id, ecf.id, [extra.id]), 400, 'ECD de 01/01/2026 a 31/12/2026', extra.id);
+  });
+
+  it('AccountingDeliveryService:457 — extra sem período gravado (400) nomeia o extra pela data de geração, não o cuid', async () => {
+    const { ecd, ecf } = await parAssinado();
+    const extra = await criarJob('EXPORT_TRIAL_BALANCE', { periodStart: null, periodEnd: null });
+    nomeiaSemId(await build(ecd.id, ecf.id, [extra.id]), 400, `TRIAL_BALANCE gerada em ${dmy(extra.createdAt)}`, extra.id);
+  });
+
+  it('AccountingDeliveryService:471 — dois extras do mesmo tipo com períodos que se cruzam (400) nomeia o 2º extra, não o cuid', async () => {
+    const { ecd, ecf } = await parAssinado();
+    const periodo = { periodStart: new Date(Date.UTC(2026, 0, 1)), periodEnd: new Date(Date.UTC(2026, 2, 31)) };
+    const a = await criarJob('EXPORT_TRIAL_BALANCE', periodo);
+    const b = await criarJob('EXPORT_TRIAL_BALANCE', { periodStart: new Date(Date.UTC(2026, 1, 1)), periodEnd: new Date(Date.UTC(2026, 3, 30)) });
+    const res = await build(ecd.id, ecf.id, [a.id, b.id]);
+    expect(res.body.code).toBe('DUPLICATE_KIND');
+    nomeiaSemId(res, 400, 'TRIAL_BALANCE de 01/02/2026 a 30/04/2026', a.id, b.id);
+  });
+
+  it('AccountingDeliveryService:480 — extra fora do período do pacote (400) nomeia o extra por tipo + período, não o cuid', async () => {
+    const { ecd, ecf } = await parAssinado();
+    const extra = await criarJob('EXPORT_TRIAL_BALANCE', { periodStart: new Date(Date.UTC(2025, 0, 1)), periodEnd: new Date(Date.UTC(2025, 5, 30)) });
+    const res = await build(ecd.id, ecf.id, [extra.id]);
+    expect(res.body.code).toBe('EXTRA_PERIOD_OUT_OF_RANGE');
+    nomeiaSemId(res, 400, 'TRIAL_BALANCE de 01/01/2025 a 30/06/2025', extra.id);
+  });
+
+  it('AccountingDeliveryService:512 — reentrega com outro conjunto de extras (409) nomeia os jobs, o contador e a entrega, não os cuids', async () => {
+    const { ecd, ecf } = await parAssinado();
+    const extra = await criarJob('EXPORT_TRIAL_BALANCE');
+    const primeira = await confirm(ecd.id, ecf.id);
+    expect(primeira.status).toBe(201);
+    const res = await confirm(ecd.id, ecf.id, [extra.id]);
+    expect(res.body.code).toBe('PACKAGE_ALREADY_DELIVERED');
+    nomeiaSemId(res, 409, 'Contadora Msg', ecd.id, ecf.id, contato.id, primeira.body.data.deliveryId);
+  });
+});

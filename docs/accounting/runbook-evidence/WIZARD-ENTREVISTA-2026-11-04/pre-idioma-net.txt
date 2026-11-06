@@ -1,0 +1,32 @@
+PATCH /api/users/me/preferences -> 200  [Authorization: Bearer <redigido>]  req: {"locale":"pt"}
+   res: {"success":true,"data":{"id":"cmw2541na0004cifw73gehtlp","locale":"pt","currency":"BRL"}}
+GET /api/dashboard/presets -> 304  [Authorization: Bearer <redigido>]
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","category":"services"},{"key":"aestheticClinic","name":"ERP para Clínica de Estética","description":"Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.","category":"services"},{"key":"crmModule","name":"Módulo CRM","description":"CRM completo: funil de leads, propostas, atividades, contas e contatos.","category":"sales"}]}
+GET /api/dynamic-tables -> 304  [Authorization: Bearer <redigido>]
+   res: {"success":true,"data":[]}
+GET /api/auth/me -> 200  [Authorization: Bearer <redigido>]
+   res: {"success":true,"data":{"id":"cmw2541na0004cifw73gehtlp","name":"AI tester wiz1","username":"wiz1-c7-20261104","email":"wiz1-c7-20261104@luminaris.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-04T13:16:04.054Z","updatedAt":"2026-11-04T13:18:10.583Z"}}
+GET /api/dashboard/presets -> 304  [Authorization: Bearer <redigido>]
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","category":"services"},{"key":"aestheticClinic","name":"ERP para Clínica de Estética","description":"Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.","category":"services"},{"key":"crmModule","name":"Módulo CRM","description":"CRM completo: funil de leads, propostas, atividades, contas e contatos.","category":"sales"}]}
+GET /api/dynamic-tables -> 304  [Authorization: Bearer <redigido>]
+   res: {"success":true,"data":[]}
+GET /api/dashboard/presets -> 304  [Authorization: Bearer <redigido>]
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","category":"services"},{"key":"aestheticClinic","name":"ERP para Clínica de Estética","description":"Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.","category":"services"},{"key":"crmModule","name":"Módulo CRM","description":"CRM completo: funil de leads, propostas, atividades, contas e contatos.","category":"sales"}]}
+GET /api/auth/me -> 304  [Authorization: Bearer <redigido>]
+   res: {"success":true,"data":{"id":"cmw2541na0004cifw73gehtlp","name":"AI tester wiz1","username":"wiz1-c7-20261104","email":"wiz1-c7-20261104@luminaris.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-04T13:16:04.054Z","updatedAt":"2026-11-04T13:18:10.583Z"}}
+GET /api/dynamic-tables -> 304  [Authorization: Bearer <redigido>]
+   res: {"success":true,"data":[]}
+GET /api/dashboard/presets -> 304  [Authorization: Bearer <redigido>]
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","category":"services"},{"key":"aestheticClinic","name":"ERP para Clínica de Estética","description":"Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.","category":"services"},{"key":"crmModule","name":"Módulo CRM","description":"CRM completo: funil de leads, propostas, atividades, contas e contatos.","category":"sales"}]}
+GET /api/dynamic-tables -> 304  [Authorization: Bearer <redigido>]
+   res: {"success":true,"data":[]}
+GET /api/dashboard/presets -> 304  [Authorization: Bearer <redigido>]
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","category":"services"},{"key":"aestheticClinic","name":"ERP para Clínica de Estética","description":"Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.","category":"services"},{"key":"crmModule","name":"Módulo CRM","description":"CRM completo: funil de leads, propostas, atividades, contas e contatos.","category":"sales"}]}
+GET /api/dynamic-tables -> 304  [Authorization: Bearer <redigido>]
+   res: {"success":true,"data":[]}
+GET /api/auth/me -> 304  [Authorization: Bearer <redigido>]
+   res: {"success":true,"data":{"id":"cmw2541na0004cifw73gehtlp","name":"AI tester wiz1","username":"wiz1-c7-20261104","email":"wiz1-c7-20261104@luminaris.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-04T13:16:04.054Z","updatedAt":"2026-11-04T13:18:10.583Z"}}
+GET /api/dashboard/presets -> 304  [Authorization: Bearer <redigido>]
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","category":"services"},{"key":"aestheticClinic","name":"ERP para Clínica de Estética","description":"Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.","category":"services"},{"key":"crmModule","name":"Módulo CRM","description":"CRM completo: funil de leads, propostas, atividades, contas e contatos.","category":"sales"}]}
+GET /api/dynamic-tables -> 304  [Authorization: Bearer <redigido>]
+   res: {"success":true,"data":[]}

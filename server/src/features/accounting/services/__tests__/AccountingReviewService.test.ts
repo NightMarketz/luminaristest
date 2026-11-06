@@ -157,10 +157,10 @@ describe('AccountingReviewService', () => {
       await expect(b.service.openReview(scope, { unitId: 'unit-1', year: 2026, ecdJobId: 'job-ecd' })).rejects.toThrow(/período/);
     });
 
-    it('2ª abertura para o mesmo par é 409 REVIEW_ALREADY_OPEN com o id existente, sem create', async () => {
+    it('2ª abertura para o mesmo par é 409 REVIEW_ALREADY_OPEN nomeando a revisão pelo exercício, sem create (FIX-MENSAGENS-ID-INTERNO lote 3)', async () => {
       const { service, create } = build({ existingByJobs: reviewRow({ id: 'r-existing' }) });
       await expect(service.openReview(scope, { unitId: 'unit-1', year: 2026, ecdJobId: 'job-ecd', ecfJobId: 'job-ecf' }))
-        .rejects.toMatchObject({ errorCode: 'REVIEW_ALREADY_OPEN', message: expect.stringContaining('r-existing') });
+        .rejects.toMatchObject({ errorCode: 'REVIEW_ALREADY_OPEN', message: expect.stringContaining('revisão do exercício') });
       expect(create).not.toHaveBeenCalled();
     });
 

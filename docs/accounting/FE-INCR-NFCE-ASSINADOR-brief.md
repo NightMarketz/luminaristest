@@ -220,6 +220,14 @@ existe num ramo. Numeração FA-n para não colidir com AL-n.
   FA-2), `AssinadorLocalSection` (FA-4 a FA-11, FA-15), `AssinadorForaAviso` (FA-12, FA-13), regressão da
   `FiscalDocumentsSection` com um documento `PENDING_SIGNATURE` (tom e rótulo, sem `undefined`).
 
+### Régua de testes (APRENDIZADOS-TESTES-2026-11-04)
+
+> Patch de 04/11. Pedido do dono (chat, 04/11): *"Já vai atualizando todas os aprendizados nos locais onde são briefs"*. Não muda item, contrato nem fork ratificado: acrescenta ao critério de aceite **só o que falta** da régua A1–A8 de [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md). Onde um ponto pediria mudar algo ratificado, ele está no corpo do PR como pergunta ao dono.
+
+- **A1 — uma camada por prova.** A regra (`assinadorEstado`, tabela) é unit do vitest. A ligação da seção com a API real vai para o teste de tela (runner do #1064) sobre o cenário, não para vitest com `fetch` stub.
+- **A3 — texto testado.** Os estados de erro (fora, versão antiga, código expirado) são testados um por vez **pelo texto exibido** em pt e en, não só pelo código do estado. É a lacuna que a VENDA-PACOTE mostrou.
+- **A4.** A pré-condição do teste de tela é um cenário com unidade de NFC-e e assinador falso, com o comando que o põe de pé.
+
 ## 4. Plano por fatias
 
 | PR | Itens | Depende | Natureza |

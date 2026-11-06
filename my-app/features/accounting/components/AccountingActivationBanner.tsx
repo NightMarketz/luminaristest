@@ -146,7 +146,7 @@ export function AccountingActivationBanner({ unitId, onNavigateToPeriods, onNavi
         title={t('activation.confirm.title', 'Ativar a contabilidade desta unidade?')}
         message={t(
           'activation.confirm.message',
-          'Setor: {{sector}}. Ao confirmar, (1) o plano de contas padrão é instalado se o da unidade estiver vazio e (2) o período do mês corrente é aberto se ainda não existir.',
+          'Setor: {{sector}}. Ao confirmar, (1) o plano de contas padrão é conferido (costuma já ter sido instalado quando alguma tela da Contabilidade lista as contas; se ainda estiver vazio, é instalado agora) e (2) o período do mês corrente é aberto se ainda não existir.',
           { sector: sectorLabel(sector) },
         )}
         confirmLabel={t('activation.confirm.confirmLabel', 'Ativar')}
