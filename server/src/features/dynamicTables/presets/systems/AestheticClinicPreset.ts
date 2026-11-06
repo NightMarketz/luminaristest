@@ -34,9 +34,9 @@ const AestheticClinicPreset = {
     'EST-0', 'AGE-0', 'FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META'] as ModuleKey[],
   // BE-INCR-MODULOS-BASE-SUBMODULOS PR-3 (item 16): ESTOQUE (productUnits + stockMovements) e AGENDA (appointments)
   // viraram módulos; saíram de `tables`.
-  // BE-INCR-MODULOS-BASE-SUBMODULOS item 11b: as 4 tabelas que a contabilidade lê pelo nome (W2 / F-W2-2) seguem
-  // travadas; viraram tabelas de módulo (PES-0, VEN-0, VEN-PAC), então a trava vem daqui até o PR-5.
-  lockedModuleTables: ['customers', 'packages', 'sales', 'saleItems'],
+  // BE-INCR-MODULOS-BASE-SUBMODULOS PR-5 (itens 26 e 28): a ponte de vendas exige PES-0 e VEN-0, que ficam travados
+  // pela contabilidade (`lockedBy` do módulo); a trava por tabela (`lockedModuleTables`) saiu e VEN-PAC destravou (F-MB-5).
+  bridges: ['sales@1' as const],
   // Item 11a: a ficha da clínica (F-P2-5 a) substitui a fonte de `customers` do PES-0 — mesmo internalName.
   moduleOverrides: { customers: aestheticClinicCustomerModule },
   // W5 item 2 (F-W5-1 → b): perfil da IA movido byte a byte do `presetKnowledgeBase` escrito à mão (`8ba1ed8f`).

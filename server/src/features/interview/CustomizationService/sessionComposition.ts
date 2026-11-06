@@ -11,7 +11,7 @@ import type { ICustomizationState } from '../models/InterviewTypes';
  * a autoridade e revalida tudo.
  */
 
-type SessionPreset = Pick<PresetSuite, 'tables' | 'modules' | 'moduleOverrides' | 'lockedModuleTables'>;
+type SessionPreset = Pick<PresetSuite, 'tables' | 'modules' | 'moduleOverrides' | 'bridges'>;
 
 /**
  * F-W1-6 (a): as tabelas que a sessão customiza — as dos módulos instalados e as da suíte, na mesma precedência do

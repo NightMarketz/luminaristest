@@ -33,7 +33,7 @@ import { reloadAccountingMappersSerialized } from '@/features/accountingBinding/
 import { OnboardingAccountingResultSchema } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
 import type { ActivateDefaultBindingResult, OnboardingAccountingResult } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
 import { composeModuleTables, expandModuleSelectors, moduleOfTable, suiteModuleOptions, type ModuleSelector } from '@/features/dynamicTables/presets/modules/registry';
-import { applyModuleRemovals, applySelectOverrides, assertAddedFieldsRespectModules, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
+import { applyModuleRemovals, applySelectOverrides, assertAddedFieldsRespectModules, assertBridgeModulesKept, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
 import { assertRemovalsAllowed } from '@/features/dynamicTables/presets/removability';
 import { CoreSystemPreset, PresetTableDefinition } from '@/features/dynamicTables/presets';
 import { DYNAMIC_TABLE_CATEGORY_CONFIG, DynamicTableCategoryConfig } from '@/features/dynamicTables/models/TableCategories';
@@ -212,8 +212,11 @@ async function handleCustomCreation(
     // BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: roda ANTES da regra de módulos, para que a trava de tabela de PESSOAS/VENDAS
     // (contábil, relação obrigatória) responda o mesmo 400 `TABLE_LOCKED` de quando elas eram tabelas da suíte.
     const coreTableKeys = Object.keys(CoreSystemPreset.tables);
-    assertRemovalsAllowed(finalTablesConfig, removedTables.filter((k) => !coreTableKeys.includes(k)));
+    // PR-5 (item 28): com as pontes da suíte, que travam PES-0/VEN-0 pela contabilidade.
+    assertRemovalsAllowed(finalTablesConfig, removedTables.filter((k) => !coreTableKeys.includes(k)), originalPreset.bridges ?? []);
     const keptModules = applyModuleRemovals(installedModules, removedTables);
+    // PR-5 (item 27): módulo exigido por ponte da suíte ausente → 400 BRIDGE_REQUIRES_MODULE.
+    assertBridgeModulesKept(keptModules, originalPreset.bridges ?? []);
 
     for (const tableKey of removedTables) {
       if (!coreTableKeys.includes(tableKey)) {

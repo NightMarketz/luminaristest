@@ -67,6 +67,7 @@ export class CustomizationService {
       const tables = this.tableExtractor.extractTablesFromRealPreset({
         key: presetKey,
         tables: composeSessionTables(preset, installed),
+        bridges: preset.bridges ?? [],
       });
       return await this.stateManager.createSessionState(userId, presetKey, preset.name, tables, installed);
     } catch (error) {
@@ -280,7 +281,7 @@ Você gostaria de:
     const installed = resolveModuleSelection(expandModuleSelectors(modules), suiteKept);
     const entering = installed.filter((k) => !current.includes(k));
     const enteringTables = this.tableExtractor
-      .extractTablesFromRealPreset({ key: preset.key ?? handle.state.presetKey, tables: composeSessionTables(preset, installed) })
+      .extractTablesFromRealPreset({ key: preset.key ?? handle.state.presetKey, tables: composeSessionTables(preset, installed), bridges: preset.bridges ?? [] })
       .filter((t) => entering.includes(moduleOfTable(t.key)!) && !(t.key in preset.tables));
     await this.stateManager.setModules(handle, installed, enteringTables);
     return handle.state;

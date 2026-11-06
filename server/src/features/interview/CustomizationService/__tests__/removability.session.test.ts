@@ -18,6 +18,7 @@ import { resolveModuleSelection } from '../../../dynamicTables/presets/modules/m
 const salaoPreset = {
   key: BeautySalonPreset.key,
   tables: composeSessionTables(BeautySalonPreset, resolveModuleSelection([], BeautySalonPreset.modules)),
+  bridges: BeautySalonPreset.bridges,
 };
 
 // Sem chave de OpenAI no projeto unit: o cliente nunca é chamado (getAiResponse é stub abaixo).
@@ -28,7 +29,8 @@ beforeEach(() => jest.clearAllMocks());
 // PR-3: productUnits/stockMovements (EST-0) e appointments (AGE-0) são bases fixas → FIXED_MODULE, como o CRM-0. Dono,
 // 2026-10-31, questionário: "Aceitar até o PR-6 (Recommended)" — na entrevista o salão não tira Estoque/Agenda até o
 // PR-6 (item 32) decidir a remoção da categoria inteira; no Controle Total a categoria inteira sai.
-const TRAVADAS_SALAO = ['customers', 'packages', 'sales', 'saleItems', 'products', 'services', 'productUnits', 'stockMovements', 'appointments'];
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-5 (item 28, F-MB-5): VEN-PAC destravou — `packages` saiu da lista.
+const TRAVADAS_SALAO = ['customers', 'sales', 'saleItems', 'products', 'services', 'productUnits', 'stockMovements', 'appointments'];
 // CRM-0 (fixo) vem dos módulos default do salão, travado por FIXED_MODULE.
 // PR-4: as bases fixas de FINANCEIRO (FIN-0 = expenses) e GESTÃO (GES-0 = reports) travam do mesmo jeito.
 const FUNIL = ['leadPipelines', 'leadStages', 'leads', 'leadActivities', 'expenses', 'reports'];

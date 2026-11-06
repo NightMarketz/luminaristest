@@ -6,6 +6,17 @@ import { ITableSchema } from '../models/DynamicTable.model';
 import type { AnalyticsConfiguration } from '@/features/analytics/core/models/AnalyticsConfiguration';
 import { DynamicTableCategory } from '../models/TableCategories';
 import type { ModuleKey } from './modules/registry';
+import { z } from 'zod';
+
+/**
+ * BE-INCR-MODULOS-BASE-SUBMODULOS PR-5, item 26 (F-MS-7 a): pontes contábeis que uma suíte declara, num enum fechado.
+ * `BRIDGE_REQUIRES` diz quais módulos cada ponte exige; o módulo exigido com `lockedBy: 'accounting'` fica travado
+ * (item 28) e a seleção sem ele é recusada com `BRIDGE_REQUIRES_MODULE` (item 27).
+ */
+export const BRIDGE_KEYS = ['sales@1'] as const;
+export const bridgeKeySchema = z.enum(BRIDGE_KEYS);
+export type BridgeKey = z.infer<typeof bridgeKeySchema>;
+export const BRIDGE_REQUIRES: Readonly<Record<BridgeKey, readonly ModuleKey[]>> = { 'sales@1': ['PES-0', 'VEN-0'] };
 
 /**
  * The core system preset that is installed for every user.
@@ -56,7 +67,8 @@ export type PresetTableDefinition = {
     requiresCapabilities?: string[];
     /**
      * W2 / F-W2-2 (ratificado 2026-10-15): a tabela é lida pela contabilidade do setor e não pode ser removida no
-     * onboarding. Declarado nas suítes (`lockedByAccounting`), nunca no módulo compartilhado.
+     * onboarding. PR-5 (item 28): as suítes deixaram de declarar; a trava vem do módulo (`ModuleDef.lockedBy` + ponte).
+     * O helper `lockedByAccounting` segue no `TableFactory` por compatibilidade.
      */
     lockedBy?: 'accounting';
   };
@@ -87,11 +99,8 @@ export type PresetSuite = {
    * (internalName → módulo-fonte; ex.: a clínica usa a ficha própria em `customers`). Só tabela de módulo do registro.
    */
   moduleOverrides?: Readonly<Record<string, unknown>>;
-  /**
-   * Item 11b: tabelas de módulo que a contabilidade do setor lê pelo nome (`meta.lockedBy: 'accounting'`). Vale até o
-   * PR-5 (item 28) levar a trava para o módulo.
-   */
-  lockedModuleTables?: readonly string[];
+  /** PR-5 (item 26): pontes contábeis da suíte (salão e clínica: `['sales@1']`). */
+  bridges?: BridgeKey[];
 };
 
 /**
@@ -104,7 +113,7 @@ export type PresetAiProfile = { name: string; description: string };
  * Suíte selecionável: `key` e `aiProfile` obrigatórios. `tablePresetSuites` é declarado com `satisfies` deste tipo — uma
  * suíte sem perfil de IA não compila (o `CoreSystemPreset` fica fora: não é selecionável).
  */
-export type SelectablePresetSuite = PresetSuite & { key: string; aiProfile: PresetAiProfile };
+export type SelectablePresetSuite = PresetSuite & { key: string; aiProfile: PresetAiProfile; bridges: BridgeKey[] };
 
 export type PresetSuiteCategory = keyof typeof tablePresetSuites;
 export type PresetSuiteName<T extends PresetSuiteCategory> = keyof (typeof tablePresetSuites)[T];

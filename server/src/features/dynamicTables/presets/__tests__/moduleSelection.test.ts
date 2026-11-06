@@ -16,8 +16,10 @@ import {
   applyModuleRemovals,
   applySelectOverrides,
   assertAddedFieldsRespectModules,
+  assertBridgeModulesKept,
   resolveModuleSelection,
 } from '../modules/moduleSelection';
+import BeautySalonPreset from '../systems/BeautySalonPreset';
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -274,5 +276,42 @@ describe('registro com várias categorias (BE-INCR-MODULOS-BASE-SUBMODULOS PR-1,
   it('registro real (só CRM): comportamento inalterado — requiresOneOf vazio nunca dispara', () => {
     expect(resolveModuleSelection(['CRM-1'])).toEqual(['CRM-0', 'CRM-1']);
     expect(applyModuleRemovals(['CRM-0', 'CRM-1'], ['leadProposals'])).toEqual(['CRM-0']);
+  });
+});
+
+describe('BE-INCR-MODULOS-BASE-SUBMODULOS PR-5, item 27 — obrigatório derivado das pontes (F-MS-7 a)', () => {
+  const salao = resolveModuleSelection([], BeautySalonPreset.modules);
+  const detalhes = (kept: readonly ModuleKey[]) => {
+    try {
+      assertBridgeModulesKept(kept, BeautySalonPreset.bridges);
+      return null;
+    } catch (e) {
+      expect(e).toBeInstanceOf(ValidationError);
+      return { message: (e as Error).message, details: (e as ValidationError).details };
+    }
+  };
+
+  it('salão completo → ok', () => {
+    expect(detalhes(salao)).toBeNull();
+  });
+
+  it('remover VENDAS do salão → 400 BRIDGE_REQUIRES_MODULE (VEN-0)', () => {
+    const semVendas = salao.filter((k) => MODULE_REGISTRY[k].category !== 'vendas');
+    expect(detalhes(semVendas)).toEqual({
+      message: "A contabilidade do setor (sales@1) exige o módulo 'VEN-0'.",
+      details: { reason: 'BRIDGE_REQUIRES_MODULE', bridge: 'sales@1', module: 'VEN-0' },
+    });
+  });
+
+  it('remover PESSOAS do salão → 400 (PES-0)', () => {
+    const semPessoas = salao.filter((k) => MODULE_REGISTRY[k].category !== 'pessoas');
+    expect(detalhes(semPessoas)).toEqual({
+      message: "A contabilidade do setor (sales@1) exige o módulo 'PES-0'.",
+      details: { reason: 'BRIDGE_REQUIRES_MODULE', bridge: 'sales@1', module: 'PES-0' },
+    });
+  });
+
+  it('suíte sem ponte (crmModule) → nada é exigido', () => {
+    expect(() => assertBridgeModulesKept(['CRM-0'], [])).not.toThrow();
   });
 });

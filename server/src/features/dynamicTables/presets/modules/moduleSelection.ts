@@ -1,6 +1,6 @@
 import { ValidationError } from '../../../../lib/errors';
 import type { ISchemaField } from '../../models/DynamicTable.model';
-import type { PresetSuite, PresetTableDefinition } from '..';
+import { BRIDGE_REQUIRES, type BridgeKey, type PresetSuite, type PresetTableDefinition } from '..';
 import {
   composeModuleTables,
   MODULE_REGISTRY,
@@ -68,7 +68,7 @@ export function resolveModuleSelection(
  * fechados pelas dependências, com a fonte/trava da suíte, e as tabelas soltas da suíte por cima (precedência do create).
  */
 export function composeSuiteDefaultTables(
-  suite: Pick<PresetSuite, 'tables' | 'modules' | 'moduleOverrides' | 'lockedModuleTables'>,
+  suite: Pick<PresetSuite, 'tables' | 'modules' | 'moduleOverrides' | 'bridges'>,
 ): Record<string, PresetTableDefinition> {
   return { ...composeModuleTables(resolveModuleSelection([], suite.modules ?? []), suiteModuleOptions(suite)), ...suite.tables };
 }
@@ -118,6 +118,24 @@ export function applyModuleRemovals(
   }
   assertRequiresOneOf(new Set(kept), registry);
   return kept;
+}
+
+/**
+ * BE-INCR-MODULOS-BASE-SUBMODULOS PR-5, item 27 (F-MS-7 a): cada ponte que a suíte declara exige os módulos de
+ * `BRIDGE_REQUIRES`. Chamado no create depois de `applyModuleRemovals`, sobre os módulos mantidos: o primeiro exigido
+ * ausente → 400 `{ reason: 'BRIDGE_REQUIRES_MODULE', bridge, module }`.
+ */
+export function assertBridgeModulesKept(kept: readonly ModuleKey[], bridges: readonly BridgeKey[]): void {
+  for (const bridge of bridges) {
+    for (const module of BRIDGE_REQUIRES[bridge]) {
+      if (kept.includes(module)) continue;
+      throw new ValidationError(`A contabilidade do setor (${bridge}) exige o módulo '${module}'.`, {
+        reason: 'BRIDGE_REQUIRES_MODULE',
+        bridge,
+        module,
+      });
+    }
+  }
 }
 
 /**

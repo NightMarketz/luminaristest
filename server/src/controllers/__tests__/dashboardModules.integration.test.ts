@@ -319,7 +319,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
 
   it('BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: tabela de PESSOAS/VENDAS segue com a trava de tabela no create (400 TABLE_LOCKED, nada instalado)', async () => {
     const casos: [string, Record<string, unknown>][] = [
-      ['packages', { reason: 'ACCOUNTING' }],
+      // PR-5 (item 28, F-MB-5): `packages` saiu desta lista — VEN-PAC destravou (caso próprio abaixo).
       ['customers', { reason: 'ACCOUNTING' }],
       ['products', { reason: 'REQUIRED_RELATION', by: ['productUnits', 'stockMovements'] }],
     ];
@@ -331,6 +331,34 @@ describe('I8 — CRM como categoria composta por módulos', () => {
       });
       expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
     }
+  });
+
+  it('PR-5 item 28: salão − packages → 201, VEN-PAC fora de modules.installed (VEN-PAC destravou)', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: ['packages'], unit: { name: 'M' } });
+    expect(r.status).toBe(201);
+    expect(r.body.data.modules.installed).not.toContain('VEN-PAC');
+    expect(await tabela(u.id, 'packages')).toBeNull();
+  });
+
+  // PR-5 item 27. LACUNA registrada no retorno: no create, `assertRemovalsAllowed` (trava ACCOUNTING de PES-0/VEN-0,
+  // item 28, chamada ANTES de `applyModuleRemovals` desde o #1002) responde primeiro, então a recusa chega como
+  // TABLE_LOCKED e o `BRIDGE_REQUIRES_MODULE` (coberto em moduleSelection.test.ts) não é alcançado por estes dois casos.
+  it('PR-5 item 27: remover VENDAS do salão → 400, nada instalado', async () => {
+    const VENDAS = ['sales', 'saleItems', 'services', 'products', 'packages', 'commissions', 'productUnits', 'stockMovements', 'appointments'];
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: VENDAS, unit: { name: 'M' } });
+    expect(r.status).toBe(400);
+    expect(r.body.details).toMatchObject({ reason: 'TABLE_LOCKED', table: 'sales', lock: { reason: 'ACCOUNTING' } });
+    expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
+  });
+
+  it('PR-5 item 27: remover PESSOAS do salão → 400 (PES-0), nada instalado', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: ['customers', 'suppliers'], unit: { name: 'M' } });
+    expect(r.status).toBe(400);
+    expect(r.body.details).toMatchObject({ reason: 'TABLE_LOCKED', table: 'customers', lock: { reason: 'ACCOUNTING' } });
+    expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
   });
 
   it('GAP-MAP CRM-0 parcial: salão custom sem as 5 tabelas de lead → modules.installed sem CRM-0 nem CRM-1', async () => {
