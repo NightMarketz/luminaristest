@@ -1,7 +1,0 @@
-Running one project: unit
-
-Test Suites: 25 passed, 25 total
-Tests:       251 passed, 251 total
-Snapshots:   0 total
-Time:        2.275 s
-Ran all test suites matching src/features/dynamicTables/presets|src/features/interview.

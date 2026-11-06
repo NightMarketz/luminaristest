@@ -1,9 +1,0 @@
-
-> luminaris-server@1.0.0 check:arch
-> depcruise src --config .dependency-cruiser.cjs --ignore-known .dependency-cruiser-known-violations.json --output-type err
-
-
-✔ no dependency violations found (1973 modules, 9067 dependencies cruised)
-‼ 26 known violations ignored. Run with --no-ignore-known to see them.
-‼ 28 stale known violations in the baseline. Run with '--baseline --baseline-mode shrink-only' to remove them.
-
