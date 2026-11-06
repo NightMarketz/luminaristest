@@ -47,7 +47,7 @@
         "id": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         }
       },
       "required": [
@@ -138,7 +138,7 @@
         "discriminador": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "valorInt": {},
         "clausula": {
@@ -150,13 +150,9 @@
           "type": "string"
         },
         "vigenteAte": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         }
       },
@@ -181,7 +177,7 @@
         "sindicatoId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "identificacao": {
           "type": "string",
@@ -192,13 +188,9 @@
           "type": "string"
         },
         "vigenteAte": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
         "fonte": {
@@ -344,12 +336,12 @@
         "id": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "parametroId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         }
       },
       "required": [
@@ -399,13 +391,9 @@
           "type": "string"
         },
         "vigenteAte": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         }
       },
@@ -431,13 +419,9 @@
           "type": "string"
         },
         "vigenteAte": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
         "fonte": {
@@ -558,14 +542,14 @@
         "lotacaoId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "cargoId": {
           "anyOf": [
             {
               "type": "string",
               "format": "cuid",
-              "pattern": "^[cC][^\\s-]{8,}$"
+              "pattern": "^[cC][0-9a-z]{6,}$"
             },
             {
               "type": "null"
@@ -577,7 +561,7 @@
             {
               "type": "string",
               "format": "cuid",
-              "pattern": "^[cC][^\\s-]{8,}$"
+              "pattern": "^[cC][0-9a-z]{6,}$"
             },
             {
               "type": "null"
@@ -589,7 +573,7 @@
             {
               "type": "string",
               "format": "cuid",
-              "pattern": "^[cC][^\\s-]{8,}$"
+              "pattern": "^[cC][0-9a-z]{6,}$"
             },
             {
               "type": "null"
@@ -646,7 +630,7 @@
         "partnerId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         }
       },
       "required": [
@@ -671,22 +655,22 @@
         "lotacaoId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "cargoId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "jornadaId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "sindicatoId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "salarioCents": {},
         "unidadeSalario": {
@@ -722,7 +706,7 @@
         "trabalhadorId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "matricula": {
           "type": "string",
@@ -745,22 +729,22 @@
             "lotacaoId": {
               "type": "string",
               "format": "cuid",
-              "pattern": "^[cC][^\\s-]{8,}$"
+              "pattern": "^[cC][0-9a-z]{6,}$"
             },
             "cargoId": {
               "type": "string",
               "format": "cuid",
-              "pattern": "^[cC][^\\s-]{8,}$"
+              "pattern": "^[cC][0-9a-z]{6,}$"
             },
             "jornadaId": {
               "type": "string",
               "format": "cuid",
-              "pattern": "^[cC][^\\s-]{8,}$"
+              "pattern": "^[cC][0-9a-z]{6,}$"
             },
             "sindicatoId": {
               "type": "string",
               "format": "cuid",
-              "pattern": "^[cC][^\\s-]{8,}$"
+              "pattern": "^[cC][0-9a-z]{6,}$"
             },
             "salarioCents": {},
             "unidadeSalario": {
@@ -801,12 +785,12 @@
         "id": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "versaoId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         }
       },
       "required": [
@@ -854,7 +838,7 @@
             {
               "type": "string",
               "format": "cuid",
-              "pattern": "^[cC][^\\s-]{8,}$"
+              "pattern": "^[cC][0-9a-z]{6,}$"
             },
             {
               "type": "null"
@@ -874,22 +858,22 @@
         "lotacaoId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "cargoId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "jornadaId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "sindicatoId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "salarioCents": {},
         "unidadeSalario": {
@@ -982,12 +966,12 @@
         "id": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "afastamentoId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         }
       },
       "required": [
@@ -1003,12 +987,12 @@
         "id": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "implantacaoId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         }
       },
       "required": [
@@ -1051,13 +1035,9 @@
           "type": "string"
         },
         "fim": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
         "observacao": {

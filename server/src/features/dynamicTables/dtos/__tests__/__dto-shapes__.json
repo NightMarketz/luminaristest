@@ -725,16 +725,10 @@
                 {
                   "type": "array",
                   "items": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "boolean"
-                      }
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean"
                     ]
                   }
                 }
@@ -927,16 +921,10 @@
                           {
                             "type": "array",
                             "items": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "number"
-                                },
-                                {
-                                  "type": "boolean"
-                                }
+                              "type": [
+                                "string",
+                                "number",
+                                "boolean"
                               ]
                             }
                           }
@@ -1371,16 +1359,10 @@
                           {
                             "type": "array",
                             "items": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "number"
-                                },
-                                {
-                                  "type": "boolean"
-                                }
+                              "type": [
+                                "string",
+                                "number",
+                                "boolean"
                               ]
                             }
                           }
@@ -1765,13 +1747,9 @@
           "maximum": 9007199254740991
         },
         "actorUserId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
         "origin": {
@@ -1924,13 +1902,9 @@
                 "maximum": 9007199254740991
               },
               "actorUserId": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
+                "type": [
+                  "string",
+                  "null"
                 ]
               },
               "origin": {
@@ -2018,13 +1992,9 @@
           "maximum": 9007199254740991
         },
         "actorUserId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
         "origin": {
@@ -2069,12 +2039,12 @@
         "tableId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "dataId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "version": {
           "type": "integer",
@@ -2107,12 +2077,12 @@
         "tableId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "dataId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         }
       },
       "required": [
@@ -2139,13 +2109,9 @@
           ]
         },
         "actorUserId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
         "origin": {
@@ -2269,13 +2235,9 @@
                 ]
               },
               "actorUserId": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
+                "type": [
+                  "string",
+                  "null"
                 ]
               },
               "origin": {
@@ -2342,13 +2304,9 @@
           ]
         },
         "actorUserId": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
+          "type": [
+            "string",
+            "null"
           ]
         },
         "origin": {
@@ -2379,7 +2337,7 @@
         "tableId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         },
         "version": {
           "type": "integer",
@@ -2409,7 +2367,7 @@
         "tableId": {
           "type": "string",
           "format": "cuid",
-          "pattern": "^[cC][^\\s-]{8,}$"
+          "pattern": "^[cC][0-9a-z]{6,}$"
         }
       },
       "required": [

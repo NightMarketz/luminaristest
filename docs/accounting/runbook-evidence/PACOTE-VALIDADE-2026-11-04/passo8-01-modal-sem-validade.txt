@@ -1,0 +1,29 @@
+Nova Venda
+
+PREENCHA AS INFORMAÇÕES PARA REGISTRAR UMA VENDA
+
+✓
+Geral
+2
+Itens
+1
+PACOTE	QTD	PREÇO UNIT.	TOTAL	
+
+Pacote C7 Sem validade
+	
+		R$ 120,00	
++
+Adicionar pacote
+Subtotal
+R$ 120,00
+Desconto
+TOTAL
+R$ 120,00
+
+VALIDADE DO PACOTE
+
+Sem validade
+
+Cancelar
+Salvar Rascunho
+Finalizar Venda

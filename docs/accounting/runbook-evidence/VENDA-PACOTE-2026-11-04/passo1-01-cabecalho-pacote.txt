@@ -1,0 +1,48 @@
+Nova Venda
+
+PREENCHA AS INFORMAÇÕES PARA REGISTRAR UMA VENDA
+
+1
+Geral
+2
+Itens
+
+TIPO DE VENDA
+
+Produtos
+Serviços
+Pacotes
+
+INFORMAÇÕES DA VENDA
+
+DATA
+UNIDADE*
+Selecione...
+
+CLIENTE
+
+Pacote precisa de cliente cadastrado: o saldo fica no nome dele.
+
+Selecione...
+
+PAGAMENTO
+
+PAGAMENTO
+Selecione...
+Credit Card
+Debit Card
+Cash
+Pix
+Package Balance
+PRAZO DE PAGAMENTO
+À vista
+7 dias
+15 dias
+30 dias
+60 dias
+Outro
+
+OBSERVAÇÕES
+
+Cancelar
+Próximo

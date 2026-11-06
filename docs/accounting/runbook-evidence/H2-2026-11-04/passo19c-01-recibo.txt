@@ -1,0 +1,25 @@
+cmw2bii05001ocitgluzahqfi
+
+SENT — SENT = o operador confirmou que despachou o pacote; o servidor não envia nem confirma recebimento.
+
+CONTADOR H2 19 AI TESTER · RJ-054321/O-7/RJ
+
+Signatário (J930)
+
+identNom: CONTADOR H2 19 AI TESTER
+identCpfCnpj: 71460238184
+identQualif: Contador
+codAssin: 900
+indCrc: RJ-054321/O-7
+email: contador.h2-19@example.com
+fone: 2130000000
+ufCrc: RJ
+indRespLegal: N
+
+Período: 01/01/2025 – 31/12/2025 · Livro: DEFAULT · 04/11/2026, 13:15:16
+
+ECD	cmw2b8rf…	983aa26e9540	
+Baixar
+
+ECF (Lucro Real)	cmw2b9cv…	5001f61e69db	
+Baixar

@@ -1,0 +1,28 @@
+POST /api/auth/login -> 200  req: {"identifier":"admin@luminaris.test","password":"<redigida>","rememberMe":false}
+   res: {"success":true,"data":{"user":{"id":"cmr2jfl4v0000ciakz7tduht3","name":"System Admin","username":"admin","email":"admin@luminaris.test","role":"ADMIN","locale":"en","currency":"BRL","createdAt":"2026-07-01T20:38:25.472Z","updatedAt":"2026-10-29T20:02:37.050Z"},"token":"…"}}
+GET /api/auth/me -> 200
+   res: {"success":true,"data":{"id":"cmr2jfl4v0000ciakz7tduht3","name":"System Admin","username":"admin","email":"admin@luminaris.test","role":"ADMIN","locale":"en","currency":"BRL","createdAt":"2026-07-01T20:38:25.472Z","updatedAt":"2026-10-29T20:02:37.050Z"}}
+GET /api/dashboard-layout -> 200
+   res: {"success":true,"data":[{"id":"cmr2jhufn0000ci1k081gyrj9","userId":"cmr2jfl4v0000ciakz7tduht3","name":"Dashboard","isActive":true,"type":"GRID","config":{"columns":12,"widgets":[],"positions":[]},"createdAt":"2026-07-01T20:40:10.835Z","updatedAt":"2026-07-01T20:40:10.835Z"}]}
+GET /api/dashboard-layout -> 304
+   res: {"success":true,"data":[{"id":"cmr2jhufn0000ci1k081gyrj9","userId":"cmr2jfl4v0000ciakz7tduht3","name":"Dashboard","isActive":true,"type":"GRID","config":{"columns":12,"widgets":[],"positions":[]},"createdAt":"2026-07-01T20:40:10.835Z","updatedAt":"2026-07-01T20:40:10.835Z"}]}
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmr2jfl4v0000ciakz7tduht3","name":"System Admin","username":"admin","email":"admin@luminaris.test","role":"ADMIN","locale":"en","currency":"BRL","createdAt":"2026-07-01T20:38:25.472Z","updatedAt":"2026-10-29T20:02:37.050Z"}}
+POST /api/users -> 201  req: {"name":"H2 AI U4","username":"h2-ai-u4","email":"h2-ai-u4@luminaris.test","password":"<redigida>","role":"USER"}
+   res: {"success":true,"data":{"id":"cmw1mqmt00000ci0c83fdixno","name":"H2 AI U4","username":"h2-ai-u4","email":"h2-ai-u4@luminaris.test","role":"USER","locale":"en","currency":"BRL","createdAt":"2026-11-04T04:41:45.204Z","updatedAt":"2026-11-04T04:41:45.204Z"}}
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmr2jfl4v0000ciakz7tduht3","name":"System Admin","username":"admin","email":"admin@luminaris.test","role":"ADMIN","locale":"en","currency":"BRL","createdAt":"2026-07-01T20:38:25.472Z","updatedAt":"2026-10-29T20:02:37.050Z"}}
+GET /api/users?page=1&limit=6 -> 200
+   res: {"success":true,"data":[{"id":"cmw1mqmt00000ci0c83fdixno","name":"H2 AI U4","username":"h2-ai-u4","email":"h2-ai-u4@luminaris.test","role":"USER","locale":"en","currency":"BRL","createdAt":"2026-11-04T04:41:45.204Z","updatedAt":"2026-11-04T04:41:45.204Z"},{"id":"cmw1m80is0000ciicfw1g8gc1","name":"H2 AI U3","username":"h2-ai-u3","email":"h2-ai-u3@luminaris.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-04T04:27:16.516Z","updatedAt":"2026-11-04T04:32:41.242Z"},{"id":"cmw18t0fk00maci9cne7czj5g","name":"Contador H2 C7","username":"h2c7contador","email":"h2-c7-contador@luminaris.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-03T22:11:41.553Z","updatedAt":"2026-11-03T22:15:02.009Z"},{"id":"cmw18mdc000cjci9cf8v7spqe","name":"H2 C7 U2","username":"h2-c7-u2","email":"h2-c7-u2@luminaris.test","role":"USER","locale":"en","currency":"BRL","createdAt":"2026-11-03T22:06:31.681Z","updatedAt":"2026-11-03T22:07:28.141Z"},{"id":"cmw17vp0u008aci9czu5fikjf","name":"H2 C7 U1 editado","username":"h2-c7-u1","email":"h2-c7-u1@luminaris.test","role":"USER","locale":"pt","currency":"USD","createdAt":"2026-11-03T21:45:47.119Z","updatedAt":"2026-11-03T22:06:05
+POST /api/auth/login -> 200  req: {"identifier":"h2-ai-u4","password":"<redigida>","rememberMe":false}
+   res: {"success":true,"data":{"user":{"id":"cmw1mqmt00000ci0c83fdixno","name":"H2 AI U4","username":"h2-ai-u4","email":"h2-ai-u4@luminaris.test","role":"USER","locale":"en","currency":"BRL","createdAt":"2026-11-04T04:41:45.204Z","updatedAt":"2026-11-04T04:41:45.204Z"},"token":"…"}}
+GET /api/auth/me -> 200
+   res: {"success":true,"data":{"id":"cmw1mqmt00000ci0c83fdixno","name":"H2 AI U4","username":"h2-ai-u4","email":"h2-ai-u4@luminaris.test","role":"USER","locale":"en","currency":"BRL","createdAt":"2026-11-04T04:41:45.204Z","updatedAt":"2026-11-04T04:41:45.204Z"}}
+GET /api/dashboard-layout -> 200
+   res: {"success":true,"data":[]}
+GET /api/dashboard-layout -> 304
+   res: {"success":true,"data":[]}
+POST /api/dashboard-layout -> 201  req: {"name":"Dashboard","type":"GRID","config":{"positions":[],"columns":12,"widgets":[]}}
+   res: {"success":true,"data":{"id":"cmw1mqvmn0001ci0cba2bs4yu","userId":"cmw1mqmt00000ci0c83fdixno","name":"Dashboard","isActive":true,"type":"GRID","config":{"columns":12,"widgets":[],"positions":[]},"createdAt":"2026-11-04T04:41:56.639Z","updatedAt":"2026-11-04T04:41:56.639Z"}}
+POST /api/dashboard-layout -> 201  req: {"name":"Dashboard","type":"GRID","config":{"positions":[],"columns":12,"widgets":[]}}
+   res: {"success":true,"data":{"id":"cmw1mqvmq0002ci0cfj1r9bim","userId":"cmw1mqmt00000ci0c83fdixno","name":"Dashboard","isActive":true,"type":"GRID","config":{"columns":12,"widgets":[],"positions":[]},"createdAt":"2026-11-04T04:41:56.642Z","updatedAt":"2026-11-04T04:41:56.642Z"}}

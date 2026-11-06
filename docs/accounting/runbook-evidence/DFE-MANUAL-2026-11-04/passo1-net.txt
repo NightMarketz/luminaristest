@@ -1,0 +1,16 @@
+Execução 04/11/2026 — RUNBOOK-H2-DFE-MANUAL, passo 1 (mesmo ambiente de P2-P4-net.txt; perfil fiscal ainda com o desvio aplicado,
+ou seja, P4 "completo" exceto pelo CNPJ da unidade)
+
+Tela: Financeiro → Vendas → venda de 04/11/2026, Cliente H2, Finalizada, Pendente, R$ 80,00 (item: Service | Corte H2 | 1 | R$ 80,00;
+"Nenhum documento fiscal emitido para esta venda."). Botões do detalhe: Cancelar | Devolver | Emitir NFS-e | Pagar.
+   print: passo1-00-venda-detalhe.png
+
+Clique em "Emitir NFS-e":
+GET /api/nfe/dfe/documents?unitId=cmuw4yqxg001jcii0iz2yb9rw&saleId=cmw1o7icf002kci40qh1g7ttk -> 304
+   res: {"success":true,"data":[]}
+POST /api/nfe/dfe/preview -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","saleId":"cmw1o7icf002kci40qh1g7ttk","kind":"NFSE"}
+   res: {"success":true,"data":{"ok":false,"faltantes":["serviço 'cmvtxuu71000tci9chpnj578o': falta cNBS (obrigatório com ibsCbsInformar, E0322)","cliente 'cmvtxuu6b000pci9c3yk4b6n2': taxId ausente ou inválido por dígito verificador","CNPJ da unidade ausente ou inválido (cadastre em 'units')"],"competenciaAlerta":false,"payloads":[],"tieOut":{"vServCents":"0","ledgerCents":"0","matches":false}}}
+
+Texto do modal ([role=dialog]), literal: ver passo1-01-modal-emitir.txt
+Botões no modal: Fechar | Fechar (sem "Confirmar")
+   print: passo1-01-modal-emitir.png
