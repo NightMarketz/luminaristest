@@ -99,11 +99,46 @@ VEREDITO: PASS
 ```
 Logs fora do git (`.claude/retornos/_logs/pr5b-*.log`). custo: US$ 13.78 · claude-opus-5-5 US$ 13.78 · 49 min
 
+## Rodada 3 (lacuna 4) — comandos
+
+```yaml
+PROVA:
+  - command: "cd server && npx tsc --noEmit"
+    exit_code: 0
+    log: .claude/retornos/_logs/modulos-base-pr5c-1.log
+    sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  - command: "cd server && npx tsc -p tsconfig.test.json --noEmit"
+    exit_code: 0
+    log: .claude/retornos/_logs/modulos-base-pr5c-2.log
+    sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  - command: "cd server && npm run check:arch"
+    exit_code: 0
+    log: .claude/retornos/_logs/modulos-base-pr5c-3.log
+    sha256: 4dfb96f97b7280fb91e558f47dd910774c79abd3675dac0857c354dbe1111c82
+  - command: "cd server && npx jest src/features/dynamicTables/presets src/features/interview/CustomizationService --selectProjects unit"
+    exit_code: 0
+    log: .claude/retornos/_logs/modulos-base-pr5c-4.log
+    sha256: c05a607e6a5731a39267e5ab1302238b6e11b2f78d05b9187f3d62f12eb7506b
+  - command: "cd server && node ../scripts/heavy-slot.cjs run --label builder-pr5c -- npx jest src/controllers/__tests__/dashboardModules.integration.test.ts --runInBand"
+    exit_code: 0
+    log: .claude/retornos/_logs/modulos-base-pr5c-i-dashboardModules.log
+    sha256: 32503f033b5c5318751f31621023179d702cd6cdb5bc305e77d974e56a5d3596
+  - command: "cd server && node ../scripts/heavy-slot.cjs run --label builder-pr5c -- npx jest src/controllers/__tests__/dashboardCreate.removability.integration.test.ts --runInBand"
+    exit_code: 0
+    log: .claude/retornos/_logs/modulos-base-pr5c-i-dashboardCreate.removability.log
+    sha256: 7db15b4585ba7038496666224a9e1b40198df0065c1a5a0e9c5917ef1a9782ed
+  - command: "cd server && node ../scripts/heavy-slot.cjs run --label builder-pr5c -- npx jest src/features/dynamicTables/presets/__tests__/suitePayloadBaseline.integration.test.ts --runInBand"
+    exit_code: 0
+    log: .claude/retornos/_logs/modulos-base-pr5c-i-suitePayloadBaseline.log
+    sha256: 49ebd1f5e7e2a31ec26e73a8d7241307552d091c400430c8ddf03ef71a0069f3
+VEREDITO: PASS
+```
+
 ## Lacunas de spec
 
 1. **DECIDIDA (dono, questionário 2026-11-06, "As duas juntas").** No create, `findRemovalLock` + `findMissingBridgeModule` → `throwRemovalRefusals`: um motivo = o 400 de sempre; dois = um 400 só, `error` com as duas mensagens e `details` = 1º motivo (`TABLE_LOCKED`, compatível com quem lê `details.reason`) + `reasons: [{reason:'TABLE_LOCKED',table,lock,message},{reason:'BRIDGE_REQUIRES_MODULE',bridge,module,message}]`. Aditivo em `ValidationError.details` (Record livre), sem mudar DTO. `dashboardModules` → "remover VENDAS" afirma os dois.
 2. **DECIDIDA (mesma decisão).** Na conversa (`CustomizationService.processRemovingTable`, a recusa de `StateManager.removeTable`), a resposta junta `describeTableLock` e `bridgeRequirementsOfTable` (sales → VEN-0, customers → PES-0). `removability.session.test.ts` → "As duas juntas".
-4. **Nova, aberta: "remover PESSOAS" no create não chega à ponte.** Com VENDAS mantida, `applyModuleRemovals` recusa PES-0 (`DEPENDENT_MODULE_KEPT`, VEN-0 depende dele), então PES-0 não falta e o 400 sai só com `TABLE_LOCKED`. Juntar este 3º motivo à lista não foi decidido; o teste afirma o observado (`reasons` ausente). O dono decide.
+4. **Decidida (dono, chat, 2026-11-06: "Sim, entra").** "Remover PESSOAS" no create: o `DEPENDENT_MODULE_KEPT` de `applyModuleRemovals` entra em `details.reasons` junto com a trava (`dashboardController.handleCustomCreation`, no catch). Resultado afirmado em `dashboardModules.integration.test.ts`: `reasons = [TABLE_LOCKED customers, DEPENDENT_MODULE_KEPT PES-0 (PES-FORN, VEN-0, AGE-0)]`; `BRIDGE_REQUIRES_MODULE` não aparece porque PES-0 fica. Removido só `customers` ou só `products` produz os mesmos dois motivos (teste PR-2 ajustado). Na conversa (`processRemovingTable`) o caso não é alcançável: ela não chama `applyModuleRemovals`, recusa só pela trava da tabela.
 5. `dashboard.paths.ts` (OpenAPI) não descreve `details.reasons`; não mexi (só descrição, sem DTO).
 3. Escolha de forma registrada: o contrato do BRIEF diz `PresetSuite.bridges: BridgeKey[]`. No código ficou opcional em `PresetSuite`, porque o `CoreSystemPreset` não é selecionável, e obrigatório em `SelectablePresetSuite`. As 3 suítes declaram.
 
