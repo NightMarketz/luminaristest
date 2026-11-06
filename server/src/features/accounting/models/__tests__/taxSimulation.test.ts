@@ -199,6 +199,18 @@ describe('item 16 — simulador de regime (F-EF-7 a; decisão 3)', () => {
     expect(semCsll.cenarios.find((x) => x.regime === 'SIMPLES')!.disponivel).toBe(true);
   });
 
+  it('sem alíquota de ISS conferível (perfil sem ISS e ISS_LIMITE sem linha): Presumido e Real ficam indisponíveis com o motivo; o Simples segue e é o melhor', () => {
+    const sem = simularRegimeAno({ ...entradaRegime(2026), issAliquotaBp: null as unknown as number });
+    for (const r of ['PRESUMIDO', 'REAL']) {
+      const cen = sem.cenarios.find((x) => x.regime === r)!;
+      expect(cen.disponivel).toBe(false);
+      expect(cen.motivoIndisponivel).toMatch(/ISS_LIMITE\/ALIQUOTA_MAX_BP sem linha vigente/);
+      expect(cen.cargaTotalCents).toBe(0n);
+    }
+    expect(sem.cenarios.find((x) => x.regime === 'SIMPLES')).toMatchObject({ disponivel: true, cargaTotalCents: 6_336_000n });
+    expect(sem.melhor).toBe('SIMPLES');
+  });
+
   it('2027 (decisão 4): sem PIS/COFINS; IBS 0,05% + 0,05% sobre a receita; CBS DRAFT ⇒ aviso e fora da carga', () => {
     const p = simularRegimeAno(entradaRegime(2027));
     const pres = p.cenarios.find((x) => x.regime === 'PRESUMIDO')!;

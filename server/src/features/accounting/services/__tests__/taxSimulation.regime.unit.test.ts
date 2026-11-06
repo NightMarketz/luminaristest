@@ -95,11 +95,12 @@ describe('TaxSimulationService.regime — alíquota de ISS fora do Simples', () 
     expect(avisoIss(v.avisos)).toMatch(/^ISS fora do Simples pela alíquota máxima \(4% — LC 116\/2003 art\. 8º II\)/);
   });
 
-  it('sem linha vigente: cai nos 500 bp (5%) com o mesmo aviso', async () => {
+  it('sem linha vigente e sem alíquota no perfil: NÃO inventa 5% — entrega null ao simulador e avisa que o ISS não foi conferido', async () => {
     const m = montar([], 0n);
     const v = await m.run();
-    expect(m.entradaDoSimulador().issAliquotaBp).toBe(500);
-    expect(avisoIss(v.avisos)).toMatch(/^ISS fora do Simples pela alíquota máxima \(5% — LC 116\/2003 art\. 8º II\)/);
+    expect(m.entradaDoSimulador().issAliquotaBp).toBeNull();
+    expect(avisoIss(v.avisos)).toBeUndefined(); // nada de "pela alíquota máxima (5%)"
+    expect(v.avisos.join(' | ')).toMatch(/ISS_LIMITE\/ALIQUOTA_MAX_BP sem linha vigente em 2027-12-31/);
   });
 
   it('perfil fiscal com alíquota própria: não consulta o teto nem avisa', async () => {
