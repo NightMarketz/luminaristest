@@ -61,7 +61,7 @@ export function saleVariantsFor(saleItemsTable?: IDynamicTable | null): SaleVari
     return hasPackage ? ['products', 'services', 'packages'] : ['products', 'services'];
 }
 
-const PACKAGE_ISSUE_KEYS: Record<PackageSaleIssue, [string, string]> = {
+export const PACKAGE_ISSUE_KEYS: Record<PackageSaleIssue, [string, string]> = {
     customer_required: ['finance_view:sales.package.customer_required', 'Pacote precisa de cliente cadastrado: o saldo fica no nome dele.'],
     mixed_packages: ['finance_view:sales.package.one_package', 'Uma venda leva um único pacote. Para outro pacote, crie outra venda.'],
     package_not_in_catalog: ['finance_view:sales.package.not_in_catalog', 'O preço deste pacote no catálogo ainda não carregou. Aguarde ou recarregue a página.'],
@@ -572,14 +572,14 @@ export default function SalesCreateModal({
                             /* Tab 1 → Salvar Rascunho + Finalizar Venda */
                             <>
                                 <button
-                                    disabled={!canSubmit || !validityReady || formState.isSubmitting}
+                                    disabled={!validityReady || formState.isSubmitting}
                                     onClick={() => handleSubmit(false)}
                                     className="px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-neutral-700 text-gray-700 dark:text-gray-200 text-sm font-semibold hover:bg-gray-200 dark:hover:bg-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                                 >
                                     {t('finance_view:sales.modal.btn_draft', 'Salvar Rascunho')}
                                 </button>
                                 <button
-                                    disabled={!canSubmit || !validityReady || formState.isSubmitting}
+                                    disabled={!validityReady || formState.isSubmitting}
                                     onClick={() => handleSubmit(true)}
                                     className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none transition-all duration-200 flex items-center gap-2"
                                 >
