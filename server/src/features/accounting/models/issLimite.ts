@@ -4,8 +4,7 @@ import { hojeDateOnly } from '../../legalParameters/models/hoje';
 
 /**
  * BE-INCR-LEGAL-PARAMS PR-2 (item 22) — alíquota máxima do ISS (tabela `ISS_LIMITE`, chave `ALIQUOTA_MAX_BP`; leiaute
- * DPS pAliq [312], RN E0595 — "não é permitido alíquota superior a 5%"). Só o máximo: o mínimo de 2% (LC 116 art. 8º-A)
- * é a D-4, pendência de contador.
+ * DPS pAliq [312], RN E0595 — "não é permitido alíquota superior a 5%"). Só o máximo.
  */
 export function issAliquotaMaxBp(linhas: readonly LinhaLegal[], data: string): number {
   const l = linhaLegalVigente(linhas, 'ISS_LIMITE', 'ALIQUOTA_MAX_BP', data);

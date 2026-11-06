@@ -196,6 +196,14 @@ export interface Reg0020Input {
 }
 
 /**
+ * Código padrão de `0020.IND_ALIQ_CSLL` quando o perfil fiscal não informa: `'1'` = alíquota de 9% da CSLL (Lucro Presumido).
+ * Fonte: Manual de Orientação do Leiaute 12 da ECF (Anexo ao ADE Cofis 02/2026, atualização jul/2026, 622 p.), registro
+ * 0020, campo IND_ALIQ_CSLL ("1 – Alíquota de 9%") e REGRA_PREENCHIMENTO_IND_ALIQ_CSSL (ano ≥ 2019 ⇒ "1" (9%) ou "4" (15%)).
+ * Conferido no PDF em 06/11/2026: gov.br/sped/…/manual_ecf_leiaute_12_20_05_2026_ac_2025_sit_esp_2026.pdf, sha256 f583475c….
+ */
+export const IND_ALIQ_CSLL_PADRAO = '1';
+
+/**
  * 0020 — Parâmetros Complementares (32 campos). Manual pp. 80-94. Ordem (exemplo
  * p. 93): REG, IND_ALIQ_CSLL, IND_QTE_SCP, e 27 flags S/N (IND_ADM_FUN_CLU …
  * IND_DEREX), POSSUI_CEBAS, CEBAS. MVP Presumido single-establishment sem
@@ -206,7 +214,7 @@ export function build0020(i: Reg0020Input = {}): string {
   const N = 'N';
   return spedLine([
     '0020',
-    i.indAliqCsll ?? '1', // IND_ALIQ_CSLL
+    i.indAliqCsll ?? IND_ALIQ_CSLL_PADRAO, // IND_ALIQ_CSLL
     '0', // IND_QTE_SCP
     // 27 flags S/N (campos 4-30: IND_ADM_FUN_CLU … IND_DEREX) — todos 'N' no MVP
     N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N,
