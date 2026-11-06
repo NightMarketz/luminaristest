@@ -222,7 +222,7 @@ export function KanbanCardDetailModal({
                                                 ref={descriptionInputRef}
                                                 value={descriptionValue}
                                                 onChange={(e) => setDescriptionValue(e.target.value)}
-                                                placeholder="Adicione uma descrição mais detalhada..."
+                                                placeholder={t('database:kanban_card.description_placeholder', 'Adicione uma descrição mais detalhada...')}
                                                 className="w-full min-h-[150px] bg-white dark:bg-neutral-800 border-2 border-primary rounded p-3 outline-none resize-y text-sm"
                                             />
                                             <div className="flex gap-2">
@@ -248,7 +248,7 @@ export function KanbanCardDetailModal({
                                                 : 'bg-black/5 dark:bg-white/5 text-gray-500 hover:bg-black/10 dark:hover:bg-white/10 py-6 text-center italic cursor-pointer'
                                                 }`}
                                         >
-                                            {descriptionValue || 'Adicione uma descrição mais detalhada...'}
+                                            {descriptionValue || t('database:kanban_card.description_placeholder', 'Adicione uma descrição mais detalhada...')}
                                         </div>
                                     )}
                                 </div>
