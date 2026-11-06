@@ -137,8 +137,9 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 
     // §3.4 #3 — a token issued before the last logout carries an older version. A user that no
     // longer exists is left to the downstream handlers (unchanged behavior).
-    const currentVersion = await getFactory().getUserService().getTokenVersion(String(payload.id || payload.userId || ''));
-    if (currentVersion !== null && (payload.tokenVersion ?? 0) !== currentVersion) {
+    // §3.4 #20 — the same read carries the user's real createdAt/updatedAt (no second query).
+    const authState = await getFactory().getUserService().getAuthState(String(payload.id || payload.userId || ''));
+    if (authState !== null && (payload.tokenVersion ?? 0) !== authState.tokenVersion) {
       res.status(401).json({ code: 'UNAUTHORIZED', message: 'Invalid or expired token' });
       return;
     }
@@ -152,6 +153,10 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     if (payload.email) req.headers['x-user-email'] = String(payload.email);
     if (payload.name) req.headers['x-user-name'] = String(payload.name);
     if (payload.username) req.headers['x-user-username'] = String(payload.username);
+    if (authState) {
+      req.headers['x-user-created-at'] = authState.createdAt.toISOString();
+      req.headers['x-user-updated-at'] = authState.updatedAt.toISOString();
+    }
 
     // Admin-only enforcement
     if (isAdminOnly(pathname, method) && payload.role !== 'ADMIN') {
