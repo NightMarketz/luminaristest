@@ -93,6 +93,27 @@ Pré-condições (conferir e colar a evidência de cada uma):
 >   Done: Feito 1=1000, A fazer 1=1500, Feito 2=2000, Feito 3=3000   (print probe.png; console.error: nenhum)
 > ```
 
+> **Rodada de 2026-11-06, passos 6b, 9 e 10** (agente, persona revisor). Comando do dono: questionário de 06/11,
+> "Corrigir e agente roda (Recomendado)" (`docs/plano/decisoes/D-2026-11-06-PARADOS-NO-DONO.md` §3, PR #1107),
+> repassado pela sessão coordenadora. Runner versionado `scripts/runbook-tela.mjs` (headless shell do Playwright,
+> 1280×900, sem painel). Para esta rodada o runner ganhou a op `drag`, um arrasto com mouse real, porque o dnd-kit só
+> ouve pointer events. O roteiro foi gerado por `docs/accounting/runbook-evidence/kanban-reorder-2026-11-06/roteiro-gerador.mjs`. Prints e logs ficam em `docs/accounting/runbook-evidence/kanban-reorder-2026-11-06/`.
+> Pré-condições:
+> ```
+> $ git log --oneline -2
+> e46b05122 fix(kanban): descrição vazia do detalhe do card passa pelo i18n (RUNBOOK-KANBAN-REORDER passo 9)
+> fbb33eb61 test(kanban): guarda vermelho do passo 9 — descrição vazia em PT com a tela em EN
+>                            (branch claude/kanban-passo9-descricao-i18n sobre origin/main 075a00de9; #824 #931 #961 #970 na base)
+> server: npm run build → server build exit=0 ; my-app: NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:4150/api npm run build → next build exit=0
+> back: npm run start (server/.env da worktree: PORT=4150, ALLOWED_ORIGIN=http://127.0.0.1:3150) ; front: next start -p 3150 -H 127.0.0.1
+> $ curl -s 127.0.0.1:4150/health → {"status":"degraded","uptime":18.5715914,"checks":{"database":"ok","qdrant":"error"}}
+> $ curl -s -o /dev/null -w "front %{http_code}" http://127.0.0.1:3150/ → front 200
+> banco: cópia de server/prisma/prisma/dev.db do checkout principal → server/prisma/prisma/kro-rb.db (o original não foi tocado)
+>   prisma migrate deploy → "No pending migrations to apply." ; npm run db:seed → "Admin user created/updated: admin@luminaris.test"
+> Tasks do admin vazia ("linhas existentes: 0") → 7 cards via POST /api/dynamic-tables/:id/data, "201" em cada (docs/accounting/runbook-evidence/kanban-reorder-2026-11-06/seed.log):
+>   To Do: A fazer 1..4 = 1000..4000 | In Progress: Em andamento 1, 2 = 1000, 2000 | Done: Feito 1 = 1000
+> ```
+
 ## Passos
 Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU).
 
@@ -271,6 +292,36 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
    próximo for o próprio card arrastado, a ordem não muda e não há update.
    Contraprova: o passo 6 continua valendo. Na área vazia de **outra** coluna, o card vai para o fim dela.
    EVIDÊNCIA (ponto de soltura, cards vizinhos e a distância até cada um, linhas da Network, screenshot depois do F5):
+   **Rodada de 2026-11-06: confere, com o card pego pelo centro.** Log `docs/accounting/runbook-evidence/kanban-reorder-2026-11-06/p6b.log`, Network em `p6b-net.txt`.
+   Prints: `p6b-antes.png`, `p6b-a-durante.png`, `p6b-a-depois.png`, `p6b-a-depois-f5.png`, `p6b-b-durante.png`,
+   `p6b-b-depois.png`, `p6b-c-depois.png` e `p6b-c-depois-f5.png`. As distâncias foram medidas no quadro antes do arrasto.
+   ```
+   antes:             TO DO: A fazer 1, A fazer 2, A fazer 3, A fazer 4
+   a) "A fazer 1" pego no centro → solto em (440,606), no vão [603,619] entre "A fazer 3" e "A fazer 4"
+      distância à borda: 3 px de "A fazer 3", 13 px de "A fazer 4"; ao centro: 54 px e 64 px → mais próximo: "A fazer 3"
+      PUT /api/dynamic-tables/cmr2jy28w0062ci1kemqrt5vo/data/cmw568sg00009cir8uvrrsc1l -> 200  req: {"data":{"order":3500}}
+      depois do arrasto: TO DO: A fazer 2, A fazer 3, A fazer 1, A fazer 4
+      depois do F5:      TO DO: A fazer 2, A fazer 3, A fazer 1, A fazer 4
+   b) "A fazer 2" pego no centro → solto em (440,370), no vão [367,383] logo abaixo dele (3 px dele, 13 px de "A fazer 3";
+      ao centro 54 e 64) → o mais próximo é o próprio card
+      PUTs: 0 ; depois: TO DO: A fazer 2, A fazer 3, A fazer 1, A fazer 4 (igual)
+   c) contraprova (passo 6): "A fazer 4" solto na área vazia de DONE (1472,836)
+      PUT .../data/cmw568sh3000lcir8c9hh8lta -> 200  req: {"data":{"status":"Done","order":2000}}
+      depois do arrasto e depois do F5: DONE: Feito 1, A fazer 4
+   console.error: (nenhum)
+   ```
+   No caso (a), 1 update só com `order`, sem `status`, e a ordem continua igual depois do F5. No caso (b) não houve
+   update. A contraprova vale.
+   **Ressalva, ambiguidade para o dono:** a 1ª tentativa pegou o card a 30 px do topo dele, e não no centro (log
+   `p6b-tentativa1.log`). Com o mesmo ponto de soltura (440,606), 3 px de "A fazer 3", o card foi para o **fim**
+   (`{"data":{"order":5000}}`, depois "A fazer 4"). O diagnóstico (`p6b-diagnostico.log`, prints `p6b-d1-durante.png` e
+   `p6b-d2-durante.png`, tirados com o mouse ainda apertado) mostra a causa. A colisão do #970 (`kanbanCollision`,
+   `InternalKanbanView.tsx:23-32`) usa `closestCenter`, que mede a partir do **centro do card arrastado**, e não do
+   ponteiro. Pego a 30 px do topo, o centro ficou 21 px abaixo do ponteiro (y=627), mais perto de "A fazer 4". Na tela,
+   no instante da soltura, "A fazer 4" já tinha subido para [501–603]: o ponteiro estava 3 px abaixo dele, e a vaga de
+   prévia, no fim. O card caiu onde a tela mostrava. Se "ponto de soltura" quer dizer o ponteiro sobre o quadro parado,
+   a 1ª tentativa diverge. Se quer dizer o card arrastado ou o que a tela mostra ao soltar, confere. O agente adotou a
+   2ª leitura e não marca FALHOU por isso. A decisão é do dono (ver o Registro desta rodada).
 
 7. Escolha uma **ordenação** na barra do Kanban (por exemplo, prioridade) e tente reordenar dentro da coluna.
    Resultado esperado: a ordem não muda (com ordenação escolhida, arrastar só muda de coluna). Nenhum update.
@@ -358,12 +409,50 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
    O Esc não fechou o diálogo; o clique fora fechou. O roteiro aceita "Esc ou clique fora", então a divergência que reprova
    o passo é o texto em PT.
 
+   **Rodada de 2026-11-06 (com o fix do PR desta rodada no build): o texto da descrição vazia confere nos dois idiomas, mas
+   o passo diverge — rótulos dos campos em EN com a tela em PT.** Idioma de partida: PT (`<html lang="pt">`,
+   `/pt/dashboard?category=kanban`); depois troca para "English (US)" pelo seletor do topo. Card "A fazer 2", sem
+   descrição. O runner compara o texto do diálogo com os valores de `database:kanban_card.*` do outro idioma, palavra
+   inteira, e lê os rótulos (`span.uppercase`). Log `docs/accounting/runbook-evidence/kanban-reorder-2026-11-06/p9.log`. Prints `p9-idioma1-detalhe.png`, `p9-idioma1-edicao.png`,
+   `p9-idioma2-detalhe.png` e `p9-idioma2-edicao.png`.
+   ```
+   --- inspetor: abertura do overlay (nos dois idiomas) ---
+   <div role="dialog" aria-modal="true" class="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto p-4 sm:p-6 md:p-12 lg:p-20">
+   --- PT (lang=pt) ---
+   A fazer 2 / Na lista To Do / PRIORIDADE / Medium / DESCRIÇÃO / Adicione uma descrição mais detalhada... /
+   INFORMAÇÕES DETALHADAS / ASSIGNEE / Vazio / DUE DATE / 05/11/2026 / LEAD / Vazio / REMINDER AT / Vazio /
+   AÇÕES RÁPIDAS / Excluir / CRIADO EM / 06/11/2026
+   placeholder da descrição: "Adicione uma descrição mais detalhada..."
+   rótulos: ["PRIORIDADE","ASSIGNEE","DUE DATE","LEAD","REMINDER AT","AÇÕES RÁPIDAS"] ; texto kanban_card.* do EN: []
+   após Esc, [role=dialog] presente: true ; após clique fora (20,880): false
+   --- troca pelo seletor do topo -> English (US); lang agora: en url: /dashboard?category=kanban ---
+   --- EN (lang=en) ---
+   A fazer 2 / In list To Do / PRIORITY / Medium / DESCRIPTION / Save / Cancel / DETAILED INFORMATION / ASSIGNEE / Empty /
+   DUE DATE / 05/11/2026 / LEAD / Empty / REMINDER AT / Empty / QUICK ACTIONS / Delete / CREATED AT / 06/11/2026
+   placeholder da descrição: "Add a more detailed description..."
+   rótulos: ["PRIORITY","ASSIGNEE","DUE DATE","LEAD","REMINDER AT","QUICK ACTIONS"] ; texto kanban_card.* do PT: []
+   após Esc, [role=dialog] presente: true ; após clique fora (20,880): false
+   console.error: (nenhum)
+   ```
+   Na tela EN, o diálogo reabriu em modo de edição, porque o estado de edição da descrição sobrevive ao fechamento. Por
+   isso o texto do campo vazio em EN vem da tentativa anterior, com o mesmo build (`p9-tentativa-en.log`, card "A fazer 2",
+   lang=en): `campo_vazio: "Add a more detailed description..."`, placeholder `"Add a more detailed description..."`,
+   forasteiros `[]`. O `DIVERGE (campo vazio)` que aparece no `p9.log` em PT é artefato do runner: ele releu o elemento
+   depois do clique que abre a edição. O texto do diálogo, capturado antes desse clique, mostra o campo vazio em PT.
+   **O que reprova o passo:** com a tela em PT, os rótulos dos campos do card aparecem em EN (ASSIGNEE, DUE DATE, LEAD,
+   REMINDER AT). O roteiro põe "rótulos dos campos" entre os textos fixos da interface. O modal escreve o rótulo do
+   schema cru (`{field.label || field.name}`, `KanbanCardDetailModal.tsx:270`). Já o `GenericTable` passa o mesmo rótulo
+   por `t('database:fields.<nome>', field.label …)` (`GenericTable.tsx:115`). O `pt/database.json` tem `fields.date`, mas não
+   tem `assigneeId`, `leadId` nem `reminderAt`. "Medium" e "To Do" são valores gravados no card e ficam como estão. O Esc
+   continua sem fechar (achado de 28/10); o clique fora fecha, e o roteiro aceita.
+
 10. Lote 4 (#813): numa tabela com coluna de relação (ex.: cliente), limpe o localStorage do site e abra
     a tabela.
     Resultado esperado: a coluna de relação aparece visível, e não oculta até alguém ligá-la à mão.
     EVIDÊNCIA: não executado na rodada de 27/10 (regra do FALHOU: o passo 6 divergiu).
     Rodada de 2026-10-28: não executado (regra do FALHOU: o passo 7 divergiu).
     Continuação de 2026-10-28: não executado (regra do FALHOU: o passo 9 divergiu).
+    Rodada de 2026-11-06: não executado (regra do FALHOU: o passo 9 divergiu, rótulos dos campos em EN com a tela em PT).
 
 ## Desfecho da rodada de 2026-10-24/25 (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
@@ -422,3 +511,30 @@ Pare no primeiro passo que divergir. Não execute os seguintes (regra do FALHOU)
   fecha); (4) "Archive", citado no roteiro do passo 9, não existe em QUICK ACTIONS.
 - Atualização do artefato de rastreio: `docs/plano/nos/FE-INCR-KANBAN-REORDER.md` — fold no PR #961
 - Assinatura do executor: agente Claude Opus 5.5, persona revisor, sob comando do dono (chat, 2026-10-28: "Sim, rodar 7–10") — não é assinatura humana
+
+## Desfecho da rodada de 2026-11-06, passos 6b, 9 e 10 (marcar UM)
+[ ] PASSOU — todos os passos com evidência conferindo com o esperado
+[x] FALHOU — passo 9 divergiu: com a tela em PT, os rótulos dos campos do detalhe do card (ASSIGNEE, DUE DATE, LEAD,
+    REMINDER AT) ficam em EN. O texto da descrição vazia, o alvo do fix desta rodada, confere em PT e em EN. O passo 6b
+    conferiu, com a ressalva do card pego fora do centro. NENHUM passo seguinte (10) foi executado
+[ ] BLOQUEADO — pré-condição __ não se sustentava; execução nem começou
+
+## Registro da rodada de 2026-11-06
+- Achados no caminho (fora do escopo deste runbook): agente, 2026-11-06 —
+  (1) **para o dono, 6b:** o "mais próximo" da colisão do #970 mede do centro do card arrastado, e não do ponteiro.
+  Num vão de 16 px, pegar o card perto do topo muda o vizinho escolhido. O card cai onde a tela mostra a vaga de prévia
+  (`p6b-d1-durante.png`). A pergunta ao dono: o esperado do 6b fica como está (o card arrastado / o que a tela mostra), ou
+  ele passa a medir do ponteiro (`pointerCoordinates` na colisão)?
+  (2) **para o dono, 9:** o detalhe do card mostra `field.label` sem `t()`, ao contrário do `GenericTable`. Corrigir
+  pede o rótulo híbrido no modal e as chaves `database:fields.assigneeId/leadId/reminderAt` em pt/en. É uma lacuna
+  nova, que não está no escopo do fix desta rodada.
+  (3) o estado de edição da descrição sobrevive ao fechar e reabrir o detalhe: o card reabre com o textarea aberto.
+  (4) o Esc segue sem fechar o detalhe (achado 3 de 28/10).
+  (5) DUE DATE mostra 05/11/2026 para `date` "2026-11-06": é a classe do date-only com UTC-shift (achado 2 de 28/10).
+  (6) ambiente: uma carga do Kanban parou em "Loading..." com `net::ERR_INSUFFICIENT_RESOURCES`
+  (`p9-tentativa-recursos.log`), na mesma hora em que o git respondia "Resource temporarily unavailable"; a carga seguinte
+  subiu normal. (7) o runner gravava o JWT da resposta do login no log de Network. Foi corrigido no runner (`TOKEN`,
+  inclusive com o corpo truncado) e redigido no `seed.log`.
+- Atualização do artefato de rastreio: `docs/plano/nos/FE-INCR-KANBAN-REORDER.md`, fold no PR desta rodada
+- Assinatura do executor: agente Claude Opus 5.5, persona revisor, sob comando do dono (questionário de 2026-11-06,
+  "Corrigir e agente roda (Recomendado)", D-2026-11-06-PARADOS-NO-DONO §3). Não é assinatura humana
