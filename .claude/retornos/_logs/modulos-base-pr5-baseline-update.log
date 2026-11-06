@@ -1,0 +1,72 @@
+Running one project: integration
+  console.info
+    [env] Assigned variables from manual parse: [ 'QDRANT_API_KEY' ]
+
+      at Object.info (src/config/env.ts:82:15)
+
+  console.log
+    {"timestamp":"2026-11-06T16:21:12.193Z","level":"info","message":"[CustomizationService] Initialized","requestId":"84ff30a1-838b-41b5-9642-73ef35ec423f","method":"POST","route":"/api/dashboard/create"}
+
+      at log (src/lib/logger.ts:118:13)
+
+  console.log
+    {"timestamp":"2026-11-06T16:21:12.201Z","level":"info","message":"[InterviewService] Initialized","requestId":"84ff30a1-838b-41b5-9642-73ef35ec423f","method":"POST","route":"/api/dashboard/create"}
+
+      at log (src/lib/logger.ts:118:13)
+
+  console.log
+    {"timestamp":"2026-11-06T16:21:12.324Z","level":"info","message":"Metric: http_request","requestId":"84ff30a1-838b-41b5-9642-73ef35ec423f","method":"POST","route":"/api/dashboard/create","userId":"cmw56lu1g0000cin8981uxnts","success":true,"path":"/api/dashboard/create","statusCode":201,"duration":148,"status":"success","metricName":"http_request","event":"http.request"}
+
+      at log (src/lib/logger.ts:118:13)
+
+  console.log
+    {"timestamp":"2026-11-06T16:21:12.457Z","level":"info","message":"Metric: http_request","requestId":"4cb49cdf-1eca-4641-8edc-19dcc52c2277","method":"POST","route":"/api/dashboard/create","userId":"cmw56lu6n005hcin8zfkzplh2","success":true,"path":"/api/dashboard/create","statusCode":201,"duration":111,"status":"success","metricName":"http_request","event":"http.request"}
+
+      at log (src/lib/logger.ts:118:13)
+
+  console.log
+    {"timestamp":"2026-11-06T16:21:12.577Z","level":"info","message":"Metric: http_request","requestId":"a333f1de-971e-40cb-88c9-7926df7500a6","method":"POST","route":"/api/dashboard/create","userId":"cmw56lua700aycin8ohcq5mfu","success":true,"path":"/api/dashboard/create","statusCode":201,"duration":103,"status":"success","metricName":"http_request","event":"http.request"}
+
+      at log (src/lib/logger.ts:118:13)
+
+  console.log
+    {"timestamp":"2026-11-06T16:21:12.691Z","level":"info","message":"Metric: http_request","requestId":"4d067226-1a4c-411e-af2e-85242797c434","method":"POST","route":"/api/dashboard/create","userId":"cmw56ludi00g9cin81cqvlekq","success":true,"path":"/api/dashboard/create","statusCode":201,"duration":98,"status":"success","metricName":"http_request","event":"http.request"}
+
+      at log (src/lib/logger.ts:118:13)
+
+  console.log
+    {"timestamp":"2026-11-06T16:21:12.805Z","level":"info","message":"Metric: http_request","requestId":"a3e7d1cf-7e58-4e21-883f-673c6e5b1bbc","method":"POST","route":"/api/dashboard/create","userId":"cmw56lugo00lkcin8k1apcrcc","success":true,"path":"/api/dashboard/create","statusCode":201,"duration":99,"status":"success","metricName":"http_request","event":"http.request"}
+
+      at log (src/lib/logger.ts:118:13)
+
+  console.log
+    {"timestamp":"2026-11-06T16:21:12.928Z","level":"info","message":"Metric: http_request","requestId":"9e0adcea-caa9-4c93-bae3-82fbb17bdda9","method":"POST","route":"/api/dashboard/create","userId":"cmw56lujw00qvcin87lkgzqxn","success":true,"path":"/api/dashboard/create","statusCode":201,"duration":105,"status":"success","metricName":"http_request","event":"http.request"}
+
+      at log (src/lib/logger.ts:118:13)
+
+  console.log
+    {"timestamp":"2026-11-06T16:21:13.054Z","level":"info","message":"Metric: http_request","requestId":"f97505c3-1626-475f-a2e8-0e058c519467","method":"POST","route":"/api/dashboard/create","userId":"cmw56luna00wccin8hyzp4779","success":true,"path":"/api/dashboard/create","statusCode":201,"duration":109,"status":"success","metricName":"http_request","event":"http.request"}
+
+      at log (src/lib/logger.ts:118:13)
+
+  console.log
+    {"timestamp":"2026-11-06T16:21:13.172Z","level":"info","message":"Metric: http_request","requestId":"fe7a0a72-1b83-4bcb-be47-b967c395509f","method":"POST","route":"/api/dashboard/create","userId":"cmw56luqr011tcin80vxunjo1","success":true,"path":"/api/dashboard/create","statusCode":201,"duration":101,"status":"success","metricName":"http_request","event":"http.request"}
+
+      at log (src/lib/logger.ts:118:13)
+
+  console.log
+    {"timestamp":"2026-11-06T16:21:13.294Z","level":"info","message":"Metric: http_request","requestId":"43b85f90-b605-4805-b2d6-5c8e2517c759","method":"POST","route":"/api/dashboard/create","userId":"cmw56luu20174cin8150q14ls","success":true,"path":"/api/dashboard/create","statusCode":201,"duration":104,"status":"success","metricName":"http_request","event":"http.request"}
+
+      at log (src/lib/logger.ts:118:13)
+
+  console.log
+    {"timestamp":"2026-11-06T16:21:13.412Z","level":"info","message":"Metric: http_request","requestId":"54bc485c-34bb-45d6-a2ea-446e897e4124","method":"POST","route":"/api/dashboard/create","userId":"cmw56luxg01cfcin8v8r9u4ap","success":true,"path":"/api/dashboard/create","statusCode":201,"duration":101,"status":"success","metricName":"http_request","event":"http.request"}
+
+      at log (src/lib/logger.ts:118:13)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        4.184 s, estimated 5 s
+Ran all test suites matching src/features/dynamicTables/presets/__tests__/suitePayloadBaseline.integration.test.ts.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?
