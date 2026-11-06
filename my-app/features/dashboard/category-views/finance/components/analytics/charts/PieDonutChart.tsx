@@ -13,6 +13,9 @@ import { getTooltipStyles } from '../../../utils/chartConstants';
 import { formatCompactNumber } from '../../../utils/kpiHelpers';
 import { useFormatCurrency } from '@/lib/context/CurrencyContext';
 
+/** recharts 3 tipa `contentStyle` com o csstype dele, não com `React.CSSProperties`. */
+type TooltipContentStyle = NonNullable<React.ComponentProps<typeof Tooltip>['contentStyle']>;
+
 export interface PieDonutChartProps {
   data: ChartDataPoint[];
   title: string;
@@ -53,7 +56,7 @@ export default function PieDonutChart({
   };
 
   const isDark = theme === 'dark';
-  const tooltipStyles = getTooltipStyles(isDark);
+  const tooltipStyles = getTooltipStyles(isDark) as TooltipContentStyle;
 
   // Apply labelMap to transform boolean/raw values to readable labels
   const mappedData = useMemo(() => {
