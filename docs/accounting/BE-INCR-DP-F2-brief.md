@@ -83,7 +83,7 @@ afastamento são da empresa"); o número, a vigência e a fonte chegam de fora.
 | Regra do divisor do salário-hora (escolha entre as formas que existem no código) | `FOLHA_REGRA` (`valorTexto`) | Regulamentação da EC 141 (F-DPF-1) |
 | Idades e prazos (empregado, aprendiz, salário-família), meses de férias | `FOLHA_REGRA` (PR-0R, inclusive o que hoje está no F1) | Lei que muda a idade do aprendiz |
 | O que cada categoria recolhe (INSS de empregado ou de contribuinte individual ou nenhum; qual FGTS) | `DP_CATEGORIA_ENCARGO` (item 66) | Categoria nova do núcleo |
-| Modo de arredondamento | `FOLHA_REGRA` (`valorTexto`) | Contador decide outro (F-DPF-3) |
+| Modo de arredondamento | `FOLHA_REGRA` (`valorTexto`) | Contador ou eSocial muda a forma (F-DPF-3) |
 | **Escala**: dias de trabalho da semana, minutos por dia, dias de repouso | `DpJornada` (item 68) | Empresa passa de 6×1 para 5×2: jornada nova, sem código |
 
 **Fica em código, e por quê.** A forma de cada calculadora (itens 3–12), a ordem de avaliação (item 35), o catálogo de
@@ -119,7 +119,8 @@ calculadora roda com **duas** fotografias de regras (a vigente e uma alterada) e
 Convenções do F2: dinheiro em centavos `bigint`; minutos em `number` inteiro; taxas em basis points (`bp`, 10 000 = 100%).
 **Nenhum valor intermediário arredonda**: as calculadoras trabalham em frações exatas (`{num, den}` em `bigint`) e
 arredondam **só** no ponto que o item declara (spec §5, "arredondamento só no ponto declarado pela regra"). O modo de
-arredondamento vem de `FOLHA_REGRA`/`ARREDONDAMENTO` (item 65; valor inicial meio-para-cima ao centavo, F-DPF-3).
+arredondamento vem de `FOLHA_REGRA`/`ARREDONDAMENTO_INSS` e `ARREDONDAMENTO` (item 65; valor inicial: truncar ao centavo em cada faixa do INSS, como o MOS do S-5001 item 2.13, F-DPF-3 revisto em 06/11;
+meio-para-cima ao centavo nos demais pontos declarados).
 **Todo número de regra vem de `RegrasFolha` (item 67)**: os percentuais e dias citados abaixo são o valor inicial da linha,
 com a fonte, e não literal no código.
 
@@ -140,7 +141,9 @@ com a fonte, e não literal no código.
     - `SALARIO_HORA_DIVISOR` (`valorTexto`): `SEMANA_SEIS_DIAS` até 2026-12-15 (CLT art. 64 [D02]; Súm. 431 [D16]);
       `DIAS_DE_TRABALHO_DA_ESCALA` desde 2026-12-16 (F-DPF-1, dono, 06/11; fonte = a cédula `D-2026-11-06-DP-BRIEF-F2`,
       com a validação do contador pendente em §5);
-    - `ARREDONDAMENTO` (`valorTexto`) `MEIO_PARA_CIMA_CENTAVO` (F-DPF-3; fonte: decisão registrada, não lei);
+    - `ARREDONDAMENTO_INSS` (`valorTexto`) `TRUNCAR_POR_FAIXA` (F-DPF-3 revisto, dono, 06/11; fonte: MOS do S-5001
+      item 2.13, dossiê `pesquisas-legais/brief-pes4-f2-contador/relatorio.md` §3) e `ARREDONDAMENTO` (`valorTexto`) `MEIO_PARA_CIMA_CENTAVO` nos demais pontos
+      (fonte: decisão registrada, não lei);
     - `SALARIO_FAMILIA_IDADE_MAX` 14 (Lei 8.213 art. 66 [D03]);
     - as do F1 (item 72): `EMPREGADO_IDADE_MIN` 16 e `APRENDIZ_IDADE_MIN` 14 (CF art. 7º XXXIII [F1-D12]),
       `APRENDIZ_IDADE_MAX` 24 e `APRENDIZ_PRAZO_MAX_MESES` 24 (CLT arts. 428 caput e § 3º e 433 [F1-D05]),
@@ -262,15 +265,18 @@ com a fonte, e não literal no código.
 22. **Reset e `resetDb`:** os dois models entram no `accountingResetClassification` (BLOCKING, G14) e no `resetDb()` antes
     de `dpVinculo`/`dpTrabalhador`.
 77. **`DpOutraRemuneracao`** (F-DPF-8, dono 06/11): por vínculo e competência, `remuneracaoCents`, `contribuicaoCents`
-    (o INSS já descontado pelo outro empregador), `cnpjOutroEmpregador` (14 dígitos com DV), `documento` (texto: a
-    declaração ou o holerite de lá) e `informadoPorId`; viva única por (vínculo, competência), gate na tx. Rotas
+    (o INSS já descontado pelo outro empregador; **só conferência**, a regra não o usa), `ordem` (`ANTES` ou `DEPOIS`
+    desta empresa na declaração do segurado, IN RFB 2.110 art. 36 § 1º I), `categoriaOutraFonte` (`EMPREGADO` ou
+    `CONTRIBUINTE_INDIVIDUAL`; o CI só conta para o teto), `cnpjOutroEmpregador` (14 dígitos com DV), `documento`
+    (texto: a declaração do Anexo VIII da IN 2.110 ou o holerite de lá; art. 49 § 3º manda arquivar) e `informadoPorId`; viva única por (vínculo, competência), gate na tx. Rotas
     `GET/POST/PATCH/DELETE /dp/vinculos/:id/outras-remuneracoes`. Auditoria `dp.outra_remuneracao.*` com ids,
     competência e hash HMAC dos valores (F-DPF-9). Entra no reset e no `resetDb()` como o lançamento.
-78. **Teto com outro emprego no motor:** a contribuição do vínculo é a da soma das remunerações (a daqui + as
-    informadas) pela tabela progressiva, limitada ao teto, **menos** a `contribuicaoCents` informada; nunca negativa.
-    Prova com um nó por outra empresa. **A regra exata de rateio entre empregadores está na IN RFB 2.110/2022, ainda não
-    lida (§5): o executor lê antes do PR-4 e, se a IN disser outra coisa, a forma muda aqui antes do código.** Sem
-    `documento`, o DTO recusa (`DP_LANCAMENTO_INVALIDO` com o campo nomeado).
+78. **Teto com outro emprego no motor** (IN RFB 2.110 arts. 36 e 49 § 2º II "a", lida em 06/11; dossiê `pesquisas-legais/brief-pes4-f2-contador/relatorio.md` §5):
+    seja `A` a soma das `remuneracaoCents` com `ordem = ANTES`. A contribuição do vínculo é
+    `INSS(min(A + daqui, teto)) − INSS(min(A, teto))`, pela tabela progressiva continuando as faixas já tributadas
+    antes; nunca negativa. Remuneração com `ordem = DEPOIS` não entra na conta desta empresa. Com `A ≥ teto`, a
+    contribuição daqui é zero. Prova com nó por ordem (antes, depois, antes acima do teto, CI antes). Sem `documento`,
+    o DTO recusa (`DP_LANCAMENTO_INVALIDO` com o campo nomeado).
 
 ### PR-2 — rubricas do F2
 
@@ -278,14 +284,16 @@ com a fonte, e não literal no código.
     do dossiê, como no item 51 de lá): `HORA_EXTRA_50`, `HORA_EXTRA_100`, `ADICIONAL_NOTURNO`, `DSR_VARIAVEIS`,
     `COMISSAO` (INFORMADO, `valorCents`), `FALTAS` (desconto, INFORMADO em minutos ou dias), `DSR_PERDIDO` (desconto),
     `COMPLEMENTO_MINIMO`, `COMPLEMENTO_PISO`, `AFASTAMENTO_EMPRESA_15D` (os 15 primeiros dias pagos pela empresa, Lei
-    8.213 art. 60 § 3º [D03]), `ADIANTAMENTO` (provento da folha de adiantamento) e `DESCONTO_ADIANTAMENTO` (desconto na
-    mensal). `calculo` ganha a família `DERIVADO` (DSR, complementos, desconto do adiantamento).
+    8.213 art. 60 § 3º [D03]), `ADIANTAMENTO` (provento da folha de adiantamento), `DESCONTO_ADIANTAMENTO` (desconto na
+    mensal) e `SALARIO_FAMILIA` (natureza 1409, `codIncCP` 51; faltava na lista, dossiê `pesquisas-legais/brief-pes4-f2-contador/relatorio.md` §9). O DSR usa a
+    natureza **1012**: a 1002 terminou em 30/04/2024 (dossiê §9). A proposta de natureza e incidência das 19 está no
+    dossiê §9; os 5 enquadramentos ambíguos de lá vão ao contador (§5). `calculo` ganha a família `DERIVADO` (DSR, complementos, desconto do adiantamento).
 24. **Mapa rubrica → calculadora** (`features/dp/models/folha/rubricaCalculo.ts`): `as const satisfies` sobre o catálogo;
     rubrica sem calculadora reprova o teste (sem rubrica órfã).
 25. **Consistência** (o teste do item 52 do F0+F1 cobre as novas): natureza e incidências vigentes; nenhuma rubrica de 723
     ou 901 com `codIncCP` em `[25, 26, 51]`; `published.json` recebe só as novas (as 6 antigas não mudam).
 26. **Conferência:** as novas também ficam `conferidoPeloContador: false` e entram na mesma pergunta do pacote do contador
-    (§5), que passa de 6 para 18 rubricas.
+    (§5), que passa de 6 para 19 rubricas.
 
 ### PR-3 — snapshot e fatiamento
 
@@ -424,7 +432,7 @@ com a fonte, e não literal no código.
 63. **Concorrência:** dois `calcular` com o mesmo `execucaoAtualId` lido ⇒ um 200 e um 409 `DP_FOLHA_CONCORRENTE`. Em
     SQLite local o teste serializa; vale o CI Linux (memória `windows-serializa-sqlite-ci-linux-nao`).
 64. **Separação AUTO × EXT** (A5): AUTO = tudo acima; EXT = a conferência do contador de cada golden (`conferidoPor`) e
-    das 18 rubricas; nenhum runbook neste BRIEF. Quando o contador conferir, a planilha dele vira fixture versionada e
+    das 19 rubricas; nenhum runbook neste BRIEF. Quando o contador conferir, a planilha dele vira fixture versionada e
     o golden passa a citá-la.
 
 ---
@@ -582,9 +590,13 @@ Com a escala como dado (item 68), a contagem sai da escala (item 69). O fork que
 
 > ✅ Ratificado (dono, 06/11): *"Só no total (Recommended)"* → (a).
 
+> 🔁 Revisto (dono, 06/11, *"Truncar como o eSocial"*): o MOS do S-5001 item 2.13 trunca em cada faixa (dossiê
+> `pesquisas-legais/brief-pes4-f2-contador/relatorio.md` §3). Valor inicial `ARREDONDAMENTO_INSS` = `TRUNCAR_POR_FAIXA`; o código tem as duas formas e a troca é
+> dado. Ex.: R$ 3.000,00 → 248,58 (eSocial) contra 248,60 (a). O texto abaixo é o histórico da ratificação.
+
 - **(a)** soma exata das faixas e um arredondamento no total. **(b)** arredonda cada faixa e soma.
 - **Recomendação: (a)** (um ponto declarado de arredondamento, spec §5). Diferença máxima: 1 centavo por faixa. O
-  contador confere no golden (§5). O **modo** (meio para cima ou truncar) é a linha `ARREDONDAMENTO` (item 65): trocar
+  contador confere no golden (§5). O **modo** (meio para cima ou truncar) é a linha `ARREDONDAMENTO_INSS` (item 65): trocar
   é dado.
 
 ### F-DPF-4 — Dias do mensalista na admissão e no término
@@ -649,8 +661,13 @@ Com a escala como dado (item 68), a contagem sai da escala (item 69). O fork que
 
 > ✅ Ratificado (dono, 06/11): *"Sem IRRF se mesmo mês (Recommended)"* → (a).
 
-A Lei 7.713 art. 7º § 1º [D06] soma os pagamentos da mesma fonte no mês. A regra específica do adiantamento está na
-IN SRF 15/2001 (não lida, §6).
+A Lei 7.713 art. 7º § 1º [D06] soma os pagamentos da mesma fonte no mês. A IN SRF 15/2001 foi revogada pela IN RFB
+1.500/2014 art. 114; a regra vigente é a IN 1.500 art. 63 (lida em 06/11; dossiê `pesquisas-legais/brief-pes4-f2-contador/relatorio.md` §6).
+
+> 🔁 Revisto (dono, 06/11, *"Corrigir no #1103"*): o caso "mês diferente" deixa de bloquear. Mesmo mês: sem retenção
+> no adiantamento (art. 63 caput). Mensal paga em mês diferente: IRRF calculado de imediato sobre o adiantamento
+> (art. 63 § 1º), e a mensal entra no IRRF do mês em que é paga, somada aos pagamentos da mesma fonte nele
+> (`rendimentoMesAntes`, item 8). O texto abaixo é o histórico da ratificação.
 - **(a)** adiantamento sem retenção quando a mensal é paga no mesmo mês; se a `dataPagamento` da mensal cair em mês
   diferente da do adiantamento, pendência bloqueante até a IN ser lida. **(b)** retém IRRF em todo pagamento, somando
   no mês (só a Lei 7.713). **(c)** só a mensal retém.
@@ -701,19 +718,26 @@ IN SRF 15/2001 (não lida, §6).
 
 ## 5. Pendente de validação externa (não entra em checklist até ter fonte ou resposta)
 
-- **Contador (um pacote só, depois da triagem; memória `pacote-contador-triar-antes`):** (1) os goldens do item 46
-  (`conferidoPor`); (2) as 18 rubricas (6 do F1 + 12 do F2) para o S-1010; (3) a validação do F-DPF-1 (o dono decidiu o divisor pela escala; se o contador discordar, vira linha nova);
-  (4) F-DPF-2 (dias úteis e repouso); (5) F-DPF-3 (arredondamento do INSS); (6) F-DPF-6 (piso com jornada menor e o
-  art. 2º da EC 141).
-- **IN RFB 2.110/2022** (contribuição com mais de um empregador; F-DPF-8): ler na fonte oficial (SIJUT, pelo navegador
-  embutido; não está no acervo) **antes do PR-4** (item 78).
+> Pesquisa de 06/11 (dossiê `pesquisas-legais/brief-pes4-f2-contador/relatorio.md`): resolvidas com fonte a IN RFB 2.110 (item 78), a IN SRF 15
+> (revogada; IN 1.500 art. 63, F-DPF-10), o Dec. 3.048 art. 75 (§§ 3º–5º: mesmo motivo em 60 dias, a empresa não paga
+> de novo os 15 dias), o arredondamento (F-DPF-3), o piso proporcional (F-DPF-6: OJ 358 + EC 141 art. 2º parágrafo
+> único; a decisão (a) é a mais conservadora) e o DSR depois de 16/12/2026 (F-DPF-2). Os goldens do dossiê §10 são do
+> agente, conferência externa pendente.
+
+- **Contador (um pacote só, depois da triagem; memória `pacote-contador-triar-antes`):** (1) os 11 goldens do dossiê
+  §10 (`conferidoPor`; o G9, dois vínculos na mesma empresa, retém IRRF no segundo vínculo, então o adaptador do IRRF
+  recebe o INSS acumulado do mês); (2) as 19 rubricas (6 do F1 + 13 do F2) para o S-1010, com os 5 enquadramentos
+  ambíguos do dossiê §9; (3) a validação do F-DPF-1 (o dono decidiu o divisor pela escala; se o contador discordar,
+  vira linha nova); (4) o sábado no DSR de escala 5×2 **antes** de 16/12/2026 (F-DPF-2); (5) a confirmação de truncar
+  o INSS por faixa (F-DPF-3); (6) como fatiar a competência 12/2026 (1–15 e 16–31); (7) o complemento até o mínimo do
+  comissionista compara com ou sem o DSR.
 - **Advogado, se o contador não fechar o F-DPF-1:** "A EC 141/2026 muda o divisor do salário-hora do mensalista (CLT
   art. 64) com 42 h e 2 dias de repouso a partir de 16/12/2026?"
-- **Cota e limite do salário-família de 2026** (Portaria Interministerial MPS/MF 13/2026): o DOU deu 403 no F1. Entra
-  por PR de dado com fonte (F-DPF-7).
-- **IN SRF 15/2001** (IRRF sobre adiantamento): ler na fonte oficial (SIJUT, pelo navegador embutido) antes do PR-4
-  (F-DPF-10).
-- **Dec. 3.048/1999 art. 75** (novo afastamento pela mesma doença em 60 dias): ler antes do PR-3 (item 32).
+- **Cota e limite do salário-família de 2026** (Portaria Interministerial MPS/MF 13/2026): pela página do INSS, até
+  R$ 1.980,38 de remuneração, cota de R$ 67,54 (dossiê §7). O DOU segue bloqueado; entra por PR de dado com a fonte
+  (F-DPF-7) depois de ler o texto da portaria.
+- **42 h em escala 5×2 a partir de 16/12/2026** passa de 8 h por dia, o que a EC art. 7º só permite por CCT (inferido,
+  dossiê §1): o golden de 12/2026 pressupõe essa CCT.
 - **Adicional de hora extra e noturno maiores por CCT:** quais cláusulas a primeira CCT real traz (L-PES-7). Se trouxer,
   `CCT_CHAVES` ganha `ADICIONAL_HE_BP`/`ADICIONAL_NOTURNO_BP` por PR com teste.
 - **Lei complementar da EC 141 art. 5º** (transição para ME/EPP): ainda não existe, pelo que se leu. Se vier, muda os
@@ -732,7 +756,7 @@ IN SRF 15/2001 (não lida, §6).
 |---|---|---|
 | Férias, 13º, rescisão, complementar, retroativo, pensão, consignado, limite de descontos, saldo devedor | F3 | Snapshot com todas as versões do mês; motor com roteiro como parâmetro; `LIQUIDO_NEGATIVO` |
 | Médias de variáveis (férias, 13º, aviso) | F3 | Resultados imutáveis por competência (a média lê execuções atuais) |
-| S-1200/S-1210, S-1010 das 18 rubricas, o grupo de múltiplos vínculos com o dado do item 77 | F4 | Linhas por rubrica com natureza e incidências; `dataPagamento` para o S-1210 |
+| S-1200/S-1210, S-1010 das 19 rubricas, o grupo de múltiplos vínculos com o dado do item 77 | F4 | Linhas por rubrica com natureza e incidências; `dataPagamento` para o S-1210 |
 | Patronal (CPP, RAT/FAP, terceiros), lançamento contábil, DCTFWeb, guia do FGTS | F5 (com F-FOL-1..9) | `bases` por vínculo; FGTS calculado |
 | Estado `FECHADA`, reabertura, painel do contador, gate do ponto | F5 | `DpFolha.estado` com espaço para o valor novo |
 | SST (`BE-INCR-DP-SST`) | BRIEF próprio | Nada novo no F2 |
@@ -756,7 +780,7 @@ IN SRF 15/2001 (não lida, §6).
 | PR-0R | opus-medio | Duas tabelas novas com carga e fonte, migração da jornada sem inventar dado, e o F1 lendo as regras sem mudar comportamento |
 | PR-0 | opus-medio | Aritmética exata com propriedades e a conferência de cada artigo |
 | PR-1 | opus-baixo | Dois CRUDs no molde do F1, com PII e uma precedência |
-| PR-2 | opus-baixo | Doze rubricas com consistência; a escolha dos códigos vai ao contador |
+| PR-2 | opus-baixo | Treze rubricas com consistência; a escolha dos códigos vai ao contador |
 | PR-3 | opus-medio | Montagem com hash canônico e fatiamento com propriedades |
 | PR-4 | opus-alto | Motor com ordem fixa, dez goldens com a conta escrita e as pendências |
 | PR-5 | opus-medio | Persistência imutável, CAS, desatualização na mesma tx |
