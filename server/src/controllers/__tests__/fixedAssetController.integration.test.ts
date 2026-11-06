@@ -9,6 +9,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { DepreciationService } from '@/features/accounting/services/DepreciationService';
+import { FixedAssetRepository } from '@/features/accounting/repositories/FixedAssetRepository';
 
 const app = makeApp();
 const UNIT = 'unit-fixed-assets-http';
@@ -689,6 +690,49 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
       await novoAtivo(classId, 'A-MSG-CDEL', 'Geladeira');
       const res = await request(app).delete(`/api/accounting/fixed-asset-classes/${classId}`).set(authHeader(dono)).send({ unitId: UNIT, classId });
       nomeiaSemId(res, 400, 'IMSG-CDEL — Equipamentos de copa', classId);
+    });
+
+    // FIX-TESTES item 5, lote 4: os 2 sites "corrigir" do DepreciationService (inventário MENSAGENS-ID-INTERNO-2026-11-05).
+    // Os dois só mordem em corrida (a classe some entre a checagem do FixedAssetService e a da quota; o CAS do addAccumulated
+    // perde). O estado é forçado pelo mesmo precedente dos testes IMO-2 acima: espião no protótipo, que chama o original.
+    describe('lote 4 — DepreciationService', () => {
+      it('DepreciationService:189 — baixa em que a classe some antes da quota da baixa (404) nomeia o bem, não o cuid da classe', async () => {
+        const classId = await novaClasse('IMSG-DQCL', 'Móveis');
+        const assetId = await novoAtivo(classId, 'A-MSG-DQCL', 'Cômoda');
+        expect((await ativar(assetId)).status).toBe(200);
+        const original = DepreciationService.prototype.postQuotaForDisposal;
+        const spy = jest.spyOn(DepreciationService.prototype, 'postQuotaForDisposal').mockImplementation(async function (
+          this: DepreciationService,
+          ...args: Parameters<DepreciationService['postQuotaForDisposal']>
+        ) {
+          await prisma.fixedAssetClass.update({ where: { id: classId }, data: { deletedAt: new Date() } });
+          return original.apply(this, args);
+        });
+        try {
+          nomeiaSemId(await baixar(assetId, 2), 404, 'A-MSG-DQCL — Cômoda', classId, assetId);
+        } finally {
+          spy.mockRestore();
+        }
+      });
+
+      it('DepreciationService:287 — quota mensal que perde o CAS do ativo (409) nomeia o bem', async () => {
+        const classId = await novaClasse('IMSG-DQCAS', 'Móveis', { depreciable: true, accumulatedDepreciationAccountId: accDepAccountId });
+        const assetId = await novoAtivo(classId, 'A-MSG-DQCAS', 'Escrivaninha', 100_000);
+        expect((await ativar(assetId)).status).toBe(200);
+        const original = FixedAssetRepository.prototype.addAccumulated;
+        const spy = jest.spyOn(FixedAssetRepository.prototype, 'addAccumulated').mockImplementation(async function (
+          this: FixedAssetRepository,
+          ...args: Parameters<FixedAssetRepository['addAccumulated']>
+        ) {
+          return args[1] === assetId ? null : original.apply(this, args);
+        });
+        try {
+          const res = await request(app).post('/api/accounting/fixed-assets/depreciation/run').set(authHeader(dono)).send({ unitId: UNIT, yearMonth: '2026-01' });
+          nomeiaSemId(res, 409, 'A-MSG-DQCAS — Escrivaninha', assetId);
+        } finally {
+          spy.mockRestore();
+        }
+      });
     });
   });
 });
