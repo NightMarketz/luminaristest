@@ -4,10 +4,10 @@ tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Correções de teste pela régua de 04/11: boot pós-rekey, textos da venda de pacote, pipeline do CRM pela pilha real, rotas contábeis sem integração, mensagens com id interno"
 estado: "inflight"
-estado_detalhe: "05/11 (fold, medido com gh): itens 1 (#1080) e 4 (#1089) e lotes 1–3 do item 5 (#1092, #1094, #1097) em main; itens 2 (#1078) e 3 (#1077) com guarda verde, à espera do merge do dono (classe vermelha); item 5 lote 4+ (120 lugares) aberto · 04/11: executa dos 5 BRIEFs e forks ratificados na recomendação (questionário); 5 BRIEFs escritos no PR #1075 (sem merge); Q1–Q5 do PR decididas por questionário ([[D-2026-11-04-APRENDIZADOS-TESTES]])."
+estado_detalhe: "06/11: item 5, lote 4 (8 serviços, 39 sites, 8 corrigir, 9 guardas vermelho → verde) no #1109, sem merge; lote 5+ (83 sites) aberto · 05/11 (fold, medido com gh): itens 1 (#1080) e 4 (#1089) e lotes 1–3 do item 5 (#1092, #1094, #1097) em main; itens 2 (#1078) e 3 (#1077) com guarda verde, à espera do merge do dono (classe vermelha); item 5 lote 4+ (120 lugares) aberto · 04/11: executa dos 5 BRIEFs e forks ratificados na recomendação (questionário); 5 BRIEFs escritos no PR #1075 (sem merge); Q1–Q5 do PR decididas por questionário ([[D-2026-11-04-APRENDIZADOS-TESTES]])."
 autorizacao: "**EXECUTA** (dono, chat, 2026-11-04, questionário): \"Executa, forks na recomendação (Recomendado)\" — executa dos 5 BRIEFs inteiros (todos os lotes), forks ratificados na recomendação, sem merge; o lote 1 do item 5 espera a correção do IMO-1 (mesmo arquivo) · antes: dono, chat, 2026-11-04: \"Já vai atualizando todas os aprendizados nos locais onde são briefs, e onde já estiver implementado, você também já cria briefs de correção de acordo com o aprendizado.\" — só os BRIEFs (sessao-planejamento); sem código, sem 'executa' · dono, chat, 2026-11-04, questionário do #1075: Q5 \"Nó FIX-TESTES (Recomendado)\""
-atualizado: "2026-11-05"
-prs: ["#1075", "#1080", "#1089", "#1092", "#1094", "#1097", "#1077", "#1078"]
+atualizado: "2026-11-06"
+prs: ["#1075", "#1080", "#1089", "#1092", "#1094", "#1097", "#1077", "#1078", "#1109"]
 ---
 # FIX-TESTES — correções de teste pela régua de 04/11
 
@@ -42,7 +42,7 @@ correção do IMO-1 (#1053). O DFE-1 segue no PILOTO-DFE (#1067, F-PIL-5).
 | 2 | guarda verde 16/16 depois da correção; **espera o merge do dono** (classe vermelha) | #1078 |
 | 3 | guarda verde 14/14 depois da correção do no-show duplicado; **espera o merge do dono** (classe vermelha, draft) | #1077 |
 | 4 | ✅ em main; `/api/accounting` sem rota fora da integração | #1089 |
-| 5 | lotes 1–3 ✅ em main; **lote 4 em diante aberto** (120 lugares, pelo corpo do #1096) | #1092, #1094, #1097 |
+| 5 | lotes 1–3 ✅ em main; **lote 4** (estoque, contraparte, depreciação, aprovação, razão, período, conciliação, CRM: 39 sites, 8 corrigir) com guarda verde, **espera o merge do dono** (06/11); **lote 5 em diante aberto** (83 sites, inventário `MENSAGENS-ID-INTERNO-2026-11-05.md`) | #1092, #1094, #1097, #1109 |
 
 - **Fork novo do item 2** (dono, chat, 05/11/2026, questionário): *"Habilitar o botão (Recomendado)"*. Na Nova Venda,
   Rascunho e Finalizar desabilitam só por validade e envio, e o `handleSubmit` mostra o texto do aviso e troca de aba.
