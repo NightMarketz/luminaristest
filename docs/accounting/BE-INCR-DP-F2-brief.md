@@ -19,6 +19,8 @@
 > [`PRE-ADR-PESSOAL-FOLHA-ESOCIAL-REINF.md`](PRE-ADR-PESSOAL-FOLHA-ESOCIAL-REINF.md) F-PES-7/8/9/13; a régua
 > [`APRENDIZADOS-TESTES-2026-11-04.md`](../operating-manual/APRENDIZADOS-TESTES-2026-11-04.md) (A1–A8); o código do F0+F1
 > em `origin/main` `fe5a2d76` (re-fetch 05/11).
+> **Forks:** F-DPF-1..13 decididos pelo dono em 06/11 (três contra a recomendação: 1, 7, 8), cédula
+> [`D-2026-11-06-DP-BRIEF-F2`](../plano/decisoes/D-2026-11-06-DP-BRIEF-F2.md).
 > **Escopo:** backend. O FE é nó vizinho (holerite e tela da folha, a abrir).
 > **Dossiê legal:** [`pesquisas-legais/brief-pes4-f2/relatorio.md`](../../pesquisas-legais/brief-pes4-f2/relatorio.md).
 > As referências [Dnn] abaixo são dele; [F1-Dnn] são do dossiê do F0+F1 (`pesquisas-legais/brief-pes4-f0-f1/`).
@@ -33,7 +35,7 @@ hora noturna, dias pagos pela empresa, base do mensalista, limites de jornada, d
 `LegalParameter` com vigência ou campo da jornada. Mudança de lei ou de escala que só troca número vira dado, sem deploy.
 **Risco principal:** a **EC 141/2026** (DOU 16/10/2026) muda a jornada máxima para 42 h em
 16/12/2026 e para 40 h em 16/12/2027, e dá **2 dias de repouso semanal remunerado** a partir de 16/12/2026. O divisor do
-salário-hora e o DSR depois dela não têm regra lida (F-DPF-1). Nada do F2 vale como folha sem o golden conferido pelo
+salário-hora e o DSR depois dela não têm regra lida; o dono decidiu o divisor pela escala (F-DPF-1, 06/11), e a validação do contador segue aberta. Nada do F2 vale como folha sem o golden conferido pelo
 contador.
 
 ---
@@ -103,7 +105,7 @@ calculadora roda com **duas** fotografias de regras (a vigente e uma alterada) e
 |---|---|---|---|
 | **PR-0R** | Regras como dado: `FOLHA_REGRA`, `DP_CATEGORIA_ENCARGO`, leitor `regrasFolha`, escala na jornada e as constantes do F1 fora do código | 65–76 | Sim: linhas novas em `legal_parameters`; campos novos na jornada |
 | **PR-0** | Calculadoras legais puras e o nó de prova | 1–12 | Não (só funções puras) |
-| **PR-1** | Dependentes, lançamentos informados e o formato do `JornadaApuradaItem` | 13–22 | Sim: rotas novas |
+| **PR-1** | Dependentes, lançamentos informados, outra remuneração e o formato do `JornadaApuradaItem` | 13–22, 77–78 | Sim: rotas novas |
 | **PR-2** | Rubricas do F2 no catálogo | 23–26 | Sim: `GET /dp/rubricas` devolve mais linhas |
 | **PR-3** | Snapshot (montagem, forma canônica, hash) e fatiamento | 27–33 | Não (serviço sem rota) |
 | **PR-4** | Motor: roteiros `MENSAL` e `ADIANTAMENTO`, pendências e goldens | 34–47 | Não (função pura) |
@@ -136,7 +138,8 @@ com a fonte, e não literal no código.
       2026-12-16 a 2027-12-15; 2400 desde 2027-12-16 (EC 141 art. 6º I e II [D12], publicada no DOU de 16/10/2026);
     - `REPOUSO_DIAS_MIN`: 1 até 2026-12-15; 2 desde 2026-12-16 (EC 141 art. 1º, inciso XV, e art. 10 I [D12]);
     - `SALARIO_HORA_DIVISOR` (`valorTexto`): `SEMANA_SEIS_DIAS` até 2026-12-15 (CLT art. 64 [D02]; Súm. 431 [D16]);
-      **sem linha** desde 2026-12-16 até o F-DPF-1, de propósito (o motor dá `PARAMETRO_LEGAL_AUSENTE`, item 44);
+      `DIAS_DE_TRABALHO_DA_ESCALA` desde 2026-12-16 (F-DPF-1, dono, 06/11; fonte = a cédula `D-2026-11-06-DP-BRIEF-F2`,
+      com a validação do contador pendente em §5);
     - `ARREDONDAMENTO` (`valorTexto`) `MEIO_PARA_CIMA_CENTAVO` (F-DPF-3; fonte: decisão registrada, não lei);
     - `SALARIO_FAMILIA_IDADE_MAX` 14 (Lei 8.213 art. 66 [D03]);
     - as do F1 (item 72): `EMPREGADO_IDADE_MIN` 16 e `APRENDIZ_IDADE_MIN` 14 (CF art. 7º XXXIII [F1-D12]),
@@ -258,6 +261,16 @@ com a fonte, e não literal no código.
     não tem PII, mas tem valor; F-DPF-9).
 22. **Reset e `resetDb`:** os dois models entram no `accountingResetClassification` (BLOCKING, G14) e no `resetDb()` antes
     de `dpVinculo`/`dpTrabalhador`.
+77. **`DpOutraRemuneracao`** (F-DPF-8, dono 06/11): por vínculo e competência, `remuneracaoCents`, `contribuicaoCents`
+    (o INSS já descontado pelo outro empregador), `cnpjOutroEmpregador` (14 dígitos com DV), `documento` (texto: a
+    declaração ou o holerite de lá) e `informadoPorId`; viva única por (vínculo, competência), gate na tx. Rotas
+    `GET/POST/PATCH/DELETE /dp/vinculos/:id/outras-remuneracoes`. Auditoria `dp.outra_remuneracao.*` com ids,
+    competência e hash HMAC dos valores (F-DPF-9). Entra no reset e no `resetDb()` como o lançamento.
+78. **Teto com outro emprego no motor:** a contribuição do vínculo é a da soma das remunerações (a daqui + as
+    informadas) pela tabela progressiva, limitada ao teto, **menos** a `contribuicaoCents` informada; nunca negativa.
+    Prova com um nó por outra empresa. **A regra exata de rateio entre empregadores está na IN RFB 2.110/2022, ainda não
+    lida (§5): o executor lê antes do PR-4 e, se a IN disser outra coisa, a forma muda aqui antes do código.** Sem
+    `documento`, o DTO recusa (`DP_LANCAMENTO_INVALIDO` com o campo nomeado).
 
 ### PR-2 — rubricas do F2
 
@@ -324,7 +337,7 @@ com a fonte, e não literal no código.
     contribuinte individual (item 6) e sem FGTS. Os dois com IRRF.
 41. **Dois vínculos do mesmo trabalhador na instância:** o motor calcula os vínculos do mesmo CPF em ordem estável
     (`dataInicio`, `matricula`) e passa o INSS já descontado ao próximo, para o teto valer na soma (EC 103 art. 28 [F1-D01];
-    Lei 8.212 art. 28 III para o 723 [F1-D02]). Remuneração em **outra** empresa: F-DPF-8.
+    Lei 8.212 art. 28 III para o 723 [F1-D02]). Remuneração em **outra** empresa entra pelo item 78 (F-DPF-8, dono 06/11).
 42. **Roteiro `ADIANTAMENTO`:** `ADIANTAMENTO` = percentual × salário contratual da versão vigente no dia do
     pagamento, sem INSS e sem FGTS. O percentual é parâmetro da instância (item 50), não lei. O IRRF do adiantamento: F-DPF-10.
 43. **Desconto do adiantamento na mensal:** a mensal desconta o que a execução `ADIANTAMENTO` **mais recente** da mesma
@@ -332,11 +345,11 @@ com a fonte, e não literal no código.
 44. **Pendências** (tipo fechado `DpPendenciaFolha`, cada uma com `codigo`, `vinculoId`, `dado` nomeado pelo rótulo que o
     usuário vê — matrícula, nome do cargo, código da rubrica — e nunca cuid nem nome de tabela; A3): `SEM_VERSAO_NA_COMPETENCIA`,
     `PARAMETRO_LEGAL_AUSENTE` (com a tabela e a data), `JORNADA_AUSENTE`, `AFASTAMENTO_SEM_REGRA_NO_F2`,
-    `LIQUIDO_NEGATIVO` (F-DPF-11), `LANCAMENTO_DUPLICADO_COM_PONTO`, `SALARIO_FAMILIA_SEM_PARAMETRO` (F-DPF-7),
+    `LIQUIDO_NEGATIVO` (F-DPF-11), `LANCAMENTO_DUPLICADO_COM_PONTO`, `SALARIO_FAMILIA_SEM_PARAMETRO` (**aviso, não bloqueia**: F-DPF-7, dono 06/11),
     `JORNADA_ACIMA_DO_LIMITE` (minutos semanais da escala acima de `JORNADA_LIMITE_SEMANAL_MIN` vigente na competência) e
     `REPOUSO_ABAIXO_DO_MINIMO` (dias de repouso da escala abaixo de `REPOUSO_DIAS_MIN`). **Nenhuma data fixa no código**:
-    a virada de 16/12/2026 da EC 141 é a vigência das linhas (item 65), e a falta da linha do divisor nessa data dá
-    `PARAMETRO_LEGAL_AUSENTE`. Vínculo com pendência bloqueante não tem linhas; os outros calculam normalmente.
+    a virada de 16/12/2026 da EC 141 é a vigência das linhas (item 65); se alguma faltar na competência (ex.: a linha
+    de 2027 ainda não publicada), o motor dá `PARAMETRO_LEGAL_AUSENTE`. Vínculo com pendência bloqueante não tem linhas; os outros calculam normalmente.
 45. **Determinismo** (fast-check): o mesmo snapshot dá o mesmo `resultadoSha256` (forma canônica do item 28 sobre
     linhas, bases, totais e pendências); a ordem dos vínculos no snapshot não muda o resultado de nenhum vínculo, salvo
     o item 41 (que tem ordem fixa).
@@ -350,7 +363,8 @@ com a fonte, e não literal no código.
 47. **Competências de 2026-12 em diante:** os goldens do F2 ficam em 2026-03/2026-04 (antes da EC 141), mais um golden
     de **troca de regra**: o mesmo vínculo em 2026-03 com a fotografia de regras real e com uma fotografia de teste em
     que `HE_ADICIONAL_BP` = 6000 e `JORNADA_LIMITE_SEMANAL_MIN` = 2400; o motor muda o resultado sem mudar código. O
-    golden real de 2026-12 nasce quando a linha do divisor (F-DPF-1) tiver fonte.
+    golden de 2026-12 (42 h, escala 5×2, divisor pela escala) entra no catálogo desde já (F-DPF-1 ratificado), também
+    com `conferidoPor: null`.
 
 ### PR-5 — folha, execução e resultado persistidos
 
@@ -469,6 +483,7 @@ interface DpSnapshot {
     dependentes: { irrf: number; salarioFamilia: Array<{ idade: number; invalido: boolean }> };
     jaPagoNoMesDePagamento: { rendimentoCents: string; irrfRetidoCents: string };
     adiantamentoPagoCents?: string;
+    outrasRemuneracoes: Array<{ remuneracaoCents: string; contribuicaoCents: string }>; // item 77, sem o CNPJ
   }>;
 }
 ```
@@ -484,6 +499,10 @@ model DpLancamento { id String @id @default(cuid()); vinculoId String; vinculo D
   competencia String; rubrica String; quantidadeMin Int?; valorCents BigInt?; origem String; moduloKey String?; observacao String?
   informadoPorId String; createdAt DateTime @default(now()); updatedAt DateTime @updatedAt; deletedAt DateTime?
   @@index([vinculoId, competencia]) @@map("dp_lancamentos") }
+model DpOutraRemuneracao { id String @id @default(cuid()); vinculoId String; vinculo DpVinculo @relation(fields: [vinculoId], references: [id], onDelete: Restrict)
+  competencia String; remuneracaoCents BigInt; contribuicaoCents BigInt; cnpjOutroEmpregador String; documento String; informadoPorId String
+  createdAt DateTime @default(now()); updatedAt DateTime @updatedAt; deletedAt DateTime?
+  @@index([vinculoId, competencia]) @@map("dp_outras_remuneracoes") }
 model DpParametrosFolha { id String @id @default(cuid()); userId String; user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   adiantamentoBp Int; competenciaInicio String; competenciaFim String?; createdAt DateTime @default(now()); updatedAt DateTime @updatedAt; deletedAt DateTime?
   @@index([userId]) @@map("dp_parametros_folha") }
@@ -523,9 +542,16 @@ reset; testes com escopo (`npx jest --runTestsByPath …`, integração `--runIn
 
 ---
 
-## 4. Forks deste BRIEF — RATIFICAÇÃO PENDENTE (nenhum se auto-ratifica)
+## 4. Forks deste BRIEF — ✅ DECIDIDOS 2026-11-06
+
+Questionário do dono em 06/11 (cédula [`D-2026-11-06-DP-BRIEF-F2`](../plano/decisoes/D-2026-11-06-DP-BRIEF-F2.md)). Dez
+pela recomendação; **três contra**: F-DPF-1 (divisor pela escala), F-DPF-7 (salário-família calcula e avisa) e F-DPF-8
+(outro emprego já no F2). O texto de cada fork abaixo fica como estava na pergunta; a linha ✅ diz o que vale, e os itens
+do checklist já foram ajustados.
 
 ### F-DPF-1 — Divisor do salário-hora depois da EC 141/2026 (revisto em 06/11: a decisão vira o valor de uma linha)
+
+> ✅ Ratificado contra a recomendação (dono, 06/11): *"Divide pela escala"*. A linha `SALARIO_HORA_DIVISOR` = `DIAS_DE_TRABALHO_DA_ESCALA` desde 2026-12-16 (fonte: esta decisão; a pergunta ao contador fica em §5 como validação, não como bloqueio).
 
 A EC 141 [D12] fixa 42 h a partir de 16/12/2026 e 40 h a partir de 16/12/2027 (art. 6º I e II), 2 dias de repouso
 semanal remunerado desde 16/12/2026 (art. 1º XV; art. 10 I) e veda redução salarial nominal ou proporcional (art. 2º).
@@ -543,6 +569,8 @@ As duas formas ficam em código (item 3) e a escolha é a linha `FOLHA_REGRA`/`S
 
 ### F-DPF-2 — Dias úteis e dias de repouso no DSR sobre variáveis (revisto em 06/11)
 
+> ✅ Ratificado (dono, 06/11): *"Pela escala (Recommended)"* → (a).
+
 Com a escala como dado (item 68), a contagem sai da escala (item 69). O fork que sobra é um só:
 - **(a)** dia útil = dia de trabalho da escala que não é feriado; o sábado não trabalhado é repouso.
 - **(b)** dia útil = todo dia que não é domingo nem feriado, qualquer que seja a escala (a prática de antes da EC 141).
@@ -552,12 +580,16 @@ Com a escala como dado (item 68), a contagem sai da escala (item 69). O fork que
 
 ### F-DPF-3 — Arredondamento do INSS progressivo
 
+> ✅ Ratificado (dono, 06/11): *"Só no total (Recommended)"* → (a).
+
 - **(a)** soma exata das faixas e um arredondamento no total. **(b)** arredonda cada faixa e soma.
 - **Recomendação: (a)** (um ponto declarado de arredondamento, spec §5). Diferença máxima: 1 centavo por faixa. O
   contador confere no golden (§5). O **modo** (meio para cima ou truncar) é a linha `ARREDONDAMENTO` (item 65): trocar
   é dado.
 
 ### F-DPF-4 — Dias do mensalista na admissão e no término
+
+> ✅ Ratificado (dono, 06/11): *"Mês de 30 dias (Recommended)"* → (a).
 
 - **(a)** mês comercial de 30: admitido no dia *d* recebe `30 − d + 1` dias (fevereiro e meses de 31 tratados como 30);
   desligado no dia *d* recebe *d* dias (com 31 ⇒ 30).
@@ -567,6 +599,8 @@ Com a escala como dado (item 68), a contagem sai da escala (item 69). O fork que
 
 ### F-DPF-5 — Afastamento no F2
 
+> ✅ Ratificado (dono, 06/11): *"Só doença; outros travam (Recommended)"* → (a).
+
 - **(a)** só doença ou acidente não do trabalho (15 dias pela empresa, Lei 8.213 art. 60 § 3º [D03]); outro motivo ⇒
   pendência bloqueante. **(b)** toda a Tabela 18 já no F2.
 - **Recomendação: (a).** Maternidade (Lei 8.213 art. 72 § 1º, com "Vide Lei 15.371/2026" não lida), acidente de
@@ -574,6 +608,8 @@ Com a escala como dado (item 68), a contagem sai da escala (item 69). O fork que
   em 60 dias (Dec. 3.048 art. 75, não lido) fica em §5.
 
 ### F-DPF-6 — Piso da CCT para jornada menor
+
+> ✅ Ratificado (dono, 06/11): *"Proporcional só no parcial (Recommended)"* → (a).
 
 - **(a)** piso proporcional à jornada contratual (minutos ÷ 44 h ou o limite vigente). **(b)** piso integral sempre.
 - **Recomendação: (a)** para tempo parcial (CLT art. 58-A § 1º [D02]: salário "proporcional à sua jornada"), mas
@@ -583,6 +619,8 @@ Com a escala como dado (item 68), a contagem sai da escala (item 69). O fork que
 
 ### F-DPF-7 — Salário-família sem a cota de 2026
 
+> ✅ Ratificado contra a recomendação (dono, 06/11): *"Calcula e avisa"* → (b). `SALARIO_FAMILIA_SEM_PARAMETRO` é aviso, não bloqueio.
+
 - **(a)** pendência bloqueante `SALARIO_FAMILIA_SEM_PARAMETRO` para vínculo 101/103 com dependente marcado, até a
   tabela `SALARIO_FAMILIA` (cota e limite, com fonte) entrar por PR de dado. **(b)** calcula sem salário-família e avisa
   (não bloqueia). **(c)** fica para o F3.
@@ -591,6 +629,8 @@ Com a escala como dado (item 68), a contagem sai da escala (item 69). O fork que
 
 ### F-DPF-8 — INSS de quem tem outro emprego fora da instância
 
+> ✅ Ratificado contra a recomendação (dono, 06/11): *"Já no F2"* → (a). Itens 77 e 78; a regra de soma ao teto pede a leitura da IN RFB 2.110/2022 antes do PR-4 (§5).
+
 - **(a)** campo informado por vínculo e competência ("remuneração em outra empresa", com o documento como fonte), somado
   ao teto. **(b)** fora do F2 (só vínculos da mesma instância).
 - **Recomendação: (b) no F2**, com (a) no F4 (o S-1200 tem o grupo de múltiplos vínculos e o MOS dá o formato). O F2 já
@@ -598,12 +638,16 @@ Com a escala como dado (item 68), a contagem sai da escala (item 69). O fork que
 
 ### F-DPF-9 — Valor do lançamento na auditoria
 
+> ✅ Ratificado (dono, 06/11): *"Só o hash (Recommended)"* → (b).
+
 - **(a)** o evento leva `quantidadeMin` e `valorCents` (remuneração de uma pessoa, mas sem identificá-la além do
   `vinculoId`). **(b)** só ids, competência e rubrica, com hash HMAC dos valores (como a correção do trabalhador).
 - **Recomendação: (b)**, coerente com o F-DPB-3 e o HMAC de 04/11: valor de remuneração por pessoa é dado pessoal e a
   cadeia de hash é irreversível.
 
 ### F-DPF-10 — IRRF do adiantamento
+
+> ✅ Ratificado (dono, 06/11): *"Sem IRRF se mesmo mês (Recommended)"* → (a).
 
 A Lei 7.713 art. 7º § 1º [D06] soma os pagamentos da mesma fonte no mês. A regra específica do adiantamento está na
 IN SRF 15/2001 (não lida, §6).
@@ -614,6 +658,8 @@ IN SRF 15/2001 (não lida, §6).
 
 ### F-DPF-11 — Líquido negativo
 
+> ✅ Ratificado (dono, 06/11): *"Trava e avisa (Recommended)"* → (a).
+
 - **(a)** pendência bloqueante `LIQUIDO_NEGATIVO` no F2; o saldo para a competência seguinte e o limite de descontos
   (CLT art. 462 [D02]) são do F3. **(b)** saldo devedor já no F2.
 - **Recomendação: (a).** No F2 só faltas e o desconto do adiantamento levam ao negativo; a regra de carregar saldo é do
@@ -621,12 +667,16 @@ IN SRF 15/2001 (não lida, §6).
 
 ### F-DPF-12 — Execução síncrona
 
+> ✅ Ratificado (dono, 06/11): *"Direto, sem fila (Recommended)"* → (a).
+
 - **(a)** `calcular` síncrono na requisição, no processo (T11). **(b)** job com fila.
 - **Recomendação: (a)**, pela T11 (sem fila) e porque o motor é puro e independente por vínculo. A meta da spec (1.000
   vínculos em menos de 60 s) vira teste de desempenho só informativo no PR-4 (gera 1.000 vínculos sintéticos e mede);
   se passar de 30 s, vira fork no BRIEF do F5.
 
 ### F-DPF-13 — Autônomo 701 (encaixe registrado no F0+F1 §7 como "fork obrigatório do F2")
+
+> ✅ Ratificado (dono, 06/11): *"Fica fora do DP (Recommended)"* → (a).
 
 - **(a)** fica fora do DP: o pagamento a autônomo segue no contas a pagar com retenção (RETENCOES-FONTE,
   `TRABALHO_NAO_ASSALARIADO_PF`); o DP só entra quando o eSocial (F4) exigir o S-1200 dele. **(b)** entra no núcleo do
@@ -652,9 +702,11 @@ IN SRF 15/2001 (não lida, §6).
 ## 5. Pendente de validação externa (não entra em checklist até ter fonte ou resposta)
 
 - **Contador (um pacote só, depois da triagem; memória `pacote-contador-triar-antes`):** (1) os goldens do item 46
-  (`conferidoPor`); (2) as 18 rubricas (6 do F1 + 12 do F2) para o S-1010; (3) F-DPF-1 (divisor depois da EC 141);
+  (`conferidoPor`); (2) as 18 rubricas (6 do F1 + 12 do F2) para o S-1010; (3) a validação do F-DPF-1 (o dono decidiu o divisor pela escala; se o contador discordar, vira linha nova);
   (4) F-DPF-2 (dias úteis e repouso); (5) F-DPF-3 (arredondamento do INSS); (6) F-DPF-6 (piso com jornada menor e o
   art. 2º da EC 141).
+- **IN RFB 2.110/2022** (contribuição com mais de um empregador; F-DPF-8): ler na fonte oficial (SIJUT, pelo navegador
+  embutido; não está no acervo) **antes do PR-4** (item 78).
 - **Advogado, se o contador não fechar o F-DPF-1:** "A EC 141/2026 muda o divisor do salário-hora do mensalista (CLT
   art. 64) com 42 h e 2 dias de repouso a partir de 16/12/2026?"
 - **Cota e limite do salário-família de 2026** (Portaria Interministerial MPS/MF 13/2026): o DOU deu 403 no F1. Entra
@@ -680,7 +732,7 @@ IN SRF 15/2001 (não lida, §6).
 |---|---|---|
 | Férias, 13º, rescisão, complementar, retroativo, pensão, consignado, limite de descontos, saldo devedor | F3 | Snapshot com todas as versões do mês; motor com roteiro como parâmetro; `LIQUIDO_NEGATIVO` |
 | Médias de variáveis (férias, 13º, aviso) | F3 | Resultados imutáveis por competência (a média lê execuções atuais) |
-| S-1200/S-1210, S-1010 das 18 rubricas, múltiplos vínculos externos (F-DPF-8 a) | F4 | Linhas por rubrica com natureza e incidências; `dataPagamento` para o S-1210 |
+| S-1200/S-1210, S-1010 das 18 rubricas, o grupo de múltiplos vínculos com o dado do item 77 | F4 | Linhas por rubrica com natureza e incidências; `dataPagamento` para o S-1210 |
 | Patronal (CPP, RAT/FAP, terceiros), lançamento contábil, DCTFWeb, guia do FGTS | F5 (com F-FOL-1..9) | `bases` por vínculo; FGTS calculado |
 | Estado `FECHADA`, reabertura, painel do contador, gate do ponto | F5 | `DpFolha.estado` com espaço para o valor novo |
 | SST (`BE-INCR-DP-SST`) | BRIEF próprio | Nada novo no F2 |
@@ -716,7 +768,8 @@ IN SRF 15/2001 (não lida, §6).
   folha está certa. Mitigação: conta escrita no golden, `conferidoPor: null` visível, e nenhuma folha vira lançamento
   ou eSocial antes do F5.
 - **EC 141/2026 recente** (16/10/2026), sem regulamentação lida e com uma lei complementar possível para ME/EPP. A
-  resposta do BRIEF é bloquear a competência ≥ 2026-12 até o F-DPF-1, não adivinhar. O go-live é em 2027 (memória
+  resposta do BRIEF era bloquear a competência ≥ 2026-12; o dono preferiu calcular com o divisor pela escala (F-DPF-1). O risco aceito é
+  a hora extra de quem trabalha 5 dias sair 20% abaixo, se o contador ler a outra forma; a troca é uma linha de dado. O go-live é em 2027 (memória
   `go-live-em-2027`): toda folha real já cai depois da EC.
 - **Regra de parâmetro mal aplicada:** um literal de regra que escape para dentro de uma calculadora volta a exigir PR
   de código numa mudança de lei. Mitigação sem gate novo: `RegrasFolha` como único caminho (item 67) e o golden de troca
@@ -724,7 +777,9 @@ IN SRF 15/2001 (não lida, §6).
 - **Migração da jornada:** jornada antiga cujo total não divide por 6 fica sem `minutosPorDia` e trava o cálculo
   daquele vínculo até ser corrigida (item 68). É de propósito (não inventa escala), mas aparece como pendência para o
   operador.
-- **Escopo grande:** 76 itens em 8 PRs. PR-0..PR-4 não têm rota e já dão o motor testável; PR-5 e PR-6 ligam.
+- **Salário-família calculado sem a cota (F-DPF-7, contra a recomendação):** o holerite pode sair sem uma parcela
+  devida (Lei 8.213 art. 68) até a cota de 2026 entrar como dado. O aviso aparece por vínculo.
+- **Escopo grande:** 78 itens em 8 PRs. PR-0..PR-4 não têm rota e já dão o motor testável; PR-5 e PR-6 ligam.
 - **Viés do autor:** preferi reusar o `calcularIrrfPf` e os moldes do F1 em todo lugar. O caso adversarial tentado foi
   o D-2: o IRRF da folha precisa somar adiantamento e mensal do mesmo mês, e o `calcularIrrfPf` já recebe
   `rendimentoMesAntes` e `retidoMesAntes` (G3), então serve sem mudança. O que **não** tentei: um caso real de
