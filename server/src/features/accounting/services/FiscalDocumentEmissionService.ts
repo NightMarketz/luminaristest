@@ -1425,11 +1425,15 @@ export class FiscalDocumentEmissionService {
               // ISS-TRANSICAO-IBS PR-2 itens 8–9 (F-ISS-1 a; L4): no regime normal o pAliq leva o fator de 2029–2032 na
               // data da 1ª ocorrência = `dCompet` — venda comum e pacote em VENDA: data da venda; pacote em CONSUMO: data
               // da sessão / do vencimento (P-ISS-3, fold de 30/10: LC 214 art. 408 § 4º I; art. 10 §§ 3º–4º). Simples
-              // com retenção: o % do Anexo já cai pela tabela — sem fator (não reduz duas vezes).
+              // com ISS pelo SN e retenção (regApTribSN 1): o % do Anexo já cai pela tabela — sem fator (não reduz duas
+              // vezes). Simples com ISS fora do DAS (regApTribSN 2/3, "ISS pela NFS-e"): o pAliq é a alíquota municipal e
+              // leva o fator como no regime normal (dono, chat, 2026-11-06, questionário: "Aplica o fator"; ADCT art. 128).
               ...(fp.issAliquotaBp && !isMei && !(isSimples && fp.regApTribSN === 1 && !fp.issRetidoTomadorPj)
                 ? {
                     pAliq: bpToPctString(
-                      isSimples ? fp.issAliquotaBp : issAliquotaNaTransicaoBp(fp.issAliquotaBp, fatorReducaoIssBp(args.linhasIssTransicao, dCompet)),
+                      isSimples && fp.regApTribSN === 1
+                        ? fp.issAliquotaBp
+                        : issAliquotaNaTransicaoBp(fp.issAliquotaBp, fatorReducaoIssBp(args.linhasIssTransicao, dCompet)),
                     ),
                   }
                 : {}),

@@ -1047,10 +1047,24 @@ describe('FiscalDocumentEmissionService — pAliq na transição ISS → IBS (IS
     ]);
   });
 
-  it('item 8: Simples (opSimpNac 3) com pAliq informado em 2029 ⇒ inalterado — o % do Anexo já cai pela tabela (não reduz duas vezes)', async () => {
-    // O ramo "com retenção" (E0621/E0628) ainda é recusado antes da montagem (F-DFE-14); aqui o Simples que informa pAliq
-    // é o regApTribSN ≠ 1 — o mesmo ramo `isSimples` do código.
-    expect(await pAliqEm('2029-01-15', { regimeTributario: 'SIMPLES', regApTribSN: 2, issAliquotaBp: 300 })).toBe('3.00');
+  it('item 8 (dono, 06/11: "Aplica o fator"): Simples com ISS fora do DAS (regApTribSN 2/3) — pAliq é a alíquota municipal e leva o fator', async () => {
+    // O ramo regApTribSN 1 com retenção (E0621/E0628: % do Anexo, sem fator) é recusado antes da montagem (F-DFE-14) e
+    // não chega à prévia; ele fica na condição `isSimples && regApTribSN === 1` do código.
+    expect(await pAliqEm('2028-12-31', { regimeTributario: 'SIMPLES', regApTribSN: 2, issAliquotaBp: 300 })).toBe('3.00');
+    expect(await pAliqEm('2029-01-15', { regimeTributario: 'SIMPLES', regApTribSN: 2, issAliquotaBp: 300 })).toBe('2.70');
+    expect(await pAliqEm('2032-12-31', { regimeTributario: 'SIMPLES', regApTribSN: 3, issAliquotaBp: 300 })).toBe('1.80');
+  });
+
+  it('item 8 / A3: Simples com ISS fora do DAS em 2033 ⇒ prévia bloqueada com o IssExtintoError nomeado (achado 2 da revisão)', async () => {
+    vendaEm('2033-01-10');
+    const { service } = makeService({
+      fiscalProfile: baseFiscalProfileView({ regimeTributario: 'SIMPLES', regApTribSN: 2, issAliquotaBp: 300 }),
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+      ledgerPostings: [{ accountId: 'acc-3.1', debitCents: 0n, creditCents: 10000n }],
+    });
+    const r = await service.preview(SCOPE, SALE_ID, 'NFSE');
+    expect(r.ok).toBe(false);
+    expect(r.faltantes).toEqual(['ISS extinto a partir de 01/01/2033 (LC 214 art. 543 IV): deixe a alíquota de ISS em branco (data 2033-01-10).']);
   });
 
   it('item 9 / A2 (P-ISS-3): pacote vendido em 2028-12 com pacoteFatoGerador=VENDA ⇒ lei de 2028 (5.00); sessão de 2029-01 em CONSUMO ⇒ 4.50', async () => {
