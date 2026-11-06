@@ -124,6 +124,48 @@ export function assertRemovalsAllowed(
   removedTables: readonly string[],
   bridges: readonly BridgeKey[],
 ): void {
+  const found = findRemovalLock(tables, removedTables, bridges);
+  if (found) throw new ValidationError(found.message, found.details);
+}
+
+/** Motivo de recusa no formato `details` do 400 (`TABLE_LOCKED` / `BRIDGE_REQUIRES_MODULE`) + a mensagem em pt. */
+export interface RemovalRefusal {
+  message: string;
+  details: Record<string, unknown>;
+}
+
+/** Mensagem em pt da ponte que exige o módulo (create e conversa). */
+export function describeBridgeRequirement(bridge: BridgeKey, module: ModuleKey): string {
+  return `A contabilidade do setor (${bridge}) exige o módulo '${module}'.`;
+}
+
+/** Item 27 na conversa: as pontes da suíte que exigem o módulo da tabela (vazio se nenhuma). */
+export function bridgeRequirementsOfTable(table: string, bridges: readonly BridgeKey[]): string[] {
+  const moduleKey = moduleOfTable(table);
+  if (!moduleKey) return [];
+  return bridges.filter((b) => BRIDGE_REQUIRES[b].includes(moduleKey)).map((b) => describeBridgeRequirement(b, moduleKey));
+}
+
+/**
+ * Dono, questionário 2026-11-06 ("As duas juntas"): trava de tabela e ponte batendo na mesma remoção → um 400 só.
+ * Um motivo → o 400 de sempre. Dois ou mais → mensagem com todas e `details` do primeiro motivo (compatível com
+ * quem lê `details.reason`) acrescido de `reasons: [details de cada motivo, com `message`]`.
+ */
+export function throwRemovalRefusals(refusals: readonly RemovalRefusal[]): void {
+  if (refusals.length === 0) return;
+  if (refusals.length === 1) throw new ValidationError(refusals[0].message, refusals[0].details);
+  throw new ValidationError(refusals.map((r) => r.message).join(' '), {
+    ...refusals[0].details,
+    reasons: refusals.map((r) => ({ ...r.details, message: r.message })),
+  });
+}
+
+/** O primeiro `TABLE_LOCKED` de `assertRemovalsAllowed`, sem lançar. */
+export function findRemovalLock(
+  tables: Readonly<Record<string, PresetTableDefinition>>,
+  removedTables: readonly string[],
+  bridges: readonly BridgeKey[],
+): RemovalRefusal | null {
   const removed = new Set(removedTables);
   const candidates = removedTables.filter((k) => {
     if (!tables[k]) return false;
@@ -139,7 +181,8 @@ export function assertRemovalsAllowed(
     const keptPlusThis = new Set(Object.keys(tables).filter((k) => !removed.has(k) || k === key));
     const lock = computeTableLocks(tables, keptPlusThis, bridges)[key];
     if (lock) {
-      throw new ValidationError(describeTableLock(key, lock), { reason: 'TABLE_LOCKED', table: key, lock });
+      return { message: describeTableLock(key, lock), details: { reason: 'TABLE_LOCKED', table: key, lock } };
     }
   }
+  return null;
 }

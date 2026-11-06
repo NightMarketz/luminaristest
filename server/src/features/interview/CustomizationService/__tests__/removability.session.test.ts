@@ -99,6 +99,20 @@ describe('item 6 — recusa nomeia a trava', () => {
     expect(r.response).toContain('Tabelas disponíveis para remoção');
   });
 
+  it('PR-5 item 27 ("As duas juntas"): sales e customers → trava contábil E a ponte que exige o módulo', async () => {
+    const vendas = await pedirRemocao('sales');
+    expect(vendas.response).toContain('é usada pela contabilidade');
+    expect(vendas.response).toContain("A contabilidade do setor (sales@1) exige o módulo 'VEN-0'.");
+    const pessoas = await pedirRemocao('customers');
+    expect(pessoas.response).toContain('é usada pela contabilidade');
+    expect(pessoas.response).toContain("A contabilidade do setor (sales@1) exige o módulo 'PES-0'.");
+  });
+
+  it('tabela travada fora de módulo de ponte → só a trava', async () => {
+    const r = await pedirRemocao('products');
+    expect(r.response).not.toContain('A contabilidade do setor');
+  });
+
   it('tabela travada por dependência → nomeia quem depende', async () => {
     const r = await pedirRemocao('products');
     expect(r.response).toContain('productUnits, stockMovements depende(m) dela');

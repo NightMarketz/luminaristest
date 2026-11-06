@@ -3,7 +3,7 @@ import { OpenAIService } from '../../../lib/openai/OpenAIService';
 import { ICustomizationState, IInterviewTurnResult, IMessage } from '../models/InterviewTypes';
 import { presetKnowledgeBase } from '../../dynamicTables/presets/ai/PresetKnowledgeBase';
 import { presetService } from '../../dynamicTables/services/PresetService';
-import { describeTableLock } from '../../dynamicTables/presets/removability';
+import { bridgeRequirementsOfTable, describeTableLock } from '../../dynamicTables/presets/removability';
 import { TableExtractor } from './TableExtractor';
 import { AIInteractions } from './AIInteractions';
 import { IInterviewSessionHandle, StateManager } from './StateManager';
@@ -465,8 +465,12 @@ Você gostaria de:
         const target = session.tables.find(
           (t) => t.key === tableKey || t.name.toLowerCase() === tableKey.toLowerCase(),
         );
+        // PR-5 item 27 (dono, 2026-11-06, "As duas juntas"): a recusa traz a trava e a ponte que exige o módulo.
         const reason = target?.lock
-          ? describeTableLock(target.key, target.lock)
+          ? [
+              describeTableLock(target.key, target.lock),
+              ...bridgeRequirementsOfTable(target.key, presetService.getPresetByKey(session.presetKey)?.bridges ?? []),
+            ].join(' ')
           : `Não encontrei a tabela "${tableKey}" neste sistema.`;
         return {
           response: `${reason}\n\nTabelas disponíveis para remoção:\n${removableTables.map(t => `- ${t}`).join('\n')}\n\nPor favor, escolha uma das tabelas listadas ou selecione outra ação.`,

@@ -1,4 +1,5 @@
 import { ValidationError } from '../../../../lib/errors';
+import { describeBridgeRequirement, type RemovalRefusal } from '../removability';
 import type { ISchemaField } from '../../models/DynamicTable.model';
 import { BRIDGE_REQUIRES, type BridgeKey, type PresetSuite, type PresetTableDefinition } from '..';
 import {
@@ -126,16 +127,19 @@ export function applyModuleRemovals(
  * ausente → 400 `{ reason: 'BRIDGE_REQUIRES_MODULE', bridge, module }`.
  */
 export function assertBridgeModulesKept(kept: readonly ModuleKey[], bridges: readonly BridgeKey[]): void {
+  const found = findMissingBridgeModule(kept, bridges);
+  if (found) throw new ValidationError(found.message, found.details);
+}
+
+/** O primeiro `BRIDGE_REQUIRES_MODULE` de `assertBridgeModulesKept`, sem lançar. */
+export function findMissingBridgeModule(kept: readonly ModuleKey[], bridges: readonly BridgeKey[]): RemovalRefusal | null {
   for (const bridge of bridges) {
     for (const module of BRIDGE_REQUIRES[bridge]) {
       if (kept.includes(module)) continue;
-      throw new ValidationError(`A contabilidade do setor (${bridge}) exige o módulo '${module}'.`, {
-        reason: 'BRIDGE_REQUIRES_MODULE',
-        bridge,
-        module,
-      });
+      return { message: describeBridgeRequirement(bridge, module), details: { reason: 'BRIDGE_REQUIRES_MODULE', bridge, module } };
     }
   }
+  return null;
 }
 
 /**

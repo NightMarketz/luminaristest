@@ -75,10 +75,36 @@ As integrações rodaram antes da última edição: nas suítes, `as BridgeKey[]
 
 Não há DTO, snapshot de shape, `.gen.ts` nem i18n tocados: o diff não muda DTO nem string de FE.
 
+## Rodada 2 (lacunas 1–2) — comandos
+
+```yaml
+PROVA_RODADA_2:
+  - command: "cd server && npx tsc --noEmit"
+    exit_code: 0
+  - command: "cd server && npx tsc -p tsconfig.test.json --noEmit"
+    exit_code: 0
+  - command: "cd server && npm run check:arch"
+    exit_code: 0
+  - command: "cd my-app && npx tsc --noEmit"
+    exit_code: 0
+  - command: "cd server && npx jest src/features/interview/CustomizationService/__tests__/removability.session.test.ts src/features/dynamicTables/presets/modules --selectProjects unit"
+    exit_code: 0
+  - command: "cd server && node ../scripts/heavy-slot.cjs run --label builder-pr5b -- npx jest src/controllers/__tests__/dashboardModules.integration.test.ts --selectProjects integration --runInBand"
+    exit_code: 0
+  - command: "cd server && node ../scripts/heavy-slot.cjs run --label builder-pr5b -- npx jest src/controllers/__tests__/dashboardCreate.removability.integration.test.ts --selectProjects integration --runInBand"
+    exit_code: 0
+  - command: "cd server && node ../scripts/heavy-slot.cjs run --label builder-pr5b -- npx jest <suitePayloadBaseline.integration.test.ts> --selectProjects integration --runInBand"
+    exit_code: 0
+VEREDITO: PASS
+```
+Logs fora do git (`.claude/retornos/_logs/pr5b-*.log`). custo: US$ 13.78 · claude-opus-5-5 US$ 13.78 · 49 min
+
 ## Lacunas de spec
 
-1. **Item 27 no create: o `BRIDGE_REQUIRES_MODULE` não é alcançável nos dois casos do teste.** O create chama `assertRemovalsAllowed` antes de `applyModuleRemovals` desde o #1002. Com a trava ACCOUNTING de PES-0/VEN-0 (item 28), tirar VENDAS ou PESSOAS do salão responde primeiro 400 `TABLE_LOCKED` (`sales`/`customers`). O BRIEF fixa a posição da checagem ("após `applyModuleRemovals`") e o item 28 manda manter a mensagem, mas não diz qual motivo vence. O int test afirma o que se observa (`TABLE_LOCKED`), com comentário apontando esta lacuna. O dono decide se a precedência muda.
-2. **Item 27, a parte do `StateManager` (recusa na conversa com a mesma mensagem): pausada.** Na conversa, as tabelas de PES-0/VEN-0 já são `isCore` pela trava ACCOUNTING, e `removeTable` recusa antes de qualquer checagem de ponte. A resposta usa `describeTableLock`. Para mostrar a mensagem da ponte, alguém teria de escolher onde ela entra e qual mensagem vence (mesma lacuna de 1). O item 32 (PR-6) trata esse recorte ("desmarcar `sales` → recusa (base de VENDAS, exigida pela ponte)").
+1. **DECIDIDA (dono, questionário 2026-11-06, "As duas juntas").** No create, `findRemovalLock` + `findMissingBridgeModule` → `throwRemovalRefusals`: um motivo = o 400 de sempre; dois = um 400 só, `error` com as duas mensagens e `details` = 1º motivo (`TABLE_LOCKED`, compatível com quem lê `details.reason`) + `reasons: [{reason:'TABLE_LOCKED',table,lock,message},{reason:'BRIDGE_REQUIRES_MODULE',bridge,module,message}]`. Aditivo em `ValidationError.details` (Record livre), sem mudar DTO. `dashboardModules` → "remover VENDAS" afirma os dois.
+2. **DECIDIDA (mesma decisão).** Na conversa (`CustomizationService.processRemovingTable`, a recusa de `StateManager.removeTable`), a resposta junta `describeTableLock` e `bridgeRequirementsOfTable` (sales → VEN-0, customers → PES-0). `removability.session.test.ts` → "As duas juntas".
+4. **Nova, aberta: "remover PESSOAS" no create não chega à ponte.** Com VENDAS mantida, `applyModuleRemovals` recusa PES-0 (`DEPENDENT_MODULE_KEPT`, VEN-0 depende dele), então PES-0 não falta e o 400 sai só com `TABLE_LOCKED`. Juntar este 3º motivo à lista não foi decidido; o teste afirma o observado (`reasons` ausente). O dono decide.
+5. `dashboard.paths.ts` (OpenAPI) não descreve `details.reasons`; não mexi (só descrição, sem DTO).
 3. Escolha de forma registrada: o contrato do BRIEF diz `PresetSuite.bridges: BridgeKey[]`. No código ficou opcional em `PresetSuite`, porque o `CoreSystemPreset` não é selecionável, e obrigatório em `SelectablePresetSuite`. As 3 suítes declaram.
 
 ## Achados fora de escopo
