@@ -206,3 +206,86 @@ Nenhum passo seguinte foi executado, então o passo 8 ficou pendente. Os passos 
 - Próximo passo (não feito aqui): instrumentar e depois corrigir o layout do card com a lista de módulos aberta, por
   sessão autorizada. Em seguida, rodar este runbook de novo **inteiro** (passos 1–8).
 - Assinatura do executor: agente claude-opus-5-5, persona revisor, sob comando do dono (questionário, 2026-11-06)
+
+---
+
+## Execução 2026-11-06 (2ª, depois do fix): passos 7 e 8, agente, persona revisor
+
+Executor: agente claude-opus-5-5, persona revisor, sob o mesmo comando do dono (questionário de 06/11, *"Agente roda"*,
+`D-2026-11-06-PARADOS-NO-DONO.md` §4) e a frase do dono no chat de 06/11: *"O que falhou, abre uma sessão a parte para
+fecharmos"*. Regra: `RUNBOOK-FORMAT.md` §Fronteira, exceção de 2026-10-25. Data: 2026-11-06, 19:49–19:53 UTC.
+
+**O que mudou no código** (branch `claude/w3-fix-passo7`, sobre a 1ª execução):
+- `3d00e83eb` — teste-guarda `AiInterviewSetup/__tests__/AiInterviewSetup.layout.test.tsx`, **vermelho** antes do fix
+  (2 casos, `AssertionError: expected false to be true` na asserção de piso da `ChatArea` e de teto da lista; os 22 testes
+  antigos da pasta verdes);
+- `d59b0e2c1` + o ajuste deste commit — só classes CSS: `ChatArea` ganhou `basis-0 min-h-32` (cede altura primeiro, com
+  piso de 128 px); o `fieldset` do `ModuleChecklist` ganhou `max-h-40 min-h-0 shrink overflow-y-auto` (teto de 160 px,
+  rola por dentro). Guarda **verde** depois (24/24), `npx tsc --noEmit` limpo.
+- 1ª tentativa sem `basis-0` (medida, não commitada como final): a mensagem aparecia, mas a lista encolhia a 72 px e
+  nenhum checkbox ficava visível. Por isso o `basis-0`.
+
+**Ambiente:** build de produção do commit `d59b0e2c1` + `ChatArea` com `basis-0` (árvore deste PR), `node dist/server.js`
+em `127.0.0.1:4100`, `next start` em `127.0.0.1:3100` (build com `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:4100/api`,
+`EXIT 0`). Banco: **cópia** nova do `server/prisma/prisma/dev.db` real, SHA-256
+`f959c9a1a482e9a5babf4456134ad51aac43fddd3ebd9aba5d0b08e892aa1e6f` (o mesmo da 1ª execução); `prisma migrate status` →
+`Database schema is up to date!`. Na cópia, o hash da senha de `h2c7contador` e `h2-ai-u4` foi trocado pelo do
+`seed-presumido` (desvio c da 1ª execução); ambos com `tabelas 0`. `OPENAI_API_KEY` real. Driver:
+`node scripts/runbook-tela.mjs` (headless shell, viewport 1280×900). Evidência em
+[`runbook-evidence/W3-ESCOLHA-2026-11-06-fix/`](runbook-evidence/W3-ESCOLHA-2026-11-06-fix/); a medida no DOM é a mesma
+função nos três pontos (card, área de mensagens, última mensagem, `elementFromPoint` na mensagem, lista, botões, campo).
+
+### Passos
+
+7. **Usuário 3 `h2c7contador`** (pt): três falas até os botões ("Tenho um salão de beleza" → "Hoje uso agenda de papel e
+   planilha para estoque e financeiro" → "Sim, está correto."), depois "hmm" + **Enviar**. EVIDÊNCIA (`run-pt-net.txt`,
+   5 `POST ChatInterview -> 200`), resposta do último:
+   `res: {"response":"Não entendi sua escolha. Você prefere **criar o sistema agora** ou **customizar** primeiro?","nextStage":"AWAITING_CREATION_TYPE_CONFIRMATION","presetKey":"beautySalon","choicePrompt":{"kind":"creation_type","reason":"unclear"}}`.
+   `passo7-ambiguo.png` mostra "hmm" e a resposta inteira, a lista com 6 módulos visíveis, os dois botões e o campo dentro
+   do card. Medida (`passo1-passo7-medida-dom.jsonl`, 2ª linha):
+   `"areaDeMensagens":{"top":292,"bottom":452,"h":160,…}` ·
+   `"ultimaMsg":{"top":348,"bottom":420,"h":72,"texto":"Não entendi sua escolha. Você prefere criar o sistema agora ou customizar primeiro?"}` ·
+   `"ultimaMsgEhOElementoNoPonto":true` · `"listaModulos":{"top":468,"bottom":628,"h":160,"clientHeight":158,"scrollHeight":412}` ·
+   `"botoesEscolha":[{"t":"Criar o sistema agora",…},{"t":"Customizar",…}]` · `"campo":{"top":746,"bottom":794,"h":48}` ·
+   `"botoesECampoDentroDoCard":true` · `"dialogs":0`. Antes do fix: área 32 px, `mensagemEhOElementoNoPonto:false`, campo
+   em 819–867 com o card terminando em 747. **Confere.**
+
+   Ainda no passo 7, o ponto do passo 1 que o mesmo defeito escondia: antes do "hmm", a proposta da IA ("Oi! Fico muito
+   animado em compartilhar que encontrei o sistema \"Salão de Beleza\"…") está na área de 160 px, com a rolagem no fim e
+   `"ultimaMsgEhOElementoNoPonto":true` (1ª linha do `.jsonl`, `passo1-proposta-visivel.png`).
+
+   **Classificação do ambíguo:** `reason: "unclear"` para "hmm" é o desenho, não bug. O BRIEF
+   (`WIZARD-W3-ESCOLHA-CRIACAO-brief.md`, l. 40) define `unclear` como "texto ambíguo", e o item 11 diz que o ambíguo não
+   abre modal e mostra a mensagem do servidor com os dois botões. Nada corrigido aqui.
+
+8. **Usuário 2 `h2-ai-u4`**: abriu em PT (`/pt/dashboard/setup`); idioma trocado pelo seletor da Navbar (`🇧🇷 PT` →
+   `🇺🇸 English (US)`) → URL `/dashboard/setup`, aba `["AI Interview"]` (`passo8-idioma-en.png`). Três falas em inglês até
+   os botões: `"botoesEscolha":[{"t":"Create the system now",…},{"t":"Customize",…}]`, `"botoesECampoDentroDoCard":true`,
+   `"dialogs":0` (`passo8-medida-dom.jsonl`, `passo8-botoes-en.png`); resposta com
+   `choicePrompt":{"kind":"creation_type","reason":"initial"}`. Clique em **Create the system now** → `{"dialogs":1}`,
+   texto (`passo8-modal-en.txt`):
+   `Create the system now? | ADMINISTRATIVE FORM | We will create the system with the "beautySalon" default. You can adjust it later. | Back | Confirm`
+   (`passo8-modal-en.png`). **Confere.**
+
+Os passos 1–6 não foram repetidos nesta execução: conferiram na 1ª (mesmo dia), e o fix só troca classes CSS de dois
+elementos (sem mudança de estado, rede ou modal). Isso é **inferido** do diff, não medido de novo; o registro da 1ª execução
+pedia rodar 1–8 de novo, e a sessão que abriu esta pediu 7 e 8. Se o dono quiser a rodada inteira, é o mesmo roteiro.
+
+## Desfecho (2ª execução, 2026-11-06)
+[x] PASSOU — passos 7 e 8 com evidência conferindo com o esperado; passos 1–6 da 1ª execução (mesmo dia), sobre código
+de fluxo inalterado.
+[ ] FALHOU
+[ ] BLOQUEADO
+
+## Registro (2ª execução)
+- Achados no caminho (fora do escopo, sem correção):
+  1. Com a UI em inglês, a IA segue respondendo em português ("Olá! Para começarmos…", "Oi! Estou super empolgado…") —
+     o runbook só pede rótulos e modal em inglês, que conferiram.
+  2. O botão **Enviar** do campo é texto fixo em português, também com a UI em inglês (`InputArea.tsx`).
+  3. Seguem os achados 1 e 2 da 1ª execução: o modal mostra a chave `"beautySalon"` em vez do nome do preset, e o
+     subtítulo "FORMULÁRIO ADMINISTRATIVO"/"ADMINISTRATIVE FORM" do `Modal` canônico.
+  4. A lista "Módulos sugeridos" agora rola dentro de 160 px (6 de 12 itens visíveis em 1280 px); não há indicação
+     visual de que rola além da barra do navegador.
+- Atualização do artefato de rastreio: `docs/plano/nos/W3.md`, `estado_detalhe` com "sign-off do item 14 PASSOU na
+  2ª execução de 06/11", no mesmo PR.
+- Assinatura do executor: agente claude-opus-5-5, persona revisor, sob comando do dono (questionário e chat, 2026-11-06)
