@@ -96,6 +96,33 @@ describe('W5 item 10 — ModuleSuggester.suggest', () => {
   });
 });
 
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-6 item 31: sugestão por categoria. Suíte crmModule (só CRM): o resto do registro
+// fica opcional, e a IA (stub) devolve o que a descrição justificaria.
+describe('PR-6 item 31 — ModuleSuggester sugere por categoria', () => {
+  const sugeridosFora = async (descricao: string, picks: string[]) => {
+    const classify = jest.fn().mockResolvedValue(picks);
+    const options = await suggesterWith(classify).suggest(
+      [{ role: 'user', content: descricao }], tablePresetSuites.sales.crmModule,
+    );
+    return options.filter((o) => o.suggested && !o.locked).map((o) => o.key);
+  };
+
+  it('"loja de roupas sem agendamento" → sem AGE-0, com VEN-PROD e EST-0 (e as bases PES-0/VEN-0)', async () => {
+    const keys = await sugeridosFora('loja de roupas sem agendamento', ['VEN-PROD', 'EST-0']);
+    expect(keys).toEqual(['PES-0', 'VEN-0', 'VEN-PROD', 'EST-0']);
+    expect(keys).not.toContain('AGE-0');
+  });
+
+  it('"barbearia" → com AGE-0 e VEN-SERV, resolvidos juntos (AGE-0 exige VEN-SERV, não-fixo)', async () => {
+    const keys = await sugeridosFora('barbearia', ['AGE-0', 'VEN-SERV']);
+    expect(keys).toEqual(['PES-0', 'VEN-0', 'VEN-SERV', 'AGE-0']);
+  });
+
+  it('submódulo sem dependência da base (FIN-REC) traz a base da categoria (FIN-0)', async () => {
+    expect(await sugeridosFora('tenho renda de aluguel', ['FIN-REC'])).toEqual(['FIN-0', 'FIN-REC']);
+  });
+});
+
 describe('W5 item 11 — sim/não latente (F-W5-4)', () => {
   const semModulos: PresetSuite = { key: 'fixtureSemModulos', tables: {} };
 
