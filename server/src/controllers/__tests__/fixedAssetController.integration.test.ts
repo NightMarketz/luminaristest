@@ -733,6 +733,48 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
           spy.mockRestore();
         }
       });
+
+      const rodarJaneiro = () =>
+        request(app).post('/api/accounting/fixed-assets/depreciation/run').set(authHeader(dono)).send({ unitId: UNIT, yearMonth: '2026-01' });
+
+      // :144 e :344 — a heurística do inventário os deu como eco, mas o id vem dos ativos/classe/configurações, não do cliente.
+      it('DepreciationService:144 — rodar o mês com bem cuja classe sumiu (404) nomeia o bem, não o cuid da classe', async () => {
+        const classId = await novaClasse('IMSG-DRCL', 'Móveis', { depreciable: true, accumulatedDepreciationAccountId: accDepAccountId });
+        const assetId = await novoAtivo(classId, 'A-MSG-DRCL', 'Penteadeira', 100_000);
+        expect((await ativar(assetId)).status).toBe(200);
+        await prisma.fixedAssetClass.update({ where: { id: classId }, data: { deletedAt: new Date() } });
+        try {
+          nomeiaSemId(await rodarJaneiro(), 404, 'A-MSG-DRCL — Penteadeira', classId, assetId);
+        } finally {
+          await prisma.fixedAssetClass.update({ where: { id: classId }, data: { deletedAt: null } });
+        }
+      });
+
+      it('DepreciationService:344 — conta acumulada da classe sumida (400) nomeia a classe, não o cuid da conta', async () => {
+        const contaAcc = await criarConta('1.2.9.7', 'Asset');
+        const classId = await novaClasse('IMSG-DRACC', 'Utensílios', { depreciable: true, accumulatedDepreciationAccountId: contaAcc.id });
+        const assetId = await novoAtivo(classId, 'A-MSG-DRACC', 'Batedeira', 100_000);
+        expect((await ativar(assetId)).status).toBe(200);
+        await prisma.account.update({ where: { id: contaAcc.id }, data: { deletedAt: new Date() } });
+        try {
+          nomeiaSemId(await rodarJaneiro(), 400, 'IMSG-DRACC — Utensílios', contaAcc.id, classId, assetId);
+        } finally {
+          await prisma.account.update({ where: { id: contaAcc.id }, data: { deletedAt: null } });
+        }
+      });
+
+      it('DepreciationService:344 — conta de despesa das configurações sumida (400) nomeia as configurações, não o cuid da conta', async () => {
+        const classId = await novaClasse('IMSG-DRDESP', 'Móveis', { depreciable: true, accumulatedDepreciationAccountId: accDepAccountId });
+        const assetId = await novoAtivo(classId, 'A-MSG-DRDESP', 'Credenza', 100_000);
+        expect((await ativar(assetId)).status).toBe(200);
+        await prisma.account.update({ where: { id: depreciationExpenseAccountId }, data: { deletedAt: new Date() } });
+        try {
+          // Qual bem o laço pega primeiro não é fixo; o rótulo certo é o dono do id (as configurações contábeis).
+          nomeiaSemId(await rodarJaneiro(), 400, 'das configurações contábeis', depreciationExpenseAccountId, assetId);
+        } finally {
+          await prisma.account.update({ where: { id: depreciationExpenseAccountId }, data: { deletedAt: null } });
+        }
+      });
     });
   });
 });
