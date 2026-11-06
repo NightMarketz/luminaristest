@@ -23,8 +23,14 @@ CICLO
    - VERDE com check vermelho por causa do próprio PR, ou em conflito, e o PR é de nó com 'executa' → abra uma
      sessão (sessao-correcao para check, sessao-integracao para conflito) na branch do PR. Dependabot com check
      vermelho: não abra sessão, liste no resumo.
-   - VERMELHO → despache o agente `revisor-independente` (isolation worktree) uma vez por SHA de cabeça, com o
-     BRIEF do nó no prompt. Guarde o veredito para o lote. Nunca mergeie vermelho.
+   - VERMELHO com `revisor: não (só texto)` → direto ao lote, sem revisor. Nunca mergeie vermelho.
+   - VERMELHO com `revisor: obrigatório` → despache o agente `revisor-independente` (isolation worktree) uma vez
+     por SHA de cabeça, com o BRIEF do nó no prompt, no máximo 3 rodadas por PR
+     (D-2026-11-06-REVISAO-CONVERGENCIA). Rodada 1: o PR inteiro. Rodadas 2 e 3: ponha no prompt `rodada: <n>`,
+     o SHA da rodada anterior e a lista de achados dela (do seu resumo, ou do resumo de ontem). Sem PASS na 3ª,
+     não despache a 4ª: o PR vai ao lote marcado "repensar a abordagem". Se não deu para despachar, o PR vai ao
+     lote marcado **sem revisor**; não some. Achado `P` (pré-existente) não segura o PR: a linha `[ABERTO]` que o
+     revisor propôs vai ao resumo, e a correção espera autorização própria. Nunca mergeie vermelho.
    - Nada de comentário público em PR; contexto vai no resumo.
 
 3. Fila. Nó entra se: estado `ready`/`inflight`, `autorizacao` com 'executa' do dono, BRIEF ratificado, nenhum
@@ -43,7 +49,10 @@ CICLO
 
 FIM DO DIA — resumo (no chat, nesta ordem, só o que medi):
 - Mergeados hoje (número · título · nó).
-- LOTE VERMELHO para eu aprovar: número · título · motivo do vermelho · CI · veredito do revisor. Peço por número.
+- LOTE VERMELHO para eu aprovar: número · título · motivo do vermelho · CI · revisor (veredito e rodada 1–3;
+  "repensar a abordagem" se a 3ª não passou; "só texto"; ou "sem revisor"). Peço por número. Abaixo de cada PR,
+  um achado por linha: id (`A` introduzido, `P` pré-existente) · `arquivo:linha` · classe · destino (corrigido ·
+  estava errado · era intencional · não importava; vazio enquanto não se sabe).
 - Perguntas pendentes (se não perguntei ainda).
 - Parado em mim fora do código: gates humanos, contador, dado externo — uma linha cada.
 - Nós que andaram de estado e o que ficou para amanhã.

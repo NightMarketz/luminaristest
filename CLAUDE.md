@@ -61,8 +61,9 @@ lê o código como o `tsc`; não reabre bancada, rodada nem revisor. Idem (dono,
 `PRE-ADR-OBSERVABILIDADE.md`): `no-console` no ESLint do server, no job de lint que já roda. Idem (dono,
 2026-10-23, F-OBS-13/14 de `ADR-OBSERVABILIDADE.md`): `catch` silencioso no ESLint do server (com o ledger de
 dívida que já existe) e o teste que descobre `jobs/*Scheduler.ts` e reprova scheduler sem caso de alerta.
-Idem (dono, 2026-10-28, `D-2026-10-28-FLUXO-AUTONOMO`): o `revisor-independente` roda **só em PR vermelho**
-(`scripts/classe-risco.mjs`), antes do lote de merge do dono.
+Idem (dono, 2026-10-28, `D-2026-10-28-FLUXO-AUTONOMO`): o `revisor-independente` roda **só em PR vermelho de código**
+(`scripts/classe-risco.mjs` → `revisor: obrigatório`; vermelho só de `.md` vai ao lote sem ele), antes do lote de merge
+do dono, em até 3 rodadas por PR, a 2ª e a 3ª só no diff novo (`D-2026-11-06-REVISAO-CONVERGENCIA`).
 
 **Citação a `docs/audit/**` em comentário de teste, ADR ou doc é HISTÓRICA** — o caminho não existe
 mais; use `git show b617d8f1:<caminho>` se precisar.

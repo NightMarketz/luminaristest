@@ -51,3 +51,26 @@ test('draft, "não mergear" no título e lista vazia são vermelhos', () => {
   assert.equal(classificar({ arquivos: ['my-app/a.tsx'], titulo: 'fix(kanban): x — não mergear sem OK' }).classe, 'vermelho');
   assert.equal(classificar({ arquivos: [] }).classe, 'vermelho');
 });
+
+// D-2026-11-06-REVISAO-CONVERGENCIA: o revisor-independente é obrigatório só no vermelho de código.
+test('vermelho só de texto (.md: cédula, ADR, CLAUDE.md, agente, skill) não exige revisor', () => {
+  const r = classificar({ arquivos: ['docs/plano/decisoes/D-x.md', 'docs/adr/ADR-x.md', 'CLAUDE.md',
+    '.claude/agents/revisor-independente.md', '.claude/skills/x/SKILL.md', 'docs/plano/nos/W3.md'] });
+  assert.equal(r.classe, 'vermelho');
+  assert.equal(r.revisor, false);
+});
+
+test('um arquivo vermelho de código basta para exigir revisor', () => {
+  for (const f of ['server/src/features/accounting/services/ReinfService.ts', 'server/prisma/schema.prisma',
+    '.github/workflows/ci.yml', '.claude/settings.json', 'scripts/classe-risco.mjs']) {
+    const r = classificar({ arquivos: ['docs/plano/decisoes/D-x.md', f] });
+    assert.equal(r.revisor, true, f);
+  }
+});
+
+test('dependência major e lista vazia exigem revisor; verde e draft de texto não', () => {
+  assert.equal(classificar({ arquivos: ['package.json'], titulo: 'Bump x from 4.1.0 to 7.0.0' }).revisor, true);
+  assert.equal(classificar({ arquivos: [] }).revisor, true);
+  assert.equal(classificar({ arquivos: ['my-app/features/crm/Kanban.tsx'] }).revisor, false);
+  assert.equal(classificar({ arquivos: ['docs/plano/decisoes/D-x.md'], draft: true }).revisor, false);
+});

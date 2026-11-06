@@ -134,17 +134,25 @@ export function bumpMajor(titulo) {
   return m ? m[1] !== m[2] : false;
 }
 
+// revisor: o revisor-independente é obrigatório só no vermelho de CÓDIGO (D-2026-11-06-REVISAO-CONVERGENCIA).
+// Arquivo vermelho em .md (cédula, ADR, gate, CLAUDE.md, agente, skill) vai ao lote do dono sem revisor.
+const SO_TEXTO = /\.md$/i;
+
 export function classificar({ arquivos, titulo = '', draft = false }) {
   const motivos = [];
+  let revisor = false;
   for (const f of arquivos) {
     const hit = VERMELHO.find((v) => v.re.test(f));
-    if (hit) motivos.push(`${f} — ${hit.motivo}`);
+    if (hit) {
+      motivos.push(`${f} — ${hit.motivo}`);
+      if (!SO_TEXTO.test(f)) revisor = true;
+    }
   }
-  if (bumpMajor(titulo)) motivos.push(`dependência major: ${titulo}`);
+  if (bumpMajor(titulo)) { motivos.push(`dependência major: ${titulo}`); revisor = true; }
   if (/n[ãa]o mergear/i.test(titulo)) motivos.push('título pede para não mergear');
   if (draft) motivos.push('PR em draft');
-  if (arquivos.length === 0) motivos.push('sem lista de arquivos (em dúvida, vermelho)');
-  return { classe: motivos.length ? 'vermelho' : 'verde', motivos };
+  if (arquivos.length === 0) { motivos.push('sem lista de arquivos (em dúvida, vermelho)'); revisor = true; }
+  return { classe: motivos.length ? 'vermelho' : 'verde', motivos, revisor };
 }
 
 function lerPr(n) {
@@ -167,5 +175,8 @@ if (isMain) {
   }
   const r = classificar(entrada);
   if (json) console.log(JSON.stringify(r));
-  else console.log([r.classe, ...r.motivos.map((m) => `  - ${m}`)].join('\n'));
+  else {
+    const rev = r.classe === 'vermelho' ? ` · revisor: ${r.revisor ? 'obrigatório' : 'não (só texto)'}` : '';
+    console.log([r.classe + rev, ...r.motivos.map((m) => `  - ${m}`)].join('\n'));
+  }
 }
