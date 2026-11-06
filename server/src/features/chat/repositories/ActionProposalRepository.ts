@@ -1,9 +1,9 @@
 import prisma from '../../../lib/prisma';
 import { ActionProposal, Prisma } from 'generated/prisma';
-import { IActionProposalRepository } from './IActionProposalRepository';
+import { ActionProposalCreateInput, IActionProposalRepository } from './IActionProposalRepository';
 
 export class ActionProposalRepository implements IActionProposalRepository {
-    async create(data: Omit<ActionProposal, 'id' | 'createdAt' | 'updatedAt'>): Promise<ActionProposal> {
+    async create(data: ActionProposalCreateInput): Promise<ActionProposal> {
         return prisma.actionProposal.create({
             data: {
                 userId: data.userId,

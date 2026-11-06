@@ -409,8 +409,141 @@ model ActionProposal {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  // BE-INCR-TEAMMATES PR-0 item 1 (F-TM-8 a, BRIEF §2.1) — emenda: proposta de teammate além da linha de tabela.
+  kind             String    @default("TABLE_ROW") // TABLE_ROW | SETTLEMENT_MATCH | MCP_TOOL_CALL | LIMITE_ATINGIDO
+  payload          Json?
+  teammateId       String?
+  channelMessageId String?
+  expiresAt        DateTime?
+
   @@index([userId])
   @@map("action_proposals")
+}
+
+// ── BE-INCR-TEAMMATES PR-0 item 1 (BRIEF §2.1) — teammates nativos (PRE-ADR-TEAMMATES). Ids "planos", sem FK:
+// o esboço da §2.1 não declara relação.
+model Teammate {
+  id               String    @id @default(cuid())
+  userId           String
+  name             String
+  role             String // papel em uma linha ("Conciliação bancária")
+  playbook         String // instruções em texto (D-3)
+  allowedTools     Json // string[]: nomes do TOOL_CLASS ou "mcp:<serverId>:<tool>"
+  toolOverrides    Json? // { [tool]: 'PROPOSTA' } — só aperta (item 11)
+  provider         String // 'anthropic' | 'openai' | 'gemini'
+  model            String
+  fallbackProvider String?
+  fallbackModel    String?
+  dailyTurnLimit   Int       @default(50)
+  status           String    @default("ACTIVE") // ACTIVE | PAUSED
+  deletedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("teammates")
+}
+
+model LlmCredential {
+  id                 String    @id @default(cuid())
+  userId             String
+  provider           String
+  secret             Bytes // secretBox: iv ‖ tag ‖ ct, AAD = id
+  keyVersion         Int
+  last4              String
+  monthlyTokenBudget Int? // orçamento do próprio tenant (item 23); null = sem teto
+  deletedAt          DateTime?
+  createdAt          DateTime  @default(now())
+  // Unicidade × soft-delete: padrão rename-on-delete (ADR-INCR7 §3, ReconciliationRepository.softDeleteStatement) —
+  // o soft-delete do PR-1 reescreve `provider` para `deleted:<id>` e libera a chave.
+
+  @@unique([userId, provider])
+  @@map("llm_credentials")
+}
+
+model AgentTurn {
+  id               String    @id @default(cuid()) // = jobId no BullMQ
+  userId           String
+  teammateId       String
+  trigger          String // ROUTINE | MANUAL | MENTION | WEBHOOK
+  routineId        String?
+  idempotencyKey   String?   @unique // routineId + slot, ou routineId + Idempotency-Key
+  channelMessageId String?
+  input            String? // corpo do webhook / mensagem — dado não confiável
+  hop              Int       @default(0)
+  status           String    @default("PENDING") // PENDING | RUNNING | DONE | FAILED | PAUSED
+  attempts         Int       @default(0)
+  provider         String?
+  model            String?
+  promptTokens     Int?
+  completionTokens Int?
+  error            String?
+  createdAt        DateTime  @default(now())
+  finishedAt       DateTime?
+
+  @@index([teammateId, createdAt])
+  @@map("agent_turns")
+}
+
+model TeammateRoutine {
+  id                String    @id @default(cuid())
+  userId            String
+  teammateId        String
+  prompt            String
+  schedule          Json? // { freq, time, weekday?, monthday? } — null = só manual/webhook
+  webhookSecretHash String? // SHA-256; o segredo nunca é gravado
+  active            Boolean   @default(true)
+  deletedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("teammate_routines")
+}
+
+model McpServer {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  url        String // https, remoto (item 40)
+  secret     Bytes? // token estático cifrado (F-TM-13 a)
+  keyVersion Int?
+  deletedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@map("mcp_servers")
+}
+
+model AgentChannel {
+  id        String    @id @default(cuid())
+  userId    String
+  name      String
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("agent_channels")
+}
+
+model AgentChannelMember {
+  channelId  String
+  teammateId String
+
+  @@id([channelId, teammateId])
+  @@map("agent_channel_members")
+}
+
+model AgentChannelMessage {
+  id         String   @id @default(cuid())
+  channelId  String
+  threadId   String? // null = raiz
+  authorType String // OWNER | TEAMMATE
+  authorId   String
+  content    String
+  hop        Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([channelId, createdAt])
+  @@map("agent_channel_messages")
 }
 
 // Trailing watermark for background jobs that need to avoid re-scanning their whole source
