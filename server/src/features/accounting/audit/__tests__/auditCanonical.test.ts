@@ -406,3 +406,24 @@ it('unit.rekeyed mantém fromUnitId/fromHeadHash/fromNextSeq/tables e derruba o 
   const allowed = { fromUnitId: 'legacy-1', fromHeadHash: 'a'.repeat(64), fromNextSeq: '53', tables: '{"accounts":{"after":2}}' };
   expect(JSON.parse(canonicalizeAuditPayload('unit.rekeyed', { ...allowed, name: 'Matriz', ownerEmail: 'x@y.z' }))).toEqual(allowed);
 });
+
+// X10a EMENDA-4 AL-16 (AL-PR-2) — teste-guarda de PII no MESMO PR que introduz os eventTypes (memória
+// `accounting-audit-allowlist-guards`). O e-CNPJ traz o CPF do responsável (OID 2.16.76.1.3.4) no subject: o certificado, o
+// subject, o CNPJ inteiro, o token e o código de pareamento NÃO sobrevivem à canonicalização, mesmo passados por engano.
+describe('dfe_signer.* — certificado, subject, token e código nunca sobrevivem à canonicalização', () => {
+  const VAZA = {
+    certificadoDerB64: 'MIIB...', subject: 'CN=EMPRESA:11444777000161, 2.16.76.1.3.4=01011980529982247250',
+    certCnpj: '11444777000161', token: 'tok-FIXTURE', codigo: 'ABCDEFGHJKMN', tokenHash: 'f'.repeat(64),
+  };
+  const BASE = { unitId: 'u-1', dispositivoId: 'd-1', certCnpjRaiz: '11444777', certNotAfter: '2049-12-31', certThumbprint: 'a'.repeat(64) };
+
+  it('dfe_signer.paired mantém unidade, dispositivo, raiz, validade, impressão digital e o tipo de vínculo', () => {
+    expect(JSON.parse(canonicalizeAuditPayload('dfe_signer.paired', { ...BASE, vinculo: 'novo', ...VAZA }))).toEqual({ ...BASE, vinculo: 'novo' });
+  });
+
+  it('dfe_signer.revoked mantém o motivo e se o dispositivo caiu junto', () => {
+    expect(
+      JSON.parse(canonicalizeAuditPayload('dfe_signer.revoked', { ...BASE, motivo: 'revogado', dispositivoRevogado: 'true', ...VAZA })),
+    ).toEqual({ ...BASE, motivo: 'revogado', dispositivoRevogado: 'true' });
+  });
+});

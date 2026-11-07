@@ -178,6 +178,11 @@ export class AccountingPolicy implements IAccountingPolicy {
     return this.canManageFiscalProfile(scope);
   }
 
+  // X10a EMENDA-4 (AL-3, AL-4): pareamento e revogação do assinador local — mesma régua do perfil fiscal.
+  canManageDfeSigner(scope: AccountingScope): boolean {
+    return this.canManageFiscalProfile(scope);
+  }
+
   // BE-INCR-DFE (nó X10b, BRIEF item 5)
   canManageServiceFiscalProfile(scope: AccountingScope): boolean {
     return this.canManageFiscalProfile(scope);

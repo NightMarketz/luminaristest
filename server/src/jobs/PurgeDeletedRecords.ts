@@ -81,6 +81,8 @@ export const PURGE_CLASS: Record<string, PurgeClass> = {
   ProductFiscalProfile: 'contabil-fiscal',
   ProfitDistributionEvent: 'contabil-fiscal',
   PscCredential: 'contabil-fiscal',
+  DfeSignerDevice: 'contabil-fiscal', // X10a EMENDA-4 AL-PR-2
+  DfeSignerDeviceUnit: 'contabil-fiscal', // X10a EMENDA-4 AL-PR-2
   PscProvider: 'contabil-fiscal',
   Receivable: 'contabil-fiscal',
   RoleAccountOverride: 'contabil-fiscal',

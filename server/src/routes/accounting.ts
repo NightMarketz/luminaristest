@@ -246,6 +246,7 @@ import {
   pscCredentialCallback,
   updatePscProvider,
 } from '../controllers/pscCredentialController';
+import { gerarCodigoDfeSigner, getDfeSigner, revogarDfeSigner } from '../controllers/dfeSignerController';
 import { deleteNfceCsc, listNfceCscs, putNfceCsc } from '../controllers/nfceCscController';
 import { getNfceContingencia, putNfceContingencia } from '../controllers/nfceContingenciaController';
 import { confirmIbsCbsAssessment, getIbsCbsResumo, listIbsCbsAssessments, previewIbsCbsAssessment, reconcileIbsCbsProvisao } from '../controllers/ibsCbsAssessmentController';
@@ -297,6 +298,10 @@ router.get('/psc-credentials/callback', pscCredentialCallback);
 router.post('/psc-credentials/:unitId/authorize', authorizePscCredential);
 router.get('/psc-credentials/:unitId', getPscCredential);
 router.delete('/psc-credentials/:unitId', deletePscCredential);
+// X10a EMENDA-4 AL-PR-2 (AL-3, AL-4, AL-12): pareamento, estado e revogação do assinador local da unidade.
+router.post('/dfe-assinador/:unitId/codigos', gerarCodigoDfeSigner);
+router.get('/dfe-assinador/:unitId', getDfeSigner);
+router.delete('/dfe-assinador/:unitId', revogarDfeSigner);
 // X10a PR-8 (D-2026-10-29-X10A-PR7-9-FORKS decisão 3): CSC da NFC-e por unidade e ambiente.
 router.put('/nfce-cscs/:unitId', putNfceCsc);
 router.get('/nfce-cscs/:unitId', listNfceCscs);
