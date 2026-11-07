@@ -87,6 +87,10 @@ export interface TransitionData {
   substitutedByDocumentId?: string | null;
   /** BE-INCR-DFE-EVENTOS (item 7) — anexo do XML do evento e101101. */
   cancelEventAttachmentId?: string | null;
+  /** BE-INCR-DFE-EVENTOS (PR-2, item 19) — cancelamento em voo: a porta devolveu PROCESSING. */
+  cancelRequestedAt?: Date | null;
+  /** BE-INCR-DFE-EVENTOS (PR-2, item 18; decisão do dono 07/11 Q2) — evento do fisco que cancelou a nota. */
+  cancelEvento?: string | null;
   /** X10a PR-9 (E-9): o infNFeSupl {qrCode, urlChave} da NFC-e off-line, em JSON. */
   contingenciaSuplJson?: string | null;
   /**
@@ -169,6 +173,14 @@ export interface IFiscalDocumentRepository {
   saleIdsWithAuthorizedDocument(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<string[]>;
   /** SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos. */
   listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  /**
+   * BE-INCR-DFE-EVENTOS (PR-2, item 18) — alvo da consulta de eventos: NFS-e `AUTHORIZED*` vivas, com chave, e com
+   * `nfseDhProc >= desde` (o teto de 2 anos, Anexo I [114]), de todas as unidades (mesmo desenho de `listPending`). Vêm
+   * TODAS as com cancelamento em voo (item 19, sem teto) e, depois, até `limit` das demais em rodízio por `updatedAt`
+   * (decisão do dono 07/11 Q3: a consultada é tocada e vai para o fim). Só os `partners` pedidos (os adaptadores que
+   * consultam eventos): nota de outro adaptador nunca é tocada, e não pode ocupar o teto do rodízio.
+   */
+  listParaEventos(desde: Date, limit: number, partners: readonly string[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
   /**
    * X10a PR-9 (decisão 7) — `CONTINGENCY` de todas as unidades, em rodízio: a tocada há mais tempo primeiro (`updatedAt`); a
    * que o job não consegue transmitir é tocada e vai para o fim.

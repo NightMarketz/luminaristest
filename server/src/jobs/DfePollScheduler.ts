@@ -70,7 +70,15 @@ export class DfePollScheduler {
     try {
       const summary = await this.poll();
       const c = summary.contingencia;
-      if (summary.failed > 0 || (summary.attachments?.failed ?? 0) > 0 || (c && c.failed + c.orfasFalharam + c.pertoDoPrazo + c.vencidas > 0)) {
+      // BE-INCR-DFE-EVENTOS PR-2 (item 18): falha ao consultar eventos, evento ignorado (A3) ou nota substituída fora do
+      // Luminaris pedem atenção — warn com o resumo (os avisos nomeiam a nota por número e série).
+      const e = summary.eventos;
+      if (
+        summary.failed > 0 ||
+        (summary.attachments?.failed ?? 0) > 0 ||
+        (c && c.failed + c.orfasFalharam + c.pertoDoPrazo + c.vencidas > 0) ||
+        (e && e.failed + e.ignorados + e.substituidasFora > 0)
+      ) {
         this.log.event('warn', 'job.completed', JOB, { job: JOB, ...summary });
       } else {
         this.log.event('info', 'job.completed', JOB, { job: JOB, ...summary });

@@ -63,6 +63,7 @@ import type { LegalParameterService } from '../../legalParameters/services/Legal
 import type { ReleituraJson } from '../../../lib/nfseReadback';
 import type { JanelaEventos } from '../dtos/FiscalDocumentDto';
 import { janelaEventos } from '../models/janelaEventos';
+import { cancelamentoSemResposta } from '../models/eventosNfse';
 
 export const DFE_EMITTED_EVENT = 'dfe.emitted';
 
@@ -641,6 +642,7 @@ export class FiscalDocumentEmissionService {
     const orfas = this.contingencia ? await this.contingencia.pendenciasDe(scope, docs.map((d) => d.id)) : new Map<string, string[]>();
     const feriados = await this.feriadosSeContingencia(docs);
     const views: FiscalDocumentView[] = [];
+    const agora = new Date();
     for (const doc of docs) {
       if (!saleStatusCache.has(doc.saleId)) {
         const row = salesTable ? await dynamicTableRepo.findDataById(doc.saleId) : null;
@@ -662,7 +664,11 @@ export class FiscalDocumentEmissionService {
       }
       if (doc.status === 'CANCELLED') {
         const hasReplacement = siblings.some((d) => d.id !== doc.id && d.cTribNac === doc.cTribNac && d.status !== 'CANCELLED' && d.status !== 'REJECTED');
-        if (!hasReplacement) pendencias.push('cancelled_without_replacement');
+        // BE-INCR-DFE-EVENTOS PR-2 (item 18; Q2): o fisco registrou um e105102 cuja substituta o Luminaris não conhece —
+        // a substituta existe, fora daqui; a pendência é essa, não "cancelada sem substituta".
+        const substituidaFora = doc.cancelEvento === 'e105102' && !doc.substitutedByDocumentId;
+        if (substituidaFora) pendencias.push('substituida_fora_do_luminaris');
+        else if (!hasReplacement) pendencias.push('cancelled_without_replacement');
         // BE-INCR-DFE-EVENTOS item 14 / F-EVT-6 (a): o fisco autorizou a substituta de uma nota que o Luminaris já tinha
         // como cancelada pelo emitente (cancelMotivo do e101101 gravado) — o registro local está errado ou é de outra nota.
         if (doc.substitutedByDocumentId && doc.cancelMotivo != null) pendencias.push('substituicao_sobre_cancelada');
@@ -672,6 +678,8 @@ export class FiscalDocumentEmissionService {
       if (AUTHORIZED_STATUSES.includes(doc.status as FiscalDocumentStatus)) {
         const substituta = siblings.find((d) => d.substitutesDocumentId === doc.id);
         if (substituta?.status === 'REJECTED') pendencias.push('substituicao_rejeitada');
+        // BE-INCR-DFE-EVENTOS PR-2 (item 19; Q1): o cancelamento pedido está em voo há 24 h ou mais, sem evento.
+        if (cancelamentoSemResposta(doc.cancelRequestedAt, agora)) pendencias.push('cancelamento_sem_resposta');
       }
       pendencias.push(...(orfas.get(doc.id) ?? []));
       views.push(this.toView(doc, pendencias, prazos, feriados));
