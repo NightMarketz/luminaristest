@@ -44,21 +44,20 @@ V0. Na imagem do server já construída para o alvo, rodar:
     EVIDÊNCIA: [saída completa do comando]
 ```
 
-> **Risco medido, mas não resolvido.** O `server/Dockerfile` usa `node:22-alpine` (musl). O binário
-> `sqlite-vec-linux-x64@0.1.9` (`vec0.so`) é ligado contra a glibc. Os símbolos que ele traz são `libc.so.6`,
-> `GLIBC_2.2.5`, `GLIBC_2.3.4`, `GLIBC_2.4`, `GLIBC_2.7` e `GLIBC_2.14`, conforme a varredura do `.so` feita pelo
-> agente em 2026-11-06. É **provável** (inferido, não executado) que o V0 falhe no Alpine. Há duas saídas, e
-> nenhuma foi aplicada: trocar a base para `node:22-slim` (glibc) ou compilar o `vec0` para musl. A escolha é do
-> dono.
+> **Risco tratado no #1121.** O binário `sqlite-vec-linux-x64@0.1.9` (`vec0.so`) é ligado contra a glibc (`libc.so.6`,
+> `GLIBC_2.2.5`..`GLIBC_2.14`, varredura do `.so` feita pelo agente em 2026-11-06). Por isso o `server/Dockerfile`
+> passou de `node:22-alpine` (musl) para `node:22-slim` (glibc) com `openssl` instalado (dono, chat, 2026-11-06:
+> "Base node:22-slim"). Se ainda assim o V0 falhar na imagem, o desfecho é BLOQUEADO.
 
 **E4 — Passo novo V1 (junto do passo 3, com o server parado): backup do arquivo de vetores.**
 
 ```
-V1. Com o server parado, ANTES do deploy:migrate:
-    sqlite3 /data/vectors.db "PRAGMA wal_checkpoint(TRUNCATE);" && cp /data/vectors.db <dir de backup>/vectors-<data>.db
-    (se o arquivo ainda não existe — 1º deploy pós-Qdrant —, anotar "não existe" e seguir)
-    Resultado esperado: checkpoint sem erro; cópia com o mesmo tamanho do original.
-    EVIDÊNCIA: [saída dos dois comandos + ls -l do original e da cópia]
+V1. Com o server parado: o `npm run deploy:migrate` (scripts/migrate-deploy.mjs) copia o vectors.db (VECTOR_DB_PATH, ou ao
+    lado do banco) junto do dev.db no diretório de backup, como `vectors.db.<stamp>.bak` (dono, chat, 2026-11-06:
+    "Script copia os dois"). Na saída do passo 3, procurar a linha "backup do índice vetorial ok: <caminho>".
+    (se o arquivo ainda não existe — 1º deploy pós-Qdrant —, a linha não aparece: anotar "não existe" e seguir)
+    Resultado esperado: a linha aparece; o .bak tem o mesmo tamanho do original.
+    EVIDÊNCIA: [a linha da saída e o `ls -l` dos dois arquivos]
 ```
 
 **E5 — Passo novo V2 (depois do passo 5, server no ar): reindexação e conferência.**

@@ -1,5 +1,9 @@
 # ---- builder ----
-FROM node:22-alpine AS builder
+# Debian slim (glibc) no lugar do alpine (musl): o binário do sqlite-vec (`sqlite-vec-linux-x64`, RAG-PR-A) é ligado
+# contra a glibc e não carrega no musl (dono, chat, 2026-11-06: "Base node:22-slim"). O openssl é o que o engine do
+# Prisma lê, e a slim não o traz.
+FROM node:22-slim AS builder
+RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -30,7 +34,8 @@ COPY server/src ./server/src
 RUN npm run build -w luminaris-server
 
 # ---- runner ----
-FROM node:22-alpine AS runner
+FROM node:22-slim AS runner
+RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
