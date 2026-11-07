@@ -49,7 +49,7 @@ describe('DpAfastamentoFeriasService (itens 56–62)', () => {
     const vincRepo = new DpVinculoRepository();
     const audit = getFactory().getAuditService();
     const legal = getFactory().getLegalParameterService();
-    const cad = new DpCadastroService(cadRepo, new DpPolicy(), audit);
+    const cad = new DpCadastroService(cadRepo, new DpPolicy(), audit, getFactory().getLegalParameterService());
     vinculos = new DpVinculoService(vincRepo, cadRepo, new DpPolicy(), audit, {
       partners: new PartnerRepository(),
       fiscalProfiles: new CompanyFiscalProfileRepository(),
@@ -63,7 +63,7 @@ describe('DpAfastamentoFeriasService (itens 56–62)', () => {
     svc = new DpAfastamentoFeriasService(new DpAfastamentoFeriasRepository(), vincRepo, new DpPolicy(), audit, legal);
     const lotacaoId = (await cad.createLotacao(scopeDe(dono), { ...u(dono), codigo: 'L1', descricao: 'Loja' })).id;
     const cargoId = (await cad.createCargo(scopeDe(dono), { ...u(dono), nome: 'Manicure', cbo: '516120' })).id;
-    const jornadaId = (await cad.createJornada(scopeDe(dono), { ...u(dono), nome: '44h', minutosSemanais: 2640, tipoJornada: '9' })).id;
+    const jornadaId = (await cad.createJornada(scopeDe(dono), { ...u(dono), nome: '44h', minutosSemanais: 2640, diasTrabalho: ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'], minutosPorDia: 440, tipoJornada: '9' })).id;
     const t = await vinculos.createTrabalhador(scopeDe(dono), { ...u(dono), cpf: CPF, nome: 'Ana', nascimento: '1990-03-10', pcd: false });
     vinculoId = (
       await vinculos.createVinculo(scopeDe(dono), {

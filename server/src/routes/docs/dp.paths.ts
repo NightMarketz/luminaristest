@@ -266,15 +266,17 @@
  *           application/json:
  *             schema:
  *               type: object
- *               required: [unitId, nome, minutosSemanais, tipoJornada]
+ *               required: [unitId, nome, tipoJornada, diasTrabalho, minutosPorDia]
  *               properties:
  *                 unitId: { type: string }
  *                 nome: { type: string, minLength: 1, maxLength: 120 }
- *                 minutosSemanais: { type: integer, minimum: 1, maximum: 10080 }
- *                 tipoJornada: { type: string, enum: ['2', '3', '4', '5', '6', '7', '9'] }
+ *                 minutosSemanais: { type: integer, minimum: 1, maximum: 10080, description: 'Derived (minutosPorDia × days); if sent, must match (400 DP_ESCALA_IRREGULAR)' }
+ *                 tipoJornada: { type: string, enum: ['2', '3', '4', '5', '6', '7', '9'], description: "'2' (12x36) => 400 DP_ESCALA_IRREGULAR (DP-PONTO, F6)" }
  *                 descricao: { type: string, nullable: true, maxLength: 999 }
+ *                 diasTrabalho: { type: array, minItems: 1, maxItems: 7, uniqueItems: true, items: { type: string, enum: [SEG, TER, QUA, QUI, SEX, SAB, DOM] } }
+ *                 minutosPorDia: { type: integer, minimum: 1, maximum: 1440 }
  *       responses:
- *         '201': { description: 'DpJornadaView' }
+ *         '201': { description: 'DpJornadaView + avisos[] (JORNADA_ACIMA_DO_LIMITE, REPOUSO_ABAIXO_DO_MINIMO against FOLHA_REGRA today; warning, not 400)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { description: 'Unit or referenced record not found' }
@@ -307,15 +309,17 @@
  *               properties:
  *                 unitId: { type: string }
  *                 nome: { type: string, minLength: 1, maxLength: 120 }
- *                 minutosSemanais: { type: integer, minimum: 1, maximum: 10080 }
+ *                 minutosSemanais: { type: integer, minimum: 1, maximum: 10080, description: 'Derived; if sent, must match the schedule (400 DP_ESCALA_IRREGULAR)' }
  *                 tipoJornada: { type: string, enum: ['2', '3', '4', '5', '6', '7', '9'] }
  *                 descricao: { type: string, nullable: true, maxLength: 999 }
+ *                 diasTrabalho: { type: array, minItems: 1, maxItems: 7, uniqueItems: true, items: { type: string, enum: [SEG, TER, QUA, QUI, SEX, SAB, DOM] } }
+ *                 minutosPorDia: { type: integer, minimum: 1, maximum: 1440 }
  *       responses:
- *         '200': { description: 'DpJornadaView' }
+ *         '200': { description: 'DpJornadaView + avisos[]' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { description: 'Record or unit not found' }
- *         '409': { description: 'DP_JORNADA_EM_USO — referenced by a contract version: minutosSemanais and tipoJornada are locked (D-5)' }
+ *         '409': { description: 'DP_JORNADA_EM_USO — referenced by a contract version: minutosSemanais, tipoJornada, diasTrabalho and minutosPorDia are locked (D-5)' }
  *     delete:
  *       summary: Soft-delete a DP working schedule (horContratual of S-2200) record (audited)
  *       tags: [DP]

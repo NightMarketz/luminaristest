@@ -59,7 +59,7 @@ describe('DpVinculoService (itens 37–49, D-5)', () => {
     dono = (await prisma.user.create({ data: { name: 'dpv', username: 'dpv-dono', email: 'dpv@test.local', password: 'x', role: 'USER' } })).id;
     outro = (await prisma.user.create({ data: { name: 'dpv2', username: 'dpv-outro', email: 'dpv2@test.local', password: 'x', role: 'USER' } })).id;
     const cadRepo = new DpCadastroRepository();
-    cad = new DpCadastroService(cadRepo, new DpPolicy(), getFactory().getAuditService());
+    cad = new DpCadastroService(cadRepo, new DpPolicy(), getFactory().getAuditService(), getFactory().getLegalParameterService());
     svc = new DpVinculoService(new DpVinculoRepository(), cadRepo, new DpPolicy(), getFactory().getAuditService(), {
       partners: new PartnerRepository(),
       fiscalProfiles: new CompanyFiscalProfileRepository(),
@@ -72,7 +72,7 @@ describe('DpVinculoService (itens 37–49, D-5)', () => {
     });
     lotacaoId = (await cad.createLotacao(scopeDe(dono), { ...u(dono), codigo: 'L1', descricao: 'Loja' })).id;
     cargoId = (await cad.createCargo(scopeDe(dono), { ...u(dono), nome: 'Manicure', cbo: '516120' })).id;
-    jornadaId = (await cad.createJornada(scopeDe(dono), { ...u(dono), nome: '44h', minutosSemanais: 2640, tipoJornada: '9' })).id;
+    jornadaId = (await cad.createJornada(scopeDe(dono), { ...u(dono), nome: '44h', minutosSemanais: 2640, diasTrabalho: ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'], minutosPorDia: 440, tipoJornada: '9' })).id;
   });
   afterAll(async () => {
     await resetDb();
@@ -233,8 +233,10 @@ describe('DpVinculoService (itens 37–49, D-5)', () => {
   });
 
   it('item 30 (D-5) — jornada referenciada por versão: minutosSemanais/tipoJornada ⇒ 409 DP_JORNADA_EM_USO; nome muda', async () => {
-    const livre = await cad.createJornada(scopeDe(dono), { ...u(dono), nome: 'Livre', minutosSemanais: 1200, tipoJornada: '9' });
-    expect((await cad.updateJornada(scopeDe(dono), livre.id, { ...u(dono), minutosSemanais: 1300 })).minutosSemanais).toBe(1300);
+    const livre = await cad.createJornada(scopeDe(dono), { ...u(dono), nome: 'Livre', minutosSemanais: 1200, diasTrabalho: ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'], minutosPorDia: 200, tipoJornada: '9' });
+    // BE-INCR-DP-F2 item 68: minutosSemanais é derivado da escala; a jornada livre muda pela escala (200 → 250 min/dia).
+    expect((await cad.updateJornada(scopeDe(dono), livre.id, { ...u(dono), minutosPorDia: 250 })).minutosSemanais).toBe(1500);
+    expect(await erro(cad.updateJornada(scopeDe(dono), livre.id, { ...u(dono), minutosSemanais: 1300 }))).toEqual({ status: 400, code: 'DP_ESCALA_IRREGULAR' });
     await vinc((await trab()).id);
     expect(await erro(cad.updateJornada(scopeDe(dono), jornadaId, { ...u(dono), minutosSemanais: 2200 }))).toEqual({ status: 409, code: 'DP_JORNADA_EM_USO' });
     expect(await erro(cad.updateJornada(scopeDe(dono), jornadaId, { ...u(dono), tipoJornada: '2' }))).toEqual({ status: 409, code: 'DP_JORNADA_EM_USO' });

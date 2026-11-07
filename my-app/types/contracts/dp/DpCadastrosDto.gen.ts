@@ -25,9 +25,15 @@ fonte: string
 export interface CreateJornadaInput {
 unitId: string
 nome: string
-minutosSemanais: number
+minutosSemanais?: number
 tipoJornada: ("2" | "3" | "4" | "5" | "6" | "7" | "9")
 descricao?: (string | null)
+/**
+ * @minItems 1
+ * @maxItems 7
+ */
+diasTrabalho: [("SEG" | "TER" | "QUA" | "QUI" | "SEX" | "SAB" | "DOM"), ...(("SEG" | "TER" | "QUA" | "QUI" | "SEX" | "SAB" | "DOM"))[]]
+minutosPorDia: number
 }
 export interface CreateLotacaoInput {
 unitId: string
@@ -72,6 +78,12 @@ nome?: string
 minutosSemanais?: number
 tipoJornada?: ("2" | "3" | "4" | "5" | "6" | "7" | "9")
 descricao?: (string | null)
+/**
+ * @minItems 1
+ * @maxItems 7
+ */
+diasTrabalho?: [("SEG" | "TER" | "QUA" | "QUI" | "SEX" | "SAB" | "DOM"), ...(("SEG" | "TER" | "QUA" | "QUI" | "SEX" | "SAB" | "DOM"))[]]
+minutosPorDia?: number
 }
 export interface UpdateLotacaoInput {
 unitId: string

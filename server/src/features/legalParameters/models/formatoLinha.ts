@@ -103,6 +103,54 @@ export const EsocialCategoriaJson = z.object({ grupo: texto, descricao: texto, e
 export const EsocialNaturezaRubricaJson = z.object({ nome: texto, descricao: texto }).strict();
 export const EsocialDescricaoJson = z.object({ descricao: texto }).strict();
 
+/**
+ * BE-INCR-DP-F2 PR-0R item 65 — chaves fechadas da `FOLHA_REGRA` e o valor de cada uma. `int` = número inteiro (bp,
+ * minutos, segundos, dias, anos ou meses, conforme o nome); `texto` = uma das formas que o código conhece. O código guarda
+ * a forma da regra; o número e a escolha da forma chegam por linha com vigência (§0.1 do BRIEF).
+ */
+export const FOLHA_REGRA_CHAVES_INT = {
+  HE_ADICIONAL_BP: { min: 0, max: 100_000 },
+  HE_REPOUSO_ADICIONAL_BP: { min: 0, max: 100_000 },
+  NOTURNO_ADICIONAL_BP: { min: 0, max: 100_000 },
+  NOTURNO_HORA_SEGUNDOS: { min: 1, max: 3600 },
+  NOTURNO_INICIO_MIN: { min: 0, max: 1439 },
+  NOTURNO_FIM_MIN: { min: 0, max: 1439 },
+  AFASTAMENTO_DIAS_EMPRESA: { min: 0, max: 366 },
+  MENSALISTA_BASE_DIAS: { min: 1, max: 31 },
+  JORNADA_LIMITE_SEMANAL_MIN: { min: 1, max: 10_080 },
+  REPOUSO_DIAS_MIN: { min: 0, max: 7 },
+  SALARIO_FAMILIA_IDADE_MAX: { min: 0, max: 120 },
+  EMPREGADO_IDADE_MIN: { min: 0, max: 120 },
+  APRENDIZ_IDADE_MIN: { min: 0, max: 120 },
+  APRENDIZ_IDADE_MAX: { min: 0, max: 120 },
+  APRENDIZ_PRAZO_MAX_MESES: { min: 1, max: 1200 },
+  FERIAS_AQUISITIVO_MESES: { min: 1, max: 120 },
+  FERIAS_CONCESSIVO_MESES: { min: 1, max: 120 },
+} as const;
+export const DIAS_SEMANA = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB', 'DOM'] as const;
+export const FOLHA_REGRA_CHAVES_TEXTO = {
+  SEMANA_DSR_INICIO: DIAS_SEMANA,
+  // Item 3 / F-DPF-1: as duas formas do divisor do salário-hora que existem em código.
+  SALARIO_HORA_DIVISOR: ['SEMANA_SEIS_DIAS', 'DIAS_DE_TRABALHO_DA_ESCALA'],
+  // F-DPF-3 (revisto 06/11): truncar em cada faixa, como o MOS do S-5001 item 2.13, ou a soma exata arredondada no total.
+  ARREDONDAMENTO_INSS: ['TRUNCAR_POR_FAIXA', 'MEIO_PARA_CIMA_NO_TOTAL'],
+  // Demais pontos declarados de arredondamento.
+  ARREDONDAMENTO: ['MEIO_PARA_CIMA_CENTAVO', 'TRUNCA_CENTAVO'],
+} as const;
+export type FolhaRegraChaveInt = keyof typeof FOLHA_REGRA_CHAVES_INT;
+export type FolhaRegraChaveTexto = keyof typeof FOLHA_REGRA_CHAVES_TEXTO;
+const ehChaveInt = (c: string): c is FolhaRegraChaveInt => Object.prototype.hasOwnProperty.call(FOLHA_REGRA_CHAVES_INT, c);
+const ehChaveTexto = (c: string): c is FolhaRegraChaveTexto => Object.prototype.hasOwnProperty.call(FOLHA_REGRA_CHAVES_TEXTO, c);
+
+/** Item 66 — o que a categoria do núcleo recolhe (INSS de empregado, de contribuinte individual ou nenhum; qual FGTS). */
+export const DpCategoriaEncargoJson = z
+  .object({
+    inss: z.enum(['EMPREGADO', 'CONTRIBUINTE_INDIVIDUAL', 'NENHUM']),
+    fgtsChave: z.enum(['FGTS_BP', 'FGTS_APRENDIZ_BP']).nullable(),
+    irrf: z.boolean(),
+  })
+  .strict();
+
 type Valor = 'int' | 'texto' | 'json';
 interface Regra {
   /** Função quando a tabela mistura chaves de valor inteiro e de texto (IRRF_DISTRIBUICAO). */
@@ -284,6 +332,31 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
     checar: (l) =>
       so(/^\d{2}$/.test(l.chave) && semDisc(l), 'chave = código de 2 dígitos da Tabela 18, sem discriminador') ??
       jsonOk(EsocialDescricaoJson, l.valorJson, 'valorJson = { descricao }'),
+  },
+  // DP-F2 PR-0R item 65: discriminador = categoria (3 dígitos) só onde a regra varia por categoria; nenhuma linha inicial varia.
+  FOLHA_REGRA: {
+    valor: (l) => (ehChaveTexto(l.chave) ? 'texto' : 'int'),
+    checar: (l) => {
+      const disc = so(semDisc(l) || /^\d{3}$/.test(l.discriminador ?? ''), 'discriminador nulo ou código de categoria de 3 dígitos');
+      if (disc) return disc;
+      if (ehChaveTexto(l.chave)) {
+        const opcoes: readonly string[] = FOLHA_REGRA_CHAVES_TEXTO[l.chave];
+        return so(opcoes.includes(l.valorTexto ?? ''), `${l.chave}: valorTexto ∈ ${opcoes.join('|')}`);
+      }
+      if (ehChaveInt(l.chave)) {
+        const { min, max } = FOLHA_REGRA_CHAVES_INT[l.chave];
+        const v = l.valorInt ?? Number.NaN;
+        return so(Number.isInteger(v) && v >= min && v <= max, `${l.chave}: valorInt inteiro em ${min}..${max}`);
+      }
+      return `chave fora do catálogo (${[...Object.keys(FOLHA_REGRA_CHAVES_INT), ...Object.keys(FOLHA_REGRA_CHAVES_TEXTO)].join(', ')})`;
+    },
+  },
+  // DP-F2 PR-0R item 66: chave = categoria do eSocial (Tabela 01, 3 dígitos), sem discriminador.
+  DP_CATEGORIA_ENCARGO: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^\d{3}$/.test(l.chave) && semDisc(l), 'chave = categoria de 3 dígitos, sem discriminador') ??
+      jsonOk(DpCategoriaEncargoJson, l.valorJson, "valorJson = { inss: EMPREGADO|CONTRIBUINTE_INDIVIDUAL|NENHUM, fgtsChave: FGTS_BP|FGTS_APRENDIZ_BP|null, irrf: boolean }"),
   },
   IRRF_DISTRIBUICAO: {
     valor: (l) => (l.chave === 'TRANSICAO_APROVACAO_ATE' ? 'texto' : 'int'),

@@ -3807,8 +3807,10 @@ model DpJornada {
   userId          String
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   nome            String
-  minutosSemanais Int // > 0
+  minutosSemanais Int // > 0; desde o F2 PR-0R (item 68) = minutosPorDia × nº de dias de trabalho, conferido no serviço
   tipoJornada     String // domínio tpJornada do S-2200 [D09] (features/dp/models/cadastros.ts)
+  diasTrabalho    String    @default("SEG,TER,QUA,QUI,SEX,SAB") // BE-INCR-DP-F2 item 68: dias de trabalho da escala (DIAS_SEMANA, vírgula); o default só serve à migração das jornadas do F1
+  minutosPorDia   Int? // item 68: > 0; null só na jornada migrada cujo total não divide por 6 (o cálculo dá JORNADA_AUSENTE até corrigir)
   descricao       String? // horário contratual, como o dscJorn
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

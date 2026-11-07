@@ -249,13 +249,36 @@
               "type": "null"
             }
           ]
+        },
+        "diasTrabalho": {
+          "minItems": 1,
+          "maxItems": 7,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "SEG",
+              "TER",
+              "QUA",
+              "QUI",
+              "SEX",
+              "SAB",
+              "DOM"
+            ]
+          }
+        },
+        "minutosPorDia": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 1440
         }
       },
       "required": [
         "unitId",
         "nome",
-        "minutosSemanais",
-        "tipoJornada"
+        "tipoJornada",
+        "diasTrabalho",
+        "minutosPorDia"
       ],
       "additionalProperties": false
     },
@@ -476,6 +499,28 @@
               "type": "null"
             }
           ]
+        },
+        "diasTrabalho": {
+          "minItems": 1,
+          "maxItems": 7,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "SEG",
+              "TER",
+              "QUA",
+              "QUI",
+              "SEX",
+              "SAB",
+              "DOM"
+            ]
+          }
+        },
+        "minutosPorDia": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 1440
         }
       },
       "required": [

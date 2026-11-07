@@ -1830,7 +1830,8 @@ export class ApplicationFactory {
       ),
       dpModule: dpModuleService, // BE-INCR-DP-F0-F1 PR-1
       dpPortResolver: new DpPortResolver(dpPortImplementations, (owner, c) => dpModuleService.modulosAtivosEm(owner, c)),
-      dpCadastro: new DpCadastroService(this.repositories.dpCadastro, this.policies.dp, auditService), // BE-INCR-DP-F0-F1 PR-3
+      // BE-INCR-DP-F0-F1 PR-3; BE-INCR-DP-F2 item 71: a fotografia legal para o aviso de jornada contra a lei vigente.
+      dpCadastro: new DpCadastroService(this.repositories.dpCadastro, this.policies.dp, auditService, legalParameterService),
       dpRubrica: new DpRubricaService(this.policies.dp), // BE-INCR-DP-F0-F1 PR-5
       // BE-INCR-DP-F0-F1 PR-6: a posse vem do vínculo (repositório do PR-4); motivo e categoria pela fotografia legal.
       dpAfastamentoFerias: new DpAfastamentoFeriasService(

@@ -66,8 +66,8 @@ describe('/api/dp cadastros de estrutura (item 35)', () => {
 
   it('jornada, sindicato, convenção e piso por HTTP; valorInt sai em string', async () => {
     const auth = authHeader(dono);
-    expect((await request(app).post('/api/dp/jornadas').set(auth).send({ unitId: UNIT, nome: '44h', minutosSemanais: 2640, tipoJornada: '8' })).status).toBe(400);
-    expect((await request(app).post('/api/dp/jornadas').set(auth).send({ unitId: UNIT, nome: '44h', minutosSemanais: 2640, tipoJornada: '4' })).status).toBe(201);
+    expect((await request(app).post('/api/dp/jornadas').set(auth).send({ unitId: UNIT, nome: '44h', minutosSemanais: 2640, diasTrabalho: ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'], minutosPorDia: 440, tipoJornada: '8' })).status).toBe(400);
+    expect((await request(app).post('/api/dp/jornadas').set(auth).send({ unitId: UNIT, nome: '44h', minutosSemanais: 2640, diasTrabalho: ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'], minutosPorDia: 440, tipoJornada: '4' })).status).toBe(201);
     const s = await request(app).post('/api/dp/sindicatos').set(auth).send({ unitId: UNIT, cnpj: '11222333000181', nome: 'Sind' });
     expect(s.status).toBe(201);
     const cargo = await request(app).post('/api/dp/cargos').set(auth).send({ unitId: UNIT, nome: 'Cabeleireiro', cbo: '516110' });

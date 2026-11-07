@@ -49,7 +49,9 @@
             "ESOCIAL_CATEGORIA",
             "ESOCIAL_NATUREZA_RUBRICA",
             "ESOCIAL_INCIDENCIA_RUBRICA",
-            "ESOCIAL_MOTIVO_AFASTAMENTO"
+            "ESOCIAL_MOTIVO_AFASTAMENTO",
+            "FOLHA_REGRA",
+            "DP_CATEGORIA_ENCARGO"
           ]
         },
         "chave": {
@@ -160,7 +162,9 @@
             "ESOCIAL_CATEGORIA",
             "ESOCIAL_NATUREZA_RUBRICA",
             "ESOCIAL_INCIDENCIA_RUBRICA",
-            "ESOCIAL_MOTIVO_AFASTAMENTO"
+            "ESOCIAL_MOTIVO_AFASTAMENTO",
+            "FOLHA_REGRA",
+            "DP_CATEGORIA_ENCARGO"
           ]
         },
         "status": {
@@ -254,7 +258,9 @@
             "ESOCIAL_CATEGORIA",
             "ESOCIAL_NATUREZA_RUBRICA",
             "ESOCIAL_INCIDENCIA_RUBRICA",
-            "ESOCIAL_MOTIVO_AFASTAMENTO"
+            "ESOCIAL_MOTIVO_AFASTAMENTO",
+            "FOLHA_REGRA",
+            "DP_CATEGORIA_ENCARGO"
           ]
         },
         "chave": {
