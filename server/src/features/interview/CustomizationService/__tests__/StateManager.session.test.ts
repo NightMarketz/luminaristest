@@ -19,6 +19,7 @@ import { resolveModuleSelection } from '../../../dynamicTables/presets/modules/m
 const salaoPreset = {
   key: BeautySalonPreset.key,
   tables: composeSessionTables(BeautySalonPreset, resolveModuleSelection([], BeautySalonPreset.modules)),
+  bridges: BeautySalonPreset.bridges,
 };
 import type { OpenAIService } from '../../../../lib/openai/OpenAIService';
 

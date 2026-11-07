@@ -237,7 +237,7 @@ export class StateManager {
     // W1 (F-W1-6 a): as tabelas dos módulos da sessão entram na mesma regra de trava.
     const known = composeSessionTables(preset, state.modules ?? []);
     const fromPreset = state.tables.filter((t) => t.lock !== undefined && t.key in known);
-    const locks = computeTableLocks(known, new Set(fromPreset.map((t) => t.key)));
+    const locks = computeTableLocks(known, new Set(fromPreset.map((t) => t.key)), preset.bridges ?? []);
     for (const t of fromPreset) {
       t.lock = locks[t.key];
       t.isCore = t.lock !== null;

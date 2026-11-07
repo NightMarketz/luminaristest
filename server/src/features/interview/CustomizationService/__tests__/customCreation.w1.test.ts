@@ -70,6 +70,18 @@ describe('F-W1-6 (a) — a sessão nasce da suíte ∪ módulos escolhidos', () 
   });
 });
 
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-6 item 33 (F-W1-6 a): a sessão nascida do salão = create default (BRIEF §1).
+const DEFAULT_SALAO_BRIEF: ModuleKey[] = ['CRM-0', 'CRM-1', 'CRM-CAMP', 'PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV',
+  'VEN-PROD', 'VEN-PAC', 'VEN-COM', 'EST-0', 'AGE-0', 'FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META'];
+describe('PR-6 item 33 — sessão do salão = create default', () => {
+  it('módulos da sessão iguais ao default §1 e ao que o create resolve sem pedido', async () => {
+    const { svc } = setup();
+    const s = (await svc.createCustomizationSession('beautySalon', USER))!;
+    expect([...s.state.modules!].sort()).toEqual([...DEFAULT_SALAO_BRIEF].sort());
+    expect(s.state.modules).toEqual(resolveModuleSelection([], BeautySalonPreset.modules ?? []));
+  });
+});
+
 describe('item 2 — toCustomCreation (pura)', () => {
   const base = (): ICustomizationState => {
     const tables = Object.entries(composeSessionTables(BeautySalonPreset, SALAO_MODULOS)).map(([key, def]) => ({

@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { ForbiddenError, ConflictError, ValidationError } from '../../../lib/errors';
 import { textoLatin1Sped } from '../../../lib/sped';
 import { resolveSupersededJob, isSupersedesUniqueViolation } from './spedRectificationGate';
+import { describeExportJob } from '../models/AccountingDelivery.model';
+import type { AccountingDataExchangeJob } from 'generated/prisma';
 import * as storage from '../../../lib/attachmentStorage';
 import { logger } from '../../../lib/logger';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
@@ -132,8 +134,10 @@ export class SpedEcfGenerationService {
     const periodEnd = new Date(`${year}-12-31T00:00:00.000Z`);
 
     // ── Gate da retificação versionada (item 21, ACC-011) — pré-cheque legível ANTES de gerar.
+    // FIX-MENSAGENS-ID-INTERNO lote 5 (F-MSG-2 a1): o job retificado nomeia a corrida da `@unique` abaixo pelo tipo + período.
+    let superseded: AccountingDataExchangeJob | undefined;
     if (isRetificadora && dto.supersedesJobId) {
-      await resolveSupersededJob(this.repo, scope, dto.supersedesJobId, 'EXPORT_SPED_ECF', {
+      superseded = await resolveSupersededJob(this.repo, scope, dto.supersedesJobId, 'EXPORT_SPED_ECF', {
         start: periodStart,
         end: periodEnd,
       });
@@ -252,7 +256,7 @@ export class SpedEcfGenerationService {
     } catch (error) {
       if (isSupersedesUniqueViolation(error)) {
         throw new ConflictError(
-          `O job '${dto.supersedesJobId}' já foi retificado por outro job — só um sucessor por job (item 21).`,
+          `O job ${superseded ? describeExportJob(superseded) : `'${dto.supersedesJobId}'`} já foi retificado por outro job — só um sucessor por job (item 21).`,
         );
       }
       throw error;

@@ -73,6 +73,9 @@ Cada passo tem três campos. EVIDÊNCIA é obrigatória e é sempre um artefato 
    marcar o checkbox e "Confirmar aceite": o selo some e o aceite aparece. Em **outra** venda igual, ainda sem aceite,
    baixar o PDF: a cláusula leva a marca **ACEITE NÃO REGISTRADO**.
    EVIDÊNCIA: [screenshot do selo + do botão + do aceite depois; o PDF com a marca]
+   **[EMENDA 2026-11-06 — PV-B, dono, questionário "Ajustar o roteiro"]** a tela não tem a tabela genérica de Sales
+   (`FinanceView.tsx:37`). Crie a venda sem aceite por API, com a sessão do operador logada (`POST /api/sales` pelo
+   DevTools, como na execução de 04/11), e siga pelo detalhe na tela.
 
 8. Venda do pacote **sem validade**: modal Nova Venda → pacote sem validade.
    Resultado esperado: o bloco mostra "Sem validade", **não há** checkbox e a venda pode ser salva sem aceite; no detalhe, sem
@@ -84,6 +87,11 @@ Cada passo tem três campos. EVIDÊNCIA é obrigatória e é sempre um artefato 
    **desabilitado**, com "vencido em DD/MM/AAAA"; ao escolher um saldo válido, a frase "Este saldo vence em …" aparece
    em destaque (≥ 16px, semibold).
    EVIDÊNCIA: [screenshot do select com as três situações + da frase em destaque]
+   **[EMENDA 2026-11-06 — PV-A, dono, questionário "Ajustar o roteiro"]** o job de expiração roda a cada 5 min, grava o
+   movimento `expiry` e zera o saldo, e o select esconde saldo zerado (`SaleActionModals.tsx:63`). O "vencido em …" só
+   aparece na janela entre o `expiresAt` passar e a rodada seguinte do job. Meça dentro dessa janela (crie o P6 e abra
+   o select logo depois), como na execução de 04/11. Saldo vencido que já foi zerado pelo job não aparece: isso é
+   desenho, não FALHOU.
 
 10. (Só se o passo 9 permitir forçar) Chamar `POST /api/sales/pay` com o `packageId` do saldo vencido pelo DevTools.
     Resultado esperado: `400` com o código `PACKAGE_BALANCE_EXPIRED` (a autoridade é o servidor, não o select).

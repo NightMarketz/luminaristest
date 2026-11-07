@@ -40,6 +40,9 @@
         "description": "Descrição",
         "amount": "Valor",
         "date": "Data",
+        "assigneeId": "Responsável",
+        "leadId": "Lead",
+        "reminderAt": "Lembrete em",
         "status": "Status",
         "type": "Tipo",
         "email": "E-mail",
@@ -269,7 +272,8 @@
         "share": "Compartilhar",
         "follow": "Seguir",
         "created_at": "Criado em",
-        "empty": "Vazio"
+        "empty": "Vazio",
+        "description_placeholder": "Adicione uma descrição mais detalhada..."
     },
     "field_descriptions": {
         "validityDays": "Prazo em dias corridos a partir da compra. Validade de 12 meses ou mais é a mais defensável; 0 ou vazio = sem validade."
