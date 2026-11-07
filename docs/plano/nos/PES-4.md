@@ -102,7 +102,7 @@ inclui marcar a folha desatualizada no lançamento, item 16/52) → PR-6 (59–6
 `DpPendenciaFolha` e `DP_PENDENCIA_CODIGOS` já existem em `models/folha/pendencias.ts` (o motor do PR-4 reusa);
 `inssComOutrasFontes` (item 78) está em `models/folha/outrasRemuneracoes.ts`.
 
-**Duas lacunas de spec (a 1ª decidida em 07/11; a 2ª vai ao dono antes do PR-4):**
+**Duas lacunas de spec (as duas decididas pelo dono em 07/11):**
 
 1. **Ordem PR-1 × PR-2.** O item 17 valida o lançamento contra rubrica `INFORMADO` do catálogo, mas o catálogo de hoje
    só tem rubricas `CONTRATUAL` e `LEGAL`; `COMISSAO`, `FALTAS` e as HE chegam no PR-2 (item 23). Com a ordem do BRIEF, o
@@ -116,6 +116,10 @@ inclui marcar a folha desatualizada no lançamento, item 16/52) → PR-6 (59–6
 2. **Tempo parcial no F-DPF-6 (PR-4).** O piso proporcional vale "só para `tipoJornada` de tempo parcial", mas o domínio
    `tpJornada` do S-2200 não tem esse código e a `DpJornada` não tem o `tmpParc`. O PR-0 entregou só a forma
    (`pisoProporcional`); falta decidir de onde o motor tira "é tempo parcial".
+   **Decidido (dono, chat, 2026-11-07, questionário na sessão do PR-0R; repassado pela sessão dp-f2-executa):
+   *"Campo novo na jornada (Recommended)"*** → booleano `tempoParcial` na `DpJornada`, como o `tmpParc` do S-2200 (CLT
+   art. 58-A), marcado pelo operador e falso por padrão; o piso proporcional do F-DPF-6 só vale com ele verdadeiro. Entra
+   no PR-4 (campo + migração + DTO da jornada). Na mesma rodada o dono confirmou a 1ª: *"PR-1 com as rubricas"*.
 
 **Próximo comando:** gravar o veredito do revisor do #1128 no corpo do PR (e corrigir no degrau, se reprovar; até 3
 rodadas, só no diff novo). Depois, sessão nova com `sessao-feature`: `git fetch` e
