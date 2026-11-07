@@ -108,6 +108,28 @@ describe('item 6 — recusa nomeia a trava', () => {
     expect(pessoas.response).toContain("A contabilidade do setor (sales@1) exige o módulo 'PES-0'.");
   });
 
+  // PR-6 item 32: F-W1-5 vale para todas as categorias; base fixa travada (BRIEF item 32 — a categoria inteira não sai
+  // na entrevista; no Controle Total, sim).
+  it('PR-6 item 32: desmarcar `sales` → recusa (base de VENDAS, exigida pela ponte) com os dois motivos', async () => {
+    const r = await pedirRemocao('sales');
+    expect(r.response).toContain('é usada pela contabilidade');
+    expect(r.response).toContain("A contabilidade do setor (sales@1) exige o módulo 'VEN-0'.");
+    expect(r.response).not.toContain('Tabela Removida com Sucesso');
+  });
+
+  it('PR-6 item 32: desmarcar `packages` desmarca VEN-PAC (submódulo de VENDAS) com aviso', async () => {
+    const s = await svc.createCustomizationSession('beautySalon', USER);
+    await sm.setCurrentAction(s!, 'removing');
+    jest.spyOn(AIInteractions.prototype, 'getAiResponse').mockResolvedValueOnce('packages');
+    const r = await svc.processCustomizationStep(s!.id, USER, [{ role: 'user', content: 'tira pacotes' }]);
+    expect(r.response).toContain('Tabela Removida com Sucesso');
+    expect(r.response).toContain('o módulo saiu junto');
+    const state = (await sm.loadSession(s!.id, USER)).state;
+    expect(state.modules).not.toContain('VEN-PAC');
+    expect(state.modules).toContain('VEN-0');
+    expect(state.tables.map((t) => t.key)).not.toContain('packages');
+  });
+
   it('tabela travada fora de módulo de ponte → só a trava', async () => {
     const r = await pedirRemocao('products');
     expect(r.response).not.toContain('A contabilidade do setor');
