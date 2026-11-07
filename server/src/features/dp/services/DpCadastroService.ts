@@ -214,7 +214,8 @@ export class DpCadastroService {
       if (escala === null && (input.diasTrabalho !== undefined || input.minutosSemanais !== undefined || input.tipoJornada !== undefined)) {
         throw dpValidationError('DP_ESCALA_IRREGULAR', 'A jornada não tem minutosPorDia: informe a escala (diasTrabalho e minutosPorDia).', { campo: 'minutosPorDia' });
       }
-      const minutosSemanais = escala ? assertEscalaRegular(escala, tipoJornada, input.minutosSemanais) : atual.minutosSemanais;
+      // A escala só se confere quando um campo de cálculo muda: renomear uma jornada do F1 (inclusive 12×36) segue livre.
+      const minutosSemanais = escala && mudaCalculo ? assertEscalaRegular(escala, tipoJornada, input.minutosSemanais) : atual.minutosSemanais;
       const row = await this.repo.updateJornada(
         id,
         { nome: input.nome, minutosSemanais, tipoJornada, descricao: input.descricao, diasTrabalho, minutosPorDia },

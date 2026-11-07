@@ -84,7 +84,7 @@ antes do PR-1, que é do tamanho do PR-6 do F0+F1 (~2 000 linhas).
 
 | PR | Branch | Itens | Classe | Gates locais | Revisor |
 |---|---|---|---|---|---|
-| #1125 | `claude/dp-f2-pr0r-4904eb` (base `main` a39ea73a1) | 65–76 (70 parcial: o motor prova no PR-4) | vermelha (migração, parâmetro legal) | tsc, check:arch, 48 unit, 8 suítes de integração, smoke:migration verdes | **PASSOU** (07/11, head 321774bb8; veredito no corpo do #1125) |
+| #1125 | `claude/dp-f2-pr0r-4904eb` (base `main` a39ea73a1) | 65–76 (70 parcial: o motor prova no PR-4) | vermelha (migração, parâmetro legal) | tsc, check:arch, 48 unit, 8 suítes de integração, smoke:migration verdes; CI do d98e8498 pegou 2 testes defasados (corrigidos no 321774bb8) | PASSOU (07/11, rodada 1, em 321774bb8: 5 sabotagens pegas; achado não bloqueante — 12×36 do F1 não renomeava — corrigido no 0fcb856b4) |
 | #1127 | `claude/dp-f2-pr0` (base `claude/dp-f2-pr0r-4904eb`) | 1–12 | vermelha só pelo título (`classe-risco`: `revisor: não`) | tsc (src e testes), check:arch, 43 unit (`folha/__tests__`) verdes | não se aplica |
 
 **Pendente:** PR-1 (13–22, 77–78) → PR-2 (23–26) → PR-3 (27–33) → PR-4 (34–47) → PR-5 (48–58) → PR-6 (59–64), em pilha

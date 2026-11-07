@@ -73,6 +73,14 @@ describe('/api/dp — regras da folha como dado (PR-0R)', () => {
     expect((await request(app).patch(`/api/dp/jornadas/${torta.id}`).set(authHeader(dono)).send({ unitId: UNIT, minutosPorDia: 440 })).body.data.minutosSemanais).toBe(2640);
   });
 
+  it('item 68 — jornada 12×36 do F1 segue renomeável; mudar o cálculo dela dá DP_ESCALA_IRREGULAR (achado do revisor do #1125)', async () => {
+    const j = await prisma.dpJornada.create({ data: { userId: dono.id, nome: 'F1 12x36', minutosSemanais: 2520, tipoJornada: '2', minutosPorDia: 420 } });
+    const ren = await request(app).patch(`/api/dp/jornadas/${j.id}`).set(authHeader(dono)).send({ unitId: UNIT, nome: 'renomeada' });
+    expect([ren.status, ren.body.data?.nome, ren.body.data?.minutosSemanais]).toEqual([200, 'renomeada', 2520]);
+    const calc = await request(app).patch(`/api/dp/jornadas/${j.id}`).set(authHeader(dono)).send({ unitId: UNIT, minutosPorDia: 400 });
+    expect([calc.status, calc.body.code]).toEqual([400, 'DP_ESCALA_IRREGULAR']);
+  });
+
   it('item 68 — D-5 cobre os campos novos: jornada em uso não troca diasTrabalho nem minutosPorDia (409)', async () => {
     const j = await post('jornadas', { nome: '44h uso', diasTrabalho: SEIS, minutosPorDia: 440, tipoJornada: '9' });
     const lot = await post('lotacoes', { codigo: 'RF1', descricao: 'Loja' });
