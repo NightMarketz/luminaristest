@@ -289,3 +289,20 @@ de fluxo inalterado.
 - Atualização do artefato de rastreio: `docs/plano/nos/W3.md`, `estado_detalhe` com "sign-off do item 14 PASSOU na
   2ª execução de 06/11", no mesmo PR.
 - Assinatura do executor: agente claude-opus-5-5, persona revisor, sob comando do dono (questionário e chat, 2026-11-06)
+
+### Achados da 2ª execução resolvidos (dono, chat, 2026-11-06: "Já resolve os agentes fora do escopo")
+
+Conferência na tela, mesmo ambiente e mesma cópia do banco, build de produção com as mudanças abaixo (2026-11-07,
+02:00–02:04 UTC). Evidência em [`runbook-evidence/W3-ESCOLHA-2026-11-06-achados/`](runbook-evidence/W3-ESCOLHA-2026-11-06-achados/).
+
+| Achado | Mudança | Evidência |
+|---|---|---|
+| Modal com a chave `beautySalon` (BRIEF item 9 pede o nome) | `usePresetName` (hook novo) busca o nome em `GET /dashboard/presets`, a mesma lista do Modo Rápido; o `CreationChoice` recebe `presetName`; sem a lista, cai na chave | `achados-pt-modal.txt`: `Vamos criar o sistema com o padrão "Advanced Beauty Salon ERP".` · `achados-en-modal.txt`: `…with the "Advanced Beauty Salon ERP" default.` |
+| Subtítulo "Formulário Administrativo" nos dois modais | `Modal` canônico ganhou `subtitle?: string \| null` (ausente = o padrão de sempre; `null` = sem linha); os dois modais do W3 passam `null` | os dois `.txt` acima não têm a linha |
+| "Enviar" fixo em PT | chave `onboardingInterviewSend` (pt "Enviar", en "Send") no `InputArea` | `[eval] ["Create the system now","Customize","Send"]` (`run-net.txt`) |
+| Lista rola sem indicação | degradê fixo (`sticky bottom-0`) na base da lista | `achados-pt-lista-degrade.png` (última linha esmaecida com `scrollTop` 0) · `achados-pt-lista-fim.png` (rolada até o fim, nenhum item coberto) |
+| IA responde em PT com a UI em EN | **não mudado** — os prompts dizem "Responda SEMPRE em português do Brasil" (`PromptConfig.ts`), e as mensagens fixas do `StageHandlers` são em PT. É decisão de produto, levada ao dono | — |
+
+Testes: `CreationChoice.test.tsx` (+2: nome do preset no modal; sem subtítulo nos dois modais), `InputArea.test.tsx` (novo),
+`Modal.subtitle.test.tsx` (novo: padrão, `null`, string). `npx vitest run features/interview components/ui/__tests__/Modal`
+→ 121/121; `npx tsc --noEmit` e `npm run test:types` limpos.

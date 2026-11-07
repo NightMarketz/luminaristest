@@ -1,0 +1,6 @@
+Criar o sistema agora?
+
+Vamos criar o sistema com o padrão "Advanced Beauty Salon ERP". Você poderá ajustar depois.
+
+Voltar
+Confirmar

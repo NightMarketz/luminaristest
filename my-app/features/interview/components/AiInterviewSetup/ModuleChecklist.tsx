@@ -35,6 +35,12 @@ export default function ModuleChecklist({ options, selected, disabled, onToggle 
           </li>
         ))}
       </ul>
+      {/* W3 (achado do runbook, 06/11): a lista rola dentro de 160 px — o degradê na base indica que há mais itens. */}
+      <div
+        aria-hidden="true"
+        data-testid="module-checklist-fade"
+        className="pointer-events-none sticky bottom-0 -mx-4 h-6 bg-gradient-to-t from-neutral-50 to-transparent dark:from-neutral-900"
+      />
     </fieldset>
   );
 }

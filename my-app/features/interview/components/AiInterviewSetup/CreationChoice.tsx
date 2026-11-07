@@ -10,7 +10,8 @@ import type { CreationChoice as Choice, ICreationChoicePrompt } from '../../type
  */
 interface CreationChoiceProps {
   prompt: ICreationChoicePrompt;
-  presetKey: string | null;
+  /** Nome do preset para o modal (BRIEF item 9); a chave só se o nome não estiver disponível. */
+  presetName: string | null;
   disabled: boolean;
   onChoose: (choice: Choice) => void;
 }
@@ -18,7 +19,7 @@ interface CreationChoiceProps {
 const primary = 'rounded-2xl bg-blue-600 px-6 py-3 font-bold text-white shadow-lg shadow-blue-500/20 transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50';
 const secondary = 'rounded-2xl border-2 border-neutral-200 bg-white px-6 py-3 font-bold text-neutral-700 transition-colors hover:border-neutral-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300';
 
-export default function CreationChoice({ prompt, presetKey, disabled, onChoose }: CreationChoiceProps) {
+export default function CreationChoice({ prompt, presetName, disabled, onChoose }: CreationChoiceProps) {
   const { t } = useTranslation('common');
   const [confirmOpen, setConfirmOpen] = useState(false);
   // Cada resposta do servidor traz um `prompt` novo: dispensar o modal da negação vale só para este.
@@ -40,6 +41,7 @@ export default function CreationChoice({ prompt, presetKey, disabled, onChoose }
         isOpen={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         title={t('choiceConfirmCreateTitle')}
+        subtitle={null}
         footer={
           <>
             <button type="button" onClick={() => setConfirmOpen(false)} className={secondary}>{t('choiceBack')}</button>
@@ -54,13 +56,14 @@ export default function CreationChoice({ prompt, presetKey, disabled, onChoose }
           </>
         }
       >
-        <p className="p-6 text-sm text-neutral-600 dark:text-neutral-400">{t('choiceConfirmCreateBody', { preset: presetKey ?? '' })}</p>
+        <p className="p-6 text-sm text-neutral-600 dark:text-neutral-400">{t('choiceConfirmCreateBody', { preset: presetName ?? '' })}</p>
       </Modal>
 
       <Modal
         isOpen={declinedOpen}
         onClose={() => setDismissedFor(prompt)}
         title={t('choiceDeclinedTitle')}
+        subtitle={null}
         footer={
           <>
             <button type="button" disabled={disabled} onClick={() => onChoose('customize')} className={secondary}>{t('choiceCustomizeAnyway')}</button>
