@@ -12,7 +12,7 @@ perfil_evidencia: "BRIEF §9: PR-0/PR-3/PR-5/PR-6 opus-baixo; PR-1/PR-2/PR-4 opu
 atualizado: "2026-11-07"
 write_set: ["server/src/features/dp/**", "server/src/controllers/dpModuleController.ts", "server/src/controllers/dpCadastrosController.ts", "server/src/controllers/dpVinculoController.ts", "server/src/controllers/__tests__/dp*.ts", "server/src/routes/dp.ts", "server/src/routes/docs/dp.paths.ts", "server/public/openapi.json", "server/src/__tests__/openapi-paths.test.ts", "server/prisma/schema.prisma", "server/prisma/migrations/**", "server/prisma/data/legal_parameters_dp_v1.sql", "server/prisma/data/legal_parameters_dp_regras_v1.sql", "server/src/features/legalParameters/models/legalParameter.ts", "server/src/features/legalParameters/models/formatoLinha.ts", "server/src/features/legalParameters/dtos/__tests__/__dto-shapes__.json", "server/src/features/accounting/audit/auditCanonical.ts", "server/test/helpers/templateDb.ts", "server/test/helpers/legalParams.ts", "server/.dependency-cruiser.cjs", "docs/adr/ADR-ARCH-BOUNDARIES.md"]
 registros: ["server/src/lib/factory.ts", "server/src/routes/index.ts"]
-prs: ["#1010", "#1014", "#1015", "#1016", "#1026", "#1032", "#1036", "#1041", "#1101", "#1103", "#1104", "#1106", "#1125", "#1127"]
+prs: ["#1010", "#1014", "#1015", "#1016", "#1026", "#1032", "#1036", "#1041", "#1101", "#1103", "#1104", "#1106", "#1125", "#1127", "#1128"]
 ---
 # PES-4 — Departamento Pessoal: núcleo + submódulos
 
@@ -74,11 +74,11 @@ BYOK, sem contratar PSC (D5 de 30/10); vigência só por data de efeito, com o s
 [[R8]], [[R-postgresql]], [[R-torre-multiempresa]], [[R-motor-dominio]], [[R-motor-regras]];
 [[M5-subrazoes-restantes]] (de onde a folha saiu, pela [[D-2026-11-02-DP-PRE-ADR]]).
 
-## Handoff da execução do BRIEF do F2 (07/11, depois do PR-0)
+## Handoff da execução do BRIEF do F2 (07/11, depois do PR-1)
 
 O `executa` do F2 (dono, chat, 06/11: *"Executa o F2"*, BRIEF inteiro, `sessao-feature`, sem merge; reconfirmado em
-07/11, *"Pode seguir"*) segue valendo para PR-1..PR-6. A sessão do PR-0 parou por higiene de contexto (CLAUDE.md, ~180k)
-antes do PR-1, que é do tamanho do PR-6 do F0+F1 (~2 000 linhas).
+07/11, *"Pode seguir"*) segue valendo para PR-2..PR-6. A sessão do PR-1 parou por higiene de contexto (CLAUDE.md) depois
+de abrir o #1128 e despachar o revisor.
 
 **Feito**
 
@@ -86,9 +86,21 @@ antes do PR-1, que é do tamanho do PR-6 do F0+F1 (~2 000 linhas).
 |---|---|---|---|---|---|
 | #1125 | `claude/dp-f2-pr0r-4904eb` (base `main` a39ea73a1) | 65–76 (70 parcial: o motor prova no PR-4) | vermelha (migração, parâmetro legal) | tsc, check:arch, 48 unit, 8 suítes de integração, smoke:migration verdes; CI do d98e8498 pegou 2 testes defasados (corrigidos no 321774bb8) | PASSOU (07/11, rodada 1, em 321774bb8: 5 sabotagens pegas; achado não bloqueante — 12×36 do F1 não renomeava — corrigido no 0fcb856b4) |
 | #1127 | `claude/dp-f2-pr0` (base `claude/dp-f2-pr0r-4904eb`) | 1–12 | vermelha só pelo título (`classe-risco`: `revisor: não`) | tsc (src e testes), check:arch, 43 unit (`folha/__tests__`) verdes | não se aplica |
+| #1128 | `claude/dp-f2-pr1` (base `claude/dp-f2-pr0`) | 13–22, 77–78 + as 5 rubricas `INFORMADO` do 23 | vermelha (migração, parâmetro legal, `auditCanonical`; `revisor: obrigatório`) | tsc (src e testes), check:arch, eslint, 12 suítes unit, 3 de integração, `migrate diff` sem diferença, smoke:migration verdes; snapshot de DTO à mão (só `dp`), CI prova | rodada 1 despachada em 07/11 (head c5ad55649); veredito vai no corpo do #1128 |
 
-**Pendente:** PR-1 (13–22, 77–78) → PR-2 (23–26) → PR-3 (27–33) → PR-4 (34–47) → PR-5 (48–58) → PR-6 (59–64), em pilha
-sobre o #1127.
+O #1127 estava em conflito com a base (só a tabela desta nota) e por isso sem CI; mesclado o #1125 nele em 07/11
+(`f03b231d2`), o CI passou a rodar.
+
+**Pendente:** veredito do revisor do #1128 → PR-2 (resto do 23: `DERIVADO`, `ADIANTAMENTO`, `DESCONTO_ADIANTAMENTO`,
+`SALARIO_FAMILIA`, `AFASTAMENTO_EMPRESA_15D`, DSR, complementos; 24–26) → PR-3 (27–33) → PR-4 (34–47) → PR-5 (48–58;
+inclui marcar a folha desatualizada no lançamento, item 16/52) → PR-6 (59–64), em pilha sobre o #1128.
+
+**Leituras do PR-1 que os seguintes herdam** (13 lacunas no corpo do #1128): o reset não classifica os 3 models novos
+(sem `userId`; bloqueiam via trabalhador/vínculo); todo write de lançamento e outra remuneração pede o chaveiro do DP
+(F-DPF-9 b, 503 sem ele); `FALTAS` em minutos; HE só no 101 (CLT art. 432); `invalido`, `ordem` e
+`categoriaOutraFonte` entraram no schema pelo item, não pelo §3.3; pela HTTP o lançamento é sempre `MANUAL`;
+`DpPendenciaFolha` e `DP_PENDENCIA_CODIGOS` já existem em `models/folha/pendencias.ts` (o motor do PR-4 reusa);
+`inssComOutrasFontes` (item 78) está em `models/folha/outrasRemuneracoes.ts`.
 
 **Duas lacunas de spec (a 1ª decidida em 07/11; a 2ª vai ao dono antes do PR-4):**
 
@@ -105,11 +117,20 @@ sobre o #1127.
    `tpJornada` do S-2200 não tem esse código e a `DpJornada` não tem o `tmpParc`. O PR-0 entregou só a forma
    (`pisoProporcional`); falta decidir de onde o motor tira "é tempo parcial".
 
-**Próximo comando:** sessão nova com `sessao-feature` na branch `claude/dp-f2-pr1`, criada de `origin/claude/dp-f2-pr0`;
-ler o BRIEF §2 PR-1, §3.3 (`DpDependente`, `DpLancamento`, `DpOutraRemuneracao`) e
-§3.4, e usar o PR-6 do F0+F1 (`git show 5aff9501d --stat`: DTO, repo, service, controller, rota, `dp.paths.ts`,
-`auditCanonical`, `factory`, `test/helpers/db.ts`) como molde. A Tabela 07 do eSocial (`ESOCIAL_TIPO_DEPENDENTE`) se
-transcreve do [F1-D10] (§6 do BRIEF), como a Tabela 18 no PR-6 do F0+F1.
+**Próximo comando:** gravar o veredito do revisor do #1128 no corpo do PR (e corrigir no degrau, se reprovar; até 3
+rodadas, só no diff novo). Depois, sessão nova com `sessao-feature`: `git fetch` e
+`git checkout -b claude/dp-f2-pr2 origin/claude/dp-f2-pr1`; ler o BRIEF §2 PR-2 (itens 23–26) e o dossiê
+`pesquisas-legais/brief-pes4-f2-contador/relatorio.md` §9; molde = o bloco das 5 rubricas do PR-1 em
+`models/rubricas/catalogo.ts` (+ `published.json` e `rubricas.test.ts`). O item 24 (`rubricaCalculo.ts`) mapeia também as
+5 `INFORMADO` do PR-1.
+
+**Como o PR-1 fez o que o depósito defasado impede (repita):** snapshot de DTO — `UPDATE_DTO_SNAPSHOT=1` num commit WIP,
+copiar só as entradas novas de `dp` e os `.gen.ts` novos, reverter o resto, e aplicar duas trocas (padrão do cuid
+`^[cC][^\s-]{8,}$` → `^[cC][0-9a-z]{6,}$`; `anyOf [{type: X}, {type: null}]` sem outra chave → `type: [X, "null"]`),
+conferindo que a troca reproduz as entradas já comitadas. OpenAPI — gerar só o `routes/docs/dp.paths.ts` com o
+`swagger-jsdoc` de `server/`, conferir que os paths antigos saem idênticos e inserir os novos depois do último `/api/dp/*`.
+`smoke:migration` pede `server/prisma/prisma/dev.db` copiado do checkout principal. Heredoc do Git Bash quebra Python
+com `\n`/aspas: escreva o script com a ferramenta Write.
 
 **Leituras do PR-0 que o motor (PR-4) herda** (detalhe no corpo do #1127): `jaContribuidoCents` do `inssEmpregado` é a
 **base** já tributada (o `A` do item 78), não o INSS em reais; o último dia do mês conta como o dia 30 do mês comercial;
