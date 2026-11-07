@@ -180,6 +180,22 @@ describe('item 10 — reindexação', () => {
     expect(again).toEqual({ users: 1, reindexed: 0 });
   });
 
+  it('vec0 restaurada com o carimbo antigo e a Chunk com o atual ⇒ reindexar refaz (ressalva da r2 do #1121)', async () => {
+    const { ana, contratoAna } = await cenario();
+    await pipeline().processDocument(await asDoc(contratoAna.id), 'x');
+    const chunks = await prisma.chunk.findMany({ where: { documentId: contratoAna.id } });
+    await vectors.upsert(chunks.map((c) => ({ chunkId: c.id, userId: ana.id, stamp: 'fake:antigo@768', vector: vectorOf(c.text) })));
+    const query = vectorOf(TRECHOS[2]);
+    expect(await vectors.search({ userId: ana.id, stamp: embedder.stamp, vector: query, limit: 10 })).toEqual([]);
+
+    const summary = await new ChunkReindexService(chunkRepo, vectors, embedder).reindex();
+
+    expect(summary).toEqual({ users: 1, reindexed: 3 });
+    expect((await vecRows()).length).toBe(3);
+    expect((await vectors.search({ userId: ana.id, stamp: embedder.stamp, vector: query, limit: 10 })).length).toBe(3);
+    expect(await new ChunkReindexService(chunkRepo, vectors, embedder).reindex()).toEqual({ users: 1, reindexed: 0 });
+  });
+
   it('trechos sem carimbo (vindos do índice antigo) ganham vetor; --user restringe ao dono', async () => {
     const { ana, bia, contratoAna, contratoBia } = await cenario();
     await prisma.chunk.create({ data: { text: 'trecho antigo da ana', index: 0, documentId: contratoAna.id } });
