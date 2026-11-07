@@ -46,6 +46,8 @@
     "test:mutation:slices": "node ./scripts/mutation-slices.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "1.6.0",
+    "@google/genai": "3.0.0",
     "@prisma/client": "^6.16.2",
     "@qdrant/js-client-rest": "^1.20.0",
     "@types/bcryptjs": "^3.0.0",

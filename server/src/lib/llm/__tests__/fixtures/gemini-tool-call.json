@@ -1,0 +1,17 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          { "text": "Vou buscar as linhas de extrato pendentes." },
+          { "functionCall": { "id": "fc_01Fixture", "name": "listar_linhas_extrato", "args": { "accountId": "acc_1", "limit": 20 } } }
+        ]
+      },
+      "finishReason": "STOP",
+      "index": 0
+    }
+  ],
+  "usageMetadata": { "promptTokenCount": 388, "candidatesTokenCount": 41, "totalTokenCount": 429 },
+  "modelVersion": "gemini-2.5-flash"
+}
