@@ -5,7 +5,7 @@ dominio: "pessoal"
 titulo: "Departamento Pessoal (folha + eSocial) — núcleo first-class sempre ligado + submódulos opcionais com ativação por competência; fase 2 do F-PES-0"
 estado: "planned"
 estado_detalhe: "05/11: BRIEF do F2 (motor mensal) escrito em docs/accounting/BE-INCR-DP-F2-brief.md (78 itens, PR-0R + PR-0..PR-6; revisto em 06/11 pela regra de parâmetro do dono: número de lei e escala viram dado com vigência, código só com a forma da regra), forks F-DPF-1..13 DECIDIDOS pelo dono em 06/11 (três contra a recomendação: F-DPF-1 divisor pela escala, F-DPF-7 salário-família calcula e avisa, F-DPF-8 outro emprego já no F2; [[D-2026-11-06-DP-BRIEF-F2]]); achado: EC 141/2026 (42 h em 16/12/2026, 40 h em 16/12/2027, 2 dias de DSR) muda o divisor do salário-hora e o DSR (F-DPF-1/2); 06/11: pesquisa das perguntas ao contador (dossiê pesquisas-legais/brief-pes4-f2-contador/, PR #1104) — F-DPF-3 revisto para truncar o INSS por faixa como o eSocial, itens 77–78 pela IN RFB 2.110, F-DPF-10 pela IN RFB 1.500 art. 63, 19 rubricas. Próximo: autorização nova do dono para o executa do F2. Antes — 04/11: F0+F1 entregues na main (681ec26a), squash do #1041. F3..F6, o BRIEF do SST (núcleo, F-DP-13) e a ponte contábil (F-FOL-1..9) seguem pendentes"
-depende_de: ["[[D-2026-11-02-DP-PRE-ADR]]", "[[D-2026-11-06-DP-BRIEF-F2]]", "[[D-2026-11-02-DP-BRIEF-F0-F1]]", "[[D-2026-10-12-QUESTIONARIO-DONO]]", "[[LEGAL-PARAMS]]", "[[IRRF-DISTRIBUICAO]]", "[[I6]]"]
+depende_de: ["[[D-2026-11-02-DP-PRE-ADR]]", "[[D-2026-11-06-DP-BRIEF-F2]]", "[[D-2026-11-06-DP-ESCOPO-LACUNAS]]", "[[D-2026-11-02-DP-BRIEF-F0-F1]]", "[[D-2026-10-12-QUESTIONARIO-DONO]]", "[[LEGAL-PARAMS]]", "[[IRRF-DISTRIBUICAO]]", "[[I6]]"]
 autorizacao: "dono, chat, 2026-11-06: \"pode planejar de acordo com suas sugestões\" (regra de parâmetro: número de lei e escala como dado; BRIEF do F2 §0.1 e PR-0R) + questionário dos forks F-DPF-1..13 ([[D-2026-11-06-DP-BRIEF-F2]]) — só o BRIEF; não é executa. Antes — dono, chat, 2026-11-05: \"Sim, planeja o F2\" (resposta a \"Abro a sessão de planejamento do BRIEF do F2 (só o BRIEF, sem código)?\") — só o BRIEF do F2; não é executa. Antes — dono, chat, 2026-11-03: \"Executa PR-0 a PR-6\" (resposta a \"Abro a sessão 3 com o executa do BRIEF BE-INCR-DP-F0-F1?\") — executa do BRIEF de F0+F1 inteiro ([[D-2026-10-28-FLUXO-AUTONOMO]]); não cobre F2 em diante, o BRIEF do SST nem a ponte contábil (F-FOL-1..9). Antes — dono, chat, 2026-11-02: \"Podemos seguir o pre-adr numa sessão, esperar, criar o nó no vault + brief em outra e o executa na terceira\" + \"Sim, abre agora\" (resposta a \"Abro já a sessão 2 (nó PES-4 + BRIEF de F0 e F1) em cima do branch do #1009?\") — nó e BRIEF de F0+F1; forks do BRIEF por questionário ([[D-2026-11-02-DP-BRIEF-F0-F1]]). Não autoriza código: o 'executa' é da sessão 3 · **EXECUTA F2** (dono, chat, 2026-11-06, questionário): \"Executa o F2\" — BRIEF BE-INCR-DP-F2 inteiro (PR-0R e PR-0..PR-6), sessao-feature, sem merge; dado depois do merge do #1103 pelo #1106"
 perfil_previsto: "opus-medio"
 perfil_evidencia: "BRIEF §9: PR-0/PR-3/PR-5/PR-6 opus-baixo; PR-1/PR-2/PR-4 opus-medio"
@@ -53,6 +53,17 @@ BYOK, sem contratar PSC (D5 de 30/10); vigência só por data de efeito, com o s
 | F4 — eSocial (pipeline agnóstico, `Null`/`Manual` primeiro, F-DP-3) | — | sem BRIEF |
 | F5 — fechamento, guias, ponte contábil (F-FOL-1..9 pendentes) | — | sem BRIEF |
 | F6 — submódulos opcionais (`PES-4-<nome>`) | — | sem BRIEF |
+
+## Lacunas de escopo (06/11) — [[D-2026-11-06-DP-ESCOPO-LACUNAS]]
+
+Cruzamento do plano com a lei e com ERPs de referência. Entram nos BRIEFs que ainda não existem (nenhuma muda o F2):
+- **F3:** TRCT; contrato de experiência/prazo determinado; vale-transporte no núcleo (sai do DP-BEN); adicionais de
+  insalubridade/periculosidade; estabilidades provisórias no desligamento; férias coletivas; desconto sindical; PLR e
+  gorjeta como rubricas.
+- **F4:** processo trabalhista (S-2500/S-2501/S-3500/S-5501/S-5503); seguro-desemprego; opção de registro eletrônico
+  (S-1000); S-2190, S-2205, S-2206, S-2298.
+- **F5:** comprovante anual de rendimentos; alerta de cota de aprendiz/PCD e do Relatório de Transparência Salarial.
+- **SST:** PGR, PCMSO, LTCAT, PPP eletrônico, ficha de EPI.
 
 ## Docs
 
