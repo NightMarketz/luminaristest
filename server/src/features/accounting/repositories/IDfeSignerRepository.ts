@@ -42,6 +42,12 @@ export interface IDfeSignerRepository {
   unlinkUnit(deviceId: string, unitId: string, at: Date, tx: Prisma.TransactionClient): Promise<void>;
   countLiveLinks(deviceId: string, tx: Prisma.TransactionClient): Promise<number>;
   revokeDevice(deviceId: string, at: Date, tx: Prisma.TransactionClient): Promise<void>;
+  /**
+   * AL-7 / AL-12 (AL-PR-3) — o poll é o heartbeat: grava `lastSeenAt`, a versão e `tokenPresente`. Devolve `true` só para
+   * o poll que VOLTOU (antes sem poll desde `voltouSeAntesDe`, nunca visto, ou sem token) — update condicional, então
+   * dois polls simultâneos não disparam a retomada (AL-14) duas vezes.
+   */
+  registrarHeartbeat(deviceId: string, data: { versaoAssinador: string; tokenPresente: boolean; at: Date }, voltouSeAntesDe: Date): Promise<boolean>;
 
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

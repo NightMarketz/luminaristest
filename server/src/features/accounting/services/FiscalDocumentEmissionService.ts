@@ -48,7 +48,7 @@ import type { ProductFiscalProfileService } from './ProductFiscalProfileService'
 import { selectDfeEmissor, type DfeSelection } from '../dfe/selectDfeEmissor';
 import { assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
 import type { CscDaUnidade, DfeAmbiente, DfeCallContext, DfeEmissorPort, DfeKind, EmitirInput, NfceSupl } from '../dfe/DfeEmissorPort';
-import { bloqueioSessaoPsc, type AssinaturaDaUnidade, type DfeAssinaturaResolver } from './DfeAssinaturaResolver';
+import { bloqueioSessaoPsc, motivoAguardaAssinatura, type AssinaturaDaUnidade, type DfeAssinaturaResolver } from './DfeAssinaturaResolver';
 import { enviarTentativa, type DfeContingenciaHandler, type DfeResultApplier } from './dfeEnvio';
 import { prazoTransmissao } from '../models/nfceContingencia';
 import { scopeToday } from '../models/dates';
@@ -439,7 +439,9 @@ export class FiscalDocumentEmissionService {
       if (faltantes.length) throw new ValidationError(`emissao_bloqueada: ${faltantes.length} pendência(s) — ver 'faltantes'.`, { faltantes });
     }
     const assinatura = await this.assinaturaDaUnidade(scope, selection.port);
-    if (!assinatura.ok && (assinatura.motivo !== 'TOKEN_EXPIRADO' || kind === 'NFSE')) throw bloqueioSessaoPsc(assinatura.motivo);
+    // EMENDA-4 AL-13 (F-AL-6 a, F-FEAS-3 a): sem assinador pareado ⇒ 400 `assinador local`; fora do ar ou sem token ⇒ a nota
+    // nasce PENDING_SIGNATURE sem número e sai quando ele volta (AL-14), como o token vencido do PSC.
+    if (!assinatura.ok && (!motivoAguardaAssinatura(assinatura.motivo) || kind === 'NFSE')) throw bloqueioSessaoPsc(assinatura.motivo);
     const aguardaAssinatura = !assinatura.ok;
     // X10a PR-9 (E-9, decisão 8): com a unidade em contingência no ambiente, a NFC-e sai off-line direto (tpEmis=9).
     const contingenciaAtiva = kind === 'NFCE' && selection.port.capabilities.contingenciaOffline === true && this.contingencia !== null;

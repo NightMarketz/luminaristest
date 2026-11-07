@@ -172,7 +172,15 @@ export interface CscDaUnidade {
  */
 export interface DfeCallContext {
   ambiente: DfeAmbiente;
-  assinatura?: { assinador: AssinadorRemotoPort; credencial: CredencialPscResolvida };
+  assinatura?: {
+    assinador: AssinadorRemotoPort;
+    credencial: CredencialPscResolvida;
+    /**
+     * X10a EMENDA-4 (AL-9): o transporte da SEFAZ já ligado ao assinador local da unidade do documento (o mTLS sai do
+     * caixa). Ausente ⇒ o transporte do adaptador. Forma estrutural do `SefazTransporte` (sem importar o pacote sefaz).
+     */
+    transporte?: { call(url: string, servico: string, xml: string): Promise<string> };
+  };
   payload?: unknown;
   /** X10a PR-8 (E-3, F-NFCE-E1-4 c): CSC da unidade no ambiente, para o QR Code v2 quando a UF recusa a v3 (rej. 407). */
   csc?: CscDaUnidade;

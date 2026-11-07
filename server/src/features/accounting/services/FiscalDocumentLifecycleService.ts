@@ -42,7 +42,7 @@ import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import { resolveEmissorFor } from '../dfe/resolveEmissor';
 import { ambienteFromTpAmb, assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
 import type { CancelInput, CancelResult, DfeAmbiente, DfeCallContext, DfeEmissorPort, EmissaoResult, EventoNfse } from '../dfe/DfeEmissorPort';
-import { AssinaturaRemotaError, isSessaoPscVencida } from '../dfe/AssinadorRemotoPort';
+import { AssinaturaRemotaError, isAssinaturaPendente, isSessaoPscVencida } from '../dfe/AssinadorRemotoPort';
 import { bloqueioSessaoPsc } from './DfeAssinaturaResolver';
 import { enviarTentativa, type DfeContingenciaHandler } from './dfeEnvio';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
@@ -803,7 +803,7 @@ export class FiscalDocumentLifecycleService {
     try {
       result = ctx ? await port.cancelar(partnerRef, cancelInput, ctx) : await port.cancelar(partnerRef, cancelInput);
     } catch (error) {
-      if (isSessaoPscVencida(error)) throw bloqueioSessaoPsc((error as AssinaturaRemotaError).code as 'CREDENCIAL_EXPIRADA' | 'CREDENCIAL_REVOGADA');
+      if (isAssinaturaPendente(error)) throw bloqueioSessaoPsc((error as AssinaturaRemotaError).code as 'CREDENCIAL_EXPIRADA' | 'CREDENCIAL_REVOGADA' | 'ASSINADOR_INDISPONIVEL');
       throw error;
     }
 

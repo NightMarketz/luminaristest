@@ -35,6 +35,7 @@ import {
   type InfNFeSupl,
 } from './nfceQrCode';
 import type { SefazTransporte } from './SefazTransporte';
+import type { DfeAssinadorKind } from '../selectDfeAssinador';
 
 /**
  * SefazNfeEmissor — adaptador `sefaz` da NF-e 55 e NFC-e 65 (BE-INCR-NFCE-EMENDA-1 itens E-4..E-8, E-10; F-NFCE-E1-1 a,
@@ -69,6 +70,11 @@ export interface SefazNfeEmissorOptions {
   /** AL-1 (EMENDA-4): o transporte — `SefazSoapClient` ou o `AssinadorLocalTransporte`. */
   soap: SefazTransporte;
   endpoint?: EndpointResolver;
+  /**
+   * X10a EMENDA-4 (AL-2): quem assina — `local` (assinador do caixa) ou `psc`. O `DfeAssinaturaResolver` lê daqui qual
+   * assinador resolver para a unidade. Ausente = `psc` (o caminho do PR-7).
+   */
+  assinador?: DfeAssinadorKind;
   /** `verAplic` do evento / `verProc`: versão do Luminaris. */
   versaoAplicativo?: string;
   now?: () => Date;
@@ -105,11 +111,13 @@ export class SefazNfeEmissor implements DfeEmissorPort {
     contingenciaOffline: true, // X10a PR-9 (E-9): NFC-e tpEmis=9 + 110112
     resultadoSincrono: true, // indSinc=1: o protNFe vem na resposta do lote (F-ADN-5 a)
   };
+  public readonly assinador: DfeAssinadorKind;
   private readonly endpoint: EndpointResolver;
   private readonly now: () => Date;
   private idLoteSeq = 0;
 
   constructor(private readonly opts: SefazNfeEmissorOptions) {
+    this.assinador = opts.assinador ?? 'psc';
     this.endpoint = opts.endpoint ?? endpointSefaz;
     this.now = opts.now ?? (() => new Date());
   }
@@ -127,7 +135,7 @@ export class SefazNfeEmissor implements DfeEmissorPort {
     if (modelo === 65) {
       assinado = comInfNFeSupl(assinado, offline ? await this.suplOffline(uf, chave, payload, assinado, versao, ctx) : this.supl(uf, chave, versao, ctx?.csc));
     }
-    let envio = await this.enviarLote(uf, modelo, assinado);
+    let envio = await this.enviarLote(uf, modelo, assinado, ctx);
     if (modelo === 65 && envio.cStat === QR_V3_RECUSADO && !ctx?.csc?.qrV3Recusado) {
       if (!input.ctx?.csc) {
         return {
@@ -141,7 +149,7 @@ export class SefazNfeEmissor implements DfeEmissorPort {
       ctx = { ...input.ctx, csc: { ...input.ctx.csc, qrV3Recusado: true } };
       // A mesma nota assinada: só o infNFeSupl muda (D02 p. 8), então não há nova assinatura.
       assinado = comInfNFeSupl(assinado, offline ? await this.suplOffline(uf, chave, payload, assinado, 2, ctx) : this.supl(uf, chave, 2, ctx.csc));
-      envio = await this.enviarLote(uf, modelo, assinado);
+      envio = await this.enviarLote(uf, modelo, assinado, ctx);
     }
     const { ret, prot, cStat, xMotivo } = envio;
     if (AUTORIZADO.has(cStat)) return this.autorizado(chave, payload, assinado, extrairProtNFe(ret), prot);
@@ -170,7 +178,7 @@ export class SefazNfeEmissor implements DfeEmissorPort {
   async consultar(partnerRef: string, ctx?: DfeCallContext): Promise<EmissaoResult> {
     const { uf, modelo } = partesDaChave(partnerRef);
     const pedido = `<consSitNFe xmlns="${NFE_NS}" versao="4.00"><tpAmb>${tpAmbFor(this.opts.ambiente)}</tpAmb><xServ>CONSULTAR</xServ><chNFe>${partnerRef}</chNFe></consSitNFe>`;
-    const ret = await this.opts.soap.call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeConsultaProtocolo4'), 'NFeConsultaProtocolo4', pedido);
+    const ret = await this.soap(ctx).call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeConsultaProtocolo4'), 'NFeConsultaProtocolo4', pedido);
     const r = no(no(parser.parse(ret)).retConsSitNFe);
     const cStat = str(r.cStat);
     const prot = no(no(r.protNFe).infProt);
@@ -196,7 +204,7 @@ export class SefazNfeEmissor implements DfeEmissorPort {
     if (input.kind === 'NFSE') throw new Error('dfe_cancel_tipo: o adaptador sefaz não cancela NFS-e');
     const assinatura = this.exigirAssinatura(ctx);
     const { uf, modelo, cnpj, cUF } = partesDaChave(partnerRef);
-    const nProt = await this.nProtDe(partnerRef, uf, modelo);
+    const nProt = await this.nProtDe(partnerRef, uf, modelo, ctx);
     if (!nProt) return { status: 'REJECTED', errors: [{ code: 'sefaz_sem_protocolo', message: 'a consulta não devolveu o protocolo de autorização' }] };
     const id = `ID110111${partnerRef}01`; // [VG-EVT-ID]: "ID" + tpEvento + chave + nSeqEvento (2)
     const evento =
@@ -204,9 +212,9 @@ export class SefazNfeEmissor implements DfeEmissorPort {
       `<CNPJ>${cnpj}</CNPJ><chNFe>${partnerRef}</chNFe><dhEvento>${dataHoraBrasilia(this.now())}</dhEvento><tpEvento>110111</tpEvento>` +
       `<nSeqEvento>1</nSeqEvento><verEvento>1.00</verEvento><detEvento versao="1.00"><descEvento>Cancelamento</descEvento>` +
       `<nProt>${nProt}</nProt><xJust>${escapeXml(input.xJust)}</xJust></detEvento></infEvento></evento>`;
-    const assinado = await this.assinar(evento, 'infEvento', modelo === 65 ? 'NFCE' : 'NFE', assinatura);
+    const assinado = await this.assinar(evento, 'infEvento', modelo === 65 ? 'NFCE' : 'NFE', assinatura, partnerRef);
     const lote = `<envEvento xmlns="${NFE_NS}" versao="1.00"><idLote>${this.idLote()}</idLote>${assinado}</envEvento>`;
-    const ret = await this.opts.soap.call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeRecepcaoEvento4'), 'NFeRecepcaoEvento4', lote);
+    const ret = await this.soap(ctx).call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeRecepcaoEvento4'), 'NFeRecepcaoEvento4', lote);
     const r = no(no(parser.parse(ret)).retEnvEvento);
     const inf = no(no(r.retEvento).infEvento);
     const cStat = str(inf.cStat) || str(r.cStat);
@@ -239,7 +247,7 @@ export class SefazNfeEmissor implements DfeEmissorPort {
     const assinatura = this.exigirAssinatura(ctx);
     const { uf, modelo, cnpj, cUF } = partesDaChave(partnerRef);
     if (modelo !== 65) throw new Error('dfe_cancel_subst_modelo: o 110112 é da NFC-e');
-    const nProt = await this.nProtDe(partnerRef, uf, modelo);
+    const nProt = await this.nProtDe(partnerRef, uf, modelo, ctx);
     if (!nProt) return { status: 'REJECTED', errors: [{ code: 'sefaz_sem_protocolo', message: 'a consulta não devolveu o protocolo de autorização' }] };
     const id = `ID110112${partnerRef}01`; // [VG-EVT-ID]; P15 nSeqEvento "Informar o valor 1 para este evento"
     const verAplic = escapeXml((this.opts.versaoAplicativo ?? 'Luminaris').slice(0, 20));
@@ -249,9 +257,9 @@ export class SefazNfeEmissor implements DfeEmissorPort {
       `<nSeqEvento>1</nSeqEvento><verEvento>1.00</verEvento><detEvento versao="1.00"><descEvento>Cancelamento por substituicao</descEvento>` +
       `<cOrgaoAutor>${cUF}</cOrgaoAutor><tpAutor>1</tpAutor><verAplic>${verAplic}</verAplic>` +
       `<nProt>${nProt}</nProt><xJust>${escapeXml(input.xJust)}</xJust><chNFeRef>${input.chNFeRef}</chNFeRef></detEvento></infEvento></evento>`;
-    const assinado = await this.assinar(evento, 'infEvento', 'NFCE', assinatura);
+    const assinado = await this.assinar(evento, 'infEvento', 'NFCE', assinatura, partnerRef);
     const lote = `<envEvento xmlns="${NFE_NS}" versao="1.00"><idLote>${this.idLote()}</idLote>${assinado}</envEvento>`;
-    const ret = await this.opts.soap.call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeRecepcaoEvento4'), 'NFeRecepcaoEvento4', lote);
+    const ret = await this.soap(ctx).call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeRecepcaoEvento4'), 'NFeRecepcaoEvento4', lote);
     const r = no(no(parser.parse(ret)).retEnvEvento);
     const inf = no(no(r.retEvento).infEvento);
     const cStat = str(inf.cStat) || str(r.cStat);
@@ -273,8 +281,8 @@ export class SefazNfeEmissor implements DfeEmissorPort {
       `<inutNFe xmlns="${NFE_NS}" versao="4.00"><infInut Id="${id}"><tpAmb>${tpAmbFor(input.ambiente)}</tpAmb><xServ>INUTILIZAR</xServ>` +
       `<cUF>${cUF}</cUF><ano>${ano}</ano><CNPJ>${input.cnpjEmitente}</CNPJ><mod>${mod}</mod><serie>${input.serie}</serie>` +
       `<nNFIni>${input.nIni}</nNFIni><nNFFin>${input.nFin}</nNFFin><xJust>${escapeXml(input.xJust)}</xJust></infInut></inutNFe>`;
-    const assinado = await this.assinar(pedido, 'infInut', input.kind, assinatura);
-    const ret = await this.opts.soap.call(this.endpoint(input.uf, mod, input.ambiente, 'NFeInutilizacao4'), 'NFeInutilizacao4', assinado);
+    const assinado = await this.assinar(pedido, 'infInut', input.kind, assinatura, undefined, input.ambiente);
+    const ret = await this.soap(input.ctx).call(this.endpoint(input.uf, mod, input.ambiente, 'NFeInutilizacao4'), 'NFeInutilizacao4', assinado);
     const inf = no(no(no(parser.parse(ret)).retInutNFe).infInut);
     const cStat = str(inf.cStat);
     if (cStat === '102') return { status: 'HOMOLOGATED', nProt: str(inf.nProt), errors: [] }; // [WS-INUT] 102 inutilização homologada
@@ -287,9 +295,9 @@ export class SefazNfeEmissor implements DfeEmissorPort {
 
   // ---- internos ----
 
-  private async enviarLote(uf: string, modelo: 55 | 65, nfeAssinada: string): Promise<{ ret: string; prot: No; cStat: string; xMotivo: string }> {
+  private async enviarLote(uf: string, modelo: 55 | 65, nfeAssinada: string, ctx?: DfeCallContext): Promise<{ ret: string; prot: No; cStat: string; xMotivo: string }> {
     const lote = `<enviNFe xmlns="${NFE_NS}" versao="4.00"><idLote>${this.idLote()}</idLote><indSinc>1</indSinc>${nfeAssinada}</enviNFe>`;
-    const ret = await this.opts.soap.call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeAutorizacao4'), 'NFeAutorizacao4', lote);
+    const ret = await this.soap(ctx).call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeAutorizacao4'), 'NFeAutorizacao4', lote);
     const r = no(no(parser.parse(ret)).retEnviNFe);
     const prot = no(no(r.protNFe).infProt);
     return { ret, prot, cStat: str(prot.cStat) || str(r.cStat), xMotivo: str(prot.xMotivo) || str(r.xMotivo) };
@@ -322,7 +330,12 @@ export class SefazNfeEmissor implements DfeEmissorPort {
     const a = this.exigirAssinatura(ctx);
     const base = baseAssinavelQrV3Offline(chave, tpAmb, dados);
     const digest = createHash('sha1').update(base, 'utf8').digest('base64');
-    const r = await a.assinador.assinarHash(digest, 'sha1', 'NFCE', a.credencial);
+    const r = await a.assinador.assinarHash(digest, 'sha1', 'NFCE', a.credencial, {
+      alvo: 'qrCodeV3Offline',
+      baseQrB64: Buffer.from(base, 'utf8').toString('base64'),
+      chave,
+      tpAmb: String(tpAmb) as '1' | '2',
+    });
     if (!r.ok) throw new AssinaturaRemotaError(r.code, r.message);
     return { qrCode: qrCodeV3Offline(urls.qrCodeBase, base, r.signatureValueB64), urlChave: urls.urlChave };
   }
@@ -339,20 +352,50 @@ export class SefazNfeEmissor implements DfeEmissorPort {
   }
 
   private async assinarNota(payload: NfePayload, tipo: TipoDfeAssinado, ctx?: DfeCallContext): Promise<string> {
-    return this.assinar(serializeNfe(payload), 'infNFe', tipo, this.exigirAssinatura(ctx));
+    return this.assinar(serializeNfe(payload), 'infNFe', tipo, this.exigirAssinatura(ctx), payload.infNFe.Id.slice(3));
   }
 
-  private async assinar(xml: string, alvo: 'infNFe' | 'infEvento' | 'infInut', tipo: TipoDfeAssinado, a: NonNullable<DfeCallContext['assinatura']>): Promise<string> {
-    return assinarEnveloped(xml, { signedLocalName: alvo }, a.credencial.certificadoPem, async (digest) => {
-      const r = await a.assinador.assinarHash(digest, 'sha1', tipo, a.credencial);
+  /**
+   * Assina `xml` pelo assinador do contexto. EMENDA-4: o pedido leva o conteúdo que o assinador local reconfere (AL-10,
+   * F-AL-5 b); sem `certificadoPem` na credencial, o certificado do `KeyInfo` é o que volta com a assinatura (L-AL-1).
+   */
+  private async assinar(
+    xml: string,
+    alvo: 'infNFe' | 'infEvento' | 'infInut',
+    tipo: TipoDfeAssinado,
+    a: NonNullable<DfeCallContext['assinatura']>,
+    chave: string | undefined,
+    ambiente: DfeAmbiente = this.opts.ambiente,
+  ): Promise<string> {
+    let certificadoDaAssinatura: string | undefined;
+    const cert = a.credencial.certificadoPem
+      ? a.credencial.certificadoPem
+      : () => {
+          if (!certificadoDaAssinatura) throw new Error('dfe_assinatura_sem_certificado: o assinador não devolveu o certificado (L-AL-1)');
+          return certificadoDaAssinatura;
+        };
+    return assinarEnveloped(xml, { signedLocalName: alvo }, cert, async (digest, blocos) => {
+      const r = await a.assinador.assinarHash(digest, 'sha1', tipo, a.credencial, {
+        alvo,
+        elementoXml: blocos.elementoC14n,
+        signedInfoC14nB64: Buffer.from(blocos.signedInfoC14n, 'utf8').toString('base64'),
+        ...(chave ? { chave } : {}),
+        tpAmb: String(tpAmbFor(ambiente)) as '1' | '2',
+      });
       if (!r.ok) throw new AssinaturaRemotaError(r.code, r.message);
+      certificadoDaAssinatura = r.certificadoDerB64;
       return r.signatureValueB64;
     });
   }
 
-  private async nProtDe(chave: string, uf: string, modelo: 55 | 65): Promise<string | null> {
+  /** AL-9 — o transporte ligado ao assinador local da unidade (no contexto), ou o do adaptador. */
+  private soap(ctx?: DfeCallContext): SefazTransporte {
+    return (ctx?.assinatura?.transporte as SefazTransporte | undefined) ?? this.opts.soap;
+  }
+
+  private async nProtDe(chave: string, uf: string, modelo: 55 | 65, ctx?: DfeCallContext): Promise<string | null> {
     const pedido = `<consSitNFe xmlns="${NFE_NS}" versao="4.00"><tpAmb>${tpAmbFor(this.opts.ambiente)}</tpAmb><xServ>CONSULTAR</xServ><chNFe>${chave}</chNFe></consSitNFe>`;
-    const ret = await this.opts.soap.call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeConsultaProtocolo4'), 'NFeConsultaProtocolo4', pedido);
+    const ret = await this.soap(ctx).call(this.endpoint(uf, modelo, this.opts.ambiente, 'NFeConsultaProtocolo4'), 'NFeConsultaProtocolo4', pedido);
     const nProt = str(no(no(no(no(parser.parse(ret)).retConsSitNFe).protNFe).infProt).nProt);
     return nProt || null;
   }

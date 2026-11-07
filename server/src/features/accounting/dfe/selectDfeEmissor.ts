@@ -72,7 +72,7 @@ export function selectDfeEmissor(env: NodeJS.ProcessEnv, kind: DfeKind, deps: Df
       return { port: new DfeDisabledEmissor(reason), ambiente: null, enabled: false, reason };
     }
     assinador = sel.kind;
-    port = new SefazNfeEmissor({ ambiente, soap: transporte });
+    port = new SefazNfeEmissor({ ambiente, soap: transporte, assinador: sel.kind });
   } else {
     port = partner === 'null' ? new NullEmissor() : new ManualEmissor();
   }

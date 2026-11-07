@@ -15,7 +15,7 @@ import type { DfeAssinaturaResolver } from './DfeAssinaturaResolver';
 import { bloqueioSessaoPsc } from './DfeAssinaturaResolver';
 import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import type { DfeAmbiente, DfeCallContext, InutilizarResult } from '../dfe/DfeEmissorPort';
-import { isSessaoPscVencida, type AssinaturaRemotaError } from '../dfe/AssinadorRemotoPort';
+import { isAssinaturaPendente, type AssinaturaRemotaError } from '../dfe/AssinadorRemotoPort';
 import { scopeToday } from '../models/dates';
 import { ufDoCodMun } from '../models/nfeMontagem';
 import { STATUS_QUE_OCUPAM_NUMERO, avisoDeInutilizacao, guardaDaFaixa, lacunasDeNumeracao } from '../models/inutilizacao';
@@ -142,13 +142,18 @@ export class FiscalNumberVoidService {
         ...(ctx ? { ctx } : {}),
       });
     } catch (portError) {
-      if (isSessaoPscVencida(portError)) {
+      if (isAssinaturaPendente(portError)) {
         // A sessão caiu entre o pré-voo e a assinatura: o pedido não foi ao fisco — sai do caminho e o 400 pede a reautorização.
         await this.voidRepo.applyResult(scope, created.id, {
           status: 'REJECTED',
-          errorsJson: JSON.stringify([{ code: 'psc_sessao_vencida', message: (portError as Error).message }]),
+          errorsJson: JSON.stringify([
+            {
+              code: (portError as AssinaturaRemotaError).code === 'ASSINADOR_INDISPONIVEL' ? 'assinador_indisponivel' : 'psc_sessao_vencida',
+              message: (portError as Error).message,
+            },
+          ]),
         });
-        throw bloqueioSessaoPsc((portError as AssinaturaRemotaError).code as 'CREDENCIAL_EXPIRADA' | 'CREDENCIAL_REVOGADA');
+        throw bloqueioSessaoPsc((portError as AssinaturaRemotaError).code as 'CREDENCIAL_EXPIRADA' | 'CREDENCIAL_REVOGADA' | 'ASSINADOR_INDISPONIVEL');
       }
       const message = portError instanceof Error ? portError.message : String(portError);
       logger.error('DfeEmissorPort.inutilizar falhou — pedido fica REQUESTED', { voidId: created.id, error: message });
