@@ -18,6 +18,13 @@ atualizado: "2026-11-07"
 | L-PR3-5 | `maxTokens` de cada chamada | "4096 (Recomendado)" | `maxTokens = 4096` |
 | L-PR3-3/4 | Duração e aviso do turno sem coluna | "Colunas novas no PR-4 (Recomendado)" | Migração no PR-4: `AgentTurn.startedAt`, `output` e `warning`. A duração é a da execução, sem contar a fila |
 
-**Seguem abertas** (fora deste questionário): L-PR3-6 (override LIVRE→PROPOSTA sem formato de proposta), L-PR3-7
+**L-PR3-6 respondida** (dono, chat, 2026-11-07, "mandar para as sessões as decisões e implementar", opção A — barrar na
+configuração): tabela `PROPOSAL_FORMAT` ao lado do `TOOL_CLASS` (`ActionClass.model.ts`), hoje com `request_record_creation`
+e `request_record_update`. O `TeammateService` recusa override para `PROPOSTA` em ferramenta fora dela com 400
+`ALCADA_INVALIDA` e mensagem que nomeia a ferramenta (vale também para ferramenta MCP, que não está na tabela). O
+`PROPOSTA_SEM_FORMATO` do runner fica como defesa em profundidade. Guarda: `toolClass.test.ts` reprova ferramenta
+`PROPOSTA` sem entrada na tabela.
+
+**Seguem abertas** (fora deste questionário): L-PR3-7
 (memória da rotina), L-PR3-8 (fuso do usuário em segundo plano, que também atinge o item 24), L-PR3-9 (MCP, PR-10) e
 L-PR3-10 (nenhuma ferramenta PROIBIDA hoje).

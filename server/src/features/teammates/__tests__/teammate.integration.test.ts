@@ -85,6 +85,18 @@ describe('/api/teammates — CRUD (itens 10–13)', () => {
     expect(r.body.code).toBe('ALCADA_INVALIDA');
   });
 
+  it('L-PR3-6: override PROPOSTA em ferramenta sem formato de proposta → 400 ALCADA_INVALIDA; a 2ª leitura não mostra o teammate', async () => {
+    const r = await request(app)
+      .post('/api/teammates')
+      .set(authHeader(dono))
+      .send({ ...conciliador, name: 'Leitor apertado', toolOverrides: { query_table_data: 'PROPOSTA' } });
+    expect(r.status).toBe(400);
+    expect(r.body.code).toBe('ALCADA_INVALIDA');
+    expect(JSON.stringify(r.body)).toContain('query_table_data');
+    const list = await request(app).get('/api/teammates').set(authHeader(dono));
+    expect(list.body.data.map((t: { name: string }) => t.name)).not.toContain('Leitor apertado');
+  });
+
   it('item 12: nome desconhecido e MCP de outro tenant → 400 FERRAMENTA_INVALIDA; MCP do próprio tenant entra', async () => {
     const desconhecido = await request(app).post('/api/teammates').set(authHeader(dono)).send({ ...conciliador, allowedTools: ['apagar_tudo'] });
     expect(desconhecido.status).toBe(400);
@@ -103,16 +115,16 @@ describe('/api/teammates — CRUD (itens 10–13)', () => {
     const id = (await prisma.teammate.findFirstOrThrow({ where: { userId: dono.id, name: 'Conciliador' } })).id;
     expect((await request(app).patch(`/api/teammates/${id}`).set(authHeader(dono)).send({ name: 'Conciliador' })).status).toBe(200);
     expect(await prisma.auditEvent.count({ where: { eventType: 'teammate.alcada_changed' } })).toBe(0);
-    const patch = await request(app).patch(`/api/teammates/${id}`).set(authHeader(dono)).send({ toolOverrides: { query_table_data: 'PROPOSTA' } });
+    const patch = await request(app).patch(`/api/teammates/${id}`).set(authHeader(dono)).send({ toolOverrides: { request_record_creation: 'PROPOSTA' } });
     expect(patch.status).toBe(200);
-    expect((await request(app).get(`/api/teammates/${id}`).set(authHeader(dono))).body.data.toolOverrides).toEqual({ query_table_data: 'PROPOSTA' });
+    expect((await request(app).get(`/api/teammates/${id}`).set(authHeader(dono))).body.data.toolOverrides).toEqual({ request_record_creation: 'PROPOSTA' });
     const ev = await prisma.auditEvent.findFirstOrThrow({ where: { eventType: 'teammate.alcada_changed', targetId: id } });
     expect(ev).toMatchObject({ scopeUserId: dono.id, unitId: 'teammates' });
     expect(JSON.parse(ev.payload)).toEqual({
       teammateId: id,
       allowedTools: JSON.stringify(['query_table_data', 'request_record_creation']),
       previousAllowedTools: JSON.stringify(['query_table_data', 'request_record_creation']),
-      toolOverrides: JSON.stringify({ query_table_data: 'PROPOSTA' }),
+      toolOverrides: JSON.stringify({ request_record_creation: 'PROPOSTA' }),
       previousToolOverrides: 'null',
     });
   });
