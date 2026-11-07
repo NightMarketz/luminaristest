@@ -42,5 +42,37 @@
   {
     "codigo": "FALTAS",
     "sha256": "44352415ac0b6cbd094bb8bb4259819ea03bd573007f55a78a032817eede7a6d"
+  },
+  {
+    "codigo": "DSR_VARIAVEIS",
+    "sha256": "bfc9d19f1c01e66a5a65ce83ddb351dc504f62c2aa0800b2a23ec0f5adc2768f"
+  },
+  {
+    "codigo": "DSR_PERDIDO",
+    "sha256": "2793e34174abdda45264fe82b6b41b445245200c189dfb58f8a99e59a3ddc209"
+  },
+  {
+    "codigo": "COMPLEMENTO_MINIMO",
+    "sha256": "bc8f4ccc24efdc0c5a978361a5717cf077481240777d576a67a85ed49fd9762b"
+  },
+  {
+    "codigo": "COMPLEMENTO_PISO",
+    "sha256": "6488a324d923526cf406a60b196cad5d0b848156085a52fecce9c70504f69418"
+  },
+  {
+    "codigo": "AFASTAMENTO_EMPRESA_15D",
+    "sha256": "fd2259cbaa766e28b010065ffab7b11e5aa16c104160bf00f491ac19b5e1d409"
+  },
+  {
+    "codigo": "ADIANTAMENTO",
+    "sha256": "f073c3987e42fb1875531419b9bc4c2c3c47e7d561aac237e6bf7c772a00de11"
+  },
+  {
+    "codigo": "DESCONTO_ADIANTAMENTO",
+    "sha256": "71988a796701a1c696ac8f28fe498788957fd6cd1020a6e2b93b02a4cf46504f"
+  },
+  {
+    "codigo": "SALARIO_FAMILIA",
+    "sha256": "9c61c85ff4c4b0c4482b9400e516e8166acfcbdb95432279618718cda8092572"
   }
 ]

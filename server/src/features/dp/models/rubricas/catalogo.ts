@@ -17,7 +17,7 @@ import { z } from 'zod';
 import { CATEGORIAS_NUCLEO } from '../vinculo';
 
 export const RUBRICA_TIPOS = ['PROVENTO', 'DESCONTO', 'INFORMATIVA'] as const;
-export const RUBRICA_CALCULOS = ['CONTRATUAL', 'LEGAL', 'INFORMADO'] as const;
+export const RUBRICA_CALCULOS = ['CONTRATUAL', 'LEGAL', 'INFORMADO', 'DERIVADO'] as const;
 
 /** `codRubr` do S-1010 é "C 1 1-30" [D09]; o código é estável e nunca reaproveitado. */
 const codigo = z.string().regex(/^[A-Z][A-Z0-9_]{0,29}$/);
@@ -147,6 +147,85 @@ export const DP_RUBRICAS = [
     incidencia: { cp: '11', irrf: '11', fgts: '11' },
     categorias: ['101', '103'],
     calculo: 'INFORMADO',
+  },
+  // ── BE-INCR-DP-F2 PR-2 (item 23: o resto da lista + SALARIO_FAMILIA) ───────────────────────────────────────────────
+  // Natureza e incidência pela proposta do dossiê `pesquisas-legais/brief-pes4-f2-contador/relatorio.md` §9 (linha da
+  // Tabela 03 em [F1-D10]); escolha do executor, vai ao contador (BRIEF §5). Os 3 ambíguos daqui (15 dias de afastamento,
+  // adiantamento, salário-família) estão marcados ao lado. `DERIVADO` = calculada sobre outras linhas da folha (DSR,
+  // complementos, desconto do adiantamento). Categorias: só 101/103 (dossiê §9: as novas não colidem com 723/901).
+  {
+    codigo: 'DSR_VARIAVEIS',
+    nome: { pt: 'DSR sobre variáveis', en: 'Paid weekly rest on variable pay' },
+    tipo: 'PROVENTO',
+    natureza: '1012', // "DSR e feriado" [F1-D10 linha 490]; a 1002 terminou em 30/04/2024 (dossiê §9: verificado)
+    incidencia: { cp: '11', irrf: '11', fgts: '11' },
+    categorias: ['101', '103'],
+    calculo: 'DERIVADO',
+  },
+  {
+    codigo: 'DSR_PERDIDO',
+    nome: { pt: 'DSR perdido por falta', en: 'Weekly rest lost to absence' },
+    tipo: 'DESCONTO',
+    natureza: '9211', // "DSR sobre faltas" [F1-D10 linha 1658]; dossiê §9: inferido
+    incidencia: { cp: '11', irrf: '11', fgts: '11' },
+    categorias: ['101', '103'],
+    calculo: 'DERIVADO',
+  },
+  {
+    codigo: 'COMPLEMENTO_MINIMO',
+    nome: { pt: 'Complemento do salário mínimo', en: 'Minimum wage top-up' },
+    tipo: 'PROVENTO',
+    natureza: '1099', // "Outras verbas salariais" [F1-D10 linha 626]; dossiê §9: inferido (a 4011 é só RPPS)
+    incidencia: { cp: '11', irrf: '11', fgts: '11' },
+    categorias: ['101', '103'],
+    calculo: 'DERIVADO',
+  },
+  {
+    codigo: 'COMPLEMENTO_PISO',
+    nome: { pt: 'Complemento do piso da categoria', en: 'Collective agreement floor top-up' },
+    tipo: 'PROVENTO',
+    natureza: '1099', // [F1-D10 linha 626]; dossiê §9: inferido
+    incidencia: { cp: '11', irrf: '11', fgts: '11' },
+    categorias: ['101', '103'],
+    calculo: 'DERIVADO',
+  },
+  {
+    codigo: 'AFASTAMENTO_EMPRESA_15D',
+    nome: { pt: 'Afastamento pago pela empresa (15 dias)', en: 'Employer-paid sick leave (first 15 days)' },
+    tipo: 'PROVENTO',
+    natureza: '1050', // "Remuneração de dias de afastamento" [F1-D10 linha 610]; Lei 8.213 art. 60 § 3º [D03]; dossiê §9: AMBÍGUO com a 1000 — vai ao contador
+    incidencia: { cp: '11', irrf: '11', fgts: '11' },
+    categorias: ['101', '103'],
+    calculo: 'CONTRATUAL',
+  },
+  {
+    codigo: 'ADIANTAMENTO',
+    nome: { pt: 'Adiantamento salarial', en: 'Salary advance' },
+    tipo: 'PROVENTO',
+    natureza: '5501', // "Adiantamento de salário" [F1-D10 linha 1346]; dossiê §9: AMBÍGUO (se vai ao S-1200 e com qual IRRF) — vai ao contador
+    incidencia: { cp: '00', irrf: '9', fgts: '00' }, // IRRF 9 = sem retenção no mesmo mês (F-DPF-10, dono 06/11; IN RFB 1.500 art. 63)
+    categorias: ['101', '103'],
+    calculo: 'CONTRATUAL',
+  },
+  {
+    codigo: 'DESCONTO_ADIANTAMENTO',
+    nome: { pt: 'Desconto do adiantamento', en: 'Salary advance deduction' },
+    tipo: 'DESCONTO',
+    natureza: '9200', // "Desconto de adiantamentos" [F1-D10 linha 1586]; dossiê §9: inferido
+    incidencia: { cp: '00', irrf: '9', fgts: '00' },
+    categorias: ['101', '103'],
+    calculo: 'DERIVADO',
+  },
+  {
+    codigo: 'SALARIO_FAMILIA',
+    nome: { pt: 'Salário-família', en: 'Family allowance (salário-família)' },
+    tipo: 'PROVENTO',
+    natureza: '1409', // "Salário-família" [F1-D10 linha 882]; Lei 8.213 arts. 65–66 [D03]; dossiê §9: achado
+    // CP 51 alimenta o tpValor 31 do S-5001; IRRF 79 (isento, RIR art. 35 I "g") — AMBÍGUO com o 9, vai ao contador.
+    // CP 51 é vedada a 723/901 (item 52 do F0+F1): só 101/103.
+    incidencia: { cp: '51', irrf: '79', fgts: '00' },
+    categorias: ['101', '103'],
+    calculo: 'LEGAL',
   },
 ] as const satisfies readonly RubricaDef[];
 
