@@ -206,6 +206,16 @@ describe('A3 — uma falta por vez, nomeando a nota por número e série', () =>
     expect(await s.service.pollEventosOnce(AGORA)).toMatchObject({ consultadas: 0, skipped: 1 });
     expect(consultar).not.toHaveBeenCalled();
   });
+
+  it('revisão #1141 (achado 2): a nota entre o pré-filtro e o teto exato é tocada — não trava o rodízio', async () => {
+    // nfseDhProc 2024-11-06T16:00Z: dentro do pré-filtro (agora − 2 anos − 1 dia), mas o teto (2026-11-06 23:59:59 BRT)
+    // já passou em AGORA (2026-11-07T15:00Z). Sem o toque, o updatedAt congela e ela ocupa a vaga do rodízio para sempre.
+    const s = make([doc({ nfseDhProc: new Date('2024-11-06T16:00:00.000Z') })]);
+    const consultar = jest.spyOn(NullEmissor.prototype, 'consultarEventos');
+    expect(await s.service.pollEventosOnce(AGORA, 1)).toMatchObject({ consultadas: 0, skipped: 1 });
+    expect(consultar).not.toHaveBeenCalled();
+    expect(transitionsOf(s.repo)).toEqual([{ status: 'AUTHORIZED', whenStatusIn: ['AUTHORIZED'] }]);
+  });
 });
 
 describe('item 19 — cancelamento em voo', () => {

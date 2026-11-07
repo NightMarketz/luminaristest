@@ -367,11 +367,14 @@ export class FiscalDocumentLifecycleService {
     const docs = await this.repo.listParaEventos(desde, limit, partners);
     for (const doc of docs) {
       const teto = janelaEventos({ kind: 'NFSE', nfseDhProc: doc.nfseDhProc }, null).substituirTeto;
+      const scope = resolveAccountingScopeInternal({ userId: doc.userId }, doc.unitId);
       if (teto == null || foraDaJanela(teto, agora)) {
+        // Revisão #1141 (achado 2): a nota entre o pré-filtro e o teto exato também é tocada — senão o `updatedAt` congela,
+        // ela fica no topo do rodízio e ocupa o teto (starvation). Sai sozinha da consulta quando `desde` passar dela.
         summary.skipped++;
+        await this.tocarParaRodizio(scope, doc);
         continue;
       }
-      const scope = resolveAccountingScopeInternal({ userId: doc.userId }, doc.unitId);
       let mudou = false;
       try {
         const port = resolveEmissorFor(doc.partner, 'NFSE');
