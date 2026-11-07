@@ -4,15 +4,15 @@ tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Builder de verticais — preset como manifesto serializável, montado pelos módulos canônicos; ponte para o marketplace do P5"
 estado: "planned"
-estado_detalhe: "31/10: F-BV-2 recortado em categorias com base fixa + submódulos (D-2026-10-31-MODULOS-BASE-SUBMODULOS, F-MB-1..6 e F-MS-1..8 ratificados) e BRIEF escrito (docs/accounting/BE-INCR-MODULOS-BASE-SUBMODULOS-brief.md, PR-0..PR-6); sem código, sem 'executa' · 21/10: PRE-ADR escrito (docs/adr/PRE-ADR-BUILDER-VERTICAIS.md, Proposed) — forks F-BV-1..7 PENDENTES; sem BRIEF, sem código · Registrado a pedido do dono (15/10), sem PRE-ADR e sem autorização de código. Próximo passo, quando pedido: PRE-ADR (preset TS → manifesto; verticais fora do molde 'venda'; separação camada operacional × kit contábil)"
+estado_detalhe: "06/11: F-BV-1..7 já ratificados em 21/10 (D-2026-10-21-CHAT-C-FORKS, todos a), a nota estava velha; F-BV-2 recortado em 31/10; nenhum fork pendente, BRIEF BE-INCR-MODULOS-BASE-SUBMODULOS espera executa · 31/10: F-BV-2 recortado em categorias com base fixa + submódulos (D-2026-10-31-MODULOS-BASE-SUBMODULOS, F-MB-1..6 e F-MS-1..8 ratificados) e BRIEF escrito (docs/accounting/BE-INCR-MODULOS-BASE-SUBMODULOS-brief.md, PR-0..PR-6); sem código, sem 'executa' · 21/10: PRE-ADR escrito (docs/adr/PRE-ADR-BUILDER-VERTICAIS.md, Proposed) — forks F-BV-1..7 PENDENTES; sem BRIEF, sem código · Registrado a pedido do dono (15/10), sem PRE-ADR e sem autorização de código. Próximo passo, quando pedido: PRE-ADR (preset TS → manifesto; verticais fora do molde 'venda'; separação camada operacional × kit contábil)"
 depende_de: ["[[W5]]", "[[KIT-SETOR]]"]
 ancora_sdd: "§IV.1 Fase P5"
 autorizacao: "dono, chat, 2026-10-21: \"dispara os chats A, C e F agora\" — escopo: PRE-ADR, sessao-planejamento, só docs, sem código, sem 'executa'"
-atualizado: "2026-10-31"
+atualizado: "2026-11-06"
 ---
 # BUILDER-VERTICAIS — Builder de verticais (ponte para o marketplace do P5)
 
-**Estado:** `planned` — 31/10: F-BV-2 recortado em categorias com base fixa + submódulos (D-2026-10-31-MODULOS-BASE-SUBMODULOS, F-MB-1..6 e F-MS-1..8 ratificados) e BRIEF escrito (docs/accounting/BE-INCR-MODULOS-BASE-SUBMODULOS-brief.md, PR-0..PR-6); sem código, sem 'executa' · 21/10: PRE-ADR escrito (Proposed), forks F-BV-1..7 PENDENTES; sem BRIEF, sem código · Registrado a pedido do dono (15/10), sem PRE-ADR e sem autorização de código. Próximo passo, quando pedido: PRE-ADR (preset TS → manifesto; verticais fora do molde 'venda'; separação camada operacional × kit contábil)  
+**Estado:** `planned` — 06/11: F-BV-1..7 já ratificados em 21/10 (D-2026-10-21-CHAT-C-FORKS, todos a), a nota estava velha; F-BV-2 recortado em 31/10; nenhum fork pendente, BRIEF BE-INCR-MODULOS-BASE-SUBMODULOS espera executa · 31/10: F-BV-2 recortado em categorias com base fixa + submódulos (D-2026-10-31-MODULOS-BASE-SUBMODULOS, F-MB-1..6 e F-MS-1..8 ratificados) e BRIEF escrito (docs/accounting/BE-INCR-MODULOS-BASE-SUBMODULOS-brief.md, PR-0..PR-6); sem código, sem 'executa' · 21/10: PRE-ADR escrito (Proposed), forks F-BV-1..7 PENDENTES; sem BRIEF, sem código · Registrado a pedido do dono (15/10), sem PRE-ADR e sem autorização de código. Próximo passo, quando pedido: PRE-ADR (preset TS → manifesto; verticais fora do molde 'venda'; separação camada operacional × kit contábil)  
 **Autorização:** dono, chat, 2026-10-21: "dispara os chats A, C e F agora" — só o PRE-ADR (só docs, sem código, sem 'executa'). BRIEF e código seguem sem autorização. Antes: o registro do nó foi pedido no chat
 em 15/10: *"Registra o builder de verticais como nó no vault (depende de W5 e KIT-SETOR), sem autorizar código ainda."*  
 **Depende de:** [[W5]], [[KIT-SETOR]]  
@@ -65,3 +65,7 @@ Ordem combinada no chat (15/10): W5 (fonte única de presets) → fechar o KIT-S
 - **E-commerce de produto físico hoje**: não há vertical; o mais perto é o salão aparado no Controle Total, com o kit
   contábil do salão. Faltam pedido/frete/rastreio, variantes, canal/marketplace, devolução como fluxo. É o caso de uso
   que este nó descreve.
+
+## Fold 06/11 — parados no dono ([[D-2026-11-06-PARADOS-NO-DONO]])
+
+- Os forks F-BV-1..7 já foram ratificados em 21/10, todos (a) ([[D-2026-10-21-CHAT-C-FORKS]] l. 51–57). O F-BV-2 foi recortado em 31/10 ([[D-2026-10-31-MODULOS-BASE-SUBMODULOS]]). Não há fork pendente. O próximo passo é o `executa` do BRIEF do corte.
