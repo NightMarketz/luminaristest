@@ -72,7 +72,7 @@ export function buildIndex(notes) {
   let fT = 0, tT = 0;
   for (const d of DOMINIOS) {
     // fecha_regua=false: trabalho mergeado que a leitura ratificada conta como crescimento de outro nó —
-    // não é linha própria, então sai do numerador E do denominador (D-2026-11-07-REGUA-DENOMINADOR).
+    // não é linha própria, então sai do numerador E do denominador (D-2026-11-07-REGUA-REDEFINICAO Q1 a).
     const r = nodes.filter((n) => n.fm.tipo === 'regua' && n.fm.dominio === d && n.fm.fecha_regua !== false);
     const f = r.filter((n) => n.fm.estado === 'done').length;
     fT += f; tT += r.length;
