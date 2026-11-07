@@ -90,18 +90,23 @@ antes do PR-1, que é do tamanho do PR-6 do F0+F1 (~2 000 linhas).
 **Pendente:** PR-1 (13–22, 77–78) → PR-2 (23–26) → PR-3 (27–33) → PR-4 (34–47) → PR-5 (48–58) → PR-6 (59–64), em pilha
 sobre o #1127.
 
-**Duas lacunas de spec para levar ao dono antes de escrever código (questionário):**
+**Duas lacunas de spec (a 1ª decidida em 07/11; a 2ª vai ao dono antes do PR-4):**
 
 1. **Ordem PR-1 × PR-2.** O item 17 valida o lançamento contra rubrica `INFORMADO` do catálogo, mas o catálogo de hoje
    só tem rubricas `CONTRATUAL` e `LEGAL`; `COMISSAO`, `FALTAS` e as HE chegam no PR-2 (item 23). Com a ordem do BRIEF, o
    PR-1 só consegue testar a recusa do `POST` de lançamento. Opções: (a) PR-2 antes do PR-1 na pilha; (b) PR-1 com os
    lançamentos testados só na recusa e o teste positivo no PR-2; (c) o PR-1 já traz as rubricas `INFORMADO` do item 23.
+   **Decidido (dono, chat, 2026-11-07): *"PR-1 já com INFORMADO"*** → (c). O PR-1 traz, do item 23, as rubricas que o
+   lançamento informa: `COMISSAO` e `FALTAS` (o item 23 as diz `INFORMADO`) e `HORA_EXTRA_50`, `HORA_EXTRA_100` e
+   `ADICIONAL_NOTURNO` (as "rubricas de jornada" que o item 19 manda lançar em minutos; leitura, registrar no corpo do
+   PR). Natureza e incidência de cada uma pelo dossiê §9, com `published.json` e o teste do item 52 do F0+F1. O resto do
+   item 23 (`DERIVADO`, `ADIANTAMENTO`, `SALARIO_FAMILIA`, `AFASTAMENTO_EMPRESA_15D`) e os itens 24–26 ficam no PR-2.
 2. **Tempo parcial no F-DPF-6 (PR-4).** O piso proporcional vale "só para `tipoJornada` de tempo parcial", mas o domínio
    `tpJornada` do S-2200 não tem esse código e a `DpJornada` não tem o `tmpParc`. O PR-0 entregou só a forma
    (`pisoProporcional`); falta decidir de onde o motor tira "é tempo parcial".
 
 **Próximo comando:** sessão nova com `sessao-feature` na branch `claude/dp-f2-pr1`, criada de `origin/claude/dp-f2-pr0`;
-perguntar as duas lacunas acima ao dono; ler o BRIEF §2 PR-1, §3.3 (`DpDependente`, `DpLancamento`, `DpOutraRemuneracao`) e
+ler o BRIEF §2 PR-1, §3.3 (`DpDependente`, `DpLancamento`, `DpOutraRemuneracao`) e
 §3.4, e usar o PR-6 do F0+F1 (`git show 5aff9501d --stat`: DTO, repo, service, controller, rota, `dp.paths.ts`,
 `auditCanonical`, `factory`, `test/helpers/db.ts`) como molde. A Tabela 07 do eSocial (`ESOCIAL_TIPO_DEPENDENTE`) se
 transcreve do [F1-D10] (§6 do BRIEF), como a Tabela 18 no PR-6 do F0+F1.
