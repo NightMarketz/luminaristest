@@ -3073,6 +3073,7 @@
   "simples": {
     "alerta": {
       "ATIVIDADE_SEM_ANEXO": "Atividade sem anexo",
+      "BENEFICIO_ISS_TRANSICAO_8B": "Benefício municipal de ISS cruza a transição de 2029",
       "BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO": "Benefício municipal não aplicado (desvantajoso)",
       "HISTORICO_IGNORADO": "Histórico pré-adoção ignorado",
       "ISS_VALOR_FIXO_MUNICIPAL": "ISS por valor fixo municipal",
