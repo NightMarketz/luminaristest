@@ -24,3 +24,8 @@ Autorização: dono, chat, 2026-11-07. Linhas no `docs/operating-manual/GAP-MAP.
 - Decisões já ratificadas que colidem: F-FE-PV-6 (a) — trava no FE + selo, **sem gate no servidor** (`FE-INCR-PACOTE-VALIDADE-brief.md:274`); F-PP-6 (a), 05/10 — aceite **antes** do `PUT Finalized`, condicionado a separar "criar + itens" de "finalizar" (`PACOTE-VALIDADE-PENDENCIAS-brief.md:155`).
 - Leituras possíveis: **(1)** comportamento correto como está (F-FE-PV-6 a), o selo cobre — nada a fazer; **(2)** cumprir F-PP-6 (a) no front: gravar o aceite antes de finalizar, e só finalizar se ele existir (sem mexer no servidor); **(3)** gate no servidor (endpoint orquestrador de "finalizar venda de pacote", não o plugin — fere o §2.1 se for no plugin).
 - Recomendação: **(2)**, que já está ratificado e fecha a lacuna do caminho normal; (3) só se o dono quiser fechar também venda feita pela API/tabela genérica.
+
+## Decisão do dono (chat, 2026-11-07: "Sim as 3 recomendações") e execução
+- **2 → opção A**: `UserDto.ts` aceita qualquer caractere (maiúscula + minúscula + número + mínimo 6 continuam). Teste-guarda vermelho (4 falhas) → verde (24/24).
+- **3 → o dono troca** `SEED_ACCOUNTING_PASSWORD` no `.env` (falta maiúscula) e roda o seed de novo. Nada feito pelo agente.
+- **4 → leitura 2**: o modal grava o aceite antes do `PUT Finalized`; falha de aceite deixa a venda Rascunho com aviso. Vitest do modal 64/64; `tsc` do my-app limpo. Venda pela API segue sem gate (F-FE-PV-6 a).

@@ -52,7 +52,7 @@ vi.mock('@/lib/services/packageAcceptances.service', async (orig) => {
         packageAcceptancesService: { getNotice: vi.fn(), create: vi.fn(), getBySale: vi.fn(), downloadReceipt: vi.fn() },
     };
 });
-vi.mock('../../../services/FinanceService', () => ({ FinanceService: { createSaleWithItems: vi.fn() } }));
+vi.mock('../../../services/FinanceService', () => ({ FinanceService: { createSaleWithItems: vi.fn(), updateSale: vi.fn() } }));
 // RelationSelector: um <input> que devolve o valor digitado (o seletor real busca tabelas).
 vi.mock('@/features/dashboard/components/forms/RelationSelector', () => ({
     default: ({ name, onChange }: { name: string; onChange: (n: string, v: string) => void }) => (
@@ -96,6 +96,7 @@ beforeEach(() => {
     vi.mocked(packageAcceptancesService.getNotice).mockResolvedValue(notice());
     vi.mocked(packageAcceptancesService.create).mockResolvedValue({ id: 'acc-1' } as never);
     vi.mocked(FinanceService.createSaleWithItems).mockResolvedValue('sale-9');
+    vi.mocked(FinanceService.updateSale).mockResolvedValue(undefined as never);
 });
 
 // ── item 8 — pagamento com saldo de pacote ───────────────────────────────────────────────────────────────────────────
@@ -274,27 +275,41 @@ describe('itens 10 e 11 — venda de pacote: bloco de validade, checkbox e grava
         expect(finalizeBtn().disabled).toBe(true);
     });
 
-    it('item 11 — ordem das chamadas: venda+itens PRIMEIRO, depois o aceite com versão + hash do texto mostrado', async () => {
+    // H2-21d-4 (dono, 07/11, F-PP-6 a): o aceite é gravado ANTES do PUT Finalized; sem a prova, a venda não finaliza.
+    it('item 11 — Finalizar: venda+itens como RASCUNHO, depois o aceite (versão + hash), só então o PUT Finalized', async () => {
         const order: string[] = [];
-        vi.mocked(FinanceService.createSaleWithItems).mockImplementation(async () => { order.push('sale'); return 'sale-9'; });
+        vi.mocked(FinanceService.createSaleWithItems).mockImplementation(async (_t, _i, data) => { order.push(`sale:${data.status}`); return 'sale-9'; });
         vi.mocked(packageAcceptancesService.create).mockImplementation(async () => { order.push('acceptance'); return { id: 'acc-1' } as never; });
+        vi.mocked(FinanceService.updateSale).mockImplementation(async (_t, _id, data) => { order.push(`put:${data.status}`); return undefined as never; });
         await openPackageSale();
         fireEvent.click(screen.getByLabelText('Li este texto ao cliente e ele concordou'));
         fireEvent.click(finalizeBtn());
         await waitFor(() => expect(onClose).toHaveBeenCalled());
-        expect(order).toEqual(['sale', 'acceptance']);
+        expect(order).toEqual(['sale:Draft', 'acceptance', 'put:Finalized']);
         expect(packageAcceptancesService.create).toHaveBeenCalledWith({ unitId: 'u1', saleId: 'sale-9', textVersion: 'v1', textSha256: 'a'.repeat(64) });
+        expect(vi.mocked(FinanceService.updateSale).mock.calls[0][3 - 1]).toMatchObject({ status: 'Finalized', totalAmount: expect.any(Number), subtotal: expect.any(Number) });
         expect(onCreated).toHaveBeenCalled();
         expect(notify).not.toHaveBeenCalled();
     });
 
-    it('item 11 — falha do aceite (ex.: 409 PACKAGE_NOTICE_CHANGED): a venda fica criada, aviso na tela e o modal fecha', async () => {
+    it('item 11 — Rascunho: venda+itens e aceite, sem PUT Finalized', async () => {
+        await openPackageSale();
+        fireEvent.click(screen.getByLabelText('Li este texto ao cliente e ele concordou'));
+        fireEvent.click(draftBtn());
+        await waitFor(() => expect(onClose).toHaveBeenCalled());
+        expect(vi.mocked(FinanceService.createSaleWithItems).mock.calls[0][2]).toMatchObject({ status: 'Draft' });
+        expect(packageAcceptancesService.create).toHaveBeenCalledTimes(1);
+        expect(FinanceService.updateSale).not.toHaveBeenCalled();
+    });
+
+    it('item 11 — falha do aceite (ex.: 409 PACKAGE_NOTICE_CHANGED): a venda NÃO finaliza, fica como rascunho, aviso na tela e o modal fecha', async () => {
         vi.mocked(packageAcceptancesService.create).mockRejectedValue({ code: 'PACKAGE_NOTICE_CHANGED', status: 409 });
         await openPackageSale();
         fireEvent.click(screen.getByLabelText('Li este texto ao cliente e ele concordou'));
         fireEvent.click(finalizeBtn());
         await waitFor(() => expect(onClose).toHaveBeenCalled());
         expect(FinanceService.createSaleWithItems).toHaveBeenCalledTimes(1);
+        expect(FinanceService.updateSale).not.toHaveBeenCalled();
         expect(notify).toHaveBeenCalledWith(expect.stringContaining('aceite da validade não foi registrado'), 'warning', expect.any(String));
         expect(onCreated).toHaveBeenCalled();
     });

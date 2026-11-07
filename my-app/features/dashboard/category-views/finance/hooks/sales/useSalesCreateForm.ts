@@ -57,7 +57,11 @@ export interface UseSalesCreateFormReturn {
 
     // Submission
     /** Cria venda + itens e devolve o id da venda (o aceite da validade — FE-INCR-PACOTE-VALIDADE item 11 — precisa dele) */
-    submit: (salesTableId: string, saleItemsTableId: string, finalize?: boolean) => Promise<string>;
+    /**
+     * `beforeFinalize` (F-PP-6 a): com `finalize`, a venda nasce Rascunho e só vira Finalized se o callback resolver
+     * (aceite gravado). Se rejeitar, a venda fica Rascunho e o submit resolve com o id (o callback já avisou o usuário).
+     */
+    submit: (salesTableId: string, saleItemsTableId: string, finalize?: boolean, beforeFinalize?: (saleId: string) => Promise<void>) => Promise<string>;
     reset: () => void;
 }
 
@@ -247,7 +251,8 @@ export function useSalesCreateForm(options: UseSalesCreateFormOptions = {}): Use
     const submit = useCallback(async (
         salesTableId: string,
         saleItemsTableId: string,
-        finalize: boolean = false
+        finalize: boolean = false,
+        beforeFinalize?: (saleId: string) => Promise<void>
     ): Promise<string> => {
         const s = stateRef.current;
 
@@ -267,7 +272,7 @@ export function useSalesCreateForm(options: UseSalesCreateFormOptions = {}): Use
                 simpleCustomer: s.simpleCustomer,
                 simpleCustomerName: s.simpleCustomer ? s.simpleCustomerName : undefined,
                 unitId: s.unitId || undefined,
-                status: finalize ? 'Finalized' : 'Draft',
+                status: finalize && !beforeFinalize ? 'Finalized' : 'Draft',
                 paymentStatus: 'Pending',
                 subtotal: sub,
                 totalAmount: total,
@@ -279,6 +284,12 @@ export function useSalesCreateForm(options: UseSalesCreateFormOptions = {}): Use
             };
 
             const saleId = await FinanceService.createSaleWithItems(salesTableId, saleItemsTableId, saleData, s.items);
+            if (finalize && beforeFinalize) {
+                let proven = true;
+                try { await beforeFinalize(saleId); } catch { proven = false; }
+                // Totais no corpo: a ponte contábil lê a linha antes do afterUpdate (PUT sem totalAmount não lança nada).
+                if (proven) await FinanceService.updateSale(salesTableId, saleId, { status: 'Finalized', subtotal: sub, totalAmount: total });
+            }
             setState(prev => ({ ...prev, isSubmitting: false }));
             return saleId;
         } catch (err) {
