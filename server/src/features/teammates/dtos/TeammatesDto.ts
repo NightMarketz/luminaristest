@@ -135,6 +135,25 @@ export const ProposalPayloadSchema = z.discriminatedUnion('kind', [
     .strict(),
 ]);
 
+/** PR-7 item 31: `GET /proposals?status=` — sem status, a caixa mostra as pendentes. */
+export const ProposalListQuerySchema = z
+  .object({ status: z.enum(['PENDING', 'EXECUTED', 'REJECTED', 'EXPIRED']).default('PENDING') })
+  .strict();
+
+/** PR-7 item 31: o item da caixa única (chat e teammates juntos). */
+export const ProposalReadSchema = z
+  .object({
+    id: z.string(),
+    kind: z.enum(['TABLE_ROW', 'SETTLEMENT_MATCH', 'MCP_TOOL_CALL', 'LIMITE_ATINGIDO']),
+    status: z.enum(['PENDING', 'EXECUTED', 'REJECTED', 'EXPIRED']),
+    payload: ProposalPayloadSchema,
+    teammate: z.object({ id: z.string(), name: z.string().nullable() }).strict().nullable(),
+    channelMessageId: z.string().nullable(),
+    expiresAt: z.string().nullable(),
+    createdAt: z.string(),
+  })
+  .strict();
+
 export type TeammateCreateInput = z.infer<typeof TeammateCreateSchema>;
 export type TeammateUpdateInput = z.infer<typeof TeammateUpdateSchema>;
 export type TeammateRead = z.infer<typeof TeammateReadSchema>;
@@ -145,3 +164,6 @@ export type ChannelPostInput = z.infer<typeof ChannelPostSchema>;
 export type McpServerCreateInput = z.infer<typeof McpServerCreateSchema>;
 export type TurnJob = z.infer<typeof TurnJobSchema>;
 export type ProposalPayload = z.infer<typeof ProposalPayloadSchema>;
+export type ProposalKind = ProposalPayload['kind'];
+export type ProposalListQuery = z.infer<typeof ProposalListQuerySchema>;
+export type ProposalRead = z.infer<typeof ProposalReadSchema>;

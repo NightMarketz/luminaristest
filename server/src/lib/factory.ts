@@ -314,6 +314,7 @@ import { AttachmentService } from '../features/attachments/services/AttachmentSe
 import { SavedTableViewService } from '../features/savedViews/services/SavedTableViewService';
 import { LlmCredentialService } from '../features/teammates/services/LlmCredentialService';
 import { TeammateService } from '../features/teammates/services/TeammateService';
+import { ProposalInboxService, TableRowProposalDispatcher } from '../features/teammates/services/ProposalInboxService';
 import { StateManager } from '../features/interview/CustomizationService/StateManager';
 import { CustomizationService } from '../features/interview/CustomizationService/CustomizationService';
 import { InterviewService } from '../features/interview/InterviewService/InterviewService';
@@ -1071,6 +1072,7 @@ export class ApplicationFactory {
     savedTableView: SavedTableViewService;
     llmCredential: LlmCredentialService; // BE-INCR-TEAMMATES PR-1 (item 7)
     teammate: TeammateService; // BE-INCR-TEAMMATES PR-2 (item 10)
+    proposalInbox: ProposalInboxService; // BE-INCR-TEAMMATES PR-7 (itens 31–33)
     interview: InterviewService; // W4: entrevista com IA sobre a sessão persistida
     customization: CustomizationService; // W1: módulos da sessão (POST /dashboard/ai/InterviewModules)
     fieldCustomization: FieldCustomizationService; // W6: painel de campos por IA sobre a mesma sessão
@@ -2348,6 +2350,11 @@ export class ApplicationFactory {
       ),
       llmCredential: new LlmCredentialService(this.repositories.llmCredential, this.policies.llmCredential, auditService), // PR-2 item 13: trilha
       teammate: new TeammateService(this.repositories.teammate, this.repositories.mcpServer, this.policies.teammate, auditService),
+      // PR-7 item 32: um despachante por kind; SETTLEMENT_MATCH (PR-8), MCP_TOOL_CALL (PR-10) e LIMITE_ATINGIDO (PR-4)
+      // registram os deles (L-PR7-1/2).
+      proposalInbox: new ProposalInboxService(this.repositories.actionProposal, this.repositories.teammate, [
+        new TableRowProposalDispatcher(dynamicTableService, dynamicTableWriteEffects),
+      ]),
       // W4 item 3: StateManager sobre o repositório (injetado, nunca `new` dentro do serviço).
       interview: new InterviewService(customizationService, chatOpenAIService),
       customization: customizationService,
@@ -2802,6 +2809,7 @@ export class ApplicationFactory {
   public getSavedTableViewService = (): SavedTableViewService => this.services.savedTableView;
   public getLlmCredentialService = (): LlmCredentialService => this.services.llmCredential;
   public getTeammateService = (): TeammateService => this.services.teammate;
+  public getProposalInboxService = (): ProposalInboxService => this.services.proposalInbox;
   public getInterviewService = (): InterviewService => this.services.interview;
   public getCustomizationService = (): CustomizationService => this.services.customization;
   public getFieldCustomizationService = (): FieldCustomizationService => this.services.fieldCustomization;

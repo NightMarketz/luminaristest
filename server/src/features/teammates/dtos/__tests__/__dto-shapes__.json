@@ -132,6 +132,23 @@
       ],
       "additionalProperties": false
     },
+    "ProposalListQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "status": {
+          "default": "PENDING",
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "EXECUTED",
+            "REJECTED",
+            "EXPIRED"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
     "ProposalPayloadSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "oneOf": [
@@ -267,6 +284,220 @@
           "additionalProperties": false
         }
       ]
+    },
+    "ProposalReadSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "TABLE_ROW",
+            "SETTLEMENT_MATCH",
+            "MCP_TOOL_CALL",
+            "LIMITE_ATINGIDO"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "EXECUTED",
+            "REJECTED",
+            "EXPIRED"
+          ]
+        },
+        "payload": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "TABLE_ROW"
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "CREATE",
+                    "UPDATE",
+                    "DELETE"
+                  ]
+                },
+                "tableId": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              },
+              "required": [
+                "kind",
+                "action",
+                "tableId",
+                "data"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "SETTLEMENT_MATCH"
+                },
+                "statementLineId": {
+                  "type": "string"
+                },
+                "targetType": {
+                  "type": "string",
+                  "enum": [
+                    "RECEIVABLE",
+                    "PAYABLE",
+                    "ACQUIRER"
+                  ]
+                },
+                "targetId": {
+                  "type": "string"
+                },
+                "amountCents": {
+                  "type": "string",
+                  "pattern": "^\\d+$"
+                },
+                "rationale": {
+                  "type": "string",
+                  "maxLength": 2000
+                }
+              },
+              "required": [
+                "kind",
+                "statementLineId",
+                "targetType",
+                "targetId",
+                "amountCents",
+                "rationale"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "MCP_TOOL_CALL"
+                },
+                "mcpServerId": {
+                  "type": "string"
+                },
+                "tool": {
+                  "type": "string"
+                },
+                "arguments": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
+                }
+              },
+              "required": [
+                "kind",
+                "mcpServerId",
+                "tool",
+                "arguments"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "LIMITE_ATINGIDO"
+                },
+                "limit": {
+                  "type": "string",
+                  "enum": [
+                    "DAILY_TURNS",
+                    "MONTHLY_TOKENS",
+                    "HOPS"
+                  ]
+                },
+                "teammateId": {
+                  "type": "string"
+                },
+                "threadId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "limit"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "teammate": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "channelMessageId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "expiresAt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "status",
+        "payload",
+        "teammate",
+        "channelMessageId",
+        "expiresAt",
+        "createdAt"
+      ],
+      "additionalProperties": false
     },
     "RoutineScheduleSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
