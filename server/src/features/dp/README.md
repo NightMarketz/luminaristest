@@ -127,6 +127,23 @@ chaves e as formas de texto aceitas estão fechadas em `legalParameters/models/f
 (`FOLHA_REGRA_CHAVES_INT`, `FOLHA_REGRA_CHAVES_TEXTO`). Linha nova entra pelo fluxo `DRAFT → PUBLISHED → REVOKED` do
 `LegalParameter`, sem rota nova. Linha ausente na data ⇒ `PARAMETRO_LEGAL_AUSENTE`, nunca valor padrão.
 
+## Calculadoras da folha (`models/folha/`, BE-INCR-DP-F2 PR-0, itens 1–12)
+
+Funções puras, sem I/O e sem literal numérico de regra legal: os números chegam de `RegrasFolha` (item 67) e de
+`parametrosFolha` (G2). Dinheiro em centavos `bigint`; nenhuma conta intermediária arredonda (`Fracao`, `bigint`
+num/den); o arredondamento ao centavo acontece só no valor de cada rubrica, pelo modo da linha `ARREDONDAMENTO` (ou
+`ARREDONDAMENTO_INSS` no INSS). Toda calculadora devolve `{ valor, prova: CalcNode }`; `fonte` do nó = artigo ou
+`LP:<id da linha>`.
+
+- `calcNode.ts` (item 1), `fracao.ts` (item 2).
+- `salario.ts`: `salarioHora` pela forma da linha `SALARIO_HORA_DIVISOR` (item 3), `diasDevidosMensalista` no mês
+  comercial do F-DPF-4 (a) e `proporcionalMensalista` (item 4).
+- `encargos.ts`: `inssEmpregado` progressivo com o já tributado antes (itens 5 e 78), `inssContribuinteIndividual`
+  (item 6), `fgtsDaCategoria` pela `DP_CATEGORIA_ENCARGO` (item 7) e `irrfMensal`, adaptador do `calcularIrrfPf` da
+  RETENCOES-FONTE pela data de pagamento (item 8).
+- `variaveis.ts`: `horaExtra` e `adicionalAplicavel` (item 9), `adicionalNoturno` (item 10), `dsrSobreVariaveis` sobre
+  `diasDoMes` (item 11), `complementoMinimo` e `pisoProporcional` (item 12, F-DPF-6 a).
+
 ## Interaction with other features
 
 - Lê, sem tabela nova, os parâmetros legais que já existem (`legalParameters`: IRRF, `ENCARGO_FOLHA`, salário mínimo).
