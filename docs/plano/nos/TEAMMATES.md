@@ -11,7 +11,7 @@ autorizacao: "dono, chat, 2026-10-29: \"Autorizo planejar\" — nó + PRE-ADR + 
 atualizado: "2026-11-07"
 write_set: ["server/src/features/teammates/**", "server/src/lib/llm/**", "server/src/features/chat/**", "server/src/jobs/TeammateTurnWorker.ts", "server/src/jobs/ProposalExpiryScheduler.ts", "server/src/jobs/__tests__/schedulerFailureAlert.test.ts", "server/prisma/schema.prisma", "server/prisma/migrations/**", "server/src/routes/teammates.ts", "server/src/routes/docs/teammates.paths.ts", "server/src/routes/hooks.ts", "server/package.json", "server/package-lock.json", ".github/workflows/ci.yml"]
 registros: ["server/src/lib/factory.ts", "server/src/routes/index.ts", "server/src/features/accounting/audit/auditCanonical.ts"]
-prs: ["#969", "#1120"]
+prs: ["#969", "#1120", "#1122"]
 ---
 # TEAMMATES — Teammates nativos (funções do OpenBot, sem o OpenBot)
 
