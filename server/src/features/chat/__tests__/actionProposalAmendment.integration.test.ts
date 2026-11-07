@@ -29,6 +29,12 @@ describe('ActionProposalRepository.create — emenda F-TM-8 a', () => {
     expect(row.expiresAt).toBeNull();
   });
 
+  it('payload null explícito grava NULL do SQL, igual ao default (achado da rodada 2 do #1120)', async () => {
+    const created = await new ActionProposalRepository().create({ ...base(userId), payload: null });
+    const [row] = await prisma.$queryRaw<{ t: string }[]>`SELECT typeof(payload) AS t FROM action_proposals WHERE id = ${created.id}`;
+    expect(row.t).toBe('null');
+  });
+
   it('com os campos novos: todos gravados (2ª leitura)', async () => {
     const expiresAt = new Date('2026-11-07T12:00:00.000Z');
     const payload = { kind: 'LIMITE_ATINGIDO', limit: 'HOPS', threadId: 'th-1' };

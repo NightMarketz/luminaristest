@@ -16,7 +16,7 @@ export class ActionProposalRepository implements IActionProposalRepository {
                 // Emenda F-TM-8 a (TEAMMATES PR-0): os campos novos chegam ao Prisma; ausentes, valem os defaults.
                 ...(data.kind !== undefined && { kind: data.kind }),
                 ...(data.payload !== undefined && {
-                    payload: data.payload === null ? Prisma.JsonNull : (data.payload as Prisma.InputJsonValue),
+                    payload: data.payload === null ? Prisma.DbNull : (data.payload as Prisma.InputJsonValue),
                 }),
                 ...(data.teammateId !== undefined && { teammateId: data.teammateId }),
                 ...(data.channelMessageId !== undefined && { channelMessageId: data.channelMessageId }),
