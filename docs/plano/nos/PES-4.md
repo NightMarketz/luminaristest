@@ -132,7 +132,9 @@ copiar só as entradas novas de `dp` e os `.gen.ts` novos, reverter o resto, e a
 `^[cC][^\s-]{8,}$` → `^[cC][0-9a-z]{6,}$`; `anyOf [{type: X}, {type: null}]` sem outra chave → `type: [X, "null"]`),
 conferindo que a troca reproduz as entradas já comitadas. OpenAPI — gerar só o `routes/docs/dp.paths.ts` com o
 `swagger-jsdoc` de `server/`, conferir que os paths antigos saem idênticos e inserir os novos depois do último `/api/dp/*`.
-`smoke:migration` pede `server/prisma/prisma/dev.db` copiado do checkout principal. Heredoc do Git Bash quebra Python
+`smoke:migration` pede `server/prisma/prisma/dev.db` copiado do checkout principal. **Model novo com `deletedAt`** entra
+na allowlist de `server/src/jobs/PurgeDeletedRecords.ts` (o DP é `contabil-fiscal`), senão o `purgeAllowlist.test.ts`
+reprova no CI (pegou o PR-1 no f7ce475a7; corrigido no b80cec8b1). Heredoc do Git Bash quebra Python
 com `\n`/aspas: escreva o script com a ferramenta Write.
 
 **Leituras do PR-0 que o motor (PR-4) herda** (detalhe no corpo do #1127): `jaContribuidoCents` do `inssEmpregado` é a
