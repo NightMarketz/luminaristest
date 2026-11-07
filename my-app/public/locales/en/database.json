@@ -40,6 +40,9 @@
         "description": "Description",
         "amount": "Amount",
         "date": "Date",
+        "assigneeId": "Assignee",
+        "leadId": "Lead",
+        "reminderAt": "Reminder At",
         "status": "Status",
         "type": "Type",
         "email": "Email",
@@ -269,7 +272,8 @@
         "share": "Share",
         "follow": "Follow",
         "created_at": "Created at",
-        "empty": "Empty"
+        "empty": "Empty",
+        "description_placeholder": "Add a more detailed description..."
     },
     "field_descriptions": {
         "validityDays": "Term in calendar days from the purchase. A validity of 12 months or more is the most defensible; 0 or empty = no validity."
