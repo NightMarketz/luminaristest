@@ -160,6 +160,31 @@ describe('AssinadorLocalSection', () => {
     expect(svc.gerarCodigo).toHaveBeenCalledWith('u1');
   });
 
+  it('FA-4: o erro de gerar código vindo da unidade 1 não aparece depois da troca para a unidade 2', async () => {
+    let falhar: (e: unknown) => void = () => undefined;
+    svc.gerarCodigo.mockImplementationOnce(() => new Promise((_r, rej) => { falhar = rej; }));
+    const { rerender } = render(<AssinadorLocalSection unitId="u1" />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Gerar código de pareamento' }));
+    rerender(<AssinadorLocalSection unitId="u2" />);
+    await act(async () => falhar({ status: 403, error: 'Erro da unidade 1' }));
+    expect(screen.queryByText('Erro da unidade 1')).toBeNull();
+  });
+
+  it('FA-4: a revogação da unidade 1 que termina depois da troca não mexe na tela da unidade 2', async () => {
+    svc.getEstado.mockResolvedValue(view({ nome: 'Caixa da unidade' }));
+    let soltar: () => void = () => undefined;
+    svc.revogar.mockImplementationOnce(() => new Promise<void>((r) => { soltar = r; }));
+    const { rerender } = render(<AssinadorLocalSection unitId="u1" />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Revogar' }));
+    fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Revogar' }));
+    rerender(<AssinadorLocalSection unitId="u2" />);
+    await screen.findByText('Caixa da unidade');
+    const chamadas = svc.getEstado.mock.calls.length;
+    await act(async () => soltar());
+    expect(svc.getEstado.mock.calls.length).toBe(chamadas);
+    expect(svc.revogar).toHaveBeenCalledWith('u1');
+  });
+
   it('FA-10: com assinador pareado, o modal avisa que o pareamento novo substitui o atual', async () => {
     svc.getEstado.mockResolvedValue(view());
     svc.gerarCodigo.mockResolvedValue({ codigo: 'ABCDEFGHJKMN', expiraEm: new Date(Date.now() + 600_000).toISOString() });
