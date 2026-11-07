@@ -1,19 +1,21 @@
 import { request } from 'node:https';
-import { readFileSync } from 'node:fs';
-import { AppError } from '../../../../lib/errors';
 import { logger } from '../../../../lib/logger';
 import { DfeTransporteError } from '../DfeEmissorPort';
 import type { SefazServico } from './sefazConfig';
+import type { SefazTransporte } from './SefazTransporte';
 
 /**
- * Cliente SOAP 1.2 dos webservices NF-e 4.00 — BE-INCR-NFCE-EMENDA-1 item E-4, sobre mTLS com o certificado do
- * TRANSMISSOR (o e-CNPJ do Luminaris), não o do emitente: "não necessariamente o CNPJ/CPF da empresa emissora" (MOC 7.0
- * Visão Geral; `pesquisas-legais/dfe-mtls-psc/relatorio.md`, EMENDA-2 §4.1; F-PSC-1 a). A nota segue assinada pelo
- * certificado do emitente no PSC. Envelope com a área `nfeDadosMsg` no namespace do WSDL do serviço; o retorno é o
- * conteúdo de `nfeResultMsg`. **Grau I:** o MOC 7.0 VG (`TRANSCRICAO-MOC70-webservices-NFe-2026-10-29.md`, `[WS-SOAP]`)
- * não traz o namespace `…/nfe/wsdl/<Servico>4` nem o `nfeResultMsg` da versão 4.00 (só o envelope do `NfeRecepcao2` e a
- * nota de que a 4.0 eliminou o `nfeCabecMsg`, p. 64); os dois vêm dos WSDL publicados das autorizadoras e ficam aqui como
- * constantes únicas, a conferir no runbook de homologação (D5) contra o `?wsdl` real.
+ * Cliente SOAP 1.2 dos webservices NF-e 4.00 — BE-INCR-NFCE-EMENDA-1 item E-4, sobre mTLS a partir do servidor. Envelope
+ * com a área `nfeDadosMsg` no namespace do WSDL do serviço; o retorno é o conteúdo de `nfeResultMsg`. **Grau I:** o MOC
+ * 7.0 VG (`TRANSCRICAO-MOC70-webservices-NFe-2026-10-29.md`, `[WS-SOAP]`) não traz o namespace `…/nfe/wsdl/<Servico>4` nem
+ * o `nfeResultMsg` da versão 4.00 (só o envelope do `NfeRecepcao2` e a nota de que a 4.0 eliminou o `nfeCabecMsg`, p. 64);
+ * os dois vêm dos WSDL publicados das autorizadoras e ficam aqui como constantes únicas, a conferir no runbook de
+ * homologação (D5) contra o `?wsdl` real.
+ *
+ * X10a EMENDA-4 (AL-1, AL-2; F-AL-7 a; `ADR-INCR-DFE-EMISSAO-PARCEIRO` §14): é uma das implementações de
+ * `SefazTransporte`. O transmissor com o e-CNPJ do Luminaris (`DFE_TRANSMISSOR_CERT`) saiu: em produção o mTLS sai do
+ * caixa do cliente (`AssinadorLocalTransporte`); este cliente fica para o falso da SEFAZ nos testes. `envelopeSoap` e
+ * `extrairResultado` são compartilhados com o transporte do assinador local.
  *
  * Falha de transporte (handshake, timeout, 5xx, corpo sem `nfeResultMsg`) ⇒ `SefazTransporteError` — quem chama decide
  * (o envio deixa o documento `SENT` e entra na recuperação, E-8). Nunca loga corpo, URL com query ou certificado (OBS-R7).
@@ -22,29 +24,12 @@ import type { SefazServico } from './sefazConfig';
 export const SOAP12_NS = 'http://www.w3.org/2003/05/soap-envelope';
 export const wsdlNs = (servico: SefazServico): string => `http://www.portalfiscal.inf.br/nfe/wsdl/${servico}`;
 
-/** O e-CNPJ do Luminaris para o TLS mútuo (PKCS#12 — o `node:tls` aceita `pfx` direto) e a cadeia da SEFAZ. */
+/** Certificado cliente do TLS mútuo (PKCS#12 — o `node:tls` aceita `pfx` direto) e a cadeia da SEFAZ. */
 export interface TransporteTls {
   pfx: Buffer;
   passphrase: string;
   /** Cadeia ICP-Brasil (PEM) acrescentada às CAs do Node — a SEFAZ usa certificado ICP-Brasil no servidor. */
   ca?: string | Buffer;
-}
-
-export const DFE_TRANSMISSOR_CERT_MISSING = 'dfe_transmissor_cert_missing';
-
-/**
- * Lê o transmissor do env, na hora do uso (o resto da aplicação sobe sem ele):
- * `DFE_TRANSMISSOR_CERT` (caminho do PFX), `DFE_TRANSMISSOR_CERT_PASSWORD`, `DFE_SEFAZ_CA` (opcional, caminho PEM).
- * Sem certificado ⇒ 503 nomeado, sem efeito (falha fechada, como o keyring do F5).
- */
-export function loadTransporteTls(env: NodeJS.ProcessEnv = process.env): TransporteTls {
-  const path = env.DFE_TRANSMISSOR_CERT?.trim();
-  const passphrase = env.DFE_TRANSMISSOR_CERT_PASSWORD ?? '';
-  if (!path) {
-    throw new AppError('Certificado do transmissor (e-CNPJ do Luminaris) não provisionado (DFE_TRANSMISSOR_CERT).', 503, DFE_TRANSMISSOR_CERT_MISSING);
-  }
-  const ca = env.DFE_SEFAZ_CA?.trim();
-  return { pfx: readFileSync(path), passphrase, ...(ca ? { ca: readFileSync(ca) } : {}) };
 }
 
 /** X10a PR-9: subclasse do marcador da porta — a falha de transporte é a que liga a contingência automática (decisão 4). */
@@ -74,7 +59,7 @@ export function extrairResultado(soap: string): string {
   return m[1].trim();
 }
 
-export class SefazSoapClient {
+export class SefazSoapClient implements SefazTransporte {
   constructor(private readonly opts: SefazSoapOptions) {}
 
   /** POST do envelope para `url`; devolve o XML de `nfeResultMsg`. Um agente por chamada (sem pool entre instâncias). */
