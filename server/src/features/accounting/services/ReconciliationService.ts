@@ -33,6 +33,12 @@ export const RECONCILE_WINDOW_DAYS = 3;
  */
 export const RECONCILE_CHUNK_SIZE = 200;
 
+/** FIX-MENSAGENS-ID-INTERNO lote 4 (F-MSG-2 a1; rótulo do dono, chat, 05/11): o lançamento é nº + data + descrição, nunca o cuid. */
+const describeLancamento = (j: { entryNumber: number | null; date: Date; description: string }) => {
+  const dmy = `${String(j.date.getUTCDate()).padStart(2, '0')}/${String(j.date.getUTCMonth() + 1).padStart(2, '0')}/${j.date.getUTCFullYear()}`;
+  return `${j.entryNumber === null ? 'lançamento sem número' : `lançamento nº ${j.entryNumber}`} de ${dmy} — ${j.description}`;
+};
+
 /** Required import columns (same integer-cents convention as the INCR-6 templates). */
 const REQUIRED_COLS = ['date', 'amountCents', 'description'] as const;
 const OPTIONAL_REF_COL = 'externalRef';
@@ -419,7 +425,7 @@ export class ReconciliationService {
     }
     if (posting.entry.status !== 'Posted') {
       throw new ValidationError(
-        `Lançamento '${posting.entry.id}' não está Posted (status atual: ${posting.entry.status}).`,
+        `O ${describeLancamento(posting.entry)} não está Posted (status atual: ${posting.entry.status}).`,
       );
     }
     // Gate 3 — max 1 active match per posting (D3; closes the duplicated-line hole).
