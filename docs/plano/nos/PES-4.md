@@ -9,10 +9,10 @@ depende_de: ["[[D-2026-11-02-DP-PRE-ADR]]", "[[D-2026-11-06-DP-BRIEF-F2]]", "[[D
 autorizacao: "dono, chat, 2026-11-06: \"pode planejar de acordo com suas sugestões\" (regra de parâmetro: número de lei e escala como dado; BRIEF do F2 §0.1 e PR-0R) + questionário dos forks F-DPF-1..13 ([[D-2026-11-06-DP-BRIEF-F2]]) — só o BRIEF; não é executa. Antes — dono, chat, 2026-11-05: \"Sim, planeja o F2\" (resposta a \"Abro a sessão de planejamento do BRIEF do F2 (só o BRIEF, sem código)?\") — só o BRIEF do F2; não é executa. Antes — dono, chat, 2026-11-03: \"Executa PR-0 a PR-6\" (resposta a \"Abro a sessão 3 com o executa do BRIEF BE-INCR-DP-F0-F1?\") — executa do BRIEF de F0+F1 inteiro ([[D-2026-10-28-FLUXO-AUTONOMO]]); não cobre F2 em diante, o BRIEF do SST nem a ponte contábil (F-FOL-1..9). Antes — dono, chat, 2026-11-02: \"Podemos seguir o pre-adr numa sessão, esperar, criar o nó no vault + brief em outra e o executa na terceira\" + \"Sim, abre agora\" (resposta a \"Abro já a sessão 2 (nó PES-4 + BRIEF de F0 e F1) em cima do branch do #1009?\") — nó e BRIEF de F0+F1; forks do BRIEF por questionário ([[D-2026-11-02-DP-BRIEF-F0-F1]]). Não autoriza código: o 'executa' é da sessão 3 · **EXECUTA F2** (dono, chat, 2026-11-06, questionário): \"Executa o F2\" — BRIEF BE-INCR-DP-F2 inteiro (PR-0R e PR-0..PR-6), sessao-feature, sem merge; dado depois do merge do #1103 pelo #1106"
 perfil_previsto: "opus-medio"
 perfil_evidencia: "BRIEF §9: PR-0/PR-3/PR-5/PR-6 opus-baixo; PR-1/PR-2/PR-4 opus-medio"
-atualizado: "2026-11-06"
+atualizado: "2026-11-07"
 write_set: ["server/src/features/dp/**", "server/src/controllers/dpModuleController.ts", "server/src/controllers/dpCadastrosController.ts", "server/src/controllers/dpVinculoController.ts", "server/src/controllers/__tests__/dp*.ts", "server/src/routes/dp.ts", "server/src/routes/docs/dp.paths.ts", "server/public/openapi.json", "server/src/__tests__/openapi-paths.test.ts", "server/prisma/schema.prisma", "server/prisma/migrations/**", "server/prisma/data/legal_parameters_dp_v1.sql", "server/prisma/data/legal_parameters_dp_regras_v1.sql", "server/src/features/legalParameters/models/legalParameter.ts", "server/src/features/legalParameters/models/formatoLinha.ts", "server/src/features/legalParameters/dtos/__tests__/__dto-shapes__.json", "server/src/features/accounting/audit/auditCanonical.ts", "server/test/helpers/templateDb.ts", "server/test/helpers/legalParams.ts", "server/.dependency-cruiser.cjs", "docs/adr/ADR-ARCH-BOUNDARIES.md"]
 registros: ["server/src/lib/factory.ts", "server/src/routes/index.ts"]
-prs: ["#1010", "#1014", "#1015", "#1016", "#1026", "#1032", "#1036", "#1041", "#1101", "#1103", "#1104", "#1106"]
+prs: ["#1010", "#1014", "#1015", "#1016", "#1026", "#1032", "#1036", "#1041", "#1101", "#1103", "#1104", "#1106", "#1125"]
 ---
 # PES-4 — Departamento Pessoal: núcleo + submódulos
 
@@ -73,6 +73,38 @@ BYOK, sem contratar PSC (D5 de 30/10); vigência só por data de efeito, com o s
 [[T2]] (tenancy), [[T8]] (auditoria encadeada), [[T10]] (bridge explícita), [[T11]] (processo único, sem fila),
 [[R8]], [[R-postgresql]], [[R-torre-multiempresa]], [[R-motor-dominio]], [[R-motor-regras]];
 [[M5-subrazoes-restantes]] (de onde a folha saiu, pela [[D-2026-11-02-DP-PRE-ADR]]).
+
+## Handoff da execução do BRIEF do F2 (07/11, depois do PR-0R)
+
+O `executa` do F2 (dono, chat, 06/11: *"Executa o F2"*, BRIEF inteiro, `sessao-feature`, sem merge) segue valendo para
+PR-0..PR-6. A sessão parou depois do PR-0R por higiene de contexto (CLAUDE.md, ~180k) e por falta de memória da máquina
+(processos falhando com `uv_spawn`).
+
+**Feito**
+
+| PR | Branch | Itens | Classe | Gates locais | Revisor |
+|---|---|---|---|---|---|
+| #1125 | `claude/dp-f2-pr0r-4904eb` (base `main` a39ea73a1) | 65–76 (70 parcial: o motor prova no PR-4) | vermelha (migração, parâmetro legal) | tsc, check:arch, 48 unit, 8 suítes de integração, smoke:migration verdes | despachado em 07/11 (ver o corpo do #1125) |
+
+**Pendente:** PR-0 (itens 1–12) → PR-1 (13–22, 77–78) → PR-2 (23–26) → PR-3 (27–33) → PR-4 (34–47) → PR-5 (48–58) →
+PR-6 (59–64), em pilha sobre o #1125; o veredito do revisor do #1125.
+
+**Próximo comando:** sessão nova com `sessao-feature` na branch `claude/dp-f2-pr0`, criada de `claude/dp-f2-pr0r-4904eb`;
+ler o BRIEF §2 PR-0 e `server/src/features/dp/models/regrasFolha.ts` (o `RegrasFolha` é o único caminho de número de regra
+para as calculadoras; `ValorRegra` traz `linhaId` para o `fonte: "LP:<id>"` do `CalcNode`).
+
+**Armadilhas novas (07/11)**
+
+- **Depósito de dependências defasado** (`~/.luminaris-deps/ws-6a1b638cfb55`): `zod` 4.1.8 (o `package.json` pede ^4.6.7),
+  `@xmldom/xmldom` sem `package.json`, `glob` que não casa `\`. Efeitos no `HEAD`: `tsc` com erros em `nfe(s)Signature.ts`,
+  57 schemas de outros domínios reprovando o snapshot de DTO, `openapi-paths` com 0 paths. O `worktree-deps.mjs` saiu 0 sem
+  corrigir. Snapshot: aplique à mão sobre o `HEAD` só os campos novos (o regex de cuid e o `nullable` do zod local diferem do
+  CI). OpenAPI: gere com as globs do `scripts/generate-openapi.js` convertidas para `/` (script no scratchpad da sessão:
+  `options` exportado + `swagger-jsdoc` resolvido de `server/`) e copie só os paths `/api/dp/*`.
+- **Criar jornada exige escala** (`diasTrabalho` + `minutosPorDia`); fixture nova de jornada leva os dois.
+- `assertIdadeEPrazo(d, regras)` e `periodosDeFerias(..., meses)` agora pedem as regras: nos testes, `regrasIdadeDaCategoria`
+  e `mesesFerias` sobre `legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_DP_REGRAS)`.
+- Git Bash converte argumento `/api/...` em caminho do Windows: `MSYS_NO_PATHCONV=1`.
 
 ## Handoff da execução do BRIEF de F0+F1 (atualizado 04/11, depois do PR-4)
 
