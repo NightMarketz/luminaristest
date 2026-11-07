@@ -40,7 +40,7 @@ export type RubricaDef = z.infer<typeof rubricaDefSchema>;
 export const RUBRICAS_CONFERIDAS_PELO_CONTADOR = false;
 
 /**
- * Item 51 — o mínimo do primeiro holerite e do pró-labore; o F2 acrescenta as variáveis.
+ * Item 51 — o mínimo do primeiro holerite e do pró-labore; o F2 acrescenta as variáveis (as informadas no PR-1).
  * Citações: [D10 linha] = linha da natureza na Tabela 03; os códigos de incidência estão na carga do PR-2.
  */
 export const DP_RUBRICAS = [
@@ -97,6 +97,56 @@ export const DP_RUBRICAS = [
     incidencia: { cp: '00', irrf: '9', fgts: '00' }, // IR 9 = verba de natureza diversa de rendimento
     categorias: ['101', '103'],
     calculo: 'LEGAL',
+  },
+  // ── BE-INCR-DP-F2 PR-1 (itens 16–19; do item 23, decidido pelo dono em 07/11: "PR-1 já com INFORMADO") ────────────
+  // As rubricas que o lançamento informa. Natureza e incidência pela proposta do dossiê
+  // `pesquisas-legais/brief-pes4-f2-contador/relatorio.md` §9 (linha da Tabela 03 em [F1-D10]); escolha do executor, vai
+  // ao contador com as outras (BRIEF §5). Categorias: só empregado (101) e aprendiz (103) — as 723/901 não têm jornada
+  // nem comissão no núcleo; a HE fica só no 101 porque a CLT art. 432 veda a prorrogação da jornada do aprendiz [D02].
+  {
+    codigo: 'HORA_EXTRA_50',
+    nome: { pt: 'Horas extras (dia útil)', en: 'Overtime (working day)' },
+    tipo: 'PROVENTO',
+    natureza: '1003', // "Horas extraordinárias" [F1-D10 linha 426]; dossiê §9: inferido
+    incidencia: { cp: '11', irrf: '11', fgts: '11' },
+    categorias: ['101'],
+    calculo: 'INFORMADO',
+  },
+  {
+    codigo: 'HORA_EXTRA_100',
+    nome: { pt: 'Horas extras (repouso e feriado)', en: 'Overtime (rest day and holiday)' },
+    tipo: 'PROVENTO',
+    natureza: '1003', // [F1-D10 linha 426]; dossiê §9: AMBÍGUO com a 1012 (c) — vai ao contador
+    incidencia: { cp: '11', irrf: '11', fgts: '11' },
+    categorias: ['101'],
+    calculo: 'INFORMADO',
+  },
+  {
+    codigo: 'ADICIONAL_NOTURNO',
+    nome: { pt: 'Adicional noturno', en: 'Night shift premium' },
+    tipo: 'PROVENTO',
+    natureza: '1205', // "Adicional noturno" [F1-D10 linha 666]; dossiê §9: inferido
+    incidencia: { cp: '11', irrf: '11', fgts: '11' },
+    categorias: ['101', '103'],
+    calculo: 'INFORMADO',
+  },
+  {
+    codigo: 'COMISSAO',
+    nome: { pt: 'Comissões', en: 'Commissions' },
+    tipo: 'PROVENTO',
+    natureza: '1207', // "Comissões, porcentagens, produção" [F1-D10 linha 682]; dossiê §9: inferido
+    incidencia: { cp: '11', irrf: '11', fgts: '11' },
+    categorias: ['101', '103'],
+    calculo: 'INFORMADO',
+  },
+  {
+    codigo: 'FALTAS',
+    nome: { pt: 'Faltas', en: 'Absences' },
+    tipo: 'DESCONTO',
+    natureza: '9207', // "Faltas" [F1-D10 linha 1626]; dossiê §9: inferido (subtrai das bases, MOS 1.2 "a")
+    incidencia: { cp: '11', irrf: '11', fgts: '11' },
+    categorias: ['101', '103'],
+    calculo: 'INFORMADO',
   },
 ] as const satisfies readonly RubricaDef[];
 

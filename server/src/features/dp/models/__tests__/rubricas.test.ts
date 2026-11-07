@@ -39,7 +39,7 @@ describe('DP-F0-F1 PR-5 — catálogo de rubricas', () => {
     expect(rubricaDefSchema.safeParse({ ...base, incidencia: { ...base.incidencia, pis: '00' } }).success).toBe(false);
   });
 
-  it('item 51 — as 6 rubricas do F1, marcadas como não conferidas pelo contador', () => {
+  it('item 51 — as 6 rubricas do F1 e as 5 INFORMADO do F2 PR-1, marcadas como não conferidas pelo contador', () => {
     expect(DP_RUBRICAS.map((r) => [r.codigo, r.tipo])).toEqual([
       ['SALARIO_BASE', 'PROVENTO'],
       ['BOLSA_ESTAGIO', 'PROVENTO'],
@@ -47,9 +47,18 @@ describe('DP-F0-F1 PR-5 — catálogo de rubricas', () => {
       ['INSS_SEGURADO', 'DESCONTO'],
       ['IRRF', 'DESCONTO'],
       ['FGTS_MES', 'INFORMATIVA'],
+      // BE-INCR-DP-F2 PR-1 (do item 23; dono, 07/11: "PR-1 já com INFORMADO") — as rubricas que o lançamento informa.
+      ['HORA_EXTRA_50', 'PROVENTO'],
+      ['HORA_EXTRA_100', 'PROVENTO'],
+      ['ADICIONAL_NOTURNO', 'PROVENTO'],
+      ['COMISSAO', 'PROVENTO'],
+      ['FALTAS', 'DESCONTO'],
     ]);
     const cat = Object.fromEntries(DP_RUBRICAS.map((r) => [r.codigo, r.categorias]));
     expect([cat.SALARIO_BASE, cat.BOLSA_ESTAGIO, cat.PRO_LABORE]).toEqual([['101', '103'], ['901'], ['723']]);
+    // CLT art. 432 [D02 do brief-pes4-f2]: aprendiz sem prorrogação de jornada ⇒ HE só para o 101.
+    expect([cat.HORA_EXTRA_50, cat.HORA_EXTRA_100, cat.ADICIONAL_NOTURNO, cat.COMISSAO, cat.FALTAS]).toEqual([['101'], ['101'], ['101', '103'], ['101', '103'], ['101', '103']]);
+    expect(DP_RUBRICAS.filter((r) => r.calculo === 'INFORMADO').map((r) => r.codigo)).toEqual(['HORA_EXTRA_50', 'HORA_EXTRA_100', 'ADICIONAL_NOTURNO', 'COMISSAO', 'FALTAS']);
     expect(RUBRICAS_CONFERIDAS_PELO_CONTADOR).toBe(false);
   });
 

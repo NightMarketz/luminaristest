@@ -333,6 +333,13 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
       so(/^\d{2}$/.test(l.chave) && semDisc(l), 'chave = código de 2 dígitos da Tabela 18, sem discriminador') ??
       jsonOk(EsocialDescricaoJson, l.valorJson, 'valorJson = { descricao }'),
   },
+  // DP-F2 PR-1 item 13: Tabela 07 do eSocial, como a Tabela 18.
+  ESOCIAL_TIPO_DEPENDENTE: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^\d{2}$/.test(l.chave) && semDisc(l), 'chave = código de 2 dígitos da Tabela 07, sem discriminador') ??
+      jsonOk(EsocialDescricaoJson, l.valorJson, 'valorJson = { descricao }'),
+  },
   // DP-F2 PR-0R item 65: discriminador = categoria (3 dígitos) só onde a regra varia por categoria; nenhuma linha inicial varia.
   FOLHA_REGRA: {
     valor: (l) => (ehChaveTexto(l.chave) ? 'texto' : 'int'),

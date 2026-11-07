@@ -35807,6 +35807,893 @@
           }
         }
       }
+    },
+    "/api/dp/trabalhadores/{id}/dependentes": {
+      "get": {
+        "summary": "Dependents of a worker, alive only (CPF masked)",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DpDependenteView[] (cpfMascarado, never the full CPF)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Worker or unit not found"
+          }
+        }
+      },
+      "post": {
+        "summary": "Register a dependent of the worker",
+        "description": "Audited as dp.dependente.created with ids and tipo only (no name, CPF or birth date). The salario-familia quota is not computed in F2 (F-DPF-7).",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "nome",
+                  "nascimento",
+                  "tipo",
+                  "deduzIrrf",
+                  "salarioFamilia",
+                  "vigenteDesde"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "nome": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "cpf": {
+                    "type": "string",
+                    "pattern": "^\\d{11}$",
+                    "description": "optional; check digit validated; never returned in full"
+                  },
+                  "nascimento": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "tipo": {
+                    "type": "string",
+                    "pattern": "^\\d{2}$",
+                    "description": "eSocial Table 07 code in force at vigenteDesde"
+                  },
+                  "deduzIrrf": {
+                    "type": "boolean"
+                  },
+                  "salarioFamilia": {
+                    "type": "boolean",
+                    "description": "child or equivalent (Table 07 03, 06, 10, 11) under FOLHA_REGRA SALARIO_FAMILIA_IDADE_MAX, or invalido"
+                  },
+                  "invalido": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "vigenteDesde": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "vigenteAte": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "inclusive; omitted = open"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "DpDependenteView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Worker or unit not found"
+          }
+        }
+      }
+    },
+    "/api/dp/trabalhadores/{id}/dependentes/{dependenteId}": {
+      "patch": {
+        "summary": "Change a dependent; the rules of the creation are checked again",
+        "description": "cpf null removes the CPF; vigenteAte null reopens. Audited as dp.dependente.updated with the changed fields and the HMAC before/after (503 dp_audit_key_missing without DP_AUDIT_KEYS).",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "dependenteId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "nome": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "cpf": {
+                    "type": "string",
+                    "pattern": "^\\d{11}$",
+                    "description": "optional; check digit validated; never returned in full"
+                  },
+                  "nascimento": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "tipo": {
+                    "type": "string",
+                    "pattern": "^\\d{2}$",
+                    "description": "eSocial Table 07 code in force at vigenteDesde"
+                  },
+                  "deduzIrrf": {
+                    "type": "boolean"
+                  },
+                  "salarioFamilia": {
+                    "type": "boolean",
+                    "description": "child or equivalent (Table 07 03, 06, 10, 11) under FOLHA_REGRA SALARIO_FAMILIA_IDADE_MAX, or invalido"
+                  },
+                  "invalido": {
+                    "type": "boolean"
+                  },
+                  "vigenteDesde": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "vigenteAte": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "inclusive; omitted = open"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "DpDependenteView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Dependent, worker or unit not found"
+          },
+          "503": {
+            "description": "dp_audit_key_missing"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete a dependent",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "dependenteId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Dependent, worker or unit not found"
+          }
+        }
+      }
+    },
+    "/api/dp/vinculos/{id}/lancamentos": {
+      "get": {
+        "summary": "Informed entries (lancamentos) of a contract, alive only",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "competencia",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DpLancamentoView[] (valorCents as string)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Contract or unit not found"
+          }
+        }
+      },
+      "post": {
+        "summary": "Inform an entry of the competence (always origem MANUAL)",
+        "description": "body rejected by the schema or by the rule => 400 DP_LANCAMENTO_INVALIDO with details.campo. Competence must cross the contract. Audited as dp.lancamento.created with ids, competence, rubrica and the HMAC of the values (503 dp_audit_key_missing without DP_AUDIT_KEYS).",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "competencia",
+                  "rubrica"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "competencia": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                  },
+                  "rubrica": {
+                    "type": "string",
+                    "description": "catalog code with calculo INFORMADO that applies to the contract category"
+                  },
+                  "quantidadeMin": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "minutes (HORA_EXTRA_50, HORA_EXTRA_100, ADICIONAL_NOTURNO, FALTAS)"
+                  },
+                  "valorCents": {
+                    "type": "string",
+                    "pattern": "^\\d+$",
+                    "description": "cents (COMISSAO); exactly one of quantidadeMin and valorCents, by the rubrica"
+                  },
+                  "observacao": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "DpLancamentoView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Contract or unit not found"
+          },
+          "503": {
+            "description": "dp_audit_key_missing"
+          }
+        }
+      }
+    },
+    "/api/dp/vinculos/{id}/lancamentos/{lancamentoId}": {
+      "patch": {
+        "summary": "Change an entry; the rules of the creation are checked again",
+        "description": "body rejected by the schema or by the rule => 400 DP_LANCAMENTO_INVALIDO with details.campo. null clears quantidadeMin, valorCents or observacao.",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "lancamentoId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "competencia": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                  },
+                  "rubrica": {
+                    "type": "string",
+                    "description": "catalog code with calculo INFORMADO that applies to the contract category"
+                  },
+                  "quantidadeMin": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "minutes (HORA_EXTRA_50, HORA_EXTRA_100, ADICIONAL_NOTURNO, FALTAS)"
+                  },
+                  "valorCents": {
+                    "type": "string",
+                    "pattern": "^\\d+$",
+                    "description": "cents (COMISSAO); exactly one of quantidadeMin and valorCents, by the rubrica"
+                  },
+                  "observacao": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "DpLancamentoView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Entry, contract or unit not found"
+          },
+          "503": {
+            "description": "dp_audit_key_missing"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete an entry",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "lancamentoId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Entry, contract or unit not found"
+          },
+          "503": {
+            "description": "dp_audit_key_missing"
+          }
+        }
+      }
+    },
+    "/api/dp/vinculos/{id}/outras-remuneracoes": {
+      "get": {
+        "summary": "Pay received from another employer, per competence, alive only",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DpOutraRemuneracaoView[] (cents as string)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Contract or unit not found"
+          }
+        }
+      },
+      "post": {
+        "summary": "Inform pay from another employer in the competence (one alive per competence)",
+        "description": "body rejected by the schema or by the rule => 400 DP_LANCAMENTO_INVALIDO with details.campo. Audited as dp.outra_remuneracao.created with ids, competence and the HMAC of the values.",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "competencia",
+                  "remuneracaoCents",
+                  "contribuicaoCents",
+                  "ordem",
+                  "categoriaOutraFonte",
+                  "cnpjOutroEmpregador",
+                  "documento"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "competencia": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                  },
+                  "remuneracaoCents": {
+                    "type": "string",
+                    "pattern": "^\\d+$"
+                  },
+                  "contribuicaoCents": {
+                    "type": "string",
+                    "pattern": "^\\d+$",
+                    "description": "INSS withheld by the other employer; check only, not used by the rule"
+                  },
+                  "ordem": {
+                    "type": "string",
+                    "enum": [
+                      "ANTES",
+                      "DEPOIS"
+                    ],
+                    "description": "order in the employee declaration (IN RFB 2.110 art. 36 § 1º I)"
+                  },
+                  "categoriaOutraFonte": {
+                    "type": "string",
+                    "enum": [
+                      "EMPREGADO",
+                      "CONTRIBUINTE_INDIVIDUAL"
+                    ],
+                    "description": "CI counts only for the ceiling"
+                  },
+                  "cnpjOutroEmpregador": {
+                    "type": "string",
+                    "description": "14 positions with check digits"
+                  },
+                  "documento": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "description": "Annex VIII declaration or the payslip there (IN RFB 2.110 art. 49 § 3º); required"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "DpOutraRemuneracaoView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Contract or unit not found"
+          },
+          "409": {
+            "description": "Live entry already exists for the competence"
+          },
+          "503": {
+            "description": "dp_audit_key_missing"
+          }
+        }
+      }
+    },
+    "/api/dp/vinculos/{id}/outras-remuneracoes/{outraRemuneracaoId}": {
+      "patch": {
+        "summary": "Change pay from another employer",
+        "description": "body rejected by the schema or by the rule => 400 DP_LANCAMENTO_INVALIDO with details.campo.",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "outraRemuneracaoId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "competencia": {
+                    "type": "string",
+                    "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                  },
+                  "remuneracaoCents": {
+                    "type": "string",
+                    "pattern": "^\\d+$"
+                  },
+                  "contribuicaoCents": {
+                    "type": "string",
+                    "pattern": "^\\d+$",
+                    "description": "INSS withheld by the other employer; check only, not used by the rule"
+                  },
+                  "ordem": {
+                    "type": "string",
+                    "enum": [
+                      "ANTES",
+                      "DEPOIS"
+                    ],
+                    "description": "order in the employee declaration (IN RFB 2.110 art. 36 § 1º I)"
+                  },
+                  "categoriaOutraFonte": {
+                    "type": "string",
+                    "enum": [
+                      "EMPREGADO",
+                      "CONTRIBUINTE_INDIVIDUAL"
+                    ],
+                    "description": "CI counts only for the ceiling"
+                  },
+                  "cnpjOutroEmpregador": {
+                    "type": "string",
+                    "description": "14 positions with check digits"
+                  },
+                  "documento": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "description": "Annex VIII declaration or the payslip there (IN RFB 2.110 art. 49 § 3º); required"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "DpOutraRemuneracaoView"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Entry, contract or unit not found"
+          },
+          "409": {
+            "description": "Live entry already exists for the competence"
+          },
+          "503": {
+            "description": "dp_audit_key_missing"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Soft-delete pay from another employer",
+        "tags": [
+          "DP"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "outraRemuneracaoId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Entry, contract or unit not found"
+          },
+          "503": {
+            "description": "dp_audit_key_missing"
+          }
+        }
+      }
     }
   },
   "tags": [

@@ -143,6 +143,22 @@ num/den); o arredondamento ao centavo acontece só no valor de cada rubrica, pel
   RETENCOES-FONTE pela data de pagamento (item 8).
 - `variaveis.ts`: `horaExtra` e `adicionalAplicavel` (item 9), `adicionalNoturno` (item 10), `dsrSobreVariaveis` sobre
   `diasDoMes` (item 11), `complementoMinimo` e `pisoProporcional` (item 12, F-DPF-6 a).
+- `outrasRemuneracoes.ts`: `inssComOutrasFontes` (item 78, IN RFB 2.110 arts. 36 e 49): só as fontes `ANTES` entram;
+  o contribuinte individual conta só para o teto.
+
+## Entradas da folha (BE-INCR-DP-F2 PR-1, itens 13–22, 77–78)
+
+- **Dependente** (`DpDependente`, posse pelo trabalhador): tipo da Tabela 07 (`ESOCIAL_TIPO_DEPENDENTE`, carga gerada
+  do HTML oficial), `deduzIrrf` (contado por `dependentesIrrfNaData`), `salarioFamilia` validado (filho ou equiparado,
+  idade da `FOLHA_REGRA`/`SALARIO_FAMILIA_IDADE_MAX` ou inválido); a cota não entra no F2. CPF sai mascarado.
+- **Lançamento** (`DpLancamento`, posse pelo vínculo): só rubrica `INFORMADO` (as 5 do PR-1: HE 50/100, adicional
+  noturno, comissão, faltas), unidade pela rubrica (`LANCAMENTO_UNIDADE`), competência que cruza o vínculo; erro
+  `DP_LANCAMENTO_INVALIDO` com `details.campo`. Pela HTTP é sempre `MANUAL`.
+- **Precedência do ponto** (`conflitosComPonto`): `DP-PONTO` ativo com itens ⇒ cada `MANUAL` de rubrica de jornada vira
+  pendência bloqueante `LANCAMENTO_DUPLICADO_COM_PONTO`. `JornadaApuradaItem = { rubrica, quantidadeMin, data? }`.
+- **Remuneração em outra empresa** (`DpOutraRemuneracao`): viva única por (vínculo, competência), documento obrigatório.
+- Auditoria sem PII; valores do lançamento e da outra remuneração só como HMAC (`DP_AUDIT_KEYRING`, F-DPF-9 b): sem o
+  chaveiro, todo write deles recusa com 503 antes de gravar.
 
 ## Interaction with other features
 

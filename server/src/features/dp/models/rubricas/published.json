@@ -22,5 +22,25 @@
   {
     "codigo": "FGTS_MES",
     "sha256": "d5d783ab7930f0df53f2db1b317540237254bfdb0f86052ede66ae2095608a81"
+  },
+  {
+    "codigo": "HORA_EXTRA_50",
+    "sha256": "ade56ace24a1bbfbbe103953989e13c6c4bfb93476c3b106324078fe6daf258b"
+  },
+  {
+    "codigo": "HORA_EXTRA_100",
+    "sha256": "abc9b22e5e752d4bc400d1c40e9d0a128ca7615f265b884a7c48b523eecd3a60"
+  },
+  {
+    "codigo": "ADICIONAL_NOTURNO",
+    "sha256": "29b03cd20af70ade3e4a2c90dc6b10c4911e24d35edd1fd4131b9869397fb454"
+  },
+  {
+    "codigo": "COMISSAO",
+    "sha256": "a7daead4096e2790efb862226df0a41da62ec04fb3e79945ad93bc05138d770b"
+  },
+  {
+    "codigo": "FALTAS",
+    "sha256": "44352415ac0b6cbd094bb8bb4259819ea03bd573007f55a78a032817eede7a6d"
   }
 ]

@@ -157,6 +157,11 @@ export async function resetDb(): Promise<void> {
   // BE-INCR-DP-F0-F1 PR-6 — afastamento e implantação de férias apontam para o vínculo com Restrict: antes dele.
   await prisma.dpAfastamento.deleteMany();
   await prisma.dpFeriasImplantacao.deleteMany();
+  // BE-INCR-DP-F2 PR-1 (item 22) — lançamento e outra remuneração apontam para o vínculo, o dependente para o
+  // trabalhador, todos com Restrict: antes deles.
+  await prisma.dpLancamento.deleteMany();
+  await prisma.dpOutraRemuneracao.deleteMany();
+  await prisma.dpDependente.deleteMany();
   await prisma.dpVinculoVersao.deleteMany();
   await prisma.dpVinculo.deleteMany();
   await prisma.dpTrabalhador.deleteMany();

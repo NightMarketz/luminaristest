@@ -1127,5 +1127,377 @@
       ],
       "additionalProperties": false
     }
+  },
+  "DpDependenteDto.ts": {
+    "CreateDependenteSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "cpf": {
+          "type": "string",
+          "pattern": "^\\d{11}$"
+        },
+        "nascimento": {
+          "type": "string"
+        },
+        "tipo": {
+          "type": "string",
+          "pattern": "^\\d{2}$"
+        },
+        "deduzIrrf": {
+          "type": "boolean"
+        },
+        "salarioFamilia": {
+          "type": "boolean"
+        },
+        "invalido": {
+          "default": false,
+          "type": "boolean"
+        },
+        "vigenteDesde": {
+          "type": "string"
+        },
+        "vigenteAte": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "unitId",
+        "nome",
+        "nascimento",
+        "tipo",
+        "deduzIrrf",
+        "salarioFamilia",
+        "vigenteDesde"
+      ],
+      "additionalProperties": false
+    },
+    "DpDependenteIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][0-9a-z]{6,}$"
+        },
+        "dependenteId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][0-9a-z]{6,}$"
+        }
+      },
+      "required": [
+        "id",
+        "dependenteId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateDependenteSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "cpf": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{11}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nascimento": {
+          "type": "string"
+        },
+        "tipo": {
+          "type": "string",
+          "pattern": "^\\d{2}$"
+        },
+        "deduzIrrf": {
+          "type": "boolean"
+        },
+        "salarioFamilia": {
+          "type": "boolean"
+        },
+        "invalido": {
+          "type": "boolean"
+        },
+        "vigenteDesde": {
+          "type": "string"
+        },
+        "vigenteAte": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "DpLancamentoDto.ts": {
+    "CreateLancamentoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "competencia": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        },
+        "rubrica": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]{0,29}$"
+        },
+        "quantidadeMin": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 44640
+        },
+        "valorCents": {},
+        "observacao": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "competencia",
+        "rubrica"
+      ],
+      "additionalProperties": false
+    },
+    "CreateOutraRemuneracaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "competencia": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        },
+        "remuneracaoCents": {},
+        "contribuicaoCents": {},
+        "ordem": {
+          "type": "string",
+          "enum": [
+            "ANTES",
+            "DEPOIS"
+          ]
+        },
+        "categoriaOutraFonte": {
+          "type": "string",
+          "enum": [
+            "EMPREGADO",
+            "CONTRIBUINTE_INDIVIDUAL"
+          ]
+        },
+        "cnpjOutroEmpregador": {
+          "type": "string"
+        },
+        "documento": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId",
+        "competencia",
+        "remuneracaoCents",
+        "contribuicaoCents",
+        "ordem",
+        "categoriaOutraFonte",
+        "cnpjOutroEmpregador",
+        "documento"
+      ],
+      "additionalProperties": false
+    },
+    "DpLancamentoIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][0-9a-z]{6,}$"
+        },
+        "lancamentoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][0-9a-z]{6,}$"
+        }
+      },
+      "required": [
+        "id",
+        "lancamentoId"
+      ],
+      "additionalProperties": false
+    },
+    "DpLancamentoQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "competencia": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "DpOutraRemuneracaoIdParamSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][0-9a-z]{6,}$"
+        },
+        "outraRemuneracaoId": {
+          "type": "string",
+          "format": "cuid",
+          "pattern": "^[cC][0-9a-z]{6,}$"
+        }
+      },
+      "required": [
+        "id",
+        "outraRemuneracaoId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateLancamentoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "competencia": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        },
+        "rubrica": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]{0,29}$"
+        },
+        "quantidadeMin": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 44640
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "valorCents": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observacao": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    },
+    "UpdateOutraRemuneracaoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "competencia": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+        },
+        "remuneracaoCents": {},
+        "contribuicaoCents": {},
+        "ordem": {
+          "type": "string",
+          "enum": [
+            "ANTES",
+            "DEPOIS"
+          ]
+        },
+        "categoriaOutraFonte": {
+          "type": "string",
+          "enum": [
+            "EMPREGADO",
+            "CONTRIBUINTE_INDIVIDUAL"
+          ]
+        },
+        "cnpjOutroEmpregador": {
+          "type": "string"
+        },
+        "documento": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      },
+      "required": [
+        "unitId"
+      ],
+      "additionalProperties": false
+    }
   }
 }

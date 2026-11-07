@@ -81,6 +81,9 @@ export const LEGAL_PARAMETER_TABELAS = [
   // núcleo recolhe. Consumidor = features/dp/models/regrasFolha.ts.
   'FOLHA_REGRA',
   'DP_CATEGORIA_ENCARGO',
+  // BE-INCR-DP-F2 PR-1 (item 13): Tabela 07 do eSocial (tipos de dependente), no padrão do D-8 do F0+F1. Consumidor =
+  // features/dp/services/DpDependenteService.ts.
+  'ESOCIAL_TIPO_DEPENDENTE',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

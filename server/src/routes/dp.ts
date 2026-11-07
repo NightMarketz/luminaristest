@@ -4,6 +4,8 @@ import { dpCargos, dpConvencaoParametros, dpConvencoes, dpJornadas, dpLotacoes, 
 import { dpTrabalhadores, dpVinculos } from '../controllers/dpVinculoController';
 import { listDpRubricas } from '../controllers/dpRubricaController';
 import { dpAfastamentos, dpFerias } from '../controllers/dpAfastamentoFeriasController';
+import { dpDependentes } from '../controllers/dpDependenteController';
+import { dpLancamentos, dpOutrasRemuneracoes } from '../controllers/dpLancamentoController';
 
 /**
  * Departamento Pessoal, núcleo (nó PES-4, BE-INCR-DP-F0-F1). Montada em `/api/dp` (routes/index.ts); registro em 2
@@ -57,5 +59,19 @@ router.get('/vinculos/:id/ferias/implantacao', dpFerias.listImplantacoes);
 router.post('/vinculos/:id/ferias/implantacao', dpFerias.createImplantacao);
 router.patch('/vinculos/:id/ferias/implantacao/:implantacaoId', dpFerias.updateImplantacao);
 router.delete('/vinculos/:id/ferias/implantacao/:implantacaoId', dpFerias.removeImplantacao);
+
+// BE-INCR-DP-F2 PR-1 (itens 20 e 77) — dependentes do trabalhador, lançamentos informados e remuneração em outra empresa.
+router.get('/trabalhadores/:id/dependentes', dpDependentes.list);
+router.post('/trabalhadores/:id/dependentes', dpDependentes.create);
+router.patch('/trabalhadores/:id/dependentes/:dependenteId', dpDependentes.update);
+router.delete('/trabalhadores/:id/dependentes/:dependenteId', dpDependentes.remove);
+router.get('/vinculos/:id/lancamentos', dpLancamentos.list);
+router.post('/vinculos/:id/lancamentos', dpLancamentos.create);
+router.patch('/vinculos/:id/lancamentos/:lancamentoId', dpLancamentos.update);
+router.delete('/vinculos/:id/lancamentos/:lancamentoId', dpLancamentos.remove);
+router.get('/vinculos/:id/outras-remuneracoes', dpOutrasRemuneracoes.list);
+router.post('/vinculos/:id/outras-remuneracoes', dpOutrasRemuneracoes.create);
+router.patch('/vinculos/:id/outras-remuneracoes/:outraRemuneracaoId', dpOutrasRemuneracoes.update);
+router.delete('/vinculos/:id/outras-remuneracoes/:outraRemuneracaoId', dpOutrasRemuneracoes.remove);
 
 export default router;
