@@ -125,3 +125,11 @@ export function pisoProporcional(pisoCents: bigint, minutosSemanais: number, lim
     }),
   };
 }
+
+/**
+ * Item 38 — rubrica informada em valor (`COMISSAO`): o `valorCents` do lançamento, sem conta (o DSR sobre ela é o item
+ * 11). Escrito no PR-2 por decisão do dono (chat, 2026-11-07: "Escrever agora"); o motor do PR-4 só consome.
+ */
+export function valorInformado(rotulo: string, valorCents: bigint, origem: string): Calculo<bigint> {
+  return { valor: valorCents, prova: no(`${rotulo}: valor informado`, valorCents, { fonte: origem }) };
+}

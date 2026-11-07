@@ -93,3 +93,20 @@ export function proporcionalMensalista(
     }),
   };
 }
+
+/**
+ * Item 37 — salário do horista = horas normais × salário-hora contratual (`unidadeSalario` hora: as horas vêm do
+ * lançamento ou da porta de jornada, não do calendário, item 31). Escrito no PR-2 por decisão do dono (chat, 2026-11-07:
+ * "Escrever agora"); o motor do PR-4 só consome.
+ */
+export function salarioHorista(salarioHoraContratual: Fracao, minutosNormais: number, arredondamento: ValorRegra<ModoArredondamento>): Calculo<bigint> {
+  const exato = multiplicar(salarioHoraContratual, fracao(inteiro(minutosNormais), MINUTOS_POR_HORA));
+  const valor = arredondarCentavos(exato, arredondamento.valor);
+  return {
+    valor,
+    prova: no(`Horista: ${minutosNormais} min × salário-hora ${textoFracao(salarioHoraContratual)}`, valor, {
+      fonte: 'BRIEF DP-F2 item 37',
+      filhos: [no(`Arredondamento ${arredondamento.valor}`, 0n, { fonte: fonteLp(arredondamento) })],
+    }),
+  };
+}

@@ -1,9 +1,9 @@
 /**
- * BE-INCR-DP-F2 PR-2 item 24 — mapa rubrica → calculadora: toda rubrica do catálogo tem calculadora (sem órfã), toda
- * calculadora nomeada existe, e as que o PR-4 ainda escreve estão numa lista fechada.
+ * BE-INCR-DP-F2 PR-2 item 24 — mapa rubrica → calculadora: toda rubrica do catálogo tem calculadora (sem órfã) e toda
+ * calculadora nomeada é uma função real (dono, chat, 2026-11-07: "Escrever agora").
  */
 import { DP_RUBRICAS } from '../../rubricas/catalogo';
-import { CALCULADORAS_A_IMPLEMENTAR, CALCULADORAS_PR0, RUBRICA_CALCULO } from '../rubricaCalculo';
+import { CALCULADORAS, RUBRICA_CALCULO } from '../rubricaCalculo';
 
 const nomes = (m: Record<string, readonly string[]>) => Object.values(m).flat();
 
@@ -18,32 +18,21 @@ describe('DP-F2 item 24 — mapa rubrica → calculadora', () => {
     expect(catalogo.filter((c) => !(c in RUBRICA_CALCULO))).toEqual(['RUBRICA_NOVA']);
   });
 
-  it('toda calculadora nomeada existe: função do PR-0 ou forma pendente com o item do BRIEF', () => {
-    for (const nome of nomes(RUBRICA_CALCULO)) {
-      const fn = (CALCULADORAS_PR0 as Record<string, unknown>)[nome];
-      const pendente = (CALCULADORAS_A_IMPLEMENTAR as Record<string, string>)[nome];
-      expect([nome, typeof fn === 'function' || /^item \d+/.test(pendente ?? '')]).toEqual([nome, true]);
-      expect([nome, fn !== undefined && pendente !== undefined]).toEqual([nome, false]); // nunca nas duas listas
-    }
-  });
-
-  it('as pendentes são só as que o BRIEF põe no PR-4 (ou no F-DPF-7), e todas são usadas', () => {
-    expect(CALCULADORAS_A_IMPLEMENTAR).toEqual({
-      salarioHorista: 'item 37',
-      valorInformado: 'item 38',
-      descontoFaltas: 'item 36',
-      dsrPerdido: 'item 36',
-      adiantamento: 'item 42',
-      descontoAdiantamento: 'item 43',
-      salarioFamilia: 'item 15 / F-DPF-7',
-    });
+  it('toda calculadora nomeada é função; toda calculadora da lista é usada', () => {
+    for (const nome of nomes(RUBRICA_CALCULO)) expect([nome, typeof (CALCULADORAS as Record<string, unknown>)[nome]]).toEqual([nome, 'function']);
     const usadas = new Set(nomes(RUBRICA_CALCULO));
-    expect([...Object.keys(CALCULADORAS_PR0), ...Object.keys(CALCULADORAS_A_IMPLEMENTAR)].filter((n) => !usadas.has(n))).toEqual([]);
+    expect(Object.keys(CALCULADORAS).filter((n) => !usadas.has(n))).toEqual([]);
   });
 
-  it('as rubricas de jornada informada usam a calculadora de jornada; as derivadas, a do PR-0 ou a pendente do item 36/43', () => {
-    expect(RUBRICA_CALCULO.HORA_EXTRA_100).toEqual(['horaExtra']); // o adicional de repouso é a linha HE_REPOUSO_ADICIONAL_BP
-    expect(RUBRICA_CALCULO.DSR_VARIAVEIS).toEqual(['dsrSobreVariaveis']);
+  it('as escritas no PR-2 ligam as rubricas do item 23', () => {
+    expect([RUBRICA_CALCULO.FALTAS, RUBRICA_CALCULO.DSR_PERDIDO, RUBRICA_CALCULO.AFASTAMENTO_EMPRESA_15D, RUBRICA_CALCULO.ADIANTAMENTO, RUBRICA_CALCULO.DESCONTO_ADIANTAMENTO, RUBRICA_CALCULO.SALARIO_FAMILIA]).toEqual([
+      ['descontoFaltas'],
+      ['dsrPerdido'],
+      ['afastamentoEmpresa'],
+      ['adiantamento'],
+      ['descontoAdiantamento'],
+      ['salarioFamilia'],
+    ]);
     expect(RUBRICA_CALCULO.COMPLEMENTO_PISO).toEqual(['complementoMinimo', 'pisoProporcional']);
   });
 });
