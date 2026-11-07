@@ -10,6 +10,6 @@ export interface IChunkVectorRepository {
   }): Promise<{ chunkId: string; distance: number }[]>;
   deleteByDocument(documentId: string): Promise<void>;
   deleteByUser(userId: string): Promise<void>;
-  /** Dos `chunkIds` pedidos, os que têm linha na vec0. */
-  findPresentChunkIds(chunkIds: string[]): Promise<Set<string>>;
+  /** Dos `chunkIds` pedidos, os que têm linha na vec0 com o carimbo `stamp` (linha de carimbo antigo não conta). */
+  findPresentChunkIds(chunkIds: string[], stamp: string): Promise<Set<string>>;
 }

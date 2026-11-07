@@ -32,12 +32,13 @@ export class ChunkReindexService {
         reindexed += await this.embedAndStore(userId, page);
         afterId = page[page.length - 1].id;
       }
-      // 2ª passada: carimbo atual na Chunk, vetor ausente na vec0.
+      // 2ª passada: carimbo atual na Chunk, vetor ausente na vec0 — ou presente com outro carimbo (vec0 restaurada de
+      // antes de uma troca de modelo), que a busca filtra por `embedding_model` e não enxerga.
       afterId = undefined;
       for (;;) {
         const page = await this.chunks.findStamped({ stamp, userId, afterId, limit: this.pageSize });
         if (page.length === 0) break;
-        const present = await this.vectors.findPresentChunkIds(page.map((c) => c.id));
+        const present = await this.vectors.findPresentChunkIds(page.map((c) => c.id), stamp);
         reindexed += await this.embedAndStore(userId, page.filter((c) => !present.has(c.id)));
         afterId = page[page.length - 1].id;
       }
