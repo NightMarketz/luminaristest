@@ -1,30 +1,28 @@
 import { IChunkRepository } from '../repositories/IChunkRepository';
-import { IVectorRepository } from '../repositories/IVectorRepository';
+import type { IChunkVectorRepository } from '../repositories/IChunkVectorRepository';
+import type { IUserEmbedder } from '@/lib/embedding/UserEmbedder';
 import { DocumentProcessingService } from './DocumentProcessingService';
 import { IDocumentRepository } from '../repositories/IDocumentRepository';
 import { IDocument, DocumentStatus } from '../models/Document.model';
 import { DocumentContext } from '../models/DocumentContext';
 import { logger } from '@/lib/logger';
-import { v5 as uuidv5 } from 'uuid';
 import type { IUserRepository } from '../../users/repositories/IUserRepository';
 import { AppError, NotFoundError } from '@/lib/errors';
 
-// Namespace UUID para gerar UUIDs determinísticos para os chunks. Deve ser um UUID válido.
-const CHUNK_ID_NAMESPACE = 'f6db7260-569b-4559-835a-484f913119a4';
-
 export class DocumentProcessingPipeline {
   private chunkRepository: IChunkRepository;
-  private vectorRepository: IVectorRepository;
+  private vectorRepository: IChunkVectorRepository;
   private processingService: DocumentProcessingService;
   private documentRepository: IDocumentRepository;
   private userRepository: IUserRepository;
 
   constructor(
     chunkRepository: IChunkRepository,
-    vectorRepository: IVectorRepository,
+    vectorRepository: IChunkVectorRepository,
     processingService: DocumentProcessingService,
     documentRepository: IDocumentRepository,
-    userRepository: IUserRepository
+    userRepository: IUserRepository,
+    private readonly embedder: IUserEmbedder
   ) {
     this.chunkRepository = chunkRepository;
     this.vectorRepository = vectorRepository;
@@ -82,11 +80,19 @@ export class DocumentProcessingPipeline {
     }
   }
 
+  /**
+   * RAG-PR-A item 8 + §8.1: reprocessar é idempotente — os vetores e os trechos anteriores do documento saem antes
+   * (vetor primeiro: a `vec0` resolve os ids pela `Chunk`). O lote de vetores entra numa transação só do arquivo de
+   * vetor, então uma falha no meio não deixa vetor com o carimbo atual visível. O carimbo vai na `Chunk` depois.
+   */
   private async processChunks(document: IDocument, text: string, context: DocumentContext): Promise<void> {
+    await this.vectorRepository.deleteByDocument(document.id);
+    await this.chunkRepository.deleteByDocument(document.id);
+
     const chunks = this.processingService.chunkText(text);
     context.processing.totalChunks = chunks.length;
 
-    // Persist chunk records first so we have their IDs for vector point generation
+    // Persist chunk records first so we have their IDs for the vector rows
     const chunkRecords: Array<{ id: string; text: string; index: number }> = [];
     for (let i = 0; i < chunks.length; i++) {
       try {
@@ -109,10 +115,10 @@ export class DocumentProcessingPipeline {
       return;
     }
 
-    // Batch-embed all chunk texts in a single OpenAI API call (R11: avoid N sequential calls)
-    let vectors: number[][];
+    // Um resolvedor só (item 6): o carimbo gravado é o mesmo que a busca vai pedir.
+    let embedded: { vectors: Float32Array[]; stamp: string; dims: number };
     try {
-      vectors = await this.processingService.generateEmbeddings(chunkRecords.map(c => c.text));
+      embedded = await this.embedder.embed(document.userId, chunkRecords.map(c => c.text));
     } catch (error) {
       const errorMessage = 'Failed to generate the document embeddings.';
       logger.error(`Batch embedding failed for document ${document.id}`, { error });
@@ -122,28 +128,18 @@ export class DocumentProcessingPipeline {
       throw new Error(errorMessage);
     }
 
-    // Build vector points and upsert in batches of 10
-    const vectorPoints: Array<{ id: string; payload: Record<string, string | number | boolean | null>; vector: number[] }> = [];
-    for (let j = 0; j < chunkRecords.length; j++) {
-      const { id: chunkId, text: chunkText, index } = chunkRecords[j];
-      vectorPoints.push({
-        id: uuidv5(chunkId, CHUNK_ID_NAMESPACE),
-        payload: { documentId: document.id, userId: document.userId, index, textContent: chunkText, chunkId, fileName: document.fileName },
-        vector: vectors[j],
-      });
-      context.processing.processedChunks++;
-      if (vectorPoints.length >= 10 || j === chunkRecords.length - 1) {
-        await this.vectorRepository.upsertChunks(vectorPoints);
-        vectorPoints.length = 0;
-        await this.documentRepository.update(document.id, {
-          contextJson: context,
-          status: DocumentStatus.PROCESSING,
-          summary: null,
-          processingDate: null,
-          processingError: null
-        });
-      }
-    }
+    await this.vectorRepository.upsert(
+      chunkRecords.map((c, j) => ({ chunkId: c.id, userId: document.userId, stamp: embedded.stamp, vector: embedded.vectors[j] })),
+    );
+    await this.chunkRepository.setEmbeddingStamp(chunkRecords.map(c => c.id), embedded.stamp, embedded.dims);
+    context.processing.processedChunks += chunkRecords.length;
+    await this.documentRepository.update(document.id, {
+      contextJson: context,
+      status: DocumentStatus.PROCESSING,
+      summary: null,
+      processingDate: null,
+      processingError: null
+    });
 
     if (context.processing.failedChunks > 0) {
       throw new Error(`${context.processing.failedChunks} chunks failed to process.`);

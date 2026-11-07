@@ -22,6 +22,11 @@ jest.mock('@/lib/prisma', () => ({
       findMany: jest.fn(async (args: { where: { id: { in: string[] } } }) =>
         args.where.id.in.map((id: string) => ({ id }))),
     },
+    // RAG-PR-A: the hits are hydrated from Chunk (the vec0 only has ids).
+    chunk: {
+      findMany: jest.fn(async (args: { where: { id: { in: string[] } } }) =>
+        args.where.id.in.map((id: string) => ({ id, text: 'context', index: 0, documentId: 'd1', document: { fileName: 'f' } }))),
+    },
   },
 }));
 
@@ -33,7 +38,7 @@ const user: UserContext = {
 
 /** Builds a ChatService with fresh fakes for every collaborator; tests configure them per case. */
 function makeService() {
-  const embedding = { embedText: jest.fn().mockResolvedValue([0.1, 0.2, 0.3]) };
+  const embedding = { currentStamp: jest.fn(), embed: jest.fn().mockResolvedValue({ vectors: [new Float32Array(768)], stamp: 'fake:det@768', dims: 768 }) };
   const vector = { search: jest.fn().mockResolvedValue([]) };
   const openai = {
     getChatCompletion: jest.fn().mockResolvedValue('answer'),
@@ -62,9 +67,7 @@ function makeService() {
 describe('RAG mode (documentIds present)', () => {
   it('searches scoped to the caller userId and returns the answer + sources (Tier-0)', async () => {
     const { service, embedding, vector, openai } = makeService();
-    vector.search.mockResolvedValue([
-      { id: 'v1', score: 0.9, payload: { documentId: 'd1', userId: 'user_A', textContent: 'context', fileName: 'f', chunkId: 'c', index: 0 } },
-    ]);
+    vector.search.mockResolvedValue([{ chunkId: 'c', distance: 0.1 }]);
     openai.getChatCompletion.mockResolvedValue('Grounded answer');
 
     const res = await service.generateResponse({ query: 'q', documentIds: ['d1'], user });
@@ -72,9 +75,10 @@ describe('RAG mode (documentIds present)', () => {
     expect(res.type).toBe('TEXT');
     expect(res.answer).toBe('Grounded answer');
     expect(res.sourceDocuments).toHaveLength(1);
-    expect(embedding.embedText).toHaveBeenCalled();
-    // Tier-0: the search MUST be scoped to the caller and the requested docs.
-    expect(vector.search).toHaveBeenCalledWith(expect.anything(), 10, ['d1'], 'user_A');
+    expect(res.sourceDocuments?.[0]).toMatchObject({ id: 'c', payload: { documentId: 'd1', textContent: 'context', fileName: 'f', chunkId: 'c', index: 0 } });
+    expect(embedding.embed).toHaveBeenCalledWith('user_A', ['q']);
+    // Tier-0: the search MUST be scoped to the caller and the requested docs, with the resolver's stamp.
+    expect(vector.search).toHaveBeenCalledWith({ userId: 'user_A', stamp: 'fake:det@768', vector: expect.any(Float32Array), documentIds: ['d1'], limit: 10 });
   });
 
   it('returns a no-results message when nothing is found (and does not call the LLM)', async () => {
@@ -238,7 +242,7 @@ describe('token usage per assistant message (I11 PR-3)', () => {
   it('RAG turn sums the rewrite and the answer (embedding excluded — F-I11-5 a)', async () => {
     const { service, openai, vector, messages } = makeService();
     vector.search.mockResolvedValue([
-      { id: 'v1', score: 0.9, payload: { documentId: 'd1', userId: 'user_A', textContent: 'ctx', fileName: 'f', chunkId: 'c', index: 0 } },
+      { chunkId: 'c', distance: 0.1 },
     ]);
     const rewrite = { model: 'gpt-3.5-turbo-0125', promptTokens: 80, completionTokens: 15 };
     openai.getChatCompletion

@@ -1,7 +1,8 @@
 import { IDocument } from '../models/Document.model';
 import { IDocumentRepository } from '../repositories/IDocumentRepository';
 import { IChunkRepository } from '../repositories/IChunkRepository';
-import { IVectorRepository } from '../repositories/IVectorRepository';
+import type { IChunkVectorRepository } from '../repositories/IChunkVectorRepository';
+import type { IUserEmbedder } from '@/lib/embedding/UserEmbedder';
 import { DocumentProcessingService } from './DocumentProcessingService';
 import { DocumentProcessingPipeline } from './DocumentProcessingPipeline';
 import { UserContext } from '../../../lib/authUtils';
@@ -23,17 +24,19 @@ export class DocumentService {
     constructor(
     private readonly repository: IDocumentRepository,
     private readonly chunkRepository: IChunkRepository,
-    private readonly vectorRepository: IVectorRepository,
+    private readonly vectorRepository: IChunkVectorRepository,
     private readonly processingService: DocumentProcessingService,
     private readonly policy: IDocumentPolicy,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
+    private readonly embedder: IUserEmbedder
   ) {
     this.processingPipeline = new DocumentProcessingPipeline(
       chunkRepository,
       vectorRepository,
       processingService,
       repository,
-      userRepository
+      userRepository,
+      embedder
     );
   }
 
@@ -123,7 +126,7 @@ export class DocumentService {
   }
 
   /**
-   * Processes document asynchronously (parse text, generate embeddings, store in Qdrant, update status).
+   * Processes document asynchronously (parse text, generate embeddings, store in the vector index, update status).
    * On error: updates status to FAILED with errorMessage.
    */
   private async processDocumentAsync(
@@ -152,7 +155,7 @@ export class DocumentService {
         processingError: null,
       });
 
-      // Run chunking + embedding + Qdrant storage; pipeline sets status=COMPLETED on success
+      // Run chunking + embedding + vector storage; pipeline sets status=COMPLETED on success
       const docWithText: IDocument = { ...document, textContent: text };
       await this.processingPipeline.processDocument(docWithText, text);
     } catch (error) {
@@ -184,18 +187,15 @@ export class DocumentService {
     if (!this.policy.canDelete(userContext, document)) {
       throw new ForbiddenError('Access denied to delete document');
     }
-    // 1. Delete vectors in Qdrant FIRST (external store — cannot join a SQL transaction).
-    //    Deleting by the `documentId` payload is robust: it removes every chunk's vector
-    //    regardless of point-id derivation, and reaps any pre-existing orphans.
-    //    If this fails, nothing in SQL has been touched yet.
-    await this.vectorRepository.deletePointsByDocumentId(id);
-    // 2. Atomically delete chunks + document in SQL (single transaction).
-    //    If this fails after the Qdrant delete, vectors are already gone but SQL is intact —
-    //    log for compensation/visibility (orphaned SQL rows can be re-cleaned; no data corruption).
+    // RAG-PR-A item 9, caminho (2): a vec0 mora num arquivo próprio, fora da transação do Prisma.
+    // 1. Vetores PRIMEIRO. Se falhar, nada no SQL foi tocado.
+    await this.vectorRepository.deleteByDocument(id);
+    // 2. Trechos + documento no SQL (uma transação). Se falhar depois do passo 1, os vetores já saíram e o SQL está
+    //    intacto (a busca não acha o documento até o `rag:reindex`); vetor que sobrar some no VecOrphanSweepScheduler.
     try {
       await this.repository.deleteWithChunks(id);
     } catch (err) {
-      logger.error('deleteDocument: SQL delete failed after Qdrant vectors were removed', { documentId: id, error: err });
+      logger.error('deleteDocument: SQL delete failed after the vectors were removed', { documentId: id, error: err });
       throw err;
     }
   }
@@ -211,16 +211,16 @@ export class DocumentService {
     if (!userContext.userId) throw new UnauthorizedError('Authentication required');
     if (!this.policy.canListAll(userContext)) throw new ForbiddenError('Document search forbidden by policy');
 
-    // generate embedding for the query
-    const queryVector = await this.processingService.generateEmbedding(query);
-    // search in Qdrant
-    const hits = await this.vectorRepository.searchVectors(queryVector, userContext.userId, limit);
+    const { vectors, stamp } = await this.embedder.embed(userContext.userId, [query]);
+    const hits = await this.vectorRepository.search({ userId: userContext.userId, stamp, vector: vectors[0], limit });
+    const chunks = new Map((await this.chunkRepository.findByIdsWithOwner(hits.map((h) => h.chunkId))).map((c) => [c.id, c]));
     const results: Array<{ document: IDocument; chunkText: string; score: number }> = [];
     for (const hit of hits) {
-      const payload = hit.payload as Record<string, unknown>;
-      const doc = await this.repository.findById(payload.documentId as string);
+      const chunk = chunks.get(hit.chunkId);
+      if (!chunk) continue;
+      const doc = await this.repository.findById(chunk.documentId);
       if (!doc) continue;
-      results.push({ document: doc, chunkText: payload.textContent as string, score: hit.score });
+      results.push({ document: doc, chunkText: chunk.text, score: 1 - hit.distance });
     }
     return results;
   }

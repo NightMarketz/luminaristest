@@ -18,7 +18,7 @@ import { ChunkRepository } from '../features/documents/repositories/ChunkReposit
 import { DashboardLayoutRepository } from '../features/dashboardLayout/repositories/DashboardLayoutRepository';
 import { DocumentRepository } from '../features/documents/repositories/DocumentRepository';
 import { UserRepository } from '../features/users/repositories/UserRepository';
-import { VectorRepository } from '../features/documents/repositories/VectorRepository';
+import { ChunkVectorRepository } from '../features/documents/repositories/ChunkVectorRepository';
 import { DynamicTableRepository } from '../features/dynamicTables/repositories/DynamicTableRepository';
 import { DynamicTableVersionRepository, type IDynamicTableVersionRepository } from '../features/dynamicTables/repositories/DynamicTableVersionRepository';
 import { DynamicTableVersionService } from '../features/dynamicTables/services/DynamicTableVersionService';
@@ -318,7 +318,10 @@ import { SystemProvisioningPolicy } from '../features/onboarding/policies/System
 
 // Lib - External Services
 import { OpenAIService as ChatOpenAIService } from './openai/OpenAIService';
-import { EmbeddingService } from './vector/embedding';
+import { getVecIndex } from './vector/sqliteVec';
+import { UserEmbedder } from './embedding/UserEmbedder';
+import { InstanceEmbeddingKeyResolver } from './embedding/InstanceEmbeddingKeyResolver';
+import { OpenAIEmbeddingProvider } from './embedding/OpenAIEmbeddingProvider';
 
 // Interfaces
 import type { IChatInstanceRepository } from '../features/chatInstances/repositories/IChatInstanceRepository';
@@ -326,7 +329,7 @@ import type { IChatMessageRepository } from '../features/chatMessages/repositori
 import type { IDashboardLayoutRepository } from '../features/dashboardLayout/repositories/IDashboardLayoutRepository';
 import type { IDocumentRepository } from '../features/documents/repositories/IDocumentRepository';
 import type { IUserRepository } from '../features/users/repositories/IUserRepository';
-import type { IVectorRepository } from '../features/documents/repositories/IVectorRepository';
+import type { IChunkVectorRepository } from '../features/documents/repositories/IChunkVectorRepository';
 import type { IDynamicTableRepository } from '../features/dynamicTables/repositories/IDynamicTableRepository';
 import type { IChatInstancePolicy } from '../features/chatInstances/policies/IChatInstancePolicy';
 import type { IChatMessagePolicy } from '../features/chatMessages/policies/IChatMessagePolicy';
@@ -828,7 +831,7 @@ export class ApplicationFactory {
     chatInstance: IChatInstanceRepository;
     dashboardLayout: IDashboardLayoutRepository;
     document: IDocumentRepository;
-    vector: IVectorRepository;
+    vector: ChunkVectorRepository;
     chunk: ChunkRepository;
     dynamicTable: IDynamicTableRepository;
     dynamicTableVersion: IDynamicTableVersionRepository;
@@ -1062,10 +1065,13 @@ export class ApplicationFactory {
   /** Porta do BCB (BE-INCR-CRM-REPORT-BUILDER PR-1, item 22) — cliente HTTP externo, não repositório. */
   private readonly ptaxClient: IPtaxClient;
 
+  private readonly embedder: UserEmbedder;
+
   private constructor() {
     // External services (singletons)
     const chatOpenAIService = new ChatOpenAIService();
-    const embeddingOpenAIService = new EmbeddingService({ apiKey: process.env.OPENAI_API_KEY || '' });
+    // RAG-PR-A itens 5–6: um embedder só (resolvedor da instância + adaptador OpenAI @768) para indexar e buscar.
+    this.embedder = new UserEmbedder(new InstanceEmbeddingKeyResolver(), { openai: new OpenAIEmbeddingProvider() });
 
     this.ptaxClient = new BcbPtaxClient();
 
@@ -1077,7 +1083,7 @@ export class ApplicationFactory {
       dashboardLayout: new DashboardLayoutRepository(),
       document: new DocumentRepository(),
       user: new UserRepository(),
-      vector: new VectorRepository(),
+      vector: new ChunkVectorRepository(() => getVecIndex().db),
       dynamicTable: new DynamicTableRepository(),
       dynamicTableVersion: new DynamicTableVersionRepository(),
       actionProposal: new ActionProposalRepository(),
@@ -1888,7 +1894,7 @@ export class ApplicationFactory {
       fiscalNumberVoid: fiscalNumberVoidService,
       nfceContingencia: nfceContingenciaService,
       chat: new ChatService(
-        embeddingOpenAIService,
+        this.embedder,
         this.repositories.vector,
         chatOpenAIService,
         luminarisAgentService,
@@ -1909,7 +1915,8 @@ export class ApplicationFactory {
         this.repositories.vector,
         new DocumentProcessingService(),
         this.policies.document,
-        this.repositories.user
+        this.repositories.user,
+        this.embedder
       ),
       user: new UserService(this.repositories.user, this.policies.user, this.repositories.vector),
       dynamicTable: dynamicTableService,
@@ -2765,7 +2772,10 @@ export class ApplicationFactory {
   public getChatMessageRepository = (): IChatMessageRepository => this.repositories.chatMessage;
   public getDashboardLayoutRepository = (): IDashboardLayoutRepository => this.repositories.dashboardLayout;
   public getDocumentRepository = (): IDocumentRepository => this.repositories.document;
-  public getVectorRepository = (): IVectorRepository => this.repositories.vector;
+  /** RAG-PR-A: varredura de órfãos e reindexação usam o repositório concreto (ids da vec0) e o embedder. */
+  public getChunkVectorRepository = (): ChunkVectorRepository => this.repositories.vector;
+  public getChunkRepository = (): ChunkRepository => this.repositories.chunk;
+  public getUserEmbedder = (): UserEmbedder => this.embedder;
   public getDynamicTableRepository = (): IDynamicTableRepository => this.repositories.dynamicTable;
   public getKnowledgeGraphRepository = (): IKnowledgeGraphRepository => this.repositories.knowledgeGraph;
 }
@@ -2781,7 +2791,7 @@ export type {
   IChatInstanceRepository,
   IDashboardLayoutRepository,
   IDocumentRepository,
-  IVectorRepository,
+  IChunkVectorRepository,
   IUserPolicy,
   IChatMessagePolicy,
   IChatInstancePolicy,

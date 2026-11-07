@@ -2,12 +2,12 @@
  * HTTP / contract tests for the documents routes — drives the REAL Express app (createApp) over
  * supertest against the REAL SQLite test DB.
  *
- * Scope note: upload/search/successful-delete call Qdrant + OpenAI, which we don't exercise here
+ * Scope note: upload/search/successful-delete call the vector index + OpenAI, which we don't exercise here
  * (the delete ORDERING and search SCOPING are covered by DocumentService.integration with mocks).
  * These tests lock the contract BOUNDARY that runs BEFORE any external call: authentication (401),
  * id/DTO rejection (400), Tier-0 ownership (existence-non-leak 404 / Forbidden 403), and the
  * `{ success, data }` envelope. Every rejection path (delete of a foreign/missing doc) is decided by
- * the policy/SQL BEFORE Qdrant is touched, so it is safe to assert here.
+ * the policy/SQL BEFORE the vector index is touched, so it is safe to assert here.
  *
  * Run via `npm run test:integration`.
  */
@@ -147,7 +147,7 @@ describe('PATCH /api/documents/:id', () => {
   });
 });
 
-describe('DELETE /api/documents/:id (rejection paths — decided before Qdrant)', () => {
+describe('DELETE /api/documents/:id (rejection paths — decided before the vector index)', () => {
   it('401s without a token', async () => {
     const owner = await seedUser({ username: 'owner' });
     const doc = await seedDocument({ userId: owner.id });
@@ -155,7 +155,7 @@ describe('DELETE /api/documents/:id (rejection paths — decided before Qdrant)'
     expect(res.status).toBe(401);
   });
 
-  it('403s when a USER deletes ANOTHER user document (policy denies before Qdrant)', async () => {
+  it('403s when a USER deletes ANOTHER user document (policy denies before the vector index)', async () => {
     const owner = await seedUser({ username: 'owner' });
     const stranger = await seedUser({ username: 'stranger' });
     const doc = await seedDocument({ userId: owner.id });

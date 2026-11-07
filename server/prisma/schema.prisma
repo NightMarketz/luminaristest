@@ -298,6 +298,10 @@ model Chunk {
   index      Int // order of this chunk in the document
   documentId String
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  // RAG-PR-A item 3: carimbo do embedding. O vetor mora na vec0 do arquivo próprio (VECTOR_DB_PATH), nunca aqui.
+  embeddingModel String? // "openai:text-embedding-3-small@768"
+  embeddingDims  Int?
+  embeddedAt     DateTime?
   createdAt  DateTime @default(now())
 
   @@index([documentId])

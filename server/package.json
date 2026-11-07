@@ -24,6 +24,7 @@
     "db:backup": "node ./scripts/db-backup.mjs",
     "db:seed:accounting": "ts-node -r tsconfig-paths/register src/jobs/seedAccountingFixtureCli.ts",
     "grant:platform-admin": "ts-node -r tsconfig-paths/register src/jobs/grantPlatformAdminCli.ts",
+    "rag:reindex": "ts-node -r tsconfig-paths/register src/jobs/ragReindexCli.ts",
     "check:legal-params-formato": "ts-node -r tsconfig-paths/register src/jobs/checkLegalParamsFormatoCli.ts",
     "deploy:migrate": "node ../scripts/migrate-deploy.mjs",
     "lint": "eslint src",
@@ -47,7 +48,6 @@
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
-    "@qdrant/js-client-rest": "^1.20.0",
     "@types/bcryptjs": "^3.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@xmldom/xmldom": "0.9.12",

@@ -4,7 +4,15 @@
  * Verifies that ChatService.generateResponse() throws ForbiddenError when a
  * user supplies documentIds that do not belong to them, and that the vector
  * store is never queried in that scenario.
+ *
+ * RAG-PR-A item 7: the second block runs the real `ChunkVectorRepository` over a vec0 on a temp file of its own —
+ * the other owner's chunk is the NEAREST neighbour of the query (régua A2), so the partition filter is exercised.
  */
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { VecIndex } from '@/lib/vector/sqliteVec';
+import { ChunkVectorRepository } from '../repositories/ChunkVectorRepository';
 
 import { ChatService } from '@/features/chat/services/ChatService';
 import { ForbiddenError } from '@/lib/errors';
@@ -18,10 +26,13 @@ jest.mock('@/lib/prisma', () => ({
     document: {
       findMany: jest.fn(),
     },
+    chunk: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
   },
 }));
 
-// We also need to prevent the real OpenAI / Qdrant / monitoring from being
+// We also need to prevent the real OpenAI / monitoring from being
 // initialised during the test.
 jest.mock('@/lib/logger', () => ({
   __esModule: true,
@@ -48,17 +59,16 @@ const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 // ---------------------------------------------------------------------------
 // Build minimal stubs for ChatService constructor dependencies
 // ---------------------------------------------------------------------------
-const mockEmbeddingService = {
-  embedText: jest.fn().mockResolvedValue([0.1, 0.2, 0.3]),
+const mockEmbedder = {
+  currentStamp: jest.fn().mockResolvedValue('fake:det@768'),
+  embed: jest.fn().mockResolvedValue({ vectors: [new Float32Array(768)], stamp: 'fake:det@768', dims: 768 }),
 };
 
 const mockVectorRepository = {
   search: jest.fn(),
-  searchVectors: jest.fn(),
-  upsertChunks: jest.fn(),
-  deletePoints: jest.fn(),
-  getPointsByDocumentId: jest.fn(),
-  deleteVectorsByUserId: jest.fn(),
+  upsert: jest.fn(),
+  deleteByDocument: jest.fn(),
+  deleteByUser: jest.fn(),
 };
 
 const mockOpenAIService = {
@@ -84,7 +94,7 @@ const mockKnowledgeGraphService = {
 
 function buildChatService(): ChatService {
   return new ChatService(
-    mockEmbeddingService as any,
+    mockEmbedder as any,
     mockVectorRepository as any,
     mockOpenAIService as any,
     mockAgentService as any,
@@ -168,12 +178,13 @@ describe('RAG cross-tenant data isolation (R3)', () => {
     // Should not throw and should reach the "no results" branch.
     expect(response.answer).toContain('não encontrei informações');
     // Vector store WAS called — ownership passed.
-    expect(mockVectorRepository.search).toHaveBeenCalledWith(
-      expect.any(Array),
-      10,
-      [docA],
-      userA,
-    );
+    expect(mockVectorRepository.search).toHaveBeenCalledWith({
+      userId: userA,
+      stamp: 'fake:det@768',
+      vector: expect.any(Float32Array),
+      documentIds: [docA],
+      limit: 10,
+    });
   });
 
   it('throws ForbiddenError when only some documentIds belong to the user (partial ownership)', async () => {
@@ -196,5 +207,85 @@ describe('RAG cross-tenant data isolation (R3)', () => {
     ).rejects.toThrow(ForbiddenError);
 
     expect(mockVectorRepository.search).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// RAG-PR-A item 7 — ChunkVectorRepository over a real vec0 (own temp file)
+// ---------------------------------------------------------------------------
+
+/** Embedding falso determinístico (régua A4): 1 na posição `hot`, `tilt` na seguinte, normalizado pelo cosine. */
+function vec(hot: number, tilt = 0): Float32Array {
+  const a = new Float32Array(768);
+  a[hot] = 1;
+  if (tilt) a[hot + 1] = tilt;
+  return a;
+}
+
+const STAMP = 'openai:text-embedding-3-small@768';
+const OLD_STAMP = 'openai:text-embedding-3-small@1536';
+
+describe('ChunkVectorRepository — vec0 real (cenário: Ana e Bia, 3 documentos, um da Bia)', () => {
+  let dir: string;
+  let index: VecIndex;
+  let repo: ChunkVectorRepository;
+  // documento → trechos, como a Chunk do banco principal responderia
+  const chunksOf: Record<string, string[]> = {
+    'doc-ana-contrato': ['ana-c1', 'ana-c2'],
+    'doc-ana-recibo': ['ana-r1', 'ana-velho'],
+    'doc-bia-contrato': ['bia-c1'],
+  };
+
+  beforeEach(async () => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vec-iso-'));
+    index = new VecIndex(path.join(dir, 'vectors.db'));
+    repo = new ChunkVectorRepository(
+      () => index.db,
+      async (w) => (w.documentId ? chunksOf[w.documentId] ?? [] : (w.documentIds ?? []).flatMap((d) => chunksOf[d] ?? [])),
+    );
+    await repo.upsert([
+      { chunkId: 'ana-c1', userId: 'ana', stamp: STAMP, vector: vec(0, 0.3) },
+      { chunkId: 'ana-c2', userId: 'ana', stamp: STAMP, vector: vec(0, 0.9) },
+      { chunkId: 'ana-r1', userId: 'ana', stamp: STAMP, vector: vec(10) },
+      { chunkId: 'ana-velho', userId: 'ana', stamp: OLD_STAMP, vector: vec(0) },
+      // vizinho mais próximo da consulta é da Bia (A2)
+      { chunkId: 'bia-c1', userId: 'bia', stamp: STAMP, vector: vec(0) },
+    ]);
+  });
+
+  afterEach(() => {
+    index.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('busca da Ana nunca devolve o trecho da Bia, mesmo sendo o mais próximo; ordem por distância', async () => {
+    const hits = await repo.search({ userId: 'ana', stamp: STAMP, vector: vec(0), limit: 10 });
+    expect(hits.map((h) => h.chunkId)).toEqual(['ana-c1', 'ana-c2', 'ana-r1']);
+    expect(hits[0].distance).toBeLessThan(hits[1].distance);
+    expect(hits[1].distance).toBeLessThan(hits[2].distance);
+  });
+
+  it('trecho com carimbo antigo não aparece', async () => {
+    const hits = await repo.search({ userId: 'ana', stamp: STAMP, vector: vec(0), limit: 10 });
+    expect(hits.map((h) => h.chunkId)).not.toContain('ana-velho');
+  });
+
+  it('documentIds restringe aos trechos desses documentos; documento da Bia pedido pela Ana não vaza', async () => {
+    const hits = await repo.search({ userId: 'ana', stamp: STAMP, vector: vec(0), documentIds: ['doc-ana-recibo', 'doc-bia-contrato'], limit: 10 });
+    expect(hits.map((h) => h.chunkId)).toEqual(['ana-r1']);
+  });
+
+  it('upsert do mesmo chunk substitui o vetor (não duplica)', async () => {
+    await repo.upsert([{ chunkId: 'ana-r1', userId: 'ana', stamp: STAMP, vector: vec(0) }]);
+    const hits = await repo.search({ userId: 'ana', stamp: STAMP, vector: vec(0), limit: 10 });
+    expect(hits.map((h) => h.chunkId)).toEqual(['ana-r1', 'ana-c1', 'ana-c2']);
+  });
+
+  it('deleteByDocument e deleteByUser apagam só o que é deles', async () => {
+    await repo.deleteByDocument('doc-ana-contrato');
+    expect((await repo.search({ userId: 'ana', stamp: STAMP, vector: vec(0), limit: 10 })).map((h) => h.chunkId)).toEqual(['ana-r1']);
+    await repo.deleteByUser('ana');
+    expect(await repo.search({ userId: 'ana', stamp: STAMP, vector: vec(0), limit: 10 })).toEqual([]);
+    expect(await repo.listChunkIds(null, 10)).toEqual(['bia-c1']);
   });
 });

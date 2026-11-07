@@ -1,7 +1,7 @@
 import { IChatService } from './IChatService';
 import { ChatRequestDto as ChatRequest, ChatResponseDto as ChatResponse } from '../dtos/ChatDto';
-import { IEmbeddingService } from '@/lib/vector/embedding';
-import { IVectorRepository } from '@/features/documents/repositories/IVectorRepository';
+import type { IUserEmbedder } from '@/lib/embedding/UserEmbedder';
+import type { IChunkVectorRepository } from '@/features/documents/repositories/IChunkVectorRepository';
 import { OpenAIService } from '@/lib/openai/OpenAIService';
 import { LlmUsage, toTurnUsage } from '@/lib/openai/llmUsage';
 import { LuminarisAgentService } from './LuminarisAgentService';
@@ -69,20 +69,20 @@ function userClockPrompt(timeZone: string | undefined): string {
 const MAX_PERSISTED_HISTORY = 50;
 
 export class ChatService implements IChatService {
-  private embeddingService: IEmbeddingService;
-  private vectorRepository: IVectorRepository;
+  private embedder: IUserEmbedder;
+  private vectorRepository: IChunkVectorRepository;
   private openaiService: OpenAIService;
   private agentService: LuminarisAgentService;
 
   constructor(
-    embeddingService: IEmbeddingService,
-    vectorRepository: IVectorRepository,
+    embedder: IUserEmbedder,
+    vectorRepository: IChunkVectorRepository,
     openaiService: OpenAIService,
     agentService: LuminarisAgentService,
     private readonly knowledgeGraphService: KnowledgeGraphService,
     private readonly chatMessageService: ChatMessageService
   ) {
-    this.embeddingService = embeddingService;
+    this.embedder = embedder;
     this.vectorRepository = vectorRepository;
     this.openaiService = openaiService;
     this.agentService = agentService;
@@ -294,10 +294,24 @@ Pergunta Reformulada:
     if (history && history.length > 1) {
       contextualQuery = await this.rewriteQueryWithHistory(query, history, onUsage);
     }
-    const queryEmbedding = await this.embeddingService.embedText(contextualQuery);
-    // Pass userId so the vector store enforces tenant isolation at the index level.
-    const searchResults = await this.vectorRepository.search(queryEmbedding, 10, documentIds, user.id);
-    const context = searchResults.map(result => result.payload.textContent as string).join('\n\n---\n\n');
+    // RAG-PR-A: mesmo resolvedor da indexação (o carimbo bate); a vec0 filtra pelo dono (PARTITION KEY) e pelos documentos.
+    const { vectors, stamp } = await this.embedder.embed(user.id, [contextualQuery]);
+    const hits = await this.vectorRepository.search({ userId: user.id, stamp, vector: vectors[0], documentIds, limit: 10 });
+    const chunkRows = await prisma.chunk.findMany({
+      where: { id: { in: hits.map((h) => h.chunkId) }, document: { userId: user.id } },
+      select: { id: true, text: true, index: true, documentId: true, document: { select: { fileName: true } } },
+    });
+    const byId = new Map(chunkRows.map((c) => [c.id, c]));
+    const searchResults = hits.flatMap((h) => {
+      const c = byId.get(h.chunkId);
+      if (!c) return [];
+      return [{
+        id: c.id,
+        score: 1 - h.distance,
+        payload: { documentId: c.documentId, userId: user.id, textContent: c.text, fileName: c.document.fileName, chunkId: c.id, index: c.index },
+      }];
+    });
+    const context = searchResults.map(result => result.payload.textContent).join('\n\n---\n\n');
 
     if (searchResults.length === 0) {
       return {
@@ -314,9 +328,9 @@ Pergunta Reformulada:
       answer: answer || 'Não foi possível gerar uma resposta.',
       type: 'TEXT',
       sourceDocuments: searchResults.map(result => ({
-        id: String(result.id),
+        id: result.id,
         score: result.score,
-        payload: result.payload as { documentId: string; userId: string; textContent: string; fileName: string; chunkId: string; index: number }
+        payload: result.payload
       })),
     };
   }
