@@ -279,6 +279,7 @@ model Document {
   status          ProcessingStatus @default(PENDING) // processing status
   summary         String? // optional AI-generated summary
   contextJson     Json? // structured JSON from AI processing
+  generatedContext Json? // RAG F-RAG-B1 a: GeneratedContextSchema (tipo, entidades, userEditedFields); contextJson fica com as estatísticas do pipeline
   uploadDate      DateTime         @default(now()) // timestamp of file upload
   processingDate  DateTime? // timestamp when processing completed
   processingError String? // error message if processing failed

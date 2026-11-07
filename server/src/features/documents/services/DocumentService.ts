@@ -7,8 +7,13 @@ import { DocumentProcessingService } from './DocumentProcessingService';
 import { DocumentProcessingPipeline } from './DocumentProcessingPipeline';
 import { UserContext } from '../../../lib/authUtils';
 import { NotFoundError, ForbiddenError, ValidationError, UnauthorizedError } from '../../../lib/errors';
-import { UpdateDocumentDto } from '../dtos/DocumentDto';
-import { DocumentUpdateInput } from '../models/Document.model';
+import {
+  GeneratedContextSchema,
+  type GeneratedContext,
+  type UpdateDocumentContextDto,
+  type UserEditableContextField,
+} from '../dtos/DocumentDto';
+import { DocumentContextUpdateInput, DocumentUpdateInput } from '../models/Document.model';
 import type { IDocumentPolicy } from '../policies/IDocumentPolicy';
 import { DocumentStatus, DocumentPurpose } from '../models/Document.model';
 import { logger } from '@/lib/logger';
@@ -201,31 +206,54 @@ export class DocumentService {
   }
 
   /**
-   * Updates o status e metadados de processamento de um documento
+   * Correção do usuário (RAG-PR-B item 18, F-RAG-4): `fileName`, `documentPurpose`, `summary` e os campos corrigíveis
+   * do contexto gerado (`documentType`, `entities`). Status e estatísticas do processamento não passam por aqui — o
+   * pipeline os grava pelo repositório. Todo campo do contexto corrigido entra em `userEditedFields` (o pipeline do
+   * RAG-PR-D não sobrescreve campo editado). Leitura do contexto atual e escrita na mesma tx: duas correções
+   * concorrentes não perdem a marca uma da outra.
    */
-  async updateDocument(
+  async updateDocumentContext(
     id: string,
-    data: UpdateDocumentDto,
+    data: UpdateDocumentContextDto,
     userContext: UserContext
   ): Promise<IDocument> {
     if (!userContext.userId) throw new UnauthorizedError('Authentication required');
 
-    const document = await this.repository.findById(id);
-    if (!document) {
-      throw new NotFoundError('Document not found');
-    }
-    if (!this.policy.canUpdate(userContext, document)) {
-      throw new ForbiddenError('Access denied to update document');
-    }
-    // Mapeia dados de DTO para input do repositório
-    const updateInput: DocumentUpdateInput = {
-      status: data.status,
-      summary: data.summary,
-      contextJson: data.contextJson,
-      processingDate: data.processingDate,
-      processingError: data.processingError,
-    };
-    const updatedDocument = await this.repository.update(id, updateInput);
-    return updatedDocument;
+    return this.repository.runInTransaction(async (tx) => {
+      const document = await this.repository.findById(id, tx);
+      if (!document) {
+        throw new NotFoundError('Document not found');
+      }
+      if (!this.policy.canUpdate(userContext, document)) {
+        throw new ForbiddenError('Access denied to update document');
+      }
+
+      const edited = (['summary', 'documentType', 'entities'] as const).filter((k) => data[k] !== undefined);
+      const update: DocumentContextUpdateInput = {
+        ...(data.fileName !== undefined && { fileName: data.fileName }),
+        ...(data.documentPurpose !== undefined && { documentPurpose: data.documentPurpose }),
+        ...(data.summary !== undefined && { summary: data.summary }),
+      };
+      if (edited.length > 0) {
+        const current = currentGeneratedContext(document.generatedContext);
+        const next: GeneratedContext = GeneratedContextSchema.parse({
+          ...current,
+          ...(data.documentType !== undefined && { documentType: data.documentType }),
+          ...(data.entities !== undefined && { entities: data.entities }),
+          userEditedFields: [...new Set<UserEditableContextField>([...current.userEditedFields, ...edited])],
+        });
+        update.generatedContext = next;
+      }
+      return this.repository.updateContext(id, update, tx);
+    });
   }
-} 
+}
+
+/**
+ * Contexto gravado (ou o vazio, antes do pipeline gerar). Valor gravado fora do `GeneratedContextSchema` não é
+ * remendado em silêncio: o `parse` lança e a correção falha com 500, para o defeito aparecer.
+ */
+function currentGeneratedContext(stored: Record<string, unknown> | null): GeneratedContext {
+  if (stored === null) return { version: 1, documentType: null, entities: [], userEditedFields: [] };
+  return GeneratedContextSchema.parse(stored);
+}

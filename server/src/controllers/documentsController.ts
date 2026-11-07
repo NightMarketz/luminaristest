@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import multer from 'multer';
 import { getFactory } from '@/lib/factory';
-import { CreateDocumentSchema, UpdateDocumentSchema, SearchDocumentsSchema } from '@/features/documents/dtos/DocumentDto';
+import { CreateDocumentSchema, UpdateDocumentContextSchema, SearchDocumentsSchema } from '@/features/documents/dtos/DocumentDto';
 import { DocumentPurpose } from '@/features/documents/models/Document.model';
 import { handleApiError } from '@/lib/apiUtils';
 import { getUserContextFromRequest } from '@/lib/authUtils';
@@ -243,11 +243,11 @@ export async function updateDocument(req: Request, res: Response) {
     const idParsed = DocumentIdSchema.safeParse(req.params);
     if (!idParsed.success) return res.status(400).json({ success: false, error: idParsed.error.flatten() });
 
-    const parse = UpdateDocumentSchema.safeParse(req.body);
+    const parse = UpdateDocumentContextSchema.safeParse(req.body);
     if (!parse.success) return res.status(400).json({ success: false, error: parse.error.flatten() });
 
     const service = getFactory().getDocumentService();
-    const updated = await service.updateDocument(idParsed.data.id, parse.data, ctx);
+    const updated = await service.updateDocumentContext(idParsed.data.id, parse.data, ctx);
     return res.json({ success: true, data: updated });
   } catch (error) {
     return handleApiError(error, res);

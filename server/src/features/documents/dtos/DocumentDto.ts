@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { DocumentStatus, DocumentPurpose } from '../models/Document.model';
+import { DocumentPurpose } from '../models/Document.model';
 import { DocumentContext } from '../models/DocumentContext';
 
 /**
@@ -19,41 +19,35 @@ export const CreateDocumentSchema = z.object({
 });
 
 /**
- * Schema for updating a Document record's processing status and results.
+ * Contexto gerado do documento (F-RAG-B1 a), em `Document.generatedContext`. Quem grava a parte gerada é o pipeline
+ * (RAG-PR-D, item 26); o usuário corrige pelo `PATCH /documents/:id` e cada campo corrigido entra em `userEditedFields`
+ * (o pipeline não sobrescreve campo editado).
  */
-export const UpdateDocumentSchema = z.object({
-  contextJson: z.object({
-    processing: z.object({
-      totalChunks: z.number(),
-      processedChunks: z.number(),
-      failedChunks: z.number(),
-      duration: z.number(),
-      startTime: z.string(),
-      endTime: z.string()
-    }),
-    statistics: z.object({
-      wordCount: z.number(),
-      charCount: z.number(),
-      avgWordLength: z.number()
-    }),
-    errors: z.array(z.object({
-      code: z.string(),
-      message: z.string(),
-      timestamp: z.string()
-    })).optional()
-  }).optional(),
-  status: z.nativeEnum(DocumentStatus, {
-    message: 'document.validation.statusRequired',
-  }),
-  summary: z.string().nullable(),
-  processingDate: z.preprocess((val) => {
-    if (typeof val === 'string' || val instanceof Date) {
-      return val instanceof Date ? val : new Date(val);
-    }
-    return val;
-  }, z.date().nullable()),
-  processingError: z.string().nullable(),
-});
+export const GeneratedContextSchema = z.object({
+  version: z.literal(1),
+  documentType: z.string().min(1).max(60).nullable(),
+  entities: z.array(z.object({
+    type: z.enum(['PESSOA', 'EMPRESA', 'DATA', 'VALOR', 'IDENTIFICADOR', 'OUTRO']),
+    value: z.string().min(1).max(200),
+  }).strict()).max(50),
+  userEditedFields: z.array(z.enum(['summary', 'documentType', 'entities'])).default([]),
+}).strict();
+export type GeneratedContext = z.infer<typeof GeneratedContextSchema>;
+export type UserEditableContextField = GeneratedContext['userEditedFields'][number];
+
+/**
+ * Corpo do `PATCH /documents/:id` (RAG-PR-B item 18, F-RAG-4). Só o que o usuário corrige: `fileName`,
+ * `documentPurpose`, `summary` e os campos corrigíveis do contexto gerado. `status`, `processingError`,
+ * `processingDate` e `contextJson` são do pipeline (gravados pelo repositório) — chave extra → 400.
+ */
+export const UpdateDocumentContextSchema = z.object({
+  fileName: z.string().min(1).max(255).optional(),
+  documentPurpose: z.nativeEnum(DocumentPurpose).optional(),
+  summary: z.string().max(4000).nullable().optional(),
+  documentType: z.string().min(1).max(60).nullable().optional(),
+  entities: GeneratedContextSchema.shape.entities.optional(),
+}).strict();
+export type UpdateDocumentContextDto = z.infer<typeof UpdateDocumentContextSchema>;
 
 /**
  * Query schema for the paginated document list. Caps `limit` to protect against unbounded reads.
@@ -89,4 +83,4 @@ export type SearchDocumentsToolArgs = z.infer<typeof SearchDocumentsToolArgsSche
 export type DocumentSearchHit = { documentId: string; fileName: string; chunkIndex: number; text: string; score: number };
 
 export type CreateDocumentDto = z.infer<typeof CreateDocumentSchema>;
-export type UpdateDocumentDto = z.infer<typeof UpdateDocumentSchema>; 
+ 

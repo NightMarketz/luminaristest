@@ -1,5 +1,6 @@
 import { IDocument } from '../models/Document.model';
-import { DocumentCreateInput, DocumentUpdateInput } from '../models/Document.model';
+import type { Prisma } from 'generated/prisma';
+import { DocumentContextUpdateInput, DocumentCreateInput, DocumentUpdateInput } from '../models/Document.model';
 
 /**
  * Interface defining the data access operations for Document entities.
@@ -29,7 +30,15 @@ export interface IDocumentRepository {
   /**
    * Finds a document by its ID
    */
-  findById(id: string): Promise<IDocument | null>;
+  findById(id: string, tx?: Prisma.TransactionClient): Promise<IDocument | null>;
+
+  /**
+   * Grava a correção do usuário (RAG-PR-B item 18): só `fileName`, `documentPurpose`, `summary` e `generatedContext`.
+   */
+  updateContext(id: string, data: DocumentContextUpdateInput, tx: Prisma.TransactionClient): Promise<IDocument>;
+
+  /** Seam de transação (a leitura do contexto atual e a escrita da correção na mesma tx). */
+  runInTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 
   /**
    * Deletes a document

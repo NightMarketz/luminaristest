@@ -10,6 +10,8 @@ import {
   ListDocumentsQuerySchema,
   SearchDocumentsSchema,
   SearchDocumentsToolArgsSchema,
+  UpdateDocumentContextSchema,
+  GeneratedContextSchema,
 } from '../DocumentDto';
 import { DocumentPurpose } from '../../models/Document.model';
 
@@ -102,5 +104,33 @@ describe('SearchDocumentsToolArgsSchema (RAG-PR-B item 16)', () => {
   it('rejects documentIds (agent mode searches every owned document) and a query over 2000 chars', () => {
     expect(SearchDocumentsToolArgsSchema.safeParse({ query: 'x', documentIds: ['d'] }).success).toBe(false);
     expect(SearchDocumentsToolArgsSchema.safeParse({ query: 'x'.repeat(2001) }).success).toBe(false);
+  });
+});
+
+describe('UpdateDocumentContextSchema (RAG-PR-B item 18, F-RAG-4)', () => {
+  it.each(['status', 'processingError', 'processingDate', 'contextJson', 'userEditedFields'])(
+    'pipeline-owned key "%s" in the body → rejected (strict)',
+    (key) => {
+      expect(UpdateDocumentContextSchema.safeParse({ summary: 'x', [key]: null }).success).toBe(false);
+    },
+  );
+  it('accepts the user-correctable fields', () => {
+    const r = UpdateDocumentContextSchema.safeParse({
+      fileName: 'a.pdf',
+      documentPurpose: DocumentPurpose.KNOWLEDGE_BASE,
+      summary: null,
+      documentType: 'Contrato',
+      entities: [{ type: 'PESSOA', value: 'Ana' }],
+    });
+    expect(r.success).toBe(true);
+  });
+  it('rejects an unknown entity type, an empty fileName and a summary over 4000 chars', () => {
+    expect(UpdateDocumentContextSchema.safeParse({ entities: [{ type: 'CPF', value: '1' }] }).success).toBe(false);
+    expect(UpdateDocumentContextSchema.safeParse({ fileName: '' }).success).toBe(false);
+    expect(UpdateDocumentContextSchema.safeParse({ summary: 'x'.repeat(4001) }).success).toBe(false);
+  });
+  it('GeneratedContextSchema defaults userEditedFields to [] and is strict', () => {
+    expect(GeneratedContextSchema.parse({ version: 1, documentType: null, entities: [] }).userEditedFields).toEqual([]);
+    expect(GeneratedContextSchema.safeParse({ version: 1, documentType: null, entities: [], extra: 1 }).success).toBe(false);
   });
 });

@@ -135,17 +135,51 @@ describe('getAllDocuments', () => {
   });
 });
 
-describe('updateDocument (Tier-0)', () => {
-  const patch = { status: DocumentStatus.COMPLETED, summary: 'done', processingDate: null, processingError: null };
+describe('updateDocumentContext (Tier-0; RAG-PR-B item 18)', () => {
+  const patch = { summary: 'resumo corrigido' };
 
-  it('lets the owner update their document', async () => {
+  it('lets the owner correct summary/fileName and leaves the pipeline fields alone', async () => {
     const { service } = makeService();
     const owner = await seedUser({ username: 'owner' });
     const doc = await seedDocument({ userId: owner.id, status: 'PENDING' });
 
-    const updated = await service.updateDocument(doc.id, patch, ctxFor({ id: owner.id, username: owner.username }));
-    expect(updated.status).toBe(DocumentStatus.COMPLETED);
-    expect(updated.summary).toBe('done');
+    const updated = await service.updateDocumentContext(
+      doc.id,
+      { ...patch, fileName: 'contrato.pdf' },
+      ctxFor({ id: owner.id, username: owner.username }),
+    );
+    expect(updated.summary).toBe('resumo corrigido');
+    expect(updated.fileName).toBe('contrato.pdf');
+    expect(updated.status).toBe(DocumentStatus.PENDING);
+    expect(updated.generatedContext).toEqual({ version: 1, documentType: null, entities: [], userEditedFields: ['summary'] });
+  });
+
+  it('every corrected context field enters userEditedFields, cumulatively and without duplicates', async () => {
+    const { service } = makeService();
+    const owner = await seedUser({ username: 'owner' });
+    const doc = await seedDocument({ userId: owner.id });
+    await prisma.document.update({
+      where: { id: doc.id },
+      data: { generatedContext: { version: 1, documentType: 'Contrato', entities: [], userEditedFields: ['summary'] } },
+    });
+    const ctx = ctxFor({ id: owner.id, username: owner.username });
+
+    await service.updateDocumentContext(doc.id, { entities: [{ type: 'EMPRESA', value: 'ACME Ltda' }] }, ctx);
+    const updated = await service.updateDocumentContext(doc.id, { documentType: 'Aditivo', summary: 's' }, ctx);
+    expect(updated.generatedContext).toEqual({
+      version: 1,
+      documentType: 'Aditivo',
+      entities: [{ type: 'EMPRESA', value: 'ACME Ltda' }],
+      userEditedFields: ['summary', 'entities', 'documentType'],
+    });
+  });
+
+  it('fileName/documentPurpose only: no generatedContext written', async () => {
+    const { service } = makeService();
+    const owner = await seedUser({ username: 'owner' });
+    const doc = await seedDocument({ userId: owner.id });
+    const updated = await service.updateDocumentContext(doc.id, { fileName: 'x.pdf' }, ctxFor({ id: owner.id, username: owner.username }));
+    expect(updated.generatedContext).toBeNull();
   });
 
   it('forbids a USER from updating ANOTHER user document (ForbiddenError)', async () => {
@@ -155,14 +189,15 @@ describe('updateDocument (Tier-0)', () => {
     const doc = await seedDocument({ userId: owner.id });
 
     await expect(
-      service.updateDocument(doc.id, patch, ctxFor({ id: stranger.id, username: stranger.username }))
+      service.updateDocumentContext(doc.id, patch, ctxFor({ id: stranger.id, username: stranger.username }))
     ).rejects.toBeInstanceOf(ForbiddenError);
+    expect((await prisma.document.findUniqueOrThrow({ where: { id: doc.id } })).summary).toBeNull();
   });
 
   it('throws NotFoundError for a missing document', async () => {
     const { service } = makeService();
     await expect(
-      service.updateDocument('cl00000000000000000000000', patch, ctxFor({ id: 'u', username: 'u' }))
+      service.updateDocumentContext('cl00000000000000000000000', patch, ctxFor({ id: 'u', username: 'u' }))
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 });
