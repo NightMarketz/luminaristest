@@ -25,3 +25,16 @@ export const TOOL_CLASS = {
 } as const satisfies Readonly<Record<string, ActionClass>>;
 
 export type RegisteredToolName = keyof typeof TOOL_CLASS;
+
+/**
+ * L-PR3-6 (dono, chat, 2026-11-07, opção A, cédula D-2026-11-07-TM-PR3-LACUNAS): ferramentas que têm formato de
+ * proposta — o runner sabe gravá-las como `ActionProposal` (`TeammateRunner.propose`). Override para `PROPOSTA` só vale
+ * para estas; fora daqui o `TeammateService` responde 400 `ALCADA_INVALIDA`. Toda ferramenta `PROPOSTA` do `TOOL_CLASS`
+ * tem de estar aqui (guarda: `features/teammates/__tests__/toolClass.test.ts`).
+ */
+export const PROPOSAL_FORMAT = {
+  request_record_creation: 'TABLE_ROW', // CREATE
+  request_record_update: 'TABLE_ROW', // UPDATE
+} as const satisfies Readonly<Partial<Record<RegisteredToolName, 'TABLE_ROW'>>>;
+
+export const hasProposalFormat = (tool: string): boolean => Object.prototype.hasOwnProperty.call(PROPOSAL_FORMAT, tool);

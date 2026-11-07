@@ -3,7 +3,7 @@ import type { IUser } from '../../users/models/User.model';
 import type { AuditService } from '../../accounting/services/AuditService';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import { TeammateReadSchema, type TeammateCreateInput, type TeammateRead, type TeammateUpdateInput } from '../dtos/TeammatesDto';
-import { TOOL_CLASS } from '../models/ActionClass.model';
+import { TOOL_CLASS, hasProposalFormat } from '../models/ActionClass.model';
 import {
   ALCADA_INVALIDA,
   FERRAMENTA_INVALIDA,
@@ -27,6 +27,8 @@ const isRegistered = (tool: string): tool is keyof typeof TOOL_CLASS => Object.p
  *   vivo do tenant ⇒ senão 400 `FERRAMENTA_INVALIDA`.
  * - Item 11: `toolOverrides` só aperta. O DTO já recusa valor diferente de `PROPOSTA`; aqui se recusa o override que
  *   afrouxaria (`PROIBIDA` → `PROPOSTA`) ou que mira ferramenta fora de `allowedTools` ⇒ 400 `ALCADA_INVALIDA`.
+ *   L-PR3-6 (dono, 07/11, opção A): override em ferramenta sem formato de proposta (`PROPOSAL_FORMAT`) também ⇒ 400
+ *   `ALCADA_INVALIDA`, nomeando a ferramenta. O `PROPOSTA_SEM_FORMATO` do runner fica como defesa em profundidade.
  * - Item 13: mudar `allowedTools`/`toolOverrides` grava `teammate.alcada_changed` na trilha encadeada, na mesma tx.
  */
 export class TeammateService {
@@ -151,6 +153,13 @@ export class TeammateService {
       }
       if (isRegistered(tool) && (TOOL_CLASS[tool] as string) === 'PROIBIDA') {
         throw new ValidationError(`Teammate "${teammateName}": a alçada não afrouxa a ferramenta proibida "${tool}".`, { tool }, ALCADA_INVALIDA);
+      }
+      if (!hasProposalFormat(tool)) {
+        throw new ValidationError(
+          `Teammate "${teammateName}": a ferramenta "${tool}" não tem formato de proposta; a alçada não pode exigir proposta para ela.`,
+          { tool },
+          ALCADA_INVALIDA,
+        );
       }
     }
   }

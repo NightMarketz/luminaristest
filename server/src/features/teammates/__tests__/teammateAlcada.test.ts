@@ -105,9 +105,32 @@ describe('item 11 — alçada só aperta', () => {
       expect(r.error!.issues[0].path[0]).toBe('toolOverrides');
     }
   });
-  it('apertar leitura LIVRE → PROPOSTA é aceito (A2: o teammate sem a alçada não ganha nada)', async () => {
-    const t = await make().svc.create(dono, { ...base, toolOverrides: { query_table_data: 'PROPOSTA' } });
-    expect(t.toolOverrides).toEqual({ query_table_data: 'PROPOSTA' });
+  it('override PROPOSTA em ferramenta com formato de proposta é aceito', async () => {
+    const t = await make().svc.create(dono, { ...base, toolOverrides: { request_record_creation: 'PROPOSTA' } });
+    expect(t.toolOverrides).toEqual({ request_record_creation: 'PROPOSTA' });
+  });
+  it('L-PR3-6: apertar leitura LIVRE → PROPOSTA (sem formato de proposta) → 400 ALCADA_INVALIDA nomeando a ferramenta', async () => {
+    const { svc } = make();
+    await expect(svc.create(dono, { ...base, toolOverrides: { query_table_data: 'PROPOSTA' } })).rejects.toMatchObject({
+      statusCode: 400,
+      errorCode: 'ALCADA_INVALIDA',
+      message: expect.stringContaining('"query_table_data"'),
+    });
+    expect(await svc.list(dono)).toEqual([]);
+  });
+  it('L-PR3-6: override PROPOSTA em ferramenta MCP (fora da tabela) → 400 ALCADA_INVALIDA', async () => {
+    const tool = 'mcp:srv-meu:buscar';
+    await expect(make().svc.create(dono, { ...base, allowedTools: [tool], toolOverrides: { [tool]: 'PROPOSTA' } })).rejects.toMatchObject({
+      errorCode: 'ALCADA_INVALIDA',
+      message: expect.stringContaining(`"${tool}"`),
+    });
+  });
+  it('L-PR3-6: PATCH que aperta leitura → 400 e nada gravado', async () => {
+    const { svc, audit } = make();
+    const t = await svc.create(dono, base);
+    await expect(svc.update(dono, t.id, { toolOverrides: { query_table_data: 'PROPOSTA' } })).rejects.toMatchObject({ errorCode: 'ALCADA_INVALIDA' });
+    expect(audit.append).not.toHaveBeenCalled();
+    expect((await svc.get(dono, t.id)).toolOverrides).toBeNull();
   });
   it('override de ferramenta fora de allowedTools → 400 ALCADA_INVALIDA', async () => {
     await expect(make().svc.create(dono, { ...base, toolOverrides: { request_record_update: 'PROPOSTA' } })).rejects.toMatchObject({
@@ -116,11 +139,11 @@ describe('item 11 — alçada só aperta', () => {
   });
   it('PATCH que tira de allowedTools a ferramenta com override (sem mexer no override) → 400 e nada gravado', async () => {
     const { svc, audit } = make();
-    const t = await svc.create(dono, { ...base, toolOverrides: { query_table_data: 'PROPOSTA' } });
-    await expect(svc.update(dono, t.id, { allowedTools: ['request_record_creation'] })).rejects.toMatchObject({
+    const t = await svc.create(dono, { ...base, toolOverrides: { request_record_creation: 'PROPOSTA' } });
+    await expect(svc.update(dono, t.id, { allowedTools: ['query_table_data'] })).rejects.toMatchObject({
       statusCode: 400,
       errorCode: 'ALCADA_INVALIDA',
-      message: expect.stringContaining('"query_table_data"'),
+      message: expect.stringContaining('"request_record_creation"'),
     });
     expect(audit.append).not.toHaveBeenCalled();
     expect((await svc.get(dono, t.id)).allowedTools).toEqual(base.allowedTools);
@@ -166,7 +189,7 @@ describe('item 13 — trilha', () => {
     const t = await svc.create(dono, base);
     await svc.update(dono, t.id, { name: 'Outro' });
     expect(audit.append).not.toHaveBeenCalled();
-    await svc.update(dono, t.id, { toolOverrides: { query_table_data: 'PROPOSTA' } });
+    await svc.update(dono, t.id, { toolOverrides: { request_record_creation: 'PROPOSTA' } });
     expect(audit.append).toHaveBeenCalledTimes(1);
     expect(audit.append.mock.calls[0]).toEqual([
       expect.anything(),
