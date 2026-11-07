@@ -1,3 +1,4 @@
+import type { Prisma } from 'generated/prisma';
 import type { IUser } from '../../users/models/User.model';
 import type { AuditService } from '../../accounting/services/AuditService';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
@@ -65,19 +66,21 @@ export class TeammateService {
   }
 
   async update(actor: IUser, id: string, input: TeammateUpdateInput): Promise<TeammateRead> {
-    const current = await this.findOwned(actor, id);
-    const allowedTools = input.allowedTools ?? current.allowedTools;
-    const toolOverrides = input.toolOverrides !== undefined ? input.toolOverrides : current.toolOverrides;
-    await this.assertTools(actor.id, input.name ?? current.name, allowedTools, toolOverrides);
-
     const patch: Partial<TeammateWrite> = {};
     for (const k of Object.keys(input) as (keyof TeammateUpdateInput)[]) {
       if (input[k] !== undefined) (patch as Record<string, unknown>)[k] = input[k];
     }
-    const alcadaMudou =
-      stable(allowedTools) !== stable(current.allowedTools) || stable(toolOverrides) !== stable(current.toolOverrides);
 
+    // Gate autoritativo dentro da tx: o estado atual (allowedTools/toolOverrides) e os servidores MCP vivos se leem
+    // com o mesmo `tx` da escrita, para que um PATCH concorrente não valide contra uma alçada que já mudou.
     const row = await this.repo.runTransaction(async (tx) => {
+      const current = await this.findOwned(actor, id, tx);
+      const allowedTools = input.allowedTools ?? current.allowedTools;
+      const toolOverrides = input.toolOverrides !== undefined ? input.toolOverrides : current.toolOverrides;
+      await this.assertTools(actor.id, input.name ?? current.name, allowedTools, toolOverrides, tx);
+      const alcadaMudou =
+        stable(allowedTools) !== stable(current.allowedTools) || stable(toolOverrides) !== stable(current.toolOverrides);
+
       const updated = await this.repo.update(actor.id, id, patch, tx);
       if (alcadaMudou) {
         await this.auditService.append(tx, teammatesAuditScope(actor.id), {
@@ -104,15 +107,21 @@ export class TeammateService {
     await this.repo.softDelete(actor.id, id);
   }
 
-  private async findOwned(actor: IUser, id: string): Promise<ITeammate> {
-    const row = await this.repo.findLiveById(actor.id, id);
+  private async findOwned(actor: IUser, id: string, tx?: Prisma.TransactionClient): Promise<ITeammate> {
+    const row = await this.repo.findLiveById(actor.id, id, tx);
     if (!row) throw new NotFoundError('Teammate não encontrado.');
     this.assertManage(actor, row.userId);
     return row;
   }
 
   /** Itens 11 e 12. Cada recusa nomeia o teammate pelo nome exibido e a ferramenta (régua A3). */
-  private async assertTools(userId: string, teammateName: string, allowedTools: string[], toolOverrides: Record<string, string> | null): Promise<void> {
+  private async assertTools(
+    userId: string,
+    teammateName: string,
+    allowedTools: string[],
+    toolOverrides: Record<string, string> | null,
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
     const mcpIds = new Set<string>();
     for (const tool of allowedTools) {
       const mcp = MCP_TOOL_RE.exec(tool);
@@ -128,7 +137,7 @@ export class TeammateService {
       }
     }
     if (mcpIds.size > 0) {
-      const live = await this.mcpServers.findLiveIds(userId, [...mcpIds]);
+      const live = await this.mcpServers.findLiveIds(userId, [...mcpIds], tx);
       for (const tool of allowedTools) {
         const mcp = MCP_TOOL_RE.exec(tool);
         if (mcp && !live.has(mcp[1])) {

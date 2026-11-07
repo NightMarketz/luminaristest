@@ -114,6 +114,50 @@ describe('item 11 — alçada só aperta', () => {
       errorCode: 'ALCADA_INVALIDA',
     });
   });
+  it('PATCH que tira de allowedTools a ferramenta com override (sem mexer no override) → 400 e nada gravado', async () => {
+    const { svc, audit } = make();
+    const t = await svc.create(dono, { ...base, toolOverrides: { query_table_data: 'PROPOSTA' } });
+    await expect(svc.update(dono, t.id, { allowedTools: ['request_record_creation'] })).rejects.toMatchObject({
+      statusCode: 400,
+      errorCode: 'ALCADA_INVALIDA',
+      message: expect.stringContaining('"query_table_data"'),
+    });
+    expect(audit.append).not.toHaveBeenCalled();
+    expect((await svc.get(dono, t.id)).allowedTools).toEqual(base.allowedTools);
+  });
+  it('PATCH lê o estado atual e valida a alçada dentro da transação (gate na tx, mesmo tx no repo)', async () => {
+    const TX = { marca: 'tx' } as never;
+    const repo = fakeRepo();
+    const vistos: unknown[] = [];
+    let dentro = false;
+    repo.runTransaction = async (fn) => {
+      dentro = true;
+      try {
+        return await fn(TX);
+      } finally {
+        dentro = false;
+      }
+    };
+    const findLiveById = repo.findLiveById;
+    repo.findLiveById = async (u, id, tx) => {
+      vistos.push(['teammate', dentro, tx]);
+      return findLiveById(u, id, tx);
+    };
+    const mcpTx: IMcpServerRepository = {
+      findLiveIds: async (u, ids, tx) => {
+        vistos.push(['mcp', dentro, tx]);
+        return mcp.findLiveIds(u, ids);
+      },
+    };
+    const svc = new TeammateService(repo, mcpTx, new TeammatePolicy(), { append: jest.fn(async () => undefined) } as unknown as AuditService);
+    const t = await svc.create(dono, base);
+    vistos.length = 0;
+    await svc.update(dono, t.id, { allowedTools: ['query_table_data', 'mcp:srv-meu:buscar'] });
+    expect(vistos).toEqual([
+      ['teammate', true, TX],
+      ['mcp', true, TX],
+    ]);
+  });
 });
 
 describe('item 13 — trilha', () => {
