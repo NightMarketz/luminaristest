@@ -34,10 +34,10 @@ export class LlmCredentialRepository implements ILlmCredentialRepository {
     return row ? { ...toDomain(row), secret: row.secret, keyVersion: row.keyVersion } : null;
   }
 
-  public async softDelete(userId: string, id: string): Promise<void> {
+  public async softDelete(userId: string, id: string, tx: Prisma.TransactionClient): Promise<void> {
     // Padrão rename-on-delete (ADR-INCR7 §3; ReconciliationRepository.softDeleteStatement): `deleted:<id>` libera o
     // @@unique([userId, provider]) para recadastrar o mesmo provedor. O blob é apagado junto (como o NfceCscRepository).
-    const { count } = await prisma.llmCredential.updateMany({
+    const { count } = await tx.llmCredential.updateMany({
       where: { id, userId, deletedAt: null },
       data: { deletedAt: new Date(), provider: `deleted:${id}`, secret: Buffer.alloc(0) },
     });

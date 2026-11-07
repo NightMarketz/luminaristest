@@ -79,6 +79,41 @@ fallbackProvider?: ("anthropic" | "openai" | "gemini")
 fallbackModel?: string
 dailyTurnLimit?: number
 }
+export interface TeammateReadInput {
+id: string
+name: string
+role: string
+playbook: string
+allowedTools: string[]
+toolOverrides: ({
+[k: string]: "PROPOSTA"
+} | null)
+provider: ("anthropic" | "openai" | "gemini")
+model: string
+fallbackProvider: (("anthropic" | "openai" | "gemini") | null)
+fallbackModel: (string | null)
+dailyTurnLimit: number
+status: ("ACTIVE" | "PAUSED")
+createdAt: string
+updatedAt: string
+}
+export interface TeammateUpdateInput {
+name?: string
+role?: string
+playbook?: string
+/**
+ * @minItems 1
+ */
+allowedTools?: [string, ...(string)[]]
+toolOverrides?: {
+[k: string]: "PROPOSTA"
+}
+provider?: ("anthropic" | "openai" | "gemini")
+model?: string
+fallbackProvider?: ("anthropic" | "openai" | "gemini")
+fallbackModel?: string
+dailyTurnLimit?: number
+}
 export interface TurnJobInput {
 turnId: string
 }

@@ -415,6 +415,182 @@
       ],
       "additionalProperties": false
     },
+    "TeammateReadSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "playbook": {
+          "type": "string"
+        },
+        "allowedTools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolOverrides": {
+          "anyOf": [
+            {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "const": "PROPOSTA"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "openai",
+            "gemini"
+          ]
+        },
+        "model": {
+          "type": "string"
+        },
+        "fallbackProvider": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "anthropic",
+                "openai",
+                "gemini"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fallbackModel": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dailyTurnLimit": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "PAUSED"
+          ]
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "role",
+        "playbook",
+        "allowedTools",
+        "toolOverrides",
+        "provider",
+        "model",
+        "fallbackProvider",
+        "fallbackModel",
+        "dailyTurnLimit",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "TeammateUpdateSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "playbook": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "allowedTools": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolOverrides": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "const": "PROPOSTA"
+          }
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "openai",
+            "gemini"
+          ]
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fallbackProvider": {
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "openai",
+            "gemini"
+          ]
+        },
+        "fallbackModel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dailyTurnLimit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        }
+      },
+      "additionalProperties": false
+    },
     "TurnJobSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",

@@ -455,6 +455,13 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'dp.ferias_implantacao.created': ['implantacaoId', 'vinculoId', 'aquisitivoInicio', 'diasGozados'],
   'dp.ferias_implantacao.updated': ['implantacaoId', 'vinculoId', 'aquisitivoInicio', 'diasGozados'],
   'dp.ferias_implantacao.deleted': ['implantacaoId', 'vinculoId', 'aquisitivoInicio', 'diasGozados'],
+  // BE-INCR-TEAMMATES PR-2 (item 13) — trilha do módulo (escopo `teammatesAuditScope`, padrão do LegalParameterService).
+  // Sem segredo: nem a chave de IA nem o `last4` entram; nem playbook. `allowedTools`/`toolOverrides` são JSON estável
+  // de nomes de ferramenta (`mcp:<serverId>:<tool>` leva id, nunca URL nem token). `mcp_server.created/deleted` entram
+  // com o emissor, no PR-10 (sem serviço de McpServer ainda — lacuna L-PR2-4).
+  'llm_credential.created': ['credentialId', 'provider', 'monthlyTokenBudget'],
+  'llm_credential.deleted': ['credentialId', 'provider'],
+  'teammate.alcada_changed': ['teammateId', 'allowedTools', 'toolOverrides', 'previousAllowedTools', 'previousToolOverrides'],
 };
 
 /**

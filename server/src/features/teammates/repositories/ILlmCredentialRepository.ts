@@ -16,6 +16,6 @@ export interface ILlmCredentialRepository {
   /** A credencial viva do tenant para o provedor, com o blob (item 8). */
   findLiveSealed(userId: string, provider: LlmProviderId): Promise<ILlmCredentialSealed | null>;
   /** Soft-delete que reescreve `provider` para `deleted:<id>` e libera o `@@unique([userId, provider])`. */
-  softDelete(userId: string, id: string): Promise<void>;
+  softDelete(userId: string, id: string, tx: Prisma.TransactionClient): Promise<void>;
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

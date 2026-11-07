@@ -7,6 +7,8 @@ import type { z } from 'zod';
 import { LLM_CREDENTIAL_KEYRING, type ILlmCredential } from '../models/LlmCredential.model';
 import type { ILlmCredentialRepository } from '../repositories/ILlmCredentialRepository';
 import type { ILlmCredentialPolicy } from '../policies/ILlmCredentialPolicy';
+import type { AuditService } from '../../accounting/services/AuditService';
+import { LLM_CREDENTIAL_CREATED, LLM_CREDENTIAL_DELETED, teammatesAuditScope } from '../models/Teammate.model';
 
 export type LlmCredentialCreateInput = z.infer<typeof LlmCredentialCreateSchema>;
 export type LlmCredentialView = z.infer<typeof LlmCredentialReadSchema>;
@@ -23,12 +25,15 @@ export interface ILlmApiKeySource {
  *   de gravar. Segundo cadastro vivo do mesmo provedor ⇒ P2002 do `@@unique` ⇒ 409 (`handleApiError`).
  * - `list`: a view (`LlmCredentialReadSchema`, `.strict()`) nunca carrega a chave.
  * - `remove`: soft-delete que libera o provedor para recadastro.
+ * - Item 13 (PR-2): `create`/`remove` gravam `llm_credential.created/deleted` na trilha encadeada, na mesma tx, sem a
+ *   chave nem o `last4`.
  * - `findApiKey`: chamador interno (resolução por turno, item 8) — decifra só em memória.
  */
 export class LlmCredentialService implements ILlmApiKeySource {
   constructor(
     private readonly repo: ILlmCredentialRepository,
     private readonly policy: ILlmCredentialPolicy,
+    private readonly auditService: AuditService,
     private readonly env: NodeJS.ProcessEnv = process.env,
   ) {}
 
@@ -42,6 +47,13 @@ export class LlmCredentialService implements ILlmApiKeySource {
       );
       const sealed = seal(input.apiKey, shell.id, keyring);
       await this.repo.writeSecret(shell.id, { secret: sealed.blob, keyVersion: sealed.keyVersion }, tx);
+      await this.auditService.append(tx, teammatesAuditScope(actor.id), {
+        actorUserId: actor.id,
+        eventType: LLM_CREDENTIAL_CREATED,
+        targetType: 'LlmCredential',
+        targetId: shell.id,
+        payload: { credentialId: shell.id, provider: shell.provider, monthlyTokenBudget: shell.monthlyTokenBudget },
+      });
       return shell;
     });
     return toView(row);
@@ -56,7 +68,16 @@ export class LlmCredentialService implements ILlmApiKeySource {
     const row = await this.repo.findLiveById(actor.id, id);
     if (!row) throw new NotFoundError('Credencial não encontrada.');
     this.assertManage(actor, row.userId);
-    await this.repo.softDelete(actor.id, id);
+    await this.repo.runTransaction(async (tx) => {
+      await this.repo.softDelete(actor.id, id, tx);
+      await this.auditService.append(tx, teammatesAuditScope(actor.id), {
+        actorUserId: actor.id,
+        eventType: LLM_CREDENTIAL_DELETED,
+        targetType: 'LlmCredential',
+        targetId: id,
+        payload: { credentialId: id, provider: row.provider },
+      });
+    });
   }
 
   async findApiKey(userId: string, provider: LlmProviderId): Promise<string | null> {
