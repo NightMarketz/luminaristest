@@ -22,6 +22,8 @@ export const CrmModulePreset: SelectablePresetSuite = {
   name: 'Módulo CRM',
   description: 'CRM completo: funil de leads, propostas, atividades, contas e contatos.',
   modules: [...CRM_MODULE_KEYS],
+  // BE-INCR-MODULOS-BASE-SUBMODULOS PR-5 (item 26): o Módulo CRM não declara ponte contábil.
+  bridges: [],
   // W5 item 3 (F-W5-1 → b): a IA da entrevista passa a conhecer a suíte CRM (rascunho do BRIEF §3.3). A frase
   // "Inclui tabelas para: …" é lida pelo `PresetMatcher.extractTablesInfo` — manter a forma.
   aiProfile: {

@@ -249,7 +249,7 @@ export class InventoryService implements IInventoryService {
         }
 
         if (item.qtyOnHand < qty || item.qtyOnHand <= 0) {
-          throw new ValidationError(`Estoque insuficiente para o produto '${productRef}'.`);
+          throw new ValidationError(`Estoque insuficiente para o produto '${item.description || productRef}'.`);
         }
         // Moving average derived in-tx; residue absorbed (D6). Never a persisted per-unit float.
         const valueDelta = Math.round((centsFromDb(item.totalValueCents) * qty) / item.qtyOnHand);
@@ -258,7 +258,7 @@ export class InventoryService implements IInventoryService {
         // concurrent baixa that drained the SKU) gets 0 and is rejected — qtyOnHand never negative.
         const won = await this.inventoryRepo.decrementForCogs(scope, item.id, qty, valueDelta, tx);
         if (won !== 1) {
-          throw new ValidationError(`Estoque insuficiente para o produto '${productRef}'.`);
+          throw new ValidationError(`Estoque insuficiente para o produto '${item.description || productRef}'.`);
         }
 
         await this.inventoryRepo.createMovement(

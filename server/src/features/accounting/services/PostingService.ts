@@ -26,6 +26,12 @@ import { assertLegDimensions, resolveLineDimensions } from './dimensionTagging';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
 
+/** FIX-MENSAGENS-ID-INTERNO lote 4 (F-MSG-2 a1; rótulo do dono, chat, 05/11): o lançamento é nº + data + descrição, nunca o cuid. */
+const describeLancamento = (j: { entryNumber: number | null; date: Date; description: string }) => {
+  const dmy = `${String(j.date.getUTCDate()).padStart(2, '0')}/${String(j.date.getUTCMonth() + 1).padStart(2, '0')}/${j.date.getUTCFullYear()}`;
+  return `${j.entryNumber === null ? 'lançamento sem número' : `lançamento nº ${j.entryNumber}`} de ${dmy} — ${j.description}`;
+};
+
 /**
  * Uma linha de lançamento já resolvida (conta-folha + tags de dimensão), pré-tx — shape antes
  * anônimo dentro de `postEntry`, nomeado aqui porque `resolveEntryLines` (F-P1-6b1) agora é
@@ -625,7 +631,7 @@ export class PostingService {
     const origCredit = original.postings.reduce((acc, p) => acc + centsFromDb(p.creditCents), 0);
     if (origDebit !== origCredit || origDebit <= 0) {
       throw new ValidationError(
-        `Lançamento '${original.id}' está desbalanceado ou sem partidas — estorno abortado.`,
+        `O ${describeLancamento(original)} está desbalanceado ou sem partidas — estorno abortado.`,
       );
     }
 

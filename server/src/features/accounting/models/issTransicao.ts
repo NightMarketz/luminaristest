@@ -35,3 +35,14 @@ export function fatorReducaoIssBp(linhas: readonly LinhaLegal[], data: string): 
   if (l?.valorInt == null) throw new SemLinhaVigenteError('ISS_TRANSICAO', data, 'FATOR_REDUCAO_BP');
   return l.valorInt;
 }
+
+/**
+ * ISS-TRANSICAO-IBS PR-2 item 8 (F-ISS-1 a) — alíquota do regime normal na DPS: `issAliquotaBp × (10000 − fator) / 10000`,
+ * com `issAliquotaBp` = a alíquota municipal de 31/12/2028 (LC 116 art. 8º-B caput, L1). Devolve bp inteiro, com o meio
+ * bp para cima (dono, chat, 06/11/2026: "Meio para cima" — achado A1 do revisor do #1111), em aritmética inteira; o
+ * `pAliq` sai com 2 casas exatas pelo `bpToPctString`. Não vale no Simples (o % efetivo do Anexo já cai pela tabela —
+ * aplicar aqui reduziria duas vezes).
+ */
+export function issAliquotaNaTransicaoBp(issAliquotaBp: number, fatorBp: number): number {
+  return Math.floor((issAliquotaBp * (10000 - fatorBp) + 5000) / 10000);
+}

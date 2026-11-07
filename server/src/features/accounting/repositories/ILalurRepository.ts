@@ -58,7 +58,7 @@ export type LalurEntryWithRelations = LalurEntry & {
   /** M315/M365 — value-objects (C2). */
   processos: LalurProcess[];
   /** M312/M362 — `entryNumber` do lançamento da ECD (I200.NUM_LCTO); null se o lançamento voltou a Draft. */
-  journalLinks: Array<{ journalEntryId: string; journalEntry: { entryNumber: number | null } }>;
+  journalLinks: Array<{ journalEntryId: string; journalEntry: { entryNumber: number | null; date: Date; description: string } }>;
   /**
    * M305/M355 1:N das linhas `origem='system'` do Bloco F (C8 emenda 3.2, E21b, F-EM-14 → a): nelas o `parteBId` fica
    * null e o M305 sai daqui. Opcional no tipo: linha do usuário nunca tem.

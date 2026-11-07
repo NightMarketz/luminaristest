@@ -13,6 +13,14 @@ export class ActionProposalRepository implements IActionProposalRepository {
                 tableLabel: data.tableLabel,
                 data: (data.data ?? {}) as Prisma.InputJsonValue,
                 status: data.status || 'PENDING',
+                // Emenda F-TM-8 a (TEAMMATES PR-0): os campos novos chegam ao Prisma; ausentes, valem os defaults.
+                ...(data.kind !== undefined && { kind: data.kind }),
+                ...(data.payload !== undefined && {
+                    payload: data.payload === null ? Prisma.DbNull : (data.payload as Prisma.InputJsonValue),
+                }),
+                ...(data.teammateId !== undefined && { teammateId: data.teammateId }),
+                ...(data.channelMessageId !== undefined && { channelMessageId: data.channelMessageId }),
+                ...(data.expiresAt !== undefined && { expiresAt: data.expiresAt }),
             },
         });
     }

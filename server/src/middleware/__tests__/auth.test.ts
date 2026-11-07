@@ -19,7 +19,7 @@ const { authMiddleware } = require('../auth') as typeof import('../auth');
 
 // §3.4 #3 — the middleware reads User.tokenVersion; null = user not in the DB, version check skipped.
 jest.mock('@/lib/factory', () => ({
-  getFactory: () => ({ getUserService: () => ({ getTokenVersion: async () => null }) }),
+  getFactory: () => ({ getUserService: () => ({ getAuthState: async () => null }) }),
 }));
 
 // ---------------------------------------------------------------------------

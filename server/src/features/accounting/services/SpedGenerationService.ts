@@ -41,6 +41,8 @@ import {
   type SpedEcdQualifAssinanteCode,
 } from '../models/spedQualifAssinante';
 import { resolveSupersededJob, isSupersedesUniqueViolation } from './spedRectificationGate';
+import { describeExportJob } from '../models/AccountingDelivery.model';
+import type { AccountingDataExchangeJob } from 'generated/prisma';
 
 /** Account.nature -> I050 COD_NAT (manual p. 118 table). */
 export function natureToCodNat(nature: string): string {
@@ -170,8 +172,10 @@ export class SpedGenerationService {
 
     // ── Gate da retificação versionada (item 21, ACC-011) — pré-cheque legível ANTES de gerar
     // o arquivo (nunca gasta a geração/gravação em disco para um pedido que já falharia).
+    // FIX-MENSAGENS-ID-INTERNO lote 5 (F-MSG-2 a1): o job retificado nomeia a corrida da `@unique` abaixo pelo tipo + período.
+    let superseded: AccountingDataExchangeJob | undefined;
     if (isSubstituta && dto.supersedesJobId) {
-      await resolveSupersededJob(this.repo, scope, dto.supersedesJobId, 'EXPORT_SPED_ECD', {
+      superseded = await resolveSupersededJob(this.repo, scope, dto.supersedesJobId, 'EXPORT_SPED_ECD', {
         start: periodStart,
         end: periodEnd,
       });
@@ -218,7 +222,7 @@ export class SpedGenerationService {
     } catch (error) {
       if (isSupersedesUniqueViolation(error)) {
         throw new ConflictError(
-          `O job '${dto.supersedesJobId}' já foi substituído por outro job — só um sucessor por job (item 21).`,
+          `O job ${superseded ? describeExportJob(superseded) : `'${dto.supersedesJobId}'`} já foi substituído por outro job — só um sucessor por job (item 21).`,
         );
       }
       throw error;

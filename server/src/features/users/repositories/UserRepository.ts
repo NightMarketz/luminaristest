@@ -222,6 +222,11 @@ export class UserRepository implements IUserRepository {
     return row ? row.tokenVersion : null;
   }
 
+  /** Token version + timestamps in one read, for the auth middleware (§3.4 #20). */
+  public async getAuthState(id: string): Promise<{ tokenVersion: number; createdAt: Date; updatedAt: Date } | null> {
+    return prisma.user.findUnique({ where: { id }, select: { tokenVersion: true, createdAt: true, updatedAt: true } });
+  }
+
   /** Bumps the token version, invalidating every JWT issued before (§3.4 #3). */
   public async incrementTokenVersion(id: string): Promise<void> {
     await prisma.user.update({ where: { id }, data: { tokenVersion: { increment: 1 } } });

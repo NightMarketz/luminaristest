@@ -42,6 +42,7 @@ export const ALERTA_LABEL: Record<AlertaSimples['codigo'], string> = {
   INTERDEPENDENCIA_RECEITA_NAO_INFORMADA: 'Receita da outra empresa do sócio não informada',
   PROJECAO_LIMITE_EPP: 'Projeção do ano perto do limite da EPP',
   PROJECAO_SUBLIMITE_ICMS_ISS: 'Projeção do ano perto do sublimite do ICMS/ISS',
+  BENEFICIO_ISS_TRANSICAO_8B: 'Benefício municipal de ISS cruza a transição de 2029',
 };
 
 const MOTIVO: Record<NonNullable<AlertaSimples['motivoInformativo']>, { key: string; label: string }> = {

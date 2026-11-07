@@ -84,7 +84,7 @@ class FakeRepo {
   replaceEntryProcesses = async () => undefined;
   replaceMovementProcesses = async () => undefined;
   replaceEntryJournalLinks = async (entryId: string, ids: string[]) => {
-    this.entries.find((e) => e.id === entryId)!.journalLinks = ids.map((journalEntryId) => ({ journalEntryId, journalEntry: { entryNumber: 1 } }));
+    this.entries.find((e) => e.id === entryId)!.journalLinks = ids.map((journalEntryId) => ({ journalEntryId, journalEntry: { entryNumber: 1, date: new Date(Date.UTC(2025, 0, 15)), description: 'Lançamento fake' } }));
   };
   createEntryParteBLinks = async (entryId: string, links: Array<{ parteBId: string; valorCents: bigint }>, tx?: unknown) => {
     this.rec('createEntryParteBLinks', tx);
