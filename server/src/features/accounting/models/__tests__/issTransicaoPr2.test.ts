@@ -83,6 +83,22 @@ describe('item 8 — alíquota do regime normal com o fator (F-ISS-1 a)', () => 
     expect(issAliquotaNaTransicaoBp(500, fatorReducaoIssBp(todas, '2029-01-15'))).toBe(450);
     expect(issAliquotaNaTransicaoBp(500, fatorReducaoIssBp(todas, '2032-12-31'))).toBe(300);
   });
+
+  // A1 do revisor do #1111: o fator dá meio bp; o dono decidiu (chat, 06/11): "Meio para cima". O resultado é bp
+  // inteiro, e o meio bp sobe sempre (antes, o toFixed de ponto flutuante subia em uns casos e descia em outros).
+  it.each([
+    [205, 1000, 185], // 184,5 ⇒ 185 (antes 1.84)
+    [215, 3000, 151], // 150,5 ⇒ 151 (antes 1.50)
+    [225, 1000, 203], // 202,5 ⇒ 203 (antes 2.02)
+    [235, 1000, 212], // 211,5 ⇒ 212
+    [225, 3000, 158], // 157,5 ⇒ 158 (antes 1.57)
+    [275, 1000, 248], // 247,5 ⇒ 248
+    [333, 2000, 266], // 266,4 ⇒ 266 (abaixo do meio desce)
+  ])('A1: %i bp com fator %i ⇒ %i bp inteiro, meio para cima', (aliq, fator, esperado) => {
+    const bp = issAliquotaNaTransicaoBp(aliq, fator);
+    expect(Number.isInteger(bp)).toBe(true);
+    expect(bp).toBe(esperado);
+  });
 });
 
 describe('itens 10, 11 e 13 no cálculo do DAS (3ª faixa do Anexo III, serviço 06.01, R$ 50.000 no PA)', () => {
