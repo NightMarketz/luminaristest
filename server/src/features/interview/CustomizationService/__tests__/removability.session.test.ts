@@ -18,6 +18,7 @@ import { resolveModuleSelection } from '../../../dynamicTables/presets/modules/m
 const salaoPreset = {
   key: BeautySalonPreset.key,
   tables: composeSessionTables(BeautySalonPreset, resolveModuleSelection([], BeautySalonPreset.modules)),
+  bridges: BeautySalonPreset.bridges,
 };
 
 // Sem chave de OpenAI no projeto unit: o cliente nunca é chamado (getAiResponse é stub abaixo).
@@ -28,7 +29,8 @@ beforeEach(() => jest.clearAllMocks());
 // PR-3: productUnits/stockMovements (EST-0) e appointments (AGE-0) são bases fixas → FIXED_MODULE, como o CRM-0. Dono,
 // 2026-10-31, questionário: "Aceitar até o PR-6 (Recommended)" — na entrevista o salão não tira Estoque/Agenda até o
 // PR-6 (item 32) decidir a remoção da categoria inteira; no Controle Total a categoria inteira sai.
-const TRAVADAS_SALAO = ['customers', 'packages', 'sales', 'saleItems', 'products', 'services', 'productUnits', 'stockMovements', 'appointments'];
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-5 (item 28, F-MB-5): VEN-PAC destravou — `packages` saiu da lista.
+const TRAVADAS_SALAO = ['customers', 'sales', 'saleItems', 'products', 'services', 'productUnits', 'stockMovements', 'appointments'];
 // CRM-0 (fixo) vem dos módulos default do salão, travado por FIXED_MODULE.
 // PR-4: as bases fixas de FINANCEIRO (FIN-0 = expenses) e GESTÃO (GES-0 = reports) travam do mesmo jeito.
 const FUNIL = ['leadPipelines', 'leadStages', 'leads', 'leadActivities', 'expenses', 'reports'];
@@ -95,6 +97,20 @@ describe('item 6 — recusa nomeia a trava', () => {
     expect(r.response).toContain('é usada pela contabilidade');
     expect(r.response).not.toMatch(/não foi encontrada|Não encontrei/);
     expect(r.response).toContain('Tabelas disponíveis para remoção');
+  });
+
+  it('PR-5 item 27 ("As duas juntas"): sales e customers → trava contábil E a ponte que exige o módulo', async () => {
+    const vendas = await pedirRemocao('sales');
+    expect(vendas.response).toContain('é usada pela contabilidade');
+    expect(vendas.response).toContain("A contabilidade do setor (sales@1) exige o módulo 'VEN-0'.");
+    const pessoas = await pedirRemocao('customers');
+    expect(pessoas.response).toContain('é usada pela contabilidade');
+    expect(pessoas.response).toContain("A contabilidade do setor (sales@1) exige o módulo 'PES-0'.");
+  });
+
+  it('tabela travada fora de módulo de ponte → só a trava', async () => {
+    const r = await pedirRemocao('products');
+    expect(r.response).not.toContain('A contabilidade do setor');
   });
 
   it('tabela travada por dependência → nomeia quem depende', async () => {

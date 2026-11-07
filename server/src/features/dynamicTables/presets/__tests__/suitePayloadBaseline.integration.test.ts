@@ -42,6 +42,10 @@
  *    no Controle Total a categoria inteira sai (teste em `dashboardSemEstoqueAgenda.integration.test.ts`). A lista `by`
  *    da trava de `units` muda só de ORDEM (`stockMovements` agora vem com o módulo EST-0). Conferido por script que,
  *    sem essas três travas, sem EST-0/AGE-0 em `modules.installed` e com `by` ordenado, a fixture é idêntica à do PR-4 (#1006).
+ *  - PR-5 (item 28, F-MB-5): a trava contábil passou da `meta` da tabela para o módulo (`lockedBy` de PES-0/VEN-0 com
+ *    a ponte `sales@1` da suíte); VEN-PAC não tem `lockedBy`, então `locks.packages` passa de `ACCOUNTING` para `null`
+ *    nas duas suítes. Conferido por script que, com `locks.packages` de volta a `ACCOUNTING`, a fixture é idêntica
+ *    (JSON.stringify igual) à de `origin/main` — tabelas gravadas, `response` e demais travas inalterados.
  *
  * Regenerar (somente num PR que mude comportamento de propósito): `UPDATE_BASELINE=1 npx jest --selectProjects
  * integration --runInBand src/features/dynamicTables/presets/__tests__/suitePayloadBaseline.integration.test.ts`.
@@ -101,9 +105,9 @@ async function snapshotInstalled(userId: string) {
 function snapshotLocks(suiteKey: string) {
   const suite = Object.values(tablePresetSuites).flatMap((c) => Object.values(c)).find((s) => s.key === suiteKey)!;
   const installed = resolveModuleSelection([], suite.modules ?? []);
-  // PR-2 (itens 11a/11b): fonte e trava das tabelas de módulo declaradas pela suíte — o mesmo que o controller passa.
+  // PR-2 (item 11a): fonte das tabelas de módulo declarada pela suíte; PR-5 (item 28): pontes da suíte — o mesmo que o controller passa.
   const tables = { ...CoreSystemPreset.tables, ...composeModuleTables(installed, suiteModuleOptions(suite)), ...suite.tables };
-  return computeTableLocks(tables, new Set(Object.keys(tables)));
+  return computeTableLocks(tables, new Set(Object.keys(tables)), suite.bridges);
 }
 
 describe('PR-0 — fotografia da instalação de salão e clínica', () => {
