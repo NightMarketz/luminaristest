@@ -9,6 +9,9 @@ import {
   CreateDocumentSchema,
   ListDocumentsQuerySchema,
   SearchDocumentsSchema,
+  SearchDocumentsToolArgsSchema,
+  UpdateDocumentContextSchema,
+  GeneratedContextSchema,
 } from '../DocumentDto';
 import { DocumentPurpose } from '../../models/Document.model';
 
@@ -78,5 +81,56 @@ describe('SearchDocumentsSchema', () => {
 
   it('caps limit at 100 (rejects above)', () => {
     expect(SearchDocumentsSchema.safeParse({ query: 'x', limit: 500 }).success).toBe(false);
+  });
+
+  // RAG-PR-B item 14
+  it('accepts documentIds up to 50 and rejects 51', () => {
+    const ids = (n: number) => Array.from({ length: n }, (_, i) => `d${i}`);
+    expect(SearchDocumentsSchema.safeParse({ query: 'x', documentIds: ids(50) }).success).toBe(true);
+    expect(SearchDocumentsSchema.safeParse({ query: 'x', documentIds: ids(51) }).success).toBe(false);
+  });
+
+  it('is strict: an extra key → rejected', () => {
+    expect(SearchDocumentsSchema.safeParse({ query: 'x', userId: 'other' }).success).toBe(false);
+  });
+});
+
+describe('SearchDocumentsToolArgsSchema (RAG-PR-B item 16)', () => {
+  it('defaults limit to 5 and caps it at 10', () => {
+    expect(SearchDocumentsToolArgsSchema.parse({ query: 'x' }).limit).toBe(5);
+    expect(SearchDocumentsToolArgsSchema.safeParse({ query: 'x', limit: 11 }).success).toBe(false);
+  });
+
+  it('rejects documentIds (agent mode searches every owned document) and a query over 2000 chars', () => {
+    expect(SearchDocumentsToolArgsSchema.safeParse({ query: 'x', documentIds: ['d'] }).success).toBe(false);
+    expect(SearchDocumentsToolArgsSchema.safeParse({ query: 'x'.repeat(2001) }).success).toBe(false);
+  });
+});
+
+describe('UpdateDocumentContextSchema (RAG-PR-B item 18, F-RAG-4)', () => {
+  it.each(['status', 'processingError', 'processingDate', 'contextJson', 'userEditedFields'])(
+    'pipeline-owned key "%s" in the body → rejected (strict)',
+    (key) => {
+      expect(UpdateDocumentContextSchema.safeParse({ summary: 'x', [key]: null }).success).toBe(false);
+    },
+  );
+  it('accepts the user-correctable fields', () => {
+    const r = UpdateDocumentContextSchema.safeParse({
+      fileName: 'a.pdf',
+      documentPurpose: DocumentPurpose.KNOWLEDGE_BASE,
+      summary: null,
+      documentType: 'Contrato',
+      entities: [{ type: 'PESSOA', value: 'Ana' }],
+    });
+    expect(r.success).toBe(true);
+  });
+  it('rejects an unknown entity type, an empty fileName and a summary over 4000 chars', () => {
+    expect(UpdateDocumentContextSchema.safeParse({ entities: [{ type: 'CPF', value: '1' }] }).success).toBe(false);
+    expect(UpdateDocumentContextSchema.safeParse({ fileName: '' }).success).toBe(false);
+    expect(UpdateDocumentContextSchema.safeParse({ summary: 'x'.repeat(4001) }).success).toBe(false);
+  });
+  it('GeneratedContextSchema defaults userEditedFields to [] and is strict', () => {
+    expect(GeneratedContextSchema.parse({ version: 1, documentType: null, entities: [] }).userEditedFields).toEqual([]);
+    expect(GeneratedContextSchema.safeParse({ version: 1, documentType: null, entities: [], extra: 1 }).success).toBe(false);
   });
 });

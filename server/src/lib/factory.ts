@@ -18,7 +18,7 @@ import { ChunkRepository } from '../features/documents/repositories/ChunkReposit
 import { DashboardLayoutRepository } from '../features/dashboardLayout/repositories/DashboardLayoutRepository';
 import { DocumentRepository } from '../features/documents/repositories/DocumentRepository';
 import { UserRepository } from '../features/users/repositories/UserRepository';
-import { VectorRepository } from '../features/documents/repositories/VectorRepository';
+import { ChunkVectorRepository } from '../features/documents/repositories/ChunkVectorRepository';
 import { DynamicTableRepository } from '../features/dynamicTables/repositories/DynamicTableRepository';
 import { DynamicTableVersionRepository, type IDynamicTableVersionRepository } from '../features/dynamicTables/repositories/DynamicTableVersionRepository';
 import { DynamicTableVersionService } from '../features/dynamicTables/services/DynamicTableVersionService';
@@ -26,6 +26,9 @@ import { ActionProposalRepository } from '../features/chat/repositories/ActionPr
 import { KnowledgeGraphRepository } from '../features/chat/repositories/KnowledgeGraphRepository';
 import { AttachmentRepository } from '../features/attachments/repositories/AttachmentRepository';
 import { SavedTableViewRepository } from '../features/savedViews/repositories/SavedTableViewRepository';
+import { LlmCredentialRepository } from '../features/teammates/repositories/LlmCredentialRepository';
+import { TeammateRepository } from '../features/teammates/repositories/TeammateRepository';
+import { McpServerRepository } from '../features/teammates/repositories/McpServerRepository';
 import { InterviewSessionRepository } from '../features/interview/repositories/InterviewSessionRepository';
 import { AccountRepository } from '../features/accounting/repositories/AccountRepository';
 import { JournalEntryRepository } from '../features/accounting/repositories/JournalEntryRepository';
@@ -110,6 +113,8 @@ import { UserPolicy } from '../features/users/policies/UserPolicy';
 import { DynamicTablePolicy } from '../features/dynamicTables/policies/DynamicTablePolicy';
 import { AttachmentPolicy } from '../features/attachments/policies/AttachmentPolicy';
 import { SavedTableViewPolicy } from '../features/savedViews/policies/SavedTableViewPolicy';
+import { LlmCredentialPolicy } from '../features/teammates/policies/LlmCredentialPolicy';
+import { TeammatePolicy } from '../features/teammates/policies/TeammatePolicy';
 import { AccountingPolicy } from '../features/accounting/policies/AccountingPolicy';
 import { AccountingScopeResetPolicy } from '../features/accounting/policies/AccountingScopeResetPolicy';
 import { AccountingScopeResetService } from '../features/accounting/services/AccountingScopeResetService';
@@ -124,6 +129,7 @@ import { ChatService } from '../features/chat/services/ChatService';
 import { DashboardLayoutService } from '../features/dashboardLayout/services/DashboardLayoutService';
 import { DocumentProcessingService } from '../features/documents/services/DocumentProcessingService';
 import { DocumentService } from '../features/documents/services/DocumentService';
+import { DocumentSearchService } from '../features/documents/services/DocumentSearchService';
 import { UserService } from '../features/users/services/UserService';
 import { DynamicTableService } from '../features/dynamicTables/services/DynamicTableService';
 import { LuminarisAgentService } from '../features/chat/services/LuminarisAgentService';
@@ -310,6 +316,8 @@ import { PresetSyncService } from '../features/dynamicTables/services/PresetSync
 import { ModuleInstallService } from '../features/dynamicTables/services/ModuleInstallService';
 import { AttachmentService } from '../features/attachments/services/AttachmentService';
 import { SavedTableViewService } from '../features/savedViews/services/SavedTableViewService';
+import { LlmCredentialService } from '../features/teammates/services/LlmCredentialService';
+import { TeammateService } from '../features/teammates/services/TeammateService';
 import { StateManager } from '../features/interview/CustomizationService/StateManager';
 import { CustomizationService } from '../features/interview/CustomizationService/CustomizationService';
 import { InterviewService } from '../features/interview/InterviewService/InterviewService';
@@ -322,7 +330,10 @@ import { SystemProvisioningPolicy } from '../features/onboarding/policies/System
 
 // Lib - External Services
 import { OpenAIService as ChatOpenAIService } from './openai/OpenAIService';
-import { EmbeddingService } from './vector/embedding';
+import { getVecIndex } from './vector/sqliteVec';
+import { UserEmbedder } from './embedding/UserEmbedder';
+import { InstanceEmbeddingKeyResolver } from './embedding/InstanceEmbeddingKeyResolver';
+import { OpenAIEmbeddingProvider } from './embedding/OpenAIEmbeddingProvider';
 
 // Interfaces
 import type { IChatInstanceRepository } from '../features/chatInstances/repositories/IChatInstanceRepository';
@@ -330,7 +341,7 @@ import type { IChatMessageRepository } from '../features/chatMessages/repositori
 import type { IDashboardLayoutRepository } from '../features/dashboardLayout/repositories/IDashboardLayoutRepository';
 import type { IDocumentRepository } from '../features/documents/repositories/IDocumentRepository';
 import type { IUserRepository } from '../features/users/repositories/IUserRepository';
-import type { IVectorRepository } from '../features/documents/repositories/IVectorRepository';
+import type { IChunkVectorRepository } from '../features/documents/repositories/IChunkVectorRepository';
 import type { IDynamicTableRepository } from '../features/dynamicTables/repositories/IDynamicTableRepository';
 import type { IChatInstancePolicy } from '../features/chatInstances/policies/IChatInstancePolicy';
 import type { IChatMessagePolicy } from '../features/chatMessages/policies/IChatMessagePolicy';
@@ -344,8 +355,13 @@ import type { IKnowledgeGraphRepository } from '../features/chat/repositories/IK
 import type { IAttachmentRepository } from '../features/attachments/repositories/IAttachmentRepository';
 import type { IAttachmentPolicy } from '../features/attachments/policies/IAttachmentPolicy';
 import type { ISavedTableViewRepository } from '../features/savedViews/repositories/ISavedTableViewRepository';
+import type { ILlmCredentialRepository } from '../features/teammates/repositories/ILlmCredentialRepository';
+import type { ITeammateRepository } from '../features/teammates/repositories/ITeammateRepository';
+import type { IMcpServerRepository } from '../features/teammates/repositories/IMcpServerRepository';
 import type { IInterviewSessionRepository } from '../features/interview/repositories/IInterviewSessionRepository';
 import type { ISavedTableViewPolicy } from '../features/savedViews/policies/ISavedTableViewPolicy';
+import type { ILlmCredentialPolicy } from '../features/teammates/policies/ILlmCredentialPolicy';
+import type { ITeammatePolicy } from '../features/teammates/policies/ITeammatePolicy';
 import type { ISystemProvisioningPolicy } from '../features/onboarding/policies/ISystemProvisioningPolicy';
 import type { IAccountingEventMapper } from '../features/accounting/sync/mappers/IAccountingEventMapper';
 import type { PostEntryInput } from '../features/accounting/dtos/PostingDto';
@@ -834,7 +850,7 @@ export class ApplicationFactory {
     chatInstance: IChatInstanceRepository;
     dashboardLayout: IDashboardLayoutRepository;
     document: IDocumentRepository;
-    vector: IVectorRepository;
+    vector: ChunkVectorRepository;
     chunk: ChunkRepository;
     dynamicTable: IDynamicTableRepository;
     dynamicTableVersion: IDynamicTableVersionRepository;
@@ -842,6 +858,9 @@ export class ApplicationFactory {
     knowledgeGraph: IKnowledgeGraphRepository;
     attachment: IAttachmentRepository;
     savedTableView: ISavedTableViewRepository;
+    llmCredential: ILlmCredentialRepository; // BE-INCR-TEAMMATES PR-1 (item 7)
+    teammate: ITeammateRepository; // BE-INCR-TEAMMATES PR-2 (item 10)
+    mcpServer: IMcpServerRepository; // BE-INCR-TEAMMATES PR-2 (item 12, só leitura)
     interviewSession: IInterviewSessionRepository; // W4 (BE-INCR-INTERVIEW-SESSION)
     account: IAccountRepository;
     journalEntry: IJournalEntryRepository;
@@ -927,6 +946,8 @@ export class ApplicationFactory {
     dynamicTable: IDynamicTablePolicy;
     attachment: IAttachmentPolicy;
     savedTableView: ISavedTableViewPolicy;
+    llmCredential: ILlmCredentialPolicy; // BE-INCR-TEAMMATES PR-1 (item 7)
+    teammate: ITeammatePolicy; // BE-INCR-TEAMMATES PR-2 (item 10)
     crmReportDefinition: ICrmReportDefinitionPolicy; // BE-INCR-CRM-REPORT-BUILDER PR-2 (item 3)
     systemProvisioning: ISystemProvisioningPolicy;
     accounting: IAccountingPolicy;
@@ -944,6 +965,7 @@ export class ApplicationFactory {
     chatInstance: ChatInstanceService;
     dashboardLayout: DashboardLayoutService;
     document: DocumentService;
+    documentSearch: DocumentSearchService;
     chat: IChatService;
     dynamicTable: DynamicTableService;
     dynamicTableVersion: DynamicTableVersionService;
@@ -1057,6 +1079,8 @@ export class ApplicationFactory {
     moduleInstall: ModuleInstallService;
     attachment: AttachmentService;
     savedTableView: SavedTableViewService;
+    llmCredential: LlmCredentialService; // BE-INCR-TEAMMATES PR-1 (item 7)
+    teammate: TeammateService; // BE-INCR-TEAMMATES PR-2 (item 10)
     interview: InterviewService; // W4: entrevista com IA sobre a sessão persistida
     customization: CustomizationService; // W1: módulos da sessão (POST /dashboard/ai/InterviewModules)
     fieldCustomization: FieldCustomizationService; // W6: painel de campos por IA sobre a mesma sessão
@@ -1072,10 +1096,13 @@ export class ApplicationFactory {
   /** Porta do BCB (BE-INCR-CRM-REPORT-BUILDER PR-1, item 22) — cliente HTTP externo, não repositório. */
   private readonly ptaxClient: IPtaxClient;
 
+  private readonly embedder: UserEmbedder;
+
   private constructor() {
     // External services (singletons)
     const chatOpenAIService = new ChatOpenAIService();
-    const embeddingOpenAIService = new EmbeddingService({ apiKey: process.env.OPENAI_API_KEY || '' });
+    // RAG-PR-A itens 5–6: um embedder só (resolvedor da instância + adaptador OpenAI @768) para indexar e buscar.
+    this.embedder = new UserEmbedder(new InstanceEmbeddingKeyResolver(), { openai: new OpenAIEmbeddingProvider() });
 
     this.ptaxClient = new BcbPtaxClient();
 
@@ -1087,13 +1114,16 @@ export class ApplicationFactory {
       dashboardLayout: new DashboardLayoutRepository(),
       document: new DocumentRepository(),
       user: new UserRepository(),
-      vector: new VectorRepository(),
+      vector: new ChunkVectorRepository(() => getVecIndex().db),
       dynamicTable: new DynamicTableRepository(),
       dynamicTableVersion: new DynamicTableVersionRepository(),
       actionProposal: new ActionProposalRepository(),
       knowledgeGraph: new KnowledgeGraphRepository(),
       attachment: new AttachmentRepository(),
       savedTableView: new SavedTableViewRepository(),
+      llmCredential: new LlmCredentialRepository(),
+      teammate: new TeammateRepository(),
+      mcpServer: new McpServerRepository(),
       interviewSession: new InterviewSessionRepository(),
       account: new AccountRepository(),
       journalEntry: new JournalEntryRepository(),
@@ -1180,6 +1210,8 @@ export class ApplicationFactory {
       dynamicTable: new DynamicTablePolicy(),
       attachment: new AttachmentPolicy(),
       savedTableView: new SavedTableViewPolicy(),
+      llmCredential: new LlmCredentialPolicy(),
+      teammate: new TeammatePolicy(),
       crmReportDefinition: new CrmReportDefinitionPolicy(),
       systemProvisioning: new SystemProvisioningPolicy(),
       accounting: new AccountingPolicy(),
@@ -1204,11 +1236,21 @@ export class ApplicationFactory {
     // (controller ou serviço de integração) chama estes efeitos depois do commit.
     const dynamicTableWriteEffects = new DynamicTableWriteEffects(knowledgeGraphService, kpiCacheService);
 
+    // RAG-PR-B item 13: o único caminho de busca nos documentos (rota e ferramenta search_documents).
+    const documentSearchService = new DocumentSearchService(
+      this.repositories.document,
+      this.repositories.chunk,
+      this.repositories.vector,
+      this.policies.document,
+      this.embedder,
+    );
+
     const luminarisAgentService = new LuminarisAgentService(
       dynamicTableService,
       this.repositories.actionProposal,
       this.policies.dynamicTable,
       dynamicTableWriteEffects,
+      documentSearchService,
     );
 
     // Shared instance: injected into ChatService (server-side persistence of chat turns)
@@ -1913,8 +1955,7 @@ export class ApplicationFactory {
       fiscalNumberVoid: fiscalNumberVoidService,
       nfceContingencia: nfceContingenciaService,
       chat: new ChatService(
-        embeddingOpenAIService,
-        this.repositories.vector,
+        documentSearchService,
         chatOpenAIService,
         luminarisAgentService,
         knowledgeGraphService,
@@ -1934,8 +1975,10 @@ export class ApplicationFactory {
         this.repositories.vector,
         new DocumentProcessingService(),
         this.policies.document,
-        this.repositories.user
+        this.repositories.user,
+        this.embedder
       ),
+      documentSearch: documentSearchService,
       user: new UserService(this.repositories.user, this.policies.user, this.repositories.vector),
       dynamicTable: dynamicTableService,
       // BE-INCR-DT-VERSION-LEDGER: leitura/diff/restore do ledger; o restore delega ao DynamicTableService.
@@ -2328,6 +2371,8 @@ export class ApplicationFactory {
         this.repositories.savedTableView,
         this.policies.savedTableView
       ),
+      llmCredential: new LlmCredentialService(this.repositories.llmCredential, this.policies.llmCredential, auditService), // PR-2 item 13: trilha
+      teammate: new TeammateService(this.repositories.teammate, this.repositories.mcpServer, this.policies.teammate, auditService),
       // W4 item 3: StateManager sobre o repositório (injetado, nunca `new` dentro do serviço).
       interview: new InterviewService(customizationService, chatOpenAIService),
       customization: customizationService,
@@ -2638,6 +2683,7 @@ export class ApplicationFactory {
   public getAnalyticsService = (): AnalyticsService => this.services.analytics;
   public getDashboardLayoutService = (): DashboardLayoutService => this.services.dashboardLayout;
   public getDocumentService = (): DocumentService => this.services.document;
+  public getDocumentSearchService = (): DocumentSearchService => this.services.documentSearch;
   public getUserService = (): UserService => this.services.user;
   public getDynamicTableService = (): DynamicTableService => this.services.dynamicTable;
   public getDynamicTableVersionService = (): DynamicTableVersionService => this.services.dynamicTableVersion;
@@ -2781,6 +2827,8 @@ export class ApplicationFactory {
   public getModuleInstallService = (): ModuleInstallService => this.services.moduleInstall;
   public getAttachmentService = (): AttachmentService => this.services.attachment;
   public getSavedTableViewService = (): SavedTableViewService => this.services.savedTableView;
+  public getLlmCredentialService = (): LlmCredentialService => this.services.llmCredential;
+  public getTeammateService = (): TeammateService => this.services.teammate;
   public getInterviewService = (): InterviewService => this.services.interview;
   public getCustomizationService = (): CustomizationService => this.services.customization;
   public getFieldCustomizationService = (): FieldCustomizationService => this.services.fieldCustomization;
@@ -2792,7 +2840,10 @@ export class ApplicationFactory {
   public getChatMessageRepository = (): IChatMessageRepository => this.repositories.chatMessage;
   public getDashboardLayoutRepository = (): IDashboardLayoutRepository => this.repositories.dashboardLayout;
   public getDocumentRepository = (): IDocumentRepository => this.repositories.document;
-  public getVectorRepository = (): IVectorRepository => this.repositories.vector;
+  /** RAG-PR-A: varredura de órfãos e reindexação usam o repositório concreto (ids da vec0) e o embedder. */
+  public getChunkVectorRepository = (): ChunkVectorRepository => this.repositories.vector;
+  public getChunkRepository = (): ChunkRepository => this.repositories.chunk;
+  public getUserEmbedder = (): UserEmbedder => this.embedder;
   public getDynamicTableRepository = (): IDynamicTableRepository => this.repositories.dynamicTable;
   public getKnowledgeGraphRepository = (): IKnowledgeGraphRepository => this.repositories.knowledgeGraph;
 }
@@ -2808,7 +2859,7 @@ export type {
   IChatInstanceRepository,
   IDashboardLayoutRepository,
   IDocumentRepository,
-  IVectorRepository,
+  IChunkVectorRepository,
   IUserPolicy,
   IChatMessagePolicy,
   IChatInstancePolicy,

@@ -60,12 +60,16 @@
  *             schema:
  *               type: object
  *               required: [query]
+ *               additionalProperties: false
  *               properties:
  *                 query: { type: string }
- *                 limit: { type: integer, default: 5 }
+ *                 documentIds: { type: array, maxItems: 50, items: { type: string } }
+ *                 limit: { type: integer, default: 10, maximum: 100 }
  *       responses:
- *         '200': { description: Matching document excerpts }
+ *         '200': { description: 'Matching excerpts { hits, stamp }' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
  *   /api/documents/token-cost:
  *     post:
@@ -99,7 +103,11 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *     patch:
- *       summary: Update document metadata
+ *       summary: Correct document metadata and generated context (user-correctable fields only)
+ *       description: >-
+ *         RAG-PR-B item 18 (F-RAG-4). Status, processingError, processingDate and contextJson belong to the
+ *         processing pipeline and are rejected (strict body, extra key → 400). Every corrected context field
+ *         (summary, documentType, entities) is recorded in generatedContext.userEditedFields.
  *       tags: [Documents]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -111,9 +119,28 @@
  *         required: true
  *         content:
  *           application/json:
- *             schema: { type: object }
+ *             schema:
+ *               type: object
+ *               additionalProperties: false
+ *               properties:
+ *                 fileName: { type: string, minLength: 1, maxLength: 255 }
+ *                 documentPurpose: { type: string, enum: [DATA_ANALYSIS, KNOWLEDGE_BASE] }
+ *                 summary: { type: string, maxLength: 4000, nullable: true }
+ *                 documentType: { type: string, minLength: 1, maxLength: 60, nullable: true }
+ *                 entities:
+ *                   type: array
+ *                   maxItems: 50
+ *                   items:
+ *                     type: object
+ *                     additionalProperties: false
+ *                     required: [type, value]
+ *                     properties:
+ *                       type: { type: string, enum: [PESSOA, EMPRESA, DATA, VALOR, IDENTIFICADOR, OUTRO] }
+ *                       value: { type: string, minLength: 1, maxLength: 200 }
  *       responses:
  *         '200': { description: Updated document }
+ *         '400': { description: Invalid body (including any pipeline-owned key) }
+ *         '403': { description: Not the owner }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *     delete:

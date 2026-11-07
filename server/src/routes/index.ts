@@ -27,6 +27,7 @@ import dfeRoutes from './dfe';
 import entryApprovalRoutes from './entryApprovals';
 import salesRoutes from './sales';
 import savedViewsRoutes from './saved-views';
+import teammatesRoutes from './teammates';
 import packageBalanceRoutes from './packageBalances';
 import packageAcceptanceRoutes from './packageAcceptances';
 import reconcilePendingRoutes from './reconcilePending';
@@ -92,6 +93,7 @@ router.use('/nfe/dfe', dfeRoutes); // BE-INCR-DFE (nó X10b) — emissão de sa�
 router.use('/entry-approvals', entryApprovalRoutes);
 router.use('/sales', salesRoutes);
 router.use('/saved-views', savedViewsRoutes);
+router.use('/teammates', teammatesRoutes); // BE-INCR-TEAMMATES PR-1 — credenciais de IA (item 7)
 router.use('/package-balances', packageBalanceRoutes);
 router.use('/package-acceptances', packageAcceptanceRoutes);
 router.use('/reconcile-pending', reconcilePendingRoutes);

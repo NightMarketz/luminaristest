@@ -1,0 +1,20 @@
+{
+  "id": "chatcmpl-Fixture01",
+  "object": "chat.completion",
+  "created": 1762387200,
+  "model": "gpt-4o-2024-08-06",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          { "id": "call_Fixture01", "type": "function", "function": { "name": "listar_linhas_extrato", "arguments": "{\"accountId\":\"acc_1\",\"limit\":20}" } }
+        ]
+      },
+      "finish_reason": "tool_calls"
+    }
+  ],
+  "usage": { "prompt_tokens": 395, "completion_tokens": 23, "total_tokens": 418 }
+}

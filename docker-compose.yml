@@ -16,11 +16,9 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       DATABASE_URL: file:/data/dev.db
-      QDRANT_URL: http://qdrant:6333
-      # lib/vector/qdrant.ts monta o cliente com `apiKey: process.env.QDRANT_API_KEY!` —
-      # sem esta linha o cliente sobe sem credencial e o índice fica aberto a quem alcançar
-      # o host (as portas do serviço qdrant abaixo são publicadas).
-      QDRANT_API_KEY: ${QDRANT_API_KEY}
+      # RAG-PR-A (BE-INCR-RAG-DOCUMENTOS item 12; dono, 2026-11-06: "vec0 em arquivo próprio"): o índice de vetores
+      # é um SEGUNDO arquivo SQLite, no MESMO volume do banco (sqlite_data) — o backup do /data leva os dois.
+      VECTOR_DB_PATH: /data/vectors.db
       # config/env.ts:163-164 lê ATTACHMENTS_DIR e cai em <cwd>/storage/attachments quando
       # ausente — cwd do processo é o WORKDIR do Dockerfile (/app), então o default seria
       # /app/storage/attachments: caminho dentro do FILESYSTEM DO CONTAINER, sem volume nenhum
@@ -32,7 +30,7 @@ services:
       ATTACHMENTS_DIR: /app/storage/attachments
       # app.ts:27 lê ALLOWED_ORIGIN direto de process.env (fora do schema Zod de env.ts, que não
       # a valida) com fallback para http://localhost:3000 — em produção isso não derruba o boot,
-      # só bloqueia silenciosamente todo request do frontend real. Igual ao QDRANT_API_KEY acima,
+      # só bloqueia silenciosamente todo request do frontend real. Igual ao ALERT_WEBHOOK_URL abaixo,
       # `:?` força a decisão explícita no .env da instância em vez de deixar o default errado
       # passar despercebido até o primeiro CORS-fail em produção.
       ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:?defina ALLOWED_ORIGIN no .env ao lado deste arquivo — sem ela o CORS cai no default http://localhost:3000 e bloqueia silenciosamente o frontend em qualquer host real}
@@ -49,8 +47,6 @@ services:
       - sqlite_data:/data
       - attachments_data:/app/storage/attachments
       - access_logs:/app/logs/access
-    depends_on:
-      - qdrant
     restart: unless-stopped
 
   frontend:
@@ -78,24 +74,7 @@ services:
       - server
     restart: unless-stopped
 
-  qdrant:
-    image: qdrant/qdrant:latest
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    environment:
-      # As duas portas acima são publicadas no HOST. Sem esta variável o Qdrant sobe com a
-      # API aberta: leitura do conteúdo indexado (divulgação, que não se desfaz) e
-      # escrita/delete da coleção para quem alcançar a máquina. `:?` é deliberado — faz
-      # `docker compose up` RECUSAR subir sem chave, porque server/src/config/env.ts declara
-      # QDRANT_API_KEY como `.optional()` e portanto nada no boot da aplicação recusaria.
-      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:?defina QDRANT_API_KEY no .env ao lado deste arquivo — o Qdrant publica 6333/6334 no host e sobe sem autenticacao nenhuma se ela faltar}
-    volumes:
-      - qdrant_data:/qdrant/storage
-    restart: unless-stopped
-
 volumes:
   sqlite_data:
-  qdrant_data:
   attachments_data:
   access_logs:

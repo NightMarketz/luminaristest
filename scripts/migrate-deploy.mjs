@@ -144,6 +144,19 @@ async function backup(dbPath, backupDir) {
       if (existsSync(dbPath + suf)) copyFileSync(dbPath + suf, dest + suf);
     }
     if (!existsSync(dest)) throw new Error(`backup não apareceu em ${dest} após a cópia.`);
+    // RAG-PR-A (dono, chat, 2026-11-06: "Script copia os dois"): o índice vetorial mora num 2º arquivo (`VECTOR_DB_PATH`,
+    // ou `vectors.db` ao lado do banco — mesma regra de `server/src/lib/vector/sqliteVec.ts`). Ele é derivável da `Chunk`
+    // (`npm run rag:reindex`), mas o backup poupa refazer o embedding. Ausente → nada a copiar. Com o app parado (a
+    // checagem de lock acima), copiar `.db` + `-wal` + `-shm` juntos é consistente.
+    const vecPath = process.env.VECTOR_DB_PATH ? resolve(process.env.VECTOR_DB_PATH) : join(dirname(dbPath), 'vectors.db');
+    if (existsSync(vecPath)) {
+      const vecDest = join(backupDir, `vectors.db.${stamp}.bak`);
+      copyFileSync(vecPath, vecDest);
+      for (const suf of ['-wal', '-shm']) {
+        if (existsSync(vecPath + suf)) copyFileSync(vecPath + suf, vecDest + suf);
+      }
+      console.log(`backup do índice vetorial ok: ${vecDest}`);
+    }
   } catch (e) {
     throw new Error(`não foi possível escrever o backup em ${backupDir}: ${e.message}`);
   }
@@ -269,6 +282,7 @@ async function selfCheck() {
       cwd: ROOT,
       encoding: 'utf8',
       shell: process.platform === 'win32',
+      env: { ...process.env, VECTOR_DB_PATH: '' },
     });
 
   let out1;
@@ -284,6 +298,8 @@ async function selfCheck() {
   assertTrue(/OK: migração aplicada e verificada/.test(out1), '1ª chamada terminou OK');
 
   console.log('\n[self-check] caminho feliz — 2ª chamada (banco existente, deve fazer backup)');
+  // RAG-PR-A: um índice vetorial ao lado do banco entra no backup (o conteúdo não importa à cópia).
+  writeFileSync(join(work, 'vectors.db'), 'vec-index-fixture');
   let out2, code2 = 0;
   try {
     out2 = call(happyDb, happyBackupDir);
@@ -297,6 +313,7 @@ async function selfCheck() {
   assertTrue(existsSync(happyBackupDir) && statSync(happyBackupDir).isDirectory(), 'diretório de backup foi criado');
   const backupFiles = (await import('node:fs')).readdirSync(happyBackupDir);
   assertTrue(backupFiles.some((f) => f.startsWith('dev.db.') && f.endsWith('.bak')), 'arquivo de backup com timestamp existe');
+  assertTrue(backupFiles.some((f) => f.startsWith('vectors.db.') && f.endsWith('.bak')), 'backup do vectors.db ao lado do banco existe');
   assertTrue(/OK: migração aplicada e verificada/.test(out2), '2ª chamada terminou OK');
 
   // ---- caminho de falha forjada: backup-dir cujo pai é um ARQUIVO (mkdir recursive tem de lançar).

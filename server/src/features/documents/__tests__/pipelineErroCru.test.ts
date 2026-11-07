@@ -6,7 +6,8 @@
 import { DocumentProcessingPipeline } from '../services/DocumentProcessingPipeline';
 import { DocumentStatus, type IDocument } from '../models/Document.model';
 import type { IChunkRepository } from '../repositories/IChunkRepository';
-import type { IVectorRepository } from '../repositories/IVectorRepository';
+import type { IChunkVectorRepository } from '../repositories/IChunkVectorRepository';
+import type { IUserEmbedder } from '@/lib/embedding/UserEmbedder';
 import type { IDocumentRepository } from '../repositories/IDocumentRepository';
 import type { IUserRepository } from '../../users/repositories/IUserRepository';
 import type { DocumentProcessingService } from '../services/DocumentProcessingService';
@@ -23,14 +24,17 @@ function build(embeddingError: Error) {
   } as unknown as IDocumentRepository;
   const chunkRepository = {
     create: jest.fn(async (d: { index: number }) => ({ id: `c${d.index}` })),
+    deleteByDocument: jest.fn(async () => []),
   } as unknown as IChunkRepository;
-  const vectorRepository = { upsertChunks: jest.fn() } as unknown as IVectorRepository;
+  const vectorRepository = { upsert: jest.fn(), deleteByDocument: jest.fn() } as unknown as IChunkVectorRepository;
   const processingService = {
     chunkText: jest.fn(() => ['trecho um', 'trecho dois']),
-    generateEmbeddings: jest.fn(async () => {
+  } as unknown as DocumentProcessingService;
+  const embedder = {
+    embed: jest.fn(async () => {
       throw embeddingError;
     }),
-  } as unknown as DocumentProcessingService;
+  } as unknown as IUserEmbedder;
   const userRepository = { getUserById: jest.fn(async () => ({ id: 'u1' })) } as unknown as IUserRepository;
   const pipeline = new DocumentProcessingPipeline(
     chunkRepository,
@@ -38,6 +42,7 @@ function build(embeddingError: Error) {
     processingService,
     documentRepository,
     userRepository,
+    embedder,
   );
   return { pipeline, updates };
 }

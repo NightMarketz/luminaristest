@@ -39,7 +39,7 @@ function makeService(table: Record<string, unknown>, rowsInTable: Array<{ id: st
     deleteOldProposals: jest.fn(), deleteByUserId: jest.fn(),
   };
   const writeEffects = { afterDataWrite: jest.fn(), afterStructureWrite: jest.fn() };
-  const service = new LuminarisAgentService(dynamicTableService as any, proposalRepository as any, new DynamicTablePolicy(), writeEffects);
+  const service = new LuminarisAgentService(dynamicTableService as any, proposalRepository as any, new DynamicTablePolicy(), writeEffects, {} as any);
   return { service, dynamicTableService, proposalRepository, writeEffects };
 }
 

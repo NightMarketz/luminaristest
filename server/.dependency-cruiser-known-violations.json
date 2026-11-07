@@ -1,15 +1,6 @@
 [
   {
     "type": "dependency",
-    "from": "src/features/chat/services/ChatService.ts",
-    "to": "src/lib/prisma.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L3-service-not-http-or-prisma"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/accounting/repositories/AccountantAssignmentRepository.ts",
     "to": "src/features/accounting/policies/IAccountingPolicy.ts",
     "rule": {

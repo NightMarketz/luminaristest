@@ -1,15 +1,15 @@
 /**
- * Security/Privacy regression test: Qdrant vector deletion ordering (R5)
+ * Security/Privacy regression test: vector deletion ordering (R5)
  *
- * LGPD art.18 VI — right to erasure: vectors stored in Qdrant must be purged
- * BEFORE the user row is removed from SQL.  If Qdrant fails the SQL delete
+ * LGPD art.18 VI — right to erasure: vectors in the vec0 index (own SQLite file) must be purged
+ * BEFORE the user row is removed from SQL.  If the vector index fails the SQL delete
  * must NOT execute, leaving the record intact for retry.
  *
  * Verified behaviours
  * -------------------
- * 1. deleteVectorsByUserId is called during deleteUser.
- * 2. deleteVectorsByUserId is called BEFORE deleteUser (ordering).
- * 3. If deleteVectorsByUserId rejects, deleteUser is NOT called.
+ * 1. deleteByUser is called during deleteUser.
+ * 2. deleteByUser is called BEFORE deleteUser (ordering).
+ * 3. If deleteByUser rejects, deleteUser is NOT called.
  */
 
 import { UserService } from '../services/UserService';
@@ -66,10 +66,10 @@ const EXISTING_USER = {
 // Helper — build a UserService with controllable mocks
 // ---------------------------------------------------------------------------
 function buildService(overrides: {
-  deleteVectorsByUserId?: jest.Mock;
+  deleteByUser?: jest.Mock;
   deleteUser?: jest.Mock;
 }) {
-  const deleteVectorsByUserId = overrides.deleteVectorsByUserId ?? jest.fn().mockResolvedValue(undefined);
+  const deleteByUser = overrides.deleteByUser ?? jest.fn().mockResolvedValue(undefined);
   const deleteUser = overrides.deleteUser ?? jest.fn().mockResolvedValue(EXISTING_USER);
 
   const mockUserRepository = {
@@ -95,7 +95,7 @@ function buildService(overrides: {
   };
 
   const mockVectorRepository = {
-    deleteVectorsByUserId,
+    deleteByUser,
     upsertChunks: jest.fn(),
     search: jest.fn(),
     searchVectors: jest.fn(),
@@ -109,59 +109,59 @@ function buildService(overrides: {
     mockVectorRepository as any,
   );
 
-  return { service, mockUserRepository, mockVectorRepository, deleteVectorsByUserId, deleteUser };
+  return { service, mockUserRepository, mockVectorRepository, deleteByUser, deleteUser };
 }
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
-describe('UserService.deleteUser — Qdrant ordering (R5)', () => {
+describe('UserService.deleteUser — vector index ordering (R5)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('calls deleteVectorsByUserId during user deletion', async () => {
-    const { service, deleteVectorsByUserId } = buildService({});
+  it('calls deleteByUser during user deletion', async () => {
+    const { service, deleteByUser } = buildService({});
 
     await service.deleteUser(USER_ID, ACTOR);
 
-    expect(deleteVectorsByUserId).toHaveBeenCalledTimes(1);
-    expect(deleteVectorsByUserId).toHaveBeenCalledWith(USER_ID);
+    expect(deleteByUser).toHaveBeenCalledTimes(1);
+    expect(deleteByUser).toHaveBeenCalledWith(USER_ID);
   });
 
-  it('calls deleteVectorsByUserId BEFORE deleteUser (ordering)', async () => {
+  it('calls deleteByUser BEFORE deleteUser (ordering)', async () => {
     const callOrder: string[] = [];
 
-    const deleteVectorsByUserId = jest.fn().mockImplementation(async () => {
-      callOrder.push('deleteVectorsByUserId');
+    const deleteByUser = jest.fn().mockImplementation(async () => {
+      callOrder.push('deleteByUser');
     });
     const deleteUser = jest.fn().mockImplementation(async () => {
       callOrder.push('deleteUser');
       return EXISTING_USER;
     });
 
-    const { service } = buildService({ deleteVectorsByUserId, deleteUser });
+    const { service } = buildService({ deleteByUser, deleteUser });
 
     await service.deleteUser(USER_ID, ACTOR);
 
-    expect(callOrder).toEqual(['deleteVectorsByUserId', 'deleteUser']);
-    expect(callOrder.indexOf('deleteVectorsByUserId')).toBeLessThan(
+    expect(callOrder).toEqual(['deleteByUser', 'deleteUser']);
+    expect(callOrder.indexOf('deleteByUser')).toBeLessThan(
       callOrder.indexOf('deleteUser'),
     );
   });
 
-  it('does NOT call deleteUser when deleteVectorsByUserId rejects', async () => {
-    const qdrantError = new Error('Qdrant connection refused');
+  it('does NOT call deleteUser when deleteByUser rejects', async () => {
+    const indexError = new Error('vector index connection refused');
 
-    const deleteVectorsByUserId = jest.fn().mockRejectedValue(qdrantError);
+    const deleteByUser = jest.fn().mockRejectedValue(indexError);
     const deleteUser = jest.fn().mockResolvedValue(EXISTING_USER);
 
-    const { service } = buildService({ deleteVectorsByUserId, deleteUser });
+    const { service } = buildService({ deleteByUser, deleteUser });
 
-    await expect(service.deleteUser(USER_ID, ACTOR)).rejects.toThrow(qdrantError);
+    await expect(service.deleteUser(USER_ID, ACTOR)).rejects.toThrow(indexError);
 
-    expect(deleteVectorsByUserId).toHaveBeenCalledTimes(1);
+    expect(deleteByUser).toHaveBeenCalledTimes(1);
     expect(deleteUser).not.toHaveBeenCalled();
   });
 });

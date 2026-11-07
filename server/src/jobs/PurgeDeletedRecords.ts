@@ -93,6 +93,13 @@ export const PURGE_CLASS: Record<string, PurgeClass> = {
   TaxAssessment: 'contabil-fiscal',
   TaxOptimizationPolicy: 'contabil-fiscal',
   WithholdingProfile: 'contabil-fiscal',
+  // BE-INCR-TEAMMATES PR-0: sem decisão do dono ainda, vale o "na dúvida, contabil-fiscal" do cabeçalho (reter é
+  // reversível). Não são contábeis; a troca para `operacional` (com a purga de cada um) é pergunta ao dono no lote.
+  AgentChannel: 'contabil-fiscal',
+  LlmCredential: 'contabil-fiscal',
+  McpServer: 'contabil-fiscal',
+  Teammate: 'contabil-fiscal',
+  TeammateRoutine: 'contabil-fiscal',
 };
 
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;

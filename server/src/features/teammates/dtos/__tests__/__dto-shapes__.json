@@ -1,0 +1,608 @@
+{
+  "TeammatesDto.ts": {
+    "ActionClassSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "enum": [
+        "LIVRE",
+        "PROPOSTA",
+        "PROIBIDA"
+      ]
+    },
+    "ChannelPostSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "threadId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "content"
+      ],
+      "additionalProperties": false
+    },
+    "LlmCredentialCreateSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "openai",
+            "gemini"
+          ]
+        },
+        "apiKey": {
+          "type": "string",
+          "minLength": 10
+        },
+        "monthlyTokenBudget": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "provider",
+        "apiKey"
+      ],
+      "additionalProperties": false
+    },
+    "LlmCredentialReadSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "openai",
+            "gemini"
+          ]
+        },
+        "last4": {
+          "type": "string"
+        },
+        "monthlyTokenBudget": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "provider",
+        "last4",
+        "monthlyTokenBudget",
+        "createdAt"
+      ],
+      "additionalProperties": false
+    },
+    "LlmProviderIdSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "enum": [
+        "anthropic",
+        "openai",
+        "gemini"
+      ]
+    },
+    "McpServerCreateSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "url": {
+          "type": "string",
+          "format": "starts_with",
+          "pattern": "^https:\\/\\/.*"
+        },
+        "token": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "name",
+        "url"
+      ],
+      "additionalProperties": false
+    },
+    "ProposalPayloadSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "TABLE_ROW"
+            },
+            "action": {
+              "type": "string",
+              "enum": [
+                "CREATE",
+                "UPDATE",
+                "DELETE"
+              ]
+            },
+            "tableId": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            }
+          },
+          "required": [
+            "kind",
+            "action",
+            "tableId",
+            "data"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "SETTLEMENT_MATCH"
+            },
+            "statementLineId": {
+              "type": "string"
+            },
+            "targetType": {
+              "type": "string",
+              "enum": [
+                "RECEIVABLE",
+                "PAYABLE",
+                "ACQUIRER"
+              ]
+            },
+            "targetId": {
+              "type": "string"
+            },
+            "amountCents": {
+              "type": "string",
+              "pattern": "^\\d+$"
+            },
+            "rationale": {
+              "type": "string",
+              "maxLength": 2000
+            }
+          },
+          "required": [
+            "kind",
+            "statementLineId",
+            "targetType",
+            "targetId",
+            "amountCents",
+            "rationale"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "MCP_TOOL_CALL"
+            },
+            "mcpServerId": {
+              "type": "string"
+            },
+            "tool": {
+              "type": "string"
+            },
+            "arguments": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {}
+            }
+          },
+          "required": [
+            "kind",
+            "mcpServerId",
+            "tool",
+            "arguments"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "LIMITE_ATINGIDO"
+            },
+            "limit": {
+              "type": "string",
+              "enum": [
+                "DAILY_TURNS",
+                "MONTHLY_TOKENS",
+                "HOPS"
+              ]
+            },
+            "teammateId": {
+              "type": "string"
+            },
+            "threadId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "limit"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "RoutineScheduleSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "freq": {
+              "type": "string",
+              "const": "DAILY"
+            },
+            "time": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+            }
+          },
+          "required": [
+            "freq",
+            "time"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "freq": {
+              "type": "string",
+              "const": "WEEKLY"
+            },
+            "time": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+            },
+            "weekday": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6
+            }
+          },
+          "required": [
+            "freq",
+            "time",
+            "weekday"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "freq": {
+              "type": "string",
+              "const": "MONTHLY"
+            },
+            "time": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+            },
+            "monthday": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 28
+            }
+          },
+          "required": [
+            "freq",
+            "time",
+            "monthday"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "TeammateCreateSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "playbook": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "allowedTools": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolOverrides": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "const": "PROPOSTA"
+          }
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "openai",
+            "gemini"
+          ]
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fallbackProvider": {
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "openai",
+            "gemini"
+          ]
+        },
+        "fallbackModel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dailyTurnLimit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        }
+      },
+      "required": [
+        "name",
+        "role",
+        "playbook",
+        "allowedTools",
+        "provider",
+        "model"
+      ],
+      "additionalProperties": false
+    },
+    "TeammateReadSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "playbook": {
+          "type": "string"
+        },
+        "allowedTools": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolOverrides": {
+          "anyOf": [
+            {
+              "type": "object",
+              "propertyNames": {
+                "type": "string"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "const": "PROPOSTA"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "openai",
+            "gemini"
+          ]
+        },
+        "model": {
+          "type": "string"
+        },
+        "fallbackProvider": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "anthropic",
+                "openai",
+                "gemini"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fallbackModel": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "dailyTurnLimit": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "PAUSED"
+          ]
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "role",
+        "playbook",
+        "allowedTools",
+        "toolOverrides",
+        "provider",
+        "model",
+        "fallbackProvider",
+        "fallbackModel",
+        "dailyTurnLimit",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    },
+    "TeammateUpdateSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "playbook": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "allowedTools": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "toolOverrides": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "const": "PROPOSTA"
+          }
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "openai",
+            "gemini"
+          ]
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fallbackProvider": {
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "openai",
+            "gemini"
+          ]
+        },
+        "fallbackModel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dailyTurnLimit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        }
+      },
+      "additionalProperties": false
+    },
+    "TurnJobSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "turnId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "turnId"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
