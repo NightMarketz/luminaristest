@@ -12,7 +12,9 @@
 > no boot — justificativa citável do dono: *"ainda vai mudar muito e a tabela só vai realmente estar
 > pronta quando todos os módulos fixos estiverem completos"*.
 >
-> **Aberto (fora deste ADR):** qual VPS/provedor concreto; se o Qdrant vira serviço gerenciado;
+> **Aberto (fora deste ADR):** qual VPS/provedor concreto; ~~se o Qdrant vira serviço gerenciado~~ (fechado pelo
+> RAG-PR-A, 2026-11-06: o Qdrant saiu; os vetores ficam num 2º arquivo SQLite, `VECTOR_DB_PATH`, no volume `sqlite_data`;
+> emenda do runbook em `docs/accounting/RUNBOOK-M2-EMENDA-RAG-PR-A.md`, pendente do dono);
 > F-P2-3 e F-P2-4 do `ADR-P2-second-vertical.md` (não tocados aqui).
 >
 > **Emenda 2026-10-29 (§8):** cada instância ganha um serviço **Redis** para a fila BullMQ dos teammates
@@ -187,7 +189,7 @@ entre clientes, mas não é sem custo operacional — registrado sem venda:
 ## 7. Próximos passos
 
 1. Provisionar o host concreto (VPS/provedor) — decisão do dono, fora deste ADR.
-2. Decidir se o Qdrant vira serviço gerenciado — fora deste ADR.
+2. ~~Decidir se o Qdrant vira serviço gerenciado~~ — fechado pelo RAG-PR-A (2026-11-06): sem Qdrant.
 3. Escrever o job de migração como etapa separada do pipeline (decisão 4) — implementação, não
    documentação; candidato a sessão de planejamento antes de sessão de feature.
 4. Rodar o `RUNBOOK-M2-DEPLOY-SMOKE.md` (atualizado) contra o alvo provisionado — gate humano, agente
