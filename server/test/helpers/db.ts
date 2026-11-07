@@ -44,6 +44,7 @@ export function pushTestSchema(): void {
  * deleteMany() so a single-table self-referencing pair never trips SQLite's FK check mid-delete.
  */
 export async function resetDb(): Promise<void> {
+  await prisma.llmCredential.deleteMany(); // BE-INCR-TEAMMATES PR-1 — folha, sem FK
   // Accounting — leaf tables first (nothing else references them).
   await prisma.postingDimension.deleteMany();
   await prisma.reconciliationMatch.deleteMany();

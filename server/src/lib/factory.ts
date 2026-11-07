@@ -26,6 +26,7 @@ import { ActionProposalRepository } from '../features/chat/repositories/ActionPr
 import { KnowledgeGraphRepository } from '../features/chat/repositories/KnowledgeGraphRepository';
 import { AttachmentRepository } from '../features/attachments/repositories/AttachmentRepository';
 import { SavedTableViewRepository } from '../features/savedViews/repositories/SavedTableViewRepository';
+import { LlmCredentialRepository } from '../features/teammates/repositories/LlmCredentialRepository';
 import { InterviewSessionRepository } from '../features/interview/repositories/InterviewSessionRepository';
 import { AccountRepository } from '../features/accounting/repositories/AccountRepository';
 import { JournalEntryRepository } from '../features/accounting/repositories/JournalEntryRepository';
@@ -110,6 +111,7 @@ import { UserPolicy } from '../features/users/policies/UserPolicy';
 import { DynamicTablePolicy } from '../features/dynamicTables/policies/DynamicTablePolicy';
 import { AttachmentPolicy } from '../features/attachments/policies/AttachmentPolicy';
 import { SavedTableViewPolicy } from '../features/savedViews/policies/SavedTableViewPolicy';
+import { LlmCredentialPolicy } from '../features/teammates/policies/LlmCredentialPolicy';
 import { AccountingPolicy } from '../features/accounting/policies/AccountingPolicy';
 import { AccountingScopeResetPolicy } from '../features/accounting/policies/AccountingScopeResetPolicy';
 import { AccountingScopeResetService } from '../features/accounting/services/AccountingScopeResetService';
@@ -306,6 +308,7 @@ import { PresetSyncService } from '../features/dynamicTables/services/PresetSync
 import { ModuleInstallService } from '../features/dynamicTables/services/ModuleInstallService';
 import { AttachmentService } from '../features/attachments/services/AttachmentService';
 import { SavedTableViewService } from '../features/savedViews/services/SavedTableViewService';
+import { LlmCredentialService } from '../features/teammates/services/LlmCredentialService';
 import { StateManager } from '../features/interview/CustomizationService/StateManager';
 import { CustomizationService } from '../features/interview/CustomizationService/CustomizationService';
 import { InterviewService } from '../features/interview/InterviewService/InterviewService';
@@ -340,8 +343,10 @@ import type { IKnowledgeGraphRepository } from '../features/chat/repositories/IK
 import type { IAttachmentRepository } from '../features/attachments/repositories/IAttachmentRepository';
 import type { IAttachmentPolicy } from '../features/attachments/policies/IAttachmentPolicy';
 import type { ISavedTableViewRepository } from '../features/savedViews/repositories/ISavedTableViewRepository';
+import type { ILlmCredentialRepository } from '../features/teammates/repositories/ILlmCredentialRepository';
 import type { IInterviewSessionRepository } from '../features/interview/repositories/IInterviewSessionRepository';
 import type { ISavedTableViewPolicy } from '../features/savedViews/policies/ISavedTableViewPolicy';
+import type { ILlmCredentialPolicy } from '../features/teammates/policies/ILlmCredentialPolicy';
 import type { ISystemProvisioningPolicy } from '../features/onboarding/policies/ISystemProvisioningPolicy';
 import type { IAccountingEventMapper } from '../features/accounting/sync/mappers/IAccountingEventMapper';
 import type { PostEntryInput } from '../features/accounting/dtos/PostingDto';
@@ -836,6 +841,7 @@ export class ApplicationFactory {
     knowledgeGraph: IKnowledgeGraphRepository;
     attachment: IAttachmentRepository;
     savedTableView: ISavedTableViewRepository;
+    llmCredential: ILlmCredentialRepository; // BE-INCR-TEAMMATES PR-1 (item 7)
     interviewSession: IInterviewSessionRepository; // W4 (BE-INCR-INTERVIEW-SESSION)
     account: IAccountRepository;
     journalEntry: IJournalEntryRepository;
@@ -919,6 +925,7 @@ export class ApplicationFactory {
     dynamicTable: IDynamicTablePolicy;
     attachment: IAttachmentPolicy;
     savedTableView: ISavedTableViewPolicy;
+    llmCredential: ILlmCredentialPolicy; // BE-INCR-TEAMMATES PR-1 (item 7)
     crmReportDefinition: ICrmReportDefinitionPolicy; // BE-INCR-CRM-REPORT-BUILDER PR-2 (item 3)
     systemProvisioning: ISystemProvisioningPolicy;
     accounting: IAccountingPolicy;
@@ -1047,6 +1054,7 @@ export class ApplicationFactory {
     moduleInstall: ModuleInstallService;
     attachment: AttachmentService;
     savedTableView: SavedTableViewService;
+    llmCredential: LlmCredentialService; // BE-INCR-TEAMMATES PR-1 (item 7)
     interview: InterviewService; // W4: entrevista com IA sobre a sessão persistida
     customization: CustomizationService; // W1: módulos da sessão (POST /dashboard/ai/InterviewModules)
     fieldCustomization: FieldCustomizationService; // W6: painel de campos por IA sobre a mesma sessão
@@ -1084,6 +1092,7 @@ export class ApplicationFactory {
       knowledgeGraph: new KnowledgeGraphRepository(),
       attachment: new AttachmentRepository(),
       savedTableView: new SavedTableViewRepository(),
+      llmCredential: new LlmCredentialRepository(),
       interviewSession: new InterviewSessionRepository(),
       account: new AccountRepository(),
       journalEntry: new JournalEntryRepository(),
@@ -1168,6 +1177,7 @@ export class ApplicationFactory {
       dynamicTable: new DynamicTablePolicy(),
       attachment: new AttachmentPolicy(),
       savedTableView: new SavedTableViewPolicy(),
+      llmCredential: new LlmCredentialPolicy(),
       crmReportDefinition: new CrmReportDefinitionPolicy(),
       systemProvisioning: new SystemProvisioningPolicy(),
       accounting: new AccountingPolicy(),
@@ -2303,6 +2313,7 @@ export class ApplicationFactory {
         this.repositories.savedTableView,
         this.policies.savedTableView
       ),
+      llmCredential: new LlmCredentialService(this.repositories.llmCredential, this.policies.llmCredential),
       // W4 item 3: StateManager sobre o repositório (injetado, nunca `new` dentro do serviço).
       interview: new InterviewService(customizationService, chatOpenAIService),
       customization: customizationService,
@@ -2754,6 +2765,7 @@ export class ApplicationFactory {
   public getModuleInstallService = (): ModuleInstallService => this.services.moduleInstall;
   public getAttachmentService = (): AttachmentService => this.services.attachment;
   public getSavedTableViewService = (): SavedTableViewService => this.services.savedTableView;
+  public getLlmCredentialService = (): LlmCredentialService => this.services.llmCredential;
   public getInterviewService = (): InterviewService => this.services.interview;
   public getCustomizationService = (): CustomizationService => this.services.customization;
   public getFieldCustomizationService = (): FieldCustomizationService => this.services.fieldCustomization;
