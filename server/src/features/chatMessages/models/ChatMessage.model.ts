@@ -14,6 +14,8 @@ export interface IChatMessage {
   promptTokens: number | null;
   completionTokens: number | null;
   model: string | null;
+  /** RAG emenda 07/11, item 15e: `{ mode, citations, sources, answerModel? }`; null fora do modo RAG ou antes da emenda. */
+  ragDetail?: unknown;
   // ChatInstance is loaded separately when needed
   // chatInstance?: IChatInstance;
 }

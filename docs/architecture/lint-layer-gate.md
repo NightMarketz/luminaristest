@@ -126,9 +126,7 @@ em silêncio (o script falha se achar mais de um).
 <!-- debt-ledger:start -->
 ```json
 {
-  "DEBT: prisma": {
-    "server/src/features/chat/services/ChatService.ts": 1
-  },
+  "DEBT: prisma": {},
   "DEBT: apiClient": {},
   "DEBT: fetch": {},
   "SANCTIONED": {

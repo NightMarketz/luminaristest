@@ -14,7 +14,10 @@
  *         required: true
  *         content:
  *           application/json:
- *             schema: { type: object }
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ragMode: { type: string, enum: [DESCRITIVO, RAPIDO], description: 'RAG (emenda 07/11, item 15a): DESCRITIVO numera os trechos e devolve citations; RAPIDO (padrão) só a resposta' }
  *       responses:
  *         '200': { description: AI-generated response }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }

@@ -1906,8 +1906,7 @@ export class ApplicationFactory {
       fiscalNumberVoid: fiscalNumberVoidService,
       nfceContingencia: nfceContingenciaService,
       chat: new ChatService(
-        this.embedder,
-        this.repositories.vector,
+        documentSearchService,
         chatOpenAIService,
         luminarisAgentService,
         knowledgeGraphService,

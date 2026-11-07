@@ -4768,6 +4768,11 @@
             "type": "string",
             "nullable": true,
             "description": "Modelos do turno, unidos por \"+\""
+          },
+          "ragDetail": {
+            "type": "object",
+            "nullable": true,
+            "description": "RAG (emenda 07/11, item 15e): { mode, citations[], sources[], answerModel? }; null fora do modo RAG"
           }
         }
       },
@@ -4842,6 +4847,11 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "ragDetail": {
+            "type": "object",
+            "nullable": true,
+            "description": "RAG (emenda 07/11, item 15e): { mode, citations[], sources[], answerModel? }; null fora do modo RAG"
           }
         }
       },
@@ -21840,7 +21850,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "type": "object",
+                "properties": {
+                  "ragMode": {
+                    "type": "string",
+                    "enum": [
+                      "DESCRITIVO",
+                      "RAPIDO"
+                    ],
+                    "description": "RAG (emenda 07/11, item 15a): DESCRITIVO numera os trechos e devolve citations; RAPIDO (padrão) só a resposta"
+                  }
+                }
               }
             }
           }

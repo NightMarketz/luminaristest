@@ -53,7 +53,7 @@ export class DocumentSearchService {
       const c = byId.get(h.chunkId);
       // Defesa em profundidade: a vec0 já filtra pelo dono; o SQL confere de novo.
       if (!c || c.userId !== user.userId) continue;
-      hits.push({ documentId: c.documentId, fileName: c.fileName, chunkIndex: c.index, text: c.text, score: 1 - h.distance });
+      hits.push({ chunkId: c.id, documentId: c.documentId, fileName: c.fileName, chunkIndex: c.index, text: c.text, score: 1 - h.distance });
     }
     return { hits, stamp };
   }

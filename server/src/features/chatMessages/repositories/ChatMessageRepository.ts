@@ -17,6 +17,7 @@ const MESSAGE_SELECT = {
   completionTokens: true,
   model: true,
   usageDetail: true,
+  ragDetail: true,
 } as const;
 
 /**

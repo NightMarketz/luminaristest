@@ -35,12 +35,12 @@ function setup(hits: DocumentSearchHit[]) {
   };
   const graph = { getGraphPrompt: jest.fn().mockResolvedValue('GRAPH') };
   const messages = { createMessage: jest.fn(), appendAssistantMessage: jest.fn(), getMessagesByInstance: jest.fn() };
-  const chat = new ChatService({} as any, {} as any, openai as any, agent, graph as any, messages as any);
+  const chat = new ChatService({} as any, openai as any, agent, graph as any, messages as any);
   /* eslint-enable @typescript-eslint/no-explicit-any */
   return { chat, openai, search };
 }
 
-const hit = (text: string): DocumentSearchHit => ({ documentId: 'contrato-ana', fileName: 'contrato-ana.pdf', chunkIndex: 3, text, score: 0.9 });
+const hit = (text: string): DocumentSearchHit => ({ chunkId: 'c-3', documentId: 'contrato-ana', fileName: 'contrato-ana.pdf', chunkIndex: 3, text, score: 0.9 });
 
 describe('search_documents (item 16)', () => {
   it('está registrada como LIVRE no TOOL_CLASS', () => {

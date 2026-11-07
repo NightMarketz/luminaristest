@@ -11,7 +11,7 @@ autorizacao: "dono, chat, 2026-10-29: \"Sim, vamos repensar o RAG agora, as cois
 atualizado: "2026-11-07"
 write_set: ["server/src/features/documents/**", "server/src/lib/vector/**", "server/src/lib/embedding/**", "server/src/features/chat/**", "server/src/jobs/DocumentProcessingWorker.ts", "server/src/jobs/VecOrphanSweepScheduler.ts", "server/src/jobs/__tests__/schedulerFailureAlert.test.ts", "server/src/features/users/services/UserService.ts", "server/prisma/schema.prisma", "server/prisma/migrations/**", "server/src/routes/documents.ts", "server/src/routes/docs/documents.paths.ts", "server/public/openapi.json", "server/package.json", "server/package-lock.json", "docker-compose.yml", "server/.env.example"]
 registros: ["server/src/lib/factory.ts", "server/src/routes/index.ts"]
-prs: ["#978", "#990", "#1121"]
+prs: ["#978", "#990", "#1121", "#1126"]
 ---
 # RAG-DOCUMENTOS — RAG de documentos repensado
 

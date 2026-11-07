@@ -54,7 +54,7 @@ describe('DocumentSearchService.search (item 13)', () => {
     expect(vectors.search).toHaveBeenCalledWith(expect.objectContaining({ userId: 'ana', stamp: 'fake:det@768', documentIds: ['contrato-ana'], limit: 5 }));
     expect(r).toEqual({
       stamp: 'fake:det@768',
-      hits: [{ documentId: 'contrato-ana', fileName: 'contrato-ana.pdf', chunkIndex: 0, text: 'cláusula primeira', score: 0.75 }],
+      hits: [{ chunkId: 'c-ana-0', documentId: 'contrato-ana', fileName: 'contrato-ana.pdf', chunkIndex: 0, text: 'cláusula primeira', score: 0.75 }],
     });
   });
 

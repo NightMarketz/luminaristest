@@ -218,6 +218,9 @@ model ChatMessage {
   completionTokens Int?
   model            String?
   usageDetail      Json? // LlmUsage[] por chamada (F-I11-4 → b)
+  // RAG emenda 07/11, item 15e (F-RAG-M7): { mode, citations[], sources[].technical, answerModel? } do turno RAG.
+  // NULL = USER, fora do modo RAG ou anterior à emenda.
+  ragDetail        Json?
 
   @@index([chatInstanceId])
 }

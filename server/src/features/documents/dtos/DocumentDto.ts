@@ -80,7 +80,8 @@ export const SearchDocumentsToolArgsSchema = z.object({
 export type SearchDocumentsToolArgs = z.infer<typeof SearchDocumentsToolArgsSchema>;
 
 /** Um acerto da busca (BRIEF §2.4). */
-export type DocumentSearchHit = { documentId: string; fileName: string; chunkIndex: number; text: string; score: number };
+// chunkId: RAG-PR-B item 15d (emenda 07/11, F-RAG-M5) — o modo descritivo liga o marcador [n] ao trecho.
+export type DocumentSearchHit = { chunkId: string; documentId: string; fileName: string; chunkIndex: number; text: string; score: number };
 
 export type CreateDocumentDto = z.infer<typeof CreateDocumentSchema>;
  

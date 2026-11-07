@@ -11,6 +11,7 @@ import OpenAI from 'openai';
 import type { DocumentSearchService } from '../../documents/services/DocumentSearchService';
 import { SearchDocumentsToolArgsSchema } from '../../documents/dtos/DocumentDto';
 import { wrapUntrustedData } from '../../../lib/untrustedData';
+import type { RagTurn } from './ragTurn';
 
 /** Linhas devolvidas por query_table_data ao modelo (o `total` diz quantas casam no banco). */
 const QUERY_TOOL_LIMIT = 10;
@@ -138,7 +139,7 @@ export class LuminarisAgentService {
     /**
      * Handles a tool call from the LLM.
      */
-    async handleToolCall(user: UserContext, functionName: string, args: Record<string, unknown>): Promise<unknown> {
+    async handleToolCall(user: UserContext, functionName: string, args: Record<string, unknown>, ragTurn?: RagTurn): Promise<unknown> {
         // Só as chaves: os valores de `args.data` são dados de registro (PII).
         logger.info(`Agent Tool Call: ${functionName}`, { userId: user.userId, argKeys: Object.keys(args) });
 
@@ -236,9 +237,14 @@ export class LuminarisAgentService {
             case 'search_documents': {
                 const parsed = SearchDocumentsToolArgsSchema.safeParse(args);
                 if (!parsed.success) throw new ValidationError('Invalid arguments for search_documents');
-                const { hits } = await this.documentSearch.search(user, parsed.data.query, { limit: parsed.data.limit });
+                const { hits, stamp } = await this.documentSearch.search(user, parsed.data.query, { limit: parsed.data.limit });
                 // Item 17: o trecho é de arquivo de terceiro — volta ao modelo delimitado como dado, nunca como instrução.
-                return { returned: hits.length, results: wrapUntrustedData('search_documents', hits) };
+                // Item 15f (emenda 07/11, F-RAG-M6 = b): no DESCRITIVO cada trecho leva o marcador [n], contínuo no turno;
+                // no RÁPIDO, os trechos voltam como no item 16. O chunkId fica no servidor (o modelo cita o número).
+                const results = ragTurn?.descriptive
+                    ? ragTurn.add(hits, stamp).map(({ chunkId: _c, ...h }) => h)
+                    : hits.map(({ chunkId: _c, ...h }) => h);
+                return { returned: hits.length, results: wrapUntrustedData('search_documents', results) };
             }
 
             default:

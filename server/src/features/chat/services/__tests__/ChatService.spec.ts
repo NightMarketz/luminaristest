@@ -12,23 +12,9 @@ import type { UserContext } from '@/lib/authUtils';
 import { Role } from '@/features/users/models/User.model';
 import { ForbiddenError } from '@/lib/errors';
 
-// The RAG ownership guard (Tier-0) queries the Prisma singleton directly; in unit tests every
-// requested documentId is treated as owned by the caller (the guard's own denial path is covered
-// by the integration suite against the real DB).
-jest.mock('@/lib/prisma', () => ({
-  __esModule: true,
-  default: {
-    document: {
-      findMany: jest.fn(async (args: { where: { id: { in: string[] } } }) =>
-        args.where.id.in.map((id: string) => ({ id }))),
-    },
-    // RAG-PR-A: the hits are hydrated from Chunk (the vec0 only has ids).
-    chunk: {
-      findMany: jest.fn(async (args: { where: { id: { in: string[] } } }) =>
-        args.where.id.in.map((id: string) => ({ id, text: 'context', index: 0, documentId: 'd1', document: { fileName: 'f' } }))),
-    },
-  },
-}));
+// RAG-PR-B item 15: the RAG mode searches through DocumentSearchService (ownership + embedding + vec0); here it is faked
+// and its own guards are covered by documentSearch.integration.test.ts and rag-tenant-isolation.test.ts.
+const HIT = { chunkId: 'c', documentId: 'd1', fileName: 'f', chunkIndex: 0, text: 'context', score: 0.9 };
 
 
 const user: UserContext = {
@@ -38,8 +24,7 @@ const user: UserContext = {
 
 /** Builds a ChatService with fresh fakes for every collaborator; tests configure them per case. */
 function makeService() {
-  const embedding = { currentStamp: jest.fn(), embed: jest.fn().mockResolvedValue({ vectors: [new Float32Array(768)], stamp: 'fake:det@768', dims: 768 }) };
-  const vector = { search: jest.fn().mockResolvedValue([]) };
+  const search = { search: jest.fn().mockResolvedValue({ hits: [], stamp: 'fake:det@768' }) };
   const openai = {
     getChatCompletion: jest.fn().mockResolvedValue('answer'),
     getChatCompletionWithToolsAndHistory: jest.fn().mockResolvedValue({ content: 'answer', tool_calls: [] }),
@@ -59,15 +44,15 @@ function makeService() {
   };
 
   const service = new ChatService(
-    embedding as any, vector as any, openai as any, agent as any, graph as any, messages as any
+    search as any, openai as any, agent as any, graph as any, messages as any
   );
-  return { service, embedding, vector, openai, agent, graph, messages };
+  return { service, search, openai, agent, graph, messages };
 }
 
 describe('RAG mode (documentIds present)', () => {
   it('searches scoped to the caller userId and returns the answer + sources (Tier-0)', async () => {
-    const { service, embedding, vector, openai } = makeService();
-    vector.search.mockResolvedValue([{ chunkId: 'c', distance: 0.1 }]);
+    const { service, search, openai } = makeService();
+    search.search.mockResolvedValue({ hits: [HIT], stamp: 'fake:det@768' });
     openai.getChatCompletion.mockResolvedValue('Grounded answer');
 
     const res = await service.generateResponse({ query: 'q', documentIds: ['d1'], user });
@@ -76,14 +61,12 @@ describe('RAG mode (documentIds present)', () => {
     expect(res.answer).toBe('Grounded answer');
     expect(res.sourceDocuments).toHaveLength(1);
     expect(res.sourceDocuments?.[0]).toMatchObject({ id: 'c', payload: { documentId: 'd1', textContent: 'context', fileName: 'f', chunkId: 'c', index: 0 } });
-    expect(embedding.embed).toHaveBeenCalledWith('user_A', ['q']);
-    // Tier-0: the search MUST be scoped to the caller and the requested docs, with the resolver's stamp.
-    expect(vector.search).toHaveBeenCalledWith({ userId: 'user_A', stamp: 'fake:det@768', vector: expect.any(Float32Array), documentIds: ['d1'], limit: 10 });
+    // Tier-0: the search MUST be scoped to the caller and the requested docs.
+    expect(search.search).toHaveBeenCalledWith(user, 'q', { documentIds: ['d1'], limit: 10 });
   });
 
   it('returns a no-results message when nothing is found (and does not call the LLM)', async () => {
-    const { service, vector, openai } = makeService();
-    vector.search.mockResolvedValue([]);
+    const { service, openai } = makeService();
 
     const res = await service.generateResponse({ query: 'q', documentIds: ['d1'], user });
 
@@ -161,7 +144,7 @@ describe('conversation persistence (server-owned)', () => {
     await service.generateResponse({ query: 'hi', chatInstanceId: 'ci_1', user });
 
     expect(messages.createMessage).toHaveBeenCalledWith({ content: 'hi', chatInstanceId: 'ci_1' }, user);
-    expect(messages.appendAssistantMessage).toHaveBeenCalledWith('ci_1', 'ok', user, expect.objectContaining({ calls: [] }));
+    expect(messages.appendAssistantMessage).toHaveBeenCalledWith('ci_1', 'ok', user, expect.objectContaining({ calls: [] }), null);
   });
 
   it('still returns the answer if persisting the assistant reply fails (best-effort)', async () => {
@@ -210,7 +193,7 @@ describe('token usage per assistant message (I11 PR-3)', () => {
       completionTokens: 160,
       model: 'gpt-4o-2024-08-06+gpt-3.5-turbo-0125',
       calls: [gpt4o, gpt35],
-    });
+    }, null);
   });
 
   it('action proposal turn records the gpt-4o call that proposed it', async () => {
@@ -226,7 +209,7 @@ describe('token usage per assistant message (I11 PR-3)', () => {
 
     expect(res.type).toBe('ACTION_PROPOSAL');
     expect(messages.appendAssistantMessage).toHaveBeenCalledWith('ci_1', expect.any(String), user,
-      { promptTokens: 1200, completionTokens: 40, model: 'gpt-4o-2024-08-06', calls: [gpt4o] });
+      { promptTokens: 1200, completionTokens: 40, model: 'gpt-4o-2024-08-06', calls: [gpt4o] }, null);
   });
 
   it('confirmation turn makes no LLM call and records 0/0', async () => {
@@ -236,14 +219,12 @@ describe('token usage per assistant message (I11 PR-3)', () => {
     await service.generateResponse({ confirmedProposalId: 'p1', chatInstanceId: 'ci_1', user });
 
     expect(messages.appendAssistantMessage).toHaveBeenCalledWith('ci_1', expect.any(String), user,
-      { promptTokens: 0, completionTokens: 0, model: null, calls: [] });
+      { promptTokens: 0, completionTokens: 0, model: null, calls: [] }, null);
   });
 
   it('RAG turn sums the rewrite and the answer (embedding excluded — F-I11-5 a)', async () => {
-    const { service, openai, vector, messages } = makeService();
-    vector.search.mockResolvedValue([
-      { chunkId: 'c', distance: 0.1 },
-    ]);
+    const { service, openai, search, messages } = makeService();
+    search.search.mockResolvedValue({ hits: [HIT], stamp: 'fake:det@768' });
     const rewrite = { model: 'gpt-3.5-turbo-0125', promptTokens: 80, completionTokens: 15 };
     openai.getChatCompletion
       .mockImplementationOnce(async (_q: string, _s: unknown, onUsage: OnUsage) => { onUsage(rewrite); return 'pergunta reescrita'; })
@@ -255,7 +236,7 @@ describe('token usage per assistant message (I11 PR-3)', () => {
     });
 
     expect(messages.appendAssistantMessage).toHaveBeenCalledWith('ci_1', 'resposta', user,
-      { promptTokens: 980, completionTokens: 135, model: 'gpt-3.5-turbo-0125', calls: [rewrite, gpt35] });
+      { promptTokens: 980, completionTokens: 135, model: 'gpt-3.5-turbo-0125', calls: [rewrite, gpt35] }, expect.objectContaining({ mode: 'RAPIDO' }));
   });
 
   it('the USER message is persisted without usage (columns stay null)', async () => {

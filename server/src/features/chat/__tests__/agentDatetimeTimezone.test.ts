@@ -37,7 +37,7 @@ function makeChatService() {
   };
   /* eslint-disable @typescript-eslint/no-explicit-any -- fakes de colaborador */
   const service = new ChatService(
-    { embed: jest.fn() } as any, { search: jest.fn() } as any, openai as any, agent as any, graph as any, messages as any,
+    { search: jest.fn() } as any, openai as any, agent as any, graph as any, messages as any,
   );
   /* eslint-enable @typescript-eslint/no-explicit-any */
   return { service, openai };
