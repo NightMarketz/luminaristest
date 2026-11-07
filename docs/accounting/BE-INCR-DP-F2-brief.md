@@ -161,7 +161,10 @@ com a fonte, e não literal no código.
     (escala irregular, como 12×36, fica para o F6 com o `DP-PONTO`, e o DTO a recusa com `reason` `DP_ESCALA_IRREGULAR`).
     Migração das jornadas existentes: `diasTrabalho` = segunda a sábado e `minutosPorDia` = `minutosSemanais ÷ 6`; quando
     não divide exato, a migração não inventa: grava `minutosPorDia` nulo e o cálculo dá `JORNADA_AUSENTE` com o nome da
-    jornada até o operador corrigir. A trava D-5 (jornada em uso) passa a cobrir os campos novos.
+    jornada até o operador corrigir. A trava D-5 (jornada em uso) passa a cobrir os campos novos. **12×36 legada**
+    (`tipoJornada = '2'`; dono, chat, 2026-11-07, `D-2026-11-07-PES4-F2-EMPREGO-UNICO-E-12X36`): o motor calcula só pela
+    escala informada pelo usuário; a migração `20261107160000_dp_jornada_12x36_sem_escala` zera a escala que a
+    `20261107130000` lhe deu (`diasTrabalho` vazio, `minutosPorDia` nulo), e o cálculo dá `JORNADA_AUSENTE` (item 61 c).
 69. **`diasDoMes(competencia, escala, feriados) → { trabalho, repouso, porDia[] }`** puro: dia de trabalho = dia da
     semana na `diasTrabalho` que não é feriado (`FERIADO_NACIONAL`/`FERIADO_LOCAL` da unidade); repouso = o resto.
     Propriedade: `trabalho + repouso` = dias do mês; mudar a escala de 6×1 para 5×2 tira um dia de trabalho por semana.
@@ -276,7 +279,10 @@ com a fonte, e não literal no código.
     `INSS(min(A + daqui, teto)) − INSS(min(A, teto))`, pela tabela progressiva continuando as faixas já tributadas
     antes; nunca negativa. Remuneração com `ordem = DEPOIS` não entra na conta desta empresa. Com `A ≥ teto`, a
     contribuição daqui é zero. Prova com nó por ordem (antes, depois, antes acima do teto, CI antes). Sem `documento`,
-    o DTO recusa (`DP_LANCAMENTO_INVALIDO` com o campo nomeado).
+    o DTO recusa (`DP_LANCAMENTO_INVALIDO` com o campo nomeado). **Escopo** (dono, chat, 2026-11-07, `D-2026-11-07-PES4-F2-EMPREGO-UNICO-E-12X36`):
+    o sistema é de uma empresa só; segurado com **vários** outros empregadores e o cálculo multi-fonte da IN 2.110 ficam
+    **fora do escopo**. A conta acima usa a única outra remuneração viva do item 77 por (vínculo, competência); o item 77
+    fica como está.
 
 ### PR-2 — rubricas do F2
 

@@ -12,6 +12,7 @@ import { getFactory } from '@/lib/factory';
 import { authHeader, makeApp, pushTestSchema, seedUnit } from '@test/helpers';
 import { regraInt, regrasFolha, TABELAS_REGRAS_FOLHA } from '@/features/dp/models/regrasFolha';
 import { hojeDateOnly } from '@/features/legalParameters/models/hoje';
+import { escalaDaJornada } from '@/features/dp/models/escala';
 
 const app = makeApp();
 const UNIT = 'unit-dp-regras';
@@ -79,6 +80,38 @@ describe('/api/dp — regras da folha como dado (PR-0R)', () => {
     expect([ren.status, ren.body.data?.nome, ren.body.data?.minutosSemanais]).toEqual([200, 'renomeada', 2520]);
     const calc = await request(app).patch(`/api/dp/jornadas/${j.id}`).set(authHeader(dono)).send({ unitId: UNIT, minutosPorDia: 400 });
     expect([calc.status, calc.body.code]).toEqual([400, 'DP_ESCALA_IRREGULAR']);
+  });
+
+  it('item 68 + decisão do dono 07/11 — 12×36 legada perde a escala inventada: motor sem escala (JORNADA_AUSENTE), sem aviso, reaplicar não falha', async () => {
+    const sql = fs.readFileSync(path.resolve(__dirname, '../../../prisma/migrations/20261107160000_dp_jornada_12x36_sem_escala/migration.sql'), 'utf8');
+    const stmts = sql.split(/\r?\n/).filter((l) => l.trim() !== '' && !l.startsWith('--'));
+    expect(stmts).toHaveLength(1);
+    // Dado legado como a 20261107130000 deixou: segunda a sábado em toda jornada do F1, inclusive a 12×36.
+    const [doze, seis] = await Promise.all([
+      prisma.dpJornada.create({ data: { userId: dono.id, nome: 'F1 12x36 legada', minutosSemanais: 2520, tipoJornada: '2', minutosPorDia: 420 } }),
+      prisma.dpJornada.create({ data: { userId: dono.id, nome: 'F1 6x1 legada', minutosSemanais: 2640, tipoJornada: '9', minutosPorDia: 440 } }),
+    ]);
+    expect(doze.diasTrabalho).toBe('SEG,TER,QUA,QUI,SEX,SAB');
+    expect(escalaDaJornada(doze)).not.toBeNull(); // sem a migração, o motor calcularia 12×36 como 6×1
+    const ler = () => Promise.all([prisma.dpJornada.findUniqueOrThrow({ where: { id: doze.id } }), prisma.dpJornada.findUniqueOrThrow({ where: { id: seis.id } })]);
+    await prisma.$executeRawUnsafe(stmts[0]);
+    const [d1, s1] = await ler();
+    expect([d1.diasTrabalho, d1.minutosPorDia, d1.minutosSemanais]).toEqual(['', null, 2520]);
+    expect([s1.diasTrabalho, s1.minutosPorDia]).toEqual(['SEG,TER,QUA,QUI,SEX,SAB', 440]); // só a 12×36 muda
+    // Motor (item 68/61 c): a entrada do cálculo é `escalaDaJornada`; null ⇒ JORNADA_AUSENTE até o usuário informar.
+    expect(escalaDaJornada(d1)).toBeNull();
+    expect(escalaDaJornada(s1)).toEqual({ diasTrabalho: SEIS, minutosPorDia: 440 });
+    // Reaplicar: 0 linhas, sem erro, mesmo estado.
+    expect(await prisma.$executeRawUnsafe(stmts[0])).toBe(0);
+    expect(await ler()).toEqual([d1, s1]);
+    // Aviso (item 71): sem escala não há conta contra a lei; a jornada segue lida e renomeável, com escala vazia.
+    const g = await request(app).get(`/api/dp/jornadas/${doze.id}`).set(authHeader(dono)).query({ unitId: UNIT });
+    expect([g.status, g.body.data.diasTrabalho, g.body.data.minutosPorDia]).toEqual([200, [], null]);
+    const ren = await request(app).patch(`/api/dp/jornadas/${doze.id}`).set(authHeader(dono)).send({ unitId: UNIT, nome: '12x36 renomeada' });
+    expect([ren.status, ren.body.data.avisos, ren.body.data.diasTrabalho]).toEqual([200, [], []]);
+    // Informar escala por dias fixos numa 12×36 segue recusado (F6, DP-PONTO): nada recria o 6×1 por trás.
+    const esc = await request(app).patch(`/api/dp/jornadas/${doze.id}`).set(authHeader(dono)).send({ unitId: UNIT, diasTrabalho: SEIS, minutosPorDia: 420 });
+    expect([esc.status, esc.body.code]).toEqual([400, 'DP_ESCALA_IRREGULAR']);
   });
 
   it('item 68 — D-5 cobre os campos novos: jornada em uso não troca diasTrabalho nem minutosPorDia (409)', async () => {
