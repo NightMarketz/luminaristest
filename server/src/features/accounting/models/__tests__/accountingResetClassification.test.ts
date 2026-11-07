@@ -26,6 +26,13 @@ const NAO_CONTABEIS = [
   // W4 (BE-INCR-INTERVIEW-SESSION): o reset NÃO a apaga — expira em 24 h e o expurgo a remove em 7 dias
   // (dono, questionário, 2026-10-16, na integração do lote: "Não contábil e fica").
   'InterviewSession',
+  // BE-INCR-TEAMMATES PR-0: teammates, credenciais BYOK, turnos, rotinas, canais e servidores MCP não são contabilidade.
+  'Teammate',
+  'LlmCredential',
+  'AgentTurn',
+  'TeammateRoutine',
+  'McpServer',
+  'AgentChannel',
 ];
 
 type ModelInfo = { name: string; fields: Set<string> };
