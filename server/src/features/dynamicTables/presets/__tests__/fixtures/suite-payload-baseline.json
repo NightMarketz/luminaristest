@@ -14746,9 +14746,7 @@
         "reason": "FIXED_MODULE"
       },
       "otherRevenues": null,
-      "packages": {
-        "reason": "ACCOUNTING"
-      },
+      "packages": null,
       "products": {
         "by": [
           "productUnits",
@@ -29594,9 +29592,7 @@
         "reason": "FIXED_MODULE"
       },
       "otherRevenues": null,
-      "packages": {
-        "reason": "ACCOUNTING"
-      },
+      "packages": null,
       "products": {
         "by": [
           "productUnits",

@@ -62,6 +62,8 @@ describe('AestheticClinicPreset — amplitude operacional F-P2-8 → RATIFICADO 
     // a ficha é superconjunto da base: nenhum campo do customerModule (lido por plugin/ponte) some na clínica
     const salonFields = salonTables.customers.schema.fields.map((f) => f.name);
     expect(clinicTables.customers.schema.fields.map((f) => f.name)).toEqual(expect.arrayContaining(salonFields));
-    expect(clinicTables.customers.meta?.lockedBy).toBe('accounting');
+    // PR-5 (item 28): a trava contábil vem do PES-0 (`lockedBy`) com a ponte `sales@1` da clínica, não da meta.
+    expect(clinicTables.customers.meta?.lockedBy).toBeUndefined();
+    expect(AestheticClinicPreset.bridges).toEqual(['sales@1']);
   });
 });

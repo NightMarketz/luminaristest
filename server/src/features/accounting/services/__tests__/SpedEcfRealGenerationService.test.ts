@@ -514,8 +514,8 @@ describe('SpedEcfRealGenerationService — ECF 3C', () => {
     const lines = producedLines();
     const i = lines.findIndex((l) => l.startsWith('|M310|3.1.1|'));
     expect(lines.slice(i + 1, i + 3)).toEqual(['|M312|42|', '|M315|2|ADM-9|']);
-    const draft = { ...e, journalLinks: [{ journalEntryId: 'je-2', journalEntry: { entryNumber: null } }] } as unknown as LalurEntryWithRelations;
-    await expect(buildService({ entries: [draft] }).service.generate(scope, makeDto())).rejects.toThrow(/sem NUM_LCTO/);
+    const draft = { ...e, journalLinks: [{ journalEntryId: 'je-2', journalEntry: { entryNumber: null, date: new Date(Date.UTC(2025, 2, 15)), description: 'Provisão' } }] } as unknown as LalurEntryWithRelations;
+    await expect(buildService({ entries: [draft] }).service.generate(scope, makeDto())).rejects.toThrow(/No ajuste '166' \(lalur, T01\/2025\): o lançamento sem número de 15\/03\/2025 — Provisão não tem NUM_LCTO/);
   });
 
   it('item 17: `|` em texto pré-existente (histLancamento) vira 400 nomeando o campo — não 500', async () => {
@@ -523,7 +523,7 @@ describe('SpedEcfRealGenerationService — ECF 3C', () => {
     const { service, createJob } = buildService({ entries: [e] });
     const p = service.generate(scope, makeDto());
     await expect(p).rejects.toBeInstanceOf(ValidationError);
-    await expect(p).rejects.toThrow(/M300 ajuste e1 \(código 7, T01\): campo histLancamento contém '\|'/); // review M6: nomeia registro + id
+    await expect(p).rejects.toThrow(/M300 ajuste '7' \(lalur, T01\/2025\): campo histLancamento contém '\|'/); // review M6: nomeia registro + rótulo (lote 5)
     expect(createJob).not.toHaveBeenCalled();
   });
 
@@ -534,7 +534,7 @@ describe('SpedEcfRealGenerationService — ECF 3C', () => {
 
   it('item 19: conta contábil soft-deletada depois do ajuste ⇒ 400 nomeando ajuste e conta (não sai no M310)', async () => {
     const e = { ...baseEntry, id: 'e1', quarter: 'T01', livro: 'lalur', codigo: '166', valorCents: 1n, indRelacao: '2', accountId: 'acc-1', account: { id: 'acc-1', code: '3.1.1', nature: 'Revenue', deletedAt: new Date() }, processos: [], journalLinks: [] } as unknown as LalurEntryWithRelations;
-    await expect(buildService({ entries: [e] }).service.generate(scope, makeDto())).rejects.toThrow(/Ajuste e1: a conta contábil '3\.1\.1' foi arquivada/);
+    await expect(buildService({ entries: [e] }).service.generate(scope, makeDto())).rejects.toThrow(/No ajuste '166' \(lalur, T01\/2025\): a conta contábil '3\.1\.1' foi arquivada/);
   });
 });
 
@@ -658,9 +658,9 @@ describe('X7 Fase B PR-4 — ECF anual (itens 18–21)', () => {
     expect(lines[iM03 + 1]).toMatch(/^\|M300\|7\|/);
 
     const casos: Array<[LalurEntryWithRelations, RegExp]> = [
-      [linha('x1', 'A04', 'lalur', '7', 1n), /Ajuste x1 \(livro 'lalur', código 7\) em A04\/2025 não tem M030 no arquivo: o mês está marcado 'E'/],
-      [linha('x2', 'A11', 'n620', '21', 1n), /Ajuste x2 \(livro 'n620', código 21\) em A11\/2025 não tem N030 no arquivo: o mês está marcado '0'/],
-      [linha('x3', 'A12', 'n500', '1', 1n), /Ajuste x3 \(livro 'n500', código 1\) em A12\/2025 não tem N030/],
+      [linha('x1', 'A04', 'lalur', '7', 1n), /O ajuste '7' \(lalur, A04\/2025\) não tem M030 no arquivo: o mês está marcado 'E'/],
+      [linha('x2', 'A11', 'n620', '21', 1n), /O ajuste '21' \(n620, A11\/2025\) não tem N030 no arquivo: o mês está marcado '0'/],
+      [linha('x3', 'A12', 'n500', '1', 1n), /O ajuste '1' \(n500, A12\/2025\) não tem N030/],
     ];
     for (const [extra, msg] of casos) {
       const { service, createJob } = buildService({ perfil, confirmados: confirmados(marcas), closings: closingA00(), entries: [...base, extra] });
@@ -675,9 +675,9 @@ describe('X7 Fase B PR-4 — ECF anual (itens 18–21)', () => {
         contrapartidaId: null, historico: 'x', indLanAnt: 'N', origem: 'user', createdById: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
         parteB: parteBIrpj, contrapartida: null, processos: [] }) as unknown as LalurMovementWithRelations;
     const casos: Array<[Parameters<typeof buildService>[0], ReturnType<typeof makeDto>, RegExp]> = [
-      [{ entries: [linha('o1', 'A03', 'lalur', '7', 1n)] }, makeDto(), /Ajuste o1 .* em A03\/2025 não pertence à ECF trimestral/],
-      [{ entries: [], movements: [mov('A00')] }, makeDto(), /Movimento mv-A00 .* em A00\/2025 não pertence à forma trimestral/],
-      [{ perfil: ANUAL, confirmados: confirmados('EEEEEEEEEEEE'), closings: closingA00(), entries: [], movements: [mov('T02')] }, anualDto(), /Movimento mv-T02 .* em T02\/2025 não pertence à forma anual/],
+      [{ entries: [linha('o1', 'A03', 'lalur', '7', 1n)] }, makeDto(), /O ajuste '7' \(lalur, A03\/2025\) não pertence à ECF trimestral/],
+      [{ entries: [], movements: [mov('A00')] }, makeDto(), /O movimento da Parte B 'x' \(A00\/2025\) .* não pertence à forma trimestral/],
+      [{ perfil: ANUAL, confirmados: confirmados('EEEEEEEEEEEE'), closings: closingA00(), entries: [], movements: [mov('T02')] }, anualDto(), /O movimento da Parte B 'x' \(T02\/2025\) .* não pertence à forma anual/],
     ];
     for (const [m, dto, msg] of casos) {
       const { service, createJob } = buildService(m);

@@ -8,18 +8,89 @@
  * scope:'all' do preset bloqueia o soft-delete desses estados. Guarda: `__tests__/purgeVendaLancada.test.ts`
  * (verificação legal de 17/10, dossiê verif-2026-10-17-lgpd-cdc-obrigacoes §4.4).
  *
- * Models with a `deletedAt` column (as of schema inspection):
- *   - DynamicTableData  ✓
- *   - InterviewSession  ✓ — janela própria de 7 dias, e também a sessão EXPIRADA (`expiresAt`), não só a apagada
+ * Allowlist (§3.4 #10, dono, questionário 06/11 — D-2026-11-06-PARADOS-NO-DONO §2): todo model com `deletedAt` tem
+ * uma classe em `PURGE_CLASS`. `operacional` é purgado; `contabil-fiscal` a purga nunca apaga (guarda até a prescrição,
+ * CTN art. 195 p.ú.; Lei 8.981/1995 art. 45 III). Model novo com `deletedAt` sem classe reprova em
+ * `__tests__/purgeAllowlist.test.ts`. Na dúvida, a classe é `contabil-fiscal` (reter é reversível; apagar, não).
+ *   - DynamicTableData, CrmReportDefinition, SavedTableView — 90 dias
+ *   - CrmAttachment — 90 dias, linha E binário em disco (§3.4 #11: o DELETE só marca `deletedAt`)
+ *   - InterviewSession — janela própria de 7 dias, e também a sessão EXPIRADA (`expiresAt`), não só a apagada
  *     (BE-INCR-INTERVIEW-SESSION item 9, F-W4-5 b: minimização LGPD — o `state` guarda texto livre do negócio).
- *
- * User, DynamicTable, Document, ChatInstance, and ChatMessage do NOT have
- * a deletedAt column in the current schema and are therefore excluded.
- * Add them here if those columns are introduced in future migrations.
  */
 
 import prisma from '../lib/prisma';
 import { logger } from '../lib/logger';
+import * as storage from '../lib/attachmentStorage';
+
+export type PurgeClass = 'operacional' | 'contabil-fiscal';
+
+/** Classe de purga de cada model com `deletedAt` (§3.4 #10). */
+export const PURGE_CLASS: Record<string, PurgeClass> = {
+  DynamicTableData: 'operacional',
+  InterviewSession: 'operacional',
+  CrmAttachment: 'operacional',
+  CrmReportDefinition: 'operacional',
+  SavedTableView: 'operacional',
+  Account: 'contabil-fiscal',
+  AccountantAssignment: 'contabil-fiscal',
+  AccountingBinding: 'contabil-fiscal',
+  AccountingContact: 'contabil-fiscal',
+  AccountingPolicyVersion: 'contabil-fiscal',
+  BankSettlementItem: 'contabil-fiscal',
+  BankStatement: 'contabil-fiscal',
+  CollectionCharge: 'contabil-fiscal',
+  CompanyFiscalProfile: 'contabil-fiscal',
+  CompanySigner: 'contabil-fiscal',
+  ConsumptionTaxAssessment: 'contabil-fiscal',
+  Counterparty: 'contabil-fiscal',
+  CustomerPackageBalance: 'contabil-fiscal',
+  DimensionDefinition: 'contabil-fiscal',
+  DimensionValue: 'contabil-fiscal',
+  DocumentAttachment: 'contabil-fiscal',
+  DpAfastamento: 'contabil-fiscal',
+  DpCargo: 'contabil-fiscal',
+  DpConvencaoColetiva: 'contabil-fiscal',
+  DpConvencaoParametro: 'contabil-fiscal',
+  DpFeriasImplantacao: 'contabil-fiscal',
+  DpJornada: 'contabil-fiscal',
+  DpLotacao: 'contabil-fiscal',
+  DpModuloAtivacao: 'contabil-fiscal',
+  DpSindicato: 'contabil-fiscal',
+  DpTrabalhador: 'contabil-fiscal',
+  DpVinculo: 'contabil-fiscal',
+  FiscalCertificate: 'contabil-fiscal',
+  FiscalDocument: 'contabil-fiscal',
+  FiscalProfile: 'contabil-fiscal',
+  FixedAsset: 'contabil-fiscal',
+  FixedAssetClass: 'contabil-fiscal',
+  InterestOnEquityCalculation: 'contabil-fiscal',
+  InventoryItem: 'contabil-fiscal',
+  IssBeneficioMunicipal: 'contabil-fiscal',
+  KitInstallation: 'contabil-fiscal',
+  LalurEntry: 'contabil-fiscal',
+  LalurParteBAccount: 'contabil-fiscal',
+  LalurParteBMovement: 'contabil-fiscal',
+  NfceCsc: 'contabil-fiscal',
+  Partner: 'contabil-fiscal',
+  Payable: 'contabil-fiscal',
+  PaymentAccount: 'contabil-fiscal',
+  ProductDestinationDefault: 'contabil-fiscal',
+  ProductFiscalProfile: 'contabil-fiscal',
+  ProfitDistributionEvent: 'contabil-fiscal',
+  PscCredential: 'contabil-fiscal',
+  PscProvider: 'contabil-fiscal',
+  Receivable: 'contabil-fiscal',
+  RoleAccountOverride: 'contabil-fiscal',
+  SalaoParceriaContrato: 'contabil-fiscal',
+  ServiceCostEvidence: 'contabil-fiscal',
+  ServiceFiscalProfile: 'contabil-fiscal',
+  SimplesApuracao: 'contabil-fiscal',
+  SimplesCreditoIncobravel: 'contabil-fiscal',
+  SourceDocument: 'contabil-fiscal',
+  TaxAssessment: 'contabil-fiscal',
+  TaxOptimizationPolicy: 'contabil-fiscal',
+  WithholdingProfile: 'contabil-fiscal',
+};
 
 const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
 /** F-W4-5 b (dono, questionário, 2026-10-16): sessão da entrevista expirada ou apagada some em 7 dias. */
@@ -30,7 +101,6 @@ export async function purgeOldDeletedRecords(): Promise<void> {
 
   logger.info(`[PurgeJob] Running purge for records soft-deleted before ${cutoffDate.toISOString()}`);
 
-  // DynamicTableData — only model with deletedAt in current schema
   const dynamicTableDataResult = await prisma.dynamicTableData.deleteMany({
     where: { deletedAt: { lt: cutoffDate } },
   });
@@ -41,4 +111,27 @@ export async function purgeOldDeletedRecords(): Promise<void> {
     where: { OR: [{ expiresAt: { lt: interviewCutoff } }, { deletedAt: { lt: interviewCutoff } }] },
   });
   logger.info(`[PurgeJob] InterviewSession: purged ${interviewSessionResult.count} record(s) expired/deleted before ${interviewCutoff.toISOString()}`);
+
+  const crmReportDefinitionResult = await prisma.crmReportDefinition.deleteMany({ where: { deletedAt: { lt: cutoffDate } } });
+  logger.info(`[PurgeJob] CrmReportDefinition: purged ${crmReportDefinitionResult.count} record(s)`);
+
+  const savedTableViewResult = await prisma.savedTableView.deleteMany({ where: { deletedAt: { lt: cutoffDate } } });
+  logger.info(`[PurgeJob] SavedTableView: purged ${savedTableViewResult.count} record(s)`);
+
+  // §3.4 #11 — o binário sai antes da linha: se o disco falhar, a linha fica e a próxima rodada tenta de novo.
+  const attachments = await prisma.crmAttachment.findMany({
+    where: { deletedAt: { lt: cutoffDate } },
+    select: { id: true, storageKey: true },
+  });
+  const removedIds: string[] = [];
+  for (const att of attachments) {
+    try {
+      await storage.deleteFile(att.storageKey);
+      removedIds.push(att.id);
+    } catch (err) {
+      logger.warn('[PurgeJob] CrmAttachment: binary not removed, row kept for the next run', { attachmentId: att.id, err });
+    }
+  }
+  const crmAttachmentResult = await prisma.crmAttachment.deleteMany({ where: { id: { in: removedIds } } });
+  logger.info(`[PurgeJob] CrmAttachment: purged ${crmAttachmentResult.count} record(s) and binaries`);
 }

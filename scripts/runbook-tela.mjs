@@ -9,10 +9,12 @@
 //   out      pasta de evidência (relativa a docs/accounting/runbook-evidence/) — obrigatória
 //   base     front, padrão $RB_BASE ou http://127.0.0.1:3100 (127.0.0.1, não localhost: o cookie de localhost é do dono)
 //   api      back, padrão $RB_API ou http://127.0.0.1:4100 (só encurta as linhas de Network e limpa cookie no logout)
-//   pass     "$SEED" ou ausente = SEED_ACCOUNTING_PASSWORD do server/.env; nunca vai para o log
+//   pass     "$SEED" ou ausente = SEED_ACCOUNTING_PASSWORD do server/.env; "$SEED_ADMIN" = SEED_ADMIN_PASSWORD; nunca vai para o log
 //   profile  sessão persistente (userDataDir) por nome, fora do repo: $RB_SCRATCH ou <tmp>/luminaris-runbook
-// Ops: login logout goto reload selectUnit select tab click clickSel clickInRow type fillLabel setVal key eval
+// Ops: login logout goto reload selectUnit select tab click clickSel clickInRow type fillLabel setVal drag key eval
 //      waitText assertAbsent controls tabsList shot text sleep (ver o switch abaixo).
+//   drag   { from, to, steps?, probe?, shot? } — mouse real (dnd-kit só ouve pointer events); from/to = {x,y} ou JS que
+//          devolve {x,y}; probe (JS) e shot rodam com o botão ainda apertado; from = to com steps 1 é um clique real.
 //
 // Navegador (~/.claude/tools/navegador/GUIA.md): $RB_CHROME, senão o headless shell mais novo do cache do Playwright
 // (%LOCALAPPDATA%\ms-playwright\chromium_headless_shell-*, ~280 MB), senão o Chrome do Puppeteer (~515 MB). Pega vaga
@@ -54,7 +56,7 @@ const env = Object.fromEntries(
   fs.readFileSync(envFile(), 'utf8').split(/\r?\n/).filter((l) => /^[A-Z_]+=/.test(l))
     .map((l) => [l.split('=')[0], l.slice(l.indexOf('=') + 1).replace(/^"|"$/g, '')]),
 );
-const PASS = (p) => (p === '$SEED' || !p ? env.SEED_ACCOUNTING_PASSWORD : p);
+const PASS = (p) => (p === '$SEED_ADMIN' ? env.SEED_ADMIN_PASSWORD : p === '$SEED' || !p ? env.SEED_ACCOUNTING_PASSWORD : p);
 
 /** Headless shell mais novo do cache do Playwright, ou undefined (o Puppeteer usa o Chrome dele). */
 function chromePath() {
@@ -100,6 +102,7 @@ fs.mkdirSync(DL, { recursive: true });
 page.on('console', (m) => { if (['error', 'warn'].includes(m.type())) log(`[console.${m.type()}]`, m.text().slice(0, 300)); });
 page.on('dialog', async (d) => { log('[dialog]', d.type(), d.message()); await d.accept(); });
 const SENHA = /("(?:password|currentPassword|newPassword|confirmPassword)"\s*:\s*")[^"]*"/g;
+const TOKEN = /("(?:token|accessToken|refreshToken)"\s*:\s*")[^"]*"?/g; // o corpo chega truncado: a aspa final pode faltar
 const net = [];
 page.on('response', async (res) => {
   const req = res.request();
@@ -109,7 +112,7 @@ page.on('response', async (res) => {
   try { body = (await res.text()).slice(0, cfg.resMax ?? 500); } catch { body = '(sem corpo)'; }
   const line = `${req.method()} ${u.replace(API, '')} -> ${res.status()}`
     + (req.postData() ? `  req: ${req.postData().replace(SENHA, '$1<redigida>"').slice(0, cfg.reqMax ?? 900)}` : '')
-    + `\n   res: ${body.replace(/\s+/g, ' ')}`;
+    + `\n   res: ${body.replace(TOKEN, '$1<redigido>"').replace(/\s+/g, ' ')}`;
   net.push(line);
   if (cfg.quietGet && req.method() === 'GET' && res.status() < 400) return;
   log('[net] ' + line);
@@ -275,6 +278,24 @@ for (const s of cfg.steps) {
         log(`[set] ${s.sel} = ${s.value} -> ${r}`);
         if (!String(r).startsWith('ok')) throw new Error(r);
         await sleep(s.wait ?? 200);
+        break;
+      }
+      case 'drag': {
+        // arrasto com mouse real (dnd-kit e afins só ouvem pointer events); from/to = {x,y} ou JS que devolve {x,y}
+        const pt = async (v) => (typeof v === 'string' ? page.evaluate(v) : v);
+        const a = await pt(s.from);
+        const b = await pt(s.to);
+        if (!a || !b) throw new Error('drag sem ponto: ' + JSON.stringify({ a, b }));
+        const n = s.steps ?? 20;
+        await page.mouse.move(a.x, a.y);
+        await page.mouse.down();
+        for (let i = 1; i <= n; i++) { await page.mouse.move(a.x + ((b.x - a.x) * i) / n, a.y + ((b.y - a.y) * i) / n); await sleep(25); }
+        await sleep(300);
+        if (s.probe) { const r = await page.evaluate(s.probe); log('[drag:probe]', typeof r === 'string' ? r : JSON.stringify(r)); }
+        if (s.shot) await shot(s.shot);
+        await page.mouse.up();
+        log(`[drag] (${Math.round(a.x)},${Math.round(a.y)}) -> (${Math.round(b.x)},${Math.round(b.y)})`);
+        await sleep(s.wait ?? 1500);
         break;
       }
       case 'key': await page.keyboard.press(s.key); await sleep(s.wait ?? 500); break;

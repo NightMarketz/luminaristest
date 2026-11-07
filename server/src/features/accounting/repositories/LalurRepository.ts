@@ -21,7 +21,7 @@ const ENTRY_RELATIONS = {
   parteB: true,
   account: { select: { id: true, code: true, nature: true, deletedAt: true } },
   processos: { orderBy: [{ indProc: 'asc' }, { numProc: 'asc' }] },
-  journalLinks: { select: { journalEntryId: true, journalEntry: { select: { entryNumber: true } } }, orderBy: { journalEntryId: 'asc' } },
+  journalLinks: { select: { journalEntryId: true, journalEntry: { select: { entryNumber: true, date: true, description: true } } }, orderBy: { journalEntryId: 'asc' } },
   parteBLinks: { select: { parteBId: true, valorCents: true, parteB: true }, orderBy: { parteB: { codCtaB: 'asc' } } },
 } satisfies Prisma.LalurEntryInclude;
 

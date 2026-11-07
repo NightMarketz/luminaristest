@@ -60,7 +60,7 @@ export function knownGapsAcross(
 
 export function suiteUniverse(
   name: string,
-  suite: Pick<PresetSuite, 'tables' | 'modules' | 'moduleOverrides' | 'lockedModuleTables'>,
+  suite: Pick<PresetSuite, 'tables' | 'modules' | 'moduleOverrides' | 'bridges'>,
 ): Universe {
   return { name, tables: { ...CoreSystemPreset.tables, ...composeSuiteDefaultTables(suite) } };
 }

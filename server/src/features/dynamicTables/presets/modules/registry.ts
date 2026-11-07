@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { PresetSuite, PresetTableDefinition } from '..';
-import { createTableFromModule, lockedByAccounting } from '../../utils/TableFactory';
+import { createTableFromModule } from '../../utils/TableFactory';
 import { leadPipelinesModule } from './core/LeadPipelinesModule';
 import { leadStagesModule } from './core/LeadStagesModule';
 import { leadsModule } from './core/LeadsModule';
@@ -51,8 +51,8 @@ import { appointmentsModule } from './planning/AppointmentsModule';
  * PR-2 (itens 7, 9–11): PESSOAS (PES-0 base = customers; PES-FORN = suppliers) e VENDAS (VEN-0 base = sales +
  * saleItems; VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM) entram no registro; salão e clínica passam a declará-los em
  * `modules`. A suíte pode trocar a fonte de uma tabela de módulo (`moduleOverrides`, item 11a — a clínica usa a ficha
- * própria em `customers`) e travar tabelas de módulo pela contabilidade (`lockedModuleTables`, item 11b, até o PR-5
- * mover a trava para o módulo).
+ * própria em `customers`). A trava contábil por tabela da suíte (item 11b) saiu no PR-5: vem de `lockedBy` do módulo
+ * quando a suíte declara uma ponte que o exige (itens 26 e 28).
  *
  * PR-3 (itens 16–20): ESTOQUE (EST-0 base = productUnits + stockMovements, depende de VEN-PROD — F-MB-4) e AGENDA
  * (AGE-0 base = appointments, depende de PES-0 e VEN-SERV) entram no registro; salão e clínica passam a declará-los.
@@ -98,6 +98,8 @@ export const moduleDefSchema = z
     dependsOn: z.array(moduleKeySchema),
     /** Cada grupo (≥2 chaves) exige pelo menos UM módulo selecionado/mantido (BRIEF item 4). */
     requiresOneOf: z.array(z.array(moduleKeySchema).min(2)).default([]),
+    /** PR-5 (item 28): travado pela contabilidade quando a suíte declara uma ponte que exige o módulo. */
+    lockedBy: z.literal('accounting').optional(),
     freeSelects: z.record(z.string(), z.array(z.string().min(1))),
   })
   .strict();
@@ -198,6 +200,7 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     tables: ['customers'],
     dependsOn: [],
     requiresOneOf: [],
+    lockedBy: 'accounting',
     freeSelects: {},
   },
   'PES-FORN': {
@@ -214,7 +217,7 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
   },
   // BRIEF §1 / F-MB-2: VENDAS = base (sales + saleItems) + catálogo por `requiresOneOf` + Comissões (F-MS-8 a).
   // `saleItems` nasce na variante mista; o instalador troca a variante pelos catálogos ligados (item 12).
-  // `lockedBy` do módulo só no PR-5: até lá a trava vem de `lockedModuleTables` da suíte (item 10/11b).
+  // PR-5 (item 28): `lockedBy` no módulo — trava quando a suíte declara a ponte `sales@1` (BRIDGE_REQUIRES).
   'VEN-0': {
     key: 'VEN-0',
     category: 'vendas',
@@ -226,6 +229,7 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     tables: ['sales', 'saleItems'],
     dependsOn: ['PES-0'],
     requiresOneOf: [['VEN-SERV', 'VEN-PROD', 'VEN-PAC']],
+    lockedBy: 'accounting',
     freeSelects: {},
   },
   'VEN-SERV': {
@@ -490,21 +494,17 @@ export function moduleOfTable(internalName: string): ModuleKey | undefined {
 }
 
 /**
- * Opções de composição vindas da suíte (BRIEF itens 11a/11b): `overrides` troca a fonte de schema de uma tabela de
- * módulo (internalName → módulo-fonte); `locked` marca tabelas de módulo como lidas pela contabilidade
- * (`meta.lockedBy: 'accounting'`) até o PR-5 levar a trava para o módulo. Chave que não é tabela de módulo → `Error`
- * (opção aceita e ignorada seria bug silencioso).
+ * Opções de composição vindas da suíte (BRIEF item 11a): `overrides` troca a fonte de schema de uma tabela de
+ * módulo (internalName → módulo-fonte). Chave que não é tabela de módulo → `Error` (opção aceita e ignorada seria bug
+ * silencioso). PR-5 (item 28): a trava contábil por tabela (`locked`, item 11b) saiu — vem do módulo + ponte.
  */
 export type ModuleCompositionOptions = {
   overrides?: Readonly<Record<string, unknown>>;
-  locked?: readonly string[];
 };
 
-/** As opções de composição que uma suíte declara (`moduleOverrides`, `lockedModuleTables`). */
-export function suiteModuleOptions(
-  suite: Pick<PresetSuite, 'moduleOverrides' | 'lockedModuleTables'>,
-): ModuleCompositionOptions {
-  return { overrides: suite.moduleOverrides, locked: suite.lockedModuleTables };
+/** As opções de composição que uma suíte declara (`moduleOverrides`). */
+export function suiteModuleOptions(suite: Pick<PresetSuite, 'moduleOverrides'>): ModuleCompositionOptions {
+  return { overrides: suite.moduleOverrides };
 }
 
 /** Compõe as tabelas de preset dos módulos dados, na ordem de registro e de instalação. */
@@ -513,18 +513,16 @@ export function composeModuleTables(
   options: ModuleCompositionOptions = {},
 ): Record<string, PresetTableDefinition> {
   const overrides = options.overrides ?? {};
-  const locked = new Set(options.locked ?? []);
-  for (const internalName of [...Object.keys(overrides), ...locked]) {
+  for (const internalName of Object.keys(overrides)) {
     if (!moduleOfTable(internalName)) {
-      throw new Error(`Composição de módulos: '${internalName}' não é tabela de módulo do registro (override/trava inválidos).`);
+      throw new Error(`Composição de módulos: '${internalName}' não é tabela de módulo do registro (override inválido).`);
     }
   }
   const tables: Record<string, PresetTableDefinition> = {};
   for (const key of MODULE_KEYS) {
     if (!keys.includes(key)) continue;
     for (const internalName of MODULE_REGISTRY[key].tables) {
-      const def = createTableFromModule(overrides[internalName] ?? MODULE_TABLE_SOURCES[key][internalName]);
-      tables[internalName] = locked.has(internalName) ? lockedByAccounting(def) : def;
+      tables[internalName] = createTableFromModule(overrides[internalName] ?? MODULE_TABLE_SOURCES[key][internalName]);
     }
   }
   return tables;

@@ -168,7 +168,9 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
   },
   ISS_LIMITE: {
     valor: 'int',
-    checar: (l) => so(l.chave === 'ALIQUOTA_MAX_BP' && semDisc(l) && (l.valorInt ?? -1) >= 0 && (l.valorInt ?? 0) <= 10_000, 'chave ALIQUOTA_MAX_BP; valorInt em bp (0..10000)'),
+    // ISS-TRANSICAO-IBS PR-2 item 10 (F-ISS-4 a): ALIQUOTA_MIN_BP (LC 116 art. 8º-A; ADCT art. 128) ao lado do máximo.
+    checar: (l) =>
+      so((l.chave === 'ALIQUOTA_MAX_BP' || l.chave === 'ALIQUOTA_MIN_BP') && semDisc(l) && (l.valorInt ?? -1) >= 0 && (l.valorInt ?? 0) <= 10_000, 'chave ALIQUOTA_MAX_BP|ALIQUOTA_MIN_BP; valorInt em bp (0..10000)'),
   },
   // ISS-TRANSICAO-IBS PR-1 (BRIEF item 2): fator de redução do ISS por ano (LC 116 art. 8º-B I–IV), sem discriminador.
   ISS_TRANSICAO: {

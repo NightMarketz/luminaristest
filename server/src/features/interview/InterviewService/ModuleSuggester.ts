@@ -26,12 +26,20 @@ export class ModuleSuggester {
 
     const suggested = new Set<ModuleKey>(locked);
     if (options.length > 0) {
-      for (const pick of await this.pickWithAi(messages, knowledge, options.map((m) => m.key))) {
-        try {
-          for (const key of resolveModuleSelection([pick], locked, registry)) suggested.add(key);
-        } catch (error) {
-          // Sugestão, não pedido: dependência não-fixa ausente descarta o pick (sem 400).
-          logger.warn(`[ModuleSuggester] Sugestão '${pick}' descartada: ${(error as Error).message}`);
+      const picks = await this.pickWithAi(messages, knowledge, options.map((m) => m.key));
+      // PR-6 item 31: a base fixa da categoria entra sempre que a categoria é sugerida; os picks se resolvem juntos
+      // (ex.: AGE-0 + VEN-SERV). Se o conjunto não fecha, cai no pick a pick e só o que não fecha é descartado.
+      const withBase = (keys: ModuleKey[]) => [...new Set([...keys, ...keys.flatMap((k) => categoryBase(k, registry))])];
+      try {
+        if (picks.length > 0) for (const key of resolveModuleSelection(withBase(picks), locked, registry)) suggested.add(key);
+      } catch {
+        for (const pick of picks) {
+          try {
+            for (const key of resolveModuleSelection(withBase([pick]), locked, registry)) suggested.add(key);
+          } catch (error) {
+            // Sugestão, não pedido: dependência não-fixa ausente descarta o pick (sem 400).
+            logger.warn(`[ModuleSuggester] Sugestão '${pick}' descartada: ${(error as Error).message}`);
+          }
         }
       }
     }
@@ -68,4 +76,12 @@ ${JSON.stringify(knowledge.filter((m) => !optionSet.has(m.key)).map((m) => m.key
       return [];
     }
   }
+}
+
+/** Base fixa da categoria do módulo (ela mesma, se o módulo é a base). */
+function categoryBase(key: ModuleKey, registry: Readonly<Record<ModuleKey, ModuleDef>>): ModuleKey[] {
+  const { category } = registry[key];
+  return Object.values(registry)
+    .filter((m) => m.fixed && m.category === category)
+    .map((m) => m.key);
 }

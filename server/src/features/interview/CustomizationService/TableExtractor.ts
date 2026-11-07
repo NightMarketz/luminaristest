@@ -1,12 +1,14 @@
 import { logger } from '../../../lib/logger';
 import { ICustomizableTable } from '../models/InterviewTypes';
 import type { ISchemaField } from '../../../features/dynamicTables/models/DynamicTable.model';
-import type { PresetTableDefinition } from '../../../features/dynamicTables/presets';
+import type { BridgeKey, PresetTableDefinition } from '../../../features/dynamicTables/presets';
 import { computeTableLocks } from '../../../features/dynamicTables/presets/removability';
 
 interface IPreset {
   key: string;
   tables: Record<string, PresetTableDefinition>;
+  /** BE-INCR-MODULOS-BASE-SUBMODULOS PR-5 (item 28): pontes da suíte, que travam os módulos exigidos. */
+  bridges: readonly BridgeKey[];
 }
 
 /**
@@ -26,7 +28,7 @@ export class TableExtractor {
     }
     
     // W2 item 4 (BE-INCR-WIZARD-REMOVABILITY): a trava vem da regra única de remoção, não de um `isCore` fixo.
-    const locks = computeTableLocks(preset.tables, new Set(Object.keys(preset.tables)));
+    const locks = computeTableLocks(preset.tables, new Set(Object.keys(preset.tables)), preset.bridges);
 
     // Extrai as tabelas do objeto do preset
     const customizableTables: ICustomizableTable[] = Object.entries(preset.tables)
