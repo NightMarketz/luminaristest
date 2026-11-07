@@ -10,7 +10,33 @@ import { createRequire } from 'node:module';
 const { acquire, holders, HELD_ENV } = createRequire(import.meta.url)('./heavy-slot.cjs');
 
 const novoDir = () => fs.mkdtempSync(path.join(os.tmpdir(), 'heavy-slot-test-'));
-const envCom = (dir, slots) => ({ LUMINARIS_HEAVY_SLOTS: String(slots), LUMINARIS_HEAVY_SLOTS_DIR: dir });
+// Piso de memória desligado: os testes de vaga não podem depender da memória da máquina.
+const envCom = (dir, slots) => ({
+  LUMINARIS_HEAVY_SLOTS: String(slots), LUMINARIS_HEAVY_SLOTS_DIR: dir, LUMINARIS_HEAVY_MIN_FREE_GB: '0',
+});
+
+test('com memória virtual abaixo do piso espera, avisa, e entra quando a memória volta', async () => {
+  const env = { ...envCom(novoDir(), 2), LUMINARIS_HEAVY_MIN_FREE_GB: '6' };
+  let livre = 2;
+  const avisos = [];
+  let entrou = false;
+  const p = acquire({ pollMs: 20, noticeMs: 0, env, label: 'tsc', log: (m) => avisos.push(m), livreGb: () => livre })
+    .then((r) => { entrou = true; return r; });
+  await new Promise((r) => setTimeout(r, 120));
+  assert.equal(entrou, false, 'não entra com 2 GB livres e piso de 6');
+  assert.equal(holders({ slots: 2, dir: env.LUMINARIS_HEAVY_SLOTS_DIR }).length, 0, 'não segura vaga enquanto espera memória');
+  assert.ok(avisos.some((m) => m.includes('2.0 GB') && m.includes('piso 6')), 'diz quanto está livre e o piso');
+  livre = 10;
+  const release = await p;
+  assert.equal(entrou, true);
+  release();
+});
+
+test('piso 0 desliga a checagem de memória', async () => {
+  const env = envCom(novoDir(), 1);
+  const release = await acquire({ ...quieto, env, livreGb: () => { throw new Error('não devia medir'); } });
+  release();
+});
 const quieto = { pollMs: 20, log: () => {} };
 
 test('pega vaga e grava PID e rótulo na trava', async () => {
