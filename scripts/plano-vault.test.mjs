@@ -54,9 +54,9 @@ test('destravados: só B (dependência A fechada); C espera B aberto', () => {
   assert.match(idx, /\| contabil \| 1 \| 3 \|/);
 });
 
-test('fecha_regua=false: fica no denominador, não conta como fechado', () => {
+test('fecha_regua=false: sai do numerador e do denominador (D-2026-11-07-REGUA-DENOMINADOR)', () => {
   const dir = vault({ ...base, 'nos/X.md': note({ id: 'X', tipo: 'regua', dominio: 'contabil', titulo: 'x', estado: 'done', fecha_regua: false }) });
-  assert.match(buildIndex(loadVault(dir))['_INDEX.md'], /\| contabil \| 1 \| 4 \|/);
+  assert.match(buildIndex(loadVault(dir))['_INDEX.md'], /\| contabil \| 1 \| 3 \|/);
 });
 
 test('blocked e diferido não aparecem em destravados', () => {
