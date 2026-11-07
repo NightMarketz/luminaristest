@@ -148,6 +148,18 @@ describe('AssinadorLocalSection', () => {
     expect(screen.getByText('Caixa Balcão')).toBeInTheDocument();
   });
 
+  it('FA-4: o código pedido na unidade 1 que chega depois da troca para a unidade 2 não aparece', async () => {
+    let soltar: (v: { codigo: string; expiraEm: string }) => void = () => undefined;
+    svc.gerarCodigo.mockImplementationOnce(() => new Promise((r) => { soltar = r; }));
+    const { rerender } = render(<AssinadorLocalSection unitId="u1" />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Gerar código de pareamento' }));
+    rerender(<AssinadorLocalSection unitId="u2" />);
+    await act(async () => soltar({ codigo: 'ABCDEFGHJKMN', expiraEm: new Date(Date.now() + 600_000).toISOString() }));
+    expect(screen.queryByTestId('codigo-pareamento')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(svc.gerarCodigo).toHaveBeenCalledWith('u1');
+  });
+
   it('FA-10: com assinador pareado, o modal avisa que o pareamento novo substitui o atual', async () => {
     svc.getEstado.mockResolvedValue(view());
     svc.gerarCodigo.mockResolvedValue({ codigo: 'ABCDEFGHJKMN', expiraEm: new Date(Date.now() + 600_000).toISOString() });

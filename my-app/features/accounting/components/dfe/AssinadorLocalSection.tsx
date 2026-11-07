@@ -63,6 +63,10 @@ export function AssinadorLocalSection({ unitId }: AssinadorLocalSectionProps) {
   const reqRef = useRef(0);
   // O dispositivo que existia quando o modal do código abriu: outro id na releitura = pareamento visto pela tela (FA-8).
   const antesDoCodigoRef = useRef<string | null>(null);
+  // A unidade da tela AGORA: a resposta de uma mutação que começou noutra unidade é descartada (o código gerado para A
+  // não pode aparecer sob B — review independente do #1143).
+  const unitRef = useRef(unitId);
+  unitRef.current = unitId;
 
   const load = useCallback(async () => {
     const req = ++reqRef.current;
@@ -84,6 +88,8 @@ export function AssinadorLocalSection({ unitId }: AssinadorLocalSectionProps) {
     setCodigo(null);
     setCodigoAberto(false);
     setPareadoAgora(false);
+    setRevogarAberto(false);
+    setActionError(null);
     void load();
   }, [load]);
 
@@ -122,15 +128,18 @@ export function AssinadorLocalSection({ unitId }: AssinadorLocalSectionProps) {
   }, [codigoAberto]);
 
   async function gerarCodigo() {
+    const pedido = unitId;
     setActionError(null);
     setPareadoAgora(false);
     setBusy(true);
     try {
-      const c = await dfeAssinadorService.gerarCodigo(unitId);
+      const c = await dfeAssinadorService.gerarCodigo(pedido);
+      if (unitRef.current !== pedido) return;
       antesDoCodigoRef.current = view?.dispositivoId ?? null;
       setCodigo(c);
       setCodigoAberto(true);
     } catch (e: unknown) {
+      if (unitRef.current !== pedido) return;
       setActionError(resolveError(e, t('dfe.assinador.error.codigo', 'Não foi possível gerar o código de pareamento.')));
     } finally {
       setBusy(false);
@@ -143,14 +152,17 @@ export function AssinadorLocalSection({ unitId }: AssinadorLocalSectionProps) {
   }
 
   async function revogar() {
+    const pedido = unitId;
     setActionError(null);
     setBusy(true);
     try {
-      await dfeAssinadorService.revogar(unitId);
+      await dfeAssinadorService.revogar(pedido);
+      if (unitRef.current !== pedido) return;
       setRevogarAberto(false);
       setPareadoAgora(false);
       await load();
     } catch (e: unknown) {
+      if (unitRef.current !== pedido) return;
       setRevogarAberto(false);
       setActionError(resolveError(e, t('dfe.assinador.error.revogar', 'Não foi possível revogar o assinador.')));
     } finally {
