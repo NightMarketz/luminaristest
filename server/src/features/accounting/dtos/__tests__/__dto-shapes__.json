@@ -15618,8 +15618,7 @@
             "INTERDEPENDENCIA_SOCIO",
             "INTERDEPENDENCIA_RECEITA_NAO_INFORMADA",
             "PROJECAO_LIMITE_EPP",
-            "PROJECAO_SUBLIMITE_ICMS_ISS",
-            "BENEFICIO_ISS_TRANSICAO_8B"
+            "PROJECAO_SUBLIMITE_ICMS_ISS"
           ]
         },
         "detalhe": {

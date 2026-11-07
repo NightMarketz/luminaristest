@@ -45,8 +45,6 @@ import type { OutraParticipacao } from '../dtos/PartnerDto';
 import { alertasDeInterdependencia, alertasDeParceria, alertasDeProjecao, receitaProjetadaDoAno, type ContratoParceria, type SocioComParticipacoes } from '../models/taxOptimizationAlertas';
 import type { IIssBeneficioMunicipalRepository } from '../repositories/IIssBeneficioMunicipalRepository';
 import { beneficioDaAtividade, excecaoPisoIss, type BeneficioCadastrado } from '../models/issBeneficio';
-import { issAliquotaMinBp } from '../models/issLimite';
-import { INICIO_TRANSICAO_ISS, issExtinto } from '../models/issTransicao';
 import { toBeneficio } from './IssBeneficioMunicipalService';
 import { TABELA_ANEXO_XI, anexoXiVigente, cnaesForaDoAnexo, enquadramentoDasOcupacoes, transportadorNaTabelaB, ocupacoesExcluidas, type OcupacaoAnexoXi } from '../models/meiAnexoXi';
 import type { IssBeneficioTipo } from '../dtos/IssBeneficioMunicipalDto';
@@ -65,7 +63,7 @@ export const SIMPLES_DAS_SUBSTITUIDO = 'tax.simples_das.substituido';
 /** BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-8 (a): documento anexado a um DAS já registrado (ramo idempotente). */
 export const SIMPLES_DAS_DOCUMENTO_ANEXADO = 'tax.simples_das.documento_anexado';
 
-const TABELAS: readonly LegalParameterTabela[] = ['SIMPLES_ANEXO_FAIXA', 'SIMPLES_ANEXO_REPARTICAO', 'SIMPLES_TETO_ISS', 'SIMPLES_ENQUADRAMENTO', 'SIMPLES_LIMITE', 'ISS_LIMITE'];
+const TABELAS: readonly LegalParameterTabela[] = ['SIMPLES_ANEXO_FAIXA', 'SIMPLES_ANEXO_REPARTICAO', 'SIMPLES_TETO_ISS', 'SIMPLES_ENQUADRAMENTO', 'SIMPLES_LIMITE'];
 
 export type { AlertaSimples, CodigoAlertaSimples } from '../dtos/SimplesDto';
 /** Última competência em que a ME/EPP ainda pode usar documento municipal (NFS-e nacional obrigatória desde 01/11/2026). */
@@ -643,34 +641,16 @@ export class SimplesApuracaoService {
     }
     // SIMPLES-PISO-ANEXO-XI bloco 1 (itens 4-6): benefício vigente no 1º dia do PA que alcança o serviço. Valor fixo
     // (art. 31 II / art. 33) fica fora do cálculo — só alerta (F-PI-5 a).
-    // ISS-TRANSICAO-IBS PR-2 item 10 (F-ISS-4 a): o piso é a linha ISS_LIMITE/ALIQUOTA_MIN_BP na data do PA, lida só quando
-    // há benefício a aplicar (sem linha PUBLISHED ⇒ 400 nomeado). Item 13: de 2033 em diante não há ISS nos Anexos — o
-    // benefício cadastrado não entra no cálculo nem pede piso (LC 214 art. 543 IV).
-    const dataPa = `${competencia}-01`;
-    let pisoIssBp: number | null = null;
     const beneficios = new Map<string, BeneficioCadastrado>();
     for (const e of entrada) {
       if (e.natureza !== 'SERVICO') continue;
-      const b = beneficioDaAtividade(cadastrados, { codMun, cTribNac: e.cTribNac, data: dataPa });
+      const b = beneficioDaAtividade(cadastrados, { codMun, cTribNac: e.cTribNac, data: `${competencia}-01` });
       if (!b) continue;
       beneficios.set(`${e.natureza}|${e.cTribNac ?? ''}`, b);
       if (b.tipo === 'VALOR_FIXO') {
         alertas.push({ severity: 'INFO', codigo: 'ISS_VALOR_FIXO_MUNICIPAL', detalhe: `serviço ${e.cTribNac}: valor fixo municipal de ISS (${b.legislacao}) — fora do cálculo do DAS (Res. CGSN 140 arts. 31 II e 33)` });
-      } else if (!issExtinto(dataPa)) {
-        pisoIssBp ??= issAliquotaMinBp(linhas, dataPa);
-        e.beneficioIss = { tipo: b.tipo, reducaoBpPorFaixa: b.reducaoBpPorFaixa, pisoIssBp };
-      }
-    }
-    // Item 12: benefício que começou antes de 2029 e segue vigente em 01/01/2029 — aviso (não bloqueio) no PA 2029-01 com a
-    // regra aplicada (P-ISS-2 → ramo § 3º do ADCT art. 128: o percentual do benefício fica mantido até 31/12/2032).
-    if (competencia === INICIO_TRANSICAO_ISS.slice(0, 7)) {
-      for (const b of new Set(beneficios.values())) {
-        if (b.vigenteDesde >= INICIO_TRANSICAO_ISS || (b.vigenteAte !== null && b.vigenteAte < INICIO_TRANSICAO_ISS)) continue;
-        alertas.push({
-          severity: 'WARNING',
-          codigo: 'BENEFICIO_ISS_TRANSICAO_8B',
-          detalhe: `benefício municipal de ISS (${b.legislacao}) vigente desde ${b.vigenteDesde} cruza 01/01/2029: o percentual do benefício fica mantido até 31/12/2032 (ADCT art. 128 § 3º) e não cai de novo pelo fator da LC 116 art. 8º-B; a redução de 2029–2032 vem das alíquotas da tabela`,
-        });
+      } else {
+        e.beneficioIss = { tipo: b.tipo, reducaoBpPorFaixa: b.reducaoBpPorFaixa };
       }
     }
 
@@ -704,14 +684,13 @@ export class SimplesApuracaoService {
       calculada = { competencia, regime: 'SIMPLES', rbt12Cents: 0, janelaRbt12: janela, mesesFaltantes: [], atividades: [], totalCalculadoCents: 0, tabela: [] };
     }
     if (entrada.length === 0) calculada = { ...calculada, atividades: [], totalCalculadoCents: 0 };
-    // F-PI-2 (dono, 10/10): o piso elevou o ISS acima do % puro da tabela — orientar a desmarcar o benefício na faixa.
-    // ISS-TRANSICAO-IBS PR-2 item 10: o texto interpola o piso lido da linha vigente no PA, não mais o "2%" fixo.
+    // F-PI-2 (dono, 10/10): o piso de 2% elevou o ISS acima do % puro da tabela — orientar a desmarcar o benefício na faixa.
     for (const a of calculada.atividades) {
-      if (!a.beneficioIss?.desvantajoso || pisoIssBp === null) continue;
+      if (!a.beneficioIss?.desvantajoso) continue;
       alertas.push({
         severity: 'WARNING',
         codigo: 'BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO',
-        detalhe: `serviço ${a.cTribNac} na ${a.faixa}ª faixa: com o benefício municipal o ISS fica em ${a.percentuais.ISS}% (piso de ${(pisoIssBp / 100).toFixed(2)}%, Res. CGSN 140 art. 31 p.ú.), acima dos ${a.beneficioIss.issTabela}% da tabela — desmarque o benefício nesta faixa`,
+        detalhe: `serviço ${a.cTribNac} na ${a.faixa}ª faixa: com o benefício municipal o ISS fica em ${a.percentuais.ISS}% (piso de 2%, Res. CGSN 140 art. 31 p.ú.), acima dos ${a.beneficioIss.issTabela}% da tabela — desmarque o benefício nesta faixa`,
       });
     }
     if (calculada.mesesFaltantes.length > 0) alertas.push({ severity: 'WARNING', codigo: 'RBT12_INCOMPLETO', detalhe: `sem receita declarada em ${calculada.mesesFaltantes.join(', ')}` });

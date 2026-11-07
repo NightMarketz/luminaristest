@@ -35,13 +35,3 @@ export function fatorReducaoIssBp(linhas: readonly LinhaLegal[], data: string): 
   if (l?.valorInt == null) throw new SemLinhaVigenteError('ISS_TRANSICAO', data, 'FATOR_REDUCAO_BP');
   return l.valorInt;
 }
-
-/**
- * ISS-TRANSICAO-IBS PR-2 item 8 (F-ISS-1 a) — alíquota do regime normal na DPS: `issAliquotaBp × (10000 − fator) / 10000`,
- * com `issAliquotaBp` = a alíquota municipal de 31/12/2028 (LC 116 art. 8º-B caput, L1). Em bp, sem arredondar: as casas
- * do `pAliq` seguem a regra que a DPS já tem (2 casas, `bpToPctString`). Não vale no Simples (o % efetivo do Anexo já cai
- * pela tabela — aplicar aqui reduziria duas vezes).
- */
-export function issAliquotaNaTransicaoBp(issAliquotaBp: number, fatorBp: number): number {
-  return (issAliquotaBp * (10000 - fatorBp)) / 10000;
-}

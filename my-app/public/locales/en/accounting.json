@@ -3073,7 +3073,6 @@
   "simples": {
     "alerta": {
       "ATIVIDADE_SEM_ANEXO": "Activity without annex",
-      "BENEFICIO_ISS_TRANSICAO_8B": "Municipal ISS benefit crosses the 2029 transition",
       "BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO": "Municipal benefit not applied (disadvantageous)",
       "HISTORICO_IGNORADO": "Pre-adoption history ignored",
       "ISS_VALOR_FIXO_MUNICIPAL": "ISS as municipal fixed amount",
