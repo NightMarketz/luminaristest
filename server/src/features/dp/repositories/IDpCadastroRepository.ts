@@ -4,7 +4,8 @@ type Tx = Prisma.TransactionClient;
 
 export interface DpLotacaoData { unitId: string; codigo: string; descricao: string }
 export interface DpCargoData { nome: string; cbo: string }
-export interface DpJornadaData { nome: string; minutosSemanais: number; tipoJornada: string; descricao: string | null }
+/** BE-INCR-DP-F2 item 68: + a escala (`diasTrabalho` na forma canônica SEG..DOM; `minutosPorDia`). */
+export interface DpJornadaData { nome: string; minutosSemanais: number; tipoJornada: string; descricao: string | null; diasTrabalho: string; minutosPorDia: number | null }
 export interface DpSindicatoData { cnpj: string; nome: string }
 export interface DpConvencaoData { sindicatoId: string; identificacao: string; vigenteDesde: string; vigenteAte: string | null; fonte: string }
 export interface DpConvencaoParametroData {

@@ -28,7 +28,7 @@ describe('/api/dp/vinculos/:id afastamentos e férias (itens 59–60)', () => {
     const post = async (path: string, body: object) => (await request(app).post(`/api/dp/${path}`).set(auth).send({ unitId: UNIT, ...body })).body.data.id as string;
     const lotacaoId = await post('lotacoes', { codigo: 'L1', descricao: 'Loja' });
     const cargoId = await post('cargos', { nome: 'Manicure', cbo: '516120' });
-    const jornadaId = await post('jornadas', { nome: '44h', minutosSemanais: 2640, tipoJornada: '9' });
+    const jornadaId = await post('jornadas', { nome: '44h', minutosSemanais: 2640, diasTrabalho: ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'], minutosPorDia: 440, tipoJornada: '9' });
     const trabalhadorId = await post('trabalhadores', { cpf: CPF, nome: 'Ana', nascimento: '1990-03-10' });
     vinculoId = await post('vinculos', {
       trabalhadorId,

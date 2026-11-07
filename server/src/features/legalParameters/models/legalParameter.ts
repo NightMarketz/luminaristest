@@ -76,6 +76,14 @@ export const LEGAL_PARAMETER_TABELAS = [
   'ESOCIAL_NATUREZA_RUBRICA',
   'ESOCIAL_INCIDENCIA_RUBRICA',
   'ESOCIAL_MOTIVO_AFASTAMENTO',
+  // BE-INCR-DP-F2 PR-0R (nó PES-4, itens 65–66; regra de parâmetro do dono, 06/11): número de lei da folha como dado
+  // (adicionais, hora noturna, dias, limites de jornada, idades e prazos, arredondamento) e o que cada categoria do
+  // núcleo recolhe. Consumidor = features/dp/models/regrasFolha.ts.
+  'FOLHA_REGRA',
+  'DP_CATEGORIA_ENCARGO',
+  // BE-INCR-DP-F2 PR-1 (item 13): Tabela 07 do eSocial (tipos de dependente), no padrão do D-8 do F0+F1. Consumidor =
+  // features/dp/services/DpDependenteService.ts.
+  'ESOCIAL_TIPO_DEPENDENTE',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

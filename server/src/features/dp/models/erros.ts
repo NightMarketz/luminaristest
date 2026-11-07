@@ -30,6 +30,10 @@ export const DP_ERROR_REASONS = [
   'DP_TRABALHADOR_COM_VINCULO',
   'DP_AFASTAMENTO_SOBREPOSTO',
   'DP_FERIAS_PERIODO_INEXISTENTE',
+  // BE-INCR-DP-F2 PR-0R (item 68): escala que não se descreve por dias fixos da semana × minutos por dia (12×36 é do F6).
+  'DP_ESCALA_IRREGULAR',
+  // BE-INCR-DP-F2 PR-1 (itens 17 e 78): lançamento ou outra remuneração inválidos; `details.campo` nomeia o campo.
+  'DP_LANCAMENTO_INVALIDO',
 ] as const;
 export type DpErrorReason = (typeof DP_ERROR_REASONS)[number];
 

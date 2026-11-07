@@ -4,9 +4,19 @@
  * com o motivo nomeado (molde `DfeDisabledEmissor`: "nunca silêncio").
  */
 import type { Competencia } from '../models/competencia';
+import type { RubricaCodigo } from '../models/rubricas/catalogo';
 
-/** O formato do item nasce no BRIEF do F2, com os lançamentos manuais; até lá a lista é sempre vazia. */
-export type JornadaApuradaItem = never;
+/**
+ * BE-INCR-DP-F2 item 18 (PR-1) — o formato do item: o mesmo do lançamento `MODULO` (rubrica de jornada, minutos e, se o
+ * ponto souber, o dia). O `NullJornadaApurada` segue devolvendo lista vazia com motivo.
+ */
+export interface JornadaApuradaItem {
+  /** Rubrica de jornada (`RUBRICAS_DE_JORNADA` em models/lancamento.ts). */
+  rubrica: RubricaCodigo;
+  quantidadeMin: number;
+  /** YYYY-MM-DD, dentro da competência. */
+  data?: string;
+}
 
 export interface JornadaApurada {
   origem: 'NULO' | 'MODULO';

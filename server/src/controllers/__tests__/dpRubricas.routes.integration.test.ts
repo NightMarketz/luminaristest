@@ -35,7 +35,7 @@ describe('GET /api/dp/rubricas (item 54)', () => {
   it('200 devolve o catálogo de código, não conferido pelo contador', async () => {
     const r = await request(app).get(BASE).set(authHeader(dono)).query({ unitId: UNIT });
     expect([r.status, r.body.success, r.body.data.conferidoPeloContador]).toEqual([200, true, false]);
-    expect(r.body.data.rubricas.map((x: { codigo: string }) => x.codigo)).toEqual(['SALARIO_BASE', 'BOLSA_ESTAGIO', 'PRO_LABORE', 'INSS_SEGURADO', 'IRRF', 'FGTS_MES']);
+    expect(r.body.data.rubricas.map((x: { codigo: string }) => x.codigo)).toEqual(['SALARIO_BASE', 'BOLSA_ESTAGIO', 'PRO_LABORE', 'INSS_SEGURADO', 'IRRF', 'FGTS_MES', 'HORA_EXTRA_50', 'HORA_EXTRA_100', 'ADICIONAL_NOTURNO', 'COMISSAO', 'FALTAS', 'DSR_VARIAVEIS', 'DSR_PERDIDO', 'COMPLEMENTO_MINIMO', 'COMPLEMENTO_PISO', 'AFASTAMENTO_EMPRESA_15D', 'ADIANTAMENTO', 'DESCONTO_ADIANTAMENTO', 'SALARIO_FAMILIA']);
     expect(r.body.data.rubricas[0]).toEqual({
       codigo: 'SALARIO_BASE',
       nome: { pt: 'Salário base', en: 'Base salary' },

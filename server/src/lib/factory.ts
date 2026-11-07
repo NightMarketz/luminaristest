@@ -220,6 +220,10 @@ import { DpVinculoRepository } from '../features/dp/repositories/DpVinculoReposi
 import { DpRubricaService } from '../features/dp/services/DpRubricaService';
 import { DpAfastamentoFeriasService } from '../features/dp/services/DpAfastamentoFeriasService';
 import { DpAfastamentoFeriasRepository } from '../features/dp/repositories/DpAfastamentoFeriasRepository';
+import { DpDependenteService } from '../features/dp/services/DpDependenteService';
+import { DpDependenteRepository } from '../features/dp/repositories/DpDependenteRepository';
+import { DpLancamentoService } from '../features/dp/services/DpLancamentoService';
+import { DpLancamentoRepository } from '../features/dp/repositories/DpLancamentoRepository';
 import type { EmployeeRowLookup } from '../features/dp/ports/EmployeeRowLookup';
 import { DP_AUDIT_KEYRING } from '../features/dp/models/vinculo';
 import { loadKeyring } from './secretBox';
@@ -397,6 +401,8 @@ import type { IDpModuloAtivacaoRepository } from '../features/dp/repositories/ID
 import type { IDpCadastroRepository } from '../features/dp/repositories/IDpCadastroRepository';
 import type { IDpVinculoRepository } from '../features/dp/repositories/IDpVinculoRepository';
 import type { IDpAfastamentoFeriasRepository } from '../features/dp/repositories/IDpAfastamentoFeriasRepository';
+import type { IDpDependenteRepository } from '../features/dp/repositories/IDpDependenteRepository';
+import type { IDpLancamentoRepository } from '../features/dp/repositories/IDpLancamentoRepository';
 import type { IDpPolicy } from '../features/dp/policies/IDpPolicy';
 import type { IWithholdingProfileRepository } from '../features/accounting/repositories/IWithholdingProfileRepository';
 import type { ITaxWithholdingReadPort, ITaxWithholdingRepository } from '../features/accounting/repositories/ITaxWithholdingRepository';
@@ -875,6 +881,8 @@ export class ApplicationFactory {
     dpCadastro: IDpCadastroRepository; // BE-INCR-DP-F0-F1 PR-3 (itens 28–33)
     dpVinculo: IDpVinculoRepository; // BE-INCR-DP-F0-F1 PR-4 (itens 37–48)
     dpAfastamentoFerias: IDpAfastamentoFeriasRepository; // BE-INCR-DP-F0-F1 PR-6 (itens 56 e 58)
+    dpDependente: IDpDependenteRepository; // BE-INCR-DP-F2 PR-1 (item 13)
+    dpLancamento: IDpLancamentoRepository; // BE-INCR-DP-F2 PR-1 (itens 16 e 77)
     withholdingProfile: IWithholdingProfileRepository; // RETENCOES-FONTE PR-1 (item 6)
     taxWithholding: ITaxWithholdingRepository; // RETENCOES-FONTE PR-2 (item 13; porta da Reinf, Emenda 22/10 item 2)
     profitDistribution: IProfitDistributionRepository; // IRRF-DISTRIBUICAO PR-2
@@ -1003,6 +1011,8 @@ export class ApplicationFactory {
     dpVinculo: DpVinculoService; // BE-INCR-DP-F0-F1 PR-4 (itens 37–49)
     dpRubrica: DpRubricaService; // BE-INCR-DP-F0-F1 PR-5 (item 54)
     dpAfastamentoFerias: DpAfastamentoFeriasService; // BE-INCR-DP-F0-F1 PR-6 (itens 56–61)
+    dpDependente: DpDependenteService; // BE-INCR-DP-F2 PR-1 (itens 13–15, 20–21)
+    dpLancamento: DpLancamentoService; // BE-INCR-DP-F2 PR-1 (itens 16–17, 20–21, 77)
     withholdingProfile: WithholdingProfileService; // RETENCOES-FONTE PR-1 (item 6)
     withholding: WithholdingService; // RETENCOES-FONTE PR-2 (itens 10–23)
     profitDistribution: ProfitDistributionService; // IRRF-DISTRIBUICAO PR-2
@@ -1123,6 +1133,8 @@ export class ApplicationFactory {
       dpCadastro: new DpCadastroRepository(), // BE-INCR-DP-F0-F1 PR-3
       dpVinculo: new DpVinculoRepository(), // BE-INCR-DP-F0-F1 PR-4
       dpAfastamentoFerias: new DpAfastamentoFeriasRepository(), // BE-INCR-DP-F0-F1 PR-6
+      dpDependente: new DpDependenteRepository(), // BE-INCR-DP-F2 PR-1
+      dpLancamento: new DpLancamentoRepository(), // BE-INCR-DP-F2 PR-1
       withholdingProfile: new WithholdingProfileRepository(), // RETENCOES-FONTE PR-1 (item 6)
       taxWithholding: new TaxWithholdingRepository(), // RETENCOES-FONTE PR-2 (item 13)
       profitDistribution: new ProfitDistributionRepository(),
@@ -1830,7 +1842,8 @@ export class ApplicationFactory {
       ),
       dpModule: dpModuleService, // BE-INCR-DP-F0-F1 PR-1
       dpPortResolver: new DpPortResolver(dpPortImplementations, (owner, c) => dpModuleService.modulosAtivosEm(owner, c)),
-      dpCadastro: new DpCadastroService(this.repositories.dpCadastro, this.policies.dp, auditService), // BE-INCR-DP-F0-F1 PR-3
+      // BE-INCR-DP-F0-F1 PR-3; BE-INCR-DP-F2 item 71: a fotografia legal para o aviso de jornada contra a lei vigente.
+      dpCadastro: new DpCadastroService(this.repositories.dpCadastro, this.policies.dp, auditService, legalParameterService),
       dpRubrica: new DpRubricaService(this.policies.dp), // BE-INCR-DP-F0-F1 PR-5
       // BE-INCR-DP-F0-F1 PR-6: a posse vem do vínculo (repositório do PR-4); motivo e categoria pela fotografia legal.
       dpAfastamentoFerias: new DpAfastamentoFeriasService(
@@ -1839,6 +1852,18 @@ export class ApplicationFactory {
         this.policies.dp,
         auditService,
         legalParameterService,
+      ),
+      // BE-INCR-DP-F2 PR-1: posse pelo trabalhador/vínculo (repositório do PR-4); HMAC com o chaveiro do DP, lido no uso.
+      dpDependente: new DpDependenteService(
+        this.repositories.dpDependente,
+        this.repositories.dpVinculo,
+        this.policies.dp,
+        auditService,
+        legalParameterService,
+        () => loadKeyring(process.env, DP_AUDIT_KEYRING),
+      ),
+      dpLancamento: new DpLancamentoService(this.repositories.dpLancamento, this.repositories.dpVinculo, this.policies.dp, auditService, () =>
+        loadKeyring(process.env, DP_AUDIT_KEYRING),
       ),
       // BE-INCR-DP-F0-F1 PR-4: reusa o sócio (D-9), o regime do ano e a fotografia legal; `employees` pela porta (D-2, D-6).
       dpVinculo: new DpVinculoService(this.repositories.dpVinculo, this.repositories.dpCadastro, this.policies.dp, auditService, {
@@ -2726,6 +2751,8 @@ export class ApplicationFactory {
   public getDpVinculoService = (): DpVinculoService => this.services.dpVinculo;
   public getDpRubricaService = (): DpRubricaService => this.services.dpRubrica;
   public getDpAfastamentoFeriasService = (): DpAfastamentoFeriasService => this.services.dpAfastamentoFerias;
+  public getDpDependenteService = (): DpDependenteService => this.services.dpDependente;
+  public getDpLancamentoService = (): DpLancamentoService => this.services.dpLancamento;
   public getWithholdingProfileService = (): WithholdingProfileService => this.services.withholdingProfile;
   public getWithholdingService = (): WithholdingService => this.services.withholding;
   /** RETENCOES-FONTE PR-2 (Emenda 22/10 item 2): a porta que a EFD-REINF lê, sem HTTP. */

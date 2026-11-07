@@ -12,6 +12,7 @@ import type {
 } from '../dtos/DpAfastamentoFeriasDto';
 import { dpConflictError, dpValidationError } from '../models/erros';
 import { periodosDeFerias, type PeriodoFerias } from '../models/ferias';
+import { mesesFerias } from '../models/regrasFolha';
 import { sobrepoe } from '../models/vigencia';
 import { naturezaDoEvento, type NaturezaVinculo } from '../models/vinculo';
 import type { IDpPolicy } from '../policies/IDpPolicy';
@@ -107,7 +108,7 @@ export class DpAfastamentoFeriasService {
       vinculoId,
       natureza,
       dataRef,
-      periodos: this.periodos(v, natureza, dataRef).map((p) => ({ ...p, diasGozadosImplantados: gozados.get(p.aquisitivoInicio) ?? null })),
+      periodos: (await this.periodos(v, natureza, dataRef)).map((p) => ({ ...p, diasGozadosImplantados: gozados.get(p.aquisitivoInicio) ?? null })),
     };
   }
   async listImplantacoes(scope: AccountingScope, vinculoId: string): Promise<DpFeriasImplantacaoView[]> {
@@ -121,7 +122,7 @@ export class DpAfastamentoFeriasService {
       const v = achado(await this.vinculos.findVinculo(scope.ownerUserId, vinculoId, tx), 'Vínculo');
       // Item 58: o aquisitivo tem de ser um período do item 57 (natureza EMPREGO, aniversário do contrato, até o término).
       const natureza = await this.naturezaEm(v);
-      if (!this.periodos(v, natureza, input.aquisitivoInicio).some((p) => p.aquisitivoInicio === input.aquisitivoInicio)) {
+      if (!(await this.periodos(v, natureza, input.aquisitivoInicio)).some((p) => p.aquisitivoInicio === input.aquisitivoInicio)) {
         throw dpValidationError(
           'DP_FERIAS_PERIODO_INEXISTENTE',
           `${input.aquisitivoInicio} não é início de período aquisitivo deste vínculo (aniversário do contrato de ${v.dataInicio}, só na natureza EMPREGO).`,
@@ -160,9 +161,14 @@ export class DpAfastamentoFeriasService {
   }
 
   // ── gates ──────────────────────────────────────────────────────────────────────────────────────────────────────────
-  /** Item 57 — só a natureza EMPREGO tem período de férias; TSVE (723, 901) ⇒ lista vazia. */
-  private periodos(v: DpVinculo, natureza: NaturezaVinculo, dataRef: string): PeriodoFerias[] {
-    return natureza === 'EMPREGO' ? periodosDeFerias(v.dataInicio, dataRef, v.dataTermino) : [];
+  /**
+   * Item 57 — só a natureza EMPREGO tem período de férias; TSVE (723, 901) ⇒ lista vazia. BE-INCR-DP-F2 item 74: os
+   * meses de aquisitivo e concessivo vêm da FOLHA_REGRA na admissão; sem linha ⇒ 400 PARAMETRO_LEGAL_AUSENTE.
+   */
+  private async periodos(v: DpVinculo, natureza: NaturezaVinculo, dataRef: string): Promise<PeriodoFerias[]> {
+    if (natureza !== 'EMPREGO') return [];
+    const meses = mesesFerias(await this.legalParams.fotografia(['FOLHA_REGRA']), v.dataInicio);
+    return periodosDeFerias(v.dataInicio, dataRef, v.dataTermino, meses);
   }
 
   /** Item 56 — `inicio ≥ dataInicio` do vínculo e sem sobreposição com outro afastamento vivo do mesmo vínculo (na tx). */

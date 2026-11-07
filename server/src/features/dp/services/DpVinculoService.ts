@@ -15,6 +15,7 @@ import type {
   UpdateTrabalhadorInput,
 } from '../dtos/DpVinculoDto';
 import { vigenciaContida } from '../models/cadastros';
+import { regrasIdadeDaCategoria } from '../models/regrasFolha';
 import { dpConflictError, dpValidationError } from '../models/erros';
 import { sobrepoe } from '../models/vigencia';
 import {
@@ -176,9 +177,11 @@ export class DpVinculoService {
     const categoria = assertCategoriaNucleo(input.categoria);
     const natureza = await this.naturezaEm(categoria, input.dataInicio);
     const dataTermino = input.dataTermino ?? null;
+    // BE-INCR-DP-F2 item 74: idade e prazo da FOLHA_REGRA na admissão; sem linha ⇒ 400 PARAMETRO_LEGAL_AUSENTE.
+    const regrasIdade = regrasIdadeDaCategoria(await this.deps.legalParams.fotografia(['FOLHA_REGRA']), categoria, input.dataInicio);
     return this.repo.runTransaction(async (tx) => {
       const trab = achado(await this.repo.findTrabalhador(scope.ownerUserId, input.trabalhadorId, tx), 'Trabalhador');
-      assertIdadeEPrazo({ categoria, nascimento: trab.nascimento, pcd: trab.pcd, dataInicio: input.dataInicio, dataTermino });
+      assertIdadeEPrazo({ categoria, nascimento: trab.nascimento, pcd: trab.pcd, dataInicio: input.dataInicio, dataTermino }, regrasIdade);
       if (categoria === '723') await this.assertProLabore(scope, trab, input.dataInicio, dataTermino, tx);
       await this.assertMatriculaLivre(scope, input.matricula, tx);
       const versao = await this.versaoValida(scope, natureza, input.versao, tx);
