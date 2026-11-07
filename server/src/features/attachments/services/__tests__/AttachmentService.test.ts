@@ -141,14 +141,16 @@ describe('AttachmentService', () => {
   });
 
   describe('delete', () => {
-    it('soft-deletes the row and best-effort removes the binary', async () => {
+    // §3.4 #11 (dono, questionário 06/11: "Arquivo vai na purga") — o DELETE só marca deletedAt; o binário fica em
+    // disco até a purga de 90 dias (jobs/PurgeDeletedRecords), e restaurar volta a funcionar.
+    it('soft-deletes the row and keeps the binary on disk for the purge', async () => {
       mockedStorage.deleteFile.mockResolvedValue(undefined);
       const { svc, repository } = buildService();
 
       await svc.delete(actor, 'att-1');
 
       expect(repository.softDelete).toHaveBeenCalledWith('att-1');
-      expect(mockedStorage.deleteFile).toHaveBeenCalledWith('u1/lead/lead-1/abcd1234_doc.pdf');
+      expect(mockedStorage.deleteFile).not.toHaveBeenCalled();
     });
 
     it('throws NotFoundError on cross-tenant delete', async () => {

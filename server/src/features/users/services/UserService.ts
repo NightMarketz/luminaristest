@@ -322,6 +322,11 @@ export class UserService {
     return this.userRepository.getTokenVersion(userId);
   }
 
+  /** Token version + the user's real createdAt/updatedAt, read once per request by the auth middleware (§3.4 #20). */
+  public async getAuthState(userId: string): Promise<{ tokenVersion: number; createdAt: Date; updatedAt: Date } | null> {
+    return this.userRepository.getAuthState(userId);
+  }
+
   /** Logout: invalidates every JWT issued to the user so far (§3.4 #3). */
   public async revokeTokens(userId: string): Promise<void> {
     await this.userRepository.incrementTokenVersion(userId);
