@@ -104,6 +104,7 @@ describe('#8 — PII fora do log', () => {
       { create: jest.fn() } as any,
       { canManageData: () => false } as any,
       { afterDataWrite: jest.fn() } as any,
+      {} as any, // documentSearch — não usado aqui
     );
     /* eslint-enable @typescript-eslint/no-explicit-any */
 

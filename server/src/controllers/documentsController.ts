@@ -171,11 +171,11 @@ export async function searchDocuments(req: Request, res: Response) {
 
     const parsed = SearchDocumentsSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ success: false, error: parsed.error.flatten() });
-    const { query, limit } = parsed.data;
+    const { query, documentIds, limit } = parsed.data;
 
-    const service = getFactory().getDocumentService();
-    const results = await service.searchDocuments(query, ctx, limit ?? 10);
-    return res.json({ success: true, data: results });
+    // RAG-PR-B item 14: a rota é religada ao DocumentSearchService (F-RAG-2 c). data = { hits, stamp }.
+    const result = await getFactory().getDocumentSearchService().search(ctx, query, { documentIds, limit });
+    return res.json({ success: true, data: result });
   } catch (error) {
     return handleApiError(error, res);
   }

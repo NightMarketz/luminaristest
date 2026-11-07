@@ -124,6 +124,7 @@ import { ChatService } from '../features/chat/services/ChatService';
 import { DashboardLayoutService } from '../features/dashboardLayout/services/DashboardLayoutService';
 import { DocumentProcessingService } from '../features/documents/services/DocumentProcessingService';
 import { DocumentService } from '../features/documents/services/DocumentService';
+import { DocumentSearchService } from '../features/documents/services/DocumentSearchService';
 import { UserService } from '../features/users/services/UserService';
 import { DynamicTableService } from '../features/dynamicTables/services/DynamicTableService';
 import { LuminarisAgentService } from '../features/chat/services/LuminarisAgentService';
@@ -939,6 +940,7 @@ export class ApplicationFactory {
     chatInstance: ChatInstanceService;
     dashboardLayout: DashboardLayoutService;
     document: DocumentService;
+    documentSearch: DocumentSearchService;
     chat: IChatService;
     dynamicTable: DynamicTableService;
     dynamicTableVersion: DynamicTableVersionService;
@@ -1198,11 +1200,21 @@ export class ApplicationFactory {
     // (controller ou serviço de integração) chama estes efeitos depois do commit.
     const dynamicTableWriteEffects = new DynamicTableWriteEffects(knowledgeGraphService, kpiCacheService);
 
+    // RAG-PR-B item 13: o único caminho de busca nos documentos (rota e ferramenta search_documents).
+    const documentSearchService = new DocumentSearchService(
+      this.repositories.document,
+      this.repositories.chunk,
+      this.repositories.vector,
+      this.policies.document,
+      this.embedder,
+    );
+
     const luminarisAgentService = new LuminarisAgentService(
       dynamicTableService,
       this.repositories.actionProposal,
       this.policies.dynamicTable,
       dynamicTableWriteEffects,
+      documentSearchService,
     );
 
     // Shared instance: injected into ChatService (server-side persistence of chat turns)
@@ -1918,6 +1930,7 @@ export class ApplicationFactory {
         this.repositories.user,
         this.embedder
       ),
+      documentSearch: documentSearchService,
       user: new UserService(this.repositories.user, this.policies.user, this.repositories.vector),
       dynamicTable: dynamicTableService,
       // BE-INCR-DT-VERSION-LEDGER: leitura/diff/restore do ledger; o restore delega ao DynamicTableService.
@@ -2620,6 +2633,7 @@ export class ApplicationFactory {
   public getAnalyticsService = (): AnalyticsService => this.services.analytics;
   public getDashboardLayoutService = (): DashboardLayoutService => this.services.dashboardLayout;
   public getDocumentService = (): DocumentService => this.services.document;
+  public getDocumentSearchService = (): DocumentSearchService => this.services.documentSearch;
   public getUserService = (): UserService => this.services.user;
   public getDynamicTableService = (): DynamicTableService => this.services.dynamicTable;
   public getDynamicTableVersionService = (): DynamicTableVersionService => this.services.dynamicTableVersion;

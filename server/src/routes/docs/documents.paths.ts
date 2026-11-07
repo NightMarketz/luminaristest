@@ -60,12 +60,16 @@
  *             schema:
  *               type: object
  *               required: [query]
+ *               additionalProperties: false
  *               properties:
  *                 query: { type: string }
- *                 limit: { type: integer, default: 5 }
+ *                 documentIds: { type: array, maxItems: 50, items: { type: string } }
+ *                 limit: { type: integer, default: 10, maximum: 100 }
  *       responses:
- *         '200': { description: Matching document excerpts }
+ *         '200': { description: 'Matching excerpts { hits, stamp }' }
+ *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
+ *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
  *   /api/documents/token-cost:
  *     post:

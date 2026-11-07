@@ -9,6 +9,7 @@ import {
   CreateDocumentSchema,
   ListDocumentsQuerySchema,
   SearchDocumentsSchema,
+  SearchDocumentsToolArgsSchema,
 } from '../DocumentDto';
 import { DocumentPurpose } from '../../models/Document.model';
 
@@ -78,5 +79,28 @@ describe('SearchDocumentsSchema', () => {
 
   it('caps limit at 100 (rejects above)', () => {
     expect(SearchDocumentsSchema.safeParse({ query: 'x', limit: 500 }).success).toBe(false);
+  });
+
+  // RAG-PR-B item 14
+  it('accepts documentIds up to 50 and rejects 51', () => {
+    const ids = (n: number) => Array.from({ length: n }, (_, i) => `d${i}`);
+    expect(SearchDocumentsSchema.safeParse({ query: 'x', documentIds: ids(50) }).success).toBe(true);
+    expect(SearchDocumentsSchema.safeParse({ query: 'x', documentIds: ids(51) }).success).toBe(false);
+  });
+
+  it('is strict: an extra key → rejected', () => {
+    expect(SearchDocumentsSchema.safeParse({ query: 'x', userId: 'other' }).success).toBe(false);
+  });
+});
+
+describe('SearchDocumentsToolArgsSchema (RAG-PR-B item 16)', () => {
+  it('defaults limit to 5 and caps it at 10', () => {
+    expect(SearchDocumentsToolArgsSchema.parse({ query: 'x' }).limit).toBe(5);
+    expect(SearchDocumentsToolArgsSchema.safeParse({ query: 'x', limit: 11 }).success).toBe(false);
+  });
+
+  it('rejects documentIds (agent mode searches every owned document) and a query over 2000 chars', () => {
+    expect(SearchDocumentsToolArgsSchema.safeParse({ query: 'x', documentIds: ['d'] }).success).toBe(false);
+    expect(SearchDocumentsToolArgsSchema.safeParse({ query: 'x'.repeat(2001) }).success).toBe(false);
   });
 });

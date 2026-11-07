@@ -24888,6 +24888,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
+                "additionalProperties": false,
                 "required": [
                   "query"
                 ],
@@ -24895,9 +24896,17 @@
                   "query": {
                     "type": "string"
                   },
+                  "documentIds": {
+                    "type": "array",
+                    "maxItems": 50,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
                   "limit": {
                     "type": "integer",
-                    "default": 5
+                    "default": 10,
+                    "maximum": 100
                   }
                 }
               }
@@ -24906,7 +24915,13 @@
         },
         "responses": {
           "200": {
-            "description": "Matching document excerpts"
+            "description": "Matching excerpts { hits, stamp }"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
           },
           "401": {
             "$ref": "#/components/responses/UnauthorizedError"

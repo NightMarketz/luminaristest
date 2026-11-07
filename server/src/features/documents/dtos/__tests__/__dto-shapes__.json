@@ -184,6 +184,13 @@
           "type": "string",
           "minLength": 1
         },
+        "documentIds": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "limit": {
           "default": 10,
           "type": "integer",
@@ -193,7 +200,29 @@
       },
       "required": [
         "query"
-      ]
+      ],
+      "additionalProperties": false
+    },
+    "SearchDocumentsToolArgsSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "limit": {
+          "default": 5,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "additionalProperties": false
     }
   }
 }

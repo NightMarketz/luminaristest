@@ -201,31 +201,6 @@ export class DocumentService {
   }
 
   /**
-   * Search documents by similarity on stored embeddings
-   */
-  async searchDocuments(
-    query: string,
-    userContext: UserContext,
-    limit = 10
-  ): Promise<Array<{ document: IDocument; chunkText: string; score: number }>> {
-    if (!userContext.userId) throw new UnauthorizedError('Authentication required');
-    if (!this.policy.canListAll(userContext)) throw new ForbiddenError('Document search forbidden by policy');
-
-    const { vectors, stamp } = await this.embedder.embed(userContext.userId, [query]);
-    const hits = await this.vectorRepository.search({ userId: userContext.userId, stamp, vector: vectors[0], limit });
-    const chunks = new Map((await this.chunkRepository.findByIdsWithOwner(hits.map((h) => h.chunkId))).map((c) => [c.id, c]));
-    const results: Array<{ document: IDocument; chunkText: string; score: number }> = [];
-    for (const hit of hits) {
-      const chunk = chunks.get(hit.chunkId);
-      if (!chunk) continue;
-      const doc = await this.repository.findById(chunk.documentId);
-      if (!doc) continue;
-      results.push({ document: doc, chunkText: chunk.text, score: 1 - hit.distance });
-    }
-    return results;
-  }
-
-  /**
    * Updates o status e metadados de processamento de um documento
    */
   async updateDocument(

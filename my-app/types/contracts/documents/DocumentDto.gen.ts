@@ -38,5 +38,13 @@ limit?: number
 }
 export interface SearchDocumentsInput {
 query: string
+/**
+ * @maxItems 50
+ */
+documentIds?: string[]
+limit?: number
+}
+export interface SearchDocumentsToolArgsInput {
+query: string
 limit?: number
 }

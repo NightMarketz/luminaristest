@@ -225,35 +225,5 @@ describe('deleteDocument (privacy-critical ordering)', () => {
   });
 });
 
-describe('searchDocuments (Tier-0)', () => {
-  it('scopes the vector search to the caller userId', async () => {
-    const { service, vector, embedder, real } = makeService();
-    const owner = await seedUser({ username: 'owner' });
-    const other = await seedUser({ username: 'other' });
-    const doc = await seedDocument({ userId: owner.id });
-    const foreign = await seedDocument({ userId: other.id });
-    const mine = await prisma.chunk.create({ data: { text: 'chunk ctx', index: 0, documentId: doc.id } });
-    const theirs = await prisma.chunk.create({ data: { text: 'alheio', index: 0, documentId: foreign.id } });
-    // The other owner's chunk is the nearest neighbour (régua A2).
-    await real.upsert([
-      { chunkId: mine.id, userId: owner.id, stamp: STAMP, vector: unit(1) },
-      { chunkId: theirs.id, userId: other.id, stamp: STAMP, vector: unit(0) },
-    ]);
-
-    const results = await service.searchDocuments('q', ctxFor({ id: owner.id, username: owner.username }), 5);
-
-    expect(embedder.embed).toHaveBeenCalledWith(owner.id, ['q']);
-    // Tier-0: the search MUST be hard-scoped to the caller.
-    expect(vector.search).toHaveBeenCalledWith(expect.objectContaining({ userId: owner.id, stamp: STAMP, limit: 5 }));
-    expect(results).toHaveLength(1);
-    expect(results[0].document.id).toBe(doc.id);
-    // The text is hydrated from the Chunk row.
-    expect(results[0].chunkText).toBe('chunk ctx');
-  });
-
-  it('throws UnauthorizedError when there is no userId', async () => {
-    const { service } = makeService();
-    const ctx = { ...ctxFor({ id: 'x', username: 'x' }), userId: '' };
-    await expect(service.searchDocuments('q', ctx, 5)).rejects.toBeInstanceOf(UnauthorizedError);
-  });
-});
+// searchDocuments saiu do DocumentService (RAG-PR-B item 14): a busca é do DocumentSearchService —
+// documentSearch.integration.test.ts.
