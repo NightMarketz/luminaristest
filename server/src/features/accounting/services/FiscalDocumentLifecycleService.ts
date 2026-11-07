@@ -1679,15 +1679,23 @@ export class FiscalDocumentLifecycleService {
       await this.repo.markPendingStep(pending.id, { sourceDocumentId });
     }
 
-    const atual = doc.status as FiscalDocumentStatus;
-    let aposentar = !AUTHORIZED_STATUSES.includes(atual);
-    if (!aposentar) {
+    // X11 PR-3 (revisão #1144, achado 1; dono 07/11 P1): a nota em análise fiscal do cancelamento segue válida — a
+    // proveniência só é aposentada quando a nota deixou de ser válida (cancelada ou rejeitada), nunca por entrar ou sair
+    // de CANCEL_ANALYSIS.
+    let atual = doc.status as FiscalDocumentStatus;
+    let aposentar = !NOTA_VALIDA_STATUSES.includes(atual);
+    for (let tentativa = 0; !aposentar && tentativa < 2; tentativa++) {
       try {
         // Guarda na 2ª escrita (#420): um cancelamento no meio não pode deixar a proveniência viva num documento cancelado.
         await this.repo.transition(scope, doc.id, { status: atual, whenStatusIn: [atual], xmlAttachmentId, pdfAttachmentId, sourceDocumentId });
+        break;
       } catch (e) {
         if (!(e instanceof Error && e.message.startsWith('fiscal_document_status_changed'))) throw e;
-        aposentar = true;
+        // O status mudou no meio: se ainda é nota válida (ex.: entrou em análise), grava com o status novo; senão aposenta.
+        const relido = await this.repo.findById(scope, doc.id);
+        const novo = relido?.status as FiscalDocumentStatus | undefined;
+        if (novo && NOTA_VALIDA_STATUSES.includes(novo) && tentativa === 0) atual = novo;
+        else aposentar = true;
       }
     }
     if (aposentar) {
