@@ -12,7 +12,7 @@ perfil_evidencia: "BRIEF §9: PR-0/PR-3/PR-5/PR-6 opus-baixo; PR-1/PR-2/PR-4 opu
 atualizado: "2026-11-07"
 write_set: ["server/src/features/dp/**", "server/src/controllers/dpModuleController.ts", "server/src/controllers/dpCadastrosController.ts", "server/src/controllers/dpVinculoController.ts", "server/src/controllers/__tests__/dp*.ts", "server/src/routes/dp.ts", "server/src/routes/docs/dp.paths.ts", "server/public/openapi.json", "server/src/__tests__/openapi-paths.test.ts", "server/prisma/schema.prisma", "server/prisma/migrations/**", "server/prisma/data/legal_parameters_dp_v1.sql", "server/prisma/data/legal_parameters_dp_regras_v1.sql", "server/src/features/legalParameters/models/legalParameter.ts", "server/src/features/legalParameters/models/formatoLinha.ts", "server/src/features/legalParameters/dtos/__tests__/__dto-shapes__.json", "server/src/features/accounting/audit/auditCanonical.ts", "server/test/helpers/templateDb.ts", "server/test/helpers/legalParams.ts", "server/.dependency-cruiser.cjs", "docs/adr/ADR-ARCH-BOUNDARIES.md"]
 registros: ["server/src/lib/factory.ts", "server/src/routes/index.ts"]
-prs: ["#1010", "#1014", "#1015", "#1016", "#1026", "#1032", "#1036", "#1041", "#1101", "#1103", "#1104", "#1106", "#1125", "#1127", "#1128"]
+prs: ["#1010", "#1014", "#1015", "#1016", "#1026", "#1032", "#1036", "#1041", "#1101", "#1103", "#1104", "#1106", "#1125", "#1127", "#1128", "#1129"]
 ---
 # PES-4 — Departamento Pessoal: núcleo + submódulos
 
@@ -74,7 +74,7 @@ BYOK, sem contratar PSC (D5 de 30/10); vigência só por data de efeito, com o s
 [[R8]], [[R-postgresql]], [[R-torre-multiempresa]], [[R-motor-dominio]], [[R-motor-regras]];
 [[M5-subrazoes-restantes]] (de onde a folha saiu, pela [[D-2026-11-02-DP-PRE-ADR]]).
 
-## Handoff da execução do BRIEF do F2 (07/11, depois do PR-1)
+## Handoff da execução do BRIEF do F2 (07/11, depois do PR-2)
 
 O `executa` do F2 (dono, chat, 06/11: *"Executa o F2"*, BRIEF inteiro, `sessao-feature`, sem merge; reconfirmado em
 07/11, *"Pode seguir"*) segue valendo para PR-2..PR-6. A sessão do PR-1 parou por higiene de contexto (CLAUDE.md) depois
@@ -87,13 +87,14 @@ de abrir o #1128 e despachar o revisor.
 | #1125 | `claude/dp-f2-pr0r-4904eb` (base `main` a39ea73a1) | 65–76 (70 parcial: o motor prova no PR-4) | vermelha (migração, parâmetro legal) | tsc, check:arch, 48 unit, 8 suítes de integração, smoke:migration verdes; CI do d98e8498 pegou 2 testes defasados (corrigidos no 321774bb8) | PASSOU (07/11, rodada 1, em 321774bb8: 5 sabotagens pegas; achado não bloqueante — 12×36 do F1 não renomeava — corrigido no 0fcb856b4) |
 | #1127 | `claude/dp-f2-pr0` (base `claude/dp-f2-pr0r-4904eb`) | 1–12 | vermelha só pelo título (`classe-risco`: `revisor: não`) | tsc (src e testes), check:arch, 43 unit (`folha/__tests__`) verdes | não se aplica |
 | #1128 | `claude/dp-f2-pr1` (base `claude/dp-f2-pr0`) | 13–22, 77–78 + as 5 rubricas `INFORMADO` do 23 | vermelha (migração, parâmetro legal, `auditCanonical`; `revisor: obrigatório`) | tsc (src e testes), check:arch, eslint, 12 suítes unit, 3 de integração, `migrate diff` sem diferença, smoke:migration verdes; snapshot de DTO à mão (só `dp`), CI prova | PASSOU (07/11, rodada 1, em c5ad55649: 5 sabotagens pegas; lacuna de teste do Tier-0 do sub-recurso fechada em b232f187d; `tx`→cliente global não pego, como #1026/#1041; ressalva ao tipo 11 curatelado vai ao contador) |
+| #1129 | `claude/dp-f2-pr2` (base `claude/dp-f2-pr1`) | 23 (as 8 restantes: DSR, complementos, afastamento, adiantamento, salário-família; família `DERIVADO`), 24–26 | vermelha só pelo título (`classe-risco`: `revisor: não`) | tsc (src e testes), check:arch, eslint, 4 suítes unit, 1 de integração verdes | não se aplica |
 
 O #1127 estava em conflito com a base (só a tabela desta nota) e por isso sem CI; mesclado o #1125 nele em 07/11
 (`f03b231d2`), o CI passou a rodar.
 
-**Pendente:** PR-2 (resto do 23: `DERIVADO`, `ADIANTAMENTO`, `DESCONTO_ADIANTAMENTO`,
-`SALARIO_FAMILIA`, `AFASTAMENTO_EMPRESA_15D`, DSR, complementos; 24–26) → PR-3 (27–33) → PR-4 (34–47) → PR-5 (48–58;
-inclui marcar a folha desatualizada no lançamento, item 16/52) → PR-6 (59–64), em pilha sobre o #1128.
+**Pendente:** PR-3 (27–33) → PR-4 (34–47) → PR-5 (48–58; inclui marcar a folha desatualizada no lançamento, item 16/52) → PR-6 (59–64), em pilha sobre o #1129.
+
+**Leitura do PR-2 que o PR-4 herda:** `models/folha/rubricaCalculo.ts` mapeia as 19 rubricas; sete formas do PR-4 ainda sem função ficam em `CALCULADORAS_A_IMPLEMENTAR` com o item do BRIEF (`salarioHorista` 37, `valorInformado` 38, `descontoFaltas`/`dsrPerdido` 36, `adiantamento` 42, `descontoAdiantamento` 43, `salarioFamilia` 15/F-DPF-7). Ao escrever cada uma, o PR-4 a move para `CALCULADORAS_PR0` e atualiza o teste que fixa a lista. A ordem do item 35 não dá lugar ao `SALARIO_FAMILIA`; decida isso no PR-4. Se o dono preferir que o PR-2 escreva as funções, a pergunta foi feita à sessão-mãe em 07/11.
 
 **Leituras do PR-1 que os seguintes herdam** (13 lacunas no corpo do #1128): o reset não classifica os 3 models novos
 (sem `userId`; bloqueiam via trabalhador/vínculo); todo write de lançamento e outra remuneração pede o chaveiro do DP
@@ -121,11 +122,7 @@ inclui marcar a folha desatualizada no lançamento, item 16/52) → PR-6 (59–6
    art. 58-A), marcado pelo operador e falso por padrão; o piso proporcional do F-DPF-6 só vale com ele verdadeiro. Entra
    no PR-4 (campo + migração + DTO da jornada). Na mesma rodada o dono confirmou a 1ª: *"PR-1 com as rubricas"*.
 
-**Próximo comando:** sessão nova com `sessao-feature`: `git fetch` e
-`git checkout -b claude/dp-f2-pr2 origin/claude/dp-f2-pr1`; ler o BRIEF §2 PR-2 (itens 23–26) e o dossiê
-`pesquisas-legais/brief-pes4-f2-contador/relatorio.md` §9; molde = o bloco das 5 rubricas do PR-1 em
-`models/rubricas/catalogo.ts` (+ `published.json` e `rubricas.test.ts`). O item 24 (`rubricaCalculo.ts`) mapeia também as
-5 `INFORMADO` do PR-1.
+**Próximo comando:** sessão nova com `sessao-feature`: `git fetch` e `git checkout -b claude/dp-f2-pr3 origin/claude/dp-f2-pr2`; `node scripts/worktree-deps.mjs` e `cd server && npx prisma generate`; ler o BRIEF §2 PR-3 (itens 27–33: `DpSnapshotService.montar`, forma canônica e hash, PII fora, `fatiar`, dias devidos, afastamento no fatiamento); PR com `gh pr create --base claude/dp-f2-pr2`.
 
 **Como o PR-1 fez o que o depósito defasado impede (repita):** snapshot de DTO — `UPDATE_DTO_SNAPSHOT=1` num commit WIP,
 copiar só as entradas novas de `dp` e os `.gen.ts` novos, reverter o resto, e aplicar duas trocas (padrão do cuid
