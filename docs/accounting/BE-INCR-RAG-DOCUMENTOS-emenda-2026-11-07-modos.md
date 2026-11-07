@@ -1,8 +1,9 @@
 # BE-INCR-RAG-DOCUMENTOS — emenda de 07/11: dois modos de resposta no RAG (item 15)
 
 > Emenda ao [`BE-INCR-RAG-DOCUMENTOS-brief.md`](BE-INCR-RAG-DOCUMENTOS-brief.md), item 15 do RAG-PR-B. **Só docs.**
-> Os forks abaixo estão com **RATIFICAÇÃO PENDENTE**. O item 15 continua parado até o dono responder; os itens 13,
-> 14, 16, 17 e 18 do RAG-PR-B não dependem desta emenda.
+> **Forks ratificados** (dono, chat, 2026-11-07, questionário): F-RAG-M1..M7, M6 contra a recomendação. Respostas literais
+> em [D-2026-11-07-RAG-MODOS](../plano/decisoes/D-2026-11-07-RAG-MODOS.md). O item 15 (com 15a–15f) está liberado para
+> execução sob o EXECUTA do nó.
 
 ## Contexto fixo
 
@@ -60,6 +61,17 @@
    com a mensagem do ASSISTANT, para o chat reaberto mostrar o mesmo. **Prova:** reabrir a instância devolve as
    mesmas `citations`.
 
+15f. **Descritivo no modo agente** (F-RAG-M6 = b).
+   - Com `ragMode = DESCRITIVO` e sem `documentIds`, cada resultado de `search_documents` volta ao modelo com
+     marcadores `[n]` numerados **no turno inteiro**: uma 2ª chamada da ferramenta continua de `n+1`, sem reiniciar.
+   - O prompt do agente manda citar `[n]` ao usar um trecho. A resposta final ganha `citations[]` e os
+     `sourceDocuments` com `technical` de todo trecho devolvido no turno.
+   - Mesmas regras do 15b: marcador sem trecho entregue é descartado, e o trecho continua delimitado como dado
+     não confiável (item 17).
+   - **Prova:** com um modelo falso que chama a ferramenta 2× (3 + 2 trechos) e responde "a [4] b [7]",
+     `citations` traz só o `[4]`, com o `chunkId` do 1º trecho da 2ª chamada. Com `RAPIDO`, a ferramenta devolve os
+     trechos sem marcador, como no item 16.
+
 Gates que o diff aciona (BRIEF §1, "Gates de todo PR"):
 - snapshot de shape dos DTOs (`ChatDto.ts`);
 - `.gen.ts` do front;
@@ -99,7 +111,7 @@ model ChatMessage {
 }
 ```
 
-## 3. Forks — RATIFICAÇÃO PENDENTE
+## 3. Forks — ratificados em 07/11 (respostas em D-2026-11-07-RAG-MODOS; M6 = (b), contra a recomendação)
 
 | ID | Pergunta | Caminhos | Recomendação |
 |---|---|---|---|
@@ -124,7 +136,6 @@ Nenhum. A emenda não depende de regra contábil, fiscal ou legal.
 
 ## 6. Achados fora de escopo (registrados, não planejados)
 
-- Modo descritivo na ferramenta `search_documents` do agente (se o dono escolher M6 = b, vira item novo).
 - Componente do chat no `my-app` que exiba `sourceDocuments`: hoje nenhum lê o campo.
 - `ChatRequestSchema` não é `.strict()`. Deixar estrito é mudança de contrato à parte, que o item 15 não pede.
 
