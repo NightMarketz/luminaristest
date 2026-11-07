@@ -37,7 +37,7 @@ function makeChatService() {
   };
   /* eslint-disable @typescript-eslint/no-explicit-any -- fakes de colaborador */
   const service = new ChatService(
-    { embedText: jest.fn() } as any, { search: jest.fn() } as any, openai as any, agent as any, graph as any, messages as any,
+    { search: jest.fn() } as any, openai as any, agent as any, graph as any, messages as any,
   );
   /* eslint-enable @typescript-eslint/no-explicit-any */
   return { service, openai };
@@ -58,7 +58,7 @@ afterEach(() => {
 describe('agente × datetime com fuso', () => {
   it.each(['request_record_update', 'request_record_creation'])('%s: o `data` pede ISO 8601 com Z ou offset', async (name) => {
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any -- colaboradores não usados por getTools */
-    const agent = new LuminarisAgentService({} as any, {} as any, {} as any, {} as any);
+    const agent = new LuminarisAgentService({} as any, {} as any, {} as any, {} as any, {} as any);
     const tool = (await agent.getTools()).find((t) => t.type === 'function' && t.function.name === name);
     const params = (tool as unknown as { function: { parameters: { properties: { data: { description: string } } } } }).function.parameters;
     const description = params.properties.data.description;

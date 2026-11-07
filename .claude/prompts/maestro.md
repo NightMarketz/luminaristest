@@ -25,7 +25,8 @@ CICLO
      vermelho: não abra sessão, liste no resumo.
    - VERMELHO com `revisor: não (só texto)` → direto ao lote, sem revisor. Nunca mergeie vermelho.
    - VERMELHO com `revisor: obrigatório` → despache o agente `revisor-independente` (isolation worktree) uma vez
-     por SHA de cabeça, com o BRIEF do nó no prompt, no máximo 3 rodadas por PR
+     por SHA de cabeça, com o BRIEF do nó no prompt, **um revisor por vez na máquina** (espere o anterior voltar
+     antes de despachar o próximo; 5 sobrepostos em 07/11, e o dono relata que o PC trava na sabotagem), no máximo 3 rodadas por PR
      (D-2026-11-06-REVISAO-CONVERGENCIA). Rodada 1: o PR inteiro. Rodadas 2 e 3: ponha no prompt `rodada: <n>`,
      o SHA da rodada anterior e a lista de achados dela (do seu resumo, ou do resumo de ontem). Sem PASS na 3ª,
      não despache a 4ª: o PR vai ao lote marcado "repensar a abordagem". Se não deu para despachar, o PR vai ao

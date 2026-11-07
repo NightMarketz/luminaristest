@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ChatMessageRole } from '../models/ChatMessage.model';
+import { RagDetailSchema } from '@/features/chat/dtos/ChatDto';
 
 /**
  * Query schema for listing an instance's messages. Pagination is optional and additive
@@ -30,6 +31,7 @@ export type ListChatMessagesQuery = z.infer<typeof ListChatMessagesQuerySchema>;
  *         promptTokens: { type: integer, minimum: 0, nullable: true, description: 'Tokens de entrada do turno do ASSISTANT (null = USER ou anterior ao I11; 0 = sem chamada ao LLM)' }
  *         completionTokens: { type: integer, minimum: 0, nullable: true, description: 'Tokens de saída do turno do ASSISTANT' }
  *         model: { type: string, nullable: true, description: 'Modelos do turno, unidos por "+"' }
+ *         ragDetail: { type: object, nullable: true, description: 'RAG (emenda 07/11, item 15e): { mode, citations[], sources[], answerModel? }; null fora do modo RAG' }
  */
 export const ChatMessageSchema = z.object({
   id: z.string().cuid({ message: 'chatMessage.validation.idInvalidCuid' }),
@@ -46,6 +48,8 @@ export const ChatMessageSchema = z.object({
   promptTokens: z.number().int().nonnegative().nullable(),
   completionTokens: z.number().int().nonnegative().nullable(),
   model: z.string().nullable(),
+  // RAG emenda 07/11, item 15e (F-RAG-M7): o chat reaberto mostra as mesmas citações.
+  ragDetail: RagDetailSchema.nullable(),
 });
 
 /**
@@ -97,6 +101,7 @@ export const UpdateChatMessageSchema = CreateChatMessageSchema.partial();
  *         content: { type: string, minLength: 1, maxLength: 4000 }
  *         role: { type: string, enum: [user, assistant, system] }
  *         createdAt: { type: string, format: date-time }
+ *         ragDetail: { type: object, nullable: true, description: 'RAG (emenda 07/11, item 15e): { mode, citations[], sources[], answerModel? }; null fora do modo RAG' }
  */
 export const ChatMessageSummarySchema = z.object({
   id: z.string().cuid(),
@@ -105,6 +110,7 @@ export const ChatMessageSummarySchema = z.object({
     .max(4000, 'chatMessage.validation.contentTooLong'),
   role: z.nativeEnum(ChatMessageRole),
   createdAt: z.date(),
+  ragDetail: RagDetailSchema.nullable(),
 });
 
 // Types derived from schemas

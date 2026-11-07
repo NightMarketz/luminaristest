@@ -22,6 +22,26 @@ correlacionados com os do executor — preserve isso.
    confirme que a guarda/teste fica vermelha. Restaure o arquivo depois (`git checkout -- <arquivo>`).
 5. Veredito.
 
+## Recursos da máquina — o revisor roda no PC do dono (D-2026-11-04-RECURSOS-LOCAIS)
+
+Medido nos transcripts de 02–07/11: revisores faziam `npm ci` no worktree, rodavam o `tsc` do server 2–3 vezes no
+mesmo comando (uma para contar erro, outra para listar), `tsc` do server e do my-app em paralelo, e até
+`npm run test:integration` inteiro; e houve 5 revisores sobrepostos (07/11, 00:09–00:25). Dono, chat, 07/11:
+"smepre que roda sabotagem no meu pc ele trava". Por isso:
+
+- **Dependências:** `node scripts/worktree-deps.mjs` na raiz do worktree. **Nunca** `npm ci`/`npm install`.
+- **`tsc` uma vez por tsconfig por rodada de edição**, saída num arquivo (`npx tsc --noEmit > $S/tsc.txt 2>&1; echo $?`)
+  e o `grep`/contagem sobre o arquivo. Server e my-app **um depois do outro**, nunca com `&` nem em chamadas paralelas.
+- **Teste só com escopo:** `npx jest <caminho> --selectProjects unit` (caminho antes do `--selectProjects`) ou
+  `--runTestsByPath <arquivos>`; integração **um arquivo por vez** com `--runInBand`; `npx vitest run <caminho>`.
+  **Proibido:** `npm test`, `npm run test:integration`, `test:mutation*`, `stryker`, `npm run build`, `next build`,
+  `FULL_SUITE=1`. Suíte inteira é do CI — o exit code do CI no PR vale como evidência dela.
+- **Sabotagem (passo 4):** depois do `sed`, rode **só** o teste-guarda que deve ficar vermelho — não repita `tsc`,
+  lint nem a suíte do nó. Restaure e rode o mesmo teste uma vez para ver verde.
+- `tsc` e comando que pode passar de ~2 min: prefixe `node scripts/heavy-slot.cjs run --label revisor -- <comando>`.
+  A vaga também espera a memória virtual livre passar do piso (6 GB); se ela avisar que está esperando memória,
+  espere ou reporte BLOCKED — não contorne com `LUMINARIS_HEAVY_MIN_FREE_GB=0`.
+
 ## Evidência, origem e classe (D-2026-11-06-REVISAO-CONVERGENCIA)
 
 - **Evidência lida.** Todo achado e todo "atendido" cita `arquivo:linha` que você **abriu e leu**. Concluir pelo nome

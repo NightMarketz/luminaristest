@@ -4,7 +4,14 @@
  */
 import fc from 'fast-check';
 import { dateOnlyFromDayNumber, dayNumberFromDateOnly } from '../../../accounting/models/dates';
-import { aniversario, periodosDeFerias } from '../ferias';
+import { LEGAL_PARAMS_SEED_FILE_DP_REGRAS, legalParamsSeedRows } from '@test/helpers/legalParams';
+import type { LinhaLegal } from '../../../legalParameters/models/legalParameter';
+import { aniversario, periodosDeFerias as periodosComMeses } from '../ferias';
+import { mesesFerias } from '../regrasFolha';
+
+// BE-INCR-DP-F2 item 72: os meses vêm da FOLHA_REGRA da carga; as asserções do F1 seguem as mesmas.
+const FOTO = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_DP_REGRAS) as LinhaLegal[];
+const periodosDeFerias = (inicio: string, ref: string, fim: string | null = null) => periodosComMeses(inicio, ref, fim, mesesFerias(FOTO, inicio));
 
 const diaSeguinte = (d: string) => dateOnlyFromDayNumber(dayNumberFromDateOnly(d) + 1);
 const dias = (de: string, ate: string) => dayNumberFromDateOnly(ate) - dayNumberFromDateOnly(de) + 1;
@@ -65,5 +72,17 @@ describe('periodosDeFerias (item 57)', () => {
         });
       }),
     );
+  });
+
+  it('BE-INCR-DP-F2 item 72 — trocar a linha troca o período, sem código: aquisitivo de 6 e concessivo de 3 meses', () => {
+    const troca = FOTO.map((l) =>
+      l.chave === 'FERIAS_AQUISITIVO_MESES' ? { ...l, valorInt: 6 } : l.chave === 'FERIAS_CONCESSIVO_MESES' ? { ...l, valorInt: 3 } : l,
+    );
+    expect(periodosComMeses('2026-03-10', '2026-09-10', null, mesesFerias(troca, '2026-03-10'))).toEqual([
+      { aquisitivoInicio: '2026-03-10', aquisitivoFim: '2026-09-09', concessivoFim: '2026-12-09' },
+      { aquisitivoInicio: '2026-09-10', aquisitivoFim: '2027-03-09', concessivoFim: '2027-06-09' },
+    ]);
+    // Sem linha vigente na admissão ⇒ PARAMETRO_LEGAL_AUSENTE, nunca um 12 do código.
+    expect(() => mesesFerias(FOTO.filter((l) => l.chave !== 'FERIAS_AQUISITIVO_MESES'), '2026-03-10')).toThrow(/FOLHA_REGRA\/FERIAS_AQUISITIVO_MESES/);
   });
 });

@@ -39,7 +39,7 @@ describe('DP-F0-F1 PR-5 — catálogo de rubricas', () => {
     expect(rubricaDefSchema.safeParse({ ...base, incidencia: { ...base.incidencia, pis: '00' } }).success).toBe(false);
   });
 
-  it('item 51 — as 6 rubricas do F1, marcadas como não conferidas pelo contador', () => {
+  it('item 51 / F2 itens 23 e 26 — as 6 rubricas do F1 e as 13 do F2 (19), marcadas como não conferidas pelo contador', () => {
     expect(DP_RUBRICAS.map((r) => [r.codigo, r.tipo])).toEqual([
       ['SALARIO_BASE', 'PROVENTO'],
       ['BOLSA_ESTAGIO', 'PROVENTO'],
@@ -47,10 +47,37 @@ describe('DP-F0-F1 PR-5 — catálogo de rubricas', () => {
       ['INSS_SEGURADO', 'DESCONTO'],
       ['IRRF', 'DESCONTO'],
       ['FGTS_MES', 'INFORMATIVA'],
+      // BE-INCR-DP-F2 PR-1 (do item 23; dono, 07/11: "PR-1 já com INFORMADO") — as rubricas que o lançamento informa.
+      ['HORA_EXTRA_50', 'PROVENTO'],
+      ['HORA_EXTRA_100', 'PROVENTO'],
+      ['ADICIONAL_NOTURNO', 'PROVENTO'],
+      ['COMISSAO', 'PROVENTO'],
+      ['FALTAS', 'DESCONTO'],
+      // BE-INCR-DP-F2 PR-2 (item 23).
+      ['DSR_VARIAVEIS', 'PROVENTO'],
+      ['DSR_PERDIDO', 'DESCONTO'],
+      ['COMPLEMENTO_MINIMO', 'PROVENTO'],
+      ['COMPLEMENTO_PISO', 'PROVENTO'],
+      ['AFASTAMENTO_EMPRESA_15D', 'PROVENTO'],
+      ['ADIANTAMENTO', 'PROVENTO'],
+      ['DESCONTO_ADIANTAMENTO', 'DESCONTO'],
+      ['SALARIO_FAMILIA', 'PROVENTO'],
     ]);
+    expect(DP_RUBRICAS).toHaveLength(19); // item 26: o pacote do contador passa de 6 para 19 rubricas
     const cat = Object.fromEntries(DP_RUBRICAS.map((r) => [r.codigo, r.categorias]));
     expect([cat.SALARIO_BASE, cat.BOLSA_ESTAGIO, cat.PRO_LABORE]).toEqual([['101', '103'], ['901'], ['723']]);
-    expect(RUBRICAS_CONFERIDAS_PELO_CONTADOR).toBe(false);
+    // CLT art. 432 [D02 do brief-pes4-f2]: aprendiz sem prorrogação de jornada ⇒ HE só para o 101.
+    expect([cat.HORA_EXTRA_50, cat.HORA_EXTRA_100, cat.ADICIONAL_NOTURNO, cat.COMISSAO, cat.FALTAS]).toEqual([['101'], ['101'], ['101', '103'], ['101', '103'], ['101', '103']]);
+    expect(DP_RUBRICAS.filter((r) => r.calculo === 'INFORMADO').map((r) => r.codigo)).toEqual(['HORA_EXTRA_50', 'HORA_EXTRA_100', 'ADICIONAL_NOTURNO', 'COMISSAO', 'FALTAS']);
+    // Item 23: a família DERIVADO (DSR, complementos, desconto do adiantamento).
+    expect(DP_RUBRICAS.filter((r) => r.calculo === 'DERIVADO').map((r) => r.codigo)).toEqual(['DSR_VARIAVEIS', 'DSR_PERDIDO', 'COMPLEMENTO_MINIMO', 'COMPLEMENTO_PISO', 'DESCONTO_ADIANTAMENTO']);
+    // Item 23 / dossiê §9: o DSR usa a 1012 (a 1002 terminou em 30/04/2024) e o salário-família é 1409 com CP 51.
+    const porCodigo = Object.fromEntries(DP_RUBRICAS.map((r) => [r.codigo, r]));
+    expect(porCodigo.DSR_VARIAVEIS.natureza).toBe('1012');
+    expect(linhaLegalVigente(LINHAS, 'ESOCIAL_NATUREZA_RUBRICA', '1002', DATA)).toBeUndefined();
+    expect([porCodigo.SALARIO_FAMILIA.natureza, porCodigo.SALARIO_FAMILIA.incidencia.cp]).toEqual(['1409', '51']);
+    for (const r of DP_RUBRICAS.slice(11)) expect(r.categorias).toEqual(['101', '103']);
+    expect(RUBRICAS_CONFERIDAS_PELO_CONTADOR).toBe(false); // item 26
   });
 
   it('item 52 — natureza e incidências existem e estão vigentes na tabela certa (cargas reais)', () => {

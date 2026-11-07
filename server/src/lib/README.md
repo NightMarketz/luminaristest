@@ -2,7 +2,7 @@
 
 Shared, framework-level code used across features. Feature business logic does **not** live here — it
 lives in `src/features/*`. This folder holds dependency injection, error handling, auth primitives,
-logging and the external-service clients (OpenAI, Qdrant).
+logging and the external-service clients (OpenAI) and the local vector index (sqlite-vec).
 
 > High-level overview in [`../../ARCHITECTURE.md`](../../ARCHITECTURE.md) §5–§6. This README is the
 > file-level map.
@@ -20,14 +20,14 @@ logging and the external-service clients (OpenAI, Qdrant).
 | `prisma.ts` | `PrismaClient` **singleton** (global cache in dev) — avoids exhausting the connection pool. The only place the client is constructed. |
 | `monitoring.ts` | Hooks/config for performance & error monitoring. |
 | `openai/OpenAIService.ts` | Wrapper around the OpenAI API (text analysis, structured extraction, chat completions); centralizes API-key use, retries and error handling. |
-| `vector/` | Vector-store integration (Qdrant) and embeddings — see below. |
+| `vector/` | Vector index (sqlite-vec, own SQLite file) and embeddings — see below. |
+| `embedding/` | `EmbeddingProvider` port, OpenAI adapter @768, `InstanceEmbeddingKeyResolver`, `UserEmbedder` (BE-INCR-RAG-DOCUMENTOS §2.3). |
 
 ### `vector/`
 
 | File | Role |
 |---|---|
-| `qdrant.ts` | The `QdrantClient` singleton (`checkCompatibility: false`) + `runQdrantInitialization()` (called at **bootstrap** in `server.ts`, never on import). |
-| `qdrant-initializer.ts` | Idempotently ensures the `documents` collection and its `documentId` payload index exist. |
+| `sqliteVec.ts` | `VecIndex`: opens `VECTOR_DB_PATH` (default `vectors.db` next to the `DATABASE_URL` file) with `better-sqlite3` + `sqlite-vec` and creates `chunk_vec` idempotently. `getVecIndex()` runs at **bootstrap** in `server.ts`, never on import. Prisma never opens this file. |
 | `embedding.ts` | `EmbeddingOpenAIService` — turns text chunks into embedding vectors via OpenAI. |
 | `chunking.ts` | Splits long text into smaller chunks before embedding (token-limit safety). |
 
@@ -37,5 +37,5 @@ logging and the external-service clients (OpenAI, Qdrant).
 - **Typed errors only:** throw an `AppError` subclass; let `handleApiError` map it. Never leak
   `error.message` to clients for unexpected errors.
 - **`logger`, not `console`.** Structured context as the second argument.
-- **No external connections on import:** external-infra init (e.g. Qdrant) runs at bootstrap, not as an
+- **No external connections on import:** external-infra init (e.g. the vector index) runs at bootstrap, not as an
   import side effect — keeps the module graph testable.

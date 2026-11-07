@@ -35,7 +35,7 @@ describe('DpCadastroService (itens 28–33, 36)', () => {
     await resetDb();
     dono = (await prisma.user.create({ data: { name: 'dpc', username: 'dpc-dono', email: 'dpc@test.local', password: 'x', role: 'USER' } })).id;
     outro = (await prisma.user.create({ data: { name: 'dpc2', username: 'dpc-outro', email: 'dpc2@test.local', password: 'x', role: 'USER' } })).id;
-    svc = new DpCadastroService(new DpCadastroRepository(), new DpPolicy(), getFactory().getAuditService());
+    svc = new DpCadastroService(new DpCadastroRepository(), new DpPolicy(), getFactory().getAuditService(), getFactory().getLegalParameterService());
   });
   afterAll(async () => {
     await resetDb();
@@ -61,7 +61,7 @@ describe('DpCadastroService (itens 28–33, 36)', () => {
 
   it('Tier-0 — cadastro de outro dono ⇒ 404 em get, update, delete; listas separadas', async () => {
     const c = await svc.createCargo(scopeDe(outro), { ...u(outro), nome: 'Gerente', cbo: '141410' });
-    const j = await svc.createJornada(scopeDe(outro), { ...u(outro), nome: '44h', minutosSemanais: 2640, tipoJornada: '4' });
+    const j = await svc.createJornada(scopeDe(outro), { ...u(outro), nome: '44h', minutosSemanais: 2640, diasTrabalho: ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'], minutosPorDia: 440, tipoJornada: '4' });
     const s = await svc.createSindicato(scopeDe(outro), { ...u(outro), cnpj: CNPJ, nome: 'Sind' });
     expect(await erro(svc.getCargo(scopeDe(dono), c.id))).toEqual({ status: 404, code: 'NOT_FOUND' });
     expect(await erro(svc.updateJornada(scopeDe(dono), j.id, { ...u(dono), nome: 'x' }))).toEqual({ status: 404, code: 'NOT_FOUND' });
@@ -72,9 +72,9 @@ describe('DpCadastroService (itens 28–33, 36)', () => {
   });
 
   it('itens 29–31 — cargo e jornada: update parcial preserva o resto; sindicato: CNPJ vivo único e recriável', async () => {
-    const j = await svc.createJornada(scopeDe(dono), { ...u(dono), nome: '44h', minutosSemanais: 2640, tipoJornada: '4', descricao: 'seg a sex 8h-17h, sáb 8h-12h' });
+    const j = await svc.createJornada(scopeDe(dono), { ...u(dono), nome: '44h', minutosSemanais: 2640, diasTrabalho: ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'], minutosPorDia: 440, tipoJornada: '4', descricao: 'seg a sex 8h-17h, sáb 8h-12h' });
     const j2 = await svc.updateJornada(scopeDe(dono), j.id, { ...u(dono), nome: '44 horas' });
-    expect(j2).toMatchObject({ nome: '44 horas', minutosSemanais: 2640, tipoJornada: '4', descricao: 'seg a sex 8h-17h, sáb 8h-12h' });
+    expect(j2).toMatchObject({ nome: '44 horas', minutosSemanais: 2640, diasTrabalho: ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'], minutosPorDia: 440, tipoJornada: '4', descricao: 'seg a sex 8h-17h, sáb 8h-12h' });
     const c = await svc.createCargo(scopeDe(dono), { ...u(dono), nome: 'Manicure', cbo: '516120' });
     expect((await svc.updateCargo(scopeDe(dono), c.id, { ...u(dono), cbo: '516110' })).nome).toBe('Manicure');
 
@@ -120,7 +120,7 @@ describe('DpCadastroService (itens 28–33, 36)', () => {
     await svc.deleteLotacao(scopeDe(dono), l.id);
     const s = await svc.createSindicato(scopeDe(dono), { ...u(dono), cnpj: CNPJ, nome: 'Nome do sindicato' });
     const cargo = await svc.createCargo(scopeDe(dono), { ...u(dono), nome: 'Nome do cargo', cbo: '516110' });
-    await svc.createJornada(scopeDe(dono), { ...u(dono), nome: 'J', minutosSemanais: 2200, tipoJornada: '2' });
+    await svc.createJornada(scopeDe(dono), { ...u(dono), nome: 'J', minutosSemanais: 2200, diasTrabalho: ['SEG', 'TER', 'QUA', 'QUI', 'SEX'], minutosPorDia: 440, tipoJornada: '9' });
     const conv = await svc.createConvencao(scopeDe(dono), { ...u(dono), sindicatoId: s.id, identificacao: 'CCT', vigenteDesde: '2026-01-01', fonte: 'registro' });
     await svc.createParametro(scopeDe(dono), conv.id, {
       ...u(dono), chave: 'PISO_SALARIAL_CENTS', discriminador: cargo.id, valorInt: 180000n, clausula: 'Texto da cláusula', vigenteDesde: '2026-01-01',

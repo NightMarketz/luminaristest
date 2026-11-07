@@ -57,34 +57,79 @@ export interface DadosIdade {
   dataTermino: string | null;
 }
 
+/** Meses completos de `de` até `ate` (date-only); o dia de `ate` igual ao de `de` fecha o mês. */
+export function mesesCompletos(de: string, ate: string): number {
+  const m = (Number(ate.slice(0, 4)) - Number(de.slice(0, 4))) * 12 + (Number(ate.slice(5, 7)) - Number(de.slice(5, 7)));
+  return ate.slice(8) >= de.slice(8) ? m : m - 1;
+}
+
+/** Valor de regra com a fonte da linha (`regrasFolha.ValorRegra`): o número e o artigo vêm do dado (item 73). */
+export interface RegraNumero {
+  valor: number;
+  fonte: string;
+}
+
 /**
- * Itens 41 e 42 — idade e prazo por categoria. 400 com `reason`.
- * - 103 (aprendiz): 14 anos completos em `dataInicio` [D12 CF art. 7º XXXIII]; sem `pcd`, menos de 24 em `dataInicio`
- *   [D05 CLT art. 428 caput] e `dataTermino` antes do 24º aniversário [art. 433]; `dataTermino` obrigatória e no máximo
- *   `dataInicio` + 2 anos − 1 dia, salvo `pcd` [art. 428 § 3º].
- * - 101 (empregado geral): 16 anos completos em `dataInicio` [D12 CF art. 7º XXXIII].
+ * BE-INCR-DP-F2 item 72 — as regras de idade e prazo que a categoria usa, lidas da `FOLHA_REGRA` na `dataInicio`
+ * (`regrasIdadeDaCategoria`). 101 usa só `empregadoIdadeMin`; 103 as do aprendiz; 901 e 723 nenhuma.
  */
-export function assertIdadeEPrazo(d: DadosIdade): void {
-  if (d.categoria === '101' && idadeEm(d.nascimento, d.dataInicio) < 16) {
-    throw dpValidationError('DP_IDADE_MINIMA', 'O empregado precisa ter 16 anos completos na admissão (CF art. 7º XXXIII).');
+export interface RegrasIdade {
+  empregadoIdadeMin?: RegraNumero;
+  aprendizIdadeMin?: RegraNumero;
+  aprendizIdadeMax?: RegraNumero;
+  aprendizPrazoMaxMeses?: RegraNumero;
+}
+
+/** Quais chaves de `FOLHA_REGRA` a categoria pede (o serviço só lê estas; 901 e 723 não leem nada). */
+export const CHAVES_IDADE_POR_CATEGORIA = {
+  '101': ['EMPREGADO_IDADE_MIN'],
+  '103': ['APRENDIZ_IDADE_MIN', 'APRENDIZ_IDADE_MAX', 'APRENDIZ_PRAZO_MAX_MESES'],
+  '901': [],
+  '723': [],
+} as const satisfies Record<CategoriaNucleo, readonly string[]>;
+
+const exigir = (r: RegraNumero | undefined, nome: string): RegraNumero => {
+  if (!r) throw new Error(`assertIdadeEPrazo: regra ${nome} não foi lida para a categoria.`);
+  return r;
+};
+const msg = (modelo: string, r: RegraNumero) => modelo.replace('{n}', String(r.valor)).replace('{fonte}', r.fonte);
+
+/**
+ * Itens 41 e 42 do F0+F1 — idade e prazo por categoria. 400 com `reason`. Desde o F2 PR-0R (item 72) os números vêm da
+ * `FOLHA_REGRA` (valores iniciais: 16 e 14 anos, CF art. 7º XXXIII [F1-D12]; menos de 24 anos e 24 meses, CLT arts. 428
+ * caput e § 3º e 433 [F1-D05]), e a mensagem leva o número e a fonte da linha (item 73).
+ * - 103 (aprendiz): idade mínima completa em `dataInicio`; sem `pcd`, abaixo da máxima em `dataInicio` e `dataTermino`
+ *   antes do aniversário da máxima [art. 433]; `dataTermino` obrigatória e no máximo `dataInicio` + prazo − 1 dia, salvo
+ *   `pcd` [art. 428 § 3º].
+ * - 101 (empregado geral): idade mínima completa em `dataInicio`.
+ */
+export function assertIdadeEPrazo(d: DadosIdade, regras: RegrasIdade): void {
+  if (d.categoria === '101') {
+    const min = exigir(regras.empregadoIdadeMin, 'EMPREGADO_IDADE_MIN');
+    if (idadeEm(d.nascimento, d.dataInicio) < min.valor) {
+      throw dpValidationError('DP_IDADE_MINIMA', msg('O empregado precisa ter {n} anos completos na admissão ({fonte}).', min));
+    }
   }
   if (d.categoria !== '103') return;
-  if (idadeEm(d.nascimento, d.dataInicio) < 14) {
-    throw dpValidationError('DP_APRENDIZ_IDADE', 'O aprendiz precisa ter 14 anos completos na admissão (CF art. 7º XXXIII).');
+  const min = exigir(regras.aprendizIdadeMin, 'APRENDIZ_IDADE_MIN');
+  const max = exigir(regras.aprendizIdadeMax, 'APRENDIZ_IDADE_MAX');
+  const prazo = exigir(regras.aprendizPrazoMaxMeses, 'APRENDIZ_PRAZO_MAX_MESES');
+  if (idadeEm(d.nascimento, d.dataInicio) < min.valor) {
+    throw dpValidationError('DP_APRENDIZ_IDADE', msg('O aprendiz precisa ter {n} anos completos na admissão ({fonte}).', min));
   }
-  if (!d.pcd && idadeEm(d.nascimento, d.dataInicio) >= 24) {
-    throw dpValidationError('DP_APRENDIZ_IDADE', 'O aprendiz sem deficiência precisa ter menos de 24 anos na admissão (CLT art. 428).');
+  if (!d.pcd && idadeEm(d.nascimento, d.dataInicio) >= max.valor) {
+    throw dpValidationError('DP_APRENDIZ_IDADE', msg('O aprendiz sem deficiência precisa ter menos de {n} anos na admissão ({fonte}).', max));
   }
   if (d.dataTermino === null) {
-    throw dpValidationError('DP_APRENDIZ_PRAZO', 'O contrato de aprendizagem exige data de término (CLT art. 428 § 3º).');
+    throw dpValidationError('DP_APRENDIZ_PRAZO', msg('O contrato de aprendizagem exige data de término ({fonte}).', prazo));
   }
   if (d.pcd) return;
-  if (idadeEm(d.nascimento, d.dataTermino) >= 24) {
-    throw dpValidationError('DP_APRENDIZ_PRAZO', 'O contrato de aprendizagem termina antes do 24º aniversário (CLT art. 433).');
+  if (idadeEm(d.nascimento, d.dataTermino) >= max.valor) {
+    throw dpValidationError('DP_APRENDIZ_PRAZO', msg('O contrato de aprendizagem termina antes do aniversário de {n} anos ({fonte}).', max));
   }
-  // dataTermino <= dataInicio + 2 anos − 1 dia ⟺ do início ao término há menos de 2 anos completos.
-  if (idadeEm(d.dataInicio, d.dataTermino) >= 2) {
-    throw dpValidationError('DP_APRENDIZ_PRAZO', 'O contrato de aprendizagem dura no máximo 2 anos (CLT art. 428 § 3º).');
+  // dataTermino <= dataInicio + N meses − 1 dia ⟺ do início ao término há menos de N meses completos.
+  if (mesesCompletos(d.dataInicio, d.dataTermino) >= prazo.valor) {
+    throw dpValidationError('DP_APRENDIZ_PRAZO', msg('O contrato de aprendizagem dura no máximo {n} meses ({fonte}).', prazo));
   }
 }
 

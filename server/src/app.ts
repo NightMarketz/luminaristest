@@ -15,7 +15,6 @@ import { requestContextMiddleware } from './middleware/requestContext';
 import { accessLogMiddleware } from './middleware/accessLog';
 import { handleApiError } from './lib/apiUtils';
 import { jsonBigintReplacer } from './lib/jsonBigintReplacer';
-import { outboundFetch } from './lib/outboundHttp';
 import prisma from './lib/prisma';
 
 /**
@@ -78,7 +77,7 @@ export function createApp(): express.Express {
   // Serve static OpenAPI if present
   app.use('/api/docs/static', express.static(path.join(process.cwd(), 'public')));
 
-  // Health check (R19): pings DB and Qdrant, 503 when degraded.
+  // Health check (R19): pings the DB, 503 when degraded.
   app.get('/health', async (req, res) => {
     const checks: Record<string, string> = {};
 
@@ -88,21 +87,6 @@ export function createApp(): express.Express {
       checks.database = 'ok';
     } catch (err) {
       checks.database = 'error';
-    }
-
-    // Qdrant ping (only if QDRANT_URL is configured)
-    if (process.env.QDRANT_URL) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
-        const qdrantRes = await outboundFetch('qdrant', `${process.env.QDRANT_URL}/healthz`, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        checks.qdrant = qdrantRes.ok ? 'ok' : 'error';
-      } catch {
-        checks.qdrant = 'error';
-      }
-    } else {
-      checks.qdrant = 'not_configured';
     }
 
     const allOk = Object.values(checks).every((v) => v === 'ok' || v === 'not_configured');

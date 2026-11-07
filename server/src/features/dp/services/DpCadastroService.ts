@@ -17,7 +17,20 @@ import type {
   UpdateSindicatoInput,
 } from '../dtos/DpCadastrosDto';
 import { vigenciaContida } from '../models/cadastros';
-import { dpConflictError } from '../models/erros';
+import { dpConflictError, dpValidationError } from '../models/erros';
+import {
+  assertEscalaRegular,
+  avisosDaJornada,
+  escalaDaJornada,
+  lerDias,
+  serializarDias,
+  type AvisoJornada,
+  type DiaSemana,
+  type EscalaJornada,
+} from '../models/escala';
+import { regraInt } from '../models/regrasFolha';
+import { scopeToday } from '../../accounting/models/dates';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import { sobrepoe, type Vigencia } from '../models/vigencia';
 import type { IDpPolicy } from '../policies/IDpPolicy';
 import type { IDpCadastroRepository } from '../repositories/IDpCadastroRepository';
@@ -38,7 +51,14 @@ type DpCadastroEvent = (typeof DP_CADASTRO_EVENTS)[number];
 
 export type DpLotacaoView = Omit<DpLotacao, 'userId' | 'deletedAt' | 'createdAt' | 'updatedAt'> & { createdAt: string; updatedAt: string };
 export type DpCargoView = Omit<DpCargo, 'userId' | 'deletedAt' | 'createdAt' | 'updatedAt'> & { createdAt: string; updatedAt: string };
-export type DpJornadaView = Omit<DpJornada, 'userId' | 'deletedAt' | 'createdAt' | 'updatedAt'> & { createdAt: string; updatedAt: string };
+/** BE-INCR-DP-F2 item 68: `diasTrabalho` sai como lista, como entra no DTO. */
+export type DpJornadaView = Omit<DpJornada, 'userId' | 'deletedAt' | 'createdAt' | 'updatedAt' | 'diasTrabalho'> & {
+  diasTrabalho: DiaSemana[];
+  createdAt: string;
+  updatedAt: string;
+};
+/** Item 71: criar e editar devolvem os avisos da jornada contra a lei vigente hoje. */
+export type DpJornadaComAvisos = DpJornadaView & { avisos: AvisoJornada[] };
 export type DpSindicatoView = Omit<DpSindicato, 'userId' | 'deletedAt' | 'createdAt' | 'updatedAt'> & { createdAt: string; updatedAt: string };
 export type DpConvencaoView = Omit<DpConvencaoColetiva, 'userId' | 'deletedAt' | 'createdAt' | 'updatedAt'> & { createdAt: string; updatedAt: string };
 /** `valorInt` sai como string (BigInt não serializa em JSON). */
@@ -62,6 +82,8 @@ export class DpCadastroService {
     private readonly repo: IDpCadastroRepository,
     private readonly policy: IDpPolicy,
     private readonly auditService: AuditService,
+    /** BE-INCR-DP-F2 item 71: limite de jornada e repouso mínimo vigentes (FOLHA_REGRA), para o aviso do cadastro. */
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   // ── Item 28 — lotação ──────────────────────────────────────────────────────────────────────────────────────────────
@@ -138,47 +160,77 @@ export class DpCadastroService {
   // ── Item 30 — jornada ──────────────────────────────────────────────────────────────────────────────────────────────
   async listJornadas(scope: AccountingScope, limit: number): Promise<DpJornadaView[]> {
     this.assertRead(scope);
-    return (await this.repo.listJornadas(scope.ownerUserId, limit)).map(view);
+    return (await this.repo.listJornadas(scope.ownerUserId, limit)).map(viewJornada);
   }
   async getJornada(scope: AccountingScope, id: string): Promise<DpJornadaView> {
     this.assertRead(scope);
-    return view(achado(await this.repo.findJornada(scope.ownerUserId, id), 'Jornada'));
+    return viewJornada(achado(await this.repo.findJornada(scope.ownerUserId, id), 'Jornada'));
   }
-  async createJornada(scope: AccountingScope, input: CreateJornadaInput): Promise<DpJornadaView> {
+  async createJornada(scope: AccountingScope, input: CreateJornadaInput): Promise<DpJornadaComAvisos> {
     this.assertManage(scope);
+    // BE-INCR-DP-F2 item 68: a escala define a jornada; minutosSemanais é derivado e conferido.
+    const escala: EscalaJornada = { diasTrabalho: lerDias(serializarDias(input.diasTrabalho)), minutosPorDia: input.minutosPorDia };
+    const minutosSemanais = assertEscalaRegular(escala, input.tipoJornada, input.minutosSemanais);
+    const avisos = await this.avisos(scope, escala);
     return this.repo.runTransaction(async (tx) => {
       const row = await this.repo.createJornada(
         scope.ownerUserId,
-        { nome: input.nome, minutosSemanais: input.minutosSemanais, tipoJornada: input.tipoJornada, descricao: input.descricao ?? null },
+        {
+          nome: input.nome,
+          minutosSemanais,
+          tipoJornada: input.tipoJornada,
+          descricao: input.descricao ?? null,
+          diasTrabalho: serializarDias(escala.diasTrabalho),
+          minutosPorDia: escala.minutosPorDia,
+        },
         tx,
       );
       await this.auditJornada(tx, scope, 'created', row);
-      return view(row);
+      return { ...viewJornada(row), avisos };
     });
   }
-  async updateJornada(scope: AccountingScope, id: string, input: UpdateJornadaInput): Promise<DpJornadaView> {
+  async updateJornada(scope: AccountingScope, id: string, input: UpdateJornadaInput): Promise<DpJornadaComAvisos> {
     this.assertManage(scope);
     return this.repo.runTransaction(async (tx) => {
       const atual = achado(await this.repo.findJornada(scope.ownerUserId, id, tx), 'Jornada');
-      // Item 30 (D-5): referenciada por versão de vínculo, os campos de cálculo não mudam — mudança = jornada nova +
-      // versão nova do vínculo. Gate dentro da tx (memória authoritative-gate-inside-tx).
+      const tipoJornada = input.tipoJornada ?? atual.tipoJornada;
+      const diasTrabalho = input.diasTrabalho !== undefined ? serializarDias(input.diasTrabalho) : atual.diasTrabalho;
+      const minutosPorDia = input.minutosPorDia ?? atual.minutosPorDia;
+      // Item 30 (D-5), estendido pelo item 68 do F2: referenciada por versão de vínculo, os campos de cálculo (minutos,
+      // tipo e escala) não mudam — mudança = jornada nova + versão nova do vínculo. Gate dentro da tx, antes da escala.
       const mudaCalculo =
         (input.minutosSemanais !== undefined && input.minutosSemanais !== atual.minutosSemanais) ||
-        (input.tipoJornada !== undefined && input.tipoJornada !== atual.tipoJornada);
+        tipoJornada !== atual.tipoJornada ||
+        diasTrabalho !== atual.diasTrabalho ||
+        minutosPorDia !== atual.minutosPorDia;
       if (mudaCalculo && (await this.repo.jornadaEmUso(id, tx))) {
         throw dpConflictError(
           'DP_JORNADA_EM_USO',
-          'A jornada já é usada por versão de vínculo: minutosSemanais e tipoJornada não mudam. Cadastre jornada nova e crie versão nova do vínculo.',
+          'A jornada já é usada por versão de vínculo: minutosSemanais, tipoJornada, diasTrabalho e minutosPorDia não mudam. Cadastre jornada nova e crie versão nova do vínculo.',
         );
       }
+      const escala = escalaDaJornada({ diasTrabalho, minutosPorDia });
+      // Item 68: jornada migrada sem minutosPorDia só muda a escala informando minutosPorDia (a migração não inventa).
+      if (escala === null && (input.diasTrabalho !== undefined || input.minutosSemanais !== undefined || input.tipoJornada !== undefined)) {
+        throw dpValidationError('DP_ESCALA_IRREGULAR', 'A jornada não tem minutosPorDia: informe a escala (diasTrabalho e minutosPorDia).', { campo: 'minutosPorDia' });
+      }
+      // A escala só se confere quando um campo de cálculo muda: renomear uma jornada do F1 (inclusive 12×36) segue livre.
+      const minutosSemanais = escala && mudaCalculo ? assertEscalaRegular(escala, tipoJornada, input.minutosSemanais) : atual.minutosSemanais;
       const row = await this.repo.updateJornada(
         id,
-        { nome: input.nome, minutosSemanais: input.minutosSemanais, tipoJornada: input.tipoJornada, descricao: input.descricao },
+        { nome: input.nome, minutosSemanais, tipoJornada, descricao: input.descricao, diasTrabalho, minutosPorDia },
         tx,
       );
       await this.auditJornada(tx, scope, 'updated', row);
-      return view(row);
+      return { ...viewJornada(row), avisos: escala ? await this.avisos(scope, escala) : [] };
     });
+  }
+
+  /** Item 71 — limite semanal e repouso mínimo da FOLHA_REGRA na data de hoje (da unidade): aviso, não 400. */
+  private async avisos(scope: AccountingScope, escala: EscalaJornada): Promise<AvisoJornada[]> {
+    const hoje = scopeToday(scope);
+    const fotografia = await this.legalParams.fotografia(['FOLHA_REGRA']);
+    return avisosDaJornada(escala, regraInt(fotografia, 'JORNADA_LIMITE_SEMANAL_MIN', hoje), regraInt(fotografia, 'REPOUSO_DIAS_MIN', hoje), hoje);
   }
   async deleteJornada(scope: AccountingScope, id: string): Promise<void> {
     this.assertManage(scope);
@@ -431,6 +483,11 @@ export class DpCadastroService {
   private assertManage(scope: AccountingScope): void {
     if (!this.policy.canManage(scope)) throw new ForbiddenError('Você não tem permissão para alterar os cadastros do DP.');
   }
+}
+
+function viewJornada(r: DpJornada): DpJornadaView {
+  const { diasTrabalho, ...resto } = r;
+  return { ...view(resto), diasTrabalho: lerDias(diasTrabalho) };
 }
 
 function achado<T>(row: T | null, oQue: string): T {

@@ -36,7 +36,7 @@ function InputArea({ userInput, setUserInput, handleSendMessage, isLoading, isCr
         disabled={isLoading || isCreating}
         className="bg-blue-600 text-white px-6 py-3 rounded-r-lg hover:bg-blue-700 disabled:bg-neutral-400 dark:disabled:bg-neutral-500"
       >
-        Enviar
+        {t('onboardingInterviewSend')}
       </button>
     </div>
   );

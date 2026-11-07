@@ -292,6 +292,10 @@
  *                   type: array
  *                   description: 'W1 (F-W1-6 a) - modules checked in the front; read only on the turn that opens the customization session (choice customize)'
  *                   items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-CAMP, PES-0, PES-FORN, VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM, EST-0, AGE-0, FIN-0, FIN-REC, FIN-BASE, GES-0, GES-META, CRM-2, PESSOAS, VENDAS, ESTOQUE, AGENDA, FINANCEIRO, GESTAO] }
+ *                 locale:
+ *                   type: string
+ *                   enum: [pt, en]
+ *                   description: 'UI language; the interview answers in it. Absent = pt (dono, chat, 2026-11-06)'
  *       responses:
  *         '200':
  *           description: Interview turn result

@@ -31,8 +31,15 @@ describe('DpCadastrosDto', () => {
   });
 
   it('item 30 — jornada: minutos > 0 e tpJornada do domínio (1 e 8 não existem)', () => {
-    const j = { unitId: 'u1', nome: '44h', minutosSemanais: 2640, tipoJornada: '4' };
+    const j = { unitId: 'u1', nome: '44h', minutosSemanais: 2640, tipoJornada: '4', diasTrabalho: ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'], minutosPorDia: 440 };
     expect(CreateJornadaSchema.safeParse(j).success).toBe(true);
+    // BE-INCR-DP-F2 item 68: a escala é obrigatória; minutosSemanais é opcional (derivado, conferido no serviço).
+    const { minutosSemanais: _m, ...semMinutos } = j;
+    expect(CreateJornadaSchema.safeParse(semMinutos).success).toBe(true);
+    expect(CreateJornadaSchema.safeParse({ ...j, diasTrabalho: undefined }).success).toBe(false);
+    expect(CreateJornadaSchema.safeParse({ ...j, diasTrabalho: ['SEG', 'SEG'] }).success).toBe(false);
+    expect(CreateJornadaSchema.safeParse({ ...j, diasTrabalho: ['XYZ'] }).success).toBe(false);
+    expect(CreateJornadaSchema.safeParse({ ...j, minutosPorDia: 0 }).success).toBe(false);
     expect(CreateJornadaSchema.safeParse({ ...j, minutosSemanais: 0 }).success).toBe(false);
     expect(CreateJornadaSchema.safeParse({ ...j, tipoJornada: '1' }).success).toBe(false);
     expect(CreateJornadaSchema.safeParse({ ...j, tipoJornada: '8' }).success).toBe(false);

@@ -206,3 +206,135 @@ Nenhum passo seguinte foi executado, então o passo 8 ficou pendente. Os passos 
 - Próximo passo (não feito aqui): instrumentar e depois corrigir o layout do card com a lista de módulos aberta, por
   sessão autorizada. Em seguida, rodar este runbook de novo **inteiro** (passos 1–8).
 - Assinatura do executor: agente claude-opus-5-5, persona revisor, sob comando do dono (questionário, 2026-11-06)
+
+---
+
+## Execução 2026-11-06 (2ª, depois do fix): passos 7 e 8, agente, persona revisor
+
+Executor: agente claude-opus-5-5, persona revisor, sob o mesmo comando do dono (questionário de 06/11, *"Agente roda"*,
+`D-2026-11-06-PARADOS-NO-DONO.md` §4) e a frase do dono no chat de 06/11: *"O que falhou, abre uma sessão a parte para
+fecharmos"*. Regra: `RUNBOOK-FORMAT.md` §Fronteira, exceção de 2026-10-25. Data: 2026-11-06, 19:49–19:53 UTC.
+
+**O que mudou no código** (branch `claude/w3-fix-passo7`, sobre a 1ª execução):
+- `3d00e83eb` — teste-guarda `AiInterviewSetup/__tests__/AiInterviewSetup.layout.test.tsx`, **vermelho** antes do fix
+  (2 casos, `AssertionError: expected false to be true` na asserção de piso da `ChatArea` e de teto da lista; os 22 testes
+  antigos da pasta verdes);
+- `d59b0e2c1` + o ajuste deste commit — só classes CSS: `ChatArea` ganhou `basis-0 min-h-32` (cede altura primeiro, com
+  piso de 128 px); o `fieldset` do `ModuleChecklist` ganhou `max-h-40 min-h-0 shrink overflow-y-auto` (teto de 160 px,
+  rola por dentro). Guarda **verde** depois (24/24), `npx tsc --noEmit` limpo.
+- 1ª tentativa sem `basis-0` (medida, não commitada como final): a mensagem aparecia, mas a lista encolhia a 72 px e
+  nenhum checkbox ficava visível. Por isso o `basis-0`.
+
+**Ambiente:** build de produção do commit `d59b0e2c1` + `ChatArea` com `basis-0` (árvore deste PR), `node dist/server.js`
+em `127.0.0.1:4100`, `next start` em `127.0.0.1:3100` (build com `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:4100/api`,
+`EXIT 0`). Banco: **cópia** nova do `server/prisma/prisma/dev.db` real, SHA-256
+`f959c9a1a482e9a5babf4456134ad51aac43fddd3ebd9aba5d0b08e892aa1e6f` (o mesmo da 1ª execução); `prisma migrate status` →
+`Database schema is up to date!`. Na cópia, o hash da senha de `h2c7contador` e `h2-ai-u4` foi trocado pelo do
+`seed-presumido` (desvio c da 1ª execução); ambos com `tabelas 0`. `OPENAI_API_KEY` real. Driver:
+`node scripts/runbook-tela.mjs` (headless shell, viewport 1280×900). Evidência em
+[`runbook-evidence/W3-ESCOLHA-2026-11-06-fix/`](runbook-evidence/W3-ESCOLHA-2026-11-06-fix/); a medida no DOM é a mesma
+função nos três pontos (card, área de mensagens, última mensagem, `elementFromPoint` na mensagem, lista, botões, campo).
+
+### Passos
+
+7. **Usuário 3 `h2c7contador`** (pt): três falas até os botões ("Tenho um salão de beleza" → "Hoje uso agenda de papel e
+   planilha para estoque e financeiro" → "Sim, está correto."), depois "hmm" + **Enviar**. EVIDÊNCIA (`run-pt-net.txt`,
+   5 `POST ChatInterview -> 200`), resposta do último:
+   `res: {"response":"Não entendi sua escolha. Você prefere **criar o sistema agora** ou **customizar** primeiro?","nextStage":"AWAITING_CREATION_TYPE_CONFIRMATION","presetKey":"beautySalon","choicePrompt":{"kind":"creation_type","reason":"unclear"}}`.
+   `passo7-ambiguo.png` mostra "hmm" e a resposta inteira, a lista com 6 módulos visíveis, os dois botões e o campo dentro
+   do card. Medida (`passo1-passo7-medida-dom.jsonl`, 2ª linha):
+   `"areaDeMensagens":{"top":292,"bottom":452,"h":160,…}` ·
+   `"ultimaMsg":{"top":348,"bottom":420,"h":72,"texto":"Não entendi sua escolha. Você prefere criar o sistema agora ou customizar primeiro?"}` ·
+   `"ultimaMsgEhOElementoNoPonto":true` · `"listaModulos":{"top":468,"bottom":628,"h":160,"clientHeight":158,"scrollHeight":412}` ·
+   `"botoesEscolha":[{"t":"Criar o sistema agora",…},{"t":"Customizar",…}]` · `"campo":{"top":746,"bottom":794,"h":48}` ·
+   `"botoesECampoDentroDoCard":true` · `"dialogs":0`. Antes do fix: área 32 px, `mensagemEhOElementoNoPonto:false`, campo
+   em 819–867 com o card terminando em 747. **Confere.**
+
+   Ainda no passo 7, o ponto do passo 1 que o mesmo defeito escondia: antes do "hmm", a proposta da IA ("Oi! Fico muito
+   animado em compartilhar que encontrei o sistema \"Salão de Beleza\"…") está na área de 160 px, com a rolagem no fim e
+   `"ultimaMsgEhOElementoNoPonto":true` (1ª linha do `.jsonl`, `passo1-proposta-visivel.png`).
+
+   **Classificação do ambíguo:** `reason: "unclear"` para "hmm" é o desenho, não bug. O BRIEF
+   (`WIZARD-W3-ESCOLHA-CRIACAO-brief.md`, l. 40) define `unclear` como "texto ambíguo", e o item 11 diz que o ambíguo não
+   abre modal e mostra a mensagem do servidor com os dois botões. Nada corrigido aqui.
+
+8. **Usuário 2 `h2-ai-u4`**: abriu em PT (`/pt/dashboard/setup`); idioma trocado pelo seletor da Navbar (`🇧🇷 PT` →
+   `🇺🇸 English (US)`) → URL `/dashboard/setup`, aba `["AI Interview"]` (`passo8-idioma-en.png`). Três falas em inglês até
+   os botões: `"botoesEscolha":[{"t":"Create the system now",…},{"t":"Customize",…}]`, `"botoesECampoDentroDoCard":true`,
+   `"dialogs":0` (`passo8-medida-dom.jsonl`, `passo8-botoes-en.png`); resposta com
+   `choicePrompt":{"kind":"creation_type","reason":"initial"}`. Clique em **Create the system now** → `{"dialogs":1}`,
+   texto (`passo8-modal-en.txt`):
+   `Create the system now? | ADMINISTRATIVE FORM | We will create the system with the "beautySalon" default. You can adjust it later. | Back | Confirm`
+   (`passo8-modal-en.png`). **Confere.**
+
+Os passos 1–6 não foram repetidos nesta execução: conferiram na 1ª (mesmo dia), e o fix só troca classes CSS de dois
+elementos (sem mudança de estado, rede ou modal). Isso é **inferido** do diff, não medido de novo; o registro da 1ª execução
+pedia rodar 1–8 de novo, e a sessão que abriu esta pediu 7 e 8. Se o dono quiser a rodada inteira, é o mesmo roteiro.
+
+## Desfecho (2ª execução, 2026-11-06)
+[x] PASSOU — passos 7 e 8 com evidência conferindo com o esperado; passos 1–6 da 1ª execução (mesmo dia), sobre código
+de fluxo inalterado.
+[ ] FALHOU
+[ ] BLOQUEADO
+
+## Registro (2ª execução)
+- Achados no caminho (fora do escopo, sem correção):
+  1. Com a UI em inglês, a IA segue respondendo em português ("Olá! Para começarmos…", "Oi! Estou super empolgado…") —
+     o runbook só pede rótulos e modal em inglês, que conferiram.
+  2. O botão **Enviar** do campo é texto fixo em português, também com a UI em inglês (`InputArea.tsx`).
+  3. Seguem os achados 1 e 2 da 1ª execução: o modal mostra a chave `"beautySalon"` em vez do nome do preset, e o
+     subtítulo "FORMULÁRIO ADMINISTRATIVO"/"ADMINISTRATIVE FORM" do `Modal` canônico.
+  4. A lista "Módulos sugeridos" agora rola dentro de 160 px (6 de 12 itens visíveis em 1280 px); não há indicação
+     visual de que rola além da barra do navegador.
+- Atualização do artefato de rastreio: `docs/plano/nos/W3.md`, `estado_detalhe` com "sign-off do item 14 PASSOU na
+  2ª execução de 06/11", no mesmo PR.
+- Assinatura do executor: agente claude-opus-5-5, persona revisor, sob comando do dono (questionário e chat, 2026-11-06)
+
+### Achados da 2ª execução resolvidos (dono, chat, 2026-11-06: "Já resolve os agentes fora do escopo")
+
+Conferência na tela, mesmo ambiente e mesma cópia do banco, build de produção com as mudanças abaixo (2026-11-07,
+02:00–02:04 UTC). Evidência em [`runbook-evidence/W3-ESCOLHA-2026-11-06-achados/`](runbook-evidence/W3-ESCOLHA-2026-11-06-achados/).
+
+| Achado | Mudança | Evidência |
+|---|---|---|
+| Modal com a chave `beautySalon` (BRIEF item 9 pede o nome) | `usePresetName` (hook novo) busca o nome em `GET /dashboard/presets`, a mesma lista do Modo Rápido; o `CreationChoice` recebe `presetName`; sem a lista, cai na chave | `achados-pt-modal.txt`: `Vamos criar o sistema com o padrão "Advanced Beauty Salon ERP".` · `achados-en-modal.txt`: `…with the "Advanced Beauty Salon ERP" default.` |
+| Subtítulo "Formulário Administrativo" nos dois modais | `Modal` canônico ganhou `subtitle?: string \| null` (ausente = o padrão de sempre; `null` = sem linha); os dois modais do W3 passam `null` | os dois `.txt` acima não têm a linha |
+| "Enviar" fixo em PT | chave `onboardingInterviewSend` (pt "Enviar", en "Send") no `InputArea` | `[eval] ["Create the system now","Customize","Send"]` (`run-net.txt`) |
+| Lista rola sem indicação | degradê fixo (`sticky bottom-0`) na base da lista | `achados-pt-lista-degrade.png` (última linha esmaecida com `scrollTop` 0) · `achados-pt-lista-fim.png` (rolada até o fim, nenhum item coberto) |
+| IA responde em PT com a UI em EN | resolvido depois — ver a seção seguinte (dono, chat, 2026-11-06: "Seguir o idioma da UI") | [`…-idioma/`](runbook-evidence/W3-ESCOLHA-2026-11-06-idioma/) |
+
+Testes: `CreationChoice.test.tsx` (+2: nome do preset no modal; sem subtítulo nos dois modais), `InputArea.test.tsx` (novo),
+`Modal.subtitle.test.tsx` (novo: padrão, `null`, string). `npx vitest run features/interview components/ui/__tests__/Modal`
+→ 121/121; `npx tsc --noEmit` e `npm run test:types` limpos.
+
+### A entrevista segue o idioma da UI (dono, chat, 2026-11-06: "Seguir o idioma da UI")
+
+**Mudança:**
+- Contrato: `ChatInterviewSchema` aceita `locale: 'pt' | 'en'` (opcional; ausente = português, o comportamento de antes;
+  outro valor → 400). Snapshot de DTO e `ChatInterviewDto.gen.ts` com só a linha nova.
+- Servidor: `features/interview/models/interviewText.ts` tem os textos fixos em pt/en e a frase de idioma (`replyIn`) que
+  fecha os prompts de resposta. O `locale` atravessa `processTurn` → `StageHandlers` → `CustomizationService` →
+  `AIInteractions`. O texto livre da escolha entende inglês ("I don't want to customize", "create it now"). O resumo
+  perdeu o ponto duplicado ("planilhas.. Isso está correto?"), que já existia em PT.
+- Front: o `useAiInterview` manda o idioma da UI (`i18n.language`) em todo POST da entrevista.
+
+**Conferência na tela** (build de produção, 2026-11-07, 02:28–02:31 UTC, `h2c7contador`, OpenAI real; evidência em
+[`runbook-evidence/W3-ESCOLHA-2026-11-06-idioma/`](runbook-evidence/W3-ESCOLHA-2026-11-06-idioma/), `run-net.txt`):
+- UI trocada para English (US): saudação `Hi! To get started, please tell me about your business…`; pergunta da IA
+  `What specific services do you offer at your beauty salon?`; resumo `Got it. So, in short, your business is: …`;
+  proposta `Hey there! I'm super excited to share that I found the perfect system…` (`en-proposta.png`);
+  "hmm" → `I didn't get your choice. Would you rather create the system now or customize it first?` (`en-ambiguo.png`);
+  **Customize** → `Customizing the "Advanced Beauty Salon ERP" System` (`en-customizacao.png`). Corpos com
+  `"locale":"en"` (5 POSTs).
+- UI de volta a Português (BR): saudação `Olá! Para começarmos…` (`pt-saudacao.png`), corpo com `"locale":"pt"`.
+
+**Fora do alcance desta mudança (seguem em PT):** o motivo da recusa de remoção que vem de `describeTableLock` /
+`bridgeRequirementsOfTable` (módulo de presets), os nomes de preset e de tabela (dado do preset) e o painel de campos por
+IA (`POST /dashboard/ai/CustomizeFields`, outro endpoint; o prompt dele pede `friendlyMessage` "em português").
+
+Testes: `StageHandlers.choice.test.ts` (+7: `locale` chega ao `processTurn`; `fr` → 400; saudação en/pt; ambíguo em
+inglês; texto livre em inglês; prompt do MATCHING_PRESET em inglês com nomes de módulo em inglês; resumo sem ponto
+duplicado), `useAiInterview.locale.test.tsx` (novo). Jest unit da entrevista e dos controllers 143/143; integração
+`interviewSession.integration.test.ts` 7/7; vitest 123/123; `tsc` do my-app e `test:types` limpos. `tsc` do server: só os
+2 erros de `nfeSignature.ts`/`nfseSignature.ts` do ambiente (o `@xmldom/xmldom` 0.9.12 sumiu do depósito compartilhado
+de dependências numa operação npm interrompida às 22:51; arquivos não tocados aqui).

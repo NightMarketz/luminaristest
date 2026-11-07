@@ -1,7 +1,6 @@
 import { IChatService } from './IChatService';
 import { ChatRequestDto as ChatRequest, ChatResponseDto as ChatResponse } from '../dtos/ChatDto';
-import { IEmbeddingService } from '@/lib/vector/embedding';
-import { IVectorRepository } from '@/features/documents/repositories/IVectorRepository';
+import type { DocumentSearchService } from '@/features/documents/services/DocumentSearchService';
 import { OpenAIService } from '@/lib/openai/OpenAIService';
 import { LlmUsage, toTurnUsage } from '@/lib/openai/llmUsage';
 import { LuminarisAgentService } from './LuminarisAgentService';
@@ -10,12 +9,11 @@ import { ChatMessageService } from '@/features/chatMessages/services/ChatMessage
 import { ChatMessageRole } from '@/features/chatMessages/models/ChatMessage.model';
 import logger from '@/lib/logger';
 import { UserContext } from '@/lib/authUtils';
-import { ForbiddenError } from '@/lib/errors';
-// eslint-disable-next-line no-restricted-imports -- DEBT: prisma.* em service, viola contrato §2 (só Repository). Backlog: docs/architecture/lint-layer-gate.md. Remover ao migrar para repository (DocumentRepository).
-import prisma from '@/lib/prisma';
 import OpenAI from 'openai';
 import { formatInTimeZone } from 'date-fns-tz';
 import { sanitizeUserInput, wrapSystemPrompt } from '@/lib/PromptSanitizer';
+import { wrapUntrustedData } from '@/lib/untrustedData';
+import { RagTurn } from './ragTurn';
 
 // System prompts are intentionally written in Portuguese: the assistant's persona is
 // a Portuguese-speaking ERP/CRM agent. Technical values (IDs, enums) stay language-neutral.
@@ -29,6 +27,17 @@ Instruções:
 3. Baseie sua resposta SOMENTE nas informações extraídas do contexto. Não utilize conhecimento prévio ou informações externas.
 4. Responda de forma direta e clara.
 `;
+
+/** Emenda 07/11, item 15b: no DESCRITIVO, cada afirmação cita o número do trecho que a sustenta. */
+const RAG_CITE_RULE =
+  '5. Os trechos do contexto vêm numerados como [1], [2]… Em cada afirmação, cite entre colchetes o número do trecho que a sustenta (ex.: "a multa é de 10% [2]"). Não cite número que não esteja no contexto.';
+
+/** Item 15f (F-RAG-M6 = b): no agente, a mesma regra para os trechos devolvidos por search_documents. */
+const AGENT_CITE_RULE =
+  'Os trechos devolvidos pela ferramenta search_documents vêm com um número ("marker"). Ao usar um trecho na resposta, cite o número dele entre colchetes (ex.: [3]). Não cite número que a ferramenta não devolveu.';
+
+/** Trechos pedidos ao índice no modo RAG (o mesmo valor de antes do RAG-PR-B). */
+const RAG_SEARCH_LIMIT = 10;
 
 const AGENT_SYSTEM_PROMPT = `
 Você é o Luminaris AI Agent, um assistente inteligente integrado ao ERP/CRM do usuário.
@@ -69,24 +78,14 @@ function userClockPrompt(timeZone: string | undefined): string {
 const MAX_PERSISTED_HISTORY = 50;
 
 export class ChatService implements IChatService {
-  private embeddingService: IEmbeddingService;
-  private vectorRepository: IVectorRepository;
-  private openaiService: OpenAIService;
-  private agentService: LuminarisAgentService;
-
   constructor(
-    embeddingService: IEmbeddingService,
-    vectorRepository: IVectorRepository,
-    openaiService: OpenAIService,
-    agentService: LuminarisAgentService,
+    // RAG-PR-B item 15: o modo RAG busca pelo mesmo serviço da rota e da ferramenta (posse + embedding + vec0).
+    private readonly documentSearch: DocumentSearchService,
+    private readonly openaiService: OpenAIService,
+    private readonly agentService: LuminarisAgentService,
     private readonly knowledgeGraphService: KnowledgeGraphService,
     private readonly chatMessageService: ChatMessageService
-  ) {
-    this.embeddingService = embeddingService;
-    this.vectorRepository = vectorRepository;
-    this.openaiService = openaiService;
-    this.agentService = agentService;
-  }
+  ) {}
 
   /**
    * Public entry point: persists the user message, generates the reply, and persists the
@@ -116,13 +115,17 @@ export class ChatService implements IChatService {
 
     // I11: every LLM call of the turn reports its usage here (embedding excluded — F-I11-5 → a).
     const calls: LlmUsage[] = [];
-    const response = await this.buildResponse(request, (usage) => calls.push(usage));
+    // Item 15a (F-RAG-M2): sem `ragMode`, RÁPIDO — o comportamento de antes da emenda.
+    const turn = new RagTurn(request.ragMode ?? 'RAPIDO');
+    const response = await this.buildResponse(request, turn, (usage) => calls.push(usage));
 
     // Persist the assistant reply. Best-effort: a write hiccup must not discard a generated answer.
     // A turn that throws before this point is not persisted, so its usage is lost (accepted limit, BRIEF item 15).
     if (chatInstanceId && response.answer) {
       try {
-        await this.chatMessageService.appendAssistantMessage(chatInstanceId, response.answer, user, toTurnUsage(calls));
+        // Item 15e (F-RAG-M7): citações e dados técnicos ficam com a mensagem, para o chat reaberto mostrar o mesmo.
+        const ragDetail = response.sourceDocuments?.length ? turn.detail(response) : null;
+        await this.chatMessageService.appendAssistantMessage(chatInstanceId, response.answer, user, toTurnUsage(calls), ragDetail);
       } catch (error) {
         logger.warn('Failed to persist assistant message', { error, chatInstanceId });
       }
@@ -156,7 +159,7 @@ Pergunta Reformulada:
     return rewrittenQuery ? rewrittenQuery.trim() : query;
   }
 
-  private async buildResponse(request: ChatRequest & { user: UserContext }, onUsage: (usage: LlmUsage) => void): Promise<ChatResponse> {
+  private async buildResponse(request: ChatRequest & { user: UserContext }, turn: RagTurn, onUsage: (usage: LlmUsage) => void): Promise<ChatResponse> {
     const { documentIds, history, confirmedProposalId, user } = request;
     const query = sanitizeUserInput(request.query ?? '');
     logger.info('Iniciando geração de resposta de chat', { queryLength: query.length, documentCount: documentIds?.length, historyLength: history?.length });
@@ -194,19 +197,21 @@ Pergunta Reformulada:
         { role: 'system', content: wrapSystemPrompt(AGENT_SYSTEM_PROMPT, user.id) },
         { role: 'system', content: userClockPrompt(user.timeZone) },
         { role: 'system', content: knowledgeGraphPrompt },
+        ...(turn.descriptive ? [{ role: 'system' as const, content: AGENT_CITE_RULE }] : []),
         ...(history || []).map(h => ({ role: h.role, content: h.content } as OpenAI.Chat.Completions.ChatCompletionMessageParam)),
         { role: 'user', content: query }
       ];
 
       // Tool-call loop.
       let iterations = 0;
+      let answerModel: string | undefined;
       while (iterations < 5) {
         iterations++;
         const response = await this.openaiService.getChatCompletionWithToolsAndHistory(
           messages,
           tools,
           undefined,
-          onUsage
+          (usage) => { answerModel = usage.model; onUsage(usage); }
         );
 
         if (!response) break;
@@ -230,7 +235,8 @@ Pergunta Reformulada:
             const result = await this.agentService.handleToolCall(
               user,
               toolCall.function.name,
-              toolArgs
+              toolArgs,
+              turn
             ) as { status?: string; proposalId?: string } | unknown;
 
             // Se for uma proposta, interrompemos e retornamos para o frontend
@@ -260,46 +266,33 @@ Pergunta Reformulada:
           }
           // Tool results appended: the next iteration lets the model call another tool or answer.
         } else {
-          return {
-            answer: response.content || 'Não foi possível gerar uma resposta.',
-            type: 'TEXT',
-            sourceDocuments: [],
-          };
+          const answer = response.content || 'Não foi possível gerar uma resposta.';
+          // Item 15f: no DESCRITIVO, a resposta final liga os [n] aos trechos devolvidos no turno inteiro.
+          if (turn.descriptive && turn.size > 0) {
+            return {
+              answer,
+              type: 'TEXT',
+              sourceDocuments: turn.sourceDocuments(),
+              citations: turn.citations(answer),
+              ...(answerModel ? { answerModel } : {}),
+            };
+          }
+          return { answer, type: 'TEXT', sourceDocuments: [] };
         }
       }
 
       return { answer: 'O limite de processamento do agente foi atingido.', type: 'TEXT', sourceDocuments: [] };
     }
 
-    // Caso contrário (modo RAG), segue com o fluxo normal
-
-    // Security: verify that ALL requested documentIds actually belong to the
-    // requesting user before touching the vector store. This prevents a
-    // cross-tenant leak where user-B could read user-A's document content by
-    // supplying user-A's documentId.
-    const ownedDocs = await prisma.document.findMany({
-      where: { id: { in: documentIds }, userId: user.id },
-      select: { id: true },
-    });
-    if (ownedDocs.length !== documentIds.length) {
-      logger.warn('RAG ownership check failed: one or more documents do not belong to the requesting user', {
-        requestedIds: documentIds,
-        userId: user.id,
-        foundCount: ownedDocs.length,
-      });
-      throw new ForbiddenError('One or more documents do not belong to this user');
-    }
-
+    // Modo RAG (documentos selecionados). RAG-PR-B item 15: posse, embedding e busca pelo DocumentSearchService —
+    // documento que não é do usuário → NotFoundError antes do embedding (padrão cross-tenant do item 13).
     let contextualQuery = query;
     if (history && history.length > 1) {
       contextualQuery = await this.rewriteQueryWithHistory(query, history, onUsage);
     }
-    const queryEmbedding = await this.embeddingService.embedText(contextualQuery);
-    // Pass userId so the vector store enforces tenant isolation at the index level.
-    const searchResults = await this.vectorRepository.search(queryEmbedding, 10, documentIds, user.id);
-    const context = searchResults.map(result => result.payload.textContent as string).join('\n\n---\n\n');
+    const { hits, stamp } = await this.documentSearch.search(user, contextualQuery, { documentIds, limit: RAG_SEARCH_LIMIT });
 
-    if (searchResults.length === 0) {
+    if (hits.length === 0) {
       return {
         answer: 'Desculpe, não encontrei informações relevantes nos documentos selecionados.',
         type: 'TEXT',
@@ -307,17 +300,34 @@ Pergunta Reformulada:
       };
     }
 
-    const finalPrompt = `Contexto:\n---\n${context}\n---\nPergunta: "${contextualQuery}"`;
-    const answer = await this.openaiService.getChatCompletion(finalPrompt, wrapSystemPrompt(RAG_SYSTEM_PROMPT, user.id), onUsage);
+    const numbered = turn.add(hits, stamp);
+    let answerModel: string | undefined;
+    const trackModel = (usage: LlmUsage) => { answerModel = usage.model; onUsage(usage); };
 
+    let answer: string | null;
+    if (turn.descriptive) {
+      // Item 15b: trechos numerados, ainda como dado não confiável (item 17); o prompt manda citar o número.
+      const context = wrapUntrustedData(
+        'documentos selecionados',
+        numbered.map((h) => `[${h.marker}] (${h.fileName}, trecho ${h.chunkIndex})\n${h.text}`).join('\n\n---\n\n'),
+      );
+      const finalPrompt = `Contexto:\n---\n${context}\n---\nPergunta: "${contextualQuery}"`;
+      answer = await this.openaiService.getChatCompletion(finalPrompt, wrapSystemPrompt(`${RAG_SYSTEM_PROMPT}${RAG_CITE_RULE}\n`, user.id), trackModel);
+    } else {
+      // Item 15c: o prompt de antes da emenda — sem numeração e sem citations.
+      const context = hits.map((h) => h.text).join('\n\n---\n\n');
+      const finalPrompt = `Contexto:\n---\n${context}\n---\nPergunta: "${contextualQuery}"`;
+      answer = await this.openaiService.getChatCompletion(finalPrompt, wrapSystemPrompt(RAG_SYSTEM_PROMPT, user.id), trackModel);
+    }
+
+    const text = answer || 'Não foi possível gerar uma resposta.';
     return {
-      answer: answer || 'Não foi possível gerar uma resposta.',
+      answer: text,
       type: 'TEXT',
-      sourceDocuments: searchResults.map(result => ({
-        id: String(result.id),
-        score: result.score,
-        payload: result.payload as { documentId: string; userId: string; textContent: string; fileName: string; chunkId: string; index: number }
-      })),
+      // F-RAG-M3: o RÁPIDO também devolve as fontes (a tela esconde).
+      sourceDocuments: turn.sourceDocuments(),
+      ...(turn.descriptive ? { citations: turn.citations(text) } : {}),
+      ...(answerModel ? { answerModel } : {}),
     };
   }
 }

@@ -18,8 +18,8 @@ afterAll(async () => {
 describe('authMiddleware — fail-closed authentication', () => {
   it('passes through non-/api routes (e.g. GET /health) without a token', async () => {
     const res = await request(app).get('/health');
-    // What this test guards is the auth passthrough (no 401). /health itself pings DB and Qdrant
-    // (R19) and legitimately answers 503 (degraded) when Qdrant is absent, as in this test env.
+    // What this test guards is the auth passthrough (no 401). /health itself pings the DB
+    // (R19) and legitimately answers 503 (degraded) when it is down.
     expect([200, 503]).toContain(res.status);
     expect(res.status).not.toBe(401);
   });

@@ -13,7 +13,7 @@ import { ChatInstanceRepository } from '../../../chatInstances/repositories/Chat
 import { ChatMessagePolicy } from '../../policies/ChatMessagePolicy';
 import { ChatMessageRole } from '../../models/ChatMessage.model';
 import { ForbiddenError, NotFoundError, UnauthorizedError } from '@/lib/errors';
-import { ChatMessageSchema } from '../../dtos/ChatMessageDto';
+import { ChatMessageSchema, ChatMessageSummarySchema } from '../../dtos/ChatMessageDto';
 import prisma from '@/lib/prisma';
 import {
   pushTestSchema,
@@ -129,6 +129,28 @@ describe('token usage (I11 PR-3)', () => {
     expect(await service.getMessageById(userMsg.id, ctx)).toMatchObject({ promptTokens: null, completionTokens: null, model: null });
     const assistant = await prisma.chatMessage.findFirstOrThrow({ where: { chatInstanceId: ci.id, role: 'ASSISTANT' } });
     expect(await service.getMessageById(assistant.id, ctx)).toMatchObject({ promptTokens: 0, completionTokens: 0, model: null });
+  });
+});
+
+describe('ragDetail (RAG emenda 07/11, item 15e — F-RAG-M7)', () => {
+  it('reabrir a instância devolve as mesmas citations e fontes; mensagem sem RAG fica null', async () => {
+    const u = await seedUser({ username: 'owner' });
+    const ci = await seedChatInstance({ userId: u.id });
+    const ctx = ctxFor({ id: u.id, username: u.username });
+    const ragDetail = {
+      mode: 'DESCRITIVO' as const,
+      citations: [{ marker: 2, chunkId: 'chunk-2' }],
+      sources: [1, 2].map((i) => ({
+        chunkId: `chunk-${i}`, documentId: 'doc', fileName: 'contrato.pdf', chunkIndex: i, score: 0.8, embeddingStamp: 'openai:text-embedding-3-small@768',
+      })),
+      answerModel: 'gpt-4o-2024-08-06',
+    };
+    await service.createMessage({ content: 'qual a multa?', chatInstanceId: ci.id }, ctx);
+    await service.appendAssistantMessage(ci.id, 'a multa é 10% [2]', ctx, undefined, ragDetail);
+
+    const { messages } = await service.getMessagesByInstance(ci.id, ctx);
+    expect(messages.map((m) => m.ragDetail)).toEqual([null, ragDetail]);
+    expect(ChatMessageSummarySchema.parse(messages[1]).ragDetail?.citations).toEqual([{ marker: 2, chunkId: 'chunk-2' }]);
   });
 });
 

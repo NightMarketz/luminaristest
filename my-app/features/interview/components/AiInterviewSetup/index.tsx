@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'next-i18next';
 import { useAiInterview } from '../../hooks/useAiInterview';
+import { usePresetName } from '../../hooks/usePresetName';
 import ChatArea from './ChatArea';
 import InputArea from './InputArea';
 import CreationArea from './CreationArea';
@@ -85,6 +86,7 @@ function AiInterviewSetup() {
     toggleModule,
     isSyncingModules
   } = useAiInterview();
+  const presetName = usePresetName(presetKey);
 
   if (isCreating || creationError) {
     return (
@@ -169,7 +171,7 @@ function AiInterviewSetup() {
           <ModuleChecklist options={moduleOptions} selected={selectedModules} disabled={isLoading || isCreating || isSyncingModules} onToggle={toggleModule} />
         )}
         {choicePrompt && !fiscalPendente && (
-          <CreationChoice prompt={choicePrompt} presetKey={presetKey} disabled={isLoading || isCreating} onChoose={sendCreationChoice} />
+          <CreationChoice prompt={choicePrompt} presetName={presetName} disabled={isLoading || isCreating} onChoose={sendCreationChoice} />
         )}
         {fiscalPendente ? (
           <FiscalQuestion onConfirm={confirmarFiscal} />

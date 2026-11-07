@@ -37,7 +37,8 @@ o quê** (§1) e **mudei X, rodo o quê** (§2). O porquê de cada escolha, com 
 Local é **sempre com escopo** (dono, 03/11): a suíte inteira só roda no CI ou com `FULL_SUITE=1`
 (`scripts/test-scope-guard.cjs`). Não repita um gate sem ter editado o código que ele cobre. Jest de integração,
 `next build` e o runner de tela pegam vaga de trabalho pesado (`node scripts/heavy-slot.cjs status` mostra quem está
-usando).
+usando). A vaga só é dada com pelo menos 6 GB de memória virtual livre (`LUMINARIS_HEAVY_MIN_FREE_GB`; dono, 07/11:
+o PC travava na sabotagem do revisor, e o Windows registrou memória virtual insuficiente com RAM física sobrando).
 
 | Mudei… | Rodo localmente | Fica para o CI |
 |---|---|---|

@@ -35,6 +35,8 @@ export interface IDocument {
   summary: string | null;
   /** JSON estruturado do processamento via AI */
   contextJson: Record<string, unknown> | null;
+  /** Contexto gerado (F-RAG-B1 a; forma do `GeneratedContextSchema`), ou null antes do pipeline gerá-lo */
+  generatedContext: Record<string, unknown> | null;
   /** Timestamp when the document was created */
   createdAt: Date;
   /** Timestamp when the document was last updated */
@@ -64,6 +66,14 @@ export interface DocumentCreateInput {
 /**
  * Input type para atualizar um Document no banco de dados.
  */
+/** Correção do usuário (RAG-PR-B item 18): só os campos que o `PATCH /documents/:id` aceita. */
+export interface DocumentContextUpdateInput {
+  fileName?: string;
+  documentPurpose?: DocumentPurpose;
+  summary?: string | null;
+  generatedContext?: Record<string, unknown>;
+}
+
 export interface DocumentUpdateInput {
   status: DocumentStatus;
   summary: string | null;

@@ -13,15 +13,15 @@ import { UserRepository } from '../repositories/UserRepository';
 import { UserPolicy } from '../policies/UserPolicy';
 import { Role } from '../models/User.model';
 import { ConflictError } from '@/lib/errors';
-import type { IVectorRepository } from '@/features/documents/repositories/IVectorRepository';
+import type { IChunkVectorRepository } from '@/features/documents/repositories/IChunkVectorRepository';
 import { pushTestSchema, resetDb, disconnectDb, seedUser, ctxFor, makeApp, authHeader } from '@test/helpers';
 
 const repo = new UserRepository();
 
 function serviceWithVectorSpy() {
-  const deleteVectorsByUserId = jest.fn().mockResolvedValue(undefined);
-  const vectors = { deleteVectorsByUserId } as unknown as IVectorRepository;
-  return { service: new UserService(repo, new UserPolicy(), vectors), deleteVectorsByUserId };
+  const deleteByUser = jest.fn().mockResolvedValue(undefined);
+  const vectors = { deleteByUser } as unknown as IChunkVectorRepository;
+  return { service: new UserService(repo, new UserPolicy(), vectors), deleteByUser };
 }
 
 beforeAll(() => {
@@ -44,7 +44,7 @@ describe('§3.4 #1 — excluir usuário com trilha contábil (FK onDelete: Restr
       data: { userId: victim.id, unitId: 'unit-1', target: 'FISCAL_PROFILE', version: 1, status: 'APPLIED', payload: {} },
     });
     const admin = ctxFor({ id: 'admin-x', username: 'root2', role: Role.ADMIN });
-    const { service, deleteVectorsByUserId } = serviceWithVectorSpy();
+    const { service, deleteByUser } = serviceWithVectorSpy();
 
     const outcome = await service.deleteUser(victim.id, admin).then(
       () => 'resolved',
@@ -54,7 +54,7 @@ describe('§3.4 #1 — excluir usuário com trilha contábil (FK onDelete: Restr
     expect(await repo.getUserById(victim.id)).not.toBeNull();
     // Hoje: P2003 cru (vira 500) e os vetores já foram apagados.
     expect(outcome).toBeInstanceOf(ConflictError);
-    expect(deleteVectorsByUserId).not.toHaveBeenCalled();
+    expect(deleteByUser).not.toHaveBeenCalled();
   });
 });
 

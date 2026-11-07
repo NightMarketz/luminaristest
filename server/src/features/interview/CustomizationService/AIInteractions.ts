@@ -1,4 +1,5 @@
 import { logger } from '../../../lib/logger';
+import { DEFAULT_INTERVIEW_LOCALE, INTERVIEW_TEXT, replyIn, type InterviewLocale } from '../models/interviewText';
 import { OpenAIService } from '../../../lib/openai/OpenAIService';
 import { IMessage } from '../models/InterviewTypes';
 import OpenAI from 'openai';
@@ -102,7 +103,7 @@ export class AIInteractions {
   /**
    * Gera uma explicação para o usuário sobre como adicionar uma nova tabela
    */
-  public async generateAddingGuidance(): Promise<string> {
+  public async generateAddingGuidance(locale: InterviewLocale = DEFAULT_INTERVIEW_LOCALE): Promise<string> {
     const systemPrompt = `
       Você é um assistente especializado em ajudar usuários a customizar sistemas.
       Gere uma explicação clara e concisa sobre como o usuário deve proceder para adicionar
@@ -113,26 +114,18 @@ export class AIInteractions {
       3. Alguns campos principais que essa tabela deve ter
       
       Use formatação markdown para tornar a explicação mais legível.
+
+      ${replyIn(locale)}
     `;
 
     const response = await this.getAiResponse(systemPrompt, []);
-    return response || `
-      # Adicionando uma Nova Tabela
-      
-      Para adicionar uma nova tabela ao seu sistema, por favor forneça:
-      
-      1. **Nome da tabela** - Um nome claro e descritivo
-      2. **Descrição** - Para que serve esta tabela?
-      3. **Campos principais** - Quais informações ela deve armazenar?
-      
-      Exemplo: "Quero adicionar uma tabela de Fornecedores para registrar informações de empresas que fornecem produtos para meu negócio, com campos como nome da empresa, contato, produtos fornecidos e condições de pagamento."
-    `;
+    return response || INTERVIEW_TEXT[locale].addGuidanceFallback;
   }
 
   /**
    * Gera uma explicação para o usuário sobre como remover uma tabela
    */
-  public async generateRemovingGuidance(availableTables: string[]): Promise<string> {
+  public async generateRemovingGuidance(availableTables: string[], locale: InterviewLocale = DEFAULT_INTERVIEW_LOCALE): Promise<string> {
     const systemPrompt = `
       Você é um assistente especializado em ajudar usuários a customizar sistemas.
       Gere uma explicação clara e concisa sobre como o usuário deve proceder para remover
@@ -142,20 +135,11 @@ export class AIInteractions {
       
       Explique que algumas tabelas são essenciais e não podem ser removidas.
       Use formatação markdown para tornar a explicação mais legível.
+
+      ${replyIn(locale)}
     `;
 
     const response = await this.getAiResponse(systemPrompt, []);
-    return response || `
-      # Removendo uma Tabela
-      
-      Para remover uma tabela do seu sistema, por favor indique o nome da tabela que deseja remover.
-      
-      Tabelas disponíveis para remoção:
-      ${availableTables.map(table => `- ${table}`).join('\n')}
-      
-      Exemplo: "Quero remover a tabela de Produtos"
-      
-      **Nota:** Algumas tabelas são essenciais para o funcionamento do sistema e não podem ser removidas.
-    `;
+    return response || INTERVIEW_TEXT[locale].removeGuidanceFallback(availableTables);
   }
 }

@@ -7,8 +7,11 @@ import fs from 'fs';
 import path from 'path';
 import type { AppError } from '../../../../lib/errors';
 import { VigenciaSobrepostaError } from '../vigencia';
+import { LEGAL_PARAMS_SEED_FILE_DP_REGRAS, legalParamsSeedRows } from '@test/helpers/legalParams';
+import type { LinhaLegal } from '../../../legalParameters/models/legalParameter';
+import { regrasIdadeDaCategoria } from '../regrasFolha';
 import {
-  assertIdadeEPrazo,
+  assertIdadeEPrazo as assertComRegras,
   camposAlterados,
   CATEGORIAS_NUCLEO,
   hashCampos,
@@ -19,6 +22,11 @@ import {
   vinculoNaData,
   type DadosIdade,
 } from '../vinculo';
+
+// BE-INCR-DP-F2 item 72: idade e prazo vêm da FOLHA_REGRA da carga, na admissão; as asserções do F1 seguem as mesmas.
+const FOTO = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_DP_REGRAS) as LinhaLegal[];
+const assertIdadeEPrazo = (d: DadosIdade, foto: readonly LinhaLegal[] = FOTO) => assertComRegras(d, regrasIdadeDaCategoria(foto, d.categoria, d.dataInicio));
+const comLinha = (chave: string, valorInt: number) => FOTO.map((l) => (l.chave === chave ? { ...l, valorInt } : l));
 
 const D09 = path.resolve(__dirname, '../../../../../../pesquisas-legais/brief-pes4-f0-f1/docs/D09_index-html.html');
 
@@ -91,6 +99,44 @@ describe('vínculo do DP (itens 39–45, 47)', () => {
     expect(reason(() => assertIdadeEPrazo({ ...geral, dataInicio: '2026-05-09' }))).toBe('DP_IDADE_MINIMA');
     expect(reason(() => assertIdadeEPrazo({ ...geral, dataInicio: '2026-05-10' }))).toBeNull();
     expect(reason(() => assertIdadeEPrazo({ ...geral, categoria: '901', dataInicio: '2026-05-09' }))).toBeNull();
+  });
+
+  describe('BE-INCR-DP-F2 itens 72–73 — o número e o artigo vêm da FOLHA_REGRA, não do código', () => {
+    it('APRENDIZ_IDADE_MAX = 29 aceita aprendiz de 25; o vigente (24) recusa', () => {
+      const aos25 = aprendiz({ dataInicio: '2035-05-10', dataTermino: '2036-05-09' });
+      expect(reason(() => assertIdadeEPrazo(aos25))).toBe('DP_APRENDIZ_IDADE');
+      expect(reason(() => assertIdadeEPrazo(aos25, comLinha('APRENDIZ_IDADE_MAX', 29)))).toBeNull();
+    });
+    it('EMPREGADO_IDADE_MIN = 18 recusa quem tem 17; APRENDIZ_IDADE_MIN = 15 recusa quem tem 14', () => {
+      const geral = { categoria: '101' as const, nascimento: '2010-05-10', pcd: false, dataTermino: null, dataInicio: '2027-06-01' };
+      expect(reason(() => assertIdadeEPrazo(geral))).toBeNull();
+      expect(reason(() => assertIdadeEPrazo(geral, comLinha('EMPREGADO_IDADE_MIN', 18)))).toBe('DP_IDADE_MINIMA');
+      expect(reason(() => assertIdadeEPrazo(aprendiz({}), comLinha('APRENDIZ_IDADE_MIN', 15)))).toBe('DP_APRENDIZ_IDADE');
+    });
+    it('APRENDIZ_PRAZO_MAX_MESES = 12 recusa contrato de 13 meses que o vigente (24) aceita', () => {
+      const treze = aprendiz({ dataTermino: '2025-06-09' });
+      expect(reason(() => assertIdadeEPrazo(treze))).toBeNull();
+      expect(reason(() => assertIdadeEPrazo(treze, comLinha('APRENDIZ_PRAZO_MAX_MESES', 12)))).toBe('DP_APRENDIZ_PRAZO');
+    });
+    it('item 73 — a mensagem monta o número e a fonte da linha; trocar a linha troca a mensagem', () => {
+      const msg = (foto: readonly LinhaLegal[]) => {
+        try {
+          assertIdadeEPrazo(aprendiz({ dataInicio: '2024-05-09', dataTermino: '2025-05-08' }), foto);
+          return null;
+        } catch (e) {
+          return (e as Error).message;
+        }
+      };
+      expect(msg(FOTO)).toBe('O aprendiz precisa ter 14 anos completos na admissão (CF art. 7º XXXIII (aprendiz a partir de 14 anos; redação da EC 20/1998)).');
+      const outra = FOTO.map((l) => (l.chave === 'APRENDIZ_IDADE_MIN' ? { ...l, valorInt: 15, fonte: 'Lei nova art. 1º' } : l));
+      expect(msg(outra)).toBe('O aprendiz precisa ter 15 anos completos na admissão (Lei nova art. 1º).');
+    });
+    it('sem linha vigente na admissão ⇒ PARAMETRO_LEGAL_AUSENTE nomeando a chave; 901 e 723 não leem linha', () => {
+      const sem = FOTO.filter((l) => l.chave !== 'EMPREGADO_IDADE_MIN');
+      const geral = { categoria: '101' as const, nascimento: '2000-05-10', pcd: false, dataTermino: null, dataInicio: '2026-05-10' };
+      expect(() => assertIdadeEPrazo(geral, sem)).toThrow(/FOLHA_REGRA\/EMPREGADO_IDADE_MIN em 2026-05-10/);
+      expect(reason(() => assertIdadeEPrazo({ ...geral, categoria: '723' }, []))).toBeNull();
+    });
   });
 
   it('item 45 — HMAC dos campos alterados: muda com o valor e com a chave, não revela o valor, ignora campo não alterado', () => {

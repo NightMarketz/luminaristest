@@ -1,0 +1,13 @@
+{
+  "id": "msg_01FixtureToolUse",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-sonnet-4-5",
+  "content": [
+    { "type": "text", "text": "Vou buscar as linhas de extrato pendentes." },
+    { "type": "tool_use", "id": "toolu_01Fixture", "name": "listar_linhas_extrato", "input": { "accountId": "acc_1", "limit": 20 } }
+  ],
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "usage": { "input_tokens": 412, "output_tokens": 57 }
+}

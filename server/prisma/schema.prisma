@@ -218,6 +218,9 @@ model ChatMessage {
   completionTokens Int?
   model            String?
   usageDetail      Json? // LlmUsage[] por chamada (F-I11-4 → b)
+  // RAG emenda 07/11, item 15e (F-RAG-M7): { mode, citations[], sources[].technical, answerModel? } do turno RAG.
+  // NULL = USER, fora do modo RAG ou anterior à emenda.
+  ragDetail        Json?
 
   @@index([chatInstanceId])
 }
@@ -279,6 +282,7 @@ model Document {
   status          ProcessingStatus @default(PENDING) // processing status
   summary         String? // optional AI-generated summary
   contextJson     Json? // structured JSON from AI processing
+  generatedContext Json? // RAG F-RAG-B1 a: GeneratedContextSchema (tipo, entidades, userEditedFields); contextJson fica com as estatísticas do pipeline
   uploadDate      DateTime         @default(now()) // timestamp of file upload
   processingDate  DateTime? // timestamp when processing completed
   processingError String? // error message if processing failed
@@ -298,6 +302,10 @@ model Chunk {
   index      Int // order of this chunk in the document
   documentId String
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  // RAG-PR-A item 3: carimbo do embedding. O vetor mora na vec0 do arquivo próprio (VECTOR_DB_PATH), nunca aqui.
+  embeddingModel String? // "openai:text-embedding-3-small@768"
+  embeddingDims  Int?
+  embeddedAt     DateTime?
   createdAt  DateTime @default(now())
 
   @@index([documentId])
@@ -409,8 +417,141 @@ model ActionProposal {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  // BE-INCR-TEAMMATES PR-0 item 1 (F-TM-8 a, BRIEF §2.1) — emenda: proposta de teammate além da linha de tabela.
+  kind             String    @default("TABLE_ROW") // TABLE_ROW | SETTLEMENT_MATCH | MCP_TOOL_CALL | LIMITE_ATINGIDO
+  payload          Json?
+  teammateId       String?
+  channelMessageId String?
+  expiresAt        DateTime?
+
   @@index([userId])
   @@map("action_proposals")
+}
+
+// ── BE-INCR-TEAMMATES PR-0 item 1 (BRIEF §2.1) — teammates nativos (PRE-ADR-TEAMMATES). Ids "planos", sem FK:
+// o esboço da §2.1 não declara relação.
+model Teammate {
+  id               String    @id @default(cuid())
+  userId           String
+  name             String
+  role             String // papel em uma linha ("Conciliação bancária")
+  playbook         String // instruções em texto (D-3)
+  allowedTools     Json // string[]: nomes do TOOL_CLASS ou "mcp:<serverId>:<tool>"
+  toolOverrides    Json? // { [tool]: 'PROPOSTA' } — só aperta (item 11)
+  provider         String // 'anthropic' | 'openai' | 'gemini'
+  model            String
+  fallbackProvider String?
+  fallbackModel    String?
+  dailyTurnLimit   Int       @default(50)
+  status           String    @default("ACTIVE") // ACTIVE | PAUSED
+  deletedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("teammates")
+}
+
+model LlmCredential {
+  id                 String    @id @default(cuid())
+  userId             String
+  provider           String
+  secret             Bytes // secretBox: iv ‖ tag ‖ ct, AAD = id
+  keyVersion         Int
+  last4              String
+  monthlyTokenBudget Int? // orçamento do próprio tenant (item 23); null = sem teto
+  deletedAt          DateTime?
+  createdAt          DateTime  @default(now())
+  // Unicidade × soft-delete: padrão rename-on-delete (ADR-INCR7 §3, ReconciliationRepository.softDeleteStatement) —
+  // o soft-delete do PR-1 reescreve `provider` para `deleted:<id>` e libera a chave.
+
+  @@unique([userId, provider])
+  @@map("llm_credentials")
+}
+
+model AgentTurn {
+  id               String    @id @default(cuid()) // = jobId no BullMQ
+  userId           String
+  teammateId       String
+  trigger          String // ROUTINE | MANUAL | MENTION | WEBHOOK
+  routineId        String?
+  idempotencyKey   String?   @unique // routineId + slot, ou routineId + Idempotency-Key
+  channelMessageId String?
+  input            String? // corpo do webhook / mensagem — dado não confiável
+  hop              Int       @default(0)
+  status           String    @default("PENDING") // PENDING | RUNNING | DONE | FAILED | PAUSED
+  attempts         Int       @default(0)
+  provider         String?
+  model            String?
+  promptTokens     Int?
+  completionTokens Int?
+  error            String?
+  createdAt        DateTime  @default(now())
+  finishedAt       DateTime?
+
+  @@index([teammateId, createdAt])
+  @@map("agent_turns")
+}
+
+model TeammateRoutine {
+  id                String    @id @default(cuid())
+  userId            String
+  teammateId        String
+  prompt            String
+  schedule          Json? // { freq, time, weekday?, monthday? } — null = só manual/webhook
+  webhookSecretHash String? // SHA-256; o segredo nunca é gravado
+  active            Boolean   @default(true)
+  deletedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("teammate_routines")
+}
+
+model McpServer {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  url        String // https, remoto (item 40)
+  secret     Bytes? // token estático cifrado (F-TM-13 a)
+  keyVersion Int?
+  deletedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@map("mcp_servers")
+}
+
+model AgentChannel {
+  id        String    @id @default(cuid())
+  userId    String
+  name      String
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("agent_channels")
+}
+
+model AgentChannelMember {
+  channelId  String
+  teammateId String
+
+  @@id([channelId, teammateId])
+  @@map("agent_channel_members")
+}
+
+model AgentChannelMessage {
+  id         String   @id @default(cuid())
+  channelId  String
+  threadId   String? // null = raiz
+  authorType String // OWNER | TEAMMATE
+  authorId   String
+  content    String
+  hop        Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([channelId, createdAt])
+  @@map("agent_channel_messages")
 }
 
 // Trailing watermark for background jobs that need to avoid re-scanning their whole source
@@ -3807,8 +3948,10 @@ model DpJornada {
   userId          String
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   nome            String
-  minutosSemanais Int // > 0
+  minutosSemanais Int // > 0; desde o F2 PR-0R (item 68) = minutosPorDia × nº de dias de trabalho, conferido no serviço
   tipoJornada     String // domínio tpJornada do S-2200 [D09] (features/dp/models/cadastros.ts)
+  diasTrabalho    String    @default("SEG,TER,QUA,QUI,SEX,SAB") // BE-INCR-DP-F2 item 68: dias de trabalho da escala (DIAS_SEMANA, vírgula); o default só serve à migração das jornadas do F1
+  minutosPorDia   Int? // item 68: > 0; null só na jornada migrada cujo total não divide por 6 (o cálculo dá JORNADA_AUSENTE até corrigir)
   descricao       String? // horário contratual, como o dscJorn
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -3898,6 +4041,7 @@ model DpTrabalhador {
   updatedAt   DateTime    @updatedAt
   deletedAt   DateTime?
   vinculos    DpVinculo[]
+  dependentes DpDependente[]
 
   @@index([userId, cpf])
   @@map("dp_trabalhadores")
@@ -3922,6 +4066,8 @@ model DpVinculo {
   versoes       DpVinculoVersao[]
   afastamentos  DpAfastamento[]
   feriasImplantacoes DpFeriasImplantacao[]
+  lancamentos        DpLancamento[]
+  outrasRemuneracoes DpOutraRemuneracao[]
 
   @@index([userId, unitId])
   @@map("dp_vinculos")
@@ -3985,4 +4131,71 @@ model DpFeriasImplantacao {
 
   @@index([vinculoId])
   @@map("dp_ferias_implantacoes")
+}
+
+/// Dependente do trabalhador — BE-INCR-DP-F2 itens 13–15 (PR-1). Sem `userId`: a posse vem do trabalhador. PII (nome, CPF,
+/// nascimento) fica fora da auditoria; a correção leva só o HMAC dos campos (G12).
+model DpDependente {
+  id             String        @id @default(cuid())
+  trabalhadorId  String
+  trabalhador    DpTrabalhador @relation(fields: [trabalhadorId], references: [id], onDelete: Restrict)
+  nome           String // PII
+  cpf            String? // PII — 11 dígitos com DV
+  nascimento     String // YYYY-MM-DD (PII)
+  tipo           String // Tabela 07 do eSocial (ESOCIAL_TIPO_DEPENDENTE), vigente em `vigenteDesde`
+  deduzIrrf      Boolean // Lei 9.250 art. 4º III [D05]
+  salarioFamilia Boolean // Lei 8.213 arts. 65–66 [D03]; a cota não entra no F2 até a fonte de 2026 (F-DPF-7)
+  invalido       Boolean       @default(false) // "inválido de qualquer idade" (Lei 8.213 art. 66; snapshot §3.2)
+  vigenteDesde   String // YYYY-MM-DD
+  vigenteAte     String? // YYYY-MM-DD inclusive; null = sem fim
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+
+  @@index([trabalhadorId])
+  @@map("dp_dependentes")
+}
+
+/// Lançamento informado da competência — BE-INCR-DP-F2 itens 16–17 (PR-1): rubrica `INFORMADO` do catálogo, em minutos
+/// ou em centavos (exatamente um, pela rubrica). Fato de entrada: nunca altera execução já gravada.
+model DpLancamento {
+  id             String    @id @default(cuid())
+  vinculoId      String
+  vinculo        DpVinculo @relation(fields: [vinculoId], references: [id], onDelete: Restrict)
+  competencia    String // AAAA-MM
+  rubrica        String // código do catálogo com calculo = INFORMADO
+  quantidadeMin  Int?
+  valorCents     BigInt?
+  origem         String // MANUAL | MODULO
+  moduloKey      String?
+  observacao     String?
+  informadoPorId String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  @@index([vinculoId, competencia])
+  @@map("dp_lancamentos")
+}
+
+/// Remuneração em outra empresa na competência — BE-INCR-DP-F2 itens 77–78 (F-DPF-8; IN RFB 2.110/2022 arts. 36 e 49).
+/// Viva única por (vínculo, competência), gate na tx. `contribuicaoCents` é só conferência: a regra não a usa.
+model DpOutraRemuneracao {
+  id                  String    @id @default(cuid())
+  vinculoId           String
+  vinculo             DpVinculo @relation(fields: [vinculoId], references: [id], onDelete: Restrict)
+  competencia         String // AAAA-MM
+  remuneracaoCents    BigInt
+  contribuicaoCents   BigInt
+  ordem               String // ANTES | DEPOIS desta empresa na declaração (IN 2.110 art. 36 § 1º I)
+  categoriaOutraFonte String // EMPREGADO | CONTRIBUINTE_INDIVIDUAL (o CI só conta para o teto)
+  cnpjOutroEmpregador String // 14 dígitos com DV
+  documento           String // declaração do Anexo VIII da IN 2.110 ou o holerite de lá (art. 49 § 3º)
+  informadoPorId      String
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+
+  @@index([vinculoId, competencia])
+  @@map("dp_outras_remuneracoes")
 }

@@ -455,6 +455,25 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'dp.ferias_implantacao.created': ['implantacaoId', 'vinculoId', 'aquisitivoInicio', 'diasGozados'],
   'dp.ferias_implantacao.updated': ['implantacaoId', 'vinculoId', 'aquisitivoInicio', 'diasGozados'],
   'dp.ferias_implantacao.deleted': ['implantacaoId', 'vinculoId', 'aquisitivoInicio', 'diasGozados'],
+  // BE-INCR-DP-F2 PR-1 (itens 21 e 77; F-DPF-9 → b): sem nome, CPF nem nascimento do dependente; valores do lançamento e
+  // da outra remuneração só como HMAC (`valoresSha256`) com a versão da chave. A alteração do dependente leva os campos e
+  // o HMAC antes/depois, como a correção do trabalhador.
+  'dp.dependente.created': ['dependenteId', 'trabalhadorId', 'tipo'],
+  'dp.dependente.updated': ['dependenteId', 'trabalhadorId', 'tipo', 'campos', 'antesSha256', 'depoisSha256', 'chaveVersao'],
+  'dp.dependente.deleted': ['dependenteId', 'trabalhadorId', 'tipo'],
+  'dp.lancamento.created': ['lancamentoId', 'vinculoId', 'competencia', 'rubrica', 'origem', 'valoresSha256', 'chaveVersao'],
+  'dp.lancamento.updated': ['lancamentoId', 'vinculoId', 'competencia', 'rubrica', 'origem', 'valoresSha256', 'chaveVersao'],
+  'dp.lancamento.deleted': ['lancamentoId', 'vinculoId', 'competencia', 'rubrica', 'origem', 'valoresSha256', 'chaveVersao'],
+  'dp.outra_remuneracao.created': ['outraRemuneracaoId', 'vinculoId', 'competencia', 'valoresSha256', 'chaveVersao'],
+  'dp.outra_remuneracao.updated': ['outraRemuneracaoId', 'vinculoId', 'competencia', 'valoresSha256', 'chaveVersao'],
+  'dp.outra_remuneracao.deleted': ['outraRemuneracaoId', 'vinculoId', 'competencia', 'valoresSha256', 'chaveVersao'],
+  // BE-INCR-TEAMMATES PR-2 (item 13) — trilha do módulo (escopo `teammatesAuditScope`, padrão do LegalParameterService).
+  // Sem segredo: nem a chave de IA nem o `last4` entram; nem playbook. `allowedTools`/`toolOverrides` são JSON estável
+  // de nomes de ferramenta (`mcp:<serverId>:<tool>` leva id, nunca URL nem token). `mcp_server.created/deleted` entram
+  // com o emissor, no PR-10 (sem serviço de McpServer ainda — lacuna L-PR2-4).
+  'llm_credential.created': ['credentialId', 'provider', 'monthlyTokenBudget'],
+  'llm_credential.deleted': ['credentialId', 'provider'],
+  'teammate.alcada_changed': ['teammateId', 'allowedTools', 'toolOverrides', 'previousAllowedTools', 'previousToolOverrides'],
 };
 
 /**

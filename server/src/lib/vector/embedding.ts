@@ -26,6 +26,8 @@ export interface EmbeddingOptions {
   model?: string;
   /** The expected dimension of the embedding vector @default 1536 */
   expectedDimension?: number;
+  /** RAG-PR-A item 5: pede ao endpoint a dimensão reduzida (text-embedding-3 aceita `dimensions`). Omitido = nativa. */
+  dimensions?: number;
   /** Per-request timeout in ms (SDK-level) @default 30000 */
   timeoutMs?: number;
   /** Bounded automatic retries on transient failures (SDK-level) @default 2 */
@@ -44,6 +46,7 @@ export class EmbeddingService implements IEmbeddingService {
   private client: OpenAI;
   private model: string;
   private expectedDimension: number;
+  private dimensions?: number;
 
   constructor(options: EmbeddingOptions) {
     if (!options.apiKey) {
@@ -56,7 +59,8 @@ export class EmbeddingService implements IEmbeddingService {
       maxRetries: options.maxRetries ?? 2,
     });
     this.model = options.model || 'text-embedding-3-small';
-    this.expectedDimension = options.expectedDimension || 1536;
+    this.expectedDimension = options.expectedDimension || options.dimensions || 1536;
+    this.dimensions = options.dimensions;
   }
 
   public async embedText(text: string): Promise<number[]> {
@@ -67,7 +71,7 @@ export class EmbeddingService implements IEmbeddingService {
     logger.debug('Generating embedding for text', { textLength: text.length, model: this.model });
 
     try {
-      const response = await this.client.embeddings.create({ model: this.model, input: text });
+      const response = await this.client.embeddings.create({ model: this.model, input: text, ...(this.dimensions ? { dimensions: this.dimensions } : {}) });
       const embedding = response.data[0]?.embedding;
 
       if (!embedding || !Array.isArray(embedding)) {
@@ -116,6 +120,7 @@ export class EmbeddingService implements IEmbeddingService {
         const response = await this.client.embeddings.create({
           model: this.model,
           input: texts.slice(start, start + EMBEDDING_BATCH_SIZE),
+          ...(this.dimensions ? { dimensions: this.dimensions } : {}),
         });
 
         // OpenAI returns embeddings in the same order as the input array

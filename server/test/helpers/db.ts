@@ -44,6 +44,9 @@ export function pushTestSchema(): void {
  * deleteMany() so a single-table self-referencing pair never trips SQLite's FK check mid-delete.
  */
 export async function resetDb(): Promise<void> {
+  await prisma.llmCredential.deleteMany(); // BE-INCR-TEAMMATES PR-1 — folha, sem FK
+  await prisma.teammate.deleteMany(); // BE-INCR-TEAMMATES PR-2 — folha, sem FK
+  await prisma.mcpServer.deleteMany(); // BE-INCR-TEAMMATES PR-2 (item 12 lê) — folha, sem FK
   // Accounting — leaf tables first (nothing else references them).
   await prisma.postingDimension.deleteMany();
   await prisma.reconciliationMatch.deleteMany();
@@ -157,6 +160,11 @@ export async function resetDb(): Promise<void> {
   // BE-INCR-DP-F0-F1 PR-6 — afastamento e implantação de férias apontam para o vínculo com Restrict: antes dele.
   await prisma.dpAfastamento.deleteMany();
   await prisma.dpFeriasImplantacao.deleteMany();
+  // BE-INCR-DP-F2 PR-1 (item 22) — lançamento e outra remuneração apontam para o vínculo, o dependente para o
+  // trabalhador, todos com Restrict: antes deles.
+  await prisma.dpLancamento.deleteMany();
+  await prisma.dpOutraRemuneracao.deleteMany();
+  await prisma.dpDependente.deleteMany();
   await prisma.dpVinculoVersao.deleteMany();
   await prisma.dpVinculo.deleteMany();
   await prisma.dpTrabalhador.deleteMany();

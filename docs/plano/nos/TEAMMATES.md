@@ -3,19 +3,19 @@ id: "TEAMMATES"
 tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Teammates nativos — agentes persistentes com papel e alçada, rotinas, canais agente↔agente e multi-provedor com BYOK (funções do OpenBot, sem o OpenBot)"
-estado: "planned"
+estado: "inflight"
 estado_detalhe: "29/10: PRE-ADR Accepted + BRIEF (43 itens, PR-0..PR-10) — F-TM-1..13 ratificados por questionário; sem código, sem 'executa'. Depende do FIX-CHAT-AGENTE fechado; PR-8 e PR-10 esperam a pesquisa LGPD; produção espera o runbook M2 com Redis"
 depende_de: ["[[FIX-CHAT-AGENTE]]"]
 ancora_sdd: "§7"
 autorizacao: "dono, chat, 2026-10-29: \"Autorizo planejar\" — nó + PRE-ADR + BRIEF, sessao-planejamento, só docs, sem código, sem 'executa' · forks F-TM-1..13 por questionário no mesmo dia ([[D-2026-10-29-TEAMMATES-FORKS]]) · **EXECUTA** (dono, chat, 2026-11-06, questionário): \"BUILDER-VERTICAIS,TEAMMATES,RAG-DOCUMENTOS\" — BRIEF BE-INCR-TEAMMATES inteiro, sessao-feature, sem merge; PR-8 e PR-10 seguem esperando as lacunas L1/L2 da LGPD (BRIEF §4)"
-atualizado: "2026-10-29"
+atualizado: "2026-11-07"
 write_set: ["server/src/features/teammates/**", "server/src/lib/llm/**", "server/src/features/chat/**", "server/src/jobs/TeammateTurnWorker.ts", "server/src/jobs/ProposalExpiryScheduler.ts", "server/src/jobs/__tests__/schedulerFailureAlert.test.ts", "server/prisma/schema.prisma", "server/prisma/migrations/**", "server/src/routes/teammates.ts", "server/src/routes/docs/teammates.paths.ts", "server/src/routes/hooks.ts", "server/package.json", "server/package-lock.json", ".github/workflows/ci.yml"]
 registros: ["server/src/lib/factory.ts", "server/src/routes/index.ts", "server/src/features/accounting/audit/auditCanonical.ts"]
-prs: ["#969"]
+prs: ["#969", "#1120", "#1122", "#1124", "#1130"]
 ---
 # TEAMMATES — Teammates nativos (funções do OpenBot, sem o OpenBot)
 
-**Estado:** `planned` — 29/10: PRE-ADR Accepted + BRIEF (43 itens, PR-0..PR-10) — F-TM-1..13 ratificados por questionário; sem código, sem 'executa'. Depende do FIX-CHAT-AGENTE fechado; PR-8 e PR-10 esperam a pesquisa LGPD; produção espera o runbook M2 com Redis  
+**Estado:** `inflight` — 29/10: PRE-ADR Accepted + BRIEF (43 itens, PR-0..PR-10) — F-TM-1..13 ratificados por questionário; sem código, sem 'executa'. Depende do FIX-CHAT-AGENTE fechado; PR-8 e PR-10 esperam a pesquisa LGPD; produção espera o runbook M2 com Redis  
 **Autorização:** dono, chat, 2026-10-29: "Autorizo planejar" — nó + PRE-ADR + BRIEF, só docs, sem código, sem 'executa'. Registro do nó antes do PRE-ADR ratificado a pedido do dono (mesmo caminho do [[BUILDER-VERTICAIS]], 15/10)  
 **Depende de:** [[FIX-CHAT-AGENTE]]  
 **Desbloqueia:** os agentes PROPOSTOS do destino §7 (Vendas, Cobrança, Fiscal, Atendimento, Contador-assistente) — um nó por agente, depois do piloto  

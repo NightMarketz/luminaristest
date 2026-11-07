@@ -91,7 +91,7 @@ try {
 // ---------------------------------------------------------------------------
 // Required everywhere: DATABASE_URL. Required in production: JWT_SECRET (mirrors lib/jwt's
 // fail-closed check, but surfaced earlier with an aggregated message). External integrations
-// (OpenAI/Qdrant/Redis) are optional so dev/test runs and offline flows don't need every key;
+// (OpenAI/Redis) are optional so dev/test runs and offline flows don't need every key;
 // their absence is warned in production, not fatal.
 //
 // `buildEnvSchema` / `validateEnv` are exported as pure functions so the rules are unit-testable
@@ -108,8 +108,7 @@ export function buildEnvSchema(nodeEnv: string) {
       JWT_SECRET: z.string().min(1).optional(),
       JWT_EXPIRES_IN: z.string().optional(),
       OPENAI_API_KEY: z.string().optional(),
-      QDRANT_URL: z.string().optional(),
-      QDRANT_API_KEY: z.string().optional(),
+      VECTOR_DB_PATH: z.string().optional(),
       REDIS_URL: z.string().optional(),
     })
     .superRefine((val, ctx) => {
@@ -141,7 +140,7 @@ export const env = validateEnv(process.env);
 
 // Warn (don't fail) on missing external integrations in production — features depending on them degrade.
 if (env.NODE_ENV === 'production') {
-  for (const key of ['OPENAI_API_KEY', 'QDRANT_URL'] as const) {
+  for (const key of ['OPENAI_API_KEY'] as const) {
     if (!env[key]) logger.warn(`[env] ${key} is not set — features depending on it will be unavailable`);
   }
 }
@@ -150,7 +149,7 @@ if (env.NODE_ENV === 'production') {
 logger.debug('[env] loaded', {
   from: loadedPath ?? '(default search)',
   nodeEnv: env.NODE_ENV,
-  present: (['DATABASE_URL', 'JWT_SECRET', 'OPENAI_API_KEY', 'QDRANT_URL', 'REDIS_URL'] as const).filter(
+  present: (['DATABASE_URL', 'JWT_SECRET', 'OPENAI_API_KEY', 'VECTOR_DB_PATH', 'REDIS_URL'] as const).filter(
     (k) => !!env[k],
   ),
 });

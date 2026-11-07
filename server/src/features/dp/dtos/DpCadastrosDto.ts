@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { isValidCnpj } from '../../../lib/cnpj';
 import { MAX_CENTS } from '../../accounting/models/money';
 import { CCT_CHAVES, TP_JORNADA_CODIGOS } from '../models/cadastros';
+import { DIAS_SEMANA } from '../models/escala';
 import { DateOnlySchema } from '../models/vigencia';
 
 const unitId = z.string().min(1);
@@ -42,16 +43,26 @@ export type CreateCargoInput = z.infer<typeof CreateCargoSchema>;
 export type UpdateCargoInput = z.infer<typeof UpdateCargoSchema>;
 
 // ── Item 30 — jornada ────────────────────────────────────────────────────────────────────────────────────────────────
+// BE-INCR-DP-F2 item 68: a escala (diasTrabalho + minutosPorDia) define a jornada; `minutosSemanais` é derivado e, quando
+// informado, conferido no serviço (diferente ⇒ 400 DP_ESCALA_IRREGULAR).
 const jornada = {
   nome: z.string().trim().min(1).max(120),
   minutosSemanais: z.number().int().positive().max(7 * 24 * 60),
   tipoJornada: z.enum(TP_JORNADA_CODIGOS), // tpJornada do S-2200 [D09]
   descricao: z.string().trim().min(1).max(999).nullable(), // dscJorn "C 1 1-999" [D09]
+  diasTrabalho: z
+    .array(z.enum(DIAS_SEMANA))
+    .min(1)
+    .max(7)
+    .refine((d) => new Set(d).size === d.length, 'diasTrabalho sem repetição'),
+  minutosPorDia: z.number().int().positive().max(24 * 60),
 };
-export const CreateJornadaSchema = z.object({ unitId, ...jornada, descricao: jornada.descricao.optional() }).strict();
+export const CreateJornadaSchema = z
+  .object({ unitId, ...jornada, minutosSemanais: jornada.minutosSemanais.optional(), descricao: jornada.descricao.optional() })
+  .strict();
 export const UpdateJornadaSchema = z
   .object({ unitId, ...jornada })
-  .partial({ nome: true, minutosSemanais: true, tipoJornada: true, descricao: true })
+  .partial({ nome: true, minutosSemanais: true, tipoJornada: true, descricao: true, diasTrabalho: true, minutosPorDia: true })
   .strict()
   .refine(naoVazio, 'nada a alterar');
 export type CreateJornadaInput = z.infer<typeof CreateJornadaSchema>;

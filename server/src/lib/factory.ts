@@ -18,7 +18,7 @@ import { ChunkRepository } from '../features/documents/repositories/ChunkReposit
 import { DashboardLayoutRepository } from '../features/dashboardLayout/repositories/DashboardLayoutRepository';
 import { DocumentRepository } from '../features/documents/repositories/DocumentRepository';
 import { UserRepository } from '../features/users/repositories/UserRepository';
-import { VectorRepository } from '../features/documents/repositories/VectorRepository';
+import { ChunkVectorRepository } from '../features/documents/repositories/ChunkVectorRepository';
 import { DynamicTableRepository } from '../features/dynamicTables/repositories/DynamicTableRepository';
 import { DynamicTableVersionRepository, type IDynamicTableVersionRepository } from '../features/dynamicTables/repositories/DynamicTableVersionRepository';
 import { DynamicTableVersionService } from '../features/dynamicTables/services/DynamicTableVersionService';
@@ -26,6 +26,9 @@ import { ActionProposalRepository } from '../features/chat/repositories/ActionPr
 import { KnowledgeGraphRepository } from '../features/chat/repositories/KnowledgeGraphRepository';
 import { AttachmentRepository } from '../features/attachments/repositories/AttachmentRepository';
 import { SavedTableViewRepository } from '../features/savedViews/repositories/SavedTableViewRepository';
+import { LlmCredentialRepository } from '../features/teammates/repositories/LlmCredentialRepository';
+import { TeammateRepository } from '../features/teammates/repositories/TeammateRepository';
+import { McpServerRepository } from '../features/teammates/repositories/McpServerRepository';
 import { InterviewSessionRepository } from '../features/interview/repositories/InterviewSessionRepository';
 import { AccountRepository } from '../features/accounting/repositories/AccountRepository';
 import { JournalEntryRepository } from '../features/accounting/repositories/JournalEntryRepository';
@@ -110,6 +113,8 @@ import { UserPolicy } from '../features/users/policies/UserPolicy';
 import { DynamicTablePolicy } from '../features/dynamicTables/policies/DynamicTablePolicy';
 import { AttachmentPolicy } from '../features/attachments/policies/AttachmentPolicy';
 import { SavedTableViewPolicy } from '../features/savedViews/policies/SavedTableViewPolicy';
+import { LlmCredentialPolicy } from '../features/teammates/policies/LlmCredentialPolicy';
+import { TeammatePolicy } from '../features/teammates/policies/TeammatePolicy';
 import { AccountingPolicy } from '../features/accounting/policies/AccountingPolicy';
 import { AccountingScopeResetPolicy } from '../features/accounting/policies/AccountingScopeResetPolicy';
 import { AccountingScopeResetService } from '../features/accounting/services/AccountingScopeResetService';
@@ -124,6 +129,7 @@ import { ChatService } from '../features/chat/services/ChatService';
 import { DashboardLayoutService } from '../features/dashboardLayout/services/DashboardLayoutService';
 import { DocumentProcessingService } from '../features/documents/services/DocumentProcessingService';
 import { DocumentService } from '../features/documents/services/DocumentService';
+import { DocumentSearchService } from '../features/documents/services/DocumentSearchService';
 import { UserService } from '../features/users/services/UserService';
 import { DynamicTableService } from '../features/dynamicTables/services/DynamicTableService';
 import { LuminarisAgentService } from '../features/chat/services/LuminarisAgentService';
@@ -220,6 +226,10 @@ import { DpVinculoRepository } from '../features/dp/repositories/DpVinculoReposi
 import { DpRubricaService } from '../features/dp/services/DpRubricaService';
 import { DpAfastamentoFeriasService } from '../features/dp/services/DpAfastamentoFeriasService';
 import { DpAfastamentoFeriasRepository } from '../features/dp/repositories/DpAfastamentoFeriasRepository';
+import { DpDependenteService } from '../features/dp/services/DpDependenteService';
+import { DpDependenteRepository } from '../features/dp/repositories/DpDependenteRepository';
+import { DpLancamentoService } from '../features/dp/services/DpLancamentoService';
+import { DpLancamentoRepository } from '../features/dp/repositories/DpLancamentoRepository';
 import type { EmployeeRowLookup } from '../features/dp/ports/EmployeeRowLookup';
 import { DP_AUDIT_KEYRING } from '../features/dp/models/vinculo';
 import { loadKeyring } from './secretBox';
@@ -306,6 +316,8 @@ import { PresetSyncService } from '../features/dynamicTables/services/PresetSync
 import { ModuleInstallService } from '../features/dynamicTables/services/ModuleInstallService';
 import { AttachmentService } from '../features/attachments/services/AttachmentService';
 import { SavedTableViewService } from '../features/savedViews/services/SavedTableViewService';
+import { LlmCredentialService } from '../features/teammates/services/LlmCredentialService';
+import { TeammateService } from '../features/teammates/services/TeammateService';
 import { StateManager } from '../features/interview/CustomizationService/StateManager';
 import { CustomizationService } from '../features/interview/CustomizationService/CustomizationService';
 import { InterviewService } from '../features/interview/InterviewService/InterviewService';
@@ -318,7 +330,10 @@ import { SystemProvisioningPolicy } from '../features/onboarding/policies/System
 
 // Lib - External Services
 import { OpenAIService as ChatOpenAIService } from './openai/OpenAIService';
-import { EmbeddingService } from './vector/embedding';
+import { getVecIndex } from './vector/sqliteVec';
+import { UserEmbedder } from './embedding/UserEmbedder';
+import { InstanceEmbeddingKeyResolver } from './embedding/InstanceEmbeddingKeyResolver';
+import { OpenAIEmbeddingProvider } from './embedding/OpenAIEmbeddingProvider';
 
 // Interfaces
 import type { IChatInstanceRepository } from '../features/chatInstances/repositories/IChatInstanceRepository';
@@ -326,7 +341,7 @@ import type { IChatMessageRepository } from '../features/chatMessages/repositori
 import type { IDashboardLayoutRepository } from '../features/dashboardLayout/repositories/IDashboardLayoutRepository';
 import type { IDocumentRepository } from '../features/documents/repositories/IDocumentRepository';
 import type { IUserRepository } from '../features/users/repositories/IUserRepository';
-import type { IVectorRepository } from '../features/documents/repositories/IVectorRepository';
+import type { IChunkVectorRepository } from '../features/documents/repositories/IChunkVectorRepository';
 import type { IDynamicTableRepository } from '../features/dynamicTables/repositories/IDynamicTableRepository';
 import type { IChatInstancePolicy } from '../features/chatInstances/policies/IChatInstancePolicy';
 import type { IChatMessagePolicy } from '../features/chatMessages/policies/IChatMessagePolicy';
@@ -340,8 +355,13 @@ import type { IKnowledgeGraphRepository } from '../features/chat/repositories/IK
 import type { IAttachmentRepository } from '../features/attachments/repositories/IAttachmentRepository';
 import type { IAttachmentPolicy } from '../features/attachments/policies/IAttachmentPolicy';
 import type { ISavedTableViewRepository } from '../features/savedViews/repositories/ISavedTableViewRepository';
+import type { ILlmCredentialRepository } from '../features/teammates/repositories/ILlmCredentialRepository';
+import type { ITeammateRepository } from '../features/teammates/repositories/ITeammateRepository';
+import type { IMcpServerRepository } from '../features/teammates/repositories/IMcpServerRepository';
 import type { IInterviewSessionRepository } from '../features/interview/repositories/IInterviewSessionRepository';
 import type { ISavedTableViewPolicy } from '../features/savedViews/policies/ISavedTableViewPolicy';
+import type { ILlmCredentialPolicy } from '../features/teammates/policies/ILlmCredentialPolicy';
+import type { ITeammatePolicy } from '../features/teammates/policies/ITeammatePolicy';
 import type { ISystemProvisioningPolicy } from '../features/onboarding/policies/ISystemProvisioningPolicy';
 import type { IAccountingEventMapper } from '../features/accounting/sync/mappers/IAccountingEventMapper';
 import type { PostEntryInput } from '../features/accounting/dtos/PostingDto';
@@ -397,6 +417,8 @@ import type { IDpModuloAtivacaoRepository } from '../features/dp/repositories/ID
 import type { IDpCadastroRepository } from '../features/dp/repositories/IDpCadastroRepository';
 import type { IDpVinculoRepository } from '../features/dp/repositories/IDpVinculoRepository';
 import type { IDpAfastamentoFeriasRepository } from '../features/dp/repositories/IDpAfastamentoFeriasRepository';
+import type { IDpDependenteRepository } from '../features/dp/repositories/IDpDependenteRepository';
+import type { IDpLancamentoRepository } from '../features/dp/repositories/IDpLancamentoRepository';
 import type { IDpPolicy } from '../features/dp/policies/IDpPolicy';
 import type { IWithholdingProfileRepository } from '../features/accounting/repositories/IWithholdingProfileRepository';
 import type { ITaxWithholdingReadPort, ITaxWithholdingRepository } from '../features/accounting/repositories/ITaxWithholdingRepository';
@@ -828,7 +850,7 @@ export class ApplicationFactory {
     chatInstance: IChatInstanceRepository;
     dashboardLayout: IDashboardLayoutRepository;
     document: IDocumentRepository;
-    vector: IVectorRepository;
+    vector: ChunkVectorRepository;
     chunk: ChunkRepository;
     dynamicTable: IDynamicTableRepository;
     dynamicTableVersion: IDynamicTableVersionRepository;
@@ -836,6 +858,9 @@ export class ApplicationFactory {
     knowledgeGraph: IKnowledgeGraphRepository;
     attachment: IAttachmentRepository;
     savedTableView: ISavedTableViewRepository;
+    llmCredential: ILlmCredentialRepository; // BE-INCR-TEAMMATES PR-1 (item 7)
+    teammate: ITeammateRepository; // BE-INCR-TEAMMATES PR-2 (item 10)
+    mcpServer: IMcpServerRepository; // BE-INCR-TEAMMATES PR-2 (item 12, só leitura)
     interviewSession: IInterviewSessionRepository; // W4 (BE-INCR-INTERVIEW-SESSION)
     account: IAccountRepository;
     journalEntry: IJournalEntryRepository;
@@ -875,6 +900,8 @@ export class ApplicationFactory {
     dpCadastro: IDpCadastroRepository; // BE-INCR-DP-F0-F1 PR-3 (itens 28–33)
     dpVinculo: IDpVinculoRepository; // BE-INCR-DP-F0-F1 PR-4 (itens 37–48)
     dpAfastamentoFerias: IDpAfastamentoFeriasRepository; // BE-INCR-DP-F0-F1 PR-6 (itens 56 e 58)
+    dpDependente: IDpDependenteRepository; // BE-INCR-DP-F2 PR-1 (item 13)
+    dpLancamento: IDpLancamentoRepository; // BE-INCR-DP-F2 PR-1 (itens 16 e 77)
     withholdingProfile: IWithholdingProfileRepository; // RETENCOES-FONTE PR-1 (item 6)
     taxWithholding: ITaxWithholdingRepository; // RETENCOES-FONTE PR-2 (item 13; porta da Reinf, Emenda 22/10 item 2)
     profitDistribution: IProfitDistributionRepository; // IRRF-DISTRIBUICAO PR-2
@@ -919,6 +946,8 @@ export class ApplicationFactory {
     dynamicTable: IDynamicTablePolicy;
     attachment: IAttachmentPolicy;
     savedTableView: ISavedTableViewPolicy;
+    llmCredential: ILlmCredentialPolicy; // BE-INCR-TEAMMATES PR-1 (item 7)
+    teammate: ITeammatePolicy; // BE-INCR-TEAMMATES PR-2 (item 10)
     crmReportDefinition: ICrmReportDefinitionPolicy; // BE-INCR-CRM-REPORT-BUILDER PR-2 (item 3)
     systemProvisioning: ISystemProvisioningPolicy;
     accounting: IAccountingPolicy;
@@ -936,6 +965,7 @@ export class ApplicationFactory {
     chatInstance: ChatInstanceService;
     dashboardLayout: DashboardLayoutService;
     document: DocumentService;
+    documentSearch: DocumentSearchService;
     chat: IChatService;
     dynamicTable: DynamicTableService;
     dynamicTableVersion: DynamicTableVersionService;
@@ -1003,6 +1033,8 @@ export class ApplicationFactory {
     dpVinculo: DpVinculoService; // BE-INCR-DP-F0-F1 PR-4 (itens 37–49)
     dpRubrica: DpRubricaService; // BE-INCR-DP-F0-F1 PR-5 (item 54)
     dpAfastamentoFerias: DpAfastamentoFeriasService; // BE-INCR-DP-F0-F1 PR-6 (itens 56–61)
+    dpDependente: DpDependenteService; // BE-INCR-DP-F2 PR-1 (itens 13–15, 20–21)
+    dpLancamento: DpLancamentoService; // BE-INCR-DP-F2 PR-1 (itens 16–17, 20–21, 77)
     withholdingProfile: WithholdingProfileService; // RETENCOES-FONTE PR-1 (item 6)
     withholding: WithholdingService; // RETENCOES-FONTE PR-2 (itens 10–23)
     profitDistribution: ProfitDistributionService; // IRRF-DISTRIBUICAO PR-2
@@ -1047,6 +1079,8 @@ export class ApplicationFactory {
     moduleInstall: ModuleInstallService;
     attachment: AttachmentService;
     savedTableView: SavedTableViewService;
+    llmCredential: LlmCredentialService; // BE-INCR-TEAMMATES PR-1 (item 7)
+    teammate: TeammateService; // BE-INCR-TEAMMATES PR-2 (item 10)
     interview: InterviewService; // W4: entrevista com IA sobre a sessão persistida
     customization: CustomizationService; // W1: módulos da sessão (POST /dashboard/ai/InterviewModules)
     fieldCustomization: FieldCustomizationService; // W6: painel de campos por IA sobre a mesma sessão
@@ -1062,10 +1096,13 @@ export class ApplicationFactory {
   /** Porta do BCB (BE-INCR-CRM-REPORT-BUILDER PR-1, item 22) — cliente HTTP externo, não repositório. */
   private readonly ptaxClient: IPtaxClient;
 
+  private readonly embedder: UserEmbedder;
+
   private constructor() {
     // External services (singletons)
     const chatOpenAIService = new ChatOpenAIService();
-    const embeddingOpenAIService = new EmbeddingService({ apiKey: process.env.OPENAI_API_KEY || '' });
+    // RAG-PR-A itens 5–6: um embedder só (resolvedor da instância + adaptador OpenAI @768) para indexar e buscar.
+    this.embedder = new UserEmbedder(new InstanceEmbeddingKeyResolver(), { openai: new OpenAIEmbeddingProvider() });
 
     this.ptaxClient = new BcbPtaxClient();
 
@@ -1077,13 +1114,16 @@ export class ApplicationFactory {
       dashboardLayout: new DashboardLayoutRepository(),
       document: new DocumentRepository(),
       user: new UserRepository(),
-      vector: new VectorRepository(),
+      vector: new ChunkVectorRepository(() => getVecIndex().db),
       dynamicTable: new DynamicTableRepository(),
       dynamicTableVersion: new DynamicTableVersionRepository(),
       actionProposal: new ActionProposalRepository(),
       knowledgeGraph: new KnowledgeGraphRepository(),
       attachment: new AttachmentRepository(),
       savedTableView: new SavedTableViewRepository(),
+      llmCredential: new LlmCredentialRepository(),
+      teammate: new TeammateRepository(),
+      mcpServer: new McpServerRepository(),
       interviewSession: new InterviewSessionRepository(),
       account: new AccountRepository(),
       journalEntry: new JournalEntryRepository(),
@@ -1123,6 +1163,8 @@ export class ApplicationFactory {
       dpCadastro: new DpCadastroRepository(), // BE-INCR-DP-F0-F1 PR-3
       dpVinculo: new DpVinculoRepository(), // BE-INCR-DP-F0-F1 PR-4
       dpAfastamentoFerias: new DpAfastamentoFeriasRepository(), // BE-INCR-DP-F0-F1 PR-6
+      dpDependente: new DpDependenteRepository(), // BE-INCR-DP-F2 PR-1
+      dpLancamento: new DpLancamentoRepository(), // BE-INCR-DP-F2 PR-1
       withholdingProfile: new WithholdingProfileRepository(), // RETENCOES-FONTE PR-1 (item 6)
       taxWithholding: new TaxWithholdingRepository(), // RETENCOES-FONTE PR-2 (item 13)
       profitDistribution: new ProfitDistributionRepository(),
@@ -1168,6 +1210,8 @@ export class ApplicationFactory {
       dynamicTable: new DynamicTablePolicy(),
       attachment: new AttachmentPolicy(),
       savedTableView: new SavedTableViewPolicy(),
+      llmCredential: new LlmCredentialPolicy(),
+      teammate: new TeammatePolicy(),
       crmReportDefinition: new CrmReportDefinitionPolicy(),
       systemProvisioning: new SystemProvisioningPolicy(),
       accounting: new AccountingPolicy(),
@@ -1192,11 +1236,21 @@ export class ApplicationFactory {
     // (controller ou serviço de integração) chama estes efeitos depois do commit.
     const dynamicTableWriteEffects = new DynamicTableWriteEffects(knowledgeGraphService, kpiCacheService);
 
+    // RAG-PR-B item 13: o único caminho de busca nos documentos (rota e ferramenta search_documents).
+    const documentSearchService = new DocumentSearchService(
+      this.repositories.document,
+      this.repositories.chunk,
+      this.repositories.vector,
+      this.policies.document,
+      this.embedder,
+    );
+
     const luminarisAgentService = new LuminarisAgentService(
       dynamicTableService,
       this.repositories.actionProposal,
       this.policies.dynamicTable,
       dynamicTableWriteEffects,
+      documentSearchService,
     );
 
     // Shared instance: injected into ChatService (server-side persistence of chat turns)
@@ -1830,7 +1884,8 @@ export class ApplicationFactory {
       ),
       dpModule: dpModuleService, // BE-INCR-DP-F0-F1 PR-1
       dpPortResolver: new DpPortResolver(dpPortImplementations, (owner, c) => dpModuleService.modulosAtivosEm(owner, c)),
-      dpCadastro: new DpCadastroService(this.repositories.dpCadastro, this.policies.dp, auditService), // BE-INCR-DP-F0-F1 PR-3
+      // BE-INCR-DP-F0-F1 PR-3; BE-INCR-DP-F2 item 71: a fotografia legal para o aviso de jornada contra a lei vigente.
+      dpCadastro: new DpCadastroService(this.repositories.dpCadastro, this.policies.dp, auditService, legalParameterService),
       dpRubrica: new DpRubricaService(this.policies.dp), // BE-INCR-DP-F0-F1 PR-5
       // BE-INCR-DP-F0-F1 PR-6: a posse vem do vínculo (repositório do PR-4); motivo e categoria pela fotografia legal.
       dpAfastamentoFerias: new DpAfastamentoFeriasService(
@@ -1839,6 +1894,18 @@ export class ApplicationFactory {
         this.policies.dp,
         auditService,
         legalParameterService,
+      ),
+      // BE-INCR-DP-F2 PR-1: posse pelo trabalhador/vínculo (repositório do PR-4); HMAC com o chaveiro do DP, lido no uso.
+      dpDependente: new DpDependenteService(
+        this.repositories.dpDependente,
+        this.repositories.dpVinculo,
+        this.policies.dp,
+        auditService,
+        legalParameterService,
+        () => loadKeyring(process.env, DP_AUDIT_KEYRING),
+      ),
+      dpLancamento: new DpLancamentoService(this.repositories.dpLancamento, this.repositories.dpVinculo, this.policies.dp, auditService, () =>
+        loadKeyring(process.env, DP_AUDIT_KEYRING),
       ),
       // BE-INCR-DP-F0-F1 PR-4: reusa o sócio (D-9), o regime do ano e a fotografia legal; `employees` pela porta (D-2, D-6).
       dpVinculo: new DpVinculoService(this.repositories.dpVinculo, this.repositories.dpCadastro, this.policies.dp, auditService, {
@@ -1888,8 +1955,7 @@ export class ApplicationFactory {
       fiscalNumberVoid: fiscalNumberVoidService,
       nfceContingencia: nfceContingenciaService,
       chat: new ChatService(
-        embeddingOpenAIService,
-        this.repositories.vector,
+        documentSearchService,
         chatOpenAIService,
         luminarisAgentService,
         knowledgeGraphService,
@@ -1909,8 +1975,10 @@ export class ApplicationFactory {
         this.repositories.vector,
         new DocumentProcessingService(),
         this.policies.document,
-        this.repositories.user
+        this.repositories.user,
+        this.embedder
       ),
+      documentSearch: documentSearchService,
       user: new UserService(this.repositories.user, this.policies.user, this.repositories.vector),
       dynamicTable: dynamicTableService,
       // BE-INCR-DT-VERSION-LEDGER: leitura/diff/restore do ledger; o restore delega ao DynamicTableService.
@@ -2303,6 +2371,8 @@ export class ApplicationFactory {
         this.repositories.savedTableView,
         this.policies.savedTableView
       ),
+      llmCredential: new LlmCredentialService(this.repositories.llmCredential, this.policies.llmCredential, auditService), // PR-2 item 13: trilha
+      teammate: new TeammateService(this.repositories.teammate, this.repositories.mcpServer, this.policies.teammate, auditService),
       // W4 item 3: StateManager sobre o repositório (injetado, nunca `new` dentro do serviço).
       interview: new InterviewService(customizationService, chatOpenAIService),
       customization: customizationService,
@@ -2613,6 +2683,7 @@ export class ApplicationFactory {
   public getAnalyticsService = (): AnalyticsService => this.services.analytics;
   public getDashboardLayoutService = (): DashboardLayoutService => this.services.dashboardLayout;
   public getDocumentService = (): DocumentService => this.services.document;
+  public getDocumentSearchService = (): DocumentSearchService => this.services.documentSearch;
   public getUserService = (): UserService => this.services.user;
   public getDynamicTableService = (): DynamicTableService => this.services.dynamicTable;
   public getDynamicTableVersionService = (): DynamicTableVersionService => this.services.dynamicTableVersion;
@@ -2726,6 +2797,8 @@ export class ApplicationFactory {
   public getDpVinculoService = (): DpVinculoService => this.services.dpVinculo;
   public getDpRubricaService = (): DpRubricaService => this.services.dpRubrica;
   public getDpAfastamentoFeriasService = (): DpAfastamentoFeriasService => this.services.dpAfastamentoFerias;
+  public getDpDependenteService = (): DpDependenteService => this.services.dpDependente;
+  public getDpLancamentoService = (): DpLancamentoService => this.services.dpLancamento;
   public getWithholdingProfileService = (): WithholdingProfileService => this.services.withholdingProfile;
   public getWithholdingService = (): WithholdingService => this.services.withholding;
   /** RETENCOES-FONTE PR-2 (Emenda 22/10 item 2): a porta que a EFD-REINF lê, sem HTTP. */
@@ -2754,6 +2827,8 @@ export class ApplicationFactory {
   public getModuleInstallService = (): ModuleInstallService => this.services.moduleInstall;
   public getAttachmentService = (): AttachmentService => this.services.attachment;
   public getSavedTableViewService = (): SavedTableViewService => this.services.savedTableView;
+  public getLlmCredentialService = (): LlmCredentialService => this.services.llmCredential;
+  public getTeammateService = (): TeammateService => this.services.teammate;
   public getInterviewService = (): InterviewService => this.services.interview;
   public getCustomizationService = (): CustomizationService => this.services.customization;
   public getFieldCustomizationService = (): FieldCustomizationService => this.services.fieldCustomization;
@@ -2765,7 +2840,10 @@ export class ApplicationFactory {
   public getChatMessageRepository = (): IChatMessageRepository => this.repositories.chatMessage;
   public getDashboardLayoutRepository = (): IDashboardLayoutRepository => this.repositories.dashboardLayout;
   public getDocumentRepository = (): IDocumentRepository => this.repositories.document;
-  public getVectorRepository = (): IVectorRepository => this.repositories.vector;
+  /** RAG-PR-A: varredura de órfãos e reindexação usam o repositório concreto (ids da vec0) e o embedder. */
+  public getChunkVectorRepository = (): ChunkVectorRepository => this.repositories.vector;
+  public getChunkRepository = (): ChunkRepository => this.repositories.chunk;
+  public getUserEmbedder = (): UserEmbedder => this.embedder;
   public getDynamicTableRepository = (): IDynamicTableRepository => this.repositories.dynamicTable;
   public getKnowledgeGraphRepository = (): IKnowledgeGraphRepository => this.repositories.knowledgeGraph;
 }
@@ -2781,7 +2859,7 @@ export type {
   IChatInstanceRepository,
   IDashboardLayoutRepository,
   IDocumentRepository,
-  IVectorRepository,
+  IChunkVectorRepository,
   IUserPolicy,
   IChatMessagePolicy,
   IChatInstancePolicy,
