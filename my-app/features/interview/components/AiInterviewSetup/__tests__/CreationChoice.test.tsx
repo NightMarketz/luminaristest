@@ -3,7 +3,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 // W3 FE-INCR-W3-CHOICE itens 7, 8, 9, 10, 11, 12 (BRIEF WIZARD-W3-ESCOLHA-CRIACAO).
-vi.mock('next-i18next', () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
+vi.mock('next-i18next', () => ({
+  useTranslation: () => ({ t: (k: string, o?: unknown) => (o && typeof o === 'object' ? `${k}:${JSON.stringify(o)}` : k) }),
+}));
 
 import CreationChoice from '../CreationChoice';
 import type { CreationChoiceReason } from '../../../types/InterviewTypes';
@@ -11,7 +13,7 @@ import type { CreationChoiceReason } from '../../../types/InterviewTypes';
 const prompt = (reason: CreationChoiceReason) => ({ kind: 'creation_type' as const, reason });
 const setup = (reason: CreationChoiceReason, disabled = false) => {
   const onChoose = vi.fn();
-  const utils = render(<CreationChoice prompt={prompt(reason)} presetKey="salon" disabled={disabled} onChoose={onChoose} />);
+  const utils = render(<CreationChoice prompt={prompt(reason)} presetName="Salão de Beleza" disabled={disabled} onChoose={onChoose} />);
   return { onChoose, ...utils };
 };
 
@@ -69,5 +71,18 @@ describe('CreationChoice (W3 FE)', () => {
     expect(screen.getByRole('button', { name: 'choiceCustomize' })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'choiceCustomize' }));
     expect(onChoose).not.toHaveBeenCalled();
+  });
+
+  it('achado do runbook W3 (06/11): o modal de confirmação mostra o NOME do preset e não traz o subtítulo administrativo', () => {
+    setup('initial');
+    fireEvent.click(screen.getByRole('button', { name: 'choiceCreateNow' }));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveTextContent('choiceConfirmCreateBody:{"preset":"Salão de Beleza"}');
+    expect(dialog).not.toHaveTextContent('administrative_subtitle');
+  });
+
+  it('achado do runbook W3 (06/11): o modal da negação também não traz o subtítulo administrativo', () => {
+    setup('declined_customize');
+    expect(screen.getByRole('dialog')).not.toHaveTextContent('administrative_subtitle');
   });
 });

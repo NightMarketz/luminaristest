@@ -96,6 +96,13 @@
               }
             ]
           }
+        },
+        "locale": {
+          "type": "string",
+          "enum": [
+            "pt",
+            "en"
+          ]
         }
       },
       "additionalProperties": false

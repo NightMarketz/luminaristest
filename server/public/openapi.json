@@ -23642,6 +23642,14 @@
                         "GESTAO"
                       ]
                     }
+                  },
+                  "locale": {
+                    "type": "string",
+                    "description": "UI language; the interview answers in it. Absent = pt (dono, chat, 2026-11-06)",
+                    "enum": [
+                      "pt",
+                      "en"
+                    ]
                   }
                 }
               }

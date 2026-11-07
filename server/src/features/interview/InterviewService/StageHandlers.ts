@@ -6,6 +6,7 @@ import { IPresetKnowledge } from '../../dynamicTables/presets/ai/PresetKnowledge
 import { stageConfig } from './PromptConfig';
 import { CustomizationService } from '../CustomizationService/CustomizationService';
 import type { ModuleSelector } from '../../dynamicTables/presets/modules/registry';
+import { DEFAULT_INTERVIEW_LOCALE, INTERVIEW_TEXT, type InterviewLocale } from '../models/interviewText';
 
 /**
  * Classe responsável pelo processamento de estágios específicos da entrevista
@@ -52,8 +53,10 @@ export class StageHandlers {
     presetKey: string,
     userId: string,
     choice?: CreationChoice,
-    modules?: ModuleSelector[]
+    modules?: ModuleSelector[],
+    locale: InterviewLocale = DEFAULT_INTERVIEW_LOCALE
   ): Promise<IInterviewTurnResult> {
+    const tx = INTERVIEW_TEXT[locale];
     const askAgain = (response: string, reason: CreationChoiceReason): IInterviewTurnResult => ({
       response,
       nextStage: 'AWAITING_CREATION_TYPE_CONFIRMATION',
@@ -75,7 +78,7 @@ export class StageHandlers {
         // Obtém a última mensagem do usuário
         const lastMessage = messages.filter(m => m.role === 'user').pop();
         if (!lastMessage) {
-          return askAgain("Não entendi sua escolha. Por favor, indique se deseja customizar o sistema ou criar diretamente.", 'unclear');
+          return askAgain(tx.choiceNoMessage, 'unclear');
         }
 
         const userContent = lastMessage.content.toLowerCase();
@@ -83,15 +86,15 @@ export class StageHandlers {
         // Escolha só vale se explícita; negação de customizar não conta como customizar.
         // ponytail: palavra-chave só no texto livre (fallback, F-W3-B2 a); o botão manda `choice`.
         const mentionsCustomize = /custom|personaliz|option\s*1|op[çc][ãa]o\s*1/.test(userContent);
-        negatesCustomize = /\b(n[ãa]o|sem|nunca)\b[^.,;!?]*(custom|personaliz)/.test(userContent);
+        negatesCustomize = /\b(n[ãa]o|sem|nunca|no|not|never|without|don'?t)\b[^.,;!?]*(custom|personaliz)/.test(userContent);
         wantsToCustomize = mentionsCustomize && !negatesCustomize;
-        wantsToCreate = /\b(cri[ae]r?|agora|diret[oa]|padr[ãa]o)\b|option\s*2|op[çc][ãa]o\s*2/.test(userContent);
+        wantsToCreate = /\b(cri[ae]r?|agora|diret[oa]|padr[ãa]o|create|now|directly|default)\b|option\s*2|op[çc][ãa]o\s*2/.test(userContent);
       }
 
       if (!wantsToCustomize && wantsToCreate) {
         logger.info('[StageHandlers] Usuário escolheu criar diretamente');
         return {
-          response: "Ótimo! Seu sistema será criado diretamente com as configurações padrão.",
+          response: tx.choiceCreate,
           nextStage: 'COMPLETED',
           presetKey
         };
@@ -99,8 +102,8 @@ export class StageHandlers {
 
       if (!wantsToCustomize) {
         return negatesCustomize
-          ? askAgain("Entendi que você prefere não customizar. Quer **criar o sistema agora** com as configurações padrão?", 'declined_customize')
-          : askAgain("Não entendi sua escolha. Você prefere **criar o sistema agora** ou **customizar** primeiro?", 'unclear');
+          ? askAgain(tx.choiceDeclined, 'declined_customize')
+          : askAgain(tx.choiceUnclear, 'unclear');
       }
       
       // Cria uma sessão de customização
@@ -111,11 +114,11 @@ export class StageHandlers {
 
       if (!session) {
         logger.error(`[StageHandlers] Falha ao criar sessão de customização para preset ${presetKey}`);
-        return askAgain("Desculpe, houve um erro ao preparar a customização. Quer tentar **customizar** de novo ou **criar o sistema agora**?", 'error');
+        return askAgain(tx.choiceSessionError, 'error');
       }
 
       // Gera a apresentação das tabelas e ajusta o prompt
-      const tablesPresentation = await this.customizationService.generateTablesPresentation(session.state, true);
+      const tablesPresentation = await this.customizationService.generateTablesPresentation(session.state, true, locale);
 
       // Avança para o estágio de customização em andamento
       return {
@@ -128,7 +131,7 @@ export class StageHandlers {
       };
     } catch (error) {
       logger.error(`[StageHandlers] Erro ao processar confirmação do tipo de criação: ${error}`);
-      return askAgain("Desculpe, houve um erro ao processar sua escolha. Quer tentar **customizar** de novo ou **criar o sistema agora**?", 'error');
+      return askAgain(tx.choiceError, 'error');
     }
   }
 }
