@@ -10,7 +10,7 @@
 // Uso:  node scripts/heavy-slot.cjs run [--label <nome>] -- <comando> [args...]   pega vaga, roda, libera
 //       node scripts/heavy-slot.cjs status                                     lista quem ocupa
 //       require('./heavy-slot.cjs').acquire({ label })                         → Promise<release()>
-const { spawn } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -21,10 +21,34 @@ const HELD_ENV = 'LUMINARIS_HEAVY_SLOT_HELD';
 
 function config(env = process.env) {
   const n = Number.parseInt(env.LUMINARIS_HEAVY_SLOTS ?? '', 10);
+  const g = Number.parseFloat(env.LUMINARIS_HEAVY_MIN_FREE_GB ?? '');
   return {
     slots: Number.isInteger(n) && n > 0 ? n : 2,
     dir: env.LUMINARIS_HEAVY_SLOTS_DIR || path.join(os.tmpdir(), 'luminaris-heavy-slots'),
+    // Piso de memória virtual livre para entrar (0 desliga). Dono, chat, 07/11: "smepre que roda sabotagem no meu pc ele
+    // trava". O log do Windows (Resource-Exhaustion-Detector, id 2004) marcou memória virtual insuficiente 20+ vezes de
+    // 06/11 23:19 a 07/11 09:31, com RAM física sobrando: o limite é o de commit (RAM + pagefile = 46,8 GB), e com a
+    // máquina parada já havia 39,3 GB comprometidos. Duas vagas cheias não bastam; falta olhar a memória.
+    minFreeGb: Number.isFinite(g) && g >= 0 ? g : 6,
   };
+}
+
+// Memória virtual livre (commit) em GB. No Windows é FreeVirtualMemory (o que acaba antes da RAM física); fora dele,
+// os.freemem(). Consulta no máximo a cada 10 s (cada consulta abre um powershell). Falha ao medir → não bloqueia.
+let memCache = { at: 0, gb: Infinity };
+function livreGbReal() {
+  if (Date.now() - memCache.at < 10_000) return memCache.gb;
+  let gb = Infinity;
+  if (process.platform === 'win32') {
+    const r = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
+      '(Get-CimInstance Win32_OperatingSystem).FreeVirtualMemory'], { encoding: 'utf8', timeout: 15_000, windowsHide: true });
+    const kb = Number.parseInt(String(r.stdout).trim(), 10);
+    if (Number.isFinite(kb)) gb = kb / 1024 / 1024;
+  } else {
+    gb = os.freemem() / 1024 ** 3;
+  }
+  memCache = { at: Date.now(), gb };
+  return gb;
 }
 
 function isAlive(pid) {
@@ -92,22 +116,30 @@ const describe = (h) =>
  */
 async function acquire({
   label = 'trabalho pesado', env = process.env, pollMs = 2000, noticeMs = 60_000, timeoutMs = Infinity, log = console.error,
+  livreGb = livreGbReal,
 } = {}) {
   if (env.CI || env[HELD_ENV]) return () => {};
   const cfg = config(env);
   const info = { pid: process.pid, label, cwd: process.cwd(), since: Date.now() };
   const deadline = Date.now() + timeoutMs;
-  let file = tryTake(cfg, info);
+  let livre = Infinity;
+  const temMemoria = () => cfg.minFreeGb <= 0 || (livre = livreGb()) >= cfg.minFreeGb;
+  let file = temMemoria() ? tryTake(cfg, info) : null;
   let lastNotice = 0;
   while (!file) {
     if (Date.now() > deadline) throw new Error(`[heavy-slot] ${label}: sem vaga em ${timeoutMs} ms`);
     if (Date.now() - lastNotice >= noticeMs) {
       lastNotice = Date.now();
-      log(`[heavy-slot] ${label}: as ${cfg.slots} vagas de trabalho pesado estão ocupadas; esperando.`);
+      if (livre < cfg.minFreeGb) {
+        log(`[heavy-slot] ${label}: só ${livre.toFixed(1)} GB de memória virtual livre (piso ${cfg.minFreeGb} GB); ` +
+          'esperando. Feche o que não usa (dev server parado, `wsl --shutdown`) ou ajuste LUMINARIS_HEAVY_MIN_FREE_GB.');
+      } else {
+        log(`[heavy-slot] ${label}: as ${cfg.slots} vagas de trabalho pesado estão ocupadas; esperando.`);
+      }
       for (const h of holders(cfg)) log(describe(h));
     }
     await new Promise((r) => setTimeout(r, pollMs));
-    file = tryTake(cfg, info);
+    file = temMemoria() ? tryTake(cfg, info) : null;
   }
   env[HELD_ENV] = String(process.pid);
   let solto = false;
