@@ -84,10 +84,10 @@ PR-0..PR-6. A sessão parou depois do PR-0R por higiene de contexto (CLAUDE.md, 
 
 | PR | Branch | Itens | Classe | Gates locais | Revisor |
 |---|---|---|---|---|---|
-| #1125 | `claude/dp-f2-pr0r-4904eb` (base `main` a39ea73a1) | 65–76 (70 parcial: o motor prova no PR-4) | vermelha (migração, parâmetro legal) | tsc, check:arch, 48 unit, 8 suítes de integração, smoke:migration verdes | despachado em 07/11 (ver o corpo do #1125) |
+| #1125 | `claude/dp-f2-pr0r-4904eb` (base `main` a39ea73a1) | 65–76 (70 parcial: o motor prova no PR-4) | vermelha (migração, parâmetro legal) | tsc, check:arch, 48 unit, 8 suítes de integração, smoke:migration verdes; CI do d98e8498 pegou 2 testes defasados (corrigidos no 321774bb8) | PASSOU (07/11, rodada 1, em 321774bb8: 5 sabotagens pegas; achado não bloqueante — 12×36 do F1 não renomeava — corrigido no 0fcb856b4) |
 
 **Pendente:** PR-0 (itens 1–12) → PR-1 (13–22, 77–78) → PR-2 (23–26) → PR-3 (27–33) → PR-4 (34–47) → PR-5 (48–58) →
-PR-6 (59–64), em pilha sobre o #1125; o veredito do revisor do #1125.
+PR-6 (59–64), em pilha sobre o #1125; o CI do head 0fcb856b4 do #1125.
 
 **Próximo comando:** sessão nova com `sessao-feature` na branch `claude/dp-f2-pr0`, criada de `claude/dp-f2-pr0r-4904eb`;
 ler o BRIEF §2 PR-0 e `server/src/features/dp/models/regrasFolha.ts` (o `RegrasFolha` é o único caminho de número de regra
