@@ -1,0 +1,21 @@
+{
+ "texto": "Não entendi sua escolha. Você prefere criar o sistema agora ou customizar primei",
+ "msgRect": {
+  "top": 156,
+  "bottom": 204,
+  "h": 48
+ },
+ "viewportH": 900,
+ "pageScrollH": 1138,
+ "areaDeMensagens": {
+  "tag": "DIV",
+  "classe": "flex-grow overflow-y-auto p-4 space-y-4",
+  "clientHeight": 32,
+  "scrollHeight": 1016,
+  "scrollTop": 984,
+  "top": 220,
+  "bottom": 252
+ },
+ "elementoNoPontoDaMensagem": "DIV Entrevista com IAOlá! Para começarmos, p",
+ "mensagemEhOElementoNoPonto": false
+}

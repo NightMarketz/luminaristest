@@ -7,7 +7,7 @@ estado: "planned"
 estado_detalhe: "29/10: PRE-ADR Accepted + BRIEF (43 itens, PR-0..PR-10) — F-TM-1..13 ratificados por questionário; sem código, sem 'executa'. Depende do FIX-CHAT-AGENTE fechado; PR-8 e PR-10 esperam a pesquisa LGPD; produção espera o runbook M2 com Redis"
 depende_de: ["[[FIX-CHAT-AGENTE]]"]
 ancora_sdd: "§7"
-autorizacao: "dono, chat, 2026-10-29: \"Autorizo planejar\" — nó + PRE-ADR + BRIEF, sessao-planejamento, só docs, sem código, sem 'executa' · forks F-TM-1..13 por questionário no mesmo dia ([[D-2026-10-29-TEAMMATES-FORKS]])"
+autorizacao: "dono, chat, 2026-10-29: \"Autorizo planejar\" — nó + PRE-ADR + BRIEF, sessao-planejamento, só docs, sem código, sem 'executa' · forks F-TM-1..13 por questionário no mesmo dia ([[D-2026-10-29-TEAMMATES-FORKS]]) · **EXECUTA** (dono, chat, 2026-11-06, questionário): \"BUILDER-VERTICAIS,TEAMMATES,RAG-DOCUMENTOS\" — BRIEF BE-INCR-TEAMMATES inteiro, sessao-feature, sem merge; PR-8 e PR-10 seguem esperando as lacunas L1/L2 da LGPD (BRIEF §4)"
 atualizado: "2026-10-29"
 write_set: ["server/src/features/teammates/**", "server/src/lib/llm/**", "server/src/features/chat/**", "server/src/jobs/TeammateTurnWorker.ts", "server/src/jobs/ProposalExpiryScheduler.ts", "server/src/jobs/__tests__/schedulerFailureAlert.test.ts", "server/prisma/schema.prisma", "server/prisma/migrations/**", "server/src/routes/teammates.ts", "server/src/routes/docs/teammates.paths.ts", "server/src/routes/hooks.ts", "server/package.json", "server/package-lock.json", ".github/workflows/ci.yml"]
 registros: ["server/src/lib/factory.ts", "server/src/routes/index.ts", "server/src/features/accounting/audit/auditCanonical.ts"]

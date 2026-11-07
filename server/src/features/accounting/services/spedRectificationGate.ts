@@ -3,6 +3,7 @@ import type { AccountingDataExchangeJob } from 'generated/prisma';
 import { ConflictError, NotFoundError, ValidationError } from '../../../lib/errors';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepository';
+import { describeExportJob } from '../models/AccountingDelivery.model';
 
 /**
  * BE-INCR-FIXED-ASSETS PR-4 (nó C8, Bloco G, item 21) — gate compartilhado da retificação
@@ -27,20 +28,20 @@ export async function resolveSupersededJob(
   }
   if (job.kind !== expectedKind) {
     throw new ValidationError(
-      `O job '${supersedesJobId}' tem kind '${job.kind}' — esperado '${expectedKind}' para esta retificação.`,
+      `O job ${describeExportJob(job)} tem kind '${job.kind}' — esperado '${expectedKind}' para esta retificação.`,
     );
   }
   if (job.status !== 'EXPORTED') {
     throw new ValidationError(
-      `O job '${supersedesJobId}' não está EXPORTED (status=${job.status}) — não pode ser substituído/retificado.`,
+      `O job ${describeExportJob(job)} não está EXPORTED (status=${job.status}) — não pode ser substituído/retificado.`,
     );
   }
   if (!job.periodStart || !job.periodEnd) {
-    throw new ValidationError(`O job '${supersedesJobId}' não tem período gravado.`);
+    throw new ValidationError(`O job ${describeExportJob(job)} não tem período gravado.`);
   }
   if (job.periodStart.getTime() !== period.start.getTime() || job.periodEnd.getTime() !== period.end.getTime()) {
     throw new ValidationError(
-      `O job '${supersedesJobId}' cobre um período diferente do arquivo sendo gerado — a retificação exige o MESMO período.`,
+      `O job ${describeExportJob(job)} cobre um período diferente do arquivo sendo gerado — a retificação exige o MESMO período.`,
     );
   }
   // Pré-cheque legível (não fecha o TOCTOU — quem fecha é a `@unique` no createJob abaixo).
@@ -51,7 +52,7 @@ export async function resolveSupersededJob(
   const existingSuccessor = await repo.findJobBySupersedesJobId(scope, supersedesJobId);
   if (existingSuccessor && existingSuccessor.status === 'EXPORTED') {
     throw new ConflictError(
-      `O job '${supersedesJobId}' já foi substituído/retificado pelo job '${existingSuccessor.id}' — só um sucessor por job.`,
+      `O job ${describeExportJob(job)} já foi substituído/retificado pelo job ${describeExportJob(existingSuccessor)} — só um sucessor por job.`,
     );
   }
   return job;

@@ -9,6 +9,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 import { DepreciationService } from '@/features/accounting/services/DepreciationService';
+import { FixedAssetRepository } from '@/features/accounting/repositories/FixedAssetRepository';
 
 const app = makeApp();
 const UNIT = 'unit-fixed-assets-http';
@@ -689,6 +690,91 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
       await novoAtivo(classId, 'A-MSG-CDEL', 'Geladeira');
       const res = await request(app).delete(`/api/accounting/fixed-asset-classes/${classId}`).set(authHeader(dono)).send({ unitId: UNIT, classId });
       nomeiaSemId(res, 400, 'IMSG-CDEL — Equipamentos de copa', classId);
+    });
+
+    // FIX-TESTES item 5, lote 4: os 2 sites "corrigir" do DepreciationService (inventário MENSAGENS-ID-INTERNO-2026-11-05).
+    // Os dois só mordem em corrida (a classe some entre a checagem do FixedAssetService e a da quota; o CAS do addAccumulated
+    // perde). O estado é forçado pelo mesmo precedente dos testes IMO-2 acima: espião no protótipo, que chama o original.
+    describe('lote 4 — DepreciationService', () => {
+      it('DepreciationService:189 — baixa em que a classe some antes da quota da baixa (404) nomeia o bem, não o cuid da classe', async () => {
+        const classId = await novaClasse('IMSG-DQCL', 'Móveis');
+        const assetId = await novoAtivo(classId, 'A-MSG-DQCL', 'Cômoda');
+        expect((await ativar(assetId)).status).toBe(200);
+        const original = DepreciationService.prototype.postQuotaForDisposal;
+        const spy = jest.spyOn(DepreciationService.prototype, 'postQuotaForDisposal').mockImplementation(async function (
+          this: DepreciationService,
+          ...args: Parameters<DepreciationService['postQuotaForDisposal']>
+        ) {
+          await prisma.fixedAssetClass.update({ where: { id: classId }, data: { deletedAt: new Date() } });
+          return original.apply(this, args);
+        });
+        try {
+          nomeiaSemId(await baixar(assetId, 2), 404, 'A-MSG-DQCL — Cômoda', classId, assetId);
+        } finally {
+          spy.mockRestore();
+        }
+      });
+
+      it('DepreciationService:287 — quota mensal que perde o CAS do ativo (409) nomeia o bem', async () => {
+        const classId = await novaClasse('IMSG-DQCAS', 'Móveis', { depreciable: true, accumulatedDepreciationAccountId: accDepAccountId });
+        const assetId = await novoAtivo(classId, 'A-MSG-DQCAS', 'Escrivaninha', 100_000);
+        expect((await ativar(assetId)).status).toBe(200);
+        const original = FixedAssetRepository.prototype.addAccumulated;
+        const spy = jest.spyOn(FixedAssetRepository.prototype, 'addAccumulated').mockImplementation(async function (
+          this: FixedAssetRepository,
+          ...args: Parameters<FixedAssetRepository['addAccumulated']>
+        ) {
+          return args[1] === assetId ? null : original.apply(this, args);
+        });
+        try {
+          const res = await request(app).post('/api/accounting/fixed-assets/depreciation/run').set(authHeader(dono)).send({ unitId: UNIT, yearMonth: '2026-01' });
+          nomeiaSemId(res, 409, 'A-MSG-DQCAS — Escrivaninha', assetId);
+        } finally {
+          spy.mockRestore();
+        }
+      });
+
+      const rodarJaneiro = () =>
+        request(app).post('/api/accounting/fixed-assets/depreciation/run').set(authHeader(dono)).send({ unitId: UNIT, yearMonth: '2026-01' });
+
+      // :144 e :344 — a heurística do inventário os deu como eco, mas o id vem dos ativos/classe/configurações, não do cliente.
+      it('DepreciationService:144 — rodar o mês com bem cuja classe sumiu (404) nomeia o bem, não o cuid da classe', async () => {
+        const classId = await novaClasse('IMSG-DRCL', 'Móveis', { depreciable: true, accumulatedDepreciationAccountId: accDepAccountId });
+        const assetId = await novoAtivo(classId, 'A-MSG-DRCL', 'Penteadeira', 100_000);
+        expect((await ativar(assetId)).status).toBe(200);
+        await prisma.fixedAssetClass.update({ where: { id: classId }, data: { deletedAt: new Date() } });
+        try {
+          nomeiaSemId(await rodarJaneiro(), 404, 'A-MSG-DRCL — Penteadeira', classId, assetId);
+        } finally {
+          await prisma.fixedAssetClass.update({ where: { id: classId }, data: { deletedAt: null } });
+        }
+      });
+
+      it('DepreciationService:344 — conta acumulada da classe sumida (400) nomeia a classe, não o cuid da conta', async () => {
+        const contaAcc = await criarConta('1.2.9.7', 'Asset');
+        const classId = await novaClasse('IMSG-DRACC', 'Utensílios', { depreciable: true, accumulatedDepreciationAccountId: contaAcc.id });
+        const assetId = await novoAtivo(classId, 'A-MSG-DRACC', 'Batedeira', 100_000);
+        expect((await ativar(assetId)).status).toBe(200);
+        await prisma.account.update({ where: { id: contaAcc.id }, data: { deletedAt: new Date() } });
+        try {
+          nomeiaSemId(await rodarJaneiro(), 400, 'IMSG-DRACC — Utensílios', contaAcc.id, classId, assetId);
+        } finally {
+          await prisma.account.update({ where: { id: contaAcc.id }, data: { deletedAt: null } });
+        }
+      });
+
+      it('DepreciationService:344 — conta de despesa das configurações sumida (400) nomeia as configurações, não o cuid da conta', async () => {
+        const classId = await novaClasse('IMSG-DRDESP', 'Móveis', { depreciable: true, accumulatedDepreciationAccountId: accDepAccountId });
+        const assetId = await novoAtivo(classId, 'A-MSG-DRDESP', 'Credenza', 100_000);
+        expect((await ativar(assetId)).status).toBe(200);
+        await prisma.account.update({ where: { id: depreciationExpenseAccountId }, data: { deletedAt: new Date() } });
+        try {
+          // Qual bem o laço pega primeiro não é fixo; o rótulo certo é o dono do id (as configurações contábeis).
+          nomeiaSemId(await rodarJaneiro(), 400, 'das configurações contábeis', depreciationExpenseAccountId, assetId);
+        } finally {
+          await prisma.account.update({ where: { id: depreciationExpenseAccountId }, data: { deletedAt: null } });
+        }
+      });
     });
   });
 });

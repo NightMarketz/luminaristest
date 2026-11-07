@@ -221,8 +221,9 @@ describe('PR-2 — PESSOAS e VENDAS no registro (itens 7, 9, 10, 11a/11b)', () =
     }
   });
 
-  it('item 10: VEN-0 não declara trava (lockedBy é do PR-5)', () => {
-    expect(Object.keys(MODULE_REGISTRY['VEN-0'])).not.toContain('lockedBy');
+  // PR-5 (item 28): o `lockedBy` do PR-5 chegou — VEN-0 declara a trava contábil (vale com a ponte `sales@1`).
+  it('item 10 / PR-5 item 28: VEN-0 declara lockedBy accounting', () => {
+    expect(MODULE_REGISTRY['VEN-0'].lockedBy).toBe('accounting');
   });
 
   it('item 7: VENDAS expande para VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM; PESSOAS para PES-0, PES-FORN', () => {
@@ -241,11 +242,12 @@ describe('PR-2 — PESSOAS e VENDAS no registro (itens 7, 9, 10, 11a/11b)', () =
     expect(() => composeModuleTables(['PES-0'], { overrides: { units: override } })).toThrow(/'units' não é tabela de módulo/);
   });
 
-  it('item 11b: locked marca lockedBy accounting só nas tabelas pedidas, preservando a meta do módulo', () => {
-    const t = composeModuleTables(['PES-0', 'VEN-0', 'VEN-SERV'], { locked: ['sales'] });
-    expect(t.sales.meta).toEqual({ requiresTables: ['saleItems'], lockedBy: 'accounting' });
-    expect(t.saleItems.meta?.lockedBy).toBeUndefined();
-    expect(() => composeModuleTables(['PES-0'], { locked: ['units'] })).toThrow(/'units' não é tabela de módulo/);
+  // PR-5 (item 28): a trava contábil por tabela (`locked`, item 11b) saiu da composição — vem de `ModuleDef.lockedBy`.
+  it('PR-5 item 28: lockedBy accounting só em PES-0 e VEN-0 (VEN-PAC destrava, F-MB-5); a composição não marca meta', () => {
+    expect(MODULE_KEYS.filter((k) => MODULE_REGISTRY[k].lockedBy === 'accounting')).toEqual(['PES-0', 'VEN-0']);
+    const t = composeModuleTables(['PES-0', 'VEN-0', 'VEN-SERV', 'VEN-PAC']);
+    expect(t.sales.meta).toEqual({ requiresTables: ['saleItems'] });
+    for (const k of Object.keys(t)) expect(t[k].meta?.lockedBy).toBeUndefined();
   });
 });
 

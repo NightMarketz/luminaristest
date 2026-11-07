@@ -32,9 +32,9 @@ import { resolveBindingScope } from '@/features/accountingBinding/scope/BindingS
 import { reloadAccountingMappersSerialized } from '@/features/accountingBinding/runtime/mapperReload';
 import { OnboardingAccountingResultSchema } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
 import type { ActivateDefaultBindingResult, OnboardingAccountingResult } from '@/features/accountingBinding/dtos/ActivateDefaultBindingDto';
-import { composeModuleTables, expandModuleSelectors, moduleOfTable, suiteModuleOptions, type ModuleSelector } from '@/features/dynamicTables/presets/modules/registry';
-import { applyModuleRemovals, applySelectOverrides, assertAddedFieldsRespectModules, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
-import { assertRemovalsAllowed } from '@/features/dynamicTables/presets/removability';
+import { composeModuleTables, expandModuleSelectors, moduleOfTable, suiteModuleOptions, type ModuleKey, type ModuleSelector } from '@/features/dynamicTables/presets/modules/registry';
+import { applyModuleRemovals, applySelectOverrides, assertAddedFieldsRespectModules, findMissingBridgeModule, resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
+import { findRemovalLock, throwRemovalRefusals, type RemovalRefusal } from '@/features/dynamicTables/presets/removability';
 import { CoreSystemPreset, PresetTableDefinition } from '@/features/dynamicTables/presets';
 import { DYNAMIC_TABLE_CATEGORY_CONFIG, DynamicTableCategoryConfig } from '@/features/dynamicTables/models/TableCategories';
 import { presetService } from '@/features/dynamicTables/services/PresetService';
@@ -212,8 +212,23 @@ async function handleCustomCreation(
     // BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: roda ANTES da regra de módulos, para que a trava de tabela de PESSOAS/VENDAS
     // (contábil, relação obrigatória) responda o mesmo 400 `TABLE_LOCKED` de quando elas eram tabelas da suíte.
     const coreTableKeys = Object.keys(CoreSystemPreset.tables);
-    assertRemovalsAllowed(finalTablesConfig, removedTables.filter((k) => !coreTableKeys.includes(k)));
-    const keptModules = applyModuleRemovals(installedModules, removedTables);
+    // PR-5 (item 28): com as pontes da suíte, que travam PES-0/VEN-0 pela contabilidade.
+    // PR-5 (item 27): módulo exigido por ponte da suíte ausente → 400 BRIDGE_REQUIRES_MODULE. Dono, 2026-11-06 ("As
+    // duas juntas"): trava de tabela e ponte na mesma remoção → um 400 só, com os dois motivos (`details.reasons`).
+    const tableLock = findRemovalLock(finalTablesConfig, removedTables.filter((k) => !coreTableKeys.includes(k)), originalPreset.bridges ?? []);
+    let keptModules: ModuleKey[];
+    try {
+      keptModules = applyModuleRemovals(installedModules, removedTables);
+    } catch (err) {
+      // Dono, 2026-11-06 ("Sim, entra"): DEPENDENT_MODULE_KEPT entra na mesma lista que a trava de tabela.
+      const dependent = err instanceof ValidationError && (err.details as Record<string, unknown> | null)?.reason === 'DEPENDENT_MODULE_KEPT'
+        ? { message: err.message, details: err.details as Record<string, unknown> }
+        : null;
+      if (tableLock) throwRemovalRefusals(dependent ? [tableLock, dependent] : [tableLock]);
+      throw err;
+    }
+    const bridgeMissing = findMissingBridgeModule(keptModules, originalPreset.bridges ?? []);
+    throwRemovalRefusals([tableLock, bridgeMissing].filter((r): r is RemovalRefusal => r !== null));
 
     for (const tableKey of removedTables) {
       if (!coreTableKeys.includes(tableKey)) {
