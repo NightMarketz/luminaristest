@@ -116,9 +116,6 @@ export class DpDependenteService {
     if (!linhaLegalVigente(linhas, 'ESOCIAL_TIPO_DEPENDENTE', d.tipo, d.vigenteDesde)) {
       throw new ValidationError(`O tipo ${d.tipo} não está vigente na Tabela 07 do eSocial em ${d.vigenteDesde} (ESOCIAL_TIPO_DEPENDENTE).`, { campo: 'tipo' });
     }
-    if (d.nascimento > d.vigenteDesde) {
-      throw new ValidationError(`O dependente nasce em ${d.nascimento}, depois do início da vigência (${d.vigenteDesde}).`, { campo: 'vigenteDesde' });
-    }
     if (d.salarioFamilia) assertSalarioFamilia(d, regraInt(linhas, 'SALARIO_FAMILIA_IDADE_MAX', d.vigenteDesde));
   }
 
