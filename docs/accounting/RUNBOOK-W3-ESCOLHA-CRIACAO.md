@@ -301,8 +301,40 @@ Conferência na tela, mesmo ambiente e mesma cópia do banco, build de produçã
 | Subtítulo "Formulário Administrativo" nos dois modais | `Modal` canônico ganhou `subtitle?: string \| null` (ausente = o padrão de sempre; `null` = sem linha); os dois modais do W3 passam `null` | os dois `.txt` acima não têm a linha |
 | "Enviar" fixo em PT | chave `onboardingInterviewSend` (pt "Enviar", en "Send") no `InputArea` | `[eval] ["Create the system now","Customize","Send"]` (`run-net.txt`) |
 | Lista rola sem indicação | degradê fixo (`sticky bottom-0`) na base da lista | `achados-pt-lista-degrade.png` (última linha esmaecida com `scrollTop` 0) · `achados-pt-lista-fim.png` (rolada até o fim, nenhum item coberto) |
-| IA responde em PT com a UI em EN | **não mudado** — os prompts dizem "Responda SEMPRE em português do Brasil" (`PromptConfig.ts`), e as mensagens fixas do `StageHandlers` são em PT. É decisão de produto, levada ao dono | — |
+| IA responde em PT com a UI em EN | resolvido depois — ver a seção seguinte (dono, chat, 2026-11-06: "Seguir o idioma da UI") | [`…-idioma/`](runbook-evidence/W3-ESCOLHA-2026-11-06-idioma/) |
 
 Testes: `CreationChoice.test.tsx` (+2: nome do preset no modal; sem subtítulo nos dois modais), `InputArea.test.tsx` (novo),
 `Modal.subtitle.test.tsx` (novo: padrão, `null`, string). `npx vitest run features/interview components/ui/__tests__/Modal`
 → 121/121; `npx tsc --noEmit` e `npm run test:types` limpos.
+
+### A entrevista segue o idioma da UI (dono, chat, 2026-11-06: "Seguir o idioma da UI")
+
+**Mudança:**
+- Contrato: `ChatInterviewSchema` aceita `locale: 'pt' | 'en'` (opcional; ausente = português, o comportamento de antes;
+  outro valor → 400). Snapshot de DTO e `ChatInterviewDto.gen.ts` com só a linha nova.
+- Servidor: `features/interview/models/interviewText.ts` tem os textos fixos em pt/en e a frase de idioma (`replyIn`) que
+  fecha os prompts de resposta. O `locale` atravessa `processTurn` → `StageHandlers` → `CustomizationService` →
+  `AIInteractions`. O texto livre da escolha entende inglês ("I don't want to customize", "create it now"). O resumo
+  perdeu o ponto duplicado ("planilhas.. Isso está correto?"), que já existia em PT.
+- Front: o `useAiInterview` manda o idioma da UI (`i18n.language`) em todo POST da entrevista.
+
+**Conferência na tela** (build de produção, 2026-11-07, 02:28–02:31 UTC, `h2c7contador`, OpenAI real; evidência em
+[`runbook-evidence/W3-ESCOLHA-2026-11-06-idioma/`](runbook-evidence/W3-ESCOLHA-2026-11-06-idioma/), `run-net.txt`):
+- UI trocada para English (US): saudação `Hi! To get started, please tell me about your business…`; pergunta da IA
+  `What specific services do you offer at your beauty salon?`; resumo `Got it. So, in short, your business is: …`;
+  proposta `Hey there! I'm super excited to share that I found the perfect system…` (`en-proposta.png`);
+  "hmm" → `I didn't get your choice. Would you rather create the system now or customize it first?` (`en-ambiguo.png`);
+  **Customize** → `Customizing the "Advanced Beauty Salon ERP" System` (`en-customizacao.png`). Corpos com
+  `"locale":"en"` (5 POSTs).
+- UI de volta a Português (BR): saudação `Olá! Para começarmos…` (`pt-saudacao.png`), corpo com `"locale":"pt"`.
+
+**Fora do alcance desta mudança (seguem em PT):** o motivo da recusa de remoção que vem de `describeTableLock` /
+`bridgeRequirementsOfTable` (módulo de presets), os nomes de preset e de tabela (dado do preset) e o painel de campos por
+IA (`POST /dashboard/ai/CustomizeFields`, outro endpoint; o prompt dele pede `friendlyMessage` "em português").
+
+Testes: `StageHandlers.choice.test.ts` (+7: `locale` chega ao `processTurn`; `fr` → 400; saudação en/pt; ambíguo em
+inglês; texto livre em inglês; prompt do MATCHING_PRESET em inglês com nomes de módulo em inglês; resumo sem ponto
+duplicado), `useAiInterview.locale.test.tsx` (novo). Jest unit da entrevista e dos controllers 143/143; integração
+`interviewSession.integration.test.ts` 7/7; vitest 123/123; `tsc` do my-app e `test:types` limpos. `tsc` do server: só os
+2 erros de `nfeSignature.ts`/`nfseSignature.ts` do ambiente (o `@xmldom/xmldom` 0.9.12 sumiu do depósito compartilhado
+de dependências numa operação npm interrompida às 22:51; arquivos não tocados aqui).

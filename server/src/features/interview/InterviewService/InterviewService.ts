@@ -9,6 +9,7 @@ import { CustomizationService } from '../CustomizationService/CustomizationServi
 import { presetService } from '../../dynamicTables/services/PresetService';
 import { MODULE_REGISTRY, type ModuleSelector } from '../../dynamicTables/presets/modules/registry';
 import { isInterviewSessionError } from '../models/InterviewSession.model';
+import { DEFAULT_INTERVIEW_LOCALE, INTERVIEW_TEXT, replyIn, type InterviewLocale } from '../models/interviewText';
 
 /**
  * Serviço responsável por orquestrar todo o processo de entrevista com IA.
@@ -62,15 +63,17 @@ export class InterviewService {
     presetKey?: string,
     sessionId?: string,
     choice?: CreationChoice,
-    modules?: ModuleSelector[]
+    modules?: ModuleSelector[],
+    locale: InterviewLocale = DEFAULT_INTERVIEW_LOCALE
   ): Promise<IInterviewTurnResult> {
+    const tx = INTERVIEW_TEXT[locale];
     try {
       logger.info(`[InterviewService] Processando turno no estágio: ${stage}`);
       
       // Estágios especiais que não seguem o fluxo padrão
       if (stage === 'GREETING') {
         return {
-          response: "Olá! Para começarmos, por favor me conte sobre o seu negócio ou projeto para que eu possa entender como melhor ajudá-lo com a configuração do sistema.",
+          response: tx.greeting,
           nextStage: 'DISCOVERING_BUSINESS'
         };
       } 
@@ -80,7 +83,7 @@ export class InterviewService {
         
         if (!matchedPreset) {
           return {
-            response: "Não encontrei um preset que se encaixe perfeitamente no seu negócio. Mas não se preocupe, podemos criar um sistema totalmente personalizado. Vamos começar definindo as principais funcionalidades que você precisa.",
+            response: tx.noPreset,
             nextStage: 'IDENTIFYING_ENTITIES'
           };
         }
@@ -91,7 +94,7 @@ export class InterviewService {
 
         // W5 itens 10–12 (c12 do I8): módulos sugeridos para a suíte casada. A sugestão nunca derruba o turno.
         const moduleOptions = await this.suggestModules(messages, matchedPreset.key);
-        const suggestedNames = (moduleOptions ?? []).filter((m) => m.suggested && !m.locked).map((m) => m.name.pt);
+        const suggestedNames = (moduleOptions ?? []).filter((m) => m.suggested && !m.locked).map((m) => m.name[locale]);
         // F-W5-4 (sim/não latente): a suíte não traz a base fixa da categoria (ex.: CRM-0) → perguntar se quer CRM.
         const asksForCrm = (moduleOptions ?? []).some((m) => !m.locked && MODULE_REGISTRY[m.key].fixed);
         const modulesPrompt = [
@@ -114,17 +117,15 @@ Crie uma mensagem acolhedora e entusiasmada (em primeira pessoa) explicando ao c
 
 Ao final, pergunte se ele gostaria de criar o sistema diretamente ou customizá-lo primeiro.
 
-Sua mensagem deve ter tom conversacional, ser breve (máximo 5 linhas) e incluir as opções em negrito: **criar o sistema agora** ou **customizar**.${modulesPrompt}`;
+Sua mensagem deve ter tom conversacional, ser breve (máximo 5 linhas) e incluir as opções em negrito: **criar o sistema agora** ou **customizar**${locale === 'en' ? ' (em inglês: **create the system now** ou **customize**)' : ''}.${modulesPrompt}
+
+${replyIn(locale)}`;
         
         // Obter resposta da IA
         const aiResponse = await this.stageHandlers.getAiResponseWithHistory(systemPrompt, []);
         
         // Fallback se a IA não responder corretamente
-        const response = aiResponse || `Ótimo! Encontrei um sistema de **${matchedPreset.name}** que combina com o que você precisa.
-
-Com ele você poderá gerenciar ${tablesInfo.slice(0, 3).join(', ')} e muito mais.${suggestedNames.length > 0 ? `\n\nPelo que você contou, também sugiro os módulos: ${suggestedNames.join(', ')}.` : ''}
-
-Gostaria de **criar o sistema agora** ou prefere **customizar** primeiro?`;
+        const response = aiResponse || tx.presetFallback(matchedPreset.name, tablesInfo.slice(0, 3).join(', '), suggestedNames);
         
         return { 
           response, 
@@ -136,16 +137,16 @@ Gostaria de **criar o sistema agora** ou prefere **customizar** primeiro?`;
       } 
       
       else if (stage === 'AWAITING_CREATION_TYPE_CONFIRMATION' && presetKey) {
-        return await this.stageHandlers.handleCreationTypeConfirmation(messages, presetKey, userId, choice, modules);
+        return await this.stageHandlers.handleCreationTypeConfirmation(messages, presetKey, userId, choice, modules, locale);
       }
 
       else if (stage === 'CUSTOMIZATION_IN_PROGRESS' && sessionId) {
-        return await this.customizationService.processCustomizationStep(sessionId, userId, messages);
+        return await this.customizationService.processCustomizationStep(sessionId, userId, messages, locale);
       }
       
       else if (stage === 'CUSTOMIZATION_COMPLETED') {
         return {
-          response: "Sua customização foi concluída com sucesso! O sistema será criado com todas as modificações que você solicitou.",
+          response: tx.customizationCompletedStage,
           nextStage: 'CUSTOMIZATION_COMPLETED' // Mantém o estágio para evitar ciclos indesejados
         };
       }
@@ -153,11 +154,11 @@ Gostaria de **criar o sistema agora** ou prefere **customizar** primeiro?`;
 
       else if (this.isProcessableStage(stage)) {
         const config = stageConfig[stage];
-        let aiResponse = await this.stageHandlers.getAiResponseWithHistory(config.systemPrompt, messages);
+        let aiResponse = await this.stageHandlers.getAiResponseWithHistory(`${config.systemPrompt} ${replyIn(locale)}`, messages);
 
         if (!aiResponse) {
           return {
-            response: "Desculpe, estou com problemas para processar sua solicitação no momento. Vamos tentar novamente.",
+            response: tx.aiUnavailable,
             nextStage: stage
           };
         }
@@ -179,14 +180,15 @@ Gostaria de **criar o sistema agora** ou prefere **customizar** primeiro?`;
           if (stage === 'DISCOVERING_BUSINESS') {
             // Extrai o resumo do negócio e cria uma pergunta de confirmação
             const summaryIndex = aiResponse.indexOf('SUMMARY:');
-            const summaryText = aiResponse.substring(summaryIndex + 'SUMMARY:'.length).trim();
-            const confirmationQuestion = `Entendi. Então, em resumo, seu negócio é: ${summaryText}. Isso está correto?`;
+            // O template já põe o ponto: o do modelo sairia duplicado ("planilhas.. Isso está correto?").
+            const summaryText = aiResponse.substring(summaryIndex + 'SUMMARY:'.length).trim().replace(/[.\s]+$/, '');
+            const confirmationQuestion = tx.confirmSummary(summaryText);
             return { response: confirmationQuestion, nextStage: 'CONFIRMING_BUSINESS' };
           }
           
           // Para outros estágios completos, avança para o próximo estágio configurado
           // Processa imediatamente o próximo estágio (importante para CONFIRMING_BUSINESS -> MATCHING_PRESET)
-          return this.processTurn(config.nextStage, messages, userId);
+          return this.processTurn(config.nextStage, messages, userId, undefined, undefined, undefined, undefined, locale);
         }
 
         return { response: aiResponse, nextStage: stage };
@@ -195,12 +197,12 @@ Gostaria de **criar o sistema agora** ou prefere **customizar** primeiro?`;
       // Estágio não processável (segue padrão de chat normal)
       else {
         const standardPrompt = `Você é um assistente especializado em configuração de sistemas. 
-        Ajude o usuário a entender e configurar seu sistema da melhor maneira possível.`;
+        Ajude o usuário a entender e configurar seu sistema da melhor maneira possível. ${replyIn(locale)}`;
         
         const aiResponse = await this.stageHandlers.getAiResponseWithHistory(standardPrompt, messages);
         
         return {
-          response: aiResponse || "Desculpe, não consegui processar sua solicitação.",
+          response: aiResponse || tx.genericFallback,
           nextStage: stage
         };
       }
@@ -209,7 +211,7 @@ Gostaria de **criar o sistema agora** ou prefere **customizar** primeiro?`;
       if (isInterviewSessionError(error)) throw error;
       logger.error(`[InterviewService] Erro ao processar turno: ${error}`);
       return {
-        response: "Desculpe, ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.",
+        response: tx.turnError,
         nextStage: 'CANNOT_PROCEED'
       };
     }

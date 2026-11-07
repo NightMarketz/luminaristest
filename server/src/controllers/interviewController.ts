@@ -62,7 +62,7 @@ export async function postChatInterview(req: Request, res: Response) {
       return res.status(400).json({ success: false, error: parse.error.flatten() });
     }
 
-    const { stage, messages: rawMessages, presetKey, sessionId, choice, modules } = parse.data;
+    const { stage, messages: rawMessages, presetKey, sessionId, choice, modules, locale } = parse.data;
 
     // Validate that the stage is a known InterviewStage (fall back to GREETING if unknown)
     const validStages: InterviewStage[] = [
@@ -92,7 +92,8 @@ export async function postChatInterview(req: Request, res: Response) {
       presetKey,
       sessionId,
       choice,
-      modules
+      modules,
+      locale
     );
 
     return res.status(200).json(result);
