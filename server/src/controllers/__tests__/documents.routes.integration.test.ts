@@ -103,7 +103,8 @@ describe('GET /api/documents/:id', () => {
 });
 
 describe('PATCH /api/documents/:id', () => {
-  const validBody = { status: 'COMPLETED', summary: null, processingDate: null, processingError: null };
+  // RAG-PR-B item 18 (F-RAG-4): o corpo só aceita os campos corrigíveis; status/processing* saíram do PATCH.
+  const validBody = { summary: 'corrigido' };
 
   it('401s without a token', async () => {
     const owner = await seedUser({ username: 'owner' });
@@ -120,7 +121,8 @@ describe('PATCH /api/documents/:id', () => {
       .set(authHeader({ id: owner.id, username: owner.username }))
       .send({ ...validBody, summary: 'done' });
     expect(res.status).toBe(200);
-    expect(res.body.data.status).toBe('COMPLETED');
+    // o status é do pipeline: o PATCH não o mexe
+    expect(res.body.data.status).toBe('PENDING');
     expect(res.body.data.summary).toBe('done');
   });
 
@@ -135,13 +137,13 @@ describe('PATCH /api/documents/:id', () => {
     expect(res.status).toBe(403);
   });
 
-  it('400s when the DTO rejects the body (missing required status)', async () => {
+  it('400s when the body carries status (item 18: .strict(), status saiu do corpo)', async () => {
     const owner = await seedUser({ username: 'owner' });
     const doc = await seedDocument({ userId: owner.id });
     const res = await request(app)
       .patch(`/api/documents/${doc.id}`)
       .set(authHeader({ id: owner.id, username: owner.username }))
-      .send({ summary: 'no status field' });
+      .send({ summary: 'x', status: 'COMPLETED' });
     expect(res.status).toBe(400);
     expect(res.body.success).toBe(false);
   });
