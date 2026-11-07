@@ -86,6 +86,14 @@ export class ChunkVectorRepository implements IChunkVectorRepository {
       .run(JSON.stringify(chunkIds));
   }
 
+  async findPresentChunkIds(chunkIds: string[]): Promise<Set<string>> {
+    if (chunkIds.length === 0) return new Set();
+    const rows = this.db()
+      .prepare('SELECT chunk_id FROM chunk_vec WHERE chunk_id IN (SELECT value FROM json_each(?))')
+      .all(JSON.stringify(chunkIds)) as { chunk_id: string }[];
+    return new Set(rows.map((r) => r.chunk_id));
+  }
+
   /** Página de ids da vec0, em ordem, para a varredura de órfãos. */
   async listChunkIds(afterChunkId: string | null, limit: number): Promise<string[]> {
     const rows = this.db()

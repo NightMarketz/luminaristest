@@ -29,7 +29,7 @@
 **E2 — Pré-condições.** Acrescentar depois do item de backup:
 
 > - O backup do banco **inclui o arquivo de vetores**: `dev.db` e `vectors.db`, do mesmo instante, com o server
->   parado. O `deploy:migrate` só copia o `dev.db`. O `vectors.db` sai num passo próprio (passo V1 abaixo).
+>   parado. O `deploy:migrate` copia os dois (passo V1 abaixo confere a linha do `vectors.db` na saída).
 >   Restaurar só um dos dois deixa vetor sem trecho (o `VecOrphanSweepScheduler` limpa em até 24 h) ou trecho
 >   sem vetor (o `npm run rag:reindex` refaz).
 

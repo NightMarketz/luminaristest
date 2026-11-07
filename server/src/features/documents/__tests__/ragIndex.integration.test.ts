@@ -165,6 +165,21 @@ describe('item 10 — reindexação', () => {
     expect(top?.embeddingModel).toBe('fake:det-v2@768');
   });
 
+  it('arquivo de vetores perdido com a Chunk carimbada ⇒ reindexar reconstrói (achado 2 da revisão do #1121)', async () => {
+    const { ana, contratoAna } = await cenario();
+    await pipeline().processDocument(await asDoc(contratoAna.id), 'x');
+    getVecIndex().db.exec('DELETE FROM chunk_vec');
+    const query = vectorOf(TRECHOS[2]);
+    expect(await vectors.search({ userId: ana.id, stamp: embedder.stamp, vector: query, limit: 10 })).toEqual([]);
+
+    const summary = await new ChunkReindexService(chunkRepo, vectors, embedder).reindex();
+
+    expect(summary).toEqual({ users: 1, reindexed: 3 });
+    expect((await vecRows()).length).toBe(3);
+    const again = await new ChunkReindexService(chunkRepo, vectors, embedder).reindex();
+    expect(again).toEqual({ users: 1, reindexed: 0 });
+  });
+
   it('trechos sem carimbo (vindos do índice antigo) ganham vetor; --user restringe ao dono', async () => {
     const { ana, bia, contratoAna, contratoBia } = await cenario();
     await prisma.chunk.create({ data: { text: 'trecho antigo da ana', index: 0, documentId: contratoAna.id } });
