@@ -23,6 +23,9 @@ name: string
 url: string
 token?: string
 }
+export interface ProposalListQueryInput {
+status?: ("PENDING" | "EXECUTED" | "REJECTED" | "EXPIRED")
+}
 export type ProposalPayloadInput = ({
 kind: "TABLE_ROW"
 action: ("CREATE" | "UPDATE" | "DELETE")
@@ -50,6 +53,45 @@ limit: ("DAILY_TURNS" | "MONTHLY_TOKENS" | "HOPS")
 teammateId?: string
 threadId?: string
 })
+export interface ProposalReadInput {
+id: string
+kind: ("TABLE_ROW" | "SETTLEMENT_MATCH" | "MCP_TOOL_CALL" | "LIMITE_ATINGIDO")
+status: ("PENDING" | "EXECUTED" | "REJECTED" | "EXPIRED")
+payload: ({
+kind: "TABLE_ROW"
+action: ("CREATE" | "UPDATE" | "DELETE")
+tableId: string
+data: {
+[k: string]: unknown
+}
+} | {
+kind: "SETTLEMENT_MATCH"
+statementLineId: string
+targetType: ("RECEIVABLE" | "PAYABLE" | "ACQUIRER")
+targetId: string
+amountCents: string
+rationale: string
+} | {
+kind: "MCP_TOOL_CALL"
+mcpServerId: string
+tool: string
+arguments: {
+[k: string]: unknown
+}
+} | {
+kind: "LIMITE_ATINGIDO"
+limit: ("DAILY_TURNS" | "MONTHLY_TOKENS" | "HOPS")
+teammateId?: string
+threadId?: string
+})
+teammate: ({
+id: string
+name: (string | null)
+} | null)
+channelMessageId: (string | null)
+expiresAt: (string | null)
+createdAt: string
+}
 export type RoutineScheduleInput = ({
 freq: "DAILY"
 time: string

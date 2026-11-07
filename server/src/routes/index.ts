@@ -28,6 +28,7 @@ import entryApprovalRoutes from './entryApprovals';
 import salesRoutes from './sales';
 import savedViewsRoutes from './saved-views';
 import teammatesRoutes from './teammates';
+import proposalsRoutes from './proposals';
 import packageBalanceRoutes from './packageBalances';
 import packageAcceptanceRoutes from './packageAcceptances';
 import reconcilePendingRoutes from './reconcilePending';
@@ -94,6 +95,7 @@ router.use('/entry-approvals', entryApprovalRoutes);
 router.use('/sales', salesRoutes);
 router.use('/saved-views', savedViewsRoutes);
 router.use('/teammates', teammatesRoutes); // BE-INCR-TEAMMATES PR-1 — credenciais de IA (item 7)
+router.use('/proposals', proposalsRoutes); // BE-INCR-TEAMMATES PR-7 — caixa única de propostas (itens 31–32)
 router.use('/package-balances', packageBalanceRoutes);
 router.use('/package-acceptances', packageAcceptanceRoutes);
 router.use('/reconcile-pending', reconcilePendingRoutes);

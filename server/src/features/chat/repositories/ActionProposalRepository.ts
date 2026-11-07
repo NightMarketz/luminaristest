@@ -1,6 +1,6 @@
 import prisma from '../../../lib/prisma';
 import { ActionProposal, Prisma } from 'generated/prisma';
-import { ActionProposalCreateInput, IActionProposalRepository } from './IActionProposalRepository';
+import { ActionProposalCreateInput, ActionProposalStatus, IActionProposalRepository } from './IActionProposalRepository';
 
 export class ActionProposalRepository implements IActionProposalRepository {
     async create(data: ActionProposalCreateInput): Promise<ActionProposal> {
@@ -50,11 +50,37 @@ export class ActionProposalRepository implements IActionProposalRepository {
             where: {
                 createdAt: { lt: cutoff },
                 status: 'PENDING',
+                expiresAt: null, // L-PR7-3: a proposta com prazo próprio fica para o ProposalExpiryScheduler
             },
         });
     }
 
     async deleteByUserId(userId: string): Promise<void> {
         await prisma.actionProposal.deleteMany({ where: { userId } });
+    }
+
+    async listByStatus(userId: string, status: ActionProposalStatus): Promise<ActionProposal[]> {
+        return prisma.actionProposal.findMany({ where: { userId, status }, orderBy: { createdAt: 'desc' } });
+    }
+
+    async findOwned(userId: string, id: string, tx?: Prisma.TransactionClient): Promise<ActionProposal | null> {
+        return (tx ?? prisma).actionProposal.findFirst({ where: { id, userId } });
+    }
+
+    async transition(id: string, from: ActionProposalStatus, to: ActionProposalStatus, tx?: Prisma.TransactionClient): Promise<boolean> {
+        const { count } = await (tx ?? prisma).actionProposal.updateMany({ where: { id, status: from }, data: { status: to } });
+        return count === 1;
+    }
+
+    async expireDue(now: Date): Promise<number> {
+        const { count } = await prisma.actionProposal.updateMany({
+            where: { status: 'PENDING', expiresAt: { lt: now } },
+            data: { status: 'EXPIRED' },
+        });
+        return count;
+    }
+
+    async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+        return prisma.$transaction(fn);
     }
 }

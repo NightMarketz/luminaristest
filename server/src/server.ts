@@ -2,6 +2,7 @@ import type { Server } from 'http';
 import app from './app';
 import { getVecIndex } from './lib/vector/sqliteVec';
 import { vecOrphanSweepScheduler } from './jobs/VecOrphanSweepScheduler';
+import { proposalExpiryScheduler } from './jobs/ProposalExpiryScheduler';
 import prisma from './lib/prisma';
 import { logger } from './lib/logger';
 import { sendAlertWebhook } from './lib/alertWebhook';
@@ -61,6 +62,7 @@ async function bootstrap(): Promise<void> {
     legalParamsRecalcScheduler.start(); // BE-INCR-LEGAL-PARAMS PR-4 (item 10): varredura dos jobs PENDING
     ptaxRateScheduler.start(); // BE-INCR-CRM-REPORT-BUILDER PR-1 (item 23): PTAX de fechamento do BCB
     vecOrphanSweepScheduler.start(); // BE-INCR-RAG-DOCUMENTOS RAG-PR-A item 9: vetor sem Chunk, diário
+    proposalExpiryScheduler.start(); // BE-INCR-TEAMMATES PR-7 item 33: PENDING vencida → EXPIRED
   });
 }
 
