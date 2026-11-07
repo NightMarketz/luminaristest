@@ -19,6 +19,8 @@ export interface IChunkRepository {
   findByIdsWithOwner(chunkIds: string[]): Promise<ChunkWithOwner[]>;
   /** RAG-PR-A item 10: trechos sem carimbo ou com carimbo ≠ `stamp`, em ordem de id, depois de `afterId`. */
   findStale(q: { stamp: string; userId?: string; afterId?: string; limit: number }): Promise<ChunkWithOwner[]>;
+  /** Trechos já com o carimbo `stamp`, em páginas por id — o reindex confere se o vetor deles existe na vec0. */
+  findStamped(q: { stamp: string; userId?: string; afterId?: string; limit: number }): Promise<ChunkWithOwner[]>;
   /** RAG-PR-A item 10: donos de documentos que têm trechos (a reindexação roda por usuário, com o carimbo dele). */
   findOwnerIdsWithChunks(): Promise<string[]>;
   /** RAG-PR-A item 9 (caminho 2): quais destes ids ainda existem na Chunk. */

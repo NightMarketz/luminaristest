@@ -54,6 +54,20 @@ export class ChunkRepository implements IChunkRepository {
     return rows.map(toOwner);
   }
 
+  async findStamped(q: { stamp: string; userId?: string; afterId?: string; limit: number }): Promise<ChunkWithOwner[]> {
+    const rows = await prisma.chunk.findMany({
+      where: {
+        embeddingModel: q.stamp,
+        ...(q.userId ? { document: { userId: q.userId } } : {}),
+        ...(q.afterId ? { id: { gt: q.afterId } } : {}),
+      },
+      include: WITH_OWNER,
+      orderBy: { id: 'asc' },
+      take: q.limit,
+    });
+    return rows.map(toOwner);
+  }
+
   async findOwnerIdsWithChunks(): Promise<string[]> {
     const docs = await prisma.document.findMany({ where: { chunks: { some: {} } }, select: { userId: true }, distinct: ['userId'] });
     return docs.map((d) => d.userId);
