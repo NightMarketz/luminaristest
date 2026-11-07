@@ -22,6 +22,7 @@ let outro: { id: string; username: string };
 let trabalhadorId: string;
 let vinculoId: string;
 let aprendizId: string;
+let aprendizTrabId: string;
 
 describe('/api/dp dependentes, lançamentos e outras remunerações (F2 PR-1)', () => {
   beforeAll(async () => {
@@ -45,7 +46,7 @@ describe('/api/dp dependentes, lançamentos e outras remunerações (F2 PR-1)', 
       dataInicio: '2026-02-10',
       versao: { lotacaoId, cargoId, jornadaId, salarioCents: '300000', unidadeSalario: '5' },
     });
-    const aprendiz = await post('trabalhadores', { cpf: '39053344705', nome: 'Bia', nascimento: '2008-01-15' });
+    const aprendiz = (aprendizTrabId = await post('trabalhadores', { cpf: '39053344705', nome: 'Bia', nascimento: '2008-01-15' }));
     aprendizId = await post('vinculos', {
       trabalhadorId: aprendiz,
       matricula: 'A1',
@@ -170,6 +171,28 @@ describe('/api/dp dependentes, lançamentos e outras remunerações (F2 PR-1)', 
     expect((await request(app).get(base).set(authHeader(outro)).query({ unitId: UNIT_OUTRO })).status).toBe(404);
     expect((await request(app).delete(`${base}/${criado.body.data.id}`).set(auth).query({ unitId: UNIT })).status).toBe(204);
     expect((await request(app).get(base).set(auth).query({ unitId: UNIT })).body.data.map((o: { competencia: string }) => o.competencia)).toEqual(['2026-04']);
+  });
+
+  it('Tier-0 do sub-recurso: id de outro pai pela rota do próprio pai ⇒ 404 (revisor do #1128, sabotagem 6)', async () => {
+    const auth = authHeader(dono);
+    const q = { unitId: UNIT };
+    const lanc = await request(app).post(`/api/dp/vinculos/${aprendizId}/lancamentos`).set(auth).send({ ...q, competencia: '2026-03', rubrica: 'FALTAS', quantidadeMin: 60 });
+    expect(lanc.status).toBe(201);
+    expect((await request(app).patch(`/api/dp/vinculos/${vinculoId}/lancamentos/${lanc.body.data.id}`).set(auth).send({ ...q, quantidadeMin: 30 })).status).toBe(404);
+    expect((await request(app).delete(`/api/dp/vinculos/${vinculoId}/lancamentos/${lanc.body.data.id}`).set(auth).query(q)).status).toBe(404);
+    const outra = await request(app)
+      .post(`/api/dp/vinculos/${aprendizId}/outras-remuneracoes`)
+      .set(auth)
+      .send({ ...q, competencia: '2026-03', remuneracaoCents: '100000', contribuicaoCents: '0', ordem: 'DEPOIS', categoriaOutraFonte: 'EMPREGADO', cnpjOutroEmpregador: CNPJ, documento: 'holerite' });
+    expect(outra.status).toBe(201);
+    expect((await request(app).patch(`/api/dp/vinculos/${vinculoId}/outras-remuneracoes/${outra.body.data.id}`).set(auth).send({ ...q, ordem: 'ANTES' })).status).toBe(404);
+    const dep = await request(app)
+      .post(`/api/dp/trabalhadores/${aprendizTrabId}/dependentes`)
+      .set(auth)
+      .send({ ...q, nome: 'Fil', nascimento: '1970-01-01', tipo: '09', deduzIrrf: true, salarioFamilia: false, vigenteDesde: '2026-03-01' });
+    expect(dep.status).toBe(201);
+    expect((await request(app).patch(`/api/dp/trabalhadores/${trabalhadorId}/dependentes/${dep.body.data.id}`).set(auth).send({ ...q, deduzIrrf: false })).status).toBe(404);
+    expect((await request(app).delete(`/api/dp/trabalhadores/${trabalhadorId}/dependentes/${dep.body.data.id}`).set(auth).query(q)).status).toBe(404);
   });
 
   it('auditoria (itens 21 e 77): sem nome, CPF nem nascimento; valores só por HMAC com a versão da chave', async () => {
