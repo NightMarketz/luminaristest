@@ -681,6 +681,8 @@ export class FiscalDocumentEmissionService {
         // BE-INCR-DFE-EVENTOS PR-2 (item 19; Q1): o cancelamento pedido está em voo há 24 h ou mais, sem evento.
         if (cancelamentoSemResposta(doc.cancelRequestedAt, agora)) pendencias.push('cancelamento_sem_resposta');
       }
+      // BE-INCR-DFE-EVENTOS PR-3 (item 20): a análise fiscal do cancelamento (e101103) espera o e105104 / e105105.
+      if (doc.status === 'CANCEL_ANALYSIS') pendencias.push('cancelamento_em_analise');
       pendencias.push(...(orfas.get(doc.id) ?? []));
       views.push(this.toView(doc, pendencias, prazos, feriados));
     }

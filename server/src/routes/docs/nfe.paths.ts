@@ -289,6 +289,9 @@
  *         409: OUT_OF_WINDOW (NFS-e E0822; NF-e/NFC-e 501) ou REJECTED pelo parceiro (código do fisco na mensagem)
  *         | DFE_CANCEL_EM_ANDAMENTO (NFS-e com cancelamento pedido há menos de 24 h e sem evento; BE-INCR-DFE-EVENTOS item 19).
  *         202: o fisco ainda não decidiu (NFS-e, PROCESSING) — o pedido fica em voo e o job de eventos conclui (item 18).
+ *         NFS-e com analiseFiscal: true (BE-INCR-DFE-EVENTOS PR-3, item 20; Guia do Emissor Web §5.3) pede a análise fiscal
+ *         do cancelamento (e101103) depois do 409 OUT_OF_WINDOW → 200 com status CANCEL_ANALYSIS; 409
+ *         DFE_ANALISE_NAO_SUPORTADA quando o adaptador não a pede. O desfecho (e105104 / e105105) vem pelo job de eventos.
  *         O corpo tem a forma do tipo do documento: NFS-e cMotivo/xMotivo; NF-e/NFC-e xJust (forma trocada = 400).
  *         Só de status AUTHORIZED. Nunca toca a venda nem o razão. OUT_OF_WINDOW/REJECTED do
  *         parceiro viram 409 tipado; CANCELLED retira a proveniência anexada (F-DFE-18, soft-delete).
@@ -309,6 +312,7 @@
  *                     unitId: { type: string }
  *                     cMotivo: { type: integer, enum: [1, 2, 9], description: '1 erro na emissão | 2 serviço não prestado | 9 outros' }
  *                     xMotivo: { type: string, minLength: 15, maxLength: 255 }
+ *                     analiseFiscal: { type: boolean, enum: [true], description: 'PR-3 — pede o e101103 (análise fiscal do cancelamento) em vez do e101101' }
  *                 - type: object
  *                   description: NF-e / NFC-e (evento 110111, MOC 7.0 VG Tabela 5-37)
  *                   required: [unitId, xJust]
@@ -316,7 +320,7 @@
  *                     unitId: { type: string }
  *                     xJust: { type: string, minLength: 15, maxLength: 255 }
  *       responses:
- *         '200': { description: "FiscalDocumentView (status CANCELLED) + avisos (['fora_da_janela_configurada'] quando passou do prazo — perfil, ou na NF-e/NFC-e o nacional de 24 h / 30 min; só aviso, BE-INCR-DFE-EVENTOS item 5, BE-INCR-NFCE item 27)" }
+ *         '200': { description: "FiscalDocumentView (status CANCELLED, ou CANCEL_ANALYSIS com analiseFiscal) + avisos (['fora_da_janela_configurada'] quando passou do prazo — perfil, ou na NF-e/NFC-e o nacional de 24 h / 30 min; só aviso, BE-INCR-DFE-EVENTOS item 5, BE-INCR-NFCE item 27)" }
  *         '202': { description: "FiscalDocumentView (status ainda AUTHORIZED) + avisos com 'cancelamento_em_andamento' — o fisco devolveu PROCESSING; o job de eventos aplica o e101101 quando ele aparecer (BE-INCR-DFE-EVENTOS item 19)" }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
@@ -468,11 +472,12 @@
  *
  *   /api/nfe/dfe/documents/{id}/cancelamento-manual:
  *     post:
- *       summary: Register a cancellation done on the public portal, with the e101101 event XML (manual mode, item 13)
+ *       summary: Register a cancellation (e101101) or a fiscal-analysis event (e101103/e105104/e105105) done on the public portal, with the event XML (manual mode, item 13; X11 PR-3)
  *       description: >-
- *         409: documento não é do modo manual ou não está autorizado
- *         Só documento do modo manual autorizado. O evento tem de cancelar esta chave (chNFSe) e o cMotivo tem de ser o
- *         do evento; o texto gravado é o do XML. Nunca toca a venda nem o razão; retira a proveniência.
+ *         409: documento não é do modo manual, ou o status não é o que o evento pede (e101101/e101103 → AUTHORIZED*;
+ *         e105104/e105105 → CANCEL_ANALYSIS). O evento tem de ser desta chave (chNFSe). cMotivo do corpo = o do XML
+ *         (e101101/e101103) ou o do pedido de análise gravado (e105104/e105105). e101101/e105104 → CANCELLED (retira a
+ *         proveniência); e101103 → CANCEL_ANALYSIS; e105105 → o status de antes da análise. Nunca toca a venda nem o razão.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
@@ -488,9 +493,9 @@
  *                 unitId: { type: string }
  *                 cMotivo: { type: integer, enum: [1, 2, 9] }
  *                 xMotivo: { type: string, minLength: 15, maxLength: 255 }
- *                 file: { type: string, format: binary, description: 'XML do evento de cancelamento e101101' }
+ *                 file: { type: string, format: binary, description: 'XML do evento: e101101, e101103, e105104 ou e105105' }
  *       responses:
- *         '200': { description: 'FiscalDocumentView (status CANCELLED)' }
+ *         '200': { description: 'FiscalDocumentView (CANCELLED, CANCEL_ANALYSIS ou o status de antes da análise)' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }

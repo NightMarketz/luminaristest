@@ -13,6 +13,8 @@ export interface EventosTickSummaryInput {
 consultadas: number
 canceladas: number
 substituidasFora: number
+emAnalise: number
+indeferidas: number
 ignorados: number
 skipped: number
 failed: number

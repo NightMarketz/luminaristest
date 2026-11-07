@@ -913,9 +913,9 @@ describe('EXPORT_ISS_BY_COMPETENCE (X7 Fase C PR-2)', () => {
     return { table: await parseTable(buf, 'xlsx'), reader, createJob };
   }
 
-  it('itens 14/17: lê só AUTHORIZED + AUTHORIZED_DIVERGENT da janela; meta, colunas, linha agregada; período no job', async () => {
+  it('itens 14/17: lê só as notas válidas (AUTHORIZED, AUTHORIZED_DIVERGENT e, X11 PR-3, CANCEL_ANALYSIS) da janela; meta, colunas, linha agregada; período no job', async () => {
     const { table, reader, createJob } = await exportar([nota({}), nota({ id: 'fd-2', status: 'AUTHORIZED_DIVERGENT' })]);
-    expect(reader.findForIssReport).toHaveBeenCalledWith(scope, '2026-03-01', '2026-03-31', ['AUTHORIZED', 'AUTHORIZED_DIVERGENT']);
+    expect(reader.findForIssReport).toHaveBeenCalledWith(scope, '2026-03-01', '2026-03-31', ['AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'CANCEL_ANALYSIS']);
     expect(table.headers[0]).toMatch(/^# kind=EXPORT_ISS_BY_COMPETENCE; periodStart=2026-03-01; periodEnd=2026-03-31; documentos=2; documentosSemIss=0; geradoEm=[^;]+$/);
     expect(table.rows[0]).toEqual(['competencia', 'municipioIbge', 'retido', 'documentos', 'documentosSemIss', 'divergentes', 'vServCents', 'baseIssCents', 'vIssCents']);
     expect(table.rows.slice(1)).toEqual([['2026-03', '3550308', 'false', '2', '0', '1', '20000', '20000', '1000']]);
@@ -923,6 +923,14 @@ describe('EXPORT_ISS_BY_COMPETENCE (X7 Fase C PR-2)', () => {
       kind: 'EXPORT_ISS_BY_COMPETENCE',
       periodStart: new Date('2026-03-01T00:00:00.000Z'), periodEnd: new Date('2026-03-31T00:00:00.000Z'),
     });
+  });
+
+  it('X11 PR-3 (dono 07/11, "Apuração"): nota em análise fiscal do cancelamento entra; divergente se era divergente antes', async () => {
+    const { table } = await exportar([
+      nota({ id: 'fd-a', status: 'CANCEL_ANALYSIS', statusAntesAnalise: 'AUTHORIZED_DIVERGENT' }),
+      nota({ id: 'fd-b', status: 'CANCEL_ANALYSIS', statusAntesAnalise: 'AUTHORIZED' }),
+    ]);
+    expect(table.rows.slice(1)).toEqual([['2026-03', '3550308', 'false', '2', '0', '1', '20000', '20000', '1000']]);
   });
 
   it('item 16 (F-TC-2 a): nota sem vIss ⇒ soma 0, conta e avisa na linha-meta', async () => {
