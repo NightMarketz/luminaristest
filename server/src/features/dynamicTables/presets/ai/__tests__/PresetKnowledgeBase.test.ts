@@ -19,6 +19,7 @@ const CLINIC_8BA1ED8F =
 const suite = (key: string): SelectablePresetSuite => ({
   key,
   tables: {},
+  bridges: [],
   aiProfile: { name: `Nome ${key}`, description: `Descrição ${key}. Inclui tabelas para: A, B e C.` },
 });
 

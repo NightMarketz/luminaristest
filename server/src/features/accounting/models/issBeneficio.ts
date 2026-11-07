@@ -11,14 +11,21 @@
  */
 export type BeneficioIssCalculo = { tipo: 'ISENCAO' | 'REDUCAO_PERCENTUAL'; reducaoBpPorFaixa: number[] | null };
 
-/** 2% em bp (LC 116 art. 8º-A caput; Res. CGSN 140 art. 31 p.ú.). */
-export const PISO_ISS_BP = 200;
+/*
+ * ISS-TRANSICAO-IBS PR-2 item 10 (F-ISS-4 a): o piso deixou de ser constante — vem da linha `ISS_LIMITE/ALIQUOTA_MIN_BP`
+ * vigente na data (`issAliquotaMinBp`, models/issLimite.ts) e entra aqui por parâmetro (a função continua pura).
+ */
 /** Subitens sem piso (LC 116 art. 8º-A § 1º; Res. CGSN 140 art. 31 p.ú.) — item+subitem = 4 primeiros dígitos do cTribNac. */
 export const SUBITENS_SEM_PISO = ['0702', '0705', '1601'] as const;
 
 export const excecaoPisoIss = (cTribNac: string | null): boolean => cTribNac !== null && (SUBITENS_SEM_PISO as readonly string[]).includes(cTribNac.slice(0, 4));
 
 /** Redução em bp aplicável à faixa (1..6); `null` = sem benefício na faixa. */
+/*
+ * ISS-TRANSICAO-IBS PR-2 item 11 (F-ISS-3; P-ISS-2 respondida pela lei no fold de 30/10, D-2026-10-30-TRIAGEM-CONTADOR):
+ * o ADCT art. 128 § 3º mantém "em sua integralidade, até 31 de dezembro de 2032, os percentuais utilizados para calcular
+ * os benefícios" — ramo "§ 3º": a redução cadastrada NÃO cai pelo fator de 2029–2032; esta função não muda.
+ */
 export function reducaoBpDaFaixa(beneficio: BeneficioIssCalculo, faixa: number): number | null {
   if (beneficio.tipo === 'ISENCAO') return 10000;
   const r = beneficio.reducaoBpPorFaixa;
@@ -28,7 +35,7 @@ export function reducaoBpDaFaixa(beneficio: BeneficioIssCalculo, faixa: number):
 }
 
 /** Contrato §4 do BRIEF. `issTabelaBp` = % efetivo do ISS da faixa, em bp (pode ter fração). */
-export function issComBeneficio(i: { issTabelaBp: number; faixa: number; cTribNac: string; beneficio: BeneficioIssCalculo | null }): {
+export function issComBeneficio(i: { issTabelaBp: number; faixa: number; cTribNac: string; beneficio: BeneficioIssCalculo | null; pisoIssBp: number }): {
   issAplicadoBp: number;
   pisoAplicado: boolean;
   excecaoPiso: boolean;
@@ -37,8 +44,8 @@ export function issComBeneficio(i: { issTabelaBp: number; faixa: number; cTribNa
   const reducao = i.beneficio ? reducaoBpDaFaixa(i.beneficio, i.faixa) : null;
   if (reducao === null) return { issAplicadoBp: i.issTabelaBp, pisoAplicado: false, excecaoPiso };
   const reduzido = (i.issTabelaBp * (10000 - reducao)) / 10000;
-  if (excecaoPiso || reduzido >= PISO_ISS_BP) return { issAplicadoBp: reduzido, pisoAplicado: false, excecaoPiso };
-  return { issAplicadoBp: PISO_ISS_BP, pisoAplicado: true, excecaoPiso };
+  if (excecaoPiso || reduzido >= i.pisoIssBp) return { issAplicadoBp: reduzido, pisoAplicado: false, excecaoPiso };
+  return { issAplicadoBp: i.pisoIssBp, pisoAplicado: true, excecaoPiso };
 }
 
 /** Linha cadastrada (forma mínima que a seleção lê). */

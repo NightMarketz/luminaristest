@@ -11,7 +11,7 @@
 import { z } from 'zod';
 import { AtividadeSemAnexoError, SimplesRegraNaoRegulamentadaError } from '../../../lib/errors';
 import { ParametroLegalAusenteError, linhaLegalVigente, type LinhaLegal } from '../../legalParameters/models/legalParameter';
-import { PISO_ISS_BP, excecaoPisoIss, reducaoBpDaFaixa } from './issBeneficio';
+import { excecaoPisoIss, reducaoBpDaFaixa } from './issBeneficio';
 
 export const TRIBUTOS_SIMPLES = [
   'IRPJ',
@@ -76,10 +76,15 @@ export const AtividadeInputSchema = z
     parcelas: z.array(ParcelaSchema).min(1),
     /**
      * SIMPLES-PISO-ANEXO-XI bloco 1 (F-PI-3 b): benefício municipal de ISS vigente para a atividade — reduz o % efetivo
-     * do ISS da faixa (Res. CGSN 140 art. 32 § 1º) com o piso de 2% (art. 31 p.ú.; models/issBeneficio.ts).
+     * do ISS da faixa (Res. CGSN 140 art. 32 § 1º) com o piso vigente no PA (art. 31 p.ú.; `pisoIssBp`, ISS-TRANSICAO-IBS PR-2 item 10).
      */
     beneficioIss: z
-      .object({ tipo: z.enum(['ISENCAO', 'REDUCAO_PERCENTUAL']), reducaoBpPorFaixa: z.array(z.number().int().min(0).max(10000)).min(1).max(6).nullable() })
+      .object({
+        tipo: z.enum(['ISENCAO', 'REDUCAO_PERCENTUAL']),
+        reducaoBpPorFaixa: z.array(z.number().int().min(0).max(10000)).min(1).max(6).nullable(),
+        /** ISS-TRANSICAO-IBS PR-2 item 10 (F-ISS-4 a): piso vigente no PA, lido por quem chama (`issAliquotaMinBp`). */
+        pisoIssBp: z.number().int().min(0).max(10000),
+      })
       .strict()
       .optional(),
   })
@@ -416,11 +421,12 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
     let beneficioIss: AtividadeApurada['beneficioIss'];
     const issTabela = pct.get('ISS');
     const reducao = at.beneficioIss && issTabela ? reducaoBpDaFaixa(at.beneficioIss, faixa) : null;
-    if (issTabela && reducao !== null) {
+    if (issTabela && at.beneficioIss && reducao !== null) {
       const excecaoPiso = excecaoPisoIss(at.cTribNac);
       const reduzido = mul(issTabela, q(BigInt(10000 - reducao), 10000n));
-      const pisoAplicado = !excecaoPiso && cmp(reduzido, BP(PISO_ISS_BP)) < 0;
-      const aplicado = pisoAplicado ? BP(PISO_ISS_BP) : reduzido;
+      const piso = BP(at.beneficioIss.pisoIssBp);
+      const pisoAplicado = !excecaoPiso && cmp(reduzido, piso) < 0;
+      const aplicado = pisoAplicado ? piso : reduzido;
       pct.set('ISS', aplicado);
       beneficioIss = { issTabela: decimal(mul(issTabela, q(100n)), 4), pisoAplicado, excecaoPiso, desvantajoso: cmp(aplicado, issTabela) > 0 };
     }

@@ -11,6 +11,7 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepository';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { CandidatePosting, MatchedLineForExport } from '../models/Reconciliation.model';
+import { describeExportJob } from '../models/AccountingDelivery.model';
 import type { AuditService } from './AuditService';
 import type { ExportRequestDto } from '../dtos/DataExchangeDto';
 import type { ImportKind } from '../models/DataExchange.model';
@@ -704,7 +705,7 @@ export class DataExchangeExportService {
       if (!job) throw new NotFoundError(`Job '${jobId}' não encontrado.`);
       if (!job.ecfRectificationRequired) {
         throw new ValidationError(
-          `O job '${jobId}' não exige retificação de ECF — nada a dispensar.`,
+          `O job ${describeExportJob(job)} não exige retificação de ECF — nada a dispensar.`,
         );
       }
       if (job.ecfRectificationWaivedAt) {

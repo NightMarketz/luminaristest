@@ -222,7 +222,7 @@ export function KanbanCardDetailModal({
                                                 ref={descriptionInputRef}
                                                 value={descriptionValue}
                                                 onChange={(e) => setDescriptionValue(e.target.value)}
-                                                placeholder="Adicione uma descrição mais detalhada..."
+                                                placeholder={t('database:kanban_card.description_placeholder', 'Adicione uma descrição mais detalhada...')}
                                                 className="w-full min-h-[150px] bg-white dark:bg-neutral-800 border-2 border-primary rounded p-3 outline-none resize-y text-sm"
                                             />
                                             <div className="flex gap-2">
@@ -248,7 +248,7 @@ export function KanbanCardDetailModal({
                                                 : 'bg-black/5 dark:bg-white/5 text-gray-500 hover:bg-black/10 dark:hover:bg-white/10 py-6 text-center italic cursor-pointer'
                                                 }`}
                                         >
-                                            {descriptionValue || 'Adicione uma descrição mais detalhada...'}
+                                            {descriptionValue || t('database:kanban_card.description_placeholder', 'Adicione uma descrição mais detalhada...')}
                                         </div>
                                     )}
                                 </div>
@@ -267,7 +267,7 @@ export function KanbanCardDetailModal({
 
                                                 return (
                                                     <div key={field.name} className="flex flex-col gap-1 relative group/field">
-                                                        <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{field.label || field.name}</span>
+                                                        <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">{String(t(`database:fields.${field.name}`, field.label || field.name))}</span>
                                                         <div className="text-sm font-medium text-gray-800 dark:text-gray-100 flex items-center gap-2">
                                                             {isEditing ? (
                                                                 <div className="flex items-center gap-1 w-full animate-in fade-in duration-200">

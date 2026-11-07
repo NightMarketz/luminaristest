@@ -3,7 +3,7 @@ import { OpenAIService } from '../../../lib/openai/OpenAIService';
 import { ICustomizationState, IInterviewTurnResult, IMessage } from '../models/InterviewTypes';
 import { presetKnowledgeBase } from '../../dynamicTables/presets/ai/PresetKnowledgeBase';
 import { presetService } from '../../dynamicTables/services/PresetService';
-import { describeTableLock } from '../../dynamicTables/presets/removability';
+import { bridgeRequirementsOfTable, describeTableLock } from '../../dynamicTables/presets/removability';
 import { TableExtractor } from './TableExtractor';
 import { AIInteractions } from './AIInteractions';
 import { IInterviewSessionHandle, StateManager } from './StateManager';
@@ -67,6 +67,7 @@ export class CustomizationService {
       const tables = this.tableExtractor.extractTablesFromRealPreset({
         key: presetKey,
         tables: composeSessionTables(preset, installed),
+        bridges: preset.bridges ?? [],
       });
       return await this.stateManager.createSessionState(userId, presetKey, preset.name, tables, installed);
     } catch (error) {
@@ -280,7 +281,7 @@ Você gostaria de:
     const installed = resolveModuleSelection(expandModuleSelectors(modules), suiteKept);
     const entering = installed.filter((k) => !current.includes(k));
     const enteringTables = this.tableExtractor
-      .extractTablesFromRealPreset({ key: preset.key ?? handle.state.presetKey, tables: composeSessionTables(preset, installed) })
+      .extractTablesFromRealPreset({ key: preset.key ?? handle.state.presetKey, tables: composeSessionTables(preset, installed), bridges: preset.bridges ?? [] })
       .filter((t) => entering.includes(moduleOfTable(t.key)!) && !(t.key in preset.tables));
     await this.stateManager.setModules(handle, installed, enteringTables);
     return handle.state;
@@ -464,8 +465,12 @@ Você gostaria de:
         const target = session.tables.find(
           (t) => t.key === tableKey || t.name.toLowerCase() === tableKey.toLowerCase(),
         );
+        // PR-5 item 27 (dono, 2026-11-06, "As duas juntas"): a recusa traz a trava e a ponte que exige o módulo.
         const reason = target?.lock
-          ? describeTableLock(target.key, target.lock)
+          ? [
+              describeTableLock(target.key, target.lock),
+              ...bridgeRequirementsOfTable(target.key, presetService.getPresetByKey(session.presetKey)?.bridges ?? []),
+            ].join(' ')
           : `Não encontrei a tabela "${tableKey}" neste sistema.`;
         return {
           response: `${reason}\n\nTabelas disponíveis para remoção:\n${removableTables.map(t => `- ${t}`).join('\n')}\n\nPor favor, escolha uma das tabelas listadas ou selecione outra ação.`,

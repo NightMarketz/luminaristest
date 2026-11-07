@@ -135,6 +135,9 @@ export interface IUserRepository {
   /** Current token version, or null when the user does not exist. */
   getTokenVersion(id: string): Promise<number | null>;
 
+  /** Token version plus the row's timestamps, for the auth middleware (§3.4 #20); null when the user does not exist. */
+  getAuthState(id: string): Promise<{ tokenVersion: number; createdAt: Date; updatedAt: Date } | null>;
+
   /** Bumps the token version, invalidating every previously issued JWT. */
   incrementTokenVersion(id: string): Promise<void>;
 }
