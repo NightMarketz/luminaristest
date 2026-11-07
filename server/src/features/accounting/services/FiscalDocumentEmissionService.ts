@@ -56,6 +56,8 @@ import { IND_OP_DEFAULT_SALAO } from '../models/indOp';
 import { RECEITA_NAO_USO_CODE, A_RECEBER_CODE } from '../fixtures/ChartOfAccountsFixture';
 import { expiryCompetence, parseExpiryMovementKey } from '../models/expiryKey';
 import { centsFromDb } from '../models/money';
+import { fatorReducaoIssBp, issAliquotaNaTransicaoBp } from '../models/issTransicao';
+import type { LinhaLegal } from '../../legalParameters/models/legalParameter';
 import { findLc116, listaLc116De, type ListaLc116 } from '../models/lc116ListaNacional';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { ReleituraJson } from '../../../lib/nfseReadback';
@@ -941,6 +943,7 @@ export class FiscalDocumentEmissionService {
     const shares = splitCents(ledgerCents, weights);
 
     const fp = fiscalProfile!;
+    const linhasIssTransicao = await this.legalParams.fotografia(['ISS_TRANSICAO']);
     const groups = orderedGroups.map((g, i) => {
       const vDescIncondCents = pacoteVenda ? 0 : descontoDoGrupo(g);
       const vServCents = shares[i] + vDescIncondCents;
@@ -955,6 +958,7 @@ export class FiscalDocumentEmissionService {
         dCompet,
         tomador,
         ambiente,
+        linhasIssTransicao,
       });
       return { cTribNac: g.cTribNac, vServCents, vDescIncondCents, payload };
     });
@@ -1325,6 +1329,7 @@ export class FiscalDocumentEmissionService {
 
     const fp = fiscalProfile!;
     const profile = this.pacoteServiceProfile(fp);
+    const linhasIssTransicao = await this.legalParams.fotografia(['ISS_TRANSICAO']);
     const payload = this.buildPayload({
       fp,
       cnpjEmitente: unitCnpj,
@@ -1334,6 +1339,7 @@ export class FiscalDocumentEmissionService {
       dCompet,
       tomador,
       ambiente,
+      linhasIssTransicao,
     });
     return {
       saleId: context.originSaleId!,
@@ -1359,6 +1365,8 @@ export class FiscalDocumentEmissionService {
     dCompet: string;
     tomador: { cnpj?: string; cpf?: string; xNome: string } | null;
     ambiente: DfeAmbiente;
+    /** ISS-TRANSICAO-IBS PR-2 item 8: fotografia de `ISS_TRANSICAO` (fator de 2029–2032). */
+    linhasIssTransicao: readonly LinhaLegal[];
   }): DpsPayload {
     const { fp, group, vServCents, xDescServ, dCompet, tomador } = args;
     const dhEmi = new Date().toISOString();
@@ -1414,8 +1422,20 @@ export class FiscalDocumentEmissionService {
               // Anexo I v1.01 E0625/E0631: ME/EPP com ISS pelo SN e sem retenção NÃO informa pAliq (município ativo
               // ou não); com retenção é obrigatório (E0621/E0628). Regime normal: issAliquotaBp = município não
               // conveniado (E0619); vazio omite (E0617). Verificação legal 17/10/2026 (verif-2026-10-17-iss-nfse).
+              // ISS-TRANSICAO-IBS PR-2 itens 8–9 (F-ISS-1 a; L4): no regime normal o pAliq leva o fator de 2029–2032 na
+              // data da 1ª ocorrência = `dCompet` — venda comum e pacote em VENDA: data da venda; pacote em CONSUMO: data
+              // da sessão / do vencimento (P-ISS-3, fold de 30/10: LC 214 art. 408 § 4º I; art. 10 §§ 3º–4º). Simples
+              // com ISS pelo SN e retenção (regApTribSN 1): o % do Anexo já cai pela tabela — sem fator (não reduz duas
+              // vezes). Simples com ISS fora do DAS (regApTribSN 2/3, "ISS pela NFS-e"): o pAliq é a alíquota municipal e
+              // leva o fator como no regime normal (dono, chat, 2026-11-06, questionário: "Aplica o fator"; ADCT art. 128).
               ...(fp.issAliquotaBp && !isMei && !(isSimples && fp.regApTribSN === 1 && !fp.issRetidoTomadorPj)
-                ? { pAliq: bpToPctString(fp.issAliquotaBp) }
+                ? {
+                    pAliq: bpToPctString(
+                      isSimples && fp.regApTribSN === 1
+                        ? fp.issAliquotaBp
+                        : issAliquotaNaTransicaoBp(fp.issAliquotaBp, fatorReducaoIssBp(args.linhasIssTransicao, dCompet)),
+                    ),
+                  }
                 : {}),
             },
             totTrib: isMei

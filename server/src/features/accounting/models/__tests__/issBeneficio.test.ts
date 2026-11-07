@@ -8,8 +8,8 @@ import { apurar, type ApuracaoInput } from '../simplesCalc';
 import { beneficioDaAtividade, issComBeneficio, sobrepoe } from '../issBeneficio';
 import { IssBeneficioMunicipalCreateDto } from '../../dtos/IssBeneficioMunicipalDto';
 
-const REDUCAO = (bp: number[]) => ({ tipo: 'REDUCAO_PERCENTUAL' as const, reducaoBpPorFaixa: bp });
-const ISENCAO = { tipo: 'ISENCAO' as const, reducaoBpPorFaixa: null };
+const REDUCAO = (bp: number[]) => ({ tipo: 'REDUCAO_PERCENTUAL' as const, reducaoBpPorFaixa: bp, pisoIssBp: 200 });
+const ISENCAO = { tipo: 'ISENCAO' as const, reducaoBpPorFaixa: null, pisoIssBp: 200 };
 
 describe('item 2 — issComBeneficio (art. 32 § 1º; piso do art. 31 p.ú.; F-PI-2 piso absoluto)', () => {
   it.each([
@@ -19,25 +19,25 @@ describe('item 2 — issComBeneficio (art. 32 § 1º; piso do art. 31 p.ú.; F-P
     ['3,5% com isenção ⇒ 2,00%', 350, ISENCAO, 200, true],
     ['F-PI-2: 1,92% com isenção ⇒ 2,00% (acima da tabela)', 192, ISENCAO, 200, true],
   ])('%s', (_t, issTabelaBp, beneficio, esperado, piso) => {
-    expect(issComBeneficio({ issTabelaBp, faixa: 2, cTribNac: '060101', beneficio })).toEqual({ issAplicadoBp: esperado, pisoAplicado: piso, excecaoPiso: false });
+    expect(issComBeneficio({ issTabelaBp, faixa: 2, cTribNac: '060101', beneficio, pisoIssBp: 200 })).toEqual({ issAplicadoBp: esperado, pisoAplicado: piso, excecaoPiso: false });
   });
 
   it('redução por faixa: usa a posição da faixa; 0 bp na faixa = sem benefício nela (como se desmarca, F-PI-2)', () => {
     const b = REDUCAO([0, 0, 2000, 0, 0, 0]);
-    expect(issComBeneficio({ issTabelaBp: 350, faixa: 3, cTribNac: '060101', beneficio: b }).issAplicadoBp).toBe(280);
-    expect(issComBeneficio({ issTabelaBp: 192, faixa: 2, cTribNac: '060101', beneficio: b })).toEqual({ issAplicadoBp: 192, pisoAplicado: false, excecaoPiso: false });
+    expect(issComBeneficio({ issTabelaBp: 350, faixa: 3, cTribNac: '060101', beneficio: b, pisoIssBp: 200 }).issAplicadoBp).toBe(280);
+    expect(issComBeneficio({ issTabelaBp: 192, faixa: 2, cTribNac: '060101', beneficio: b, pisoIssBp: 200 })).toEqual({ issAplicadoBp: 192, pisoAplicado: false, excecaoPiso: false });
   });
 });
 
 describe('item 3 — subitens 7.02, 7.05 e 16.01 sem piso (LC 116 art. 8º-A § 1º; Res. CGSN 140 art. 31 p.ú.)', () => {
   it.each(['070201', '070502', '160101'])('%s: isenção ⇒ 0%; redução de 50% sobre 3,5% ⇒ 1,75%', (cTribNac) => {
-    expect(issComBeneficio({ issTabelaBp: 350, faixa: 1, cTribNac, beneficio: ISENCAO })).toEqual({ issAplicadoBp: 0, pisoAplicado: false, excecaoPiso: true });
-    expect(issComBeneficio({ issTabelaBp: 350, faixa: 1, cTribNac, beneficio: REDUCAO([5000]) }).issAplicadoBp).toBe(175);
+    expect(issComBeneficio({ issTabelaBp: 350, faixa: 1, cTribNac, beneficio: ISENCAO, pisoIssBp: 200 })).toEqual({ issAplicadoBp: 0, pisoAplicado: false, excecaoPiso: true });
+    expect(issComBeneficio({ issTabelaBp: 350, faixa: 1, cTribNac, beneficio: REDUCAO([5000]), pisoIssBp: 200 }).issAplicadoBp).toBe(175);
   });
 
   it('subitem vizinho (07.04, 16.02) tem piso', () => {
-    expect(issComBeneficio({ issTabelaBp: 350, faixa: 1, cTribNac: '070401', beneficio: ISENCAO }).issAplicadoBp).toBe(200);
-    expect(issComBeneficio({ issTabelaBp: 350, faixa: 1, cTribNac: '160201', beneficio: ISENCAO }).issAplicadoBp).toBe(200);
+    expect(issComBeneficio({ issTabelaBp: 350, faixa: 1, cTribNac: '070401', beneficio: ISENCAO, pisoIssBp: 200 }).issAplicadoBp).toBe(200);
+    expect(issComBeneficio({ issTabelaBp: 350, faixa: 1, cTribNac: '160201', beneficio: ISENCAO, pisoIssBp: 200 }).issAplicadoBp).toBe(200);
   });
 });
 
