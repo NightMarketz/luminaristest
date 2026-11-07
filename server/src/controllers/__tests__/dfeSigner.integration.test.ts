@@ -194,4 +194,33 @@ describe('X10a EMENDA-4 AL-PR-2 — pareamento do assinador local', () => {
     expect(JSON.stringify(r.body)).toContain('dfe_signer_ambiente_nao_configurado');
     expect(await prisma.dfeSignerDevice.count()).toBe(antes);
   });
+
+  it('AL-3: o mesmo código em 4 pareamentos simultâneos vale uma vez só (consumo atômico dentro da tx)', async () => {
+    const antes = await prisma.dfeSignerDevice.count();
+    const c = await codigo(filial);
+    const rs = await Promise.all([1, 2, 3, 4].map((i) => parear({ codigo: c, nome: `Caixa ${i}` })));
+    expect(rs.map((r) => r.status).sort()).toEqual([201, 400, 400, 400]);
+    expect(await prisma.dfeSignerDevice.count()).toBe(antes + 1);
+  });
+
+  it('L-AL-2: o Bearer de um dispositivo de outro dono não vincula a unidade dele (código inválido, nada muda)', async () => {
+    const mine = DfeSignerPareamentoRespostaSchema.parse((await parear({ codigo: await codigo(filial), nome: 'Caixa do dono' })).body);
+    const units = await prisma.dynamicTable.create({
+      data: { userId: outro.id, name: 'Units', internalName: 'units', category: 'business', schema: { fields: [] } as never },
+    });
+    const lojaDoOutro = (await prisma.dynamicTableData.create({ data: { dynamicTableId: units.id, data: { name: 'Loja do Outro', cnpj: '11.444.777/0001-61' } as never } })).id;
+    const c = await request(app).post(`${USER}/${lojaDoOutro}/codigos`).set(authHeader(outro));
+    expect(c.status).toBe(201);
+    const r = await parear({ codigo: c.body.data.codigo }, mine.token);
+    expect(r.status).toBe(400);
+    expect(JSON.stringify(r.body)).toContain('dfe_signer_codigo_invalido');
+    expect(await prisma.dfeSignerDeviceUnit.count({ where: { unitId: lojaDoOutro } })).toBe(0);
+  });
+
+  it('o código digitado com hífens e minúsculas é o mesmo código', async () => {
+    const c = await codigo(outraRaiz);
+    const digitado = `${c.slice(0, 4)}-${c.slice(4, 8)}-${c.slice(8)}`.toLowerCase();
+    const r = await parear({ codigo: digitado, cert: CERT_OUTRA_RAIZ });
+    expect(r.status).toBe(201);
+  });
 });
