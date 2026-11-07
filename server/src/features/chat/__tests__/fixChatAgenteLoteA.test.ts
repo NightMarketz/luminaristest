@@ -4,7 +4,7 @@
  * e 2026-10-22 ("Todos os 22 em série").
  *
  * Cada `it` afirma o comportamento correto; antes do fix falha na asserção final.
- * Lote D (dono, 2026-10-29): o guarda do #13 saiu com a rota `qdrant-status` e o do log `warn` da extração (#8)
+ * Lote D (dono, 2026-10-29): o guarda do #13 saiu com a rota de status do índice vetorial antigo e o do log `warn` da extração (#8)
  * saiu com `extractStructuredData` (R26 aposentado) — ver `features/documents/__tests__/fixChatAgenteLoteD.test.ts`.
  */
 import { ChatService } from '../services/ChatService';
@@ -48,7 +48,7 @@ function makeChatService() {
   };
   /* eslint-disable @typescript-eslint/no-explicit-any -- fakes de colaborador */
   const service = new ChatService(
-    { embedText: jest.fn() } as any, { search: jest.fn() } as any, openai as any, agent as any, graph as any, messages as any,
+    { search: jest.fn() } as any, openai as any, agent as any, graph as any, messages as any,
   );
   /* eslint-enable @typescript-eslint/no-explicit-any */
   return { service, openai, agent, messages };
@@ -104,6 +104,7 @@ describe('#8 — PII fora do log', () => {
       { create: jest.fn() } as any,
       { canManageData: () => false } as any,
       { afterDataWrite: jest.fn() } as any,
+      {} as any, // documentSearch — não usado aqui
     );
     /* eslint-enable @typescript-eslint/no-explicit-any */
 

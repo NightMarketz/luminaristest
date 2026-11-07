@@ -30,12 +30,10 @@ const base = {
         // ESM-only package pulled in at import time by lib/pdf.ts (ReceiptService); no test renders
         // a PDF, so stub the module instead of transforming the whole puppeteer tree.
         '^puppeteer$': '<rootDir>/test/mocks/puppeteer.ts',
-        // Vector ops need a live Qdrant server; tests stub the client (CI runs with dummy creds).
-        '^@qdrant/js-client-rest$': '<rootDir>/test/mocks/qdrantClient.ts',
     },
     transform: {
         '^.+\\.tsx?$': swc('typescript'),
-        // ESM-only deps (uuid v13, qdrant) ship no CJS build; swc down-compiles them.
+        // ESM-only deps (uuid v13) ship no CJS build; swc down-compiles them.
         '^.+\\.jsx?$': swc('ecmascript'),
     },
     // Default ignores all of node_modules; the negative lookahead lets the ESM deps above through.

@@ -6,7 +6,7 @@ export interface MetricOptions {
   /**
    * Warn threshold in ms (BRIEF-W2-D, F4). Optional and backward-compatible: when omitted the
    * log-level decision is exactly what it was before this field existed (`success` alone decides
-   * info vs warn) — none of the 7 pre-existing call sites (VectorRepository, DocumentProcessingService)
+   * info vs warn) — none of the 7 pre-existing call sites (the former vector repository, DocumentProcessingService)
    * pass it, so their behavior is byte-for-byte unchanged.
    *
    * When provided, a call that took LONGER than this threshold logs at `warn` even though it

@@ -21,6 +21,7 @@ export const TOOL_CLASS = {
   query_table_data: 'LIVRE', // leitura
   request_record_creation: 'PROPOSTA', // escrita em DynamicTable
   request_record_update: 'PROPOSTA', // escrita em DynamicTable
+  search_documents: 'LIVRE', // leitura (RAG-PR-B item 16)
 } as const satisfies Readonly<Record<string, ActionClass>>;
 
 export type RegisteredToolName = keyof typeof TOOL_CLASS;

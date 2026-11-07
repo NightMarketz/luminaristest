@@ -42,6 +42,13 @@
         },
         "confirmedProposalId": {
           "type": "string"
+        },
+        "ragMode": {
+          "type": "string",
+          "enum": [
+            "DESCRITIVO",
+            "RAPIDO"
+          ]
         }
       }
     },
@@ -107,9 +114,6 @@
                   "documentId": {
                     "type": "string"
                   },
-                  "userId": {
-                    "type": "string"
-                  },
                   "textContent": {
                     "type": "string"
                   },
@@ -125,12 +129,45 @@
                 },
                 "required": [
                   "documentId",
-                  "userId",
                   "textContent",
                   "fileName",
                   "chunkId",
                   "index"
                 ]
+              },
+              "technical": {
+                "type": "object",
+                "properties": {
+                  "chunkId": {
+                    "type": "string"
+                  },
+                  "documentId": {
+                    "type": "string"
+                  },
+                  "fileName": {
+                    "type": "string"
+                  },
+                  "chunkIndex": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "score": {
+                    "type": "number"
+                  },
+                  "embeddingStamp": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "chunkId",
+                  "documentId",
+                  "fileName",
+                  "chunkIndex",
+                  "score",
+                  "embeddingStamp"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -139,11 +176,177 @@
               "payload"
             ]
           }
+        },
+        "citations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "marker": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "chunkId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "marker",
+              "chunkId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "answerModel": {
+          "type": "string"
         }
       },
       "required": [
         "answer"
       ]
+    },
+    "RagCitationSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "marker": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "chunkId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "marker",
+        "chunkId"
+      ],
+      "additionalProperties": false
+    },
+    "RagDetailSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "DESCRITIVO",
+            "RAPIDO"
+          ]
+        },
+        "citations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "marker": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "chunkId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "marker",
+              "chunkId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "chunkId": {
+                "type": "string"
+              },
+              "documentId": {
+                "type": "string"
+              },
+              "fileName": {
+                "type": "string"
+              },
+              "chunkIndex": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "score": {
+                "type": "number"
+              },
+              "embeddingStamp": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "chunkId",
+              "documentId",
+              "fileName",
+              "chunkIndex",
+              "score",
+              "embeddingStamp"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "answerModel": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "mode",
+        "citations",
+        "sources"
+      ],
+      "additionalProperties": false
+    },
+    "RagModeSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "enum": [
+        "DESCRITIVO",
+        "RAPIDO"
+      ]
+    },
+    "RagTechnicalSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "chunkId": {
+          "type": "string"
+        },
+        "documentId": {
+          "type": "string"
+        },
+        "fileName": {
+          "type": "string"
+        },
+        "chunkIndex": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "score": {
+          "type": "number"
+        },
+        "embeddingStamp": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "chunkId",
+        "documentId",
+        "fileName",
+        "chunkIndex",
+        "score",
+        "embeddingStamp"
+      ],
+      "additionalProperties": false
     }
   }
 }

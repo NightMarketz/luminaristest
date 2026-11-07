@@ -15,6 +15,22 @@ updatedAt: unknown
 promptTokens: (number | null)
 completionTokens: (number | null)
 model: (string | null)
+ragDetail: ({
+mode: ("DESCRITIVO" | "RAPIDO")
+citations: {
+marker: number
+chunkId: string
+}[]
+sources: {
+chunkId: string
+documentId: string
+fileName: string
+chunkIndex: number
+score: number
+embeddingStamp: string
+}[]
+answerModel?: string
+} | null)
 }
 export interface CreateChatMessageInput {
 content: string
@@ -31,4 +47,20 @@ id: string
 content: string
 role: ("user" | "assistant" | "system")
 createdAt: unknown
+ragDetail: ({
+mode: ("DESCRITIVO" | "RAPIDO")
+citations: {
+marker: number
+chunkId: string
+}[]
+sources: {
+chunkId: string
+documentId: string
+fileName: string
+chunkIndex: number
+score: number
+embeddingStamp: string
+}[]
+answerModel?: string
+} | null)
 }

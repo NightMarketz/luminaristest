@@ -218,6 +218,9 @@ model ChatMessage {
   completionTokens Int?
   model            String?
   usageDetail      Json? // LlmUsage[] por chamada (F-I11-4 → b)
+  // RAG emenda 07/11, item 15e (F-RAG-M7): { mode, citations[], sources[].technical, answerModel? } do turno RAG.
+  // NULL = USER, fora do modo RAG ou anterior à emenda.
+  ragDetail        Json?
 
   @@index([chatInstanceId])
 }
@@ -279,6 +282,7 @@ model Document {
   status          ProcessingStatus @default(PENDING) // processing status
   summary         String? // optional AI-generated summary
   contextJson     Json? // structured JSON from AI processing
+  generatedContext Json? // RAG F-RAG-B1 a: GeneratedContextSchema (tipo, entidades, userEditedFields); contextJson fica com as estatísticas do pipeline
   uploadDate      DateTime         @default(now()) // timestamp of file upload
   processingDate  DateTime? // timestamp when processing completed
   processingError String? // error message if processing failed
@@ -298,6 +302,10 @@ model Chunk {
   index      Int // order of this chunk in the document
   documentId String
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  // RAG-PR-A item 3: carimbo do embedding. O vetor mora na vec0 do arquivo próprio (VECTOR_DB_PATH), nunca aqui.
+  embeddingModel String? // "openai:text-embedding-3-small@768"
+  embeddingDims  Int?
+  embeddedAt     DateTime?
   createdAt  DateTime @default(now())
 
   @@index([documentId])

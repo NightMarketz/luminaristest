@@ -42,7 +42,7 @@ export interface SeedDocumentOptions {
 /**
  * Creates a Document directly via Prisma (bypassing the upload pipeline) and returns the row with its
  * generated cuid id. Used by `documents` integration tests to arrange fixtures
- * without hitting OpenAI/Qdrant.
+ * without hitting OpenAI or the vector index.
  */
 export async function seedDocument(opts: SeedDocumentOptions) {
   return prisma.document.create({

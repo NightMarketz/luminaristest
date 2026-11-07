@@ -1,12 +1,12 @@
 /**
  * Integration tests for DocumentService — business rules against a REAL SQLite DB with the real
- * DocumentRepository and DocumentPolicy. The external stores are faked: Qdrant (IVectorRepository)
- * and the processing/embedding service are mocks, so no network is touched.
+ * DocumentRepository and DocumentPolicy. The vector index is a spy over the real `ChunkVectorRepository` (vec0 on a
+ * temp file of its own, RAG-PR-A) and the embedder is a deterministic fake, so no network is touched.
  *
  * Covers what the policy unit test can't: Tier-0 (a USER only touches their own docs), the
  * existence-non-leak (404 not 403 for a foreign doc), the typed-error contract, and the privacy-
- * critical delete ordering — vectors are removed from Qdrant BEFORE the SQL row, and a Qdrant
- * failure must leave SQL intact (no orphaned-vector / half-deleted state).
+ * critical delete ordering — vectors are removed BEFORE the SQL row, and a vector-index failure must leave SQL intact
+ * (RAG-PR-A item 9, path 2).
  *
  * Run via `npm run test:integration`.
  */
@@ -17,31 +17,46 @@ import { Role } from '../../../users/models/User.model';
 import { NotFoundError, ForbiddenError, UnauthorizedError } from '@/lib/errors';
 import { DocumentStatus } from '../../models/Document.model';
 import { pushTestSchema, resetDb, disconnectDb, seedUser, seedDocument, ctxFor } from '@test/helpers';
+import { ChunkRepository } from '../../repositories/ChunkRepository';
+import { ChunkVectorRepository } from '../../repositories/ChunkVectorRepository';
+import { getVecIndex } from '@/lib/vector/sqliteVec';
+import prisma from '@/lib/prisma';
 
 const repo = new DocumentRepository();
 
 /** Per-test fakes for the external collaborators; only the SQL path is real. */
+const STAMP = 'fake:det@768';
+const unit = (hot: number) => {
+  const a = new Float32Array(768);
+  a[hot] = 1;
+  return a;
+};
+
 function makeService() {
+  const real = new ChunkVectorRepository(() => getVecIndex().db);
   const vector = {
-    upsertChunks: jest.fn().mockResolvedValue(undefined),
-    search: jest.fn().mockResolvedValue([]),
-    searchVectors: jest.fn().mockResolvedValue([]),
-    deletePointsByDocumentId: jest.fn().mockResolvedValue(undefined),
-    getPointsByDocumentId: jest.fn().mockResolvedValue([]),
+    upsert: jest.fn((rows: Parameters<ChunkVectorRepository['upsert']>[0]) => real.upsert(rows)),
+    search: jest.fn((q: Parameters<ChunkVectorRepository['search']>[0]) => real.search(q)),
+    deleteByDocument: jest.fn((id: string) => real.deleteByDocument(id)),
+    deleteByUser: jest.fn((id: string) => real.deleteByUser(id)),
   };
   const processing = {
     extractText: jest.fn().mockResolvedValue('text'),
-    generateEmbedding: jest.fn().mockResolvedValue([0.1, 0.2, 0.3]),
+  };
+  const embedder = {
+    currentStamp: jest.fn().mockResolvedValue(STAMP),
+    embed: jest.fn(async (_u: string, texts: string[]) => ({ vectors: texts.map(() => unit(0)), stamp: STAMP, dims: 768 })),
   };
   const service = new DocumentService(
     repo,
-    {} as any, // chunkRepository — only used by the async pipeline (not exercised here)
+    new ChunkRepository(),
     vector as any,
     processing as any,
     new DocumentPolicy(),
-    {} as any // userRepository — pipeline-only
+    {} as any, // userRepository — pipeline-only
+    embedder
   );
-  return { service, vector, processing };
+  return { service, vector, processing, embedder, real };
 }
 
 beforeAll(() => {
@@ -120,17 +135,51 @@ describe('getAllDocuments', () => {
   });
 });
 
-describe('updateDocument (Tier-0)', () => {
-  const patch = { status: DocumentStatus.COMPLETED, summary: 'done', processingDate: null, processingError: null };
+describe('updateDocumentContext (Tier-0; RAG-PR-B item 18)', () => {
+  const patch = { summary: 'resumo corrigido' };
 
-  it('lets the owner update their document', async () => {
+  it('lets the owner correct summary/fileName and leaves the pipeline fields alone', async () => {
     const { service } = makeService();
     const owner = await seedUser({ username: 'owner' });
     const doc = await seedDocument({ userId: owner.id, status: 'PENDING' });
 
-    const updated = await service.updateDocument(doc.id, patch, ctxFor({ id: owner.id, username: owner.username }));
-    expect(updated.status).toBe(DocumentStatus.COMPLETED);
-    expect(updated.summary).toBe('done');
+    const updated = await service.updateDocumentContext(
+      doc.id,
+      { ...patch, fileName: 'contrato.pdf' },
+      ctxFor({ id: owner.id, username: owner.username }),
+    );
+    expect(updated.summary).toBe('resumo corrigido');
+    expect(updated.fileName).toBe('contrato.pdf');
+    expect(updated.status).toBe(DocumentStatus.PENDING);
+    expect(updated.generatedContext).toEqual({ version: 1, documentType: null, entities: [], userEditedFields: ['summary'] });
+  });
+
+  it('every corrected context field enters userEditedFields, cumulatively and without duplicates', async () => {
+    const { service } = makeService();
+    const owner = await seedUser({ username: 'owner' });
+    const doc = await seedDocument({ userId: owner.id });
+    await prisma.document.update({
+      where: { id: doc.id },
+      data: { generatedContext: { version: 1, documentType: 'Contrato', entities: [], userEditedFields: ['summary'] } },
+    });
+    const ctx = ctxFor({ id: owner.id, username: owner.username });
+
+    await service.updateDocumentContext(doc.id, { entities: [{ type: 'EMPRESA', value: 'ACME Ltda' }] }, ctx);
+    const updated = await service.updateDocumentContext(doc.id, { documentType: 'Aditivo', summary: 's' }, ctx);
+    expect(updated.generatedContext).toEqual({
+      version: 1,
+      documentType: 'Aditivo',
+      entities: [{ type: 'EMPRESA', value: 'ACME Ltda' }],
+      userEditedFields: ['summary', 'entities', 'documentType'],
+    });
+  });
+
+  it('fileName/documentPurpose only: no generatedContext written', async () => {
+    const { service } = makeService();
+    const owner = await seedUser({ username: 'owner' });
+    const doc = await seedDocument({ userId: owner.id });
+    const updated = await service.updateDocumentContext(doc.id, { fileName: 'x.pdf' }, ctxFor({ id: owner.id, username: owner.username }));
+    expect(updated.generatedContext).toBeNull();
   });
 
   it('forbids a USER from updating ANOTHER user document (ForbiddenError)', async () => {
@@ -140,46 +189,47 @@ describe('updateDocument (Tier-0)', () => {
     const doc = await seedDocument({ userId: owner.id });
 
     await expect(
-      service.updateDocument(doc.id, patch, ctxFor({ id: stranger.id, username: stranger.username }))
+      service.updateDocumentContext(doc.id, patch, ctxFor({ id: stranger.id, username: stranger.username }))
     ).rejects.toBeInstanceOf(ForbiddenError);
+    expect((await prisma.document.findUniqueOrThrow({ where: { id: doc.id } })).summary).toBeNull();
   });
 
   it('throws NotFoundError for a missing document', async () => {
     const { service } = makeService();
     await expect(
-      service.updateDocument('cl00000000000000000000000', patch, ctxFor({ id: 'u', username: 'u' }))
+      service.updateDocumentContext('cl00000000000000000000000', patch, ctxFor({ id: 'u', username: 'u' }))
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 });
 
 describe('deleteDocument (privacy-critical ordering)', () => {
-  it('deletes the Qdrant vectors BEFORE the SQL row, then removes the document', async () => {
+  it('deletes the vectors BEFORE the SQL row, then removes the document', async () => {
     const { service, vector } = makeService();
     const owner = await seedUser({ username: 'owner' });
     const doc = await seedDocument({ userId: owner.id });
 
     await service.deleteDocument(doc.id, ctxFor({ id: owner.id, username: owner.username }));
 
-    // Vectors purged by the documentId payload filter — so deleted content can't resurface in RAG.
-    expect(vector.deletePointsByDocumentId).toHaveBeenCalledWith(doc.id);
+    // Vectors purged by document — so deleted content can't resurface in RAG.
+    expect(vector.deleteByDocument).toHaveBeenCalledWith(doc.id);
     // SQL row is gone.
     expect(await repo.findById(doc.id)).toBeNull();
   });
 
-  it('leaves the SQL row INTACT if the Qdrant delete fails (Qdrant-before-SQL ordering)', async () => {
+  it('leaves the SQL row INTACT if the vector delete fails (vector-before-SQL ordering)', async () => {
     const { service, vector } = makeService();
     const owner = await seedUser({ username: 'owner' });
     const doc = await seedDocument({ userId: owner.id });
-    vector.deletePointsByDocumentId.mockRejectedValue(new Error('qdrant down'));
+    vector.deleteByDocument.mockRejectedValue(new Error('vector index down'));
 
     await expect(
       service.deleteDocument(doc.id, ctxFor({ id: owner.id, username: owner.username }))
     ).rejects.toThrow();
-    // The document must still exist: we never reach the SQL delete if Qdrant failed.
+    // The document must still exist: we never reach the SQL delete if the vector delete failed.
     expect(await repo.findById(doc.id)).not.toBeNull();
   });
 
-  it('forbids a USER from deleting ANOTHER user document and does NOT touch Qdrant', async () => {
+  it('forbids a USER from deleting ANOTHER user document and does NOT touch the vectors', async () => {
     const { service, vector } = makeService();
     const owner = await seedUser({ username: 'owner' });
     const stranger = await seedUser({ username: 'stranger' });
@@ -188,7 +238,7 @@ describe('deleteDocument (privacy-critical ordering)', () => {
     await expect(
       service.deleteDocument(doc.id, ctxFor({ id: stranger.id, username: stranger.username }))
     ).rejects.toBeInstanceOf(ForbiddenError);
-    expect(vector.deletePointsByDocumentId).not.toHaveBeenCalled();
+    expect(vector.deleteByDocument).not.toHaveBeenCalled();
     expect(await repo.findById(doc.id)).not.toBeNull();
   });
 
@@ -198,7 +248,7 @@ describe('deleteDocument (privacy-critical ordering)', () => {
     const doc = await seedDocument({ userId: owner.id });
 
     await service.deleteDocument(doc.id, ctxFor({ id: 'admin-1', username: 'root', role: Role.ADMIN }));
-    expect(vector.deletePointsByDocumentId).toHaveBeenCalledWith(doc.id);
+    expect(vector.deleteByDocument).toHaveBeenCalledWith(doc.id);
     expect(await repo.findById(doc.id)).toBeNull();
   });
 
@@ -210,30 +260,5 @@ describe('deleteDocument (privacy-critical ordering)', () => {
   });
 });
 
-describe('searchDocuments (Tier-0)', () => {
-  it('scopes the vector search to the caller userId', async () => {
-    const { service, vector, processing } = makeService();
-    const owner = await seedUser({ username: 'owner' });
-    const doc = await seedDocument({ userId: owner.id });
-    // Real payload shape upserted by DocumentProcessingPipeline: the chunk text lives in `textContent`.
-    vector.searchVectors.mockResolvedValue([
-      { id: 'v1', version: 1, score: 0.9, payload: { documentId: doc.id, textContent: 'chunk ctx' } },
-    ]);
-
-    const results = await service.searchDocuments('q', ctxFor({ id: owner.id, username: owner.username }), 5);
-
-    expect(processing.generateEmbedding).toHaveBeenCalledWith('q');
-    // Tier-0: the search MUST be hard-scoped to the caller.
-    expect(vector.searchVectors).toHaveBeenCalledWith([0.1, 0.2, 0.3], owner.id, 5);
-    expect(results).toHaveLength(1);
-    expect(results[0].document.id).toBe(doc.id);
-    // Guards the payload-field mapping: `textContent` (not `text`) must reach the caller.
-    expect(results[0].chunkText).toBe('chunk ctx');
-  });
-
-  it('throws UnauthorizedError when there is no userId', async () => {
-    const { service } = makeService();
-    const ctx = { ...ctxFor({ id: 'x', username: 'x' }), userId: '' };
-    await expect(service.searchDocuments('q', ctx, 5)).rejects.toBeInstanceOf(UnauthorizedError);
-  });
-});
+// searchDocuments saiu do DocumentService (RAG-PR-B item 14): a busca é do DocumentSearchService —
+// documentSearch.integration.test.ts.

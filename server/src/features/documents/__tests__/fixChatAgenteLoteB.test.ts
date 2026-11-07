@@ -5,20 +5,12 @@
  *
  * Cada `it` afirma o comportamento correto; antes do fix falha na asserção final.
  * Lote D (dono, 2026-10-29): o guarda do #21 saiu com o `ExcelStructuredExtractor` (R26 aposentado).
+ * RAG-PR-A: o guarda do #12 (índice de userId no índice externo) virou a PARTITION KEY `user_id` da vec0,
+ * guardada em `rag-tenant-isolation.test.ts`.
  */
 import express from 'express';
 import request from 'supertest';
 import type { Request, Response, NextFunction } from 'express';
-
-const createPayloadIndex = jest.fn().mockResolvedValue({});
-jest.mock('@/lib/vector/qdrant', () => ({
-  qdrant: {
-    getCollections: jest.fn().mockResolvedValue({ collections: [{ name: 'documents' }] }),
-    getCollection: jest.fn().mockResolvedValue({ payload_schema: {} }),
-    createCollection: jest.fn(),
-    createPayloadIndex: (...a: unknown[]) => createPayloadIndex(...a),
-  },
-}));
 
 jest.mock('@/controllers/documentsController', () => {
   const ok = (_req: Request, res: Response) => res.status(200).json({ success: true });
@@ -31,7 +23,6 @@ jest.mock('@/controllers/documentsController', () => {
 });
 
 import documentRoutes from '@/routes/documents';
-import { initializeQdrant } from '@/lib/vector/qdrant-initializer';
 import { EmbeddingService } from '@/lib/vector/embedding';
 
 describe('#9 — rotas de documentos que chamam a OpenAI têm freio por usuário', () => {
@@ -46,14 +37,6 @@ describe('#9 — rotas de documentos que chamam a OpenAI têm freio por usuário
     }
 
     expect(last).toBe(429);
-  });
-});
-
-describe('#12 — índice de payload em userId no Qdrant', () => {
-  it('initializeQdrant cria o índice keyword de userId (todas as buscas filtram por ele)', async () => {
-    await initializeQdrant();
-
-    expect(createPayloadIndex).toHaveBeenCalledWith('documents', expect.objectContaining({ field_name: 'userId', field_schema: 'keyword' }));
   });
 });
 

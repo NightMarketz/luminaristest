@@ -1,6 +1,7 @@
 import type { Server } from 'http';
 import app from './app';
-import { runQdrantInitialization } from './lib/vector/qdrant';
+import { getVecIndex } from './lib/vector/sqliteVec';
+import { vecOrphanSweepScheduler } from './jobs/VecOrphanSweepScheduler';
 import prisma from './lib/prisma';
 import { logger } from './lib/logger';
 import { sendAlertWebhook } from './lib/alertWebhook';
@@ -27,9 +28,8 @@ let httpServer: Server | undefined;
  *
  * PRÉ-BOOT: `server.ts` passa a aguardar a inicialização do alimentador de bindings contábeis
  * ANTES de `app.listen()` — a primeira vez que o bootstrap do projeto bloqueia o `listen()` numa
- * Promise (o Qdrant, logo abaixo, continua fire-and-forget DELIBERADAMENTE — precedente contrário
- * registrado, não revogado; Qdrant não é uma pré-condição para servir contabilidade corretamente,
- * bindings ativos são).
+ * Promise (o antigo índice de vetores externo ficava fire-and-forget DELIBERADAMENTE — não era
+ * pré-condição para servir contabilidade corretamente, bindings ativos são).
  *
  * MODO DE FALHA (F-FEEDER-4): se `initializeAccountingSyncFromBindings()` rejeitar — zero
  * `AccountingBinding` `Active` no banco (`NoActiveAccountingBindingsError`) ou colisão de
@@ -45,13 +45,12 @@ async function bootstrap(): Promise<void> {
   await ApplicationFactory.getInstance().getLegalParameterService().aquecer();
   // BE-INCR-LEGAL-PARAMS PR-4 (item 10, L-3): publicar/revogar acorda o recálculo logo depois do commit.
   ApplicationFactory.getInstance().getLegalParameterService().setAoEnfileirar(() => legalParamsRecalcScheduler.kick());
+  // BE-INCR-RAG-DOCUMENTOS RAG-PR-A item 4: abre o arquivo de vetores (VECTOR_DB_PATH) com a sqlite-vec e cria a
+  // chunk_vec de forma idempotente. Extensão que não carrega derruba o boot (VEC_EXTENSAO_NAO_CARREGADA).
+  getVecIndex();
 
   httpServer = app.listen(PORT, () => {
     logger.event('info', 'process.started', 'Luminaris Server running', { url: `http://localhost:${PORT}`, health: `http://localhost:${PORT}/health` });
-
-    // Initialize external infra at bootstrap (not on module import). Fire-and-forget: the function
-    // logs and swallows its own errors, so a Qdrant outage never crashes the API process.
-    void runQdrantInitialization();
 
     // Só aqui: o alimentador já trocou o accountingSync (o await acima), então o primeiro
     // tick do reconcile enxerga os mappers vindos dos bindings Active, nunca a fixture.
@@ -61,6 +60,7 @@ async function bootstrap(): Promise<void> {
     mpReleaseReportScheduler.start(); // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-5)
     legalParamsRecalcScheduler.start(); // BE-INCR-LEGAL-PARAMS PR-4 (item 10): varredura dos jobs PENDING
     ptaxRateScheduler.start(); // BE-INCR-CRM-REPORT-BUILDER PR-1 (item 23): PTAX de fechamento do BCB
+    vecOrphanSweepScheduler.start(); // BE-INCR-RAG-DOCUMENTOS RAG-PR-A item 9: vetor sem Chunk, diário
   });
 }
 

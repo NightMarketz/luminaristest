@@ -13,7 +13,7 @@ import { UserService } from '../services/UserService';
 import { UserRepository } from '../repositories/UserRepository';
 import { UserPolicy } from '../policies/UserPolicy';
 import { Role } from '../models/User.model';
-import type { IVectorRepository } from '@/features/documents/repositories/IVectorRepository';
+import type { IChunkVectorRepository } from '@/features/documents/repositories/IChunkVectorRepository';
 import { pushTestSchema, resetDb, disconnectDb, seedUser, ctxFor, makeApp, authHeader } from '@test/helpers';
 
 const PDF = Buffer.from('%PDF-1.4\n%guarda\n');
@@ -46,7 +46,7 @@ describe('§3.4 #12 — exclusão de usuário não limpa anexos em disco', () =>
       },
     });
     const absPath = storage.resolveReadPath(storageKey);
-    const vectors = { deleteVectorsByUserId: jest.fn().mockResolvedValue(undefined) } as unknown as IVectorRepository;
+    const vectors = { deleteByUser: jest.fn().mockResolvedValue(undefined) } as unknown as IChunkVectorRepository;
     const service = new UserService(new UserRepository(), new UserPolicy(), vectors);
 
     await service.deleteUser(victim.id, ctxFor({ id: 'admin-x', username: 'root2', role: Role.ADMIN }));

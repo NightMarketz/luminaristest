@@ -13,6 +13,7 @@ import { ChatMessageRole } from '../models/ChatMessage.model';
 import type { IChatMessage } from '../models/ChatMessage.model';
 import type { IChatInstanceRepository } from '../../chatInstances/repositories/IChatInstanceRepository';
 import type { Prisma } from 'generated/prisma';
+import { RagDetailSchema, type RagDetail } from '@/features/chat/dtos/ChatDto';
 import type { TurnUsage } from '@/lib/openai/llmUsage';
 
 /**
@@ -110,7 +111,7 @@ export class ChatMessageService {
    * @throws {ForbiddenError} If the instance does not belong to the user
    * `usage` (I11) é gravado no mesmo `create`; ausente → colunas NULL.
    */
-  async appendAssistantMessage(chatInstanceId: string, content: string, userContext: UserContext, usage?: TurnUsage): Promise<void> {
+  async appendAssistantMessage(chatInstanceId: string, content: string, userContext: UserContext, usage?: TurnUsage, ragDetail?: RagDetail | null): Promise<void> {
     if (!userContext.userId) {
       throw new UnauthorizedError('Authentication required');
     }
@@ -133,6 +134,8 @@ export class ChatMessageService {
         model: usage.model,
         usageDetail: usage.calls,
       }),
+      // RAG emenda 07/11, item 15e (F-RAG-M7): citações e dados técnicos do turno; ausente = NULL.
+      ...(ragDetail && { ragDetail }),
     };
     await this.chatMessageRepository.createMessage(messageData);
   }
@@ -303,7 +306,9 @@ export class ChatMessageService {
       updatedAt: message.updatedAt,
       promptTokens: message.promptTokens ?? null,
       completionTokens: message.completionTokens ?? null,
-      model: message.model ?? null
+      model: message.model ?? null,
+      // Json do banco: só sai o que casa com o schema (linha anterior à emenda ou corrompida → null).
+      ragDetail: RagDetailSchema.safeParse(message.ragDetail).data ?? null,
     };
   }
 
@@ -317,7 +322,9 @@ export class ChatMessageService {
       id: message.id,
       content: message.content,
       role: message.role,
-      createdAt: message.createdAt
+      createdAt: message.createdAt,
+      // RAG emenda 07/11, item 15e: a lista é o que o chat reaberto lê — as citações vão junto.
+      ragDetail: RagDetailSchema.safeParse(message.ragDetail).data ?? null,
     };
   }
 } 

@@ -12,6 +12,7 @@ content: string
 }[]
 chatInstanceId?: string
 confirmedProposalId?: string
+ragMode?: ("DESCRITIVO" | "RAPIDO")
 }
 export interface ChatResponseInput {
 answer: string
@@ -28,11 +29,52 @@ id: string
 score: number
 payload: {
 documentId: string
-userId: string
 textContent: string
 fileName: string
 chunkId: string
 index: number
 }
+technical?: {
+chunkId: string
+documentId: string
+fileName: string
+chunkIndex: number
+score: number
+embeddingStamp: string
+}
 }[]
+citations?: {
+marker: number
+chunkId: string
+}[]
+answerModel?: string
+}
+export interface RagCitationInput {
+marker: number
+chunkId: string
+}
+export interface RagDetailInput {
+mode: ("DESCRITIVO" | "RAPIDO")
+citations: {
+marker: number
+chunkId: string
+}[]
+sources: {
+chunkId: string
+documentId: string
+fileName: string
+chunkIndex: number
+score: number
+embeddingStamp: string
+}[]
+answerModel?: string
+}
+export type RagModeInput = ("DESCRITIVO" | "RAPIDO")
+export interface RagTechnicalInput {
+chunkId: string
+documentId: string
+fileName: string
+chunkIndex: number
+score: number
+embeddingStamp: string
 }

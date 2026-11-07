@@ -9,7 +9,8 @@
 import bcrypt from 'bcryptjs';
 import { UserService } from '../UserService';
 import { UserRepository } from '../../repositories/UserRepository';
-import { VectorRepository } from '@/features/documents/repositories/VectorRepository';
+import { ChunkVectorRepository } from '@/features/documents/repositories/ChunkVectorRepository';
+import { getVecIndex } from '@/lib/vector/sqliteVec';
 import { UserPolicy } from '../../policies/UserPolicy';
 import { Role } from '../../models/User.model';
 import {
@@ -22,7 +23,7 @@ import {
 import { pushTestSchema, resetDb, disconnectDb, seedUser, ctxFor } from '@test/helpers';
 
 const repo = new UserRepository();
-const service = new UserService(repo, new UserPolicy(), new VectorRepository());
+const service = new UserService(repo, new UserPolicy(), new ChunkVectorRepository(() => getVecIndex().db));
 
 beforeAll(() => {
   pushTestSchema();
