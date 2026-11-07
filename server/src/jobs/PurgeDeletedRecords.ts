@@ -49,12 +49,15 @@ export const PURGE_CLASS: Record<string, PurgeClass> = {
   DocumentAttachment: 'contabil-fiscal',
   DpAfastamento: 'contabil-fiscal',
   DpCargo: 'contabil-fiscal',
+  DpDependente: 'contabil-fiscal', // BE-INCR-DP-F2 PR-1: dado de folha, como o trabalhador
   DpConvencaoColetiva: 'contabil-fiscal',
   DpConvencaoParametro: 'contabil-fiscal',
   DpFeriasImplantacao: 'contabil-fiscal',
   DpJornada: 'contabil-fiscal',
+  DpLancamento: 'contabil-fiscal', // BE-INCR-DP-F2 PR-1
   DpLotacao: 'contabil-fiscal',
   DpModuloAtivacao: 'contabil-fiscal',
+  DpOutraRemuneracao: 'contabil-fiscal', // BE-INCR-DP-F2 PR-1
   DpSindicato: 'contabil-fiscal',
   DpTrabalhador: 'contabil-fiscal',
   DpVinculo: 'contabil-fiscal',
