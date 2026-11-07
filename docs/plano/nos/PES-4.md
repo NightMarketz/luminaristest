@@ -86,12 +86,12 @@ de abrir o #1128 e despachar o revisor.
 |---|---|---|---|---|---|
 | #1125 | `claude/dp-f2-pr0r-4904eb` (base `main` a39ea73a1) | 65–76 (70 parcial: o motor prova no PR-4) | vermelha (migração, parâmetro legal) | tsc, check:arch, 48 unit, 8 suítes de integração, smoke:migration verdes; CI do d98e8498 pegou 2 testes defasados (corrigidos no 321774bb8) | PASSOU (07/11, rodada 1, em 321774bb8: 5 sabotagens pegas; achado não bloqueante — 12×36 do F1 não renomeava — corrigido no 0fcb856b4) |
 | #1127 | `claude/dp-f2-pr0` (base `claude/dp-f2-pr0r-4904eb`) | 1–12 | vermelha só pelo título (`classe-risco`: `revisor: não`) | tsc (src e testes), check:arch, 43 unit (`folha/__tests__`) verdes | não se aplica |
-| #1128 | `claude/dp-f2-pr1` (base `claude/dp-f2-pr0`) | 13–22, 77–78 + as 5 rubricas `INFORMADO` do 23 | vermelha (migração, parâmetro legal, `auditCanonical`; `revisor: obrigatório`) | tsc (src e testes), check:arch, eslint, 12 suítes unit, 3 de integração, `migrate diff` sem diferença, smoke:migration verdes; snapshot de DTO à mão (só `dp`), CI prova | rodada 1 despachada em 07/11 (head c5ad55649); veredito vai no corpo do #1128 |
+| #1128 | `claude/dp-f2-pr1` (base `claude/dp-f2-pr0`) | 13–22, 77–78 + as 5 rubricas `INFORMADO` do 23 | vermelha (migração, parâmetro legal, `auditCanonical`; `revisor: obrigatório`) | tsc (src e testes), check:arch, eslint, 12 suítes unit, 3 de integração, `migrate diff` sem diferença, smoke:migration verdes; snapshot de DTO à mão (só `dp`), CI prova | PASSOU (07/11, rodada 1, em c5ad55649: 5 sabotagens pegas; lacuna de teste do Tier-0 do sub-recurso fechada em b232f187d; `tx`→cliente global não pego, como #1026/#1041; ressalva ao tipo 11 curatelado vai ao contador) |
 
 O #1127 estava em conflito com a base (só a tabela desta nota) e por isso sem CI; mesclado o #1125 nele em 07/11
 (`f03b231d2`), o CI passou a rodar.
 
-**Pendente:** veredito do revisor do #1128 → PR-2 (resto do 23: `DERIVADO`, `ADIANTAMENTO`, `DESCONTO_ADIANTAMENTO`,
+**Pendente:** PR-2 (resto do 23: `DERIVADO`, `ADIANTAMENTO`, `DESCONTO_ADIANTAMENTO`,
 `SALARIO_FAMILIA`, `AFASTAMENTO_EMPRESA_15D`, DSR, complementos; 24–26) → PR-3 (27–33) → PR-4 (34–47) → PR-5 (48–58;
 inclui marcar a folha desatualizada no lançamento, item 16/52) → PR-6 (59–64), em pilha sobre o #1128.
 
@@ -121,8 +121,7 @@ inclui marcar a folha desatualizada no lançamento, item 16/52) → PR-6 (59–6
    art. 58-A), marcado pelo operador e falso por padrão; o piso proporcional do F-DPF-6 só vale com ele verdadeiro. Entra
    no PR-4 (campo + migração + DTO da jornada). Na mesma rodada o dono confirmou a 1ª: *"PR-1 com as rubricas"*.
 
-**Próximo comando:** gravar o veredito do revisor do #1128 no corpo do PR (e corrigir no degrau, se reprovar; até 3
-rodadas, só no diff novo). Depois, sessão nova com `sessao-feature`: `git fetch` e
+**Próximo comando:** sessão nova com `sessao-feature`: `git fetch` e
 `git checkout -b claude/dp-f2-pr2 origin/claude/dp-f2-pr1`; ler o BRIEF §2 PR-2 (itens 23–26) e o dossiê
 `pesquisas-legais/brief-pes4-f2-contador/relatorio.md` §9; molde = o bloco das 5 rubricas do PR-1 em
 `models/rubricas/catalogo.ts` (+ `published.json` e `rubricas.test.ts`). O item 24 (`rubricaCalculo.ts`) mapeia também as
