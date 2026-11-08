@@ -234,4 +234,43 @@ describe('AssinadorLocalSection', () => {
     await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
     expect(svc.getEstado).toHaveBeenCalledTimes(2);
   });
+
+  it('achado 1/A: releitura de 30 s que falha depois de carga online não deixa "Online" como fato na tela', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    svc.getEstado.mockResolvedValueOnce(view());
+    render(<AssinadorLocalSection unitId="u1" />);
+    expect(await screen.findByText('Online')).toBeInTheDocument();
+    svc.getEstado.mockRejectedValueOnce(new Error('Network Error'));
+    await act(async () => { vi.advanceTimersByTime(RELEITURA_MS); });
+    expect(await screen.findByText('Desconhecido')).toBeInTheDocument();
+    expect(screen.queryByText('Online')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Revogar' })).toBeInTheDocument();
+  });
+
+  it('achado 1/B: revogar deu certo e a releitura falha ⇒ o vínculo sai da tela e Revogar não fica disponível', async () => {
+    svc.getEstado.mockResolvedValueOnce(view());
+    svc.revogar.mockResolvedValue(undefined);
+    render(<AssinadorLocalSection unitId="u1" />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Revogar' }));
+    const dialog = await screen.findByRole('dialog');
+    svc.getEstado.mockRejectedValue(new Error('Network Error'));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Revogar' }));
+    expect(await screen.findByText(/Nenhum assinador pareado/)).toBeInTheDocument();
+    expect(screen.queryByText('Online')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Revogar' })).toBeNull();
+    expect(svc.revogar).toHaveBeenCalledTimes(1);
+  });
+
+  it('achado 2: re-pareamento do mesmo dispositivo (mesmo id, pareadoEm novo) fecha o modal e avisa "pareado"', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    svc.getEstado.mockResolvedValueOnce(view({ pareadoEm: '2026-11-01T00:00:00.000Z' }));
+    svc.gerarCodigo.mockResolvedValue({ codigo: 'ABCDEFGHJKMN', expiraEm: new Date(Date.now() + 600_000).toISOString() });
+    render(<AssinadorLocalSection unitId="u1" />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Gerar código de pareamento' }));
+    await screen.findByRole('dialog');
+    svc.getEstado.mockResolvedValue(view({ pareadoEm: '2026-11-08T10:00:00.000Z' }));
+    await act(async () => { vi.advanceTimersByTime(RELEITURA_MS); });
+    expect(await screen.findByText('Assinador pareado.')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
 });

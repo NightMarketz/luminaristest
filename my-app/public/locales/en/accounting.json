@@ -2742,6 +2742,7 @@
       "status": "Status",
       "online": "Online",
       "fora": "Offline",
+      "desconhecido": "Unknown",
       "lastSeen": "Last contact",
       "nunca": "never",
       "dispositivo": "Checkout",

@@ -2742,6 +2742,7 @@
       "status": "Situação",
       "online": "Online",
       "fora": "Fora do ar",
+      "desconhecido": "Desconhecido",
       "lastSeen": "Último contato",
       "nunca": "nunca",
       "dispositivo": "Caixa",

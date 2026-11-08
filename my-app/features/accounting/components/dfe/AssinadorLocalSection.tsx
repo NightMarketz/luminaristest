@@ -52,6 +52,8 @@ export function AssinadorLocalSection({ unitId }: AssinadorLocalSectionProps) {
   const [view, setView] = useState<DfeSignerView | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Releitura que falhou: `view` é a última lida com sucesso, mas não se sabe mais se o vínculo continua ativo.
+  const [desconhecido, setDesconhecido] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [codigo, setCodigo] = useState<DfeSignerCodigoView | null>(null);
@@ -61,8 +63,9 @@ export function AssinadorLocalSection({ unitId }: AssinadorLocalSectionProps) {
   const [agora, setAgora] = useState(() => Date.now());
   // Troca de unidade com resposta em voo: só a última carga vale (padrão `reqRef` do FiscalProfilePanel).
   const reqRef = useRef(0);
-  // O dispositivo que existia quando o modal do código abriu: outro id na releitura = pareamento visto pela tela (FA-8).
-  const antesDoCodigoRef = useRef<string | null>(null);
+  // O pareamento que existia quando o modal do código abriu: outro id ou outro `pareadoEm` na releitura = pareamento
+  // visto pela tela (FA-8). O mesmo dispositivo pareando de novo mantém o id e só renova `pareadoEm`.
+  const antesDoCodigoRef = useRef<{ dispositivoId: string; pareadoEm: string } | null>(null);
   // A unidade da tela AGORA: a resposta de uma mutação que começou noutra unidade é descartada (o código gerado para A
   // não pode aparecer sob B — review independente do #1143).
   const unitRef = useRef(unitId);
@@ -76,8 +79,10 @@ export function AssinadorLocalSection({ unitId }: AssinadorLocalSectionProps) {
       if (req !== reqRef.current) return;
       setView(v);
       setLoaded(true);
+      setDesconhecido(false);
     } catch (e: unknown) {
       if (req !== reqRef.current) return;
+      setDesconhecido(true);
       setLoadError(resolveError(e, tRef.current('dfe.assinador.error.load', 'Não foi possível carregar o estado do assinador local.')));
     }
   }, [unitId, tRef]);
@@ -85,6 +90,7 @@ export function AssinadorLocalSection({ unitId }: AssinadorLocalSectionProps) {
   useEffect(() => {
     setView(null);
     setLoaded(false);
+    setDesconhecido(false);
     setCodigo(null);
     setCodigoAberto(false);
     setPareadoAgora(false);
@@ -112,7 +118,8 @@ export function AssinadorLocalSection({ unitId }: AssinadorLocalSectionProps) {
   // FA-8: com o modal do código aberto, o dispositivo novo na releitura fecha o modal e avisa "pareado".
   useEffect(() => {
     if (!codigoAberto || !view) return;
-    if (view.dispositivoId !== antesDoCodigoRef.current) {
+    const antes = antesDoCodigoRef.current;
+    if (!antes || view.dispositivoId !== antes.dispositivoId || view.pareadoEm !== antes.pareadoEm) {
       setCodigoAberto(false);
       setCodigo(null);
       setPareadoAgora(true);
@@ -135,7 +142,7 @@ export function AssinadorLocalSection({ unitId }: AssinadorLocalSectionProps) {
     try {
       const c = await dfeAssinadorService.gerarCodigo(pedido);
       if (unitRef.current !== pedido) return;
-      antesDoCodigoRef.current = view?.dispositivoId ?? null;
+      antesDoCodigoRef.current = view ? { dispositivoId: view.dispositivoId, pareadoEm: view.pareadoEm } : null;
       setCodigo(c);
       setCodigoAberto(true);
     } catch (e: unknown) {
@@ -160,6 +167,8 @@ export function AssinadorLocalSection({ unitId }: AssinadorLocalSectionProps) {
       if (unitRef.current !== pedido) return;
       setRevogarAberto(false);
       setPareadoAgora(false);
+      // O revogar deu certo: o vínculo sai da tela já agora, mesmo que a releitura logo abaixo falhe.
+      setView(null);
       await load();
     } catch (e: unknown) {
       if (unitRef.current !== pedido) return;
@@ -215,7 +224,11 @@ export function AssinadorLocalSection({ unitId }: AssinadorLocalSectionProps) {
         <div className="space-y-2">
           <div className={row}>
             <span className={label}>{t('dfe.assinador.status', 'Situação')}</span>
-            {estado.kind === 'online' ? (
+            {desconhecido ? (
+              <span className="rounded-full bg-neutral-800 px-2 py-0.5 text-xs font-medium text-neutral-300">
+                {t('dfe.assinador.desconhecido', 'Desconhecido')}
+              </span>
+            ) : estado.kind === 'online' ? (
               <span className="rounded-full bg-emerald-900/40 px-2 py-0.5 text-xs font-medium text-emerald-300">{t('dfe.assinador.online', 'Online')}</span>
             ) : (
               <span className="rounded-full bg-red-900/40 px-2 py-0.5 text-xs font-medium text-red-300">{t('dfe.assinador.fora', 'Fora do ar')}</span>
