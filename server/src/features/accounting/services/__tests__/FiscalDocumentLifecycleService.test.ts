@@ -269,7 +269,12 @@ describe('FiscalDocumentLifecycleService — consultarUm (itens 24-25)', () => {
         docsById['doc-1'] = { ...docsById['doc-1'], status: 'AUTHORIZED' };
         return baseDoc({ status: 'AUTHORIZED' });
       })
-      .mockRejectedValueOnce(new Error('fiscal_document_status_changed: doc-1'));
+      .mockImplementationOnce(async () => {
+        // O repositório real só lança status_changed quando o status mudou: aqui, o cancelamento ganhou a corrida. A releitura
+        // (X11 PR-3, revisão #1144) vê CANCELLED — nota que deixou de ser válida → proveniência aposentada.
+        docsById['doc-1'] = { ...docsById['doc-1'], status: 'CANCELLED' };
+        throw new Error('fiscal_document_status_changed: doc-1');
+      });
     await expect(service.consultarUm(SCOPE, 'doc-1')).resolves.toBeDefined();
     expect(repo.transition).toHaveBeenLastCalledWith(SCOPE, 'doc-1', expect.objectContaining({ whenStatusIn: ['AUTHORIZED'], sourceDocumentId: 'srcdoc-1' }));
     expect(postingService.retireSourceDocument).toHaveBeenCalledWith(SCOPE, 'srcdoc-1', 'dfe_status_changed');

@@ -16,7 +16,7 @@ import type {
   SequenceAmbiente,
   TransitionData,
 } from './IFiscalDocumentRepository';
-import { AUTHORIZED_STATUSES } from './IFiscalDocumentRepository';
+import { NOTA_VALIDA_STATUSES } from './IFiscalDocumentRepository';
 import { locaisDoPayload } from '../models/issCompetencia';
 
 export function attemptRef(documentId: string, attemptNo: number): string {
@@ -99,7 +99,7 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
   public async saleIdsWithAuthorizedDocument(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<string[]> {
     if (saleIds.length === 0) return [];
     const rows = await this.db(tx).fiscalDocument.findMany({
-      where: { ...accountingScopeWhere(scope), ambiente: 'producao', status: { in: [...AUTHORIZED_STATUSES] }, saleId: { in: [...saleIds] }, deletedAt: null },
+      where: { ...accountingScopeWhere(scope), ambiente: 'producao', status: { in: [...NOTA_VALIDA_STATUSES] }, saleId: { in: [...saleIds] }, deletedAt: null },
       select: { saleId: true },
       distinct: ['saleId'],
     });
@@ -112,7 +112,7 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
         ...accountingScopeWhere(scope),
         kind: 'NFSE',
         ambiente: 'producao',
-        status: { in: [...AUTHORIZED_STATUSES] },
+        status: { in: [...NOTA_VALIDA_STATUSES] },
         dCompet: { startsWith: `${competencia}-` },
         deletedAt: null,
       },
@@ -133,7 +133,7 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     const alvo = {
       kind: 'NFSE',
       partner: { in: [...partners] },
-      status: { in: [...AUTHORIZED_STATUSES] },
+      status: { in: [...NOTA_VALIDA_STATUSES] },
       deletedAt: null,
       chaveOuCodigo: { not: null },
       nfseDhProc: { gte: desde },
@@ -352,7 +352,7 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
   ): Promise<{ candidates: FiscalDocument[]; nextCursor: string | null }> {
     const page = await this.db(tx).fiscalDocument.findMany({
       where: {
-        status: { in: [...AUTHORIZED_STATUSES] },
+        status: { in: [...NOTA_VALIDA_STATUSES] },
         ambiente: 'producao',
         deletedAt: null,
         xmlAttachmentId: null,

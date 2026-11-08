@@ -101,7 +101,7 @@ describe('DfePollScheduler — alerta da NFC-e off-line uma vez por nota, por ev
 });
 
 describe('DfePollScheduler — passo de eventos da NFS-e (BE-INCR-DFE-EVENTOS PR-2, item 18)', () => {
-  const EVENTOS_OK = { consultadas: 3, canceladas: 1, substituidasFora: 0, ignorados: 0, skipped: 0, failed: 0, avisos: [] as string[] };
+  const EVENTOS_OK = { consultadas: 3, canceladas: 1, substituidasFora: 0, emAnalise: 0, indeferidas: 0, ignorados: 0, skipped: 0, failed: 0, avisos: [] as string[] };
   const comEventos = (e: Partial<typeof EVENTOS_OK>): PollSummary => ({ total: 0, updated: 0, skipped: 0, failed: 0, eventos: { ...EVENTOS_OK, ...e } });
   const nivel = (log: { event: jest.Mock }) => log.event.mock.calls.find(([, ev]) => ev === 'job.completed')?.[0];
 

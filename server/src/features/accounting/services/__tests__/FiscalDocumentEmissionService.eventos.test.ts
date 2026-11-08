@@ -168,3 +168,11 @@ describe('PR-2 (itens 18–19) — pendências do cancelamento visto de fora e d
     expect((await novo.svc.getById(SCOPE as never, 'orig')).pendencias).toEqual([]);
   });
 });
+
+describe('PR-3 (item 20) — pendência da análise fiscal do cancelamento', () => {
+  it('CANCEL_ANALYSIS → cancelamento_em_analise; a nota AUTHORIZED ao lado não a ganha', async () => {
+    const { svc } = make([row({ status: 'CANCEL_ANALYSIS', statusAntesAnalise: 'AUTHORIZED', cancelMotivo: 1 }), row({ id: 'outra', cTribNac: '070101' })]);
+    expect((await svc.getById(SCOPE as never, 'orig')).pendencias).toEqual(['cancelamento_em_analise']);
+    expect((await svc.getById(SCOPE as never, 'outra')).pendencias).toEqual([]);
+  });
+});

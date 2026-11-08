@@ -25,7 +25,8 @@ export const EventoNfseSchema = z.discriminatedUnion('tipo', [
 
 /**
  * Eventos que cancelam a nota (item 18): o cancelamento do emitente (e101101), o de ofício (e305101), o deferido pela
- * análise fiscal (e105104) e o por substituição (e105102). e101103/e105105 são do PR-3 (F-EVT-4 b): conhecidos, sem efeito.
+ * análise fiscal (e105104) e o por substituição (e105102). e101103/e105105 são a análise fiscal (PR-3, F-EVT-4 b):
+ * mudam a nota para `CANCEL_ANALYSIS` e de volta (`desfechoDaAnalise`, models/eventosNfse.ts), sem cancelar.
  */
 export const EVENTOS_QUE_CANCELAM = ['e101101', 'e305101', 'e105104', 'e105102'] as const;
 export type EventoQueCancela = (typeof EVENTOS_QUE_CANCELAM)[number];
@@ -36,12 +37,18 @@ export type EventoQueCancela = (typeof EVENTOS_QUE_CANCELAM)[number];
  */
 export const AVISO_CANCEL_EM_ANDAMENTO = 'cancelamento_em_andamento';
 
+/** PR-3 (item 20; dono 07/11) — eventType da entrada e da saída por indeferimento da análise fiscal (allowlist em auditCanonical). */
+export const DFE_CANCEL_ANALYSIS_EVENT = 'dfe.cancel_analysis';
+
 /** Resumo do passo de eventos no tick do `dfe_poll_pending` (item 18). `avisos` nomeia a nota por número e série (A3). */
 export const EventosTickSummarySchema = z
   .object({
     consultadas: z.number().int(),
     canceladas: z.number().int(),
     substituidasFora: z.number().int(),
+    /** PR-3 (item 20): notas que entraram em análise fiscal (e101103) e que voltaram por indeferimento (e105105). */
+    emAnalise: z.number().int(),
+    indeferidas: z.number().int(),
     ignorados: z.number().int(),
     skipped: z.number().int(),
     failed: z.number().int(),

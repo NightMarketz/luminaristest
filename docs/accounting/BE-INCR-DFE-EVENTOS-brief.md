@@ -309,6 +309,31 @@ Outras leituras do PR-2 que não pediram decisão, porque o BRIEF já as dá:
 - **Resíduo declarado:** o cancelamento concluído pelo job grava `cancelMotivo`/`cancelReason` nulos. O evento consultado
   só traz tipo e `dhProc`. O motivo digitado no pedido em voo segue no fisco, não no Luminaris.
 
+### Emenda do PR-3 — lacunas de spec decididas pelo dono (07/11/2026)
+
+> Sessão de feature do PR-3 (item 20, F-EVT-4 b). Autorização: o mesmo `executa` do dono de 07/11 (*"Pode disparar então
+> o que precisa seguir"*), com o PR-3 empilhado sobre o PR-2 (Q4 da emenda anterior). O item 20 não cobria quatro pontos;
+> viraram questionário (AskUserQuestion, 07/11) e as quatro respostas ficaram na recomendação. Não muda fork ratificado.
+> Fonte nova lida nesta sessão: `NFSe-ESQUEMAS_XSD-v1.01.zip` (sha256 `e7935cbd9470`, igual ao MANIFEST) —
+> `tiposEventos_v1.01.xsd` `TE101103`/`TE105104`/`TE105105` e `tiposSimples_v1.01.xsd` `TSCodJustAnaliseFiscalCanc`
+> (1|2|9), `TSCodJustAnaliseFiscalCancDef` (1), `TSCodJustAnaliseFiscalCancIndef` (1 indeferido · 2 sem análise de
+> mérito). O e105104/e105105 trazem `CPFAgTrib` (CPF do agente municipal) e `nProcAdm` (0-1).
+
+| # | Lacuna | Resposta do dono (literal) | Efeito |
+|---|---|---|---|
+| P1 | A nota em análise continua válida no fisco (só o e105104 a cancela). As apurações (ISS, IBS/CBS, Simples) e os buscadores contavam só `AUTHORIZED*` | *"Conta como autorizada (Recomendado)"* | `NOTA_VALIDA_STATUSES = AUTHORIZED* + CANCEL_ANALYSIS` nas apurações e nos buscadores de nota viva. Se o deferimento vier, ela sai como qualquer cancelamento (F-TC-3 a). Os guards de cancelar e substituir **não** aceitam a nota em análise (matriz [8], E0068). DANFE e inutilização são NF-e/NFC-e, onde o status não existe |
+| P2 | De onde voltar no e105105: `AUTHORIZED_DIVERGENT` só existe no próprio status | *"Coluna do status anterior (Recomendado)"* | `FiscalDocument.statusAntesAnalise` gravado na entrada, restaurado no indeferimento, limpo na saída. A divergência da nota em análise vale nas apurações que a contam à parte (`statusDeAutorizacao`) |
+| P3 | Como a porta recebe o e101103, e com que auditoria | *"Flag no cancelar (Recomendado)"* | `CancelInput.analiseFiscal?: true` (NFS-e); `CancelResult` ganha `ANALYSIS_REQUESTED`; capacidade `analiseFiscal` (ausente → 409 `DFE_ANALISE_NAO_SUPORTADA`). O 2º `POST /cancelar { …, analiseFiscal: true }` manda o e101103 direto. `PROCESSING` segue o item 19. Audit novo `dfe.cancel_analysis {documentId, evento e101103\|e105105, cMotivo?}`; o deferido usa `dfe.cancelled` com evento e105104 |
+| P4 | Por onde o modo manual registra cada evento (F-FE-DFE-9 a: o XML é a prova) | *"Mesma rota cancelamento-manual (Recomendado)"* | O `cancelamento-manual` aceita o XML de e101103 (→ `CANCEL_ANALYSIS`), e105104 (→ `CANCELLED`) e e105105 (→ status de antes). O `cMotivo` do corpo bate com o do XML (e101101/e101103) ou com o do pedido gravado (e105104/e105105). O XML vira anexo em produção. O `CPFAgTrib` não é lido: nunca é gravado nem auditado |
+
+Leituras do PR-3 que não pediram decisão, porque o BRIEF ou a fonte já as dão:
+- Desfecho pelo job: o evento que cancela vence (item 18). Sem ele, vale o **último** entre e101103 e e105105 por `dhProc`.
+  Uma análise indeferida pode ser pedida de novo (Anexo II [4]–[6]).
+- O e101103 visto pelo job numa nota `AUTHORIZED*` sem pedido local leva a nota a `CANCEL_ANALYSIS` (A2: pedido feito no
+  portal), com o motivo nulo.
+- **Resíduo declarado:** com o pedido de análise em voo (`PROCESSING`), o motivo digitado fica no fisco. A entrada pelo job
+  grava `cancelMotivo` nulo, como no item 19.
+
 ## 4. Contratos (esboço materializável)
 
 ```prisma
@@ -329,9 +354,10 @@ model FiscalDocument {
   cancelEventAttachmentId String?   // XML do e101101 (item 7)
   cancelRequestedAt       DateTime? // PR-2, item 19
   cancelEvento            String?   // PR-2, emenda Q2 (07/11): e101101 | e305101 | e105104 | e105102
+  statusAntesAnalise      String?   // PR-3, emenda P2 (07/11): AUTHORIZED | AUTHORIZED_DIVERGENT, restaurado no e105105
   @@index([userId, unitId, substitutesDocumentId])
 }
-// status ganha CANCEL_ANALYSIS só se F-EVT-4 (b)
+// status ganha CANCEL_ANALYSIS (F-EVT-4 b, PR-3)
 ```
 
 ```ts
@@ -365,7 +391,8 @@ type JanelaEventos = {
 interface DfeCapabilities { /* … */ substituir: boolean; consultarEventos: boolean /* PR-2 */ }
 interface EmissaoResult   { /* … */ dhProc?: string }  // item 1
 /** OUT_OF_WINDOW ⇔ o fisco rejeitou com E0822 (Anexo II [28]); E0823/E0824/E0827/E0840 = REJECTED com o código. */
-interface CancelResult    { status: 'CANCELLED' | 'OUT_OF_WINDOW' | 'REJECTED' | 'PROCESSING'; errors: … }
+interface CancelResult    { status: 'CANCELLED' | 'OUT_OF_WINDOW' | 'REJECTED' | 'PROCESSING' | 'ANALYSIS_REQUESTED' /* PR-3 */; errors: … }
+// PR-3 (emenda P3): CancelInput NFS-e += { analiseFiscal?: true } · DfeCapabilities += { analiseFiscal?: boolean }
 type EventoNfse =                                                              // PR-2, F-EVT-5 (b)
   | { tipo: 'e101101' | 'e305101' | 'e105104' | 'e105105' | 'e101103'; dhProc: string }
   | { tipo: 'e105102'; dhProc: string; chSubstituta: string; cMotivo: string };

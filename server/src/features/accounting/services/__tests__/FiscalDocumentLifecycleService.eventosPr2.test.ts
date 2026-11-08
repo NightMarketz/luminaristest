@@ -116,7 +116,7 @@ describe('item 18 — eventos vistos de fora (A2: cancelada fora do Luminaris, s
     expect(r).toMatchObject({ consultadas: 1, canceladas: 1, substituidasFora: 0, ignorados: 0, failed: 0 });
     expect(cancelar).not.toHaveBeenCalled();
     expect(cancelou(s.repo)).toEqual([
-      expect.objectContaining({ cancelledAt: new Date('2026-11-02T12:15:00.000Z'), cancelEvento: tipo, cancelMotivo: null, saleKey: 'cancelled:doc-interno-xyz:sale-1', whenStatusIn: ['AUTHORIZED', 'AUTHORIZED_DIVERGENT'] }),
+      expect.objectContaining({ cancelledAt: new Date('2026-11-02T12:15:00.000Z'), cancelEvento: tipo, cancelMotivo: null, saleKey: 'cancelled:doc-interno-xyz:sale-1', whenStatusIn: ['AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'CANCEL_ANALYSIS'] }),
     ]);
     expect(s.auditService.append).toHaveBeenCalledWith(expect.anything(), SCOPE, expect.objectContaining({ eventType: 'dfe.cancelled', payload: { documentId: 'doc-interno-xyz', evento: tipo } }));
     expect(s.postingService.retireSourceDocument).toHaveBeenCalledWith(SCOPE, 'src-1', `dfe_cancelled:${tipo}`);
@@ -146,7 +146,7 @@ describe('item 18 — eventos vistos de fora (A2: cancelada fora do Luminaris, s
     expect(cancelou(s.repo)).toEqual([]);
   });
 
-  it('e101103 / e105105 (PR-3, F-EVT-4 b) são conhecidos e sem efeito; a nota é tocada e vai para o fim do rodízio (Q3)', async () => {
+  it('e101103 seguido de e105105 numa nota AUTHORIZED: análise pedida e indeferida fora daqui — nada muda; a nota é tocada (Q3; PR-3 no .eventosPr3)', async () => {
     const s = make([doc()]);
     NullEmissor.programarEventos(CHAVE, [
       { tipo: 'e101103', dhProc: '2026-11-03T10:00:00-03:00' },

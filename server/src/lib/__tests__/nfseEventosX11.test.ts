@@ -5,7 +5,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { parseNfseAutorizada } from '../nfse';
-import { parseEventoCancelamento } from '../nfseEvento';
+import { parseEventoCancelamento, parseEventoNfseManual } from '../nfseEvento';
 import { signNfseEventoForTest, signNfseForTest } from '@test/helpers/nfeSignature';
 
 const RAW = readFileSync(join(__dirname, 'fixtures', 'nfse', 'nfse-autorizada-web.SYNTHETIC.xml'), 'utf8');
@@ -63,5 +63,54 @@ describe('item 8 — XML de e105102 no cancelamento manual', () => {
 
   it('nenhum dos dois → a mensagem antiga continua', () => {
     expect(() => parseEventoCancelamento(evento('<e999999/>'))).toThrow(/não é um cancelamento \(e101101 ausente\)/);
+  });
+});
+
+describe('X11 PR-3 (item 20) — parseEventoNfseManual: e101101 | e101103 | e105104 | e105105 (XSD 1.01 tiposEventos)', () => {
+  const evento = (grupo: string) =>
+    signNfseEventoForTest(
+      '<?xml version="1.0" encoding="UTF-8"?><evento xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.01">' +
+        `<infEvento Id="EVT${'1'.repeat(59)}"><verAplic>SefinNac</verAplic><ambGer>2</ambGer><nSeqEvento>001</nSeqEvento>` +
+        '<dhProc>2026-11-06T16:00:00-03:00</dhProc><nDFSe>88</nDFSe><pedRegEvento versao="1.01">' +
+        `<infPedReg Id="PRE${'2'.repeat(56)}"><tpAmb>1</tpAmb><verAplic>SefinNac</verAplic>` +
+        `<dhEvento>2026-11-06T15:59:00-03:00</dhEvento><CNPJAutor>11222333000181</CNPJAutor><chNFSe>${CH_ORIGINAL}</chNFSe>` +
+        `${grupo}</infPedReg></pedRegEvento></infEvento></evento>`,
+    );
+  const MOTIVO = 'servico nao foi prestado ao cliente';
+  const resposta = (tipo: string, cMotivo: string) =>
+    `<${tipo}><xDesc>x</xDesc><CPFAgTrib>12345678909</CPFAgTrib><nProcAdm>2026000123</nProcAdm><cMotivo>${cMotivo}</cMotivo><xMotivo>${MOTIVO}</xMotivo></${tipo}>`;
+
+  it('e101103: cMotivo 1|2|9 (TSCodJustAnaliseFiscalCanc) e xMotivo', () => {
+    expect(parseEventoNfseManual(evento(`<e101103><xDesc>x</xDesc><cMotivo>2</cMotivo><xMotivo>${MOTIVO}</xMotivo></e101103>`))).toEqual({
+      tipo: 'e101103', chNFSe: CH_ORIGINAL, cMotivo: 2, xMotivo: MOTIVO, dhProc: '2026-11-06T16:00:00-03:00',
+    });
+  });
+
+  it('e105104: cMotivo 1; o CPFAgTrib e o nProcAdm não saem do leitor (PII)', () => {
+    const r = parseEventoNfseManual(evento(resposta('e105104', '1')));
+    expect(r).toEqual({ tipo: 'e105104', chNFSe: CH_ORIGINAL, cMotivo: 1, xMotivo: MOTIVO, dhProc: '2026-11-06T16:00:00-03:00' });
+    expect(JSON.stringify(r)).not.toContain('12345678909');
+  });
+
+  it('e105105: cMotivo 1 indeferido | 2 sem análise de mérito', () => {
+    expect(parseEventoNfseManual(evento(resposta('e105105', '2')))).toMatchObject({ tipo: 'e105105', cMotivo: 2 });
+  });
+
+  it.each([
+    ['e105104', '2'],
+    ['e105105', '9'],
+    ['e101103', '3'],
+  ])('%s com cMotivo %s fora do domínio do XSD → nfse_evento_invalido', (tipo, c) => {
+    const grupo = tipo === 'e101103' ? `<e101103><xDesc>x</xDesc><cMotivo>${c}</cMotivo><xMotivo>${MOTIVO}</xMotivo></e101103>` : resposta(tipo, c);
+    expect(() => parseEventoNfseManual(evento(grupo))).toThrow(new RegExp(`cMotivo "${c}" do ${tipo}`));
+  });
+
+  it('e101101 segue lido como antes', () => {
+    expect(parseEventoNfseManual(evento(`<e101101><xDesc>x</xDesc><cMotivo>9</cMotivo><xMotivo>${MOTIVO}</xMotivo></e101101>`))).toMatchObject({ tipo: 'e101101', cMotivo: 9 });
+  });
+
+  it('e105102 → "registre pela substituição"; grupo desconhecido → mensagem com os 4 esperados', () => {
+    expect(() => parseEventoNfseManual(evento('<e105102><xDesc>x</xDesc></e105102>'))).toThrow(/registre pela substituição/);
+    expect(() => parseEventoNfseManual(evento('<e999999/>'))).toThrow(/e101101 \| e101103 \| e105104 \| e105105/);
   });
 });

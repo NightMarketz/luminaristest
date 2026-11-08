@@ -30,7 +30,7 @@ describe('EventoNfseSchema', () => {
   });
 
   it('EventosTickSummarySchema é estrito', () => {
-    const ok = { consultadas: 1, canceladas: 0, substituidasFora: 0, ignorados: 0, skipped: 0, failed: 0, avisos: [] };
+    const ok = { consultadas: 1, canceladas: 0, substituidasFora: 0, emAnalise: 0, indeferidas: 0, ignorados: 0, skipped: 0, failed: 0, avisos: [] };
     expect(EventosTickSummarySchema.safeParse(ok).success).toBe(true);
     expect(EventosTickSummarySchema.safeParse({ ...ok, extra: 1 }).success).toBe(false);
   });

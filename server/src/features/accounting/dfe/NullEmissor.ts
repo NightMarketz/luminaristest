@@ -29,6 +29,7 @@ export class NullEmissor implements DfeEmissorPort {
     inutilizar: true, // BE-INCR-NFCE item 24: homologa sinteticamente (faixa válida + Null ⇒ HOMOLOGATED)
     cce: false, // BE-INCR-NFCE item 28 (F-NFCE-9 c): a CC-e não está implementada em adaptador nenhum
     consultarEventos: true, // BE-INCR-DFE-EVENTOS item 18: o contrato do PR-2 é exercido por aqui (roteiro abaixo)
+    analiseFiscal: true, // BE-INCR-DFE-EVENTOS item 20 (PR-3): o pedido de análise (e101103) é exercido por aqui
   };
 
   /**
@@ -83,8 +84,10 @@ export class NullEmissor implements DfeEmissorPort {
   }
 
   async cancelar(partnerRef: string, input: CancelInput): Promise<CancelResult> {
-    void input;
-    return NullEmissor.roteiro.cancelar.get(partnerRef) ?? { status: 'CANCELLED', errors: [] };
+    const programado = NullEmissor.roteiro.cancelar.get(partnerRef);
+    if (programado) return programado;
+    // PR-3 (item 20): o pedido de análise fiscal (e101103) é registrado; o cancelamento direto, cancelado.
+    return input.kind === 'NFSE' && input.analiseFiscal ? { status: 'ANALYSIS_REQUESTED', errors: [] } : { status: 'CANCELLED', errors: [] };
   }
 
   /** BE-INCR-DFE-EVENTOS item 18 — os eventos programados para a chave (cópia: o chamador não altera o roteiro). */

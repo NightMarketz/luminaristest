@@ -34,7 +34,7 @@ import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IConsumptionTaxAssessmentRepository } from '../repositories/IConsumptionTaxAssessmentRepository';
 import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFiscalProfileRepository';
-import { AUTHORIZED_STATUSES, type IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
+import { NOTA_VALIDA_STATUSES, statusDeAutorizacao, type IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
@@ -391,12 +391,13 @@ export class IbsCbsAssessmentService {
     const parametros = parametrosUsados(linhasLegais.filter((l) => !(l.tabela === 'IBS_CBS' && l.discriminador === 'VENCIMENTO')), de, ate);
     const tabela = tabelaIbsCbsDe(linhasLegais);
 
-    const docs = await this.fiscalDocumentRepo.findForIbsCbs(scope, de, ate, AUTHORIZED_STATUSES);
+    // X11 PR-3 (dono 07/11, "Apuração"): a nota em análise fiscal do cancelamento entra — só o e105104 a cancela.
+    const docs = await this.fiscalDocumentRepo.findForIbsCbs(scope, de, ate, NOTA_VALIDA_STATUSES);
     const documentos: IbsCbsDocumento[] = docs.map((d) => ({
       fiscalDocumentId: d.id,
       dataEmissaoLocal: d.dCompet, // dia escrito (= sale.date), não ISO UTC
       natureza: d.kind === 'NFE' ? 'MERCADORIA' : 'SERVICO', // item 12: NFS-e = serviço, NF-e = mercadoria
-      status: d.status as IbsCbsDocumento['status'],
+      status: statusDeAutorizacao(d) as IbsCbsDocumento['status'], // CANCEL_ANALYSIS → o status de antes da análise
       ibsCents: d.vIbsCents,
       cbsCents: d.vCbsCents,
       baseCents: null, // o documento não persiste a base de IBS/CBS (nem o ADN a devolve) — CONFERENCIA_SEM_BASE (dono 21/10)

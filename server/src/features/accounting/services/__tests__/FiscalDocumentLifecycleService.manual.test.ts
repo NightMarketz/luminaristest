@@ -295,7 +295,7 @@ describe('cancelamentoManual — item 13 (F-MAN-5 a) e F-MAN-2b (b)', () => {
       status: 'CANCELLED',
       cancelMotivo: 1,
       cancelReason: 'valor digitado errado no portal',
-      whenStatusIn: ['AUTHORIZED', 'AUTHORIZED_DIVERGENT'],
+      whenStatusIn: ['AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'CANCEL_ANALYSIS'], // X11 PR-3: o e105104 cancela a nota em análise,
     });
     expect(postingService.retireSourceDocument).toHaveBeenCalledWith(SCOPE, 'src-1', 'dfe_cancelled:1');
   });

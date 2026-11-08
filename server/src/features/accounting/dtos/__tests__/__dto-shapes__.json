@@ -5766,7 +5766,8 @@
             "REJECTED",
             "CANCELLED",
             "PENDING_SIGNATURE",
-            "CONTINGENCY"
+            "CONTINGENCY",
+            "CANCEL_ANALYSIS"
           ]
         },
         "pendencias": {
@@ -5847,6 +5848,10 @@
               "type": "string",
               "minLength": 15,
               "maxLength": 255
+            },
+            "analiseFiscal": {
+              "type": "boolean",
+              "const": true
             }
           },
           "required": [
@@ -6353,6 +6358,10 @@
           "type": "string",
           "minLength": 15,
           "maxLength": 255
+        },
+        "analiseFiscal": {
+          "type": "boolean",
+          "const": true
         }
       },
       "required": [
@@ -28197,6 +28206,16 @@
           "minimum": -9007199254740991,
           "maximum": 9007199254740991
         },
+        "emAnalise": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "indeferidas": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
         "ignorados": {
           "type": "integer",
           "minimum": -9007199254740991,
@@ -28223,6 +28242,8 @@
         "consultadas",
         "canceladas",
         "substituidasFora",
+        "emAnalise",
+        "indeferidas",
         "ignorados",
         "skipped",
         "failed",
