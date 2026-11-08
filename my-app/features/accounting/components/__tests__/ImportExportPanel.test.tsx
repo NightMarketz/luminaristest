@@ -116,3 +116,29 @@ describe('ImportExportPanel — onCommitSuccess (FE-INCR6 W1)', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 });
+
+// ── H2 achado 19-1 — o balancete sai com período (asOf) ─────────────────────
+// O servidor grava `periodStart/periodEnd` do balancete a partir do `asOf`; sem ele o artefato nunca entra
+// nos extras do pacote do contador e o perfil "Balancete" não pré-marca nada. A tela só pedia a Data de BP/DRE.
+describe('ImportExportPanel — balancete com período (H2 19-1)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+    vi.mocked(dataExchangeService.exportAndDownload).mockResolvedValue(undefined as never);
+  });
+
+  it('Balancete (relatório padrão) mostra a Data e manda asOf ao exportar', async () => {
+    render(<ImportExportPanel unitId="u1" />);
+
+    const date = screen.queryByLabelText('Data');
+    expect(date, 'o Balancete precisa do campo Data para exportar com período').not.toBeNull();
+    fireEvent.change(date as HTMLElement, { target: { value: '2025-12-31' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Exportar' }));
+
+    await waitFor(() => expect(dataExchangeService.exportAndDownload).toHaveBeenCalled());
+    expect(vi.mocked(dataExchangeService.exportAndDownload).mock.calls[0][0]).toMatchObject({
+      kind: 'EXPORT_TRIAL_BALANCE',
+      asOf: '2025-12-31',
+    });
+  });
+});
