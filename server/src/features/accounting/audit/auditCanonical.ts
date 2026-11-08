@@ -281,7 +281,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-DFE (nó X10b, PR-3, item 40) — ciclo de vida do documento após o SENT.
   'dfe.authorized': ['documentId', 'partnerRef', 'nNFSe', 'chaveOuCodigo', 'sourceDocumentId'],
   'dfe.rejected': ['documentId', 'attemptNo', 'errorCodes'],
-  'dfe.cancelled': ['documentId', 'cMotivo'],
+  'dfe.cancelled': ['documentId', 'cMotivo', 'evento'], // evento: BE-INCR-DFE-EVENTOS PR-2 (Q2) — e101101|e305101|e105104|e105102, sem PII
   // BE-INCR-DFE-MANUAL (item 15) — resultado da releitura no retorno manual. Nomes de campo divergentes NÃO entram
   // (ficam no resultJson da tentativa, sem PII); aqui só o veredito e a contagem.
   'dfe.manual_result': ['documentId', 'attemptNo', 'releitura', 'nDivergencias'],

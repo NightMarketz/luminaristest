@@ -287,6 +287,8 @@
  *       summary: Cancel an AUTHORIZED document (NFS-e e101101 item 29; NF-e/NFC-e 110111, BE-INCR-NFCE item 27)
  *       description: >-
  *         409: OUT_OF_WINDOW (NFS-e E0822; NF-e/NFC-e 501) ou REJECTED pelo parceiro (código do fisco na mensagem)
+ *         | DFE_CANCEL_EM_ANDAMENTO (NFS-e com cancelamento pedido há menos de 24 h e sem evento; BE-INCR-DFE-EVENTOS item 19).
+ *         202: o fisco ainda não decidiu (NFS-e, PROCESSING) — o pedido fica em voo e o job de eventos conclui (item 18).
  *         O corpo tem a forma do tipo do documento: NFS-e cMotivo/xMotivo; NF-e/NFC-e xJust (forma trocada = 400).
  *         Só de status AUTHORIZED. Nunca toca a venda nem o razão. OUT_OF_WINDOW/REJECTED do
  *         parceiro viram 409 tipado; CANCELLED retira a proveniência anexada (F-DFE-18, soft-delete).
@@ -315,6 +317,7 @@
  *                     xJust: { type: string, minLength: 15, maxLength: 255 }
  *       responses:
  *         '200': { description: "FiscalDocumentView (status CANCELLED) + avisos (['fora_da_janela_configurada'] quando passou do prazo — perfil, ou na NF-e/NFC-e o nacional de 24 h / 30 min; só aviso, BE-INCR-DFE-EVENTOS item 5, BE-INCR-NFCE item 27)" }
+ *         '202': { description: "FiscalDocumentView (status ainda AUTHORIZED) + avisos com 'cancelamento_em_andamento' — o fisco devolveu PROCESSING; o job de eventos aplica o e101101 quando ele aparecer (BE-INCR-DFE-EVENTOS item 19)" }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }

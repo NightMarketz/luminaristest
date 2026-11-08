@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { AVISO_CANCEL_EM_ANDAMENTO } from '../features/accounting/dtos/EventoNfseDto';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
@@ -143,7 +144,8 @@ export const cancelarFiscalDocument = async (req: Request, res: Response) => {
     const scope = await getFactory().getAccountingScopeResolver().resolve(user, body.data.unitId, { access: 'write' });
     const { unitId: _unitId, ...input } = body.data; // a forma (NFS-e × NF-e/NFC-e) o serviço confere contra o tipo
     const data = await getFactory().getFiscalDocumentLifecycleService().cancelar(scope, params.data.id, input);
-    return res.json({ success: true, data });
+    // BE-INCR-DFE-EVENTOS PR-2 (item 19): o fisco ainda não decidiu — 202, o job de eventos conclui.
+    return res.status(data.avisos.includes(AVISO_CANCEL_EM_ANDAMENTO) ? 202 : 200).json({ success: true, data });
   } catch (error) {
     return handleApiError(error, res);
   }

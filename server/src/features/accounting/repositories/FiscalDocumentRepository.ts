@@ -129,6 +129,27 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     });
   }
 
+  public async listParaEventos(desde: Date, limit: number, partners: readonly string[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
+    const alvo = {
+      kind: 'NFSE',
+      partner: { in: [...partners] },
+      status: { in: [...AUTHORIZED_STATUSES] },
+      deletedAt: null,
+      chaveOuCodigo: { not: null },
+      nfseDhProc: { gte: desde },
+    };
+    const emVoo = await this.db(tx).fiscalDocument.findMany({
+      where: { ...alvo, cancelRequestedAt: { not: null } },
+      orderBy: [{ cancelRequestedAt: 'asc' }],
+    });
+    const rodizio = await this.db(tx).fiscalDocument.findMany({
+      where: { ...alvo, cancelRequestedAt: null },
+      orderBy: [{ updatedAt: 'asc' }],
+      take: limit,
+    });
+    return [...emVoo, ...rodizio];
+  }
+
   public async listContingencia(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]> {
     return this.db(tx).fiscalDocument.findMany({
       where: { status: 'CONTINGENCY', deletedAt: null },

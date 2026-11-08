@@ -286,6 +286,29 @@ Vale para o **PR-2** e o **PR-3**, que ainda não foram executados.
 - **A5.** Os eventos reais do portal (HTML, F-FE-DFE-9) ficam EXT; o XML real de evento vira fixture.
 - **A6.** O job roda sobre repositório real, e a 2ª leitura do documento mostra `CANCELLED`.
 
+### Emenda do PR-2 — lacunas de spec decididas pelo dono (07/11/2026)
+
+> Sessão de feature do PR-2 (`executa`: dono, chat, 07/11, *"Pode disparar então o que precisa seguir"*; escopo novo em
+> [`D-2026-11-07-REGUA-DENOMINADOR`](../plano/decisoes/D-2026-11-07-REGUA-DENOMINADOR.md) §2: o PR-2 sai contra o
+> `NullEmissor`, a prova com o ADN real fica no X10i). Quatro lacunas que os itens 18–19 não cobriam viraram
+> questionário (AskUserQuestion, 07/11). As quatro respostas ficaram na recomendação. Não muda fork ratificado.
+
+| # | Lacuna | Resposta do dono (literal) | Efeito |
+|---|---|---|---|
+| Q1 | O e101101 pedido nunca aparece na consulta (o pedido se perdeu): a nota ficaria em voo para sempre | *"Expira em 24 h (Recomendado)"* | O 409 `DFE_CANCEL_EM_ANDAMENTO` vale por 24 h desde o `cancelRequestedAt`. Depois disso um novo pedido passa, e a view mostra `cancelamento_sem_resposta` até ele sair. Resposta definitiva (REJECTED/OUT_OF_WINDOW) a um novo pedido limpa o `cancelRequestedAt` |
+| Q2 | Onde fica a marca do e105102 com substituta desconhecida (a pendência é calculada do estado) | *"Coluna cancelEvento (Recomendado)"* | `FiscalDocument.cancelEvento` (e101101 \| e305101 \| e105104 \| e105102), gravado pelo job, pelo cancelamento local (direto e manual) e pela substituição do item 14. Pendência `substituida_fora_do_luminaris` = e105102 sem `substitutedByDocumentId`. `dfe.cancelled` ganha o campo `evento` no allowlist |
+| Q3 | Cadência do job: quantas notas por tick (o tick é de 2 min) | *"Teto 50 + rodízio (Recomendado)"* | Por tick: todas as notas em voo, mais até 50 das demais em rodízio por `updatedAt`. A nota consultada sem mudança é tocada e vai para o fim (como na contingência do X10a PR-9) |
+| Q4 | O PR-3 (F-EVT-4 b) entra nesta sessão? | *"PR-2 agora, PR-3 depois (Recomendado)"* | Este PR entrega só os itens 18–19. O PR-3 abre em seguida, empilhado sobre o PR-2 |
+
+Outras leituras do PR-2 que não pediram decisão, porque o BRIEF já as dá:
+- O 202 do item 19 vale só para NFS-e. NF-e/NFC-e seguem 409 `DFE_CANCEL_PROCESSING`, sem escrita (§7: nenhum item deste
+  BRIEF aceita NF-e).
+- A substituta é "conhecida" quando o Luminaris tem a nota da `chSubstituta` ou um substituto desta original ainda vivo
+  (pendente, sem chave). Nesse caso a autorização dela cancela a original (item 14), e o job não faz nada.
+- e101103/e105105 são do PR-3: o job os reconhece e não aplica efeito.
+- **Resíduo declarado:** o cancelamento concluído pelo job grava `cancelMotivo`/`cancelReason` nulos. O evento consultado
+  só traz tipo e `dhProc`. O motivo digitado no pedido em voo segue no fisco, não no Luminaris.
+
 ## 4. Contratos (esboço materializável)
 
 ```prisma
@@ -305,6 +328,7 @@ model FiscalDocument {
   substReason             String?   // xMotivo 15–255
   cancelEventAttachmentId String?   // XML do e101101 (item 7)
   cancelRequestedAt       DateTime? // PR-2, item 19
+  cancelEvento            String?   // PR-2, emenda Q2 (07/11): e101101 | e305101 | e105104 | e105102
   @@index([userId, unitId, substitutesDocumentId])
 }
 // status ganha CANCEL_ANALYSIS só se F-EVT-4 (b)

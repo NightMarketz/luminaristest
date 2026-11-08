@@ -2392,6 +2392,9 @@ model FiscalDocument {
   substMotivo             String? // TSCodJustSubst 01|02|03|04|05|99 (Anexo I [115]) — domínio ≠ cancelMotivo (TSCodJustCanc 1|2|9)
   substReason             String? // xMotivo 15–255 (Anexo I [116])
   cancelEventAttachmentId String? // item 7 — XML do evento e101101 (DocumentAttachment, só em produção)
+  // BE-INCR-DFE-EVENTOS (nó X11, PR-2)
+  cancelRequestedAt       DateTime? // item 19 — cancelamento em voo (a porta devolveu PROCESSING); o job de eventos conclui
+  cancelEvento            String? // item 18 (decisão do dono 07/11, Q2) — evento do fisco que cancelou: e101101 | e305101 | e105104 | e105102
   // X10a PR-9 (E-9, F-NFCE-E1-6 b) — infNFeSupl {qrCode, urlChave} da NFC-e emitida em contingência off-line: o DANFE sai
   // antes da autorização, então o BE entrega o QR Code da nota impressa. null na emissão normal.
   contingenciaSuplJson    String?

@@ -450,7 +450,7 @@ describe('FiscalDocumentLifecycleService — cancelar (item 29)', () => {
     mockPort.cancelar.mockResolvedValueOnce({ status: 'CANCELLED', errors: [] } as CancelResult);
     await service.cancelar(SCOPE, 'doc-1', { cMotivo: 2, xMotivo: 'serviço não prestado xxxx' });
     expect(repo.transition).toHaveBeenCalledWith(SCOPE, 'doc-1', expect.objectContaining({ status: 'CANCELLED', cancelMotivo: 2, saleKey: 'cancelled:doc-1:sale-1' }), expect.anything());
-    expect(auditService.append).toHaveBeenCalledWith(expect.anything(), SCOPE, expect.objectContaining({ eventType: 'dfe.cancelled', payload: { documentId: 'doc-1', cMotivo: '2' } }));
+    expect(auditService.append).toHaveBeenCalledWith(expect.anything(), SCOPE, expect.objectContaining({ eventType: 'dfe.cancelled', payload: { documentId: 'doc-1', cMotivo: '2', evento: 'e101101' } })); // + evento (X11 PR-2, Q2)
     expect(postingService.retireSourceDocument).toHaveBeenCalledWith(SCOPE, 'srcdoc-1', expect.stringContaining('dfe_cancelled'));
   });
 

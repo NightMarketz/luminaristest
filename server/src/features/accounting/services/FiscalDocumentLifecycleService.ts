@@ -1,12 +1,14 @@
 import type { FiscalDocument, FiscalDocumentPendingAttachment } from 'generated/prisma';
 import { Prisma } from 'generated/prisma';
 import { SubstituicaoBloqueadaError } from '../../../lib/errors';
-import { foraDaJanela } from '../models/janelaEventos';
+import { foraDaJanela, janelaEventos } from '../models/janelaEventos';
+import { cancelamentoEmVoo, EVENTOS_POR_TICK, nomeDaNota } from '../models/eventosNfse';
 import { invariantesSubstituicao } from '../models/substituicaoInvariantes';
 import type { DpsManualPayload, DpsPayload, SubstMotivo } from '../dtos/DpsPayloadDto';
 import { NfePayloadSchema, NfePayloadSemNumeracaoSchema } from '../dtos/NfePayloadDto';
 import type { NfePayload, NfePayloadSemNumeracao } from '../dtos/NfePayloadDto';
 import type { ContingenciaTickSummary } from '../dtos/NfceContingenciaDto';
+import { AVISO_CANCEL_EM_ANDAMENTO, EVENTOS_QUE_CANCELAM, EventoNfseSchema, type EventoQueCancela, type EventosTickSummary } from '../dtos/EventoNfseDto';
 import { gerarCnf, numerarNfe } from '../models/nfeMontagem';
 import { emContingencia, suplDoXml } from '../models/nfceContingencia';
 import type { IFiscalNumberVoidRepository } from '../repositories/IFiscalNumberVoidRepository';
@@ -32,7 +34,7 @@ import type { FiscalDocumentEmissionService, FiscalDocumentView } from './Fiscal
 import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import { resolveEmissorFor } from '../dfe/resolveEmissor';
 import { ambienteFromTpAmb, assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
-import type { CancelInput, CancelResult, DfeAmbiente, DfeCallContext, DfeEmissorPort, EmissaoResult } from '../dfe/DfeEmissorPort';
+import type { CancelInput, CancelResult, DfeAmbiente, DfeCallContext, DfeEmissorPort, EmissaoResult, EventoNfse } from '../dfe/DfeEmissorPort';
 import { AssinaturaRemotaError, isSessaoPscVencida } from '../dfe/AssinadorRemotoPort';
 import { bloqueioSessaoPsc } from './DfeAssinaturaResolver';
 import { enviarTentativa, type DfeContingenciaHandler } from './dfeEnvio';
@@ -153,6 +155,8 @@ export function naoRecebida(
 /** BE-INCR-DFE-EVENTOS itens 5 e 11 (F-EVT-1 a): fora da janela configurada — aviso na resposta, nunca bloqueio. */
 export const AVISO_FORA_DA_JANELA = 'fora_da_janela_configurada';
 
+export { AVISO_CANCEL_EM_ANDAMENTO };
+
 /**
  * BE-INCR-NFCE (nó X10a, item 27) — o corpo do cancelamento tem a forma do tipo do documento (`CancelInput`, item 7):
  * NFS-e = e101101 (`cMotivo`/`xMotivo`); NF-e/NFC-e = 110111 (`xJust`). Forma trocada ⇒ 400.
@@ -190,6 +194,8 @@ export interface PollSummary {
   attachments?: PendingAttachmentDrainSummary;
   /** X10a PR-9 (decisões 6 e 7) — transmissão das NFC-e off-line, prazo e órfãs no mesmo tick. */
   contingencia?: ContingenciaTickSummary;
+  /** BE-INCR-DFE-EVENTOS (PR-2, item 18) — eventos do fisco aplicados às NFS-e autorizadas no mesmo tick. */
+  eventos?: EventosTickSummary;
 }
 
 // BE-INCR-DFE-ANEXO-PENDENTE F-PA-6 (a): teto de 10 tentativas, backoff exponencial de 2 min até 1 h.
@@ -335,6 +341,140 @@ export class FiscalDocumentLifecycleService {
       }
     }
     return summary;
+  }
+
+  /**
+   * BE-INCR-DFE-EVENTOS (PR-2, item 18; F-EVT-5 b) — passo de eventos do job `dfe_poll_pending`. Para cada NFS-e
+   * `AUTHORIZED*` com `nfseDhProc` dentro do teto de 2 anos (Anexo I [114]) cujo adaptador declara `consultarEventos`,
+   * consulta os eventos da chave e aplica o primeiro que cancela (por `dhProc`):
+   * - e101101 / e305101 / e105104 → `CANCELLED` como fato do fisco (sem chamar `cancelar`), `cancelledAt` = `dhProc`;
+   *   conclui o cancelamento em voo do item 19;
+   * - e105102 com `chSubstituta` desconhecida → `CANCELLED` + pendência `substituida_fora_do_luminaris`; com a substituta
+   *   conhecida (autorizada ou ainda pendente aqui) nada muda: a autorização dela cancela a original (item 14).
+   * e101103/e105105 são do PR-3 (F-EVT-4 b): conhecidos e sem efeito. Evento fora do contrato (`EventoNfseSchema`) ou com
+   * `dhProc` depois do teto é ignorado com aviso que nomeia a nota por número e série (A3). A nota que não muda é tocada
+   * e vai para o fim do rodízio (Q3). Erro de código próprio `dfe_*` = skip+log; qualquer outro = `failed` (alerta).
+   */
+  async pollEventosOnce(agora: Date = new Date(), limit: number = EVENTOS_POR_TICK): Promise<EventosTickSummary> {
+    const summary: EventosTickSummary = { consultadas: 0, canceladas: 0, substituidasFora: 0, ignorados: 0, skipped: 0, failed: 0, avisos: [] };
+    if (!selectDfeEmissor(process.env, 'NFSE').enabled) return summary;
+    const partners = this.partnersComEventos();
+    if (partners.length === 0) return summary;
+    // Pré-filtro grosso (2 anos e 1 dia); o teto exato é o da janela (fim do dia, America/Sao_Paulo), conferido abaixo.
+    const desde = new Date(agora.getTime());
+    desde.setUTCFullYear(desde.getUTCFullYear() - 2);
+    desde.setUTCDate(desde.getUTCDate() - 1);
+    const docs = await this.repo.listParaEventos(desde, limit, partners);
+    for (const doc of docs) {
+      const teto = janelaEventos({ kind: 'NFSE', nfseDhProc: doc.nfseDhProc }, null).substituirTeto;
+      const scope = resolveAccountingScopeInternal({ userId: doc.userId }, doc.unitId);
+      if (teto == null || foraDaJanela(teto, agora)) {
+        // Revisão #1141 (achado 2): a nota entre o pré-filtro e o teto exato também é tocada — senão o `updatedAt` congela,
+        // ela fica no topo do rodízio e ocupa o teto (starvation). Sai sozinha da consulta quando `desde` passar dela.
+        summary.skipped++;
+        await this.tocarParaRodizio(scope, doc);
+        continue;
+      }
+      let mudou = false;
+      try {
+        const port = resolveEmissorFor(doc.partner, 'NFSE');
+        this.assertAmbienteDoDocumento(doc);
+        if (!port.consultarEventos) throw new ValidationError(`dfe_eventos_nao_suportado: o adaptador '${port.name}' não consulta eventos.`, null);
+        const brutos: unknown[] = await port.consultarEventos(doc.chaveOuCodigo as string);
+        summary.consultadas++;
+        mudou = await this.aplicarEventos(scope, doc, brutos, teto, summary);
+      } catch (error) {
+        if (isDfeSkippableError(error)) {
+          logger.warn('dfe_poll_eventos: skip (erro de código próprio)', { documentId: doc.id, error: error instanceof Error ? error.message : String(error) });
+          summary.skipped++;
+        } else {
+          logger.error('dfe_poll_eventos: falha ao consultar os eventos da nota — alerta', {
+            documentId: doc.id,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          summary.failed++;
+        }
+      }
+      if (!mudou) await this.tocarParaRodizio(scope, doc);
+    }
+    return summary;
+  }
+
+  /** Os parceiros cujos documentos podem ser consultados: o adaptador de cada nome declara `consultarEventos`. */
+  private partnersComEventos(): string[] {
+    const env = selectDfeEmissor(process.env, 'NFSE');
+    const candidatos = [...new Set([env.port.name, 'null', 'manual'])];
+    return candidatos.filter((name) => {
+      try {
+        const port = resolveEmissorFor(name, 'NFSE');
+        return port.capabilities.consultarEventos === true && typeof port.consultarEventos === 'function';
+      } catch {
+        return false; // sem adaptador para o nome (ou o falso em produção): ninguém a consultar com ele
+      }
+    });
+  }
+
+  /** Item 18 — devolve `true` quando a nota mudou de status (não volta ao rodízio). */
+  private async aplicarEventos(
+    scope: AccountingScope,
+    doc: FiscalDocument,
+    brutos: unknown[],
+    teto: string,
+    summary: EventosTickSummary,
+  ): Promise<boolean> {
+    const validos: EventoNfse[] = [];
+    for (const bruto of brutos) {
+      const r = EventoNfseSchema.safeParse(bruto);
+      if (!r.success) {
+        const tipo = (bruto as { tipo?: unknown } | null)?.tipo;
+        summary.ignorados++;
+        summary.avisos.push(`${nomeDaNota(doc)}: evento desconhecido (${typeof tipo === 'string' ? tipo : 'sem tipo'}) — ignorado.`);
+        continue;
+      }
+      if (foraDaJanela(teto, new Date(r.data.dhProc))) {
+        summary.ignorados++;
+        summary.avisos.push(`${nomeDaNota(doc)}: evento ${r.data.tipo} de ${r.data.dhProc} depois do teto de 2 anos (${teto}) — ignorado.`);
+        continue;
+      }
+      validos.push(r.data);
+    }
+    const quecancelam = validos
+      .filter((e): e is EventoNfse & { tipo: EventoQueCancela } => (EVENTOS_QUE_CANCELAM as readonly string[]).includes(e.tipo))
+      .sort((a, b) => Date.parse(a.dhProc) - Date.parse(b.dhProc));
+    const evento = quecancelam[0];
+    if (!evento) return false;
+    if (evento.tipo === 'e105102') {
+      if (await this.substitutaConhecida(scope, doc, evento.chSubstituta)) return false;
+      await raceToConflict(() => this.markCancelled(scope, doc, null, null, new Date(evento.dhProc), 'e105102'));
+      summary.canceladas++;
+      summary.substituidasFora++;
+      return true;
+    }
+    await raceToConflict(() => this.markCancelled(scope, doc, null, null, new Date(evento.dhProc), evento.tipo));
+    summary.canceladas++;
+    return true;
+  }
+
+  /**
+   * e105102 (Anexo II [3]) — a substituta é "conhecida" quando o Luminaris tem a nota da `chSubstituta` ou um substituto
+   * desta original ainda vivo (pendente, sem chave): a autorização dela é que cancela a original, na tx do item 14.
+   */
+  private async substitutaConhecida(scope: AccountingScope, doc: FiscalDocument, chSubstituta: string): Promise<boolean> {
+    if (await this.repo.findByChaveOuCodigo(scope, chSubstituta)) return true;
+    const substituto = await this.repo.findSubstituteOf(scope, doc.id);
+    return substituto != null && substituto.status !== 'REJECTED' && substituto.status !== 'CANCELLED';
+  }
+
+  /** Q3 — a nota consultada que não mudou é tocada (`updatedAt`) e vai para o fim do rodízio; se mudou no meio, nada a adiar. */
+  private async tocarParaRodizio(scope: AccountingScope, doc: FiscalDocument): Promise<void> {
+    try {
+      await this.repo.transition(scope, doc.id, { status: doc.status as FiscalDocumentStatus, whenStatusIn: [doc.status as FiscalDocumentStatus] });
+    } catch (error) {
+      logger.warn('dfe_poll_eventos: a nota mudou de status durante o tick — nada a adiar', {
+        documentId: doc.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   /**
@@ -582,6 +722,13 @@ export class FiscalDocumentLifecycleService {
         'DFE_CANCEL_MANUAL',
       );
     }
+    // BE-INCR-DFE-EVENTOS item 19: com um cancelamento em voo há menos de 24 h (Q1), o 2º pedido não chega à porta.
+    if (cancelamentoEmVoo(doc.cancelRequestedAt, new Date())) {
+      throw new ConflictError(
+        `dfe_cancel_em_andamento: o cancelamento da ${nomeDaNota(doc)} já foi pedido e o fisco ainda não respondeu — aguarde a consulta de eventos.`,
+        'DFE_CANCEL_EM_ANDAMENTO',
+      );
+    }
 
     // BE-INCR-DFE-EVENTOS item 5 (F-EVT-1 a): fora da janela CONFIGURADA a operação segue para a porta e só avisa —
     // quem recusa é o fisco (E0822 → OUT_OF_WINDOW, item 6). O prazo é parâmetro do município (Anexo II RN E0822 [28]).
@@ -600,6 +747,8 @@ export class FiscalDocumentLifecycleService {
       throw error;
     }
 
+    // Q1: um pedido vencido (> 24 h, sem evento) que agora teve resposta definitiva deixa de estar em voo.
+    if (result.status === 'OUT_OF_WINDOW' || result.status === 'REJECTED') await this.encerrarPedidoEmVoo(scope, doc);
     if (result.status === 'OUT_OF_WINDOW') {
       throw new ConflictError(
         cancelInput.kind === 'NFSE'
@@ -614,15 +763,21 @@ export class FiscalDocumentLifecycleService {
       throw new ConflictError(`Cancelamento rejeitado pelo parceiro: ${detail}`, 'DFE_CANCEL_REJECTED');
     }
     if (result.status === 'PROCESSING') {
-      // Não citado explicitamente no item 29 (só CANCELLED/OUT_OF_WINDOW/REJECTED) — inalcançável
-      // com Null (sempre CANCELLED) e File (sempre REJECTED); tratado como "ainda não decidido".
-      throw new ConflictError('Cancelamento ainda em processamento no parceiro — consulte novamente mais tarde.', 'DFE_CANCEL_PROCESSING');
+      // BE-INCR-DFE-EVENTOS item 19 (fecha L5): na NFS-e o pedido fica em voo e o job de eventos (item 18) conclui.
+      // NF-e/NFC-e ficam fora do X11 (BRIEF §7): seguem "ainda não decidido", sem escrita.
+      if (cancelInput.kind !== 'NFSE') {
+        throw new ConflictError('Cancelamento ainda em processamento no parceiro — consulte novamente mais tarde.', 'DFE_CANCEL_PROCESSING');
+      }
+      await raceToConflict(() =>
+        this.repo.transition(scope, doc.id, { status: doc.status as FiscalDocumentStatus, cancelRequestedAt: new Date(), whenStatusIn: AUTHORIZED_STATUSES }),
+      );
+      return { ...(await this.emissionService.getById(scope, documentId)), avisos: [...avisos, AVISO_CANCEL_EM_ANDAMENTO] };
     }
 
     // CANCELLED
     await raceToConflict(() =>
       cancelInput.kind === 'NFSE'
-        ? this.markCancelled(scope, doc, cancelInput.cMotivo, cancelInput.xMotivo)
+        ? this.markCancelled(scope, doc, cancelInput.cMotivo, cancelInput.xMotivo, new Date(), 'e101101')
         : this.markCancelled(scope, doc, null, cancelInput.xJust),
     );
     return { ...(await this.emissionService.getById(scope, documentId)), avisos };
@@ -638,8 +793,10 @@ export class FiscalDocumentLifecycleService {
     scope: AccountingScope,
     doc: FiscalDocument,
     cMotivo: 1 | 2 | 9 | null,
-    xMotivo: string,
+    xMotivo: string | null,
     cancelledAt: Date = new Date(),
+    /** BE-INCR-DFE-EVENTOS (PR-2, decisão do dono 07/11 Q2) — o evento da NFS-e que cancelou. NF-e/NFC-e: ausente. */
+    evento?: EventoQueCancela,
   ): Promise<void> {
     await this.repo.runTransaction(async (tx) => {
       await this.repo.transition(scope, doc.id, {
@@ -648,6 +805,7 @@ export class FiscalDocumentLifecycleService {
         cancelMotivo: cMotivo,
         cancelReason: xMotivo,
         saleKey: `cancelled:${doc.id}:${doc.saleId}`, // rename-on-cancel libera o @@unique (F-DFE-16 b)
+        ...(evento ? { cancelEvento: evento } : {}),
         whenStatusIn: AUTHORIZED_STATUSES,
       }, tx);
       await this.auditService.append(tx, scope, {
@@ -655,13 +813,25 @@ export class FiscalDocumentLifecycleService {
         eventType: 'dfe.cancelled',
         targetType: 'fiscal_document',
         targetId: doc.id,
-        payload: cMotivo == null ? { documentId: doc.id } : { documentId: doc.id, cMotivo: String(cMotivo) },
+        payload: {
+          documentId: doc.id,
+          ...(cMotivo == null ? {} : { cMotivo: String(cMotivo) }),
+          ...(evento ? { evento } : {}),
+        },
       });
     });
 
     if (doc.sourceDocumentId) {
-      await this.postingService.retireSourceDocument(scope, doc.sourceDocumentId, `dfe_cancelled:${cMotivo ?? '110111'}`);
+      await this.postingService.retireSourceDocument(scope, doc.sourceDocumentId, `dfe_cancelled:${cMotivo ?? evento ?? '110111'}`);
     }
+  }
+
+  /** Q1 — o pedido em voo vencido teve resposta definitiva num 2º pedido: sai de voo (a pendência some). */
+  private async encerrarPedidoEmVoo(scope: AccountingScope, doc: FiscalDocument): Promise<void> {
+    if (doc.cancelRequestedAt == null) return;
+    await raceToConflict(() =>
+      this.repo.transition(scope, doc.id, { status: doc.status as FiscalDocumentStatus, cancelRequestedAt: null, whenStatusIn: AUTHORIZED_STATUSES }),
+    );
   }
 
   /**
@@ -856,7 +1026,7 @@ export class FiscalDocumentLifecycleService {
       );
     }
     // BE-INCR-DFE-EVENTOS item 7: `cancelledAt` = o instante do fisco (infEvento/dhProc), não a hora do upload.
-    await raceToConflict(() => this.markCancelled(scope, doc, evento.cMotivo, evento.xMotivo, new Date(evento.dhProc)));
+    await raceToConflict(() => this.markCancelled(scope, doc, evento.cMotivo, evento.xMotivo, new Date(evento.dhProc), 'e101101'));
 
     // Item 7: a prova (XML do e101101) vira anexo DEPOIS da tx do CANCELLED — mesma ordem "transição antes, anexo
     // depois" do GAP-MAP `applyResult` (28/09). Só em produção (ADR §9.2 item 5). Falha aqui deixa o documento
@@ -1123,6 +1293,7 @@ export class FiscalDocumentLifecycleService {
               cancelledAt: nfseDhProc ?? new Date(),
               saleKey: `cancelled:${original.id}:${original.saleId}`,
               substitutedByDocumentId: doc.id,
+              cancelEvento: 'e105102', // PR-2 (Q2): o fisco gerou o e105102 ao autorizar a substituta (Anexo II [3])
               whenStatusIn: AUTHORIZED_STATUSES,
             },
             tx,
