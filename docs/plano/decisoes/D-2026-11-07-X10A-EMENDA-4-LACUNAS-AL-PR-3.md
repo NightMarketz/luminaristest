@@ -12,7 +12,7 @@ atualizado: "2026-11-07"
 **Estado:** `decided`. **Autorização:** dono, chat, 07/11/2026, questionário (citação no frontmatter). Origem: a sessão de
 feature que executa o AL-PR-3 do [`BE-INCR-NFCE-EMENDA-4-assinador-local-brief.md`](../../accounting/BE-INCR-NFCE-EMENDA-4-assinador-local-brief.md)
 achou dois pontos que o BRIEF não cobre (regra 2 da `sessao-feature`). Continua a numeração de
-[`D-2026-11-07-X10A-EMENDA-4-LACUNAS`](D-2026-11-07-X10A-EMENDA-4-LACUNAS.md) (L-AL-1..4). Nenhum fork ratificado muda.
+`D-2026-11-07-X10A-EMENDA-4-LACUNAS` (L-AL-1..4; o arquivo entra pelo PR #1138, ainda fora de `main`). Nenhum fork ratificado muda.
 
 ## Decisões
 
