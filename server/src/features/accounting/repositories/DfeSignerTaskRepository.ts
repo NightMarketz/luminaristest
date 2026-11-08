@@ -16,8 +16,10 @@ export class DfeSignerTaskRepository implements IDfeSignerTaskRepository {
     const candidatas = await prisma.dfeSignerTask.findMany({ where: elegivel, orderBy: { createdAt: 'asc' } });
     const entregues: DfeSignerTask[] = [];
     for (const t of candidatas) {
-      const r = await prisma.dfeSignerTask.updateMany({ where: { id: t.id, ...elegivel }, data: { status: 'DELIVERED', leaseUntil } });
-      if (r.count === 1) entregues.push({ ...t, status: 'DELIVERED', leaseUntil });
+      // AL-9: o lease cobre o prazo da tarefa (TRANSMITIR leva até timeoutMs + folga); reentrega só depois do vencimento.
+      const lease = t.expiresAt > leaseUntil ? t.expiresAt : leaseUntil;
+      const r = await prisma.dfeSignerTask.updateMany({ where: { id: t.id, ...elegivel }, data: { status: 'DELIVERED', leaseUntil: lease } });
+      if (r.count === 1) entregues.push({ ...t, status: 'DELIVERED', leaseUntil: lease });
     }
     return entregues;
   }
@@ -34,5 +36,4 @@ export class DfeSignerTaskRepository implements IDfeSignerTaskRepository {
   public async expire(id: string): Promise<boolean> {
     const r = await prisma.dfeSignerTask.updateMany({ where: { id, status: { in: ABERTAS } }, data: { status: 'EXPIRED', payload: null, leaseUntil: null } });
     return r.count === 1;
-  }
-}
+  }}

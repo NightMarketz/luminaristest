@@ -53,8 +53,8 @@ export const DFE_TRANSMITIR_TIMEOUT_PADRAO_MS = 30_000;
 /** AL-9: o servidor espera o resultado do TRANSMITIR pelo `timeoutMs` da tarefa mais esta folga (poll + volta). */
 export const DFE_TRANSMITIR_FOLGA_MS = 5_000;
 /**
- * AL-6: tarefa entregue e sem resultado volta a ser entregue depois do lease (o assinador caiu entre o GET e o POST).
- * Constante de operação (não regra fiscal): metade da espera da assinatura, para caber pelo menos uma reentrega.
+ * AL-6: lease mínimo da entrega. A tarefa entregue fica com o lease até o MAIOR entre este valor e o vencimento dela
+ * (AL-9): TRANSMITIR em andamento não volta ao poll antes do próprio prazo. Constante de operação (não regra fiscal).
  */
 export const DFE_SIGNER_LEASE_MS = 10_000;
 

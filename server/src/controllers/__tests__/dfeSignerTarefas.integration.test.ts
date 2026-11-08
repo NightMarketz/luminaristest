@@ -148,6 +148,24 @@ describe('X10a EMENDA-4 AL-PR-3 — fila do assinador local pela HTTP', () => {
     await pendente;
   });
 
+  it('AL-9 (defeito): TRANSMITIR em andamento não é reentregue antes do próprio prazo — 10,5 s depois do envio, o poll ainda devolve 204', async () => {
+    // Só o relógio do `Date` anda; os timers reais seguem para o HTTP e para a espera do resultado.
+    jest.useFakeTimers({ doNotFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'nextTick', 'queueMicrotask', 'performance', 'hrtime'] });
+    try {
+      const pendente = (await fila()).executar(
+        { tipo: 'TRANSMITIR', url: 'https://homologacao.nfce.fazenda.sp.gov.br/ws/x.asmx', servico: 'NFeStatusServico4', envelopeB64: 'PHgvPg==', timeoutMs: 30_000 },
+        35_000,
+      );
+      const [tarefa] = DfeSignerTarefasRespostaSchema.parse((await poll({ espera: '5' })).body).tarefas;
+      jest.setSystemTime(Date.now() + 10_500); // o lease antigo era de 10 s
+      expect((await poll()).status).toBe(204);
+      expect((await resultado(tarefa.id, { ok: true, tipo: 'TRANSMITIR', httpStatus: 200, corpoB64: '' })).status).toBe(200);
+      expect(await pendente).toEqual({ ok: true, tipo: 'TRANSMITIR', httpStatus: 200, corpoB64: '' });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('AL-6: sem resultado no prazo ⇒ a fila devolve null, a tarefa vence e o resultado atrasado é 409', async () => {
     const r = await (await fila()).executar({ tipo: 'TRANSMITIR', url: 'https://homologacao.nfce.fazenda.sp.gov.br/ws/x.asmx', servico: 'NFeStatusServico4', envelopeB64: 'PHgvPg==', timeoutMs: 1_000 }, 300);
     expect(r).toBeNull();
