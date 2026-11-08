@@ -35775,6 +35775,218 @@
           }
         }
       }
+    },
+    "/api/accounting/dfe-assinador/{unitId}/codigos": {
+      "post": {
+        "summary": "Generate a single-use pairing code for the unit's local signer (shown once; only its hash is stored)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Pairing code (12 chars, TTL 10 min)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "expiraEm": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "description": "unidade_sem_cnpj"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/api/accounting/dfe-assinador/{unitId}": {
+      "get": {
+        "summary": "State of the unit's local signer (no token hash, no certificate, no subject); data is null when unpaired",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "DfeSignerView (online",
+            "diasParaVencer": null,
+            "versaoMinima": null,
+            "outrasUnidades) or null": null
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Revoke the signer link of this unit only; revoking the last link revokes the device (its token gets 401)",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "unitId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/api/dfe-assinador/v1/pareamento": {
+      "post": {
+        "summary": "Signer-side pairing (no user session). Without Bearer a new device is created and its token returned once; with the Bearer of an already paired device and the same certificate, only the unit link is added",
+        "tags": [
+          "Accounting"
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Authorization",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Bearer <device token> (2nd link of the same device)"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "codigo",
+                  "nomeDispositivo",
+                  "versaoAssinador",
+                  "certificadoDerB64"
+                ],
+                "properties": {
+                  "codigo": {
+                    "type": "string"
+                  },
+                  "nomeDispositivo": {
+                    "type": "string"
+                  },
+                  "versaoAssinador": {
+                    "type": "string",
+                    "example": "1.0.0"
+                  },
+                  "certificadoDerB64": {
+                    "type": "string",
+                    "description": "public certificate only (DER",
+                    "base64)": null
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Link added to the existing device: { dispositivoId, unidades, ambiente, protocolo } (no token)"
+          },
+          "201": {
+            "description": "New device: { dispositivoId, token, unidades, ambiente, protocolo }"
+          },
+          "400": {
+            "description": "dfe_signer_codigo_invalido | dfe_signer_cnpj_divergente | dfe_signer_certificado_vencido | dfe_signer_certificado_invalido | dfe_signer_certificado_divergente"
+          },
+          "401": {
+            "description": "Unknown or revoked device token"
+          },
+          "422": {
+            "description": "unidade_sem_cnpj"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "dfe_signer_ambiente_nao_configurado"
+          }
+        }
+      }
     }
   },
   "tags": [

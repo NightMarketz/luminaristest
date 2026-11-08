@@ -24,6 +24,7 @@ import { collectionChargesRouter, paymentCollectionWebhookRouter, receivableChar
 import serviceFiscalSuggestionRoutes from './serviceFiscalSuggestions';
 import nfeRoutes from './nfe';
 import dfeRoutes from './dfe';
+import dfeAssinadorRoutes from './dfeAssinador';
 import entryApprovalRoutes from './entryApprovals';
 import salesRoutes from './sales';
 import savedViewsRoutes from './saved-views';
@@ -90,6 +91,7 @@ router.use('/dimensions', dimensionRoutes);
 router.use('/counterparties', counterpartyRoutes);
 router.use('/nfe', nfeRoutes);
 router.use('/nfe/dfe', dfeRoutes); // BE-INCR-DFE (nó X10b) — emissão de saída, /api/nfe/dfe/*
+router.use('/dfe-assinador', dfeAssinadorRoutes); // X10a EMENDA-4 AL-PR-2 — rotas do assinador local (sem JWT; Bearer de dispositivo)
 router.use('/entry-approvals', entryApprovalRoutes);
 router.use('/sales', salesRoutes);
 router.use('/saved-views', savedViewsRoutes);

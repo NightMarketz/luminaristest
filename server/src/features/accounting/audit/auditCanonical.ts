@@ -326,6 +326,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'psc_credential.removed':    ['unitId', 'pscProviderId', 'certNotAfter'],
   'psc_provider.set':          ['pscProviderId', 'nome'],
   'psc_provider.removed':      ['pscProviderId', 'nome'],
+  // X10a EMENDA-4 AL-16 (AL-PR-2) — assinador local: unidade, dispositivo, CNPJ-RAIZ, validade e sha256 do DER. NUNCA o
+  // certificado, o subject (o e-CNPJ traz o CPF do responsável, OID 2.16.76.1.3.4), o token nem o código de pareamento.
+  'dfe_signer.paired':  ['unitId', 'dispositivoId', 'certCnpjRaiz', 'certNotAfter', 'certThumbprint', 'vinculo'],
+  'dfe_signer.revoked': ['unitId', 'dispositivoId', 'certCnpjRaiz', 'certNotAfter', 'certThumbprint', 'motivo', 'dispositivoRevogado'],
   // X10a PR-8 (D-2026-10-29-X10A-PR7-9-FORKS decisão 3) — só unidade, ambiente e o identificador do CSC: NUNCA o CSC.
   'nfce_csc.set':     ['unitId', 'ambiente', 'cscId'],
   'nfce_csc.removed': ['unitId', 'ambiente', 'cscId'],

@@ -14,3 +14,15 @@ export async function resolveUnitCnpjFromUnits(scope: AccountingScope): Promise<
   const cnpj = stripCnpjMask(String((unitRow?.data as Record<string, unknown> | undefined)?.cnpj ?? '')).toUpperCase();
   return cnpj && isValidCnpj(cnpj) ? cnpj : null;
 }
+
+/**
+ * Nome da unidade do escopo (campo `name` do preset `units`), com checagem de pertença à tabela do dono — o id de outra
+ * unidade nunca vaza o nome. Sem nome ⇒ o próprio id. Régua A3 do X10a EMENDA-4: a recusa nomeia a unidade pelo nome.
+ */
+export async function resolveUnitNameFromUnits(scope: AccountingScope): Promise<string> {
+  const dynamicTableRepo = getFactory().getDynamicTableRepository();
+  const unitsTable = await dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'units');
+  if (!unitsTable || !(await dynamicTableRepo.existsByIdInTable(scope.unitId, unitsTable.id))) return scope.unitId;
+  const name = ((await dynamicTableRepo.findDataById(scope.unitId))?.data as Record<string, unknown> | undefined)?.name;
+  return typeof name === 'string' && name ? name : scope.unitId;
+}

@@ -191,6 +191,10 @@ export async function resetDb(): Promise<void> {
   await prisma.pscAuthorization.deleteMany();
   await prisma.pscCredential.deleteMany();
   await prisma.pscProvider.deleteMany();
+  // X10a EMENDA-4 AL-PR-2: o vínculo referencia o dispositivo (FK Restrict) — cai antes dele.
+  await prisma.dfeSignerDeviceUnit.deleteMany();
+  await prisma.dfeSignerDevice.deleteMany();
+  await prisma.dfeSignerPairingCode.deleteMany();
   await prisma.nfceCsc.deleteMany(); // X10a PR-8: CSC da NFC-e por unidade
   // BE-INCR-MIT-EXPORT PR-2 (nó X9): mit_exports só referencia User (Cascade) — sem ordem de FK.
   await prisma.mitExport.deleteMany();

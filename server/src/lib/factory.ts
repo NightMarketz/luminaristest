@@ -52,6 +52,10 @@ import { FiscalCertificateRepository } from '../features/accounting/repositories
 // X10a PR-7 (EMENDA-PSC) — PSC
 import { PscProviderRepository } from '../features/accounting/repositories/PscProviderRepository';
 import { PscCredentialRepository } from '../features/accounting/repositories/PscCredentialRepository';
+// X10a EMENDA-4 AL-PR-2 — assinador local (pareamento, estado, revogação)
+import { DfeSignerRepository } from '../features/accounting/repositories/DfeSignerRepository';
+import type { IDfeSignerRepository } from '../features/accounting/repositories/IDfeSignerRepository';
+import { DfeSignerService } from '../features/accounting/services/DfeSignerService';
 import type { IPscProviderRepository } from '../features/accounting/repositories/IPscProviderRepository';
 import type { IPscCredentialRepository } from '../features/accounting/repositories/IPscCredentialRepository';
 import { PscProviderService } from '../features/accounting/services/PscProviderService';
@@ -179,7 +183,7 @@ import { AccountingScopeResolver, type IAccountingScopeResolver } from '../featu
 import { AccountingPolicyVersionService } from '../features/accounting/services/AccountingPolicyVersionService';
 import { PaymentAccountService } from '../features/accounting/services/PaymentAccountService';
 import { FiscalCertificateService } from '../features/accounting/services/FiscalCertificateService';
-import { resolveUnitCnpjFromUnits } from '../features/accounting/services/unitCnpj';
+import { resolveUnitCnpjFromUnits, resolveUnitNameFromUnits } from '../features/accounting/services/unitCnpj';
 import { CollectionChargeService } from '../features/accounting/services/CollectionChargeService';
 import { ReleaseReportService } from '../features/accounting/services/ReleaseReportService';
 import { JobWatermarkRepository } from '../jobs/JobWatermarkRepository';
@@ -915,6 +919,7 @@ export class ApplicationFactory {
     // X10a PR-7 (EMENDA-PSC E-2/E-3)
     pscProvider: IPscProviderRepository;
     pscCredential: IPscCredentialRepository;
+    dfeSigner: IDfeSignerRepository; // X10a EMENDA-4 AL-PR-2
     nfceCsc: INfceCscRepository; // X10a PR-8
     nfceContingencia: INfceContingenciaRepository; // X10a PR-9
     collectionCharge: ICollectionChargeRepository; // BE-INCR-PAYMENT-PROVIDER PR-2
@@ -1049,6 +1054,7 @@ export class ApplicationFactory {
     // X10a PR-7 (EMENDA-PSC E-2..E-6, E-9)
     pscProvider: PscProviderService;
     pscCredential: PscCredentialService;
+    dfeSigner: DfeSignerService; // X10a EMENDA-4 AL-PR-2
     nfceCsc: NfceCscService; // X10a PR-8
     nfceContingencia: NfceContingenciaService; // X10a PR-9
     collectionCharge: CollectionChargeService; // BE-INCR-PAYMENT-PROVIDER PR-2
@@ -1178,6 +1184,7 @@ export class ApplicationFactory {
       // X10a PR-7 (EMENDA-PSC)
       pscProvider: new PscProviderRepository(),
       pscCredential: new PscCredentialRepository(),
+      dfeSigner: new DfeSignerRepository(), // X10a EMENDA-4 AL-PR-2
       nfceCsc: new NfceCscRepository(),
       nfceContingencia: new NfceContingenciaRepository(),
       collectionCharge: new CollectionChargeRepository(),
@@ -2342,6 +2349,14 @@ export class ApplicationFactory {
       // X10a PR-7 (EMENDA-PSC): cadastro de PSCs (PLATFORM_ADMIN) e credencial OAuth por unidade (const acima).
       pscProvider: new PscProviderService(this.repositories.pscProvider, auditService, new PscProviderPolicy()),
       pscCredential: pscCredentialService,
+      // X10a EMENDA-4 AL-PR-2 (AL-3..AL-5, AL-12): pareamento, estado e revogação do assinador local.
+      dfeSigner: new DfeSignerService(
+        this.repositories.dfeSigner,
+        auditService,
+        this.policies.accounting,
+        resolveUnitCnpjFromUnits,
+        resolveUnitNameFromUnits,
+      ),
       nfceCsc: nfceCscService,
       collectionCharge: collectionChargeService,
       releaseReport: releaseReportService, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-1..P3-5)
@@ -2734,6 +2749,7 @@ export class ApplicationFactory {
   // X10a PR-7 (EMENDA-PSC)
   public getPscProviderService = (): PscProviderService => this.services.pscProvider;
   public getPscCredentialService = (): PscCredentialService => this.services.pscCredential;
+  public getDfeSignerService = (): DfeSignerService => this.services.dfeSigner; // X10a EMENDA-4 AL-PR-2
   public getNfceCscService = (): NfceCscService => this.services.nfceCsc;
   public getNfceContingenciaService = (): NfceContingenciaService => this.services.nfceContingencia;
   public getCollectionChargeService = (): CollectionChargeService => this.services.collectionCharge;

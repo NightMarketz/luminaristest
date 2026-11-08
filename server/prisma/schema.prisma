@@ -3750,6 +3750,62 @@ model PscAuthorization {
   @@map("psc_authorizations")
 }
 
+// X10a EMENDA-4 AL-PR-2 (AL-3, AL-4, AL-12; F-AL-3 a; F-ADL-3/5 a; D-2026-11-07-X10A-EMENDA-4-LACUNAS L-AL-2/3): o
+// assinador local do caixa (dispositivo pareado). O token de dispositivo nunca é gravado (só o sha256); o certificado e o
+// subject também não (o e-CNPJ traz o CPF do responsável, OID 2.16.76.1.3.4) — só CNPJ, raiz, validade e o sha256 do DER.
+// Revogado = deletedAt (o token passa a dar 401). Infraestrutura de emissão: Prisma first-class, não DynamicTable.
+model DfeSignerDevice {
+  id              String                @id @default(cuid())
+  userId          String
+  nome            String
+  tokenHash       String                @unique // sha256(token) hex; o token nunca é gravado
+  certCnpj        String // 14 posições (F-ADL-3 a: a NFS-e exige o certificado do próprio estabelecimento)
+  certCnpjRaiz    String // 8 primeiras
+  certThumbprint  String // sha256 do DER, hex
+  certNotAfter    String // AAAA-MM-DD, como readCertFacts
+  ambiente        String // producao | homologacao
+  versaoAssinador String
+  tokenPresente   Boolean               @default(false)
+  lastSeenAt      DateTime?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  deletedAt       DateTime?
+  units           DfeSignerDeviceUnit[]
+
+  @@index([userId])
+  @@map("dfe_signer_devices")
+}
+
+// AL-4: um dispositivo serve N unidades da mesma raiz, cada vínculo explícito. "Um ativo por unidade" é guarda no serviço,
+// dentro da tx. Revogar (L-AL-3) = deletedAt no vínculo; o último vínculo vivo revoga o dispositivo.
+model DfeSignerDeviceUnit {
+  deviceId  String
+  userId    String
+  unitId    String
+  createdAt DateTime        @default(now())
+  deletedAt DateTime?
+  device    DfeSignerDevice @relation(fields: [deviceId], references: [id])
+
+  @@id([deviceId, unitId])
+  @@index([userId, unitId])
+  @@map("dfe_signer_device_units")
+}
+
+// AL-3: código de pareamento de uso único (TTL 10 min). Só o sha256 é gravado; usedAt preenchido ⇒ código consumido.
+model DfeSignerPairingCode {
+  id          String    @id @default(cuid())
+  userId      String
+  actorUserId String
+  unitId      String
+  codeHash    String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, unitId])
+  @@map("dfe_signer_pairing_codes")
+}
+
 // X10a PR-8 (BE-INCR-NFCE-EMENDA-1 §4, F-NFCE-E1-4 c; D-2026-10-29-X10A-PR7-9-FORKS decisão 3): CSC da NFC-e por unidade e
 // ambiente, para o QR Code v2 quando a UF recusa a v3. Cifrado com o keyring DFE_PSC_KEYS (secretBox, AAD = id). Uma
 // linha viva por (unidade, ambiente) — o serviço apaga a anterior na mesma tx; soft-delete zera o ciphertext.
