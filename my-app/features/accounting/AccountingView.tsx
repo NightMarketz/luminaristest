@@ -32,6 +32,7 @@ import { CounterpartiesPanel } from './components/CounterpartiesPanel';
 import { DimensionsPanel } from './components/DimensionsPanel';
 import { FixedAssetsPanel, type FixedAssetsSectionId } from './components/FixedAssetsPanel';
 import { FiscalProfilePanel } from './components/FiscalProfilePanel';
+import { AssinadorLocalSection } from './components/dfe/AssinadorLocalSection';
 import { TaxAssessmentPanel } from './components/TaxAssessmentPanel';
 import { MeiEnquadramentoSection } from './components/MeiEnquadramentoSection';
 import { PresumidoServicosSection } from './components/PresumidoServicosSection';
@@ -604,6 +605,8 @@ export function AccountingView() {
       {activeTab === 'perfil-fiscal' && unitId && (
         <div className="space-y-8">
           <FiscalProfilePanel unitId={unitId} />
+          {/* FE-INCR-NFCE-ASSINADOR FA-3 (F-FEAS-1 a): assinador local logo depois do perfil fiscal da unidade */}
+          <AssinadorLocalSection unitId={unitId} />
           <PartnersSection unitId={unitId} />
           <MeiEnquadramentoSection unitId={unitId} anoInicial={meiAno} />
           <PresumidoServicosSection unitId={unitId} />
