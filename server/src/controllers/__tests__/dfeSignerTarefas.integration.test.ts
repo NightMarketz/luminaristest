@@ -12,6 +12,7 @@ import { DfeSignerCodigoViewSchema, DfeSignerTarefasRespostaSchema, DfeSignerVie
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { makeTestCert } from '@test/helpers/nfeSignature';
+import { DFE_SIGNER_LEASE_MS } from '@/features/accounting/models/DfeSigner.model';
 
 const app = makeApp();
 const derB64 = (pem: string) => pem.replace(/-----(BEGIN|END) CERTIFICATE-----/g, '').replace(/\s+/g, '');
@@ -32,6 +33,7 @@ const poll = (q: Partial<Record<'espera' | 'versaoAssinador' | 'tokenPresente' |
     .set('Authorization', `Bearer ${t}`);
 const resultado = (id: string, body: DfeSignerResultadoBody, t = token) =>
   request(app).post(`${TAREFAS}/${id}/resultado`).set('Authorization', `Bearer ${t}`).send(body);
+const heartbeat = (id: string, t = token) => request(app).post(`${TAREFAS}/${id}/heartbeat`).set('Authorization', `Bearer ${t}`);
 const ASSINADO: DfeSignerResultadoBody = { ok: true, tipo: 'ASSINAR', signatureValueB64: 'c2lnbmF0dXJl', certificadoDerB64: CERT };
 
 async function parear(unitId: string, bearer?: string): Promise<string | undefined> {
@@ -137,15 +139,66 @@ describe('X10a EMENDA-4 AL-PR-3 — fila do assinador local pela HTTP', () => {
     expect(JSON.stringify(outro.body)).toContain('dfe_signer_resultado_conflitante');
   });
 
-  it('AL-6: tarefa entregue sem resultado volta a ser entregue depois do lease; antes dele, não', async () => {
+  it('AL-6: tarefa entregue sem resultado e sem heartbeat volta a ser entregue depois do lease (30 s); antes dele, não', async () => {
+    jest.useFakeTimers({ doNotFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'nextTick', 'queueMicrotask', 'performance', 'hrtime'] });
+    try {
+      const pendente = (await fila()).executar({ tipo: 'ASSINAR', algoritmo: 'rsa-sha1', digestB64: 'aGFzaA==', conteudo: CONTEUDO }, 120_000);
+      const [primeira] = DfeSignerTarefasRespostaSchema.parse((await poll({ espera: '5' })).body).tarefas;
+      jest.setSystemTime(Date.now() + DFE_SIGNER_LEASE_MS - 1_000);
+      expect((await poll()).status).toBe(204); // lease vivo: não reentrega
+      jest.setSystemTime(Date.now() + 2_000); // passou do lease, sem heartbeat
+      const [reentregue] = DfeSignerTarefasRespostaSchema.parse((await poll()).body).tarefas;
+      expect(reentregue.id).toBe(primeira.id);
+      expect((await resultado(primeira.id, ASSINADO)).status).toBe(200);
+      await pendente;
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('heartbeat: com heartbeat a cada 20 s (lease de 30 s) a tarefa não é reentregue, e cada heartbeat renova o lease', async () => {
+    jest.useFakeTimers({ doNotFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'nextTick', 'queueMicrotask', 'performance', 'hrtime'] });
+    try {
+      const pendente = (await fila()).executar({ tipo: 'ASSINAR', algoritmo: 'rsa-sha1', digestB64: 'aGFzaA==', conteudo: CONTEUDO }, 120_000);
+      const [tarefa] = DfeSignerTarefasRespostaSchema.parse((await poll({ espera: '5' })).body).tarefas;
+      for (let i = 0; i < 3; i++) {
+        jest.setSystemTime(Date.now() + 20_000);
+        expect((await heartbeat(tarefa.id)).status).toBe(200);
+        expect((await poll()).status).toBe(204); // renovada: não reentrega
+      }
+      expect((await resultado(tarefa.id, ASSINADO)).status).toBe(200);
+      await pendente;
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('heartbeat: tarefa de outro dispositivo ⇒ 404; o dispositivo dono continua renovando', async () => {
     const pendente = (await fila()).executar({ tipo: 'ASSINAR', algoritmo: 'rsa-sha1', digestB64: 'aGFzaA==', conteudo: CONTEUDO }, 10_000);
-    const [primeira] = DfeSignerTarefasRespostaSchema.parse((await poll({ espera: '5' })).body).tarefas;
-    expect((await poll()).status).toBe(204); // lease vivo: não reentrega
-    await prisma.dfeSignerTask.update({ where: { id: primeira.id }, data: { leaseUntil: new Date(Date.now() - 1) } });
-    const [reentregue] = DfeSignerTarefasRespostaSchema.parse((await poll()).body).tarefas;
-    expect(reentregue.id).toBe(primeira.id);
-    await resultado(primeira.id, ASSINADO);
+    const [tarefa] = DfeSignerTarefasRespostaSchema.parse((await poll({ espera: '5' })).body).tarefas;
+    const outroToken = await parear(filial); // o outro caixa só tira o vínculo da filial; o do centro segue com o token antigo
+    const r = await heartbeat(tarefa.id, outroToken!);
+    expect(r.status).toBe(404);
+    expect(JSON.stringify(r.body)).toContain('dfe_signer_tarefa_nao_encontrada');
+    expect((await heartbeat(tarefa.id)).status).toBe(200);
+    await resultado(tarefa.id, ASSINADO);
     await pendente;
+  });
+
+  it('heartbeat: tarefa expirada não é renovada (409 dfe_signer_tarefa_vencida) nem entregue de novo', async () => {
+    jest.useFakeTimers({ doNotFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'setImmediate', 'clearImmediate', 'nextTick', 'queueMicrotask', 'performance', 'hrtime'] });
+    try {
+      const pendente = (await fila()).executar({ tipo: 'ASSINAR', algoritmo: 'rsa-sha1', digestB64: 'aGFzaA==', conteudo: CONTEUDO }, 1_000);
+      const [tarefa] = DfeSignerTarefasRespostaSchema.parse((await poll({ espera: '5' })).body).tarefas;
+      jest.setSystemTime(Date.now() + 2_000); // passou do prazo da tarefa; o lease ainda estaria vivo
+      const r = await heartbeat(tarefa.id);
+      expect(r.status).toBe(409);
+      expect(JSON.stringify(r.body)).toContain('dfe_signer_tarefa_vencida');
+      expect((await poll()).status).toBe(204);
+      expect(await pendente).toBe('ENTREGUE');
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('AL-9 (defeito): TRANSMITIR em andamento não é reentregue antes do próprio prazo — 10,5 s depois do envio, o poll ainda devolve 204', async () => {

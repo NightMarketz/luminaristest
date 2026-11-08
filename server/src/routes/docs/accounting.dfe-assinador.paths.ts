@@ -122,5 +122,18 @@
  *         '404': { description: dfe_signer_tarefa_nao_encontrada (not a task of this device) }
  *         '409': { description: dfe_signer_resultado_conflitante | dfe_signer_tarefa_vencida }
  *         '429': { description: Rate limited }
+ *   /api/dfe-assinador/v1/tarefas/{id}/heartbeat:
+ *     post:
+ *       summary: Signer heartbeat for a delivered task (AL-6). Renews the lease (leaseAte = now + 30 s) only for a task of this device, DELIVERED and not expired
+ *       tags: [Accounting]
+ *       parameters:
+ *         - { in: header, name: Authorization, required: true, schema: { type: string }, description: 'Bearer <device token>' }
+ *         - { in: path, name: id, required: true, schema: { type: string } }
+ *       responses:
+ *         '200': { description: '{ leaseAte } — ISO instant until which the task stays with this device' }
+ *         '401': { description: Unknown or revoked device token }
+ *         '404': { description: dfe_signer_tarefa_nao_encontrada (not a task of this device) }
+ *         '409': { description: dfe_signer_tarefa_vencida | dfe_signer_tarefa_nao_entregue }
+ *         '429': { description: Rate limited }
  */
 export {};

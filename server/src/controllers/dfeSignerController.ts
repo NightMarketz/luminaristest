@@ -100,3 +100,17 @@ export const registrarResultadoDfeSigner = async (req: Request, res: Response) =
     return handleApiError(error, res);
   }
 };
+
+/**
+ * POST /api/dfe-assinador/v1/tarefas/:id/heartbeat — o caixa renova o lease da tarefa entregue a ele (AL-6). Só a tarefa
+ * do próprio dispositivo (outra ⇒ 404); entregue e não vencida (vencida ⇒ 409). Sem heartbeat, a tarefa volta ao poll.
+ */
+export const heartbeatDfeSignerTarefa = async (req: Request, res: Response) => {
+  try {
+    const device = (req as RequestComDispositivo).dfeSignerDevice!;
+    const r = await getFactory().getDfeSignerTaskService().renovarLease(device, req.params.id);
+    return res.json({ success: true, data: r });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};

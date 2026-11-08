@@ -9,6 +9,7 @@ import {
   DFE_SIGNER_RESULTADO_CONFLITANTE,
   DFE_SIGNER_RESULTADO_TIPO,
   DFE_SIGNER_TAREFA_NAO_ENCONTRADA,
+  DFE_SIGNER_TAREFA_NAO_ENTREGUE,
   DFE_SIGNER_TAREFA_VENCIDA,
   DFE_TRANSMITIR_TIMEOUT_PADRAO_MS,
   type DfeSignerTaskTipo,
@@ -169,6 +170,29 @@ export class DfeSignerTaskService {
     }
     this.esperandoResultado.get(task.id)?.(body);
     return { idempotente: false };
+  }
+
+  /**
+   * AL-6 — heartbeat do caixa: renova o lease da tarefa entregue a este dispositivo (`leaseAte = agora + lease`). Só a
+   * tarefa do próprio dispositivo (outra ⇒ 404); precisa estar `DELIVERED` e não vencida (vencida ⇒ 409, nunca renovada).
+   */
+  async renovarLease(device: DfeSignerDeviceWithUnits, taskId: string): Promise<{ leaseAte: string }> {
+    const task = await this.repo.findForDevice(device.id, taskId);
+    if (!task) throw new AppError('Tarefa do assinador não encontrada.', 404, DFE_SIGNER_TAREFA_NAO_ENCONTRADA);
+    const agora = this.now();
+    if (task.status === 'EXPIRED' || (task.status === 'DELIVERED' && task.expiresAt <= agora)) {
+      if (task.status === 'DELIVERED') await this.repo.expire(task.id);
+      throw new ConflictError('A tarefa venceu antes do heartbeat.', DFE_SIGNER_TAREFA_VENCIDA);
+    }
+    if (task.status !== 'DELIVERED') throw new ConflictError('A tarefa não está entregue a este assinador.', DFE_SIGNER_TAREFA_NAO_ENTREGUE);
+    const leaseAte = new Date(agora.getTime() + DFE_SIGNER_LEASE_MS);
+    if (await this.repo.renovarLease(task.id, device.id, agora, leaseAte)) return { leaseAte: leaseAte.toISOString() };
+    // Mudou entre a leitura e a renovação (resultado ou vencimento): o estado gravado decide o erro.
+    const atual = await this.repo.findForDevice(device.id, taskId);
+    throw new ConflictError(
+      atual?.status === 'EXPIRED' ? 'A tarefa venceu antes do heartbeat.' : 'A tarefa não está mais entregue a este assinador.',
+      atual?.status === 'EXPIRED' ? DFE_SIGNER_TAREFA_VENCIDA : DFE_SIGNER_TAREFA_NAO_ENTREGUE,
+    );
   }
 
   // ── Internos ───────────────────────────────────────────────────────────────

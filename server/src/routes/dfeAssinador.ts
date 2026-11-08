@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { parearDfeSigner, pollDfeSignerTarefas, registrarResultadoDfeSigner } from '../controllers/dfeSignerController';
+import { heartbeatDfeSignerTarefa, parearDfeSigner, pollDfeSignerTarefas, registrarResultadoDfeSigner } from '../controllers/dfeSignerController';
 import { dfeSignerDeviceLimiter, optionalDfeSignerDevice, requireDfeSignerDevice } from '../middleware/dfeSignerDeviceAuth';
 
 /**
@@ -13,5 +13,6 @@ const router = Router();
 router.post('/v1/pareamento', optionalDfeSignerDevice, dfeSignerDeviceLimiter, parearDfeSigner);
 router.get('/v1/tarefas', requireDfeSignerDevice, dfeSignerDeviceLimiter, pollDfeSignerTarefas);
 router.post('/v1/tarefas/:id/resultado', requireDfeSignerDevice, dfeSignerDeviceLimiter, registrarResultadoDfeSigner);
+router.post('/v1/tarefas/:id/heartbeat', requireDfeSignerDevice, dfeSignerDeviceLimiter, heartbeatDfeSignerTarefa);
 
 export default router;

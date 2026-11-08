@@ -19,11 +19,14 @@ export interface IDfeSignerTaskRepository {
   create(data: DfeSignerTaskData): Promise<DfeSignerTask>;
   /**
    * Entrega ao dispositivo as tarefas `PENDING` e as `DELIVERED` com o lease vencido (reentrega), ainda não vencidas;
-   * marca `DELIVERED` com o lease até o MAIOR entre `leaseUntil` e o vencimento da tarefa: uma tarefa entregue (um
-   * TRANSMITIR, por exemplo, com o timeout da SEFAZ correndo) não volta ao poll antes do próprio prazo (AL-9).
-   * Só volta a que este chamador marcou (update condicional).
+   * marca `DELIVERED` com `leaseUntil` (lease curto, AL-6). Só volta a que este chamador marcou (update condicional).
    */
   claim(deviceId: string, now: Date, leaseUntil: Date): Promise<DfeSignerTask[]>;
+  /**
+   * Heartbeat do caixa (AL-6): renova o lease só se a tarefa é deste dispositivo, está `DELIVERED` e não venceu
+   * (`expiresAt > now`). false se nada foi renovado (o chamador decide o motivo pela leitura).
+   */
+  renovarLease(id: string, deviceId: string, now: Date, leaseUntil: Date): Promise<boolean>;
   findForDevice(deviceId: string, id: string): Promise<DfeSignerTask | null>;
   /** `PENDING | DELIVERED` ⇒ `status` final, apaga o payload e grava o hash do resultado; false se já saiu desses estados. */
   complete(id: string, status: Extract<DfeSignerTaskStatus, 'DONE' | 'FAILED'>, resultHash: string): Promise<boolean>;

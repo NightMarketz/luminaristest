@@ -16,12 +16,20 @@ export class DfeSignerTaskRepository implements IDfeSignerTaskRepository {
     const candidatas = await prisma.dfeSignerTask.findMany({ where: elegivel, orderBy: { createdAt: 'asc' } });
     const entregues: DfeSignerTask[] = [];
     for (const t of candidatas) {
-      // AL-9: o lease cobre o prazo da tarefa (TRANSMITIR leva até timeoutMs + folga); reentrega só depois do vencimento.
-      const lease = t.expiresAt > leaseUntil ? t.expiresAt : leaseUntil;
-      const r = await prisma.dfeSignerTask.updateMany({ where: { id: t.id, ...elegivel }, data: { status: 'DELIVERED', leaseUntil: lease } });
-      if (r.count === 1) entregues.push({ ...t, status: 'DELIVERED', leaseUntil: lease });
+      // AL-6: lease curto para toda tarefa; a reentrega só vem depois de `leaseUntil < agora` (sem heartbeat do caixa).
+      const r = await prisma.dfeSignerTask.updateMany({ where: { id: t.id, ...elegivel }, data: { status: 'DELIVERED', leaseUntil } });
+      if (r.count === 1) entregues.push({ ...t, status: 'DELIVERED', leaseUntil });
     }
     return entregues;
+  }
+
+  public async renovarLease(id: string, deviceId: string, now: Date, leaseUntil: Date): Promise<boolean> {
+    // Só a tarefa entregue, deste dispositivo e ainda não vencida (expiresAt > agora): o update condicional decide.
+    const r = await prisma.dfeSignerTask.updateMany({
+      where: { id, deviceId, status: 'DELIVERED', expiresAt: { gt: now } },
+      data: { leaseUntil },
+    });
+    return r.count === 1;
   }
 
   public async findForDevice(deviceId: string, id: string): Promise<DfeSignerTask | null> {
