@@ -1,0 +1,116 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_IN2022_22_DOC_ICP_01-01_compilada-pdf",
+      "url": "https://www.gov.br/iti/pt-br/assuntos/legislacao/documentos-principais/IN2022_22_DOC_ICP_01.01_compilada.pdf",
+      "url_final": "https://www.gov.br/iti/pt-br/assuntos/legislacao/documentos-principais/IN2022_22_DOC_ICP_01.01_compilada.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:26:57-03:00",
+      "sha256": "6f975ac2b6dbdf578a1723687521a371e0cdf69adab7d3f0b9ab6bcaf71bf84e",
+      "arquivo": "docs/D01_IN2022_22_DOC_ICP_01-01_compilada-pdf.pdf",
+      "texto": "docs/D01_IN2022_22_DOC_ICP_01-01_compilada-pdf.txt",
+      "bytes": 419181
+    },
+    {
+      "id": "D02",
+      "titulo": "D02_IN2019_08_DOC-ICP-01-01-htm",
+      "url": "https://repositorio.iti.gov.br/instrucoes-normativas/IN2019_08_DOC-ICP-01.01.htm",
+      "url_final": "https://repositorio.iti.gov.br/instrucoes-normativas/IN2019_08_DOC-ICP-01.01.htm",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:30:24-03:00",
+      "sha256": "2d33f7be10e64ab78fc0dc745b2b840a7f08b0911ece0f70e35eeacba55c1637",
+      "arquivo": "docs/D02_IN2019_08_DOC-ICP-01-01-htm.html",
+      "texto": "docs/D02_IN2019_08_DOC-ICP-01-01-htm.txt",
+      "bytes": 540002
+    },
+    {
+      "id": "D03",
+      "titulo": "D03_IN2026_35_DOC_ICP_01-01_PQC-htm",
+      "url": "https://repositorio.iti.gov.br/instrucoes-normativas/IN2026_35_DOC_ICP_01.01_PQC.htm",
+      "url_final": "https://repositorio.iti.gov.br/instrucoes-normativas/IN2026_35_DOC_ICP_01.01_PQC.htm",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:30:24-03:00",
+      "sha256": "2d25791c4224eda63316291d770045fceccc3ddd6ec6c0630ba875fed240ed94",
+      "arquivo": "docs/D03_IN2026_35_DOC_ICP_01-01_PQC-htm.html",
+      "texto": "docs/D03_IN2026_35_DOC_ICP_01-01_PQC-htm.txt",
+      "bytes": 419893
+    },
+    {
+      "id": "D04",
+      "titulo": "Assinatura digital - SerproID - Manual de integração",
+      "url": "https://serproid.serpro.gov.br/manual-integracao/utilizacao-certificado/assinatura-digital/",
+      "url_final": "https://serproid.serpro.gov.br/manual-integracao/utilizacao-certificado/assinatura-digital/",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:30:29-03:00",
+      "sha256": "ef20baf846436193ddc4c6bca7f3c8998a002de1e27afe7cee435b0640a243b1",
+      "arquivo": "docs/D04_assinatura-digital.html",
+      "texto": "docs/D04_assinatura-digital.txt",
+      "bytes": 43806
+    },
+    {
+      "id": "D05",
+      "titulo": "Manual da NF-e",
+      "url": "http://moc.sped.fazenda.pr.gov.br/NFe_NFCe/VisaoGeral.html",
+      "url_final": "http://moc.sped.fazenda.pr.gov.br/NFe_NFCe/VisaoGeral.html",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:35:49-03:00",
+      "sha256": "7869d3726b407c988030087b19d2efa4421f5b96c9353c93a9bd09a9994f9eb2",
+      "arquivo": "docs/D05_VisaoGeral-html.html",
+      "texto": "docs/D05_VisaoGeral-html.txt",
+      "bytes": 483990
+    },
+    {
+      "id": "D06",
+      "titulo": "Perguntas Frequentes - CG ICP-Brasil — Instituto Nacional de Tecnologia da Informação",
+      "url": "https://www.gov.br/iti/pt-br/assuntos/comite-gestor/perguntas-frequentes-cg-icp-brasil",
+      "url_final": "https://www.gov.br/iti/pt-br/assuntos/comite-gestor/perguntas-frequentes-cg-icp-brasil",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:39:11-03:00",
+      "sha256": "1fbca433a21a3f48b952129527dce81a7821ac1c9fd5aa9a0969313e30d1fb27",
+      "arquivo": "docs/D06_perguntas-frequentes-cg-icp-brasil.html",
+      "texto": "docs/D06_perguntas-frequentes-cg-icp-brasil.txt",
+      "bytes": 151744
+    },
+    {
+      "id": "D07",
+      "titulo": "D07_DownloadArquivoEstatico",
+      "url": "https://dfe-portal.svrs.rs.gov.br/NFE/DownloadArquivoEstatico/?sistema=NFE&tipoArquivo=3&nomeArquivo=NT2018%20005_v1_40-AlteracaodeleiauteNF-eNFC-e.pdf",
+      "url_final": "https://dfe-portal.svrs.rs.gov.br/NFE/DownloadArquivoEstatico/?sistema=NFE&tipoArquivo=3&nomeArquivo=NT2018%20005_v1_40-AlteracaodeleiauteNF-eNFC-e.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:48:06-03:00",
+      "sha256": "817cdba0654a4cd6cf72af52fd67bbb588f7a22aa7bedc8a026d041e91438af7",
+      "arquivo": "docs/D07_DownloadArquivoEstatico.html",
+      "texto": "docs/D07_DownloadArquivoEstatico.txt",
+      "bytes": 742871
+    },
+    {
+      "id": "D08",
+      "titulo": "D08_DownloadArquivoEstatico",
+      "url": "https://dfe-portal.svrs.rs.gov.br/NFE/DownloadArquivoEstatico/?sistema=NFE&tipoArquivo=3&nomeArquivo=Nota%20T%C3%A9cnica%202020.005%20-%20v1.20%20-%20Regras%20de%20Valida%C3%A7%C3%A3o.pdf",
+      "url_final": "https://dfe-portal.svrs.rs.gov.br/NFE/DownloadArquivoEstatico/?sistema=NFE&tipoArquivo=3&nomeArquivo=Nota%20T%C3%A9cnica%202020.005%20-%20v1.20%20-%20Regras%20de%20Valida%C3%A7%C3%A3o.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:48:51-03:00",
+      "sha256": "b0a750234d4c2b2f79f44f1fbdef33c2e51c6f98347952b01633cde5942b0737",
+      "arquivo": "docs/D08_DownloadArquivoEstatico.html",
+      "texto": "docs/D08_DownloadArquivoEstatico.txt",
+      "bytes": 751215
+    },
+    {
+      "id": "D09",
+      "titulo": "Perguntas Frequentes",
+      "url": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/perguntas-frequentes.aspx",
+      "url_final": "https://portal.fazenda.sp.gov.br/servicos/nfce/Paginas/perguntas-frequentes.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-30T02:49:36-03:00",
+      "sha256": "f930b129274d3b61a6fe72c977d054bf5327d12627ea80a7522ceb0ce8f0fe11",
+      "arquivo": "docs/D09_perguntas-frequentes-aspx.html",
+      "texto": "docs/D09_perguntas-frequentes-aspx.txt",
+      "bytes": 104813
+    }
+  ],
+  "buscas": [],
+  "slug": "d5-byok-psc",
+  "pergunta": "BYOK com e-CNPJ em nuvem (PSC): o PSC pode assinar NF-e/NFC-e (rsa-sha1)? cadastro da aplicação? mTLS?",
+  "criado": "2026-10-30T02:26:56-03:00"
+}

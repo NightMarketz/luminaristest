@@ -19,6 +19,7 @@ description?: string
 attachmentId?: string
 rawJson?: string
 }
+extemporaneousReason?: string
 /**
  * @minItems 2
  */
@@ -43,7 +44,8 @@ export interface ReverseEntryInput {
 unitId: string
 lancamentoId: string
 reversalPostingDate: string
-reason?: string
+reason: string
+extemporaneousReason?: string
 }
 export interface ReportQueryInput {
 unitId: string

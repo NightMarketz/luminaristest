@@ -1,0 +1,2 @@
+POST /api/dashboard/ai/ChatInterview -> 200  [Authorization: Bearer <redigido>]  req: {"messages":[{"sender":"ai","text":"Olá! Para começarmos, por favor me conte sobre o seu negócio ou projeto para que eu possa entender como melhor ajudá-lo com a configuração do sistema."},{"sender":"user","text":"Tenho um salão de beleza em Curitiba com 3 cabeleireiras"}],"stage":"DISCOVERING_BUSINESS"}
+   res: {"response":"Qual tipo de serviços você oferece no seu salão de beleza?","nextStage":"DISCOVERING_BUSINESS"}

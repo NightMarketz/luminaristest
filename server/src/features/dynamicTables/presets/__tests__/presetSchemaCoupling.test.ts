@@ -43,6 +43,19 @@ const OPTIONAL_RELATIONS: Readonly<Record<string, string>> = {
     'F-CRM-5 (a): Oportunidades depende só de CRM-0 — accountId opcional, descartado sem CRM-2A (registry.ts)',
   'crmOpportunities.contactId->crmContacts':
     'F-CRM-5 (a): Oportunidades depende só de CRM-0 — contactId opcional, descartado sem CRM-2B (registry.ts)',
+  // BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: PESSOAS/VENDAS isolados (F-TAP-1 b) sem CRM, sem os outros catálogos e sem
+  // as categorias que ainda são tabelas soltas da suíte (AGENDA, CRM-CAMP). Relação opcional sai na instalação (E5).
+  'tasks.leadId->leads': 'CRM-0 é opcional fora das suítes que o declaram: sem Funil o vínculo da tarefa ao lead é descartado (E5)',
+  // PR-4 (item 22): Campanhas virou o submódulo CRM-CAMP; VENDAS não depende dele (F-MB-3b, escolha do dono).
+  'sales.campaignId->campaigns': 'F-MB-3b: sem Campanhas (CRM-CAMP) `sales.campaignId` (opcional) é descartado na instalação',
+  'saleItems.productId->products': 'F-MB-2: catálogo por requiresOneOf — sem VEN-PROD o item não aponta produto (E5)',
+  'saleItems.serviceId->services': 'F-MB-2: catálogo por requiresOneOf — sem VEN-SERV o item não aponta serviço (E5)',
+  'saleItems.packageId->packages': 'F-MB-2 / F-MS-3 (a): sem VEN-PAC o item não aponta pacote (E5)',
+  'saleItems.appointmentId->appointments': 'AGENDA é categoria própria (AGE-0, PR-3): sem ela o item não aponta atendimento (E5)',
+  'services.associatedProducts->products': 'VEN-SERV não depende de VEN-PROD: sem Produtos a lista de produtos associados é descartada (E5)',
+  // PR-3: ESTOQUE isolado (EST-0 + VEN-PROD) sem PESSOAS-Fornecedores.
+  'stockMovements.supplierId->suppliers':
+    'PES-FORN é opcional: sem Fornecedores `stockMovements.supplierId` (opcional) é descartado (E5; D-2026-10-31-MODULOS-BASE-SUBMODULOS, Consequências)',
 };
 
 // --- Item 6 / F-TAP-2 → (a): manifesto estático dos campos que cada plugin escreve/lê ---------------------------
@@ -175,7 +188,22 @@ const PLUGIN_MANIFEST: readonly PluginFieldManifest[] = [
 
 // --- Item 8 / F-TAP-4 → (a): vermelhos conhecidos, com o nó dono — a lista só encolhe ----------------------------
 
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-3 (item 18): os KNOWN_GAPS (a) do PR-2 — `products.deleteConstraints` →
+// productUnits/stockMovements ausentes nos universos com Produtos sem ESTOQUE, dono BUILDER-VERTICAIS — fecharam: a
+// constraint com alvo ausente nunca é lida (E8) e o delete funciona, provado por
+// `dashboardSemEstoqueAgenda.integration.test.ts` › "item 18". Viraram `ABSENT_DELETE_CONSTRAINT_TARGETS` (abaixo).
 const KNOWN_GAPS: readonly KnownGap[] = [];
+
+/**
+ * `${tabela}.deleteConstraints->${tabelaAlvo}` → motivo. Só vale com a tabela-alvo AUSENTE do universo (com ela
+ * presente, alvo e campo do agregado seguem conferidos). Mesmo mecanismo das relações opcionais (F-TAP-3).
+ */
+const ABSENT_DELETE_CONSTRAINT_TARGETS: Readonly<Record<string, string>> = {
+  'products.deleteConstraints->productUnits':
+    'F-MB-4 / F-MS-4: VEN-PROD não depende de EST-0; sem a tabela a constraint nunca é lida (E8) — item 18 do PR-3',
+  'products.deleteConstraints->stockMovements':
+    'F-MB-4 / F-MS-4: VEN-PROD não depende de EST-0; sem a tabela a constraint nunca é lida (E8) — item 18 do PR-3',
+};
 
 // --- Coletores ---------------------------------------------------------------------------------------------------
 
@@ -227,6 +255,7 @@ function collectRelationFindings(universes: readonly Universe[]): CouplingFindin
     for (const [tableKey, table] of Object.entries(u.tables)) {
       for (const dc of table.schema.deleteConstraints ?? []) {
         const target = resolveTableRef(dc.targetTable, tableKey);
+        if (target && !u.tables[target] && ABSENT_DELETE_CONSTRAINT_TARGETS[`${tableKey}.deleteConstraints->${target}`]) continue;
         if (!target || !u.tables[target]) {
           out.push({ suite: u.name, table: tableKey, source: 'rule', ruleKind: 'deleteConstraints', ref: dc.targetTable, target: `(universo ${u.name})` });
           continue;
@@ -361,6 +390,12 @@ describe('TESTE-ACOPLAMENTO-PRESET — preset × schema', () => {
     const ruleBase = firstTableWith(salon, (t) => !!t.schema.defaultDisplayField);
     const ruleTypo = withTable(salon, ruleBase, (t) => { t.schema.defaultDisplayField = 'nmae'; });
     expect(collectRuleFindings([ruleTypo]).some((f) => f.ref === 'nmae' && f.ruleKind === 'defaultDisplayField')).toBe(true);
+
+    // A allowlist de deleteConstraints com alvo ausente (PR-3) não cobre outra tabela-alvo.
+    const dcTypo = withTable(salon, 'products', (t) => {
+      t.schema.deleteConstraints = [...(t.schema.deleteConstraints ?? []), { type: 'RESTRICT', targetTable: '@@PRESET_TABLE_KEY::stockMovementz' }];
+    });
+    expect(collectRelationFindings([dcTypo]).some((f) => f.ruleKind === 'deleteConstraints' && f.ref.endsWith('::stockMovementz'))).toBe(true);
 
     const relBase = firstTableWith(salon, (t) => t.schema.fields.some((f) => f.type === 'relation'));
     const relTypo = withTable(salon, relBase, (t) => {

@@ -12,10 +12,14 @@ import logger, { type EventLogger } from '../lib/logger';
 import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
 import { runDfePollPending } from './dfePollPending.job';
 import type { PollSummary } from '../features/accounting/services/FiscalDocumentLifecycleService';
+import { scopeDay } from '../features/accounting/models/dates';
+import type { ContingenciaTickSummary } from '../features/accounting/dtos/NfceContingenciaDto';
 
 const JOB = 'dfe_poll_pending';
 const DEFAULT_INTERVAL_MS = 120_000; // 2 minutos
 const DEFAULT_INITIAL_DELAY_MS = 30_000;
+/** C3: o "dia corrido" do alerta é o de Brasília (fuso constante do AccountingScope), não o UTC. */
+const FUSO_DO_ALERTA = { timeZone: 'America/Sao_Paulo' };
 
 /** Gate P4 (ADR-OBSERVABILIDADE OBS-R9): every scheduler line carries a `job.*` catalog event. */
 type JobLogger = EventLogger;
@@ -48,6 +52,8 @@ export class DfePollScheduler {
   private readonly poll: () => Promise<PollSummary>;
   private readonly log: JobLogger;
   private readonly alert: (payload: AlertPayload) => void;
+  /** C3: `evento:documentId` → dia do último alerta. Sem teto; o dia que passou sai no próximo tick. Process-local, como o lock. */
+  private readonly alertadas = new Map<string, string>();
 
   constructor(deps: DfePollSchedulerDeps = {}) {
     this.poll = deps.poll ?? runDfePollPending;
@@ -63,10 +69,35 @@ export class DfePollScheduler {
     this.running = true;
     try {
       const summary = await this.poll();
-      if (summary.failed > 0 || (summary.attachments?.failed ?? 0) > 0) {
+      const c = summary.contingencia;
+      // BE-INCR-DFE-EVENTOS PR-2 (item 18): falha ao consultar eventos, evento ignorado (A3) ou nota substituída fora do
+      // Luminaris pedem atenção — warn com o resumo (os avisos nomeiam a nota por número e série).
+      const e = summary.eventos;
+      if (
+        summary.failed > 0 ||
+        (summary.attachments?.failed ?? 0) > 0 ||
+        (c && c.failed + c.orfasFalharam + c.pertoDoPrazo + c.vencidas > 0) ||
+        (e && e.failed + e.ignorados + e.substituidasFora > 0)
+      ) {
         this.log.event('warn', 'job.completed', JOB, { job: JOB, ...summary });
       } else {
         this.log.event('info', 'job.completed', JOB, { job: JOB, ...summary });
+      }
+      // X10a PR-9 (decisões 6, 7 e 9): NFC-e off-line perto do prazo/vencida ou órfã não resolvida ⇒ alerta remoto.
+      // C3: no máximo 1 vez por nota, por evento e por dia — o tick de 2 min repetia o mesmo aviso ~720 vezes por dia.
+      const novas = c ? this.alertasNovas(c.alertas) : [];
+      if (novas.length > 0) {
+        const conta = (evento: string) => novas.filter((a) => a.evento === evento).length;
+        this.alert({
+          source: 'dfe_poll',
+          event: 'reconcile_summary',
+          timestamp: new Date().toISOString(),
+          job: JOB,
+          contingenciaPertoDoPrazo: conta('PERTO_DO_PRAZO'),
+          contingenciaVencidas: conta('VENCIDA'),
+          contingenciaOrfasFalharam: conta('ORFA_FALHOU'),
+          contingenciaAlertas: novas,
+        });
       }
       return summary;
     } catch (error) {
@@ -77,6 +108,17 @@ export class DfePollScheduler {
     } finally {
       this.running = false;
     }
+  }
+
+  private alertasNovas(alertas: ContingenciaTickSummary['alertas']): ContingenciaTickSummary['alertas'] {
+    const hoje = scopeDay(FUSO_DO_ALERTA, new Date());
+    for (const [chave, dia] of this.alertadas) if (dia !== hoje) this.alertadas.delete(chave);
+    return alertas.filter((a) => {
+      const chave = `${a.evento}:${a.documentId}`;
+      if (this.alertadas.has(chave)) return false;
+      this.alertadas.set(chave, hoje);
+      return true;
+    });
   }
 
   start(options: DfePollSchedulerStartOptions = {}): void {

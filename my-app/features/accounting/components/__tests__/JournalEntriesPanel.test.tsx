@@ -114,6 +114,26 @@ describe('JournalEntriesPanel (render)', () => {
     ).toContain(input.value);
   });
 
+  // TESTE-GUARDA — ITG 2000 item 36, C4 item 2: estorno com data num período fechado e reaberto exige a razão do
+  // registro extemporâneo no servidor; o modal "Confirmar estorno" tem o campo e o body o leva.
+  it('guarda: a razão do registro extemporâneo digitada no estorno vai no body do reverseEntry', async () => {
+    vi.mocked(accountingService.listEntries).mockResolvedValue({ entries: [entry], total: 1 });
+    vi.mocked(accountingService.reverseEntry).mockResolvedValue({} as never);
+    render(<JournalEntriesPanel unitId="u1" />);
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /Estornar/ })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /Estornar/ }));
+    fireEvent.change(screen.getByLabelText('Motivo do estorno'), { target: { value: 'valor em duplicidade' } });
+    fireEvent.change(screen.getByLabelText('Razão do registro extemporâneo'), { target: { value: ' estorno depois do fechamento ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar estorno' }));
+
+    await waitFor(() =>
+      expect(accountingService.reverseEntry).toHaveBeenCalledWith(
+        expect.objectContaining({ lancamentoId: 'e1', reason: 'valor em duplicidade', extemporaneousReason: 'estorno depois do fechamento' }),
+      ),
+    );
+  });
+
   // ── FE-INCR-AUDIT-PROVENANCE (sessão de feature, F-FEAP-1..7 → (a) ratificados) ──
 
   describe('Verificar cadeia de auditoria (F-FEAP-1a)', () => {

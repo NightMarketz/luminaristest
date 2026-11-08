@@ -10,12 +10,13 @@ scoped to its owner (tenant).
 `Document` (Prisma): `id`, `userId`, `fileName`, `fileType` (`PDF` | `DOCX` | `XLSX`), `fileSize`,
 `textContent`, `mimeType`, `status` (`PENDING` | `PROCESSING` | `COMPLETED` | `ERROR`),
 `documentPurpose` (`DATA_ANALYSIS` | `KNOWLEDGE_BASE`), `summary`, `contextJson`, dates.
-`Chunk` rows hold the split text; vectors live in **Qdrant** (collection `documents`).
+`Chunk` rows hold the split text and the embedding stamp (`embeddingModel`, `embeddingDims`, `embeddedAt`); vectors live in the
+`chunk_vec` vec0 of a **separate SQLite file** (`VECTOR_DB_PATH`, sqlite-vec), which Prisma never opens.
 
 ## Layering & authorization
 
 `Controller → Service → Repository`, with `Policy` injected into the service. SQL access goes through
-`DocumentRepository`/`ChunkRepository`; vector access through `VectorRepository` (Qdrant).
+`DocumentRepository`/`ChunkRepository`; vector access through `ChunkVectorRepository` (vec0).
 
 - **Multi-tenant (Tier-0):** vector search is **hard-scoped to the owner** —
   `VectorRepository.search`/`searchVectors` always apply `must: [{ key: 'userId', match: userId }]`,
@@ -34,7 +35,6 @@ scoped to its owner (tenant).
 | PATCH | `/:id` | Update `status`/`summary`/`contextJson`/`processingDate`/`processingError`. |
 | DELETE | `/:id` | Delete the document + its chunks + its vectors. |
 | POST | `/search` | Semantic search over the user's documents (`{ query, limit? }`). |
-| GET | `/:id/qdrant` | Inspect a document's stored vectors (owner-checked). |
 | POST | `/token-cost` | Estimate token count for an uploaded file (no persistence). |
 
 All endpoints require authentication. Static paths (`/list`) are registered before `/:id` so they
@@ -46,24 +46,27 @@ are not shadowed by the parametric route.
 blocking the response:
 
 1. Status → `PROCESSING`; statistics computed.
-2. **DATA_ANALYSIS** purpose: Excel → direct structured extraction; other tabular text → LLM-based
-   structured extraction (delegated to [`structuredData`](../structuredData/README.md)). Extraction
-   failures are recorded in `contextJson.errors` but don't abort the run.
-3. Text is chunked; each chunk is embedded and upserted into Qdrant in batches of 10. Each vector's
-   payload carries `{ documentId, userId, index, textContent, chunkId, fileName }`.
+2. `documentPurpose` no longer changes processing: the structured extraction behind `DATA_ANALYSIS`
+   (R26) was retired together with the `structuredData` feature and its table (dono, 2026-10-29,
+   `docs/plano/decisoes/D-2026-10-29-FIX-CHAT-AGENTE-FECHAMENTO.md`). The purpose is kept as a label.
+3. The document's previous vectors and chunks are removed (reprocessing is idempotent); the text is chunked; all chunks
+   are embedded through `UserEmbedder` (one resolver for indexing and querying) and written to the vec0 in one
+   transaction of the vector file, keyed by `chunk_id`, partitioned by `user_id`, tagged with the stamp.
 4. Status → `COMPLETED` (or `ERROR`, with the message persisted) on finish.
 
 ## Invariants & lifecycle
 
-- **Delete removes vectors too.** `deleteDocument` deletes Qdrant points **by the `documentId`
-  payload filter** (`VectorRepository.deletePointsByDocumentId`) **first**, then deletes chunks +
-  document in a single SQL transaction. Deleting by semantic key (not by reconstructed point ids) is
-  robust against id-derivation drift and reaps any pre-existing orphans — so a deleted document's
-  content can no longer surface in RAG.
-- **Qdrant-before-SQL ordering:** the external store is cleaned first; if the SQL transaction then
-  fails, vectors are already gone and SQL is intact (logged for visibility, no data corruption).
-- **Vector point id** = `uuidv5(chunk.id, NAMESPACE)` at upsert (see pipeline). Because deletion is
-  by payload filter, callers never need to reconstruct this id.
+- **Delete removes vectors too, vectors first** (RAG-PR-A item 9, path 2): `deleteDocument` deletes the
+  document's vec0 rows (`ChunkVectorRepository.deleteByDocument`, ids read from `Chunk`) **first**, then chunks +
+  document in a single SQL transaction. If the SQL step fails, vectors are gone and SQL is intact (logged).
+  Anything left behind (a vector without `Chunk`) is removed by the daily `VecOrphanSweepScheduler`.
+- **`Chunk` is the record copy, the vec0 is the index** (FIX-CHAT-AGENTE #18, dono 2026-10-29: keep). Search hits
+  are hydrated from `Chunk` (text, index, document), and `npm run rag:reindex [--user <id>]` rebuilds every vector
+  whose stamp is missing or differs from the current one.
+- **No reprocessing after restart** (FIX-CHAT-AGENTE #6, dono 2026-10-29): the file bytes live only in
+  memory during processing. A document left in `PROCESSING` by a restart goes to `FAILED` through the
+  R18 watchdog (`server.ts`) and the user uploads it again. Automatic reprocessing waits for the
+  document queue (#10, on the TEAMMATES BullMQ queue, after its PR-0).
 
 ## DTOs
 
@@ -81,8 +84,8 @@ Gold-standard 4-level suite (see [`TESTING.md`](../../../TESTING.md)):
 - **DTO unit** — `dtos/__tests__/DocumentDto.spec.ts`: `CreateDocumentSchema` limits (fileType enum,
   positive fileSize, `documentPurpose` default) + list/search query caps.
 - **Service integration** — `services/__tests__/DocumentService.integration.test.ts` (real SQLite,
-  Qdrant/embeddings mocked): Tier-0 reads/updates/deletes, the **404-not-403 existence non-leak**, and
-  the privacy-critical **delete ordering** (Qdrant vectors purged BEFORE the SQL row; a Qdrant failure
+  embeddings faked, vec0 on a temp file): Tier-0 reads/updates/deletes, the **404-not-403 existence non-leak**,
+  and the privacy-critical **delete ordering** (vectors purged BEFORE the SQL row; a vector-index failure
   leaves SQL intact). Also guards the search payload mapping (`textContent` reaches the caller).
 - **HTTP contract** — `controllers/__tests__/documents.routes.integration.test.ts`: 401/400/403/404 and
   the `{ success, data }` envelope on the boundary that runs before any external call.
@@ -93,9 +96,8 @@ Gold-standard 4-level suite (see [`TESTING.md`](../../../TESTING.md)):
 
 ## Interaction with other features
 
-- **Consumes:** [`structuredData`](../structuredData/README.md) (structured extraction for tabular
-  docs — **DEPRECATED R26 on the frontend**, see that feature's README), [`users`](../users/README.md)
-  (`UserRepository` to resolve the owner during processing), `lib/openai` (tabular detection / embeddings).
+- **Consumes:** [`users`](../users/README.md) (`UserRepository` to resolve the owner during processing),
+  `lib/vector` (embeddings).
 - **Consumed by:** [`chat`](../chat/README.md) (RAG search via `VectorRepository.search`),
   [`reports`](../reports/README.md) (context extraction for chart generation). Both pass the
   authenticated `userId`, so retrieval stays tenant-scoped.

@@ -5,15 +5,18 @@
  * paths:
  *   /api/accounting/partners:
  *     get:
- *       summary: List the partners in force on a date and the sum of their shares (F-IRD-14)
+ *       summary: List the partners in force on a date (or all live terms) and the sum of their shares (F-IRD-14)
  *       description: >-
  *         data defaults to today in the scope time zone. somaParticipacaoBp different from 10000 does not block the
- *         registry; it only returns a warning (it blocks the interest on equity later).
+ *         registry; it only returns a warning (it blocks the interest on equity later). todas=true (FE-INCR-ECF-Y600
+ *         PR-2) lists every live term, ended and future ones included; the sum and the warning stay on the terms in
+ *         force on data. todas together with data is a 400.
  *       tags: [Accounting]
  *       security: [{ bearerAuth: [] }]
  *       parameters:
  *         - { in: query, name: unitId, required: true, schema: { type: string } }
  *         - { in: query, name: data, required: false, schema: { type: string, format: date } }
+ *         - { in: query, name: todas, required: false, schema: { type: string, enum: ['true'] } }
  *       responses:
  *         '200': { description: '{ data, socios: PartnerView[], somaParticipacaoBp, aviso }' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
@@ -42,6 +45,20 @@
  *                 participacaoBp: { type: integer, minimum: 0, maximum: 10000 }
  *                 entradaEm: { type: string, format: date }
  *                 saidaEm: { type: string, format: date, nullable: true }
+ *                 outrasParticipacoes:
+ *                   type: array
+ *                   nullable: true
+ *                   maxItems: 50
+ *                   description: 'EFICIENCIA-FISCAL PR-4 item 20 — informed stakes in other companies; feed only the interdependence alert (LC 123 art. 3º § 4º III, IV, V)'
+ *                   items:
+ *                     type: object
+ *                     required: [cnpj, participacaoBp, empresaNoSimples, administrador]
+ *                     properties:
+ *                       cnpj: { type: string }
+ *                       participacaoBp: { type: integer, minimum: 0, maximum: 10000 }
+ *                       empresaNoSimples: { type: boolean }
+ *                       administrador: { type: boolean }
+ *                       receitaBrutaAnualCents: { type: integer, minimum: 0, nullable: true }
  *       responses:
  *         '201': { description: 'PartnerView' }
  *         '400': { $ref: '#/components/responses/BadRequestError' }
@@ -95,5 +112,6 @@
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '403': { $ref: '#/components/responses/ForbiddenError' }
  *         '404': { $ref: '#/components/responses/UnitNotFound' }
+ *         '409': { description: 'SOCIO_COM_DISTRIBUICAO (partner has profit distribution or JCP; set saidaEm instead) or deleted unit' }
  */
 export {};

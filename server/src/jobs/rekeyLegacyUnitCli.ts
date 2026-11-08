@@ -86,6 +86,16 @@ export const REKEY_MODELS = [
   'InterestOnEquityCalculation', // IRRF-DISTRIBUICAO PR-4: `unitId` = unidade do lançamento e do razão lido, sem hash → REKEY pelo F-RK-5
   'WithholdingProfile', // RETENCOES-FONTE PR-1: perfil de retenção da unidade, sem hash → REKEY pelo F-RK-5 (segue a contraparte, que já é REKEY)
   'TaxWithholding', // RETENCOES-FONTE PR-2: retenção da unidade (segue o título e a baixa), sem hash → REKEY pelo F-RK-5
+  // X10a PR-7 (EMENDA-PSC): credencial do PSC e a autorização pendente são da unidade; AAD da cifra = id, não unitId →
+  //   REKEY pelo precedente do FiscalCertificate. Deixá-las no unitId antigo tiraria da unidade re-chaveada a assinatura.
+  'PscCredential', 'PscAuthorization',
+  // X10a EMENDA-4 AL-PR-2: o vínculo do assinador local e o código de pareamento são da unidade, sem hash → REKEY pelo F-RK-5.
+  'DfeSignerDeviceUnit', 'DfeSignerPairingCode',
+  'NfceCsc', // X10a PR-8: CSC da NFC-e por unidade; AAD da cifra = id → REKEY pelo mesmo precedente
+  // X10a PR-9: contingência da unidade e a nota órfã (segue o FiscalDocument), sem hash → REKEY pelo F-RK-5.
+  'NfceContingencia', 'NfceContingenciaOrfa',
+  'DpLotacao', // BE-INCR-DP-F0-F1 PR-3: lotação do DP no estabelecimento (unitId), sem hash → REKEY pelo F-RK-5
+  'DpVinculo', // BE-INCR-DP-F0-F1 PR-4: vínculo do DP no estabelecimento (unitId), sem hash → REKEY pelo F-RK-5
 ] as const;
 
 /**

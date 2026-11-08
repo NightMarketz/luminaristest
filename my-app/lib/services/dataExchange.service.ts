@@ -126,11 +126,13 @@ async function streamDownload(url: string, fileName: string): Promise<void> {
 
 export const dataExchangeService = {
   /** Upload + validate a CSV/XLSX import — stages a VALIDATED job (no ledger write yet). */
-  async importFile(kind: ImportKind, unitId: string, file: File): Promise<DataExchangeJob> {
+  async importFile(kind: ImportKind, unitId: string, file: File, extemporaneousReason?: string): Promise<DataExchangeJob> {
     const form = new FormData();
     form.append('file', file);
     form.append('kind', kind);
     form.append('unitId', unitId);
+    // ITG 2000 item 36: razão do registro extemporâneo do job; sem ela, linha em período reaberto sai inválida na prévia.
+    if (extemporaneousReason) form.append('extemporaneousReason', extemporaneousReason);
 
     const response = await fetch(`${baseUrl()}/accounting/data-exchange/imports`, {
       method: 'POST',

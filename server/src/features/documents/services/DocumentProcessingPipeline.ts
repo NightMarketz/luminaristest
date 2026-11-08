@@ -1,49 +1,37 @@
 import { IChunkRepository } from '../repositories/IChunkRepository';
-import { IVectorRepository } from '../repositories/IVectorRepository';
+import type { IChunkVectorRepository } from '../repositories/IChunkVectorRepository';
+import type { IUserEmbedder } from '@/lib/embedding/UserEmbedder';
 import { DocumentProcessingService } from './DocumentProcessingService';
-import { OpenAIService } from '@/lib/openai/OpenAIService';
 import { IDocumentRepository } from '../repositories/IDocumentRepository';
-import { IDocument, DocumentStatus, DocumentPurpose } from '../models/Document.model';
+import { IDocument, DocumentStatus } from '../models/Document.model';
 import { DocumentContext } from '../models/DocumentContext';
 import { logger } from '@/lib/logger';
-import { v5 as uuidv5 } from 'uuid';
-import { StructuredDataService } from '../../structuredData/services/StructuredDataService';
-import { extractStructuredDataFromExcel } from '@/lib/vector/extractors/ExcelStructuredExtractor';
 import type { IUserRepository } from '../../users/repositories/IUserRepository';
-import { NotFoundError } from '@/lib/errors';
-import type { UserContext } from '@/types/UserContext';
-
-// Namespace UUID para gerar UUIDs determinísticos para os chunks. Deve ser um UUID válido.
-const CHUNK_ID_NAMESPACE = 'f6db7260-569b-4559-835a-484f913119a4';
+import { AppError, NotFoundError } from '@/lib/errors';
 
 export class DocumentProcessingPipeline {
   private chunkRepository: IChunkRepository;
-  private vectorRepository: IVectorRepository;
+  private vectorRepository: IChunkVectorRepository;
   private processingService: DocumentProcessingService;
   private documentRepository: IDocumentRepository;
-  private openAIService: OpenAIService;
-  private structuredDataService: StructuredDataService;
   private userRepository: IUserRepository;
 
   constructor(
     chunkRepository: IChunkRepository,
-    vectorRepository: IVectorRepository,
+    vectorRepository: IChunkVectorRepository,
     processingService: DocumentProcessingService,
     documentRepository: IDocumentRepository,
-    openAIService: OpenAIService,
-    structuredDataService: StructuredDataService,
-    userRepository: IUserRepository
+    userRepository: IUserRepository,
+    private readonly embedder: IUserEmbedder
   ) {
     this.chunkRepository = chunkRepository;
     this.vectorRepository = vectorRepository;
     this.processingService = processingService;
     this.documentRepository = documentRepository;
-    this.openAIService = openAIService;
-    this.structuredDataService = structuredDataService;
     this.userRepository = userRepository;
   }
 
-  public async processDocument(document: IDocument, text:string, fileBuffer?: Buffer): Promise<void> {
+  public async processDocument(document: IDocument, text:string): Promise<void> {
     const startTime = Date.now();
     const context: DocumentContext = {
       processing: {
@@ -69,76 +57,10 @@ export class DocumentProcessingPipeline {
         processingError: null,
       });
 
-      const isExcel =
-        document.mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && fileBuffer;
-
+      // R26 aposentado (dono, 2026-10-29): sem extração estruturada; o dono do documento ainda tem de existir.
       const userRecord = await this.userRepository.getUserById(document.userId);
       if (!userRecord) {
         throw new NotFoundError(`User with id ${document.userId} not found for document ${document.id}`);
-      }
-      const user: UserContext = {
-        id: userRecord.id,
-        userId: userRecord.id,
-        name: userRecord.name ?? '',
-        username: userRecord.username,
-        email: userRecord.email,
-        role: userRecord.role,
-        userRole: userRecord.role,
-        userEmail: userRecord.email,
-        userName: userRecord.name ?? undefined,
-        createdAt: userRecord.createdAt,
-        updatedAt: userRecord.updatedAt,
-      };
-
-      // Lógica condicional baseada no propósito do documento
-      if (document.documentPurpose === DocumentPurpose.DATA_ANALYSIS) {
-        logger.info(`Processing document ${document.id} for DATA_ANALYSIS.`);
-        if (isExcel) {
-          logger.info(`Excel document ${document.id} detected. Using direct structured data extraction.`);
-          try {
-            if (!fileBuffer) {
-              throw new Error('File buffer is missing for Excel processing.');
-            }
-            const structuredData = await extractStructuredDataFromExcel(fileBuffer);
-            await this.structuredDataService.createFromStructured(user, document.id, structuredData);
-            logger.info(`Successfully extracted and saved structured data directly from Excel for document ${document.id}.`);
-          } catch (error) {
-            logger.error(`Failed to extract or save structured data directly from Excel for document ${document.id}`, { error });
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error during structured data processing';
-            context.errors.push({
-              code: 'STRUCTURED_DATA_ERROR_EXCEL',
-              message: errorMessage,
-              timestamp: new Date().toISOString(),
-            });
-          }
-        } else {
-          logger.info(`Document ${document.id} is not an Excel file or buffer is missing. Using LLM-based extraction.`);
-          const isTabular = await this.openAIService.isTextTabular(text);
-
-          if (isTabular) {
-            logger.info(`Document ${document.id} is tabular. Attempting to extract and save structured data via LLM.`);
-            try {
-              await this.structuredDataService.createFromText(user, document.id, text);
-              logger.info(`Successfully extracted and saved structured data for document ${document.id}.`);
-            } catch (error) {
-              logger.error(`Failed to extract or save structured data for document ${document.id}`, { error });
-              const errorMessage = error instanceof Error ? error.message : 'Unknown error during structured data processing';
-              context.errors.push({
-                code: 'STRUCTURED_DATA_ERROR_LLM',
-                message: errorMessage,
-                timestamp: new Date().toISOString(),
-              });
-            }
-          } else {
-            logger.info(`Document ${document.id} is not tabular. Skipping structured data extraction.`);
-          }
-        }
-      } else if (document.documentPurpose === DocumentPurpose.KNOWLEDGE_BASE) {
-        logger.info(`Processing document ${document.id} for KNOWLEDGE_BASE. Skipping structured data extraction.`);
-        // A lógica de vetorização de chunks já é comum e será executada após este bloco.
-        // Futuramente, podemos adicionar lógicas específicas para KNOWLEDGE_BASE aqui, como geração de resumos.
-      } else {
-        logger.warn(`Document ${document.id} has an unknown or null purpose. Defaulting to KNOWLEDGE_BASE processing to avoid data extraction on non-tabular data.`);
       }
 
       await this.processChunks(document, text, context);
@@ -158,11 +80,19 @@ export class DocumentProcessingPipeline {
     }
   }
 
+  /**
+   * RAG-PR-A item 8 + §8.1: reprocessar é idempotente — os vetores e os trechos anteriores do documento saem antes
+   * (vetor primeiro: a `vec0` resolve os ids pela `Chunk`). O lote de vetores entra numa transação só do arquivo de
+   * vetor, então uma falha no meio não deixa vetor com o carimbo atual visível. O carimbo vai na `Chunk` depois.
+   */
   private async processChunks(document: IDocument, text: string, context: DocumentContext): Promise<void> {
+    await this.vectorRepository.deleteByDocument(document.id);
+    await this.chunkRepository.deleteByDocument(document.id);
+
     const chunks = this.processingService.chunkText(text);
     context.processing.totalChunks = chunks.length;
 
-    // Persist chunk records first so we have their IDs for vector point generation
+    // Persist chunk records first so we have their IDs for the vector rows
     const chunkRecords: Array<{ id: string; text: string; index: number }> = [];
     for (let i = 0; i < chunks.length; i++) {
       try {
@@ -171,7 +101,7 @@ export class DocumentProcessingPipeline {
         chunkRecords.push({ id: chunk.id, text: chunkText, index: i });
       } catch (error) {
         context.processing.failedChunks++;
-        const errorMessage = error instanceof Error ? error.message : 'Unknown chunk processing error';
+        const errorMessage = 'Failed to persist a document chunk.';
         logger.error(`Error persisting chunk ${i} of document ${document.id}`, { error });
         context.errors = context.errors || [];
         context.errors.push({ code: 'CHUNK_PROCESSING_ERROR', message: errorMessage, timestamp: new Date().toISOString() });
@@ -185,41 +115,31 @@ export class DocumentProcessingPipeline {
       return;
     }
 
-    // Batch-embed all chunk texts in a single OpenAI API call (R11: avoid N sequential calls)
-    let vectors: number[][];
+    // Um resolvedor só (item 6): o carimbo gravado é o mesmo que a busca vai pedir.
+    let embedded: { vectors: Float32Array[]; stamp: string; dims: number };
     try {
-      vectors = await this.processingService.generateEmbeddings(chunkRecords.map(c => c.text));
+      embedded = await this.embedder.embed(document.userId, chunkRecords.map(c => c.text));
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown embedding error';
+      const errorMessage = 'Failed to generate the document embeddings.';
       logger.error(`Batch embedding failed for document ${document.id}`, { error });
       context.processing.failedChunks += chunkRecords.length;
       context.errors = context.errors || [];
       context.errors.push({ code: 'CHUNK_PROCESSING_ERROR', message: errorMessage, timestamp: new Date().toISOString() });
-      throw new Error(`Batch embedding failed: ${errorMessage}`);
+      throw new Error(errorMessage);
     }
 
-    // Build vector points and upsert in batches of 10
-    const vectorPoints: Array<{ id: string; payload: Record<string, string | number | boolean | null>; vector: number[] }> = [];
-    for (let j = 0; j < chunkRecords.length; j++) {
-      const { id: chunkId, text: chunkText, index } = chunkRecords[j];
-      vectorPoints.push({
-        id: uuidv5(chunkId, CHUNK_ID_NAMESPACE),
-        payload: { documentId: document.id, userId: document.userId, index, textContent: chunkText, chunkId, fileName: document.fileName },
-        vector: vectors[j],
-      });
-      context.processing.processedChunks++;
-      if (vectorPoints.length >= 10 || j === chunkRecords.length - 1) {
-        await this.vectorRepository.upsertChunks(vectorPoints);
-        vectorPoints.length = 0;
-        await this.documentRepository.update(document.id, {
-          contextJson: context,
-          status: DocumentStatus.PROCESSING,
-          summary: null,
-          processingDate: null,
-          processingError: null
-        });
-      }
-    }
+    await this.vectorRepository.upsert(
+      chunkRecords.map((c, j) => ({ chunkId: c.id, userId: document.userId, stamp: embedded.stamp, vector: embedded.vectors[j] })),
+    );
+    await this.chunkRepository.setEmbeddingStamp(chunkRecords.map(c => c.id), embedded.stamp, embedded.dims);
+    context.processing.processedChunks += chunkRecords.length;
+    await this.documentRepository.update(document.id, {
+      contextJson: context,
+      status: DocumentStatus.PROCESSING,
+      summary: null,
+      processingDate: null,
+      processingError: null
+    });
 
     if (context.processing.failedChunks > 0) {
       throw new Error(`${context.processing.failedChunks} chunks failed to process.`);
@@ -234,7 +154,7 @@ export class DocumentProcessingPipeline {
   ): Promise<void> {
     context.processing.duration = Date.now() - startTime;
     context.processing.endTime = new Date().toISOString();
-    const errorMessage = error instanceof Error ? error.message : 'Unknown processing error';
+    const errorMessage = error instanceof AppError ? error.message : 'Document processing failed.';
     context.errors = context.errors || [];
     context.errors.push({
       code: 'FATAL_PROCESSING_ERROR',

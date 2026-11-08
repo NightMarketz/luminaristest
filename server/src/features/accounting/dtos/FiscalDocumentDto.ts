@@ -30,7 +30,9 @@ export const FiscalDocumentListQuerySchema = z
   .object({
     unitId: z.string().min(1),
     saleId: z.string().optional(),
-    status: z.enum(['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED']).optional(), // AUTHORIZED_DIVERGENT: F-MAN-2 (c)
+    status: z
+      .enum(['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED', 'PENDING_SIGNATURE', 'CONTINGENCY', 'CANCEL_ANALYSIS'])
+      .optional(), // AUTHORIZED_DIVERGENT: F-MAN-2 (c); PENDING_SIGNATURE: F-PSC-6 a; CANCEL_ANALYSIS: X11 PR-3 (F-EVT-4 b)
     // item 30 (PR-3): true = só documentos com pendências (sale_cancelled_with_live_document |
     // cancelled_without_replacement). `queryBoolean()`, nunca `z.coerce.boolean()` (memória
     // zod-coerce-boolean-inverte-query-string) — ausente = false = sem filtro.
@@ -44,13 +46,19 @@ export const FiscalDocumentScopeQuerySchema = z.object({ unitId: z.string().min(
 export const FiscalDocumentParamsSchema = z.object({ id: z.string().min(1) }).strict();
 
 /** BE-INCR-DFE (item 29) — Anexo II e101101: cMotivo 1|2|9, xMotivo 15-255 caracteres. Cancelamento de NFS-e. */
-export const CancelNfseSchema = z
-  .object({
-    unitId: z.string().min(1),
-    cMotivo: z.union([z.literal(1), z.literal(2), z.literal(9)]),
-    xMotivo: z.string().min(15).max(255),
-  })
-  .strict();
+const cancelNfseCampos = {
+  unitId: z.string().min(1),
+  cMotivo: z.union([z.literal(1), z.literal(2), z.literal(9)]),
+  xMotivo: z.string().min(15).max(255),
+};
+
+/**
+ * BE-INCR-DFE-EVENTOS (nó X11, PR-3, item 20; F-EVT-4 b; dono 07/11, pergunta "Porta e101103"): `analiseFiscal: true` =
+ * o operador confirmou, depois do 409 `DFE_CANCEL_OUT_OF_WINDOW`, que o pedido vira Solicitação de Análise Fiscal para
+ * Cancelamento (e101103, Anexo II [4]) — espelho do Guia do Emissor Web v1.2 §5.3. O e101103 leva o mesmo cMotivo
+ * (`TSCodJustAnaliseFiscalCanc` 1|2|9, XSD 1.01) e xMotivo do e101101. Só `true`: ausente = cancelamento direto.
+ */
+export const CancelNfseSchema = z.object({ ...cancelNfseCampos, analiseFiscal: z.literal(true).optional() }).strict();
 
 /** BE-INCR-NFCE (nó X10a, item 27) — evento 110111 da NF-e/NFC-e: `xJust` de 15 a 255 caracteres (MOC 7.0 VG Tabela 5-37). */
 export const CancelNfeSchema = z
@@ -95,9 +103,11 @@ export type RejeicaoManualInput = z.infer<typeof RejeicaoManualSchema>;
 /**
  * F-MAN-5 (a) — cancelamento manual: o corpo reusa o ramo NFS-e de `CancelFiscalDocumentSchema` (item 13) e o XML do evento
  * `e101101` chega pelo multer. O `cMotivo` do corpo tem de ser o do XML (senão 422 — parâmetro aceito e ignorado é
- * bug); o texto gravado é o `xMotivo` do XML (transcrição §7).
+ * bug); o texto gravado é o `xMotivo` do XML (transcrição §7). X11 PR-3 (item 20): o XML também pode ser de e101103 /
+ * e105104 / e105105 — nesses dois últimos o `cMotivo` do corpo é o do pedido de análise gravado (o do XML é a resposta).
  */
-export const CancelamentoManualSchema = CancelNfseSchema; // o modo manual só emite NFS-e (capabilities.kinds)
+// X11 PR-3: sem `analiseFiscal` — no manual quem diz o evento é o XML (e101101 | e101103 | e105104 | e105105).
+export const CancelamentoManualSchema = z.object(cancelNfseCampos).strict(); // o modo manual só emite NFS-e (capabilities.kinds)
 
 /**
  * BE-INCR-DFE-EVENTOS (nó X11, itens 11 e 17) — POST …/documents/:id/substituir. `cMotivo` é o `TSCodJustSubst` do
@@ -174,7 +184,7 @@ export const LacunaDeNumeracaoSchema = z
     serie: z.number().int(),
     numero: z.string().regex(/^\d+$/),
     documentId: z.string().nullable(),
-    status: z.enum(['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED']).nullable(),
+    status: z.enum(['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED', 'PENDING_SIGNATURE', 'CONTINGENCY']).nullable(),
     avisos: z.array(z.string()),
     presuncao: z.string().optional(),
   })

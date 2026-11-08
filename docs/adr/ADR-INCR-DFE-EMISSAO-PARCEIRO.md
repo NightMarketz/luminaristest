@@ -480,3 +480,25 @@ ratificadas; nenhuma decisão nova aqui.
    (Aj. SINIEF 19/16 cl. 4ª VII); NFC-e vedada a partir de R$ 200.000,00 (§ 4º). F-DFE-7 (b) segue para NFS-e e NF-e 55.
 5. **Inutilização** (F-NFCE-E3-1 c, 17/10): a porta mantém `inutilizar()` em todas as UF; para AC/BA/SP depois de
    01/11/2026 a SEFAZ decide e o operador vê o aviso (E3-2 a).
+
+## 14. EMENDA 2026-11-07 — a transmissão da NF-e/NFC-e sai do servidor (assinador local, AL-PR-0 da EMENDA-4)
+
+Origem: AL-PR-0 do [`BE-INCR-NFCE-EMENDA-4-assinador-local-brief.md`](../accounting/BE-INCR-NFCE-EMENDA-4-assinador-local-brief.md)
+§5, dentro do `executa` do dono, chat, 2026-11-07 (*"Pode disparar então o que precisa seguir"*). Registro de
+decisões já ratificadas ([`D-2026-10-30-X10A-EMENDA-4-FORKS`](../plano/decisoes/D-2026-10-30-X10A-EMENDA-4-FORKS.md));
+o desenho do componente novo está no [`ADR-ASSINADOR-LOCAL`](ADR-ASSINADOR-LOCAL.md).
+
+1. **Quem transmite é o cliente**, que também é o emitente (MOC 7.0 §4.2.3; [[D-2026-10-30-D5-SEM-CONTRATACAO-BYOK]]).
+   O mTLS com a SEFAZ sai do servidor e vai para o assinador local, com o certificado do cliente. A linha "e-CNPJ do
+   Luminaris no transporte" (EMENDA-2 §4.1 do BE-INCR-NFCE) deixa de valer.
+2. **A porta não muda de forma:** `SefazNfeEmissor` passa a depender de uma interface `SefazTransporte`
+   (`call(url, servico, xml)`, mesmos quatro códigos de `SefazTransporteError`), de que `SefazSoapClient` é uma
+   implementação e `AssinadorLocalTransporte` outra. A contingência automática (decisão 4 de 29/10) continua ligando
+   pelo mesmo `isFalhaDeComunicacao`.
+3. **Seleção do assinador por tipo:** `DFE_ASSINADOR_<KIND>` (fallback `DFE_ASSINADOR`) ∈ `local | psc`, no mesmo
+   padrão do §13 item 2; ausente ou desconhecido ⇒ porta desabilitada com motivo nomeado.
+4. **`DFE_TRANSMISSOR_CERT` sai** (F-AL-7 a): o certificado do Luminaris não tem mais dono depois de 30/10 e não fica
+   configurável. O PSC fica como segundo adaptador da `AssinadorRemotoPort`, desligado por padrão; sem transporte
+   próprio, ele só transmite pelo assinador local.
+5. **Assinador fora ⇒ `PENDING_SIGNATURE`**, não contingência (F-AL-6 a): a contingência off-line também precisa
+   assinar a nota e o QR v3 com o token.

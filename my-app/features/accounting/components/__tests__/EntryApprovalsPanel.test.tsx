@@ -8,6 +8,7 @@ import { render, screen, cleanup, waitFor, fireEvent, within } from '@testing-li
 import { EntryApprovalsPanel } from '../EntryApprovalsPanel';
 import { entryApprovalsService, type ApprovalEntry } from '../../../../lib/services/entryApprovals.service';
 import { accountingService } from '../../../../lib/services/accounting.service';
+import { later } from '../../../../test-utils/later';
 
 vi.mock('../../../../lib/services/entryApprovals.service', () => ({
   entryApprovalsService: {
@@ -112,6 +113,28 @@ describe('EntryApprovalsPanel', () => {
       expect(entryApprovalsService.submitDraft).toHaveBeenCalledWith('e-draft', {
         unitId: 'u1',
         expectedVersion: 3,
+      }),
+    );
+  });
+
+  // TESTE-GUARDA — ITG 2000 item 36, C4 item 1: aprovar rascunho datado num período fechado e reaberto exige a razão
+  // do registro extemporâneo no servidor; o modal "Aprovar e postar" tem o campo e o body o leva.
+  it('approve: the typed extemporaneous-entry reason goes in the approve body', async () => {
+    vi.mocked(accountingService.listEntries).mockResolvedValue({ entries: [], total: 0 });
+    vi.mocked(entryApprovalsService.listPending).mockResolvedValue({ entries: [pending], total: 1 });
+    vi.mocked(entryApprovalsService.approve).mockResolvedValue(pending);
+
+    render(<EntryApprovalsPanel unitId="u1" />);
+    fireEvent.click(await screen.findByText('Aprovar'));
+    await screen.findAllByText('Aprovar e postar');
+    fireEvent.change(screen.getByLabelText('Razão do registro extemporâneo'), { target: { value: ' aprovado depois do fechamento ' } });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Aprovar e postar' }).at(-1) as HTMLElement);
+
+    await waitFor(() =>
+      expect(entryApprovalsService.approve).toHaveBeenCalledWith('e-pending', {
+        unitId: 'u1',
+        expectedVersion: 5,
+        extemporaneousReason: 'aprovado depois do fechamento',
       }),
     );
   });
@@ -326,7 +349,7 @@ describe('EntryApprovalsPanel', () => {
       .mockResolvedValueOnce({ entries: [pending], total: 51 }) // page 1
       // Page 2 (its only row) answers in a macrotask, like a real request: `listPending` is called
       // synchronously in the effect, so a wait on the CALL is not a wait on the ROW (flaked on #426).
-      .mockImplementationOnce(() => new Promise((r) => setTimeout(() => r({ entries: [pendingPage2], total: 51 }), 5)))
+      .mockImplementationOnce(() => later({ entries: [pendingPage2], total: 51 }, 5))
       .mockResolvedValue({ entries: [pending], total: 50 }); // back on page 1 after approve
     vi.mocked(entryApprovalsService.approve).mockResolvedValue(pendingPage2);
 

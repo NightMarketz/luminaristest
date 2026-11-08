@@ -252,7 +252,7 @@ export class ProfitDistributionService {
   async cancel(scope: AccountingScope, id: string, input: CancelProfitDistributionInput): Promise<ProfitDistributionView> {
     this.assertManage(scope);
     const owner = scope.ownerUserId;
-    const row = await this.repo.runTransaction(async (tx) => this.assertCancelavel(owner, id, tx));
+    const row = await this.repo.runTransaction(async (tx) => this.assertCancelavel(scope, id, tx));
     const s: AccountingScope = { ...scope, unitId: row.unitId };
     if (row.entryId) {
       await this.postingService.reverseEntry(s, {
@@ -260,12 +260,13 @@ export class ProfitDistributionService {
         lancamentoId: row.entryId,
         reversalPostingDate: row.dataEvento,
         reason: `distribuição de lucros ${row.id} cancelada`,
+        automaticWriter: true,
       });
     }
     await this.repo.runTransaction(async (tx) => {
-      await this.assertCancelavel(owner, id, tx);
+      await this.assertCancelavel(scope, id, tx);
       if (!(await this.repo.markCancelled(owner, id, { cancelledById: scope.actorUserId, cancelReason: input.motivo ?? null }, tx))) {
-        throw new ConflictError(`A distribuição '${id}' mudou de status durante o cancelamento.`);
+        throw new ConflictError(`A ${await this.describeEvento(scope, row)} mudou de status durante o cancelamento.`);
       }
       await this.auditService.append(tx, s, {
         actorUserId: scope.actorUserId,
@@ -318,7 +319,7 @@ export class ProfitDistributionService {
     if (input.evento === 'CREDITO') {
       // Item 11 (F-IRD-9): o líquido vai ao passivo do sócio configurado no perfil (F-TA-7).
       if (!fp?.dividendosPagarAccountId) throw contaNaoConfigurada('dividendos a pagar');
-      contraAccountId = (await this.contaComNatureza(s, fp.dividendosPagarAccountId, 'Liability', 'dividendos a pagar')).id;
+      contraAccountId = (await this.contaComNatureza(s, fp.dividendosPagarAccountId, 'Liability', 'dividendos a pagar', true)).id;
     } else {
       const natureza = input.evento === 'EMPREGO' ? 'Equity' : 'Asset';
       const rotulo = input.evento === 'EMPREGO' ? 'contraAccountId (capital social)' : 'contraAccountId (banco, caixa ou o bem entregue)';
@@ -404,7 +405,7 @@ export class ProfitDistributionService {
     const s: AccountingScope = { ...scope, unitId: row.unitId };
     let entry = await this.postingService.findEntryBySource(s, PROFIT_DISTRIBUTION_SOURCE_TYPE, row.id);
     if (entry && (entry.reversedById || entry.status !== 'Posted')) {
-      throw new ValidationError(`O lançamento da distribuição '${row.id}' (${entry.id}) foi estornado fora do fluxo.`);
+      throw new ValidationError(`O lançamento da ${await this.describeEvento(scope, row)} foi estornado fora do fluxo.`);
     }
     if (!entry) {
       const fp = await this.fiscalProfileRepo.findByScope(s);
@@ -414,6 +415,7 @@ export class ProfitDistributionService {
         date: row.dataEvento,
         description: `Distribuição de lucros (${row.evento}) — sócio ${row.partnerId}, evento ${row.id}`,
         sourceType: PROFIT_DISTRIBUTION_SOURCE_TYPE,
+        automaticWriter: true,
         sourceId: row.id,
         lines: await this.linhas(p, row.debitoAccountId, row.brutoCents, row.irrfCents),
       });
@@ -429,20 +431,21 @@ export class ProfitDistributionService {
     bruto: bigint,
     irrf: bigint,
   ): Promise<Array<{ accountCode: string; debitCents: number; creditCents: number }>> {
-    const codigo = async (id: string) => (await this.contaDoEscopo(p.s, id)).code;
+    const codigo = async (id: string, papel: string) => (await this.contaDoEscopo(p.s, id, papel)).code;
     const lines = [
-      { accountCode: await codigo(debitoAccountId), debitCents: Number(bruto), creditCents: 0 },
-      { accountCode: await codigo(p.contraAccountId), debitCents: 0, creditCents: Number(bruto - irrf) },
+      { accountCode: await codigo(debitoAccountId, 'débito da distribuição'), debitCents: Number(bruto), creditCents: 0 },
+      { accountCode: await codigo(p.contraAccountId, 'contrapartida da distribuição'), debitCents: 0, creditCents: Number(bruto - irrf) },
     ];
     if (irrf > 0n) {
       if (!p.irrfRecolherAccountId) throw contaNaoConfigurada('IRRF a recolher');
-      lines.push({ accountCode: await codigo(p.irrfRecolherAccountId), debitCents: 0, creditCents: Number(irrf) });
+      lines.push({ accountCode: await codigo(p.irrfRecolherAccountId, 'IRRF a recolher'), debitCents: 0, creditCents: Number(irrf) });
     }
     return lines;
   }
 
   /** Item 20 — gate do cancelamento: só o último POSTED do `taxId` na competência. */
-  private async assertCancelavel(owner: string, id: string, tx: Prisma.TransactionClient): Promise<ProfitDistributionEvent> {
+  private async assertCancelavel(scope: AccountingScope, id: string, tx: Prisma.TransactionClient): Promise<ProfitDistributionEvent> {
+    const owner = scope.ownerUserId;
     const row = await this.repo.findById(owner, id, tx);
     if (!row) throw new NotFoundError(`Distribuição '${id}' não encontrada.`);
     if (row.status !== 'POSTED') throw new ConflictError(`Só uma distribuição lançada (POSTED) pode ser cancelada; esta está ${row.status}.`, 'DISTRIBUICAO_NAO_POSTADA');
@@ -450,23 +453,39 @@ export class ProfitDistributionService {
     const ultimo = lancados[lancados.length - 1];
     if (ultimo && ultimo.id !== row.id) {
       throw new ConflictError(
-        `Só o último evento do mês do sócio pode ser cancelado (F-IRD-8): cancele antes a distribuição '${ultimo.id}'.`,
+        `Só o último evento do mês do sócio pode ser cancelado (F-IRD-8): cancele antes a ${await this.describeEvento(scope, ultimo)}.`,
         'NAO_E_O_ULTIMO_DO_MES',
       );
     }
     return row;
   }
 
-  private async contaDoEscopo(s: AccountingScope, id: string): Promise<Account> {
+  /**
+   * `papel` só vem quando o id NÃO foi digitado no pedido (perfil fiscal, linha já gravada): conta sumida nomeia o papel dela.
+   * Sem `papel` o id é o eco do corpo do pedido e fica na mensagem (F-MSG-1 a).
+   */
+  private async contaDoEscopo(s: AccountingScope, id: string, papel?: string): Promise<Account> {
     const conta = await this.accountRepo.findById(s, id);
-    if (!conta || conta.deletedAt) throw new NotFoundError(`Conta '${id}' não encontrada nesta unidade.`);
+    if (!conta || conta.deletedAt) {
+      throw new NotFoundError(papel ? `Conta de ${papel} não encontrada nesta unidade.` : `Conta '${id}' não encontrada nesta unidade.`);
+    }
     return conta;
   }
 
-  private async contaComNatureza(s: AccountingScope, id: string, natureza: string, rotulo: string): Promise<Account> {
-    const conta = await this.contaDoEscopo(s, id);
+  private async contaComNatureza(s: AccountingScope, id: string, natureza: string, rotulo: string, interna = false): Promise<Account> {
+    const conta = await this.contaDoEscopo(s, id, interna ? rotulo : undefined);
     if (conta.nature !== natureza) throw new ValidationError(`A conta de ${rotulo} tem de ser ${natureza}; '${conta.code}' é ${conta.nature}.`);
     return conta;
+  }
+
+  /**
+   * FIX-MENSAGENS-ID-INTERNO lote 3 (F-MSG-2 a1; dono, chat, 05/11): a distribuição não tem tela; é nomeada por sócio + data
+   * ("distribuição a Fulano em 10/03/2026"), nunca pelo cuid. Só é montada no caminho de erro, então o sócio é lido aqui.
+   */
+  private async describeEvento(scope: AccountingScope, row: Pick<ProfitDistributionEvent, 'partnerId' | 'dataEvento'>): Promise<string> {
+    const partner = await this.partnerRepo.findById(scope, row.partnerId);
+    const [ano, mes, dia] = row.dataEvento.split('-');
+    return `distribuição a ${partner?.nome?.trim() || 'sócio sem cadastro'} em ${dia}/${mes}/${ano}`;
   }
 
   private assertRead(scope: AccountingScope): void {

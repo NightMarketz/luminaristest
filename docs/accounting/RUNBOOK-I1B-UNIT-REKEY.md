@@ -82,9 +82,13 @@ Spec: `docs/adr/ADR-INCR-UNIT-REKEY-migration.md` §4 (itens 15–18), §6 (F-RK
    Resultado esperado: `{"status":"NOTHING_TO_DO",...}`, exit 0.
    EVIDÊNCIA: [colar a saída]
 
-10. **Restart e boot.** Subir o backend (build de produção). O boot relê `accounting_bindings` — a linha `Active`
-    agora sob o `unitId` novo, se o legado tinha binding.
-    Resultado esperado: boot sem `Boot ABORTADO`; `GET /api/accounting/accounts?unitId=<novo>` responde 200 com as contas re-chaveadas.
+10. **Restart e boot (OPS).** A ligação de código já está provada por teste: `server/src/jobs/__tests__/rekeyLegacyUnitCli.integration.test.ts`,
+    caso *"passo 10 do runbook: binding Active nascido sob o legado → …"* (FIX-TESTES-I1B-BOOT-POS-REKEY). Ele monta o binding
+    `Active` e o plano sob o legado, roda o `--apply`, relê o alimentador (o mapper resolve para o `unitId` novo, o legado dá
+    `NoMapperForUnitError`) e faz `GET /api/accounting/accounts?unitId=<novo>` → 200 com as mesmas contas (o legado → 404).
+    O que sobra aqui é só o que o teste não alcança: o `server.ts` real subindo sobre o dado real.
+    Subir o backend (build de produção) sobre o banco re-chaveado.
+    Resultado esperado: boot sem `Boot ABORTADO`; `GET /api/accounting/accounts?unitId=<novo>` responde 200.
     EVIDÊNCIA: [colar log de boot + resposta]
 
 ## Desfecho (marcar UM)

@@ -29,6 +29,8 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   (transporta branch revisada, não melhora). **Toda uma exige autorização citável do dono** (ORCH-006; no vault, o campo `autorizacao` da nota
   do nó — vazio não roteia, e o texto limita o escopo: "só ADR"/"sem 'executa'" não autoriza código),
   recusa o que não é dela, e trata campo com placeholder como decisão não coberta.
+  **Desde 28/10 o `executa` vale para o BRIEF inteiro** (todos os PR-0..PR-n, BRIEF ratificado e sem fork
+  pendente; fork novo para o nó e vira pergunta) — `docs/plano/decisoes/D-2026-10-28-FLUXO-AUTONOMO.md`.
   **O uso é pela natureza do trabalho, não pela frase-gatilho:** tarefa autorizada que É planejar /
   implementar spec / instrumentar lacuna / corrigir lacuna / integrar branch **roda pela sessão**
   (invoque a skill e trabalhe pelo formulário) — executar esses tipos de mão livre é violação de
@@ -41,7 +43,9 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   só do dono** — runbook sem assinatura é nulo. Exceção (dono, chat, 2026-10-25): runbook de conferência
   na tela do próprio app, com todos os passos rodados pelo agente — o agente, na persona do revisor e sob
   comando do dono para aquele runbook, marca o desfecho e assina como agente (nunca nome de pessoa);
-  não vale para H1/H2/M2/X1/X2 — regra em `RUNBOOK-FORMAT.md` §Fronteira. Agente não substitui oráculo: a tela, o PVA e o
+  não vale para H1/H2/M2/X1/X2 — regra em `RUNBOOK-FORMAT.md` §Fronteira. Emenda (dono, chat, 2026-10-29): nos
+  cinco gates o agente assina como "AI tester" (nunca nome de pessoa) **só** no gate e na execução que o dono autorizar
+  no chat; a assinatura atesta a execução, não substitui o oráculo (PVA, NF-e, RFB, contador, produção). Agente não substitui oráculo: a tela, o PVA e o
   julgamento do resultado continuam do humano.
 
 ## ⛔ A bancada de auditoria foi DESLIGADA em 2026-08-09 (decisão do dono)
@@ -57,6 +61,9 @@ lê o código como o `tsc`; não reabre bancada, rodada nem revisor. Idem (dono,
 `PRE-ADR-OBSERVABILIDADE.md`): `no-console` no ESLint do server, no job de lint que já roda. Idem (dono,
 2026-10-23, F-OBS-13/14 de `ADR-OBSERVABILIDADE.md`): `catch` silencioso no ESLint do server (com o ledger de
 dívida que já existe) e o teste que descobre `jobs/*Scheduler.ts` e reprova scheduler sem caso de alerta.
+Idem (dono, 2026-10-28, `D-2026-10-28-FLUXO-AUTONOMO`): o `revisor-independente` roda **só em PR vermelho de código**
+(`scripts/classe-risco.mjs` → `revisor: obrigatório`; vermelho só de `.md` vai ao lote sem ele), antes do lote de merge
+do dono, em até 3 rodadas por PR, a 2ª e a 3ª só no diff novo (`D-2026-11-06-REVISAO-CONVERGENCIA`).
 
 **Citação a `docs/audit/**` em comentário de teste, ADR ou doc é HISTÓRICA** — o caminho não existe
 mais; use `git show b617d8f1:<caminho>` se precisar.
@@ -104,6 +111,12 @@ morde só no código solto; em dúvida, **o contrato prevalece**.
 
 - `tsc` limpo é gate: `cd server && npx tsc --noEmit` e `cd my-app && npx tsc --noEmit` — não avance vermelho.
 - `neutral-*`, **nunca** `zinc-*`; cards `rounded-2xl`/`3xl`; zero `any` evitável.
+- **Que teste prova o quê e "mudei X, rodo Y" → `docs/operating-manual/TESTES.md`.**
+- **Teste local só com escopo** (dono, 2026-11-03: "isso pesa o pc demais"): `npx jest <caminho> --selectProjects unit`
+  (o caminho **antes** do `--selectProjects`, senão roda tudo); integração um arquivo por vez com `--runInBand`;
+  `npx vitest run <caminho>`. Suíte inteira é do CI — bloqueada localmente sem `FULL_SUITE=1` (`scripts/test-scope-guard.cjs`).
+  "Tudo que depende do que mudei": `npm run test:changed` (unit e front; na integração não existe — puxa quase tudo).
+  Não repita gate sem ter editado o código que ele cobre.
 - Telas atrás de `withAuth` → verifique contra **build de produção**, não `next dev`.
 - Tocou `.claude/skills/**` → `node .claude/skills/skill-audit/skill-audit.mjs run` antes de fechar
   (0 findings é gate). Gate cujo predicado lê ambiente se prova **na condição que falha** — detalhe
@@ -115,9 +128,22 @@ morde só no código solto; em dúvida, **o contrato prevalece**.
 - Pausa > 60 min com contexto > 150k → retome em sessão nova a partir do handoff.
 - Arquivo grande já lido e não editado → não releia; cite o trecho que está no contexto.
 
-## Merge só com PR nomeado
-Autorização genérica ("mergeia tudo", "os PRs com CI verde", "executa") **não** autoriza merge: liste os PRs
-(número · título · fiscal/contábil? · CI · revisão) e espere o dono confirmar por número. "Executar" não inclui mergear.
+## Recursos da máquina (dono, 2026-11-04 — `docs/plano/decisoes/D-2026-11-04-RECURSOS-LOCAIS.md`)
+- **Worktree nova:** `node scripts/worktree-deps.mjs` (depósito compartilhado por lockfile), não `npm ci`. Remover worktree
+  com `git worktree remove`, nunca `rm -rf`.
+- **Sessão aberta por sessão não abre outra:** propõe o cartão. Prefira continuar a sessão que tem o contexto (`SendMessage`).
+- **Onde roda (emenda R3, 04/11):** tarefa curta na mesma worktree, sem instalação → **subagente**; tarefa que o dono
+  acompanha à parte → **sessão** (cartão); trabalho pesado → **sessão na nuvem**, quando o dono pedir. Fan-out: até
+  **3 subagentes** simultâneos e **3 cartões** por turno. Trabalho pesado: **2 vagas por máquina** (`scripts/heavy-slot.cjs`).
+- **Cache de prompt (1 h):** pausa longa no meio da tarefa → handoff e feche. Brief aponta arquivos, não cola conteúdo;
+  saída de comando com `tail`/`grep`.
+
+## Merge por classe de risco (dono, 2026-10-28)
+`node scripts/classe-risco.mjs pr <n>` decide. **Verde** → a sessão maestro (`.claude/prompts/maestro.md`) mergeia
+sozinha (squash) com todos os checks verdes, sem conflito e fora de draft. **Vermelho** → revisor-independente e
+depois o **lote diário**: liste os PRs (número · título · motivo do vermelho · CI · veredito do revisor) e espere o
+dono confirmar por número. Fora da maestro, nenhuma sessão mergeia, nem verde. Regra em
+`docs/plano/decisoes/D-2026-10-28-FLUXO-AUTONOMO.md`.
 
 ## Gates de envio [OPS-001] — antes de fechar resposta/relatório/PR
 

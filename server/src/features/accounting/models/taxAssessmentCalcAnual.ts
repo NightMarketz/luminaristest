@@ -3,12 +3,16 @@ import { LALUR_MESES, type LalurMes } from './Lalur.model';
 import {
   ajustesParteA,
   aliquotaCsll,
+  assertHospitalarSem16,
   baseServicoCents,
   fecharComDeducoes,
   impostoSobreBase,
   linha,
+  linhaHospitalar,
   linhaNaoUso,
+  hospitalarComTeto,
   maxZero,
+  presuncaoHospitalar,
   receitaServicoDaMemoria,
   somarDeducoes,
   temLinha,
@@ -145,6 +149,8 @@ export interface EntradaEstimativa {
   receitaRevendaCents: bigint;
   /** BE-INCR-H1-REFERENCIAL-3-4 (F-HR-3 b) — conta 3.4 do mês, com sinal; ausente = 0. */
   receitaNaoUsoCents?: bigint;
+  /** EFICIENCIA-FISCAL PR-5 (item 26; dono, 28/10, lacuna 2) — parte do serviço do mês a 8 %/12 %; ausente = 0. */
+  receitaHospitalarCents?: bigint;
   /** Item 9 — receita dos meses em atividade ANTERIORES do ano, mês a mês (só o 16% lê). */
   receitasMesesAnteriores: ReceitaMes[];
   /** Item 9 — meses `CONFIRMED` do ano, do mesmo tributo (só a diferença postergada lê). */
@@ -176,14 +182,17 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
   const pR = linhaVigente(e.tabela, chave, dataFim, 'REVENDA')!;
 
   const servico = baseServicoCents(e.receitaServicoCents, e.receitaNaoUsoCents);
+  const hosp = hospitalarComTeto(e.receitaHospitalarCents, servico);
+  if (e.tributo === 'IRPJ' && e.perfil.prestadoraExclusivaServicos) assertHospitalarSem16(hosp);
   const memoria: MemoriaLinha[] = [
-    linha('RECEITA_SERVICO', 'Receita bruta de serviço do mês (conta 3.1)', e.receitaServicoCents, F_ART2),
+    linha('RECEITA_SERVICO', 'Receita bruta de serviço do mês = max(0, crédito − débito da conta 3.1)', e.receitaServicoCents, F_ART2),
     ...linhaNaoUso(e.receitaNaoUsoCents, 'mês'),
-    linha('RECEITA_REVENDA', 'Receita bruta de revenda do mês (conta 3.3)', e.receitaRevendaCents, F_ART2),
-    linha('RECEITA_MES', 'Receita bruta do mês', servico + e.receitaRevendaCents, F_ART2),
+    ...linhaHospitalar(hosp, 'mês'),
+    linha('RECEITA_REVENDA', 'Receita bruta de revenda do mês = max(0, crédito − débito da conta 3.3)', e.receitaRevendaCents, F_ART2),
+    linha('RECEITA_MES', 'Receita bruta do mês = serviço + não uso + revenda', servico + e.receitaRevendaCents, F_ART2),
   ];
 
-  let presServico = mulBp(servico, pS.valor);
+  let presServico = mulBp(servico - hosp, pS.valor);
   let codigoServico = 'PRESUNCAO_SERVICO';
   let descServico = `Receita de serviço × ${pS.valor / 100}%`;
   let fonteServico = pS.fonte;
@@ -201,7 +210,8 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
     const acumulada = acumuladaAnterior + servico + e.receitaRevendaCents;
     const limite = linhaVigente(e.tabela, 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', dataFim)!;
     const reduzida = linhaVigente(e.tabela, 'PRESUNCAO_IRPJ_REDUZIDA', dataFim)!;
-    memoria.push(linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} (limite ${limite.valor} centavos)`, acumulada, limite.fonte));
+    const somados = [...anteriores.map((r) => r.periodo), e.periodo].join(', ');
+    memoria.push(linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} = Σ receita bruta do razão de ${somados} (limite ${limite.valor} centavos)`, acumulada, limite.fonte));
     if (acumulada <= BigInt(limite.valor)) {
       presServico = mulBp(servico, reduzida.valor);
       codigoServico = 'PRESUNCAO_REDUZIDA_16';
@@ -213,11 +223,19 @@ export function apurarEstimativaReceitaBruta(e: EntradaEstimativa): ResultadoApu
   }
 
   const presRevenda = mulBp(e.receitaRevendaCents, pR.valor);
-  const base = presServico + presRevenda;
+  let base = presServico + presRevenda;
   memoria.push(
     linha(codigoServico, descServico, presServico, fonteServico),
     linha('PRESUNCAO_REVENDA', `Receita de revenda × ${pR.valor / 100}%`, presRevenda, pR.fonte),
-    linha('BASE', 'Base de cálculo estimada do mês', base, F_ART2),
+  );
+  if (hosp > 0n) {
+    const pH = presuncaoHospitalar(e.tabela, chave, dataFim);
+    const presH = mulBp(hosp, pH.valor);
+    base += presH;
+    memoria.push(linha('PRESUNCAO_HOSPITALAR', `Receita de serviço hospitalar × ${pH.valor / 100}%`, presH, pH.fonte));
+  }
+  memoria.push(
+    linha('BASE', 'Base de cálculo estimada do mês = Σ presunções', base, F_ART2),
   );
   const imposto = impostoSobreBase(e.tabela, e.tributo, dataFim, base, aliqCsll, 1n);
   memoria.push(...imposto.memoria);
@@ -231,7 +249,7 @@ function memoriaDiferenca(t: TabelaApuracao, d: { total: bigint; linhas: Memoria
   const mesSeguinte = m === 12 ? `01/${ano + 1}` : `${pad2(m + 1)}/${ano}`;
   return [
     ...d.linhas,
-    linha('DIFERENCA_POSTERGADA', `Diferença do imposto postergado (código de receita ${cod})`, d.total, F_16_8),
+    linha('DIFERENCA_POSTERGADA', `Diferença do imposto postergado = Σ diferenças dos períodos (código de receita ${cod})`, d.total, F_16_8),
     linha('DIFERENCA_POSTERGADA_VENCIMENTO', `Vencimento: último dia útil de ${mesSeguinte}, sem acréscimos no prazo (informativo)`, 0n, 'IN RFB 1.700/2017 art. 33 §§ 9º–10'),
   ];
 }
@@ -311,7 +329,7 @@ export function apurarBalancete(e: EntradaBalancete): ResultadoApuracaoAnual {
   if (!e.contasProvisaoConfiguradas) {
     memoria.push(linha('GUARDA_CIRCULARIDADE', 'guarda de circularidade sem contas configuradas', 0n, 'BRIEF X7 item 7'));
   }
-  memoria.push(...ajustes.memoria, linha('MESES_PERIODO', `Meses do período em curso (quantidade, não centavos)`, BigInt(n), 'IN RFB 1.700/2017 art. 29 § 1º; art. 49 II'));
+  memoria.push(...ajustes.memoria, linha('MESES_PERIODO', `Meses do período em curso = ${nomeMes(ativos[0])} a ${e.periodo} (quantidade, não centavos)`, BigInt(n), 'IN RFB 1.700/2017 art. 29 § 1º; art. 49 II'));
   const periodo = impostoSobreBase(e.tabela, e.tributo, dataFim, ajustes.base, aliqCsll, BigInt(n), 'DEVIDO_PERIODO_EM_CURSO');
   memoria.push(...periodo.memoria);
 
@@ -344,7 +362,8 @@ function excessoNoBalancete(e: EntradaBalancete, m: number, dataFim: string, mem
   const acumulada = acumuladaAnterior + baseServicoCents(e.receitaMes!.servicoCents, e.receitaMes!.naoUsoCents) + e.receitaMes!.revendaCents;
   const limite = linhaVigente(e.tabela, 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', dataFim)!;
   if (!(acumuladaAnterior <= BigInt(limite.valor) && acumulada > BigInt(limite.valor))) return null;
-  memoria.push(linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} (limite ${limite.valor} centavos)`, acumulada, limite.fonte));
+  const somados = [...anteriores.map((r) => r.periodo), e.periodo].join(', ');
+  memoria.push(linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} = Σ receita bruta do razão de ${somados} (limite ${limite.valor} centavos)`, acumulada, limite.fonte));
   return diferencaPostergada16(e.tabela, e.ano, e.anteriores, m);
 }
 
@@ -436,16 +455,17 @@ export function apurarAjusteAnual(e: EntradaAjusteAnual): ResultadoApuracaoAnual
     memoria.push(linha(`ESTIMATIVA_PAGA_${c.periodo}`, `${c.periodo}: estimativa ${informado ? 'paga (informada)' : 'assumida paga = confirmado'}`, pago, `${F_ART2_4} IV`));
   }
   if (mesesAssumidos.length > 0) {
-    memoria.push(linha('ESTIMATIVA_PAGA_ASSUMIDA', `Pago não informado — assumido o confirmado de ${mesesAssumidos.join(', ')} (P-B10)`, assumidas, 'BRIEF X7 B item 10; F-TB-2 (b)'));
+    memoria.push(linha('ESTIMATIVA_PAGA_ASSUMIDA', `Σ confirmado de ${mesesAssumidos.join(', ')} — pago não informado, assumido o confirmado (P-B10)`, assumidas, 'BRIEF X7 B item 10; F-TB-2 (b)'));
   }
   if (mesesNaoPagos.length > 0) {
     memoria.push(
-      linha('ESTIMATIVA_NAO_PAGA', `Estimativa paga a menor em ${mesesNaoPagos.join(', ')} — a diferença não é deduzida (multa isolada, não modelada)`, naoPagas, 'IN RFB 1.700/2017 art. 52'),
+      linha('ESTIMATIVA_NAO_PAGA', `Σ (confirmado − pago) em ${mesesNaoPagos.join(', ')} — estimativa paga a menor; a diferença não é deduzida (multa isolada, não modelada)`, naoPagas, 'IN RFB 1.700/2017 art. 52'),
     );
   }
   // (III) retido já usado nos meses + o do ano
   const retidoMeses = meses.reduce((s, c) => s + c.deducoesCents, 0n);
-  memoria.push(linha('RETIDO_MESES', 'Retenções já deduzidas nas estimativas mensais confirmadas', retidoMeses, `${F_ART2_4} III`));
+  const mesesRetido = [...meses].sort((a, b) => numMes(a.periodo) - numMes(b.periodo)).map((c) => c.periodo).join(', ') || 'nenhum mês';
+  memoria.push(linha('RETIDO_MESES', `Σ retenções deduzidas nas estimativas confirmadas de ${mesesRetido}`, retidoMeses, `${F_ART2_4} III`));
   const retidoAno = somarDeducoes(e.tributo, e.deducoes, memoria);
 
   const deducoesCents = pagas + retidoMeses + retidoAno;
@@ -454,13 +474,13 @@ export function apurarAjusteAnual(e: EntradaAjusteAnual): ResultadoApuracaoAnual
   const saldoNegativo = maxZero(-saldo);
   memoria.push(
     linha('SALDO_AJUSTE', 'Devido anual − estimativas pagas − retenções', saldo, F_ART2_4),
-    linha('A_PAGAR', 'Valor a pagar', aPagar, `código de receita ${codigoReceita.codigo} (${codigoReceita.fonte})`),
+    linha('A_PAGAR', 'Valor a pagar = max(0, saldo do ajuste)', aPagar, `código de receita ${codigoReceita.codigo} (${codigoReceita.fonte})`),
   );
   if (aPagar > 0n) {
     memoria.push(linha('VENCIMENTO_QUOTA_UNICA', `Quota única até o último dia útil de março/${e.ano + 1}, Selic desde 1º/fev (informativo)`, 0n, 'Lei 9.430/1996 art. 6º §§ 1º–2º'));
   }
   if (saldoNegativo > 0n) {
-    memoria.push(linha('SALDO_NEGATIVO', 'Saldo negativo — restituição/compensação fora do sistema', saldoNegativo, 'Lei 9.430/1996 art. 6º § 1º II'));
+    memoria.push(linha('SALDO_NEGATIVO', 'Saldo negativo = max(0, estimativas pagas + retenções − devido anual) — restituição/compensação fora do sistema', saldoNegativo, 'Lei 9.430/1996 art. 6º § 1º II'));
   }
   // X7 Fase B PR-3 (item 16, F-TB-3 a): o A00 provisiona só a diferença entre o devido anual e o que os meses já
   // provisionaram (devido + diferença postergada). Com sinal: > 0 ⇒ D despesa / C a recolher; < 0 ⇒ D saldo negativo

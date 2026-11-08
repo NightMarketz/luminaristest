@@ -83,6 +83,7 @@ import {
   generateSpedEcfReal,
   spedEcdRtfUpload,
   getSpedQualifAssinante,
+  getSpedEcfY600Vigencias,
 } from '../controllers/spedController';
 import { closeExercise } from '../controllers/closingController';
 
@@ -212,8 +213,18 @@ import {
   listServiceCosts,
   listTaxSuggestions,
   rejectTaxSuggestion,
+  getTaxOptimizationReport,
   updateTaxOptimizationPolicy,
 } from '../controllers/taxOptimizationController';
+import { avaliarServicosFiscais } from '../controllers/servicoFiscalAvaliacaoController';
+import {
+  proporFatorR,
+  proporRegime,
+  proporRemuneracaoSocio,
+  simularFatorR,
+  simularRegime,
+  simularRemuneracaoSocio,
+} from '../controllers/taxSimulationController';
 import {
   deleteProductDestination,
   listProductDestinations,
@@ -225,6 +236,19 @@ import {
   getFiscalCertificate,
   putFiscalCertificate,
 } from '../controllers/fiscalCertificateController';
+import {
+  authorizePscCredential,
+  createPscProvider,
+  deletePscCredential,
+  deletePscProvider,
+  getPscCredential,
+  listPscProviders,
+  pscCredentialCallback,
+  updatePscProvider,
+} from '../controllers/pscCredentialController';
+import { gerarCodigoDfeSigner, getDfeSigner, revogarDfeSigner } from '../controllers/dfeSignerController';
+import { deleteNfceCsc, listNfceCscs, putNfceCsc } from '../controllers/nfceCscController';
+import { getNfceContingencia, putNfceContingencia } from '../controllers/nfceContingenciaController';
 import { confirmIbsCbsAssessment, getIbsCbsResumo, listIbsCbsAssessments, previewIbsCbsAssessment, reconcileIbsCbsProvisao } from '../controllers/ibsCbsAssessmentController';
 import { apropriarCreditoIbsCbs } from '../controllers/payableController';
 
@@ -268,6 +292,28 @@ router.put('/fiscal-certificates/:unitId', fiscalCertificateUpload, putFiscalCer
 router.get('/fiscal-certificates/:unitId', getFiscalCertificate);
 router.delete('/fiscal-certificates/:unitId', deleteFiscalCertificate);
 
+// Credencial do PSC por unidade + cadastro dos PSCs (X10a PR-7; EMENDA-PSC E-2..E-5). `callback` é estático e vem
+// ANTES de '/:unitId'; é público (publicApiRoutes) — a prova é o `state` assinado.
+router.get('/psc-credentials/callback', pscCredentialCallback);
+router.post('/psc-credentials/:unitId/authorize', authorizePscCredential);
+router.get('/psc-credentials/:unitId', getPscCredential);
+router.delete('/psc-credentials/:unitId', deletePscCredential);
+// X10a EMENDA-4 AL-PR-2 (AL-3, AL-4, AL-12): pareamento, estado e revogação do assinador local da unidade.
+router.post('/dfe-assinador/:unitId/codigos', gerarCodigoDfeSigner);
+router.get('/dfe-assinador/:unitId', getDfeSigner);
+router.delete('/dfe-assinador/:unitId', revogarDfeSigner);
+// X10a PR-8 (D-2026-10-29-X10A-PR7-9-FORKS decisão 3): CSC da NFC-e por unidade e ambiente.
+router.put('/nfce-cscs/:unitId', putNfceCsc);
+router.get('/nfce-cscs/:unitId', listNfceCscs);
+router.delete('/nfce-cscs/:unitId', deleteNfceCsc);
+// X10a PR-9 (E-9; decisões 4 e 8): contingência off-line da NFC-e por unidade e ambiente.
+router.put('/nfce-contingencia/:unitId', putNfceContingencia);
+router.get('/nfce-contingencia/:unitId', getNfceContingencia);
+router.get('/psc-providers', listPscProviders);
+router.post('/psc-providers', createPscProvider);
+router.patch('/psc-providers/:id', updatePscProvider);
+router.delete('/psc-providers/:id', deletePscProvider);
+
 // Formal provenance on an already-posted entry (BE-INCR-PROVENANCE-ATTACH / NFE-X).
 // Distinct from /attachments above: that one stores a FILE; this one records the FISCAL
 // DOCUMENT identity (SourceDocument + JournalEntrySource + audit), writing no ledger value.
@@ -296,6 +342,9 @@ router.get('/sped/qualif-assinante', getSpedQualifAssinante);
 // `spedEcdRtfUpload` (multer) é NO-OP num corpo JSON puro (ECD original) — só ativa quando o
 // cliente sobe o .rtf do Termo de Verificação (ECD substituta, Passo 19-20).
 router.post('/sped/ecd/generate', spedEcdRtfUpload, generateSpedEcd);
+
+// Y600: vigências do cadastro de sócios que a ECF do ano exige (FE-INCR-ECF-Y600 PR-0) — leitura para a tela.
+router.get('/sped/ecf/y600/vigencias', getSpedEcfY600Vigencias);
 
 // SPED Fiscal (ECF) — Lucro Presumido; generate the `.txt` (download reuses the job route).
 router.post('/sped/ecf/generate', generateSpedEcf);
@@ -435,6 +484,17 @@ router.delete('/tax-optimization/service-costs/:id', deleteServiceCost);
 router.get('/tax-optimization/suggestions', listTaxSuggestions);
 router.post('/tax-optimization/suggestions/:id/accept', acceptTaxSuggestion);
 router.post('/tax-optimization/suggestions/:id/reject', rejectTaxSuggestion);
+// EFICIENCIA-FISCAL PR-3 (BRIEF itens 15–18, §4.3): simuladores (GET não grava) e o POST gêmeo que grava a sugestão do SYSTEM.
+// O fator r fica sob /simples: o router de /accounting/simples (montado antes) não tem a rota e passa adiante.
+router.get('/simples/simulacoes/fator-r', simularFatorR);
+router.post('/simples/simulacoes/fator-r/sugestao', proporFatorR);
+router.get('/simulacoes/regime', simularRegime);
+router.post('/simulacoes/regime/sugestao', proporRegime);
+router.get('/simulacoes/remuneracao-socio', simularRemuneracaoSocio);
+router.post('/simulacoes/remuneracao-socio/sugestao', proporRemuneracaoSocio);
+router.get('/tax-optimization/report', getTaxOptimizationReport); // EFICIENCIA-FISCAL PR-4 item 23
+// EFICIENCIA-FISCAL PR-5 (BRIEF itens 27, 30–32; lacuna 4 do dono, 28/10): avaliação dos serviços do ano.
+router.post('/tax-optimization/servicos/avaliar', avaliarServicosFiscais);
 // ITEM-DESTINATION PR-2 (BRIEF item 18, F-ID-2 a) — destinação padrão por produto
 router.get('/product-destinations', listProductDestinations);
 router.put('/product-destinations', upsertProductDestination);

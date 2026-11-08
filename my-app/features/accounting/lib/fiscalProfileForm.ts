@@ -80,6 +80,9 @@ export interface FiscalProfileForm {
     csllRecolherAccountId: string | null;
     pacoteCTribNac: string | null;
     pacoteCNBS: string | null;
+    /** H2 22-2: o DTO tem `.default(1)` — omitidas no PUT total, voltariam a 1. */
+    nfeSerie: number;
+    nfceSerie: number;
   };
 }
 
@@ -100,6 +103,7 @@ export function toFiscalProfileForm(v: FiscalProfileView | null): FiscalProfileF
       carried: {
         insumoExpenseAccountId: null, irpjDespesaAccountId: null, csllDespesaAccountId: null,
         irpjRecolherAccountId: null, csllRecolherAccountId: null, pacoteCTribNac: null, pacoteCNBS: null,
+        nfeSerie: 1, nfceSerie: 1, // defaults do DTO
       },
     };
   }
@@ -137,6 +141,8 @@ export function toFiscalProfileForm(v: FiscalProfileView | null): FiscalProfileF
       csllRecolherAccountId: v.csllRecolherAccountId,
       pacoteCTribNac: v.pacoteCTribNac,
       pacoteCNBS: v.pacoteCNBS,
+      nfeSerie: v.nfeSerie,
+      nfceSerie: v.nfceSerie,
     },
   };
 }
@@ -191,6 +197,8 @@ export function toUpsertFiscalProfile(unitId: string, f: FiscalProfileForm): Fis
     inscricaoMunicipal: nullable(f.inscricaoMunicipal),
     cnae: nullable(f.cnae),
     dpsSerie: Number(f.dpsSerie),
+    nfeSerie: f.carried.nfeSerie,
+    nfceSerie: f.carried.nfceSerie,
     regEspTrib: Number(f.regEspTrib),
     regApTribSN: simples && f.regApTribSN !== '' ? Number(f.regApTribSN) : null,
     issAliquotaBp: iss,

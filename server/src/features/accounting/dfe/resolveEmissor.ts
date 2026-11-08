@@ -29,5 +29,12 @@ function portByName(partner: string, kind: DfeKind, env: NodeJS.ProcessEnv): Dfe
   if (selection.enabled && selection.port.name === partner) return selection.port;
   if (partner === 'manual') return new ManualEmissor();
   if (partner === 'null') return new NullEmissor();
+  // X10a PR-7: documento `sefaz` com o env apontando para outro adaptador — a porta é a do documento (mesmo ambiente do
+  // env: documento de outro ambiente é barrado antes, F-AMB-2 a).
+  if (partner === 'sefaz') {
+    const sel = selectDfeEmissor({ ...env, [`DFE_PARTNER_${kind}`]: 'sefaz' }, kind);
+    if (sel.enabled) return sel.port;
+    throw new ValidationError(`dfe_adapter_unknown: ${sel.reason ?? "adaptador 'sefaz' indisponível"}`);
+  }
   throw new ValidationError(`dfe_adapter_unknown: nenhum adaptador para o parceiro '${partner}' do documento.`);
 }

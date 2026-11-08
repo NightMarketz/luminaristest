@@ -8,7 +8,7 @@ import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { getFactory } from '@/lib/factory';
 import { CoreSystemPreset } from '@/features/dynamicTables/presets';
-import { composeModuleTables } from '@/features/dynamicTables/presets/modules/registry';
+import { composeSuiteDefaultTables } from '@/features/dynamicTables/presets/modules/moduleSelection';
 import BeautySalonPreset from '@/features/dynamicTables/presets/systems/BeautySalonPreset';
 
 const app = makeApp();
@@ -29,6 +29,10 @@ const linhasDe = async (userId: string, internalName: string) => {
   return t ? prisma.dynamicTableData.findMany({ where: { dynamicTableId: t.id }, orderBy: { id: 'asc' } }) : [];
 };
 const LEADS = ['leadPipelines', 'leadStages', 'leads', 'leadActivities', 'leadProposals'];
+// BE-INCR-MODULOS-BASE-SUBMODULOS item 11: salão e clínica declaram também PESSOAS e VENDAS.
+// PR-4 (itens 21–22): e Campanhas (CRM-CAMP, logo depois do CRM na ordem do registro), FINANCEIRO e GESTÃO.
+const FORA_DO_CRM = ['PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM', 'EST-0', 'AGE-0', 'FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META'];
+const PV = ['CRM-CAMP', ...FORA_DO_CRM];
 const B2B = ['crmAccounts', 'crmContacts', 'crmOpportunities'];
 
 describe('I8 — CRM como categoria composta por módulos', () => {
@@ -44,7 +48,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     const u = await novoUsuario();
     const r = await criar(u, { suiteKey: 'beautySalon', unit: { name: 'Matriz' } });
     expect(r.status).toBe(201);
-    expect(r.body.data.modules).toEqual({ installed: ['CRM-0', 'CRM-1'] });
+    expect(r.body.data.modules).toEqual({ installed: ['CRM-0', 'CRM-1', ...PV] });
     const t = await tabelasDe(u.id);
     for (const x of LEADS) expect(t).toContain(x);
     for (const x of B2B) expect(t).not.toContain(x);
@@ -56,7 +60,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     const u = await novoUsuario();
     const r = await criar(u, { suiteKey: 'aestheticClinic', unit: { name: 'Clínica' } });
     expect(r.status).toBe(201);
-    expect(r.body.data.modules).toEqual({ installed: ['CRM-0', 'CRM-1'] });
+    expect(r.body.data.modules).toEqual({ installed: ['CRM-0', 'CRM-1', ...PV] });
     const t = await tabelasDe(u.id);
     for (const x of LEADS) expect(t).toContain(x);
     for (const x of B2B) expect(t).not.toContain(x);
@@ -66,7 +70,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     const u = await novoUsuario();
     const r = await criar(u, { suiteKey: 'beautySalon', unit: { name: 'Matriz' }, modules: ['CRM-3'] });
     expect(r.status).toBe(201);
-    expect(r.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'CRM-3']);
+    expect(r.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'CRM-3', ...PV]);
     const t = await tabelasDe(u.id);
     expect(t).toContain('crmOpportunities');
     expect(t).not.toContain('crmAccounts');
@@ -88,7 +92,8 @@ describe('I8 — CRM como categoria composta por módulos', () => {
 
   it('c3: tenant sem CRM (Controle Total removendo o funil) cria unidade sem pipeline e tasks sem leadId', async () => {
     const u = await novoUsuario();
-    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: LEADS, unit: { name: 'M' } });
+    // PR-4: Campanhas é submódulo do CRM (CRM-CAMP, F-MB-3b) — sem CRM sai junto.
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: [...LEADS, 'campaigns'], unit: { name: 'M' } });
     expect(r.status).toBe(201);
     const t = await tabelasDe(u.id);
     for (const x of LEADS) expect(t).not.toContain(x);
@@ -180,7 +185,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     const u = await novoUsuario();
     const r = await criar(u, { suiteKey: 'beautySalon', unit: { name: 'M' }, modules: ['CRM-2'] });
     expect(r.status).toBe(201);
-    expect(r.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B']);
+    expect(r.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', ...PV]);
     const t = await tabelasDe(u.id);
     for (const x of [...LEADS, 'crmAccounts', 'crmContacts']) expect(t).toContain(x);
     expect(t).not.toContain('crmOpportunities');
@@ -250,7 +255,7 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     expect(crm.body.data.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3']);
     expect(crm.body.data.moduleViews).toHaveLength(5);
     expect(crm.body.data.moduleViews[0]).toEqual({
-      key: 'CRM-0', name: { pt: 'Funil', en: 'Funnel' }, fixed: true,
+      key: 'CRM-0', category: 'crm', name: { pt: 'Funil', en: 'Funnel' }, fixed: true,
       tables: ['leadPipelines', 'leadStages', 'leads', 'leadActivities'], dependsOn: [],
     });
     expect(crm.body.data.moduleViews.find((m: { key: string }) => m.key === 'CRM-2B')).toMatchObject({
@@ -258,7 +263,14 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     });
     expect(Object.keys(crm.body.data.tables)).toHaveLength(8);
     const salao = await request(app).get('/api/dashboard/presets/beautySalon').set(authHeader(u as never));
-    expect(salao.body.data.moduleViews.map((m: { key: string }) => m.key)).toEqual(['CRM-0', 'CRM-1']);
+    expect(salao.body.data.moduleViews.map((m: { key: string }) => m.key)).toEqual(['CRM-0', 'CRM-1', ...PV]);
+    // BE-INCR-MODULOS-BASE-SUBMODULOS §3: moduleViews traz a categoria (aditivo) — o FE agrupa sem lista paralela.
+    expect(salao.body.data.moduleViews.map((m: { key: string; category: string }) => `${m.key}:${m.category}`)).toEqual([
+      'CRM-0:crm', 'CRM-1:crm', 'CRM-CAMP:crm', 'PES-0:pessoas', 'PES-FORN:pessoas',
+      'VEN-0:vendas', 'VEN-SERV:vendas', 'VEN-PROD:vendas', 'VEN-PAC:vendas', 'VEN-COM:vendas',
+      'EST-0:estoque', 'AGE-0:agenda', // PR-3
+      'FIN-0:financeiro', 'FIN-REC:financeiro', 'FIN-BASE:financeiro', 'GES-0:gestao', 'GES-META:gestao',
+    ]);
   });
 
   // W5 item 6 (F-W5-2): o Controle Total resolve pelo registro (`presetService`), não pelo import dinâmico do
@@ -297,11 +309,113 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
   });
 
+  it('BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: Controle Total instala saleItems na variante dos catálogos (mista), como o Rápido', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: [], unit: { name: 'M' } });
+    expect(r.status).toBe(201);
+    const nomes = (await campos(u.id, 'saleItems')).map((f) => f.name);
+    expect(nomes).toEqual(expect.arrayContaining(['type', 'productId', 'serviceId', 'packageId', 'quantity']));
+  });
+
+  it('BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: tabela de PESSOAS/VENDAS segue com a trava de tabela no create (400 TABLE_LOCKED, nada instalado)', async () => {
+    const casos: [string, Record<string, unknown>][] = [
+      // PR-5 (item 28, F-MB-5): `packages` saiu desta lista — VEN-PAC destravou (caso próprio abaixo).
+      ['customers', { reason: 'ACCOUNTING' }],
+      ['products', { reason: 'REQUIRED_RELATION', by: ['productUnits', 'stockMovements'] }],
+    ];
+    for (const [tabelaRemovida, lock] of casos) {
+      const u = await novoUsuario();
+      const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: [tabelaRemovida], unit: { name: 'M' } });
+      // Lacuna 4 (dono, 2026-11-06, "Sim, entra"): nos dois casos o módulo da tabela tem dependente mantido →
+      // `reasons` traz o DEPENDENT_MODULE_KEPT junto; o 1º motivo (topo de `details`) segue a trava.
+      const { reasons, ...topo } = r.body.details;
+      expect({ tabelaRemovida, status: r.status, details: topo }).toEqual({
+        tabelaRemovida, status: 400, details: { reason: 'TABLE_LOCKED', table: tabelaRemovida, lock },
+      });
+      expect((reasons ?? []).map((x: { reason: string }) => x.reason)).toEqual(
+        ['TABLE_LOCKED', 'DEPENDENT_MODULE_KEPT'],
+      );
+      expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
+    }
+  });
+
+  it('PR-5 item 28: salão − packages → 201, VEN-PAC fora de modules.installed (VEN-PAC destravou)', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: ['packages'], unit: { name: 'M' } });
+    expect(r.status).toBe(201);
+    expect(r.body.data.modules.installed).not.toContain('VEN-PAC');
+    expect(await tabela(u.id, 'packages')).toBeNull();
+  });
+
+  // PR-5 item 27. Dono, questionário 2026-11-06 ("As duas juntas"): trava de tabela (TABLE_LOCKED) e ponte
+  // (BRIDGE_REQUIRES_MODULE) na mesma remoção → um 400 só; `details` = o 1º motivo + `reasons` com os dois.
+  it('PR-5 item 27: remover VENDAS do salão → 400, nada instalado', async () => {
+    const VENDAS = ['sales', 'saleItems', 'services', 'products', 'packages', 'commissions', 'productUnits', 'stockMovements', 'appointments'];
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: VENDAS, unit: { name: 'M' } });
+    expect(r.status).toBe(400);
+    expect(r.body.details).toMatchObject({ reason: 'TABLE_LOCKED', table: 'sales', lock: { reason: 'ACCOUNTING' } });
+    expect(r.body.details.reasons).toEqual([
+      expect.objectContaining({ reason: 'TABLE_LOCKED', table: 'sales', lock: { reason: 'ACCOUNTING' } }),
+      expect.objectContaining({ reason: 'BRIDGE_REQUIRES_MODULE', bridge: 'sales@1', module: 'VEN-0' }),
+    ]);
+    expect(r.body.error ?? r.body.message).toContain("exige o módulo 'VEN-0'");
+    expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
+  });
+
+  it('PR-5 item 27: remover PESSOAS do salão → 400 (PES-0), nada instalado', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: ['customers', 'suppliers'], unit: { name: 'M' } });
+    expect(r.status).toBe(400);
+    expect(r.body.details).toMatchObject({ reason: 'TABLE_LOCKED', table: 'customers', lock: { reason: 'ACCOUNTING' } });
+    // Lacuna 4, dono 2026-11-06 ("Sim, entra"): com VENDAS mantida, PES-0 não sai (`applyModuleRemovals` →
+    // DEPENDENT_MODULE_KEPT, VEN-0 depende dele) e entra na lista. A ponte não falta (PES-0 fica), então
+    // BRIDGE_REQUIRES_MODULE NÃO aparece — é o que a regra produz.
+    expect(r.body.details.reasons).toEqual([
+      expect.objectContaining({ reason: 'TABLE_LOCKED', table: 'customers', lock: expect.objectContaining({ reason: 'ACCOUNTING' }) }),
+      expect.objectContaining({ reason: 'DEPENDENT_MODULE_KEPT', moduleKey: 'PES-0', dependents: expect.arrayContaining(['VEN-0']), message: expect.any(String) }),
+    ]);
+    expect(r.body.error ?? r.body.message).toContain("O módulo 'PES-0' não pode ser removido");
+    expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
+  });
+
   it('GAP-MAP CRM-0 parcial: salão custom sem as 5 tabelas de lead → modules.installed sem CRM-0 nem CRM-1', async () => {
     const u = await novoUsuario();
-    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: LEADS, unit: { name: 'M' } });
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: [...LEADS, 'campaigns'], unit: { name: 'M' } });
     expect(r.status).toBe(201);
-    expect(r.body.data.modules).toEqual({ installed: [] });
+    expect(r.body.data.modules).toEqual({ installed: FORA_DO_CRM });
+  });
+
+  it('PR-4 item 22: tirar o funil mantendo Campanhas → 400 DEPENDENT_MODULE_KEPT [CRM-CAMP], nada instalado (F-MB-3b)', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: LEADS, unit: { name: 'M' } });
+    expect({ status: r.status, details: r.body.details }).toMatchObject({
+      status: 400, details: { reason: 'DEPENDENT_MODULE_KEPT', moduleKey: 'CRM-0', dependents: ['CRM-CAMP'] },
+    });
+    expect(await prisma.dynamicTable.count({ where: { userId: u.id } })).toBe(0);
+  });
+
+  it('PR-4 item 21: FINANCEIRO e GESTÃO saem inteiros no create; sem Campanhas `sales.campaignId` é descartado', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, {
+      mode: 'custom', presetKey: 'beautySalon', unit: { name: 'M' },
+      removedTables: ['expenses', 'otherRevenues', 'financialBaselines', 'reports', 'goals', 'campaigns'],
+    });
+    expect(r.status).toBe(201);
+    expect(r.body.data.modules.installed).toEqual(['CRM-0', 'CRM-1', 'PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM', 'EST-0', 'AGE-0']); // + ESTOQUE e AGENDA (PR-3)
+    const t = await tabelasDe(u.id);
+    for (const x of ['expenses', 'otherRevenues', 'financialBaselines', 'reports', 'goals', 'campaigns']) expect(t).not.toContain(x);
+    const sales = await tabela(u.id, 'sales');
+    const campos = ((sales!.schema as unknown as { fields: { name: string }[] }).fields).map((f) => f.name);
+    expect(campos).not.toContain('campaignId');
+  });
+
+  it('PR-4: só a base de FINANCEIRO com os submódulos mantidos → 400 DEPENDENT_MODULE_KEPT (categoria sem cascata)', async () => {
+    const u = await novoUsuario();
+    const r = await criar(u, { mode: 'custom', presetKey: 'beautySalon', removedTables: ['expenses'], unit: { name: 'M' } });
+    expect({ status: r.status, details: r.body.details }).toMatchObject({
+      status: 400, details: { reason: 'DEPENDENT_MODULE_KEPT', moduleKey: 'FIN-0', dependents: ['FIN-REC', 'FIN-BASE'] },
+    });
   });
 
   // GAP-MAP Nível 3 "CRM — convertLead fixa enum inglês em campo freeSelects" (FIX-CRM-CONVERT-LEAD-SELECTS).
@@ -346,7 +460,8 @@ describe('I8 — CRM como categoria composta por módulos', () => {
     const u = await novoUsuario('ADMIN');
     // O Core antigo = Core atual + as 5 tabelas de lead (mesmos módulos, mesma fábrica) — é o que um tenant
     // criado antes do I8 tem instalado.
-    const legado = { tables: { ...CoreSystemPreset.tables, ...composeModuleTables(['CRM-0', 'CRM-1']), ...BeautySalonPreset.tables } };
+    // PR-2: as tabelas de PESSOAS/VENDAS também vêm dos módulos default da suíte.
+    const legado = { tables: { ...CoreSystemPreset.tables, ...composeSuiteDefaultTables(BeautySalonPreset) } };
     const dts = getFactory().getDynamicTableService();
     await dts.installPresetAsSystem(u.id, legado);
     const unitsT = (await tabela(u.id, 'units'))!;

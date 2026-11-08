@@ -25,6 +25,9 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export default function DashboardGrid() {
   const { user } = useAuth();
+  // Só o id: o AuthContext troca o objeto `user` a cada navegação, e recarregar as abas com a lista ainda em voo
+  // criava a aba padrão duas vezes no primeiro login (H2 21-4).
+  const userId = user?.id;
   const { items, updateLayout, addWidget, removeWidget, setLayout, updateWidgetConfig } = useDashboardGrid();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -91,10 +94,10 @@ export default function DashboardGrid() {
       }
     }
 
-    if (user) {
+    if (userId) {
       loadLayouts();
     }
-  }, [user, setLayout]);
+  }, [userId, setLayout]);
 
   useEffect(function saveLayoutOnChange() {
     // Skip during initial load, on error, or with no active tab.

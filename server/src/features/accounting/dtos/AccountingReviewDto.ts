@@ -108,6 +108,7 @@ export const ResolveFindingSchema = z.discriminatedUnion('resolution', [
  *         description:     { type: string, maxLength: 500 }
  *         lines:           { type: array, minItems: 2, items: { $ref: '#/components/schemas/PostEntryLine' } }
  *         reverseOriginal: { type: boolean, description: "Só quando register='I200' — estorna o lançamento apontado pelo locator antes do acerto" }
+ *         extemporaneousReason: { type: string, description: "Razão do registro extemporâneo (ITG 2000, item 36) — exigida quando a data cai num período já fechado e reaberto" }
  */
 export const AdjustmentEntrySchema = z
   .object({
@@ -117,6 +118,8 @@ export const AdjustmentEntrySchema = z
     // Espelha PostEntryInput (BRIEF §4): mesma linha, mesmo teto de centavos, mesma regra de um lado só.
     lines: z.array(PostEntryLineSchema).min(2),
     reverseOriginal: z.boolean().optional(),
+    // ITG 2000 (R1) item 36: o acerto é feito por pessoa — em período fechado e reaberto, a razão é a digitada.
+    extemporaneousReason: z.string().trim().min(1).optional(),
   })
   .strict();
 

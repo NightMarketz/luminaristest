@@ -16,7 +16,7 @@ import type {
   SequenceAmbiente,
   TransitionData,
 } from './IFiscalDocumentRepository';
-import { AUTHORIZED_STATUSES } from './IFiscalDocumentRepository';
+import { NOTA_VALIDA_STATUSES } from './IFiscalDocumentRepository';
 import { locaisDoPayload } from '../models/issCompetencia';
 
 export function attemptRef(documentId: string, attemptNo: number): string {
@@ -99,7 +99,7 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
   public async saleIdsWithAuthorizedDocument(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<string[]> {
     if (saleIds.length === 0) return [];
     const rows = await this.db(tx).fiscalDocument.findMany({
-      where: { ...accountingScopeWhere(scope), ambiente: 'producao', status: { in: [...AUTHORIZED_STATUSES] }, saleId: { in: [...saleIds] }, deletedAt: null },
+      where: { ...accountingScopeWhere(scope), ambiente: 'producao', status: { in: [...NOTA_VALIDA_STATUSES] }, saleId: { in: [...saleIds] }, deletedAt: null },
       select: { saleId: true },
       distinct: ['saleId'],
     });
@@ -112,7 +112,7 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
         ...accountingScopeWhere(scope),
         kind: 'NFSE',
         ambiente: 'producao',
-        status: { in: [...AUTHORIZED_STATUSES] },
+        status: { in: [...NOTA_VALIDA_STATUSES] },
         dCompet: { startsWith: `${competencia}-` },
         deletedAt: null,
       },
@@ -126,6 +126,54 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     return this.db(tx).fiscalDocument.findMany({
       where: { status: { in: ['SENT', 'PROCESSING'] }, deletedAt: null, updatedAt: { lt: olderThan } },
       orderBy: [{ updatedAt: 'asc' }],
+    });
+  }
+
+  public async listParaEventos(desde: Date, limit: number, partners: readonly string[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
+    const alvo = {
+      kind: 'NFSE',
+      partner: { in: [...partners] },
+      status: { in: [...NOTA_VALIDA_STATUSES] },
+      deletedAt: null,
+      chaveOuCodigo: { not: null },
+      nfseDhProc: { gte: desde },
+    };
+    const emVoo = await this.db(tx).fiscalDocument.findMany({
+      where: { ...alvo, cancelRequestedAt: { not: null } },
+      orderBy: [{ cancelRequestedAt: 'asc' }],
+    });
+    const rodizio = await this.db(tx).fiscalDocument.findMany({
+      where: { ...alvo, cancelRequestedAt: null },
+      orderBy: [{ updatedAt: 'asc' }],
+      take: limit,
+    });
+    return [...emVoo, ...rodizio];
+  }
+
+  public async listContingencia(limit: number, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]> {
+    return this.db(tx).fiscalDocument.findMany({
+      where: { status: 'CONTINGENCY', deletedAt: null },
+      include: { attempts: { orderBy: { attemptNo: 'asc' } } },
+      // Rodízio (revisão F): a que não sai é tocada pelo job e vai para o fim — nota parada não toma o teto das outras.
+      orderBy: [{ updatedAt: 'asc' }],
+      take: limit,
+    });
+  }
+
+  public async listContingenciaNaoAutorizada(desde: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts[]> {
+    return this.db(tx).fiscalDocument.findMany({
+      where: {
+        kind: 'NFCE',
+        status: { in: ['CONTINGENCY', 'SENT', 'PROCESSING', 'REJECTED', 'PENDING_SIGNATURE'] },
+        deletedAt: null,
+        // Revisão J: a janela é a da TENTATIVA de contingência (o documento pode ser antigo e cair em contingência hoje,
+        // no reenvio da rejeitada ou da que esperava a assinatura).
+        attempts: { some: { payloadJson: { contains: '"tpEmis":9' }, sentAt: { gte: desde } } },
+      },
+      include: { attempts: { orderBy: { attemptNo: 'asc' } } },
+      // Revisões E e G: sem teto — a janela `desde` é que limita (a abandonada há muito sai sozinha; a que vence primeiro
+      // nunca fica de fora por haver muitas pendentes depois dela).
+      orderBy: [{ createdAt: 'asc' }],
     });
   }
 
@@ -158,14 +206,14 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
 
   public async createSent(scope: AccountingScope, data: CreateSentFiscalDocumentData, tx?: Prisma.TransactionClient): Promise<FiscalDocumentWithAttempts> {
     const { userId, unitId } = accountingScopeWhere(scope);
-    const { payloadJson, ...doc } = data;
+    const { payloadJson, initialStatus, ...doc } = data;
     const created = await this.db(tx).fiscalDocument.create({
       data: {
         userId,
         unitId,
         ...doc,
         saleKey: data.saleKey ?? data.saleId,
-        status: 'SENT',
+        status: initialStatus ?? 'SENT',
         currentAttemptNo: 1,
         createdById: scope.actorUserId,
       },
@@ -304,7 +352,7 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
   ): Promise<{ candidates: FiscalDocument[]; nextCursor: string | null }> {
     const page = await this.db(tx).fiscalDocument.findMany({
       where: {
-        status: { in: [...AUTHORIZED_STATUSES] },
+        status: { in: [...NOTA_VALIDA_STATUSES] },
         ambiente: 'producao',
         deletedAt: null,
         xmlAttachmentId: null,

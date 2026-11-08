@@ -1,5 +1,5 @@
 import prisma from '../../../lib/prisma';
-import { IDocument, DocumentCreateInput, DocumentUpdateInput, DocumentStatus, DocumentPurpose } from '../models/Document.model';
+import { IDocument, DocumentContextUpdateInput, DocumentCreateInput, DocumentUpdateInput, DocumentStatus, DocumentPurpose } from '../models/Document.model';
 import { IDocumentRepository } from './IDocumentRepository';
 import type { Document as PrismaDocument } from 'generated/prisma';
 import { ProcessingStatus as PrismaProcessingStatus, DocumentPurpose as PrismaDocumentPurpose, Prisma } from 'generated/prisma';
@@ -70,12 +70,29 @@ export class DocumentRepository implements IDocumentRepository {
     };
   }
 
-  async findById(id: string): Promise<IDocument | null> {
-    const document = await prisma.document.findUnique({
+  async findById(id: string, tx?: Prisma.TransactionClient): Promise<IDocument | null> {
+    const document = await (tx ?? prisma).document.findUnique({
       where: { id },
     });
 
     return document ? this.toDomain(document) : null;
+  }
+
+  async updateContext(id: string, data: DocumentContextUpdateInput, tx: Prisma.TransactionClient): Promise<IDocument> {
+    const updated = await tx.document.update({
+      where: { id },
+      data: {
+        ...(data.fileName !== undefined && { fileName: data.fileName }),
+        ...(data.documentPurpose !== undefined && { documentPurpose: data.documentPurpose as unknown as PrismaDocumentPurpose }),
+        ...(data.summary !== undefined && { summary: data.summary }),
+        ...(data.generatedContext !== undefined && { generatedContext: data.generatedContext as Prisma.InputJsonValue }),
+      },
+    });
+    return this.toDomain(updated);
+  }
+
+  async runInTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    return prisma.$transaction(fn);
   }
 
   async delete(id: string): Promise<void> {
@@ -105,6 +122,7 @@ export class DocumentRepository implements IDocumentRepository {
       documentPurpose: prismaDocument.documentPurpose as unknown as DocumentPurpose,
       summary: prismaDocument.summary,
       contextJson: (prismaDocument.contextJson ?? null) as Record<string, unknown> | null,
+      generatedContext: (prismaDocument.generatedContext ?? null) as Record<string, unknown> | null,
       uploadDate: prismaDocument.uploadDate,
       processingDate: prismaDocument.processingDate,
       processingError: prismaDocument.processingError,

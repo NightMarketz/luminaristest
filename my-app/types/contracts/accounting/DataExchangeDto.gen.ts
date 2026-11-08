@@ -1,7 +1,7 @@
 // GERADO por server/src/features/accounting/dtos/__tests__/dtoShapeSnapshot.test.ts — NÃO EDITE.
 // Mudou um DTO? UPDATE_DTO_SNAPSHOT=1 npx jest --selectProjects unit --testPathPatterns dtoShapeSnapshot e comite o diff.
 export interface ExportRequestInput {
-kind: ("EXPORT_TRIAL_BALANCE" | "EXPORT_GENERAL_LEDGER" | "EXPORT_BALANCE_SHEET" | "EXPORT_INCOME_STATEMENT" | "EXPORT_TEMPLATE" | "EXPORT_BANK_RECONCILIATION" | "EXPORT_ENTRY_SAMPLE" | "EXPORT_TAX_ASSESSMENT_MEMO" | "EXPORT_ISS_BY_COMPETENCE" | "EXPORT_IBS_CBS_MEMO")
+kind: ("EXPORT_TRIAL_BALANCE" | "EXPORT_GENERAL_LEDGER" | "EXPORT_BALANCE_SHEET" | "EXPORT_INCOME_STATEMENT" | "EXPORT_TEMPLATE" | "EXPORT_BANK_RECONCILIATION" | "EXPORT_ENTRY_SAMPLE" | "EXPORT_TAX_ASSESSMENT_MEMO" | "EXPORT_ISS_BY_COMPETENCE" | "EXPORT_IBS_CBS_MEMO" | "EXPORT_ECONOMIA_FISCAL")
 format: ("csv" | "xlsx")
 unitId: string
 asOf?: string
@@ -26,6 +26,7 @@ status?: ("VALID" | "INVALID" | "COMMITTED" | "SKIPPED")
 export interface ImportUploadInput {
 kind: ("IMPORT_CHART_OF_ACCOUNTS" | "IMPORT_OPENING_BALANCES" | "IMPORT_JOURNAL_ENTRIES")
 unitId: string
+extemporaneousReason?: string
 }
 export interface CommitImportInput {
 unitId: string

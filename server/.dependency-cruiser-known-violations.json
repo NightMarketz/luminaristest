@@ -1,15 +1,6 @@
 [
   {
     "type": "dependency",
-    "from": "src/features/chat/services/ChatService.ts",
-    "to": "src/lib/prisma.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L3-service-not-http-or-prisma"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/accounting/repositories/AccountantAssignmentRepository.ts",
     "to": "src/features/accounting/policies/IAccountingPolicy.ts",
     "rule": {
@@ -75,15 +66,6 @@
     "type": "dependency",
     "from": "src/features/sectorKits/policies/SectorKitPolicy.ts",
     "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L5-policy-is-pure"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/structuredData/policies/StructuredDataPolicy.ts",
-    "to": "src/features/documents/repositories/IDocumentRepository.ts",
     "rule": {
       "severity": "error",
       "name": "L5-policy-is-pure"

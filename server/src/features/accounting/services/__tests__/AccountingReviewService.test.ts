@@ -24,6 +24,7 @@ import type { AuditService } from '@/features/accounting/services/AuditService';
 import type { PostingService } from '@/features/accounting/services/PostingService';
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { REVIEW_ADJUSTMENT_SOURCE_TYPE, staleFindings } from '@/features/accounting/models/AccountingReview.model';
+import { AdjustmentEntrySchema } from '@/features/accounting/dtos/AccountingReviewDto';
 
 const scope = resolveAccountingScopeInternal({ userId: 'dono-a' }, 'unit-1');
 const T0 = new Date('2026-09-10T10:00:00.000Z');
@@ -156,10 +157,10 @@ describe('AccountingReviewService', () => {
       await expect(b.service.openReview(scope, { unitId: 'unit-1', year: 2026, ecdJobId: 'job-ecd' })).rejects.toThrow(/período/);
     });
 
-    it('2ª abertura para o mesmo par é 409 REVIEW_ALREADY_OPEN com o id existente, sem create', async () => {
+    it('2ª abertura para o mesmo par é 409 REVIEW_ALREADY_OPEN nomeando a revisão pelo exercício, sem create (FIX-MENSAGENS-ID-INTERNO lote 3)', async () => {
       const { service, create } = build({ existingByJobs: reviewRow({ id: 'r-existing' }) });
       await expect(service.openReview(scope, { unitId: 'unit-1', year: 2026, ecdJobId: 'job-ecd', ecfJobId: 'job-ecf' }))
-        .rejects.toMatchObject({ errorCode: 'REVIEW_ALREADY_OPEN', message: expect.stringContaining('r-existing') });
+        .rejects.toMatchObject({ errorCode: 'REVIEW_ALREADY_OPEN', message: expect.stringContaining('revisão do exercício') });
       expect(create).not.toHaveBeenCalled();
     });
 
@@ -276,6 +277,37 @@ describe('AccountingReviewService', () => {
       const { service, postEntry } = build({ review: reviewRow({ status: 'REJECTED' }) });
       await expect(service.postAdjustment(scope, 'r-1', 'f-1', dto)).rejects.toMatchObject({ errorCode: 'REVIEW_NOT_OPEN' });
       expect(postEntry).not.toHaveBeenCalled();
+    });
+
+    // TESTE-GUARDA — ITG 2000 (R1) item 36, C4 item 2b (HANDOFF-2026-11-02-delegacao-dono §C4): o acerto é feito por
+    // pessoa, então em período fechado e reaberto a razão do extemporâneo é a digitada, nunca a automática.
+    describe('item 36 — o acerto é humano: razão digitada, sem o marcador de gravador automático', () => {
+      const RAZAO = 'achado da revisão profissional depois do fechamento';
+
+      it('o DTO do acerto aceita a razão do registro extemporâneo', () => {
+        const parsed = AdjustmentEntrySchema.safeParse({ ...dto, extemporaneousReason: RAZAO });
+        expect(parsed.success).toBe(true);
+      });
+
+      it('postEntry recebe a razão digitada e NÃO recebe automaticWriter', async () => {
+        const { service, postEntry } = build();
+        const comRazao = { ...dto, extemporaneousReason: RAZAO };
+        await service.postAdjustment(scope, 'r-1', 'f-1', comRazao);
+
+        const entrada = postEntry.mock.calls[0][1] as unknown as Record<string, unknown>;
+        expect(entrada.automaticWriter).toBeUndefined();
+        expect(entrada.extemporaneousReason).toBe(RAZAO);
+      });
+
+      it('o estorno do original (reverseOriginal) leva a mesma razão digitada, sem o marcador', async () => {
+        const { service, reverseEntry } = build({ finding: findingRow({ register: 'I200', locator: 'orig-1' }) });
+        const comRazao = { ...dto, reverseOriginal: true, extemporaneousReason: RAZAO };
+        await service.postAdjustment(scope, 'r-1', 'f-1', comRazao);
+
+        const entrada = reverseEntry.mock.calls[0][1] as Record<string, unknown>;
+        expect(entrada.automaticWriter).toBeUndefined();
+        expect(entrada.extemporaneousReason).toBe(RAZAO);
+      });
     });
   });
 

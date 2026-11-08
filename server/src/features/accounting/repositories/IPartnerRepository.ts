@@ -1,5 +1,6 @@
 import type { Partner, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
+import type { OutraParticipacao } from '../dtos/PartnerDto';
 
 export interface PartnerData {
   nome: string;
@@ -9,6 +10,8 @@ export interface PartnerData {
   participacaoBp: number;
   entradaEm: string;
   saidaEm: string | null;
+  /** EFICIENCIA-FISCAL PR-4 item 20: participações informadas em outras empresas; null = não informado. */
+  outrasParticipacoes: OutraParticipacao[] | null;
 }
 
 /**

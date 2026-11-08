@@ -2,7 +2,10 @@ import { createHash } from 'node:crypto';
 import { ForbiddenError, ConflictError, ValidationError } from '../../../lib/errors';
 import { textoLatin1Sped } from '../../../lib/sped';
 import { resolveSupersededJob, isSupersedesUniqueViolation } from './spedRectificationGate';
+import { describeExportJob } from '../models/AccountingDelivery.model';
+import type { AccountingDataExchangeJob } from 'generated/prisma';
 import * as storage from '../../../lib/attachmentStorage';
+import { logger } from '../../../lib/logger';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
 import { metrics } from '../../../lib/monitoring';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -13,11 +16,18 @@ import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRep
 import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepository';
 import type { AuditService } from './AuditService';
 import { toJobResponse, type DataExchangeJobResponse } from './dataExchangeMappers';
-import type { SpedEcfRequestDto } from '../dtos/SpedEcfDto';
+import type { SpedEcfRequestDto, Y600VigenciasView } from '../dtos/SpedEcfDto';
 import { receitaBrutaPorAtividade, receitaBrutaPorAtividadeSemGate } from './receitaBrutaPorAtividade';
 import { buildEcfFile, resolveEcfCodVer, serializeEcf, type EcfFileInput, type EcfQuarter } from '../../../lib/ecf';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
-import { montarY600, type Y600PartnerReader } from './y600FromPartners';
+import { montarY600, selecionarVigenciasDoAno, type Y600PartnerReader } from './y600FromPartners';
+import { somaParticipacaoBp } from '../models/partner';
+import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFiscalProfileRepository';
+import type { IReceitaFiscalRepository } from '../repositories/IReceitaFiscalRepository';
+import type { IServiceFiscalProfileRepository } from '../repositories/IServiceFiscalProfileRepository';
+import { repartirReceitaHospitalar, type ChecklistHospitalarEmpresa } from '../models/presuncaoHospitalar';
+import { hospitalarComTeto } from '../models/taxAssessmentCalc';
+import { linhaVigente, tabelaApuracaoDe } from '../models/taxAssessmentParams';
 
 /** Quarter windows (T01..T04) for a calendar year. */
 export function quarterWindows(year: number): Array<{ perApur: string; dtIni: string; dtFin: string; from: Date; to: Date }> {
@@ -66,7 +76,51 @@ export class SpedEcfGenerationService {
     private readonly fiscalProfileRepo: Pick<IFiscalProfileRepository, 'findByScope'>,
     /** BE-INCR-ECF-Y600 item 8: vigências do cadastro de sócios (IRRF-DISTRIBUICAO PR-1) para o Y600. */
     private readonly partners: Y600PartnerReader,
+    /**
+     * Achado 1 do #1021 (dono, chat, 03/11: "Autorizo a correção"): a receita hospitalar (8 %/12 %) e a do 16 % saem das
+     * linhas de 32 % como na apuração — o perfil da empresa e a subrazão por serviço. Só leitura.
+     */
+    private readonly companyProfileRepo: Pick<ICompanyFiscalProfileRepository, 'findByYear'>,
+    private readonly receitaFiscalRepo: Pick<IReceitaFiscalRepository, 'findServicosEntreDias'>,
+    private readonly serviceFiscalRepo: Pick<IServiceFiscalProfileRepository, 'findManyByServiceRefs'>,
   ) {}
+
+  /**
+   * FE-INCR-ECF-Y600 PR-0 (item 1; F-FE-Y600-1 → b): as vigências que o `montarY600` vai exigir no ano, pela MESMA
+   * seleção (`selecionarVigenciasDoAno`), para a tela pedir o complemento de cada uma antes do POST. Vale para o
+   * Presumido e o Real (o Real chama o mesmo `montarY600`). Leitura pura, sem auditoria. Policy: a mesma da listagem
+   * do cadastro de sócios (`PartnerService.list`). O CPF/CNPJ sai só com os 4 últimos dígitos.
+   */
+  public async y600Vigencias(scope: AccountingScope, year: number): Promise<Y600VigenciasView> {
+    if (!this.policy.canReadFiscalProfile(scope)) {
+      throw new ForbiddenError('Você não tem permissão para ler os sócios da empresa.');
+    }
+    const doAno = selecionarVigenciasDoAno(await this.partners.list(scope), year);
+    return {
+      year,
+      vigencias: doAno.map(({ partner: p, vigenteNoFim, dtFimSoc }) => ({
+        partnerId: p.id,
+        nome: p.nome,
+        taxIdFinal: p.taxId.slice(-4),
+        tipoPessoa: p.tipoPessoa as 'PF' | 'PJ',
+        residenteBrasil: p.residenteBrasil,
+        participacaoBp: p.participacaoBp,
+        entradaEm: p.entradaEm,
+        saidaEm: p.saidaEm,
+        dtFimSoc,
+        vigenteNoFim,
+      })),
+      somaParticipacaoFimBp: somaParticipacaoBp(doAno.filter((v) => v.vigenteNoFim).map((v) => v.partner)),
+    };
+  }
+
+  /** Σ da receita dos serviços HOSPITALAR na janela — a mesma leitura de `TaxAssessmentService.receitaHospitalar`. */
+  private async receitaHospitalar(scope: AccountingScope, empresa: ChecklistHospitalarEmpresa, de: Date, ate: Date): Promise<bigint> {
+    const linhas = await this.receitaFiscalRepo.findServicosEntreDias(scope, de.toISOString().slice(0, 10), ate.toISOString().slice(0, 10));
+    const refs = [...new Set(linhas.map((l) => l.serviceRef).filter((r): r is string => r !== null))];
+    if (refs.length === 0) return 0n;
+    return repartirReceitaHospitalar(linhas, await this.serviceFiscalRepo.findManyByServiceRefs(scope, refs), empresa).hospitalarCents;
+  }
 
   public async generate(scope: AccountingScope, dto: SpedEcfRequestDto): Promise<DataExchangeJobResponse> {
     if (!this.policy.canRead(scope)) {
@@ -80,8 +134,10 @@ export class SpedEcfGenerationService {
     const periodEnd = new Date(`${year}-12-31T00:00:00.000Z`);
 
     // ── Gate da retificação versionada (item 21, ACC-011) — pré-cheque legível ANTES de gerar.
+    // FIX-MENSAGENS-ID-INTERNO lote 5 (F-MSG-2 a1): o job retificado nomeia a corrida da `@unique` abaixo pelo tipo + período.
+    let superseded: AccountingDataExchangeJob | undefined;
     if (isRetificadora && dto.supersedesJobId) {
-      await resolveSupersededJob(this.repo, scope, dto.supersedesJobId, 'EXPORT_SPED_ECF', {
+      superseded = await resolveSupersededJob(this.repo, scope, dto.supersedesJobId, 'EXPORT_SPED_ECF', {
         start: periodStart,
         end: periodEnd,
       });
@@ -95,11 +151,24 @@ export class SpedEcfGenerationService {
     const yearTo = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
     const deps = { accountRepo: this.accountRepo, postingRepo: this.postingRepo, fiscalProfileRepo: this.fiscalProfileRepo };
     await receitaBrutaPorAtividade(deps, scope, yearFrom, yearTo, accounts);
+    const perfil = await this.companyProfileRepo.findByYear(scope, year);
+    // O 16 % segue as condições da apuração (`regra16`): declaração completa, sem revenda nem hospitalar e acumulada ≤ limite.
+    const tabela16 = perfil?.prestadoraExclusivaServicos && perfil.declaraNaoProfissaoRegulamentada
+      ? tabelaApuracaoDe(await this.legalParams.fotografia(['TAX_ASSESSMENT']))
+      : null;
+    let acumuladaCents = 0n;
+    let revendaAnoCents = 0n;
     const quarters: EcfQuarter[] = [];
     for (const w of windows) {
       const { servicoCents, revendaCents, naoUsoCents } = await receitaBrutaPorAtividadeSemGate(this.postingRepo, scope, accounts, w.from, w.to);
       // BE-INCR-H1-REFERENCIAL-3-4: o P200/P400 não tem linha própria para a 3.4 — entra na base de serviço.
-      quarters.push({ perApur: w.perApur, dtIni: w.dtIni, dtFin: w.dtFin, servicoCents: Math.max(0, servicoCents + naoUsoCents), revendaCents });
+      const servico = Math.max(0, servicoCents + naoUsoCents);
+      const hospitalar = perfil ? hospitalarComTeto(await this.receitaHospitalar(scope, perfil, w.from, w.to), BigInt(servico)) : 0n;
+      acumuladaCents += BigInt(servico + revendaCents);
+      revendaAnoCents += BigInt(revendaCents);
+      const limite = tabela16 ? linhaVigente(tabela16, 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', w.dtFin) : undefined;
+      const reduzida16 = !!limite && hospitalar === 0n && revendaAnoCents === 0n && acumuladaCents <= BigInt(limite.valor);
+      quarters.push({ perApur: w.perApur, dtIni: w.dtIni, dtFin: w.dtFin, servicoCents: servico, revendaCents, hospitalarCents: Number(hospitalar), reduzida16 });
     }
 
     // ── Y600 (BE-INCR-ECF-Y600 itens 8–11): cadastro × complemento do request, já ordenado (item 3) ──
@@ -107,8 +176,9 @@ export class SpedEcfGenerationService {
 
     // Item 25: ano sem leiaute é 400 explícito (a lib lança Error puro — mesmo tratamento do SpedEcfRealGenerationService).
     let codVer: string;
+    const leiautes = await this.legalParams.fotografia(['LEIAUTE_SPED']);
     try {
-      codVer = resolveEcfCodVer(year, await this.legalParams.fotografia(['LEIAUTE_SPED']));
+      codVer = resolveEcfCodVer(year, leiautes);
     } catch (e) {
       throw new ValidationError(e instanceof Error ? e.message : String(e));
     }
@@ -186,7 +256,7 @@ export class SpedEcfGenerationService {
     } catch (error) {
       if (isSupersedesUniqueViolation(error)) {
         throw new ConflictError(
-          `O job '${dto.supersedesJobId}' já foi retificado por outro job — só um sucessor por job (item 21).`,
+          `O job ${superseded ? describeExportJob(superseded) : `'${dto.supersedesJobId}'`} já foi retificado por outro job — só um sucessor por job (item 21).`,
         );
       }
       throw error;
@@ -267,6 +337,29 @@ export class SpedEcfGenerationService {
         }
       }
       return j;
+    }).catch(async (error: unknown) => {
+      // Lacuna 10 (D-2026-10-28-LACUNAS-EXECUTA-27-28): o arquivo já existe e o rollback desfez o
+      // EXPORTED — sem isto o job ficaria PROCESSING para sempre, com o artefato órfão. FAILED fora
+      // da tx que falhou; o erro da tx não é registrado aqui (OBS-R5: a borda registra).
+      // Compensação best-effort: cada passo isolado e o erro original sempre relançado. A falha
+      // de um passo é OUTRO erro, que se perderia — por isso registra aqui (não é o relançado).
+      try {
+        await this.repo.updateJob(scope, job.id, { status: 'FAILED', supersedesJobId: null });
+      } catch (compensationError) {
+        logger.error('export: falha ao marcar FAILED depois da tx — job fica PROCESSING', {
+          jobId: job.id, kind: job.kind, error: compensationError,
+        });
+      }
+      for (const key of [storageKey]) {
+        try {
+          await storage.deleteFile(key);
+        } catch (compensationError) {
+          logger.error('export: falha ao apagar o artefato depois da tx — arquivo órfão', {
+            jobId: job.id, kind: job.kind, error: compensationError,
+          });
+        }
+      }
+      throw error;
     });
 
     endTimer({ success: true, jobId: job.id, kind: job.kind, unitId: scope.unitId });

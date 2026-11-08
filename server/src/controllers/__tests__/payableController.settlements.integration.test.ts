@@ -197,4 +197,32 @@ describe('/api/payables/{id}/settlements — contrato HTTP da baixa parcial', ()
     expect(res.status).toBe(400);
     expect(JSON.stringify(res.body)).toContain('Desfaça as baixas ativas');
   });
+
+  // FIX-MENSAGENS-ID-INTERNO lote 2 (FIX-TESTES item 5): a classe de bem foi achada (o operador a escolheu pelo código); o
+  // que sumiu foi a conta de custo DELA, id interno que o operador nunca viu. A mensagem nomeia a classe por `código — nome`.
+  it('PayableService:1679 — compra com item de imobilizado cuja classe perdeu a conta de custo (400) nomeia a classe, não o cuid da conta', async () => {
+    const custo = await criarConta(dono.id, '1.2.9', 'Asset');
+    const classe = await request(app)
+      .post('/api/accounting/fixed-asset-classes')
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, code: 'IMSG2-CL', name: 'Móveis', depreciable: false, costAccountId: custo.id });
+    expect(classe.status).toBe(201);
+    const classId = classe.body.data.id as string;
+    await prisma.account.update({ where: { id: custo.id }, data: { deletedAt: new Date() } });
+    const res = await request(app)
+      .post('/api/payables')
+      .set(authHeader(dono))
+      .send({
+        unitId: UNIT, supplierName: 'ACME HTTP', documentNumber: 'NF-msg-1679', description: 'compra de bens',
+        issueDate: DATA, dueDate: '2026-07-15', amountCents: 100000, inventoryMultiItem: true,
+        fixedAssetItems: [{ cProd: 'C-1679', costCents: 100000, classId, ncm: '94036000' }],
+      });
+    const msg = String(res.body.message);
+    expect({ status: res.status, nomeiaRotulo: msg.includes('IMSG2-CL — Móveis'), cuidNaMensagem: [custo.id, classId].filter((id) => msg.includes(id)), msg }).toEqual({
+      status: 400,
+      nomeiaRotulo: true,
+      cuidNaMensagem: [],
+      msg,
+    });
+  });
 });

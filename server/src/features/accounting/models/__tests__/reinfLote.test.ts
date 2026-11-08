@@ -107,7 +107,7 @@ describe('montarR4020 — agrupamento (itens 6–7; L2, L7)', () => {
     expect(noEvento).toBe(1_500n + 2_325n);
     expect(m.linhasR4020.reduce((s, x) => s + BigInt(x.amountCents), 0n)).toBe(noEvento);
     expect(m.totaisPorCodigo).toEqual(expect.arrayContaining([{ codigoReceita: '170806', totalCents: '1500' }, { codigoReceita: '595207', totalCents: '2325' }]));
-    expect(m.avisos).toEqual([expect.stringContaining(AVISO_PF_FORA_DA_REINF)]); // PR-2: o INSS vai ao R-2010 (montarR2010), sem aviso
+    expect(m.avisos).toEqual([expect.objectContaining({ codigo: AVISO_PF_FORA_DA_REINF, quantidade: expect.any(Number) })]); // PR-2: o INSS vai ao R-2010 (montarR2010), sem aviso
   });
 });
 

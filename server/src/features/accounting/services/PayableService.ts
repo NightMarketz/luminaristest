@@ -534,7 +534,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
     for (const l of linhas) {
       if (!l.settlementId) continue;
       const entry = await this.posting.findEntryBySource(scope, AP_WITHHOLDING_SOURCE_TYPE, l.settlementId);
-      if (entry) await this.posting.reverseEntry(scope, { unitId: scope.unitId, lancamentoId: entry.id, reversalPostingDate: dto.reversalDate, reason: dto.reason });
+      if (entry) await this.posting.reverseEntry(scope, { automaticWriter: true, unitId: scope.unitId, lancamentoId: entry.id, reversalPostingDate: dto.reversalDate, reason: dto.reason || `Cancelamento da retenção na fonte da liquidação ${l.settlementId}` });
     }
   }
 
@@ -559,6 +559,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
       description: `Retenção de ${tributo} — ${payable.supplierName}${payable.documentNumber ? ` (NF ${payable.documentNumber})` : ''}`,
       auditDescription: `Retenção de ${tributo} — NF ${payable.documentNumber ?? 's/nº'}`,
       sourceType: AP_WITHHOLDING_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: paymentId,
       lines: [
         { accountCode: FORNECEDORES_A_PAGAR_CODE, debitCents: cents, creditCents: 0 },
@@ -970,7 +971,8 @@ export class PayableService implements IFixedAssetDraftRedriver {
         unitId: scope.unitId,
         lancamentoId: recognition.id,
         reversalPostingDate: dto.reversalDate,
-        reason: dto.reason,
+        reason: dto.reason || `Cancelamento da conta a pagar ${payableId}`,
+        automaticWriter: true,
       });
       reversalEntryId = reversal.id;
     }
@@ -1055,7 +1057,8 @@ export class PayableService implements IFixedAssetDraftRedriver {
         unitId: scope.unitId,
         lancamentoId: settlement.id,
         reversalPostingDate: dto.reversalDate,
-        reason: dto.reason,
+        reason: dto.reason || `Cancelamento do pagamento ${paymentId} da conta a pagar ${payableId}`,
+        automaticWriter: true,
       });
       reversalEntryId = reversal.id;
     }
@@ -1472,6 +1475,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
       description: this.recognitionDescription(payable),
       auditDescription: this.recognitionAuditDescription(payable),
       sourceType: AP_PAYABLE_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: payable.id,
       sourceDocument: {
         externalRef: dto.documentNumber,
@@ -1672,7 +1676,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
       }
       const account = await this.accountRepo.findById(scope, klass.costAccountId);
       if (!account || account.deletedAt) {
-        throw new ValidationError(`Conta do bem '${klass.costAccountId}' (classe '${klass.code}') não existe neste escopo.`);
+        throw new ValidationError(`Conta do bem da classe '${[klass.code, klass.name].filter(Boolean).join(' — ') || klass.id}' não existe neste escopo.`);
       }
       if (!account.acceptsEntries) {
         throw new ValidationError(`Conta do bem '${account.code}' (classe '${klass.code}') não aceita lançamentos (não é folha).`);
@@ -1731,6 +1735,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
       description: this.recognitionDescription(payable),
       auditDescription: this.recognitionAuditDescription(payable),
       sourceType: AP_PAYABLE_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: payable.id,
       sourceDocument: {
         externalRef: payable.documentNumber ?? undefined,
@@ -1760,6 +1765,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
       description: this.settlementDescription(payable),
       auditDescription: this.settlementAuditDescription(payable),
       sourceType: AP_PAYMENT_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: payment.id,
       lines: [
         { accountCode: debitCode, debitCents: dto.amountCents, creditCents: 0 },
@@ -1782,6 +1788,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
       description: this.settlementDescription(payable),
       auditDescription: this.settlementAuditDescription(payable),
       sourceType: AP_PAYMENT_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: payment.id,
       lines: [
         { accountCode: debitCode, debitCents: centsFromDb(payment.amountCents), creditCents: 0 },

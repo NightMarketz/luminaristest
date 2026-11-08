@@ -51,7 +51,7 @@ are constructed and injected in `server/src/lib/factory.ts`.
 - Explicit `select` — never select secrets (e.g. password hashes) into read paths.
 - Multi-tenant reads are scoped by `userId`.
 - Map Prisma `P2025` → `NotFoundError`; let `P2002` (unique) propagate → handled as 409.
-- External stores (e.g. Qdrant `VectorRepository`) are repositories too and also have an interface.
+- External stores (e.g. the `ChunkVectorRepository` over the sqlite-vec file) are repositories too and also have an interface.
 
 ## 5. Policy (`policies/<Entity>Policy.ts` + `I<Entity>Policy.ts`)
 

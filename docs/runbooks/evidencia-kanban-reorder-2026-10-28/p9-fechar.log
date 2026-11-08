@@ -1,0 +1,11 @@
+url após login: http://127.0.0.1:3030/
+
+======== p9fechar ========
+aberto: true
+activeElement antes do Esc: DIV[role=button]
+3 s após Esc, [role=dialog] presente: true
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/p9-apos-esc.png
+3 s após clique fora (20,980), [role=dialog] presente: false
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/p9-apos-clique-fora.png
+--- console.error ---
+(nenhum)

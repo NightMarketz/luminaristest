@@ -5,8 +5,8 @@
  *
  * - Classificação: relação primeiro (`productId`/`serviceId`/`packageId`), depois `type`.
  * - Quantidade da linha para as guardas: `quantity` (1 se a coluna não existe — preset só-serviços). As pontes contábeis
- *   seguem `quantity × unitPrice` cru (contrato do X14/REVENUE-SPLIT); o subtotal do SalesPlugin conta serviço como 1 —
- *   divergência anterior a este nó, registrada no review do #913, fora do escopo dele.
+ *   seguem `quantity × unitPrice` cru (contrato do X14/REVENUE-SPLIT), e o subtotal do SalesPlugin também, desde o VP-1b
+ *   (D-2026-11-04-VENDA-QUANTIDADE-SERVICO-E-PV-A; antes contava serviço como 1, divergência do review do #913).
  * - Fronteira reais → centavos: `Math.round(reais × 100)`, com lixo/NaN ⇒ 0.
  */
 

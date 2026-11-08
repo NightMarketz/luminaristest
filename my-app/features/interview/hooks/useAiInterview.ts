@@ -108,7 +108,11 @@ export function useAiInterview() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
+  // Idioma da UI (dono, chat, 2026-11-06: "Seguir o idioma da UI"): a entrevista responde nele. Sem instância i18n
+  // (testes), o campo fica fora do corpo e o servidor usa português — o comportamento de antes.
+  const uiLocale: ChatInterviewInput['locale'] = i18n?.language ? (i18n.language.startsWith('en') ? 'en' : 'pt') : undefined;
+  const localeField = uiLocale ? { locale: uiLocale } : {};
 
   useEffect(() => {
     // W7 item 1: o cleanup aborta a saudação da 1ª montagem do StrictMode (e a de quem sai antes da resposta) —
@@ -117,7 +121,7 @@ export function useAiInterview() {
     async function fetchInitialMessage() {
       setIsLoading(true);
       try {
-        const data = await InterviewService.chatInterview<Pick<ChatInterviewReply, 'nextStage'> & { response?: string }>({ messages: [], stage: 'GREETING' }, controller.signal);
+        const data = await InterviewService.chatInterview<Pick<ChatInterviewReply, 'nextStage'> & { response?: string }>({ messages: [], stage: 'GREETING', ...localeField }, controller.signal);
         if (controller.signal.aborted) return;
         if (data.response) {
           setMessages([{ sender: 'ai', text: data.response }]);
@@ -230,7 +234,8 @@ export function useAiInterview() {
           ...(sessionId ? { sessionId } : {}),
           ...(choice ? { choice } : {}),
           // W1 (F-W1-6 a): a sessão de customização nasce com os módulos marcados.
-          ...(choice === 'customize' && selectedModules.length > 0 ? { modules: selectedModules } : {})
+          ...(choice === 'customize' && selectedModules.length > 0 ? { modules: selectedModules } : {}),
+          ...localeField
         } satisfies ChatInterviewInput);
       } catch (requestError) {
         if (!(requestError instanceof InterviewApiError) || requestError.status === undefined) throw requestError;

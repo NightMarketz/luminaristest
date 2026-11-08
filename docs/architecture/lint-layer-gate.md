@@ -126,9 +126,7 @@ em silêncio (o script falha se achar mais de um).
 <!-- debt-ledger:start -->
 ```json
 {
-  "DEBT: prisma": {
-    "server/src/features/chat/services/ChatService.ts": 1
-  },
+  "DEBT: prisma": {},
   "DEBT: apiClient": {},
   "DEBT: fetch": {},
   "SANCTIONED": {
@@ -140,6 +138,7 @@ em silêncio (o script falha se achar mais de um).
     "server/src/jobs/LegalParamsRecalcScheduler.ts": 2,
     "server/src/jobs/MpReleaseReportScheduler.ts": 1,
     "server/src/jobs/PtaxRateScheduler.ts": 1,
+    "server/src/jobs/VecOrphanSweepScheduler.ts": 1,
     "server/src/lib/pdf.ts": 1
   }
 }

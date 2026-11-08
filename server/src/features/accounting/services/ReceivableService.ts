@@ -39,7 +39,7 @@ import type { IReceivableRepository, ReceivableWithReceipts } from '../repositor
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { ICounterpartyRepository } from '../repositories/ICounterpartyRepository';
 import type { ICollectionChargeRepository } from '../repositories/ICollectionChargeRepository';
-import { RECEIVABLE_HAS_LIVE_CHARGE } from '../models/CollectionCharge.model';
+import { RECEIVABLE_HAS_LIVE_CHARGE, describeCharge } from '../models/CollectionCharge.model';
 import { SPLIT_ACCOUNT_NOT_CONFIGURED, SPLIT_IBS_CBS_KIND } from '../models/BankSettlement.model';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostEntryInput } from '../dtos/PostingDto';
@@ -382,7 +382,8 @@ export class ReceivableService {
         unitId: scope.unitId,
         lancamentoId: recognition.id,
         reversalPostingDate: dto.reversalDate,
-        reason: dto.reason,
+        reason: dto.reason || `Cancelamento da conta a receber ${receivableId}`,
+        automaticWriter: true,
       });
       reversalEntryId = reversal.id;
     }
@@ -452,7 +453,8 @@ export class ReceivableService {
         unitId: scope.unitId,
         lancamentoId: settlement.id,
         reversalPostingDate: dto.reversalDate,
-        reason: dto.reason,
+        reason: dto.reason || `Cancelamento do recebimento ${receiptId} da conta a receber ${receivableId}`,
+        automaticWriter: true,
       });
       reversalEntryId = reversal.id;
     }
@@ -641,7 +643,8 @@ export class ReceivableService {
     if (debitAccountId === null) return resolveReceiptMethodAccount(method);
     const account = await this.accountRepo.findById(scope, debitAccountId);
     if (!account || account.deletedAt || !account.acceptsEntries) {
-      throw new ValidationError(`provider_balance_requires_payment_account: a conta '${debitAccountId}' da conta de provedor não é folha ativa do escopo.`);
+      const rotulo = account ? [account.code, account.name].filter(Boolean).join(' — ') || debitAccountId : debitAccountId;
+      throw new ValidationError(`provider_balance_requires_payment_account: a conta '${rotulo}' da conta de provedor não é folha ativa do escopo.`);
     }
     return account.code;
   }
@@ -650,7 +653,7 @@ export class ReceivableService {
     const live = await this.collectionChargeRepo.findLiveByReceivable(scope, receivableId, tx);
     if (live) {
       throw new ConflictError(
-        `${RECEIVABLE_HAS_LIVE_CHARGE}: o título tem a cobrança '${live.id}' (${live.status}) no provedor; cancele-a antes.`,
+        `${RECEIVABLE_HAS_LIVE_CHARGE}: o título tem a cobrança '${describeCharge(live)}' (${live.status}) no provedor; cancele-a antes.`,
         RECEIVABLE_HAS_LIVE_CHARGE,
       );
     }
@@ -698,6 +701,7 @@ export class ReceivableService {
       description: this.recognitionDescription(receivable),
       auditDescription: this.recognitionAuditDescription(receivable),
       sourceType: AR_RECEIVABLE_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: receivable.id,
       sourceDocument: {
         externalRef: dto.documentNumber,
@@ -723,6 +727,7 @@ export class ReceivableService {
       description: this.recognitionDescription(receivable),
       auditDescription: this.recognitionAuditDescription(receivable),
       sourceType: AR_RECEIVABLE_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: receivable.id,
       sourceDocument: {
         externalRef: receivable.documentNumber ?? undefined,
@@ -748,6 +753,7 @@ export class ReceivableService {
       description: this.receiptDescription(receivable),
       auditDescription: this.receiptAuditDescription(receivable),
       sourceType: AR_RECEIPT_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: receipt.id,
       lines: [
         { accountCode: debitCode, debitCents: dto.amountCents, creditCents: 0 },
@@ -769,6 +775,7 @@ export class ReceivableService {
       description: this.receiptDescription(receivable),
       auditDescription: this.receiptAuditDescription(receivable),
       sourceType: AR_RECEIPT_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId: receipt.id,
       lines: [
         { accountCode: debitCode, debitCents: centsFromDb(receipt.amountCents), creditCents: 0 },

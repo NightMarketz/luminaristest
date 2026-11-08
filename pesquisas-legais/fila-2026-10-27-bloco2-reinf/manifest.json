@@ -1,0 +1,92 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_Manual-20da-20EFD-Reinf-20vers-c3-a3o-202-1-2-1-pdf",
+      "url": "http://sped.rfb.gov.br/arquivo/download/7261",
+      "url_final": "http://sped.rfb.gov.br/estatico/28/40FAAC1C636CC110D4C12D2790B43C641C6BCA/Manual%20da%20EFD-Reinf%20vers%c3%a3o%202.1.2.1.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T02:26:01-03:00",
+      "sha256": "563e771cf0b48dec156c44bc3582a469c8a7203b2e415a89da7bba1ee27f5977",
+      "arquivo": "docs/D01_Manual-20da-20EFD-Reinf-20vers-c3-a3o-202-1-2-1-pdf.pdf",
+      "texto": "docs/D01_Manual-20da-20EFD-Reinf-20vers-c3-a3o-202-1-2-1-pdf.txt",
+      "bytes": 3044983
+    },
+    {
+      "id": "D02",
+      "titulo": "D02_XSD-20EFD-Reinf-20v2-1-2-20-20CNPJ-20Alfanum-c3-a9rico-zip",
+      "url": "http://sped.rfb.gov.br/arquivo/download/8193",
+      "url_final": "http://sped.rfb.gov.br/estatico/74/6A2EE4D441E3A9536B5BC35CB282735B479423/XSD%20EFD-Reinf%20v2.1.2%20-%20CNPJ%20Alfanum%c3%a9rico.zip",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T02:26:01-03:00",
+      "sha256": "26a82d92bdccc4dddc56150e08080e60043315964b9f7e6800a3402f6218d4b9",
+      "arquivo": "docs/D02_XSD-20EFD-Reinf-20v2-1-2-20-20CNPJ-20Alfanum-c3-a9rico-zip.html",
+      "texto": "docs/D02_XSD-20EFD-Reinf-20v2-1-2-20-20CNPJ-20Alfanum-c3-a9rico-zip.txt",
+      "bytes": 64550
+    },
+    {
+      "id": "D03",
+      "titulo": "D03_EFD-REINF-20-20Tabelas-2015012026-zip",
+      "url": "http://sped.rfb.gov.br/arquivo/download/7994",
+      "url_final": "http://sped.rfb.gov.br/estatico/56/02690B8D5DE8904DFAB98799195B016052E4F5/EFD-REINF%20-%20Tabelas%2015012026.zip",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T02:26:02-03:00",
+      "sha256": "31c04713b92a965c7413190a21dfc1b8eab4b10002a58371506da758e770b1a7",
+      "arquivo": "docs/D03_EFD-REINF-20-20Tabelas-2015012026-zip.html",
+      "texto": "docs/D03_EFD-REINF-20-20Tabelas-2015012026-zip.txt",
+      "bytes": 416773
+    },
+    {
+      "id": "D04",
+      "titulo": "Pesquisa avançada por nome do beneficiário no portal do e-CAC",
+      "url": "http://sped.rfb.gov.br/pagina/show/7911",
+      "url_final": "http://sped.rfb.gov.br/pagina/show/7911",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T02:27:02-03:00",
+      "sha256": "e7ed06d59e5e2d6e418a9b2062deac160f488ba9bcc8a7821eea22dec398b21a",
+      "arquivo": "docs/D04_7911.html",
+      "texto": "docs/D04_7911.txt",
+      "bytes": 28778
+    },
+    {
+      "id": "D05",
+      "titulo": "EFD-Reinf — Receita Federal",
+      "url": "https://www.gov.br/receitafederal/pt-br/acesso-a-informacao/perguntas-frequentes/sped/efd-reinf/efdr",
+      "url_final": "https://www.gov.br/receitafederal/pt-br/acesso-a-informacao/perguntas-frequentes/sped/efd-reinf/efdr",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T02:27:02-03:00",
+      "sha256": "9db77f57c87112ad41a9f99bf42cff5976c73d566f9d5aa5441c68960daec9da",
+      "arquivo": "docs/D05_efdr.html",
+      "texto": "docs/D05_efdr.txt",
+      "bytes": 357771
+    },
+    {
+      "id": "D06",
+      "titulo": "Versão 2.1.2 dos leiautes da EFD-Reinf",
+      "url": "http://sped.rfb.gov.br/pagina/show/7186",
+      "url_final": "http://sped.rfb.gov.br/pagina/show/7186",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T02:28:41-03:00",
+      "sha256": "99158b8918c8f3eca62e7fd4c0ccdcc67c1a84ff555e283b32bc8e32608b17c7",
+      "arquivo": "docs/D06_7186.html",
+      "texto": "docs/D06_7186.txt",
+      "bytes": 28201
+    },
+    {
+      "id": "D07",
+      "titulo": "D07_Leiautes-20da-20EFD-Reinf-20vers-c3-a3o-202-1-2-zip",
+      "url": "http://sped.rfb.gov.br/arquivo/download/7185",
+      "url_final": "http://sped.rfb.gov.br/estatico/54/624B4458B9B21F00B964E01CC71AF7FB00E13C/Leiautes%20da%20EFD-Reinf%20vers%c3%a3o%202.1.2.zip",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-10-27T02:29:23-03:00",
+      "sha256": "4e81428926b42f455119d7771cee28df0c0116fdbf662ae78a0a407e01a83fd1",
+      "arquivo": "docs/D07_Leiautes-20da-20EFD-Reinf-20vers-c3-a3o-202-1-2-zip.html",
+      "texto": "docs/D07_Leiautes-20da-20EFD-Reinf-20vers-c3-a3o-202-1-2-zip.txt",
+      "bytes": 4677092
+    }
+  ],
+  "buscas": [],
+  "slug": "fila-2026-10-27-bloco2-reinf",
+  "pergunta": "Bloco 2 da fila: P-REINF-7 (classTrib do R-1000 para salão e clínica no Simples), P-REINF-2 (natureza do rendimento, Tabela 01, de cada serviço que salão ou clínica contrata de PJ) e P-REINF-5 (a EFD-Reinf Web aceita digitar os eventos R-4000?)",
+  "criado": "2026-10-27T02:25:45-03:00"
+}

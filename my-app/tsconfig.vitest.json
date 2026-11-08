@@ -3,6 +3,7 @@
   "compilerOptions": {
     "target": "es2017",
     "moduleResolution": "bundler",
+    "tsBuildInfoFile": "./tsconfig.vitest.tsbuildinfo",
     "types": ["vitest/globals", "node"]
   },
   "include": [

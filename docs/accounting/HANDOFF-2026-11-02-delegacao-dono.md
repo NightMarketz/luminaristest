@@ -1,0 +1,207 @@
+# Passagem de sessão — delegação do dono: H1, H2, cédulas e #907 (02/11/2026)
+
+> Leia isto primeiro na sessão que vai disparar as correções. As decisões estão em
+> [`D-2026-11-02-DELEGACAO-DONO`](../plano/decisoes/D-2026-11-02-DELEGACAO-DONO.md); este documento diz **o que falta
+> fazer, em que ordem, com que autorização e com que prompt**.
+> Graus: **[V]** verificado nesta sessão (comando ou leitura do arquivo) · **[I]** inferido · **[A]** assumido.
+> Medido em 02–03/11/2026 contra `origin/main` `f5dc79b7`.
+
+## 1. Em duas linhas
+
+As cédulas pendentes foram decididas, o #1005 está em `main` e o H1 não tem passo executável até haver ECD assinada
+**[V]**. Faltam as correções de código C1–C6, o resto do H2 (C7) e o lote de merge (M1). O risco principal é o #907: ele muda a regra de
+lançamento em período reaberto e mexe em todos os chamadores de `reverseEntry`, então só entra com revisor independente
+**[V]**.
+
+## 2. Autorização que vale para tudo abaixo
+
+Dono, chat, 2026-11-02: *"gates humanos H1 e H2, as cédulas de decisão pendentes e o #907. Faz e me substitui nas
+decisões"*. Dono, chat, 2026-11-03: *"Já documenta as correções necessárias pra disparar tudo numa próxima sessão"*.
+Cada correção abaixo cita a seção da nota de decisão que a criou. Pela régua de 28/10, contabilidade e fiscal são classe
+**vermelha**: revisor independente antes do merge, e o merge sai pela maestro.
+
+## 3. Estado em 03/11
+
+| Item | Estado | Grau |
+|---|---|---|
+| #1005 FIX-DRE-DEDUCAO-SINAL | MERGED (`f5dc79b7`) | [V] |
+| #1011 nota de decisão + folds + este handoff | aberto, vermelho (cédula e gate H1), só docs | [V] |
+| #1003 kit D1/D1f | `[x]` desfeitos no `b5fed32b`; aberto, vermelho | [V] |
+| #907 ITG 2000 itens 32/36 | 2 correções em `8f4b1a14`, gates verdes e tela conferida em build de produção; **1 brecha antes do merge** (C1) | [V] |
+| #982 evidência do H2 | re-semeadura + passos 1–20 com evidência; desfecho geral FALHOU (passo 14); 21–23 e runbooks irmãos por rodar (C7) | [V] |
+| H1 | tentativa 4: passos 1–5 PASSOU e assinados (29/10); passo 6 pausado até ECD assinada do 1º cliente | [V] |
+
+Se esta sessão terminar antes dos dois agentes, confira com `gh pr view 907` e `gh pr view 982` o que chegou à branch
+antes de disparar C1 ou C6.
+
+## 4. Correções a disparar
+
+Ordem e paralelismo: **C2, C3, C5 e C8 tocam arquivos separados e podem rodar em paralelo**, uma sessão cada. **C4 só
+depois do #907 em `main`** (mesmo `PostingService`). C1 fecha o #907 e vem primeiro.
+
+### C1 — fechar o #907 (fix da brecha → revisor → merge)
+
+- **Antes do revisor, 1 correção curta no mesmo PR** (`sessao-correcao`, commit `fix:`). A razão automática do item 36
+  depende do `sourceType`, e o HTTP deixa o cliente escolher: `PostEntrySchema.sourceType` é `z.string().default('manual')`,
+  e o controller repassa o valor. Um POST com `sourceType: 'x'` escapa da razão digitada **[V, relato do agente em
+  `8f4b1a14`]**. **Decisão:** a razão automática vale só para chamada interna. O serviço recebe a origem por parâmetro de
+  código, e o controller nunca a marca como automática; pelo HTTP, a razão é sempre exigida. Teste-guarda: POST HTTP com
+  `sourceType` qualquer em período reaberto sem razão → 400.
+
+#### Depois da brecha
+
+
+- **Origem:** nota §3. **Sessão:** `revisor-independente` (worktree), depois a maestro com o número.
+- **Pronto quando:** o revisor APROVA a cabeça final da branch `claude/itg2000-32-36-instrumentacao` e o PR está MERGED.
+- **O que o revisor confere, antes de abrir o diff:** (1) estorno sem motivo dá 400 no DTO e no serviço; (2) o histórico
+  do estorno tem motivo, data dd/mm/aaaa e `exercício/nº` do Diário; (3) lançamento manual com data em período fechado e
+  reaberto sem `extemporaneousReason` dá 400, e com ela o histórico consigna data e razão; (4) gravador automático no
+  mesmo caso passa com a razão automática; (5) período nunca fechado não muda; (6) os dois caminhos de reabertura são
+  cobertos; (7) todos os chamadores de `reverseEntry` passam motivo (`tsc` limpo); (8) o modal de lançamento tem o campo
+  novo e o de estorno o motivo obrigatório; (9) a sabotagem traz os vermelhos de volta.
+
+### C2 — gate de cobertura referencial só na ECF (H1)
+
+- **Origem:** nota §4. **Sessões:** `sessao-instrumentacao` → `sessao-correcao`, mesmo PR (OPS-006 leve).
+- **Onde:** `server/src/features/accounting/services/SpedGenerationService.ts:150-156` **[V]** (o `ValidationError` com
+  `unmappedAccounts` na ECD). A trava `COD_PLAN_REF` logo abaixo (l. 157) fica como está.
+- **Comportamento:** na ECD, conta analítica sem código referencial deixa de dar 400. Ela sai sem I051, e a resposta da
+  geração traz um aviso com `unmappedAccounts`. Na ECF, o gate continua igual. O FE mostra o aviso sem bloquear o
+  download.
+- **Base legal:** Manual da ECD, item 1.17 (mapeamento facultativo), [D09] do dossiê
+  [`gates-humanos-lei`](../../pesquisas-legais/gates-humanos-lei/relatorio.md).
+- **Teste-guarda:** ECD com 1 conta sem mapeamento → hoje 400, depois 200 sem I051 para ela e com o aviso; ECF com a
+  mesma conta → continua 400 (controle).
+
+### C3 — alerta da NFC-e off-line uma vez por nota e por dia
+
+- **Origem:** nota §8. **Sessões:** `sessao-instrumentacao` → `sessao-correcao`.
+- **Onde:** `server/src/jobs/DfePollScheduler.ts:72-86` **[V]**: a cada tick, nota off-line perto do prazo, vencida ou
+  órfã dispara `this.alert`. Medido pela maestro: cerca de 720 avisos por dia por nota vencida **[I]**.
+- **Comportamento:** no máximo 1 aviso por nota, por evento (perto do prazo, vencida, órfã) e por dia corrido. A memória
+  do projeto pede janela ancorada no evento e trabalho em rodízio (`fila-de-job-com-teto-starvation`).
+- **Teste-guarda:** dois ticks seguidos com a mesma nota vencida → 1 alerta (hoje 2). Controle: nota nova no 2º tick
+  → alerta próprio.
+
+### C4 — lacunas restantes do ITG 2000 (depois do #907 em `main`)
+
+- **Origem:** nota §3 (fim). Ficam no `GAP-MAP.md` ao lado das linhas 32/36 depois do #907.
+- **Sessões:** uma `sessao-instrumentacao` com 3 guardas → `sessao-correcao`.
+  1. `EntryApprovalService.approveEntry` (`server/src/features/accounting/services/EntryApprovalService.ts:214` **[V]**):
+     rascunho aprovado com data em período reaberto deve seguir a regra do item 36. O DTO do rascunho ganha o campo.
+  2. `reverseEntry` com data de estorno em período reaberto: mesma regra.
+  2b. Acerto da revisão profissional (`sourceType: review_adjustment`, `ReviewDetailModal`): é feito por pessoa e hoje
+     recebe a razão automática. Ele deve exigir a razão digitada (o DTO do acerto ganha o campo).
+  3. O `reverse` da reconciliação (`server/src/jobs/accountingSyncReconcile.job.ts`) manda `reversalPostingDate` com
+     hora. Deve mandar data pura (memória `motor-grava-date-como-iso-utc-scopeday-recua-um-dia`).
+- **Só pesquisa, sem código:** o tamanho máximo do campo HIST do I250 no leiaute da ECD, contra o histórico mais
+  longo que o #907 gera. Pelo método legal: acervo primeiro, depois o Manual da ECD no sped.rfb.gov.br.
+
+### C5 — executar o FE-INCR-ECF-Y600 (H2 passo 14)
+
+- **Origem:** nota §6. Sem ele, o passo 14 do H2 continua FALHOU: a ECF pela tela dá 400 porque os painéis não mandam
+  os sócios (Y600).
+- **Autorização:** `executa` do BRIEF inteiro, por esta delegação (nota §6). O BRIEF e os forks já existem:
+  [`FE-INCR-ECF-Y600-brief.md`](FE-INCR-ECF-Y600-brief.md), forks em `D-2026-10-29-FE-ECF-Y600-FORKS`.
+- **Sessão:** `sessao-feature`, PR-0 → PR-1 → PR-2 do BRIEF (PR-0 e PR-2 condicionais aos forks já ratificados).
+- **Depois:** refazer o passo 14 do RUNBOOK-H2 pela tela, como AI tester, no #982.
+
+### C8 — memória de cálculo com a linha da ECF (P-C1)
+
+- **Origem:** nota §9 (pesquisa de 03/11 no lugar do parecer do contador). **Autorização:** `executa` da emenda por esta
+  delegação. **Sessão:** `sessao-feature` (emenda pequena ao BRIEF X7-C §C3 item 5).
+- **Onde:** `server/src/features/accounting/models/taxAssessmentMemoExport.ts` (`MEMO_COLUMNS`, `linhasDaApuracao`) **[V]**,
+  e uma tabela de correspondência código da memória → (registro, linha) por regime/forma/tributo, com `DT_INI`/`DT_FIM`.
+- **Comportamento:** duas colunas novas, `registroEcf` e `linhaEcf`, depois de `codigo`. Passo sem linha na ECF fica
+  vazio. Correspondência de partida no dossiê [`pc1-memoria-calculo`](../../pesquisas-legais/pc1-memoria-calculo/relatorio.md)
+  §2 (grau inferido).
+- **Teste-guarda:** gerar a ECF Presumido e a memória do mesmo trimestre no seed e conferir, para cada linha com
+  `linhaEcf`, que o valor da memória é igual ao valor do registro/código na ECF. É esse teste que promove a
+  correspondência de inferida a verificada.
+
+### C6 — achados do H2 (execução de 02–03/11, #982 em `3077cda9`)
+
+Re-semeadura do `dev.db` real com backup (SHA-256 igual), 4 migrações, `db:seed:accounting` **exit 0** com
+`balanceSheetBalanced: true` em todos os cortes **[V]** — fecha o passo 3 do FIX-DRE-DEDUCAO-SINAL. Passos 16–20 rodados
+pela tela (build de produção de `ac4acf38`): 17 e 20 PASSOU; 16 BLOQUEADO só no item e); 18 e 19 BLOQUEADO. Desfecho
+geral do BROWSER-SIGNOFF: **FALHOU (passo 14)**, assinado como AI tester **[V, relato do agente; SHA conferido]**.
+
+| Achado | O que é | Destino |
+|---|---|---|
+| Y600 na tela | 14, 18 e 19 têm a mesma causa: o painel da ECF não coleta sócios (`SpedEcfRealPanel.tsx:122`), então não há ECF exportada, revisão assinada nem pacote | **C5**; depois refazer 14, 18 e 19 |
+| F-17-1 | o 400 da ECF por "contador sem telefone" mostra o id do contato, não o nome | correção leve (instrumentação → correção) no texto do erro |
+| F-16-e | `canManageLalur` e `canReadLalur` são o mesmo predicado (`AccountingPolicy.ts:91-97`): o ramo só-leitura do e-Lalur não existe | lacuna de política: vai ao [[GOV-CONTADOR]] (perfis do contador), não a fix isolado |
+| F-907-T | o toast global de erro do `apiClient` cobria o botão "Postar" do modal de lançamento (erro repetido do que o modal já mostra) | **resolvido no #1012** (03/11): as 4 escritas que só o modal chama passam `silent`; classe verde; tela não conferida (vai no C7) |
+| F-20-1 | a linha do extrato só casa com a conta a pagar quando a referência é igual ao nº do documento (`BankSettlement.model.ts:199-205`) | regra desenhada, não bug; vira texto de ajuda na tela de conciliação se o dono quiser |
+
+### C7 — resto da execução do H2
+
+Não rodou por falta de contexto, não por pré-condição **[V, relato do agente]**:
+
+- `RUNBOOK-H2-BROWSER-SIGNOFF` passos 21, 22 e 23. O 23 exige dois usuários com atribuição de contador ATIVA.
+- Os runbooks irmãos, nesta ordem: `ATIVACAO-CONTABIL`, `VENDA-PACOTE`, `PACOTE-VALIDADE`, `IMOBILIZADO`,
+  `WIZARD-ENTREVISTA`, `DFE-MANUAL`.
+- Depois do C5: refazer 14, 18 e 19.
+- Assinatura AI tester nos passos 1–5 e 11, que ainda não têm desfecho marcado: marcar pela evidência já colada.
+
+Prompt: o mesmo da execução de 02/11 (branch `claude/gate-copilot-h2-9782b8`, `dev.db` real com backup antes, build de
+produção em `127.0.0.1:3100/4100`, Puppeteer, assinatura `agente claude-opus-5-5, AI tester, sob autorização do dono
+(chat, 2026-11-02)`), começando no passo 21. A re-semeadura **não** precisa ser repetida se nenhuma migração nova
+entrar em `main` antes. Pare num passo fechado perto de 150k de contexto e faça push.
+
+## 5. Lote de merge (M1) — aprovado por delegação, com condição
+
+| PR | Condição para a maestro mergear |
+|---|---|
+| #1011 | CI verde (só docs) |
+| #1012 | classe **verde** (fix de FE do F-907-T): a maestro mergeia com CI verde |
+| #1003 | CI verde na cabeça `b5fed32b` ou depois |
+| #907 | C1: revisor APROVA a cabeça final |
+| #982 | depois que o agente do H2 terminar e o CI ficar verde; o H2 segue `human-open` se houver FALHOU/BLOQUEADO |
+
+Dependabot (#944, #946, #948, #949, #951, #952): **não** mergear (nota §8).
+
+## 6. Próximo comando exato
+
+Numa sessão nova, nesta ordem:
+
+1. `gh pr view 907 --json headRefOid,statusCheckRollup` e `gh pr view 982 --json headRefOid,isDraft` para ver o que os
+   agentes deixaram.
+2. Revisor do #907 (C1): despachar `revisor-independente` em worktree com a lista do C1 como âncora.
+3. Em paralelo, uma sessão para cada: C2, C3, C5 e C8. Prompt de cada uma: *"Leia
+   `docs/accounting/HANDOFF-2026-11-02-delegacao-dono.md` §C<n> e execute pela sessão indicada. Autorização: delegação do
+   dono de 02/11 (§2 do handoff)."*
+4. Depois do #907 em `main`: C4.
+5. C7 (resto do H2) quando quiser; os passos 14, 18 e 19 só depois do C5.
+6. Lote M1 pela maestro.
+
+## 7. Arquivos
+
+- [`docs/plano/decisoes/D-2026-11-02-DELEGACAO-DONO.md`](../plano/decisoes/D-2026-11-02-DELEGACAO-DONO.md)
+- [`docs/plano/gates/H1.md`](../plano/gates/H1.md) (fold 02/11) · [`docs/plano/gates/H2.md`](../plano/gates/H2.md)
+- [`docs/accounting/RUNBOOK-H2-BROWSER-SIGNOFF.md`](RUNBOOK-H2-BROWSER-SIGNOFF.md) (na branch do #982)
+- [`docs/plano/nos/FIX-DRE-DEDUCAO-SINAL.md`](../plano/nos/FIX-DRE-DEDUCAO-SINAL.md): o passo 3 (seed no `dev.db` real) é o P0 do H2
+- [`docs/plano/nos/FE-INCR-ECF-Y600.md`](../plano/nos/FE-INCR-ECF-Y600.md)
+
+## 8. Disparo de 03/11
+
+Dono, chat, 03/11: *"Dispara todos em sessões separadas"*. Uma sessão local por correção, cada uma em worktree própria a
+partir de `main`. O app caiu em 03/11 por volta de 20:30 UTC. Depois disso, o dono pediu *"Faz com que todos voltem a
+trabalhar"*, e cada sessão recebeu a ordem de conferir o próprio estado git antes de retomar.
+
+| Correção | Sessão | Observação |
+|---|---|---|
+| C1 | `c1-907-brecha` | fix da brecha + `revisor-independente`; push na branch do #907 |
+| C2 | `c2-ecd-referencial` | PR novo |
+| C3 | `c3-nfce-alerta` | PR novo |
+| C5 | `c5-ecf-y600` | BRIEF inteiro; não refaz passos do H2 |
+| C6 | `c6-f17-erro-ecf` | só o F-17-1 (F-16-e vai ao GOV-CONTADOR; F-20-1 é regra; F-907-T no #1012) |
+| C7 | `c7-h2-resto` | única com o `dev.db` real e as portas 3100/4100; confere `integrity_check` depois da queda; push no #982 |
+| C8 | `c8-memo-linha-ecf` | PR novo, com a emenda ao BRIEF X7-C |
+
+**Não disparados:**
+
+- **C4:** espera o #907 em `main`.
+- **Refazer 14, 18 e 19 do H2:** espera o C5 em `main`.
+- **Lote M1:** a maestro tem de ser aberta pelo dono (`.claude/prompts/maestro.md`: "num chat seu, aberto por você, não
+  por outra sessão"). Em 03/11, #1011, #1012 e #1003 estavam MERGEABLE, fora de draft e com CI verde.

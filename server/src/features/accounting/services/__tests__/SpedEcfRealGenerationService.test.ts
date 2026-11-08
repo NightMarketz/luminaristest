@@ -27,6 +27,7 @@ jest.mock('../../../../lib/attachmentStorage', () => ({
     return { storageKey: 'u/unit/job/ecf_real.txt', sanitizedName: 'ecf_real.txt' };
   }),
   resolveReadPath: jest.fn((k: string) => `/abs/${k}`),
+  deleteFile: jest.fn(async () => undefined),
 }));
 import * as storage from '../../../../lib/attachmentStorage';
 import { legalParamsSemente } from '@test/helpers/legalParams';
@@ -90,6 +91,8 @@ function makeEntries(): LalurEntryWithRelations[] {
 
 interface Mocks {
   canRead?: boolean;
+  /** ERRO-CRU-AO-CLIENTE: substitui a semente (ex.: `fotografia` que falha como o banco falharia). */
+  legalParams?: typeof legalParamsSemente;
   entries?: LalurEntryWithRelations[];
   parteB?: LalurParteBAccount[];
   /** ECF 3C: fechamentos do exercício (default: os 4, sem saldos — o suficiente para a geração passar). */
@@ -143,7 +146,7 @@ function buildService(m: Mocks = {}) {
 
   const partnerList = jest.fn(async (_s: unknown) => (m.partners ?? [PARTNER_REAL]) as never);
 
-  const service = new SpedEcfRealGenerationService(lalurRepo, policy, repo, audit, lalurService, profiles, assessments, legalParamsSemente, { list: partnerList });
+  const service = new SpedEcfRealGenerationService(lalurRepo, policy, repo, audit, lalurService, profiles, assessments, m.legalParams ?? legalParamsSemente, { list: partnerList });
   return { service, partnerList, createJob, updateJob, findEntriesForYear, findManyParteB, findClosingsForYear, findMovementsForYear, diagnoseYear, openingBalances, append, policy };
 }
 
@@ -175,6 +178,16 @@ describe('SpedEcfRealGenerationService.generate', () => {
     await service.generate(scope, makeDto({ year: 2026, fiscal: { formaTrib: '1', formaTribPer: 'RRRR', formaApur: 'T', indAliqCsll: '1', indRecReceita: '2', codVer: '0013' } }));
     expect(producedLines()[0]).toMatch(/^\|0000\|LECF\|0013\|/);
     expect(producedLines()[0]).toContain('|01012026|31122026|');
+  });
+
+  // ERRO-CRU-AO-CLIENTE (GAP-MAP, dono 2026-11-04): o `try` do item 4 só pode traduzir o erro de leiaute; falha do
+  // banco na fotografia não é "ano sem leiaute" — não vira 400 com o texto do banco.
+  it('falha do banco na fotografia LEIAUTE_SPED ⇒ NÃO vira ValidationError (400) com o texto do banco', async () => {
+    const falha = new Error('SQLITE_BUSY: database is locked');
+    const legalParams = { ...legalParamsSemente, fotografia: jest.fn(async () => { throw falha; }) } as typeof legalParamsSemente;
+    const { service } = buildService({ legalParams });
+    const err = await service.generate(scope, makeDto()).catch((e) => e);
+    expect(err).not.toBeInstanceOf(ValidationError);
   });
 
   it('item 11: o gerador LÊ do model — findEntriesForYear(scope, year) + findManyParteB(scope, live) — e o DTO não carrega ajustes', async () => {
@@ -333,6 +346,47 @@ describe('SpedEcfRealGenerationService.generate', () => {
     expect(updateJob).toHaveBeenCalledTimes(1);
   });
 
+  // GUARD (lacuna 10, cédula D-2026-10-28-LACUNAS-EXECUTA-27-28): o arquivo já foi gravado e a
+  // tx do EXPORTED falha (aqui, a auditoria dentro dela). O rollback desfaz o EXPORTED, e nada
+  // fora da tx volta o job: ele fica PROCESSING para sempre, com o artefato órfão no disco.
+  // Esperado: FAILED gravado FORA da tx que falhou, o arquivo apagado, e o erro relançado.
+  it('keeps compensating and rethrows the ORIGINAL tx error when updateJob(FAILED) itself fails (lacuna 10)', async () => {
+    const { service, updateJob, append } = buildService();
+    append.mockRejectedValueOnce(new Error('audit insert failed'));
+    const passThrough = updateJob.getMockImplementation()!;
+    updateJob.mockImplementation(async (...args: Parameters<typeof passThrough>) => {
+      if ((args as unknown[])[3] === undefined && (args[2] as { status?: string }).status === 'FAILED') {
+        throw new Error('db down');
+      }
+      return passThrough(...args);
+    });
+    const errorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+
+    await expect(service.generate(scope, makeDto())).rejects.toThrow('audit insert failed');
+
+    expect(storage.deleteFile).toHaveBeenCalledWith('u/unit/job/ecf_real.txt');
+    expect(errorSpy).toHaveBeenCalledWith(
+      'export: falha ao marcar FAILED depois da tx — job fica PROCESSING',
+      expect.objectContaining({ jobId: 'job-1', error: expect.objectContaining({ message: 'db down' }) }),
+    );
+    errorSpy.mockRestore();
+  });
+
+  it('does not leave the job PROCESSING when the EXPORTED tx fails after the file was written (lacuna 10)', async () => {
+    const { service, updateJob, append } = buildService();
+    append.mockRejectedValueOnce(new Error('audit insert failed'));
+
+    await expect(service.generate(scope, makeDto())).rejects.toThrow('audit insert failed');
+
+    const outOfTx = updateJob.mock.calls
+      .filter((c) => (c as unknown[])[3] === undefined)
+      .map((c) => c[2] as { status?: string; supersedesJobId?: string | null });
+    const lastOutOfTx = outOfTx[outOfTx.length - 1];
+    expect(lastOutOfTx?.status).toBe('FAILED');
+    expect(lastOutOfTx).toEqual(expect.objectContaining({ supersedesJobId: null }));
+    expect(storage.deleteFile).toHaveBeenCalledWith('u/unit/job/ecf_real.txt');
+  });
+
   it('does not leave the job claiming EXPORTED when saveFile fails, and records FAILED (A1)', async () => {
     const { service, createJob, updateJob } = buildService();
     (storage.saveFile as jest.Mock).mockRejectedValueOnce(new Error('disk full'));
@@ -460,8 +514,8 @@ describe('SpedEcfRealGenerationService — ECF 3C', () => {
     const lines = producedLines();
     const i = lines.findIndex((l) => l.startsWith('|M310|3.1.1|'));
     expect(lines.slice(i + 1, i + 3)).toEqual(['|M312|42|', '|M315|2|ADM-9|']);
-    const draft = { ...e, journalLinks: [{ journalEntryId: 'je-2', journalEntry: { entryNumber: null } }] } as unknown as LalurEntryWithRelations;
-    await expect(buildService({ entries: [draft] }).service.generate(scope, makeDto())).rejects.toThrow(/sem NUM_LCTO/);
+    const draft = { ...e, journalLinks: [{ journalEntryId: 'je-2', journalEntry: { entryNumber: null, date: new Date(Date.UTC(2025, 2, 15)), description: 'Provisão' } }] } as unknown as LalurEntryWithRelations;
+    await expect(buildService({ entries: [draft] }).service.generate(scope, makeDto())).rejects.toThrow(/No ajuste '166' \(lalur, T01\/2025\): o lançamento sem número de 15\/03\/2025 — Provisão não tem NUM_LCTO/);
   });
 
   it('item 17: `|` em texto pré-existente (histLancamento) vira 400 nomeando o campo — não 500', async () => {
@@ -469,7 +523,7 @@ describe('SpedEcfRealGenerationService — ECF 3C', () => {
     const { service, createJob } = buildService({ entries: [e] });
     const p = service.generate(scope, makeDto());
     await expect(p).rejects.toBeInstanceOf(ValidationError);
-    await expect(p).rejects.toThrow(/M300 ajuste e1 \(código 7, T01\): campo histLancamento contém '\|'/); // review M6: nomeia registro + id
+    await expect(p).rejects.toThrow(/M300 ajuste '7' \(lalur, T01\/2025\): campo histLancamento contém '\|'/); // review M6: nomeia registro + rótulo (lote 5)
     expect(createJob).not.toHaveBeenCalled();
   });
 
@@ -480,7 +534,7 @@ describe('SpedEcfRealGenerationService — ECF 3C', () => {
 
   it('item 19: conta contábil soft-deletada depois do ajuste ⇒ 400 nomeando ajuste e conta (não sai no M310)', async () => {
     const e = { ...baseEntry, id: 'e1', quarter: 'T01', livro: 'lalur', codigo: '166', valorCents: 1n, indRelacao: '2', accountId: 'acc-1', account: { id: 'acc-1', code: '3.1.1', nature: 'Revenue', deletedAt: new Date() }, processos: [], journalLinks: [] } as unknown as LalurEntryWithRelations;
-    await expect(buildService({ entries: [e] }).service.generate(scope, makeDto())).rejects.toThrow(/Ajuste e1: a conta contábil '3\.1\.1' foi arquivada/);
+    await expect(buildService({ entries: [e] }).service.generate(scope, makeDto())).rejects.toThrow(/No ajuste '166' \(lalur, T01\/2025\): a conta contábil '3\.1\.1' foi arquivada/);
   });
 });
 
@@ -604,9 +658,9 @@ describe('X7 Fase B PR-4 — ECF anual (itens 18–21)', () => {
     expect(lines[iM03 + 1]).toMatch(/^\|M300\|7\|/);
 
     const casos: Array<[LalurEntryWithRelations, RegExp]> = [
-      [linha('x1', 'A04', 'lalur', '7', 1n), /Ajuste x1 \(livro 'lalur', código 7\) em A04\/2025 não tem M030 no arquivo: o mês está marcado 'E'/],
-      [linha('x2', 'A11', 'n620', '21', 1n), /Ajuste x2 \(livro 'n620', código 21\) em A11\/2025 não tem N030 no arquivo: o mês está marcado '0'/],
-      [linha('x3', 'A12', 'n500', '1', 1n), /Ajuste x3 \(livro 'n500', código 1\) em A12\/2025 não tem N030/],
+      [linha('x1', 'A04', 'lalur', '7', 1n), /O ajuste '7' \(lalur, A04\/2025\) não tem M030 no arquivo: o mês está marcado 'E'/],
+      [linha('x2', 'A11', 'n620', '21', 1n), /O ajuste '21' \(n620, A11\/2025\) não tem N030 no arquivo: o mês está marcado '0'/],
+      [linha('x3', 'A12', 'n500', '1', 1n), /O ajuste '1' \(n500, A12\/2025\) não tem N030/],
     ];
     for (const [extra, msg] of casos) {
       const { service, createJob } = buildService({ perfil, confirmados: confirmados(marcas), closings: closingA00(), entries: [...base, extra] });
@@ -621,9 +675,9 @@ describe('X7 Fase B PR-4 — ECF anual (itens 18–21)', () => {
         contrapartidaId: null, historico: 'x', indLanAnt: 'N', origem: 'user', createdById: null, createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
         parteB: parteBIrpj, contrapartida: null, processos: [] }) as unknown as LalurMovementWithRelations;
     const casos: Array<[Parameters<typeof buildService>[0], ReturnType<typeof makeDto>, RegExp]> = [
-      [{ entries: [linha('o1', 'A03', 'lalur', '7', 1n)] }, makeDto(), /Ajuste o1 .* em A03\/2025 não pertence à ECF trimestral/],
-      [{ entries: [], movements: [mov('A00')] }, makeDto(), /Movimento mv-A00 .* em A00\/2025 não pertence à forma trimestral/],
-      [{ perfil: ANUAL, confirmados: confirmados('EEEEEEEEEEEE'), closings: closingA00(), entries: [], movements: [mov('T02')] }, anualDto(), /Movimento mv-T02 .* em T02\/2025 não pertence à forma anual/],
+      [{ entries: [linha('o1', 'A03', 'lalur', '7', 1n)] }, makeDto(), /O ajuste '7' \(lalur, A03\/2025\) não pertence à ECF trimestral/],
+      [{ entries: [], movements: [mov('A00')] }, makeDto(), /O movimento da Parte B 'x' \(A00\/2025\) .* não pertence à forma trimestral/],
+      [{ perfil: ANUAL, confirmados: confirmados('EEEEEEEEEEEE'), closings: closingA00(), entries: [], movements: [mov('T02')] }, anualDto(), /O movimento da Parte B 'x' \(T02\/2025\) .* não pertence à forma anual/],
     ];
     for (const [m, dto, msg] of casos) {
       const { service, createJob } = buildService(m);

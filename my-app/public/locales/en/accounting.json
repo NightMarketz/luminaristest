@@ -67,7 +67,9 @@
       "OPEN": "Open",
       "PAYING": "Paying",
       "PAID": "Paid",
-      "CANCELLED": "Cancelled"
+      "CANCELLED": "Cancelled",
+      "PARTIALLY_PAID": "Partially paid",
+      "DEFERRED": "Deferred"
     },
     "col": {
       "expand": "Expand",
@@ -136,7 +138,7 @@
       "mode": {
         "expense": "Expense",
         "inventory": "Inventory purchase",
-        "inventoryHint": "Debits 1.1.6 Inventory and values the product at moving average — the amount above is the purchase TOTAL."
+        "inventoryHint": "Debits 1.1.3.01 Inventory and values the product at moving average — the amount above is the purchase TOTAL."
       },
       "noProducts": "No products in the catalog. Register products in the inventory module."
     },
@@ -145,6 +147,9 @@
       "paidAtLabel": "Payment date",
       "reversalDateLabel": "Reversal date",
       "methodLabel": "Payment method",
+      "method": {
+        "Cash": "Cash"
+      },
       "reasonLabel": "Reason",
       "payTitle": "Register payment",
       "payConfirm": "Confirm payment",
@@ -244,6 +249,9 @@
       "receivedAtLabel": "Receipt date",
       "reversalDateLabel": "Reversal date",
       "methodLabel": "Receipt method",
+      "method": {
+        "Cash": "Cash"
+      },
       "reasonLabel": "Reason",
       "receiveTitle": "Register receipt",
       "receiveConfirm": "Confirm receipt",
@@ -392,9 +400,10 @@
     "generating": "Generating…",
     "ecd": {
       "title": "Generate SPED ECD",
-      "description": "Digital Accounting Bookkeeping. Requires a complete referential mapping (the \"Ready\" badge above).",
+      "description": "Digital Accounting Bookkeeping. An account without a referential code does not block: it ships without I051, with a warning (mapping is optional in the ECD; the ECF requires it).",
       "book": "Book (term)",
-      "submit": "Generate & download ECD"
+      "submit": "Generate & download ECD",
+      "avisos": "ECD generated and downloaded, with warnings:"
     },
     "ecf": {
       "title": "Generate SPED ECF",
@@ -466,7 +475,13 @@
       "ecfSignerCount": "The ECF accepts 1 or 2 signers.",
       "ecfContador": "The ECF requires an accountant signer (qualification 900) and a non-accountant.",
       "ecfContadorCrc": "The accountant signer (900) requires an 11-digit CPF and a CRC.",
-      "ecdContadorCrc": "The accountant signer (900) requires an 11-digit CPF, CRC, CRC state, email and phone."
+      "ecdContadorCrc": "The accountant signer (900) requires an 11-digit CPF, CRC, CRC state, email and phone.",
+      "ECF_Y600_COMPLEMENTO_FALTANDO": "The partner register changed: a partner of the year has no complement. The list was reloaded — complete the new row and generate again.",
+      "ECF_Y600_PARTNER_FORA_DO_ANO": "The partner register changed: a partner on the list no longer has a term in the year. The list was reloaded — generate again.",
+      "ECF_Y600_PAIS_INCOERENTE": "The country does not match the partner's residence in the register (residents go out as 105; non-residents require the country).",
+      "ECF_Y600_QUALIF_INCOERENTE": "The qualification of a partner or legal representative is not valid for this case in the ECF Manual (p. 574).",
+      "ECF_Y600_SEM_SOCIOS": "The ECF requires at least one partner, owner or officer in Y600.",
+      "ECF_Y600_LIMITE": "Y600 exceeds the number of rows the ECF accepts."
     },
     "qualif": {
       "contadorCadastro": "Registered accountant (optional)",
@@ -485,6 +500,89 @@
       "8": "Closed supplementary pension entities",
       "9": "Political parties",
       "10": "Financial institutions - Presumed profit"
+    },
+    "y600": {
+      "title": "Partners, owner and officers (Y600)",
+      "help": "Partners come from the register; fill in the qualification and the 5 amounts for the year (Y600 fields 13 to 17). A blank amount is not zero: type 0,00.",
+      "carregando": "Loading the partners for the year…",
+      "erroCarga": "Could not load the partners for the year.",
+      "tentarDeNovo": "Try again",
+      "semVigencias": "No partner with a term in {{year}}. Register the partners or add at least one officer.",
+      "somaFim": "Sum of the shares in force on Dec 31: {{soma}} (informative, does not block).",
+      "dirigentes": "Officers and board members who are not partners",
+      "dirAdicionar": "Add officer",
+      "dirRemover": "Remove officer",
+      "dirNome": "Name",
+      "dirCpf": "CPF",
+      "dtAltSoc": "Start (DT_ALT_SOC)",
+      "dtFimSoc": "End within the year (DT_FIM_SOC, optional)",
+      "qualif": "Qualification (QUALIF)",
+      "selecione": "— select —",
+      "pais": "Country (Sped table, 3 digits)",
+      "percVot": "Voting capital % (optional)",
+      "repCpf": "Legal representative CPF (optional)",
+      "repQualif": "Representative qualification",
+      "residente": "resident",
+      "naoResidente": "non-resident",
+      "participacao": "Share",
+      "semSaida": "no exit",
+      "naoCarregado": "The partners for the year have not loaded yet — wait or try again.",
+      "invalido": "Y600 incomplete.",
+      "valor": {
+        "remTrab": "Compensation for work (VL_REM_TRAB)",
+        "lucDiv": "Profits/dividends (VL_LUC_DIV)",
+        "jurCap": "Interest on equity (VL_JUR_CAP)",
+        "demRend": "Other income (VL_DEM_REND)",
+        "irRet": "Income tax withheld (VL_IR_RET)"
+      },
+      "semOcorrencia": "The ECF requires at least one partner, owner or officer in Y600: register the partners or add an officer.",
+      "qualifObrigatoria": "Choose the qualification (QUALIF) of every partner and officer.",
+      "qualifIncoerente": "Qualification outside the table for this case (residence × individual/company) — pick one from the list.",
+      "valorObrigatorio": "Fill in the 5 Y600 amounts for every partner and officer (zero if none: 0,00).",
+      "valorInvalido": "Invalid BRL amount in Y600 — use the 1.234,56 format.",
+      "paisObrigatorio": "Enter the country (Sped code, 3 digits) of the non-resident partner.",
+      "paisInvalido": "Invalid country: 3 digits from the Sped table, other than 105 (Brazil).",
+      "representanteIncompleto": "Legal representative: enter the CPF and the qualification together, or leave both blank.",
+      "cpfInvalido": "Invalid CPF in Y600 (officer or legal representative).",
+      "dtFimForaDoAno": "The officer's end date must fall within the ECF year.",
+      "dtFimAntesDoInicio": "The officer's end date cannot be before the start date.",
+      "percVotInvalido": "Invalid voting capital: a percentage between 0 and 100.",
+      "qualifDesc": {
+        "_fonte": "Manual ECF Leiaute 12 (maio/2026), Y600 campo 8, p. 572 — texto do manual, não traduzido",
+        "01": "Acionista Pessoa Física Domiciliado no Brasil",
+        "02": "Sócio Pessoa Física Domiciliado no Brasil",
+        "03": "Acionista Pessoa Jurídica Domiciliado no Brasil",
+        "04": "Sócio Pessoa Jurídica Domiciliado no Brasil",
+        "05": "Acionista Pessoa Física Residente ou Domiciliado no Exterior",
+        "06": "Sócio Pessoa Física Residente ou Domiciliado no Exterior",
+        "07": "Acionista Pessoa Jurídica Residente ou Domiciliado no Exterior",
+        "08": "Sócio Pessoa Jurídica Residente ou Domiciliado no Exterior",
+        "09": "Titular",
+        "10": "Administrador sem Vínculo Empregatício",
+        "11": "Diretor sem Vínculo Empregatício",
+        "12": "Presidente sem Vínculo Empregatício",
+        "13": "Administrador com Vínculo Empregatício",
+        "14": "Conselheiro de Administração ou Fiscal",
+        "15": "Diretor com Vínculo Empregatício",
+        "16": "Fundador",
+        "17": "Presidente com Vínculo Empregatício"
+      },
+      "qualifRepLegDesc": {
+        "_fonte": "Manual ECF Leiaute 12 (maio/2026), Y600 campo 12, p. 573 — texto do manual, não traduzido",
+        "PF": {
+          "01": "Procurador",
+          "02": "Curador",
+          "03": "Mãe",
+          "04": "Pai",
+          "05": "Tutor",
+          "06": "Outro"
+        },
+        "PJ": {
+          "01": "Procurador",
+          "06": "Outro"
+        }
+      },
+      "irCadastro": "Go to the partner register"
     }
   },
   "trialBalance": {
@@ -664,6 +762,7 @@
     "reverseAction": {
       "enabledTitle": "Reverse this entry",
       "disabledTitle": "Entry already reversed",
+      "notPostedTitle": "Only posted entries can be reversed",
       "label": "Reverse"
     },
     "receiptAction": {
@@ -697,6 +796,7 @@
       "confirm": "Confirm reversal",
       "reverseEntryOf": "Reverse entry from",
       "reversalDateLabel": "Reversal date",
+      "reasonLabel": "Reversal reason",
       "warning": "A new offsetting entry will be created automatically on the date above. This action cannot be undone.",
       "periodClosed": "The period for the selected date is closed.",
       "viewPeriods": "View Periods"
@@ -740,7 +840,9 @@
       "date": "Date",
       "description": "Description",
       "descriptionPlaceholder": "Entry memo…",
-      "selectAccount": "— select account —"
+      "selectAccount": "— select account —",
+      "extemporaneousReason": "Reason for the late (extemporaneous) entry",
+      "extemporaneousReasonHelp": "Optional. Required when the date falls in a period that has already been closed."
     },
     "column": {
       "account": "Account",
@@ -2525,7 +2627,8 @@
         "vDescCond": "Conditional discount",
         "vDescIncond": "Unconditional discount",
         "vServ": "Service amount",
-        "xDescServ": "Service description"
+        "xDescServ": "Service description",
+        "totTrib": "Approximate taxes"
       },
       "homologacaoSemLink": "Homologation: use the portal restricted-production environment (address to be confirmed in the runbook — PV-7).",
       "howto": "Use the portal \"Emissão Completa\". Copy each value into the field with the same name; the ones marked \"checked on return\" are compared with the authorized XML.",
@@ -2542,7 +2645,9 @@
         "naoInformado": "Not provided.",
         "prestador": "Select Prestador (service provider).",
         "retidoSim": "Yes, withheld by the customer.",
-        "tributavel": "Taxable operation."
+        "tributavel": "Taxable operation.",
+        "fedMei": "No federal taxes on the MEI invoice — do not provide.",
+        "totTribMei": "Do not provide — optional for the MEI."
       },
       "note": {
         "aliquota": "check — the portal may compute it",
@@ -2553,6 +2658,7 @@
       },
       "opSimpNac": {
         "1": "1 — Not opted in",
+        "2": "2 — Opted in MEI",
         "3": "3 — Opted in ME/EPP"
       },
       "portalLink": "Open the Emissor Nacional",
@@ -2905,7 +3011,7 @@
     },
     "confirm": {
       "title": "Activate accounting for this unit?",
-      "message": "Sector: {{sector}}. On confirm, (1) the default chart of accounts is installed if the unit's chart is empty and (2) the current month's period is opened if it does not exist yet.",
+      "message": "Sector: {{sector}}. On confirm, (1) the default chart of accounts is checked (it is usually already installed once an Accounting screen lists the accounts; if it is still empty, it is installed now) and (2) the current month's period is opened if it does not exist yet.",
       "confirmLabel": "Activate",
       "cancelLabel": "Cancel"
     },
@@ -2967,6 +3073,7 @@
   "simples": {
     "alerta": {
       "ATIVIDADE_SEM_ANEXO": "Activity without annex",
+      "BENEFICIO_ISS_TRANSICAO_8B": "Municipal ISS benefit crosses the 2029 transition",
       "BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO": "Municipal benefit not applied (disadvantageous)",
       "HISTORICO_IGNORADO": "Pre-adoption history ignored",
       "ISS_VALOR_FIXO_MUNICIPAL": "ISS as municipal fixed amount",
@@ -2988,7 +3095,15 @@
       "SEM_NCM": "Resale without NCM on the product profile",
       "SEGREGACAO_DIVERGE": "Manual segregation differs from the NCM",
       "SEGREGACAO_INDEVIDA": "Single-phase segregation not backed by the NCM",
-      "ICMS_ST_NAO_CONFERIDA": "ICMS-ST not verified for the NCM"
+      "ICMS_ST_NAO_CONFERIDA": "ICMS-ST not verified for the NCM",
+      "PARCERIA_COTA_SEM_CONTRATO": "Partner share without a contract in effect",
+      "PARCERIA_SEM_COTA": "Partnership in effect with no share this month",
+      "PARCEIRO_SEM_CNPJ": "Partner professional without a declared CNPJ",
+      "PARCERIA_CHECKLIST_INCOMPLETO": "Partnership clause not declared",
+      "INTERDEPENDENCIA_SOCIO": "Partner's stake that bars Simples",
+      "INTERDEPENDENCIA_RECEITA_NAO_INFORMADA": "Revenue of the partner's other company not informed",
+      "PROJECAO_LIMITE_EPP": "Year projection near the EPP limit",
+      "PROJECAO_SUBLIMITE_ICMS_ISS": "Year projection near the ICMS/ISS sublimit"
     },
     "alertas": {
       "title": "Alerts"
@@ -3447,6 +3562,21 @@
       "PARTIALLY_REFUNDED": "Partially refunded",
       "PENDING": "Pending",
       "REFUNDED": "Refunded"
+    },
+    "list": {
+      "title": "Unit charges",
+      "filterStatus": "Status",
+      "filterKind": "Type",
+      "all": "All",
+      "loading": "Loading charges…",
+      "empty": "No charges in this unit with these filters.",
+      "error": "Error loading the unit's charges.",
+      "openReceivable": "Open the receivable in Accounts Receivable",
+      "noNumber": "no number",
+      "receivableCancelled": "cancelled",
+      "col": {
+        "receivable": "Receivable"
+      }
     }
   },
   "paymentProvider": {
@@ -3597,6 +3727,71 @@
         "ACCOUNT_NOT_FOUND": "The kit's account is not live in the unit's chart of accounts.",
         "KIT_NOT_INSTALLED": "The unit's kit is not installed; resume the installation before deciding."
       }
+    }
+  },
+  "reinf": {
+    "avisos": {
+      "PF_SERVICO_FORA_DA_REINF": "{{quantidade}} individual service withholding(s) left out of Reinf: report them outside the system until dependents are registered.",
+      "DIVIDENDO_PJ_FORA_DA_REINF": "{{quantidade}} profit distribution(s) to a corporate partner left out of Reinf until the accountant answers.",
+      "NATUREZA_NAO_CONFERIDA": "{{quantidade}} income nature code(s) come from the withholding profile and have not been checked by the accountant yet.",
+      "DEFASADO_RETIFICAR": "{{quantidade}} event(s) from a previous batch have a reversed source: rectify them.",
+      "REABRIR_ANTES": "{{quantidade}} event(s) already transmitted: reopen the period before rectifying."
+    },
+    "erros": {
+      "NATUREZA_RENDIMENTO_SEM_MAPA": "A withholding has no published income nature code: check the supplier withholding profile.",
+      "REINF_SEM_CONTATO": "Set the accountant with a CPF in the fiscal profile: they are the R-1000 contact."
+    }
+  },
+  "partners": {
+    "title": "Partners",
+    "description": "Registry of the company's partners and of each one's terms — used by the ECF (Y600) and by profit and interest-on-equity distributions.",
+    "filtroData": "In force on (empty = all terms)",
+    "new": "New partner",
+    "loading": "Loading…",
+    "empty": "No partner registered.",
+    "col": {
+      "nome": "Name",
+      "taxId": "CPF/CNPJ",
+      "tipo": "Type",
+      "residencia": "Residence",
+      "participacao": "Share",
+      "entrada": "Entry",
+      "saida": "Exit",
+      "acoes": "Actions"
+    },
+    "residente": "Brazil",
+    "naoResidente": "Abroad",
+    "edit": "Edit",
+    "remove": "Remove",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving…",
+    "removing": "Removing…",
+    "modal": {
+      "newTitle": "New partner",
+      "editTitle": "Edit partner"
+    },
+    "removeModal": {
+      "title": "Remove partner",
+      "confirm": "Confirm removal",
+      "note": "Removing is for a wrong entry. If the partner left the company, edit and set the exit date."
+    },
+    "field": {
+      "nome": "Name",
+      "taxId": "CPF or CNPJ (digits only)",
+      "residencia": "Residence",
+      "participacao": "Share of capital (%)",
+      "entrada": "Entry",
+      "saida": "Exit (optional)"
+    },
+    "error": {
+      "load": "Could not load the partners.",
+      "save": "Could not save the partner.",
+      "remove": "Could not remove the partner.",
+      "nomeObrigatorio": "Enter the partner's name.",
+      "taxIdFormato": "CPF (11 digits) or CNPJ (14 digits), numbers only.",
+      "participacaoInvalida": "Invalid share: a percentage between 0 and 100.",
+      "entradaObrigatoria": "Enter the entry date."
     }
   }
 }

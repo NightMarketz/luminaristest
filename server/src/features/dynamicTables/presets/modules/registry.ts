@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { PresetTableDefinition } from '..';
+import type { PresetSuite, PresetTableDefinition } from '..';
 import { createTableFromModule } from '../../utils/TableFactory';
 import { leadPipelinesModule } from './core/LeadPipelinesModule';
 import { leadStagesModule } from './core/LeadStagesModule';
@@ -9,6 +9,23 @@ import { leadActivitiesModule } from './core/LeadActivitiesModule';
 import { crmAccountsModule } from './crm/CrmAccountsModule';
 import { crmContactsModule } from './crm/CrmContactsModule';
 import { opportunitiesModule } from './crm/OpportunitiesModule';
+import { customerModule } from './people/CustomerModule';
+import { suppliersModule } from './people/SuppliersModule';
+import { salesModule } from './finance/SalesModule';
+import { saleItemsMixedModule } from './finance/SalesItemsMixed';
+import { serviceModule } from './service/ServiceModule';
+import { productModule } from './product/ProductModule';
+import { packageCatalogModule } from './finance/PackageCatalogModule';
+import { commissionsModule } from './finance/CommissionsModule';
+import { campaignsModule } from './business/CampaignsModule';
+import { expensesModule } from './finance/ExpensesModule';
+import { otherRevenuesModule } from './finance/OtherRevenuesModule';
+import { financialBaselinesModule } from './finance/FinancialBaselinesModule';
+import { reportsModule } from './business/ReportsModule';
+import { goalsModule } from './business/GoalsModule';
+import { productUnitModule } from './product/ProductModule';
+import { stockMovementsModule } from './inventory/StockMovementsModule';
+import { appointmentsModule } from './planning/AppointmentsModule';
 
 /**
  * BE-INCR-CRM-MODULE-COMPOSITION (nó I8) — comportamento 1: registro de módulos.
@@ -25,13 +42,42 @@ import { opportunitiesModule } from './crm/OpportunitiesModule';
  * atômicos; `group` é só UI/alias e nunca entra em dependência. F-SUB-2 (a): a chave do grupo ('CRM-2') segue
  * aceita na ENTRADA e expande para os membros; a saída só tem chaves atômicas. Regra do corte (BRIEF §2):
  * módulo não-fixo tem exatamente uma tabela (guarda em `moduleRegistry.test.ts`).
+ *
+ * BE-INCR-MODULOS-BASE-SUBMODULOS (docs/accounting/BE-INCR-MODULOS-BASE-SUBMODULOS-brief.md, PR-1): o registro é
+ * genérico por categoria — `category` é enum, cada categoria presente tem UMA base fixa (`assertRegistryInvariants`),
+ * `dependsOn` pode cruzar categorias e `requiresOneOf` exige pelo menos um módulo de cada grupo. As entradas do
+ * registro continuam só as do CRM; as demais categorias entram nos PR-2..4.
+ *
+ * PR-2 (itens 7, 9–11): PESSOAS (PES-0 base = customers; PES-FORN = suppliers) e VENDAS (VEN-0 base = sales +
+ * saleItems; VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM) entram no registro; salão e clínica passam a declará-los em
+ * `modules`. A suíte pode trocar a fonte de uma tabela de módulo (`moduleOverrides`, item 11a — a clínica usa a ficha
+ * própria em `customers`). A trava contábil por tabela da suíte (item 11b) saiu no PR-5: vem de `lockedBy` do módulo
+ * quando a suíte declara uma ponte que o exige (itens 26 e 28).
+ *
+ * PR-3 (itens 16–20): ESTOQUE (EST-0 base = productUnits + stockMovements, depende de VEN-PROD — F-MB-4) e AGENDA
+ * (AGE-0 base = appointments, depende de PES-0 e VEN-SERV) entram no registro; salão e clínica passam a declará-los.
+ * PR-4 (itens 21–22): FINANCEIRO (FIN-0 base = expenses; FIN-REC = otherRevenues; FIN-BASE = financialBaselines),
+ * GESTÃO (GES-0 base = reports; GES-META = goals) e Campanhas como submódulo do CRM (CRM-CAMP = campaigns,
+ * F-MS-2 b / F-MB-3b). Nenhuma das três categorias depende de outra por tabela (BRIEF §0.2, E14).
  */
 
-export const MODULE_KEYS = ['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3'] as const;
+export const MODULE_CATEGORIES = ['crm', 'pessoas', 'vendas', 'estoque', 'agenda', 'financeiro', 'gestao'] as const;
+export const moduleCategorySchema = z.enum(MODULE_CATEGORIES);
+export type ModuleCategory = z.infer<typeof moduleCategorySchema>;
+
+export const MODULE_KEYS = [
+  'CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3', 'CRM-CAMP',
+  'PES-0', 'PES-FORN',
+  'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM',
+  'EST-0', 'AGE-0',
+  'FIN-0', 'FIN-REC', 'FIN-BASE',
+  'GES-0', 'GES-META',
+] as const;
 export const moduleKeySchema = z.enum(MODULE_KEYS);
 export type ModuleKey = z.infer<typeof moduleKeySchema>;
 
-export const MODULE_GROUP_KEYS = ['CRM-2'] as const;
+/** BRIEF item 7: um grupo por categoria, com a chave da categoria em maiúsculas — só as categorias que já têm módulos. */
+export const MODULE_GROUP_KEYS = ['CRM-2', 'PESSOAS', 'VENDAS', 'ESTOQUE', 'AGENDA', 'FINANCEIRO', 'GESTAO'] as const;
 export const moduleGroupKeySchema = z.enum(MODULE_GROUP_KEYS);
 export type ModuleGroupKey = z.infer<typeof moduleGroupKeySchema>;
 
@@ -43,17 +89,23 @@ export type ModuleSelector = z.infer<typeof moduleSelectorSchema>;
 export const moduleDefSchema = z
   .object({
     key: moduleKeySchema,
-    category: z.literal('crm'),
+    category: moduleCategorySchema,
     group: moduleGroupKeySchema.optional(),
     name: z.object({ pt: z.string().min(1), en: z.string().min(1) }).strict(),
     aiDescription: z.string().min(1),
     fixed: z.boolean(),
     tables: z.array(z.string().min(1)).min(1),
     dependsOn: z.array(moduleKeySchema),
+    /** Cada grupo (≥2 chaves) exige pelo menos UM módulo selecionado/mantido (BRIEF item 4). */
+    requiresOneOf: z.array(z.array(moduleKeySchema).min(2)).default([]),
+    /** PR-5 (item 28): travado pela contabilidade quando a suíte declara uma ponte que exige o módulo. */
+    lockedBy: z.literal('accounting').optional(),
     freeSelects: z.record(z.string(), z.array(z.string().min(1))),
   })
   .strict();
 export type ModuleDef = z.infer<typeof moduleDefSchema>;
+/** Registro como as regras puras o leem (chave string: o registro de teste pode ter chaves que o real ainda não tem). */
+export type ModuleRegistry = Readonly<Record<string, ModuleDef>>;
 
 export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
   'CRM-0': {
@@ -65,6 +117,7 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     fixed: true,
     tables: ['leadPipelines', 'leadStages', 'leads', 'leadActivities'],
     dependsOn: [],
+    requiresOneOf: [],
     freeSelects: {},
   },
   'CRM-1': {
@@ -76,6 +129,7 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     fixed: false,
     tables: ['leadProposals'],
     dependsOn: ['CRM-0'],
+    requiresOneOf: [],
     freeSelects: {},
   },
   'CRM-2A': {
@@ -88,6 +142,7 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     fixed: false,
     tables: ['crmAccounts'],
     dependsOn: ['CRM-0'],
+    requiresOneOf: [],
     // F-I8-C11 (2026-09-26): só campos JÁ `select`; `segment` (texto) ficou fora.
     freeSelects: { crmAccounts: ['size'] },
   },
@@ -103,6 +158,7 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     // F-SUB-3 (a): Contatos NÃO depende de Contas — `crmContacts.accountId` é opcional (descartado sem Contas,
     // restaurado por sync quando Contas chega).
     dependsOn: ['CRM-0'],
+    requiresOneOf: [],
     freeSelects: { crmContacts: ['role'] },
   },
   'CRM-3': {
@@ -114,6 +170,208 @@ export const MODULE_REGISTRY: Readonly<Record<ModuleKey, ModuleDef>> = {
     fixed: false,
     tables: ['crmOpportunities'],
     dependsOn: ['CRM-0'],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  // BRIEF item 22 (F-MS-2 b, F-MB-3b): Campanhas é submódulo do CRM. Sem ele `sales.campaignId` (opcional) é
+  // descartado na instalação (E5); um vertical sem CRM perde campanhas por escolha do dono.
+  'CRM-CAMP': {
+    key: 'CRM-CAMP',
+    category: 'crm',
+    name: { pt: 'Campanhas', en: 'Campaigns' },
+    aiDescription:
+      'Campanhas de marketing com período, canal e orçamento; a venda pode apontar a campanha de origem para medir receita incremental.',
+    fixed: false,
+    tables: ['campaigns'],
+    dependsOn: ['CRM-0'],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  // BRIEF §1 / F-MB-1: PESSOAS é categoria própria; a base é Clientes (sem `customers` o tomador da venda vira
+  // NAO_IDENTIFICADO — BRIEF §0.2, E12). F-MS-6 (a): `freeSelects` nascem vazios.
+  'PES-0': {
+    key: 'PES-0',
+    category: 'pessoas',
+    group: 'PESSOAS',
+    name: { pt: 'Clientes', en: 'Customers' },
+    aiDescription:
+      'Base de Pessoas: cadastro de clientes com identificação fiscal, contato e histórico de compras; é o tomador das vendas.',
+    fixed: true,
+    tables: ['customers'],
+    dependsOn: [],
+    requiresOneOf: [],
+    lockedBy: 'accounting',
+    freeSelects: {},
+  },
+  'PES-FORN': {
+    key: 'PES-FORN',
+    category: 'pessoas',
+    group: 'PESSOAS',
+    name: { pt: 'Fornecedores', en: 'Suppliers' },
+    aiDescription: 'Cadastro de fornecedores, que podem ser ligados às entradas de estoque.',
+    fixed: false,
+    tables: ['suppliers'],
+    dependsOn: [],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  // BRIEF §1 / F-MB-2: VENDAS = base (sales + saleItems) + catálogo por `requiresOneOf` + Comissões (F-MS-8 a).
+  // `saleItems` nasce na variante mista; o instalador troca a variante pelos catálogos ligados (item 12).
+  // PR-5 (item 28): `lockedBy` no módulo — trava quando a suíte declara a ponte `sales@1` (BRIDGE_REQUIRES).
+  'VEN-0': {
+    key: 'VEN-0',
+    category: 'vendas',
+    group: 'VENDAS',
+    name: { pt: 'Vendas', en: 'Sales' },
+    aiDescription:
+      'Base de Vendas: vendas e seus itens, com pagamento, desconto e status; a venda finalizada é lançada na contabilidade.',
+    fixed: true,
+    tables: ['sales', 'saleItems'],
+    dependsOn: ['PES-0'],
+    requiresOneOf: [['VEN-SERV', 'VEN-PROD', 'VEN-PAC']],
+    lockedBy: 'accounting',
+    freeSelects: {},
+  },
+  'VEN-SERV': {
+    key: 'VEN-SERV',
+    category: 'vendas',
+    group: 'VENDAS',
+    name: { pt: 'Serviços', en: 'Services' },
+    aiDescription: 'Catálogo de serviços com preço e duração, vendidos como item de venda e usados na agenda.',
+    fixed: false,
+    tables: ['services'],
+    dependsOn: ['VEN-0'],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  'VEN-PROD': {
+    key: 'VEN-PROD',
+    category: 'vendas',
+    group: 'VENDAS',
+    name: { pt: 'Produtos', en: 'Products' },
+    aiDescription: 'Catálogo de produtos para revenda ou uso interno, vendidos como item de venda.',
+    fixed: false,
+    tables: ['products'],
+    dependsOn: ['VEN-0'],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  'VEN-PAC': {
+    key: 'VEN-PAC',
+    category: 'vendas',
+    group: 'VENDAS',
+    name: { pt: 'Pacotes', en: 'Packages' },
+    aiDescription: 'Pacotes de sessões pré-pagas com validade; a venda de pacote gera passivo até o consumo.',
+    fixed: false,
+    tables: ['packages'],
+    dependsOn: ['VEN-0'],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  'VEN-COM': {
+    key: 'VEN-COM',
+    category: 'vendas',
+    group: 'VENDAS',
+    name: { pt: 'Comissões', en: 'Commissions' },
+    aiDescription: 'Comissões por profissional calculadas sobre os itens de venda.',
+    fixed: false,
+    tables: ['commissions'],
+    dependsOn: ['VEN-0'],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  // BRIEF §1 / F-MB-4: ESTOQUE é um bloco fixo dependente de Produtos. Sem ele a variante de `saleItems` segue pelos
+  // catálogos (item 12) e o CMV segue pelo estoque valorado em Prisma (BRIEF §0.2, E13).
+  'EST-0': {
+    key: 'EST-0',
+    category: 'estoque',
+    group: 'ESTOQUE',
+    name: { pt: 'Estoque', en: 'Inventory' },
+    aiDescription:
+      'Base de Estoque: saldo de cada produto por unidade e as movimentações de entrada e saída, inclusive as geradas pelas vendas.',
+    fixed: true,
+    tables: ['productUnits', 'stockMovements'],
+    dependsOn: ['VEN-PROD'],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  // BRIEF §1: AGENDA marca atendimentos de cliente (PES-0) para um serviço do catálogo (VEN-SERV).
+  'AGE-0': {
+    key: 'AGE-0',
+    category: 'agenda',
+    group: 'AGENDA',
+    name: { pt: 'Agenda', en: 'Schedule' },
+    aiDescription:
+      'Base de Agenda: agendamentos que ligam cliente, serviço, profissional e unidade, com horário e status do atendimento.',
+    fixed: true,
+    tables: ['appointments'],
+    dependsOn: ['PES-0', 'VEN-SERV'],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  // BRIEF §1 / F-MS-8 (a): FINANCEIRO com base Despesas; Outras receitas e Linha de base são submódulos. O mapa-alvo
+  // não declara `dependsOn` para FINANCEIRO nem GESTÃO (como PES-FORN): nenhuma tabela deles relaciona a base.
+  'FIN-0': {
+    key: 'FIN-0',
+    category: 'financeiro',
+    group: 'FINANCEIRO',
+    name: { pt: 'Despesas', en: 'Expenses' },
+    aiDescription:
+      'Base do Financeiro: despesas e contas a pagar com vencimento, pagamento e categoria; alimenta fluxo de caixa e lucro.',
+    fixed: true,
+    tables: ['expenses'],
+    dependsOn: [],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  'FIN-REC': {
+    key: 'FIN-REC',
+    category: 'financeiro',
+    group: 'FINANCEIRO',
+    name: { pt: 'Outras receitas', en: 'Other revenues' },
+    aiDescription: 'Receitas que não vêm de venda (juros, aluguel, revenda), somadas ao resultado do período.',
+    fixed: false,
+    tables: ['otherRevenues'],
+    dependsOn: [],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  'FIN-BASE': {
+    key: 'FIN-BASE',
+    category: 'financeiro',
+    group: 'FINANCEIRO',
+    name: { pt: 'Linha de base financeira', en: 'Financial baselines' },
+    aiDescription: 'Fotografias de referência por unidade e data (caixa inicial, patrimônio líquido, passivos) para os indicadores financeiros.',
+    fixed: false,
+    tables: ['financialBaselines'],
+    dependsOn: [],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  // BRIEF §1 / E14: GESTÃO não depende de outra categoria por tabela; a meta lê KPIs por `metricKey` (item 25).
+  'GES-0': {
+    key: 'GES-0',
+    category: 'gestao',
+    group: 'GESTAO',
+    name: { pt: 'Relatórios', en: 'Reports' },
+    aiDescription: 'Base de Gestão: relatórios gerenciais salvos para acompanhar o negócio.',
+    fixed: true,
+    tables: ['reports'],
+    dependsOn: [],
+    requiresOneOf: [],
+    freeSelects: {},
+  },
+  'GES-META': {
+    key: 'GES-META',
+    category: 'gestao',
+    group: 'GESTAO',
+    name: { pt: 'Metas', en: 'Goals' },
+    aiDescription:
+      'Metas por unidade e período sobre um indicador; sem a fonte do indicador a meta existe e o acompanhamento fica vazio.',
+    fixed: false,
+    tables: ['goals'],
+    dependsOn: [],
+    requiresOneOf: [],
     freeSelects: {},
   },
 };
@@ -123,6 +381,12 @@ export const MODULE_GROUPS: Readonly<
   Record<ModuleGroupKey, { name: { pt: string; en: string }; members: readonly ModuleKey[] }>
 > = {
   'CRM-2': { name: { pt: 'Contas e contatos', en: 'Accounts and contacts' }, members: ['CRM-2A', 'CRM-2B'] },
+  PESSOAS: { name: { pt: 'Pessoas', en: 'People' }, members: ['PES-0', 'PES-FORN'] },
+  VENDAS: { name: { pt: 'Vendas', en: 'Sales' }, members: ['VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM'] },
+  ESTOQUE: { name: { pt: 'Estoque', en: 'Inventory' }, members: ['EST-0'] },
+  AGENDA: { name: { pt: 'Agenda', en: 'Schedule' }, members: ['AGE-0'] },
+  FINANCEIRO: { name: { pt: 'Financeiro', en: 'Finance' }, members: ['FIN-0', 'FIN-REC', 'FIN-BASE'] },
+  GESTAO: { name: { pt: 'Gestão', en: 'Management' }, members: ['GES-0', 'GES-META'] },
 };
 
 /** Expande chaves de grupo em seus membros; deduplica e devolve na ordem do registro. */
@@ -138,10 +402,14 @@ export function expandModuleSelectors(selectors: readonly ModuleSelector[]): Mod
   return MODULE_KEYS.filter((k) => out.has(k));
 }
 
-/** BRIEF item 11 (F-SUB-8 a): visão de um módulo exposta em `GET /dashboard/presets/:key` (`moduleViews`). */
+/**
+ * BRIEF item 11 (F-SUB-8 a): visão de um módulo exposta em `GET /dashboard/presets/:key` (`moduleViews`).
+ * BE-INCR-MODULOS-BASE-SUBMODULOS §3: `category` (aditivo) — o FE agrupa por categoria sem lista paralela.
+ */
 export const presetModuleViewSchema = z
   .object({
     key: moduleKeySchema,
+    category: moduleCategorySchema,
     group: moduleGroupKeySchema.optional(),
     name: z.object({ pt: z.string().min(1), en: z.string().min(1) }).strict(),
     fixed: z.boolean(),
@@ -154,9 +422,10 @@ export type PresetModuleView = z.infer<typeof presetModuleViewSchema>;
 /** Visões dos módulos dados, na ordem do registro. */
 export function presetModuleViews(keys: readonly ModuleKey[]): PresetModuleView[] {
   return MODULE_KEYS.filter((k) => keys.includes(k)).map((k) => {
-    const { key, group, name, fixed, tables, dependsOn } = MODULE_REGISTRY[k];
+    const { key, category, group, name, fixed, tables, dependsOn } = MODULE_REGISTRY[k];
     return {
       key,
+      category,
       ...(group ? { group } : {}),
       name: { ...name },
       fixed,
@@ -166,30 +435,94 @@ export function presetModuleViews(keys: readonly ModuleKey[]): PresetModuleView[
   });
 }
 
-/** Fonte de schema de cada tabela registrada (o módulo de preset que já existia). */
-const TABLE_SOURCES: Readonly<Record<string, unknown>> = {
-  leadPipelines: leadPipelinesModule,
-  leadStages: leadStagesModule,
-  leads: leadsModule,
-  leadActivities: leadActivitiesModule,
-  leadProposals: leadProposalsModule,
-  crmAccounts: crmAccountsModule,
-  crmContacts: crmContactsModule,
-  crmOpportunities: opportunitiesModule,
+/**
+ * Fonte de schema de cada tabela, por módulo (BRIEF item 6): `systems/*.ts` não importam de novo o mesmo módulo de
+ * preset — a tabela de um módulo registrado vem sempre daqui.
+ */
+export const MODULE_TABLE_SOURCES: Readonly<Record<ModuleKey, Readonly<Record<string, unknown>>>> = {
+  'CRM-0': {
+    leadPipelines: leadPipelinesModule,
+    leadStages: leadStagesModule,
+    leads: leadsModule,
+    leadActivities: leadActivitiesModule,
+  },
+  'CRM-1': { leadProposals: leadProposalsModule },
+  'CRM-2A': { crmAccounts: crmAccountsModule },
+  'CRM-2B': { crmContacts: crmContactsModule },
+  'CRM-3': { crmOpportunities: opportunitiesModule },
+  'PES-0': { customers: customerModule },
+  'PES-FORN': { suppliers: suppliersModule },
+  'VEN-0': { sales: salesModule, saleItems: saleItemsMixedModule },
+  'VEN-SERV': { services: serviceModule },
+  'VEN-PROD': { products: productModule },
+  'VEN-PAC': { packages: packageCatalogModule },
+  'VEN-COM': { commissions: commissionsModule },
+  'CRM-CAMP': { campaigns: campaignsModule },
+  'EST-0': { productUnits: productUnitModule, stockMovements: stockMovementsModule },
+  'AGE-0': { appointments: appointmentsModule },
+  'FIN-0': { expenses: expensesModule },
+  'FIN-REC': { otherRevenues: otherRevenuesModule },
+  'FIN-BASE': { financialBaselines: financialBaselinesModule },
+  'GES-0': { reports: reportsModule },
+  'GES-META': { goals: goalsModule },
 };
+
+/**
+ * Invariantes do registro (BRIEF item 2): cada categoria PRESENTE tem exatamente um módulo fixo (a base; pode ter N
+ * tabelas) e todo módulo não-fixo tem exatamente uma tabela. Lança `Error` nomeando a categoria/módulo.
+ */
+export function assertRegistryInvariants(registry: ModuleRegistry = MODULE_REGISTRY): void {
+  const defs = Object.values(registry);
+  for (const category of new Set(defs.map((d) => d.category))) {
+    const bases = defs.filter((d) => d.category === category && d.fixed).map((d) => d.key);
+    if (bases.length !== 1) {
+      throw new Error(
+        `Registro de módulos: a categoria '${category}' precisa de exatamente uma base fixa (encontradas: ${bases.length}${bases.length ? ` — ${bases.join(', ')}` : ''}).`,
+      );
+    }
+  }
+  for (const d of defs) {
+    if (!d.fixed && d.tables.length !== 1) {
+      throw new Error(`Registro de módulos: o módulo não-fixo '${d.key}' precisa de exatamente uma tabela (tem ${d.tables.length}).`);
+    }
+  }
+}
 
 /** Módulo dono de uma tabela de preset, ou `undefined` se a tabela não pertence a módulo (ex.: core). */
 export function moduleOfTable(internalName: string): ModuleKey | undefined {
   return MODULE_KEYS.find((k) => MODULE_REGISTRY[k].tables.includes(internalName));
 }
 
+/**
+ * Opções de composição vindas da suíte (BRIEF item 11a): `overrides` troca a fonte de schema de uma tabela de
+ * módulo (internalName → módulo-fonte). Chave que não é tabela de módulo → `Error` (opção aceita e ignorada seria bug
+ * silencioso). PR-5 (item 28): a trava contábil por tabela (`locked`, item 11b) saiu — vem do módulo + ponte.
+ */
+export type ModuleCompositionOptions = {
+  overrides?: Readonly<Record<string, unknown>>;
+};
+
+/** As opções de composição que uma suíte declara (`moduleOverrides`). */
+export function suiteModuleOptions(suite: Pick<PresetSuite, 'moduleOverrides'>): ModuleCompositionOptions {
+  return { overrides: suite.moduleOverrides };
+}
+
 /** Compõe as tabelas de preset dos módulos dados, na ordem de registro e de instalação. */
-export function composeModuleTables(keys: readonly ModuleKey[]): Record<string, PresetTableDefinition> {
+export function composeModuleTables(
+  keys: readonly ModuleKey[],
+  options: ModuleCompositionOptions = {},
+): Record<string, PresetTableDefinition> {
+  const overrides = options.overrides ?? {};
+  for (const internalName of Object.keys(overrides)) {
+    if (!moduleOfTable(internalName)) {
+      throw new Error(`Composição de módulos: '${internalName}' não é tabela de módulo do registro (override inválido).`);
+    }
+  }
   const tables: Record<string, PresetTableDefinition> = {};
   for (const key of MODULE_KEYS) {
     if (!keys.includes(key)) continue;
     for (const internalName of MODULE_REGISTRY[key].tables) {
-      tables[internalName] = createTableFromModule(TABLE_SOURCES[internalName]);
+      tables[internalName] = createTableFromModule(overrides[internalName] ?? MODULE_TABLE_SOURCES[key][internalName]);
     }
   }
   return tables;

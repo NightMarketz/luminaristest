@@ -60,6 +60,10 @@ export function ImportExportPanel({
   // Import state
   const [importKind, setImportKind] = useState<ImportKind>('IMPORT_JOURNAL_ENTRIES');
   const [templateFormat, setTemplateFormat] = useState<SpreadsheetFormat>('csv');
+  // ITG 2000 item 36 — razão do registro extemporâneo do job (lançamentos e saldos iniciais em período reaberto).
+  const [extemporaneousReason, setExtemporaneousReason] = useState('');
+  // O plano de contas não lança nada: o servidor recusa a razão nesse tipo.
+  const postsEntries = importKind !== 'IMPORT_CHART_OF_ACCOUNTS';
   const [uploading, setUploading] = useState(false);
   const [committing, setCommitting] = useState(false);
   const [job, setJob] = useState<DataExchangeJob | null>(null);
@@ -75,6 +79,9 @@ export function ImportExportPanel({
   const [exportError, setExportError] = useState<string | null>(null);
 
   const needsAsOf = exportKind === 'EXPORT_BALANCE_SHEET' || exportKind === 'EXPORT_INCOME_STATEMENT';
+  // Balancete: a Data é opcional (sem ela o servidor exporta sem período), mas é ela que dá o período do
+  // artefato — sem asOf o balancete não entra nos extras do pacote do contador (H2 19-1).
+  const showsAsOf = needsAsOf || exportKind === 'EXPORT_TRIAL_BALANCE';
   const needsAccount = exportKind === 'EXPORT_GENERAL_LEDGER';
 
   async function refreshRows(jobId: string) {
@@ -94,7 +101,7 @@ export function ImportExportPanel({
     setJob(null);
     setRows([]);
     try {
-      const created = await dataExchangeService.importFile(importKind, unitId, file);
+      const created = await dataExchangeService.importFile(importKind, unitId, file, (postsEntries && extemporaneousReason.trim()) || undefined);
       setJob(created);
       await refreshRows(created.id);
     } catch (err) {
@@ -151,7 +158,7 @@ export function ImportExportPanel({
           kind: exportKind,
           format: exportFormat,
           unitId,
-          asOf: needsAsOf ? asOf : undefined,
+          asOf: showsAsOf && asOf ? asOf : undefined,
           accountCode: needsAccount ? accountCode : undefined,
         },
         fileName,
@@ -197,6 +204,20 @@ export function ImportExportPanel({
           >
             <FiDownload size={15} /> {t('importExport.import.downloadTemplate', 'Baixar modelo')}
           </button>
+
+          {postsEntries && (
+            <label htmlFor="import-extemporaneous-reason" className="flex items-center gap-2 text-sm text-neutral-400">
+              {t('journalEntryModal.field.extemporaneousReason', 'Razão do registro extemporâneo')}
+              <input
+                id="import-extemporaneous-reason"
+                type="text"
+                value={extemporaneousReason}
+                onChange={(e) => setExtemporaneousReason(e.target.value)}
+                title={t('journalEntryModal.field.extemporaneousReasonHelp', 'Opcional. Exigida quando a data cai num período que já foi fechado.')}
+                className={inputClass}
+              />
+            </label>
+          )}
 
           <input ref={fileRef} type="file" accept=".csv,.xlsx" onChange={handleFileSelected} className="hidden" />
           <button
@@ -290,7 +311,7 @@ export function ImportExportPanel({
             </select>
           </label>
 
-          {needsAsOf && (
+          {showsAsOf && (
             <label className="flex items-center gap-2 text-sm text-neutral-400">
               {t('importExport.export.dateLabel', 'Data')}
               <input type="date" value={asOf} onChange={(e) => setAsOf(e.target.value)} className={inputClass} />

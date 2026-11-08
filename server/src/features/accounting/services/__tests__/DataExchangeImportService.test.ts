@@ -1,9 +1,10 @@
-import { DataExchangeImportService, type IAccountReader, type IPoster } from '../DataExchangeImportService';
+import { DataExchangeImportService, type IAccountReader, type IPeriodReader, type IPoster } from '../DataExchangeImportService';
 import type { IDataExchangeRepository } from '../../repositories/IDataExchangeRepository';
 import type { AuditService } from '../AuditService';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
 import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import type { AccountingDataExchangeJob, AccountingDataExchangeRow } from 'generated/prisma';
+import { ValidationError } from '../../../../lib/errors';
 
 jest.mock('../../../../lib/attachmentStorage', () => ({
   saveFile: jest.fn(async () => ({ storageKey: 'u/unit/job/rand_import.csv', sanitizedName: 'import.csv' })),
@@ -81,15 +82,30 @@ function makePoster() {
 }
 
 const audit = { append: jest.fn(async () => undefined) } as unknown as AuditService;
+// Nenhum período fechado e reaberto: a prévia não exige a razão do extemporâneo nestes casos.
+const periods: IPeriodReader = { findByYearMonth: jest.fn(async () => null) };
 const csv = (s: string) => ({ originalname: 'f.csv', mimetype: 'text/csv', buffer: Buffer.from(s, 'utf8') });
 
 beforeEach(() => jest.clearAllMocks());
 
 describe('DataExchangeImportService — chart of accounts', () => {
+  // ITG 2000 item 36: a razão do extemporâneo só vale para lançamentos e saldos iniciais — no plano de contas seria
+  // parâmetro aceito e ignorado (achado do revisor do C4); recusa com 400.
+  it('rejects an extemporaneousReason on a chart-of-accounts upload (nothing to post)', async () => {
+    const { repo } = makeRepo();
+    const { poster } = makePoster();
+    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
+
+    await expect(
+      svc.uploadAndValidate(scope, 'IMPORT_CHART_OF_ACCOUNTS', csv('code,name,nature,acceptsEntries,parentCode\n3.1,Fornecedores,Liability,true,\n'), 'razão'),
+    ).rejects.toThrow(/razão do registro extemporâneo/);
+    expect(repo.createJob).not.toHaveBeenCalled();
+  });
+
   it('creates new accounts and skips existing ones on commit', async () => {
     const { repo } = makeRepo();
     const { poster, createAccount } = makePoster();
-    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster);
+    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
 
     const job = await svc.uploadAndValidate(scope, 'IMPORT_CHART_OF_ACCOUNTS',
       csv('code,name,nature,acceptsEntries,parentCode\n3.1,Fornecedores,Liability,true,\n1.1.01,Banco,Asset,true,\n3.2,Outra,Liability,true,\n'));
@@ -100,6 +116,26 @@ describe('DataExchangeImportService — chart of accounts', () => {
     expect(committed.committedRows).toBe(2);
     expect(committed.status).toBe('COMMITTED');
   });
+
+  // ERRO-CRU-AO-CLIENTE (GAP-MAP, dono 2026-11-04): `row.errorMessage` sai no DTO da importação. O motivo de domínio
+  // (AppError nosso) continua visível na linha; erro que não é nosso (banco, bug) fica só no log.
+  it('createAccount falha com erro interno ⇒ errorMessage da linha sem o texto interno; erro de domínio passa', async () => {
+    const { repo, rows } = makeRepo();
+    const { poster, createAccount } = makePoster();
+    createAccount
+      .mockRejectedValueOnce(new Error('Invalid `prisma.account.create()` invocation: SQLITE_BUSY: database is locked'))
+      .mockRejectedValueOnce(new ValidationError('Conta-pai 3 não aceita filhas.'));
+    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
+
+    const job = await svc.uploadAndValidate(scope, 'IMPORT_CHART_OF_ACCOUNTS',
+      csv('code,name,nature,acceptsEntries,parentCode\n3.1,Fornecedores,Liability,true,\n3.2,Outra,Liability,true,\n'));
+    await svc.commit(scope, job.id).catch(() => undefined);
+
+    const msgs = (rows.get(job.id) ?? []).map((r) => r.errorMessage);
+    expect(msgs.join(' | ')).not.toContain('prisma');
+    expect(msgs.join(' | ')).not.toContain('SQLITE_BUSY');
+    expect(msgs).toContain('Conta-pai 3 não aceita filhas.');
+  });
 });
 
 describe('DataExchangeImportService — opening balances', () => {
@@ -109,7 +145,7 @@ describe('DataExchangeImportService — opening balances', () => {
   it('commits one balanced entry with a deterministic file-based sourceId', async () => {
     const { repo } = makeRepo();
     const { poster, postEntry } = makePoster();
-    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster);
+    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
 
     const job = await svc.uploadAndValidate(scope, 'IMPORT_OPENING_BALANCES', csv(openingCsv));
     expect(job.validRows).toBe(2);
@@ -131,7 +167,7 @@ describe('DataExchangeImportService — opening balances', () => {
     const commitAndCaptureSourceId = async () => {
       const { repo } = makeRepo();
       const { poster, postEntry } = makePoster();
-      const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster);
+      const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
       const job = await svc.uploadAndValidate(scope, 'IMPORT_OPENING_BALANCES', csv(openingCsv));
       await svc.commit(scope, job.id);
       return postEntry.mock.calls[0][1].sourceId;
@@ -148,7 +184,7 @@ describe('DataExchangeImportService — journal entries', () => {
   it('posts one entry per group with sourceId=externalReference', async () => {
     const { repo } = makeRepo();
     const { poster, postEntry } = makePoster();
-    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster);
+    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
 
     const job = await svc.uploadAndValidate(scope, 'IMPORT_JOURNAL_ENTRIES',
       csv('entryKey,documentDate,postingDate,description,accountCode,debitCents,creditCents,lineDescription,externalReference\n' +
@@ -174,7 +210,7 @@ describe('DataExchangeImportService — journal entries', () => {
   it('BE-INCR-8: a blank externalReference unfolds to NO externalRef but keeps the di: dedup key (desconflação)', async () => {
     const { repo } = makeRepo();
     const { poster, postEntry } = makePoster();
-    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster);
+    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
 
     const job = await svc.uploadAndValidate(scope, 'IMPORT_JOURNAL_ENTRIES',
       csv('entryKey,documentDate,postingDate,description,accountCode,debitCents,creditCents,lineDescription,externalReference\n' +
@@ -196,7 +232,7 @@ describe('DataExchangeImportService — journal entries', () => {
   it('is idempotent — a second commit does not re-post', async () => {
     const { repo } = makeRepo();
     const { poster, postEntry } = makePoster();
-    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster);
+    const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
 
     const job = await svc.uploadAndValidate(scope, 'IMPORT_JOURNAL_ENTRIES',
       csv('entryKey,documentDate,postingDate,description,accountCode,debitCents,creditCents,lineDescription,externalReference\n' +
@@ -218,7 +254,7 @@ describe('DataExchangeImportService — journal entries', () => {
     const commitFileAndCaptureSourceId = async () => {
       const { repo } = makeRepo();
       const { poster, postEntry } = makePoster();
-      const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster);
+      const svc = new DataExchangeImportService(repo, new AccountingPolicy(), audit, accountReader, poster, periods);
       const job = await svc.uploadAndValidate(scope, 'IMPORT_JOURNAL_ENTRIES', csv(fileCsv));
       await svc.commit(scope, job.id);
       return postEntry.mock.calls[0][1].sourceId;

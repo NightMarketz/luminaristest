@@ -12,7 +12,10 @@ import { PrismaClient } from 'generated/prisma';
 
 const SERVER_DIR = path.resolve(__dirname, '../../..');
 const SEED = path.join(SERVER_DIR, 'prisma', 'seed.ts');
-const TS_NODE = path.join(SERVER_DIR, 'node_modules', 'ts-node', 'dist', 'bin.js');
+// Workspace npm: o ts-node fica içado no node_modules da raiz (ou no do server, se a versão divergir).
+const TS_NODE = [SERVER_DIR, path.join(SERVER_DIR, '..')]
+  .map((d) => path.join(d, 'node_modules', 'ts-node', 'dist', 'bin.js'))
+  .find((f) => fs.existsSync(f))!;
 const ADMIN_EMAIL = 'seed-env@test.local';
 
 const fileUrl = (p: string): string => `file:${p.replace(/\\/g, '/')}`;

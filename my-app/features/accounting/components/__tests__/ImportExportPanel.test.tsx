@@ -86,10 +86,59 @@ describe('ImportExportPanel — onCommitSuccess (FE-INCR6 W1)', () => {
     await waitFor(() => expect(spy).toHaveBeenCalledTimes(1));
   });
 
+  // TESTE-GUARDA — ITG 2000 item 36, C4 item 4 (decisão do dono, 04/11): a importação com data num período fechado e
+  // reaberto exige a razão do registro extemporâneo; o job a recebe no upload, para a prévia já julgar a linha.
+  it('a razão do registro extemporâneo digitada vai no upload do job', async () => {
+    vi.mocked(dataExchangeService.importFile).mockResolvedValue(job());
+    const { container } = render(<ImportExportPanel unitId="u1" />);
+
+    fireEvent.change(screen.getByLabelText('Razão do registro extemporâneo'), { target: { value: ' notas recebidas depois do fechamento ' } });
+    const file = new File(['a,b'], 'x.csv', { type: 'text/csv' });
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(dataExchangeService.importFile).toHaveBeenCalledWith('IMPORT_JOURNAL_ENTRIES', 'u1', file, 'notas recebidas depois do fechamento'),
+    );
+  });
+
+  it('no plano de contas o campo da razão do extemporâneo não aparece (nada é lançado)', () => {
+    const { container } = render(<ImportExportPanel unitId="u1" />);
+    const tipo = container.querySelector('select') as HTMLSelectElement;
+    fireEvent.change(tipo, { target: { value: 'IMPORT_CHART_OF_ACCOUNTS' } });
+
+    expect(screen.queryByLabelText('Razão do registro extemporâneo')).toBeNull();
+  });
+
   it('NÃO chama onCommitSuccess quando nada foi gravado (job FAILED, committedRows = 0)', async () => {
     const spy = vi.fn();
     await uploadAndCommit(job({ status: 'FAILED', committedRows: 0 }), spy);
     await waitFor(() => expect(dataExchangeService.commit).toHaveBeenCalled());
     expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+// ── H2 achado 19-1 — o balancete sai com período (asOf) ─────────────────────
+// O servidor grava `periodStart/periodEnd` do balancete a partir do `asOf`; sem ele o artefato nunca entra
+// nos extras do pacote do contador e o perfil "Balancete" não pré-marca nada. A tela só pedia a Data de BP/DRE.
+describe('ImportExportPanel — balancete com período (H2 19-1)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+    vi.mocked(dataExchangeService.exportAndDownload).mockResolvedValue(undefined as never);
+  });
+
+  it('Balancete (relatório padrão) mostra a Data e manda asOf ao exportar', async () => {
+    render(<ImportExportPanel unitId="u1" />);
+
+    const date = screen.queryByLabelText('Data');
+    expect(date, 'o Balancete precisa do campo Data para exportar com período').not.toBeNull();
+    fireEvent.change(date as HTMLElement, { target: { value: '2025-12-31' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Exportar' }));
+
+    await waitFor(() => expect(dataExchangeService.exportAndDownload).toHaveBeenCalled());
+    expect(vi.mocked(dataExchangeService.exportAndDownload).mock.calls[0][0]).toMatchObject({
+      kind: 'EXPORT_TRIAL_BALANCE',
+      asOf: '2025-12-31',
+    });
   });
 });

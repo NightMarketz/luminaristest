@@ -3,13 +3,23 @@
  * BE-INCR-CRM-SUBMODULES — itens 3 (grupo 'CRM-2' como atalho), 5 (MODULE_PARTIAL) e 6 (DEPENDENT_MODULE_KEPT).
  */
 import { ValidationError } from '../../../../lib/errors';
-import { MODULE_REGISTRY, composeModuleTables, expandModuleSelectors, type ModuleDef, type ModuleKey } from '../modules/registry';
+import {
+  MODULE_REGISTRY,
+  composeModuleTables,
+  expandModuleSelectors,
+  type ModuleCategory,
+  type ModuleDef,
+  type ModuleKey,
+  type ModuleRegistry,
+} from '../modules/registry';
 import {
   applyModuleRemovals,
   applySelectOverrides,
   assertAddedFieldsRespectModules,
+  assertBridgeModulesKept,
   resolveModuleSelection,
 } from '../modules/moduleSelection';
+import BeautySalonPreset from '../systems/BeautySalonPreset';
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -117,6 +127,14 @@ describe('assertAddedFieldsRespectModules (comportamento 10, F-CRM-7 → a)', ()
     );
   });
 
+  it("PR-2 item 13: addedFields.sales com campo 'totalAmount' → 400 (sales virou tabela de VEN-0)", () => {
+    const vendas = composeModuleTables(['PES-0', 'VEN-0', 'VEN-SERV']);
+    expect(() => assertAddedFieldsRespectModules({ sales: [{ name: 'totalAmount', type: 'number' }] }, vendas)).toThrow(
+      /addedFields\.sales: o campo 'totalAmount' é declarado pelo módulo 'VEN-0'/,
+    );
+    expect(() => assertAddedFieldsRespectModules({ customers: [{ name: 'email' }] }, vendas)).toThrow(/módulo 'PES-0'/);
+  });
+
   it('sombrear qualquer campo declarado pelo módulo → 400', () => {
     expect(() => assertAddedFieldsRespectModules({ leadStages: [{ name: 'type' }] }, tables)).toThrow(ValidationError);
   });
@@ -124,8 +142,8 @@ describe('assertAddedFieldsRespectModules (comportamento 10, F-CRM-7 → a)', ()
   it('campo novo em tabela de módulo é aceito; tabela fora de módulo não é checada aqui', () => {
     expect(() =>
       assertAddedFieldsRespectModules(
-        { leads: [{ name: 'instagram', type: 'string' }], customers: [{ name: 'name' }] },
-        { ...tables, customers: { name: 'C', category: 'business', schema: { fields: [{ name: 'name', label: 'N', type: 'string' }] } } } as never,
+        { leads: [{ name: 'instagram', type: 'string' }], units: [{ name: 'name' }] },
+        { ...tables, units: { name: 'C', category: 'business', schema: { fields: [{ name: 'name', label: 'N', type: 'string' }] } } } as never,
       ),
     ).not.toThrow();
   });
@@ -163,5 +181,137 @@ describe('applySelectOverrides (comportamento 11, F-I8-C11)', () => {
         for (const f of fields) expect({ t, f, type: all[t].schema.fields.find((x) => x.name === f)?.type }).toEqual({ t, f, type: 'select' });
       }
     }
+  });
+});
+
+describe('registro com várias categorias (BE-INCR-MODULOS-BASE-SUBMODULOS PR-1, registro sintético)', () => {
+  const k = (s: string) => s as ModuleKey;
+  const def = (key: string, category: ModuleCategory, over: Partial<ModuleDef> = {}): ModuleDef => ({
+    key: k(key),
+    category,
+    name: { pt: key, en: key },
+    aiDescription: key,
+    fixed: false,
+    tables: [`${key}-t`],
+    dependsOn: [],
+    requiresOneOf: [],
+    freeSelects: {},
+    ...over,
+  });
+  // PESSOAS (base PES-0), VENDAS (base VEN-0 + 3 catálogos), AGENDA (base AGE-0 → PES-0 + VEN-SERV).
+  const reg: ModuleRegistry = {
+    'PES-0': def('PES-0', 'pessoas', { fixed: true, tables: ['customers'] }),
+    'VEN-0': def('VEN-0', 'vendas', {
+      fixed: true,
+      tables: ['sales', 'saleItems'],
+      dependsOn: [k('PES-0')],
+      requiresOneOf: [[k('VEN-SERV'), k('VEN-PROD'), k('VEN-PAC')]],
+    }),
+    'VEN-SERV': def('VEN-SERV', 'vendas', { dependsOn: [k('VEN-0')] }),
+    'VEN-PROD': def('VEN-PROD', 'vendas', { dependsOn: [k('VEN-0')] }),
+    'VEN-PAC': def('VEN-PAC', 'vendas', { dependsOn: [k('VEN-0')] }),
+    'AGE-0': def('AGE-0', 'agenda', { fixed: true, dependsOn: [k('PES-0'), k('VEN-SERV')] }),
+  };
+  const erro = (fn: () => unknown): ValidationError => {
+    try {
+      fn();
+    } catch (e) {
+      return e as ValidationError;
+    }
+    throw new Error('esperava ValidationError');
+  };
+
+  it('item 3: dependência para base fixa de outra categoria entra implícita (VEN-SERV puxa VEN-0 e PES-0)', () => {
+    expect(resolveModuleSelection([k('VEN-SERV')], [], reg)).toEqual(['PES-0', 'VEN-0', 'VEN-SERV']);
+  });
+
+  it('item 3: AGE-0 puxa PES-0 implícito; sem VEN-SERV → 400 missingModule VEN-SERV', () => {
+    const err = erro(() => resolveModuleSelection([k('AGE-0')], [], reg));
+    expect(err.details).toEqual({ module: 'AGE-0', missingModule: 'VEN-SERV' });
+    expect(resolveModuleSelection([k('AGE-0'), k('VEN-SERV')], [], reg)).toEqual(['PES-0', 'VEN-0', 'VEN-SERV', 'AGE-0']);
+  });
+
+  it('item 4: VEN-0 sem nenhum catálogo → 400 REQUIRES_ONE_OF com mensagem e detalhes', () => {
+    const err = erro(() => resolveModuleSelection([k('VEN-0')], [], reg));
+    expect(err).toBeInstanceOf(ValidationError);
+    expect(err.message).toBe("O módulo 'VEN-0' exige pelo menos um destes: VEN-SERV, VEN-PROD, VEN-PAC.");
+    expect(err.details).toEqual({ reason: 'REQUIRES_ONE_OF', module: 'VEN-0', oneOf: ['VEN-SERV', 'VEN-PROD', 'VEN-PAC'] });
+    expect(resolveModuleSelection([k('VEN-PAC')], [], reg)).toContain('VEN-PAC');
+  });
+
+  it('item 4: remover os três catálogos → 400; remover dois de três → ok', () => {
+    const selected = [k('PES-0'), k('VEN-0'), k('VEN-SERV'), k('VEN-PROD'), k('VEN-PAC')];
+    const err = erro(() => applyModuleRemovals(selected, ['VEN-SERV-t', 'VEN-PROD-t', 'VEN-PAC-t'], reg));
+    expect(err.details).toMatchObject({ reason: 'REQUIRES_ONE_OF', module: 'VEN-0' });
+    expect(applyModuleRemovals(selected, ['VEN-SERV-t', 'VEN-PROD-t'], reg)).toEqual(['PES-0', 'VEN-0', 'VEN-PAC']);
+  });
+
+  it('item 5: remover sales+saleItems com VEN-SERV mantido → 400 DEPENDENT_MODULE_KEPT [VEN-SERV]', () => {
+    const err = erro(() => applyModuleRemovals([k('PES-0'), k('VEN-0'), k('VEN-SERV')], ['sales', 'saleItems'], reg));
+    expect(err.details).toEqual({ reason: 'DEPENDENT_MODULE_KEPT', moduleKey: 'VEN-0', dependents: ['VEN-SERV'] });
+  });
+
+  it('item 5: sair a base barra submódulo mantido da categoria mesmo sem dependsOn declarado', () => {
+    const solto: ModuleRegistry = { ...reg, 'VEN-PAC': def('VEN-PAC', 'vendas') };
+    const err = erro(() => applyModuleRemovals([k('PES-0'), k('VEN-0'), k('VEN-PAC')], ['sales', 'saleItems'], solto));
+    expect(err.details).toMatchObject({ reason: 'DEPENDENT_MODULE_KEPT', moduleKey: 'VEN-0', dependents: ['VEN-PAC'] });
+  });
+
+  it('item 5: remover a categoria VENDAS inteira com AGE-0 mantido → 400 (AGE-0 depende de VEN-SERV)', () => {
+    const selected = [k('PES-0'), k('VEN-0'), k('VEN-SERV'), k('AGE-0')];
+    const err = erro(() => applyModuleRemovals(selected, ['sales', 'saleItems', 'VEN-SERV-t'], reg));
+    expect(err.details).toMatchObject({ reason: 'DEPENDENT_MODULE_KEPT', dependents: ['AGE-0'] });
+  });
+
+  it('item 5: remover a categoria inteira (base + submódulos) sem dependente mantido → ok, só PESSOAS fica', () => {
+    const selected = [k('PES-0'), k('VEN-0'), k('VEN-SERV'), k('VEN-PROD')];
+    expect(applyModuleRemovals(selected, ['sales', 'saleItems', 'VEN-SERV-t', 'VEN-PROD-t'], reg)).toEqual(['PES-0']);
+  });
+
+  it('item 5: remover só parte da base (sales sem saleItems) segue FIXED_MODULE_PARTIAL', () => {
+    const err = erro(() => applyModuleRemovals([k('PES-0'), k('VEN-0'), k('VEN-SERV')], ['sales'], reg));
+    expect(err.details).toMatchObject({ reason: 'FIXED_MODULE_PARTIAL', moduleKey: 'VEN-0' });
+  });
+
+  it('registro real (só CRM): comportamento inalterado — requiresOneOf vazio nunca dispara', () => {
+    expect(resolveModuleSelection(['CRM-1'])).toEqual(['CRM-0', 'CRM-1']);
+    expect(applyModuleRemovals(['CRM-0', 'CRM-1'], ['leadProposals'])).toEqual(['CRM-0']);
+  });
+});
+
+describe('BE-INCR-MODULOS-BASE-SUBMODULOS PR-5, item 27 — obrigatório derivado das pontes (F-MS-7 a)', () => {
+  const salao = resolveModuleSelection([], BeautySalonPreset.modules);
+  const detalhes = (kept: readonly ModuleKey[]) => {
+    try {
+      assertBridgeModulesKept(kept, BeautySalonPreset.bridges);
+      return null;
+    } catch (e) {
+      expect(e).toBeInstanceOf(ValidationError);
+      return { message: (e as Error).message, details: (e as ValidationError).details };
+    }
+  };
+
+  it('salão completo → ok', () => {
+    expect(detalhes(salao)).toBeNull();
+  });
+
+  it('remover VENDAS do salão → 400 BRIDGE_REQUIRES_MODULE (VEN-0)', () => {
+    const semVendas = salao.filter((k) => MODULE_REGISTRY[k].category !== 'vendas');
+    expect(detalhes(semVendas)).toEqual({
+      message: "A contabilidade do setor (sales@1) exige o módulo 'VEN-0'.",
+      details: { reason: 'BRIDGE_REQUIRES_MODULE', bridge: 'sales@1', module: 'VEN-0' },
+    });
+  });
+
+  it('remover PESSOAS do salão → 400 (PES-0)', () => {
+    const semPessoas = salao.filter((k) => MODULE_REGISTRY[k].category !== 'pessoas');
+    expect(detalhes(semPessoas)).toEqual({
+      message: "A contabilidade do setor (sales@1) exige o módulo 'PES-0'.",
+      details: { reason: 'BRIDGE_REQUIRES_MODULE', bridge: 'sales@1', module: 'PES-0' },
+    });
+  });
+
+  it('suíte sem ponte (crmModule) → nada é exigido', () => {
+    expect(() => assertBridgeModulesKept(['CRM-0'], [])).not.toThrow();
   });
 });

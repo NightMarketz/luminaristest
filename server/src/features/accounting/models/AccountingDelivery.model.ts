@@ -38,6 +38,11 @@ export const DELIVERABLE_EXPORT_KINDS = [
   'EXPORT_ISS_BY_COMPETENCE',
   // IBS-CBS-2027 PR-5 (BRIEF item 24): a memória das apurações de IBS/CBS entra como extra do pacote.
   'EXPORT_IBS_CBS_MEMO',
+  // EFICIENCIA-FISCAL PR-4 (BRIEF item 23; ADR D9): o relatório de economia entra como extra do pacote, para a assinatura.
+  'EXPORT_ECONOMIA_FISCAL',
+  // EFD-REINF PR-3 (BRIEF item 22): o XML do lote da Reinf e o relatório de conferência entram como extras do pacote.
+  'EXPORT_REINF',
+  'EXPORT_REINF_RELATORIO',
 ] as const;
 export type DeliverableExportKind = (typeof DELIVERABLE_EXPORT_KINDS)[number];
 
@@ -130,6 +135,22 @@ export function buildDeliveryManifest(params: {
 /** `Date` (UTC 00:00) → `YYYY-MM-DD`. */
 export function toDateOnly(d: Date): string {
   return d.toISOString().slice(0, 10);
+}
+
+/** `Date` (UTC) → `dd/mm/aaaa`, o formato que a tela mostra. */
+export function toDateBr(d: Date): string {
+  return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}/${d.getUTCFullYear()}`;
+}
+
+/**
+ * FIX-MENSAGENS-ID-INTERNO lote 3 (F-MSG-2 a1; rótulo do dono, chat, 05/11): o arquivo exportado é nomeado por tipo + período
+ * ("ECD de 01/01/2026 a 31/12/2026"), nunca pelo cuid; sem período gravado, pela data de geração ("ECD gerada em 05/11/2026").
+ */
+export function describeExportJob(job: { kind: string; periodStart: Date | null; periodEnd: Date | null; createdAt: Date }): string {
+  const tipo = job.kind.replace(/^EXPORT_(SPED_)?/, '');
+  return job.periodStart && job.periodEnd
+    ? `${tipo} de ${toDateBr(job.periodStart)} a ${toDateBr(job.periodEnd)}`
+    : `${tipo} gerada em ${toDateBr(job.createdAt)}`;
 }
 
 /**

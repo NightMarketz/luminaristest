@@ -8,6 +8,8 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
+import { DepreciationService } from '@/features/accounting/services/DepreciationService';
+import { FixedAssetRepository } from '@/features/accounting/repositories/FixedAssetRepository';
 
 const app = makeApp();
 const UNIT = 'unit-fixed-assets-http';
@@ -138,6 +140,27 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
     expect(res.status).toBe(409);
   });
 
+  // IMO-1 (RUNBOOK-H2-IMOBILIZADO passo 5; FE-INCR-FIXED-ASSETS-brief.md:38 e item 14 — "409 de CAS"). Outra aba já
+  // ativou o bem (status E version mudaram); quem chega com o version VELHO tem de receber o 409 de CAS, que é o que faz
+  // o FE recarregar a lista — hoje o serviço checa o status antes do version e devolve 400.
+  it('IMO-1: activate com o version lido antes de outra ativação (1, banco em 2) é 409 (CAS), não 400 de status', async () => {
+    const klass = await request(app).post('/api/accounting/fixed-asset-classes').set(authHeader(dono)).send({ unitId: UNIT, code: 'IMO1-ACT', name: 'x', depreciable: false, costAccountId });
+    const asset = await request(app)
+      .post('/api/accounting/fixed-assets')
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, classId: klass.body.data.id, code: 'A-IMO1-ACT', description: 'x', costCents: 1000, residualValueCents: 0, acquiredAt: '2026-01-01', annualRateBp: 1000 });
+    const assetId = asset.body.data.id as string;
+    const primeira = await request(app).post(`/api/accounting/fixed-assets/${assetId}/activate`).set(authHeader(dono)).send({ unitId: UNIT, assetId, activatedAt: '2026-01-01', version: 1 });
+    expect(primeira.status).toBe(200);
+    expect(primeira.body.data.version).toBe(2);
+
+    const segunda = await request(app)
+      .post(`/api/accounting/fixed-assets/${assetId}/activate`)
+      .set(authHeader(dono))
+      .send({ unitId: UNIT, assetId, activatedAt: '2026-01-01', version: 1 });
+    expect({ status: segunda.status, message: segunda.body.message }).toEqual({ status: 409, message: expect.stringContaining('version divergente') });
+  });
+
   it('assetId do corpo divergente do :id é 400 — nunca um dos dois ignorado', async () => {
     const res = await request(app)
       .put('/api/accounting/fixed-assets/qualquer-id')
@@ -253,16 +276,39 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
       expect(Number(byCode.get('1.1.1')?.debitCents)).toBe(100_000); // caixa recebido
       expect(Number(byCode.get('3.9')?.creditCents)).toBe(833); // ganho
 
-      // Chamada sequencial SUBSEQUENTE (já DISPOSED) é 400 pelo guard de status.
+      // Chamada sequencial SUBSEQUENTE (já DISPOSED) com o version velho é recusada e não posta 2ª baixa. O status
+      // dela (409 de CAS, dono 04/11: "409 (BRIEF item 14)") é o caso IMO-1 de baixa logo abaixo — aqui fica só o
+      // invariante de não duplicar.
       const again = await request(app)
         .post(`/api/accounting/fixed-assets/${assetId}/dispose`)
         .set(authHeader(dono))
         .send({ unitId: UNIT, assetId, disposedAt: '2026-01-31', proceedsCents: 100_000, counterpartAccountId: cashAccountId, version: afterRun!.version });
-      expect(again.status).toBe(400);
+      expect(again.status).not.toBe(200);
       expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.disposal', sourceId: assetId } })).toBe(1);
     });
 
-    it('OPS-001 adversarial: 2 baixas CONCORRENTES (mesma version, mês sem quota postada) — só 1 vence, a outra 400/409, 1 entry de baixa só', async () => {
+    // IMO-1, baixa (dono, chat, 04/11: "409 (BRIEF item 14)" — FE-INCR-FIXED-ASSETS-brief.md item 14, "409 de CAS
+    // (ativar/baixar)"). Outra aba já baixou o bem (status E version mudaram); quem chega com o version VELHO tem de
+    // receber o 409 de CAS — hoje o serviço checa o status antes do version e devolve 400.
+    it('IMO-1: dispose com o version lido antes de outra baixa (2, banco em 3) é 409 (CAS), não 400 de status', async () => {
+      const klass = await request(app).post('/api/accounting/fixed-asset-classes').set(authHeader(dono)).send({ unitId: UNIT, code: 'IMO1-DISP', name: 'x', depreciable: false, costAccountId });
+      const asset = await request(app)
+        .post('/api/accounting/fixed-assets')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, classId: klass.body.data.id, code: 'A-IMO1-DISP', description: 'x', costCents: 50_000, residualValueCents: 0, acquiredAt: '2026-01-01', annualRateBp: 1000 });
+      const assetId = asset.body.data.id as string;
+      const ativa = await request(app).post(`/api/accounting/fixed-assets/${assetId}/activate`).set(authHeader(dono)).send({ unitId: UNIT, assetId, activatedAt: '2026-01-01', version: 1 });
+      expect(ativa.body.data.version).toBe(2);
+      const baixa = { unitId: UNIT, assetId, disposedAt: '2026-01-31', proceedsCents: 50_000, counterpartAccountId: cashAccountId, version: 2 };
+      const primeira = await request(app).post(`/api/accounting/fixed-assets/${assetId}/dispose`).set(authHeader(dono)).send(baixa);
+      expect(primeira.status).toBe(200);
+      expect(primeira.body.data.version).toBeGreaterThan(2);
+
+      const segunda = await request(app).post(`/api/accounting/fixed-assets/${assetId}/dispose`).set(authHeader(dono)).send(baixa);
+      expect({ status: segunda.status, message: segunda.body.message }).toEqual({ status: 409, message: expect.stringContaining('version divergente') });
+    });
+
+    it('OPS-001 adversarial: 2 baixas CONCORRENTES (mesma version, mês sem quota postada) — só 1 vence, a outra 409, 1 entry de baixa só', async () => {
       const klass = await request(app)
         .post('/api/accounting/fixed-asset-classes')
         .set(authHeader(dono))
@@ -281,14 +327,96 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
           .send({ unitId: UNIT, assetId, disposedAt: '2026-01-31', proceedsCents: 99_167, counterpartAccountId: cashAccountId, version: 2 }); // activate() já incrementou p/ 2; NBV pós-quota (100.000-833) → sem ganho/perda
       const [a, b] = await Promise.all([disposeCall(), disposeCall()]);
       const statuses = [a.status, b.status].sort();
-      // Windows serializa SQLite (classe windows-serializa-sqlite-ci-linux-nao) — localmente as
-      // duas podem serializar como 200+400; o invariante que NÃO pode falhar em nenhum dos dois SOs
-      // é "só 1 sucesso, 1 entry de baixa" (a quota do mês, por sua vez, é idempotente por sourceId
-      // e nunca duplica em nenhum dos dois casos — read-first + P2002 race-close).
-      expect(statuses[0]).toBe(200);
-      expect([400, 409]).toContain(statuses[1]);
+      // Windows serializa SQLite (classe windows-serializa-sqlite-ci-linux-nao). Com o CAS de version antes da
+      // checagem de status (IMO-1, dono 04/11: "Apertar para [200,409]"), a 2ª baixa dá 409 tanto serializada
+      // (chega com version 2, banco já adiante) quanto concorrente (perde o CAS final). Invariante: só 1 sucesso,
+      // 1 entry de baixa (a quota do mês é idempotente por sourceId — read-first + P2002 race-close).
+      expect(statuses).toEqual([200, 409]);
       expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.disposal', sourceId: assetId } })).toBe(1);
       expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.depreciation', sourceId: `${assetId}:2026-01` } })).toBe(1);
+    });
+
+    // IMO-2 (dono, chat, 05/11: "Autorizo o IMO-2") — teste-guarda, VERMELHO até a sessão de correção. Janela
+    // concorrente que o teste acima não força: a perdedora (B) passa o CAS de leitura e o status ACTIVE com o
+    // version 2, e só então a vencedora (A) completa a baixa inteira. B relê o ativo depois de
+    // `postQuotaForDisposal` (FixedAssetService.disposeAsset), pega o version NOVO e o CAS final
+    // (`FixedAssetRepository.dispose`, que filtra só `version`, não `status: 'ACTIVE'`) passa — 200 de novo,
+    // regrava DISPOSED e audita a baixa 2×. A ordem é forçada pelo spy (sem sleep): na 1ª entrada em
+    // `postQuotaForDisposal` (a de B) a baixa A roda até o fim; a entrada de A passa direto.
+    it('IMO-2: 2ª baixa que relê o ativo DEPOIS do commit da 1ª é 409, não 200 (status re-checado no CAS final)', async () => {
+      const klass = await request(app)
+        .post('/api/accounting/fixed-asset-classes')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, code: 'IMO2-DISP', name: 'x', depreciable: true, costAccountId, accumulatedDepreciationAccountId: accDepAccountId });
+      const asset = await request(app)
+        .post('/api/accounting/fixed-assets')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, classId: klass.body.data.id, code: 'A-IMO2', description: 'x', costCents: 100_000, residualValueCents: 0, acquiredAt: '2026-01-01', annualRateBp: 1000 });
+      const assetId = asset.body.data.id as string;
+      const ativa = await request(app).post(`/api/accounting/fixed-assets/${assetId}/activate`).set(authHeader(dono)).send({ unitId: UNIT, assetId, activatedAt: '2026-01-01', version: 1 });
+      expect(ativa.body.data.version).toBe(2);
+
+      const disposeCall = () =>
+        request(app)
+          .post(`/api/accounting/fixed-assets/${assetId}/dispose`)
+          .set(authHeader(dono))
+          .send({ unitId: UNIT, assetId, disposedAt: '2026-01-31', proceedsCents: 99_167, counterpartAccountId: cashAccountId, version: 2 });
+
+      const original = DepreciationService.prototype.postQuotaForDisposal;
+      let primeiraEntrada = true;
+      let resA: Awaited<ReturnType<typeof disposeCall>> | undefined;
+      const spy = jest.spyOn(DepreciationService.prototype, 'postQuotaForDisposal').mockImplementation(async function (
+        this: DepreciationService,
+        ...args: Parameters<DepreciationService['postQuotaForDisposal']>
+      ) {
+        if (primeiraEntrada) {
+          primeiraEntrada = false; // B chegou aqui com version 2 e status ACTIVE já conferidos
+          resA = await disposeCall(); // A baixa inteira (tx1 + tx2 commitadas) antes de B reler o ativo
+        }
+        return original.apply(this, args);
+      });
+      let resB: Awaited<ReturnType<typeof disposeCall>>;
+      try {
+        resB = await disposeCall();
+      } finally {
+        spy.mockRestore();
+      }
+
+      expect(resA?.status).toBe(200); // preparação: a vencedora baixou
+      expect(resB.status).toBe(409); // hoje: 200 — a perdedora regrava DISPOSED e audita de novo
+      expect(await prisma.auditEvent.count({ where: { eventType: 'fixed_asset.disposed', targetId: assetId } })).toBe(1);
+    });
+
+    // IMO-2, guarda do filtro do CAS final (review do #1084): a quota que a PRÓPRIA baixa posta pode esgotar a base e
+    // mover o bem para FULLY_DEPRECIATED (DepreciationService.postQuotaForDisposal) antes do `assetRepo.dispose`. Um
+    // filtro só `status: 'ACTIVE'` no CAS daria 409 falso aqui — este caso reprova essa troca.
+    it('IMO-2: baixa no mês em que a própria quota esgota a base é 200 (CAS aceita FULLY_DEPRECIATED), 1 quota e 1 baixa', async () => {
+      const klass = await request(app)
+        .post('/api/accounting/fixed-asset-classes')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, code: 'IMO2-ULTIMO', name: 'x', depreciable: true, costAccountId, accumulatedDepreciationAccountId: accDepAccountId });
+      const asset = await request(app)
+        .post('/api/accounting/fixed-assets')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, classId: klass.body.data.id, code: 'A-IMO2-ULTIMO', description: 'x', costCents: 1_200, residualValueCents: 0, acquiredAt: '2025-02-01', annualRateBp: 10_000 });
+      const assetId = asset.body.data.id as string;
+      // Retroativo (antes do 1º período OPEN, 2026-01): 11 quotas de 100 já acumuladas; falta a última, a de 2026-01.
+      const ativa = await request(app)
+        .post(`/api/accounting/fixed-assets/${assetId}/activate`)
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, assetId, activatedAt: '2025-02-01', openingAccumulatedCents: 1_100, version: 1 });
+      expect(ativa.status).toBe(200);
+
+      const res = await request(app)
+        .post(`/api/accounting/fixed-assets/${assetId}/dispose`)
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, assetId, disposedAt: '2026-01-31', proceedsCents: 0, version: ativa.body.data.version });
+
+      expect({ status: res.status, assetStatus: res.body.data?.status }).toEqual({ status: 200, assetStatus: 'DISPOSED' });
+      const depois = await prisma.fixedAsset.findUnique({ where: { id: assetId } });
+      expect(depois!.accumulatedDepreciationCents).toBe(1_200n); // a quota de 2026-01 esgotou a base antes do CAS
+      expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.depreciation', sourceId: `${assetId}:2026-01` } })).toBe(1);
+      expect(await prisma.journalEntry.count({ where: { sourceType: 'fixed_asset.disposal', sourceId: assetId } })).toBe(1);
     });
   });
 
@@ -402,6 +530,251 @@ describe('/api/accounting/fixed-asset-classes + /fixed-assets — contrato HTTP'
       expect(res.body.data.repaired).toBeGreaterThanOrEqual(1);
       const fixed = await prisma.fixedAsset.findUnique({ where: { id: assetId } });
       expect(fixed!.accumulatedDepreciationCents).toBe(833n);
+    });
+  });
+
+  // FIX-TESTES item 5, lote 1 (FIX-MENSAGENS-ID-INTERNO-brief.md itens 3–4; inventário em
+  // docs/operating-manual/MENSAGENS-ID-INTERNO-2026-11-05.md). A mensagem que sai do handleApiError é a que o operador lê:
+  // ela nomeia o bem pelo rótulo `código — descrição` e a classe por `código — nome` (F-MSG-2 a1), nunca pelo cuid de
+  // um registro que o usuário vê pelo código ou não mandou (F-MSG-1 a). Um caso por site "corrigir" do inventário.
+  describe('FIX-MENSAGENS-ID-INTERNO lote 1 — a mensagem nomeia o bem/classe pelo rótulo, nunca pelo cuid', () => {
+    const novaClasse = async (code: string, name: string, extra: Record<string, unknown> = {}) => {
+      const r = await request(app)
+        .post('/api/accounting/fixed-asset-classes')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, code, name, depreciable: false, costAccountId, ...extra });
+      expect(r.status).toBe(201);
+      return r.body.data.id as string;
+    };
+    const novoAtivo = async (classId: string, code: string, description: string, costCents = 1000) => {
+      const r = await request(app)
+        .post('/api/accounting/fixed-assets')
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, classId, code, description, costCents, residualValueCents: 0, acquiredAt: '2026-01-01', annualRateBp: 1000 });
+      expect(r.status).toBe(201);
+      return r.body.data.id as string;
+    };
+    const ativar = (assetId: string, version = 1) =>
+      request(app).post(`/api/accounting/fixed-assets/${assetId}/activate`).set(authHeader(dono)).send({ unitId: UNIT, assetId, activatedAt: '2026-01-01', version });
+    const baixar = (assetId: string, version: number, proceedsCents = 1000) =>
+      request(app)
+        .post(`/api/accounting/fixed-assets/${assetId}/dispose`)
+        .set(authHeader(dono))
+        .send({ unitId: UNIT, assetId, disposedAt: '2026-01-31', proceedsCents, counterpartAccountId: cashAccountId, version });
+    /** Status certo, a mensagem contém o rótulo e não contém nenhum dos cuids. A `msg` vai no objeto para o diff mostrá-la. */
+    const nomeiaSemId = (res: request.Response, status: number, rotulo: string, ...ids: string[]) => {
+      const msg = String(res.body.message);
+      expect({ status: res.status, nomeiaRotulo: msg.includes(rotulo), cuidNaMensagem: ids.filter((id) => msg.includes(id)), msg }).toEqual({
+        status,
+        nomeiaRotulo: true,
+        cuidNaMensagem: [],
+        msg,
+      });
+    };
+
+    it('FixedAssetService:136 — editar bem ACTIVE (400) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-EDIT', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-EDIT', 'Mesa');
+      expect((await ativar(assetId)).status).toBe(200);
+      const res = await request(app).put(`/api/accounting/fixed-assets/${assetId}`).set(authHeader(dono)).send({ unitId: UNIT, assetId, description: 'Mesa nova' });
+      nomeiaSemId(res, 400, 'A-MSG-EDIT — Mesa', assetId);
+    });
+
+    it('FixedAssetService:140 — editar bem cuja classe sumiu, sem classId no corpo (404), nomeia o bem, não o cuid da classe', async () => {
+      const classId = await novaClasse('IMSG-EDCL', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-EDCL', 'Cadeira');
+      await prisma.fixedAssetClass.update({ where: { id: classId }, data: { deletedAt: new Date() } });
+      const res = await request(app).put(`/api/accounting/fixed-assets/${assetId}`).set(authHeader(dono)).send({ unitId: UNIT, assetId, description: 'Cadeira nova' });
+      nomeiaSemId(res, 404, 'A-MSG-EDCL — Cadeira', classId, assetId);
+    });
+
+    it('FixedAssetService:183 — remover bem FULLY_DEPRECIATED (400) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-DELS', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-DELS', 'Armário');
+      await prisma.fixedAsset.update({ where: { id: assetId }, data: { status: 'FULLY_DEPRECIATED' } });
+      const res = await request(app).delete(`/api/accounting/fixed-assets/${assetId}`).set(authHeader(dono)).send({ unitId: UNIT, assetId });
+      nomeiaSemId(res, 400, 'A-MSG-DELS — Armário', assetId);
+    });
+
+    it('FixedAssetService:186 — remover bem com quota postada (400) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-DELQ', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-DELQ', 'Estante');
+      expect((await ativar(assetId)).status).toBe(200);
+      await prisma.fixedAsset.update({ where: { id: assetId }, data: { accumulatedDepreciationCents: 100n } });
+      const res = await request(app).delete(`/api/accounting/fixed-assets/${assetId}`).set(authHeader(dono)).send({ unitId: UNIT, assetId });
+      nomeiaSemId(res, 400, 'A-MSG-DELQ — Estante', assetId);
+    });
+
+    it('FixedAssetService:196 — ativar com version divergente (409) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-ACAS', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-ACAS', 'Balcão');
+      nomeiaSemId(await ativar(assetId, 999), 409, 'A-MSG-ACAS — Balcão', assetId);
+    });
+
+    it('FixedAssetService:199 — ativar bem já ACTIVE com o version atual (400) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-ASTA', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-ASTA', 'Gaveteiro');
+      expect((await ativar(assetId)).status).toBe(200);
+      nomeiaSemId(await ativar(assetId, 2), 400, 'A-MSG-ASTA — Gaveteiro', assetId);
+    });
+
+    it('FixedAssetService:206 — ativar bem cuja classe sumiu (404) nomeia o bem, não o cuid da classe', async () => {
+      const classId = await novaClasse('IMSG-ACL', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-ACL', 'Sofá');
+      await prisma.fixedAssetClass.update({ where: { id: classId }, data: { deletedAt: new Date() } });
+      nomeiaSemId(await ativar(assetId), 404, 'A-MSG-ACL — Sofá', classId, assetId);
+    });
+
+    it('FixedAssetService:196/226 — 2 ativações concorrentes: a que perde (409) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-ACON', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-ACON', 'Poltrona');
+      const [a, b] = await Promise.all([ativar(assetId), ativar(assetId)]);
+      expect([a.status, b.status].sort()).toEqual([200, 409]);
+      nomeiaSemId(a.status === 409 ? a : b, 409, 'A-MSG-ACON — Poltrona', assetId);
+    });
+
+    it('FixedAssetService:246 — baixar com version divergente (409) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-DCAS', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-DCAS', 'Bancada');
+      expect((await ativar(assetId)).status).toBe(200);
+      nomeiaSemId(await baixar(assetId, 999), 409, 'A-MSG-DCAS — Bancada', assetId);
+    });
+
+    it('FixedAssetService:249 — baixar bem PENDING_ACTIVATION (400) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-DSTA', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-DSTA', 'Prateleira');
+      nomeiaSemId(await baixar(assetId, 1), 400, 'A-MSG-DSTA — Prateleira', assetId);
+    });
+
+    it('FixedAssetService:252 — baixar bem cuja classe sumiu (404) nomeia o bem, não o cuid da classe', async () => {
+      const classId = await novaClasse('IMSG-DCL', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-DCL', 'Biombo');
+      expect((await ativar(assetId)).status).toBe(200);
+      await prisma.fixedAssetClass.update({ where: { id: classId }, data: { deletedAt: new Date() } });
+      nomeiaSemId(await baixar(assetId, 2), 404, 'A-MSG-DCL — Biombo', classId, assetId);
+    });
+
+    it('FixedAssetService:246/322 — 2 baixas concorrentes: a que perde (409) nomeia o bem', async () => {
+      const classId = await novaClasse('IMSG-DCON', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-DCON', 'Aparador');
+      expect((await ativar(assetId)).status).toBe(200);
+      const [a, b] = await Promise.all([baixar(assetId, 2), baixar(assetId, 2)]);
+      expect([a.status, b.status].sort()).toEqual([200, 409]);
+      nomeiaSemId(a.status === 409 ? a : b, 409, 'A-MSG-DCON — Aparador', assetId);
+    });
+
+    it('FixedAssetService:425 — baixar bem cuja conta do bem (da classe) sumiu (400) nomeia a classe, não o cuid da conta', async () => {
+      const contaPropria = await criarConta('1.2.7', 'Asset');
+      const classId = await novaClasse('IMSG-CONTA', 'Móveis', { costAccountId: contaPropria.id });
+      const assetId = await novoAtivo(classId, 'A-MSG-CONTA', 'Divisória');
+      expect((await ativar(assetId)).status).toBe(200);
+      await prisma.account.update({ where: { id: contaPropria.id }, data: { deletedAt: new Date() } });
+      nomeiaSemId(await baixar(assetId, 2), 400, 'IMSG-CONTA — Móveis', contaPropria.id, classId, assetId);
+    });
+
+    it('FixedAssetService:425 — baixar com a conta de ganho das settings sumida (400) nomeia o bem, não o cuid da conta', async () => {
+      const gain = await prisma.account.findFirstOrThrow({ where: { userId: dono.id, unitId: UNIT, code: '3.9' } });
+      const classId = await novaClasse('IMSG-GANHO', 'Móveis');
+      const assetId = await novoAtivo(classId, 'A-MSG-GANHO', 'Painel');
+      expect((await ativar(assetId)).status).toBe(200);
+      await prisma.account.update({ where: { id: gain.id }, data: { deletedAt: new Date() } });
+      try {
+        nomeiaSemId(await baixar(assetId, 2, 2000), 400, 'A-MSG-GANHO — Painel', gain.id, assetId);
+      } finally {
+        await prisma.account.update({ where: { id: gain.id }, data: { deletedAt: null } });
+      }
+    });
+
+    it('FixedAssetClassService:134 — remover classe com bem vivo (400) nomeia a classe', async () => {
+      const classId = await novaClasse('IMSG-CDEL', 'Equipamentos de copa');
+      await novoAtivo(classId, 'A-MSG-CDEL', 'Geladeira');
+      const res = await request(app).delete(`/api/accounting/fixed-asset-classes/${classId}`).set(authHeader(dono)).send({ unitId: UNIT, classId });
+      nomeiaSemId(res, 400, 'IMSG-CDEL — Equipamentos de copa', classId);
+    });
+
+    // FIX-TESTES item 5, lote 4: os 2 sites "corrigir" do DepreciationService (inventário MENSAGENS-ID-INTERNO-2026-11-05).
+    // Os dois só mordem em corrida (a classe some entre a checagem do FixedAssetService e a da quota; o CAS do addAccumulated
+    // perde). O estado é forçado pelo mesmo precedente dos testes IMO-2 acima: espião no protótipo, que chama o original.
+    describe('lote 4 — DepreciationService', () => {
+      it('DepreciationService:189 — baixa em que a classe some antes da quota da baixa (404) nomeia o bem, não o cuid da classe', async () => {
+        const classId = await novaClasse('IMSG-DQCL', 'Móveis');
+        const assetId = await novoAtivo(classId, 'A-MSG-DQCL', 'Cômoda');
+        expect((await ativar(assetId)).status).toBe(200);
+        const original = DepreciationService.prototype.postQuotaForDisposal;
+        const spy = jest.spyOn(DepreciationService.prototype, 'postQuotaForDisposal').mockImplementation(async function (
+          this: DepreciationService,
+          ...args: Parameters<DepreciationService['postQuotaForDisposal']>
+        ) {
+          await prisma.fixedAssetClass.update({ where: { id: classId }, data: { deletedAt: new Date() } });
+          return original.apply(this, args);
+        });
+        try {
+          nomeiaSemId(await baixar(assetId, 2), 404, 'A-MSG-DQCL — Cômoda', classId, assetId);
+        } finally {
+          spy.mockRestore();
+        }
+      });
+
+      it('DepreciationService:287 — quota mensal que perde o CAS do ativo (409) nomeia o bem', async () => {
+        const classId = await novaClasse('IMSG-DQCAS', 'Móveis', { depreciable: true, accumulatedDepreciationAccountId: accDepAccountId });
+        const assetId = await novoAtivo(classId, 'A-MSG-DQCAS', 'Escrivaninha', 100_000);
+        expect((await ativar(assetId)).status).toBe(200);
+        const original = FixedAssetRepository.prototype.addAccumulated;
+        const spy = jest.spyOn(FixedAssetRepository.prototype, 'addAccumulated').mockImplementation(async function (
+          this: FixedAssetRepository,
+          ...args: Parameters<FixedAssetRepository['addAccumulated']>
+        ) {
+          return args[1] === assetId ? null : original.apply(this, args);
+        });
+        try {
+          const res = await request(app).post('/api/accounting/fixed-assets/depreciation/run').set(authHeader(dono)).send({ unitId: UNIT, yearMonth: '2026-01' });
+          nomeiaSemId(res, 409, 'A-MSG-DQCAS — Escrivaninha', assetId);
+        } finally {
+          spy.mockRestore();
+        }
+      });
+
+      const rodarJaneiro = () =>
+        request(app).post('/api/accounting/fixed-assets/depreciation/run').set(authHeader(dono)).send({ unitId: UNIT, yearMonth: '2026-01' });
+
+      // :144 e :344 — a heurística do inventário os deu como eco, mas o id vem dos ativos/classe/configurações, não do cliente.
+      it('DepreciationService:144 — rodar o mês com bem cuja classe sumiu (404) nomeia o bem, não o cuid da classe', async () => {
+        const classId = await novaClasse('IMSG-DRCL', 'Móveis', { depreciable: true, accumulatedDepreciationAccountId: accDepAccountId });
+        const assetId = await novoAtivo(classId, 'A-MSG-DRCL', 'Penteadeira', 100_000);
+        expect((await ativar(assetId)).status).toBe(200);
+        await prisma.fixedAssetClass.update({ where: { id: classId }, data: { deletedAt: new Date() } });
+        try {
+          nomeiaSemId(await rodarJaneiro(), 404, 'A-MSG-DRCL — Penteadeira', classId, assetId);
+        } finally {
+          await prisma.fixedAssetClass.update({ where: { id: classId }, data: { deletedAt: null } });
+        }
+      });
+
+      it('DepreciationService:344 — conta acumulada da classe sumida (400) nomeia a classe, não o cuid da conta', async () => {
+        const contaAcc = await criarConta('1.2.9.7', 'Asset');
+        const classId = await novaClasse('IMSG-DRACC', 'Utensílios', { depreciable: true, accumulatedDepreciationAccountId: contaAcc.id });
+        const assetId = await novoAtivo(classId, 'A-MSG-DRACC', 'Batedeira', 100_000);
+        expect((await ativar(assetId)).status).toBe(200);
+        await prisma.account.update({ where: { id: contaAcc.id }, data: { deletedAt: new Date() } });
+        try {
+          nomeiaSemId(await rodarJaneiro(), 400, 'IMSG-DRACC — Utensílios', contaAcc.id, classId, assetId);
+        } finally {
+          await prisma.account.update({ where: { id: contaAcc.id }, data: { deletedAt: null } });
+        }
+      });
+
+      it('DepreciationService:344 — conta de despesa das configurações sumida (400) nomeia as configurações, não o cuid da conta', async () => {
+        const classId = await novaClasse('IMSG-DRDESP', 'Móveis', { depreciable: true, accumulatedDepreciationAccountId: accDepAccountId });
+        const assetId = await novoAtivo(classId, 'A-MSG-DRDESP', 'Credenza', 100_000);
+        expect((await ativar(assetId)).status).toBe(200);
+        await prisma.account.update({ where: { id: depreciationExpenseAccountId }, data: { deletedAt: new Date() } });
+        try {
+          // Qual bem o laço pega primeiro não é fixo; o rótulo certo é o dono do id (as configurações contábeis).
+          nomeiaSemId(await rodarJaneiro(), 400, 'das configurações contábeis', depreciationExpenseAccountId, assetId);
+        } finally {
+          await prisma.account.update({ where: { id: depreciationExpenseAccountId }, data: { deletedAt: null } });
+        }
+      });
     });
   });
 });

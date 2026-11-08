@@ -39,12 +39,20 @@ export type TributoApuracao = 'IRPJ' | 'CSLL';
 /** Fase B (BRIEF B item 11; nomes do ADR §6): + os 3 modos do Real anual. */
 export type ModoApuracao = 'PRESUMIDO' | 'REAL_TRIMESTRAL' | 'ESTIMATIVA_RECEITA' | 'BALANCETE_SUSPENSAO_REDUCAO' | 'AJUSTE_ANUAL';
 
+/**
+ * Quem reteve (F-C8-R1 a, dono, chat, 03/11: "Sim, opção (a)"): a linha da ECF da dedução retida depende dele — Lei 9.430
+ * art. 64 (órgão federal), Lei 10.833 art. 34 (demais entidades federais), art. 30 (PJ privada), art. 33 (estados, DF, municípios).
+ */
+export const RETENTORES = ['ORGAO_FEDERAL', 'ENTIDADE_ADM_FEDERAL', 'PJ_PRIVADA', 'ORGAO_ESTADUAL_MUNICIPAL'] as const;
+export type RetentorDeducao = (typeof RETENTORES)[number];
+
 /** Dedução informada pelo operador (F-X7-11 a; shape do `TaxAssessmentPreviewSchema.deducoes` do contrato §2). */
 export interface DeducaoInformada {
   tributo: TributoApuracao;
   tipo: 'IRRF' | 'CSLL_RETIDA' | 'OUTRA';
   valorCents: string;
   documento?: string;
+  retentor?: RetentorDeducao; // obrigatório na CSLL_RETIDA, opcional no IRRF (ausente = linha genérica)
 }
 
 /** Memória CONFIRMADA de um trimestre anterior do mesmo tributo e ano (F-TA-3 a: a fonte é a memória, não o razão). */
@@ -213,7 +221,7 @@ export function parcelaExcedenteLc224(e: EntradaLc224): ResultadoLc224 {
   ];
 
   if (e.periodo !== 'T04') {
-    memoria.push(linha('LC224_EXCEDENTE', 'Parcela da receita bruta que excede o limite do trimestre', excedenteTrimestre, F_15_3));
+    memoria.push(linha('LC224_EXCEDENTE', 'Parcela excedente = max(0, receita bruta do trimestre − (limite do trimestre + sobra anterior))', excedenteTrimestre, F_15_3));
     return { vigente: true, limiteTrimestreCents: limite, sobraAnteriorCents: sobra, excedenteCents: excedenteTrimestre, memoria };
   }
 
@@ -240,10 +248,10 @@ export function parcelaExcedenteLc224(e: EntradaLc224): ResultadoLc224 {
   }
   memoria.push(
     linha('LC224_LIMITE_ANUAL', `Limite anual: ${n} trimestre(s) em atividade × limite do trimestre`, limiteAnual, F_15_9),
-    linha('LC224_RECEITA_ACUMULADA', 'Receita bruta acumulada do ano-calendário', acumulada, F_15_5),
-    linha('LC224_EXCEDENTE_ANUAL', 'Parcela da receita acumulada que excede o limite anual', excedenteAnual, F_15_5),
-    linha('LC224_EXCEDENTES_ANTERIORES', 'Soma das parcelas excedentes dos trimestres anteriores', somaAnteriores, F_15_5),
-    linha('LC224_EXCEDENTE', `Parcela excedente do último trimestre (§ 5º ${ramo})`, excedente, `${F_15_5} ${ramo}`),
+    linha('LC224_RECEITA_ACUMULADA', `Receita bruta acumulada do ano-calendário = Σ receita bruta de ${[...anteriores.map((a) => a.periodo), e.periodo].join(', ')}`, acumulada, F_15_5),
+    linha('LC224_EXCEDENTE_ANUAL', 'Excedente anual = max(0, receita acumulada − limite anual)', excedenteAnual, F_15_5),
+    linha('LC224_EXCEDENTES_ANTERIORES', `Σ parcelas excedentes confirmadas de ${anteriores.map((a) => a.periodo).join(', ') || 'nenhum trimestre'}`, somaAnteriores, F_15_5),
+    linha('LC224_EXCEDENTE', `Parcela excedente do último trimestre (§ 5º ${ramo}) = ${excedenteAnual >= somaAnteriores ? 'min(excedente do trimestre, excedente anual − Σ excedentes anteriores)' : '0 (excedente anual < Σ excedentes anteriores)'}`, excedente, `${F_15_5} ${ramo}`),
   );
   return {
     vigente: true,
@@ -277,6 +285,38 @@ export function linhaNaoUso(naoUsoCents: bigint | undefined, periodoDesc: string
 }
 
 /** Base de serviço lida de uma memória confirmada; memória anterior a este incremento não tem a linha da 3.4 (= 0). */
+/** EFICIENCIA-FISCAL PR-5 (item 26): linha da receita hospitalar — só quando houver, para não mudar a memória de quem não tem. */
+export const RECEITA_HOSPITALAR = 'RECEITA_HOSPITALAR';
+const F_HOSPITALAR = 'Lei 9.249/1995 art. 15 § 1º III "a" e § 2º; art. 20 III';
+export function linhaHospitalar(hospitalarCents: bigint, periodoDesc: string): MemoriaLinha[] {
+  return hospitalarCents > 0n ? [linha(RECEITA_HOSPITALAR, `Parte da receita de serviço do ${periodoDesc} em serviço hospitalar = min(Σ receita dos serviços hospitalares na subrazão por serviço, receita de serviço)`, hospitalarCents, F_HOSPITALAR)] : [];
+}
+/**
+ * Achado 1 do #1021 (dono, chat, 03/11: "Linha nova"): com hospitalar, a receita de serviço que fica a 32 % — é o valor da
+ * P200 8 / P400 4 da ECF, que leva a hospitalar para a P200 4 / P400 2. Só quando houver, como a linha hospitalar.
+ */
+export const RECEITA_SERVICO_COMUM = 'RECEITA_SERVICO_COMUM';
+export function linhaServicoComum(hospitalarCents: bigint, servicoCents: bigint, periodoDesc: string): MemoriaLinha[] {
+  return hospitalarCents > 0n
+    ? [linha(RECEITA_SERVICO_COMUM, `Receita de serviço do ${periodoDesc} fora do serviço hospitalar (3.1 + 3.4 − hospitalar)`, servicoCents - hospitalarCents, F_HOSPITALAR)]
+    : [];
+}
+export function receitaHospitalarDaMemoria(memoria: MemoriaLinha[], periodo: string): bigint {
+  return temLinha(memoria, RECEITA_HOSPITALAR) ? valorLinha(memoria, RECEITA_HOSPITALAR, periodo) : 0n;
+}
+/** A parte hospitalar nunca passa da receita de serviço do razão (teto na 3.1 — dono, 28/10, lacuna 1) nem fica negativa. */
+export function hospitalarComTeto(hospitalarCents: bigint | undefined, servicoCents: bigint): bigint {
+  const h = hospitalarCents ?? 0n;
+  if (h <= 0n || servicoCents <= 0n) return 0n;
+  return h > servicoCents ? servicoCents : h;
+}
+/** Linha `PRESUNCAO_*`/HOSPITALAR vigente; ausente ⇒ erro explícito (a tabela cobre todo ano apurável). */
+export function presuncaoHospitalar(t: TabelaApuracao, chave: 'PRESUNCAO_IRPJ' | 'PRESUNCAO_CSLL', data: string): ParametroApuracao {
+  const p = linhaVigente(t, chave, data, 'HOSPITALAR');
+  if (!p) throw new Error(`taxAssessmentParams: sem linha vigente de ${chave}/HOSPITALAR em ${data}`);
+  return p;
+}
+
 export function receitaServicoDaMemoria(memoria: MemoriaLinha[], periodo: string): bigint {
   const naoUso = temLinha(memoria, RECEITA_NAO_USO) ? valorLinha(memoria, RECEITA_NAO_USO, periodo) : 0n;
   return baseServicoCents(valorLinha(memoria, 'RECEITA_SERVICO', periodo), naoUso);
@@ -307,6 +347,11 @@ export interface EntradaPresumido {
   receitaRevendaCents: bigint;
   /** BE-INCR-H1-REFERENCIAL-3-4 (F-HR-3 b) — conta 3.4 do trimestre, com sinal; ausente = 0. */
   receitaNaoUsoCents?: bigint;
+  /**
+   * EFICIENCIA-FISCAL PR-5 (item 26) — parte de `receitaServicoCents` dos serviços HOSPITALAR na data (subrazão por serviço,
+   * `presuncaoHospitalar.ts`); o teto na 3.1 é aplicado aqui. Ausente = 0 (memória igual à de antes).
+   */
+  receitaHospitalarCents?: bigint;
   perfil: PerfilApuracaoPresumido;
   anteriores: MemoriaAnterior[];
   deducoes: DeducaoInformada[];
@@ -339,19 +384,35 @@ function basePresumido(
   aliqCsll: { valor: number; fonte: string },
   meses: bigint, // Lei 9.249 art. 3º § 1º: meses do trimestre em atividade
   reduzida16?: ParametroApuracao, // PRESUMIDO-16 item 2: substitui a presunção de serviço do IRPJ
+  receitaHospitalar: bigint = 0n, // EFICIENCIA-FISCAL PR-5 item 26: parte de receitaServico a 8 %/12 % (art. 15 § 2º)
 ): { baseCents: bigint; devidoCents: bigint; memoria: MemoriaLinha[] } {
   const receita = receitaServico + receitaRevenda;
-  const excServico = receita > 0n ? arred(excedente * receitaServico, receita) : 0n;
-  const excRevenda = excedente - excServico;
+  const excServicoTotal = receita > 0n ? arred(excedente * receitaServico, receita) : 0n;
+  const excRevenda = excedente - excServicoTotal;
+  // Item 26 (dono, 28/10, lacuna 2): a parcela excedente do serviço se reparte também pela receita hospitalar (§ 6º).
+  const excHospitalar = receitaServico > 0n ? arred(excServicoTotal * receitaHospitalar, receitaServico) : 0n;
+  const excServico = excServicoTotal - excHospitalar;
+  const servicoComum = receitaServico - receitaHospitalar;
   const acrescimo = suspenso ? 0 : parametroVigente(t, ACRESCIMO[tributo], dataFim);
   const pS = reduzida16 ?? linhaVigente(t, PRESUNCAO[tributo], dataFim, 'SERVICO')!;
   const pR = linhaVigente(t, PRESUNCAO[tributo], dataFim, 'REVENDA')!;
-  const presS = mulBp(receitaServico, pS.valor);
+  const presS = mulBp(servicoComum, pS.valor);
   const presR = mulBp(receitaRevenda, pR.valor);
   const acrS = mulBp(excServico, pS.valor, acrescimo);
   const acrR = mulBp(excRevenda, pR.valor, acrescimo);
-  const base = presS + presR + acrS + acrR;
+  let base = presS + presR + acrS + acrR;
   const fonteAcr = linhaVigente(t, ACRESCIMO[tributo], dataFim)?.fonte ?? `${ACRESCIMO[tributo]} sem linha vigente (acréscimo 0)`;
+  const hospitalar: MemoriaLinha[] = [];
+  if (receitaHospitalar > 0n) {
+    const pH = presuncaoHospitalar(t, PRESUNCAO[tributo], dataFim);
+    const presH = mulBp(receitaHospitalar, pH.valor);
+    const acrH = mulBp(excHospitalar, pH.valor, acrescimo);
+    base += presH + acrH;
+    hospitalar.push(
+      linha('PRESUNCAO_HOSPITALAR', `Receita de serviço hospitalar × ${pH.valor / 100}%`, presH, pH.fonte),
+      linha('LC224_ACRESCIMO_HOSPITALAR', `Parcela excedente do serviço hospitalar (${excHospitalar} centavos) × ${pH.valor / 100}% × ${acrescimo / 100}%`, acrH, `${fonteAcr}; IN RFB 2.305/2025 art. 15 §§ 1º II e 6º`),
+    );
+  }
   const memoria = [
     reduzida16
       ? linha('PRESUNCAO_REDUZIDA_16', `Receita de serviço × ${pS.valor / 100}% (prestadora exclusiva, acumulada ≤ limite)`, presS, F_215_10)
@@ -359,7 +420,8 @@ function basePresumido(
     linha('PRESUNCAO_REVENDA', `Receita de revenda × ${pR.valor / 100}%`, presR, pR.fonte),
     linha('LC224_ACRESCIMO_SERVICO', `Parcela excedente do serviço (${excServico} centavos) × ${pS.valor / 100}% × ${acrescimo / 100}%`, acrS, `${fonteAcr}; IN RFB 2.305/2025 art. 15 §§ 1º II e 6º`),
     linha('LC224_ACRESCIMO_REVENDA', `Parcela excedente da revenda (${excRevenda} centavos) × ${pR.valor / 100}% × ${acrescimo / 100}%`, acrR, `${fonteAcr}; IN RFB 2.305/2025 art. 15 §§ 1º II e 6º`),
-    linha('BASE', 'Base de cálculo', base, 'Lei 9.430/1996 art. 25 I'),
+    ...hospitalar,
+    linha('BASE', 'Base de cálculo = Σ presunções + Σ acréscimos da LC 224', base, 'Lei 9.430/1996 art. 25 I'),
   ];
   const imposto = impostoSobreBase(t, tributo, dataFim, base, aliqCsll, meses);
   return { baseCents: base, devidoCents: imposto.devidoCents, memoria: [...memoria, ...imposto.memoria] };
@@ -382,7 +444,7 @@ export function impostoSobreBase(
   if (tributo === 'CSLL') {
     const a = aliqCsll!;
     const v = mulBp(base, a.valor);
-    return { devidoCents: v, memoria: [linha('ALIQUOTA', `Base × ${a.valor / 100}%`, v, a.fonte), linha(codigoDevido, 'CSLL devida', v, a.fonte)] };
+    return { devidoCents: v, memoria: [linha('ALIQUOTA', `Base × ${a.valor / 100}%`, v, a.fonte), linha(codigoDevido, 'CSLL devida = base × alíquota', v, a.fonte)] };
   }
   const aliq = linhaVigente(t, 'IRPJ_ALIQ', dataFim)!;
   const adicAliq = linhaVigente(t, 'IRPJ_ADIC_ALIQ', dataFim)!;
@@ -394,12 +456,25 @@ export function impostoSobreBase(
     memoria: [
       linha('ALIQUOTA', `Base × ${aliq.valor / 100}%`, normal, aliq.fonte),
       linha('ADICIONAL', `${adicAliq.valor / 100}% × (base − ${limiteMes.valor} centavos × ${meses} meses)`, adicional, limiteMes.fonte),
-      linha(codigoDevido, 'IRPJ devido', normal + adicional, aliq.fonte),
+      linha(codigoDevido, 'IRPJ devido = alíquota + adicional', normal + adicional, aliq.fonte),
     ],
   };
 }
 
 const F_215_10 = 'IN RFB 1.700/2017 art. 215 § 10; Lei 9.250/1995 art. 40';
+
+export const HOSPITALAR_INCOMPATIVEL_COM_16 = 'HOSPITALAR_INCOMPATIVEL_COM_16';
+/**
+ * EFICIENCIA-FISCAL PR-5 (item 26; dono, 28/10, lacuna 2): receita a 8 %/12 % com a declaração do 16 % ⇒ 400 — o art. 40 da
+ * Lei 9.250 "não se aplica às pessoas jurídicas que prestam serviços hospitalares" (p.ú.) e a declaração diz o contrário.
+ */
+export function assertHospitalarSem16(receitaHospitalarCents: bigint): void {
+  if (receitaHospitalarCents > 0n) {
+    throw new ValidationError(
+      `${HOSPITALAR_INCOMPATIVEL_COM_16}: há receita de serviço hospitalar (8 %/12 %) no período, mas o perfil fiscal declara prestadora exclusiva de serviços com o 16 % — o 16 % não se aplica a quem presta serviço hospitalar (Lei 9.250/1995 art. 40 parágrafo único). Revise a declaração ou a equiparação dos serviços.`,
+    );
+  }
+}
 const F_215_11 = 'IN RFB 1.700/2017 art. 215 § 11';
 
 /**
@@ -414,6 +489,7 @@ function regra16(
   lc: { vigente: boolean; limiteTrimestreCents: bigint },
 ): { reduzida16?: ParametroApuracao; memoria: MemoriaLinha[]; diferenca: { total: bigint; linhas: MemoriaLinha[] } | null } {
   if (!e.perfil.prestadoraExclusivaServicos) return { memoria: [], diferenca: null };
+  assertHospitalarSem16(e.receitaHospitalarCents ?? 0n);
   if (!e.perfil.declaraNaoProfissaoRegulamentada) {
     throw new ValidationError(
       'declarou prestadora exclusiva de serviços sem confirmar que não é sociedade de profissão legalmente regulamentada nem prestadora de serviço hospitalar ou de transporte (Lei 9.250/1995 art. 40 parágrafo único; F-P16-1).',
@@ -435,7 +511,8 @@ function regra16(
   const limite = linhaVigente(e.tabela, 'RECEITA_LIMITE_REDUZIDA_ANO_CENTS', dataFim)!;
   const acumuladaAnterior = e.anteriores.reduce((s, a) => s + receitaDaMemoria(a), 0n);
   const acumulada = acumuladaAnterior + receitaTrimestre;
-  const memoria = [linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} (limite ${limite.valor} centavos)`, acumulada, F_215_10)];
+  const somados = [...e.anteriores.map((a) => a.periodo), e.periodo].join(', ');
+  const memoria = [linha('RECEITA_ACUMULADA_ANO', `Receita bruta acumulada do ano até ${e.periodo} = Σ receita bruta de ${somados} (limite ${limite.valor} centavos)`, acumulada, F_215_10)];
   if (acumulada <= BigInt(limite.valor)) return { reduzida16: linhaVigente(e.tabela, 'PRESUNCAO_IRPJ_REDUZIDA', dataFim)!, memoria, diferenca: null };
   if (acumuladaAnterior > BigInt(limite.valor)) return { memoria, diferenca: null }; // item 5: o excesso já foi cobrado antes
   return { memoria, diferenca: diferencaPostergada16Trimestral(e) };
@@ -465,7 +542,7 @@ function memoriaDiferencaTrimestral(t: TabelaApuracao, d: { total: bigint; linha
   const mesSeguinte = periodo === 'T04' ? `01/${ano + 1}` : `${String(Number(periodo.slice(1)) * 3 + 1).padStart(2, '0')}/${ano}`;
   return [
     ...d.linhas,
-    linha('DIFERENCA_POSTERGADA', `Diferença do imposto postergado (código de receita ${cod})`, d.total, F_215_11),
+    linha('DIFERENCA_POSTERGADA', `Diferença do imposto postergado = Σ diferenças dos períodos (código de receita ${cod})`, d.total, F_215_11),
     linha('DIFERENCA_POSTERGADA_VENCIMENTO', `Vencimento: último dia útil de ${mesSeguinte}, sem acréscimos no prazo (informativo)`, 0n, 'IN RFB 1.700/2017 art. 215 §§ 12–13'),
   ];
 }
@@ -497,11 +574,14 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
     encerramentoAtividadeEm: e.perfil.encerramentoAtividadeEm,
   });
   const suspenso = e.perfil.lc224AcrescimoSuspenso;
-  const r16 = regra16(e, dataFim, lc);
+  const hosp = hospitalarComTeto(e.receitaHospitalarCents, servico);
+  const r16 = regra16({ ...e, receitaHospitalarCents: hosp }, dataFim, lc);
   const memoria: MemoriaLinha[] = [
-    linha('RECEITA_SERVICO', 'Receita bruta de serviço do trimestre (conta 3.1)', e.receitaServicoCents, 'IN RFB 1.700/2017 art. 215 caput'),
+    linha('RECEITA_SERVICO', 'Receita bruta de serviço do trimestre = max(0, crédito − débito da conta 3.1)', e.receitaServicoCents, 'IN RFB 1.700/2017 art. 215 caput'),
     ...linhaNaoUso(e.receitaNaoUsoCents, 'trimestre'),
-    linha('RECEITA_REVENDA', 'Receita bruta de revenda do trimestre (conta 3.3)', e.receitaRevendaCents, 'IN RFB 1.700/2017 art. 215 caput'),
+    linha('RECEITA_REVENDA', 'Receita bruta de revenda do trimestre = max(0, crédito − débito da conta 3.3)', e.receitaRevendaCents, 'IN RFB 1.700/2017 art. 215 caput'),
+    ...linhaHospitalar(hosp, 'trimestre'),
+    ...linhaServicoComum(hosp, servico, 'trimestre'),
     ...r16.memoria,
     ...lc.memoria,
   ];
@@ -511,7 +591,7 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
     );
   }
   const meses = mesesDoTrimestreEmAtividade(e.ano, e.periodo, e.perfil);
-  const calc = basePresumido(e.tabela, e.tributo, dataFim, servico, e.receitaRevendaCents, lc.excedenteCents, suspenso, aliqCsll, meses, r16.reduzida16);
+  const calc = basePresumido(e.tabela, e.tributo, dataFim, servico, e.receitaRevendaCents, lc.excedenteCents, suspenso, aliqCsll, meses, r16.reduzida16, hosp);
   memoria.push(...calc.memoria);
 
   // § 5º I-b / II-b: recalcula os trimestres anteriores com a parcela excedente' e deduz a diferença no T04.
@@ -529,13 +609,15 @@ export function apurarPresumidoTrimestral(e: EntradaPresumido): ResultadoApuraca
         temLinha(a.memoria, 'LC224_SUSPENSO'), // o trimestre suspenso foi apurado (e é recalculado) sem acréscimo
         aliqCsll,
         mesesDoTrimestreEmAtividade(e.ano, a.periodo, e.perfil),
+        undefined,
+        receitaHospitalarDaMemoria(a.memoria, a.periodo), // item 26: o recálculo do § 5º usa a mesma repartição
       );
       acerto += valorLinha(a.memoria, 'DEVIDO', a.periodo) - recalc.devidoCents;
     }
     memoria.push(
       linha(
         'LC224_ACERTO_T04',
-        `Diferença entre o devido apurado e o recalculado (§ 5º ${lc.t04.ramo}) dos trimestres anteriores, deduzida no último trimestre`,
+        `Σ (devido apurado − devido recalculado) dos trimestres anteriores (§ 5º ${lc.t04.ramo}), deduzida no último trimestre`,
         acerto,
         `${F_15_5} ${lc.t04.ramo} b (P-3: sempre aplicada)`,
       ),
@@ -643,7 +725,7 @@ export function ajustesParteA(
     linha('LUCRO_AJUSTADO', 'Lucro ajustado (LAIR + adições − exclusões)', lucroAjustado, F_M300),
     linha('COMPENSACAO', `Σ linhas P do ${livro}`, compensacao, F_M300),
     linha('COMPENSACAO_TETO', `${teto.valor / 100}% do lucro ajustado`, tetoCents, teto.fonte),
-    linha('BASE', 'Lucro real / base de cálculo (≥ 0)', base, F_M300),
+    linha('BASE', 'Lucro real / base de cálculo = max(0, lucro ajustado − compensação)', base, F_M300),
   ];
   return { base, memoria };
 }
@@ -669,10 +751,10 @@ export function fecharComDeducoes(
   const liquido = devido - deducoesCents - acertoT04;
   const aPagar = maxZero(liquido);
   const saldoNegativo = maxZero(-liquido);
-  memoria.push(linha('A_PAGAR', 'Valor a pagar', aPagar, `código de receita ${codigoReceita.codigo} (${codigoReceita.fonte})`));
+  memoria.push(linha('A_PAGAR', 'Valor a pagar = max(0, devido − deduções − acerto do § 5º)', aPagar, `código de receita ${codigoReceita.codigo} (${codigoReceita.fonte})`));
   if (saldoNegativo > 0n) {
     const fonte = acertoT04 > 0n ? 'IN RFB 2.305/2025 art. 15 § 7º — pedido fora do sistema' : 'F-TA-9 (a) — restituição/compensação fora do sistema';
-    memoria.push(linha('SALDO_NEGATIVO', 'Deduções acima do devido — restituição/compensação fora do sistema', saldoNegativo, fonte));
+    memoria.push(linha('SALDO_NEGATIVO', 'Saldo negativo = max(0, deduções + acerto do § 5º − devido) — restituição/compensação fora do sistema', saldoNegativo, fonte));
   }
   return {
     tributo,
@@ -696,7 +778,9 @@ export function somarDeducoes(tributo: TributoApuracao, deducoes: DeducaoInforma
     .forEach((d, i) => {
       const v = BigInt(d.valorCents);
       total += v;
-      memoria.push(linha(`DEDUCAO_${i + 1}`, `${d.tipo}${d.documento ? ` — ${d.documento}` : ''}`, v, 'Lei 9.430/1996 art. 2º § 4º III; ADR F-X7-11 (a)'));
+      // `tipo/retentor` abre a descrição: é dela que a tabela de correspondência lê a linha da ECF (F-C8-R1 a).
+      const rotulo = d.retentor ? `${d.tipo}/${d.retentor}` : d.tipo;
+      memoria.push(linha(`DEDUCAO_${i + 1}`, `${rotulo}${d.documento ? ` — ${d.documento}` : ''}`, v, 'Lei 9.430/1996 art. 2º § 4º III; ADR F-X7-11 (a)'));
     });
   return total;
 }

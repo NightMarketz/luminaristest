@@ -1,0 +1,1687 @@
+CLÁUSULAS-PADRÃO CONTRATUAIS  |  Google Cloud
+Ir para o conteúdo principal
+Visão geral
+close
+Accelerate your digital transformation
+Whether your business is early in its journey or well on its way to digital transformation, Google Cloud can help solve your toughest challenges.
+Learn more
+Key benefits
+Why Google Cloud
+Top reasons businesses choose us.
+AI and Agents
+Get enterprise-ready AI.
+Multicloud
+Run your apps wherever you need them.
+Global infrastructure
+Build on the same infrastructure as Google.
+Data Cloud
+Make smarter decisions with unified data.
+Modern Infrastructure Cloud
+Next generation of cloud infrastructure.
+Security
+Protect your users, data, and apps.
+Productivity and collaboration
+Connect your teams with AI-powered apps.
+Reports and insights
+Executive insights
+Curated C-suite perspectives.
+Analyst reports
+Read what industry analysts say about us.
+Whitepapers
+Browse and download popular whitepapers.
+Customer stories
+Explore case studies and videos.
+Solutions
+close
+Industry Solutions
+Reduce cost, increase operational agility, and capture new market opportunities.
+Retail
+Analytics and collaboration tools for the retail value chain.
+Consumer Packaged Goods
+Solutions for CPG digital transformation and brand growth.
+Financial Services
+Computing, data management, and analytics tools for financial services.
+Healthcare and Life Sciences
+Advance research at scale and empower healthcare innovation.
+Media and Entertainment
+Solutions for content production and distribution operations.
+Telecommunications
+Hybrid and multi-cloud services to deploy and monetize 5G.
+Games
+AI-driven solutions to build and scale games faster.
+Manufacturing
+Migration and AI tools to optimize the manufacturing value chain.
+Supply Chain and Logistics
+Enable sustainable, efficient, and resilient data-driven operations across supply chain and logistics operations.
+Government
+Data storage, AI, and analytics solutions for government agencies.
+Education
+Teaching tools to provide more engaging learning experiences.
+Not seeing what you're looking for?
+See all industry solutions
+Not seeing what you're looking for?
+See all solutions
+Application Modernization
+Modernize, automate, and scale your application and data portfolio using enterprise AI, intelligent engineering practices, and cloud-native infrastructure.
+Google Cloud Modernize
+Unified program and AI-powered tools for end-to-end cloud migration and modernization.
+Application Modernization with AI
+AI-assisted code refactoring, assessment, and transformation for legacy applications.
+Gemini for business
+Enterprise-ready generative AI and agents to accelerate innovation across your organization.
+AI Hypercomputer
+Integrated supercomputing architecture to train, tune, and serve AI workloads.
+Mainframe Modernization
+Automated tools and AI-driven guidance for moving your mainframe apps to the cloud.
+Database Modernization
+Fully managed database services to migrate, manage, and modernize enterprise data.
+Data Lake Modernization
+Unify and govern multimodal data on an open, high-performance cloud data lake.
+Data Warehouse Modernization
+Migrate and modernize your enterprise data warehouse for serverless analytics and AI.
+APIs
+Unlock legacy applications and build new digital channels using APIs and automation.
+Platform Eng
+Managed services and golden paths to build, manage, and scale internal developer platforms.
+DevOps Best Practices
+Processes and resources for implementing DevOps in your org.
+SRE Principles
+Tools and resources for adopting SRE in your org.
+Artificial Intelligence
+Add intelligence and efficiency to your business with AI and machine learning.
+Gemini for customer experience
+Build and manage agents that live across the entire customer lifecycle.
+Gemini for enterprise
+Unified agentic portfolio for your entire organization.
+AI Commerce Search
+Google-quality search and product recommendations for retailers.
+Google Cloud with Gemini
+AI assistants for application development, coding, and more.
+Physical AI
+Simulate, train, and operate the next generation of robots, autonomous vehicles, industrial devices, and machines.
+APIs and Applications
+Speed up the pace of innovation without coding, using APIs, apps, and automation.
+New Business Channels Using APIs
+Attract and empower an ecosystem of developers and partners.
+Unlocking Legacy Applications Using APIs
+Cloud services for extending and modernizing legacy apps.
+Open Banking APIx
+Simplify and accelerate secure delivery of open banking compliant APIs.
+Data Analytics
+Generate instant insights from data at any scale with a serverless, fully managed analytics platform that significantly simplifies analytics.
+Data Migration
+Migrate and modernize your data warehouse and data lakes with AI-powered migration services.
+Data Lakehouse
+Unify and govern your multimodal data with a high-performance and open data lakehouse.
+Real-time Analytics
+Insights from ingesting, processing, and analyzing event streams.
+Marketing Analytics
+Solutions for collecting, analyzing, and activating customer data.
+Datasets
+Data from Google, public, and commercial providers to enrich your analytics and AI initiatives.
+Business Intelligence
+Solutions for modernizing your BI stack and creating rich data experiences.
+Data Analytics Agents
+Built-in agents for data lifecycle and tools to build your own agents.
+Geospatial Analytics
+A comprehensive platform to solve for geospatial use cases at scale.
+Data Science
+Managed services and integrated workflows to build, manage, and scale data science.
+Databases
+Migrate and manage enterprise data with security, reliability, high availability, and fully managed data services.
+Database Migration
+Guides and tools to simplify your database migration life cycle.
+Database Modernization
+Upgrades to modernize your operational database infrastructure.
+Databases for Games
+Build global, live games with Google Cloud databases.
+Google Cloud Databases
+Database services to migrate, manage, and modernize data.
+Migrate Oracle workloads to Google Cloud
+Rehost, replatform, rewrite your Oracle workloads.
+Open Source Databases
+Fully managed open source databases with enterprise-grade support.
+SQL Server on Google Cloud
+Options for running SQL Server virtual machines on Google Cloud.
+Gemini for Databases
+Supercharge database development and management with AI.
+Infrastructure Modernization
+Migrate core systems rapidly and modernize enterprise workloads with AI-powered infrastructure and automated cloud solutions.
+Google Cloud Modernize
+Unified program and AI-powered tools for end-to-end cloud migration and modernization.
+Gemini for business
+Enterprise-ready generative AI and agents to accelerate innovation across your organization.
+AI Hypercomputer
+Integrated supercomputing architecture to train, tune, and serve AI workloads.
+Rapid Migration and Modernization Program (RaMP)
+End-to-end migration program to simplify and accelerate your path to the cloud.
+Data Center Exits
+Migration solutions for moving VMs, apps, databases, and workloads out of data centers.
+Application Modernization & Migration
+Discovery, assessment, and migration tools for moving and modernizing applications.
+Database Modernization & Migration
+Fully managed database services to migrate, manage, and modernize enterprise data.
+Cross-Cloud Networking
+Simplify hybrid and multicloud networking, and secure your workloads, data, and users.
+High Performance Computing (HPC)
+Compute, storage, and networking options to support any high-performance workload.
+VMware
+Fully managed, native VMware Cloud Foundation software stack on Google Cloud.
+SAP
+Certified infrastructure and AI solutions for running SAP applications and SAP HANA.
+Windows
+Tools, licenses, and partner solutions for running enterprise Windows workloads.
+Productivity and Collaboration
+Change the way teams work with solutions designed for humans and built for impact.
+Google Workspace
+Collaboration and productivity tools for enterprises.
+Google Workspace Essentials
+Secure video meetings and modern collaboration for teams.
+Cloud Identity
+Unified platform for IT admins to manage user devices and apps.
+Chrome Enterprise
+ChromeOS, Chrome Browser, and Chrome devices built for business.
+Security
+Detect, investigate, and respond to online threats to help protect your business.
+Agentic SOC
+Delivering better security outcomes with AI agents.
+Web App and API Protection
+Threat and fraud protection for your web applications and APIs.
+Security and Resilience Framework
+Solutions for each phase of the security and resilience life cycle.
+Risk and compliance as code (RCaC)
+Solution to modernize your governance, risk, and compliance function with automation.
+Software Supply Chain Security
+Solution for improving end-to-end software supply chain security.
+Security Foundation
+Recommended products to help achieve a strong security posture.
+Google Cloud Cybershield™
+Strengthen nationwide cyber defense.
+Startups and SMB
+Accelerate startup and SMB growth with tailored solutions and programs.
+Startup Program
+Get financial, business, and technical support to take your startup to the next level.
+Small and Medium Business
+Explore solutions for web hosting, app development, AI, and analytics.
+Software as a Service
+Build better SaaS products, scale efficiently, and grow your business.
+Products
+close
+Featured Products
+Gemini for business
+Secure platform to discover, create, run, and govern AI agents for employees.
+Gemini platform
+Unified platform for ML models, generative AI, and agent building.
+Compute Engine
+Virtual machines running in Google’s data center.
+Cloud Storage
+Object storage that’s secure, durable, and scalable.
+BigQuery
+Autonomous data to AI platform for analytics and data science.
+Cloud Run
+Fully managed environment for running containerized apps.
+Google Kubernetes Engine
+Managed environment for running containerized apps.
+Looker
+Platform for BI, data applications, and embedded analytics.
+Apigee API Management
+Manage the full life cycle of APIs anywhere with visibility and control.
+Cloud SQL
+Relational database services for MySQL, PostgreSQL and SQL Server.
+Cloud CDN
+Content delivery network for delivering web and video.
+Not seeing what you're looking for?
+See all products (100+)
+AI and Machine Learning
+Gemini platform
+Unified platform for ML models, generative AI, and agent building.
+Gemini for business
+Secure platform to discover, create, run, and govern AI agents for employees.
+Gemini for customer experience
+Build and manage agents that live across the entire customer lifecycle.
+Model Garden
+Single place to discover over 200 models from Google and Google partners.
+Customer Experience Agent Studio
+Build conversational AI with both deterministic and gen AI functionality.
+Agent Search
+Build Google-quality search for your enterprise apps and experiences.
+Speech-to-Text
+Speech recognition and transcription across 125 languages.
+Text-to-Speech
+Speech synthesis in 220+ voices and 40+ languages.
+Translation AI
+Language detection, translation, and glossary support.
+Vision AI
+Custom and pre-trained models to detect emotion, text, and more.
+Contact Center as a Service
+Omnichannel contact center solution that is native to the cloud.
+Not seeing what you're looking for?
+See all AI and machine learning products
+Business Intelligence
+Looker
+Platform for BI, data applications, and embedded analytics.
+Data Studio
+Interactive data suite for dashboarding, reporting, and analytics.
+Compute
+Compute Engine
+Virtual machines running in Google’s data center.
+App Engine
+Serverless application platform for apps and back ends.
+Cloud GPUs
+GPUs for ML, scientific computing, and 3D visualization.
+Migrate to Virtual Machines
+Server and virtual machine migration to Compute Engine.
+Spot VMs
+Compute instances for batch jobs and fault-tolerant workloads.
+Batch
+Fully managed service for scheduling batch jobs.
+Sole-Tenant Nodes
+Dedicated hardware for compliance, licensing, and management.
+Bare Metal
+Infrastructure to run specialized workloads on Google Cloud.
+Recommender
+Usage recommendations for Google Cloud products and services.
+VMware Engine
+Fully managed, native VMware Cloud Foundation software stack.
+Cloud Run
+Fully managed environment for running containerized apps.
+Not seeing what you're looking for?
+See all compute products
+Containers
+Google Kubernetes Engine
+Managed environment for running containerized apps.
+Cloud Run
+Fully managed environment for running containerized apps.
+Cloud Build
+Solution for running build steps in a Docker container.
+Artifact Registry
+Package manager for build artifacts and dependencies.
+Cloud Code
+IDE support to write, run, and debug Kubernetes applications.
+Cloud Deploy
+Fully managed continuous delivery to GKE and Cloud Run.
+Migrate to Containers
+Components for migrating VMs into system containers on GKE.
+Deep Learning Containers
+Containers with data science frameworks, libraries, and tools.
+Knative
+Components to create Kubernetes-native cloud-based software.
+Data Analytics
+BigQuery
+Autonomous data to AI platform for analytics and data science.
+Managed Service for Apache Spark
+Zero-ops serverless or managed clusters, accelerated by Lightning Engine.
+Dataflow
+Real-time analytics for stream and batch processing.
+Looker
+Platform for BI, data applications, and embedded analytics.
+Lakehouse
+Open lakehouse platform with enterprise storage and performance capabilities.
+Pub/Sub
+Messaging service for event ingestion and delivery.
+Managed Service for Apache Airflow
+Workflow orchestration service built on Apache Airflow.
+Knowledge Catalog
+Always-on catalog for AI that provides universal context for agents.
+Data Analytics Agents
+Built-in agents for data lifecycle and tools to build your own agents.
+Data Analytics Migration Services
+Free-to-use, cloud-native and AI-powered data migration services.
+Managed Service for Apache Kafka
+Managed Kafka service to operate highly available Apache Kafka clusters.
+Not seeing what you're looking for?
+See all data analytics products
+Databases
+AlloyDB for PostgreSQL
+Fully managed, PostgreSQL-compatible database for enterprise workloads.
+Cloud SQL
+Fully managed database for MySQL, PostgreSQL, and SQL Server.
+Firestore
+Highly scalable and serverless NoSQL document database, with MongoDB compatibility.
+Spanner
+Cloud-native relational database with unlimited scale and 99.999% availability.
+Bigtable
+Cloud-native wide-column database for large-scale, low-latency workloads.
+Datastream
+Serverless change data capture and replication service.
+Database Migration Service
+Serverless, minimal downtime migrations to Cloud SQL.
+Bare Metal Solution
+Fully managed infrastructure for your Oracle workloads.
+Memorystore
+Fully managed Redis and Memcached for sub-millisecond data access.
+Developer Tools
+Artifact Registry
+Universal package manager for build artifacts and dependencies.
+Cloud Code
+IDE support to write, run, and debug Kubernetes applications.
+Cloud Build
+Continuous integration and continuous delivery platform.
+Cloud Deploy
+Fully managed continuous delivery to GKE and Cloud Run.
+Cloud Deployment Manager
+Service for creating and managing Google Cloud resources.
+Cloud SDK
+Command-line tools and libraries for Google Cloud.
+Cloud Scheduler
+Cron job scheduler for task automation and management.
+Cloud Source Repositories
+Private Git repository to store, manage, and track code.
+Infrastructure Manager
+Automate infrastructure management with Terraform.
+Cloud Workstations
+Managed and secure development environments in the cloud.
+Gemini Code Assist
+AI-powered assistant available across Google Cloud and your IDE.
+Not seeing what you're looking for?
+See all developer tools
+Distributed Cloud
+Google Distributed Cloud Connected
+Distributed cloud services for edge workloads.
+Google Distributed Cloud Air-gapped
+Distributed cloud for air-gapped workloads.
+Hybrid and Multicloud
+Google Kubernetes Engine
+Managed environment for running containerized apps.
+Apigee API Management
+API management, development, and security platform.
+Migrate to Containers
+Tool to move workloads and existing applications to GKE.
+Cloud Build
+Service for executing builds on Google Cloud infrastructure.
+Observability
+Monitoring, logging, and application performance suite.
+Cloud Service Mesh
+Fully managed service mesh based on Envoy and Istio.
+Google Distributed Cloud
+Fully managed solutions for the edge and data centers.
+Industry Specific
+Anti Money Laundering AI
+Detect suspicious, potential money laundering activity with AI.
+Cloud Healthcare API
+Solution for bridging existing care systems and apps on Google Cloud.
+Device Connect for Fitbit
+Gain a 360-degree patient view with connected Fitbit data on Google Cloud.
+Telecom Network Automation
+Ready to use cloud-native automation for telecom networks.
+Telecom Data Fabric
+Telecom data management and analytics with an automated approach.
+Telecom Subscriber Insights
+Ingests data to improve subscriber acquisition and retention.
+Spectrum Access System (SAS)
+Controls fundamental access to the Citizens Broadband Radio Service (CBRS).
+Integration Services
+Application Integration
+Connect to 3rd party apps and enable data consistency without code.
+Workflows
+Workflow orchestration for serverless products and API services.
+Apigee API Management
+Manage the full life cycle of APIs anywhere with visibility and control.
+Cloud Tasks
+Task management service for asynchronous task execution.
+Cloud Scheduler
+Cron job scheduler for task automation and management.
+Managed Service for Apache Spark
+Zero-ops serverless or managed clusters, accelerated by Lightning Engine.
+Cloud Data Fusion
+Data integration for building and managing data pipelines.
+Managed Service for Apache Airflow
+Workflow orchestration service built on Apache Airflow.
+Pub/Sub
+Messaging service for event ingestion and delivery.
+Eventarc
+Build an event-driven architecture that can connect any service.
+Management Tools
+Cloud Shell
+Interactive shell environment with a built-in command line.
+Cloud console
+Web-based interface for managing and monitoring cloud apps.
+Cloud Endpoints
+Deployment and development management for APIs on Google Cloud.
+Cloud IAM
+Permissions management system for Google Cloud resources.
+Cloud APIs
+Programmatic interfaces for Google Cloud services.
+Service Catalog
+Service catalog for admins managing internal enterprise solutions.
+Cost Management
+Tools for monitoring, controlling, and optimizing your costs.
+Observability
+Monitoring, logging, and application performance suite.
+Carbon Footprint
+Dashboard to view and export Google Cloud carbon emissions reports.
+Config Connector
+Kubernetes add-on for managing Google Cloud resources.
+Active Assist
+Tools for easily managing performance, security, and cost.
+Not seeing what you're looking for?
+See all management tools
+Maps and Geospatial
+Earth Engine
+Geospatial platform for Earth observation data and analysis.
+Google Maps Platform
+Create immersive location experiences and improve business operations.
+Media Services
+Cloud CDN
+Content delivery network for serving web and video content.
+Live Stream API
+Service to convert live video and package for streaming.
+OpenCue
+Open source render manager for visual effects and animation.
+Transcoder API
+Convert video files and package them for optimized delivery.
+Video Stitcher API
+Service for dynamic or server side ad insertion.
+Migration
+Migration Center
+Unified platform for migrating and modernizing with Google Cloud.
+Application Migration
+App migration to the cloud for low-cost refresh cycles.
+Migrate to Virtual Machines
+Components for migrating VMs and physical servers to Compute Engine.
+Cloud Foundation Toolkit
+Reference templates for Deployment Manager and Terraform.
+Database Migration Service
+Serverless, minimal downtime migrations to Cloud SQL.
+Migrate to Containers
+Components for migrating VMs into system containers on GKE.
+Data Analytics Migration Services
+Streamlined data warehouse and data lake migration tooling and incentives.
+Rapid Migration and Modernization Program
+End-to-end migration program to simplify your path to the cloud.
+Transfer Appliance
+Storage server for moving large volumes of data to Google Cloud.
+Storage Transfer Service
+Data transfers from online and on-premises sources to Cloud Storage.
+VMware Engine
+Migrate and run your VMware workloads natively on Google Cloud.
+Networking
+Cloud Armor
+Security policies and defense against web and DDoS attacks.
+Cloud CDN and Media CDN
+Content delivery network for serving web and video content.
+Cloud DNS
+Domain name system for reliable and low-latency name lookups.
+Cloud Load Balancing
+Service for distributing traffic across applications and regions.
+Cloud NAT
+NAT service for giving private instances internet access.
+Cloud Connectivity
+Connectivity options for VPN, peering, and enterprise needs.
+Network Connectivity Center
+Connectivity management to help simplify and scale networks.
+Network Intelligence Center
+Network monitoring, verification, and optimization platform.
+Network Service Tiers
+Cloud network options based on performance, availability, and cost.
+Virtual Private Cloud
+Single VPC for an entire organization, isolated within projects.
+Private Service Connect
+Secure connection between your VPC and services.
+Not seeing what you're looking for?
+See all networking products
+Operations
+Cloud Logging
+Google Cloud audit, platform, and application logs management.
+Cloud Monitoring
+Infrastructure and application health with rich metrics.
+Error Reporting
+Application error identification and analysis.
+Managed Service for Prometheus
+Fully-managed Prometheus on Google Cloud.
+Cloud Trace
+Tracing system collecting latency data from applications.
+Cloud Profiler
+CPU and heap profiler for analyzing application performance.
+Cloud Quotas
+Manage quotas for all Google Cloud services.
+Productivity and Collaboration
+AppSheet
+No-code development platform to build and extend applications.
+AppSheet Automation
+Build automations and applications on a unified platform.
+Gemini for business
+Secure platform to discover, create, run, and govern AI agents for employees.
+Google Workspace
+Collaboration and productivity tools for individuals and organizations.
+Google Workspace Essentials
+Secure video meetings and modern collaboration for teams.
+Cloud Identity
+Unified platform for IT admins to manage user devices and apps.
+Chrome Enterprise
+ChromeOS, Chrome browser, and Chrome devices built for business.
+Security and Identity
+Cloud IAM
+Permissions management system for Google Cloud resources.
+Sensitive Data Protection
+Discover, classify, and protect your valuable data assets.
+Mandiant Managed Defense
+Find and eliminate threats with confidence 24x7.
+Google Threat Intelligence
+Know who’s targeting you.
+Security Command Center
+Platform for defending against threats to your Google Cloud assets.
+Cloud Key Management
+Manage encryption keys on Google Cloud.
+Mandiant Incident Response
+Minimize the impact of a breach.
+Chrome Enterprise Premium
+Get secure enterprise browsing with extensive endpoint visibility.
+Assured Workloads
+Compliance and security controls for sensitive workloads.
+Google Security Operations
+Detect, investigate, and respond to cyber threats.
+Mandiant Consulting
+Get expert guidance before, during, and after an incident.
+Not seeing what you're looking for?
+See all security and identity products
+Serverless
+Cloud Run
+Fully managed environment for running containerized apps.
+Cloud Functions
+Platform for creating functions that respond to cloud events.
+App Engine
+Serverless application platform for apps and back ends.
+Workflows
+Workflow orchestration for serverless products and API services.
+API Gateway
+Develop, deploy, secure, and manage APIs with a fully managed gateway.
+Storage
+Cloud Storage
+Object storage that’s secure, durable, and scalable.
+Block Storage
+High-performance storage for AI, analytics, databases, and enterprise applications.
+Filestore
+File storage that is highly scalable and secure.
+Persistent Disk
+Block storage for virtual machine instances running on Google Cloud.
+Cloud Storage for Firebase
+Object storage for storing and serving user-generated content.
+Local SSD
+Block storage that is locally attached for high-performance needs.
+Storage Transfer Service
+Data transfers from online and on-premises sources to Cloud Storage.
+Google Cloud Managed Lustre
+High performance managed parallel file service.
+Google Cloud NetApp Volumes
+File storage service for NFS, SMB, and multi-protocol environments.
+Backup and DR Service
+Service for centralized, application-consistent data protection.
+Web3
+Blockchain Node Engine
+Fully managed node hosting for developing on the blockchain.
+Blockchain RPC
+Enterprise-grade RPC for building on the blockchain.
+Web3
+Blockchain Node Engine
+Fully managed node hosting for developing on the blockchain.
+Blockchain RPC
+Enterprise-grade RPC for building on the blockchain.
+Pricing
+close
+Save money with our transparent approach to pricing
+Google Cloud's pay-as-you-go pricing offers automatic savings based on monthly usage and discounted rates for prepaid resources. Contact us today to get a quote.
+Request a quote
+Pricing overview and tools
+Google Cloud pricing
+Pay only for what you use with no lock-in.
+Pricing calculator
+Calculate your cloud savings.
+Google Cloud free tier
+Explore products with free monthly usage.
+Cost optimization framework
+Get best practices to optimize workload costs.
+Cost management tools
+Tools to monitor and control your costs.
+Product-specific Pricing
+Compute Engine
+Cloud SQL
+Google Kubernetes Engine
+Cloud Storage
+BigQuery
+See full price list with 100+ products
+Resources
+close
+Learn & build
+Google Cloud Free Program
+$300 in free credits and 20+ free products.
+Solution Generator
+Get AI generated solution recommendations.
+Quickstarts
+Get tutorials and walkthroughs.
+Blog
+Read our latest product news and stories.
+Learning Hub
+Grow your career with role-based training.
+Google Cloud certification
+Prepare and register for certifications.
+Cloud computing basics
+Learn more about cloud computing basics.
+Cloud Architecture Center
+Get reference architectures and best practices.
+Connect
+Innovators
+Join Google Cloud's developer program.
+Developer Center
+Stay in the know and stay connected.
+Events and webinars
+Browse upcoming and on demand events.
+Google Cloud Community
+Ask questions, find answers, and connect.
+Consulting and Partners
+Google Cloud Consulting
+Work with our experts on cloud projects.
+Google Cloud Marketplace
+Deploy ready-to-go solutions in a few clicks.
+Find a partner
+Explore the benefits of working with a partner.
+Google Cloud partners
+Learn about the ecosystem and resources.
+Docs
+Suporte
+/
+Docs
+Suporte
+English
+Deutsch
+Español – América Latina
+Français
+Português – Brasil
+中文 – 简体
+日本語
+한국어
+Console
+Fazer login
+Contact Us
+Start free
+Visão geral
+Mais
+Solutions
+Mais
+Products
+Mais
+Pricing
+Mais
+Resources
+Mais
+Docs
+Suporte
+Console
+Contact Us
+Start free
+Accelerate your digital transformation
+Learn more
+Key benefits
+Why Google Cloud
+AI and Agents
+Multicloud
+Global infrastructure
+Data Cloud
+Modern Infrastructure Cloud
+Security
+Productivity and collaboration
+Reports and insights
+Executive insights
+Analyst reports
+Whitepapers
+Customer stories
+Industry Solutions
+Retail
+Consumer Packaged Goods
+Financial Services
+Healthcare and Life Sciences
+Media and Entertainment
+Telecommunications
+Games
+Manufacturing
+Supply Chain and Logistics
+Government
+Education
+See all industry solutions
+See all solutions
+Application Modernization
+Google Cloud Modernize
+Application Modernization with AI
+Gemini for business
+AI Hypercomputer
+Mainframe Modernization
+Database Modernization
+Data Lake Modernization
+Data Warehouse Modernization
+APIs
+Platform Eng
+DevOps Best Practices
+SRE Principles
+Artificial Intelligence
+Gemini for customer experience
+Gemini for enterprise
+AI Commerce Search
+Google Cloud with Gemini
+Physical AI
+APIs and Applications
+New Business Channels Using APIs
+Unlocking Legacy Applications Using APIs
+Open Banking APIx
+Data Analytics
+Data Migration
+Data Lakehouse
+Real-time Analytics
+Marketing Analytics
+Datasets
+Business Intelligence
+Data Analytics Agents
+Geospatial Analytics
+Data Science
+Databases
+Database Migration
+Database Modernization
+Databases for Games
+Google Cloud Databases
+Migrate Oracle workloads to Google Cloud
+Open Source Databases
+SQL Server on Google Cloud
+Gemini for Databases
+Infrastructure Modernization
+Google Cloud Modernize
+Gemini for business
+AI Hypercomputer
+Rapid Migration and Modernization Program (RaMP)
+Data Center Exits
+Application Modernization & Migration
+Database Modernization & Migration
+Cross-Cloud Networking
+High Performance Computing (HPC)
+VMware
+SAP
+Windows
+Productivity and Collaboration
+Google Workspace
+Google Workspace Essentials
+Cloud Identity
+Chrome Enterprise
+Security
+Agentic SOC
+Web App and API Protection
+Security and Resilience Framework
+Risk and compliance as code (RCaC)
+Software Supply Chain Security
+Security Foundation
+Google Cloud Cybershield™
+Startups and SMB
+Startup Program
+Small and Medium Business
+Software as a Service
+Featured Products
+Gemini for business
+Gemini platform
+Compute Engine
+Cloud Storage
+BigQuery
+Cloud Run
+Google Kubernetes Engine
+Looker
+Apigee API Management
+Cloud SQL
+Cloud CDN
+See all products (100+)
+AI and Machine Learning
+Gemini platform
+Gemini for business
+Gemini for customer experience
+Model Garden
+Customer Experience Agent Studio
+Agent Search
+Speech-to-Text
+Text-to-Speech
+Translation AI
+Vision AI
+Contact Center as a Service
+See all AI and machine learning products
+Business Intelligence
+Looker
+Data Studio
+Compute
+Compute Engine
+App Engine
+Cloud GPUs
+Migrate to Virtual Machines
+Spot VMs
+Batch
+Sole-Tenant Nodes
+Bare Metal
+Recommender
+VMware Engine
+Cloud Run
+See all compute products
+Containers
+Google Kubernetes Engine
+Cloud Run
+Cloud Build
+Artifact Registry
+Cloud Code
+Cloud Deploy
+Migrate to Containers
+Deep Learning Containers
+Knative
+Data Analytics
+BigQuery
+Managed Service for Apache Spark
+Dataflow
+Looker
+Lakehouse
+Pub/Sub
+Managed Service for Apache Airflow
+Knowledge Catalog
+Data Analytics Agents
+Data Analytics Migration Services
+Managed Service for Apache Kafka
+See all data analytics products
+Databases
+AlloyDB for PostgreSQL
+Cloud SQL
+Firestore
+Spanner
+Bigtable
+Datastream
+Database Migration Service
+Bare Metal Solution
+Memorystore
+Developer Tools
+Artifact Registry
+Cloud Code
+Cloud Build
+Cloud Deploy
+Cloud Deployment Manager
+Cloud SDK
+Cloud Scheduler
+Cloud Source Repositories
+Infrastructure Manager
+Cloud Workstations
+Gemini Code Assist
+See all developer tools
+Distributed Cloud
+Google Distributed Cloud Connected
+Google Distributed Cloud Air-gapped
+Hybrid and Multicloud
+Google Kubernetes Engine
+Apigee API Management
+Migrate to Containers
+Cloud Build
+Observability
+Cloud Service Mesh
+Google Distributed Cloud
+Industry Specific
+Anti Money Laundering AI
+Cloud Healthcare API
+Device Connect for Fitbit
+Telecom Network Automation
+Telecom Data Fabric
+Telecom Subscriber Insights
+Spectrum Access System (SAS)
+Integration Services
+Application Integration
+Workflows
+Apigee API Management
+Cloud Tasks
+Cloud Scheduler
+Managed Service for Apache Spark
+Cloud Data Fusion
+Managed Service for Apache Airflow
+Pub/Sub
+Eventarc
+Management Tools
+Cloud Shell
+Cloud console
+Cloud Endpoints
+Cloud IAM
+Cloud APIs
+Service Catalog
+Cost Management
+Observability
+Carbon Footprint
+Config Connector
+Active Assist
+See all management tools
+Maps and Geospatial
+Earth Engine
+Google Maps Platform
+Media Services
+Cloud CDN
+Live Stream API
+OpenCue
+Transcoder API
+Video Stitcher API
+Migration
+Migration Center
+Application Migration
+Migrate to Virtual Machines
+Cloud Foundation Toolkit
+Database Migration Service
+Migrate to Containers
+Data Analytics Migration Services
+Rapid Migration and Modernization Program
+Transfer Appliance
+Storage Transfer Service
+VMware Engine
+Networking
+Cloud Armor
+Cloud CDN and Media CDN
+Cloud DNS
+Cloud Load Balancing
+Cloud NAT
+Cloud Connectivity
+Network Connectivity Center
+Network Intelligence Center
+Network Service Tiers
+Virtual Private Cloud
+Private Service Connect
+See all networking products
+Operations
+Cloud Logging
+Cloud Monitoring
+Error Reporting
+Managed Service for Prometheus
+Cloud Trace
+Cloud Profiler
+Cloud Quotas
+Productivity and Collaboration
+AppSheet
+AppSheet Automation
+Gemini for business
+Google Workspace
+Google Workspace Essentials
+Cloud Identity
+Chrome Enterprise
+Security and Identity
+Cloud IAM
+Sensitive Data Protection
+Mandiant Managed Defense
+Google Threat Intelligence
+Security Command Center
+Cloud Key Management
+Mandiant Incident Response
+Chrome Enterprise Premium
+Assured Workloads
+Google Security Operations
+Mandiant Consulting
+See all security and identity products
+Serverless
+Cloud Run
+Cloud Functions
+App Engine
+Workflows
+API Gateway
+Storage
+Cloud Storage
+Block Storage
+Filestore
+Persistent Disk
+Cloud Storage for Firebase
+Local SSD
+Storage Transfer Service
+Google Cloud Managed Lustre
+Google Cloud NetApp Volumes
+Backup and DR Service
+Web3
+Blockchain Node Engine
+Blockchain RPC
+Web3
+Blockchain Node Engine
+Blockchain RPC
+Save money with our transparent approach to pricing
+Request a quote
+Pricing overview and tools
+Google Cloud pricing
+Pricing calculator
+Google Cloud free tier
+Cost optimization framework
+Cost management tools
+Product-specific Pricing
+Compute Engine
+Cloud SQL
+Google Kubernetes Engine
+Cloud Storage
+BigQuery
+See full price list with 100+ products
+Learn & build
+Google Cloud Free Program
+Solution Generator
+Quickstarts
+Blog
+Learning Hub
+Google Cloud certification
+Cloud computing basics
+Cloud Architecture Center
+Connect
+Innovators
+Developer Center
+Events and webinars
+Google Cloud Community
+Consulting and Partners
+Google Cloud Consulting
+Google Cloud Marketplace
+Find a partner
+Google Cloud partners
+Home
+Mantenha tudo organizado com as coleções
+Salve e categorize o conteúdo com base nas suas preferências.
+Back to Google Cloud Terms Directory
+Current
+CLÁUSULAS-PADRÃO CONTRATUAIS
+Seção I - Informações Gerais
+CLÁUSULA 1. Identificação das partes
+1.1. Pelo presente instrumento contratual, o Exportador e o Importador
+(doravante, Partes), abaixo identificados, resolvem adotar as cláusulas-padrão
+contratuais (doravante Cláusulas) aprovadas pela Autoridade Nacional de
+Proteção de Dados (ANPD), para reger a Transferência Internacional de Dados
+descrita na Cláusula 2, em conformidade com as disposições da
+Legislação Nacional.
+Nome: Cliente ou Parceiro, conforme aplicável
+Qualificação: Conforme especificado no Contrato. Para fins destas
+Cláusulas, “Contrato” significa o contrato entre Exportador e
+Importador ao qual essas Cláusulas se integram.
+Endereço principal: Conforme especificado no Contrato
+Endereço de e-mail: Conforme especificado no Contrato
+Contato para o Titular: Os detalhes de contato do Exportador
+estão especificados no Contrato.
+Outras informações: Não aplicável
+Exportador/Controlador
+Nome: Google
+Qualificação: Conforme especificado no Contrato
+Endereço principal: Conforme especificado no Contrato
+Endereço de e-mail: Conforme especificado no Contrato
+Contato para o Titular: O titular dos dados pode entrar em
+contato com a equipe de proteção de dados
+aqui.
+Outras informações: Não aplicável
+Importador/Operador
+CLÁUSULA 2. Objeto
+2.1. Estas Cláusulas se aplicam às Transferências Internacionais de Dados
+do Exportador para o Importador, conforme a descrição abaixo.
+Descrição da transferência internacional de dados: O Importador fornece os
+Serviços ao Exportador de acordo com o Contrato. Esses Serviços são descritos
+nos Contratos, incluindo no Apêndice 4 (Produtos Específicos) do Adendo de
+Processamento de Dados de Cloud (Clientes) ou do Adendo de Processamento de
+Dados de Cloud (Parceiros) (conforme aplicável, o "CDPA") incorporado a
+tais Contratos.
+Principais finalidades da transferência: O Importador tratará os
+dados pessoais para fornecer, proteger e monitorar os Serviços e
+quaisquer SST aplicáveis, de acordo com o Contrato.
+Categorias de dados pessoais transferidos: Os dados pessoais
+transferidos podem incluir, por exemplo:
+Dados pessoais, incluindo qualquer informação que identifique
+o titular dos dados e suas características pessoais, incluindo:
+nome, endereço, dados de contato, idade, data de nascimento,
+sexo e descrição física.
+Dados profissionais, incluindo informações relacionadas com o
+emprego do titular dos dados, incluindo histórico profissional
+e de carreira, detalhes sobre recrutamento e rescisão, registos
+de assiduidade, avaliações de desempenho, registros de formação e
+registros de segurança.
+Dados financeiros, incluindo informações relacionadas com as
+finanças do titular dos dados, incluindo rendimentos, salário,
+bens e investimentos, pagamentos, solvabilidade, empréstimos,
+benefícios, subsídios, dados de seguros e informações
+sobre pensões.
+Detalhes sobre educação e treinamento, incluindo informações
+relacionadas à educação e qualquer treinamento profissional do
+titular dos dados, incluindo registros acadêmicos, qualificações,
+habilidades, registros de treinamento, experiência profissional,
+registros de alunos e estudantes.
+Dados pessoais emitidos como identificador por uma autoridade
+pública, incluindo dados do passaporte, números de segurança
+social, números de cartão de identidade, dados da carta de
+condução.
+Família, estilo de vida e circunstâncias sociais, incluindo
+qualquer informação relacionada com a família do titular dos
+dados e o estilo de vida e circunstâncias sociais do titular dos
+dados, incluindo dados sobre a família e outros membros da
+família, hábitos, habitação, dados de viagens, atividades de
+lazer e filiação em organizações de caridade ou voluntárias.
+Os dados pessoais transferidos podem incluir Dados
+Pessoais Sensíveis.
+Período de armazenamento dos dados: O Importador armazenará os
+dados pessoais transferidos até sua eliminação, de acordo com as
+disposições do Cloud Data Processing Addendum ("CDPA") (Clientes)
+ou CDPA (Parceiros), conforme aplicável.
+Outras informações: Não aplicável.
+CLÁUSULA 3. Transferências Posteriores
+OPÇÃO A. 3.1. O Importador não poderá realizar Transferência Posterior dos
+Dados Pessoais objeto da Transferência Internacional de Dados regida por
+estas Cláusulas, salvo nas hipóteses previstas no item 18.3.
+CLÁUSULA 4. Responsabilidades das Partes
+4.1. Sem prejuízo do dever de assistência mútua e das obrigações gerais das
+Partes, caberá à Parte Designada abaixo, na condição de Controlador,
+a responsabilidade pelo cumprimento das seguintes obrigações previstas
+nestas Cláusulas:
+(a) Responsável por publicar o documento
+previsto na Cláusula 14;
+(x) Exportador ( ) Importador
+(b) Responsável por atender às solicitações
+de titulares de que trata a Cláusula 15:
+(x) Exportador ( ) Importador
+(c) Responsável por realizar a comunicação de
+incidente de segurança prevista na Cláusula 16:
+(x) Exportador ( ) Importador
+4.2. Para os fins destas Cláusulas, verificado, posteriormente, que a
+Parte Designada na forma do item 4.1. atua como Operador, o Controlador
+permanecerá responsável:
+(a) pelo cumprimento das obrigações previstas
+nas Cláusulas 14, 15 e 16 e demais disposições estabelecidas na
+Legislação Nacional, especialmente em caso de omissão ou descumprimento das
+obrigações pela Parte Designada;
+(b) pelo atendimento às determinações da ANPD; e
+(c) pela garantia dos direitos dos Titulares
+e pela reparação dos danos causados, observado o disposto na Cláusula 17.
+4.3. Caso verificada a equiparação a Controlador de que trata o item 4.2,
+caberá ao Exportador o cumprimento das obrigações previstas nas
+Cláusulas 14, 15 e 16.
+4.4. Ressalvado o disposto nos itens 4.2. e 4.3, não se aplica às Partes,
+na condição de Operadores, o disposto nas Cláusulas 14, 15 e 16.
+4.5. As Partes fornecerão, em qualquer hipótese, todas as informações de
+que dispuserem e que se demonstrarem necessárias para que o Terceiro
+Controlador possa atender a determinações da ANPD e cumprir adequadamente
+obrigações previstas na Legislação Nacional relacionadas à transparência,
+ao atendimento a direitos dos titulares e à comunicação de incidentes
+de segurança à ANPD.
+4.6. As Partes devem promover assistência mútua com a finalidade de
+atender às solicitações dos Titulares.
+4.7. Em caso de recebimento de solicitação de Titular, a Parte deverá:
+(a) atender à solicitação, quando dispuser das
+informações necessárias;
+(b) informar ao Titular o canal de atendimento
+disponibilizado pelo Terceiro Controlador; ou
+(c) encaminhar a solicitação para o Terceiro
+Controlador o quanto antes, a fim de viabilizar a resposta no prazo previsto
+na Legislação Nacional.
+4.8. As Partes devem manter o registro de incidentes de segurança com
+dados pessoais, nos termos da Legislação Nacional.
+Seção II - Cláusulas Mandatórias
+CLÁUSULA 5. Finalidade
+5.1. Estas Cláusulas se apresentam como mecanismo viabilizador do fluxo
+internacional seguro de dados pessoais, estabelecem garantias mínimas e
+condições válidas para a realização de Transferência Internacional de Dados
+e visam garantir a adoção das salvaguardas adequadas para o cumprimento dos
+princípios, dos direitos do Titular e do regime de proteção de dados
+previstos na Legislação Nacional.
+CLÁUSULA 6. Definições
+6.1. Para os fins destas Cláusulas, serão consideradas as definições do art.
+5° da Lei nº 13.709, de 14 de agosto de 2018, e do art. 3º do Regulamento
+de Transferência Internacional de Dados Pessoais, sem prejuízo de outros
+atos normativos expedidos pela ANPD. As Partes concordam, ainda,
+em considerar os termos e seus respectivos significados, conforme
+exposto a seguir:
+(a) Agentes de tratamento: o controlador
+e o operador;
+(b) ANPD: Autoridade Nacional de Proteção
+de Dados;
+(c) Cláusulas: as cláusulas-padrão contratuais
+aprovadas pela ANPD, que integram as Seções I, II e III;
+(d) Contrato Coligado: instrumento contratual
+firmado entre as Partes ou, pelo menos, entre uma destas e um terceiro,
+incluindo um Terceiro Controlador, que possua propósito comum, vinculação
+ou relação de dependência com o contrato que rege a Transferência
+Internacional de Dados;
+(e) Controlador: Parte ou terceiro
+("Terceiro Controlador") a quem compete as decisões referentes ao
+tratamento de Dados Pessoais;
+(f) Dado Pessoal: informação relacionada a
+pessoa natural identificada ou identificável;
+(g) Dado Pessoal Sensível: dado pessoal sobre
+origem racial ou étnica, convicção religiosa, opinião política, filiação a
+sindicato ou a organização de caráter religioso, filosófico ou político,
+dado referente à saúde ou à vida sexual, dado genético ou biométrico, quando
+vinculado a uma pessoa natural;
+(h) Eliminação: exclusão de dado ou de conjunto
+de dados armazenados em banco de dados, independentemente do
+procedimento empregado;
+(i) Exportador: agente de tratamento,
+localizado no território nacional ou em país estrangeiro, que transfere dados
+pessoais para Importador;
+(j) Importador: agente de tratamento,
+localizado em país estrangeiro ou que seja organismo internacional,
+que recebe dados pessoais transferidos por Exportador;
+(k) Legislação Nacional: conjunto de
+dispositivos constitucionais, legais e regulamentares brasileiros a
+respeito da proteção de Dados Pessoais, incluindo a Lei nº 13.709,
+de 14 de agosto de 2018, o Regulamento de Transferência Internacional de
+Dados e outros atos normativos expedidos pela ANPD;
+(l) Lei de Arbitragem: Lei nº 9.307,
+de 23 de setembro de 1996;
+(m) Medidas de Segurança: medidas técnicas
+e administrativas adotadas para proteger os dados pessoais de acessos não
+autorizados e de situações acidentais ou ilícitas de destruição, perda,
+alteração, comunicação ou difusão;
+(n) Órgão de Pesquisa: órgão ou entidade da
+administração pública direta ou indireta ou pessoa jurídica de direito
+privado sem fins lucrativos legalmente constituída sob as leis brasileiras,
+com sede e foro no País, que inclua em sua missão institucional ou em seu
+objetivo social ou estatutário a pesquisa básica ou aplicada de caráter
+histórico, científico, tecnológico ou estatístico;
+(o) Operador: Parte ou terceiro, incluindo um
+Subcontratado, que realiza o tratamento de Dados Pessoais
+em nome do Controlador;
+(p) Parte Designada: Parte do contrato
+designada, nos termos da Cláusula 4 ("Opção A"), para cumprir, na condição
+de Controlador, obrigações específicas relativas à transparência, direitos
+dos Titulares e comunicação de incidentes de segurança;
+(q) Partes: Exportador e Importador;
+(r) Solicitação de Acesso: solicitação de
+atendimento obrigatório, por força de lei, regulamento ou determinação de
+autoridade pública, para conceder acesso aos Dados Pessoais objeto da
+Transferência Internacional de Dados regida por estas Cláusulas;
+(s) Subcontratado: agente de tratamento
+contratado pelo Importador, sem vínculo com o Exportador, para realizar
+tratamento de Dados Pessoais após uma Transferência Internacional
+de Dados;
+(t) Terceiro Controlador: Controlador dos Dados
+Pessoais que fornece instruções por escrito para a realização, em seu nome,
+da Transferência Internacional de Dados entre Operadores regida por estas
+Cláusulas, na forma da Cláusula 4 ("Opção B");
+(u) Titular: pessoa natural a quem se referem
+os Dados Pessoais que são objeto da Transferência Internacional de Dados
+regida por estas Cláusulas;
+(v) Transferência: modalidade de tratamento
+por meio da qual um agente de tratamento transmite, compartilha ou
+disponibiliza acesso a Dados Pessoais a outro agente de tratamento;
+(w) Transferência Internacional de Dados:
+transferência de Dados Pessoais para país estrangeiro ou organismo
+internacional do qual o país seja membro; e
+(x) Transferência Posterior: transferência
+Internacional de Dados, originada de um Importador, e destinada a um
+terceiro, incluindo um Subcontratado, desde que não configure
+Solicitação de Acesso.
+CLÁUSULA 7. Legislação aplicável e fiscalização da ANPD
+7.1. A Transferência Internacional de Dados objeto das presentes
+Cláusulas submete-se à Legislação Nacional e à fiscalização da ANPD,
+incluindo o poder de aplicar medidas preventivas e sanções administrativas
+a ambas as Partes, conforme o caso, bem como o de limitar, suspender ou
+proibir as transferências internacionais decorrentes destas Cláusulas ou de
+um Contrato Coligado.
+CLÁUSULA 8. Interpretação
+8.1. Qualquer aplicação destas Cláusulas deve ocorrer de acordo com os
+seguintes termos:
+(a) estas Cláusulas devem sempre ser
+interpretadas de forma mais favorável ao Titular e de acordo com as
+disposições da Legislação Nacional;
+(b) em caso de dúvida sobre o significado de
+termos destas Cláusulas, aplica-se o significado que mais se alinha com a
+Legislação Nacional;
+(c) nenhum item destas Cláusulas,
+incluindo-se aqui um Contrato Coligado e as disposições previstas na
+Seção IV, poderá ser interpretado com o objetivo de limitar ou excluir a
+responsabilidade de qualquer uma das Partes em relação a obrigações previstas
+na Legislação Nacional; e
+(d) as disposições das Seções I e II prevalecem
+em caso de conflito de interpretação com Cláusulas adicionais e demais
+disposições previstas nas Seções III e IV deste instrumento ou em Contratos
+Coligados.
+CLÁUSULA 9. Possibilidade de adesão de terceiros
+9.1. Em comum acordo entre as Partes, é possível a um agente de tratamento
+aderir a estas Cláusulas na condição de Exportador ou de Importador, por
+meio do preenchimento e assinatura de documento escrito, que integrará o
+presente instrumento.
+9.2. A parte aderente terá os mesmos direitos e obrigações das Partes
+originárias, conforme a posição assumida de Exportador ou Importador
+e de acordo com a categoria de agente de tratamento correspondente.
+CLÁUSULA 10. Obrigações gerais das Partes
+10.1. As Partes se comprometem a adotar e, quando necessário, demonstrar
+a adoção de medidas eficazes e capazes de comprovar a observância e o
+cumprimento das disposições destas Cláusulas e da Legislação Nacional e,
+inclusive, da eficácia dessas medidas e, em especial:
+(a) utilizar os Dados Pessoais somente para as
+finalidades específicas descritas na Cláusula 2, sem possibilidade de
+tratamento posterior de forma incompatível com essas finalidades, observadas,
+em qualquer caso, as limitações, garantias e salvaguardas previstas
+nestas Cláusulas;
+(b) garantir a compatibilidade do tratamento
+com as finalidades informadas ao Titular, de acordo com o
+contexto do tratamento;
+(c) limitar o tratamento ao mínimo necessário
+para a realização de suas finalidades, com abrangência dos dados pertinentes,
+proporcionais e não excessivos em relação às finalidades do tratamento
+de Dados Pessoais;
+(d) garantir aos Titulares, observado
+o disposto na Cláusula 4.
+(d.1.) informações claras, precisas e
+facilmente acessíveis sobre a realização do tratamento e os respectivos
+agentes de tratamento, observados os segredos comercial e industrial;
+(d.2.) consulta facilitada e gratuita sobre a
+forma e a duração do tratamento, bem como sobre a integralidade de seus
+Dados Pessoais; e
+(d.3.) a exatidão, clareza, relevância e
+atualização dos Dados Pessoais, de acordo com a necessidade e para o
+cumprimento da finalidade de seu tratamento;
+(e) adotar as medidas de segurança apropriadas
+e compatíveis com os riscos envolvidos na Transferência Internacional de
+Dados regida por estas Cláusulas;
+(f) não realizar tratamento de Dados Pessoais
+para fins discriminatórios ilícitos ou abusivos;
+(g) assegurar que qualquer pessoa que atue
+sob sua autoridade, inclusive subcontratados ou qualquer agente que com
+ele colabore, de forma gratuita ou onerosa, realize tratamento de dados
+apenas em conformidade com suas instruções e com o
+disposto nestas Cláusulas; e
+(h) manter registro das operações de
+tratamento dos Dados Pessoais objeto da Transferência Internacional de Dados
+regida por estas Cláusulas, e apresentar a documentação pertinente à ANPD,
+quando solicitado.
+CLÁUSULA 11. Dados pessoais sensíveis
+11.1. Caso a Transferência Internacional de Dados envolva Dados Pessoais
+sensíveis, as Partes aplicarão salvaguardas adicionais, incluindo medidas
+de segurança específicas e proporcionais aos riscos da atividade
+de tratamento, à natureza específica dos dados e aos interesses,
+direitos e garantias a serem protegidos, conforme descrito na Seção III.
+CLÁUSULA 12. Dados pessoais de crianças e adolescentes
+12.1. Caso a Transferência Internacional de Dados envolva Dados Pessoais de
+crianças e adolescentes, as Partes aplicarão salvaguardas adicionais,
+incluindo medidas que assegurem que o tratamento seja realizado em seu melhor
+interesse, nos termos da Legislação Nacional e dos instrumentos pertinentes
+de direito internacional.
+CLÁUSULA 13. Uso legal dos dados
+13.1. O Exportador garante que os Dados Pessoais foram coletados,
+tratados e transferidos para o Importador de acordo com a
+Legislação Nacional.
+CLÁUSULA 14. Transparência
+14.1. A Parte Designada publicará, em sua página na Internet,
+documento contendo informações facilmente acessíveis redigidas em
+linguagem simples, clara e precisa sobre a realização da Transferência
+Internacional de Dados, incluindo, pelo menos, informações sobre:
+(a) a forma, a duração e a finalidade específica
+da transferência internacional;
+(b) o país de destino dos dados transferidos;
+(c) a identificação e os contatos da
+Parte Designada;
+(d) o uso compartilhado de dados pelas Partes
+e a finalidade;
+(e) as responsabilidades dos agentes que
+realizarão o tratamento;
+(f) os direitos do Titular e os meios para
+o seu exercício, incluindo canal de fácil acesso disponibilizado para
+atendimento às suas solicitações e o direito de peticionar contra o
+Controlador perante a ANPD; e
+(g) Transferências Posteriores, incluindo as
+relativas aos destinatários e à finalidade da transferência.
+14.2. O documento referido no item 14.1. poderá ser disponibilizado
+em página específica ou integrado, de forma destacada e de fácil acesso,
+à Política de Privacidade ou documento equivalente.
+14.3. A pedido, as Partes devem disponibilizar, gratuitamente, ao Titular
+uma cópia destas Cláusulas, observados os segredos comercial e industrial.
+14.4. Todas as informações disponibilizadas aos titulares, nos termos destas
+Cláusulas, deverão ser redigidas na língua portuguesa.
+CLÁUSULA 15. Direitos do Titular
+15.1. O Titular tem direito a obter da Parte Designada, em relação aos Dados
+Pessoais objeto da Transferência Internacional de Dados regida por estas
+Cláusulas, a qualquer momento, e mediante requisição, nos termos da
+Legislação Nacional:
+(a) confirmação da existência de tratamento;
+(b) acesso aos dados;
+(c) correção de dados incompletos,
+inexatos ou desatualizados;
+(d) anonimização, bloqueio ou eliminação de
+dados desnecessários, excessivos ou tratados em desconformidade com estas
+Cláusulas e com o disposto na Legislação Nacional;
+(e) portabilidade dos dados a outro fornecedor
+de serviço ou produto, mediante requisição expressa, de acordo com a
+regulamentação da ANPD, observados os segredos comercial e industrial;
+(f) eliminação dos Dados Pessoais tratados com
+o consentimento do Titular, exceto nas hipóteses previstas na Cláusula 20;
+(g) informação das entidades públicas e privadas
+com as quais as Partes realizaram uso compartilhado de dados;
+(h) informação sobre a possibilidade de não
+fornecer consentimento e sobre as consequências da negativa;
+(i) revogação do consentimento mediante
+procedimento gratuito e facilitado, ratificationados os tratamentos
+realizados antes do requerimento de eliminação;
+(j) revisão de decisões tomadas unicamente
+com base em tratamento automatizado de dados pessoais que afetem seus
+interesses, incluídas as decisões destinadas a definir o seu perfil pessoal,
+profissional, de consumo e de crédito ou os aspectos
+de sua personalidade; e
+(k) informações a respeito dos critérios e dos
+procedimentos utilizados para a decisão automatizada, observados os segredos
+comercial e industrial.
+15.2. O titular pode opor-se a tratamento realizado com fundamento em uma
+das hipóteses de dispensa de consentimento, em caso de descumprimento ao
+disposto nestas Cláusulas ou na Legislação Nacional.
+15.3. O prazo para atendimento às solicitações previstas nesta Cláusula
+e no item 14.3. é de 15 (quinze) dias contados da data do requerimento do
+titular, ressalvada a hipótese de prazo distinto estabelecido em
+regulamentação específica da ANPD.
+15.4. Caso a solicitação do Titular seja direcionada à Parte não designada
+como responsável pelas obrigações previstas nesta Cláusula ou no item 14.3.,
+a Parte deverá:
+(a) informar ao Titular o canal de atendimento
+disponibilizado pela Parte Designada; ou
+(b) encaminhar a solicitação para a Parte
+Designada o quanto antes, a fim de viabilizar a resposta no prazo previsto
+no item 15.2.
+15.5. As Partes deverão informar, imediatamente, aos Agentes de Tratamento
+com os quais tenham realizado uso compartilhado de dados a correção,
+a eliminação, a anonimização ou o bloqueio dos dados, para que repitam
+idêntico procedimento, exceto nos casos em que esta comunicação seja
+comprovadamente impossível ou implique esforço desproporcional.
+15.6. As Partes devem promover assistência mútua com a finalidade de
+atender às solicitações dos Titulares.
+CLÁUSULA 16. Comunicação de Incidente de Segurança
+16.1. A Parte Designada deverá comunicar à ANPD e aos Titulares, no prazo
+de 3 (três) dias úteis, a ocorrência de incidente de segurança que possa
+acarretar risco ou dano relevante para os Titulares, observado o disposto
+na Legislação Nacional.
+16.2. O Importador deve manter o registro de incidentes de segurança nos
+termos da Legislação Nacional.
+CLÁUSULA 17. Responsabilidade e ressarcimento de danos
+17.1. A Parte que, em razão do exercício da atividade de tratamento de Dados
+Pessoais, causar dano patrimonial, moral, individual ou coletivo, em violação
+às disposições destas Cláusulas e da Legislação Nacional,
+é obrigada a repará-lo.
+17.2. O Titular poderá pleitear a reparação do dano causado por quaisquer
+das Partes em razão da violação destas Cláusulas.
+17.3. A defesa dos interesses e dos direitos dos Titulares poderá ser
+pleiteada em juízo, individual ou coletivamente, na forma do disposto na
+legislação pertinente acerca dos instrumentos de tutela individual
+e coletiva.
+17.4. A Parte que atuar como Operador responde, solidariamente, pelos danos
+causados pelo tratamento quando descumprir as presentes Cláusulas ou quando
+não tiver seguido as instruções lícitas do Controlador, ressalvado o
+disposto no item 17.6.
+17.5. Os Controladores que estiverem diretamente envolvidos no tratamento
+do qual decorreram danos ao Titular respondem, solidariamente, por estes
+danos, ressalvado o disposto no item 17.6.
+17.6. Não caberá responsabilização das Partes se comprovado que:
+(a) não realizaram o tratamento de Dados
+Pessoais que lhes é atribuído;
+(b) embora tenham realizado o tratamento de
+Dados Pessoais que lhes é atribuído, não houve violação a estas Cláusulas
+ou à Legislação Nacional; ou
+(c) o dano é decorrente de culpa exclusiva do
+Titular ou de terceiro que não seja destinatário de Transferência Posterior
+ou subcontratado pelas Partes.
+17.7. Nos termos da Legislação Nacional, o juiz poderá inverter o ônus da
+prova a favor do Titular quando, a seu juízo, for verossímil a alegação,
+ou quando houver hipossuficiência para fins de produção de prova ou quando a
+produção de prova pelo Titular resultar-lhe excessivamente onerosa.
+17.8. As ações de reparação por danos coletivos que tenham por objeto a
+responsabilização nos termos desta Cláusula podem ser exercidas coletivamente
+em juízo, observado o disposto na legislação pertinente.
+17.9. A Parte que reparar o dano ao titular tem direito de regresso contra
+os demais responsáveis, na medida de sua participação no evento danoso.
+CLÁUSULA 18. Salvaguardas para Transferência Posterior
+18.1. O Importador somente poderá realizar Transferências Posteriores dos
+Dados Pessoais objeto da Transferência Internacional de Dados regida por
+estas Cláusulas se expressamente autorizado, conforme as hipóteses e
+condições descritas na Cláusula 3.
+18.2. Em qualquer caso, o Importador:
+(a) deve assegurar que a finalidade da
+Transferência Posterior é compatível com as finalidades específicas
+descritas na Cláusula 2;
+(b) deve garantir, mediante instrumento
+contratual escrito, que as salvaguardas previstas nestas Cláusulas serão
+observadas pelo terceiro destinatário da Transferência Posterior; e
+(c) para fins destas Cláusulas, e em relação
+aos Dados Pessoais transferidos, será considerado o responsável por
+eventuais irregularidades praticadas pelo terceiro destinatário da
+Transferência Posterior.
+18.3. A Transferência Posterior poderá, ainda, ser realizada com base em
+outro mecanismo válido de Transferência Internacional de Dados previsto
+na Legislação Nacional, independentemente da autorização de que trata a
+Cláusula 3.
+CLÁUSULA 19. Notificação de Solicitação de Acesso
+19.1. O Importador notificará o Exportador e o Titular sobre Solicitação
+de Acesso relacionada aos Dados Pessoais objeto da Transferência Internacional
+de Dados regida por estas Cláusulas, ressalvada a hipótese de vedação de
+notificação pela lei do país de tratamento dos dados.
+19.2. O Importador adotará as medidas legais cabíveis, incluindo ações
+judiciais, para proteger os direitos dos Titulares sempre que houver
+fundamento jurídico adequado para questionar a legalidade da Solicitação
+de Acesso e, se for o caso, a vedação de realizar a notificação referida
+no item 19.1.
+19.3. Para atender às solicitações da ANPD e do Exportador, o Importador
+deve manter registro de Solicitações de Acesso, incluindo data,
+solicitante, finalidade da solicitação, tipo de dados solicitados, número de
+solicitações recebidas e medidas legais adotadas.
+CLÁUSULA 20. Término do tratamento e eliminação
+dos dados
+20.1. As Partes deverão eliminar os Dados Pessoais objeto da Transferência
+Internacional de Dados regida por estas Cláusulas após o término do
+tratamento, no âmbito e nos limites técnicos das atividades, autorizada a
+conservação apenas para as seguintes finalidades:
+(a) cumprimento de obrigação legal ou
+regulatória pelo Controlador;
+(b) estudo por Órgão de Pesquisa, garantida,
+sempre que possível, a anonimização dos Dados Pessoais;
+(c) transferência a terceiro, desde que
+respeitados os requisitos previstos nestas Cláusulas
+e na Legislação Nacional; e
+(d) uso exclusivo do Controlador, vedado
+seu acesso por terceiro, e desde que anonimizados os dados.
+20.2. Para fins desta Cláusula, considera-se que o término do
+tratamento ocorrerá quando:
+(a) alcançada a finalidade prevista
+nestas Cláusulas;
+(b) os Dados Pessoais deixarem de ser
+necessários ou pertinentes ao alcance da finalidade específica prevista
+nestas Cláusulas;
+(c) finalizado o período de tratamento;
+(d) atendida solicitação do Titular; e
+(e) determinado pela ANPD, quando houver
+violação ao disposto nestas Cláusulas ou na Legislação Nacional.
+CLÁUSULA 21. Segurança no tratamento dos dados
+21.1. As Partes deverão adotar medidas de segurança que garantam proteção
+aos Dados Pessoais objeto da Transferência Internacional de Dados regida por
+estas Cláusulas, mesmo após o seu término.
+21.2. As Partes informarão, na Seção III, as Medidas de Segurança adotadas,
+considerando a natureza das informações tratadas, as características
+específicas e a finalidade do tratamento, o estado atual da tecnologia e os
+riscos para os direitos dos Titulares, especialmente no caso de dados
+pessoais sensíveis e de crianças e adolescentes.
+21.3. As Partes deverão realizar os esforços necessários para adotar medidas
+periódicas de avaliação e revisão visando manter nível de segurança
+adequado às características do tratamento de dados.
+CLÁUSULA 22. Legislação do país destinatário dos dados
+22.1. O Importador declara que não identificou leis ou práticas
+administrativas do país destinatário dos Dados Pessoais que o impeçam
+de cumprir as obrigações assumidas nestas Cláusulas.
+22.2. Sobrevindo alteração normativa que altere esta situação, o Importador
+notificará, de imediato, o Exportador para avaliação da continuidade
+do contrato.
+CLÁUSULA 23. Descumprimento das Cláusulas
+pelo Importador
+23.1. Havendo violação das salvaguardas e garantias previstas nestas
+Cláusulas ou a impossibilidade de seu cumprimento pelo Importador,
+o Exportador deverá ser comunicado imediatamente, ressalvado o disposto
+no item 19.1.
+23.2. Recebida a comunicação de que trata o item 23.1 ou verificado
+o descumprimento destas Cláusulas pelo Importador, o Exportador adotará as
+providências pertinentes para assegurar a proteção aos direitos dos
+Titulares e a conformidade da Transferência Internacional de Dados com a
+Legislação Nacional e as presentes Cláusulas, podendo, conforme o caso:
+(a) suspender a Transferência
+Internacional de Dados;
+(b) solicitar a devolução dos Dados Pessoais,
+sua transferência a um terceiro, ou a sua eliminação; e
+(c) rescindir o contrato.
+CLÁUSULA 24. Eleição do foro e jurisdição
+24.1. Aplica-se a estas Cláusulas a legislação brasileira e qualquer
+controvérsia entre as Partes decorrente destas Cláusulas será resolvida
+perante os tribunais competentes do Brasil, observado, se for o caso,
+o foro eleito pelas Partes na Seção IV.
+24.2. Os Titulares podem ajuizar ações judiciais contra o Exportador
+ou o Importador, conforme sua escolha, perante os tribunais competentes
+no Brasil, inclusive naqueles localizados no local de sua residência.
+24.3. Em comum acordo, as Partes poderão se valer da arbitragem para
+resolver os conflitos decorrentes destas Cláusulas, desde que
+realizadas no Brasil e conforme as disposições da Lei de Arbitragem.
+Seção III - Medidas De Segurança
+São aplicáveis todas as medidas de segurança, conforme detalhadas
+no Apêndice 2 (Medidas de Segurança) do CDPA, conforme alterado pelo
+Apêndice 4 (Produtos específicos) do CDPA e na Seção 7 dos Termos
+Gerais do CDPA.
+Seção IV - Cláusulas Adicionais e Anexos
+A não ser quando definidos na Cláusula 6 acima, os termos em
+maiúsculas usados, mas não definidos nestas Cláusulas têm os
+significados atribuídos a eles no Contrato.
+Conforme disposto na Cláusula 24.1, o foro de eleição das Partes
+será aquele descrito no Contrato.
+Se o Contrato estiver relacionado à revenda ou ao fornecimento do
+Google Cloud Platform, Looker (orignal) ou Serviços de SecOps por
+meio de um programa de parceiros, revendedores ou distribuidores
+do Google Cloud, todas as referências nestas Cláusulas ao Cliente
+significam Parceiro
+21 de agosto de 2025.
+[[["Fácil de entender","easyToUnderstand","thumb-up"],["Meu problema foi resolvido","solvedMyProblem","thumb-up"],["Outro","otherUp","thumb-up"]],[["Difícil de entender","hardToUnderstand","thumb-down"],["Informações incorretas ou exemplo de código","incorrectInformationOrSampleCode","thumb-down"],["Não contém as informações/amostras de que eu preciso","missingTheInformationSamplesINeed","thumb-down"],["Problema na tradução","translationIssue","thumb-down"],["Outro","otherDown","thumb-down"]],[],[],[]]
+Por que o Google
+Por que escolher o Google Cloud
+Confiança e segurança
+Nuvem com infraestrutura moderna
+Multicloud
+Infraestrutura global
+Clientes e estudos de caso
+Relatórios de analistas
+Artigos
+Produtos e preços
+Veja todos os produtos
+Veja todas as soluções
+Google Cloud para startups
+Google Cloud Marketplace
+Preços do Google Cloud
+Entre em contato com a equipe de vendas.
+Suporte
+Fóruns da comunidade
+Suporte
+Notas da versão
+Status do sistema
+Recursos
+GitHub
+Introdução ao Google Cloud
+Documentação do Google Cloud
+Exemplos de código
+Centro de arquitetura do Cloud
+Treinamento e certificação
+Builders Hub
+Centro para Desenvolvedores
+Envolver
+Blog
+Eventos
+X (Twitter)
+Google Cloud no YouTube
+Google Cloud Tech no YouTube
+Seja um parceiro
+Google Cloud Affiliate Program
+Área da imprensa
+Sobre o Google
+Privacidade
+Termos do site
+Termos do Google Cloud
+Manage cookies
+Essa é nossa terceira década de ação climática: participe!
+Inscreva-se para receber a newsletter do Google Cloud
+Inscrever-se
+English
+Deutsch
+Español – América Latina
+Français
+Português – Brasil
+中文 – 简体
+日本語
+한국어

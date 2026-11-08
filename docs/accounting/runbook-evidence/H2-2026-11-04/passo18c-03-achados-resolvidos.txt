@@ -1,0 +1,23 @@
+ECD cmw049xs… · ECF cmw2aqxu…
+aberta
+0 BLOCKER abertos
+Baixar ECD
+Baixar ECF
+Adicionar achado
+Trocar jobs
+Assinar
+Rejeitar
+Registro	Localizador	Descrição	Severidade	Estado	Ações
+I050 plano de contas	4.1	
+H2 18b: conta 4.1 com natureza a conferir no plano referencial (achado de teste, AI tester)
+	BLOCKER	
+dado editado · 04/11/2026, 13:04:28
+Abrir account cmuw4z86… no painel dono
+	
+I200 lançamento	cmuw4zdql033pcii05ojje205	
+H2 18b: lançamento 110 (despesas operacionais 07/2025) a reclassificar (achado de teste, AI tester)
+	NOTE	
+lançamento de acerto · 04/11/2026, 13:05:18
+Abrir journal_entry cmw2b5p0… no painel dono
+entry.posted · 04/11/2026, 13:05:18
+	

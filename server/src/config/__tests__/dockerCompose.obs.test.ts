@@ -9,7 +9,7 @@ import { join } from 'path';
  *   `LOG_ACCESS_DIR`, `lib/accessLog.ts` grava em `/app/logs/access` (resolvido de `__dirname`), dentro da camada
  *   gravável do container — todo `docker compose up --build` apagava a guarda. Achado da revisão de 2026-10-24.
  *
- * LIMITE DECLARADO (molde de dockerCompose.qdrant.test.ts): lê o TEXTO do compose, não sobe a stack.
+ * LIMITE DECLARADO (molde do teste de compose do serviço de vetores antigo, removido no RAG-PR-A): lê o TEXTO do compose, não sobe a stack.
  */
 const COMPOSE = readFileSync(join(__dirname, '../../../../docker-compose.yml'), 'utf8');
 
@@ -41,7 +41,7 @@ const server = semComentarios(serviceBlock('server'));
 
 describe('docker-compose.yml · nó OBS, Fase B', () => {
   it('controle: o serviço server é recortado', () => {
-    expect(server).toContain('dockerfile: Dockerfile');
+    expect(server).toContain('dockerfile: server/Dockerfile');
   });
 
   it('item 15: ALERT_WEBHOOK_URL é obrigatória (`:?`), não só repassada', () => {

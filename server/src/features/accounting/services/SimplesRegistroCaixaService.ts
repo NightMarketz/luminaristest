@@ -3,7 +3,7 @@ import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/err
 import { calendarDayAsWritten } from '../models/dates';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
-import type { IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
+import { NOTA_VALIDA_STATUSES, type IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
 import type { IReceitaFiscalRepository } from '../repositories/IReceitaFiscalRepository';
 import type { IReceitaFiscalRecebimentoRepository } from '../repositories/IReceitaFiscalRecebimentoRepository';
 import type { ISimplesCreditoIncobravelRepository } from '../repositories/ISimplesCreditoIncobravelRepository';
@@ -15,7 +15,8 @@ export const SIMPLES_INCOBRAVEL_REGISTRADO = 'tax.simples_incobravel.registrado'
 export const SIMPLES_INCOBRAVEL_REMOVIDO = 'tax.simples_incobravel.removido';
 
 const MEIOS_CARTAO = new Set(['Debit Card', 'Credit Card']);
-const AUTORIZADOS = new Set(['AUTHORIZED', 'AUTHORIZED_DIVERGENT']);
+// X11 PR-3 (dono 07/11, "Apuração"): a nota em análise fiscal do cancelamento (`CANCEL_ANALYSIS`) segue válida no fisco.
+const AUTORIZADOS = new Set<string>(NOTA_VALIDA_STATUSES);
 
 /**
  * Porta do núcleo (core-boundary, `docs/accounting/NUCLEO-PORTAVEL.md`): o `dueDate` cru da venda de origem, ou null.

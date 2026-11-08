@@ -61,6 +61,14 @@ model User {
   companyFiscalProfiles      CompanyFiscalProfile[] // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13) — perfil da empresa por ano
   companySigners             CompanySigner[] // X13 (F-OBP-9 a) — representante legal / signatários não-contador
   partners                   Partner[] // IRRF-DISTRIBUICAO PR-1 (F-IRD-2, F-IRD-14) — sócios beneficiários da distribuição
+  dpModuloAtivacoes          DpModuloAtivacao[] // BE-INCR-DP-F0-F1 PR-1 (nó PES-4, item 12) — submódulos opcionais do DP
+  dpLotacoes                 DpLotacao[] // BE-INCR-DP-F0-F1 PR-3 (item 28)
+  dpCargos                   DpCargo[] // BE-INCR-DP-F0-F1 PR-3 (item 29)
+  dpJornadas                 DpJornada[] // BE-INCR-DP-F0-F1 PR-3 (item 30)
+  dpSindicatos               DpSindicato[] // BE-INCR-DP-F0-F1 PR-3 (item 31)
+  dpConvencoesColetivas      DpConvencaoColetiva[] // BE-INCR-DP-F0-F1 PR-3 (item 32)
+  dpTrabalhadores            DpTrabalhador[] // BE-INCR-DP-F0-F1 PR-4 (item 37)
+  dpVinculos                 DpVinculo[] // BE-INCR-DP-F0-F1 PR-4 (item 39)
   withholdingProfiles        WithholdingProfile[] // RETENCOES-FONTE PR-1 (item 6) — perfil de retenção por contraparte × natureza
   taxWithholdings            TaxWithholding[] // RETENCOES-FONTE PR-2 (item 13) — retenções feitas (e sofridas no PR-3)
   profitDistributionEvents   ProfitDistributionEvent[] // IRRF-DISTRIBUICAO PR-2 (BRIEF item 10)
@@ -210,6 +218,9 @@ model ChatMessage {
   completionTokens Int?
   model            String?
   usageDetail      Json? // LlmUsage[] por chamada (F-I11-4 → b)
+  // RAG emenda 07/11, item 15e (F-RAG-M7): { mode, citations[], sources[].technical, answerModel? } do turno RAG.
+  // NULL = USER, fora do modo RAG ou anterior à emenda.
+  ragDetail        Json?
 
   @@index([chatInstanceId])
 }
@@ -271,6 +282,7 @@ model Document {
   status          ProcessingStatus @default(PENDING) // processing status
   summary         String? // optional AI-generated summary
   contextJson     Json? // structured JSON from AI processing
+  generatedContext Json? // RAG F-RAG-B1 a: GeneratedContextSchema (tipo, entidades, userEditedFields); contextJson fica com as estatísticas do pipeline
   uploadDate      DateTime         @default(now()) // timestamp of file upload
   processingDate  DateTime? // timestamp when processing completed
   processingError String? // error message if processing failed
@@ -279,7 +291,6 @@ model Document {
   updatedAt DateTime @updatedAt
 
   chunks         Chunk[] // relation to chunks
-  structuredData StructuredData? // relation to structured data
 
   @@index([userId])
 }
@@ -291,29 +302,13 @@ model Chunk {
   index      Int // order of this chunk in the document
   documentId String
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  // RAG-PR-A item 3: carimbo do embedding. O vetor mora na vec0 do arquivo próprio (VECTOR_DB_PATH), nunca aqui.
+  embeddingModel String? // "openai:text-embedding-3-small@768"
+  embeddingDims  Int?
+  embeddedAt     DateTime?
   createdAt  DateTime @default(now())
 
   @@index([documentId])
-}
-
-// Model for structured data extracted from documents
-model StructuredData {
-  id String @id @default(cuid())
-
-  // One-to-one relation with Document
-  documentId String   @unique
-  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
-  // Stores headers and their types, detected by AI
-  // Ex: [{ "name": "Produto", "type": "TEXT" }, { "name": "Valor", "type": "CURRENCY" }]
-  headers Json
-
-  // Stores row data, ready for Handsontable
-  // Ex: [["Notebook", 5000.00], ["Mouse", 150.00]]
-  data Json
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 // Model for dynamically created tables by users
@@ -422,8 +417,141 @@ model ActionProposal {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  // BE-INCR-TEAMMATES PR-0 item 1 (F-TM-8 a, BRIEF §2.1) — emenda: proposta de teammate além da linha de tabela.
+  kind             String    @default("TABLE_ROW") // TABLE_ROW | SETTLEMENT_MATCH | MCP_TOOL_CALL | LIMITE_ATINGIDO
+  payload          Json?
+  teammateId       String?
+  channelMessageId String?
+  expiresAt        DateTime?
+
   @@index([userId])
   @@map("action_proposals")
+}
+
+// ── BE-INCR-TEAMMATES PR-0 item 1 (BRIEF §2.1) — teammates nativos (PRE-ADR-TEAMMATES). Ids "planos", sem FK:
+// o esboço da §2.1 não declara relação.
+model Teammate {
+  id               String    @id @default(cuid())
+  userId           String
+  name             String
+  role             String // papel em uma linha ("Conciliação bancária")
+  playbook         String // instruções em texto (D-3)
+  allowedTools     Json // string[]: nomes do TOOL_CLASS ou "mcp:<serverId>:<tool>"
+  toolOverrides    Json? // { [tool]: 'PROPOSTA' } — só aperta (item 11)
+  provider         String // 'anthropic' | 'openai' | 'gemini'
+  model            String
+  fallbackProvider String?
+  fallbackModel    String?
+  dailyTurnLimit   Int       @default(50)
+  status           String    @default("ACTIVE") // ACTIVE | PAUSED
+  deletedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("teammates")
+}
+
+model LlmCredential {
+  id                 String    @id @default(cuid())
+  userId             String
+  provider           String
+  secret             Bytes // secretBox: iv ‖ tag ‖ ct, AAD = id
+  keyVersion         Int
+  last4              String
+  monthlyTokenBudget Int? // orçamento do próprio tenant (item 23); null = sem teto
+  deletedAt          DateTime?
+  createdAt          DateTime  @default(now())
+  // Unicidade × soft-delete: padrão rename-on-delete (ADR-INCR7 §3, ReconciliationRepository.softDeleteStatement) —
+  // o soft-delete do PR-1 reescreve `provider` para `deleted:<id>` e libera a chave.
+
+  @@unique([userId, provider])
+  @@map("llm_credentials")
+}
+
+model AgentTurn {
+  id               String    @id @default(cuid()) // = jobId no BullMQ
+  userId           String
+  teammateId       String
+  trigger          String // ROUTINE | MANUAL | MENTION | WEBHOOK
+  routineId        String?
+  idempotencyKey   String?   @unique // routineId + slot, ou routineId + Idempotency-Key
+  channelMessageId String?
+  input            String? // corpo do webhook / mensagem — dado não confiável
+  hop              Int       @default(0)
+  status           String    @default("PENDING") // PENDING | RUNNING | DONE | FAILED | PAUSED
+  attempts         Int       @default(0)
+  provider         String?
+  model            String?
+  promptTokens     Int?
+  completionTokens Int?
+  error            String?
+  createdAt        DateTime  @default(now())
+  finishedAt       DateTime?
+
+  @@index([teammateId, createdAt])
+  @@map("agent_turns")
+}
+
+model TeammateRoutine {
+  id                String    @id @default(cuid())
+  userId            String
+  teammateId        String
+  prompt            String
+  schedule          Json? // { freq, time, weekday?, monthday? } — null = só manual/webhook
+  webhookSecretHash String? // SHA-256; o segredo nunca é gravado
+  active            Boolean   @default(true)
+  deletedAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("teammate_routines")
+}
+
+model McpServer {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  url        String // https, remoto (item 40)
+  secret     Bytes? // token estático cifrado (F-TM-13 a)
+  keyVersion Int?
+  deletedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@map("mcp_servers")
+}
+
+model AgentChannel {
+  id        String    @id @default(cuid())
+  userId    String
+  name      String
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("agent_channels")
+}
+
+model AgentChannelMember {
+  channelId  String
+  teammateId String
+
+  @@id([channelId, teammateId])
+  @@map("agent_channel_members")
+}
+
+model AgentChannelMessage {
+  id         String   @id @default(cuid())
+  channelId  String
+  threadId   String? // null = raiz
+  authorType String // OWNER | TEAMMATE
+  authorId   String
+  content    String
+  hop        Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([channelId, createdAt])
+  @@map("agent_channel_messages")
 }
 
 // Trailing watermark for background jobs that need to avoid re-scanning their whole source
@@ -1847,6 +1975,15 @@ model CompanyFiscalProfile {
   // BE-INCR-EFD-REINF PR-1 (item 4; lacuna B, dono 26/10: "Campo no perfil fiscal") — `classTrib` do R-1000 (Tabela 08)
   // do Simples: '01' | '02' | '03' conforme a CPP (P-REINF-7 ao contador). MEI = 04 e Presumido/Real = 99 são derivados.
   reinfClassTrib                   String?
+  // EFICIENCIA-FISCAL PR-5 (item 25; ADR §7 ChecklistHospitalarSchema): checklist da empresa para o 8 %/12 % hospitalar
+  // (Lei 9.249 art. 15 § 1º III "a": sociedade empresária + normas da Anvisa). Alvará date-only, calendário validado.
+  sociedadeEmpresaria              Boolean            @default(false)
+  alvaraSanitarioValidoAte         String?
+  alvaraSourceDocumentId           String?
+  // EFICIENCIA-FISCAL PR-5 (item 30; D-2026-10-28-EFICIENCIA-FISCAL-PR5-EXECUCAO, lacuna 4): naturezas declaradas que
+  // sustentam LOCACAO_IMOVEL_PROPRIO_NO_SIMPLES e CESSAO_MAO_DE_OBRA_MEDICA. null = não declarado.
+  declaraLocacaoImovelProprio      Boolean?
+  declaraCessaoMaoDeObraMedica     Boolean?
   createdById                      String?
   updatedById                      String?
   createdAt                        DateTime           @default(now())
@@ -1874,12 +2011,17 @@ model Partner {
   participacaoBp  Int // 0..10000
   entradaEm       String // YYYY-MM-DD
   saidaEm         String? // YYYY-MM-DD inclusive; null = em aberto
+  // EFICIENCIA-FISCAL PR-4 item 20 (D-2026-10-28-EFICIENCIA-FISCAL-PR4-EXECUCAO #3): participações do sócio em outras empresas,
+  // INFORMADAS no cadastro — [{ cnpj, participacaoBp, empresaNoSimples, administrador, receitaBrutaAnualCents? }]. Só alimenta
+  // o aviso de interdependência (LC 123 art. 3º § 4º III, IV e V); shape em PartnerDto.
+  outrasParticipacoes Json?
   createdById     String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   deletedAt       DateTime?
   profitDistributionEvents ProfitDistributionEvent[]
   interestOnEquityAllocations InterestOnEquityAllocation[]
+  dpTrabalhadores DpTrabalhador[] // BE-INCR-DP-F0-F1 PR-4 (item 44): sócio do pró-labore
 
   @@index([userId, taxId])
   @@map("partners")
@@ -2109,6 +2251,11 @@ model ServiceFiscalProfile {
   cLocPrestacao String? // IBGE 7 [192]; null => FiscalProfile.codMun (EP — grupo 6 da lista, MUN.INCID l.73-78)
   xDescServ     String? // [197]; null => services.name
   cClassTrib    String? // IBS-CBS-2027 PR-1 (F-IBS-10 a): 6 dígitos; null => FiscalProfile.ibsCbsClassTrib
+  // EFICIENCIA-FISCAL PR-5 (item 25; F-EF-10/11 a): finalidade TERAPEUTICA | ESTETICA | BELEZA (null ⇒ ESTETICA, I-17) e a
+  // equiparação hospitalar do serviço (Lei 9.249 art. 15 § 1º III "a"); fundamento = item da Atribuição 4 da RDC Anvisa 50.
+  finalidade           String?
+  elegivelHospitalar   Boolean   @default(false)
+  fundamentoHospitalar String?
   createdById   String?
   updatedById   String?
   createdAt     DateTime  @default(now())
@@ -2208,7 +2355,7 @@ model FiscalDocument {
   userId                  String
   unitId                  String
   kind                    String // NFSE | NFE | NFCE (BE-INCR-NFCE item 3)
-  status                  String // SENT | PROCESSING | AUTHORIZED | AUTHORIZED_DIVERGENT (releitura divergente, F-MAN-2 c) | REJECTED | CANCELLED
+  status                  String // SENT | PROCESSING | AUTHORIZED | AUTHORIZED_DIVERGENT (releitura divergente, F-MAN-2 c) | REJECTED | CANCELLED | CANCEL_ANALYSIS (X11 PR-3: análise fiscal do cancelamento pendente)
   saleId                  String
   saleKey                 String // = saleId enquanto vivo; "cancelled:<id>:<saleId>" após CANCELLED
   cTribNac                String                  @default("") // F-DFE-16 (b); "" para NFE
@@ -2245,6 +2392,15 @@ model FiscalDocument {
   substMotivo             String? // TSCodJustSubst 01|02|03|04|05|99 (Anexo I [115]) — domínio ≠ cancelMotivo (TSCodJustCanc 1|2|9)
   substReason             String? // xMotivo 15–255 (Anexo I [116])
   cancelEventAttachmentId String? // item 7 — XML do evento e101101 (DocumentAttachment, só em produção)
+  // BE-INCR-DFE-EVENTOS (nó X11, PR-2)
+  cancelRequestedAt       DateTime? // item 19 — cancelamento em voo (a porta devolveu PROCESSING); o job de eventos conclui
+  cancelEvento            String? // item 18 (decisão do dono 07/11, Q2) — evento do fisco que cancelou: e101101 | e305101 | e105104 | e105102
+  // BE-INCR-DFE-EVENTOS (nó X11, PR-3, item 20; dono 07/11): status antes do CANCEL_ANALYSIS (AUTHORIZED | AUTHORIZED_DIVERGENT),
+  // restaurado quando o fisco indefere a análise fiscal (e105105). null fora da análise.
+  statusAntesAnalise      String?
+  // X10a PR-9 (E-9, F-NFCE-E1-6 b) — infNFeSupl {qrCode, urlChave} da NFC-e emitida em contingência off-line: o DANFE sai
+  // antes da autorização, então o BE entrega o QR Code da nota impressa. null na emissão normal.
+  contingenciaSuplJson    String?
   createdById             String?
   createdAt               DateTime                @default(now())
   updatedAt               DateTime                @updatedAt
@@ -3171,6 +3327,9 @@ model TaxAssessment {
   entradaInformada         Json?
   // PR-4 (item 10): aviso visível da mudança de parâmetro legal ("reconfirme" ou "valor mudou depois do pagamento").
   avisoParametroLegal      String?
+  // EMENDA RASTREIO (item 1, F-RT-4 b, dono 03/11 "Coluna nova"): origem de cada linha da memória — RastreioApuracaoSchema.
+  // Null nas apurações anteriores à emenda (e nas de PIS/COFINS).
+  rastreio                 Json?
   status                   String // CONFIRMED | SUPERSEDED
   supersedesId             String?
   provisaoEntryId          String? // PR-3 (commit 3 da provisão)
@@ -3306,6 +3465,10 @@ model SalaoParceriaContrato {
   naturezaCota          String // ALUGUEL_BEM_MOVEL | GESTAO (§ 4º)
   homologadoEm          String // YYYY-MM-DD
   sindicato             String // sindicato ou órgão local do MTE que homologou (§ 8º)
+  // EFICIENCIA-FISCAL PR-4 item 19 (D-2026-10-28-EFICIENCIA-FISCAL-PR4-EXECUCAO #2): dado DECLARADO (I-19). CNPJ do
+  // profissional-parceiro (14 dígitos, DV validado) e o checklist da cláusula da P-EF-9 — shape em SimplesDto. Vazio ⇒ alerta.
+  profissionalCnpj      String?
+  checklistDeclarado    Json?
   vigenteDesde          String // YYYY-MM-DD
   vigenteAte            String? // YYYY-MM-DD inclusive; null = sem fim
   createdById           String
@@ -3332,6 +3495,9 @@ model ReceitaFiscalLinha {
   itemRef               String // id da linha de saleItems
   natureza              String // SERVICO | REVENDA
   cTribNac              String? // do ServiceFiscalProfile do serviço
+  // EFICIENCIA-FISCAL PR-5 (item 26; D-2026-10-28-EFICIENCIA-FISCAL-PR5-EXECUCAO, lacuna 1): serviço da linha — a presunção
+  // hospitalar do Presumido é por serviço (Lei 9.249 art. 15 § 2º). Linhas anteriores = null ⇒ 32 %.
+  serviceRef            String?
   productRef            String?
   receitaCents          BigInt
   excluir               Json // TributoSimples[] — marcas de segregação do item (vazio até o X10a)
@@ -3520,6 +3686,189 @@ model FiscalCertificate {
   @@map("fiscal_certificates")
 }
 
+// X10a PR-7 (EMENDA-PSC E-2/E-3; F-PSC-2 a, F-PSC-3 a; dono 29/10 "Executa (sem merge)"): PSC homologado (cadastro da
+// PLATAFORMA, gerido por PLATFORM_ADMIN) e a credencial OAuth do PSC por unidade. Prisma first-class (§2.1: credencial
+// de emissão legal). Segredos cifrados com o keyring DFE_PSC_KEYS (secretBox, AAD = id da linha).
+model PscProvider {
+  id                  String    @id @default(cuid())
+  nome                String
+  baseUrl             String
+  clientId            String
+  clientSecretCipher  Bytes?
+  keyVersion          Int?
+  cotaAnual           Int?
+  lifetimeMaxSegundos Int?
+  algoritmos          String // JSON: ["rsa-sha256", …]
+  habilitadoEm        DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+
+  @@map("psc_providers")
+}
+
+// Uma linha viva por (userId, unitId) — R8. Soft-delete com rename do unitId e ciphertext zerado na mesma tx.
+// consumoAno = ano civil do contador consumoNoAno (F-PSC-4 a); ao incrementar em ano novo, o contador zera.
+model PscCredential {
+  id                    String    @id @default(cuid())
+  userId                String
+  unitId                String
+  pscProviderId         String
+  titularCnpj           String
+  certificadoPem        String
+  certNotAfter          String // AAAA-MM-DD
+  accessTokenCiphertext Bytes? // null após DELETE
+  tokenExpiraEm         DateTime
+  keyVersion            Int?
+  escopo                String // JSON
+  consumoNoAno          Int       @default(0)
+  consumoAno            Int
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  deletedAt             DateTime?
+
+  @@unique([userId, unitId])
+  @@map("psc_credentials")
+}
+
+// Autorização OAuth pendente (E-4): guarda o code_verifier PKCE cifrado (AAD = id) por 10 min; o `state` é o id
+// assinado por HMAC. usedAt preenchido no callback ⇒ state reusado é recusado.
+model PscAuthorization {
+  id                     String    @id @default(cuid())
+  userId                 String
+  actorUserId            String
+  unitId                 String
+  pscProviderId          String
+  escopo                 String // JSON
+  codeVerifierCiphertext Bytes?
+  keyVersion             Int
+  expiresAt              DateTime
+  usedAt                 DateTime?
+  createdAt              DateTime  @default(now())
+
+  @@index([userId, unitId])
+  @@map("psc_authorizations")
+}
+
+// X10a EMENDA-4 AL-PR-2 (AL-3, AL-4, AL-12; F-AL-3 a; F-ADL-3/5 a; D-2026-11-07-X10A-EMENDA-4-LACUNAS L-AL-2/3): o
+// assinador local do caixa (dispositivo pareado). O token de dispositivo nunca é gravado (só o sha256); o certificado e o
+// subject também não (o e-CNPJ traz o CPF do responsável, OID 2.16.76.1.3.4) — só CNPJ, raiz, validade e o sha256 do DER.
+// Revogado = deletedAt (o token passa a dar 401). Infraestrutura de emissão: Prisma first-class, não DynamicTable.
+model DfeSignerDevice {
+  id              String                @id @default(cuid())
+  userId          String
+  nome            String
+  tokenHash       String                @unique // sha256(token) hex; o token nunca é gravado
+  certCnpj        String // 14 posições (F-ADL-3 a: a NFS-e exige o certificado do próprio estabelecimento)
+  certCnpjRaiz    String // 8 primeiras
+  certThumbprint  String // sha256 do DER, hex
+  certNotAfter    String // AAAA-MM-DD, como readCertFacts
+  ambiente        String // producao | homologacao
+  versaoAssinador String
+  tokenPresente   Boolean               @default(false)
+  lastSeenAt      DateTime?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  deletedAt       DateTime?
+  units           DfeSignerDeviceUnit[]
+
+  @@index([userId])
+  @@map("dfe_signer_devices")
+}
+
+// AL-4: um dispositivo serve N unidades da mesma raiz, cada vínculo explícito. "Um ativo por unidade" é guarda no serviço,
+// dentro da tx. Revogar (L-AL-3) = deletedAt no vínculo; o último vínculo vivo revoga o dispositivo.
+model DfeSignerDeviceUnit {
+  deviceId  String
+  userId    String
+  unitId    String
+  createdAt DateTime        @default(now())
+  deletedAt DateTime?
+  device    DfeSignerDevice @relation(fields: [deviceId], references: [id])
+
+  @@id([deviceId, unitId])
+  @@index([userId, unitId])
+  @@map("dfe_signer_device_units")
+}
+
+// AL-3: código de pareamento de uso único (TTL 10 min). Só o sha256 é gravado; usedAt preenchido ⇒ código consumido.
+model DfeSignerPairingCode {
+  id          String    @id @default(cuid())
+  userId      String
+  actorUserId String
+  unitId      String
+  codeHash    String    @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, unitId])
+  @@map("dfe_signer_pairing_codes")
+}
+
+// X10a PR-8 (BE-INCR-NFCE-EMENDA-1 §4, F-NFCE-E1-4 c; D-2026-10-29-X10A-PR7-9-FORKS decisão 3): CSC da NFC-e por unidade e
+// ambiente, para o QR Code v2 quando a UF recusa a v3. Cifrado com o keyring DFE_PSC_KEYS (secretBox, AAD = id). Uma
+// linha viva por (unidade, ambiente) — o serviço apaga a anterior na mesma tx; soft-delete zera o ciphertext.
+model NfceCsc {
+  id            String    @id @default(cuid())
+  userId        String
+  unitId        String
+  ambiente      String // producao | homologacao
+  cscId         String // identificador do CSC na SEFAZ (1–6 dígitos)
+  cscCiphertext Bytes?
+  keyVersion    Int?
+  qrV3Recusado  Boolean   @default(false) // a UF devolveu 407 ao QR v3 (F-NFCE-E1-4 c): emissão e remontagem do nfeProc usam o v2
+  createdAt     DateTime  @default(now())
+  deletedAt     DateTime?
+
+  @@index([userId, unitId, ambiente])
+  @@map("nfce_cscs")
+}
+
+// X10a PR-9 (E-9, F-NFCE-E1-5 b; D-2026-10-29-X10A-PR7-9-FORKS decisões 4 e 8) — contingência off-line da NFC-e por unidade
+// e ambiente. ativa ⇒ a venda nova sai com tpEmis=9 sem tentar a SEFAZ. origem AUTO (falha de comunicação) sai sozinha
+// quando o job volta a falar com a SEFAZ; MANUAL só pelo operador. dhCont/xJust são o B28/B29 das notas emitidas nela.
+model NfceContingencia {
+  id        String    @id @default(cuid())
+  userId    String
+  unitId    String
+  ambiente  String // producao | homologacao
+  ativa     Boolean   @default(false)
+  origem    String? // AUTO | MANUAL — da entrada vigente (ou da última)
+  dhCont    DateTime?
+  xJust     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, unitId, ambiente])
+  @@map("nfce_contingencias")
+}
+
+// X10a PR-9 (decisão 6) — a NFC-e "normal" que ficou sem resposta quando a venda saiu em contingência (MOC 7.0 Anexo IV
+// p. 11: "inutilizar a numeração, se não autorizada; ou cancelar, se autorizada"). O job consulta a chave: autorizada ⇒
+// 110112 apontando a de contingência; 217 ⇒ pedido de inutilização; falha ⇒ FAILED (pendência visível no documento).
+model NfceContingenciaOrfa {
+  id         String   @id @default(cuid())
+  userId     String
+  unitId     String
+  documentId String // o FiscalDocument da venda — agora a nota de contingência
+  ambiente   String // producao | homologacao
+  serie      Int
+  numero     BigInt // nNF da nota normal
+  chave      String // chave (44) da nota normal
+  status     String // PENDING | CANCELLED_SUBST | VOID_REQUESTED | FAILED
+  voidId     String? // FiscalNumberVoid do pedido de inutilização
+  tentativas Int      @default(0)
+  ultimoErro String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([documentId, numero])
+  @@index([status])
+  @@index([userId, unitId, documentId])
+  @@map("nfce_contingencia_orfas")
+}
+
 // EFICIENCIA-FISCAL PR-1 (BRIEF BE-INCR-EFICIENCIA-FISCAL §4.1; ADR-INCR-EFICIENCIA-FISCAL D2, D3, D5, D6) — política
 // COMERCIAL de eficiência fiscal por unidade (não liga nem desliga guarda legal — D2). Versionada por vigência (molde
 // IssBeneficioMunicipal): a versão nova fecha a anterior em vigenteDesde − 1 dia. Sem linha ⇒ padrões do BRIEF.
@@ -3589,4 +3938,326 @@ model TaxOptimizationSuggestion {
   @@unique([userId, unitId, practice, subjectType, subjectId, pendingSlot])
   @@index([userId, unitId, status])
   @@map("tax_optimization_suggestions")
+}
+
+// ============================================================================
+// DEPARTAMENTO PESSOAL — núcleo (nó PES-4, BE-INCR-DP-F0-F1). Prisma first-class: a lei desenha o esquema (CLT,
+// eSocial, custeio) e a folha exige atomicidade e imutabilidade (ADR-PERSISTENCE-BOUNDARY; PRE-ADR-DP F-DP-1).
+// Dinheiro em centavos BigInt; datas date-only em String (YYYY-MM-DD); competência em String (YYYY-MM).
+// ============================================================================
+
+/// PR-1 (item 12) — ativação de submódulo opcional do DP, por instância (R8: empregador = instância; sem unitId) e com
+/// vigência por competência (D-4). Sem sobreposição por (userId, moduleKey): gate no serviço, dentro da tx (o @@unique
+/// de idempotência morre em apagar→recriar com soft-delete). Desativar grava competenciaFim e nunca apaga dado.
+model DpModuloAtivacao {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  moduleKey         String // DP_MODULE_KEYS (features/dp/models/moduleRegistry.ts), validado no DTO
+  competenciaInicio String // YYYY-MM
+  competenciaFim    String? // YYYY-MM inclusive; null = sem fim
+  motivo            String
+  /// Motivo do encerramento (item 13: end recebe motivo; sem coluna, seria parâmetro aceito e ignorado).
+  motivoFim         String?
+  createdById       String
+  endedById         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  @@index([userId, moduleKey])
+  @@map("dp_modulo_ativacoes")
+}
+
+// BE-INCR-DP-F0-F1 PR-3 (itens 28–33) — cadastros de estrutura do DP, por instância (R8). Soft-delete; unicidade de
+// registro vivo por gate no serviço dentro da tx (F19), nunca @@unique.
+
+/// Lotação (conceito do S-1020). `unitId` = estabelecimento (R8, F-DP-2). FPAS, terceiros e tipo ficam para F2/F4.
+model DpLotacao {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId    String // estabelecimento = unidade (linha de units)
+  codigo    String // codLotacao "C 1 1-30" [D09]; vivo único por instância
+  descricao String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  versoes   DpVinculoVersao[] // PR-4 (item 43), Restrict
+
+  @@index([userId, codigo])
+  @@map("dp_lotacoes")
+}
+
+model DpCargo {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nome      String
+  cbo       String // CBOCargo "C 1 6" [D09]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  versoes   DpVinculoVersao[] // PR-4 (item 43), Restrict
+
+  @@index([userId])
+  @@map("dp_cargos")
+}
+
+/// Jornada (horContratual do S-2200). `minutosSemanais` e `tipoJornada` travam quando uma versão de vínculo a referencia (D-5).
+model DpJornada {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nome            String
+  minutosSemanais Int // > 0; desde o F2 PR-0R (item 68) = minutosPorDia × nº de dias de trabalho, conferido no serviço
+  tipoJornada     String // domínio tpJornada do S-2200 [D09] (features/dp/models/cadastros.ts)
+  diasTrabalho    String    @default("SEG,TER,QUA,QUI,SEX,SAB") // BE-INCR-DP-F2 item 68: dias de trabalho da escala (DIAS_SEMANA, vírgula); o default só serve à migração das jornadas do F1
+  minutosPorDia   Int? // item 68: > 0; null só na jornada migrada cujo total não divide por 6 (o cálculo dá JORNADA_AUSENTE até corrigir)
+  descricao       String? // horário contratual, como o dscJorn
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  versoes         DpVinculoVersao[] // PR-4 (item 43), Restrict — a referência trava minutosSemanais/tipoJornada (D-5)
+
+  @@index([userId])
+  @@map("dp_jornadas")
+}
+
+model DpSindicato {
+  id        String                @id @default(cuid())
+  userId    String
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cnpj      String // 14 posições com DV (lib/cnpj); vivo único por instância
+  nome      String
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  deletedAt DateTime?
+  convencoes DpConvencaoColetiva[]
+  versoes   DpVinculoVersao[] // PR-4 (item 43), Restrict
+
+  @@index([userId, cnpj])
+  @@map("dp_sindicatos")
+}
+
+/// Convenção ou acordo coletivo (F-PES-8 → a): a cláusula é dado com fonte e vigência.
+model DpConvencaoColetiva {
+  id            String                 @id @default(cuid())
+  userId        String
+  user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sindicatoId   String
+  sindicato     DpSindicato            @relation(fields: [sindicatoId], references: [id], onDelete: Restrict)
+  identificacao String // texto livre, ex.: o registro do instrumento
+  vigenteDesde  String // YYYY-MM-DD
+  vigenteAte    String? // YYYY-MM-DD inclusive; null = sem fim
+  fonte         String
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  deletedAt     DateTime?
+  parametros    DpConvencaoParametro[]
+
+  @@index([userId, sindicatoId])
+  @@map("dp_convencoes_coletivas")
+}
+
+/// Parâmetro da convenção (item 33): `chave` ∈ CCT_CHAVES; vigência dentro da convenção, sem sobreposição por
+/// (convencaoId, chave, discriminador), com gate na tx.
+model DpConvencaoParametro {
+  id            String              @id @default(cuid())
+  convencaoId   String
+  convencao     DpConvencaoColetiva @relation(fields: [convencaoId], references: [id], onDelete: Restrict)
+  chave         String // CCT_CHAVES (features/dp/models/cadastros.ts)
+  discriminador String? // PISO_SALARIAL_CENTS: cargoId
+  valorInt      BigInt // centavos ou bp, pela chave
+  clausula      String // texto da cláusula
+  vigenteDesde  String // YYYY-MM-DD
+  vigenteAte    String? // YYYY-MM-DD inclusive
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  deletedAt     DateTime?
+
+  @@index([convencaoId, chave])
+  @@map("dp_convencao_parametros")
+}
+
+// BE-INCR-DP-F0-F1 PR-4 (itens 37–49) — trabalhador, vínculo e versões do vínculo, por instância (R8). Unicidade de
+// registro vivo (CPF, matrícula) por gate no serviço dentro da tx (F19), nunca @@unique.
+
+/// Trabalhador (pessoa). CPF, nome e nascimento são PII: nunca entram na auditoria (F-DPB-3; F17).
+model DpTrabalhador {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cpf         String // PII — 11 dígitos com DV (lib/cpf); vivo único por instância (gate na tx)
+  nome        String // PII
+  nascimento  String // YYYY-MM-DD (PII)
+  pcd         Boolean     @default(false) // CLT art. 428 §§ 3º e 5º [D05]
+  /// *Ref (ADR-PERSISTENCE-BOUNDARY, F-DP-1 → a): linha do preset `employees` do Core. Guarda contra órfão = verificação
+  /// no read (`pessoaOperacionalRemovida`, D-6); nenhum cálculo do DP lê `employees`.
+  employeeRef String?
+  partnerId   String? // sócio (Partner PF com taxId = cpf) — exigido para a categoria 723 (item 44)
+  partner     Partner?    @relation(fields: [partnerId], references: [id], onDelete: Restrict)
+  origem      String // DIGITADA | IMPORTADA_ESOCIAL (F-DP-12); o F1 só grava DIGITADA
+  createdById String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
+  vinculos    DpVinculo[]
+  dependentes DpDependente[]
+
+  @@index([userId, cpf])
+  @@map("dp_trabalhadores")
+}
+
+/// Vínculo (identidade). `natureza` (EMPREGO | TSVE) é derivada do `evento` da categoria na ESOCIAL_CATEGORIA, não gravada.
+model DpVinculo {
+  id            String            @id @default(cuid())
+  userId        String
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trabalhadorId String
+  trabalhador   DpTrabalhador     @relation(fields: [trabalhadorId], references: [id], onDelete: Restrict)
+  unitId        String // estabelecimento = unidade (R8)
+  matricula     String // "C 1 1-30" no S-2200 [D09]; viva única por instância (gate na tx)
+  categoria     String // CATEGORIAS_NUCLEO (F-DPB-1)
+  dataInicio    String // YYYY-MM-DD
+  dataTermino   String? // YYYY-MM-DD; obrigatória para 103
+  origem        String // DIGITADA | IMPORTADA_ESOCIAL
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  deletedAt     DateTime?
+  versoes       DpVinculoVersao[]
+  afastamentos  DpAfastamento[]
+  feriasImplantacoes DpFeriasImplantacao[]
+  lancamentos        DpLancamento[]
+  outrasRemuneracoes DpOutraRemuneracao[]
+
+  @@index([userId, unitId])
+  @@map("dp_vinculos")
+}
+
+/// Versão do vínculo (F-DP-8 → b): só data de efeito; cobertura contínua desde `dataInicio`, sem sobreposição (gate na tx).
+model DpVinculoVersao {
+  id             String       @id @default(cuid())
+  vinculoId      String
+  vinculo        DpVinculo    @relation(fields: [vinculoId], references: [id], onDelete: Restrict)
+  vigenteDesde   String // YYYY-MM-DD
+  vigenteAte     String? // YYYY-MM-DD inclusive; null = sem fim
+  lotacaoId      String
+  lotacao        DpLotacao    @relation(fields: [lotacaoId], references: [id], onDelete: Restrict)
+  cargoId        String? // obrigatório na natureza EMPREGO
+  cargo          DpCargo?     @relation(fields: [cargoId], references: [id], onDelete: Restrict)
+  jornadaId      String? // obrigatória na natureza EMPREGO
+  jornada        DpJornada?   @relation(fields: [jornadaId], references: [id], onDelete: Restrict)
+  sindicatoId    String?
+  sindicato      DpSindicato? @relation(fields: [sindicatoId], references: [id], onDelete: Restrict)
+  salarioCents   BigInt // salário contratual, pró-labore ou bolsa
+  unidadeSalario String // undSalFixo do S-2200 [D09] (features/dp/models/vinculo.ts)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([vinculoId, vigenteDesde])
+  @@map("dp_vinculo_versoes")
+}
+
+// BE-INCR-DP-F0-F1 PR-6 (item 56) — afastamento do vínculo. Sem userId: a posse vem do vínculo, que o serviço resolve
+// antes (como a versão). Sem CID nem outro dado clínico (LGPD, dado de saúde); o `motivo` não entra na auditoria.
+model DpAfastamento {
+  id         String    @id @default(cuid())
+  vinculoId  String
+  vinculo    DpVinculo @relation(fields: [vinculoId], references: [id], onDelete: Restrict)
+  motivo     String // vigente na ESOCIAL_MOTIVO_AFASTAMENTO (Tabela 18) no `inicio`
+  inicio     String // YYYY-MM-DD; ≥ dataInicio do vínculo
+  fim        String? // YYYY-MM-DD inclusive; null = em aberto
+  observacao String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  @@index([vinculoId, inicio])
+  @@map("dp_afastamentos")
+}
+
+// BE-INCR-DP-F0-F1 PR-6 (item 58) — dias de férias já gozados de um período aquisitivo, para quem chega de outro sistema.
+// Viva única por (vinculoId, aquisitivoInicio): gate no serviço, dentro da tx (sem @@unique, por causa do soft-delete).
+model DpFeriasImplantacao {
+  id               String    @id @default(cuid())
+  vinculoId        String
+  vinculo          DpVinculo @relation(fields: [vinculoId], references: [id], onDelete: Restrict)
+  aquisitivoInicio String // YYYY-MM-DD; casa com um período de `periodosDeFerias` (item 57)
+  diasGozados      Int // 0..30
+  fonte            String // ex.: "ficha de férias do sistema anterior"
+  informadoPorId   String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  @@index([vinculoId])
+  @@map("dp_ferias_implantacoes")
+}
+
+/// Dependente do trabalhador — BE-INCR-DP-F2 itens 13–15 (PR-1). Sem `userId`: a posse vem do trabalhador. PII (nome, CPF,
+/// nascimento) fica fora da auditoria; a correção leva só o HMAC dos campos (G12).
+model DpDependente {
+  id             String        @id @default(cuid())
+  trabalhadorId  String
+  trabalhador    DpTrabalhador @relation(fields: [trabalhadorId], references: [id], onDelete: Restrict)
+  nome           String // PII
+  cpf            String? // PII — 11 dígitos com DV
+  nascimento     String // YYYY-MM-DD (PII)
+  tipo           String // Tabela 07 do eSocial (ESOCIAL_TIPO_DEPENDENTE), vigente em `vigenteDesde`
+  deduzIrrf      Boolean // Lei 9.250 art. 4º III [D05]
+  salarioFamilia Boolean // Lei 8.213 arts. 65–66 [D03]; a cota não entra no F2 até a fonte de 2026 (F-DPF-7)
+  invalido       Boolean       @default(false) // "inválido de qualquer idade" (Lei 8.213 art. 66; snapshot §3.2)
+  vigenteDesde   String // YYYY-MM-DD
+  vigenteAte     String? // YYYY-MM-DD inclusive; null = sem fim
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+
+  @@index([trabalhadorId])
+  @@map("dp_dependentes")
+}
+
+/// Lançamento informado da competência — BE-INCR-DP-F2 itens 16–17 (PR-1): rubrica `INFORMADO` do catálogo, em minutos
+/// ou em centavos (exatamente um, pela rubrica). Fato de entrada: nunca altera execução já gravada.
+model DpLancamento {
+  id             String    @id @default(cuid())
+  vinculoId      String
+  vinculo        DpVinculo @relation(fields: [vinculoId], references: [id], onDelete: Restrict)
+  competencia    String // AAAA-MM
+  rubrica        String // código do catálogo com calculo = INFORMADO
+  quantidadeMin  Int?
+  valorCents     BigInt?
+  origem         String // MANUAL | MODULO
+  moduloKey      String?
+  observacao     String?
+  informadoPorId String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+
+  @@index([vinculoId, competencia])
+  @@map("dp_lancamentos")
+}
+
+/// Remuneração em outra empresa na competência — BE-INCR-DP-F2 itens 77–78 (F-DPF-8; IN RFB 2.110/2022 arts. 36 e 49).
+/// Viva única por (vínculo, competência), gate na tx. `contribuicaoCents` é só conferência: a regra não a usa.
+model DpOutraRemuneracao {
+  id                  String    @id @default(cuid())
+  vinculoId           String
+  vinculo             DpVinculo @relation(fields: [vinculoId], references: [id], onDelete: Restrict)
+  competencia         String // AAAA-MM
+  remuneracaoCents    BigInt
+  contribuicaoCents   BigInt
+  ordem               String // ANTES | DEPOIS desta empresa na declaração (IN 2.110 art. 36 § 1º I)
+  categoriaOutraFonte String // EMPREGADO | CONTRIBUINTE_INDIVIDUAL (o CI só conta para o teto)
+  cnpjOutroEmpregador String // 14 dígitos com DV
+  documento           String // declaração do Anexo VIII da IN 2.110 ou o holerite de lá (art. 49 § 3º)
+  informadoPorId      String
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+
+  @@index([vinculoId, competencia])
+  @@map("dp_outras_remuneracoes")
 }

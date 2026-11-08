@@ -71,9 +71,13 @@ export function resolveEcfCodVer(year: number, linhas: readonly LinhaLegal[], ov
  *                         P400(4) "Receita Bruta Sujeita ao Percentual de 32%"
  *   revenda  (conta 3.3): P200(4) "Receita Bruta Sujeita ao Percentual de 8%"
  *                         P400(2) "Receita Bruta Sujeita ao Percentual de 12%"
+ *   serviço hospitalar:   P200(4) / P400(2) — 8 % / 12 % (Lei 9.249/1995 art. 15 § 1º III "a"; a P400(4) diz
+ *                         "exceto a de serviços hospitalares")
+ *   serviço a 16 %:       P200(6) "Receita Bruta Sujeita ao Percentual de 16%" (só IRPJ, IN RFB 1.700 art. 215 § 10)
  */
 export const P_LINE = {
   servico: { p200: '8', p400: '4' },
+  servico16: { p200: '6' },
   revenda: { p200: '4', p400: '2' },
 } as const;
 
@@ -192,6 +196,14 @@ export interface Reg0020Input {
 }
 
 /**
+ * Código padrão de `0020.IND_ALIQ_CSLL` quando o perfil fiscal não informa: `'1'` = alíquota de 9% da CSLL (Lucro Presumido).
+ * Fonte: Manual de Orientação do Leiaute 12 da ECF (Anexo ao ADE Cofis 02/2026, atualização jul/2026, 622 p.), registro
+ * 0020, campo IND_ALIQ_CSLL ("1 – Alíquota de 9%") e REGRA_PREENCHIMENTO_IND_ALIQ_CSSL (ano ≥ 2019 ⇒ "1" (9%) ou "4" (15%)).
+ * Conferido no PDF em 06/11/2026: gov.br/sped/…/manual_ecf_leiaute_12_20_05_2026_ac_2025_sit_esp_2026.pdf, sha256 f583475c….
+ */
+export const IND_ALIQ_CSLL_PADRAO = '1';
+
+/**
  * 0020 — Parâmetros Complementares (32 campos). Manual pp. 80-94. Ordem (exemplo
  * p. 93): REG, IND_ALIQ_CSLL, IND_QTE_SCP, e 27 flags S/N (IND_ADM_FUN_CLU …
  * IND_DEREX), POSSUI_CEBAS, CEBAS. MVP Presumido single-establishment sem
@@ -202,7 +214,7 @@ export function build0020(i: Reg0020Input = {}): string {
   const N = 'N';
   return spedLine([
     '0020',
-    i.indAliqCsll ?? '1', // IND_ALIQ_CSLL
+    i.indAliqCsll ?? IND_ALIQ_CSLL_PADRAO, // IND_ALIQ_CSLL
     '0', // IND_QTE_SCP
     // 27 flags S/N (campos 4-30: IND_ADM_FUN_CLU … IND_DEREX) — todos 'N' no MVP
     N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N, N,
@@ -427,6 +439,8 @@ export interface EcfQuarter {
   dtFin: string; // ISO
   servicoCents: number; // receita bruta de serviços no trimestre: max(0, 3.1 + 3.4) (BE-INCR-H1-REFERENCIAL-3-4)
   revendaCents: number; // receita bruta de revenda (conta 3.3) no trimestre
+  hospitalarCents?: number; // parte de `servicoCents` em serviço hospitalar (8 %/12 %), já com o teto na 3.1
+  reduzida16?: boolean; // o serviço do trimestre vai a 16 % no IRPJ (prestadora exclusiva, acumulada ≤ limite)
 }
 
 export interface EcfFileInput {
@@ -509,10 +523,13 @@ export function buildEcfFile(input: EcfFileInput): string[] {
     blockP.push(buildP030(q.dtIni, q.dtFin, q.perApur));
     // Linhas `E` de receita bruta — só quando > 0 (ocorrência 0:N). Todos os P200 do período antes dos P400:
     // o PVA recusa P200 depois de P400 no mesmo P030 (L10 do RUNBOOK-H1).
-    if (q.servicoCents > 0) blockP.push(buildPLine('P200', P_LINE.servico.p200, q.servicoCents));
-    if (q.revendaCents > 0) blockP.push(buildPLine('P200', P_LINE.revenda.p200, q.revendaCents));
-    if (q.servicoCents > 0) blockP.push(buildPLine('P400', P_LINE.servico.p400, q.servicoCents));
-    if (q.revendaCents > 0) blockP.push(buildPLine('P400', P_LINE.revenda.p400, q.revendaCents));
+    // O serviço hospitalar vai com a revenda às linhas de 8 %/12 %; o resto do serviço, a 32 % (ou a 16 % no IRPJ).
+    const servicoComum = q.servicoCents - (q.hospitalarCents ?? 0);
+    const a8ou12 = q.revendaCents + (q.hospitalarCents ?? 0);
+    if (servicoComum > 0) blockP.push(buildPLine('P200', q.reduzida16 ? P_LINE.servico16.p200 : P_LINE.servico.p200, servicoComum));
+    if (a8ou12 > 0) blockP.push(buildPLine('P200', P_LINE.revenda.p200, a8ou12));
+    if (servicoComum > 0) blockP.push(buildPLine('P400', P_LINE.servico.p400, servicoComum));
+    if (a8ou12 > 0) blockP.push(buildPLine('P400', P_LINE.revenda.p400, a8ou12));
   }
   blockP.push(buildBlockClose('P990', 0));
   blockP[blockP.length - 1] = buildBlockClose('P990', blockP.length);

@@ -42,7 +42,17 @@
             "ISS_TRANSICAO",
             "NFCE_LIMITE",
             "INUT_NAO_SE_APLICA",
-            "ICMS_ST_NCM_UF"
+            "ICMS_ST_NCM_UF",
+            "ENCARGO_FOLHA",
+            "IBS_CBS_REDUCAO_NBS",
+            "INSS_EMPREGADO",
+            "ESOCIAL_CATEGORIA",
+            "ESOCIAL_NATUREZA_RUBRICA",
+            "ESOCIAL_INCIDENCIA_RUBRICA",
+            "ESOCIAL_MOTIVO_AFASTAMENTO",
+            "FOLHA_REGRA",
+            "DP_CATEGORIA_ENCARGO",
+            "ESOCIAL_TIPO_DEPENDENTE"
           ]
         },
         "chave": {
@@ -146,7 +156,17 @@
             "ISS_TRANSICAO",
             "NFCE_LIMITE",
             "INUT_NAO_SE_APLICA",
-            "ICMS_ST_NCM_UF"
+            "ICMS_ST_NCM_UF",
+            "ENCARGO_FOLHA",
+            "IBS_CBS_REDUCAO_NBS",
+            "INSS_EMPREGADO",
+            "ESOCIAL_CATEGORIA",
+            "ESOCIAL_NATUREZA_RUBRICA",
+            "ESOCIAL_INCIDENCIA_RUBRICA",
+            "ESOCIAL_MOTIVO_AFASTAMENTO",
+            "FOLHA_REGRA",
+            "DP_CATEGORIA_ENCARGO",
+            "ESOCIAL_TIPO_DEPENDENTE"
           ]
         },
         "status": {
@@ -233,7 +253,17 @@
             "ISS_TRANSICAO",
             "NFCE_LIMITE",
             "INUT_NAO_SE_APLICA",
-            "ICMS_ST_NCM_UF"
+            "ICMS_ST_NCM_UF",
+            "ENCARGO_FOLHA",
+            "IBS_CBS_REDUCAO_NBS",
+            "INSS_EMPREGADO",
+            "ESOCIAL_CATEGORIA",
+            "ESOCIAL_NATUREZA_RUBRICA",
+            "ESOCIAL_INCIDENCIA_RUBRICA",
+            "ESOCIAL_MOTIVO_AFASTAMENTO",
+            "FOLHA_REGRA",
+            "DP_CATEGORIA_ENCARGO",
+            "ESOCIAL_TIPO_DEPENDENTE"
           ]
         },
         "chave": {

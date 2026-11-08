@@ -1,0 +1,42 @@
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmw18t0fk00maci9cne7czj5g","name":"Contador H2 C7","username":"h2c7contador","email":"h2-c7-contador@luminaris.test","role":"USER","locale":"en","currency":"BRL","createdAt":"2026-11-03T22:11:41.553Z","updatedAt":"2026-11-03T22:11:41.553Z"}}
+GET /api/dynamic-tables -> 304
+   res: {"success":true,"data":[]}
+GET /api/accounting/accountant-assignments/mine -> 304
+   res: {"success":true,"data":[{"id":"cmw18uw8a00mgci9crip7l33i","unitId":"cmuw4yqxg001jcii0iz2yb9rw","status":"PENDING","accountingContactId":"cmw18trpt00meci9cz55eck1t","accountantUserId":"cmw18t0fk00maci9cne7czj5g","crcNumber":"SP-123456/O-8","crcUf":"SP","activeFrom":null,"activeUntil":null,"endReason":null,"createdAt":"2026-11-03T22:13:09.418Z","ownerEmail":"seed-presumido@seed.local","ownerUserId":"cmufn7n590000cixkxbls0agh"}]}
+PATCH /api/users/me/preferences -> 200  req: {"locale":"pt"}
+   res: {"success":true,"data":{"id":"cmw18t0fk00maci9cne7czj5g","locale":"pt","currency":"BRL"}}
+GET /api/auth/me -> 200
+   res: {"success":true,"data":{"id":"cmw18t0fk00maci9cne7czj5g","name":"Contador H2 C7","username":"h2c7contador","email":"h2-c7-contador@luminaris.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-03T22:11:41.553Z","updatedAt":"2026-11-03T22:15:02.009Z"}}
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmw18t0fk00maci9cne7czj5g","name":"Contador H2 C7","username":"h2c7contador","email":"h2-c7-contador@luminaris.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-03T22:11:41.553Z","updatedAt":"2026-11-03T22:15:02.009Z"}}
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmw18t0fk00maci9cne7czj5g","name":"Contador H2 C7","username":"h2c7contador","email":"h2-c7-contador@luminaris.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-03T22:11:41.553Z","updatedAt":"2026-11-03T22:15:02.009Z"}}
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmw18t0fk00maci9cne7czj5g","name":"Contador H2 C7","username":"h2c7contador","email":"h2-c7-contador@luminaris.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-03T22:11:41.553Z","updatedAt":"2026-11-03T22:15:02.009Z"}}
+GET /api/accounting/accountant-assignments/mine -> 304
+   res: {"success":true,"data":[{"id":"cmw18uw8a00mgci9crip7l33i","unitId":"cmuw4yqxg001jcii0iz2yb9rw","status":"PENDING","accountingContactId":"cmw18trpt00meci9cz55eck1t","accountantUserId":"cmw18t0fk00maci9cne7czj5g","crcNumber":"SP-123456/O-8","crcUf":"SP","activeFrom":null,"activeUntil":null,"endReason":null,"createdAt":"2026-11-03T22:13:09.418Z","ownerEmail":"seed-presumido@seed.local","ownerUserId":"cmufn7n590000cixkxbls0agh"}]}
+GET /api/dynamic-tables -> 304
+   res: {"success":true,"data":[]}
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmw18t0fk00maci9cne7czj5g","name":"Contador H2 C7","username":"h2c7contador","email":"h2-c7-contador@luminaris.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-03T22:11:41.553Z","updatedAt":"2026-11-03T22:15:02.009Z"}}
+POST /api/accounting/accountant-assignments/cmw18uw8a00mgci9crip7l33i/accept -> 200  req: {"declaresWrittenContract":true}
+   res: {"success":true,"data":{"id":"cmw18uw8a00mgci9crip7l33i","unitId":"cmuw4yqxg001jcii0iz2yb9rw","status":"ACTIVE","accountingContactId":"cmw18trpt00meci9cz55eck1t","accountantUserId":"cmw18t0fk00maci9cne7czj5g","crcNumber":"SP-123456/O-8","crcUf":"SP","activeFrom":"2026-11-03T22:15:13.581Z","activeUntil":null,"endReason":null,"createdAt":"2026-11-03T22:13:09.418Z"}}
+GET /api/accounting/accountant-assignments/mine -> 200
+   res: {"success":true,"data":[{"id":"cmw18uw8a00mgci9crip7l33i","unitId":"cmuw4yqxg001jcii0iz2yb9rw","status":"ACTIVE","accountingContactId":"cmw18trpt00meci9cz55eck1t","accountantUserId":"cmw18t0fk00maci9cne7czj5g","crcNumber":"SP-123456/O-8","crcUf":"SP","activeFrom":"2026-11-03T22:15:13.581Z","activeUntil":null,"endReason":null,"createdAt":"2026-11-03T22:13:09.418Z","ownerEmail":"seed-presumido@seed.local","ownerUserId":"cmufn7n590000cixkxbls0agh"}]}
+GET /api/accounting/cmuw4yqxg001jcii0iz2yb9rw/periods?year=2026&ownerUserId=cmufn7n590000cixkxbls0agh -> 200
+   res: {"success":true,"data":[{"id":"cmuw4yzm001cecii0b4rxkkht","userId":"cmufn7n590000cixkxbls0agh","unitId":"cmuw4yqxg001jcii0iz2yb9rw","year":2026,"month":1,"status":"OPEN","openedAt":"2026-10-06T03:45:48.810Z","openedById":"cmufn7n590000cixkxbls0agh","closedAt":null,"closedById":null,"createdAt":"2026-10-06T03:45:48.744Z","updatedAt":"2026-10-06T03:45:48.810Z"},{"id":"cmuw4yzm201cfcii0gfyhat9x","userId":"cmufn7n590000cixkxbls0agh","unitId":"cmuw4yqxg001jcii0iz2yb9rw","year":2026,"month":2,"status":"OPEN","openedAt":"2026-10-06T03:45:48.830Z","openedById":"cmufn7n590000cixkxbls0agh","closedAt":nu
+GET /api/accounting/policy-versions?unitId=cmuw4yqxg001jcii0iz2yb9rw&status=PROPOSED&ownerUserId=cmufn7n590000cixkxbls0agh -> 200
+   res: {"success":true,"data":[]}
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmw18t0fk00maci9cne7czj5g","name":"Contador H2 C7","username":"h2c7contador","email":"h2-c7-contador@luminaris.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-03T22:11:41.553Z","updatedAt":"2026-11-03T22:15:02.009Z"}}
+GET /api/accounting/accountant-assignments/mine -> 304
+   res: {"success":true,"data":[{"id":"cmw18uw8a00mgci9crip7l33i","unitId":"cmuw4yqxg001jcii0iz2yb9rw","status":"ACTIVE","accountingContactId":"cmw18trpt00meci9cz55eck1t","accountantUserId":"cmw18t0fk00maci9cne7czj5g","crcNumber":"SP-123456/O-8","crcUf":"SP","activeFrom":"2026-11-03T22:15:13.581Z","activeUntil":null,"endReason":null,"createdAt":"2026-11-03T22:13:09.418Z","ownerEmail":"seed-presumido@seed.local","ownerUserId":"cmufn7n590000cixkxbls0agh"}]}
+GET /api/dynamic-tables -> 304
+   res: {"success":true,"data":[]}
+GET /api/accounting/cmuw4yqxg001jcii0iz2yb9rw/periods?year=2026&ownerUserId=cmufn7n590000cixkxbls0agh -> 304
+   res: {"success":true,"data":[{"id":"cmuw4yzm001cecii0b4rxkkht","userId":"cmufn7n590000cixkxbls0agh","unitId":"cmuw4yqxg001jcii0iz2yb9rw","year":2026,"month":1,"status":"OPEN","openedAt":"2026-10-06T03:45:48.810Z","openedById":"cmufn7n590000cixkxbls0agh","closedAt":null,"closedById":null,"createdAt":"2026-10-06T03:45:48.744Z","updatedAt":"2026-10-06T03:45:48.810Z"},{"id":"cmuw4yzm201cfcii0gfyhat9x","userId":"cmufn7n590000cixkxbls0agh","unitId":"cmuw4yqxg001jcii0iz2yb9rw","year":2026,"month":2,"status":"OPEN","openedAt":"2026-10-06T03:45:48.830Z","openedById":"cmufn7n590000cixkxbls0agh","closedAt":nu
+GET /api/accounting/policy-versions?unitId=cmuw4yqxg001jcii0iz2yb9rw&status=PROPOSED&ownerUserId=cmufn7n590000cixkxbls0agh -> 304
+   res: {"success":true,"data":[]}
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmw18t0fk00maci9cne7czj5g","name":"Contador H2 C7","username":"h2c7contador","email":"h2-c7-contador@luminaris.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-03T22:11:41.553Z","updatedAt":"2026-11-03T22:15:02.009Z"}}

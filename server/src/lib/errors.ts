@@ -435,8 +435,8 @@ export class PackageNoticeChangedError extends AppError {
 
 /** Itens 4 e 13: pacote sem validade (catálogo `validityDays` ausente ou 0) não tem o que aceitar nem comprovar. */
 export class PackageWithoutValidityError extends AppError {
-  constructor(packageId: string) {
-    super(`O pacote ${packageId} não tem validade: não há texto de validade para aceitar.`, 400, 'PACKAGE_WITHOUT_VALIDITY');
+  constructor(packageLabel: string) {
+    super(`O pacote '${packageLabel}' não tem validade: não há texto de validade para aceitar.`, 400, 'PACKAGE_WITHOUT_VALIDITY');
     Object.setPrototypeOf(this, PackageWithoutValidityError.prototype);
   }
 }

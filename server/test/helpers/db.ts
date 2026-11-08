@@ -44,6 +44,9 @@ export function pushTestSchema(): void {
  * deleteMany() so a single-table self-referencing pair never trips SQLite's FK check mid-delete.
  */
 export async function resetDb(): Promise<void> {
+  await prisma.llmCredential.deleteMany(); // BE-INCR-TEAMMATES PR-1 — folha, sem FK
+  await prisma.teammate.deleteMany(); // BE-INCR-TEAMMATES PR-2 — folha, sem FK
+  await prisma.mcpServer.deleteMany(); // BE-INCR-TEAMMATES PR-2 (item 12 lê) — folha, sem FK
   // Accounting — leaf tables first (nothing else references them).
   await prisma.postingDimension.deleteMany();
   await prisma.reconciliationMatch.deleteMany();
@@ -88,6 +91,8 @@ export async function resetDb(): Promise<void> {
   await prisma.fiscalDocument.deleteMany();
   await prisma.fiscalDocumentSequence.deleteMany();
   await prisma.fiscalNumberVoid.deleteMany(); // BE-INCR-NFCE PR-4
+  await prisma.nfceContingenciaOrfa.deleteMany(); // X10a PR-9 — sem FK
+  await prisma.nfceContingencia.deleteMany(); // X10a PR-9 — sem FK
   await prisma.serviceFiscalProfile.deleteMany();
   await prisma.productFiscalProfile.deleteMany(); // BE-INCR-NFCE item 10
   await prisma.issBeneficioMunicipal.deleteMany(); // SIMPLES-PISO-ANEXO-XI bloco 1
@@ -150,7 +155,28 @@ export async function resetDb(): Promise<void> {
   await prisma.profitDistributionEvent.deleteMany(); // IRRF-DISTRIBUICAO PR-2 (antes de partners: FK Restrict)
   await prisma.interestOnEquityAllocation.deleteMany(); // IRRF-DISTRIBUICAO PR-4 (antes do cálculo e dos partners: FK Restrict)
   await prisma.interestOnEquityCalculation.deleteMany(); // IRRF-DISTRIBUICAO PR-4
+  // BE-INCR-DP-F0-F1 PR-4 — antes de partners (o trabalhador aponta para o sócio com Restrict) e dos cadastros do PR-3
+  // (a versão aponta para lotação, cargo, jornada e sindicato com Restrict): versão → vínculo → trabalhador.
+  // BE-INCR-DP-F0-F1 PR-6 — afastamento e implantação de férias apontam para o vínculo com Restrict: antes dele.
+  await prisma.dpAfastamento.deleteMany();
+  await prisma.dpFeriasImplantacao.deleteMany();
+  // BE-INCR-DP-F2 PR-1 (item 22) — lançamento e outra remuneração apontam para o vínculo, o dependente para o
+  // trabalhador, todos com Restrict: antes deles.
+  await prisma.dpLancamento.deleteMany();
+  await prisma.dpOutraRemuneracao.deleteMany();
+  await prisma.dpDependente.deleteMany();
+  await prisma.dpVinculoVersao.deleteMany();
+  await prisma.dpVinculo.deleteMany();
+  await prisma.dpTrabalhador.deleteMany();
   await prisma.partner.deleteMany(); // IRRF-DISTRIBUICAO PR-1
+  await prisma.dpModuloAtivacao.deleteMany(); // BE-INCR-DP-F0-F1 PR-1 — folha (só FK para User)
+  // BE-INCR-DP-F0-F1 PR-3 — filhos antes dos pais (FK Restrict: parâmetro → convenção → sindicato).
+  await prisma.dpConvencaoParametro.deleteMany();
+  await prisma.dpConvencaoColetiva.deleteMany();
+  await prisma.dpSindicato.deleteMany();
+  await prisma.dpJornada.deleteMany();
+  await prisma.dpCargo.deleteMany();
+  await prisma.dpLotacao.deleteMany();
   await prisma.accountingContact.deleteMany(); // depois do accountingDeliveryLog (FK Restrict)
 
   // BE-INCR-FIXED-ASSETS (nó C8): fixedAssetClass tem FK Restrict para account — cai antes dele;
@@ -161,6 +187,15 @@ export async function resetDb(): Promise<void> {
   await prisma.paymentAccount.deleteMany();
   // BE-INCR-DFE-ADN-EMISSOR PR-1 (nó X10i): fiscal_certificates não tem FK — sem ordem.
   await prisma.fiscalCertificate.deleteMany();
+  // X10a PR-7 (EMENDA-PSC): credencial do PSC por unidade, autorização pendente e cadastro dos PSCs.
+  await prisma.pscAuthorization.deleteMany();
+  await prisma.pscCredential.deleteMany();
+  await prisma.pscProvider.deleteMany();
+  // X10a EMENDA-4 AL-PR-2: o vínculo referencia o dispositivo (FK Restrict) — cai antes dele.
+  await prisma.dfeSignerDeviceUnit.deleteMany();
+  await prisma.dfeSignerDevice.deleteMany();
+  await prisma.dfeSignerPairingCode.deleteMany();
+  await prisma.nfceCsc.deleteMany(); // X10a PR-8: CSC da NFC-e por unidade
   // BE-INCR-MIT-EXPORT PR-2 (nó X9): mit_exports só referencia User (Cascade) — sem ordem de FK.
   await prisma.mitExport.deleteMany();
   // BE-INCR-EFD-REINF PR-1: reinf_batches só referencia User (Cascade) — sem ordem de FK.
@@ -205,7 +240,6 @@ export async function resetDb(): Promise<void> {
   await prisma.dashboardLayout.deleteMany();
   await prisma.chatMessage.deleteMany();
   await prisma.chatInstance.deleteMany();
-  await prisma.structuredData.deleteMany();
   await prisma.chunk.deleteMany();
   await prisma.document.deleteMany();
   await prisma.actionProposal.deleteMany();

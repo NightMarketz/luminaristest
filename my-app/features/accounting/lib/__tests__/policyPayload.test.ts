@@ -8,7 +8,7 @@ import type { FiscalProfileView } from '../../../../lib/services/fiscalProfile.s
  * (logo, nenhuma das 6 chaves que o espelho do FE não tem — E-6); a de contas leva só as 3 do imobilizado; o diff
  * mostra só chaves do `payload`, conta sem rótulo vira "conta não encontrada", e a base de uma APPLIED é o snapshot.
  */
-const t: TFn = (_k, fb, vars) => fb.replace(/\{\{(\w+)\}\}/g, (_m, n: string) => vars?.[n] ?? '');
+const t: TFn = (_k: string, fb: string, vars?: Record<string, string>) => fb.replace(/\{\{(\w+)\}\}/g, (_m, n: string) => vars?.[n] ?? '');
 
 const view: FiscalProfileView = {
   unitId: 'u1', regimeTributario: 'SIMPLES', icmsContribuinte: false, pisCofinsRegime: 'SIMPLES',
@@ -16,7 +16,7 @@ const view: FiscalProfileView = {
   icmsRecuperavelAccountId: null, pisCofinsRecuperavelAccountId: null, insumoExpenseAccountId: null,
   irpjDespesaAccountId: null, csllDespesaAccountId: null, irpjRecolherAccountId: null, csllRecolherAccountId: null,
   partnerAccountRef: null, codMun: '3550308', inscricaoMunicipal: null, cnae: null,
-  dpsSerie: 7, regEspTrib: 0, regApTribSN: 1, issAliquotaBp: 200, issRetidoTomadorPj: false,
+  dpsSerie: 7, nfeSerie: 1, nfceSerie: 1, regEspTrib: 0, regApTribSN: 1, issAliquotaBp: 200, issRetidoTomadorPj: false,
   pacoteFatoGerador: 'CONSUMO', pacoteCTribNac: null, pacoteCNBS: null,
   ibsCbsInformar: false, ibsCbsCst: null, ibsCbsClassTrib: null,
   pTotTribFedCent: null, pTotTribEstCent: null, pTotTribMunCent: null, pTotTribSNCent: 1550,

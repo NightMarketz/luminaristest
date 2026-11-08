@@ -26,6 +26,11 @@ export interface ReceitaPorAtividade {
   revendaCents: number; // max(0, net 3.3)
   /** Net da 3.4 COM sinal (estorno de vencimento reduz a base de serviço — `baseServicoCents` no model). */
   naoUsoCents: number;
+  /**
+   * EMENDA RASTREIO (item 2, F-RT-1 a): o net COM sinal de cada conta de presunção (3.1/3.3/3.4) com movimento na janela,
+   * da MESMA leitura `groupByAccount` — a confirmação do X7 grava por conta, sem query nova.
+   */
+  contas: { accountId: string; code: string; name: string; netCents: number }[];
 }
 
 interface Deps {
@@ -109,5 +114,8 @@ function segregar(accounts: Account[], netById: Map<string, number>): ReceitaPor
     servicoCents: servico ? Math.max(0, netById.get(servico.id) ?? 0) : 0,
     revendaCents: revenda ? Math.max(0, netById.get(revenda.id) ?? 0) : 0,
     naoUsoCents: naoUso ? (netById.get(naoUso.id) ?? 0) : 0,
+    contas: [servico, revenda, naoUso]
+      .filter((a): a is Account => !!a && (netById.get(a.id) ?? 0) !== 0)
+      .map((a) => ({ accountId: a.id, code: a.code, name: a.name, netCents: netById.get(a.id)! })),
   };
 }

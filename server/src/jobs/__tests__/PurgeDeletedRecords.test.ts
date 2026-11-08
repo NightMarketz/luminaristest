@@ -9,6 +9,10 @@ jest.mock('../../lib/prisma', () => ({
   default: {
     dynamicTableData: { deleteMany: (...a: unknown[]) => deleteManyDynamic(...a) },
     interviewSession: { deleteMany: (...a: unknown[]) => deleteManyInterview(...a) },
+    // §3.4 #10/#11 — os outros models operacionais da allowlist (cobertos em purgeAllowlist.test.ts).
+    crmReportDefinition: { deleteMany: async () => ({ count: 0 }) },
+    savedTableView: { deleteMany: async () => ({ count: 0 }) },
+    crmAttachment: { findMany: async () => [], deleteMany: async () => ({ count: 0 }) },
   },
 }));
 

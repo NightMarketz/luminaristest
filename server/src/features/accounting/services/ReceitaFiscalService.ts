@@ -134,6 +134,7 @@ export class ReceitaFiscalService {
         itemRef: l?.itemRef ?? (r.natureza === 'SERVICO' ? ITEM_VENDA_INTEIRA : `${ITEM_VENDA_INTEIRA}:REVENDA`),
         natureza: r.natureza,
         cTribNac: l?.serviceRef ? (cTribNacDe.get(l.serviceRef) ?? null) : null,
+        serviceRef: r.natureza === 'SERVICO' ? (l?.serviceRef ?? null) : null, // EFICIENCIA-FISCAL PR-5 item 26
         productRef: l?.productRef ?? null,
         receitaCents: BigInt(r.receitaCents),
         // EFICIENCIA-FISCAL PR-2 (item 13; ADR D7): derivado da NCM do `ProductFiscalProfile`. Serviço e produto sem perfil
@@ -193,6 +194,7 @@ export class ReceitaFiscalService {
         itemRef: `${v.itemRef}${sufixo}`,
         natureza: v.natureza as ReceitaFiscalLinhaData['natureza'],
         cTribNac: v.cTribNac,
+        serviceRef: v.serviceRef,
         productRef: v.productRef,
         receitaCents: -v.receitaCents,
         excluir: v.excluir as string[],

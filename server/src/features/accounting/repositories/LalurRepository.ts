@@ -21,7 +21,7 @@ const ENTRY_RELATIONS = {
   parteB: true,
   account: { select: { id: true, code: true, nature: true, deletedAt: true } },
   processos: { orderBy: [{ indProc: 'asc' }, { numProc: 'asc' }] },
-  journalLinks: { select: { journalEntryId: true, journalEntry: { select: { entryNumber: true } } }, orderBy: { journalEntryId: 'asc' } },
+  journalLinks: { select: { journalEntryId: true, journalEntry: { select: { entryNumber: true, date: true, description: true } } }, orderBy: { journalEntryId: 'asc' } },
   parteBLinks: { select: { parteBId: true, valorCents: true, parteB: true }, orderBy: { parteB: { codCtaB: 'asc' } } },
 } satisfies Prisma.LalurEntryInclude;
 
@@ -100,7 +100,7 @@ export class LalurRepository implements ILalurRepository {
     if (ids.length === 0) return [];
     return (tx ?? prisma).journalEntry.findMany({
       where: { id: { in: ids }, ...accountingScopeWhere(scope) },
-      select: { id: true, entryNumber: true, date: true },
+      select: { id: true, entryNumber: true, date: true, description: true },
     });
   }
 

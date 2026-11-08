@@ -112,6 +112,11 @@ LUCROS_ACUMULADOS: string[]
 } | null)
 receitaTotalAnoAnteriorCents?: (number | null)
 reinfClassTrib?: (("01" | "02" | "03") | null)
+sociedadeEmpresaria?: boolean
+alvaraSanitarioValidoAte?: (string | null)
+alvaraSourceDocumentId?: (string | null)
+declaraLocacaoImovelProprio?: (boolean | null)
+declaraCessaoMaoDeObraMedica?: (boolean | null)
 }
 export interface OnboardingFiscalInput {
 regime: ("MEI" | "SIMPLES" | "PRESUMIDO" | "REAL" | "NAO_SEI")

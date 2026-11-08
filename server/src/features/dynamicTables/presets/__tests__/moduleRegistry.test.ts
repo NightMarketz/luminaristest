@@ -13,9 +13,17 @@ import {
   moduleSelectorSchema,
   MODULE_GROUPS,
   MODULE_GROUP_KEYS,
+  MODULE_CATEGORIES,
+  MODULE_TABLE_SOURCES,
+  assertRegistryInvariants,
+  expandModuleSelectors,
+  type ModuleCategory,
+  type ModuleDef,
   type ModuleKey,
 } from '../modules/registry';
 import { CrmModulePreset } from '../systems/CrmModulePreset';
+import BeautySalonPreset from '../systems/BeautySalonPreset';
+import AestheticClinicPreset from '../systems/AestheticClinicPreset';
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -40,8 +48,8 @@ describe('registro de módulos — contrato Zod (BRIEF §3)', () => {
     expect(moduleDefSchema.safeParse({ ...MODULE_REGISTRY['CRM-0'], extra: 1 }).success).toBe(false);
   });
 
-  it('CRM-0 é o único fixo; CRM-1/2A/2B/3 dependem só de CRM-0 (F-CRM-3/5 → a; F-SUB-3 → a)', () => {
-    expect(MODULE_KEYS.filter((k) => MODULE_REGISTRY[k].fixed)).toEqual(['CRM-0']);
+  it('CRM-0 é o único fixo do CRM; CRM-1/2A/2B/3 dependem só de CRM-0 (F-CRM-3/5 → a; F-SUB-3 → a)', () => {
+    expect(MODULE_KEYS.filter((k) => MODULE_REGISTRY[k].fixed && MODULE_REGISTRY[k].category === 'crm')).toEqual(['CRM-0']);
     for (const k of ['CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3'] as const) {
       expect(MODULE_REGISTRY[k].dependsOn).toEqual(['CRM-0']);
     }
@@ -104,7 +112,8 @@ describe('registro de módulos — invariantes (BRIEF §2.1)', () => {
   it('(e) todo membro de grupo existe, pertence a um único grupo e declara esse grupo', () => {
     const vistos = new Map<ModuleKey, string>();
     for (const g of MODULE_GROUP_KEYS) {
-      expect(MODULE_GROUPS[g].members.length).toBeGreaterThanOrEqual(2);
+      // BRIEF §1 / item 7: o grupo de categoria é alias de entrada mesmo com um só módulo (ESTOQUE = EST-0, AGENDA = AGE-0).
+      expect(MODULE_GROUPS[g].members.length).toBeGreaterThanOrEqual(1);
       for (const m of MODULE_GROUPS[g].members) {
         expect(MODULE_KEYS).toContain(m);
         expect(vistos.has(m)).toBe(false);
@@ -126,3 +135,187 @@ describe('registro de módulos — invariantes (BRIEF §2.1)', () => {
     expect(moduleOfTable('leadProposals')).toBe('CRM-1');
   });
 });
+
+describe('registro genérico por categoria (BE-INCR-MODULOS-BASE-SUBMODULOS PR-1)', () => {
+  const def = (key: string, category: ModuleCategory, over: Partial<ModuleDef> = {}): ModuleDef => ({
+    key: key as ModuleKey,
+    category,
+    name: { pt: key, en: key },
+    aiDescription: key,
+    fixed: false,
+    tables: [`${key}-t`],
+    dependsOn: [],
+    requiresOneOf: [],
+    freeSelects: {},
+    ...over,
+  });
+
+  it('item 1: category é enum fechado de 7 categorias; toda entrada real passa no schema', () => {
+    expect(MODULE_CATEGORIES).toEqual(['crm', 'pessoas', 'vendas', 'estoque', 'agenda', 'financeiro', 'gestao']);
+    for (const k of MODULE_KEYS) expect(moduleDefSchema.safeParse(MODULE_REGISTRY[k]).success).toBe(true);
+    expect(moduleDefSchema.safeParse({ ...MODULE_REGISTRY['CRM-0'], category: 'vendas' }).success).toBe(true);
+    expect(moduleDefSchema.safeParse({ ...MODULE_REGISTRY['CRM-0'], category: 'outra' }).success).toBe(false);
+  });
+
+  it('item 2: cada categoria presente tem uma base; não-fixo tem uma tabela', () => {
+    expect(() => assertRegistryInvariants()).not.toThrow();
+    const cats = new Set(MODULE_KEYS.map((k) => MODULE_REGISTRY[k].category));
+    for (const c of cats) {
+      expect(MODULE_KEYS.filter((k) => MODULE_REGISTRY[k].category === c && MODULE_REGISTRY[k].fixed)).toHaveLength(1);
+    }
+  });
+
+  it('item 2 (negativo): duas bases na mesma categoria → falha nomeando a categoria', () => {
+    const reg = { 'VEN-0': def('VEN-0', 'vendas', { fixed: true }), 'VEN-X': def('VEN-X', 'vendas', { fixed: true }) };
+    expect(() => assertRegistryInvariants(reg)).toThrow(/categoria 'vendas'.*exatamente uma base fixa.*VEN-0, VEN-X/);
+  });
+
+  it('item 2 (negativo): categoria sem base e não-fixo com 2 tabelas → falham', () => {
+    expect(() => assertRegistryInvariants({ 'VEN-S': def('VEN-S', 'vendas') })).toThrow(/categoria 'vendas'/);
+    const reg = { 'VEN-0': def('VEN-0', 'vendas', { fixed: true }), 'VEN-S': def('VEN-S', 'vendas', { tables: ['a', 'b'] }) };
+    expect(() => assertRegistryInvariants(reg)).toThrow(/'VEN-S'.*exatamente uma tabela/);
+  });
+
+  it('item 4: requiresOneOf default [] e cada grupo exige ≥2 chaves', () => {
+    const { requiresOneOf: _drop, ...semCampo } = MODULE_REGISTRY['CRM-0'];
+    expect(_drop).toEqual([]);
+    expect(moduleDefSchema.parse(semCampo).requiresOneOf).toEqual([]);
+    expect(moduleDefSchema.safeParse({ ...MODULE_REGISTRY['CRM-0'], requiresOneOf: [['CRM-1']] }).success).toBe(false);
+    expect(moduleDefSchema.safeParse({ ...MODULE_REGISTRY['CRM-0'], requiresOneOf: [['CRM-1', 'CRM-3']] }).success).toBe(true);
+  });
+
+  it('item 6: toda tabela de todo módulo tem fonte, e a fonte não traz tabela de outro módulo', () => {
+    for (const k of MODULE_KEYS) {
+      expect(Object.keys(MODULE_TABLE_SOURCES[k]).sort()).toEqual([...MODULE_REGISTRY[k].tables].sort());
+      for (const t of MODULE_REGISTRY[k].tables) expect(MODULE_TABLE_SOURCES[k][t]).toBeDefined();
+    }
+    expect(Object.keys(composeModuleTables(MODULE_KEYS))).toEqual(MODULE_KEYS.flatMap((k) => MODULE_REGISTRY[k].tables));
+  });
+
+  it('a ordem de chaves do registro é a de MODULE_KEYS (as regras puras devolvem na ordem do registro)', () => {
+    expect(Object.keys(MODULE_REGISTRY)).toEqual([...MODULE_KEYS]);
+  });
+});
+
+describe('PR-2 — PESSOAS e VENDAS no registro (itens 7, 9, 10, 11a/11b)', () => {
+  it('itens 9–10: o mapa-alvo §1 — base, tabelas, dependências e requiresOneOf', () => {
+    const view = (k: ModuleKey) => {
+      const { category, fixed, tables, dependsOn, requiresOneOf } = MODULE_REGISTRY[k];
+      return { category, fixed, tables, dependsOn, requiresOneOf };
+    };
+    expect(view('PES-0')).toEqual({ category: 'pessoas', fixed: true, tables: ['customers'], dependsOn: [], requiresOneOf: [] });
+    expect(view('PES-FORN')).toEqual({ category: 'pessoas', fixed: false, tables: ['suppliers'], dependsOn: [], requiresOneOf: [] });
+    expect(view('VEN-0')).toEqual({
+      category: 'vendas', fixed: true, tables: ['sales', 'saleItems'], dependsOn: ['PES-0'],
+      requiresOneOf: [['VEN-SERV', 'VEN-PROD', 'VEN-PAC']],
+    });
+    for (const [k, t] of [['VEN-SERV', 'services'], ['VEN-PROD', 'products'], ['VEN-PAC', 'packages'], ['VEN-COM', 'commissions']] as const) {
+      expect(view(k)).toEqual({ category: 'vendas', fixed: false, tables: [t], dependsOn: ['VEN-0'], requiresOneOf: [] });
+    }
+  });
+
+  it('item 9 (F-MS-6 a): os módulos novos nascem com freeSelects vazio e aiDescription em pt', () => {
+    for (const k of ['PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM'] as const) {
+      expect(MODULE_REGISTRY[k].freeSelects).toEqual({});
+      expect(MODULE_REGISTRY[k].aiDescription.length).toBeGreaterThan(20);
+    }
+  });
+
+  // PR-5 (item 28): o `lockedBy` do PR-5 chegou — VEN-0 declara a trava contábil (vale com a ponte `sales@1`).
+  it('item 10 / PR-5 item 28: VEN-0 declara lockedBy accounting', () => {
+    expect(MODULE_REGISTRY['VEN-0'].lockedBy).toBe('accounting');
+  });
+
+  it('item 7: VENDAS expande para VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM; PESSOAS para PES-0, PES-FORN', () => {
+    expect(expandModuleSelectors(['VENDAS'])).toEqual(['VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM']);
+    expect(expandModuleSelectors(['PESSOAS'])).toEqual(['PES-0', 'PES-FORN']);
+    expect(moduleSelectorSchema.safeParse('VENDAS').success).toBe(true);
+    expect(moduleKeySchema.safeParse('VENDAS').success).toBe(false);
+    // desde o PR-3 (ESTOQUE, AGENDA) e o PR-4 (FINANCEIRO, GESTAO) toda categoria tem grupo
+    for (const g of ['ESTOQUE', 'AGENDA', 'FINANCEIRO', 'GESTAO']) expect(moduleSelectorSchema.safeParse(g).success).toBe(true);
+  });
+
+  it('item 11a: override troca a fonte de uma tabela de módulo; override de tabela fora de módulo → erro', () => {
+    const override = { name: 'Fichas', category: 'business', schema: { fields: [{ name: 'x', label: 'x', type: 'string' }] } };
+    expect(composeModuleTables(['PES-0'], { overrides: { customers: override } }).customers.name).toBe('Fichas');
+    expect(composeModuleTables(['PES-0']).customers.name).toBe('Customers');
+    expect(() => composeModuleTables(['PES-0'], { overrides: { units: override } })).toThrow(/'units' não é tabela de módulo/);
+  });
+
+  // PR-5 (item 28): a trava contábil por tabela (`locked`, item 11b) saiu da composição — vem de `ModuleDef.lockedBy`.
+  it('PR-5 item 28: lockedBy accounting só em PES-0 e VEN-0 (VEN-PAC destrava, F-MB-5); a composição não marca meta', () => {
+    expect(MODULE_KEYS.filter((k) => MODULE_REGISTRY[k].lockedBy === 'accounting')).toEqual(['PES-0', 'VEN-0']);
+    const t = composeModuleTables(['PES-0', 'VEN-0', 'VEN-SERV', 'VEN-PAC']);
+    expect(t.sales.meta).toEqual({ requiresTables: ['saleItems'] });
+    for (const k of Object.keys(t)) expect(t[k].meta?.lockedBy).toBeUndefined();
+  });
+});
+
+describe('PR-4 — FINANCEIRO, GESTÃO e Campanhas no registro (itens 21–22)', () => {
+  const view = (k: ModuleKey) => {
+    const { category, fixed, tables, dependsOn, requiresOneOf, freeSelects } = MODULE_REGISTRY[k];
+    return { category, fixed, tables, dependsOn, requiresOneOf, freeSelects };
+  };
+  const sub = (category: ModuleCategory, table: string, dependsOn: ModuleKey[] = []) =>
+    ({ category, fixed: false, tables: [table], dependsOn, requiresOneOf: [], freeSelects: {} });
+
+  it('item 21: o mapa-alvo §1 — FIN-0 (expenses) + FIN-REC/FIN-BASE; GES-0 (reports) + GES-META', () => {
+    expect(view('FIN-0')).toEqual({ ...sub('financeiro', 'expenses'), fixed: true });
+    expect(view('FIN-REC')).toEqual(sub('financeiro', 'otherRevenues'));
+    expect(view('FIN-BASE')).toEqual(sub('financeiro', 'financialBaselines'));
+    expect(view('GES-0')).toEqual({ ...sub('gestao', 'reports'), fixed: true });
+    expect(view('GES-META')).toEqual(sub('gestao', 'goals'));
+  });
+
+  it("item 22: CRM-CAMP é submódulo do CRM (category 'crm', dependsOn ['CRM-0']) dono de `campaigns`", () => {
+    expect(view('CRM-CAMP')).toEqual(sub('crm', 'campaigns', ['CRM-0']));
+    expect(MODULE_REGISTRY['CRM-CAMP'].group).toBeUndefined();
+    expect(moduleOfTable('campaigns')).toBe('CRM-CAMP');
+  });
+
+  it('item 7 (PR-4): FINANCEIRO e GESTAO expandem para os módulos da categoria', () => {
+    expect(expandModuleSelectors(['FINANCEIRO'])).toEqual(['FIN-0', 'FIN-REC', 'FIN-BASE']);
+    expect(expandModuleSelectors(['GESTAO'])).toEqual(['GES-0', 'GES-META']);
+    for (const k of ['FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META', 'CRM-CAMP'] as const) {
+      expect(MODULE_REGISTRY[k].aiDescription.length).toBeGreaterThan(20);
+    }
+  });
+
+  it('a suíte Módulo CRM continua com as mesmas 8 tabelas (CRM-CAMP fica fora; é opcional)', () => {
+    expect(CrmModulePreset.modules).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3']);
+    expect(Object.keys(CrmModulePreset.tables)).not.toContain('campaigns');
+  });
+});
+describe('PR-3 — ESTOQUE e AGENDA no registro (item 16)', () => {
+  it('item 16: o mapa-alvo §1 — EST-0 depende de VEN-PROD; AGE-0 de PES-0 e VEN-SERV; ambos base fixa', () => {
+    const view = (k: ModuleKey) => {
+      const { category, group, fixed, tables, dependsOn, requiresOneOf, freeSelects } = MODULE_REGISTRY[k];
+      return { category, group, fixed, tables, dependsOn, requiresOneOf, freeSelects };
+    };
+    expect(view('EST-0')).toEqual({
+      category: 'estoque', group: 'ESTOQUE', fixed: true, tables: ['productUnits', 'stockMovements'], dependsOn: ['VEN-PROD'],
+      requiresOneOf: [], freeSelects: {},
+    });
+    expect(view('AGE-0')).toEqual({
+      category: 'agenda', group: 'AGENDA', fixed: true, tables: ['appointments'], dependsOn: ['PES-0', 'VEN-SERV'],
+      requiresOneOf: [], freeSelects: {},
+    });
+    for (const k of ['EST-0', 'AGE-0'] as const) expect(MODULE_REGISTRY[k].aiDescription.length).toBeGreaterThan(20);
+    expect(moduleOfTable('productUnits')).toBe('EST-0');
+    expect(moduleOfTable('stockMovements')).toBe('EST-0');
+    expect(moduleOfTable('appointments')).toBe('AGE-0');
+  });
+
+  it('item 16 (grupos): ESTOQUE expande para EST-0 e AGENDA para AGE-0', () => {
+    expect(expandModuleSelectors(['ESTOQUE'])).toEqual(['EST-0']);
+    expect(expandModuleSelectors(['AGENDA'])).toEqual(['AGE-0']);
+  });
+
+  it('item 16: salão e clínica declaram EST-0 e AGE-0 e não carregam mais as três tabelas soltas', () => {
+    for (const suite of [BeautySalonPreset, AestheticClinicPreset]) {
+      expect(suite.modules).toEqual(expect.arrayContaining(['EST-0', 'AGE-0']));
+      for (const t of ['productUnits', 'stockMovements', 'appointments']) expect(Object.keys(suite.tables)).not.toContain(t);
+    }
+  });
+});
+

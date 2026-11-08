@@ -149,8 +149,8 @@ export const SalesPlugin: RulePlugin = {
       const discount = Number(currentData?.discountAmount ?? 0) || 0;
       let subtotal = 0;
       for (const it of items) {
-        const isProduct = (it.data?.type ? String(it.data.type) === 'Product' : !!it.data?.productId);
-        const qty = isProduct ? Number(it.data?.quantity || 1) : 1;
+        // Toda linha conta a quantidade (VP-1 pacote; VP-1b serviço, D-2026-11-04-VENDA-QUANTIDADE-SERVICO-E-PV-A).
+        const qty = Number(it.data?.quantity || 1);
         const price = Number(it.data?.unitPrice || 0);
         subtotal += qty * price;
       }
@@ -319,8 +319,8 @@ export const SalesPlugin: RulePlugin = {
     const { items, saleUnitId } = await loadSaleItems(ctx);
     let subtotal = 0;
     for (const it of items) {
-      const isProduct = (it.data?.type ? String(it.data.type) === 'Product' : !!it.data?.productId);
-      const qty = isProduct ? Number(it.data?.quantity || 1) : 1;
+      // Toda linha conta a quantidade (VP-1 pacote; VP-1b serviço, D-2026-11-04-VENDA-QUANTIDADE-SERVICO-E-PV-A).
+      const qty = Number(it.data?.quantity || 1);
       const price = Number(it.data?.unitPrice || 0);
       subtotal += qty * price;
     }

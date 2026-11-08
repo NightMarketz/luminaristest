@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ValidationError } from '../../../lib/errors';
-import type { PresetTableDefinition } from '.';
-import { MODULE_REGISTRY, moduleOfTable } from './modules/registry';
+import { BRIDGE_REQUIRES, type BridgeKey, type PresetTableDefinition } from '.';
+import { MODULE_REGISTRY, moduleOfTable, type ModuleKey } from './modules/registry';
 
 /**
  * BE-INCR-WIZARD-REMOVABILITY (nó W2, `docs/accounting/BE-INCR-WIZARD-REMOVABILITY-brief.md`) — regra pura de trava
@@ -34,27 +34,43 @@ const PRESET_REF = '@@PRESET_TABLE_KEY::';
 
 /**
  * Item 1. Para cada tabela mantida, a trava que a impede de sair (ou `null`), nesta precedência:
- * FIXED_MODULE → ACCOUNTING → REQUIRED_RELATION → REQUIRED_TABLE → REQUIRED_CAPABILITY. Item 2: só as tabelas AINDA
+ * ACCOUNTING → FIXED_MODULE → REQUIRED_RELATION → REQUIRED_TABLE → REQUIRED_CAPABILITY. Item 2: só as tabelas AINDA
  * mantidas (`keptKeys`) contam como origem, então a trava se desfaz quando o dependente sai.
+ *
+ * BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: `customers`/`sales`/`saleItems` viraram tabelas das bases fixas PES-0/VEN-0.
+ * A trava contábil vem antes da de módulo fixo para que elas sigam travadas por ACCOUNTING (fotografia do PR-0 e o
+ * estado final do item 28); nas tabelas do CRM nada muda (nenhuma tem trava contábil).
+ *
+ * PR-5 (item 28): `bridges` são as pontes que a suíte declara. A trava ACCOUNTING vem primeiro do MÓDULO dono
+ * (`ModuleDef.lockedBy: 'accounting'` e alguma ponte da suíte o exige em `BRIDGE_REQUIRES`), depois da `meta` da tabela.
  */
 export function computeTableLocks(
   tables: Readonly<Record<string, PresetTableDefinition>>,
   keptKeys: ReadonlySet<string>,
+  bridges: readonly BridgeKey[],
 ): Record<string, TableLock | null> {
   const kept = Object.keys(tables).filter((k) => keptKeys.has(k));
   const locks: Record<string, TableLock | null> = {};
-  for (const key of kept) locks[key] = lockOf(key, tables, kept);
+  for (const key of kept) locks[key] = lockOf(key, tables, kept, bridges);
   return locks;
+}
+
+/** Item 28: o módulo está travado pela contabilidade quando declara `lockedBy` e uma ponte da suíte o exige. */
+function isModuleLockedByBridge(moduleKey: ModuleKey | undefined, bridges: readonly BridgeKey[]): boolean {
+  if (!moduleKey || MODULE_REGISTRY[moduleKey].lockedBy !== 'accounting') return false;
+  return bridges.some((b) => BRIDGE_REQUIRES[b].includes(moduleKey));
 }
 
 function lockOf(
   key: string,
   tables: Readonly<Record<string, PresetTableDefinition>>,
   kept: readonly string[],
+  bridges: readonly BridgeKey[],
 ): TableLock | null {
   const moduleKey = moduleOfTable(key);
-  if (moduleKey && MODULE_REGISTRY[moduleKey].fixed) return { reason: 'FIXED_MODULE', by: [moduleKey] };
+  if (isModuleLockedByBridge(moduleKey, bridges)) return { reason: 'ACCOUNTING' };
   if (tables[key].meta?.lockedBy === 'accounting') return { reason: 'ACCOUNTING' };
+  if (moduleKey && MODULE_REGISTRY[moduleKey].fixed) return { reason: 'FIXED_MODULE', by: [moduleKey] };
 
   const others = kept.filter((k) => k !== key);
   const byRelation = others.filter((k) =>
@@ -93,21 +109,80 @@ export function describeTableLock(table: string, lock: TableLock): string {
 
 /**
  * Item 7 (F-W2-3). Lança `ValidationError { reason:'TABLE_LOCKED', table, lock }` na primeira tabela removida que
- * continua travada contra o conjunto FINAL mantido (remover dependente e alvo juntos passa). Tabelas de módulo ficam
- * de fora: no create quem decide é o `applyModuleRemovals` (I8 / F-SUB-6, módulo inteiro ou nada), que roda antes.
+ * continua travada contra o conjunto FINAL mantido (remover dependente e alvo juntos passa). Tabelas de módulo FIXO
+ * sem trava contábil ficam de fora: quem decide é o `applyModuleRemovals` (I8 / F-SUB-6, módulo inteiro ou nada).
  * Chave fora de `tables` (ex.: tabela do Core, que o create ignora — item 8) também fica de fora.
+ *
+ * BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: as tabelas de PESSOAS/VENDAS viraram tabelas de módulo, mas suas travas de
+ * tabela (contábil em `customers`/`sales`/`saleItems`/`packages`; relação obrigatória de `productUnits` em `products`,
+ * de `appointments` em `services`) continuam valendo como antes — por isso só a tabela de módulo fixo sem trava
+ * contábil fica de fora, e o create chama esta regra ANTES de `applyModuleRemovals`.
+ * PR-5 (item 28): "trava contábil" inclui a do módulo exigido por ponte da suíte (`bridges`).
  */
 export function assertRemovalsAllowed(
   tables: Readonly<Record<string, PresetTableDefinition>>,
   removedTables: readonly string[],
+  bridges: readonly BridgeKey[],
 ): void {
+  const found = findRemovalLock(tables, removedTables, bridges);
+  if (found) throw new ValidationError(found.message, found.details);
+}
+
+/** Motivo de recusa no formato `details` do 400 (`TABLE_LOCKED` / `BRIDGE_REQUIRES_MODULE`) + a mensagem em pt. */
+export interface RemovalRefusal {
+  message: string;
+  details: Record<string, unknown>;
+}
+
+/** Mensagem em pt da ponte que exige o módulo (create e conversa). */
+export function describeBridgeRequirement(bridge: BridgeKey, module: ModuleKey): string {
+  return `A contabilidade do setor (${bridge}) exige o módulo '${module}'.`;
+}
+
+/** Item 27 na conversa: as pontes da suíte que exigem o módulo da tabela (vazio se nenhuma). */
+export function bridgeRequirementsOfTable(table: string, bridges: readonly BridgeKey[]): string[] {
+  const moduleKey = moduleOfTable(table);
+  if (!moduleKey) return [];
+  return bridges.filter((b) => BRIDGE_REQUIRES[b].includes(moduleKey)).map((b) => describeBridgeRequirement(b, moduleKey));
+}
+
+/**
+ * Dono, questionário 2026-11-06 ("As duas juntas"): trava de tabela e ponte batendo na mesma remoção → um 400 só.
+ * Um motivo → o 400 de sempre. Dois ou mais → mensagem com todas e `details` do primeiro motivo (compatível com
+ * quem lê `details.reason`) acrescido de `reasons: [details de cada motivo, com `message`]`.
+ */
+export function throwRemovalRefusals(refusals: readonly RemovalRefusal[]): void {
+  if (refusals.length === 0) return;
+  if (refusals.length === 1) throw new ValidationError(refusals[0].message, refusals[0].details);
+  throw new ValidationError(refusals.map((r) => r.message).join(' '), {
+    ...refusals[0].details,
+    reasons: refusals.map((r) => ({ ...r.details, message: r.message })),
+  });
+}
+
+/** O primeiro `TABLE_LOCKED` de `assertRemovalsAllowed`, sem lançar. */
+export function findRemovalLock(
+  tables: Readonly<Record<string, PresetTableDefinition>>,
+  removedTables: readonly string[],
+  bridges: readonly BridgeKey[],
+): RemovalRefusal | null {
   const removed = new Set(removedTables);
-  const candidates = removedTables.filter((k) => tables[k] && !moduleOfTable(k));
+  const candidates = removedTables.filter((k) => {
+    if (!tables[k]) return false;
+    const moduleKey = moduleOfTable(k);
+    return (
+      !moduleKey ||
+      !MODULE_REGISTRY[moduleKey].fixed ||
+      isModuleLockedByBridge(moduleKey, bridges) ||
+      tables[k].meta?.lockedBy === 'accounting'
+    );
+  });
   for (const key of candidates) {
     const keptPlusThis = new Set(Object.keys(tables).filter((k) => !removed.has(k) || k === key));
-    const lock = computeTableLocks(tables, keptPlusThis)[key];
+    const lock = computeTableLocks(tables, keptPlusThis, bridges)[key];
     if (lock) {
-      throw new ValidationError(describeTableLock(key, lock), { reason: 'TABLE_LOCKED', table: key, lock });
+      return { message: describeTableLock(key, lock), details: { reason: 'TABLE_LOCKED', table: key, lock } };
     }
   }
+  return null;
 }

@@ -3,7 +3,10 @@ import type { LegalParameterService } from '../../legalParameters/services/Legal
 import { ForbiddenError, ValidationError, ConflictError } from '../../../lib/errors';
 import { textoLatin1Sped } from '../../../lib/sped';
 import { resolveSupersededJob, isSupersedesUniqueViolation } from './spedRectificationGate';
+import { describeExportJob } from '../models/AccountingDelivery.model';
+import type { AccountingDataExchangeJob } from 'generated/prisma';
 import * as storage from '../../../lib/attachmentStorage';
+import { logger } from '../../../lib/logger';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
 import { metrics } from '../../../lib/monitoring';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -21,7 +24,7 @@ import { natureToCodNat } from './SpedGenerationService';
 import { LALUR_MESES, findParteBPadrao, isLalurMes, isPrejuizoIndicador, periodoBounds, periodosParteB, type LalurLivro, type LalurMes } from '../models/Lalur.model';
 import { mesesEmAtividade } from '../models/taxAssessmentCalcAnual';
 import { formaEfetiva } from './CompanyFiscalProfileService';
-import { LalurService } from './LalurService';
+import { LalurService, describeAjuste } from './LalurService';
 import { toMagnitude } from './lalurParteBBalances';
 import { montarY600, type Y600PartnerReader } from './y600FromPartners';
 import {
@@ -83,6 +86,16 @@ export function derivarEcfAnual(year: number, inicioAtividadeEm: string | null, 
 
 /** `kind` do job de export do Real (BRIEF item 4 — coluna String, zero migração). */
 export const SPED_ECF_REAL_JOB_KIND = 'EXPORT_SPED_ECF_REAL';
+
+/**
+ * FIX-MENSAGENS-ID-INTERNO lote 5 (F-MSG-2 a1; rótulos do dono, chat, 05/11, lote 3): o ajuste é código + livro + período
+ * (`describeAjuste`), o movimento da Parte B é histórico + período e o lançamento é nº + data + descrição. O cuid nunca entra.
+ */
+const describeMovimento = (m: { historico: string; quarter: string; year: number }) => `movimento da Parte B '${m.historico}' (${m.quarter}/${m.year})`;
+const describeLancamento = (j: { entryNumber: number | null; date: Date; description: string }) => {
+  const dmy = `${String(j.date.getUTCDate()).padStart(2, '0')}/${String(j.date.getUTCMonth() + 1).padStart(2, '0')}/${j.date.getUTCFullYear()}`;
+  return `${j.entryNumber === null ? 'lançamento sem número' : `lançamento nº ${j.entryNumber}`} de ${dmy} — ${j.description}`;
+};
 
 /**
  * SPED ECF (SPED Fiscal · IRPJ/CSLL · Lucro REAL) file generation (ADR-INCR-SPED-ECF-FASE3 — Fork
@@ -172,7 +185,7 @@ export class SpedEcfRealGenerationService {
     try {
       row = LalurService.resolveLinha(livro, e.codigo, e.year);
     } catch (err) {
-      throw new ValidationError(`Ajuste ${e.id}: ${err instanceof Error ? err.message : String(err)}`);
+      throw new ValidationError(`No ${describeAjuste(e)}: ${err instanceof Error ? err.message : String(err)}`);
     }
     const line: EcfRealLalurLine = {
       livro: livro as EcfRealLalurLine['livro'], // n620/n660 não chegam aqui: `resolveLinha` os recusa até o catálogo do X7 Fase B PR-4
@@ -182,7 +195,7 @@ export class SpedEcfRealGenerationService {
       valorCents: Number(e.valorCents),
     };
     if (livro === 'lalur' || livro === 'lacs') {
-      if (!row.tipoLanc || row.tipoLanc === 'R') throw new ValidationError(`Ajuste ${e.id}: código '${e.codigo}' sem TIPO_LANCAMENTO no catálogo.`);
+      if (!row.tipoLanc || row.tipoLanc === 'R') throw new ValidationError(`O ${describeAjuste(e)} não tem TIPO_LANCAMENTO no catálogo.`);
       line.tipoLancamento = row.tipoLanc;
       line.indRelacao = (e.indRelacao ?? undefined) as EcfRealLalurLine['indRelacao'];
       if (e.histLancamento) line.hist = e.histLancamento;
@@ -191,18 +204,18 @@ export class SpedEcfRealGenerationService {
       if (e.account) {
         // BRIEF 3C item 19: conta arquivada DEPOIS do ajuste sairia no M310 como se viva.
         if (e.account.deletedAt) {
-          throw new ValidationError(`Ajuste ${e.id}: a conta contábil '${e.account.code}' foi arquivada — arquive ou reaponte o ajuste antes de gerar (M310.COD_CTA ∈ J050, p.252).`);
+          throw new ValidationError(`No ${describeAjuste(e)}: a conta contábil '${e.account.code}' foi arquivada — arquive ou reaponte o ajuste antes de gerar (M310.COD_CTA ∈ J050, p.252).`);
         }
         line.codCta = e.account.code;
         line.codNat = natureToCodNat(e.account.nature);
         // BRIEF 3C item 18: a regra do sinal (p.246) só define COD_NAT 1..4; '09' não pode ser tratado como patrimonial.
         if (!['01', '02', '03', '04'].includes(line.codNat)) {
-          throw new ValidationError(`Ajuste ${e.id}: conta contábil '${e.account.code}' com natureza '${e.account.nature}' (COD_NAT ${line.codNat}) fora do domínio 01..04 do M310/M360 (p.246).`);
+          throw new ValidationError(`No ${describeAjuste(e)}: conta contábil '${e.account.code}' com natureza '${e.account.nature}' (COD_NAT ${line.codNat}) fora do domínio 01..04 do M310/M360 (p.246).`);
         }
         // M312/M362 (Fork F-3C-3 a): NUM_LCTO = JournalEntry.entryNumber (o mesmo do I200).
         const numLctos: string[] = [];
         for (const l of e.journalLinks ?? []) {
-          if (l.journalEntry.entryNumber === null) throw new ValidationError(`Ajuste ${e.id}: lançamento '${l.journalEntryId}' sem NUM_LCTO — não pode sair no M312/M362 (p.254).`);
+          if (l.journalEntry.entryNumber === null) throw new ValidationError(`No ${describeAjuste(e)}: o ${describeLancamento(l.journalEntry)} não tem NUM_LCTO — não pode sair no M312/M362 (p.254).`);
           numLctos.push(String(l.journalEntry.entryNumber));
         }
         if (numLctos.length > 0) line.numLctos = numLctos;
@@ -231,12 +244,12 @@ export class SpedEcfRealGenerationService {
       if ((parteA ? m : n).has(e.quarter)) continue;
       if (mesBalRed === undefined) {
         throw new ValidationError(
-          `Ajuste ${e.id} (livro '${e.livro}', código ${e.codigo}) em ${e.quarter}/${year} não pertence à ECF trimestral (T01..T04) — linha de uma forma anual anterior; arquive-a antes de gerar (X7 BRIEF B itens 2 e 21).`,
+          `O ${describeAjuste(e)} não pertence à ECF trimestral (T01..T04) — linha de uma forma anual anterior; arquive-a antes de gerar (X7 BRIEF B itens 2 e 21).`,
         );
       }
       const marca = isLalurMes(e.quarter) ? mesBalRed[LALUR_MESES.indexOf(e.quarter)] : '—';
       throw new ValidationError(
-        `Ajuste ${e.id} (livro '${e.livro}', código ${e.codigo}) em ${e.quarter}/${year} não tem ${parteA ? 'M030' : 'N030'} no arquivo: o mês está marcado '${marca}' no MES_BAL_RED ` +
+        `O ${describeAjuste(e)} não tem ${parteA ? 'M030' : 'N030'} no arquivo: o mês está marcado '${marca}' no MES_BAL_RED ` +
           `(${parteA ? 'M300/M350 só nos meses B — Manual p.242' : 'N030 só nos meses B ou E — Manual p.278'}; X7 BRIEF B item 21) — arquive a linha ou confirme o mês no modo certo.`,
       );
     }
@@ -252,12 +265,12 @@ export class SpedEcfRealGenerationService {
     }
     for (const e of entries) {
       const reg = e.livro === 'lacs' ? 'M350' : e.livro === 'lalur' ? 'M300' : e.livro.toUpperCase();
-      if (e.histLancamento?.includes('|')) throw bad(reg, `ajuste ${e.id} (código ${e.codigo}, ${e.quarter})`, 'histLancamento');
-      for (const p of e.processos ?? []) if (p.numProc.includes('|')) throw bad(e.livro === 'lacs' ? 'M365' : 'M315', `ajuste ${e.id}`, 'numProc');
+      if (e.histLancamento?.includes('|')) throw bad(reg, describeAjuste(e), 'histLancamento');
+      for (const p of e.processos ?? []) if (p.numProc.includes('|')) throw bad(e.livro === 'lacs' ? 'M365' : 'M315', describeAjuste(e), 'numProc');
     }
     for (const m of movements) {
-      if (m.historico.includes('|')) throw bad('M410', `movimento ${m.id} (conta '${m.parteB.codCtaB}', ${m.quarter})`, 'historico');
-      for (const p of m.processos ?? []) if (p.numProc.includes('|')) throw bad('M415', `movimento ${m.id}`, 'numProc');
+      if (m.historico.includes('|')) throw bad('M410', `${describeMovimento(m)} (conta '${m.parteB.codCtaB}')`, 'historico');
+      for (const p of m.processos ?? []) if (p.numProc.includes('|')) throw bad('M415', describeMovimento(m), 'numProc');
     }
   }
 
@@ -286,8 +299,10 @@ export class SpedEcfRealGenerationService {
     const isRetificadora = dto.retificadora === 'S';
     const periodStart = new Date(`${year}-01-01T00:00:00.000Z`);
     const periodEnd = new Date(`${year}-12-31T00:00:00.000Z`);
+    // FIX-MENSAGENS-ID-INTERNO lote 5 (F-MSG-2 a1): o job retificado nomeia a corrida da `@unique` abaixo pelo tipo + período.
+    let superseded: AccountingDataExchangeJob | undefined;
     if (isRetificadora && dto.supersedesJobId) {
-      await resolveSupersededJob(this.repo, scope, dto.supersedesJobId, SPED_ECF_REAL_JOB_KIND, {
+      superseded = await resolveSupersededJob(this.repo, scope, dto.supersedesJobId, SPED_ECF_REAL_JOB_KIND, {
         start: periodStart,
         end: periodEnd,
       });
@@ -295,8 +310,9 @@ export class SpedEcfRealGenerationService {
     // Fork 7→(a): ano sem leiaute é 400 explícito (a lib lança Error puro; aqui vira ValidationError
     // para a OpenAPI "a year with no known layout is a 400" ser verdade em produção — review I-1).
     let codVer: string;
+    const leiautes = await this.legalParams.fotografia(['LEIAUTE_SPED']);
     try {
-      codVer = resolveEcfCodVer(year, await this.legalParams.fotografia(['LEIAUTE_SPED']), dto.fiscal.codVer);
+      codVer = resolveEcfCodVer(year, leiautes, dto.fiscal.codVer);
     } catch (e) {
       throw new ValidationError(e instanceof Error ? e.message : String(e));
     }
@@ -389,7 +405,7 @@ export class SpedEcfRealGenerationService {
     const orfao = movementsRaw.find((m) => !(periodosDaParteB as readonly string[]).includes(m.quarter));
     if (orfao) {
       throw new ValidationError(
-        `Movimento ${orfao.id} da Parte B (conta '${orfao.parteB.codCtaB}') em ${orfao.quarter}/${year} não pertence à forma ${formaApur === 'A' ? 'anual (só A00)' : 'trimestral (T01..T04)'} — arquive-o antes de gerar (IN RFB 1.700/2017 art. 50 II; X7 BRIEF B itens 2 e 20).`,
+        `O ${describeMovimento(orfao)} (conta '${orfao.parteB.codCtaB}') não pertence à forma ${formaApur === 'A' ? 'anual (só A00)' : 'trimestral (T01..T04)'} — arquive-o antes de gerar (IN RFB 1.700/2017 art. 50 II; X7 BRIEF B itens 2 e 20).`,
       );
     }
     for (const q of periodosDaParteB) {
@@ -511,7 +527,7 @@ export class SpedEcfRealGenerationService {
     } catch (error) {
       if (isSupersedesUniqueViolation(error)) {
         throw new ConflictError(
-          `O job '${dto.supersedesJobId}' já foi retificado por outro job — só um sucessor por job (item 21).`,
+          `O job ${superseded ? describeExportJob(superseded) : `'${dto.supersedesJobId}'`} já foi retificado por outro job — só um sucessor por job (item 21).`,
         );
       }
       throw error;
@@ -588,6 +604,29 @@ export class SpedEcfRealGenerationService {
         }
       }
       return j;
+    }).catch(async (error: unknown) => {
+      // Lacuna 10 (D-2026-10-28-LACUNAS-EXECUTA-27-28): o arquivo já existe e o rollback desfez o
+      // EXPORTED — sem isto o job ficaria PROCESSING para sempre, com o artefato órfão. FAILED fora
+      // da tx que falhou; o erro da tx não é registrado aqui (OBS-R5: a borda registra).
+      // Compensação best-effort: cada passo isolado e o erro original sempre relançado. A falha
+      // de um passo é OUTRO erro, que se perderia — por isso registra aqui (não é o relançado).
+      try {
+        await this.repo.updateJob(scope, job.id, { status: 'FAILED', supersedesJobId: null });
+      } catch (compensationError) {
+        logger.error('export: falha ao marcar FAILED depois da tx — job fica PROCESSING', {
+          jobId: job.id, kind: job.kind, error: compensationError,
+        });
+      }
+      for (const key of [storageKey]) {
+        try {
+          await storage.deleteFile(key);
+        } catch (compensationError) {
+          logger.error('export: falha ao apagar o artefato depois da tx — arquivo órfão', {
+            jobId: job.id, kind: job.kind, error: compensationError,
+          });
+        }
+      }
+      throw error;
     });
 
     endTimer({ success: true, jobId: job.id, kind: job.kind, unitId: scope.unitId });

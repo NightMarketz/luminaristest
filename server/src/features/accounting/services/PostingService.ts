@@ -26,6 +26,12 @@ import { assertLegDimensions, resolveLineDimensions } from './dimensionTagging';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
 
+/** FIX-MENSAGENS-ID-INTERNO lote 4 (F-MSG-2 a1; rótulo do dono, chat, 05/11): o lançamento é nº + data + descrição, nunca o cuid. */
+const describeLancamento = (j: { entryNumber: number | null; date: Date; description: string }) => {
+  const dmy = `${String(j.date.getUTCDate()).padStart(2, '0')}/${String(j.date.getUTCMonth() + 1).padStart(2, '0')}/${j.date.getUTCFullYear()}`;
+  return `${j.entryNumber === null ? 'lançamento sem número' : `lançamento nº ${j.entryNumber}`} de ${dmy} — ${j.description}`;
+};
+
 /**
  * Uma linha de lançamento já resolvida (conta-folha + tags de dimensão), pré-tx — shape antes
  * anônimo dentro de `postEntry`, nomeado aqui porque `resolveEntryLines` (F-P1-6b1) agora é
@@ -136,12 +142,46 @@ export class PostingService {
     tx: Prisma.TransactionClient,
     scope: AccountingScope,
     dateStr: string,
-  ): Promise<void> {
+  ): Promise<{ jaFechado: boolean }> {
     const { year, month } = this.extractYearMonth(dateStr);
     const period = await this.periodRepo.findByYearMonth(scope, year, month, tx);
     if (!period || period.status !== 'OPEN') {
       throw new AccountingPeriodNotOpenError(year, month);
     }
+    // `closedAt` só é gravado ao fechar (setStatus) e a reabertura não o limpa: OPEN com closedAt = fechado e reaberto,
+    // pelos dois caminhos (reopenPeriod e openPeriod a partir de SOFT_CLOSED).
+    return { jaFechado: period.closedAt != null };
+  }
+
+  /**
+   * ITG 2000 (R1) item 36 — período já fechado e reaberto = fora da época devida: o histórico consigna a data efetiva
+   * da ocorrência e a razão do registro extemporâneo (D-2026-11-02-DELEGACAO-DONO). Gravador automático (chamada
+   * interna, `automaticWriter`) sem razão: a razão real do registro tardio é o processamento depois do fechamento. Pelo
+   * HTTP a razão digitada é sempre exigida — o `sourceType` vem do cliente e não decide nada aqui (§3.6).
+   */
+  private historicoExtemporaneo(
+    description: string,
+    date: string,
+    jaFechado: boolean,
+    input: { extemporaneousReason?: string; automaticWriter?: boolean },
+    sourceType: string,
+  ): string {
+    if (!jaFechado) return description;
+    const razao =
+      input.extemporaneousReason?.trim() ||
+      (input.automaticWriter ? `lançamento automático (${sourceType}) processado depois do fechamento do período` : undefined);
+    if (!razao) {
+      throw new ValidationError(
+        'Lançamento em período já fechado e reaberto: informe a razão do registro extemporâneo (ITG 2000, item 36).',
+      );
+    }
+    return `${description} — registro extemporâneo; ocorrência em ${this.dataBr(date)}; razão: ${razao}`;
+  }
+
+  /** Data date-only (ou Date gravada à meia-noite UTC) em dd/mm/aaaa, lida como escrita — sem recuo de fuso. */
+  private dataBr(value: string | Date): string {
+    const [y, m, d] = (typeof value === 'string' ? value : value.toISOString()).slice(0, 10).split('-');
+    return `${d}/${m}/${y}`;
   }
 
   /**
@@ -335,7 +375,9 @@ export class PostingService {
       // ATOMIC — entry header + all legs commit/roll back together.
       const entry = await this.postingRepo.runTransaction(async (tx) => {
         // AUTHORITATIVE PERIOD GATE — inside the tx, before Posted. Closes the TOCTOU window.
-        await this.assertPeriodOpenTx(tx, scope, input.date);
+        const { jaFechado } = await this.assertPeriodOpenTx(tx, scope, input.date);
+
+        const description = this.historicoExtemporaneo(input.description, input.date, jaFechado, input, sourceType);
 
         // MANDATORY-DIMENSION GATE (SEC-B1-1, INCR-DIM-COMPLETENESS) — in-tx (T6), authoritative at
         // commit: a leg to a `requiresDimension` account with NO tag is rejected + rolls back. This
@@ -361,7 +403,7 @@ export class PostingService {
             userId,
             unitId,
             date: new Date(input.date),
-            description: input.description,
+            description,
             status: 'Posted',
             sourceType,
             sourceId: input.sourceId ?? null,
@@ -537,6 +579,11 @@ export class PostingService {
     if (!this.policy.canPost(scope)) {
       throw new ForbiddenError('Você não tem permissão para estornar lançamentos.');
     }
+    // ITG 2000 (R1) item 32 — o histórico do estorno deve precisar o motivo da retificação.
+    const motivo = input.reason?.trim();
+    if (!motivo) {
+      throw new ValidationError('Informe o motivo do estorno (ITG 2000, item 32).');
+    }
     const { userId, unitId } = accountingScopeWhere(scope);
 
     // PERIOD GATE — gate on the REVERSAL date (not the original entry date).
@@ -584,7 +631,7 @@ export class PostingService {
     const origCredit = original.postings.reduce((acc, p) => acc + centsFromDb(p.creditCents), 0);
     if (origDebit !== origCredit || origDebit <= 0) {
       throw new ValidationError(
-        `Lançamento '${original.id}' está desbalanceado ou sem partidas — estorno abortado.`,
+        `O ${describeLancamento(original)} está desbalanceado ou sem partidas — estorno abortado.`,
       );
     }
 
@@ -600,7 +647,7 @@ export class PostingService {
     try {
       result = await this.postingRepo.runTransaction(async (tx) => {
         // AUTHORITATIVE PERIOD GATE — inside the tx, on the reversal date.
-        await this.assertPeriodOpenTx(tx, scope, input.reversalPostingDate);
+        const { jaFechado } = await this.assertPeriodOpenTx(tx, scope, input.reversalPostingDate);
 
         const reversalFiscalYear = this.fiscalYearFrom(input.reversalPostingDate);
         const reversalEntryNumber = await this.postingRepo.nextEntryNumber(
@@ -614,7 +661,19 @@ export class PostingService {
             userId,
             unitId,
             date: new Date(input.reversalPostingDate),
-            description: input.reason ? `Estorno de ${original.id} — ${input.reason}` : `Estorno de ${original.id}`,
+            // Item 32: motivo, data e localização da origem (nº no Diário como a tela mostra; sem número, o id).
+            // Item 36: data do estorno num período fechado e reaberto consigna a razão do registro extemporâneo.
+            description: this.historicoExtemporaneo(
+              `Estorno do lançamento ${
+                original.fiscalYear != null && original.entryNumber != null
+                  ? `${original.fiscalYear}/${String(original.entryNumber).padStart(4, '0')} (id ${original.id})`
+                  : original.id
+              } de ${this.dataBr(original.date)} — motivo: ${motivo}`,
+              input.reversalPostingDate,
+              jaFechado,
+              input,
+              reversalSourceType,
+            ),
             status: 'Posted',
             sourceType: reversalSourceType,
             sourceId: original.id,

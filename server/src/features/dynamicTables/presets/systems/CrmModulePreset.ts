@@ -1,5 +1,10 @@
 import type { SelectablePresetSuite } from '..';
-import { composeModuleTables, MODULE_KEYS } from '../modules/registry';
+import { composeModuleTables, MODULE_KEYS, MODULE_REGISTRY } from '../modules/registry';
+
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: o registro deixou de ser só CRM — a suíte compõe só a categoria `crm`.
+// PR-4: CRM-CAMP (Campanhas) entrou na categoria `crm`, mas a suíte continua com as mesmas 8 tabelas (a instalação do
+// Módulo CRM não muda; Campanhas é opcional, ligável depois).
+const CRM_MODULE_KEYS = MODULE_KEYS.filter((k) => MODULE_REGISTRY[k].category === 'crm' && k !== 'CRM-CAMP');
 
 /**
  * @description
@@ -16,7 +21,9 @@ export const CrmModulePreset: SelectablePresetSuite = {
   key: 'crmModule',
   name: 'Módulo CRM',
   description: 'CRM completo: funil de leads, propostas, atividades, contas e contatos.',
-  modules: [...MODULE_KEYS],
+  modules: [...CRM_MODULE_KEYS],
+  // BE-INCR-MODULOS-BASE-SUBMODULOS PR-5 (item 26): o Módulo CRM não declara ponte contábil.
+  bridges: [],
   // W5 item 3 (F-W5-1 → b): a IA da entrevista passa a conhecer a suíte CRM (rascunho do BRIEF §3.3). A frase
   // "Inclui tabelas para: …" é lida pelo `PresetMatcher.extractTablesInfo` — manter a forma.
   aiProfile: {
@@ -27,7 +34,7 @@ export const CrmModulePreset: SelectablePresetSuite = {
       'do primeiro contato até o fechamento. Inclui tabelas para: Funis de venda, Etapas do funil, Leads (com histórico ' +
       'de atividades), Propostas, Contas (empresas), Contatos e Oportunidades.',
   },
-  tables: composeModuleTables(MODULE_KEYS),
+  tables: composeModuleTables(CRM_MODULE_KEYS),
 };
 
 export default CrmModulePreset;

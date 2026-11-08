@@ -136,8 +136,8 @@ export class AttachmentService {
   }
 
   /**
-   * Soft-deletes an attachment and best-effort removes its binary from disk.
-   * Cross-tenant access is reported as NotFoundError.
+   * Soft-deletes an attachment. The binary stays on disk until the 90-day purge removes row and file together
+   * (§3.4 #11, jobs/PurgeDeletedRecords). Cross-tenant access is reported as NotFoundError.
    */
   public async delete(actor: IUser | null, id: string): Promise<void> {
     if (!actor) throw new UnauthorizedError('Authentication required to delete attachments');
@@ -152,6 +152,5 @@ export class AttachmentService {
     }
 
     await this.repository.softDelete(id);
-    await storage.deleteFile(att.storageKey);
   }
 }

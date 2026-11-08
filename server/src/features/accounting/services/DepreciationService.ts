@@ -33,6 +33,11 @@ export const DEPRECIATION_POSTED = 'depreciation.posted';
 /** `sourceType` das quotas mensais — chave de idempotência é `${assetId}:${yearMonth}` (item 13). */
 export const DEPRECIATION_SOURCE_TYPE = 'fixed_asset.depreciation';
 
+/** FIX-MENSAGENS-ID-INTERNO lote 4 (F-MSG-2 a1): o bem é `código — descrição` e a classe `código — nome`, como no
+ *  FixedAssetService; o cuid só sem rótulo. */
+const rotuloAtivo = (a: { id: string; code: string; description: string | null }) => [a.code, a.description].filter(Boolean).join(' — ') || a.id;
+const rotuloClasse = (c: { id: string; code: string; name: string }) => [c.code, c.name].filter(Boolean).join(' — ') || c.id;
+
 function minBigInt(a: bigint, b: bigint): bigint {
   return a < b ? a : b;
 }
@@ -141,7 +146,7 @@ export class DepreciationService {
     const classesById = new Map<string, FixedAssetClass>();
     for (const classId of new Set(assets.map((a) => a.classId))) {
       const klass = await this.classRepo.findById(scope, classId);
-      if (!klass) throw new NotFoundError(`Classe de bem '${classId}' não foi encontrada.`);
+      if (!klass) throw new NotFoundError(`Classe de bem do ativo '${rotuloAtivo(assets.find((a) => a.classId === classId)!)}' não foi encontrada.`);
       if (!klass.accumulatedDepreciationAccountId) {
         throw new ValidationError(
           `Classe '${klass.code}' não tem accumulatedDepreciationAccountId configurada — configure antes de rodar a depreciação (item 16).`,
@@ -186,7 +191,7 @@ export class DepreciationService {
     const asset = await this.assetRepo.findById(scope, assetId);
     if (!asset) throw new NotFoundError(`Ativo '${assetId}' não foi encontrado.`);
     const klass = await this.classRepo.findById(scope, asset.classId);
-    if (!klass) throw new NotFoundError(`Classe de bem '${asset.classId}' não foi encontrada.`);
+    if (!klass) throw new NotFoundError(`Classe de bem do ativo '${rotuloAtivo(asset)}' não foi encontrada.`);
     if (!klass.depreciable) return;
     if (!klass.accumulatedDepreciationAccountId) {
       throw new ValidationError(`Classe '${klass.code}' não tem accumulatedDepreciationAccountId configurada (item 16).`);
@@ -242,9 +247,9 @@ export class DepreciationService {
 
     // E12 (F-EM-7 → b): benfeitoria debita a conta de amortização da classe; o crédito reusa a acumulada da classe.
     const despesaAccount = isAmortization
-      ? await this.requireAccount(scope, klass.amortizationExpenseAccountId!, 'despesa de amortização da classe (amortizationExpenseAccountId)')
-      : await this.requireAccount(scope, settings.depreciationExpenseAccountId!, 'despesa de depreciação (depreciationExpenseAccountId)');
-    const acumuladaAccount = await this.requireAccount(scope, klass.accumulatedDepreciationAccountId!, 'depreciação acumulada da classe (accumulatedDepreciationAccountId)');
+      ? await this.requireAccount(scope, klass.amortizationExpenseAccountId!, 'despesa de amortização (amortizationExpenseAccountId)', `da classe '${rotuloClasse(klass)}'`)
+      : await this.requireAccount(scope, settings.depreciationExpenseAccountId!, 'despesa de depreciação (depreciationExpenseAccountId)', `das configurações contábeis (depreciação do ativo '${rotuloAtivo(asset)}')`);
+    const acumuladaAccount = await this.requireAccount(scope, klass.accumulatedDepreciationAccountId!, 'depreciação acumulada (accumulatedDepreciationAccountId)', `da classe '${rotuloClasse(klass)}'`);
 
     const dateStr = `${yearMonth}-${String(endOfMonth.getUTCDate()).padStart(2, '0')}`;
     const entry = await this.postingService.postEntry(scope, {
@@ -252,6 +257,7 @@ export class DepreciationService {
       date: dateStr,
       description: `${isAmortization ? 'Amortização' : 'Depreciação'} de ${asset.code} — ${klass.name} (${yearMonth})`,
       sourceType: DEPRECIATION_SOURCE_TYPE,
+      automaticWriter: true,
       sourceId,
       lines: [
         { accountCode: despesaAccount.code, debitCents: Number(quota), creditCents: 0 },
@@ -283,7 +289,7 @@ export class DepreciationService {
         tx,
       );
       if (!updated) {
-        throw new ConflictError(`Ativo '${asset.id}' foi alterado por outra operação durante a depreciação — releia e tente de novo.`);
+        throw new ConflictError(`Ativo '${rotuloAtivo(asset)}' foi alterado por outra operação durante a depreciação — releia e tente de novo.`);
       }
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
@@ -338,9 +344,10 @@ export class DepreciationService {
     return { checked, repaired, draftsCreated };
   }
 
-  private async requireAccount(scope: AccountingScope, id: string, label: string) {
+  /** `dono`: quem guarda o id (classe, configurações) — todo id daqui é interno, então a mensagem nomeia o dono (F-MSG-1 a). */
+  private async requireAccount(scope: AccountingScope, id: string, label: string, dono: string) {
     const account = await this.accountRepo.findById(scope, id);
-    if (!account || account.deletedAt) throw new ValidationError(`${label} '${id}' não existe neste escopo.`);
+    if (!account || account.deletedAt) throw new ValidationError(`${label} ${dono} não existe neste escopo.`);
     if (!account.acceptsEntries) throw new ValidationError(`${label} '${account.code}' não aceita lançamentos (não é folha).`);
     return account;
   }

@@ -1,9 +1,9 @@
 import prisma from '../../../lib/prisma';
 import { ActionProposal, Prisma } from 'generated/prisma';
-import { IActionProposalRepository } from './IActionProposalRepository';
+import { ActionProposalCreateInput, IActionProposalRepository } from './IActionProposalRepository';
 
 export class ActionProposalRepository implements IActionProposalRepository {
-    async create(data: Omit<ActionProposal, 'id' | 'createdAt' | 'updatedAt'>): Promise<ActionProposal> {
+    async create(data: ActionProposalCreateInput): Promise<ActionProposal> {
         return prisma.actionProposal.create({
             data: {
                 userId: data.userId,
@@ -13,6 +13,14 @@ export class ActionProposalRepository implements IActionProposalRepository {
                 tableLabel: data.tableLabel,
                 data: (data.data ?? {}) as Prisma.InputJsonValue,
                 status: data.status || 'PENDING',
+                // Emenda F-TM-8 a (TEAMMATES PR-0): os campos novos chegam ao Prisma; ausentes, valem os defaults.
+                ...(data.kind !== undefined && { kind: data.kind }),
+                ...(data.payload !== undefined && {
+                    payload: data.payload === null ? Prisma.DbNull : (data.payload as Prisma.InputJsonValue),
+                }),
+                ...(data.teammateId !== undefined && { teammateId: data.teammateId }),
+                ...(data.channelMessageId !== undefined && { channelMessageId: data.channelMessageId }),
+                ...(data.expiresAt !== undefined && { expiresAt: data.expiresAt }),
             },
         });
     }

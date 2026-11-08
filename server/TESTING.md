@@ -5,6 +5,8 @@ Living document — update it in the same PR that changes the testing strategy o
 
 > For the app architecture itself, see [`ARCHITECTURE.md`](./ARCHITECTURE.md). The **mandatory
 > per-feature** test standard is in [`src/features/FEATURE_TEMPLATE.md`](./src/features/FEATURE_TEMPLATE.md) §10.
+> **Which tests to run for a given change** (server, front, scripts, screen, runbooks) is in
+> [`docs/operating-manual/TESTES.md`](../docs/operating-manual/TESTES.md).
 
 ---
 
@@ -36,8 +38,8 @@ have a test that fails if the invariant breaks?*
 | **Prisma + SQLite** | a **real**, isolated database per run (`test-integration.db`) for integration tests |
 | **`@types/jest`, `@types/supertest`** | types for the Jest globals and supertest |
 
-We do not mock the database: integration tests run against real SQLite (via `prisma db push`),
-because a fake repository "lies" — it misses transaction errors, constraints, and the real Prisma
+We do not mock the database: integration tests run against real SQLite (a copy of a template DB
+built once per schema hash, see §5), because a fake repository "lies" — it misses transaction errors, constraints, and the real Prisma
 path. Mocks are reserved for expensive/unavailable external dependencies (OpenAI, Qdrant) when needed.
 
 ---
@@ -105,9 +107,15 @@ to find a file's test and keeps the context together.
 
 ### Test database
 - A single SQLite file (`prisma/test-integration.db`), pointed at by `test/jest.setupEnv.ts`.
-- The `integration` project runs **`--runInBand`** (serial), so files never race on the DB.
+- **Template DB:** `test/helpers/templateDb.ts` runs `prisma db push` + the SQL seeds **once per schema
+  hash** (warmed in `test/jest.integrationGlobalSetup.ts`, which also takes a heavy-work slot). Each file's
+  `pushTestSchema()` then only truncates the `.db`/`-wal`/`-shm` and copies the template (milliseconds;
+  truncate, not delete, because of EBUSY on Windows).
+- Locally, run integration **one file at a time with `--runInBand`**. In CI it runs in 4 shards on
+  separate runners (separate SQLite each).
 - Each file: `pushTestSchema()` in `beforeAll`, `resetDb()` in `afterEach`, `disconnectDb()` in `afterAll`.
-- It is git-ignored (created fresh on every run).
+  `resetDb()` also restores the seeded legal parameters and reloads their cache.
+- It is git-ignored.
 
 ### Minimum set per CRUD feature (four levels)
 1. **Policy unit** — `policies/__tests__/<Entity>Policy.spec.ts`. Ref.:
@@ -127,17 +135,24 @@ to find a file's test and keeps the context together.
 
 ## 6. How to run
 
-```bash
-npm test               # everything: unit, then integration (what CI runs)
-npm run test:unit      # unit only (fast, no DB) — good day to day
-npm run test:integration   # integration only (serial, isolated DB)
-npm run test:coverage  # runs everything with coverage + enforces the ratchet (coverageThreshold)
-npm run test:watch     # unit in watch mode (re-runs on save)
+**Locally, always scoped** (owner, 2026-11-03: the full suite is too heavy for the machine). The full
+suite is blocked outside CI unless `FULL_SUITE=1` (`scripts/test-scope-guard.cjs`). The path goes
+**before** `--selectProjects`, or Jest swallows it and runs everything.
 
-# filter by file/name:
-npm run test:unit -- UserPolicy
-npm run test:integration -- -t "Tier-0"
+```bash
+npx jest src/features/users --selectProjects unit                 # unit, one folder or file
+npx jest src/controllers/__tests__/users.routes.integration.test.ts --selectProjects integration --runInBand
+npm run test:changed                                              # unit tests related to the diff vs origin/main (NOT integration)
+npm run test:watch                                                # unit in watch mode
 ```
+
+**CI** does not call these scripts. It runs `npx jest --selectProjects <unit|integration> --shard=N/M
+--detectOpenHandles --coverage` in 7 shards (3 unit + 4 integration) and sums coverage in a separate job
+(`scripts/coverage-gate.js`). `npm test` / `npm run test:integration` (4 sequential shards with 8 GB heap)
+reproduce the full run locally only with `FULL_SUITE=1`.
+
+Mutation testing (Stryker, unit project only, never in CI): `npm run test:mutation` (only the lines changed
+vs origin/main), `npm run test:mutation:slices` (the full run, in budgeted slices).
 
 ---
 
@@ -153,8 +168,10 @@ import { makeApp, seedUser, authHeader, ctxFor, pushTestSchema, resetDb, disconn
 | `seedUser({ username, role?, email?, name? })` | creates a user directly via Prisma; returns the row (with generated cuid `id`) |
 | `signToken(actor)` / `authHeader(actor)` | real JWT (same secret/Bearer the middleware verifies); `authHeader` returns `{ Authorization }` |
 | `ctxFor(actor)` | builds a `UserContext` as the controller would resolve it — to test the service directly |
-| `pushTestSchema()` | recreates the schema in the test DB (call in `beforeAll`) |
-| `resetDb()` | deletes all rows in FK order (call in `afterEach`) |
+| `pushTestSchema()` | copies the template DB over the test DB (call in `beforeAll`) |
+| `resetDb()` | deletes all rows in FK order and restores the seeded legal parameters (call in `afterEach`) |
+| `applyMigrations(dbPath, dirs)` (`test/helpers/migrations.ts`) | applies real migrations in one spawn, for tests of a migration itself |
+| `fakeSefaz`, `nfeSignature`, `fiscalCertificate`, `reinfXsd`, `legalParams`, `ecfPresumidoOraculo` | domain fakes and fixtures (files in `test/helpers/`) |
 | `disconnectDb()` | closes the Prisma connection (call in `afterAll`) |
 
 ### Skeleton of an HTTP test
@@ -180,9 +197,10 @@ it('403 for a USER on an admin-only route', async () => {
 
 ## 8. Coverage (anti-regression ratchet)
 
-`jest.config.js` sets `coverageThreshold.global` **just below the current baseline** (~37% stmts /
-24% branches). Meaning: `npm run test:coverage` **fails** if coverage **regresses** below the floor.
-As new features get tests, **raise those numbers** to lock the gain.
+`jest.config.js` sets `coverageThreshold.global` **just below the current baseline** (50% statements /
+36% branches / 46% functions / 51% lines on 2026-11-04). CI enforces it on the **sum** of the 7 shards
+(job `server-coverage`, `scripts/coverage-gate.js`); a single shard is partial by definition. As new
+features get tests, **raise those numbers** to lock the gain.
 
 Reports: terminal summary + `coverage/lcov-report/index.html` (git-ignored).
 

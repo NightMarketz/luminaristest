@@ -228,8 +228,8 @@ export default function SalesTable({
                                                         <HiEye size={18} />
                                                     </button>
 
-                                                    {/* Finalizar — só se não finalizado e não cancelado */}
-                                                    {!isFinalized && !isCancelled && (
+                                                    {/* Finalizar — só se não finalizado, cancelado nem devolvido */}
+                                                    {!isFinalized && !isCancelled && !isReturned && (
                                                         <button
                                                             disabled={isUpdating === sale.id}
                                                             onClick={() => confirm({

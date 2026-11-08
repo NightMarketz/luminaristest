@@ -1,0 +1,78 @@
+[
+  {
+    "codigo": "SALARIO_BASE",
+    "sha256": "263c62c8be1eb78147201b45b313291db7c93737e3e3b10a12abb273bbcc7f9c"
+  },
+  {
+    "codigo": "BOLSA_ESTAGIO",
+    "sha256": "2f8f0811dd375dde37432a48c1bdd0a5048bb17a2def34b97502b5fe68e13247"
+  },
+  {
+    "codigo": "PRO_LABORE",
+    "sha256": "42c2a67b29de2413fc8e5802aa20965332ae09b0dca466359fd8eaaca5ab186d"
+  },
+  {
+    "codigo": "INSS_SEGURADO",
+    "sha256": "4090a49fe587225a1dbc0b306cda9d3b4c370702349f41878da10857fe99004b"
+  },
+  {
+    "codigo": "IRRF",
+    "sha256": "ba8fb6955ece35aaba785d6a9e25184ef5e4a871e0aac41502d647bc0585eb88"
+  },
+  {
+    "codigo": "FGTS_MES",
+    "sha256": "d5d783ab7930f0df53f2db1b317540237254bfdb0f86052ede66ae2095608a81"
+  },
+  {
+    "codigo": "HORA_EXTRA_50",
+    "sha256": "ade56ace24a1bbfbbe103953989e13c6c4bfb93476c3b106324078fe6daf258b"
+  },
+  {
+    "codigo": "HORA_EXTRA_100",
+    "sha256": "abc9b22e5e752d4bc400d1c40e9d0a128ca7615f265b884a7c48b523eecd3a60"
+  },
+  {
+    "codigo": "ADICIONAL_NOTURNO",
+    "sha256": "29b03cd20af70ade3e4a2c90dc6b10c4911e24d35edd1fd4131b9869397fb454"
+  },
+  {
+    "codigo": "COMISSAO",
+    "sha256": "a7daead4096e2790efb862226df0a41da62ec04fb3e79945ad93bc05138d770b"
+  },
+  {
+    "codigo": "FALTAS",
+    "sha256": "44352415ac0b6cbd094bb8bb4259819ea03bd573007f55a78a032817eede7a6d"
+  },
+  {
+    "codigo": "DSR_VARIAVEIS",
+    "sha256": "bfc9d19f1c01e66a5a65ce83ddb351dc504f62c2aa0800b2a23ec0f5adc2768f"
+  },
+  {
+    "codigo": "DSR_PERDIDO",
+    "sha256": "2793e34174abdda45264fe82b6b41b445245200c189dfb58f8a99e59a3ddc209"
+  },
+  {
+    "codigo": "COMPLEMENTO_MINIMO",
+    "sha256": "bc8f4ccc24efdc0c5a978361a5717cf077481240777d576a67a85ed49fd9762b"
+  },
+  {
+    "codigo": "COMPLEMENTO_PISO",
+    "sha256": "6488a324d923526cf406a60b196cad5d0b848156085a52fecce9c70504f69418"
+  },
+  {
+    "codigo": "AFASTAMENTO_EMPRESA_15D",
+    "sha256": "fd2259cbaa766e28b010065ffab7b11e5aa16c104160bf00f491ac19b5e1d409"
+  },
+  {
+    "codigo": "ADIANTAMENTO",
+    "sha256": "f073c3987e42fb1875531419b9bc4c2c3c47e7d561aac237e6bf7c772a00de11"
+  },
+  {
+    "codigo": "DESCONTO_ADIANTAMENTO",
+    "sha256": "71988a796701a1c696ac8f28fe498788957fd6cd1020a6e2b93b02a4cf46504f"
+  },
+  {
+    "codigo": "SALARIO_FAMILIA",
+    "sha256": "9c61c85ff4c4b0c4482b9400e516e8166acfcbdb95432279618718cda8092572"
+  }
+]

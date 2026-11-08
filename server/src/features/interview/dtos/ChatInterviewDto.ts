@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { moduleSelectorSchema } from '../../dynamicTables/presets/modules/registry';
+import { INTERVIEW_LOCALES } from '../models/interviewText';
 
 /**
  * BE-INCR-INTERVIEW-SESSION (nó W4, item 7) — corpo de `POST /api/dashboard/ai/ChatInterview`, saído do controller.
@@ -26,6 +27,8 @@ export const ChatInterviewSchema = z
     choice: z.enum(['create', 'customize']).optional(),
     // W1 (F-W1-6 a): módulos marcados no front; lidos só no turno que abre a sessão (`choice:'customize'`).
     modules: z.array(moduleSelectorSchema).optional(),
+    // Idioma da UI (dono, chat, 2026-11-06: "Seguir o idioma da UI"); ausente = português.
+    locale: z.enum(INTERVIEW_LOCALES).optional(),
   })
   .strict();
 

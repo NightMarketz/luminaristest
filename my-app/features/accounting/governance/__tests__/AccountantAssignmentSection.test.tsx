@@ -81,6 +81,17 @@ describe('AccountantAssignmentSection (dono)', () => {
     await waitFor(() => expect(accountantAssignmentsService.listByScope).toHaveBeenCalledTimes(2));
   });
 
+  // H2 C7 achado 23-pre-2 (03/11, PR #982): o contato cadastrado DEPOIS de a seção carregar só aparecia no convite
+  // depois de recarregar a página. Guarda: abrir o modal relê a lista de contatos.
+  it('contato cadastrado depois do carregamento aparece no modal "Convidar" sem recarregar a página', async () => {
+    vi.mocked(accountingContactsService.listContacts).mockResolvedValueOnce([]).mockResolvedValue([contact]);
+    render(<AccountantAssignmentSection unitId="u1" />);
+    await waitFor(() => expect(accountingContactsService.listContacts).toHaveBeenCalledTimes(1));
+    fireEvent.click(await screen.findByRole('button', { name: /Convidar/ }));
+    await screen.findByRole('combobox');
+    await waitFor(() => expect(screen.queryByRole('option', { name: /Ana Contadora/ })).not.toBeNull());
+  });
+
   it('o histórico lista a linha ENCERRADA com o motivo', async () => {
     vi.mocked(accountantAssignmentsService.listByScope).mockResolvedValue([assignment({ status: 'ENDED', endReason: 'fim do contrato', activeUntil: '2026-11-01T12:00:00Z' })]);
     render(<AccountantAssignmentSection unitId="u1" />);

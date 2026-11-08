@@ -1,13 +1,13 @@
 import type { IUserRepository } from '../repositories/IUserRepository';
 import type { IUserPolicy } from '../policies/IUserPolicy';
-import type { IVectorRepository } from '../../documents/repositories/IVectorRepository';
+import type { IChunkVectorRepository } from '../../documents/repositories/IChunkVectorRepository';
 import { CreateUserDto, UpdateUserDto } from '../dtos/UserDto';
 import bcrypt from 'bcryptjs';
 import type { IUser } from '../models/User.model';
 import { Role } from '../models/User.model';
 import type { UserContext } from '../../../types/UserContext';
 import { Prisma } from 'generated/prisma';
-import { ForbiddenError, NotFoundError, UnauthorizedError, ValidationError, ConflictError } from '../../../lib/errors';
+import { AppError, ForbiddenError, NotFoundError, UnauthorizedError, ValidationError, ConflictError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import * as storage from '../../../lib/attachmentStorage';
 
@@ -29,7 +29,7 @@ export class UserService {
   constructor(
     private userRepository: IUserRepository,
     private userPolicy: IUserPolicy,
-    private vectorRepository: IVectorRepository
+    private vectorRepository: IChunkVectorRepository
   ) { }
 
   /**
@@ -194,11 +194,12 @@ export class UserService {
 
     // §3.4 #6 — changing one's own password or email requires the current password.
     // An ADMIN editing another user is exempt.
+    // 400, not 401: the session is valid — a 401 here made the client treat it as an expired session (H2 21-1).
     const isSelf = actor.userId === id;
     if (isSelf && (data.password || data.email !== undefined)) {
       const withHash = await this.userRepository.getUserByUsername(existingUser.username);
       if (!data.currentPassword || !withHash || !(await bcrypt.compare(data.currentPassword, withHash.password))) {
-        throw new UnauthorizedError('Current password is required to change password or email');
+        throw new AppError('Current password is required to change password or email', 400, 'CURRENT_PASSWORD_INVALID');
       }
     }
 
@@ -291,22 +292,22 @@ export class UserService {
     }
 
     // Prevent locking out the system by deleting the last remaining admin.
-    // Checked BEFORE the Qdrant purge so we never erase vectors for a delete we then refuse.
+    // Checked BEFORE the vector purge so we never erase vectors for a delete we then refuse.
     if (user.role === Role.ADMIN && (await this.userRepository.countByRole(Role.ADMIN)) <= 1) {
       throw new ValidationError('Cannot delete the last admin user.');
     }
 
-    // LGPD art.18 VI — right to erasure: purge Qdrant vectors BEFORE the SQL
-    // delete.  If Qdrant fails we abort here and the user record is still intact
+    // LGPD art.18 VI — right to erasure: purge the vectors BEFORE the SQL
+    // delete.  If the vector index fails we abort here and the user record is still intact
     // so the operation can be retried.  True distributed transactions are not
-    // available between Qdrant and Postgres, so this ordering is the safest choice.
+    // available between the vector file and the main DB, so this ordering is the safest choice.
     // §3.4 #1 — a Restrict FK (accounting trail) would fail the SQL delete AFTER the purge.
     if (await this.userRepository.hasRestrictedDependents(id)) {
       throw new ConflictError('User has accounting records and cannot be deleted', 'USER_HAS_DEPENDENTS');
     }
 
-    logger.info('Deleting Qdrant vectors before user deletion (LGPD art.18 VI)', { userId: id });
-    await this.vectorRepository.deleteVectorsByUserId(id);
+    logger.info('Deleting vectors before user deletion (LGPD art.18 VI)', { userId: id });
+    await this.vectorRepository.deleteByUser(id);
 
     const storageKeys = await this.userRepository.getAttachmentStorageKeys(id);
     await this.userRepository.deleteUser(id);
@@ -319,6 +320,11 @@ export class UserService {
   /** Current token version for JWT issue/verification; null when the user does not exist (§3.4 #3). */
   public async getTokenVersion(userId: string): Promise<number | null> {
     return this.userRepository.getTokenVersion(userId);
+  }
+
+  /** Token version + the user's real createdAt/updatedAt, read once per request by the auth middleware (§3.4 #20). */
+  public async getAuthState(userId: string): Promise<{ tokenVersion: number; createdAt: Date; updatedAt: Date } | null> {
+    return this.userRepository.getAuthState(userId);
   }
 
   /** Logout: invalidates every JWT issued to the user so far (§3.4 #3). */

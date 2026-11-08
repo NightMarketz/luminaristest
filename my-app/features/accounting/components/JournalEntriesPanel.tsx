@@ -158,7 +158,10 @@ function JournalEntryRow({
 
   const totalDebitCents = entry.postings.reduce((s, p) => s + p.debitCents, 0);
   const totalCreditCents = entry.postings.reduce((s, p) => s + p.creditCents, 0);
-  const canReverse = !entry.reversedById && entry.status !== 'Reversed';
+  // Rascunho/pendente não tem número: o servidor recusa recibo (ReceiptService) e estorno (PostingService).
+  const canReceipt = entry.entryNumber != null && entry.fiscalYear != null;
+  const canReverse =
+    !entry.reversedById && entry.status !== 'Reversed' && entry.status !== 'Draft' && entry.status !== 'PendingApproval';
   const isDownloadingReceipt = receiptBusyId === entry.id;
   const isLoadingProvenance = provenanceBusyId === entry.id;
 
@@ -196,7 +199,7 @@ function JournalEntryRow({
         >
           <div className="flex items-center gap-2">
             <button
-              disabled={isDownloadingReceipt}
+              disabled={isDownloadingReceipt || !canReceipt}
               onClick={() => onReceiptClick(entry.id)}
               title={t('journalEntries.receiptAction.title', 'Baixar recibo em PDF deste lançamento')}
               className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-300 transition-colors hover:border-blue-700 hover:bg-blue-900/30 hover:text-blue-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-neutral-700 disabled:hover:bg-neutral-800 disabled:hover:text-neutral-300"
@@ -215,7 +218,9 @@ function JournalEntryRow({
               onClick={() => onReverseClick(entry.id)}
               title={canReverse
                 ? t('journalEntries.reverseAction.enabledTitle', 'Estornar este lançamento')
-                : t('journalEntries.reverseAction.disabledTitle', 'Lançamento já estornado')}
+                : !canReceipt
+                  ? t('journalEntries.reverseAction.notPostedTitle', 'Só lançamentos postados podem ser estornados')
+                  : t('journalEntries.reverseAction.disabledTitle', 'Lançamento já estornado')}
               className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-300 transition-colors hover:border-red-700 hover:bg-red-900/30 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-neutral-700 disabled:hover:bg-neutral-800 disabled:hover:text-neutral-300"
             >
               <FiRotateCcw size={12} />
@@ -268,6 +273,10 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
   const [confirmReverseId, setConfirmReverseId] = useState<string | null>(null);
   const [reversalDate, setReversalDate] = useState(scopeToday);
   const [isReversing, setIsReversing] = useState(false);
+  // ITG 2000 item 32: o estorno exige o motivo da retificação (o servidor recusa sem ele).
+  const [reverseReason, setReverseReason] = useState('');
+  // ITG 2000 item 36: data do estorno num período fechado e reaberto exige a razão do registro extemporâneo.
+  const [reverseExtemporaneousReason, setReverseExtemporaneousReason] = useState('');
   const [receiptBusyId, setReceiptBusyId] = useState<string | null>(null);
   // ── audit chain verification (FE-INCR-AUDIT-PROVENANCE, F-FEAP-1a) ─────────
   const [isVerifyingChain, setIsVerifyingChain] = useState(false);
@@ -307,7 +316,14 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
     setError(null);
     setPeriodError(false);
     try {
-      await accountingService.reverseEntry({ unitId, lancamentoId: confirmReverseId, reversalPostingDate: reversalDate });
+      const extemporaneousReason = reverseExtemporaneousReason.trim();
+      await accountingService.reverseEntry({
+        unitId,
+        lancamentoId: confirmReverseId,
+        reversalPostingDate: reversalDate,
+        reason: reverseReason.trim(),
+        ...(extemporaneousReason && { extemporaneousReason }),
+      });
       setConfirmReverseId(null);
       await fetchEntries();
       onReversalComplete?.();
@@ -434,7 +450,7 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
                 <JournalEntryRow
                   key={entry.id}
                   entry={entry}
-                  onReverseClick={(id) => setConfirmReverseId(id)}
+                  onReverseClick={(id) => { setReverseReason(''); setReverseExtemporaneousReason(''); setConfirmReverseId(id); }}
                   onReceiptClick={(id) => void handleDownloadReceipt(id)}
                   onProvenanceClick={(id) => void handleShowProvenance(id)}
                   receiptBusyId={receiptBusyId}
@@ -466,7 +482,7 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
             </button>
             <button
               onClick={() => void handleConfirmReverse()}
-              disabled={isReversing}
+              disabled={isReversing || !reverseReason.trim()}
               className="inline-flex items-center gap-2 rounded-xl bg-red-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-50"
             >
               {isReversing ? (
@@ -508,6 +524,33 @@ export function JournalEntriesPanel({ unitId, onReversalComplete, onNavigateToPe
               onChange={(e) => setReversalDate(e.target.value)}
               className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 focus:border-red-500 focus:outline-none"
             />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="reverse-reason" className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
+              {t('journalEntries.confirmModal.reasonLabel', 'Motivo do estorno')}
+            </label>
+            <input
+              id="reverse-reason"
+              type="text"
+              value={reverseReason}
+              onChange={(e) => setReverseReason(e.target.value)}
+              className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 focus:border-red-500 focus:outline-none"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="reverse-extemporaneous-reason" className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
+              {t('journalEntryModal.field.extemporaneousReason', 'Razão do registro extemporâneo')}
+            </label>
+            <input
+              id="reverse-extemporaneous-reason"
+              type="text"
+              value={reverseExtemporaneousReason}
+              onChange={(e) => setReverseExtemporaneousReason(e.target.value)}
+              className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 focus:border-red-500 focus:outline-none"
+            />
+            <p className="text-xs text-neutral-500">
+              {t('journalEntryModal.field.extemporaneousReasonHelp', 'Opcional. Exigida quando a data cai num período que já foi fechado.')}
+            </p>
           </div>
           <p className="text-neutral-400">
             {t('journalEntries.confirmModal.warning', 'Um novo lançamento oposto será criado automaticamente na data acima. Esta ação não pode ser desfeita.')}

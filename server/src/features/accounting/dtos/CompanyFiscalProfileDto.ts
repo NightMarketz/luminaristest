@@ -159,6 +159,14 @@ export const UpsertCompanyFiscalProfileSchema = z
     // BE-INCR-EFD-REINF PR-1 (item 4; lacuna B, dono 26/10): `classTrib` do R-1000 do optante — Tabela 08 do leiaute 2.1.2b:
     // 01/02/03 conforme a CPP (P-REINF-7 ao contador). MEI (04) e Presumido/Real (99) são derivados, não informados.
     reinfClassTrib: z.enum(['01', '02', '03']).nullable().default(null),
+    // EFICIENCIA-FISCAL PR-5 (item 25; ADR §7 ChecklistHospitalarSchema): checklist do 8 %/12 % hospitalar (Lei 9.249 art. 15
+    // § 1º III "a"). Alvará date-only com calendário validado (memória date-only-regex-nao-valida-calendario).
+    sociedadeEmpresaria: z.boolean().default(false),
+    alvaraSanitarioValidoAte: dateOnly('alvaraSanitarioValidoAte').nullable().default(null),
+    alvaraSourceDocumentId: z.string().min(1).nullable().default(null),
+    // EFICIENCIA-FISCAL PR-5 (item 30; lacuna 4 do dono, 28/10): naturezas declaradas — null = não declarado.
+    declaraLocacaoImovelProprio: z.boolean().nullable().default(null),
+    declaraCessaoMaoDeObraMedica: z.boolean().nullable().default(null),
   })
   .strict()
   .superRefine((v, ctx) => {

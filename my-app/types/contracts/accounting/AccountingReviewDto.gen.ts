@@ -47,6 +47,7 @@ creditCents: number
 dimensions?: string[]
 })[]]
 reverseOriginal?: boolean
+extemporaneousReason?: string
 }
 export interface SignOffReviewInput {
 unitId: string

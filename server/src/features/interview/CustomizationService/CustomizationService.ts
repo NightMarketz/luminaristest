@@ -1,9 +1,10 @@
 import { logger } from '../../../lib/logger';
+import { DEFAULT_INTERVIEW_LOCALE, INTERVIEW_TEXT, replyIn, type InterviewLocale } from '../models/interviewText';
 import { OpenAIService } from '../../../lib/openai/OpenAIService';
 import { ICustomizationState, IInterviewTurnResult, IMessage } from '../models/InterviewTypes';
 import { presetKnowledgeBase } from '../../dynamicTables/presets/ai/PresetKnowledgeBase';
 import { presetService } from '../../dynamicTables/services/PresetService';
-import { describeTableLock } from '../../dynamicTables/presets/removability';
+import { bridgeRequirementsOfTable, describeTableLock } from '../../dynamicTables/presets/removability';
 import { TableExtractor } from './TableExtractor';
 import { AIInteractions } from './AIInteractions';
 import { IInterviewSessionHandle, StateManager } from './StateManager';
@@ -67,6 +68,7 @@ export class CustomizationService {
       const tables = this.tableExtractor.extractTablesFromRealPreset({
         key: presetKey,
         tables: composeSessionTables(preset, installed),
+        bridges: preset.bridges ?? [],
       });
       return await this.stateManager.createSessionState(userId, presetKey, preset.name, tables, installed);
     } catch (error) {
@@ -78,20 +80,13 @@ export class CustomizationService {
   /**
    * Gera uma apresentação elegante das tabelas do preset para o usuário
    */
-  public async generateTablesPresentation(session: ICustomizationState, isInteractive = false): Promise<string> {
+  public async generateTablesPresentation(session: ICustomizationState, isInteractive = false, locale: InterviewLocale = DEFAULT_INTERVIEW_LOCALE): Promise<string> {
+    const tx = INTERVIEW_TEXT[locale];
     logger.info(`[CustomizationService] Gerando apresentação de tabelas do preset ${session.presetKey}`);
 
     // No modo interativo, geramos uma resposta simples, pois os detalhes serão exibidos no painel lateral
     if (isInteractive) {
-      return `# Customização do Sistema "${session.presetName}"
-
-Por favor, observe o painel de customização à esquerda para ver todas as funcionalidades atuais do seu sistema.
-
-O que você gostaria de fazer agora?
-
-1. **Adicionar** novas funcionalidades
-2. **Remover** funcionalidades existentes
-3. **Finalizar** a customização e criar o sistema`;
+      return tx.customizationIntro(session.presetName);
     }
 
     // Para o modo não-interativo, geramos a apresentação completa com todos os detalhes
@@ -105,10 +100,10 @@ O que você gostaria de fazer agora?
         const mainFields = table.fields
           .filter(field => field.label && !field.hidden) // Exibe apenas campos não ocultos
           .slice(0, 5)
-          .map(field => `${field.label}${field.required ? ' (obrigatório)' : ''}`);
+          .map(field => `${field.label}${field.required ? tx.requiredSuffix : ''}`);
 
         if (mainFields.length > 0) {
-          tablePresentation += `\n   - Campos principais: ${mainFields.join(', ')}`;
+          tablePresentation += `\n   - ${tx.mainFields}: ${mainFields.join(', ')}`;
         }
       }
 
@@ -123,30 +118,24 @@ O cliente escolheu customizar o sistema "${session.presetName}" que contém as s
 
 Gere uma mensagem elegante e bem formatada explicando ao cliente que estas são as funcionalidades atuais do sistema. Pergunte se ele gostaria de adicionar novas funcionalidades, remover alguma existente ou finalizar a customização.
 
-Sua resposta deve ser clara, usar formatação markdown para ficar bonita e fácil de entender, e oferecer opções claras para o cliente escolher: adicionar, remover ou finalizar a customização e criar o sistema.`;
+Sua resposta deve ser clara, usar formatação markdown para ficar bonita e fácil de entender, e oferecer opções claras para o cliente escolher: adicionar, remover ou finalizar a customização e criar o sistema.
+
+${replyIn(locale)}`;
 
     const aiResponse = await this.aiInteractions.getAiResponse(systemPrompt, []);
-    return aiResponse || `# Customização do Sistema ${session.presetName}
-
-## Funcionalidades Atuais
-
-Estas são as tabelas e funcionalidades incluídas no seu sistema:
-
-- ${tablesFormatted}
-
-## Próximos Passos
-
-Você gostaria de:
-
-1. **Adicionar** novas funcionalidades
-2. **Remover** alguma funcionalidade existente
-3. **Finalizar** a customização e criar o sistema`;
+    return aiResponse || tx.tablesFallback(session.presetName, tablesFormatted);
   }
 
   /**
    * Processa a resposta do usuário durante a customização
    */
-  public async processCustomizationStep(sessionId: string, userId: string, messages: IMessage[]): Promise<IInterviewTurnResult> {
+  public async processCustomizationStep(
+    sessionId: string,
+    userId: string,
+    messages: IMessage[],
+    locale: InterviewLocale = DEFAULT_INTERVIEW_LOCALE
+  ): Promise<IInterviewTurnResult> {
+    const tx = INTERVIEW_TEXT[locale];
     try {
       logger.info(`[CustomizationService] Processando passo de customização para sessionId ${sessionId}`);
 
@@ -159,7 +148,7 @@ Você gostaria de:
       if (!lastUserMessage) {
         logger.warn(`[CustomizationService] Não foi encontrada nenhuma mensagem do usuário para processar`);
         return {
-          response: "Não entendi sua solicitação. Por favor, diga o que deseja fazer com a customização do sistema.",
+          response: tx.stepNoMessage,
           nextStage: 'CUSTOMIZATION_IN_PROGRESS',
           sessionId
         };
@@ -174,11 +163,11 @@ Você gostaria de:
       // Se já estamos em um fluxo específico de ação, continue esse fluxo
       if (session.currentAction === 'adding') {
         // Processa a adição de uma nova tabela
-        return await this.processAddingTable(handle, lastUserMessage.content);
+        return await this.processAddingTable(handle, lastUserMessage.content, locale);
       }
       else if (session.currentAction === 'removing') {
         // Processa a remoção de uma tabela
-        return await this.processRemovingTable(handle, lastUserMessage.content);
+        return await this.processRemovingTable(handle, lastUserMessage.content, locale);
       }
 
       // Se não estamos em um fluxo específico, analisa a intenção do usuário
@@ -192,7 +181,7 @@ Você gostaria de:
         case 'add':
           // Inicia o fluxo de adição de tabela
           await this.stateManager.setCurrentAction(handle, 'adding');
-          const addingGuidance = await this.aiInteractions.generateAddingGuidance();
+          const addingGuidance = await this.aiInteractions.generateAddingGuidance(locale);
           return {
             response: addingGuidance,
             nextStage: 'CUSTOMIZATION_IN_PROGRESS',
@@ -207,7 +196,7 @@ Você gostaria de:
             .filter(t => !t.isCore)
             .map(t => t.name);
 
-          const removingGuidance = await this.aiInteractions.generateRemovingGuidance(removableTables);
+          const removingGuidance = await this.aiInteractions.generateRemovingGuidance(removableTables, locale);
           return {
             response: removingGuidance,
             nextStage: 'CUSTOMIZATION_IN_PROGRESS',
@@ -221,7 +210,7 @@ Você gostaria de:
           if (!preset) throw new InterviewSessionNotFoundError();
           await this.stateManager.completeCustomization(handle);
           return {
-            response: `# Customização Concluída!\n\nSeu sistema "${session.presetName}" foi customizado com sucesso e agora inclui todas as funcionalidades e tabelas que você solicitou.\n\nO sistema será criado conforme suas especificações.`,
+            response: tx.customizationDone(session.presetName),
             nextStage: 'COMPLETED',
             presetKey: session.presetKey,
             creation: toCustomCreation(session, preset),
@@ -245,11 +234,13 @@ Você gostaria de:
             3. Finalizar a customização e criar o sistema
 
             Use formatação markdown para tornar sua resposta mais legível.
+
+            ${replyIn(locale)}
           `;
 
           const aiResponse = await this.aiInteractions.getAiResponse(systemPrompt, []);
           return {
-            response: aiResponse || "Não entendi completamente o que você deseja fazer. Você gostaria de adicionar novas funcionalidades, remover alguma existente, ou finalizar a customização?",
+            response: aiResponse || tx.stepUnknown,
             nextStage: 'CUSTOMIZATION_IN_PROGRESS',
             sessionId
           };
@@ -258,7 +249,7 @@ Você gostaria de:
       if (isInterviewSessionError(error)) throw error;
       logger.error(`[CustomizationService] Erro ao processar passo de customização: ${error}`);
       return {
-        response: "Ocorreu um erro ao processar sua solicitação de customização. Por favor, tente novamente.",
+        response: tx.stepError,
         nextStage: 'CUSTOMIZATION_IN_PROGRESS',
         sessionId
       };
@@ -280,7 +271,7 @@ Você gostaria de:
     const installed = resolveModuleSelection(expandModuleSelectors(modules), suiteKept);
     const entering = installed.filter((k) => !current.includes(k));
     const enteringTables = this.tableExtractor
-      .extractTablesFromRealPreset({ key: preset.key ?? handle.state.presetKey, tables: composeSessionTables(preset, installed) })
+      .extractTablesFromRealPreset({ key: preset.key ?? handle.state.presetKey, tables: composeSessionTables(preset, installed), bridges: preset.bridges ?? [] })
       .filter((t) => entering.includes(moduleOfTable(t.key)!) && !(t.key in preset.tables));
     await this.stateManager.setModules(handle, installed, enteringTables);
     return handle.state;
@@ -289,8 +280,9 @@ Você gostaria de:
   /**
    * Processa a adição de uma nova tabela
    */
-  private async processAddingTable(handle: IInterviewSessionHandle, userMessage: string): Promise<IInterviewTurnResult> {
+  private async processAddingTable(handle: IInterviewSessionHandle, userMessage: string, locale: InterviewLocale): Promise<IInterviewTurnResult> {
     const sessionId = handle.id;
+    const tx = INTERVIEW_TEXT[locale];
     try {
       logger.info(`[CustomizationService] Processando adição de tabela para sessionId ${sessionId}`);
 
@@ -320,7 +312,7 @@ Você gostaria de:
       if (!aiResponse) {
         logger.error(`[CustomizationService] Não foi possível analisar a requisição de adição de tabela`);
         return {
-          response: "Não consegui entender os detalhes da tabela que você deseja adicionar. Por favor, forneça o nome e a descrição da tabela.",
+          response: tx.addNoAi,
           nextStage: 'CUSTOMIZATION_IN_PROGRESS',
           sessionId
         };
@@ -337,7 +329,7 @@ Você gostaria de:
         // Verifica se as informações são válidas
         if (!tableInfo.tableName || !tableInfo.description) {
           return {
-            response: "Não consegui identificar claramente o nome ou a descrição da tabela. Por favor, forneça essas informações no formato: \"Quero adicionar uma tabela de [nome] para [descrição]\".",
+            response: tx.addMissing,
             nextStage: 'CUSTOMIZATION_IN_PROGRESS',
             sessionId
           };
@@ -355,7 +347,7 @@ Você gostaria de:
 
         if (success) {
           return {
-            response: `# Tabela Adicionada com Sucesso!\n\nA tabela "${tableInfo.tableName}" foi adicionada ao seu sistema.\n\nVocê gostaria de:\n\n1. **Adicionar** outra funcionalidade\n2. **Remover** alguma funcionalidade existente\n3. **Finalizar** a customização e criar o sistema`,
+            response: tx.addOk(tableInfo.tableName),
             nextStage: 'CUSTOMIZATION_IN_PROGRESS',
             sessionId,
             // W1: a tabela nova aparece no painel (já com o campo "Nome").
@@ -363,7 +355,7 @@ Você gostaria de:
           };
         } else {
           return {
-            response: `Não foi possível adicionar a tabela "${tableInfo.tableName}". Ela pode já existir no sistema ou ocorreu um erro no processo.\n\nPor favor, tente um nome diferente ou escolha outra ação:`,
+            response: tx.addFailed(tableInfo.tableName),
             nextStage: 'CUSTOMIZATION_IN_PROGRESS',
             sessionId
           };
@@ -374,7 +366,7 @@ Você gostaria de:
       }
 
       return {
-        response: "Não consegui processar corretamente as informações da tabela. Por favor, tente novamente com um formato mais claro, especificando o nome e a descrição da tabela.",
+        response: tx.addParseError,
         nextStage: 'CUSTOMIZATION_IN_PROGRESS',
         sessionId
       };
@@ -383,7 +375,7 @@ Você gostaria de:
       logger.error(`[CustomizationService] Erro ao processar adição de tabela: ${error}`);
       await this.stateManager.setCurrentAction(handle, null);
       return {
-        response: "Ocorreu um erro ao processar a adição da tabela. Por favor, tente novamente.",
+        response: tx.addError,
         nextStage: 'CUSTOMIZATION_IN_PROGRESS',
         sessionId
       };
@@ -393,8 +385,9 @@ Você gostaria de:
   /**
    * Processa a remoção de uma tabela
    */
-  private async processRemovingTable(handle: IInterviewSessionHandle, userMessage: string): Promise<IInterviewTurnResult> {
+  private async processRemovingTable(handle: IInterviewSessionHandle, userMessage: string, locale: InterviewLocale): Promise<IInterviewTurnResult> {
     const sessionId = handle.id;
+    const tx = INTERVIEW_TEXT[locale];
     try {
       logger.info(`[CustomizationService] Processando remoção de tabela para sessionId ${sessionId}`);
 
@@ -417,7 +410,7 @@ Você gostaria de:
       if (!aiResponse || aiResponse.trim().toLowerCase() === "unknown") {
         logger.error(`[CustomizationService] Não foi possível identificar a tabela a ser removida`);
         return {
-          response: "Não consegui identificar qual tabela você deseja remover. Por favor, especifique o nome exato da tabela que deseja remover.",
+          response: tx.removeUnknown,
           nextStage: 'CUSTOMIZATION_IN_PROGRESS',
           sessionId
         };
@@ -437,10 +430,10 @@ Você gostaria de:
         const gone = before.filter((k) => !handle.state.tables.some((t) => t.key === k));
         const moduleKey = modulesBefore.find((k) => !(handle.state.modules ?? []).includes(k));
         const moduleNote = moduleKey
-          ? `\n\nEla faz parte do módulo "${MODULE_REGISTRY[moduleKey].name.pt}", que existe inteiro ou não existe: o módulo saiu junto, com as tabelas ${gone.join(', ')}.`
+          ? tx.removeModuleNote(MODULE_REGISTRY[moduleKey].name[locale], gone.join(', '))
           : '';
         return {
-          response: `# Tabela Removida com Sucesso!\n\nA tabela "${tableKey}" foi removida do seu sistema.${moduleNote}\n\nVocê gostaria de:\n\n1. **Adicionar** uma nova funcionalidade\n2. **Remover** outra funcionalidade existente\n3. **Finalizar** a customização e criar o sistema`,
+          response: tx.removeOk(tableKey, moduleNote),
           nextStage: 'CUSTOMIZATION_IN_PROGRESS',
           sessionId,
           // W1: o painel e a lista de módulos do front seguem a sessão (o módulo pode ter saído junto).
@@ -454,7 +447,7 @@ Você gostaria de:
 
         if (removableTables.length === 0) {
           return {
-            response: "Não há tabelas que possam ser removidas. Todas as tabelas restantes são essenciais para o funcionamento do sistema.\n\nVocê gostaria de adicionar novas funcionalidades ou finalizar a customização?",
+            response: tx.removeNone,
             nextStage: 'CUSTOMIZATION_IN_PROGRESS',
             sessionId
           };
@@ -464,11 +457,15 @@ Você gostaria de:
         const target = session.tables.find(
           (t) => t.key === tableKey || t.name.toLowerCase() === tableKey.toLowerCase(),
         );
+        // PR-5 item 27 (dono, 2026-11-06, "As duas juntas"): a recusa traz a trava e a ponte que exige o módulo.
         const reason = target?.lock
-          ? describeTableLock(target.key, target.lock)
-          : `Não encontrei a tabela "${tableKey}" neste sistema.`;
+          ? [
+              describeTableLock(target.key, target.lock),
+              ...bridgeRequirementsOfTable(target.key, presetService.getPresetByKey(session.presetKey)?.bridges ?? []),
+            ].join(' ')
+          : tx.removeNotFound(tableKey);
         return {
-          response: `${reason}\n\nTabelas disponíveis para remoção:\n${removableTables.map(t => `- ${t}`).join('\n')}\n\nPor favor, escolha uma das tabelas listadas ou selecione outra ação.`,
+          response: tx.removeRefused(reason, removableTables),
           nextStage: 'CUSTOMIZATION_IN_PROGRESS',
           sessionId
         };
@@ -478,7 +475,7 @@ Você gostaria de:
       logger.error(`[CustomizationService] Erro ao processar remoção de tabela: ${error}`);
       await this.stateManager.setCurrentAction(handle, null);
       return {
-        response: "Ocorreu um erro ao processar a remoção da tabela. Por favor, tente novamente.",
+        response: tx.removeError,
         nextStage: 'CUSTOMIZATION_IN_PROGRESS',
         sessionId
       };

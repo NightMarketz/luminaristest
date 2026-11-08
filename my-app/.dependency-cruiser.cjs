@@ -58,7 +58,10 @@ module.exports = {
   ],
   options: {
     doNotFollow: { path: ['node_modules'] },
-    exclude: { path: ['^\\.next/', '^node_modules/', '^public/'] },
+    // node_modules em qualquer nível: no workspace npm o pacote içado resolve em ../node_modules, e pela junção do
+    // depósito (scripts/worktree-deps.mjs) no caminho real, fora do my-app. Com '^node_modules/' o `next/dist/server/…`
+    // caía na U5.
+    exclude: { path: ['^\\.next/', '(^|/)node_modules/', '^public/'] },
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.json' },
     enhancedResolveOptions: { extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'] },

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import type { AccountingDataExchangeJob, BankStatementLine, ConsumptionTaxAssessment, FiscalDocument, TaxAssessment } from 'generated/prisma';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import * as storage from '../../../lib/attachmentStorage';
+import { logger } from '../../../lib/logger';
 import { sendAlertWebhook } from '../../../lib/alertWebhook';
 import { metrics } from '../../../lib/monitoring';
 import { serializeTable, type OutTable } from '../../../lib/spreadsheet';
@@ -10,6 +11,7 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { IDataExchangeRepository } from '../repositories/IDataExchangeRepository';
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { CandidatePosting, MatchedLineForExport } from '../models/Reconciliation.model';
+import { describeExportJob } from '../models/AccountingDelivery.model';
 import type { AuditService } from './AuditService';
 import type { ExportRequestDto } from '../dtos/DataExchangeDto';
 import type { ImportKind } from '../models/DataExchange.model';
@@ -17,11 +19,13 @@ import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { centsFromDb } from '../models/money';
 import { sampleEntries, type SampleableLeg } from '../models/entrySample';
 import { anosDaJanela, linhaMeta, linhasDaApuracao, MEMO_COLUMNS, selecionarApuracoes } from '../models/taxAssessmentMemoExport';
+import { ECONOMIA_COLUMNS, competenciasDaJanela, linhaMetaEconomia, linhasExportEconomia } from '../models/taxOptimizationReport';
+import type { TaxOptimizationReport } from '../dtos/TaxOptimizationDto';
 import { IBS_CBS_MEMO_COLUMNS, linhaMetaIbsCbs, linhasDaApuracaoIbsCbs, selecionarApuracoesIbsCbs } from '../models/ibsCbsMemoExport';
 import { agregarIssPorCompetencia, ISS_COLUMNS, municipioDeIncidencia, type IssDocInput } from '../models/issCompetencia';
 import { listaLc116De, type ListaLc116 } from '../models/lc116ListaNacional';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
-import type { FiscalDocumentStatus } from '../repositories/IFiscalDocumentRepository';
+import { NOTA_VALIDA_STATUSES, statusDeAutorizacao, type FiscalDocumentStatus } from '../repositories/IFiscalDocumentRepository';
 import { toJobResponse, toJobListItem, type DataExchangeJobResponse, type DataExchangeJobListItem } from './dataExchangeMappers';
 import type {
   TrialBalanceReport,
@@ -95,6 +99,12 @@ export interface IIbsCbsAssessmentReader {
   findMany(ownerUserId: string, anoCalendario: number): Promise<ConsumptionTaxAssessment[]>;
 }
 
+/** Leitura que `EXPORT_ECONOMIA_FISCAL` precisa (EFICIENCIA-FISCAL PR-4 item 23) — o relatório de economia por competência,
+ *  satisfeita por `TaxOptimizationReportService` (que aplica a policy dele). */
+export interface IEconomiaFiscalReader {
+  relatorio(scope: AccountingScope, competencia: string): Promise<TaxOptimizationReport>;
+}
+
 /** Leitura que `EXPORT_ISS_BY_COMPETENCE` precisa (X7 Fase C PR-2, BRIEF C item 14) — satisfeita
  *  estruturalmente por `IFiscalDocumentRepository`. */
 export interface IIssDocumentReader {
@@ -106,8 +116,12 @@ export interface IIssDocumentReader {
   ): Promise<Array<FiscalDocument & { cLocPrestacao: string | null; cLocEmi: string | null }>>;
 }
 
-/** F-TC-3 (a): vale o status atual — `CANCELLED` sai. F-TC-4 (a): `AUTHORIZED_DIVERGENT` entra, contado à parte. */
-const ISS_STATUSES: readonly FiscalDocumentStatus[] = ['AUTHORIZED', 'AUTHORIZED_DIVERGENT'];
+/**
+ * F-TC-3 (a): vale o status atual — `CANCELLED` sai. F-TC-4 (a): `AUTHORIZED_DIVERGENT` entra, contado à parte.
+ * X11 PR-3 (dono 07/11, "Apuração"): a nota em análise fiscal (`CANCEL_ANALYSIS`) é válida no fisco e entra; divergente
+ * se era divergente antes da análise (`statusDeAutorizacao`).
+ */
+const ISS_STATUSES: readonly FiscalDocumentStatus[] = NOTA_VALIDA_STATUSES;
 
 /** `[YYYY-MM-DD, YYYY-MM-DD]` → `{from: T00:00:00.000Z, to: T00:00:00.000Z}` — job-column
  *  storage convention (period-as-marker, not a query bound; matches SpedGenerationService). */
@@ -179,6 +193,8 @@ export class DataExchangeExportService {
     private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
     // IBS-CBS-2027 PR-5 (BRIEF item 24): apurações mensais de IBS/CBS para EXPORT_IBS_CBS_MEMO.
     private readonly ibsCbsAssessments: IIbsCbsAssessmentReader,
+    // EFICIENCIA-FISCAL PR-4 (item 23): relatório de economia por competência para EXPORT_ECONOMIA_FISCAL.
+    private readonly economiaFiscal: IEconomiaFiscalReader,
   ) {}
 
   /**
@@ -237,11 +253,14 @@ export class DataExchangeExportService {
           headers: [
             'accountCode', 'accountName', 'date', 'entryId', 'entryNumber',
             'description', 'status', 'debitCents', 'creditCents', 'runningBalanceCents',
+            // EMENDA RASTREIO do X7 (item 11, F-RT-1 a): o documento de origem, ao fim (aditivo) —
+            // fecha a cadeia conta → lançamento → documento da memória de cálculo.
+            'sourceType', 'sourceId',
           ],
           rows: rows.map((row) => [
             row.accountCode, row.accountName, row.date.toISOString().slice(0, 10), row.entryId,
             row.entryNumber ?? '', row.description, row.status, row.debitCents, row.creditCents,
-            row.runningBalanceCents,
+            row.runningBalanceCents, row.sourceType, row.sourceId ?? '',
           ]),
         };
         return { table, period };
@@ -416,7 +435,9 @@ export class DataExchangeExportService {
           anosDaJanela(w).map((ano) => this.taxAssessments.findConfirmedByYear(scope.ownerUserId, ano)),
         );
         const apuracoes = selecionarApuracoes(porAno.flat(), w);
-        const dataRows: OutTable['rows'] = apuracoes.flatMap((a) => linhasDaApuracao(a));
+        // EMENDA RASTREIO item 9: o vencimento do DARF sai pela lei no export; feriados lidos uma vez por export.
+        const feriados = apuracoes.length > 0 ? await this.legalParams.fotografia(['FERIADO_NACIONAL']) : [];
+        const dataRows: OutTable['rows'] = apuracoes.flatMap((a) => linhasDaApuracao(a, feriados));
         const table: OutTable = {
           headers: [linhaMeta(w, apuracoes.length, new Date())],
           rows: [[...MEMO_COLUMNS], ...dataRows],
@@ -434,6 +455,18 @@ export class DataExchangeExportService {
         const table: OutTable = {
           headers: [linhaMetaIbsCbs(w, apuracoes.length, new Date())],
           rows: [[...IBS_CBS_MEMO_COLUMNS], ...apuracoes.flatMap((a) => linhasDaApuracaoIbsCbs(a))],
+        };
+        return { table, period: periodColumns(w.periodStart, w.periodEnd) };
+      }
+      case 'EXPORT_ECONOMIA_FISCAL': {
+        // EFICIENCIA-FISCAL PR-4 (item 23; ADR D9): o relatório de economia de cada competência da janela, no pacote do
+        // contador. A policy do relatório (canManageTaxAssessment) roda dentro de `relatorio`. Só ACCEPTED soma (I-11).
+        const w = { periodStart: dto.periodStart as string, periodEnd: dto.periodEnd as string };
+        const relatorios: TaxOptimizationReport[] = [];
+        for (const c of competenciasDaJanela(w)) relatorios.push(await this.economiaFiscal.relatorio(scope, c));
+        const table: OutTable = {
+          headers: [linhaMetaEconomia(w, relatorios, new Date())],
+          rows: [[...ECONOMIA_COLUMNS], ...relatorios.flatMap(linhasExportEconomia)],
         };
         return { table, period: periodColumns(w.periodStart, w.periodEnd) };
       }
@@ -458,7 +491,7 @@ export class DataExchangeExportService {
           return {
             dCompet: d.dCompet, municipioIbge, tpRetISSQN: d.tpRetISSQN === 2 ? 2 : 1,
             vServCents: d.vServCents, baseIssCents: d.baseIssCents, vIssCents: d.vIssCents,
-            divergente: d.status === 'AUTHORIZED_DIVERGENT',
+            divergente: statusDeAutorizacao(d) === 'AUTHORIZED_DIVERGENT',
           };
         });
         const linhas = agregarIssPorCompetencia(inputs);
@@ -559,6 +592,29 @@ export class DataExchangeExportService {
         },
       });
       return j;
+    }).catch(async (error: unknown) => {
+      // Lacuna 10 (D-2026-10-28-LACUNAS-EXECUTA-27-28): o arquivo já existe e o rollback desfez o
+      // EXPORTED — sem isto o job ficaria PROCESSING para sempre, com o artefato órfão. FAILED fora
+      // da tx que falhou; o erro da tx não é registrado aqui (OBS-R5: a borda registra).
+      // Compensação best-effort: cada passo isolado e o erro original sempre relançado. A falha
+      // de um passo é OUTRO erro, que se perderia — por isso registra aqui (não é o relançado).
+      try {
+        await this.repo.updateJob(scope, job.id, { status: 'FAILED' });
+      } catch (compensationError) {
+        logger.error('export: falha ao marcar FAILED depois da tx — job fica PROCESSING', {
+          jobId: job.id, kind: job.kind, error: compensationError,
+        });
+      }
+      for (const key of [storageKey]) {
+        try {
+          await storage.deleteFile(key);
+        } catch (compensationError) {
+          logger.error('export: falha ao apagar o artefato depois da tx — arquivo órfão', {
+            jobId: job.id, kind: job.kind, error: compensationError,
+          });
+        }
+      }
+      throw error;
     });
 
     endTimer({ success: true, jobId: job.id, kind: job.kind, unitId: scope.unitId });
@@ -653,7 +709,7 @@ export class DataExchangeExportService {
       if (!job) throw new NotFoundError(`Job '${jobId}' não encontrado.`);
       if (!job.ecfRectificationRequired) {
         throw new ValidationError(
-          `O job '${jobId}' não exige retificação de ECF — nada a dispensar.`,
+          `O job ${describeExportJob(job)} não exige retificação de ECF — nada a dispensar.`,
         );
       }
       if (job.ecfRectificationWaivedAt) {

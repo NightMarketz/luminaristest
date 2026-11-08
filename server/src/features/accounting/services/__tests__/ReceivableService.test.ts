@@ -48,7 +48,7 @@ interface Opts {
   counterparty?: { id: string; userId: string; unitId: string; type: string } | null;
   counterpartyByName?: { id: string; userId: string; unitId: string; type: string } | null;
   canManageCounterparty?: boolean;
-  liveCharges?: Array<{ id: string; status: string } | null>; // successive findLiveByReceivable results (F5 PR-2, P2-13)
+  liveCharges?: Array<{ id: string; status: string; kind: string; amountCents: bigint } | null>; // successive findLiveByReceivable results (F5 PR-2, P2-13)
 }
 
 function build(opts: Opts = {}) {
@@ -472,7 +472,7 @@ describe('ReceivableService.cancelReceivable — cobrança viva no provedor (F5 
   const recognized = (type: string) => (type === AR_RECEIVABLE_SOURCE_TYPE ? { id: 'rec-entry-1' } : null);
 
   it('cobrança viva ⇒ 409 receivable_has_live_charge ANTES do estorno: reverseEntry e a escrita não rodam', async () => {
-    const { service, reverseEntry, receivableRepo } = build({ findEntryBySource: recognized, liveCharges: [{ id: 'ch-1', status: 'PENDING' }] });
+    const { service, reverseEntry, receivableRepo } = build({ findEntryBySource: recognized, liveCharges: [{ id: 'ch-1', status: 'PENDING', kind: 'PIX', amountCents: 10000n }] });
     await expect(
       service.cancelReceivable(scope, 'rec-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
     ).rejects.toMatchObject({ statusCode: 409, errorCode: 'receivable_has_live_charge' });
@@ -481,7 +481,7 @@ describe('ReceivableService.cancelReceivable — cobrança viva no provedor (F5 
   });
 
   it('re-checa dentro da tx: cobrança criada entre o pré-cheque e a tx ⇒ 409 sem gravar CANCELLED', async () => {
-    const { service, collectionChargeRepo, receivableRepo } = build({ findEntryBySource: recognized, liveCharges: [null, { id: 'ch-2', status: 'CREATING' }] });
+    const { service, collectionChargeRepo, receivableRepo } = build({ findEntryBySource: recognized, liveCharges: [null, { id: 'ch-2', status: 'CREATING', kind: 'PIX', amountCents: 10000n }] });
     await expect(
       service.cancelReceivable(scope, 'rec-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
     ).rejects.toMatchObject({ errorCode: 'receivable_has_live_charge' });

@@ -82,3 +82,16 @@ export function staleFindings(
     .map((f) => f.id);
   return { unresolvedBlockers, resolvedAfterGeneration };
 }
+
+/**
+ * FIX-MENSAGENS-ID-INTERNO lote 3 (F-MSG-2 a1; rótulos do dono, chat, 05/11): a revisão é nomeada pelo exercício e o achado por
+ * registro + descrição (cortada em 80 caracteres), nunca pelo cuid.
+ */
+export function describeReview(review: { year: number }): string {
+  return `revisão do exercício ${review.year}`;
+}
+
+export function describeFinding(finding: { register: string; description: string }): string {
+  const d = finding.description.trim();
+  return `achado ${finding.register} — ${d.length > 80 ? `${d.slice(0, 79)}…` : d}`;
+}

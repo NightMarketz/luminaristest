@@ -166,6 +166,8 @@ export function JournalEntryModal({
   const { t } = useTranslation('accounting');
   const [date, setDate] = useState<string>(() => initial?.date ?? scopeToday());
   const [description, setDescription] = useState(initial?.description ?? '');
+  // ITG 2000 item 36 — só no lançamento direto ao razão (sem `submit`): rascunho e acerto usam outro DTO.
+  const [extemporaneousReason, setExtemporaneousReason] = useState('');
   const [lines, setLines] = useState<Line[]>(() => (initial ? toLines(initial) : DEFAULT_LINES));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -186,6 +188,7 @@ export function JournalEntryModal({
 
   const isDirty =
     description !== '' ||
+    extemporaneousReason !== '' ||
     lines.some((l) => l.accountCode !== '' || l.amountBrl !== '');
 
   // ── Line helpers ─────────────────────────────────────────────────────────────
@@ -262,10 +265,14 @@ export function JournalEntryModal({
     try {
       const payload: JournalEntrySubmitValue = { date, description, unitId, lines: legs };
       // Default command = post straight to the ledger; the approval tower injects its own.
-      await (submit ? submit(payload) : accountingService.postEntry(payload));
+      const reason = extemporaneousReason.trim();
+      await (submit
+        ? submit(payload)
+        : accountingService.postEntry(reason ? { ...payload, extemporaneousReason: reason } : payload));
       // Reset form state before closing
       setDate(scopeToday());
       setDescription('');
+      setExtemporaneousReason('');
       setLines(DEFAULT_LINES);
       onSuccess();
       onClose();
@@ -338,6 +345,31 @@ export function JournalEntryModal({
             />
           </div>
         </div>
+
+        {/* ── Razão do registro extemporâneo (ITG 2000, item 36) — opcional; o servidor a exige em período reaberto ── */}
+        {!submit && (
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="journal-entry-extemporaneous-reason"
+              className="text-xs font-semibold uppercase tracking-widest text-neutral-400"
+            >
+              {t('journalEntryModal.field.extemporaneousReason', 'Razão do registro extemporâneo')}
+            </label>
+            <input
+              id="journal-entry-extemporaneous-reason"
+              type="text"
+              value={extemporaneousReason}
+              onChange={(e) => setExtemporaneousReason(e.target.value)}
+              className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 focus:border-emerald-500 focus:outline-none"
+            />
+            <p className="text-xs text-neutral-500">
+              {t(
+                'journalEntryModal.field.extemporaneousReasonHelp',
+                'Opcional. Exigida quando a data cai num período que já foi fechado.',
+              )}
+            </p>
+          </div>
+        )}
 
         {/* ── Lines ── */}
         <div className="space-y-2">

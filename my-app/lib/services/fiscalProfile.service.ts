@@ -48,6 +48,8 @@ export interface FiscalProfileView {
   inscricaoMunicipal: string | null;
   cnae: string | null;
   dpsSerie: number;
+  nfeSerie: number;
+  nfceSerie: number;
   regEspTrib: number;
   regApTribSN: number | null;
   issAliquotaBp: number | null;

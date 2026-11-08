@@ -30,19 +30,23 @@ const base = {
         // ESM-only package pulled in at import time by lib/pdf.ts (ReceiptService); no test renders
         // a PDF, so stub the module instead of transforming the whole puppeteer tree.
         '^puppeteer$': '<rootDir>/test/mocks/puppeteer.ts',
-        // Vector ops need a live Qdrant server; tests stub the client (CI runs with dummy creds).
-        '^@qdrant/js-client-rest$': '<rootDir>/test/mocks/qdrantClient.ts',
     },
     transform: {
         '^.+\\.tsx?$': swc('typescript'),
-        // ESM-only deps (uuid v13, qdrant) ship no CJS build; swc down-compiles them.
+        // ESM-only deps (uuid v13) ship no CJS build; swc down-compiles them.
         '^.+\\.jsx?$': swc('ecmascript'),
     },
     // Default ignores all of node_modules; the negative lookahead lets the ESM deps above through.
     transformIgnorePatterns: ['/node_modules/(?!(uuid|@qdrant/js-client-rest)/)'],
 };
 
+// Suíte inteira só no CI ou com FULL_SUITE=1 (dono, 03/11: "isso pesa o pc demais"); regra em scripts/test-scope-guard.cjs.
+require('../scripts/test-scope-guard.cjs').guardFullSuite('jest');
+
 module.exports = {
+    // Sem teto, o jest abre núcleos−1 workers (15 nesta máquina, ~700 MB cada): duas sessões testando juntas
+    // esgotam 31 GB e travam o PC (medido 29/10). 25% = 4 workers aqui; no CI (2–4 núcleos) dá 1. Integração já é --runInBand.
+    maxWorkers: '25%',
     projects: [
         {
             ...base,

@@ -96,6 +96,61 @@ export const MeiAnexoXiJson = z
   .object({ ocupacao: texto, cnae: z.string().regex(/^\d{4}-\d\/\d{2}$/), descricaoCnae: texto, iss: z.boolean(), icms: z.boolean() })
   .strict();
 
+/** BE-INCR-DP-F0-F1 item 20 — faixa do INSS do empregado. `ateCents: null` = até o teto do RGPS (`TETO_RGPS_CENTS`). */
+export const InssEmpregadoFaixaJson = z.object({ ateCents: z.number().int().positive().nullable(), aliquotaBp: z.number().int().min(0).max(10_000) }).strict();
+/** Item 23 — Tabela 01: `evento` pela REGRA_COMPATIB_CATEG_EVENTO do leiaute (S-2200 = emprego; S-2300 = TSVE). */
+export const EsocialCategoriaJson = z.object({ grupo: texto, descricao: texto, evento: z.enum(['S-2200', 'S-2300']).nullable() }).strict();
+export const EsocialNaturezaRubricaJson = z.object({ nome: texto, descricao: texto }).strict();
+export const EsocialDescricaoJson = z.object({ descricao: texto }).strict();
+
+/**
+ * BE-INCR-DP-F2 PR-0R item 65 — chaves fechadas da `FOLHA_REGRA` e o valor de cada uma. `int` = número inteiro (bp,
+ * minutos, segundos, dias, anos ou meses, conforme o nome); `texto` = uma das formas que o código conhece. O código guarda
+ * a forma da regra; o número e a escolha da forma chegam por linha com vigência (§0.1 do BRIEF).
+ */
+export const FOLHA_REGRA_CHAVES_INT = {
+  HE_ADICIONAL_BP: { min: 0, max: 100_000 },
+  HE_REPOUSO_ADICIONAL_BP: { min: 0, max: 100_000 },
+  NOTURNO_ADICIONAL_BP: { min: 0, max: 100_000 },
+  NOTURNO_HORA_SEGUNDOS: { min: 1, max: 3600 },
+  NOTURNO_INICIO_MIN: { min: 0, max: 1439 },
+  NOTURNO_FIM_MIN: { min: 0, max: 1439 },
+  AFASTAMENTO_DIAS_EMPRESA: { min: 0, max: 366 },
+  MENSALISTA_BASE_DIAS: { min: 1, max: 31 },
+  JORNADA_LIMITE_SEMANAL_MIN: { min: 1, max: 10_080 },
+  REPOUSO_DIAS_MIN: { min: 0, max: 7 },
+  SALARIO_FAMILIA_IDADE_MAX: { min: 0, max: 120 },
+  EMPREGADO_IDADE_MIN: { min: 0, max: 120 },
+  APRENDIZ_IDADE_MIN: { min: 0, max: 120 },
+  APRENDIZ_IDADE_MAX: { min: 0, max: 120 },
+  APRENDIZ_PRAZO_MAX_MESES: { min: 1, max: 1200 },
+  FERIAS_AQUISITIVO_MESES: { min: 1, max: 120 },
+  FERIAS_CONCESSIVO_MESES: { min: 1, max: 120 },
+} as const;
+export const DIAS_SEMANA = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB', 'DOM'] as const;
+export const FOLHA_REGRA_CHAVES_TEXTO = {
+  SEMANA_DSR_INICIO: DIAS_SEMANA,
+  // Item 3 / F-DPF-1: as duas formas do divisor do salário-hora que existem em código.
+  SALARIO_HORA_DIVISOR: ['SEMANA_SEIS_DIAS', 'DIAS_DE_TRABALHO_DA_ESCALA'],
+  // F-DPF-3 (revisto 06/11): truncar em cada faixa, como o MOS do S-5001 item 2.13, ou a soma exata arredondada no total.
+  ARREDONDAMENTO_INSS: ['TRUNCAR_POR_FAIXA', 'MEIO_PARA_CIMA_NO_TOTAL'],
+  // Demais pontos declarados de arredondamento.
+  ARREDONDAMENTO: ['MEIO_PARA_CIMA_CENTAVO', 'TRUNCA_CENTAVO'],
+} as const;
+export type FolhaRegraChaveInt = keyof typeof FOLHA_REGRA_CHAVES_INT;
+export type FolhaRegraChaveTexto = keyof typeof FOLHA_REGRA_CHAVES_TEXTO;
+const ehChaveInt = (c: string): c is FolhaRegraChaveInt => Object.prototype.hasOwnProperty.call(FOLHA_REGRA_CHAVES_INT, c);
+const ehChaveTexto = (c: string): c is FolhaRegraChaveTexto => Object.prototype.hasOwnProperty.call(FOLHA_REGRA_CHAVES_TEXTO, c);
+
+/** Item 66 — o que a categoria do núcleo recolhe (INSS de empregado, de contribuinte individual ou nenhum; qual FGTS). */
+export const DpCategoriaEncargoJson = z
+  .object({
+    inss: z.enum(['EMPREGADO', 'CONTRIBUINTE_INDIVIDUAL', 'NENHUM']),
+    fgtsChave: z.enum(['FGTS_BP', 'FGTS_APRENDIZ_BP']).nullable(),
+    irrf: z.boolean(),
+  })
+  .strict();
+
 type Valor = 'int' | 'texto' | 'json';
 interface Regra {
   /** Função quando a tabela mistura chaves de valor inteiro e de texto (IRRF_DISTRIBUICAO). */
@@ -111,6 +166,8 @@ const jsonOk = (schema: z.ZodType, v: unknown, msg: string): string | null => (s
 const bp = (l: LinhaParaFormato) => (l.valorInt ?? -1) >= 0 && (l.valorInt ?? 0) <= 10_000;
 /** BE-INCR-IRRF-DISTRIBUICAO item 5 — chaves da tabela e o tipo de valor de cada uma. */
 const IRRF_DISTRIBUICAO_CHAVES_INT = ['ALIQUOTA_PF_BP', 'LIMITE_MENSAL_PF_CENTS', 'ALIQUOTA_JCP_BP'];
+/** EFICIENCIA-FISCAL PR-3 — chaves em bp da ENCARGO_FOLHA (o teto do RGPS é em centavos). DP-F0-F1 item 22: + FGTS do aprendiz. */
+const ENCARGO_FOLHA_CHAVES_BP = ['CI_SEGURADO_BP', 'PATRONAL_BP', 'FGTS_BP', 'FGTS_APRENDIZ_BP'];
 /** D-2026-10-24-LEGAL-PARAMS-SIMPLES-FORMATO — chave = anexo; faixa F1..F6 nas tabelas por faixa (o que `simplesCalc` lê). */
 const anexo = (l: LinhaParaFormato) => ['I', 'II', 'III', 'IV', 'V'].includes(l.chave);
 const faixa = (l: LinhaParaFormato) => /^F[1-6]$/.test(l.discriminador ?? '');
@@ -159,7 +216,9 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
   },
   ISS_LIMITE: {
     valor: 'int',
-    checar: (l) => so(l.chave === 'ALIQUOTA_MAX_BP' && semDisc(l) && (l.valorInt ?? -1) >= 0 && (l.valorInt ?? 0) <= 10_000, 'chave ALIQUOTA_MAX_BP; valorInt em bp (0..10000)'),
+    // ISS-TRANSICAO-IBS PR-2 item 10 (F-ISS-4 a): ALIQUOTA_MIN_BP (LC 116 art. 8º-A; ADCT art. 128) ao lado do máximo.
+    checar: (l) =>
+      so((l.chave === 'ALIQUOTA_MAX_BP' || l.chave === 'ALIQUOTA_MIN_BP') && semDisc(l) && (l.valorInt ?? -1) >= 0 && (l.valorInt ?? 0) <= 10_000, 'chave ALIQUOTA_MAX_BP|ALIQUOTA_MIN_BP; valorInt em bp (0..10000)'),
   },
   // ISS-TRANSICAO-IBS PR-1 (BRIEF item 2): fator de redução do ISS por ano (LC 116 art. 8º-B I–IV), sem discriminador.
   ISS_TRANSICAO: {
@@ -231,6 +290,81 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
   },
   // BE-INCR-IRRF-DISTRIBUICAO item 5: alíquotas em bp, limite mensal em centavos (Lei 9.250 art. 6º-A; Lei 9.249 art. 9º
   // § 2º) e o prazo de aprovação do lucro da transição (date-only, art. 6º-A § 3º II; liminar das ADIs 7.912/7.914).
+  // EFICIENCIA-FISCAL PR-3 (itens 15–17): alíquotas em bp e o teto do RGPS em centavos, sem discriminador.
+  ENCARGO_FOLHA: {
+    valor: 'int',
+    checar: (l) =>
+      so(semDisc(l), 'sem discriminador') ??
+      (l.chave === 'TETO_RGPS_CENTS'
+        ? so((l.valorInt ?? 0) > 0, 'TETO_RGPS_CENTS: valorInt = centavos > 0')
+        : so(ENCARGO_FOLHA_CHAVES_BP.includes(l.chave) && bp(l), 'chave CI_SEGURADO_BP|PATRONAL_BP|FGTS_BP|FGTS_APRENDIZ_BP (valorInt em bp 0..10000) ou TETO_RGPS_CENTS')),
+  },
+  // DP-F0-F1 item 20: faixas progressivas (EC 103 art. 28 caput e § 1º); a última vai até o teto (`ateCents: null`).
+  INSS_EMPREGADO: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^FAIXA_[1-9]$/.test(l.chave) && semDisc(l), 'chave FAIXA_1..9, sem discriminador') ??
+      jsonOk(InssEmpregadoFaixaJson, l.valorJson, 'valorJson = { ateCents: inteiro > 0 | null, aliquotaBp: 0..10000 }'),
+  },
+  // DP-F0-F1 item 23: tabelas do eSocial (S-1.3), chave = código da tabela, transcritas por script do HTML oficial.
+  ESOCIAL_CATEGORIA: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^\d{3}$/.test(l.chave) && semDisc(l), 'chave = código de 3 dígitos da Tabela 01, sem discriminador') ??
+      jsonOk(EsocialCategoriaJson, l.valorJson, 'valorJson = { grupo, descricao, evento: S-2200 | S-2300 | null }'),
+  },
+  ESOCIAL_NATUREZA_RUBRICA: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^\d{4}$/.test(l.chave) && semDisc(l), 'chave = código de 4 dígitos da Tabela 03, sem discriminador') ??
+      jsonOk(EsocialNaturezaRubricaJson, l.valorJson, 'valorJson = { nome, descricao }'),
+  },
+  ESOCIAL_INCIDENCIA_RUBRICA: {
+    valor: 'json',
+    checar: (l) =>
+      so(
+        (['CP', 'FGTS'].includes(l.discriminador ?? '') && /^\d{2}$/.test(l.chave)) || (l.discriminador === 'IRRF' && /^\d{1,4}$/.test(l.chave)),
+        'discriminador CP|FGTS (chave de 2 dígitos do S-1010) ou IRRF (chave de 1 a 4 dígitos da Tabela 21)',
+      ) ?? jsonOk(EsocialDescricaoJson, l.valorJson, 'valorJson = { descricao }'),
+  },
+  ESOCIAL_MOTIVO_AFASTAMENTO: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^\d{2}$/.test(l.chave) && semDisc(l), 'chave = código de 2 dígitos da Tabela 18, sem discriminador') ??
+      jsonOk(EsocialDescricaoJson, l.valorJson, 'valorJson = { descricao }'),
+  },
+  // DP-F2 PR-1 item 13: Tabela 07 do eSocial, como a Tabela 18.
+  ESOCIAL_TIPO_DEPENDENTE: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^\d{2}$/.test(l.chave) && semDisc(l), 'chave = código de 2 dígitos da Tabela 07, sem discriminador') ??
+      jsonOk(EsocialDescricaoJson, l.valorJson, 'valorJson = { descricao }'),
+  },
+  // DP-F2 PR-0R item 65: discriminador = categoria (3 dígitos) só onde a regra varia por categoria; nenhuma linha inicial varia.
+  FOLHA_REGRA: {
+    valor: (l) => (ehChaveTexto(l.chave) ? 'texto' : 'int'),
+    checar: (l) => {
+      const disc = so(semDisc(l) || /^\d{3}$/.test(l.discriminador ?? ''), 'discriminador nulo ou código de categoria de 3 dígitos');
+      if (disc) return disc;
+      if (ehChaveTexto(l.chave)) {
+        const opcoes: readonly string[] = FOLHA_REGRA_CHAVES_TEXTO[l.chave];
+        return so(opcoes.includes(l.valorTexto ?? ''), `${l.chave}: valorTexto ∈ ${opcoes.join('|')}`);
+      }
+      if (ehChaveInt(l.chave)) {
+        const { min, max } = FOLHA_REGRA_CHAVES_INT[l.chave];
+        const v = l.valorInt ?? Number.NaN;
+        return so(Number.isInteger(v) && v >= min && v <= max, `${l.chave}: valorInt inteiro em ${min}..${max}`);
+      }
+      return `chave fora do catálogo (${[...Object.keys(FOLHA_REGRA_CHAVES_INT), ...Object.keys(FOLHA_REGRA_CHAVES_TEXTO)].join(', ')})`;
+    },
+  },
+  // DP-F2 PR-0R item 66: chave = categoria do eSocial (Tabela 01, 3 dígitos), sem discriminador.
+  DP_CATEGORIA_ENCARGO: {
+    valor: 'json',
+    checar: (l) =>
+      so(/^\d{3}$/.test(l.chave) && semDisc(l), 'chave = categoria de 3 dígitos, sem discriminador') ??
+      jsonOk(DpCategoriaEncargoJson, l.valorJson, "valorJson = { inss: EMPREGADO|CONTRIBUINTE_INDIVIDUAL|NENHUM, fgtsChave: FGTS_BP|FGTS_APRENDIZ_BP|null, irrf: boolean }"),
+  },
   IRRF_DISTRIBUICAO: {
     valor: (l) => (l.chave === 'TRANSICAO_APROVACAO_ATE' ? 'texto' : 'int'),
     checar: (l) =>
@@ -258,6 +392,12 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
             ((l.chave === 'CBS' && l.discriminador === 'ALIQUOTA') || (l.chave === 'IBS' && ['ALIQUOTA_UF', 'ALIQUOTA_MUN'].includes(l.discriminador ?? ''))) && bp(l),
             'chave CBS com discriminador ALIQUOTA, ou IBS com ALIQUOTA_UF|ALIQUOTA_MUN (ou VENCIMENTO); valorInt em bp (0..10000)',
           ),
+  },
+  // EFICIENCIA-FISCAL PR-5 (item 32): Anexo III da LC 214 — chave = prefixo de NBS (5 a 9 dígitos, sem pontos), sem
+  // discriminador; valorInt = redução em bp.
+  IBS_CBS_REDUCAO_NBS: {
+    valor: 'int',
+    checar: (l) => so(/^\d{5,9}$/.test(l.chave) && semDisc(l) && bp(l) && (l.valorInt ?? 0) > 0, 'chave = prefixo de NBS (5 a 9 dígitos); sem discriminador; valorInt = redução em bp (1..10000)'),
   },
   // IBS-CBS-2027 PR-3 (item 15; dono 21/10): lista de uso ou consumo pessoal (LC 214 art. 57) — chave = prefixo de NCM.
   IBS_CBS_USO_CONSUMO: {

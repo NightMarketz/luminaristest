@@ -13,7 +13,7 @@ import type { EcdSignerDraft as EcdSigner, EcfSignerDraft as EcfSigner } from '.
 // here as well — both panels resolve `../../../../lib/services/sped.service` to the same module.
 vi.mock('../../../../lib/services/sped.service', () => ({
   spedService: {
-    generateAndDownloadEcd: vi.fn(),
+    generateAndDownloadEcd: vi.fn(async () => ({ job: { id: 'job-ecd' }, avisos: [] })),
     generateAndDownloadEcf: vi.fn(),
     generateAndDownloadEcfReal: vi.fn(),
     // FE-INCR-SPED-SIGNERS: a tabela de qualificação vem do BE (recorte das consts transcritas).
@@ -21,6 +21,15 @@ vi.mock('../../../../lib/services/sped.service', () => ({
       layout === 'ECD'
         ? [{ code: '205', description: 'Administrador' }, { code: '900', description: 'Contador/Contabilista' }]
         : [{ code: '205', description: 'Administrador' }, { code: '900', description: 'Contador' }]),
+    // FE-INCR-ECF-Y600: as duas ECFs leem as vigências do Y600 no mount; uma sócia residente (o guard é EcfY600.guard.test.tsx).
+    listY600Vigencias: vi.fn(async (_unitId: string, year: number) => ({
+      year,
+      vigencias: [{
+        partnerId: 'p1', nome: 'SOCIA UNICA', taxIdFinal: '4725', tipoPessoa: 'PF', residenteBrasil: true,
+        participacaoBp: 10000, entradaEm: '2020-01-01', saidaEm: null, dtFimSoc: null, vigenteNoFim: true,
+      }],
+      somaParticipacaoFimBp: 10000,
+    })),
   },
 }));
 vi.mock('../../../../lib/services/accountingContacts.service', () => ({
@@ -35,6 +44,12 @@ const flush = () => act(async () => { await new Promise((r) => setTimeout(r, 0))
 const pick = (el: HTMLElement, value: string) => {
   fireEvent.change(el, { target: { value } });
   fireEvent.blur(el);
+};
+/** FE-INCR-ECF-Y600: o Y600 é obrigatório para gerar a ECF — QUALIF 02 e os 5 valores zerados da sócia p1. */
+const preencherY600 = (box: ReturnType<typeof within> = within(document.body)) => {
+  const row = within(box.getByTestId('y600-socio-p1'));
+  fireEvent.change(row.getAllByRole('combobox')[0], { target: { value: '02' } });
+  for (const input of row.getAllByPlaceholderText('0,00')) fireEvent.change(input, { target: { value: '0' } });
 };
 
 const ecd = (o: Partial<EcdSigner> = {}): EcdSigner => ({
@@ -169,6 +184,8 @@ describe('SpedEcfRealPanel (render + validation)', () => {
   it('sends a payload without formaApur once formaTribPer and signers are valid', async () => {
     const { spedService } = await import('../../../../lib/services/sped.service');
     render(<SpedEcfRealPanel unitId="u1" {...realProps} />);
+    await flush();
+    preencherY600();
 
     fireEvent.change(screen.getByPlaceholderText('PPPP'), { target: { value: 'PPPP' } });
     fireEvent.change(screen.getByPlaceholderText('14 dígitos'), { target: { value: '12345678000199' } });
@@ -248,6 +265,7 @@ describe('SpedGenerationPanel — submit da ECF Presumido', () => {
     fireEvent.change(ecfBox.getAllByPlaceholderText('Nome')[1], { target: { value: 'Beltrano' } });
     fireEvent.change(ecfBox.getAllByPlaceholderText('CPF/CNPJ')[1], { target: { value: '98765432100' } });
     pick(ecfBox.getAllByPlaceholderText('Qualif. (900=contador)')[1], '205');
+    preencherY600(ecfBox);
 
     fireEvent.click(ecfBox.getByRole('button', { name: 'Gerar e baixar ECF' }));
 
@@ -384,6 +402,31 @@ describe('SpedGenerationPanel — contador do cadastro (signerContactIds)', () =
     expect(payload.declarant.codPlanRef).toBe('1');
   });
 
+  // C2 (Manual da ECD 1.17, mapeamento facultativo): conta sem código referencial não bloqueia — o arquivo baixa
+  // (o service resolve) e o aviso do servidor aparece no painel, sem a caixa de erro.
+  it('ECD: o aviso do servidor (conta sem código referencial) aparece sem bloquear o download', async () => {
+    const { spedService } = await import('../../../../lib/services/sped.service');
+    const aviso = '1 conta(s) analítica(s) sem código referencial na versão RFB-2025 saíram sem I051: 3.9.';
+    vi.mocked(spedService.generateAndDownloadEcd).mockResolvedValueOnce({ job: { id: 'job-ecd' } as never, avisos: [aviso] });
+    render(<SpedGenerationPanel unitId="u1" />);
+    await flush();
+    const section = screen.getByRole('heading', { name: /Gerar SPED ECD/ }).closest('section') as HTMLElement;
+    const ecdForm = within(section);
+    fireEvent.change(ecdForm.getByLabelText('Contador do cadastro (opcional)'), { target: { value: 'ct1' } });
+    fireEvent.change(ecdForm.getByPlaceholderText('2026'), { target: { value: '2026' } });
+    fireEvent.change(ecdForm.getByPlaceholderText('Nome'), { target: { value: 'Sócio' } });
+    fireEvent.change(ecdForm.getByPlaceholderText('CPF/CNPJ'), { target: { value: '52998224725' } });
+    pick(ecdForm.getByPlaceholderText('Cód. (900=contador)'), '205');
+    fireEvent.change(ecdForm.getByDisplayValue('Não resp. legal'), { target: { value: 'S' } });
+    fireEvent.click(ecdForm.getByRole('button', { name: 'Gerar e baixar ECD' }));
+
+    const status = await ecdForm.findByRole('status');
+    expect(status).toHaveTextContent('ECD gerada e baixada, com avisos:');
+    expect(status).toHaveTextContent(aviso);
+    expect(spedService.generateAndDownloadEcd).toHaveBeenCalledTimes(1);
+    expect(section.querySelector('.text-red-300')).toBeNull(); // a caixa de erro do ECD não aparece
+  });
+
   it('ECF: o 400 do servidor ("não tem telefone") aparece íntegro', async () => {
     const { spedService } = await import('../../../../lib/services/sped.service');
     vi.mocked(spedService.generateAndDownloadEcf).mockRejectedValue({ success: false, error: "O contador 'ct1' não tem telefone no cadastro — o registro 0930 da ECF exige FONE.", status: 400 });
@@ -396,6 +439,7 @@ describe('SpedGenerationPanel — contador do cadastro (signerContactIds)', () =
     pick(ecfForm.getByPlaceholderText('Qualif. (900=contador)'), '205');
     fireEvent.change(ecfForm.getByPlaceholderText('E-mail'), { target: { value: 's@x.com' } });
     fireEvent.change(ecfForm.getByPlaceholderText('Fone'), { target: { value: '11999999999' } });
+    preencherY600(ecfForm);
     fireEvent.click(ecfForm.getByRole('button', { name: 'Gerar e baixar ECF' }));
 
     await waitFor(() => expect(ecfForm.getByText(/não tem telefone no cadastro/)).toBeTruthy());

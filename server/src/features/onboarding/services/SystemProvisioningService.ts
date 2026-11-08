@@ -1,5 +1,5 @@
 import logger from '../../../lib/logger';
-import { ForbiddenError, OnboardingRolledBackError, OnboardingRollbackFailedError } from '../../../lib/errors';
+import { AppError, ForbiddenError, OnboardingRolledBackError, OnboardingRollbackFailedError } from '../../../lib/errors';
 import type { UserContext } from '../../../types/UserContext';
 import type { DynamicTableService } from '../../dynamicTables/services/DynamicTableService';
 import type { PresetTableDefinition } from '../../dynamicTables/presets';
@@ -268,7 +268,7 @@ export class SystemProvisioningService implements ISystemProvisioningService {
       logger.error(`Onboarding: a compensação falhou para o usuário ${ctx.userId}.`, { purgeError });
       return new OnboardingRollbackFailedError(messages.rollbackFailed);
     }
-    const detail = cause instanceof Error ? cause.message : String(cause);
+    const detail = cause instanceof AppError ? cause.message : 'erro interno';
     return new OnboardingRolledBackError(messages.rolledBack(detail));
   }
 }

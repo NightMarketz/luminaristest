@@ -1,5 +1,6 @@
 import type { Prisma, SalaoParceriaContrato, SimplesHistoricoMensal, SimplesSegregacaoManual } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
+import type { ChecklistParceria } from '../dtos/SimplesDto';
 
 /** BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14, itens 10–11) — campos gravados no histórico pré-adoção. */
 export interface HistoricoData {
@@ -17,6 +18,9 @@ export interface ParceriaData {
   sindicato: string;
   vigenteDesde: string;
   vigenteAte: string | null;
+  /** EFICIENCIA-FISCAL PR-4 item 19: dado declarado; null = não declarado. */
+  profissionalCnpj: string | null;
+  checklistDeclarado: ChecklistParceria | null;
 }
 
 /**

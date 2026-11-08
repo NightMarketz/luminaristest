@@ -20,6 +20,7 @@ import {
   build9900,
   build0010,
   build0020,
+  IND_ALIQ_CSLL_PADRAO,
   buildEcfFile,
   serializeEcf,
   __selfCheck,
@@ -108,6 +109,12 @@ describe('ecf primitives', () => {
     expect(line.endsWith('|N||')).toBe(true); // POSSUI_CEBAS=N, CEBAS empty
     // 32 fields → 33 pipes.
     expect(line.split('|').length).toBe(34);
+  });
+
+  it('0020 com indAliqCsll informado usa o código do DTO; sem ele, o padrão exportado (IND_ALIQ_CSLL_PADRAO = 1)', () => {
+    expect(build0020({ indAliqCsll: '4' }).startsWith('|0020|4|0|')).toBe(true);
+    expect(build0020({}).startsWith(`|0020|${IND_ALIQ_CSLL_PADRAO}|0|`)).toBe(true);
+    expect(IND_ALIQ_CSLL_PADRAO).toBe('1');
   });
 
   it('COD_VER 2025 = 0012 (leiaute 12), lido da tabela LEIAUTE_SPED; 2026 sem linha ⇒ throw', () => {

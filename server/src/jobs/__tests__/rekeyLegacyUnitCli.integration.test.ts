@@ -15,6 +15,8 @@ import { logger } from '@/lib/logger';
 import { ApplicationFactory } from '@/lib/factory';
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { NoMapperForUnitError } from '@/lib/errors';
+import { SALE_BINDING_V1 } from '@/features/accountingBinding/fixtures/saleBinding';
 import {
   runCli, buildInventory, tableDigest, REKEY_MODELS, KEEP_MODELS, EXCLUDED_UNIT_IDS, UNIT_REKEYED_EVENT,
 } from '../rekeyLegacyUnitCli';
@@ -149,7 +151,7 @@ describe('I1b — rekeyLegacyUnitCli', () => {
   it('item 2: inventário do DMMF = 62 models com unitId, classificação fechada 60 REKEY + 2 KEEP, toda REKEY com userId', () => {
     // 47 na medição do ADR (26/09) + ProductDestinationDefault (#481) + PaymentAccount (#484) + AccountantAssignment (#482). Model novo com unitId derruba este teste até ser classificado.
     const inv = buildInventory();
-    expect(inv).toHaveLength(78); // +3 TaxOptimizationPolicy / ServiceCostEvidence / TaxOptimizationSuggestion (EFICIENCIA-FISCAL PR-1) · +1 FiscalNumberVoid (X10a PR-4) · +1 TaxWithholding (RETENCOES-FONTE PR-2) · +1 WithholdingProfile (RETENCOES-FONTE PR-1) · +1 InterestOnEquityCalculation (IRRF-DISTRIBUICAO PR-4) · +1 ProfitDistributionEvent (IRRF-DISTRIBUICAO PR-2) · +1 ConsumptionTaxAssessment (IBS-CBS-2027 PR-2) · +1 FiscalCertificate (X10i PR-1) · +1 SimplesCreditoIncobravel (X14-CAIXA PR-3) · +1 ReceitaFiscalRecebimento (X14-CAIXA PR-1) · +2 KitUpgradeRun / KitUpgradePending (KIT-SETOR PR-4) · +1 RoleAccountOverride (KIT-SETOR PR-3) · +1 IssBeneficioMunicipal (SIMPLES-PISO-ANEXO-XI bloco 1) · +1 FiscalDocumentPendingAttachment (DFE-ANEXO-PENDENTE) · +1 CollectionCharge (F5 PR-2) · +1 SimplesDeclaracaoAnual (X14 PR-4) · +1 KitInstallation (KIT-SETOR PR-2) · +1 SimplesApuracao (X14 PR-3) · +4 Simples* / SalaoParceriaContrato / ReceitaFiscalLinha (X14 PR-2) · +1 TaxAssessment (X7 Fase A PR-2) · +1 AccountingPolicyVersion (GOV-CONTADOR, política versionada) · +1 PackageValidityAcceptance (FE-INCR-PACOTE-VALIDADE)
+    expect(inv).toHaveLength(87); // +2 DfeSignerDeviceUnit / DfeSignerPairingCode (X10a EMENDA-4 AL-PR-2) · +1 DpVinculo (BE-INCR-DP-F0-F1 PR-4) · +1 DpLotacao (BE-INCR-DP-F0-F1 PR-3) · +2 NfceContingencia / NfceContingenciaOrfa (X10a PR-9) · +1 NfceCsc (X10a PR-8) · +2 PscCredential / PscAuthorization (X10a PR-7) · +3 TaxOptimizationPolicy / ServiceCostEvidence / TaxOptimizationSuggestion (EFICIENCIA-FISCAL PR-1) · +1 FiscalNumberVoid (X10a PR-4) · +1 TaxWithholding (RETENCOES-FONTE PR-2) · +1 WithholdingProfile (RETENCOES-FONTE PR-1) · +1 InterestOnEquityCalculation (IRRF-DISTRIBUICAO PR-4) · +1 ProfitDistributionEvent (IRRF-DISTRIBUICAO PR-2) · +1 ConsumptionTaxAssessment (IBS-CBS-2027 PR-2) · +1 FiscalCertificate (X10i PR-1) · +1 SimplesCreditoIncobravel (X14-CAIXA PR-3) · +1 ReceitaFiscalRecebimento (X14-CAIXA PR-1) · +2 KitUpgradeRun / KitUpgradePending (KIT-SETOR PR-4) · +1 RoleAccountOverride (KIT-SETOR PR-3) · +1 IssBeneficioMunicipal (SIMPLES-PISO-ANEXO-XI bloco 1) · +1 FiscalDocumentPendingAttachment (DFE-ANEXO-PENDENTE) · +1 CollectionCharge (F5 PR-2) · +1 SimplesDeclaracaoAnual (X14 PR-4) · +1 KitInstallation (KIT-SETOR PR-2) · +1 SimplesApuracao (X14 PR-3) · +4 Simples* / SalaoParceriaContrato / ReceitaFiscalLinha (X14 PR-2) · +1 TaxAssessment (X7 Fase A PR-2) · +1 AccountingPolicyVersion (GOV-CONTADOR, política versionada) · +1 PackageValidityAcceptance (FE-INCR-PACOTE-VALIDADE)
     expect(inv.filter((t) => t.cls === 'REKEY').map((t) => t.model).sort()).toEqual([...REKEY_MODELS].sort());
     expect(inv.filter((t) => t.cls === 'KEEP').map((t) => t.model).sort()).toEqual([...KEEP_MODELS].sort());
     expect(inv.filter((t) => t.cls === 'REKEY').every((t) => t.ownerColumn === 'userId')).toBe(true);
@@ -480,5 +482,61 @@ describe('I1b — rekeyLegacyUnitCli', () => {
     } finally {
       await prisma.$executeRawUnsafe('UPDATE audit_chain_heads SET "unitId" = ? WHERE "scopeUserId" = ? AND "unitId" = ?', 'legacy-head', o.id, 'cabeca-falsa');
     }
+  }, 120000);
+
+  // FIX-TESTES-I1B-BOOT-POS-REKEY (passo 10 do RUNBOOK-I1B-UNIT-REKEY, F-I1B-1 a): o estado do bug é um binding Active
+  // que NASCEU sob o legado e foi movido pelo --apply. F-I1B-2 (a): o boot é o que o server.ts chama —
+  // `getInstance().initializeAccountingSyncFromBindings()`. A factory é singleton sem reset (construtor privado), mas o
+  // método não reaproveita estado: cria o alimentador e relê os bindings Active do banco a cada chamada
+  // (`lib/factory.ts`, `getAccountingBindingFeederService` + `initializeAccountingSyncFromBindings`) e troca o
+  // `accountingSync` inteiro. O `server.ts` em si segue sem teste (ele sobe no import).
+  it('passo 10 do runbook: binding Active nascido sob o legado → após --apply o boot relê e mapeia só o `to`; GET /accounts?unitId=<to> devolve o plano', async () => {
+    const o = await onboardedOwner();
+    const legacy = 'legacy-boot';
+    const factory = ApplicationFactory.getInstance();
+    // Plano de contas do legado pelo caminho real (o mesmo ensureChartOfAccounts que o GET /accounts chama) + o binding.
+    await factory.getPostingService().ensureChartOfAccounts(resolveAccountingScopeInternal({ userId: o.id }, legacy));
+    await prisma.accountingBinding.create({
+      data: {
+        userId: o.id, unitId: legacy, sectorKey: SALE_BINDING_V1.sectorKey, bindingVersion: 1, compiledAt: new Date(),
+        compiledFromHash: 'sha256:fix-testes-i1b-boot', payload: JSON.stringify(SALE_BINDING_V1), status: 'Active', createdById: o.id,
+      },
+    });
+    const chart = async (unitId: string) =>
+      (await prisma.account.findMany({ where: { userId: o.id, unitId }, select: { code: true, name: true }, orderBy: { code: 'asc' } }));
+    const chartBefore = await chart(legacy);
+    expect(chartBefore.length).toBeGreaterThan(0);
+    expect(await prisma.accountingBinding.count({ where: { userId: o.id, unitId: legacy, status: 'Active' } })).toBe(1);
+
+    const r = await cli(applyArgs(o.id, legacy, await backup()));
+    expect(r.code).toBe(0);
+    const to: string = JSON.parse(r.out.split('\n').filter((l) => l.startsWith('{"event":"unit_rekeyed"')).pop() as string).to;
+
+    // Boot relido sobre o mesmo banco.
+    await expect(factory.initializeAccountingSyncFromBindings()).resolves.toBeUndefined();
+    const sync = factory.getAccountingSyncService();
+    expect(sync.hasMapper(to, 'sale.finalized')).toBe(true);
+    expect(sync.hasMapper(legacy, 'sale.finalized')).toBe(false);
+    expect(await prisma.accountingBinding.count({ where: { userId: o.id, unitId: to, status: 'Active' } })).toBe(1);
+    await expect(
+      sync.sync(
+        { ownerUserId: o.id, actorUserId: o.id, unitId: legacy, ledgerCode: 'DEFAULT', baseCurrencyCode: 'BRL', timeZone: 'America/Sao_Paulo' },
+        { sourceType: 'sale.finalized', sourceId: 'sale-boot-legacy', unitId: legacy, amount: 100, currency: 'BRL', occurredAt: new Date().toISOString(), label: 'Venda' },
+      ),
+    ).rejects.toBeInstanceOf(NoMapperForUnitError);
+
+    // Rota relida (A6): o `to` responde com o mesmo plano; o legado não é unidade → 404 UNIT_NOT_FOUND
+    // (`AccountingScopeResolver.ts:59`).
+    const auth = authHeader({ id: o.id, username: (await prisma.user.findUniqueOrThrow({ where: { id: o.id } })).username });
+    const ok = await request(app).get(`/api/accounting/accounts?unitId=${to}`).set(auth);
+    expect(ok.status).toBe(200);
+    const listed = (ok.body.data.accounts as { code: string; name: string }[])
+      .map(({ code, name }) => ({ code, name })).sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0));
+    expect(listed).toEqual(chartBefore);
+    expect(await chart(to)).toEqual(chartBefore); // o GET não semeou nada por cima
+    const gone = await request(app).get(`/api/accounting/accounts?unitId=${legacy}`).set(auth);
+    expect(gone.status).toBe(404);
+    expect(gone.body.code).toBe('UNIT_NOT_FOUND');
+    expect(await chart(legacy)).toEqual([]);
   }, 120000);
 });

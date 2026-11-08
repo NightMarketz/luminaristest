@@ -53,11 +53,11 @@ describe('outboundFetch', () => {
     const boom = new TypeError('fetch failed');
     fetchSpy = jest.spyOn(global, 'fetch').mockRejectedValue(boom);
 
-    await expect(outboundFetch('qdrant', 'http://qdrant:6333/healthz')).rejects.toBe(boom);
+    await expect(outboundFetch('bcb_ptax', 'http://bcb.example/healthz')).rejects.toBe(boom);
 
     const [line] = lines();
     expect(line).toMatchObject({
-      level: 'warn', event: 'integration.failed', integration: 'qdrant', method: 'GET', errorName: 'TypeError',
+      level: 'warn', event: 'integration.failed', integration: 'bcb_ptax', method: 'GET', errorName: 'TypeError',
       durationMs: expect.any(Number),
     });
     expect(line).not.toHaveProperty('status');

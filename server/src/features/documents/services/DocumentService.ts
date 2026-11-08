@@ -1,18 +1,22 @@
 import { IDocument } from '../models/Document.model';
 import { IDocumentRepository } from '../repositories/IDocumentRepository';
 import { IChunkRepository } from '../repositories/IChunkRepository';
-import { IVectorRepository } from '../repositories/IVectorRepository';
+import type { IChunkVectorRepository } from '../repositories/IChunkVectorRepository';
+import type { IUserEmbedder } from '@/lib/embedding/UserEmbedder';
 import { DocumentProcessingService } from './DocumentProcessingService';
 import { DocumentProcessingPipeline } from './DocumentProcessingPipeline';
 import { UserContext } from '../../../lib/authUtils';
 import { NotFoundError, ForbiddenError, ValidationError, UnauthorizedError } from '../../../lib/errors';
-import { UpdateDocumentDto } from '../dtos/DocumentDto';
-import { DocumentUpdateInput } from '../models/Document.model';
+import {
+  GeneratedContextSchema,
+  type GeneratedContext,
+  type UpdateDocumentContextDto,
+  type UserEditableContextField,
+} from '../dtos/DocumentDto';
+import { DocumentContextUpdateInput, DocumentUpdateInput } from '../models/Document.model';
 import type { IDocumentPolicy } from '../policies/IDocumentPolicy';
 import { DocumentStatus, DocumentPurpose } from '../models/Document.model';
 import { logger } from '@/lib/logger';
-import { OpenAIService } from '@/lib/openai/OpenAIService';
-import { StructuredDataService } from '../../structuredData/services/StructuredDataService';
 import type { IUserRepository } from '../../users/repositories/IUserRepository';
 
 /**
@@ -25,21 +29,19 @@ export class DocumentService {
     constructor(
     private readonly repository: IDocumentRepository,
     private readonly chunkRepository: IChunkRepository,
-    private readonly vectorRepository: IVectorRepository,
+    private readonly vectorRepository: IChunkVectorRepository,
     private readonly processingService: DocumentProcessingService,
     private readonly policy: IDocumentPolicy,
-    private readonly openAIService: OpenAIService,
-    private readonly structuredDataService: StructuredDataService,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
+    private readonly embedder: IUserEmbedder
   ) {
     this.processingPipeline = new DocumentProcessingPipeline(
       chunkRepository,
       vectorRepository,
       processingService,
       repository,
-      openAIService,
-      structuredDataService,
-      userRepository
+      userRepository,
+      embedder
     );
   }
 
@@ -108,8 +110,6 @@ export class DocumentService {
         throw new ValidationError(`Unsupported file type: ${fileType}`);
     }
 
-    const buffer = Buffer.from(fileBuffer);
-
     const doc = await this.repository.create({
       userId: userContext.userId,
       fileName,
@@ -122,7 +122,7 @@ export class DocumentService {
     });
 
     setImmediate(() => {
-      this.processDocumentAsync(doc.id, fileBuffer, buffer, mimeType).catch(error => {
+      this.processDocumentAsync(doc.id, fileBuffer, mimeType).catch(error => {
         logger.error(`Error in async document processing for document ${doc.id}`, { error });
       });
     });
@@ -131,13 +131,12 @@ export class DocumentService {
   }
 
   /**
-   * Processes document asynchronously (parse text, generate embeddings, store in Qdrant, update status).
+   * Processes document asynchronously (parse text, generate embeddings, store in the vector index, update status).
    * On error: updates status to FAILED with errorMessage.
    */
   private async processDocumentAsync(
     docId: string,
     fileBuffer: ArrayBuffer,
-    buffer: Buffer,
     mimeType: string
   ): Promise<void> {
     try {
@@ -161,9 +160,9 @@ export class DocumentService {
         processingError: null,
       });
 
-      // Run chunking + embedding + Qdrant storage; pipeline sets status=COMPLETED on success
+      // Run chunking + embedding + vector storage; pipeline sets status=COMPLETED on success
       const docWithText: IDocument = { ...document, textContent: text };
-      await this.processingPipeline.processDocument(docWithText, text, buffer);
+      await this.processingPipeline.processDocument(docWithText, text);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown processing error';
       logger.error(`Async processing failed for document ${docId}`, { error });
@@ -193,73 +192,68 @@ export class DocumentService {
     if (!this.policy.canDelete(userContext, document)) {
       throw new ForbiddenError('Access denied to delete document');
     }
-    // 1. Delete vectors in Qdrant FIRST (external store — cannot join a SQL transaction).
-    //    Deleting by the `documentId` payload is robust: it removes every chunk's vector
-    //    regardless of point-id derivation, and reaps any pre-existing orphans.
-    //    If this fails, nothing in SQL has been touched yet.
-    await this.vectorRepository.deletePointsByDocumentId(id);
-    // 2. Atomically delete chunks + document in SQL (single transaction).
-    //    If this fails after the Qdrant delete, vectors are already gone but SQL is intact —
-    //    log for compensation/visibility (orphaned SQL rows can be re-cleaned; no data corruption).
+    // RAG-PR-A item 9, caminho (2): a vec0 mora num arquivo próprio, fora da transação do Prisma.
+    // 1. Vetores PRIMEIRO. Se falhar, nada no SQL foi tocado.
+    await this.vectorRepository.deleteByDocument(id);
+    // 2. Trechos + documento no SQL (uma transação). Se falhar depois do passo 1, os vetores já saíram e o SQL está
+    //    intacto (a busca não acha o documento até o `rag:reindex`); vetor que sobrar some no VecOrphanSweepScheduler.
     try {
       await this.repository.deleteWithChunks(id);
     } catch (err) {
-      logger.error('deleteDocument: SQL delete failed after Qdrant vectors were removed', { documentId: id, error: err });
+      logger.error('deleteDocument: SQL delete failed after the vectors were removed', { documentId: id, error: err });
       throw err;
     }
   }
 
   /**
-   * Search documents by similarity on stored embeddings
+   * Correção do usuário (RAG-PR-B item 18, F-RAG-4): `fileName`, `documentPurpose`, `summary` e os campos corrigíveis
+   * do contexto gerado (`documentType`, `entities`). Status e estatísticas do processamento não passam por aqui — o
+   * pipeline os grava pelo repositório. Todo campo do contexto corrigido entra em `userEditedFields` (o pipeline do
+   * RAG-PR-D não sobrescreve campo editado). Leitura do contexto atual e escrita na mesma tx: duas correções
+   * concorrentes não perdem a marca uma da outra.
    */
-  async searchDocuments(
-    query: string,
-    userContext: UserContext,
-    limit = 10
-  ): Promise<Array<{ document: IDocument; chunkText: string; score: number }>> {
-    if (!userContext.userId) throw new UnauthorizedError('Authentication required');
-    if (!this.policy.canListAll(userContext)) throw new ForbiddenError('Document search forbidden by policy');
-
-    // generate embedding for the query
-    const queryVector = await this.processingService.generateEmbedding(query);
-    // search in Qdrant
-    const hits = await this.vectorRepository.searchVectors(queryVector, userContext.userId, limit);
-    const results: Array<{ document: IDocument; chunkText: string; score: number }> = [];
-    for (const hit of hits) {
-      const payload = hit.payload as Record<string, unknown>;
-      const doc = await this.repository.findById(payload.documentId as string);
-      if (!doc) continue;
-      results.push({ document: doc, chunkText: payload.textContent as string, score: hit.score });
-    }
-    return results;
-  }
-
-  /**
-   * Updates o status e metadados de processamento de um documento
-   */
-  async updateDocument(
+  async updateDocumentContext(
     id: string,
-    data: UpdateDocumentDto,
+    data: UpdateDocumentContextDto,
     userContext: UserContext
   ): Promise<IDocument> {
     if (!userContext.userId) throw new UnauthorizedError('Authentication required');
 
-    const document = await this.repository.findById(id);
-    if (!document) {
-      throw new NotFoundError('Document not found');
-    }
-    if (!this.policy.canUpdate(userContext, document)) {
-      throw new ForbiddenError('Access denied to update document');
-    }
-    // Mapeia dados de DTO para input do repositório
-    const updateInput: DocumentUpdateInput = {
-      status: data.status,
-      summary: data.summary,
-      contextJson: data.contextJson,
-      processingDate: data.processingDate,
-      processingError: data.processingError,
-    };
-    const updatedDocument = await this.repository.update(id, updateInput);
-    return updatedDocument;
+    return this.repository.runInTransaction(async (tx) => {
+      const document = await this.repository.findById(id, tx);
+      if (!document) {
+        throw new NotFoundError('Document not found');
+      }
+      if (!this.policy.canUpdate(userContext, document)) {
+        throw new ForbiddenError('Access denied to update document');
+      }
+
+      const edited = (['summary', 'documentType', 'entities'] as const).filter((k) => data[k] !== undefined);
+      const update: DocumentContextUpdateInput = {
+        ...(data.fileName !== undefined && { fileName: data.fileName }),
+        ...(data.documentPurpose !== undefined && { documentPurpose: data.documentPurpose }),
+        ...(data.summary !== undefined && { summary: data.summary }),
+      };
+      if (edited.length > 0) {
+        const current = currentGeneratedContext(document.generatedContext);
+        const next: GeneratedContext = GeneratedContextSchema.parse({
+          ...current,
+          ...(data.documentType !== undefined && { documentType: data.documentType }),
+          ...(data.entities !== undefined && { entities: data.entities }),
+          userEditedFields: [...new Set<UserEditableContextField>([...current.userEditedFields, ...edited])],
+        });
+        update.generatedContext = next;
+      }
+      return this.repository.updateContext(id, update, tx);
+    });
   }
-} 
+}
+
+/**
+ * Contexto gravado (ou o vazio, antes do pipeline gerar). Valor gravado fora do `GeneratedContextSchema` não é
+ * remendado em silêncio: o `parse` lança e a correção falha com 500, para o defeito aparecer.
+ */
+function currentGeneratedContext(stored: Record<string, unknown> | null): GeneratedContext {
+  if (stored === null) return { version: 1, documentType: null, entities: [], userEditedFields: [] };
+  return GeneratedContextSchema.parse(stored);
+}

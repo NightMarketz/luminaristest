@@ -27,6 +27,7 @@ depende_de: []
 - **Lacunas 03/10 (PR #480):** [`ADR-INCR-UNIT-REKEY-migration.md` §10](../../adr/ADR-INCR-UNIT-REKEY-migration.md) — L-RK-1..5 ratificadas em [[D-2026-10-03-I1B-LACUNAS-L-RK]]; BRIEF da correção: [`BE-INCR-UNIT-REKEY-LACUNAS-brief.md`](../../accounting/BE-INCR-UNIT-REKEY-LACUNAS-brief.md) — ✅ FECHADO no #501
 - **Execução no dev.db (04/10):** evidência dos passos 1–3, 8 e 10 em [`RUNBOOK-I1B-UNIT-REKEY.rascunho-2026-10-04.md`](../../accounting/RUNBOOK-I1B-UNIT-REKEY.rascunho-2026-10-04.md) (colhida por agente a pedido do dono); desfecho e assinatura: [[D-2026-10-04-I1B-RUNBOOK-ASSINADO]]
 - **Ressalvas do review do #501 (04/10):** L-RK-6 (regra v) + L-RK-7 (cabeças do pré) — [[D-2026-10-04-I1B-RESSALVAS-501]]; BRIEF [`BE-INCR-UNIT-REKEY-VERIFY-V-brief.md`](../../accounting/BE-INCR-UNIT-REKEY-VERIFY-V-brief.md) (sem "executa")
+- **Régua de testes (04/11):** passo 10 do runbook (boot relendo o binding re-chaveado) sem teste → BRIEF [`FIX-TESTES-I1B-BOOT-POS-REKEY-brief.md`](../../accounting/FIX-TESTES-I1B-BOOT-POS-REKEY-brief.md), item 1 do [[FIX-TESTES]] ([[D-2026-11-04-APRENDIZADOS-TESTES]]); sem 'executa'. Estado deste nó não muda.
 
 - [`docs/accounting/BE-INCR-ONBOARDING-FIRST-UNIT-brief.md`](../../accounting/BE-INCR-ONBOARDING-FIRST-UNIT-brief.md)
 - [`docs/accounting/ONBOARDING-WIZARD-plano-grafo-brief.md`](../../accounting/ONBOARDING-WIZARD-plano-grafo-brief.md)

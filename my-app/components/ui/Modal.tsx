@@ -14,6 +14,8 @@ interface ModalProps {
   headerActions?: React.ReactNode;
   isDirty?: boolean;
   themeColor?: string; // e.g. "bg-blue-600", "bg-purple-600"
+  /** Linha abaixo do título. Ausente = "Formulário Administrativo" (padrão de sempre); `null` = sem linha. */
+  subtitle?: string | null;
 }
 
 export function Modal({
@@ -24,7 +26,8 @@ export function Modal({
   maxWidth = "max-w-md",
   footer,
   isDirty = false,
-  themeColor = "bg-blue-600"
+  themeColor = "bg-blue-600",
+  subtitle
 }: ModalProps) {
   const { t } = useTranslation(['common', 'database']);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -153,9 +156,11 @@ export function Modal({
             <h3 id="modal-title" className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">
               {title}
             </h3>
-            <p className="text-[11px] text-gray-500 dark:text-neutral-500 uppercase font-bold tracking-widest mt-0.5">
-              {t('common:dashboard.form.administrative_subtitle', 'Formulário Administrativo')}
-            </p>
+            {subtitle !== null && (
+              <p className="text-[11px] text-gray-500 dark:text-neutral-500 uppercase font-bold tracking-widest mt-0.5">
+                {subtitle ?? t('common:dashboard.form.administrative_subtitle', 'Formulário Administrativo')}
+              </p>
+            )}
           </div>
           <button
             onClick={handleClose}

@@ -482,12 +482,12 @@ describe('AccountingReportService.generalLedger (C6b PR-1, F-C6b-7 a)', () => {
         findManyForExport: jest.fn(async () => [
           {
             id: 'e1', entryNumber: 10, date: new Date('2026-01-12T00:00:00.000Z'),
-            description: 'venda 1', status: 'Posted',
+            description: 'venda 1', status: 'Posted', sourceType: 'SALE', sourceId: 'sale-1',
             postings: [{ id: 'p1', accountId: 'acc-a', debitCents: 2000, creditCents: 0 }],
           },
           {
             id: 'e2', entryNumber: 11, date: new Date('2026-01-18T00:00:00.000Z'),
-            description: 'venda 2', status: 'Posted',
+            description: 'venda 2', status: 'Posted', sourceType: 'MANUAL', sourceId: null,
             postings: [{ id: 'p2', accountId: 'acc-a', debitCents: 0, creditCents: 500 }],
           },
         ]),
@@ -509,6 +509,8 @@ describe('AccountingReportService.generalLedger (C6b PR-1, F-C6b-7 a)', () => {
     expect(aRows[0]).toMatchObject({ status: 'OPENING_BALANCE', runningBalanceCents: 5000 });
     expect(aRows[1]).toMatchObject({ entryId: 'e1', debitCents: 2000, creditCents: 0, runningBalanceCents: 7000 });
     expect(aRows[2]).toMatchObject({ entryId: 'e2', debitCents: 0, creditCents: 500, runningBalanceCents: 6500 });
+    // EMENDA RASTREIO do X7 (item 11, F-RT-1 a): o documento de origem de cada lançamento; a abertura não tem.
+    expect(aRows.map((r) => [r.sourceType, r.sourceId])).toEqual([['', null], ['SALE', 'sale-1'], ['MANUAL', null]]);
     // abertura + Σ janela (2000 - 500) = saldo final
     expect(aRows[aRows.length - 1].runningBalanceCents).toBe(5000 + (2000 - 500));
   });

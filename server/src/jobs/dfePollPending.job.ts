@@ -21,7 +21,13 @@ export async function runDfePollPending(): Promise<PollSummary> {
   const olderThan = new Date(Date.now() - readMsEnv('DFE_POLL_AFTER_MS', DEFAULT_POLL_AFTER_MS));
   const service = getFactory().getFiscalDocumentLifecycleService();
   const summary = await service.pollPendingOnce(olderThan);
+  // X10a PR-9 (decisões 6 e 7): transmite as NFC-e off-line, alerta o prazo e resolve as órfãs — antes do dreno, para a
+  // NFC-e autorizada agora ganhar o anexo no mesmo tick.
+  const contingencia = await getFactory().getNfceContingenciaService().tick(olderThan);
+  // BE-INCR-DFE-EVENTOS PR-2 (item 18): eventos do fisco sobre as NFS-e autorizadas (cancelamento fora do Luminaris e
+  // o em voo do item 19). Cancelar não cria anexo; a ordem em relação ao dreno não importa.
+  const eventos = await service.pollEventosOnce();
   // BE-INCR-DFE-ANEXO-PENDENTE item 7 (F-PA-2 a): mesmo tick, depois do poll.
   const attachments = await service.drainPendingAttachmentsOnce();
-  return { ...summary, attachments };
+  return { ...summary, contingencia, eventos, attachments };
 }

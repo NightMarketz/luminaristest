@@ -67,7 +67,9 @@
       "OPEN": "Em aberto",
       "PAYING": "Em pagamento",
       "PAID": "Paga",
-      "CANCELLED": "Cancelada"
+      "CANCELLED": "Cancelada",
+      "PARTIALLY_PAID": "Paga em parte",
+      "DEFERRED": "Adiada"
     },
     "col": {
       "expand": "Expandir",
@@ -136,7 +138,7 @@
       "mode": {
         "expense": "Despesa",
         "inventory": "Compra de estoque",
-        "inventoryHint": "Debita 1.1.6 Estoques e valora o produto pelo custo médio — o valor acima é o TOTAL da compra."
+        "inventoryHint": "Debita 1.1.3.01 Estoques e valora o produto pelo custo médio — o valor acima é o TOTAL da compra."
       },
       "noProducts": "Nenhum produto no catálogo. Cadastre produtos no módulo de estoque."
     },
@@ -145,6 +147,9 @@
       "paidAtLabel": "Data do pagamento",
       "reversalDateLabel": "Data da reversão",
       "methodLabel": "Forma de pagamento",
+      "method": {
+        "Cash": "Dinheiro"
+      },
       "reasonLabel": "Motivo",
       "payTitle": "Registrar pagamento",
       "payConfirm": "Confirmar pagamento",
@@ -244,6 +249,9 @@
       "receivedAtLabel": "Data do recebimento",
       "reversalDateLabel": "Data da reversão",
       "methodLabel": "Forma de recebimento",
+      "method": {
+        "Cash": "Dinheiro"
+      },
       "reasonLabel": "Motivo",
       "receiveTitle": "Registrar recebimento",
       "receiveConfirm": "Confirmar recebimento",
@@ -392,9 +400,10 @@
     "generating": "Gerando…",
     "ecd": {
       "title": "Gerar SPED ECD",
-      "description": "Escrituração Contábil Digital. Exige o mapeamento referencial completo (badge \"Pronto\" acima).",
+      "description": "Escrituração Contábil Digital. Conta sem código referencial não bloqueia: sai sem I051, com aviso (o mapeamento é facultativo na ECD; a ECF exige).",
       "book": "Livro (termo)",
-      "submit": "Gerar e baixar ECD"
+      "submit": "Gerar e baixar ECD",
+      "avisos": "ECD gerada e baixada, com avisos:"
     },
     "ecf": {
       "title": "Gerar SPED ECF",
@@ -466,7 +475,13 @@
       "ecfSignerCount": "A ECF aceita 1 ou 2 signatários.",
       "ecfContador": "A ECF exige um signatário contador (qualificação 900) e um não-contador.",
       "ecfContadorCrc": "O signatário contador (900) exige CPF de 11 dígitos e CRC.",
-      "ecdContadorCrc": "O signatário contador (900) exige CPF de 11 dígitos, CRC, UF do CRC, e-mail e fone."
+      "ecdContadorCrc": "O signatário contador (900) exige CPF de 11 dígitos, CRC, UF do CRC, e-mail e fone.",
+      "ECF_Y600_COMPLEMENTO_FALTANDO": "O cadastro de sócios mudou: há sócio do ano sem complemento. A lista foi recarregada — complete a linha nova e gere de novo.",
+      "ECF_Y600_PARTNER_FORA_DO_ANO": "O cadastro de sócios mudou: um sócio da lista não tem mais vigência no ano. A lista foi recarregada — gere de novo.",
+      "ECF_Y600_PAIS_INCOERENTE": "O país informado não bate com a residência do sócio no cadastro (residente sai com 105; não residente exige o país).",
+      "ECF_Y600_QUALIF_INCOERENTE": "A qualificação de um sócio ou do representante legal não vale para esse caso no Manual da ECF (p. 574).",
+      "ECF_Y600_SEM_SOCIOS": "A ECF exige ao menos um sócio, titular ou dirigente no Y600.",
+      "ECF_Y600_LIMITE": "O Y600 passou do número de linhas que a ECF aceita."
     },
     "qualif": {
       "contadorCadastro": "Contador do cadastro (opcional)",
@@ -485,6 +500,89 @@
       "8": "Entidades Fechadas de Previdência Complementar",
       "9": "Partidos Políticos",
       "10": "Financeiras - Lucro Presumido"
+    },
+    "y600": {
+      "title": "Sócios, titular e dirigentes (Y600)",
+      "help": "Os sócios vêm do cadastro; complete a qualificação e os 5 valores do ano (campos 13 a 17 do Y600). Valor vazio não vira zero: digite 0,00.",
+      "carregando": "Carregando os sócios do ano…",
+      "erroCarga": "Erro ao carregar os sócios do ano.",
+      "tentarDeNovo": "Tentar de novo",
+      "semVigencias": "Nenhum sócio com vigência em {{year}}. Cadastre os sócios ou informe ao menos um dirigente.",
+      "somaFim": "Soma das participações vigentes em 31/12: {{soma}} (informativo, não bloqueia).",
+      "dirigentes": "Dirigentes e conselheiros não sócios",
+      "dirAdicionar": "Incluir dirigente",
+      "dirRemover": "Excluir dirigente",
+      "dirNome": "Nome",
+      "dirCpf": "CPF",
+      "dtAltSoc": "Início (DT_ALT_SOC)",
+      "dtFimSoc": "Fim no ano (DT_FIM_SOC, opcional)",
+      "qualif": "Qualificação (QUALIF)",
+      "selecione": "— selecione —",
+      "pais": "País (tabela do Sped, 3 dígitos)",
+      "percVot": "Capital votante % (opcional)",
+      "repCpf": "CPF do representante legal (opcional)",
+      "repQualif": "Qualif. do representante",
+      "residente": "residente",
+      "naoResidente": "não residente",
+      "participacao": "Participação",
+      "semSaida": "sem saída",
+      "naoCarregado": "Os sócios do ano ainda não carregaram — aguarde ou tente de novo.",
+      "invalido": "Y600 incompleto.",
+      "valor": {
+        "remTrab": "Remuneração do trabalho (VL_REM_TRAB)",
+        "lucDiv": "Lucros/dividendos (VL_LUC_DIV)",
+        "jurCap": "Juros s/ capital próprio (VL_JUR_CAP)",
+        "demRend": "Demais rendimentos (VL_DEM_REND)",
+        "irRet": "IR retido na fonte (VL_IR_RET)"
+      },
+      "semOcorrencia": "A ECF exige ao menos um sócio, titular ou dirigente no Y600: cadastre os sócios ou adicione um dirigente.",
+      "qualifObrigatoria": "Escolha a qualificação (QUALIF) de cada sócio e dirigente.",
+      "qualifIncoerente": "Qualificação fora da tabela para esse caso (residência × PF/PJ) — escolha uma das opções da lista.",
+      "valorObrigatorio": "Preencha os 5 valores do Y600 de cada sócio e dirigente (zero se não houve: 0,00).",
+      "valorInvalido": "Valor em R$ inválido no Y600 — use o formato 1.234,56.",
+      "paisObrigatorio": "Informe o país (código do Sped, 3 dígitos) do sócio não residente.",
+      "paisInvalido": "País inválido: 3 dígitos da tabela do Sped, diferente de 105 (Brasil).",
+      "representanteIncompleto": "Representante legal: informe o CPF e a qualificação juntos, ou deixe os dois em branco.",
+      "cpfInvalido": "CPF inválido no Y600 (dirigente ou representante legal).",
+      "dtFimForaDoAno": "A data de fim do dirigente tem de cair no ano da ECF.",
+      "dtFimAntesDoInicio": "A data de fim do dirigente não pode ser anterior à de início.",
+      "percVotInvalido": "Capital votante inválido: um percentual entre 0 e 100.",
+      "qualifDesc": {
+        "_fonte": "Manual ECF Leiaute 12 (maio/2026), Y600 campo 8, p. 572 — texto do manual, não traduzido",
+        "01": "Acionista Pessoa Física Domiciliado no Brasil",
+        "02": "Sócio Pessoa Física Domiciliado no Brasil",
+        "03": "Acionista Pessoa Jurídica Domiciliado no Brasil",
+        "04": "Sócio Pessoa Jurídica Domiciliado no Brasil",
+        "05": "Acionista Pessoa Física Residente ou Domiciliado no Exterior",
+        "06": "Sócio Pessoa Física Residente ou Domiciliado no Exterior",
+        "07": "Acionista Pessoa Jurídica Residente ou Domiciliado no Exterior",
+        "08": "Sócio Pessoa Jurídica Residente ou Domiciliado no Exterior",
+        "09": "Titular",
+        "10": "Administrador sem Vínculo Empregatício",
+        "11": "Diretor sem Vínculo Empregatício",
+        "12": "Presidente sem Vínculo Empregatício",
+        "13": "Administrador com Vínculo Empregatício",
+        "14": "Conselheiro de Administração ou Fiscal",
+        "15": "Diretor com Vínculo Empregatício",
+        "16": "Fundador",
+        "17": "Presidente com Vínculo Empregatício"
+      },
+      "qualifRepLegDesc": {
+        "_fonte": "Manual ECF Leiaute 12 (maio/2026), Y600 campo 12, p. 573 — texto do manual, não traduzido",
+        "PF": {
+          "01": "Procurador",
+          "02": "Curador",
+          "03": "Mãe",
+          "04": "Pai",
+          "05": "Tutor",
+          "06": "Outro"
+        },
+        "PJ": {
+          "01": "Procurador",
+          "06": "Outro"
+        }
+      },
+      "irCadastro": "Ir para o cadastro de sócios"
     }
   },
   "trialBalance": {
@@ -664,6 +762,7 @@
     "reverseAction": {
       "enabledTitle": "Estornar este lançamento",
       "disabledTitle": "Lançamento já estornado",
+      "notPostedTitle": "Só lançamentos postados podem ser estornados",
       "label": "Estornar"
     },
     "receiptAction": {
@@ -697,6 +796,7 @@
       "confirm": "Confirmar estorno",
       "reverseEntryOf": "Estornar lançamento de",
       "reversalDateLabel": "Data do estorno",
+      "reasonLabel": "Motivo do estorno",
       "warning": "Um novo lançamento oposto será criado automaticamente na data acima. Esta ação não pode ser desfeita.",
       "periodClosed": "O período para a data selecionada está fechado.",
       "viewPeriods": "Ver Períodos"
@@ -740,7 +840,9 @@
       "date": "Data",
       "description": "Descrição",
       "descriptionPlaceholder": "Histórico do lançamento…",
-      "selectAccount": "— selecione a conta —"
+      "selectAccount": "— selecione a conta —",
+      "extemporaneousReason": "Razão do registro extemporâneo",
+      "extemporaneousReasonHelp": "Opcional. Exigida quando a data cai num período que já foi fechado."
     },
     "column": {
       "account": "Conta",
@@ -2525,7 +2627,8 @@
         "vDescCond": "Desconto condicionado",
         "vDescIncond": "Desconto incondicionado",
         "vServ": "Valor do Serviço prestado",
-        "xDescServ": "Descrição do Serviço"
+        "xDescServ": "Descrição do Serviço",
+        "totTrib": "Valor aproximado dos tributos"
       },
       "homologacaoSemLink": "Homologação: use o ambiente de produção restrita do portal (endereço a confirmar no runbook — PV-7).",
       "howto": "Use a Emissão Completa do portal. Copie cada valor no campo de mesmo nome; os marcados \"conferido na volta\" são comparados com o XML autorizado.",
@@ -2542,7 +2645,9 @@
         "naoInformado": "Não informado.",
         "prestador": "Marque Prestador.",
         "retidoSim": "Sim, retido pelo tomador.",
-        "tributavel": "Operação tributável."
+        "tributavel": "Operação tributável.",
+        "fedMei": "Sem tributação federal na nota do MEI — não informe.",
+        "totTribMei": "Não informe — facultativo para o MEI."
       },
       "note": {
         "aliquota": "conferência — o portal pode calcular",
@@ -2553,6 +2658,7 @@
       },
       "opSimpNac": {
         "1": "1 — Não optante",
+        "2": "2 — Optante MEI",
         "3": "3 — Optante ME/EPP"
       },
       "portalLink": "Abrir o Emissor Nacional",
@@ -2905,7 +3011,7 @@
     },
     "confirm": {
       "title": "Ativar a contabilidade desta unidade?",
-      "message": "Setor: {{sector}}. Ao confirmar, (1) o plano de contas padrão é instalado se o da unidade estiver vazio e (2) o período do mês corrente é aberto se ainda não existir.",
+      "message": "Setor: {{sector}}. Ao confirmar, (1) o plano de contas padrão é conferido (costuma já ter sido instalado quando alguma tela da Contabilidade lista as contas; se ainda estiver vazio, é instalado agora) e (2) o período do mês corrente é aberto se ainda não existir.",
       "confirmLabel": "Ativar",
       "cancelLabel": "Cancelar"
     },
@@ -2967,6 +3073,7 @@
   "simples": {
     "alerta": {
       "ATIVIDADE_SEM_ANEXO": "Atividade sem anexo",
+      "BENEFICIO_ISS_TRANSICAO_8B": "Benefício municipal de ISS cruza a transição de 2029",
       "BENEFICIO_MUNICIPAL_INAPLICAVEL_DESVANTAJOSO": "Benefício municipal não aplicado (desvantajoso)",
       "HISTORICO_IGNORADO": "Histórico pré-adoção ignorado",
       "ISS_VALOR_FIXO_MUNICIPAL": "ISS por valor fixo municipal",
@@ -2988,7 +3095,15 @@
       "SEM_NCM": "Revenda sem NCM no perfil do produto",
       "SEGREGACAO_DIVERGE": "Segregação manual diverge da NCM",
       "SEGREGACAO_INDEVIDA": "Segregação monofásica sem NCM que a sustente",
-      "ICMS_ST_NAO_CONFERIDA": "ICMS-ST não conferido para a NCM"
+      "ICMS_ST_NAO_CONFERIDA": "ICMS-ST não conferido para a NCM",
+      "PARCERIA_COTA_SEM_CONTRATO": "Cota do parceiro sem contrato em efeito",
+      "PARCERIA_SEM_COTA": "Parceria em efeito sem cota no mês",
+      "PARCEIRO_SEM_CNPJ": "Profissional-parceiro sem CNPJ declarado",
+      "PARCERIA_CHECKLIST_INCOMPLETO": "Cláusula da parceria não declarada",
+      "INTERDEPENDENCIA_SOCIO": "Sócio com participação que veda o Simples",
+      "INTERDEPENDENCIA_RECEITA_NAO_INFORMADA": "Receita da outra empresa do sócio não informada",
+      "PROJECAO_LIMITE_EPP": "Projeção do ano perto do limite da EPP",
+      "PROJECAO_SUBLIMITE_ICMS_ISS": "Projeção do ano perto do sublimite do ICMS/ISS"
     },
     "alertas": {
       "title": "Alertas"
@@ -3447,6 +3562,21 @@
       "PARTIALLY_REFUNDED": "Estornada em parte",
       "PENDING": "Pendente",
       "REFUNDED": "Estornada"
+    },
+    "list": {
+      "title": "Cobranças da unidade",
+      "filterStatus": "Status",
+      "filterKind": "Tipo",
+      "all": "Todos",
+      "loading": "Carregando cobranças…",
+      "empty": "Nenhuma cobrança nesta unidade com estes filtros.",
+      "error": "Erro ao carregar as cobranças da unidade.",
+      "openReceivable": "Abrir o título no Contas a Receber",
+      "noNumber": "sem nº",
+      "receivableCancelled": "cancelado",
+      "col": {
+        "receivable": "Título"
+      }
     }
   },
   "paymentProvider": {
@@ -3597,6 +3727,71 @@
         "ACCOUNT_NOT_FOUND": "A conta do kit não está viva no plano da unidade.",
         "KIT_NOT_INSTALLED": "O kit da unidade não está instalado; retome a instalação antes de decidir."
       }
+    }
+  },
+  "reinf": {
+    "avisos": {
+      "PF_SERVICO_FORA_DA_REINF": "{{quantidade}} retenção(ões) de pessoa física por serviço fora da Reinf: declare fora do sistema até o cadastro de dependentes.",
+      "DIVIDENDO_PJ_FORA_DA_REINF": "{{quantidade}} distribuição(ões) de lucros a sócio PJ fora da Reinf até o contador responder.",
+      "NATUREZA_NAO_CONFERIDA": "{{quantidade}} natureza(s) do rendimento vêm do perfil de retenção e ainda não foram conferidas pelo contador.",
+      "DEFASADO_RETIFICAR": "{{quantidade}} evento(s) de lote anterior com origem estornada: retifique.",
+      "REABRIR_ANTES": "{{quantidade}} evento(s) já transmitido(s): reabra o período antes de retificar."
+    },
+    "erros": {
+      "NATUREZA_RENDIMENTO_SEM_MAPA": "Uma retenção não tem natureza do rendimento publicada: confira o perfil de retenção do fornecedor.",
+      "REINF_SEM_CONTATO": "Indique no perfil fiscal o contador com CPF: ele é o contato do R-1000."
+    }
+  },
+  "partners": {
+    "title": "Sócios",
+    "description": "Cadastro dos sócios da empresa e das vigências de cada um — usado pela ECF (Y600) e pela distribuição de lucros e JCP.",
+    "filtroData": "Vigentes em (vazio = todas as vigências)",
+    "new": "Novo sócio",
+    "loading": "Carregando…",
+    "empty": "Nenhum sócio cadastrado.",
+    "col": {
+      "nome": "Nome",
+      "taxId": "CPF/CNPJ",
+      "tipo": "Tipo",
+      "residencia": "Residência",
+      "participacao": "Participação",
+      "entrada": "Entrada",
+      "saida": "Saída",
+      "acoes": "Ações"
+    },
+    "residente": "Brasil",
+    "naoResidente": "Exterior",
+    "edit": "Editar",
+    "remove": "Remover",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "saving": "Salvando…",
+    "removing": "Removendo…",
+    "modal": {
+      "newTitle": "Novo sócio",
+      "editTitle": "Editar sócio"
+    },
+    "removeModal": {
+      "title": "Remover sócio",
+      "confirm": "Confirmar remoção",
+      "note": "Remover é para cadastro errado. Se o sócio saiu da sociedade, edite e informe a data de saída."
+    },
+    "field": {
+      "nome": "Nome",
+      "taxId": "CPF ou CNPJ (só dígitos)",
+      "residencia": "Residência",
+      "participacao": "Participação no capital (%)",
+      "entrada": "Entrada",
+      "saida": "Saída (opcional)"
+    },
+    "error": {
+      "load": "Erro ao carregar os sócios.",
+      "save": "Não foi possível salvar o sócio.",
+      "remove": "Não foi possível remover o sócio.",
+      "nomeObrigatorio": "Informe o nome do sócio.",
+      "taxIdFormato": "CPF (11 dígitos) ou CNPJ (14 dígitos), só números.",
+      "participacaoInvalida": "Participação inválida: um percentual entre 0 e 100.",
+      "entradaObrigatoria": "Informe a data de entrada."
     }
   }
 }

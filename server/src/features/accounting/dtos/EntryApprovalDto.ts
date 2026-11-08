@@ -90,9 +90,11 @@ export const SubmitEntrySchema = z
  *       properties:
  *         unitId:          { type: string }
  *         expectedVersion: { type: integer, minimum: 1 }
+ *         extemporaneousReason: { type: string, description: "Razão do registro extemporâneo (ITG 2000, item 36) — exigida quando a data do rascunho cai num período já fechado e reaberto" }
  */
 export const ApproveEntrySchema = z
-  .object({ unitId: z.string().min(1), expectedVersion })
+  // ITG 2000 (R1) item 36: aprovar é postar — a razão do extemporâneo entra aqui, quando o período é conferido.
+  .object({ unitId: z.string().min(1), expectedVersion, extemporaneousReason: z.string().trim().min(1).optional() })
   .strict();
 
 /** @openapi

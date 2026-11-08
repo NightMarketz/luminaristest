@@ -8,7 +8,6 @@ import chatInstanceRoutes from './chat-instances';
 import chatMessageRoutes from './chat-messages';
 import dashboardRoutes from './dashboard';
 import dashboardLayoutRoutes from './dashboard-layout';
-import structuredDataRoutes from './structured-data';
 import docsRoutes from './docs';
 import analyticsRoutes from './analytics';
 import analyticsDefinitionsRoutes from './analyticsDefinitions';
@@ -25,14 +24,17 @@ import { collectionChargesRouter, paymentCollectionWebhookRouter, receivableChar
 import serviceFiscalSuggestionRoutes from './serviceFiscalSuggestions';
 import nfeRoutes from './nfe';
 import dfeRoutes from './dfe';
+import dfeAssinadorRoutes from './dfeAssinador';
 import entryApprovalRoutes from './entryApprovals';
 import salesRoutes from './sales';
 import savedViewsRoutes from './saved-views';
+import teammatesRoutes from './teammates';
 import packageBalanceRoutes from './packageBalances';
 import packageAcceptanceRoutes from './packageAcceptances';
 import reconcilePendingRoutes from './reconcilePending';
 import bankSettlementRoutes from './bankSettlements';
 import lalurRoutes from './lalur';
+import dpRoutes from './dp';
 import taxAssessmentRoutes from './taxAssessments';
 import mitExportRoutes from './mitExports';
 import reinfBatchRoutes from './reinfBatches';
@@ -70,7 +72,6 @@ router.use('/chat-instances', chatInstanceRoutes);
 router.use('/chat-messages', chatMessageRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/dashboard-layout', dashboardLayoutRoutes);
-router.use('/structured-data', structuredDataRoutes);
 router.use('/docs', docsRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/analytics/definitions', analyticsDefinitionsRoutes);
@@ -90,14 +91,17 @@ router.use('/dimensions', dimensionRoutes);
 router.use('/counterparties', counterpartyRoutes);
 router.use('/nfe', nfeRoutes);
 router.use('/nfe/dfe', dfeRoutes); // BE-INCR-DFE (nó X10b) — emissão de saída, /api/nfe/dfe/*
+router.use('/dfe-assinador', dfeAssinadorRoutes); // X10a EMENDA-4 AL-PR-2 — rotas do assinador local (sem JWT; Bearer de dispositivo)
 router.use('/entry-approvals', entryApprovalRoutes);
 router.use('/sales', salesRoutes);
 router.use('/saved-views', savedViewsRoutes);
+router.use('/teammates', teammatesRoutes); // BE-INCR-TEAMMATES PR-1 — credenciais de IA (item 7)
 router.use('/package-balances', packageBalanceRoutes);
 router.use('/package-acceptances', packageAcceptanceRoutes);
 router.use('/reconcile-pending', reconcilePendingRoutes);
 router.use('/bank-settlements', bankSettlementRoutes); // BE-INCR-BANK-SETTLEMENT (nó F7)
 router.use('/lalur', lalurRoutes);
+router.use('/dp', dpRoutes); // BE-INCR-DP-F0-F1 PR-1 (nó PES-4) — Departamento Pessoal, núcleo
 router.use('/payment-accounts', paymentAccountRoutes); // BE-INCR-PAYMENT-PROVIDER (nó F5) PR-1
 router.use('/collection-charges', collectionChargesRouter); // BE-INCR-PAYMENT-PROVIDER (nó F5) PR-2
 router.use('/payment-collection', paymentCollectionWebhookRouter); // PR-2 — webhook PÚBLICO (publicApiRoutes)

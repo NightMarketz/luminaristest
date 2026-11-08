@@ -40,7 +40,7 @@
  *                   required: [suiteKey, unit]
  *                   properties:
  *                     mode: { type: string, enum: [quick] }
- *                     suiteKey: { type: string, description: Preset suite key, e.g. "agronegocio" }
+ *                     suiteKey: { type: string, description: 'Preset suite key, e.g. "agronegocio"' }
  *                     unit:
  *                       type: object
  *                       required: [name]
@@ -61,7 +61,7 @@
  *                     modules:
  *                       type: array
  *                       description: 'I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit). CRM-2 is a group key (BE-INCR-CRM-SUBMODULES F-SUB-2 a) that expands to CRM-2A + CRM-2B; data.modules.installed lists only atomic keys'
- *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-2] }
+ *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-CAMP, PES-0, PES-FORN, VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM, EST-0, AGE-0, FIN-0, FIN-REC, FIN-BASE, GES-0, GES-META, CRM-2, PESSOAS, VENDAS, ESTOQUE, AGENDA, FINANCEIRO, GESTAO] }
  *                     selectOverrides:
  *                       type: object
  *                       description: 'I8 c11 (F-I8-C11) - { table: { field: options[] } }; only fields that are already select and in the module freeSelects allowlist; a text field yields 400 NOT_A_SELECT'
@@ -112,7 +112,7 @@
  *                     modules:
  *                       type: array
  *                       description: 'I8 - module keys (flat list, F-CRM-9 b). Summed to the suite default; dependencies come from the registry (CRM-0 implicit). CRM-2 is a group key (BE-INCR-CRM-SUBMODULES F-SUB-2 a) that expands to CRM-2A + CRM-2B; data.modules.installed lists only atomic keys'
- *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-2] }
+ *                       items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-CAMP, PES-0, PES-FORN, VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM, EST-0, AGE-0, FIN-0, FIN-REC, FIN-BASE, GES-0, GES-META, CRM-2, PESSOAS, VENDAS, ESTOQUE, AGENDA, FINANCEIRO, GESTAO] }
  *                     selectOverrides:
  *                       type: object
  *                       description: 'I8 c11 (F-I8-C11) - { table: { field: options[] } }; only fields that are already select and in the module freeSelects allowlist; a text field yields 400 NOT_A_SELECT'
@@ -154,7 +154,7 @@
  *               required: [moduleKey]
  *               additionalProperties: false
  *               properties:
- *                 moduleKey: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-2] }
+ *                 moduleKey: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-CAMP, PES-0, PES-FORN, VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM, EST-0, AGE-0, FIN-0, FIN-REC, FIN-BASE, GES-0, GES-META, CRM-2, PESSOAS, VENDAS, ESTOQUE, AGENDA, FINANCEIRO, GESTAO] }
  *       responses:
  *         '200':
  *           description: 'Install result { status: installed | already-installed, tables, synced, modules? } - modules only for a group key'
@@ -191,7 +191,7 @@
  *           required: true
  *           schema: { type: string }
  *       responses:
- *         '200': { description: 'Preset detail - the raw suite plus moduleViews (BE-INCR-CRM-SUBMODULES item 11): the registry modules the suite composes, each { key, group?, name, fixed, tables, dependsOn }' }
+ *         '200': { description: 'Preset detail - the raw suite plus moduleViews (BE-INCR-CRM-SUBMODULES item 11): the registry modules the suite composes, each { key, category, group?, name, fixed, tables, dependsOn }' }
  *         '401': { $ref: '#/components/responses/UnauthorizedError' }
  *         '404': { $ref: '#/components/responses/NotFoundError' }
  *
@@ -291,7 +291,11 @@
  *                 modules:
  *                   type: array
  *                   description: 'W1 (F-W1-6 a) - modules checked in the front; read only on the turn that opens the customization session (choice customize)'
- *                   items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-2] }
+ *                   items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-CAMP, PES-0, PES-FORN, VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM, EST-0, AGE-0, FIN-0, FIN-REC, FIN-BASE, GES-0, GES-META, CRM-2, PESSOAS, VENDAS, ESTOQUE, AGENDA, FINANCEIRO, GESTAO] }
+ *                 locale:
+ *                   type: string
+ *                   enum: [pt, en]
+ *                   description: 'UI language; the interview answers in it. Absent = pt (dono, chat, 2026-11-06)'
  *       responses:
  *         '200':
  *           description: Interview turn result
@@ -329,7 +333,7 @@
  *                     items:
  *                       type: object
  *                       properties:
- *                         key: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3] }
+ *                         key: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-CAMP, PES-0, PES-FORN, VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM, EST-0, AGE-0, FIN-0, FIN-REC, FIN-BASE, GES-0, GES-META] }
  *                         name:
  *                           type: object
  *                           properties:
@@ -535,7 +539,7 @@
  *                 sessionId: { type: string, format: uuid }
  *                 modules:
  *                   type: array
- *                   items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-2] }
+ *                   items: { type: string, enum: [CRM-0, CRM-1, CRM-2A, CRM-2B, CRM-3, CRM-CAMP, PES-0, PES-FORN, VEN-0, VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM, EST-0, AGE-0, FIN-0, FIN-REC, FIN-BASE, GES-0, GES-META, CRM-2, PESSOAS, VENDAS, ESTOQUE, AGENDA, FINANCEIRO, GESTAO] }
  *       responses:
  *         '200':
  *           description: Session after the change

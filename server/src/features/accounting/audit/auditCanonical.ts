@@ -178,7 +178,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     'codMun', 'dpsSerie', 'inscricaoEstadual', 'nfeSerie', 'nfceSerie', 'regEspTrib', 'regApTribSN', 'issAliquotaBp', 'issRetidoTomadorPj', 'pacoteFatoGerador', 'pacoteCTribNac', 'pacoteCNBS', 'ibsCbsInformar', 'ibsCbsCst', 'ibsCbsClassTrib', 'pTotTribFedCent', 'pTotTribEstCent', 'pTotTribMunCent', 'pTotTribSNCent', 'emissaoForaDoMes',
     'policyVersionId'], // GOV-CONTADOR política versionada (item 14): a versão que aplicou esta escrita
   // BE-INCR-DFE (nó X10b, item 9) — perfil fiscal do serviço: só códigos (lista nacional/NBS/INDOP/IBGE) + serviceRef (id)
-  'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao', 'cClassTrib'], // cClassTrib: IBS-CBS-2027 PR-1, L2
+  'service_fiscal_profile.updated': ['serviceRef', 'cTribNac', 'cTribMun', 'cNBS', 'cIndOp', 'cLocPrestacao', 'cClassTrib', 'finalidade', 'elegivelHospitalar'], // cClassTrib: IBS-CBS-2027 PR-1, L2; finalidade/elegivelHospitalar: EFICIENCIA-FISCAL PR-5 item 25 (fundamento = texto livre, fora)
   'service_fiscal_profile.deleted': ['serviceRef', 'cTribNac'],
   // BE-INCR-NFCE (nó X10a, item 26): perfil fiscal do produto — só códigos (xProd é texto livre, fica fora)
   'product_fiscal_profile.updated': ['productRef', 'ncm', 'cest', 'origem', 'cfopPadrao', 'csosn', 'cstIcms', 'cstPis', 'cstCofins', 'ibsCbsCst', 'ibsCbsClassTrib'],
@@ -218,7 +218,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
     // PRESUMIDO-TETO-78MI item 5 (F-PT-2 c): centavos da receita total do ano anterior declarada (número da PJ, sem PII).
     'receitaTotalAnoAnteriorCents',
     // BE-INCR-EFD-REINF PR-1 (item 4): enum 01–03 da Tabela 08 da Reinf (sem PII).
-    'reinfClassTrib'],
+    'reinfClassTrib',
+    // EFICIENCIA-FISCAL PR-5 (itens 25 e 30): checklist hospitalar (boolean, date-only, id) e naturezas declaradas (boolean).
+    'sociedadeEmpresaria', 'alvaraSanitarioValidoAte', 'alvaraSourceDocumentId', 'declaraLocacaoImovelProprio', 'declaraCessaoMaoDeObraMedica'],
   'company_fiscal_profile.deleted': ['anoCalendario'],
   // BE-INCR-TAX-ASSESSMENT Fase A PR-2 (nó X7, item 22) — só ids, enum e centavos como string; sem PII. O documento
   // da dedução (texto livre) e a memória ficam FORA do evento.
@@ -279,12 +281,15 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-DFE (nó X10b, PR-3, item 40) — ciclo de vida do documento após o SENT.
   'dfe.authorized': ['documentId', 'partnerRef', 'nNFSe', 'chaveOuCodigo', 'sourceDocumentId'],
   'dfe.rejected': ['documentId', 'attemptNo', 'errorCodes'],
-  'dfe.cancelled': ['documentId', 'cMotivo'],
+  'dfe.cancelled': ['documentId', 'cMotivo', 'evento'], // evento: BE-INCR-DFE-EVENTOS PR-2 (Q2) — e101101|e305101|e105104|e105102, sem PII
   // BE-INCR-DFE-MANUAL (item 15) — resultado da releitura no retorno manual. Nomes de campo divergentes NÃO entram
   // (ficam no resultJson da tentativa, sem PII); aqui só o veredito e a contagem.
   'dfe.manual_result': ['documentId', 'attemptNo', 'releitura', 'nDivergencias'],
   // BE-INCR-DFE-EVENTOS (nó X11, item 14) — a substituta autorizada cancelou a original (e105102). Sem PII.
   'dfe.substituted': ['documentId', 'substituteDocumentId', 'cMotivo'],
+  // BE-INCR-DFE-EVENTOS PR-3 (item 20; dono 07/11): entrada (e101103) e saída por indeferimento (e105105) da análise fiscal do
+  // cancelamento. cMotivo = do pedido (1|2|9) ou da resposta (1|2). Sem PII: o CPFAgTrib do e105104/e105105 nunca é lido.
+  'dfe.cancel_analysis': ['documentId', 'evento', 'cMotivo'],
   // BE-INCR-NFCE (nó X10a, item 26) — faixa inutilizada homologada (F-NFCE-5 a). Sem PII (o xJust fica na linha, não aqui).
   'dfe.number_voided': ['voidId', 'kind', 'serie', 'nIni', 'nFin', 'ambiente'],
   // BE-INCR-CONTADOR-DELIVERY (item 14) — cadastro do contador + entrega do pacote ECD/ECF.
@@ -316,6 +321,22 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-DFE-ADN-EMISSOR PR-1 (item 6) — só unidade, fingerprint e validade: NUNCA chave, certificado, senha nem CNPJ.
   'fiscal_certificate.set':     ['unitId', 'fingerprintSha256', 'notAfter'],
   'fiscal_certificate.removed': ['unitId', 'fingerprintSha256', 'notAfter'],
+  // X10a PR-7 (EMENDA-PSC E-5) — NUNCA token, segredo OAuth, code_verifier nem CNPJ.
+  'psc_credential.authorized': ['unitId', 'pscProviderId', 'certNotAfter'],
+  'psc_credential.removed':    ['unitId', 'pscProviderId', 'certNotAfter'],
+  'psc_provider.set':          ['pscProviderId', 'nome'],
+  'psc_provider.removed':      ['pscProviderId', 'nome'],
+  // X10a EMENDA-4 AL-16 (AL-PR-2) — assinador local: unidade, dispositivo, CNPJ-RAIZ, validade e sha256 do DER. NUNCA o
+  // certificado, o subject (o e-CNPJ traz o CPF do responsável, OID 2.16.76.1.3.4), o token nem o código de pareamento.
+  'dfe_signer.paired':  ['unitId', 'dispositivoId', 'certCnpjRaiz', 'certNotAfter', 'certThumbprint', 'vinculo'],
+  'dfe_signer.revoked': ['unitId', 'dispositivoId', 'certCnpjRaiz', 'certNotAfter', 'certThumbprint', 'motivo', 'dispositivoRevogado'],
+  // X10a PR-8 (D-2026-10-29-X10A-PR7-9-FORKS decisão 3) — só unidade, ambiente e o identificador do CSC: NUNCA o CSC.
+  'nfce_csc.set':     ['unitId', 'ambiente', 'cscId'],
+  'nfce_csc.removed': ['unitId', 'ambiente', 'cscId'],
+  // X10a PR-9 (EMENDA-1 item 26; D-2026-10-29-X10A-PR7-9-FORKS decisões 4 e 8) — entrada e saída da contingência off-line da
+  // NFC-e. O xJust (texto livre do operador) fica na linha, não aqui.
+  'dfe.contingency_entered': ['unitId', 'ambiente', 'origem', 'dhCont'],
+  'dfe.contingency_left':    ['unitId', 'ambiente', 'origem'],
   'collection_charge.created':        ['collectionChargeId', 'receivableId', 'paymentAccountId', 'kind', 'amountCents', 'status'],
   'collection_charge.status_changed': ['collectionChargeId', 'from', 'to', 'providerStatus'],
   'collection_charge.cancelled':      ['collectionChargeId', 'fromStatus', 'toStatus', 'providerStatus'],
@@ -398,6 +419,68 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // unitId (`CompanyFiscalProfile`): é do nível da empresa e SE REPETE, igual, no evento de cada unidade resetada —
   // nunca some `companyLevel` entre unidades (dono, questionário, 2026-10-16: "Apaga, conta em toda unidade"). Sem PII.
   'accounting.scope_reset': ['removed', 'companyLevel'],
+  // BE-INCR-DP-F0-F1 PR-1 (nó PES-4, item 19) — ativação de submódulo opcional do DP. Ids, chave e competência; sem PII.
+  // O `motivo` (texto livre) fica FORA: é digitado e pode conter qualquer coisa, e o AuditEvent não se apaga (F17).
+  'dp.module_activation.created': ['activationId', 'moduleKey', 'competenciaInicio'],
+  'dp.module_activation.ended': ['activationId', 'moduleKey', 'competenciaFim'],
+  // BE-INCR-DP-F0-F1 PR-3 (item 36) — cadastros de estrutura: ids, códigos e datas; o piso da convenção em string (dado
+  // da convenção, não de pessoa). Nome de cargo/sindicato, descrição e cláusula ficam fora.
+  'dp.lotacao.created': ['lotacaoId', 'unitId', 'codigo'],
+  'dp.lotacao.updated': ['lotacaoId', 'unitId', 'codigo'],
+  'dp.lotacao.deleted': ['lotacaoId', 'unitId', 'codigo'],
+  'dp.cargo.created': ['cargoId', 'cbo'],
+  'dp.cargo.updated': ['cargoId', 'cbo'],
+  'dp.cargo.deleted': ['cargoId', 'cbo'],
+  'dp.jornada.created': ['jornadaId', 'tipoJornada', 'minutosSemanais'],
+  'dp.jornada.updated': ['jornadaId', 'tipoJornada', 'minutosSemanais'],
+  'dp.jornada.deleted': ['jornadaId', 'tipoJornada', 'minutosSemanais'],
+  'dp.sindicato.created': ['sindicatoId', 'cnpj'],
+  'dp.sindicato.updated': ['sindicatoId', 'cnpj'],
+  'dp.sindicato.deleted': ['sindicatoId', 'cnpj'],
+  'dp.convencao.created': ['convencaoId', 'sindicatoId', 'vigenteDesde', 'vigenteAte'],
+  'dp.convencao.updated': ['convencaoId', 'sindicatoId', 'vigenteDesde', 'vigenteAte'],
+  'dp.convencao.deleted': ['convencaoId', 'sindicatoId', 'vigenteDesde', 'vigenteAte'],
+  'dp.convencao_parametro.created': ['parametroId', 'convencaoId', 'chave', 'discriminador', 'valorInt', 'vigenteDesde', 'vigenteAte'],
+  'dp.convencao_parametro.updated': ['parametroId', 'convencaoId', 'chave', 'discriminador', 'valorInt', 'vigenteDesde', 'vigenteAte'],
+  'dp.convencao_parametro.deleted': ['parametroId', 'convencaoId', 'chave', 'discriminador', 'valorInt', 'vigenteDesde', 'vigenteAte'],
+  // BE-INCR-DP-F0-F1 PR-4 (itens 45 e 49) — trabalhador, vínculo e versões: ids, códigos, datas, flags e hashes. CPF,
+  // nome, nascimento e salário NUNCA entram (F-DPB-3; F17); a correção leva só os campos, o HMAC-SHA256 antes/depois
+  // (chaveiro DP_AUDIT, dono 2026-11-04) e a versão da chave.
+  'dp.trabalhador.created': ['trabalhadorId', 'origem', 'temEmployeeRef', 'temPartner'],
+  'dp.trabalhador.updated': ['trabalhadorId', 'origem', 'temEmployeeRef', 'temPartner'],
+  'dp.trabalhador.deleted': ['trabalhadorId', 'origem', 'temEmployeeRef', 'temPartner'],
+  'dp.trabalhador.corrected': ['trabalhadorId', 'campos', 'antesSha256', 'depoisSha256', 'chaveVersao'],
+  'dp.vinculo.created': ['vinculoId', 'trabalhadorId', 'unitId', 'categoria', 'dataInicio'],
+  'dp.vinculo.deleted': ['vinculoId', 'trabalhadorId', 'unitId', 'categoria', 'dataInicio'],
+  'dp.vinculo_versao.created': ['vinculoId', 'versaoId', 'vigenteDesde'],
+  'dp.vinculo_versao.corrected': ['vinculoId', 'versaoId', 'campos', 'antesSha256', 'depoisSha256', 'chaveVersao'],
+  // BE-INCR-DP-F0-F1 PR-6 (item 61) — afastamento: ids e datas; o `motivo` NUNCA entra (pode ser dado de saúde, e o
+  // AuditEvent não se apaga — F17); a observação também fica fora. Implantação de férias: ids, aquisitivo e dias gozados.
+  'dp.afastamento.created': ['afastamentoId', 'vinculoId', 'inicio', 'fim'],
+  'dp.afastamento.updated': ['afastamentoId', 'vinculoId', 'inicio', 'fim'],
+  'dp.afastamento.deleted': ['afastamentoId', 'vinculoId', 'inicio', 'fim'],
+  'dp.ferias_implantacao.created': ['implantacaoId', 'vinculoId', 'aquisitivoInicio', 'diasGozados'],
+  'dp.ferias_implantacao.updated': ['implantacaoId', 'vinculoId', 'aquisitivoInicio', 'diasGozados'],
+  'dp.ferias_implantacao.deleted': ['implantacaoId', 'vinculoId', 'aquisitivoInicio', 'diasGozados'],
+  // BE-INCR-DP-F2 PR-1 (itens 21 e 77; F-DPF-9 → b): sem nome, CPF nem nascimento do dependente; valores do lançamento e
+  // da outra remuneração só como HMAC (`valoresSha256`) com a versão da chave. A alteração do dependente leva os campos e
+  // o HMAC antes/depois, como a correção do trabalhador.
+  'dp.dependente.created': ['dependenteId', 'trabalhadorId', 'tipo'],
+  'dp.dependente.updated': ['dependenteId', 'trabalhadorId', 'tipo', 'campos', 'antesSha256', 'depoisSha256', 'chaveVersao'],
+  'dp.dependente.deleted': ['dependenteId', 'trabalhadorId', 'tipo'],
+  'dp.lancamento.created': ['lancamentoId', 'vinculoId', 'competencia', 'rubrica', 'origem', 'valoresSha256', 'chaveVersao'],
+  'dp.lancamento.updated': ['lancamentoId', 'vinculoId', 'competencia', 'rubrica', 'origem', 'valoresSha256', 'chaveVersao'],
+  'dp.lancamento.deleted': ['lancamentoId', 'vinculoId', 'competencia', 'rubrica', 'origem', 'valoresSha256', 'chaveVersao'],
+  'dp.outra_remuneracao.created': ['outraRemuneracaoId', 'vinculoId', 'competencia', 'valoresSha256', 'chaveVersao'],
+  'dp.outra_remuneracao.updated': ['outraRemuneracaoId', 'vinculoId', 'competencia', 'valoresSha256', 'chaveVersao'],
+  'dp.outra_remuneracao.deleted': ['outraRemuneracaoId', 'vinculoId', 'competencia', 'valoresSha256', 'chaveVersao'],
+  // BE-INCR-TEAMMATES PR-2 (item 13) — trilha do módulo (escopo `teammatesAuditScope`, padrão do LegalParameterService).
+  // Sem segredo: nem a chave de IA nem o `last4` entram; nem playbook. `allowedTools`/`toolOverrides` são JSON estável
+  // de nomes de ferramenta (`mcp:<serverId>:<tool>` leva id, nunca URL nem token). `mcp_server.created/deleted` entram
+  // com o emissor, no PR-10 (sem serviço de McpServer ainda — lacuna L-PR2-4).
+  'llm_credential.created': ['credentialId', 'provider', 'monthlyTokenBudget'],
+  'llm_credential.deleted': ['credentialId', 'provider'],
+  'teammate.alcada_changed': ['teammateId', 'allowedTools', 'toolOverrides', 'previousAllowedTools', 'previousToolOverrides'],
 };
 
 /**

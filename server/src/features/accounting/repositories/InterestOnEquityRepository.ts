@@ -83,6 +83,14 @@ export class InterestOnEquityRepository implements IInterestOnEquityRepository {
     return this.db(tx).interestOnEquityCalculation.findFirst({ where: { id, userId: ownerUserId, deletedAt: null }, include: { alocacoes: true } });
   }
 
+  public async existsAlocacaoDoSocio(ownerUserId: string, partnerId: string, tx?: Prisma.TransactionClient): Promise<boolean> {
+    const row = await this.db(tx).interestOnEquityAllocation.findFirst({
+      where: { partnerId, calculation: { userId: ownerUserId, deletedAt: null } },
+      select: { id: true },
+    });
+    return row !== null;
+  }
+
   public async findVivo(ownerUserId: string, anoCalendario: number, periodo: string, tx?: Prisma.TransactionClient): Promise<InterestOnEquityCalculation | null> {
     return this.db(tx).interestOnEquityCalculation.findFirst({ where: { userId: ownerUserId, anoCalendario, periodo, vivoKey: JCP_VIVO, deletedAt: null } });
   }

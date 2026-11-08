@@ -442,7 +442,8 @@ export async function resolveChartData(
 
     return { chart, data };
   } catch (error: unknown) {
-    return { chart, data: [], error: error instanceof Error ? error.message : 'Error executing processor' };
+    logger.warn('Analytics: processor failed', { chartKey, error });
+    return { chart, data: [], error: 'Error executing processor' };
   }
 }
 
@@ -613,6 +614,7 @@ export async function resolveChartDetails(
       recordIds = [...new Set(recordIds)];
     }
   } catch (error: unknown) {
+    logger.warn('Analytics: processor failed', { chartKey, error });
     return {
       recordsByTable: {},
       total: 0,
@@ -621,7 +623,7 @@ export async function resolveChartDetails(
       totalPages: 0,
       importantFields: chart.options?.importantFields,
       defaultImportantFields: chart.options?.defaultImportantFields,
-      error: error instanceof Error ? error.message : 'Error executing processor',
+      error: 'Error executing processor',
     };
   }
 

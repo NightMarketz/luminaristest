@@ -37,7 +37,7 @@ Os quatro pontos de lei dos gates D1f, D7 e H1 (P5), com o grau de cada um:
 - **A partir de 2027:** os Anexos I a V da LC 123 passam à redação dos Anexos XVIII a XXII da LC 214, e o Anexo VII entra pelo Anexo XXIII (arts. 519 e 520 [D10]). A partilha do ISS dentro do Anexo III em 2027 não foi lida aqui. Isso não muda as conclusões de 2026.
 
 ## 4. Ambiguidades (só o que precisa de decisão humana)
-- **cClassTrib do serviço de salão (D1f).** O informe técnico IT 2025.002 v1.31 [D07], de 15/12/2025, hospedado no portal SPED de MG, é a última versão lida em domínio oficial. O texto extraído não traz a linha do código 000001, porque a tabela fica no anexo. Versões posteriores (1.50 ou mais) só apareceram em fonte secundária.
+- **[Superada em 28/10:** o 000001 foi conferido na tabela oficial do SVRS, dossiê `fila-2026-10-27-bloco5-cclasstrib`; D1f fechado em 03/11.**]** **cClassTrib do serviço de salão (D1f).** O informe técnico IT 2025.002 v1.31 [D07], de 15/12/2025, hospedado no portal SPED de MG, é a última versão lida em domínio oficial. O texto extraído não traz a linha do código 000001, porque a tabela fica no anexo. Versões posteriores (1.50 ou mais) só apareceram em fonte secundária.
   - **Leitura A:** 000001 (tributação integral) vale para o serviço do salão. Implica a alíquota cheia de IBS/CBS no regime regular.
   - **Leitura B:** existe classificação mais específica numa versão posterior da tabela. Implica outro CST ou redução.
   - **Mais segura:** tratar o 000001 como **secundário** até ler a tabela vigente no Portal NF-e ou no portal da NFS-e nacional. Essa conferência é do agente, numa fonte oficial, não do contador.

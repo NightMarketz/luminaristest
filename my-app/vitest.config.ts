@@ -1,6 +1,18 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+
+// Suíte inteira só no CI ou com FULL_SUITE=1 (dono, 03/11: "isso pesa o pc demais"); regra em scripts/test-scope-guard.cjs.
+const { guardFullSuite } = createRequire(import.meta.url)('../scripts/test-scope-guard.cjs') as {
+  guardFullSuite: (runner: 'jest' | 'vitest') => void;
+};
+guardFullSuite('vitest');
+
+// Fuso fixo em UTC-3, igual ao CI: os guards de date-only (UTC-shift, PRs #50/#52) só mordem fora de UTC, e
+// sem isto passavam ou falhavam conforme o fuso da máquina. Os workers (forks) herdam o process.env deste
+// processo. Atribuição incondicional: um TZ=UTC herdado do shell ou do runner não pode desligar os guards.
+process.env.TZ = 'America/Sao_Paulo';
 
 // Frontend test runner (Vitest + Testing Library). Mirrors the tsconfig
 // path alias `@/* -> ./*` so tests can import the same way app code does.
@@ -21,5 +33,8 @@ export default defineConfig({
     include: ['**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', '.next', 'e2e'],
     css: false,
+    // Sem teto, o vitest abre ~1 worker jsdom por núcleo; somado a outras sessões testando, esgota a RAM
+    // e trava o PC (medido 29/10). Mesmo teto do jest do server.
+    maxWorkers: '25%',
   },
 });

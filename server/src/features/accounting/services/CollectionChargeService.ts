@@ -24,6 +24,7 @@ import {
   COLLECTION_CHARGE_STATUS_CHANGED,
   DEFAULT_BOLETO_BUSINESS_DAYS,
   DEFAULT_PIX_MINUTES,
+  describeCharge,
   PAYMENT_ACCOUNT_CREDENTIAL_INVALID,
   PAYMENT_ACCOUNT_NOT_ACTIVE,
   PROVIDER_CREDENTIAL_INVALID,
@@ -33,7 +34,8 @@ import {
   mapMercadoPagoStatus,
   type CollectionChargeStatus,
 } from '../models/CollectionCharge.model';
-import type { CreateChargeInputDto } from '../dtos/CollectionChargeDto';
+import type { CreateChargeInputDto, ListCollectionChargesQueryDto } from '../dtos/CollectionChargeDto';
+import { writtenDocumentNumber } from '../models/Receivable.model';
 import type { ICollectionChargeRepository } from '../repositories/ICollectionChargeRepository';
 import type { IPaymentAccountRepository } from '../repositories/IPaymentAccountRepository';
 import type { IReceivableRepository } from '../repositories/IReceivableRepository';
@@ -63,6 +65,21 @@ export interface CollectionChargeView {
   createdAt: string;
   updatedAt: string;
   payer?: PayerInput;
+}
+
+/** Item da lista da unidade: a view sem pagador + o nº do título como escrito (16b; D-2026-10-29-F5-16B-E-P-RET-4). */
+export interface CollectionChargeListItem extends CollectionChargeView {
+  receivableDocumentNumber: string | null;
+  /** Título cancelado (`deletedAt`): fora do AR, então o FE mostra o nº sem link (D-2026-10-29-F5-16B-TITULO-CANCELADO). */
+  receivableCancelled: boolean;
+}
+
+/** Página da lista da unidade (EMENDA-1 PR-0, 0c). */
+export interface CollectionChargePage {
+  items: CollectionChargeListItem[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export interface CollectionPollSummary {
@@ -131,7 +148,7 @@ export class CollectionChargeService {
       }
       const live = await this.repo.findLiveByReceivable(scope, receivableId, tx);
       if (live) {
-        throw new ConflictError(`${CHARGE_LIVE_EXISTS}: o título já tem a cobrança viva '${live.id}' (${live.status}).`, CHARGE_LIVE_EXISTS);
+        throw new ConflictError(`${CHARGE_LIVE_EXISTS}: o título já tem a cobrança viva '${describeCharge(live)}' (${live.status}).`, CHARGE_LIVE_EXISTS);
       }
       const balance = centsFromDb(receivable.amountCents) - centsFromDb(receivable.receivedCents);
       if (balance <= 0) {
@@ -187,7 +204,7 @@ export class CollectionChargeService {
       throw new ConflictError(`${CHARGE_NOT_PENDING}: só cobrança PENDING pode ser cancelada (atual: ${charge.status}).`, CHARGE_NOT_PENDING);
     }
     const keyring = loadKeyring();
-    const account = await this.requireAccountRow(charge.paymentAccountId);
+    const account = await this.requireAccountRow(charge);
     const resolved = this.resolve(account, keyring);
     const port = this.providerFor(account.provider);
     let result: ChargeResult;
@@ -223,7 +240,7 @@ export class CollectionChargeService {
           });
         }
       });
-      return toView(await this.requireAny(charge.id), true);
+      return toView(await this.requireAny(charge.id, charge), true);
     }
     return toView(await this.applyProviderResult(charge.id, result), true);
   }
@@ -282,7 +299,7 @@ export class CollectionChargeService {
     for (const row of rows) {
       summary.scanned += 1;
       try {
-        const account = await this.requireAccountRow(row.paymentAccountId);
+        const account = await this.requireAccountRow(row);
         if (account.status !== 'ACTIVE') continue;
         if (row.status === 'CREATING' && row.expiresAt.getTime() <= this.now().getTime()) {
           // Venceu antes de chegar ao MP: não reenvia; EXPIRED é terminal (F9: terminal nunca tem baixa automática).
@@ -317,6 +334,25 @@ export class CollectionChargeService {
     const receivable = await this.receivableRepo.findById(scope, receivableId);
     if (!receivable) throw new NotFoundError(`Conta a receber '${receivableId}' não foi encontrada.`);
     return (await this.repo.findManyByReceivable(scope, receivableId)).map((c) => toView(c, false));
+  }
+
+  /** GET /api/collection-charges?unitId (EMENDA-1 PR-0, 0c) — mesma policy da lista por título; sem pagador (F9). */
+  async listByUnit(scope: AccountingScope, query: ListCollectionChargesQueryDto): Promise<CollectionChargePage> {
+    if (!this.policy.canReadReceivable(scope)) {
+      throw new ForbiddenError('Você não tem permissão para ler cobranças.');
+    }
+    const { status, kind, page, limit } = query;
+    const { items, total } = await this.repo.findPageByUnit(scope, { status, kind, page, limit });
+    return {
+      items: items.map((c) => ({
+        ...toView(c, false),
+        receivableDocumentNumber: writtenDocumentNumber(c.receivableId, c.receivable.documentNumber),
+        receivableCancelled: c.receivable.deletedAt !== null,
+      })),
+      total,
+      page,
+      limit,
+    };
   }
 
   /** GET /api/collection-charges/:id (P2-15) — pagador só para quem gerencia o título (F9). */
@@ -381,9 +417,9 @@ export class CollectionChargeService {
             await this.audit(tx, scope, COLLECTION_CHARGE_FAILED, charge.id, { fromStatus: 'CREATING', toStatus: 'FAILED' });
           }
         });
-        return this.requireAny(charge.id);
+        return this.requireAny(charge.id, charge);
       }
-      throw await this.translateProviderError(account, error, charge.id);
+      throw await this.translateProviderError(account, error, charge);
     }
     await this.repo.runTransaction(async (tx) => {
       const n = await this.repo.casStatus(
@@ -425,8 +461,10 @@ export class CollectionChargeService {
         providerStatusDetail: result.providerStatusDetail,
       });
     }
+    let seen: CollectionCharge | undefined;
     await this.repo.runTransaction(async (tx) => {
       const current = await this.repo.findByIdAnyScope(chargeId, tx);
+      if (current) seen = current;
       if (!current || current.status === 'CREATING') return; // CREATING é do fluxo de criação
       const from = current.status as CollectionChargeStatus;
       const raw = { providerStatus: result.providerStatus, providerStatusDetail: result.providerStatusDetail };
@@ -463,7 +501,7 @@ export class CollectionChargeService {
         });
       }
     });
-    return this.requireAny(chargeId);
+    return this.requireAny(chargeId, seen);
   }
 
   private async callProvider<T>(account: PaymentAccount, fn: () => Promise<T>): Promise<T> {
@@ -475,19 +513,19 @@ export class CollectionChargeService {
   }
 
   /** 401 do MP ⇒ conta CREDENTIAL_INVALID (audit) + 502 `provider_credential_invalid` (P2-4); o resto ⇒ 502. */
-  private async translateProviderError(account: PaymentAccount, error: unknown, chargeId?: string): Promise<AppError> {
+  private async translateProviderError(account: PaymentAccount, error: unknown, charge?: CollectionCharge): Promise<AppError> {
     if (error instanceof CollectionProviderError && error.httpStatus === 401) {
       await this.markCredentialInvalid(account);
       return new AppError('O Mercado Pago recusou a credencial da conta; grave a credencial de novo.', 502, PROVIDER_CREDENTIAL_INVALID);
     }
     if (error instanceof CollectionProviderError) {
       return new AppError(
-        `Mercado Pago indisponível (${error.message}).${chargeId ? ` A cobrança '${chargeId}' será reenviada automaticamente.` : ''}`,
+        `Mercado Pago indisponível (${error.message}).${charge ? ` A cobrança '${describeCharge(charge)}' será reenviada automaticamente.` : ''}`,
         502,
         PROVIDER_UNAVAILABLE,
       );
     }
-    return error instanceof AppError ? error : new AppError(error instanceof Error ? error.message : String(error), 500);
+    return error instanceof AppError ? error : new AppError('Falha inesperada na cobrança; tente de novo.', 500);
   }
 
   /** Público desde o PR-3: o job do relatório (P3-5) aplica o mesmo P2-4. */
@@ -522,15 +560,16 @@ export class CollectionChargeService {
     return row;
   }
 
-  private async requireAny(id: string): Promise<CollectionCharge> {
+  /** `known`: a cobrança já lida nesta requisição, para nomeá-la por tipo + valor se ela sumir (id só sem rótulo). */
+  private async requireAny(id: string, known?: CollectionCharge): Promise<CollectionCharge> {
     const row = await this.repo.findByIdAnyScope(id);
-    if (!row) throw new NotFoundError(`Cobrança '${id}' não foi encontrada.`);
+    if (!row) throw new NotFoundError(`Cobrança '${known ? describeCharge(known) : id}' não foi encontrada.`);
     return row;
   }
 
-  private async requireAccountRow(id: string): Promise<PaymentAccount> {
-    const row = await this.paymentAccountRepo.findByIdAnyScope(id);
-    if (!row) throw new NotFoundError(`Conta de pagamento '${id}' não foi encontrada.`);
+  private async requireAccountRow(charge: CollectionCharge): Promise<PaymentAccount> {
+    const row = await this.paymentAccountRepo.findByIdAnyScope(charge.paymentAccountId);
+    if (!row) throw new NotFoundError(`Conta de pagamento da cobrança '${describeCharge(charge)}' não foi encontrada.`);
     return row;
   }
 

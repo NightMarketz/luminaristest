@@ -51,6 +51,8 @@ export function buildFichaSections(payload: DpsManualPayloadInput, saleId: strin
   const conf = t('dfe.ficha.note.conferencia', 'conferência — o portal preenche');
   const tomaDoc = d.toma.CNPJ ?? d.toma.CPF;
   const simples = d.prest.regTrib.opSimpNac === 3;
+  // F-XP-4 → (b) (dono, 29/10/2026): MEI = opSimpNac 2 — sem tributos federais (E0676) nem total estimado (indTotTrib 0).
+  const mei = d.prest.regTrib.opSimpNac === 2;
 
   const pessoas: FichaRow[] = [
     { id: 'dCompet', label: t('dfe.ficha.field.dCompet', 'Data de Competência'), copy: fmt(portalDate, d.dCompet), campo: 'dCompet' },
@@ -61,7 +63,11 @@ export function buildFichaSections(payload: DpsManualPayloadInput, saleId: strin
     {
       id: 'opSimpNac',
       label: t('dfe.ficha.field.opSimpNac', 'Opção no Simples Nacional'),
-      copy: simples ? t('dfe.ficha.opSimpNac.3', '3 — Optante ME/EPP') : t('dfe.ficha.opSimpNac.1', '1 — Não optante'),
+      copy: mei
+        ? t('dfe.ficha.opSimpNac.2', '2 — Optante MEI')
+        : simples
+          ? t('dfe.ficha.opSimpNac.3', '3 — Optante ME/EPP')
+          : t('dfe.ficha.opSimpNac.1', '1 — Não optante'),
       note: conf,
     },
   ];
@@ -148,11 +154,15 @@ export function buildFichaSections(payload: DpsManualPayloadInput, saleId: strin
     {
       id: 'tribFed',
       label: t('dfe.ficha.field.tribFed', 'Tributação federal'),
-      instruction: simples
-        ? t('dfe.ficha.instr.fedSimples', 'Já preenchida pelo Simples — não altere.')
-        : t('dfe.ficha.instr.fedNormal', 'Não informe PIS/COFINS.'),
+      instruction: mei
+        ? t('dfe.ficha.instr.fedMei', 'Sem tributação federal na nota do MEI — não informe.')
+        : simples
+          ? t('dfe.ficha.instr.fedSimples', 'Já preenchida pelo Simples — não altere.')
+          : t('dfe.ficha.instr.fedNormal', 'Não informe PIS/COFINS.'),
     },
-    ...('pTotTribSN' in totTrib
+    ...('indTotTrib' in totTrib
+      ? [{ id: 'totTrib', label: t('dfe.ficha.field.totTrib', 'Valor aproximado dos tributos'), instruction: t('dfe.ficha.instr.totTribMei', 'Não informe — facultativo para o MEI.') }]
+      : 'pTotTribSN' in totTrib
       ? [{ id: 'pTotTribSN', label: t('dfe.ficha.field.pTotTribSN', 'Valor aproximado dos tributos — Simples Nacional (%)'), copy: fmt(portalPercent, totTrib.pTotTribSN), note: pv5 }]
       : [
           { id: 'pTotTribFed', label: t('dfe.ficha.field.pTotTribFed', 'Valor aproximado dos tributos — Federal (%)'), copy: fmt(portalPercent, totTrib.pTotTrib.pTotTribFed), note: pv5 },

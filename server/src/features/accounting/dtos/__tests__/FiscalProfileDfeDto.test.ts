@@ -101,6 +101,18 @@ describe('UpsertServiceFiscalProfileSchema (BRIEF item 8)', () => {
   it('campo extra → 400 (.strict())', () => {
     expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, serviceRef: 'x' }).success).toBe(false);
   });
+
+  // EFICIENCIA-FISCAL PR-5 (BRIEF item 25; ADR §7 refine): hospitalar só TERAPEUTICA com fundamento.
+  it('item 25: finalidade ∈ TERAPEUTICA|ESTETICA|BELEZA, omitida fica ausente (não reseta); elegível exige TERAPEUTICA + fundamento', () => {
+    expect(UpsertServiceFiscalProfileSchema.parse(base)).not.toHaveProperty('finalidade');
+    for (const finalidade of ['TERAPEUTICA', 'ESTETICA', 'BELEZA', null]) expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, finalidade }).success).toBe(true);
+    expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, finalidade: 'MEDICA' }).success).toBe(false);
+    expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, finalidade: 'TERAPEUTICA', elegivelHospitalar: true, fundamentoHospitalar: 'Atribuição 4' }).success).toBe(true);
+    const estetica = UpsertServiceFiscalProfileSchema.safeParse({ ...base, finalidade: 'ESTETICA', elegivelHospitalar: true, fundamentoHospitalar: 'Atribuição 4' });
+    expect(estetica.success).toBe(false);
+    expect(JSON.stringify(estetica.error?.issues)).toContain('HOSPITALAR_SO_TERAPEUTICA_COM_FUNDAMENTO');
+    expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, finalidade: 'TERAPEUTICA', elegivelHospitalar: true }).success).toBe(false);
+  });
 });
 
 // ITEM-DESTINATION item 20 (F-ID-5 a): conta de despesa do insumo do serviço, opcional/anulável.

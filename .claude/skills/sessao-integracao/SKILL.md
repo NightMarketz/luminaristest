@@ -23,7 +23,7 @@ transporte. Integração que "aproveita pra arrumar" destrói a rastreabilidade 
 
 | Situação | Sessão correta |
 |---|---|
-| O conteúdo ainda tem pendência de review | Sessão de review (agente separado, worktree isolado) |
+| O conteúdo ainda tem pendência de review | Sessão de review (agente separado, worktree isolado), **proposta como cartão** — esta sessão não a abre (R3 de `D-2026-11-04-RECURSOS-LOCAIS`) |
 | A branch não existe ainda — o trabalho não foi feito | `sessao-planejamento` → `sessao-feature` |
 | O gate falhou depois do merge e "só falta um ajuste" | **Nenhuma** — regra 5: pare e reporte; o diagnóstico é do dono |
 | Gate humano ou dado externo trava o merge (ex.: fixture real da NF-e) | **Nenhuma** — runbook humano; ver `docs/operating-manual/RUNBOOK-FORMAT.md` |
@@ -99,16 +99,25 @@ do estritamente exigido pela resolução de conflitos.
 ## Notas de operação neste repo (aditivas — não alteram as regras acima)
 
 **O baseline do passo 1 tem um pré-requisito próprio.** Em worktree novo o gate falha por ambiente, não
-por código, e aí o baseline mente: rode `npm ci` e crie o `.env` com `OPENAI_API_KEY=ci-dummy-openai-key`
+por código, e aí o baseline mente: rode `node scripts/worktree-deps.mjs` (depósito compartilhado, não `npm ci`) e crie o `.env` com `OPENAI_API_KEY=ci-dummy-openai-key`
 **antes** de medir. O client Prisma junctionado do main é stale.
 
 **Gate de saída — os comandos que costumam entrar:**
 
+`cd server && npx tsc --noEmit`, e os testes dos arquivos que o transporte tocou:
+
 ```bash
-cd server && npx tsc --noEmit && npm run test:integration
+cd server && npx jest <teste-guarda> <testes dos arquivos tocados> --selectProjects unit
+cd server && npx jest <arquivo>.integration.test.ts --selectProjects integration --runInBand   # um arquivo por vez
 ```
 
-`npx jest --selectProjects integration` cru faz 29 de 41 suítes colidirem no mesmo SQLite. Some
+**Escopo, não suíte inteira** (dono, chat, 2026-11-03: "isso pesa o pc demais"). O caminho vem **antes** do
+`--selectProjects`: depois dele o jest 30 lê o caminho como nome de projeto e roda as 448 suítes. Suíte inteira
+(`npm run test:integration`, `npm test`, jest ou vitest sem caminho) é do CI do PR e fica bloqueada fora dele sem
+`FULL_SUITE=1` (`scripts/test-scope-guard.cjs`). No relatório/PR, diga quais testes rodaram aqui e que a suíte
+completa é a do CI.
+
+Integração sempre com `--runInBand` (sem ele, as suítes colidem no mesmo SQLite). Some
 `cd my-app && npx tsc --noEmit`, `npm run docs:generate` (se tocou rota/DTO documentado),
 `npm run smoke:migration` (se a origem traz migração) e `node scripts/plano-vault.mjs check` (se a origem
 toca `docs/plano/`).

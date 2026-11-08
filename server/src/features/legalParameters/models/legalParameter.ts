@@ -62,6 +62,28 @@ export const LEGAL_PARAMETER_TABELAS = [
   // BE-INCR-EFICIENCIA-FISCAL PR-2 (item 11; F-EF-5 a; D-2026-10-27-EFICIENCIA-FISCAL-PR2-EXECUCAO): NCM sob ICMS-ST por UF
   // (IBGE no discriminador) — segregação do Simples (LC 123 art. 18 § 4º-A I). Consumidor = models/segregacaoNcm.ts.
   'ICMS_ST_NCM_UF',
+  // BE-INCR-EFICIENCIA-FISCAL PR-3 (itens 15–17; D-2026-10-28-EFICIENCIA-FISCAL-PR3-EXECUCAO decisão 1): encargos da folha
+  // (INSS do contribuinte individual, patronal, FGTS, teto do RGPS). Consumidor = models/taxSimulation.ts.
+  'ENCARGO_FOLHA',
+  // EFICIENCIA-FISCAL PR-5 (item 32; F-EF-8/11 a): serviços de saúde com redução de 60 % do IBS/CBS a partir de 2027 (LC 214
+  // art. 130 e Anexo III), chave = prefixo de NBS. Consumidor = models/servicoFiscalAvaliacao.ts.
+  'IBS_CBS_REDUCAO_NBS',
+  // BE-INCR-DP-F0-F1 PR-2 (nó PES-4, itens 20 e 23): tabela progressiva do INSS do empregado (EC 103 art. 28) e as tabelas
+  // do eSocial como dado (precedente NATUREZA_RENDIMENTO). Consumidor = features/dp/models/parametrosFolha.ts e o
+  // cadastro do DP (categoria do vínculo, natureza e incidência das rubricas, motivo do afastamento).
+  'INSS_EMPREGADO',
+  'ESOCIAL_CATEGORIA',
+  'ESOCIAL_NATUREZA_RUBRICA',
+  'ESOCIAL_INCIDENCIA_RUBRICA',
+  'ESOCIAL_MOTIVO_AFASTAMENTO',
+  // BE-INCR-DP-F2 PR-0R (nó PES-4, itens 65–66; regra de parâmetro do dono, 06/11): número de lei da folha como dado
+  // (adicionais, hora noturna, dias, limites de jornada, idades e prazos, arredondamento) e o que cada categoria do
+  // núcleo recolhe. Consumidor = features/dp/models/regrasFolha.ts.
+  'FOLHA_REGRA',
+  'DP_CATEGORIA_ENCARGO',
+  // BE-INCR-DP-F2 PR-1 (item 13): Tabela 07 do eSocial (tipos de dependente), no padrão do D-8 do F0+F1. Consumidor =
+  // features/dp/services/DpDependenteService.ts.
+  'ESOCIAL_TIPO_DEPENDENTE',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

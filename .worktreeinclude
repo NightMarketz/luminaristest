@@ -1,0 +1,6 @@
+# Arquivos locais (gitignored) que o Claude Code copia do checkout principal para cada worktree nova que ele cria
+# (--worktree, subagente, sessão paralela do app). Sintaxe do .gitignore; arquivo versionado nunca é copiado.
+# Dono, chat, 2026-11-04: "Me da um prompt para implementar todas as 7 sugestões". Doc:
+# https://code.claude.com/docs/en/worktrees. Não use o hook WorktreeCreate: ele substitui a criação e desliga este arquivo.
+server/.env
+my-app/.env.local

@@ -13,7 +13,9 @@ class MyDocument extends Document {
 
     return (
       <Html lang={currentLocale}> {/* Use o locale dinâmico aqui */}
-        <Head />
+        <Head>
+          <link rel="icon" type="image/png" href="/Logo.png" />
+        </Head>
         <body>
           <script
             dangerouslySetInnerHTML={{

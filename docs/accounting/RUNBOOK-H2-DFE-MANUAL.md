@@ -99,6 +99,16 @@ Network, o XML, a chave da nota) — nunca uma frase descrevendo que deu certo.
    aparecem (o anexo só é guardado em produção).
    EVIDÊNCIA: [os dois arquivos ou o print da pasta de downloads]
 
+10. **(EMENDA 2026-10-29 — MEI, F-XP-4 → b)** Pré-condição: uma empresa com o perfil da empresa no regime **MEI** no ano
+    corrente, e a unidade com `regEspTrib = 0`, sem ISS retido e sem IBS/CBS. O `codMun` da unidade precisa ser o
+    município do endereço do CNPJ do MEI (RN E0041 — o Luminaris não confere isso). Emitir uma venda de serviço dessa
+    unidade.
+    Resultado esperado: a ficha mostra "2 — Optante MEI", "Sem tributação federal na nota do MEI — não informe." e
+    "Valor aproximado dos tributos: Não informe — facultativo para o MEI.", sem alíquota e sem "Regime de Apuração
+    Tributária pelo SN". O portal autoriza a nota, e o XML devolvido pelo retorno manual é aceito sem divergência
+    (`cStat 107`, NFS-e MEI).
+    EVIDÊNCIA: [print da ficha + resposta do retorno manual]
+
 ## Desfecho (marcar UM)
 [ ] PASSOU — todos os passos com evidência conferindo com o esperado
 [ ] FALHOU — passo __ divergiu; evidência da divergência colada acima;
@@ -109,3 +119,114 @@ Network, o XML, a chave da nota) — nunca uma frase descrevendo que deu certo.
 - Achados no caminho (fora do escopo deste runbook): [lista ou "nenhum"]
 - Atualização do artefato de rastreio: [linha da nota FE-INCR-DFE / gate H2 atualizada com o desfecho + data]
 - Assinatura do executor: ____________
+
+---
+
+## Execução 2026-11-04 — AI tester — BLOQUEADO (P4, P5, P6 e P7)
+
+Executor: agente claude-opus-5-5, AI tester           Data: 2026-11-04 (13:24–13:46 -03:00)
+Autorização (citada literalmente): dono, chat, 2026-11-04: *"Pode disparar uma sessão pra corrigir os achados e outra para
+cada não feito"*; regra de assinatura em `docs/operating-manual/RUNBOOK-FORMAT.md` §Fronteira.
+
+**Ambiente:** build de produção do commit `5acacc5de` (= `origin/main` no início da execução): server `npm run build`
+(exit 0) e `node dist/server.js` em `:4100`; my-app `next build` com `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:4100/api`
+(✓ Compiled successfully) e `next start -H 127.0.0.1 -p 3100`. O `server/.env` da worktree é cópia do `.env` local com
+`DATABASE_URL` absoluto para o dev.db **real** (`server/prisma/prisma/dev.db`), `PORT=4100`,
+`ALLOWED_ORIGIN=http://127.0.0.1:3100`, `DFE_PARTNER=manual` e `DFE_PARTNER_ENV=homologacao`. `prisma migrate status`:
+"Database schema is up to date!". Backup antes da 1ª escrita: `server/prisma/prisma/dev.db.bak-dfe-manual-2026-11-04`
+(API de backup do SQLite, `integrity_check -> ok`). Usuário `seed-presumido`, unidade `seed-unit-presumido`
+(`cmuw4yqxg001jcii0iz2yb9rw`). Runner Puppeteer com um Chromium headless, sob a trava de tela (tomada às 13:24, apagada
+depois de derrubar server e app, com 3100/4100 livres). Senha redigida no log. P7 (DevTools) trocado pelo log de rede do runner.
+
+### Pré-condições
+
+| # | Resultado | Evidência |
+|---|---|---|
+| P1 | Pré-merge não se aplica: o PR-2 do FE-INCR-DFE está em `main`. Rodou o commit `5acacc5de`. | `git log origin/main --oneline -1` → `5acacc5de docs: fold do X10a …` |
+| P2 | **OK** | `GET /api/nfe/dfe/status -> 200` com `"enabled":true,"partner":"manual","ambiente":"homologacao"` ([rede](runbook-evidence/DFE-MANUAL-2026-11-04/P2-P4-net.txt)) |
+| P3 | **OK** | `curl http://127.0.0.1:3100/` → `200`, `next start` sobre o `next build` |
+| P4 | **NÃO** se sustenta: perfil incompleto e unidade sem CNPJ | ver abaixo |
+| P5 | **NÃO** se sustenta: o serviço tem perfil (`cTribNac 010701`), mas falta o cNBS | passo 1, abaixo |
+| P6 | **NÃO** se sustenta: o cliente não tem CPF/CNPJ válido | passo 1, abaixo |
+| P7 | **NÃO** se sustenta para o agente: o acesso ao Emissor Nacional com o certificado do emitente é dado externo | — |
+| P8 | Não exercitada: o `POST /nfe/dfe/documents` só sai no "Confirmar", que a tela não ofereceu. Há correção em `main` (`6f95e2a50`, #549, "L-PR2-1 (dCompet ISO UTC)"). Grau: inferido pelo git log, sem tela. | — |
+| P9 | Não exercitada: depende de um documento `REJECTED` (passo 5). Mesma correção (#549, "L-PR2-2 (reenvio REJECTED)"). Grau: inferido. | — |
+
+**P4, estado encontrado:**
+```text
+GET /api/accounting/fiscal-profile?unitId=cmuw4yqxg001jcii0iz2yb9rw -> 200
+   emissao={"completo":false,"faltantes":["pTotTribEstCent","pTotTribMunCent","ibsCbsCst","ibsCbsClassTrib"],"pendingExternalValidation":[],"opSimpNac":1} codMun=3550308 regEspTrib=0 issAliquotaBp=200
+(tela) Perfil da unidade incompleto — Tributos aproximados — estadual (%) · municipal (%) · IBS/CBS — CST · IBS/CBS — cClassTrib
+```
+[print](runbook-evidence/DFE-MANUAL-2026-11-04/P4-perfil-fiscal-antes.png) ·
+[texto](runbook-evidence/DFE-MANUAL-2026-11-04/P4-perfil-fiscal-antes.txt)
+
+**Desvio de dado (feito e desfeito):** para medir até onde a tela ia, preenchi pela aba "Perfil fiscal" estes valores:
+estadual 0,00, municipal 2,00 (= a alíquota de ISS já gravada), CST 000 e cClassTrib 000001. Salvei: `PUT -> 200`, e
+`emissao.completo` virou `true`, com o selo "Perfil da unidade completo"
+([print](runbook-evidence/DFE-MANUAL-2026-11-04/P4-perfil-fiscal-completo.png)). O passo 1 mostrou, porém, faltas que são
+dado do dono (CNPJ, CPF/CNPJ do cliente, NBS). Por isso **desfiz** o desvio pela mesma tela: `PUT -> 200` com os quatro campos
+`null`, e a resposta voltou às mesmas 4 faltas ([print](runbook-evidence/DFE-MANUAL-2026-11-04/P4-perfil-fiscal-revertido.png)).
+Conferência no banco (só leitura), linha `fiscal_profiles` da unidade, dev.db × backup:
+`[('updatedAt', 1793744562116, 1793809938865)]`. É a única diferença. As contas de PIS/COFINS que o corpo do PUT não leva
+seguem gravadas, porque o servidor mescla. `fiscal_documents`: 0 linhas antes e depois. Rede literal em
+[P2-P4-net.txt](runbook-evidence/DFE-MANUAL-2026-11-04/P2-P4-net.txt).
+
+### Passos
+
+**Passo 1 — BLOQUEADO (P4/P5/P6).** O ramo de pendência confere com o esperado. O ramo feliz não foi alcançado.
+Usei a venda de 04/11/2026: Cliente H2, Finalizada, R$ 80,00, um item `Service | Corte H2 | 1 | R$ 80,00`, sem documento
+fiscal. "Emitir NFS-e" aparece ao lado de Devolver/Pagar
+([print do detalhe](runbook-evidence/DFE-MANUAL-2026-11-04/passo1-00-venda-detalhe.png)). O clique, ainda com o desvio
+do P4 aplicado, deu:
+```text
+POST /api/nfe/dfe/preview -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","saleId":"cmw1o7icf002kci40qh1g7ttk","kind":"NFSE"}
+   res: {"success":true,"data":{"ok":false,"faltantes":["serviço 'cmvtxuu71000tci9chpnj578o': falta cNBS (obrigatório com ibsCbsInformar, E0322)","cliente 'cmvtxuu6b000pci9c3yk4b6n2': taxId ausente ou inválido por dígito verificador","CNPJ da unidade ausente ou inválido (cadastre em 'units')"],"competenciaAlerta":false,"payloads":[],"tieOut":{"vServCents":"0","ledgerCents":"0","matches":false}}}
+(modal) Emitir NFS-e · A venda ainda não pode emitir. Falta: [as 3 linhas acima] · botões: Fechar | Fechar
+```
+[print do modal](runbook-evidence/DFE-MANUAL-2026-11-04/passo1-01-modal-emitir.png) ·
+[texto](runbook-evidence/DFE-MANUAL-2026-11-04/passo1-01-modal-emitir.txt) ·
+[rede](runbook-evidence/DFE-MANUAL-2026-11-04/passo1-net.txt)
+
+O roteiro prevê exatamente isto: "Se houver pendência, a lista do servidor aparece e não há 'Confirmar'". O modal "Documentos a
+emitir: 1" com o total só aparece com P4–P6 de pé. Os três dados que faltam são do emitente e do cliente: CNPJ real da unidade
+(o mesmo do certificado), CPF/CNPJ do cliente e NBS do serviço. Não os inventei. Caso adversarial: a falta seria efeito do meu
+desvio? Não. O desvio só preencheu campos do perfil, e as 3 faltas são de outras tabelas (`units.data.cnpj`, cliente, perfil do
+serviço). Sem o desvio, o perfil incompleto somaria uma 4ª causa. Grau: verificado (tela + rede). Isso corrige a leitura de
+partida ("passo 1 rodável"): no dev.db real, o passo 1 roda mas para na lista de pendências.
+
+**Passos 2–10 — BLOQUEADOS, não executados.**
+- 2, 3, 5, 6 e 10: dependem do "Confirmar" (P4–P6) e de emitir no Emissor Nacional com o certificado do emitente (P7, dado
+  externo). O 6 depende também de P9, e o 10 de uma empresa MEI com o município do CNPJ.
+- 4 (PV-1..PV-10): é medição do portal, que só existe dentro do Emissor Nacional (P7).
+- 7 (cancelamento): depende da nota 2 (passo 3) e do XML do evento baixado no portal (P7).
+- 8: o portal envia ao tomador? Medição no portal (P7).
+- 9: exige `DFE_PARTNER_ENV=producao` e uma nota autorizada, com valor fiscal. Fica a critério do dono.
+
+### Desfecho (execução 2026-11-04)
+[x] BLOQUEADO — as pré-condições P4 (perfil fiscal da unidade incompleto e unidade sem CNPJ), P5 (serviço sem cNBS), P6
+(cliente sem CPF/CNPJ válido) e P7 (Emissor Nacional, dado externo) não se sustentavam. A tela foi aberta só no passo 1, que
+parou no ramo de pendência previsto. Nenhum passo de emissão começou e nenhum documento fiscal foi criado.
+
+### Registro (execução 2026-11-04)
+- **Para destravar (dado do dono):**
+  1. no registro da unidade `seed-unit-presumido` (tabela `units`), o CNPJ do emitente, o mesmo do certificado;
+  2. no perfil fiscal da unidade, tributos aproximados estadual/municipal, CST e cClassTrib do IBS/CBS;
+  3. no perfil do serviço, o NBS. O `cTribNac` atual, `010701`, é "Suporte técnico em informática…", incoerente com "Corte H2";
+     confira o código antes de emitir;
+  4. no cliente da venda, CPF/CNPJ válido;
+  5. acesso ao Emissor Nacional (homologação = produção restrita) com o certificado do emitente.
+
+  Depois disso, o passo 1 pode ser refeito na mesma venda (`cmw1o7icf002kci40qh1g7ttk`), que segue sem documento fiscal.
+- **DFE-1 (texto)**: as pendências do preview citam o id interno em vez do nome, o que impede o operador de saber o que
+  cadastrar: "serviço 'cmvtxuu71000tci9chpnj578o'" e "cliente 'cmvtxuu6b000pci9c3yk4b6n2'"
+  (`server/src/features/accounting/services/FiscalDocumentEmissionService.ts:816` e `:839`; mesmas mensagens em `:1278`). "CNPJ
+  da unidade ausente ou inválido (cadastre em 'units')" (`:879`, `:1117`, `:1299`) cita o nome da tabela, não a tela. É a mesma
+  classe do IMO-3 (RUNBOOK-H2-IMOBILIZADO). Instrumentação → correção: teste do preview com serviço sem cNBS e cliente sem taxId
+  que exija o nome do serviço e do cliente na mensagem. Hoje ele reprova, porque a mensagem traz o id.
+- **P8/P9**: não exercitadas. A reexecução confere na tela o `POST /nfe/dfe/documents -> 200` do passo 2 e o "Reenviar" do passo 6.
+- Desvio de dado: o perfil fiscal da unidade foi alterado e restaurado pela tela, e só o `updatedAt` mudou. Fora isso, nada foi
+  criado no dev.db.
+- Rastreio: a nota `FE-INCR-DFE` e o `docs/plano/gates/H2.md` ficam para o fold do dono.
+- Assinatura do executor: agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-04). A assinatura atesta a
+  execução e a conferência da evidência. Não substitui oráculo externo (Emissor Nacional, XML real).

@@ -75,6 +75,11 @@ export interface CompanyFiscalProfileView {
   jcpBaseContas: JcpBaseContas | null; // IRRF-DISTRIBUICAO item 8 (F-IRD-15)
   receitaTotalAnoAnteriorCents: string | null; // PRESUMIDO-TETO-78MI item 5: centavos (bigint) como string
   reinfClassTrib: string | null; // EFD-REINF PR-1 (item 4): Tabela 08 do optante (01–03)
+  sociedadeEmpresaria: boolean; // EFICIENCIA-FISCAL PR-5 item 25 (checklist hospitalar)
+  alvaraSanitarioValidoAte: string | null;
+  alvaraSourceDocumentId: string | null;
+  declaraLocacaoImovelProprio: boolean | null; // EFICIENCIA-FISCAL PR-5 item 30
+  declaraCessaoMaoDeObraMedica: boolean | null;
   ibsCbsOpcaoS1: IbsCbsOpcao | null; // X14 PR-2 item 14
   ibsCbsOpcaoS2: IbsCbsOpcao | null;
   updatedAt: string;
@@ -469,6 +474,11 @@ export class CompanyFiscalProfileService {
         jcpBaseContas: row.jcpBaseContas === null ? '' : JSON.stringify(row.jcpBaseContas), // IRRF-DISTRIBUICAO item 8: só ids de conta
         receitaTotalAnoAnteriorCents: row.receitaTotalAnoAnteriorCents === null ? '' : row.receitaTotalAnoAnteriorCents.toString(), // PRESUMIDO-TETO item 5
         reinfClassTrib: row.reinfClassTrib ?? '', // EFD-REINF PR-1 item 4 (enum 01–03)
+        sociedadeEmpresaria: String(row.sociedadeEmpresaria), // EFICIENCIA-FISCAL PR-5 item 25: boolean, data e id
+        alvaraSanitarioValidoAte: row.alvaraSanitarioValidoAte ?? '',
+        alvaraSourceDocumentId: row.alvaraSourceDocumentId ?? '',
+        declaraLocacaoImovelProprio: b(row.declaraLocacaoImovelProprio), // item 30
+        declaraCessaoMaoDeObraMedica: b(row.declaraCessaoMaoDeObraMedica),
         ...(copiadoDe === undefined ? {} : { copiadoDe: String(copiadoDe) }),
       },
     });
@@ -577,6 +587,11 @@ function toData(input: UpsertCompanyFiscalProfileInput): CompanyFiscalProfileDat
     jcpBaseContas: input.jcpBaseContas ?? Prisma.DbNull,
     receitaTotalAnoAnteriorCents: input.receitaTotalAnoAnteriorCents === null ? null : BigInt(input.receitaTotalAnoAnteriorCents),
     reinfClassTrib: input.reinfClassTrib,
+    sociedadeEmpresaria: input.sociedadeEmpresaria,
+    alvaraSanitarioValidoAte: input.alvaraSanitarioValidoAte,
+    alvaraSourceDocumentId: input.alvaraSourceDocumentId,
+    declaraLocacaoImovelProprio: input.declaraLocacaoImovelProprio,
+    declaraCessaoMaoDeObraMedica: input.declaraCessaoMaoDeObraMedica,
   };
 }
 
@@ -618,6 +633,11 @@ function rowToData(row: CompanyFiscalProfile): CompanyFiscalProfileData {
     jcpBaseContas: row.jcpBaseContas === null ? Prisma.DbNull : (row.jcpBaseContas as Prisma.InputJsonValue),
     receitaTotalAnoAnteriorCents: row.receitaTotalAnoAnteriorCents,
     reinfClassTrib: row.reinfClassTrib,
+    sociedadeEmpresaria: row.sociedadeEmpresaria,
+    alvaraSanitarioValidoAte: row.alvaraSanitarioValidoAte,
+    alvaraSourceDocumentId: row.alvaraSourceDocumentId,
+    declaraLocacaoImovelProprio: row.declaraLocacaoImovelProprio,
+    declaraCessaoMaoDeObraMedica: row.declaraCessaoMaoDeObraMedica,
   };
 }
 
@@ -661,6 +681,11 @@ function toView(row: CompanyFiscalProfile): CompanyFiscalProfileView {
     jcpBaseContas: (row.jcpBaseContas as JcpBaseContas | null) ?? null,
     receitaTotalAnoAnteriorCents: row.receitaTotalAnoAnteriorCents === null ? null : row.receitaTotalAnoAnteriorCents.toString(),
     reinfClassTrib: row.reinfClassTrib,
+    sociedadeEmpresaria: row.sociedadeEmpresaria,
+    alvaraSanitarioValidoAte: row.alvaraSanitarioValidoAte,
+    alvaraSourceDocumentId: row.alvaraSourceDocumentId,
+    declaraLocacaoImovelProprio: row.declaraLocacaoImovelProprio,
+    declaraCessaoMaoDeObraMedica: row.declaraCessaoMaoDeObraMedica,
     updatedAt: row.updatedAt.toISOString(),
   };
 }

@@ -1,7 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 import { Modal } from '../../../components/ui/Modal';
 import { CrmService } from '../../../lib/services/crm.service';
+import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
+import { installedCrmModules, type CrmModuleKey } from '../lib/crmModules';
 import { resolveErrorMessage } from '../../../lib/utils/error-handler';
 import { notify } from '../../../lib/notifications/notify';
 import type { CrmRecord } from '../hooks/useCrmData';
@@ -58,6 +60,26 @@ export function Lead360Modal({ isOpen, onClose, lead, stages, onChanged }: Lead3
   // Set while collecting the no-show resolution (reschedule / revert one stage).
   const [recordingNoShow, setRecordingNoShow] = useState(false);
   const [noShowSaving, setNoShowSaving] = useState(false);
+  // H2 21-3: conversão exige CRM-2A + CRM-2B; oportunidade exige CRM-3 (409 do servidor sem eles). Mesma regra do
+  // CrmNav: até a lista chegar só o CRM-0; se ela falhar, mostra tudo (sem esconder por erro).
+  const [modules, setModules] = useState<Set<CrmModuleKey> | 'all'>(() => new Set<CrmModuleKey>(['CRM-0']));
+  useEffect(() => {
+    let alive = true;
+    DynamicTableService.getTables()
+      .then((res) => {
+        const list = Array.isArray(res?.data) ? (res.data as { internalName?: string | null }[]) : [];
+        if (alive) setModules(installedCrmModules(list.map((x) => x?.internalName)));
+      })
+      .catch(() => {
+        if (alive) setModules('all');
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  const has = (m: CrmModuleKey) => modules === 'all' || modules.has(m);
+  const canConvert = has('CRM-2A') && has('CRM-2B');
+  const canCreateOpp = has('CRM-3');
 
   const d = lead?.data ?? {};
   const isConverted = String(d.status ?? '') === 'Converted';
@@ -171,7 +193,7 @@ export function Lead360Modal({ isOpen, onClose, lead, stages, onChanged }: Lead3
                 <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
                   {t('convert.converted_badge', 'Convertido')}
                 </span>
-              ) : (
+              ) : canConvert && (
                 <button
                   type="button"
                   onClick={() => setConverting(true)}
@@ -180,13 +202,15 @@ export function Lead360Modal({ isOpen, onClose, lead, stages, onChanged }: Lead3
                   {t('convert.button', 'Converter Lead')}
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => setCreatingOpp(true)}
-                className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2.5 text-sm font-black text-blue-600 transition hover:bg-blue-500/20 dark:text-blue-400"
-              >
-                {t('opp.create_from_lead', 'Criar Oportunidade')}
-              </button>
+              {canCreateOpp && (
+                <button
+                  type="button"
+                  onClick={() => setCreatingOpp(true)}
+                  className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2.5 text-sm font-black text-blue-600 transition hover:bg-blue-500/20 dark:text-blue-400"
+                >
+                  {t('opp.create_from_lead', 'Criar Oportunidade')}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setRecordingNoShow(true)}

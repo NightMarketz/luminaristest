@@ -1,0 +1,148 @@
+/**
+ * BE-INCR-MODULOS-BASE-SUBMODULOS — PR-0, item 0: fotografia de referência da instalação de salão e clínica.
+ *
+ * Pré-requisito dos testes de igualdade dos PR-1..5: nenhuma instalação de salão/clínica pode mudar de comportamento
+ * quando o registro de módulos for generalizado. A fixture `fixtures/suite-payload-baseline.json` foi capturada ANTES
+ * de qualquer mudança de registro e só pode ser alterada num PR que mude comportamento de propósito, com a
+ * justificativa escrita no diff (BRIEF §10, risco principal).
+ *
+ * O que a fotografia guarda, por suíte × cenário (default; sem `campaigns`; sem `goals`; sem `commissions`):
+ * Cenários: `rapido` (modo Rápido por `suiteKey`, sem remoções) e `default`/`sem-*` (Controle Total, `mode: 'custom'`).
+ *  - `response`: `data.modules` e a lista de tabelas de negócio que o create devolve;
+ *  - `installed`: as tabelas que o create REALMENTE gravou (controller → provisionamento → `installPresetAsSystem`),
+ *    com `name`, `category` e `schema`; o id das relações é trocado pelo `internalName` do alvo (o id é aleatório).
+ *    Isso inclui a variante de `saleItems` escolhida pelo instalador e as relações opcionais descartadas;
+ *  - `locks`: `computeTableLocks` sobre o conjunto composto (default de módulos ∪ tabelas da suíte), com todas as
+ *    tabelas mantidas. A trava vem de `meta`, que o create descarta antes de gravar; por isso esta parte compõe as
+ *    tabelas com as mesmas funções públicas do controller (`resolveModuleSelection`, `composeModuleTables`).
+ *
+ * Alterações da fixture (cada uma com a justificativa):
+ *  - PR-2 (BE-INCR-MODULOS-BASE-SUBMODULOS itens 9–11): `response.modules.installed` ganha PES-0, PES-FORN, VEN-0,
+ *    VEN-SERV, VEN-PROD, VEN-PAC, VEN-COM (as suítes passaram a declarar PESSOAS e VENDAS; em `sem-commissions` sai
+ *    VEN-COM, porque remover `commissions` remove o módulo de uma tabela). A lista `by` da trava de `units` muda só de
+ *    ORDEM (`sales` antes de `productUnits`: tabela de módulo entra antes das da suíte). Conferido por script que, sem
+ *    as chaves novas em `modules.installed` e com `by` ordenado, a fixture é idêntica à do PR-0 — tabelas gravadas,
+ *    schemas (inclusive a ficha da clínica e a variante de `saleItems`) e motivos de trava inalterados.
+ *  - PR-2, correção pedida pelo dono (chat, 31/10/2026, "Corrigir aqui"): no Controle Total (`default`, `sem-*`) o
+ *    `saleItems` passa da variante só-serviços para a mista — o create custom descartava `meta` e o instalador não via
+ *    os catálogos. Conferido por script: só `installed.saleItems` desses 8 cenários mudou, e ficou idêntico ao do
+ *    cenário `rapido` da mesma suíte; demais tabelas, `response` e `locks` iguais.
+ *  - PR-4 (itens 21–24): `response.modules.installed` ganha CRM-CAMP, FIN-0, FIN-REC, FIN-BASE, GES-0, GES-META (em
+ *    `sem-campaigns` sai CRM-CAMP e em `sem-goals` sai GES-META — remover a tabela remove o módulo de uma tabela).
+ *    `locks.expenses` e `locks.reports` passam de `null` para `FIXED_MODULE` (FIN-0 e GES-0 são as bases fixas das
+ *    categorias, BRIEF §1; mesma regra do CRM-0 desde o I8 e do item 32, "base fixa travada"; dono, chat, 31/10,
+ *    "pode seguir" depois da pergunta sobre esta trava). A lista `by` da trava de `units` muda só de ORDEM. Conferido
+ *    por script: sem as chaves novas, com `by` ordenado e essas duas travas em `null`, a fixture é idêntica à do PR-2 (já com a correção do Controle Total) —
+ *    tabelas gravadas, schemas e demais travas inalterados.
+ *  - PR-3 (itens 16–20): `response.modules.installed` ganha EST-0 e AGE-0 (as suítes declaram ESTOQUE e AGENDA). As
+ *    travas de `productUnits` (REQUIRED_CAPABILITY ← stockMovements), `stockMovements` (null) e `appointments` (null)
+ *    passam a FIXED_MODULE [EST-0]/[AGE-0]: são bases fixas (F-MB-4 "um bloco fixo"; regra geral de
+ *    D-2026-10-31-MODULOS-BASE-SUBMODULOS) e `lockOf` trava tabela de módulo fixo como já fazia com o CRM-0. Efeito: na
+ *    entrevista o salão não tira Estoque/Agenda — dono, 2026-10-31, questionário: "Aceitar até o PR-6 (Recommended)";
+ *    no Controle Total a categoria inteira sai (teste em `dashboardSemEstoqueAgenda.integration.test.ts`). A lista `by`
+ *    da trava de `units` muda só de ORDEM (`stockMovements` agora vem com o módulo EST-0). Conferido por script que,
+ *    sem essas três travas, sem EST-0/AGE-0 em `modules.installed` e com `by` ordenado, a fixture é idêntica à do PR-4 (#1006).
+ *  - PR-5 (item 28, F-MB-5): a trava contábil passou da `meta` da tabela para o módulo (`lockedBy` de PES-0/VEN-0 com
+ *    a ponte `sales@1` da suíte); VEN-PAC não tem `lockedBy`, então `locks.packages` passa de `ACCOUNTING` para `null`
+ *    nas duas suítes. Conferido por script que, com `locks.packages` de volta a `ACCOUNTING`, a fixture é idêntica
+ *    (JSON.stringify igual) à de `origin/main` — tabelas gravadas, `response` e demais travas inalterados.
+ *
+ * Regenerar (somente num PR que mude comportamento de propósito): `UPDATE_BASELINE=1 npx jest --selectProjects
+ * integration --runInBand src/features/dynamicTables/presets/__tests__/suitePayloadBaseline.integration.test.ts`.
+ */
+import fs from 'fs';
+import path from 'path';
+import request from 'supertest';
+import prisma from '@/lib/prisma';
+import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
+import { CoreSystemPreset, tablePresetSuites } from '@/features/dynamicTables/presets';
+import { composeModuleTables, suiteModuleOptions } from '@/features/dynamicTables/presets/modules/registry';
+import { resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
+import { computeTableLocks } from '@/features/dynamicTables/presets/removability';
+
+const FIXTURE = path.join(__dirname, 'fixtures', 'suite-payload-baseline.json');
+const SUITES = ['beautySalon', 'aestheticClinic'] as const;
+const SCENARIOS: { name: string; removedTables: string[]; quick?: boolean }[] = [
+  { name: 'rapido', removedTables: [], quick: true },
+  { name: 'default', removedTables: [] },
+  { name: 'sem-campaigns', removedTables: ['campaigns'] },
+  { name: 'sem-goals', removedTables: ['goals'] },
+  { name: 'sem-commissions', removedTables: ['commissions'] },
+];
+
+const app = makeApp();
+let n = 0;
+const novoUsuario = () => {
+  n += 1;
+  return prisma.user
+    .create({ data: { name: `base-${n}`, username: `base-user-${n}`, email: `base-${n}@test.local`, password: 'x', role: 'USER' } })
+    .then((u) => ({ id: u.id, username: u.username, role: u.role }));
+};
+
+const sortKeys = (v: unknown): unknown => {
+  if (Array.isArray(v)) return v.map(sortKeys);
+  if (v && typeof v === 'object') {
+    return Object.fromEntries(
+      Object.entries(v as Record<string, unknown>)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([k, val]) => [k, sortKeys(val)]),
+    );
+  }
+  return v;
+};
+
+async function snapshotInstalled(userId: string) {
+  const rows = await prisma.dynamicTable.findMany({ where: { userId } });
+  const nameById = new Map(rows.map((r) => [r.id, r.internalName ?? r.name]));
+  let json = JSON.stringify(rows.map((r) => ({ internalName: r.internalName, name: r.name, category: r.category, schema: r.schema })));
+  for (const [id, internalName] of nameById) json = json.split(id).join(`@@id:${internalName}`);
+  const list = JSON.parse(json) as { internalName: string; name: string; category: string; schema: unknown }[];
+  return Object.fromEntries(
+    list.sort((a, b) => a.internalName.localeCompare(b.internalName)).map((t) => [t.internalName, sortKeys({ name: t.name, category: t.category, schema: t.schema })]),
+  );
+}
+
+function snapshotLocks(suiteKey: string) {
+  const suite = Object.values(tablePresetSuites).flatMap((c) => Object.values(c)).find((s) => s.key === suiteKey)!;
+  const installed = resolveModuleSelection([], suite.modules ?? []);
+  // PR-2 (item 11a): fonte das tabelas de módulo declarada pela suíte; PR-5 (item 28): pontes da suíte — o mesmo que o controller passa.
+  const tables = { ...CoreSystemPreset.tables, ...composeModuleTables(installed, suiteModuleOptions(suite)), ...suite.tables };
+  return computeTableLocks(tables, new Set(Object.keys(tables)), suite.bridges);
+}
+
+describe('PR-0 — fotografia da instalação de salão e clínica', () => {
+  beforeAll(() => {
+    pushTestSchema();
+  }, 120000);
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
+  it('o payload atual é igual à fotografia', async () => {
+    const actual: Record<string, unknown> = {};
+    for (const suiteKey of SUITES) {
+      const perScenario: Record<string, unknown> = {};
+      for (const sc of SCENARIOS) {
+        const u = await novoUsuario();
+        const r = await request(app)
+          .post('/api/dashboard/create')
+          .set(authHeader(u as never))
+          .send(sc.quick ? { suiteKey, unit: { name: 'Matriz' } } : { mode: 'custom', presetKey: suiteKey, removedTables: sc.removedTables, unit: { name: 'Matriz' } });
+        expect({ suiteKey, scenario: sc.name, status: r.status, body: r.status === 201 ? undefined : r.body }).toEqual({ suiteKey, scenario: sc.name, status: 201, body: undefined });
+        perScenario[sc.name] = {
+          response: { modules: r.body.data.modules, business: [...r.body.data.tables.business].sort() },
+          installed: await snapshotInstalled(u.id),
+        };
+      }
+      actual[suiteKey] = { scenarios: perScenario, locks: sortKeys(snapshotLocks(suiteKey)) };
+    }
+
+    if (process.env.UPDATE_BASELINE === '1') {
+      fs.mkdirSync(path.dirname(FIXTURE), { recursive: true });
+      fs.writeFileSync(FIXTURE, `${JSON.stringify(actual, null, 2)}\n`, 'utf8');
+    }
+    const baseline = JSON.parse(fs.readFileSync(FIXTURE, 'utf8'));
+    expect(JSON.parse(JSON.stringify(actual))).toEqual(baseline);
+  }, 180000);
+});

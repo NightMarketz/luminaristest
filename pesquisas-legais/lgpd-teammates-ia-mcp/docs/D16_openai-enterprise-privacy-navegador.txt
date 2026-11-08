@@ -1,0 +1,9 @@
+Fonte: https://openai.com/pt-BR/enterprise-privacy/ (redireciona de /enterprise-privacy/)
+Lido no navegador embutido em 2026-10-29 (document.body.innerText); o curl devolveu 403.
+Trechos literais extraídos (página em pt-BR):
+
+"Atualização: 8 de janeiro de 2026 Privacidade empresarial na OpenAI"
+
+"Por padrão, os dados do ChatGPT Business, ChatGPT Enterprise, ChatGPT for Healthcare, ChatGPT Edu, ChatGPT for Teachers e da Plataforma de API (após 1º de março de 2023) não são usados para treinar nossos modelos, a menos que você tenha optado explicitamente por compartilhar seus dados conosco para melhorar os serviços."
+
+"Como a OpenAI gerencia a retenção e o monitoramento de dados para uso na API? Exceto por determinados endpoints e recursos listados em nossa documentação da plataforma, a OpenAI pode reter com segurança entradas e saídas da API por até 30 dias para prestar os serviços e identificar abuso. Após 30 dias, entradas e saídas da API são removidas dos nossos sistemas, salvo se formos legalmente obrigados a retê-las. Você também pode solicitar Zero Data Retention (ZDR) para endpoints elegíveis se tiver um caso de uso qualificado."

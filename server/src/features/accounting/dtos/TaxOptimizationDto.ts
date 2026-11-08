@@ -60,3 +60,51 @@ export const DecideSuggestionSchema = z
   .object({ unitId: z.string().min(1), ownerUserId: z.string().min(1).optional(), reason: z.string().trim().min(3).max(280).optional() })
   .strict();
 export type DecideSuggestionInput = z.infer<typeof DecideSuggestionSchema>;
+
+/**
+ * EFICIENCIA-FISCAL PR-4 itens 22–23 (BRIEF BE-INCR-EFICIENCIA-FISCAL §4.3; ADR D9; D-2026-10-28-EFICIENCIA-FISCAL-PR4-EXECUCAO
+ * #5 e #6) — `GET /api/accounting/tax-optimization/report?competencia=`. Soma só ACCEPTED (I-11): PROPOSED/REJECTED/EXPIRED
+ * aparecem em contagem, nunca em centavos. Policy `canManageTaxAssessment` (BRIEF §4.3).
+ */
+export const TaxOptimizationReportQuerySchema = z
+  .object({
+    unitId: z.string().min(1),
+    competencia: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'competência = YYYY-MM'),
+  })
+  .strict();
+export type TaxOptimizationReportQuery = z.infer<typeof TaxOptimizationReportQuerySchema>;
+
+/** Linhas medidas (D9) além das práticas: a segregação e o desconto incondicional, só no Simples. */
+export const CODIGOS_LINHA_MEDIDA = ['SEGREGACAO_MEDIDA', 'DESCONTO_INCONDICIONAL_MEDIDO'] as const;
+export const TIPOS_LINHA_RELATORIO = ['SUGESTAO_ACEITA', 'MEDIDA', 'CONSUMIDA'] as const;
+
+const centsString = z.string().regex(/^\d+$/, 'centavos ≥ 0 como string');
+
+export const TaxOptimizationReportLinhaSchema = z
+  .object({
+    tipo: z.enum(TIPOS_LINHA_RELATORIO),
+    codigo: z.string().min(1), // prática (TAX_PRACTICES) ou CODIGOS_LINHA_MEDIDA
+    suggestionId: z.string().nullable(),
+    disponivel: z.boolean(),
+    /** null ⇔ NAO_DISPONIVEL. */
+    economiaCents: centsString.nullable(),
+    legalBasis: z.array(z.object({ norma: z.string(), artigo: z.string() }).strict()),
+    detalhe: z.string(),
+    /** Nó do plano de que a linha depende quando NAO_DISPONIVEL por falta de dado (item 22). */
+    noDependente: z.string().nullable(),
+  })
+  .strict()
+  .refine((l) => l.disponivel === (l.economiaCents !== null), { message: 'economiaCents null ⇔ NAO_DISPONIVEL', path: ['economiaCents'] });
+
+export const TaxOptimizationReportSchema = z
+  .object({
+    competencia: z.string(),
+    unitId: z.string(),
+    linhas: z.array(TaxOptimizationReportLinhaSchema),
+    totais: z.object({ aceitasCents: centsString, medidaCents: centsString, totalCents: centsString }).strict(),
+    contagem: z.object({ PROPOSED: z.number().int().min(0), REJECTED: z.number().int().min(0), EXPIRED: z.number().int().min(0) }).strict(),
+    parametrosSha256: z.string().regex(/^[0-9a-f]{64}$/),
+  })
+  .strict();
+export type TaxOptimizationReport = z.infer<typeof TaxOptimizationReportSchema>;
+export type TaxOptimizationReportLinha = z.infer<typeof TaxOptimizationReportLinhaSchema>;

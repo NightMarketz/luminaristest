@@ -14,6 +14,7 @@ jest.mock('../../../../lib/attachmentStorage', () => ({
     return { storageKey: 'u/unit/job/ecf.txt', sanitizedName: 'ecf.txt' };
   }),
   resolveReadPath: jest.fn((k: string) => `/abs/${k}`),
+  deleteFile: jest.fn(async () => undefined),
 }));
 import * as storage from '../../../../lib/attachmentStorage';
 import { legalParamsSemente } from '@test/helpers/legalParams';
@@ -72,6 +73,8 @@ function makeDto(over: Partial<Record<keyof SpedEcfRequestDto, unknown>> = {}): 
 
 interface Mocks {
   canRead?: boolean;
+  /** ERRO-CRU-AO-CLIENTE: substitui a semente (ex.: `fotografia` que falha como o banco falharia). */
+  legalParams?: typeof legalParamsSemente;
   accounts?: Account[];
   extraRevenueMove?: boolean; // add movement on a non-3.1/3.3 revenue account
   extraRevenueAccountId?: string; // which account receives that movement (default rec39)
@@ -124,7 +127,7 @@ function buildService(m: Mocks = {}) {
 
   const partnerList = jest.fn(async (_s: unknown) => m.partners ?? [makePartner()]);
 
-  const service = new SpedEcfGenerationService(accountRepo, postingRepo, policy, repo, audit, legalParamsSemente, fiscalProfileRepo, { list: partnerList });
+  const service = new SpedEcfGenerationService(accountRepo, postingRepo, policy, repo, audit, m.legalParams ?? legalParamsSemente, fiscalProfileRepo, { list: partnerList }, { findByYear: async () => null }, { findServicosEntreDias: async () => [] }, { findManyByServiceRefs: async () => [] });
   return { service, createJob, updateJob, groupByAccount, append, policy, partnerList };
 }
 
@@ -145,6 +148,16 @@ describe('SpedEcfGenerationService.generate', () => {
     await expect(service.generate(scope, makeDto())).rejects.toBeInstanceOf(ForbiddenError);
     expect(createJob).not.toHaveBeenCalled();
     expect(savedBuffers).toHaveLength(0);
+  });
+
+  // ERRO-CRU-AO-CLIENTE (GAP-MAP, dono 2026-11-04): o `try` do item 25 só pode traduzir o erro de leiaute; falha do
+  // banco na fotografia não é "ano sem leiaute" — não vira 400 com o texto do banco.
+  it('falha do banco na fotografia LEIAUTE_SPED ⇒ NÃO vira ValidationError (400) com o texto do banco', async () => {
+    const falha = new Error('SQLITE_BUSY: database is locked');
+    const legalParams = { ...legalParamsSemente, fotografia: jest.fn(async () => { throw falha; }) } as typeof legalParamsSemente;
+    const { service } = buildService({ legalParams });
+    const err = await service.generate(scope, makeDto()).catch((e) => e);
+    expect(err).not.toBeInstanceOf(ValidationError);
   });
 
   it('blocks with ValidationError + unmappedRevenueAccounts when a Revenue account is not 3.1/3.3 (exhaustiveness gate)', async () => {
@@ -307,6 +320,47 @@ describe('SpedEcfGenerationService.generate', () => {
     expect(groupByAccount).toHaveBeenCalled();
     // 1 year read (gate) + 4 quarter reads.
     expect(groupByAccount).toHaveBeenCalledTimes(5);
+  });
+
+  // GUARD (lacuna 10, cédula D-2026-10-28-LACUNAS-EXECUTA-27-28): o arquivo já foi gravado e a
+  // tx do EXPORTED falha (aqui, a auditoria dentro dela). O rollback desfaz o EXPORTED, e nada
+  // fora da tx volta o job: ele fica PROCESSING para sempre, com o artefato órfão no disco.
+  // Esperado: FAILED gravado FORA da tx que falhou, o arquivo apagado, e o erro relançado.
+  it('keeps compensating and rethrows the ORIGINAL tx error when updateJob(FAILED) itself fails (lacuna 10)', async () => {
+    const { service, updateJob, append } = buildService();
+    append.mockRejectedValueOnce(new Error('audit insert failed'));
+    const passThrough = updateJob.getMockImplementation()!;
+    updateJob.mockImplementation(async (...args: Parameters<typeof passThrough>) => {
+      if ((args as unknown[])[3] === undefined && (args[2] as { status?: string }).status === 'FAILED') {
+        throw new Error('db down');
+      }
+      return passThrough(...args);
+    });
+    const errorSpy = jest.spyOn(logger, 'error').mockImplementation(() => {});
+
+    await expect(service.generate(scope, makeDto())).rejects.toThrow('audit insert failed');
+
+    expect(storage.deleteFile).toHaveBeenCalledWith('u/unit/job/ecf.txt');
+    expect(errorSpy).toHaveBeenCalledWith(
+      'export: falha ao marcar FAILED depois da tx — job fica PROCESSING',
+      expect.objectContaining({ jobId: 'job-1', error: expect.objectContaining({ message: 'db down' }) }),
+    );
+    errorSpy.mockRestore();
+  });
+
+  it('does not leave the job PROCESSING when the EXPORTED tx fails after the file was written (lacuna 10)', async () => {
+    const { service, updateJob, append } = buildService();
+    append.mockRejectedValueOnce(new Error('audit insert failed'));
+
+    await expect(service.generate(scope, makeDto())).rejects.toThrow('audit insert failed');
+
+    const outOfTx = updateJob.mock.calls
+      .filter((c) => (c as unknown[])[3] === undefined)
+      .map((c) => c[2] as { status?: string; supersedesJobId?: string | null });
+    const lastOutOfTx = outOfTx[outOfTx.length - 1];
+    expect(lastOutOfTx?.status).toBe('FAILED');
+    expect(lastOutOfTx).toEqual(expect.objectContaining({ supersedesJobId: null }));
+    expect(storage.deleteFile).toHaveBeenCalledWith('u/unit/job/ecf.txt');
   });
 
   // GUARD (A1, triagem 2026-08-20 ratificada) — mesmo defeito do ECD, segundo sítio dos três.

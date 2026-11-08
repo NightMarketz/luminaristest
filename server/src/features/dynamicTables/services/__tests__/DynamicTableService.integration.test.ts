@@ -41,7 +41,7 @@ function ctxFor(userId: string, role: Role = Role.USER): UserContext {
 
 // Ids semeados pela suíte — o afterEach limpa SÓ estes donos, nunca um deleteMany() global.
 // Mesma classe de colisão fechada em NoOverlapUpdateConcurrency.integration.test.ts: no
-// test:leaks todas as suítes compartilham o mesmo test-integration.db em --runInBand, e um
+// --runInBand todas as suítes do processo compartilham o mesmo test-integration.db, e um
 // wipe sem where apaga dados de suíte alheia (ou morre em FK Restrict que não é seu).
 const seededUserIds = new Set<string>();
 

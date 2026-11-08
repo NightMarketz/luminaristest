@@ -36,6 +36,11 @@ const turn = (picks: string[] | Error) => {
   return new InterviewService({} as CustomizationService, openai).processTurn('MATCHING_PRESET', b2b, 'u1');
 };
 
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: PESSOAS e VENDAS entram no registro e no default do salão/clínica (travados).
+// PR-4: e Campanhas (CRM-CAMP, logo depois do CRM na ordem do registro), FINANCEIRO e GESTÃO.
+const ALEM_DO_FUNIL = ['CRM-CAMP', 'PES-0', 'PES-FORN', 'VEN-0', 'VEN-SERV', 'VEN-PROD', 'VEN-PAC', 'VEN-COM', 'EST-0', 'AGE-0',
+  'FIN-0', 'FIN-REC', 'FIN-BASE', 'GES-0', 'GES-META'];
+
 const byKey = (options: InterviewModuleOption[]) =>
   Object.fromEntries(options.map((o) => [o.key, { locked: o.locked, suggested: o.suggested }]));
 
@@ -44,13 +49,14 @@ describe('W5 item 10 — ModuleSuggester.suggest', () => {
     const classify = jest.fn().mockResolvedValue(['CRM-2A']);
     const options = await suggesterWith(classify).suggest(b2b, tablePresetSuites.services.beautySalon);
 
-    expect(options.map((o) => o.key)).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3']);
+    expect(options.map((o) => o.key)).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3', ...ALEM_DO_FUNIL]);
     expect(byKey(options)).toEqual({
       'CRM-0': { locked: true, suggested: true },
       'CRM-1': { locked: true, suggested: true },
       'CRM-2A': { locked: false, suggested: true },
       'CRM-2B': { locked: false, suggested: false },
       'CRM-3': { locked: false, suggested: false },
+      ...Object.fromEntries(ALEM_DO_FUNIL.map((k) => [k, { locked: true, suggested: true }])),
     });
     // A IA escolhe só entre os não-travados.
     expect(classify).toHaveBeenCalledWith(expect.any(String), expect.any(String), ['CRM-2A', 'CRM-2B', 'CRM-3']);
@@ -59,12 +65,13 @@ describe('W5 item 10 — ModuleSuggester.suggest', () => {
     });
   });
 
-  it('crmModule (os 5 travados) → zero chamada à IA, todos locked + suggested', async () => {
-    const classify = jest.fn();
+  it('crmModule: os 5 do CRM travados; a IA escolhe só entre os módulos fora do funil (PR-2/PR-4: entraram no registro)', async () => {
+    const classify = jest.fn().mockResolvedValue([]);
     const options = await suggesterWith(classify).suggest(b2b, tablePresetSuites.sales.crmModule);
 
-    expect(classify).not.toHaveBeenCalled();
-    expect(options.every((o) => o.locked && o.suggested)).toBe(true);
+    expect(classify).toHaveBeenCalledWith(expect.any(String), expect.any(String), ALEM_DO_FUNIL);
+    expect(options.filter((o) => o.locked && o.suggested).map((o) => o.key)).toEqual(['CRM-0', 'CRM-1', 'CRM-2A', 'CRM-2B', 'CRM-3']);
+    expect(options.filter((o) => ALEM_DO_FUNIL.includes(o.key)).every((o) => !o.locked && !o.suggested)).toBe(true);
   });
 
   it.each([
@@ -73,7 +80,7 @@ describe('W5 item 10 — ModuleSuggester.suggest', () => {
   ])('%s → só os travados sugeridos', async (_caso, makeClassify) => {
     const options = await suggesterWith(makeClassify()).suggest(b2b, tablePresetSuites.services.beautySalon);
 
-    expect(options.filter((o) => o.suggested).map((o) => o.key)).toEqual(['CRM-0', 'CRM-1']);
+    expect(options.filter((o) => o.suggested).map((o) => o.key)).toEqual(['CRM-0', 'CRM-1', ...ALEM_DO_FUNIL]);
   });
 
   it('pick cuja dependência não-fixa falta é descartado (sem 400); os outros picks seguem', async () => {
@@ -85,7 +92,34 @@ describe('W5 item 10 — ModuleSuggester.suggest', () => {
     const classify = jest.fn().mockResolvedValue(['CRM-3', 'CRM-2B']);
     const options = await suggesterWith(classify).suggest(b2b, tablePresetSuites.services.beautySalon, registry);
 
-    expect(options.filter((o) => o.suggested).map((o) => o.key)).toEqual(['CRM-0', 'CRM-1', 'CRM-2B']);
+    expect(options.filter((o) => o.suggested).map((o) => o.key)).toEqual(['CRM-0', 'CRM-1', 'CRM-2B', ...ALEM_DO_FUNIL]);
+  });
+});
+
+// BE-INCR-MODULOS-BASE-SUBMODULOS PR-6 item 31: sugestão por categoria. Suíte crmModule (só CRM): o resto do registro
+// fica opcional, e a IA (stub) devolve o que a descrição justificaria.
+describe('PR-6 item 31 — ModuleSuggester sugere por categoria', () => {
+  const sugeridosFora = async (descricao: string, picks: string[]) => {
+    const classify = jest.fn().mockResolvedValue(picks);
+    const options = await suggesterWith(classify).suggest(
+      [{ role: 'user', content: descricao }], tablePresetSuites.sales.crmModule,
+    );
+    return options.filter((o) => o.suggested && !o.locked).map((o) => o.key);
+  };
+
+  it('"loja de roupas sem agendamento" → sem AGE-0, com VEN-PROD e EST-0 (e as bases PES-0/VEN-0)', async () => {
+    const keys = await sugeridosFora('loja de roupas sem agendamento', ['VEN-PROD', 'EST-0']);
+    expect(keys).toEqual(['PES-0', 'VEN-0', 'VEN-PROD', 'EST-0']);
+    expect(keys).not.toContain('AGE-0');
+  });
+
+  it('"barbearia" → com AGE-0 e VEN-SERV, resolvidos juntos (AGE-0 exige VEN-SERV, não-fixo)', async () => {
+    const keys = await sugeridosFora('barbearia', ['AGE-0', 'VEN-SERV']);
+    expect(keys).toEqual(['PES-0', 'VEN-0', 'VEN-SERV', 'AGE-0']);
+  });
+
+  it('submódulo sem dependência da base (FIN-REC) traz a base da categoria (FIN-0)', async () => {
+    expect(await sugeridosFora('tenho renda de aluguel', ['FIN-REC'])).toEqual(['FIN-0', 'FIN-REC']);
   });
 });
 
@@ -131,7 +165,7 @@ describe('W5 item 12 — turno MATCHING_PRESET devolve moduleOptions', () => {
 
     expect(result.presetKey).toBe('beautySalon');
     expect(result.choicePrompt).toEqual({ kind: 'creation_type', reason: 'initial' });
-    expect(result.moduleOptions?.filter((o) => o.suggested).map((o) => o.key)).toEqual(['CRM-0', 'CRM-1', 'CRM-3']);
+    expect(result.moduleOptions?.filter((o) => o.suggested).map((o) => o.key)).toEqual(['CRM-0', 'CRM-1', 'CRM-3', ...ALEM_DO_FUNIL]);
     expect(ai.mock.calls[0][0]).toContain('Oportunidades');
     expect(ai.mock.calls[0][0]).not.toContain(CRM_QUESTION);
     // Fallback (a IA da mensagem não respondeu) também cita o módulo sugerido.

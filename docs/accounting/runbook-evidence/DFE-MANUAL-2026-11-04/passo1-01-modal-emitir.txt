@@ -1,0 +1,10 @@
+Emitir NFS-e
+
+FORMULÁRIO ADMINISTRATIVO
+
+A venda ainda não pode emitir. Falta:
+
+serviço 'cmvtxuu71000tci9chpnj578o': falta cNBS (obrigatório com ibsCbsInformar, E0322)
+cliente 'cmvtxuu6b000pci9c3yk4b6n2': taxId ausente ou inválido por dígito verificador
+CNPJ da unidade ausente ou inválido (cadastre em 'units')
+Fechar

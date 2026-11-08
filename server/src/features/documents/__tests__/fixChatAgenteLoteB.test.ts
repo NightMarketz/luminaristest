@@ -4,35 +4,25 @@
  * e 2026-10-22 ("Todos os 22 em série").
  *
  * Cada `it` afirma o comportamento correto; antes do fix falha na asserção final.
+ * Lote D (dono, 2026-10-29): o guarda do #21 saiu com o `ExcelStructuredExtractor` (R26 aposentado).
+ * RAG-PR-A: o guarda do #12 (índice de userId no índice externo) virou a PARTITION KEY `user_id` da vec0,
+ * guardada em `rag-tenant-isolation.test.ts`.
  */
 import express from 'express';
 import request from 'supertest';
-import ExcelJS from 'exceljs';
 import type { Request, Response, NextFunction } from 'express';
-
-const createPayloadIndex = jest.fn().mockResolvedValue({});
-jest.mock('@/lib/vector/qdrant', () => ({
-  qdrant: {
-    getCollections: jest.fn().mockResolvedValue({ collections: [{ name: 'documents' }] }),
-    getCollection: jest.fn().mockResolvedValue({ payload_schema: {} }),
-    createCollection: jest.fn(),
-    createPayloadIndex: (...a: unknown[]) => createPayloadIndex(...a),
-  },
-}));
 
 jest.mock('@/controllers/documentsController', () => {
   const ok = (_req: Request, res: Response) => res.status(200).json({ success: true });
   const pass = (_req: Request, _res: Response, next: NextFunction) => next();
   return {
   listDocuments: ok, listDocumentNames: ok, getDocumentById: ok, deleteDocument: ok, searchDocuments: ok,
-  uploadDocument: ok, updateDocument: ok, uploadMiddleware: pass, qdrantStatus: ok, getDocumentQdrant: ok,
+  uploadDocument: ok, updateDocument: ok, uploadMiddleware: pass, 
   tokenCostUpload: pass, computeTokenCost: ok,
   };
 });
 
 import documentRoutes from '@/routes/documents';
-import { initializeQdrant } from '@/lib/vector/qdrant-initializer';
-import { extractStructuredDataFromExcel } from '@/lib/vector/extractors/ExcelStructuredExtractor';
 import { EmbeddingService } from '@/lib/vector/embedding';
 
 describe('#9 — rotas de documentos que chamam a OpenAI têm freio por usuário', () => {
@@ -47,29 +37,6 @@ describe('#9 — rotas de documentos que chamam a OpenAI têm freio por usuário
     }
 
     expect(last).toBe(429);
-  });
-});
-
-describe('#12 — índice de payload em userId no Qdrant', () => {
-  it('initializeQdrant cria o índice keyword de userId (todas as buscas filtram por ele)', async () => {
-    await initializeQdrant();
-
-    expect(createPayloadIndex).toHaveBeenCalledWith('documents', expect.objectContaining({ field_name: 'userId', field_schema: 'keyword' }));
-  });
-});
-
-describe('#21 — inferType do Excel', () => {
-  it('coluna de texto com número no fim ("Item 2", "Rua 1") fica TEXT, não DATE', async () => {
-    const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet('Plan1');
-    ws.addRow(['Descrição', 'Quando']);
-    ws.addRow(['Item 2', new Date(Date.UTC(2026, 9, 1))]);
-    ws.addRow(['Rua 1', new Date(Date.UTC(2026, 9, 2))]);
-    const buffer = Buffer.from(await wb.xlsx.writeBuffer());
-
-    const { sheets } = await extractStructuredDataFromExcel(buffer);
-
-    expect(sheets[0].headers.map((h) => h.type)).toEqual(['TEXT', 'DATE']);
   });
 });
 

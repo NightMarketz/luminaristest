@@ -55,15 +55,33 @@ export const LEGAL_PARAMS_SEED_FILE_IBS_CBS_V2 = path.resolve(__dirname, '../../
 export const LEGAL_PARAMS_SEED_FILE_PRESUMIDO_TETO = path.resolve(__dirname, '../../prisma/data/legal_parameters_presumido_teto_v1.sql');
 /** RETENCOES-FONTE PR-1 (itens 1, 2, 3 e 7): RETENCAO, RETENCAO_CODIGO, NATUREZA_RENDIMENTO e IRRF_PF_MENSAL. Mesma regra de igualdade. */
 export const LEGAL_PARAMS_SEED_FILE_RETENCOES = path.resolve(__dirname, '../../prisma/data/legal_parameters_retencoes_v1.sql');
+/** RETENCOES-FONTE lacuna 9 (NT EFD-Reinf 02/2026): 12001 com o tipo de isenção 12, supersede a linha de 2026. Mesma regra de igualdade. */
+export const LEGAL_PARAMS_SEED_FILE_RETENCOES_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_retencoes_v2.sql');
+/** RETENCOES-FONTE PR de dado (29/10): INSS/CPRB 3,5% até 2027 e 11% desde 2028; código 116201 do INSS. Mesma regra de igualdade. */
+export const LEGAL_PARAMS_SEED_FILE_RETENCOES_V3 = path.resolve(__dirname, '../../prisma/data/legal_parameters_retencoes_v3.sql');
 /** ISS-TRANSICAO-IBS PR-1 (BRIEF itens 1, 2 e 5): fim do ISS_LIMITE, ISS_TRANSICAO e IBS DRAFT 2029–2032. Mesma regra de igualdade. */
 export const LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO = path.resolve(__dirname, '../../prisma/data/legal_parameters_iss_transicao_v1.sql');
+/** ISS-TRANSICAO-IBS PR-2 (BRIEF item 10): ISS_LIMITE/ALIQUOTA_MIN_BP por vigência (2025–2032). Mesma regra de igualdade. */
+export const LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO_V2 = path.resolve(__dirname, '../../prisma/data/legal_parameters_iss_transicao_v2.sql');
 /** BE-INCR-NFCE PR-3 (item 17): limites da NFC-e (Aj. SINIEF 19/16 cl. 4ª VII "a" e § 4º). Mesma regra de igualdade. */
 export const LEGAL_PARAMS_SEED_FILE_NFCE_LIMITE = path.resolve(__dirname, '../../prisma/data/legal_parameters_nfce_limite_v1.sql');
 /** BE-INCR-NFCE PR-4 (EMENDA-3 E3-2 a): UF sem pedido de inutilização desde 01/11/2026. Mesma regra de igualdade. */
 export const LEGAL_PARAMS_SEED_FILE_INUT_NAO_SE_APLICA = path.resolve(__dirname, '../../prisma/data/legal_parameters_inut_nao_se_aplica_v1.sql');
 /** EFICIENCIA-FISCAL PR-2 (item 11): NCM sob ICMS-ST em SP até 31/03/2026, DRAFT. Mesma regra de igualdade. */
 export const LEGAL_PARAMS_SEED_FILE_ICMS_ST_NCM_UF = path.resolve(__dirname, '../../prisma/data/legal_parameters_icms_st_ncm_uf_v1.sql');
-export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6, LEGAL_PARAMS_SEED_FILE_V8, LEGAL_PARAMS_SEED_FILE_LP9_PC, LEGAL_PARAMS_SEED_FILE_FERIADO_LOCAL, LEGAL_PARAMS_SEED_FILE_IBS_CBS, LEGAL_PARAMS_SEED_FILE_IBS_CBS_V2, LEGAL_PARAMS_SEED_FILE_IRRF_DISTRIBUICAO, LEGAL_PARAMS_SEED_FILE_PRESUMIDO_TETO, LEGAL_PARAMS_SEED_FILE_RETENCOES, LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO, LEGAL_PARAMS_SEED_FILE_NFCE_LIMITE, LEGAL_PARAMS_SEED_FILE_INUT_NAO_SE_APLICA, LEGAL_PARAMS_SEED_FILE_ICMS_ST_NCM_UF];
+/** EFD-REINF PR-3 (BRIEF item 20): linha REINF da matriz OBRIGACAO_REGIME. Mesma regra de igualdade com o migration.sql. */
+export const LEGAL_PARAMS_SEED_FILE_REINF = path.resolve(__dirname, '../../prisma/data/legal_parameters_reinf_v1.sql');
+/** EFICIENCIA-FISCAL PR-3 (itens 15–17): ENCARGO_FOLHA (INSS, patronal, FGTS, teto RGPS 2026). Mesma regra de igualdade. */
+export const LEGAL_PARAMS_SEED_FILE_ENCARGO_FOLHA = path.resolve(__dirname, '../../prisma/data/legal_parameters_encargo_folha_v1.sql');
+// EFICIENCIA-FISCAL PR-5 (itens 26 e 32): presunção HOSPITALAR e redução NBS de 2027.
+export const LEGAL_PARAMS_SEED_FILE_EFICIENCIA_SERVICOS = path.resolve(__dirname, '../../prisma/data/legal_parameters_eficiencia_servicos_v1.sql');
+/** BE-INCR-DP-F0-F1 PR-2 (itens 20–23): INSS_EMPREGADO 2026, FGTS_APRENDIZ_BP e as tabelas do eSocial. Mesma regra de igualdade. */
+export const LEGAL_PARAMS_SEED_FILE_DP = path.resolve(__dirname, '../../prisma/data/legal_parameters_dp_v1.sql');
+/** BE-INCR-DP-F2 PR-0R (itens 65–66): FOLHA_REGRA e DP_CATEGORIA_ENCARGO. Mesma regra de igualdade. */
+export const LEGAL_PARAMS_SEED_FILE_DP_REGRAS = path.resolve(__dirname, '../../prisma/data/legal_parameters_dp_regras_v1.sql');
+/** BE-INCR-DP-F2 PR-1 (item 13): ESOCIAL_TIPO_DEPENDENTE (Tabela 07 do eSocial). Mesma regra de igualdade. */
+export const LEGAL_PARAMS_SEED_FILE_DP_DEPENDENTE = path.resolve(__dirname, '../../prisma/data/legal_parameters_dp_dependente_v1.sql');
+export const LEGAL_PARAMS_SEED_FILES = [LEGAL_PARAMS_SEED_FILE, LEGAL_PARAMS_SEED_FILE_V2, LEGAL_PARAMS_SEED_FILE_V3, LEGAL_PARAMS_SEED_FILE_V4, LEGAL_PARAMS_SEED_FILE_V5, LEGAL_PARAMS_SEED_FILE_V6, LEGAL_PARAMS_SEED_FILE_V8, LEGAL_PARAMS_SEED_FILE_LP9_PC, LEGAL_PARAMS_SEED_FILE_FERIADO_LOCAL, LEGAL_PARAMS_SEED_FILE_IBS_CBS, LEGAL_PARAMS_SEED_FILE_IBS_CBS_V2, LEGAL_PARAMS_SEED_FILE_IRRF_DISTRIBUICAO, LEGAL_PARAMS_SEED_FILE_PRESUMIDO_TETO, LEGAL_PARAMS_SEED_FILE_RETENCOES, LEGAL_PARAMS_SEED_FILE_RETENCOES_V2, LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO, LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO_V2, LEGAL_PARAMS_SEED_FILE_NFCE_LIMITE, LEGAL_PARAMS_SEED_FILE_INUT_NAO_SE_APLICA, LEGAL_PARAMS_SEED_FILE_ICMS_ST_NCM_UF, LEGAL_PARAMS_SEED_FILE_REINF, LEGAL_PARAMS_SEED_FILE_ENCARGO_FOLHA, LEGAL_PARAMS_SEED_FILE_EFICIENCIA_SERVICOS, LEGAL_PARAMS_SEED_FILE_DP, LEGAL_PARAMS_SEED_FILE_DP_REGRAS, LEGAL_PARAMS_SEED_FILE_DP_DEPENDENTE];
 
 type Valor = string | number | null;
 

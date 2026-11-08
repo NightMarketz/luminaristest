@@ -49,6 +49,14 @@ const publicApiRoutes: PublicRule[] = [
   // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-5, PP-D4) — webhook do provedor de cobrança: sem sessão; a prova é a
   // assinatura `x-signature` com o segredo da conta do `:accountId`. POST apenas (GET/HEAD continuam 401).
   { path: '/api/payment-collection/webhook', method: 'POST', match: 'prefix' },
+  // X10a PR-7 (EMENDA-PSC E-4) — retorno OAuth do PSC: quem chega é o navegador do titular, sem JWT. A prova é o
+  // `state` (HMAC do keyring DFE_PSC) + a autorização pendente não expirada e não usada. GET exato.
+  { path: '/api/accounting/psc-credentials/callback', method: 'GET', match: 'exact' },
+  // X10a EMENDA-4 AL-5 — rotas do assinador local do caixa: não há sessão de usuário. A prova é o código de pareamento
+  // ou o `Authorization: Bearer <token de dispositivo>` (middleware `dfeSignerDeviceAuth`, montado no próprio router).
+  // GET (tarefas, AL-PR-3) e POST (pareamento, resultado).
+  { path: '/api/dfe-assinador/v1', method: 'GET', match: 'prefix' },
+  { path: '/api/dfe-assinador/v1', method: 'POST', match: 'prefix' },
 ];
 
 // Admin-only API paths with method checks (prefix match covers /api/users/:id).
@@ -134,8 +142,9 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 
     // §3.4 #3 — a token issued before the last logout carries an older version. A user that no
     // longer exists is left to the downstream handlers (unchanged behavior).
-    const currentVersion = await getFactory().getUserService().getTokenVersion(String(payload.id || payload.userId || ''));
-    if (currentVersion !== null && (payload.tokenVersion ?? 0) !== currentVersion) {
+    // §3.4 #20 — the same read carries the user's real createdAt/updatedAt (no second query).
+    const authState = await getFactory().getUserService().getAuthState(String(payload.id || payload.userId || ''));
+    if (authState !== null && (payload.tokenVersion ?? 0) !== authState.tokenVersion) {
       res.status(401).json({ code: 'UNAUTHORIZED', message: 'Invalid or expired token' });
       return;
     }
@@ -149,6 +158,10 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     if (payload.email) req.headers['x-user-email'] = String(payload.email);
     if (payload.name) req.headers['x-user-name'] = String(payload.name);
     if (payload.username) req.headers['x-user-username'] = String(payload.username);
+    if (authState) {
+      req.headers['x-user-created-at'] = authState.createdAt.toISOString();
+      req.headers['x-user-updated-at'] = authState.updatedAt.toISOString();
+    }
 
     // Admin-only enforcement
     if (isAdminOnly(pathname, method) && payload.role !== 'ADMIN') {

@@ -17,7 +17,10 @@ export function humanizeZodFlatten(
 ): string {
   const parts: string[] = [];
   for (const [field, msgs] of Object.entries(err.fieldErrors || {})) {
-    if (msgs && msgs.length) parts.push(`${field}: ${msgs.join(', ')}`);
+    // Mensagem do DTO que já começa com "campo:" não ganha o prefixo de novo (H2 22-3).
+    if (!msgs || !msgs.length) continue;
+    const text = msgs.join(', ');
+    parts.push(text.startsWith(`${field}:`) ? text : `${field}: ${text}`);
   }
   if (err.formErrors && err.formErrors.length) parts.push(...err.formErrors);
   return parts.length ? parts.join('; ') : empty;

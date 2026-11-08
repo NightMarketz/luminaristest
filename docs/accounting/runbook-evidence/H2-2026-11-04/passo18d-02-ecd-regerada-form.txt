@@ -1,0 +1,98 @@
+Gerar SPED ECD
+
+Escrituração Contábil Digital. Conta sem código referencial não bloqueia: sai sem I051, com aviso (o mapeamento é facultativo na ECD; a ECF exige).
+
+Ano
+Versão mapeamento
+CNPJ
+Nome empresarial
+UF
+AC
+AL
+AM
+AP
+BA
+CE
+DF
+ES
+GO
+MA
+MG
+MS
+MT
+PA
+PB
+PE
+PI
+PR
+RJ
+RN
+RO
+RR
+RS
+SC
+SE
+SP
+TO
+Cód. município (IBGE)
+Possui NIRE
+Não
+Sim
+Grande porte
+Não
+Sim
+Plano referencial
+Selecione
+1 - PJ em Geral - Lucro Real
+2 - PJ em Geral - Lucro Presumido
+3 - Financeiras - Lucro Real
+4 - Seguradoras - Lucro Real
+5 - Imunes e Isentas em Geral
+6 - Imunes e Isentas - Financeiras
+7 - Imunes e Isentas - Seguradoras
+8 - Entidades Fechadas de Previdência Complementar
+9 - Partidos Políticos
+10 - Financeiras - Lucro Presumido
+Livro (termo)
+Nº de ordem
+Natureza do livro
+Encerr. exercício
+Contador do cadastro (opcional)
+— preencher o contador à mão —
+CONTADOR FICTICIO DE TESTE — CRC SP-123456/O-1
+CONTADOR SEM FONE TESTE — CRC SP-654321/O-2
+CONTADORA H2 AI TESTER — CRC MG-012345/O-6
+Os dados do contador vêm do cadastro; não é preciso uma linha 900 abaixo.
+Signatários (J930)
+Adicionar
+Não resp. legal
+Resp. legal
+UF do CRC
+AC
+AL
+AM
+AP
+BA
+CE
+DF
+ES
+GO
+MA
+MG
+MS
+MT
+PA
+PB
+PE
+PI
+PR
+RJ
+RN
+RO
+RR
+RS
+SC
+SE
+SP
+TO
+Gerar e baixar ECD

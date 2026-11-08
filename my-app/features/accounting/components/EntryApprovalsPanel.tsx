@@ -225,6 +225,8 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
   // command confirmation modal
   const [action, setAction] = useState<ActionState>(null);
   const [reason, setReason] = useState('');
+  // ITG 2000 item 36: aprovar rascunho datado num período fechado e reaberto exige a razão do registro extemporâneo.
+  const [extemporaneousReason, setExtemporaneousReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionPeriodError, setActionPeriodError] = useState(false);
@@ -285,6 +287,7 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
   // ── command modal ──────────────────────────────────────────────────────────
   function openAction(next: ActionState) {
     setReason('');
+    setExtemporaneousReason('');
     setActionError(null);
     setActionPeriodError(false);
     setAction(next);
@@ -307,7 +310,12 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
       if (action.type === 'submit') {
         await entryApprovalsService.submitDraft(entry.id, { unitId, expectedVersion: entry.version });
       } else if (action.type === 'approve') {
-        await entryApprovalsService.approve(entry.id, { unitId, expectedVersion: entry.version });
+        const razao = extemporaneousReason.trim();
+        await entryApprovalsService.approve(entry.id, {
+          unitId,
+          expectedVersion: entry.version,
+          ...(razao && { extemporaneousReason: razao }),
+        });
       } else {
         await entryApprovalsService.reject(entry.id, {
           unitId,
@@ -592,6 +600,24 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
                 onChange={(e) => setReason(e.target.value)}
                 className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 focus:border-red-500 focus:outline-none"
               />
+            </div>
+          )}
+
+          {action?.type === 'approve' && (
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="approve-extemporaneous-reason" className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
+                {t('journalEntryModal.field.extemporaneousReason', 'Razão do registro extemporâneo')}
+              </label>
+              <input
+                id="approve-extemporaneous-reason"
+                type="text"
+                value={extemporaneousReason}
+                onChange={(e) => setExtemporaneousReason(e.target.value)}
+                className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none"
+              />
+              <p className="text-xs text-neutral-500">
+                {t('journalEntryModal.field.extemporaneousReasonHelp', 'Opcional. Exigida quando a data cai num período que já foi fechado.')}
+              </p>
             </div>
           )}
 

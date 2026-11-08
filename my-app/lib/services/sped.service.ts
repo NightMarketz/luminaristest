@@ -1,7 +1,7 @@
 import { apiClient } from '../api/api-client';
 import { dataExchangeService, type DataExchangeJob } from './dataExchange.service';
 import type { SpedEcdRequestInput } from '@/types/contracts/accounting/SpedEcdDto.gen';
-import type { SpedEcfRequestInput } from '@/types/contracts/accounting/SpedEcfDto.gen';
+import type { SpedEcfRequestInput, Y600VigenciasViewInput } from '@/types/contracts/accounting/SpedEcfDto.gen';
 import type { SpedEcfRealRequestInput } from '@/types/contracts/accounting/SpedEcfRealDto.gen';
 
 /**
@@ -19,6 +19,11 @@ import type { SpedEcfRealRequestInput } from '@/types/contracts/accounting/SpedE
 interface Envelope<T> {
   success: boolean;
   data: T;
+}
+
+/** Envelope da geração do SPED: `avisos` não bloqueiam (ex.: conta sem código referencial na ECD — Manual da ECD 1.17, C2). */
+interface GenerationEnvelope<T> extends Envelope<T> {
+  avisos?: string[];
 }
 
 // ── Payloads (contrato gerado) ──────────────────────────────────────────────────
@@ -87,16 +92,25 @@ export interface EcfSignerDraft {
   fone: string;
 }
 
+/** Vigências do cadastro de sócios que o Y600 do ano exige (FE-INCR-ECF-Y600 PR-0) — resposta da rota de leitura. */
+export type Y600VigenciasView = Y600VigenciasViewInput;
+
 export const spedService = {
+  /** FE-INCR-ECF-Y600 (F-FE-Y600-1 → b): as vigências que a ECF do ano vai exigir, pela mesma seleção do gerador. */
+  async listY600Vigencias(unitId: string, year: number): Promise<Y600VigenciasView> {
+    const qs = `?unitId=${encodeURIComponent(unitId)}&year=${year}`;
+    return (await apiClient.get<Envelope<Y600VigenciasView>>(`/accounting/sped/ecf/y600/vigencias${qs}`)).data;
+  },
+
   /** Tabela de Qualificação do Assinante servida pelo BE (F-FE-SG-1 → a: um dono só). */
   async getQualifAssinante(unitId: string, layout: QualifLayout): Promise<QualifAssinante[]> {
     const qs = `?unitId=${encodeURIComponent(unitId)}&layout=${layout}`;
     return (await apiClient.get<Envelope<QualifAssinante[]>>(`/accounting/sped/qualif-assinante${qs}`)).data;
   },
 
-  /** Generate the ECD .txt and immediately download it. Requires coverage.ready. */
-  async generateAndDownloadEcd(payload: GenerateEcdPayload): Promise<DataExchangeJob> {
-    const res = await apiClient.post<Envelope<DataExchangeJob>>(
+  /** Generate the ECD .txt and immediately download it; `avisos` vêm junto (conta sem referencial não bloqueia, C2). */
+  async generateAndDownloadEcd(payload: GenerateEcdPayload): Promise<{ job: DataExchangeJob; avisos: string[] }> {
+    const res = await apiClient.post<GenerationEnvelope<DataExchangeJob>>(
       '/accounting/sped/ecd/generate',
       payload,
     );
@@ -106,7 +120,7 @@ export const spedService = {
       payload.unitId,
       job.fileName ?? `sped-ecd-${payload.year}.txt`,
     );
-    return job;
+    return { job, avisos: res.avisos ?? [] };
   },
 
   /** Generate the ECF .txt and immediately download it. */

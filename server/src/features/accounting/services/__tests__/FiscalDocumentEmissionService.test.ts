@@ -26,7 +26,7 @@ import type { AccountingScope } from '../../scope/AccountingScope';
 import { PackageExpiryNfsePendingError } from '../../../../lib/errors';
 
 import { legalParamsSemente } from '@test/helpers/legalParams';
-import type { DpsPayload } from '../../dtos/DpsPayloadDto';
+import { DpsPayloadSchema, type DpsPayload } from '../../dtos/DpsPayloadDto';
 const SCOPE: AccountingScope = {
   ownerUserId: 'u1',
   actorUserId: 'u1',
@@ -71,7 +71,7 @@ function baseFiscalProfileView(overrides: Partial<Record<string, unknown>> = {})
     pTotTribSNCent: null,
     emissaoForaDoMes: 'AVISAR',
     d1fConfirmado: true,
-    emissao: { completo: true, faltantes: [], pendingExternalValidation: [] },
+    emissao: { completo: true, faltantes: [], pendingExternalValidation: [], opSimpNac: overrides.regimeTributario === 'SIMPLES' ? 3 : 1 },
     updatedAt: new Date().toISOString(),
     ...overrides,
   };
@@ -603,6 +603,37 @@ describe('FiscalDocumentEmissionService — Simples Nacional (item 22)', () => {
     expect(payload.infDPS.IBSCBS).toBeUndefined();
   });
 
+  // F-XP-4 → (b) (dono, chat, 29/10/2026): DPS do MEI pelas RNs do Anexo I v1.01 (gov.br/nfse, 09/02/2026).
+  it('MEI (opSimpNac=2): sem regApTribSN (E0162), sem pAliq (E0600), sem retenção (E0583), indTotTrib=0 (E0710) e sem IBSCBS', async () => {
+    const { service } = makeService({
+      fiscalProfile: baseFiscalProfileView({
+        regimeTributario: 'SIMPLES', regApTribSN: 1, issAliquotaBp: 200, pTotTribSNCent: null, ibsCbsInformar: false,
+        emissao: { completo: true, faltantes: [], pendingExternalValidation: [], opSimpNac: 2 },
+      }),
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+      ledgerPostings: [{ accountId: 'acc-3.1', debitCents: 0n, creditCents: 10000n }],
+    });
+    const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
+    expect(result.ok).toBe(true);
+    const payload = (result.payloads as DpsPayload[])[0];
+    expect(DpsPayloadSchema.parse(payload)).toBeDefined();
+    expect(payload.infDPS.prest.regTrib).toEqual({ opSimpNac: 2, regEspTrib: 0 });
+    expect(payload.infDPS.valores.trib.tribMun).toEqual({ tribISSQN: 1, tpRetISSQN: 1 });
+    expect(payload.infDPS.valores.trib.totTrib).toEqual({ indTotTrib: 0 });
+    expect(payload.infDPS.IBSCBS).toBeUndefined();
+  });
+
+  it('MEI: NF-e/NFC-e seguem bloqueadas com o motivo (Res. CGSN 140 art. 106 § 1º III / art. 106-B)', async () => {
+    const { service } = makeService({
+      fiscalProfile: baseFiscalProfileView({ regimeTributario: 'SIMPLES', emissao: { completo: true, faltantes: [], pendingExternalValidation: [], opSimpNac: 2 } }),
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+      ledgerPostings: [{ accountId: 'acc-3.1', debitCents: 0n, creditCents: 10000n }],
+    });
+    const result = await service.preview(SCOPE, SALE_ID, 'NFCE');
+    expect(result.ok).toBe(false);
+    expect(result.faltantes.join(' ')).toMatch(/regime MEI — NF-e\/NFC-e fora do escopo/);
+  });
+
   // IBS-CBS-2027 PR-1 (BRIEF item 3; F-IBS-10 a): cClassTrib do SERVIÇO no gIBSCBS, com fallback no do perfil.
   async function cClassTribDe(cClassTribServico: string | null | undefined): Promise<string | undefined> {
     const { service } = makeService({
@@ -952,5 +983,104 @@ describe('FiscalDocumentEmissionService — GAP-MAP L-PR2 (verificação de brow
     await expect(service.reassembleGroupForReenvio(SCOPE, SALE_ID, 'NFSE', '060101', 'homologacao')).resolves.toMatchObject({
       vServCents: 10000,
     });
+  });
+});
+
+/**
+ * ISS-TRANSICAO-IBS PR-2 itens 8–9 (BRIEF docs/accounting/BE-INCR-ISS-TRANSICAO-IBS-brief.md; F-ISS-1 a; L4). O fator
+ * vem da semente (ISS_TRANSICAO 1000/2000/3000/4000, LC 116 art. 8º-B I–IV) e a data é o `dCompet` da DPS. P-ISS-3
+ * (fold de 30/10, D-2026-10-30-TRIAGEM-CONTADOR; LC 214 art. 408 § 4º I e art. 10 §§ 3º–4º): pacote em VENDA ⇒ data da
+ * venda; em CONSUMO ⇒ data da sessão. Competências literais, nada relativo a hoje (A4/A8). A pilha é a da prévia
+ * (`preview`), que relê o `pAliq` do payload montado (A6, na camada do serviço).
+ */
+describe('FiscalDocumentEmissionService — pAliq na transição ISS → IBS (ISS-TRANSICAO-IBS PR-2 itens 8–9)', () => {
+  function vendaEm(date: string, linha: Record<string, unknown> = { serviceId: 'srv-A', type: 'Service', description: 'Corte', quantity: 1, unitPrice: 100 }) {
+    jest.clearAllMocks();
+    process.env = { ...process.env, DFE_PARTNER: 'null', DFE_PARTNER_ENV: 'homologacao', NODE_ENV: 'test' };
+    findTableByInternalName.mockImplementation(async (_u: string, name: string) => {
+      if (name === 'sales') return SALES_TABLE;
+      if (name === 'customers') return CUSTOMERS_TABLE;
+      if (name === 'units') return UNITS_TABLE;
+      if (name === 'saleItems') return ITEMS_TABLE;
+      return null;
+    });
+    existsByIdInTable.mockResolvedValue(true);
+    findDataById.mockImplementation(async (id: string) => {
+      if (id === SALE_ID) return { id: SALE_ID, data: { status: 'Finalized', unitId: 'unit-1', customerId: CUSTOMER_ID, date } };
+      if (id === CUSTOMER_ID) return { id: CUSTOMER_ID, data: { name: 'Cliente', taxId: '11144477735' } };
+      if (id === 'unit-1') return { id: 'unit-1', data: { cnpj: '11222333000181' } };
+      return null;
+    });
+    findRowsByFieldValue.mockResolvedValue([{ data: linha }]);
+  }
+  async function pAliqEm(date: string, perfil: Record<string, unknown>, opts: { pacote?: boolean } = {}): Promise<string | undefined> {
+    vendaEm(date, opts.pacote ? { packageId: 'pkg-1', type: 'Package', quantity: 1, unitPrice: 200 } : undefined);
+    const { service } = makeService({
+      fiscalProfile: baseFiscalProfileView({ pTotTribSNCent: 400, ...perfil }),
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+      ledgerPostings: opts.pacote ? [{ accountId: 'acc-1.1.2.01', debitCents: 20000n, creditCents: 0n }] : [{ accountId: 'acc-3.1', debitCents: 0n, creditCents: 10000n }],
+      ...(opts.pacote ? { anchorSourceType: 'sale.package.sold' } : {}),
+    });
+    const result = await service.preview(SCOPE, SALE_ID, 'NFSE');
+    expect(result.faltantes).toEqual([]);
+    const payload = (result.payloads as DpsPayload[])[0];
+    expect(payload.infDPS.dCompet).toBe(date);
+    return (payload.infDPS.valores.trib.tribMun as { pAliq?: string }).pAliq;
+  }
+
+  it('item 8: regime normal com 5% — 2028-12-31 ⇒ 5.00; 2029-01-15 ⇒ 4.50 (500 × 9/10)', async () => {
+    expect(await pAliqEm('2028-12-31', { regimeTributario: 'PRESUMIDO', issAliquotaBp: 500 })).toBe('5.00');
+    expect(await pAliqEm('2029-01-15', { regimeTributario: 'PRESUMIDO', issAliquotaBp: 500 })).toBe('4.50');
+  });
+
+  it('A7: tabela de esperados 2028–2032 × alíquota municipal de 31/12/2028 (comparada inteira)', async () => {
+    const datas = ['2028-12-31', '2029-01-01', '2030-06-30', '2031-12-31', '2032-12-31'];
+    const tabela: Array<[number, string[]]> = [];
+    for (const bp of [200, 500]) {
+      const linha: string[] = [];
+      for (const d of datas) linha.push((await pAliqEm(d, { regimeTributario: 'PRESUMIDO', issAliquotaBp: bp })) ?? '—');
+      tabela.push([bp, linha]);
+    }
+    expect(tabela).toEqual([
+      [200, ['2.00', '1.80', '1.60', '1.40', '1.20']],
+      [500, ['5.00', '4.50', '4.00', '3.50', '3.00']],
+    ]);
+  });
+
+  it('item 8 (dono, 06/11: "Aplica o fator"): Simples com ISS fora do DAS (regApTribSN 2/3) — pAliq é a alíquota municipal e leva o fator', async () => {
+    // O ramo regApTribSN 1 com retenção (E0621/E0628: % do Anexo, sem fator) é recusado antes da montagem (F-DFE-14) e
+    // não chega à prévia; ele fica na condição `isSimples && regApTribSN === 1` do código.
+    expect(await pAliqEm('2028-12-31', { regimeTributario: 'SIMPLES', regApTribSN: 2, issAliquotaBp: 300 })).toBe('3.00');
+    expect(await pAliqEm('2029-01-15', { regimeTributario: 'SIMPLES', regApTribSN: 2, issAliquotaBp: 300 })).toBe('2.70');
+    expect(await pAliqEm('2032-12-31', { regimeTributario: 'SIMPLES', regApTribSN: 3, issAliquotaBp: 300 })).toBe('1.80');
+  });
+
+  it('item 8 / A3: Simples com ISS fora do DAS em 2033 ⇒ prévia bloqueada com o IssExtintoError nomeado (achado 2 da revisão)', async () => {
+    vendaEm('2033-01-10');
+    const { service } = makeService({
+      fiscalProfile: baseFiscalProfileView({ regimeTributario: 'SIMPLES', regApTribSN: 2, issAliquotaBp: 300 }),
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+      ledgerPostings: [{ accountId: 'acc-3.1', debitCents: 0n, creditCents: 10000n }],
+    });
+    const r = await service.preview(SCOPE, SALE_ID, 'NFSE');
+    expect(r.ok).toBe(false);
+    expect(r.faltantes).toEqual(['ISS extinto a partir de 01/01/2033 (LC 214 art. 543 IV): deixe a alíquota de ISS em branco (data 2033-01-10).']);
+  });
+
+  it('item 9 / A2 (P-ISS-3): pacote vendido em 2028-12 com pacoteFatoGerador=VENDA ⇒ lei de 2028 (5.00); sessão de 2029-01 em CONSUMO ⇒ 4.50', async () => {
+    expect(await pAliqEm('2028-12-20', { regimeTributario: 'PRESUMIDO', issAliquotaBp: 500, pacoteFatoGerador: 'VENDA', pacoteCTribNac: '060101', pacoteCNBS: null }, { pacote: true })).toBe('5.00');
+    expect(await pAliqEm('2029-01-10', { regimeTributario: 'PRESUMIDO', issAliquotaBp: 500, pacoteFatoGerador: 'CONSUMO' })).toBe('4.50');
+  });
+
+  it('A3: regime normal em 2033 com alíquota ⇒ prévia bloqueada com o IssExtintoError nomeado e a data (LC 214 art. 543 IV)', async () => {
+    vendaEm('2033-01-10');
+    const { service } = makeService({
+      fiscalProfile: baseFiscalProfileView({ regimeTributario: 'PRESUMIDO', issAliquotaBp: 500 }),
+      serviceProfiles: { 'srv-A': { cTribNac: '060101', cTribMun: null, cNBS: null, cIndOp: '030101', cLocPrestacao: null } },
+      ledgerPostings: [{ accountId: 'acc-3.1', debitCents: 0n, creditCents: 10000n }],
+    });
+    const r = await service.preview(SCOPE, SALE_ID, 'NFSE');
+    expect(r.ok).toBe(false);
+    expect(r.faltantes).toEqual(['ISS extinto a partir de 01/01/2033 (LC 214 art. 543 IV): deixe a alíquota de ISS em branco (data 2033-01-10).']);
   });
 });

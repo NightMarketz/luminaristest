@@ -1,0 +1,68 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_Manual_ECF_Leiaute_12_20_05_2026_AC_2025_SIT_ESP_2026-pdf",
+      "url": "http://sped.rfb.gov.br/arquivo/download/8003",
+      "url_final": "http://sped.rfb.gov.br/estatico/54/7E3B296352B7AFD32210C180962BDB938B0804/Manual_ECF_Leiaute_12_20_05_2026_AC_2025_SIT_ESP_2026.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-03T00:34:20-03:00",
+      "sha256": "7216ec2bd62de7d45e5b019298be2420d08c2a3c6ade3646a053412937e95265",
+      "arquivo": "docs/D01_Manual_ECF_Leiaute_12_20_05_2026_AC_2025_SIT_ESP_2026-pdf.pdf",
+      "texto": "docs/D01_Manual_ECF_Leiaute_12_20_05_2026_AC_2025_SIT_ESP_2026-pdf.txt",
+      "bytes": 6410931
+    },
+    {
+      "id": "D02",
+      "titulo": "D02_Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_",
+      "url": "http://sped.rfb.gov.br/estatico/E1/20FDEEE25CAA9F998AC2AD3045DE0E9C631D3C/Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_2026.xlsx",
+      "url_final": "http://sped.rfb.gov.br/estatico/E1/20FDEEE25CAA9F998AC2AD3045DE0E9C631D3C/Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_2026.xlsx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-03T00:34:20-03:00",
+      "sha256": "366b8d9030a04e9f6203b6ae29ace49d3ffa3fa0c1f5a7a18b0c967b9a5a3cac",
+      "arquivo": "docs/D02_Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_.html",
+      "texto": "docs/D02_Tabelas_Dinamicas_ECF_Leiaute_12_28_05_2026_AC_2025_SIT_ESP_.txt",
+      "bytes": 1724077
+    },
+    {
+      "id": "D03",
+      "titulo": "Lei nº 8.981 de 20/01/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-8981-1995-01-20.md",
+      "url_final": "https://github.com/ctresb/leis/blob/8bf2e5070525043cb82294b9de8630a4aea5e53d/federal/leis-ordinarias/1995/lei-8981-1995-01-20.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-01-20;8981",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "8bf2e5070525043cb82294b9de8630a4aea5e53d",
+      "alertas": [],
+      "baixado_em": "2026-11-03T00:34:50-03:00",
+      "sha256": "b567b47ee6be147deb0aeea63f5cc92d7c93652f40fae948125979dac84680e7",
+      "arquivo": "docs/D03_lei-8981-1995-01-20.md",
+      "texto": "docs/D03_lei-8981-1995-01-20.txt",
+      "bytes": 86250
+    },
+    {
+      "id": "D04",
+      "titulo": "Lei nº 5.172 de 25/10/1966",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1966/lei-5172-1966-10-25.md",
+      "url_final": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1966/lei-5172-1966-10-25.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1966-10-25;5172",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "",
+      "alertas": [],
+      "baixado_em": "2026-11-03T00:34:55-03:00",
+      "sha256": "fe8ef71d4ebe8c0d04d3422ca95853e15291c5c7ca6168cd34ae7b8ee6e3983b",
+      "arquivo": "docs/D04_lei-5172-1966-10-25.md",
+      "texto": "docs/D04_lei-5172-1966-10-25.txt",
+      "bytes": 148085
+    }
+  ],
+  "buscas": [],
+  "slug": "pc1-memoria-calculo",
+  "pergunta": "P-C1: que formato da memória de cálculo do IRPJ/CSLL (EXPORT_TAX_ASSESSMENT_MEMO) serve para o contador conferir e arquivar — há formato obrigatório? qual layout oficial a conferência usa?",
+  "criado": "2026-11-03T00:34:02-03:00"
+}

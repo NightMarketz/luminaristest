@@ -37,7 +37,20 @@ O formato abaixo tem três propriedades que um prompt não teria, e cada uma res
   3. o desfecho siga só a evidência colada (regra do FALHOU incluída); método que difira do roteiro
      (ex.: falha de rede simulada sem DevTools) fique escrito na evidência.
   **Não vale** para os cinco gates abaixo (H1, H2, M2, X1, X2) nem para nada que dependa de PVA, NF-e real,
-  arquivo RFB, contador ou deploy: lá a assinatura continua só humana, e `luminaris-gate-copilot` [GHC-001] segue intacto.
+  arquivo RFB, contador ou deploy: lá a assinatura continua só humana, e `luminaris-gate-copilot` [GHC-001] segue intacto
+  — **salvo a emenda de 2026-10-29 abaixo.**
+- **Emenda 2026-10-29 — agente como "AI tester" nos cinco gates, só com autorização do dono** (dono, chat, 2026-10-29:
+  *"Pode assinar as evidencias"* e *"Estou literalmente mudando a regra que te permite assinar como ai tester se eu
+  autorizar"*). Nos gates H1, H2, M2, X1 e X2, o agente pode marcar o desfecho e assinar um bloco de EVIDÊNCIA
+  quando:
+  1. o dono autorizar no chat **aquele gate e aquela execução** (a autorização não se estende a outro gate nem a outra
+     tentativa), citado literalmente no bloco;
+  2. a assinatura for `agente <modelo>, AI tester, sob autorização do dono (chat, <data>)` — **nunca** nome de pessoa;
+  3. o desfecho siga só a evidência colada. Quando o oráculo é humano ou externo (tela do PVA, NF-e real, arquivo RFB,
+     resposta do contador, host de produção), a evidência é o artefato que o dono colou, e o bloco diz isso. A assinatura
+     do agente atesta a execução e a conferência da evidência; ela **não** substitui o oráculo;
+  4. qualquer desvio do roteiro (ordem trocada, passo não verificado) fique escrito ao lado do desfecho.
+  Sem a autorização do item 1, vale a regra anterior: desfecho e assinatura só do dono.
 
 ## Os cinco runbooks e onde o desfecho é registrado
 
@@ -107,6 +120,13 @@ que são o precedente do gênero (13 relatórios de execução com evidência co
 **FALHOU não é fracasso da execução — é resultado.** No H1 especialmente: crítica do PVA é achado de
 **domínio**, vira ADR ou emenda, não hotfix. A varredura de browser de 2026-07-23 é o precedente: ela
 "falhou" achando 2 bugs de runtime, e foi a sessão mais produtiva do gate.
+
+**Runner Puppeteer de runbook de tela pega vaga de trabalho pesado** (dono, chat, 2026-11-04: "Me da um prompt para
+implementar todas as 7 sugestões"). Desde 04/11 o runner é versionado: `node scripts/runbook-tela.mjs <roteiro.json>`
+(roteiro, ops e variáveis no cabeçalho do script). Ele pega a vaga sozinho; sem vaga, espera e mostra quem ocupa
+(`node scripts/heavy-slot.cjs status`). Roda sem janela, no headless shell do cache do Playwright (~280 MB; guia em
+`~/.claude/tools/navegador/GUIA.md`), e sai com 1 no primeiro passo com `[ERRO]`. Não reescreva o runner no
+scratchpad; op nova entra no script.
 
 **Pré-condição de ambiente que costuma ser esquecida:** o `dev.db` populado fica em
 `server/prisma/prisma/dev.db` (o `server/prisma/dev.db` é isca de 0 byte), e telas atrás de `withAuth`

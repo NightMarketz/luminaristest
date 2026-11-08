@@ -1,0 +1,32 @@
+url após login: http://127.0.0.1:3030/
+
+======== p9 ========
+url: http://127.0.0.1:3030/dashboard?category=kanban
+--- inspetor: abertura do overlay ---
+<div role="dialog" aria-modal="true" class="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto p-4 sm:p-6 md:p-12 lg:p-20">
+--- texto do diálogo (EN) ---
+Feito 1
+
+In list Done
+
+PRIORITY
+Medium
+DESCRIPTION
+Adicione uma descrição mais detalhada...
+DETAILED INFORMATION
+ASSIGNEE
+Empty
+DUE DATE
+27/10/2026
+LEAD
+Empty
+REMINDER AT
+Empty
+QUICK ACTIONS
+Delete
+CREATED AT
+28/10/2026
+[print] docs/runbooks/evidencia-kanban-reorder-2026-10-28/p9-detalhe-en.png
+após Esc, [role=dialog] presente: true
+--- console.error ---
+(nenhum)

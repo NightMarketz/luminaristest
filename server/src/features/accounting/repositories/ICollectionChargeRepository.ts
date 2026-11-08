@@ -1,6 +1,14 @@
 import type { CollectionCharge, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 
+/**
+ * Linha da lista da unidade com o nº do título (EMENDA-1 16b; D-2026-10-29-F5-16B-E-P-RET-4 item 2) e o `deletedAt` dele
+ * (título cancelado sai do AR; D-2026-10-29-F5-16B-TITULO-CANCELADO).
+ */
+export type CollectionChargeWithReceivableNumber = CollectionCharge & {
+  receivable: { documentNumber: string | null; deletedAt: Date | null };
+};
+
 export interface CreateCollectionChargeData {
   userId: string;
   unitId: string;
@@ -44,6 +52,11 @@ export interface ICollectionChargeRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<CollectionCharge | null>;
   findManyByReceivable(scope: AccountingScope, receivableId: string): Promise<CollectionCharge[]>;
+  /** Página das cobranças da unidade (EMENDA-1 PR-0, 0b), `createdAt desc, id desc`. */
+  findPageByUnit(
+    scope: AccountingScope,
+    params: { status?: string; kind?: string; page: number; limit: number },
+  ): Promise<{ items: CollectionChargeWithReceivableNumber[]; total: number }>;
   findLastByCounterparty(scope: AccountingScope, counterpartyId: string): Promise<CollectionCharge | null>;
   /** PENDING (inclusive vencidas) + CREATING com `updatedAt` anterior a `staleBefore` (P2-3/P2-9). */
   findPollable(staleBefore: Date): Promise<CollectionCharge[]>;

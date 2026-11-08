@@ -6,31 +6,17 @@ fileType: ("PDF" | "DOCX" | "XLSX")
 fileSize: number
 documentPurpose?: ("DATA_ANALYSIS" | "KNOWLEDGE_BASE")
 }
-export interface UpdateDocumentInput {
-contextJson?: {
-processing: {
-totalChunks: number
-processedChunks: number
-failedChunks: number
-duration: number
-startTime: string
-endTime: string
-}
-statistics: {
-wordCount: number
-charCount: number
-avgWordLength: number
-}
-errors?: {
-code: string
-message: string
-timestamp: string
+export interface GeneratedContextInput {
+version: 1
+documentType: (string | null)
+/**
+ * @maxItems 50
+ */
+entities: {
+type: ("PESSOA" | "EMPRESA" | "DATA" | "VALOR" | "IDENTIFICADOR" | "OUTRO")
+value: string
 }[]
-}
-status: ("PENDING" | "PROCESSING" | "COMPLETED" | "ERROR" | "FAILED")
-summary: (string | null)
-processingDate: unknown
-processingError: (string | null)
+userEditedFields?: ("summary" | "documentType" | "entities")[]
 }
 export interface ListDocumentsQueryInput {
 page?: number
@@ -38,5 +24,26 @@ limit?: number
 }
 export interface SearchDocumentsInput {
 query: string
+/**
+ * @maxItems 50
+ */
+documentIds?: string[]
 limit?: number
+}
+export interface SearchDocumentsToolArgsInput {
+query: string
+limit?: number
+}
+export interface UpdateDocumentContextInput {
+fileName?: string
+documentPurpose?: ("DATA_ANALYSIS" | "KNOWLEDGE_BASE")
+summary?: (string | null)
+documentType?: (string | null)
+/**
+ * @maxItems 50
+ */
+entities?: {
+type: ("PESSOA" | "EMPRESA" | "DATA" | "VALOR" | "IDENTIFICADOR" | "OUTRO")
+value: string
+}[]
 }

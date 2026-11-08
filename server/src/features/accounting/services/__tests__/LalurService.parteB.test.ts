@@ -84,7 +84,7 @@ class FakeRepo {
   replaceEntryProcesses = async () => undefined;
   replaceMovementProcesses = async () => undefined;
   replaceEntryJournalLinks = async (entryId: string, ids: string[]) => {
-    this.entries.find((e) => e.id === entryId)!.journalLinks = ids.map((journalEntryId) => ({ journalEntryId, journalEntry: { entryNumber: 1 } }));
+    this.entries.find((e) => e.id === entryId)!.journalLinks = ids.map((journalEntryId) => ({ journalEntryId, journalEntry: { entryNumber: 1, date: new Date(Date.UTC(2025, 0, 15)), description: 'Lançamento fake' } }));
   };
   createEntryParteBLinks = async (entryId: string, links: Array<{ parteBId: string; valorCents: bigint }>, tx?: unknown) => {
     this.rec('createEntryParteBLinks', tx);
@@ -720,8 +720,8 @@ describe('Bloco F — diferença contábil × fiscal da depreciação no fechame
 
     const t = build({ ativos });
     const c = contas(t.repo);
-    const manual = await t.svc.createEntry(scope, { unitId: 'unit-1', year: 2025, quarter: 'T01', livro: 'lacs', codigo: '86', valorCents: 5, indRelacao: '1', parteBId: c.c1071.id });
-    await expect(t.svc.closeParteB(scope, T01)).rejects.toThrow(new RegExp(`ajuste ${manual.id} do usuário na linha 86 do lacs em T01/2025`));
+    await t.svc.createEntry(scope, { unitId: 'unit-1', year: 2025, quarter: 'T01', livro: 'lacs', codigo: '86', valorCents: 5, indRelacao: '1', parteBId: c.c1071.id });
+    await expect(t.svc.closeParteB(scope, T01)).rejects.toThrow(/ajuste do usuário na linha 86 do lacs em T01\/2025/);
     expect(sys(t.repo)).toHaveLength(0);
     expect(t.repo.closings).toHaveLength(0);
   });

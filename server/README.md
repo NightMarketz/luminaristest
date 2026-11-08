@@ -74,7 +74,6 @@ server/
 | `chatInstances` | Chat instances per widget | [README](./src/features/chatInstances/README.md) |
 | `chatMessages` | Message persistence (CRUD) | [README](./src/features/chatMessages/README.md) |
 | `documents` | Document upload/processing/search (RAG) | [README](./src/features/documents/README.md) |
-| `structuredData` | Structured data extracted from documents | [README](./src/features/structuredData/README.md) |
 | `dashboardLayout` | Dashboard layouts (upsert per user) | [README](./src/features/dashboardLayout/README.md) |
 | `interview` | Guided customization | [READMEs](./src/features/interview/) |
 

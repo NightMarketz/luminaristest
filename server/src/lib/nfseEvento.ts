@@ -31,7 +31,8 @@ const fail = (motivo: string): never => {
   throw new ValidationError(`nfse_evento_invalido: ${motivo}`);
 };
 
-export function parseEventoCancelamento(input: string | Buffer): EventoCancelamento {
+/** O envelope comum (XSD 1.01 `TCEvento`): assinatura conferida, `infEvento` e `infPedReg` presentes. */
+function lerEnvelope(input: string | Buffer): { infEvento: Node; infPedReg: Node } {
   const xml = (typeof input === 'string' ? input : input.toString('utf8')).trim();
   if (!xml) fail('documento vazio.');
   if (/<!DOCTYPE/i.test(xml)) fail('documento com DTD (<!DOCTYPE>) não é aceito.');
@@ -46,6 +47,11 @@ export function parseEventoCancelamento(input: string | Buffer): EventoCancelame
   if (!infEvento) fail('elemento <evento>/<infEvento> não encontrado.');
   const infPedReg = obj(obj(infEvento!.pedRegEvento)?.infPedReg);
   if (!infPedReg) fail('infEvento/pedRegEvento/infPedReg não encontrado.');
+  return { infEvento: infEvento!, infPedReg: infPedReg! };
+}
+
+export function parseEventoCancelamento(input: string | Buffer): EventoCancelamento {
+  const { infEvento, infPedReg } = lerEnvelope(input);
   const e101101 = obj(infPedReg!.e101101);
   // BE-INCR-DFE-EVENTOS (nó X11, item 8): o e105102 (Anexo II [3]) é gerado pelo sistema quando a substituta é
   // autorizada — não é o cancelamento do emitente; quem o registra é a substituição.
@@ -64,4 +70,50 @@ export function parseEventoCancelamento(input: string | Buffer): EventoCancelame
   if (!dhProc) fail('infEvento/dhProc ausente.');
 
   return { chNFSe, cMotivo: Number(cMotivo) as 1 | 2 | 9, xMotivo, dhProc };
+}
+
+/**
+ * BE-INCR-DFE-EVENTOS (nó X11, PR-3, item 20; F-FE-DFE-9 a: o XML do evento é a prova; dono 07/11, pergunta "Manual") —
+ * leitor dos eventos que o `cancelamento-manual` aceita. Caminhos e domínios do XSD 1.01 (`tiposEventos_v1.01.xsd`
+ * `TE101101`/`TE101103`/`TE105104`/`TE105105`; `tiposSimples_v1.01.xsd`, sha256 do zip `e7935cbd9470`, igual ao MANIFEST):
+ * - e101101 cancelamento [2] e e101103 Solicitação de Análise Fiscal para Cancelamento [4]: `cMotivo` 1|2|9
+ *   (`TSCodJustCanc` / `TSCodJustAnaliseFiscalCanc`), `xMotivo` 15–255;
+ * - e105104 deferido [5]: `cMotivo` 1 (`TSCodJustAnaliseFiscalCancDef`); e105105 indeferido [6]: `cMotivo` 1 indeferido |
+ *   2 indeferido sem análise de mérito (`TSCodJustAnaliseFiscalCancIndef`); `xMotivo` 15–255.
+ * O `CPFAgTrib` (CPF do agente da administração tributária) e o `nProcAdm` dos e105104/e105105 NÃO são lidos: o CPF é
+ * dado pessoal que o Luminaris não precisa (ADR-OBSERVABILIDADE, PII) e nenhum dos dois decide a transição.
+ */
+export type EventoNfseManual =
+  | { tipo: 'e101101' | 'e101103'; chNFSe: string; cMotivo: 1 | 2 | 9; xMotivo: string; dhProc: string }
+  | { tipo: 'e105104'; chNFSe: string; cMotivo: 1; xMotivo: string; dhProc: string }
+  | { tipo: 'e105105'; chNFSe: string; cMotivo: 1 | 2; xMotivo: string; dhProc: string };
+
+const MOTIVOS_DO_EVENTO = {
+  e101101: ['1', '2', '9'],
+  e101103: ['1', '2', '9'],
+  e105104: ['1'],
+  e105105: ['1', '2'],
+} as const;
+
+export function parseEventoNfseManual(input: string | Buffer): EventoNfseManual {
+  const { infEvento, infPedReg } = lerEnvelope(input);
+  const tipos = (Object.keys(MOTIVOS_DO_EVENTO) as Array<keyof typeof MOTIVOS_DO_EVENTO>).filter((t) => obj(infPedReg[t]));
+  if (tipos.length === 0 && obj(infPedReg.e105102)) {
+    fail('o evento é um cancelamento por substituição (e105102) — registre pela substituição.');
+  }
+  if (tipos.length !== 1) fail('o evento não é um cancelamento nem da análise fiscal (esperado um de e101101 | e101103 | e105104 | e105105).');
+  const tipo = tipos[0];
+  const grupo = obj(infPedReg[tipo])!;
+
+  const chNFSe = txt(infPedReg.chNFSe);
+  if (!/^\d{50}$/.test(chNFSe)) fail(`chNFSe "${chNFSe}" fora do formato de 50 dígitos.`);
+  const cMotivo = txt(grupo.cMotivo);
+  const permitidos: readonly string[] = MOTIVOS_DO_EVENTO[tipo];
+  if (!permitidos.includes(cMotivo)) fail(`cMotivo "${cMotivo}" do ${tipo} fora de ${permitidos.join('|')}.`);
+  const xMotivo = txt(grupo.xMotivo);
+  if (xMotivo.length < 15 || xMotivo.length > 255) fail('xMotivo fora de 15–255 caracteres.');
+  const dhProc = txt(infEvento.dhProc);
+  if (!dhProc) fail('infEvento/dhProc ausente.');
+
+  return { tipo, chNFSe, cMotivo: Number(cMotivo), xMotivo, dhProc } as EventoNfseManual;
 }

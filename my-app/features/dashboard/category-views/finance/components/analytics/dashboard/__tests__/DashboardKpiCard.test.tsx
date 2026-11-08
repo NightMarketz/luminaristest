@@ -26,6 +26,19 @@ describe('DashboardKpiCard — trend flat', () => {
     expect(container.querySelector('.text-red-700')).toBeNull();
   });
 
+  // Resíduo do #770 (dono, chat 2026-11-04: "a badge do kpi"): os chamadores decidem `trend` pela variação CRUA e
+  // formatam o texto arredondado. −0,001% → `AnalyticsDashboard.getCardData` manda trend 'down' + change "0.00%";
+  // `CrmAnalyticsDashboard` manda 'down' + "-0.00%". A variação exibida é zero, e a badge sai ▼ vermelha.
+  it.each(['0.00%', '-0.00%', '+0.00%'])('variação exibida %s com trend down/up não mostra seta nem a cor de queda', (change) => {
+    for (const trend of ['down', 'up'] as const) {
+      const { container } = render(<DashboardKpiCard {...base} change={change} trend={trend} />);
+      expect(container.textContent, `trend ${trend}`).not.toContain('▼');
+      expect(container.textContent, `trend ${trend}`).not.toContain('▲');
+      expect(container.querySelector('.text-red-700'), `trend ${trend}`).toBeNull();
+      cleanup();
+    }
+  });
+
   it('controle: down mostra ▼ e up mostra ▲', () => {
     const down = render(<DashboardKpiCard {...base} change="-5.00%" trend="down" />);
     expect(down.container.textContent).toContain('▼');

@@ -101,7 +101,7 @@ describe('montarR4010 — dividendos (item 16; L6; lacunas A e B do dono 27/10)'
   it('lacuna A: dividendo a sócio PJ não vai a evento nenhum; o relatório avisa', () => {
     const m = montarR4010([div({ taxId: CNPJ_S, tipoPessoa: 'PJ', brutoCents: '9000000' })], [], TABELAS);
     expect([m.beneficiariosPF, m.beneficiariosPJ, m.relatorio]).toEqual([[], [], []]);
-    expect(m.avisos).toEqual([expect.stringContaining(AVISO_DIVIDENDO_PJ_FORA_DA_REINF)]);
+    expect(m.avisos).toEqual([expect.objectContaining({ codigo: AVISO_DIVIDENDO_PJ_FORA_DA_REINF })]);
   });
 
   it('invariante 3: CPF com DV inválido ⇒ 400 nomeado com o partnerId', () => {

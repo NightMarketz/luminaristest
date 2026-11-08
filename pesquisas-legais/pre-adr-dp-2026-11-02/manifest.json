@@ -1,0 +1,26 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Decreto-Lei nº 5.452 de 01/05/1943",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos-lei/1943/del-5452-1943-05-01.md",
+      "url_final": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos-lei/1943/del-5452-1943-05-01.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "",
+      "alertas": [],
+      "baixado_em": "2026-11-02T18:44:27-03:00",
+      "sha256": "7eee0da3b620a17fbd7b34a0eb9adc967c4fb6650d1acba37469d247f88f4600",
+      "arquivo": "docs/D01_del-5452-1943-05-01.md",
+      "texto": "docs/D01_del-5452-1943-05-01.txt",
+      "bytes": 690741
+    }
+  ],
+  "buscas": [],
+  "slug": "pre-adr-dp-2026-11-02",
+  "pergunta": "PRE-ADR do DP: obrigação de controle de jornada (CLT art. 74 §2º) e extinção por acordo (CLT art. 484-A) citadas pela spec",
+  "criado": "2026-11-02T18:44:26-03:00"
+}

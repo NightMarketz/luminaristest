@@ -1,0 +1,30 @@
+Execução 04/11/2026 — RUNBOOK-H2-DFE-MANUAL, pré-condições lidas pela sessão do browser (runner Puppeteer, perfil "dfe")
+Build de produção do commit 5acacc5de (origin/main): app http://127.0.0.1:3100, API http://127.0.0.1:4100/api,
+server/.env com DFE_PARTNER=manual e DFE_PARTNER_ENV=homologacao, dev.db real (backup antes: dev.db.bak-dfe-manual-2026-11-04).
+Senha redigida pelo runner.
+
+[P2]
+POST /api/auth/login -> 200  req: {"identifier":"seed-presumido","password":"<redigida>","rememberMe":false}
+GET /api/nfe/dfe/status -> 200
+   res: {"success":true,"data":{"enabled":true,"partner":"manual","ambiente":"homologacao","capabilities":{"kinds":["NFSE"],"numbersDps":true,"consultar":false,"cancelar":false,"webhook":false,"substituir":true,"inutilizar":false,"cce":false},"porTipo":{"NFSE":{"enabled":true,"partner":"manual","ambiente":"homologacao",…},"NFE":{"enabled":false,"partner":null,"ambiente":null,"reason":"parceiro 'manual' não emite NFE"},"NFCE":{"enabled":false,…}}}}
+
+[P4 — estado encontrado]
+GET /api/accounting/fiscal-profile?unitId=cmuw4yqxg001jcii0iz2yb9rw -> 200
+   emissao={"completo":false,"faltantes":["pTotTribEstCent","pTotTribMunCent","ibsCbsCst","ibsCbsClassTrib"],"pendingExternalValidation":[],"opSimpNac":1} codMun=3550308 regEspTrib=0 issAliquotaBp=200
+Tela (aba Contabilidade → Perfil fiscal): "Perfil da unidade incompleto" — Tributos aproximados — estadual (%) · municipal (%) · IBS/CBS — CST · IBS/CBS — cClassTrib
+   print: P4-perfil-fiscal-antes.png / texto: P4-perfil-fiscal-antes.txt
+
+[P4 — desvio de dado, depois desfeito]
+Para medir se o resto do caminho abria, o agente preencheu pela tela estadual 0,00, municipal 2,00 (= a alíquota de ISS já gravada),
+CST 000 e cClassTrib 000001 e salvou:
+PUT /api/accounting/fiscal-profile -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","regimeTributario":"PRESUMIDO",…,"codMun":"3550308",…,"issAliquotaBp":200,…,"ibsCbsInformar":true,"ibsCbsCst":"000","ibsCbsClassTrib":"000001","pTotTribFedCent":1550,"pTotTribEstCent":0,"pTotTribMunCent":200,"pTotTribSNCent":null,"emissaoForaDoMes":"BLOQUEAR"}
+GET /api/accounting/fiscal-profile -> 200 emissao={"completo":true,"faltantes":[],"pendingExternalValidation":[],"opSimpNac":1} pTotTribFedCent=1550 pTotTribEstCent=0 pTotTribMunCent=200 ibsCbsCst=000 ibsCbsClassTrib=000001
+   print: P4-perfil-fiscal-completo.png ("Perfil da unidade completo")
+O passo 1 mostrou outras faltas de cadastro (CNPJ da unidade, cNBS do serviço, taxId do cliente), que são dado do dono.
+O agente então desfez o desvio pela mesma tela (campos esvaziados, Salvar perfil):
+PUT /api/accounting/fiscal-profile -> 200  req: {…,"ibsCbsInformar":true,"ibsCbsCst":null,"ibsCbsClassTrib":null,"pTotTribFedCent":1550,"pTotTribEstCent":null,"pTotTribMunCent":null,…}
+GET /api/accounting/fiscal-profile -> 200 emissao={"completo":false,"faltantes":["pTotTribEstCent","pTotTribMunCent","ibsCbsCst","ibsCbsClassTrib"],"pendingExternalValidation":[],"opSimpNac":1} pTotTribFedCent=1550 pTotTribEstCent=null pTotTribMunCent=null ibsCbsCst=null ibsCbsClassTrib=null
+   print: P4-perfil-fiscal-revertido.png ("Perfil da unidade incompleto")
+Conferência no banco (só leitura), linha fiscal_profiles da unidade, dev.db × backup: única diferença [('updatedAt', 1793744562116, 1793809938865)].
+As contas PIS/COFINS ausentes do corpo do PUT continuaram gravadas (o servidor mescla), iguais ao backup.
+fiscal_documents: 0 linhas antes e depois (nenhum documento fiscal criado).

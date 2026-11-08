@@ -51,7 +51,7 @@ const padraoRows = [{ codigo: '1000', descricao: 'Prejuízo Fiscal Operacional',
  * the test's first yield: a plain timer started at the call gets absorbed by slow synchronous work under load
  * (in the full-suite run a plain 50 ms let 5 of the 12 guarded e-Lalur cases pass).
  */
-const later = <T,>(value: T) => new Promise<T>((resolve) => setTimeout(() => setTimeout(() => resolve(value), 50), 0));
+import { later } from '../../../../test-utils/later'; // drenado pelo afterEach global (vitest.setup.ts)
 
 describe('LalurPanel', () => {
   beforeEach(() => {

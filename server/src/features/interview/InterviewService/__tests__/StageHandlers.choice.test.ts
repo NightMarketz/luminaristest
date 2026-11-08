@@ -122,7 +122,7 @@ describe('item 1 — contrato do corpo em POST /api/dashboard/ai/ChatInterview',
     const res = await call({ stage: 'AWAITING_CREATION_TYPE_CONFIRMATION', presetKey: 'beautySalon', choice: 'create' });
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(processTurn).toHaveBeenCalledWith('AWAITING_CREATION_TYPE_CONFIRMATION', [], 'u1', 'beautySalon', undefined, 'create', undefined);
+    expect(processTurn).toHaveBeenCalledWith('AWAITING_CREATION_TYPE_CONFIRMATION', [], 'u1', 'beautySalon', undefined, 'create', undefined, undefined);
   });
 
   it('W1 (F-W1-6 a): modules do corpo chega ao processTurn', async () => {
@@ -133,7 +133,7 @@ describe('item 1 — contrato do corpo em POST /api/dashboard/ai/ChatInterview',
     const res = await call({ stage: 'AWAITING_CREATION_TYPE_CONFIRMATION', presetKey: 'beautySalon', choice: 'customize', modules: ['CRM-3'] });
 
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(processTurn).toHaveBeenCalledWith('AWAITING_CREATION_TYPE_CONFIRMATION', [], 'u1', 'beautySalon', undefined, 'customize', ['CRM-3']);
+    expect(processTurn).toHaveBeenCalledWith('AWAITING_CREATION_TYPE_CONFIRMATION', [], 'u1', 'beautySalon', undefined, 'customize', ['CRM-3'], undefined);
   });
 
   it('W1: módulo fora do registro em modules → 400 sem chamar o processTurn', async () => {
@@ -141,5 +141,67 @@ describe('item 1 — contrato do corpo em POST /api/dashboard/ai/ChatInterview',
     const res = await call({ stage: 'AWAITING_CREATION_TYPE_CONFIRMATION', presetKey: 'beautySalon', choice: 'customize', modules: ['CRM-9'] });
     expect(res.status).toHaveBeenCalledWith(400);
     expect(processTurn).not.toHaveBeenCalled();
+  });
+
+  it('idioma da UI (dono, 06/11): locale do corpo chega ao processTurn', async () => {
+    const processTurn = jest
+      .spyOn(InterviewService.prototype, 'processTurn')
+      .mockResolvedValue({ response: 'ok', nextStage: 'DISCOVERING_BUSINESS' });
+    const res = await call({ stage: 'GREETING', locale: 'en' });
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(processTurn).toHaveBeenCalledWith('GREETING', [], 'u1', undefined, undefined, undefined, undefined, 'en');
+  });
+
+  it('idioma da UI: locale fora de pt/en → 400 sem chamar o processTurn', async () => {
+    const processTurn = jest.spyOn(InterviewService.prototype, 'processTurn');
+    const res = await call({ stage: 'GREETING', locale: 'fr' });
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(processTurn).not.toHaveBeenCalled();
+  });
+});
+
+describe('idioma da UI (dono, chat, 2026-11-06: "Seguir o idioma da UI")', () => {
+  it('GREETING em inglês com locale en; sem locale segue em português', async () => {
+    const svc = new InterviewService({} as CustomizationService, {} as OpenAIService);
+    expect((await svc.processTurn('GREETING', [], 'u1', undefined, undefined, undefined, undefined, 'en')).response).toMatch(/^Hi! To get started/);
+    expect((await svc.processTurn('GREETING', [], 'u1')).response).toMatch(/^Olá! Para começarmos/);
+  });
+
+  it('resumo do DISCOVERING_BUSINESS no idioma da UI e sem ponto duplicado', async () => {
+    jest.spyOn(StageHandlers.prototype, 'getAiResponseWithHistory').mockResolvedValue('SUMMARY: A beauty salon that uses spreadsheets.');
+    const svc = new InterviewService({} as CustomizationService, {} as OpenAIService);
+    const en = await svc.processTurn('DISCOVERING_BUSINESS', said('salon'), 'u1', undefined, undefined, undefined, undefined, 'en');
+    expect(en.response).toBe('Got it. So, in short, your business is: A beauty salon that uses spreadsheets. Is that correct?');
+    const pt = await svc.processTurn('DISCOVERING_BUSINESS', said('salão'), 'u1');
+    expect(pt.response).toBe('Entendi. Então, em resumo, seu negócio é: A beauty salon that uses spreadsheets. Isso está correto?');
+  });
+
+  it('ambíguo em inglês → texto fixo em inglês, mesmo reason unclear', async () => {
+    const result = await handlersWith().handleCreationTypeConfirmation(said('hmm'), 'beautySalon', 'u1', undefined, undefined, 'en');
+    expect(result.response).toBe("I didn't get your choice. Would you rather **create the system now** or **customize** it first?");
+    expect(result.choicePrompt).toEqual({ kind: 'creation_type', reason: 'unclear' });
+  });
+
+  it.each([
+    ["I don't want to customize", 'declined_customize'],
+    ['create it now', undefined],
+  ])('texto livre em inglês "%s" → reason %s', async (content, reason) => {
+    const result = await handlersWith().handleCreationTypeConfirmation(said(content), 'beautySalon', 'u1', undefined, undefined, 'en');
+    if (reason) expect(result.choicePrompt).toEqual({ kind: 'creation_type', reason });
+    else expect(result.nextStage).toBe('COMPLETED');
+  });
+
+  it('o prompt do MATCHING_PRESET pede a resposta em inglês e cita os módulos pelo nome em inglês', async () => {
+    jest.spyOn(PresetMatcher.prototype, 'findMatchingPreset').mockResolvedValue(presetKnowledgeBase[0]);
+    const ai = jest.spyOn(StageHandlers.prototype, 'getAiResponseWithHistory').mockResolvedValue('Found it.');
+    jest.spyOn(ModuleSuggester.prototype, 'suggest').mockResolvedValue([
+      { key: 'CRM-3', name: { pt: 'Oportunidades', en: 'Opportunities' }, dependsOn: [], locked: false, suggested: true },
+    ]);
+    await new InterviewService({} as CustomizationService, {} as OpenAIService)
+      .processTurn('MATCHING_PRESET', said('I run a salon'), 'u1', undefined, undefined, undefined, undefined, 'en');
+    const prompt = ai.mock.calls[0][0];
+    expect(prompt).toContain('Responda SEMPRE em inglês');
+    expect(prompt).toContain('Opportunities');
+    expect(prompt).not.toContain('Oportunidades');
   });
 });
