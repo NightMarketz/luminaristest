@@ -18,7 +18,7 @@ import type { DfeSignerDeviceWithUnits, IDfeSignerRepository } from '../reposito
 import type { IDfeSignerTaskRepository } from '../repositories/IDfeSignerTaskRepository';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
-import type { FilaDoAssinador, NovaTarefaAssinador } from '../dfe/local/AssinadorLocal';
+import type { FilaDoAssinador, NovaTarefaAssinador, SemResposta } from '../dfe/local/AssinadorLocal';
 
 /** AL-13 (F-AL-6 a) — por que a unidade não assina agora pelo assinador local. */
 export type MotivoSemAssinadorLocal =
@@ -172,7 +172,7 @@ export class DfeSignerTaskService {
   }
 
   // ── Internos ───────────────────────────────────────────────────────────────
-  private async executar(device: DfeSignerDeviceWithUnits, scope: AccountingScope, tarefa: NovaTarefaAssinador, esperaMs: number): Promise<DfeSignerResultadoBody | null> {
+  private async executar(device: DfeSignerDeviceWithUnits, scope: AccountingScope, tarefa: NovaTarefaAssinador, esperaMs: number): Promise<DfeSignerResultadoBody | SemResposta> {
     const expiresAt = new Date(this.now().getTime() + esperaMs);
     const task = await this.repo.create({
       userId: scope.ownerUserId,
@@ -195,8 +195,12 @@ export class DfeSignerTaskService {
     });
     this.acordar(device.id);
     const r = await resultado;
-    if (!r) await this.repo.expire(task.id);
-    return r;
+    if (r) return r;
+    // Sem resultado no prazo. Ainda `PENDING` ⇒ ninguém a pega depois (a expiração é atômica com a entrega). Já entregue ⇒
+    // o caixa pode estar executando: `ENTREGUE`, que o adaptador trata como timeout da SEFAZ (AL-9), nunca como "não saiu".
+    if (await this.repo.expirarPendente(task.id)) return 'NAO_ENTREGUE';
+    await this.repo.expire(task.id);
+    return 'ENTREGUE';
   }
 
   private async entregar(deviceId: string): Promise<DfeSignerTarefa[]> {

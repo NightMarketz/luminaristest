@@ -36,4 +36,9 @@ export class DfeSignerTaskRepository implements IDfeSignerTaskRepository {
   public async expire(id: string): Promise<boolean> {
     const r = await prisma.dfeSignerTask.updateMany({ where: { id, status: { in: ABERTAS } }, data: { status: 'EXPIRED', payload: null, leaseUntil: null } });
     return r.count === 1;
+  }
+
+  public async expirarPendente(id: string): Promise<boolean> {
+    const r = await prisma.dfeSignerTask.updateMany({ where: { id, status: 'PENDING' }, data: { status: 'EXPIRED', payload: null, leaseUntil: null } });
+    return r.count === 1;
   }}

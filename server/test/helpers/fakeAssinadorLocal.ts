@@ -2,7 +2,7 @@ import { createHash, sign, type KeyObject } from 'node:crypto';
 import { request } from 'node:https';
 import { wsdlNs } from '../../src/features/accounting/dfe/sefaz/SefazSoapClient';
 import { DfeSignerTarefaSchema, type DfeSignerResultadoBody } from '../../src/features/accounting/dtos/DfeSignerDto';
-import type { FilaDoAssinador, NovaTarefaAssinador } from '../../src/features/accounting/dfe/local/AssinadorLocal';
+import type { FilaDoAssinador, NovaTarefaAssinador, SemResposta } from '../../src/features/accounting/dfe/local/AssinadorLocal';
 import type { TlsPki } from './fakeSefaz';
 
 /**
@@ -14,7 +14,9 @@ import type { TlsPki } from './fakeSefaz';
  */
 export type CaixaFalso = FilaDoAssinador & {
   tarefas: NovaTarefaAssinador[];
-  responder?: (t: NovaTarefaAssinador) => Promise<DfeSignerResultadoBody | null>;
+  responder?: (t: NovaTarefaAssinador) => Promise<DfeSignerResultadoBody | SemResposta>;
+  /** O comportamento normal do caixa (assina ou transmite de verdade), para o `responder` embrulhar. */
+  padrao: (t: NovaTarefaAssinador) => Promise<DfeSignerResultadoBody>;
 };
 
 export const sha1B64 = (s: string | Buffer) => createHash('sha1').update(s).digest('base64');
@@ -24,11 +26,12 @@ export const thumbprintDe = (pem: string) => createHash('sha256').update(Buffer.
 export function caixaFalso(opts: { key: KeyObject; certPem: string; cnpj: string; tpAmb: '1' | '2'; pki: TlsPki }): CaixaFalso {
   const caixa: CaixaFalso = {
     tarefas: [],
+    padrao: async (tarefa) => (tarefa.tipo === 'ASSINAR' ? assinar(tarefa, opts) : transmitir(tarefa, opts.pki)),
     async executar(tarefa) {
       caixa.tarefas.push(tarefa);
       DfeSignerTarefaSchema.parse({ ...tarefa, id: 't1', expiraEm: new Date().toISOString() }); // contrato §4.2
       if (caixa.responder) return caixa.responder(tarefa);
-      return tarefa.tipo === 'ASSINAR' ? assinar(tarefa, opts) : transmitir(tarefa, opts.pki);
+      return caixa.padrao(tarefa);
     },
   };
   return caixa;

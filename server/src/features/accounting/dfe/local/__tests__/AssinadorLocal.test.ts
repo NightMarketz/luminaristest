@@ -128,7 +128,7 @@ describe('X10a EMENDA-4 — assinador local (AL-8, AL-9, AL-10, L-AL-1)', () => 
       expect(await assinar()).toMatchObject({ ok: false, code: esperado });
     });
     it('sem resposta no prazo ⇒ ASSINADOR_INDISPONIVEL (a nota espera, F-AL-6 a)', async () => {
-      caixa.responder = async () => null;
+      caixa.responder = async () => 'ENTREGUE';
       expect(await assinar()).toMatchObject({ ok: false, code: 'ASSINADOR_INDISPONIVEL' });
     });
     it('L-AL-1: certificado que assinou ≠ certificado do pareamento ⇒ CONTEUDO_RECUSADO', async () => {
@@ -169,10 +169,15 @@ describe('X10a EMENDA-4 — assinador local (AL-8, AL-9, AL-10, L-AL-1)', () => 
       expect(isFalhaDeComunicacao(e)).toBe(false);
       expect(isAssinaturaPendente(e)).toBe(true);
     });
-    it('assinador sem resposta ⇒ ASSINADOR_INDISPONIVEL (não contingência)', async () => {
-      caixa.responder = async () => null;
+    it('transmissão nunca entregue ao caixa (sem resposta) ⇒ ASSINADOR_INDISPONIVEL, não contingência: nada saiu para a SEFAZ', async () => {
+      caixa.responder = async () => 'NAO_ENTREGUE';
       const e = await call().catch((x: unknown) => x);
       expect([e instanceof AssinaturaRemotaError && e.code, isFalhaDeComunicacao(e)]).toEqual(['ASSINADOR_INDISPONIVEL', false]);
+    });
+    it('AL-9 (defeito): transmissão entregue ao caixa sem resposta ⇒ sefaz_timeout (comunicação, a consulta usa a mesma chave), nunca ASSINADOR_INDISPONIVEL', async () => {
+      caixa.responder = async () => 'ENTREGUE';
+      const e = await call().catch((x: unknown) => x);
+      expect([e instanceof SefazTransporteError && e.code, isFalhaDeComunicacao(e)]).toEqual(['sefaz_timeout', true]);
     });
     it('HOST_FORA_DA_LISTA ⇒ erro nosso (tabela e lista divergiram), não falha de comunicação', async () => {
       caixa.responder = async () => ({ ok: false, code: 'HOST_FORA_DA_LISTA', message: 'x' });

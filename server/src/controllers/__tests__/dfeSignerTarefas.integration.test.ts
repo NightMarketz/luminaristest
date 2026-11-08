@@ -168,7 +168,7 @@ describe('X10a EMENDA-4 AL-PR-3 — fila do assinador local pela HTTP', () => {
 
   it('AL-6: sem resultado no prazo ⇒ a fila devolve null, a tarefa vence e o resultado atrasado é 409', async () => {
     const r = await (await fila()).executar({ tipo: 'TRANSMITIR', url: 'https://homologacao.nfce.fazenda.sp.gov.br/ws/x.asmx', servico: 'NFeStatusServico4', envelopeB64: 'PHgvPg==', timeoutMs: 1_000 }, 300);
-    expect(r).toBeNull();
+    expect(r).toBe('NAO_ENTREGUE'); // ninguém a pegou: vence sem efeito
     const vencida = await prisma.dfeSignerTask.findFirstOrThrow({ where: { tipo: 'TRANSMITIR' }, orderBy: { createdAt: 'desc' } });
     expect(vencida).toMatchObject({ status: 'EXPIRED', payload: null });
     expect((await poll()).status).toBe(204); // vencida não é entregue

@@ -226,7 +226,7 @@ describe('X10a EMENDA-4 AL-PR-3 — assinador local nos serviços de emissão e 
   });
 
   it('AL-13 (F-AL-6 a): o assinador cai no meio ⇒ PENDING_SIGNATURE com o número, sem contingência; nada foi à SEFAZ', async () => {
-    caixa.responder = async () => null;
+    caixa.responder = async () => 'ENTREGUE';
     const antes = sefaz.controle.chamadas.length;
     const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
     expect(view).toMatchObject({ status: 'PENDING_SIGNATURE', numero: '1' });
@@ -247,8 +247,26 @@ describe('X10a EMENDA-4 AL-PR-3 — assinador local nos serviços de emissão e 
     expect(repo.nextNumber).toHaveBeenCalledTimes(1);
   });
 
+  it('AL-6 + AL-9 (defeito): TRANSMITIR entregue ao caixa sem resultado ⇒ timeout da SEFAZ (SENT, mesma chave); a retomada não gera segunda chave', async () => {
+    const desde = sefaz.controle.chamadas.length;
+    let perdeu = false;
+    caixa.responder = async (t) => {
+      if (t.tipo === 'TRANSMITIR' && !perdeu) {
+        perdeu = true;
+        await caixa.padrao(t); // a SEFAZ recebe e autoriza; o resultado se perde no caminho até o servidor
+        return 'ENTREGUE'; // silêncio: a tarefa foi entregue e não voltou resultado
+      }
+      return caixa.padrao(t);
+    };
+    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
+    expect(view).toMatchObject({ status: 'SENT', numero: '1' });
+    expect(await lifecycle.enviarPendentesDaUnidade(SCOPE)).toEqual({ enviadas: 0, falhas: 0 });
+    expect(repo.nextNumber).toHaveBeenCalledTimes(1);
+    expect(autorizacoes(desde)).toBe(1);
+  });
+
   it('AL-14: o reenviar manual também aceita a PENDING_SIGNATURE do assinador local', async () => {
-    caixa.responder = async () => null;
+    caixa.responder = async () => 'ENTREGUE';
     const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
     expect(view.status).toBe('PENDING_SIGNATURE');
     caixa.responder = undefined;

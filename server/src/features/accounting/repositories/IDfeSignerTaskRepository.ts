@@ -28,4 +28,6 @@ export interface IDfeSignerTaskRepository {
   /** `PENDING | DELIVERED` ⇒ `status` final, apaga o payload e grava o hash do resultado; false se já saiu desses estados. */
   complete(id: string, status: Extract<DfeSignerTaskStatus, 'DONE' | 'FAILED'>, resultHash: string): Promise<boolean>;
   /** `PENDING | DELIVERED` ⇒ `EXPIRED` e apaga o payload; false se já saiu desses estados. */
-  expire(id: string): Promise<boolean>;}
+  expire(id: string): Promise<boolean>;
+  /** `PENDING` ⇒ `EXPIRED` só se ainda não foi entregue (atômico com `claim`); false se já foi entregue ou saiu. */
+  expirarPendente(id: string): Promise<boolean>;}
