@@ -108,3 +108,6 @@ dá 409). O helper ficou estrito. **Falsificador:** tirar `PAYING` de `PARTIALLY
 - A tabela do AP foi **derivada pela leitura**, não por execução. As escritas por recálculo (`payableStatusForBalance`) podem produzir pares que a leitura
   não enxergou (ex.: `OPEN → PARTIALLY_PAID` num recálculo após estorno de retenção sobre um título já parcialmente baixado). O item 2 da fila
   é o que converte isso em prova. Grau: **inferido**.
+- AR (revisão independente do #1150): o `compensateFailedRecognition` do `ReceivableService` grava `CANCELLED` sem condição de status.
+  Se um claim concorrente entrar entre o commit da criação e a falha do reconhecimento, o resultado é `RECEIVING → CANCELLED`, par fora da
+  tabela. A tabela acerta ao não legalizá-lo; o item 2 decide entre CAS `where status: 'OPEN'` e `assertTransition`. Grau: **inferido** (leitura, não execução).

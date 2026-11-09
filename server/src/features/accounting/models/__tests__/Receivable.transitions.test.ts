@@ -28,8 +28,8 @@ describe('RECEIVABLE_TRANSITIONS', () => {
     }
   });
 
-  it('o estorno de recebimento nunca recalcula para RECEIVED nem sai de CANCELLED', () => {
-    expect(canTransition(RECEIVABLE_TRANSITIONS, 'RECEIVED', 'RECEIVED')).toBe(false);
+  it('só o finalize (RECEIVING) chega a RECEIVED — o estorno nunca recalcula para RECEIVED — e nada sai de CANCELLED', () => {
+    expect(sourcesOf(RECEIVABLE_TRANSITIONS, 'RECEIVED')).toEqual(['RECEIVING']);
     expect(sourcesOf(RECEIVABLE_TRANSITIONS, 'CANCELLED')).toEqual(['OPEN']);
     for (const s of RECEIVABLE_STATUSES) expect(canTransition(RECEIVABLE_TRANSITIONS, 'CANCELLED', s)).toBe(false);
   });
