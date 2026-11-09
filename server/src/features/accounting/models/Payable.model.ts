@@ -27,10 +27,12 @@ export type PayableStatus = (typeof PAYABLE_STATUSES)[number];
  *   OPEN|PARTIALLY_PAID → PAYING           claimForPayment (sum-CAS)
  *   PAYING → PAID|PARTIALLY_PAID           finalizeIfPaying
  *   PAYING → OPEN|PARTIALLY_PAID           revertClaim (recalcula por payableStatusForBalance)
- *   PAID|PARTIALLY_PAID → OPEN|PARTIALLY_PAID   estorno de baixa / estorno de retenção (recálculo; PAID recusado)
+ *   PAID|PARTIALLY_PAID → OPEN|PARTIALLY_PAID   estorno de baixa (recálculo; PAID recusado no estorno de baixa, não no de retenção)
+ *   PARTIALLY_PAID → PARTIALLY_PAID         estorno de uma de duas baixas (grava o mesmo status; NÃO listado, ver lifecycle.ts)
  *   OPEN → DEFERRED, DEFERRED → OPEN       WithholdingService (título de imposto < R$ 10, Lei 9.430 art. 68 §1º)
  *   OPEN → CANCELLED                       cancelPayable (só OPEN)
  *   PARTIALLY_PAID|PAID → CANCELLED        compensateFailedRecognition (título nascido com retenção cujo razão falhou)
+ *   OPEN → CANCELLED (também)              WithholdingService (cancelamento de título de imposto, exige OPEN)
  * Na criação o título nasce por `payableStatusForBalance` (OPEN | PARTIALLY_PAID | PAID). `CANCELLED` é terminal.
  * Mudou um sítio de escrita? Mude esta tabela no mesmo PR — `Payable.transitions.test.ts` amarra as constantes a ela.
  */

@@ -11,7 +11,9 @@
  *  - todo estado é chave (o `satisfies TransitionTable<S>` reprova estado esquecido ou digitado errado);
  *  - estado terminal = lista vazia;
  *  - X → X só vale se constar. Nada de "mesmo status é sempre ok": o PATCH de `PaymentAccount` recusa o mesmo
- *    status com 409 (dono, 03/10). Recálculo que devolve o mesmo status é um no-op que o chamador pula antes.
+ *    status com 409 (dono, 03/10). Recálculo que grava o mesmo status NÃO é pulado hoje (ex.: estorno de uma de
+ *    duas baixas num título PARTIALLY_PAID): a tabela não o lista. Antes de ligar `assertTransition` num recálculo,
+ *    decidir se ele vira no-op ou se o par X → X entra na tabela (PRE-ADR-LIFECYCLE-TRANSITIONS §4, item 2).
  */
 import { ValidationError } from './errors';
 
