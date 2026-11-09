@@ -5,6 +5,7 @@
  * payment-method → credit-account map, and the rename-on-delete helper.
  */
 import { ValidationError } from '../../../lib/errors';
+import type { TransitionTable } from '../../../lib/lifecycle';
 import { BANCO_CODE, CAIXA_CODE } from '../fixtures/ChartOfAccountsFixture';
 
 /**
@@ -12,12 +13,35 @@ import { BANCO_CODE, CAIXA_CODE } from '../fixtures/ChartOfAccountsFixture';
  * `registerPayment` flips `OPEN|PARTIALLY_PAID → PAYING` atomically (the sum-CAS of
  * BE-INCR-PARTIAL-SETTLEMENT, ADR §3) before posting, so concurrent settlements race on this
  * single-row write and exactly one wins; finalize resolves `PAYING → PAID | PARTIALLY_PAID` by the
- * balance. `PARTIALLY_PAID` (F-PS2 → a) = `0 < paidCents < amountCents`. `PAID`/`CANCELLED` are terminal.
+ * balance. `PARTIALLY_PAID` (F-PS2 → a) = `0 < paidCents < amountCents`. `CANCELLED` is terminal; `PAID` is
+ * NOT (a settlement reversal reopens it) — the full graph is `PAYABLE_TRANSITIONS` below.
  */
 // RETENCOES-FONTE PR-2 (item 20): `DEFERRED` = título de imposto < R$ 10 somado ao da competência seguinte (Lei 9.430
 // art. 68 § 1º) — não vence, não aceita baixa e fica fora do "em aberto".
 export const PAYABLE_STATUSES = ['OPEN', 'PARTIALLY_PAID', 'PAYING', 'PAID', 'CANCELLED', 'DEFERRED'] as const;
 export type PayableStatus = (typeof PAYABLE_STATUSES)[number];
+
+/**
+ * Grafo do ciclo de vida do título (PRE-ADR-LIFECYCLE-TRANSITIONS, piloto). DECLARA o que os sítios de escrita
+ * já fazem; não executa nada — a corrida segue no CAS do `PayableRepository`. Sítios lidos em 2026-11-09:
+ *   OPEN|PARTIALLY_PAID → PAYING           claimForPayment (sum-CAS)
+ *   PAYING → PAID|PARTIALLY_PAID           finalizeIfPaying
+ *   PAYING → OPEN|PARTIALLY_PAID           revertClaim (recalcula por payableStatusForBalance)
+ *   PAID|PARTIALLY_PAID → OPEN|PARTIALLY_PAID   estorno de baixa / estorno de retenção (recálculo; PAID recusado)
+ *   OPEN → DEFERRED, DEFERRED → OPEN       WithholdingService (título de imposto < R$ 10, Lei 9.430 art. 68 §1º)
+ *   OPEN → CANCELLED                       cancelPayable (só OPEN)
+ *   PARTIALLY_PAID|PAID → CANCELLED        compensateFailedRecognition (título nascido com retenção cujo razão falhou)
+ * Na criação o título nasce por `payableStatusForBalance` (OPEN | PARTIALLY_PAID | PAID). `CANCELLED` é terminal.
+ * Mudou um sítio de escrita? Mude esta tabela no mesmo PR — `Payable.transitions.test.ts` amarra as constantes a ela.
+ */
+export const PAYABLE_TRANSITIONS = {
+  OPEN: ['PAYING', 'DEFERRED', 'CANCELLED'],
+  PARTIALLY_PAID: ['PAYING', 'OPEN', 'CANCELLED'],
+  PAYING: ['PAID', 'PARTIALLY_PAID', 'OPEN'],
+  PAID: ['PARTIALLY_PAID', 'OPEN', 'CANCELLED'],
+  DEFERRED: ['OPEN'],
+  CANCELLED: [],
+} as const satisfies TransitionTable<PayableStatus>;
 
 /** Statuses a NEW settlement may be registered against (guard pré-CAS, ADR F-PS2 site 2). */
 export const PAYABLE_SETTLEABLE_STATUSES = ['OPEN', 'PARTIALLY_PAID'] as const;
