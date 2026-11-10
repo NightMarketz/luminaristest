@@ -84,6 +84,10 @@ tema G (REG Q-03, REG-IMOBILIZADO Q-04/Q-05, REG-FECHAMENTO Q-301..Q-304, REG-CL
 
 Só IDs escritos pelo dono no chat; faixas 3 e 4, um ID por vez.
 
+- **Merge livre do vermelho da faixa 1 (D-2026-11-10-FAIXA1-MERGE-LIVRE, PR #1163):** dono, chat, 2026-11-10: "Sim, confirma o #1163"
+  (confirmação do lote vermelho daquele PR, só texto; copiada no corpo do #1163). Ressalva: o #1160 (SM F-01.2) carrega também o
+  INV F-11.2, que é da faixa 4 (autorizado pelo dono na sessão SM); a exceção cobre só a faixa 1, então o #1160 segue para o lote
+  do dono, salvo ordem dele em contrário.
 - **Faixa 1 inteira (45 linhas, 46 IDs com INV F-11.2), mais SOT F-02.1:** dono, chat, 2026-11-10: "Dispara a faixa 1 em opus
   médio 1 para cada categoria". Aprovação por faixa vale só para a faixa 1 (regra do prompt da orquestração). SOT F-02.1 é
   Representação D1, aprovado como dependência do SOT F-02.2 ("Aprova F-02.1 junto", questionário da mesma data).
