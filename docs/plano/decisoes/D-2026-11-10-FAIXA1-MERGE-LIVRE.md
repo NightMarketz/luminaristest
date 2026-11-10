@@ -11,7 +11,7 @@ atualizado: "2026-11-10"
 
 **Estado:** `decided`. Exceção, com escopo fechado, à regra de merge da [D-2026-10-28-FLUXO-AUTONOMO](D-2026-10-28-FLUXO-AUTONOMO.md).
 
-**Por quê:** a faixa 1 da auditoria de estruturas implícitas tem 46 linhas, cada uma com um PR. A maior parte toca o módulo
+**Por quê:** a faixa 1 da auditoria de estruturas implícitas tem 46 linhas, cada uma com um PR (alguma pode ter mais de um, como o SM F-01.2, dividido em AP e AR). A maior parte toca o módulo
 contábil e sai **vermelha** no `classe-risco.mjs`, o que mandaria dezenas de PRs ao lote diário, um número por vez. O dono
 não quer confirmar cada um.
 
@@ -31,9 +31,9 @@ A maestro trata como **VERDE** (merge squash sozinha) o PR que cumpre **todas** 
 
 Faltou qualquer condição: vale a regra de sempre (lote do dono).
 
-## Achados cobertos (47 IDs)
+## Achados cobertos (46 IDs)
 
-SM F-01.2 (inclui INV F-11.2) · INV F-16.3, F-26.1, F-40.1, F-40.2, F-14.2, F-41.1, F-42.1 · SOT F-01.1, F-18.1, F-02.1, F-02.2,
+SM F-01.2 (o INV F-11.2 não está coberto: é faixa 4) · INV F-16.3, F-26.1, F-40.1, F-40.2, F-14.2, F-41.1, F-42.1 · SOT F-01.1, F-18.1, F-02.1, F-02.2,
 F-11.1, F-12.1, F-23.1, F-01.4 · EFX F-18.2, F-19.1 · BRD F-02.1, F-03.4, F-04.2, F-08.1, F-56.1, F-56.2, F-57.1, F-57.2, F-57.3,
 F-58.1, F-60.2, F-62.1, F-63.1, F-65.1, F-65.3, F-66.1, F-66.2, F-66.3, F-66.4, F-69.1, F-71.1, F-72.1, F-72.2, F-72.4, F-72.6,
 F-73.2, F-74.1, F-75.1.
