@@ -389,6 +389,18 @@ describe('StockMovementsApplyPlugin — applies manual In/Out to stock', () => {
     expect(stored.reason).toBe('Purchase');
     expect(stored.detailKey).toBe('ACCOUNTING_PAYABLE:pay-1');
   });
+  it('INV F-41.1 (resíduo): prefixo ACCOUNTING_PAYABLE: forjado num POST sem isSystem → 400, estoque intacto', async () => {
+    // Decisão do dono (chat, 10/11): exigir isSystem. O único criador legítimo (PhysicalStockSync) escreve com isSystem: true,
+    // e o motor tira __isSystem do payload, então o cliente não forja a flag; o prefixo do detailKey, sim.
+    const purchaseFields = [...movementFields, f('supplierId', 'string'), f('cost', 'number'), f('paymentStatus', 'string'), f('detailKey', 'string')];
+    const productUnits = await seedTbl({ name: 'Product Units', internalName: 'productUnits', category: 'inventory', fields: productUnitFields });
+    const movements = await seedTbl({ name: 'Stock Movements', internalName: 'stockMovements', category: 'inventory', fields: purchaseFields });
+    const puId = (await prisma.dynamicTableData.create({ data: { dynamicTableId: productUnits.id, data: { productId: 'p1', unitId: 'u1', stock: 10, reserved: 0 } as any } })).id;
+    await expect(
+      create(movements.id, { productId: 'p1', unitId: 'u1', type: 'In', quantity: 5, reason: 'Purchase', detailKey: 'ACCOUNTING_PAYABLE:forjado', __isSystem: true }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    expect((await rowById(puId))!.data as any).toMatchObject({ stock: 10 });
+  });
 });
 
 // ---------------------------------------------------------------------------------------------
