@@ -74,7 +74,7 @@ const receivedReceivable: ReceivableWithReceipts = {
   ...openReceivable, id: 'ar2', customerName: 'Cliente Y', documentNumber: 'NF-2',
   description: 'Venda', status: 'RECEIVED', remainingCents: 0,
   receipts: [{
-    id: 'rec1', userId: 'o1', unitId: 'u1', receivableId: 'ar2', amountCents: 150000, method: 'Pix',
+    id: 'rec1', userId: 'o1', unitId: 'u1', receivableId: 'ar2', amountCents: 150000, method: 'Pix', kind: 'PAYMENT',
     receivedAt: '2026-06-05', receivedByUserId: 'o1', status: 'ACTIVE', entryId: 'e9',
     createdAt: '2026-06-05T00:00:00Z', updatedAt: '2026-06-05T00:00:00Z',
   }],
@@ -410,5 +410,34 @@ describe('SOT F-01.1 — AccountsReceivablePanel usa o remainingCents do servido
       screen.getByTestId('charge-amount').textContent,
       'SOT F-01.1: o valor da cobrança deve ser o remainingCents do servidor (500,00); 1.500,00 = amountCents − Σ ACTIVE, conta própria da tela',
     ).toMatch(/(^|\s)500,00$/);
+  });
+});
+
+describe('SOT F-02.2 — histórico de recebimentos mostra rótulo, não o método cru', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+    vi.mocked(counterpartiesService.listCounterparties).mockResolvedValue(customerOptions);
+  });
+
+  it('SOT F-02.2: ProviderBalance e SplitPayment aparecem com rótulo no histórico do AR', async () => {
+    const base = receivedReceivable.receipts[0];
+    const rec: ReceivableWithReceipts = {
+      ...receivedReceivable,
+      receipts: [
+        { ...base, id: 'rec-pb', method: 'ProviderBalance' },
+        { ...base, id: 'rec-split', method: 'SplitPayment', kind: 'SPLIT_IBS_CBS' },
+      ],
+    };
+    vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [rec], total: 1 });
+
+    render(<AccountsReceivablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Cliente Y')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Cliente Y'));
+
+    expect(screen.queryByText('ProviderBalance')).toBeNull();
+    expect(screen.queryByText('SplitPayment')).toBeNull();
+    expect(screen.getByText('Saldo no provedor')).toBeInTheDocument();
+    expect(screen.getByText('Split payment (IBS/CBS)')).toBeInTheDocument();
   });
 });

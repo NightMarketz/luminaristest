@@ -1,4 +1,5 @@
 import { canonicalSha256 } from './taxOptimization';
+import { isValidCompetencia } from './dates';
 import type { CODIGOS_LINHA_MEDIDA, TaxOptimizationReport, TaxOptimizationReportLinha } from '../dtos/TaxOptimizationDto';
 
 /**
@@ -36,7 +37,7 @@ const SUJEITOS_DE_VENDA = new Set(['SALE', 'SALE_KIT']);
 
 /** #5 — em que competência a sugestão produz efeito. */
 export function competenciaDaSugestao(s: SugestaoDoRelatorio, competenciaDaVenda: ReadonlyMap<string, string>, diaNoEscopo: (d: Date) => string): string {
-  if (s.subjectType === 'COMPETENCIA' && /^\d{4}-\d{2}$/.test(s.subjectId)) return s.subjectId;
+  if (s.subjectType === 'COMPETENCIA' && isValidCompetencia(s.subjectId)) return s.subjectId;
   if (SUJEITOS_DE_VENDA.has(s.subjectType)) {
     const daVenda = competenciaDaVenda.get(s.subjectId.split(':')[0]);
     if (daVenda) return daVenda;

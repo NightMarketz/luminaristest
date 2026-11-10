@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { isValidDateOnly } from '../models/dates';
+import { isValidCompetencia, isValidDateOnly } from '../models/dates';
 import { MAX_CENTS } from '../models/money';
 import { CNPJ_REGEX, isValidCnpj } from '../../../lib/cnpj';
 import { SEGREGACAO_EXCLUI, type TributoSimples } from '../models/simplesCalc';
@@ -193,7 +193,7 @@ export type BaseCaixa = z.infer<typeof BaseCaixaSchema>;
 /** Item 13 (F-CX-7 a) — art. 20 IV: ICMS/ISS da receita não recebida, recolhidos direto ao ente — fora do DAS. */
 export const ImpedimentoCaixaSchema = z
   .object({
-    mesBase: z.string().regex(/^\d{4}-\d{2}$/),
+    mesBase: z.string().regex(/^\d{4}-\d{2}$/).refine(isValidCompetencia, 'Competência inválida no calendário.'),
     receitaNaoRecebidaCents: cents,
     icmsCents: cents,
     issCents: cents,
