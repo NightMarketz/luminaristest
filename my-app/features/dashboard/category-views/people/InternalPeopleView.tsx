@@ -64,6 +64,7 @@ export default function InternalPeopleView({ tables, isWidgetMode = false }: Peo
         people,
         peopleTables,
         isLoading,
+        error: loadError,
         refetch,
         schemaByTableId,
         deletePerson,
@@ -221,6 +222,10 @@ export default function InternalPeopleView({ tables, isWidgetMode = false }: Peo
                                 <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
                                 <p className="text-sm font-medium text-gray-500 animate-pulse">{t('common:loading', 'Carregando...')}</p>
                             </div>
+                        </div>
+                    ) : paginatedPeople.length === 0 && loadError ? (
+                        <div role="alert" className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
+                            <p className="text-red-600 dark:text-red-400 font-bold">{t('common:error_loading_data', 'Erro ao carregar os dados.')}</p>
                         </div>
                     ) : paginatedPeople.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
