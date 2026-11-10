@@ -277,7 +277,8 @@ export async function computeTokenCost(req: Request, res: Response) {
     const docxMimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
     if (mime === 'application/pdf' || mime === excelMimeType || mime === docxMimeType) {
-      const arrayBuffer = data.buffer.slice(0, data.byteLength) as ArrayBuffer;
+      // BRD F-66.2: a pooled Buffer starts at byteOffset, not 0.
+      const arrayBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
       const processingService = new DocumentProcessingService();
       // BRD F-66.1: arquivo que o extrator não lê é entrada inválida (400), não defeito (500).
       text = await processingService.extractText(arrayBuffer, mime).catch((error: unknown) => {
