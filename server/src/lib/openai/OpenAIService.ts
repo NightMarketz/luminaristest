@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { createHash } from 'crypto';
 import { logger } from '../logger';
+import { toProviderError } from '../llm/OpenAiLlmProvider';
 import type { LlmUsage } from './llmUsage';
 
 // Named constants for per-call output token ceilings (R11 cost guardrails)
@@ -200,7 +201,7 @@ export class OpenAIService {
         return completion.choices[0]?.message?.content;
       } catch (error) {
         logger.error('Error getting chat completion from OpenAI', { error });
-        throw new Error('Failed to get response from AI service.', { cause: error });
+        throw toProviderError(error);
       }
     });
   }
@@ -244,7 +245,7 @@ export class OpenAIService {
       return completion.choices[0]?.message?.content;
     } catch (error) {
       logger.error('Error getting chat completion from OpenAI with history', { error });
-      throw new Error('Failed to get response from AI service with history.', { cause: error });
+      throw toProviderError(error);
     }
   }
 
@@ -282,7 +283,7 @@ export class OpenAIService {
       return completion.choices[0]?.message;
     } catch (error) {
       logger.error('Error getting chat completion from OpenAI with tools and history', { error });
-      throw new Error('Failed to get response from AI service with tools and history.', { cause: error });
+      throw toProviderError(error);
     }
   }
 
