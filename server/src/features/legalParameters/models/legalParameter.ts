@@ -3,7 +3,7 @@
  * lei e o lookup PURO por data do fato gerador. Guarda números e listas, nunca lógica (`R-motor-regras`).
  */
 import { createHash } from 'crypto';
-import { ValidationError } from '../../../lib/errors';
+import { AppError, ValidationError } from '../../../lib/errors';
 
 /** Item 2 — uma tabela por fonte de verdade que hoje está em código. Fora do enum ⇒ 400 no DTO. */
 export const LEGAL_PARAMETER_TABELAS = [
@@ -160,6 +160,18 @@ export function linhasVigentesDaTabela<T extends LinhaLegal>(linhas: readonly T[
   }
   if (porChave.size === 0) throw new SemLinhaVigenteError(tabela, data);
   return [...porChave.values()];
+}
+
+/**
+ * BRD F-69.1 — `valorJson` gravado que não é JSON: defeito do dado da plataforma (500), com tipo e o id da linha,
+ * em vez do `SyntaxError` cru que não dizia qual linha.
+ */
+export class LinhaLegalIlegivelError extends AppError {
+  constructor(id: string, tabela: string, chave: string) {
+    super(`valorJson ilegível na linha de parâmetro legal ${id} (${tabela}/${chave}).`, 500, 'PARAMETRO_LEGAL_ILEGIVEL');
+    Object.setPrototypeOf(this, LinhaLegalIlegivelError.prototype);
+    this.name = 'LinhaLegalIlegivelError';
+  }
 }
 
 /** Item 4 — sem linha vigente da tabela/chave na data. `ValidationError` (400) para a prévia/rota que a dispara. */
