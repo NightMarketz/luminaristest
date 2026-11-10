@@ -114,11 +114,12 @@ A pesquisa propõe conectores por fonte, grafo de normas e motor de regras. A me
   alertas de versão. O corpus SPED tem `MANIFEST.md`, e há 87 dossiês. Falta acesso a fontes específicas, não uma
   camada genérica.
 - **As lacunas são nomeáveis:** a API multivigente da RFB, o CONFAZ, a SEFAZ-SP, a Prefeitura de SP, o SPED e o
-  portal NF-e. Quatro dessas seis já passam no `baixar` (memória de 27/10). A **API SIJUT** não passa, porque o
-  `baixar` recebe a casca JS. O **portal NF-e** também não, porque entra em laço de redirecionamento.
+  portal NF-e. Quatro dessas seis já passam no `baixar` (memória de 27/10). A **API SIJUT** não passava, porque o
+  `baixar` recebia a casca JS (resolvido em 09/11: o `baixar` converte o link). O **portal NF-e** também não passa,
+  porque entra em laço de redirecionamento.
 - **Um grafo de normas** não tem consumidor no código hoje (inferido: nenhum serviço lê relação entre normas).
 
-**Fork para o dono (não decidido aqui):**
+**Fork para o dono:**
 (a) manter como está: `baixar` e navegador por dossiê;
 (b) ensinar o `legal.py` a converter link SIJUT em `api/consulta-externa/ato/{id}/visao/multivigente`. É a única
 rota bloqueada com uso alto (27 documentos do normasinternet2 e 10 do normas.receita, somando todos os dossiês). A ferramenta fica em
@@ -130,7 +131,9 @@ camada genérica, os coletores por fonte e o campo de classe. Spec e contraponto
 
 ## 6. Reedição silenciosa na mesma URL: o que o `legal.py` detecta (09/11/2026)
 
-Li o código em `~/.claude/tools/pesquisa-legal/legal.py` (395 linhas, versão de 26/10) e testei.
+Li o código em `~/.claude/tools/pesquisa-legal/legal.py` (395 linhas, versão de 26/10) e testei. **O que segue
+descreve a versão de 26/10.** No mesmo dia 09/11 a ferramenta passou a comparar pelo texto, a alertar reedição e a
+ler a API da Receita: ver `LEGAL-PY-CAPTURAS-brief.md` §7.
 
 | Pergunta | Resposta | Evidência |
 |---|---|---|

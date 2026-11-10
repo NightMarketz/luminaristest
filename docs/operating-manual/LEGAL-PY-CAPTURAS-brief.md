@@ -1,7 +1,7 @@
 # BRIEF — `legal.py`: alerta de reedição e leitura da API da Receita
 
-**Estado:** escopo e forks **decididos** em 09/11/2026, por delegação do dono. Falta só o "executa". Nada foi
-implementado.
+**Estado:** **implementado em 09/11/2026** (dono, chat: "Executa"). D1–D6 prontos, 36 testes verdes. O registro da
+execução está na §7, e o que a execução corrigiu nesta spec está na §5.
 
 ## Contexto fixo
 
@@ -9,8 +9,7 @@ implementado.
   `docs/operating-manual/VERIFICACAO-LEGAL.md`). A ferramenta fica **fora do repo**. Este BRIEF fica no repo porque
   o diagnóstico que o motiva está aqui (`REGULATORY-SOURCE-COVERAGE.md` §6).
 - **Autorização:** dono, chat, 09/11/2026: "Me da a sua sugestão estruturada em spec" (a spec) e "Faz os contrapontos
-  e decide como devemos seguir" (o recorte e os forks). **Nenhuma das duas autoriza código**: implementar exige um
-  "executa" (ORCH-006). Não há nó no vault: é ferramenta do agente, não produto, e não é gate (regra ⛔ do `CLAUDE.md`).
+  e decide como devemos seguir" (o recorte e os forks) e "Executa" (o código). Não há nó no vault: é ferramenta do agente, não produto, e não é gate (regra ⛔ do `CLAUDE.md`).
 - **Insumos** (lidos nesta sessão): `legal.py` de 26/10/2026, 395 linhas (`http_get` :77, `extrair_texto` :104,
   `cmd_baixar` :215–242, `cmd_acervo` :260–300, `cmd_trecho` :303, `cmd_relatorio` :318); a API SIJUT do ato 92278
   (Res. CGSN 140), nas três visões.
@@ -26,7 +25,7 @@ A primeira versão tinha 10 comportamentos. Testei cada um contra o repositório
 | Guardar texto por hash em `_textos/` duplica o que o git já faz | Os 266 `.txt` rastreados são 203 blobs distintos: o git já guarda texto igual uma vez só | **Cortado.** Vira regra sem código: o `.txt` e o manifest entram no commit do dossiê (D5) |
 | O campo `classe` não tem quem o leia | Nenhum código nem relatório consome a classe. É a mesma crítica que fiz ao grafo de normas | **Cortado.** Volta quando existir consumidor |
 | Baixar três visões da Receita triplica documento sem ganho | As três visões trazem os mesmos 2.033 segmentos e só mudam as marcações. A original já está no acervo. Os dossiês usaram quase só a multivigente | **Uma visão só:** multivigente |
-| Minha leitura das marcações da API estava errada | Supus que "riscado na multivigente" = "fora da vigente". Não é: 60 segmentos riscados aparecem na vigente, **sem risco**, e só a anotação diz "Revogado pela Res. CGSN 183" | **A renderização imprime a anotação de cada segmento.** Sem ela, texto revogado parece vigente |
+| Minha leitura das marcações da API estava errada | Supus que "riscado na multivigente" = "fora da vigente". Não é: 60 segmentos riscados continuam na vigente, e é a anotação que diz "Revogado pela Res. CGSN 183". (Na execução vi que a vigente traz desses 60 só o rótulo, "II -": ver §5) | **A renderização imprime a anotação de cada segmento** |
 | O adaptador é só troca de URL? | Não: o `baixar` já baixa a API, mas grava o JSON cru. O `.txt` de uma multivigente tem linha de 93.107 caracteres, e o `trecho` não serve nele | **Mantido, e é o item de maior valor** |
 | O alerta de "texto mudou" chega a quem não precisa | Quem baixa agora vai ler o texto novo de qualquer jeito. Quem precisa saber é o dossiê antigo que citou o texto velho | **Mantido, com o texto do alerta apontando os dossiês afetados** |
 | Registrar falha (404) no manifest | Não achei caso em que a falha sem registro causou erro | **Cortado.** A sessão já escreve a lacuna no relatório |
@@ -44,14 +43,17 @@ fixture). Gate: `python -m unittest test_legal` na pasta da ferramenta.
 - `norm(txt)`: NFC, sequência de espaço em branco vira um espaço, pontas aparadas.
 - Documento novo grava `sha256_texto = sha256(norm(txt))`. O `sha256` do bruto continua igual.
 - A deduplicação no dossiê passa a usar `sha256_texto`: `Já salvo como [Dnn] (mesmo texto; bruto difere)`.
+- Texto com menos de 200 caracteres (página-casca, PDF sem texto) não recebe `sha256_texto`: vale só o bruto.
 - Teste: duas fixtures HTML iguais até `</html>`, com `<script id="f5_cspm">` diferente depois → 1 documento.
 
 **D2. Alerta de reedição na captura.**
 - Ao gravar um documento, varre `pesquisas-legais/*/manifest.json` atrás das capturas anteriores da mesma chave.
 - Chave: `id_normativo` quando existir (D3); senão a URL pedida, sem fragmento e sem diferença de caixa. Medido: 4
   URLs aparecem com duas grafias, como `d12955.htm` e `D12955.htm`.
-- Compara com a captura mais recente. Se ela não tiver `sha256_texto`, calcula na hora a partir do `.txt` dela, se
-  existir.
+- Compara com a captura mais recente. Bruto idêntico é `IGUAL` sem mais conta. Se ela não tiver `sha256_texto`,
+  calcula na hora a partir do `.txt` dela, se existir.
+- Captura antiga da API da Receita guardou o JSON cru como `.txt`. Ela é renderizada de novo a partir do bruto antes
+  de comparar; sem o bruto, o resultado é `SEM_COMPARACAO`.
 - Resultado gravado em `captura.tipo` e em `alertas`:
 
 | `tipo` | Quando | Texto do alerta |
@@ -77,12 +79,18 @@ fixture). Gate: `python -m unittest test_legal` na pasta da ferramenta.
 - Ordena `ementas` + `outrosSegmentos` por (`ordemSegmentoAto`, `versaoSegmento`); pula `omitir: true`. A chave do
   segmento é (`idSegmento`, `versaoSegmento`): o ato 92278 tem 2.033 segmentos e só 1.765 ids.
 - Uma linha por segmento, com o HTML de `textoIntegra` removido.
-- `tachado: true` vira `~~texto~~`. `agendado: true` vira `[AGENDADO] texto`.
-- Depois do texto, as anotações do segmento (`ancorasDestino[].texto` e `ancorasOrigem[].texto`), com a
-  `dataInicioVigencia`. É a anotação que diz "Revogado" ou "Redação dada".
+- Sai riscado (`~~texto~~`) o segmento com `tachado: true` **ou** com anotação "[Revogado" não agendada.
+- `agendado: true` vira `[AGENDADO]` seguido da anotação. A API manda esse segmento **sem texto**: a redação futura
+  só existe no ato que a anotação indica.
+- Depois do texto, as anotações do segmento (`ancorasDestino` e `ancorasOrigem`), com a `dataInicioVigencia` e o
+  `rfb:N` do ato que alterou, pronto para `baixar`. É a anotação que diz "Revogado" ou "Redação dada".
+- O cabeçalho traz a situação do ato na fonte. Ato com `vigente: false` gera o alerta "o ato consta como NÃO
+  VIGENTE na fonte".
 - No fim, "Histórico de alterações": `historico[].texto` e a data de vigência.
 - Alertas: "alteração com vigência futura: <texto>, a partir de <data>" (caso real: Res. CGSN 195/2026, em
-  01/01/2027) e "N anexos binários não baixados", com a URL `…/ato/N/anexo/<id>` de cada um, para `baixar` à parte.
+  01/01/2027) e "N anexos binários não baixados (o texto integral pode estar neles)", com a URL
+  `…/ato/N/anexo/<id>` de cada um, para `baixar` à parte.
+- O `trecho` passa a aceitar artigo riscado (`~~Art. …`) como cabeçalho.
 - Teste, com a fixture real do ato 92278: nenhuma linha passa de 5.000 caracteres; o `trecho` acha "Art. 6º" com o
   artigo no cabeçalho; todo segmento que tem anotação "Revogado" sai com ela na mesma linha.
 
@@ -128,13 +136,24 @@ A linha de comando não ganha argumento novo: `legal.py baixar <slug> <url|rfb:N
 | F5 | Campo `classe` | Não fazer | Sem consumidor |
 | F6 | Segmento agendado | Incluir com `[AGENDADO]` e a data | O produto entra em operação em 2027: o agendado é a regra que ele vai usar |
 
-## 5. Ainda não verificado
+## 5. O que a execução conferiu e corrigiu nesta spec
 
-- **Aparência na tela do SIJUT.** As marcações foram conferidas só nos dados da API. Falta comparar um artigo com
-  revogação e um com redação nova contra a tela, no navegador embutido. É o primeiro passo da implementação do D4,
-  e não é pergunta ao dono.
-- **Solução de Consulta na API.** Só li uma Resolução. Antes de fechar o D4, baixar uma SC Cosit e conferir que os
-  campos são os mesmos.
+Conferência contra a tela do SIJUT (navegador embutido, 09/11/2026, ato 92278):
+
+| Ponto | Tela | API | Efeito |
+|---|---|---|---|
+| Riscados na multivigente | 205 | 217, dos quais 12 são anexo binário | Bate. O teste fixa 217 |
+| Revogados na vigente | 60 anotações "[Revogado(a)", cada uma só com o rótulo ("II -") | 60 segmentos não omitidos, com o texto reduzido ao rótulo e `tachado: false` | **Corrige o que escrevi na §1**: a visão vigente não mostra texto revogado. O rótulo sai riscado mesmo assim |
+| Agendados | Só "[Vide modificação prevista para 01/01/2027, nos termos da Res. CGSN 190]" | 232 segmentos com `textoIntegra` vazio | A redação de 2027 **não está neste ato**: é preciso baixar o `rfb:N` indicado |
+| Solução de Consulta (SC Cosit 98.035/2025) | não conferida | Mesmos campos; o corpo tem 2 segmentos e o inteiro teor vem em PDF anexo | O alerta de anexo passou a dizer "o texto integral pode estar neles" |
+
+Lacunas de spec que apareceram e como foram fechadas (por delegação: "decide como devemos seguir"):
+
+- **Texto curto como identidade (D1).** Página-casca ou PDF sem texto teriam o mesmo hash de texto. Ficam sem
+  `sha256_texto`.
+- **Captura antiga da API em JSON cru (D2).** Comparar o `.txt` antigo com o texto renderizado daria falso "texto
+  mudou" em toda norma da Receita já citada. A captura antiga é renderizada de novo a partir do bruto.
+- **Ato não vigente (D4).** A spec não dizia o que fazer com `vigente: false`. Virou alerta.
 
 ## 6. Fora de escopo
 
@@ -143,10 +162,23 @@ A linha de comando não ganha argumento novo: `legal.py baixar <slug> <url|rfb:N
   continuam sendo o caminho, dossiê a dossiê.
 - Rotina periódica que rebaixa URLs citadas. Seria aparato novo. Volta à mesa se o D2 mostrar reedição frequente.
 
-## 7. Ordem de execução
+## 7. Execução (09/11/2026)
 
-1. PR só de documentação e script de medição: este BRIEF, o inventário e `scripts/cobertura-fontes-legais.mjs`.
-2. `git init` na pasta da ferramenta, com a versão de 26/10 como primeiro commit (F1).
-3. D1 e D2, com teste. Não dependem da Receita.
-4. Conferência da tela do SIJUT (§5), depois D3 e D4.
-5. D5: a linha no `VERIFICACAO-LEGAL.md` e a atualização da memória `legal-py-achar-ssl-e-rfb-fora-do-acervo`.
+- **Onde:** `~/.claude/tools/pesquisa-legal` (fora deste repo), com git local (F1). Commits: `b06ea19` (versão de
+  26/10, intacta), `e965ee1` (D1 e D2), `97edf3e` (D3, D4 e D6).
+- **Teste:** `python -m unittest test_legal` na pasta da ferramenta: 36 testes, todos offline. As fixtures da
+  Receita são respostas reais da API, capturadas em 09/11.
+- **Falsificação:** 11 versões mutadas do `legal.py`, uma por regra (não riscar revogado, ignorar `omitir`, tirar as
+  anotações, não desviar o link do SIJUT, deduplicar só pelo bruto…). As 11 derrubam pelo menos um teste. A primeira
+  rodada deixou uma viva ("bruto idêntico é IGUAL"); o teste que faltava foi escrito.
+- **Dado real:** `baixar` com `sijut2consulta/link.action?idAto=92278`, ao lado de cópias de 5 dossiês antigos:
+  - leu a Res. CGSN 140 pela API e gravou 2.254 linhas legíveis, com o `trecho` achando o dispositivo sob "Art. 6º";
+  - acusou **`TEXTO MUDOU desde 2026-10-29`**, apontando `emissao-mei-me-por-tipo D02`. A mudança é real: as
+    alterações da Res. CGSN 191/2026, agendadas para 01/11/2026, entraram em vigor (a linha removida é o § 1º sobre
+    a nota de serviço "conforme modelo aprovado e autorizado pelo Município");
+  - para a Lei 9.250 no Planalto, respondeu "há captura de 2026-10-17 (irrf-distribuicao D05), mas o texto dela não
+    foi guardado", e a segunda captura seguida deu "mesmo texto; bruto difere".
+- **Não coberto:** nenhuma revisão por agente independente (o código fica fora do repo e do fluxo de PR). Contra a
+  tela só foi conferido um ato grande (Resolução). Instrução Normativa com tabela em anexo HTML não foi testada.
+- **O alerta era verdadeiro e o dossiê já estava certo:** o relatório de `emissao-mei-me-por-tipo` (29/10) leu a
+  Res. CGSN 191 direto e já concluiu pela NFS-e nacional obrigatória a partir de 01/11/2026. Nada a refazer nele.

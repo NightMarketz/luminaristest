@@ -14,6 +14,16 @@ Procon, Bacen, CVM, SEFAZ, prefeituras etc.) — em BRIEF, ADR, fork, código, t
 Ferramenta: `~/.claude/tools/pesquisa-legal/legal.py` (dossiê em `./pesquisas-legais/<slug>/`; passo a
 passo em `~/.claude/CLAUDE.md`).
 
+Desde 09/11/2026 (`LEGAL-PY-CAPTURAS-brief.md`):
+- **Norma da Receita:** `baixar <slug> <link do SIJUT>` ou `baixar <slug> rfb:<idAto>` lê o ato pela API oficial, na
+  visão multivigente, e grava texto legível. Riscado (`~~…~~`) é redação substituída ou dispositivo revogado, e a
+  anotação ao lado diz qual. `[AGENDADO]` é alteração com vigência futura: a redação nova está no ato `rfb:N` indicado.
+- **Alertas a ler na saída do `baixar`:** "TEXTO MUDOU desde <data>" lista os dossiês que citaram a versão
+  anterior, e a conclusão deles tem de ser relida. "Anexo binário não baixado" pede o `baixar` da URL do anexo
+  quando o trecho citado está nele (é o caso do inteiro teor de Solução de Consulta).
+- **Commit do dossiê:** o `manifest.json` e os `docs/*.txt` entram no commit que usa o dossiê. O bruto (html, pdf,
+  json) é opcional. Sem o `.txt` no repo, a próxima captura da mesma URL não tem com o que comparar.
+
 ## Passos
 
 1. **Pesquisar antes de perguntar.** Não abrir com pergunta ao dono nem com "consulte o contador/advogado".
