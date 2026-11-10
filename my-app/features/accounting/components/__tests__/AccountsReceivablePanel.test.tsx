@@ -361,3 +361,32 @@ describe('AccountsReceivablePanel — cobrança por provedor', () => {
     expect(onLedgerChange).not.toHaveBeenCalled();
   });
 });
+
+describe('SOT F-02.2 — histórico de recebimentos mostra rótulo, não o método cru', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+    vi.mocked(counterpartiesService.listCounterparties).mockResolvedValue(customerOptions);
+  });
+
+  it('SOT F-02.2: ProviderBalance e SplitPayment aparecem com rótulo no histórico do AR', async () => {
+    const base = receivedReceivable.receipts[0];
+    const rec: ReceivableWithReceipts = {
+      ...receivedReceivable,
+      receipts: [
+        { ...base, id: 'rec-pb', method: 'ProviderBalance' },
+        { ...base, id: 'rec-split', method: 'SplitPayment', kind: 'SPLIT_IBS_CBS' },
+      ],
+    };
+    vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [rec], total: 1 });
+
+    render(<AccountsReceivablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Cliente Y')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Cliente Y'));
+
+    expect(screen.queryByText('ProviderBalance')).toBeNull();
+    expect(screen.queryByText('SplitPayment')).toBeNull();
+    expect(screen.getByText('Saldo no provedor')).toBeInTheDocument();
+    expect(screen.getByText('Split payment (IBS/CBS)')).toBeInTheDocument();
+  });
+});
