@@ -157,8 +157,12 @@ export async function updateTableData(req: Request, res: Response) {
     // idempotent. tableId comes from the route param of PUT /:tableId/data/:dataId.
     // Finalize is anti-revenue-gated for all-Package sales (Incremento G P4); the package-sold
     // bridge books their origin instead. Exactly one of the two acts.
-    await maybeSyncSaleFinalized(ctx, req.params.tableId, updated);
-    await maybeSyncSalePackageSold(ctx, req.params.tableId, updated);
+    // INV F-40.1: as pontes leem a linha como gravada DEPOIS do afterUpdate (o SalesPlugin recalcula o total pelos itens),
+    // não a devolvida antes dele — senão o razão leva o total que o navegador mandou.
+    const [persisted] = await service.getTableDataByIds(ctx, updated.dynamicTableId, [updated.id]);
+    const syncRow = persisted ?? updated;
+    await maybeSyncSaleFinalized(ctx, req.params.tableId, syncRow);
+    await maybeSyncSalePackageSold(ctx, req.params.tableId, syncRow);
 
     return res.json({ success: true, data: updated });
   } catch (error) {
