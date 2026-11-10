@@ -198,3 +198,26 @@ describe('AccountsPayablePanel (render)', () => {
     }
   });
 });
+
+describe('SOT F-02.2 — histórico de pagamentos mostra rótulo, não o método cru', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+    vi.mocked(counterpartiesService.listCounterparties).mockResolvedValue(supplierOptions);
+  });
+
+  it('SOT F-02.2: baixa de retenção (method NONE) aparece com rótulo no histórico do AP', async () => {
+    const withholding: PayableWithPayments = {
+      ...paidPayable,
+      payments: [{ ...paidPayable.payments[0], id: 'pay-ret', method: 'NONE', kind: 'WITHHOLDING' }],
+    };
+    vi.mocked(accountsPayableService.listPayables).mockResolvedValue({ payables: [withholding], total: 1 });
+
+    render(<AccountsPayablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Fornecedor Y')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Fornecedor Y'));
+
+    expect(screen.queryByText('NONE')).toBeNull();
+    expect(screen.getByText('Retenção (sem saída de caixa)')).toBeInTheDocument();
+  });
+});
