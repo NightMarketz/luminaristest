@@ -355,6 +355,20 @@ describe('StockMovementsApplyPlugin — applies manual In/Out to stock', () => {
     const { movements } = await seedInventory(10);
     await expect(create(movements.id, { productId: 'p1', unitId: 'u1', type: 'Out', quantity: 999 })).rejects.toBeInstanceOf(ValidationError);
   });
+  it('INV F-41.1: entrada manual In/Purchase (fornecedor e custo, sem vir do título) → 400, estoque intacto', async () => {
+    // A compra entra pelo Contas a Pagar (valora pelo custo médio e lança D Estoques / C Fornecedores); a manual sobe o
+    // estoque sem título, lançamento nem custo médio (venda seguinte sem CMV). Hoje só a tela barra (MovementModal).
+    // Schema como o do preset real (StockMovementsModule): supplierId e cost declarados — senão o strip do motor os remove
+    // e a recusa viria da validação de supplierId, não desta guarda.
+    const purchaseFields = [...movementFields, f('supplierId', 'string'), f('cost', 'number'), f('paymentStatus', 'string'), f('detailKey', 'string')];
+    const productUnits = await seedTbl({ name: 'Product Units', internalName: 'productUnits', category: 'inventory', fields: productUnitFields });
+    const movements = await seedTbl({ name: 'Stock Movements', internalName: 'stockMovements', category: 'inventory', fields: purchaseFields });
+    const puId = (await prisma.dynamicTableData.create({ data: { dynamicTableId: productUnits.id, data: { productId: 'p1', unitId: 'u1', stock: 10, reserved: 0 } as any } })).id;
+    await expect(
+      create(movements.id, { productId: 'p1', unitId: 'u1', type: 'In', quantity: 5, reason: 'Purchase', supplierId: 's1', cost: 100 }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    expect((await rowById(puId))!.data as any).toMatchObject({ stock: 10 });
+  });
   it('manual Purchase entry still requires supplierId (regression guard for the skip below)', async () => {
     const { movements } = await seedInventory(10);
     await expect(
