@@ -329,34 +329,26 @@ export async function resolveChartData(
   const table = await service.getTableById(user, tableId);
   const rows = await service.getAllTableData(user, tableId);
 
-  // Validate field mappings
-  const hasFieldMappings =
-    chart.params &&
-    Object.keys(chart.params).some((key) =>
-      ['statusField', 'amountField', 'dateField', 'paymentStatusField'].includes(key)
-    );
-
-  if (hasFieldMappings) {
-    for (const [paramKey, fieldName] of Object.entries(chart.params || {})) {
-      if (['statusField', 'amountField', 'dateField', 'paymentStatusField'].includes(paramKey)) {
-        const fieldExists = table.schema.fields.some((f: ISchemaField) => f.name === fieldName);
-        if (!fieldExists && typeof fieldName === 'string') {
-          return {
-            chart,
-            data: [],
-            error: `Field '${fieldName}' (mapped to '${paramKey}') does not exist in table schema`,
-          };
-        }
-      }
-    }
-  }
-
   const processorParams = {
     ...chart.params,
     ...params,
     tableId,
     timeZone: user.timeZone || 'UTC',
   };
+
+  // Validate field mappings — the effective ones (preset + query), not only the preset's (BRD F-08.1).
+  for (const [paramKey, fieldName] of Object.entries(processorParams)) {
+    if (['statusField', 'amountField', 'dateField', 'paymentStatusField'].includes(paramKey)) {
+      const fieldExists = table.schema.fields.some((f: ISchemaField) => f.name === fieldName);
+      if (!fieldExists && typeof fieldName === 'string') {
+        return {
+          chart,
+          data: [],
+          error: `Field '${fieldName}' (mapped to '${paramKey}') does not exist in table schema`,
+        };
+      }
+    }
+  }
 
   try {
     // Create an async generator for optimized stream reading
