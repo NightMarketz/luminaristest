@@ -290,7 +290,7 @@ Teste que não falhar = "não reproduzido": a linha fica registrada assim e não
 | **BRD F-72.6** — `document.service.ts` sem default de URL base e com leitura do cookie por `split`. Ficha: `INVENTARIO-BRD.md` | 3 | D2 | nenhum (teste-guarda a escrever) | [ABERTO] | `git grep -n "BRD F-72.6" -- server/src my-app` → vazio |
 | **BRD F-73.2** — 44 pontos do front engolem a falha: 16 `catch` vazios, 19 só `console`, 9 `.catch(() => null)`. Ficha: `INVENTARIO-BRD.md` | 3 | D3 | nenhum (teste-guarda a escrever) | [ABERTO] | `git grep -n "BRD F-73.2" -- server/src my-app` → vazio |
 | **BRD F-74.1** — Conversão de lead: valor com vírgula vira `NaN` e a oportunidade é criada sem valor, sem aviso. Ficha: `INVENTARIO-BRD.md` | 3 | D3 | nenhum (teste-guarda a escrever) | [ABERTO] | `git grep -n "BRD F-74.1" -- server/src my-app` → vazio |
-| **BRD F-75.1** — `localStorage` e `router.query` lidos por cast, sem checagem. Ficha: `INVENTARIO-BRD.md` | 3 | D2 | teste-guarda vitest `my-app/lib/hooks/__tests__/queryAndStorageCast.test.tsx` › "BRD F-75.1" | [CORRIGIDO] 2026-11-10 (branch `claude/brd-f-75-1`): `useTheme` e o script de `_document.tsx` só aceitam `light`/`dark` gravado (outro valor cai na preferência do sistema); `pages/dashboard` só aceita `?category` string (array é ignorado, em vez de derrubar o `.toLowerCase()`). `pages/crm/leads/[id].tsx` não reproduz: segmento dinâmico simples, o Next entrega string | `cd my-app && npx vitest run lib/hooks/__tests__/queryAndStorageCast.test.tsx` → 2 passed |
+| **BRD F-75.1** — `localStorage` e `router.query` lidos por cast, sem checagem. Ficha: `INVENTARIO-BRD.md` | 3 | D2 | nenhum (teste-guarda a escrever) | [ABERTO] | `git grep -n "BRD F-75.1" -- server/src my-app` → vazio |
 
 ## Transversais
 
