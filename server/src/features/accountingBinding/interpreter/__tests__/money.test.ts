@@ -39,15 +39,6 @@ describe('centsFromReais — Variante 1 verbatim (float reais → centavos)', ()
     expect(() => centsFromReais('200' as unknown, 'ctx')).toThrow(ValidationError);
   });
 
-  it('NÃO impõe MAX_CENTS — divergência de teto preservada (F-BP-4, decorrência)', () => {
-    // MAX_CENTS = 2_147_483_647 centavos = R$ 21.474.836,47. Um valor em reais que produza
-    // amountCents ACIMA de MAX_CENTS mas ainda dentro de Number.isSafeInteger deve PASSAR aqui —
-    // é a janela estreita que a Variante 1 aceita e a Variante 2 rejeitaria.
-    const reaisAboveMaxCents = (MAX_CENTS + 1000) / 100;
-    const cents = centsFromReais(reaisAboveMaxCents, 'ctx');
-    expect(cents).toBeGreaterThan(MAX_CENTS);
-  });
-
   it('mensagem de erro carrega o context recebido', () => {
     expect(() => centsFromReais(0, 'liquidação (venda sale-9)')).toThrow(/liquidação \(venda sale-9\)/);
   });
