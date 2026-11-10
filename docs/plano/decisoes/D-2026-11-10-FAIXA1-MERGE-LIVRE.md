@@ -1,0 +1,48 @@
+---
+id: "D-2026-11-10-FAIXA1-MERGE-LIVRE"
+tipo: "decisao"
+dominio: "processo"
+titulo: "PR vermelho da faixa 1 da auditoria de estruturas implícitas entra sem o lote do dono, com revisor PASS e CI verde"
+estado: "decided"
+autorizacao: "dono, chat, 2026-11-10: \"Se eu for ficar autorizando cada commit, vou ter que fazer muitas vezes, tem qeu ficar livre isso\"; questionário em seguida: \"Livre só nesta faixa 1 (Recomendado)\""
+atualizado: "2026-11-10"
+---
+# D-2026-11-10-FAIXA1-MERGE-LIVRE
+
+**Estado:** `decided`. Exceção, com escopo fechado, à regra de merge da [D-2026-10-28-FLUXO-AUTONOMO](D-2026-10-28-FLUXO-AUTONOMO.md).
+
+**Por quê:** a faixa 1 da auditoria de estruturas implícitas tem 46 linhas, cada uma com um PR. A maior parte toca o módulo
+contábil e sai **vermelha** no `classe-risco.mjs`, o que mandaria dezenas de PRs ao lote diário, um número por vez. O dono
+não quer confirmar cada um.
+
+## Regra
+
+A maestro trata como **VERDE** (merge squash sozinha) o PR que cumpre **todas** as condições abaixo:
+
+1. O título começa pelo ID de um achado da lista abaixo (ex.: `fix(api): BRD F-02.1 — …`), e o PR muda a linha desse ID na seção
+   "Estruturas implícitas — faixa 1 (2026-11-10)" do `docs/operating-manual/GAP-MAP.md`.
+2. O diff não toca nenhum destes; se tocar, a exceção não vale e o PR vai ao lote: `server/prisma/**` (schema, migração),
+   `server/public/openapi.json`, `dtoShapeSnapshot`, `my-app/types/contracts/**`, `server/src/middleware/auth.ts`,
+   `server/src/routes/auth.ts`, `withAuth`, `DynamicTableService.ts`, pagamento (`CollectionCharge`, `PaymentAccount`, provider,
+   webhook), transmissão ou assinatura de DF-e, Reinf, baselines de gate, `.claude/**`, `CLAUDE.md`.
+3. O `revisor-independente` deu **PASS** no SHA de cabeça, em no máximo 3 rodadas (D-2026-11-06-REVISAO-CONVERGENCIA). Achado
+   `P` (pré-existente) não segura o PR; achado `A` aberto segura.
+4. Todos os checks verdes, `MERGEABLE`, fora de draft, base `main`.
+
+Faltou qualquer condição: vale a regra de sempre (lote do dono).
+
+## Achados cobertos (47 IDs)
+
+SM F-01.2 (inclui INV F-11.2) · INV F-16.3, F-26.1, F-40.1, F-40.2, F-14.2, F-41.1, F-42.1 · SOT F-01.1, F-18.1, F-02.1, F-02.2,
+F-11.1, F-12.1, F-23.1, F-01.4 · EFX F-18.2, F-19.1 · BRD F-02.1, F-03.4, F-04.2, F-08.1, F-56.1, F-56.2, F-57.1, F-57.2, F-57.3,
+F-58.1, F-60.2, F-62.1, F-63.1, F-65.1, F-65.3, F-66.1, F-66.2, F-66.3, F-66.4, F-69.1, F-71.1, F-72.1, F-72.2, F-72.4, F-72.6,
+F-73.2, F-74.1, F-75.1.
+
+## Fora desta exceção
+
+Faixas 2, 3 e 4 da mesma auditoria, todo outro PR vermelho do repositório e qualquer PR de achado que não esteja na lista acima.
+Triagem e estado: `docs/estruturas-implicitas/CORRECOES.md` (PR #1153).
+
+## Fim
+
+A exceção acaba quando a última linha da seção do GAP-MAP sair de `[ABERTO]`, ou antes, se o dono revogar no chat.
