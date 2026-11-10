@@ -8,6 +8,7 @@ import type { Request, Response } from 'express';
  */
 const createTableData = jest.fn();
 const updateTableData = jest.fn();
+const getTableDataByIds = jest.fn();
 const afterDataWrite = jest.fn();
 const maybeSyncSaleFinalized = jest.fn();
 const getUserContextFromRequest = jest.fn(() => ({ id: 'u1', userId: 'u1' }));
@@ -24,7 +25,7 @@ jest.mock('@/lib/apiUtils', () => ({
 jest.mock('@/lib/factory', () => ({
   __esModule: true,
   getFactory: () => ({
-    getDynamicTableService: () => ({ createTableData, updateTableData }),
+    getDynamicTableService: () => ({ createTableData, updateTableData, getTableDataByIds }),
     getDynamicTableWriteEffects: () => ({ afterDataWrite }),
   }),
 }));
@@ -74,6 +75,8 @@ describe('dynamicTablesController sale-bridge wiring', () => {
   it('updateTableData calls the bridge post-commit with (ctx, tableId, updated)', async () => {
     const updated = { id: 'sale-1', data: { status: 'Finalized', unitId: 'unit-1', totalAmount: 250 } };
     updateTableData.mockResolvedValueOnce(updated);
+    // INV F-40.1: a ponte recebe a linha relida depois do afterUpdate (aqui, a mesma).
+    getTableDataByIds.mockResolvedValueOnce([updated]);
     const req = {
       params: { tableId: TABLE_ID, dataId: DATA_ID },
       body: { data: { status: 'Finalized' } },

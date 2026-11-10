@@ -22,7 +22,8 @@ type Actor = { id: string; username: string };
 let user: Actor;
 let unitId: string;
 let packageId: string;
-let tables: Record<'packages' | 'sales' | 'saleItems', string>;
+let customerId: string;
+let tables: Record<'packages' | 'sales' | 'saleItems' | 'customers', string>;
 
 const post = (tableId: string, data: Record<string, unknown>) =>
   request(app).post(`/api/dynamic-tables/${tableId}/data`).set(authHeader(user)).send({ data });
@@ -31,7 +32,7 @@ const put = (tableId: string, dataId: string, data: Record<string, unknown>) =>
 
 /** Venda Draft com um item Package de quantidade 2 × R$ 320. */
 async function draftPackageSale(): Promise<string> {
-  const sale = await post(tables.sales, { unitId, date: '2026-11-04', status: 'Draft', simpleCustomer: true, simpleCustomerName: 'Cliente H2' });
+  const sale = await post(tables.sales, { unitId, date: '2026-11-04', status: 'Draft', customerId });
   expect(sale.status).toBe(201);
   const item = await post(tables.saleItems, { saleId: sale.body.data.id, type: 'Package', packageId, description: 'Pacote 10 escovas', quantity: 2, unitPrice: 320 });
   expect(item.status).toBe(201);
@@ -53,7 +54,11 @@ describe('SalesPlugin × pacote — subtotal conta a quantidade (VP-1, via API)'
     expect(created.status).toBe(201);
     unitId = created.body.data.unitId;
     const byName = async (n: string) => (await prisma.dynamicTable.findFirstOrThrow({ where: { userId: user.id, internalName: n } })).id;
-    tables = { packages: await byName('packages'), sales: await byName('sales'), saleItems: await byName('saleItems') };
+    tables = { packages: await byName('packages'), sales: await byName('sales'), saleItems: await byName('saleItems'), customers: await byName('customers') };
+    // INV F-14.2: venda de pacote exige cliente cadastrado.
+    const cust = await post(tables.customers, { name: 'Cliente H2', email: 'cliente-h2@test.local' });
+    expect(cust.status).toBe(201);
+    customerId = cust.body.data.id;
 
     const pkg = await post(tables.packages, { name: 'Pacote 10 escovas', price: 320 });
     expect(pkg.status).toBe(201);
