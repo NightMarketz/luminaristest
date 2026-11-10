@@ -21,6 +21,7 @@
 import prisma from '../lib/prisma';
 import { logger } from '../lib/logger';
 import * as storage from '../lib/attachmentStorage';
+import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
 
 export type PurgeClass = 'operacional' | 'contabil-fiscal';
 
@@ -108,42 +109,70 @@ const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
 /** F-W4-5 b (dono, questionário, 2026-10-16): sessão da entrevista expirada ou apagada some em 7 dias. */
 export const INTERVIEW_SESSION_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
-export async function purgeOldDeletedRecords(): Promise<void> {
+const JOB = 'PurgeDeletedRecords';
+
+export interface PurgeDeps {
+  alert?: (payload: AlertPayload) => void;
+}
+
+export async function purgeOldDeletedRecords(deps: PurgeDeps = {}): Promise<void> {
+  const alert = deps.alert ?? sendAlertWebhook;
   const cutoffDate = new Date(Date.now() - NINETY_DAYS_MS);
 
   logger.info(`[PurgeJob] Running purge for records soft-deleted before ${cutoffDate.toISOString()}`);
 
-  const dynamicTableDataResult = await prisma.dynamicTableData.deleteMany({
-    where: { deletedAt: { lt: cutoffDate } },
+  // EFX F-19.1: cada passo é isolado — o que lança é registrado e alertado, e os seguintes rodam no mesmo ciclo.
+  const step = async (name: string, run: () => Promise<void>): Promise<void> => {
+    try {
+      await run();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.event('error', 'job.failed', JOB, { job: JOB, step: name, error: message });
+      alert({ source: 'purge_deleted_records', event: 'job_failed', timestamp: new Date().toISOString(), job: JOB, step: name, error: message });
+    }
+  };
+
+  await step('DynamicTableData', async () => {
+    const dynamicTableDataResult = await prisma.dynamicTableData.deleteMany({
+      where: { deletedAt: { lt: cutoffDate } },
+    });
+    logger.info(`[PurgeJob] DynamicTableData: purged ${dynamicTableDataResult.count} record(s)`);
   });
-  logger.info(`[PurgeJob] DynamicTableData: purged ${dynamicTableDataResult.count} record(s)`);
 
-  const interviewCutoff = new Date(Date.now() - INTERVIEW_SESSION_RETENTION_MS);
-  const interviewSessionResult = await prisma.interviewSession.deleteMany({
-    where: { OR: [{ expiresAt: { lt: interviewCutoff } }, { deletedAt: { lt: interviewCutoff } }] },
+  await step('InterviewSession', async () => {
+    const interviewCutoff = new Date(Date.now() - INTERVIEW_SESSION_RETENTION_MS);
+    const interviewSessionResult = await prisma.interviewSession.deleteMany({
+      where: { OR: [{ expiresAt: { lt: interviewCutoff } }, { deletedAt: { lt: interviewCutoff } }] },
+    });
+    logger.info(`[PurgeJob] InterviewSession: purged ${interviewSessionResult.count} record(s) expired/deleted before ${interviewCutoff.toISOString()}`);
   });
-  logger.info(`[PurgeJob] InterviewSession: purged ${interviewSessionResult.count} record(s) expired/deleted before ${interviewCutoff.toISOString()}`);
 
-  const crmReportDefinitionResult = await prisma.crmReportDefinition.deleteMany({ where: { deletedAt: { lt: cutoffDate } } });
-  logger.info(`[PurgeJob] CrmReportDefinition: purged ${crmReportDefinitionResult.count} record(s)`);
+  await step('CrmReportDefinition', async () => {
+    const crmReportDefinitionResult = await prisma.crmReportDefinition.deleteMany({ where: { deletedAt: { lt: cutoffDate } } });
+    logger.info(`[PurgeJob] CrmReportDefinition: purged ${crmReportDefinitionResult.count} record(s)`);
+  });
 
-  const savedTableViewResult = await prisma.savedTableView.deleteMany({ where: { deletedAt: { lt: cutoffDate } } });
-  logger.info(`[PurgeJob] SavedTableView: purged ${savedTableViewResult.count} record(s)`);
+  await step('SavedTableView', async () => {
+    const savedTableViewResult = await prisma.savedTableView.deleteMany({ where: { deletedAt: { lt: cutoffDate } } });
+    logger.info(`[PurgeJob] SavedTableView: purged ${savedTableViewResult.count} record(s)`);
+  });
 
   // §3.4 #11 — o binário sai antes da linha: se o disco falhar, a linha fica e a próxima rodada tenta de novo.
-  const attachments = await prisma.crmAttachment.findMany({
-    where: { deletedAt: { lt: cutoffDate } },
-    select: { id: true, storageKey: true },
-  });
-  const removedIds: string[] = [];
-  for (const att of attachments) {
-    try {
-      await storage.deleteFile(att.storageKey);
-      removedIds.push(att.id);
-    } catch (err) {
-      logger.warn('[PurgeJob] CrmAttachment: binary not removed, row kept for the next run', { attachmentId: att.id, err });
+  await step('CrmAttachment', async () => {
+    const attachments = await prisma.crmAttachment.findMany({
+      where: { deletedAt: { lt: cutoffDate } },
+      select: { id: true, storageKey: true },
+    });
+    const removedIds: string[] = [];
+    for (const att of attachments) {
+      try {
+        await storage.deleteFile(att.storageKey);
+        removedIds.push(att.id);
+      } catch (err) {
+        logger.warn('[PurgeJob] CrmAttachment: binary not removed, row kept for the next run', { attachmentId: att.id, err });
+      }
     }
-  }
-  const crmAttachmentResult = await prisma.crmAttachment.deleteMany({ where: { id: { in: removedIds } } });
-  logger.info(`[PurgeJob] CrmAttachment: purged ${crmAttachmentResult.count} record(s) and binaries`);
+    const crmAttachmentResult = await prisma.crmAttachment.deleteMany({ where: { id: { in: removedIds } } });
+    logger.info(`[PurgeJob] CrmAttachment: purged ${crmAttachmentResult.count} record(s) and binaries`);
+  });
 }
