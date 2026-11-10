@@ -24,7 +24,8 @@ CICLO
      sessão (sessao-correcao para check, sessao-integracao para conflito) na branch do PR. Dependabot com check
      vermelho: não abra sessão, liste no resumo.
    - VERMELHO de achado da faixa 1 da auditoria de estruturas implícitas → siga D-2026-11-10-FAIXA1-MERGE-LIVRE: com
-     revisor PASS e todas as condições dela, mergeie como VERDE; faltou uma, lote.
+     revisor PASS e todas as condições dela, mergeie como VERDE; faltou uma, lote. Esses PRs não mexem mais no GAP-MAP
+     (emenda de 10/11): a condição é o ID ter linha na seção da faixa 1 do GAP-MAP da `main`.
    - VERMELHO com `revisor: não (só texto)` → direto ao lote, sem revisor. Nunca mergeie vermelho.
    - VERMELHO com `revisor: obrigatório` → despache o agente `revisor-independente` (isolation worktree) uma vez
      por SHA de cabeça, com o BRIEF do nó no prompt, **um revisor por vez na máquina** (espere o anterior voltar

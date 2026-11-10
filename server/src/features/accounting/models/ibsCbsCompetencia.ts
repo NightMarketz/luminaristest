@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidDateOnly } from './dates';
 import { SemLinhaVigenteError } from '../../legalParameters/models/legalParameter';
 import { parametroIbsCbsVigente, type ParametroIbsCbs, type TributoConsumo } from './ibsCbsParams';
 import type { MemoriaLinha } from './taxAssessmentCalc';
@@ -19,7 +20,7 @@ import type { ResultadoAntecipacao } from './ibsCbsAntecipacao';
 export const IbsCbsDocumentoSchema = z
   .object({
     fiscalDocumentId: z.string(),
-    dataEmissaoLocal: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    dataEmissaoLocal: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(isValidDateOnly, 'Data inválida no calendário.'),
     status: z.enum(['AUTHORIZED', 'AUTHORIZED_DIVERGENT']),
     ibsCents: z.bigint().nullable(),
     cbsCents: z.bigint().nullable(),

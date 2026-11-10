@@ -12,7 +12,7 @@ import { SalePaymentModal, SaleReasonModal } from '../components/sales/SaleActio
 import { useConfirmModal } from '@/components/ui/feedback/useConfirmModal';
 import { useTranslation } from 'next-i18next';
 import { useFilterPersistence } from '../../shared/hooks/useFilterPersistence';
-import { lineQuantity } from '../utils/packageSale';
+import { saleLinesSubtotal } from '../utils/packageSale';
 
 
 interface SalesViewProps {
@@ -130,9 +130,7 @@ export function SalesView({
     // Subtotal calculado dos itens da venda selecionada
     const computedSubtotal = useMemo(() => {
         if (!selectedSale) return 0;
-        return itemsList
-            .filter((it) => String(it.saleId || '') === String(selectedSale.id))
-            .reduce((sum, it) => sum + lineQuantity(it) * Number(it.unitPrice || 0), 0);
+        return saleLinesSubtotal(itemsList.filter((it) => String(it.saleId || '') === String(selectedSale.id)));
     }, [selectedSale, itemsList]);
 
     // Item 7 (F-FE-VP-2): na venda de pacote, o pacote vendido não paga a si mesmo

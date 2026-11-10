@@ -236,7 +236,8 @@ export class LuminarisAgentService {
 
             case 'search_documents': {
                 const parsed = SearchDocumentsToolArgsSchema.safeParse(args);
-                if (!parsed.success) throw new ValidationError('Invalid arguments for search_documents');
+                // BRD F-57.2: a model argument error goes back to the model, like query_table_data's FILTRO_INVALIDO.
+                if (!parsed.success) return agentToolError('ARGUMENTOS_INVALIDOS', 'Argumentos inválidos para search_documents.');
                 const { hits, stamp } = await this.documentSearch.search(user, parsed.data.query, { limit: parsed.data.limit });
                 // Item 17: o trecho é de arquivo de terceiro — volta ao modelo delimitado como dado, nunca como instrução.
                 // Item 15f (emenda 07/11, F-RAG-M6 = b): no DESCRITIVO cada trecho leva o marcador [n], contínuo no turno;
@@ -248,7 +249,7 @@ export class LuminarisAgentService {
             }
 
             default:
-                throw new ValidationError(`Unknown function: ${functionName}`);
+                return agentToolError('FERRAMENTA_DESCONHECIDA', `Ferramenta desconhecida: ${functionName}.`);
         }
     }
 

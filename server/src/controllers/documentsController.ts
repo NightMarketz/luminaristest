@@ -5,6 +5,7 @@ import { getFactory } from '@/lib/factory';
 import { CreateDocumentSchema, UpdateDocumentContextSchema, SearchDocumentsSchema } from '@/features/documents/dtos/DocumentDto';
 import { DocumentPurpose } from '@/features/documents/models/Document.model';
 import { handleApiError } from '@/lib/apiUtils';
+import { parsePageParam } from '@/lib/pagination';
 import { getUserContextFromRequest } from '@/lib/authUtils';
 import { DocumentProcessingService } from '@/features/documents/services/DocumentProcessingService';
 
@@ -109,8 +110,8 @@ export async function listDocuments(req: Request, res: Response) {
     const ctx = getUserContextFromRequest(req);
     if (!ctx) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const page = Math.max(1, Number(req.query.page || 1));
-    const safeLimit = Math.min(Number(req.query.limit || 50) || 50, 100);
+    const page = parsePageParam('page', req.query.page, 1);
+    const safeLimit = parsePageParam('limit', req.query.limit, 50, 100);
     const service = getFactory().getDocumentService();
     const data = await service.getAllDocuments(ctx, page, safeLimit);
     return res.json({ success: true, data });
@@ -271,7 +272,8 @@ export async function computeTokenCost(req: Request, res: Response) {
     const docxMimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
     if (mime === 'application/pdf' || mime === excelMimeType || mime === docxMimeType) {
-      const arrayBuffer = data.buffer.slice(0, data.byteLength) as ArrayBuffer;
+      // BRD F-66.2: a pooled Buffer starts at byteOffset, not 0.
+      const arrayBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
       const processingService = new DocumentProcessingService();
       text = await processingService.extractText(arrayBuffer, mime);
     } else if (mime === 'text/csv') {
