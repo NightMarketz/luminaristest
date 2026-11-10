@@ -14,11 +14,11 @@ const OWNER = 'owner-efx-f18-2';
 
 type StaleSweep = { failStaleProcessing?: (now: Date) => Promise<unknown> };
 
-const criarJob = (updatedAt: Date) =>
+const criarJob = (updatedAt: Date, supersedesJobId?: string) =>
   prisma.accountingDataExchangeJob.create({
     data: {
       userId: OWNER, unitId: UNIT, direction: 'EXPORT', kind: 'EXPORT_SPED_ECD', status: 'PROCESSING',
-      requestedById: OWNER, createdAt: updatedAt, updatedAt,
+      requestedById: OWNER, createdAt: updatedAt, updatedAt, supersedesJobId,
     },
   });
 
@@ -45,5 +45,23 @@ describe('EFX F-18.2 — job de exportação preso em PROCESSING', () => {
     });
     const status = Object.fromEntries(depois.map((j) => [j.id === preso.id ? 'preso' : 'emCurso', j.status]));
     expect(status).toEqual({ preso: 'FAILED', emCurso: 'PROCESSING' });
+  });
+
+  it('EFX F-18.2: substituta presa vira FAILED com supersedesJobId limpo, e a nova tentativa sobre o original cria', async () => {
+    const now = new Date();
+    const original = await prisma.accountingDataExchangeJob.create({
+      data: { userId: OWNER, unitId: UNIT, direction: 'EXPORT', kind: 'EXPORT_SPED_ECD', status: 'EXPORTED', requestedById: OWNER },
+    });
+    const substitutaPresa = await criarJob(new Date(now.getTime() - 60 * 60 * 1000), original.id);
+
+    const service = getFactory().getDataExchangeExportService() as unknown as StaleSweep;
+    await service.failStaleProcessing?.(now);
+
+    const depois = await prisma.accountingDataExchangeJob.findUnique({
+      where: { id: substitutaPresa.id },
+      select: { status: true, supersedesJobId: true },
+    });
+    expect(depois).toEqual({ status: 'FAILED', supersedesJobId: null });
+    await expect(criarJob(now, original.id)).resolves.toMatchObject({ supersedesJobId: original.id });
   });
 });

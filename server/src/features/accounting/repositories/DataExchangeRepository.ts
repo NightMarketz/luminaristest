@@ -28,7 +28,9 @@ export class DataExchangeRepository implements IDataExchangeRepository {
       // CAS: a requisição que ainda termina (EXPORTED) ou outra varredura não é atropelada.
       const { count } = await prisma.accountingDataExchangeJob.updateMany({
         where: { id: job.id, status: 'PROCESSING', updatedAt: { lt: olderThan } },
-        data: { status: 'FAILED' },
+        // Como nos outros FAILED dos SPED (SpedGenerationService.ts:259-266): FAILED com `supersedesJobId` preenchido
+        // trava o original para sempre no @unique.
+        data: { status: 'FAILED', supersedesJobId: null },
       });
       if (count === 1) vencidos.push(job);
     }
