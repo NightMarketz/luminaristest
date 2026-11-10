@@ -89,6 +89,9 @@ Só IDs escritos pelo dono no chat; faixas 3 e 4, um ID por vez.
   Representação D1, aprovado como dependência do SOT F-02.2 ("Aprova F-02.1 junto", questionário da mesma data).
 - **Execução pedida:** uma sessão por tema (SM, INV, SOT, EFX, BRD), Opus com esforço médio.
 - **Os 5 descartes propostos:** sem resposta do dono até aqui.
+- **Merge da faixa 1 (dono, chat, 2026-11-10: "tem qeu ficar livre isso"; questionário: "Livre só nesta faixa 1"):** PR vermelho
+  da faixa 1 com revisor PASS, CI verde e sem arquivo de ZP entra como verde. Nota `D-2026-11-10-FAIXA1-MERGE-LIVRE`, PR #1163
+  (vermelho só de texto: precisa de uma confirmação do dono no lote; depois disso, os PRs vermelhos da faixa 1 não vão mais ao lote).
 - **Registro:** PR #1153 (GAP-MAP, seção "Estruturas implícitas — faixa 1", 46 linhas; classe verde).
 - **Sessões (10/11):** `faixa1-brd` (28), `faixa1-inv` (7) e `faixa1-sot` (8), todas iniciadas a partir do branch do #1153.
   `faixa1-sm` (SM F-01.2) e `faixa1-efx` (EFX F-19.1, F-18.2) iniciadas no turno seguinte (dono, chat, 2026-11-10: "Dispara SM e EFX").
