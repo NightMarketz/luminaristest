@@ -200,6 +200,12 @@ export const SalesPlugin: RulePlugin = {
         throw new ValidationError('Unidade de negócio é obrigatória para criar uma venda.');
       }
 
+      // INV F-40.1 (Q-11, dono 10/11): o total na criação não é o do navegador — grava 0; o afterUpdate recalcula dos itens.
+      if (!ctx.isSystem && ctx.after) {
+        ctx.after['subtotal'] = 0;
+        ctx.after['totalAmount'] = 0;
+      }
+
       // Auto-fill date with today if not provided
       if (!afterCreate?.date) {
         if (ctx.after) ctx.after['date'] = new Date().toISOString().split('T')[0];
