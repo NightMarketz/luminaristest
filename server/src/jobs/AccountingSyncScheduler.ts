@@ -17,6 +17,7 @@ import logger, { type EventLogger } from '../lib/logger';
 import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
 import { runAccountingSyncReconcile } from './accountingSyncReconcile.job';
 import type { ReconcileSummary } from './accountingSyncReconcile.job';
+import { readMsEnv } from './readMsEnv';
 
 const JOB = 'accounting_sync_reconcile';
 const DEFAULT_INTERVAL_MS = 300_000; // 5 minutes
@@ -50,16 +51,6 @@ export interface SchedulerStartOptions {
 export type RunOnceResult = ReconcileSummary | { skipped: 'lock' };
 
 /** Reads a positive-integer ms env var, or throws if present-but-invalid. */
-function readMsEnv(name: string, fallback: number, min: number): number {
-  const raw = process.env[name];
-  if (raw === undefined || raw === '') return fallback;
-  const n = Number(raw);
-  if (!Number.isInteger(n) || n < min) {
-    throw new Error(`Invalid ${name}='${raw}' — must be an integer >= ${min} (ms).`);
-  }
-  return n;
-}
-
 function assertMs(value: number, label: string, min: number): void {
   if (!Number.isInteger(value) || value < min) {
     throw new Error(`Invalid ${label}=${value} — must be an integer >= ${min} (ms).`);

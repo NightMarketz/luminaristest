@@ -11,6 +11,7 @@ import logger, { type EventLogger } from '../lib/logger';
 import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
 import { getFactory } from '../lib/factory';
 import type { PtaxSyncSummary } from '../features/fx/services/PtaxSyncService';
+import { readMsEnv } from './readMsEnv';
 
 const JOB = 'ptax_rate_sync';
 const DEFAULT_INTERVAL_MS = 1_800_000; // 30 minutos — sem lacuna o tick não chama o BCB
@@ -30,14 +31,6 @@ export interface PtaxRateSchedulerStartOptions {
   intervalMs?: number;
   initialDelayMs?: number;
   allowInTest?: boolean;
-}
-
-function readMsEnv(name: string, fallback: number, min: number): number {
-  const raw = process.env[name];
-  if (raw === undefined || raw === '') return fallback;
-  const n = Number(raw);
-  if (!Number.isInteger(n) || n < min) throw new Error(`Invalid ${name}='${raw}' — must be an integer >= ${min} (ms).`);
-  return n;
 }
 
 export class PtaxRateScheduler {
