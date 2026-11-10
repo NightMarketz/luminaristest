@@ -12,6 +12,25 @@ import type { DocumentSearchService } from '../../documents/services/DocumentSea
 import { SearchDocumentsToolArgsSchema } from '../../documents/dtos/DocumentDto';
 import { wrapUntrustedData } from '../../../lib/untrustedData';
 import type { RagTurn } from './ragTurn';
+import { SchemaValidator } from '../../dynamicTables/validation/SchemaValidator';
+import type { ITableSchema } from '../../dynamicTables/models/DynamicTable.model';
+
+const proposalValidator = new SchemaValidator();
+
+/**
+ * BRD F-57.3: a proposta é conferida contra o schema da tabela ao ser criada (completa no CREATE, parcial no
+ * UPDATE), com o mesmo validador da confirmação. Inválida → recusa ao modelo, nenhuma proposta gravada.
+ */
+function proposalDataError(data: Record<string, unknown>, schema: unknown, isPartial: boolean, tableName: string) {
+    try {
+        proposalValidator.validateDataAgainstSchema(data, schema as ITableSchema, isPartial);
+        return null;
+    } catch (error) {
+        if (!(error instanceof ValidationError)) throw error;
+        const fields = error.details ? Object.keys(error.details) : [];
+        return agentToolError('DADOS_INVALIDOS', `Os dados não valem para a tabela "${tableName}"${fields.length ? `: confira ${fields.join(', ')}` : ''}.`);
+    }
+}
 
 /** Linhas devolvidas por query_table_data ao modelo (o `total` diz quantas casam no banco). */
 const QUERY_TOOL_LIMIT = 10;
@@ -190,6 +209,8 @@ export class LuminarisAgentService {
                 if (!this.policy.canManageData(user, table)) {
                     return agentToolError('SEM_PERMISSAO', `Você não tem permissão para criar registros na tabela "${table.name}".`);
                 }
+                const creationError = proposalDataError(creationData, table.schema, false, table.name);
+                if (creationError) return creationError;
                 const proposal = await this.proposalRepository.create({
                     userId: user.userId,
                     action: 'CREATE',
@@ -222,6 +243,8 @@ export class LuminarisAgentService {
                 if (!record) {
                     return agentToolError('REGISTRO_NAO_ENCONTRADO', `O registro "${recordId}" não existe na tabela "${table.name}".`);
                 }
+                const updateError = proposalDataError(updateData, table.schema, true, table.name);
+                if (updateError) return updateError;
                 const proposal = await this.proposalRepository.create({
                     userId: user.userId,
                     action: 'UPDATE',
