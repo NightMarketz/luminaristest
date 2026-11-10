@@ -1,10 +1,10 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { Request, Response } from 'express';
 import { z } from 'zod';
-import multer from 'multer';
 import { getFactory } from '@/lib/factory';
 import { CreateDocumentSchema, UpdateDocumentContextSchema, SearchDocumentsSchema } from '@/features/documents/dtos/DocumentDto';
 import { DocumentPurpose } from '@/features/documents/models/Document.model';
 import { handleApiError } from '@/lib/apiUtils';
+import { makeUploadMiddleware, validateMagicBytes } from '@/lib/uploadSecurity';
 import { getUserContextFromRequest } from '@/lib/authUtils';
 import { DocumentProcessingService } from '@/features/documents/services/DocumentProcessingService';
 
@@ -18,7 +18,8 @@ const DOCUMENT_MIME_TYPES = new Set([
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // DOCX
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',       // XLSX
-  'application/msword',       // legacy .doc
+  // Sem 'application/msword': o .doc (OLE) nunca passou na conferência de bytes, que exige ZIP, e o extrator não lê
+  // .doc (BRD F-66.3 — a recusa continua, agora com o tipo fora da lista).
   'application/octet-stream', // some browsers send this for .docx/.xlsx
 ]);
 
@@ -27,79 +28,9 @@ const TOKEN_COST_MIME_TYPES = new Set([
   'text/csv',
 ]);
 
-/** Magic-bytes validation — secondary check after MIME filter. */
-function validateMagicBytes(buffer: Buffer, mimetype: string): boolean {
-  const PDF_MAGIC = [0x25, 0x50, 0x44, 0x46]; // %PDF
-  const ZIP_MAGIC = [0x50, 0x4b, 0x03, 0x04]; // PK (DOCX and XLSX are ZIP-based)
-
-  if (mimetype === 'application/pdf') {
-    return PDF_MAGIC.every((byte, i) => buffer[i] === byte);
-  }
-  if (
-    mimetype.includes('officedocument') ||
-    mimetype.includes('spreadsheet') ||
-    mimetype === 'application/msword' ||
-    mimetype === 'application/octet-stream'
-  ) {
-    return ZIP_MAGIC.every((byte, i) => buffer[i] === byte);
-  }
-  // CSV and other text-based types — no magic bytes to check
-  return true;
-}
-
-/** Wraps a multer single-field middleware and converts multer errors to HTTP responses. */
-function makeUploadMiddleware(
-  allowedTypes: Set<string>,
-  fieldName: string,
-) {
-  const instance = multer({
-    storage: multer.memoryStorage(),
-    limits: {
-      fileSize: MAX_FILE_SIZE,
-      files: 1,
-      fields: 10,
-    },
-    fileFilter: (_req, file, cb) => {
-      if (allowedTypes.has(file.mimetype)) {
-        cb(null, true);
-      } else {
-        cb(new Error('INVALID_FILE_TYPE'));
-      }
-    },
-  });
-
-  const single = instance.single(fieldName);
-
-  return (req: Request, res: Response, next: NextFunction): void => {
-    single(req, res, (err: unknown) => {
-      if (!err) {
-        next();
-        return;
-      }
-      if (err instanceof multer.MulterError) {
-        if (err.code === 'LIMIT_FILE_SIZE') {
-          res.status(413).json({
-            success: false,
-            error: 'File too large. Maximum size is 50 MB.',
-          });
-          return;
-        }
-        res.status(400).json({ success: false, error: `Upload error: ${err.message}` });
-        return;
-      }
-      if (err instanceof Error && err.message === 'INVALID_FILE_TYPE') {
-        res.status(415).json({
-          success: false,
-          error: 'File type not supported. Allowed types: PDF, DOCX, XLSX.',
-        });
-        return;
-      }
-      next(err);
-    });
-  };
-}
-
-export const uploadMiddleware = makeUploadMiddleware(DOCUMENT_MIME_TYPES, 'file');
+// BRD F-66.3: multer e conferência de bytes vêm de `lib/uploadSecurity` (a cópia local exigia ZIP para
+// octet-stream; a comum aceita ZIP ou PDF, como nas demais rotas de upload).
+export const uploadMiddleware = makeUploadMiddleware(DOCUMENT_MIME_TYPES, 'file', MAX_FILE_SIZE);
 
 const DocumentIdSchema = z.object({ id: z.string().cuid({ message: 'Invalid document ID format' }) });
 
@@ -254,7 +185,7 @@ export async function updateDocument(req: Request, res: Response) {
   }
 }
 
-export const tokenCostUpload = makeUploadMiddleware(TOKEN_COST_MIME_TYPES, 'file');
+export const tokenCostUpload = makeUploadMiddleware(TOKEN_COST_MIME_TYPES, 'file', MAX_FILE_SIZE);
 export async function computeTokenCost(req: Request, res: Response) {
   try {
     const ctx = getUserContextFromRequest(req);
