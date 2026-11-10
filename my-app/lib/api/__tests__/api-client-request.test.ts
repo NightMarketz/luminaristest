@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { apiClient } from '../api-client';
+import { apiClient, NETWORK_ERROR_MESSAGE } from '../api-client';
 import { notify } from '../../notifications/notify';
 
 /**
@@ -72,9 +72,8 @@ describe('apiClient.request', () => {
     expect(lastHeaders()['x-user-timezone']).toBeTruthy();
   });
 
-  it('falha de rede: o erro nativo passa como veio', async () => {
-    const native = new TypeError('Failed to fetch');
-    vi.mocked(globalThis.fetch).mockRejectedValue(native);
-    await expect(apiClient.get('/x')).rejects.toBe(native);
+  it('falha de rede: Error com a mensagem de rede do cliente, sem status (BRD F-72.1)', async () => {
+    vi.mocked(globalThis.fetch).mockRejectedValue(new TypeError('Failed to fetch'));
+    await expect(apiClient.get('/x')).rejects.toEqual(new Error(NETWORK_ERROR_MESSAGE));
   });
 });
