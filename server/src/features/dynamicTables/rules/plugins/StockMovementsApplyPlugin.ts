@@ -53,6 +53,12 @@ export const StockMovementsApplyPlugin: RulePlugin = {
       throw new ValidationError('Entrada por compra é registrada pelo Contas a Pagar (título de estoque), não pela movimentação manual.');
     }
 
+    // INV F-41.1: compra entra pelo Contas a Pagar (título de estoque: custo médio + D Estoques / C Fornecedores), nunca
+    // pela movimentação manual — que subiria o estoque sem título, lançamento nem custo médio (venda seguinte sem CMV).
+    if (type === 'In' && !isAccountingPayableRow && String(ctx.after?.reason || '') === 'Purchase') {
+      throw new ValidationError('Entrada por compra é registrada pelo Contas a Pagar (título de estoque), não pela movimentação manual.');
+    }
+
     // Regras financeiras para entradas manuais: exigir dados essenciais quando motivo for compra.
     // A validação manual de supplierId/cost não se aplica à linha do Payable; o delta abaixo SIM.
     if (type === 'In' && !isAccountingPayableRow) {

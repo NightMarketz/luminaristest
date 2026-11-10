@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { getFactory } from '@/lib/factory';
 import { handleApiError } from '@/lib/apiUtils';
+import { parsePageParam } from '@/lib/pagination';
 import { getUserContextFromRequest } from '@/lib/authUtils';
 import { ValidationError } from '@/lib/errors';
 import { z } from 'zod';
@@ -85,8 +86,8 @@ export async function getTableData(req: Request, res: Response) {
     const pageRaw = req.query.page;
     const sizeRaw = req.query.pageSize ?? req.query.limit;
     if (pageRaw !== undefined || sizeRaw !== undefined) {
-      const page = Math.max(1, Number(pageRaw) || 1);
-      const pageSize = Math.min(1000, Math.max(1, Number(sizeRaw) || 50));
+      const page = parsePageParam('page', pageRaw, 1);
+      const pageSize = parsePageParam(req.query.pageSize !== undefined ? 'pageSize' : 'limit', sizeRaw, 50, 1000);
       const result = await service.getTableData(ctx, req.params.tableId, page, pageSize);
       return res.json({
         success: true,

@@ -2,6 +2,20 @@ import type { Response } from 'express';
 import { ZodError, ZodIssue } from 'zod';
 import { AppError, ModuleNotInstalledError, ReportTooLargeError, RetencaoExcedePagamentoError, RoleOverrideCompileDraftError, SystemResetBlockedByAccountingError, ValidationError } from './errors';
 import { logger } from './logger';
+import { LlmProviderError, type LlmProviderErrorKind } from './llm/LlmProvider';
+
+/**
+ * BRD F-56.1: falha do provedor de LLM sai com a categoria. Transitória (taxa, cota, servidor, prazo) = 503;
+ * credencial ou pedido recusado pelo provedor = 502. O texto do provedor nunca vai ao cliente.
+ */
+const LLM_ERROR_HTTP: Record<LlmProviderErrorKind, { status: number; message: string }> = {
+  RATE_LIMIT: { status: 503, message: 'O serviço de IA atingiu o limite de requisições. Tente de novo em instantes.' },
+  QUOTA: { status: 503, message: 'O crédito do serviço de IA acabou.' },
+  SERVER: { status: 503, message: 'O serviço de IA está indisponível no momento.' },
+  TIMEOUT: { status: 503, message: 'O serviço de IA demorou demais para responder.' },
+  AUTH: { status: 502, message: 'O serviço de IA recusou a credencial configurada.' },
+  BAD_REQUEST: { status: 502, message: 'O serviço de IA recusou o pedido.' },
+};
 
 /**
  * Interface for a standardized API error response.
@@ -22,8 +36,16 @@ export function handleApiError(error: unknown, res: Response): void {
 
   // Duck-typed Prisma error code, mapped here so it is not coupled to the ORM type.
   const prismaCode = (error as { code?: string })?.code;
+  // BRD F-02.1: body-parser (express.json) marks client errors with `type`; without this they were 500.
+  const bodyParserType = (error as { type?: string })?.type;
 
-  if (error instanceof ZodError) {
+  if (bodyParserType === 'entity.parse.failed') {
+    statusCode = 400;
+    responseBody = { code: 'MALFORMED_JSON', message: 'The request body is not valid JSON.' };
+  } else if (bodyParserType === 'entity.too.large') {
+    statusCode = 413;
+    responseBody = { code: 'PAYLOAD_TOO_LARGE', message: 'The request body exceeds the size limit.' };
+  } else if (error instanceof ZodError) {
     statusCode = 400;
     responseBody = {
       code: 'VALIDATION_ERROR',
@@ -39,6 +61,10 @@ export function handleApiError(error: unknown, res: Response): void {
     if ((error instanceof ValidationError || error instanceof ModuleNotInstalledError || error instanceof ReportTooLargeError || error instanceof RoleOverrideCompileDraftError || error instanceof SystemResetBlockedByAccountingError || error instanceof RetencaoExcedePagamentoError) && error.details) {
       responseBody.details = error.details;
     }
+  } else if (error instanceof LlmProviderError) {
+    const mapped = LLM_ERROR_HTTP[error.kind];
+    statusCode = mapped.status;
+    responseBody = { code: `LLM_${error.kind}`, message: mapped.message };
   } else if (prismaCode === 'P2002') {
     // Unique constraint violation.
     statusCode = 409;

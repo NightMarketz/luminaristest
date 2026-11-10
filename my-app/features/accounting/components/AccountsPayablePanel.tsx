@@ -8,6 +8,7 @@ import {
   type PayablePayment,
   type PayableStatus,
   type PaymentMethod,
+  type PaymentRecordMethod,
 } from '../../../lib/services/accountsPayable.service';
 import { accountingService, type Account } from '../../../lib/services/accounting.service';
 import { counterpartiesService, type Counterparty } from '../../../lib/services/counterparties.service';
@@ -28,11 +29,6 @@ import { useAccountingT } from '../lib/useAccountingT';
 // but `total` comes back on every page so StandardPagination has what it needs).
 const PAYABLES_PER_PAGE = 50;
 
-
-/** Sum of the ACTIVE payments on a payable (in cents). */
-function sumActive(payments: PayablePayment[]): number {
-  return payments.filter((p) => p.status === 'ACTIVE').reduce((acc, p) => acc + p.amountCents, 0);
-}
 
 // ── status badge ─────────────────────────────────────────────────────────────
 
@@ -67,6 +63,12 @@ function StatusBadge({ status }: { status: PayableStatus }) {
 
 // ── payments drawer ──────────────────────────────────────────────────────────
 
+/** Rótulo do método gravado (SOT F-02.2): `NONE` é a baixa de retenção, sem saída de caixa. */
+const PAYMENT_METHOD_LABEL: Partial<Record<PaymentRecordMethod, string>> = {
+  Cash: 'Dinheiro',
+  NONE: 'Retenção (sem saída de caixa)',
+};
+
 function PaymentsDrawer({ payable }: { payable: PayableWithPayments }) {
   const { t } = useTranslation('accounting');
   return (
@@ -85,7 +87,9 @@ function PaymentsDrawer({ payable }: { payable: PayableWithPayments }) {
             {payable.payments.map((p) => (
               <tr key={p.id} className="border-t border-neutral-800/50">
                 <td className="py-1 pr-4 tabular-nums text-neutral-300">{formatDate(p.paidAt)}</td>
-                <td className="py-1 pr-4 text-neutral-300">{p.method}</td>
+                <td className="py-1 pr-4 text-neutral-300">
+                  {t('contasAPagar.actionModal.method.' + p.method, PAYMENT_METHOD_LABEL[p.method] ?? p.method)}
+                </td>
                 <td className="py-1 pr-4 text-right tabular-nums text-neutral-300">{formatCents(p.amountCents)}</td>
                 <td className="py-1 text-neutral-400">
                   {p.status === 'ACTIVE'
@@ -345,7 +349,7 @@ export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPerio
     setActionPeriodError(false);
     try {
       if (action.type === 'pay') {
-        const remaining = action.payable.amountCents - sumActive(action.payable.payments);
+        const remaining = action.payable.remainingCents;
         await accountsPayableService.registerPayment(action.payable.id, {
           unitId,
           method,

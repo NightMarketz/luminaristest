@@ -7,6 +7,10 @@ import { emitSessionExpired } from './sessionExpired';
 // (importable outside lib/services — the lint gate bars only the client module).
 export { humanizeZodFlatten, isZodFlatten };
 
+/** BRD F-72.4 (decisão do dono, 10/11): limite de tempo por requisição à API. */
+export const API_TIMEOUT_MS = 60_000;
+export const API_TIMEOUT_MESSAGE = 'O servidor demorou demais para responder. Tente de novo.';
+
 /** Extract a human-readable message from a parsed error body. */
 export function extractErrorMessage(result: Record<string, unknown>, status: number, statusText: string): string {
   if (isZodFlatten(result?.error)) return humanizeZodFlatten(result.error as ZodFlatten);
@@ -75,13 +79,17 @@ class ApiClient {
 
     try {
       const headers = this.getHeaders(init.headers, token) as Record<string, string>;
+      // BRD F-72.4 (decisão do dono, 10/11): 60 s de limite; o signal do chamador, se houver, continua valendo.
+      const timeout = AbortSignal.timeout(API_TIMEOUT_MS);
+      const signal = init.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
       let response: Response;
       try {
-        response = await fetch(url, {
-          ...init,
-          headers,
-        });
+        response = await fetch(url, { ...init, headers, signal });
       } catch (networkError) {
+        if (networkError instanceof DOMException && networkError.name === 'TimeoutError') {
+          if (!silent) notify(API_TIMEOUT_MESSAGE, 'error', 'Erro');
+          throw new Error(API_TIMEOUT_MESSAGE);
+        }
         // BRD F-72.1: a network failure gets the same treatment as an HTTP error (toast + Error with the
         // toast text), without `status` — callers read "no status" as "no response". Aborts pass through.
         if (!(networkError instanceof TypeError)) throw networkError;
@@ -114,7 +122,12 @@ class ApiClient {
         throw httpError;
       }
 
-      if (!parsed) result = { error: 'Failed to parse server response' };
+      if (!parsed) {
+        // BRD F-72.2: 2xx com corpo não-JSON (página de proxy, resposta cortada) é falha, não dado de sucesso.
+        const message = 'Resposta inválida do servidor.';
+        if (!silent) notify(message, 'error', 'Erro');
+        throw Object.assign(new Error(message), { status: response.status });
+      }
       return result as T;
     } catch (error) {
       // Re-throw our parsed error object (it always has `status`, even when the body was empty) or a native

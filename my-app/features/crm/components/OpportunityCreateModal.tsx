@@ -6,6 +6,7 @@ import { resolveErrorMessage } from '../../../lib/utils/error-handler';
 import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
 import { fetchAllRows } from '../lib/crmFetch';
 import { DEFAULT_CURRENCY } from '../lib/constants';
+import { parseBrl } from '../../accounting/lib/parseBrl';
 import type { CrmRecord } from '../hooks/useCrmData';
 
 type Currency = 'BRL' | 'USD' | 'EUR';
@@ -97,7 +98,8 @@ export function OpportunityCreateModal({
     }
   }, [isOpen, leadName, defaultAccountId]);
 
-  const amountValue = Number(amount);
+  // BRD F-74.1: BR money input ("1.234,56") via the canonical parser; the DTO takes reais.
+  const amountValue = parseBrl(amount) / 100;
   const isValid = name.trim() !== '' && pipelineId !== '';
 
   const handleConfirm = async () => {
@@ -105,7 +107,7 @@ export function OpportunityCreateModal({
     setSubmitting(true);
     setError(null);
 
-    const hasAmount = amount.trim() !== '' && Number.isFinite(amountValue);
+    const hasAmount = amount.trim() !== '';
     const payload: ConvertLeadToOpportunityPayload = {
       leadId,
       name: name.trim(),
@@ -194,9 +196,8 @@ export function OpportunityCreateModal({
           <div>
             <label className={labelClass}>{t('opp.amount', 'Valor')}</label>
             <input
-              type="number"
-              min={0}
-              step="0.01"
+              type="text"
+              inputMode="decimal"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className={inputClass}

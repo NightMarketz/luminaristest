@@ -29,6 +29,9 @@ const STATUS_TONE: Record<FiscalDocumentView['status'], string> = {
   AUTHORIZED_DIVERGENT: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
   REJECTED: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
   CANCELLED: 'bg-neutral-200 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300',
+  PENDING_SIGNATURE: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+  CONTINGENCY: 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300',
+  CANCEL_ANALYSIS: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
 };
 
 const isAuthorized = (d: FiscalDocumentView) => d.status === 'AUTHORIZED' || d.status === 'AUTHORIZED_DIVERGENT';

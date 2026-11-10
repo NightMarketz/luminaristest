@@ -17,7 +17,9 @@ const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.doc
 describe('#15 — estimativa de tokens para DOCX', () => {
   it('DOCX devolve 200 com a contagem, não 400', async () => {
     const res = { status: jest.fn().mockReturnThis(), json: jest.fn() } as unknown as Response;
-    const req = { file: { mimetype: DOCX, buffer: Buffer.from('PK fake docx') } } as unknown as Request;
+    // Assinatura ZIP real: o BRD F-66.1 confere os bytes antes de extrair.
+    const docx = Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.from(' fake docx')]);
+    const req = { file: { mimetype: DOCX, buffer: docx } } as unknown as Request;
 
     await computeTokenCost(req, res);
 

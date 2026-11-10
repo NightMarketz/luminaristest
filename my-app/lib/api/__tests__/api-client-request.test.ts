@@ -39,9 +39,17 @@ describe('apiClient.request', () => {
     expect(notify).toHaveBeenCalledWith('Erro 502: Bad Gateway', 'error', 'Erro');
   });
 
-  it('2xx com corpo não-JSON: segue devolvendo { error: "Failed to parse server response" }', async () => {
+  // BRD F-72.2 (GAP-MAP, faixa 1 de 2026-11-10): o 2xx com corpo não-JSON voltava como dado de sucesso
+  // (`{ error: 'Failed to parse server response' }`), e a tela ficava vazia ou quebrava lendo campos que não existem.
+  it('BRD F-72.2 2xx com corpo não-JSON: rejeita com { status } e mostra o toast', async () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(res(200, 'oops'));
-    await expect(apiClient.get('/x')).resolves.toEqual({ error: 'Failed to parse server response' });
+    await expect(apiClient.get('/x')).rejects.toMatchObject({ status: 200 });
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
+  it('BRD F-72.2 controle: 2xx com corpo vazio segue resolvendo {}', async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValue(res(204, ''));
+    await expect(apiClient.get('/x')).resolves.toEqual({});
   });
 
   it('silent: rejeita igual, sem toast', async () => {

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidCompetencia, isValidDateOnly } from './dates';
 import { findLc116, type ListaLc116 } from './lc116ListaNacional';
 
 /**
@@ -13,7 +14,7 @@ const centsStr = z.string().regex(/^\d+$/);
 /** Contrato de saída (BRIEF C §2.2) + coluna `divergentes` do F-TC-4 (a). */
 export const IssLinhaSchema = z
   .object({
-    competencia: z.string().regex(/^\d{4}-\d{2}$/),
+    competencia: z.string().regex(/^\d{4}-\d{2}$/).refine(isValidCompetencia, 'Competência inválida no calendário.'),
     municipioIbge: z.string().regex(/^\d{7}$/), // município do ISS (municipioDeIncidencia, LC 116 art. 3º)
     retido: z.boolean(), // tpRetISSQN === 2
     documentos: z.number().int().nonnegative(),
@@ -29,7 +30,7 @@ export type IssLinha = z.infer<typeof IssLinhaSchema>;
 /** Contrato de entrada (BRIEF C §2.2) + `divergente` (status `AUTHORIZED_DIVERGENT`, F-TC-4 a). */
 export const IssDocInputSchema = z
   .object({
-    dCompet: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    dCompet: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(isValidDateOnly, 'Data inválida no calendário.'),
     municipioIbge: z.string().regex(/^\d{7}$/),
     tpRetISSQN: z.union([z.literal(1), z.literal(2)]),
     vServCents: z.bigint(),

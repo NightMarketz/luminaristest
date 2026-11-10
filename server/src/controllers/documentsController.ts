@@ -5,6 +5,8 @@ import { getFactory } from '@/lib/factory';
 import { CreateDocumentSchema, UpdateDocumentContextSchema, SearchDocumentsSchema } from '@/features/documents/dtos/DocumentDto';
 import { DocumentPurpose } from '@/features/documents/models/Document.model';
 import { handleApiError } from '@/lib/apiUtils';
+import { ValidationError } from '@/lib/errors';
+import { parsePageParam } from '@/lib/pagination';
 import { getUserContextFromRequest } from '@/lib/authUtils';
 import { DocumentProcessingService } from '@/features/documents/services/DocumentProcessingService';
 
@@ -109,8 +111,8 @@ export async function listDocuments(req: Request, res: Response) {
     const ctx = getUserContextFromRequest(req);
     if (!ctx) return res.status(401).json({ success: false, error: 'Unauthorized' });
 
-    const page = Math.max(1, Number(req.query.page || 1));
-    const safeLimit = Math.min(Number(req.query.limit || 50) || 50, 100);
+    const page = parsePageParam('page', req.query.page, 1);
+    const safeLimit = parsePageParam('limit', req.query.limit, 50, 100);
     const service = getFactory().getDocumentService();
     const data = await service.getAllDocuments(ctx, page, safeLimit);
     return res.json({ success: true, data });
@@ -263,6 +265,11 @@ export async function computeTokenCost(req: Request, res: Response) {
     const file = (req as Request & { file?: Express.Multer.File }).file;
     if (!file) return res.status(400).json({ success: false, error: 'No file uploaded' });
 
+    // BRD F-66.1: mesma conferência de assinatura do uploadDocument (anti MIME spoofing).
+    if (!validateMagicBytes(file.buffer, file.mimetype)) {
+      return res.status(415).json({ success: false, error: 'File content does not match declared type.' });
+    }
+
     const data = file.buffer;
     let text = '';
     const mime = file.mimetype || '';
@@ -274,7 +281,11 @@ export async function computeTokenCost(req: Request, res: Response) {
       // BRD F-66.2: a pooled Buffer starts at byteOffset, not 0.
       const arrayBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
       const processingService = new DocumentProcessingService();
-      text = await processingService.extractText(arrayBuffer, mime);
+      // BRD F-66.1: arquivo que o extrator não lê é entrada inválida (400), não defeito (500).
+      text = await processingService.extractText(arrayBuffer, mime).catch((error: unknown) => {
+        if (error instanceof ValidationError) throw error;
+        throw new ValidationError('Não foi possível ler o texto do arquivo enviado.');
+      });
     } else if (mime === 'text/csv') {
       text = data.toString('utf-8');
     } else {

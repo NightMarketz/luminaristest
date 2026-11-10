@@ -10,10 +10,11 @@
  */
 import logger, { type EventLogger } from '../lib/logger';
 import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
-import { runDfePollPending } from './dfePollPending.job';
+import { readDfePollAfterMs, runDfePollPending } from './dfePollPending.job';
 import type { PollSummary } from '../features/accounting/services/FiscalDocumentLifecycleService';
 import { scopeDay } from '../features/accounting/models/dates';
 import type { ContingenciaTickSummary } from '../features/accounting/dtos/NfceContingenciaDto';
+import { readMsEnv } from './readMsEnv';
 
 const JOB = 'dfe_poll_pending';
 const DEFAULT_INTERVAL_MS = 120_000; // 2 minutos
@@ -35,14 +36,6 @@ export interface DfePollSchedulerStartOptions {
   intervalMs?: number;
   initialDelayMs?: number;
   allowInTest?: boolean;
-}
-
-function readMsEnv(name: string, fallback: number, min: number): number {
-  const raw = process.env[name];
-  if (raw === undefined || raw === '') return fallback;
-  const n = Number(raw);
-  if (!Number.isInteger(n) || n < min) throw new Error(`Invalid ${name}='${raw}' — must be an integer >= ${min} (ms).`);
-  return n;
 }
 
 export class DfePollScheduler {
@@ -132,6 +125,7 @@ export class DfePollScheduler {
     }
     const intervalMs = options.intervalMs ?? readMsEnv('DFE_POLL_INTERVAL_MS', DEFAULT_INTERVAL_MS, 1);
     const initialDelayMs = options.initialDelayMs ?? readMsEnv('DFE_POLL_INITIAL_DELAY_MS', DEFAULT_INITIAL_DELAY_MS, 0);
+    readDfePollAfterMs(); // BRD F-71.1: o limiar lido a cada tick também falha no boot
 
     const tick = (): void => {
       // eslint-disable-next-line no-restricted-syntax -- SANCTIONED: já registrado e alertado em runOnce (job.failed); o timer não pode morrer (OBS-R8)

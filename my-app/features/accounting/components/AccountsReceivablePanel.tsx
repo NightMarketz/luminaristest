@@ -9,6 +9,7 @@ import {
   type ReceivableReceipt,
   type ReceivableStatus,
   type ReceiptMethod,
+  type ReceiptRecordMethod,
 } from '../../../lib/services/accountsReceivable.service';
 import { accountingService, type Account } from '../../../lib/services/accounting.service';
 import { counterpartiesService, type Counterparty } from '../../../lib/services/counterparties.service';
@@ -33,11 +34,6 @@ import { useAccountingT } from '../lib/useAccountingT';
 // but `total` comes back on every page so StandardPagination has what it needs).
 const RECEIVABLES_PER_PAGE = 50;
 
-
-/** Sum of the ACTIVE receipts on a receivable (in cents). */
-function sumActive(receipts: ReceivableReceipt[]): number {
-  return receipts.filter((r) => r.status === 'ACTIVE').reduce((acc, r) => acc + r.amountCents, 0);
-}
 
 // ── status badge ─────────────────────────────────────────────────────────────
 
@@ -70,6 +66,13 @@ function StatusBadge({ status }: { status: ReceivableStatus }) {
 
 // ── receipts drawer ──────────────────────────────────────────────────────────
 
+/** Rótulo do método gravado (SOT F-02.2): `ProviderBalance` e `SplitPayment` vêm do servidor, não do modal. */
+const RECEIPT_METHOD_LABEL: Partial<Record<ReceiptRecordMethod, string>> = {
+  Cash: 'Dinheiro',
+  ProviderBalance: 'Saldo no provedor',
+  SplitPayment: 'Split payment (IBS/CBS)',
+};
+
 function ReceiptsDrawer({ receivable }: { receivable: ReceivableWithReceipts }) {
   const { t } = useTranslation('accounting');
   return (
@@ -88,7 +91,9 @@ function ReceiptsDrawer({ receivable }: { receivable: ReceivableWithReceipts }) 
             {receivable.receipts.map((r) => (
               <tr key={r.id} className="border-t border-neutral-800/50">
                 <td className="py-1 pr-4 tabular-nums text-neutral-300">{formatDate(r.receivedAt)}</td>
-                <td className="py-1 pr-4 text-neutral-300">{r.method}</td>
+                <td className="py-1 pr-4 text-neutral-300">
+                  {t('contasAReceber.actionModal.method.' + r.method, RECEIPT_METHOD_LABEL[r.method] ?? r.method)}
+                </td>
                 <td className="py-1 pr-4 text-right tabular-nums text-neutral-300">{formatCents(r.amountCents)}</td>
                 <td className="py-1 text-neutral-400">
                   {r.status === 'ACTIVE'
@@ -390,7 +395,7 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
       id: r.id,
       customerName: r.customerName,
       description: r.description,
-      openCents: r.amountCents - sumActive(r.receipts),
+      openCents: r.remainingCents,
     });
   }
 
@@ -438,7 +443,7 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
     setActionLiveCharge(false);
     try {
       if (action.type === 'receive') {
-        const remaining = action.receivable.amountCents - sumActive(action.receivable.receipts);
+        const remaining = action.receivable.remainingCents;
         await accountsReceivableService.registerReceipt(action.receivable.id, {
           unitId,
           method,

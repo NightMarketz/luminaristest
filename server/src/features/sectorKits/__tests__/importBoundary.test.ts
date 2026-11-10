@@ -35,6 +35,8 @@ const ALLOWED_ACCOUNTING_IMPORTS: ReadonlyArray<{ suffix: RegExp; names: readonl
     // + o de-para da L8 e o plano de 3 níveis congelado (BE-INCR-PLANO-4-NIVEIS, F-L8-8 a e F-L8-9 a, dono 13/10).
     names: ['CANONICAL_ACCOUNTS', 'CanonicalAccount', 'AccountNature', 'CANONICAL_ACCOUNTS_PRE_L8', 'codigoPosL8'],
   },
+  // SOT F-12.1 (dono, chat, 10/11: "Liberar"): a validação de data e competência pelo calendário tem casa única.
+  { suffix: /accounting\/models\/dates$/, names: ['isValidDateOnly', 'isValidCompetencia'] },
 ];
 
 function namedImportsOf(statement: string): string[] {
