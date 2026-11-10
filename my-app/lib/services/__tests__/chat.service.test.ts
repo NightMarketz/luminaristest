@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NETWORK_ERROR_MESSAGE } from '../../api/api-client'; // BRD F-72.1
 import { ChatApiError, ChatService } from '../chat.service';
 import { DocumentService } from '../document.service';
 import { notify } from '../../notifications/notify';
@@ -91,12 +92,12 @@ describe('ChatService', () => {
     expect(notify).not.toHaveBeenCalled();
   });
 
-  it('falha de rede: ChatApiError sem status, com a mensagem nativa', async () => {
+  it('falha de rede: ChatApiError sem status, com a mensagem de rede do cliente (BRD F-72.1)', async () => {
     vi.mocked(globalThis.fetch).mockRejectedValue(new TypeError('Failed to fetch'));
     const err = await ChatService.listInstances().catch((e: unknown) => e);
     expect(err).toBeInstanceOf(ChatApiError);
     expect(err).toBeInstanceOf(Error);
-    expect(err).toMatchObject({ message: 'Failed to fetch', status: undefined });
+    expect(err).toMatchObject({ message: NETWORK_ERROR_MESSAGE, status: undefined });
   });
 });
 
@@ -120,11 +121,11 @@ describe('DocumentService.listForSelection', () => {
     expect(lastCall().url).toMatch(/\/documents\/list$/);
   });
 
-  it('não-2xx → Error("Falha ao buscar documentos."); rede → mensagem nativa', async () => {
+  it('não-2xx → Error("Falha ao buscar documentos."); rede → mensagem de rede do cliente (BRD F-72.1)', async () => {
     reply(500, { message: 'x' });
     await expect(DocumentService.listForSelection()).rejects.toEqual(new Error('Falha ao buscar documentos.'));
     expect(notify).not.toHaveBeenCalled();
     vi.mocked(globalThis.fetch).mockRejectedValue(new TypeError('Failed to fetch'));
-    await expect(DocumentService.listForSelection()).rejects.toEqual(new Error('Failed to fetch'));
+    await expect(DocumentService.listForSelection()).rejects.toEqual(new Error(NETWORK_ERROR_MESSAGE));
   });
 });

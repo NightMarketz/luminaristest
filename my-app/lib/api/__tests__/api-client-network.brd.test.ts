@@ -19,7 +19,7 @@ describe('BRD F-72.1 — falha de rede tratada como o erro HTTP', () => {
   });
 
   it('BRD F-72.1: falha de rede gera toast e rejeita com a mensagem do toast, sem "Failed to fetch"', async () => {
-    const err = await apiClient.get('/x').catch((e: unknown) => e as Error & { status?: unknown });
+    const err = (await apiClient.get('/x').catch((e: unknown) => e)) as Error & { status?: unknown };
     expect(notify).toHaveBeenCalledTimes(1);
     const [toastMsg, kind] = vi.mocked(notify).mock.calls[0];
     expect(kind).toBe('error');
@@ -30,7 +30,7 @@ describe('BRD F-72.1 — falha de rede tratada como o erro HTTP', () => {
   });
 
   it('BRD F-72.1: silent cala o toast da falha de rede', async () => {
-    const err = await apiClient.get('/x', { silent: true }).catch((e: unknown) => e as Error);
+    const err = (await apiClient.get('/x', { silent: true }).catch((e: unknown) => e)) as Error;
     expect(notify).not.toHaveBeenCalled();
     expect(err.message).not.toBe('Failed to fetch');
   });
