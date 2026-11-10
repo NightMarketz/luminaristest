@@ -9,6 +9,7 @@ import {
   type ReceivableReceipt,
   type ReceivableStatus,
   type ReceiptMethod,
+  type ReceiptRecordMethod,
 } from '../../../lib/services/accountsReceivable.service';
 import { accountingService, type Account } from '../../../lib/services/accounting.service';
 import { counterpartiesService, type Counterparty } from '../../../lib/services/counterparties.service';
@@ -70,6 +71,13 @@ function StatusBadge({ status }: { status: ReceivableStatus }) {
 
 // ── receipts drawer ──────────────────────────────────────────────────────────
 
+/** Rótulo do método gravado (SOT F-02.2): `ProviderBalance` e `SplitPayment` vêm do servidor, não do modal. */
+const RECEIPT_METHOD_LABEL: Partial<Record<ReceiptRecordMethod, string>> = {
+  Cash: 'Dinheiro',
+  ProviderBalance: 'Saldo no provedor',
+  SplitPayment: 'Split payment (IBS/CBS)',
+};
+
 function ReceiptsDrawer({ receivable }: { receivable: ReceivableWithReceipts }) {
   const { t } = useTranslation('accounting');
   return (
@@ -88,7 +96,9 @@ function ReceiptsDrawer({ receivable }: { receivable: ReceivableWithReceipts }) 
             {receivable.receipts.map((r) => (
               <tr key={r.id} className="border-t border-neutral-800/50">
                 <td className="py-1 pr-4 tabular-nums text-neutral-300">{formatDate(r.receivedAt)}</td>
-                <td className="py-1 pr-4 text-neutral-300">{r.method}</td>
+                <td className="py-1 pr-4 text-neutral-300">
+                  {t('contasAReceber.actionModal.method.' + r.method, RECEIPT_METHOD_LABEL[r.method] ?? r.method)}
+                </td>
                 <td className="py-1 pr-4 text-right tabular-nums text-neutral-300">{formatCents(r.amountCents)}</td>
                 <td className="py-1 text-neutral-400">
                   {r.status === 'ACTIVE'
