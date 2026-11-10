@@ -30,7 +30,10 @@ describe('InterviewService', () => {
     const { url, init } = lastCall();
     expect(url).toMatch(/\/dashboard\/ai\/ChatInterview$/);
     expect(init.method).toBe('POST');
-    expect(init.signal).toBe(controller.signal);
+    // BRD F-72.4: o signal enviado combina o do chamador com o limite de 60 s; abortar o do chamador aborta o pedido.
+    expect(init.signal?.aborted).toBe(false);
+    controller.abort();
+    expect(init.signal?.aborted).toBe(true);
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer tok-1');
     expect(JSON.parse(String(init.body))).toEqual({ messages: [], stage: 'GREETING' });
   });
