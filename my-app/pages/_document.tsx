@@ -23,7 +23,7 @@ class MyDocument extends Document {
               (function() {
                 function getInitialTheme() {
                   const storedTheme = window.localStorage.getItem('theme');
-                  if (typeof storedTheme === 'string') return storedTheme;
+                  if (storedTheme === 'light' || storedTheme === 'dark') return storedTheme;
                   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                   return prefersDark ? 'dark' : 'light';
                 }

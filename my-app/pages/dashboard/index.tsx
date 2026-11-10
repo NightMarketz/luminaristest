@@ -62,8 +62,9 @@ function DashboardPage({ allTables }: DashboardPageProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
-    if (router.isReady && router.query.category) {
-      setSelectedCategory(router.query.category as string);
+    const category = router.query.category;
+    if (router.isReady && typeof category === 'string' && category) {
+      setSelectedCategory(category);
     }
   }, [router.isReady, router.query.category]);
   const [tables, setTables] = useState<IDynamicTable[]>(allTables || []);
