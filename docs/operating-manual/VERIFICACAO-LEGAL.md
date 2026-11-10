@@ -33,6 +33,8 @@ passo em `~/.claude/CLAUDE.md`).
      reforma), MP em tramitação ou regulamentação pendente;
    - outra norma, notícia ou pista indica alteração posterior à cópia;
    - norma ausente do acervo (`_falhas.jsonl`, `COBERTURA.md`; PR e RJ estaduais vazios em 17/10/2026).
+     Lacunas medidas por módulo e por fonte (SPED, NF-e, IN RFB, CONFAZ, RICMS-SP, município de SP, CARF):
+     `REGULATORY-SOURCE-COVERAGE.md`.
 
    Nesses casos, fonte oficial nesta ordem: texto da norma (planalto.gov.br, normas.leg.br, LexML,
    in.gov.br, CONFAZ) → órgão (gov.br/receitafederal, normas.receita.fazenda.gov.br, sped.rfb.gov.br,
