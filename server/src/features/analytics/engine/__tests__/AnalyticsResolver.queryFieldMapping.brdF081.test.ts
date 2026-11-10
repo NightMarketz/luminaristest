@@ -52,4 +52,10 @@ describe('BRD F-08.1 — mapeamento de campo vindo da query é conferido', () =>
     expect(r.error).toMatch(/inexistente/);
     expect(processor).not.toHaveBeenCalled();
   });
+
+  it('BRD F-08.1 chave repetida na query (array) ⇒ error, processador não roda', async () => {
+    const r = await resolveChartData(user, 'k1', { key: 'k1', amountField: ['valor', 'outro'] });
+    expect(r.error).toMatch(/amountField/);
+    expect(processor).not.toHaveBeenCalled();
+  });
 });

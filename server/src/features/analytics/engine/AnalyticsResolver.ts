@@ -340,7 +340,7 @@ export async function resolveChartData(
   for (const [paramKey, fieldName] of Object.entries(processorParams)) {
     if (['statusField', 'amountField', 'dateField', 'paymentStatusField'].includes(paramKey)) {
       const fieldExists = table.schema.fields.some((f: ISchemaField) => f.name === fieldName);
-      if (!fieldExists && typeof fieldName === 'string') {
+      if (fieldName !== undefined && !fieldExists) {
         return {
           chart,
           data: [],
