@@ -200,6 +200,11 @@ export const SalesPlugin: RulePlugin = {
         throw new ValidationError('Unidade de negócio é obrigatória para criar uma venda.');
       }
 
+      // INV F-40.2 (Q-11, dono 10/11): de fora do sistema a venda nasce rascunho; finalizar é por atualização (com as guardas).
+      if (!ctx.isSystem && String(afterCreate?.status || '') === 'Finalized') {
+        throw new ValidationError('A venda é criada como rascunho; finalize-a depois de incluir os itens.');
+      }
+
       // Auto-fill date with today if not provided
       if (!afterCreate?.date) {
         if (ctx.after) ctx.after['date'] = new Date().toISOString().split('T')[0];
