@@ -53,7 +53,7 @@ const paidPayable: PayableWithPayments = {
   ...openPayable, id: 'ap2', supplierName: 'Fornecedor Y', documentNumber: 'NF-2',
   description: 'Energia', status: 'PAID',
   payments: [{
-    id: 'pay1', userId: 'o1', unitId: 'u1', payableId: 'ap2', amountCents: 150000, method: 'Pix',
+    id: 'pay1', userId: 'o1', unitId: 'u1', payableId: 'ap2', amountCents: 150000, method: 'Pix', kind: 'PAYMENT',
     paidAt: '2026-06-05', paidByUserId: 'o1', status: 'ACTIVE', entryId: 'e9',
     createdAt: '2026-06-05T00:00:00Z', updatedAt: '2026-06-05T00:00:00Z',
   }],
