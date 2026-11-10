@@ -3,6 +3,13 @@ import { DEFAULT_INTERVIEW_LOCALE, INTERVIEW_TEXT, replyIn, type InterviewLocale
 import { OpenAIService } from '../../../lib/openai/OpenAIService';
 import { IMessage } from '../models/InterviewTypes';
 import OpenAI from 'openai';
+import { z } from 'zod';
+
+// BRD F-58.1: the AI's JSON is checked, not trusted; anything off-shape falls back to 'unknown'.
+const UserIntentSchema = z.object({
+  action: z.enum(['add', 'remove', 'done', 'unknown']),
+  entity: z.string().optional(),
+});
 
 /**
  * Classe responsável por gerenciar as interações com a IA durante o processo de customização
@@ -86,9 +93,13 @@ export class AIInteractions {
           // Último recurso: tentar parsear a resposta inteira
           jsonCandidate = response.trim();
         }
-        const result = JSON.parse(jsonCandidate);
-        logger.info(`[AIInteractions] Intenção identificada: ${result.action}`);
-        return result;
+        const parsed = UserIntentSchema.safeParse(JSON.parse(jsonCandidate));
+        if (!parsed.success) {
+          logger.error('[AIInteractions] JSON da intenção fora do formato');
+          return { action: 'unknown' };
+        }
+        logger.info(`[AIInteractions] Intenção identificada: ${parsed.data.action}`);
+        return parsed.data;
       } catch (parseError) {
         logger.error(`[AIInteractions] Erro ao parsear JSON da intenção: ${parseError}`);
       }

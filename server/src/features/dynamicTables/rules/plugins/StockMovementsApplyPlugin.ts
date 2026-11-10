@@ -81,6 +81,7 @@ export const StockMovementsApplyPlugin: RulePlugin = {
     const currentStock = Number((productUnitRow?.data as Record<string, unknown>)?.stock ?? 0);
     const newStock = type === 'In' ? currentStock + quantity : currentStock - quantity;
     if (newStock < 0) throw new ValidationError('Operação inválida: estoque insuficiente.');
+    assertNotBelowReserved(productUnitRow, currentStock, newStock);
 
     // Update Product Units stock immediately before creating movement
     await ctx.repository.updateData(String(productUnitRow.id), { ...(productUnitRow?.data as Record<string, unknown> || {}), stock: newStock });
@@ -105,6 +106,7 @@ export const StockMovementsApplyPlugin: RulePlugin = {
     if (!(nextType === 'In' || nextType === 'Out')) throw new ValidationError('type inválido para movimentação.');
     if (nextQty <= 0) throw new ValidationError('quantity deve ser maior que zero.');
     if (newStock < 0) throw new ValidationError('Operação inválida: estoque insuficiente.');
+    assertNotBelowReserved(productUnitRow, currentStock, newStock);
     // Validações financeiras para atualização: se continuar sendo entrada por Compra, mantenha requisitos
     if (nextType === 'In') {
       const reason = String(after?.reason || before?.reason || '');
@@ -133,6 +135,17 @@ export const StockMovementsApplyPlugin: RulePlugin = {
     await ctx.repository.updateData(String(productUnitRow.id), { ...(productUnitRow?.data as Record<string, unknown> || {}), stock: newStock });
   },
 };
+
+/**
+ * INV F-26.1 (Q-02, dono 10/11): `reserved <= stock` vale sempre — uma movimentação que baixa o estoque não o deixa
+ * abaixo do que as vendas em aberto reservaram.
+ */
+function assertNotBelowReserved(productUnitRow: IDynamicTableData, currentStock: number, newStock: number): void {
+  const reserved = Number((productUnitRow.data as Record<string, unknown>)?.reserved ?? 0) || 0;
+  if (newStock < currentStock && newStock < reserved) {
+    throw new ValidationError(`Operação inválida: o estoque ficaria em ${newStock}, abaixo do reservado por vendas em aberto (${reserved}).`);
+  }
+}
 
 /**
  * Resolve Product Units table and the specific (productId, unitId) row.
