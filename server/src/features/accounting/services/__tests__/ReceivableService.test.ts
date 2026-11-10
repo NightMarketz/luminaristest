@@ -377,6 +377,18 @@ describe('ReceivableService.registerReceipt — receipt (D2/D3/D4)', () => {
     expect(writes.at(-1)).toEqual({ status: 'PARTIALLY_RECEIVED' });
   });
 
+  it('SM F-01.2 / INV F-11.2: o revertClaim não devolve centavos nem grava status por escrita incondicional (só CAS sobre RECEIVING)', async () => {
+    const { service, receivableRepo, postEntry } = build();
+    receivableRepo.findByIdWithReceipts.mockResolvedValueOnce({ ...receivableRow({ status: 'PARTIALLY_RECEIVED', receivedCents: BigInt(30000) }), receipts: [] });
+    receivableRepo.findById.mockResolvedValueOnce(receivableRow({ status: 'RECEIVING', receivedCents: BigInt(30000) }));
+    postEntry.mockRejectedValueOnce(new Error('period closed'));
+    await expect(service.registerReceipt(scope, 'rec-1', { ...receiveDto, amountCents: 10000 } as never)).rejects.toThrow('period closed');
+    const unconditional = receivableRepo.updateReceivable.mock.calls
+      .map((c) => c[2] as Record<string, unknown>)
+      .filter((w) => 'receivedCents' in w || 'status' in w);
+    expect(unconditional).toEqual([]);
+  });
+
   it('rejects receiving a non-OPEN receivable', async () => {
     const { service, receivableRepo } = build();
     receivableRepo.findByIdWithReceipts.mockResolvedValueOnce({ ...receivableRow({ status: 'RECEIVED' }), receipts: [] });

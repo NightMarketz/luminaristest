@@ -492,6 +492,18 @@ describe('PayableService.registerPayment — settlement (D2/D3/D4)', () => {
     expect(writes.at(-1)).toEqual({ status: 'PARTIALLY_PAID' });
   });
 
+  it('SM F-01.2 / INV F-11.2: o revertClaim não devolve centavos nem grava status por escrita incondicional (só CAS sobre PAYING)', async () => {
+    const { service, payableRepo, postEntry } = build();
+    payableRepo.findByIdWithPayments.mockResolvedValueOnce({ ...payableRow({ status: 'PARTIALLY_PAID', paidCents: BigInt(30000) }), payments: [] });
+    payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PAYING', paidCents: BigInt(30000) }));
+    postEntry.mockRejectedValueOnce(new Error('period closed'));
+    await expect(service.registerPayment(scope, 'pay-1', { ...payDto, amountCents: 10000 } as never)).rejects.toThrow('period closed');
+    const unconditional = payableRepo.updatePayable.mock.calls
+      .map((c) => c[2] as Record<string, unknown>)
+      .filter((w) => 'paidCents' in w || 'status' in w);
+    expect(unconditional).toEqual([]);
+  });
+
   it('rejects paying a non-OPEN payable', async () => {
     const { service, payableRepo } = build();
     payableRepo.findByIdWithPayments.mockResolvedValueOnce({ ...payableRow({ status: 'PAID' }), payments: [] });
