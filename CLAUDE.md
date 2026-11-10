@@ -146,8 +146,9 @@ dono confirmar por número. Fora da maestro, nenhuma sessão mergeia, nem verde.
 `docs/plano/decisoes/D-2026-10-28-FLUXO-AUTONOMO.md`.
 
 ## Branch de integração e GAP-MAP por feature (dono, 2026-11-10 — `docs/plano/decisoes/D-2026-11-10-BRANCH-DE-INTEGRACAO-E-GAP-MAP-POR-FEATURE.md`)
-- **Feature/tema com 2+ PRs** (mesmo nó, mesma faixa, arquivos em comum) usa `integration/<slug>`: os PRs têm **base na
-  integração** (nunca em outro filho); a sessão que coordena o tema mergeia neles com CI verde; a `main` só recebe **um** PR
+- **Feature/tema com 2+ PRs** (mesmo nó, mesma faixa, arquivos em comum) usa `integration/<slug>`: os PRs formam uma **pilha
+  nativa (`gh stack init --base integration/<slug>`, `submit`, `merge`)** com a integração como base, livre dentro dela (o GitHub
+  rebaseia os de cima; sem `rebase --onto` manual; piloto testou 2 camadas); a sessão que coordena o tema mergeia neles com CI verde; a `main` só recebe **um** PR
   `integration/<slug>` → `main` quando a feature fecha (classe de risco normal: verde → maestro, vermelho → lote do dono).
 - **PR isolado, sem irmãos, vai direto para a `main`** (regra abaixo, de 08/11).
 - **GAP-MAP:** o `GAP-MAP.md` vira índice/glossário; cada feature tem `docs/gap-map/<slug>.md`, e a lacuna é uma máquina de
@@ -156,8 +157,9 @@ dono confirmar por número. Fora da maestro, nenhuma sessão mergeia, nem verde.
 
 ## Pilhas e tamanho de PR (dono, 2026-11-08; emendado em 2026-11-10 acima)
 - **Um PR por item do GAP-MAP**, mergeado direto na `main` sempre que a dependência permitir, ou na `integration/<slug>` do tema.
-- **Profundidade máxima de pilha: 2** (`main` → integração → PR). Não prepare um filho sobre um pai ainda não mergeado; a raiz entra primeiro.
-- Dependência que não cabe em 2 níveis: separe o contrato em PR próprio, que entra antes.
+- **Profundidade máxima entre a `main` e o resto: 2** (`main` → integração → pilha). Dentro de uma `integration/<slug>` a pilha é livre
+  (acima de 4 camadas, reporte no lote). **Fora de integração**, filho sobre pai não mergeado continua proibido; a raiz entra primeiro.
+- Dependência que não cabe em 2 níveis fora de integração: separe o contrato em PR próprio, que entra antes.
 - **Não junte tarefas extras num PR** só para reduzir a contagem de PRs: PR grande piora a revisão.
 - Ao mergear o pai (squash), rebaseie o filho com `git rebase --onto` e troque a base do PR para a `main` antes de nova rodada de CI.
 

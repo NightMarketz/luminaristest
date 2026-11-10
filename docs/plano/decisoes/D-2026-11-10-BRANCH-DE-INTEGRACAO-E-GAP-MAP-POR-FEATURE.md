@@ -27,11 +27,15 @@ base no branch do #1153):
 1. **Feature/tema** = conjunto de 2 ou mais PRs que dependem entre si ou editam arquivos em comum (um nó do plano com
    PR-0..PR-n, uma faixa de correções, um incremento com emenda). Cada um ganha **uma** branch `integration/<slug>`,
    criada a partir da `main` por quem abre o primeiro PR do tema.
-2. **Os PRs do tema têm como base `integration/<slug>`**, nunca outro PR filho e nunca a `main`. Profundidade: `main` →
-   `integration/<slug>` → PR (pilha de filho sobre filho continua proibida; a regra de profundidade 2 de 08/11 passa a
-   valer entre `main` e a integração).
-3. **Merge em `integration/<slug>`** (squash, um por PR): a sessão que coordena o tema mergeia com CI verde, sem conflito
-   e fora de draft, sem passar pelo lote do dono. A `main` não é tocada.
+2. **Os PRs do tema formam uma pilha nativa do GitHub cuja base (trunk) é `integration/<slug>`**, criada com
+   `gh stack init --base integration/<slug>` e enviada com `gh stack submit`. **Dentro da integração a pilha é livre**:
+   a regra de profundidade 2 de 08/11 passa a valer só entre `main` e a integração, e um PR pode ficar sobre outro PR do
+   mesmo tema. Nunca se aponta um PR do tema direto para a `main`. Só 2 camadas foram testadas (piloto abaixo) e a
+   documentação do GitHub não informa profundidade máxima: pilha acima de 4 camadas é reportada no lote, para medir.
+3. **Merge em `integration/<slug>`** com `gh stack merge <PR> --yes --squash` (merge atômico do PR escolhido e de tudo
+   que está abaixo dele): a sessão que coordena o tema mergeia com CI verde, sem conflito e fora de draft, sem passar
+   pelo lote do dono. A `main` não é tocada. Os PRs acima do mergeado são rebaseados pelo GitHub; **não se faz
+   `rebase --onto` manual**. Se a pilha perder o histórico linear, `gh stack rebase` + `gh stack push`.
 4. **Revisor independente** continua rodando por PR vermelho de código, como em `D-2026-11-06-REVISAO-CONVERGENCIA`,
    **antes** do merge na integração (o diff é pequeno e a rodada é barata).
 5. **Fechamento:** quando o tema fecha, abre-se **um** PR `integration/<slug>` → `main`. Ele entra pela
@@ -67,7 +71,18 @@ base no branch do #1153):
    script `gap-map.mjs`, a migração das linhas do `GAP-MAP.md` por nível → feature e o teste que reprova linha sem comando.
    A migração só roda **depois** que a faixa 1 mergear, para não gerar o conflito que se quer acabar.
 
+## Piloto do `gh stack` (10/11, luminaristest, branches e PRs apagados depois)
+
+Extensão oficial `github/gh-stack` v0.3.0. `integration/piloto-stack` + pilha de 2 PRs (#1186, #1187, stack #1188):
+`gh stack init --base` → `submit --auto` → `gh stack merge 1186 --yes --squash`. **Resultado:** o #1187 trocou a base para
+a integração sozinho e ficou com 1 commit (o dele); o merge do #1187 deixou os dois commits em ordem na integração. Medido
+no mesmo piloto: a CI (`pull_request` sem filtro) roda nos PRs com base `integration/*`; o `push` só dispara na `main`; o
+repositório não tem rulesets e `delete_branch_on_merge` está `false` (825 branches remotas). **Não testado:** o PR
+`integration/<slug>` → `main`, a merge queue (o repo não usa) e pilha com 3+ camadas.
+
 ## Pendente (não decidido aqui)
+
+- Ligar `delete_branch_on_merge` no repositório (configuração do dono no GitHub) para parar o acúmulo de branches.
 
 - Auto-aprovação de `gh pr merge` quando a base do PR for `integration/*` (o hook não vê a base pelo texto do comando;
   exige consultar `gh pr view`). Hoje o merge na integração pede confirmação.
