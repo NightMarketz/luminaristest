@@ -77,3 +77,20 @@ describe('assertCentsInRange — Variante 2 verbatim (centavos já prontos, reva
     expect(() => assertCentsInRange(MAX_CENTS + 1, 'ctx')).toThrow(ValidationError);
   });
 });
+
+// SOT F-11.1 (Q-07 = a, dono, questionário 2026-11-10): "valor inválido dá erro e o teto MAX_CENTS vale em todos os
+// caminhos de reais → centavos do servidor". Caminhos 2 e 3 de 3: as duas variantes deste módulo.
+describe('SOT F-11.1 — o teto MAX_CENTS vale nas duas variantes', () => {
+  it('SOT F-11.1: centsFromReais rejeita reais que dão centavos acima de MAX_CENTS', () => {
+    expect(() => centsFromReais((MAX_CENTS + 1000) / 100, 'ctx')).toThrow(ValidationError);
+  });
+
+  it('SOT F-11.1: centsFromReais aceita exatamente MAX_CENTS', () => {
+    expect(centsFromReais(MAX_CENTS / 100, 'ctx')).toBe(MAX_CENTS);
+  });
+
+  it('SOT F-11.1: assertCentsInRange rejeita lixo e acima de MAX_CENTS (já conforme — referência)', () => {
+    expect(() => assertCentsInRange('abc', 'ctx')).toThrow(ValidationError);
+    expect(() => assertCentsInRange(MAX_CENTS + 1, 'ctx')).toThrow(ValidationError);
+  });
+});
