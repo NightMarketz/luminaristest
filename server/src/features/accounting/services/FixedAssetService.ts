@@ -228,6 +228,11 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
       );
     }
     const openingAccumulatedCents = BigInt(dto.openingAccumulatedCents ?? 0);
+    if (openingAccumulatedCents > current.costCents - current.residualValueCents) {
+      throw new ValidationError(
+        `openingAccumulatedCents (${openingAccumulatedCents}) excede a base depreciável do ativo '${rotuloAtivo(current)}' (costCents − residualValueCents = ${current.costCents - current.residualValueCents}).`,
+      );
+    }
 
     return this.assetRepo.runTransaction(async (tx) => {
       const updated = await this.assetRepo.activate(scope, id, { activatedAt: activatedAtDate, openingAccumulatedCents }, dto.version, tx);
