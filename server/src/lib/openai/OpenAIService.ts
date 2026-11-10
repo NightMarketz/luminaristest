@@ -145,6 +145,28 @@ export function tryFixMalformedJson(jsonString: string): string | null {
   }
 }
 
+/**
+ * BRD F-56.2 (decisão do dono, BRD Q7 = a, 10/11): resposta cortada pelo limite de tokens (`finish_reason: 'length'`)
+ * volta com o texto recebido e este aviso, em vez de passar por completa. Só nos métodos de texto livre; os de
+ * `json_schema` já caem no ramo de parse quando o JSON vem cortado.
+ */
+export const TRUNCATED_REPLY_NOTICE = '\n\n[Resposta cortada: o limite de tamanho da resposta foi atingido.]';
+
+type ChoiceLike = { finish_reason?: string | null; message?: { content?: string | null } | null } | undefined;
+
+function withTruncationNotice(choice: ChoiceLike): string | null {
+  const content = choice?.message?.content ?? null;
+  return choice?.finish_reason === 'length' && content ? content + TRUNCATED_REPLY_NOTICE : content;
+}
+
+function withTruncatedMessageNotice<M extends { content: string | null }>(
+  choice: { finish_reason?: string | null; message: M } | undefined,
+): M | null {
+  if (!choice) return null;
+  const content = withTruncationNotice(choice);
+  return content === choice.message.content ? choice.message : { ...choice.message, content };
+}
+
 export class OpenAIService {
   private openai: OpenAI;
   private static instance: OpenAIService;
@@ -197,7 +219,7 @@ export class OpenAIService {
           max_tokens: MAX_TOKENS_CHAT,
         });
         OpenAIService.reportUsage(completion, onUsage);
-        return completion.choices[0]?.message?.content;
+        return withTruncationNotice(completion.choices[0]);
       } catch (error) {
         logger.error('Error getting chat completion from OpenAI', { error });
         throw new Error('Failed to get response from AI service.', { cause: error });
@@ -241,7 +263,7 @@ export class OpenAIService {
         max_tokens: MAX_TOKENS_CHAT,
       });
       OpenAIService.reportUsage(completion, onUsage);
-      return completion.choices[0]?.message?.content;
+      return withTruncationNotice(completion.choices[0]);
     } catch (error) {
       logger.error('Error getting chat completion from OpenAI with history', { error });
       throw new Error('Failed to get response from AI service with history.', { cause: error });
@@ -279,7 +301,7 @@ export class OpenAIService {
         max_tokens: MAX_TOKENS_AGENT,
       });
       OpenAIService.reportUsage(completion, onUsage);
-      return completion.choices[0]?.message;
+      return withTruncatedMessageNotice(completion.choices[0]);
     } catch (error) {
       logger.error('Error getting chat completion from OpenAI with tools and history', { error });
       throw new Error('Failed to get response from AI service with tools and history.', { cause: error });
