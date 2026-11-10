@@ -2,7 +2,7 @@
 id: "D-2026-11-10-BRANCH-DE-INTEGRACAO-E-GAP-MAP-POR-FEATURE"
 tipo: "decisao"
 dominio: "processo"
-titulo: "Branch de integração por feature/tema (merge na main uma vez, quando a feature fecha) e GAP-MAP partido em um arquivo por feature, com a lacuna como máquina de estados"
+titulo: "Branch de integração por feature/tema (merge na main uma vez, quando a feature fecha) e GAP-MAP em fragmentos, um arquivo por achado, com a lacuna como máquina de estados"
 estado: "decided"
 autorizacao: "dono, chat, 2026-11-10: \"Adota essa estratégia em todo o sistema assim como vamos separar o gap-map em uma máquina de estados, assim cada feature tem seu próprio gap-map e não ficam vários mexendo no mesmo arquivo toda hora\""
 atualizado: "2026-11-10"
@@ -46,30 +46,39 @@ base no branch do #1153):
 8. **Automação de permissão:** o hook `PermissionRequest` do usuário aprova `git commit` e `git push` simples de
    branch `claude/*` e `integration/*`. `--force`/`-f`/`--delete`, push para `main` e `gh pr merge` continuam com prompt.
 
-## Regra 2 — GAP-MAP por feature
+## Regra 2 — GAP-MAP em fragmentos, um arquivo por achado
 
-1. **O `GAP-MAP.md` único deixa de ser editado por tema.** Ele passa a ser o **índice e o glossário** (níveis 1–5/O,
-   convenção `[COBERTO]/[PARCIAL]/…`, regra nº 1 "status vem de comando") e aponta para os arquivos de feature.
-2. **Um arquivo por feature:** `docs/gap-map/<slug>.md` (o mesmo `<slug>` da `integration/<slug>`), com uma linha por
-   lacuna. A mudança no arquivo de uma feature não conflita com a de outra; o conflito residual é só no índice, que só
-   ganha linha quando nasce feature.
+*(Revisada em 10/11, mesmo dia: o desenho inicial era um arquivo por feature. Dois PRs da mesma feature ainda colidiriam
+no arquivo; o padrão de "news fragments" do towncrier — cada PR cria o seu arquivo e o índice é montado depois — não
+colide nunca.)*
+
+1. **O `GAP-MAP.md` único deixa de ser editado por PR de achado.** Ele passa a ser o **índice e o glossário** (níveis
+   1–5/O, convenção `[COBERTO]/[PARCIAL]/…`, regra nº 1 "status vem de comando") e é **gerado** a partir dos fragmentos.
+2. **Um arquivo por achado:** `docs/gap-map/<ID>.md` (ex.: `docs/gap-map/BRD-F-02.1.md`), com a lacuna, o nível, o estado
+   e o `Comando que prova`. O PR que trata o achado cria ou altera **só** o fragmento dele; nenhum PR edita o índice.
+   O `<slug>` da feature entra como campo do fragmento (`feature: estruturas-implicitas`), não como nome de arquivo.
 3. **A lacuna é uma máquina de estados**, e o estado é **derivado de comando**, nunca escrito à mão:
    `aberto` → `instrumentado` (teste-guarda vermelho pelo motivo certo) → `corrigido` (teste verde) → `verificado`
    (gate de CI verde na main) · `oraculo` (só validador externo alcança) · `rejeitado` (com motivo). Cada linha leva
    a coluna `Comando que prova`; a transição é a mudança do resultado do comando.
-4. **O estado de cada lacuna é gerado:** um script (`scripts/gap-map.mjs index`) lê os arquivos de feature, roda ou
-   confere o comando de cada linha e regenera o índice. O índice gerado não é versionado, como o `_INDEX.md` do vault.
-5. **`CORRECOES.md`** (achados de estruturas implícitas) segue o mesmo caminho: vira `docs/gap-map/<slug>.md` por tema
-   (INV, SOT, SM, BRD, EFX), com os identificadores `F-nn.m` preservados.
+4. **O índice é gerado:** um script (`scripts/gap-map.mjs index`) lê os fragmentos, roda ou confere o comando de cada um
+   e regenera o índice por nível e por feature. O índice gerado não é versionado, como o `_INDEX.md` do vault.
+5. **`CORRECOES.md`** (achados de estruturas implícitas) segue o mesmo caminho: cada achado vira um fragmento, com os
+   identificadores `F-nn.m` preservados.
+6. **Escritor único é transição, não regime.** Hoje (D-2026-11-10-FAIXA1-MERGE-LIVRE, #1208/#1209) o orquestrador escreve
+   o GAP-MAP sozinho e os PRs de correção não o tocam; funciona, mas o commit que devolveu o arquivo à base mudou a cabeça
+   de 31 PRs e exigiu uma emenda para o PASS do revisor continuar valendo. Com fragmentos isso deixa de existir.
 
-## Sequência (nada disso mexe nos 40 PRs em voo)
+## Sequência
 
 1. Este PR: decisão + CLAUDE.md + hook (já feito no usuário). **Não toca** `GAP-MAP.md` nem `CORRECOES.md`.
-2. **Faixa 1 em andamento:** a sessão orquestradora decide se migra os PRs abertos para `integration/estruturas-implicitas`
-   (troca de base, sem reescrever o código) ou deixa fechar como está. Por mensagem, quando o dono mandar.
-3. **BRIEF de execução** (`sessao-planejamento`, autorizado por esta decisão): formato de `docs/gap-map/<slug>.md`, o
-   script `gap-map.mjs`, a migração das linhas do `GAP-MAP.md` por nível → feature e o teste que reprova linha sem comando.
-   A migração só roda **depois** que a faixa 1 mergear, para não gerar o conflito que se quer acabar.
+2. **A Faixa 1 fica fora da integração.** Em 10/11 o dono liberou o merge dela direto na `main`
+   (`D-2026-11-10-FAIXA1-MERGE-LIVRE`), e o orquestrador já rebaseou os PRs para a `main` (19 mergeados entre 15h e 18h UTC).
+   Nada é migrado para `integration/estruturas-implicitas`; a regra de integração vale para os **próximos** temas.
+3. **BRIEF de execução** (`sessao-planejamento`, autorizado por esta decisão): formato do fragmento, o script
+   `gap-map.mjs`, a migração das linhas do `GAP-MAP.md` e do `CORRECOES.md` para fragmentos e o teste que reprova
+   fragmento sem comando. A migração só roda **depois** que a Faixa 1 fechar (`GAP-MAP.md` sem linha `[ABERTO]`/`[EM PR]`
+   na seção da faixa 1), para não reabrir conflito nos PRs em voo.
 
 ## Piloto do `gh stack` (10/11, luminaristest, branches e PRs apagados depois)
 
@@ -80,9 +89,19 @@ no mesmo piloto: a CI (`pull_request` sem filtro) roda nos PRs com base `integra
 repositório não tem rulesets e `delete_branch_on_merge` está `false` (825 branches remotas). **Não testado:** o PR
 `integration/<slug>` → `main`, a merge queue (o repo não usa) e pilha com 3+ camadas.
 
+## Medido no fluxo ao vivo (10/11, 15h–18h UTC)
+
+19 PRs mergeados na `main` (cerca de 6 por hora), ~50 abertos; CI de PR com mediana de 26 min (máximo 33) e 17 checks;
+**dos 19 runs de push na `main` hoje, 12 foram cancelados e 5 passaram** (o grupo `ci-${{ github.ref }}` mantém só um
+pendente, e o `ci.yml` não tem `merge_group`): a `main` quase não é testada por commit. A proteção da `main` não pôde ser
+lida (token sem permissão) e o estado `BEHIND` dos PRs veio `UNKNOWN`.
+
 ## Pendente (não decidido aqui)
 
-- Ligar `delete_branch_on_merge` no repositório (configuração do dono no GitHub) para parar o acúmulo de branches.
-
+- ~~`delete_branch_on_merge`~~ **ligado** pelo dono em 10/11 (lido `true` três vezes seguidas).
+- **Merge queue na `main` (decisão do dono, configuração do GitHub)**, com `merge_group` no `ci.yml` e concorrência de
+  build de 3 ou mais (CI de 26 min e ~6 merges/h); até lá, agrupar o `ci.yml` de push por SHA para cada merge ter o seu run.
+- PRs parados a triar: #951, #952, #1061 (dependabot com falhas), #1133 e os empilhados em `claude/*` (#1198, #1210, #1211),
+  que devem migrar para `gh stack`.
 - Auto-aprovação de `gh pr merge` quando a base do PR for `integration/*` (o hook não vê a base pelo texto do comando;
   exige consultar `gh pr view`). Hoje o merge na integração pede confirmação.

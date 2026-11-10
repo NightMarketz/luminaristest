@@ -151,10 +151,12 @@ estruturas implícitas entra como verde com revisor PASS — `docs/plano/decisoe
   nativa (`gh stack init --base integration/<slug>`, `submit`, `merge`)** com a integração como base, livre dentro dela (o GitHub
   rebaseia os de cima; sem `rebase --onto` manual; piloto testou 2 camadas); a sessão que coordena o tema mergeia neles com CI verde; a `main` só recebe **um** PR
   `integration/<slug>` → `main` quando a feature fecha (classe de risco normal: verde → maestro, vermelho → lote do dono).
-- **PR isolado, sem irmãos, vai direto para a `main`** (regra abaixo, de 08/11).
-- **GAP-MAP:** o `GAP-MAP.md` vira índice/glossário; cada feature tem `docs/gap-map/<slug>.md`, e a lacuna é uma máquina de
-  estados com estado derivado de comando. **Não edite o `GAP-MAP.md` para registrar lacuna de uma feature** depois da migração
-  (BRIEF pendente; até lá, a regra antiga vale). Detalhe e sequência na decisão.
+- **PR isolado, sem irmãos, vai direto para a `main`** (regra abaixo, de 08/11). **A Faixa 1 de estruturas implícitas fica
+  fora da integração:** ela segue direto na `main` pela `D-2026-11-10-FAIXA1-MERGE-LIVRE`.
+- **GAP-MAP:** o `GAP-MAP.md` vira índice/glossário gerado; cada achado tem o seu fragmento `docs/gap-map/<ID>.md` (padrão
+  towncrier: um arquivo por achado, nenhum PR edita o índice), e a lacuna é uma máquina de estados com estado derivado de
+  comando. **Depois da migração, não edite o `GAP-MAP.md` para registrar lacuna** (BRIEF pendente, só roda quando a Faixa 1
+  fechar; até lá valem a regra antiga e o escritor único da Faixa 1). Detalhe e sequência na decisão.
 
 ## Pilhas e tamanho de PR (dono, 2026-11-08; emendado em 2026-11-10 acima)
 - **Um PR por item do GAP-MAP**, mergeado direto na `main` sempre que a dependência permitir, ou na `integration/<slug>` do tema.
