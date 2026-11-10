@@ -728,6 +728,8 @@ export interface ReturnedSale {
   amount: number;
   currency: string;
   occurredAt: string;
+  /** True for an all-Package sale — recognizes no revenue, so the INV F-42.1 ordering gate does not apply. */
+  isAllPackage?: boolean;
 }
 
 export interface SaleReturnReconcileDeps extends ReconcileOutcomeReporter {
@@ -770,6 +772,22 @@ export async function reconcileSaleReturns(deps: SaleReturnReconcileDeps): Promi
       if (exists) {
         summary.idempotentHits++;
         await reportResolvedSafely(deps.reportResolved, { ownerUserId: sale.ownerUserId, unitId: sale.unitId, sourceType: 'sale.returned', sourceId: sale.saleId });
+        continue;
+      }
+
+      // INV F-42.1 — ordering gate (mesmo da liquidação): sem a receita lançada, a devolução fica pendente
+      // (OPENING_ENTRY_MISSING), não 'FAILED'; `reportResolved` acima a limpa quando postar.
+      if (!sale.isAllPackage && !(await deps.hasExistingEntry(scope, 'sale.finalized', sale.saleId))) {
+        summary.blocked = (summary.blocked ?? 0) + 1;
+        logger.warn('Reconcile return blocked — revenue entry missing', { saleId: sale.saleId });
+        await reportPendingSafely(deps.reportPending, summary, {
+          ownerUserId: sale.ownerUserId,
+          unitId: sale.unitId,
+          sourceType: 'sale.returned',
+          sourceId: sale.saleId,
+          reasonCode: 'OPENING_ENTRY_MISSING',
+          reasonDetail: `receita 'sale.finalized' ausente para a venda ${sale.saleId}`,
+        });
         continue;
       }
 
@@ -2069,19 +2087,26 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
     const returns = await reconcileSaleReturns({
       listReturnedSales: async () => {
         const found = await listSalesByStatus('Returned');
-        return found.map(({ ownerUserId, row }) => ({
-          ownerUserId,
-          saleId: row.id,
-          unitId: typeof row.data.unitId === 'string' ? row.data.unitId : '',
-          amount: typeof row.data.totalAmount === 'number' ? row.data.totalAmount : NaN,
-          currency: typeof row.data.currency === 'string' ? row.data.currency : 'BRL',
-          occurredAt:
-            typeof row.data.returnedAt === 'string'
-              ? row.data.returnedAt
-              : typeof row.data.date === 'string'
-                ? row.data.date
-                : new Date().toISOString(),
-        }));
+        const out: ReturnedSale[] = [];
+        for (const { ownerUserId, row } of found) {
+          // INV F-42.1: a venda só de pacote não tem receita — o gate de ordem não se aplica a ela.
+          const isAllPackage = (await loadSalePackageInfo(ownerUserId, row.id)).kind === 'Package';
+          out.push({
+            ownerUserId,
+            isAllPackage,
+            saleId: row.id,
+            unitId: typeof row.data.unitId === 'string' ? row.data.unitId : '',
+            amount: typeof row.data.totalAmount === 'number' ? row.data.totalAmount : NaN,
+            currency: typeof row.data.currency === 'string' ? row.data.currency : 'BRL',
+            occurredAt:
+              typeof row.data.returnedAt === 'string'
+                ? row.data.returnedAt
+                : typeof row.data.date === 'string'
+                  ? row.data.date
+                  : new Date().toISOString(),
+          });
+        }
+        return out;
       },
       hasExistingEntry,
       sync: doSync,
@@ -2520,10 +2545,13 @@ export async function retryOneReconcilePendingItem(
       const row = await loadRow('sales');
       if (!row) return { outcome: 'still_pending' };
       const data = row.data;
+      // INV F-42.1: a venda só de pacote não tem receita — o gate de ordem não se aplica a ela.
+      const isAllPackage = (await loadSalePackageInfo(scope.ownerUserId, row.id)).kind === 'Package';
       const summary = await reconcileSaleReturns({
         listReturnedSales: async () => [
           {
             ownerUserId: scope.ownerUserId,
+            isAllPackage,
             saleId: row.id,
             unitId: typeof data.unitId === 'string' ? data.unitId : '',
             amount: typeof data.totalAmount === 'number' ? data.totalAmount : NaN,

@@ -152,6 +152,8 @@ describe('SaleReversalBridge.maybeReverseSale', () => {
 
   describe('Returned → contra-revenue entry', () => {
     it('books a NEW sale.returned entry (NOT a reversal) with the sale amount', async () => {
+      // INV F-42.1: a receita já lançada (gate de ordem).
+      findEntryBySource.mockImplementation(async (_s: unknown, sourceType: string) => (sourceType === 'sale.finalized' ? { id: 'entry-1' } : null));
       await maybeReverseSale(actor, SALES_TABLE_ID, returnedRow());
 
       expect(reverseEntry).not.toHaveBeenCalled();

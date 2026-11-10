@@ -454,7 +454,8 @@ function returned(over: Partial<ReturnedSale> = {}): ReturnedSale {
 function buildReturnDeps(over: Partial<SaleReturnReconcileDeps> = {}): SaleReturnReconcileDeps {
   return {
     listReturnedSales: jest.fn(async () => [returned()]),
-    hasExistingEntry: jest.fn(async () => false),
+    // INV F-42.1: a receita (sale.finalized) já lançada; a devolução ainda não.
+    hasExistingEntry: jest.fn(async (_s: AccountingScope, sourceType: string) => sourceType === 'sale.finalized'),
     sync: jest.fn(async () => ({ entryId: 'ret-1' })),
     ...over,
   };
