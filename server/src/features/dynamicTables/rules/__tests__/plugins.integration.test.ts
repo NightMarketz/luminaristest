@@ -389,11 +389,12 @@ describe('StockMovementsApplyPlugin — applies manual In/Out to stock', () => {
     const movements = await seedTbl({ name: 'Stock Movements', internalName: 'stockMovements', category: 'inventory', fields: prodLikeMovementFields });
     const pu = await prisma.dynamicTableData.create({ data: { dynamicTableId: productUnits.id, data: { productId: 'p1', unitId: 'u1', stock: 10, reserved: 0 } as any } });
 
-    // Envia sourceType como a integração enviaria por engano — o canário abaixo prova o strip.
-    await create(movements.id, {
+    // Envia sourceType como a integração enviaria por engano — o canário abaixo prova o strip. Com isSystem, como o
+    // PhysicalStockSync grava (INV F-41.1 resíduo: sem isSystem o prefixo não basta).
+    await service.createTableData(ctx(), movements.id, { data: {
       productId: 'p1', unitId: 'u1', type: 'In', quantity: 5,
       reason: 'Purchase', sourceType: 'ACCOUNTING_PAYABLE', detailKey: 'ACCOUNTING_PAYABLE:pay-1',
-    });
+    } } as any, { isSystem: true });
 
     // Delta aplicado sem exigir supplierId/cost (a linha já nasceu valorada no razão).
     expect(((await rowById(pu.id))!.data as Record<string, unknown>)).toMatchObject({ stock: 15 });
