@@ -1,7 +1,8 @@
 /**
  * Regras PURAS da linha de venda (`saleItems`), numa fonte só para o motor (SalesPlugin), as pontes contábeis
- * (`sync/bridges/saleItems.ts`) e a guarda fiscal (EFICIENCIA-FISCAL PR-1, review do #913). Mora em `lib/` sem import
- * nenhum: o motor não importa o núcleo contábil (B1) e o núcleo não importa `features/sales` (core-boundary, item 42).
+ * (`sync/bridges/saleItems.ts`) e a guarda fiscal (EFICIENCIA-FISCAL PR-1, review do #913). Mora em `lib/`: o motor não
+ * importa o núcleo contábil (B1) e o núcleo não importa `features/sales` (core-boundary, item 42). Os únicos imports são
+ * `lib/errors` e o teto `MAX_CENTS` (`features/accounting/models/money`, sem dependências), desde o SOT F-11.1.
  *
  * - Classificação: relação primeiro (`productId`/`serviceId`/`packageId`), depois `type`.
  * - Quantidade da linha para as guardas: `quantity` (1 se a coluna não existe — preset só-serviços). As pontes contábeis
