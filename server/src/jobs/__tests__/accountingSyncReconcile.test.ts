@@ -482,6 +482,16 @@ describe('reconcileSaleReturns', () => {
     expect(summary).toEqual({ total: 1, synced: 0, idempotentHits: 1, failed: 0 });
   });
 
+  it('INV F-42.1: devolução sem a receita (sale.finalized) lançada → blocked OPENING_ENTRY_MISSING, sem sync', async () => {
+    const reportPending = jest.fn(async () => undefined);
+    const deps = buildReturnDeps({ hasExistingEntry: jest.fn(async () => false), reportPending });
+    const summary = await reconcileSaleReturns(deps);
+
+    expect(deps.sync).not.toHaveBeenCalled();
+    expect(summary).toMatchObject({ total: 1, synced: 0, failed: 0, blocked: 1 });
+    expect(reportPending).toHaveBeenCalledWith(expect.objectContaining({ sourceType: 'sale.returned', sourceId: 'sale-1', reasonCode: 'OPENING_ENTRY_MISSING' }));
+  });
+
   it('continues after an isolated failure', async () => {
     const sync = jest
       .fn()
