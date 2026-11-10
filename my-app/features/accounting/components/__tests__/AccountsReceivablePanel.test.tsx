@@ -74,7 +74,7 @@ const receivedReceivable: ReceivableWithReceipts = {
   ...openReceivable, id: 'ar2', customerName: 'Cliente Y', documentNumber: 'NF-2',
   description: 'Venda', status: 'RECEIVED',
   receipts: [{
-    id: 'rec1', userId: 'o1', unitId: 'u1', receivableId: 'ar2', amountCents: 150000, method: 'Pix',
+    id: 'rec1', userId: 'o1', unitId: 'u1', receivableId: 'ar2', amountCents: 150000, method: 'Pix', kind: 'PAYMENT',
     receivedAt: '2026-06-05', receivedByUserId: 'o1', status: 'ACTIVE', entryId: 'e9',
     createdAt: '2026-06-05T00:00:00Z', updatedAt: '2026-06-05T00:00:00Z',
   }],
