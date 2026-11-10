@@ -7,7 +7,7 @@ import { z } from 'zod';
  */
 export const AgentToolErrorSchema = z
   .object({
-    error: z.enum(['SEM_PERMISSAO', 'REGISTRO_NAO_ENCONTRADO', 'FILTRO_INVALIDO', 'DADOS_VAZIOS']),
+    error: z.enum(['SEM_PERMISSAO', 'REGISTRO_NAO_ENCONTRADO', 'FILTRO_INVALIDO', 'DADOS_VAZIOS', 'ARGUMENTOS_INVALIDOS']),
     message: z.string().min(1),
   })
   .strict();
