@@ -292,6 +292,19 @@ Teste que não falhar = "não reproduzido": a linha fica registrada assim e não
 | **BRD F-74.1** — Conversão de lead: valor com vírgula vira `NaN` e a oportunidade é criada sem valor, sem aviso. Ficha: `INVENTARIO-BRD.md` | 3 | D3 | nenhum (teste-guarda a escrever) | [ABERTO] | `git grep -n "BRD F-74.1" -- server/src my-app` → vazio |
 | **BRD F-75.1** — `localStorage` e `router.query` lidos por cast, sem checagem. Ficha: `INVENTARIO-BRD.md` | 3 | D2 | nenhum (teste-guarda a escrever) | [ABERTO] | `git grep -n "BRD F-75.1" -- server/src my-app` → vazio |
 
+### Faixa 1 — linhas novas do dia 2 (follow-ups, 2026-11-10)
+
+Resíduos que os PRs da faixa 1 deixaram fora de escopo. **Autorização:** dono, questionário da orquestração do dia 2, 2026-11-10,
+"Quais follow-ups viram linha nova da faixa 1?": "INV F-26.1 delete In, INV F-42.1 controle, BRD F-73.2 35 catch". Cada uma só
+começa depois do merge do PR-pai, com sessão cortada de `origin/main`. Não estão na lista da `D-2026-11-10-FAIXA1-MERGE-LIVRE`:
+PR vermelho delas vai ao lote do dono.
+
+| Lacuna | Nível | D | Instrumento | Status | Comando que prova |
+|---|---|---|---|---|---|
+| **F1-N1 (INV F-26.1, delete de entrada In)** — apagar uma movimentação In pode deixar o estoque abaixo de `reserved` (Q-02: `reserved <= stock` vale sempre). Pai: #1180 | 2 | D3 | nenhum (teste-guarda a escrever) | [ABERTO] | `git grep -n "F1-N1" -- server/src my-app` → vazio |
+| **F1-N2 (INV F-42.1, controle da isenção de pacote)** — a isenção de venda só de pacote na devolução não tem teste: removida, os 71 testes seguem verdes (revisor do #1178). Só teste. Pai: #1178 | 2 | D3 | nenhum (teste-guarda a escrever) | [ABERTO] | `git grep -n "F1-N2" -- server/src my-app` → vazio |
+| **F1-N3 (BRD F-73.2, 35 ocorrências)** — 35 `catch` do front achados pelo script da ficha BRD-73 e não triados; corrigir os que engolem falha visível ao usuário, registrar os intencionais. Pai: #1206 | 3 | D3 | nenhum (teste-guarda a escrever) | [ABERTO] | `git grep -n "F1-N3" -- server/src my-app` → vazio |
+
 ## Transversais
 
 | Lacuna | Instrumento real | Status | Comando que prova |
