@@ -155,12 +155,15 @@ Atualizado em 10/11, dia 2 (orquestração d2, medido com `gh` e `git diff` às 
   - SOT F-17.2: descartar ou não (o dono pediu a sugestão de correção; respondida no chat).
   - Faixas 3 e 4: um ID por vez, escrito no chat. Inclui a linha nova F4-N1.
   - #1160, #1167 e #1209 no lote.
-  - Conflito do #1170 em `SalesPlugin.ts` (com o #1168), fora da lista.
   - Forks F-ENV-0..10 do BRIEF do BRD F-01.1 (#1207).
 - **Conflitos de GAP-MAP, decisão do dono (10/11, questionário da orquestração do dia 1: "Tirar o GAP-MAP dos PRs" e "Trocar pela
   linha já na main"):** a orquestração do dia 1 executa. Cada PR aberto da faixa 1 ganha commit que devolve o `GAP-MAP.md` ao
   merge-base; um PR só de docs atualiza as linhas (mergeado → a linha que o PR escreveu; aberto → `[EM PR #n]`); um PR de cédula
   emenda a condição 1 da D-2026-11-10-FAIXA1-MERGE-LIVRE para "o ID do título tem linha na seção da faixa 1 do GAP-MAP da main".
+- **#1170 × #1168 em `SalesPlugin.beforeCreate` (fora da lista):** a sessão INV resolveu localmente (`c6e5f1845`, os dois blocos
+  intactos: recusa de `Finalized` do F-40.2 e zeramento dos totais do F-40.1) e segurou o push a pedido da orquestração. Liberado
+  pelo dono (chat, 2026-11-10: "Libera o push"), com push só depois de os testes de venda e do finance passarem, e nova rodada do
+  revisor no SHA novo (resolução de conflito em código derruba o PASS).
 - **GAP-MAP fora dos PRs (feito pela orquestração do dia 1, 10/11):** 31 PRs abertos com commit que devolve o `GAP-MAP.md` à base;
   #1208 (verde) atualiza a seção da faixa 1: 12 `[CORRIGIDO 10/11, #n]` e 34 `[EM PR #n]`; #1209 (vermelho só texto, **precisa da
   confirmação do dono**) emenda a D-FAIXA1: condição 1 = o ID tem linha no GAP-MAP da `main`; condição 3 = o PASS sobrevive ao
