@@ -3,7 +3,7 @@
  * relógio injetado). Cenário: dono "runner-dono" (fuso ausente ⇒ UTC) com o teammate "Conciliador".
  */
 import type OpenAI from 'openai';
-import type { LlmMessage, LlmToolCall } from '../../../lib/llm/LlmProvider';
+import { LlmProviderError, type LlmMessage, type LlmToolCall } from '../../../lib/llm/LlmProvider';
 import type { UserContext } from '../../../lib/authUtils';
 import { Role } from '../../users/models/User.model';
 import type { IDynamicTable } from '../../dynamicTables/models/DynamicTable.model';
@@ -223,5 +223,18 @@ describe('item 18 — o que o turno grava e o teto de 5 voltas', () => {
     s.turns.claim.mockResolvedValueOnce(false);
     expect(await s.runner.runTurn('t1')).toEqual({ status: 'SKIPPED' });
     expect(s.llm.complete).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * BRD F-60.2 (GAP-MAP, faixa 1 de 2026-11-10; ficha BRD-60): o prefixo de código do turno FAILED lia só `error.code`;
+ * o erro do provedor (`LlmProviderError`) tem `kind`, e a categoria sumia do texto gravado.
+ */
+describe('BRD F-60.2 — categoria do erro do provedor no turno FAILED', () => {
+  it('BRD F-60.2 LlmProviderError RATE_LIMIT ⇒ error gravado começa por "RATE_LIMIT: "', async () => {
+    const s = setup({ replies: () => ({ content: 'ok' }) });
+    (s.llm.complete as jest.Mock).mockRejectedValueOnce(new LlmProviderError('RATE_LIMIT', 'Anthropic: 429', 'anthropic'));
+    const out = await s.runner.runTurn('t1');
+    expect(out).toMatchObject({ status: 'FAILED', error: 'RATE_LIMIT: Anthropic: 429' });
   });
 });
