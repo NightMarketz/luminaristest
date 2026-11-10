@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NETWORK_ERROR_MESSAGE } from '../../api/api-client'; // BRD F-72.1
 import { SetupApiError, SetupService } from '../setup.service';
 import { notify } from '../../notifications/notify';
 
@@ -37,8 +38,8 @@ describe('SetupService.createDashboard', () => {
     await expect(SetupService.createDashboard(payload, { silent: true })).rejects.toMatchObject({ status: 500, body: {} });
   });
 
-  it('falha de rede: sem status, mensagem nativa', async () => {
+  it('falha de rede: sem status, mensagem de rede do cliente (BRD F-72.1)', async () => {
     vi.mocked(globalThis.fetch).mockRejectedValue(new TypeError('Failed to fetch'));
-    await expect(SetupService.createDashboard(payload, { silent: true })).rejects.toMatchObject({ message: 'Failed to fetch', status: undefined });
+    await expect(SetupService.createDashboard(payload, { silent: true })).rejects.toMatchObject({ message: NETWORK_ERROR_MESSAGE, status: undefined });
   });
 });

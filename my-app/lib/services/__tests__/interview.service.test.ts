@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NETWORK_ERROR_MESSAGE } from '../../api/api-client'; // BRD F-72.1
 import { InterviewApiError, InterviewService } from '../interview.service';
 import { notify } from '../../notifications/notify';
 import type { CustomizeFieldsDtoInput } from '@/types/contracts/interview/CustomizeFields.dto.gen';
@@ -65,9 +66,9 @@ describe('InterviewService', () => {
     expect([legado, semKind]).toHaveLength(2);
   });
 
-  it('falha de rede: sem status, mensagem nativa', async () => {
+  it('falha de rede: sem status, mensagem de rede do cliente (BRD F-72.1)', async () => {
     vi.mocked(globalThis.fetch).mockRejectedValue(new TypeError('Failed to fetch'));
     await expect(InterviewService.customizeFields({ kind: 'message', sessionId: 's', tableKey: 't', message: 'm' }))
-      .rejects.toMatchObject({ message: 'Failed to fetch', status: undefined });
+      .rejects.toMatchObject({ message: NETWORK_ERROR_MESSAGE, status: undefined });
   });
 });
