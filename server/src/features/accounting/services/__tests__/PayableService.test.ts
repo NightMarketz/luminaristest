@@ -651,6 +651,18 @@ describe('PayableService.cancelPayment — reverse settlement + reopen (net-zero
       service.cancelPayment(scope, 'pay-1', 'paym-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
     ).rejects.toBeInstanceOf(ValidationError);
   });
+
+  it('SM F-01.2: o recálculo que tiraria um título CANCELLED (terminal) do estado terminal é recusado, sem gravar status', async () => {
+    const { service, payableRepo } = build();
+    payableRepo.findById
+      .mockResolvedValueOnce(payableRow({ status: 'CANCELLED', paidCents: BigInt(50000) })) // pre-check
+      .mockResolvedValueOnce(payableRow({ status: 'CANCELLED', paidCents: BigInt(0) })); // re-read: recálculo daria OPEN
+    await expect(
+      service.cancelPayment(scope, 'pay-1', 'paym-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
+    ).rejects.toThrow(/transição de status inválida \(CANCELLED → OPEN\)/);
+    const statusWrites = payableRepo.updatePayable.mock.calls.filter((c) => 'status' in (c[2] as object));
+    expect(statusWrites).toHaveLength(0);
+  });
 });
 
 describe('PayableService.reconcilePayables — re-drive safety net (D4/ADR §6.2)', () => {
