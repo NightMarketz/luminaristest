@@ -38,10 +38,10 @@ Depois das respostas do dono (seção abaixo):
 | 1 | pronta para instrumentar: D2/D3, fora de ZP, fora dos temas F e G, sem questão aberta, sem corrida | 45 |
 | 2 | depende do dono ou de outro achado; hoje só os 2 bloqueados pelo BRD F-01.1 | 2 |
 | 3 | não delegada: tema F inteiro, tema G inteiro, D4/D5, zona proibida. Um ID por vez, ZP liberada só naquela execução | 50 |
-| 4 | corrida [INF]: só anda com teste-guarda determinístico (Windows serializa o SQLite) | 10 (11 IDs) |
-| — | desfecho na triagem: 5 descartados (propostos) e 2 duplicatas fundidas | 7 |
+| 4 | corrida [INF]: só anda com teste-guarda determinístico (Windows serializa o SQLite) | 11 (12 IDs; INV F-11.2 reaberto em 10/11) |
+| — | desfecho na triagem: 5 descartados (propostos) e 1 duplicata fundida (EFX F-15.1) | 6 |
 
-Total: 45 + 2 + 50 + 11 + 5 + 1 (INV F-11.2, fundido em SM F-01.2) = 114. EFX F-15.1 conta nos 11 da faixa 4.
+Total: 45 + 2 + 50 + 12 + 5 = 114. EFX F-15.1 conta nos 12 da faixa 4. Em 10/11 o INV F-11.2 saiu da fusão com o SM F-01.2, porque o #1160 não cobre o CAS do `revertClaim`.
 Antes das respostas: faixa 1 = 33, faixa 2 = 16 linhas, faixa 3 = 49, faixa 4 = 9.
 
 ### Pergunta nova desta triagem
@@ -116,7 +116,7 @@ Desfecho: `aberto` · `aprovado <data>` · `GAP-MAP #<PR>` · `instrumentado #<P
 |---|---|---|---|---|---|---|---|
 | SM F-40.2 | `executeProposal` não consome a proposta antes de escrever, nem confere `status`, `expiresAt` ou `kind` | D3 | 6.00 | [OBS ✔] [INF] | resp. 10/11: Q-03 = consumo na mesma tx da escrita; sem `options.tx`, CAS `PENDING → EXECUTED` e volta se a escrita falhar; `expiresAt` vencido recusa. A parte "executa duas vezes" é corrida; a parte `expiresAt`/`kind` é determinística. #1133 aberto toca `ActionProposalRepository`: reabrir depois dele | 4 | aberto · inclui EFX F-15.1 |
 | SM F-16.1 | estorno lê o status fora da tx e grava `Reversed` sem status no `where` | D3 | 3.00 | [OBS ✔] [INF] | nada; efeito de corrida [INF] | 4 | aberto |
-| SM F-01.2 | recálculos de status do AP/AR sem `assertTransition` | D3 | 2.00 | [OBS ✔] | fila do PRE-ADR §4 item 2; entra depois do #1150 (item 1, toca `Receivable.model.ts`) | 1 | aprovado 10/11 (faixa 1) · inclui INV F-11.2 · PR #1160 aberto, **vermelho** (lado AP; o AR espera o #1150) |
+| SM F-01.2 | recálculos de status do AP/AR sem `assertTransition` | D3 | 2.00 | [OBS ✔] | fila do PRE-ADR §4 item 2; entra depois do #1150 (item 1, toca `Receivable.model.ts`) | 1 | aprovado 10/11 (faixa 1) · PR #1160 aberto, **vermelho**, revisor rodada 1 PASS (relato da sessão). Reproduzido: estorno de baixa num título `CANCELLED` voltava a `OPEN` sem erro. Só o lado AP; o AR espera o #1150. A transição para o mesmo status (ex.: PP → PP) segue sem checagem, e nenhum teste a prende (ressalva do revisor) |
 | SM F-09.2 | `transition()` do `FiscalDocument` grava sem CAS quando falta `whenStatusIn`; 2 chamadas sem guarda | D3 | 2.00 | [OBS ✔] [OBS] [INF] | ZP transmissão fiscal (`dfeEnvio.ts`); #1146 aberto toca os dois arquivos; resíduo da linha do GAP-MAP "DF-e — resultado automático gravado sem guarda de status" [CORRIGIDO 07/10]; corrida [INF] | 3 | aberto |
 | SM F-06.1 | `PaymentAccount`: troca de status sem CAS; PATCH e `CREDENTIAL_INVALID` concorrem | D3 | 1.00 | [OBS] [INF] | ZP pagamento (`PaymentAccount`); corrida [INF] | 3 | aberto |
 | SM F-11.2 | `applyResult` da inutilização sem CAS de status | D2 | 1.00 | [OBS ✔] | ZP transmissão fiscal (inutilização); #1146 toca `FiscalNumberVoidService.ts` | 3 | aberto |
@@ -125,7 +125,7 @@ Desfecho: `aberto` · `aprovado <data>` · `GAP-MAP #<PR>` · `instrumentado #<P
 | INV F-27.1 | `convertLead` confere `Converted` fora da tx; a tela só barra o duplo clique numa aba | D3 | 4.00 | [OBS ✔] [INF] | nada; corrida [INF] | 4 | aberto |
 | INV F-37.1 | `reject` da revisão contábil confere o status fora da tx | D3 | 4.00 | [OBS ✔] [INF] | nada; corrida [INF] | 4 | aberto |
 | INV F-06.1 | exclusão de conta e lançamento conferem um ao outro fora da tx | D3 | 2.00 | [OBS ✔] [OBS] [INF] | nada; corrida [INF] | 4 | aberto |
-| INV F-11.2 | `revertClaim` devolve centavos sem guarda no `where`; caminho para saldo negativo não encontrado | D3 | 1.00 | [OBS ✔] | duplicata | — | linha única em SM F-01.2 |
+| INV F-11.2 | `revertClaim` devolve centavos sem guarda no `where`; caminho para saldo negativo não encontrado | D3 | 1.00 | [OBS ✔] | reaberto em 10/11: o #1160 (SM F-01.2) não cobre o CAS do `revertClaim`, e a sessão SM o deixou fora do escopo. Volta a ser linha própria: corrida (CAS no `where`) | 4 | aberto · fora da fusão com SM F-01.2; não aprovado (faixa 4 é um ID por vez) |
 | INV F-12.1 | três escritas em título de imposto (`DEFERRED`, reabertura) sem a condição de saldo | D2 | 2.00 | [OBS ✔] [INF] | nada; corrida [INF] | 4 | aberto |
 | INV F-16.3 | ativação de imobilizado aceita acumulado de abertura acima de `custo − residual`; o bem para de depreciar | D3 | 4.00 | [OBS ✔] [OBS] · **[OBS ✔] 10/11** | reaberto: `activateAsset` não compara o acumulado de abertura com a base (`FixedAssetService.ts:222-236`) | 1 | aprovado 10/11 (faixa 1) · PR #1155 aberto, **vermelho** (revisor obrigatório; rodada 1 PASS segundo a sessão) → lote do dono. Reproduzido; base no branch do #1153 |
 | INV F-40.1 | o total da venda na criação é o que o navegador mandou, e vai ao razão se a venda nasce finalizada | D3 | 3.00 | [OBS ✔] | resp. 10/11: Q-11 = só rascunho na criação; Q-A. PR separado do F-40.2. #1145 aberto toca `useSalesCreateForm.ts` | 1 | aprovado 10/11 (faixa 1) · **parado**: a guarda dá vermelho, mas zerar o total na criação quebra 4 suítes, porque no PUT `Finalized` as pontes leem a linha de antes do `afterUpdate` recalcular o total. A sessão pede para ampliar a correção para o `dynamicTablesController.ts`; espera o dono (aumento de escopo) |
