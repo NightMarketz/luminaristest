@@ -6,9 +6,9 @@
 > É o "BRIEF de execução" que a `D-2026-11-10-BRANCH-DE-INTEGRACAO-E-GAP-MAP-POR-FEATURE` (PR #1183) pede na
 > sua Sequência, item 3.
 >
-> **Estado deste BRIEF (2026-11-10):** 11 forks ratificados pelo dono em questionário; **2 pendentes**
-> (F-GM-12 e F-GM-13). **A execução não está autorizada**: falta o "executa", e há duas pré-condições
-> (seção "Pré-condições").
+> **Estado deste BRIEF (2026-11-10):** os 13 forks estão ratificados pelo dono em questionário; nenhum
+> pendente. **A execução não está autorizada**: falta o "executa", e há duas pré-condições (seção
+> "Pré-condições").
 
 ## Contexto fixo
 
@@ -122,6 +122,13 @@ Cada item é testável sozinho. "Teste" = caso em `scripts/gap-map.test.mjs` (`n
     ou `celula` em `COBERTO`, `PARCIAL` ou `PAPEL`, com "Comando que prova" vazio (regra nº 1 do GAP-MAP;
     é "o teste que reprova fragmento sem comando" da decisão do #1183). Pasta sem fragmento passa.
 11. `index` com fragmento malformado sai com exit 1 e nomeia o arquivo; não gera índice parcial.
+11a. `verificar <ID>` roda o campo `comando` do fragmento (uma linha de shell, na raiz do repositório), imprime
+    o comando antes de rodar e compara o resultado (`passa` = exit 0; `falha` = exit ≠ 0) com o que o estado
+    pede: em `instrumentado`, o contrário de `esperado`; em `corrigido`, `verificado` e em `celula`, o próprio
+    `esperado`. Divergência dá exit 1 e não grava nada. Com `--gravar`, um `achado` em `corrigido` cujo
+    resultado bate passa a `verificado`. **É o único caminho para `verificado`.** Roda um fragmento por vez;
+    nunca é chamado pelo `index`, pelo `check` nem pelo CI. Fragmento sem `comando` dá exit 1 com a mensagem
+    "sem comando executável" (F-GM-13).
 
 **Migração (uma vez; pré-condição P-2)**
 
@@ -151,15 +158,17 @@ Cada item é testável sozinho. "Teste" = caso em `scripts/gap-map.test.mjs` (`n
     e 231 (`FECHADO POR INSPEÇÃO`), que são achados sem título em negrito.
 14. `migrar` **não adivinha**: linha que não fecha com o cabeçalho, etiqueta fora da tabela de troca, linha
     `[EM PR #n]` (P-2 não cumprida) ou caso da lista "a decidir" sem resposta registrada faz o comando parar e
-    listar. A migração **nunca grava `verificado`**: esse estado só nasce de comando rodado (item 9 e F-GM-13).
+    listar. A migração **nunca grava `verificado`** nem preenche `comando`: `verificado` só nasce de comando rodado
+    (item 11a), e o fragmento migrado guarda o comando em prosa na seção, como está hoje.
 15. Oráculo da migração (teste, contra o `GAP-MAP.md` depois do commit do item 12): para cada uma das 9
     tabelas, o índice gerado com o filtro correspondente tem as mesmas linhas, na mesma ordem e com as mesmas
     células do original, comparadas com espaço normalizado. A célula Status é comparada depois de aplicar a
     tabela de troca à etiqueta do original. Diferença em qualquer célula reprova.
-16. O que sobra no `GAP-MAP.md` depois da migração depende de F-GM-12. Nos dois caminhos, o glossário (níveis,
+16. Depois da migração o `GAP-MAP.md` **continua versionado, só com a prosa** (F-GM-12): o glossário (níveis,
     convenção das etiquetas, a máquina de estados, regra nº 1) e as seções "Backtest", "Predição", "Fila
-    corrigida" e "Uso em projeto em andamento" continuam legíveis no repositório, e o texto passa a dizer:
-    "onde uma regra citar 'a linha do GAP-MAP', leia 'o fragmento do achado'".
+    corrigida" e "Uso em projeto em andamento", como estão. Cada tabela migrada vira um parágrafo que aponta
+    `docs/gap-map/` e o comando que gera o índice (`docs/gap-map/_INDEX.md`, fora do git). O texto passa a
+    dizer: "onde uma regra citar 'a linha do GAP-MAP', leia 'o fragmento do achado'".
 17. Nenhuma citação em `server/`, `my-app/` ou `docs/` é reescrita. A seção "Fila corrigida" não muda, então
     "GAP-MAP 7", "GAP-MAP 8" e as demais continuam resolvendo.
 18. **`CORRECOES.md`** (decisão do #1183, Regra 2 item 5): cada achado de estruturas implícitas vira fragmento,
@@ -200,7 +209,7 @@ Os PRs têm base em `integration/gap-map`. A `main` recebe um PR só, no fechame
 
 | PR | Itens | Quando |
 |---|---|---|
-| PR-0 — ferramenta | 1–11, 19 (script, teste, `.gitignore`, hook; nenhum fragmento) | assim que houver "executa" e P-1 |
+| PR-0 — ferramenta | 1–11a, 19 (script, teste, `.gitignore`, hook; nenhum fragmento) | assim que houver "executa" e P-1 |
 | PR-1 — migração | 12–17, 26 (só `.md`) | depois de P-2 |
 | PR-2 — regra | 20–25 (sessões, revisor, `CLAUDE.md`, `docs/README.md`, passo do CI) | junto do PR-1 |
 | PR-3 — `CORRECOES.md` | 18 | depois do insumo ausente levantado |
@@ -254,6 +263,8 @@ Os valores acima são exemplo de forma.
 | `prs` | string[] | não | `"#n"` |
 | `autorizacao` | string | não | vazio = registrado, não roteia (ORCH-006), como no vault |
 | `feature`, `d`, `origem` | string | não | tema, dano (D2/D3), de onde veio |
+| `comando` | string | não | uma linha de shell, com escopo (nunca a suíte inteira); é o que `verificar` roda |
+| `esperado` | `"passa"` \| `"falha"` | não | resultado do `comando` **com a lacuna fechada**; ausente = `"passa"` |
 | `ordem` | inteiro | não | só migrados |
 
 **Transições aceitas por `transicao` em `achado`**
@@ -263,7 +274,7 @@ Os valores acima são exemplo de forma.
 | `aberto` | `instrumentado` | "Comando que prova" preenchido |
 | `instrumentado` | `corrigido` | `--pr` |
 | `aberto` | `corrigido` | `--pr` e comando preenchido (nível leve do OPS-006: teste e fix no mesmo PR) |
-| `corrigido` | `verificado` | conforme F-GM-13 |
+| `corrigido` | `verificado` | só por `verificar <ID> --gravar` (item 11a); `transicao` recusa |
 | `aberto`, `instrumentado` | `rejeitado` | `--motivo` |
 | `aberto` | `oraculo` | `--motivo` |
 | `corrigido`, `verificado` | `aberto` (regressão) | `--motivo` |
@@ -276,6 +287,7 @@ Os valores acima são exemplo de forma.
 | `achar <texto>` | texto | `id · nível · estado · caminho`, uma por linha | 0 com ou sem resultado |
 | `transicao <ID> --para e [--pr n] [--motivo t]` | id existente | fragmento regravado; imprime `<ID>: <de> → <para>` | 0; 1 se o id não existe ou a transição não é aceita |
 | `check` | fragmentos | problemas, um por linha, em stderr | 0 íntegro; 1 com problema |
+| `verificar <ID> [--gravar]` | fragmento com `comando` | o comando, o resultado e `bate`/`diverge` | 0 bate; 1 diverge ou não há `comando` |
 | `migrar [--de <ref>]` | `GAP-MAP.md` no ref | fragmentos criados; resumo por tabela | 0; 1 nos casos do item 14 ou se o oráculo do item 15 falha |
 
 **Índice gerado** (`_INDEX.md`): cabeçalho "GERADO — não edite", uma seção `## Nível <n>` por nível, linha
@@ -287,7 +299,8 @@ quebras de linha escapados como no `buildIndex` do vault, e ao fim uma lista por
 ### Ratificados (dono, questionário no chat, 2026-11-10)
 
 A primeira rodada foi respondida antes de eu ler a decisão do #1183. Onde resposta e decisão divergiam, o dono
-respondeu de novo na segunda rodada; a coluna "Vale" traz o resultado.
+respondeu de novo na segunda rodada; a coluna "Vale" traz o resultado. F-GM-12 e F-GM-13 foram respondidos
+numa terceira rodada, com o PR do BRIEF já aberto; a resposta está na coluna da segunda.
 
 | Fork | Pergunta | 1ª rodada | 2ª rodada (conciliação com o #1183) | Vale |
 |---|---|---|---|---|
@@ -301,34 +314,15 @@ respondeu de novo na segunda rodada; a coluna "Vale" traz o resultado.
 | F-GM-8 | Etiquetas fora da convenção | "Normaliza na migração" | — | normaliza (tabela do item 13) |
 | F-GM-9 | Quem grava `CORRIGIDO` nos PRs da faixa 1 já abertos | "A orquestração, em PR de docs" | — | sem objeto: com P-2 não há PR da faixa 1 aberto na migração |
 | F-GM-10 | Estados | (não perguntado) | "Máquina para achados, etiquetas para células" | item 3 |
+| F-GM-12 | O que é o `GAP-MAP.md` depois | (não perguntado) | "Versionado, só com a prosa" | item 16 |
+| F-GM-13 | O script roda o comando | (não perguntado) | "Também roda, um por vez" | item 11a |
 | F-GM-11 | Três linhas, uma a uma | linha 59 "COBERTO" · linha 109 "Etiqueta nova DESCARTADO" · linha 195 "ABERTO, com 'suspenso' no detalhe" | — | 109 → `rejeitado`; 195 → célula `ABERTO`; 59 volta à lista "a decidir" (é achado, e `COBERTO` é etiqueta de célula) |
 
-### Pendentes — RATIFICAÇÃO PENDENTE
+### Pendentes
 
-**F-GM-12 — O que é o `GAP-MAP.md` depois da migração.**
-A decisão do #1183 diz que ele "passa a ser o índice e o glossário" e "é gerado a partir dos fragmentos", e
-também que "o índice gerado não é versionado". As duas frases juntas admitem duas leituras.
-(a) O `GAP-MAP.md` continua versionado, só com a prosa (glossário, Backtest, Predição, Fila corrigida, Uso), e
-aponta o índice gerado `docs/gap-map/_INDEX.md`, que fica fora do git.
-(b) O `GAP-MAP.md` inteiro passa a ser gerado e sai do git; a prosa vai para outro arquivo versionado.
-Recomendação: **(a)**. Mais de 200 arquivos citam `docs/operating-manual/GAP-MAP.md` pelo caminho, e a seção
-"Fila corrigida" é o que resolve "GAP-MAP 7" e "GAP-MAP 8". Em (b) essas citações passam a apontar um arquivo
-que só existe depois de gerar. — PENDENTE
-
-**F-GM-13 — "Estado derivado de comando": o script roda o comando?**
-A decisão do #1183 diz que o script "roda ou confere o comando de cada um". As 237 linhas de hoje trazem o
-comando em prosa (às vezes com o resultado esperado ao lado), e a regra da máquina é não rodar suíte inteira
-no local.
-(a) O script só **confere**: o `check` reprova fragmento sem comando (item 10); quem roda o comando é a sessão,
-antes de chamar `transicao`, e cola a saída no relatório. `verificado` é gravado pela sessão que viu o CI da
-`main` verde com o teste.
-(b) O script também **roda**, um fragmento por vez: campos opcionais `comando` (uma linha de shell) e
-`esperado` (`"falha"` ou `"passa"`); `gap-map.mjs verificar <ID>` roda, compara com o estado e só então aceita
-`corrigido → verificado`. Nunca roda no `index` nem no CI. Fragmento migrado fica sem `comando` até alguém
-preencher.
-Recomendação: **(b)**. Sem ele, "derivado de comando" é só disciplina, que é o que a regra nº 1 do GAP-MAP
-tenta evitar; e roda um caso por vez, dentro da regra de teste local com escopo. Custo: mais um comando e dois
-campos no PR-0. — PENDENTE
+Nenhum. O `esperado` com padrão `"passa"` e a inversão em `instrumentado` (item 11a) são detalhe do contrato
+dentro da resposta do F-GM-13, não decisão nova: o dono ratificou os campos `comando` e `esperado` e o comando
+`verificar`.
 
 ## Pendente de validação externa
 
