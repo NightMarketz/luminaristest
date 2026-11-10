@@ -103,13 +103,37 @@ Só IDs escritos pelo dono no chat; faixas 3 e 4, um ID por vez.
 
 ## Estado e próximo passo (handoff)
 
-- **Feito (10/11):** passo 1 (esta planilha) e o questionário da faixa 2. Arquivo ainda não commitado, na worktree
-  `implicit-structures-audit-orchestration-f2db13` (branch `claude/implicit-structures-audit-orchestration-f2db13`, base `d3cf331e7`).
-- **Pendente:** o dono escrever no chat os IDs aprovados (passo 2) e confirmar ou recusar os 5 descartes propostos.
-- **Próximo passo:** com os IDs, abrir o PR só de documentação que acrescenta ao `docs/operating-manual/GAP-MAP.md` uma linha por ID
-  aprovado (ID do achado, nível, autorização citada com data) e, no mesmo PR, este `CORRECOES.md`. Depois, um item por vez:
-  `sessao-instrumentacao` → `sessao-correcao` → PR → `node scripts/classe-risco.mjs pr <n>`.
-- **Antes de instrumentar qualquer linha:** `git fetch && git diff d3cf331e7 origin/main -- <arquivos citados>`; se mudou, reabrir.
+Atualizado em 10/11, fim do dia.
+
+- **Feito:**
+  - Triagem, questionário e GAP-MAP: #1153, mergeado.
+  - Exceção de merge da faixa 1: #1163, mergeado, com a confirmação do dono no corpo do PR.
+  - Data vencida do teste do CRM: #1182, mergeado.
+  - **Faixa 1 inteira em PR:** as 44 linhas da tabela, mais SOT F-02.1 e INV F-11.2. Cada PR é uma linha da Tabela abaixo e todos
+    têm base `main`, salvo o #1198, empilhado no #1166. Nenhum PR de correção está mergeado.
+- **Merge (só a maestro):**
+  - Verde: entra direto.
+  - Vermelho da faixa 1 com revisor PASS: entra pela D-2026-11-10-FAIXA1-MERGE-LIVRE.
+  - #1160: vai ao lote do dono, porque carrega o INV F-11.2, da faixa 4.
+  - Depois do #1166: o #1198 precisa de `rebase --onto origin/main` e troca de base.
+- **Conflitos previstos:**
+  - #1170 e #1172 com o #1145, em `useSalesCreateForm.ts`.
+  - #1161, #1164 e #1191 no enum de erros: unir os valores.
+  - #1197 e #1199 nos imports: manter os dois.
+  - #1171 e #1202 no mesmo `api-client.ts`, em trechos diferentes.
+- **Parado no dono:**
+  - 5 descartes propostos (SOT F-17.2, SOT F-22.1, EFX F-08.1, EFX F-13.1, EFX F-14.2).
+  - Faixas 3 e 4: um ID por vez.
+  - BRD F-01.1: BRIEF por `sessao-planejamento`, que destrava BRD F-04.3 e F-73.1.
+  - Liberar `models/dates` no `importBoundary.test`: resto do SOT F-12.1.
+  - Exigir `isSystem` no `detailKey`: resíduo do INV F-41.1.
+- **Follow-ups registrados, sem autorização:**
+  - 35 ocorrências não triadas do BRD F-73.2.
+  - Delete de entrada In que fura a reserva (INV F-26.1).
+  - `updateJob` do EXPORTED sem CAS (EFX F-18.2).
+  - Teste de controle da isenção de pacote (INV F-42.1).
+- **Próximo passo:** depois de cada merge, mudar o Desfecho da linha para `corrigido #<PR> (mergeado)`, num PR de estado como o #1196.
+  Antes de instrumentar uma linha nova: `git fetch && git diff d3cf331e7 origin/main -- <arquivos citados>`; se mudou, reabrir.
 
 ## Tabela
 
