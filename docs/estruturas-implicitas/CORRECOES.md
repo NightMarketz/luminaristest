@@ -1,0 +1,230 @@
+# Correções da auditoria de estruturas implícitas: triagem e estado
+
+Fonte do estado da orquestração dos 114 achados de Classe = Correção. Uma linha por achado; duplicatas numa linha só.
+Quem retoma lê este arquivo, não o histórico da sessão.
+
+- **Autorização:** dono, chat, 2026-11-10: "Me da o prompt para a sessão Opus realizar a orquestração das 114 correções".
+  Autoriza orquestrar. **Nenhum achado está aprovado**: a aprovação é por ID, escrita pelo dono no chat, depois desta triagem.
+- **Inventários:** branch `claude/implicit-state-machines-inventory-e766ea`, commit `f5f70b03f`, pasta `docs/estruturas-implicitas/`
+  (fora da `main`). Ler com `git show f5f70b03f:docs/estruturas-implicitas/<arquivo>`.
+- **Triagem:** 2026-11-10, sessão de orquestração, só leitura.
+
+## Como esta triagem foi feita
+
+1. **Código atual × inventário.** `origin/main` = `d3cf331e7`, o mesmo commit dos inventários: `git diff d3cf331e7 origin/main`
+   vazio. Nenhuma linha citada mudou ou sumiu; nenhum achado foi reclassificado por deriva de código.
+2. **PRs abertos que tocam linhas citadas** (`gh pr list` + arquivos, 10/11): #1133 (teammates PR-7, `ActionProposalRepository`,
+   `ProposalExpiryScheduler`), #1145 (H2-21d, `useSalesCreateForm.ts`; a venda de pacote com validade passa a nascer rascunho),
+   #1146 (assinador local AL-PR-3: `dfeEnvio.ts`, `FiscalDocumentLifecycleService.ts`, `FiscalNumberVoidService.ts`,
+   `DfeAssinaturaResolver.ts`, `routes/dfeAssinador.ts`), #1150 (`RECEIVABLE_TRANSITIONS`, item 1 do PRE-ADR). Quando um deles
+   entrar, as linhas citadas nesses arquivos mudam: reabrir antes de instrumentar.
+3. **Reabertura por mim (10/11), marcada `[OBS ✔] 10/11` na coluna Evidência:** 7 dos 8 itens da ordem sugerida (INV F-40.1 só
+   indiretamente, pelo `beforeCreate` lido para o F-40.2), os 2 que o BRD manda reabrir antes de triar (F-63.1, F-08.1) e SOT F-01.1,
+   SOT F-18.1, EFX F-19.1. Os 12 marcados confirmam o defeito descrito; no BRD F-63.1, só a metade "calendário" (o teto é política).
+   Também li o código de SOT F-17.2 (Q-08), SOT F-22.1, EFX F-13.1 e EFX F-14.2: os quatro caíram, e a leitura está no Desfecho
+   de cada um. Os demais seguem com a evidência do
+   inventário: `[OBS ✔]` reaberto pela sessão de descoberta, `[OBS]` vindo da coleta e não reaberto, `[INF]` inferido. No BRD a
+   evidência está na ficha; "(nr)" quer dizer não reaberto.
+4. **GAP-MAP atual conferido** para linha que já cubra o achado: SM F-09.2 é resíduo de uma linha [CORRIGIDO 07/10]; INV F-42.1 é
+   vizinho da linha "Pacote — cancelar ou devolver venda de pacote", cuja parte de devolução segue aberta.
+5. **Não rodei teste nenhum.** Nenhum achado foi promovido a defeito provado: isso é da `sessao-instrumentacao`.
+
+## Faixas
+
+Depois das respostas do dono (seção abaixo):
+
+| Faixa | Regra | Linhas |
+|---|---|---|
+| 1 | pronta para instrumentar: D2/D3, fora de ZP, fora dos temas F e G, sem questão aberta, sem corrida | 45 |
+| 2 | depende do dono ou de outro achado; hoje só os 2 bloqueados pelo BRD F-01.1 | 2 |
+| 3 | não delegada: tema F inteiro, tema G inteiro, D4/D5, zona proibida. Um ID por vez, ZP liberada só naquela execução | 50 |
+| 4 | corrida [INF]: só anda com teste-guarda determinístico (Windows serializa o SQLite) | 11 (12 IDs; INV F-11.2 reaberto em 10/11) |
+| — | desfecho na triagem: 5 descartados (propostos) e 1 duplicata fundida (EFX F-15.1) | 6 |
+
+Total: 45 + 2 + 50 + 12 + 5 = 114. EFX F-15.1 conta nos 12 da faixa 4. Em 10/11 o INV F-11.2 saiu da fusão com o SM F-01.2, porque o #1160 não cobre o CAS do `revertClaim`.
+Antes das respostas: faixa 1 = 33, faixa 2 = 16 linhas, faixa 3 = 49, faixa 4 = 9.
+
+### Pergunta nova desta triagem
+
+**Q-A: plugin de preset é zona proibida?** O `CONTEXTO.md` põe "`DynamicTableService.ts` e o motor de plugins" na ZP. Os inventários
+divergem: o INV pede liberação da ZP para mexer em `StockMovementsApplyPlugin.ts` (F-41.1) e o EFX marca ZP no mesmo arquivo
+(F-23.1), mas o INV não marca ZP em `SalesPlugin.ts` (F-14.2, F-40.x). Precedente: VP-1 e VP-1b do GAP-MAP corrigiram
+`SalesPlugin.ts` pelo fluxo normal. O reflexo STOP do `CLAUDE.md` mira injeção de serviço Prisma e integração entre módulos dentro do
+motor, não guarda local de um plugin. Decide a faixa de INV F-14.2, F-41.1, F-26.1, F-40.1 e F-40.2.
+
+### Ressalva sobre a ordem sugerida
+
+A ordem sugerida no prompt da orquestração começa por INV F-16.3, F-40.1, F-40.2, F-14.2, F-42.1. Na triagem, F-40.1 e F-40.2
+tinham a INV Q-11 aberta (faixa 2) e F-14.2 dependia da Q-A. Com as respostas de 10/11, os 8 da ordem sugerida estão na faixa 1.
+F-40.1, F-40.2 e SOT F-23.1 tocam `useSalesCreateForm.ts`, que o #1145 aberto também muda: instrumentar depois dele, ou rebasear.
+
+## Respostas do dono
+
+Questionário (AskUserQuestion) desta sessão, 2026-11-10. Responde a pergunta; **não aprova ID nenhum**.
+
+| Pergunta | Resposta do dono | Achados afetados |
+|---|---|---|
+| Q-A plugin de preset é ZP? | "Só o motor é ZP": `DynamicTableService.ts` e o contrato `RuleRegistry`/`RuleContext`/`RulePlugin`; guarda local em plugin vai pelo fluxo normal; injetar serviço Prisma em plugin continua proibido | INV F-14.2, F-41.1, F-26.1, F-40.1, F-40.2 → faixa 1 |
+| INV Q-11 venda nasce finalizada? | "Só rascunho na criação" (a) | INV F-40.1, F-40.2 |
+| INV Q-02 `reserved <= stock` vale sempre? | "Vale sempre" (a) | INV F-26.1 |
+| SM Q-03 consumo da `ActionProposal` | "Mesma tx, senão CAS" (c, com b de reserva); `expiresAt` vencido recusa | SM F-40.2 = EFX F-15.1 → faixa 4 |
+| SOT Q-07 reais → centavos | "Erro e teto em tudo" (a) | SOT F-11.1 |
+| BRD Q6 `NODE_ENV` ausente | "Exigir no boot" (a) | BRD F-03.4 |
+| BRD Q7 resposta do modelo cortada | "Texto com aviso de corte" (a) | BRD F-56.2 |
+| SM Q-07 job preso em `PROCESSING` | "Varredura leva a FAILED" (a) | EFX F-18.2 (= SM F-18.3, Produto) |
+| BRD F-71.1/F-71.2 config inválida derruba o boot? | "Os dois falham no boot" | F-71.1 → faixa 1; F-71.2 → faixa 3 (ZP) |
+| BRD F-72.4 limite de tempo | "60 s API, 10 s ViaCEP" | BRD F-72.4 |
+| SOT F-02.1 junto com F-02.2? | "Aprova F-02.1 junto": F-02.1 (Representação D1) entra antes, em PR próprio. Falta o ID escrito na lista de aprovação | SOT F-02.2 |
+| BRD Q1 envelope de erro | "(c) `handleApiError` único": vira BRIEF próprio (`sessao-planejamento`), não correção | BRD F-01.1 (faixa 3); F-04.3, F-73.1 bloqueados por ele |
+
+Seguem abertas e não perguntadas nesta rodada (faixa 3, uma por vez): AUT Q-01..Q-07, EFX Q-02/Q-03/Q-05, BRD Q2, e as questões do
+tema G (REG Q-03, REG-IMOBILIZADO Q-04/Q-05, REG-FECHAMENTO Q-301..Q-304, REG-CLASSIFICACAO Q-C1/Q-C3/Q-C4).
+
+## Aprovados
+
+Só IDs escritos pelo dono no chat; faixas 3 e 4, um ID por vez.
+
+- **Faixa 1 inteira (45 linhas, 46 IDs com INV F-11.2), mais SOT F-02.1:** dono, chat, 2026-11-10: "Dispara a faixa 1 em opus
+  médio 1 para cada categoria". Aprovação por faixa vale só para a faixa 1 (regra do prompt da orquestração). SOT F-02.1 é
+  Representação D1, aprovado como dependência do SOT F-02.2 ("Aprova F-02.1 junto", questionário da mesma data).
+- **Execução pedida:** uma sessão por tema (SM, INV, SOT, EFX, BRD), Opus com esforço médio.
+- **Os 5 descartes propostos:** sem resposta do dono até aqui.
+- **Merge da faixa 1 (dono, chat, 2026-11-10: "tem qeu ficar livre isso"; questionário: "Livre só nesta faixa 1"):** PR vermelho
+  da faixa 1 com revisor PASS, CI verde e sem arquivo de ZP entra como verde. Nota `D-2026-11-10-FAIXA1-MERGE-LIVRE`, PR #1163
+  (vermelho só de texto: precisa de uma confirmação do dono no lote; depois disso, os PRs vermelhos da faixa 1 não vão mais ao lote).
+- **Registro:** PR #1153 (GAP-MAP, seção "Estruturas implícitas — faixa 1", 46 linhas; classe verde).
+- **Sessões (10/11):** `faixa1-brd` (28), `faixa1-inv` (7) e `faixa1-sot` (8), todas iniciadas a partir do branch do #1153.
+  `faixa1-sm` (SM F-01.2) e `faixa1-efx` (EFX F-19.1, F-18.2) iniciadas no turno seguinte (dono, chat, 2026-11-10: "Dispara SM e EFX").
+
+## Estado e próximo passo (handoff)
+
+- **Feito (10/11):** passo 1 (esta planilha) e o questionário da faixa 2. Arquivo ainda não commitado, na worktree
+  `implicit-structures-audit-orchestration-f2db13` (branch `claude/implicit-structures-audit-orchestration-f2db13`, base `d3cf331e7`).
+- **Pendente:** o dono escrever no chat os IDs aprovados (passo 2) e confirmar ou recusar os 5 descartes propostos.
+- **Próximo passo:** com os IDs, abrir o PR só de documentação que acrescenta ao `docs/operating-manual/GAP-MAP.md` uma linha por ID
+  aprovado (ID do achado, nível, autorização citada com data) e, no mesmo PR, este `CORRECOES.md`. Depois, um item por vez:
+  `sessao-instrumentacao` → `sessao-correcao` → PR → `node scripts/classe-risco.mjs pr <n>`.
+- **Antes de instrumentar qualquer linha:** `git fetch && git diff d3cf331e7 origin/main -- <arquivos citados>`; se mudou, reabrir.
+
+## Tabela
+
+Colunas: Tema + ID · Defeito · D · Score (só compara dentro do tema) · Evidência · Dependência · Faixa · Desfecho.
+Desfecho: `aberto` · `aprovado <data>` · `GAP-MAP #<PR>` · `instrumentado #<PR>` · `não reproduzido` · `corrigido #<PR>` ·
+`descartado` · `bloqueado`, sempre com o motivo.
+
+| Achado | Defeito | D | Score | Evidência | Dependência | Faixa | Desfecho |
+|---|---|---|---|---|---|---|---|
+| SM F-40.2 | `executeProposal` não consome a proposta antes de escrever, nem confere `status`, `expiresAt` ou `kind` | D3 | 6.00 | [OBS ✔] [INF] | resp. 10/11: Q-03 = consumo na mesma tx da escrita; sem `options.tx`, CAS `PENDING → EXECUTED` e volta se a escrita falhar; `expiresAt` vencido recusa. A parte "executa duas vezes" é corrida; a parte `expiresAt`/`kind` é determinística. #1133 aberto toca `ActionProposalRepository`: reabrir depois dele | 4 | aberto · inclui EFX F-15.1 |
+| SM F-16.1 | estorno lê o status fora da tx e grava `Reversed` sem status no `where` | D3 | 3.00 | [OBS ✔] [INF] | nada; efeito de corrida [INF] | 4 | aberto |
+| SM F-01.2 | recálculos de status do AP/AR sem `assertTransition` | D3 | 2.00 | [OBS ✔] | fila do PRE-ADR §4 item 2; entra depois do #1150 (item 1, toca `Receivable.model.ts`) | 1 | aprovado 10/11 (faixa 1) · PR #1160 aberto, **vermelho**, revisor rodada 1 PASS (relato da sessão). Reproduzido: estorno de baixa num título `CANCELLED` voltava a `OPEN` sem erro. Só o lado AP; o AR espera o #1150. A transição para o mesmo status (ex.: PP → PP) segue sem checagem, e nenhum teste a prende (ressalva do revisor) |
+| SM F-09.2 | `transition()` do `FiscalDocument` grava sem CAS quando falta `whenStatusIn`; 2 chamadas sem guarda | D3 | 2.00 | [OBS ✔] [OBS] [INF] | ZP transmissão fiscal (`dfeEnvio.ts`); #1146 aberto toca os dois arquivos; resíduo da linha do GAP-MAP "DF-e — resultado automático gravado sem guarda de status" [CORRIGIDO 07/10]; corrida [INF] | 3 | aberto |
+| SM F-06.1 | `PaymentAccount`: troca de status sem CAS; PATCH e `CREDENTIAL_INVALID` concorrem | D3 | 1.00 | [OBS] [INF] | ZP pagamento (`PaymentAccount`); corrida [INF] | 3 | aberto |
+| SM F-11.2 | `applyResult` da inutilização sem CAS de status | D2 | 1.00 | [OBS ✔] | ZP transmissão fiscal (inutilização); #1146 toca `FiscalNumberVoidService.ts` | 3 | aberto |
+| SM F-21.1 | reinstalação do kit volta a `INSTALLING` sem CAS | D3 | 0.50 | [OBS ✔] | nada; corrida [INF] | 4 | aberto |
+| INV F-26.1 | saída manual de estoque ignora a reserva (e a edição de movimentação também) | D3 | 4.00 | [OBS ✔] | resp. 10/11: Q-02 = vale sempre; Q-A = só o motor é ZP | 1 | aprovado 10/11 (faixa 1) |
+| INV F-27.1 | `convertLead` confere `Converted` fora da tx; a tela só barra o duplo clique numa aba | D3 | 4.00 | [OBS ✔] [INF] | nada; corrida [INF] | 4 | aberto |
+| INV F-37.1 | `reject` da revisão contábil confere o status fora da tx | D3 | 4.00 | [OBS ✔] [INF] | nada; corrida [INF] | 4 | aberto |
+| INV F-06.1 | exclusão de conta e lançamento conferem um ao outro fora da tx | D3 | 2.00 | [OBS ✔] [OBS] [INF] | nada; corrida [INF] | 4 | aberto |
+| INV F-11.2 | `revertClaim` devolve centavos sem guarda no `where`; caminho para saldo negativo não encontrado | D3 | 1.00 | [OBS ✔] | reaberto em 10/11: o #1160 (SM F-01.2) não cobre o CAS do `revertClaim`, e a sessão SM o deixou fora do escopo. Volta a ser linha própria: corrida (CAS no `where`) | 4 | aberto · fora da fusão com SM F-01.2; não aprovado (faixa 4 é um ID por vez) |
+| INV F-12.1 | três escritas em título de imposto (`DEFERRED`, reabertura) sem a condição de saldo | D2 | 2.00 | [OBS ✔] [INF] | nada; corrida [INF] | 4 | aberto |
+| INV F-16.3 | ativação de imobilizado aceita acumulado de abertura acima de `custo − residual`; o bem para de depreciar | D3 | 4.00 | [OBS ✔] [OBS] · **[OBS ✔] 10/11** | reaberto: `activateAsset` não compara o acumulado de abertura com a base (`FixedAssetService.ts:222-236`) | 1 | aprovado 10/11 (faixa 1) · PR #1155 aberto, **vermelho** (revisor obrigatório; rodada 1 PASS segundo a sessão) → lote do dono. Reproduzido; base no branch do #1153 |
+| INV F-40.1 | o total da venda na criação é o que o navegador mandou, e vai ao razão se a venda nasce finalizada | D3 | 3.00 | [OBS ✔] | resp. 10/11: Q-11 = só rascunho na criação; Q-A. PR separado do F-40.2. #1145 aberto toca `useSalesCreateForm.ts` | 1 | aprovado 10/11 (faixa 1) · PR #1168 aberto, verde. Reproduzido (o POST gravava total 500, esperado 0). Escopo ampliado ao `dynamicTablesController.updateTableData`, que relê a linha antes das pontes, com autorização do dono dada na sessão INV ("pode estender a correção ao dynamicTablesController.ts", conferida por busca no transcript em 10/11) |
+| INV F-40.2 | venda criada já finalizada pula as guardas do finalizar; "Finalizar Venda" da tela usa esse caminho | D3 | 3.00 | [OBS ✔] [INF] · **[OBS ✔] 10/11** | resp. 10/11: Q-11 = só rascunho na criação (o POST recusa `Finalized` de fora do sistema; a tela finaliza por atualização); Q-A. O teste-guarda é a "confirmação por execução" que o achado pede. #1145 aberto toca `useSalesCreateForm.ts` · reaberto: o `beforeCreate` não roda as guardas do finalizar (`SalesPlugin.ts:141-217`) | 1 | aprovado 10/11 (faixa 1) |
+| INV F-14.2 | venda de pacote sem cliente cadastrado lança o passivo e não credita saldo; só a tela exige cliente | D3 | 2.00 | [OBS ✔] [OBS] · **[OBS ✔] 10/11** | resp. 10/11: Q-A = só o motor é ZP · reaberto: "cliente simples" passa sem `customerId` (`SalesPlugin.ts:163-171`) | 1 | aprovado 10/11 (faixa 1) |
+| INV F-15.2 | o reconcile do estoque contábil regrava o retrato fora de transação | D2 | 2.00 | [OBS ✔] [OBS] [INF] | nada; corrida [INF] | 4 | aberto |
+| INV F-41.1 | compra manual de estoque: só a tela barra | D3 | 2.00 | [OBS ✔] | resp. 10/11: Q-A = só o motor é ZP (a guarda é local no `StockMovementsApplyPlugin.ts`) | 1 | aprovado 10/11 (faixa 1) |
+| INV F-42.1 | devolução lança a contra-receita sem conferir a receita | D3 | 2.00 | [OBS ✔] [OBS] · **[OBS ✔] 10/11** | nada; vizinho da linha do GAP-MAP "Pacote — cancelar ou devolver venda de pacote" (a parte devolução segue aberta lá, com decisão do dono pendente) e mexe no mesmo `SaleReversalBridge.ts` · reaberto: `Returned` lança sem a guarda de ordem que a liquidação tem (`SaleReversalBridge.ts:133-158` × `SaleSettlementBridge.ts:90-106`) | 1 | aprovado 10/11 (faixa 1) |
+| INV F-16.4 | editar ativo confere o status fora da tx e grava sem versão | D2 | 1.00 | [OBS ✔] [INF] | nada; corrida [INF] | 4 | aberto |
+| BRD F-01.1 | Quatro formatos de corpo de erro; a mesma falha de validação sai em dois (`flatten` nos 485 `safeParse`; `issues` quando o schema lança) | D4 | 2,0 | ficha BRD-01 | resp. 10/11: BRD Q1 = (c) `handleApiError` único. D4, contrato de API (ZP), 485 respostas: vai à `sessao-planejamento` (BRIEF próprio), não à correção | 3 | aberto |
+| BRD F-02.1 | JSON malformado ou corpo acima do limite respondem 500 e entram no log como defeito | D3 | 4,0 | ficha BRD-02 · **[OBS ✔] 10/11** | reaberto: `handleApiError` não reconhece erro do body-parser e cai no 500 (`apiUtils.ts:59-68`) | 1 | aprovado 10/11 (faixa 1) · PR #1154 aberto, verde (vermelho → verde segundo a sessão; base no branch do #1153) |
+| BRD F-03.4 | `NODE_ENV` ausente vale `development`: o 500 leva `stack` ao cliente e as guardas "recusa produção" dos adaptadores falsos não disparam | D3 | 3,0 | ficha BRD-03 | resp. 10/11: Q6 = exigir `NODE_ENV` no boot; conferir scripts de dev, teste e deploy | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-04.2 | Paginação por `Number()`: `listDocuments` deixa `NaN` seguir; `getTableData` troca valor inválido por 1 e 50 | D3 | 2,0 | ficha BRD-04 | nada | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-04.3 | Handler com validação à mão (`throw ValidationError`) e `safeParse` responde a mesma falha em dois formatos | D3 | 1,0 | ficha BRD-01, BRD-04 | resp. 10/11: BRD Q1 = (c); espera o BRD F-01.1 | 2 | bloqueado: depende do BRIEF do BRD F-01.1 |
+| BRD F-08.1 | `getAnalyticsData` valida só `key` e repassa `{ ...req.query }` inteiro | D3 | 1,0 | ficha BRD-08 · **[OBS ✔] 10/11** | reaberto: `{ ...req.query }` entra depois da validação dos mapeamentos e os sobrescreve em `processorParams` (`AnalyticsResolver.ts:318`, `:355-357`); o alcance fica nos dados do próprio usuário | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-46.2 | `webhookSecret` ausente na credencial faria `createHmac` lançar fora de `try` (500) [INF] | D3 | 1,0 | ficha BRD-46 (nr = não reaberto) | ZP (marca da ficha) | 3 | aberto |
+| BRD F-49.1 | Chaveiro ausente é 503 com tipo; chaveiro malformado é `Error` simples (500) | D3 | 1,0 | ficha BRD-49, BRD-71 (nr = não reaberto) | ZP: a ficha BRD-49 (callback do PSC) é marcada ZP | 3 | aberto |
+| BRD F-53.1 | `assinarHash` promete `ok:false`, mas corpo JSON `null` lança `TypeError` fora do `try` | D3 | 1,0 | ficha BRD-53 | ZP (marca da ficha) | 3 | aberto |
+| BRD F-54.1 | Retorno da SEFAZ sem `cStat` vira `REJECTED` (`sefaz_sem_cstat`) em emitir, cancelar e inutilizar | D4 | 1,5 | ficha BRD-54 | D4; ZP; BRD Q2 | 3 | aberto |
+| BRD F-54.2 | `parser.parse` do retorno sem `try`: XML ilegível sobe sem o tipo `SefazTransporteError` | D3 | 1,0 | ficha BRD-54 (nr = não reaberto) | ZP (marca da ficha) | 3 | aberto |
+| BRD F-56.1 | Falha do provedor de LLM no chat e na entrevista vira `Error` genérico (500), com duas linhas de log; os teammates têm tipo por categoria | D3 | 2,0 | ficha BRD-56, BRD-60 | nada | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-56.2 | `finish_reason` não é lido em nenhum cliente: resposta cortada por limite de tokens passa por completa | D3 | 2,0 | ficha BRD-56 | resp. 10/11: Q7 = mostrar o texto com aviso de corte | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-57.1 | Chamada de ferramenta com argumentos ilegíveis é pulada sem mensagem `tool`, com o histórico já contendo a chamada | D3 | 4,0 | ficha BRD-57 | nada | 1 | aprovado 10/11 (faixa 1) · PR #1161 aberto, verde (enum `ARGUMENTOS_INVALIDOS` novo; o F-57.2 mexe na mesma linha, rebaseia quem entrar depois) |
+| BRD F-57.2 | Erro de argumento do modelo: `query_table_data` devolve erro ao modelo; `search_documents` e nome desconhecido lançam e viram HTTP 4xx para o usuário | D3 | 4,0 | ficha BRD-57 | nada | 1 | aprovado 10/11 (faixa 1) · PR #1164 aberto, verde. Trocou a asserção de `searchDocumentsTool.test.ts` que fixava o `ValidationError` (o próprio defeito); conflito previsto com o #1161 na linha do enum |
+| BRD F-57.3 | Argumentos de ferramenta lidos por cast; a proposta é gravada sem validar contra a tabela, e a falha só aparece na confirmação | D3 | 2,0 | ficha BRD-57 (nr = não reaberto) | nada; #1133 aberto mexe na caixa de propostas, rebasear | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-58.1 | Intenção e nova tabela da entrevista: `JSON.parse` devolvido cru com o tipo declarado; `tableName` e `description` só conferidos como verdadeiros | D2 | 4,0 | ficha BRD-58 | nada | 1 | aprovado 10/11 (faixa 1) · PR #1165 aberto, verde |
+| BRD F-60.2 | O prefixo de código do erro lê `error.code`; o erro do provedor tem `kind` | D3 | 1,0 | ficha BRD-60 | nada; teammates "escrito e não ligado" (EFX-16), efeito hoje só em teste; #1133 é do mesmo módulo | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-62.1 | O 415 de upload tem texto fixo de tipos aceitos, errado para certificado e XML | D3 | 2,0 | ficha BRD-62 | nada | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-63.1 | NF-e recebida: sem teto de valor e sem validação de calendário, segundo a coleta | D3 | 2,0 | ficha BRD-63 (nr, [INF]) · **[OBS ✔] 10/11** | reaberto: `moneyToCents` sem teto e `dateOnly` só por regex (`nfe.ts:166-196`). O teto é política (o valor 13v2 cabe sem perda); o defeito é o calendário | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-64.1 | Evento de NFS-e: `dhProc` conferido só quanto à presença | D3 | 1,0 | ficha BRD-64 (nr = não reaberto) | ZP (marca da ficha) | 3 | aberto |
+| BRD F-65.1 | XLSX corrompido responde 500 genérico em extrato, importação contábil e catálogo; CSV inválido responde 400 com detalhe | D3 | 4,0 | ficha BRD-65, BRD-67 · **[OBS ✔] 10/11** | reaberto: `wb.xlsx.load` sem `try` (`spreadsheet.ts:103`) | 1 | aprovado 10/11 (faixa 1) · PR #1156 aberto, verde (base no branch do #1153). Fora do escopo, anotado pela sessão: o teto `MAX_IMPORT_CELLS` lança `Error` simples (500) |
+| BRD F-65.3 | Relatório do provedor: data impossível é aceita e rola o dia | D3 | 1,0 | ficha BRD-65 (nr = não reaberto) | nada; o parser `S/lib/mpReleaseReport.ts` é do relatório do provedor de pagamento: confirmar na aprovação que não conta como ZP | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-66.1 | Custo de tokens: sem conferência de assinatura de bytes; erro do extrator responde 500 | D3 | 2,0 | ficha BRD-66 | nada | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-66.2 | Custo de tokens: `data.buffer.slice(0, byteLength)` ignora `byteOffset` | D2 | 4,0 | ficha BRD-66 | nada | 1 | aprovado 10/11 (faixa 1) · PR #1169 aberto, verde |
+| BRD F-66.3 | `documentsController` duplica o multer e a conferência de bytes com regra diferente para `octet-stream` | D3 | 0,5 | ficha BRD-66 (nr = não reaberto) | nada | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-66.4 | Extração de PDF, DOCX e XLSX de documento sem limite de páginas ou células | D3 | 2,0 | ficha BRD-66 (nr = não reaberto) | nada | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-69.1 | Leitura central de `LegalParameter.valorJson` faz `JSON.parse` sem `try`: uma linha ilegível derruba toda leitura de parâmetros | D3 | 3,0 | ficha BRD-69 | nada | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-71.1 | `readMsEnv` copiado em 6 arquivos; 5 lançam em valor inválido e 1 (`DFE_POLL_AFTER_MS`) usa o default em silêncio | D2 | 1,0 | ficha BRD-71 (nr = não reaberto) | resp. 10/11: um leitor `readMsEnv` só, que lança em valor inválido | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-71.2 | Configuração de integração validada só na primeira chamada: o erro aparece para o usuário como 500/503 | D3 | 1,0 | ficha BRD-71 (nr = não reaberto) | resp. 10/11: conferir no boot a configuração das integrações habilitadas; toca pagamento, PSC e SEFAZ (ZP) | 3 | aberto |
+| BRD F-72.1 | Erro HTTP gera toast; erro de rede não gera e leva a mensagem crua do navegador | D3 | 4,0 | ficha BRD-72 | nada | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-72.2 | Resposta 2xx com corpo não-JSON volta como dado de sucesso | D3 | 2,0 | ficha BRD-72 | nada | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-72.4 | Sem timeout no cliente de API e no ViaCEP | D3 | 2,0 | ficha BRD-72 | resp. 10/11: limite de 60 s no cliente de API e 10 s no ViaCEP | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-72.6 | `document.service.ts` sem default de URL base e com leitura do cookie por `split` | D2 | 2,0 | ficha BRD-72 | nada | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-73.1 | Doze extratores de mensagem de erro; os dois principais com ordem inversa, e um não trata o formato de validação | D3 | 2,0 | ficha BRD-73 | resp. 10/11: BRD Q1 = (c); espera o BRD F-01.1 | 2 | bloqueado: depende do BRIEF do BRD F-01.1 |
+| BRD F-73.2 | 44 pontos do front engolem a falha: 16 `catch` vazios, 19 só `console`, 9 `.catch(() => null)` | D3 | 2,0 | ficha BRD-73 (nr = não reaberto) | nada; a 1ª etapa é separar os `catch` intencionais (comentados) dos que engolem falha | 1 | aprovado 10/11 (faixa 1) |
+| BRD F-74.1 | Conversão de lead: valor com vírgula vira `NaN` e a oportunidade é criada sem valor, sem aviso | D3 | 4,0 | ficha BRD-74 · **[OBS ✔] 10/11** | reaberto: `Number(amount)` e `amount: undefined` em silêncio (`OpportunityCreateModal.tsx:100-113`) | 1 | aprovado 10/11 (faixa 1) · PR #1159 aberto, verde |
+| BRD F-75.1 | `localStorage` e `router.query` lidos por cast, sem checagem | D2 | 1,0 | ficha BRD-75 (nr = não reaberto) | nada | 1 | aprovado 10/11 (faixa 1) |
+| EFX F-02.1 | cancelamento de cobrança perde o autor em queda | D3 | 0.50 | [OBS ✔] [INF] | ZP pagamento | 3 | aberto |
+| EFX F-06.1 | cancelamento de NF-e/NFC-e sem intenção gravada e sem reconciliação | D5 | 3.00 | [OBS ✔] [INF] | D5; ZP fiscal; EFX Q-02 | 3 | aberto |
+| EFX F-06.2 | retorno do evento de cancelamento não é guardado | D3 | 2.00 | [OBS ✔] [OBS] | ZP fiscal; EFX Q-03 (tema G: guardar o retorno é obrigação?) | 3 | aberto |
+| EFX F-08.1 | inutilização presa em `REQUESTED` | D5 | 2.00 | [OBS] | — | — | descartado (proposto): duplicata de SM F-11.1, que é Classe Produto (SM Q-02) e segue fora desta orquestração |
+| EFX F-09.1 | consumo do PSC contado depois | D3 | 0.50 | [OBS] [INF] | ZP assinatura (PSC; minha leitura, o inventário não marca); #1146 toca `DfeAssinaturaResolver.ts` | 3 | aberto |
+| EFX F-13.1 | chamada paga a LLM sem registro de uso | D3 | 2.00 | [OBS] | — | — | descartado (proposto): não é defeito. O código registra as duas faltas como decisão: "embedding excluded — F-I11-5 → a" e "its usage is lost (accepted limit, BRIEF item 15)" (`ChatService.ts:117`, `:123`). Sobra a entrevista sem registro: é escopo do I11, pergunta de Produto [OBS ✔, 10/11] |
+| EFX F-14.2 | trechos sem vetor depois de falha do embedding | D2 | 1.00 | [OBS] | — | — | descartado (proposto): a condição do próprio achado é satisfeita. `ChunkRepository.findStale` seleciona `embeddingModel: null` (`:43-55`) e o `ChunkReindexService` reembeda e carimba (`:30-53`). Ressalva: a reindexação é o CLI `rag:reindex`, manual [OBS ✔, 10/11] |
+| EFX F-15.1 | proposta do agente executa duas vezes | D3 | 6.00 | [OBS ✔] | duplicata | — | linha única em SM F-40.2 |
+| EFX F-17.1 | Reinf e upload de importação falham sem alerta | D5 | 2.00 | [OBS ✔] [OBS] | D5 | 3 | aberto |
+| EFX F-18.1 | arquivo órfão no anexo do CRM e na Reinf | D2 | 2.00 | [OBS] | metade em ZP (Reinf). A metade CRM (`AttachmentService.ts:88-96`) sozinha seria faixa 1; dividir é decisão do dono | 3 | aberto |
+| EFX F-18.2 | job de exportação preso em `PROCESSING` | D3 | 1.00 | [OBS] [INF] | resp. 10/11: SM Q-07 = varredura por `updatedAt` antigo leva a `FAILED` com motivo (padrão `claimStaleConfirming`); o scheduler precisa do caso de alerta que o teste de schedulers exige | 1 | aprovado 10/11 (faixa 1) · PR #1167 aberto, **vermelho** (contábil); revisor rodada 1 em andamento |
+| EFX F-18.3 | geração simultânea do mesmo SPED | D3 | 0.50 | [INF] | corrida [INF]; conferir com INV-39 | 4 | aberto |
+| EFX F-19.1 | passo da purga que falha bloqueia os outros | D3 | 1.00 | [OBS] · **[OBS ✔] 10/11** | reaberto: passos da purga em sequência, sem `try` por passo (`PurgeDeletedRecords.ts:116-130`) | 1 | aprovado 10/11 (faixa 1) · PR #1158 aberto, verde. Reproduzido (os passos seguintes eram chamados 0 vezes) e corrigido, segundo a sessão |
+| EFX F-23.1 | estoque gravado em gancho `before*`, fora da transação | D3 | 2.00 | [OBS ✔] | ZP motor de plugins e contrato do `DynamicTableService`; EFX Q-05 | 3 | aberto |
+| EFX F-23.3 | `supports` que lança desliga o plugin em silêncio | D3 | 2.00 | [OBS ✔] | ZP motor (`RuleRegistry.ts`) | 3 | aberto |
+| SOT F-01.1 | a tela calcula o saldo do título por conta própria, diferente da do servidor | D2 | 4.00 | [OBS ✔] [INF] · **[OBS ✔] 10/11** | reaberto: `amountCents - sumActive(receipts)` (`AccountsReceivablePanel.tsx:393`, `:441`) | 1 | aprovado 10/11 (faixa 1) · PR #1157 aberto, **vermelho** (tela contábil); revisor rodada 1 aprova, segundo a sessão |
+| SOT F-18.1 | `FiscalDocumentStatus` do front com 6 dos 9 status | D3 | 4.00 | [OBS ✔] [INF] · **[OBS ✔] 10/11** | nada (lê o tipo gerado, não o altera) · reaberto: 6 status em `dfe.service.ts:51`, 9 no tipo gerado | 1 | aprovado 10/11 (faixa 1) · PR #1162 aberto, **vermelho** (tela fiscal); revisor rodada 1 aprova, segundo a sessão |
+| SOT F-02.2 | histórico de pagamentos mostra `NONE` e `ProviderBalance` crus | D3 | 2.00 | [OBS ✔] [INF] | resp. 10/11: o dono escolheu "aprova F-02.1 junto": SOT F-02.1 (Representação D1, só tipo) entra antes, em PR próprio | 1 | aprovado 10/11 (faixa 1) · espera o SOT F-02.1 (PR #1166, só tipo; inclui também `SplitPayment`, que o servidor grava no recibo do AR) |
+| SOT F-11.1 | três regras de reais → centavos | D3 | 2.00 | [OBS ✔] [OBS] | resp. 10/11: Q-07 = erro e teto `MAX_CENTS` em todos os caminhos; um teste-guarda por caminho | 1 | aprovado 10/11 (faixa 1) |
+| SOT F-12.1 | data e competência validadas só por regex em 14 sítios | D3 | 2.00 | [OBS ✔] [OBS] [INF] | nada; família de 14 sítios: sítio em ZP sai (o exemplo citado, `FiscalCertificateDto.ts`, é certificado; a BRD-68 marca PFX como ZP) | 1 | aprovado 10/11 (faixa 1) |
+| SOT F-23.1 | subtotal da venda com duas fórmulas no front | D3 | 2.00 | [OBS ✔] [OBS] [INF] | nada; #1145 aberto toca `useSalesCreateForm.ts`, citado na ficha | 1 | aprovado 10/11 (faixa 1) |
+| SOT F-01.4 | texto do tie-out do AP descreve a soma errada | D3 | 1.00 | [OBS ✔] | nada | 1 | aprovado 10/11 (faixa 1) |
+| SOT F-17.2 | cache de KPI invalidado só por escrita de DynamicTable | D2 | 1.00 | [OBS ✔] [INF] | Q-08 respondida por leitura | — | descartado (proposto): não é defeito. `server/src/features/analytics/**` só lê `getDynamicTableService` (4 chamadas) e nenhum arquivo dali usa `prisma.` ou repositório; o cache de KPI não tem leitor fora de `AnalyticsService.ts`. Pela regra do próprio achado, fecha como "nenhuma" [OBS ✔, grep, 10/11] |
+| SOT F-22.1 | duas `formatBRL` com comportamento diferente | D3 | 1.00 | [OBS] | — | — | descartado (proposto): não reproduzido. As duas `formatBRL` devolvem "R$ 0,00" para ausente, `null` e `NaN` (`finance/utils/formatters.ts:19-21`; `shared/utils/formatters.ts:15-27`); só ±Infinity diverge, o que a ficha não descreve. Unificar as duas é Representação [OBS ✔, 10/11] |
+| AUT F-01.1 | usuário apagado continua autenticado e com o papel do token | D3 | 6.00 | [OBS ✔] [INF] | tema F (não delegado); ⛔ | 3 | aberto |
+| AUT F-01.2 | papel lido do JWT; troca de papel ou de senha não invalida tokens | D3 | 6.00 | [OBS ✔] | tema F (não delegado); ⛔ | 3 | aberto |
+| AUT F-23.1 | catálogo referencial global exige `ADMIN` no controller; o resto da plataforma exige `PLATFORM_ADMIN` | D3 | 4.00 | [OBS ✔] [OBS] | tema F (não delegado) | 3 | aberto |
+| AUT F-04.2 | `ADMIN` troca senha e papel de `PLATFORM_ADMIN` | D3 | 3.00 | [OBS ✔] [INF] | tema F (não delegado) | 3 | aberto |
+| AUT F-52.1 | `ADMIN` lê e altera dado de qualquer cliente em 6 módulos e em nenhum dos outros | D3 | 3.00 | [OBS ✔] | tema F (não delegado) | 3 | aberto |
+| AUT F-04.1 | criação de usuário por admin cai na rota pública e o papel é ignorado | D3 | 3.00 | [OBS ✔] | tema F (não delegado); ⛔ | 3 | aberto |
+| AUT F-01.3 | cookie de 24 h e JWT de 7 dias | D3 | 2.00 | [OBS ✔] | tema F (não delegado); ⛔ | 3 | aberto |
+| AUT F-45.1 | prefixo público do assinador cobre rotas que ainda não existem | D3 | 2.00 | [OBS ✔] [INF] | tema F (não delegado); ⛔ | 3 | aberto |
+| AUT F-51.1 | binding e kit aceitam `unitId` sem validar | D3 | 2.00 | [OBS ✔] | tema F (não delegado) | 3 | aberto |
+| AUT F-02.1 | documentação da API pública | D3 | 2.00 | [OBS ✔] | tema F (não delegado); ⛔ | 3 | aberto |
+| AUT F-52.3 | listas fechadas de papel excluem `PLATFORM_ADMIN` | D3 | 2.00 | [OBS ✔] | tema F (não delegado) | 3 | aberto |
+| AUT F-52.2 | policy contábil não distingue dono de delegado | D3 | 1.50 | [OBS ✔] | tema F (não delegado) | 3 | aberto |
+| AUT F-01.4 | dois leitores do contexto do usuário | D3 | 1.00 | [OBS ✔] | tema F (não delegado) | 3 | aberto |
+| AUT F-51.2 | 9 handlers no comentário, 15 no código | D3 | 1.00 | [OBS ✔] | tema F (não delegado) | 3 | aberto |
+| AUT F-52.4 | regra de papel repetida em dois serviços | D3 | 1.00 | [OBS ✔] | tema F (não delegado) | 3 | aberto |
+| AUT F-55.1 | três páginas sem `withAuth` | D3 | 1.00 | [OBS ✔] | tema F (não delegado); ⛔ | 3 | aberto |
+| AUT F-53.1 | escritas por `id` sem dono no `where` | D3 | 0.67 | [OBS ✔] [OBS] | tema F (não delegado) | 3 | aberto |
+| AUT F-53.2 | repositório da DynamicTable sem dono em nenhuma consulta | D3 | 0.67 | [OBS ✔] [OBS] | tema F (não delegado); ⛔ | 3 | aberto |
+| AUT F-51.3 | cinco handlers declaram `read` e gravam; a exceção só está em comentário | D3 | 1.00 | [OBS ✔] | tema F (não delegado) | 3 | aberto |
+| AUT F-52.5 | predicado de leitura em 5 escritas e de gestão em 13 leituras | D3 | 1.00 | [OBS ✔] [OBS] | tema F (não delegado) | 3 | aberto |
+| REG F-02.1 | valores gravados com parâmetro fora do alcance do job (Simples, retenções, IRRF de distribuição, JCP, NCM) não são recalculados nem avisados quando o parâmetro muda | D3 | 3.00 | [OBS ✔] [OBS] | tema G: fonte normativa, validador nomeado e cenário de referência externo | 3 | aberto |
+| REG-IMOBILIZADO F-225.1 | a linha de sistema do JCP no e-Lalur aceita alteração de valor, relação e conta pela API; as do Bloco F e o `PF`/`BC` não | D3 | 4.00 | [OBS ✔] [OBS] | tema G: fonte normativa, validador nomeado e cenário de referência externo | 3 | aberto |
+| REG-IMOBILIZADO F-219.1 | linha da Parte A, conta e movimento da Parte B são gravados em período com a Parte B fechada, sem aviso; o derivado do fechamento fica velho | D3 | 3.00 | [OBS ✔] | tema G: fonte normativa, validador nomeado e cenário de referência externo | 3 | aberto |
+| REG-FECHAMENTO F-301.1 | o encerramento do exercício não acompanha lançamentos posteriores; encerrar de novo devolve o antigo | D3 | 4.50 | [OBS ✔] [INF] | tema G: fonte normativa, validador nomeado e cenário de referência externo | 3 | aberto |
+| REG-FECHAMENTO F-310.2 | a ECF lê o razão vivo e não confere com a apuração confirmada | D3 | 4.50 | [OBS ✔] [OBS] | tema G: fonte normativa, validador nomeado e cenário de referência externo | 3 | aberto |
+| REG-FECHAMENTO F-315.1 | conta de receita sem regra de prefixo é encerrada, mas fica fora da DRE, do J150 e do LAIR | D3 | 4.50 | [OBS ✔] | tema G: fonte normativa, validador nomeado e cenário de referência externo | 3 | aberto |
+| REG-FECHAMENTO F-302.1 | estorno de encerramento aceito com data em outro exercício | D3 | 3.00 | [OBS ✔] [INF] | tema G: fonte normativa, validador nomeado e cenário de referência externo | 3 | aberto |
+| REG-FECHAMENTO F-303.1 | reabrir período ou mudar o razão não marca apuração nem arquivo já gerado | D3 | 3.00 | [OBS ✔] [OBS] | tema G: fonte normativa, validador nomeado e cenário de referência externo | 3 | aberto |
+| REG-CLASSIFICACAO F-417.1 | ajuste de papel, pendência aceita e upgrade do kit ativam versão nova do vínculo sem recarregar os mappers; a conta nova só vale depois de reinício ou da ativação de outra unidade | D3 | 4.50 | [OBS ✔] | tema G: fonte normativa, validador nomeado e cenário de referência externo | 3 | aberto |
+| REG-CLASSIFICACAO F-407.1 | cancelamento estorna o CMV no razão e não devolve ao estoque valorado | D4 | 4.50 | [OBS ✔] | tema G: fonte normativa, validador nomeado e cenário de referência externo | 3 | aberto |
+| REG-CLASSIFICACAO F-406.1 | guarda "Package Balance nunca caixa" sem efeito no intérprete; ajuste aceita conta de ativo | D3 | 3.00 | [OBS ✔] | tema G: fonte normativa, validador nomeado e cenário de referência externo | 3 | aberto |
