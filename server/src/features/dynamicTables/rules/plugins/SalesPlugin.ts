@@ -169,6 +169,11 @@ export const SalesPlugin: RulePlugin = {
       if (simple && !simpleName) {
         throw new ValidationError('Nome do "cliente simples" é obrigatório quando habilitado.');
       }
+      // INV F-14.2: venda só de pacote credita saldo ao cliente — sem `customerId` a ponte lança o passivo e pula o crédito.
+      const isPackageOnly = items.every((it) => (it.data?.type ? String(it.data.type) === 'Package' : !!it.data?.packageId));
+      if (isPackageOnly && !custId) {
+        throw new ValidationError('Venda de pacote exige cliente cadastrado (o saldo do pacote é do cliente).');
+      }
 
       // Serviços precisam ter agendamento pronto antes de finalizar
       await assertServiceAppointmentsReady(ctx, items);
