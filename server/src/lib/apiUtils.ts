@@ -22,8 +22,16 @@ export function handleApiError(error: unknown, res: Response): void {
 
   // Duck-typed Prisma error code, mapped here so it is not coupled to the ORM type.
   const prismaCode = (error as { code?: string })?.code;
+  // BRD F-02.1: body-parser (express.json) marks client errors with `type`; without this they were 500.
+  const bodyParserType = (error as { type?: string })?.type;
 
-  if (error instanceof ZodError) {
+  if (bodyParserType === 'entity.parse.failed') {
+    statusCode = 400;
+    responseBody = { code: 'MALFORMED_JSON', message: 'The request body is not valid JSON.' };
+  } else if (bodyParserType === 'entity.too.large') {
+    statusCode = 413;
+    responseBody = { code: 'PAYLOAD_TOO_LARGE', message: 'The request body exceeds the size limit.' };
+  } else if (error instanceof ZodError) {
     statusCode = 400;
     responseBody = {
       code: 'VALIDATION_ERROR',
