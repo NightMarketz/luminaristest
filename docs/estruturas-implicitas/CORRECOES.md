@@ -68,6 +68,7 @@ Questionário (AskUserQuestion) desta sessão, 2026-11-10. Responde a pergunta; 
 | INV Q-11 venda nasce finalizada? | "Só rascunho na criação" (a) | INV F-40.1, F-40.2 |
 | INV Q-02 `reserved <= stock` vale sempre? | "Vale sempre" (a) | INV F-26.1 |
 | SM Q-03 consumo da `ActionProposal` | "Mesma tx, senão CAS" (c, com b de reserva); `expiresAt` vencido recusa | SM F-40.2 = EFX F-15.1 → faixa 4 |
+| BRD F-66.4 teto de PDF/DOCX (10/11, depois do #1200) | "Recusar com 400"; "500 páginas / 2 mi caracteres": PDF até 500 páginas, DOCX até 2.000.000 de caracteres extraídos | BRD F-66.4 |
 | SOT Q-07 reais → centavos | "Erro e teto em tudo" (a) | SOT F-11.1 |
 | BRD Q6 `NODE_ENV` ausente | "Exigir no boot" (a) | BRD F-03.4 |
 | BRD Q7 resposta do modelo cortada | "Texto com aviso de corte" (a) | BRD F-56.2 |
