@@ -6,6 +6,7 @@ titulo: "PR vermelho da faixa 1 da auditoria de estruturas implícitas entra sem
 estado: "decided"
 autorizacao: "dono, chat, 2026-11-10: \"Se eu for ficar autorizando cada commit, vou ter que fazer muitas vezes, tem qeu ficar livre isso\"; questionário em seguida: \"Livre só nesta faixa 1 (Recomendado)\""
 atualizado: "2026-11-10"
+emenda: "dono, chat, 2026-11-10, questionário: \"Tirar o GAP-MAP dos PRs (Recomendado)\"; \"Trocar pela linha já na main (Recomendado)\""
 ---
 # D-2026-11-10-FAIXA1-MERGE-LIVRE
 
@@ -19,14 +20,17 @@ não quer confirmar cada um.
 
 A maestro trata como **VERDE** (merge squash sozinha) o PR que cumpre **todas** as condições abaixo:
 
-1. O título começa pelo ID de um achado da lista abaixo (ex.: `fix(api): BRD F-02.1 — …`), e o PR muda a linha desse ID na seção
-   "Estruturas implícitas — faixa 1 (2026-11-10)" do `docs/operating-manual/GAP-MAP.md`.
+1. O título começa pelo ID de um achado da lista abaixo (ex.: `fix(api): BRD F-02.1 — …`), e esse ID tem linha na seção
+   "Estruturas implícitas — faixa 1 (2026-11-10)" do `docs/operating-manual/GAP-MAP.md` **da `main`**. O PR de correção não
+   mexe nessa seção; quem a atualiza é a orquestração, em PR só de docs (emenda de 10/11, abaixo).
 2. O diff não toca nenhum destes; se tocar, a exceção não vale e o PR vai ao lote: `server/prisma/**` (schema, migração),
    `server/public/openapi.json`, `dtoShapeSnapshot`, `my-app/types/contracts/**`, `server/src/middleware/auth.ts`,
    `server/src/routes/auth.ts`, `withAuth`, `DynamicTableService.ts`, pagamento (`CollectionCharge`, `PaymentAccount`, provider,
    webhook), transmissão ou assinatura de DF-e, Reinf, baselines de gate, `.claude/**`, `CLAUDE.md`.
 3. O `revisor-independente` deu **PASS** no SHA de cabeça, em no máximo 3 rodadas (D-2026-11-06-REVISAO-CONVERGENCIA). Achado
-   `P` (pré-existente) não segura o PR; achado `A` aberto segura.
+   `P` (pré-existente) não segura o PR; achado `A` aberto segura. O PASS continua valendo quando os commits posteriores a ele são
+   só (a) o que devolve o `GAP-MAP.md` à versão da base ou (b) rebase ou merge da `main` sem conflito em código; qualquer outro
+   commit pede nova rodada.
 4. Todos os checks verdes, `MERGEABLE`, fora de draft, base `main`.
 
 Faltou qualquer condição: vale a regra de sempre (lote do dono).
@@ -45,4 +49,11 @@ Triagem e estado: `docs/estruturas-implicitas/CORRECOES.md` (PR #1153).
 
 ## Fim
 
-A exceção acaba quando a última linha da seção do GAP-MAP sair de `[ABERTO]`, ou antes, se o dono revogar no chat.
+A exceção acaba quando nenhuma linha da seção do GAP-MAP estiver em `[ABERTO]` ou `[EM PR #n]`, ou antes, se o dono revogar no chat.
+
+## Emenda de 10/11: GAP-MAP fora dos PRs
+
+Cada PR mexia na própria linha do GAP-MAP, e cada merge dava conflito nos PRs seguintes (#1164, #1192, #1203). O dono decidiu
+(questionário, 10/11): "Tirar o GAP-MAP dos PRs" e, para esta regra, "Trocar pela linha já na main". Os PRs abertos receberam um
+commit que devolve o `GAP-MAP.md` à versão da base; a seção é atualizada no #1208 (`[EM PR #n]` → `[CORRIGIDO dd/mm, #n]`). Daí
+as condições 1 e 3 e o "Fim" acima.
