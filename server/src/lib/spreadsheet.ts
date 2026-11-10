@@ -31,7 +31,7 @@ export interface OutTable {
 const BOM = '﻿';
 
 /** Cell-count ceiling for an imported XLSX grid — zip-bomb guard (SEC audit 2026-07-15). */
-const MAX_IMPORT_CELLS = 2_000_000;
+export const MAX_IMPORT_CELLS = 2_000_000;
 
 /** RFC-4180-core CSV parse into a matrix of raw string cells (quotes/escapes/newlines handled). */
 function parseCsvMatrix(text: string): string[][] {
