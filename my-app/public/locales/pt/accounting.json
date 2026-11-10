@@ -2723,6 +2723,9 @@
       "AUTHORIZED": "Autorizada",
       "AUTHORIZED_DIVERGENT": "Autorizada com divergência",
       "CANCELLED": "Cancelada",
+      "CANCEL_ANALYSIS": "Cancelamento em análise pelo fisco",
+      "CONTINGENCY": "Emitida em contingência, aguardando transmissão",
+      "PENDING_SIGNATURE": "Aguardando reautorização do assinador",
       "PROCESSING": "Em processamento",
       "REJECTED": "Rejeitada",
       "SENT": "Aguardando retorno do portal"
