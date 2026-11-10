@@ -3,10 +3,18 @@ name: CI
 # push só na main: branch com PR já roda via pull_request. Antes, todo push em branch de PR
 # disparava DUAS runs (push + pull_request, grupos de concurrency distintos — uma não cancela a
 # outra), dobrando a fila de jobs concorrentes.
+#
+# merge_group: a merge queue do GitHub testa cada PR numa branch temporária (`gh-readonly-queue/...`)
+# já em cima da main (e das entradas à frente dela), no lugar da regra "branch atualizada". Sem este
+# gatilho os checks obrigatórios nunca reportam e o PR fica parado na fila em "Expected". Todos os
+# jobs rodam em merge_group; nenhum tem `if` por evento, e o grupo de concurrency é por ref (cada
+# entrada tem a sua), então uma não cancela a outra.
 on:
   push:
     branches: [main]
   pull_request:
+  merge_group:
+    types: [checks_requested]
 
 # Token só de leitura: nenhum job escreve no repo (artifact e cache usam o token de runtime, não o
 # GITHUB_TOKEN). Sem este bloco, a permissão vem do padrão do repositório, que pode ser escrita.
@@ -38,7 +46,9 @@ jobs:
     outputs:
       code: ${{ steps.diff.outputs.code }}
     steps:
-      # O checkout de PR é o merge commit; HEAD^1 é a base na hora do merge.
+      # O checkout de PR é o merge commit; HEAD^1 é a base na hora do merge. Em merge_group o commit
+      # da branch da fila também tem como HEAD^1 a entrada anterior (ou a main): o diff é o desta
+      # entrada. Se a base vier errada, o diff só pode sair maior ou vazio, e os dois dão code=true.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 2
@@ -47,7 +57,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ "${GITHUB_EVENT_NAME}" != "pull_request" ]; then
+          if [ "${GITHUB_EVENT_NAME}" != "pull_request" ] && [ "${GITHUB_EVENT_NAME}" != "merge_group" ]; then
             echo "code=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
           FILES=$(git diff --name-only HEAD^1 HEAD)
