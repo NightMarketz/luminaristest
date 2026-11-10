@@ -81,6 +81,8 @@ export interface Receivable {
 /** List/get reads embed the receipt history. */
 export interface ReceivableWithReceipts extends Receivable {
   receipts: ReceivableReceipt[];
+  /** Saldo em aberto derivado pelo servidor (`amountCents − receivedCents`, `ReceivableService.withBalance`) — SOT F-01.1. */
+  remainingCents: number;
 }
 
 // ── Request payloads ─────────────────────────────────────────────────────────────

@@ -35,11 +35,6 @@ import { useAccountingT } from '../lib/useAccountingT';
 const RECEIVABLES_PER_PAGE = 50;
 
 
-/** Sum of the ACTIVE receipts on a receivable (in cents). */
-function sumActive(receipts: ReceivableReceipt[]): number {
-  return receipts.filter((r) => r.status === 'ACTIVE').reduce((acc, r) => acc + r.amountCents, 0);
-}
-
 // ── status badge ─────────────────────────────────────────────────────────────
 
 const STATUS_LABEL: Record<ReceivableStatus, string> = {
@@ -400,7 +395,7 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
       id: r.id,
       customerName: r.customerName,
       description: r.description,
-      openCents: r.amountCents - sumActive(r.receipts),
+      openCents: r.remainingCents,
     });
   }
 
@@ -448,7 +443,7 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
     setActionLiveCharge(false);
     try {
       if (action.type === 'receive') {
-        const remaining = action.receivable.amountCents - sumActive(action.receivable.receipts);
+        const remaining = action.receivable.remainingCents;
         await accountsReceivableService.registerReceipt(action.receivable.id, {
           unitId,
           method,

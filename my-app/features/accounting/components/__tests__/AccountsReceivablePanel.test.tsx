@@ -67,12 +67,12 @@ const openReceivable: ReceivableWithReceipts = {
   documentNumber: 'NF-1', description: 'Serviço', issueDate: '2026-06-01', dueDate: '2026-06-10',
   amountCents: 150000, revenueAccountId: 'acc1', status: 'OPEN', createdById: 'o1',
   cancelledById: null, cancelReason: null, createdAt: '2026-06-01T00:00:00Z',
-  updatedAt: '2026-06-01T00:00:00Z', deletedAt: null, receipts: [],
+  updatedAt: '2026-06-01T00:00:00Z', deletedAt: null, receipts: [], remainingCents: 150000,
 };
 
 const receivedReceivable: ReceivableWithReceipts = {
   ...openReceivable, id: 'ar2', customerName: 'Cliente Y', documentNumber: 'NF-2',
-  description: 'Venda', status: 'RECEIVED',
+  description: 'Venda', status: 'RECEIVED', remainingCents: 0,
   receipts: [{
     id: 'rec1', userId: 'o1', unitId: 'u1', receivableId: 'ar2', amountCents: 150000, method: 'Pix', kind: 'PAYMENT',
     receivedAt: '2026-06-05', receivedByUserId: 'o1', status: 'ACTIVE', entryId: 'e9',
@@ -359,6 +359,57 @@ describe('AccountsReceivablePanel — cobrança por provedor', () => {
     await waitFor(() => expect(screen.getByTestId('charge-result')).toBeInTheDocument());
     fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
     expect(onLedgerChange).not.toHaveBeenCalled();
+  });
+});
+
+// ── SOT F-01.1 — o saldo do título é o `remainingCents` que o servidor devolve ──────────────────────────────
+// O servidor deriva o saldo de `amountCents − receivedCents` e o devolve na leitura (`ReceivableService.ts`,
+// `withBalance`). Na janela do claim (`receivedCents` já somado, recibo ainda não gravado) Σ recibos ACTIVE
+// fica abaixo do que o servidor considera recebido: a tela que recalcula pelo log envia o saldo cheio e o
+// servidor recusa com 400. Comportamento correto: a tela lê `remainingCents` da resposta.
+describe('SOT F-01.1 — AccountsReceivablePanel usa o remainingCents do servidor', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+    vi.mocked(counterpartiesService.listCounterparties).mockResolvedValue(customerOptions);
+    vi.mocked(paymentAccountsService.list).mockResolvedValue([activeAccount]);
+  });
+
+  it('SOT F-01.1: "Receber" envia o remainingCents da resposta, não amountCents − Σ recibos ACTIVE', async () => {
+    // estado sintético do contrato: o servidor diz que o saldo é 50000 e a lista de recibos ACTIVE está vazia
+    // (o botão "Receber" só aparece em OPEN; o caso real da janela do claim, em RECEIVING, é o "Cobrar" abaixo)
+    const divergent = { ...openReceivable, receipts: [], remainingCents: 50000 } as ReceivableWithReceipts;
+    vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [divergent], total: 1 });
+    vi.mocked(accountsReceivableService.registerReceipt).mockResolvedValue({} as never);
+
+    render(<AccountsReceivablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Cliente X')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /Receber/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar recebimento' }));
+
+    await waitFor(() => expect(accountsReceivableService.registerReceipt).toHaveBeenCalledTimes(1));
+    const body = vi.mocked(accountsReceivableService.registerReceipt).mock.calls[0][1];
+    expect(
+      body.amountCents,
+      'SOT F-01.1: o saldo enviado deve ser o remainingCents do servidor (50000); 150000 = amountCents − Σ ACTIVE, conta própria da tela',
+    ).toBe(50000);
+  });
+
+  it('SOT F-01.1: "Cobrar" em RECEIVING mostra o remainingCents da resposta como saldo aberto', async () => {
+    // janela do claim: o servidor já conta 100000 recebidos (receivedCents), o recibo ainda não existe
+    const inClaimWindow = { ...openReceivable, status: 'RECEIVING', receipts: [], remainingCents: 50000 } as ReceivableWithReceipts;
+    vi.mocked(accountsReceivableService.listReceivables).mockResolvedValue({ receivables: [inClaimWindow], total: 1 });
+    vi.mocked(collectionChargesService.payerSuggestion).mockResolvedValue({});
+    vi.mocked(collectionChargesService.listByReceivable).mockResolvedValue([]);
+
+    render(<AccountsReceivablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Cobrar$/ })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: /^Cobrar$/ }));
+    await waitFor(() => expect(screen.getByText('Cobrar título')).toBeInTheDocument());
+    expect(
+      screen.getByTestId('charge-amount').textContent,
+      'SOT F-01.1: o valor da cobrança deve ser o remainingCents do servidor (500,00); 1.500,00 = amountCents − Σ ACTIVE, conta própria da tela',
+    ).toMatch(/(^|\s)500,00$/);
   });
 });
 
