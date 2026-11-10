@@ -82,6 +82,8 @@ function build(opts: Opts = {}) {
     claimForPayment,
     finalizeIfPaying,
     releaseSettlement,
+    releaseClaim: jest.fn(async () => 1),
+    resolveRevertedClaim: jest.fn(async () => 1),
     updatePayable: jest.fn(async (_s, id: string, data: Record<string, unknown>) => payableRow({ id, ...data } as Partial<Payable>)),
     createPayment: jest.fn(async (data: Record<string, unknown>) => {
       const p = paymentRow({ id: `paym-${createdPayments.length + 1}`, ...data } as Partial<PayablePayment>);
@@ -487,9 +489,8 @@ describe('PayableService.registerPayment — settlement (D2/D3/D4)', () => {
     payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PAYING', paidCents: BigInt(30000) })); // after the decrement
     postEntry.mockRejectedValueOnce(new Error('period closed'));
     await expect(service.registerPayment(scope, 'pay-1', { ...payDto, amountCents: 10000 } as never)).rejects.toThrow('period closed');
-    const writes = payableRepo.updatePayable.mock.calls.map((c) => c[2] as Record<string, unknown>);
-    expect(writes).toContainEqual({ paidCents: { decrement: 10000 } });
-    expect(writes.at(-1)).toEqual({ status: 'PARTIALLY_PAID' });
+    expect(payableRepo.releaseClaim).toHaveBeenCalledWith(scope, 'pay-1', 10000, expect.anything());
+    expect(payableRepo.resolveRevertedClaim).toHaveBeenLastCalledWith(scope, 'pay-1', 'PARTIALLY_PAID', expect.anything());
   });
 
   it('SM F-01.2 / INV F-11.2: o revertClaim não devolve centavos nem grava status por escrita incondicional (só CAS sobre PAYING)', async () => {

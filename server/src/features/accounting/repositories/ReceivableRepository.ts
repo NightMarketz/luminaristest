@@ -2,7 +2,7 @@ import prisma from '../../../lib/prisma';
 import type { Receivable, ReceivableReceipt, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
-import { RECEIVABLE_OUTSTANDING_STATUSES, RECEIVABLE_SETTLEABLE_STATUSES } from '../models/Receivable.model';
+import { RECEIVABLE_OUTSTANDING_STATUSES, RECEIVABLE_SETTLEABLE_STATUSES, type ReceivableStatus } from '../models/Receivable.model';
 import { scopeToday } from '../models/dates';
 import { buildSubledgerFilterWhere } from './subledgerFilters';
 import type {
@@ -177,6 +177,24 @@ export class ReceivableRepository implements IReceivableRepository {
         receivedCents: { gte: cents },
       },
       data: { receivedCents: { decrement: cents } },
+    });
+    return result.count;
+  }
+
+  /** INV F-11.2 — MIRROR de `PayableRepository.releaseClaim`: devolve os centavos só enquanto RECEIVING e com saldo. */
+  public async releaseClaim(scope: AccountingScope, id: string, cents: number, tx?: Prisma.TransactionClient): Promise<number> {
+    const result = await (tx ?? prisma).receivable.updateMany({
+      where: { id, ...accountingScopeWhere(scope), status: 'RECEIVING', receivedCents: { gte: cents } },
+      data: { receivedCents: { decrement: cents } },
+    });
+    return result.count;
+  }
+
+  /** INV F-11.2 — MIRROR de `PayableRepository.resolveRevertedClaim`: CAS sobre RECEIVING. */
+  public async resolveRevertedClaim(scope: AccountingScope, id: string, status: ReceivableStatus, tx?: Prisma.TransactionClient): Promise<number> {
+    const result = await (tx ?? prisma).receivable.updateMany({
+      where: { id, ...accountingScopeWhere(scope), status: 'RECEIVING' },
+      data: { status },
     });
     return result.count;
   }

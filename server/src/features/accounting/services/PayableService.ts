@@ -1862,12 +1862,17 @@ export class PayableService implements IFixedAssetDraftRedriver {
             await this.withholding.service.reverterNaTx(scope, linhas, tx);
           }
         }
-        await this.payableRepo.updatePayable(scope, payableId, { paidCents: { decrement: claimedCents } }, tx);
+        // INV F-11.2: devolução e status por CAS sobre PAYING — o título que saiu de PAYING não é tocado.
+        if ((await this.payableRepo.releaseClaim(scope, payableId, claimedCents, tx)) === 0) {
+          throw new ValidationError('Não foi possível desfazer a baixa: o título não está mais em pagamento ou o saldo não comporta a devolução.');
+        }
         const row = await this.payableRepo.findById(scope, payableId, tx);
         if (!row) return;
         const status = payableStatusForBalance(centsFromDb(row.paidCents), centsFromDb(row.amountCents));
         assertPayableRecalc(row.status, status);
-        await this.payableRepo.updatePayable(scope, payableId, { status }, tx);
+        if ((await this.payableRepo.resolveRevertedClaim(scope, payableId, status, tx)) === 0) {
+          throw new ValidationError('Não foi possível desfazer a baixa: o título não está mais em pagamento.');
+        }
       });
     } catch (error) {
       logger.error('AP registerPayment revert failed — reconcile will reconcile state', {
