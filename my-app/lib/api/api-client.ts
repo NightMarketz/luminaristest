@@ -13,6 +13,9 @@ export function extractErrorMessage(result: Record<string, unknown>, status: num
   return String(result?.message || result?.error || `Erro ${status}: ${statusText}`);
 }
 
+/** Shown (toast and rejection message) when `fetch` itself fails: no connection, DNS, CORS. */
+export const NETWORK_ERROR_MESSAGE = 'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.';
+
 /** Per-call options: `RequestInit` plus two client knobs that are stripped before `fetch`. */
 export interface ApiRequestOptions extends RequestInit {
   /** Skip the automatic error toast — for callers that render their own error UI. */
@@ -72,10 +75,19 @@ class ApiClient {
 
     try {
       const headers = this.getHeaders(init.headers, token) as Record<string, string>;
-      const response = await fetch(url, {
-        ...init,
-        headers,
-      });
+      let response: Response;
+      try {
+        response = await fetch(url, {
+          ...init,
+          headers,
+        });
+      } catch (networkError) {
+        // BRD F-72.1: a network failure gets the same treatment as an HTTP error (toast + Error with the
+        // toast text), without `status` — callers read "no status" as "no response". Aborts pass through.
+        if (!(networkError instanceof TypeError)) throw networkError;
+        if (!silent) notify(NETWORK_ERROR_MESSAGE, 'error', 'Erro');
+        throw new Error(NETWORK_ERROR_MESSAGE);
+      }
       // Só com token enviado: o 401 do login (sem sessão) é credencial errada, não sessão expirada.
       if (response.status === 401 && headers['Authorization']) emitSessionExpired();
 
