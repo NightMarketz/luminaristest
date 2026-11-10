@@ -9,6 +9,7 @@ import type {
   UpdateJobInput,
   CreateRowInput,
   UpdateRowInput,
+  StaleFailedJob,
 } from '../models/DataExchange.model';
 
 /**
@@ -17,6 +18,23 @@ import type {
  * updateMany so the WHERE can carry userId+unitId (a 0-row result fails loud, never no-op).
  */
 export class DataExchangeRepository implements IDataExchangeRepository {
+  public async failStaleProcessing(olderThan: Date): Promise<StaleFailedJob[]> {
+    const candidatos = await prisma.accountingDataExchangeJob.findMany({
+      where: { status: 'PROCESSING', updatedAt: { lt: olderThan } },
+      select: { id: true, userId: true, unitId: true, kind: true },
+    });
+    const vencidos: StaleFailedJob[] = [];
+    for (const job of candidatos) {
+      // CAS: a requisição que ainda termina (EXPORTED) ou outra varredura não é atropelada.
+      const { count } = await prisma.accountingDataExchangeJob.updateMany({
+        where: { id: job.id, status: 'PROCESSING', updatedAt: { lt: olderThan } },
+        data: { status: 'FAILED' },
+      });
+      if (count === 1) vencidos.push(job);
+    }
+    return vencidos;
+  }
+
   public async createJob(
     data: CreateJobInput,
     tx?: Prisma.TransactionClient,
