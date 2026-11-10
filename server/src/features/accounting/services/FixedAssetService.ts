@@ -235,6 +235,15 @@ export class FixedAssetService implements IFixedAssetDraftCreator {
     }
 
     return this.assetRepo.runTransaction(async (tx) => {
+      // Gate autoritativo dentro da tx: custo/residual são mutáveis por updateAsset sem incrementar `version`, então a guarda
+      // acima (lida fora da tx) pode estar velha — relê pela tx e repete a mesma fórmula.
+      const fresh = await this.assetRepo.findById(scope, id, tx);
+      if (!fresh) throw new NotFoundError(`Ativo '${rotuloAtivo(current)}' não foi encontrado.`);
+      if (openingAccumulatedCents > fresh.costCents - fresh.residualValueCents) {
+        throw new ValidationError(
+          `openingAccumulatedCents (${openingAccumulatedCents}) excede a base depreciável do ativo '${rotuloAtivo(fresh)}' (costCents − residualValueCents = ${fresh.costCents - fresh.residualValueCents}).`,
+        );
+      }
       const updated = await this.assetRepo.activate(scope, id, { activatedAt: activatedAtDate, openingAccumulatedCents }, dto.version, tx);
       if (!updated) throw new ConflictError(`Ativo '${rotuloAtivo(current)}' foi alterado por outra operação (version divergente) — releia e tente de novo.`);
       await this.auditService.append(tx, scope, {
