@@ -28,6 +28,11 @@ describe('BRD F-63.1 — data da NF-e recebida conferida contra o calendário', 
     expect((err as Error).message).toMatch(/ide\/dhEmi/);
   });
 
+  it('BRD F-63.1 mês 13 em dhRecbto ⇒ ValidationError (não RangeError)', () => {
+    const xml = signNfeForTest(PURCHASE.replace('<dhRecbto>2025-07-10T09:31:12-03:00</dhRecbto>', '<dhRecbto>2025-13-10T09:31:12-03:00</dhRecbto>'));
+    expect(() => parseNfe(xml, LEGAIS_SEMENTE)).toThrow(ValidationError);
+  });
+
   it('BRD F-63.1 controle: dhEmi real (assinado de novo) ⇒ aceita', () => {
     const xml = signNfeForTest(PURCHASE);
     expect(parseNfe(xml, LEGAIS_SEMENTE).ide.dhEmiDate).toBe('2025-07-10');
