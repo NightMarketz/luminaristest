@@ -46,12 +46,12 @@ const openPayable: PayableWithPayments = {
   amountCents: 150000, expenseAccountId: 'acc1', inventoryProductRef: null, inventoryQty: null,
   status: 'OPEN', createdById: 'o1',
   cancelledById: null, cancelReason: null, createdAt: '2026-06-01T00:00:00Z',
-  updatedAt: '2026-06-01T00:00:00Z', deletedAt: null, payments: [],
+  updatedAt: '2026-06-01T00:00:00Z', deletedAt: null, payments: [], remainingCents: 150000,
 };
 
 const paidPayable: PayableWithPayments = {
   ...openPayable, id: 'ap2', supplierName: 'Fornecedor Y', documentNumber: 'NF-2',
-  description: 'Energia', status: 'PAID',
+  description: 'Energia', status: 'PAID', remainingCents: 0,
   payments: [{
     id: 'pay1', userId: 'o1', unitId: 'u1', payableId: 'ap2', amountCents: 150000, method: 'Pix',
     paidAt: '2026-06-05', paidByUserId: 'o1', status: 'ACTIVE', entryId: 'e9',

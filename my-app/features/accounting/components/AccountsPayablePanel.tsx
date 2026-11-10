@@ -29,11 +29,6 @@ import { useAccountingT } from '../lib/useAccountingT';
 const PAYABLES_PER_PAGE = 50;
 
 
-/** Sum of the ACTIVE payments on a payable (in cents). */
-function sumActive(payments: PayablePayment[]): number {
-  return payments.filter((p) => p.status === 'ACTIVE').reduce((acc, p) => acc + p.amountCents, 0);
-}
-
 // ── status badge ─────────────────────────────────────────────────────────────
 
 const STATUS_LABEL: Record<PayableStatus, string> = {
@@ -345,7 +340,7 @@ export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPerio
     setActionPeriodError(false);
     try {
       if (action.type === 'pay') {
-        const remaining = action.payable.amountCents - sumActive(action.payable.payments);
+        const remaining = action.payable.remainingCents;
         await accountsPayableService.registerPayment(action.payable.id, {
           unitId,
           method,

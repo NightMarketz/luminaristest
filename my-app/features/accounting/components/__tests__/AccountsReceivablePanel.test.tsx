@@ -67,12 +67,12 @@ const openReceivable: ReceivableWithReceipts = {
   documentNumber: 'NF-1', description: 'Serviço', issueDate: '2026-06-01', dueDate: '2026-06-10',
   amountCents: 150000, revenueAccountId: 'acc1', status: 'OPEN', createdById: 'o1',
   cancelledById: null, cancelReason: null, createdAt: '2026-06-01T00:00:00Z',
-  updatedAt: '2026-06-01T00:00:00Z', deletedAt: null, receipts: [],
+  updatedAt: '2026-06-01T00:00:00Z', deletedAt: null, receipts: [], remainingCents: 150000,
 };
 
 const receivedReceivable: ReceivableWithReceipts = {
   ...openReceivable, id: 'ar2', customerName: 'Cliente Y', documentNumber: 'NF-2',
-  description: 'Venda', status: 'RECEIVED',
+  description: 'Venda', status: 'RECEIVED', remainingCents: 0,
   receipts: [{
     id: 'rec1', userId: 'o1', unitId: 'u1', receivableId: 'ar2', amountCents: 150000, method: 'Pix',
     receivedAt: '2026-06-05', receivedByUserId: 'o1', status: 'ACTIVE', entryId: 'e9',

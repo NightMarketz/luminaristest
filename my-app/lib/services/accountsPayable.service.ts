@@ -75,6 +75,8 @@ export interface Payable {
 /** List/get reads embed the payment history. */
 export interface PayableWithPayments extends Payable {
   payments: PayablePayment[];
+  /** Saldo em aberto derivado pelo servidor (`amountCents − paidCents`, `PayableService.withBalance`) — SOT F-01.1. */
+  remainingCents: number;
 }
 
 // ── Request payloads ─────────────────────────────────────────────────────────────
