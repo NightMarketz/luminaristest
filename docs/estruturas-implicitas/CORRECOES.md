@@ -91,7 +91,7 @@ Só IDs escritos pelo dono no chat; faixas 3 e 4, um ID por vez.
 - **Os 5 descartes propostos:** sem resposta do dono até aqui.
 - **Registro:** PR #1153 (GAP-MAP, seção "Estruturas implícitas — faixa 1", 46 linhas; classe verde).
 - **Sessões (10/11):** `faixa1-brd` (28), `faixa1-inv` (7) e `faixa1-sot` (8), todas iniciadas a partir do branch do #1153.
-  `faixa1-sm` (SM F-01.2) e `faixa1-efx` (EFX F-19.1, F-18.2) ficam para o turno seguinte, pelo limite de 3 por turno.
+  `faixa1-sm` (SM F-01.2) e `faixa1-efx` (EFX F-19.1, F-18.2) iniciadas no turno seguinte (dono, chat, 2026-11-10: "Dispara SM e EFX").
 
 ## Estado e próximo passo (handoff)
 
