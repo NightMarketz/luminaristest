@@ -41,7 +41,7 @@ export type QuickDashboardPayload = QuickCreationInput;
 
 export type CustomDashboardPayload = CustomCreationInput;
 
-// ponytail: `fiscal` é consumida por `dashboardController` (`UnifiedCreationSchema.extend({ fiscal })`) FORA do DTO gerado —
+// atalho: `fiscal` é consumida por `dashboardController` (`UnifiedCreationSchema.extend({ fiscal })`) FORA do DTO gerado —
 // extensão explícita (plano §10 linha 4 / D9), nunca `as`. Quem manda é a Entrevista (`useAiInterview`).
 export type CreateDashboardPayload = UnifiedCreationInput & { fiscal?: OnboardingFiscalInput };
 

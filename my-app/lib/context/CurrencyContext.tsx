@@ -87,7 +87,7 @@ export function CurrencyProvider({ children }: CurrencyProviderProps) {
     updateAuth({ ...user, currency: newCurrency });
 
     try {
-      // ponytail: `newCurrency` vem de SUPPORTED_CURRENCIES; o servidor devolve 400 se divergir do contrato gerado.
+      // atalho: `newCurrency` vem de SUPPORTED_CURRENCIES; o servidor devolve 400 se divergir do contrato gerado.
       await UserService.updatePreferences({ currency: newCurrency as UpdatePreferencesInput['currency'] });
     } catch (err) {
       console.error('[CurrencyContext] Failed to save currency preference:', err);

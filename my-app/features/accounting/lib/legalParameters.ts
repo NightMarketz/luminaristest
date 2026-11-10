@@ -69,7 +69,7 @@ export function propostaDeNovaVersao(l: LegalParameter): PropostaForm {
   const valor = tipoValor === 'int' ? String(l.valorInt) : tipoValor === 'texto' ? (l.valorTexto ?? '') : JSON.stringify(l.valorJson, null, 2);
   return {
     ...propostaVazia(),
-    // ponytail: a linha veio do BE, cuja `tabela` é sempre do enum (o DTO recusa outra).
+    // atalho: a linha veio do BE, cuja `tabela` é sempre do enum (o DTO recusa outra).
     tabela: l.tabela as ProposeLegalParameterInput['tabela'],
     chave: l.chave,
     discriminador: l.discriminador ?? '',

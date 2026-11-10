@@ -68,7 +68,7 @@ export async function runInstall(args: InstallSectorKitArgs): Promise<number> {
   try {
     const kitService = ApplicationFactory.getInstance().getKitInstallService(scope);
 
-    // Idempotência. ponytail: pré-check e instalação são idas separadas ao banco (TOCTOU, o mesmo teto do CLI
+    // Idempotência. atalho: pré-check e instalação são idas separadas ao banco (TOCTOU, o mesmo teto do CLI
     // antigo: passo de deploy operado por uma pessoa; o compile pula quando já há Active e supersede atomicamente).
     const installation = await kitService.findInstallation(scope);
     // Só o MESMO kit é "já instalado"; outro kit na unidade cai no install(), que recusa (um kit por unidade, item 9).

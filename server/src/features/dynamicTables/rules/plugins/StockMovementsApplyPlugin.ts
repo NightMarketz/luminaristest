@@ -42,7 +42,7 @@ export const StockMovementsApplyPlugin: RulePlugin = {
     // O discriminador é o PREFIXO do detailKey — campo DECLARADO no preset stockMovements: o
     // buildZodSchema do motor REMOVE chaves fora do schema antes do plugin (finding do review
     // independente — um sourceType custom não sobrevive ao strip; detailKey sobrevive).
-    // ponytail: um cliente pode forjar o prefixo no POST genérico e pular a validação manual —
+    // atalho: um cliente pode forjar o prefixo no POST genérico e pular a validação manual —
     // impacto restrito ao dado operacional do próprio tenant (o razão não passa por aqui);
     // chave dura exigiria mover o log físico para Prisma.
     const isAccountingPayableRow = String(ctx.after?.detailKey || '').startsWith('ACCOUNTING_PAYABLE:');

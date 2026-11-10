@@ -1001,7 +1001,7 @@ export function buildEcdFile(input: EcdFileInput): string[] {
 }
 
 /**
- * Runnable self-check (ponytail: the money/date/determinism logic leaves one
+ * Runnable self-check (atalho: the money/date/determinism logic leaves one
  * check that fails if it breaks). Not a test framework — asserts + throws.
  */
 export function __selfCheck(): void {

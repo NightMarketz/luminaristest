@@ -9,7 +9,7 @@ import ExcelJS from 'exceljs';
  * (untyped) and XLSX (typed) behave identically downstream; money columns are integer
  * cents strings that the validators parse.
  *
- * ponytail: hand-rolled CSV covers quoting/escaping/newlines/BOM — reach for a csv lib
+ * atalho: hand-rolled CSV covers quoting/escaping/newlines/BOM — reach for a csv lib
  * only if an RFC-4180 edge case (embedded NUL, exotic delimiters) actually bites.
  */
 
@@ -107,7 +107,7 @@ export async function parseTable(buffer: Buffer, format: SpreadsheetFormat): Pro
       // Zip-bomb guard: a small compressed XLSX can expand to a huge grid. Reject an
       // absurd cell count before we build the matrix + run validation (bounds downstream
       // memory/CPU). (SEC audit 2026-07-15)
-      // ponytail: this caps AFTER exceljs decompresses into its row model — the true
+      // atalho: this caps AFTER exceljs decompresses into its row model — the true
       // decompression cap needs a streaming reader (exceljs WorkbookReader) or an unzip
       // size check; deferred until a real bomb is observed. Upload is already ≤10 MB.
       if (ws.rowCount * ws.columnCount > MAX_IMPORT_CELLS) {

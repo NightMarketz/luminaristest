@@ -42,7 +42,7 @@ export type ScopeSettingsAccountField =
 
 /**
  * Configuração por escopo (`AccountingScopeSettings`, decisão do dono 2026-09-15). Nasceu dentro do F7
- * (as 2 contas de encargo bancário) e por isso o repositório é o do F7 — ponytail: divide quando um
+ * (as 2 contas de encargo bancário) e por isso o repositório é o do F7 — atalho: divide quando um
  * segundo consumidor (X6 `FiscalProfile`, C6b perfil de pacote) aparecer, não antes.
  *
  * BE-INCR-FIXED-ASSETS (nó C8) acrescenta 4 contas (item 5 + item 24): despesa de depreciação

@@ -1673,7 +1673,7 @@ export interface PackageExpiryPostingReconcileDeps extends PackageExpiryEffectsD
  * `('sale.package.expired', movementKey)` (idempotent on PostingService's @@unique), then emits the missing
  * expiry NFS-e when the profile is CONSUMO (idempotent on the document's @@unique). A movement already posted
  * and already with its note (or not CONSUMO) is a silent no-op. Pending rows reuse the movement key.
- * ponytail: lê todos os movimentos `expiry` a cada tick; upgrade = filtrar por "sem lançamento/sem nota" no SQL se a tabela crescer.
+ * atalho: lê todos os movimentos `expiry` a cada tick; upgrade = filtrar por "sem lançamento/sem nota" no SQL se a tabela crescer.
  */
 export async function reconcileSalePackageExpiryPosting(deps: PackageExpiryPostingReconcileDeps): Promise<ReconcileSummary> {
   const movements = await deps.listExpiryMovements();

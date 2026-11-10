@@ -500,7 +500,7 @@ export class PostingService {
       });
       return entry;
     } catch (error) {
-      // ponytail: authoritative race-close — @@unique([userId,unitId,sourceType,sourceId])
+      // atalho: authoritative race-close — @@unique([userId,unitId,sourceType,sourceId])
       // is a REAL DB constraint. A concurrent poster that wins the race trips P2002;
       // re-fetch and return its entry.
       if (
@@ -743,7 +743,7 @@ export class PostingService {
         return { ...reversal, postings: reversalPostings };
       });
     } catch (error) {
-      // ponytail: authoritative race-close — @@unique([userId,unitId,sourceType,sourceId]) blocks
+      // atalho: authoritative race-close — @@unique([userId,unitId,sourceType,sourceId]) blocks
       // a second reversal. A concurrent reverser that loses the race trips P2002; re-fetch under the
       // reversal's actual sourceType (='closing' when reversing a closing entry — N1).
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {

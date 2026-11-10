@@ -132,7 +132,7 @@ export function FiscalProfilePanel({ unitId }: FiscalProfilePanelProps) {
   const saving = governed.busy;
   const saveError = formError ?? governed.error;
 
-  // ponytail: os `as` dos <select> abaixo são folha string → união (cada <option> já é um membro da união), nunca objeto.
+  // atalho: os `as` dos <select> abaixo são folha string → união (cada <option> já é um membro da união), nunca objeto.
   const regime = form.regimeTributario;
   const simples = regime === 'SIMPLES';
   const faltanteLabel = (name: string) => (name in FALTANTE_LABEL ? t(`fiscalProfile.faltante.${name}`, FALTANTE_LABEL[name]) : name);

@@ -11,7 +11,7 @@
 //   node scripts/baixar-fontes-oficiais.mjs --forcar   # rebaixa tudo (checar reedicao)
 //   node scripts/baixar-fontes-oficiais.mjs --so=<id>
 //
-// ponytail: fetch + writeFile, sem lib de download nem cache. Host que passar a exigir
+// atalho: fetch + writeFile, sem lib de download nem cache. Host que passar a exigir
 // cookie/JS aparece como FALHOU no manifesto e o dono baixa pelo navegador.
 
 import { createHash } from 'node:crypto';

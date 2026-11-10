@@ -102,7 +102,7 @@ export function calcPercent(value: number, total: number): number {
  * silêncio. `en-CA` formata exatamente como `YYYY-MM-DD` — mesmo caminho de stdlib que `scopeDay`
  * usa no backend (server/src/features/accounting/models/dates.ts).
  *
- * ponytail: a constante de fuso é ESPELHADA de `AccountingScope.timeZone` (backend) — cópia ÚNICA
+ * atalho: a constante de fuso é ESPELHADA de `AccountingScope.timeZone` (backend) — cópia ÚNICA
  * no frontend (decisão do dono 2026-09-25, supersede as duas cópias do F3(b) de 2026-09-02). Vira
  * dado do backend quando o fuso for por tenant.
  */

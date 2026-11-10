@@ -22,13 +22,13 @@ export interface PackageSaleReceiptData {
   acceptance: { acceptedByLabel: string; acceptedAt: Date; textVersion: string } | null;
 }
 
-// ponytail: 'YYYY-MM-DD' by components (no Date → no local-tz day-shift; memory date-only-rendering-utc-shift-class-bug).
+// atalho: 'YYYY-MM-DD' by components (no Date → no local-tz day-shift; memory date-only-rendering-utc-shift-class-bug).
 function dateOnlyBR(dateOnly: string): string {
   const [y, m, d] = dateOnly.split('-');
   return `${d}/${m}/${y}`;
 }
 
-// ponytail: acceptedAt is an instant (server clock). The salon's scope is a CONSTANT America/Sao_Paulo (AccountingScope),
+// atalho: acceptedAt is an instant (server clock). The salon's scope is a CONSTANT America/Sao_Paulo (AccountingScope),
 // which has been a fixed UTC-3 since DST was abolished in 2019 — so shift by -3h and read UTC getters instead of Intl
 // (small-ICU Nodes drop locale data, same reason as centsToBRL). Upgrade: a per-scope zone + a tz database if the scope
 // timeZone ever stops being a constant.

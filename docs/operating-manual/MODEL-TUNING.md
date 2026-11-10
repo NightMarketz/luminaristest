@@ -74,7 +74,7 @@ Snippets oficiais completos em "Prompting Claude Fable 5" (docs.claude.com). Os 
 - **Anti-overplanning:** "When you have enough information to act, act…" — Fable delibera demais
   em tarefa ambígua.
 - **No-tidying em effort alto:** "Don't add features, refactor, or introduce abstractions beyond
-  what the task requires…" (≈ ponytail oficial).
+  what the task requires…" (≈ o minimalismo de código solto do `CLAUDE.md`).
 - **Claims auditados / verificador de contexto fresco / memória um-fato-por-arquivo /
   lead-with-outcome / fronteira assess-first:** já codificados como OPS-001..004 + T1–T8 + guia —
   a doc oficial **converge** com as três camadas; nada a adicionar, grau promovido.

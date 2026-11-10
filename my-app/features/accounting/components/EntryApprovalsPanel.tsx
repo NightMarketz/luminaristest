@@ -20,7 +20,7 @@ import { useAccountingT } from '../lib/useAccountingT';
 // Server-side page size for the "Aguardando aprovação" queue (FRENTE 5 fix). This
 // section has its own status-scoped endpoint (`/entry-approvals/pending`,
 // findManyByStatus) with a real per-status `total`, so it CAN be paginated safely.
-// "Rascunhos" below is a DIFFERENT case — see the ponytail note at its fetch site.
+// "Rascunhos" below is a DIFFERENT case — see the `atalho:` note at its fetch site.
 const PENDING_PER_PAGE = 50;
 
 function totalDebit(entry: ApprovalEntry): number {
@@ -242,7 +242,7 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
       // findManyByStatus) with a real per-status `total` — paginated below via StandardPagination.
       // Drafts do NOT have that: GET /accounting/entries has no `status` filter and its `total`
       // counts ALL statuses, not just Draft (PostingDto.ts ListEntriesQuerySchema; PostingService
-      // .listEntries → journalEntryRepo.findManyByUnit). ponytail: one page of 200 (backend max)
+      // .listEntries → journalEntryRepo.findManyByUnit). atalho: one page of 200 (backend max)
       // remains for drafts — a unit with >200 entries can push an old draft off this page.
       // Upgrade path: add a `status` filter to GET /accounting/entries (the repository already
       // has a status-scoped read, `findManyByStatus` — JournalEntryRepository.ts:99 — it just
@@ -349,7 +349,7 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
           'Alguém alterou este lançamento enquanto esta tela estava aberta. A lista foi recarregada — confira e tente de novo.',
         );
         const fresh = await fetchAll();
-        // ponytail: the row may have changed STATUS too (someone else approved it). We don't
+        // atalho: the row may have changed STATUS too (someone else approved it). We don't
         // re-derive whether the command still applies — the server owns the state machine and
         // answers with its own error. We only guarantee the version is fresh.
         const refreshed = fresh ? [...fresh.drafts, ...fresh.pending].find((e) => e.id === entry.id) : undefined;

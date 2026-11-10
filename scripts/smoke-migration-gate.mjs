@@ -127,7 +127,7 @@ let pre;
 }
 
 // ---------------------------------------------------------------- S2 · migrate
-// ponytail: sem `migrate status` — o parse do formato de saída dele já devolveu
+// atalho: sem `migrate status` — o parse do formato de saída dele já devolveu
 // 'desconhecido'; a contagem autoritativa é o output do próprio deploy.
 let aplicadas = 0;
 try {

@@ -3,7 +3,7 @@ import type { BindingScope } from '../repositories/IAccountingBindingRepository'
 /**
  * Contrato de autorização do módulo `accountingBinding` (Corpo C, item 9/15 do BRIEF). Mesmo
  * escopo grosso de `IAccountingPolicy` (ator autenticado) — RBAC por papel fica para quando os
- * papéis existirem no produto (mesmo `ponytail` registrado em `AccountingPolicy.ts`).
+ * papéis existirem no produto (mesmo `atalho:` registrado em `AccountingPolicy.ts`).
  */
 export interface IAccountingBindingPolicy {
   /** Pode compilar/recompilar um binding (POST /accounting-binding/compile). */

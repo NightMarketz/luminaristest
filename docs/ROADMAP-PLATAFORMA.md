@@ -120,7 +120,7 @@ só preset + binding compilado + (se preciso) contas novas no chart via papel.
 - Revisitar **T11** (single-process) e, se necessário, **T1** (SQLite) — ambas são decisões travadas/
   rejeitadas (§1/§4): reabrir = ADR + sinal humano, com os dados de carga na mão.
 - **Unidades compartilhadas / multi-operador:** ativar a separação `ownerUserId`≠`actorUserId` que o
-  `AccountingScope` já reserva (membership check é stub `ponytail:` declarado) — e com ela a **torre de
+  `AccountingScope` já reserva (membership check é stub `atalho:` declarado) — e com ela a **torre de
   aprovação** (ACC-016/017) deixa de ser YAGNI, porque passa a existir mais de um operador por tenant.
 - inbox/outbox/DLQ só aqui (T11 hoje as torna desnecessárias).
 

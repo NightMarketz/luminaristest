@@ -42,7 +42,7 @@ export function Navbar() {
     // 2. Persist to DB in the background (only when authenticated)
     if (isAuthenticated && user) {
       try {
-        // ponytail: `locale` vem de `languages` (pt|en); o servidor devolve 400 se divergir do contrato gerado.
+        // atalho: `locale` vem de `languages` (pt|en); o servidor devolve 400 se divergir do contrato gerado.
         await UserService.updatePreferences({ locale: locale as UpdatePreferencesInput['locale'] });
       } catch {
         // Silently ignore — language still changes locally

@@ -710,7 +710,7 @@ export type PointCurrency = CurrencyCode | typeof NO_CURRENCY_KEY | null;
 const SEPARATOR = ' | ';
 
 const asPointCurrency = (v: string): PointCurrency =>
-  v === NO_CURRENCY_KEY || (CURRENCY_CODES as readonly string[]).includes(v) ? (v as PointCurrency) : null; // ponytail: folha string → união
+  v === NO_CURRENCY_KEY || (CURRENCY_CODES as readonly string[]).includes(v) ? (v as PointCurrency) : null; // atalho: folha string → união
 
 /**
  * Item 14: moeda de um ponto. `dimension` → a parte do nome que vem da dimensão de moeda (1ª ou 2ª — os códigos não

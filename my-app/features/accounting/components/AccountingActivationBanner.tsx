@@ -109,7 +109,7 @@ export function AccountingActivationBanner({ unitId, onNavigateToPeriods, onNavi
             <select
               aria-label={t('activation.sectorLabel', 'Setor')}
               value={sector}
-              onChange={(e) => setSector(e.target.value as ActivationSector)} // ponytail: as só na folha string → união (options = ACTIVATION_SECTORS)
+              onChange={(e) => setSector(e.target.value as ActivationSector)} // atalho: as só na folha string → união (options = ACTIVATION_SECTORS)
               disabled={busy}
               className="rounded-xl border border-neutral-700 bg-neutral-900 px-2 py-1 text-neutral-100 focus:border-emerald-500 focus:outline-none disabled:opacity-50"
             >

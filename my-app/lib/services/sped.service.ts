@@ -27,7 +27,7 @@ interface GenerationEnvelope<T> extends Envelope<T> {
 }
 
 // ── Payloads (contrato gerado) ──────────────────────────────────────────────────
-// ponytail: `signerContactIds` é consumida por spedController.expandSignerContacts ANTES do .strict()
+// atalho: `signerContactIds` é consumida por spedController.expandSignerContacts ANTES do .strict()
 // (F-C12-4; D9 do PLANO-FE-CONTRACT-TYPES): o contador do cadastro vira signatário 900 no servidor.
 type SignerContacts = { signerContactIds?: string[] };
 export type GenerateEcdPayload = SpedEcdRequestInput & SignerContacts;

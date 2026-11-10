@@ -30,17 +30,17 @@
 
 Projeto indexado como `C-Users-smurf-Downloads-Luminaris`.
 
-## Ponytail × este projeto
+## Minimalismo × padrão de camada
 
-O ponytail (modo lazy, sempre ativo) e este projeto **concordam** no núcleo — menos código, reuse antes de
-recriar, YAGNI — e o codebase-memory é o que torna esse instinto fundamentado. Mas com uma fronteira clara:
+Menos código, reuso antes de recriar e YAGNI valem neste projeto, e o codebase-memory é o que torna esse
+instinto fundamentado. Mas com uma fronteira clara:
 
 - **Padrões de camada NÃO são over-engineering.** A cadeia `Route → Controller → Service → Repository → Prisma`
   (+ Policy), injeção via **Factory**, **DTO Zod**, **soft-delete** e **registro de rota em 2 toques** (`index.ts` + `docs.paths.ts`; auth é deny-by-default no middleware) são
-  *requisitos do projeto* (Contrato §2/§3). Caem na própria regra do ponytail de "nunca simplificar o que foi
-  explicitamente pedido / segurança". **Não** inline uma policy, **não** pule um DTO, **não** corte o factory
-  "pra ser enxuto".
-- O ponytail morde no **código solto** (um helper, um fix pontual) — aí sim, seja mínimo.
+  *requisitos do projeto* (Contrato §2/§3): o que foi explicitamente pedido e o que protege segurança não se
+  simplifica. **Não** inline uma policy, **não** pule um DTO, **não** corte o factory "pra ser enxuto".
+- O minimalismo morde no **código solto** (um helper, um fix pontual) — aí sim, seja mínimo. Atalho
+  deliberado leva um comentário `atalho:` que nomeia o teto e o upgrade.
 - Em dúvida entre enxugar e seguir o padrão da camada → **o contrato prevalece**.
 
 ## skill-audit — predicado de ambiente

@@ -22,7 +22,7 @@ import { GovernanceEngine } from '../validation/GovernanceEngine';
  * lock do SQLite (o perdedor recebe um erro cru de banco em vez de "esse horário já está ocupado").
  * Serializar a tx aqui transforma a corrida numa fila: a segunda re-conta já enxergando a primeira.
  *
- * ponytail: trava in-process, não distribuída — o teto é UM processo Node por arquivo SQLite, que é
+ * atalho: trava in-process, não distribuída — o teto é UM processo Node por arquivo SQLite, que é
  * exatamente o desenho atual deste projeto. Se algum dia houver mais de um processo escrevendo o
  * mesmo banco, isto deixa de bastar: o upgrade é constraint de exclusão no banco (Postgres
  * `EXCLUDE USING gist`) ou um lock consultivo, não uma trava maior aqui.

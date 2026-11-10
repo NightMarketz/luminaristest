@@ -257,7 +257,7 @@ export function JournalEntryModal({
       return;
     }
 
-    // ponytail: removeLine mantém ≥ 2 linhas, então o null é inalcançável — só prova a tupla ao tsc.
+    // atalho: removeLine mantém ≥ 2 linhas, então o null é inalcançável — só prova a tupla ao tsc.
     const legs = atLeastTwo(lines.map(toPostingLine));
     if (!legs) return;
 

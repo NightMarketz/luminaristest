@@ -109,7 +109,7 @@ export function SimplesSegregacaoSection({ unitId, competencia, onSalvo }: Simpl
                       <select
                         aria-label={t('simples.segregacao.naturezaN', 'Natureza da parcela {{n}}', { n: String(i + 1) })}
                         value={l.natureza}
-                        // ponytail: folha string → união (cada <option> é membro da união)
+                        // atalho: folha string → união (cada <option> é membro da união)
                         onChange={(e) => setLinha(i, { natureza: e.target.value as SegregacaoLinha['natureza'] })}
                         className={sel}
                       >
@@ -129,7 +129,7 @@ export function SimplesSegregacaoSection({ unitId, competencia, onSalvo }: Simpl
                       <select
                         aria-label={t('simples.segregacao.motivoN', 'Motivo da parcela {{n}}', { n: String(i + 1) })}
                         value={l.motivo}
-                        // ponytail: folha string → união
+                        // atalho: folha string → união
                         onChange={(e) => setLinha(i, { motivo: e.target.value as SegregacaoLinha['motivo'] })}
                         className={sel}
                       >

@@ -20,7 +20,7 @@ export interface ReceiptArtifact {
  * READ-ONLY: composes the entry read + per-leg account name reads, renders the pure
  * HTML serializer, and streams the PDF. NOTHING is persisted — a receipt is a
  * deterministic render of an immutable entry, always regenerable, so storing it would
- * be YAGNI (ponytail). Persist as a DocumentAttachment only if a signed/archived copy is
+ * be YAGNI. Persist as a DocumentAttachment only if a signed/archived copy is
  * ever required. No prisma.* and no Express here; the canRead policy is the only gate.
  */
 export class ReceiptService {

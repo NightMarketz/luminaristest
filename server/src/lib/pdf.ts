@@ -1,7 +1,7 @@
 /**
  * HTML → PDF via a SINGLE shared headless-Chromium instance (puppeteer).
  *
- * ponytail: one browser launched lazily and reused for every render — per-request
+ * atalho: one browser launched lazily and reused for every render — per-request
  * launch would add seconds of latency + a Chromium process per call. Single-process
  * deploy (memory stay-on-sqlite-no-postgres) → one browser for the whole app; closed on
  * shutdown via closePdfBrowser(). If request isolation is ever needed, move to a page

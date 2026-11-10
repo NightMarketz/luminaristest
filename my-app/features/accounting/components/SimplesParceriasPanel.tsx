@@ -215,7 +215,7 @@ export function SimplesParceriasPanel({ unitId }: { unitId: string }) {
               <select
                 aria-label={t('simples.parceria.naturezaCota', 'Natureza da cota')}
                 value={form.naturezaCota}
-                // ponytail: folha string → união (cada <option> é membro da união)
+                // atalho: folha string → união (cada <option> é membro da união)
                 onChange={(e) => set('naturezaCota', e.target.value as ParceriaForm['naturezaCota'])}
                 className={`w-full ${inputClass}`}
               >
