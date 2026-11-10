@@ -4,6 +4,7 @@ import type {
   CancelamentoManualInput,
   EmitFiscalDocumentInput,
   FiscalDocumentActionBodyInput,
+  FiscalDocumentListQueryInput,
   PreviewFiscalDocumentInput,
   RejeicaoManualInput,
 } from '@/types/contracts/accounting/FiscalDocumentDto.gen';
@@ -48,7 +49,8 @@ export interface Releitura {
   }>;
 }
 
-export type FiscalDocumentStatus = 'SENT' | 'PROCESSING' | 'AUTHORIZED' | 'AUTHORIZED_DIVERGENT' | 'REJECTED' | 'CANCELLED';
+/** Deriva do contrato gerado: o filtro `status` (`FiscalDocumentDto.ts`) lista os mesmos 9 de `FISCAL_DOCUMENT_STATUSES` — SOT F-18.1. */
+export type FiscalDocumentStatus = NonNullable<FiscalDocumentListQueryInput['status']>;
 export type FiscalDocumentPendencia = 'releitura_divergente' | 'sale_cancelled_with_live_document' | 'cancelled_without_replacement';
 export type DfeAmbiente = 'homologacao' | 'producao';
 

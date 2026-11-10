@@ -2726,6 +2726,9 @@
       "AUTHORIZED": "Authorized",
       "AUTHORIZED_DIVERGENT": "Authorized with divergence",
       "CANCELLED": "Cancelled",
+      "CANCEL_ANALYSIS": "Cancellation under tax authority review",
+      "CONTINGENCY": "Issued in contingency, awaiting transmission",
+      "PENDING_SIGNATURE": "Waiting for signer reauthorization",
       "PROCESSING": "Processing",
       "REJECTED": "Rejected",
       "SENT": "Waiting for the portal return"
