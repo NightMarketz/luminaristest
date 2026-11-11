@@ -42,10 +42,22 @@ export const StockMovementsApplyPlugin: RulePlugin = {
     // O discriminador é o PREFIXO do detailKey — campo DECLARADO no preset stockMovements: o
     // buildZodSchema do motor REMOVE chaves fora do schema antes do plugin (finding do review
     // independente — um sourceType custom não sobrevive ao strip; detailKey sobrevive).
-    // ponytail: um cliente pode forjar o prefixo no POST genérico e pular a validação manual —
-    // impacto restrito ao dado operacional do próprio tenant (o razão não passa por aqui);
-    // chave dura exigiria mover o log físico para Prisma.
-    const isAccountingPayableRow = String(ctx.after?.detailKey || '').startsWith('ACCOUNTING_PAYABLE:');
+    // INV F-41.1 (resíduo, dono 10/11: "Exigir isSystem"): o prefixo é forjável num POST genérico; o isSystem não (o motor
+    // tira `__isSystem` do payload e só o PhysicalStockSync grava com `{ isSystem: true }`). Sem os dois, é entrada manual.
+    const isAccountingPayableRow =
+      ctx.isSystem === true && String(ctx.after?.detailKey || '').startsWith('ACCOUNTING_PAYABLE:');
+
+    // INV F-41.1: compra entra pelo Contas a Pagar (título de estoque: custo médio + D Estoques / C Fornecedores), nunca
+    // pela movimentação manual — que subiria o estoque sem título, lançamento nem custo médio (venda seguinte sem CMV).
+    if (type === 'In' && !isAccountingPayableRow && String(ctx.after?.reason || '') === 'Purchase') {
+      throw new ValidationError('Entrada por compra é registrada pelo Contas a Pagar (título de estoque), não pela movimentação manual.');
+    }
+
+    // INV F-41.1: compra entra pelo Contas a Pagar (título de estoque: custo médio + D Estoques / C Fornecedores), nunca
+    // pela movimentação manual — que subiria o estoque sem título, lançamento nem custo médio (venda seguinte sem CMV).
+    if (type === 'In' && !isAccountingPayableRow && String(ctx.after?.reason || '') === 'Purchase') {
+      throw new ValidationError('Entrada por compra é registrada pelo Contas a Pagar (título de estoque), não pela movimentação manual.');
+    }
 
     // Regras financeiras para entradas manuais: exigir dados essenciais quando motivo for compra.
     // A validação manual de supplierId/cost não se aplica à linha do Payable; o delta abaixo SIM.

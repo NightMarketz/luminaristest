@@ -148,7 +148,8 @@
       "reversalDateLabel": "Data da reversão",
       "methodLabel": "Forma de pagamento",
       "method": {
-        "Cash": "Dinheiro"
+        "Cash": "Dinheiro",
+        "NONE": "Retenção (sem saída de caixa)"
       },
       "reasonLabel": "Motivo",
       "payTitle": "Registrar pagamento",
@@ -250,7 +251,9 @@
       "reversalDateLabel": "Data da reversão",
       "methodLabel": "Forma de recebimento",
       "method": {
-        "Cash": "Dinheiro"
+        "Cash": "Dinheiro",
+        "ProviderBalance": "Saldo no provedor",
+        "SplitPayment": "Split payment (IBS/CBS)"
       },
       "reasonLabel": "Motivo",
       "receiveTitle": "Registrar recebimento",
@@ -2723,6 +2726,9 @@
       "AUTHORIZED": "Autorizada",
       "AUTHORIZED_DIVERGENT": "Autorizada com divergência",
       "CANCELLED": "Cancelada",
+      "CANCEL_ANALYSIS": "Cancelamento em análise pelo fisco",
+      "CONTINGENCY": "Emitida em contingência, aguardando transmissão",
+      "PENDING_SIGNATURE": "Aguardando reautorização do assinador",
       "PROCESSING": "Em processamento",
       "REJECTED": "Rejeitada",
       "SENT": "Aguardando retorno do portal"

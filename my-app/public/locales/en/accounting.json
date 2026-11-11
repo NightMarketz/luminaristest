@@ -148,7 +148,8 @@
       "reversalDateLabel": "Reversal date",
       "methodLabel": "Payment method",
       "method": {
-        "Cash": "Cash"
+        "Cash": "Cash",
+        "NONE": "Withholding (no cash out)"
       },
       "reasonLabel": "Reason",
       "payTitle": "Register payment",
@@ -250,7 +251,9 @@
       "reversalDateLabel": "Reversal date",
       "methodLabel": "Receipt method",
       "method": {
-        "Cash": "Cash"
+        "Cash": "Cash",
+        "ProviderBalance": "Provider balance",
+        "SplitPayment": "Split payment (IBS/CBS)"
       },
       "reasonLabel": "Reason",
       "receiveTitle": "Register receipt",
@@ -2723,6 +2726,9 @@
       "AUTHORIZED": "Authorized",
       "AUTHORIZED_DIVERGENT": "Authorized with divergence",
       "CANCELLED": "Cancelled",
+      "CANCEL_ANALYSIS": "Cancellation under tax authority review",
+      "CONTINGENCY": "Issued in contingency, awaiting transmission",
+      "PENDING_SIGNATURE": "Waiting for signer reauthorization",
       "PROCESSING": "Processing",
       "REJECTED": "Rejected",
       "SENT": "Waiting for the portal return"

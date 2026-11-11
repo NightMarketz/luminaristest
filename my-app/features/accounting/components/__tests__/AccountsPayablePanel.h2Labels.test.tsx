@@ -33,7 +33,7 @@ const openPayable: PayableWithPayments = {
   amountCents: 150000, expenseAccountId: 'acc1', inventoryProductRef: null, inventoryQty: null,
   status: 'OPEN', createdById: 'o1',
   cancelledById: null, cancelReason: null, createdAt: '2026-06-01T00:00:00Z',
-  updatedAt: '2026-06-01T00:00:00Z', deletedAt: null, payments: [],
+  updatedAt: '2026-06-01T00:00:00Z', deletedAt: null, payments: [], remainingCents: 150000,
 };
 
 // Achado (G) do H2 (RUNBOOK-H2-BROWSER-SIGNOFF passo 15, execução 29/10, build de produção de 455c1a45):

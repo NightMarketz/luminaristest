@@ -267,7 +267,8 @@ export function useSalesCreateForm(options: UseSalesCreateFormOptions = {}): Use
                 simpleCustomer: s.simpleCustomer,
                 simpleCustomerName: s.simpleCustomer ? s.simpleCustomerName : undefined,
                 unitId: s.unitId || undefined,
-                status: finalize ? 'Finalized' : 'Draft',
+                // INV F-40.2 (Q-11): a venda nasce rascunho; o finalizar é por atualização, depois dos itens.
+                status: 'Draft',
                 paymentStatus: 'Pending',
                 subtotal: sub,
                 totalAmount: total,
@@ -279,6 +280,7 @@ export function useSalesCreateForm(options: UseSalesCreateFormOptions = {}): Use
             };
 
             const saleId = await FinanceService.createSaleWithItems(salesTableId, saleItemsTableId, saleData, s.items);
+            if (finalize) await FinanceService.updateSale(salesTableId, saleId, { status: 'Finalized' });
             setState(prev => ({ ...prev, isSubmitting: false }));
             return saleId;
         } catch (err) {

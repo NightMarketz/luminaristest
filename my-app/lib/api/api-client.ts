@@ -122,7 +122,12 @@ class ApiClient {
         throw httpError;
       }
 
-      if (!parsed) result = { error: 'Failed to parse server response' };
+      if (!parsed) {
+        // BRD F-72.2: 2xx com corpo não-JSON (página de proxy, resposta cortada) é falha, não dado de sucesso.
+        const message = 'Resposta inválida do servidor.';
+        if (!silent) notify(message, 'error', 'Erro');
+        throw Object.assign(new Error(message), { status: response.status });
+      }
       return result as T;
     } catch (error) {
       // Re-throw our parsed error object (it always has `status`, even when the body was empty) or a native

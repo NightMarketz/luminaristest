@@ -10,18 +10,16 @@ import { MAX_CENTS } from '../../accounting/models/money';
  * `centsFromReais` — Variante 1, verbatim de `SaleFinalizedMapper.ts:31-47` (idêntica, comentário
  * a comentário, em `SaleSettledMapper.ts:51-67`, `SaleReturnedMapper.ts:31-47` e
  * `SalePackageSoldMapper.ts:27-43`): `typeof===number && Number.isFinite` → `Math.round(v*100)` →
- * `Number.isSafeInteger` → `>0`. Propositalmente SEM teto `MAX_CENTS` — o único teto desta variante é
- * `Number.isSafeInteger`, mais alto que `MAX_CENTS`.
+ * `Number.isSafeInteger` → `>0`, mais o teto `MAX_CENTS` desde o SOT F-11.1 (os mappers de origem seguem sem ele).
  *
  * `assertCentsInRange` — Variante 2, verbatim de `SaleCogsMapper.ts:36-51`: `Number.isSafeInteger`
  * → `>0` → `<=MAX_CENTS` (import de contrato público, `features/accounting/models/money` — o teto de
  * persistência compartilhado, ACC-HARDEN-POST-CENTS-001).
  *
- * DIVERGÊNCIA DE TETOS PRESERVADA (BRIEF fork F-BP-4 — DECORRÊNCIA do gate byte-idêntico do ADR §7,
- * não ratificação; revisão um-a-um pendente, reabrível sem custo antes do merge):
- * `centsFromReais` NÃO impõe `MAX_CENTS`; `assertCentsInRange` impõe os dois. **NÃO unificar sem
- * decisão do dono** — mudaria o comportamento observável de um evento hoje aceito pela Variante 1 com
- * `amountCents` entre `MAX_CENTS` e `Number.MAX_SAFE_INTEGER`.
+ * TETO UNIFICADO (SOT F-11.1 — decisão do dono, Q-07 = a, questionário 2026-11-10: "valor inválido dá erro e o
+ * teto `MAX_CENTS` vale em todos os caminhos"): `centsFromReais` passa a impor `MAX_CENTS` como
+ * `assertCentsInRange`. Fecha o fork F-BP-4; evento com `amountCents` entre `MAX_CENTS` e
+ * `Number.MAX_SAFE_INTEGER` passa a ser recusado também pela Variante 1.
  *
  * As mensagens de erro aqui são genéricas (parametrizadas por `context`), diferentes do texto
  * bespoke de cada mapper (ex.: "... para lançamento de receita ..." vs "... para liquidação ...") —
@@ -31,7 +29,7 @@ import { MAX_CENTS } from '../../accounting/models/money';
  * de fato produz.
  */
 
-/** Variante 1, verbatim — float reais → centavos inteiros. */
+/** Variante 1 — float reais → centavos inteiros, com o teto `MAX_CENTS` (SOT F-11.1). */
 export function centsFromReais(value: unknown, context: string): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     throw new ValidationError(`Valor inválido para ${context}: não é um número finito.`);
@@ -42,6 +40,9 @@ export function centsFromReais(value: unknown, context: string): number {
   }
   if (cents <= 0) {
     throw new ValidationError(`Valor deve ser maior que zero para ${context}.`);
+  }
+  if (cents > MAX_CENTS) {
+    throw new ValidationError(`Valor fora da faixa suportada de centavos (${context}).`);
   }
   return cents;
 }
