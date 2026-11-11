@@ -65,6 +65,17 @@ describe('F1-N3 — seed do painel não engole a falha', () => {
     );
   });
 
+  it('seed que falha num erro já notificado pelo apiClient não repete o toast', async () => {
+    getTables.mockResolvedValue({ data: tables } as never);
+    const httpError = Object.defineProperty(Object.assign(new Error('Erro 500'), { status: 500 }), 'notified', { value: true });
+    seed.mockRejectedValue(httpError);
+    render(<DashboardPage allTables={tables} />);
+    fireEvent.click(screen.getByText('seed'));
+    await waitFor(() => expect(seed).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 0));
+    expect(notices).toEqual([]);
+  });
+
   it('releitura das tabelas que falha depois do seed mantém o painel', async () => {
     getTables.mockResolvedValueOnce({ data: tables } as never).mockRejectedValueOnce(new Error('Erro 500'));
     seed.mockResolvedValue(undefined);
