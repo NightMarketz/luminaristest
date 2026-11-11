@@ -1,0 +1,38 @@
+# Faixa vermelha do merge por risco — docs/operating-manual/MERGE-POR-RISCO-brief.md §3
+# (F-MRG-5 ratificado pelo dono no chat, 2026-10-24). PR que toca qualquer caminho abaixo
+# espera a aprovação de @web3br1; o resto entra pelo CI. Só vale com o ruleset da main
+# exigindo review de Code Owners, e só depois dos PRs de teste verde/vermelho (§7 item 4b).
+# Limite: ADR em status Proposed também é vermelha, mas CODEOWNERS não lê status — fica no rótulo.
+
+# Schema, migrations e dados de parâmetro legal
+/server/prisma/                                   @web3br1
+
+# Contabilidade e autenticação
+/server/src/features/accounting/                  @web3br1
+/server/src/features/accountingBinding/           @web3br1
+/server/src/middleware/auth.ts                    @web3br1
+
+# Código de legal-params
+/server/src/features/legalParameters/             @web3br1
+/server/src/controllers/legalParameterController.ts @web3br1
+/server/src/routes/legalParameters.ts             @web3br1
+/server/src/routes/docs/legal-parameters.paths.ts @web3br1
+/server/src/jobs/LegalParamsRecalcScheduler.ts    @web3br1
+/server/src/jobs/checkLegalParamsFormatoCli.ts    @web3br1
+/pesquisas-legais/                                @web3br1
+
+# Regras do agente (qualquer nível)
+CLAUDE.md                                         @web3br1
+/.claude/skills/                                  @web3br1
+
+# CI, este arquivo e scripts de gate
+/.github/                                         @web3br1
+/scripts/                                         @web3br1
+/server/scripts/coverage-gate.js                  @web3br1
+/server/scripts/smoke-gate-*.mjs                  @web3br1
+.dependency-cruiser.cjs                           @web3br1
+.dependency-cruiser-known-violations.json         @web3br1
+
+# Dependências
+package.json                                      @web3br1
+package-lock.json                                 @web3br1
