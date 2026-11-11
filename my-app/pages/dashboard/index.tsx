@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { getCookie, deleteCookie } from 'cookies-next';
 import { useAuth } from '../../lib/context/AuthContext';
 import type { IDynamicTable } from '../../features/dashboard/components/shared/dynamic-tables.client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DynamicTableService } from '../../lib/services/dynamic-table.service';
 import { DashboardSidebar } from '../../features/dashboard/DashboardSidebar';
 import dynamic from 'next/dynamic';
@@ -10,6 +10,8 @@ import { isNavigable } from '../../features/dashboard/category-views/shared/util
 import DashboardOverview from '../../features/dashboard/components/DashboardOverview';
 import { GetServerSideProps } from 'next';
 import { runDevSeed } from '../../features/dev/seed';
+import { notify } from '../../lib/notifications/notify';
+import { wasNotified } from '../../lib/notifications/notified';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
@@ -58,6 +60,8 @@ function DashboardPage({ allTables }: DashboardPageProps) {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const { t } = useTranslation('common');
+  const tRef = useRef(t);
+  tRef.current = t;
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -101,10 +105,11 @@ function DashboardPage({ allTables }: DashboardPageProps) {
         setSeeding(true);
         await runDevSeed(tables, () => { });
         window.sessionStorage.setItem('dev_seed_ran', '1');
-        const j = await DynamicTableService.getTables().catch(() => ({ data: [] as IDynamicTable[] }));
-        if (Array.isArray(j?.data)) setTables(j.data as IDynamicTable[]);
+        const j = await DynamicTableService.getTables().catch(() => null); // falha já notificada pelo apiClient; o painel mantém as tabelas
+        if (Array.isArray(j?.data)) setTables(j.data as unknown as IDynamicTable[]);
       } catch (e: unknown) {
         console.error('Seed failed:', e);
+        if (!wasNotified(e)) notify(e instanceof Error ? e.message : String(e), 'error', tRef.current('seedFailed'));
       } finally {
         setSeeding(false);
       }
@@ -227,10 +232,11 @@ function DashboardPage({ allTables }: DashboardPageProps) {
             try {
               setSeeding(true);
               await runDevSeed(tables, () => { });
-              const j = await DynamicTableService.getTables().catch(() => ({ data: [] as IDynamicTable[] }));
-              if (Array.isArray(j?.data)) setTables(j.data as IDynamicTable[]);
+              const j = await DynamicTableService.getTables().catch(() => null); // falha já notificada pelo apiClient; o painel mantém as tabelas
+              if (Array.isArray(j?.data)) setTables(j.data as unknown as IDynamicTable[]);
             } catch (e: unknown) {
               console.error('Manual seed failed:', e);
+              if (!wasNotified(e)) notify(e instanceof Error ? e.message : String(e), 'error', t('seedFailed'));
             } finally {
               setSeeding(false);
             }
