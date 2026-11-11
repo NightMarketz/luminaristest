@@ -398,6 +398,7 @@
   "onboardingSessionConflict": "Esta customização foi alterada em outra aba. Sua conversa continua aqui — envie a mensagem de novo.",
   "onboardingErrorCreateFailed": "Ocorreu uma falha ao criar seu dashboard.",
   "onboardingErrorUnexpected": "Ocorreu um erro inesperado.",
+  "onboardingErrorNetwork": "Não foi possível falar com o servidor. Verifique sua conexão e tente novamente.",
   "onboardingCreateErrorModulePartial": "O módulo {{moduleKey}} existe inteiro ou não existe: remova todas as tabelas dele ou nenhuma ({{tables}}).",
   "onboardingCreateErrorFixedModulePartial": "O módulo {{moduleKey}} é fixo: as tabelas dele ({{tables}}) não podem sair separadamente.",
   "onboardingCreateErrorDependentModuleKept": "O módulo {{moduleKey}} não pode sair: {{dependents}} depende(m) dele.",
