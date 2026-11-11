@@ -125,6 +125,7 @@ test('lista dura: snapshot de DTO, certificado e emissão fiscal, NFS-e, auth e 
     'server/src/features/accounting/services/FiscalCertificateService.ts',
     'server/src/features/accounting/services/FiscalDocumentEmissionService.ts', 'server/src/lib/nfseSignature.ts',
     'server/src/lib/nfse.ts', 'server/src/lib/jwt.ts', 'server/src/controllers/authController.ts',
+    'server/src/controllers/authUtilityController.ts', 'server/src/lib/authUtils.ts', 'my-app/CLAUDE.md',
     'my-app/lib/context/AuthContext.tsx', 'server/src/routes/dfe.ts', 'server/src/routes/dfeAssinador.ts',
     'server/src/features/accounting/services/dfeEnvio.ts', 'server/src/features/accounting/services/PscProviderService.ts',
     'server/src/features/accounting/services/CompanySignerService.ts',

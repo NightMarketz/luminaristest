@@ -34,7 +34,7 @@ estrutura (fila, máquina, estado entre sessões), ou compensar o modelo. Só o 
 
 | # | Pergunta | Resposta literal | Regra |
 |---|---|---|---|
-| 1 | Merge do vermelho de código | "Estender com lista dura (Recomendado)" | PR vermelho com `lote: não` no `classe-risco.mjs` entra pela maestro (squash) com PASS do `revisor-independente` no SHA de cabeça, em até 3 rodadas, todos os checks verdes, `MERGEABLE`, fora de draft, base `main`. Achado `A` aberto segura; `P` (pré-existente) não. O PASS continua valendo se os commits posteriores forem só rebase ou merge da `main` sem conflito em código; qualquer outro commit pede nova rodada. `lote: sim` segue no lote diário do dono |
+| 1 | Merge do vermelho de código | "Estender com lista dura (Recomendado)" | PR vermelho com `lote: não` no `classe-risco.mjs` entra pela maestro (squash) com PASS do `revisor-independente` no SHA de cabeça, em até 3 rodadas, todos os checks verdes, `MERGEABLE`, fora de draft, base `main`. Achado `A` aberto segura; `P` (pré-existente) não. O PASS continua valendo se os commits posteriores forem só rebase ou merge da `main` sem conflito em código, ou o commit que devolve o `GAP-MAP.md` à versão da base (condição 3-a da D-2026-11-10-FAIXA1-MERGE-LIVRE, que segue valendo para os PRs da faixa 1 abertos antes da emenda de 10/11); qualquer outro commit pede nova rodada. `lote: sim` segue no lote diário do dono |
 | 2 | Sessões | "Pausa só em fork real" · "Teste e fix num PR só" · "cbm deixa de ser obrigatório" | (a) Escolha de rotina o agente faz e declara no PR, na seção "Escolhas tomadas"; pausa e pergunta só em fork de produto, de lei, de arquitetura ou irreversível. (b) Instrumentação e correção saem sempre num PR com commit `test:` (vermelho pelo motivo certo) e depois `fix:`; a prova do teste vermelho continua obrigatória. (c) O codebase-memory vira ferramenta disponível; reusar o canônico antes de criar continua regra |
 | 3 | Aparato | "Aposentar retornos e PROVA" · "Congelar as geradoras" · "Docs mecânicos viram verde" | (a) Saem o agente `executor` e o `CONTRATO-DE-RETORNO` como etapa; a prova é o CI do PR. (b) As skills geradoras e o pipeline orquestrador → implementador → revisor não são mais invocados nem mantidos; o Contrato de arquitetura e os exemplos de referência ficam. (c) Ver "Correção do questionário" abaixo |
 | 4 | Modelos | "Opus revisa, Sonnet em teste (Recomendado)" | O `revisor-independente` fica em Opus. Fable 5.2 planeja (BRIEF), Opus 5.5 implementa. Sonnet 5.5 entra em teste na faixa 1 (abaixo) |
@@ -60,7 +60,7 @@ Também ficam no lote: vermelho de texto e qualquer arquivo em `docs/plano/{gate
   entrar com o PASS do revisor.
 - `withAuth`, `DynamicTableService.ts` e `my-app/types/contracts/**`: vêm da condição 2 da D-2026-11-10-FAIXA1-MERGE-LIVRE,
   que esta regra absorve.
-- Leitura larga de "auth": `server/src/lib/jwt*`, `authController`, `authUtils` e `AuthContext`.
+- Leitura larga de "auth": `server/src/lib/jwt*`, `authController`, `authUtils`, `authUtilityController` e `AuthContext`.
 - Leitura larga de DF-e: `server/src/lib/nfse*`, telas `components/dfe/**` e o cliente do assinador no FE.
 - `ChargeReceivable*`/`ReceivableCharge*` (cobrança do recebível no FE) e `server/src/jobs/**/migrat*` (migração de dado por job).
 
