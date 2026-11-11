@@ -45,6 +45,7 @@ EVIDÊNCIA é sempre artefato colado/anexado (screenshot, lista do Network, corp
 
 5. Trocar o idioma para **inglês** e abrir `/dashboard/setup` nas três abas (**Rápido**, **Controle Total**, **Entrevista com IA**); no Controle Total, escolher um modelo e ir até "Select the tables"; na Entrevista, ir até o painel esquerdo de funcionalidades aparecer.
    Resultado esperado: nenhum texto em português nas três abas e no painel esquerdo (o painel **direito** fica para o PR-3); a frase de ajuda no rodapé em inglês.
+   **Emenda de roteiro (2026-11-11, 2ª execução):** "texto em português" aqui é o que passa pelo i18n do front (BRIEF itens 6–7: texto vindo do servidor não é traduzido). Ficam **fora** deste passo, até o dono responder a pergunta de produto das lacunas `L-20261111-204322-37cb` e `-f834`: nome e descrição dos presets (catálogo do servidor, sem `locale` no endpoint; o salão já é inglês, a clínica e o CRM são português) e a descrição `Tabela de <nome>` do painel esquerdo (texto gerado no servidor).
    EVIDÊNCIA: [um screenshot por aba + o painel esquerdo]
 
 6. Ligar o **modo escuro** e repetir o passo 5 em português.
@@ -54,11 +55,11 @@ EVIDÊNCIA é sempre artefato colado/anexado (screenshot, lista do Network, corp
 ### PR-3 — painel direito (itens 10–11; código = PR-3 do W7, commit: ______)
 
 7. Em **inglês**, na **Entrevista com IA**, abrir o painel direito ("Show customization panel") com uma tabela selecionada. No modo **Manual**: clicar em **New field** e abrir o seletor de tipo; marcar/desmarcar **Visible** num campo; clicar em **Save changes**.
-   Resultado esperado: nenhum texto em português no cabeçalho, nos campos, no formulário (rótulos, placeholders, as 8 opções de tipo, botões) nem na mensagem "Changes saved successfully!".
+   Resultado esperado: nenhum texto em português no cabeçalho, nos campos, no formulário (rótulos, placeholders, as opções de tipo — 7 hoje: texto, número, sim/não, data, data e hora, e-mail e telefone —, botões) nem na mensagem "Changes saved successfully!".
    EVIDÊNCIA: [screenshot do formulário aberto com o seletor de tipo + screenshot após salvar]
 
 8. Ainda em inglês, trocar para **Conversational AI**, digitar uma frase e enviar.
-   Resultado esperado: boas-vindas e saudação em inglês (com o nome da tabela em negrito); placeholder e "Finish conversation" em inglês. Enquanto o FE do W6 não sair, a rota `CustomizeFields` ainda dá **404** (ADR-W6 D1) — o esperado aqui é a bolha de erro **em inglês**, não uma resposta da IA.
+   Resultado esperado: boas-vindas e saudação em inglês (com o nome da tabela em negrito); placeholder e "Finish conversation" em inglês. Com o FE do W6 já em `main`, `CustomizeFields` responde **200** (o 404 do ADR-W6 D1 acabou): o esperado é a proposta da IA aparecer (cartão "AI proposal", botões Discard/Apply em inglês). O **texto que o modelo escreve** e o rótulo que propõe seguem o idioma que o servidor receber; hoje a rota não recebe `locale` (lacuna `L-20261111-214837-3484`).
    EVIDÊNCIA: [screenshot da conversa + a linha 404 no Network]
 
 9. Ligar o **modo escuro** e repetir os passos 7–8 em português.
@@ -165,3 +166,51 @@ os nomes e descrições dos presets vêm do servidor, não do i18n do front, ent
 - Rastreio: `docs/plano/nos/W7.md` (`estado_detalhe`) atualizado nesta execução.
 - Assinatura do executor: agente claude-sonnet-5-5, AI tester, sob autorização do dono (chat, 2026-11-11). A assinatura atesta a execução e a conferência da evidência. Não substitui oráculo humano
   (o julgamento de produto sobre nome de preset em português).
+
+
+## Execução 2026-11-11 (2ª) — AI tester — PASSOU nos passos 1–3 e 5–9, com roteiro emendado no passo 5 (passo 4 não reexecutado)
+
+Executor: agente claude-sonnet-5-5, AI tester           Data: 2026-11-11 (18:10–19:00 -03:00)
+Autorização (citada): dono, chat, 2026-11-11, pedido de destravar e corrigir o que falhou nos runbooks H2/W7 (a correção mínima das lacunas `L-20261111-204322-f834/-37cb/-8a05` e a reexecução do passo 5 ao 9); regra de assinatura em `RUNBOOK-FORMAT.md` §Fronteira, só neste runbook e nesta execução.
+
+**Ambiente:** branch `claude/fix-w7-i18n-wizard-8899c2` (código = `main` + o fix `useAiInterview`/`onboardingErrorNetwork`), `server` de produção (`npm run build` + `node dist/server.js`) em `127.0.0.1:4571`, front `next build` + `next start -H 127.0.0.1 -p 3571`, banco descartável novo (`w7-2.db`: migrações + seed contábil + binding do salão, só para o boot subir). `OPENAI_API_KEY` presente em `server/.env` (não impressa; o modelo respondeu de verdade). Runner `scripts/runbook-tela.mjs` (Chromium sem janela, 1280×900, um perfil por usuário). Usuários `w7-ga` (passos 1–3) e `w7-gb` (5–9), criados por `POST /api/users` → `201`, sem tabelas.
+
+**Análise antes do código (leitura):** o roteiro esperava "nenhum texto em português" no passo 5, mas o contrato (BRIEF itens 6–7) só manda passar pelo `t()` as strings do front e diz que texto do servidor não é traduzido. Só a lacuna `-8a05` é do front (item 7: fallback local vira chave) e foi corrigida (teste-guarda vermelho em commit separado, depois o fix). `-37cb` (nome/descrição de preset: o endpoint não recebe `locale`; o salão já é inglês, clínica e CRM são português) e `-f834` (`Tabela de <nome>` é gravada no estado da sessão e entra em 4 prompts da IA) têm duas leituras legítimas de produto/projeto: ficam com o dono (estado `com-dono` na caixa) e o roteiro do passo 5 foi emendado para excluí-las até a resposta.
+
+### Passos
+
+**Passo 1 — PASSOU** (`w7-ga`, UI em inglês). Uma bolha de saudação, sem Debug; `POST ChatInterview … "stage":"GREETING","locale":"en"` único na abertura. [print](runbook-evidence/W7-2026-11-11-2/passo1-entrevista.png) · [texto](runbook-evidence/W7-2026-11-11-2/passo1-entrevista.txt) · [rede](runbook-evidence/W7-2026-11-11-2/u1-net.txt)
+
+**Passo 2 — PASSOU, e o achado `-8a05` fechado.** Entrevista até a pergunta fiscal ("Simples Nacional", porte "No"); o processo que escuta `:4571` foi finalizado (`taskkill`; `curl` → `000`); "Create system" abriu o modal, agora com o corpo em inglês:
+```text
+(modal) Error creating project · Could not reach the server. Check your connection and try again. · Try again
+```
+[antes](runbook-evidence/W7-2026-11-11-2/passo2-antes-de-criar.png) · [modal](runbook-evidence/W7-2026-11-11-2/passo2-modal-erro.png) · [texto](runbook-evidence/W7-2026-11-11-2/passo2-modal-erro.txt). (Na 1ª execução o corpo era `Não foi possível conectar ao servidor…`.)
+
+**Passo 3 — PASSOU.** Servidor religado (`curl` → `200`); "Try again" na mesma página:
+```text
+[eval] {"marca":"mesma-pagina","path":"/dashboard","nav":1}
+POST /api/dashboard/create -> 201  req: {"suiteKey":"beautySalon","unit":{"name":"beautySalon"},"fiscal":{"regime":"SIMPLES","grandePorte":false},"modules":["CRM-0",…]}
+```
+A marca da janela sobreviveu e há 1 navegação: a página não recarregou; o `create` com resposta é um só e o sistema foi criado (`/dashboard`). [print](runbook-evidence/W7-2026-11-11-2/passo3-depois-do-retry.png) · [rede](runbook-evidence/W7-2026-11-11-2/u1-net.txt)
+
+**Passo 4 — NÃO REEXECUTADO.** A mudança de código está só no ramo "sem resposta do servidor" (`useAiInterview.ts`); o ramo do 403 (modal "Your system has already been created.") é outro e segue coberto pelo teste `item 4` e pela 1ª execução. Dito aqui para que ninguém leia como reexecutado.
+
+**Passo 5 — PASSOU com a emenda de roteiro** (`w7-gb`, inglês, modo claro). Aba Rápido, Controle Total até "Next: customize tables" e Entrevista até o painel esquerdo: títulos, abas, botões, frases de ajuda, "Suggested modules", "System features", "Core", "Fields: …" em inglês. Textos em português que restam são só os excluídos pela emenda: `ERP para Clínica de Estética`, `Módulo CRM` e `Tabela de <nome>`. [rápido](runbook-evidence/W7-2026-11-11-2/passo5-a-rapido.png) · [controle total](runbook-evidence/W7-2026-11-11-2/passo5-b-controle-total-2.png) · [entrevista](runbook-evidence/W7-2026-11-11-2/passo5-c-entrevista-escolha.png) · [painel esquerdo](runbook-evidence/W7-2026-11-11-2/passo5-c-entrevista-painel-esquerdo.png) ([texto](runbook-evidence/W7-2026-11-11-2/passo5-c-entrevista-painel-esquerdo.txt))
+
+**Passo 6 — PASSOU** (português, `theme=dark`, `class=dark`). Fundos e textos em cinza neutro, cards com cantos arredondados. [rápido](runbook-evidence/W7-2026-11-11-2/passo6-a-rapido-escuro.png) · [controle total](runbook-evidence/W7-2026-11-11-2/passo6-b-controle-total-escuro.png) · [entrevista](runbook-evidence/W7-2026-11-11-2/passo6-c-entrevista-escuro.png). (A 1ª tentativa saiu clara por eu ter alternado o tema duas vezes; refeita com `localStorage.theme=dark` conferido por `eval`.)
+
+**Passo 7 — PASSOU** (inglês). Painel direito aberto na tabela `LeadProposals`, modo Manual: "Add new field" com "Technical name / Label / Data type / Required field / Cancel / Add" e o seletor com as 7 opções (`Text, Number, Yes/No, Date, Date and time, Email, Phone`); `Visible` desmarcado em um campo; "Save changes" → `Changes saved successfully!`; rede: `POST CustomizeFields {"kind":"manual","changes":[{"action":"setHidden","name":"estimatedCloseDate","hidden":true}]} -> 200`. [formulário](runbook-evidence/W7-2026-11-11-2/passo7-formulario-novo-campo.png) · [após salvar](runbook-evidence/W7-2026-11-11-2/passo7-depois-de-salvar.png) · [rede](runbook-evidence/W7-2026-11-11-2/u3-net.txt)
+
+**Passo 8 — PASSOU, com o esperado emendado.** "Conversational AI": boas-vindas em inglês ("Welcome to smart customization!", `LeadProposals` em negrito), placeholder `Describe what you need…`, "Back to manual mode". O 404 do roteiro acabou (W6 em `main`): `POST CustomizeFields {"kind":"message",…} -> 200`, cartão "AI proposal" com Discard/Apply. **Achado:** a resposta do modelo veio em português (`Proponho adicionar um campo para armazenar notas das propostas.`, rótulo `Notas da Proposta`) com a UI em inglês, porque a rota não recebe `locale` — lacuna `L-20261111-214837-3484`. [print](runbook-evidence/W7-2026-11-11-2/passo8-conversa.png) · [texto](runbook-evidence/W7-2026-11-11-2/passo8-conversa.txt)
+
+**Passo 9 — PASSOU** (português, escuro). Modo Manual: "Novo Campo" aberto, `Alterações salvas com sucesso!`; modo "IA Humanizada": pergunta, resposta e "Proposta da IA / Descartar / Aplicar" em português, cinza neutro, balões arredondados. [novo campo](runbook-evidence/W7-2026-11-11-2/passo9-manual-novo-campo-escuro.png) · [salvo](runbook-evidence/W7-2026-11-11-2/passo9-manual-depois-de-salvar-escuro.png) · [modo IA](runbook-evidence/W7-2026-11-11-2/passo9-modo-ia-escuro.png)
+
+### Desfecho (execução 2026-11-11, 2ª)
+[x] PASSOU — passos 1–3 e 5–9 com evidência conferindo com o esperado **do roteiro emendado**; o passo 4 não foi reexecutado (declarado acima). O passo 5 só fecha com a emenda; se o dono decidir que o catálogo de presets e o `Tabela de …` devem seguir o idioma, as lacunas `-37cb`/`-f834` reabrem esse passo.
+
+### Registro (execução 2026-11-11, 2ª)
+- **Desvios de roteiro:** UI em inglês nos passos 1–3 e 5–8 (idioma padrão do usuário novo); servidor parado por `taskkill` (não Ctrl+C); DevTools → log de rede do runner; passo 4 não reexecutado; modo escuro refeito uma vez (descrito no passo 6).
+- **Achados fora do escopo (caixa do maestro):** `L-20261111-214837-3484` (`FieldCustomizationService/index.ts:211`, `CustomizeFields` sem `locale`), `L-20261111-214837-d745` (`FloatingChatBubble.tsx:20`, `aria-label="Abrir chat"` em português na UI em inglês). `L-20261111-204322-37cb` e `-f834` passaram a `com-dono` (pergunta de produto). `L-20261111-204322-8a05` corrigida neste PR.
+- Rastreio: `docs/plano/nos/W7.md` (`estado_detalhe`) atualizado.
+- Assinatura do executor: agente claude-sonnet-5-5, AI tester, sob autorização do dono (chat, 2026-11-11). Atesta a execução e a conferência da evidência; não substitui oráculo humano (a decisão de produto sobre idioma do catálogo e a leitura do passo 5 emendado são do dono).

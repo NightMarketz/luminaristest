@@ -1,0 +1,58 @@
+Luminaris
+🇺🇸
+EN
+w7-gb
+W
+Set Up Your System
+
+Select the best mode to start organizing your operation and managing your KPIs.
+
+Quick Mode
+Total Control
+AI Interview
+2
+Select the tables
+
+Customizing for the system: Advanced Beauty Salon ERP. Uncheck the tables you don't want to use in your workflow.
+
+MODULES
+Funnel
+Base — always installed · leadPipelines, leadStages, leads, leadActivities
+Proposals
+leadProposals
+Campaigns
+campaigns
+Customers
+Base — always installed · customers
+Suppliers
+suppliers
+Sales
+Base — always installed · sales, saleItems
+Services
+services
+Products
+products
+Packages
+packages
+Commissions
+commissions
+Inventory
+Base — always installed · productUnits, stockMovements
+Schedule
+Base — always installed · appointments
+Expenses
+Base — always installed · expenses
+Other revenues
+otherRevenues
+Financial baselines
+financialBaselines
+Reports
+Base — always installed · reports
+Goals
+goals
+Unit name
+
+Enter the unit name to create the system.
+
+Back
+Finish and create system
