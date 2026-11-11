@@ -94,8 +94,14 @@ ADR, `.claude/**` e `CLAUDE.md`, que o dono manteve no lote. Nada mudou na régu
 - **PR `integration/<slug>` → `main`** (D-2026-11-10-BRANCH-DE-INTEGRACAO, PR #1183, aberto em 10/11): esta regra fala de
   PR com base `main` revisado no SHA de cabeça. O PR de fechamento de uma integração não foi discutido: vai ao lote até
   o dono decidir se o PASS dos PRs que ele contém vale.
-- **`scripts/prova-runner.mjs` e o teste dele** continuam no repositório até o #1152 entrar (ele edita o arquivo;
-  apagar agora daria conflito). Depois, saem junto com a linha do `.gitignore`.
+- **`.github/CODEOWNERS`** (#1149, na `main` desde 11/11; F-MRG-5 de 24/10): lista `server/src/features/accounting/` e
+  `accountingBinding/` inteiros como caminho que espera a aprovação do dono. O arquivo só tem efeito se o ruleset da
+  `main` passar a exigir review de Code Owners, e isso não está ligado. Se for ligado como está, todo PR contábil volta
+  a esperar o dono e a resposta 1 desta decisão perde o efeito. As duas regras são do dono; qual vale é pergunta para
+  ele antes de ligar o ruleset (encolher o CODEOWNERS até a lista dura, ou manter os dois).
+- **`scripts/prova-runner.mjs` e o teste dele** foram removidos neste PR, depois de o #1152 entrar. A linha do
+  `.gitignore` que ignora `.claude/retornos/_logs/*.log` fica, para os logs antigos não aparecerem como não rastreados.
+  Os retornos já gravados em `.claude/retornos/` ficam como registro.
 - **Gancho "cbm FIRST" do SessionStart** é do plugin, fora do repositório: a regra do CLAUDE.md vale sobre ele.
 
 ## O que não muda
