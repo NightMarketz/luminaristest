@@ -148,7 +148,8 @@
       "reversalDateLabel": "Reversal date",
       "methodLabel": "Payment method",
       "method": {
-        "Cash": "Cash"
+        "Cash": "Cash",
+        "NONE": "Withholding (no cash out)"
       },
       "reasonLabel": "Reason",
       "payTitle": "Register payment",
@@ -250,7 +251,9 @@
       "reversalDateLabel": "Reversal date",
       "methodLabel": "Receipt method",
       "method": {
-        "Cash": "Cash"
+        "Cash": "Cash",
+        "ProviderBalance": "Provider balance",
+        "SplitPayment": "Split payment (IBS/CBS)"
       },
       "reasonLabel": "Reason",
       "receiveTitle": "Register receipt",
@@ -2723,9 +2726,68 @@
       "AUTHORIZED": "Authorized",
       "AUTHORIZED_DIVERGENT": "Authorized with divergence",
       "CANCELLED": "Cancelled",
+      "CANCEL_ANALYSIS": "Cancellation under tax authority review",
+      "CONTINGENCY": "Issued in contingency, awaiting transmission",
+      "PENDING_SIGNATURE": "Waiting for signer reauthorization",
       "PROCESSING": "Processing",
       "REJECTED": "Rejected",
       "SENT": "Waiting for the portal return"
+    },
+    "assinador": {
+      "error": {
+        "load": "Could not load the local signer status.",
+        "codigo": "Could not generate the pairing code.",
+        "revogar": "Could not revoke the signer."
+      },
+      "title": "Local signer",
+      "intro": "The local signer runs at the checkout, signs the NF-e/NFC-e with the customer's own certificate (token, card or A1 on Windows) and transmits it to SEFAZ. The PIN is typed only at the checkout.",
+      "refresh": "Refresh",
+      "retry": "Try again",
+      "pareado": "Signer paired.",
+      "semPareamento": "No signer paired for this unit. Generate a code and type it into the checkout signer.",
+      "status": "Status",
+      "online": "Online",
+      "fora": "Offline",
+      "desconhecido": "Unknown",
+      "lastSeen": "Last contact",
+      "nunca": "never",
+      "dispositivo": "Checkout",
+      "versao": "Signer version",
+      "certificado": "Certificate",
+      "certRaiz": "CNPJ root",
+      "certValidade": "valid until",
+      "diasParaVencer": "{{dias}} days to expire",
+      "vencidoHa": "expired {{dias}} days ago",
+      "impressao": "Fingerprint (SHA-256)",
+      "copiarImpressao": "Copy fingerprint",
+      "token": "Token at the checkout",
+      "tokenSim": "detected",
+      "tokenNao": "not detected",
+      "ambiente": "Environment",
+      "producao": "Production",
+      "homologacao": "Homologation",
+      "outrasUnidades": "Also serves",
+      "gerarCodigo": "Generate pairing code",
+      "revogar": "Revoke",
+      "codigoTitulo": "Pairing code",
+      "substitui": "This unit already has a paired signer. The new pairing replaces the current one.",
+      "codigoInstrucao": "Type this code into the checkout signer. It works only once and cannot be shown again after this window is closed.",
+      "expiraEm": "Expires in {{tempo}}",
+      "copiarCodigo": "Copy code",
+      "aguardando": "This screen checks the pairing on its own every 30 seconds.",
+      "codigoExpirado": "The code has expired.",
+      "gerarOutro": "Generate another",
+      "revogarTitulo": "Revoke the signer for this unit?",
+      "revogarEfeito": "The checkout stops signing for this unit. New invoices stay pending until another signer is paired.",
+      "revogarOutras": "The same checkout keeps serving: {{unidades}}.",
+      "cancelar": "Cancel",
+      "confirmarRevogar": "Revoke",
+      "aviso": {
+        "token-ausente": "The certificate token or card was not detected at the checkout. Check that it is in the reader.",
+        "cert-vencendo": "The signer certificate expires within 30 days. Renew it with the certificate authority.",
+        "cert-vencido": "The signer certificate has expired: invoices will not be signed until a valid certificate is paired.",
+        "versao-antiga": "The signer version at this checkout is older than the required minimum. Update the signer."
+      }
     }
   },
   "legalParams": {

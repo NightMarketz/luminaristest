@@ -133,6 +133,8 @@ export interface IAccountingPolicy {
   canManageFiscalCertificate(scope: AccountingScope): boolean;
   /** X10a PR-7 (EMENDA-PSC E-5): delega a canManageFiscalProfile. */
   canManagePscCredential(scope: AccountingScope): boolean;
+  /** X10a EMENDA-4 (AL-3, AL-4): código de pareamento e revogação do assinador local — delega a canManageFiscalProfile. */
+  canManageDfeSigner(scope: AccountingScope): boolean;
 
   /**
    * BE-INCR-DFE (nó X10b, BRIEF item 5): perfil fiscal do serviço = régua do perfil fiscal; emissão/cancelamento

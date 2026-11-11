@@ -22,6 +22,11 @@ export const ACCOUNTING_RESET_SETUP = [
   // X10a PR-7 (EMENDA-PSC E-3/E-4): como o FiscalCertificate — credencial da unidade, sem FK.
   'PscCredential',
   'PscAuthorization',
+  // X10a EMENDA-4 AL-PR-2: o assinador local é cadastro da unidade, como a credencial do PSC. O vínculo referencia o
+  // dispositivo (FK Restrict) e sai antes dele.
+  'DfeSignerDeviceUnit',
+  'DfeSignerDevice',
+  'DfeSignerPairingCode',
   // X10a PR-8: o CSC da NFC-e é cadastro da unidade, como a credencial do PSC — sem FK.
   'NfceCsc',
   'ReferentialMapping',
@@ -135,8 +140,9 @@ export const ACCOUNTING_RESET_BLOCKING = [
 export const ACCOUNTING_RESET_SPLIT = ['AccountingPolicyVersion'] as const satisfies readonly SetupTable[];
 
 /** Os de SETUP sem `unitId` (da EMPRESA, chaveados só por `userId`): contados fora da quebra por unidade. ProductFiscalProfile:
- * BE-INCR-NFCE item 10 (F-NFCE-3 b, um perfil por produto do dono). */
-export const ACCOUNTING_RESET_SETUP_USER_LEVEL = ['CompanyFiscalProfile', 'ProductFiscalProfile'] as const satisfies readonly SetupTable[];
+ * BE-INCR-NFCE item 10 (F-NFCE-3 b, um perfil por produto do dono). DfeSignerDevice: X10a EMENDA-4 AL-PR-2 — o dispositivo
+ * serve N unidades (o vínculo `DfeSignerDeviceUnit` é que tem `unitId`). */
+export const ACCOUNTING_RESET_SETUP_USER_LEVEL = ['CompanyFiscalProfile', 'ProductFiscalProfile', 'DfeSignerDevice'] as const satisfies readonly SetupTable[];
 
 export type TrailTable = (typeof ACCOUNTING_RESET_TRAIL)[number];
 export type SetupTable = (typeof ACCOUNTING_RESET_SETUP)[number];

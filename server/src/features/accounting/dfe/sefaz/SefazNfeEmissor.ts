@@ -34,13 +34,13 @@ import {
   type CscNfce,
   type InfNFeSupl,
 } from './nfceQrCode';
-import type { SefazSoapClient } from './SefazSoapClient';
+import type { SefazTransporte } from './SefazTransporte';
 
 /**
  * SefazNfeEmissor — adaptador `sefaz` da NF-e 55 e NFC-e 65 (BE-INCR-NFCE-EMENDA-1 itens E-4..E-8, E-10; F-NFCE-E1-1 a,
- * E1-2 a: um adaptador para os dois modelos). Fala SOAP 1.2 com a autorizadora da UF (tabela E-11) sobre o mTLS do
- * transmissor; a nota é assinada pelo certificado do emitente no PSC (`AssinadorRemotoPort`, F-E8-1R a) — o Luminaris
- * nunca vê a chave. Leiaute dos lotes e retornos: `TRANSCRICAO-MOC70-webservices-NFe-2026-10-29.md` (`[WS-*]`).
+ * E1-2 a: um adaptador para os dois modelos). Fala SOAP 1.2 com a autorizadora da UF (tabela E-11) por um
+ * `SefazTransporte` (EMENDA-4 AL-1: o mTLS sai do caixa do cliente, com o certificado dele); a nota é assinada pelo
+ * certificado do emitente pela `AssinadorRemotoPort` (assinador local ou PSC, AL-2) — o Luminaris nunca vê a chave. Leiaute dos lotes e retornos: `TRANSCRICAO-MOC70-webservices-NFe-2026-10-29.md` (`[WS-*]`).
  *
  * - `emitir` (E-5): lote `enviNFe` com UMA nota e `indSinc=1` (`[NT2025001-SINC]`); cStat 100/150 ⇒ `AUTHORIZED` com o
  *   `nfeProc` (NFe + protNFe); rejeição ⇒ `REJECTED` com o cStat em `errors[].code`; duplicidade (204/539) ⇒
@@ -66,7 +66,8 @@ export type EndpointResolver = (uf: string, modelo: 55 | 65, ambiente: DfeAmbien
 
 export interface SefazNfeEmissorOptions {
   ambiente: DfeAmbiente;
-  soap: SefazSoapClient;
+  /** AL-1 (EMENDA-4): o transporte — `SefazSoapClient` ou o `AssinadorLocalTransporte`. */
+  soap: SefazTransporte;
   endpoint?: EndpointResolver;
   /** `verAplic` do evento / `verProc`: versão do Luminaris. */
   versaoAplicativo?: string;

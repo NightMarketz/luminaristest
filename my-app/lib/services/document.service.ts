@@ -1,4 +1,5 @@
 import { apiClient } from '../api/api-client';
+import { multipartAuthHeaders, multipartBaseUrl, multipartParseError } from './multipart';
 
 interface DocumentResponse { id?: string; name?: string; [key: string]: unknown }
 interface UploadResponse { id?: string; url?: string; [key: string]: unknown }
@@ -31,30 +32,24 @@ export const DocumentService = {
   },
 
   async uploadDocument(formData: FormData): Promise<UploadResponse> {
-    // Note: FormData requires a different content-type or letting browser set it
-    // The apiClient defaults to application/json. We might need a generic or custom method
-    // for multipart/form-data. For now, assuming the interceptor handles it if we pass headers
-    // or we might need to adjust the apiClient for file uploads.
-    // We will bypass apiClient exclusively for FormData uploads if it forces JSON,
-    // or pass custom headers. Let's pass an empty content-type so browser sets boundary.
-    const token = typeof window !== 'undefined' ? document.cookie.split('auth_token=')[1]?.split(';')[0] : '';
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/documents/upload`, {
+    // BRD F-72.6: o mesmo caminho dos outros uploads (`multipart.ts`): URL base com default, cookie lido pelo nome
+    // exato e o erro no formato do apiClient. O browser põe o boundary — sem Content-Type aqui.
+    const response = await fetch(`${multipartBaseUrl()}/documents/upload`, {
       method: 'POST',
-      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      headers: multipartAuthHeaders(),
       body: formData,
     });
-    if (!response.ok) throw await response.json();
+    if (!response.ok) throw await multipartParseError(response);
     return response.json();
   },
 
   async getTokenCost(formData: FormData): Promise<TokenCostResponse> {
-    const token = typeof window !== 'undefined' ? document.cookie.split('auth_token=')[1]?.split(';')[0] : '';
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/documents/token-cost`, {
+    const response = await fetch(`${multipartBaseUrl()}/documents/token-cost`, {
       method: 'POST',
-      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      headers: multipartAuthHeaders(),
       body: formData,
     });
-    if (!response.ok) throw await response.json();
+    if (!response.ok) throw await multipartParseError(response);
     // The server answers { success, data: { tokens, charCount } }.
     const body = await response.json() as { data?: TokenCostResponse } & TokenCostResponse;
     return body.data ?? body;

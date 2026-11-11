@@ -9,6 +9,7 @@ import type {
   UpdateJobInput,
   CreateRowInput,
   UpdateRowInput,
+  StaleFailedJob,
 } from '../models/DataExchange.model';
 
 /**
@@ -17,6 +18,32 @@ import type {
  * updateMany so the WHERE can carry userId+unitId (a 0-row result fails loud, never no-op).
  */
 export class DataExchangeRepository implements IDataExchangeRepository {
+  public async failStaleProcessing(olderThan: Date): Promise<StaleFailedJob[]> {
+    const candidatos = await prisma.accountingDataExchangeJob.findMany({
+      where: { status: 'PROCESSING', updatedAt: { lt: olderThan } },
+      select: { id: true, userId: true, unitId: true, kind: true },
+    });
+    const vencidos: StaleFailedJob[] = [];
+    try {
+      for (const job of candidatos) {
+        // CAS: a requisição que ainda termina (EXPORTED) ou outra varredura não é atropelada.
+        const { count } = await prisma.accountingDataExchangeJob.updateMany({
+          where: { id: job.id, status: 'PROCESSING', updatedAt: { lt: olderThan } },
+          // Como nos outros FAILED dos SPED (SpedGenerationService.ts:259-266): FAILED com `supersedesJobId` preenchido
+          // trava o original para sempre no @unique.
+          data: { status: 'FAILED', supersedesJobId: null },
+        });
+        if (count === 1) vencidos.push(job);
+      }
+    } catch (error) {
+      // Os já levados a FAILED não voltam a PROCESSING (o próximo ciclo não os vê) e o job não guarda o motivo:
+      // o chamador precisa deles para alertar. O erro segue propagado.
+      if (error instanceof Error) Object.assign(error, { staleFailedJobs: vencidos });
+      throw error;
+    }
+    return vencidos;
+  }
+
   public async createJob(
     data: CreateJobInput,
     tx?: Prisma.TransactionClient,

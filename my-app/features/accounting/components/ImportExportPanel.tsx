@@ -79,6 +79,9 @@ export function ImportExportPanel({
   const [exportError, setExportError] = useState<string | null>(null);
 
   const needsAsOf = exportKind === 'EXPORT_BALANCE_SHEET' || exportKind === 'EXPORT_INCOME_STATEMENT';
+  // Balancete: a Data é opcional (sem ela o servidor exporta sem período), mas é ela que dá o período do
+  // artefato — sem asOf o balancete não entra nos extras do pacote do contador (H2 19-1).
+  const showsAsOf = needsAsOf || exportKind === 'EXPORT_TRIAL_BALANCE';
   const needsAccount = exportKind === 'EXPORT_GENERAL_LEDGER';
 
   async function refreshRows(jobId: string) {
@@ -155,7 +158,7 @@ export function ImportExportPanel({
           kind: exportKind,
           format: exportFormat,
           unitId,
-          asOf: needsAsOf ? asOf : undefined,
+          asOf: showsAsOf && asOf ? asOf : undefined,
           accountCode: needsAccount ? accountCode : undefined,
         },
         fileName,
@@ -308,7 +311,7 @@ export function ImportExportPanel({
             </select>
           </label>
 
-          {needsAsOf && (
+          {showsAsOf && (
             <label className="flex items-center gap-2 text-sm text-neutral-400">
               {t('importExport.export.dateLabel', 'Data')}
               <input type="date" value={asOf} onChange={(e) => setAsOf(e.target.value)} className={inputClass} />

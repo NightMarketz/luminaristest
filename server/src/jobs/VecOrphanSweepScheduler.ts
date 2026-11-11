@@ -8,6 +8,7 @@ import logger, { type EventLogger } from '../lib/logger';
 import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
 import { getFactory } from '../lib/factory';
 import { VecOrphanSweepService, type VecOrphanSweepSummary } from '../features/documents/services/VecOrphanSweepService';
+import { readMsEnv } from './readMsEnv';
 
 const JOB = 'vec_orphan_sweep';
 const DEFAULT_INTERVAL_MS = 86_400_000; // diário
@@ -25,14 +26,6 @@ export interface VecOrphanSweepSchedulerStartOptions {
   intervalMs?: number;
   initialDelayMs?: number;
   allowInTest?: boolean;
-}
-
-function readMsEnv(name: string, fallback: number, min: number): number {
-  const raw = process.env[name];
-  if (raw === undefined || raw === '') return fallback;
-  const n = Number(raw);
-  if (!Number.isInteger(n) || n < min) throw new Error(`Invalid ${name}='${raw}' — must be an integer >= ${min} (ms).`);
-  return n;
 }
 
 function defaultSweep(): Promise<VecOrphanSweepSummary> {

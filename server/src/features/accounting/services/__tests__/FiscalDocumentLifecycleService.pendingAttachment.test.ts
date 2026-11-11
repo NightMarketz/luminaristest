@@ -282,6 +282,39 @@ describe('itens 4–5 — caminho rápido inline e drenagem por passo', () => {
     expect(h.postingService.retireSourceDocument).toHaveBeenCalledWith(SCOPE, 'src-1', 'dfe_status_changed');
     expect(h.onlyPending()[0].status).toBe('DONE');
   });
+
+  // X11 PR-3 (revisão #1144, achado 1; dono 07/11 P1): a nota em análise fiscal do cancelamento segue válida no fisco.
+  it('X11 PR-3: em CANCEL_ANALYSIS antes da drenagem → anexos e proveniência gravados, nada aposentado', async () => {
+    const h = harness();
+    mockPort.consultar.mockResolvedValueOnce(AUTH);
+    h.documentAttachmentService.upload.mockRejectedValueOnce(new Error('ENOSPC'));
+    await h.service.consultarUm(SCOPE, 'doc-1');
+    h.docsById.set('doc-1', { ...h.docsById.get('doc-1')!, status: 'CANCEL_ANALYSIS', statusAntesAnalise: 'AUTHORIZED' } as Doc);
+
+    expect((await h.service.drainPendingAttachmentsOnce()).done).toBe(1);
+    expect(h.postingService.retireSourceDocument).not.toHaveBeenCalled();
+    expect(h.docsById.get('doc-1')).toMatchObject({ status: 'CANCEL_ANALYSIS', xmlAttachmentId: expect.any(String), sourceDocumentId: 'src-1' });
+  });
+
+  it('X11 PR-3: entra em CANCEL_ANALYSIS no meio da 2ª escrita → grava com o status novo, nada aposentado', async () => {
+    const h = harness();
+    mockPort.consultar.mockResolvedValueOnce(AUTH);
+    h.documentAttachmentService.upload.mockRejectedValueOnce(new Error('ENOSPC'));
+    await h.service.consultarUm(SCOPE, 'doc-1');
+    const real = h.repo.transition.getMockImplementation()!;
+    let corrida = true;
+    h.repo.transition.mockImplementation(async (s: unknown, id: string, data: Record<string, unknown> & { status: string; whenStatusIn?: string[] }) => {
+      if (corrida && data.sourceDocumentId) {
+        corrida = false; // o pedido de análise ganhou a corrida: a nota mudou de status antes da 2ª escrita
+        h.docsById.set(id, { ...h.docsById.get(id)!, status: 'CANCEL_ANALYSIS' });
+      }
+      return real(s, id, data);
+    });
+
+    expect((await h.service.drainPendingAttachmentsOnce()).done).toBe(1);
+    expect(h.postingService.retireSourceDocument).not.toHaveBeenCalled();
+    expect(h.docsById.get('doc-1')).toMatchObject({ status: 'CANCEL_ANALYSIS', sourceDocumentId: 'src-1' });
+  });
 });
 
 describe('item 8 (F-PA-6 a) — backoff e teto', () => {

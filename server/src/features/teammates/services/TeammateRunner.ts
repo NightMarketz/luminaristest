@@ -2,7 +2,7 @@ import { formatInTimeZone } from 'date-fns-tz';
 import type OpenAI from 'openai';
 import type { Prisma } from 'generated/prisma';
 import type { UserContext } from '../../../lib/authUtils';
-import type { LlmMessage, LlmProviderId, LlmToolCall, LlmToolDef } from '../../../lib/llm/LlmProvider';
+import { LlmProviderError, type LlmMessage, type LlmProviderId, type LlmToolCall, type LlmToolDef } from '../../../lib/llm/LlmProvider';
 import type { LlmUsage } from '../../../lib/openai/llmUsage';
 import { toTurnUsage } from '../../../lib/openai/llmUsage';
 import { NotFoundError } from '../../../lib/errors';
@@ -165,7 +165,11 @@ export class TeammateRunner {
       }
       return await finish({ status: 'DONE', answer: null, warning: TURN_ROUND_LIMIT_WARNING });
     } catch (error) {
-      const code = error instanceof Error && 'code' in error ? `${(error as { code: unknown }).code}: ` : '';
+      // BRD F-60.2: o erro do provedor tem `kind`, não `code`.
+      const code =
+        error instanceof LlmProviderError ? `${error.kind}: `
+        : error instanceof Error && 'code' in error ? `${(error as { code: unknown }).code}: `
+        : '';
       return finish({ status: 'FAILED', error: `${code}${error instanceof Error ? error.message : String(error)}` });
     }
   }

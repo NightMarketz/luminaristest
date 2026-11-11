@@ -11,11 +11,44 @@ export type FiscalDocumentKind = (typeof FISCAL_DOCUMENT_KINDS)[number];
 // das pendentes no callback OAuth (D-2026-10-29-X10A-PR7-9-FORKS decisão 5).
 // CONTINGENCY — X10a PR-9 (E-9, F-NFCE-E1-5 b): NFC-e emitida em contingência off-line (tpEmis=9), com número e DANFE,
 // ainda não transmitida. O job a transmite enquanto a SEFAZ responder (decisão 7); o resultado sai pelo `applyResult`.
-export const FISCAL_DOCUMENT_STATUSES = ['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED', 'PENDING_SIGNATURE', 'CONTINGENCY'] as const;
+// CANCEL_ANALYSIS — BE-INCR-DFE-EVENTOS (nó X11, PR-3, item 20; F-EVT-4 b): NFS-e com a Solicitação de Análise Fiscal
+// para Cancelamento (e101103, Anexo II [4]) registrada e sem resposta. Sai por e105104 (deferido → CANCELLED) ou e105105
+// (indeferido → o status de antes, `statusAntesAnalise`). Com ela pendente o fisco recusa cancelamento direto (matriz
+// `RN EVENTOSxEVENTOS` [8]) e substituição (E0068, Anexo I [179]).
+export const FISCAL_DOCUMENT_STATUSES = [
+  'SENT',
+  'PROCESSING',
+  'AUTHORIZED',
+  'AUTHORIZED_DIVERGENT',
+  'REJECTED',
+  'CANCELLED',
+  'PENDING_SIGNATURE',
+  'CONTINGENCY',
+  'CANCEL_ANALYSIS',
+] as const;
 export type FiscalDocumentStatus = (typeof FISCAL_DOCUMENT_STATUSES)[number];
 
-/** Documento autorizado no ambiente nacional — com ou sem divergência na releitura (F-MAN-2 c). */
+/**
+ * Documento autorizado no ambiente nacional — com ou sem divergência na releitura (F-MAN-2 c). É o "de onde" das
+ * operações do emitente (cancelar, pedir análise, substituir): NÃO inclui `CANCEL_ANALYSIS`.
+ */
 export const AUTHORIZED_STATUSES: readonly FiscalDocumentStatus[] = ['AUTHORIZED', 'AUTHORIZED_DIVERGENT'];
+
+/**
+ * BE-INCR-DFE-EVENTOS PR-3 (decisão do dono 07/11, pergunta "Apuração"): nota VÁLIDA no fisco — as autorizadas e a que
+ * espera a análise fiscal do cancelamento (só o e105104 a cancela). É o filtro das apurações (ISS, IBS/CBS, Simples), do
+ * DANFE e dos buscadores de nota viva. Se o deferimento vier, ela sai como qualquer cancelamento (vale o status atual).
+ */
+export const NOTA_VALIDA_STATUSES: readonly FiscalDocumentStatus[] = [...AUTHORIZED_STATUSES, 'CANCEL_ANALYSIS'];
+
+/**
+ * PR-3 — o status "de autorização" da nota: o próprio, ou o de antes da análise fiscal (`statusAntesAnalise`). É o que diz
+ * se a nota em análise é divergente (F-MAN-2 c / F-TC-4 a) nas apurações que contam a divergência à parte.
+ */
+export function statusDeAutorizacao(doc: { status: string; statusAntesAnalise?: string | null }): 'AUTHORIZED' | 'AUTHORIZED_DIVERGENT' | null {
+  const s = doc.status === 'CANCEL_ANALYSIS' ? (doc.statusAntesAnalise ?? 'AUTHORIZED') : doc.status;
+  return s === 'AUTHORIZED' || s === 'AUTHORIZED_DIVERGENT' ? s : null;
+}
 
 /** Dados do documento no `SENT` inicial (BRIEF item 20 — criado junto com a tentativa 1 e o número). */
 export interface CreateSentFiscalDocumentData {
@@ -87,6 +120,12 @@ export interface TransitionData {
   substitutedByDocumentId?: string | null;
   /** BE-INCR-DFE-EVENTOS (item 7) — anexo do XML do evento e101101. */
   cancelEventAttachmentId?: string | null;
+  /** BE-INCR-DFE-EVENTOS (PR-2, item 19) — cancelamento em voo: a porta devolveu PROCESSING. */
+  cancelRequestedAt?: Date | null;
+  /** BE-INCR-DFE-EVENTOS (PR-2, item 18; decisão do dono 07/11 Q2) — evento do fisco que cancelou a nota. */
+  cancelEvento?: string | null;
+  /** BE-INCR-DFE-EVENTOS (PR-3, item 20) — status antes do CANCEL_ANALYSIS, restaurado no indeferimento (e105105). */
+  statusAntesAnalise?: string | null;
   /** X10a PR-9 (E-9): o infNFeSupl {qrCode, urlChave} da NFC-e off-line, em JSON. */
   contingenciaSuplJson?: string | null;
   /**
@@ -169,6 +208,14 @@ export interface IFiscalDocumentRepository {
   saleIdsWithAuthorizedDocument(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<string[]>;
   /** SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos. */
   listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  /**
+   * BE-INCR-DFE-EVENTOS (PR-2, item 18) — alvo da consulta de eventos: NFS-e `AUTHORIZED*` vivas, com chave, e com
+   * `nfseDhProc >= desde` (o teto de 2 anos, Anexo I [114]), de todas as unidades (mesmo desenho de `listPending`). Vêm
+   * TODAS as com cancelamento em voo (item 19, sem teto) e, depois, até `limit` das demais em rodízio por `updatedAt`
+   * (decisão do dono 07/11 Q3: a consultada é tocada e vai para o fim). Só os `partners` pedidos (os adaptadores que
+   * consultam eventos): nota de outro adaptador nunca é tocada, e não pode ocupar o teto do rodízio.
+   */
+  listParaEventos(desde: Date, limit: number, partners: readonly string[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
   /**
    * X10a PR-9 (decisão 7) — `CONTINGENCY` de todas as unidades, em rodízio: a tocada há mais tempo primeiro (`updatedAt`); a
    * que o job não consegue transmitir é tocada e vai para o fim.

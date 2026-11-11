@@ -46,14 +46,14 @@ const openPayable: PayableWithPayments = {
   amountCents: 150000, expenseAccountId: 'acc1', inventoryProductRef: null, inventoryQty: null,
   status: 'OPEN', createdById: 'o1',
   cancelledById: null, cancelReason: null, createdAt: '2026-06-01T00:00:00Z',
-  updatedAt: '2026-06-01T00:00:00Z', deletedAt: null, payments: [],
+  updatedAt: '2026-06-01T00:00:00Z', deletedAt: null, payments: [], remainingCents: 150000,
 };
 
 const paidPayable: PayableWithPayments = {
   ...openPayable, id: 'ap2', supplierName: 'Fornecedor Y', documentNumber: 'NF-2',
-  description: 'Energia', status: 'PAID',
+  description: 'Energia', status: 'PAID', remainingCents: 0,
   payments: [{
-    id: 'pay1', userId: 'o1', unitId: 'u1', payableId: 'ap2', amountCents: 150000, method: 'Pix',
+    id: 'pay1', userId: 'o1', unitId: 'u1', payableId: 'ap2', amountCents: 150000, method: 'Pix', kind: 'PAYMENT',
     paidAt: '2026-06-05', paidByUserId: 'o1', status: 'ACTIVE', entryId: 'e9',
     createdAt: '2026-06-05T00:00:00Z', updatedAt: '2026-06-05T00:00:00Z',
   }],
@@ -196,5 +196,61 @@ describe('AccountsPayablePanel (render)', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+// ── SOT F-01.1 — o saldo do título é o `remainingCents` que o servidor devolve ──────────────────────────────
+// O servidor deriva o saldo de `amountCents − paidCents` e o devolve na leitura (`PayableService.ts`,
+// `withBalance`). Na janela do claim (`paidCents` já somado, pagamento ainda não gravado) Σ pagamentos ACTIVE
+// fica abaixo do que o servidor considera pago: a tela que recalcula pelo log envia o saldo cheio e o
+// servidor recusa com 400. Comportamento correto: a tela lê `remainingCents` da resposta.
+describe('SOT F-01.1 — AccountsPayablePanel usa o remainingCents do servidor', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+    vi.mocked(counterpartiesService.listCounterparties).mockResolvedValue(supplierOptions);
+  });
+
+  it('SOT F-01.1: "Pagar" envia o remainingCents da resposta, não amountCents − Σ pagamentos ACTIVE', async () => {
+    // estado sintético do contrato: o servidor diz que o saldo é 50000 e a lista de pagamentos ACTIVE está vazia
+    // (o botão "Pagar" só aparece em OPEN)
+    const divergent = { ...openPayable, payments: [], remainingCents: 50000 } as PayableWithPayments;
+    vi.mocked(accountsPayableService.listPayables).mockResolvedValue({ payables: [divergent], total: 1 });
+    vi.mocked(accountsPayableService.registerPayment).mockResolvedValue({} as never);
+
+    render(<AccountsPayablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Fornecedor X')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /Pagar/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar pagamento' }));
+
+    await waitFor(() => expect(accountsPayableService.registerPayment).toHaveBeenCalledTimes(1));
+    const body = vi.mocked(accountsPayableService.registerPayment).mock.calls[0][1];
+    expect(
+      body.amountCents,
+      'SOT F-01.1: o saldo enviado deve ser o remainingCents do servidor (50000); 150000 = amountCents − Σ ACTIVE, conta própria da tela',
+    ).toBe(50000);
+  });
+});
+
+describe('SOT F-02.2 — histórico de pagamentos mostra rótulo, não o método cru', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+    vi.mocked(counterpartiesService.listCounterparties).mockResolvedValue(supplierOptions);
+  });
+
+  it('SOT F-02.2: baixa de retenção (method NONE) aparece com rótulo no histórico do AP', async () => {
+    const withholding: PayableWithPayments = {
+      ...paidPayable,
+      payments: [{ ...paidPayable.payments[0], id: 'pay-ret', method: 'NONE', kind: 'WITHHOLDING' }],
+    };
+    vi.mocked(accountsPayableService.listPayables).mockResolvedValue({ payables: [withholding], total: 1 });
+
+    render(<AccountsPayablePanel unitId="u1" />);
+    await waitFor(() => expect(screen.getByText('Fornecedor Y')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Fornecedor Y'));
+
+    expect(screen.queryByText('NONE')).toBeNull();
+    expect(screen.getByText('Retenção (sem saída de caixa)')).toBeInTheDocument();
   });
 });

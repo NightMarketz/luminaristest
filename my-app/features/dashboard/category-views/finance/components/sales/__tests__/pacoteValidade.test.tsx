@@ -52,7 +52,8 @@ vi.mock('@/lib/services/packageAcceptances.service', async (orig) => {
         packageAcceptancesService: { getNotice: vi.fn(), create: vi.fn(), getBySale: vi.fn(), downloadReceipt: vi.fn() },
     };
 });
-vi.mock('../../../services/FinanceService', () => ({ FinanceService: { createSaleWithItems: vi.fn(), updateSale: vi.fn() } }));
+// INV F-40.2: o "Finalizar" cria o rascunho e finaliza por updateSale.
+vi.mock('../../../services/FinanceService', () => ({ FinanceService: { createSaleWithItems: vi.fn(), updateSale: vi.fn(async () => ({})) } }));
 // RelationSelector: um <input> que devolve o valor digitado (o seletor real busca tabelas).
 vi.mock('@/features/dashboard/components/forms/RelationSelector', () => ({
     default: ({ name, onChange }: { name: string; onChange: (n: string, v: string) => void }) => (

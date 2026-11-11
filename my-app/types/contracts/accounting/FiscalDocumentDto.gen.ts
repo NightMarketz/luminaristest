@@ -13,7 +13,7 @@ kind: ("NFSE" | "NFE" | "NFCE")
 export interface FiscalDocumentListQueryInput {
 unitId: string
 saleId?: string
-status?: ("SENT" | "PROCESSING" | "AUTHORIZED" | "AUTHORIZED_DIVERGENT" | "REJECTED" | "CANCELLED" | "PENDING_SIGNATURE" | "CONTINGENCY")
+status?: ("SENT" | "PROCESSING" | "AUTHORIZED" | "AUTHORIZED_DIVERGENT" | "REJECTED" | "CANCELLED" | "PENDING_SIGNATURE" | "CONTINGENCY" | "CANCEL_ANALYSIS")
 pendencias?: (boolean | ("true" | "false"))
 }
 export interface FiscalDocumentScopeQueryInput {
@@ -26,6 +26,7 @@ export type CancelFiscalDocumentInput = ({
 unitId: string
 cMotivo: (1 | 2 | 9)
 xMotivo: string
+analiseFiscal?: true
 } | {
 unitId: string
 xJust: string
@@ -114,4 +115,5 @@ export interface CancelNfseInput {
 unitId: string
 cMotivo: (1 | 2 | 9)
 xMotivo: string
+analiseFiscal?: true
 }

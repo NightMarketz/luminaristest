@@ -148,7 +148,8 @@
       "reversalDateLabel": "Data da reversão",
       "methodLabel": "Forma de pagamento",
       "method": {
-        "Cash": "Dinheiro"
+        "Cash": "Dinheiro",
+        "NONE": "Retenção (sem saída de caixa)"
       },
       "reasonLabel": "Motivo",
       "payTitle": "Registrar pagamento",
@@ -250,7 +251,9 @@
       "reversalDateLabel": "Data da reversão",
       "methodLabel": "Forma de recebimento",
       "method": {
-        "Cash": "Dinheiro"
+        "Cash": "Dinheiro",
+        "ProviderBalance": "Saldo no provedor",
+        "SplitPayment": "Split payment (IBS/CBS)"
       },
       "reasonLabel": "Motivo",
       "receiveTitle": "Registrar recebimento",
@@ -2723,9 +2726,68 @@
       "AUTHORIZED": "Autorizada",
       "AUTHORIZED_DIVERGENT": "Autorizada com divergência",
       "CANCELLED": "Cancelada",
+      "CANCEL_ANALYSIS": "Cancelamento em análise pelo fisco",
+      "CONTINGENCY": "Emitida em contingência, aguardando transmissão",
+      "PENDING_SIGNATURE": "Aguardando reautorização do assinador",
       "PROCESSING": "Em processamento",
       "REJECTED": "Rejeitada",
       "SENT": "Aguardando retorno do portal"
+    },
+    "assinador": {
+      "error": {
+        "load": "Não foi possível carregar o estado do assinador local.",
+        "codigo": "Não foi possível gerar o código de pareamento.",
+        "revogar": "Não foi possível revogar o assinador."
+      },
+      "title": "Assinador local",
+      "intro": "O assinador local roda no caixa, assina a NF-e/NFC-e com o certificado do próprio cliente (token, cartão ou A1 no Windows) e transmite à SEFAZ. O PIN é digitado só no caixa.",
+      "refresh": "Atualizar",
+      "retry": "Tentar de novo",
+      "pareado": "Assinador pareado.",
+      "semPareamento": "Nenhum assinador pareado nesta unidade. Gere um código e digite-o no assinador do caixa.",
+      "status": "Situação",
+      "online": "Online",
+      "fora": "Fora do ar",
+      "desconhecido": "Desconhecido",
+      "lastSeen": "Último contato",
+      "nunca": "nunca",
+      "dispositivo": "Caixa",
+      "versao": "Versão do assinador",
+      "certificado": "Certificado",
+      "certRaiz": "CNPJ-raiz",
+      "certValidade": "válido até",
+      "diasParaVencer": "{{dias}} dias para vencer",
+      "vencidoHa": "vencido há {{dias}} dias",
+      "impressao": "Impressão digital (SHA-256)",
+      "copiarImpressao": "Copiar impressão digital",
+      "token": "Token no caixa",
+      "tokenSim": "detectado",
+      "tokenNao": "não detectado",
+      "ambiente": "Ambiente",
+      "producao": "Produção",
+      "homologacao": "Homologação",
+      "outrasUnidades": "Também atende",
+      "gerarCodigo": "Gerar código de pareamento",
+      "revogar": "Revogar",
+      "codigoTitulo": "Código de pareamento",
+      "substitui": "Esta unidade já tem um assinador pareado. O pareamento novo substitui o atual.",
+      "codigoInstrucao": "Digite este código no assinador do caixa. Ele vale uma vez só e não pode ser mostrado de novo depois de fechar esta janela.",
+      "expiraEm": "Expira em {{tempo}}",
+      "copiarCodigo": "Copiar código",
+      "aguardando": "Esta tela confere o pareamento sozinha a cada 30 segundos.",
+      "codigoExpirado": "O código expirou.",
+      "gerarOutro": "Gerar outro",
+      "revogarTitulo": "Revogar o assinador nesta unidade?",
+      "revogarEfeito": "O caixa para de assinar nesta unidade. Notas novas ficam pendentes até outro assinador ser pareado.",
+      "revogarOutras": "O mesmo caixa continua atendendo: {{unidades}}.",
+      "cancelar": "Cancelar",
+      "confirmarRevogar": "Revogar",
+      "aviso": {
+        "token-ausente": "O token ou cartão do certificado não foi detectado no caixa. Confira se ele está no leitor.",
+        "cert-vencendo": "O certificado do assinador vence em até 30 dias. Renove com a certificadora.",
+        "cert-vencido": "O certificado do assinador está vencido: as notas não serão assinadas até um certificado válido ser pareado.",
+        "versao-antiga": "A versão do assinador neste caixa é anterior à mínima exigida. Atualize o assinador."
+      }
     }
   },
   "legalParams": {

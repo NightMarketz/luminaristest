@@ -141,3 +141,38 @@ describe('item 11 — createSubstitute (mesmo caminho da emissão)', () => {
     expect(repo.createSent).not.toHaveBeenCalled();
   });
 });
+
+describe('PR-2 (itens 18–19) — pendências do cancelamento visto de fora e do cancelamento em voo', () => {
+  it('Q2: CANCELLED por e105102 sem substituta conhecida → substituida_fora_do_luminaris (não cancelled_without_replacement)', async () => {
+    const { svc } = make([row({ status: 'CANCELLED', saleKey: 'cancelled:orig:s', cancelEvento: 'e105102' })]);
+    expect((await svc.getById(SCOPE as never, 'orig')).pendencias).toEqual(['substituida_fora_do_luminaris']);
+  });
+
+  it('CANCELLED por e105102 COM a substituta daqui (item 14) → sem pendência', async () => {
+    const { svc } = make([
+      row({ status: 'CANCELLED', saleKey: 'cancelled:orig:s', cancelEvento: 'e105102', substitutedByDocumentId: 'subst' }),
+      row({ id: 'subst', status: 'AUTHORIZED', substitutesDocumentId: 'orig' }),
+    ]);
+    expect((await svc.getById(SCOPE as never, 'orig')).pendencias).toEqual([]);
+  });
+
+  it('CANCELLED por ofício (e305101) sem substituta → cancelled_without_replacement, como qualquer cancelada', async () => {
+    const { svc } = make([row({ status: 'CANCELLED', saleKey: 'cancelled:orig:s', cancelEvento: 'e305101' })]);
+    expect((await svc.getById(SCOPE as never, 'orig')).pendencias).toEqual(['cancelled_without_replacement']);
+  });
+
+  it('Q1: cancelamento em voo há 24 h ou mais → cancelamento_sem_resposta; há menos de 24 h → nada', async () => {
+    const velho = make([row({ cancelRequestedAt: new Date(Date.now() - 25 * 60 * 60 * 1000) })]);
+    expect((await velho.svc.getById(SCOPE as never, 'orig')).pendencias).toEqual(['cancelamento_sem_resposta']);
+    const novo = make([row({ cancelRequestedAt: new Date(Date.now() - 60 * 60 * 1000) })]);
+    expect((await novo.svc.getById(SCOPE as never, 'orig')).pendencias).toEqual([]);
+  });
+});
+
+describe('PR-3 (item 20) — pendência da análise fiscal do cancelamento', () => {
+  it('CANCEL_ANALYSIS → cancelamento_em_analise; a nota AUTHORIZED ao lado não a ganha', async () => {
+    const { svc } = make([row({ status: 'CANCEL_ANALYSIS', statusAntesAnalise: 'AUTHORIZED', cancelMotivo: 1 }), row({ id: 'outra', cTribNac: '070101' })]);
+    expect((await svc.getById(SCOPE as never, 'orig')).pendencias).toEqual(['cancelamento_em_analise']);
+    expect((await svc.getById(SCOPE as never, 'outra')).pendencias).toEqual([]);
+  });
+});

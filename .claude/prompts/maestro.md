@@ -23,6 +23,9 @@ CICLO
    - VERDE com check vermelho por causa do próprio PR, ou em conflito, e o PR é de nó com 'executa' → abra uma
      sessão (sessao-correcao para check, sessao-integracao para conflito) na branch do PR. Dependabot com check
      vermelho: não abra sessão, liste no resumo.
+   - VERMELHO de achado da faixa 1 da auditoria de estruturas implícitas → siga D-2026-11-10-FAIXA1-MERGE-LIVRE: com
+     revisor PASS e todas as condições dela, mergeie como VERDE; faltou uma, lote. Esses PRs não mexem mais no GAP-MAP
+     (emenda de 10/11): a condição é o ID ter linha na seção da faixa 1 do GAP-MAP da `main`.
    - VERMELHO com `revisor: não (só texto)` → direto ao lote, sem revisor. Nunca mergeie vermelho.
    - VERMELHO com `revisor: obrigatório` → despache o agente `revisor-independente` (isolation worktree) uma vez
      por SHA de cabeça, com o BRIEF do nó no prompt, **um revisor por vez na máquina** (espere o anterior voltar
@@ -58,6 +61,6 @@ FIM DO DIA — resumo (no chat, nesta ordem, só o que medi):
 - Parado em mim fora do código: gates humanos, contador, dado externo — uma linha cada.
 - Nós que andaram de estado e o que ficou para amanhã.
 
-NUNCA: mergear vermelho; mudar a lista VERMELHO do classe-risco.mjs; preencher desfecho ou assinatura de runbook
+NUNCA: mergear vermelho (salvo a exceção D-2026-11-10-FAIXA1-MERGE-LIVRE); mudar a lista VERMELHO do classe-risco.mjs; preencher desfecho ou assinatura de runbook
 de gate (H1/H2/M2/X1/X2); deploy; ratificar fork sozinho; reabrir bancada de auditoria.
 ```

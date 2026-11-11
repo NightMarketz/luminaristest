@@ -52,6 +52,11 @@ const publicApiRoutes: PublicRule[] = [
   // X10a PR-7 (EMENDA-PSC E-4) — retorno OAuth do PSC: quem chega é o navegador do titular, sem JWT. A prova é o
   // `state` (HMAC do keyring DFE_PSC) + a autorização pendente não expirada e não usada. GET exato.
   { path: '/api/accounting/psc-credentials/callback', method: 'GET', match: 'exact' },
+  // X10a EMENDA-4 AL-5 — rotas do assinador local do caixa: não há sessão de usuário. A prova é o código de pareamento
+  // ou o `Authorization: Bearer <token de dispositivo>` (middleware `dfeSignerDeviceAuth`, montado no próprio router).
+  // GET (tarefas, AL-PR-3) e POST (pareamento, resultado).
+  { path: '/api/dfe-assinador/v1', method: 'GET', match: 'prefix' },
+  { path: '/api/dfe-assinador/v1', method: 'POST', match: 'prefix' },
 ];
 
 // Admin-only API paths with method checks (prefix match covers /api/users/:id).

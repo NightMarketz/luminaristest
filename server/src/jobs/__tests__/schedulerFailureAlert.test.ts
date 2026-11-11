@@ -10,6 +10,7 @@ import fs from 'fs';
 import path from 'path';
 import { AccountingSyncScheduler } from '../AccountingSyncScheduler';
 import { CollectionChargePollScheduler } from '../CollectionChargePollScheduler';
+import { DataExchangeStaleSweepScheduler } from '../DataExchangeStaleSweepScheduler';
 import { DfePollScheduler } from '../DfePollScheduler';
 import { LegalParamsRecalcScheduler } from '../LegalParamsRecalcScheduler';
 import { MpReleaseReportScheduler } from '../MpReleaseReportScheduler';
@@ -22,6 +23,7 @@ const silentLog = () => ({ event: jest.fn() });
 const cases: { file: string; source: string; build: (alert: jest.Mock) => { runOnce(): Promise<unknown> } }[] = [
   { file: 'AccountingSyncScheduler.ts', source: 'accounting_sync_reconcile', build: (alert) => new AccountingSyncScheduler({ reconcile: boom, log: silentLog(), alert }) },
   { file: 'CollectionChargePollScheduler.ts', source: 'collection_charge_poll', build: (alert) => new CollectionChargePollScheduler({ poll: boom, log: silentLog(), alert }) },
+  { file: 'DataExchangeStaleSweepScheduler.ts', source: 'data_exchange_stale_sweep', build: (alert) => new DataExchangeStaleSweepScheduler({ sweep: boom, log: silentLog(), alert }) },
   { file: 'DfePollScheduler.ts', source: 'dfe_poll', build: (alert) => new DfePollScheduler({ poll: boom, log: silentLog(), alert }) },
   { file: 'LegalParamsRecalcScheduler.ts', source: 'legal_params_recalc', build: (alert) => new LegalParamsRecalcScheduler({ run: boom, log: silentLog(), alert }) },
   { file: 'MpReleaseReportScheduler.ts', source: 'mp_release_report', build: (alert) => new MpReleaseReportScheduler({ fetch: boom, log: silentLog(), alert }) },

@@ -99,7 +99,30 @@ export interface DfeCapabilities {
    * (`cancelarPorSubstituicao`). Ausente = `false`: falha de comunicação segue a regra antiga (fica `SENT`).
    */
   contingenciaOffline?: boolean;
+  /**
+   * BE-INCR-DFE-EVENTOS (nó X11, item 18; F-EVT-5 b) — o adaptador lista os eventos registrados no fisco sobre uma NFS-e
+   * (`consultarEventos(chave)`): o job aplica o cancelamento feito fora do Luminaris e conclui o cancelamento em voo
+   * (item 19). Ausente = `false`: a nota não é consultada.
+   */
+  consultarEventos?: boolean;
+  /**
+   * BE-INCR-DFE-EVENTOS (nó X11, PR-3, item 20; dono 07/11) — o adaptador pede a análise fiscal do cancelamento (e101103)
+   * quando `cancelar` recebe `analiseFiscal: true`. Ausente = `false`: o pedido é recusado antes da porta (409
+   * `DFE_ANALISE_NAO_SUPORTADA`), para o adaptador não ignorar a flag e mandar o e101101 de novo.
+   */
+  analiseFiscal?: boolean;
 }
+
+/**
+ * BE-INCR-DFE-EVENTOS (nó X11, item 18; BRIEF §4, F-EVT-5 b) — um evento do fisco sobre a NFS-e (Anexo II, aba
+ * `TIPO EVENTOS DE NFSe`): e101101 cancelamento [2] · e105102 cancelamento por substituição [3] (gerado pelo município,
+ * com a chave da substituta) · e101103 pedido de análise fiscal [4] · e105104/e105105 deferido/indeferido [5]/[6] ·
+ * e305101 cancelamento por ofício [15]. `dhProc` = instante do registro no fisco (TSDateTimeUTC, com fuso).
+ * Forma validada na entrada do serviço por `EventoNfseSchema` (dtos/EventoNfseDto.ts).
+ */
+export type EventoNfse =
+  | { tipo: 'e101101' | 'e305101' | 'e105104' | 'e105105' | 'e101103'; dhProc: string }
+  | { tipo: 'e105102'; dhProc: string; chSubstituta: string; cMotivo: string };
 
 /**
  * X10a PR-9 (decisão 4 de D-2026-10-29-X10A-PR7-9-FORKS) — falha de COMUNICAÇÃO com o fisco (timeout, 5xx, rede, TLS,
@@ -208,18 +231,23 @@ export interface EmissaoResult {
  * - E0823 / E0824 / E0827 / E0840 (Anexo II [29]/[30]/[31]/[35]) e qualquer outra rejeição ⇒ `REJECTED`, com o
  *   código preservado em `errors[].code`.
  * O adaptador real (X10i) herda o teste de tradução (`DfeCancelResultContract.test.ts`).
+ * - BE-INCR-DFE-EVENTOS (nó X11, PR-3, item 20; dono 07/11): `ANALYSIS_REQUESTED` ⇔ o fisco registrou a Solicitação de
+ *   Análise Fiscal para Cancelamento (e101103, Anexo II [4]) pedida com `CancelInput.analiseFiscal`. Só responde a esse
+ *   pedido; o cancelamento direto nunca a devolve, e o pedido de análise nunca devolve `CANCELLED`/`OUT_OF_WINDOW`.
  */
 export interface CancelResult {
-  status: 'CANCELLED' | 'OUT_OF_WINDOW' | 'REJECTED' | 'PROCESSING';
+  status: 'CANCELLED' | 'OUT_OF_WINDOW' | 'REJECTED' | 'PROCESSING' | 'ANALYSIS_REQUESTED';
   errors: Array<{ code: string; message: string }>;
 }
 
 /**
  * BE-INCR-NFCE (nó X10a, item 7) — o cancelamento tem a forma do tipo: NFS-e = `cMotivo`/`xMotivo` do e101101 (Anexo II,
  * inalterado); NF-e/NFC-e = `xJust` de 15 a 255 caracteres (MOC 7.0 VG §5.9.1, Tabela 5-37, evento 110111).
+ * X11 PR-3 (item 20): na NFS-e, `analiseFiscal: true` pede o e101103 (mesmo POST /nfse/{chave}/eventos do ADN, outro
+ * grupo; cMotivo `TSCodJustAnaliseFiscalCanc` 1|2|9 e xMotivo, XSD 1.01) em vez do e101101. Só com `capabilities.analiseFiscal`.
  */
 export type CancelInput =
-  | { kind: 'NFSE'; cMotivo: 1 | 2 | 9; xMotivo: string }
+  | { kind: 'NFSE'; cMotivo: 1 | 2 | 9; xMotivo: string; analiseFiscal?: true }
   | { kind: 'NFE' | 'NFCE'; xJust: string };
 
 /**
@@ -258,6 +286,11 @@ export interface DfeEmissorPort {
   emitir(input: EmitirInput): Promise<EmissaoResult>;
   consultar(partnerRef: string, ctx?: DfeCallContext): Promise<EmissaoResult>;
   cancelar(partnerRef: string, input: CancelInput, ctx?: DfeCallContext): Promise<CancelResult>;
+  /**
+   * BE-INCR-DFE-EVENTOS (nó X11, item 18) — só com `capabilities.consultarEventos`: os eventos da NFS-e de chave `chave`,
+   * em qualquer ordem. Não muda estado em lugar nenhum; quem aplica é o serviço.
+   */
+  consultarEventos?(chave: string, ctx?: DfeCallContext): Promise<EventoNfse[]>;
   /**
    * X10a PR-8 — o que impede o envio do tipo na UF/ambiente do emitente (webservice ou URL do QR Code sem fonte oficial),
    * como faltantes nomeados. O serviço consulta ANTES de consumir o número. Ausente = nada a checar.

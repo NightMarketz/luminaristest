@@ -281,12 +281,15 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // BE-INCR-DFE (nó X10b, PR-3, item 40) — ciclo de vida do documento após o SENT.
   'dfe.authorized': ['documentId', 'partnerRef', 'nNFSe', 'chaveOuCodigo', 'sourceDocumentId'],
   'dfe.rejected': ['documentId', 'attemptNo', 'errorCodes'],
-  'dfe.cancelled': ['documentId', 'cMotivo'],
+  'dfe.cancelled': ['documentId', 'cMotivo', 'evento'], // evento: BE-INCR-DFE-EVENTOS PR-2 (Q2) — e101101|e305101|e105104|e105102, sem PII
   // BE-INCR-DFE-MANUAL (item 15) — resultado da releitura no retorno manual. Nomes de campo divergentes NÃO entram
   // (ficam no resultJson da tentativa, sem PII); aqui só o veredito e a contagem.
   'dfe.manual_result': ['documentId', 'attemptNo', 'releitura', 'nDivergencias'],
   // BE-INCR-DFE-EVENTOS (nó X11, item 14) — a substituta autorizada cancelou a original (e105102). Sem PII.
   'dfe.substituted': ['documentId', 'substituteDocumentId', 'cMotivo'],
+  // BE-INCR-DFE-EVENTOS PR-3 (item 20; dono 07/11): entrada (e101103) e saída por indeferimento (e105105) da análise fiscal do
+  // cancelamento. cMotivo = do pedido (1|2|9) ou da resposta (1|2). Sem PII: o CPFAgTrib do e105104/e105105 nunca é lido.
+  'dfe.cancel_analysis': ['documentId', 'evento', 'cMotivo'],
   // BE-INCR-NFCE (nó X10a, item 26) — faixa inutilizada homologada (F-NFCE-5 a). Sem PII (o xJust fica na linha, não aqui).
   'dfe.number_voided': ['voidId', 'kind', 'serie', 'nIni', 'nFin', 'ambiente'],
   // BE-INCR-CONTADOR-DELIVERY (item 14) — cadastro do contador + entrega do pacote ECD/ECF.
@@ -323,6 +326,10 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'psc_credential.removed':    ['unitId', 'pscProviderId', 'certNotAfter'],
   'psc_provider.set':          ['pscProviderId', 'nome'],
   'psc_provider.removed':      ['pscProviderId', 'nome'],
+  // X10a EMENDA-4 AL-16 (AL-PR-2) — assinador local: unidade, dispositivo, CNPJ-RAIZ, validade e sha256 do DER. NUNCA o
+  // certificado, o subject (o e-CNPJ traz o CPF do responsável, OID 2.16.76.1.3.4), o token nem o código de pareamento.
+  'dfe_signer.paired':  ['unitId', 'dispositivoId', 'certCnpjRaiz', 'certNotAfter', 'certThumbprint', 'vinculo'],
+  'dfe_signer.revoked': ['unitId', 'dispositivoId', 'certCnpjRaiz', 'certNotAfter', 'certThumbprint', 'motivo', 'dispositivoRevogado'],
   // X10a PR-8 (D-2026-10-29-X10A-PR7-9-FORKS decisão 3) — só unidade, ambiente e o identificador do CSC: NUNCA o CSC.
   'nfce_csc.set':     ['unitId', 'ambiente', 'cscId'],
   'nfce_csc.removed': ['unitId', 'ambiente', 'cscId'],

@@ -99,3 +99,34 @@ describe('DfePollScheduler — alerta da NFC-e off-line uma vez por nota, por ev
     expect(prazoAlertas(alert)).toHaveLength(2);
   });
 });
+
+describe('DfePollScheduler — passo de eventos da NFS-e (BE-INCR-DFE-EVENTOS PR-2, item 18)', () => {
+  const EVENTOS_OK = { consultadas: 3, canceladas: 1, substituidasFora: 0, emAnalise: 0, indeferidas: 0, ignorados: 0, skipped: 0, failed: 0, avisos: [] as string[] };
+  const comEventos = (e: Partial<typeof EVENTOS_OK>): PollSummary => ({ total: 0, updated: 0, skipped: 0, failed: 0, eventos: { ...EVENTOS_OK, ...e } });
+  const nivel = (log: { event: jest.Mock }) => log.event.mock.calls.find(([, ev]) => ev === 'job.completed')?.[0];
+
+  it.each([
+    ['falha ao consultar', { failed: 1 }],
+    ['evento ignorado (A3)', { ignorados: 1, avisos: ['NFS-e nº 41 (DPS série 70001 nº 15): evento desconhecido (e999999) — ignorado.'] }],
+    ['nota substituída fora do Luminaris', { substituidasFora: 1 }],
+  ])('%s ⇒ job.completed em warn, com o resumo dos eventos', async (_n, e) => {
+    const log = { event: jest.fn() };
+    const scheduler = new DfePollScheduler({ poll: async () => comEventos(e), log, alert: jest.fn() });
+    await scheduler.runOnce();
+    expect(nivel(log)).toBe('warn');
+    expect(log.event).toHaveBeenCalledWith('warn', 'job.completed', 'dfe_poll_pending', expect.objectContaining({ eventos: expect.objectContaining(e) }));
+  });
+
+  it('controle: eventos aplicados sem falha ⇒ info', async () => {
+    const log = { event: jest.fn() };
+    await new DfePollScheduler({ poll: async () => comEventos({}), log, alert: jest.fn() }).runOnce();
+    expect(nivel(log)).toBe('info');
+  });
+
+  it('o passo de eventos lançando derruba o tick ⇒ job.failed + alerta remoto (OBS-R8)', async () => {
+    const log = { event: jest.fn() };
+    const alert = jest.fn();
+    await expect(new DfePollScheduler({ poll: async () => Promise.reject(new Error('listParaEventos: database is locked')), log, alert }).runOnce()).rejects.toThrow('database is locked');
+    expect(alert).toHaveBeenCalledWith(expect.objectContaining({ source: 'dfe_poll', event: 'job_failed', error: 'listParaEventos: database is locked' }));
+  });
+});

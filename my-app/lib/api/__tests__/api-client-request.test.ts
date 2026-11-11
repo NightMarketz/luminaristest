@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { apiClient } from '../api-client';
+import { apiClient, NETWORK_ERROR_MESSAGE } from '../api-client';
 import { notify } from '../../notifications/notify';
 
 /**
@@ -39,9 +39,17 @@ describe('apiClient.request', () => {
     expect(notify).toHaveBeenCalledWith('Erro 502: Bad Gateway', 'error', 'Erro');
   });
 
-  it('2xx com corpo não-JSON: segue devolvendo { error: "Failed to parse server response" }', async () => {
+  // BRD F-72.2 (GAP-MAP, faixa 1 de 2026-11-10): o 2xx com corpo não-JSON voltava como dado de sucesso
+  // (`{ error: 'Failed to parse server response' }`), e a tela ficava vazia ou quebrava lendo campos que não existem.
+  it('BRD F-72.2 2xx com corpo não-JSON: rejeita com { status } e mostra o toast', async () => {
     vi.mocked(globalThis.fetch).mockResolvedValue(res(200, 'oops'));
-    await expect(apiClient.get('/x')).resolves.toEqual({ error: 'Failed to parse server response' });
+    await expect(apiClient.get('/x')).rejects.toMatchObject({ status: 200 });
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
+  it('BRD F-72.2 controle: 2xx com corpo vazio segue resolvendo {}', async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValue(res(204, ''));
+    await expect(apiClient.get('/x')).resolves.toEqual({});
   });
 
   it('silent: rejeita igual, sem toast', async () => {
@@ -64,9 +72,8 @@ describe('apiClient.request', () => {
     expect(lastHeaders()['x-user-timezone']).toBeTruthy();
   });
 
-  it('falha de rede: o erro nativo passa como veio', async () => {
-    const native = new TypeError('Failed to fetch');
-    vi.mocked(globalThis.fetch).mockRejectedValue(native);
-    await expect(apiClient.get('/x')).rejects.toBe(native);
+  it('falha de rede: Error com a mensagem de rede do cliente, sem status (BRD F-72.1)', async () => {
+    vi.mocked(globalThis.fetch).mockRejectedValue(new TypeError('Failed to fetch'));
+    await expect(apiClient.get('/x')).rejects.toEqual(new Error(NETWORK_ERROR_MESSAGE));
   });
 });

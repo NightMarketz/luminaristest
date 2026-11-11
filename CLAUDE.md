@@ -143,7 +143,15 @@ morde só no código solto; em dúvida, **o contrato prevalece**.
 sozinha (squash) com todos os checks verdes, sem conflito e fora de draft. **Vermelho** → revisor-independente e
 depois o **lote diário**: liste os PRs (número · título · motivo do vermelho · CI · veredito do revisor) e espere o
 dono confirmar por número. Fora da maestro, nenhuma sessão mergeia, nem verde. Regra em
-`docs/plano/decisoes/D-2026-10-28-FLUXO-AUTONOMO.md`.
+`docs/plano/decisoes/D-2026-10-28-FLUXO-AUTONOMO.md`. Exceção (dono, 2026-11-10): vermelho da faixa 1 da auditoria de
+estruturas implícitas entra como verde com revisor PASS — `docs/plano/decisoes/D-2026-11-10-FAIXA1-MERGE-LIVRE.md`.
+
+## Pilhas e tamanho de PR (dono, 2026-11-08)
+- **Um PR por item do GAP-MAP**, mergeado direto na `main` sempre que a dependência permitir.
+- **Profundidade máxima de pilha: 2.** Não prepare um filho sobre um pai ainda não mergeado; a raiz entra primeiro.
+- Dependência que não cabe em 2 níveis: separe o contrato em PR próprio, que entra antes.
+- **Não junte tarefas extras num PR** só para reduzir a contagem de PRs: PR grande piora a revisão.
+- Ao mergear o pai (squash), rebaseie o filho com `git rebase --onto` e troque a base do PR para a `main` antes de nova rodada de CI.
 
 ## Gates de envio [OPS-001] — antes de fechar resposta/relatório/PR
 

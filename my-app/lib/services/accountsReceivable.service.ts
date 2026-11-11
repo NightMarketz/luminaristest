@@ -6,6 +6,7 @@ import type {
   CancelReceivableInput,
   CancelReceiptInput,
 } from '@/types/contracts/accounting/ReceivableDto.gen';
+import type { SettlementKind } from './accountsPayable.service';
 
 /**
  * Accounts Receivable (Contas a Receber) service — thin typed client over the AR
@@ -30,7 +31,10 @@ export type ReceivableStatus = 'OPEN' | 'PARTIALLY_RECEIVED' | 'RECEIVING' | 'RE
 
 /** Títulos em que a cobrança por provedor é oferecida — espelho de `CHARGEABLE_RECEIVABLE_STATUSES` do BE (F9). */
 export const CHARGEABLE_RECEIVABLE_STATUSES: readonly ReceivableStatus[] = ['OPEN', 'PARTIALLY_RECEIVED', 'RECEIVING'];
-export type ReceiptMethod = 'Cash' | 'Pix' | 'TED' | 'Boleto';
+/** Método aceito na escrita — deriva do contrato gerado (inclui `ProviderBalance`; SOT F-02.1). */
+export type ReceiptMethod = RegisterReceiptInput['method'];
+/** Método gravado no recibo: os da escrita + `'SplitPayment'` do split do IBS/CBS (`SPLIT_IBS_CBS_METHOD`, `BankSettlement.model.ts`). */
+export type ReceiptRecordMethod = ReceiptMethod | 'SplitPayment';
 export type ReceiptStatus = 'ACTIVE' | 'CANCELLED';
 
 export const RECEIPT_METHODS: readonly ReceiptMethod[] = ['Cash', 'Pix', 'TED', 'Boleto'];
@@ -41,7 +45,8 @@ export interface ReceivableReceipt {
   unitId: string;
   receivableId: string;
   amountCents: number;
-  method: ReceiptMethod;
+  method: ReceiptRecordMethod;
+  kind: SettlementKind;
   receivedAt: string;
   receivedByUserId: string | null;
   status: ReceiptStatus;
@@ -76,6 +81,8 @@ export interface Receivable {
 /** List/get reads embed the receipt history. */
 export interface ReceivableWithReceipts extends Receivable {
   receipts: ReceivableReceipt[];
+  /** Saldo em aberto derivado pelo servidor (`amountCents − receivedCents`, `ReceivableService.withBalance`) — SOT F-01.1. */
+  remainingCents: number;
 }
 
 // ── Request payloads ─────────────────────────────────────────────────────────────

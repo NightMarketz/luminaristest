@@ -14,7 +14,7 @@ import type { CandidatePosting, MatchedLineForExport } from '../models/Reconcili
 import { describeExportJob } from '../models/AccountingDelivery.model';
 import type { AuditService } from './AuditService';
 import type { ExportRequestDto } from '../dtos/DataExchangeDto';
-import type { ImportKind } from '../models/DataExchange.model';
+import { DATA_EXCHANGE_PROCESSING_STALE_MS, type ImportKind, type StaleFailedJob } from '../models/DataExchange.model';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { centsFromDb } from '../models/money';
 import { sampleEntries, type SampleableLeg } from '../models/entrySample';
@@ -25,7 +25,7 @@ import { IBS_CBS_MEMO_COLUMNS, linhaMetaIbsCbs, linhasDaApuracaoIbsCbs, selecion
 import { agregarIssPorCompetencia, ISS_COLUMNS, municipioDeIncidencia, type IssDocInput } from '../models/issCompetencia';
 import { listaLc116De, type ListaLc116 } from '../models/lc116ListaNacional';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
-import type { FiscalDocumentStatus } from '../repositories/IFiscalDocumentRepository';
+import { NOTA_VALIDA_STATUSES, statusDeAutorizacao, type FiscalDocumentStatus } from '../repositories/IFiscalDocumentRepository';
 import { toJobResponse, toJobListItem, type DataExchangeJobResponse, type DataExchangeJobListItem } from './dataExchangeMappers';
 import type {
   TrialBalanceReport,
@@ -116,8 +116,12 @@ export interface IIssDocumentReader {
   ): Promise<Array<FiscalDocument & { cLocPrestacao: string | null; cLocEmi: string | null }>>;
 }
 
-/** F-TC-3 (a): vale o status atual — `CANCELLED` sai. F-TC-4 (a): `AUTHORIZED_DIVERGENT` entra, contado à parte. */
-const ISS_STATUSES: readonly FiscalDocumentStatus[] = ['AUTHORIZED', 'AUTHORIZED_DIVERGENT'];
+/**
+ * F-TC-3 (a): vale o status atual — `CANCELLED` sai. F-TC-4 (a): `AUTHORIZED_DIVERGENT` entra, contado à parte.
+ * X11 PR-3 (dono 07/11, "Apuração"): a nota em análise fiscal (`CANCEL_ANALYSIS`) é válida no fisco e entra; divergente
+ * se era divergente antes da análise (`statusDeAutorizacao`).
+ */
+const ISS_STATUSES: readonly FiscalDocumentStatus[] = NOTA_VALIDA_STATUSES;
 
 /** `[YYYY-MM-DD, YYYY-MM-DD]` → `{from: T00:00:00.000Z, to: T00:00:00.000Z}` — job-column
  *  storage convention (period-as-marker, not a query bound; matches SpedGenerationService). */
@@ -487,7 +491,7 @@ export class DataExchangeExportService {
           return {
             dCompet: d.dCompet, municipioIbge, tpRetISSQN: d.tpRetISSQN === 2 ? 2 : 1,
             vServCents: d.vServCents, baseIssCents: d.baseIssCents, vIssCents: d.vIssCents,
-            divergente: d.status === 'AUTHORIZED_DIVERGENT',
+            divergente: statusDeAutorizacao(d) === 'AUTHORIZED_DIVERGENT',
           };
         });
         const linhas = agregarIssPorCompetencia(inputs);
@@ -512,6 +516,11 @@ export class DataExchangeExportService {
   }
 
   /** Renders + persists an export artifact and records the job + audit. Returns the job summary. */
+  /** EFX F-18.2 (SM Q-07 = a): job PROCESSING sem desfecho há mais de `DATA_EXCHANGE_PROCESSING_STALE_MS` vira FAILED. */
+  public async failStaleProcessing(now: Date = new Date()): Promise<StaleFailedJob[]> {
+    return this.repo.failStaleProcessing(new Date(now.getTime() - DATA_EXCHANGE_PROCESSING_STALE_MS));
+  }
+
   public async export(scope: AccountingScope, dto: ExportRequestDto): Promise<DataExchangeJobResponse> {
     if (!this.policy.canRead(scope)) {
       throw new ForbiddenError('Não autorizado a exportar dados contábeis.');

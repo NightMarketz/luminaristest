@@ -4,7 +4,7 @@ import { accountingScopeWhere } from '../scope/AccountingScope';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { scopeDay } from '../models/dates';
 import type { MovimentoPacote, PagamentoPacote, SaldoPacote } from '../models/ibsCbsAntecipacao';
-import { AUTHORIZED_STATUSES } from './IFiscalDocumentRepository';
+import { NOTA_VALIDA_STATUSES } from './IFiscalDocumentRepository';
 import type { DadosPacoteIbsCbs, IIbsCbsPacoteRepository } from './IIbsCbsPacoteRepository';
 
 const PACOTE_VENDIDO = 'sale.package.sold';
@@ -82,7 +82,7 @@ export class IbsCbsPacoteRepository implements IIbsCbsPacoteRepository {
   private async diaDoDocumento(scope: AccountingScope, saleIds: readonly string[]): Promise<Map<string, string>> {
     if (saleIds.length === 0) return new Map();
     const rows = await prisma.fiscalDocument.findMany({
-      where: { ...accountingScopeWhere(scope), ambiente: 'producao', status: { in: [...AUTHORIZED_STATUSES] }, saleId: { in: [...saleIds] }, deletedAt: null },
+      where: { ...accountingScopeWhere(scope), ambiente: 'producao', status: { in: [...NOTA_VALIDA_STATUSES] }, saleId: { in: [...saleIds] }, deletedAt: null },
       select: { saleId: true, dCompet: true },
       orderBy: { dCompet: 'asc' },
     });
