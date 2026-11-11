@@ -34,12 +34,13 @@ Cada passo tem três campos. EVIDÊNCIA é obrigatória e é sempre um artefato 
    /api/accounting/settings` com **só** `unitId` + os 3 campos; console limpo.
    EVIDÊNCIA: [screenshot da seção após recarregar + linha do Network com o corpo do PUT]
 
-2. Seção **Taxas**: conferir que o catálogo do Anexo III apareceu (1º acesso semeia no servidor), com origem
-   `ANEXO_III_*` e link "fonte". Criar uma taxa `CUSTOM` (NCM, descrição, vida útil, %, justificativa). Ocultar uma
-   linha do Anexo e marcar "Mostrar ocultas".
-   Resultado esperado: catálogo listado; a taxa nova aparece como `CUSTOM`; a oculta some e reaparece com o selo
-   "oculta" ao marcar "Mostrar ocultas"; nada é apagado.
-   EVIDÊNCIA: [screenshot da lista com as 3 situações + Network do `POST /depreciation-rates` e do `…/hide`]
+2. Seção **Taxas**: conferir que o catálogo do Anexo III aparece (vem da tabela de plataforma `DEPRECIACAO_ANEXO_III`,
+   não é mais semeado por escopo), com origem `ANEXO_III_*` e link "fonte", **sem botão "Ocultar"** nessas linhas
+   (regra L-14: só taxa `CUSTOM` se oculta). Criar uma taxa `CUSTOM` (NCM, descrição, vida útil, %, justificativa).
+   **Ocultar a taxa `CUSTOM`** e marcar "Mostrar ocultas".
+   Resultado esperado: catálogo listado sem "Ocultar" nas linhas do Anexo; a taxa nova aparece como `CUSTOM` com
+   "Ocultar"; a oculta some e reaparece com o selo "oculta" ao marcar "Mostrar ocultas"; nada é apagado.
+   EVIDÊNCIA: [screenshot/DOM da lista (Anexo sem botão, `CUSTOM` com botão, `CUSTOM` oculta) + Network do `POST /depreciation-rates` e do `…/hide` da `CUSTOM`]
 
 3. Seção **Classes**: criar uma classe depreciável (conta do bem + conta de depreciação acumulada) e uma **não**
    depreciável (a conta acumulada não aparece). Tentar remover uma classe com bem vivo (depois do passo 4).
@@ -61,12 +62,15 @@ Cada passo tem três campos. EVIDÊNCIA é obrigatória e é sempre um artefato 
    de CAS), recarrega a lista e **não reenvia sozinho**.
    EVIDÊNCIA: [screenshot do `Ativo` + screenshot da mensagem do 409 + Network do 409]
 
-6. **Rodar depreciação** do mês (default = mês anterior ao de hoje; ajustar para o mês do passo 5). Rodar de novo o
-   mesmo mês. Fechar o período desse mês (UI Períodos) e rodar de novo.
-   Resultado esperado: 1ª rodada `N lançada(s)`; 2ª `0 lançada(s)`/`ignorada(s)` (idempotente); com o período fechado,
-   a tabela de falhas mostra `PERIOD_NOT_OPEN` com o botão "Abrir períodos" que leva à aba Períodos; o balancete
-   (aba Balancete) refletiu a depreciação.
-   EVIDÊNCIA: [screenshot do resultado das 3 rodadas + screenshot do Balancete + Network do `POST …/depreciation/run`]
+6. **Rodar depreciação** do mês M (default = mês anterior ao de hoje; ajustar para o mês do passo 5). Rodar de novo o
+   mesmo mês M. Depois **fechar (UI Períodos) o período de um mês M+1 que ainda NÃO foi depreciado** (o bem ativo
+   precisa cobri-lo) e rodar a depreciação de M+1. (O servidor ignora o que já foi lançado **antes** do gate de período:
+   reexecutar M com o período fechado dá `0 lançada(s)`/`ignorada(s)`, não `PERIOD_NOT_OPEN` — por isso o gate se prova
+   com um mês novo.)
+   Resultado esperado: 1ª rodada de M `N lançada(s)`; 2ª `0 lançada(s)`/`ignorada(s)` (idempotente); a rodada de M+1 com
+   o período fechado mostra na tabela de falhas `PERIOD_NOT_OPEN` com o botão "Abrir períodos" que leva à aba Períodos;
+   o balancete (aba Balancete) refletiu a depreciação de M.
+   EVIDÊNCIA: [screenshot do resultado das 3 rodadas + screenshot do Balancete + Network dos `POST …/depreciation/run`]
 
 7. **Reconciliar**.
    Resultado esperado: o resultado `verificado(s)/reparado(s)/rascunho(s) recriado(s)` aparece; sem erro no console.
@@ -286,3 +290,50 @@ seguinte foi executado.
 - Rastreio: a nota `FE-INCR-FIXED-ASSETS` fica para o fold do dono.
 - Assinatura do executor: agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-04). A assinatura
   atesta a execução e a conferência da evidência; não substitui oráculo externo.
+
+## Execução 2026-11-11 (3ª) — AI tester — reexecução curta dos passos 2 e 6 do roteiro reescrito (IMO-U1 + débito `de67`)
+
+Autorização: dono, chat, 2026-11-11 (corrigir as lacunas dos runbooks H2 rodados no dia). Escopo: **só** conferir que o roteiro
+novo dos passos 2 e 6 se cumpre e que o fix IMO-U1 (sem "Ocultar" em linha do Anexo III) está na tela. Os demais passos não
+foram refeitos; o passo 9 (NF-e real) segue **BLOQUEADO**, externo. Sem desfecho geral do runbook.
+
+**Ambiente (isolado):** build de produção da branch `claude/fix-imo-u1-ocultar-anexo-f8eb71` (commit do fix `5d8d4020f`),
+front `127.0.0.1:3710`, servidor `127.0.0.1:3711`, **cópia privada** do `dev.db` (+wal) em pasta de scratchpad — o banco do dono
+não foi aberto para escrita. Unidade `seed-unit-presumido`, usuário `seed-presumido`, bens `BEM-C7-01`/`-02` já `Ativo` desde 01/10.
+Runner `scripts/runbook-tela.mjs`; evidência em `runbook-evidence/IMOBILIZADO-2026-11-11-3a/`. Servidores derrubados ao fim
+(3710/3711 livres).
+
+**Passo 2 — PASSOU** ([DOM](runbook-evidence/IMOBILIZADO-2026-11-11-3a/passo2-04-taxas-contagem-dom.png),
+[lista](runbook-evidence/IMOBILIZADO-2026-11-11-3a/passo2-01-anexo-sem-ocultar.png),
+[modal](runbook-evidence/IMOBILIZADO-2026-11-11-3a/passo2-02-modal-ocultar-custom.png),
+[oculta](runbook-evidence/IMOBILIZADO-2026-11-11-3a/passo2-03-custom-oculta-mostrar-ocultas.png), net em `passo2-net.txt`):
+```text
+[eval] {"linhas":222,"anexo":222,"anexoComOcultar":0,"custom":0,"customComOcultar":0}
+[net] POST /api/accounting/depreciation-rates -> 201  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","ncm":"8471","description":"Taxa CUSTOM 3a execucao","lifeYears":4,"annualRateBp":2500,"justification":"Roteiro H2 3a execucao 2026-11-11"}
+[net] POST /api/accounting/depreciation-rates/cmwcnnwfo0005cigw2bmyc6t2/hide -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw"}   (res.data.source = "CUSTOM", hiddenAt preenchido)
+[assert] "Taxa CUSTOM 3a execucao" presente=false (esperado ausente)      ← some da lista
+(marcar "Mostrar ocultas") GET …/depreciation-rates?unitId=…&includeHidden=true -> 200; texto "oculta" presente
+```
+Nenhum `POST …/hide` em linha do Anexo foi possível (0 botões) — o 404 com id interno `lp3-dep-anexo-100` não chega mais ao usuário.
+A contagem `custom: 0` do `[eval]` é da recarga final, em que a CUSTOM já estava oculta e "Mostrar ocultas" desmarcado.
+
+**Passo 6 — PASSOU** (roteiro novo: M = 2026-10 depreciado, M+1 = 2026-11 fechado e não depreciado;
+[rodada 1](runbook-evidence/IMOBILIZADO-2026-11-11-3a/passo6-01-rodada1-mes-M-2026-10.png),
+[rodada 2](runbook-evidence/IMOBILIZADO-2026-11-11-3a/passo6-02-rodada2-mes-M-idempotente.png),
+[fechar Nov](runbook-evidence/IMOBILIZADO-2026-11-11-3a/passo6-04-periodo-nov-fechado.png),
+[falhas](runbook-evidence/IMOBILIZADO-2026-11-11-3a/passo6-05-rodada-M1-periodo-fechado-PERIOD_NOT_OPEN.png),
+net em `passo6-net.txt`, `passo6c-net.txt`, `passo6d-net.txt`):
+```text
+[net] POST /api/accounting/fixed-assets/depreciation/run -> 200  req: {"unitId":"…","yearMonth":"2026-10"}
+   res: {"success":true,"data":{"yearMonth":"2026-10","posted":2,"skipped":0,"failed":[]}}
+[net] POST /api/accounting/fixed-assets/depreciation/run -> 200  req: {"unitId":"…","yearMonth":"2026-10"}
+   res: {"success":true,"data":{"yearMonth":"2026-10","posted":0,"skipped":2,"failed":[]}}
+[net] POST /api/accounting/periods/cmuw4yzmz01cocii0558nkumb/soft-close -> 200   (year 2026, month 11, status SOFT_CLOSED)
+[net] POST /api/accounting/fixed-assets/depreciation/run -> 200  req: {"unitId":"…","yearMonth":"2026-11"}
+   res: {"success":true,"data":{"yearMonth":"2026-11","posted":0,"skipped":0,"failed":[{"assetId":"cmw1qjr3t000bcit0l847f5v7","code":"PERIOD_NOT_OPEN","message":"Período contábil 2026/11 não está aberto para lançamentos."},{"assetId":"cmw1qjxju000dcit0mg4t1kjq","code":"PERIOD_NOT_OPEN", …}]}}
+```
+Tela: "Depreciação de 2026-11: 0 lançada(s), 0 ignorada(s), 2 com falha." com a tabela de falhas e o link "Abrir períodos".
+**Não conferido nesta reexecução:** a leitura do Balancete refletindo a depreciação de M (o roteiro dos 3 itens fica como
+está; o Balancete foi coberto na execução de 04/11).
+
+Assinatura: AI tester, agente claude-opus-5-5, sob autorização do dono (chat, 2026-11-11).
