@@ -36,3 +36,6 @@ filha. Nenhum desses toques mudava o resultado quando a resposta era a recomenda
 - 06/11: a resposta 3 (revisor só no vermelho) passa a valer só no vermelho de código (`revisor: obrigatório` do
   `classe-risco.mjs`), com teto de 3 rodadas, re-revisão só do diff novo, pré-existente em trilho próprio e a coluna
   destino no lote — [D-2026-11-06-REVISAO-CONVERGENCIA](D-2026-11-06-REVISAO-CONVERGENCIA.md).
+- 10/11: a resposta 2 (merge) muda — vermelho de código fora da lista dura (`lote: não` do `classe-risco.mjs`) entra pela
+  maestro com PASS do revisor, sem o lote do dono; a lista dura, o vermelho de texto, major e draft seguem no lote —
+  [D-2026-11-10-METODO-FABLE-5-2](D-2026-11-10-METODO-FABLE-5-2.md).

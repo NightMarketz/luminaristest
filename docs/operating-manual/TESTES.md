@@ -55,8 +55,9 @@ o PC travava na sabotagem do revisor, e o Windows registrou memória virtual ins
 | tela atrás de `withAuth` | `node scripts/runbook-tela.mjs <roteiro.json>` contra **build de produção** em `127.0.0.1` | — |
 | caso só verificável por oráculo externo | o runbook, só os passos EXT/DEC | — |
 
-**Quem roda o quê numa entrega de agente:** o executor roda os comandos com escopo enquanto desenvolve; a passada que
-vale como prova é a do `prova-runner` (bloco PROVA). Rodar a mesma confirmação final nos dois é repetição.
+**Quem roda o quê numa entrega de agente:** a sessão roda os comandos com escopo enquanto desenvolve; a passada que
+vale como prova é a do CI do PR (o `prova-runner` e o bloco PROVA foram aposentados em 2026-11-10,
+`docs/plano/decisoes/D-2026-11-10-METODO-FABLE-5-2.md`). Repetir localmente a confirmação que o CI já dá é repetição.
 
 ## 3. Mutação (só quando vale)
 

@@ -75,9 +75,14 @@ que não morde não é pronto.
    "limpeza" além do mínimo necessário pra fazer o teste-guarda passar.
    Você já verifica seu próprio trabalho por padrão; não adicione camadas
    extras de checagem.
-5. Qualquer decisão não coberta por este documento — mesmo que pareça
-   rotineira ou de baixo risco — deve ser documentada e a execução
-   pausada nesse ponto. Nunca escolha um caminho por conta própria.
+5. Decisão não coberta por este documento que seja fork de produto, de
+   lei, de arquitetura ou irreversível deve ser documentada e a execução
+   pausada nesse ponto. Escolha de rotina você faz e declara em
+   "Escolhas tomadas" no relatório e no PR (dono, 2026-11-10,
+   `D-2026-11-10-METODO-FABLE-5-2`). Na dúvida entre rotina e fork, é
+   fork. Campo do formulário com placeholder continua sendo pausa
+   imediata. As regras 1 e 3 não são rotina: arquivo fora da localização e
+   causa raiz diferente continuam sendo PARE e reporte.
 
 ### Sequência obrigatória
 1. Rode o teste-guarda (ou o comando-guarda, literal como está no
@@ -103,8 +108,8 @@ sessao-correcao".** Mesma forma aceita na `sessao-instrumentacao` (origem: #588/
 como guarda; a regra 1 continua valendo — se o fix do ambiente da suíte exigir arquivo fora da localização
 listada (ex.: `jest.config.js`, `ci.yml`), PARE e reporte.
 
-**Nível de cerimônia — [OPS-006]** (`.claude/skills/_OPERATING-GATES.md`): no nível leve, o teste-guarda
-chega no commit `test:` do mesmo PR, e esta sessão entra com o commit `fix:` em seguida.
+**Um PR só — [OPS-006]** (`.claude/skills/_OPERATING-GATES.md`; dono, 2026-11-10): o teste-guarda chega no
+commit `test:` do mesmo PR, e esta sessão entra com o commit `fix:` em seguida, na mesma sessão de trabalho.
 
 **Comandos do passo 1 e 3:**
 
