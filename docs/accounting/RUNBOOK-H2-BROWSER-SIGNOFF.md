@@ -144,6 +144,14 @@ Pré-condições (verificar antes de começar):
 > [`runbook-evidence/H2-2026-11-02/`](runbook-evidence/H2-2026-11-02/) e guarda o Network (`/api`: método, URL, status, corpo do
 > request e início do corpo da resposta) e o console (erro/aviso). O Network colado abaixo vem dessa captura, não do DevTools.
 
+> **P0 de ambiente — `ATTACHMENTS_DIR` absoluto (11/11).** O `DATABASE_URL` dos runbooks é um dev.db absoluto e compartilhado, mas o
+> `ATTACHMENTS_DIR` padrão é `<cwd>/storage/attachments` (`server/src/config/env.ts:167`): os `.txt` de ECD/ECF e os anexos vivem na
+> pasta da worktree que subiu o servidor. Trocar de worktree (ou removê-la) deixa jobs `EXPORTED` no banco sem arquivo, e o
+> «Baixar» do passo 19 c) devolve 404 («O arquivo deste artefato não está mais disponível…»; antes do fix, 500 por ENOENT).
+> **Antes de subir o servidor, defina `ATTACHMENTS_DIR` com caminho absoluto de uma pasta estável** (ex.: dentro do checkout
+> principal, ao lado do dev.db) e use a **mesma** pasta em toda execução contra o mesmo banco; ou use cópia privada do dev.db
+> **e** pasta própria. Job criado com outro `ATTACHMENTS_DIR` precisa ser regerado (passos 12/14).
+
 ## Passos
 
 1. Passada final pelas abas do painel de contabilidade (AP, AR, Dimensões, Conciliação,
@@ -1615,6 +1623,50 @@ Desfecho do passo 19 na reexecução de 11/11 (marcar UM):
 [x] FALHOU — item c) divergiu: "Baixar" ECD e ECF → 500 (ENOENT: os binários dos jobs de 04/11 não existem no storage deste ambiente); a), b) e d) conferem, e o 19-1 está corrigido; o sha256 só foi conferido no Balancete; o roteiro seguiu depois do c) (desvio escrito acima) *(marcado pelo agente AI tester, 11/11, pela evidência do bloco acima)*
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passo 19, reexecução 11/11): agente claude-sonnet-5-5, AI tester, sob autorização do dono (chat, 2026-11-11)
+
+> **Execução 11/11 (2ª) — passo 19 c) destravado (agente `claude-sonnet-5-5`, AI tester).** Branch `claude/fix-export-download-19c-45227f`
+> (fix do download sem binário: 404 de domínio no lugar do 500). **Ambiente:** build de produção do commit da branch
+> (`server`: `npm run build`, exit 0; `my-app`: `next build` com `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:4410/api`, exit 0), API em
+> `127.0.0.1:4410` e app em `127.0.0.1:3410` (3000/4100/5000 do dono intactas). **Cópia privada do dev.db** (só `dev.db`, `-wal` e
+> `-shm` copiados em bytes; `prisma migrate deploy` → «No pending migrations»), `ATTACHMENTS_DIR` absoluto dentro da worktree
+> (`server/storage/attachments`, ignorado pelo git), JWT de teste e `OPENAI_API_KEY=ci-dummy-openai-key`. O dev.db real não foi tocado.
+>
+> **Desvio de método (declarado):** os passos 12, 14 e 18 foram executados **por API** (login do `seed-real`, `Authorization: Bearer`),
+> não pela tela — o objetivo era só haver jobs com arquivo e uma revisão assinada para o c). Os corpos são os da execução de 04/11
+> (mesmos dados fictícios; o passo 17, contador `900` no signatário, foi o contador do cadastro `cmvwlx9sq…`). A tela foi usada no
+> 19 b) (montar/validar pacote) e no 19 c) (clicar em «Baixar»), pelo runner `scripts/runbook-tela.mjs`.
+>
+> ```text
+> 12. POST /api/accounting/sped/ecd/generate -> 201  (signerContactIds=[cmvwlx9sq000lcizs3z1p4zng], unidade seed-real, 2025)
+>     job cmwcmjakg0004ciskv83bdfom · EXPORT_SPED_ECD · EXPORTED · 53589 bytes · sha256 983aa26e954018272799a7cd17615356685de22547983234853dcc0246b9689f
+> 14. POST /api/accounting/sped/ecf/real/generate -> 201  (sócio SOCIA TESTE H2 REAL, qualif 01)
+>     job cmwcmjgs10005ciskoj3evimf · EXPORT_SPED_ECF_REAL · EXPORTED · 2123 bytes · sha256 8fe830b5e866142ced762a2e884ad086e761897e63762d5f0b4fd3c8923b1740
+> 18. POST /api/accounting/reviews -> 201 (par acima) · POST /api/accounting/reviews/cmwcmjjg80007ciskp22p1v2z/sign-off -> 200  status SIGNED_OFF
+>     (sem achados; revisor CONTADOR FICTICIO DE TESTE, SP-123456/O-1)
+> 19 b) tela, Compliance → Entrega ao contador → Montar pacote (Exercício 2025, contador CONTADOR H2 19 AI TESTER, ECD e ECF acima):
+>     POST /api/accounting/delivery/build -> 200  extraJobIds=["cmwck8j8v0006ciiwun7x46l9"] (Balancete pré-marcado pelo perfil, de 11/11 anterior)
+> 19 c) tela, «Baixar» nas três linhas do manifesto:
+>     GET /api/accounting/data-exchange/jobs/cmwcmjakg0004ciskv83bdfom/download?unitId=cmuw4z7zj02ehcii0st3unfr4 -> 200   (|0000|LECD|01012025|31122025|CORPOREOS …)
+>     GET /api/accounting/data-exchange/jobs/cmwcmjgs10005ciskoj3evimf/download?unitId=cmuw4z7zj02ehcii0st3unfr4 -> 200   (|0000|LECF|0012|08845676000198|CORPOREOS …)
+>     GET /api/accounting/data-exchange/jobs/cmwck8j8v0006ciiwun7x46l9/download?unitId=cmuw4z7zj02ehcii0st3unfr4 -> 404
+>        {"code":"NOT_FOUND","message":"O arquivo deste artefato não está mais disponível no armazenamento. Gere a exportação novamente."}
+> sha256 dos bytes baixados (mesmo GET, via API) × manifesto:
+>     ECD  983aa26e954018272799a7cd17615356685de22547983234853dcc0246b9689f · 53589 bytes  = manifesto ✔
+>     ECF  8fe830b5e866142ced762a2e884ad086e761897e63762d5f0b4fd3c8923b1740 · 2123 bytes   = manifesto ✔
+> ```
+>
+> A 3ª linha (Balancete `cmwck8j8…`, de outra worktree, arquivo ausente neste `ATTACHMENTS_DIR`) é a **prova do fix**: onde antes
+> havia 500 por ENOENT com caminho absoluto no log, agora há 404 `NOT_FOUND` legível, sem caminho. Não é divergência do roteiro
+> (o arquivo realmente não existe neste ambiente; vale a pré-condição P0 acima). Prints e texto:
+> [`passo19c-01-manifesto.png`](runbook-evidence/H2-2026-11-11b/passo19c-01-manifesto.png),
+> [`passo19c-01-manifesto.txt`](runbook-evidence/H2-2026-11-11b/passo19c-01-manifesto.txt),
+> [`passo19c-02-apos-baixar.png`](runbook-evidence/H2-2026-11-11b/passo19c-02-apos-baixar.png). Grau: **verificado**. O 19 d)
+> («Registrar despacho») não foi repetido nesta execução; vale o do bloco anterior de 11/11. O passo 16 não foi tocado (F-16-e).
+
+Desfecho do passo 19 c) na 2ª execução de 11/11 (marcar UM):
+[x] PASSOU — «Baixar» ECD e ECF → 200, sha256 igual ao manifesto; com a pré-condição P0 (`ATTACHMENTS_DIR` absoluto) cumprida; a), b) e d) herdados do bloco anterior de 11/11 *(marcado pelo agente AI tester, 11/11, pela evidência do bloco acima)*
+
+Assinatura do executor (passo 19 c), 2ª execução de 11/11): AI tester, agente claude-sonnet-5-5, sob autorização do dono (chat, 2026-11-11)
 
 ### [EMENDA 2026-09-29] Passo 20 — Baixas por retorno bancário (FE-INCR-BANK-SETTLEMENT)
 
