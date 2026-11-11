@@ -66,6 +66,8 @@ interface Opts {
   /** GOV-CONTADOR: policy real no lugar do dublê, e a atribuição ACTIVE por chamada (com/sem tx). */
   policy?: IAccountingPolicy;
   findActive?: (s: unknown, tx?: unknown) => Promise<ActiveAccountant | null>;
+  /** INV F-37.1: status da revisão por chamada (com/sem tx) — a corrida sem concorrência real. */
+  reviewStatusByCall?: (tx?: unknown) => string;
 }
 
 function build(opts: Opts = {}) {
@@ -73,7 +75,11 @@ function build(opts: Opts = {}) {
   const findings = opts.findings ?? [];
   const auditAppend = jest.fn(async (_tx: unknown, _scope: unknown, _input: { eventType: string; payload: Record<string, unknown> }) => undefined);
   const create = jest.fn(async (d: Record<string, unknown>) => reviewRow({ ...d, id: 'r-new' }));
-  const findById = jest.fn(async () => (review ? { ...review, findings } : null));
+  const findById = jest.fn(async (_s?: unknown, _id?: string, tx?: unknown) =>
+    review
+      ? { ...review, ...(opts.reviewStatusByCall ? { status: opts.reviewStatusByCall(tx) } : {}), findings }
+      : null,
+  );
   const findByJobs = jest.fn(async (..._a: unknown[]) => opts.existingByJobs ?? null);
   const update = jest.fn(async (_s: unknown, _id: string, d: Record<string, unknown>) => reviewRow({ ...review, ...d }));
   const createFinding = jest.fn(async (d: Record<string, unknown>) => findingRow({ ...d, id: 'f-new' }));
@@ -355,6 +361,17 @@ describe('AccountingReviewService', () => {
     expect(r.status).toBe('REJECTED');
     expect(update.mock.calls[0][2]).toMatchObject({ status: 'REJECTED', closeReason: 'saldo não bate' });
     expect(auditAppend.mock.calls[0][2]).toMatchObject({ eventType: 'review.rejected' });
+  });
+
+  // INV F-37.1 (faixa 4): a assinatura que cruza com a rejeição não pode ser sobrescrita. Sem
+  // concorrência real (o Windows serializa o SQLite): o dublê devolve OPEN na leitura de fora da tx
+  // e SIGNED_OFF na releitura com o handle da tx — o que um signOff commitado no meio produziria.
+  it('reject: revisão assinada entre o preflight e a tx → 409 REVIEW_NOT_OPEN, sem update nem evento (gate dentro da tx)', async () => {
+    const { service, update, auditAppend } = build({ reviewStatusByCall: (tx) => (tx ? 'SIGNED_OFF' : 'OPEN') });
+    await expect(service.reject(scope, 'r-1', { unitId: 'unit-1', reason: 'saldo não bate' }))
+      .rejects.toMatchObject({ errorCode: 'REVIEW_NOT_OPEN' });
+    expect(update).not.toHaveBeenCalled();
+    expect(auditAppend).not.toHaveBeenCalled();
   });
 
   // ------------------------------------------- GOV-CONTADOR (BRIEF item 12, 17e) — sign-off/reject governados
