@@ -1,5 +1,9 @@
 # Contrato de retorno de subagente
 
+> **APOSENTADO em 2026-11-10** (dono, `docs/plano/decisoes/D-2026-11-10-METODO-FABLE-5-2.md`). O retorno com bloco
+> PROVA, o agente `executor` e o `prova-runner` deixam de ser etapa: a prova de uma entrega é o CI do PR. Este
+> texto fica como registro; não grave retorno novo em `.claude/retornos/`.
+
 > **Isto é tráfego entre agentes, não reporte humano.** Denso de propósito. A metade humana do que um
 > subagente descobre é outro artefato — `REPORTE-HUMANO-FORMAT.md`.
 
