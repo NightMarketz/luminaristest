@@ -23,7 +23,9 @@ export interface AlertPayload {
     // BE-INCR-RAG-DOCUMENTOS RAG-PR-A item 9 (caminho 2).
     | 'vec_orphan_sweep'
     // EFX F-19.1: passo da purga LGPD que falhou (os outros seguem no mesmo ciclo).
-    | 'purge_deleted_records';
+    | 'purge_deleted_records'
+    // EFX F-18.2: a varredura de job de exportação preso em PROCESSING.
+    | 'data_exchange_stale_sweep';
   event: 'reconcile_summary' | 'generation_failed' | 'job_failed' | 'uncaught_exception';
   timestamp: string; // ISO
   [key: string]: unknown; // free-form fields per trigger (failed, blocked, jobId, kind…)
