@@ -14,6 +14,7 @@ jest.mock('../../../../lib/attachmentStorage', () => ({
   saveFile: jest.fn(async () => ({ storageKey: 'u/unit/job/rand_export.csv', sanitizedName: 'export.csv' })),
   resolveReadPath: jest.fn((key: string) => `/abs/${key}`),
   deleteFile: jest.fn(async () => undefined),
+  fileExists: jest.fn(async () => true),
 }));
 import * as storage from '../../../../lib/attachmentStorage';
 import { legalParamsSemente } from '@test/helpers/legalParams';
@@ -224,6 +225,21 @@ describe('DataExchangeExportService (BE-INCR-6)', () => {
     expect(dl.mimeType).toBe('text/csv');
 
     await expect(svc.getArtifactForDownload(scope, 'nope')).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it('devolve NotFoundError legível (sem caminho absoluto) quando o binário do job sumiu do disco', async () => {
+    const { repo } = makeRepo();
+    const svc = new DataExchangeExportService(makeReports(), new AccountingPolicy(), repo, audit, makeReconciliationReader(), makeJournalEntryRepo(), makeAccountRepo(), makeTaxReader(), makeIssReader(), legalParamsSemente, makeIbsCbsReader(), makeEconomiaReader());
+    await svc.export(scope, { kind: 'EXPORT_TRIAL_BALANCE', format: 'csv', unitId: 'unit-1' });
+
+    // H2 19 c): ATTACHMENTS_DIR mudou / worktree removida → storageKey no banco, arquivo ausente.
+    const fileExists = (storage as unknown as { fileExists: jest.Mock }).fileExists;
+    fileExists.mockResolvedValueOnce(false);
+
+    const err = await svc.getArtifactForDownload(scope, 'job-1').catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(NotFoundError);
+    expect((err as NotFoundError).message).not.toContain('/abs/');
+    expect((err as NotFoundError).message).not.toContain('u/unit/job');
   });
 
   it('rejects export when the policy denies (no actor)', async () => {
