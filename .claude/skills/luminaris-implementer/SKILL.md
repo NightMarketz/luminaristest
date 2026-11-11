@@ -255,3 +255,9 @@ Ação: leia `.claude/skills/luminaris-reviewer/SKILL.md` e valide os arquivos l
 - **[IMPL-005] Não se auto-aprove** — você não é o revisor; entregue ao `luminaris-reviewer` em vez de declarar APROVADO
 - **Não invente paths** — se um import não existe, encontre o path correto com Grep
 - **Não misture lógica entre camadas** — business logic no service, validação no controller, acesso a dados no repository
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Execute o plano inteiro: item do plano não entregue é seu, não follow-up. O que aparecer fora do plano vai à caixa antes do relatório.

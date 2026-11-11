@@ -150,3 +150,9 @@ cd server && npx jest features/analytics/kpis/<category> --passWithNoTests
 - Não leia params com `params || {}` nem destructure com default `= {}` — o TS infere `{}` e apaga os tipos dos campos; use `params.<field> ?? default` com cast explícito
 - Não esqueça de registrar o processor/template no `index.ts` da categoria (e a categoria no `kpis/index.ts`) — KPI não-registrado é órfão (tsc verde, mas o engine não o encontra)
 - Não entregue o processor sem o teste com suíte Empty Safety — rows vazios devem dar `0` finito, nunca `NaN`
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

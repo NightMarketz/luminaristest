@@ -51,6 +51,17 @@ Risco = P(erro) × custo do erro **não pego**. Procedimento:
 3. Ordene "ninguém" primeiro; gaste o esforço nessa ordem.
 4. Escreva o risco-silencioso nº 1, por extenso, na entrega final.
 
+### Lacuna achada não fica para trás
+
+Vale para toda skill, agente e sessão: o modelo tende a terminar com débito que "não tocou".
+
+1. O que é da sua tarefa você termina: caso que o pedido cobre, teste que o seu diff exige, erro que você introduziu.
+   Nada disso é "follow-up".
+2. O que está fora do escopo vai, na hora, a uma fila que alguém lê e despacha (no Luminaris, `scripts/lacunas.mjs`,
+   lida pelo orquestrador), com `arquivo:linha` e evidência. Não corrija fora do escopo; também não deixe só no relatório.
+3. Subagente sem escrita devolve as lacunas numa seção própria; quem despachou registra.
+4. A 1ª linha da entrega diz quantas lacunas foram registradas, ou 0.
+
 ---
 
 ## Os 6 passos de instalação

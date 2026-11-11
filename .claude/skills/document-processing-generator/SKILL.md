@@ -116,3 +116,9 @@ cd server && npx tsc --noEmit
 - Não busque RAG cross-tenant — a ownership check por `userId` antes do Qdrant é barreira de segurança obrigatória; passar `userId` + `docIds` do dono a `vectorRepository.search()` é inegociável
 - Não deixe o documento preso em `PROCESSING` — todo branch (sucesso e exceção) move para `COMPLETED` ou `ERROR`
 - Não use `KNOWLEDGE_BASE` para XLSX/CSV tabular — esse purpose pula a extração estruturada (ver `structured-data-generator`)
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

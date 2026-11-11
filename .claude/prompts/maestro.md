@@ -33,8 +33,8 @@ CICLO
      (D-2026-11-06-REVISAO-CONVERGENCIA). Rodada 1: o PR inteiro. Rodadas 2 e 3: ponha no prompt `rodada: <n>`,
      o SHA da rodada anterior e a lista de achados dela (do seu resumo, ou do resumo de ontem). Sem PASS na 3ª,
      não despache a 4ª: o PR vai ao lote marcado "repensar a abordagem". Se não deu para despachar, o PR vai ao
-     lote marcado **sem revisor**; não some. Achado `P` (pré-existente) não segura o PR: a linha `[ABERTO]` que o
-     revisor propôs vai ao resumo, e a correção espera autorização própria. Nunca mergeie vermelho.
+     lote marcado **sem revisor**; não some. Achado `P` (pré-existente) não segura o PR: o revisor o põe na caixa e
+     ele segue pelo passo 3b (OPS-007). Nunca mergeie vermelho.
    - Nada de comentário público em PR; contexto vai no resumo.
 
 3. Fila. Nó entra se: estado `ready`/`inflight`, `autorizacao` com 'executa' do dono, BRIEF ratificado, nenhum

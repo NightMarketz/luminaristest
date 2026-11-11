@@ -79,3 +79,17 @@ destino`. Nenhuma lacuna aberta sai do dia sem destino: ou tem sessão, ou PR, o
 - Fork de verdade continua do dono; o maestro não ratifica BRIEF nem escolhe produto, lei ou arquitetura.
 - A moratória de aparato de auditoria (`CLAUDE.md` §⛔): a caixa é fila de trabalho, não rodada de descoberta. Sessão
   nenhuma sai **procurando** lacuna; registra a que apareceu no caminho da tarefa.
+
+## Emenda de 11/11: em todo lugar (OPS-007)
+
+Dono, chat, 2026-11-11: "Já atualiza todas as nossas skills com isso, sessão de execução, sessão de gap map,
+planejamento, tudo. Então, porque isso é uma característica do seu modelo. Então, em todos os lugares vai acontecer."
+
+- A regra vira **OPS-007** em `.claude/skills/_OPERATING-GATES.md` e vale para toda skill, agente, subagente e sessão.
+- Toda `SKILL.md` de `.claude/skills/` e os 3 agentes de `.claude/agents/` ganham a seção "Lacunas e débitos (OPS-007)",
+  com uma linha pelo papel (gerador, orquestrador, implementador, revisor, domínio, borda, auditoria, fronteira, log).
+  Subagente sem Bash devolve as lacunas numa seção `Lacunas`; quem despachou põe na caixa.
+- **Achado `P` (pré-existente) do revisor:** antes ia ao resumo como linha `[ABERTO]` proposta e esperava autorização
+  própria (D-2026-11-06-REVISAO-CONVERGENCIA, dono, 06/11). Agora o revisor o põe na caixa e o maestro o despacha pelo
+  passo 3b. O trilho continua separado do PR revisado, que segue sem FAIL por ele.
+- Versão portável no `docs/operating-manual/PORTABLE-GUIDE.md`.

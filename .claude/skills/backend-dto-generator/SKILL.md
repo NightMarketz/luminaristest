@@ -143,3 +143,9 @@ cd server && npx tsc --noEmit
 - Não redefina o objeto do Update manualmente — derive de `Create<Resource>Schema.partial()` para não divergir
 - Não esqueça o type guard `is<Resource>Input` com `safeParse` — é o que o controller/service usam para narrowing seguro
 - Não omita o companion `models/<Resource>.model.ts` com `interface I<Resource>` — é a fonte do tipo de domínio (`IUser`, enums) que policy/service importam
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

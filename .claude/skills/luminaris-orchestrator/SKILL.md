@@ -249,3 +249,9 @@ vault `docs/plano/` (ORCH-007). O orquestrador NÃO escreve — quem fecha o loo
 - **NÃO assuma nomes de arquivo** — especifique no plano exatamente o que cada skill gerará
 - **NÃO pule a leitura do SKILL_MATRIX.md** — o plano deve ser baseado no estado atual das skills
 - Se a tarefa claramente não mapeia para nenhuma skill existente, informe o usuário e sugira qual skill mais próxima criar
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Todo artefato que o plano exige entra no plano (nenhuma camada "fica para depois"). Lacuna que aparece e não cabe no plano autorizado vai à caixa como `feature` ou `fork`; o plano não termina com "follow-ups" soltos.

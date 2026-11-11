@@ -312,3 +312,9 @@ Required check (frontend): `cd my-app && npx vitest run`. Arquivos: `my-app/**/_
 - **Não omita a suíte Empty Safety em KPI processor** — rows vazios devem render `0` finito, nunca `NaN`/`Infinity`; é a regressão mais comum
 - **Não asserir `previousValue === 0` sem dados no período anterior** — o contrato é `undefined`; aceite `undefined` ou `number`
 - **Não espione o `logger` para provar uma linha de log** — `jest.spyOn(logger, 'warn')` vê a chamada sem o contexto que o `formatLog` injeta; espione `console`, faça `JSON.parse` e valide com `LogEntrySchema` (`TEST-008`)
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

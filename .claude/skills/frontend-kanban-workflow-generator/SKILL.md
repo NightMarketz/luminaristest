@@ -103,3 +103,9 @@ Verificação visual (contrato §6): build de produção, arrastar um card persi
 - **Não renderize todas as etapas de todos os pais** — filtre pelo pai ativo (senão colunas duplicadas/vazias).
 - **Não faça `updateRecord` simples quando a transição tem efeitos colaterais** — use o endpoint de transição atômico (`backend-workflow-transition-generator`).
 - **Não fixe `max-w-*`** no board — herde o container full-height.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

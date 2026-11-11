@@ -13,7 +13,7 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
 - **Critério reuse-vs-bespoke:** `.claude/skills/_REUSE-CRITERION.md`
 - **Observabilidade (log, nível, PII, alerta) →** `docs/adr/ADR-OBSERVABILIDADE.md`
 - **Scaffolding (nomes/paths por camada):** `docs/claude-skills/GENERATION_CONTRACTS.md`
-- **Disciplina operacional do agente (OPS-001..006):** `.claude/skills/_OPERATING-GATES.md`
+- **Disciplina operacional do agente (OPS-001..007; OPS-007 = lacuna achada vai à caixa do maestro):** `.claude/skills/_OPERATING-GATES.md`
   (versão portável p/ outros projetos: `docs/operating-manual/PORTABLE-GUIDE.md`;
   política de raciocínio T1–T8: `docs/operating-manual/REASONING-TRAITS.md`;
   tuning por modelo — Opus 5.5 ativo: delegar pouco, sem scaffolding de verificação, escopo

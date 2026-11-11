@@ -86,3 +86,9 @@ cd my-app && npx tsc --noEmit
 - (**SYNC-006**) Não esqueça de desempacotar paginação: `{ data: T[]; pagination: { page, limit, totalCount, totalPages } }`; nem trate uma resposta envelopada `{ success, data }` como `T` cru.
 - (**SYNC-003**) Não assuma que os endpoints são simétricos nem que o verbo é óbvio — verifique path **e** método HTTP em `routes/<resource>.ts` explicitamente.
 - (**SYNC-001 / SYNC-002**) Não deixe o frontend e o DTO divergirem — campo a mais (ou a menos), tipo errado ou opcionalidade diferente é drift de contrato.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

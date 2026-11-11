@@ -88,3 +88,9 @@ Artefatos que você prepara ficam onde o dono pediu; secrets ficam como **placeh
 - Custo recorrente novo (serviço gerenciado, ex.: Qdrant cloud) é fork aberto do ADR — vai
   para o questionário, não para o checklist.
 - Toda afirmação sobre o artefato de deploy carrega evidência lida do arquivo (CBM-001).
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Pré-condição faltando no ambiente ou no código, que não é passo humano, vai à caixa como `defeito` ou `debito`; o que depende do dono, do contador ou de dado externo vai como `gate`.

@@ -112,3 +112,9 @@ cd my-app && npx tsc --noEmit
 - **Não passe um objeto `value` literal sem `useMemo`** — `<Ctx.Provider value={{ ... }}>` recria o objeto a cada render e re-renderiza todos os consumidores. Memoize o value e estabilize handlers com `useCallback`.
 - Não faça fetch no corpo do render — só em `useEffect` (com cleanup), e via service layer (não `apiClient`/`fetch` direto).
 - Não esconda loading/error — exponha `isLoading`/`error` no value quando o provider busca dados.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

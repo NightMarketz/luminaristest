@@ -95,3 +95,9 @@ cd server && npx tsc --noEmit
 - Não omita `canListAll` nem deixe de checar `Role.ADMIN` nele — listar todos do tenant é privilégio admin
 - Não esqueça o ramo admin no ownership: `actor?.id === ownerId || actor?.role === Role.ADMIN` (só dono OU admin)
 - Não deixe a classe sem `implements I<Resource>Policy` — a interface é o contrato injetado no service
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

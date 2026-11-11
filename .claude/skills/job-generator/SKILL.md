@@ -111,3 +111,9 @@ cd server && npx tsc --noEmit
 - Não deixe um job periódico sem agendamento registrado no boot — declarar o cron/intervalo, senão o job nunca roda
 - Não use Prisma direto sem documentar o bypass — anote no topo que pula factory/validação/rules/policy (aceitável em seed/job, mas explícito)
 - Não escreva seed de volume idempotente sem cleanup dos `__demo` anteriores — re-rodar tem que ser seguro; sem isso, duplica
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

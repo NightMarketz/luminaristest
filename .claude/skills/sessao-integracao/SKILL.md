@@ -98,7 +98,7 @@ do estritamente exigido pela resolução de conflitos.
 
 ## Notas de operação neste repo (aditivas — não alteram as regras acima)
 
-**Achado fora de escopo vai à caixa do maestro, não morre no relatório** (dono, chat, 2026-11-11 —
+**Achado fora de escopo vai à caixa do maestro, não morre no relatório** — OPS-007 (dono, chat, 2026-11-11 —
 `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`). A regra de não corrigir o que está fora do escopo
 continua; muda o destino do achado:
 - O que é da sua tarefa você resolve antes de fechar: caso que a spec pede, teste que o seu diff exige, erro que o seu
