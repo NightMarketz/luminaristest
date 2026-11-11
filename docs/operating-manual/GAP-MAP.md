@@ -312,6 +312,21 @@ PR vermelho delas vai ao lote do dono.
 | **F1-N2 (INV F-42.1, controle da isenção de pacote)** — a isenção de venda só de pacote na devolução não tem teste: removida, os 71 testes seguem verdes (revisor do #1178). Só teste. Pai: #1178 | 2 | D3 | nenhum (teste-guarda a escrever) | [ABERTO] | `git grep -n "F1-N2" -- server/src my-app` → vazio |
 | **F1-N3 (BRD F-73.2, 35 ocorrências)** — 35 `catch` do front achados pelo script da ficha BRD-73 e não triados; corrigir os que engolem falha visível ao usuário, registrar os intencionais. Pai: #1206 | 3 | D3 | nenhum (teste-guarda a escrever) | [ABERTO] | `git grep -n "F1-N3" -- server/src my-app` → vazio |
 
+## Estruturas implícitas — faixas 3 e 4 (2026-11-11)
+
+Achados das faixas 3 (zona proibida, D4/D5, temas F e G) e 4 (corrida) da auditoria de estruturas implícitas, aprovados **um ID por
+vez** pelo dono. Triagem, estado e a lista dos 25 IDs aprovados: `docs/estruturas-implicitas/CORRECOES.md` §Aprovados (dia 3).
+**Autorização:** dono, questionário, 2026-11-11 (o rótulo marcado de cada ID está no `CORRECOES.md`). Na faixa 3, a ZP fica liberada
+só na execução daquele ID. A faixa 4 só anda com teste-guarda determinístico, nunca com concorrência real, porque o Windows serializa
+o SQLite. Mesmo fluxo da seção da faixa 1: `sessao-instrumentacao` + `sessao-correcao`, um PR por linha. O PR de correção não mexe
+nesta seção: a linha entra aqui em PR só de docs, quando o PR de correção abre.
+
+| Lacuna | Nível | D | Instrumento | Status | Comando que prova |
+|---|---|---|---|---|---|
+| **INV F-27.1** — `convertLead` confere `Converted` fora da tx; a tela só barra o duplo clique numa aba. Ficha: `INVENTARIO-INV.md` | 2 | D3 | teste-guarda `server/src/features/crm/services/__tests__/CrmPipelineService.test.ts` › "INV F-27.1: lead convertido por outra chamada entre a leitura e a tx → ValidationError, sem conta nem contato" (vermelho antes do fix: `Received promise resolved instead of rejected`); corrigido: releitura do status no repositório da tx (`withTransaction(tx).findDataById`) antes de criar conta e contato | [EM PR #1230] | `cd server && npx jest src/features/crm/services/__tests__/CrmPipelineService.test.ts --selectProjects unit -t "INV F-27.1"` |
+| **INV F-37.1** — `reject` da revisão contábil confere o status fora da tx; assinatura que cruza vira `REJECTED`. Ficha: `INVENTARIO-INV.md` | 2 | D3 | teste-guarda Jest `server/src/features/accounting/services/__tests__/AccountingReviewService.test.ts` › "reject: revisão assinada entre o preflight e a tx → 409 REVIEW_NOT_OPEN" (dublê OPEN fora da tx, SIGNED_OFF com `tx`; vermelho antes do fix: `Received promise resolved instead of rejected`); corrigido: releitura com `tx` + `assertOpen` dentro do `runTransaction` do `reject` | [EM PR #1231] | `cd server && npx jest src/features/accounting/services/__tests__/AccountingReviewService.test.ts --selectProjects unit` |
+| **SM F-16.1** — estorno lê o status fora da tx e grava `Reversed` sem status no `where`; conciliação na janela fica `Reversed` com extrato `MATCHED`. Ficha: `INVENTARIO-SM.md` | 3 | D3 | teste-guarda Jest `server/src/features/accounting/services/__tests__/reverseEntryStatusCas.integration.test.ts` › "conciliação entre a leitura e a tx: o estorno recusa (409) e não grava Reversed sobre Reconciled" (spy em `findById` grava `Reconciled` antes de devolver `Posted`; vermelho antes do fix: `Received promise resolved instead of rejected`); corrigido: `JournalEntryRepository.setStatus(…, expectedStatus)` com status no `where`, 0 linhas ⇒ 409 | [EM PR #1232] | `cd server && npx jest src/features/accounting/services/__tests__/reverseEntryStatusCas.integration.test.ts --selectProjects integration --runInBand` |
+
 ## Transversais
 
 | Lacuna | Instrumento real | Status | Comando que prova |
