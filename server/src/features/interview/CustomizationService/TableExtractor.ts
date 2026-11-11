@@ -1,3 +1,4 @@
+import { DEFAULT_INTERVIEW_LOCALE, INTERVIEW_TEXT, type InterviewLocale } from '../models/interviewText';
 import { logger } from '../../../lib/logger';
 import { ICustomizableTable } from '../models/InterviewTypes';
 import type { ISchemaField } from '../../../features/dynamicTables/models/DynamicTable.model';
@@ -19,7 +20,7 @@ export class TableExtractor {
   /**
    * Extrai tabelas do preset real usando o PresetService
    */
-  public extractTablesFromRealPreset(preset: IPreset): ICustomizableTable[] {
+  public extractTablesFromRealPreset(preset: IPreset, locale: InterviewLocale = DEFAULT_INTERVIEW_LOCALE): ICustomizableTable[] {
     logger.info(`[TableExtractor] Extraindo tabelas reais do preset: ${preset.key}`);
     
     if (!preset.tables) {
@@ -39,7 +40,7 @@ export class TableExtractor {
 
         // Deriva o nome e descrição a partir do schema da tabela
         const name = (ts.label as string | undefined) || this.formatTableName(tableKey);
-        const description = (ts.description as string | undefined) || `Tabela de ${name}`;
+        const description = (ts.description as string | undefined) || INTERVIEW_TEXT[locale].tableFallbackDescription(name);
 
         // Extrai corretamente os campos do schema da tabela
         let fields: Array<{ name: string; label: string; type: string; required: boolean; hidden: boolean }> = [];
