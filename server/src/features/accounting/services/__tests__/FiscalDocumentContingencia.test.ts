@@ -36,14 +36,6 @@ import { FiscalNumberVoidService } from '../FiscalNumberVoidService';
 import { DfeAssinaturaResolver } from '../DfeAssinaturaResolver';
 import type { ResolveForEmissionResult } from '../PscCredentialService';
 import type { AccountingScope } from '../../scope/AccountingScope';
-import { DfeTransporteError, type DfeCallContext, type EmissaoResult } from '../../dfe/DfeEmissorPort';
-
-/** A SEFAZ responde "NF-e não consta na base" (217): a original nunca chegou. */
-const naoRecebida = (chave: string): EmissaoResult => ({
-  status: 'PROCESSING',
-  partnerRef: chave,
-  errors: [{ code: '217', message: 'NF-e nao consta na base de dados da SEFAZ' }],
-});
 
 /**
  * X10a PR-9 — contingência off-line da NFC-e (BE-INCR-NFCE-EMENDA-1 E-9, F-NFCE-E1-5 b; D-2026-10-29-X10A-PR7-9-FORKS
@@ -179,9 +171,6 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
   let cont: MemCont;
   let contingencia: NfceContingenciaService;
   let voidService: { inutilizarOrfa: jest.Mock };
-  // Consulta da chave original (dfeEnvio, antes da contingência). Padrão: a consulta chega à SEFAZ falsa. Fora do ar
-  // (foraDoAr) a nota nunca foi recebida, então a consulta responde 217 (caso (b)). Os testes de (c) sobrescrevem isso.
-  let consultaSpy: jest.SpyInstance;
   let agora = new Date('2026-10-29T15:00:00Z');
   // O assinador local da unidade (AL-PR-3): sem dispositivo por padrão; o teste da órfã põe um caixa falso.
   let localDaUnidade: () => Promise<unknown>;
@@ -266,15 +255,8 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
     emission.setContingencia(contingencia);
     lifecycle.setContingenciaHandler(emission.contingenciaHandler());
     contingencia.setResultApplier((s, d, r) => lifecycle.aplicarResultadoDoEnvio(s, d, r));
-    const consultarReal = emissor.consultar.bind(emissor);
-    consultaSpy = jest.spyOn(emissor, 'consultar').mockImplementation(async (chave: string, ctx?: DfeCallContext) =>
-      sefaz.controle.foraDoAr ? naoRecebida(chave) : consultarReal(chave, ctx),
-    );
   });
-  afterEach(() => {
-    jest.useRealTimers();
-    consultaSpy.mockRestore();
-  });
+  afterEach(() => jest.useRealTimers());
 
   const eventos = () => audit.append.mock.calls.map((c) => (c[2] as { eventType: string }).eventType);
   const autorizacoes = (desde = 0) => sefaz.controle.chamadas.slice(desde).filter((c) => c.servico === 'NFeAutorizacao4').length;
@@ -366,7 +348,6 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
 
   it('decisão 6: a normal chegou e foi autorizada (resposta perdida) ⇒ depois da de contingência autorizada, 110112 apontando-a ⇒ CANCELLED_SUBST', async () => {
     sefaz.controle.perderRespostaAutorizacao = true;
-    consultaSpy.mockResolvedValueOnce(naoRecebida('')); // a consulta antes da contingência ainda não vê a normal (corrida da órfã)
     const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
     expect(view.status).toBe('CONTINGENCY');
     sefaz.controle.perderRespostaAutorizacao = false;
@@ -385,7 +366,6 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
 
   it('decisão 6: a de contingência ainda não autorizada ⇒ a órfã espera (o 110112 sem a substituta na base daria 912)', async () => {
     sefaz.controle.perderRespostaAutorizacao = true;
-    consultaSpy.mockResolvedValueOnce(naoRecebida(''));
     await emission.emit(SCOPE, 'sale-1', 'NFCE');
     sefaz.controle.perderRespostaAutorizacao = false;
     sefaz.controle.cStatAutorizacao = '704'; // a de contingência volta rejeitada
@@ -406,7 +386,6 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
 
   it('defeito (decisão 6): a órfã é consultada pelo assinador local da unidade — o transporte do boot (sem dispositivo) não pode barrar o 110112', async () => {
     sefaz.controle.perderRespostaAutorizacao = true;
-    consultaSpy.mockResolvedValueOnce(naoRecebida(''));
     const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
     expect(view.status).toBe('CONTINGENCY');
     sefaz.controle.perderRespostaAutorizacao = false;
@@ -428,7 +407,6 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
 
   it('decisão 6: o 110112 recusado vira pendência visível no documento (contingencia_orfa_falhou)', async () => {
     sefaz.controle.perderRespostaAutorizacao = true;
-    consultaSpy.mockResolvedValueOnce(naoRecebida(''));
     const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
     sefaz.controle.perderRespostaAutorizacao = false;
     await contingencia.tick(PASSADO()); // a de contingência sai autorizada
@@ -568,48 +546,5 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
     expect(await contingencia.tick(PASSADO())).toMatchObject({ transmitidas: 1 });
     const doc = await emission.getById(SCOPE, view.id);
     expect(doc).toMatchObject({ status: 'AUTHORIZED', contingencia: { qrCode: expect.stringMatching(/\|3\|2\|/) } });
-  });
-
-  // --- Consulta da chave original ANTES da contingência (sefaz_timeout de NFC-e com tpEmis=1). Sem ela, a nota
-  // já autorizada na SEFAZ (resposta perdida) nascia duplicada com chave tpEmis 9. ---
-
-  it('consulta (a): a original já autorizada na SEFAZ (resposta perdida) ⇒ AUTHORIZED com o protocolo dela, sem chave tpEmis 9', async () => {
-    sefaz.controle.perderRespostaAutorizacao = true;
-    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
-    sefaz.controle.perderRespostaAutorizacao = false;
-    const doc = await emission.getById(SCOPE, view.id);
-    expect(doc).toMatchObject({ status: 'AUTHORIZED', numero: '1', chaveOuCodigo: payloadDe(view.id).infNFe.Id.slice(3) });
-    expect(payloadDe(view.id).infNFe.ide.tpEmis).toBe(1);
-    expect(repo.attempts.get(view.id)).toHaveLength(1);
-    expect(cont.estados.size).toBe(0);
-    expect(cont.orfas).toHaveLength(0);
-    expect(consultaSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('consulta (b): a original não consta na SEFAZ (217) ⇒ entra na contingência como antes, com chave tpEmis 9', async () => {
-    sefaz.controle.foraDoAr = true;
-    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
-    expect(consultaSpy).toHaveBeenCalledTimes(1);
-    expect(view).toMatchObject({ status: 'CONTINGENCY', numero: '2', currentAttemptNo: 2 });
-    expect(payloadDe(view.id, 2).infNFe.ide.tpEmis).toBe(9);
-  });
-
-  it('consulta (c): a consulta falha (SEFAZ sem resposta) ⇒ NÃO entra na contingência; a nota fica SENT para reconsulta pela mesma chave', async () => {
-    sefaz.controle.foraDoAr = true;
-    consultaSpy.mockRejectedValueOnce(new DfeTransporteError('sefaz_timeout', 'consulta sem resposta'));
-    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
-    expect(view).toMatchObject({ status: 'SENT', numero: '1', currentAttemptNo: 1 });
-    expect(payloadDe(view.id).infNFe.ide.tpEmis).toBe(1);
-    expect(cont.estados.size).toBe(0);
-    expect(cont.orfas).toHaveLength(0);
-  });
-
-  it('consulta (c): resultado inconclusivo (cStat fora de 217 e de autorizada) ⇒ NÃO entra na contingência; fica SENT', async () => {
-    sefaz.controle.foraDoAr = true;
-    consultaSpy.mockResolvedValueOnce({ status: 'PROCESSING', partnerRef: '', errors: [{ code: '999', message: 'cStat inesperado' }] });
-    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
-    expect(view).toMatchObject({ status: 'SENT', numero: '1', currentAttemptNo: 1 });
-    expect(payloadDe(view.id).infNFe.ide.tpEmis).toBe(1);
-    expect(cont.estados.size).toBe(0);
   });
 });

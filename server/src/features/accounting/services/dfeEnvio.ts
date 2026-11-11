@@ -17,43 +17,6 @@ function tpEmisDe(payload: unknown): number | null {
   return typeof tpEmis === 'number' ? tpEmis : null;
 }
 
-/** Chave de 44 dígitos da NF-e/NFC-e (`infNFe/@Id` sem o prefixo "NFe"); `null` sem Id. */
-function chaveDe(payload: unknown): string | null {
-  const id = (payload as { infNFe?: { Id?: unknown } } | null)?.infNFe?.Id;
-  return typeof id === 'string' && id.length > 3 ? id.slice(3) : null;
-}
-
-/**
- * Veredito da consulta da chave original, feita ANTES de entrar na contingência (sefaz_timeout de NFC-e com tpEmis=1):
- * - AUTORIZADA: a SEFAZ já tem a nota ⇒ grava AUTHORIZED com o protocolo dela, sem contingência (sem chave tpEmis 9).
- * - NAO_RECEBIDA: a SEFAZ responde 217 (não consta na base) ⇒ segue a contingência.
- * - INCONCLUSIVA: consulta falhou ou resposta sem veredito ⇒ NÃO entra na contingência; a nota fica SENT para reconsulta
- *   pela mesma chave. AL-9: assinador fora do ar cai aqui também (não liga contingência).
- */
-type VereditoDaOriginal = { tipo: 'AUTORIZADA'; result: EmissaoResult } | { tipo: 'NAO_RECEBIDA' } | { tipo: 'INCONCLUSIVA' };
-
-async function consultarOriginal(port: DfeEmissorPort, input: EmitirInput): Promise<VereditoDaOriginal> {
-  const chave = chaveDe(input.payload);
-  if (!chave) return { tipo: 'INCONCLUSIVA' };
-  try {
-    const result = await port.consultar(chave, {
-      ambiente: input.ambiente,
-      ...(input.ctx?.assinatura ? { assinatura: input.ctx.assinatura } : {}),
-      ...(input.ctx?.csc ? { csc: input.ctx.csc } : {}),
-      payload: input.payload,
-    });
-    if (result.status === 'AUTHORIZED') return { tipo: 'AUTORIZADA', result };
-    if (result.status === 'PROCESSING' && result.errors.some((e) => e.code === '217')) return { tipo: 'NAO_RECEBIDA' };
-    return { tipo: 'INCONCLUSIVA' };
-  } catch (consultaError) {
-    logger.warn('dfe_contingencia: consulta da chave original falhou — documento fica SENT para reconsulta, sem contingência', {
-      chave,
-      error: consultaError instanceof Error ? consultaError.message : String(consultaError),
-    });
-    return { tipo: 'INCONCLUSIVA' };
-  }
-}
-
 /**
  * Envio pós-commit de UMA tentativa — criação (`FiscalDocumentEmissionService.createAndSend`) e reenvio
  * (`FiscalDocumentLifecycleService`). `doc` é o documento já em `SENT` na tentativa que sai.
@@ -66,8 +29,6 @@ async function consultarOriginal(port: DfeEmissorPort, input: EmitirInput): Prom
  * - X10a PR-9 (E-9; decisão 4 de D-2026-10-29-X10A-PR7-9-FORKS): falha de COMUNICAÇÃO (`DfeTransporteError`, nunca
  *   rejeição) no envio de uma NFC-e normal por adaptador com `contingenciaOffline` ⇒ `contingencia` re-emite a venda
  *   off-line. A NFC-e que JÁ é de contingência (reenvio da rejeitada) volta a `CONTINGENCY`: o job a transmite.
- *   ANTES dessa entrada, consulta a chave original (`consultarOriginal`): autorizada ⇒ grava AUTHORIZED; 217 ⇒ contingência;
- *   consulta falha ou inconclusiva ⇒ fica SENT para reconsulta, sem chave tpEmis 9.
  */
 export async function enviarTentativa(
   repo: Pick<IFiscalDocumentRepository, 'transition'>,
@@ -106,29 +67,14 @@ export async function enviarTentativa(
         return;
       }
       if (tpEmis === 1 && contingencia) {
-        // Antes de qualquer chave tpEmis 9, pergunta à SEFAZ pela original: se ela já está autorizada, a contingência
-        // duplicaria a nota (o caso do timeout com a resposta perdida).
-        const veredito = await consultarOriginal(port, input);
-        if (veredito.tipo === 'AUTORIZADA' && applier) {
-          try {
-            await applier(scope, { ...doc, status: 'SENT' }, veredito.result);
-            return;
-          } catch (applyError) {
-            logger.error('dfe_contingencia: a original está autorizada, mas falhou ao gravá-la — documento fica SENT', {
-              documentId: doc.id,
-              error: applyError instanceof Error ? applyError.message : String(applyError),
-            });
-          }
-        } else if (veredito.tipo === 'NAO_RECEBIDA') {
-          try {
-            await contingencia(scope, doc, port, input);
-            return;
-          } catch (contError) {
-            logger.error('dfe_contingencia: a entrada em contingência falhou — documento fica SENT', {
-              documentId: doc.id,
-              error: contError instanceof Error ? contError.message : String(contError),
-            });
-          }
+        try {
+          await contingencia(scope, doc, port, input);
+          return;
+        } catch (contError) {
+          logger.error('dfe_contingencia: a entrada em contingência falhou — documento fica SENT', {
+            documentId: doc.id,
+            error: contError instanceof Error ? contError.message : String(contError),
+          });
         }
       }
     }
