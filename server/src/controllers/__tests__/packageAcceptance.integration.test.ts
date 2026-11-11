@@ -219,4 +219,41 @@ describe('package-acceptances (FE-INCR-PACOTE-VALIDADE)', () => {
       expect((await request(app).get(`/api/package-acceptances/${s}/receipt`).query({ unitId })).status).toBe(401);
     });
   });
+
+  // VP-4 (L-20261111-202850-5acb): o fluxo REAL do modal. Desde a INV F-40.1 a venda nasce com total 0 e só o afterUpdate
+  // grava o total dos itens; o aceite vem ANTES do PUT Finalized (F-PP-6 a). Os testes acima semeiam a venda com
+  // totalAmount direto no banco e por isso nunca viram o 400 "Venda sem valor total válido." que o modal recebia.
+  describe('venda criada pela API (INV F-40.1) — aceite antes de existir total gravado (VP-4)', () => {
+    async function draftPackageSaleViaApi(quantity: number, unitPrice: number, discountAmount?: number) {
+      const sale = await request(app).post(`/api/dynamic-tables/${tables.sales}/data`).set(authHeader(user))
+        .send({ data: { unitId, customerId, date: SALE_DATE, status: 'Draft', paymentStatus: 'Pending', subtotal: unitPrice * quantity, totalAmount: unitPrice * quantity, ...(discountAmount ? { discountAmount } : {}) } });
+      expect({ step: 'sale', status: sale.status }).toEqual({ step: 'sale', status: 201 });
+      const item = await request(app).post(`/api/dynamic-tables/${tables.saleItems}/data`).set(authHeader(user))
+        .send({ data: { saleId: sale.body.data.id, type: 'Package', packageId: pkg30, quantity, unitPrice } });
+      expect({ step: 'item', status: item.status, body: item.status === 201 ? 'ok' : item.body }).toEqual({ step: 'item', status: 201, body: 'ok' });
+      return sale.body.data.id as string;
+    }
+
+    it('rascunho com item, total ainda 0 no cabeçalho → o aceite grava (201)', async () => {
+      const saleId = await draftPackageSaleViaApi(2, 250);
+      const header = (await prisma.dynamicTableData.findUniqueOrThrow({ where: { id: saleId } })).data as Record<string, unknown>;
+      expect(header.totalAmount).toBe(0); // premissa: é este estado que o modal encontra
+      const res = await request(app).post('/api/package-acceptances').set(authHeader(user)).send({ unitId, saleId, textVersion: 'v1', textSha256: notice().textSha256 });
+      expect({ status: res.status, message: res.status === 201 ? 'ok' : res.body.message }).toEqual({ status: 201, message: 'ok' });
+      expect(await prisma.packageValidityAcceptance.count({ where: { userId: user.id, saleId } })).toBe(1);
+    });
+
+    it('o comprovante do rascunho imprime o valor dos itens menos o desconto, não 0', async () => {
+      const saleId = await draftPackageSaleViaApi(2, 250, 50);
+      const res = await request(app).get(`/api/package-acceptances/${saleId}/receipt`).query({ unitId }).set(authHeader(user));
+      expect(res.status).toBe(200);
+      expect(Buffer.from(res.body).toString('utf-8')).toMatch(/450[,.]00/);
+    });
+
+    it('rascunho sem item de valor (total derivado 0) segue recusado: 400', async () => {
+      const saleId = await draftPackageSaleViaApi(1, 0);
+      const res = await request(app).post('/api/package-acceptances').set(authHeader(user)).send({ unitId, saleId, textVersion: 'v1', textSha256: notice().textSha256 });
+      expect(res.status).toBe(400);
+    });
+  });
 });
