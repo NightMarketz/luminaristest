@@ -53,6 +53,8 @@ function buildService(over: { dts?: any; repo?: any } = {}) {
         : { id, dynamicTableId: 'leads-table', data: {} }),
     ...over.repo,
   };
+  // Seam de tx do repositório: o repo ligado à tx lê o mesmo estado do fake (convertLead relê o lead nele).
+  repository.withTransaction ??= jest.fn(() => repository);
   const writeEffects = { afterDataWrite: jest.fn(), afterStructureWrite: jest.fn() };
   const svc = new CrmPipelineService(dynamicTableService as any, repository as any, writeEffects);
   return { svc, dynamicTableService, repository, writeEffects };
