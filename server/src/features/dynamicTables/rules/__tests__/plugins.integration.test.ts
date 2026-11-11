@@ -351,6 +351,16 @@ describe('StockMovementsApplyPlugin — applies manual In/Out to stock', () => {
     await expect(update(String((mv as any).id), { quantity: 5 })).rejects.toBeInstanceOf(ValidationError);
     expect((await rowById(puId))!.data as any).toMatchObject({ stock: 8, reserved: 7 });
   });
+  it('F1-N1 (INV F-26.1): apagar entrada que deixaria o estoque abaixo do reservado → 400, estoque e movimentação intactos', async () => {
+    const { movements, puId } = await seedInventory(10);
+    const mv = await create(movements.id, { productId: 'p1', unitId: 'u1', type: 'In', quantity: 5 });
+    // Reserva feita depois da entrada (venda em rascunho): stock 15, reserved 12. Apagar a entrada deixaria stock 10 < 12.
+    const pu = (await rowById(puId))!;
+    await prisma.dynamicTableData.update({ where: { id: puId }, data: { data: { ...(pu.data as any), reserved: 12 } } });
+    await expect(service.deleteTableData(ctx(), String((mv as any).id))).rejects.toBeInstanceOf(ValidationError);
+    expect((await rowById(puId))!.data as any).toMatchObject({ stock: 15, reserved: 12 });
+    expect((await rowById(String((mv as any).id)))!.deletedAt).toBeNull();
+  });
   it('rejects an Out movement that would drive stock negative', async () => {
     const { movements } = await seedInventory(10);
     await expect(create(movements.id, { productId: 'p1', unitId: 'u1', type: 'Out', quantity: 999 })).rejects.toBeInstanceOf(ValidationError);
