@@ -144,6 +144,7 @@ export const StockMovementsApplyPlugin: RulePlugin = {
     const delta = type === 'In' ? -quantity : (type === 'Out' ? +quantity : 0);
     const newStock = currentStock + delta;
     if (newStock < 0) throw new ValidationError('Operação inválida: estoque insuficiente.');
+    assertNotBelowReserved(productUnitRow, currentStock, newStock);
     await ctx.repository.updateData(String(productUnitRow.id), { ...(productUnitRow?.data as Record<string, unknown> || {}), stock: newStock });
   },
 };

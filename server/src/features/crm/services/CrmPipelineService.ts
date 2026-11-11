@@ -115,7 +115,8 @@ export class CrmPipelineService {
    *
    * All three writes commit/roll back together (single transaction). The lead is
    * read BEFORE the transaction to snapshot unitId/leadName/email/phone/assigneeId.
-   * Guard: a lead already `Converted` throws ValidationError (idempotency).
+   * Guard: a lead already `Converted` throws ValidationError (idempotency) — checked before the tx and
+   * re-checked on the tx-bound repository inside it (INV F-27.1).
    */
   async convertLead(user: UserContext, input: ConvertLeadInput) {
     // Resolve the leads table OBJECT once (findTableByInternalName is tenant-scoped via
@@ -199,6 +200,14 @@ export class CrmPipelineService {
 
     // Atomic: account create + contact create + lead update commit/rollback together.
     const result = await this.dynamicTableService.runInTransaction(async (tx) => {
+      // INV F-27.1: the guard above reads committed state OUTSIDE the tx, so two confirmations
+      // (two tabs, two API calls) could both pass it. Re-check `Converted` on the tx-bound repo
+      // before any write — the authoritative gate lives inside the transaction.
+      const current = await this.repository.withTransaction(tx).findDataById(leadRow.id);
+      if ((current?.data as Record<string, unknown> | undefined)?.status === 'Converted') {
+        throw new ValidationError('Lead already converted');
+      }
+
       const account = await this.dynamicTableService.createTableData(
         user,
         accountsTableId,

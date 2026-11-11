@@ -100,9 +100,9 @@ export function useChatInstances({
         fetchInstances();
     }, [fetchInstances]);
 
-    // Save last active chat to cookie when it changes
+    // Save last active chat to cookie when it changes — the cookie belongs to the floating (GENERIC) chat.
     useEffect(() => {
-        if (currentWidgetInstanceId && !currentWidgetInstanceId.startsWith('new-')) {
+        if (chatType === 'GENERIC' && currentWidgetInstanceId && !currentWidgetInstanceId.startsWith('new-')) {
             import('cookies-next').then(({ setCookie }) => {
                 setCookie(LAST_CHAT_COOKIE_KEY, currentWidgetInstanceId, {
                     maxAge: 60 * 60 * 24 * 30, // 30 days
@@ -110,7 +110,7 @@ export function useChatInstances({
                 });
             });
         }
-    }, [currentWidgetInstanceId]);
+    }, [chatType, currentWidgetInstanceId]);
 
     const toggleDropdown = useCallback(() => {
         setIsDropdownOpen(prev => !prev);

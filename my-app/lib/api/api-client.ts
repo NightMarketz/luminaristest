@@ -1,5 +1,6 @@
 import { getCookie } from 'cookies-next';
 import { notify } from '../notifications/notify';
+import { markNotified } from '../notifications/notified';
 import { humanizeZodFlatten, isZodFlatten, type ZodFlatten } from './zodFlatten';
 import { emitSessionExpired } from './sessionExpired';
 
@@ -88,13 +89,13 @@ class ApiClient {
       } catch (networkError) {
         if (networkError instanceof DOMException && networkError.name === 'TimeoutError') {
           if (!silent) notify(API_TIMEOUT_MESSAGE, 'error', 'Erro');
-          throw new Error(API_TIMEOUT_MESSAGE);
+          throw markNotified(new Error(API_TIMEOUT_MESSAGE), !silent);
         }
         // BRD F-72.1: a network failure gets the same treatment as an HTTP error (toast + Error with the
         // toast text), without `status` — callers read "no status" as "no response". Aborts pass through.
         if (!(networkError instanceof TypeError)) throw networkError;
         if (!silent) notify(NETWORK_ERROR_MESSAGE, 'error', 'Erro');
-        throw new Error(NETWORK_ERROR_MESSAGE);
+        throw markNotified(new Error(NETWORK_ERROR_MESSAGE), !silent);
       }
       // Só com token enviado: o 401 do login (sem sessão) é credencial errada, não sessão expirada.
       if (response.status === 401 && headers['Authorization']) emitSessionExpired();
@@ -119,14 +120,14 @@ class ApiClient {
         // (non-enumerable, so `{ ...err }` stays body + status) and the HTTP status so callers can branch.
         const httpError = Object.assign(new Error(errorMessage), result, { status: response.status });
         Object.defineProperty(httpError, 'body', { value: result });
-        throw httpError;
+        throw markNotified(httpError, !silent);
       }
 
       if (!parsed) {
         // BRD F-72.2: 2xx com corpo não-JSON (página de proxy, resposta cortada) é falha, não dado de sucesso.
         const message = 'Resposta inválida do servidor.';
         if (!silent) notify(message, 'error', 'Erro');
-        throw Object.assign(new Error(message), { status: response.status });
+        throw markNotified(Object.assign(new Error(message), { status: response.status }), !silent);
       }
       return result as T;
     } catch (error) {
