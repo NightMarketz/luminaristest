@@ -49,8 +49,10 @@ jobs:
       # O checkout de PR é o merge commit; HEAD^1 é a base na hora do merge. Em merge_group NÃO se usa
       # HEAD^1: com o método rebase a branch da fila recebe os commits do PR um a um (HEAD^1 seria o
       # penúltimo commit do próprio PR), e uma entrada só de Markdown atrás de outra com código herdaria
-      # `code=false`. Lá o diff é contra `merge_group.base_sha` (a ponta da main sob a fila), que cobre
-      # todas as entradas à frente: só pode sair maior (mais testes), nunca menor.
+      # `code=false`. Lá o diff é contra a ponta atual de
+      # `merge_group.base_ref` (a main), não contra `base_sha`: a documentação do GitHub o descreve como o
+      # pai do grupo, que na fila em série pode ser a entrada anterior. Contra a main, o diff cobre todas as
+      # entradas à frente: só pode sair maior (mais testes), nunca menor.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 2
@@ -63,9 +65,9 @@ jobs:
             echo "code=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
           if [ "${GITHUB_EVENT_NAME}" = "merge_group" ]; then
-            BASE_SHA=$(node -p "require(process.env.GITHUB_EVENT_PATH).merge_group.base_sha")
-            git fetch --no-tags --depth=1 origin "${BASE_SHA}"
-            FILES=$(git diff --name-only "${BASE_SHA}" HEAD)
+            BASE_REF=$(node -p "require(process.env.GITHUB_EVENT_PATH).merge_group.base_ref.replace(/^refs\/heads\//, '')")
+            git fetch --no-tags --depth=1 origin "refs/heads/${BASE_REF}"
+            FILES=$(git diff --name-only FETCH_HEAD HEAD)
           else
             FILES=$(git diff --name-only HEAD^1 HEAD)
           fi
