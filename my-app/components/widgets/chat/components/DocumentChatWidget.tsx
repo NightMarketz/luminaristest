@@ -4,7 +4,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useChatInstance } from '../hooks/useChatInstance';
 import { useChatMessages } from '../hooks/useChatMessages';
 import { useChatInput } from '../hooks/useChatInput';
-import { useChatInstances } from '../hooks/UseChatInstances';
+import { useChatInstances } from '../../shared/hooks/useChatInstances';
 
 // Importar subcomponentes
 import { ChatHeader } from './ChatHeader';
@@ -90,10 +90,10 @@ function DocumentChatWidget({
     loadInstancesError,
     isLoadingInstances,
   } = useChatInstances({
+    chatType: 'DOCUMENT',
     currentWidgetInstanceId: chatInstanceId,
     onSelectChatInstance: initializeChat,
     onActiveInstanceDeleted: resetChat,
-    widgetInstanceIdForLogging: widgetInstanceId,
   });
 
   const handleDocumentSelectionChange = useCallback(function handleDocSelection(docs: DocumentOption[]) {

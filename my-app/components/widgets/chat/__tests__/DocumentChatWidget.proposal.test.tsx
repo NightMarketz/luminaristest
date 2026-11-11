@@ -64,7 +64,7 @@ describe('DocumentChatWidget — modal da proposta', () => {
         ],
       }),
     }));
-    vi.doMock('../hooks/UseChatInstances', () => ({
+    vi.doMock('../../shared/hooks/useChatInstances', () => ({
       useChatInstances: () => ({
         allChatInstances: [], isDropdownOpen: false, toggleDropdown: vi.fn(), handleSelectInstance: vi.fn(), handleInitiateNewChat: vi.fn(),
         instanceIdPendingDelete: null, isDeletingInstance: false, deleteInstanceError: null, requestDeleteConfirmation: vi.fn(),

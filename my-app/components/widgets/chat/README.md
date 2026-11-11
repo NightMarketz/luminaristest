@@ -36,7 +36,7 @@ de gráficos (Analytics) a partir da última resposta do assistente.
 | Hook | Papel |
 |---|---|
 | `useChatInstance` | Cria/resolve a instância de chat do widget (por `widgetInstanceId`). |
-| `useChatInstances` | Lista/gerencia instâncias do usuário. |
+| `useChatInstances` | Lista/gerencia instâncias do usuário (filtradas por `DOCUMENT`). Vem de `../shared/hooks/useChatInstances`, o mesmo do chat genérico. |
 | `useChatMessages` | Histórico de mensagens da instância (persistência via backend). |
 | `useChatInput` | Estado do campo de entrada e envio. |
 
@@ -52,6 +52,6 @@ documentos selecionados no `DocumentSelector`. Ver
 ```
 chat/
 ├── components/  ChatWidget · DocumentChatWidget · DocumentSelector · ChatHeader/List/Input
-├── hooks/       UseChatInstance · UseChatInstances · UseChatMessages · UseChatInput
+├── hooks/       UseChatInstance · UseChatMessages · UseChatInput (instâncias: ../shared/hooks)
 └── types/       chat.types.ts
 ```
