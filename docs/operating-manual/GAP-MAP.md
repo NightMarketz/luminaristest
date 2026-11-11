@@ -312,6 +312,17 @@ PR vermelho delas vai ao lote do dono.
 | **F1-N2 (INV F-42.1, controle da isenção de pacote)** — a isenção de venda só de pacote na devolução não tem teste: removida, os 71 testes seguem verdes (revisor do #1178). Só teste. Pai: #1178 | 2 | D3 | nenhum (teste-guarda a escrever) | [ABERTO] | `git grep -n "F1-N2" -- server/src my-app` → vazio |
 | **F1-N3 (BRD F-73.2, 35 ocorrências)** — 35 `catch` do front achados pelo script da ficha BRD-73 e não triados; corrigir os que engolem falha visível ao usuário, registrar os intencionais. Pai: #1206 | 3 | D3 | nenhum (teste-guarda a escrever) | [ABERTO] | `git grep -n "F1-N3" -- server/src my-app` → vazio |
 
+## Lacunas da caixa (desde 2026-11-11)
+
+Lacunas que as sessões acharam fora do próprio escopo e mandaram à caixa do maestro (`node scripts/lacunas.mjs`,
+regra `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`). **Autorização de todas as linhas abaixo:** a mesma
+decisão (dono, chat, 2026-11-11). Quem escreve aqui é só o maestro, no PR só de docs do dia; os PRs de correção não mexem
+nesta seção. Uma linha por id: `id · arquivo:linha · classe · o que falta · Status ([ABERTO] / [EM PR #n] /
+[CORRIGIDO dd/mm, #n] / não reproduzido) · teste-guarda`.
+
+| Id | Local | Classe | Lacuna | Status | Teste-guarda |
+|---|---|---|---|---|---|
+
 ## Transversais
 
 | Lacuna | Instrumento real | Status | Comando que prova |
