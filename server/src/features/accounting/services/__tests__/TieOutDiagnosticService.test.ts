@@ -20,6 +20,7 @@
  *  - conta-controle ausente do chart + subrazão com valor → ACUSA (não explode NotFoundError);
  *  - policy canRead nega → ForbiddenError.
  */
+import { PAYABLE_OUTSTANDING_STATUSES } from '../../models/Payable.model';
 import {
   TieOutDiagnosticService,
   POS_FEEDER_SOURCE_TYPES,
@@ -411,5 +412,20 @@ describe('TieOutDiagnosticService.tieOut — empty safety e guarda de policy', (
     expect(receivableRepo.findOutstanding).not.toHaveBeenCalled();
     expect(payableRepo.findOutstanding).not.toHaveBeenCalled();
     expect(accountRepo.findByCode).not.toHaveBeenCalled();
+  });
+});
+
+// SOT F-01.4 — o texto do check do AP descreve a soma que o código faz: os status de PAYABLE_OUTSTANDING_STATUSES
+// (`Payable.model.ts`), não "(OPEN+PAYING)" escrito à mão.
+describe('SOT F-01.4 — texto do tie-out do AP', () => {
+  it('SOT F-01.4: o detail do check "payables" cita todos os status em aberto da soma', async () => {
+    const { svc } = buildService(BALANCED);
+    const r = await svc.tieOut(scope);
+    const detail = checkById(r.checks, 'payables').detail;
+    for (const st of PAYABLE_OUTSTANDING_STATUSES) {
+      expect(detail).toContain(st);
+    }
+    // a soma é do saldo remanescente (amountCents − paidCents), não do total
+    expect(detail).toMatch(/saldo remanescente/);
   });
 });

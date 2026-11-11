@@ -12,7 +12,7 @@ import { useState, useCallback, useMemo, useRef } from 'react';
 import type { NewSaleItem, SalesCreateFormState, SaleData, SaleVariant } from '../../types';
 import { FinanceService } from '../../services/FinanceService';
 import {
-    lineQuantity,
+    saleLinesSubtotal,
     isAboveCatalog,
     packageSaleIssue,
     type PackageCatalog,
@@ -206,7 +206,7 @@ export function useSalesCreateForm(options: UseSalesCreateFormOptions = {}): Use
     // ─────────────────────────────────────────────────────────────
 
     const subtotal = useMemo(() => {
-        return state.items.reduce((sum, item) => sum + Math.round(lineQuantity(item) * Number(item.unitPrice || 0) * 100), 0) / 100;
+        return saleLinesSubtotal(state.items);
     }, [state.items]);
 
     const totalAmount = useMemo(
@@ -252,7 +252,7 @@ export function useSalesCreateForm(options: UseSalesCreateFormOptions = {}): Use
         const s = stateRef.current;
 
         // Recompute totals from snapshot to avoid stale closure on subtotal/totalAmount
-        const sub = s.items.reduce((acc, item) => acc + Math.round(lineQuantity(item) * Number(item.unitPrice || 0) * 100), 0) / 100;
+        const sub = saleLinesSubtotal(s.items);
         const total = Math.max(0, sub - (s.discountAmount || 0));
         // F-FE-VP-1b: flag na venda, sem guardar o preço do catálogo. Só vai quando a tabela tem o
         // campo (`canFlagAboveCatalog`); sem ele, a venda acima já foi barrada por `packageIssue`.
@@ -267,7 +267,8 @@ export function useSalesCreateForm(options: UseSalesCreateFormOptions = {}): Use
                 simpleCustomer: s.simpleCustomer,
                 simpleCustomerName: s.simpleCustomer ? s.simpleCustomerName : undefined,
                 unitId: s.unitId || undefined,
-                status: finalize ? 'Finalized' : 'Draft',
+                // INV F-40.2 (Q-11): a venda nasce rascunho; o finalizar é por atualização, depois dos itens.
+                status: 'Draft',
                 paymentStatus: 'Pending',
                 subtotal: sub,
                 totalAmount: total,
@@ -279,6 +280,7 @@ export function useSalesCreateForm(options: UseSalesCreateFormOptions = {}): Use
             };
 
             const saleId = await FinanceService.createSaleWithItems(salesTableId, saleItemsTableId, saleData, s.items);
+            if (finalize) await FinanceService.updateSale(salesTableId, saleId, { status: 'Finalized' });
             setState(prev => ({ ...prev, isSubmitting: false }));
             return saleId;
         } catch (err) {

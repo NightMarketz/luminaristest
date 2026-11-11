@@ -195,7 +195,14 @@ function dateOnly(raw: string, field: string): string {
   if (!/^\d{4}-\d{2}-\d{2}/.test(s)) {
     throw new ValidationError(`NF-e inválida: data "${raw}" em "${field}" não é AAAA-MM-DD...`);
   }
-  return s.slice(0, 10);
+  const day = s.slice(0, 10);
+  // BRD F-63.1: o regex aceita 2026-02-30; confere o calendário (mesma regra de `isValidDateOnly`). O `Date` só
+  // confere, não produz a data — o dia devolvido continua o reslice literal.
+  const check = new Date(`${day}T00:00:00.000Z`);
+  if (Number.isNaN(check.getTime()) || check.toISOString().slice(0, 10) !== day) {
+    throw new ValidationError(`NF-e inválida: data "${raw}" em "${field}" não existe no calendário.`);
+  }
+  return day;
 }
 
 /** Emitente/destinatário: CNPJ xor CPF, nome, IE. */

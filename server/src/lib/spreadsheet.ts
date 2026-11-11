@@ -1,4 +1,5 @@
 import ExcelJS from 'exceljs';
+import { ValidationError } from './errors';
 
 /**
  * Minimal tabular (de)serializer for the accounting Data Exchange (BE-INCR-6).
@@ -31,7 +32,7 @@ export interface OutTable {
 const BOM = '﻿';
 
 /** Cell-count ceiling for an imported XLSX grid — zip-bomb guard (SEC audit 2026-07-15). */
-const MAX_IMPORT_CELLS = 2_000_000;
+export const MAX_IMPORT_CELLS = 2_000_000;
 
 /** RFC-4180-core CSV parse into a matrix of raw string cells (quotes/escapes/newlines handled). */
 function parseCsvMatrix(text: string): string[][] {
@@ -100,7 +101,12 @@ export async function parseTable(buffer: Buffer, format: SpreadsheetFormat): Pro
     // Node's global Buffer is generic in newer @types/node and doesn't structurally match
     // exceljs's own Buffer param, though they're identical at runtime. Cast through unknown
     // to the exact expected type (no `any`).
-    await wb.xlsx.load(buffer as unknown as Parameters<typeof wb.xlsx.load>[0]);
+    try {
+      await wb.xlsx.load(buffer as unknown as Parameters<typeof wb.xlsx.load>[0]);
+    } catch {
+      // BRD F-65.1: an unreadable file is the client's error (400), not a 500.
+      throw new ValidationError('The XLSX file could not be read (corrupted or not a spreadsheet).');
+    }
     const ws = wb.worksheets[0];
     matrix = [];
     if (ws) {

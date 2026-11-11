@@ -143,7 +143,8 @@ morde só no código solto; em dúvida, **o contrato prevalece**.
 sozinha (squash) com todos os checks verdes, sem conflito e fora de draft. **Vermelho** → revisor-independente e
 depois o **lote diário**: liste os PRs (número · título · motivo do vermelho · CI · veredito do revisor) e espere o
 dono confirmar por número. Fora da maestro, nenhuma sessão mergeia, nem verde. Regra em
-`docs/plano/decisoes/D-2026-10-28-FLUXO-AUTONOMO.md`.
+`docs/plano/decisoes/D-2026-10-28-FLUXO-AUTONOMO.md`. Exceção (dono, 2026-11-10): vermelho da faixa 1 da auditoria de
+estruturas implícitas entra como verde com revisor PASS — `docs/plano/decisoes/D-2026-11-10-FAIXA1-MERGE-LIVRE.md`.
 
 ## Pilhas e tamanho de PR (dono, 2026-11-08)
 - **Um PR por item do GAP-MAP**, mergeado direto na `main` sempre que a dependência permitir.

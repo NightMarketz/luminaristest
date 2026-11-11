@@ -9,6 +9,7 @@
 import logger, { type EventLogger } from '../lib/logger';
 import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';
 import { getFactory } from '../lib/factory';
+import { readMsEnv } from './readMsEnv';
 
 const JOB = 'legal_params_recalc';
 const DEFAULT_INTERVAL_MS = 300_000; // 5 minutos
@@ -24,14 +25,6 @@ export interface LegalParamsRecalcSchedulerDeps {
   log?: JobLogger;
   /** Nó OBS, item 10 (F-OBS-7 a): remote alert on failure. Default = the fire-and-forget webhook. */
   alert?: (payload: AlertPayload) => void;
-}
-
-function readMsEnv(name: string, fallback: number, min: number): number {
-  const raw = process.env[name];
-  if (raw === undefined || raw === '') return fallback;
-  const n = Number(raw);
-  if (!Number.isInteger(n) || n < min) throw new Error(`Invalid ${name}='${raw}' — must be an integer >= ${min} (ms).`);
-  return n;
 }
 
 export class LegalParamsRecalcScheduler {

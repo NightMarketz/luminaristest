@@ -319,10 +319,10 @@ describe('StockMovementsApplyPlugin — applies manual In/Out to stock', () => {
     f('sourceType', 'string'), f('reason', 'string'),
   ];
 
-  async function seedInventory(stock: number) {
+  async function seedInventory(stock: number, reserved = 0) {
     const productUnits = await seedTbl({ name: 'Product Units', internalName: 'productUnits', category: 'inventory', fields: productUnitFields });
     const movements = await seedTbl({ name: 'Stock Movements', internalName: 'stockMovements', category: 'inventory', fields: movementFields });
-    const pu = await prisma.dynamicTableData.create({ data: { dynamicTableId: productUnits.id, data: { productId: 'p1', unitId: 'u1', stock, reserved: 0 } as any } });
+    const pu = await prisma.dynamicTableData.create({ data: { dynamicTableId: productUnits.id, data: { productId: 'p1', unitId: 'u1', stock, reserved } as any } });
     return { movements, puId: pu.id };
   }
 
@@ -336,9 +336,38 @@ describe('StockMovementsApplyPlugin — applies manual In/Out to stock', () => {
     await create(movements.id, { productId: 'p1', unitId: 'u1', type: 'In', quantity: 5 });
     expect((await rowById(puId))!.data as any).toMatchObject({ stock: 15 });
   });
+  it('INV F-26.1: saída manual que deixaria o estoque abaixo do reservado → 400, estoque intacto', async () => {
+    // Q-02 (dono, 10/11): reserved <= stock vale sempre. stock 5, reserved 5: uma saída de 3 deixaria stock 2 < reserved 5.
+    const { movements, puId } = await seedInventory(5, 5);
+    await expect(create(movements.id, { productId: 'p1', unitId: 'u1', type: 'Out', quantity: 3 })).rejects.toBeInstanceOf(ValidationError);
+    expect((await rowById(puId))!.data as any).toMatchObject({ stock: 5, reserved: 5 });
+  });
+  it('INV F-26.1: editar movimentação que deixaria o estoque abaixo do reservado → 400, estoque intacto', async () => {
+    const { movements, puId } = await seedInventory(10);
+    const mv = await create(movements.id, { productId: 'p1', unitId: 'u1', type: 'Out', quantity: 2 });
+    // Reserva feita depois da saída (venda em rascunho): stock 8, reserved 7.
+    const pu = (await rowById(puId))!;
+    await prisma.dynamicTableData.update({ where: { id: puId }, data: { data: { ...(pu.data as any), reserved: 7 } } });
+    await expect(update(String((mv as any).id), { quantity: 5 })).rejects.toBeInstanceOf(ValidationError);
+    expect((await rowById(puId))!.data as any).toMatchObject({ stock: 8, reserved: 7 });
+  });
   it('rejects an Out movement that would drive stock negative', async () => {
     const { movements } = await seedInventory(10);
     await expect(create(movements.id, { productId: 'p1', unitId: 'u1', type: 'Out', quantity: 999 })).rejects.toBeInstanceOf(ValidationError);
+  });
+  it('INV F-41.1: entrada manual In/Purchase (fornecedor e custo, sem vir do título) → 400, estoque intacto', async () => {
+    // A compra entra pelo Contas a Pagar (valora pelo custo médio e lança D Estoques / C Fornecedores); a manual sobe o
+    // estoque sem título, lançamento nem custo médio (venda seguinte sem CMV). Hoje só a tela barra (MovementModal).
+    // Schema como o do preset real (StockMovementsModule): supplierId e cost declarados — senão o strip do motor os remove
+    // e a recusa viria da validação de supplierId, não desta guarda.
+    const purchaseFields = [...movementFields, f('supplierId', 'string'), f('cost', 'number'), f('paymentStatus', 'string'), f('detailKey', 'string')];
+    const productUnits = await seedTbl({ name: 'Product Units', internalName: 'productUnits', category: 'inventory', fields: productUnitFields });
+    const movements = await seedTbl({ name: 'Stock Movements', internalName: 'stockMovements', category: 'inventory', fields: purchaseFields });
+    const puId = (await prisma.dynamicTableData.create({ data: { dynamicTableId: productUnits.id, data: { productId: 'p1', unitId: 'u1', stock: 10, reserved: 0 } as any } })).id;
+    await expect(
+      create(movements.id, { productId: 'p1', unitId: 'u1', type: 'In', quantity: 5, reason: 'Purchase', supplierId: 's1', cost: 100 }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    expect((await rowById(puId))!.data as any).toMatchObject({ stock: 10 });
   });
   it('manual Purchase entry still requires supplierId (regression guard for the skip below)', async () => {
     const { movements } = await seedInventory(10);
@@ -360,11 +389,12 @@ describe('StockMovementsApplyPlugin — applies manual In/Out to stock', () => {
     const movements = await seedTbl({ name: 'Stock Movements', internalName: 'stockMovements', category: 'inventory', fields: prodLikeMovementFields });
     const pu = await prisma.dynamicTableData.create({ data: { dynamicTableId: productUnits.id, data: { productId: 'p1', unitId: 'u1', stock: 10, reserved: 0 } as any } });
 
-    // Envia sourceType como a integração enviaria por engano — o canário abaixo prova o strip.
-    await create(movements.id, {
+    // Envia sourceType como a integração enviaria por engano — o canário abaixo prova o strip. Com isSystem, como o
+    // PhysicalStockSync grava (INV F-41.1 resíduo: sem isSystem o prefixo não basta).
+    await service.createTableData(ctx(), movements.id, { data: {
       productId: 'p1', unitId: 'u1', type: 'In', quantity: 5,
       reason: 'Purchase', sourceType: 'ACCOUNTING_PAYABLE', detailKey: 'ACCOUNTING_PAYABLE:pay-1',
-    });
+    } } as any, { isSystem: true });
 
     // Delta aplicado sem exigir supplierId/cost (a linha já nasceu valorada no razão).
     expect(((await rowById(pu.id))!.data as Record<string, unknown>)).toMatchObject({ stock: 15 });
@@ -374,6 +404,18 @@ describe('StockMovementsApplyPlugin — applies manual In/Out to stock', () => {
     expect('sourceType' in stored).toBe(false);
     expect(stored.reason).toBe('Purchase');
     expect(stored.detailKey).toBe('ACCOUNTING_PAYABLE:pay-1');
+  });
+  it('INV F-41.1 (resíduo): prefixo ACCOUNTING_PAYABLE: forjado num POST sem isSystem → 400, estoque intacto', async () => {
+    // Decisão do dono (chat, 10/11): exigir isSystem. O único criador legítimo (PhysicalStockSync) escreve com isSystem: true,
+    // e o motor tira __isSystem do payload, então o cliente não forja a flag; o prefixo do detailKey, sim.
+    const purchaseFields = [...movementFields, f('supplierId', 'string'), f('cost', 'number'), f('paymentStatus', 'string'), f('detailKey', 'string')];
+    const productUnits = await seedTbl({ name: 'Product Units', internalName: 'productUnits', category: 'inventory', fields: productUnitFields });
+    const movements = await seedTbl({ name: 'Stock Movements', internalName: 'stockMovements', category: 'inventory', fields: purchaseFields });
+    const puId = (await prisma.dynamicTableData.create({ data: { dynamicTableId: productUnits.id, data: { productId: 'p1', unitId: 'u1', stock: 10, reserved: 0 } as any } })).id;
+    await expect(
+      create(movements.id, { productId: 'p1', unitId: 'u1', type: 'In', quantity: 5, reason: 'Purchase', detailKey: 'ACCOUNTING_PAYABLE:forjado', __isSystem: true }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    expect((await rowById(puId))!.data as any).toMatchObject({ stock: 10 });
   });
 });
 

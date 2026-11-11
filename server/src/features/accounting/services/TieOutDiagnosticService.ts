@@ -8,7 +8,7 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { centsFromDb } from '../models/money';
-import { PAYABLE_ORIGIN_WITHHOLDING_TAX } from '../models/Payable.model';
+import { PAYABLE_ORIGIN_WITHHOLDING_TAX, PAYABLE_OUTSTANDING_STATUSES } from '../models/Payable.model';
 import {
   CLIENTES_A_RECEBER_CODE,
   ESTOQUES_CODE,
@@ -110,7 +110,7 @@ export interface TieOutDiagnosticReport {
  *       construção (reconhecimento D 1.1.5 / recebimento C 1.1.5 / cancelamento = estorno) e
  *       este diagnóstico é o verificador externo que faltava (Council: "tie-out unchecked").
  *
- *  (ii) AP em aberto (Σ Payable OPEN+PAYING) === saldo credor de `2.1.2 Fornecedores a Pagar`.
+ *  (ii) AP em aberto (Σ saldo remanescente das Payable em PAYABLE_OUTSTANDING_STATUSES) === saldo credor de `2.1.2 Fornecedores a Pagar`.
  *
  *  (iii) `1.1.2 A Receber` (PDV): o razão da 1.1.2 deve ser INTEIRAMENTE explicado pelo agregado
  *       (salão + CRM) — o board confirma que o CRM também debita 1.1.2, então o lado "subrazão"
@@ -202,8 +202,7 @@ export class TieOutDiagnosticService {
       controlAccountName: apAccount?.name ?? null,
       subledgerCents: apOpenCents,
       ledgerCents: apLedgerCents,
-      detail:
-        'Σ Payable em aberto (OPEN+PAYING) vs saldo credor da conta-controle do AP.',
+      detail: `Σ saldo remanescente das Payable em aberto (${PAYABLE_OUTSTANDING_STATUSES.join('+')}) vs saldo credor da conta-controle do AP.`,
     });
 
     // (iii) 1.1.2 (PDV): razão total vs agregado (salão + CRM). O líquido dos feeders é
