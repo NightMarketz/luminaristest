@@ -156,9 +156,9 @@ Só IDs escritos pelo dono no chat; faixas 3 e 4, um ID por vez.
 **Encerramento de 11/11 (orquestração encerrada a pedido do dono; sessões arquivadas).** Retomada: `RETOMADA.md`, nesta pasta.
 
 - Mergeados em 11/11 por ordem do dono no chat ("faça todos os merges possíveis"): #1222 (F1-N1), #1226 e #1229 (F1-N3), #1230
-  (INV F-27.1), #1225 (GAP-MAP) e #1227 (decisões do dia 3). Todos de classe verde e CI verde. O #1224 foi fechado sem merge: o
+  (INV F-27.1), #1228 (F1-N3), #1225 (GAP-MAP) e #1227 (decisões do dia 3). Todos de classe verde e CI verde. O #1224 foi fechado sem merge: o
   conteúdo dele estava coberto pelo #1225 e pelo #1227, e conflitava com os dois.
-- Abertos: #1228 (F1-N3, verde, rebaseado para `main`), #1178 (INV F-42.1, falta nova rodada do revisor), #1231 e #1232 (faixa 4,
+- #1228 (F1-N3) rebaseado para `main` e mergeado em 11/11. Abertos: #1178 (INV F-42.1, falta nova rodada do revisor), #1231 e #1232 (faixa 4,
   lote do dono).
 - Pendentes, achados fora de escopo das sessões e decisões do dono: `RETOMADA.md` §A–§D.
 
@@ -236,7 +236,7 @@ Fora da contagem dos 114: são resíduos de PRs da faixa 1, não achados do inve
 |---|---|---|---|---|---|
 | F1-N1 | INV F-26.1, #1180 | apagar movimentação In pode deixar o estoque abaixo de `reserved` | 1 | #1180 (mergeado 10/11) | **corrigido #1222 (mergeado 11/11)** · GAP-MAP neste PR; pronta quando este PR entrar |
 | F1-N2 | INV F-42.1, #1178 | isenção de venda só de pacote na devolução sem teste de controle | 1 | #1178 | GAP-MAP neste PR; espera o merge do pai |
-| F1-N3 | BRD F-73.2, #1206 | 35 `catch` do front não triados | 1 | #1206 | **corrigido #1226 e #1229 (mergeados 11/11); #1228 (`useConfirmModal`) rebaseado para `main` em 11/11, aguardando CI** · GAP-MAP neste PR; espera o merge do pai |
+| F1-N3 | BRD F-73.2, #1206 | 35 `catch` do front não triados | 1 | #1206 | **corrigido #1226, #1228 e #1229 (mergeados 11/11)** · GAP-MAP neste PR; espera o merge do pai |
 | F4-N1 | EFX F-18.2, #1167 | `updateJob` do EXPORTED sem CAS sobre PROCESSING: exportação > 10 min sobrescreve o FAILED da varredura [INF] | 4 | #1167 | aprovado 11/11 (dono, questionário: "F4-N1 (resíduo do #1167)") · registrado; só anda com o ID escrito pelo dono e teste-guarda determinístico |
 
 ## Tabela

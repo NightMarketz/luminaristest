@@ -310,7 +310,7 @@ PR vermelho delas vai ao lote do dono.
 |---|---|---|---|---|---|
 | **F1-N1 (INV F-26.1, delete de entrada In)** — apagar uma movimentação In pode deixar o estoque abaixo de `reserved` (Q-02: `reserved <= stock` vale sempre). Pai: #1180 | 2 | D3 | nenhum (teste-guarda a escrever) | [CORRIGIDO 11/11, #1222] | `git grep -n "F1-N1" -- server/src my-app` → vazio |
 | **F1-N2 (INV F-42.1, controle da isenção de pacote)** — a isenção de venda só de pacote na devolução não tem teste: removida, os 71 testes seguem verdes (revisor do #1178). Só teste. Pai: #1178 | 2 | D3 | nenhum (teste-guarda a escrever) | [ABERTO] | `git grep -n "F1-N2" -- server/src my-app` → vazio |
-| **F1-N3 (BRD F-73.2, 35 ocorrências)** — 35 `catch` do front achados pelo script da ficha BRD-73 e não triados; corrigir os que engolem falha visível ao usuário, registrar os intencionais. Pai: #1206 | 3 | D3 | nenhum (teste-guarda a escrever) | [EM PR #1228] | `git grep -n "F1-N3" -- server/src my-app` → vazio |
+| **F1-N3 (BRD F-73.2, 35 ocorrências)** — 35 `catch` do front achados pelo script da ficha BRD-73 e não triados; corrigir os que engolem falha visível ao usuário, registrar os intencionais. Pai: #1206 | 3 | D3 | nenhum (teste-guarda a escrever) | [CORRIGIDO 11/11, #1226, #1228, #1229] | `git grep -n "F1-N3" -- server/src my-app` → vazio |
 
 ## Estruturas implícitas — faixas 3 e 4 (2026-11-11)
 

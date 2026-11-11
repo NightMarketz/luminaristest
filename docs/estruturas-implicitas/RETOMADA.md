@@ -21,7 +21,6 @@ antes de agir**, porque foi medido em 11/11.
 
 | PR | ID | Classe | Situação em 11/11 |
 |---|---|---|---|
-| #1228 | F1-N3 (`useConfirmModal`) | verde | rebaseado para `main` em 11/11; CI rodando. Entra quando ficar verde |
 | #1178 | INV F-42.1 (faixa 1) | vermelho | o PASS da rodada 1 é anterior ao commit `5133bd785` (A1, código): precisa de nova rodada do `revisor-independente` no SHA de cabeça; com PASS, entra pela D-2026-11-10-FAIXA1-MERGE-LIVRE |
 | #1231 | INV F-37.1 (faixa 4) | vermelho | revisor rodada 1 PASS, CI verde: **lote do dono** |
 | #1232 | SM F-16.1 (faixa 4) | vermelho | revisor rodada 1 PASS, CI verde: **lote do dono** |
