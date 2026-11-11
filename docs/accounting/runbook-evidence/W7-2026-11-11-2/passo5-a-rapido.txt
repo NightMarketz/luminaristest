@@ -15,14 +15,14 @@ Advanced Beauty Salon ERP
 
 Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.
 
-ERP para Clínica de Estética
+Aesthetic Clinic ERP
 
 Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.
 
 SALES
-Módulo CRM
+CRM Module
 
-CRM completo: funil de leads, propostas, atividades, contas e contatos.
+Full CRM: lead funnel, proposals, activities, accounts and contacts.
 
 Unit name
 Create Dashboard

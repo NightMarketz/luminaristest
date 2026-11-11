@@ -16,15 +16,15 @@ Hi! To get started, please tell me about your business or project so I can under
 
 I run a small hair salon called Studio Aurora in Sao Paulo with 3 stylists and 40 clients a week.
 
-What services do you offer at Studio Aurora besides haircuts?
+What services do you offer at Studio Aurora?
 
 We do haircuts, coloring and manicures. I want to control schedule, stock, sales and finances.
 
-Got it. So, in short, your business is: A small hair salon in Sao Paulo called Studio Aurora that offers haircuts, coloring, and manicures, serving 40 clients a week and aiming to control scheduling, stock, sales, and finances. Is that correct?
+Got it. So, in short, your business is: A small hair salon in Sao Paulo called Studio Aurora offering haircuts, coloring, and manicures, serving 40 clients a week while needing to manage scheduling, stock, sales, and finances. Is that correct?
 
 Yes, that sounds right. Please continue.
 
-Hello! I'm excited to share that I've found the perfect system for your beauty salon! With this system, you'll effortlessly manage clients, services, appointments, products, sales, and employees. Imagine having everything you need to streamline your operations and enhance your customer experience all in one place! You can also choose to activate additional modules like Accounts, Contacts, and Opportunities, which you can uncheck if you prefer. Would you like to create the system now or customize it first?
+I'm excited to share that I've found the perfect system for your beauty salon! This software will help you manage your clients, services, and appointments seamlessly. You’ll be able to record sales, manage your products, and keep track of your employees and their commissions easily. Plus, I suggest activating the Contacts and Opportunities modules for even more efficiency! You can uncheck them if you prefer. Would you like to create the system now or customize it first?
 
 Suggested modules
 

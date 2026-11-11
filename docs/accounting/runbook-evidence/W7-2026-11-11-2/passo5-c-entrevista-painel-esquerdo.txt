@@ -17,135 +17,135 @@ System: Advanced Beauty Salon ERP
 LeadPipelines
 Core
 
-Tabela de LeadPipelines
+Table of LeadPipelines
 
 Fields: Unit, Pipeline Name, Default
 LeadStages
 Core
 
-Tabela de LeadStages
+Table of LeadStages
 
 Fields: Pipeline, Stage Name, Stage Type and 2 more...
 Leads
 Core
 
-Tabela de Leads
+Table of Leads
 
 Fields: Unit, Pipeline, Stage and 21 more...
 LeadActivities
 Core
 
-Tabela de LeadActivities
+Table of LeadActivities
 
 Fields: Lead, Actor, Type and 4 more...
 LeadProposals
 
-Tabela de LeadProposals
+Table of LeadProposals
 
 Fields: Lead, Amount, Currency and 4 more...
 CrmContacts
 
-Tabela de CrmContacts
+Table of CrmContacts
 
 Fields: Unit, Contact Name, Email and 7 more...
 CrmOpportunities
 
-Tabela de CrmOpportunities
+Table of CrmOpportunities
 
 Fields: Unit, Lead, Account and 12 more...
 Campaigns
 
-Tabela de Campaigns
+Table of Campaigns
 
 Fields: Unit, Campaign Name, Target Audience and 8 more...
 Customers
 Core
 
-Tabela de Customers
+Table of Customers
 
 Fields: Main Unit, Full Name, Email and 17 more...
 Suppliers
 
-Tabela de Suppliers
+Table of Suppliers
 
 Fields: Supplier Name, Contact Person, Email and 11 more...
 Sales
 Core
 
-Tabela de Sales
+Table of Sales
 
 Fields: Unit, Sale Date, Status and 27 more...
 SaleItems
 Core
 
-Tabela de SaleItems
+Table of SaleItems
 
 Fields: Sale, Item Type, Product and 14 more...
 Services
 Core
 
-Tabela de Services
+Table of Services
 
 Fields: Name, Category, Price and 6 more...
 Products
 Core
 
-Tabela de Products
+Table of Products
 
 Fields: Name, Brand, Description and 3 more...
 Packages
 
-Tabela de Packages
+Table of Packages
 
 Fields: Name, Package Price, Validity (days) and 1 more...
 Commissions
 
-Tabela de Commissions
+Table of Commissions
 
 Fields: Employee (Commission), Sale, Sale Item and 5 more...
 ProductUnits
 Core
 
-Tabela de ProductUnits
+Table of ProductUnits
 
 Fields: Product, Unit, Sale Price and 2 more...
 StockMovements
 Core
 
-Tabela de StockMovements
+Table of StockMovements
 
 Fields: Product, Unit, Type and 10 more...
 Appointments
 Core
 
-Tabela de Appointments
+Table of Appointments
 
 Fields: Unit, Customer, Simple Customer and 7 more...
 Expenses
 Core
 
-Tabela de Expenses
+Table of Expenses
 
 Fields: Unit, Description, Amount and 6 more...
 OtherRevenues
 
-Tabela de OtherRevenues
+Table of OtherRevenues
 
 Fields: Unit, Revenue Date, Amount and 3 more...
 FinancialBaselines
 
-Tabela de FinancialBaselines
+Table of FinancialBaselines
 
 Fields: Unit, Baseline Date, Opening Cash and 3 more...
 Reports
 Core
 
-Tabela de Reports
+Table of Reports
 
 Fields: Report Type, Description
 Goals
 
-Tabela de Goals
+Table of Goals
 
 Fields: Unit, Description, Period and 6 more...
 AI interview
@@ -154,15 +154,15 @@ Hi! To get started, please tell me about your business or project so I can under
 
 I run a small hair salon called Studio Aurora in Sao Paulo with 3 stylists and 40 clients a week.
 
-What services do you offer at Studio Aurora besides haircuts?
+What services do you offer at Studio Aurora?
 
 We do haircuts, coloring and manicures. I want to control schedule, stock, sales and finances.
 
-Got it. So, in short, your business is: A small hair salon in Sao Paulo offering haircuts, coloring, and manicures, aiming to control schedule, stock, sales, and finances. Is that correct?
+Got it. So, in short, your business is: A small hair salon in Sao Paulo called Studio Aurora offering haircuts, coloring, and manicures, serving 40 clients a week while needing to manage scheduling, stock, sales, and finances. Is that correct?
 
 Yes, that sounds right. Please continue.
 
-Hello! I'm excited to share that I've found the perfect system for your beauty salon! With this system, you'll be able to manage your clients easily, keep track of services and their prices, schedule appointments seamlessly, and even manage your products and sales efficiently. Plus, you'll have the capability to oversee your employees and their commissions. I also recommend considering the additional modules for Contacts and Opportunities, which you can opt-out of if you prefer. Would you like to create the system now or customize it first?
+I'm excited to share that I've found the perfect system for your beauty salon! This software will help you manage your clients, services, and appointments seamlessly. You’ll be able to record sales, manage your products, and keep track of your employees and their commissions easily. Plus, I suggest activating the Contacts and Opportunities modules for even more efficiency! You can uncheck them if you prefer. Would you like to create the system now or customize it first?
 
 Customizing the "Advanced Beauty Salon ERP" System
 
