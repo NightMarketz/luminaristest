@@ -95,7 +95,7 @@ dá 409). O helper ficou estrito. **Falsificador:** tirar `PAYING` de `PARTIALLY
 
 ## 4. Fila de adoção (um PR por item, na ordem; cada um "sem mudança de comportamento" salvo o marcado)
 
-1. `Receivable` (espelho do AP): tabela + teste, e o CAS `RECEIVABLE_SETTLEABLE_STATUSES` amarrado.
+1. ✅ `Receivable` (espelho do AP): tabela + teste, e o CAS `RECEIVABLE_SETTLEABLE_STATUSES` amarrado. Feito em `RECEIVABLE_TRANSITIONS` + `Receivable.transitions.test.ts`; o JSDoc também deixou de chamar `RECEIVED` de terminal. Diferença do AP: o título nasce sempre `OPEN`, então só `OPEN → CANCELLED`.
 2. AP/AR: `assertTransition` nos 4 recálculos não condicionais. **Pode mudar o comportamento** se algum recálculo hoje produzir um par fora da tabela, e isso seria bug revelado. Fazer pela `sessao-instrumentacao` primeiro.
 3. `CollectionCharge`, `BankSettlementItem`, `AccountingDataExchangeJob`, `JournalEntry`, `FixedAsset`, `AgentTurn`.
 4. Front: `AccountsPayablePanel`/`AccountsReceivablePanel` e `FiscalDocumentsSection`/`FichaModal` passam a ler predicados do service; `DeliveryPanel`, `useGovernedSave` e `useAiInterview` passam para união discriminada (o estágio da entrevista vira união tipada).
@@ -108,3 +108,6 @@ dá 409). O helper ficou estrito. **Falsificador:** tirar `PAYING` de `PARTIALLY
 - A tabela do AP foi **derivada pela leitura**, não por execução. As escritas por recálculo (`payableStatusForBalance`) podem produzir pares que a leitura
   não enxergou (ex.: `OPEN → PARTIALLY_PAID` num recálculo após estorno de retenção sobre um título já parcialmente baixado). O item 2 da fila
   é o que converte isso em prova. Grau: **inferido**.
+- AR (revisão independente do #1150): o `compensateFailedRecognition` do `ReceivableService` grava `CANCELLED` sem condição de status.
+  Se um claim concorrente entrar entre o commit da criação e a falha do reconhecimento, o resultado é `RECEIVING → CANCELLED`, par fora da
+  tabela. A tabela acerta ao não legalizá-lo; o item 2 decide entre CAS `where status: 'OPEN'` e `assertTransition`. Grau: **inferido** (leitura, não execução).

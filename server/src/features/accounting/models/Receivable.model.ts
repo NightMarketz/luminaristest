@@ -5,15 +5,39 @@
  * the rename-on-delete helper.
  */
 import { ValidationError } from '../../../lib/errors';
+import type { TransitionTable } from '../../../lib/lifecycle';
 import { BANCO_CODE, CAIXA_CODE } from '../fixtures/ChartOfAccountsFixture';
 
 /**
  * Receivable lifecycle. `RECEIVING` is the TRANSIENT DB race-gate of the double-receipt guard (D4):
- * `registerReceipt` flips `OPEN → RECEIVING` atomically before posting, so two concurrent receipts
- * race on this single-row transition and exactly one wins. `RECEIVED` and `CANCELLED` are terminal.
+ * `registerReceipt` flips `OPEN|PARTIALLY_RECEIVED → RECEIVING` atomically (sum-CAS) before posting, so two
+ * concurrent receipts race on this single-row transition and exactly one wins. `CANCELLED` is terminal;
+ * `RECEIVED` is NOT (a receipt reversal reopens it) — the full graph is `RECEIVABLE_TRANSITIONS` below.
  */
 export const RECEIVABLE_STATUSES = ['OPEN', 'PARTIALLY_RECEIVED', 'RECEIVING', 'RECEIVED', 'CANCELLED'] as const;
 export type ReceivableStatus = (typeof RECEIVABLE_STATUSES)[number];
+
+/**
+ * Grafo do ciclo de vida do título a receber (PRE-ADR-LIFECYCLE-TRANSITIONS §4 item 1, espelho do
+ * `PAYABLE_TRANSITIONS`). DECLARA o que os sítios de escrita já fazem; não executa nada — a corrida segue no CAS
+ * do `ReceivableRepository`. Sítios lidos em 2026-11-09 (só `ReceivableService`/`ReceivableRepository` escrevem):
+ *   OPEN|PARTIALLY_RECEIVED → RECEIVING           claimForReceipt (sum-CAS)
+ *   RECEIVING → RECEIVED|PARTIALLY_RECEIVED       finalizeIfReceiving
+ *   RECEIVING → OPEN|PARTIALLY_RECEIVED           revertClaim (recalcula por receivableStatusForBalance)
+ *   RECEIVED|PARTIALLY_RECEIVED → OPEN|PARTIALLY_RECEIVED   cancelReceipt (recálculo; resultado RECEIVED é recusado)
+ *   PARTIALLY_RECEIVED → PARTIALLY_RECEIVED       estorno de um de dois recebimentos (grava o mesmo status; NÃO listado, ver lifecycle.ts)
+ *   OPEN → CANCELLED                              cancelReceivable (só OPEN) e compensateFailedRecognition (nasce OPEN)
+ * Diferente do AP: o título nasce sempre `OPEN` (sem retenção na origem), então não há `RECEIVED|PARTIALLY_RECEIVED →
+ * CANCELLED`, e não há `DEFERRED`. Mudou um sítio de escrita? Mude esta tabela no mesmo PR —
+ * `Receivable.transitions.test.ts` amarra as constantes a ela.
+ */
+export const RECEIVABLE_TRANSITIONS = {
+  OPEN: ['RECEIVING', 'CANCELLED'],
+  PARTIALLY_RECEIVED: ['RECEIVING', 'OPEN'],
+  RECEIVING: ['RECEIVED', 'PARTIALLY_RECEIVED', 'OPEN'],
+  RECEIVED: ['PARTIALLY_RECEIVED', 'OPEN'],
+  CANCELLED: [],
+} as const satisfies TransitionTable<ReceivableStatus>;
 
 /** Statuses a NEW receipt may be registered against (guard pré-CAS, ADR F-PS2 site 2). MIRROR of AP. */
 export const RECEIVABLE_SETTLEABLE_STATUSES = ['OPEN', 'PARTIALLY_RECEIVED'] as const;
