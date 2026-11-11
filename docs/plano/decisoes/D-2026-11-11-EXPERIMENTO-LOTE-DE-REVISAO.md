@@ -21,9 +21,9 @@ rodada ou revisor permanente. Nada é criado em `docs/audit/**`.
 
 ## Desenho
 
-- **Corpus:** 20 squash commits da faixa 1 (todos já passaram por revisor PASS por PR e estão na `main`), repostos em ordem
-  numa branch descartável `exp/lote-base` cortada do pai do primeiro. Sem push para a `main`.
-- **Defeitos plantados (verdade conhecida, cega para o revisor):** 8 dos 20 recebem um commit extra que quebra o código de
+- **Corpus:** 19 squash commits (eram 20; o commit de docs do GAP-MAP saiu) da faixa 1 (todos já passaram por revisor PASS por PR e estão na `main`), repostos em ordem
+  (30 a 68 do histórico da main) numa branch descartável `exp/lote-base` cortada do pai do primeiro. Sem push para a `main`.
+- **Defeitos plantados (verdade conhecida, cega para o revisor):** 8 dos 19 recebem (2 deles, nas posições 10 e 12, acabaram sem efeito prático: mutante equivalente; ficam fora do denominador, que passa a ser 6 defeitos reais) um commit extra que quebra o código de
   produção do PR (guarda removida, comparação invertida, CAS trocado por escrita direta). 4 são pegos pelo teste-guarda do
   próprio PR (detectáveis rodando) e 4 passam com os testes verdes (só a leitura pega). Os outros 12 ficam limpos.
   A lista dos plantados fica com a orquestração e só sai depois de todos os braços.
@@ -43,6 +43,30 @@ Lote de tamanho N é aceito se `recall_N >= recall_A - 10 pontos` **e** falsos p
 aceito. Se nenhum lote passar, fica 1 por PR. Com 8 defeitos a amostra é pequena: diferença menor que 2 defeitos entre
 braços é ruído e conta como empate; nesse caso fica o menor lote entre os empatados.
 
-## Resultado
+## Resultado (11/11/2026)
 
-(vazio — preencher depois de rodar; não aplicar a regra nova antes disso)
+Execução: braços A, B, C e D completos, mesmo agente `revisor-independente`, corpus de 19 commits, 6 defeitos reais
+(4 que o teste do próprio commit pega: 6, 9, 11, 14; 2 que só a leitura pega: 2, 8). Posições 10 e 12 eram mutantes sem efeito prático.
+
+| Braço | Revisões | Defeitos reais achados | FAIL em commit limpo | FAIL em 10/12 | Tokens (soma) |
+|---|---|---|---|---|---|
+| A, 1 commit | 19 | 6 de 6 | 1 (pos. 5) | 2 | ~873 mil |
+| B, 3–4 commits | 5 | 6 de 6 | 0 | 0 | ~350 mil |
+| C, 9–10 commits | 2 | 6 de 6 | 1 (pos. 5) | 0 | ~204 mil |
+| D, 19 commits | 1 | 6 de 6 | 0 | 0 | ~151 mil |
+
+**Pelo critério fixado antes:** recall igual em todos (6 de 6) e falsos positivos de B, C e D dentro do dobro de A: todos aceitos.
+Mas a regra de empate diz que, com diferença menor que 2 defeitos, vale o menor lote entre os empatados, o que mantém **1 por PR**.
+
+**Leitura honesta:**
+- Nenhum braço perdeu defeito plantado, nem o de 19 commits. Os defeitos eram fáceis demais (os 2 de leitura estavam à vista),
+  então o experimento não separou os braços no recall. Não prova que o lote de 19 é seguro para defeito sutil.
+- O braço de 1 commit achou mais problemas **fora** do plantado: posição 10 (PUT com `customerId: null` finaliza venda de pacote sem
+  cliente, reproduzido), posição 5 (sobra fórmula de subtotal sem arredondar em `useSalesAnalytics.ts`), posição 12 (formatos não ISO).
+  Os lotes maiores acharam menos disso (o de 10 achou a posição 5; o de 19 e os de 4 não).
+- Custo: o lote de 19 gastou ~1/6 dos tokens do braço de 1 commit.
+- Limites: 6 defeitos; a integração ficou bloqueada (401) em parte das execuções; não há como impedir que um revisor procure o commit
+  na main (nenhum indício de que isso ocorreu).
+
+**Decisão provisória:** mantém revisão por PR nos vermelhos de código. Para afrouxar, rodar uma segunda rodada com defeitos
+sutis (lógica de negócio sem teste, corrida, caso de borda) antes de ratificar qualquer lote.
