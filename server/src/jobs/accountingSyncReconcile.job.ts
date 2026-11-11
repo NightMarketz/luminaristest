@@ -481,6 +481,16 @@ export interface SaleReconcileDeps extends ReconcileOutcomeReporter {
 }
 
 /**
+ * INV F-42.1 (A1): sales the revenue pass must consider = Finalized + Returned. A Returned sale may never
+ * have had its revenue booked; the return bridge refuses to post without it (ordering gate), so the
+ * revenue pass has to be able to book it first. Pure; dedupes by sale id.
+ */
+export function withReturnedSalesPendingRevenue<T extends { row: { id: string } }>(finalized: T[], returned: T[]): T[] {
+  const seen = new Set(finalized.map((s) => s.row.id));
+  return [...finalized, ...returned.filter((s) => !seen.has(s.row.id))];
+}
+
+/**
  * Re-drive every Finalized sale lacking a journal entry. Idempotent and
  * fault-isolated: an isolated failure is logged and the batch continues. Mirrors the
  * per-source pass shape (see reconcileCrmReceivables); kept as a separate core so each
@@ -1995,8 +2005,8 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
 
     // Classify every Finalized sale ONCE (all-Package routing + single packageId), reused by the
     // revenue pass (skip all-Package), the package-origin pass and the settlement ordering gate.
-    const classifiedFinalized = await (async () => {
-      const found = await listSalesByStatus('Finalized');
+    const classifySales = async (status: string) => {
+      const found = await listSalesByStatus(status);
       const out: Array<{
         ownerUserId: string;
         row: { id: string; data: Record<string, unknown> };
@@ -2017,7 +2027,12 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
         });
       }
       return out;
-    })();
+    };
+    const classifiedFinalized = await classifySales('Finalized');
+    // INV F-42.1 (A1): a Returned sale whose revenue was never booked (e.g. skipped by a closed month)
+    // is invisible to a Finalized-only pass, so its return would stay pending forever. The revenue pass
+    // also covers those; idempotent (hasExistingEntry), and it runs BEFORE the returns pass.
+    const revenueCandidates = withReturnedSalesPendingRevenue(classifiedFinalized, await classifySales('Returned'));
 
     const crm = await reconcileCrmReceivables({
       listWonOpportunities: async () => {
@@ -2052,7 +2067,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
 
     const sale = await reconcileSaleSales({
       listFinalizedSales: async () =>
-        classifiedFinalized.map(({ ownerUserId, row, isAllPackage, revenueByNature }) => ({
+        revenueCandidates.map(({ ownerUserId, row, isAllPackage, revenueByNature }) => ({
           ownerUserId,
           saleId: row.id,
           unitId: typeof row.data.unitId === 'string' ? row.data.unitId : '',
