@@ -1,0 +1,233 @@
+Luminaris
+🇧🇷
+PT
+seed-presumido
+S
+Categorias
+Todas as Tabelas
+Comercial
+Produtos
+1
+Serviços
+1
+Estoque
+2
+Financeiro
+7
+Pessoas
+3
+Leads
+5
+Planejamento
+1
+Kanban
+1
+Operações
+4
+Marketing
+Negócios
+2
+Administrativo
+Outros
+Excluir Sistema
+Financeiro
+Nova Venda
+Análises
+Vendas
+Despesas
+Outros
+BUSCAR
+STATUS
+Todos
+Rascunho
+Finalizada
+Cancelada
+PERÍODO
+Todos
+Este mês
+Mês passado
+Últimos 3 meses
+Este ano
+VENDAS
+1
+TOTAL PAGO
+R$ 0,00
+Lista de vendas
+DATA	CLIENTE	STATUS	PAGAMENTO	SUBTOTAL	TOTAL	AÇÕES
+11/11/2026	Cliente DFE Teste	
+Finalizada
+	Pendente	R$ 80,00	R$ 80,00	
+Detalhes
+Cancelar
+Devolver
+Emitir NFS-e
+Pagar
+Data
+11/11/2026
+Finalizada
+Pendente
+Cliente
+Cliente DFE Teste
+Unidade
+seed-unit-presumido
+Subtotal
+R$ 80,00
+Total
+R$ 80,00
+Documentos fiscais
+Aguardando retorno do portal
+Homologação
+06.01.01
+R$ 80,00
+Ficha
+Registrar rejeição
+
+Depois de emitir no portal, baixe o XML da NFS-e (e o DANFSe, se quiser) e envie aqui.
+
+Selecionar XML da NFS-e
+DANFSe (PDF, opcional)
+Registrar retorno
+DISCOUNT
+R$ 0,00
+TAXES
+R$ 0,00
+SALES CHANNEL
+InStore
+REVENUE TYPE
+Operational
+IS NEW CUSTOMER
+Sim
+IS LOYAL CUSTOMER
+Não
+Itens
+Tipo	Produto/Serviço	Qtd	Preço
+Service	Corte DFE Teste	1	R$ 80,00
+
+Ficha para o Emissor Nacional — tentativa 1
+
+FORMULÁRIO ADMINISTRATIVO
+
+Homologação
+Homologação: use o ambiente de produção restrita do portal (endereço a confirmar no runbook — PV-7).
+
+Use a Emissão Completa do portal. Copie cada valor no campo de mesmo nome; os marcados "conferido na volta" são comparados com o XML autorizado.
+
+1. Pessoas
+Data de Competência
+conferido na volta
+11/11/2026
+Copiar
+Informar a DPS
+Não marque — o portal numera a DPS.
+Emitente da NFS-e
+Marque Prestador.
+CPF/CNPJ do emitente
+conferido na volta
+11222333000181
+Copiar
+(conferência — o portal preenche)
+Município do emitente
+3550308
+Copiar
+(conferência — o portal preenche)
+Opção no Simples Nacional
+1 — Não optante
+Copiar
+(conferência — o portal preenche)
+Tomador do Serviço
+Marque Brasil.
+CPF/CNPJ do tomador
+conferido na volta
+52998224725
+Copiar
+Nome/Razão Social
+Cliente DFE Teste
+Copiar
+(o portal pode recuperar do cadastro)
+Endereço do tomador
+Se o portal pedir, digite o endereço a partir do cadastro do cliente — a DPS do Luminaris não o leva.
+(PV-3)
+Intermediário
+Não informado.
+2. Serviço
+Local da prestação — Município
+conferido na volta
+O mesmo município do emitente.
+3550308
+Copiar
+(PV-4)
+Código de Tributação Nacional
+conferido na volta
+06.01.01
+Copiar
+Imunidade, exportação ou não incidência?
+Não.
+Descrição do Serviço
+1x Corte DFE Teste
+Copiar
+Item da NBS
+conferido na volta
+123456789
+Copiar
+Código interno do contribuinte
+Se o portal exigir, use o identificador da venda.
+cmwck7e1j000ucitkxoraz7le
+Copiar
+(PV-8)
+3. Valores
+Valor do Serviço prestado
+conferido na volta
+80,00
+Copiar
+Tributação do ISSQN
+Operação tributável.
+Regime Especial de Tributação
+0
+Copiar
+(rótulo do portal a conferir no runbook (PV-9))
+Exigibilidade suspensa?
+Não.
+Retenção do ISSQN
+conferido na volta
+Não.
+Benefício municipal / dedução
+Não.
+Alíquota
+conferido na volta
+2,00
+Copiar
+(conferência — o portal pode calcular)
+Tributação federal
+Não informe PIS/COFINS.
+Valor aproximado dos tributos — Federal (%)
+0,00
+Copiar
+(percentual — forma de informar a conferir no runbook (PV-5))
+Valor aproximado dos tributos — Estadual (%)
+0,00
+Copiar
+(percentual — forma de informar a conferir no runbook (PV-5))
+Valor aproximado dos tributos — Municipal (%)
+2,00
+Copiar
+(percentual — forma de informar a conferir no runbook (PV-5))
+IBS/CBS — CST
+conferido na volta
+000
+Copiar
+(PV-10)
+IBS/CBS — cClassTrib
+conferido na volta
+000001
+Copiar
+(PV-10)
+4. Emitir NFS-e
+Resumo + "Emitir NFS-e"
+Confira o resumo e clique em "Emitir NFS-e". Depois, "Baixar XML" (e o DANFSe) e envie o arquivo aqui embaixo.
+Retorno do portal
+
+Depois de emitir no portal, baixe o XML da NFS-e (e o DANFSe, se quiser) e envie aqui.
+
+Selecionar XML da NFS-e
+DANFSe (PDF, opcional)
+Registrar retorno
