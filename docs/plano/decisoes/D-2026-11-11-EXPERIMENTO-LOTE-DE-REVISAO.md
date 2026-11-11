@@ -68,5 +68,38 @@ Mas a regra de empate diz que, com diferença menor que 2 defeitos, vale o menor
 - Limites: 6 defeitos; a integração ficou bloqueada (401) em parte das execuções; não há como impedir que um revisor procure o commit
   na main (nenhum indício de que isso ocorreu).
 
-**Decisão provisória:** mantém revisão por PR nos vermelhos de código. Para afrouxar, rodar uma segunda rodada com defeitos
-sutis (lógica de negócio sem teste, corrida, caso de borda) antes de ratificar qualquer lote.
+**Decisão provisória (após a rodada 1):** mantém revisão por PR nos vermelhos de código; rodar segunda rodada com defeitos sutis.
+
+## Resultado da rodada 2 (defeitos sutis, 11/11/2026)
+
+Mesmos 19 commits (branch `exp/lote-r2`), 6 defeitos novos que **passam nos testes do próprio commit**: 6 (Dockerfile com
+`NODE_ENV=development`), 7 (`paymentStatusField` fora da conferência), 8 (rótulos duplicados no 415), 11 (`<=` em vez de `<` na reserva
+de estoque), 14 (`?page=` vazio vira 400 em vez do padrão), 15 (`QUOTA` em 502 contra a docstring de 503).
+Braço de 1 commit reduzido: 6 commits com defeito + 4 limpos (1, 3, 9, 17), por custo.
+
+| Braço | Revisões | Defeitos achados com FAIL | Defeitos vistos mas com PASS | Tokens |
+|---|---|---|---|---|
+| 1 commit | 10 | 3 de 6 (6, 7, 11) | 3 (8, 14, 15) | ~466 mil |
+| 3 a 4 commits | 5 | 5 de 6 (6, 7, 8, 11, 15) | 1 (14) | ~418 mil |
+| 9 a 10 commits | 2 | 3 de 6 (6, 7, 11) | 3 (8, 14, 15) | ~213 mil |
+| 19 commits | 1 | 4 de 6 (6, 7, 11, 15) | 1 (14) | ~146 mil |
+
+- **Tamanho do lote não degradou o acerto:** o pior braço foi o de 1 commit (3 de 6), o melhor foi o de 4 (5 de 6). Diferença de 2 defeitos
+  entre A e B; entre A e D, de 1 (ruído pela regra fixada antes).
+- **O modo de falha dominante é de calibração, não de escala:** nos defeitos 8, 14 e 15 o revisor **mediu ou anotou a divergência**
+  (rótulos repetidos "XML, XML"; comentário diz string vazia → padrão, código dá 400; docstring diz cota = 503, tabela põe 502) e
+  deu PASS por considerar "sem efeito". A divergência entre comentário/mensagem do commit e o código deveria valer FAIL.
+- **FAIL em commit limpo pela chave:** só no braço de 4 (posições 2, 5, 10, 18), todos achados legítimos do código original
+  (`entity: null` da IA; fórmula crua em `useSalesAnalytics.ts`; PUT com `customerId: null`; leitura do corpo com timeout e `AbortSignal.any`).
+  Pela regra literal fixada antes (falsos positivos <= 2 x os de A, com A = 0) o braço de 4 reprovaria; a regra é degenerada com A = 0
+  e o que esses FAIL mostram é recall em problemas reais fora do plantado, não ruído.
+- Limites: 6 defeitos; o braço A só viu 4 limpos; um revisor por célula; sem repetição.
+
+## Conclusão das duas rodadas
+
+1. **Nada indica perda de acerto ao revisar vários PRs de uma vez** (até 19, nos defeitos fáceis e nos sutis). A evidência
+   a favor de "1 por PR" é só a profundidade nos problemas fora do plantado, que também apareceu no lote de 4.
+2. **Proposta:** vermelho de código revisado em **lotes de até ~4 PRs da mesma área**, um revisor por lote, veredito por PR;
+   verde por amostragem. Lote de 10 a 19 serve para varredura/retrospectiva, não como gate, até haver mais dados.
+3. **Mudança de formulário do revisor:** divergência entre comentário/mensagem do commit/GAP-MAP e o código é **FAIL**, não ressalva.
+4. A regra do lote só vale depois de o dono ratificar nesta nota (estado continua `decided` para medir; a adoção é decisão à parte).
