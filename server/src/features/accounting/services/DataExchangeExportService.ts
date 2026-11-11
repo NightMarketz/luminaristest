@@ -667,6 +667,11 @@ export class DataExchangeExportService {
     }
     const job = await this.repo.findJobById(scope, id);
     if (!job || !job.storageKey) throw new NotFoundError('Artefato não encontrado.');
+    // O banco pode apontar para binário que não está mais no disco (ATTACHMENTS_DIR trocado,
+    // worktree removida). Erro de domínio legível, sem caminho absoluto — nunca ENOENT/500.
+    if (!(await storage.fileExists(job.storageKey))) {
+      throw new NotFoundError('O arquivo deste artefato não está mais disponível no armazenamento. Gere a exportação novamente.');
+    }
 
     if (process.env.AUDIT_DATA_EXCHANGE_DOWNLOADS === 'true') {
       await this.repo.runTransaction(async (tx) => {
