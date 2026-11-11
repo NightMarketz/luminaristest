@@ -1,0 +1,106 @@
+Luminaris
+🇧🇷
+PT
+seed-presumido
+S
+Categorias
+Todas as Tabelas
+Comercial
+Produtos
+1
+Serviços
+1
+Estoque
+2
+Financeiro
+7
+Pessoas
+3
+Leads
+5
+Planejamento
+1
+Kanban
+1
+Operações
+4
+Marketing
+Negócios
+2
+Administrativo
+Outros
+Excluir Sistema
+Financeiro
+Nova Venda
+Análises
+Vendas
+Despesas
+Outros
+BUSCAR
+STATUS
+Todos
+Rascunho
+Finalizada
+Cancelada
+PERÍODO
+Todos
+Este mês
+Mês passado
+Últimos 3 meses
+Este ano
+VENDAS
+1
+TOTAL PAGO
+R$ 0,00
+Lista de vendas
+DATA	CLIENTE	STATUS	PAGAMENTO	SUBTOTAL	TOTAL	AÇÕES
+11/11/2026	Cliente DFE Teste	
+Finalizada
+	Pendente	R$ 80,00	R$ 80,00	
+Detalhes
+Cancelar
+Devolver
+Emitir NFS-e
+Pagar
+Data
+11/11/2026
+Finalizada
+Pendente
+Cliente
+Cliente DFE Teste
+Unidade
+seed-unit-presumido
+Subtotal
+R$ 80,00
+Total
+R$ 80,00
+Documentos fiscais
+
+Nenhum documento fiscal emitido para esta venda.
+
+DISCOUNT
+R$ 0,00
+TAXES
+R$ 0,00
+SALES CHANNEL
+InStore
+REVENUE TYPE
+Operational
+IS NEW CUSTOMER
+Sim
+IS LOYAL CUSTOMER
+Não
+Itens
+Tipo	Produto/Serviço	Qtd	Preço
+Service	Corte DFE Teste	1	R$ 80,00
+
+Emitir NFS-e
+
+FORMULÁRIO ADMINISTRATIVO
+
+Documentos a emitir (um por código de serviço): 1
+
+Total dos serviços: R$ 80,00
+
+Cancelar
+Confirmar
