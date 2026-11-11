@@ -336,4 +336,4 @@ Tela: "Depreciação de 2026-11: 0 lançada(s), 0 ignorada(s), 2 com falha." com
 **Não conferido nesta reexecução:** a leitura do Balancete refletindo a depreciação de M (o roteiro dos 3 itens fica como
 está; o Balancete foi coberto na execução de 04/11).
 
-Assinatura: AI tester, agente claude-opus-5-5, sob autorização do dono (chat, 2026-11-11).
+Assinatura: AI tester, agente claude-sonnet-5-5, sob autorização do dono (chat, 2026-11-11).
