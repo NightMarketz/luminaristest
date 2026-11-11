@@ -1,0 +1,13 @@
+Exportação
+
+Baixe relatórios em CSV ou XLSX.
+
+Relatório
+Balancete
+Razão
+Balanço Patrimonial
+DRE
+Data
+CSV
+XLSX
+Exportar

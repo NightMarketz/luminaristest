@@ -1,0 +1,11 @@
+Entregas
+Todos os status
+QUEUED
+SENT
+FAILED
+Período	Contador	Status	Tentativas	Quando / motivo	Ações
+01/01/2025 – 31/12/2025	CONTADOR H2 19 AI TESTER R2	SENT	1	11/11/2026, 17:20:21	
+Detalhe
+
+01/01/2025 – 31/12/2025	CONTADOR H2 19 AI TESTER	SENT	1	04/11/2026, 13:15:16	
+Detalhe
