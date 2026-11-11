@@ -24,15 +24,22 @@ export class DataExchangeRepository implements IDataExchangeRepository {
       select: { id: true, userId: true, unitId: true, kind: true },
     });
     const vencidos: StaleFailedJob[] = [];
-    for (const job of candidatos) {
-      // CAS: a requisição que ainda termina (EXPORTED) ou outra varredura não é atropelada.
-      const { count } = await prisma.accountingDataExchangeJob.updateMany({
-        where: { id: job.id, status: 'PROCESSING', updatedAt: { lt: olderThan } },
-        // Como nos outros FAILED dos SPED (SpedGenerationService.ts:259-266): FAILED com `supersedesJobId` preenchido
-        // trava o original para sempre no @unique.
-        data: { status: 'FAILED', supersedesJobId: null },
-      });
-      if (count === 1) vencidos.push(job);
+    try {
+      for (const job of candidatos) {
+        // CAS: a requisição que ainda termina (EXPORTED) ou outra varredura não é atropelada.
+        const { count } = await prisma.accountingDataExchangeJob.updateMany({
+          where: { id: job.id, status: 'PROCESSING', updatedAt: { lt: olderThan } },
+          // Como nos outros FAILED dos SPED (SpedGenerationService.ts:259-266): FAILED com `supersedesJobId` preenchido
+          // trava o original para sempre no @unique.
+          data: { status: 'FAILED', supersedesJobId: null },
+        });
+        if (count === 1) vencidos.push(job);
+      }
+    } catch (error) {
+      // Os já levados a FAILED não voltam a PROCESSING (o próximo ciclo não os vê) e o job não guarda o motivo:
+      // o chamador precisa deles para alertar. O erro segue propagado.
+      if (error instanceof Error) Object.assign(error, { staleFailedJobs: vencidos });
+      throw error;
     }
     return vencidos;
   }

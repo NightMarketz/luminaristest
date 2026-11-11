@@ -50,13 +50,7 @@ export class DataExchangeStaleSweepScheduler {
     this.running = true;
     try {
       const failed = await this.sweep();
-      for (const j of failed) {
-        // Mesma fonte e evento dos outros FAILED do export (DataExchangeExportService/SPED), com o motivo.
-        this.alert({
-          source: 'data_exchange_export', event: 'generation_failed', timestamp: new Date().toISOString(),
-          jobId: j.id, kind: j.kind, unitId: j.unitId, reason: 'stale_processing',
-        });
-      }
+      this.reportStale(failed);
       const summary = { failed: failed.length };
       if (failed.length > 0) {
         this.log.event('warn', 'job.completed', JOB, { job: JOB, ...summary, reason: 'stale_processing', jobIds: failed.map((j) => j.id) });
@@ -66,11 +60,27 @@ export class DataExchangeStaleSweepScheduler {
       return summary;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      // Varredura interrompida no meio: os jobs já levados a FAILED não serão revistos pelo próximo ciclo.
+      const partial = (error as { staleFailedJobs?: StaleFailedJob[] } | null)?.staleFailedJobs;
+      if (Array.isArray(partial) && partial.length > 0) {
+        this.reportStale(partial);
+        this.log.event('warn', 'job.completed', JOB, { job: JOB, failed: partial.length, reason: 'stale_processing', jobIds: partial.map((j) => j.id), partial: true });
+      }
       this.log.event('error', 'job.failed', JOB, { job: JOB, error: message });
       this.alert({ source: 'data_exchange_stale_sweep', event: 'job_failed', timestamp: new Date().toISOString(), job: JOB, error: message });
       throw error;
     } finally {
       this.running = false;
+    }
+  }
+
+  private reportStale(failed: StaleFailedJob[]): void {
+    for (const j of failed) {
+      // Mesma fonte e evento dos outros FAILED do export (DataExchangeExportService/SPED), com o motivo.
+      this.alert({
+        source: 'data_exchange_export', event: 'generation_failed', timestamp: new Date().toISOString(),
+        jobId: j.id, kind: j.kind, unitId: j.unitId, reason: 'stale_processing',
+      });
     }
   }
 
