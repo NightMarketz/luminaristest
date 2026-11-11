@@ -406,6 +406,23 @@ describe('CrmPipelineService', () => {
       expect(dynamicTableService.createTableData).not.toHaveBeenCalled();
       expect(dynamicTableService.runInTransaction).not.toHaveBeenCalled();
     });
+    // INV F-27.1 (faixa 4, corrida; dono, questionário, 2026-11-11): o status `Converted` era lido só
+    // antes da tx. Duas confirmações (duas abas, duas chamadas à API) passavam ambas pela guarda e criavam
+    // duas contas e dois contatos. Cenário determinístico, sem concorrência real: a leitura de fora da tx
+    // vê o lead `Open`; o repositório ligado à tx (o estado que a escrita vai encontrar) já o vê
+    // `Converted`, como se a outra conversão tivesse commitado entre a leitura e a escrita.
+    it('INV F-27.1: lead convertido por outra chamada entre a leitura e a tx → ValidationError, sem conta nem contato', async () => {
+      const txFindDataById = jest.fn(async () => ({ ...leadRow, data: { ...leadRow.data, status: 'Converted' } }));
+      const withTransaction = jest.fn(() => ({ findDataById: txFindDataById }));
+      const { svc, dynamicTableService, repository } = buildConvert();
+      (repository as any).withTransaction = withTransaction;
+
+      await expect(svc.convertLead(user, baseInput)).rejects.toBeInstanceOf(ValidationError);
+      expect(dynamicTableService.createTableData).not.toHaveBeenCalled();
+      expect(dynamicTableService.updateTableData).not.toHaveBeenCalled();
+      // A releitura usa o repositório da MESMA tx da escrita.
+      expect(withTransaction).toHaveBeenCalledWith(txArg.tx);
+    });
   });
 
   describe('advanceOpportunity', () => {
