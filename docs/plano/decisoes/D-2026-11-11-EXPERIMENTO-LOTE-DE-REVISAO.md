@@ -4,7 +4,7 @@ tipo: "decisao"
 dominio: "processo"
 titulo: "Medir o acerto do revisor por tamanho de lote antes de afrouxar a revisão por PR"
 estado: "decided"
-autorizacao: "dono, chat, 2026-11-11: \"pode medir antes de afrouxar, com certeza. E para decidir o tamanho do lote, pelo resultado que a gente tiver\""
+autorizacao: "dono, chat, 2026-11-11: \"pode medir antes de afrouxar, com certeza. E para decidir o tamanho do lote, pelo resultado que a gente tiver\"; adoção: \"Sim, lotes de 4\" (2026-11-11, depois do resultado das duas rodadas)"
 atualizado: "2026-11-11"
 ---
 # D-2026-11-11-EXPERIMENTO-LOTE-DE-REVISAO
@@ -102,4 +102,9 @@ Braço de 1 commit reduzido: 6 commits com defeito + 4 limpos (1, 3, 9, 17), por
 2. **Proposta:** vermelho de código revisado em **lotes de até ~4 PRs da mesma área**, um revisor por lote, veredito por PR;
    verde por amostragem. Lote de 10 a 19 serve para varredura/retrospectiva, não como gate, até haver mais dados.
 3. **Mudança de formulário do revisor:** divergência entre comentário/mensagem do commit/GAP-MAP e o código é **FAIL**, não ressalva.
-4. A regra do lote só vale depois de o dono ratificar nesta nota (estado continua `decided` para medir; a adoção é decisão à parte).
+4. **Adoção (dono, chat, 2026-11-11: "Sim, lotes de 4"):** o `revisor-independente` revisa PR vermelho de código em **lotes de até 4 PRs da
+   mesma área**, um revisor por lote, veredito por PR (PASS/FAIL em cada). Vale a rodada de revisão do `D-2026-10-28-FLUXO-AUTONOMO` (até 3 rodadas, a 2ª e
+   a 3ª só no diff novo): a rodada é do lote, e um PR que passou não volta para o lote seguinte. Lote de mais de 4 só como varredura, não como gate.
+   Não muda a classe de risco, o lote de merge do dono, nem o limite de 3 subagentes simultâneos.
+5. **Ainda não adotado:** a mudança de formulário do item 3 (divergência entre comentário/mensagem e código = FAIL). Mexe em `.claude/agents/revisor-independente.md`
+   (vermelho) e espera a ordem do dono.
