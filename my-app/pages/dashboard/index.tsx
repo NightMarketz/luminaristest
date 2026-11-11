@@ -11,6 +11,7 @@ import DashboardOverview from '../../features/dashboard/components/DashboardOver
 import { GetServerSideProps } from 'next';
 import { runDevSeed } from '../../features/dev/seed';
 import { notify } from '../../lib/notifications/notify';
+import { wasNotified } from '../../lib/notifications/notified';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
@@ -108,7 +109,7 @@ function DashboardPage({ allTables }: DashboardPageProps) {
         if (Array.isArray(j?.data)) setTables(j.data as unknown as IDynamicTable[]);
       } catch (e: unknown) {
         console.error('Seed failed:', e);
-        notify(e instanceof Error ? e.message : String(e), 'error', tRef.current('seedFailed'));
+        if (!wasNotified(e)) notify(e instanceof Error ? e.message : String(e), 'error', tRef.current('seedFailed'));
       } finally {
         setSeeding(false);
       }
@@ -235,7 +236,7 @@ function DashboardPage({ allTables }: DashboardPageProps) {
               if (Array.isArray(j?.data)) setTables(j.data as unknown as IDynamicTable[]);
             } catch (e: unknown) {
               console.error('Manual seed failed:', e);
-              notify(e instanceof Error ? e.message : String(e), 'error', t('seedFailed'));
+              if (!wasNotified(e)) notify(e instanceof Error ? e.message : String(e), 'error', t('seedFailed'));
             } finally {
               setSeeding(false);
             }
