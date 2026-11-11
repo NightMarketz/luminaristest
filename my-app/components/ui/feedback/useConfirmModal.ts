@@ -3,6 +3,8 @@
 import { useState, useCallback, useRef, ReactNode } from 'react';
 import React from 'react';
 import { ConfirmModal, ConfirmModalVariant } from './ConfirmModal';
+import { notify } from '../../../lib/notifications/notify';
+import { wasNotified } from '../../../lib/notifications/notified';
 
 // =============================================================================
 // TYPES
@@ -63,8 +65,11 @@ export function useConfirmModal(): UseConfirmModalReturn {
             // Só executa se o onConfirm não der throw (sucesso)
         } catch (err) {
             // Absorve o erro para não causar Uncaught Promise Rejection (que derruba o Next.js).
-            // O componente chamador (ex: SalesView) já exibiu o Toast de erro antes do throw.
+            // Erro do apiClient já virou toast (`notified`); qualquer outro é avisado aqui (F1-N3).
             console.error('[useConfirmModal] Action failed (caught in handleConfirm):', err);
+            if (!wasNotified(err)) {
+                notify(err instanceof Error && err.message ? err.message : 'Não foi possível concluir a ação.', 'error', 'Erro');
+            }
         } finally {
             setIsLoading(false);
             setIsOpen(false);
