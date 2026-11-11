@@ -822,11 +822,16 @@ export class ReceivableService {
           await this.receivableRepo.updateReceipt(scope, receipt.id, { status: 'CANCELLED' }, tx);
         }
         // Status from the row RE-READ after the decrement (review #307 F2) — mirror of AP.
-        await this.receivableRepo.updateReceivable(scope, receivableId, { receivedCents: { decrement: claimedCents } }, tx);
+        // INV F-11.2: devolução e status por CAS sobre RECEIVING — o título que saiu de RECEIVING não é tocado.
+        if ((await this.receivableRepo.releaseClaim(scope, receivableId, claimedCents, tx)) === 0) {
+          throw new ValidationError('Não foi possível desfazer o recebimento: o título não está mais em recebimento ou o saldo não comporta a devolução.');
+        }
         const row = await this.receivableRepo.findById(scope, receivableId, tx);
         if (!row) return;
         const status = receivableStatusForBalance(centsFromDb(row.receivedCents), centsFromDb(row.amountCents));
-        await this.receivableRepo.updateReceivable(scope, receivableId, { status }, tx);
+        if ((await this.receivableRepo.resolveRevertedClaim(scope, receivableId, status, tx)) === 0) {
+          throw new ValidationError('Não foi possível desfazer o recebimento: o título não está mais em recebimento.');
+        }
       });
     } catch (error) {
       logger.error('AR registerReceipt revert failed — reconcile will reconcile state', {

@@ -82,6 +82,8 @@ function build(opts: Opts = {}) {
     claimForPayment,
     finalizeIfPaying,
     releaseSettlement,
+    releaseClaim: jest.fn(async () => 1),
+    resolveRevertedClaim: jest.fn(async () => 1),
     updatePayable: jest.fn(async (_s, id: string, data: Record<string, unknown>) => payableRow({ id, ...data } as Partial<Payable>)),
     createPayment: jest.fn(async (data: Record<string, unknown>) => {
       const p = paymentRow({ id: `paym-${createdPayments.length + 1}`, ...data } as Partial<PayablePayment>);
@@ -487,9 +489,20 @@ describe('PayableService.registerPayment — settlement (D2/D3/D4)', () => {
     payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PAYING', paidCents: BigInt(30000) })); // after the decrement
     postEntry.mockRejectedValueOnce(new Error('period closed'));
     await expect(service.registerPayment(scope, 'pay-1', { ...payDto, amountCents: 10000 } as never)).rejects.toThrow('period closed');
-    const writes = payableRepo.updatePayable.mock.calls.map((c) => c[2] as Record<string, unknown>);
-    expect(writes).toContainEqual({ paidCents: { decrement: 10000 } });
-    expect(writes.at(-1)).toEqual({ status: 'PARTIALLY_PAID' });
+    expect(payableRepo.releaseClaim).toHaveBeenCalledWith(scope, 'pay-1', 10000, expect.anything());
+    expect(payableRepo.resolveRevertedClaim).toHaveBeenLastCalledWith(scope, 'pay-1', 'PARTIALLY_PAID', expect.anything());
+  });
+
+  it('SM F-01.2 / INV F-11.2: o revertClaim não devolve centavos nem grava status por escrita incondicional (só CAS sobre PAYING)', async () => {
+    const { service, payableRepo, postEntry } = build();
+    payableRepo.findByIdWithPayments.mockResolvedValueOnce({ ...payableRow({ status: 'PARTIALLY_PAID', paidCents: BigInt(30000) }), payments: [] });
+    payableRepo.findById.mockResolvedValueOnce(payableRow({ status: 'PAYING', paidCents: BigInt(30000) }));
+    postEntry.mockRejectedValueOnce(new Error('period closed'));
+    await expect(service.registerPayment(scope, 'pay-1', { ...payDto, amountCents: 10000 } as never)).rejects.toThrow('period closed');
+    const unconditional = payableRepo.updatePayable.mock.calls
+      .map((c) => c[2] as Record<string, unknown>)
+      .filter((w) => 'paidCents' in w || 'status' in w);
+    expect(unconditional).toEqual([]);
   });
 
   it('rejects paying a non-OPEN payable', async () => {
@@ -650,6 +663,18 @@ describe('PayableService.cancelPayment — reverse settlement + reopen (net-zero
     await expect(
       service.cancelPayment(scope, 'pay-1', 'paym-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
     ).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('SM F-01.2: o recálculo que tiraria um título CANCELLED (terminal) do estado terminal é recusado, sem gravar status', async () => {
+    const { service, payableRepo } = build();
+    payableRepo.findById
+      .mockResolvedValueOnce(payableRow({ status: 'CANCELLED', paidCents: BigInt(50000) })) // pre-check
+      .mockResolvedValueOnce(payableRow({ status: 'CANCELLED', paidCents: BigInt(0) })); // re-read: recálculo daria OPEN
+    await expect(
+      service.cancelPayment(scope, 'pay-1', 'paym-1', { unitId: 'unit-1', reversalDate: '2026-07-14' } as never),
+    ).rejects.toThrow(/transição de status inválida \(CANCELLED → OPEN\)/);
+    const statusWrites = payableRepo.updatePayable.mock.calls.filter((c) => 'status' in (c[2] as object));
+    expect(statusWrites).toHaveLength(0);
   });
 });
 

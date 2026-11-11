@@ -79,6 +79,8 @@ function build(opts: Opts = {}) {
     claimForReceipt,
     finalizeIfReceiving,
     releaseSettlement,
+    releaseClaim: jest.fn(async () => 1),
+    resolveRevertedClaim: jest.fn(async () => 1),
     updateReceivable: jest.fn(async (_s, id: string, data: Record<string, unknown>) => receivableRow({ id, ...data } as Partial<Receivable>)),
     createReceipt: jest.fn(async (data: Record<string, unknown>) => {
       const r = receiptRow({ id: `recp-${createdReceipts.length + 1}`, ...data } as Partial<ReceivableReceipt>);
@@ -372,9 +374,20 @@ describe('ReceivableService.registerReceipt — receipt (D2/D3/D4)', () => {
     receivableRepo.findById.mockResolvedValueOnce(receivableRow({ status: 'RECEIVING', receivedCents: BigInt(30000) })); // after the decrement
     postEntry.mockRejectedValueOnce(new Error('period closed'));
     await expect(service.registerReceipt(scope, 'rec-1', { ...receiveDto, amountCents: 10000 } as never)).rejects.toThrow('period closed');
-    const writes = receivableRepo.updateReceivable.mock.calls.map((c) => c[2] as Record<string, unknown>);
-    expect(writes).toContainEqual({ receivedCents: { decrement: 10000 } });
-    expect(writes.at(-1)).toEqual({ status: 'PARTIALLY_RECEIVED' });
+    expect(receivableRepo.releaseClaim).toHaveBeenCalledWith(scope, 'rec-1', 10000, expect.anything());
+    expect(receivableRepo.resolveRevertedClaim).toHaveBeenLastCalledWith(scope, 'rec-1', 'PARTIALLY_RECEIVED', expect.anything());
+  });
+
+  it('SM F-01.2 / INV F-11.2: o revertClaim não devolve centavos nem grava status por escrita incondicional (só CAS sobre RECEIVING)', async () => {
+    const { service, receivableRepo, postEntry } = build();
+    receivableRepo.findByIdWithReceipts.mockResolvedValueOnce({ ...receivableRow({ status: 'PARTIALLY_RECEIVED', receivedCents: BigInt(30000) }), receipts: [] });
+    receivableRepo.findById.mockResolvedValueOnce(receivableRow({ status: 'RECEIVING', receivedCents: BigInt(30000) }));
+    postEntry.mockRejectedValueOnce(new Error('period closed'));
+    await expect(service.registerReceipt(scope, 'rec-1', { ...receiveDto, amountCents: 10000 } as never)).rejects.toThrow('period closed');
+    const unconditional = receivableRepo.updateReceivable.mock.calls
+      .map((c) => c[2] as Record<string, unknown>)
+      .filter((w) => 'receivedCents' in w || 'status' in w);
+    expect(unconditional).toEqual([]);
   });
 
   it('rejects receiving a non-OPEN receivable', async () => {

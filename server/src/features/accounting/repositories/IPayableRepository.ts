@@ -1,5 +1,6 @@
 import type { Payable, PayablePayment, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
+import type { PayableStatus } from '../models/Payable.model';
 import type { CreditoPisCofinsNota, RazaoCreditoPisCofins } from '../models/pisCofinsParams';
 import type { IbsCbsCreditoNota } from '../models/ibsCbsCredito';
 
@@ -179,6 +180,15 @@ export interface IPayableRepository {
     cents: number,
     tx?: Prisma.TransactionClient,
   ): Promise<number>;
+
+  /**
+   * INV F-11.2 — desfaz o claim de uma baixa que não chegou ao razão: `updateMany` where status = PAYING AND
+   * `paidCents >= cents` → `paidCents −= cents`. 0 = o título saiu de PAYING ou o saldo não comporta. Must run inside the tx.
+   */
+  releaseClaim(scope: AccountingScope, id: string, cents: number, tx?: Prisma.TransactionClient): Promise<number>;
+
+  /** INV F-11.2 — status do claim desfeito, CAS sobre PAYING (0 = o título saiu de PAYING). Must run inside the tx. */
+  resolveRevertedClaim(scope: AccountingScope, id: string, status: PayableStatus, tx?: Prisma.TransactionClient): Promise<number>;
 
   updatePayable(
     scope: AccountingScope,
