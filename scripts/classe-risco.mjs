@@ -138,7 +138,7 @@ export const LOTE_DURO = [
   ['server/src/routes/auth.ts', 'rota de autenticação'],
   ['server/src/lib/jwt*', 'emissão e verificação do token'],
   ['**/authController*', 'controller de autenticação'],
-  ['**/authUtils*', 'utilitário de autenticação'],
+  ['**/authUtil*', 'utilitário de autenticação (authUtils, authUtilityController)'],
   ['my-app/lib/context/AuthContext*', 'sessão do usuário no FE'],
   ['my-app/lib/hoc/withAuth*', 'guarda de tela (withAuth)'],
   ['server/src/features/dynamicTables/services/DynamicTableService.ts', 'motor DynamicTable'],

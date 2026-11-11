@@ -34,7 +34,8 @@ CICLO
      revisor propôs vai ao resumo, e a correção espera autorização própria.
    - VERMELHO com `lote: não (entra com revisor PASS)` e PASS do revisor no SHA de cabeça, sem achado `A` aberto, todos
      os checks verdes, MERGEABLE, fora de draft, base `main` → mergeie como VERDE (D-2026-11-10-METODO-FABLE-5-2). O PASS
-     continua valendo se os commits depois dele forem só rebase ou merge da `main` sem conflito em código; qualquer
+     continua valendo se os commits depois dele forem só rebase ou merge da `main` sem conflito em código, ou o commit
+     que devolve o `GAP-MAP.md` à versão da base (PRs da faixa 1 abertos antes da emenda de 10/11); qualquer
      outro commit pede nova rodada. Faltou uma condição, ou a base é `integration/*`: lote.
    - VERMELHO com `lote: sim` → lote do dono, com o veredito do revisor. Nunca mergeie.
    - Nada de comentário público em PR; contexto vai no resumo.
