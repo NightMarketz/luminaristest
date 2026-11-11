@@ -713,7 +713,7 @@ export class PostingService {
           }
         }
 
-        await this.journalEntryRepo.setStatus(scope, original.id, 'Reversed', tx);
+        await this.journalEntryRepo.setStatus(scope, original.id, 'Reversed', tx, 'Posted');
         await this.journalEntryRepo.setReversedBy(scope, original.id, reversal.id, tx);
 
         // FREE THE IDEMPOTENCY KEY (D5): a closing entry keys on sourceId=String(year); once
