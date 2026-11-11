@@ -53,7 +53,7 @@ describe('item 2 — choice decide sem ler o texto', () => {
     expect(result.sessionId).toBe('sess-1');
     // W4 item 6: a sessão nasce do usuário autenticado — o id é o da linha, não vem do cliente.
     // W1 (F-W1-6 a): o 3º argumento são os módulos do turno (ausentes aqui).
-    expect(createCustomizationSession).toHaveBeenCalledWith('beautySalon', 'u1', undefined);
+    expect(createCustomizationSession).toHaveBeenCalledWith('beautySalon', 'u1', undefined, 'pt');
   });
 });
 
