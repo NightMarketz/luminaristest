@@ -230,19 +230,28 @@ export default function SalesCreateModal({
         }
         setSubmitError(null);
         try {
-            const saleId = await submit(salesTable.id, saleItemsTable.id, finalize);
-            // Item 11: venda e itens já existem; o aceite é a 3ª chamada, com versão + hash do texto MOSTRADO. Se falhar
-            // (inclusive 409 PACKAGE_NOTICE_CHANGED) a venda fica criada e o detalhe mostra o selo "aceite não registrado".
-            if (noticeState.status === 'ready' && hasValidity(noticeState.notice)) {
+            const activeNotice = noticeState.status === 'ready' && hasValidity(noticeState.notice) ? noticeState.notice : null;
+            const needsAcceptance = activeNotice !== null;
+            const registerAcceptance = async (id: string) => {
+                if (!activeNotice) return;
                 try {
-                    await packageAcceptancesService.create(toAcceptanceInput(formState.unitId, saleId, noticeState.notice));
-                } catch {
+                    await packageAcceptancesService.create(toAcceptanceInput(formState.unitId, id, activeNotice));
+                } catch (e) {
                     notify(
-                        t('finance_view:sales.validity.accept_failed', 'A venda foi criada, mas o aceite da validade não foi registrado. Abra a venda e registre o aceite.'),
+                        finalize
+                            ? t('finance_view:sales.validity.accept_failed_draft', 'A venda foi criada como rascunho e NÃO foi finalizada: o aceite da validade não foi registrado. Abra a venda, registre o aceite e finalize.')
+                            : t('finance_view:sales.validity.accept_failed', 'A venda foi criada, mas o aceite da validade não foi registrado. Abra a venda e registre o aceite.'),
                         'warning',
                         t('finance_view:sales.validity.title', 'Validade do pacote'),
                     );
+                    throw e;
                 }
+            };
+            // F-PP-6 (a): ao finalizar, o aceite vem ANTES do PUT Finalized (a prova precede o crédito do saldo).
+            // Rascunho: venda+itens, depois o aceite (a falha só avisa; nada foi finalizado).
+            const saleId = await submit(salesTable.id, saleItemsTable.id, finalize, finalize && needsAcceptance ? registerAcceptance : undefined);
+            if (!finalize && needsAcceptance) {
+                await registerAcceptance(saleId).catch(() => undefined);
             }
             onCreated();
             onClose();
