@@ -45,6 +45,7 @@ EVIDÊNCIA é sempre artefato colado/anexado (screenshot, lista do Network, corp
 
 5. Trocar o idioma para **inglês** e abrir `/dashboard/setup` nas três abas (**Rápido**, **Controle Total**, **Entrevista com IA**); no Controle Total, escolher um modelo e ir até "Select the tables"; na Entrevista, ir até o painel esquerdo de funcionalidades aparecer.
    Resultado esperado: nenhum texto em português nas três abas e no painel esquerdo (o painel **direito** fica para o PR-3); a frase de ajuda no rodapé em inglês.
+   **Atualização (dono, chat, 2026-11-11: "Sim, localizar"):** a emenda abaixo ficou superada — nome/descrição dos presets e a descrição `Tabela de …` passam a seguir o idioma da UI (`?locale=` em `GET /dashboard/presets`, `locale` na sessão da entrevista). O passo 5 deve ser reconferido na próxima execução sem exclusões.
    **Emenda de roteiro (2026-11-11, 2ª execução):** "texto em português" aqui é o que passa pelo i18n do front (BRIEF itens 6–7: texto vindo do servidor não é traduzido). Ficam **fora** deste passo, até o dono responder a pergunta de produto das lacunas `L-20261111-204322-37cb` e `-f834`: nome e descrição dos presets (catálogo do servidor, sem `locale` no endpoint; o salão já é inglês, a clínica e o CRM são português) e a descrição `Tabela de <nome>` do painel esquerdo (texto gerado no servidor).
    EVIDÊNCIA: [um screenshot por aba + o painel esquerdo]
 
@@ -214,3 +215,6 @@ A marca da janela sobreviveu e há 1 navegação: a página não recarregou; o `
 - **Achados fora do escopo (caixa do maestro):** `L-20261111-214837-3484` (`FieldCustomizationService/index.ts:211`, `CustomizeFields` sem `locale`), `L-20261111-214837-d745` (`FloatingChatBubble.tsx:20`, `aria-label="Abrir chat"` em português na UI em inglês). `L-20261111-204322-37cb` e `-f834` passaram a `com-dono` (pergunta de produto). `L-20261111-204322-8a05` corrigida neste PR.
 - Rastreio: `docs/plano/nos/W7.md` (`estado_detalhe`) atualizado.
 - Assinatura do executor: agente claude-sonnet-5-5, AI tester, sob autorização do dono (chat, 2026-11-11). Atesta a execução e a conferência da evidência; não substitui oráculo humano (a decisão de produto sobre idioma do catálogo e a leitura do passo 5 emendado são do dono).
+
+### Atualização posterior (2026-11-11, mesmo PR) — localização do catálogo
+Decisão do dono (chat, 2026-11-11): *"Sim, localizar"*. Corrigidas `L-20261111-204322-37cb` (`presetText.ts`; `GET /dashboard/presets?locale=`; o front manda o idioma da UI) e `-f834` (`TableExtractor` usa `INTERVIEW_TEXT[locale].tableFallbackDescription`; a sessão da entrevista recebe o `locale`). Verificado por testes (jest unit `localeCatalog.test.ts`, vitest de `features/interview`, `lib/services`), `tsc` e paridade i18n; **o passo 5 não foi reexecutado no navegador depois desta mudança** — o desfecho PASSOU acima vale para o roteiro emendado, e a emenda deixa de ser necessária só depois dessa reexecução.

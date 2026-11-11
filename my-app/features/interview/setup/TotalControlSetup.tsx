@@ -84,7 +84,7 @@ export default function TotalControlSetup() {
     async function fetchPresets() {
       setIsLoading(true);
       try {
-        setPresets(await SetupService.getPresets());
+        setPresets(await SetupService.getPresets(i18n?.language?.startsWith('en') ? 'en' : 'pt'));
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : String(err));
       } finally {
@@ -93,7 +93,7 @@ export default function TotalControlSetup() {
     }
 
     fetchPresets();
-  }, [user, authLoading]);
+  }, [user, authLoading, i18n?.language]);
 
   function handleSelectPreset(preset: Preset) {
     setSelectedPreset(preset);
