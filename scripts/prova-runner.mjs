@@ -17,7 +17,7 @@ export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const STAGES = ['prova', 'invariantes', 'review-llm(opcional, não-gate)'];
 const TIMEOUT_MS = 10 * 60 * 1000; // F-3 (a): reexecuta tudo, sem allowlist
 
-// ponytail: YAML mínimo — só `PROVA:` + lista de mapas planos + `VEREDITO:`. Qualquer outra forma = SEM-PROVA.
+// atalho: YAML mínimo — só `PROVA:` + lista de mapas planos + `VEREDITO:`. Qualquer outra forma = SEM-PROVA.
 export function parseProva(text) {
   const t = text.replace(/\r\n/g, '\n');
   // review a8409e1c #1: escolhe o fence que contém PROVA, não o primeiro

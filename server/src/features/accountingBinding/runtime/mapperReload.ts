@@ -11,7 +11,7 @@ import { getFactory } from '../../../lib/factory';
  * referência atropela a outra com uma leitura mais velha. Uma recarga rejeitada não quebra a cadeia: quem a pediu
  * recebe a rejeição, e a próxima roda normalmente.
  *
- * ponytail: o teto é um processo (T11). Multi-processo exigiria outro sinal.
+ * atalho: o teto é um processo (T11). Multi-processo exigiria outro sinal.
  */
 export function serializeReload(reload: () => Promise<void>): () => Promise<void> {
   let chain: Promise<void> = Promise.resolve();

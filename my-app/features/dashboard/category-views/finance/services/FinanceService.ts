@@ -11,7 +11,7 @@ import type { SaleData, SaleItemData, NewSaleItem } from '@/features/dashboard/c
 import { lineQuantity } from '../utils/packageSale';
 
 /** Item do modal Nova Venda → linha da tabela de itens (função com retorno declarado, regra do mapper do my-app/CLAUDE.md).
- *  ponytail: `SaleItemData` tem index signature — o retorno declarado não barra chave extra; o shape é este literal. */
+ *  atalho: `SaleItemData` tem index signature — o retorno declarado não barra chave extra; o shape é este literal. */
 export function toSaleItemPayload(saleId: string, item: NewSaleItem): SaleItemData {
     return {
         saleId,

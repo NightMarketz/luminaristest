@@ -22,7 +22,7 @@ export class AccountingPolicy implements IAccountingPolicy {
     return !!scope.actorUserId;
   }
 
-  // ponytail: membership check entra quando unidade for compartilhada
+  // atalho: membership check entra quando unidade for compartilhada
   canClosePeriod(scope: AccountingScope): boolean {
     return !!scope.actorUserId;
   }
@@ -113,7 +113,7 @@ export class AccountingPolicy implements IAccountingPolicy {
     return !!scope.actorUserId;
   }
 
-  // ponytail: RBAC por papel (F6, ⚫) entra quando os papéis existirem. Aqui só a checagem
+  // atalho: RBAC por papel (F6, ⚫) entra quando os papéis existirem. Aqui só a checagem
   // grosseira de ator; a SoD dinâmica vive em enforcesSegregationOfDuties (abaixo).
   canManageEntryApproval(scope: AccountingScope): boolean {
     return !!scope.actorUserId;

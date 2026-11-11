@@ -21,7 +21,7 @@ export const LEGAL_PARAMS_SEEDS = ['legal_parameters_v1.sql', 'legal_parameters_
  * Banco-modelo: o `db push` (~3–5 s, um subprocesso `npx`) roda UMA vez por versão do schema e cada arquivo de
  * integração copia o resultado (ms). Antes eram 83 pushes por execução da suíte. O hash do schema.prisma no nome
  * invalida o modelo sozinho quando o schema muda.
- * ponytail: modelos de hashes antigos ficam em prisma/ (gitignored, *.db) — apague à mão se incomodar.
+ * atalho: modelos de hashes antigos ficam em prisma/ (gitignored, *.db) — apague à mão se incomodar.
  */
 export function templateDb(): string {
   const schema = fs.readFileSync(path.join(SERVER_DIR, 'prisma', 'schema.prisma'));

@@ -38,7 +38,7 @@ export function tally(records) {
     t.output += u.output_tokens ?? 0;
     t.requests += 1;
     const p = PRICES[m.model];
-    // ponytail: fast mode = 2× tudo (preço oficial do Opus 5.5 fast é 2× input/output; cache read assumido 2×)
+    // atalho: fast mode = 2× tudo (preço oficial do Opus 5.5 fast é 2× input/output; cache read assumido 2×)
     const k = u.speed === 'fast' ? 2 : 1;
     if (p) t.usd += k * ((u.input_tokens ?? 0) * p.input + cw5m * p.input * 1.25 + cw1h * p.input * 2
       + (u.cache_read_input_tokens ?? 0) * p.cacheRead + (u.output_tokens ?? 0) * p.output) / 1e6;

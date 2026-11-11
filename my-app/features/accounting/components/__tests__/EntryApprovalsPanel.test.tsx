@@ -322,7 +322,7 @@ describe('EntryApprovalsPanel', () => {
 
   // FRENTE 5: the pending queue now has real server-side pagination — it has its own
   // status-scoped endpoint with a per-status `total` (unlike drafts, which stay on the
-  // single capped page — see the ponytail note at the fetch site).
+  // single capped page — see the `atalho:` note at the fetch site).
   it('paginates the pending queue server-side: "Next" requests page=2', async () => {
     vi.mocked(accountingService.listEntries).mockResolvedValue({ entries: [], total: 0 });
     vi.mocked(entryApprovalsService.listPending).mockResolvedValue({ entries: [pending], total: 51 });

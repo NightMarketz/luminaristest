@@ -205,7 +205,7 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
 
     try {
       // Save to DB
-      // ponytail: os dois vêm de <select> com as opções do contrato (pt|en, BRL|USD|EUR); o servidor devolve 400 se divergir.
+      // atalho: os dois vêm de <select> com as opções do contrato (pt|en, BRL|USD|EUR); o servidor devolve 400 se divergir.
       await UserService.updatePreferences({
         locale: preferencesLocale as UpdatePreferencesInput['locale'],
         currency: preferencesCurrency as UpdatePreferencesInput['currency'],

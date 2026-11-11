@@ -103,7 +103,7 @@ confirma lendo o arquivo/teste. Tabela e regra integral em `docs/operating-manua
 CrmPipelineService…). Bespoke só com divergência de **shape ou posse** sancionada pelo critério de reuso,
 justificada no relatório.
 
-**3. Padrão de camada não é over-engineering** (ponytail × projeto): Route→Controller→Service→Repository→Prisma
+**3. Padrão de camada não é over-engineering**: Route→Controller→Service→Repository→Prisma
 (+ Policy), Factory, DTO Zod, soft-delete e rota em 2 toques são requisito (Contrato §2/§3). O minimalismo
 morde só no código solto; em dúvida, **o contrato prevalece**.
 

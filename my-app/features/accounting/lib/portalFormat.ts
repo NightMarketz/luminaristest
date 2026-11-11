@@ -6,7 +6,7 @@
  * Os formatos são do guia (PV-2 do RUNBOOK-H2-DFE-MANUAL: o guia dá o tipo do campo, não a máscara — grau INFERIDO).
  */
 
-// ponytail: ligar se o runbook mostrar que o portal exige milhar — PV-2
+// atalho: ligar se o runbook mostrar que o portal exige milhar — PV-2
 export const PORTAL_THOUSANDS_SEPARATOR = '';
 
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/;

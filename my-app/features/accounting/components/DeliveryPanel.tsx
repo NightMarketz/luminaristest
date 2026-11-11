@@ -203,7 +203,7 @@ function ContactModal({ unitId, contact, onClose, onDone }: { unitId: string; co
           cpf: cpf.trim(),
           phone: phone.trim() || null,
           crcNumber: crcNumber.trim(),
-          crcUf: crcUf as UpdateContactInput['crcUf'], // ponytail: folha string → união (<select> de UF_CODES)
+          crcUf: crcUf as UpdateContactInput['crcUf'], // atalho: folha string → união (<select> de UF_CODES)
           crcCertificate: crcCertificate.trim() || null,
           crcCertificateValidUntil: validUntil || null,
         };
@@ -215,7 +215,7 @@ function ContactModal({ unitId, contact, onClose, onDone }: { unitId: string; co
           email: email.trim(),
           cpf: cpf.trim(),
           crcNumber: crcNumber.trim(),
-          crcUf: crcUf as RegisterContactInput['crcUf'], // ponytail: folha string → união (<select> de UF_CODES)
+          crcUf: crcUf as RegisterContactInput['crcUf'], // atalho: folha string → união (<select> de UF_CODES)
         };
         if (phone.trim()) body.phone = phone.trim();
         if (crcCertificate.trim()) body.crcCertificate = crcCertificate.trim();

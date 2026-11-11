@@ -128,7 +128,7 @@ For DynamicTable-backed domains (leads, ERP, CRM) the service orchestrates `Dyna
 - DTO: `dtos/<Domain>Transition.dto.ts` (Zod + `@openapi` + type guard); Controller fino (`safeParse` + factory + `handleApiError`); Route 2-toques (`index.ts` + `docs/<feature>.paths.ts`; auth deny-by-default); Factory getter `get<Domain>Service()`
 - Test: `buildService` + mock `runInTransaction`/`findTableByInternalName`; assert atomicidade (1× `runInTransaction`) + cross-tenant `NotFoundError`
 - Golden ref: `server/src/features/crm/services/CrmPipelineService.ts` (`advanceStage`)
-- **Caminho de dinheiro (gate — ver Contrato §2.1):** valores em **centavos inteiros**; invariantes de fechamento (`Σdébito=Σcrédito`) = igualdade inteira exata; idempotência via `compositeUnique(sourceKey)` + check no service com **teto `ponytail:` nomeado** (não é constraint de DB); registro postado/terminal imutável exige **guarda de delete** na camada de serviço (soft-delete não consulta `immutableAfter`).
+- **Caminho de dinheiro (gate — ver Contrato §2.1):** valores em **centavos inteiros**; invariantes de fechamento (`Σdébito=Σcrédito`) = igualdade inteira exata; idempotência via `compositeUnique(sourceKey)` + check no service com **teto `atalho:` nomeado** (não é constraint de DB); registro postado/terminal imutável exige **guarda de delete** na camada de serviço (soft-delete não consulta `immutableAfter`).
 
 ## Frontend Kanban Workflow Contract
 

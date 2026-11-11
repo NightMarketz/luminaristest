@@ -6,7 +6,7 @@
  * a menos que `allowInTest`.
  *
  * ⚠️ Lock PROCESS-LOCAL — mesma ressalva de `AccountingSyncScheduler` (não protege multi-réplica).
- * ponytail: lock local; upgrade a lease distribuída só se multi-réplica.
+ * atalho: lock local; upgrade a lease distribuída só se multi-réplica.
  */
 import logger, { type EventLogger } from '../lib/logger';
 import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';

@@ -125,7 +125,7 @@ export function PolicyVersionsPanel({ unitId, governance, onAssignmentLost }: Po
 
       <div className="mb-4 flex flex-wrap gap-3">
         <select aria-label={t('policy.filter.target', 'Alvo')} value={target} onChange={(e) => setTarget(e.target.value as PolicyTarget | '')} className={selectClass}>
-          {/* ponytail: `as` em folha string → união; cada <option> é um membro dela. */}
+          {/* atalho: `as` em folha string → união; cada <option> é um membro dela. */}
           <option value="">{t('policy.filter.allTargets', 'Todos os alvos')}</option>
           {TARGETS.map((x) => <option key={x} value={x}>{t(TARGET_LABEL[x][0], TARGET_LABEL[x][1])}</option>)}
         </select>

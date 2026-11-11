@@ -29,7 +29,7 @@ import type { InTable } from './spreadsheet';
  * convert exactly is emitted as its RAW token so `parseLines` rejects the whole import
  * all-or-nothing with a per-row error (ACC-014 fails loud, never silently rounds).
  *
- * ponytail: the position constants below are the FEBRABAN-240 Segmento E standard offsets and
+ * atalho: the position constants below are the FEBRABAN-240 Segmento E standard offsets and
  * are the per-bank CALIBRATION point (CNAB is "posicional por banco" — master map §5, ⚫).
  * A bank whose layout deviates from these offsets is the documented tuning knob; adjust the
  * constants (or add a per-bank map) only when a real file needs it. CNAB 400 and CNAB remessa
@@ -75,7 +75,7 @@ function cnabAmountToCents(rawValue: string, nature: string): string {
   if (!/^\d+$/.test(digits)) return digits; // non-numeric (spaces/garbage) → let parseLines reject
   const cents = digits.replace(/^0+/, '') || '0';
   if (cents === '0') return '0'; // zero (e.g. saldo zerado) → parseLines rejects amountCents==0
-  // ponytail: an 18-digit field far exceeds MAX_CENTS; parseLines' /^-?\d+$/ + MAX_CENTS check
+  // atalho: an 18-digit field far exceeds MAX_CENTS; parseLines' /^-?\d+$/ + MAX_CENTS check
   // reject it loudly, so no bignum here — no silent wrong value is ever persisted.
   return nature === 'D' ? `-${cents}` : cents; // C=+ inflow, D=- outflow (1:1 with signed line)
 }

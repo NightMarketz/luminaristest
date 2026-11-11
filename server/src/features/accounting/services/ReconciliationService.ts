@@ -21,7 +21,7 @@ import type {
   PendingReportQueryDto,
 } from '../dtos/ReconciliationDto';
 
-/** D6 matching window in days around the line date. ponytail: configurável depois. */
+/** D6 matching window in days around the line date. atalho: configurável depois. */
 export const RECONCILE_WINDOW_DAYS = 3;
 
 /**
@@ -155,7 +155,7 @@ export class ReconciliationService {
           closingBalanceCents: preParsed ? preParsed.closingBalanceCents : dto.closingBalanceCents ?? null,
           paymentAccountId: preParsed?.paymentAccountId ?? null,
           sha256,
-          // ponytail: anexo do arquivo bruto (INCR-5) fica de fora do MVP; upgrade =
+          // atalho: anexo do arquivo bruto (INCR-5) fica de fora do MVP; upgrade =
           // persistir via DocumentAttachmentService e preencher attachmentId aqui.
           attachmentId: null,
           importedById: scope.actorUserId,

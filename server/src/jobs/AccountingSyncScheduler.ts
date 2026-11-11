@@ -10,7 +10,7 @@
  *   - use an external scheduler with concurrency=1, OR
  *   - open an ADR for a distributed lease.
  * See docs/runbooks/accounting-sync-reconciliation.md.
- * ponytail: process-local lock; upgrade to a DB/advisory lease only if multi-replica.
+ * atalho: process-local lock; upgrade to a DB/advisory lease only if multi-replica.
  */
 import { randomUUID } from 'crypto';
 import logger, { type EventLogger } from '../lib/logger';

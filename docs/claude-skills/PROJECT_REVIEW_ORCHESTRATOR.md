@@ -19,8 +19,8 @@ não tente segurar tudo de uma vez.
 
 ## Phase 0 — Carregar contratos (sempre antes)
 Leia: `.claude/skills/_ARCHITECTURE-CONTRACT.md` (bar + §0 canônicos), `.claude/skills/_REUSE-CRITERION.md`
-(shape+posse), `CLAUDE.md` (fronteira ponytail × camada). Regra fixa desta revisão: **padrões de camada são
-requisito** — onde ponytail e contrato colidirem, o contrato vence; ponytail só morde código solto.
+(shape+posse), `CLAUDE.md` (fronteira minimalismo × camada). Regra fixa desta revisão: **padrões de camada são
+requisito** — onde minimalismo e contrato colidirem, o contrato vence; o minimalismo só morde código solto.
 
 ## Phase 1 — Mapear a realidade pelo grafo (zero chute)
 - `get_architecture(aspects=["packages","routes","hotspots","clusters"])` → seams reais, módulos de fato.
@@ -34,10 +34,10 @@ Para cada cluster do mapa, aplique as duas lentes **opostas e complementares**:
 - **Lente contrato (`luminaris-reviewer`):** violação de camada (Route/Controller/Service/Repository/Policy),
   reuso faltando dos canônicos §0, **veredicto de ilha** fundamentado no grafo — Etapa 1 (`search_graph` +
   `SIMILAR_TO`) + Etapa 2 (`trace_path` inbound / in-degree, `change_count`/`last_modified`).
-- **Lente ponytail (`/ponytail-review`):** stdlib reinventada, dependência desnecessária, abstração
+- **Lente de minimalismo:** stdlib reinventada, dependência desnecessária, abstração
   especulativa, flexibilidade morta, boilerplate.
 - Cada achado: `arquivo:linha` + evidência de grafo + **qual lente o pegou**. Marque colisões entre lentes
-  (ponytail quer deletar algo que o contrato exige → resolve a favor do contrato, registre a colisão).
+  (o minimalismo quer deletar algo que o contrato exige → resolve a favor do contrato, registre a colisão).
 
 ## Phase 3 — Colher em enriquecimento de skill (o alvo real)
 Transforme padrões **recorrentes** (não casos isolados) em edições propostas, cada uma com a contagem de
@@ -61,4 +61,4 @@ ocorrências e a evidência que a sustenta:
 - Evidência ou silêncio: sem número de grafo / `arquivo:linha`, não é achado.
 - YAGNI no próprio relatório: só vira patch o que apareceu **repetido**; caso único = nota, não regra.
 - Não reescreva skills inteiras — patches **aditivos e cirúrgicos** (como a cola cbm já feita).
-- Contrato > ponytail em código de camada; ponytail manda em helper/fix solto.
+- Contrato > minimalismo em código de camada; o minimalismo manda em helper/fix solto.

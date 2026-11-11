@@ -138,7 +138,7 @@ export function CrmReportEditor({
               aria-label={t('report_builder.editor.kind', 'Tipo')}
               className={inputCls}
               value={draft.kind}
-              onChange={(e) => onChange(withKind(draft, e.target.value as ReportKind, list))} // ponytail: folha string → união
+              onChange={(e) => onChange(withKind(draft, e.target.value as ReportKind, list))} // atalho: folha string → união
             >
               {KINDS.map((k) => (
                 <option key={k} value={k}>
@@ -153,7 +153,7 @@ export function CrmReportEditor({
               aria-label={t('report_builder.editor.chart_type', 'Gráfico')}
               className={inputCls}
               value={draft.chartType}
-              onChange={(e) => set({ chartType: e.target.value as ReportChartType })} // ponytail: folha string → união
+              onChange={(e) => set({ chartType: e.target.value as ReportChartType })} // atalho: folha string → união
             >
               {allowedChartTypes(draft.kind).map((c) => (
                 <option key={c} value={c}>
@@ -172,7 +172,7 @@ export function CrmReportEditor({
           aria-label={t('report_builder.editor.source', 'Fonte')}
           className={inputCls}
           value={draft.source ?? ''}
-          onChange={(e) => e.target.value && onSourceChange(e.target.value as ReportSource)} // ponytail: folha string → união
+          onChange={(e) => e.target.value && onSourceChange(e.target.value as ReportSource)} // atalho: folha string → união
         >
           <option value="">{t('report_builder.editor.pick_source', 'Escolha a fonte…')}</option>
           {sources.map((s) => (
@@ -208,7 +208,7 @@ export function CrmReportEditor({
                     className={inputCls}
                     value={m.type}
                     onChange={(e) => {
-                      const type = e.target.value as MeasureType; // ponytail: folha string → união
+                      const type = e.target.value as MeasureType; // atalho: folha string → união
                       const keep = measureFieldOptions(type, list).some((f) => f.name === m.field);
                       setMeasure(i, { ...m, type, field: keep ? m.field : '' });
                     }}
@@ -392,7 +392,7 @@ export function CrmReportEditor({
                           aria-label={t('report_builder.editor.period', 'Período')}
                           className={inputCls}
                           value={d.period}
-                          onChange={(e) => setDimension(i, { ...d, period: e.target.value as PeriodUnit })} // ponytail: folha string → união
+                          onChange={(e) => setDimension(i, { ...d, period: e.target.value as PeriodUnit })} // atalho: folha string → união
                         >
                           {PERIODS.map((p) => (
                             <option key={p} value={p}>
@@ -451,7 +451,7 @@ export function CrmReportEditor({
                     className={inputCls}
                     value={f.op}
                     onChange={(e) => {
-                      const op = e.target.value as FilterOp; // ponytail: folha string → união
+                      const op = e.target.value as FilterOp; // atalho: folha string → união
                       const value = isMultiValueOp(op) === isMultiValueOp(f.op) ? f.value : isMultiValueOp(op) ? [] : '';
                       setFilter(i, { ...f, op, value });
                     }}
@@ -752,7 +752,7 @@ function JoinsSection({
                   className={inputCls}
                   value={j.rightSource ?? ''}
                   disabled={busy}
-                  onChange={(e) => e.target.value && onJoinSourceChange(i, e.target.value as ReportSource)} // ponytail: folha string → união
+                  onChange={(e) => e.target.value && onJoinSourceChange(i, e.target.value as ReportSource)} // atalho: folha string → união
                 >
                   <option value="">{t('report_builder.joins.pick_source', 'Escolha a tabela…')}</option>
                   {sources.map((s) => (

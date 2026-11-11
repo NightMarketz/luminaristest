@@ -140,7 +140,7 @@ export function MeiEnquadramentoSection({ unitId, anoInicial }: MeiEnquadramento
       <select
         aria-label={label}
         value={form ? form[key] : ''}
-        // ponytail: folha string → união (cada <option> é membro da união)
+        // atalho: folha string → união (cada <option> é membro da união)
         onChange={(e) => set(key, e.target.value as MeiEnquadramentoForm['contribuinteIcms'])}
         className={`w-full ${inputClass}`}
       >

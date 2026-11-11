@@ -84,7 +84,7 @@ export class StageHandlers {
         const userContent = lastMessage.content.toLowerCase();
 
         // Escolha só vale se explícita; negação de customizar não conta como customizar.
-        // ponytail: palavra-chave só no texto livre (fallback, F-W3-B2 a); o botão manda `choice`.
+        // atalho: palavra-chave só no texto livre (fallback, F-W3-B2 a); o botão manda `choice`.
         const mentionsCustomize = /custom|personaliz|option\s*1|op[çc][ãa]o\s*1/.test(userContent);
         negatesCustomize = /\b(n[ãa]o|sem|nunca|no|not|never|without|don'?t)\b[^.,;!?]*(custom|personaliz)/.test(userContent);
         wantsToCustomize = mentionsCustomize && !negatesCustomize;

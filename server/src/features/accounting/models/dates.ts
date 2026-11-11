@@ -30,7 +30,7 @@ export function isValidCompetencia(s: string): boolean {
  * para ISO à meia-noite UTC (`2026-11-25T00:00:00.000Z`): isso é um DIA, não um instante — `scopeDay` o converteria para
  * o dia anterior em Brasília (24/11). Aceita `YYYY-MM-DD` ou esse ISO; devolve os 10 primeiros caracteres se forem um
  * calendário real; senão lança `ValidationError` (nunca inventa "hoje" em cima de lixo).
- * ponytail: prefixo literal; um datetime com offset fora da meia-noite não é a convenção do campo `date`.
+ * atalho: prefixo literal; um datetime com offset fora da meia-noite não é a convenção do campo `date`.
  * Memória motor-grava-date-como-iso-utc-scopeday-recua-um-dia.
  */
 export function calendarDayAsWritten(value: string): string {

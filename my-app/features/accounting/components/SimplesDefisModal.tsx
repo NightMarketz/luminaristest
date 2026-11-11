@@ -340,7 +340,7 @@ export function SimplesDefisModal({ unitId, ano, isOpen, onClose }: SimplesDefis
                     <select
                       aria-label={t('simples.defis.tipoBeneficiarioN', 'Tipo de beneficiário {{n}}', { n: String(i + 1) })}
                       value={x.tipoBeneficiario}
-                      // ponytail: folha string → união (cada <option> é membro da união)
+                      // atalho: folha string → união (cada <option> é membro da união)
                       onChange={(e) => setDoacao(i, { tipoBeneficiario: e.target.value as DefisDoacaoLinha['tipoBeneficiario'] })}
                       className={inp}
                     >
@@ -350,7 +350,7 @@ export function SimplesDefisModal({ unitId, ano, isOpen, onClose }: SimplesDefis
                     <select
                       aria-label={t('simples.defis.formaDoacaoN', 'Forma da doação {{n}}', { n: String(i + 1) })}
                       value={x.formaDoacao}
-                      // ponytail: folha string → união
+                      // atalho: folha string → união
                       onChange={(e) => setDoacao(i, { formaDoacao: e.target.value as DefisDoacaoLinha['formaDoacao'] })}
                       className={inp}
                     >

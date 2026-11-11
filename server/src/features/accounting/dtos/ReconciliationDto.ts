@@ -136,7 +136,7 @@ export function isAutoMatchStatementInput(v: unknown): v is AutoMatchStatementDt
 export const ManualMatchSchema = z.object({
   unitId: idLike,
   statementLineId: idLike,
-  // ponytail: 50 legs per line is far above any real aggregation; raise if a case appears
+  // atalho: 50 legs per line is far above any real aggregation; raise if a case appears
   postingIds: z
     .array(idLike)
     .min(1)

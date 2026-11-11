@@ -265,7 +265,7 @@ export function buildParteBChild(reg: 'M305' | 'M355', l: EcfRealLalurLine): str
 
 /**
  * M310 (p.252) / M360 (p.264) — Conta contábil relacionada (5 campos): REG, COD_CTA, COD_CCUS (vazio —
- * sem J100 nesta fase), VL_CTA, IND_VL_CTA. 1 filho por linha — ponytail: a soma de vários filhos é
+ * sem J100 nesta fase), VL_CTA, IND_VL_CTA. 1 filho por linha — atalho: a soma de vários filhos é
  * o mesmo invariante (REGRA_VALOR_DETALHADO); adicionar quando um ajuste precisar de mais de uma conta.
  */
 export function buildContabilChild(reg: 'M310' | 'M360', l: EcfRealLalurLine): string {

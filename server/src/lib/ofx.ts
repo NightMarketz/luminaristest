@@ -25,7 +25,7 @@ import type { InTable, SpreadsheetFormat } from './spreadsheet';
  * cannot convert exactly is emitted as its RAW token so `parseLines` rejects the whole
  * import all-or-nothing with a per-row error (ACC-014 fails loud, never silently rounds).
  *
- * ponytail: OFX 1.x is SGML (aggregates closed, leaf elements often unclosed) and 2.x is
+ * atalho: OFX 1.x is SGML (aggregates closed, leaf elements often unclosed) and 2.x is
  * XML — both are handled by a couple of regexes, no new dependency. Reach for a real OFX
  * library only if a genuine real-world layout breaks this (nested aggregates in a txn,
  * exotic encodings).
@@ -90,7 +90,7 @@ function ofxAmountToCents(raw: string): string {
   }
   frac = frac.padEnd(2, '0');
   // Integer arithmetic on the parts — within MAX_CENTS this is far below 2^53 so it is exact.
-  // ponytail: a pathologically huge intPart would overflow to "1e+22"-style notation, which
+  // atalho: a pathologically huge intPart would overflow to "1e+22"-style notation, which
   // parseLines' /^-?\d+$/ + MAX_CENTS check reject anyway — no silent wrong value, so no bignum.
   const cents = Number(intPart) * 100 + Number(frac);
   if (cents === 0) return '0'; // sign on zero is meaningless; parseLines rejects amountCents==0

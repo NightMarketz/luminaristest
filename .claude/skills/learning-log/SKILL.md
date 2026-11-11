@@ -18,7 +18,7 @@ funcionou. Esta skill anota isso **na hora**, num lugar estável, no formato cer
 o aprendizado é **efêmero** (escopo do esforço → ledger no repo) ou **durável** (cross-sessão
 → auto-memória).
 
-> Ponytail: isto é append num markdown + (às vezes) um arquivo de memória. Não é um sistema —
+> YAGNI: isto é append num markdown + (às vezes) um arquivo de memória. Não é um sistema —
 > não invente banco, schema ou índice. O ledger É o índice.
 
 ## Quando usar (e quando não)
@@ -99,7 +99,7 @@ Varre **ledger + memória** (não há wiki separada) e propõe correções — n
 3. **Claim stale / contradição:** memória que cita `file:line`/flag que não existe mais (Grep/Read
    confirma), ou duas memórias que se contradizem. Reportar para o usuário decidir — não auto-editar.
 
-Saída: lista de gaps com a correção sugerida. Ponytail: lint é leitura + grep + proposta, não um
+Saída: lista de gaps com a correção sugerida. YAGNI: lint é leitura + grep + proposta, não um
 sistema — sem banco, sem índice próprio.
 
 ## Invariantes (gate)

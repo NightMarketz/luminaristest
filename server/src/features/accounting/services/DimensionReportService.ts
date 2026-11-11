@@ -331,7 +331,7 @@ export class DimensionReportService {
         current = current.parentId ? byId.get(current.parentId) : undefined;
       }
     }
-    // ponytail: O(depth) walk per value; a materialized path would only pay off past ~10k values.
+    // atalho: O(depth) walk per value; a materialized path would only pay off past ~10k values.
     return rollup;
   }
 }
