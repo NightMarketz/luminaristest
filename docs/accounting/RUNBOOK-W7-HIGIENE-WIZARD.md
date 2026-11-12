@@ -45,8 +45,6 @@ EVIDÊNCIA é sempre artefato colado/anexado (screenshot, lista do Network, corp
 
 5. Trocar o idioma para **inglês** e abrir `/dashboard/setup` nas três abas (**Rápido**, **Controle Total**, **Entrevista com IA**); no Controle Total, escolher um modelo e ir até "Select the tables"; na Entrevista, ir até o painel esquerdo de funcionalidades aparecer.
    Resultado esperado: nenhum texto em português nas três abas e no painel esquerdo (o painel **direito** fica para o PR-3); a frase de ajuda no rodapé em inglês.
-   **Atualização (dono, chat, 2026-11-11: "Sim, localizar"):** a emenda abaixo ficou superada — nome/descrição dos presets e a descrição `Tabela de …` passam a seguir o idioma da UI (`?locale=` em `GET /dashboard/presets`, `locale` na sessão da entrevista). O passo 5 deve ser reconferido na próxima execução sem exclusões.
-   **Emenda de roteiro (2026-11-11, 2ª execução):** "texto em português" aqui é o que passa pelo i18n do front (BRIEF itens 6–7: texto vindo do servidor não é traduzido). Ficam **fora** deste passo, até o dono responder a pergunta de produto das lacunas `L-20261111-204322-37cb` e `-f834`: nome e descrição dos presets (catálogo do servidor, sem `locale` no endpoint; o salão já é inglês, a clínica e o CRM são português) e a descrição `Tabela de <nome>` do painel esquerdo (texto gerado no servidor).
    EVIDÊNCIA: [um screenshot por aba + o painel esquerdo]
 
 6. Ligar o **modo escuro** e repetir o passo 5 em português.
