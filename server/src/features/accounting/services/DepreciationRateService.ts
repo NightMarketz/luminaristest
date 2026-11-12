@@ -123,6 +123,8 @@ export class DepreciationRateService implements ITaxaDepreciacaoCatalogo {
     }
     const rate = await this.rateRepo.findById(scope, id);
     if (!rate) throw new NotFoundError(`Taxa de depreciação '${id}' não foi encontrada.`);
+    // L-14: só linha CUSTOM se oculta; ANEXO_* (fotografia legal que algum bem usa) é da plataforma.
+    if (rate.source !== 'CUSTOM') throw new NotFoundError(`Taxa de depreciação '${id}' não foi encontrada.`);
 
     return this.rateRepo.runTransaction(async (tx) => {
       const hidden = await this.rateRepo.hide(scope, id, tx);
