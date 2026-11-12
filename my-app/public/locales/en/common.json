@@ -1,4 +1,5 @@
 {
+  "floatingChat": { "open": "Open chat" },
   "appName": "Luminaris",
   "login": "Login",
   "logout": "Logout",
