@@ -123,6 +123,13 @@ describe('DepreciationRateService.hideRate', () => {
     expect(hide).not.toHaveBeenCalled();
   });
 
+  it('L-14: linha ANEXO_* que um bem usa e ficou em depreciation_rates não se oculta — NotFound, sem hide nem auditoria', async () => {
+    const { service, hide, auditAppend } = build({ found: { ...rateRow, source: 'ANEXO_RFB_2020' } });
+    await expect(service.hideRate(scope, 'rate-1')).rejects.toBeInstanceOf(NotFoundError);
+    expect(hide).not.toHaveBeenCalled();
+    expect(auditAppend).not.toHaveBeenCalled();
+  });
+
   it('id de outro escopo é NotFoundError (D11) — nunca Forbidden, nunca toca hide', async () => {
     const { service, hide } = build({ found: null });
     await expect(service.hideRate(scope, 'rate-alheio')).rejects.toBeInstanceOf(NotFoundError);
