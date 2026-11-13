@@ -43,6 +43,7 @@ vi.mock('../components/AccountingActivationBanner', () => ({
 
 describe('AccountingView — aba Pendências (I5 PR-3)', () => {
   beforeEach(() => {
+    window.history.replaceState(null, '', '/'); // a aba vive em ?tab=: não vaza entre testes
     vi.clearAllMocks();
     cleanup();
     current.unitId = 'u1';

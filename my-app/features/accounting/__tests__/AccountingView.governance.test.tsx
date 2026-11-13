@@ -123,6 +123,7 @@ function mockUnits(ids: string[]) {
 
 describe('AccountingView — modo cliente (F-FE-GOV-1 b)', () => {
   beforeEach(() => {
+    window.history.replaceState(null, '', '/'); // a aba vive em ?tab=: não vaza entre testes
     vi.clearAllMocks();
     cleanup();
     vi.mocked(accountingService.getTrialBalance).mockResolvedValue({ balanced: true, rows: [] } as never);
