@@ -7,10 +7,12 @@ interface GradientHeaderProps {
   badges?: ReactNode;
   right?: ReactNode;
   children?: ReactNode;
+  /** `h2` quando o header está dentro de um modal (a página já tem o seu h1). */
+  as?: 'h1' | 'h2';
 }
 
 /** Hero header with gradient avatar + blur blobs — the Luminaris signature header. */
-export function GradientHeader({ title, subtitle, avatar, badges, right, children }: GradientHeaderProps) {
+export function GradientHeader({ title, subtitle, avatar, badges, right, children, as: Heading = 'h1' }: GradientHeaderProps) {
   return (
     <div className="relative overflow-hidden rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/5 dark:bg-neutral-900">
       <div className="pointer-events-none absolute right-0 top-0 -mr-32 -mt-32 h-64 w-64 rounded-full bg-blue-500/5 blur-3xl" />
@@ -25,9 +27,9 @@ export function GradientHeader({ title, subtitle, avatar, badges, right, childre
           ) : null}
           <div className="min-w-0">
             {badges ? <div className="mb-1 flex items-center gap-2">{badges}</div> : null}
-            <h1 className="truncate text-2xl font-black tracking-tight text-gray-900 dark:text-white md:text-3xl">
+            <Heading className="truncate text-2xl font-black tracking-tight text-gray-900 dark:text-white md:text-3xl">
               {title}
-            </h1>
+            </Heading>
             {subtitle ? <p className="mt-1 text-sm font-semibold text-gray-500 dark:text-gray-400">{subtitle}</p> : null}
           </div>
         </div>

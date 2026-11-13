@@ -10,6 +10,7 @@ import ErrorBoundary from '../components/error-boundaries/ErrorBoundary';
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { FloatingChatContainer } from '../components/floating-chat';
+import { SkipLink } from '../components/layout/SkipLink';
 import { ToastProvider } from '../lib/context/ToastContext';
 
 declare global {
@@ -49,8 +50,9 @@ function MyApp({ Component, pageProps }: MyAppProps) {
           <CurrencyProvider>
             <DashboardDataProvider>
               <div className="flex flex-col min-h-screen bg-lumi-light-100 dark:bg-lumi-dark-500 transition-colors duration-300">
+                {!isAuthPage && <SkipLink />}
                 {!isAuthPage && <Navbar />}
-                <main className={!isAuthPage ? 'pt-[60px]' : ''}>
+                <main id="main-content" className={!isAuthPage ? 'pt-[64px]' : ''}>
                   <Component {...pageProps} />
                 </main>
               </div>

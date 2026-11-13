@@ -116,6 +116,7 @@ export function Opp360Modal({ isOpen, onClose, opportunity, stages, ownerNames, 
       >
         <div className="space-y-6 p-5">
           <GradientHeader
+            as="h2"
             avatar={String(d.name ?? 'O')}
             title={String(d.name ?? t('opportunities.unnamed', 'Unnamed opportunity'))}
             subtitle={fmtAmount}

@@ -31,9 +31,9 @@ function Home() {
     <div className="flex h-[calc(100vh-60px)] w-full bg-gray-50 dark:bg-neutral-950 overflow-hidden relative">
 
       <div className="relative w-full h-full overflow-hidden flex flex-col">
-        <main className="flex flex-1 flex-col overflow-hidden relative">
+        <div className="flex flex-1 flex-col overflow-hidden relative">
           <DashboardGrid key={user ? user.id : 'anonymous'} />
-        </main>
+        </div>
       </div>
     </div>
   );
