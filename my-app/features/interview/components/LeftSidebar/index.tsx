@@ -57,7 +57,7 @@ function LeftSidebar({ customizationState, isVisible, onSelectTable, selectedTab
   return (
     <div
       className={`fixed left-0 top-0 h-full z-50 transition-transform duration-300 ease-in-out ${isVisible ? 'translate-x-0' : '-translate-x-full'}`}
-      style={{ width: '400px' }}
+      style={{ width: 'min(400px, 100vw)' }}
     >
       <div className="bg-white dark:bg-neutral-800 h-full shadow-2xl flex flex-col border-r border-neutral-200 dark:border-neutral-700">
         {/* Cabeçalho Fixo */}

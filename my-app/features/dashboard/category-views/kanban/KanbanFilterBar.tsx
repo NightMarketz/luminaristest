@@ -73,7 +73,7 @@ export function KanbanFilterBar({
                 label={t('database:fields.priority', 'Prioridade')}
                 icon={<MdPriorityHigh size={14} />}
             >
-                <div className="flex gap-1.5 min-w-[420px]">
+                <div className="flex flex-wrap gap-1.5 sm:min-w-[420px]">
                     {[
                         { id: '', label: t('common:all', 'Todas') },
                         { id: 'Low', label: t('database:options.Low', 'Low'), color: 'bg-blue-500' },
