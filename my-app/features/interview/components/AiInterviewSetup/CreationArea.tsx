@@ -33,7 +33,7 @@ function CreationArea({ isCreating, creationError, onRetry, onBackToConversation
             </p>
           </>
         ) : creationError ? (
-          <>
+          <div role="alert">
             <h2 className="text-2xl font-bold text-center text-red-600 mb-6">
               {t('onboardingErrorTitle')}
             </h2>
@@ -61,13 +61,13 @@ function CreationArea({ isCreating, creationError, onRetry, onBackToConversation
                   {t('onboardingBackToConversation')}
                 </button>
               )}
-              {creationError.kind === 'already-provisioned' && (
+              {(creationError.kind === 'already-provisioned' || creationError.kind === 'partial') && (
                 <Link href="/dashboard" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                   {t('onboardingGoToDashboard')}
                 </Link>
               )}
             </div>
-          </>
+          </div>
         ) : null}
       </div>
     </div>

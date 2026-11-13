@@ -29,6 +29,9 @@ describe('CreationArea — erro classificado (W7 item 4)', () => {
     render(<CreationArea {...props('partial')} />);
     expect(screen.queryByRole('button', { name: 'onboardingRetry' })).toBeNull();
     expect(screen.getByText('onboardingErrorPartial')).toBeInTheDocument();
+    // L-20261113-152222-3a43: o overlay fixo não pode ser um beco sem saída
+    expect(screen.getByRole('link', { name: 'onboardingGoToDashboard' })).toHaveAttribute('href', '/dashboard');
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
   it('already-provisioned ⇒ sem retry; link para /dashboard', () => {
