@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'next-i18next';
 import { useFloatingChat } from './FloatingChatProvider';
 
 /**
@@ -8,6 +9,7 @@ import { useFloatingChat } from './FloatingChatProvider';
  * Click para expandir o chat.
  */
 export function FloatingChatBubble() {
+    const { t } = useTranslation('common');
     const { isOpen, toggle } = useFloatingChat();
 
     // Não mostra o bubble quando o chat está aberto
@@ -17,7 +19,7 @@ export function FloatingChatBubble() {
         <button
             onClick={toggle}
             className="fixed bottom-20 right-6 z-[9999] w-14 h-14 rounded-full bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 hover:scale-110 active:scale-95 transition-all duration-200 flex items-center justify-center group"
-            aria-label="Abrir chat"
+            aria-label={t('floatingChat.open')}
         >
             {/* Chat icon */}
             <svg
