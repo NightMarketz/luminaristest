@@ -1,11 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { RowExpandButton } from './RowExpandButton';
 import { useTranslation } from 'next-i18next';
 import {
   FiUploadCloud,
   FiZap,
   FiTrash2,
-  FiChevronDown,
-  FiChevronRight,
   FiRefreshCw,
   FiEyeOff,
   FiLink,
@@ -137,7 +136,7 @@ function StatementRow({
     <>
       <tr className="border-b border-neutral-800/60 transition-colors hover:bg-neutral-800/30 last:border-0">
         <td className="w-8 cursor-pointer px-3 py-2.5 text-neutral-500" onClick={toggle}>
-          {expanded ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
+          <RowExpandButton expanded={expanded} onToggle={toggle} label={t('reconciliation.col.expand', 'Expandir')} />
         </td>
         <td className="px-4 py-2.5 tabular-nums text-neutral-300">
           {formatDate(statement.periodStart)} — {formatDate(statement.periodEnd)}
