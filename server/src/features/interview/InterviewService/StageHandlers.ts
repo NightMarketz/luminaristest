@@ -110,7 +110,7 @@ export class StageHandlers {
       logger.info('[StageHandlers] Usuário escolheu customizar o sistema');
       
       // W4 item 6: a sessão pertence ao usuário; o id é o da linha persistida, nunca vem do cliente.
-      const session = await this.customizationService.createCustomizationSession(presetKey, userId, modules);
+      const session = await this.customizationService.createCustomizationSession(presetKey, userId, modules, locale);
 
       if (!session) {
         logger.error(`[StageHandlers] Falha ao criar sessão de customização para preset ${presetKey}`);
