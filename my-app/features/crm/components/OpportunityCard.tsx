@@ -1,4 +1,5 @@
 import React from 'react';
+import type { ButtonHTMLAttributes, Ref } from 'react';
 import { useTranslation } from 'next-i18next';
 import type { CrmRecord } from '../hooks/useCrmData';
 import { DEFAULT_CURRENCY } from '../lib/constants';
@@ -7,11 +8,14 @@ interface OpportunityCardProps {
   opportunity: CrmRecord;
   /** id → owner display name, for the "(owner)" line. */
   ownerNames?: Map<string, string>;
+  /** Props/ref de arrasto do dnd-kit: ficam no próprio <button> (uma só parada de Tab por card). */
+  dragProps?: ButtonHTMLAttributes<HTMLButtonElement>;
+  dragRef?: Ref<HTMLButtonElement>;
   onClick?: (opportunityId: string) => void;
 }
 
 /** A pipeline card for a first-class opportunity: name + amount(currency) + win% + owner. */
-export function OpportunityCard({ opportunity, ownerNames, onClick }: OpportunityCardProps) {
+export function OpportunityCard({ opportunity, ownerNames, onClick, dragProps, dragRef }: OpportunityCardProps) {
   const { t } = useTranslation('crm');
   const d = opportunity.data || {};
   const ownerId = String(d.ownerId ?? '');
@@ -20,6 +24,8 @@ export function OpportunityCard({ opportunity, ownerNames, onClick }: Opportunit
   return (
     <button
       type="button"
+      {...dragProps}
+      ref={dragRef}
       onClick={() => onClick?.(opportunity.id)}
       className="w-full rounded-2xl border border-gray-200 bg-white p-3.5 text-left shadow-sm transition hover:border-blue-400 hover:shadow-md dark:border-white/5 dark:bg-neutral-800 dark:hover:border-blue-500/40"
     >

@@ -61,6 +61,7 @@
     "back": "← Overview",
     "no_stages": "No stages configured.",
     "empty_stage": "No records",
+    "select_label": "Pipeline",
     "new_lead": "New Lead",
     "search_placeholder": "Search by name…",
     "search_label": "Search lead"
