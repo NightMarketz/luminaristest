@@ -136,6 +136,10 @@ export function OpportunityCreateModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      isDirty={
+        !submitting &&
+        (name !== (leadName ?? '') || pipelineId !== '' || amount !== '' || accountId !== (defaultAccountId ?? ''))
+      }
       title={t('opp.create', 'Criar Oportunidade')}
       maxWidth="max-w-lg"
       footer={

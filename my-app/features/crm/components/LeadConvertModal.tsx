@@ -127,6 +127,10 @@ export function LeadConvertModal({ isOpen, onClose, leadId, leadName, onConverte
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      isDirty={
+        !submitting &&
+        (accountName !== (leadName ?? '') || [segment, size, website, city, state, contactRole, contactJobTitle].some((v) => v !== ''))
+      }
       title={t('convert.title', 'Converter Lead')}
       maxWidth="max-w-lg"
       footer={
