@@ -74,6 +74,7 @@ export function DashboardSidebar({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Fallback for props if they are not provided (already using t in parent usually, but safer here)
@@ -98,6 +99,7 @@ export function DashboardSidebar({
     async function fetchSidebarData() {
       try {
         setIsLoading(true);
+        setError(null);
         const result = await DynamicTableService.getSidebar();
 
         // Merge API categories with Defaults
@@ -121,7 +123,7 @@ export function DashboardSidebar({
     }
 
     fetchSidebarData();
-  }, []);
+  }, [reloadKey]);
 
   const handleDeleteSystem = useCallback(async () => {
     if (isDeleting) return;
@@ -147,7 +149,18 @@ export function DashboardSidebar({
   }
 
   if (error) {
-    return <div className={`p-4 ${isCollapsed ? 'w-20' : 'w-64'} transition-all text-red-500`}>{t('errorLoading')}</div>;
+    return (
+      <div className={`flex flex-col items-start gap-2 p-4 ${isCollapsed ? 'w-20' : 'w-64'} transition-all`}>
+        <p role="alert" className="text-sm text-red-500">{t('errorLoading')}</p>
+        <button
+          type="button"
+          onClick={() => setReloadKey((k) => k + 1)}
+          className="rounded-lg border border-gray-300 px-3 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-100 dark:border-neutral-700 dark:text-gray-200 dark:hover:bg-neutral-800"
+        >
+          {t('try_again', 'Try again')}
+        </button>
+      </div>
+    );
   }
 
   const getIcon = (icon?: string): IconType => {
