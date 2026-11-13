@@ -36,6 +36,7 @@ vi.mock('../components/ServiceFiscalProfilesPanel', () => ({
 
 describe('AccountingView — aba Perfil fiscal', () => {
   beforeEach(() => {
+    window.history.replaceState(null, '', '/'); // a aba vive em ?tab=: não vaza entre testes
     vi.clearAllMocks();
     cleanup();
     vi.mocked(DynamicTableService.getTables).mockResolvedValue({ data: [{ id: 't1', internalName: 'units' }] } as never);
