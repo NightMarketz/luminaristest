@@ -81,19 +81,18 @@
 @layer base {
 
   /* Estilos para formulários para um visual moderno e compatível com dark mode.
-     Os `input[type=...]` valem com especificidade 0,1,1 e por isso vencem as utilitárias do próprio campo
-     (rounded-*, bg-*, px-*, w-*... — achado W7 passo 6). Migração por tela (dono, 13/11):
-     o campo que declara a própria aparência recebe `data-own-style`. Nele esta mesma base vira
-     `input:where(...)` (especificidade 0,0,1): continua dando o default do que o campo NÃO declara, mas
-     qualquer utilitária dele vence. Sem o atributo, nada muda. Quando todas as telas migrarem, a primeira
-     regra cai e fica só a segunda. */
+     Estes seletores valem com especificidade 0,1,1 (0,2,1 no escuro) e por isso vencem as utilitárias do próprio campo
+     (rounded-*, bg-*, px-*, w-*, e as sem `dark:` no escuro — achado W7 passo 6). Migração por tela (dono, 13/11):
+     o campo que declara a própria aparência recebe `data-own-style`. Nele a mesma base vira especificidade 0,0,1
+     (`:where` em tudo, inclusive no escuro): continua dando o default do que o campo NÃO declara, mas qualquer
+     utilitária dele vence. Sem o atributo nada muda. Quando todas as telas migrarem, o primeiro bloco cai. */
   input[type='text']:not(:where([data-own-style])),
   input[type='email']:not(:where([data-own-style])),
   input[type='password']:not(:where([data-own-style])),
   input[type='number']:not(:where([data-own-style])),
   input[type='search']:not(:where([data-own-style])),
-  textarea,
-  select {
+  textarea:not(:where([data-own-style])),
+  select:not(:where([data-own-style])) {
     @apply w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200;
   }
 
@@ -101,8 +100,20 @@
   input:where([data-own-style][type='email']),
   input:where([data-own-style][type='password']),
   input:where([data-own-style][type='number']),
-  input:where([data-own-style][type='search']) {
-    @apply w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200;
+  input:where([data-own-style][type='search']),
+  textarea:where([data-own-style]),
+  select:where([data-own-style]) {
+    @apply w-full px-3 py-2 bg-gray-50 text-gray-900 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200;
+  }
+
+  :where(.dark) input:where([data-own-style][type='text']),
+  :where(.dark) input:where([data-own-style][type='email']),
+  :where(.dark) input:where([data-own-style][type='password']),
+  :where(.dark) input:where([data-own-style][type='number']),
+  :where(.dark) input:where([data-own-style][type='search']),
+  :where(.dark) textarea:where([data-own-style]),
+  :where(.dark) select:where([data-own-style]) {
+    @apply bg-gray-700 text-gray-100 border-gray-600 placeholder-gray-500;
   }
 
   select {

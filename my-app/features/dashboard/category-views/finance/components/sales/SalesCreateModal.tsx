@@ -450,6 +450,7 @@ export default function SalesCreateModal({
                                         value={formState.simpleCustomerName}
                                         onChange={e => setSimpleCustomerName(e.target.value)}
                                         placeholder={t('finance_view:sales.modal.customer_name', 'Nome do cliente...')}
+                                        data-own-style
                                         className={FIELD_CLASS}
                                     />
                                 ) : (
@@ -477,6 +478,7 @@ export default function SalesCreateModal({
                                             <select
                                                 value={formState.paymentMethod}
                                                 onChange={e => setPaymentMethod(e.target.value)}
+                                                data-own-style
                                                 className={FIELD_CLASS}
                                             >
                                                 <option value="">{t('common:select_placeholder', 'Selecione...')}</option>
@@ -512,6 +514,7 @@ export default function SalesCreateModal({
                                     onChange={e => setNotes(e.target.value)}
                                     rows={3}
                                     placeholder={t('finance_view:sales.modal.notes_placeholder', 'Observações sobre a venda...')}
+                                    data-own-style
                                     className={`${FIELD_CLASS} resize-none`}
                                 />
                             </div>

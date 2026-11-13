@@ -25,9 +25,12 @@ contornavam com `!pl-16`.
 
 1. **Migração por tela, não troca global.** Trocar a regra inteira por `input:where([type=...])` (opção "b") mudaria a
    aparência de 106 inputs sem revisão visual por tela; o dono recusou.
-2. **Mecanismo:** o campo que declara a própria aparência recebe o atributo `data-own-style`. Nele a mesma base vira
-   `input:where([data-own-style][type=...])` (especificidade 0,0,1): **continua dando o default do que o campo não declara**, mas
-   toda utilitária dele vence. Sem o atributo nada muda (`:not(:where([data-own-style]))` tem especificidade 0).
+2. **Mecanismo:** o campo que declara a própria aparência recebe o atributo `data-own-style` (`input` dos 5 tipos,
+   `textarea` e `select`). Nele a mesma base vira `input:where([data-own-style][type=...])` (especificidade 0,0,1) e a parte escura
+   `:where(.dark) input:where(...)` (também 0,0,1): **continua dando o default do que o campo não declara**, mas toda utilitária
+   dele vence. Sem o atributo nada muda (`:not(:where([data-own-style]))` tem especificidade 0). `textarea`/`select` entram
+   porque, no escuro, o `select:is(.dark *)` global (0,1,1) vence classe sem `dark:` (as telas de contabilidade escrevem
+   `bg-neutral-800` direto): migrar só o `input` deixaria input e select com fundos diferentes na mesma tela.
 3. **Não usar o modificador `!`** (`!rounded-2xl`...) para resolver este conflito: o PR do wizard o usou como menor mudança e
    a migração o remove.
 4. Quando a fila abaixo zerar, a primeira regra cai e fica só a segunda (cleanup final, mais um item da fila).
@@ -38,9 +41,11 @@ contornavam com `!pl-16`.
 
 ## Migrado neste PR
 
-`pages/users/login.tsx`, `pages/users/signup.tsx` (`!pl-16` → `pl-16`) e os 5 campos do wizard
+`pages/users/login.tsx`, `pages/users/signup.tsx` (`!pl-16` → `pl-16`), os 5 campos do wizard
 (`QuickSetup`, `TotalControlSetup`, `NewFieldForm` ×2, `InputArea`; os `!` do PR #1250 saem, as classes voltam ao que o autor
-escreveu). Medição de `getComputedStyle` em build de produção no corpo do PR.
+escreveu) e as **16 telas com defeito funcional** (ordem do dono, 13/11: "Já corrige os defeitos funcionais junto com a
+migração"), 36 inputs mais os `select`/`textarea` dos mesmos arquivos. Medição de `getComputedStyle` em build de produção no
+corpo do PR (só login/signup são públicos; as demais estão atrás de `withAuth` e ficam cobertas pelo teste de cascata).
 
 ## Como migrar uma tela
 
@@ -50,64 +55,49 @@ escreveu). Medição de `getComputedStyle` em build de produção no corpo do PR
 3. Revisão visual em claro e escuro (build de produção, `127.0.0.1`) antes do merge. **Um PR por tela ou por feature**; o
    efeito visual é do autor, não do default.
 
-## Fila (54 arquivos, 99 inputs) — "defeito" = hoje ignora `pl-*` ou largura
+## Fila (38 arquivos, 63 inputs)
 
 Linhas da `main` em 13/11 (auditoria por AST; reconstrua com `audit-inputs.cjs`/`cascade-diff.cjs`, nas notas da sessão). Os 16
-com defeito primeiro.
+que ignoravam `pl-*`/largura já foram migrados; sobram as que só divergem em raio, fundo, borda e cor. `select`/`textarea` dessas
+telas também recebem o atributo.
 
-| arquivo | inputs | linhas | defeito funcional |
-|---|---|---|---|
-| `my-app/components/widgets/generic-chat/components/GenericChatWidget.tsx` | 1 | 225 | **sim** |
-| `my-app/features/accounting/components/CompliancePanel.tsx` | 5 | 212, 291, 300, 353, 401 | **sim** |
-| `my-app/features/accounting/components/JournalEntryModal.tsx` | 3 | 339, 358, 428 | **sim** |
-| `my-app/features/accounting/components/MeiEnquadramentoSection.tsx` | 1 | 160 | **sim** |
-| `my-app/features/accounting/components/PresumidoServicosSection.tsx` | 1 | 92 | **sim** |
-| `my-app/features/accounting/components/SubledgerFilterBar.tsx` | 1 | 58 | **sim** |
-| `my-app/features/accounting/components/TaxAssessmentPanel.tsx` | 1 | 150 | **sim** |
-| `my-app/features/crm/components/reports/CrmReportEditor.tsx` | 2 | 534, 636 | **sim** |
-| `my-app/features/dashboard/category-views/finance/components/sales/create/inputs.tsx` | 3 | 45, 129, 180 | **sim** |
-| `my-app/features/dashboard/category-views/finance/components/sales/SalesCreateModal.tsx` | 1 | 448 | **sim** |
-| `my-app/features/dashboard/category-views/inventory/components/InventoryTable.tsx` | 1 | 347 | **sim** |
-| `my-app/features/dashboard/category-views/inventory/components/MovementModal.tsx` | 2 | 231, 273 | **sim** |
-| `my-app/pages/documents/index.tsx` | 1 | 156 | **sim** |
-| `my-app/pages/users/create.tsx` | 4 | 127, 149, 171, 227 | **sim** |
-| `my-app/pages/users/edit/[id].tsx` | 4 | 313, 335, 357, 413 | **sim** |
-| `my-app/pages/users/profile.tsx` | 5 | 394, 412, 431, 465, 482 | **sim** |
-| `my-app/features/accounting/components/AccountsPayablePanel.tsx` | 1 | 595 |  |
-| `my-app/features/accounting/components/AccountsReceivablePanel.tsx` | 1 | 715 |  |
-| `my-app/features/accounting/components/CatalogCombobox.tsx` | 1 | 150 |  |
-| `my-app/features/accounting/components/ChartOfAccountsPanel.tsx` | 2 | 210, 226 |  |
-| `my-app/features/accounting/components/CreateCounterpartyModal.tsx` | 2 | 152, 167 |  |
-| `my-app/features/accounting/components/CreatePayableModal.tsx` | 5 | 281, 295, 310, 324, 452 |  |
-| `my-app/features/accounting/components/CreateReceivableModal.tsx` | 4 | 212, 226, 241, 255 |  |
-| `my-app/features/accounting/components/DepreciationRatesSection.tsx` | 1 | 233 |  |
-| `my-app/features/accounting/components/DimensionsPanel.tsx` | 4 | 490, 502, 623, 635 |  |
-| `my-app/features/accounting/components/EntryApprovalsPanel.tsx` | 2 | 597, 611 |  |
-| `my-app/features/accounting/components/FixedAssetFormModal.tsx` | 1 | 258 |  |
-| `my-app/features/accounting/components/ImportExportPanel.tsx` | 2 | 211, 323 |  |
-| `my-app/features/accounting/components/JournalEntriesPanel.tsx` | 2 | 532, 544 |  |
-| `my-app/features/accounting/components/LalurParteBModal.tsx` | 1 | 222 |  |
-| `my-app/features/accounting/components/PeriodsPanel.tsx` | 1 | 237 |  |
-| `my-app/features/accounting/components/ReconciliationPanel.tsx` | 3 | 516, 526, 536 |  |
-| `my-app/features/accounting/components/ReviewDetailModal.tsx` | 1 | 485 |  |
-| `my-app/features/crm/components/CrmPipelineBoard.tsx` | 1 | 147 |  |
-| `my-app/features/crm/components/LeadConvertModal.tsx` | 6 | 170, 183, 202, 208, 212, 238 |  |
-| `my-app/features/crm/components/LeadTasksPanel.tsx` | 1 | 193 |  |
-| `my-app/features/crm/components/OpportunityCreateModal.tsx` | 2 | 174, 198 |  |
-| `my-app/features/crm/components/ProposalCaptureModal.tsx` | 2 | 94, 127 |  |
-| `my-app/features/dashboard/category-views/finance/components/expenses/ExpensesFilterBar.tsx` | 1 | 59 |  |
-| `my-app/features/dashboard/category-views/finance/components/sales/SaleActionModals.tsx` | 1 | 214 |  |
-| `my-app/features/dashboard/category-views/finance/components/sales/SalesFilterBar.tsx` | 1 | 48 |  |
-| `my-app/features/dashboard/category-views/inventory/components/InventoryFilterBar.tsx` | 2 | 71, 163 |  |
-| `my-app/features/dashboard/category-views/kanban/KanbanFilterBar.tsx` | 1 | 48 |  |
-| `my-app/features/dashboard/category-views/kanban/KanbanFilterSidebar.tsx` | 1 | 49 |  |
-| `my-app/features/dashboard/category-views/people/components/PeopleFilterBar.tsx` | 1 | 47 |  |
-| `my-app/features/dashboard/category-views/planning/components/PlanningFilterBar.tsx` | 1 | 62 |  |
-| `my-app/features/dashboard/category-views/products/ProductFilterBar.tsx` | 1 | 66 |  |
-| `my-app/features/dashboard/category-views/services/ServiceFilterBar.tsx` | 1 | 63 |  |
-| `my-app/features/dashboard/category-views/shared/components/GenericFilterBar.tsx` | 1 | 47 |  |
-| `my-app/features/dashboard/category-views/shared/components/RelationCell.tsx` | 1 | 131 |  |
-| `my-app/features/dashboard/category-views/shared/components/SavedViewsMenu.tsx` | 1 | 87 |  |
-| `my-app/features/dashboard/components/forms/dynamic-form-fields/CepAddressField.tsx` | 1 | 66 |  |
-| `my-app/features/dashboard/components/forms/dynamic-form-fields/CurrencyField.tsx` | 1 | 75 |  |
-| `my-app/features/dashboard/components/forms/RelationSelector.tsx` | 1 | 162 |  |
+| arquivo | inputs | linhas |
+|---|---|---|
+| `my-app/features/accounting/components/AccountsPayablePanel.tsx` | 1 | 595 |
+| `my-app/features/accounting/components/AccountsReceivablePanel.tsx` | 1 | 715 |
+| `my-app/features/accounting/components/CatalogCombobox.tsx` | 1 | 150 |
+| `my-app/features/accounting/components/ChartOfAccountsPanel.tsx` | 2 | 210, 226 |
+| `my-app/features/accounting/components/CreateCounterpartyModal.tsx` | 2 | 152, 167 |
+| `my-app/features/accounting/components/CreatePayableModal.tsx` | 5 | 281, 295, 310, 324, 452 |
+| `my-app/features/accounting/components/CreateReceivableModal.tsx` | 4 | 212, 226, 241, 255 |
+| `my-app/features/accounting/components/DepreciationRatesSection.tsx` | 1 | 233 |
+| `my-app/features/accounting/components/DimensionsPanel.tsx` | 4 | 490, 502, 623, 635 |
+| `my-app/features/accounting/components/EntryApprovalsPanel.tsx` | 2 | 597, 611 |
+| `my-app/features/accounting/components/FixedAssetFormModal.tsx` | 1 | 258 |
+| `my-app/features/accounting/components/ImportExportPanel.tsx` | 2 | 211, 323 |
+| `my-app/features/accounting/components/JournalEntriesPanel.tsx` | 2 | 532, 544 |
+| `my-app/features/accounting/components/LalurParteBModal.tsx` | 1 | 222 |
+| `my-app/features/accounting/components/PeriodsPanel.tsx` | 1 | 237 |
+| `my-app/features/accounting/components/ReconciliationPanel.tsx` | 3 | 516, 526, 536 |
+| `my-app/features/accounting/components/ReviewDetailModal.tsx` | 1 | 485 |
+| `my-app/features/crm/components/CrmPipelineBoard.tsx` | 1 | 147 |
+| `my-app/features/crm/components/LeadConvertModal.tsx` | 6 | 170, 183, 202, 208, 212, 238 |
+| `my-app/features/crm/components/LeadTasksPanel.tsx` | 1 | 193 |
+| `my-app/features/crm/components/OpportunityCreateModal.tsx` | 2 | 174, 198 |
+| `my-app/features/crm/components/ProposalCaptureModal.tsx` | 2 | 94, 127 |
+| `my-app/features/dashboard/category-views/finance/components/expenses/ExpensesFilterBar.tsx` | 1 | 59 |
+| `my-app/features/dashboard/category-views/finance/components/sales/SaleActionModals.tsx` | 1 | 214 |
+| `my-app/features/dashboard/category-views/finance/components/sales/SalesFilterBar.tsx` | 1 | 48 |
+| `my-app/features/dashboard/category-views/inventory/components/InventoryFilterBar.tsx` | 2 | 71, 163 |
+| `my-app/features/dashboard/category-views/kanban/KanbanFilterBar.tsx` | 1 | 48 |
+| `my-app/features/dashboard/category-views/kanban/KanbanFilterSidebar.tsx` | 1 | 49 |
+| `my-app/features/dashboard/category-views/people/components/PeopleFilterBar.tsx` | 1 | 47 |
+| `my-app/features/dashboard/category-views/planning/components/PlanningFilterBar.tsx` | 1 | 62 |
+| `my-app/features/dashboard/category-views/products/ProductFilterBar.tsx` | 1 | 66 |
+| `my-app/features/dashboard/category-views/services/ServiceFilterBar.tsx` | 1 | 63 |
+| `my-app/features/dashboard/category-views/shared/components/GenericFilterBar.tsx` | 1 | 47 |
+| `my-app/features/dashboard/category-views/shared/components/RelationCell.tsx` | 1 | 131 |
+| `my-app/features/dashboard/category-views/shared/components/SavedViewsMenu.tsx` | 1 | 87 |
+| `my-app/features/dashboard/components/forms/dynamic-form-fields/CepAddressField.tsx` | 1 | 66 |
+| `my-app/features/dashboard/components/forms/dynamic-form-fields/CurrencyField.tsx` | 1 | 75 |
+| `my-app/features/dashboard/components/forms/RelationSelector.tsx` | 1 | 162 |

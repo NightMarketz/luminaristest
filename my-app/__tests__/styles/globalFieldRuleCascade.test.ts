@@ -23,10 +23,28 @@ import ts from 'typescript';
 const require = createRequire(import.meta.url);
 const APP = path.resolve(__dirname, '..', '..');
 
-// Telas migradas: wizard de onboarding (BRIEF W7 item 8: neutral-*, rounded-2xl) e login/signup (já usavam `!pl-16`).
+// Telas migradas: wizard de onboarding (BRIEF W7 item 8: neutral-*, rounded-2xl), login/signup (já usavam `!pl-16`) e as 16
+// telas em que a regra global quebrava `pl-*`/largura (texto por cima do ícone, w-24 virando 100%).
+// Tela nova migrada entra aqui (D-2026-11-13-REGRA-GLOBAL-INPUT-MIGRACAO-POR-TELA).
 const WIZARD_FILES = [
   'pages/users/login.tsx',
   'pages/users/signup.tsx',
+  'components/widgets/generic-chat/components/GenericChatWidget.tsx',
+  'features/accounting/components/CompliancePanel.tsx',
+  'features/accounting/components/JournalEntryModal.tsx',
+  'features/accounting/components/MeiEnquadramentoSection.tsx',
+  'features/accounting/components/PresumidoServicosSection.tsx',
+  'features/accounting/components/SubledgerFilterBar.tsx',
+  'features/accounting/components/TaxAssessmentPanel.tsx',
+  'features/crm/components/reports/CrmReportEditor.tsx',
+  'features/dashboard/category-views/finance/components/sales/create/inputs.tsx',
+  'features/dashboard/category-views/finance/components/sales/SalesCreateModal.tsx',
+  'features/dashboard/category-views/inventory/components/InventoryTable.tsx',
+  'features/dashboard/category-views/inventory/components/MovementModal.tsx',
+  'pages/documents/index.tsx',
+  'pages/users/create.tsx',
+  'pages/users/edit/[id].tsx',
+  'pages/users/profile.tsx',
   'features/interview/setup/QuickSetup.tsx',
   'features/interview/setup/TotalControlSetup.tsx',
   'features/interview/components/RightSidebar/NewFieldForm.tsx',
@@ -51,10 +69,18 @@ function readFields(): Field[] {
           let own = false;
           for (const a of n.attributes.properties) {
             if (ts.isJsxAttribute(a) && a.name.getText(sf) === 'data-own-style') own = true;
-            if (!ts.isJsxAttribute(a) || !a.initializer || !ts.isStringLiteral(a.initializer)) continue;
+            if (!ts.isJsxAttribute(a) || !a.initializer) continue;
             const name = a.name.getText(sf);
-            if (name === 'type') type = a.initializer.text;
-            if (name === 'className') classes = a.initializer.text;
+            if (name === 'type' && ts.isStringLiteral(a.initializer)) type = a.initializer.text;
+            if (name === 'className') {
+              if (ts.isStringLiteral(a.initializer)) classes = a.initializer.text;
+              else if (ts.isJsxExpression(a.initializer) && a.initializer.expression) {
+                // template com `${}`: vale só a parte literal (as classes vindas da expressão não são cobertas)
+                const e = a.initializer.expression;
+                if (ts.isNoSubstitutionTemplateLiteral(e)) classes = e.text;
+                else if (ts.isTemplateExpression(e)) classes = [e.head.text, ...e.templateSpans.map((t) => t.literal.text)].join(' ');
+              }
+            }
           }
           if (classes && (tag !== 'input' || (type !== null && TEXT_TYPES.includes(type)))) out.push({ file, tag, type, classes, own });
         }
@@ -88,6 +114,7 @@ function specificity(sel: selectorParser.Selector): Spec {
 }
 
 const OWN_PROPS = [
+  'width',
   'background-color',
   'border-color',
   'border-top-color',
@@ -176,11 +203,11 @@ describe('regra global de campos de texto × utilitárias do campo (wizard)', ()
   const fields = readFields();
 
   it('acha os campos do wizard', () => {
-    expect(fields.length).toBeGreaterThanOrEqual(13);
+    expect(fields.length).toBeGreaterThanOrEqual(49);
   });
 
   it('todo campo de texto dessas telas declara data-own-style (sem ele a regra global volta a vencer)', () => {
-    expect(fields.filter((f) => f.tag === 'input' && !f.own).map((f) => `${f.file} <input type=${f.type}>`)).toEqual([]);
+    expect(fields.filter((f) => !f.own).map((f) => `${f.file} <${f.tag} type=${f.type}>`)).toEqual([]);
   });
 
   it.each(['light', 'dark'] as const)('em %s, toda propriedade declarada por classe do campo é vencida por classe do campo', async (mode) => {

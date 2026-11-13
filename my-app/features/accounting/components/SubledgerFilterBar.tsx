@@ -65,6 +65,7 @@ export function SubledgerFilterBar({ value, onChange, counterpartyOptions, t }: 
               'subledgerFilters.searchHint',
               'Não diferencia maiúsculas de minúsculas, mas não casa acentuação (ex.: "marco" não encontra "março").',
             )}
+            data-own-style
             className={`${inputClass} w-full pl-8`}
           />
         </div>
@@ -79,6 +80,7 @@ export function SubledgerFilterBar({ value, onChange, counterpartyOptions, t }: 
           id="subledger-filter-counterparty"
           value={value.counterpartyId ?? ''}
           onChange={(e) => patch({ counterpartyId: e.target.value || undefined })}
+          data-own-style
           className={inputClass}
         >
           <option value="">{t('subledgerFilters.counterpartyAll', '— todas —')}</option>

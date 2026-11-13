@@ -397,6 +397,7 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
                       id="name"
                       required
                       autoComplete="name"
+                      data-own-style
                       className="block w-full px-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
                       placeholder={t('userEditNamePlaceholder', 'Nome completo')}
                       value={formData.name}
@@ -416,6 +417,7 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
                       required
                       minLength={3}
                       autoComplete="username"
+                      data-own-style
                       className="block w-full px-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
                       placeholder={t('userEditUsernamePlaceholder', 'nome_de_usuario')}
                       value={formData.username}
@@ -434,6 +436,7 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
                       id="email"
                       required
                       autoComplete="email"
+                      data-own-style
                       className="block w-full px-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
                       placeholder={t('userEditEmailPlaceholder', 'email@luminaris.com')}
                       value={formData.email}
@@ -467,6 +470,7 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
                       name="currentPassword"
                       id="currentPassword"
                       autoComplete="current-password"
+                      data-own-style
                       className="block w-full px-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
                       value={formData.currentPassword ?? ''}
                       onChange={handleChange}
@@ -484,6 +488,7 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
                       name="password"
                       id="password"
                       autoComplete="new-password"
+                      data-own-style
                       className="block w-full px-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
                       placeholder={t('passwordPlaceholderProfile', 'Deixe em branco para manter a senha atual')}
                       value={formData.password}
@@ -535,6 +540,7 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
                       <select
                         value={preferencesLocale}
                         onChange={(e) => setPreferencesLocale(e.target.value)}
+                        data-own-style
                         className="block w-full pl-9 pr-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                       >
                         <option value="pt">🇧🇷 Português (BR)</option>
@@ -553,6 +559,7 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
                       <select
                         value={preferencesCurrency}
                         onChange={(e) => setPreferencesCurrency(e.target.value)}
+                        data-own-style
                         className="block w-full pl-9 pr-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                       >
                         {SUPPORTED_CURRENCIES.map((c) => (

@@ -47,6 +47,7 @@ export function QuantityInput({ value, onChange, min = 1, max = 9999 }: Quantity
                 inputMode="numeric"
                 value={value}
                 onChange={handleTextChange}
+                data-own-style
                 className="w-10 h-8 text-center text-sm font-bold bg-transparent text-gray-900 dark:text-white border-x border-gray-200 dark:border-gray-700 focus:outline-none transition-colors"
             />
             <button
@@ -137,6 +138,7 @@ export function PaymentTermChips({ value, onChange }: PaymentTermChipsProps) {
                         onBlur={() => { if (!isCustomValue) setCustomOpen(false); }}
                         placeholder="45"
                         min={1}
+                        data-own-style
                         className={`w-10 bg-transparent focus:outline-none text-center font-medium ${
                             isCustomValue ? 'text-white' : 'text-gray-700 dark:text-gray-300'
                         }`}
@@ -184,6 +186,7 @@ export function CurrencyInput({ value, onChange, placeholder, className }: Curre
             onChange={e => setDisplayValue(e.target.value)}
             onBlur={handleBlur}
             placeholder={placeholder}
+            data-own-style
             className={
                 className ??
                 'w-full px-3 py-2 rounded-lg bg-white dark:bg-neutral-800 border border-gray-200 dark:border-gray-700 text-sm text-right font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500'

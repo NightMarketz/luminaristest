@@ -217,6 +217,7 @@ export function CompliancePanel({ unitId }: { unitId: string }) {
                 if (e.key === 'Enter') void loadCoverage(version);
               }}
               placeholder="2026"
+              data-own-style
               className={inputClass}
             />
           </label>
@@ -293,6 +294,7 @@ export function CompliancePanel({ unitId }: { unitId: string }) {
                               value={drafts[acc.accountId]?.referentialCode ?? ''}
                               onChange={(e) => setDraft(acc.accountId, 'referentialCode', e.target.value)}
                               placeholder="1.01.01.01"
+                              data-own-style
                               className={`${inputClass} w-36`}
                             />
                           </td>
@@ -302,6 +304,7 @@ export function CompliancePanel({ unitId }: { unitId: string }) {
                               value={drafts[acc.accountId]?.label ?? ''}
                               onChange={(e) => setDraft(acc.accountId, 'label', e.target.value)}
                               placeholder={acc.name}
+                              data-own-style
                               className={`${inputClass} w-full`}
                             />
                           </td>
@@ -355,6 +358,7 @@ export function CompliancePanel({ unitId }: { unitId: string }) {
                 value={copyTo}
                 onChange={(e) => setCopyTo(e.target.value)}
                 placeholder="2027"
+                data-own-style
                 className={inputClass}
               />
             </label>
@@ -406,6 +410,7 @@ export function CompliancePanel({ unitId }: { unitId: string }) {
                   setCatalogVersionTouched(true);
                 }}
                 placeholder="2026"
+                data-own-style
                 className={inputClass}
               />
             </label>

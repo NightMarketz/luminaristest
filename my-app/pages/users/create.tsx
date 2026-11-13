@@ -129,6 +129,7 @@ function CreateUserPage(props: InferGetServerSidePropsType<typeof getServerSideP
                     name="name"
                     type="text"
                     required
+                    data-own-style
                     className="w-full pl-9 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-neutral-800 border border-gray-200/60 dark:border-gray-700/60 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all font-medium"
                     placeholder="Ex: João da Silva"
                     value={formData.name}
@@ -152,6 +153,7 @@ function CreateUserPage(props: InferGetServerSidePropsType<typeof getServerSideP
                       type="text"
                       required
                       minLength={3}
+                      data-own-style
                       className="w-full pl-8 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-neutral-800 border border-gray-200/60 dark:border-gray-700/60 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all font-medium"
                       placeholder="joaosilva"
                       value={formData.username}
@@ -173,6 +175,7 @@ function CreateUserPage(props: InferGetServerSidePropsType<typeof getServerSideP
                       name="email"
                       type="email"
                       required
+                      data-own-style
                       className="w-full pl-9 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-neutral-800 border border-gray-200/60 dark:border-gray-700/60 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all font-medium"
                       placeholder="joao@luminaris.com"
                       value={formData.email}
@@ -193,6 +196,7 @@ function CreateUserPage(props: InferGetServerSidePropsType<typeof getServerSideP
                     required
                     value={formData.role}
                     onChange={handleFormChange}
+                    data-own-style
                     className="w-full pl-4 pr-10 py-2.5 text-sm bg-gray-50 dark:bg-neutral-800 border border-gray-200/60 dark:border-gray-700/60 rounded-md text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all appearance-none font-bold uppercase tracking-wide"
                   >
                     <option value={Roles.USER}>{t('roleOptionUser', 'USER - Acesso Padrão')}</option>
@@ -230,6 +234,7 @@ function CreateUserPage(props: InferGetServerSidePropsType<typeof getServerSideP
                     type="password"
                     required
                     minLength={6}
+                    data-own-style
                     className="w-full pl-9 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-neutral-800 border border-gray-200/60 dark:border-gray-700/60 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all font-medium"
                     placeholder={t('passwordMin6CharsPlaceholder')}
                     value={formData.password}

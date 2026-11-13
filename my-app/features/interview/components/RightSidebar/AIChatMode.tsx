@@ -245,6 +245,7 @@ function AIChatMode({ tableData, sessionId, onSaveChanges, onSync, onClose, onSe
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder={t('onboardingFieldsAiInputPlaceholder')}
+              data-own-style
               className="w-full border border-neutral-300 dark:border-neutral-600 rounded-md p-3 pr-10 resize-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-700 dark:text-neutral-100"
               rows={2}
               onKeyDown={(e) => {
