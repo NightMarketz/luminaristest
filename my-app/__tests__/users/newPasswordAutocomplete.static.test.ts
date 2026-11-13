@@ -12,7 +12,7 @@ const app = path.resolve(__dirname, '../..');
 describe.each(['pages/users/create.tsx', 'pages/users/edit/[id].tsx'])('%s', (file) => {
   it('o campo de senha nova tem autoComplete="new-password"', () => {
     const src = fs.readFileSync(path.join(app, file), 'utf8');
-    const inputs = [...src.matchAll(/<input[^>]*?type="password"[^>]*?\/?>/gs)].map((m) => m[0]);
+    const inputs = [...src.matchAll(/<input[^>]*?type="password"[^>]*?\/?>/g)].map((m) => m[0]);
     const named = inputs.filter((i) => /name="password"/.test(i));
     expect(named.length).toBeGreaterThan(0);
     for (const i of named) expect(i).toMatch(/autoComplete="new-password"/);
