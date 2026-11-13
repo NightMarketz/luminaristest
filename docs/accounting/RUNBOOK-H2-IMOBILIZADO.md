@@ -286,3 +286,216 @@ seguinte foi executado.
 - Rastreio: a nota `FE-INCR-FIXED-ASSETS` fica para o fold do dono.
 - Assinatura do executor: agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-04). A assinatura
   atesta a execução e a conferência da evidência; não substitui oráculo externo.
+
+## Execução 2026-11-11 — AI tester (reexecução depois do IMO-1) — passos 1–8 PASSARAM, passo 9 BLOQUEADO
+
+Executor: agente claude-sonnet-5-5, AI tester           Data: 2026-11-11
+Autorização (citada literalmente): dono, chat, 2026-11-11: *"rode todos os runbooks que são possíveis"* (sessões Sonnet
+médio), com a emenda de 2026-10-29 de `docs/operating-manual/RUNBOOK-FORMAT.md` (assinatura como "AI tester").
+
+**Ambiente.** O mesmo do bloco do `RUNBOOK-H2-VENDA-PACOTE.md` de 11/11: build de produção da `main` em `54e5086d0` (o IMO-1,
+`f523a90e2` / #1079, é ancestral: `git merge-base --is-ancestor` → ok), servidor `127.0.0.1:4200`, front `127.0.0.1:3200`,
+usuário `seed-presumido`, unidade `seed-unit-presumido` (`cmuw4yqxg001jcii0iz2yb9rw`), **cópia privada** do `dev.db`
+(migrações aplicadas até `20261107170000_dfe_signer_pareamento`). Runner `scripts/runbook-tela.mjs` e, só no passo 5, um
+script de duas abas (o runner tem uma página só). Log de rede no lugar do DevTools. Tela: Contabilidade (`/accounting`) →
+aba **Imobilizado**.
+
+**Pré-condições.** P1 `main` `54e5086d0`. P2/P3 servidor e front de pé. P4 já satisfeita pela execução de 04/11 na mesma cópia
+(contas `1.2.1.01`, `1.2.9.01`, `3.7`, `4.7`, `4.8`, banco `1.1.1.01`; confirmadas na tela dos passos 1 e 3). P5 períodos 2026/01–11
+`OPEN` (tela Períodos; `accounting_periods`: 11 `OPEN`, 1 `FUTURE`, 12 `HARD_CLOSED` de 2025). P6 trocado pelo log de rede.
+Como o runbook pede para partir das pré-condições, todos os passos rodaram de novo, com códigos novos (`MAQ-11`, `TER-11`,
+`BEM-11-01`, `BEM-11-02`) para criar de verdade; as classes e os 2 bens de 04/11 (`MAQ-C7`, `TER-C7`, `BEM-C7-01/02`, ambos `ACTIVE`)
+seguem no banco e entram na depreciação do passo 6.
+
+**Passo 1.** Imobilizado → Contas: Despesa de depreciação `4.8`, Ganho `3.7`, Perda `4.7` → **Salvar**; recarregar
+([print após recarregar](runbook-evidence/IMOBILIZADO-2026-11-11/passo1-01-contas-apos-recarregar.png)).
+```text
+[eval] ["Despesa de depreciação (antes) = 4.8 — Despesa de Depreciação C7","Ganho na baixa (antes) = 3.7 — …","Perda na baixa (antes) = 4.7 — …"]
+[net] PUT /api/accounting/settings -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","depreciationExpenseAccountId":"cmw1ovxj7004vci402oag9nbn","disposalGainAccountId":"cmw1ovotk004rci407v01jq5p","disposalLossAccountId":"cmw1ovt8k004tci40buahw4gy"}
+[eval] ["Contas salvas."]
+(reload) [eval] ["Despesa de depreciação = 4.8 — Despesa de Depreciação C7","Ganho na baixa = 3.7 — Ganho na Baixa de Imobilizado C7","Perda na baixa = 4.7 — Perda na Baixa de Imobilizado C7"]
+console: nenhuma linha [console.error]/[console.warn]
+```
+Os selects já vinham preenchidos de 04/11; o `PUT` leva só `unitId` + os 3 campos. Grau: verificado. **Confere.**
+
+**Passo 2.** Taxas: catálogo, taxa `CUSTOM`, Ocultar, "Mostrar ocultas"
+([catálogo](runbook-evidence/IMOBILIZADO-2026-11-11/passo2-01-catalogo-anexo-iii.png) ·
+[modal](runbook-evidence/IMOBILIZADO-2026-11-11/passo2-02-modal-taxa-custom.png) ·
+[criada](runbook-evidence/IMOBILIZADO-2026-11-11/passo2-03-taxa-custom-criada.png) ·
+[Ocultar no Anexo](runbook-evidence/IMOBILIZADO-2026-11-11/passo2-04-ocultar-anexo-confirmacao.png) ·
+[recusa](runbook-evidence/IMOBILIZADO-2026-11-11/passo2-05-ocultar-anexo-recusada.png) ·
+[CUSTOM oculta](runbook-evidence/IMOBILIZADO-2026-11-11/passo2-06-custom-oculta-com-mostrar-ocultas.png)).
+```text
+[eval] {"linhas":222,"origens":["ANEXO_III_IN_","ANEXO_III_NOTA_"],"linksFonte":222,"hrefExemplo":"https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/visao/multivigente"}
+[net] POST /api/accounting/depreciation-rates -> 201  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","ncm":"8516.60.00","description":"Forno elétrico C7 rodada 11/11","lifeYears":5,"annualRateBp":2000,"justification":"Uso intensivo em dois turnos - laudo técnico C7 (teste H2 11/11)"}
+   res: {"success":true,"data":{"id":"cmwckqslq002xcizkvs870pcg",…,"source":"CUSTOM",…,"hiddenAt":null,…}}
+[eval] ["8516.60.00 Forno elétrico C7 rodada 11/11 5 20% CUSTOM Uso intensivo em dois turnos - … Ocultar"]
+(a) linha do Anexo 8437 → Ocultar → Confirmar
+[console.error] Failed to load resource: the server responded with a status of 404 (Not Found)
+[net] POST /api/accounting/depreciation-rates/lp3-dep-anexo-100/hide -> 404  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw"}
+   res: {"code":"NOT_FOUND","message":"Taxa de depreciação 'lp3-dep-anexo-100' não foi encontrada."}
+(b) a CUSTOM → Ocultar → Confirmar
+[net] POST /api/accounting/depreciation-rates/cmwckqslq002xcizkvs870pcg/hide -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw"}
+[eval] {"custom_sem_mostrar_ocultas":0}
+[eval] Mostrar ocultas=true
+[eval] ["8516.60.00 Forno elétrico C7 rodada 11/11oculta 5 20% CUSTOM Uso intensivo em dois turnos - … "]
+```
+O catálogo lista 222 linhas do Anexo III, todas com origem `ANEXO_III_*` e link "fonte". A taxa nova aparece como `CUSTOM`; a oculta
+some e reaparece com o selo "oculta" ao marcar "Mostrar ocultas"; nada foi apagado (`hiddenAt` preenchido na resposta).
+**Pela regra ratificada L-14** (`BE-INCR-LEGAL-PARAMS-brief.md:278`, só `CUSTOM` se oculta) a linha do Anexo é recusada com 404
+(o roteiro de 03/10 manda ocultar uma linha do Anexo e é anterior à regra; também não há mais semeadura no 1º acesso). O erro
+de 404 ainda expõe o id interno `lp3-dep-anexo-100`, e o botão "Ocultar" segue oferecido nas 222 linhas do Anexo (achado IMO-U1
+abaixo). Grau: verificado. **Confere pela L-14, com a ressalva do IMO-U1.**
+
+**Passo 3.** Classes: depreciável e não depreciável; remover classe com bem vivo (depois do passo 4)
+([depreciável](runbook-evidence/IMOBILIZADO-2026-11-11/passo3-01-modal-classe-depreciavel.png) ·
+[não depreciável](runbook-evidence/IMOBILIZADO-2026-11-11/passo3-02-modal-classe-nao-depreciavel.png) ·
+[lista](runbook-evidence/IMOBILIZADO-2026-11-11/passo3-03-lista-de-classes.png) ·
+[400](runbook-evidence/IMOBILIZADO-2026-11-11/passo3-04-remover-classe-com-bem-vivo-400.png)).
+```text
+[eval] {"selectsDoModal":["Conta do bem = 1.2.1.01 — Máquinas e Equipamentos C7","Conta de deprec. acumulada = 1.2.9.01 — (-) Depreciação Acumulada Máquinas C7"]}
+[net] POST /api/accounting/fixed-asset-classes -> 201  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","code":"MAQ-11","name":"Máquinas e equipamentos 11/11","depreciable":true,"costAccountId":"cmw1ovbmz004lci40836wvwkd","accumulatedDepreciationAccountId":"cmw1ovk7s004pci40oo32tvo1"}
+[eval] {"selectsDoModal":["Conta do bem = 1.2.1.01 — Máquinas e Equipamentos C7"]}      ← o select da acumulada sumiu
+[net] POST /api/accounting/fixed-asset-classes -> 201  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","code":"TER-11","name":"Terrenos 11/11 (não depreciável)","depreciable":false,"costAccountId":"cmw1ovbmz004lci40836wvwkd"}
+(depois do passo 4) MAQ-11 → Remover → Confirmar remoção
+[console.error] Failed to load resource: the server responded with a status of 400 (Bad Request)
+[net] DELETE /api/accounting/fixed-asset-classes/cmwcksiq1002zcizk91ufmhbe -> 400  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","classId":"cmwcksiq1002zcizk91ufmhbe"}
+   res: {"code":"VALIDATION_ERROR","message":"Classe 'MAQ-11 — Máquinas e equipamentos 11/11' tem 2 ativo(s) vivo(s) — remova ou baixe-os antes."}
+```
+O `POST` da não depreciável não leva `accumulatedDepreciationAccountId`; a mensagem do 400 agora mostra o código da classe, não o id
+(o IMO-3 de 04/11 melhorou neste caso). Os dois `console.error` dos passos 2 e 3 são os 404/400 provocados de propósito. Grau: verificado. **Confere.**
+
+**Passo 4.** Bens: classe depreciável, custo `5.000,00`, residual `500,00`, aquisição `15/09/2026`, taxa do catálogo (NCM 9402,
+10% a.a.); 2º bem com taxa explícita de 10%
+([modal catálogo](runbook-evidence/IMOBILIZADO-2026-11-11/passo4-01-modal-bem-taxa-catalogo.png) ·
+[modal explícita](runbook-evidence/IMOBILIZADO-2026-11-11/passo4-02-modal-bem-taxa-explicita.png) ·
+[lista](runbook-evidence/IMOBILIZADO-2026-11-11/passo4-03-lista-de-bens.png)).
+```text
+[net] POST /api/accounting/fixed-assets -> 201  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","classId":"cmwcksiq1002zcizk91ufmhbe","code":"BEM-11-01","description":"Cadeira hidráulica de corte 11/11","quantity":1,"costCents":500000,"residualValueCents":50000,"acquiredAt":"2026-09-15","rateId":"lp3-dep-anexo-255"}
+[net] POST /api/accounting/fixed-assets -> 201  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","classId":"cmwcksiq1002zcizk91ufmhbe","code":"BEM-11-02","description":"Secador profissional 11/11","quantity":1,"costCents":300000,"residualValueCents":0,"acquiredAt":"2026-09-20","annualRateBp":1000}
+[eval] ["BEM-11-01 Cadeira hidráulica de corte 11/11 Máquinas e equipamentos 11/11 R$ 5.000,00 R$ 0,00 R$ 5.000,00 Aguardando ativação 15/09/2026 —  Ativar Editar Remover","BEM-11-02 Secador profissional 11/11 Máquinas e equipamentos 11/11 R$ 3.000,00 R$ 0,00 R$ 3.000,00 Aguardando ativação 20/09/2026 —  Ativar Editar Remover"]
+```
+O 1º `POST` leva `rateId` sem `annualRateBp`; o 2º, o inverso. As datas aparecem como digitadas (15/09 e 20/09), custo `R$ 5.000,00`.
+Método: na 1ª tentativa o clique na opção do combobox por `click()` não selecionou a taxa e a tela bloqueou com "Escolha uma taxa do
+catálogo" (nenhum `POST` saiu); repeti com `mousedown`/`mouseup`/`click`. Grau: verificado. **Confere.**
+
+**Passo 5 — o ponto que falhou em 04/11, agora PASSOU.** Ativei o `BEM-11-01` em 2026-10-01 (abertura em branco), abri uma 2ª aba, ativei
+o `BEM-11-02` lá, voltei à 1ª aba (lista ainda com o `BEM-11-02` em "Aguardando ativação") e tentei ativá-lo com o `version` velho
+([1º bem Ativo](runbook-evidence/IMOBILIZADO-2026-11-11/passo5-01-bem1-ativo.png) ·
+[2ª aba](runbook-evidence/IMOBILIZADO-2026-11-11/passo5-02-aba2-bem2-ativo.png) ·
+[1ª aba, aviso](runbook-evidence/IMOBILIZADO-2026-11-11/passo5-03-aba1-version-velho.png) ·
+[1ª aba, lista recarregada](runbook-evidence/IMOBILIZADO-2026-11-11/passo5-04-aba1-lista-recarregada.png)).
+```text
+[aba1] lista antes: BEM-11-01 … Aguardando ativação 15/09/2026 —  Ativar Editar Remover | BEM-11-02 … Aguardando ativação 20/09/2026 —  Ativar Editar Remover
+[aba1][net] POST /api/accounting/fixed-assets/cmwckur1u0033cizk5qkqrcx6/activate -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","assetId":"cmwckur1u0033cizk5qkqrcx6","activatedAt":"2026-10-01","version":1}
+[aba1] lista depois: BEM-11-01 Cadeira hidráulica de corte 11/11 … Ativo 15/09/2026 01/10/2026  Baixar Remover
+[aba2][net] POST /api/accounting/fixed-assets/cmwckuuy70035cizkpkixozq7/activate -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","assetId":"cmwckuuy70035cizkpkixozq7","activatedAt":"2026-10-01","version":1}
+[aba1] lista ANTES do clique (stale): BEM-11-02 … Aguardando ativação 20/09/2026 —  Ativar Editar Remover
+[aba1][console.error] Failed to load resource: the server responded with a status of 409 (Conflict)
+[aba1][net] POST /api/accounting/fixed-assets/cmwckuuy70035cizkpkixozq7/activate -> 409  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","assetId":"cmwckuuy70035cizkpkixozq7","activatedAt":"2026-10-01","version":1}
+   res: {"code":"CONFLICT","message":"Ativo 'BEM-11-02 — Secador profissional 11/11' foi alterado por outra operação (version divergente) — releia e tente de novo."}
+[aba1] aviso: … Novo bem / O bem mudou — lista recarregada. Confira e tente de novo. / Fechar / …
+[aba1] lista 2,5 s depois: BEM-11-01 … Ativo 15/09/2026 01/10/2026  Baixar Remover | BEM-11-02 Secador profissional 11/11 … Ativo 20/09/2026 01/10/2026  Baixar Remover
+```
+O 1º bem virou `Ativo`; na 1ª aba o 2º bem deu **409** (era 400 em 04/11) com o aviso "O bem mudou — lista recarregada. Confira e tente de novo.",
+a lista recarregou sozinha (o `BEM-11-02` passou a `Ativo`) e **nenhum `POST` foi reenviado** (3 `…/activate` no log da 1ª aba: um por clique).
+O `console.error` do 409 é o esperado do passo. A mensagem do 409 mostra o código do bem, não o id interno. Grau: verificado
+(tela e rede). Caso adversarial tentado: o corpo enviado leva `version: 1` e o banco já estava em `version: 2` (a divergência é de verdade,
+como em 04/11), e dessa vez o servidor a trata como CAS (409) antes do gate de status.
+
+**Passo 6.** Rodar depreciação de 2026-10; de novo; fechar o período; de novo
+([2ª rodada](runbook-evidence/IMOBILIZADO-2026-11-11/passo6-02-segunda-rodada-idempotente.png) ·
+[fechar Out](runbook-evidence/IMOBILIZADO-2026-11-11/passo6-03-fechar-periodo-confirmacao.png) ·
+[Out fechado](runbook-evidence/IMOBILIZADO-2026-11-11/passo6-04-periodo-out-fechado.png) ·
+[3ª rodada](runbook-evidence/IMOBILIZADO-2026-11-11/passo6-05-terceira-rodada-period-not-open.png) ·
+[Nov fechado, falhas](runbook-evidence/IMOBILIZADO-2026-11-11/passo6-06-period-not-open-nov-fechado.png) ·
+[Abrir períodos](runbook-evidence/IMOBILIZADO-2026-11-11/passo6-07-abrir-periodos-leva-a-periodos.png) ·
+[Balancete](runbook-evidence/IMOBILIZADO-2026-11-11/passo6-08-balancete.png)).
+```text
+(1ª rodada — rodou durante o reconhecimento da tela, sem print; saída literal do log)
+[eval] 2026-10     (valor padrão do campo "Mês de competência")
+[net] POST /api/accounting/fixed-assets/depreciation/run -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","yearMonth":"2026-10"}
+   res: {"success":true,"data":{"yearMonth":"2026-10","posted":4,"skipped":0,"failed":[]}}
+[eval] … Depreciação de 2026-10: 4 lançada(s), 0 ignorada(s), 0 com falha. …
+(2ª rodada, mesmo mês)
+   res: {"success":true,"data":{"yearMonth":"2026-10","posted":0,"skipped":4,"failed":[]}}
+[eval] Depreciação de 2026-10: 0 lançada(s), 4 ignorada(s), 0 com falha.
+(Períodos → Out → "Fechar parcial" → Confirmar)
+[net] POST /api/accounting/periods/cmuw4yzmu01cncii0kinf6tqq/soft-close -> 200   … "month":10,"status":"SOFT_CLOSED"
+(3ª rodada, Out fechado, mesmo mês)
+   res: {"success":true,"data":{"yearMonth":"2026-10","posted":0,"skipped":4,"failed":[]}}
+[eval] Depreciação de 2026-10: 0 lançada(s), 4 ignorada(s), 0 com falha.
+(desvio do roteiro: Nov também fechado parcialmente, rodada de 2026-11)
+[net] POST /api/accounting/periods/cmuw4yzmz01cocii0558nkumb/soft-close -> 200   … "month":11,"status":"SOFT_CLOSED"
+[net] POST /api/accounting/fixed-assets/depreciation/run -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","yearMonth":"2026-11"}
+   res: {"success":true,"data":{"yearMonth":"2026-11","posted":0,"skipped":0,"failed":[{"assetId":"cmwckur1u0033cizk5qkqrcx6","code":"PERIOD_NOT_OPEN","message":"Período contábil 2026/11 não está aberto para lançamentos."},{"assetId":"cmwckuuy70035cizkpkixozq7","code":"PERIOD_NOT_OPEN",…},{"assetId":"cmw1qjr3t000bcit0l847f5v7","code":"PERIOD_NOT_OPEN",…},{"assetId":"c…
+[eval] Depreciação de 2026-11: 0 lançada(s), 0 ignorada(s), 4 com falha. / Bem / Falha / BEM-11-01 Período contábil 2026/11 não está aberto para lançamentos.Abrir períodos / BEM-11-02 … / BEM-C7-01 … / BEM-C7-02 …
+[eval] ["Abrir períodos","Abrir períodos","Abrir períodos","Abrir períodos"]
+(clique em "Abrir períodos")
+[eval] {"aba_ativa":["Períodos"],"temEncerrar":true}
+(Períodos → Reabrir Out e Nov → 11 cards "Fechar parcial", todos de novo Abertos)
+[net] POST /api/accounting/periods/cmuw4yzmu01cncii0kinf6tqq/reopen -> 200 · POST /api/accounting/periods/cmuw4yzmz01cocii0558nkumb/reopen -> 200
+Balancete:
+[eval] ["1.2.9.01 | (-) Depreciação Acumulada Máquinas C7 | Ativo | — | R$ 125,00 | -R$ 125,00","4.8 | Despesa de Depreciação C7 | Despesa | R$ 125,00 | — | R$ 125,00"]
+```
+1ª rodada `4 lançada(s)` (os 2 bens novos e os 2 de 04/11: 37,50 + 25,00 + 37,50 + 25,00 = 125,00, conferindo com o balancete); 2ª rodada `0 lançada(s)/4
+ignorada(s)` (idempotente). **Desvio do roteiro, escrito aqui:** com o período de 2026-10 fechado, a 3ª rodada de 2026-10 também devolveu `0
+lançada(s)/4 ignorada(s)` e **não** `PERIOD_NOT_OPEN`: a lógica "já lançado → ignora" vem antes do gate de período, e todos os bens já tinham a
+quota de outubro. Para provar que o gate de período segue vivo, fechei também 2026-11 (parcial) e rodei 2026-11, onde nada estava lançado: aí a tabela
+de falhas mostra `PERIOD_NOT_OPEN` por bem, com o botão "Abrir períodos", que leva à aba Períodos. O Balancete reflete a depreciação (4.8 débito
+R$ 125,00; 1.2.9.01 crédito R$ 125,00). Depois reabri Out e Nov (estado de volta a `OPEN`). Grau: verificado (tela, rede e balancete). **Confere**, com a
+leitura do desvio como roteiro desatualizado e não como defeito (inferido: o servidor é idempotente por desenho).
+
+**Passo 7.** Reconciliar ([print](runbook-evidence/IMOBILIZADO-2026-11-11/passo7-01-reconciliar.png)).
+```text
+[net] POST /api/accounting/fixed-assets/reconcile -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw"}
+   res: {"success":true,"data":{"checked":4,"repaired":0,"draftsCreated":0}}
+[eval] … Reconciliação: 4 verificado(s), 0 reparado(s), 0 rascunho(s) recriado(s) de NF-e. …
+```
+Sem erro no console. Grau: verificado. **Confere.**
+
+**Passo 8.** Baixar: `BEM-11-01` com valor recebido `1.500,00` (data 2026-11-05) sem e com contrapartida; `BEM-11-02` imprestável (valor 0)
+([sem contrapartida](runbook-evidence/IMOBILIZADO-2026-11-11/passo8-01-baixa-valor-recebido-sem-contrapartida.png) ·
+[bloqueio](runbook-evidence/IMOBILIZADO-2026-11-11/passo8-02-bloqueio-sem-contrapartida.png) ·
+[com contrapartida](runbook-evidence/IMOBILIZADO-2026-11-11/passo8-03-baixa-com-contrapartida.png) ·
+[imprestável](runbook-evidence/IMOBILIZADO-2026-11-11/passo8-04-baixa-imprestavel-sem-contrapartida.png) ·
+[lista](runbook-evidence/IMOBILIZADO-2026-11-11/passo8-05-lista-com-baixados.png)).
+```text
+[eval] clicou Confirmar baixa        (valor 1.500,00, sem contrapartida)
+[eval] … / Informe a conta de contrapartida do valor recebido. / Cancelar / …        (nenhum [net] saiu)
+[eval] ok Conta de contrapartida = 1.1.1.01 — Banco
+[net] POST /api/accounting/fixed-assets/cmwckur1u0033cizk5qkqrcx6/dispose -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","assetId":"cmwckur1u0033cizk5qkqrcx6","disposedAt":"2026-11-05","proceedsCents":150000,"counterpartAccountId":"cmuw4yr3r0033cii07aq3w7uf","version":3}
+[eval] {"contrapartida":false}        (BEM-11-02, valor 0,00: o campo de contrapartida não aparece)
+[net] POST /api/accounting/fixed-assets/cmwckuuy70035cizkpkixozq7/dispose -> 200  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","assetId":"cmwckuuy70035cizkpkixozq7","disposedAt":"2026-11-05","proceedsCents":0,"version":3}
+[eval] ["BEM-11-01 Cadeira hidráulica de corte 11/11 Máquinas e equipamentos 11/11 R$ 5.000,00 R$ 75,00 R$ 4.925,00 Baixado 15/09/2026 01/10/2026 ","BEM-11-02 Secador profissional 11/11 Máquinas e equipamentos 11/11 R$ 3.000,00 R$ 50,00 R$ 2.950,00 Baixado 20/09/2026 01/10/2026 "]
+banco (leitura): BEM-11-01 | DISPOSED | version 5 | 7500 · BEM-11-02 | DISPOSED | version 5 | 5000 · journal_entries fixed_asset.depreciation 6 · fixed_asset.disposal 2
+```
+Sem contrapartida, a tela bloqueia o envio com "Informe a conta de contrapartida do valor recebido." e nada vai ao servidor; com ela o bem vira
+`Baixado`, sem botões de ação na linha; a baixa imprestável não pede contrapartida; os dois `POST` levam `version`. Grau: verificado.
+**Confere.** Não exercitado: baixar pela 2ª vez com `version` velho (a parte `disposeAsset` do IMO-1; o instrumento é teste de serviço).
+
+**Passo 9 — BLOQUEADO.** Exige importar uma NF-e de compra com 1 item `Imobilizado` pela aba NF-e: o XML de NF-e real (autorizada) é dado externo
+(`RUNBOOK-FORMAT.md`, "NF-e real"), e o agente não o fabrica. O PR-2 já está em `main`, então o passo é executável pelo dono com um XML dele.
+Sem evidência colada: o passo fica em branco.
+
+### Desfecho (execução 2026-11-11)
+[x] PASSOU — passos 1–8 com evidência conferindo com o esperado (passo 2 pela regra L-14; passo 6 com o desvio escrito acima); o **IMO-1 está
+corrigido** (passo 5: 409 + "O bem mudou — lista recarregada", sem reenvio). **Passo 9 BLOQUEADO** (NF-e real, dado externo): o runbook não fecha por
+inteiro, e o texto do desfecho original do runbook ("PASSOU — todos os passos (1–8)") é o que esta marca atende.
+[ ] FALHOU
+[ ] BLOQUEADO
+
+### Registro (execução 2026-11-11)
+- **IMO-U1 (baixo: UI × regra L-14, o "IMO-2" do bloco de 04/11)** — `my-app/features/accounting/components/DepreciationRatesSection.tsx:198`: o botão
+  "Ocultar" segue em toda linha não oculta, inclusive as 222 do Anexo III que o servidor recusa com 404 (L-14), e a mensagem expõe o id
+  `lp3-dep-anexo-100`. Reconfirmado em 11/11 (passo 2). O nome "IMO-2" do `GAP-MAP.md:142` é outro defeito (2ª baixa concorrente); por isso o código novo.
+- **Roteiro desatualizado** — passo 2 (ocultar linha do Anexo; "1º acesso semeia") e passo 6 (com o período fechado, "a tabela de falhas mostra
+  `PERIOD_NOT_OPEN)"): vale reescrever com a taxa `CUSTOM` e com "rodar um mês ainda não lançado" para exercitar o gate de período.
+- Rótulos "imprestável" e "abertura retroativa": "Valor recebido (R$) — 0 se imprestável" apareceu claro; "abertura retroativa" não foi exercitada (passo 5 com
+  abertura em branco). Linguagem de contador: ok para o que apareceu; **validação humana segue pendente** (BRIEF §4).
+- Desvios de dado na cópia privada do dev.db (unidade `seed-unit-presumido`): taxa `CUSTOM` `cmwckqslq002xcizkvs870pcg` (oculta); classes `MAQ-11`
+  `cmwcksiq1002zcizk91ufmhbe` e `TER-11` `cmwcksm2r0031cizk7acfzrqk`; bens `BEM-11-01` e `BEM-11-02`, ambos `DISPOSED` em 2026-11-05; depreciação de
+  2026-10 lançada para 4 bens; baixas lançadas; períodos 2026/10 e 2026/11 fechados e reabertos. O banco compartilhado do dono não foi tocado.
+- Rastreio: nota `FE-INCR-FIXED-ASSETS` atualizada com o desfecho de 11/11.
+- Assinatura do executor: agente claude-sonnet-5-5, AI tester, sob autorização do dono (chat, 2026-11-11). A assinatura atesta a execução e a
+  conferência da evidência; não substitui oráculo externo.

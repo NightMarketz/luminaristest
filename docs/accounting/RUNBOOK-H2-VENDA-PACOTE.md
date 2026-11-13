@@ -231,3 +231,165 @@ finalização, contra R$ 640,00 do item e do lançamento. Evidência acima. Nenh
 - Rastreio: nota `FE-INCR-VENDA-PACOTE` fica para o fold do dono.
 - Assinatura do executor: agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02). A assinatura
   atesta a execução e a conferência da evidência; não substitui oráculo externo.
+
+---
+
+## Execução 2026-11-11 — AI tester (reexecução depois do VP-1) — FALHOU no passo 9
+
+Executor: agente claude-sonnet-5-5, AI tester           Data: 2026-11-11
+Autorização (citada literalmente): dono, chat, 2026-11-11: *"rode todos os runbooks que são possíveis"* (sessões Sonnet
+médio), com a emenda de 2026-10-29 de `docs/operating-manual/RUNBOOK-FORMAT.md` (assinatura como "AI tester").
+
+**Ambiente.** Build de produção da `main` em `54e5086d0` (o VP-1, `f5943677b` / #1052, e o VP-1b, `d1d3f3fee` / #1068, são
+ancestrais: `git merge-base --is-ancestor` → ok). Servidor `127.0.0.1:4200`, front `127.0.0.1:3200` (build com
+`NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:4200/api`), usuário `seed-presumido`, unidade `seed-unit-presumido`, cliente
+`Cliente H2`. **Banco: cópia privada** do `server/prisma/prisma/dev.db` do checkout principal (db + wal + shm, sha256 do
+db `f959c9a1…`), com `prisma migrate deploy` aplicado em cima (a cópia estava atrás da `main`; a última migração é
+`20261107170000_dfe_signer_pareamento`). A cópia existe para não escrever no banco que a outra sessão do H2 usa em paralelo.
+Runner `scripts/runbook-tela.mjs` (Chromium headless shell), log de rede no lugar do DevTools (`[net]`).
+Leitura de banco por `node:sqlite` em modo só leitura.
+
+**Pré-condições.** P1 `main` `54e5086d0`. P2/P3 servidor e front de pé (`GET /api` → 200; `/users/login` → 200). P4 o seletor
+mostra Produtos / Serviços / Pacotes (passo 1). P5 o seletor de pacote lista os 4 ativos e **não** lista o inativo (passo 2).
+P6 `aboveCatalogPrice` já no schema (o `POST` da venda o aceita e o devolve). P7 cliente e unidade existem. P8 trocado pelo
+log de rede. Desvio de método: no modal, "Pagamento" ficou `Pix` e o aceite da validade foi marcado em toda venda (o bloco
+"Validade do pacote" é posterior ao roteiro de 05/10 e o pede quando o pacote tem validade).
+
+**Passo 1.** Nova Venda → Pacotes ([print](runbook-evidence/VENDA-PACOTE-2026-11-11/passo1-01-cabecalho-pacote.png)).
+```text
+[eval] {"frase":true,"avulso":false}
+```
+Grau: verificado. **Confere.**
+
+**Passo 2.** Unidade + cliente; Itens → "Adicionar pacote"; seletor aberto
+([seletor](runbook-evidence/VENDA-PACOTE-2026-11-11/passo2-01-seletor-aberto.png) ·
+[linha](runbook-evidence/VENDA-PACOTE-2026-11-11/passo2-02-linha-preco.png)).
+```text
+[eval] Pacote C7 Vencido | Pacote C7 Sem validade | Pacote C7 30 dias | Pacote H2        (o "Pacote C7 Inativo" não aparece)
+[eval] tag 1|R$ 300,00|R$ 0,00        (qtd | preço unitário | desconto, depois de escolher "Pacote H2")
+```
+Grau: verificado. **Confere.**
+
+**Passo 3.** Preço `250,00` → aviso; "Finalizar Venda"; preço `300,00` + Desconto `50,00`
+([aviso](runbook-evidence/VENDA-PACOTE-2026-11-11/passo3-01-aviso-preco-menor.png) ·
+[após o clique](runbook-evidence/VENDA-PACOTE-2026-11-11/passo3-02-finalizar-recusa.png) ·
+[total](runbook-evidence/VENDA-PACOTE-2026-11-11/passo3-03-total-com-desconto.png)).
+```text
+[eval] {"avisoNaTela":true}                      ("Para cobrar menos que o catálogo, use o campo Desconto." com preço 250)
+(clique em Finalizar Venda: nenhuma linha [net] nesse trecho do log; o aviso segue na tela)
+[eval] {"avisoNaTela":true}
+[eval] Subtotal / R$ 300,00 / Desconto / TOTAL / R$ 250,00 / …
+[eval] Salvar Rascunho:disabled=false | Finalizar Venda:disabled=false
+```
+Grau: verificado. **Confere**, com a mesma nota de 04/11: a recusa não abre faixa nova, a frase fica na linha (leitura:
+inferido).
+
+**Passo 4.** 2ª linha com `Pacote C7 30 dias` e "Finalizar Venda"
+([print](runbook-evidence/VENDA-PACOTE-2026-11-11/passo4-01-um-pacote-por-venda.png)).
+```text
+[eval] {"msg":true}        ("Uma venda leva um único pacote. Para outro pacote, crie outra venda."; nenhuma linha [net])
+```
+Grau: verificado. **Confere.**
+
+**Passo 5 — conferido (VP-1 corrigido).** Qtd 2 (botão "+"), preço `320,00`, desconto `0`; caminho da emenda F11 (o
+`FinanceService.createSaleWithItems` segue criando a venda antes dos itens): **Salvar Rascunho** e **Finalizar** pela lista
+([itens](runbook-evidence/VENDA-PACOTE-2026-11-11/passo5-01-itens-qtd2-320.png) ·
+[lista do rascunho](runbook-evidence/VENDA-PACOTE-2026-11-11/passo5-02-lista-rascunho.png) ·
+[confirmação](runbook-evidence/VENDA-PACOTE-2026-11-11/passo5-03-lista-apos-finalizar.png) ·
+[lista finalizada](runbook-evidence/VENDA-PACOTE-2026-11-11/passo5-03-lista-finalizada.png) ·
+[detalhe](runbook-evidence/VENDA-PACOTE-2026-11-11/passo5-04-detalhe.png)).
+```text
+[eval] Subtotal / R$ 640,00 / Desconto / TOTAL / R$ 640,00 / …
+[net] POST /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data -> 201  req: {"data":{"date":"2026-11-11","customerId":"cmvtxuu6b000pci9c3yk4b6n2","simpleCustomer":false,"unitId":"cmuw4yqxg001jcii0iz2yb9rw","status":"Draft","paymentStatus":"Pending","subtotal":640,"totalAmount":640,"paymentMethod":"Pix","aboveCatalogPrice":true}}
+[net] POST /api/dynamic-tables/cmuw4yqvo0011cii0biovlxj9/data -> 201  req: {"data":{"saleId":"cmwckeagc000ncizkq2rk6x0v","packageId":"cmvtxuu8f0015ci9c87vo9g6f","type":"Package","quantity":2,"unitPrice":320}}
+[console.error] Failed to load resource: the server responded with a status of 400 (Bad Request)
+[net] POST /api/package-acceptances -> 400  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","saleId":"cmwckeagc000ncizkq2rk6x0v","textVersion":"v1","textSha256":"6a9ec8a1c543710b4c73a3882953401fea302a2bf9cfbbd5dcdee02a8d34da54"}
+   res: {"code":"VALIDATION_ERROR","message":"Venda sem valor total válido."}
+[eval] ["11/11/2026\tCliente H2\t Rascunho Acima do catálogo \tPendente\tR$ 640,00\tR$ 640,00\t", …]
+[net] PUT /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data/cmwckeagc000ncizkq2rk6x0v -> 200  req: {"data":{"status":"Finalized"}}
+[eval] ["11/11/2026\tCliente H2\t Finalizada Acima do catálogo \tPendente\tR$ 640,00\tR$ 640,00\t", …]
+detalhe: Finalizada · Pendente · Acima do catálogo … Subtotal R$ 640,00 · Total R$ 640,00
+         Itens: Tipo Pacote | Produto/Serviço Pacote H2 | Qtd 2 | Preço R$ 320,00
+banco (leitura):
+dynamic_table_data cmwckeagc000ncizkq2rk6x0v | Finalized | subtotal 640 | totalAmount 640 | aboveCatalogPrice 1
+journal_entries cmwckfu8k0011cizk8qkm1x31 | sale.package.sold | Posted | postings: débito 64000 (1.1.2.01) | crédito 64000 (2.1.1.01)
+package_balance_movements cmwckfu8w0017cizk8nwii4a0 | credit | deltaCents 64000 | sale cmwckeagc000ncizkq2rk6x0v
+```
+Os dois corpos de `POST` batem com o roteiro, a etiqueta "Acima do catálogo" está na lista e o item aparece como **Pacote** com
+o nome no detalhe. **A divergência de 04/11 sumiu:** depois da finalização a venda vale R$ 640,00 no banco, na lista e no
+detalhe, igual ao item e ao lançamento (era R$ 320,00). Grau: verificado (tela, rede e banco). Ressalva: o `PUT` devolve a
+linha com `totalAmount: 0` no corpo da resposta (o recálculo roda depois de montar a resposta); a leitura do banco logo
+em seguida mostra 640. **À margem do passo, achado VP-4 (abaixo):** o `POST /api/package-acceptances` devolve 400 e a tela
+mostra o toast "Venda sem valor total válido." + o aviso "A venda foi criada, mas o aceite da validade não foi registrado".
+O roteiro de 05/10 não menciona o aceite; os resultados esperados do passo 5 estão atendidos.
+
+**Passo 6.** Pacote H2, qtd 1, preço `300,00`; Salvar Rascunho + Finalizar
+([itens](runbook-evidence/VENDA-PACOTE-2026-11-11/passo6-01-itens-300-qtd1.png) ·
+[lista](runbook-evidence/VENDA-PACOTE-2026-11-11/passo6-02-lista.png)).
+```text
+[net] POST /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data -> 201  req: {"data":{"date":"2026-11-11","customerId":"cmvtxuu6b000pci9c3yk4b6n2","simpleCustomer":false,"unitId":"cmuw4yqxg001jcii0iz2yb9rw","status":"Draft","paymentStatus":"Pending","subtotal":300,"totalAmount":300,"paymentMethod":"Pix","aboveCatalogPrice":false}}
+[net] POST /api/dynamic-tables/cmuw4yqvo0011cii0biovlxj9/data -> 201  req: {"data":{"saleId":"cmwckh4qp001bcizk52vfo59i","packageId":"cmvtxuu8f0015ci9c87vo9g6f","type":"Package","quantity":1,"unitPrice":300}}
+[console.error] Failed to load resource: the server responded with a status of 400 (Bad Request)
+[net] POST /api/package-acceptances -> 400  req: {"unitId":"cmuw4yqxg001jcii0iz2yb9rw","saleId":"cmwckh4qp001bcizk52vfo59i","textVersion":"v1","textSha256":"6a9ec8a1c543710b4c73a3882953401fea302a2bf9cfbbd5dcdee02a8d34da54"}
+   res: {"code":"VALIDATION_ERROR","message":"Venda sem valor total válido."}
+[net] PUT /api/dynamic-tables/cmuw4yqvn000zcii0dqy91u0x/data/cmwckh4qp001bcizk52vfo59i -> 200  req: {"data":{"status":"Finalized"}}
+[eval] ["11/11/2026\tCliente H2\t Finalizada \tPendente\tR$ 300,00\tR$ 300,00\t","11/11/2026\tCliente H2\t Finalizada Acima do catálogo \tPendente\tR$ 640,00\tR$ 640,00\t"]
+```
+`"aboveCatalogPrice": false` no corpo; sem etiqueta na linha. Grau: verificado. **Confere** (o 400 do aceite repete o VP-4).
+
+**Passo 7.** Venda de serviço (Corte H2, R$ 80,00) do mesmo cliente: Salvar Rascunho + Finalizar; detalhe → **Pagar** → forma
+"Saldo de pacote" ([print](runbook-evidence/VENDA-PACOTE-2026-11-11/passo7-02-select-saldo-pacote.png)).
+```text
+[net] POST …/data -> 201  req: {"data":{"date":"2026-11-11","customerId":"cmvtxuu6b000pci9c3yk4b6n2","simpleCustomer":false,"unitId":"cmuw4yqxg001jcii0iz2yb9rw","status":"Draft","paymentStatus":"Pending","subtotal":80,"totalAmount":80,"paymentMethod":"Pix"}}
+[net] POST …/data -> 201  req: {"data":{"saleId":"cmwckibre001zcizks66f0h05","serviceId":"cmvtxuu71000tci9chpnj578o","type":"Service","quantity":1,"unitPrice":80}}
+[net] PUT …/data/cmwckibre001zcizks66f0h05 -> 200  req: {"data":{"status":"Finalized"}}
+[set] select = Package Balance -> ok Package Balance
+[eval] … {"opts":[":Selecione o pacote…","cmvtxuu8f0015ci9c87vo9g6f:Pacote H2 — saldo R$ 1.940,00 — vence em 11/11/2027","cmw1kcewn006dcio0uyrv1vd0:Pacote C7 Sem validade — saldo R$ 120,00 — sem validade"]}
+```
+O saldo do pacote vendido nos passos 5–6 aparece como opção. Grau: verificado. **Confere.**
+
+**Passo 8.** Venda de pacote do passo 5 (finalizada, pendente) → **Pagar** → "Saldo de pacote"
+([print](runbook-evidence/VENDA-PACOTE-2026-11-11/passo8-01-select-pacote-propria-venda.png)).
+```text
+[eval] abriu 11/11/2026	Cliente H2	 Finalizada Acima do catálogo 	Pendente	R$ 640,00	R$ 640,00
+[set] select = Package Balance -> ok Package Balance
+[eval] … {"opts":[":Selecione o pacote…","cmw1kcewn006dcio0uyrv1vd0:Pacote C7 Sem validade — saldo R$ 120,00 — sem validade"]}
+```
+O `Pacote H2` (o próprio vendido) **não** aparece; o saldo de outro pacote (`Pacote C7 Sem validade`) aparece. Grau: verificado.
+**Confere.**
+
+**Passo 9 — FALHOU.** Console do navegador ao longo dos passos 1–8: nos passos 1–4, 7 e 8 nenhuma linha `[console.error]`/
+`[console.warn]`. Nos passos 5 e 6 o runner registrou, a cada venda de pacote com validade, uma linha vermelha:
+```text
+[console.error] Failed to load resource: the server responded with a status of 400 (Bad Request)
+   ← par do [net] POST /api/package-acceptances -> 400  res: {"code":"VALIDATION_ERROR","message":"Venda sem valor total válido."}
+```
+Esperado: "sem erro vermelho". Divergência: duas linhas de erro (uma por venda de pacote criada), mais o toast de erro na tela
+([print](runbook-evidence/VENDA-PACOTE-2026-11-11/passo5-02-lista-rascunho.png)). Causa lida no código, ver VP-4. Grau: verificado
+(tela e rede); a causa é inferida da leitura do serviço e do plugin e confirmada pelo banco (venda no rascunho com
+`totalAmount` 0; nenhuma linha em `package_validity_acceptances` para a venda).
+
+### Desfecho (execução 2026-11-11)
+[x] FALHOU — passo 9 divergiu: console com erro vermelho (`POST /api/package-acceptances` → 400) em toda venda de pacote com
+validade criada pelo modal. Passos 1–8 conferem; o VP-1 está corrigido (venda de Qtd 2 vale 640,00 no banco, na tela e no
+razão). Não há passo depois do 9.
+
+### Registro (execução 2026-11-11)
+- **VP-4 (alto: o modal Nova Venda nunca grava o aceite da validade)** — `server/src/features/packages/services/PackageAcceptanceService.ts:202`
+  lê `totalAmount` da venda e recusa `<= 0`. Desde o INV F-40.1 (#1168, `128467696`, `SalesPlugin.ts:213-216`) a venda criada por
+  usuário nasce com `subtotal`/`totalAmount` 0 (só o `afterUpdate` recalcula, na finalização). O modal Nova Venda registra o
+  aceite logo depois de criar os itens (`SalesCreateModal.tsx:252-254`), ainda no rascunho, então o `POST /package-acceptances`
+  cai sempre em "Venda sem valor total válido." (400). Efeito: nenhum aceite de validade é gravado pelo caminho normal; o
+  detalhe mostra "ACEITE NÃO REGISTRADO" + o botão "Registrar aceite" depois de finalizada. O runbook `PACOTE-VALIDADE` depende
+  disso. Instrumentação → correção: teste de integração que cria rascunho de pacote com item (total 0 na linha) e chama o
+  aceite, esperando 201; a correção é decisão da sessão de correção (ler o total dos itens, como as pontes passaram a fazer
+  no #1168, ou deixar o aceite para depois da finalização; muda o contrato do modal).
+- **Roteiro desatualizado** — o passo 5 (e o 6) manda "Finalizar Venda" no modal; segue valendo a emenda F11. Desde o F-40.2 a
+  criação de venda `Finalized` por usuário é recusada pelo plugin ("A venda é criada como rascunho; finalize-a depois de incluir
+  os itens."), então o "Finalizar Venda" do modal tende a devolver 400 em vez de criar a venda órfã (inferido, não exercitado).
+- Desvios de dado na cópia privada do dev.db: vendas de pacote `cmwckeagc000ncizkq2rk6x0v` (640,00, finalizada) e
+  `cmwckh4qp001bcizk52vfo59i` (300,00, finalizada), venda de serviço `cmwckibre001zcizks66f0h05` (80,00, finalizada),
+  lançamentos `sale.package.sold`, saldo do `Cliente H2` no `Pacote H2` +940,00. O banco compartilhado do dono não foi tocado.
+- Rastreio: nota `FE-INCR-VENDA-PACOTE` atualizada com o desfecho de 11/11.
+- Assinatura do executor: agente claude-sonnet-5-5, AI tester, sob autorização do dono (chat, 2026-11-11). A assinatura atesta
+  a execução e a conferência da evidência; não substitui oráculo externo.
