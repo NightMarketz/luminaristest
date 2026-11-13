@@ -346,6 +346,8 @@
   "securityDescription": "Change your password. Leave blank to keep the current one.",
   "rememberMe": "Remember me",
   "forgotPassword": "Forgot password?",
+  "forgotPasswordSoon": "Password recovery by e-mail is not available yet. Ask your account administrator to reset it.",
+  "planComingSoon": "Coming soon",
   "welcomeToLuminaris": "Welcome to {{appName}}",
   "luminarisDescription": "Centralize your operations, optimize your workflow, and grow your business with our AI-driven ERP ecosystem.",
   "joinCommunity": "Join 15k+ companies that already transformed their digital management strategy.",
