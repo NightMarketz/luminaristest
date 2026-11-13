@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'next-i18next';
+import { useDialogFocus } from '../useDialogFocus';
 import { MdWarningAmber, MdInfoOutline, MdErrorOutline, MdClose } from 'react-icons/md';
 
 // =============================================================================
@@ -135,6 +136,10 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
     const { t } = useTranslation('common');
 
+    const dialogRef = useRef<HTMLDivElement>(null);
+    // Foco entra no diálogo (no botão Cancelar — o padrão seguro numa ação destrutiva), circula e volta ao gatilho.
+    useDialogFocus(isOpen, dialogRef, '[data-confirm-cancel]');
+
     // ESC key closes the modal — must be called before any early return (Rules of Hooks)
     useEffect(() => {
         if (!isOpen) return;
@@ -154,6 +159,7 @@ export function ConfirmModal({
 
     const modal = (
         <div
+            ref={dialogRef}
             className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
             role="dialog"
             aria-modal="true"
@@ -206,6 +212,7 @@ export function ConfirmModal({
                     <button
                         onClick={onClose}
                         disabled={isLoading}
+                        data-confirm-cancel
                         className="px-4 py-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-neutral-800 border border-gray-200 dark:border-neutral-700 rounded-xl transition-colors disabled:opacity-50"
                     >
                         {resolvedCancelLabel}

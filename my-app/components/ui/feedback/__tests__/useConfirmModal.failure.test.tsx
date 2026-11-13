@@ -36,7 +36,7 @@ describe('F1-N3 — useConfirmModal não engole a falha da ação', () => {
     render(<Harness onConfirm={onConfirm} />);
     fireEvent.click(screen.getByText('abrir'));
     fireEvent.click(await screen.findByText('Sim'));
-    await waitFor(() => expect(screen.queryByText('Tem certeza?')).toBeNull());
+    await waitFor(() => expect(screen.getByText('Sim')).not.toBeDisabled());
   }
 
   it('erro que ninguém notificou vira toast de erro com o motivo', async () => {
@@ -51,5 +51,18 @@ describe('F1-N3 — useConfirmModal não engole a falha da ação', () => {
       throw Object.defineProperty(new Error('Erro 500'), 'notified', { value: true });
     });
     expect(notices).toEqual([]);
+  });
+
+  // L-20261113-152224-a0c9: a ação falhava e o diálogo fechava como se tivesse dado certo
+  it('falha mantém o diálogo aberto; sucesso fecha', async () => {
+    await runWith(async () => {
+      throw new Error('boom');
+    });
+    expect(screen.getByText('Tem certeza?')).toBeInTheDocument();
+    cleanup();
+    render(<Harness onConfirm={async () => {}} />);
+    fireEvent.click(screen.getByText('abrir'));
+    fireEvent.click(await screen.findByText('Sim'));
+    await waitFor(() => expect(screen.queryByText('Tem certeza?')).toBeNull());
   });
 });
