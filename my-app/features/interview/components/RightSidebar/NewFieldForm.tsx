@@ -35,7 +35,7 @@ function NewFieldForm({ newField, setNewField, onAddField, onCancel }: NewFieldF
             value={newField.name}
             onChange={(e) => setNewField({ ...newField, name: e.target.value })}
             placeholder={t('onboardingFieldsTechNamePlaceholder')}
-            className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:border-neutral-600 dark:text-white"
+            className="w-full px-3 py-2 border !border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:!bg-neutral-800 dark:!border-neutral-600 dark:!text-white"
           />
         </div>
         
@@ -52,7 +52,7 @@ function NewFieldForm({ newField, setNewField, onAddField, onCancel }: NewFieldF
             value={newField.label}
             onChange={(e) => setNewField({ ...newField, label: e.target.value })}
             placeholder={t('onboardingFieldsLabelPlaceholder')}
-            className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:border-neutral-600 dark:text-white"
+            className="w-full px-3 py-2 border !border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:!bg-neutral-800 dark:!border-neutral-600 dark:!text-white"
           />
         </div>
         
