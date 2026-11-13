@@ -420,6 +420,7 @@
   "onboardingTotalControlLoadingDetails": "Carregando detalhes...",
   "onboardingTotalControlNext": "Próximo: Customizar Tabelas",
   "onboardingTotalControlSelectModel": "Selecione um modelo para continuar.",
+  "onboardingTotalControlSelected": "Selecionado",
   "onboardingTotalControlSelectTables": "Selecione as Tabelas",
   "onboardingTotalControlCustomizingFor": "Personalizando para o sistema de:",
   "onboardingTotalControlCustomizingHint": "Desmarque as tabelas que não deseja utilizar no seu fluxo de trabalho.",

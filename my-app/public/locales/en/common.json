@@ -421,6 +421,7 @@
   "onboardingTotalControlLoadingDetails": "Loading details...",
   "onboardingTotalControlNext": "Next: customize tables",
   "onboardingTotalControlSelectModel": "Select a template to continue.",
+  "onboardingTotalControlSelected": "Selected",
   "onboardingTotalControlSelectTables": "Select the tables",
   "onboardingTotalControlCustomizingFor": "Customizing for the system:",
   "onboardingTotalControlCustomizingHint": "Uncheck the tables you don't want to use in your workflow.",

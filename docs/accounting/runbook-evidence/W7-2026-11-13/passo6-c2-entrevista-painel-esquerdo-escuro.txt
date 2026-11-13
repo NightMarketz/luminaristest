@@ -1,0 +1,214 @@
+Luminaris
+🇧🇷
+PT
+w7-ia
+W
+Configurar seu Sistema
+
+Selecione o melhor modo para começar a organizar sua operação e gerenciar seus KPIs.
+
+Modo Rápido
+Controle Total
+Entrevista com IA
+Funcionalidades do Sistema
+
+Sistema: ERP Avançado para Salão de Beleza
+
+LeadPipelines
+Essencial
+
+Tabela de LeadPipelines
+
+Campos: Unit, Pipeline Name, Default
+LeadStages
+Essencial
+
+Tabela de LeadStages
+
+Campos: Pipeline, Stage Name, Stage Type e mais 2...
+Leads
+Essencial
+
+Tabela de Leads
+
+Campos: Unit, Pipeline, Stage e mais 21...
+LeadActivities
+Essencial
+
+Tabela de LeadActivities
+
+Campos: Lead, Actor, Type e mais 4...
+LeadProposals
+
+Tabela de LeadProposals
+
+Campos: Lead, Amount, Currency e mais 4...
+CrmContacts
+
+Tabela de CrmContacts
+
+Campos: Unit, Contact Name, Email e mais 7...
+Campaigns
+
+Tabela de Campaigns
+
+Campos: Unit, Campaign Name, Target Audience e mais 8...
+Customers
+Essencial
+
+Tabela de Customers
+
+Campos: Main Unit, Full Name, Email e mais 17...
+Suppliers
+
+Tabela de Suppliers
+
+Campos: Supplier Name, Contact Person, Email e mais 11...
+Sales
+Essencial
+
+Tabela de Sales
+
+Campos: Unit, Sale Date, Status e mais 27...
+SaleItems
+Essencial
+
+Tabela de SaleItems
+
+Campos: Sale, Item Type, Product e mais 14...
+Services
+Essencial
+
+Tabela de Services
+
+Campos: Name, Category, Price e mais 6...
+Products
+Essencial
+
+Tabela de Products
+
+Campos: Name, Brand, Description e mais 3...
+Packages
+
+Tabela de Packages
+
+Campos: Name, Package Price, Validity (days) e mais 1...
+Commissions
+
+Tabela de Commissions
+
+Campos: Employee (Commission), Sale, Sale Item e mais 5...
+ProductUnits
+Essencial
+
+Tabela de ProductUnits
+
+Campos: Product, Unit, Sale Price e mais 2...
+StockMovements
+Essencial
+
+Tabela de StockMovements
+
+Campos: Product, Unit, Type e mais 10...
+Appointments
+Essencial
+
+Tabela de Appointments
+
+Campos: Unit, Customer, Simple Customer e mais 7...
+Expenses
+Essencial
+
+Tabela de Expenses
+
+Campos: Unit, Description, Amount e mais 6...
+OtherRevenues
+
+Tabela de OtherRevenues
+
+Campos: Unit, Revenue Date, Amount e mais 3...
+FinancialBaselines
+
+Tabela de FinancialBaselines
+
+Campos: Unit, Baseline Date, Opening Cash e mais 3...
+Reports
+Essencial
+
+Tabela de Reports
+
+Campos: Report Type, Description
+Goals
+
+Tabela de Goals
+
+Campos: Unit, Description, Period e mais 6...
+Entrevista com IA
+
+Olá! Para começarmos, por favor me conte sobre o seu negócio ou projeto para que eu possa entender como melhor ajudá-lo com a configuração do sistema.
+
+Tenho um salão de beleza com 3 cadeiras e também vendo produtos.
+
+Qual é o público-alvo principal do seu salão de beleza?
+
+Quero controlar agenda, clientes, estoque e vendas.
+
+Entendi. Então, em resumo, seu negócio é: Um salão de beleza com 3 cadeiras que atende clientes e vende produtos, buscando controlar agenda, clientes, estoque e vendas. Isso está correto?
+
+Sim, está correto.
+
+Olá! Fico animado em compartilhar que encontrei o sistema "Salão de Beleza", perfeito para o seu negócio! Com ele, você poderá gerenciar seus clientes, agendar serviços, controlar as vendas e até acompanhar as comissões dos funcionários de maneira super prática. Além disso, você pode ativar os módulos de Contatos, que ajudam a manter tudo organizado, mas fique à vontade para desmarcá-los se preferir.
+
+Gostaria de criar o sistema agora ou customizar primeiro?
+
+Customização do Sistema "ERP Avançado para Salão de Beleza"
+
+Por favor, observe o painel de customização à esquerda para ver todas as funcionalidades atuais do seu sistema.
+
+O que você gostaria de fazer agora?
+
+Adicionar novas funcionalidades
+Remover funcionalidades existentes
+Finalizar a customização e criar o sistema
+Módulos sugeridos
+
+Desmarque o que não quiser agora; dá para instalar depois.
+
+Funil
+(incluído)
+Propostas
+(incluído)
+Contas
+Contatos
+Oportunidades
+Campanhas
+(incluído)
+Clientes
+(incluído)
+Fornecedores
+(incluído)
+Vendas
+(incluído)
+Serviços
+(incluído)
+Produtos
+(incluído)
+Pacotes
+(incluído)
+Comissões
+(incluído)
+Estoque
+(incluído)
+Agenda
+(incluído)
+Despesas
+(incluído)
+Outras receitas
+(incluído)
+Linha de base financeira
+(incluído)
+Relatórios
+(incluído)
+Metas
+(incluído)
+Enviar

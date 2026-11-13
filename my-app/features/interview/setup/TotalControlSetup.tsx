@@ -222,7 +222,7 @@ export default function TotalControlSetup() {
 
                     {selectedPreset?.key === preset.key && (
                       <div className="mt-auto flex items-center text-blue-600 dark:text-blue-400 font-bold text-xs uppercase tracking-widest">
-                        Selecionado
+                        {t('onboardingTotalControlSelected')}
                       </div>
                     )}
                   </button>
