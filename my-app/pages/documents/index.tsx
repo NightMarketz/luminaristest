@@ -116,7 +116,18 @@ function DocumentListPage() {
     return <div className="flex justify-center items-center min-h-screen"><p className="text-xl">{t('loading')}</p></div>;
   }
   if (error) {
-    return <div className="flex justify-center items-center min-h-screen"><p className="text-xl text-red-600">{t('errorLabel')} {error}</p></div>;
+    return (
+      <div className="flex flex-col justify-center items-center gap-4 min-h-screen">
+        <p role="alert" className="text-xl text-red-600">{t('errorLabel')} {error}</p>
+        <button
+          type="button"
+          onClick={() => void fetchDocuments()}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+        >
+          {t('try_again', 'Try again')}
+        </button>
+      </div>
+    );
   }
 
   const documentsByStatus = getDocumentsByStatus();
