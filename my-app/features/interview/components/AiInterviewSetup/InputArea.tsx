@@ -27,7 +27,7 @@ function InputArea({ userInput, setUserInput, handleSendMessage, isLoading, isCr
         onChange={(e) => setUserInput(e.target.value)}
         onKeyPress={handleKeyPress}
         placeholder={t('onboardingInterviewInputPlaceholder')}
-        className="flex-grow p-3 border border-neutral-300 dark:border-neutral-600 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-neutral-700 dark:text-white"
+        className="flex-grow !p-3 border !border-neutral-300 dark:!border-neutral-600 !rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:!bg-neutral-700 dark:!text-white"
         disabled={isLoading || isCreating}
         autoComplete="off"
       />
