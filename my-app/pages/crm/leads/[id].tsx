@@ -125,15 +125,15 @@ function LeadDetailInner() {
 
           <SectionCard title={t('detail.contact', 'Contato')}>
             <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
-              <div>
+              <div className="min-w-0">
                 <dt className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('detail.email', 'Email')}</dt>
-                <dd className="mt-0.5 font-bold text-gray-800 dark:text-gray-200">{String(d.email ?? '—')}</dd>
+                <dd className="mt-0.5 font-bold text-gray-800 [overflow-wrap:anywhere] dark:text-gray-200">{String(d.email ?? '—')}</dd>
               </div>
-              <div>
+              <div className="min-w-0">
                 <dt className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('detail.phone', 'Telefone')}</dt>
-                <dd className="mt-0.5 font-bold text-gray-800 dark:text-gray-200">{String(d.phone ?? '—')}</dd>
+                <dd className="mt-0.5 font-bold text-gray-800 [overflow-wrap:anywhere] dark:text-gray-200">{String(d.phone ?? '—')}</dd>
               </div>
-              <div>
+              <div className="min-w-0">
                 <dt className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('detail.status', 'Status')}</dt>
                 <dd className="mt-0.5"><StatusBadge status={String(d.status ?? 'Open')} /></dd>
               </div>
