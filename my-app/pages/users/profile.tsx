@@ -1,4 +1,4 @@
-import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, useEffect, useRef, FormEvent } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../../lib/context/AuthContext';
@@ -113,9 +113,12 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
   const [prefSuccess, setPrefSuccess] = useState<string | null>(null);
   const [prefError, setPrefError] = useState<string | null>(null);
 
-  // Sync form data when actor loads
+  // Sync form data only when the actor first loads (or a different user appears). Saving preferences swaps the
+  // actor object in AuthContext; re-copying here would wipe unsaved name/e-mail/password edits.
+  const syncedActorId = useRef<string | null>(null);
   useEffect(() => {
-    if (actor) {
+    if (actor && syncedActorId.current !== actor.id) {
+      syncedActorId.current = actor.id;
       setFormData({
         name: actor.name || '',
         email: actor.email || '',
@@ -527,12 +530,13 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
 
                   {/* Language dropdown */}
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    <label htmlFor="preferencesLocale" className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                       {t('languageLabel', 'Idioma')}
                     </label>
                     <div className="relative">
                       <IoGlobeOutline size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                       <select
+                        id="preferencesLocale"
                         value={preferencesLocale}
                         onChange={(e) => setPreferencesLocale(e.target.value)}
                         className="block w-full pl-9 pr-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
@@ -545,12 +549,13 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
 
                   {/* Currency dropdown */}
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    <label htmlFor="preferencesCurrency" className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                       {t('currencyLabel', 'Moeda')}
                     </label>
                     <div className="relative">
                       <IoCashOutline size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                       <select
+                        id="preferencesCurrency"
                         value={preferencesCurrency}
                         onChange={(e) => setPreferencesCurrency(e.target.value)}
                         className="block w-full pl-9 pr-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
