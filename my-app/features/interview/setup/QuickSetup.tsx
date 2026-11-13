@@ -146,7 +146,8 @@ export default function QuickSetup() {
             onChange={(e) => setUnitName(e.target.value)}
             disabled={isCreating}
             placeholder={t('unitNamePlaceholder')}
-            className="w-full !rounded-2xl border !border-neutral-200 !bg-white !px-4 !py-3 !text-neutral-900 focus:border-blue-500 focus:outline-none dark:!border-neutral-700 dark:!bg-neutral-800 dark:!text-white"
+            data-own-style
+            className="w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-neutral-900 focus:border-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white"
           />
         </div>
         {error && isCreating && (
