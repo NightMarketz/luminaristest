@@ -44,9 +44,11 @@ function DocumentListPage() {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchDocuments = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const fetchDocuments = useCallback(async (silent = false) => {
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const result = await DocumentService.getDocuments() as { data?: { documents?: unknown[] } | unknown[] };
       // Backend returns { success, data: { documents: [...], totalCount } }.
@@ -57,15 +59,24 @@ function DocumentListPage() {
         : (payload?.documents ?? []);
       setDocuments(list as typeof documents);
     } catch (e) {
-      setError(resolveErrorMessage(e, tRef.current));
+      // Reconsulta silenciosa que falha não derruba a lista já mostrada.
+      if (!silent) setError(resolveErrorMessage(e, tRef.current));
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [tRef]);
 
   useEffect(() => {
     fetchDocuments();
   }, [fetchDocuments]);
+
+  // Documento em PENDING/PROCESSING muda no servidor sem evento: reconsulta a cada 5 s enquanto houver um.
+  const hasPending = documents.some((d) => d.status === 'PENDING' || d.status === 'PROCESSING');
+  useEffect(() => {
+    if (!hasPending) return;
+    const timer = setInterval(() => { void fetchDocuments(true); }, 5000);
+    return () => clearInterval(timer);
+  }, [hasPending, fetchDocuments]);
 
   const toggleExpand = (id: string) => {
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
@@ -137,6 +148,14 @@ function DocumentListPage() {
                 {t('documents.subtitle', 'Manage your documents and perform analysis based on their content')}
               </p>
             </div>
+            <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => { void fetchDocuments(true); }}
+              className="flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-neutral-600 text-gray-700 dark:text-gray-200 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors"
+            >
+              {t('documents.refresh', 'Refresh')}
+            </button>
             <button
               onClick={handleUploadClick}
               className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all shadow-sm hover:shadow"
@@ -144,6 +163,7 @@ function DocumentListPage() {
               <PlusIcon className="h-5 w-5 mr-1" />
               {t('uploadDocument', { defaultValue: 'Upload Document' })}
             </button>
+            </div>
           </div>
 
           {/* Pesquisa e Filtros */}
@@ -220,7 +240,9 @@ function DocumentListPage() {
             <p className="mt-2 text-gray-600 dark:text-gray-400">
               {searchTerm
                 ? t('documents.noResultsFiltered', 'No documents found matching the applied filters.')
-                : t('documents.noDocuments', 'No documents found. Click "Upload Document" to add.')
+                : documents.length === 0
+                  ? t('documents.noDocuments', 'No documents found. Click "Upload Document" to add.')
+                  : t('documents.noDocumentsInTab', 'No documents in this tab.')
               }
             </p>
           </div>
@@ -302,11 +324,30 @@ function DocumentListPage() {
 
                 {expanded[doc.id] && (
                   <div className="p-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-100 dark:border-gray-700">
-                    <div className="overflow-x-auto">
-                      <pre className="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
-                        {JSON.stringify(doc, null, 2)}
-                      </pre>
-                    </div>
+                    <dl className="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1 text-xs text-gray-800 dark:text-gray-200">
+                      <dt className="font-medium text-gray-500 dark:text-gray-400">{t('documents.detail.file', 'File')}</dt>
+                      <dd className="break-all">{doc.fileName}</dd>
+                      <dt className="font-medium text-gray-500 dark:text-gray-400">{t('documents.detail.type', 'Type')}</dt>
+                      <dd>{doc.fileType}</dd>
+                      <dt className="font-medium text-gray-500 dark:text-gray-400">{t('documents.detail.size', 'Size')}</dt>
+                      <dd>{Math.round(doc.fileSize / 1024)} KB</dd>
+                      <dt className="font-medium text-gray-500 dark:text-gray-400">{t('documents.detail.purpose', 'Purpose')}</dt>
+                      <dd>{doc.documentPurpose === 'KNOWLEDGE_BASE' ? t('documents.knowledgeBase', 'Knowledge Base') : t('documents.dataAnalysis', 'Data Analysis')}</dd>
+                      <dt className="font-medium text-gray-500 dark:text-gray-400">{t('documents.detail.uploaded', 'Uploaded')}</dt>
+                      <dd>{new Date(doc.uploadDate).toLocaleString()}</dd>
+                      {doc.processingError && (
+                        <>
+                          <dt className="font-medium text-gray-500 dark:text-gray-400">{t('documents.detail.error', 'Error')}</dt>
+                          <dd className="text-red-600 dark:text-red-400">{doc.processingError}</dd>
+                        </>
+                      )}
+                      {doc.summary && (
+                        <>
+                          <dt className="font-medium text-gray-500 dark:text-gray-400">{t('documents.detail.summary', 'Summary')}</dt>
+                          <dd>{doc.summary}</dd>
+                        </>
+                      )}
+                    </dl>
                   </div>
                 )}
               </div>

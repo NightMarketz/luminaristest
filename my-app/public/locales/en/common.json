@@ -584,6 +584,17 @@
     "noDocuments": "No documents found. Click \"Upload Document\" to add.",
     "hideDetails": "Hide Details",
     "viewDetails": "View Details",
+    "refresh": "Refresh",
+    "noDocumentsInTab": "No documents in this tab.",
+    "detail": {
+      "file": "File",
+      "type": "Type",
+      "size": "Size",
+      "purpose": "Purpose",
+      "uploaded": "Uploaded",
+      "error": "Error",
+      "summary": "Summary"
+    },
     "deleteTitle": "Delete document",
     "deleteMessage": "Are you sure you want to delete this document? This will also remove its vectors and cannot be undone."
   },

@@ -583,6 +583,17 @@
     "noDocuments": "Nenhum documento encontrado. Clique em \"Upload Document\" para adicionar.",
     "hideDetails": "Ocultar Detalhes",
     "viewDetails": "Ver Detalhes",
+    "refresh": "Atualizar",
+    "noDocumentsInTab": "Nenhum documento nesta aba.",
+    "detail": {
+      "file": "Arquivo",
+      "type": "Tipo",
+      "size": "Tamanho",
+      "purpose": "Finalidade",
+      "uploaded": "Enviado em",
+      "error": "Erro",
+      "summary": "Resumo"
+    },
     "deleteTitle": "Excluir documento",
     "deleteMessage": "Tem certeza que deseja excluir este documento? Essa ação removerá também seus vetores e não pode ser desfeita."
   },
