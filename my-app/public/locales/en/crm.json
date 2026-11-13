@@ -83,6 +83,7 @@
     "name": "Name",
     "pipeline": "Pipeline",
     "pipeline_ph": "Select a pipeline",
+    "load_error": "Could not load the pipelines.",
     "amount": "Amount",
     "currency": "Currency",
     "win_probability": "Win %",

@@ -36,10 +36,15 @@ export function NoShowCaptureModal({ isOpen, canRevert, onCancel, onConfirm }: N
   const handleConfirm = async () => {
     if (!isValid || submitting) return;
     setSubmitting(true);
-    if (option === 'reschedule') {
-      await onConfirm({ option: 'reschedule', rescheduleAt: new Date(newDate).toISOString() });
-    } else {
-      await onConfirm({ option: 'revert' });
+    try {
+      if (option === 'reschedule') {
+        await onConfirm({ option: 'reschedule', rescheduleAt: new Date(newDate).toISOString() });
+      } else {
+        await onConfirm({ option: 'revert' });
+      }
+    } finally {
+      // Falhou (o pai trata o erro): sem isto o botão ficava desabilitado para sempre e não dava para tentar de novo.
+      setSubmitting(false);
     }
   };
 
