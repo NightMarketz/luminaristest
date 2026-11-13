@@ -18,6 +18,7 @@ import { type ITableSchema, type ISchemaField } from '../../../components/shared
 import { useRenderTypedValue } from '../../../shared/hooks/useRenderTypedValue';
 import { getInitials, getAvatarColor } from '../utils/people-display';
 
+import { activatableProps } from '../../shared/hooks/a11yProps';
 // ─────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────
@@ -80,7 +81,7 @@ export function PeopleRow({
 
     return (
         <tr
-            onClick={() => onSelectRecord(person)}
+            {...activatableProps(() => onSelectRecord(person))}
             className="group bg-gray-50/50 dark:bg-neutral-800/20 border-t-2 border-gray-200 dark:border-gray-800 hover:bg-gray-100/50 dark:hover:bg-neutral-800/40 transition-colors cursor-pointer"
         >
             {orderedCols.map((colId) => {

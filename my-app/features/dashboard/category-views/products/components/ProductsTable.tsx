@@ -26,6 +26,7 @@ import type {
 } from '../hooks/useProductsData';
 import { ConfirmDeleteModal } from '../../../shared/components/ConfirmDeleteModal';
 
+import { sortableThProps } from '../../shared/hooks/a11yProps';
 // ─────────────────────────────────────────────────────────────
 // Module-level constants (stable references, never recreated on render)
 // ─────────────────────────────────────────────────────────────
@@ -186,7 +187,7 @@ export function ProductsTable({
                                         key={col.id}
                                         scope="col"
                                         title={col.label}
-                                        onClick={sortable ? () => handleColSort(col.id) : undefined}
+                                        {...sortableThProps(sortable, sortState, () => handleColSort(col.id))}
                                         className={`px-2 py-3 text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-800 select-none group relative z-20 hover:bg-gray-200/80 dark:hover:bg-neutral-700/50 transition-colors ${sortable ? 'cursor-pointer' : ''} ${alignClass}`}
                                     >
                                         <div className="flex items-center gap-1 w-full" style={{ justifyContent: isRight ? 'flex-end' : isCenter ? 'center' : 'flex-start' }}>
