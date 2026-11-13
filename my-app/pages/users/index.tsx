@@ -263,6 +263,7 @@ function UserListPage({ }: UserListPageProps) {
                               onClick={() => handleEditUser(userOnCard.id)}
                               className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:text-gray-400 dark:hover:text-indigo-400 dark:hover:bg-indigo-500/10 rounded-md transition-colors"
                               title={t('userCardEditUser')}
+                              aria-label={`${t('userCardEditUser')}: ${userOnCard.name || userOnCard.username}`}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>

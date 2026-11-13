@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useId } from 'react';
 import { useTranslation } from 'next-i18next';
 import { Modal } from '../../../components/ui/Modal';
 import { CrmService, type ConvertLeadToOpportunityPayload } from '../../../lib/services/crm.service';
@@ -42,6 +42,7 @@ export function OpportunityCreateModal({
   onCreated,
 }: OpportunityCreateModalProps) {
   const { t } = useTranslation('crm');
+  const uid = useId();
 
   const [name, setName] = useState('');
   const [pipelineId, setPipelineId] = useState('');
@@ -170,8 +171,8 @@ export function OpportunityCreateModal({
         ) : null}
 
         <div>
-          <label className={labelClass}>{t('opp.name', 'Nome')} *</label>
-          <input
+          <label className={labelClass} htmlFor={`${uid}-1`}>{t('opp.name', 'Nome')} *</label>
+          <input id={`${uid}-1`}
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -181,8 +182,8 @@ export function OpportunityCreateModal({
         </div>
 
         <div>
-          <label className={labelClass}>{t('opp.pipeline', 'Pipeline')} *</label>
-          <select value={pipelineId} onChange={(e) => setPipelineId(e.target.value)} className={inputClass}>
+          <label className={labelClass} htmlFor={`${uid}-2`}>{t('opp.pipeline', 'Pipeline')} *</label>
+          <select id={`${uid}-2`} value={pipelineId} onChange={(e) => setPipelineId(e.target.value)} className={inputClass}>
             <option value="">{t('opp.pipeline_ph', 'Selecione um pipeline')}</option>
             {pipelines.map((p) => (
               <option key={p.id} value={p.id}>
@@ -194,8 +195,8 @@ export function OpportunityCreateModal({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className={labelClass}>{t('opp.amount', 'Valor')}</label>
-            <input
+            <label className={labelClass} htmlFor={`${uid}-3`}>{t('opp.amount', 'Valor')}</label>
+            <input id={`${uid}-3`}
               type="text"
               inputMode="decimal"
               value={amount}
@@ -205,8 +206,8 @@ export function OpportunityCreateModal({
             />
           </div>
           <div>
-            <label className={labelClass}>{t('opp.currency', 'Moeda')}</label>
-            <select value={currency} onChange={(e) => setCurrency(e.target.value as Currency)} className={inputClass}>
+            <label className={labelClass} htmlFor={`${uid}-4`}>{t('opp.currency', 'Moeda')}</label>
+            <select id={`${uid}-4`} value={currency} onChange={(e) => setCurrency(e.target.value as Currency)} className={inputClass}>
               {CURRENCIES.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -217,8 +218,8 @@ export function OpportunityCreateModal({
         </div>
 
         <div>
-          <label className={labelClass}>{t('opp.account', 'Conta')}</label>
-          <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputClass}>
+          <label className={labelClass} htmlFor={`${uid}-5`}>{t('opp.account', 'Conta')}</label>
+          <select id={`${uid}-5`} value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputClass}>
             <option value="">{t('opp.account_ph', 'Sem conta')}</option>
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>

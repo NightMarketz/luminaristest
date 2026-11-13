@@ -150,7 +150,7 @@ export function LeadTasksPanel({ leadId, onChanged }: LeadTasksPanelProps) {
                   checked={isDone}
                   disabled={busyId === task.id}
                   onChange={() => toggleDone(task.id, status)}
-                  aria-label={t('tasks.toggle_done', 'Concluir tarefa')}
+                  aria-label={`${t('tasks.toggle_done', 'Concluir tarefa')}: ${String(task.data?.name ?? '')}`}
                   className="h-4 w-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-white/20 dark:bg-neutral-800"
                 />
                 <span

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useId } from 'react';
 import { useTranslation } from 'next-i18next';
 import { Modal } from '../../../components/ui/Modal';
 import { CrmService, type ConvertLeadPayload } from '../../../lib/services/crm.service';
@@ -21,6 +21,7 @@ interface LeadConvertModalProps {
  */
 export function LeadConvertModal({ isOpen, onClose, leadId, leadName, onConverted }: LeadConvertModalProps) {
   const { t } = useTranslation('crm');
+  const uid = useId();
 
   const [accountName, setAccountName] = useState('');
   const [segment, setSegment] = useState('');
@@ -166,8 +167,8 @@ export function LeadConvertModal({ isOpen, onClose, leadId, leadName, onConverte
           </h3>
 
           <div>
-            <label className={labelClass}>{t('convert.account_name', 'Nome da conta')} *</label>
-            <input
+            <label className={labelClass} htmlFor={`${uid}-1`}>{t('convert.account_name', 'Nome da conta')} *</label>
+            <input id={`${uid}-1`}
               type="text"
               value={accountName}
               onChange={(e) => setAccountName(e.target.value)}
@@ -179,13 +180,13 @@ export function LeadConvertModal({ isOpen, onClose, leadId, leadName, onConverte
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>{t('convert.segment', 'Segmento')}</label>
-              <input type="text" value={segment} onChange={(e) => setSegment(e.target.value)} className={inputClass} />
+              <label className={labelClass} htmlFor={`${uid}-2`}>{t('convert.segment', 'Segmento')}</label>
+              <input id={`${uid}-2`} type="text" value={segment} onChange={(e) => setSegment(e.target.value)} className={inputClass} />
             </div>
             {sizeOptions.length > 0 ? (
               <div>
-                <label className={labelClass}>{t('convert.size', 'Porte')}</label>
-                <select value={size} onChange={(e) => setSize(e.target.value)} className={inputClass}>
+                <label className={labelClass} htmlFor={`${uid}-3`}>{t('convert.size', 'Porte')}</label>
+                <select id={`${uid}-3`} value={size} onChange={(e) => setSize(e.target.value)} className={inputClass}>
                   <option value="">—</option>
                   {sizeOptions.map((o) => (
                     <option key={o} value={o}>
@@ -198,18 +199,18 @@ export function LeadConvertModal({ isOpen, onClose, leadId, leadName, onConverte
           </div>
 
           <div>
-            <label className={labelClass}>{t('convert.website', 'Website')}</label>
-            <input type="text" value={website} onChange={(e) => setWebsite(e.target.value)} className={inputClass} />
+            <label className={labelClass} htmlFor={`${uid}-4`}>{t('convert.website', 'Website')}</label>
+            <input id={`${uid}-4`} type="text" value={website} onChange={(e) => setWebsite(e.target.value)} className={inputClass} />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className={labelClass}>{t('convert.city', 'Cidade')}</label>
-              <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} />
+              <label className={labelClass} htmlFor={`${uid}-5`}>{t('convert.city', 'Cidade')}</label>
+              <input id={`${uid}-5`} type="text" value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>{t('convert.state', 'Estado')}</label>
-              <input type="text" value={state} onChange={(e) => setState(e.target.value)} className={inputClass} />
+              <label className={labelClass} htmlFor={`${uid}-6`}>{t('convert.state', 'Estado')}</label>
+              <input id={`${uid}-6`} type="text" value={state} onChange={(e) => setState(e.target.value)} className={inputClass} />
             </div>
           </div>
         </section>
@@ -222,8 +223,8 @@ export function LeadConvertModal({ isOpen, onClose, leadId, leadName, onConverte
           <div className="grid grid-cols-2 gap-3">
             {roleOptions.length > 0 ? (
               <div>
-                <label className={labelClass}>{t('convert.contact_role', 'Papel')}</label>
-                <select value={contactRole} onChange={(e) => setContactRole(e.target.value)} className={inputClass}>
+                <label className={labelClass} htmlFor={`${uid}-7`}>{t('convert.contact_role', 'Papel')}</label>
+                <select id={`${uid}-7`} value={contactRole} onChange={(e) => setContactRole(e.target.value)} className={inputClass}>
                   <option value="">—</option>
                   {roleOptions.map((o) => (
                     <option key={o} value={o}>
@@ -234,8 +235,8 @@ export function LeadConvertModal({ isOpen, onClose, leadId, leadName, onConverte
               </div>
             ) : null}
             <div>
-              <label className={labelClass}>{t('convert.contact_job_title', 'Cargo')}</label>
-              <input
+              <label className={labelClass} htmlFor={`${uid}-8`}>{t('convert.contact_job_title', 'Cargo')}</label>
+              <input id={`${uid}-8`}
                 type="text"
                 value={contactJobTitle}
                 onChange={(e) => setContactJobTitle(e.target.value)}
