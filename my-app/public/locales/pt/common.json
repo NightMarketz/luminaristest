@@ -1,4 +1,18 @@
 {
+  "errorBoundary": {
+    "title": "Oops! Algo deu errado",
+    "body": "Encontramos um problema inesperado. Por favor, tente recarregar a página.",
+    "details": "Detalhes do erro",
+    "retry": "Tentar novamente"
+  },
+  "navbar": {
+    "changeLanguage": "Trocar idioma",
+    "userMenu": "Menu do usuário",
+    "myDashboard": "Minha Dashboard",
+    "accounting": "Contabilidade"
+  },
+  "actionFailed": "Não foi possível concluir a ação.",
+  "errorTitle": "Erro",
   "floatingChat": { "open": "Abrir chat" },
   "appName": "Luminaris",
   "login": "Entrar",

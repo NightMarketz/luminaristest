@@ -95,7 +95,7 @@ export function Navbar() {
             <button
               onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
               className="h-9 px-3 flex items-center gap-2 text-[11px] font-bold rounded-lg hover:bg-black/5 dark:hover:bg-white/5 text-gray-600 dark:text-gray-400 transition-all duration-200"
-              aria-label="Change language"
+              aria-label={t('navbar.changeLanguage', 'Change language')}
             >
               <span className="text-base">{currentLang.flag}</span>
               <span className="hidden sm:inline uppercase tracking-widest">{currentLang.code}</span>
@@ -135,7 +135,7 @@ export function Navbar() {
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="flex items-center gap-2.5 p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200"
-                aria-label="User menu"
+                aria-label={t('navbar.userMenu', 'User menu')}
                 aria-haspopup="true"
                 aria-expanded={isDropdownOpen}
               >
@@ -182,7 +182,7 @@ export function Navbar() {
                       onClick={() => setIsDropdownOpen(false)}
                     >
                       <IoGridOutline size={16} />
-                      Minha Dashboard
+                      {t('navbar.myDashboard', 'Minha Dashboard')}
                     </Link>
 
                     <Link
@@ -200,7 +200,7 @@ export function Navbar() {
                       onClick={() => setIsDropdownOpen(false)}
                     >
                       <IoReceiptOutline size={16} />
-                      Contabilidade
+                      {t('navbar.accounting', 'Contabilidade')}
                     </Link>
 
                     {user?.role === 'ADMIN' && (
