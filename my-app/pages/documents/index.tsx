@@ -162,7 +162,7 @@ function DocumentListPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-3 text-sm font-medium">
+              <div className="flex flex-wrap items-center gap-3 text-sm font-medium">
                 <span className="text-gray-500 dark:text-gray-400">Status:</span>
                 <span className="flex items-center px-2 py-1 rounded-full bg-green-100 dark:bg-green-800/30 text-green-800 dark:text-green-200">
                   <span className="h-2 w-2 rounded-full bg-green-500 mr-1"></span>
@@ -181,7 +181,7 @@ function DocumentListPage() {
 
             {/* Abas */}
             <div className="mt-6 border-b border-gray-200 dark:border-gray-700">
-              <nav className="-mb-px flex space-x-8">
+              <nav aria-label="Filtro de documentos" className="-mb-px flex flex-wrap gap-x-6 gap-y-1">
                 <button
                   onClick={() => setActiveTab('all')}
                   className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${activeTab === 'all'
@@ -238,7 +238,7 @@ function DocumentListPage() {
                           ? <BookOpenIcon className="h-5 w-5" />
                           : <TableCellsIcon className="h-5 w-5" />}
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <h3 className="font-medium text-gray-900 dark:text-white truncate max-w-xs" title={doc.fileName}>
                           {doc.fileName}
                         </h3>
