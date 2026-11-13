@@ -13,6 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { CrmLoadError } from './CrmLoadError';
 import { OpportunityCard } from './OpportunityCard';
 import { Opp360Modal } from './Opp360Modal';
 import { ProposalCaptureModal } from './ProposalCaptureModal';
@@ -213,13 +214,9 @@ export function OppPipelineBoard() {
         ) : null}
       </div>
 
-      {error ? (
-        <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-300">
-          {error}
-        </div>
-      ) : null}
+      {error ? <CrmLoadError message={error} onRetry={() => void reload()} /> : null}
 
-      {loading ? (
+      {error ? null : loading ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('common.loading', 'Carregando…')}</p>
       ) : notInstalled ? (
         <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 p-10 text-center dark:border-white/10">

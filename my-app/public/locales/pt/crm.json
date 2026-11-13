@@ -1,6 +1,7 @@
 {
   "common": {
-    "loading": "Carregando…"
+    "loading": "Carregando…",
+    "retry": "Tentar novamente"
   },
   "nav": {
     "overview": "Visão Geral",

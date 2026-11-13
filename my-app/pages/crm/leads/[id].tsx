@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { CrmLoadError } from '../../../features/crm/components/CrmLoadError';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useTranslation } from 'next-i18next';
@@ -32,7 +33,7 @@ function LeadDetailInner() {
   const { t } = useTranslation('crm');
   const router = useRouter();
   const leadId = String(router.query.id ?? '');
-  const { loading, leads, stages, reload } = useCrmData();
+  const { loading, error, leads, stages, reload } = useCrmData();
   const [advancing, setAdvancing] = useState(false);
   // Set while the next stage is a `meeting` and we await the meeting date.
   const [capturingMeeting, setCapturingMeeting] = useState(false);
@@ -93,6 +94,8 @@ function LeadDetailInner() {
 
       {loading ? (
         <p className="mt-6 text-sm font-semibold text-gray-400">{t('common.loading', 'Carregando…')}</p>
+      ) : error ? (
+        <div className="mt-6"><CrmLoadError message={error} onRetry={() => void reload()} /></div>
       ) : !lead ? (
         <p className="mt-6 text-sm font-semibold text-gray-400">{t('detail.not_found', 'Lead não encontrado.')}</p>
       ) : (
