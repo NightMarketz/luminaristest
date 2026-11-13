@@ -80,7 +80,7 @@ function describeArc(
  * instead of traffic light colors.
  */
 function getNeedleColor(isDark: boolean): string {
-    return isDark ? '#f4f4f5' : '#18181b'; // zinc-100 dark mode, zinc-900 light mode
+    return isDark ? '#f4f4f5' : '#18181b'; // neutral-100 dark mode, neutral-900 light mode
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────

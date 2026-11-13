@@ -25,6 +25,13 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
     },
 });
 
+// Classes literais (o Tailwind só gera o que aparece inteiro no fonte).
+const ACCENT_SHADOW: Record<string, string> = {
+    blue: 'shadow-blue-500/20',
+    violet: 'shadow-violet-500/20',
+    amber: 'shadow-amber-500/20',
+};
+
 interface Plan {
     id: string;
     name: string;
@@ -190,7 +197,7 @@ function SubscriptionPage(props: InferGetServerSidePropsType<typeof getServerSid
                             <div className="p-6 lg:p-8">
                                 {/* Plan icon & name */}
                                 <div className="flex items-center gap-3 mb-4">
-                                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${plan.gradient} flex items-center justify-center text-white shadow-lg shadow-${plan.accentColor}-500/20`}>
+                                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${plan.gradient} flex items-center justify-center text-white shadow-lg ${ACCENT_SHADOW[plan.accentColor] ?? ''}`}>
                                         {plan.icon}
                                     </div>
                                     <div>

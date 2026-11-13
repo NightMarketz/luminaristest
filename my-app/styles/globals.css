@@ -328,3 +328,14 @@ body {
   border: 2px dashed var(--lumi-accent) !important; /* lumi-secondary */
   opacity: 0.5 !important;
 }
+/* Usuários que pedem menos movimento: sem animações/transições longas nem rolagem suave. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
