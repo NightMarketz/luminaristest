@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/router';
 import { useTranslation } from 'next-i18next';
 import { useFloatingChat } from './FloatingChatProvider';
 
@@ -11,9 +12,12 @@ import { useFloatingChat } from './FloatingChatProvider';
 export function FloatingChatBubble() {
     const { t } = useTranslation('common');
     const { isOpen, toggle } = useFloatingChat();
+    const router = useRouter();
 
     // Não mostra o bubble quando o chat está aberto
     if (isOpen) return null;
+    // A Entrevista com IA tem o próprio chat e o botão Enviar no canto: a bolha o cobria em telas estreitas.
+    if (router?.pathname?.endsWith('/setup')) return null;
 
     return (
         <button

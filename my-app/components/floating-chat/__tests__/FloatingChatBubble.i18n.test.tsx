@@ -7,6 +7,7 @@ import { render, screen } from '@testing-library/react';
 vi.mock('next-i18next', () => ({
   useTranslation: () => ({ t: (k: string) => (k === 'floatingChat.open' ? 'Open chat' : k) }),
 }));
+vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/dashboard' }) }));
 vi.mock('../FloatingChatProvider', () => ({
   useFloatingChat: () => ({ isOpen: false, toggle: () => {} }),
 }));
