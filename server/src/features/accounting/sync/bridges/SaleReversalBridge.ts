@@ -140,6 +140,16 @@ export async function maybeReverseSale(
       return;
     }
 
+    // INV F-42.1 — ORDERING GATE (mesmo da liquidação): sem a receita lançada não há o que devolver; não lança agora —
+    // o reconcile re-dirige quando ela postar. A venda só de pacote não reconhece receita e segue como estava.
+    if (!(await isAllPackageSale(actor.userId, row.id))) {
+      const revenue = await getFactory().getPostingService().findEntryBySource(scope, 'sale.finalized', row.id);
+      if (!revenue) {
+        logger.warn('Return blocked — revenue entry missing (blocked_missing_opening_entry)', { saleId: row.id });
+        return;
+      }
+    }
+
     const returnDay =
       typeof data.returnedAt === 'string'
         ? scopeDay(scope, data.returnedAt)

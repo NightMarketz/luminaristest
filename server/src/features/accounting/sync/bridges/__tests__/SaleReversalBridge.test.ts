@@ -5,6 +5,8 @@ import type { AccountingEvent } from '../../AccountingSyncPort';
 // buildSaleReturnedEvent are pure and left real. ---
 const findTableByInternalName = jest.fn();
 const findEntryBySource = jest.fn();
+// isAllPackageSale lê os itens da venda pelo repositório; [] = venda sem itens de pacote.
+const findRowsByFieldValue = jest.fn(async () => []);
 const reverseEntry = jest.fn();
 const sync = jest.fn();
 const loggerWarn = jest.fn();
@@ -13,7 +15,7 @@ const loggerError = jest.fn();
 jest.mock('../../../../../lib/factory', () => ({
   __esModule: true,
   getFactory: () => ({
-    getDynamicTableRepository: () => ({ findTableByInternalName }),
+    getDynamicTableRepository: () => ({ findTableByInternalName, findRowsByFieldValue }),
     getPostingService: () => ({ findEntryBySource, reverseEntry }),
     getAccountingSyncService: () => ({ sync }),
   }),
@@ -150,6 +152,8 @@ describe('SaleReversalBridge.maybeReverseSale', () => {
 
   describe('Returned → contra-revenue entry', () => {
     it('books a NEW sale.returned entry (NOT a reversal) with the sale amount', async () => {
+      // INV F-42.1: a receita já lançada (gate de ordem).
+      findEntryBySource.mockImplementation(async (_s: unknown, sourceType: string) => (sourceType === 'sale.finalized' ? { id: 'entry-1' } : null));
       await maybeReverseSale(actor, SALES_TABLE_ID, returnedRow());
 
       expect(reverseEntry).not.toHaveBeenCalled();
@@ -162,6 +166,13 @@ describe('SaleReversalBridge.maybeReverseSale', () => {
         unitId: 'unit-1',
         amount: 250,
       });
+    });
+
+    it('INV F-42.1: sem a receita (sale.finalized) lançada, a devolução não lança — fica para o reconcile', async () => {
+      findEntryBySource.mockResolvedValue(null);
+      await maybeReverseSale(actor, SALES_TABLE_ID, returnedRow());
+      expect(sync).not.toHaveBeenCalled();
+      expect(loggerError).not.toHaveBeenCalled();
     });
 
     it.each([0, -10, NaN, Infinity, 'x'])('skips a Returned sale with invalid totalAmount (%s)', async (totalAmount) => {
