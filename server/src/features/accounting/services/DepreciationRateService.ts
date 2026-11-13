@@ -1,5 +1,5 @@
 import type { DepreciationRate } from 'generated/prisma';
-import { ForbiddenError, NotFoundError } from '../../../lib/errors';
+import { ConflictError, ForbiddenError, NotFoundError } from '../../../lib/errors';
 import { DEPRECIATION_RATE_CREATED, DEPRECIATION_RATE_HIDDEN } from '../models/FixedAsset.model';
 import type { UpsertDepreciationRateInput } from '../dtos/DepreciationRateDto';
 import type { IDepreciationRateRepository } from '../repositories/IDepreciationRateRepository';
@@ -124,7 +124,9 @@ export class DepreciationRateService implements ITaxaDepreciacaoCatalogo {
     const rate = await this.rateRepo.findById(scope, id);
     if (!rate) throw new NotFoundError(`Taxa de depreciação '${id}' não foi encontrada.`);
     // L-14: só linha CUSTOM se oculta; ANEXO_* (fotografia legal que algum bem usa) é da plataforma.
-    if (rate.source !== 'CUSTOM') throw new NotFoundError(`Taxa de depreciação '${id}' não foi encontrada.`);
+    if (rate.source !== 'CUSTOM') {
+      throw new ConflictError('Taxas do Anexo da Receita Federal são da plataforma e não podem ser ocultadas; só as taxas personalizadas.', 'DEPRECIATION_RATE_NOT_HIDEABLE');
+    }
 
     return this.rateRepo.runTransaction(async (tx) => {
       const hidden = await this.rateRepo.hide(scope, id, tx);
