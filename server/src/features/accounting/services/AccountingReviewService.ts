@@ -460,6 +460,10 @@ export class AccountingReviewService {
       // GATE AUTORITATIVO — a atribuição pode ter mudado entre o preflight e a tx.
       const active = await this.assignmentRepo.findActive(scope, tx);
       this.assertCanSignOff(scope, active);
+      // GATE AUTORITATIVO — a revisão pode ter sido assinada entre o preflight e a tx (INV F-37.1).
+      const fresh = await this.reviewRepo.findById(scope, review.id, tx);
+      if (!fresh) throw new NotFoundError(`A ${describeReview(review)} não foi encontrada.`);
+      this.assertOpen(fresh);
       const updated = await this.reviewRepo.update(
         scope,
         review.id,
