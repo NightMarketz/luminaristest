@@ -5,6 +5,7 @@ kind: "message"
 sessionId: string
 tableKey: string
 message: string
+locale?: ("pt" | "en")
 } | {
 kind: "decision"
 sessionId: string
