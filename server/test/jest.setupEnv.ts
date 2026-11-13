@@ -12,3 +12,6 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-0123456789abcdef
 // RAG-PR-A: o índice de vetores (sqlite-vec) é um arquivo SQLite próprio. Cada arquivo de teste ganha o seu, para
 // nenhuma suíte compartilhar vetores com outra (instrução do dono, 2026-11-06).
 process.env.VECTOR_DB_PATH = join(tmpdir(), `luminaris-vec-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.db`);
+// O construtor de OpenAIService aborta sem chave, e worktree não tem server/.env. Chave fictícia como a do CI
+// (ci.yml: OPENAI_API_KEY: ci-dummy-openai-key); nunca sobrescreve uma chave já definida.
+process.env.OPENAI_API_KEY ??= 'ci-dummy-openai-key';
