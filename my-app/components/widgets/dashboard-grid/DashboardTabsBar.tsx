@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { HiPlus, HiX } from 'react-icons/hi';
 import { DashboardLayout } from './types/dashboard-grid.types';
+import { useTranslation } from 'next-i18next';
 import { useConfirmModal } from '../../ui/feedback/useConfirmModal';
 
 interface DashboardTabsBarProps {
@@ -29,14 +30,18 @@ export default function DashboardTabsBar({
 }: DashboardTabsBarProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState('');
+  const { t } = useTranslation('common');
   const { confirm, confirmNode } = useConfirmModal();
 
   const askDelete = (layout: DashboardLayout) => {
     void confirm({
-      title: 'Excluir aba',
-      message: `Excluir a aba "${layout.name}" e os widgets dela? Esta ação não pode ser desfeita.`,
-      confirmLabel: 'Excluir',
-      cancelLabel: 'Cancelar',
+      title: t('dashboardTabs.deleteTitle', 'Excluir aba'),
+      message: t('dashboardTabs.deleteMessage', {
+        name: layout.name,
+        defaultValue: `Excluir a aba "${layout.name}" e os widgets dela? Esta ação não pode ser desfeita.`,
+      }),
+      confirmLabel: t('dashboardTabs.deleteConfirm', 'Excluir'),
+      cancelLabel: t('dashboardTabs.cancel', 'Cancelar'),
       variant: 'danger',
       onConfirm: async () => {
         onDelete(layout.id);
@@ -61,7 +66,7 @@ export default function DashboardTabsBar({
     <>
     <div
       role="tablist"
-      aria-label="Abas do dashboard"
+      aria-label={t('dashboardTabs.tablist', 'Abas do dashboard')}
       className="flex items-center gap-1 px-2 py-1.5 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-neutral-900/40 overflow-x-auto custom-scrollbar"
     >
       {layouts.map((layout) => {
@@ -79,7 +84,7 @@ export default function DashboardTabsBar({
             {isEditing ? (
               <input
                 autoFocus
-                aria-label="Nome da aba"
+                aria-label={t('dashboardTabs.nameInput', 'Nome da aba')}
                 value={draftName}
                 onChange={(e) => setDraftName(e.target.value)}
                 onBlur={() => commitRename(layout.id)}
@@ -103,7 +108,7 @@ export default function DashboardTabsBar({
                     startEditing(layout);
                   }
                 }}
-                title="Clique para abrir, duplo-clique ou F2 para renomear"
+                title={t('dashboardTabs.tabHint', 'Clique para abrir, duplo-clique ou F2 para renomear')}
                 className="cursor-pointer"
               >
                 {layout.name}
@@ -114,9 +119,9 @@ export default function DashboardTabsBar({
               <button
                 type="button"
                 onClick={() => askDelete(layout)}
-                aria-label={`Excluir aba ${layout.name}`}
+                aria-label={`${t('dashboardTabs.deleteTitle', 'Excluir aba')} ${layout.name}`}
                 className="inline-flex items-center justify-center w-6 h-6 rounded hover:text-red-500 focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity"
-                title={`Excluir aba ${layout.name}`}
+                title={`${t('dashboardTabs.deleteTitle', 'Excluir aba')} ${layout.name}`}
               >
                 <HiX className="w-3 h-3" />
               </button>
@@ -128,9 +133,9 @@ export default function DashboardTabsBar({
       <button
         type="button"
         onClick={onCreate}
-        aria-label="Nova aba"
+        aria-label={t('dashboardTabs.newTab', 'Nova aba')}
         className="flex items-center gap-1 px-2 py-1 rounded-md text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-neutral-800/60 transition-colors"
-        title="Nova aba"
+        title={t('dashboardTabs.newTab', 'Nova aba')}
       >
         <HiPlus className="w-3.5 h-3.5" />
       </button>

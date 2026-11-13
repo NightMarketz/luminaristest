@@ -622,5 +622,15 @@
     "confirm": "Confirm?",
     "notClose": "No, close",
     "pleaseWait": "Please wait..."
+  },
+  "dashboardTabs": {
+    "deleteTitle": "Delete tab",
+    "deleteMessage": "Delete the tab \"{{name}}\" and its widgets? This action cannot be undone.",
+    "deleteConfirm": "Delete",
+    "cancel": "Cancel",
+    "tablist": "Dashboard tabs",
+    "nameInput": "Tab name",
+    "tabHint": "Click to open, double-click or F2 to rename",
+    "newTab": "New tab"
   }
 }
