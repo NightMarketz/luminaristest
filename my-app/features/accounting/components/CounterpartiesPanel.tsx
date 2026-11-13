@@ -159,7 +159,7 @@ export function CounterpartiesPanel({ unitId }: CounterpartiesPanelProps) {
 
       {/* Table */}
       {!loading && counterparties.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/50">
+        <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/50">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-800 text-left text-neutral-400">
