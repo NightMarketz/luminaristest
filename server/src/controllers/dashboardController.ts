@@ -427,7 +427,7 @@ export async function getDashboardPresets(req: Request, res: Response) {
     const ctx = getUserContextFromRequest(req);
     if (!ctx) return res.status(401).json({ success: false, error: 'Authentication required' });
 
-    const allPresets = presetService.getAllPresetSummaries();
+    const allPresets = presetService.getAllPresetSummaries(req.query.locale === 'en' ? 'en' : 'pt');
     return res.status(200).json({ success: true, data: allPresets });
   } catch (error) {
     return handleApiError(error, res);

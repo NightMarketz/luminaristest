@@ -179,8 +179,8 @@ export function useAiInterview() {
             message: known ? t(known.key, known.params) : errorData.error || t('onboardingErrorCreateFailed'),
           });
         } else {
-          // W7 item 4: falha de rede — o pedido pode ser reenviado (o 403 one-shot barra a criação dupla).
-          setCreationError({ kind: classifyCreationError(null, null), message: (err instanceof Error && err.message) || t('onboardingErrorUnexpected') });
+          // W7 item 4/7: falha sem resposta (rede/limite de tempo) — texto próprio traduzido (o do apiClient é fixo em pt); o pedido pode ser reenviado (o 403 one-shot barra a criação dupla).
+          setCreationError({ kind: classifyCreationError(null, null), message: t('onboardingErrorNetwork') });
         }
         setIsCreating(false);
         return;

@@ -1,3 +1,5 @@
+import { localizePresetText } from '../presets/presetText';
+import { DEFAULT_INTERVIEW_LOCALE, type InterviewLocale } from '../../interview/models/interviewText';
 import { tablePresetSuites } from '../presets';
 import { presetModuleViews } from '../presets/modules/registry';
 
@@ -10,13 +12,12 @@ class PresetService {
    * Retrieves a summary list of all available presets, suitable for UI display.
    * @returns An array of preset summaries.
    */
-  public getAllPresetSummaries() {
+  public getAllPresetSummaries(locale: InterviewLocale = DEFAULT_INTERVIEW_LOCALE) {
     const allPresets = Object.values(tablePresetSuites)
       .flatMap(category => Object.values(category))
       .map(preset => ({
         key: preset.key,
-        name: preset.name,
-        description: preset.description,
+        ...localizePresetText(preset, locale),
         category: this.findCategoryForPreset(preset.key),
       }));
 

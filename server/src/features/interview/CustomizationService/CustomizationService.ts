@@ -6,6 +6,7 @@ import { presetKnowledgeBase } from '../../dynamicTables/presets/ai/PresetKnowle
 import { presetService } from '../../dynamicTables/services/PresetService';
 import { bridgeRequirementsOfTable, describeTableLock } from '../../dynamicTables/presets/removability';
 import { TableExtractor } from './TableExtractor';
+import { localizePresetText } from '../../dynamicTables/presets/presetText';
 import { AIInteractions } from './AIInteractions';
 import { IInterviewSessionHandle, StateManager } from './StateManager';
 import { InterviewSessionNotFoundError, isInterviewSessionError } from '../models/InterviewSession.model';
@@ -48,6 +49,7 @@ export class CustomizationService {
     presetKey: string,
     userId: string,
     modules: ModuleSelector[] = [],
+    locale: InterviewLocale = DEFAULT_INTERVIEW_LOCALE,
   ): Promise<IInterviewSessionHandle | null> {
     logger.info(`[CustomizationService] Criando sessão de customização para preset ${presetKey}`);
 
@@ -73,8 +75,8 @@ export class CustomizationService {
         key: presetKey,
         tables: composeSessionTables(preset, installed),
         bridges: preset.bridges ?? [],
-      });
-      return await this.stateManager.createSessionState(userId, presetKey, preset.name, tables, installed);
+      }, locale);
+      return await this.stateManager.createSessionState(userId, presetKey, localizePresetText(preset, locale).name, tables, installed);
     } catch (error) {
       logger.error(`[CustomizationService] Erro ao criar sessão de customização: ${error}`);
       return null;

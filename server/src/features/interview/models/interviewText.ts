@@ -65,6 +65,7 @@ export const INTERVIEW_TEXT = {
     removeRefused: (reason: string, tables: string[]) =>
       `${reason}\n\nTabelas disponíveis para remoção:\n${tables.map((t) => `- ${t}`).join('\n')}\n\nPor favor, escolha uma das tabelas listadas ou selecione outra ação.`,
     removeError: 'Ocorreu um erro ao processar a remoção da tabela. Por favor, tente novamente.',
+    tableFallbackDescription: (name: string) => `Tabela de ${name}`,
     addGuidanceFallback:
       '# Adicionando uma Nova Tabela\n\nPara adicionar uma nova tabela ao seu sistema, por favor forneça:\n\n1. **Nome da tabela** - Um nome claro e descritivo\n2. **Descrição** - Para que serve esta tabela?\n3. **Campos principais** - Quais informações ela deve armazenar?\n\nExemplo: "Quero adicionar uma tabela de Fornecedores para registrar informações de empresas que fornecem produtos para meu negócio, com campos como nome da empresa, contato, produtos fornecidos e condições de pagamento."',
     removeGuidanceFallback: (tables: string[]) =>
@@ -113,6 +114,7 @@ export const INTERVIEW_TEXT = {
     removeRefused: (reason: string, tables: string[]) =>
       `${reason}\n\nTables available for removal:\n${tables.map((t) => `- ${t}`).join('\n')}\n\nPlease choose one of the listed tables or select another action.`,
     removeError: 'Something went wrong while removing the table. Please try again.',
+    tableFallbackDescription: (name: string) => `Table of ${name}`,
     addGuidanceFallback:
       '# Adding a New Table\n\nTo add a new table to your system, please provide:\n\n1. **Table name** - A clear, descriptive name\n2. **Description** - What is this table for?\n3. **Main fields** - What information should it store?\n\nExample: "I want to add a Suppliers table to keep track of the companies that supply products to my business, with fields such as company name, contact, products supplied and payment terms."',
     removeGuidanceFallback: (tables: string[]) =>

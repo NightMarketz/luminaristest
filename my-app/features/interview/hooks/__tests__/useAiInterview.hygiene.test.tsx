@@ -112,6 +112,13 @@ describe('W7 itens 2–5 — Debug fora, retry sem reload, erro classificado', (
     expect(hook.creationError?.kind).toBe(kind);
   });
 
+  it('item 7 (lacuna L-20261111-204322-8a05): sem resposta do servidor ⇒ texto da chave traduzida, nunca a constante em português do apiClient', async () => {
+    await criarCom(new TypeError('Failed to fetch'));
+    expect(hook.creationError?.kind).toBe('retryable');
+    // `t` é espelhado no mock acima (devolve a chave): a mensagem tem de vir de t(), não de `err.message`.
+    expect(hook.creationError?.message).toBe('onboardingErrorNetwork');
+  });
+
   it('item 5: 400 ⇒ "Voltar à conversa" limpa o erro, devolve a pergunta fiscal e mantém as mensagens', async () => {
     await criarCom(resp(400, { success: false, error: 'Payload inválido' }));
     const mensagens = hook.messages;
