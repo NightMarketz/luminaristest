@@ -666,5 +666,15 @@
     "confirm": "Confirmar?",
     "notClose": "Não, fechar",
     "pleaseWait": "Aguarde..."
+  },
+  "dashboardTabs": {
+    "deleteTitle": "Excluir aba",
+    "deleteMessage": "Excluir a aba \"{{name}}\" e os widgets dela? Esta ação não pode ser desfeita.",
+    "deleteConfirm": "Excluir",
+    "cancel": "Cancelar",
+    "tablist": "Abas do dashboard",
+    "nameInput": "Nome da aba",
+    "tabHint": "Clique para abrir, duplo-clique ou F2 para renomear",
+    "newTab": "Nova aba"
   }
 }
