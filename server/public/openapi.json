@@ -10344,7 +10344,7 @@
     "/api/accounting/depreciation-rates/{id}/hide": {
       "post": {
         "summary": "Hide a depreciation rate (soft — item 2)",
-        "description": "Never deletes: a rate a FixedAsset already snapshotted stays readable by id. CUSTOM rows only — an Anexo III row is platform data (BE-INCR-LEGAL-PARAMS PR-3) and answers 404. Audited as depreciation_rate.hidden.",
+        "description": "Never deletes: a rate a FixedAsset already snapshotted stays readable by id. CUSTOM rows only — an Anexo III row is platform data (BE-INCR-LEGAL-PARAMS PR-3) and answers 409 with code DEPRECIATION_RATE_NOT_HIDEABLE (L-14). An unknown id (or one from another scope) answers 404. Audited as depreciation_rate.hidden.",
         "tags": [
           "Accounting"
         ],

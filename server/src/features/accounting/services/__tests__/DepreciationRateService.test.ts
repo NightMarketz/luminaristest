@@ -3,7 +3,7 @@
  * semente da migração; prova-se ORDEM (policy antes de dado), o catálogo Anexo de plataforma + CUSTOM (BE-INCR-LEGAL-
  * PARAMS PR-3), a tradução cross-tenant → NotFound (D11), e o conteúdo do payload de auditoria.
  */
-import { ForbiddenError, NotFoundError } from '@/lib/errors';
+import { ConflictError, ForbiddenError, NotFoundError } from '@/lib/errors';
 import { DepreciationRateService } from '@/features/accounting/services/DepreciationRateService';
 import { legalParamsSemente } from '@test/helpers/legalParams';
 import type {
@@ -121,6 +121,18 @@ describe('DepreciationRateService.hideRate', () => {
     const { service, hide } = build({ found: null });
     await expect(service.hideRate(scope, 'lp3-dep-anexo-2')).rejects.toBeInstanceOf(NotFoundError);
     expect(hide).not.toHaveBeenCalled();
+  });
+
+  it('L-14: linha ANEXO_* que um bem usa e ficou em depreciation_rates não se oculta — ConflictError próprio (não NotFound), sem id na mensagem, sem hide nem auditoria', async () => {
+    const { service, hide, auditAppend, runTransaction } = build({ found: { ...rateRow, id: 'cuid-interno-xyz', source: 'ANEXO_RFB_2020' } });
+    const err = await service.hideRate(scope, 'cuid-interno-xyz').catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ConflictError);
+    expect(err).not.toBeInstanceOf(NotFoundError);
+    expect(err).toMatchObject({ statusCode: 409, errorCode: 'DEPRECIATION_RATE_NOT_HIDEABLE' });
+    expect((err as Error).message).not.toContain('cuid-interno-xyz');
+    expect(runTransaction).not.toHaveBeenCalled();
+    expect(hide).not.toHaveBeenCalled();
+    expect(auditAppend).not.toHaveBeenCalled();
   });
 
   it('id de outro escopo é NotFoundError (D11) — nunca Forbidden, nunca toca hide', async () => {
