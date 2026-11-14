@@ -23,7 +23,9 @@ export const ACCOUNTING_RESET_SETUP = [
   'PscCredential',
   'PscAuthorization',
   // X10a EMENDA-4 AL-PR-2: o assinador local é cadastro da unidade, como a credencial do PSC. O vínculo referencia o
-  // dispositivo (FK Restrict) e sai antes dele.
+  // dispositivo (FK Restrict) e sai antes dele. AL-PR-3: a fila do assinador (DfeSignerTask) é transitória, sem FK — sai
+  // junto (uma tarefa só existe enquanto um documento a espera, e o documento é BLOCKING).
+  'DfeSignerTask',
   'DfeSignerDeviceUnit',
   'DfeSignerDevice',
   'DfeSignerPairingCode',

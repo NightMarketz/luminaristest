@@ -26,7 +26,7 @@ export const LOG_EVENTS = [
   // alert
   'alert.failed',
   // X10a EMENDA-4 AL-16 — assinador local (o catálogo pede `<gate>.<what>`: `dfe.signer_*`, não `dfe.signer.*`)
-  'dfe.signer_paired', 'dfe.signer_revoked',
+  'dfe.signer_paired', 'dfe.signer_revoked', 'dfe.signer_offline', 'dfe.signer_task_timeout', 'dfe.signer_conteudo_recusado',
 ] as const;
 
 export type LogEvent = (typeof LOG_EVENTS)[number];

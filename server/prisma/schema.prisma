@@ -3806,6 +3806,30 @@ model DfeSignerPairingCode {
   @@map("dfe_signer_pairing_codes")
 }
 
+// X10a EMENDA-4 AL-PR-3 (AL-6, AL-7; F-AL-2 a; contrato §4.2/§4.3): a fila servidor → assinador local. Tarefa ASSINAR ou
+// TRANSMITIR, PENDING → DELIVERED → DONE | FAILED | EXPIRED; leaseUntil = reentrega quando o assinador não respondeu.
+// O payload (XML/envelope) é apagado ao concluir; o RESULTADO nunca é gravado (o ASSINAR traz o certificado, com o CPF do
+// responsável — L-AL-1): vai ao chamador em memória e aqui fica só o sha256 do corpo, para a idempotência por taskId.
+model DfeSignerTask {
+  id         String    @id @default(cuid())
+  userId     String
+  deviceId   String
+  unitId     String
+  documentId String? // FiscalDocument / FiscalNumberVoid, quando houver
+  tipo       String // ASSINAR | TRANSMITIR
+  payload    String? // JSON da tarefa (contrato §4.2); null depois de concluída
+  status     String    @default("PENDING") // PENDING | DELIVERED | DONE | FAILED | EXPIRED
+  leaseUntil DateTime?
+  resultHash String?
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([deviceId, status])
+  @@index([userId, unitId])
+  @@map("dfe_signer_tasks")
+}
+
 // X10a PR-8 (BE-INCR-NFCE-EMENDA-1 §4, F-NFCE-E1-4 c; D-2026-10-29-X10A-PR7-9-FORKS decisão 3): CSC da NFC-e por unidade e
 // ambiente, para o QR Code v2 quando a UF recusa a v3. Cifrado com o keyring DFE_PSC_KEYS (secretBox, AAD = id). Uma
 // linha viva por (unidade, ambiente) — o serviço apaga a anterior na mesma tx; soft-delete zera o ciphertext.

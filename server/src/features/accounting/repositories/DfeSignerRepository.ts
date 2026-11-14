@@ -67,6 +67,21 @@ export class DfeSignerRepository implements IDfeSignerRepository {
     await tx.dfeSignerDevice.updateMany({ where: { id: deviceId, deletedAt: null }, data: { deletedAt: at } });
   }
 
+  public async registrarHeartbeat(
+    deviceId: string,
+    data: { versaoAssinador: string; tokenPresente: boolean; at: Date },
+    voltouSeAntesDe: Date,
+  ): Promise<boolean> {
+    const set = { versaoAssinador: data.versaoAssinador, tokenPresente: data.tokenPresente, lastSeenAt: data.at };
+    const voltou = await prisma.dfeSignerDevice.updateMany({
+      where: { id: deviceId, deletedAt: null, OR: [{ lastSeenAt: null }, { lastSeenAt: { lt: voltouSeAntesDe } }, { tokenPresente: false }] },
+      data: set,
+    });
+    if (voltou.count === 1) return true;
+    await prisma.dfeSignerDevice.updateMany({ where: { id: deviceId, deletedAt: null }, data: set });
+    return false;
+  }
+
   public async runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     return prisma.$transaction(fn);
   }
