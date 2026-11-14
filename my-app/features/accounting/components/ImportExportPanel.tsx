@@ -250,7 +250,7 @@ export function ImportExportPanel({
             </div>
 
             {previewRows.length > 0 && (
-              <div className="overflow-hidden rounded-2xl border border-neutral-800">
+              <div className="overflow-x-auto rounded-2xl border border-neutral-800">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-neutral-900 text-xs uppercase text-neutral-500">
                     <tr>

@@ -45,7 +45,7 @@ function SimpleSection({ section, title }: { section: CashFlowSection; title: st
   const { t } = useTranslation('accounting');
   const total = parseInt(section.totalCents, 10);
   return (
-    <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/50">
+    <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/50">
       <div className="border-b border-neutral-800 px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-400">{title}</div>
       <table className="w-full text-sm">
         <tbody><LineRows accounts={section.accounts} emptyLabel={t('cashFlow.section.empty', 'Sem movimentação')} /></tbody>
@@ -129,7 +129,7 @@ export function DFCPanel({ unitId }: { unitId: string }) {
           )}
 
           {/* Operating (with net result + adjustments footer rows) */}
-          <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/50">
+          <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/50">
             <div className="border-b border-neutral-800 px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-400">{t('cashFlow.section.operating', 'Atividades operacionais')}</div>
             <table className="w-full text-sm">
               <tbody>

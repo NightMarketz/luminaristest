@@ -56,7 +56,7 @@ export function PeriodComparisonPanel({ unitId }: { unitId: string }) {
           <div className="text-sm text-neutral-400">
             {t('periodComparison.range.label', '{{current}} vs {{previous}}', { current: formatDate(report.asOfCurrent), previous: formatDate(report.asOfPrevious) })}
           </div>
-          <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/50">
+          <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/50">
             <table className="w-full text-sm">
               <thead className="border-b border-neutral-800 text-xs uppercase tracking-widest text-neutral-500">
                 <tr>

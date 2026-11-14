@@ -112,7 +112,7 @@ export function ReceivableChargesDrawer({ unitId, receivableId, receivableOpen, 
         ) : charges.length === 0 ? (
           <p className="py-3 text-center text-xs text-neutral-500">{t('collectionCharge.drawer.empty', 'Nenhuma cobrança emitida para este título.')}</p>
         ) : (
-          <table className="w-full text-xs">
+          <div className="overflow-x-auto"><table className="w-full text-xs">
             <thead>
               <tr className="text-left text-neutral-500">
                 <th className="py-1 pr-4 font-medium">{t('collectionCharge.col.kind', 'Tipo')}</th>
@@ -169,7 +169,7 @@ export function ReceivableChargesDrawer({ unitId, receivableId, receivableOpen, 
                 );
               })}
             </tbody>
-          </table>
+          </table></div>
         )}
 
         {/* Detalhe (F-FE-COB-4 a): último estado do provedor; pagador só para quem gere o título (F9). */}
