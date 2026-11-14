@@ -102,9 +102,15 @@ export default function DashboardGrid() {
   }, [userId, setLayout]);
 
   useEffect(function saveLayoutOnChange() {
-    // Skip during initial load, on error, or with no active tab.
-    if (isInitialMount.current || isLoading || !!error || !activeLayoutId) {
-      if (!isLoading) isInitialMount.current = false;
+    // Skip during initial load or with no active tab (a failed load leaves no active tab). `error` must NOT gate
+    // this: a failed save sets it, and gating on it stopped every later auto-save until a reload.
+    if (isInitialMount.current || isLoading || !activeLayoutId) {
+      if (!isLoading && isInitialMount.current) {
+        isInitialMount.current = false;
+        // This run already consumed the programmatic load (setLayout in the same commit): do not let the flag
+        // swallow the first real user edit.
+        switchingRef.current = false;
+      }
       return;
     }
 
@@ -131,7 +137,7 @@ export default function DashboardGrid() {
     return () => {
       clearTimeout(handler);
     };
-  }, [items, isLoading, activeLayoutId, error]);
+  }, [items, isLoading, activeLayoutId]);
 
   // A funcionalidade de carregamento automático do último chat salvo foi removida
 
