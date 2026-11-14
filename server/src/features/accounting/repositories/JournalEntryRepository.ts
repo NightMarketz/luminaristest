@@ -1,6 +1,6 @@
 import prisma from '../../../lib/prisma';
 import type { JournalEntry, Prisma } from 'generated/prisma';
-import { NotFoundError } from '../../../lib/errors';
+import { ConflictError, NotFoundError } from '../../../lib/errors';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
 import type {
@@ -111,13 +111,20 @@ export class JournalEntryRepository implements IJournalEntryRepository {
     id: string,
     status: string,
     tx?: Prisma.TransactionClient,
+    expectedStatus?: string,
   ): Promise<void> {
     // updateMany so the WHERE can carry userId+unitId (update() rejects non-unique filters).
     // A 0-row result means the id is not this tenant's — fail loud instead of silently no-op.
+    // SM F-16.1: with `expectedStatus` the write is a CAS — 0 rows ⇒ the status moved since the caller read it.
     const { count } = await (tx ?? prisma).journalEntry.updateMany({
-      where: { id, ...accountingScopeWhere(scope) },
+      where: { id, ...accountingScopeWhere(scope), ...(expectedStatus ? { status: expectedStatus } : {}) },
       data: { status },
     });
+    if (count === 0 && expectedStatus) {
+      throw new ConflictError(
+        `O lançamento '${id}' mudou de status durante a operação (esperado '${expectedStatus}') — recarregue e tente de novo.`,
+      );
+    }
     if (count === 0) {
       throw new NotFoundError(`Lançamento '${id}' não encontrado para atualizar status.`);
     }

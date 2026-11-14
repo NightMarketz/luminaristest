@@ -119,12 +119,16 @@ export interface IJournalEntryRepository {
     tx?: Prisma.TransactionClient,
   ): Promise<Array<{ id: string; sourceId: string; date: Date; debitCents: bigint; debitAccountIds: string[] }>>;
 
-  /** Transitions an entry's status (e.g. Posted -> Reversed). Throws if not found in scope. */
+  /**
+   * Transitions an entry's status (e.g. Posted -> Reversed). Throws if not found in scope.
+   * With `expectedStatus` it is a CAS: throws ConflictError (409) when the current status differs.
+   */
   setStatus(
     scope: AccountingScope,
     id: string,
     status: string,
     tx?: Prisma.TransactionClient,
+    expectedStatus?: string,
   ): Promise<void>;
 
   /**

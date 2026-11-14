@@ -411,7 +411,7 @@ describe('PostingService', () => {
           expect.objectContaining({ accountId: 'acc-3.1', debitCents: 10000, creditCents: 0 }),
         ]),
       );
-      expect(journalEntryRepo.setStatus).toHaveBeenCalledWith(scope, 'entry-1', 'Reversed', txHandle);
+      expect(journalEntryRepo.setStatus).toHaveBeenCalledWith(scope, 'entry-1', 'Reversed', txHandle, 'Posted');
       expect(journalEntryRepo.setReversedBy).toHaveBeenCalledWith(scope, 'entry-1', 'rev-1', txHandle);
       // the returned reversal is built as { ...reversal, postings } — same id, hydrated legs
       expect(rev.id).toBe('rev-1');
