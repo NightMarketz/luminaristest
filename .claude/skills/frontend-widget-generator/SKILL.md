@@ -93,3 +93,9 @@ cd my-app && npx tsc --noEmit
 - Não omita a interface de props (`interface <Name>WidgetProps`) nem use `any`
 - Não calcule dados derivados sem `useMemo([deps])` — o widget re-renderiza a cada update do `DashboardDataContext`
 - **Estilize aplicando `frontend-design-system`** (tokens `neutral`/`lumi-*`, KPI tiles, badges, score gauge) — não use `zinc`/Tailwind genérico
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

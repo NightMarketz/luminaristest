@@ -81,3 +81,9 @@ humano e o executor é o dono.
   aceite é pedido que não se fecha.
 - Esta skill não abre frente de código; o que a resposta destravar roda pelo trilho normal
   (sessão própria + autorização citável, ORCH-006).
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Pré-condição faltando no ambiente ou no código, que não é passo humano, vai à caixa como `defeito` ou `debito`; o que depende do dono, do contador ou de dado externo vai como `gate`.

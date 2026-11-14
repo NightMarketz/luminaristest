@@ -327,6 +327,17 @@ nesta seção: a linha entra aqui em PR só de docs, quando o PR de correção a
 | **INV F-37.1** — `reject` da revisão contábil confere o status fora da tx; assinatura que cruza vira `REJECTED`. Ficha: `INVENTARIO-INV.md` | 2 | D3 | teste-guarda Jest `server/src/features/accounting/services/__tests__/AccountingReviewService.test.ts` › "reject: revisão assinada entre o preflight e a tx → 409 REVIEW_NOT_OPEN" (dublê OPEN fora da tx, SIGNED_OFF com `tx`; vermelho antes do fix: `Received promise resolved instead of rejected`); corrigido: releitura com `tx` + `assertOpen` dentro do `runTransaction` do `reject` | [EM PR #1231] | `cd server && npx jest src/features/accounting/services/__tests__/AccountingReviewService.test.ts --selectProjects unit` |
 | **SM F-16.1** — estorno lê o status fora da tx e grava `Reversed` sem status no `where`; conciliação na janela fica `Reversed` com extrato `MATCHED`. Ficha: `INVENTARIO-SM.md` | 3 | D3 | teste-guarda Jest `server/src/features/accounting/services/__tests__/reverseEntryStatusCas.integration.test.ts` › "conciliação entre a leitura e a tx: o estorno recusa (409) e não grava Reversed sobre Reconciled" (spy em `findById` grava `Reconciled` antes de devolver `Posted`; vermelho antes do fix: `Received promise resolved instead of rejected`); corrigido: `JournalEntryRepository.setStatus(…, expectedStatus)` com status no `where`, 0 linhas ⇒ 409 | [EM PR #1232] | `cd server && npx jest src/features/accounting/services/__tests__/reverseEntryStatusCas.integration.test.ts --selectProjects integration --runInBand` |
 
+## Lacunas da caixa (desde 2026-11-11)
+
+Lacunas que as sessões acharam fora do próprio escopo e mandaram à caixa do maestro (`node scripts/lacunas.mjs`,
+regra `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`). **Autorização de todas as linhas abaixo:** a mesma
+decisão (dono, chat, 2026-11-11). Quem escreve aqui é só o maestro, no PR só de docs do dia; os PRs de correção não mexem
+nesta seção. Uma linha por id: `id · arquivo:linha · classe · o que falta · Status ([ABERTO] / [EM PR #n] /
+[CORRIGIDO dd/mm, #n] / não reproduzido) · teste-guarda`.
+
+| Id | Local | Classe | Lacuna | Status | Teste-guarda |
+|---|---|---|---|---|---|
+
 ## Transversais
 
 | Lacuna | Instrumento real | Status | Comando que prova |

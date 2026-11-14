@@ -100,3 +100,9 @@ cd server && npx tsc --noEmit
 - Não instancie o service direto (`new <Resource>Service()`) — sempre `getFactory().get<Resource>Service()`
 - Não extraia o actor manualmente do token — use `getUserContextFromRequest(req)`
 - Não retorne shapes ad-hoc — sucesso é sempre `{ success: true, data }`; erro é sempre via `handleApiError(error, res)`
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

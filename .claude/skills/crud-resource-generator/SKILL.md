@@ -117,3 +117,9 @@ cd my-app && npx tsc --noEmit
 - Registros soft-deleted devem ser limpos pelo job `PurgeDeletedRecords` após 90 dias.
 - **[CRUD-005] Nunca gere um recurso com invariante financeiro/legal como `dynamic-table`** — money em `data: Json` é float em SQLite e `unique()` de preset é scan TOCTOU (não constraint). Isso é Prisma first-class; ver `_ARCHITECTURE-CONTRACT.md §2.1`.
 - **[CRUD-004] Fronteira dura DynamicTable × Prisma:** NUNCA injete um serviço Prisma first-class (`PostingService`, `PayrollService`…) em `DynamicTableService`, `RuleContext` ou `RulePlugin`, e NUNCA modifique `DynamicTableService.ts` para integrar dois módulos. Integração cross-módulo sobe ao nível de controller/route/serviço de integração — nunca dentro do motor de plugins. Ver `_ARCHITECTURE-CONTRACT.md §2.1`.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.
