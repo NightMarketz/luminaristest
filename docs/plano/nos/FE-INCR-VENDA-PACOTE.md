@@ -31,3 +31,7 @@ Origem: [[D-2026-10-05-FE-PACOTE-VALIDADE-FORKS]] (F-FE-PV-1 c e a cédula de ab
   servidor aceita pagar pacote com saldo de pacote), 12 itens, contrato (tipos do wizard + campo `aboveCatalogPrice`
   no preset de vendas), forks ✅ ratificados (§5.1), PE-VP-1 (contador: lançamento da troca), insumos I1..I3. Não
   autoriza código: exige "executa".
+
+## Fold 14/11 — VP-4 mergeado
+
+- #1242 (13/11, `689366f1a`): aceite da validade deriva o total dos itens (`PackageAcceptanceService.derivedSaleTotal`). Fecha as lacunas `L-20261111-202850-5acb` (400 "Venda sem valor total válido") e `L-20261111-215622-6ffa`, ambas resolvidas na fila. O runbook H2 de venda de pacote foi reexecutado no mesmo PR; o resultado está no runbook, não reescrito aqui.
