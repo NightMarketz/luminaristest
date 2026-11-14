@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAccountingT } from '../lib/useAccountingT';
 import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
 import { accountingService } from '../../../lib/services/accounting.service';
@@ -40,46 +40,55 @@ export function useAccountingData(governance?: GovernanceScope) {
   const [loadingReport, setLoadingReport] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Desmonte: descarta a resposta de uma busca de unidades que volta depois (o antigo `active` do efeito).
+  const mountedRef = useRef(true);
   useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const tables = await DynamicTableService.getTables();
-        const list: TableMetaLike[] = Array.isArray(tables?.data) ? (tables.data as TableMetaLike[]) : [];
-        const unitsTable =
-          list.find((t) => t.internalName === 'units') ??
-          list.find((t) => /unidade|units/i.test(String(t.name ?? '')));
-        if (!unitsTable?.id) {
-          if (active) {
-            setUnits([]);
-            setLoadingUnits(false);
-          }
-          return;
-        }
-        const rows = await DynamicTableService.getTableData(String(unitsTable.id));
-        const data: RowLike[] = Array.isArray(rows?.data) ? (rows.data as RowLike[]) : [];
-        const opts: UnitOption[] = data.map((r) => ({
-          id: String(r.id),
-          label: String(r?.data?.name ?? r?.data?.fantasyName ?? r?.data?.companyName ?? r.id),
-        }));
-        if (active) {
-          setUnits(opts);
-          setUnitId(opts[0]?.id ?? '');
-          setLoadingUnits(false);
-        }
-      } catch {
-        if (active) {
-          setError(tRef.current('view.error.units', 'Falha ao carregar as unidades.'));
-          setLoadingUnits(false);
-        }
-      }
-    })();
+    mountedRef.current = true;
     return () => {
-      active = false;
+      mountedRef.current = false;
     };
-    // Sem `t` nas deps: este efeito carrega as unidades UMA vez. Com `t` ele
-    // re-disparava a cada render sob i18next não-inicializado.
+  }, []);
+
+  const loadUnits = useCallback(async () => {
+    setLoadingUnits(true);
+    setError(null);
+    try {
+      const tables = await DynamicTableService.getTables();
+      const list: TableMetaLike[] = Array.isArray(tables?.data) ? (tables.data as TableMetaLike[]) : [];
+      const unitsTable =
+        list.find((t) => t.internalName === 'units') ??
+        list.find((t) => /unidade|units/i.test(String(t.name ?? '')));
+      if (!unitsTable?.id) {
+        if (mountedRef.current) {
+          setUnits([]);
+          setLoadingUnits(false);
+        }
+        return;
+      }
+      const rows = await DynamicTableService.getTableData(String(unitsTable.id));
+      const data: RowLike[] = Array.isArray(rows?.data) ? (rows.data as RowLike[]) : [];
+      const opts: UnitOption[] = data.map((r) => ({
+        id: String(r.id),
+        label: String(r?.data?.name ?? r?.data?.fantasyName ?? r?.data?.companyName ?? r.id),
+      }));
+      if (mountedRef.current) {
+        setUnits(opts);
+        setUnitId(opts[0]?.id ?? '');
+        setLoadingUnits(false);
+      }
+    } catch {
+      if (mountedRef.current) {
+        setError(tRef.current('view.error.units', 'Falha ao carregar as unidades.'));
+        setLoadingUnits(false);
+      }
+    }
   }, [tRef]);
+
+  // Sem `t` nas deps: carrega as unidades UMA vez. Com `t` o efeito re-disparava a cada render sob i18next
+  // não-inicializado.
+  useEffect(() => {
+    loadUnits();
+  }, [loadUnits]);
 
   const loadReport = useCallback(async (uid: string) => {
     if (!uid || delegated) {
@@ -111,6 +120,7 @@ export function useAccountingData(governance?: GovernanceScope) {
     loadingUnits,
     loadingReport,
     error,
-    reload: () => loadReport(unitId),
+    // Sem unidade escolhida a falha foi ao carregar as unidades: tentar de novo é buscá-las (`loadReport('')` não faz nada).
+    reload: () => (unitId ? loadReport(unitId) : loadUnits()),
   };
 }
