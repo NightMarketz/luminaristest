@@ -227,6 +227,7 @@ function GenericChatWidget({
                                                         value={renameValue}
                                                         onChange={(e) => setRenameValue(e.target.value)}
                                                         placeholder="Novo nome..."
+                                                        data-own-style
                                                         className="w-full px-2 py-1 text-sm rounded border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800"
                                                         autoFocus
                                                         onKeyDown={(e) => {
@@ -338,6 +339,7 @@ function GenericChatWidget({
                         placeholder={inputPlaceholder}
                         rows={1}
                         disabled={isLoading}
+                        data-own-style
                         className="flex-1 resize-none rounded custom-scrollbar border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-neutral-800/80 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white disabled:opacity-50"
                         style={{ minHeight: '38px', maxHeight: '120px' }}
                     />

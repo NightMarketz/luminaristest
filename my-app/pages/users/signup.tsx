@@ -77,7 +77,8 @@ function SignupPage(props: InferGetServerSidePropsType<typeof getServerSideProps
                 type="text"
                 autoComplete="name"
                 required
-                className="block w-full !pl-16 pr-4 py-3 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
+                data-own-style
+                className="block w-full pl-16 pr-4 py-3 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
                 placeholder={t('nameInputPlaceholder')}
                 value={formData.name}
                 onChange={handleChange}
@@ -100,7 +101,8 @@ function SignupPage(props: InferGetServerSidePropsType<typeof getServerSideProps
                 autoComplete="username"
                 required
                 minLength={3}
-                className="block w-full !pl-16 pr-4 py-3 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
+                data-own-style
+                className="block w-full pl-16 pr-4 py-3 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
                 placeholder={t('usernameInputPlaceholder')}
                 value={formData.username}
                 onChange={handleChange}
@@ -122,7 +124,8 @@ function SignupPage(props: InferGetServerSidePropsType<typeof getServerSideProps
                 type="email"
                 autoComplete="email"
                 required
-                className="block w-full !pl-16 pr-4 py-3 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
+                data-own-style
+                className="block w-full pl-16 pr-4 py-3 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
                 placeholder={t('emailInputPlaceholder')}
                 value={formData.email}
                 onChange={handleChange}
@@ -145,7 +148,8 @@ function SignupPage(props: InferGetServerSidePropsType<typeof getServerSideProps
                 autoComplete="new-password"
                 required
                 minLength={6}
-                className="block w-full !pl-16 pr-4 py-3 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
+                data-own-style
+                className="block w-full pl-16 pr-4 py-3 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={handleChange}

@@ -352,6 +352,7 @@ export function InventoryTable({
                                                                             onFocus={() => { if (inv) { setEditingPriceId(inv.id); setEditingPriceValue(salePrice > 0 ? formatCurrencyInput((salePrice * 100).toFixed(0)) : ''); } }}
                                                                             onBlur={() => setTimeout(() => { if (editingPriceId === inv?.id) { setEditingPriceId(null); setEditingPriceValue(''); } }, 150)}
                                                                             onKeyDown={(e) => { if (e.key === 'Enter' && inv) onSavePrice(inv.id, parseCurrencyToNumber(editingPriceValue)); }}
+                                                                            data-own-style
                                                                             className="w-20 pl-7 pr-2 py-1 text-right text-xs font-bold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-neutral-800 text-emerald-600 dark:text-emerald-400 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 outline-none transition-all"
                                                                             placeholder="0,00"
                                                                             disabled={isSavingPrice}

@@ -136,6 +136,7 @@ export function CrmReportEditor({
             {t('report_builder.editor.kind', 'Tipo')}
             <select
               aria-label={t('report_builder.editor.kind', 'Tipo')}
+              data-own-style
               className={inputCls}
               value={draft.kind}
               onChange={(e) => onChange(withKind(draft, e.target.value as ReportKind, list))} // atalho: folha string → união
@@ -151,6 +152,7 @@ export function CrmReportEditor({
             {t('report_builder.editor.chart_type', 'Gráfico')}
             <select
               aria-label={t('report_builder.editor.chart_type', 'Gráfico')}
+              data-own-style
               className={inputCls}
               value={draft.chartType}
               onChange={(e) => set({ chartType: e.target.value as ReportChartType })} // atalho: folha string → união
@@ -170,6 +172,7 @@ export function CrmReportEditor({
         <h3 className={titleCls}>{t('report_builder.editor.source', 'Fonte')}</h3>
         <select
           aria-label={t('report_builder.editor.source', 'Fonte')}
+          data-own-style
           className={inputCls}
           value={draft.source ?? ''}
           onChange={(e) => e.target.value && onSourceChange(e.target.value as ReportSource)} // atalho: folha string → união
@@ -205,6 +208,7 @@ export function CrmReportEditor({
                 <div key={i} className="flex flex-wrap items-center gap-2" data-testid={`measure-${i}`}>
                   <select
                     aria-label={t('report_builder.editor.measure_type', 'Cálculo')}
+                    data-own-style
                     className={inputCls}
                     value={m.type}
                     onChange={(e) => {
@@ -221,6 +225,7 @@ export function CrmReportEditor({
                   </select>
                   <select
                     aria-label={t('report_builder.editor.measure_field', 'Campo')}
+                    data-own-style
                     className={inputCls}
                     value={m.field}
                     onChange={(e) => setMeasure(i, { ...m, field: e.target.value })}
@@ -303,6 +308,7 @@ export function CrmReportEditor({
                     </button>
                     <select
                       aria-label={t('report_builder.currency.single', 'Só uma moeda')}
+                      data-own-style
                       className={inputCls}
                       value=""
                       disabled={draft.filters.length >= MAX_FILTERS}
@@ -347,6 +353,7 @@ export function CrmReportEditor({
                   <div key={i} className="flex flex-wrap items-center gap-2" data-testid={`dimension-${i}`}>
                     <select
                       aria-label={t('report_builder.editor.dimension_type', 'Agrupar')}
+                      data-own-style
                       className={inputCls}
                       value={d.type}
                       onChange={(e) =>
@@ -364,6 +371,7 @@ export function CrmReportEditor({
                     {d.type === 'field' ? (
                       <select
                         aria-label={t('report_builder.editor.dimension_field', 'Campo do agrupamento')}
+                        data-own-style
                         className={inputCls}
                         value={d.field}
                         onChange={(e) => setDimension(i, { type: 'field', field: e.target.value })}
@@ -378,6 +386,7 @@ export function CrmReportEditor({
                       <>
                         <select
                           aria-label={t('report_builder.editor.date_field', 'Campo de data')}
+                          data-own-style
                           className={inputCls}
                           value={d.dateField}
                           onChange={(e) => setDimension(i, { ...d, dateField: e.target.value })}
@@ -390,6 +399,7 @@ export function CrmReportEditor({
                         </select>
                         <select
                           aria-label={t('report_builder.editor.period', 'Período')}
+                          data-own-style
                           className={inputCls}
                           value={d.period}
                           onChange={(e) => setDimension(i, { ...d, period: e.target.value as PeriodUnit })} // atalho: folha string → união
@@ -435,6 +445,7 @@ export function CrmReportEditor({
                 <div key={i} className="flex flex-wrap items-center gap-2" data-testid={`filter-${i}`}>
                   <select
                     aria-label={t('report_builder.editor.filter_field', 'Campo do filtro')}
+                    data-own-style
                     className={inputCls}
                     value={f.field}
                     onChange={(e) => setFilter(i, { field: e.target.value, op: f.op, value: isMultiValueOp(f.op) ? [] : '' })}
@@ -448,6 +459,7 @@ export function CrmReportEditor({
                   </select>
                   <select
                     aria-label={t('report_builder.editor.filter_op', 'Operador')}
+                    data-own-style
                     className={inputCls}
                     value={f.op}
                     onChange={(e) => {
@@ -486,6 +498,7 @@ export function CrmReportEditor({
             <div className="flex flex-wrap items-center gap-2">
               <select
                 aria-label={t('report_builder.editor.sort_by', 'Ordenar')}
+                data-own-style
                 className={inputCls}
                 value={draft.sort?.by ?? ''}
                 onChange={(e) => {
@@ -504,6 +517,7 @@ export function CrmReportEditor({
               {draft.sort?.by === 'measure' && draft.measures.length > 1 ? (
                 <select
                   aria-label={t('report_builder.editor.sort_key', 'Qual medida')}
+                  data-own-style
                   className={inputCls}
                   value={draft.sort.measureIndex ?? ''}
                   onChange={(e) =>
@@ -521,6 +535,7 @@ export function CrmReportEditor({
               {draft.sort ? (
                 <select
                   aria-label={t('report_builder.editor.sort_dir', 'Direção')}
+                  data-own-style
                   className={inputCls}
                   value={draft.sort.dir}
                   onChange={(e) => draft.sort && set({ sort: { ...draft.sort, dir: e.target.value === 'desc' ? 'desc' : 'asc' } })}
@@ -535,6 +550,7 @@ export function CrmReportEditor({
                   type="number"
                   min={1}
                   max={MAX_LIMIT}
+                  data-own-style
                   className={`${inputCls} w-24`}
                   value={draft.limit ?? ''}
                   onChange={(e) => set({ limit: e.target.value === '' ? null : Number(e.target.value) })}
@@ -603,7 +619,7 @@ function FilterValueInput({
       );
     }
     return (
-      <select aria-label={label} className={inputCls} value={String(filter.value ?? '')} onChange={(e) => onChange(e.target.value)}>
+      <select aria-label={label} data-own-style className={inputCls} value={String(filter.value ?? '')} onChange={(e) => onChange(e.target.value)}>
         <option value="">…</option>
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -618,6 +634,7 @@ function FilterValueInput({
     return (
       <select
         aria-label={label}
+        data-own-style
         className={inputCls}
         value={filter.value === true ? 'true' : filter.value === false ? 'false' : ''}
         onChange={(e) => onChange(e.target.value === '' ? '' : coerceFilterValue(e.target.value, field))}
@@ -636,6 +653,7 @@ function FilterValueInput({
     <input
       aria-label={label}
       type={type}
+      data-own-style
       className={inputCls}
       value={filter.value == null ? '' : String(filter.value)}
       onChange={(e) => onChange(coerceFilterValue(e.target.value, field))}
@@ -749,6 +767,7 @@ function JoinsSection({
               <div key={i} className="flex flex-wrap items-start gap-2" data-testid={`join-${i}`}>
                 <select
                   aria-label={t('report_builder.joins.right_source', 'Tabela')}
+                  data-own-style
                   className={inputCls}
                   value={j.rightSource ?? ''}
                   disabled={busy}
@@ -763,6 +782,7 @@ function JoinsSection({
                 </select>
                 <select
                   aria-label={t('report_builder.joins.left_field', 'Campo da fonte')}
+                  data-own-style
                   className={inputCls}
                   value={j.leftField}
                   disabled={busy}
@@ -778,6 +798,7 @@ function JoinsSection({
                 <span className="self-center text-xs font-bold text-gray-400">=</span>
                 <select
                   aria-label={t('report_builder.joins.right_field', 'Campo da outra tabela')}
+                  data-own-style
                   className={inputCls}
                   value={j.rightField}
                   disabled={!j.rightSource || busy}
