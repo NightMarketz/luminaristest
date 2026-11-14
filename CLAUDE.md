@@ -146,10 +146,23 @@ dono confirmar por número. Fora da maestro, nenhuma sessão mergeia, nem verde.
 `docs/plano/decisoes/D-2026-10-28-FLUXO-AUTONOMO.md`. Exceção (dono, 2026-11-10): vermelho da faixa 1 da auditoria de
 estruturas implícitas entra como verde com revisor PASS — `docs/plano/decisoes/D-2026-11-10-FAIXA1-MERGE-LIVRE.md`.
 
-## Pilhas e tamanho de PR (dono, 2026-11-08)
-- **Um PR por item do GAP-MAP**, mergeado direto na `main` sempre que a dependência permitir.
-- **Profundidade máxima de pilha: 2.** Não prepare um filho sobre um pai ainda não mergeado; a raiz entra primeiro.
-- Dependência que não cabe em 2 níveis: separe o contrato em PR próprio, que entra antes.
+## Branch de integração e GAP-MAP por feature (dono, 2026-11-10 — `docs/plano/decisoes/D-2026-11-10-BRANCH-DE-INTEGRACAO-E-GAP-MAP-POR-FEATURE.md`)
+- **Feature/tema com 2+ PRs** (mesmo nó, mesma faixa, arquivos em comum) usa `integration/<slug>`: os PRs formam uma **pilha
+  nativa (`gh stack init --base integration/<slug>`, `submit`, `merge`)** com a integração como base, livre dentro dela (o GitHub
+  rebaseia os de cima; sem `rebase --onto` manual; piloto testou 2 camadas); a sessão que coordena o tema mergeia neles com CI verde; a `main` só recebe **um** PR
+  `integration/<slug>` → `main` quando a feature fecha (classe de risco normal: verde → maestro, vermelho → lote do dono).
+- **PR isolado, sem irmãos, vai direto para a `main`** (regra abaixo, de 08/11). **A Faixa 1 de estruturas implícitas fica
+  fora da integração:** ela segue direto na `main` pela `D-2026-11-10-FAIXA1-MERGE-LIVRE`.
+- **GAP-MAP:** o `GAP-MAP.md` vira índice/glossário gerado; cada achado tem o seu fragmento `docs/gap-map/<ID>.md` (padrão
+  towncrier: um arquivo por achado, nenhum PR edita o índice), e a lacuna é uma máquina de estados com estado derivado de
+  comando. **Depois da migração, não edite o `GAP-MAP.md` para registrar lacuna** (BRIEF pendente, só roda quando a Faixa 1
+  fechar; até lá valem a regra antiga e o escritor único da Faixa 1). Detalhe e sequência na decisão.
+
+## Pilhas e tamanho de PR (dono, 2026-11-08; emendado em 2026-11-10 acima)
+- **Um PR por item do GAP-MAP**, mergeado direto na `main` sempre que a dependência permitir, ou na `integration/<slug>` do tema.
+- **Profundidade máxima entre a `main` e o resto: 2** (`main` → integração → pilha). Dentro de uma `integration/<slug>` a pilha é livre
+  (acima de 4 camadas, reporte no lote). **Fora de integração**, filho sobre pai não mergeado continua proibido; a raiz entra primeiro.
+- Dependência que não cabe em 2 níveis fora de integração: separe o contrato em PR próprio, que entra antes.
 - **Não junte tarefas extras num PR** só para reduzir a contagem de PRs: PR grande piora a revisão.
 - Ao mergear o pai (squash), rebaseie o filho com `git rebase --onto` e troque a base do PR para a `main` antes de nova rodada de CI.
 
