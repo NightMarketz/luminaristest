@@ -33,7 +33,7 @@ function renderSingleMessage(msg: Message, index: number) {
             ? 'bg-blue-500 dark:bg-blue-600 text-white'
             : isError
               ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300'
-              : 'bg-slate-100 dark:bg-zinc-700 text-slate-800 dark:text-slate-200'
+              : 'bg-slate-100 dark:bg-neutral-700 text-slate-800 dark:text-slate-200'
           }`}
       >
         <ReactMarkdown>{msg.content}</ReactMarkdown>
@@ -52,7 +52,7 @@ export function ChatMessageList({
 }: ChatMessageListProps) {
   if (isDuplicateInstance) {
     return (
-      <div className="chat-scrollbar flex-grow p-3 overflow-y-auto bg-white dark:bg-zinc-900/50 flex justify-center items-center h-full">
+      <div className="chat-scrollbar flex-grow p-3 overflow-y-auto bg-white dark:bg-neutral-900/50 flex justify-center items-center h-full">
         <p className="text-orange-600 dark:text-orange-400 text-xs p-3 bg-orange-100 dark:bg-orange-900/30 rounded-md text-center">
           {errorInstance || "Este chat já está aberto em outro widget."}
         </p>
@@ -61,7 +61,7 @@ export function ChatMessageList({
   }
 
   return (
-    <div className="chat-scrollbar flex-grow p-3 space-y-3 overflow-y-auto bg-white dark:bg-zinc-900/50">
+    <div className="chat-scrollbar flex-grow p-3 space-y-3 overflow-y-auto bg-white dark:bg-neutral-900/50">
       {isInstanceLoading && messages.length === 0 && (
         <div className="flex justify-center items-center h-full">
           <p className="text-slate-500 dark:text-slate-400 text-xs">Carregando histórico...</p>
@@ -80,7 +80,7 @@ export function ChatMessageList({
       
       {isSendingMessage && (
         <div className="flex justify-start">
-          <div className="px-3 py-2 text-xs bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-slate-400 rounded-lg animate-pulse">
+          <div className="px-3 py-2 text-xs bg-slate-100 dark:bg-neutral-700 text-slate-500 dark:text-slate-400 rounded-lg animate-pulse">
             Pensando...
           </div>
         </div>

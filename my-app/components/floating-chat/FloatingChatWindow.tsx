@@ -190,7 +190,7 @@ export function FloatingChatWindow() {
             </div>
 
             {/* Chat content */}
-            <div className="h-[calc(100%-40px)] bg-white dark:bg-zinc-800">
+            <div className="h-[calc(100%-40px)] bg-white dark:bg-neutral-800">
                 <GenericChatWidget
                     id="floating-chat-instance"
                     title="Chat"

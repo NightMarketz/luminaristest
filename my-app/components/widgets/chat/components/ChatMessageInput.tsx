@@ -86,8 +86,8 @@ export function ChatMessageInput({
   }
 
   return (
-    <div className="p-4 border-t border-slate-200 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-800">
-      <div className="relative flex items-end bg-white dark:bg-zinc-700 border border-slate-300 dark:border-zinc-600 rounded-2xl transition-all duration-200">
+    <div className="p-4 border-t border-slate-200 dark:border-neutral-700 bg-slate-50 dark:bg-neutral-800">
+      <div className="relative flex items-end bg-white dark:bg-neutral-700 border border-slate-300 dark:border-neutral-600 rounded-2xl transition-all duration-200">
         {/* Botão de documentos à esquerda */}
         {documentSelector && (
           <div className="flex-shrink-0 p-2">
@@ -106,7 +106,7 @@ export function ChatMessageInput({
             disabled={isDisabled}
             maxLength={MAX_MESSAGE_LENGTH}
             rows={1}
-            className="w-full px-3 py-1 text-sm bg-white dark:bg-zinc-700 border-none outline-none resize-none text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-zinc-400 disabled:opacity-60 focus:ring-0 focus:border-none chat-scrollbar"
+            className="w-full px-3 py-1 text-sm bg-white dark:bg-neutral-700 border-none outline-none resize-none text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-neutral-400 disabled:opacity-60 focus:ring-0 focus:border-none chat-scrollbar"
             aria-label="Message input"
             style={{ 
               minHeight: '36px',
@@ -121,7 +121,7 @@ export function ChatMessageInput({
           <button
             onClick={handleSendButtonClick}
             disabled={isDisabled || !inputValue.trim()}
-            className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
+            className="p-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none"
             aria-label="Send message"
           >
             {isSendingMessage ? (

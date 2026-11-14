@@ -64,7 +64,7 @@ export function Toast({ id, type, message, title, duration = 5000, onClose }: To
                 
                 /* Temas Base */
                 bg-white/90 border-gray-200/50 
-                dark:bg-zinc-900/90 dark:border-zinc-800/50
+                dark:bg-neutral-900/90 dark:border-neutral-800/50
                 
                 /* Variantes por Tipo */
                 ${type === 'success' ? 'border-emerald-500/20 bg-emerald-50/95 dark:bg-emerald-950/30' : ''}
@@ -77,7 +77,7 @@ export function Toast({ id, type, message, title, duration = 5000, onClose }: To
         >
             <div className={`
                 flex-shrink-0 p-2 rounded-xl shadow-sm border
-                bg-white dark:bg-zinc-800/50 border-gray-100 dark:border-zinc-700/50
+                bg-white dark:bg-neutral-800/50 border-gray-100 dark:border-neutral-700/50
             `}>
                 {icons[type]}
             </div>
@@ -94,7 +94,7 @@ export function Toast({ id, type, message, title, duration = 5000, onClose }: To
                         {title}
                     </h4>
                 )}
-                <p className="text-sm font-medium text-gray-700 dark:text-zinc-300 leading-relaxed">
+                <p className="text-sm font-medium text-gray-700 dark:text-neutral-300 leading-relaxed">
                     {message}
                 </p>
             </div>
