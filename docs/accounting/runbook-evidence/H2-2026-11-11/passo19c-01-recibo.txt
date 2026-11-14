@@ -1,0 +1,33 @@
+Despacho registrado
+
+FORMULÁRIO ADMINISTRATIVO
+
+cmwckcnri000eciiwn1fuo442
+
+SENT — SENT = o operador confirmou que despachou o pacote; o servidor não envia nem confirma recebimento.
+
+CONTADOR H2 19 AI TESTER R2 · SP-098765/O-4/SP
+
+Signatário (J930)
+
+identNom: CONTADOR H2 19 AI TESTER R2
+identCpfCnpj: 11144477735
+identQualif: Contador
+codAssin: 900
+indCrc: SP-098765/O-4
+email: contador.h2-19r2@example.com
+fone: 1130000000
+ufCrc: SP
+indRespLegal: N
+
+Período: 01/01/2025 – 31/12/2025 · Livro: DEFAULT · 11/11/2026, 17:20:21
+
+ECD	cmw2b8rf…	983aa26e9540	
+Baixar
+
+ECF (Lucro Real)	cmw2b9cv…	5001f61e69db	
+Baixar
+
+Balancete	cmwck8j8…	6802ff944355	
+Baixar
+Copiar manifesto (JSON)

@@ -1,0 +1,6 @@
+[Importação/Exportação, relatório = Balancete] texto da seção Exportação: Relatório · Balancete/Razão/Balanço Patrimonial/DRE · Data · CSV/XLSX · Exportar
+(o campo "Data" agora aparece com "Balancete" selecionado; em 04/11 só aparecia em BP e DRE)
+== fillLabel {"label":"Data","value":"2025-12-31"}
+== click Exportar
+POST /api/accounting/data-exchange/exports -> 201  req: {"kind":"EXPORT_TRIAL_BALANCE","format":"xlsx","unitId":"cmuw4z7zj02ehcii0st3unfr4","asOf":"2025-12-31"}
+   res: {"success":true,"data":{"id":"cmwck8j8v0006ciiwun7x46l9","direction":"EXPORT","kind":"EXPORT_TRIAL_BALANCE","status":"EXPORTED","fileName":"export_trial_balance.xlsx","mimeType":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","sizeBytes":7158,"sha256":"6802ff9443556d750890059dcef4abd3d9119815c6e6c1483ab758882cac92fe","totalRows":12,"validRows":0,"invalidRows":0,"committedRows":0,"createdAt":"2026-11-11T20:17:09.487Z","periodStart":"2025-01-01","periodEnd":"2025-12-31"

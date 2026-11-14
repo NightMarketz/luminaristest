@@ -1,0 +1,192 @@
+[heavy-slot] runbook H2-2026-11-11: as 2 vagas de trabalho pesado estão ocupadas; esperando.
+  vaga 0: PID 20280 · jest integração (C:\Users\smurf\Downloads\Luminaris\.claude\worktrees\agent-ae10e57b26260f483\server) · C:\Users\smurf\Downloads\Luminaris\.claude\worktrees\agent-ae10e57b26260f483\server · há 0 min
+  vaga 1: PID 60356 · runbook VENDA-PACOTE-2026-11-11 · C:\Users\smurf\Downloads\Luminaris\.claude\worktrees\legislative-gaps-official-sources-2bc3a2 · há 0 min
+[navegador] C:\Users\smurf\AppData\Local\ms-playwright\chromium_headless_shell-1254\chrome-headless-shell-win64\chrome-headless-shell.exe
+
+== login {"user":"h2-21d-ai@luminaris.test","pass":"<redigida>"}
+[net] POST /api/auth/login -> 200  req: {"identifier":"h2-21d-ai@luminaris.test","password":"<redigida>","rememberMe":false}
+   res: {"success":true,"data":{"user":{"id":"cmwck42vm0000ciiwxus3gkiw","name":"H2 21d AI Tester","username":"h2-21d-ai","email":"h2-21d-ai@luminaris.test","role":"USER","locale":"en","currency":"BRL","createdAt":"2026-11-11T20:13:41.650Z","updatedAt":"2026-11-11T20:13:41.650Z"},"token":"<redigido>"
+[net] POST /api/dashboard-layout -> 201  req: {"name":"Dashboard","type":"GRID","config":{"positions":[],"columns":12,"widgets":[]}}
+   res: {"success":true,"data":{"id":"cmwck4q0c0001ciiw7496a5e4","userId":"cmwck42vm0000ciiwxus3gkiw","name":"Dashboard","isActive":true,"type":"GRID","config":{"columns":12,"widgets":[],"positions":[]},"createdAt":"2026-11-11T20:14:11.628Z","updatedAt":"2026-11-11T20:14:11.628Z"}}
+url após login: http://127.0.0.1:3160/
+
+== goto {"url":"/users/profile"}
+
+== text {"name":"passo21d-02-perfil-antes","max":1500}
+[texto body]
+Luminaris
+🇺🇸
+EN
+h2-21d-ai
+H
+My Profile
+
+Manage your account information and security settings.
+
+H
+H2 21d AI Tester
+
+@h2-21d-ai
+
+USER
+
+EMAIL
+
+h2-21d-ai@luminaris.test
+
+ID
+
+cmwck42vm0000ciiwxus3gkiw
+
+MEMBRO DESDE
+
+—
+
+PLANO ATUAL
+
+Gratuito
+
+Gerencie sua assinatura e aproveite mais recursos.
+
+Gerenciar Assinatura
+Personal Information
+
+Update your name, username, and email address.
+
+FULL NAME
+USERNAME
+EMAIL
+Security
+
+Change your password. Leave blank to keep the current one.
+
+CURRENT PASSWORD
+
+Required to change your password or email.
+
+NEW PASSWORD (OPTIONAL)
+
+Minimum 6 characters if changing password.
+
+Preferências de Região
+
+Idioma da interface e moeda padrão para valores financeiros.
+
+IDIOMA
+🇧🇷 Português (BR)
+🇺🇸 English (US)
+MOEDA
+🇧🇷 Real Brasileiro (R$)
+🇺🇸 Dólar Americano ($)
+🇪🇺 Euro (€)
+Salvar Preferências
+Cancel
+Save Changes
+[/texto]
+
+== type {"sel":"#email","text":"h2-21d-ai2@luminaris.test"}
+
+== type {"sel":"#currentPassword","text":"<redigida>"}
+
+== type {"sel":"#password","text":"<redigida>"}
+
+== shot {"name":"passo21d-03-perfil-preenchido"}
+[print] docs/accounting/runbook-evidence/H2-2026-11-11/passo21d-03-perfil-preenchido.png
+
+== clickSel {"sel":"form button[type=submit]","wait":3000}
+[net] PUT /api/users/cmwck42vm0000ciiwxus3gkiw -> 200  req: {"email":"h2-21d-ai2@luminaris.test","password":"<redigida>","currentPassword":"<redigida>"}
+   res: {"success":true,"data":{"id":"cmwck42vm0000ciiwxus3gkiw","name":"H2 21d AI Tester","username":"h2-21d-ai","email":"h2-21d-ai2@luminaris.test","role":"USER","locale":"en","currency":"BRL","createdAt":"2026-11-11T20:13:41.650Z","updatedAt":"2026-11-11T20:14:17.495Z"}}
+
+== shot {"name":"passo21d-04-perfil-salvo"}
+[print] docs/accounting/runbook-evidence/H2-2026-11-11/passo21d-04-perfil-salvo.png
+
+== text {"name":"passo21d-04-perfil-salvo","max":2000}
+[texto body]
+Luminaris
+🇺🇸
+EN
+h2-21d-ai
+H
+My Profile
+
+Manage your account information and security settings.
+
+Profile updated successfully!
+H
+H2 21d AI Tester
+
+@h2-21d-ai
+
+USER
+
+EMAIL
+
+h2-21d-ai2@luminaris.test
+
+ID
+
+cmwck42vm0000ciiwxus3gkiw
+
+MEMBRO DESDE
+
+—
+
+PLANO ATUAL
+
+Gratuito
+
+Gerencie sua assinatura e aproveite mais recursos.
+
+Gerenciar Assinatura
+Personal Information
+
+Update your name, username, and email address.
+
+FULL NAME
+USERNAME
+EMAIL
+Security
+
+Change your password. Leave blank to keep the current one.
+
+CURRENT PASSWORD
+
+Required to change your password or email.
+
+NEW PASSWORD (OPTIONAL)
+
+Minimum 6 characters if changing password.
+
+Preferências de Região
+
+Idioma da interface e moeda padrão para valores financeiros.
+
+IDIOMA
+🇧🇷 Português (BR)
+🇺🇸 English (US)
+MOEDA
+🇧🇷 Real Brasileiro (R$)
+🇺🇸 Dólar Americano ($)
+🇪🇺 Euro (€)
+Salvar Preferências
+Cancel
+Save Changes
+[/texto]
+
+== eval {"js":"location.href"}
+[eval] http://127.0.0.1:3160/users/profile
+
+== logout {}
+
+== login {"user":"h2-21d-ai2@luminaris.test","pass":"<redigida>"}
+[net] POST /api/auth/login -> 200  req: {"identifier":"h2-21d-ai2@luminaris.test","password":"<redigida>","rememberMe":false}
+   res: {"success":true,"data":{"user":{"id":"cmwck42vm0000ciiwxus3gkiw","name":"H2 21d AI Tester","username":"h2-21d-ai","email":"h2-21d-ai2@luminaris.test","role":"USER","locale":"en","currency":"BRL","createdAt":"2026-11-11T20:13:41.650Z","updatedAt":"2026-11-11T20:14:17.495Z"},"token":"<redigido>"
+url após login: http://127.0.0.1:3160/
+
+== eval {"js":"location.href"}
+[eval] http://127.0.0.1:3160/
+
+== shot {"name":"passo21d-05-login-novo"}
+[print] docs/accounting/runbook-evidence/H2-2026-11-11/passo21d-05-login-novo.png
+
+[fim] ok
