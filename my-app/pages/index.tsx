@@ -32,6 +32,7 @@ function Home() {
 
       <div className="relative w-full h-full overflow-hidden flex flex-col">
         <main className="flex flex-1 flex-col overflow-hidden relative">
+          <h1 className="sr-only">{t('homeTitle', 'Início')}</h1>
           <DashboardGrid key={user ? user.id : 'anonymous'} />
         </main>
       </div>
