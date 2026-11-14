@@ -581,3 +581,53 @@ describe('item 19 (PR-C) — começar de um modelo', () => {
     expect(screen.getByText('Visualizar')).toBeDisabled();
   });
 });
+
+// L-20261113-152228-04e6 — perda de rascunho e DELETE duplo
+describe('rascunho e exclusão', () => {
+  beforeEach(() => {
+    Object.values(svc).forEach((f) => f.mockReset());
+    fieldsOf.mockReset().mockResolvedValue(PROPOSAL_SCHEMA);
+    svc.list.mockImplementation(() => ok([saved]));
+    svc.preview.mockImplementation(() => ok(RUN));
+    svc.run.mockImplementation(() => ok(RUN));
+  });
+  afterEach(() => cleanup());
+    it('Voltar à lista com alterações não salvas pede confirmação; sem alterações volta direto', async () => {
+      render(<CrmReportBuilder />);
+      fireEvent.click(await screen.findByText('Novo relatório'));
+      fireEvent.click(await screen.findByText('Voltar à lista')); // nada editado
+      expect(await screen.findByText('Novo relatório')).toBeInTheDocument();
+
+      cleanup();
+      await newReportOn('leadProposals');
+      fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Rascunho' } });
+      fireEvent.click(screen.getByText('Voltar à lista'));
+      expect(await screen.findByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByLabelText('Nome')).toHaveValue('Rascunho'); // continua no editor
+    });
+
+    it('salvar zera a sujeira: Voltar à lista depois de salvar não pergunta', async () => {
+      svc.create.mockImplementation((body: { name: string }) => ok({ ...saved, userId: 'eu', id: 'n1', name: body.name, spec: { source: 'leadProposals', measures: [{ type: 'count' }] } }));
+      await newReportOn('leadProposals');
+      fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Contagem' } });
+      fireEvent.click(screen.getByText('Salvar'));
+      await waitFor(() => expect(svc.create).toHaveBeenCalled());
+      await waitFor(() => expect(screen.getByText('Salvar')).toBeDisabled());
+      fireEvent.click(screen.getByText('Voltar à lista'));
+      expect(await screen.findByText('Novo relatório')).toBeInTheDocument();
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('duplo clique em Apagar dispara um único DELETE', async () => {
+      let release!: () => void;
+      svc.remove.mockImplementation(() => new Promise((r) => { release = () => r({ success: true, data: { id: 'r1' } }); }));
+      render(<CrmReportBuilder />);
+      await screen.findByText('Propostas');
+      fireEvent.click(screen.getAllByText('Apagar')[0]);
+      const btn = () => screen.getAllByText('Apagar').slice(-1)[0];
+      fireEvent.click(btn());
+      fireEvent.click(btn());
+      expect(svc.remove).toHaveBeenCalledTimes(1);
+      release();
+    });
+  });
