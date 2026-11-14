@@ -105,3 +105,9 @@ Páginas atrás de `withAuth` mostram um gate "Authenticating…" até o `AuthCo
 - **Não fixe `max-w-*` divergentes por página** dentro de um módulo — telas irmãs ficam de tamanhos diferentes ao navegar. Herde o container full-height do shell.
 - Não calcule dados derivados (`filter`/`sort`/`group`/`find`/`reduce`/lookups) direto no render sem `useMemo([deps])` — recalcula a cada render (inclusive em context updates) com custo O(n)/O(n log n); memoize em páginas e em hooks de dados
 - **Não faça fetch nem defina hook de dados na página** (`apiClient`/`lib/services`/`export function use<...>`) — a página COMPÕE a View do módulo; service layer e hooks vivem no módulo (FEPAGE-001). Criar a View/hooks/fetch é trabalho do `frontend-feature-module-generator`, não desta skill.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

@@ -98,6 +98,19 @@ do estritamente exigido pela resolução de conflitos.
 
 ## Notas de operação neste repo (aditivas — não alteram as regras acima)
 
+**Achado fora de escopo vai à caixa do maestro, não morre no relatório** — OPS-007 (dono, chat, 2026-11-11 —
+`docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`). A regra de não corrigir o que está fora do escopo
+continua; muda o destino do achado:
+- O que é da sua tarefa você resolve antes de fechar: caso que a spec pede, teste que o seu diff exige, erro que o seu
+  código introduziu. Isso não é "fora de escopo".
+- Cada linha de "Achados fora de escopo" / "Lacunas de spec" vira uma entrada na caixa, antes do relatório:
+  `node scripts/lacunas.mjs add --local <arquivo:linha> --classe <defeito|debito|spec|feature|fork|gate> --o-que "…"
+  --evidencia "…" [--como-provar "…"] [--no <NÓ>] [--pr <n>] [--pai <id>]` (`--pai` = o id da lacuna que originou esta
+  sessão, se veio de uma). O id entra na linha do relatório e no corpo do PR.
+- 1ª linha do relatório final: `LACUNAS NA CAIXA: <n> (<ids>)` ou `LACUNAS NA CAIXA: 0`.
+- **Não envie a lacuna por `SendMessage` ao maestro**: turno aberto por mensagem de sessão não abre sessão, e a cadeia
+  para. O maestro lê a caixa quando volta.
+
 **O baseline do passo 1 tem um pré-requisito próprio.** Em worktree novo o gate falha por ambiente, não
 por código, e aí o baseline mente: rode `node scripts/worktree-deps.mjs` (depósito compartilhado, não `npm ci`) e crie o `.env` com `OPENAI_API_KEY=ci-dummy-openai-key`
 **antes** de medir. O client Prisma junctionado do main é stale.

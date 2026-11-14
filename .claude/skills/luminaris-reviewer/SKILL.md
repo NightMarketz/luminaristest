@@ -465,3 +465,9 @@ Produzir um relatório estruturado:
 - **Cobertura antes de filtro** — reporte todo achado com confiança + severidade; não filtre por "importância" no passo de achado (guarda de recall — MODEL-TUNING.md)
 - **Não ignore cross-layer** — um mismatch de tipo entre DTO e frontend service é um bug silencioso
 - **Não presuma** que o código está correto porque foi gerado por uma skill — valide sempre
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Achado pré-existente ou fora do diff (não dá FAIL) vai à caixa como `defeito` ou `debito`, com o id no relatório. Achado introduzido pelo diff não vai à caixa: é FAIL e volta para quem implementou.

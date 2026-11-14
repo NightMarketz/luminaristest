@@ -258,3 +258,9 @@ cd server && npx tsc --noEmit
 - **[INTV-003] Não criar AI prompts sem marcador de conclusão** — stages em loop (DISCOVERING_BUSINESS, COLLECTING_INDUSTRY) precisam de um marcador detectável no texto ("SUMMARY:", "INDUSTRY_CONFIRMED:") para avançar. Sem marcador, o wizard nunca avança.
 - **[INTV-006] Não pular o `FieldPresetMatcher`** — ao adicionar campos custom, sempre tentar match primeiro. Campos sem preset têm menos validação de schema.
 - **[INTV-002] Não modificar `InterviewStage` sem atualizar `ProcessableStage`** — se o novo estágio usa AI com history, precisa estar em ambas as types.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

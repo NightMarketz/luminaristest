@@ -104,3 +104,9 @@ cd my-app && npx tsc --noEmit
 - **[FEHOOK-006]** Não coloque regra de negócio (invariante de domínio) no hook; e não calcule dados derivados (`filter`/`sort`/`group`/`find`) sem `useMemo([deps])`.
 - **[FEHOOK-004]** **Não confie no page-size default ao ler DynamicTable** — a API retorna só 50 linhas; pagine (fetch-all) ou os KPIs/contagens ficam errados com volume. Sempre teste a view com >50 registros.
 - **[FEHOOK-007]** Não use `any`/`any[]` para tabelas ou respostas de service — defina interfaces locais; `catch (e: any)` → `catch (e)` com narrowing por `unknown`.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

@@ -153,3 +153,9 @@ Depois: `PARECER PRONTO. Entregar ao luminaris-orchestrator para montar o plano 
 - **NÃO planeje em cima do doc aspiracional sem cruzar com as memórias `accounting-*` e as notas de `docs/plano/trilhos/`/`rejeitadas/`** — o doc contradiz decisões commitadas.
 - **Em dúvida sobre onde o dado vive → Prisma first-class.** Contabilidade nunca é DynamicTable.
 - **Toda afirmação sobre "o projeto já faz X" tem de vir de código/memória lidos** (CBM-001), nunca de suposição.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Invariante, regra legal ou contábil que o plano não cobre e que você encontrou vai à caixa como `spec` (se o BRIEF devia cobrir) ou `fork` (se depende de escolha do dono), com a fonte lida em `--evidencia`.

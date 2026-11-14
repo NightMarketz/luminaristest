@@ -359,3 +359,9 @@ discrimina. A partir daqui o auditor **barra drift**, não constrói baseline. R
 > **Contrato de fontes (o que decide o quê):** *skill define* (SKILL.md + contratos) · *governance relaciona* (governance.md:
 > regra→gate→eval) · *cbm localiza* (estrutural, não-autoritativo — CBM-001) · *código/testes confirmam* (verdade objetiva) ·
 > *skill-audit impede drift* (gate determinístico no CI + sweep comportamental human-run).
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Cada finding que não for corrigido nesta rodada vai à caixa como `debito`, com o comando do gate em `--como-provar`; finding não some entre rodadas.

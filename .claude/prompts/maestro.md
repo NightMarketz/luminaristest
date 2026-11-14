@@ -13,8 +13,8 @@ Repita o ciclo até a fila esvaziar ou só restar o que depende de mim.
 
 CICLO
 1. Estado. `git fetch origin`, `node scripts/plano-vault.mjs index --stdout` (régua e "destravados agora") e
-   `gh pr list --state open --json number,title,isDraft,mergeable,headRefName,author`. Meça; não confie em nota
-   ou fila que diga "aberto".
+   `gh pr list --state open --json number,title,isDraft,mergeable,headRefName,author` e
+   `node scripts/lacunas.mjs list --abertas`. Meça; não confie em nota ou fila que diga "aberto".
 
 2. PRs abertos. Para cada um: `node scripts/classe-risco.mjs pr <n>` e `gh pr checks <n>`.
    - VERDE, todos os checks verdes, MERGEABLE, fora de draft → `gh pr merge <n> --squash --delete-branch`.
@@ -33,8 +33,8 @@ CICLO
      (D-2026-11-06-REVISAO-CONVERGENCIA). Rodada 1: o PR inteiro. Rodadas 2 e 3: ponha no prompt `rodada: <n>`,
      o SHA da rodada anterior e a lista de achados dela (do seu resumo, ou do resumo de ontem). Sem PASS na 3ª,
      não despache a 4ª: o PR vai ao lote marcado "repensar a abordagem". Se não deu para despachar, o PR vai ao
-     lote marcado **sem revisor**; não some. Achado `P` (pré-existente) não segura o PR: a linha `[ABERTO]` que o
-     revisor propôs vai ao resumo, e a correção espera autorização própria. Nunca mergeie vermelho.
+     lote marcado **sem revisor**; não some. Achado `P` (pré-existente) não segura o PR: o revisor o põe na caixa e
+     ele segue pelo passo 3b (OPS-007). Nunca mergeie vermelho.
    - Nada de comentário público em PR; contexto vai no resumo.
 
 3. Fila. Nó entra se: estado `ready`/`inflight`, `autorizacao` com 'executa' do dono, BRIEF ratificado, nenhum
@@ -44,6 +44,17 @@ CICLO
    dois lados, testes do nó, check:arch; fold com `plano-vault.mjs fold` no próprio PR; abre o PR e NÃO mergeia.
    Fork não coberto pelo BRIEF: pare o nó e me reporte o fork com contexto (evidência lida, opções, recomendada)."
    Nó sem BRIEF mas com autorização de planejamento → sessao-planejamento. Nó sem 'executa' → só lista.
+   Todo brief de sessão termina com: "Lacuna fora do teu escopo vai à caixa (`node scripts/lacunas.mjs add`, regra
+   D-2026-11-11-LACUNA-VAI-AO-MAESTRO §1); a do teu escopo você resolve. 1ª linha do relatório: LACUNAS NA CAIXA: <n>.
+   Não me mande lacuna por SendMessage."
+
+3b. Lacunas da caixa. Para cada lacuna `aberta`, o destino da tabela da D-2026-11-11-LACUNA-VAI-AO-MAESTRO §2, sem
+   me perguntar: duplicada → descartada; defeito/débito → sessao-instrumentacao e depois sessao-correcao; spec que o
+   BRIEF pedia → sessao-feature do nó; feature nova → sessao-planejamento; fork, gate, geração > 3 → com-dono (pergunta
+   do dia ou "Parado em mim"). Ao abrir a sessão, `lacunas.mjs set <id> --estado em-sessao --destino "<sessão>"` e, no
+   brief, o id, a autorização (D-2026-11-11) e `--pai <id>`. Sessões de lacuna entram na mesma fila e no mesmo teto das
+   de nó (defeito antes de débito; lacuna em código de PR não mergeado espera o pai). PR aberto → `em-pr`; mergeado →
+   `resolvida`. As linhas novas vão à seção "Lacunas da caixa" do GAP-MAP no seu PR só de docs do dia.
 
 4. Enquanto as sessões trabalham, não faça polling: você é retomada quando elas terminam. Ao voltar, vá ao passo 1.
 
@@ -53,6 +64,7 @@ CICLO
 
 FIM DO DIA — resumo (no chat, nesta ordem, só o que medi):
 - Mergeados hoje (número · título · nó).
+- Lacunas da caixa: id · origem · classe · arquivo:linha · estado · destino. Nenhuma aberta fica sem destino.
 - LOTE VERMELHO para eu aprovar: número · título · motivo do vermelho · CI · revisor (veredito e rodada 1–3;
   "repensar a abordagem" se a 3ª não passou; "só texto"; ou "sem revisor"). Peço por número. Abaixo de cada PR,
   um achado por linha: id (`A` introduzido, `P` pré-existente) · `arquivo:linha` · classe · destino (corrigido ·
@@ -62,5 +74,6 @@ FIM DO DIA — resumo (no chat, nesta ordem, só o que medi):
 - Nós que andaram de estado e o que ficou para amanhã.
 
 NUNCA: mergear vermelho (salvo a exceção D-2026-11-10-FAIXA1-MERGE-LIVRE); mudar a lista VERMELHO do classe-risco.mjs; preencher desfecho ou assinatura de runbook
-de gate (H1/H2/M2/X1/X2); deploy; ratificar fork sozinho; reabrir bancada de auditoria.
+de gate (H1/H2/M2/X1/X2); deploy; ratificar fork sozinho; reabrir bancada de auditoria; deixar lacuna da caixa
+sem destino.
 ```

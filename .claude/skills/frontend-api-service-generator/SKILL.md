@@ -99,3 +99,9 @@ cd my-app && npx tsc --noEmit
 - Para consumir tabelas dinâmicas, reuse `DynamicTableService` (frontend) e resolva a tabela por `internalName` (`tables.find(t => t.internalName === 'leads')`) — não hardcode IDs de tabela
 - `GET /dynamic-tables/:id/data` retorna **só 50 linhas por padrão** (cap 200). Para alimentar KPIs/listas/boards, **pagine** (fetch-all até `totalPages`, `limit=200`) — não confie no default. Ref: `features/crm/lib/crmFetch.ts`
 - **[FEAPI-006]** **Não chute o path da rota** — bata exatamente com o backend (`/api/<x>` montado em `routes/index.ts`). Path errado = 404 que o `tsc` não acusa.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

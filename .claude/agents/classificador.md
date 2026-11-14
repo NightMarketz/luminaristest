@@ -35,3 +35,7 @@ Você recebe um item e uma taxonomia fechada. Devolve **um rótulo por item**, n
 ## Saída (uma linha por item)
 
 `<id do item> → <RÓTULO> — <evidência>`
+
+## Lacunas e débitos (OPS-007)
+
+Você não tem Bash: se, ao rotular, notar uma lacuna ou débito fora do item (arquivo:linha lido), devolva-a numa seção `Lacunas` ao fim do retorno; quem te despachou a põe na caixa. Não investigue além disso. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.

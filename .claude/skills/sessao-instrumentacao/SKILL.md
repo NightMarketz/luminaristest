@@ -24,13 +24,16 @@ seguinte**, que vai bater na regra 3 dela e parar.
 | Situação | Sessão correta |
 |---|---|
 | Já existe teste-guarda vermelho | `sessao-correcao` |
-| A lacuna **não está** no GAP-MAP | Nenhuma — a moratória suspende rodada de descoberta (`CLAUDE.md` §⛔) |
+| A lacuna **não está** no GAP-MAP nem na caixa do maestro (`scripts/lacunas.mjs`) | Nenhuma — a moratória suspende rodada de descoberta (`CLAUDE.md` §⛔) |
 | É feature ausente, não lacuna (o comportamento nunca existiu) | `sessao-planejamento` → `sessao-feature` |
 | Gate humano ou dado externo | Nenhuma — runbook humano |
 
 ## Onde achar os campos
 
 - **Lacuna:** `docs/operating-manual/GAP-MAP.md` — a linha exata, com nível (1–5 ou O) e a coluna Status.
+  Lacuna da caixa do maestro (id `L-…`, triada por ele) conta como listada: o campo Lacuna é o id + o `show` dela, a
+  autorização é a `D-2026-11-11-LACUNA-VAI-AO-MAESTRO`, e o passo 4 **não** edita o GAP-MAP (quem põe a linha é o
+  maestro, no PR só de docs do dia).
 - **Autorização:** a decisão do dono que priorizou aquela linha (o GAP-MAP registra que a triagem é
   decisão do dono sobre a lista, sem aparato novo). Se a lacuna virou nó do vault
   (`docs/plano/nos/PASSO-*.md` — ex.: GAP-MAP 7 = `PASSO-11`), a autorização é o campo `autorizacao` da
@@ -124,6 +127,19 @@ morde, e zero mudança em código de aplicação.
 ---
 
 ## Notas de operação neste repo (aditivas — não alteram as regras acima)
+
+**Achado fora de escopo vai à caixa do maestro, não morre no relatório** — OPS-007 (dono, chat, 2026-11-11 —
+`docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`). A regra de não corrigir o que está fora do escopo
+continua; muda o destino do achado:
+- O que é da sua tarefa você resolve antes de fechar: caso que a spec pede, teste que o seu diff exige, erro que o seu
+  código introduziu. Isso não é "fora de escopo".
+- Cada linha de "Achados fora de escopo" / "Lacunas de spec" vira uma entrada na caixa, antes do relatório:
+  `node scripts/lacunas.mjs add --local <arquivo:linha> --classe <defeito|debito|spec|feature|fork|gate> --o-que "…"
+  --evidencia "…" [--como-provar "…"] [--no <NÓ>] [--pr <n>] [--pai <id>]` (`--pai` = o id da lacuna que originou esta
+  sessão, se veio de uma). O id entra na linha do relatório e no corpo do PR.
+- 1ª linha do relatório final: `LACUNAS NA CAIXA: <n> (<ids>)` ou `LACUNAS NA CAIXA: 0`.
+- **Não envie a lacuna por `SendMessage` ao maestro**: turno aberto por mensagem de sessão não abre sessão, e a cadeia
+  para. O maestro lê a caixa quando volta.
 
 **Comando da suíte no passo 1 — não improvise.** O baseline errado é o modo mais barato de envenenar a
 sessão seguinte:

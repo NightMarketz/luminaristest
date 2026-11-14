@@ -93,3 +93,9 @@ resultado, não fracasso: o precedente do projeto é a varredura de browser que 
 - Ordem entre gates vem do `depende_de` das notas em `docs/plano/gates/`, não de preferência sua.
 - Toda afirmação "pré-condição X está ok" carrega a evidência própria colada (CBM-001 — comando
   ou leitura, nunca suposição).
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Pré-condição faltando no ambiente ou no código, que não é passo humano, vai à caixa como `defeito` ou `debito`; o que depende do dono, do contador ou de dado externo vai como `gate`.

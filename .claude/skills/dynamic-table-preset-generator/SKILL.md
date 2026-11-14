@@ -174,3 +174,9 @@ grep -n "<suiteKey>" server/src/features/dynamicTables/presets/index.ts   # deve
 - Não duplique campos que já existem em `presets/fields/` — reutilize os presets existentes
 - **Atenção runtime (não é erro de tsc):** o motor valida campos compostos obrigatórios (ex: criar `leads` exige `unitId` + `pipelineId` + `stageId` casados) e bloqueia hard-delete de registros referenciados (ex: um lead com `leadActivities` — apague as atividades antes). Reflita isso nos seeds/clients.
 - **Não crie a entidade-folha de um board sem o pai com etapas** (lição CRM): `leads` sem `pipeline` + `stages` no mesmo suite, ou sem os campos de relação `pipelineId`/`stageId` casados, deixa a UI **sem colunas e sem dados** — o board não tem por onde agrupar. Board/funil sempre traz pai (pipeline) + etapas (stages) + relações.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.
