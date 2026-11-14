@@ -346,7 +346,12 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
                     </div>
                     <div>
                       <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Plano Atual</p>
-                      <p className={`text-sm font-bold ${planStyle.text}`}>{PLAN_LABELS[currentPlan] || 'Gratuito'}</p>
+                      <p className={`text-sm font-bold ${planStyle.text}`}>
+                        {PLAN_LABELS[currentPlan] || 'Gratuito'}
+                        <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:bg-neutral-800 dark:text-gray-400">
+                          {t('planComingSoon', 'Em breve')}
+                        </span>
+                      </p>
                     </div>
                   </div>
                 </div>

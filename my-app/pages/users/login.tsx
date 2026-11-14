@@ -8,6 +8,7 @@ import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import { useTranslation } from 'next-i18next';
 import { setCookie } from 'cookies-next';
 import { resolveErrorMessage } from '../../lib/utils/error-handler';
+import { notify } from '../../lib/notifications/notify';
 import { AuthService } from '../../lib/services/auth.service';
 import { AuthSplitLayout } from '../../components/layout/AuthSplitLayout';
 import { FiMail, FiLock, FiAlertCircle, FiCheckCircle } from 'react-icons/fi';
@@ -125,9 +126,13 @@ function LoginPage(props: InferGetServerSidePropsType<typeof getServerSideProps>
               <label htmlFor="password" className="block text-sm font-bold text-slate-700 dark:text-slate-300 group-focus-within:text-blue-600 transition-colors">
                 {t('passwordPlaceholder')}
               </label>
-              <Link href="#" className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors">
+              <button
+                type="button"
+                onClick={() => notify(t('forgotPasswordSoon', 'A recuperação de senha por e-mail ainda não está disponível. Peça a redefinição ao administrador da sua conta.'), 'info')}
+                className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
+              >
                 {t('forgotPassword', 'Esqueceu a senha?')}
-              </Link>
+              </button>
             </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">

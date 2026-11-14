@@ -375,6 +375,8 @@
   "securityDescription": "Altere sua senha. Deixe em branco para manter a atual.",
   "rememberMe": "Lembrar-me",
   "forgotPassword": "Esqueceu a senha?",
+  "forgotPasswordSoon": "A recuperação de senha por e-mail ainda não está disponível. Peça a redefinição ao administrador da sua conta.",
+  "planComingSoon": "Em breve",
   "welcomeToLuminaris": "Bem-vindo ao {{appName}}",
   "luminarisDescription": "Centralize suas operações, otimize seu fluxo de trabalho e cresça seu negócio com nosso ecossistema de ERP impulsionado por IA.",
   "joinCommunity": "Junte-se a mais de 15 mil empresas que já transformaram sua estratégia de gestão digital.",

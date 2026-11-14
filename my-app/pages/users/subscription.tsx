@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { notify } from '../../lib/notifications/notify';
 import Link from 'next/link';
 import { useAuth } from '../../lib/context/AuthContext';
 import withAuth from '../../lib/hoc/withAuth';
@@ -129,7 +130,8 @@ function SubscriptionPage(props: InferGetServerSidePropsType<typeof getServerSid
     };
 
     const handleConfirm = () => {
-        // Purely visual — no backend call
+        // Sem cobrança nem troca de plano no backend ainda: fechar em silêncio parecia sucesso. Avisa o que (não) aconteceu.
+        notify('A contratação de planos ainda não está disponível. Nada foi alterado na sua conta.', 'info', 'Em breve');
         setShowConfirmModal(false);
         setSelectedPlan(null);
     };
