@@ -42,6 +42,9 @@ export function useAccountingData(governance?: GovernanceScope) {
 
   // Desmonte: descarta a resposta de uma busca de unidades que volta depois (o antigo `active` do efeito).
   const mountedRef = useRef(true);
+  // A última busca de unidades falhou? Só então `reload` sem `unitId` a refaz (sem falha, `unitId` vazio é legítimo:
+  // contador sem unidades próprias no modo cliente — religar `loadingUnits` ali tiraria o livro do cliente da tela).
+  const unitsFailedRef = useRef(false);
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -52,6 +55,7 @@ export function useAccountingData(governance?: GovernanceScope) {
   const loadUnits = useCallback(async () => {
     setLoadingUnits(true);
     setError(null);
+    unitsFailedRef.current = false;
     try {
       const tables = await DynamicTableService.getTables();
       const list: TableMetaLike[] = Array.isArray(tables?.data) ? (tables.data as TableMetaLike[]) : [];
@@ -77,6 +81,7 @@ export function useAccountingData(governance?: GovernanceScope) {
         setLoadingUnits(false);
       }
     } catch {
+      unitsFailedRef.current = true;
       if (mountedRef.current) {
         setError(tRef.current('view.error.units', 'Falha ao carregar as unidades.'));
         setLoadingUnits(false);
@@ -120,7 +125,8 @@ export function useAccountingData(governance?: GovernanceScope) {
     loadingUnits,
     loadingReport,
     error,
-    // Sem unidade escolhida a falha foi ao carregar as unidades: tentar de novo é buscá-las (`loadReport('')` não faz nada).
-    reload: () => (unitId ? loadReport(unitId) : loadUnits()),
+    // `unitId` vazio COM falha nas unidades: tentar de novo é buscá-las. Sem falha, segue `loadReport` (que com '' só zera
+    // o relatório), como antes — `reload` também é o onLedgerChange/onSuccess dos painéis e do modal.
+    reload: () => (!unitId && unitsFailedRef.current ? loadUnits() : loadReport(unitId)),
   };
 }

@@ -69,4 +69,24 @@ describe('useAccountingData — reload após falha ao carregar as unidades', () 
     await waitFor(() => expect(getTrialBalance).toHaveBeenCalledTimes(2));
     expect(getTables).toHaveBeenCalledTimes(1);
   });
+
+  it('R1 (rodada 2): sem unidades próprias e SEM falha, reload NÃO refaz a busca nem religa loadingUnits', async () => {
+    // Contador sem unidades próprias no modo cliente: unitId fica '' de propósito (não houve erro). O reload vem dos
+    // painéis (onLedgerChange etc.); refazer a busca religaria `loadingUnits` e tiraria o livro do cliente da tela.
+    getTables.mockResolvedValue({ data: [{ id: 'tbl-units', name: 'Units', internalName: 'units' }] });
+    getTableData.mockResolvedValue({ data: [] });
+
+    const { result } = renderHook(() => useAccountingData());
+    await waitFor(() => expect(result.current.loadingUnits).toBe(false));
+    expect(result.current.unitId).toBe('');
+    expect(result.current.error).toBeNull();
+
+    await act(async () => {
+      result.current.reload();
+    });
+
+    expect(getTables).toHaveBeenCalledTimes(1);
+    expect(result.current.loadingUnits).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
 });
