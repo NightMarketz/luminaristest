@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { RowExpandButton } from './RowExpandButton';
 import { useTranslation } from 'next-i18next';
-import { FiChevronDown, FiChevronRight, FiFileText, FiRotateCcw, FiShield, FiLink } from 'react-icons/fi';
+import { FiFileText, FiRotateCcw, FiShield, FiLink } from 'react-icons/fi';
 import {
   accountingService,
   type JournalEntryWithFullPostings,
@@ -173,7 +174,7 @@ function JournalEntryRow({
       >
         {/* expand icon */}
         <td className="w-8 px-3 py-2.5 text-neutral-500">
-          {expanded ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
+          <RowExpandButton expanded={expanded} onToggle={() => setExpanded((v) => !v)} label={t('journalEntries.col.expand', 'Expandir')} />
         </td>
         <td className="px-4 py-2.5 font-mono text-xs text-neutral-500">
           {entry.fiscalYear && entry.entryNumber != null
