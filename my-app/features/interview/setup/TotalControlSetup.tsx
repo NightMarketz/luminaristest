@@ -65,6 +65,8 @@ export default function TotalControlSetup() {
   // I4 PR-4 (F-I4-9 a): antes de criar, a pergunta fechada de regime/porte (+ ICMS em Presumido/Real).
   const [askFiscal, setAskFiscal] = useState(false);
   const { t, i18n } = useTranslation('common');
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const groupedPresets = useMemo(() => {
@@ -83,17 +85,18 @@ export default function TotalControlSetup() {
 
     async function fetchPresets() {
       setIsLoading(true);
+      setLoadError(null);
       try {
         setPresets(await SetupService.getPresets());
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : String(err));
+        setLoadError(err instanceof Error ? err.message : String(err));
       } finally {
         setIsLoading(false);
       }
     }
 
     fetchPresets();
-  }, [user, authLoading]);
+  }, [user, authLoading, reloadKey]);
 
   function handleSelectPreset(preset: Preset) {
     setSelectedPreset(preset);
@@ -188,13 +191,32 @@ export default function TotalControlSetup() {
     );
   }
 
-  if (error && !isFetchingDetails) {
-    return <div className="p-6 rounded-2xl bg-red-50 text-red-600 text-center border border-red-100">{error}</div>;
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center gap-4 p-6 rounded-2xl bg-red-50 text-red-600 text-center border border-red-100">
+        <p role="alert">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => setReloadKey((k) => k + 1)}
+          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700"
+        >
+          {t('onboardingRetry')}
+        </button>
+      </div>
+    );
   }
+
+  // Falha ao buscar detalhes ou ao criar: o aviso aparece sobre o passo atual, sem perder a escolha nem a customização.
+  const errorBanner = error ? (
+    <div role="alert" className="mb-6 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">
+      {error}
+    </div>
+  ) : null;
 
   if (currentStep === 'selecting_preset') {
     return (
       <div className="w-full">
+        {errorBanner}
         <div className="flex items-center gap-4 mb-10">
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/20">1</div>
           <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('onboardingTotalControlChooseBase')}</h2>
@@ -253,6 +275,7 @@ export default function TotalControlSetup() {
   if (currentStep === 'customizing_preset' && presetDetails) {
     return (
       <div className="w-full">
+        {errorBanner}
         <div className="flex items-center gap-4 mb-10">
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-500 text-white font-bold shadow-lg shadow-emerald-500/20">2</div>
           <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">{t('onboardingTotalControlSelectTables')}</h2>

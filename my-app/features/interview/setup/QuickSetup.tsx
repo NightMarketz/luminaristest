@@ -23,6 +23,9 @@ export default function QuickSetup() {
 
   const [presets, setPresets] = useState<Preset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // Falha ao carregar os modelos (tela sem formulário, com "tentar de novo") × falha ao criar (o formulário e a escolha ficam).
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -51,18 +54,19 @@ export default function QuickSetup() {
 
     async function verifyAndLoad() {
       setIsLoading(true);
+      setLoadError(null);
       try {
         setPresets(await SetupService.getPresets());
 
       } catch (err) {
-        setError((err instanceof Error ? err.message : String(err)) || t('onboardingQuickLoadError'));
+        setLoadError((err instanceof Error ? err.message : String(err)) || t('onboardingQuickLoadError'));
       } finally {
         setIsLoading(false);
       }
     }
 
     verifyAndLoad();
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, reloadKey]);
 
   async function handleCreateDashboard(fiscal: FiscalOnboarding) {
     if (!selectedPreset || !unitName.trim()) return;
@@ -91,8 +95,19 @@ export default function QuickSetup() {
     );
   }
 
-  if (error && !isCreating) {
-    return <div className="p-6 rounded-2xl bg-red-50 dark:bg-red-950/20 text-red-600 text-center border border-red-100 dark:border-red-900">{error}</div>;
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center gap-4 p-6 rounded-2xl bg-red-50 dark:bg-red-950/20 text-red-600 text-center border border-red-100 dark:border-red-900">
+        <p role="alert">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => setReloadKey((k) => k + 1)}
+          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700"
+        >
+          {t('onboardingRetry')}
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -149,8 +164,8 @@ export default function QuickSetup() {
             className="w-full !rounded-2xl border !border-neutral-200 !bg-white !px-4 !py-3 !text-neutral-900 focus:border-blue-500 focus:outline-none dark:!border-neutral-700 dark:!bg-neutral-800 dark:!text-white"
           />
         </div>
-        {error && isCreating && (
-          <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/20 text-red-600 border border-red-100 dark:border-red-900 text-sm">
+        {error && (
+          <div role="alert" className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/20 text-red-600 border border-red-100 dark:border-red-900 text-sm">
             {error}
           </div>
         )}
