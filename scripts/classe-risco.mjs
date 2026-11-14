@@ -3,8 +3,9 @@
 //   node scripts/classe-risco.mjs pr <n> [--json]        → lê o PR com `gh pr view`
 //   node scripts/classe-risco.mjs arquivos <caminho...>  → classifica uma lista local (ex.: git diff --name-only)
 // Verde  → a maestro mergeia sozinha com CI verde, sem conflito, fora de draft.
-// Vermelho → revisor-independente roda e o PR entra no lote diário do dono, que aprova por número.
-// Em dúvida, vermelho: a lista abaixo só cresce por decisão do dono.
+// Vermelho · lote: não → a maestro mergeia sozinha depois do PASS do revisor-independente (D-2026-11-10-METODO-FABLE-5-2).
+// Vermelho · lote: sim → lote diário do dono, que aprova por número (lista dura, vermelho de texto, major, draft).
+// Em dúvida, vermelho e lote: as duas listas abaixo só mudam por decisão do dono.
 import { execFileSync } from 'node:child_process';
 import { globToRegex } from './paralelo.mjs';
 
@@ -128,6 +129,70 @@ export const VERMELHO = [
   ['scripts/paralelo.mjs', 'globToRegex que a régua usa'],
 ].map(([glob, motivo]) => ({ glob, motivo, re: globToRegex(glob) }));
 
+// Lista dura (dono, 10/11, D-2026-11-10-METODO-FABLE-5-2): PR vermelho que toca um destes caminhos NÃO entra com o
+// PASS do revisor; segue no lote do dono. Vale só para PR que já é vermelho: não torna vermelho um PR verde.
+export const LOTE_DURO = [
+  ['server/prisma/**', 'schema ou migração'],
+  ['server/src/jobs/**/migrat*', 'migração de dado por job'],
+  ['server/src/middleware/auth.ts', 'autenticação'],
+  ['server/src/routes/auth.ts', 'rota de autenticação'],
+  ['server/src/lib/jwt*', 'emissão e verificação do token'],
+  ['**/authController*', 'controller de autenticação'],
+  ['**/authUtil*', 'utilitário de autenticação (authUtils, authUtilityController)'],
+  ['my-app/lib/context/AuthContext*', 'sessão do usuário no FE'],
+  ['my-app/lib/hoc/withAuth*', 'guarda de tela (withAuth)'],
+  ['server/src/features/dynamicTables/services/DynamicTableService.ts', 'motor DynamicTable'],
+  ['server/public/openapi.json', 'contrato público da API'],
+  ['**/*dtoShapeSnapshot*', 'teste do snapshot de shape dos DTOs'],
+  ['**/__dto-shapes__.json', 'snapshot de shape dos DTOs'],
+  ['my-app/types/contracts/**', 'contrato gerado do FE'],
+  // Pagamento: cobrança, conta de pagamento, provedor e relatório de liberação.
+  ['**/*ollectionCharge*', 'cobrança (pagamento)'],
+  ['**/*hargeReceivable*', 'cobrança do recebível'],
+  ['**/*eceivableCharge*', 'cobrança do recebível'],
+  ['**/*aymentAccount*', 'conta de pagamento'],
+  ['**/*aymentProvider*', 'provedor de pagamento'],
+  ['server/src/features/accounting/collection/**', 'provedor de cobrança'],
+  ['**/*eleaseReport*', 'relatório de liberação do provedor'],
+  ['**/*ebhook*', 'webhook'],
+  // DF-e: emissão, transmissão, assinatura e credencial.
+  ['server/src/features/accounting/dfe/**', 'emissão, transmissão e assinatura de DF-e'],
+  ['**/*dfeXmlSign*', 'assinatura XMLDSig do DF-e'],
+  ['**/*nfeSignature*', 'assinatura da NF-e'],
+  ['server/src/lib/nfse*', 'NFS-e: DPS, evento, leitura e assinatura'],
+  ['my-app/features/accounting/components/dfe/**', 'tela de emissão e assinatura de DF-e'],
+  ['**/*feAssinador*', 'assinador local do DF-e'],
+  ['**/assinador*', 'estado do assinador local'],
+  ['**/*iscalCertificate*', 'custódia do certificado fiscal'],
+  ['**/*iscalDocumentEmission*', 'emissão do documento fiscal'],
+  ['**/*feSigner*', 'assinador do DF-e'],
+  ['**/*feAssinatura*', 'resolução da assinatura do DF-e'],
+  ['**/*ompanySigner*', 'signatário da empresa'],
+  ['**/*scCredential*', 'credencial PSC'],
+  ['**/*scProvider*', 'provedor PSC'],
+  ['**/dfeEnvio*', 'envio do DF-e'],
+  ['**/*fePoll*', 'polling do DF-e'],
+  ['server/src/routes/dfe*', 'rota de DF-e'],
+  ['**/*einf*', 'EFD-Reinf'],
+  ['server/src/lib/reinf/**', 'XSD oficial da EFD-Reinf'],
+  // Pasta de decisão do dono: fica no lote com qualquer extensão (o .md já ficaria, por ser vermelho de texto).
+  ['docs/plano/gates/**', 'gate humano'],
+  ['docs/plano/decisoes/**', 'cédula de decisão do dono'],
+  ['docs/plano/trilhos/**', 'trilho travado'],
+  ['docs/plano/rejeitadas/**', 'decisão rejeitada'],
+  ['docs/adr/**', 'decisão de arquitetura'],
+  // Baselines e o próprio aparato de gate.
+  ['**/.dependency-cruiser*', 'baseline e regra do check:arch'],
+  ['**/eslint*.config.*', 'regra de lint que é gate'],
+  ['scripts/debt-ledger-check.mjs', 'ledger de dívida'],
+  ['.github/**', 'CI e automação do repositório'],
+  ['.claude/**', 'regra de agente, skill ou gate'],
+  ['CLAUDE.md', 'regra de agente'],
+  ['**/CLAUDE.md', 'regra de agente'],
+  ['scripts/classe-risco*', 'régua de merge por classe de risco'],
+  ['scripts/paralelo.mjs', 'globToRegex que a régua usa'],
+].map(([glob, motivo]) => ({ glob, motivo, re: globToRegex(glob) }));
+
 // "Bump x from 4.104.0 to 7.43.0" → major mudou. Grupo minor-patch do dependabot não traz versão.
 export function bumpMajor(titulo) {
   const m = /from v?(\d+)\.[\w.-]* to v?(\d+)\./.exec(titulo);
@@ -140,19 +205,26 @@ const SO_TEXTO = /\.md$/i;
 
 export function classificar({ arquivos, titulo = '', draft = false }) {
   const motivos = [];
+  const motivosLote = [];
   let revisor = false;
   for (const f of arquivos) {
     const hit = VERMELHO.find((v) => v.re.test(f));
     if (hit) {
       motivos.push(`${f} — ${hit.motivo}`);
-      if (!SO_TEXTO.test(f)) revisor = true;
+      if (SO_TEXTO.test(f)) motivosLote.push(`${f} — vermelho de texto (decisão do dono, sem revisor)`);
+      else revisor = true;
     }
+    const duro = LOTE_DURO.find((d) => d.re.test(f));
+    if (duro) motivosLote.push(`${f} — lista dura: ${duro.motivo}`);
   }
-  if (bumpMajor(titulo)) { motivos.push(`dependência major: ${titulo}`); revisor = true; }
-  if (/n[ãa]o mergear/i.test(titulo)) motivos.push('título pede para não mergear');
-  if (draft) motivos.push('PR em draft');
-  if (arquivos.length === 0) { motivos.push('sem lista de arquivos (em dúvida, vermelho)'); revisor = true; }
-  return { classe: motivos.length ? 'vermelho' : 'verde', motivos, revisor };
+  if (bumpMajor(titulo)) { motivos.push(`dependência major: ${titulo}`); motivosLote.push('dependência major'); revisor = true; }
+  if (/n[ãa]o mergear/i.test(titulo)) { motivos.push('título pede para não mergear'); motivosLote.push('título pede para não mergear'); }
+  if (draft) { motivos.push('PR em draft'); motivosLote.push('PR em draft'); }
+  if (arquivos.length === 0) { motivos.push('sem lista de arquivos (em dúvida, vermelho)'); motivosLote.push('sem lista de arquivos'); revisor = true; }
+  const vermelho = motivos.length > 0;
+  // lote só existe no vermelho: a lista dura não muda a classe de um PR verde.
+  const lote = vermelho && motivosLote.length > 0;
+  return { classe: vermelho ? 'vermelho' : 'verde', motivos, revisor, lote, motivosLote: lote ? motivosLote : [] };
 }
 
 function lerPr(n) {
@@ -177,6 +249,8 @@ if (isMain) {
   if (json) console.log(JSON.stringify(r));
   else {
     const rev = r.classe === 'vermelho' ? ` · revisor: ${r.revisor ? 'obrigatório' : 'não (só texto)'}` : '';
-    console.log([r.classe + rev, ...r.motivos.map((m) => `  - ${m}`)].join('\n'));
+    const lote = r.classe === 'vermelho' ? ` · lote: ${r.lote ? 'sim' : 'não (entra com revisor PASS)'}` : '';
+    console.log([r.classe + rev + lote, ...r.motivos.map((m) => `  - ${m}`),
+      ...r.motivosLote.map((m) => `  - lote: ${m}`)].join('\n'));
   }
 }

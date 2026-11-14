@@ -36,9 +36,10 @@ seguinte**, que vai bater na regra 3 dela e parar.
   (`docs/plano/nos/PASSO-*.md` — ex.: GAP-MAP 7 = `PASSO-11`), a autorização é o campo `autorizacao` da
   nota; vazio = não roteia (ORCH-006).
 - **Nó do vault, se houver:** o passo 4 atualiza o GAP-MAP **e** roda o fold no próprio PR
-  (`node scripts/plano-vault.mjs fold <NÓ> --pr <n>`, `docs/plano/README.md` §Fold).
-- **Nível de cerimônia:** aplique [OPS-006] (`.claude/skills/_OPERATING-GATES.md`). No nível leve esta
-  sessão e a `sessao-correcao` saem num só PR: commit `test:` (vermelho) e depois `fix:`.
+  (`node scripts/plano-vault.mjs fold <NÓ> --pr <n>`, `docs/plano/README.md` §Fold). Achado da faixa 1 da
+  auditoria de estruturas implícitas é exceção: o PR não edita o `GAP-MAP.md` (ver passo 4).
+- **Um PR só:** [OPS-006] (`.claude/skills/_OPERATING-GATES.md`; dono, 2026-11-10). Esta sessão e a
+  `sessao-correcao` saem sempre num só PR, na mesma sessão de trabalho: commit `test:` (vermelho) e depois `fix:`.
 - **Comportamento correto esperado:** uma frase. Se houver mais de uma leitura possível, **pare** — a
   regra 5 diz que interpretar comportamento esperado é decisão do dono.
 
@@ -88,9 +89,10 @@ pelo motivo da lacuna, verde no controle que só difere da condição que
 morde, e zero mudança em código de aplicação.
 
 ### Regras de escopo — invioláveis
-1. PROIBIDO corrigir. Se a correção parecer óbvia e de uma linha,
-   continua proibida — registre a observação no relatório. O fix
-   pertence à sessão de correção, com este teste como guarda.
+1. PROIBIDO corrigir no commit `test:`. Ele sozinho tem de ficar
+   vermelho pelo motivo certo. O fix entra depois, no commit `fix:` do
+   mesmo PR, pelo formulário da sessão de correção e com este teste
+   como guarda.
 2. PROIBIDO alterar código de aplicação para "facilitar o teste". Se a
    lacuna for genuinamente intestável sem mudança no código (falta de
    injeção, acoplamento), isso é um ACHADO — registre "intestável como
@@ -101,10 +103,14 @@ morde, e zero mudança em código de aplicação.
    quebrado envenena a sessão de correção seguinte.
 4. Um teste por lacuna, a lacuna do formulário. Casos adjacentes que
    "valeria cobrir junto" vão pra "Achados fora de escopo".
-5. Qualquer decisão não coberta por este documento — inclusive escolha
-   entre interpretações do comportamento correto esperado — deve ser
-   registrada e a execução pausada. Interpretar comportamento esperado
-   é decisão do dono, não sua.
+5. Escolha entre interpretações do comportamento correto esperado é
+   fork de produto: registre e pause. Interpretar comportamento esperado
+   é decisão do dono, não sua. O mesmo vale para fork de lei, de
+   arquitetura ou irreversível. Escolha de rotina (nome do caso,
+   fixture, arquivo do teste) você faz e declara em "Escolhas tomadas"
+   (dono, 2026-11-10, `D-2026-11-10-METODO-FABLE-5-2`). Na dúvida entre
+   rotina e fork, é fork. Campo do formulário com placeholder continua
+   sendo pausa imediata.
 
 ### Sequência obrigatória
 1. Rode a suíte atual e registre o estado (o que já falha antes de
@@ -116,7 +122,10 @@ morde, e zero mudança em código de aplicação.
    outro motivo, corrija O TESTE (nunca a aplicação) até a falha ser a
    certa.
 4. Atualize a linha da lacuna no GAP-MAP com a referência ao teste
-   (caminho + nome do caso).
+   (caminho + nome do caso). Exceção: achado da faixa 1 da auditoria de
+   estruturas implícitas não edita o `GAP-MAP.md` no PR (emenda de
+   10/11 da `D-2026-11-10-FAIXA1-MERGE-LIVRE`); a referência ao teste
+   vai no corpo do PR.
 5. Relatório final: teste criado, motivo exato da falha (colar a
    mensagem), confirmação de zero mudança em código de aplicação, e
    "Achados fora de escopo" (mesmo vazia).

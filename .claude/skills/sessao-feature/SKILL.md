@@ -13,7 +13,8 @@ metadata:
 # Sessão de feature — a spec é o limite superior E inferior
 
 Não implemente menos ("deixei preparado pra depois") nem mais ("aproveitei e já fiz"). Toda ambiguidade
-da spec é **lacuna de spec**: registra e pausa, nunca escolhe.
+da spec que seja fork de produto, de lei, de arquitetura ou irreversível é **lacuna de spec**: registra e
+pausa. Escolha de rotina você faz e declara (regra 2).
 
 ## Roteamento — quando NÃO é esta sessão
 
@@ -72,12 +73,18 @@ suposição no código). Nada além da spec.
 1. A spec é o limite superior E inferior: não implemente menos ("deixei
    preparado pra depois") nem mais ("aproveitei e já fiz"). Preparação
    pra feature futura só se a spec pedir explicitamente.
-2. Toda lacuna da spec — caso não coberto, decisão de formato não
-   especificada, comportamento ambíguo — deve ser registrada numa seção
-   "Lacunas de spec" e a execução PAUSADA nesse ponto. Nunca escolha um
-   caminho por conta própria, mesmo que pareça rotineiro ou de baixo
-   risco. Se houver partes independentes da lacuna, continue apenas
-   nelas e liste o que ficou bloqueado.
+2. Lacuna da spec que seja fork de produto, de lei, de arquitetura ou
+   irreversível — leituras diferentes levam a comportamento, regra
+   legal, fronteira de camada ou dado gravado materialmente diferente —
+   deve ser registrada numa seção "Lacunas de spec" e a execução PAUSADA
+   nesse ponto. Se houver partes independentes da lacuna, continue
+   apenas nelas e liste o que ficou bloqueado. Escolha de rotina (nome,
+   ordem, formato sem efeito de contrato, status HTTP dentro da mesma
+   classe) você faz como um colega cuidadoso e declara numa seção
+   "Escolhas tomadas" do relatório e do PR (dono, 2026-11-10,
+   `D-2026-11-10-METODO-FABLE-5-2`). Na dúvida entre rotina e fork, é
+   fork. Campo do formulário com placeholder continua sendo pausa
+   imediata.
 3. Não modifique nós vizinhos. Se o contrato de entrada recebido for
    insuficiente pra feature (falta campo, falta garantia), isso é lacuna
    de spec — registre e pause; não "resolva" mudando o outro módulo.
@@ -100,8 +107,8 @@ suposição no código). Nada além da spec.
    cada um com seu teste.
 4. Rode os testes do nó (por caminho) + testes de contrato; a suíte inteira é do CI.
 5. Relatório final: checklist com status por item, diff resumido, seção
-   "Lacunas de spec" (mesmo vazia) e seção "Achados fora de escopo"
-   (mesmo vazia).
+   "Lacunas de spec" (mesmo vazia), seção "Escolhas tomadas" (mesmo
+   vazia) e seção "Achados fora de escopo" (mesmo vazia).
 
 ---
 
@@ -116,8 +123,8 @@ minimalismo perde para o contrato quando os dois divergem.
 nunca DynamicTable; nunca injete serviço Prisma em `DynamicTableService`/`RuleContext`/`RulePlugin`.
 Integração cross-módulo sobe a controller/rota.
 
-**Reuse antes de recriar.** Consulte o codebase-memory para localizar o canônico (`search_graph`,
-`semantic_query`) e **confirme lendo o arquivo** (CBM-001). Bespoke só com divergência sancionada pelo
+**Reuse antes de recriar.** Localize o canônico por Grep e leitura (o codebase-memory é ferramenta
+disponível para pergunta estrutural, não passo obrigatório) e **confirme lendo o arquivo** (CBM-001). Bespoke só com divergência sancionada pelo
 critério de reuso, justificada no relatório.
 
 **Comandos de gate no passo 4:**

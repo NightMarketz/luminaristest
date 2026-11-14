@@ -25,7 +25,7 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
 - **Por que auditoria não substitui oráculo:** `docs/operating-manual/ORACLE-DEFICIT.md`.
 - **As 5 sessões de agente (um formulário por tipo de trabalho):** `sessao-planejamento` (produz
   BRIEF, não ratifica fork) → `sessao-feature` (executa a spec) · `sessao-instrumentacao`
-  (teste-guarda que falha pelo motivo certo) → `sessao-correcao` (fix mínimo) · `sessao-integracao`
+  (teste-guarda que falha pelo motivo certo) → `sessao-correcao` (fix mínimo; as duas num PR só, commits `test:` e `fix:`) · `sessao-integracao`
   (transporta branch revisada, não melhora). **Toda uma exige autorização citável do dono** (ORCH-006; no vault, o campo `autorizacao` da nota
   do nó — vazio não roteia, e o texto limita o escopo: "só ADR"/"sem 'executa'" não autoriza código),
   recusa o que não é dela, e trata campo com placeholder como decisão não coberta.
@@ -35,6 +35,11 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   implementar spec / instrumentar lacuna / corrigir lacuna / integrar branch **roda pela sessão**
   (invoque a skill e trabalhe pelo formulário) — executar esses tipos de mão livre é violação de
   escopo, não atalho. A autorização citável continua obrigatória; a sessão não a substitui.
+- **Escolha de rotina × fork (dono, 2026-11-10 — `docs/plano/decisoes/D-2026-11-10-METODO-FABLE-5-2.md`):** escolha de
+  rotina a sessão faz e declara no PR ("Escolhas tomadas"); pausa e pergunta só em fork de produto, de lei, de
+  arquitetura ou irreversível; campo de formulário com placeholder continua parando a sessão. **Congelados:** as skills geradoras e o pipeline orquestrador → implementador → revisor
+  não são invocados nem mantidos (valem o Contrato e os exemplos de referência). **Aposentados:** retornos/PROVA e o
+  agente `executor`; a prova é o CI do PR. Fable 5.2 planeja, Opus 5.5 implementa e revisa; Sonnet 5.5 só no teste da faixa 1.
 - **Gate humano e dado externo NÃO têm sessão de agente** — PVA, sign-off de browser, deploy, XML de
   NF-e, arquivo RFB. O artefato deles é `docs/operating-manual/RUNBOOK-FORMAT.md`: evidência colada
   (nunca frase), desfecho em 3 estados, assinatura humana. **Agente prepara o runbook e, sob comando
@@ -62,8 +67,8 @@ lê o código como o `tsc`; não reabre bancada, rodada nem revisor. Idem (dono,
 2026-10-23, F-OBS-13/14 de `ADR-OBSERVABILIDADE.md`): `catch` silencioso no ESLint do server (com o ledger de
 dívida que já existe) e o teste que descobre `jobs/*Scheduler.ts` e reprova scheduler sem caso de alerta.
 Idem (dono, 2026-10-28, `D-2026-10-28-FLUXO-AUTONOMO`): o `revisor-independente` roda **só em PR vermelho de código**
-(`scripts/classe-risco.mjs` → `revisor: obrigatório`; vermelho só de `.md` vai ao lote sem ele), antes do lote de merge
-do dono, em até 3 rodadas por PR, a 2ª e a 3ª só no diff novo (`D-2026-11-06-REVISAO-CONVERGENCIA`).
+(`scripts/classe-risco.mjs` → `revisor: obrigatório`; vermelho só de `.md` vai ao lote sem ele), antes do merge (da maestro
+no `lote: não`, do dono no lote), em até 3 rodadas por PR, a 2ª e a 3ª só no diff novo (`D-2026-11-06-REVISAO-CONVERGENCIA`).
 
 **Citação a `docs/audit/**` em comentário de teste, ADR ou doc é HISTÓRICA** — o caminho não existe
 mais; use `git show b617d8f1:<caminho>` se precisar.
@@ -95,8 +100,9 @@ Regra completa + anti-padrões proibidos em `.claude/skills/_ARCHITECTURE-CONTRA
 
 ## Antes de escrever código — reflexo obrigatório
 
-**1. Pergunte ao codebase-memory se o canônico já existe** (`search_graph`, `semantic_query`, `trace_path`,
-`detect_changes`). **[CBM-001]: o cbm localiza, não prova** — toda conclusão sobre o que o código *faz* se
+**1. Confira se o canônico já existe antes de criar** — por Grep e leitura; para pergunta estrutural (quem chama,
+o que quebra), o codebase-memory (`search_graph`, `trace_path`, `detect_changes`) é ferramenta disponível, não passo
+obrigatório (dono, 2026-11-10). **[CBM-001]: o cbm localiza, não prova** — toda conclusão sobre o que o código *faz* se
 confirma lendo o arquivo/teste. Tabela e regra integral em `docs/operating-manual/CLAUDE-RAIZ-DETALHE.md`.
 
 **2. Reuse o canônico** listado no §0 (GenericTable, Modal, StandardPagination, AnalyticsDashboard,
@@ -121,7 +127,7 @@ morde só no código solto; em dúvida, **o contrato prevalece**.
 - Tocou `.claude/skills/**` → `node .claude/skills/skill-audit/skill-audit.mjs run` antes de fechar
   (0 findings é gate). Gate cujo predicado lê ambiente se prova **na condição que falha** — detalhe
   (SG-005, #203) em `docs/operating-manual/CLAUDE-RAIZ-DETALHE.md`.
-- Nível de cerimônia por risco (leve × completo): **[OPS-006]** em `.claude/skills/_OPERATING-GATES.md`.
+- Lacuna mapeada sai num PR só, commits `test:` (vermelho) e `fix:`: **[OPS-006]** em `.claude/skills/_OPERATING-GATES.md`.
 
 ## Higiene de contexto
 - Contexto passou de ~180k tokens, ou fechou um nó/PR → feche a etapa, escreva o handoff (feito · pendente · próximo comando exato · arquivos) e peça sessão nova. Não emende outra tarefa nem espere a compactação.
@@ -140,11 +146,12 @@ morde só no código solto; em dúvida, **o contrato prevalece**.
 
 ## Merge por classe de risco (dono, 2026-10-28)
 `node scripts/classe-risco.mjs pr <n>` decide. **Verde** → a sessão maestro (`.claude/prompts/maestro.md`) mergeia
-sozinha (squash) com todos os checks verdes, sem conflito e fora de draft. **Vermelho** → revisor-independente e
-depois o **lote diário**: liste os PRs (número · título · motivo do vermelho · CI · veredito do revisor) e espere o
-dono confirmar por número. Fora da maestro, nenhuma sessão mergeia, nem verde. Regra em
-`docs/plano/decisoes/D-2026-10-28-FLUXO-AUTONOMO.md`. Exceção (dono, 2026-11-10): vermelho da faixa 1 da auditoria de
-estruturas implícitas entra como verde com revisor PASS — `docs/plano/decisoes/D-2026-11-10-FAIXA1-MERGE-LIVRE.md`.
+sozinha (squash) com todos os checks verdes, sem conflito e fora de draft. **Vermelho com `lote: não`** (código fora
+da lista dura; dono, 2026-11-10) → entra do mesmo jeito depois do **PASS do revisor-independente** no SHA de cabeça.
+**Vermelho com `lote: sim`** (lista dura `LOTE_DURO`, vermelho de texto, major, draft) → **lote diário**: liste os PRs
+(número · título · motivo do lote · CI · veredito do revisor) e espere o dono confirmar por número. Fora da maestro,
+nenhuma sessão mergeia, nem verde. Regras em `docs/plano/decisoes/D-2026-10-28-FLUXO-AUTONOMO.md` e
+`docs/plano/decisoes/D-2026-11-10-METODO-FABLE-5-2.md` (que absorve a exceção da faixa 1).
 
 ## Pilhas e tamanho de PR (dono, 2026-11-08)
 - **Um PR por item do GAP-MAP**, mergeado direto na `main` sempre que a dependência permitir.

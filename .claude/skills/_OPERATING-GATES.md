@@ -187,23 +187,16 @@ tabela de passos); ela não tem representação de fila, gate ou merge. Seu úni
 
 ---
 
-## [OPS-006] Cerimônia por risco — nível leve × nível completo
+## [OPS-006] Lacuna mapeada — um PR, dois commits
 
-Ratificado pelo dono em 2026-10-07 (F-1.1..F-1.3 de `docs/operating-manual/CERIMONIA-POR-RISCO-brief.md`).
-A cerimônia acompanha o risco do diff, não o tipo de pedido.
+Ratificado pelo dono em 2026-10-07 como "nível leve" (F-1.1..F-1.3 de
+`docs/operating-manual/CERIMONIA-POR-RISCO-brief.md`) e estendido a **toda** lacuna em 2026-11-10
+(`docs/plano/decisoes/D-2026-11-10-METODO-FABLE-5-2.md`). Os limites antigos do nível leve (≤ 30 linhas, fora de
+`prisma/**`, do contábil e do `auth.ts`) deixam de decidir o número de PRs: o risco do diff decide o **merge**
+(`scripts/classe-risco.mjs`: revisor e lote), não a divisão em sessões.
 
-**Nível leve** — vale só se **todas** forem verdade (o agente aplica e declara no PR; o dono pode vetar):
-
-1. O trabalho é `fix` ou `test` (lacuna mapeada, não feature).
-2. ≤ **30 linhas** de código de aplicação alteradas (testes não contam).
-3. Nenhum arquivo em `server/prisma/**` (schema ou migração).
-4. Nenhum arquivo em `server/src/features/accounting/**` ou `server/src/features/accountingBinding/**`
-   (contábil **e** fiscal vivem aí), nem em `server/src/middleware/auth.ts`.
-
-Qualquer "não" ⇒ **nível completo** (fluxo atual), sem discussão.
-
-**No nível leve:** instrumentação e correção viram **um PR com dois commits** — `test:` com o teste-guarda
-vermelho pelo motivo certo, depois `fix:` que o faz passar. O fold do vault entra no mesmo PR
+Instrumentação e correção saem **sempre num PR com dois commits**, na mesma sessão de trabalho — `test:` com o
+teste-guarda vermelho pelo motivo certo, depois `fix:` que o faz passar. O fold do vault entra no mesmo PR
 (`node scripts/plano-vault.mjs fold <NÓ> --pr <n>`). **Não muda:** autorização citável (ORCH-006),
 `tsc` limpo, teste falhando pelo motivo certo antes do fix.
 
@@ -220,7 +213,7 @@ vermelho pelo motivo certo, depois `fix:` que o faz passar. O fold do vault entr
 | OPS-003 | CBM-001 já enforça a metade estrutural; revisor rejeita claim comportamental sem fonte. Sub-regra *instrumento que erra em silêncio*: auto-probe barato (o `-v` removeu alguma linha?) executável na hora | prosa livre não é lintável; e o auto-probe é **auto-reportado** — ninguém vê o comando que o agente rodou, só a conclusão. O revisor independente pega isto **apenas** se o relatório colar o comando junto do resultado |
 | OPS-004 | item 5 vira artefato obrigatório do relatório (FAIL de forma se ausente) | passos 1–4 são processo, não gate |
 | OPS-005 | **probe objetivo** (`gh pr list --state open` — a única OPS com fonte externa, não auto-reportada); estado da fila vira artefato do relatório | o revisor independente **não** vê a fila (revisa um diff, não o estado de PRs do repo) — quem abre a frente é quem conta |
-| OPS-006 | predicado checável no diff (`git diff --numstat` + caminhos); os dois commits `test:`→`fix:` provam a ordem | a classificação é declarada pelo agente — o veto do dono é o freio |
+| OPS-006 | os dois commits `test:`→`fix:` provam a ordem | o resultado do commit `test:` é colado pelo agente; só o revisor independente (no vermelho de código) o reexecuta |
 
 Gaps declarados de propósito (OPS-001 gate 5 aplicado a este próprio doc): a metade auto-reportada
 dessas regras só fecha com **review independente** (`reviewer-independence-separate-agent`) — que já é

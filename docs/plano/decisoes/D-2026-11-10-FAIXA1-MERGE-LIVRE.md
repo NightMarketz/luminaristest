@@ -57,3 +57,9 @@ Cada PR mexia na própria linha do GAP-MAP, e cada merge dava conflito nos PRs s
 (questionário, 10/11): "Tirar o GAP-MAP dos PRs" e, para esta regra, "Trocar pela linha já na main". Os PRs abertos receberam um
 commit que devolve o `GAP-MAP.md` à versão da base; a seção é atualizada no #1208 (`[EM PR #n]` → `[CORRIGIDO dd/mm, #n]`). Daí
 as condições 1 e 3 e o "Fim" acima.
+
+## Absorvida em 10/11
+
+A [D-2026-11-10-METODO-FABLE-5-2](D-2026-11-10-METODO-FABLE-5-2.md) estendeu esta regra a todo PR vermelho de código fora da
+lista dura (`LOTE_DURO` do `scripts/classe-risco.mjs`), sem a condição do ID no título. A lista de 46 IDs acima fica como
+registro; a condição 3 (o PASS vale depois de rebase ou merge da `main` sem conflito em código) passou para a regra nova.

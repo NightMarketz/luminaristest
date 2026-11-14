@@ -15,6 +15,15 @@
 >   sub-disparam); o que saiu foi o empurrão de delegação no corpo.
 > - **Fable 5:** prescrição passo-a-passo *degrada* o output (ver seção própria).
 
+## Divisão de papéis desde 2026-11-10 (`docs/plano/decisoes/D-2026-11-10-METODO-FABLE-5-2.md`)
+
+Fable 5.2 planeja (BRIEF), Opus 5.5 implementa e revisa, Sonnet 5.5 está em teste só na faixa 1. Medição própria
+de 28/10 a 10/11 (na decisão): o revisor independente segue pegando defeito real em código do Opus 5.5, então ele
+fica; saiu o que era empurrão — pausa em escolha de rotina, duas sessões para teste e fix, cbm obrigatório,
+retornos/PROVA, geradoras passo a passo. O BRIEF escrito pelo Fable é contrato (comportamentos, schemas, forks),
+não passo a passo: a seção "Fable 5" abaixo vale para ele. **Grau:** os itens de "Fable 5" foram verificados na
+doc oficial do Fable 5 em 2026-07-08 e **não foram reconferidos para o 5.2**.
+
 ## Opus 5.5 — o que vale neste repo (modelo ativo)
 
 **1. Contrato ≠ empurrão.** Contratos deste repo (STOP DynamicTable×Prisma, cadeia de camadas,
