@@ -228,6 +228,7 @@ function CreateUserPage(props: InferGetServerSidePropsType<typeof getServerSideP
                     id="password"
                     name="password"
                     type="password"
+                    autoComplete="new-password"
                     required
                     minLength={6}
                     className="w-full pl-9 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-neutral-800 border border-gray-200/60 dark:border-gray-700/60 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all font-medium"
