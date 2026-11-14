@@ -581,7 +581,7 @@ function StatementsSubView({ unitId, glAccountId, accountLabel, onLedgerChange }
         </div>
       )}
       {!loading && statements.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/50">
+        <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/50">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-800 text-left text-neutral-400">
@@ -782,7 +782,7 @@ function PendingSubView({ unitId, glAccountId, onLedgerChange }: PendingSubViewP
                 {t('reconciliation.pending.lines.empty', 'Nenhuma linha pendente.')}
               </div>
             ) : (
-              <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/50">
+              <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/50">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-neutral-800 text-left text-neutral-400">
@@ -842,7 +842,7 @@ function PendingSubView({ unitId, glAccountId, onLedgerChange }: PendingSubViewP
                 {t('reconciliation.pending.postings.empty', 'Nenhum lançamento pendente.')}
               </div>
             ) : (
-              <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/50">
+              <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/50">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-neutral-800 text-left text-neutral-400">

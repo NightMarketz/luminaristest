@@ -294,7 +294,7 @@ function TieOutBlock({
   const diff = parseInt(tieOut.differenceCents, 10);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/50">
+    <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/50">
       <div className="flex items-center justify-between border-b border-neutral-800 px-4 py-2.5">
         <span className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
           {t('aging.tieOut.title', 'Tie-out subrazão × razão')}
