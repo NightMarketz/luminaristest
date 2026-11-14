@@ -86,8 +86,9 @@ function toError(err: unknown, fallback: string): SetupApiError {
  */
 export const SetupService = {
   /** GET /dashboard/presets — list the available dashboard presets. */
-  async getPresets(): Promise<Preset[]> {
-    const body = (await apiClient.get('/dashboard/presets')) as { data?: Preset[] };
+  async getPresets(locale?: 'pt' | 'en'): Promise<Preset[]> {
+    // `locale` (lacuna L-20261111-204322-37cb): nome/descrição do preset no idioma da UI; sem ele o servidor usa pt.
+    const body = (await apiClient.get(`/dashboard/presets${locale ? `?locale=${locale}` : ''}`)) as { data?: Preset[] };
     return body.data ?? [];
   },
 

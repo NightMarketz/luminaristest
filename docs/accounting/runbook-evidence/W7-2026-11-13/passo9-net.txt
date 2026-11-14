@@ -1,0 +1,40 @@
+GET /auth/me -> 304
+   res: {"success":true,"data":{"id":"cmwexzi42000gciucnzqlnzww","name":"W7 Tester","username":"w7-ia","email":"w7-ia@example.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-13T12:17:3
+GET /dynamic-tables -> 304
+   res: {"success":true,"data":[]}
+GET /dashboard/presets?locale=en -> 304
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","c
+GET /dashboard/presets?locale=en -> 304
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","c
+GET /dynamic-tables -> 304
+   res: {"success":true,"data":[]}
+GET /dashboard/presets?locale=pt -> 304
+   res: {"success":true,"data":[{"key":"beautySalon","name":"ERP Avançado para Salão de Beleza","description":"Solução completa de gestão para salões, com agenda, estoque, vendas, finanças e marketing.","cate
+GET /auth/me -> 304
+   res: {"success":true,"data":{"id":"cmwexzi42000gciucnzqlnzww","name":"W7 Tester","username":"w7-ia","email":"w7-ia@example.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-13T12:17:3
+GET /dashboard/presets?locale=pt -> 304
+   res: {"success":true,"data":[{"key":"beautySalon","name":"ERP Avançado para Salão de Beleza","description":"Solução completa de gestão para salões, com agenda, estoque, vendas, finanças e marketing.","cate
+GET /dynamic-tables -> 304
+   res: {"success":true,"data":[]}
+GET /auth/me -> 304
+   res: {"success":true,"data":{"id":"cmwexzi42000gciucnzqlnzww","name":"W7 Tester","username":"w7-ia","email":"w7-ia@example.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-13T12:17:3
+GET /dynamic-tables -> 304
+   res: {"success":true,"data":[]}
+GET /dashboard/presets?locale=pt -> 304
+   res: {"success":true,"data":[{"key":"beautySalon","name":"ERP Avançado para Salão de Beleza","description":"Solução completa de gestão para salões, com agenda, estoque, vendas, finanças e marketing.","cate
+POST /dashboard/ai/ChatInterview -> 200  req: {"messages":[],"stage":"GREETING","locale":"pt"}
+   res: {"response":"Olá! Para começarmos, por favor me conte sobre o seu negócio ou projeto para que eu possa entender como melhor ajudá-lo com a configuração do sistema.","nextStage":"DISCOVERING_BUSINESS"}
+POST /dashboard/ai/ChatInterview -> 200  req: {"messages":[{"sender":"ai","text":"Olá! Para começarmos, por favor me conte sobre o seu negócio ou projeto para que eu possa entender como melhor ajudá-lo com a configuração do sistema."},{"sender":"user","text":"Tenho um salão de beleza com 3 cadeiras e também vendo produtos."}],"stage":"DISCOVERING_BUSINESS","locale":"pt"}
+   res: {"response":"Quais serviços de beleza você oferece no seu salão?","nextStage":"DISCOVERING_BUSINESS"}
+POST /dashboard/ai/ChatInterview -> 200  req: {"messages":[{"sender":"ai","text":"Olá! Para começarmos, por favor me conte sobre o seu negócio ou projeto para que eu possa entender como melhor ajudá-lo com a configuração do sistema."},{"sender":"user","text":"Tenho um salão de beleza com 3 cadeiras e também vendo produtos."},{"sender":"ai","text":"Quais serviços de beleza você oferece no seu salão?"},{"sender":"user","text":"Quero controlar agenda, clientes, estoque e vendas."}],"stage":"DISCOVERING_BUSINESS","locale":"pt"}
+   res: {"response":"Entendi. Então, em resumo, seu negócio é: Um salão de beleza com 3 cadeiras que oferece serviços de beleza e vende produtos, buscando controlar agenda, clientes, estoque e vendas. Isso es
+POST /dashboard/ai/ChatInterview -> 200  req: {"messages":[{"sender":"ai","text":"Olá! Para começarmos, por favor me conte sobre o seu negócio ou projeto para que eu possa entender como melhor ajudá-lo com a configuração do sistema."},{"sender":"user","text":"Tenho um salão de beleza com 3 cadeiras e também vendo produtos."},{"sender":"ai","text":"Quais serviços de beleza você oferece no seu salão?"},{"sender":"user","text":"Quero controlar agenda, clientes, estoque e vendas."},{"sender":"ai","text":"Entendi. Então, em resumo, seu negócio é: Um salão de beleza com 3 cadeiras que oferece serviços de beleza e vende produtos, buscando controlar agenda, clientes, estoque e vendas. Isso está correto?"},{"sender":"user","text":"Sim, está correto."}],"stage":"CONFIRMING_BUSINESS","locale":"pt"}
+   res: {"response":"Olá! Estou super empolgado em compartilhar que encontrei o sistema \"Salão de Beleza\" perfeito para o seu negócio! Com ele, você poderá gerenciar seus clientes, agendar serviços, control
+GET /dashboard/presets?locale=pt -> 304
+   res: {"success":true,"data":[{"key":"beautySalon","name":"ERP Avançado para Salão de Beleza","description":"Solução completa de gestão para salões, com agenda, estoque, vendas, finanças e marketing.","cate
+POST /dashboard/ai/ChatInterview -> 200  req: {"messages":[{"sender":"ai","text":"Olá! Para começarmos, por favor me conte sobre o seu negócio ou projeto para que eu possa entender como melhor ajudá-lo com a configuração do sistema."},{"sender":"user","text":"Tenho um salão de beleza com 3 cadeiras e também vendo produtos."},{"sender":"ai","text":"Quais serviços de beleza você oferece no seu salão?"},{"sender":"user","text":"Quero controlar agenda, clientes, estoque e vendas."},{"sender":"ai","text":"Entendi. Então, em resumo, seu negócio é: Um salão de beleza com 3 cadeiras que oferece serviços de beleza e vende produtos, buscando controlar agenda, clientes, estoque e vendas. Isso está correto?"},{"sender":"user","text":"Sim, está correto."},{"sender":"ai","text":"Olá! Estou super empolgado em compartilhar que encontrei o sistema \"Salão de Beleza\" perfeito para o seu negócio! Com ele, você poderá gerenciar seus clientes, agendar 
+   res: {"response":"# Customização do Sistema \"ERP Avançado para Salão de Beleza\"\n\nPor favor, observe o painel de customização à esquerda para ver todas as funcionalidades atuais do seu sistema.\n\nO que
+POST /dashboard/ai/CustomizeFields -> 200  req: {"kind":"manual","sessionId":"1ad4945f-f2ca-44a3-9862-e71a7c372c32","tableKey":"leadProposals","changes":[{"action":"setHidden","name":"notes","hidden":true}]}
+   res: {"sessionId":"1ad4945f-f2ca-44a3-9862-e71a7c372c32","tableKey":"leadProposals","table":{"key":"leadProposals","name":"LeadProposals","description":"Tabela de LeadProposals","isSelected":true,"isCore":
+POST /dashboard/ai/CustomizeFields -> 200  req: {"kind":"message","sessionId":"1ad4945f-f2ca-44a3-9862-e71a7c372c32","tableKey":"leadProposals","message":"Adicione um campo chamado notas internas para guardar comentários sobre a proposta."}
+   res: {"sessionId":"1ad4945f-f2ca-44a3-9862-e71a7c372c32","tableKey":"leadProposals","table":{"key":"leadProposals","name":"LeadProposals","description":"Tabela de LeadProposals","isSelected":true,"isCore":

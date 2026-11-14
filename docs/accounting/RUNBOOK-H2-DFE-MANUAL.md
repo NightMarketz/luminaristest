@@ -230,3 +230,87 @@ parou no ramo de pendência previsto. Nenhum passo de emissão começou e nenhum
 - Rastreio: a nota `FE-INCR-DFE` e o `docs/plano/gates/H2.md` ficam para o fold do dono.
 - Assinatura do executor: agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-04). A assinatura atesta a
   execução e a conferência da evidência. Não substitui oráculo externo (Emissor Nacional, XML real).
+
+---
+
+## Execução 2026-11-11 — AI tester — BLOQUEADO no passo 2 (P7: Emissor Nacional)
+
+Executor: agente claude-sonnet-5-5, AI tester           Data: 2026-11-11 (17:10–17:45 -03:00)
+Autorização (citada literalmente): dono, chat, 2026-11-11: *"rode todos os runbooks que são possíveis"*; regra de assinatura em
+`docs/operating-manual/RUNBOOK-FORMAT.md` §Fronteira (emenda de 2026-10-29), só neste runbook e nesta execução.
+
+**Ambiente:** commit `54e5086d0` (= `origin/main` no início, branch `claude/rb-dfe-w7-318a11`). `server`: `npm run build` + `node dist/server.js` em `:4271`.
+Front: `next build` (`NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:4271/api`) + `next start -H 127.0.0.1 -p 3271`. Ambos dos arquivos desta worktree.
+Banco **descartável novo** (`file:./prisma/kro-rb.db`): `prisma migrate deploy`, `seed-accounting --i-have-a-backup` e `activate-salon-binding.mjs` nas duas
+unidades. `DFE_PARTNER=manual`, `DFE_PARTNER_ENV=homologacao`. O dev.db real não foi tocado. Tenant `seed-presumido`, unidade `seed-unit-presumido`
+(`cmwcjzhrz004mci2s6n27tv5f`). Runner `scripts/runbook-tela.mjs` (Chromium sem janela). Desvio de ambiente: as portas 3150/3160/4150/4160 já estavam
+ocupadas por processos de outras sessões (um deles ligado ao dev.db real); desisti delas e usei 3271/4271. Minhas chamadas de escrita foram todas para 4271.
+
+### Dados preparados (P4–P6), pela API do próprio app, com valores de teste
+
+| Dado | Como | Valor de teste |
+|---|---|---|
+| CNPJ da unidade | `PUT /dynamic-tables/<Units>/data/<unit>` | `11222333000181` (CNPJ fictício de DV válido) |
+| Perfil fiscal da unidade | `PUT /accounting/fiscal-profile` | `codMun 3550308`, ISS 2,00 % (`issAliquotaBp 200`), tributos aprox. fed/est 0,00 e mun 2,00, CST `000`, cClassTrib `000001` |
+| Cliente | `POST /dynamic-tables/<Customers>/data` | "Cliente DFE Teste", `taxId 52998224725` (CPF fictício de DV válido), id `cmwck7300000hcitkz237l1dv` |
+| Serviço | `POST /dynamic-tables/<Services>/data` + `PUT /accounting/service-fiscal-profiles/<id>` | "Corte DFE Teste" R$ 80,00, `cTribNac 060101` (Barbearia, cabeleireiros…), `cNBS 123456789` (fixture dos testes do projeto) |
+| Venda | `POST` Sales (Rascunho) + `POST` Sale Items (`Service`) + `PUT` status `Finalized`; `date` ISO UTC como a tela grava | `cmwck7e1j000ucitkxoraz7le`, R$ 80,00 |
+
+### Pré-condições
+
+| # | Resultado | Evidência |
+|---|---|---|
+| P1 | Pré-merge não se aplica: código = `main` (`54e5086d0`) | `git rev-parse --short HEAD` → `54e5086d0` |
+| P2 | **OK** | `GET /api/nfe/dfe/status -> 200` com `"enabled":true,"partner":"manual","ambiente":"homologacao"` |
+| P3 | **OK** | `curl http://127.0.0.1:3271/` → `200`, `next start` sobre `next build` |
+| P4 | **OK** (depois do preparo) | `GET /api/accounting/fiscal-profile?unitId=cmwcjzhrz004mci2s6n27tv5f` → `{"emissao":{"completo":true,"faltantes":[],"pendingExternalValidation":[],"opSimpNac":1},"codMun":"3550308","regEspTrib":0,"issAliquotaBp":200}`; o CNPJ `11222333000181` aparece como emitente na ficha |
+| P5 | **OK** | `PUT /accounting/service-fiscal-profiles/cmwck730n000lcitkx2dnte5o -> 200` `{"cTribNac":"060101","cTribNacDescricao":"Barbearia, cabeleireiros, manicuros, pedicuros e congêneres.","cNBS":"123456789",…}` |
+| P6 | **OK** | detalhe da venda: Finalizada, 1 item `Service`, cliente com CPF; lançamento da venda no razão (`GET /accounting/entries` → `Receita…`, id `cmwck7e3s0018citkm4bh4oaz`). [print](runbook-evidence/DFE-MANUAL-2026-11-11/passo1-00-venda-detalhe.png) |
+| P7 | **NÃO se sustenta** para o agente: o acesso ao Emissor Nacional com certificado/login do emitente é dado externo; o CNPJ da unidade é fictício e não existe no portal | — |
+| P8 | **OK** (exercitada) | `POST /api/nfe/dfe/documents -> 200`, não `400 infDPS.dCompet`, com a venda de `date` ISO: [rede](runbook-evidence/DFE-MANUAL-2026-11-11/passo2-net.txt) |
+| P9 | Não exercitada: depende de documento `REJECTED` (passo 5, portal) | — |
+
+### Passos
+
+**Passo 1 — PASSOU.** Venda aberta pela lista (Financeiro → Vendas → "Ver Detalhes"), clique em "Emitir NFS-e". O modal mostra "Documentos a emitir (um por
+código de serviço): 1" e "Total dos serviços: R$ 80,00", botões Cancelar | Confirmar, sem lista de pendências e sem aviso de diferença com o razão.
+```text
+POST /api/nfe/dfe/preview -> 200  req: {"unitId":"cmwcjzhrz004mci2s6n27tv5f","saleId":"cmwck7e1j000ucitkxoraz7le","kind":"NFSE"}
+(modal) Emitir NFS-e · Documentos a emitir (um por código de serviço): 1 · Total dos serviços: R$ 80,00 · Cancelar | Confirmar
+```
+[print do detalhe](runbook-evidence/DFE-MANUAL-2026-11-11/passo1-00-venda-detalhe.png) ·
+[print do modal](runbook-evidence/DFE-MANUAL-2026-11-11/passo1-01-modal-emitir.png) ·
+[texto](runbook-evidence/DFE-MANUAL-2026-11-11/passo1-01-modal-emitir.txt) · [rede](runbook-evidence/DFE-MANUAL-2026-11-11/passo1-net.txt)
+
+**Passo 2 — metade feita; a outra metade BLOQUEADA (P7).** "Confirmar" executado: `POST /api/nfe/dfe/documents -> 200` e a ficha "Ficha para o Emissor
+Nacional — tentativa 1" abriu com as 4 seções (1. Pessoas, 2. Serviço, 3. Valores, 4. Emitir NFS-e). Os valores batem com o preparo: data `11/11/2026`,
+emitente `11222333000181`, município `3550308`, tomador CPF `52998224725` "Cliente DFE Teste", `06.01.01`, NBS `123456789`, valor `80,00`, alíquota `2,00`,
+tributos aprox. `0,00 / 0,00 / 2,00`, CST `000`, cClassTrib `000001`, e o botão "Registrar retorno".
+[print da ficha](runbook-evidence/DFE-MANUAL-2026-11-11/passo2-00-ficha.png) · [texto](runbook-evidence/DFE-MANUAL-2026-11-11/passo2-00-ficha.txt) ·
+[rede](runbook-evidence/DFE-MANUAL-2026-11-11/passo2-net.txt). A parte que exige o portal (emitir, baixar o XML, "Registrar retorno", faixa verde de
+"Releitura") **não foi executada**: sem certificado do emitente, e um XML sintético não seria retorno do portal. Nada foi colado como retorno. O portal
+não foi aberto, então não há o que colar de F-FE-DFE-9.
+
+**Passos 3–10 — BLOQUEADOS, não executados** (dependem do Emissor Nacional, P7, ou de decisão do dono):
+- 3 (divergência), 5 (rejeição), 6 (reenvio; depende também de P9) e 7 (cancelamento, XML do evento, PV-1/F-FE-DFE-9): precisam emitir ou recusar no portal.
+- 4 (PV-1..PV-10): é medição do portal.
+- 8: o portal envia ao tomador? Medição no portal.
+- 9: exige `DFE_PARTNER_ENV=producao` e nota autorizada, com valor fiscal. Decisão do dono.
+- 10 (MEI): exige empresa MEI e o município do CNPJ real no portal.
+
+### Desfecho (execução 2026-11-11)
+[x] BLOQUEADO — no passo 2: o passo 1 passou e o "Confirmar" gerou a ficha corretamente (P8 fechada), mas a pré-condição P7 (acesso ao Emissor Nacional
+com o certificado do emitente, dado externo) não se sustenta. A emissão no portal e tudo que dela depende (passo 2, parte do portal, e passos 3–10) não foi
+executado. Um documento fiscal em `AWAITING` (tentativa 1, id `cmwcke3aw0001cig04aq9qwh4`) ficou no banco descartável.
+
+### Registro (execução 2026-11-11)
+- **Verificado agora, e que a execução de 04/11 não alcançou:** P4–P6 e P8 de pé; passo 1 (modal "Documentos a emitir: 1"); ficha da tentativa 1 com os campos certos.
+  Ficam para o dono: o portal (P7), PV-1..PV-10, o XML do evento e o passo 9.
+- **Para destravar o resto:** acesso ao Emissor Nacional (homologação = produção restrita) com o certificado de um emitente real e o CNPJ dele na unidade.
+  Depois, repete-se o preparo acima com esse CNPJ e segue-se do passo 2.
+- Achados no caminho: (i) as portas 3150/3160/4150/4160 estavam com servidores de outras sessões, um deles ligado ao dev.db real. O `next start`/`node` da segunda sessão morre com
+  EADDRINUSE e quem testa passa a conversar com o servidor errado; só notei porque o login devolveu um usuário criado em 24/09.
+- Lacunas registradas: 0 (a) e 3 na execução do W7 desta mesma sessão. `scripts/lacunas.mjs` ainda não está em `origin/main` (só no commit `cf863ba72`, branch `claude/lacunas-debitos-tecnicos-7fc8e5`); usei o script desse commit. O achado acima (portas) é de ambiente, não de código, e vai só no corpo do PR.
+- Rastreio: `docs/plano/nos/FE-INCR-DFE.md` (`estado_detalhe`) atualizado nesta execução; `docs/plano/gates/H2.md` fica para o fold do dono.
+- Assinatura do executor: agente claude-sonnet-5-5, AI tester, sob autorização do dono (chat, 2026-11-11). A assinatura atesta a execução e a conferência da
+  evidência. Não substitui oráculo externo (Emissor Nacional, XML real).

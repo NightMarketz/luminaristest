@@ -1,0 +1,43 @@
+Luminaris
+🇺🇸
+EN
+w7-ga
+W
+Set Up Your System
+
+Select the best mode to start organizing your operation and managing your KPIs.
+
+Quick Mode
+Total Control
+AI Interview
+AI interview
+
+Hi! To get started, please tell me about your business or project so I can understand how best to help you set up the system.
+
+I run a small hair salon called Studio Aurora in Sao Paulo with 3 stylists and 40 clients a week.
+
+What specific services do you offer at Studio Aurora?
+
+We do haircuts, coloring and manicures. I want to control schedule, stock, sales and finances.
+
+Got it. So, in short, your business is: A small hair salon in Sao Paulo called Studio Aurora offering haircuts, coloring, and manicures, serving 40 clients a week with a need to manage scheduling, stock, sales, and finances. Is that correct?
+
+Yes, that sounds right. Please continue.
+
+Hey there! I'm excited to share that I found the perfect system for your beauty salon! With this, you can easily manage your clients, schedule appointments, offer services, track products, and handle sales, all while keeping your employees organized and informed. Plus, I recommend activating the Contacts and Opportunities modules for even more insights, but you can uncheck them if you'd like. Would you prefer to create the system now or customize it first?
+
+Great! Your system will be created directly with the default settings.
+
+Before creating the system: how is your company taxed? If you don't know, your accountant can tell us later.
+
+Tax regime
+MEI (Individual Micro-Entrepreneur)
+Simples Nacional
+Presumed Profit (Lucro Presumido)
+Actual Profit (Lucro Real)
+I don't know — the accountant will tell
+Large company? (assets over R$ 240M or revenue over R$ 300M in the previous year)
+Yes
+No
+I don't know
+Create system
