@@ -1,0 +1,59 @@
+[navegador] C:\Users\smurf\AppData\Local\ms-playwright\chromium_headless_shell-1254\chrome-headless-shell-win64\chrome-headless-shell.exe
+
+== logout {}
+
+== login {}
+[net] POST /api/auth/login -> 200  req: {"identifier":"seed-real","password":"<redigida>","rememberMe":false}
+   res: {"success":true,"data":{"user":{"id":"cmufn7te50279cixko3lvgj5x","name":"Seed REAL","username":"seed-real","email":"seed-real@seed.local","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-09-24T14:44:28.685Z","updatedAt":"2026-10-30T02:35:57.345Z"},"token":"<redigido>"}}
+url após login: http://127.0.0.1:3160/pt
+
+== goto {"url":"/accounting"}
+
+== selectUnit {"unitId":"cmuw4z7zj02ehcii0st3unfr4"}
+
+== tab {"text":"Compliance"}
+
+== text {"name":"passo19d-01-entregas","sel":"[data-testid=delivery-history]","max":2500}
+[texto [data-testid=delivery-history]]
+Entregas
+Todos os status
+QUEUED
+SENT
+FAILED
+Período	Contador	Status	Tentativas	Quando / motivo	Ações
+01/01/2025 – 31/12/2025	CONTADOR H2 19 AI TESTER R2	SENT	1	11/11/2026, 17:20:21	
+Detalhe
+
+01/01/2025 – 31/12/2025	CONTADOR H2 19 AI TESTER	SENT	1	04/11/2026, 13:15:16	
+Detalhe
+[/texto]
+
+== eval {"js":"[...document.querySelectorAll('[data-testid=delivery-history] button')].map(b=>b.innerText.trim())"}
+[eval] ["Detalhe","Detalhe"]
+
+== shot {"name":"passo19d-01-entregas"}
+[print] docs/accounting/runbook-evidence/H2-2026-11-11/passo19d-01-entregas.png
+
+== clickInRow {"row":"CONTADOR H2 19 AI TESTER R2","text":"Detalhe","rowSel":"[data-testid=delivery-history] tr"}
+
+== sleep {"ms":1000}
+
+== text {"name":"passo19d-02-detalhe-entrega","sel":"[role=dialog]","max":2500}
+[texto [role=dialog]]
+Entrega cmwckcnr…
+
+FORMULÁRIO ADMINISTRATIVO
+
+01/01/2025 – 31/12/2025 · SENT · 1
+
+ECD sha256 983aa26e9540 · ECF sha256 5001f61e69db
+
+0. ECD · cmw2b8rf… · 983aa26e9540
+1. ECF (Lucro Real) · cmw2b9cv… · 5001f61e69db
+2. Balancete · cmwck8j8… · 6802ff944355
+[/texto]
+
+== shot {"name":"passo19d-02-detalhe-entrega"}
+[print] docs/accounting/runbook-evidence/H2-2026-11-11/passo19d-02-detalhe-entrega.png
+
+[fim] ok
