@@ -152,7 +152,14 @@ function UserListPage({ }: UserListPageProps) {
               <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
             </div>
             <p className="text-xl font-bold mb-2 text-gray-900 dark:text-white tracking-tight">{t('userListErrorPrefix')}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">{error}</p>
+            <p role="alert" className="text-sm text-gray-500 dark:text-gray-400 mb-8">{error}</p>
+            <button
+              type="button"
+              onClick={() => void fetchUsers(currentPage)}
+              className="mb-3 px-6 py-3 rounded-2xl text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-all active:scale-95"
+            >
+              {t('try_again', 'Try again')}
+            </button>
             <Link href="/" className="px-6 py-3 rounded-2xl text-sm font-bold shadow-xl shadow-gray-900/10 hover:shadow-gray-900/20 bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 transition-all active:scale-95">
               {t('userListGoHomepage')}
             </Link>

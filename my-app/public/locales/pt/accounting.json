@@ -6,6 +6,7 @@
     "loadingUnits": "Carregando…",
     "noUnit": "Nenhuma unidade",
     "selectUnitPrompt": "Selecione uma unidade para visualizar os dados contábeis.",
+    "retry": "Tentar novamente",
     "balancete": "Balancete",
     "balanced": "Balanceado (Σdébito = Σcrédito)",
     "unbalanced": "Desbalanceado — verifique o razão",

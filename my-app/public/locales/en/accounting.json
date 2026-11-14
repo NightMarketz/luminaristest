@@ -6,6 +6,7 @@
     "loadingUnits": "Loading…",
     "noUnit": "No unit",
     "selectUnitPrompt": "Select a unit to view the accounting data.",
+    "retry": "Try again",
     "balancete": "Trial Balance",
     "balanced": "Balanced (Σdebit = Σcredit)",
     "unbalanced": "Unbalanced — check the ledger",
