@@ -10,6 +10,7 @@ import type {
   ChartType,
 } from '../../../dashboard/category-views/finance/types/analytics.types';
 import { useCrmAnalytics } from '../../hooks/useCrmAnalytics';
+import { CrmLoadError } from '../CrmLoadError';
 import type { ChartDataPoint, CrmDatePreset } from '../../../../lib/services/crm.service';
 
 /** Luminaris analytics palette (shared with the rest of the dashboard charts). */
@@ -114,7 +115,7 @@ function toChartInputs(spec: ChartSpec, title: string): { chart: ChartPreset; da
 
 export function CrmAnalyticsDashboard() {
   const { t } = useTranslation('crm');
-  const { datePreset, setDatePreset, data, loading, error } = useCrmAnalytics();
+  const { datePreset, setDatePreset, data, loading, error, retry } = useCrmAnalytics();
 
   const cardMap = useMemo(
     () => new Map(data.cards.map((c) => [c.name, c])),
@@ -168,13 +169,9 @@ export function CrmAnalyticsDashboard() {
         ))}
       </div>
 
-      {error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-300">
-          {error}
-        </div>
-      ) : null}
+      {error ? <CrmLoadError message={error} onRetry={() => void retry()} /> : null}
 
-      {loading ? (
+      {error ? null : loading ? (
         <div className="flex min-h-[300px] items-center justify-center">
           <div className="flex flex-col items-center gap-3">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />

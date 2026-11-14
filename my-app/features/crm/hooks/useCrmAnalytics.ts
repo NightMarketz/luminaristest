@@ -35,5 +35,7 @@ export function useCrmAnalytics() {
     void reload(datePreset);
   }, [datePreset, reload]);
 
-  return { datePreset, setDatePreset, data, loading, error };
+  const retry = useCallback(() => reload(datePreset), [reload, datePreset]);
+
+  return { datePreset, setDatePreset, data, loading, error, retry };
 }

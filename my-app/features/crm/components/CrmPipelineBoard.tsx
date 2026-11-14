@@ -11,6 +11,7 @@ import {
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import FloatingActionButton from '../../dashboard/components/shared/FloatingActionButton';
+import { CrmLoadError } from './CrmLoadError';
 import { LeadCard } from './LeadCard';
 import { Lead360Modal } from './Lead360Modal';
 import { ProposalCaptureModal } from './ProposalCaptureModal';
@@ -205,13 +206,9 @@ export function CrmPipelineBoard() {
         </div>
       </div>
 
-      {error ? (
-        <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-300">
-          {error}
-        </div>
-      ) : null}
+      {error ? <CrmLoadError message={error} onRetry={() => void reload()} /> : null}
 
-      {loading ? (
+      {error ? null : loading ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('common.loading', 'Carregando…')}</p>
       ) : columns.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('pipeline.no_stages', 'Nenhuma etapa configurada.')}</p>

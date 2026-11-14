@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { CrmLoadError } from './CrmLoadError';
 import { useTranslation } from 'next-i18next';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -25,8 +26,9 @@ interface CalendarEvent {
  */
 export function MeetingsCalendar() {
   const { t } = useTranslation('crm');
-  const { loading: loadingActs, rows: activities } = useCrmTable('leadActivities');
-  const { rows: leads } = useCrmTable('leads');
+  const { loading: loadingActs, error: actsError, reload: reloadActs, rows: activities } = useCrmTable('leadActivities');
+  const { error: leadsError, reload: reloadLeads, rows: leads } = useCrmTable('leads');
+  const loadError = actsError ?? leadsError;
 
   const events = useMemo<CalendarEvent[]>(() => {
     const nameById = new Map(leads.map((l) => [l.id, String(l.data?.leadName ?? t('detail.unnamed_lead', 'Unnamed lead'))]));
@@ -62,9 +64,13 @@ export function MeetingsCalendar() {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-      <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-        {loadingActs ? t('meetings.loading', 'Carregando…') : t('meetings.count', { count: events.length, defaultValue: '{{count}} reuniões encontradas' })}
-      </p>
+      {loadError ? (
+        <CrmLoadError message={loadError} onRetry={() => void Promise.all([reloadActs(), reloadLeads()])} />
+      ) : (
+        <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+          {loadingActs ? t('meetings.loading', 'Carregando…') : t('meetings.count', { count: events.length, defaultValue: '{{count}} reuniões encontradas' })}
+        </p>
+      )}
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
