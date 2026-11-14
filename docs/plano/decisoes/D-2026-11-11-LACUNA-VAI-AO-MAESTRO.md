@@ -5,7 +5,7 @@ dominio: "processo"
 titulo: "Lacuna, débito ou achado fora de escopo que uma sessão encontra vai à caixa do maestro, e o maestro abre a sessão que o resolve"
 estado: "decided"
 autorizacao: "dono, chat, 2026-11-11: \"se as sessões que estão realizando tarefas acharem lacunas, elas precisam enviar essas lacunas já direto pro orquestrador e o orquestrador já vai lançar outras sessões que vão resolver essas lacunas que ficaram. Senão fica lá esperando parado e perdendo tempo.\""
-atualizado: "2026-11-11"
+atualizado: "2026-11-14"
 ---
 # D-2026-11-11-LACUNA-VAI-AO-MAESTRO
 
@@ -93,3 +93,23 @@ planejamento, tudo. Então, porque isso é uma característica do seu modelo. En
   própria (D-2026-11-06-REVISAO-CONVERGENCIA, dono, 06/11). Agora o revisor o põe na caixa e o maestro o despacha pelo
   passo 3b. O trilho continua separado do PR revisado, que segue sem FAIL por ele.
 - Versão portável no `docs/operating-manual/PORTABLE-GUIDE.md`.
+
+## Emenda de 14/11: o script alcança toda sessão da máquina
+
+Dono, chat, 2026-11-14: "Vamos escrever o script lacunas e deixar pronto para que qualquer sessão alcance ele"; no
+questionário do mesmo dia escolheu "Global na máquina".
+
+**Medido em 14/11:** `scripts/lacunas.mjs` só existe em worktree cortada depois do #1233. Das 55 worktrees da máquina, 2
+tinham o arquivo; a checkout principal não tinha. Nelas `node scripts/lacunas.mjs add` morria com "Cannot find module" e
+a lacuna se perdia. O script também saía calado, sem rodar e com exit 0, quando o seu caminho tinha espaço ou acento.
+
+- `node scripts/lacunas.mjs instalar` copia o script para `~/.claude/tools/lacunas/lacunas.mjs`. A cópia aceita os
+  mesmos comandos e grava na mesma caixa (`<git-common-dir>/lacunas/`), de qualquer worktree:
+  `node "$HOME/.claude/tools/lacunas/lacunas.mjs" add …` (Bash e PowerShell).
+- A fonte continua sendo `scripts/lacunas.mjs`, versionado. Quem mudar o script sobe `VERSAO` e roda `instalar`; enquanto
+  a cópia estiver atrás, todo comando rodado do repo avisa no stderr. `instalar` recusa trocar uma cópia mais nova por
+  uma mais velha.
+- A cópia funciona em qualquer repositório git, cada um com a sua caixa. Fora do Luminaris não há maestro lendo: lá a
+  caixa é só registro, e o cartão de sessão ou a pergunta ao dono continuam obrigatórios (`~/.claude/CLAUDE.md`).
+- **Fora do alcance:** sessão na nuvem não enxerga o `.git` desta máquina. Lacuna achada lá continua indo na seção
+  "Achados fora de escopo" do relatório e do PR, e quem recebe o resultado aqui põe na caixa.

@@ -45,7 +45,8 @@ CICLO
    Fork não coberto pelo BRIEF: pare o nó e me reporte o fork com contexto (evidência lida, opções, recomendada)."
    Nó sem BRIEF mas com autorização de planejamento → sessao-planejamento. Nó sem 'executa' → só lista.
    Todo brief de sessão termina com: "Lacuna fora do teu escopo vai à caixa (`node scripts/lacunas.mjs add`, regra
-   D-2026-11-11-LACUNA-VAI-AO-MAESTRO §1); a do teu escopo você resolve. 1ª linha do relatório: LACUNAS NA CAIXA: <n>.
+   D-2026-11-11-LACUNA-VAI-AO-MAESTRO §1; se a tua worktree não tem esse arquivo, o mesmo script está em
+   `node "$HOME/.claude/tools/lacunas/lacunas.mjs" add`); a do teu escopo você resolve. 1ª linha do relatório: LACUNAS NA CAIXA: <n>.
    Não me mande lacuna por SendMessage."
 
 3b. Lacunas da caixa. Para cada lacuna `aberta`, o destino da tabela da D-2026-11-11-LACUNA-VAI-AO-MAESTRO §2, sem
