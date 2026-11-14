@@ -25,7 +25,10 @@ export function GradientHeader({ title, subtitle, avatar, badges, right, childre
           ) : null}
           <div className="min-w-0">
             {badges ? <div className="mb-1 flex items-center gap-2">{badges}</div> : null}
-            <h1 className="truncate text-2xl font-black tracking-tight text-gray-900 dark:text-white md:text-3xl">
+            <h1
+              title={title}
+              className="line-clamp-2 text-2xl font-black tracking-tight text-gray-900 [overflow-wrap:anywhere] dark:text-white md:text-3xl"
+            >
               {title}
             </h1>
             {subtitle ? <p className="mt-1 text-sm font-semibold text-gray-500 dark:text-gray-400">{subtitle}</p> : null}
