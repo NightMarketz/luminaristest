@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLatestRequest } from './useLatestRequest';
 import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
 import { fetchAllRows } from '../lib/crmFetch';
 import type { CrmRecord } from './useCrmData';
@@ -39,11 +40,15 @@ export function useLeadTasks(leadId: string): LeadTasksState {
   const [tasksTableId, setTasksTableId] = useState<string | null>(null);
   const [rows, setRows] = useState<CrmRecord[]>([]);
 
+  const begin = useLatestRequest();
+
   const reload = useCallback(async () => {
+    const isCurrent = begin();
     setLoading(true);
     setError(null);
     try {
       const tablesRes = await DynamicTableService.getTables();
+      if (!isCurrent()) return;
       const tables: DynTable[] = (tablesRes?.data ?? []) as DynTable[];
       const tasksTable = tables.find((x) => x?.internalName === 'tasks') ?? null;
       setTasksTableId(tasksTable?.id ?? null);
@@ -52,13 +57,16 @@ export function useLeadTasks(leadId: string): LeadTasksState {
         setRows([]);
         return;
       }
-      setRows((await fetchAllRows(tasksTable.id)) as CrmRecord[]);
+      const fetched = (await fetchAllRows(tasksTable.id)) as CrmRecord[];
+      if (!isCurrent()) return;
+      setRows(fetched);
     } catch (e) {
+      if (!isCurrent()) return;
       setError(e instanceof Error ? e.message : 'Falha ao carregar tarefas');
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, []);
+  }, [begin]);
 
   useEffect(() => {
     void reload();

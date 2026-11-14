@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLatestRequest } from './useLatestRequest';
 import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
 import { fetchAllRows } from '../lib/crmFetch';
 
@@ -88,11 +89,15 @@ export function useCrmData(): CrmData {
   const [opportunities, setOpportunities] = useState<CrmRecord[]>([]);
   const [opportunitiesTableId, setOpportunitiesTableId] = useState<string | null>(null);
 
+  const begin = useLatestRequest();
+
   const reload = useCallback(async () => {
+    const isCurrent = begin();
     setLoading(true);
     setError(null);
     try {
       const tablesRes = await DynamicTableService.getTables();
+      if (!isCurrent()) return;
       const tables: DynTable[] = (tablesRes?.data ?? []) as DynTable[];
 
       const leadsTable = resolveTable(tables, 'leads');
@@ -115,16 +120,18 @@ export function useCrmData(): CrmData {
         pull(opportunitiesTable),
       ]);
 
+      if (!isCurrent()) return;
       setLeads(leadRows);
       setStages(stageRows);
       setPipelines(pipelineRows);
       setOpportunities(opportunityRows);
     } catch (e) {
+      if (!isCurrent()) return;
       setError(e instanceof Error ? e.message : 'Falha ao carregar dados do CRM');
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, []);
+  }, [begin]);
 
   useEffect(() => {
     void reload();
