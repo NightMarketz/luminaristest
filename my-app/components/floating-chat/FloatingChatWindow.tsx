@@ -25,6 +25,27 @@ export function FloatingChatWindow() {
     const resizeStartSize = useRef({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
     const [isAnimating, setIsAnimating] = useState(false);
     const [shouldRender, setShouldRender] = useState(false);
+    const [viewport, setViewport] = useState(() => ({
+        w: typeof window !== 'undefined' ? window.innerWidth : 1280,
+        h: typeof window !== 'undefined' ? window.innerHeight : 800,
+    }));
+
+    // Em tela estreita a janela encolhe até caber (margem 10 px de cada lado).
+    const effWidth = Math.min(size.width, Math.max(viewport.w - 20, 0));
+    const effHeight = Math.min(size.height, Math.max(viewport.h - 20, 0));
+    const effLeft = Math.max(10, Math.min(position.x, viewport.w - effWidth - 10));
+
+    useEffect(() => {
+        const onResize = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
+        onResize();
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
+
+    // Ao abrir, o foco entra na janela (antes ficava no body).
+    useEffect(() => {
+        if (shouldRender && isOpen) windowRef.current?.focus();
+    }, [shouldRender, isOpen]);
 
     // Handle mount/unmount animations
     useEffect(() => {
@@ -42,8 +63,8 @@ export function FloatingChatWindow() {
     // Ensure position is within viewport on mount
     useEffect(() => {
         if (typeof window !== 'undefined' && isOpen) {
-            const maxX = window.innerWidth - size.width - 20;
-            const maxY = window.innerHeight - size.height - 20;
+            const maxX = window.innerWidth - effWidth - 20;
+            const maxY = window.innerHeight - effHeight - 20;
 
             const boundedX = Math.max(20, Math.min(position.x, maxX));
             const boundedY = Math.max(20, Math.min(position.y, maxY));
@@ -53,7 +74,7 @@ export function FloatingChatWindow() {
             }
             currentPos.current = { x: boundedX, y: boundedY };
         }
-    }, [isOpen, size.width, size.height]);
+    }, [isOpen, effWidth, effHeight]);
 
     // DRAG HANDLERS
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -153,13 +174,16 @@ export function FloatingChatWindow() {
     return (
         <div
             ref={windowRef}
+            role="dialog"
+            aria-label="Chat Assistente"
+            tabIndex={-1}
             className={`fixed z-[9999] rounded-xl overflow-hidden transition-all duration-200 ${isAnimating ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
                 }`}
             style={{
-                left: position.x,
+                left: effLeft,
                 top: position.y,
-                width: size.width,
-                height: size.height,
+                width: effWidth,
+                height: effHeight,
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             }}
             onMouseDown={handleMouseDown}
