@@ -145,6 +145,8 @@ describe('FixedAssetsPanel', () => {
 
   it('"Taxas": origem + link "fonte"; "mostrar ocultas" pede includeHidden=true; ocultar confirma e nunca apaga', async () => {
     vi.mocked(fixedAssetsService.hideRate).mockResolvedValue(rate({ hiddenAt: '2026-10-03T00:00:00.000Z' }));
+    // L-14: só CUSTOM se oculta — a linha do Anexo III (r1) não tem botão; a taxa própria (r9) tem.
+    vi.mocked(fixedAssetsService.listRates).mockResolvedValue([rate({}), rate({ id: 'r9', ncm: null, description: 'Própria', source: 'CUSTOM', sourceUrl: null })]);
     render(<FixedAssetsPanel unitId="u1" />);
     goTo('Taxas');
     const tr = (await screen.findByText('Computadores')).closest('tr') as HTMLElement;
@@ -157,11 +159,13 @@ describe('FixedAssetsPanel', () => {
     await waitFor(() => expect(fixedAssetsService.listRates).toHaveBeenLastCalledWith('u1', true));
 
     // a recarga desmonta a tabela (loading) — reconsulta a linha em vez de usar a referência velha
-    const fresh = (await screen.findByText('Computadores')).closest('tr') as HTMLElement;
+    const anexo = (await screen.findByText('Computadores')).closest('tr') as HTMLElement;
+    expect(within(anexo).queryByRole('button', { name: 'Ocultar' })).toBeNull();
+    const fresh = screen.getByText('Própria').closest('tr') as HTMLElement;
     fireEvent.click(within(fresh).getByRole('button', { name: 'Ocultar' }));
     expect(within(dialog()).getByText(/bens que já usam a taxa continuam com o snapshot/)).toBeInTheDocument();
     fireEvent.click(within(dialog()).getByRole('button', { name: 'Confirmar' }));
-    await waitFor(() => expect(fixedAssetsService.hideRate).toHaveBeenCalledWith('r1', 'u1'));
+    await waitFor(() => expect(fixedAssetsService.hideRate).toHaveBeenCalledWith('r9', 'u1'));
   });
 
   it('"Taxas" — nova taxa CUSTOM: % → basis points; justificativa obrigatória', async () => {

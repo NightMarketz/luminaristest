@@ -1,0 +1,68 @@
+Contabilidade
+
+Razão de partida dobrada — balancete por unidade
+
+Unidade
+Unidade C7 Ativacao
+seed-unit-presumido
+Balancete
+Períodos
+Lançamentos
+Aprovações
+Contas a Pagar
+Contas a Receber
+Aging
+Fluxo de Caixa Projetado
+Contrapartes
+Razão
+Plano de Contas
+BP
+DRE
+DFC
+Comparativo
+Livro Diário
+Importação/Exportação
+Conciliação
+NF-e
+Compliance
+Dimensões
+Imobilizado
+Perfil fiscal
+Parâmetros legais
+Política contábil
+Apuração
+Pendências
+Cobrança
+Kit de setor
+Imobilizado
+
+Bens, classes, taxas de depreciação e as contas que a depreciação mensal e a baixa usam.
+
+Bens
+Classes
+Taxas
+Contas
+Mês de competência
+Rodar depreciação
+Reconciliar
+
+Depreciação de 2026-11: 0 lançada(s), 0 ignorada(s), 2 com falha.
+
+Bem	Falha
+BEM-C7-01	Período contábil 2026/11 não está aberto para lançamentos.Abrir períodos
+BEM-C7-02	Período contábil 2026/11 não está aberto para lançamentos.Abrir períodos
+Todos os status
+Aguardando ativação
+Ativo
+Totalmente depreciado
+Baixado
+Todas as classes
+MAQ-C7 — Máquinas e equipamentos C7
+TER-C7 — Terrenos C7 (não depreciável)
+Novo bem
+Código	Descrição	Classe	Custo	Deprec. acumulada	Valor líquido	Status	Aquisição	Ativação	Ações
+BEM-C7-01	Cadeira hidráulica de corte C7	Máquinas e equipamentos C7	R$ 5.000,00	R$ 37,50	R$ 4.962,50	Ativo	15/09/2026	01/10/2026	
+Baixar
+
+BEM-C7-02	Secador profissional C7	Máquinas e equipamentos C7	R$ 3.000,00	R$ 25,00	R$ 2.975,00	Ativo	20/09/2026	01/10/2026	
+Baixar

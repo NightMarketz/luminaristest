@@ -54,7 +54,8 @@ export interface DepreciationRatesSectionProps {
 /**
  * Seção "Taxas" (FE-INCR-FIXED-ASSETS itens 23–26): catálogo do Anexo III (IN RFB 1.700/2017) + taxas `CUSTOM`.
  * O 1º `GET` do escopo semeia o Anexo III no BE (lazy) — aqui é só um carregamento normal, sem botão "semear".
- * Sem edição (o BE não tem rota). "Ocultar" nunca apaga: o bem que já usa a taxa mantém o snapshot.
+ * Sem edição (o BE não tem rota). "Ocultar" nunca apaga: o bem que já usa a taxa mantém o snapshot, e só vale
+ * para taxa `CUSTOM` (L-14) — o Anexo III é tabela de plataforma e não tem botão.
  */
 export function DepreciationRatesSection({ unitId }: DepreciationRatesSectionProps) {
   const { t, tRef } = useAccountingT();
@@ -195,7 +196,8 @@ export function DepreciationRatesSection({ unitId }: DepreciationRatesSectionPro
                     </td>
                     <td className={`${td} max-w-[16rem] truncate text-xs text-neutral-400`} title={r.justification ?? undefined}>{r.justification ?? ''}</td>
                     <td className={td}>
-                      {!hidden && (
+                      {/* L-14: só taxa CUSTOM se oculta — linha do Anexo III é da plataforma e o BE responde 404. */}
+                      {!hidden && r.source === 'CUSTOM' && (
                         <button type="button" onClick={() => { setHideError(null); setToHide(r); }} className={`${smallBtn} hover:border-amber-700 hover:text-amber-300`}>
                           <FiEyeOff size={11} /> {t('fixedAssets.rate.hide', 'Ocultar')}
                         </button>
