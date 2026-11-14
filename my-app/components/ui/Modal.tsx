@@ -9,9 +9,7 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   maxWidth?: string;
-  showCloseButton?: boolean;
   footer?: React.ReactNode;
-  headerActions?: React.ReactNode;
   isDirty?: boolean;
   themeColor?: string; // e.g. "bg-blue-600", "bg-purple-600"
   /** Linha abaixo do título. Ausente = "Formulário Administrativo" (padrão de sempre); `null` = sem linha. */
