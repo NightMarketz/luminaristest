@@ -85,6 +85,7 @@
     "name": "Nome",
     "pipeline": "Pipeline",
     "pipeline_ph": "Selecione um pipeline",
+    "load_error": "Não foi possível carregar os pipelines.",
     "amount": "Valor",
     "currency": "Moeda",
     "win_probability": "Win %",

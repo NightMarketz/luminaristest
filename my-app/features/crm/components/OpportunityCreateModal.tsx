@@ -55,12 +55,16 @@ export function OpportunityCreateModal({
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Falha ao carregar pipelines/contas: sem isto o "Criar" ficava desabilitado (pipeline vazio) sem dizer por quê.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Load the pipelines + accounts (by internalName, fetch-all) when the modal opens.
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
     (async () => {
+      setLoadFailed(false);
       try {
         const tablesRes = await DynamicTableService.getTables();
         const tables: DynTable[] = (tablesRes?.data ?? []) as DynTable[];
@@ -77,13 +81,14 @@ export function OpportunityCreateModal({
         if (!cancelled) {
           setPipelines([]);
           setAccounts([]);
+          setLoadFailed(true);
         }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, [isOpen, reloadKey]);
 
   // Reset the form each time the modal (re)opens — prefill name with the lead name
   // and default the account link when the lead is already converted.
@@ -184,6 +189,15 @@ export function OpportunityCreateModal({
             className={inputClass}
           />
         </div>
+
+        {loadFailed ? (
+          <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-300">
+            <span>{t('opp.load_error', 'Não foi possível carregar os pipelines.')}</span>
+            <button type="button" onClick={() => setReloadKey((k) => k + 1)} className="rounded-lg border border-rose-300 px-2 py-1 dark:border-rose-800">
+              {t('common.retry', 'Tentar novamente')}
+            </button>
+          </div>
+        ) : null}
 
         <div>
           <label className={labelClass} htmlFor={`${uid}-2`}>{t('opp.pipeline', 'Pipeline')} *</label>
