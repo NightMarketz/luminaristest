@@ -18,7 +18,7 @@ import { AccountingView } from '../AccountingView';
  */
 
 // L-20261113-152222-e69d: o erro da carga é configurável por teste (padrão: sem erro)
-const hookState = vi.hoisted(() => ({ error: null as string | null, reload: vi.fn() }));
+const hookState = vi.hoisted(() => ({ error: null as string | null, unitsFailed: false, reload: vi.fn(), retryUnits: vi.fn() }));
 
 vi.mock('../hooks/useAccountingData', () => ({
   useAccountingData: () => ({
@@ -29,7 +29,9 @@ vi.mock('../hooks/useAccountingData', () => ({
     loadingUnits: false,
     loadingReport: false,
     error: hookState.error,
+    unitsFailed: hookState.unitsFailed,
     reload: hookState.reload,
+    retryUnits: hookState.retryUnits,
   }),
 }));
 
@@ -233,6 +235,7 @@ describe('AccountingView — erro de carga e lançamento (e69d)', () => {
     vi.clearAllMocks();
     cleanup();
     hookState.error = null;
+    hookState.unitsFailed = false;
   });
 
   it('erro da carga: role=alert com "Tentar novamente" que chama reload', () => {
@@ -241,6 +244,15 @@ describe('AccountingView — erro de carga e lançamento (e69d)', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Falha ao carregar o balancete');
     fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
     expect(hookState.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('erro ao carregar as unidades: "Tentar novamente" chama retryUnits, não reload', () => {
+    hookState.error = 'Falha ao carregar as unidades.';
+    hookState.unitsFailed = true;
+    render(<AccountingView />);
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+    expect(hookState.retryUnits).toHaveBeenCalledTimes(1);
+    expect(hookState.reload).not.toHaveBeenCalled();
   });
 
   it('Novo Lançamento: se o plano de contas não carrega, o modal NÃO abre com o select vazio', async () => {

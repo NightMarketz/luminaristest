@@ -157,7 +157,7 @@ export function AccountingView() {
   }, [activeAssignments, chosenContext, assignmentsLoaded, ownUnitsEmpty]);
   const governance = useMemo(() => (selectedAssignment ? toGovernanceScope(selectedAssignment) : undefined), [selectedAssignment]);
 
-  const { units, unitId: ownUnitId, setUnitId, report, loadingUnits, loadingReport, error, reload } =
+  const { units, unitId: ownUnitId, setUnitId, report, loadingUnits, loadingReport, error, unitsFailed, reload, retryUnits } =
     useAccountingData(governance);
   useEffect(() => { setOwnUnitsEmpty(!loadingUnits && units.length === 0); }, [loadingUnits, units.length]);
   const unitId = governance ? governance.unitId : ownUnitId;
@@ -377,7 +377,7 @@ export function AccountingView() {
           <span>{error}</span>
           <button
             type="button"
-            onClick={() => void reload()}
+            onClick={() => void (unitsFailed ? retryUnits() : reload())}
             className="rounded-lg border border-red-800 px-3 py-1 text-xs font-semibold text-red-200 hover:bg-red-900/40"
           >
             {t('view.retry', 'Tentar novamente')}

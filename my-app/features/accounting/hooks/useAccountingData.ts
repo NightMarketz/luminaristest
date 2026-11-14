@@ -42,9 +42,8 @@ export function useAccountingData(governance?: GovernanceScope) {
 
   // Desmonte: descarta a resposta de uma busca de unidades que volta depois (o antigo `active` do efeito).
   const mountedRef = useRef(true);
-  // A última busca de unidades falhou? Só então `reload` sem `unitId` a refaz (sem falha, `unitId` vazio é legítimo:
-  // contador sem unidades próprias no modo cliente — religar `loadingUnits` ali tiraria o livro do cliente da tela).
-  const unitsFailedRef = useRef(false);
+  // A última busca de unidades falhou? Só o banner usa (retry); o `reload` dos painéis nunca busca unidades.
+  const [unitsFailed, setUnitsFailed] = useState(false);
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -55,7 +54,7 @@ export function useAccountingData(governance?: GovernanceScope) {
   const loadUnits = useCallback(async () => {
     setLoadingUnits(true);
     setError(null);
-    unitsFailedRef.current = false;
+    setUnitsFailed(false);
     try {
       const tables = await DynamicTableService.getTables();
       const list: TableMetaLike[] = Array.isArray(tables?.data) ? (tables.data as TableMetaLike[]) : [];
@@ -81,8 +80,8 @@ export function useAccountingData(governance?: GovernanceScope) {
         setLoadingUnits(false);
       }
     } catch {
-      unitsFailedRef.current = true;
       if (mountedRef.current) {
+        setUnitsFailed(true);
         setError(tRef.current('view.error.units', 'Falha ao carregar as unidades.'));
         setLoadingUnits(false);
       }
@@ -125,8 +124,11 @@ export function useAccountingData(governance?: GovernanceScope) {
     loadingUnits,
     loadingReport,
     error,
-    // `unitId` vazio COM falha nas unidades: tentar de novo é buscá-las. Sem falha, segue `loadReport` (que com '' só zera
-    // o relatório), como antes — `reload` também é o onLedgerChange/onSuccess dos painéis e do modal.
-    reload: () => (!unitId && unitsFailedRef.current ? loadUnits() : loadReport(unitId)),
+    unitsFailed,
+    // Banner, falha ao carregar as unidades (`unitsFailed`): busca-as de novo.
+    retryUnits: loadUnits,
+    // Refaz o balancete. É também o onLedgerChange/onSuccess dos painéis e do modal: NUNCA busca unidades (religar
+    // `loadingUnits` tira o livro do cliente da tela no modo contador e remonta os painéis — #1263, rodadas 2 e 3).
+    reload: () => loadReport(unitId),
   };
 }
