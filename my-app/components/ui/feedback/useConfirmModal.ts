@@ -61,6 +61,7 @@ export function useConfirmModal(): UseConfirmModalReturn {
 
     const handleConfirm = useCallback(async () => {
         if (!options) return;
+        let failed = false;
         try {
             setIsLoading(true);
             await options.onConfirm();
@@ -68,15 +69,20 @@ export function useConfirmModal(): UseConfirmModalReturn {
         } catch (err) {
             // Absorve o erro para não causar Uncaught Promise Rejection (que derruba o Next.js).
             // Erro do apiClient já virou toast (`notified`); qualquer outro é avisado aqui (F1-N3).
+            failed = true;
             console.error('[useConfirmModal] Action failed (caught in handleConfirm):', err);
             if (!wasNotified(err)) {
                 notify(err instanceof Error && err.message ? err.message : t('actionFailed', 'Não foi possível concluir a ação.'), 'error', t('errorTitle', 'Erro'));
             }
         } finally {
             setIsLoading(false);
-            setIsOpen(false);
-            resolveRef.current?.();
-            resolveRef.current = null;
+            // Falhou: o diálogo fica aberto (a falha já virou toast) para tentar de novo ou cancelar; fechar aqui
+            // fazia a ação parecer concluída.
+            if (!failed) {
+                setIsOpen(false);
+                resolveRef.current?.();
+                resolveRef.current = null;
+            }
         }
     }, [options, t]);
 
