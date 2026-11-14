@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { RowExpandButton } from './RowExpandButton';
 import { useTranslation } from 'next-i18next';
-import { FiChevronDown, FiChevronRight, FiPlusCircle, FiEdit2, FiSend, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import { FiPlusCircle, FiEdit2, FiSend, FiCheckCircle, FiXCircle } from 'react-icons/fi';
 import {
   entryApprovalsService,
   type ApprovalEntry,
@@ -94,6 +95,7 @@ interface EntryRowProps {
 }
 
 function EntryRow({ entry, actions }: EntryRowProps) {
+  const { t } = useTranslation('accounting');
   const [expanded, setExpanded] = useState(false);
   return (
     <>
@@ -102,7 +104,7 @@ function EntryRow({ entry, actions }: EntryRowProps) {
         onClick={() => setExpanded((v) => !v)}
       >
         <td className="w-8 px-3 py-2.5 text-neutral-500">
-          {expanded ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
+          <RowExpandButton expanded={expanded} onToggle={() => setExpanded((v) => !v)} label={t('approvals.col.expand', 'Expandir')} />
         </td>
         <td className="px-4 py-2.5 tabular-nums text-neutral-300">{formatDate(entry.date)}</td>
         <td className="max-w-xs px-4 py-2.5 text-neutral-100">

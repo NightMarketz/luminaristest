@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { RowExpandButton } from './RowExpandButton';
 import { useTranslation } from 'next-i18next';
-import { FiChevronDown, FiChevronRight, FiPlusCircle, FiDollarSign, FiXCircle, FiRotateCcw, FiSend, FiList } from 'react-icons/fi';
+import { FiPlusCircle, FiDollarSign, FiXCircle, FiRotateCcw, FiSend, FiList } from 'react-icons/fi';
 import {
   accountsReceivableService,
   CHARGEABLE_RECEIVABLE_STATUSES,
@@ -145,7 +146,7 @@ function ReceivableRow({ receivable, onReceive, onCancel, onUndoReceipt, chargeS
         onClick={() => hasReceipts && setExpanded((v) => !v)}
       >
         <td className="w-8 px-3 py-2.5 text-neutral-500">
-          {hasReceipts ? (expanded ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />) : null}
+          {hasReceipts ? <RowExpandButton expanded={expanded} onToggle={() => setExpanded((v) => !v)} label={t('contasAReceber.col.expand', 'Expandir')} /> : null}
         </td>
         <td className="px-4 py-2.5 text-neutral-100">
           <span className="line-clamp-1 font-medium">{receivable.customerName}</span>
