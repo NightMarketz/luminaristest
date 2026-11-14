@@ -76,6 +76,11 @@ export function DashboardSidebar({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  // Em tela estreita (w-64 = 256 px de 375) a barra nasce recolhida.
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia?.('(max-width: 767px)').matches) setIsCollapsed(true);
+  }, []);
+
   // Fallback for props if they are not provided (already using t in parent usually, but safer here)
   const displaySeedingText = seedingText || t('sidebar.seeding', 'Populando...');
   const displaySeedBtnText = seedDataText || t('sidebar.seed_data', 'Popular dados');

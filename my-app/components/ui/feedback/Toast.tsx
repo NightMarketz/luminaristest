@@ -72,7 +72,7 @@ export function Toast({ id, type, message, title, duration = 5000, onClose }: To
                 ${type === 'warning' ? 'border-amber-500/20 bg-amber-50/95 dark:bg-amber-950/30' : ''}
                 ${type === 'info' ? 'border-blue-500/20 bg-blue-50/95 dark:bg-blue-950/30' : ''}
                 
-                min-w-[350px] max-w-[450px]
+                sm:min-w-[350px] max-w-[min(450px,calc(100vw_-_2rem))]
             `}
         >
             <div className={`

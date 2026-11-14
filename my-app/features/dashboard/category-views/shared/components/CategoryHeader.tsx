@@ -37,7 +37,7 @@ export function CategoryHeader({
 
     return (
         <header className="px-4 pt-3 pb-3 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-neutral-900 sticky top-0 z-40 min-h-[64px]">
-            <div className="flex items-center justify-between w-full">
+            <div className="flex flex-wrap items-center justify-between gap-y-2 w-full">
                 <div className="flex items-center gap-4 lg:gap-6">
                     {onBack && (
                         <button
