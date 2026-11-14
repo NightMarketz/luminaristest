@@ -17,6 +17,7 @@ import { UnitStockRow } from './UnitStockRow';
 import { RelationCell } from '../../shared/components/RelationCell';
 import { RowActionsCell } from '../../shared/components/RowActionsCell';
 import { useRenderTypedValue } from '../../../shared/hooks/useRenderTypedValue';
+import { activatableProps } from '../../shared/hooks/a11yProps';
 import type {
     DynamicRecord,
     ProductData,
@@ -138,7 +139,8 @@ export function ProductRow({
         <React.Fragment>
             {/* Primary Product Row - Clickable to expand */}
             <tr
-                onClick={() => { if (hasUnits && hasInventory) setIsExpanded(!isExpanded); }}
+                {...activatableProps(() => setIsExpanded(!isExpanded), { disabled: !(hasUnits && hasInventory) })}
+                aria-expanded={hasUnits && hasInventory ? isExpanded : undefined}
                 className={`group bg-gray-50/50 dark:bg-neutral-800/20 border-t-2 border-gray-200 dark:border-gray-800 ${hasUnits && hasInventory ? 'cursor-pointer hover:bg-gray-100/50 dark:hover:bg-neutral-800/40' : ''} transition-colors`}
             >
                 {/* Render Dynamic Sorted Cells */}

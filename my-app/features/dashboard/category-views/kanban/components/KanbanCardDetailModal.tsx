@@ -16,6 +16,7 @@ import { MdCheck } from 'react-icons/md';
 import { useFormatCurrency } from '@/lib/context/CurrencyContext';
 import { formatDateNumericBR } from '@/features/dashboard/shared/utils/formatters';
 
+import { activatableProps } from '../../shared/hooks/a11yProps';
 interface KanbanCardDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -300,7 +301,7 @@ export function KanbanCardDetailModal({
                                                                 </div>
                                                             ) : (
                                                                 <div
-                                                                    onClick={() => setEditingFieldName(field.name)}
+                                                                    {...activatableProps(() => setEditingFieldName(field.name), { role: 'button' })}
                                                                     className="w-full cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 px-2 py-1 -ml-2 rounded transition-colors flex items-center justify-between"
                                                                 >
                                                                     {renderFieldValue(field, value, formatCurrency, relationLookups, t('database:kanban_card.empty', 'Vazio'))}
