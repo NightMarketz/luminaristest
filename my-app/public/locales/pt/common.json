@@ -256,7 +256,22 @@
     "new_conversation": "Nova Conversa",
     "no_conversations": "Nenhuma conversa",
     "ask_anything": "Pergunte qualquer coisa!",
-    "connected_to_engine": "Conectado ao Motor de Análise"
+    "connected_to_engine": "Conectado ao Motor de Análise",
+    "messages_label": "Mensagens do chat",
+    "input_label": "Mensagem",
+    "confirm": {
+      "title_create": "Confirmar Novo Registro",
+      "title_update": "Confirmar Alterações",
+      "title_delete": "Confirmar Exclusão",
+      "title_default": "Confirmar Ação",
+      "review_again": "Revisar Novamente",
+      "applying": "Aplicando...",
+      "confirm_apply": "Confirmar e Aplicar",
+      "selected_table": "Tabela Selecionada",
+      "operation_data": "Dados da Operação",
+      "warning_title": "Atenção",
+      "warning_body": "Esta ação alterará registros reais no banco de dados. Verifique cuidadosamente os campos acima antes de prosseguir com a execução."
+    }
   },
   "save_changes": "Salvar Alterações",
   "cancel": "Cancelar",

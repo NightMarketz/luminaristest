@@ -61,7 +61,7 @@ export function ChatHeader(props: ChatHeaderProps) {
   return (
     <div className="flex items-center justify-between px-3 py-2.5 bg-gray-50/50 dark:bg-neutral-800/30 border-b border-gray-200 dark:border-gray-800 cursor-move drag-handle group select-none">
       <div className="relative flex items-center flex-grow min-w-0" ref={dropdownRef}>
-        <div className="flex items-center cursor-pointer" onClick={toggleDropdown}>
+        <button type="button" className="flex items-center cursor-pointer text-left" onClick={toggleDropdown} aria-expanded={isDropdownOpen} aria-haspopup="true">
           <h3
             className="font-semibold text-xs tracking-wide uppercase text-gray-700 dark:text-gray-300 truncate pr-2"
             title={chatTitle}
@@ -71,7 +71,7 @@ export function ChatHeader(props: ChatHeaderProps) {
           <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 text-gray-400 dark:text-gray-500 transform transition-transform duration-150 ${isDropdownOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
-        </div>
+        </button>
 
         {isDropdownOpen && (
           <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-neutral-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg z-20 p-2 text-gray-900 dark:text-white">

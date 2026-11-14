@@ -256,7 +256,22 @@
     "new_conversation": "New Conversation",
     "no_conversations": "No conversations",
     "ask_anything": "Ask anything!",
-    "connected_to_engine": "Connected to Analysis Engine"
+    "connected_to_engine": "Connected to Analysis Engine",
+    "messages_label": "Chat messages",
+    "input_label": "Message",
+    "confirm": {
+      "title_create": "Confirm New Record",
+      "title_update": "Confirm Changes",
+      "title_delete": "Confirm Deletion",
+      "title_default": "Confirm Action",
+      "review_again": "Review Again",
+      "applying": "Applying...",
+      "confirm_apply": "Confirm and Apply",
+      "selected_table": "Selected Table",
+      "operation_data": "Operation Data",
+      "warning_title": "Warning",
+      "warning_body": "This action will change real records in the database. Carefully check the fields above before proceeding."
+    }
   },
   "save_changes": "Save Changes",
   "cancel": "Cancel",
