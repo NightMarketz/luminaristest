@@ -11,6 +11,11 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     groups:
+      # @stryker-mutator/* têm peer de mesma versão exata (jest-runner exige core igual): bump isolado quebra o
+      # install (PR 1061). Grupo ANTES do npm-minor-patch (o Dependabot usa o primeiro grupo que casa) e sem
+      # update-types, para os pacotes subirem juntos em qualquer nível, major inclusive.
+      stryker:
+        patterns: ["@stryker-mutator/*"]
       npm-minor-patch:
         update-types: [minor, patch]
     ignore:
