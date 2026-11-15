@@ -110,3 +110,9 @@ sistema — sem banco, sem índice próprio.
   exatamente o que as regras de memória do projeto proíbem.
 - Evidência é `file:line`/commit/teste real, ou explicitamente `(a confirmar)` — nunca fabricada.
 - O ledger é markdown puro append-only conceitualmente; editar é só para refinar/dedup, não reescrever histórico.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Lição que pede mudança de código, skill ou gate vai à caixa (`debito` ou `feature`) além do log: aprendizado sem tarefa não resolve nada.

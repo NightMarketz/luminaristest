@@ -29,6 +29,7 @@ function DocumentCreatePage() {
   const [fileSize, setFileSize] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [tokenEstimate, setTokenEstimate] = useState<number | null>(null);
+  const [tokenFailed, setTokenFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [documentPurpose, setDocumentPurpose] = useState<DocumentPurpose>('DATA_ANALYSIS');
@@ -41,11 +42,15 @@ function DocumentCreatePage() {
     setFileName(file.name);
     setFileSize(file.size);
     setTokenEstimate(null);
+    setTokenFailed(false);
     const formData = new FormData();
     formData.append('file', file);
     DocumentService.getTokenCost(formData)
       .then((data) => setTokenEstimate(data.tokens ?? null))
-      .catch((err) => console.error('Failed to fetch token cost:', err));
+      .catch((err) => {
+        console.error('Failed to fetch token cost:', err);
+        setTokenFailed(true);
+      });
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
@@ -86,16 +91,23 @@ function DocumentCreatePage() {
       <form onSubmit={handleSubmit} className="p-6">
         {/* Área de escolha do propósito */}
         <div className="mb-8">
-          <label className="block mb-3 font-semibold text-gray-700 dark:text-gray-200">
+          <div id="purpose-label" className="block mb-3 font-semibold text-gray-700 dark:text-gray-200">
             Propósito do documento
-          </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div 
-              onClick={() => setDocumentPurpose('DATA_ANALYSIS')}
-              className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${documentPurpose === 'DATA_ANALYSIS' 
+          </div>
+          <div role="radiogroup" aria-labelledby="purpose-label" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label
+              className={`relative flex items-center p-4 focus-within:ring-2 focus-within:ring-indigo-500 border-2 rounded-lg cursor-pointer transition-all ${documentPurpose === 'DATA_ANALYSIS' 
                 ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30' 
                 : 'border-gray-200 hover:border-indigo-200 dark:border-gray-700 dark:hover:border-indigo-700'}`}
             >
+              <input
+                type="radio"
+                name="documentPurpose"
+                value="DATA_ANALYSIS"
+                checked={documentPurpose === 'DATA_ANALYSIS'}
+                onChange={() => setDocumentPurpose('DATA_ANALYSIS')}
+                className="sr-only"
+              />
               <div className={`p-2 rounded-full mr-3 ${documentPurpose === 'DATA_ANALYSIS' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-800 dark:text-indigo-200' : 'bg-gray-100 text-gray-500 dark:bg-neutral-800 dark:text-gray-400'}`}>
                 <TableCellsIcon className="h-6 w-6" />
               </div>
@@ -103,14 +115,21 @@ function DocumentCreatePage() {
                 <h3 className="font-medium text-gray-800 dark:text-gray-200">Análise de Dados</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Para planilhas e tabelas que serão usadas em gráficos e análises</p>
               </div>
-            </div>
+            </label>
             
-            <div 
-              onClick={() => setDocumentPurpose('KNOWLEDGE_BASE')} 
-              className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${documentPurpose === 'KNOWLEDGE_BASE' 
+            <label
+              className={`relative flex items-center p-4 focus-within:ring-2 focus-within:ring-indigo-500 border-2 rounded-lg cursor-pointer transition-all ${documentPurpose === 'KNOWLEDGE_BASE' 
                 ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30' 
                 : 'border-gray-200 hover:border-indigo-200 dark:border-gray-700 dark:hover:border-indigo-700'}`}
             >
+              <input
+                type="radio"
+                name="documentPurpose"
+                value="KNOWLEDGE_BASE"
+                checked={documentPurpose === 'KNOWLEDGE_BASE'}
+                onChange={() => setDocumentPurpose('KNOWLEDGE_BASE')}
+                className="sr-only"
+              />
               <div className={`p-2 rounded-full mr-3 ${documentPurpose === 'KNOWLEDGE_BASE' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-800 dark:text-indigo-200' : 'bg-gray-100 text-gray-500 dark:bg-neutral-800 dark:text-gray-400'}`}>
                 <BookOpenIcon className="h-6 w-6" />
               </div>
@@ -118,13 +137,13 @@ function DocumentCreatePage() {
                 <h3 className="font-medium text-gray-800 dark:text-gray-200">Base de Conhecimento</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Para documentos de texto que serão usados para perguntas e respostas</p>
               </div>
-            </div>
+            </label>
           </div>
         </div>
         
         {/* Área de upload */}
         <div className="p-6 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg mb-6 bg-gray-50 dark:bg-neutral-900/30 hover:bg-gray-100 dark:hover:bg-gray-900/50 transition-colors">
-          <label className="flex flex-col items-center justify-center cursor-pointer">
+          <label className="flex flex-col items-center justify-center cursor-pointer rounded-lg focus-within:ring-2 focus-within:ring-indigo-500">
             <DocumentIcon className="h-12 w-12 text-gray-400 dark:text-gray-500 mb-2" />
             <span className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">
               {t('selectFile', { defaultValue: 'Select Document' })}
@@ -137,7 +156,7 @@ function DocumentCreatePage() {
               accept=".pdf,.docx,.xlsx"
               onChange={handleFileChange}
               disabled={submitting}
-              className="hidden"
+              className="sr-only"
             />
             <span className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
               Escolher arquivo
@@ -179,7 +198,11 @@ function DocumentCreatePage() {
               </label>
               <div className="flex items-center bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-3 py-2">
                 <div className="flex-1 text-gray-800 dark:text-gray-200">
-                  {tokenEstimate !== null ? `${tokenEstimate} tokens` : 'A calcular...'}
+                  {tokenEstimate !== null
+                    ? `${tokenEstimate} tokens`
+                    : tokenFailed
+                      ? 'Não foi possível estimar. O envio continua disponível.'
+                      : 'A calcular...'}
                 </div>
                 {tokenEstimate !== null && (
                   <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-600 px-2 py-1 rounded">

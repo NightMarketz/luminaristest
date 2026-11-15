@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'next-i18next';
 import { Modal } from '../../../../components/ui/Modal';
+import { useConfirmModal } from '../../../../components/ui/feedback/useConfirmModal';
 import { useAuth } from '../../../../lib/context/AuthContext';
 import {
   CrmReportsService,
@@ -121,6 +122,16 @@ export function CrmReportBuilder() {
   // (review do PR-B, achado 1)
   const latest = useRef({ draft, rightRaw, sourceFields });
   latest.current = { draft, rightRaw, sourceFields };
+
+  // Rascunho "sujo" = difere do que foi carregado/salvo por último. A linha de base é recapturada quando entra no
+  // editor ou quando o relatório salvo muda (abrir, salvar, salvar como); o rascunho vem do latest, no mesmo commit.
+  const [baseline, setBaseline] = useState('');
+  useEffect(() => {
+    setBaseline(JSON.stringify(latest.current.draft));
+  }, [mode, saved]);
+  const dirty = mode === 'editor' && JSON.stringify(draft) !== baseline;
+  const { confirm: confirmLeave, confirmNode: leaveNode } = useConfirmModal();
+  const [deleting, setDeleting] = useState(false);
   const reason = fields ? blockReason(draft, fields) : 'NO_SOURCE';
   const patch = saved ? buildPatch(saved, draft) : null;
   const canSave = !saving && reason === null && draft.name.trim() !== '' && (saved ? patch !== null : true);
@@ -362,8 +373,9 @@ export function CrmReportBuilder() {
   };
 
   const confirmDelete = async () => {
-    if (!toDelete) return;
+    if (!toDelete || deleting) return;
     const target = toDelete;
+    setDeleting(true);
     try {
       await CrmReportsService.remove(target.id);
       setToDelete(null);
@@ -378,6 +390,8 @@ export function CrmReportBuilder() {
       const v = reportError(e);
       if (v.code === 'REPORT_NOT_FOUND') backToListWith(v);
       else setError(v);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -422,9 +436,17 @@ export function CrmReportBuilder() {
               type="button"
               className={secondaryBtn}
               onClick={() => {
-                setMode('list');
-                setError(null);
-                void loadList();
+                const leave = () => {
+                  setMode('list');
+                  setError(null);
+                  void loadList();
+                };
+                if (!dirty) return leave();
+                void confirmLeave({
+                  message: t('common:unsavedChangesConfirm', 'There are unsaved changes. Are you sure you want to close?'),
+                  variant: 'warning',
+                  onConfirm: async () => leave(),
+                });
               }}
             >
               {t('report_builder.editor.back', 'Voltar à lista')}
@@ -536,7 +558,7 @@ export function CrmReportBuilder() {
             <button type="button" className={secondaryBtn} onClick={() => setToDelete(null)}>
               {t('report_builder.confirm.cancel', 'Cancelar')}
             </button>
-            <button type="button" className={dangerBtn} onClick={() => void confirmDelete()}>
+            <button type="button" className={dangerBtn} disabled={deleting} onClick={() => void confirmDelete()}>
               {t('report_builder.confirm.delete_ok', 'Apagar')}
             </button>
           </div>
@@ -580,6 +602,7 @@ export function CrmReportBuilder() {
           />
         </label>
       </Modal>
+      {leaveNode}
     </div>
   );
 }

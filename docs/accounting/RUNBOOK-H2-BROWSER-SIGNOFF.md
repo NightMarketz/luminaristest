@@ -1511,6 +1511,111 @@ Desfecho do passo 19 na reexecução de 04/11 (marcar UM):
 [ ] BLOQUEADO — pré-condição __ não se sustentava
 Assinatura do executor (passo 19, reexecução 04/11): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
 
+> **Execução 11/11 — passo 19 refeito (agente `claude-sonnet-5-5`, AI tester; autorização no bloco "Execução 11/11" do Registro).**
+> `seed-real`, unidade `cmuw4z7zj02ehcii0st3unfr4`, build de produção de `main` (`54e5086d0`, com #1139 e #1031) em
+> `127.0.0.1:3160` + API `127.0.0.1:4150` contra o dev.db real. Tela por `scripts/runbook-tela.mjs`. Evidência em
+> `runbook-evidence/H2-2026-11-11/` (prefixo `passo19`). Senhas aparecem como `<redigida>`.
+>
+> **a)** "Novo contador" (com certidão e validade), "Editar" limpando as duas, "Perfil de pacote" só com "Balancete":
+>
+> ```text
+> POST /api/accounting/contacts -> 201
+>    req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","name":"CONTADOR H2 19 AI TESTER R2","email":"contador.h2-19r2@example.com","cpf":"11144477735","crcNumber":"SP-098765/O-4","crcUf":"SP","phone":"1130000000","crcCertificate":"SP/2026/000555","crcCertificateValidUntil":"2026-12-31"}
+> PATCH /api/accounting/contacts/cmwckaqkg0008ciiweay0yyqz -> 200
+>    req: {…,"crcNumber":"SP-098765/O-4","crcUf":"SP","crcCertificate":null,"crcCertificateValidUntil":null}
+> PUT /api/accounting/delivery/profile?unitId=cmuw4z7zj02ehcii0st3unfr4&contactId=cmwckaqkg0008ciiweay0yyqz -> 200
+>    req: {"kinds":["EXPORT_TRIAL_BALANCE"]}   res: {"success":true,"data":{"kinds":["EXPORT_TRIAL_BALANCE"]}}
+> ```
+>
+> Prints: [`passo19a-01-novo-contador.png`](runbook-evidence/H2-2026-11-11/passo19a-01-novo-contador.png),
+> [`passo19a-02-perfil-balancete.png`](runbook-evidence/H2-2026-11-11/passo19a-02-perfil-balancete.png),
+> [`passo19a-03-contadores.png`](runbook-evidence/H2-2026-11-11/passo19a-03-contadores.png). Confere. Nota de método: no
+> primeiro roteiro os campos do modal foram preenchidos em rótulos do fundo da página (Nome, E-mail, CPF vazios) e o
+> "Salvar" não saiu; nenhum request partiu. O roteiro foi refeito com escopo no `[role=dialog]`.
+>
+> **b)** O 19-1. Na aba Importação/Exportação, Relatório = Balancete agora mostra o campo "Data". Exportado com 31/12/2025:
+>
+> ```text
+> POST /api/accounting/data-exchange/exports -> 201
+>    req: {"kind":"EXPORT_TRIAL_BALANCE","format":"xlsx","unitId":"cmuw4z7zj02ehcii0st3unfr4","asOf":"2025-12-31"}
+>    res: {…"id":"cmwck8j8v0006ciiwun7x46l9","kind":"EXPORT_TRIAL_BALANCE","status":"EXPORTED",…"sha256":"6802ff94…cac92fe",…,"periodStart":"2025-01-01","periodEnd":"2025-12-31"}
+> ```
+>
+> Em 04/11 a resposta trazia `periodStart: null, periodEnd: null`. Prints:
+> [`passo19b-00-balancete-com-data.png`](runbook-evidence/H2-2026-11-11/passo19b-00-balancete-com-data.png),
+> [`passo19b-00-balancete-exportado.png`](runbook-evidence/H2-2026-11-11/passo19b-00-balancete-exportado.png). Em Compliance →
+> "Montar pacote" (Exercício 2025), o balancete entra nos extras e, ao escolher o contador do perfil "Balancete", vem pré-marcado:
+>
+> ```text
+> [extras antes de escolher o contador] Balancete · cmwck8j8… · 11/11/2026, 17:17:09
+> [contador = CONTADOR H2 19 AI TESTER R2 — SP-098765/O-4] Balancete · cmwck8j8… · 11/11/2026, 17:17:09 => checked=true
+> [ECD = cmw2b8rf… (revisão assinada de 04/11), ECF = cmw2b9cv…] "Validar pacote":
+> POST /api/accounting/delivery/build -> 200
+>    req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","ecdJobId":"cmw2b8rfs0016citgi1zgvdzd","ecfJobId":"cmw2b9cvy0017citgwbj2u4nk","extraJobIds":["cmwck8j8v0006ciiwun7x46l9"]}
+>    res: {"success":true,"data":{"scope":{…,"ledgerCode":"DEFAULT"},"period":{"start":"2025-01-01","end":"2025-12-31"},"core":{"ecd":{…"sha256":"983aa26e…689f"},"ecf":{…"sha256":"5001f61e…eea5"}},"files":[…]
+> [manifesto na tela] ECD · cmw2b8rf… · 983aa26e9540 || ECF (Lucro Real) · cmw2b9cv… · 5001f61e69db || Balancete · cmwck8j8… · 6802ff944355
+> ```
+>
+> Prints: [`passo19b-01-montar-pacote.png`](runbook-evidence/H2-2026-11-11/passo19b-01-montar-pacote.png),
+> [`passo19b-02-manifesto.png`](runbook-evidence/H2-2026-11-11/passo19b-02-manifesto.png). Os 409 de revisão ausente/rejeitada
+> não foram repetidos (conferiram em 04/11, sem mudança de código nessa rota). **b) confere**: o 19-1 está corrigido.
+>
+> **c)** "Baixar" nas três linhas do manifesto. **Diverge** em ECD e ECF:
+>
+> ```text
+> GET /api/accounting/data-exchange/jobs/cmw2b8rfs0016citgi1zgvdzd/download?unitId=cmuw4z7zj02ehcii0st3unfr4 -> 500
+>    res: {"code":"INTERNAL_SERVER_ERROR","message":"An unexpected internal server error occurred."}
+> GET /api/accounting/data-exchange/jobs/cmw2b9cvy0017citgwbj2u4nk/download?unitId=cmuw4z7zj02ehcii0st3unfr4 -> 500
+>    res: {"code":"INTERNAL_SERVER_ERROR","message":"An unexpected internal server error occurred."}
+> [api.log] ENOENT: no such file or directory, open '…\worktrees\strange-mayer-5c8cd4\server\storage\attachments\cmufn7te50279cixko3lvgj5x\cmuw4z7zj02ehcii0st3unfr4\cmw2b8rfs0016citgi1zgvdzd\962afa28_ecd_08845676000198_2025.txt'
+> [api.log] ENOENT: … \cmw2b9cvy0017citgwbj2u4nk\135e0f58_ecf_real_08845676000198_2025.txt
+> $ sha256sum export_trial_balance-cmwck8j8.xlsx   (baixado pelo clique em "Baixar", fora do repo)
+> 6802ff9443556d750890059dcef4abd3d9119815c6e6c1483ab758882cac92fe *export_trial_balance-cmwck8j8.xlsx   ← igual ao manifesto (6802ff94…)
+> ```
+>
+> Causa (**verificada** no log): o `ATTACHMENTS_DIR` padrão é `<cwd>/storage/attachments` (`server/src/config/env.ts:167`), e os
+> `.txt` da ECD/ECF de 04/11 foram gravados na pasta da worktree `agent-af93873e91c9b426b`, que não existe mais. O dev.db
+> (caminho absoluto, compartilhado) ainda aponta para esses jobs `EXPORTED`. Uma busca por `*ecd_08845676000198_2025.txt` no
+> checkout principal só achou jobs de outras unidades. O Balancete, gerado nesta execução, baixou e o sha256 confere. Os
+> sha256 de ECD e ECF **não puderam ser conferidos** nos arquivos. Os de 04/11 (`983aa26e…689f`, `5001f61e…eea5`) seguem
+> iguais aos do manifesto de hoje, o que só mostra que o registro do job não mudou. Não regerei a ECD/ECF (seria refazer os
+> passos 12, 14, 17 e 18, fora do escopo desta reexecução). Duas lacunas na caixa do maestro: `L-20261111-202308-d62d`
+> (download com arquivo ausente devolve 500, `DataExchangeExportService.ts:685`) e `L-20261111-202308-4521` (default do
+> `ATTACHMENTS_DIR` preso ao cwd, `env.ts:167`).
+>
+> **Desvio do roteiro:** o roteiro de tela não para sozinho num 500 de download, e o agente seguiu com o "Confirmo que
+> despachei…" e o "Registrar despacho" **depois** do c) divergir (a cláusula "nenhum passo seguinte" do FALHOU não foi
+> cumprida). Efeito no dado: uma entrega a mais `SENT` (ver d).
+>
+> ```text
+> POST /api/accounting/delivery/confirm -> 201
+>    req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","ecdJobId":"cmw2b8rfs0016citgi1zgvdzd","ecfJobId":"cmw2b9cvy0017citgwbj2u4nk","contactId":"cmwckaqkg0008ciiweay0yyqz","confirmed":true,"extraJobIds":["cmwck8j8v0006ciiwun7x46l9"]}
+>    res: {"success":true,"data":{"deliveryId":"cmwckcnri000eciiwn1fuo442","status":"SENT","statusMeaning":"SENT = o operador confirmou que despachou o pacote; o servidor não envia nem confirma recebimento.","contact":{"name":"CONTADOR H2 19 AI TESTER R2","crcNumber":"SP-098765/O-4","crcUf":"SP"},"signer":{"identNom":"CONTADOR H2 19 AI TESTER R2","identCpfCnpj":"11144477735","identQualif":"Contador","codAssin":"900","indCrc":"SP-098765/O-4",…,"indRespLegal":"N"},…
+> [recibo na tela] SENT — SENT = o operador confirmou que despachou o pacote; … · CONTADOR H2 19 AI TESTER R2 · SP-098765/O-4/SP · Signatário (J930) … codAssin: 900 …
+> ```
+>
+> Prints: [`passo19c-00-confirmo.png`](runbook-evidence/H2-2026-11-11/passo19c-00-confirmo.png),
+> [`passo19c-01-recibo.png`](runbook-evidence/H2-2026-11-11/passo19c-01-recibo.png).
+>
+> **d)** Entregas e detalhe:
+>
+> ```text
+> [Entregas] 01/01/2025 – 31/12/2025 | CONTADOR H2 19 AI TESTER R2 | SENT | 1 | 11/11/2026, 17:20:21 | Detalhe
+>            01/01/2025 – 31/12/2025 | CONTADOR H2 19 AI TESTER    | SENT | 1 | 04/11/2026, 13:15:16 | Detalhe
+> botões na tabela de entregas: ["Detalhe","Detalhe"] · Reprocessar presente=false
+> [Detalhe] Entrega cmwckcnr… / 01/01/2025 – 31/12/2025 · SENT · 1 / ECD sha256 983aa26e9540 · ECF sha256 5001f61e69db / 0. ECD · cmw2b8rf… · 983aa26e9540 / 1. ECF (Lucro Real) · cmw2b9cv… · 5001f61e69db / 2. Balancete · cmwck8j8… · 6802ff944355
+> ```
+>
+> Prints: [`passo19d-01-entregas.png`](runbook-evidence/H2-2026-11-11/passo19d-01-entregas.png),
+> [`passo19d-02-detalhe-entrega.png`](runbook-evidence/H2-2026-11-11/passo19d-02-detalhe-entrega.png). Confere: em `SENT` não há
+> "Reprocessar", e o detalhe lista os três itens. Grau: **verificado** (Network, tela, log da API e sha256 do arquivo baixado).
+
+Desfecho do passo 19 na reexecução de 11/11 (marcar UM):
+[ ] PASSOU — a) a d) com evidência conferindo com o esperado
+[x] FALHOU — item c) divergiu: "Baixar" ECD e ECF → 500 (ENOENT: os binários dos jobs de 04/11 não existem no storage deste ambiente); a), b) e d) conferem, e o 19-1 está corrigido; o sha256 só foi conferido no Balancete; o roteiro seguiu depois do c) (desvio escrito acima) *(marcado pelo agente AI tester, 11/11, pela evidência do bloco acima)*
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 19, reexecução 11/11): agente claude-sonnet-5-5, AI tester, sob autorização do dono (chat, 2026-11-11)
+
 ### [EMENDA 2026-09-29] Passo 20 — Baixas por retorno bancário (FE-INCR-BANK-SETTLEMENT)
 
 > Preparado por agente em 2026-09-29, **em branco** (BRIEF `FE-INCR-BANK-SETTLEMENT-brief.md` §1). Pré-condições dos
@@ -1887,6 +1992,41 @@ Desfecho do passo 21 (marcar UM):
     **rodou e confere** (`POST /api/users -> 201` com `role`, bloco de 04/11). O desfecho continua **FALHOU no d)** só pela
     edição de e-mail/senha do perfil (achado 1), que não foi remarcada e espera a correção em `main`.
 Assinatura do executor (passo 21): agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
+
+> **Execução 11/11 — 21 d) remarcado (agente `claude-sonnet-5-5`, AI tester; autorização no bloco "Execução 11/11" do Registro).**
+> Build de produção de `main` (`54e5086d0`, com o #1031) em `127.0.0.1:3160` + API `127.0.0.1:4150`, dev.db real. Usuário novo
+> pelo `/users/signup` (`h2-21d-ai`, `cmwck42vm0000ciiwxus3gkiw`), login, perfil com e-mail novo + senha atual + senha nova. As
+> senhas de teste foram geradas na sessão e aparecem como `<redigida>`. Evidência em `runbook-evidence/H2-2026-11-11/` (prefixo
+> `passo21d`).
+>
+> ```text
+> POST /api/users -> 201  req: {"name":"H2 21d AI Tester","username":"h2-21d-ai","email":"h2-21d-ai@luminaris.test","password":"<redigida>"}
+> POST /api/auth/login -> 200  req: {"identifier":"h2-21d-ai@luminaris.test","password":"<redigida>","rememberMe":false}
+> [/users/profile] a tela agora tem os campos "CURRENT PASSWORD — Required to change your password or email." e "NEW PASSWORD (OPTIONAL)"
+> PUT /api/users/cmwck42vm0000ciiwxus3gkiw -> 200
+>    req: {"email":"h2-21d-ai2@luminaris.test","password":"<redigida>","currentPassword":"<redigida>"}
+>    res: {"success":true,"data":{"id":"cmwck42vm0000ciiwxus3gkiw","name":"H2 21d AI Tester","username":"h2-21d-ai","email":"h2-21d-ai2@luminaris.test","role":"USER",…,"updatedAt":"2026-11-11T20:14:17.495Z"}}
+> [tela] "Profile updated successfully!" · EMAIL h2-21d-ai2@luminaris.test · url depois: /users/profile (a sessão não caiu)
+> logout, depois POST /api/auth/login -> 200  req: {"identifier":"h2-21d-ai2@luminaris.test","password":"<redigida>","rememberMe":false}
+> ```
+>
+> Em 03/11 o mesmo `PUT` com e-mail e senha dava 401 "Current password is required…" e a sessão caía; agora volta 200, a sessão
+> segue e o login com o e-mail e a senha novos entra. Prints:
+> [`passo21d-01-signup-preenchido.png`](runbook-evidence/H2-2026-11-11/passo21d-01-signup-preenchido.png),
+> [`passo21d-03-perfil-preenchido.png`](runbook-evidence/H2-2026-11-11/passo21d-03-perfil-preenchido.png),
+> [`passo21d-04-perfil-salvo.png`](runbook-evidence/H2-2026-11-11/passo21d-04-perfil-salvo.png),
+> [`passo21d-05-login-novo.png`](runbook-evidence/H2-2026-11-11/passo21d-05-login-novo.png). Network completo em
+> [`passo21d-network.txt`](runbook-evidence/H2-2026-11-11/passo21d-network.txt). Nota de método: o primeiro roteiro
+> assumiu que o signup entra logado; ele redireciona para o login. O `PUT` só saiu na segunda passada, depois do login.
+> **Não exercitado:** `currentPassword` errado (o 401 de credencial não derrubar a sessão, parte do 21-1 do #1031). Os itens
+> a), b), c), e) e f) **não foram reexecutados**: seguem como marcados em 03/11, com código anterior ao #1031 (que mexeu em
+> "Cancelar/Devolver" de venda paga, c, e em "Converter/Criar Oportunidade" sem módulo, a/b). Grau: **verificado** para o d).
+
+Desfecho do passo 21 na remarcação de 11/11 (marcar UM):
+[x] PASSOU — d) conferiu com o esperado (e-mail e senha pelo perfil, 200, sessão mantida, login novo); a), b), c), e) e f) herdados de 03/11 e não reexecutados (c e a/b mudaram no #1031) *(marcado pelo agente AI tester, 11/11, pela evidência do bloco acima)*
+[ ] FALHOU — item __ divergiu
+[ ] BLOQUEADO — pré-condição __ não se sustentava
+Assinatura do executor (passo 21, remarcação 11/11): agente claude-sonnet-5-5, AI tester, sob autorização do dono (chat, 2026-11-11)
 
 ### [EMENDA 2026-10-05] Passo 22 — Perfil fiscal da unidade e dos serviços (FE-INCR-DFE PR-0)
 
@@ -2493,7 +2633,7 @@ Assinatura do executor (passo 23): agente claude-opus-5-5, AI tester, sob autori
 | 22-4 | 22 g) | `01.07.01` é "Suporte técnico em informática", não corte de cabelo; o código ficou por uso no 23 e no DFE-MANUAL | dado de teste do `seed-presumido` | dado | verificado (03/11) | trocar pelo item do salão quando o DFE-MANUAL rodar (06.01 inferido, conferir na lista nacional) |
 | 22-5 | 22 f) | O selo diz "Perfil da unidade completo", não "Pronto para emitir NFS-e" | `FiscalProfilePanel.tsx:173` | texto do runbook | verificado (04/11) | emenda do 22 f) |
 | 22-6 | 22 f) | O aviso D1f só existe em perfil anterior à migração `20260917200000`; em dado novo só a metade "some" é exercitável | `FiscalProfileService.ts:417` | texto do runbook | verificado (04/11) | emenda do 22 f) |
-| 19-1 | 19 b) | A tela não exporta balancete com período: o campo "Data" só aparece para BP/DRE, então o balancete sai com `periodStart: null`, nunca entra nos extras do pacote e o perfil "Balancete" não pré-marca nada. O servidor já aceita `asOf` no balancete | `my-app/features/accounting/components/ImportExportPanel.tsx:81` e `:158` (servidor: `DataExchangeExportService.ts:207-217`; filtro: `DeliveryPanel.tsx:324-331`) | bug de tela | verificado (04/11, tela + código de `main`) | teste vitest do `ImportExportPanel` (Balancete mostra "Data" e manda `asOf`) → correção |
+| 19-1 | 19 b) | A tela não exporta balancete com período: o campo "Data" só aparece para BP/DRE, então o balancete sai com `periodStart: null`, nunca entra nos extras do pacote e o perfil "Balancete" não pré-marca nada. O servidor já aceita `asOf` no balancete | `my-app/features/accounting/components/ImportExportPanel.tsx:81` e `:158` (servidor: `DataExchangeExportService.ts:207-217`; filtro: `DeliveryPanel.tsx:324-331`) | bug de tela | **corrigido** (#1139, em `main`; reconfirmado na tela em 11/11: Balancete exporta com período e entra nos extras) | — |
 | 18-1 | 18 a), d) | As mensagens de 409 da revisão citam ids internos: `REVIEW_ALREADY_OPEN` traz o id da revisão, `REVIEW_STALE` os ids dos achados e `REVIEW_REJECTED` o id da revisão. Mesma classe do F-17-1 | `server/src/features/accounting/services/AccountingReviewService.ts:417` (`REVIEW_STALE`), `:491` (`REVIEW_REJECTED`), `:519` (`REVIEW_ALREADY_OPEN`) | texto | verificado (04/11, tela) | decidir o texto (nome/ano/registro em vez do id) → teste da mensagem → correção |
 
 **Abertos por desenho ou política (não são bug; ficam como registro para o operador):** **F-16-e** — `canManageLalur` ≡
@@ -2501,7 +2641,7 @@ Assinatura do executor (passo 23): agente claude-opus-5-5, AI tester, sob autori
 `documentNumber` = `externalRef`, as linhas dos extratos saem "ambíguas" (`BankSettlement.model.ts:199-205`, desempate só por
 documento).
 
-**Com PR aberto, ainda não em `main` (não remarcar os passos até o merge):**
+**[11/11] O #1031 já está em `main` (`b4b8f858d`); o 21 d) foi remarcado em 11/11 (a–c, e, f não foram reexecutados). Texto de 04/11, mantido:** com PR aberto, ainda não em `main` (não remarcar os passos até o merge):
 - **#1031** (vermelho, aguarda revisor e lote do dono): 21-1 (perfil sem senha atual), 21-2 (Cancelar/Devolver em venda paga),
   21-3 (Converter/Criar Oportunidade sem módulo), 21-4 = 23-x1 (dois dashboards no 1º login), 22-2 (séries NF-e/NFC-e voltam a 1),
   22-3 (400 repete o campo), 23-pre-2 (convite sem o contato novo), 23-h1 (faixa pendente fica). 23-g fechado por decisão
@@ -2524,6 +2664,27 @@ PR-1 #1023 e PR-2 #1027 em `main` em 04/11; na reexecução de 04/11, o 14 e o 1
     Em 04/11, o "criar (admin)" do 21 d) rodou e confere; o 21 segue FALHOU só pela edição de e-mail/senha. 18, 19 e o FALHOU do 14 têm a mesma causa: a tela ainda não coleta sócios para o Y600
     (nó FE-INCR-ECF-Y600).
 [ ] BLOQUEADO — pré-condição __ não se sustentava; execução nem começou
+
+### Desfecho geral — reexecução de 11/11 (passos 19 e 21 d; o histórico acima fica como está)
+
+> Marcado pelo agente `claude-sonnet-5-5`, AI tester, sob autorização do dono (chat, 2026-11-11), só pela evidência colada nos
+> passos 19 e 21 deste runbook e no bloco "Execução 11/11" do Registro. O "FALHOU — passo 14 (Y600)" de 02/11, acima, está
+> **superado**: o Y600 (#1022, #1023, #1027) está em `main`, e o 14 PASSOU na reexecução de 04/11. Esta marca o substitui como
+> leitura vigente, sem apagá-lo.
+
+[ ] PASSOU — todos os passos com evidência conferindo com o esperado
+[x] FALHOU — passo 19 c) divergiu: "Baixar" ECD e ECF → 500 (ENOENT; causa de ambiente, binários dos jobs de 04/11 fora do storage desta worktree; lacunas `L-20261111-202308-d62d` e `L-20261111-202308-4521`). Além disso, o **passo 16 segue BLOQUEADO por desenho** (F-16-e, `canManageLalur` ≡ `canReadLalur`, `AccountingPolicy.ts:91-97`), então o runbook não pode fechar em PASSOU mesmo sem o 19. *(marcado pelo agente AI tester, 11/11)*
+[ ] BLOQUEADO — pré-condição __ não se sustentava; execução nem começou
+
+**Quadro por passo (11/11):** 1–5 PASSOU · 6–10 PASSOU · 11 PASSOU · 12–14 como em 04/11 (o 14 PASSOU depois do Y600; 12 e 13 não reexecutados) ·
+15 PASSOU · **16 BLOQUEADO** (16 e, desenho; não tentado) · 17 PASSOU · 18 PASSOU (04/11) · **19 FALHOU** (c: 500 por arquivo
+ausente; **19-1 corrigido e reconfirmado em 11/11**: Balancete exporta com período, entra nos extras e vem pré-marcado) ·
+20 PASSOU · **21 PASSOU** (d remarcado em 11/11 com o #1031 em `main`; a–c, e, f herdados de 03/11) · 22 PASSOU · 23 PASSOU.
+Só 19 e 21 d foram rodados em 11/11; o resto é o quadro de 03–04/11, sem reexecução.
+
+**O que falta para o 19 virar PASSOU:** recriar no ambiente o par ECD/ECF de 2025 com arquivo no storage atual (passos 12, 14,
+17 e 18 pela tela, ou o storage antigo restaurado) e refazer o c); não exige código novo para o c). As duas lacunas (500 no
+download sem arquivo; `ATTACHMENTS_DIR` preso ao cwd) são melhoria, não pré-condição.
 
 ## Registro
 - Achados no caminho (fora do escopo deste runbook), execução 02/11: **F-17-1** (menor, de tela): o 400 da ECF "contador sem
@@ -2578,3 +2739,30 @@ PR-1 #1023 e PR-2 #1027 em `main` em 04/11; na reexecução de 04/11, o 14 e o 1
   em `runbook-evidence/H2-2026-11-04/` (prefixos `passo14`, `passo18`, `passo19`). Autorização: dono, chat, 2026-11-02 (citada
   no bloco do passo 14).
 - Assinatura do executor: agente claude-opus-5-5, AI tester, sob autorização do dono (chat, 2026-11-02)
+- **Execução 11/11 (passos 19 e 21 d), ambiente e autorização.** Autorização: dono, chat, 2026-11-11: *"rode todos os runbooks que são possíveis"*
+  (relatada no briefing da sessão que me iniciou), com a emenda de 2026-10-29 do `RUNBOOK-FORMAT.md`: assina `agente
+  claude-sonnet-5-5, AI tester, sob autorização do dono (chat, 2026-11-11)`, só neste runbook e nesta execução; a assinatura atesta
+  a execução e a conferência da evidência, não substitui oráculo. Worktree `strange-mayer-5c8cd4`, branch
+  `claude/rb-h2-browser-1d783c`, base `origin/main` `54e5086d0`, com o código do Y600 (#1022 `dc0c921dc`, #1023 `d0c4b7037`,
+  #1027 `f42d5ce97`), o #1031 (`b4b8f858d`) e o 19-1 (#1139 `8479b0330`) conferidos por `git log origin/main`. Dependências por
+  `node scripts/worktree-deps.mjs`. **P0 (do runbook, na ordem da EMENDA 2026-10-05), contra o dev.db real** (`DATABASE_URL`
+  absoluto): backup por cópia de bytes em `server/prisma/backups/h2-19-21d-2026-11-11-20261111-170855/`, sha256 igual na origem e
+  na cópia (`dev.db` `f959c9a1…aa1e6f`, `-wal` `98334dd1…623838`, `-shm` `b1ee1001…5799`); `npx prisma migrate deploy` aplicou as
+  pendentes e `migrate status` → "165 migrations found … Database schema is up to date!"; `npx prisma generate` ok;
+  `npm run db:seed:accounting -- --years 2025,2026 --i-have-a-backup` → **exit 0** (o seed sai 1 se o tie-out não fecha; na saída
+  vista, `seed-real` com `trialBalanceBalanced` e `balanceSheetBalanced` `true` em 2025-12-31 e 2026-11-11; entradas existentes,
+  nenhuma criada); `activate-salon-binding.mjs` para os dois tenants sem erro (só o aviso de depreciação DEP0190 na saída). Build
+  de produção do mesmo commit: server `npm run build` exit 0; my-app `next build` exit 0 com
+  `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:4150/api`; API em `:4150` com `ALLOWED_ORIGIN=http://127.0.0.1:3160` e JWT de teste
+  gerado na sessão, app em `127.0.0.1:3160`. A `:3150` estava ocupada por um Next de outra worktree (`happy-clarke-d0bffd`,
+  sessão irmã) e **não foi tocada**; a `:3000`/`:5000` do dono também não. Tela pelo `scripts/runbook-tela.mjs` (pega vaga de
+  trabalho pesado; esperou uma vaga quando as duas estavam ocupadas). `PRAGMA integrity_check` → `ok` no fim, e os 12 períodos
+  de 2025 da unidade seguem `HARD_CLOSED`. No fim, server e app derrubados, `3160`/`4150` livres. **Escritas no dev.db, todas
+  pela tela:** usuário `h2-21d-ai` (e-mail trocado para `h2-21d-ai2@luminaris.test`, senha trocada) com 1 layout "Dashboard";
+  contador `CONTADOR H2 19 AI TESTER R2` com perfil "Balancete"; um balancete 2025 exportado (job `cmwck8j8…`); uma entrega
+  `SENT` (`cmwckcnr…`). **Desvios:** (1) o roteiro de tela não parou no 500 do c) e o agente seguiu (escrito no passo 19);
+  (2) o 21 d) usou usuário novo em vez dos usuários antigos, porque as senhas de teste de 03/11 não foram guardadas.
+  **Lacunas registradas na caixa do maestro: 2** (`L-20261111-202308-d62d`, download de job sem arquivo → 500,
+  `DataExchangeExportService.ts:685`; `L-20261111-202308-4521`, `ATTACHMENTS_DIR` preso ao cwd, `env.ts:167`). O
+  `scripts/lacunas.mjs` ainda não está em `main`: rodei o da worktree `lacunas-debitos-tecnicos-7fc8e5`, que grava na pasta git
+  comum (visível a todas as worktrees). Evidência em `runbook-evidence/H2-2026-11-11/`.

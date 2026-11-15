@@ -13,6 +13,7 @@ import {
 } from '@/features/dashboard/shared/utils/formatters';
 import type { ExpensesColumn } from './ExpensesTable';
 
+import { activatableProps } from '../../../shared/hooks/a11yProps';
 interface ExpensesRowProps {
     record: ExpenseRecord;
     columns: ExpensesColumn[];
@@ -58,7 +59,7 @@ export function ExpensesRow({
 
     return (
         <tr
-            onClick={() => onSelect(record)}
+            {...activatableProps(() => onSelect(record))}
             className="group hover:bg-blue-50/40 dark:hover:bg-blue-500/5 transition-colors cursor-pointer border-b border-gray-100 dark:border-gray-800/50 last:border-0"
         >
             {columns.map((col) => {

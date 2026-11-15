@@ -54,6 +54,31 @@ const GenericTabbedView = dynamic(
 
 interface DashboardPageProps {
   allTables: IDynamicTable[];
+  /** Status HTTP (>= 400, fora 401/403) da carga SSR das tabelas: mostra o erro com "tentar de novo" em vez de mandar ao login. */
+  loadError?: number;
+}
+
+function DashboardLoadError() {
+  const { t } = useTranslation('common');
+  const router = useRouter();
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-6 text-center">
+      <p role="alert" className="text-sm font-semibold text-red-600 dark:text-red-400">
+        {t('errorLoading', 'Error loading.')}
+      </p>
+      <button
+        type="button"
+        onClick={() => void router.replace(router.asPath)}
+        className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700"
+      >
+        {t('try_again', 'Try again')}
+      </button>
+    </div>
+  );
+}
+
+export default function DashboardPageEntry(props: DashboardPageProps) {
+  return props.loadError ? <DashboardLoadError /> : <DashboardPage allTables={props.allTables} />;
 }
 
 function DashboardPage({ allTables }: DashboardPageProps) {
@@ -254,7 +279,6 @@ function DashboardPage({ allTables }: DashboardPageProps) {
   );
 }
 
-export default DashboardPage;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { req, res } = context;
@@ -326,11 +350,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   if (status >= 400) {
-    console.log('[Dashboard SSR] API request failed (not ok), redirecting');
+    // Sessão válida + API com erro (5xx, 404...): redirecionar ao login só devolvia o usuário logado para "/" e
+    // escondia o erro. A página mostra a falha com "tentar de novo".
+    console.log('[Dashboard SSR] API request failed (not ok), rendering error state');
     return {
-      redirect: {
-        destination: `/users/login`,
-        permanent: false,
+      props: {
+        allTables: [],
+        loadError: status,
+        ...translations,
       },
     };
   }

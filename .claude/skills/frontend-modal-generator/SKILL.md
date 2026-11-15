@@ -103,3 +103,9 @@ Verificação visual (contrato §6): abrir o modal não troca de rota; ação di
 - **Não recrie confirmação** — reuse `ConfirmDeleteModal`/`ConfirmModal`.
 - **Não chame `fetch`/`apiClient` direto** no modal — use o service layer.
 - **Não escreva no cancelar** de um `capture` — cancelar deve reverter (rollback no pai), não persistir.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

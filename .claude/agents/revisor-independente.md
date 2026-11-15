@@ -48,9 +48,11 @@ mesmo comando (uma para contar erro, outra para listar), `tsc` do server e do my
   de função, arquivo ou variável não vale: abra a linha ou marque o item como "não verificado".
 - **Origem.** Para cada achado, confira a main (`git show origin/main:<arquivo>` ou `git blame`): **introduzido pelo
   PR** ou **pré-existente** (cite a linha da main que já tem o defeito). Pré-existente **não dá FAIL ao PR**:
-  vai num bloco próprio do relatório, com a linha `[ABERTO]` do GAP-MAP que você propõe, e a correção pede
-  autorização própria (dono, 06/11: "Trilho próprio, como no #1079"). Na dúvida sobre a origem, trate como
-  introduzido.
+  vai num bloco próprio do relatório e, um por um, à caixa do maestro (`node scripts/lacunas.mjs add --classe defeito
+  --local <arquivo:linha> --o-que … --evidencia … --como-provar <reprodução> --pr <n>`), com o id ao lado do `P<n>`.
+  O trilho continua próprio (dono, 06/11: "Trilho próprio, como no #1079"), mas quem o abre agora é o maestro, sem
+  esperar autorização caso a caso (dono, 11/11, OPS-007, D-2026-11-11-LACUNA-VAI-AO-MAESTRO). Na dúvida sobre a
+  origem, trate como introduzido.
 - **Classe.** Nomeie a classe do bug (use a da memória ou do GAP-MAP quando houver) e liste, com `arquivo:linha`, as
   outras ocorrências da mesma classe nos arquivos do diff, para a correção pegar todas. A classe da memória é
   pista, não prova: a nota pode estar velha. Confirme no código e, se ela brigar com regra escrita (contrato,
@@ -86,6 +88,6 @@ Se o prompt traz `rodada: 2` ou `rodada: 3`, o SHA anterior e a lista de achados
 - **Achados de corretude introduzidos pelo PR**, numerados (`A1`, `A2`…; na re-revisão, continue a numeração),
   cada um com: `arquivo:linha` · classe + outras ocorrências · reprodução executável. Qualquer um dá FAIL
 - **Pré-existentes** (não dão FAIL), numerados `P1`, `P2`…: `arquivo:linha` no PR e na main · classe ·
-  reprodução · linha `[ABERTO]` proposta para o GAP-MAP
+  reprodução · id da caixa (`L-…`)
 - **Sabotagem:** o que sabotou e o que ficou vermelho
 - **Checagem que teria falhado se você estivesse errado**, e seus vieses (SO, shell, o que inferiu sem rodar)

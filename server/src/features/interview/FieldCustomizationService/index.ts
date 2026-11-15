@@ -4,6 +4,7 @@ import { logger } from '../../../lib/logger';
 import type { OpenAIService } from '../../../lib/openai/OpenAIService';
 import { fieldPresetKnowledgeBase } from '../../dynamicTables/presets/fields/FieldPresetKnowledgeBase';
 import type { ICustomizableTable } from '../models/InterviewTypes';
+import { DEFAULT_INTERVIEW_LOCALE, replyIn, type InterviewLocale } from '../models/interviewText';
 import type { IInterviewSessionHandle, StateManager } from '../CustomizationService/StateManager';
 import type {
   CustomizeFieldsDecisionDto,
@@ -72,7 +73,7 @@ export class FieldCustomizationService {
     let content: string | null;
     try {
       content = await this.openaiService.completeWithJsonSchema(
-        this.buildModelMessages(table, dto.message),
+        this.buildModelMessages(table, dto.message, dto.locale ?? DEFAULT_INTERVIEW_LOCALE),
         buildFieldCustomizationResponseFormat(this.presetMatcher.presetKeys()),
       );
     } catch (error) {
@@ -200,15 +201,16 @@ export class FieldCustomizationService {
   private buildModelMessages(
     table: ICustomizableTable,
     userMessage: string,
+    locale: InterviewLocale,
   ): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
     const history = (table.conversationHistory ?? [])
       .filter((m): m is IFieldHistoryEntry & { role: 'user' | 'assistant' } => m.role === 'user' || m.role === 'assistant')
       .slice(-MODEL_HISTORY_LIMIT)
       .map((m) => ({ role: m.role, content: m.content }));
-    return [{ role: 'system', content: this.systemPrompt(table) }, ...history, { role: 'user', content: userMessage }];
+    return [{ role: 'system', content: this.systemPrompt(table, locale) }, ...history, { role: 'user', content: userMessage }];
   }
 
-  private systemPrompt(table: ICustomizableTable): string {
+  private systemPrompt(table: ICustomizableTable, locale: InterviewLocale): string {
     const fields = (table.fields ?? [])
       .map((f) => `- ${f.label} (${f.name}): tipo ${f.type}${f.required ? ', obrigatório' : ''}`)
       .join('\n');
@@ -217,6 +219,7 @@ export class FieldCustomizationService {
     return promptConfig.FIELD_CUSTOMIZATION_PROMPT.replace('{{TABLE_NAME}}', () => table.name)
       .replace('{{TABLE_DESCRIPTION}}', () => table.description)
       .replace('{{TABLE_FIELDS}}', () => fields || '(nenhum)')
-      .replace('{{PRESET_CATALOG}}', () => catalog);
+      .replace('{{PRESET_CATALOG}}', () => catalog)
+      .concat('\n\n', replyIn(locale), ' Isso vale para a mensagem e para os rótulos dos campos propostos.');
   }
 }

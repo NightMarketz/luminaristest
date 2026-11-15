@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'next-i18next';
 import { ITable, ITableField } from '../../types/InterviewTypes';
 
+import { activatableProps } from '../../../dashboard/category-views/shared/hooks/a11yProps';
 interface ICustomizationState {
   presetKey: string;
   presetName: string;
@@ -26,7 +27,8 @@ function LeftSidebar({ customizationState, isVisible, onSelectTable, selectedTab
     return (
       <div
         className={`mb-3 p-3 ${isSelected ? 'bg-blue-50 dark:bg-blue-900' : 'bg-neutral-100 dark:bg-neutral-700'} rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors duration-200`}
-        onClick={() => onSelectTable && onSelectTable(table)}
+        {...activatableProps(() => onSelectTable && onSelectTable(table), { role: 'button' })}
+        aria-pressed={isSelected}
       >
         <div className="flex justify-between items-start mb-1">
           <h3 className={`font-semibold ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-neutral-900 dark:text-white'}`}>
@@ -57,7 +59,7 @@ function LeftSidebar({ customizationState, isVisible, onSelectTable, selectedTab
   return (
     <div
       className={`fixed left-0 top-0 h-full z-50 transition-transform duration-300 ease-in-out ${isVisible ? 'translate-x-0' : '-translate-x-full'}`}
-      style={{ width: '400px' }}
+      style={{ width: 'min(400px, 100vw)' }}
     >
       <div className="bg-white dark:bg-neutral-800 h-full shadow-2xl flex flex-col border-r border-neutral-200 dark:border-neutral-700">
         {/* Cabeçalho Fixo */}

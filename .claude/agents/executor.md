@@ -46,3 +46,7 @@ pause, nunca escolha.
 - Não injete serviço Prisma first-class em `DynamicTableService`/`RuleContext`/`RulePlugin` (§2.1).
 - Não emita PASS/PASSOU por conta própria; não edite `.claude/settings.json` nem `.claude/skills/skill-audit/**`.
 - Não commite nem faça push a menos que o prompt mande.
+
+## Lacunas e débitos (OPS-007)
+
+Item do BRIEF não entregue é seu, não follow-up. O que aparecer fora do BRIEF vai à caixa (`node scripts/lacunas.mjs add`) antes do retorno, e o retorno abre com `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.

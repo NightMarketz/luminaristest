@@ -105,3 +105,9 @@ Verificação visual (contrato §6): add/edit/delete na linha funcionando, filtr
 - **Não esqueça o namespace `database`** no `serverSideTranslations` — senão cabeçalhos/filtros caem em inglês para outros locales.
 - **Não pagine só a primeira página** — `useTableData` busca tudo; nunca volte a um `getTableData` de página única.
 - **Não fixe `max-w-*`** na tela — herde o container full-height do shell.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

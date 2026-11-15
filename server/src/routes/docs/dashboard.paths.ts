@@ -395,6 +395,7 @@
  *                     sessionId: { type: string }
  *                     tableKey: { type: string }
  *                     message: { type: string, minLength: 1, maxLength: 2000 }
+ *                     locale: { type: string, enum: [pt, en], description: 'Idioma da UI; a resposta da IA sai nele (padrão pt)' }
  *                 - type: object
  *                   required: [kind, sessionId, tableKey, proposalId, decision]
  *                   additionalProperties: false

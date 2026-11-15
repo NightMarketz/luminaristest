@@ -13,7 +13,7 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
 - **Critério reuse-vs-bespoke:** `.claude/skills/_REUSE-CRITERION.md`
 - **Observabilidade (log, nível, PII, alerta) →** `docs/adr/ADR-OBSERVABILIDADE.md`
 - **Scaffolding (nomes/paths por camada):** `docs/claude-skills/GENERATION_CONTRACTS.md`
-- **Disciplina operacional do agente (OPS-001..006):** `.claude/skills/_OPERATING-GATES.md`
+- **Disciplina operacional do agente (OPS-001..007; OPS-007 = lacuna achada vai à caixa do maestro):** `.claude/skills/_OPERATING-GATES.md`
   (versão portável p/ outros projetos: `docs/operating-manual/PORTABLE-GUIDE.md`;
   política de raciocínio T1–T8: `docs/operating-manual/REASONING-TRAITS.md`;
   tuning por modelo — Opus 5.5 ativo: delegar pouco, sem scaffolding de verificação, escopo
@@ -35,6 +35,9 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   implementar spec / instrumentar lacuna / corrigir lacuna / integrar branch **roda pela sessão**
   (invoque a skill e trabalhe pelo formulário) — executar esses tipos de mão livre é violação de
   escopo, não atalho. A autorização citável continua obrigatória; a sessão não a substitui.
+- **Lacuna achada fora do escopo não fica no relatório** (dono, 2026-11-11): o que é da tarefa a sessão resolve; o resto
+  vai à caixa `node scripts/lacunas.mjs add` (nunca por `SendMessage`), e o maestro abre a sessão que resolve —
+  `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`.
 - **Gate humano e dado externo NÃO têm sessão de agente** — PVA, sign-off de browser, deploy, XML de
   NF-e, arquivo RFB. O artefato deles é `docs/operating-manual/RUNBOOK-FORMAT.md`: evidência colada
   (nunca frase), desfecho em 3 estados, assinatura humana. **Agente prepara o runbook e, sob comando

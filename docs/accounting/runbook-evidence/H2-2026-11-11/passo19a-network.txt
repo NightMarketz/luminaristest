@@ -1,0 +1,101 @@
+[heavy-slot] runbook H2-2026-11-11: as 2 vagas de trabalho pesado estão ocupadas; esperando.
+  vaga 0: PID 2708 · jest integração (C:\Users\smurf\Downloads\Luminaris\.claude\worktrees\agent-a6ea2de2b76c63759\server) · C:\Users\smurf\Downloads\Luminaris\.claude\worktrees\agent-a6ea2de2b76c63759\server · há 0 min
+  vaga 1: PID 55656 · jest integração (C:\Users\smurf\Downloads\Luminaris\.claude\worktrees\agent-aded5c240a53dfe73\server) · C:\Users\smurf\Downloads\Luminaris\.claude\worktrees\agent-aded5c240a53dfe73\server · há 0 min
+[navegador] C:\Users\smurf\AppData\Local\ms-playwright\chromium_headless_shell-1254\chrome-headless-shell-win64\chrome-headless-shell.exe
+
+== logout {}
+
+== login {}
+[net] POST /api/auth/login -> 200  req: {"identifier":"seed-real","password":"<redigida>","rememberMe":false}
+   res: {"success":true,"data":{"user":{"id":"cmufn7te50279cixko3lvgj5x","name":"Seed REAL","username":"seed-real","email":"seed-real@seed.local","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-09-24T14:44:28.685Z","updatedAt":"2026-10-30T02:35:57.345Z"},"token":"<redigido>"}}
+url após login: http://127.0.0.1:3160/pt
+
+== goto {"url":"/accounting"}
+
+== selectUnit {"unitId":"cmuw4z7zj02ehcii0st3unfr4"}
+
+== tab {"text":"Compliance"}
+
+== click {"text":"Novo contador","exact":false}
+
+== fillLabel {"scope":"[role=dialog]","label":"Nome","value":"CONTADOR H2 19 AI TESTER R2"}
+[fill] Nome[0] = CONTADOR H2 19 AI TESTER R2 -> ok
+
+== fillLabel {"scope":"[role=dialog]","label":"E-mail","value":"contador.h2-19r2@example.com"}
+[fill] E-mail[0] = contador.h2-19r2@example.com -> ok
+
+== fillLabel {"scope":"[role=dialog]","label":"CPF","value":"11144477735"}
+[fill] CPF[0] = 11144477735 -> ok
+
+== fillLabel {"scope":"[role=dialog]","label":"Fone","value":"1130000000"}
+[fill] Fone[0] = 1130000000 -> ok
+
+== fillLabel {"scope":"[role=dialog]","label":"CRC","value":"SP-098765/O-4"}
+[fill] CRC[0] = SP-098765/O-4 -> ok
+
+== fillLabel {"scope":"[role=dialog]","label":"UF do CRC","value":"SP"}
+[fill] UF do CRC[0] = SP -> ok SP
+
+== fillLabel {"scope":"[role=dialog]","label":"Certidão","value":"SP/2026/000555"}
+[fill] Certidão[0] = SP/2026/000555 -> ok
+
+== fillLabel {"scope":"[role=dialog]","label":"Validade","value":"2026-12-31"}
+[fill] Validade[0] = 2026-12-31 -> ok
+
+== shot {"name":"passo19a-01-novo-contador"}
+[print] docs/accounting/runbook-evidence/H2-2026-11-11/passo19a-01-novo-contador.png
+
+== click {"sel":"[role=dialog] button","text":"Salvar"}
+[net] POST /api/accounting/contacts -> 201  req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","name":"CONTADOR H2 19 AI TESTER R2","email":"contador.h2-19r2@example.com","cpf":"11144477735","crcNumber":"SP-098765/O-4","crcUf":"SP","phone":"1130000000","crcCertificate":"SP/2026/000555","crcCertificateValidUntil":"2026-12-31"}
+   res: {"success":true,"data":{"id":"cmwckaqkg0008ciiweay0yyqz","userId":"cmufn7te50279cixko3lvgj5x","unitId":"cmuw4z7zj02ehcii0st3unfr4","name":"CONTADOR H2 19 AI TESTER R2","email":"contador.h2-19r2@example.com","cpf":"11144477735","phone":"1130000000","crcNumber":"SP-098765/O-4","crcUf":"SP","crcCertificate":"SP/2026/000555","crcCertificateValidUntil":"2026-12-31T00:00:00.000Z","createdById":"cmufn7te50279cixko3lvgj5x","createdAt":"2026-11-11T20:18:52.288Z","updatedAt":"2026-11-11T20:18:52.288Z","deletedAt":null,"packageProfile":null}}
+
+== clickInRow {"row":"CONTADOR H2 19 AI TESTER R2","text":"Editar"}
+
+== fillLabel {"scope":"[role=dialog]","label":"Certidão","value":""}
+[fill] Certidão[0] =  -> ok
+
+== fillLabel {"scope":"[role=dialog]","label":"Validade","value":""}
+[fill] Validade[0] =  -> ok
+
+== click {"sel":"[role=dialog] button","text":"Salvar"}
+[net] PATCH /api/accounting/contacts/cmwckaqkg0008ciiweay0yyqz -> 200  req: {"unitId":"cmuw4z7zj02ehcii0st3unfr4","contactId":"cmwckaqkg0008ciiweay0yyqz","name":"CONTADOR H2 19 AI TESTER R2","email":"contador.h2-19r2@example.com","cpf":"11144477735","phone":"1130000000","crcNumber":"SP-098765/O-4","crcUf":"SP","crcCertificate":null,"crcCertificateValidUntil":null}
+   res: {"success":true,"data":{"id":"cmwckaqkg0008ciiweay0yyqz","userId":"cmufn7te50279cixko3lvgj5x","unitId":"cmuw4z7zj02ehcii0st3unfr4","name":"CONTADOR H2 19 AI TESTER R2","email":"contador.h2-19r2@example.com","cpf":"11144477735","phone":"1130000000","crcNumber":"SP-098765/O-4","crcUf":"SP","crcCertificate":null,"crcCertificateValidUntil":null,"createdById":"cmufn7te50279cixko3lvgj5x","createdAt":"2026-11-11T20:18:52.288Z","updatedAt":"2026-11-11T20:18:54.720Z","deletedAt":null,"packageProfile":null}}
+
+== clickInRow {"row":"CONTADOR H2 19 AI TESTER R2","text":"Perfil de pacote","exact":false}
+
+== click {"sel":"[role=dialog] label","text":"Balancete","exact":false}
+
+== shot {"name":"passo19a-02-perfil-balancete"}
+[print] docs/accounting/runbook-evidence/H2-2026-11-11/passo19a-02-perfil-balancete.png
+
+== click {"sel":"[role=dialog] button","text":"Salvar"}
+[net] PUT /api/accounting/delivery/profile?unitId=cmuw4z7zj02ehcii0st3unfr4&contactId=cmwckaqkg0008ciiweay0yyqz -> 200  req: {"kinds":["EXPORT_TRIAL_BALANCE"]}
+   res: {"success":true,"data":{"kinds":["EXPORT_TRIAL_BALANCE"]}}
+
+== text {"name":"passo19a-02-contadores","max":200}
+[texto body]
+Luminaris
+🇧🇷
+PT
+seed-real
+S
+Contabilidade
+
+Razão de partida dobrada — balancete por unidade
+
+Unidade
+seed-unit-real
+Balancete
+Períodos
+Lançamentos
+Aprovações
+Contas a Pagar
+Contas a Receber
+Aging
+Fl
+[/texto]
+
+== shot {"name":"passo19a-03-contadores"}
+[print] docs/accounting/runbook-evidence/H2-2026-11-11/passo19a-03-contadores.png
+
+[fim] ok

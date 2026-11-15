@@ -150,3 +150,9 @@ cd server && npx tsc --noEmit
 - **Nunca tente razão + subrazão na "mesma tx", nem compense com `try/catch` + delete** — `postEntry` abre a própria tx raiz; o padrão é 2 commits + reconcile declarado no cabeçalho `atomicUntil` (§2.3, `SVC-008`). Não invente engine/fila/plugin para isso: motor de domínio é decisão rejeitada (`docs/adr/ADR-DOMAIN-MOTOR-rejected.md`).
 - **Nunca `logger.error(...)` seguido de `throw` no service** — a borda registra (`SVC-009`, OBS-R5); a linha sai duplicada.
 - **Nunca engula erro com `catch {}` ou `.catch(() => undefined)`** — registre em `warn`+ com `{ error }` ou justifique no ledger de dívida (`SVC-010`, OBS-R8).
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

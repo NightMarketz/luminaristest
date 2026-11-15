@@ -144,6 +144,7 @@ export function LeadAttachmentsPanel({ leadId, onChanged }: LeadAttachmentsPanel
                 <button
                   type="button"
                   onClick={() => handleDownload(att)}
+                  aria-label={`${t('attachments.download', 'Baixar')}: ${att.fileName}`}
                   disabled={busyId === att.id}
                   className="rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs font-black text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-neutral-800 dark:text-gray-200 dark:hover:bg-neutral-700"
                 >
@@ -151,6 +152,7 @@ export function LeadAttachmentsPanel({ leadId, onChanged }: LeadAttachmentsPanel
                 </button>
                 <button
                   type="button"
+                  aria-label={`${t('attachments.delete', 'Excluir')}: ${att.fileName}`}
                   onClick={() => handleDelete(att)}
                   disabled={busyId === att.id}
                   className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-black text-rose-600 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:text-rose-400"

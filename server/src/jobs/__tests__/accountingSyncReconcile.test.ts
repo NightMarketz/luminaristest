@@ -3,6 +3,7 @@ import {
   reconcileSaleSales,
   reconcileSaleCancellations,
   reconcileSaleReturns,
+  withReturnedSalesPendingRevenue,
   reconcileSaleSettlements,
   reconcileSalePackageOrigin,
   reconcileSalePackageConsumption,
@@ -454,7 +455,8 @@ function returned(over: Partial<ReturnedSale> = {}): ReturnedSale {
 function buildReturnDeps(over: Partial<SaleReturnReconcileDeps> = {}): SaleReturnReconcileDeps {
   return {
     listReturnedSales: jest.fn(async () => [returned()]),
-    hasExistingEntry: jest.fn(async () => false),
+    // INV F-42.1: a receita (sale.finalized) já lançada; a devolução ainda não.
+    hasExistingEntry: jest.fn(async (_s: AccountingScope, sourceType: string) => sourceType === 'sale.finalized'),
     sync: jest.fn(async () => ({ entryId: 'ret-1' })),
     ...over,
   };
@@ -480,6 +482,62 @@ describe('reconcileSaleReturns', () => {
 
     expect(deps.sync).not.toHaveBeenCalled();
     expect(summary).toEqual({ total: 1, synced: 0, idempotentHits: 1, failed: 0 });
+  });
+
+  it('INV F-42.1: devolução sem a receita (sale.finalized) lançada → blocked OPENING_ENTRY_MISSING, sem sync', async () => {
+    const reportPending = jest.fn(async () => undefined);
+    const deps = buildReturnDeps({ hasExistingEntry: jest.fn(async () => false), reportPending });
+    const summary = await reconcileSaleReturns(deps);
+
+    expect(deps.sync).not.toHaveBeenCalled();
+    expect(summary).toMatchObject({ total: 1, synced: 0, failed: 0, blocked: 1 });
+    expect(reportPending).toHaveBeenCalledWith(expect.objectContaining({ sourceType: 'sale.returned', sourceId: 'sale-1', reasonCode: 'OPENING_ENTRY_MISSING' }));
+  });
+
+  it('INV F-42.1 (P1 pré-existente): venda só de pacote devolvida não tem receita e NÃO é bloqueada', async () => {
+    const deps = buildReturnDeps({
+      hasExistingEntry: jest.fn(async () => false),
+      listReturnedSales: jest.fn(async () => [returned({ isAllPackage: true })]),
+    });
+    const summary = await reconcileSaleReturns(deps);
+    expect(deps.sync).toHaveBeenCalledTimes(1);
+    expect(summary).toMatchObject({ synced: 1, failed: 0 });
+  });
+
+  it('INV F-42.1 (A1): receita pulada + venda devolvida → o passe de receita a lança e a devolução entra na sequência', async () => {
+    const booked = new Set<string>();
+    const hasExistingEntry = jest.fn(async (_s: AccountingScope, t: string, id: string) => booked.has(`${t}:${id}`));
+    const sync = jest.fn(async (_s: AccountingScope, e: AccountingEvent) => {
+      booked.add(`${e.sourceType}:${e.sourceId}`);
+      return { entryId: `${e.sourceType}-1` };
+    });
+    const returnedRow = { row: { id: 'sale-1' }, ownerUserId: 'owner-1' };
+    // O passe de receita só vê Finalized (vazio aqui: a venda já está Returned) + as Returned, como no job.
+    const candidates = withReturnedSalesPendingRevenue([], [returnedRow]);
+    const rev = await reconcileSaleSales({
+      listFinalizedSales: async () =>
+        candidates.map((c) => ({
+          ownerUserId: c.ownerUserId,
+          saleId: c.row.id,
+          unitId: 'unit-1',
+          amount: 250,
+          currency: 'BRL',
+          occurredAt: '2026-06-25T00:00:00.000Z',
+        })),
+      hasExistingEntry,
+      sync,
+    });
+    const ret = await reconcileSaleReturns({ listReturnedSales: async () => [returned()], hasExistingEntry, sync });
+
+    expect(rev).toMatchObject({ synced: 1, failed: 0 });
+    expect(ret).toMatchObject({ synced: 1, failed: 0 });
+    expect(sync.mock.calls.map(([, e]) => e.sourceType)).toEqual(['sale.finalized', 'sale.returned']);
+  });
+
+  it('withReturnedSalesPendingRevenue une Finalized + Returned sem duplicar o id', () => {
+    const f = [{ row: { id: 'a' } }, { row: { id: 'b' } }];
+    const r = [{ row: { id: 'b' } }, { row: { id: 'c' } }];
+    expect(withReturnedSalesPendingRevenue(f, r).map((x) => x.row.id)).toEqual(['a', 'b', 'c']);
   });
 
   it('continues after an isolated failure', async () => {

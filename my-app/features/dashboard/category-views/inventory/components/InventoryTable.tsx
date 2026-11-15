@@ -23,6 +23,7 @@ import type { IDynamicTable, IDynamicTableData, ISchemaField } from '../../../co
 import { useRenderTypedValue } from '../../../shared/hooks/useRenderTypedValue';
 import { RelationCell } from '../../shared/components/RelationCell';
 
+import { sortableThProps } from '../../shared/hooks/a11yProps';
 const STRUCTURAL = new Set(['productId', 'unitId', 'stock', 'reserved', 'salePrice']);
 
 interface InventoryTableProps {
@@ -206,7 +207,7 @@ export function InventoryTable({
                                     className={`relative group px-2 py-3 text-left text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-800 select-none
                                         ${sortable ? 'cursor-pointer hover:bg-gray-200 dark:hover:bg-neutral-700/50' : ''}
                                     `}
-                                    onClick={sortable ? () => handleColSort(col.id) : undefined}
+                                    {...sortableThProps(sortable, sortState, () => handleColSort(col.id))}
                                 >
                                     <div className="flex items-center">
                                         <span className="truncate">{col.label}</span>

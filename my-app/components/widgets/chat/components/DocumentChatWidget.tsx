@@ -171,7 +171,7 @@ function DocumentChatWidget({
   }, [onClose, widgetInstanceId]);
 
   return (
-    <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-lg flex flex-col h-full w-full overflow-hidden border border-slate-200 dark:border-zinc-700">
+    <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-lg flex flex-col h-full w-full overflow-hidden border border-slate-200 dark:border-neutral-700">
       <ChatHeader
         chatTitle={chatTitle || "Selecione ou crie uma conversa"}
         onClose={handleCloseWidget}
@@ -204,7 +204,7 @@ function DocumentChatWidget({
             />
           </>
         ) : (
-          <div className="flex-grow flex items-center justify-center text-center text-zinc-500 dark:text-zinc-400 px-4">
+          <div className="flex-grow flex items-center justify-center text-center text-neutral-500 dark:text-neutral-400 px-4">
             <p>Selecione uma conversa no menu acima para começar.</p>
           </div>
         )}

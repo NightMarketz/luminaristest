@@ -86,6 +86,7 @@ export function CrmReportList({ reports, currentUserId, onOpen, onDelete, onNew 
                   <button
                     type="button"
                     onClick={() => onOpen(r.id)}
+                    aria-label={`${t('report_builder.list.open', 'Abrir')}: ${r.name}`}
                     className="rounded-lg border border-gray-200 px-2.5 py-1 text-xs font-bold text-gray-700 hover:bg-gray-100 dark:border-neutral-700 dark:text-gray-200 dark:hover:bg-neutral-800"
                   >
                     {t('report_builder.list.open', 'Abrir')}
@@ -93,6 +94,7 @@ export function CrmReportList({ reports, currentUserId, onOpen, onDelete, onNew 
                   <button
                     type="button"
                     onClick={() => onDelete(r)}
+                    aria-label={`${t('report_builder.list.delete', 'Apagar')}: ${r.name}`}
                     className="rounded-lg border border-rose-200 px-2.5 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:border-rose-900/50 dark:text-rose-300 dark:hover:bg-rose-950/40"
                   >
                     {t('report_builder.list.delete', 'Apagar')}

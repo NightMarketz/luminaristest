@@ -9,7 +9,7 @@ function SectionTable({ section, title }: { section: StatementSection; title: st
   const { t } = useTranslation('accounting');
   const total = parseInt(section.totalCents, 10);
   return (
-    <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/50">
+    <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/50">
       <div className="border-b border-neutral-800 px-4 py-2.5 text-xs font-semibold uppercase tracking-widest text-neutral-400">
         {title}
       </div>

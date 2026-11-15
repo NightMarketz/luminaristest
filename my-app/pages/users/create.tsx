@@ -232,6 +232,7 @@ function CreateUserPage(props: InferGetServerSidePropsType<typeof getServerSideP
                     id="password"
                     name="password"
                     type="password"
+                    autoComplete="new-password"
                     required
                     minLength={6}
                     data-own-style

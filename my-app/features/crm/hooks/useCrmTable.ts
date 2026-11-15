@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useLatestRequest } from './useLatestRequest';
 import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
 import { fetchAllRows } from '../lib/crmFetch';
 import type { CrmRecord } from './useCrmData';
@@ -28,11 +29,15 @@ export function useCrmTable(internalName: string): CrmTableState {
   const [table, setTable] = useState<DynTable | null>(null);
   const [rows, setRows] = useState<CrmRecord[]>([]);
 
+  const begin = useLatestRequest();
+
   const reload = useCallback(async () => {
+    const isCurrent = begin();
     setLoading(true);
     setError(null);
     try {
       const tablesRes = await DynamicTableService.getTables();
+      if (!isCurrent()) return;
       const tables: DynTable[] = (tablesRes?.data ?? []) as DynTable[];
       const t = tables.find((x) => x?.internalName === internalName) ?? null;
       setTable(t);
@@ -40,13 +45,16 @@ export function useCrmTable(internalName: string): CrmTableState {
         setRows([]);
         return;
       }
-      setRows((await fetchAllRows(t.id)) as CrmRecord[]);
+      const fetched = (await fetchAllRows(t.id)) as CrmRecord[];
+      if (!isCurrent()) return;
+      setRows(fetched);
     } catch (e) {
+      if (!isCurrent()) return;
       setError(e instanceof Error ? e.message : 'Falha ao carregar dados');
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, [internalName]);
+  }, [internalName, begin]);
 
   useEffect(() => {
     void reload();

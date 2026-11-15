@@ -107,3 +107,9 @@ cd my-app && npx tsc --noEmit
 - **Estilize as telas aplicando `frontend-design-system`** (tokens reais + componentes-assinatura) — Tailwind genérico (`zinc-*`, card `rounded-xl` em vez de `2xl`, título/KPI sem `font-black`) deixa o módulo off-brand, fora do padrão do app.
 - **Não recrie tabela/paginação/layout/analytics do zero** — reuse `GenericTable`/`GenericTabbedView`, `StandardPagination`, o container full-height e `AnalyticsDashboard`. Bespoke = módulo "ilha" (erro do CRM).
 - **Não use rota `[id].tsx` para detalhe de registro** — use modal (`Modal.tsx`).
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

@@ -1,6 +1,7 @@
 {
   "common": {
-    "loading": "Carregando…"
+    "loading": "Carregando…",
+    "retry": "Tentar novamente"
   },
   "nav": {
     "overview": "Visão Geral",
@@ -61,6 +62,7 @@
     "back": "← Visão Geral",
     "no_stages": "Nenhuma etapa configurada.",
     "empty_stage": "Sem registros",
+    "select_label": "Pipeline",
     "new_lead": "Novo Lead",
     "search_placeholder": "Buscar por nome…",
     "search_label": "Buscar lead"

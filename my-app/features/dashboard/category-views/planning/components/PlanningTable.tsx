@@ -13,6 +13,7 @@ import type { IDynamicTable, IDynamicTableData } from '../../../components/share
 
 
 
+import { sortableThProps } from '../../shared/hooks/a11yProps';
 interface PlanningTableProps {
     records: IDynamicTableData[];
     tableData: IDynamicTable | null;
@@ -156,7 +157,7 @@ export function PlanningTable({
                                 return (
                                     <th
                                         key={col.id}
-                                        onClick={sortable ? () => handleColSort(col.id) : undefined}
+                                        {...sortableThProps(sortable, sortState, () => handleColSort(col.id))}
                                         className={`relative group px-4 py-3 border-b border-gray-200 dark:border-gray-800 transition-colors hover:bg-gray-200/50 dark:hover:bg-neutral-700/50 select-none ${sortable ? 'cursor-pointer' : ''} ${isCenter ? 'text-center' : 'text-left'}`}
                                     >
                                         <div className={`flex items-center gap-1 w-full ${isCenter ? 'justify-center' : 'justify-start'}`}>

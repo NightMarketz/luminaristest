@@ -1,4 +1,19 @@
 {
+  "errorBoundary": {
+    "title": "Oops! Algo deu errado",
+    "body": "Encontramos um problema inesperado. Por favor, tente recarregar a página.",
+    "details": "Detalhes do erro",
+    "retry": "Tentar novamente"
+  },
+  "navbar": {
+    "changeLanguage": "Trocar idioma",
+    "userMenu": "Menu do usuário",
+    "myDashboard": "Minha Dashboard",
+    "accounting": "Contabilidade"
+  },
+  "actionFailed": "Não foi possível concluir a ação.",
+  "errorTitle": "Erro",
+  "floatingChat": { "open": "Abrir chat" },
   "appName": "Luminaris",
   "login": "Entrar",
   "logout": "Sair",
@@ -99,6 +114,10 @@
   "userListUnknownErrorFetching": "Ocorreu um erro desconhecido ao buscar usuários.",
   "userListAdminDeleteSelfError": "Administradores não podem excluir a própria conta através desta interface.",
   "userListConfirmDelete": "Tem certeza de que deseja excluir este usuário? Esta ação não pode ser desfeita.",
+  "userListConfirmDeleteNamed": "Excluir \"{{name}}\"? Esta ação não pode ser desfeita.",
+  "userListConfirmDeleteLabel": "Excluir",
+  "userCardEditUser": "Editar usuário",
+  "userCardDeleteUser": "Excluir usuário",
   "userListDeleteFailed": "Falha ao excluir usuário.",
   "userListDeleteSuccess": "Usuário excluído com sucesso.",
   "userListUnknownDeleteError": "Ocorreu um erro desconhecido durante a exclusão.",
@@ -241,7 +260,22 @@
     "new_conversation": "Nova Conversa",
     "no_conversations": "Nenhuma conversa",
     "ask_anything": "Pergunte qualquer coisa!",
-    "connected_to_engine": "Conectado ao Motor de Análise"
+    "connected_to_engine": "Conectado ao Motor de Análise",
+    "messages_label": "Mensagens do chat",
+    "input_label": "Mensagem",
+    "confirm": {
+      "title_create": "Confirmar Novo Registro",
+      "title_update": "Confirmar Alterações",
+      "title_delete": "Confirmar Exclusão",
+      "title_default": "Confirmar Ação",
+      "review_again": "Revisar Novamente",
+      "applying": "Aplicando...",
+      "confirm_apply": "Confirmar e Aplicar",
+      "selected_table": "Tabela Selecionada",
+      "operation_data": "Dados da Operação",
+      "warning_title": "Atenção",
+      "warning_body": "Esta ação alterará registros reais no banco de dados. Verifique cuidadosamente os campos acima antes de prosseguir com a execução."
+    }
   },
   "save_changes": "Salvar Alterações",
   "cancel": "Cancelar",
@@ -249,6 +283,9 @@
   "loading": "Carregando",
   "loading_data": "Carregando dados...",
   "errorLoading": "Erro ao carregar.",
+  "dashboardGridEmptyTitle": "Seu dashboard está vazio",
+  "dashboardGridEmptyHint": "Use o botão + no canto da tela para adicionar o primeiro widget.",
+  "homeTitle": "Início",
   "error_loading_products": "Erro ao carregar produtos.",
   "try_again": "Tentar novamente",
   "no_products_found": "Nenhum produto encontrado",
@@ -345,6 +382,8 @@
   "securityDescription": "Altere sua senha. Deixe em branco para manter a atual.",
   "rememberMe": "Lembrar-me",
   "forgotPassword": "Esqueceu a senha?",
+  "forgotPasswordSoon": "A recuperação de senha por e-mail ainda não está disponível. Peça a redefinição ao administrador da sua conta.",
+  "planComingSoon": "Em breve",
   "welcomeToLuminaris": "Bem-vindo ao {{appName}}",
   "luminarisDescription": "Centralize suas operações, otimize seu fluxo de trabalho e cresça seu negócio com nosso ecossistema de ERP impulsionado por IA.",
   "joinCommunity": "Junte-se a mais de 15 mil empresas que já transformaram sua estratégia de gestão digital.",
@@ -582,6 +621,17 @@
     "noDocuments": "Nenhum documento encontrado. Clique em \"Upload Document\" para adicionar.",
     "hideDetails": "Ocultar Detalhes",
     "viewDetails": "Ver Detalhes",
+    "refresh": "Atualizar",
+    "noDocumentsInTab": "Nenhum documento nesta aba.",
+    "detail": {
+      "file": "Arquivo",
+      "type": "Tipo",
+      "size": "Tamanho",
+      "purpose": "Finalidade",
+      "uploaded": "Enviado em",
+      "error": "Erro",
+      "summary": "Resumo"
+    },
     "deleteTitle": "Excluir documento",
     "deleteMessage": "Tem certeza que deseja excluir este documento? Essa ação removerá também seus vetores e não pode ser desfeita."
   },
@@ -620,5 +670,15 @@
     "confirm": "Confirmar?",
     "notClose": "Não, fechar",
     "pleaseWait": "Aguarde..."
+  },
+  "dashboardTabs": {
+    "deleteTitle": "Excluir aba",
+    "deleteMessage": "Excluir a aba \"{{name}}\" e os widgets dela? Esta ação não pode ser desfeita.",
+    "deleteConfirm": "Excluir",
+    "cancel": "Cancelar",
+    "tablist": "Abas do dashboard",
+    "nameInput": "Nome da aba",
+    "tabHint": "Clique para abrir, duplo-clique ou F2 para renomear",
+    "newTab": "Nova aba"
   }
 }

@@ -198,7 +198,7 @@ export class PackageAcceptanceService {
     const customerId = typeof data.customerId === 'string' ? data.customerId : '';
     if (!customerId) throw new ValidationError('Venda de pacote sem cliente: não há quem aceitar a validade.');
     const saleDate = calendarDayAsWritten(typeof data.date === 'string' ? data.date : '');
-    const totalAmount = Number(data.totalAmount);
+    const totalAmount = await this.derivedSaleTotal(scope, saleId, data);
     if (!Number.isFinite(totalAmount) || totalAmount <= 0) throw new ValidationError('Venda sem valor total válido.');
 
     const packageId = items.packageIds[0];
@@ -209,6 +209,22 @@ export class PackageAcceptanceService {
       totalAmount,
       validityDays: await loadPackageValidityDays(scope.ownerUserId, packageId),
     };
+  }
+
+  /**
+   * Total da venda como o servidor o deriva dos itens (qtd × preço − desconto do cabeçalho), a mesma conta do
+   * `SalesPlugin.afterUpdate`. Não lê o `totalAmount` gravado: desde a INV F-40.1 a venda nasce com 0 e só o 1º PUT o
+   * recalcula, mas o aceite vem ANTES do PUT Finalized (F-PP-6 a) — VP-4.
+   */
+  private async derivedSaleTotal(scope: AccountingScope, saleId: string, header: Record<string, unknown>): Promise<number> {
+    const itemsTable = await this.dynamicTableRepo.findTableByInternalName(scope.ownerUserId, 'saleItems');
+    const rows = itemsTable ? await this.dynamicTableRepo.findRowsByFieldValue(itemsTable.id, 'saleId', saleId) : [];
+    let subtotal = 0;
+    for (const r of rows) {
+      const d = (r.data ?? {}) as Record<string, unknown>;
+      subtotal += Number(d.quantity || 1) * Number(d.unitPrice || 0);
+    }
+    return Math.max(0, subtotal - (Number(header.discountAmount ?? 0) || 0));
   }
 
   private async assertPackageInCatalog(scope: AccountingScope, packageId: string): Promise<void> {

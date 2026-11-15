@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useId } from 'react';
 import { useTranslation } from 'next-i18next';
 import { Modal } from '../../../components/ui/Modal';
 
@@ -18,6 +18,7 @@ interface NoShowCaptureModalProps {
  */
 export function NoShowCaptureModal({ isOpen, canRevert, onCancel, onConfirm }: NoShowCaptureModalProps) {
   const { t } = useTranslation('crm');
+  const uid = useId();
   const [option, setOption] = useState<'reschedule' | 'revert'>('reschedule');
   const [newDate, setNewDate] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -100,10 +101,10 @@ export function NoShowCaptureModal({ isOpen, canRevert, onCancel, onConfirm }: N
 
         {option === 'reschedule' && (
           <div>
-            <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-gray-400">
+            <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-gray-400" htmlFor={`${uid}-1`}>
               {t('noshow.new_date', 'Nova data da reunião')}
             </label>
-            <input
+            <input id={`${uid}-1`}
               type="datetime-local"
               value={newDate}
               onChange={(e) => setNewDate(e.target.value)}

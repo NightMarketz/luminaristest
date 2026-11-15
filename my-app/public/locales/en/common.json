@@ -1,4 +1,19 @@
 {
+  "errorBoundary": {
+    "title": "Oops! Something went wrong",
+    "body": "We found an unexpected problem. Please try reloading the page.",
+    "details": "Error details",
+    "retry": "Try again"
+  },
+  "navbar": {
+    "changeLanguage": "Change language",
+    "userMenu": "User menu",
+    "myDashboard": "My Dashboard",
+    "accounting": "Accounting"
+  },
+  "actionFailed": "Could not complete the action.",
+  "errorTitle": "Error",
+  "floatingChat": { "open": "Open chat" },
   "appName": "Luminaris",
   "login": "Login",
   "logout": "Logout",
@@ -99,6 +114,10 @@
   "userListUnknownErrorFetching": "An unknown error occurred while fetching users.",
   "userListAdminDeleteSelfError": "Administrators cannot delete their own account through this interface.",
   "userListConfirmDelete": "Are you sure you want to delete this user? This action cannot be undone.",
+  "userListConfirmDeleteNamed": "Delete \"{{name}}\"? This action cannot be undone.",
+  "userListConfirmDeleteLabel": "Delete",
+  "userCardEditUser": "Edit user",
+  "userCardDeleteUser": "Delete user",
   "userListDeleteFailed": "Failed to delete user.",
   "userListDeleteSuccess": "User deleted successfully.",
   "userListUnknownDeleteError": "An unknown error occurred during deletion.",
@@ -241,7 +260,22 @@
     "new_conversation": "New Conversation",
     "no_conversations": "No conversations",
     "ask_anything": "Ask anything!",
-    "connected_to_engine": "Connected to Analysis Engine"
+    "connected_to_engine": "Connected to Analysis Engine",
+    "messages_label": "Chat messages",
+    "input_label": "Message",
+    "confirm": {
+      "title_create": "Confirm New Record",
+      "title_update": "Confirm Changes",
+      "title_delete": "Confirm Deletion",
+      "title_default": "Confirm Action",
+      "review_again": "Review Again",
+      "applying": "Applying...",
+      "confirm_apply": "Confirm and Apply",
+      "selected_table": "Selected Table",
+      "operation_data": "Operation Data",
+      "warning_title": "Warning",
+      "warning_body": "This action will change real records in the database. Carefully check the fields above before proceeding."
+    }
   },
   "save_changes": "Save Changes",
   "cancel": "Cancel",
@@ -249,6 +283,9 @@
   "loading": "Loading",
   "loading_data": "Loading data...",
   "errorLoading": "Error loading.",
+  "dashboardGridEmptyTitle": "Your dashboard is empty",
+  "dashboardGridEmptyHint": "Use the + button in the corner of the screen to add your first widget.",
+  "homeTitle": "Home",
   "error_loading_products": "Error loading products.",
   "try_again": "Try again",
   "no_products_found": "No products found",
@@ -345,6 +382,8 @@
   "securityDescription": "Change your password. Leave blank to keep the current one.",
   "rememberMe": "Remember me",
   "forgotPassword": "Forgot password?",
+  "forgotPasswordSoon": "Password recovery by e-mail is not available yet. Ask your account administrator to reset it.",
+  "planComingSoon": "Coming soon",
   "welcomeToLuminaris": "Welcome to {{appName}}",
   "luminarisDescription": "Centralize your operations, optimize your workflow, and grow your business with our AI-driven ERP ecosystem.",
   "joinCommunity": "Join 15k+ companies that already transformed their digital management strategy.",
@@ -583,6 +622,17 @@
     "noDocuments": "No documents found. Click \"Upload Document\" to add.",
     "hideDetails": "Hide Details",
     "viewDetails": "View Details",
+    "refresh": "Refresh",
+    "noDocumentsInTab": "No documents in this tab.",
+    "detail": {
+      "file": "File",
+      "type": "Type",
+      "size": "Size",
+      "purpose": "Purpose",
+      "uploaded": "Uploaded",
+      "error": "Error",
+      "summary": "Summary"
+    },
     "deleteTitle": "Delete document",
     "deleteMessage": "Are you sure you want to delete this document? This will also remove its vectors and cannot be undone."
   },
@@ -621,5 +671,15 @@
     "confirm": "Confirm?",
     "notClose": "No, close",
     "pleaseWait": "Please wait..."
+  },
+  "dashboardTabs": {
+    "deleteTitle": "Delete tab",
+    "deleteMessage": "Delete the tab \"{{name}}\" and its widgets? This action cannot be undone.",
+    "deleteConfirm": "Delete",
+    "cancel": "Cancel",
+    "tablist": "Dashboard tabs",
+    "nameInput": "Tab name",
+    "tabHint": "Click to open, double-click or F2 to rename",
+    "newTab": "New tab"
   }
 }

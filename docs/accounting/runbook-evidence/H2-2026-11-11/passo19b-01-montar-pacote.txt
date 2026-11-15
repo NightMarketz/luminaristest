@@ -1,0 +1,22 @@
+Montar pacote
+Exercício
+Contador destinatário
+Selecione…
+CONTADOR FICTICIO DE TESTE — SP-123456/O-1
+CONTADOR H2 19 AI TESTER — RJ-054321/O-7
+CONTADOR H2 19 AI TESTER R2 — SP-098765/O-4
+CONTADOR SEM FONE TESTE — SP-654321/O-2
+CONTADORA H2 AI TESTER — MG-012345/O-6
+Arquivo da ECD (EXPORTED)
+— nenhum —
+cmw2b8rf… · ECD · 04/11/2026, 13:07:41
+cmw049xs… · ECD · 03/11/2026, 00:17:07
+cmvwlzja… · ECD · 31/10/2026, 13:21:50
+cmvwlvx4… · ECD · 31/10/2026, 13:19:01
+Arquivo da ECF (EXPORTED)
+— nenhum —
+cmw2b9cv… · ECF_REAL · 04/11/2026, 13:08:09
+cmw2aqxu… · ECF_REAL · 04/11/2026, 12:53:50
+Extras (máx. 20) — só relatórios gerados com período
+Balancete · cmwck8j8… · 11/11/2026, 17:17:09
+Validar pacote

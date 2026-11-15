@@ -6,33 +6,32 @@ import {
   DndContext,
   closestCenter,
   DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
   useDroppable,
 } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import FloatingActionButton from '../../dashboard/components/shared/FloatingActionButton';
+import { CrmLoadError } from './CrmLoadError';
 import { LeadCard } from './LeadCard';
 import { Lead360Modal } from './Lead360Modal';
 import { ProposalCaptureModal } from './ProposalCaptureModal';
 import { MeetingCaptureModal } from './MeetingCaptureModal';
+import { usePipelineSensors } from '../hooks/usePipelineSensors';
 import { useCrmPipelineBoard, type PipelineColumn } from '../hooks/useCrmPipelineBoard';
 import { OWNER_FILTER_ALL } from '../hooks/useOwnerFilter';
 import type { CrmRecord } from '../hooks/useCrmData';
 
 /** A draggable lead card (mirror of SortableTaskItem/useSortable). */
-function SortableLeadCard({ lead, onClick }: { lead: CrmRecord; onClick: (id: string) => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: lead.id });
+export function SortableLeadCard({ lead, onClick }: { lead: CrmRecord; onClick: (id: string) => void }) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: lead.id });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0 : 1,
   };
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <LeadCard lead={lead} onClick={onClick} />
+    <div ref={setNodeRef} style={style}>
+      <LeadCard lead={lead} onClick={onClick} dragProps={{ ...attributes, ...listeners }} dragRef={setActivatorNodeRef} />
     </div>
   );
 }
@@ -123,7 +122,7 @@ export function CrmPipelineBoard() {
 
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const sensors = usePipelineSensors();
 
   // Resolve from the UNFILTERED lead map so changing the owner filter (or filtering
   // a lead out) while the Lead360 modal is open does not abruptly close it.
@@ -183,6 +182,7 @@ export function CrmPipelineBoard() {
             <select
               value={activePipelineId ?? ''}
               onChange={(e) => setActivePipelineId(e.target.value)}
+              aria-label={t('pipeline.select_label', 'Pipeline')}
               className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-gray-700 dark:border-white/10 dark:bg-neutral-800 dark:text-gray-200"
             >
               {pipelines.map((p) => (
@@ -206,13 +206,9 @@ export function CrmPipelineBoard() {
         </div>
       </div>
 
-      {error ? (
-        <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-300">
-          {error}
-        </div>
-      ) : null}
+      {error ? <CrmLoadError message={error} onRetry={() => void reload()} /> : null}
 
-      {loading ? (
+      {error ? null : loading ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('common.loading', 'Carregando…')}</p>
       ) : columns.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('pipeline.no_stages', 'Nenhuma etapa configurada.')}</p>

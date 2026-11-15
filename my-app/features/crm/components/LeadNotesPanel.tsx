@@ -139,6 +139,7 @@ export function LeadNotesPanel({ leadId, onChanged }: LeadNotesPanelProps) {
             value={message}
             onChange={(ev) => setMessage(ev.target.value)}
             rows={3}
+            aria-label={t('notes.placeholder', 'Escreva uma nota…')}
             placeholder={t('notes.placeholder', 'Escreva uma nota…')}
             className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-800 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-neutral-800 dark:text-gray-200"
           />

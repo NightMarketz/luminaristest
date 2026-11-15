@@ -38,10 +38,10 @@ const scope: AccountingScope = {
 };
 
 const SALES_TABLE = 'tbl-sales';
-const SALE = { id: 'sale-1', dynamicTableId: SALES_TABLE, data: { unitId: 'unit-1', customerId: 'cust-1', date: '2026-11-25', totalAmount: 250 } };
+const SALE = { id: 'sale-1', dynamicTableId: SALES_TABLE, data: { unitId: 'unit-1', customerId: 'cust-1', date: '2026-11-25', totalAmount: 0 } }; // F-40.1: o cabeçalho nasce com 0; o total vem dos itens
 const NOTICE = buildValidityNotice('2026-11-25', 30, FERIADOS_SEMENTE)!;
 
-function build(opts: { sale?: unknown; existing?: unknown; policy?: Partial<IPackageAcceptancePolicy>; createError?: unknown; user?: { name: string | null; username: string } | null } = {}) {
+function build(opts: { sale?: unknown; existing?: unknown; policy?: Partial<IPackageAcceptancePolicy>; createError?: unknown; user?: { name: string | null; username: string } | null; items?: unknown[] } = {}) {
   const repo = {
     findBySale: jest.fn(async () => ('existing' in opts ? opts.existing : null)),
     create: jest.fn(async (_s: AccountingScope, d: Record<string, unknown>) => {
@@ -50,7 +50,7 @@ function build(opts: { sale?: unknown; existing?: unknown; policy?: Partial<IPac
     }),
   };
   const policy: IPackageAcceptancePolicy = { canRecord: () => true, canRead: () => true, ...opts.policy };
-  const tables: Record<string, { id: string }> = { sales: { id: SALES_TABLE }, packages: { id: 'tbl-pkg' }, customers: { id: 'tbl-cust' }, units: { id: 'tbl-units' } };
+  const tables: Record<string, { id: string }> = { saleItems: { id: 'tbl-items' }, sales: { id: SALES_TABLE }, packages: { id: 'tbl-pkg' }, customers: { id: 'tbl-cust' }, units: { id: 'tbl-units' } };
   const rows: Record<string, { id: string; dynamicTableId: string; data: Record<string, unknown> }> = {
     'sale-1': { ...SALE },
     'cust-1': { id: 'cust-1', dynamicTableId: 'tbl-cust', data: { name: 'Ana Souza' } },
@@ -62,6 +62,7 @@ function build(opts: { sale?: unknown; existing?: unknown; policy?: Partial<IPac
     findTableByInternalName: jest.fn(async (_u: string, n: string) => tables[n] ?? null),
     findDataById: jest.fn(async (id: string) => rows[id] ?? null),
     existsByIdInTable: jest.fn(async (id: string, t: string) => rows[id]?.dynamicTableId === t),
+    findRowsByFieldValue: jest.fn(async () => ('items' in opts ? opts.items : [{ id: 'it-1', data: { quantity: 1, unitPrice: 250 } }])),
   };
   const users = { getUserById: jest.fn(async () => ('user' in opts ? opts.user : { id: 'actor-1', name: 'Bia', username: 'bia' })) };
   const svc = new PackageAcceptanceService(
@@ -160,6 +161,15 @@ describe('PackageAcceptanceService.create (item 4)', () => {
     loadInfo.mockResolvedValue({ kind: 'Package', packageIds: ['pkg-1', 'pkg-2'] });
     const { svc } = build();
     await expect(svc.create(scope, input)).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('VP-4: o total vem dos itens (qtd × preço − desconto), não do cabeçalho gravado; itens sem valor → 400', async () => {
+    const { svc, repo } = build({ items: [{ id: 'i1', data: { quantity: 2, unitPrice: 250 } }], sale: { ...SALE, data: { ...SALE.data, discountAmount: 50 } } });
+    await svc.create(scope, input);
+    expect(repo.create).toHaveBeenCalledTimes(1);
+    const none = build({ items: [{ id: 'i1', data: { quantity: 1, unitPrice: 0 } }] });
+    await expect(none.svc.create(scope, input)).rejects.toThrow('Venda sem valor total válido.');
+    expect(none.repo.create).not.toHaveBeenCalled();
   });
 
   it('venda sem cliente → 400', async () => {

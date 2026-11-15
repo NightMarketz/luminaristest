@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLatestRequest } from './useLatestRequest';
 import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
 import { fetchAllRows } from '../lib/crmFetch';
 import type { CrmRecord } from './useCrmData';
@@ -36,11 +37,15 @@ export function useLeadActivities(leadId: string, type?: string): LeadActivities
   const [activitiesTableId, setActivitiesTableId] = useState<string | null>(null);
   const [rows, setRows] = useState<CrmRecord[]>([]);
 
+  const begin = useLatestRequest();
+
   const reload = useCallback(async () => {
+    const isCurrent = begin();
     setLoading(true);
     setError(null);
     try {
       const tablesRes = await DynamicTableService.getTables();
+      if (!isCurrent()) return;
       const tables: DynTable[] = (tablesRes?.data ?? []) as DynTable[];
       const activitiesTable = tables.find((x) => x?.internalName === 'leadActivities') ?? null;
       setActivitiesTableId(activitiesTable?.id ?? null);
@@ -49,13 +54,16 @@ export function useLeadActivities(leadId: string, type?: string): LeadActivities
         setRows([]);
         return;
       }
-      setRows((await fetchAllRows(activitiesTable.id)) as CrmRecord[]);
+      const fetched = (await fetchAllRows(activitiesTable.id)) as CrmRecord[];
+      if (!isCurrent()) return;
+      setRows(fetched);
     } catch (e) {
+      if (!isCurrent()) return;
       setError(e instanceof Error ? e.message : 'Falha ao carregar atividades');
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, []);
+  }, [begin]);
 
   useEffect(() => {
     void reload();

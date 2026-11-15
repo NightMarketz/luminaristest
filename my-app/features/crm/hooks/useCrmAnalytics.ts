@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useLatestRequest } from './useLatestRequest';
 import { CrmService, type CrmAnalyticsBundle, type CrmDatePreset } from '../../../lib/services/crm.service';
 
 const EMPTY: CrmAnalyticsBundle = {
@@ -11,23 +12,30 @@ export function useCrmAnalytics() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const begin = useLatestRequest();
+
   const reload = useCallback(async (preset: CrmDatePreset) => {
+    const isCurrent = begin();
     setLoading(true);
     setError(null);
     try {
       const res = await CrmService.getAnalytics(preset);
+      if (!isCurrent()) return;
       setData(res?.data ?? EMPTY);
     } catch (e) {
+      if (!isCurrent()) return;
       setError(e instanceof Error ? e.message : 'Falha ao carregar analytics do CRM');
       setData(EMPTY);
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, []);
+  }, [begin]);
 
   useEffect(() => {
     void reload(datePreset);
   }, [datePreset, reload]);
 
-  return { datePreset, setDatePreset, data, loading, error };
+  const retry = useCallback(() => reload(datePreset), [reload, datePreset]);
+
+  return { datePreset, setDatePreset, data, loading, error, retry };
 }

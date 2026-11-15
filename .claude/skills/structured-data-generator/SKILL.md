@@ -221,3 +221,9 @@ cd server && npx prisma migrate dev --name add_<tipo>_to_structured_data
 - **Não usar `undefined` para célula vazia** — use `null`; `undefined` não serializa em JSON e desalinha a linha na coluna SQL.
 - **Não materializar a planilha inteira em memória quando há leitura paginada** — pagine; volumes grandes estouram memória e o frontend já consome em páginas.
 - **Não esquecer nenhum dos 4 pontos casados ao adicionar `HeaderType`** — model enum + `ExcelHeader` + `inferColumnType` + `z.enum` do DTO; faltar um deixa o tipo inválido só em runtime.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

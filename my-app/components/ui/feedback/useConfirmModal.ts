@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, ReactNode } from 'react';
 import React from 'react';
 import { ConfirmModal, ConfirmModalVariant } from './ConfirmModal';
+import { useTranslation } from 'next-i18next';
 import { notify } from '../../../lib/notifications/notify';
 import { wasNotified } from '../../../lib/notifications/notified';
 
@@ -41,6 +42,7 @@ interface UseConfirmModalReturn {
 // =============================================================================
 
 export function useConfirmModal(): UseConfirmModalReturn {
+    const { t } = useTranslation('common');
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [options, setOptions] = useState<UseConfirmModalOptions | null>(null);
@@ -59,6 +61,7 @@ export function useConfirmModal(): UseConfirmModalReturn {
 
     const handleConfirm = useCallback(async () => {
         if (!options) return;
+        let failed = false;
         try {
             setIsLoading(true);
             await options.onConfirm();
@@ -66,17 +69,22 @@ export function useConfirmModal(): UseConfirmModalReturn {
         } catch (err) {
             // Absorve o erro para não causar Uncaught Promise Rejection (que derruba o Next.js).
             // Erro do apiClient já virou toast (`notified`); qualquer outro é avisado aqui (F1-N3).
+            failed = true;
             console.error('[useConfirmModal] Action failed (caught in handleConfirm):', err);
             if (!wasNotified(err)) {
-                notify(err instanceof Error && err.message ? err.message : 'Não foi possível concluir a ação.', 'error', 'Erro');
+                notify(err instanceof Error && err.message ? err.message : t('actionFailed', 'Não foi possível concluir a ação.'), 'error', t('errorTitle', 'Erro'));
             }
         } finally {
             setIsLoading(false);
-            setIsOpen(false);
-            resolveRef.current?.();
-            resolveRef.current = null;
+            // Falhou: o diálogo fica aberto (a falha já virou toast) para tentar de novo ou cancelar; fechar aqui
+            // fazia a ação parecer concluída.
+            if (!failed) {
+                setIsOpen(false);
+                resolveRef.current?.();
+                resolveRef.current = null;
+            }
         }
-    }, [options]);
+    }, [options, t]);
 
     const handleClose = useCallback(() => {
         resolveRef.current?.();

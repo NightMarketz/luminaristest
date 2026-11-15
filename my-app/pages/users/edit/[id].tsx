@@ -241,7 +241,7 @@ function EditUserPageComponent({ t, i18n, ...props }: EditUserPageProps) {
           href="/users"
           className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
         >
-          {t('userEditBackToList')}
+          {t('userEditGoToListLink')}
         </Link>
       </div>
     );
@@ -419,6 +419,7 @@ function EditUserPageComponent({ t, i18n, ...props }: EditUserPageProps) {
                     name="password"
                     type="password"
                     data-own-style
+                    autoComplete="new-password"
                     className="w-full pl-9 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-neutral-800 border border-gray-200/60 dark:border-gray-700/60 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all font-medium"
                     placeholder={t('userEditPasswordPlaceholder', 'Deixe em branco para não alterar')}
                     value={formData.password || ''}

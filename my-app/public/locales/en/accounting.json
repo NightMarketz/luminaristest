@@ -1001,6 +1001,9 @@
     }
   },
   "reconciliation": {
+    "col": {
+      "expand": "Expand"
+    },
     "bankAccount": "Bank account",
     "loadingAccounts": "Loading accounts…",
     "noBankAccounts": "No account available",
