@@ -142,6 +142,7 @@ export function MeiEnquadramentoSection({ unitId, anoInicial }: MeiEnquadramento
         value={form ? form[key] : ''}
         // atalho: folha string → união (cada <option> é membro da união)
         onChange={(e) => set(key, e.target.value as MeiEnquadramentoForm['contribuinteIcms'])}
+        data-own-style
         className={`w-full ${inputClass}`}
       >
         <option value="">{t('simples.mei.naoDeclarado', '— não declarado —')}</option>
@@ -169,6 +170,7 @@ export function MeiEnquadramentoSection({ unitId, anoInicial }: MeiEnquadramento
               const n = Number(v);
               if (/^\d{4}$/.test(v) && n >= 2000 && n <= 2100) setAno(n);
             }}
+            data-own-style
             className="w-24 rounded-xl border border-neutral-700 bg-neutral-800 px-2 py-1 text-neutral-100"
           />
         </label>

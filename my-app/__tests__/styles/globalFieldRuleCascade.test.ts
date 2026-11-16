@@ -1,6 +1,8 @@
 /**
  * Guarda de cascata: a regra global de campos de texto (`styles/globals.css`, `@layer base`) não pode vencer as
- * utilitárias que o próprio campo do wizard declara (achado do runbook W7, passo 6, 13/11).
+ * utilitárias que o próprio campo declara quando a tela migrou (`data-own-style`; achado do runbook W7, passo 6,
+ * 13/11, migração por tela decidida pelo dono). Campo SEM o atributo continua com a regra global vencendo (as demais
+ * telas não mudam até migrarem); campo COM o atributo ainda recebe o default global do que não declara.
  *
  * jsdom não calcula cascata de CSS, então este teste a calcula: compila o `globals.css` real com o Tailwind real
  * (config do projeto, conteúdo = só as classes dos campos), acha as regras que casam o elemento (jsdom `matches`),
@@ -21,8 +23,28 @@ import ts from 'typescript';
 const require = createRequire(import.meta.url);
 const APP = path.resolve(__dirname, '..', '..');
 
-// Campos do wizard de onboarding que declaram aparência própria (BRIEF W7 item 8: neutral-*, rounded-2xl).
+// Telas migradas: wizard de onboarding (BRIEF W7 item 8: neutral-*, rounded-2xl), login/signup (já usavam `!pl-16`) e as 16
+// telas em que a regra global quebrava `pl-*`/largura (texto por cima do ícone, w-24 virando 100%).
+// Tela nova migrada entra aqui (D-2026-11-13-REGRA-GLOBAL-INPUT-MIGRACAO-POR-TELA).
 const WIZARD_FILES = [
+  'pages/users/login.tsx',
+  'pages/users/signup.tsx',
+  'components/widgets/generic-chat/components/GenericChatWidget.tsx',
+  'features/accounting/components/CompliancePanel.tsx',
+  'features/accounting/components/JournalEntryModal.tsx',
+  'features/accounting/components/MeiEnquadramentoSection.tsx',
+  'features/accounting/components/PresumidoServicosSection.tsx',
+  'features/accounting/components/SubledgerFilterBar.tsx',
+  'features/accounting/components/TaxAssessmentPanel.tsx',
+  'features/crm/components/reports/CrmReportEditor.tsx',
+  'features/dashboard/category-views/finance/components/sales/create/inputs.tsx',
+  'features/dashboard/category-views/finance/components/sales/SalesCreateModal.tsx',
+  'features/dashboard/category-views/inventory/components/InventoryTable.tsx',
+  'features/dashboard/category-views/inventory/components/MovementModal.tsx',
+  'pages/documents/index.tsx',
+  'pages/users/create.tsx',
+  'pages/users/edit/[id].tsx',
+  'pages/users/profile.tsx',
   'features/interview/setup/QuickSetup.tsx',
   'features/interview/setup/TotalControlSetup.tsx',
   'features/interview/components/RightSidebar/NewFieldForm.tsx',
@@ -30,7 +52,8 @@ const WIZARD_FILES = [
   'features/interview/components/AiInterviewSetup/InputArea.tsx',
 ];
 
-type Field = { file: string; tag: string; type: string | null; classes: string };
+type Field = { file: string; tag: string; type: string | null; classes: string; own: boolean };
+const TEXT_TYPES = ['text', 'email', 'password', 'number', 'search'];
 
 function readFields(): Field[] {
   const out: Field[] = [];
@@ -43,13 +66,23 @@ function readFields(): Field[] {
         if (tag === 'input' || tag === 'textarea' || tag === 'select') {
           let type: string | null = null;
           let classes = '';
+          let own = false;
           for (const a of n.attributes.properties) {
-            if (!ts.isJsxAttribute(a) || !a.initializer || !ts.isStringLiteral(a.initializer)) continue;
+            if (ts.isJsxAttribute(a) && a.name.getText(sf) === 'data-own-style') own = true;
+            if (!ts.isJsxAttribute(a) || !a.initializer) continue;
             const name = a.name.getText(sf);
-            if (name === 'type') type = a.initializer.text;
-            if (name === 'className') classes = a.initializer.text;
+            if (name === 'type' && ts.isStringLiteral(a.initializer)) type = a.initializer.text;
+            if (name === 'className') {
+              if (ts.isStringLiteral(a.initializer)) classes = a.initializer.text;
+              else if (ts.isJsxExpression(a.initializer) && a.initializer.expression) {
+                // template com `${}`: vale só a parte literal (as classes vindas da expressão não são cobertas)
+                const e = a.initializer.expression;
+                if (ts.isNoSubstitutionTemplateLiteral(e)) classes = e.text;
+                else if (ts.isTemplateExpression(e)) classes = [e.head.text, ...e.templateSpans.map((t) => t.literal.text)].join(' ');
+              }
+            }
           }
-          if (classes && (tag !== 'input' || type === 'text')) out.push({ file, tag, type, classes });
+          if (classes && (tag !== 'input' || (type !== null && TEXT_TYPES.includes(type)))) out.push({ file, tag, type, classes, own });
         }
       }
       ts.forEachChild(n, visit);
@@ -81,6 +114,7 @@ function specificity(sel: selectorParser.Selector): Spec {
 }
 
 const OWN_PROPS = [
+  'width',
   'background-color',
   'border-color',
   'border-top-color',
@@ -124,6 +158,7 @@ function matching(root: postcss.Root, field: Field, dark: boolean): Decl[] {
   if (dark) wrap.className = 'dark';
   const el = doc.createElement(field.tag);
   if (field.type) el.setAttribute('type', field.type);
+  if (field.own) el.setAttribute('data-own-style', '');
   el.className = field.classes;
   wrap.appendChild(el);
   doc.body.appendChild(wrap);
@@ -168,7 +203,11 @@ describe('regra global de campos de texto × utilitárias do campo (wizard)', ()
   const fields = readFields();
 
   it('acha os campos do wizard', () => {
-    expect(fields.length).toBeGreaterThanOrEqual(7);
+    expect(fields.length).toBeGreaterThanOrEqual(49);
+  });
+
+  it('todo campo de texto dessas telas declara data-own-style (sem ele a regra global volta a vencer)', () => {
+    expect(fields.filter((f) => !f.own).map((f) => `${f.file} <${f.tag} type=${f.type}>`)).toEqual([]);
   });
 
   it.each(['light', 'dark'] as const)('em %s, toda propriedade declarada por classe do campo é vencida por classe do campo', async (mode) => {
@@ -187,5 +226,25 @@ describe('regra global de campos de texto × utilitárias do campo (wizard)', ()
       }
     }
     expect(losses).toEqual([]);
+  });
+
+  it('sem data-own-style a regra global ainda vence a utilitária (telas não migradas não mudam)', async () => {
+    const probe: Field = { file: 'probe', tag: 'input', type: 'text', classes: 'rounded-2xl bg-white px-4', own: false };
+    const root = await compile([probe.classes]);
+    const all = matching(root, probe, false);
+    const win = (prop: string): Decl => all.filter((d) => d.prop === prop).reduce((m, d) => (beats(d, m) ? d : m));
+    for (const prop of ['border-top-left-radius', 'background-color', 'padding-left']) {
+      expect(isOwn(win(prop).selector, probe.classes)).toBe(false);
+    }
+  });
+
+  it('com data-own-style a regra global continua dando o default do que o campo não declara', async () => {
+    const probe: Field = { file: 'probe', tag: 'input', type: 'text', classes: 'rounded-2xl', own: true };
+    const root = await compile([probe.classes]);
+    const all = matching(root, probe, false);
+    const win = (prop: string): Decl => all.filter((d) => d.prop === prop).reduce((m, d) => (beats(d, m) ? d : m));
+    expect(isOwn(win('border-top-left-radius').selector, probe.classes)).toBe(true);
+    expect(win('background-color').selector).toContain('data-own-style'); // default global (gray-50), não do campo
+    expect(win('padding-left').selector).toContain('data-own-style');
   });
 });

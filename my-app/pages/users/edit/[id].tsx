@@ -325,6 +325,7 @@ function EditUserPageComponent({ t, i18n, ...props }: EditUserPageProps) {
                     name="name"
                     type="text"
                     required
+                    data-own-style
                     className="w-full pl-9 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-neutral-800 border border-gray-200/60 dark:border-gray-700/60 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all font-medium"
                     placeholder={t('userEditNamePlaceholder', 'Nome completo')}
                     value={formData.name || ''}
@@ -348,6 +349,7 @@ function EditUserPageComponent({ t, i18n, ...props }: EditUserPageProps) {
                       type="text"
                       required
                       minLength={3}
+                      data-own-style
                       className="w-full pl-8 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-neutral-800 border border-gray-200/60 dark:border-gray-700/60 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all font-medium"
                       placeholder={t('userEditUsernamePlaceholder', 'nome_de_usuario')}
                       value={formData.username || ''}
@@ -369,6 +371,7 @@ function EditUserPageComponent({ t, i18n, ...props }: EditUserPageProps) {
                       name="email"
                       type="email"
                       required
+                      data-own-style
                       className="w-full pl-9 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-neutral-800 border border-gray-200/60 dark:border-gray-700/60 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all font-medium"
                       placeholder={t('userEditEmailPlaceholder', 'email@luminaris.com')}
                       value={formData.email || ''}
@@ -389,6 +392,7 @@ function EditUserPageComponent({ t, i18n, ...props }: EditUserPageProps) {
                       name="role"
                       value={formData.role || ''}
                       onChange={handleFormChange}
+                      data-own-style
                       className="w-full pl-4 pr-10 py-2.5 text-sm bg-gray-50 dark:bg-neutral-800 border border-gray-200/60 dark:border-gray-700/60 rounded-md text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all appearance-none font-bold uppercase tracking-wide"
                     >
                       <option value={Roles.USER}>{t('userEditRoleUser', 'USER - Acesso Padrão')}</option>
@@ -424,6 +428,7 @@ function EditUserPageComponent({ t, i18n, ...props }: EditUserPageProps) {
                     id="password"
                     name="password"
                     type="password"
+                    data-own-style
                     autoComplete="new-password"
                     className="w-full pl-9 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-neutral-800 border border-gray-200/60 dark:border-gray-700/60 rounded-md text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all font-medium"
                     placeholder={t('userEditPasswordPlaceholder', 'Deixe em branco para não alterar')}

@@ -341,6 +341,7 @@ export function JournalEntryModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('journalEntryModal.field.descriptionPlaceholder', 'Histórico do lançamento…')}
+              data-own-style
               className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 focus:border-emerald-500 focus:outline-none"
             />
           </div>
@@ -360,6 +361,7 @@ export function JournalEntryModal({
               type="text"
               value={extemporaneousReason}
               onChange={(e) => setExtemporaneousReason(e.target.value)}
+              data-own-style
               className="rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 placeholder-neutral-600 focus:border-emerald-500 focus:outline-none"
             />
             <p className="text-xs text-neutral-500">
@@ -396,6 +398,7 @@ export function JournalEntryModal({
                 <select
                   value={line.accountCode}
                   onChange={(e) => updateLine(line.id, { accountCode: e.target.value })}
+                  data-own-style
                   className="w-full rounded-xl border border-neutral-700 bg-neutral-800 px-2 py-1.5 text-sm text-neutral-100 focus:border-emerald-500 focus:outline-none"
                 >
                   <option value="">{t('journalEntryModal.field.selectAccount', '— selecione a conta —')}</option>
@@ -431,6 +434,7 @@ export function JournalEntryModal({
                   value={line.amountBrl}
                   onChange={(e) => updateLine(line.id, { amountBrl: e.target.value })}
                   placeholder="0,00"
+                  data-own-style
                   className="w-28 rounded-xl border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-right text-sm text-neutral-100 placeholder-neutral-600 tabular-nums focus:border-emerald-500 focus:outline-none"
                 />
 
@@ -459,6 +463,7 @@ export function JournalEntryModal({
                       value={line.dims[axis.definitionId] ?? ''}
                       onChange={(e) => setLineDim(line.id, axis.definitionId, e.target.value)}
                       title={axis.name}
+                      data-own-style
                       className="rounded-lg border border-neutral-700 bg-neutral-900 px-2 py-1 text-xs text-neutral-300 focus:border-emerald-500 focus:outline-none"
                     >
                       <option value="">
