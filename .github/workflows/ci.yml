@@ -459,6 +459,24 @@ jobs:
       - name: Plano vault íntegro (links e dependências resolvem)
         run: node scripts/plano-vault.mjs check
 
+  # Testes dos scripts de processo (`scripts/*.test.mjs`: classe-risco, heavy-slot, lacunas, paralelo, plano-vault,
+  # prova-runner, session-cost, test-scope-guard, workspace-layout). Só usam módulos do Node, então não há `npm ci`.
+  # Lacuna L-20261114-204424-7432: nenhum passo do CI os rodava, e regressão neles só aparecia rodando à mão.
+  scripts-tests:
+    name: Scripts – node --test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: node --test scripts/*.test.mjs
+        run: node --test scripts/*.test.mjs
+
   # Diff-scoped design gate. A base ainda tem ~33 ocorrências de `zinc-` pré-existentes
   # (contrato §4: superfícies dark = neutral-*). Em vez de reprovar nelas (refactor =
   # fatia própria), este job falha SÓ quando a mudança INTRODUZ um `zinc-` novo — mesmo
