@@ -224,6 +224,9 @@ Regra completa: `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`.
    continua valendo): `node scripts/lacunas.mjs add --local <arquivo:linha> --classe <defeito|debito|spec|feature|fork|gate>
    --o-que "…" --evidencia "…" [--como-provar "…"] [--no <NÓ>] [--pr <n>] [--pai <id>]`. Débito técnico conta: código
    morto, duplicação, `atalho:` vencido, tipo frouxo, teste que não assere o que diz.
+   **Worktree sem `scripts/lacunas.mjs`** (cortada antes de 11/11; "Cannot find module"): o mesmo script, com a mesma
+   caixa, está em `node "$HOME/.claude/tools/lacunas/lacunas.mjs" add …` (Bash e PowerShell). Falhar o comando não
+   dispensa o registro.
 3. **Sem Bash (subagente só de leitura)?** Devolva as lacunas numa seção `Lacunas` do retorno, com os mesmos campos; quem
    te despachou põe na caixa. Quem despacha subagente confere essa seção antes de usar o resultado.
 4. **Fechamento:** 1ª linha do relatório/resposta final `LACUNAS NA CAIXA: <n> (<ids>)` ou `LACUNAS NA CAIXA: 0`.

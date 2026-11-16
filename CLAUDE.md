@@ -36,7 +36,8 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   (invoque a skill e trabalhe pelo formulário) — executar esses tipos de mão livre é violação de
   escopo, não atalho. A autorização citável continua obrigatória; a sessão não a substitui.
 - **Lacuna achada fora do escopo não fica no relatório** (dono, 2026-11-11): o que é da tarefa a sessão resolve; o resto
-  vai à caixa `node scripts/lacunas.mjs add` (nunca por `SendMessage`), e o maestro abre a sessão que resolve —
+  vai à caixa `node scripts/lacunas.mjs add` (nunca por `SendMessage`; worktree antiga sem o arquivo usa a cópia
+  `node "$HOME/.claude/tools/lacunas/lacunas.mjs"`, mesma caixa), e o maestro abre a sessão que resolve —
   `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`.
 - **Gate humano e dado externo NÃO têm sessão de agente** — PVA, sign-off de browser, deploy, XML de
   NF-e, arquivo RFB. O artefato deles é `docs/operating-manual/RUNBOOK-FORMAT.md`: evidência colada

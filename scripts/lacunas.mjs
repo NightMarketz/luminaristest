@@ -8,6 +8,13 @@
 // máquina e nunca versionado. Um arquivo por lacuna (criado com `wx`), então sessões em paralelo não colidem.
 // $LUMINARIS_LACUNAS_DIR troca a pasta (teste).
 //
+// Alcance: este arquivo só existe em worktree cortada depois de 11/11 (#1233). `instalar` copia o script para
+// ~/.claude/tools/lacunas/lacunas.mjs, e a cópia serve a worktree antiga e a qualquer outro repositório git da máquina
+// (cada repositório tem a sua caixa, no próprio .git):
+//   node "$HOME/.claude/tools/lacunas/lacunas.mjs" add …     (mesmos comandos, mesma caixa)
+// Mudou o script? Suba VERSAO e rode `node scripts/lacunas.mjs instalar`; enquanto a cópia global estiver atrás, todo
+// comando rodado daqui avisa no stderr. $LACUNAS_TOOLS_DIR troca a pasta da cópia (teste).
+//
 // Uso:
 //   node scripts/lacunas.mjs add --local <arquivo:linha> --classe <classe> --o-que "<o que falta/está errado>"
 //        --evidencia "<o que foi lido ou rodado>" [--como-provar "<teste ou comando que falharia>"]
@@ -15,16 +22,21 @@
 //   node scripts/lacunas.mjs list [--abertas] [--json]
 //   node scripts/lacunas.mjs show <id>
 //   node scripts/lacunas.mjs set <id> --estado <estado> --destino "<sessão / PR / pergunta / motivo>"
+//   node scripts/lacunas.mjs instalar
 //
 // Classes: defeito · debito · spec (o BRIEF pedia e não foi feito) · feature (frente nova, sem spec) ·
 //          fork (escolha de produto, lei, arquitetura ou irreversível) · gate (humano ou dado externo)
 // Estados: aberta → em-sessao → em-pr → resolvida | com-dono | descartada (descartada exige o motivo no destino)
 
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
 
+export const VERSAO = 2;
+const EU = fileURLToPath(import.meta.url);
 export const CLASSES = ['defeito', 'debito', 'spec', 'feature', 'fork', 'gate'];
 export const ESTADOS = ['aberta', 'em-sessao', 'em-pr', 'resolvida', 'com-dono', 'descartada'];
 export const FINAIS = ['resolvida', 'descartada'];
@@ -86,6 +98,37 @@ export function mudar(id, { estado, destino }, dir = pasta(), agora = new Date()
   return l;
 }
 
+export function pastaGlobal() {
+  return process.env.LACUNAS_TOOLS_DIR || join(homedir(), '.claude', 'tools', 'lacunas');
+}
+
+// 0 = não há cópia (ou não é este script).
+function versaoDe(arquivo) {
+  try { return Number(/^export const VERSAO = (\d+);/m.exec(readFileSync(arquivo, 'utf8'))?.[1] ?? 0); } catch { return 0; }
+}
+
+function mesmoArquivo(a, b) {
+  try { return realpathSync(a).toLowerCase() === realpathSync(b).toLowerCase(); } catch { return false; }
+}
+
+export function instalar(dir = pastaGlobal()) {
+  const alvo = join(dir, 'lacunas.mjs');
+  if (mesmoArquivo(alvo, EU)) return alvo;
+  const la = versaoDe(alvo);
+  if (la > VERSAO) throw new Error(`a cópia global é mais nova (v${la}) que este script (v${VERSAO}): instale de uma worktree atualizada`);
+  mkdirSync(dir, { recursive: true });
+  copyFileSync(EU, alvo);
+  return alvo;
+}
+
+function avisoCopiaGlobal() {
+  const alvo = join(pastaGlobal(), 'lacunas.mjs');
+  const la = versaoDe(alvo);
+  if (la && la < VERSAO && !mesmoArquivo(alvo, EU)) {
+    console.error(`aviso: a cópia global (${alvo}) está na v${la} e este script na v${VERSAO} — rode: node scripts/lacunas.mjs instalar`);
+  }
+}
+
 function flags(argv) {
   const o = { _: [] };
   for (let i = 0; i < argv.length; i++) {
@@ -119,13 +162,17 @@ function main() {
     console.log(JSON.stringify(ler(pasta(), f._[0]), null, 2));
   } else if (cmd === 'set') {
     console.log(linha(mudar(f._[0], { estado: f.estado, destino: f.destino })));
+  } else if (cmd === 'instalar') {
+    console.log(`cópia global na v${VERSAO}: ${instalar()}`);
   } else {
-    console.error('uso: node scripts/lacunas.mjs add|list|show|set — ver o cabeçalho do arquivo');
+    console.error('uso: node scripts/lacunas.mjs add|list|show|set|instalar — ver o cabeçalho do arquivo');
     process.exit(2);
   }
+  avisoCopiaGlobal();
 }
 
-const direto = process.argv[1] && resolve(process.argv[1]) === resolve(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+// fileURLToPath + realpath: caminho com espaço, acento ou junction não pode fazer o script sair calado sem rodar.
+const direto = process.argv[1] && mesmoArquivo(process.argv[1], EU);
 if (direto) {
   try { main(); } catch (e) { console.error(e.message); process.exit(1); }
 }
