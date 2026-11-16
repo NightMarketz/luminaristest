@@ -17,6 +17,9 @@ import { AccountingView } from '../AccountingView';
  * (those have their own test suites).
  */
 
+// L-20261113-152222-e69d: o erro da carga é configurável por teste (padrão: sem erro)
+const hookState = vi.hoisted(() => ({ error: null as string | null, unitsFailed: false, reload: vi.fn(), retryUnits: vi.fn() }));
+
 vi.mock('../hooks/useAccountingData', () => ({
   useAccountingData: () => ({
     units: [{ id: 'u1', label: 'Unidade 1' }],
@@ -25,8 +28,10 @@ vi.mock('../hooks/useAccountingData', () => ({
     report: null,
     loadingUnits: false,
     loadingReport: false,
-    error: null,
-    reload: vi.fn(),
+    error: hookState.error,
+    unitsFailed: hookState.unitsFailed,
+    reload: hookState.reload,
+    retryUnits: hookState.retryUnits,
   }),
 }));
 
@@ -71,7 +76,9 @@ vi.mock('../components/FixedAssetsPanel', () => ({
   FixedAssetsPanel: (p: { onNavigateToPeriods?: () => void; initialSection?: string }) =>
     React.createElement('button', { 'data-testid': 'fixed-assets-panel-mock', 'data-section': p.initialSection, onClick: p.onNavigateToPeriods }, 'fa'),
 }));
-vi.mock('../components/JournalEntryModal', () => ({ JournalEntryModal: () => null }));
+vi.mock('../components/JournalEntryModal', () => ({
+  JournalEntryModal: ({ isOpen }: { isOpen: boolean }) => (isOpen ? <div data-testid="entry-modal" /> : null),
+}));
 
 // AgingPanel stub: exposes two buttons that call the navigation callbacks with a fixed
 // counterpartyId, exactly like a real click on a group row would.
@@ -220,5 +227,43 @@ describe('AccountingView — aba Imobilizado (FE-INCR-FIXED-ASSETS item 1)', () 
     await screen.findByTestId('nfe-panel-mock');
     fireEvent.click(screen.getByRole('tab', { name: 'Imobilizado' }));
     expect(await screen.findByTestId('fixed-assets-panel-mock')).toHaveAttribute('data-section', 'bens');
+  });
+});
+
+describe('AccountingView — erro de carga e lançamento (e69d)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    cleanup();
+    hookState.error = null;
+    hookState.unitsFailed = false;
+  });
+
+  it('erro da carga: role=alert com "Tentar novamente" que chama reload', () => {
+    hookState.error = 'Falha ao carregar o balancete';
+    render(<AccountingView />);
+    expect(screen.getByRole('alert')).toHaveTextContent('Falha ao carregar o balancete');
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+    expect(hookState.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('erro ao carregar as unidades: "Tentar novamente" chama retryUnits, não reload', () => {
+    hookState.error = 'Falha ao carregar as unidades.';
+    hookState.unitsFailed = true;
+    render(<AccountingView />);
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+    expect(hookState.retryUnits).toHaveBeenCalledTimes(1);
+    expect(hookState.reload).not.toHaveBeenCalled();
+  });
+
+  it('Novo Lançamento: se o plano de contas não carrega, o modal NÃO abre com o select vazio', async () => {
+    const { accountingService } = await import('../../../lib/services/accounting.service');
+    const { dimensionsService } = await import('../../../lib/services/dimensions.service');
+    vi.mocked(accountingService.getAccounts).mockRejectedValue(new Error('500'));
+    vi.mocked(dimensionsService.listCatalog).mockResolvedValue({ entries: [] } as never);
+    render(<AccountingView />);
+    fireEvent.click(await screen.findByRole('button', { name: /Novo Lançamento/ }));
+    await waitFor(() => expect(accountingService.getAccounts).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByTestId('entry-modal')).toBeNull();
   });
 });

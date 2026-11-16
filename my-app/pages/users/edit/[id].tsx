@@ -236,7 +236,17 @@ function EditUserPageComponent({ t, i18n, ...props }: EditUserPageProps) {
   if (pageError) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen text-center px-4">
-        <p className="text-xl text-red-600 dark:text-red-400 mb-4">{t('errorLabel')} {pageError}</p>
+        <p role="alert" className="text-xl text-red-600 dark:text-red-400 mb-4">{t('errorLabel')} {pageError}</p>
+        {/* Retry só quando a falha pode ser transitória (carga); autorização/id inválido não melhoram refazendo. */}
+        {userId && actor && (
+          <button
+            type="button"
+            onClick={() => void fetchUserData()}
+            className="mb-3 px-4 py-2 border border-indigo-600 text-indigo-600 rounded-md hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors"
+          >
+            {t('try_again', 'Try again')}
+          </button>
+        )}
         <Link
           href="/users"
           className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"

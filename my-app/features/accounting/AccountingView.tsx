@@ -157,7 +157,7 @@ export function AccountingView() {
   }, [activeAssignments, chosenContext, assignmentsLoaded, ownUnitsEmpty]);
   const governance = useMemo(() => (selectedAssignment ? toGovernanceScope(selectedAssignment) : undefined), [selectedAssignment]);
 
-  const { units, unitId: ownUnitId, setUnitId, report, loadingUnits, loadingReport, error, reload } =
+  const { units, unitId: ownUnitId, setUnitId, report, loadingUnits, loadingReport, error, unitsFailed, reload, retryUnits } =
     useAccountingData(governance);
   useEffect(() => { setOwnUnitsEmpty(!loadingUnits && units.length === 0); }, [loadingUnits, units.length]);
   const unitId = governance ? governance.unitId : ownUnitId;
@@ -255,9 +255,9 @@ export function AccountingView() {
         setIsModalOpen(true);
       })
       .catch(() => {
-        // Still open the modal; it will show an empty account list
+        // Não abre o lançamento com a lista de contas vazia (o select ficaria sem opção e o usuário sem saída):
+        // a falha já virou toast pelo apiClient; clicar em "Novo lançamento" de novo tenta outra vez.
         setModalAccounts([]);
-        setIsModalOpen(true);
       });
     dimensionsService
       .listCatalog({ unitId })
@@ -373,8 +373,15 @@ export function AccountingView() {
 
       {/* ── Error banner ───────────────────────────────────────────────────── */}
       {error && !governance && (
-        <div className="mb-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
-          {error}
+        <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => void (unitsFailed ? retryUnits() : reload())}
+            className="rounded-lg border border-red-800 px-3 py-1 text-xs font-semibold text-red-200 hover:bg-red-900/40"
+          >
+            {t('view.retry', 'Tentar novamente')}
+          </button>
         </div>
       )}
 
