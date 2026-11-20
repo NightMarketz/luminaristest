@@ -13,11 +13,11 @@ governs-rules:
   - AC-2.2-3
 gates:
   AC-2.1-B2:
-    gate: luminaris-reviewer/fronteira-2.1
+    gate: luminaris-reviewer/REV-005
     kind: design-time
     note: entidade com invariante financeiro/legal nunca vira linha de preset
   AC-2.1-B3:
-    gate: luminaris-reviewer/fronteira-2.1
+    gate: luminaris-reviewer/REV-005
     kind: design-time
     note: preset é UI/entrada, não persistência autoritativa de módulo ERP
   AC-2.2-2:

@@ -16,7 +16,7 @@ Arquivos de **edição compartilhada**: todo feature novo os toca. Dois trabalho
 | `server/src/lib/factory.ts` | todo service/repo/controller registra aqui | ponto único |
 | `server/prisma/schema.prisma` (+ `migrations/`) | todo model novo + histórico de migração diverge entre worktrees | ponto único — o mais duro |
 | `server/prisma/seed.ts` | fixtures compartilhadas | ponto único |
-| `server/src/routes/docs.paths.ts` | todo endpoint documentado ganha bloco aqui (registro em 2 toques, contrato §3) | ponto único — 10 de 18 PRs do lote de 16/10 |
+| `server/src/routes/docs.paths.ts` | desde o #748 (17/10) guarda só tags e `components` do OpenAPI; os paths moram em `server/src/routes/docs/<feature>.paths.ts`, um por feature (contrato §3) e disjuntos entre features. Só conflita quando dois PRs criam tag ou component | ponto único — raro desde o #748 (era 10 de 18 PRs do lote de 16/10) |
 | `server/public/openapi.json` (+ `npm run docs:generate`) | artefato derivado; dois regens sempre conflitam | derivado |
 | `server/src/features/*/dtos/__tests__/__dto-shapes__.json` + `my-app/types/contracts/**/*.gen.ts` | snapshot de DTO e os tipos gerados dele | derivado |
 | `server/.dependency-cruiser-known-violations.json` + `my-app/.dependency-cruiser-known-violations.json` | baseline do `check:arch` (só encolhe) — todo PR que corrige violação reescreve | ponto único — 5 de 18 PRs do lote de 16/10 |
@@ -54,7 +54,7 @@ Todo lote paralelizável se decompõe em três fases — nunca uma:
 
 ## [PAR-005] Teto honesto — quando NÃO paralelizar (em dúvida → serial)
 
-O grau de paralelismo seguro = nº de slices com write-sets disjuntos (PAR-002). Vai **serial** quando: same-domain; edita arquivo existente; schema-vs-schema; ou a prova de disjunção não fecha. **Em dúvida → serial** (espelha o "em dúvida → Prisma first-class" do §2.1: o default é o lado seguro). O ganho real aparece com **várias features novas de domínios diferentes** — o padrão dos increments; não com incrementos empilhados no mesmo módulo.
+O grau de paralelismo seguro = nº de slices com write-sets disjuntos (PAR-002). Vai **serial** quando: same-domain; edita arquivo existente; schema-vs-schema; ou a prova de disjunção não fecha. **Em dúvida → serial** (o default é o lado seguro). O ganho real aparece com **várias features novas de domínios diferentes** — o padrão dos increments; não com incrementos empilhados no mesmo módulo.
 
 ## [PAR-006] Contrato de saída (o que o plano DEVE emitir)
 

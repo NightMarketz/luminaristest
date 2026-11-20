@@ -25,9 +25,9 @@ incremental — skills sem `governance.md` ainda não aparecem aqui e **não** f
 | Regra | Texto (contrato) | Skill responsável | Gate | Tipo | Status |
 |---|---|---|---|---|---|
 | `AC-2.1-B1` | Não injetar serviço Prisma first-class no motor | backend-workflow-transition-generator | `skill-audit/G6` | executável (grep) — **declarado, nunca executado** | ⚠️ **G6 NÃO ENFORÇADO** (ver nota abaixo). Cobertura real da regra: `server/src/features/dynamicTables/__tests__/no-accounting-imports.boundary.test.ts`, que roda no job `Server – typecheck & test` |
-| `AC-2.1-B2` | Não modelar invariante como linha de DynamicTable | dynamic-table-preset-generator | `luminaris-reviewer/fronteira-2.1` | design-time | ✅ coberto |
-| `AC-2.1-B3` | Preset não é persistência de módulo ERP | dynamic-table-preset-generator | `luminaris-reviewer/fronteira-2.1` | design-time | ✅ coberto |
-| `AC-2.1-B4` | Não editar DynamicTableService p/ integração | backend-workflow-transition-generator | `luminaris-reviewer/fronteira-2.1` | design-time | ✅ coberto |
+| `AC-2.1-B2` | Não modelar invariante como linha de DynamicTable | dynamic-table-preset-generator | `luminaris-reviewer/REV-005` | design-time | ✅ coberto |
+| `AC-2.1-B3` | Preset não é persistência de módulo ERP | dynamic-table-preset-generator | `luminaris-reviewer/REV-005` | design-time | ✅ coberto |
+| `AC-2.1-B4` | Não editar DynamicTableService p/ integração | backend-workflow-transition-generator | `luminaris-reviewer/REV-005` | design-time | ✅ coberto |
 | `AC-2.2-2` | `unique` de preset ≠ constraint de DB | dynamic-table-preset-generator | `skill-audit/P6` | design-time | ✅ coberto |
 | `AC-2.2-3` | Sem self-relation provada | dynamic-table-preset-generator | `skill-audit/G5` | executável (grep) — **declarado, nunca executado** | ⚠️ **G5 NÃO ENFORÇADO** (mesmo mecanismo). Sem cobertura substituta conhecida |
 | `AC-2.3-1` | Razão + subrazão = 2 commits + reconcile; nunca "mesma tx" nem compensação `try/catch` | backend-service-generator / luminaris-reviewer | `SVC-008` (eval `happy-2`) · `REV-008` (eval `happy-4`) | design-time | ✅ coberto (revisor) — 2026-09-22 |

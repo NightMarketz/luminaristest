@@ -209,7 +209,7 @@ export interface Appointment {
 
 export const appointmentsService = {
   getAll: (page = 1, limit = 10) =>
-    apiClient.get<{ data: Appointment[]; pagination: any }>(`/appointments?page=${page}&limit=${limit}`),
+    apiClient.get<{ data: Appointment[]; pagination: { page: number; limit: number; total: number } }>(`/appointments?page=${page}&limit=${limit}`),
   getById: (id: string) =>
     apiClient.get<{ data: Appointment }>(`/appointments/${id}`),
   create: (input: Omit<Appointment, 'id' | 'status'>) =>

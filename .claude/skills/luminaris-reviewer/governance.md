@@ -43,7 +43,7 @@ rules:
       - type: eval
         target: ./evals/evals.json#happy-3
   # Adicionada em 2026-09-22 (Contrato §2.3, cabeçalho atomicUntil — ADR-DOMAIN-MOTOR-rejected).
-  # Eval estrutural em happy-4; verificador de repo (atomicUntil.boundary.test.ts) chega no PR-B.
+  # Eval estrutural em happy-4; verificador de repo: server/src/features/accounting/__tests__/atomicUntil.boundary.test.ts (PR-B, #459).
   REV-008:
     gates:
       - type: eval
