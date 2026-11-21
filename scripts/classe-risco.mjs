@@ -130,17 +130,25 @@ export const VERMELHO = [
 
 // "Bump x from 4.104.0 to 7.43.0" → major mudou. Grupo minor-patch do dependabot não traz versão.
 // O título é só pista: PR de várias dependências ("Bump express and @types/express in /server", #952, express 4→5)
-// não traz versão e passava verde. A prova é o diff dos package.json (majorsNoDiff, abaixo).
+// não traz versão e passava verde. A prova é o conteúdo dos package.json da base e do PR (compararPackageJson, abaixo).
 export function bumpMajor(titulo) {
   const m = /from v?(\d+)\.[\w.-]* to v?(\d+)\./.exec(titulo);
   return m ? m[1] !== m[2] : false;
 }
 
-// Major e minor do começo de um spec do npm ("^4.18.2", "~5", ">=4.8.4 <6.1.0", "5.x"). null = não é versão
-// (workspace:, file:, npm:alias, git, URL, tag como "latest", comando de script).
+// A maior versão que um spec do npm admite ("^4.18.2" → 4.18, ">=4.8.4 <6.1.0" → 6.1, "^8 || ^9" → 9, "5.x" → 5).
+// "npm:pacote@^5" lê o spec depois do último "@". null = não é versão legível (workspace:, file:, git, URL,
+// "*", tag como "latest"): quem chama trata como dúvida. Pré-release e build ("2.0.0-beta.1", "+sha") não mudam a
+// major e saem antes da leitura; cada versão é lida inteira (major.minor.patch), senão "5.1.7" viraria 5.1 e 7.
 function versaoDoSpec(spec) {
-  const m = /^(?:[~^=v]|[<>]=?|\s)*(\d+)(?:\.(\d+))?/.exec(spec.trim());
-  return m ? { major: Number(m[1]), minor: m[2] === undefined ? null : Number(m[2]) } : null;
+  const s = spec.trim().replace(/^npm:.+@(?=[^@]*$)/, '').replace(/(\d)[-+][0-9A-Za-z.-]*[A-Za-z][0-9A-Za-z.-]*/g, '$1');
+  if (!s || !/^[~^=v<>\s|.\-xX*\d]+$/.test(s) || !/\d/.test(s)) return null;
+  let max = null;
+  for (const m of s.matchAll(/(\d+)(?:\.(\d+|[xX*]))?(?:\.(?:\d+|[xX*]))?/g)) {
+    const v = { major: Number(m[1]), minor: m[2] === undefined || /[xX*]/.test(m[2]) ? null : Number(m[2]) };
+    if (!max || v.major > max.major || (v.major === max.major && (v.minor ?? -1) > (max.minor ?? -1))) max = v;
+  }
+  return max;
 }
 
 function mudouMajor(de, para) {
@@ -149,34 +157,68 @@ function mudouMajor(de, para) {
   return de.major === 0 && de.minor !== null && para.minor !== null && de.minor !== para.minor;
 }
 
-// Lê o diff unificado do PR e devolve cada dependência de package.json cuja major mudou, ex.:
-// "express ^4.18.2 → ^5.3.0 (server/package.json)". O lockfile fica de fora: ele repete as mesmas versões e as
-// transitivas, e quem declara a dependência é o package.json. A chave "version" é a versão do próprio pacote.
-export function majorsNoDiff(diff) {
-  const achados = [];
-  let arquivo = null;
-  let removidas = new Map(); // nome → fila de { spec, v } removidos (o mesmo nome pode estar em dependencies e peer)
-  for (const linha of diff.split(/\r?\n/)) {
-    const cab = /^diff --git a\/(\S+) b\/(\S+)/.exec(linha);
-    if (cab) {
-      removidas = new Map();
-      arquivo = cab[2].split('/').pop() === 'package.json' ? cab[2] : null;
-      continue;
+// Seções em que um package.json declara dependência. "overrides" força versão de transitiva: major ali também conta.
+const SECOES = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies', 'overrides'];
+
+// nome → [{ secao, spec }]. Valor que não é string (override aninhado) vira o JSON dele: mudou → dúvida.
+function dependencias(pkg) {
+  const out = new Map();
+  for (const secao of SECOES) {
+    const bloco = pkg?.[secao];
+    if (!bloco || typeof bloco !== 'object') continue;
+    for (const [nome, valor] of Object.entries(bloco)) {
+      const spec = typeof valor === 'string' ? valor : JSON.stringify(valor);
+      out.set(nome, [...(out.get(nome) ?? []), { secao, spec }]);
     }
-    if (!arquivo || linha.startsWith('---') || linha.startsWith('+++')) continue;
-    const m = /^([-+])\s*"([^"]+)"\s*:\s*"([^"]*)"\s*,?\s*$/.exec(linha);
-    if (!m || m[2] === 'version') continue;
-    const [, sinal, nome, spec] = m;
-    const v = versaoDoSpec(spec);
-    if (!v) continue;
-    if (sinal === '-') {
-      removidas.set(nome, [...(removidas.get(nome) ?? []), { spec, v }]);
-      continue;
-    }
-    const antes = removidas.get(nome)?.shift();
-    if (antes && mudouMajor(antes.v, v)) achados.push(`${nome} ${antes.spec} → ${spec} (${arquivo})`);
   }
-  return achados;
+  return out;
+}
+
+// Compara um package.json da base (antes) com o da cabeça do PR (depois), já como JSON, seção por seção.
+// antes/depois: texto do arquivo, ou null quando ele não existe daquele lado (arquivo novo ou apagado).
+// Devolve majors ("express ^4.18.2 → ^5.3.0 (server/package.json)") e dúvidas (spec trocado que a régua não lê,
+// JSON ilegível): em dúvida, vermelho. Dependência só de um lado é nova ou retirada, não bump. Dependência movida
+// de seção (devDependencies → dependencies) é comparada do mesmo jeito. Scripts, "version" e o lockfile não entram:
+// quem declara a dependência é o package.json, e o lockfile só repete as versões e as transitivas.
+export function compararPackageJson(antes, depois, arquivo) {
+  const majors = [];
+  const duvidas = [];
+  const ler = (texto) => {
+    if (texto === null || texto === undefined) return {};
+    try {
+      return JSON.parse(texto);
+    } catch {
+      duvidas.push(`${arquivo}: JSON ilegível`);
+      return null;
+    }
+  };
+  const a = ler(antes);
+  const b = ler(depois);
+  if (!a || !b) return { majors, duvidas };
+  const da = dependencias(a);
+  const db = dependencias(b);
+  for (const [nome, lista] of db) {
+    const anteriores = da.get(nome);
+    if (!anteriores) continue;
+    const pares = [];
+    const restoA = [...anteriores];
+    const restoB = [];
+    for (const item of lista) {
+      const i = restoA.findIndex((x) => x.secao === item.secao);
+      if (i >= 0) pares.push([restoA.splice(i, 1)[0], item]);
+      else restoB.push(item);
+    }
+    for (let i = 0; i < Math.min(restoA.length, restoB.length); i++) pares.push([restoA[i], restoB[i]]);
+    for (const [x, y] of pares) {
+      if (x.spec === y.spec) continue;
+      const desc = `${nome} ${x.spec} → ${y.spec} (${arquivo})`;
+      const va = versaoDoSpec(x.spec);
+      const vb = versaoDoSpec(y.spec);
+      if (!va || !vb) duvidas.push(desc);
+      else if (mudouMajor(va, vb)) majors.push(desc);
+    }
+  }
+  return { majors, duvidas };
 }
 
 // revisor: o revisor-independente é obrigatório só no vermelho de CÓDIGO (D-2026-11-06-REVISAO-CONVERGENCIA).
@@ -185,8 +227,9 @@ const SO_TEXTO = /\.md$/i;
 
 const PACKAGE_JSON = /(^|\/)package\.json$/;
 
-// diff: texto do `gh pr diff` (modo pr). undefined = não lido (modo arquivos); null = a leitura falhou.
-export function classificar({ arquivos, titulo = '', draft = false, diff }) {
+// pacotes: [{ arquivo, antes, depois }] lidos do PR (modo pr). undefined = não lido (modo arquivos); null = a
+// leitura falhou — com package.json no PR, vermelho: sem o conteúdo não dá para provar que nenhuma major mudou.
+export function classificar({ arquivos, titulo = '', draft = false, pacotes }) {
   const motivos = [];
   let revisor = false;
   for (const f of arquivos) {
@@ -196,12 +239,19 @@ export function classificar({ arquivos, titulo = '', draft = false, diff }) {
       if (!SO_TEXTO.test(f)) revisor = true;
     }
   }
-  const majors = typeof diff === 'string' ? majorsNoDiff(diff) : [];
+  const majors = [];
+  const duvidas = [];
+  for (const p of pacotes ?? []) {
+    const r = compararPackageJson(p.antes, p.depois, p.arquivo);
+    majors.push(...r.majors);
+    duvidas.push(...r.duvidas);
+  }
   for (const d of majors) motivos.push(`dependência major: ${d}`);
+  for (const d of duvidas) motivos.push(`dependência ilegível (em dúvida, vermelho): ${d}`);
   if (!majors.length && bumpMajor(titulo)) motivos.push(`dependência major: ${titulo}`);
-  if (majors.length || bumpMajor(titulo)) revisor = true;
-  if (diff === null && arquivos.some((f) => PACKAGE_JSON.test(f))) {
-    motivos.push('package.json sem diff legível (em dúvida, vermelho)');
+  if (majors.length || duvidas.length || bumpMajor(titulo)) revisor = true;
+  if (pacotes === null && arquivos.some((f) => PACKAGE_JSON.test(f))) {
+    motivos.push('package.json do PR não pôde ser lido (em dúvida, vermelho)');
     revisor = true;
   }
   if (/n[ãa]o mergear/i.test(titulo)) motivos.push('título pede para não mergear');
@@ -210,19 +260,40 @@ export function classificar({ arquivos, titulo = '', draft = false, diff }) {
   return { classe: motivos.length ? 'vermelho' : 'verde', motivos, revisor };
 }
 
-function lerPr(n) {
-  const out = execFileSync('gh', ['pr', 'view', String(n), '--json', 'files,title,isDraft'], { encoding: 'utf8' });
-  const pr = JSON.parse(out);
-  const arquivos = pr.files.map((f) => f.path);
-  let diff;
-  if (arquivos.some((f) => PACKAGE_JSON.test(f))) {
-    try {
-      diff = execFileSync('gh', ['pr', 'diff', String(n)], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
-    } catch {
-      diff = null; // classificar() marca vermelho: sem o diff não dá para provar que nenhuma major mudou
-    }
+function gh(args) {
+  return execFileSync('gh', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+}
+
+// Conteúdo do arquivo num commit; null se o arquivo não existe nele (404). Outro erro sobe.
+function conteudo(repo, caminho, sha) {
+  try {
+    return gh(['api', `repos/${repo}/contents/${caminho.split('/').map(encodeURIComponent).join('/')}?ref=${sha}`,
+      '-H', 'Accept: application/vnd.github.raw']);
+  } catch (e) {
+    if (/HTTP 404|Not Found/.test(String(e.stderr ?? e.message))) return null;
+    throw e;
   }
-  return { arquivos, titulo: pr.title, draft: pr.isDraft, diff };
+}
+
+// Lê cada package.json do PR no merge-base (não na ponta da main: mudança que a main fez depois apareceria como
+// bump ao contrário) e na cabeça do PR.
+function lerPacotes(n, arquivos) {
+  const alvo = arquivos.filter((f) => PACKAGE_JSON.test(f));
+  if (!alvo.length) return undefined;
+  try {
+    const pr = JSON.parse(gh(['pr', 'view', String(n), '--json', 'baseRefOid,headRefOid,url']));
+    const repo = new URL(pr.url).pathname.split('/').slice(1, 3).join('/');
+    const base = gh(['api', `repos/${repo}/compare/${pr.baseRefOid}...${pr.headRefOid}`, '--jq', '.merge_base_commit.sha']).trim();
+    return alvo.map((arquivo) => ({ arquivo, antes: conteudo(repo, arquivo, base), depois: conteudo(repo, arquivo, pr.headRefOid) }));
+  } catch {
+    return null;
+  }
+}
+
+function lerPr(n) {
+  const pr = JSON.parse(gh(['pr', 'view', String(n), '--json', 'files,title,isDraft']));
+  const arquivos = pr.files.map((f) => f.path);
+  return { arquivos, titulo: pr.title, draft: pr.isDraft, pacotes: lerPacotes(n, arquivos) };
 }
 
 const isMain = process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/').split('/').pop());
