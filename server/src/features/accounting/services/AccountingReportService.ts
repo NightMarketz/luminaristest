@@ -13,8 +13,10 @@ import { scopeToday } from '../models/dates';
 import {
   STATEMENT_MAPPING_VERSION,
   findMappingRule,
+  findDreRule,
   applySign,
 } from './StatementMappingFixture';
+import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
 
 // ─── Trial balance ────────────────────────────────────────────────────────────
 
@@ -188,7 +190,18 @@ export class AccountingReportService {
     private readonly postingRepo: IPostingRepository,
     private readonly journalEntryRepo: IJournalEntryRepository,
     private readonly policy: IAccountingPolicy,
+    /** Lacuna 038d: lê `insumoExpenseAccountId` para a DRE classificar o insumo pelo papel. Ausente = só pelo prefixo. */
+    private readonly fiscalProfileRepo?: Pick<IFiscalProfileRepository, 'findByScope'>,
   ) {}
+
+  /**
+   * Contas que a DRE trata como custo dos serviços pelo PAPEL (lacuna 038d): a do `insumoExpenseAccountId` do perfil fiscal.
+   * Lida no escopo, uma vez por relatório; sem perfil ou sem insumo, conjunto vazio (vale só o prefixo).
+   */
+  private async custoServicosAccountIds(scope: AccountingScope): Promise<ReadonlySet<string>> {
+    const profile = await this.fiscalProfileRepo?.findByScope(scope);
+    return new Set(profile?.insumoExpenseAccountId ? [profile.insumoExpenseAccountId] : []);
+  }
 
   // ─── Private helpers ────────────────────────────────────────────────────────
 
@@ -285,11 +298,14 @@ export class AccountingReportService {
     rows: TrialBalanceRow[],
     statement: 'BP' | 'DRE',
     sectionName: string,
+    custoServicosAccountIds: ReadonlySet<string> = new Set(),
   ): StatementSection {
     let total = 0;
     const accounts: BpDreLine[] = [];
     for (const row of rows) {
-      const rule = findMappingRule(row.nature, row.code, statement);
+      const rule = statement === 'DRE'
+        ? findDreRule(row.nature, row.code, row.accountId, custoServicosAccountIds)
+        : findMappingRule(row.nature, row.code, statement);
       if (!rule || rule.section !== sectionName) continue;
       const signed = applySign(row.balanceCents, rule.sign);
       total += signed;
@@ -810,11 +826,12 @@ export class AccountingReportService {
         ),
       ]);
 
-      const grossRevenue = this.buildSection(dreRows, 'DRE', 'grossRevenue');
-      const revenueDeductions = this.buildSection(dreRows, 'DRE', 'revenueDeductions');
-      const costOfGoodsSold = this.buildSection(dreRows, 'DRE', 'costOfGoodsSold');
-      const financialResult = this.buildSection(dreRows, 'DRE', 'financialResult');
-      const expenses = this.buildSection(dreRows, 'DRE', 'expenses');
+      const custoServicos = await this.custoServicosAccountIds(scope);
+      const grossRevenue = this.buildSection(dreRows, 'DRE', 'grossRevenue', custoServicos);
+      const revenueDeductions = this.buildSection(dreRows, 'DRE', 'revenueDeductions', custoServicos);
+      const costOfGoodsSold = this.buildSection(dreRows, 'DRE', 'costOfGoodsSold', custoServicos);
+      const financialResult = this.buildSection(dreRows, 'DRE', 'financialResult', custoServicos);
+      const expenses = this.buildSection(dreRows, 'DRE', 'expenses', custoServicos);
 
       const { netCents: dreNetCents } = this.computeDreNet(dreRows);
       const { netCents: priorNetCents } = this.computeDreNet(priorRows);

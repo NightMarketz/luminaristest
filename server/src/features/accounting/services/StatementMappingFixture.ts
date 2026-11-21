@@ -62,6 +62,23 @@ export function findMappingRule(
   });
 }
 
+/**
+ * Regra da DRE por PAPEL (lacuna 038d; cédula D-2026-11-21-DRE-INSUMO-PELO-PAPEL, Lei 6.404/76 art. 187 II/III): a conta
+ * apontada em `insumoExpenseAccountId` do perfil fiscal é custo dos serviços, acima do lucro bruto, qualquer que seja o
+ * código. O papel só vale para `Expense`; fora disso (ou conta fora do conjunto) vale o prefixo, como em `findMappingRule`.
+ */
+export function findDreRule(
+  nature: string,
+  code: string,
+  accountId: string,
+  custoServicosAccountIds: ReadonlySet<string>,
+): StatementMappingRule | undefined {
+  if (nature === 'Expense' && custoServicosAccountIds.has(accountId)) {
+    return STATEMENT_MAPPING_RULES.find((r) => r.id === 'dre.cogs_services');
+  }
+  return findMappingRule(nature, code, 'DRE');
+}
+
 /** Applies the sign convention and returns a signed integer (cents). */
 export function applySign(rawBalance: number, sign: StatementMappingRule['sign']): number {
   switch (sign) {
