@@ -80,7 +80,7 @@ describe('Lacuna 35d3 — padrão do insumoExpenseAccountId pelo plano padrão (
   const perfil = (unitId: string, extra: Record<string, unknown> = {}) =>
     request(app).put('/api/accounting/fiscal-profile').set(authHeader(dono)).send({ unitId, regimeTributario: 'PRESUMIDO', icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO', ...extra });
 
-  it('o plano padrão cria a 4.7 no escopo; perfil sem conta de insumo recebe a 4.7; perfil já configurado (4.1) fica como está', async () => {
+  it('o plano padrão cria a 4.7 no escopo; perfil sem conta de insumo recebe a 4.7; perfil legado na 4.1 não é sobrescrito e reprova o plano padrão (lacuna 051e)', async () => {
     for (const u of [VAZIO, CONFIG]) await seedUnit({ userId: dono.id, id: u });
     expect((await perfil(VAZIO)).status).toBe(200);
     for (const u of [VAZIO, CONFIG]) await request(app).get('/api/accounting/accounts').set(authHeader(dono)).query({ unitId: u }); // ensureChartOfAccounts
@@ -88,13 +88,18 @@ describe('Lacuna 35d3 — padrão do insumoExpenseAccountId pelo plano padrão (
     const csp = await conta(VAZIO, '4.7');
     expect([csp.name, csp.nature, csp.acceptsEntries]).toEqual(['Custo dos Serviços Prestados', 'Expense', true]);
     const op = await conta(CONFIG, '4.1');
-    // Perfil legado: gravado antes da lacuna 051e, que hoje recusa a 4.1 no PUT (não é custo na DRE). O padrão não o sobrescreve.
+    // Perfil legado: gravado antes da lacuna 051e, que recusa a 4.1 (não é custo na DRE) em toda escrita: PUT, kit e plano padrão
+    // (dono, 21/11: "Checar em todo PUT"; "aplica a regra também no kit e no plano padrão"). O padrão não o sobrescreve.
     expect((await perfil(CONFIG)).status).toBe(200);
     expect((await perfil(CONFIG, { insumoExpenseAccountId: op.id })).status).toBe(400);
     await prisma.fiscalProfile.updateMany({ where: { userId: dono.id, unitId: CONFIG }, data: { insumoExpenseAccountId: op.id } });
 
-    for (const u of [VAZIO, CONFIG]) await getFactory().getFiscalProfileService().ensureCanonicalAccounts(scope(u));
-    const insumo = async (unitId: string) => (await prisma.fiscalProfile.findFirstOrThrow({ where: { userId: dono.id, unitId } })).insumoExpenseAccountId;
-    expect({ vazio: await insumo(VAZIO), config: await insumo(CONFIG) }).toEqual({ vazio: csp.id, config: op.id });
+    const svc = getFactory().getFiscalProfileService();
+    await svc.ensureCanonicalAccounts(scope(VAZIO));
+    await expect(svc.ensureCanonicalAccounts(scope(CONFIG))).rejects.toThrow(/Conta de insumo do serviço '4.1' não é custo na DRE/);
+    const row = (unitId: string) => prisma.fiscalProfile.findFirstOrThrow({ where: { userId: dono.id, unitId } });
+    expect({ vazio: (await row(VAZIO)).insumoExpenseAccountId, config: (await row(CONFIG)).insumoExpenseAccountId }).toEqual({ vazio: csp.id, config: op.id });
+    // a tx voltou: o campo que o plano padrão grava na unidade VAZIO não foi gravado na CONFIG
+    expect({ vazio: (await row(VAZIO)).ibsRecolherAccountId === null, config: (await row(CONFIG)).ibsRecolherAccountId }).toEqual({ vazio: false, config: null });
   });
 });
