@@ -5,7 +5,7 @@ type Tx = Prisma.TransactionClient;
 export interface DpLotacaoData { unitId: string; codigo: string; descricao: string }
 export interface DpCargoData { nome: string; cbo: string }
 /** BE-INCR-DP-F2 item 68: + a escala (`diasTrabalho` na forma canônica SEG..DOM; `minutosPorDia`). */
-export interface DpJornadaData { nome: string; minutosSemanais: number; tipoJornada: string; descricao: string | null; diasTrabalho: string; minutosPorDia: number | null }
+export interface DpJornadaData { nome: string; minutosSemanais: number; tipoJornada: string; descricao: string | null; diasTrabalho: string; minutosPorDia: number | null; tempoParcial: boolean }
 export interface DpSindicatoData { cnpj: string; nome: string }
 /** Item 27 — parâmetro da CCT vivo com o sindicato da convenção (viva) que o traz. */
 export type DpParametroCctComSindicato = DpConvencaoParametro & { convencao: Pick<DpConvencaoColetiva, 'sindicatoId'> };

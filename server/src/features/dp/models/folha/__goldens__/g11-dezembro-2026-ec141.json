@@ -1,0 +1,68 @@
+{
+  "cenario": "G11 — 12/2026, mensalista R$ 3.000,00, escala 5×2 de 504 min (42 h; pressupõe CCT, BRIEF §5), 10 h de HE, pagamento em 30/12/2026",
+  "dataRef": "2026-12-15",
+  "conferidoPor": null,
+  "fonte": "pesquisas-legais/brief-pes4-f2-contador/relatorio.md §10",
+  "entradas": {
+    "competencia": "2026-12",
+    "dataPagamento": "2026-12-30",
+    "vinculos": [
+      {
+        "id": "g11",
+        "matricula": "G11",
+        "categoria": "101",
+        "dataInicio": "2025-01-02",
+        "salarioCents": "300000",
+        "unidadeSalario": "5",
+        "jornada": {
+          "diasTrabalho": [
+            "SEG",
+            "TER",
+            "QUA",
+            "QUI",
+            "SEX"
+          ],
+          "minutosPorDia": 504
+        },
+        "lancamentos": [
+          {
+            "rubrica": "HORA_EXTRA_50",
+            "quantidadeMin": 600
+          }
+        ]
+      }
+    ]
+  },
+  "conta": [
+    "Tabelas de 2026: INSS 7,5% até 1.621,00; 9% até 2.902,84; 12% até 4.354,27; 14% até o teto de 8.475,55. Mínimo 1.621,00. IRRF desde 05/2025 com a redução do art. 3º-A desde 01/2026; dependente 189,59; simplificado 607,20. FGTS 8% (aprendiz 2%).",
+    "INSS em TRUNCAR_POR_FAIXA (linha ARREDONDAMENTO_INSS vigente, F-DPF-3 revisto): cada faixa truncada ao centavo, depois a soma. O dossiê §10 mostra em negrito a forma antiga (arredonda no total).",
+    "Regras do último dia da competência (L4): SALARIO_HORA_DIVISOR = DIAS_DE_TRABALHO_DA_ESCALA, limite 2.520 min, repouso mínimo 2 (EC 141).",
+    "Divisor: 504 min × 30 = 252 h; hora = 3.000/252 = 11,904762.",
+    "HE: 10 h × 11,904762 × 1,5 = 178,5714 → 178,57.",
+    "DSR pelo mês inteiro (L4: um mês só; o dossiê fatiava em 16/12 e dava 81,17 — divergência registrada, pergunta (6) do §5 ao contador): 22 dias de trabalho (seg–sex menos 25/12) e 9 de repouso → 178,57 × 9/22 = 73,0514 → 73,05.",
+    "Bruto: 3.251,62. INSS: 121,57 + 115,36 + (348,78 × 12% = 41,8536 → 41,85) = 278,78. IRRF 0 (redução do art. 3º-A). FGTS: 260,1296 → 260,13.",
+    "Líquido: 3.251,62 − 278,78 = 2.972,84."
+  ],
+  "esperado": {
+    "g11": {
+      "linhas": {
+        "SALARIO_BASE": "300000",
+        "HORA_EXTRA_50": "17857",
+        "DSR_VARIAVEIS": "7305",
+        "INSS_SEGURADO": "27878",
+        "FGTS_MES": "26013"
+      },
+      "bases": {
+        "cp": "325162",
+        "irrf": "325162",
+        "fgts": "325162"
+      },
+      "totais": {
+        "proventos": "325162",
+        "descontos": "27878",
+        "liquido": "297284"
+      },
+      "pendencias": []
+    }
+  }
+}

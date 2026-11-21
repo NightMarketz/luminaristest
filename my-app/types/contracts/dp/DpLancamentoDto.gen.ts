@@ -7,6 +7,7 @@ rubrica: string
 quantidadeMin?: number
 valorCents?: unknown
 observacao?: string
+data?: string
 }
 export interface CreateOutraRemuneracaoInput {
 unitId: string
@@ -37,6 +38,7 @@ rubrica?: string
 quantidadeMin?: (number | null)
 valorCents?: unknown
 observacao?: (string | null)
+data?: (string | null)
 }
 export interface UpdateOutraRemuneracaoInput {
 unitId: string

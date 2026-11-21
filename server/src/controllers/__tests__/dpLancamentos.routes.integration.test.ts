@@ -139,6 +139,14 @@ describe('/api/dp dependentes, lançamentos e outras remunerações (F2 PR-1)', 
     expect([troca.status, troca.body.data.rubrica, troca.body.data.quantidadeMin, troca.body.data.valorCents]).toEqual([200, 'COMISSAO', null, '5000']);
     const ruim = await request(app).patch(`${base}/${id}`).set(auth).send({ unitId: UNIT, rubrica: 'FALTAS' }); // FALTAS em minutos, sem minutos
     expect([ruim.status, ruim.body.details?.campo]).toEqual([400, 'valorCents']);
+    // L1 (PR-4, dono 21/11): a FALTAS exige a data do dia, dentro da competência; com ela, grava e devolve a data.
+    const semData = await request(app).post(base).set(auth).send({ unitId: UNIT, competencia: '2026-03', rubrica: 'FALTAS', quantidadeMin: 440 });
+    expect([semData.status, semData.body.code, semData.body.details?.campo]).toEqual([400, 'DP_LANCAMENTO_INVALIDO', 'data']);
+    const foraDoMes = await request(app).post(base).set(auth).send({ unitId: UNIT, competencia: '2026-03', rubrica: 'FALTAS', quantidadeMin: 440, data: '2026-04-01' });
+    expect([foraDoMes.status, foraDoMes.body.details?.campo]).toEqual([400, 'data']);
+    const falta = await request(app).post(base).set(auth).send({ unitId: UNIT, competencia: '2026-03', rubrica: 'FALTAS', quantidadeMin: 440, data: '2026-03-11' });
+    expect([falta.status, falta.body.data.data]).toEqual([201, '2026-03-11']);
+    expect((await request(app).delete(`${base}/${falta.body.data.id}`).set(auth).query({ unitId: UNIT })).status).toBe(204);
     expect((await request(app).delete(`${base}/${id}`).set(authHeader(outro)).query({ unitId: UNIT_OUTRO })).status).toBe(404);
     expect((await request(app).delete(`${base}/${id}`).set(auth).query({ unitId: UNIT })).status).toBe(204);
     expect((await request(app).get(base).set(auth).query({ unitId: UNIT })).body.data).toHaveLength(1);
@@ -176,7 +184,7 @@ describe('/api/dp dependentes, lançamentos e outras remunerações (F2 PR-1)', 
   it('Tier-0 do sub-recurso: id de outro pai pela rota do próprio pai ⇒ 404 (revisor do #1128, sabotagem 6)', async () => {
     const auth = authHeader(dono);
     const q = { unitId: UNIT };
-    const lanc = await request(app).post(`/api/dp/vinculos/${aprendizId}/lancamentos`).set(auth).send({ ...q, competencia: '2026-03', rubrica: 'FALTAS', quantidadeMin: 60 });
+    const lanc = await request(app).post(`/api/dp/vinculos/${aprendizId}/lancamentos`).set(auth).send({ ...q, competencia: '2026-03', rubrica: 'FALTAS', quantidadeMin: 60, data: '2026-03-10' });
     expect(lanc.status).toBe(201);
     expect((await request(app).patch(`/api/dp/vinculos/${vinculoId}/lancamentos/${lanc.body.data.id}`).set(auth).send({ ...q, quantidadeMin: 30 })).status).toBe(404);
     expect((await request(app).delete(`/api/dp/vinculos/${vinculoId}/lancamentos/${lanc.body.data.id}`).set(auth).query(q)).status).toBe(404);
@@ -217,7 +225,7 @@ describe('/api/dp dependentes, lançamentos e outras remunerações (F2 PR-1)', 
     try {
       const auth = authHeader(dono);
       const antes = await prisma.dpLancamento.count();
-      const r = await request(app).post(`/api/dp/vinculos/${vinculoId}/lancamentos`).set(auth).send({ unitId: UNIT, competencia: '2026-05', rubrica: 'FALTAS', quantidadeMin: 440 });
+      const r = await request(app).post(`/api/dp/vinculos/${vinculoId}/lancamentos`).set(auth).send({ unitId: UNIT, competencia: '2026-05', rubrica: 'FALTAS', quantidadeMin: 440, data: '2026-05-11' });
       expect(r.status).toBe(503);
       expect(await prisma.dpLancamento.count()).toBe(antes);
       const dep = await request(app)

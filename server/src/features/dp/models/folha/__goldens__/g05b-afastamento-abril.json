@@ -1,0 +1,65 @@
+{
+  "cenario": "G5 (abril) — o mesmo afastamento: 1–20/04 pela previdência, retorno em 21/04",
+  "dataRef": "2026-04-15",
+  "conferidoPor": null,
+  "fonte": "pesquisas-legais/brief-pes4-f2-contador/relatorio.md §10",
+  "entradas": {
+    "competencia": "2026-04",
+    "dataPagamento": "2026-05-06",
+    "vinculos": [
+      {
+        "id": "g5",
+        "matricula": "G5",
+        "categoria": "101",
+        "dataInicio": "2025-01-02",
+        "salarioCents": "300000",
+        "unidadeSalario": "5",
+        "jornada": {
+          "diasTrabalho": [
+            "SEG",
+            "TER",
+            "QUA",
+            "QUI",
+            "SEX",
+            "SAB"
+          ],
+          "minutosPorDia": 440
+        },
+        "afastamentos": [
+          {
+            "motivo": "03",
+            "inicio": "2026-03-10",
+            "fim": "2026-04-20"
+          }
+        ]
+      }
+    ]
+  },
+  "conta": [
+    "Tabelas de 2026: INSS 7,5% até 1.621,00; 9% até 2.902,84; 12% até 4.354,27; 14% até o teto de 8.475,55. Mínimo 1.621,00. IRRF desde 05/2025 com a redução do art. 3º-A desde 01/2026; dependente 189,59; simplificado 607,20. FGTS 8% (aprendiz 2%).",
+    "INSS em TRUNCAR_POR_FAIXA (linha ARREDONDAMENTO_INSS vigente, F-DPF-3 revisto): cada faixa truncada ao centavo, depois a soma. O dossiê §10 mostra em negrito a forma antiga (arredonda no total).",
+    "Os 15 dias da empresa acabaram em 24/03: abril não tem trecho da empresa.",
+    "21–30/04 no mês comercial: 30 − 20 = 10 dias × 3.000/30 = 1.000,00 (21/04 é feriado, mas é dia de salário no mês comercial).",
+    "INSS 75,00. IRRF 0. FGTS 80,00. Líquido 925,00."
+  ],
+  "esperado": {
+    "g5": {
+      "linhas": {
+        "SALARIO_BASE": "100000",
+        "INSS_SEGURADO": "7500",
+        "FGTS_MES": "8000"
+      },
+      "bases": {
+        "cp": "100000",
+        "irrf": "100000",
+        "fgts": "100000"
+      },
+      "totais": {
+        "proventos": "100000",
+        "descontos": "7500",
+        "liquido": "92500"
+      },
+      "pendencias": []
+    }
+  }
+}

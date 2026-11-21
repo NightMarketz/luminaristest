@@ -1,0 +1,59 @@
+{
+  "cenario": "G10 (mensal) — a mesma competência, com o adiantamento de 1.200,00 já pago",
+  "dataRef": "2026-03-15",
+  "conferidoPor": null,
+  "fonte": "pesquisas-legais/brief-pes4-f2-contador/relatorio.md §10",
+  "entradas": {
+    "competencia": "2026-03",
+    "dataPagamento": "2026-03-31",
+    "vinculos": [
+      {
+        "id": "g10",
+        "matricula": "G10",
+        "categoria": "101",
+        "dataInicio": "2025-01-02",
+        "salarioCents": "300000",
+        "unidadeSalario": "5",
+        "jornada": {
+          "diasTrabalho": [
+            "SEG",
+            "TER",
+            "QUA",
+            "QUI",
+            "SEX",
+            "SAB"
+          ],
+          "minutosPorDia": 440
+        },
+        "adiantamentoPagoCents": "120000"
+      }
+    ]
+  },
+  "conta": [
+    "Tabelas de 2026: INSS 7,5% até 1.621,00; 9% até 2.902,84; 12% até 4.354,27; 14% até o teto de 8.475,55. Mínimo 1.621,00. IRRF desde 05/2025 com a redução do art. 3º-A desde 01/2026; dependente 189,59; simplificado 607,20. FGTS 8% (aprendiz 2%).",
+    "INSS em TRUNCAR_POR_FAIXA (linha ARREDONDAMENTO_INSS vigente, F-DPF-3 revisto): cada faixa truncada ao centavo, depois a soma. O dossiê §10 mostra em negrito a forma antiga (arredonda no total).",
+    "Salário 3.000,00; INSS 248,58 (G1); IRRF 0; DESCONTO_ADIANTAMENTO 1.200,00 (item 43); FGTS 240,00.",
+    "Líquido: 3.000,00 − 248,58 − 1.200,00 = 1.551,42."
+  ],
+  "esperado": {
+    "g10": {
+      "linhas": {
+        "SALARIO_BASE": "300000",
+        "INSS_SEGURADO": "24858",
+        "DESCONTO_ADIANTAMENTO": "120000",
+        "FGTS_MES": "24000"
+      },
+      "bases": {
+        "cp": "300000",
+        "irrf": "300000",
+        "fgts": "300000"
+      },
+      "totais": {
+        "proventos": "300000",
+        "descontos": "144858",
+        "liquido": "155142"
+      },
+      "pendencias": []
+    }
+  }
+}

@@ -13,7 +13,7 @@ import { DP_RUBRICAS } from '../rubricas/catalogo';
 
 const c = (s: string) => CompetenciaSchema.parse(s);
 const VINCULO = { categoria: '101', dataInicio: '2026-02-10', dataTermino: '2026-06-05' };
-const base: DadosLancamento = { rubrica: 'HORA_EXTRA_50', competencia: c('2026-03'), quantidadeMin: 120, valorCents: null };
+const base: DadosLancamento = { rubrica: 'HORA_EXTRA_50', competencia: c('2026-03'), quantidadeMin: 120, valorCents: null, data: null };
 
 function erro(fn: () => void): { reason?: unknown; campo?: unknown } {
   try {
@@ -62,12 +62,30 @@ describe('item 17 — validação do lançamento', () => {
 
   it('rubrica que não se aplica à categoria (HE no aprendiz 103, CLT art. 432)', () => {
     expect(erro(() => assertLancamentoValido(base, { ...VINCULO, categoria: '103' })).campo).toBe('rubrica');
-    expect(() => assertLancamentoValido({ ...base, rubrica: 'FALTAS' }, { ...VINCULO, categoria: '103' })).not.toThrow();
-    expect(erro(() => assertLancamentoValido({ ...base, rubrica: 'FALTAS' }, { ...VINCULO, categoria: '723' })).campo).toBe('rubrica');
+    expect(() => assertLancamentoValido({ ...base, rubrica: 'FALTAS', data: '2026-03-11' }, { ...VINCULO, categoria: '103' })).not.toThrow();
+    expect(erro(() => assertLancamentoValido({ ...base, rubrica: 'FALTAS', data: '2026-03-11' }, { ...VINCULO, categoria: '723' })).campo).toBe('rubrica');
   });
 
   it('vínculo sem término aceita competência futura', () => {
     expect(() => assertLancamentoValido({ ...base, competencia: c('2030-01') }, { ...VINCULO, dataTermino: null })).not.toThrow();
+  });
+});
+
+describe('L1 (PR-4, dono 21/11: "Data na falta") — a FALTAS exige a data, um lançamento por dia', () => {
+  const falta: DadosLancamento = { ...base, rubrica: 'FALTAS', quantidadeMin: 440 };
+  it('sem data ⇒ 400 com o campo data; com o dia da competência e do vínculo, aceita', () => {
+    expect(erro(() => assertLancamentoValido(falta, VINCULO)).campo).toBe('data');
+    expect(() => assertLancamentoValido({ ...falta, data: '2026-03-11' }, VINCULO)).not.toThrow();
+  });
+  it('data fora da competência, fora do vínculo ou fora do calendário ⇒ 400 data; mais de um dia ⇒ 400 quantidadeMin', () => {
+    expect(erro(() => assertLancamentoValido({ ...falta, data: '2026-04-01' }, VINCULO)).campo).toBe('data');
+    expect(erro(() => assertLancamentoValido({ ...falta, competencia: c('2026-02'), data: '2026-02-09' }, VINCULO)).campo).toBe('data');
+    expect(erro(() => assertLancamentoValido({ ...falta, data: '2026-03-32' }, VINCULO)).campo).toBe('data');
+    expect(erro(() => assertLancamentoValido({ ...falta, quantidadeMin: 1441, data: '2026-03-11' }, VINCULO)).campo).toBe('quantidadeMin');
+  });
+  it('as outras rubricas aceitam a data opcional, dentro da competência', () => {
+    expect(() => assertLancamentoValido({ ...base, data: '2026-03-15' }, VINCULO)).not.toThrow();
+    expect(erro(() => assertLancamentoValido({ ...base, data: '2026-05-15' }, VINCULO)).campo).toBe('data');
   });
 });
 
@@ -80,7 +98,7 @@ describe('itens 18–19 — formato do item do ponto e precedência MANUAL × MO
   const manuais = [
     { id: 'l1', rubrica: 'HORA_EXTRA_50', origem: 'MANUAL' as const },
     { id: 'l2', rubrica: 'COMISSAO', origem: 'MANUAL' as const },
-    { id: 'l3', rubrica: 'FALTAS', origem: 'MANUAL' as const },
+    { id: 'l3', rubrica: 'FALTAS', origem: 'MANUAL' as const, data: '2026-03-11' },
     { id: 'l4', rubrica: 'ADICIONAL_NOTURNO', origem: 'MODULO' as const },
   ];
   const apurar = async (comp: string) => {
@@ -91,8 +109,9 @@ describe('itens 18–19 — formato do item do ponto e precedência MANUAL × MO
   it('DP-PONTO ativo com itens ⇒ cada MANUAL de jornada vira pendência bloqueante (nunca soma)', async () => {
     const p = conflitosComPonto('v1', c('2026-03'), manuais, await apurar('2026-03'));
     expect(p.map((x) => [x.codigo, x.bloqueante, x.dado])).toEqual([
-      ['LANCAMENTO_DUPLICADO_COM_PONTO', true, 'HORA_EXTRA_50 (lançamento l1)'],
-      ['LANCAMENTO_DUPLICADO_COM_PONTO', true, 'FALTAS (lançamento l3)'],
+      // Item 44 / A3 (PR-4): o `dado` é o rótulo visível (rubrica e dia), nunca o id do lançamento.
+      ['LANCAMENTO_DUPLICADO_COM_PONTO', true, 'HORA_EXTRA_50'],
+      ['LANCAMENTO_DUPLICADO_COM_PONTO', true, 'FALTAS de 2026-03-11'],
     ]);
   });
 

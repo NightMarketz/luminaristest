@@ -10,6 +10,7 @@ import {
   DP_SNAPSHOT_VERSAO_FORMATO,
   DpSnapshotSchema,
   lerOuAusente,
+  linhasIrrfNaData,
   normalizarSnapshot,
   parametrosParaJson,
   regrasParaJson,
@@ -29,7 +30,7 @@ import type { IDpLancamentoRepository } from '../repositories/IDpLancamentoRepos
 import type { IDpVinculoRepository } from '../repositories/IDpVinculoRepository';
 
 /** As tabelas legais que o snapshot lê da fotografia (G2, item 67 e os feriados do item 69). */
-export const TABELAS_SNAPSHOT = [...TABELAS_PARAMETROS_FOLHA, ...TABELAS_REGRAS_FOLHA, 'FERIADO_NACIONAL', 'FERIADO_LOCAL'] as const satisfies readonly LegalParameterTabela[];
+export const TABELAS_SNAPSHOT = [...TABELAS_PARAMETROS_FOLHA, ...TABELAS_REGRAS_FOLHA, 'FERIADO_NACIONAL', 'FERIADO_LOCAL', 'RETENCAO'] as const satisfies readonly LegalParameterTabela[];
 
 /** Itens 8 e 43 — o que a mesma fonte já pagou ao vínculo no mês do pagamento e o último adiantamento da competência. */
 export interface PagamentosAnterioresDoVinculo {
@@ -147,6 +148,7 @@ export class DpSnapshotService {
             minutosSemanais: x.jornada.minutosSemanais,
             tipoJornada: x.jornada.tipoJornada,
             escala: escalaDaJornada(x.jornada),
+            tempoParcial: x.jornada.tempoParcial,
           },
           cargoId: x.cargoId,
           cargoNome: x.cargo?.nome ?? null,
@@ -171,6 +173,7 @@ export class DpSnapshotService {
             ...(l.quantidadeMin !== null ? { quantidadeMin: l.quantidadeMin } : {}),
             ...(l.valorCents !== null ? { valorCents: l.valorCents.toString() } : {}),
             origem: l.origem as 'MANUAL' | 'MODULO',
+            ...(l.data !== null ? { data: l.data } : {}),
           })),
           ...apurada.itens.map((i) => ({ id: null, rubrica: i.rubrica, quantidadeMin: i.quantidadeMin, origem: 'MODULO' as const, ...(i.data ? { data: i.data } : {}) })),
         ],
@@ -202,6 +205,7 @@ export class DpSnapshotService {
       parametros: {
         competencia: lerOuAusente(() => parametrosFolha(fotografia, ate), parametrosParaJson),
         pagamento: lerOuAusente(() => parametrosFolha(fotografia, dataPagamento), parametrosParaJson),
+        irrfPagamento: linhasIrrfNaData(fotografia, dataPagamento),
         ...(adiantamentoBp !== undefined ? { adiantamentoBp } : {}),
       },
       regras: lerOuAusente(() => regrasFolha(fotografia, ate), regrasParaJson),

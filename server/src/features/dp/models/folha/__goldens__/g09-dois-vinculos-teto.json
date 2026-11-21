@@ -1,0 +1,102 @@
+{
+  "cenario": "G9 — dois vínculos 101 do mesmo trabalhador na instância: A R$ 6.000,00 (admitido antes) e B R$ 4.000,00",
+  "dataRef": "2026-03-15",
+  "conferidoPor": null,
+  "fonte": "pesquisas-legais/brief-pes4-f2-contador/relatorio.md §10",
+  "entradas": {
+    "competencia": "2026-03",
+    "dataPagamento": "2026-04-06",
+    "vinculos": [
+      {
+        "id": "g9a",
+        "matricula": "G9-A",
+        "categoria": "101",
+        "dataInicio": "2024-01-02",
+        "trabalhadorId": "t-g9",
+        "salarioCents": "600000",
+        "unidadeSalario": "5",
+        "jornada": {
+          "diasTrabalho": [
+            "SEG",
+            "TER",
+            "QUA",
+            "QUI",
+            "SEX",
+            "SAB"
+          ],
+          "minutosPorDia": 440
+        }
+      },
+      {
+        "id": "g9b",
+        "matricula": "G9-B",
+        "categoria": "101",
+        "dataInicio": "2025-06-02",
+        "trabalhadorId": "t-g9",
+        "salarioCents": "400000",
+        "unidadeSalario": "5",
+        "jornada": {
+          "diasTrabalho": [
+            "SEG",
+            "TER",
+            "QUA",
+            "QUI",
+            "SEX",
+            "SAB"
+          ],
+          "minutosPorDia": 440
+        }
+      }
+    ]
+  },
+  "conta": [
+    "Tabelas de 2026: INSS 7,5% até 1.621,00; 9% até 2.902,84; 12% até 4.354,27; 14% até o teto de 8.475,55. Mínimo 1.621,00. IRRF desde 05/2025 com a redução do art. 3º-A desde 01/2026; dependente 189,59; simplificado 607,20. FGTS 8% (aprendiz 2%).",
+    "INSS em TRUNCAR_POR_FAIXA (linha ARREDONDAMENTO_INSS vigente, F-DPF-3 revisto): cada faixa truncada ao centavo, depois a soma. O dossiê §10 mostra em negrito a forma antiga (arredonda no total).",
+    "Ordem (item 41): A (dataInicio 2024-01-02) antes de B.",
+    "INSS de A: 121,57 + 115,36 + 174,17 + (1.645,73 × 14% = 230,4022 → 230,40) = 641,50.",
+    "INSS de B, continuando as faixas a partir de 6.000 (IN RFB 2.110 art. 49 § 2º II \"a\"): INSS(8.475,55) − INSS(6.000,00) = 988,07 − 641,50 = 346,57.",
+    "IRRF de A: base 6.000 − 641,50 = 5.358,50 × 27,5% − 908,73 = 564,86; redução 978,62 − 0,133145 × 6.000 = 179,75; retém 385,11.",
+    "IRRF de B (Lei 7.713 art. 7º § 1º): total 10.000; deduções 988,07; base 9.011,93 × 27,5% − 908,73 = 1.569,55; sem redução; retém 1.569,55 − 385,11 = 1.184,44.",
+    "Líquidos: A 6.000 − 641,50 − 385,11 = 4.973,39; B 4.000 − 346,57 − 1.184,44 = 2.468,99."
+  ],
+  "esperado": {
+    "g9a": {
+      "linhas": {
+        "SALARIO_BASE": "600000",
+        "INSS_SEGURADO": "64150",
+        "IRRF": "38511",
+        "FGTS_MES": "48000"
+      },
+      "bases": {
+        "cp": "600000",
+        "irrf": "600000",
+        "fgts": "600000"
+      },
+      "totais": {
+        "proventos": "600000",
+        "descontos": "102661",
+        "liquido": "497339"
+      },
+      "pendencias": []
+    },
+    "g9b": {
+      "linhas": {
+        "SALARIO_BASE": "400000",
+        "INSS_SEGURADO": "34657",
+        "IRRF": "118444",
+        "FGTS_MES": "32000"
+      },
+      "bases": {
+        "cp": "400000",
+        "irrf": "400000",
+        "fgts": "400000"
+      },
+      "totais": {
+        "proventos": "400000",
+        "descontos": "153101",
+        "liquido": "246899"
+      },
+      "pendencias": []
+    }
+  }
+}

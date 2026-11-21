@@ -16,7 +16,7 @@
 import { createHash } from 'crypto';
 import { z } from 'zod';
 import { DIAS_SEMANA, FOLHA_REGRA_CHAVES_TEXTO } from '../../../legalParameters/models/formatoLinha';
-import { SemLinhaVigenteError } from '../../../legalParameters/models/legalParameter';
+import { linhasEmVigor, SemLinhaVigenteError, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { CompetenciaSchema } from '../competencia';
 import { dpModuleKeySchema } from '../moduleRegistry';
 import type { ParametrosFolha } from '../parametrosFolha';
@@ -58,6 +58,49 @@ const ParametrosFolhaJsonSchema = z
   })
   .strict();
 export type ParametrosFolhaJson = z.infer<typeof ParametrosFolhaJsonSchema>;
+
+/**
+ * PR-4 (leitura do item 8: "dispensa ≤ R$ 10 já vem do G3") — as linhas que o `calcularIrrfPf` lê, em vigor na data de
+ * pagamento: a tabela `IRRF_PF_MENSAL` e o mínimo `RETENCAO`/`MINIMO`/`IRRF_PF`. O motor puro chama a calculadora
+ * reusada sobre estas linhas, sem reconstruir a tabela; sem elas, a dispensa sumiria em silêncio.
+ */
+export const LinhaLegalJsonSchema = z
+  .object({
+    id: z.string(),
+    tabela: z.string(),
+    chave: z.string(),
+    discriminador: z.string().nullable(),
+    valorInt: Int.nullable(),
+    valorTexto: z.string().nullable(),
+    valorJson: z.string().nullable(),
+    fonte: z.string(),
+    vigenteDesde: DataSchema,
+    vigenteAte: DataSchema.nullable(),
+    status: z.string(),
+    supersedesId: z.string().nullable(),
+  })
+  .strict();
+
+/** As linhas do IRRF em vigor (`linhasEmVigor`) que cobrem a `data`, na forma do `LinhaLegal` (sem os campos de fluxo). */
+export function linhasIrrfNaData(fotografia: readonly LinhaLegal[], data: string): z.infer<typeof LinhaLegalJsonSchema>[] {
+  return linhasEmVigor(fotografia)
+    .filter((l) => l.tabela === 'IRRF_PF_MENSAL' || (l.tabela === 'RETENCAO' && l.chave === 'MINIMO' && l.discriminador === 'IRRF_PF'))
+    .filter((l) => l.vigenteDesde <= data && (l.vigenteAte === null || data <= l.vigenteAte))
+    .map((l) => ({
+      id: l.id,
+      tabela: l.tabela,
+      chave: l.chave,
+      discriminador: l.discriminador,
+      valorInt: l.valorInt,
+      valorTexto: l.valorTexto,
+      valorJson: l.valorJson,
+      fonte: l.fonte,
+      vigenteDesde: l.vigenteDesde,
+      vigenteAte: l.vigenteAte,
+      status: l.status,
+      supersedesId: l.supersedesId,
+    }));
+}
 
 const s = (v: bigint) => v.toString();
 const sn = (v: bigint | null) => (v === null ? null : v.toString());
@@ -138,7 +181,7 @@ const RegrasFolhaSchema = z
 // ── Vínculo ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 const EscalaSchema = z.object({ diasTrabalho: z.array(z.enum(DIAS_SEMANA)), minutosPorDia: Int }).strict();
 const JornadaSnapshotSchema = z
-  .object({ id: z.string(), nome: z.string(), minutosSemanais: Int, tipoJornada: z.string(), escala: EscalaSchema.nullable() })
+  .object({ id: z.string(), nome: z.string(), minutosSemanais: Int, tipoJornada: z.string(), escala: EscalaSchema.nullable(), tempoParcial: z.boolean() })
   .strict();
 const VersaoSnapshotSchema = z
   .object({
@@ -214,7 +257,13 @@ export const DpSnapshotSchema = z
     roteiro: z.enum(ROTEIROS),
     dataPagamento: DataSchema,
     parametros: z
-      .object({ competencia: ouAusente(ParametrosFolhaJsonSchema), pagamento: ouAusente(ParametrosFolhaJsonSchema), adiantamentoBp: Int.optional() })
+      .object({
+        competencia: ouAusente(ParametrosFolhaJsonSchema),
+        pagamento: ouAusente(ParametrosFolhaJsonSchema),
+        /** PR-4: as linhas do IRRF em vigor na data de pagamento (o `calcularIrrfPf` reusado lê delas). */
+        irrfPagamento: z.array(LinhaLegalJsonSchema),
+        adiantamentoBp: Int.optional(),
+      })
       .strict(),
     regras: ouAusente(RegrasFolhaSchema),
     /** Por `unitId`: feriados do mês na unidade (nacional, eleição e local do município do perfil fiscal). */
@@ -278,6 +327,7 @@ export function normalizarSnapshot(snap: DpSnapshot): DpSnapshot {
   return {
     ...snap,
     feriados,
+    parametros: { ...snap.parametros, irrfPagamento: [...snap.parametros.irrfPagamento].sort(porTexto((l) => l.id)) },
     modulosAtivos: [...snap.modulosAtivos].sort(),
     vinculos: [...snap.vinculos]
       .map((v) => ({

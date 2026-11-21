@@ -1,0 +1,67 @@
+{
+  "cenario": "G4 — comissionista puro (unidade 7, L3), comissão R$ 1.200,00, escala 6×1",
+  "dataRef": "2026-03-15",
+  "conferidoPor": null,
+  "fonte": "pesquisas-legais/brief-pes4-f2-contador/relatorio.md §10",
+  "entradas": {
+    "competencia": "2026-03",
+    "dataPagamento": "2026-04-06",
+    "vinculos": [
+      {
+        "id": "g4",
+        "matricula": "G4",
+        "categoria": "101",
+        "dataInicio": "2025-01-02",
+        "salarioCents": "0",
+        "unidadeSalario": "7",
+        "jornada": {
+          "diasTrabalho": [
+            "SEG",
+            "TER",
+            "QUA",
+            "QUI",
+            "SEX",
+            "SAB"
+          ],
+          "minutosPorDia": 440
+        },
+        "lancamentos": [
+          {
+            "rubrica": "COMISSAO",
+            "valorCents": "120000"
+          }
+        ]
+      }
+    ]
+  },
+  "conta": [
+    "Tabelas de 2026: INSS 7,5% até 1.621,00; 9% até 2.902,84; 12% até 4.354,27; 14% até o teto de 8.475,55. Mínimo 1.621,00. IRRF desde 05/2025 com a redução do art. 3º-A desde 01/2026; dependente 189,59; simplificado 607,20. FGTS 8% (aprendiz 2%).",
+    "INSS em TRUNCAR_POR_FAIXA (linha ARREDONDAMENTO_INSS vigente, F-DPF-3 revisto): cada faixa truncada ao centavo, depois a soma. O dossiê §10 mostra em negrito a forma antiga (arredonda no total).",
+    "DSR sobre a comissão (Súm. 27): 1.200,00 × 5/26 = 230,7692 → 230,77.",
+    "Complemento até o mínimo (CLT art. 78; a comparação inclui o DSR da comissão, G4 do dossiê; pergunta (7) do §5 ao contador): 1.621,00 − 1.430,77 = 190,23.",
+    "Bruto 1.621,00. INSS: 1.621,00 × 7,5% = 121,575 → 121,57. IRRF 0. FGTS 129,68.",
+    "Líquido: 1.621,00 − 121,57 = 1.499,43."
+  ],
+  "esperado": {
+    "g4": {
+      "linhas": {
+        "COMISSAO": "120000",
+        "DSR_VARIAVEIS": "23077",
+        "COMPLEMENTO_MINIMO": "19023",
+        "INSS_SEGURADO": "12157",
+        "FGTS_MES": "12968"
+      },
+      "bases": {
+        "cp": "162100",
+        "irrf": "162100",
+        "fgts": "162100"
+      },
+      "totais": {
+        "proventos": "162100",
+        "descontos": "12157",
+        "liquido": "149943"
+      },
+      "pendencias": []
+    }
+  }
+}

@@ -116,6 +116,7 @@ describe('/api/dp — regras da folha como dado (PR-0R)', () => {
 
   it('item 68 — D-5 cobre os campos novos: jornada em uso não troca diasTrabalho nem minutosPorDia (409)', async () => {
     const j = await post('jornadas', { nome: '44h uso', diasTrabalho: SEIS, minutosPorDia: 440, tipoJornada: '9' });
+    expect(j.body.data.tempoParcial).toBe(false); // PR-4 (dono, 07/11): falso por padrão
     const lot = await post('lotacoes', { codigo: 'RF1', descricao: 'Loja' });
     const car = await post('cargos', { nome: 'Manicure', cbo: '516120' });
     const t = await post('trabalhadores', { cpf: '52998224725', nome: 'Ana', nascimento: '1990-03-10' });
@@ -124,7 +125,8 @@ describe('/api/dp — regras da folha como dado (PR-0R)', () => {
       versao: { lotacaoId: lot.body.data.id, cargoId: car.body.data.id, jornadaId: j.body.data.id, salarioCents: '300000', unidadeSalario: '5' },
     });
     expect(v.status).toBe(201);
-    for (const corpo of [{ diasTrabalho: ['SEG', 'TER', 'QUA', 'QUI', 'SEX'] }, { minutosPorDia: 400 }]) {
+    // PR-4: o tempoParcial muda o piso (F-DPF-6) e entra na trava D-5 como os campos da escala.
+    for (const corpo of [{ diasTrabalho: ['SEG', 'TER', 'QUA', 'QUI', 'SEX'] }, { minutosPorDia: 400 }, { tempoParcial: true }]) {
       const r = await request(app).patch(`/api/dp/jornadas/${j.body.data.id}`).set(authHeader(dono)).send({ unitId: UNIT, ...corpo });
       expect([r.status, r.body.code]).toEqual([409, 'DP_JORNADA_EM_USO']);
     }

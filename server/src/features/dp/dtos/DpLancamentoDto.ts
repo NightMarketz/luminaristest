@@ -29,6 +29,8 @@ const lancamento = {
   quantidadeMin: z.number().int().positive().max(44_640).nullable(), // até 31 dias × 24 h
   valorCents: cents.positive().nullable(),
   observacao: z.string().trim().min(1).max(500).nullable(),
+  // L1 (dono, 21/11): a data do dia da falta (obrigatória na FALTAS; dentro da competência — conferido no serviço).
+  data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'data = YYYY-MM-DD').nullable(),
 };
 
 /** `origem` não entra: pela HTTP o lançamento é sempre `MANUAL` (o `MODULO` vem da porta do ponto, item 18). */
@@ -39,6 +41,7 @@ export const CreateLancamentoSchema = z
     quantidadeMin: lancamento.quantidadeMin.unwrap().optional(),
     valorCents: cents.positive().optional(),
     observacao: lancamento.observacao.unwrap().optional(),
+    data: lancamento.data.unwrap().optional(),
   })
   .strict();
 export type CreateLancamentoInput = z.infer<typeof CreateLancamentoSchema>;
@@ -46,7 +49,7 @@ export type CreateLancamentoInput = z.infer<typeof CreateLancamentoSchema>;
 /** `null` apaga a quantidade (para trocar de unidade junto com a rubrica) ou a observação. */
 export const UpdateLancamentoSchema = z
   .object({ unitId, ...lancamento })
-  .partial({ competencia: true, rubrica: true, quantidadeMin: true, valorCents: true, observacao: true })
+  .partial({ competencia: true, rubrica: true, quantidadeMin: true, valorCents: true, observacao: true, data: true })
   .strict()
   .refine(naoVazio, 'nada a alterar');
 export type UpdateLancamentoInput = z.infer<typeof UpdateLancamentoSchema>;

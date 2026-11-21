@@ -182,6 +182,7 @@ export class DpCadastroService {
           descricao: input.descricao ?? null,
           diasTrabalho: serializarDias(escala.diasTrabalho),
           minutosPorDia: escala.minutosPorDia,
+          tempoParcial: input.tempoParcial ?? false,
         },
         tx,
       );
@@ -196,17 +197,19 @@ export class DpCadastroService {
       const tipoJornada = input.tipoJornada ?? atual.tipoJornada;
       const diasTrabalho = input.diasTrabalho !== undefined ? serializarDias(input.diasTrabalho) : atual.diasTrabalho;
       const minutosPorDia = input.minutosPorDia ?? atual.minutosPorDia;
+      const tempoParcial = input.tempoParcial ?? atual.tempoParcial;
       // Item 30 (D-5), estendido pelo item 68 do F2: referenciada por versão de vínculo, os campos de cálculo (minutos,
       // tipo e escala) não mudam — mudança = jornada nova + versão nova do vínculo. Gate dentro da tx, antes da escala.
       const mudaCalculo =
         (input.minutosSemanais !== undefined && input.minutosSemanais !== atual.minutosSemanais) ||
         tipoJornada !== atual.tipoJornada ||
         diasTrabalho !== atual.diasTrabalho ||
-        minutosPorDia !== atual.minutosPorDia;
+        minutosPorDia !== atual.minutosPorDia ||
+        tempoParcial !== atual.tempoParcial;
       if (mudaCalculo && (await this.repo.jornadaEmUso(id, tx))) {
         throw dpConflictError(
           'DP_JORNADA_EM_USO',
-          'A jornada já é usada por versão de vínculo: minutosSemanais, tipoJornada, diasTrabalho e minutosPorDia não mudam. Cadastre jornada nova e crie versão nova do vínculo.',
+          'A jornada já é usada por versão de vínculo: minutosSemanais, tipoJornada, diasTrabalho, minutosPorDia e tempoParcial não mudam. Cadastre jornada nova e crie versão nova do vínculo.',
         );
       }
       const escala = escalaDaJornada({ diasTrabalho, minutosPorDia });
@@ -218,7 +221,7 @@ export class DpCadastroService {
       const minutosSemanais = escala && mudaCalculo ? assertEscalaRegular(escala, tipoJornada, input.minutosSemanais) : atual.minutosSemanais;
       const row = await this.repo.updateJornada(
         id,
-        { nome: input.nome, minutosSemanais, tipoJornada, descricao: input.descricao, diasTrabalho, minutosPorDia },
+        { nome: input.nome, minutosSemanais, tipoJornada, descricao: input.descricao, diasTrabalho, minutosPorDia, tempoParcial },
         tx,
       );
       await this.auditJornada(tx, scope, 'updated', row);

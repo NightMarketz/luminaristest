@@ -34,6 +34,7 @@ descricao?: (string | null)
  */
 diasTrabalho: [("SEG" | "TER" | "QUA" | "QUI" | "SEX" | "SAB" | "DOM"), ...(("SEG" | "TER" | "QUA" | "QUI" | "SEX" | "SAB" | "DOM"))[]]
 minutosPorDia: number
+tempoParcial?: boolean
 }
 export interface CreateLotacaoInput {
 unitId: string
@@ -84,6 +85,7 @@ descricao?: (string | null)
  */
 diasTrabalho?: [("SEG" | "TER" | "QUA" | "QUI" | "SEX" | "SAB" | "DOM"), ...(("SEG" | "TER" | "QUA" | "QUI" | "SEX" | "SAB" | "DOM"))[]]
 minutosPorDia?: number
+tempoParcial?: boolean
 }
 export interface UpdateLotacaoInput {
 unitId: string

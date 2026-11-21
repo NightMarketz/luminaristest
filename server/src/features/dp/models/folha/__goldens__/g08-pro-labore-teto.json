@@ -1,0 +1,46 @@
+{
+  "cenario": "G8 — pró-labore 723 de R$ 10.000,00, acima do teto",
+  "dataRef": "2026-03-15",
+  "conferidoPor": null,
+  "fonte": "pesquisas-legais/brief-pes4-f2-contador/relatorio.md §10",
+  "entradas": {
+    "competencia": "2026-03",
+    "dataPagamento": "2026-04-06",
+    "vinculos": [
+      {
+        "id": "g8",
+        "matricula": "G8",
+        "categoria": "723",
+        "dataInicio": "2025-01-02",
+        "salarioCents": "1000000",
+        "unidadeSalario": "5"
+      }
+    ]
+  },
+  "conta": [
+    "Tabelas de 2026: INSS 7,5% até 1.621,00; 9% até 2.902,84; 12% até 4.354,27; 14% até o teto de 8.475,55. Mínimo 1.621,00. IRRF desde 05/2025 com a redução do art. 3º-A desde 01/2026; dependente 189,59; simplificado 607,20. FGTS 8% (aprendiz 2%).",
+    "INSS de contribuinte individual: 11% × 8.475,55 (teto) = 932,3105 → 932,31 (ARREDONDAMENTO meio para cima).",
+    "IRRF: base 10.000,00 − 932,31 = 9.067,69 × 27,5% = 2.493,61 − 908,73 = 1.584,88; sem redução (rendimento > 7.350).",
+    "Líquido: 10.000,00 − 932,31 − 1.584,88 = 7.482,81."
+  ],
+  "esperado": {
+    "g8": {
+      "linhas": {
+        "PRO_LABORE": "1000000",
+        "INSS_SEGURADO": "93231",
+        "IRRF": "158488"
+      },
+      "bases": {
+        "cp": "1000000",
+        "irrf": "1000000",
+        "fgts": "0"
+      },
+      "totais": {
+        "proventos": "1000000",
+        "descontos": "251719",
+        "liquido": "748281"
+      },
+      "pendencias": []
+    }
+  }
+}

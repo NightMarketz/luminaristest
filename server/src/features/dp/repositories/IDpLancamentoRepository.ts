@@ -7,6 +7,8 @@ export interface DpLancamentoData {
   rubrica: string;
   quantidadeMin: number | null;
   valorCents: bigint | null;
+  /** L1 (21/11): o dia da falta; `null` nas outras rubricas que não a trazem. */
+  data: string | null;
   origem: string;
   moduloKey: string | null;
   observacao: string | null;

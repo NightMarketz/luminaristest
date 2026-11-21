@@ -87,6 +87,22 @@ export function dsrSobreVariaveis(variaveisCents: bigint, dias: Pick<DiasDoMes, 
   };
 }
 
+/**
+ * Item 37 — DSR do horista = minutos por dia da escala × dias de repouso do mês × salário-hora contratual (Lei 605 art.
+ * 7º "b" [D01]). As HE habituais entram pelo `dsrSobreVariaveis` (item 11), na mesma linha `DSR_VARIAVEIS`.
+ */
+export function dsrDoHorista(salarioHora: Fracao, minutosPorDia: number, diasRepouso: number, arredondamento: ValorRegra<ModoArredondamento>): Calculo<bigint> {
+  const exato = multiplicar(salarioHora, fracao(inteiro(minutosPorDia) * inteiro(diasRepouso), MINUTOS_POR_HORA));
+  const valor = arredondarCentavos(exato, arredondamento.valor);
+  return {
+    valor,
+    prova: no(`DSR do horista: ${diasRepouso} dia(s) de repouso × ${minutosPorDia} min × salário-hora ${textoFracao(salarioHora)}`, valor, {
+      fonte: 'Lei 605/1949 art. 7º "b"',
+      filhos: [no(`Arredondamento ${arredondamento.valor}`, 0n, { fonte: fonteLp(arredondamento) })],
+    }),
+  };
+}
+
 /** Mínimo de referência do complemento: o salário mínimo (G2), o mínimo-hora do aprendiz ou o piso da CCT (G7). */
 export interface MinimoReferencia {
   valorCents: bigint;

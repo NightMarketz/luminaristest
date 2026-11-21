@@ -56,13 +56,15 @@ const jornada = {
     .max(7)
     .refine((d) => new Set(d).size === d.length, 'diasTrabalho sem repetição'),
   minutosPorDia: z.number().int().positive().max(24 * 60),
+  // BE-INCR-DP-F2 PR-4 (dono, chat, 2026-11-07: "Campo novo na jornada"): `tmpParc` do S-2200 (CLT art. 58-A).
+  tempoParcial: z.boolean(),
 };
 export const CreateJornadaSchema = z
-  .object({ unitId, ...jornada, minutosSemanais: jornada.minutosSemanais.optional(), descricao: jornada.descricao.optional() })
+  .object({ unitId, ...jornada, minutosSemanais: jornada.minutosSemanais.optional(), descricao: jornada.descricao.optional(), tempoParcial: jornada.tempoParcial.optional() })
   .strict();
 export const UpdateJornadaSchema = z
   .object({ unitId, ...jornada })
-  .partial({ nome: true, minutosSemanais: true, tipoJornada: true, descricao: true, diasTrabalho: true, minutosPorDia: true })
+  .partial({ nome: true, minutosSemanais: true, tipoJornada: true, descricao: true, diasTrabalho: true, minutosPorDia: true, tempoParcial: true })
   .strict()
   .refine(naoVazio, 'nada a alterar');
 export type CreateJornadaInput = z.infer<typeof CreateJornadaSchema>;
