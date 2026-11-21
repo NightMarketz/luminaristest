@@ -132,6 +132,9 @@ describe('updateInstance (Tier-0)', () => {
     await expect(
       service.updateInstance(ci.id, { title: 'Hacked' }, ctxFor({ id: stranger.id, username: stranger.username }))
     ).rejects.toBeInstanceOf(ForbiddenError);
+    // Contrato §5: além do erro, nada do outro dono foi escrito.
+    const kept = await service.getInstanceById(ci.id, ctxFor({ id: owner.id, username: owner.username }));
+    expect(kept.title).not.toBe('Hacked');
   });
 
   it('throws NotFoundError for a missing instance', async () => {
