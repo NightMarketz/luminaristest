@@ -1,0 +1,982 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei Complementar nº 123 de 14/12/2006",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2006/lcp-123-2006-12-14.md",
+      "url_final": "https://github.com/ctresb/leis/blob/394a7e97c8604703a3ea6638df61ab1873cecc6e/federal/leis-complementares/2006/lcp-123-2006-12-14.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2006-12-14;123",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "394a7e97c8604703a3ea6638df61ab1873cecc6e",
+      "alertas": [],
+      "baixado_em": "2026-11-20T19:16:54-03:00",
+      "sha256": "62ae5f126e5d6a0bf1e149614362aeca97730684067c128251c92cc1f732bdd9",
+      "arquivo": "docs/D01_lcp-123-2006-12-14.md",
+      "texto": "docs/D01_lcp-123-2006-12-14.txt",
+      "bytes": 255709,
+      "sha256_texto": "b88e53d46978e27b2d1087c98d45e295958791aae98a10e0b3a15ad08fe72adc",
+      "captura": {
+        "anterior": {
+          "slug": "triagem-contador-2026-10-30",
+          "id": "D08",
+          "baixado_em": "2026-10-30T02:21:04-03:00",
+          "sha256_texto": "b88e53d46978e27b2d1087c98d45e295958791aae98a10e0b3a15ad08fe72adc"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 10.147 de 21/12/2000",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2000/lei-10147-2000-12-21.md",
+      "url_final": "https://github.com/ctresb/leis/blob/dc08d8291baac23e97bb4c5095389052d6846822/federal/leis-ordinarias/2000/lei-10147-2000-12-21.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2000-12-21;10147",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "dc08d8291baac23e97bb4c5095389052d6846822",
+      "alertas": [],
+      "baixado_em": "2026-11-20T19:16:56-03:00",
+      "sha256": "3e15396e59ce53f5cec18fe5bdce6341dc281ef23e9924b977a80a696d687d37",
+      "arquivo": "docs/D02_lei-10147-2000-12-21.md",
+      "texto": "docs/D02_lei-10147-2000-12-21.txt",
+      "bytes": 9849,
+      "sha256_texto": "cf0782f3037fcdb6f2e3ae19a4f23005da150b3a35573fb4d896a44c0d859334",
+      "captura": {
+        "anterior": {
+          "slug": "eficiencia-fiscal-praticas",
+          "id": "D05",
+          "baixado_em": "2026-10-20T11:40:37-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Lei nº 10.637 de 30/12/2002",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2002/lei-10637-2002-12-30.md",
+      "url_final": "https://github.com/ctresb/leis/blob/823c54bedbd9e523afea8ab05e3cd715bd70a18d/federal/leis-ordinarias/2002/lei-10637-2002-12-30.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2002-12-30;10637",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "823c54bedbd9e523afea8ab05e3cd715bd70a18d",
+      "alertas": [],
+      "baixado_em": "2026-11-20T19:16:57-03:00",
+      "sha256": "f165259701b4081b0e9f73921c214895bea18d10081ade540630de3ee2a5ad8e",
+      "arquivo": "docs/D03_lei-10637-2002-12-30.md",
+      "texto": "docs/D03_lei-10637-2002-12-30.txt",
+      "bytes": 79264,
+      "sha256_texto": "4b6406f8f06136a5d20657a14d9cdb062f8a2e435797f21b392df48481cda6ad",
+      "captura": {
+        "anterior": {
+          "slug": "eficiencia-fiscal-praticas",
+          "id": "D17",
+          "baixado_em": "2026-10-20T11:45:44-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "Lei nº 10.833 de 29/12/2003",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2003/lei-10833-2003-12-29.md",
+      "url_final": "https://github.com/ctresb/leis/blob/17688c9637f6a90b7faace6d797aedfa3f6b2ff0/federal/leis-ordinarias/2003/lei-10833-2003-12-29.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2003-12-29;10833",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "17688c9637f6a90b7faace6d797aedfa3f6b2ff0",
+      "alertas": [],
+      "baixado_em": "2026-11-20T19:16:59-03:00",
+      "sha256": "fa0d994627d9e1476d625a9f0b588e596181735b922bdcdf9c1c0336fd06b9fc",
+      "arquivo": "docs/D04_lei-10833-2003-12-29.md",
+      "texto": "docs/D04_lei-10833-2003-12-29.txt",
+      "bytes": 176687,
+      "sha256_texto": "1586972bc1932da6422885dc583607b026e0c531b826a781f603c37e57ea5946",
+      "captura": {
+        "anterior": {
+          "slug": "brief-2026-10-22-retencoes-fonte",
+          "id": "D01",
+          "baixado_em": "2026-10-22T13:21:29-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "Decreto nº 12.955 de 29/04/2026",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2026/dec-12955-2026-04-29.md",
+      "url_final": "https://github.com/ctresb/leis/blob/517db958cd0ae2ba36c1f0b524b3cc55fe4198c6/federal/decretos/2026/dec-12955-2026-04-29.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2026-04-29;12955",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "517db958cd0ae2ba36c1f0b524b3cc55fe4198c6",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-20T19:17:00-03:00",
+      "sha256": "5527dbfe923a984a86c22b27ef1c5c0b6f4f0c2996bbe14315e8804afd08bbd9",
+      "arquivo": "docs/D05_dec-12955-2026-04-29.md",
+      "texto": "docs/D05_dec-12955-2026-04-29.txt",
+      "bytes": 779823,
+      "sha256_texto": "5e9edac0c08cbfc7d89c1bbcf32151b31396209c73c4afe4aeeffc93c344ec82",
+      "captura": {
+        "anterior": {
+          "slug": "fila-2026-10-27-bloco3-eficiencia",
+          "id": "D04",
+          "baixado_em": "2026-10-27T11:05:56-03:00",
+          "sha256_texto": "5e9edac0c08cbfc7d89c1bbcf32151b31396209c73c4afe4aeeffc93c344ec82"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "Lei nº 5.172 de 25/10/1966",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1966/lei-5172-1966-10-25.md",
+      "url_final": "https://github.com/ctresb/leis/blob/04685ef7689b7028d0dc835e5cde644ad7a2d328/federal/leis-ordinarias/1966/lei-5172-1966-10-25.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1966-10-25;5172",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "04685ef7689b7028d0dc835e5cde644ad7a2d328",
+      "alertas": [],
+      "baixado_em": "2026-11-20T19:17:02-03:00",
+      "sha256": "fe8ef71d4ebe8c0d04d3422ca95853e15291c5c7ca6168cd34ae7b8ee6e3983b",
+      "arquivo": "docs/D06_lei-5172-1966-10-25.md",
+      "texto": "docs/D06_lei-5172-1966-10-25.txt",
+      "bytes": 148085,
+      "sha256_texto": "4c9a86703705688e85cada4149409411b13921ff4505569b0578a20eb9841bee",
+      "captura": {
+        "anterior": {
+          "slug": "pc1-memoria-calculo",
+          "id": "D04",
+          "baixado_em": "2026-11-03T00:34:55-03:00",
+          "sha256_texto": "4c9a86703705688e85cada4149409411b13921ff4505569b0578a20eb9841bee"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "Lei nº 12.592 de 18/01/2012",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2012/lei-12592-2012-01-18.md",
+      "url_final": "https://github.com/ctresb/leis/blob/a31cf3cd12073c7b195933a53e733b85c00cfe02/federal/leis-ordinarias/2012/lei-12592-2012-01-18.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2012-01-18;12592",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "a31cf3cd12073c7b195933a53e733b85c00cfe02",
+      "alertas": [],
+      "baixado_em": "2026-11-20T19:17:04-03:00",
+      "sha256": "ae4c4aae44ba1bd08493c05fd82e366cdd2f3bf263b93383f93b1f936541fd00",
+      "arquivo": "docs/D07_lei-12592-2012-01-18.md",
+      "texto": "docs/D07_lei-12592-2012-01-18.txt",
+      "bytes": 7614,
+      "sha256_texto": "31185ae8508e1a64836cd8a4e6bee29072f2c9c6492fb7ae78ac0eb935c8f2ba",
+      "captura": {
+        "anterior": {
+          "slug": "triagem-contador-2026-10-30",
+          "id": "D05",
+          "baixado_em": "2026-10-30T02:20:59-03:00",
+          "sha256_texto": "31185ae8508e1a64836cd8a4e6bee29072f2c9c6492fb7ae78ac0eb935c8f2ba"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "Lei Complementar nº 116 de 31/07/2003",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2003/lcp-116-2003-07-31.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ae234474cd3e1e3f6e871eaa102aeb862ec17541/federal/leis-complementares/2003/lcp-116-2003-07-31.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2003-07-31;116",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "ae234474cd3e1e3f6e871eaa102aeb862ec17541",
+      "alertas": [],
+      "baixado_em": "2026-11-20T19:17:05-03:00",
+      "sha256": "ee5663cd6f75d06dc795b4b9b49b52e4a9d7ad9c2575d817375088a5ed3098b9",
+      "arquivo": "docs/D08_lcp-116-2003-07-31.md",
+      "texto": "docs/D08_lcp-116-2003-07-31.txt",
+      "bytes": 48020,
+      "sha256_texto": "3de7769e0c311fb6ab3f2396d652c6c1931950242e19cbbcdcce4b35a323fae9",
+      "captura": {
+        "anterior": {
+          "slug": "iss-transicao-ibs-pr1",
+          "id": "D01",
+          "baixado_em": "2026-10-24T17:12:28-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D09",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-20T19:17:15-03:00",
+      "sha256": "5eed746c76ea8ed21939113150924439258f6e499b574c99c1843e8d4176898b",
+      "arquivo": "docs/D09_lcp214-htm.html",
+      "texto": "docs/D09_lcp214-htm.txt",
+      "bytes": 5403923,
+      "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3",
+      "captura": {
+        "anterior": {
+          "slug": "triagem-contador-2026-10-30",
+          "id": "D10",
+          "baixado_em": "2026-10-30T02:21:14-03:00",
+          "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D10",
+      "titulo": "Resolução CGSN nº 140, de 22 de maio de 2018",
+      "url": "rfb:92278",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/92278/visao/multivigente",
+      "id_normativo": "rfb:92278",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-20T19:17:15-03:00",
+      "sha256": "158a09df9d0832b58264f9a0f625f75b9238563c44c967c7b5ea03bde5f48cb3",
+      "arquivo": "docs/D10_rfb-92278-multivigente.json",
+      "texto": "docs/D10_rfb-92278-multivigente.txt",
+      "bytes": 1465038,
+      "sha256_texto": "b5a0230413794b2737aa224e5fd3b8cfbd7bd87a28642b2649e4236a64b094f3",
+      "anexos": [
+        {
+          "nome": "Anexo I .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48430"
+        },
+        {
+          "nome": "Anexo II .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48431"
+        },
+        {
+          "nome": "Anexo III .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48432"
+        },
+        {
+          "nome": "Anexo IV .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48433"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48446"
+        },
+        {
+          "nome": "Anexo VI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48458"
+        },
+        {
+          "nome": "Anexo VI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/50966"
+        },
+        {
+          "nome": "Anexo VII .pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48436"
+        },
+        {
+          "nome": "Anexo VII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/50967"
+        },
+        {
+          "nome": "Anexo VII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54769"
+        },
+        {
+          "nome": "Anexo VII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/58338"
+        },
+        {
+          "nome": "Anexo VIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48459"
+        },
+        {
+          "nome": "Anexo IX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48460"
+        },
+        {
+          "nome": "Anexo X .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48439"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48461"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/52778"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54307"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54308"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54995"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/59531"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/64455"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/77593"
+        },
+        {
+          "nome": "Anexo XI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/81177"
+        },
+        {
+          "nome": "Anexo XII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/58339"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "emissao-mei-me-por-tipo",
+          "id": "D02",
+          "baixado_em": "2026-10-29T03:17:34-03:00",
+          "sha256_texto": "f58cdf2e7d483f172a4648aa67b3e40a4cbf29dc5f59eaa0b4d819dc74a7962e"
+        },
+        "tipo": "TEXTO_MUDOU",
+        "citado_em": [
+          {
+            "slug": "emissao-mei-me-por-tipo",
+            "id": "D02"
+          }
+        ],
+        "diferencas": [
+          "-§ 1º Relativamente à prestação de serviços sujeita ao ISS, a ME ou EPP optante pelo Simples Nacional utilizará a Nota Fiscal de Serviços, conforme modelo aprovado e autorizado pelo Município, ou Distrito Federal, ou outro documento fiscal ",
+          "-[AGENDADO]  [Vide modificação prevista para 01/11/2026, nos termos do(a) Resolução CGSN nº 191, de 4 de agosto de 2026 · rfb:152781]",
+          "-[AGENDADO]  [Vide dispositivo a ser incluído em 01/11/2026, nos termos do(a) Resolução CGSN nº 191, de 4 de agosto de 2026 · rfb:152781]"
+        ]
+      },
+      "alertas": [
+        "alteração com vigência futura: Alterado(a) pelo(a) Resolução CGSN nº 190, de 4 de agosto de 2026, a partir de 01/01/2027 (rfb:152832)",
+        "alteração com vigência futura: Alterado(a) pelo(a) Resolução CGSN nº 195, de 21 de outubro de 2026, a partir de 01/01/2027 (rfb:154194)",
+        "24 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar",
+        "TEXTO MUDOU desde 2026-10-29. Dossiês que citaram a versão anterior: emissao-mei-me-por-tipo D02. Conferir se a conclusão deles ainda vale"
+      ]
+    },
+    {
+      "id": "D11",
+      "titulo": "d12955",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/D12955.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-20T19:17:17-03:00",
+      "sha256": "0665a80baed2c797f434088f0dff4929ebb20a093b7e49f336efab158e6a9123",
+      "arquivo": "docs/D11_d12955-htm.html",
+      "texto": "docs/D11_d12955-htm.txt",
+      "bytes": 3184515,
+      "sha256_texto": "fdd17260256d367e90aaa8f51c289974e9c97078b68b0810b55927533f18671f",
+      "captura": {
+        "anterior": {
+          "slug": "fila-2026-10-27-bloco4-draft",
+          "id": "D06",
+          "baixado_em": "2026-10-27T11:19:04-03:00",
+          "sha256_texto": "fdd17260256d367e90aaa8f51c289974e9c97078b68b0810b55927533f18671f"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D12",
+      "titulo": "D12_NBCTG1002-pdf",
+      "url": "https://www1.cfc.org.br/sisweb/SRE/docs/NBCTG1002.pdf",
+      "url_final": "https://www1.cfc.org.br/sisweb/SRE/docs/NBCTG1002.pdf",
+      "orgao": "Conselho Federal de Contabilidade (SRE: resoluções e NBC)",
+      "baixado_em": "2026-11-20T19:17:19-03:00",
+      "sha256": "22e993c60f44fb4aedeea3a51af2a4a5a8fa3baf440d9e413e0fddcbda9bd335",
+      "arquivo": "docs/D12_NBCTG1002-pdf.pdf",
+      "texto": "docs/D12_NBCTG1002-pdf.txt",
+      "bytes": 211864,
+      "sha256_texto": "a9b778e531a9ac9b7f8f2909899c9e4293a80561d2541af3ec552bd43d5ab66d",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D13",
+      "titulo": "Lei nº 6.374, de 01/03/1989",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/estaduais/SP/leis-ordinarias/1989/lei-6374-1989-03-01-id25030.md",
+      "url_final": "https://github.com/ctresb/leis/blob/a04d818af03dd02ec234f777e89fc809126702e5/estaduais/SP/leis-ordinarias/1989/lei-6374-1989-03-01-id25030.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.al.sp.gov.br/norma/25030",
+      "versao_texto": "atualizada",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "a04d818af03dd02ec234f777e89fc809126702e5",
+      "alertas": [
+        "versao_texto = 'atualizada' (não é texto compilado: alterações posteriores não aparecem)",
+        "consta como revogada (situacao='Sem revogação expressa', revogada=false)"
+      ],
+      "baixado_em": "2026-11-20T19:18:18-03:00",
+      "sha256": "419917e3106054a23498fa31fdd8030acc29517f69b657b4d108999b2cded724",
+      "arquivo": "docs/D13_lei-6374-1989-03-01-id25030.md",
+      "texto": "docs/D13_lei-6374-1989-03-01-id25030.txt",
+      "bytes": 349593,
+      "sha256_texto": "237c5f3815481be162678a960884a35c980bc14d1364456a0bd515c4c1075f8b",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D14",
+      "titulo": "RC 30062/2024",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/RC30062_2024.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/RC30062_2024.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-20T19:18:44-03:00",
+      "sha256": "1304c4cd06c7b19acf1d41937dc2c0d4fb9147a9807b7f3ce36ac3b863d0415d",
+      "arquivo": "docs/D14_RC30062_2024-aspx.html",
+      "texto": "docs/D14_RC30062_2024-aspx.txt",
+      "bytes": 160984,
+      "sha256_texto": "1d400b7a81205cb2afb9c7c41dc82e01ec7bca28859b0d219a986b9ed2e5a859",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D15",
+      "titulo": "RC 25481/2022",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/RC25481_2022.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/RC25481_2022.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-20T19:18:44-03:00",
+      "sha256": "b4642bb31efc26c12f3eeb2ffbd7672b77390557c638d6cc6482198d73a8afd2",
+      "arquivo": "docs/D15_RC25481_2022-aspx.html",
+      "texto": "docs/D15_RC25481_2022-aspx.txt",
+      "bytes": 154800,
+      "sha256_texto": "3e727dc7c838b67611a65059df592a1243fa265e511cb4b9aaec11b91d999995",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D16",
+      "titulo": "RC 29915/2024",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/RC29915_2024.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/RC29915_2024.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-20T19:18:45-03:00",
+      "sha256": "4fb953aecb7f839980cf9eb66671fcc0dcef42f4fc8061c68d4875f1dcb59c82",
+      "arquivo": "docs/D16_RC29915_2024-aspx.html",
+      "texto": "docs/D16_RC29915_2024-aspx.txt",
+      "bytes": 154191,
+      "sha256_texto": "e809151d4f62cfa5c96a2a2f34acc9110a548eeb09f15899fc9863c06b4ee24c",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D17",
+      "titulo": "LEI N° 6.374, DE 01 DE MARÇO DE 1989 - Assembleia Legislativa do Estado de São Paulo",
+      "url": "https://www.al.sp.gov.br/repositorio/legislacao/lei/1989/lei-6374-01.03.1989.html",
+      "url_final": "https://www.al.sp.gov.br/repositorio/legislacao/lei/1989/lei-6374-01.03.1989.html",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-20T19:19:11-03:00",
+      "sha256": "3dfff7b936296f8ad68cf13809c4bb23e5d7c5f73e91f5db176de5a5b10327d2",
+      "arquivo": "docs/D17_lei-6374-01-03-1989-html.html",
+      "texto": "docs/D17_lei-6374-01-03-1989-html.txt",
+      "bytes": 874041,
+      "sha256_texto": "db0c54caa69d464982beecd1e0faa1cab1e67e2f84f94ba9624cf09df5623961",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D18",
+      "titulo": "Portaria SRE 94 de 2025",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/Portaria-SRE-94-de-2025.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/Portaria-SRE-94-de-2025.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-20T19:19:30-03:00",
+      "sha256": "c4ec4e8472ddd784e6eaff5d902ae4e69abd47daa2bf5016bcaa9cf02f511f2c",
+      "arquivo": "docs/D18_Portaria-SRE-94-de-2025-aspx.html",
+      "texto": "docs/D18_Portaria-SRE-94-de-2025-aspx.txt",
+      "bytes": 151277,
+      "sha256_texto": "d592229266582b6d6de475f64d3e99971dc663fe5ade0fd19ace73442052e9c2",
+      "captura": {
+        "anterior": {
+          "slug": "fila-2026-10-27-bloco3-eficiencia",
+          "id": "D14",
+          "baixado_em": "2026-10-27T11:09:09-03:00",
+          "sha256_texto": "d592229266582b6d6de475f64d3e99971dc663fe5ade0fd19ace73442052e9c2"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D19",
+      "titulo": "RC 33677/2026",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/RC33677_2026.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/RC33677_2026.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-20T19:19:30-03:00",
+      "sha256": "641de836a846c561c5eaacdd05c5a059e7f87cf2b4ad6185b165613ba7e9c4eb",
+      "arquivo": "docs/D19_RC33677_2026-aspx.html",
+      "texto": "docs/D19_RC33677_2026-aspx.txt",
+      "bytes": 158933,
+      "sha256_texto": "01c45cf4a0b3906f5a4540273bc72294b57ce6f9a7e6b141fd559dfdae06135b",
+      "captura": {
+        "anterior": {
+          "slug": "fila-2026-10-27-bloco3-eficiencia",
+          "id": "D12",
+          "baixado_em": "2026-10-27T11:08:56-03:00",
+          "sha256_texto": "01c45cf4a0b3906f5a4540273bc72294b57ce6f9a7e6b141fd559dfdae06135b"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D20",
+      "titulo": "RICMS - Artigo 115\r\n\t\t\t\t\t\t\r\nSEÇÃO III - DO PAGAMENTO POR GUIA DE RECOLHIMENTOS ESPECIAIS",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art115.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art115.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-20T19:19:30-03:00",
+      "sha256": "1fbebe2714a4ea6e942b5d66835ca03d841bb943dbfc91908cddc1982b7ebb37",
+      "arquivo": "docs/D20_art115-aspx.html",
+      "texto": "docs/D20_art115-aspx.txt",
+      "bytes": 178804,
+      "sha256_texto": "eb1af7510c401038031ea1cd176862136c6eee90e6822d37d21e7b88f75f06df",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D21",
+      "titulo": "Parecer Normativo Cosit nº 5, de 17 de dezembro de 2018",
+      "url": "rfb:97407",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/97407/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/97407/visao/multivigente",
+      "id_normativo": "rfb:97407",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-20T19:21:51-03:00",
+      "sha256": "98330af57f77e6390fa6f772c50bfab59db579c4702c3105a1326fd07b11b713",
+      "arquivo": "docs/D21_rfb-97407-multivigente.json",
+      "texto": "docs/D21_rfb-97407-multivigente.txt",
+      "bytes": 5086,
+      "sha256_texto": "cf8e48c005ea09accf967778c9765516ad6eb1f256c7cab279906a84b072938c",
+      "anexos": [
+        {
+          "nome": "Parecer Normativo Cosit nº 5-2018.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/97407/anexo/72785"
+        }
+      ],
+      "captura": {
+        "tipo": "PRIMEIRA"
+      },
+      "alertas": [
+        "1 anexo binário não baixado (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D22",
+      "titulo": "Solução de Consulta Cosit nº 127, de 27 de março de 2019",
+      "url": "rfb:99744",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/99744/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/99744/visao/multivigente",
+      "id_normativo": "rfb:99744",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-20T19:21:52-03:00",
+      "sha256": "3fc001f4bd305a1123a18056fa021769f6847ff65e242e8e1e631a87e187a19f",
+      "arquivo": "docs/D22_rfb-99744-multivigente.json",
+      "texto": "docs/D22_rfb-99744-multivigente.txt",
+      "bytes": 3708,
+      "sha256_texto": "102b8663c39c7059eebe7cddcbebcbc562fb01353c936d3c92aaf7c030c417c8",
+      "anexos": [
+        {
+          "nome": "SC Cosit nº 127-2019.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/99744/anexo/51835"
+        }
+      ],
+      "captura": {
+        "tipo": "PRIMEIRA"
+      },
+      "alertas": [
+        "1 anexo binário não baixado (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D23",
+      "titulo": "Instrução Normativa RFB nº 2121, de 15 de dezembro de 2022",
+      "url": "rfb:127905",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/127905/visao/multivigente",
+      "id_normativo": "rfb:127905",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-20T19:21:53-03:00",
+      "sha256": "0d88e35b7fbd24799eb90978e4828e374f960ffcd8acfc639f75f54b870ca3e7",
+      "arquivo": "docs/D23_rfb-127905-multivigente.json",
+      "texto": "docs/D23_rfb-127905-multivigente.txt",
+      "bytes": 3532630,
+      "sha256_texto": "de5df091f51fec7bbb554d07df656f2f32cc2323fc16a65b298d063f775d2fc5",
+      "anexos": [
+        {
+          "nome": "IN1.html",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/67992"
+        },
+        {
+          "nome": "ANEXO I.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68008"
+        },
+        {
+          "nome": "ANEXO II.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68003"
+        },
+        {
+          "nome": "ANEXO III.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68039"
+        },
+        {
+          "nome": "ANEXO IV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68005"
+        },
+        {
+          "nome": "ANEXO V.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68006"
+        },
+        {
+          "nome": "ANEXO V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/84251"
+        },
+        {
+          "nome": "ANEXO VI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68007"
+        },
+        {
+          "nome": "ANEXO VII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68009"
+        },
+        {
+          "nome": "ANEXO VIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68040"
+        },
+        {
+          "nome": "ANEXO IX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68011"
+        },
+        {
+          "nome": "ANEXO X.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68012"
+        },
+        {
+          "nome": "ANEXO XI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68013"
+        },
+        {
+          "nome": "ANEXO XII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68035"
+        },
+        {
+          "nome": "ANEXO XIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68014"
+        },
+        {
+          "nome": "ANEXO XIV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68015"
+        },
+        {
+          "nome": "ANEXO XV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68016"
+        },
+        {
+          "nome": "ANEXO XVI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68020"
+        },
+        {
+          "nome": "ANEXO XVII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68021"
+        },
+        {
+          "nome": "ANEXO XVIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68022"
+        },
+        {
+          "nome": "ANEXO XIX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68023"
+        },
+        {
+          "nome": "ANEXO XX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68024"
+        },
+        {
+          "nome": "ANEXO XXI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68025"
+        },
+        {
+          "nome": "ANEXO XXII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68026"
+        },
+        {
+          "nome": "ANEXO XXIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68027"
+        },
+        {
+          "nome": "ANEXO XXIV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68028"
+        },
+        {
+          "nome": "ANEXO XXV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/68029"
+        },
+        {
+          "nome": "Anexo XXVI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/84347"
+        },
+        {
+          "nome": "Anexo XXVII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/84346"
+        },
+        {
+          "nome": "Anexo XXVIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/84348"
+        },
+        {
+          "nome": "Anexo XXIX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/127905/anexo/84349"
+        }
+      ],
+      "captura": {
+        "tipo": "PRIMEIRA"
+      },
+      "alertas": [
+        "31 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D24",
+      "titulo": "SC Cosit nº 127-2019 Publicação",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/99744/anexo/51835",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/99744/anexo/51835",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-20T19:22:03-03:00",
+      "sha256": "7833af6a5a580426fdd95f4cb07d3f41269f38d54dfbb9cb19ce8494d23cbbea",
+      "arquivo": "docs/D24_51835.pdf",
+      "texto": "docs/D24_51835.txt",
+      "bytes": 26783,
+      "sha256_texto": "8807f27c76c67db5abd6cb7f25a8067b8a1dbbcf246c0ef6c25e4bb1cc6aaad7",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D25",
+      "titulo": "Decreto nº 9.580 de 22/11/2018",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "url_final": "https://github.com/ctresb/leis/blob/39239e708b021186cea3d407a5fc7984f2c725f5/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2018-11-22;9580",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "39239e708b021186cea3d407a5fc7984f2c725f5",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-20T19:24:18-03:00",
+      "sha256": "2c328212c1a8408eaa64072debe9860ecb435a731150296702b0583f00acfe6e",
+      "arquivo": "docs/D25_dec-9580-2018-11-22.md",
+      "texto": "docs/D25_dec-9580-2018-11-22.txt",
+      "bytes": 1624,
+      "sha256_texto": "5934a1d17e8377ff29a590ebde2063d3c373344bb35cbf32cfe4ba5ea2d9a769",
+      "captura": {
+        "anterior": {
+          "slug": "brief-pes4-f2",
+          "id": "D09",
+          "baixado_em": "2026-11-05T20:19:00-03:00",
+          "sha256_texto": "5934a1d17e8377ff29a590ebde2063d3c373344bb35cbf32cfe4ba5ea2d9a769"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D26",
+      "titulo": "D9580",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-20T19:24:44-03:00",
+      "sha256": "2b3bbed6b4514109b885df5e850bd9f227a705a966d1fe5c3bf06b253b2eaf04",
+      "arquivo": "docs/D26_d9580-htm.html",
+      "texto": "docs/D26_d9580-htm.txt",
+      "bytes": 2944670,
+      "sha256_texto": "308eef1ab300503de35e5f95cd330efac875ed092e31da5d7cff109b0421d222",
+      "captura": {
+        "anterior": {
+          "slug": "brief-pes4-f2",
+          "id": "D11",
+          "baixado_em": "2026-11-05T20:21:39-03:00",
+          "sha256_texto": "308eef1ab300503de35e5f95cd330efac875ed092e31da5d7cff109b0421d222"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D27",
+      "titulo": "RC 25486/2022",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/RC25486_2022.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/RC25486_2022.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-20T19:28:16-03:00",
+      "sha256": "e8101c3bc830faa05e0b2f7b69530ffee4645e0a760e013ff5b3606097be2d25",
+      "arquivo": "docs/D27_RC25486_2022-aspx.html",
+      "texto": "docs/D27_RC25486_2022-aspx.txt",
+      "bytes": 155153,
+      "sha256_texto": "97c9940c76c9b844aed4b9b141dbb427eed631e5e0480a1b976b46d59a31b5db",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D28",
+      "titulo": "Solução de Consulta Cosit nº 16, de 4 de março de 2024",
+      "url": "rfb:136652",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/136652/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/136652/visao/multivigente",
+      "id_normativo": "rfb:136652",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-20T19:28:40-03:00",
+      "sha256": "31f57bc0262507d4f10441619cf1b6f1de81c4b1ce305a56c68395e01f660e14",
+      "arquivo": "docs/D28_rfb-136652-multivigente.json",
+      "texto": "docs/D28_rfb-136652-multivigente.txt",
+      "bytes": 6511,
+      "sha256_texto": "961b058faa2c824ca26ea0dcf721518009c0fbed34a88422102a62b8a7795f5f",
+      "anexos": [
+        {
+          "nome": "SC Cosit nº 16-2024.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/136652/anexo/73025"
+        }
+      ],
+      "captura": {
+        "tipo": "PRIMEIRA"
+      },
+      "alertas": [
+        "1 anexo binário não baixado (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D29",
+      "titulo": "Solução de Consulta Cosit nº 496, de 27 de setembro de 2017",
+      "url": "rfb:87181",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/87181/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/87181/visao/multivigente",
+      "id_normativo": "rfb:87181",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-20T19:28:40-03:00",
+      "sha256": "0eb775320f0c4e436414d44ed9479061e8d0f7b4b559a353bdd9c2991f4dfcf9",
+      "arquivo": "docs/D29_rfb-87181-multivigente.json",
+      "texto": "docs/D29_rfb-87181-multivigente.txt",
+      "bytes": 8151,
+      "sha256_texto": "5529dcaa1aee4235e5e04bb925095b641a9e0b3bde73ba02f5d1daa11926ad81",
+      "anexos": [
+        {
+          "nome": "SC Cosit nº 496-2017.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/87181/anexo/45893"
+        }
+      ],
+      "captura": {
+        "tipo": "PRIMEIRA"
+      },
+      "alertas": [
+        "1 anexo binário não baixado (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D30",
+      "titulo": "STJ - Precedentes Qualificados",
+      "url": "https://processo.stj.jus.br/repetitivos/temas_repetitivos/pesquisa.jsp?novaConsulta=true&tipo_pesquisa=T&cod_tema_inicial=779&cod_tema_final=779",
+      "url_final": "https://processo.stj.jus.br/repetitivos/temas_repetitivos/pesquisa.jsp?novaConsulta=true&tipo_pesquisa=T&cod_tema_inicial=779&cod_tema_final=779",
+      "orgao": "STJ",
+      "baixado_em": "2026-11-20T19:28:51-03:00",
+      "sha256": "b85c154965f416d0d47acddf14f2cc53507f6fb26aa6497fc069b36b33cc9010",
+      "arquivo": "docs/D30_pesquisa-jsp.html",
+      "texto": "docs/D30_pesquisa-jsp.txt",
+      "bytes": 60385,
+      "sha256_texto": "05f47e86d6cb26b2b91e2fd4665f05f66072f68551e79ab3106bd0cb55ae2e4b",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D31",
+      "titulo": "LEI Nº 13.701 DE 24 DE DEZEMBRO DE 2003 « Catálogo de Legislação Municipal",
+      "url": "https://legislacao.prefeitura.sp.gov.br/leis/lei-13701-de-24-de-dezembro-de-2003",
+      "url_final": "https://legislacao.prefeitura.sp.gov.br/lei-13701-de-24-de-dezembro-de-2003",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-20T19:29:07-03:00",
+      "sha256": "4a37623b7b614aadeb072743918144c3b1b8561f5bf50cf779d9bf57c14a8092",
+      "arquivo": "docs/D31_lei-13701-de-24-de-dezembro-de-2003.html",
+      "texto": "docs/D31_lei-13701-de-24-de-dezembro-de-2003.txt",
+      "bytes": 180179,
+      "sha256_texto": "8d5256569a667be215810175c11ef58f617373d06a39de8a82aee9e0051ff171",
+      "captura": {
+        "anterior": {
+          "slug": "fila-2026-10-27-bloco3-eficiencia",
+          "id": "D05",
+          "baixado_em": "2026-10-27T11:06:43-03:00",
+          "sha256_texto": "ad24d58154352ebe2ae9ffd4c217e78ac87304c5f51b3332188ae3d6d96a5abd"
+        },
+        "tipo": "TEXTO_MUDOU",
+        "citado_em": [
+          {
+            "slug": "gates-humanos-lei",
+            "id": "D08"
+          },
+          {
+            "slug": "fila-2026-10-27-bloco3-eficiencia",
+            "id": "D05"
+          }
+        ],
+        "diferencas": [
+          "+ INSTRUÇÃO NORMATIVA SECRETARIA MUNICIPAL DA FAZENDA - SF/SUREM Nº 10 DE 4 DE DEZEMBRO DE 2019 ",
+          "- INSTRUÇÃO NORMATIVA SECRETARIA MUNICIPAL DA FAZENDA - SF/SUREM Nº 10 DE 4 DE DEZEMBRO DE 2019 "
+        ]
+      },
+      "alertas": [
+        "TEXTO MUDOU desde 2026-10-27. Dossiês que citaram a versão anterior: gates-humanos-lei D08, fila-2026-10-27-bloco3-eficiencia D05. Conferir se a conclusão deles ainda vale"
+      ]
+    }
+  ],
+  "buscas": [],
+  "slug": "insumos-salao-sp",
+  "pergunta": "Tributação dos insumos de salão de beleza em SP capital (Simples, Presumido, Real, IBS/CBS 2027) e planejamento lícito",
+  "criado": "2026-11-20T19:16:25-03:00"
+}
