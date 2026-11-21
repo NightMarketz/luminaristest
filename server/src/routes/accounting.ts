@@ -230,6 +230,7 @@ import {
   listProductDestinations,
   upsertProductDestination,
 } from '../controllers/productDestinationController';
+import { createInsumoStockCount } from '../controllers/insumoStockCountController';
 import {
   deleteFiscalCertificate,
   fiscalCertificateUpload,
@@ -499,6 +500,8 @@ router.post('/tax-optimization/servicos/avaliar', avaliarServicosFiscais);
 router.get('/product-destinations', listProductDestinations);
 router.put('/product-destinations', upsertProductDestination);
 router.delete('/product-destinations/:productRef', deleteProductDestination);
+// BE-INCR-INSUMO-INVENTARIO-PERIODICO (BRIEF item 4): contagem do estoque de insumo do serviço no fechamento.
+router.post('/insumo-stock-counts', createInsumoStockCount);
 // BE-INCR-FISCAL-OBLIGATION-PROFILE (nó X13, PR-1, BRIEF itens 6/8/9; F-XP-2/3 a) — perfil da EMPRESA por ano +
 // signatários não-contador; segmentos estáticos, antes de /:unitId/periods.
 router.get('/company-fiscal-profile/:ano/obligations', getCompanyObligations);

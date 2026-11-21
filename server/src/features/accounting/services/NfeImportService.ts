@@ -155,6 +155,7 @@ export class NfeImportService {
       mappingByCProd,
       resolved.byNItem,
       regime.insumoExpenseAccountId,
+      regime.insumoStockAccountId,
     );
 
     const issueDate = nfe.ide.dhEmiDate; // YYYY-MM-DD (reslice literal from the parser)
@@ -306,6 +307,8 @@ export class NfeImportService {
     mappingByCProd: Map<string, ItemDestinationMapping>,
     destinationByNItem: Map<number, ItemDestination>,
     insumoExpenseAccountId: string | null,
+    /** INSUMO-INVENTARIO-PERIODICO item 2 (F-ID-3 c): preenchida ⇒ o insumo debita o estoque de insumo, não a despesa. */
+    insumoStockAccountId: string | null = null,
   ): {
     inventoryItems: NonNullable<CreatePayableInput['inventoryItems']>;
     fixedAssetItems: NonNullable<CreatePayableInput['fixedAssetItems']>;
@@ -386,7 +389,9 @@ export class NfeImportService {
           );
         }
         insumoItems.push({
-          accountId: insumoExpenseAccountId,
+          // INSUMO-INVENTARIO-PERIODICO item 2: com a conta de estoque de insumo, a compra vai ao ativo (NBC TG 1002
+          // 13.2) e a contagem do fechamento leva a diferença ao custo (13.6); sem ela, despesa na entrada (F-ID-3 a).
+          ...(insumoStockAccountId ? { accountId: insumoStockAccountId, stock: true as const } : { accountId: insumoExpenseAccountId }),
           productRef,
           cProd: it.cProd,
           nItem: it.nItem,

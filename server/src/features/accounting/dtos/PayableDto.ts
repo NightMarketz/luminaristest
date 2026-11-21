@@ -206,6 +206,9 @@ const insumoItem = z
     nItem: z.number().int().positive(),
     costCents: cents,
     description: z.string().min(1).optional(),
+    // INSUMO-INVENTARIO-PERIODICO item 3 (F-ID-3 c, dono 21/11): `true` = `accountId` é o estoque de insumo (folha de
+    // ATIVO); ausente = despesa na entrada (folha Expense, F-ID-3 a). A baixa do estoque é a contagem (item 4).
+    stock: z.literal(true).optional(),
   })
   .strict();
 

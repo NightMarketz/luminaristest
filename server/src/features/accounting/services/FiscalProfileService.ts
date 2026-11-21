@@ -1,4 +1,4 @@
-import { PERFIL_FISCAL_PLANO_PADRAO } from '../fixtures/ChartOfAccountsFixture';
+import { ESTOQUES_CODE, PERFIL_FISCAL_PLANO_PADRAO } from '../fixtures/ChartOfAccountsFixture';
 import { findMappingRule } from './StatementMappingFixture';
 import { ForbiddenError, PolicyApprovalRequiredError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
@@ -83,6 +83,7 @@ export interface FiscalProfileView extends CostRegime {
   icmsRecuperavelAccountId: string | null;
   pisCofinsRecuperavelAccountId: string | null;
   insumoExpenseAccountId: string | null;
+  insumoStockAccountId: string | null; // INSUMO-INVENTARIO-PERIODICO item 1
   // X7 Fase A (BRIEF item 3, F-TA-6 a)
   irpjDespesaAccountId: string | null;
   csllDespesaAccountId: string | null;
@@ -347,6 +348,7 @@ export class FiscalProfileService {
     if (input.pisCofinsRecuperavelAccountId) await this.assertAssetAccount(scope, input.pisCofinsRecuperavelAccountId, 'PIS/COFINS a recuperar', tx);
     // Lacuna 051e (dono 21/11: "Checar em todo PUT"; e "aplica a regra também no kit e no plano padrão"): vale em toda escrita.
     if (input.insumoExpenseAccountId) await this.assertInsumoCostAccount(scope, input.insumoExpenseAccountId, tx);
+    if (input.insumoStockAccountId) await this.assertInsumoStockAccount(scope, input.insumoStockAccountId, tx);
     // X7 item 3 (F-TA-6 a): provisão D despesa / C a recolher (item 15) — despesa = Expense, a recolher = Liability.
     if (input.irpjDespesaAccountId) await this.assertExpenseAccount(scope, input.irpjDespesaAccountId, 'despesa de IRPJ', tx);
     if (input.csllDespesaAccountId) await this.assertExpenseAccount(scope, input.csllDespesaAccountId, 'despesa de CSLL', tx);
@@ -434,6 +436,7 @@ export class FiscalProfileService {
         icmsRecuperavelAccountId: row.icmsRecuperavelAccountId ?? '',
         pisCofinsRecuperavelAccountId: row.pisCofinsRecuperavelAccountId ?? '',
         insumoExpenseAccountId: row.insumoExpenseAccountId ?? '', // ITEM-DESTINATION item 20 (decisão do dono 02/10)
+        insumoStockAccountId: row.insumoStockAccountId ?? '', // INSUMO-INVENTARIO-PERIODICO item 1
         // X7 item 3 (F-TA-6 a): contas da provisão — só ids
         irpjDespesaAccountId: row.irpjDespesaAccountId ?? '',
         csllDespesaAccountId: row.csllDespesaAccountId ?? '',
@@ -503,6 +506,21 @@ export class FiscalProfileService {
     }
   }
 
+  /**
+   * INSUMO-INVENTARIO-PERIODICO item 1 (F-ID-3 c, dono 21/11): o estoque de insumo é folha de ATIVO do escopo e NÃO é
+   * a conta `Estoques` da revenda (`ESTOQUES_CODE`) — lá o tie-out LAC-E exige Σ InventoryItem = saldo, e o insumo
+   * não tem InventoryItem.
+   */
+  private async assertInsumoStockAccount(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<void> {
+    await this.assertAssetAccount(scope, id, 'estoque de insumo do serviço', tx);
+    const account = await this.accountRepo.findById(scope, id, tx);
+    if (account?.code === ESTOQUES_CODE) {
+      throw new ValidationError(
+        `Conta de estoque de insumo '${account.code}' é o estoque de revenda (tie-out do subrazão de estoque) — use uma conta de ativo própria para o insumo do serviço.`,
+      );
+    }
+  }
+
   /** ITEM-DESTINATION item 20 (F-ID-5 a): análogo ao `assertAssetAccount` — o insumo do serviço vai para
    *  DESPESA na entrada (F-ID-3 a), então a conta é folha de resultado `nature = Expense` do escopo. */
   private async assertExpenseAccount(scope: AccountingScope, id: string, label: string, tx?: Prisma.TransactionClient): Promise<{ code: string; nature: string }> {
@@ -560,6 +578,7 @@ export class FiscalProfileService {
       icmsRecuperavelAccountId: row.icmsRecuperavelAccountId,
       pisCofinsRecuperavelAccountId: row.pisCofinsRecuperavelAccountId,
       insumoExpenseAccountId: row.insumoExpenseAccountId,
+      insumoStockAccountId: row.insumoStockAccountId,
       irpjDespesaAccountId: row.irpjDespesaAccountId,
       csllDespesaAccountId: row.csllDespesaAccountId,
       irpjRecolherAccountId: row.irpjRecolherAccountId,
