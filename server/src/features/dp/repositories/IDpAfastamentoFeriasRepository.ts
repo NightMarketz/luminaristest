@@ -32,5 +32,7 @@ export interface IDpAfastamentoFeriasRepository {
   updateImplantacao(id: string, data: Partial<Omit<DpFeriasImplantacaoData, 'aquisitivoInicio'>>, tx: Tx): Promise<DpFeriasImplantacao>;
   deleteImplantacao(id: string, tx: Tx): Promise<DpFeriasImplantacao>;
 
+  /** BE-INCR-DP-F2 item 27 (PR-3) — leitura em lote do snapshot: o que toca o período `de`..`ate` (date-only, inclusivo). */
+  listAfastamentosDosVinculos(vinculoIds: readonly string[], de: string, ate: string): Promise<DpAfastamento[]>;
   runTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T>;
 }

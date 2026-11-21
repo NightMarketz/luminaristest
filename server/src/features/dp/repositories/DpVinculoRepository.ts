@@ -1,6 +1,6 @@
 import prisma from '../../../lib/prisma';
 import type { DpTrabalhador, DpVinculo, DpVinculoVersao, Prisma } from 'generated/prisma';
-import type { DpTrabalhadorData, DpVersaoData, DpVinculoCompleto, DpVinculoData, IDpVinculoRepository } from './IDpVinculoRepository';
+import type { DpTrabalhadorData, DpVersaoData, DpVinculoCompleto, DpVinculoData, DpVinculoSnapshotFonte, IDpVinculoRepository } from './IDpVinculoRepository';
 
 type Tx = Prisma.TransactionClient;
 const vivo = { deletedAt: null };
@@ -73,6 +73,17 @@ export class DpVinculoRepository implements IDpVinculoRepository {
   }
   public async updateVersao(id: string, data: Partial<DpVersaoData>, tx: Tx): Promise<DpVinculoVersao> {
     return tx.dpVinculoVersao.update({ where: { id }, data });
+  }
+
+  public async listVinculosCompletosNoPeriodo(ownerUserId: string, de: string, ate: string): Promise<DpVinculoSnapshotFonte[]> {
+    return prisma.dpVinculo.findMany({
+      where: { userId: ownerUserId, ...vivo, dataInicio: { lte: ate }, OR: [{ dataTermino: null }, { dataTermino: { gte: de } }] },
+      include: {
+        trabalhador: true,
+        versoes: { orderBy: { vigenteDesde: 'asc' }, include: { lotacao: true, cargo: true, jornada: true, sindicato: true } },
+      },
+      orderBy: { id: 'asc' },
+    });
   }
 
   public async runTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {

@@ -176,9 +176,16 @@ export class LinhaLegalIlegivelError extends AppError {
 
 /** Item 4 — sem linha vigente da tabela/chave na data. `ValidationError` (400) para a prévia/rota que a dispara. */
 export class SemLinhaVigenteError extends ValidationError {
+  /** BE-INCR-DP-F2 item 27 (PR-3): o snapshot da folha guarda a ausência nomeada (tabela, chave, data), não só a mensagem. */
+  public readonly tabela: string;
+  public readonly data: string;
+  public readonly chave: string | null;
   constructor(tabela: string, data: string, chave?: string, errorCode?: string) {
     super(`Sem linha vigente de ${tabela}${chave ? `/${chave}` : ''} em ${data} (parâmetros legais da plataforma).`, null, errorCode);
     Object.setPrototypeOf(this, SemLinhaVigenteError.prototype); // ValidationError fixa o próprio protótipo
+    this.tabela = tabela;
+    this.data = data;
+    this.chave = chave ?? null;
     this.name = 'SemLinhaVigenteError';
   }
 }

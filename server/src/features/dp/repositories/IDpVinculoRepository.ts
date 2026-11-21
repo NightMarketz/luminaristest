@@ -37,6 +37,8 @@ export type DpVersaoResolvida = DpVinculoVersao & {
 };
 /** Item 47 — vínculo com todas as versões e os cadastros que cada uma referencia. */
 export type DpVinculoCompleto = DpVinculo & { versoes: DpVersaoResolvida[] };
+/** Item 27 — o vínculo completo e o trabalhador dele (o snapshot lê só a idade e o `pcd`, nunca nome nem CPF). */
+export type DpVinculoSnapshotFonte = DpVinculoCompleto & { trabalhador: DpTrabalhador };
 
 /**
  * Trabalhador, vínculo e versões do DP (itens 37–48). Tudo por instância (`userId` = dono); linha viva = `deletedAt: null`;
@@ -65,5 +67,7 @@ export interface IDpVinculoRepository {
   createVersao(vinculoId: string, data: DpVersaoData, tx: Tx): Promise<DpVinculoVersao>;
   updateVersao(id: string, data: Partial<DpVersaoData>, tx: Tx): Promise<DpVinculoVersao>;
 
+  /** BE-INCR-DP-F2 item 27 (PR-3) — leitura em lote do snapshot: o que toca o período `de`..`ate` (date-only, inclusivo). */
+  listVinculosCompletosNoPeriodo(ownerUserId: string, de: string, ate: string): Promise<DpVinculoSnapshotFonte[]>;
   runTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T>;
 }
