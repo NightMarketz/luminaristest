@@ -210,6 +210,29 @@ describe('acquisitionCost — destinação por item (ITEM-DESTINATION)', () => {
       .toEqual({ base: 4237, pis: 70, cofins: 322, total: 392 });
   });
 
+  // Guarda do padrão de produção (chave c516 LIGADA, revisor #1301 A1): o `regime()` do helper nasce com a chave desligada,
+  // então sem este caso nada provava que a chave só vale para INSUMO_SERVICO (BRIEF ITEM-DESTINATION item 7: "REVENDA +
+  // MONOFASICO segue com crédito 0 em qualquer CST"). Sabotagem: tirar `insumo &&` de `monofasicoNcmInsumo` em nfeCost.ts
+  // faz a REVENDA e o IMOBILIZADO creditarem 392 e este teste ficar vermelho.
+  it('lacuna c516 — chave LIGADA: monofásico por NCM só credita como INSUMO_SERVICO; REVENDA e IMOBILIZADO (em qualquer CST), cumulativo e Simples seguem 0', () => {
+    const ligada = (over: Partial<CostRegime>) => regime({ pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditMonofasicoInsumo: true, ...over });
+    const comCst = (cst: string) => ITENS.map((it) => (it.nItem === 2 ? { ...it, cstPis: cst, cstCofins: cst } : it));
+    for (const cst of ['01', '02', '04', '06']) {
+      const itens = comCst(cst);
+      const insumo = acquisitionCost(NFE, itens, ligada({}), dest({ 2: 'INSUMO_SERVICO' }), LEGAIS_SEMENTE);
+      expect([insumo.itens[1].classe, insumo.itens[1].creditoPisCofinsCents]).toEqual(['MONOFASICO', 392]);
+      for (const destino of [undefined, dest({ 2: 'REVENDA' }), dest({ 2: 'IMOBILIZADO' })]) {
+        const c = acquisitionCost(NFE, itens, ligada({}), destino, LEGAIS_SEMENTE);
+        expect([c.itens[1].classe, c.itens[1].creditoPisCofinsCents, c.itens[1].basePisCofinsCents]).toEqual(['MONOFASICO', 0, 0]);
+        expect(c.warnings.join(' ')).not.toMatch(/insumo monofásico/);
+      }
+    }
+    for (const r of [ligada({ pisCofinsRegime: 'CUMULATIVO' }), ligada({ pisCofinsRegime: 'SIMPLES' })]) {
+      const c = acquisitionCost(NFE, ITENS, r, dest({ 1: 'INSUMO_SERVICO', 2: 'INSUMO_SERVICO', 3: 'INSUMO_SERVICO' }), LEGAIS_SEMENTE);
+      expect([c.creditoPisCofinsCents, c.itens[1].creditoPisCofinsCents]).toEqual([0, 0]);
+    }
+  });
+
   it('item 8 — Σ custoLiquido === custoEstoqueCents com destinações mistas; no SIMPLES e no CUMULATIVO a destinação não muda crédito', () => {
     const mix = dest({ 1: 'INSUMO_SERVICO', 2: 'REVENDA', 3: 'INSUMO_SERVICO' });
     const c = acquisitionCost(NFE, ITENS, real, mix, LEGAIS_SEMENTE);
