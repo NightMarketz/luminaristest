@@ -2,7 +2,11 @@
 
 - **Data:** 2026-11-21
 - **Nó:** [[CICLO-FISCAL]] (`docs/plano/nos/CICLO-FISCAL.md`), aberto por este planejamento
-- **Status:** **Proposed**. Os forks F-CF-1..10 estão **PENDENTES**. Nenhum código autorizado sem "executa".
+- **Status:** **Proposed → forks RATIFICADOS em 21/11** por questionário ([[D-2026-11-21-CICLO-FISCAL-FORKS]]). F-CF-1,
+  2, 3, 7, 8, 9 e 10 ficaram na recomendação. **F-CF-4 → (b)** e **F-CF-5 → (b)** foram contra a recomendação. O
+  **F-CF-6 foi perguntado de novo**: a 1ª recomendação estava errada, porque o `postEntry` exige período `OPEN`
+  (`PostingService.ts:131,148`). Ficou em (a) "dia de corte com o período aberto". Os detalhes F-CF-4a e F-CF-5a ficaram
+  na recomendação. Nenhum código autorizado sem "executa".
 - **Lacuna de origem:** `L-20261121-184212-4fdb` (classe `feature`): "nenhum job agenda o ciclo fiscal".
 - **Autorização:** dono, chat, 2026-11-21: *"Executa tudo pra liberar e poder rodar em xhigh até terminar"*, em
   resposta à proposta de planejar o job do ciclo fiscal (repassada pela sessão que abriu esta). Cobre este PRE-ADR/BRIEF,
@@ -97,8 +101,9 @@ o comportamento quando a chave está desligada.
    `CLAUDE.md` é Prisma, não DynamicTable: o usuário não desenha o esquema, a lei desenha.
 2. **Job** (`CicloFiscalScheduler` + `CicloFiscalService`). Clone do par do LEGAL-PARAMS PR-4. Uma vez por dia, para
    cada PJ com perfil fiscal do ano: (a) materializa as ocorrências; (b) checa os pré-requisitos; (c) calcula a prévia
-   pelos serviços que existem; (d) confirma só o que a política deixa (F-CF-3); (e) gera Reinf e MIT quando a entrada
-   está completa (F-CF-4); (f) deixa ao humano o que exige julgamento ou assinatura.
+   pelos serviços que existem; (d) confirma só o que a política deixa, a partir do dia de corte (F-CF-3, F-CF-6),
+   incluindo a provisão estimada do Simples (F-CF-5 → b); (e) gera Reinf e MIT quando a entrada está completa, e o
+   rascunho de ECD/ECF com o exercício encerrado (F-CF-4 → b); (f) deixa ao humano o que exige julgamento ou assinatura.
 3. **Leitura e marcação** (rotas). `GET` do calendário com a situação do prazo. A marcação humana do que só se
    cumpre fora do sistema (transmitiu no PVA, pagou, transmitiu o PGDAS-D) é auditada. A tela é do `AGENDA-FISCAL`.
 
@@ -106,8 +111,8 @@ o comportamento quando a chave está desligada.
 
 | Passo | Por quê | Fonte |
 |---|---|---|
-| Transmitir o PGDAS-D e registrar o DAS oficial | o PGDAS-D "constitui confissão de dívida"; a provisão do Simples é pelo valor **oficial** do DAS (F-SN-10 → a) | Res. CGSN 140 art. 38 § 2º I [D04]; `SimplesApuracaoService` cabeçalho `atomicUntil` |
-| Assinar e transmitir ECD/ECF no PVA | assinatura ICP-Brasil | IN 2.004 art. 3º § 1º [D06]; gate H1 |
+| Transmitir o PGDAS-D e registrar o DAS oficial | o PGDAS-D "constitui confissão de dívida"; a provisão **definitiva** do Simples é pelo valor **oficial** do DAS (F-SN-10 → a). A estimada do job (F-CF-5 → b) é estornada nesse registro | Res. CGSN 140 art. 38 § 2º I [D04]; `SimplesApuracaoService` cabeçalho `atomicUntil` |
+| Assinar e transmitir ECD/ECF no PVA | assinatura ICP-Brasil; o job só gera o rascunho (F-CF-4 → b) | IN 2.004 art. 3º § 1º [D06]; gate H1 |
 | Encerrar a DCTFWeb no MIT | o usuário encerra (Manual do MIT §9) | `ADR-INCR-DCTFWEB-MIT`; F-X7-9 → b |
 | Transmitir a Reinf | porta `ReinfTransmissorPort` sem adaptador (PR-4 do EFD-REINF) | nó [[EFD-REINF]] |
 | Opção pelo Simples, opção semestral IBS/CBS regular (2027), forma do IRPJ | decisão irretratável do contribuinte | Res. CGSN 140 art. 40-D [D09]; IN 2.004 |
@@ -138,7 +143,8 @@ o mesmo bug de reconcile em três serviços ou mais de três pessoas na equipe. 
 
 | Risco | Mitigação |
 |---|---|
-| Confirmação automática com dedução que o usuário não informou superestima o imposto | política desligada por padrão; entrada por ocorrência que o usuário preenche antes; confirmação só a N dias úteis do vencimento (F-CF-3 b) |
+| Confirmação automática com dedução que o usuário não informou superestima o imposto | política desligada por padrão; entrada por ocorrência que o usuário preenche antes; confirmação só a partir do dia de corte (F-CF-3 b, F-CF-6 a) |
+| Provisão no período já fechado | o `postEntry` recusa período que não está `OPEN` (`PostingService.ts:131,148`); o job confirma, a provisão fica pendente com aviso "reabra o período" (mecanismo do X7 item 15) e o `reconcile` completa quando reabrir |
 | Prévia calculada com venda ainda não lançada subestima | pré-requisito `VENDAS_PENDENTES` (`ReconcilePending` aberto ou sync bloqueado na competência) |
 | Job e usuário confirmam ao mesmo tempo | a confirmação já tem CAS (`expectedAPagarCents`, `ALREADY_CONFIRMED`); o job lê o 409 como "já confirmada" |
 | Duas réplicas rodam o job | lock local não protege; a chave única e o CAS da transição protegem (2ª passada sem efeito) |
@@ -165,8 +171,8 @@ o mesmo bug de reconcile em três serviços ou mais de três pessoas na equipe. 
 
 ## 6. Checklist numerado
 
-Cada item é testável sozinho. **[F-CF-n]** = depende do fork. Os itens marcados *(se F-CF-n a)* mudam de forma se o
-dono escolher outro caminho, e o BRIEF é emendado antes do executa.
+Cada item é testável sozinho. **[F-CF-n]** = o fork que decidiu o item. Todos foram ratificados em 21/11
+([[D-2026-11-21-CICLO-FISCAL-FORKS]]). As marcas *(se F-CF-n a)* que ficaram valem como "F-CF-n → a ratificado".
 
 ### PR-0 — contrato: prazo como dado + calendário puro + modelo (sem job, sem rota)
 
@@ -208,7 +214,8 @@ dono escolher outro caminho, e o BRIEF é emendado antes do executa.
    execuções seguidas sem dado novo ⇒ 0 escritas na 2ª (contagem `inalteradas`).
 7. **Catálogo fechado de pré-requisitos** (`PRE_REQUISITOS_CICLO`), cada um com código, mensagem pt/en e a origem
    **lida** (o job não reimplementa a regra, só mapeia o erro nomeado do serviço dono):
-   `SEM_PERFIL_DO_ANO` · `UNIDADE_NAO_DEFINIDA` [F-CF-10] · `PERIODO_NAO_FECHADO` [F-CF-6] · `VENDAS_PENDENTES`
+   `SEM_PERFIL_DO_ANO` · `UNIDADE_NAO_DEFINIDA` [F-CF-10] · `ANO_NAO_ENCERRADO` / `SPED_SEM_SIGNATARIO` (item 21) ·
+   `VENDAS_PENDENTES`
    (`ReconcilePending` aberto na competência ou sync bloqueado) · `ORDEM_ANTERIOR_PENDENTE` (409 `…_ORDER`) ·
    `PARAMETRO_LEGAL_AUSENTE` (`ParametroLegalAusenteError`) · `TETO_PRESUMIDO_EXCEDIDO` (`PRESUMIDO_TETO_EXCEDIDO`) ·
    `CONTAS_DE_PROVISAO` (`provisaoContasConfiguradas = false`) · `LALUR_PARTE_B` (Real, sem Parte B no `A00`/trimestre) ·
@@ -223,8 +230,8 @@ dono escolher outro caminho, e o BRIEF é emendado antes do executa.
    `CicloFiscalService`).
 9. **Prévia persistida na ocorrência:** valores por tributo, `parametrosSha256`, avisos com código e `calculadaEm`. Ela é
    recalculada a cada passada até o estado sair de `PREVIA_CALCULADA`, e só se grava quando o hash muda.
-   **Simples:** a prévia é o fim do caminho automático. O estado vai a `AGUARDANDO_HUMANO` ("transmita o PGDAS-D até
-   <vencimento> e registre o DAS"), com a prévia como espelho (F-SN-10 → a; [F-CF-5]).
+   **Simples:** depois da prévia, o estado vai a `AGUARDANDO_HUMANO` ("transmita o PGDAS-D até <vencimento> e registre o
+   DAS"), com a prévia como espelho. A provisão estimada é o item 17b (PR-2, F-CF-5 → b).
 10. **`CicloFiscalScheduler.ts`**, clone do `LegalParamsRecalcScheduler`: lock local, eventos `job.scheduled/completed/
     skipped/failed`, `alert` injetado (padrão `sendAlertWebhook`) que dispara `job_failed` no `catch` do `runOnce`.
     A fonte `ciclo_fiscal` entra em `AlertPayload.source` na mesma mudança (OBS-R11). Intervalo
@@ -253,20 +260,34 @@ dono escolher outro caminho, e o BRIEF é emendado antes do executa.
     registrado ⇒ `CONCLUIDA`; `ReinfBatch.status = TRANSMITIDO/ACEITO`. Evento de auditoria novo
     `fiscal.obrigacao.marcada` na allowlist do `auditCanonical.ts` (campos: `ocorrenciaId`, `obrigacao`, `periodo`,
     `de`, `para`; o recibo é texto livre e passa pelo `auditFreeTextMask`).
-15. **Entrada por ocorrência** *(se F-CF-3 b)*: `PUT /api/accounting/obrigacoes/:id/entrada`. Guarda as deduções,
+15. **Entrada por ocorrência** (F-CF-3 → b): `PUT /api/accounting/obrigacoes/:id/entrada`. Guarda as deduções,
     retenções sofridas, estimativas pagas e o modo mensal que a confirmação do X7/X8/IBS-CBS aceita, validados **pelo
     mesmo schema** do preview da família (sem schema paralelo). O job usa essa entrada; sem ela, usa a vazia.
-16. **Política no perfil fiscal do ano** *(se F-CF-3 b)*: `cicloFiscalAutoConfirmar` (lista fechada de famílias:
-    `X7`, `X8`, `IBS_CBS`; vazia por padrão) e `cicloFiscalJanelaDiasUteis` (padrão 5), com migração aditiva. Os campos
-    novos entram no evento de auditoria do perfil (guarda de allowlist: campo novo exige guarda, memória
-    "Allowlist de auditoria").
-17. **Confirmação automática** *(se F-CF-3 b)*: a família está na política, a prévia não tem aviso bloqueante, o período
-    está fechado [F-CF-6] e faltam ≤ `cicloFiscalJanelaDiasUteis` dias úteis para o vencimento. Então o job chama
-    `confirmarPeloSistema` com a entrada do item 15 e `expectedAPagarCents` da prévia **da mesma passada**. A provisão
-    segue o caminho do serviço dono (X7: best-effort depois do commit 1; ocorrência confirmada com
-    `provisaoEntryId = null` ⇒ o job chama `reconcileProvisao` na passada seguinte). Testes de integração: confirma e
-    provisiona sem HTTP (é o `comoProvar` da lacuna); 409 `ALREADY_CONFIRMED` porque o usuário confirmou antes ⇒
-    ocorrência `CONFIRMADA` apontando para a dele, sem 2ª linha; `CALCULATED_PROVISIONAL` nunca confirma.
+16. **Política no perfil fiscal do ano** (F-CF-3 → b; F-CF-5a → a): `cicloFiscalAutoConfirmar` (lista fechada de
+    famílias: `X7`, `X8`, `IBS_CBS`, `SIMPLES`; vazia por padrão) e `cicloFiscalDiaCorteUtil` (o n-ésimo dia útil do mês
+    seguinte à competência, padrão 5, F-CF-6 → a), com migração aditiva. Os campos novos entram no evento de auditoria do
+    perfil (guarda de allowlist: campo novo exige guarda, memória "Allowlist de auditoria").
+17. **Confirmação automática** (F-CF-3 → b, F-CF-6 → a): a família está na política, a prévia não tem aviso bloqueante,
+    não há `VENDAS_PENDENTES`, e `hoje` ≥ dia de corte. Então o job chama `confirmarPeloSistema` com a entrada do item 15
+    e `expectedAPagarCents` da prévia **da mesma passada**. A provisão segue o caminho do serviço dono (X7: best-effort
+    depois do commit 1; ocorrência confirmada com `provisaoEntryId = null` ⇒ o job chama `reconcileProvisao` na passada
+    seguinte). **Período já fechado** quando o job chega: confirma, e a provisão fica pendente com o aviso "reabra o
+    período para lançar a provisão", porque o `postEntry` exige `OPEN` (`PostingService.ts:131,148`). O `reconcile`
+    completa quando o período reabrir. Testes de integração: confirma e provisiona sem HTTP (é o `comoProvar` da lacuna);
+    antes do dia de corte não confirma; com o período `SOFT_CLOSED`, a confirmação existe e a provisão fica pendente com o
+    aviso; 409 `ALREADY_CONFIRMED` porque o usuário confirmou antes ⇒ ocorrência `CONFIRMADA` apontando para a dele, sem
+    2ª linha; `CALCULATED_PROVISIONAL` nunca confirma.
+17b. **Provisão estimada do Simples** (F-CF-5 → b; F-CF-5a → a). Com `SIMPLES` na política, a partir do dia de corte,
+    com o período `OPEN` e sem DAS oficial registrado, o job lança a provisão pelo valor **calculado** da prévia, no
+    último dia da competência. Lançamento: D dedução da receita / C Simples a recolher, contas do perfil, por um método
+    novo `SimplesApuracaoService.provisionarEstimativaPeloSistema` com `sourceType = 'simples.das.provision.estimate'`
+    e `sourceId = <ocorrência>`. O `registrarDas` ganha um passo no commit 1: **estorna a estimada viva da competência
+    antes** de lançar a oficial (o mesmo estorno idempotente que ele já faz para a substituída). Resultado: uma provisão
+    viva por competência, sempre. Prévia mudou antes do registro ⇒ estorna a estimada e lança outra (F-CF-8 → b, nada
+    entregue). Atualizar o cabeçalho `atomicUntil` do serviço com as linhas e os testes novos (`[AC-2.3-2]`).
+    **Emenda o F-SN-10 só neste ponto:** a provisão definitiva continua pelo valor oficial. Testes de integração:
+    estimada lançada sem HTTP; `registrarDas` ⇒ estimada estornada + oficial lançada, 1 viva; repetir o registro não cria
+    linha (reconcile); sem a família na política, nenhuma estimada.
 18. **Depois de confirmada** [F-CF-8]: a cada passada, a apuração viva é recalculada com `recalcularPeloSistema` e
     comparada como em `mesmosValores` (`TaxAssessmentRecalcService.ts:55`). Se diverge, *(se F-CF-8 b)* reconfirma
     quando nada foi entregue (sem `MitExport` com a apuração e sem DAS registrado). Se algo foi entregue, só grava o
@@ -282,8 +303,16 @@ dono escolher outro caminho, e o BRIEF é emendado antes do executa.
 20. **MIT/DCTFWeb** [F-CF-4]: quando todas as apurações X7/X8 do mês estão confirmadas, o job chama
     `MitExportService.gerarPeloSistema`. Gera de novo só se uma apuração do mês foi substituída depois do arquivo. Estado
     `ARQUIVO_GERADO` → o humano encerra no MIT (item 14).
-21. **ECD/ECF/DEFIS/DASN-SIMEI/bloco anual**: só ocorrência + prazo + pré-requisito (`ANO_NAO_ENCERRADO`, signatários do
-    SPED). O job não gera (F-CF-4 a).
+21. **Rascunho de ECD e ECF** (F-CF-4 → b; F-CF-4a → a): uma vez por ano-calendário, quando o encerramento do exercício
+    estiver lançado (`ExerciseClosingService`) e os signatários do SPED estiverem no perfil, o job chama a geração que já
+    existe (`SpedGenerationService` para a ECD; `SpedEcfGenerationService`/`SpedEcfRealGenerationService` pela forma) por
+    métodos `*PeloSistema`. Estado `ARQUIVO_GERADO` → o humano assina e transmite no PVA. Gera de novo só se o razão do
+    ano mudar depois da geração. A detecção (lançamento do ano com `createdAt` posterior ao arquivo, ou estorno) é esboço
+    e se confere na execução (§10 item 6). Sem encerramento ⇒ `AGUARDANDO_PRE_REQUISITO` com `ANO_NAO_ENCERRADO`; sem
+    signatário ⇒ `SPED_SEM_SIGNATARIO`. Testes: exercício encerrado ⇒ 1 arquivo; 2ª passada ⇒ nenhum; lançamento novo no
+    ano ⇒ 1 arquivo novo.
+22. **DEFIS, DASN-SIMEI e bloco anual do PGDAS-D**: só ocorrência + prazo + pré-requisito. O job não gera, porque a
+    declaração é feita no portal.
 
 ## 7. Contratos esboçados
 
@@ -433,11 +462,12 @@ export class CicloFiscalService {
 // jobs/CicloFiscalScheduler.ts: deps { run?, log?, alert? } idênticos aos do LegalParamsRecalcScheduler
 ```
 
-## 8. Forks — RATIFICAÇÃO PENDENTE
+## 8. Forks — RATIFICADOS em 21/11 (questionário; cédula em [[D-2026-11-21-CICLO-FISCAL-FORKS]])
 
 Em cada fork, a opção (a) é a recomendada, salvo onde se diz outra coisa.
 
 **F-CF-1 · Calendário persistido ou derivado na leitura.**
+- **RATIFICADO 21/11: (a)** — na recomendação.
 - (a) **Tabela `ObrigacaoFiscalOcorrencia`** (§7). A função pura gera o esperado e a tabela guarda o estado do job:
   pré-requisito, prévia, tentativa, marcação humana. Isso dá idempotência por chave única, retentativa e "aguardando
   humano" que sobrevive ao restart.
@@ -447,6 +477,7 @@ Em cada fork, a opção (a) é a recomendada, salvo onde se diz outra coisa.
 - **Recomendação: (a).** O estado do job é dado novo, que nenhuma tabela atual guarda.
 
 **F-CF-2 · Prazo como dado ou como código.**
+- **RATIFICADO 21/11: (a)** — na recomendação.
 - (a) **Linha `PRAZO_OBRIGACAO` em `legal_parameters`** (regra do enum + fonte + vigência). A prorrogação e a calamidade
   viram linhas novas publicadas pelo fluxo do LEGAL-PARAMS, sem deploy. Precedente: `IBS_CBS/VENCIMENTO` (dono, 23/10).
 - (b) Funções em `lib/` por obrigação, como `prazoReinf.ts`. É mais simples, mas cada prorrogação vira deploy, e o
@@ -454,6 +485,7 @@ Em cada fork, a opção (a) é a recomendada, salvo onde se diz outra coisa.
 - **Recomendação: (a)**, com os intérpretes de `lib/` como execução da regra.
 
 **F-CF-3 · O que o job confirma sem humano (o fork central).**
+- **RATIFICADO 21/11: (b)** — na recomendação. A janela "≤ N dias úteis antes do vencimento" foi trocada pelo dia de corte do F-CF-6 (perguntado de novo).
 - (a) **Nunca confirma.** Calcula a prévia, checa, avisa, e o humano confirma (padrão Odoo/ERPNext, §2). Não tem risco
   de valor errado, mas automatiza só o cálculo.
 - (b) **Confirma por política do tenant, opt-in por família** (`X7`, `X8`, `IBS_CBS`), com três travas: período fechado
@@ -466,6 +498,7 @@ Em cada fork, a opção (a) é a recomendada, salvo onde se diz outra coisa.
   desligado dela. A chave padrão desligada vem do mercado (§2) e do risco da §4. O Simples fica fora pelo F-CF-5.
 
 **F-CF-4 · Que arquivos o job gera sozinho.**
+- **RATIFICADO 21/11: (b) — contra a recomendação.** Detalhe F-CF-4a → (a), na recomendação: gera uma vez quando o encerramento do exercício estiver lançado e os signatários estiverem no perfil; gera de novo só se o razão do ano mudar (item 21).
 - (a) **Reinf e MIT mensais**, quando a entrada está completa (itens 19–20). O ECD, a ECF e as declarações anuais ficam
   só no calendário, com prazo e pré-requisito, porque pedem ano encerrado, signatários e PVA.
 - (b) (a) + rascunho do ECD/ECF quando o exercício estiver encerrado (`ExerciseClosingService`).
@@ -474,6 +507,7 @@ Em cada fork, a opção (a) é a recomendada, salvo onde se diz outra coisa.
   ECD e ECF pesam vários MB, e o PVA é humano de qualquer forma (gate H1).
 
 **F-CF-5 · Simples: o job para na prévia ou provisiona uma estimativa.**
+- **RATIFICADO 21/11: (b) — contra a recomendação.** Emenda o F-SN-10 só neste ponto: a provisão definitiva continua pelo DAS oficial. Detalhe F-CF-5a → (a), na recomendação: a estimada segue a mesma política opt-in (família `SIMPLES`) e o dia de corte (item 17b).
 - (a) **Para na prévia.** Calcula, mostra o espelho do PGDAS-D e avisa "transmita até <vencimento> e registre o DAS". A
   provisão continua no registro do DAS oficial (F-SN-10 → a).
 - (b) Lança uma provisão estimada pelo valor calculado no último dia da competência e a estorna no registro do DAS
@@ -482,14 +516,21 @@ Em cada fork, a opção (a) é a recomendada, salvo onde se diz outra coisa.
   Contador), adiada pela R5. O handoff de 21/11 §3 item 3 já propõe rever a R5. Uma provisão estimada é remendo: gera
   dois lançamentos por mês e diferença a estornar.
 
-**F-CF-6 · Quando o período precisa estar fechado.**
-- (a) **A prévia roda com o período aberto; a confirmação automática exige `SOFT_CLOSED`** (ou `HARD_CLOSED`). A prévia
-  é leitura. A confirmação gera provisão, que precisa de razão estável.
-- (b) Tudo exige `SOFT_CLOSED`: nada aparece antes do fechamento.
-- (c) Nada exige fechamento; a confirmação usa a carência de N dias depois do fim do mês.
+**F-CF-6 · Quando o job confirma e provisiona (perguntado de novo em 21/11).**
+- **RATIFICADO 21/11: (a)** — na recomendação corrigida.
+- **Correção:** a 1ª versão deste fork recomendava "a confirmação automática exige `SOFT_CLOSED`", e o dono respondeu
+  (a). A recomendação estava errada: o `postEntry` exige período `OPEN` (`PostingService.ts:131,148`), então a provisão
+  ficaria sempre pendente. A pergunta foi refeita com isso explícito.
+- (a) **Dia de corte, com o período aberto.** A partir do n-ésimo dia útil do mês seguinte (padrão 5, no perfil), com o
+  período ainda `OPEN`, sem venda pendente e sem aviso, o job confirma e a provisão entra na competência; depois o
+  usuário fecha o período. Se o período já estiver fechado, o job confirma e a provisão fica pendente com aviso
+  (mecanismo do X7 item 15). A prévia roda sempre, com o período aberto ou fechado.
+- (b) Logo que o mês acaba. Cada venda atrasada força uma reconfirmação (estorno + provisão nova) até a entrega.
+- (c) Só depois de `SOFT_CLOSED`. A provisão fica sempre pendente até alguém reabrir o período.
 - **Recomendação: (a).**
 
 **F-CF-7 · Como o usuário fica sabendo (vencimento e pré-requisito).**
+- **RATIFICADO 21/11: (a)** — na recomendação.
 - (a) **Estado e situação do prazo no calendário** (`GET`, item 11), com `VENCE_EM_BREVE` a ≤ N dias úteis (padrão
   5). A tela é do `AGENDA-FISCAL`. O e-mail vem quando o `EMAIL-TRANSPORT` existir (proposta F5.1). O alerta de
   operação (webhook) é só da falha do job (OBS-R11).
@@ -500,6 +541,7 @@ Em cada fork, a opção (a) é a recomendada, salvo onde se diz outra coisa.
   `lib/`. Criar um canal é outro nó.
 
 **F-CF-8 · Depois de confirmada, se o dado muda.**
+- **RATIFICADO 21/11: (b)** — na recomendação.
 - (a) **Só avisa.** Grava a divergência e o humano substitui (retificação).
 - (b) **Reconfirma sozinho se nada foi entregue** (sem MIT com a apuração, sem DAS registrado) e a família está na
   política. Se algo foi entregue, só avisa com `AVISO_VALOR_MUDOU_APOS_ENTREGA`. É o mesmo critério do recálculo do
@@ -507,6 +549,7 @@ Em cada fork, a opção (a) é a recomendada, salvo onde se diz outra coisa.
 - **Recomendação: (b)**, pela coerência com o precedente. Com a política desligada, vale (a).
 
 **F-CF-9 · Quais obrigações entram no calendário.**
+- **RATIFICADO 21/11: (a)** — na recomendação.
 - (a) **As que o código apura, gera ou já tem na matriz:** DAS, DARF IRPJ/CSLL, PIS/COFINS (até 12/2026), CBS/IBS
   (desde 2027), DCTFWeb, Reinf, ECD, ECF, DEFIS (até a de 2026), bloco anual do PGDAS-D (desde 2027) e DASN-SIMEI. FGTS,
   eSocial e GPS entram com o [[PES-4]]. ISS municipal entra quando houver apuração. EFD-Contribuições e EFD ICMS/IPI
@@ -516,6 +559,7 @@ Em cada fork, a opção (a) é a recomendada, salvo onde se diz outra coisa.
   prazo chega com ela.
 
 **F-CF-10 · Qual unidade o job usa no escopo.**
+- **RATIFICADO 21/11: (a)** — na recomendação.
 O perfil fiscal é por PJ (`@@unique([userId, anoCalendario])`, sem `unitId`), mas o `AccountingScope` exige uma unidade,
 e a apuração grava a "unidade lida". Não há conceito de matriz no código.
 - (a) **A unidade da última apuração confirmada da família; na 1ª, a única unidade da PJ.** PJ com 2+ unidades e sem
@@ -546,6 +590,9 @@ e a apuração grava a "unidade lida". Não há conceito de matriz no código.
 4. **Transmissão** (PGDAS-D, DCTFWeb, Reinf, eSocial): R5 e o PR-4 do EFD-REINF.
 5. **Lista de pendências de venda por competência**: o item 7 supõe uma contagem de `ReconcilePending` aberta por
    competência. O nome do método do repositório (`countAbertasNaCompetencia`) é esboço e se confere na execução.
+6. **"O razão do ano mudou depois do rascunho de ECD/ECF"** (item 21): não existe marca d'água por ano no razão. A
+   detecção por `createdAt` dos lançamentos do ano é esboço; a execução lê o `SpedGenerationService` e o
+   `spedRectificationGate.ts` antes de fixar a regra.
 
 ## 11. Achados fora de escopo (na caixa)
 
@@ -559,8 +606,8 @@ e a apuração grava a "unidade lida". Não há conceito de matriz no código.
 |---|---|
 | PR-0 | `server/prisma/schema.prisma`, `server/prisma/migrations/<ts>_ciclo_fiscal_pr0/**`, `server/prisma/data/legal_parameters_prazo_obrigacao_v1.sql`, `server/src/lib/prazoObrigacao.ts` (novo), `server/src/features/accounting/models/cicloFiscal.ts` (novo), `server/src/features/accounting/models/periodosEsperados.ts` (novo, extraído), `server/src/features/accounting/services/TaxAssessmentPeriodosService.ts`, `server/src/features/accounting/repositories/{I,}ObrigacaoFiscalOcorrenciaRepository.ts` (novos), `server/src/features/legalParameters/models/formatoLinha.ts`, `server/src/features/legalParameters/models/legalParameter.ts` (tabela no enum), testes em `__tests__/` |
 | PR-1 | `server/src/features/accounting/services/CicloFiscalService.ts` (novo), `server/src/jobs/CicloFiscalScheduler.ts` (novo), `server/src/jobs/__tests__/schedulerFailureAlert.test.ts`, `server/src/features/accounting/services/{SimplesApuracaoService,IbsCbsAssessmentService,ReinfService,MitExportService}.ts` (métodos `*PeloSistema`), `server/src/features/accounting/dtos/CicloFiscalDto.ts` (novo), `server/src/controllers/cicloFiscalController.ts` (novo), `server/src/routes/obrigacoes.ts` (novo), `server/src/routes/docs/accounting.obrigacoes.paths.ts` (novo), i18n dos códigos |
-| PR-2 | `CicloFiscalService.ts`, `CicloFiscalDto.ts`, `cicloFiscalController.ts`, `routes/obrigacoes.ts`, `server/src/features/accounting/dtos/CompanyFiscalProfileDto.ts`, `server/prisma/schema.prisma` + migração (campos da política, F-CF-3 b; `unidadeApuracaoId`, F-CF-10) |
-| PR-3 | `CicloFiscalService.ts` e os testes de integração de Reinf/MIT |
+| PR-2 | `CicloFiscalService.ts`, `CicloFiscalDto.ts`, `cicloFiscalController.ts`, `routes/obrigacoes.ts`, `server/src/features/accounting/dtos/CompanyFiscalProfileDto.ts`, `server/src/features/accounting/services/SimplesApuracaoService.ts` (estimada + estorno no `registrarDas`, item 17b), `server/prisma/schema.prisma` + migração (campos da política, F-CF-3 b; `unidadeApuracaoId`, F-CF-10) |
+| PR-3 | `CicloFiscalService.ts`, `server/src/features/accounting/services/{SpedGenerationService,SpedEcfGenerationService,SpedEcfRealGenerationService}.ts` (métodos `*PeloSistema`, item 21) e os testes de integração de Reinf/MIT/ECD/ECF |
 
 **Registros (choke points PAR-001):** `server/src/lib/factory.ts`, `server/src/routes/accounting.ts`,
 `server/src/routes/docs.paths.ts`, `server/public/openapi.json`, `server/src/server.ts` (start/stop),
