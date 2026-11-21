@@ -47,4 +47,10 @@ As perguntas tinham o contexto de cada fork.
 | F-ICR-9 | "Política do contador, padrão 'fora' (Recomendado)" | `icmsBaseIncluiIbsCbs` na política versionada, padrão `false`, com aviso; a pergunta vai ao tributarista |
 | F-ICR-10 | "Absorver neste nó, BRIEF próprio (Recomendado)" | A EFD ICMS/IPI é a fase final do ICMS-EFD, com BRIEF e autorização próprios; lacuna `3b81` (metade ICMS/IPI) aponta para cá |
 
+**Ressalva do F-ICR-9 (conferida depois da resposta):** a pergunta dizia que o leiaute destaca o IBS/CBS "por fora".
+A NT 2025.002 v1.52 apoia isso só em parte. O total `vNFTot` (W60, "com IBS / CBS / IS") é separado do `vNF`, e a
+UB16-10 subtrai o `vICMS` da base do IBS/CBS. Mas nenhuma regra diz o que entra no `vBC` do ICMS (BRIEF §8 item 10,
+grau **inferido**). A resposta vale, condicionada à pergunta ao tributarista (§8 item 8). Se a fonte contrariar, o padrão
+da política volta ao dono e não é trocado em silêncio.
+
 **Não é "executa".** Cada PR do BRIEF precisa de pedido próprio do dono.

@@ -83,6 +83,23 @@ deste nó é conta certa sem efeito legal (F-ICR-10).
 | A tabela `ICMS_ST_NCM_UF` tem 13 linhas, todas `DRAFT`, só cosméticos de SP, com vigência até 31/03/2026 | `prisma/data/legal_parameters_icms_st_ncm_uf_v1.sql` |
 | Molde da apuração mensal com saldo, CAS, substituição em cascata e provisão em 2 commits + reconcile | `services/IbsCbsAssessmentService.ts:1-27`; `schema.prisma` (model `ConsumptionTaxAssessment`). **O molde não transporta saldo credor de um mês para o outro**: o saldo negativo fica no mês (`ibsCbsCompetencia.ts:235`) |
 
+## 2b. Como Odoo e ERPNext modelam (código-fonte, não marketing)
+
+| O quê | Onde | O que se lê | Grau |
+|---|---|---|---|
+| Contas de ICMS separadas por natureza | OCA `l10n-brazil` 18.0, commit `29ac3afb` (21/11/2026), `l10n_br_coa_generic/data/template/account.account-br_oca_generic.csv` | "2.1.7.1.03 ICMS a Recolher", "2.1.7.1.11 ICMS Substituição Tributária a Recolher", "2.1.7.1.12 ICMS Diferencial de Alíquota a Recolher", "1.1.4.1.02 ICMS a Compensar", "1.2.3.1.01 ICMS Ativo Imobilizado 1/48 Avos CIAP", e contas de ST/antecipado/DIFAL por classe de estoque | verificado |
+| Lançamento **por documento** | `l10n_br_account/models/account_tax.py` (`compute_all`, linhas de repartição; o imposto `deductible` é o crédito) | O imposto de cada nota vai ao razão na própria nota, pela repartição do `account.tax` ligado ao grupo fiscal (`fiscal_tax_group.py`). É o modelo que o dono escolheu no F-ICR-4 (b) | verificado |
+| Fechamento fiscal do período | `l10n_br_fiscal_closing/models/closing.py` e `README.rst` | O `l10n_br_fiscal.closing` só **exporta os documentos fiscais do período** (zip por mês/ano). Não calcula nem compensa imposto | verificado |
+| Apuração mensal (E110: débitos − créditos, saldo credor transportado) | lista de módulos da 18.0 | Nenhum módulo de apuração de ICMS na 18.0 | **inferido**: só a lista e o `closing.py` foram lidos |
+| Vigência, regra por UF × NCM, DIFAL em constante de código | `l10n_br_fiscal` (`tax_definition.py`, `icms_regulation.py`, `tax.py`) | Lidos no PRE-ADR (§2.4, commit `296438366ff2`, 10/10). A vigência é por `now()`, não pela data do fato, e esse é o defeito que a `LegalParameter` resolve | verificado em 10/10, não relido |
+| ERPNext | `frappe/erpnext` develop | Sem localização brasileira; `Item Tax` com `valid_from` por linha, sem regra por UF | do PRE-ADR §2.4 (10/10), não relido |
+
+**O que se aproveita:**
+- as **contas separadas** (a recolher, ST a recolher, DIFAL, a compensar, CIAP) viram os campos de conta do perfil
+  (item 5);
+- o **lançamento por nota** é o F-ICR-4 (b);
+- **a apuração não tem molde nos dois**, e por isso vem do RICMS/SP art. 87 e do serviço de IBS/CBS da casa.
+
 ## 3. Base legal (resumo; detalhe e trechos no dossiê)
 
 | Regra | Norma | Grau |
@@ -128,7 +145,7 @@ PR-5. PR-7 depende do PR-3 e do C8. PR-8 depende do PR-3. A EFD (F-ICR-10) não 
 
 ## 5. Checklist numerado (cada item = ≥ 1 teste)
 
-Regra 3: item com regra legal cita a fonte. Item que depende de fork leva o fork. O que não tem fonte lida está na §6.
+Regra 3: item com regra legal cita a fonte. Item que depende de fork leva o fork. O que não tem fonte lida está na §8.
 
 ### PR-0 — dado
 
@@ -136,8 +153,10 @@ Regra 3: item com regra legal cita a fonte. Item que depende de fork leva o fork
    ou `'*'`, valor `{ aliqBp, fcpBp?, artigo }`, com vigência pela data do fato. Linhas de SP só para o que o 1º
    tenant vende: `'*'` = 1800 (art. 52 I) e 3303/3304/3305/3307 = 2500 com as exceções do art. 55 IV como linhas de
    prefixo mais longo a 1800. Desempate: prefixo mais longo vence. Sem linha `PUBLISHED` para a NCM, o item vai a
-   faltante nomeado e a nota não sai. Fonte: RICMS/SP arts. 52 e 55 [D03]. Teste: 3304.99.90 → 2500;
-   3305.10.00 → 1800; NCM sem linha → faltante.
+   faltante nomeado e a nota não sai. Fonte: RICMS/SP arts. 52 e 55 [D03]. **Ressalva:** o art. 55 classifica pela
+   "NBM/SH vigente em 31 de dezembro de 1996", e não pela NCM de hoje. Por isso as linhas de 25% entram `DRAFT` até a
+   correspondência NBM/SH 1996 → NCM vigente ser conferida (§8 item 11). Teste: 3304.99.90 → 2500 (com a linha
+   publicada); 3305.10.00 → 1800; NCM sem linha → faltante.
 2. **[direto]** Tabela `ICMS_ALIQ_INTERESTADUAL` (nacional): chave `ufOrigem-ufDestino`, discriminador `origem`
    (0–8), valor em bp. Fontes: RICMS/SP art. 52 II, III e § 2º [D03] para a saída de SP; Res. Senado 22/1989 e 13/2012
    para as outras UFs, **insumo ausente** (§9). As linhas de origem fora de SP ficam `DRAFT` até a transcrição.
@@ -161,7 +180,9 @@ Regra 3: item com regra legal cita a fonte. Item que depende de fork leva o fork
    IE → 400 nomeado. Teste: perfil PRESUMIDO + IE + 47725 → RPA, CPR 1200.
 6. **[direto]** `ProductFiscalProfile.cstIcms` passa a aceitar `00, 20, 40, 41, 60` (e `10`, só com F-ICR-5 ≠ c).
    Regra cruzada: CST 60 só para NCM com linha `ICMS_ST_NCM_UF` vigente na data da venda (senão aviso, porque o
-   perfil não tem data). Fonte: MOC 7.0 Anexo I, grupo N (transcrição do X10a). O grupo da redação de base (CST 20)
+   perfil não tem data). Fonte: MOC 7.0 Anexo I, grupo N. Só o `ICMS00` está transcrito
+   (`TRANSCRICAO-MOC70-NFCe-NFe-saida-2026-10-26.md`), e transcrever `ICMS20/40/60` (e `ICMS10`) é o 1º passo do PR-2
+   (§9). O grupo da redação de base (CST 20)
    lê `pRedBC` da tabela do item 1 (`reducaoBp`), não do produto. Teste: 60 em NCM fora da lista → aviso.
 
 ### PR-1 — livro fiscal por item (F-ICMS-13 a) e parser
@@ -189,7 +210,8 @@ Regra 3: item com regra legal cita a fonte. Item que depende de fork leva o fork
 
 11. **[direto]** CFOP de saída por catálogo fechado (F-ICMS-12 a): venda de mercadoria adquirida de terceiros 5102/6102;
     com ST retida anteriormente (substituído) 5405; devolução de compra 5202/6202. O CST vem do produto e o CFOP do par
-    (natureza × dentro/fora da UF × CST). Fonte: MOC 7.0 (transcrição do X10a, tabela CFOP). Teste: CST 60 + interna →
+    (natureza × dentro/fora da UF × CST). Fonte: tabela de CFOP do Convênio s/nº de 15/12/1970 (SINIEF), **não
+    transcrita** (§9). A lista fechada entra com a transcrição, no PR-2. Teste: CST 60 + interna →
     5405; CST 00 + RJ → 6102.
 12. **[direto]** Função pura `icmsDoItem({ cst, valorOperacaoCents, freteCents, seguroCents, outrasCents,
     descontoIncondCents, aliqBp, reducaoBp? })`. Saída: `{ modBC: 3, vBC, pICMS, vICMS, pRedBC? }`.
@@ -240,9 +262,10 @@ Regra 3: item com regra legal cita a fonte. Item que depende de fork leva o fork
     - substituir M derruba M+1.. em cascata, devolvidos em `reconfirmar` (molde IBS/CBS).
     Teste: M com saldo credor 50 → M+1 começa com 50; substituir M → M+1 `SUPERSEDED`.
 19. **[direto]** Devoluções e cancelamento:
-    - devolução de venda (entrada CFOP 1202/2202) → crédito (estorno do débito, alínea g) pelo `vICMS` da nota de
-      devolução;
-    - devolução de compra (saída 5202/6202) → débito;
+    - devolução de venda (entrada CFOP 1202/2202) → **crédito pelas entradas (alínea e)** pelo `vICMS` da nota de
+      devolução, escriturada no livro de entrada como qualquer entrada com crédito (não é alínea g, que fica só para o
+      estorno de débito informado);
+    - devolução de compra (saída 5202/6202, com destaque) → **débito pelas saídas (alínea a)**;
     - nota cancelada no próprio mês → fora da apuração, e o lançamento da nota (item 23) é estornado;
     - nota cancelada depois de confirmada a apuração do mês → estorno do lançamento da nota e aviso `RECONFIRMAR` na
       apuração do mês de origem.
@@ -252,7 +275,8 @@ Regra 3: item com regra legal cita a fonte. Item que depende de fork leva o fork
     baixa de estoque por perda (FIN-10) no mês → estorno (alínea c). Teste: perda de 2 unidades com crédito médio de 18
     cada → estorno 36.
 21. **[direto]** Ajustes informados pelo contador (outros débitos, outros créditos, deduções — alíneas b, f, g, j),
-    cada um com `{ alinea, descricao, valorCents, fundamento }`. O fundamento é obrigatório: sem ele, 400. Os códigos
+    cada um com `{ alinea, descricao, valorCents, fundamento, contrapartidaAccountId }` (contrapartida pelo item 23b). O
+    fundamento é obrigatório: sem ele, 400. Os códigos
     da Tabela 5.1.1 de SP ficam para a EFD (F-ICR-10). Teste: ajuste sem fundamento → 400.
 22. **[F-ICR-1]** Gate de regime: apuração só com `icmsApuracao = RPA` no mês. Simples abaixo do sublimite → 400
     `icms_no_das` (LC 123 art. 13 [D19]). Teste: perfil SIMPLES sem excesso → 400.
@@ -260,33 +284,44 @@ Regra 3: item com regra legal cita a fonte. Item que depende de fork leva o fork
 ### PR-4 — provisão, vencimento, superfície
 
 23. **[F-ICR-4 → (b), dono 21/11, contra a recomendação]** Débito **nota a nota**, em 2 commits + reconcile
-    (`FiscalBookService`, cabeçalho `atomicUntil`, AC-2.3-1/2):
-    - **gatilho:** livro de saída `REGULAR` com Σ `vIcmsCents` > 0, gravado na autorização ou na importação do XML de
-      saída (itens 8–9);
-    - **commit 1:** `postEntry(sourceType='icms_saida', sourceId=<FiscalBookEntry.id>)` na `dataEntradaSaida`. Na venda
-      (5102/6102), D `icmsDeducaoAccountId` / C `icmsRecolherAccountId` = Σ `vIcmsCents`. Na devolução de compra
-      (5202/6202), D `icmsRecolherAccountId` / C `icmsRecuperavelAccountId`, porque estorna o crédito. A devolução de
-      venda (entrada 1202/2202) faz o inverso da venda na importação;
+    (`FiscalBookService`, cabeçalho `atomicUntil`, AC-2.3-1/2). Regra de contas única, que vale para o 23 e o 23b:
+    - **U1:** todo débito fiscal (alíneas a, b, c) credita `icmsRecolherAccountId`;
+    - **U2:** todo crédito fiscal (alíneas e, f, g) debita `icmsRecuperavelAccountId`. A entrada com crédito já faz isso
+      na importação (X6);
+    - **U3:** a compensação do 23b move min(créditos totais + saldo anterior, débitos totais) do a-recuperar para o
+      a-recolher. O que sobra no a-recuperar é o saldo credor a transportar.
+    Lançamentos por nota (`sourceType='icms_saida'`, `sourceId=<FiscalBookEntry.id>`, na `dataEntradaSaida`):
+    - **venda** (5102/6102 com destaque): D `icmsDeducaoAccountId` / C a recolher (U1);
+    - **devolução de compra** (5202/6202): D o fornecedor do `Payable` de origem, achado pela chave referenciada (`refNFe`)
+      / C a recolher (U1). O ICMS destacado é cobrado do fornecedor. Sem a nota de origem, o lançamento fica pendente
+      com o alerta `ICMS_DEVOLUCAO_SEM_ORIGEM`;
+    - **devolução de venda** (entrada 1202/2202, na importação): D a recuperar / C `icmsDeducaoAccountId` (U2). É a
+      única entrada que este nó lança, porque não tem `Payable`;
     - **commit 2:** CAS de `FiscalBookEntry.debitoEntryId` (`where null`), num `runTransaction` próprio;
-    - **cancelamento** (`situacao` → `CANCELADA`): `reverseEntry` do lançamento da nota, achado pela fonte;
-    - **período fechado** na data da nota: o livro fica gravado, o lançamento fica pendente e aparece no alerta
-      `ICMS_NOTA_SEM_LANCAMENTO` da apuração; o reconcile lança quando o período reabrir (gate dentro da tx do
-      `postEntry`);
+    - **cancelamento** (`situacao` → `CANCELADA`): estorno do lançamento da nota, achado pela fonte. Ele sai na data da
+      nota se o período dela estiver aberto, e **na data do cancelamento** se estiver fechado. Neste caso, a apuração do
+      mês de origem ganha o aviso `RECONFIRMAR` (item 19);
+    - **período fechado na data da nota:** o livro é gravado e o lançamento fica pendente, no alerta
+      `ICMS_NOTA_SEM_LANCAMENTO`. O reconcile lança quando o período reabrir (gate dentro da tx do `postEntry`);
     - **reconcile** `reconcileIcmsSaidas()`: read-first e idempotente. Lança as notas sem `debitoEntryId`, inclusive as
       gravadas no PR-1, antes deste PR existir.
     Teste: o kit do IBS/CBS por nota (commit 1, CAS, crash entre os dois, reconcile idempotente, 2ª chamada sem
-    lançamento novo), mais cancelamento → estorno e período fechado → pendente.
+    lançamento novo), mais cancelamento com período aberto e fechado, devolução sem origem → pendente.
 23b. **[F-ICR-4 → (b)]** Lançamento da **apuração** (`IcmsAssessmentService`, `sourceType='icms_assessment'`), no
-    último dia do mês e em 2 commits + reconcile. Ele **não** relança os débitos das notas, só lança:
-    - os outros débitos, os estornos de crédito e o DIFAL do art. 117 (item 17): D contrapartida do ajuste (DIFAL de
-      uso e consumo ou ativo → `icmsDifalCustoAccountId`; estorno por perda → `icmsDeducaoAccountId`) / C
-      `icmsRecolherAccountId`;
-    - os outros créditos e os estornos de débito: D `icmsRecolherAccountId` / C contrapartida;
-    - a compensação: D `icmsRecolherAccountId` / C `icmsRecuperavelAccountId` = min(créditos totais, débitos totais).
-      O saldo credor fica no a-recuperar.
-    A substituição estorna o lançamento da substituída antes do `postEntry`, e o gate de período fica dentro da tx. A
-    apuração recusa a confirmação (409 `icms_notas_sem_lancamento`) enquanto houver nota do mês sem `debitoEntryId`,
-    para o razão não divergir da apuração. Teste: tie-out do mês (invariante 5), substituição estorna e reposta.
+    último dia do mês, em 2 commits + reconcile. Ele **não** relança as notas (alíneas a e e já estão no razão pelo 23
+    e pelo X6). Lança só:
+    - **b, c (U1):** DIFAL do art. 117 II → D `icmsDifalCustoAccountId` / C a recolher. Estorno por perda (item 20) →
+      D a conta de perda do estoque (FIN-10) / C a recolher. Ajuste informado → D a contrapartida do ajuste / C a
+      recolher;
+    - **f, g (U2):** crédito do art. 117 I → D a recuperar / C `icmsDifalCustoAccountId`, porque o ICMS de origem de uso
+      e consumo ficou no custo (X6 item 5) e o DIFAL líquido fica no custo. Parcela do CIAP (PR-7) → D a recuperar / C
+      `icmsCiapAccountId`. Ajuste informado → D a recuperar / C a contrapartida;
+    - **compensação (U3):** D a recolher / C a recuperar.
+    Cada ajuste (item 21) passa a ter `contrapartidaAccountId` obrigatória. A substituição estorna o lançamento da
+    substituída antes do `postEntry`, e o gate de período fica dentro da tx. Enquanto houver nota do mês sem
+    `debitoEntryId`, a confirmação recusa com 409 `icms_notas_sem_lancamento`, para o razão não divergir da apuração.
+    Teste: tie-out do mês (invariante 5) num mês com venda, compra, devolução de compra, devolução de venda, DIFAL e
+    perda; substituição estorna e reposta.
 24. **[direto]** Vencimento = regra do CPR do perfil (item 4) aplicada ao mês seguinte. Fica gravado na apuração e
     vai para o calendário do CICLO-FISCAL (PR #1322) como origem `ICMS` (aresta: o calendário lê a apuração; este nó não
     edita o job). Teste: CPR 1200 → dia 20.
@@ -478,6 +513,7 @@ export const IcmsAjusteSchema = z.object({
   descricao: z.string().min(3).max(200),
   valorCents: z.coerce.bigint().positive(),
   fundamento: z.string().min(3).max(200),                               // item 21: obrigatório
+  contrapartidaAccountId: z.string().min(1),                             // item 23b
 }).strict();
 
 export const IcmsAssessmentPreviewSchema = z.object({
@@ -653,13 +689,22 @@ estrutural).
    parte."*
 9. **Contas contábeis** (dedução "ICMS sobre vendas", ICMS a recolher, ST a recolher, CIAP): código do contador de
    cada tenant (P-5 do X7, molde).
-10. **NT 2025.002 / MOC 7.0:** regra de validação de `vBC` do ICMS com o grupo `IBSCBS` presente (rejeição que
-    confirma ou derruba a leitura (i) do F-ICR-9).
+10. **NT 2025.002 / MOC 7.0 — conferido em parte (21/11, depois do questionário):**
+    - a UB16-10 manda **subtrair o `vICMS`** da base do IBS/CBS, o que bate com o ADCT art. 133;
+    - o leiaute cria um total separado, `vNFTot` (W60, "Valor total da NF-e com IBS / CBS / IS"), ao lado do `vNF`, o que
+      indica que o `vNF` e o `vProd` não carregam IBS/CBS (`TRANSCRICAO-NT2025002-v152-UB-2026-10-26.md:703, 979-995`).
+    Isso apoia a leitura (i) do F-ICR-9 como prática do leiaute. **Inferido**: nenhuma regra da NT diz o que entra no `vBC`
+    do ICMS. A resposta do dono ao F-ICR-9 fica de pé, e a pergunta do item 8 continua necessária.
+11. **Correspondência NBM/SH 1996 → NCM vigente** para as posições do art. 55 IV (3303, 3304, 3305, 3307 e as
+    exceções 3305.10, 3307.20, 3307.10.0100, 3307.90.0500 e anti-solares de 3304). Até a conferência, as linhas de 25%
+    ficam `DRAFT` (item 1).
 
 ## 9. Insumos ausentes (registrados, não varridos)
 
 - Texto das portarias SRE de IVA-ST (§8-2), da CAT 42/2018 (§8-1) e da CAT 28/2020 (§8-4).
 - Transcrição dos subgrupos `ICMS10/20/40/60` do MOC 7.0 Anexo I (o X10a transcreveu só `ICMS00` e `ICMSSN102/500`).
+  É o 1º passo do PR-2.
+- Tabela de CFOP (Convênio s/nº de 15/12/1970, SINIEF) para o catálogo fechado do item 11.
 - Guia Prático da EFD ICMS/IPI vigente (L-ICMS-6): só importa no F-ICR-10.
 - O BRIEF do CICLO-FISCAL está no PR #1322, ainda não mergeado: a aresta do item 24 assume a forma "o calendário lê a
   apuração", e isso tem de ser conferido quando o #1322 entrar.
@@ -686,9 +731,9 @@ estrutural).
 |---|---|
 | PR-0 | `server/src/features/legalParameters/models/legalParameter.ts`, `server/src/features/legalParameters/models/formatoLinha.ts`, `server/prisma/data/legal_parameters_icms_*.sql`, `server/prisma/migrations/**`, `server/src/features/accounting/dtos/FiscalProfileDto.ts`, `server/src/features/accounting/dtos/ProductFiscalProfileDto.ts`, `server/src/features/accounting/models/icms*.ts`, `scripts/gerar-icms-*.mjs` |
 | PR-1 | `server/src/lib/nfe.ts`, `server/src/lib/nfeCost.ts`, `server/src/features/accounting/services/NfeImportService.ts`, `server/src/features/accounting/services/FiscalBookService.ts`, `server/src/features/accounting/repositories/*FiscalBook*`, `server/src/features/accounting/services/FiscalDocumentEmissionService.ts` |
-| PR-2 | `server/src/features/accounting/models/nfeMontagem.ts`, `server/src/features/accounting/models/nfeIbsCbsMontagem.ts`, `server/src/features/accounting/models/nfePrecondicoes.ts`, `server/src/features/accounting/dtos/NfePayloadDto.ts`, `server/src/features/accounting/models/icmsItem.ts` |
+| PR-2 | `server/src/features/accounting/services/AccountingPolicyVersionService.ts`, `server/src/features/accounting/services/policyVersionApply.ts`, `server/src/features/accounting/dtos/AccountingPolicyVersionDto.ts` (F-ICR-9 a), `docs/accounting/fontes-oficiais/TRANSCRICAO-*ICMS*`, `server/src/features/accounting/models/nfeMontagem.ts`, `server/src/features/accounting/models/nfeIbsCbsMontagem.ts`, `server/src/features/accounting/models/nfePrecondicoes.ts`, `server/src/features/accounting/dtos/NfePayloadDto.ts`, `server/src/features/accounting/models/icmsItem.ts` |
 | PR-3/4 | `server/src/features/accounting/models/icmsApuracao.ts`, `server/src/features/accounting/dtos/IcmsAssessmentDto.ts`, `server/src/features/accounting/services/IcmsAssessmentService.ts`, `server/src/features/accounting/repositories/*IcmsApuracao*`, `server/src/controllers/*Icms*`, `server/src/features/accounting/policies/**`, `server/src/features/accounting/models/obrigacoesPorRegime.ts` |
-| PR-5/6 | `server/src/features/accounting/models/icmsSt*.ts`, `server/src/features/accounting/services/IcmsAssessmentService.ts`, `server/src/features/inventory/**` (só com F-ICR-7 a) |
+| PR-5/6 | `server/src/features/accounting/models/icmsSt*.ts`, `server/src/features/accounting/services/IcmsAssessmentService.ts`, `server/src/features/accounting/services/InventoryService.ts`, `server/src/features/accounting/repositories/*Inventory*` (F-ICR-7 a) |
 | PR-7 | `server/src/features/accounting/models/icmsCiap.ts`, `server/src/features/accounting/services/IcmsCiapService.ts` |
 | PR-8 | `server/src/features/accounting/models/icmsTransicao.ts` |
 
@@ -707,10 +752,12 @@ série com qualquer PR aberto do X10a nesses arquivos.
 3. Σ débito por item do livro de saída `REGULAR` do mês = alínea a, sem arredondamento no total (o arredondamento é por
    item, igual ao `vICMS` da nota).
 4. Nenhum crédito de item `USO_CONSUMO`, `INSUMO_SERVICO` ou com ST.
-5. Tie-out do mês (F-ICR-4 b): Σ lançamentos `icms_saida` vivos do mês (C a recolher) = alínea a − devoluções.
-   O lançamento `icms_assessment` vivo leva as alíneas b, c, f, g e a compensação. A soma dos dois no a-recolher é
-   igual ao `aRecolherCents` da apuração viva, e passa com a apuração substituída estornada e com nota cancelada
-   estornada.
+5. Tie-out do mês (F-ICR-4 b, regras U1–U3 do item 23).
+   - **a-recolher:** Σ créditos no a-recolher do mês (notas `icms_saida` vivas + alíneas b/c do 23b) − compensação =
+     `aRecolherCents`.
+   - **a-recuperar:** Σ débitos no a-recuperar do mês (entradas X6 + devoluções de venda + f/g do 23b) − compensação =
+     `saldoCredorTransportarCents` − `saldoCredorAnteriorCents`.
+   - Passa com a apuração substituída estornada e com a nota cancelada estornada.
 6. Fato gerador ≥ 2033 nunca gera débito (ADCT 129).
 7. Nenhum cálculo de ST, antecipação ou complemento usa linha `DRAFT`.
 
