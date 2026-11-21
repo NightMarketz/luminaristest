@@ -106,7 +106,7 @@ function SetupDashboardPage() {
                   </nav>
                 </div>
 
-                <main className="p-8 sm:p-12">
+                <div className="p-8 sm:p-12">
                   {mode === 'quick' && <QuickSetup />}
                   {mode === 'totalControl' && <TotalControlSetup />}
                   {mode === 'aiInterview' && (
@@ -114,7 +114,7 @@ function SetupDashboardPage() {
                       <AiInterviewSetup />
                     </div>
                   )}
-                </main>
+                </div>
               </div>
             </div>
           </div>
