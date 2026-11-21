@@ -1,0 +1,60 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Decreto nº 9.580 de 22/11/2018",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "url_final": "https://github.com/ctresb/leis/blob/39239e708b021186cea3d407a5fc7984f2c725f5/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2018-11-22;9580",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "39239e708b021186cea3d407a5fc7984f2c725f5",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T08:12:00-03:00",
+      "sha256": "2c328212c1a8408eaa64072debe9860ecb435a731150296702b0583f00acfe6e",
+      "arquivo": "docs/D01_dec-9580-2018-11-22.md",
+      "texto": "docs/D01_dec-9580-2018-11-22.txt",
+      "bytes": 1624,
+      "sha256_texto": "5934a1d17e8377ff29a590ebde2063d3c373344bb35cbf32cfe4ba5ea2d9a769",
+      "captura": {
+        "anterior": {
+          "slug": "brief-pes4-f2",
+          "id": "D09",
+          "baixado_em": "2026-11-05T20:19:00-03:00",
+          "sha256_texto": "5934a1d17e8377ff29a590ebde2063d3c373344bb35cbf32cfe4ba5ea2d9a769"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "D9580",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T08:12:21-03:00",
+      "sha256": "be274de500db876bcf2d1825e0cb1e96c26a15d622e7f15a0efdd29fd054adc9",
+      "arquivo": "docs/D02_d9580-htm.html",
+      "texto": "docs/D02_d9580-htm.txt",
+      "bytes": 2944670,
+      "sha256_texto": "308eef1ab300503de35e5f95cd330efac875ed092e31da5d7cff109b0421d222",
+      "captura": {
+        "anterior": {
+          "slug": "brief-pes4-f2",
+          "id": "D11",
+          "baixado_em": "2026-11-05T20:21:39-03:00",
+          "sha256_texto": "308eef1ab300503de35e5f95cd330efac875ed092e31da5d7cff109b0421d222"
+        },
+        "tipo": "IGUAL"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "insumo-lucro-real-custo",
+  "pergunta": "No Lucro Real, o insumo aplicado no serviço (tinta, oxidante) é custo dedutível do lucro real (IRPJ) e da base da CSLL?",
+  "criado": "2026-11-21T08:11:58-03:00"
+}
