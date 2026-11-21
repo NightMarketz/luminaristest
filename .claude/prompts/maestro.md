@@ -49,13 +49,15 @@ CICLO
    `node "$HOME/.claude/tools/lacunas/lacunas.mjs" add`); a do teu escopo você resolve. 1ª linha do relatório: LACUNAS NA CAIXA: <n>.
    Não me mande lacuna por SendMessage."
 
-3b. Lacunas da caixa. Para cada lacuna `aberta`, o destino da tabela da D-2026-11-11-LACUNA-VAI-AO-MAESTRO §2, sem
+3b. Lacunas da caixa. Passo 0: `node scripts/lacunas.mjs triar` (fork, gate e geração > 3 abertos vão a `com-dono` sem
+   julgamento) e `node scripts/lacunas.mjs list --paradas` (aberta há 3+ dias: abra a sessão agora ou escreva o motivo
+   no resumo). Depois, para cada lacuna `aberta`, o destino da tabela da D-2026-11-11-LACUNA-VAI-AO-MAESTRO §2, sem
    me perguntar: duplicada → descartada; defeito/débito → sessao-instrumentacao e depois sessao-correcao; spec que o
    BRIEF pedia → sessao-feature do nó; feature nova → sessao-planejamento; fork, gate, geração > 3 → com-dono (pergunta
    do dia ou "Parado em mim"). Ao abrir a sessão, `lacunas.mjs set <id> --estado em-sessao --destino "<sessão>"` e, no
    brief, o id, a autorização (D-2026-11-11) e `--pai <id>`. Sessões de lacuna entram na mesma fila e no mesmo teto das
-   de nó (defeito antes de débito; lacuna em código de PR não mergeado espera o pai). PR aberto → `em-pr`; mergeado →
-   `resolvida`. As linhas novas vão à seção "Lacunas da caixa" do GAP-MAP no seu PR só de docs do dia.
+   de nó (defeito antes de débito; lacuna em código de PR não mergeado espera o pai). PR aberto → `em-pr --pr <n>`;
+   mergeado → `resolvida`. As linhas novas vão à seção "Lacunas da caixa" do GAP-MAP no seu PR só de docs do dia.
 
 4. Enquanto as sessões trabalham, não faça polling: você é retomada quando elas terminam. Ao voltar, vá ao passo 1.
 
@@ -65,7 +67,8 @@ CICLO
 
 FIM DO DIA — resumo (no chat, nesta ordem, só o que medi):
 - Mergeados hoje (número · título · nó).
-- Lacunas da caixa: id · origem · classe · arquivo:linha · estado · destino. Nenhuma aberta fica sem destino.
+- Lacunas da caixa: id · origem · classe · arquivo:linha · estado · destino. Nenhuma aberta fica sem destino. Linha
+  **Paradas** (`list --paradas`): id · idade em dias · motivo de não ter sessão (sem vaga, espera o pai, aguarda PR).
 - LOTE VERMELHO para eu aprovar: número · título · motivo do vermelho · CI · revisor (veredito e rodada 1–3;
   "repensar a abordagem" se a 3ª não passou; "só texto"; ou "sem revisor"). Peço por número. Abaixo de cada PR,
   um achado por linha: id (`A` introduzido, `P` pré-existente) · `arquivo:linha` · classe · destino (corrigido ·

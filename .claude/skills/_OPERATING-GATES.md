@@ -232,8 +232,11 @@ Regra completa: `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`.
 4. **Fechamento:** 1ª linha do relatório/resposta final `LACUNAS NA CAIXA: <n> (<ids>)` ou `LACUNAS NA CAIXA: 0`.
    Nunca por `SendMessage` ao maestro (turno aberto por mensagem de sessão não abre sessão e a cadeia para).
 5. **Quem resolve:** o maestro lê a caixa a cada ciclo e abre a sessão certa sem perguntar ao dono; fork, gate e
-   cadeia longa (geração > 3) vão ao dono. A caixa é fila de trabalho, não rodada de descoberta: ninguém sai procurando
-   lacuna, registra a que apareceu no caminho.
+   cadeia longa (geração > 3) vão ao dono (`lacunas.mjs triar` faz isso sem julgamento, no começo do ciclo). A caixa é
+   fila de trabalho, não rodada de descoberta: ninguém sai procurando lacuna, registra a que apareceu no caminho.
+6. **Ligar ao PR e ao tempo:** `--local` é caminho relativo à raiz da checkout (fora dela o `add` recusa). Ao abrir o PR,
+   `set <id> --estado em-pr --pr <n>` (sem `--pr` o script recusa). Lacuna `aberta` há 3 dias ou mais aparece em
+   `list --paradas` e entra no resumo do dia com o motivo.
 
 **Prova:** `node scripts/lacunas.mjs list --abertas` mostra a lacuna com id; o relatório traz o id; nenhuma linha
 "fora de escopo" de relatório sem id correspondente.

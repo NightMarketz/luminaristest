@@ -5,7 +5,7 @@ dominio: "processo"
 titulo: "Lacuna, débito ou achado fora de escopo que uma sessão encontra vai à caixa do maestro, e o maestro abre a sessão que o resolve"
 estado: "decided"
 autorizacao: "dono, chat, 2026-11-11: \"se as sessões que estão realizando tarefas acharem lacunas, elas precisam enviar essas lacunas já direto pro orquestrador e o orquestrador já vai lançar outras sessões que vão resolver essas lacunas que ficaram. Senão fica lá esperando parado e perdendo tempo.\""
-atualizado: "2026-11-14"
+atualizado: "2026-11-21"
 ---
 # D-2026-11-11-LACUNA-VAI-AO-MAESTRO
 
@@ -111,5 +111,28 @@ a lacuna se perdia. O script também saía calado, sem rodar e com exit 0, quand
   uma mais velha.
 - A cópia funciona em qualquer repositório git, cada um com a sua caixa. Fora do Luminaris não há maestro lendo: lá a
   caixa é só registro, e o cartão de sessão ou a pergunta ao dono continuam obrigatórios (`~/.claude/CLAUDE.md`).
+## Emenda de 21/11: a metade "despachar" estava atrasada
+
+Dono, chat, 2026-11-21: "Aplicar" (os quatro refinamentos propostos na revisão do dia).
+
+**Medido em 21/11 (124 lacunas na caixa):** 49 `aberta`, 39 `em-pr`, 30 `resolvida`, 3 `com-dono`, 1 `em-sessao`. Dos 49
+abertos, 6 eram `fork` e 3 `gate`, que a tabela §2 manda ao dono sem esperar; 5 defeitos com evidência estavam abertos
+desde 11–13/11 sem sessão. `set --pr` não gravava o PR (L-20261121-035340-2b5e) e o `add` aceitou `--local` apontando
+para outra worktree (L-20261120-220811-4e7d).
+
+1. **`set --pr <n>` grava o PR; `--estado em-pr` exige `--pr`** (ou um `pr` já gravado). Sem o número a lacuna não se liga
+   ao PR e o resumo do dia não consegue conferir `em-pr` contra o `gh`.
+2. **Lacuna parada.** `list --paradas [dias]` (padrão 3) lista a `aberta` com idade ≥ N dias. O resumo do dia ganha, na
+   seção "Lacunas da caixa", a linha **Paradas** com o motivo de cada uma (sem vaga, espera o pai, aguarda PR). "Nenhuma
+   aberta sai do dia sem destino" continua valendo; parada sem motivo escrito é falha do ciclo.
+3. **Triagem determinística: passo 0 do 3b.** `node scripts/lacunas.mjs triar` manda a `com-dono`, sem julgamento, toda
+   `aberta` de classe `fork` ou `gate` e toda de geração > 3. `--simular` só mostra. O resto da tabela §2 continua sendo
+   julgamento do maestro.
+4. **`--local` é caminho da checkout onde o achado vive.** `../outra-worktree/…` e caminho absoluto fora da raiz do repo
+   são recusados. Achado cujo arquivo está noutra checkout vai na caixa dela, ou no texto de `--o-que`, sem inventar caminho.
+
+`scripts/lacunas.mjs` na VERSAO 3 (cópia global reinstalada). A caixa de 21/11 não foi triada por esta emenda: o primeiro
+`triar` é do maestro, no ciclo seguinte.
+
 - **Fora do alcance:** sessão na nuvem não enxerga o `.git` desta máquina. Lacuna achada lá continua indo na seção
   "Achados fora de escopo" do relatório e do PR, e quem recebe o resultado aqui põe na caixa.

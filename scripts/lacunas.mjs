@@ -19,10 +19,15 @@
 //   node scripts/lacunas.mjs add --local <arquivo:linha> --classe <classe> --o-que "<o que falta/está errado>"
 //        --evidencia "<o que foi lido ou rodado>" [--como-provar "<teste ou comando que falharia>"]
 //        [--no <NÓ>] [--pr <n>] [--pai <id da lacuna que originou esta sessão>]
-//   node scripts/lacunas.mjs list [--abertas] [--json]
+//   node scripts/lacunas.mjs list [--abertas] [--paradas [dias]] [--json]
 //   node scripts/lacunas.mjs show <id>
-//   node scripts/lacunas.mjs set <id> --estado <estado> --destino "<sessão / PR / pergunta / motivo>"
+//   node scripts/lacunas.mjs set <id> --estado <estado> --destino "<sessão / PR / pergunta / motivo>" [--pr <n>]
+//        (--estado em-pr exige --pr, ou um pr já gravado na lacuna)
+//   node scripts/lacunas.mjs triar [--simular]   (fork, gate e geração > 3 abertos → com-dono; o passo 0 do maestro)
 //   node scripts/lacunas.mjs instalar
+//
+// --local é caminho relativo à raiz do repositório onde o achado está. Caminho de fora dele (`../outra-worktree/…` ou
+// absoluto alheio) é recusado: a lacuna vai na caixa da checkout onde o arquivo vive, ou no texto, sem caminho inventado.
 //
 // Classes: defeito · debito · spec (o BRIEF pedia e não foi feito) · feature (frente nova, sem spec) ·
 //          fork (escolha de produto, lei, arquitetura ou irreversível) · gate (humano ou dado externo)
@@ -35,13 +40,17 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
 
-export const VERSAO = 2;
+export const VERSAO = 3;
 const EU = fileURLToPath(import.meta.url);
 export const CLASSES = ['defeito', 'debito', 'spec', 'feature', 'fork', 'gate'];
 export const ESTADOS = ['aberta', 'em-sessao', 'em-pr', 'resolvida', 'com-dono', 'descartada'];
 export const FINAIS = ['resolvida', 'descartada'];
 // Geração além disto (lacuna da lacuna da lacuna…) não abre sessão sozinha: vai ao dono como "repensar".
 export const GERACAO_MAX = 3;
+// Lacuna `aberta` há mais dias que isto sem destino é "parada": o maestro a lista no resumo com o motivo (OPS-007).
+export const DIAS_PARADA = 3;
+// Estas classes nunca abrem sessão sozinhas: o destino é sempre o dono (tabela §2 da D-2026-11-11).
+export const CLASSES_DO_DONO = ['fork', 'gate'];
 
 function git(args) {
   try { return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); }
@@ -64,10 +73,24 @@ export function listar(dir = pasta(), { abertas = false } = {}) {
   return abertas ? todas.filter((l) => !FINAIS.includes(l.estado)) : todas;
 }
 
+export function validarLocal(local, raiz = git(['rev-parse', '--show-toplevel'])) {
+  const t = String(local).trim();
+  if (/^\.\.([\\/]|$)/.test(t)) {
+    throw new Error(`--local fora do repositório: ${t} (use caminho relativo à raiz; achado em outra checkout vai na caixa dela)`);
+  }
+  if (raiz && /^([a-zA-Z]:[\\/]|\/)/.test(t)) {
+    const norm = (x) => x.replace(/\\/g, '/').toLowerCase();
+    if (!norm(t).startsWith(norm(raiz).replace(/\/$/, '') + '/')) {
+      throw new Error(`--local fora do repositório: ${t} (raiz: ${raiz})`);
+    }
+  }
+}
+
 export function adicionar(campos, dir = pasta(), agora = new Date()) {
   const faltam = ['local', 'classe', 'oQue', 'evidencia'].filter((k) => !campos[k] || !String(campos[k]).trim());
   if (faltam.length) throw new Error(`faltam campos: ${faltam.join(', ')} (lacuna sem evidência não entra)`);
   if (!CLASSES.includes(campos.classe)) throw new Error(`classe inválida: ${campos.classe} (use ${CLASSES.join(' · ')})`);
+  validarLocal(campos.local);
   mkdirSync(dir, { recursive: true });
   const dup = listar(dir, { abertas: true }).find((l) => l.local === campos.local && l.classe === campos.classe);
   if (dup) return { ...dup, duplicada: true };
@@ -88,12 +111,40 @@ export function adicionar(campos, dir = pasta(), agora = new Date()) {
   return l;
 }
 
-export function mudar(id, { estado, destino }, dir = pasta(), agora = new Date()) {
+export function paradas(dir = pasta(), { dias = DIAS_PARADA, agora = new Date() } = {}) {
+  return listar(dir)
+    .filter((l) => l.estado === 'aberta')
+    .map((l) => ({ ...l, idadeDias: Math.floor((agora - new Date(l.criada)) / 86_400_000) }))
+    .filter((l) => l.idadeDias >= dias);
+}
+
+// Passo 0 do maestro, sem julgamento: o que a tabela §2 manda ao dono vai ao dono já no primeiro ciclo.
+export function triar(dir = pasta(), { simular = false, agora = new Date() } = {}) {
+  const feitas = [];
+  for (const l of listar(dir).filter((x) => x.estado === 'aberta')) {
+    let destino = '';
+    if (l.geracao > GERACAO_MAX) destino = 'geração > 3: repensar a abordagem (a cadeia não está convergindo)';
+    else if (l.classe === 'fork') destino = 'fork: pergunta única do dia (AskUserQuestion com contexto)';
+    else if (l.classe === 'gate') destino = 'gate humano ou dado externo: "Parado em mim"';
+    if (!destino) continue;
+    feitas.push({ id: l.id, classe: l.classe, destino });
+    if (!simular) mudar(l.id, { estado: 'com-dono', destino }, dir, agora);
+  }
+  return feitas;
+}
+
+export function mudar(id, { estado, destino, pr }, dir = pasta(), agora = new Date()) {
   if (!ESTADOS.includes(estado)) throw new Error(`estado inválido: ${estado} (use ${ESTADOS.join(' · ')})`);
   if (!destino || !String(destino).trim()) throw new Error('--destino é obrigatório (sessão, PR, pergunta ou motivo)');
   const l = ler(dir, id);
+  if (pr !== undefined && pr !== true) {
+    const n = String(pr).replace(/^#/, '').trim();
+    if (!/^\d+$/.test(n)) throw new Error(`--pr inválido: ${pr} (número do PR)`);
+    l.pr = n;
+  }
+  if (estado === 'em-pr' && !l.pr) throw new Error('em-pr exige --pr <n>: sem o número a lacuna não se liga ao PR');
   l.estado = estado; l.destino = destino;
-  l.historico.push({ em: agora.toISOString(), estado, destino });
+  l.historico.push({ em: agora.toISOString(), estado, destino, ...(l.pr ? { pr: l.pr } : {}) });
   writeFileSync(join(dir, `${id}.json`), JSON.stringify(l, null, 2));
   return l;
 }
@@ -155,17 +206,26 @@ function main() {
       comoProvar: f.comoProvar, no: f.no, pr: f.pr, pai: f.pai });
     console.log(l.duplicada ? `já estava na caixa: ${l.id}` : `na caixa: ${l.id}`);
   } else if (cmd === 'list') {
+    if (f.paradas) {
+      const ps = paradas(pasta(), { dias: f.paradas === true ? DIAS_PARADA : Number(f.paradas) });
+      console.log(ps.length ? ps.map((l) => `${linha(l)}\n    ⏱ aberta há ${l.idadeDias} dia(s) sem destino`).join('\n') : '(nenhuma parada)');
+      avisoCopiaGlobal();
+      return;
+    }
     const ls = listar(pasta(), { abertas: !!f.abertas });
     if (f.json) console.log(JSON.stringify(ls, null, 2));
     else console.log(ls.length ? ls.map(linha).join('\n') : '(caixa vazia)');
   } else if (cmd === 'show') {
     console.log(JSON.stringify(ler(pasta(), f._[0]), null, 2));
   } else if (cmd === 'set') {
-    console.log(linha(mudar(f._[0], { estado: f.estado, destino: f.destino })));
+    console.log(linha(mudar(f._[0], { estado: f.estado, destino: f.destino, pr: f.pr })));
+  } else if (cmd === 'triar') {
+    const fs = triar(pasta(), { simular: !!f.simular });
+    console.log(fs.length ? fs.map((x) => `${x.id} · ${x.classe} → com-dono · ${x.destino}`).join('\n') + (f.simular ? '\n(simulação: nada gravado)' : '') : '(nada a triar)');
   } else if (cmd === 'instalar') {
     console.log(`cópia global na v${VERSAO}: ${instalar()}`);
   } else {
-    console.error('uso: node scripts/lacunas.mjs add|list|show|set|instalar — ver o cabeçalho do arquivo');
+    console.error('uso: node scripts/lacunas.mjs add|list|show|set|triar|instalar — ver o cabeçalho do arquivo');
     process.exit(2);
   }
   avisoCopiaGlobal();

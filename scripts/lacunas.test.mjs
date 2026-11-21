@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { adicionar, instalar, listar, mudar, VERSAO } from './lacunas.mjs';
+import { adicionar, instalar, listar, mudar, paradas, triar, validarLocal, VERSAO } from './lacunas.mjs';
 
 const base = { local: 'server/src/x.ts:10', classe: 'defeito', oQue: 'soma ignora sinal', evidencia: 'li x.ts:10' };
 const nova = () => mkdtempSync(join(tmpdir(), 'lacunas-'));
@@ -97,4 +97,53 @@ test('CLI: avisa quando a cópia global é mais velha que o script do repo, sem 
   const r = spawnSync('node', [script, 'list'], { env, encoding: 'utf8' });
   assert.equal(r.status, 0);
   assert.match(r.stderr, /lacunas\.mjs instalar/);
+});
+
+test('set --pr grava o número do PR e em-pr sem PR é recusado', () => {
+  const dir = nova();
+  const a = adicionar(base, dir);
+  assert.throws(() => mudar(a.id, { estado: 'em-pr', destino: 'sessão x' }, dir), /em-pr exige --pr/);
+  assert.throws(() => mudar(a.id, { estado: 'em-pr', destino: 'x', pr: 'abc' }, dir), /--pr inválido/);
+  const l = mudar(a.id, { estado: 'em-pr', destino: 'PR aberto', pr: '#1297' }, dir);
+  assert.equal(l.pr, '1297');
+  assert.equal(listar(dir)[0].pr, '1297');
+  assert.equal(mudar(a.id, { estado: 'resolvida', destino: 'merge' }, dir).pr, '1297');
+});
+
+test('--local fora do repositório é recusado', () => {
+  assert.throws(() => adicionar({ ...base, local: '../outra-worktree/x.md' }, nova()), /fora do repositório/);
+  assert.throws(() => validarLocal('C:/outro/repo/x.ts:1', 'C:/meu/repo'), /fora do repositório/);
+  assert.doesNotThrow(() => validarLocal('C:/meu/repo/x.ts:1', 'C:/meu/repo'));
+  assert.doesNotThrow(() => validarLocal('server/src/x.ts:1', 'C:/meu/repo'));
+});
+
+test('paradas lista só aberta com idade >= N dias', () => {
+  const dir = nova();
+  const velha = adicionar(base, dir, new Date('2026-11-10T12:00:00Z'));
+  adicionar({ ...base, local: 'nova.ts:1' }, dir, new Date('2026-11-20T12:00:00Z'));
+  const emPr = adicionar({ ...base, local: 'pr.ts:1' }, dir, new Date('2026-11-10T12:00:00Z'));
+  mudar(emPr.id, { estado: 'em-pr', destino: 'x', pr: '1' }, dir);
+  const ps = paradas(dir, { dias: 3, agora: new Date('2026-11-21T12:00:00Z') });
+  assert.deepEqual(ps.map((l) => l.id), [velha.id]);
+  assert.equal(ps[0].idadeDias, 11);
+});
+
+test('triar manda fork, gate e geração > 3 ao dono; defeito fica; --simular não grava', () => {
+  const dir = nova();
+  const d = adicionar(base, dir);
+  const f = adicionar({ ...base, local: 'f.ts:1', classe: 'fork' }, dir);
+  const g = adicionar({ ...base, local: 'g.ts:1', classe: 'gate' }, dir);
+  const p1 = adicionar({ ...base, local: 'p1.ts:1' }, dir);
+  const p2 = adicionar({ ...base, local: 'p2.ts:1', pai: p1.id }, dir);
+  const p3 = adicionar({ ...base, local: 'p3.ts:1', pai: p2.id }, dir);
+  const p4 = adicionar({ ...base, local: 'p4.ts:1', pai: p3.id }, dir);
+  assert.deepEqual(triar(dir, { simular: true }).map((x) => x.id).sort(), [f.id, g.id, p4.id].sort());
+  assert.ok(listar(dir).every((l) => l.estado === 'aberta'));
+  triar(dir);
+  const est = Object.fromEntries(listar(dir).map((l) => [l.id, l.estado]));
+  assert.equal(est[d.id], 'aberta');
+  assert.equal(est[f.id], 'com-dono');
+  assert.equal(est[g.id], 'com-dono');
+  assert.equal(est[p4.id], 'com-dono');
+  assert.deepEqual(triar(dir), []);
 });
