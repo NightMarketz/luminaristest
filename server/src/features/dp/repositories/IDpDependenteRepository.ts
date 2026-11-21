@@ -24,5 +24,7 @@ export interface IDpDependenteRepository {
   create(trabalhadorId: string, data: DpDependenteData, tx: Tx): Promise<DpDependente>;
   update(id: string, data: Partial<DpDependenteData>, tx: Tx): Promise<DpDependente>;
   delete(id: string, tx: Tx): Promise<DpDependente>;
+  /** BE-INCR-DP-F2 item 27 (PR-3) — leitura em lote do snapshot: os dependentes vivos dos trabalhadores. */
+  listDosTrabalhadores(trabalhadorIds: readonly string[], tx?: Tx): Promise<DpDependente[]>;
   runTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T>;
 }

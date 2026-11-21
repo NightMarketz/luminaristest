@@ -7,6 +7,8 @@ export interface DpCargoData { nome: string; cbo: string }
 /** BE-INCR-DP-F2 item 68: + a escala (`diasTrabalho` na forma canônica SEG..DOM; `minutosPorDia`). */
 export interface DpJornadaData { nome: string; minutosSemanais: number; tipoJornada: string; descricao: string | null; diasTrabalho: string; minutosPorDia: number | null }
 export interface DpSindicatoData { cnpj: string; nome: string }
+/** Item 27 — parâmetro da CCT vivo com o sindicato da convenção (viva) que o traz. */
+export type DpParametroCctComSindicato = DpConvencaoParametro & { convencao: Pick<DpConvencaoColetiva, 'sindicatoId'> };
 export interface DpConvencaoData { sindicatoId: string; identificacao: string; vigenteDesde: string; vigenteAte: string | null; fonte: string }
 export interface DpConvencaoParametroData {
   chave: string;
@@ -62,5 +64,7 @@ export interface IDpCadastroRepository {
   updateParametro(id: string, data: Partial<Omit<DpConvencaoParametroData, 'chave' | 'discriminador'>>, tx: Tx): Promise<DpConvencaoParametro>;
   deleteParametro(id: string, tx: Tx): Promise<DpConvencaoParametro>;
 
+  /** BE-INCR-DP-F2 item 27 (PR-3) — leitura em lote do snapshot: o que toca o período `de`..`ate` (date-only, inclusivo). */
+  listParametrosCctNoPeriodo(ownerUserId: string, sindicatoIds: readonly string[], de: string, ate: string, tx?: Tx): Promise<DpParametroCctComSindicato[]>;
   runTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T>;
 }

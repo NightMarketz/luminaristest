@@ -7,6 +7,7 @@ import type {
   DpJornadaData,
   DpLotacaoData,
   DpSindicatoData,
+  DpParametroCctComSindicato,
   IDpCadastroRepository,
 } from './IDpCadastroRepository';
 
@@ -140,6 +141,16 @@ export class DpCadastroRepository implements IDpCadastroRepository {
   }
   public async deleteParametro(id: string, tx: Tx): Promise<DpConvencaoParametro> {
     return tx.dpConvencaoParametro.update({ where: { id }, data: morto() });
+  }
+
+  public async listParametrosCctNoPeriodo(ownerUserId: string, sindicatoIds: readonly string[], de: string, ate: string, tx?: Tx): Promise<DpParametroCctComSindicato[]> {
+    if (sindicatoIds.length === 0) return [];
+    const toca = { vigenteDesde: { lte: ate }, OR: [{ vigenteAte: null }, { vigenteAte: { gte: de } }] };
+    return this.db(tx).dpConvencaoParametro.findMany({
+      where: { ...vivo, ...toca, convencao: { userId: ownerUserId, sindicatoId: { in: [...sindicatoIds] }, ...vivo, ...toca } },
+      include: { convencao: { select: { sindicatoId: true } } },
+      orderBy: { id: 'asc' },
+    });
   }
 
   public async runTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {

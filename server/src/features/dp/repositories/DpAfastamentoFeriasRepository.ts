@@ -49,6 +49,14 @@ export class DpAfastamentoFeriasRepository implements IDpAfastamentoFeriasReposi
     return tx.dpFeriasImplantacao.update({ where: { id }, data: morto() });
   }
 
+  public async listAfastamentosDosVinculos(vinculoIds: readonly string[], de: string, ate: string, tx?: Tx): Promise<DpAfastamento[]> {
+    if (vinculoIds.length === 0) return [];
+    return this.db(tx).dpAfastamento.findMany({
+      where: { vinculoId: { in: [...vinculoIds] }, ...vivo, inicio: { lte: ate }, OR: [{ fim: null }, { fim: { gte: de } }] },
+      orderBy: { id: 'asc' },
+    });
+  }
+
   public async runTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
     return prisma.$transaction(fn);
   }
