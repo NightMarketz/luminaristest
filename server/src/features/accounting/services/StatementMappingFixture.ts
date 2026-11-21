@@ -1,4 +1,4 @@
-export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v5';
+export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v6';
 
 /**
  * Declarative mapping rules for BP (Balanço Patrimonial) and DRE (Demonstração
@@ -39,6 +39,9 @@ export const STATEMENT_MAPPING_RULES = [
   { id: 'dre.financial_rev', statement: 'DRE', match: { nature: 'Revenue', codePrefix: '3.5' }, section: 'financialResult', sign: 'credit_positive', order: 260 },
   { id: 'dre.financial_exp', statement: 'DRE', match: { nature: 'Expense', codePrefix: '4.3' }, section: 'financialResult', sign: 'debit_negative', order: 261 },
   { id: 'dre.cogs',       statement: 'DRE', match: { nature: 'Expense', codePrefix: '4.2' },   section: 'costOfGoodsSold',   sign: 'debit_negative',   order: 250 },
+  // Custo dos Serviços Prestados (4.7, lacuna 35d3; dono 21/11): o insumo do serviço é custo, acima do lucro bruto (NBC TG 1002
+  // item 5.1 (d)). Antes da regra só por natureza `dre.expenses` (first-match), senão cairia em despesas operacionais.
+  { id: 'dre.cogs_services', statement: 'DRE', match: { nature: 'Expense', codePrefix: '4.7' }, section: 'costOfGoodsSold', sign: 'debit_negative', order: 251 },
   { id: 'dre.expenses',   statement: 'DRE', match: { nature: 'Expense' },                     section: 'expenses',          sign: 'debit_negative',   order: 300 },
 ] as const;
 

@@ -14,7 +14,7 @@ import { AESTHETIC_CLINIC_KIT_V6 } from '@/features/sectorKits/kits/aestheticCli
 import type { SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
 
 // Literais: a fronteira do sectorKits não importa de features/accounting (importBoundary.test). Mesmos de REFERENCIAL_PLANO_PADRAO.
-const REFERENCIAL_PLANO_PADRAO_CODIGOS = ['2.01.01.17.13.10', '2.01.01.17.12.10', '2.01.01.09.01', '2.03.01.01.01', '2.03.02.03.01', '3.01.01.09.01.04', '2.01.01.09.28', '1.01.02.03.40'];
+const REFERENCIAL_PLANO_PADRAO_CODIGOS = ['2.01.01.17.13.10', '2.01.01.17.12.10', '2.01.01.09.01', '2.03.01.01.01', '2.03.02.03.01', '3.01.01.09.01.04', '2.01.01.09.28', '1.01.02.03.40', '3.01.01.03.01.03'];
 const UNIT = 'unit-kit-v2';
 const TODAY = new Date().toISOString().slice(0, 10);
 let ownerId: string;
@@ -63,10 +63,10 @@ describe('kit vigente do salão (v6) — referencial 2025 (BE-INCR-H1-REFERENCIA
     await preparar(regime);
     await expect(instalar()).resolves.toMatchObject({ status: 'INSTALLED' });
     const c = await cobertura();
-    // 34 folhas do canônico (15 + as 9 da emenda 3.3 + as 6 do IRRF-DISTRIBUICAO + IBS/CBS a recolher do IBS-CBS-2027 PR-2
-    // + IBS/CBS a recuperar do PR-3, mapeadas fora do kit) + as 8 do conteúdo
+    // 35 folhas do canônico (15 + as 9 da emenda 3.3 + as 6 do IRRF-DISTRIBUICAO + IBS/CBS a recolher do IBS-CBS-2027 PR-2
+    // + IBS/CBS a recuperar do PR-3 + a 4.7 Custo dos Serviços Prestados da lacuna 35d3, mapeadas fora do kit) + as 8 do conteúdo
     // fiscal, todas mapeadas.
-    expect(c).toEqual({ folhas: 42, faltam: [] });
+    expect(c).toEqual({ folhas: 43, faltam: [] });
     const conta34 = await prisma.account.findFirstOrThrow({ where: { ...where(), code: '3.4' } });
     const m = await prisma.referentialMapping.findFirstOrThrow({ where: { ...where(), accountId: conta34.id, mappingVersion: '2025' } });
     expect(m.referentialCode).toBe('3.01.01.01.01.98');
