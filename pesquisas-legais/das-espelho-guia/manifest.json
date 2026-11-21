@@ -1,0 +1,382 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei Complementar nº 123 de 14/12/2006",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2006/lcp-123-2006-12-14.md",
+      "url_final": "https://github.com/ctresb/leis/blob/394a7e97c8604703a3ea6638df61ab1873cecc6e/federal/leis-complementares/2006/lcp-123-2006-12-14.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2006-12-14;123",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "394a7e97c8604703a3ea6638df61ab1873cecc6e",
+      "alertas": [],
+      "baixado_em": "2026-11-20T18:53:02-03:00",
+      "sha256": "62ae5f126e5d6a0bf1e149614362aeca97730684067c128251c92cc1f732bdd9",
+      "arquivo": "docs/D01_lcp-123-2006-12-14.md",
+      "texto": "docs/D01_lcp-123-2006-12-14.txt",
+      "bytes": 255709,
+      "sha256_texto": "b88e53d46978e27b2d1087c98d45e295958791aae98a10e0b3a15ad08fe72adc",
+      "captura": {
+        "anterior": {
+          "slug": "triagem-contador-2026-10-30",
+          "id": "D08",
+          "baixado_em": "2026-10-30T02:21:04-03:00",
+          "sha256_texto": "b88e53d46978e27b2d1087c98d45e295958791aae98a10e0b3a15ad08fe72adc"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei Complementar nº 214 de 16/01/2025",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2025/lcp-214-2025-01-16.md",
+      "url_final": "https://github.com/ctresb/leis/blob/571468687b4dc8d8f1a3b1dbd5f958ff85fad0cf/federal/leis-complementares/2025/lcp-214-2025-01-16.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2025-01-16;214",
+      "versao_texto": "republicação/retificação",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "571468687b4dc8d8f1a3b1dbd5f958ff85fad0cf",
+      "alertas": [
+        "versao_texto = 'republicação/retificação' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-20T18:53:05-03:00",
+      "sha256": "f1f80d77a11f96d8eaf7777d647e577d04abd0fc28420ec22664be7a76ed8851",
+      "arquivo": "docs/D02_lcp-214-2025-01-16.md",
+      "texto": "docs/D02_lcp-214-2025-01-16.txt",
+      "bytes": 1880,
+      "sha256_texto": "69a75533fb995e70146dcbfb8c354916fe2d155b3a163e10d2a110aeaed37e93",
+      "captura": {
+        "anterior": {
+          "slug": "iss-transicao-ibs-pr1",
+          "id": "D02",
+          "baixado_em": "2026-10-24T17:12:32-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Resolução CGSN nº 140, de 22 de maio de 2018",
+      "url": "http://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=92278",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/92278/visao/multivigente",
+      "id_normativo": "rfb:92278",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-20T18:53:44-03:00",
+      "sha256": "158a09df9d0832b58264f9a0f625f75b9238563c44c967c7b5ea03bde5f48cb3",
+      "arquivo": "docs/D03_rfb-92278-multivigente.json",
+      "texto": "docs/D03_rfb-92278-multivigente.txt",
+      "bytes": 1465038,
+      "sha256_texto": "b5a0230413794b2737aa224e5fd3b8cfbd7bd87a28642b2649e4236a64b094f3",
+      "anexos": [
+        {
+          "nome": "Anexo I .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48430"
+        },
+        {
+          "nome": "Anexo II .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48431"
+        },
+        {
+          "nome": "Anexo III .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48432"
+        },
+        {
+          "nome": "Anexo IV .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48433"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48446"
+        },
+        {
+          "nome": "Anexo VI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48458"
+        },
+        {
+          "nome": "Anexo VI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/50966"
+        },
+        {
+          "nome": "Anexo VII .pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48436"
+        },
+        {
+          "nome": "Anexo VII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/50967"
+        },
+        {
+          "nome": "Anexo VII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54769"
+        },
+        {
+          "nome": "Anexo VII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/58338"
+        },
+        {
+          "nome": "Anexo VIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48459"
+        },
+        {
+          "nome": "Anexo IX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48460"
+        },
+        {
+          "nome": "Anexo X .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48439"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48461"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/52778"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54307"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54308"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54995"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/59531"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/64455"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/77593"
+        },
+        {
+          "nome": "Anexo XI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/81177"
+        },
+        {
+          "nome": "Anexo XII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/58339"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "emissao-mei-me-por-tipo",
+          "id": "D02",
+          "baixado_em": "2026-10-29T03:17:34-03:00",
+          "sha256_texto": "f58cdf2e7d483f172a4648aa67b3e40a4cbf29dc5f59eaa0b4d819dc74a7962e"
+        },
+        "tipo": "TEXTO_MUDOU",
+        "citado_em": [
+          {
+            "slug": "emissao-mei-me-por-tipo",
+            "id": "D02"
+          }
+        ],
+        "diferencas": [
+          "-§ 1º Relativamente à prestação de serviços sujeita ao ISS, a ME ou EPP optante pelo Simples Nacional utilizará a Nota Fiscal de Serviços, conforme modelo aprovado e autorizado pelo Município, ou Distrito Federal, ou outro documento fiscal ",
+          "-[AGENDADO]  [Vide modificação prevista para 01/11/2026, nos termos do(a) Resolução CGSN nº 191, de 4 de agosto de 2026 · rfb:152781]",
+          "-[AGENDADO]  [Vide dispositivo a ser incluído em 01/11/2026, nos termos do(a) Resolução CGSN nº 191, de 4 de agosto de 2026 · rfb:152781]"
+        ]
+      },
+      "alertas": [
+        "alteração com vigência futura: Alterado(a) pelo(a) Resolução CGSN nº 190, de 4 de agosto de 2026, a partir de 01/01/2027 (rfb:152832)",
+        "alteração com vigência futura: Alterado(a) pelo(a) Resolução CGSN nº 195, de 21 de outubro de 2026, a partir de 01/01/2027 (rfb:154194)",
+        "24 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar",
+        "TEXTO MUDOU desde 2026-10-29. Dossiês que citaram a versão anterior: emissao-mei-me-por-tipo D02. Conferir se a conclusão deles ainda vale"
+      ]
+    },
+    {
+      "id": "D04",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-20T18:53:46-03:00",
+      "sha256": "6efc444b364971c3b1e563dbd8cd51abd5682b69c049d5a645a05554092c4f83",
+      "arquivo": "docs/D04_lcp214-htm.html",
+      "texto": "docs/D04_lcp214-htm.txt",
+      "bytes": 5403923,
+      "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3",
+      "captura": {
+        "anterior": {
+          "slug": "triagem-contador-2026-10-30",
+          "id": "D10",
+          "baixado_em": "2026-10-30T02:21:14-03:00",
+          "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "Lei nº 14.759 de 21/12/2023",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2023/lei-14759-2023-12-21.md",
+      "url_final": "https://github.com/ctresb/leis/blob/2be2554342e10a19c16058e427dbd3822364d8a9/federal/leis-ordinarias/2023/lei-14759-2023-12-21.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2023-12-21;14759",
+      "versao_texto": "republicação/retificação",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "2be2554342e10a19c16058e427dbd3822364d8a9",
+      "alertas": [
+        "versao_texto = 'republicação/retificação' (não é texto compilado: alterações posteriores não aparecem)",
+        "corpo curto ou com aviso (texto integral pode faltar)"
+      ],
+      "baixado_em": "2026-11-20T18:57:55-03:00",
+      "sha256": "3458ce4b0eb829284797bd34f7c19959daca396e85c278b63a2805066a267787",
+      "arquivo": "docs/D05_lei-14759-2023-12-21.md",
+      "texto": "docs/D05_lei-14759-2023-12-21.txt",
+      "bytes": 689,
+      "sha256_texto": "a28570789a0a57637dce7c14c4b84eac8f155b6ac98cdb9070c9b53dbcf036cc",
+      "captura": {
+        "anterior": {
+          "slug": "verif-2026-10-17-lgpd-cdc-obrigacoes",
+          "id": "D07",
+          "baixado_em": "2026-10-17T09:56:04-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "Lei nº 662 de 06/04/1949",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1949/lei-662-1949-04-06.md",
+      "url_final": "https://github.com/ctresb/leis/blob/a8ffff23fc3bfa941c6fdad903b9429e3c6371c8/federal/leis-ordinarias/1949/lei-662-1949-04-06.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1949-04-06;662",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "a8ffff23fc3bfa941c6fdad903b9429e3c6371c8",
+      "alertas": [],
+      "baixado_em": "2026-11-20T18:57:56-03:00",
+      "sha256": "52b0b95bbce511184a63823ca3b341dd3249c3fea06775f7d7e1dcc9ecf32142",
+      "arquivo": "docs/D06_lei-662-1949-04-06.md",
+      "texto": "docs/D06_lei-662-1949-04-06.txt",
+      "bytes": 1713,
+      "sha256_texto": "ead7060586eab929631bb65af3ea06e8c9d4886acc948ed3c90b3b15f2264d66",
+      "captura": {
+        "anterior": {
+          "slug": "verif-2026-10-17-lgpd-cdc-obrigacoes",
+          "id": "D05",
+          "baixado_em": "2026-10-17T09:55:59-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "L14759",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/L14759.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14759.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-20T18:58:11-03:00",
+      "sha256": "755248462e2d28f2848da8a65a149d451d227207eb4531aae1dbd5310ca7c0cb",
+      "arquivo": "docs/D07_l14759-htm.html",
+      "texto": "docs/D07_l14759-htm.txt",
+      "bytes": 11306,
+      "sha256_texto": "89307730b0fab1875847afcde31932dadc38456fa3d26b6b720dbfca2fcc5cfd",
+      "captura": {
+        "anterior": {
+          "slug": "verif-2026-10-17-lgpd-cdc-obrigacoes",
+          "id": "D18",
+          "baixado_em": "2026-10-17T09:57:07-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "SEM_COMPARACAO"
+      },
+      "alertas": [
+        "há captura de 2026-10-17 (verif-2026-10-17-lgpd-cdc-obrigacoes D18), mas o texto dela não foi guardado"
+      ]
+    },
+    {
+      "id": "D08",
+      "titulo": "Resolução CGSN nº 190, de 4 de agosto de 2026",
+      "url": "rfb:152832",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/152832/visao/multivigente",
+      "id_normativo": "rfb:152832",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-20T19:16:23-03:00",
+      "sha256": "9d1b3419c37266069da0ff3eb51292886279aac4674436e4e540b1bbf57dce6b",
+      "arquivo": "docs/D08_rfb-152832-multivigente.json",
+      "texto": "docs/D08_rfb-152832-multivigente.txt",
+      "bytes": 401679,
+      "sha256_texto": "7abf091d0d84b78c9bb164c0e430b9f04420ec8bf87870829dd223aa84707ad7",
+      "anexos": [
+        {
+          "nome": "Anexo I.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85769"
+        },
+        {
+          "nome": "Anexo II.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85770"
+        },
+        {
+          "nome": "Anexo III.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85771"
+        },
+        {
+          "nome": "Anexo IV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85775"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85773"
+        },
+        {
+          "nome": "Anexo Único.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85784"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "emissao-mei-me-por-tipo",
+          "id": "D03",
+          "baixado_em": "2026-10-29T03:18:33-03:00",
+          "sha256_texto": "7abf091d0d84b78c9bb164c0e430b9f04420ec8bf87870829dd223aa84707ad7"
+        },
+        "tipo": "IGUAL"
+      },
+      "alertas": [
+        "6 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D09",
+      "titulo": "MANUAL DO PGDAS",
+      "url": "https://www.sefin.ro.gov.br/portalsefin/manuais/MANUAL_PGDAS-D_2018_V4.pdf",
+      "url_final": "https://www.sefin.ro.gov.br/portalsefin/manuais/MANUAL_PGDAS-D_2018_V4.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T00:41:47-03:00",
+      "sha256": "9980221cb690226594f78b5c3dc375b633657b8acdf9511048ade37386d1f434",
+      "arquivo": "docs/D09_MANUAL_PGDAS-D_2018_V4-pdf.pdf",
+      "texto": "docs/D09_MANUAL_PGDAS-D_2018_V4-pdf.txt",
+      "bytes": 9906441,
+      "sha256_texto": "ee9b5c0e7616ad59fce58c204d1fa070201cd0ec80bea50eeb88552541d3cba3",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "das-espelho-guia",
+  "pergunta": "DAS espelho da guia: vencimento (Res. CGSN 140 art. 40, dia não útil), partilha do Anexo I 2026 e 2027 em R$, janela do RBT12 em 2027 (LC 214 art. 517)",
+  "criado": "2026-11-20T18:52:34-03:00"
+}
