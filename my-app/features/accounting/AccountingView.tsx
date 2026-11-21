@@ -50,7 +50,7 @@ import { ClientModeStrip, PendingInvitesBanner, clientLabel } from './governance
 import { PolicyVersionsPanel } from './governance/PolicyVersionsPanel';
 import { AccountingActivationBanner } from './components/AccountingActivationBanner';
 import { ReconcilePendingPanel } from './components/ReconcilePendingPanel';
-import { parseInventoryPurchaseSeed, type InventoryPurchaseSeed } from './lib/inventoryPurchaseLink';
+import { parseInventoryPurchaseSeed, stripInventoryPurchaseParams, type InventoryPurchaseSeed } from './lib/inventoryPurchaseLink';
 import { AccountingKitTab } from './components/AccountingKitTab';
 import { useUnitKit } from './hooks/useUnitKit';
 
@@ -178,12 +178,31 @@ export function AccountingView() {
   const [activationNonce, setActivationNonce] = useState(0);
   const [kitNonce, setKitNonce] = useState(0);
 
-  const [rawTab, setRawTab] = useState<Tab>(() => (inventoryPurchaseSeed ? 'contas-a-pagar' : 'balancete'));
+  // A aba mora na URL (?tab=): F5 e link compartilhado voltam à mesma aba. O seed de compra de estoque tem prioridade.
+  const [rawTab, setRawTab] = useState<Tab>(() => {
+    if (inventoryPurchaseSeed) return 'contas-a-pagar';
+    if (typeof window === 'undefined') return 'balancete';
+    const fromUrl = new URLSearchParams(window.location.search).get('tab');
+    return TABS.some((tb) => tb.id === fromUrl) ? (fromUrl as Tab) : 'balancete';
+  });
   // Allowlist por construção: no modo cliente nenhuma aba fora de `DELEGATED_TABS` chega a renderizar (item 8.1).
   // A aba "Kit de setor" sem kit carregado (outra unidade, erro) volta ao Balancete.
   const activeTab: Tab =
     governance && !DELEGATED_TABS.includes(rawTab) ? 'periodos' : rawTab === 'kit' && !kitTabVisible ? 'balancete' : rawTab;
   const setActiveTab = setRawTab;
+  // ÚNICO escritor da URL desta tela. Consumido o seed de compra de estoque (`inventoryPurchaseSeed === null`), os params
+  // do deep link saem daqui, junto com a aba — dois efeitos escrevendo a query se atropelavam (o de baixo apagava o `tab=`).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (activeTab === 'balancete') url.searchParams.delete('tab');
+    else url.searchParams.set('tab', activeTab);
+    if (!inventoryPurchaseSeed) stripInventoryPurchaseParams(url.searchParams);
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    if (next !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+      window.history.replaceState(window.history.state, '', next);
+    }
+  }, [activeTab, inventoryPurchaseSeed]);
   // Seção em que a aba Imobilizado abre — a NF-e aponta "Classes"/"Taxas"; volta a "Bens" ao sair da aba.
   const [fixedAssetsSection, setFixedAssetsSection] = useState<FixedAssetsSectionId>('bens');
   useEffect(() => { if (activeTab !== 'imobilizado') setFixedAssetsSection('bens'); }, [activeTab]);
@@ -240,8 +259,7 @@ export function AccountingView() {
   useEffect(() => {
     // Só depois que o painel montou (precisa do unitId): até lá o SEED ainda não foi capturado.
     if (!inventoryPurchaseSeed || !unitId || activeTab !== 'contas-a-pagar') return;
-    setInventoryPurchaseSeed(null);
-    window.history.replaceState(window.history.state, '', window.location.pathname);
+    setInventoryPurchaseSeed(null); // a URL é limpa pelo efeito da aba, que reroda com o seed nulo
   }, [inventoryPurchaseSeed, unitId, activeTab]);
 
   function openNewEntryModal() {

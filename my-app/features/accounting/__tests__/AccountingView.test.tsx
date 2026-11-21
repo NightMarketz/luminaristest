@@ -119,6 +119,7 @@ vi.mock('../components/AccountsReceivablePanel', () => ({
 
 describe('AccountingView — F-AGING-5(b) cross-navigation seed', () => {
   beforeEach(() => {
+    window.history.replaceState(null, '', '/'); // a aba vive em ?tab=: não vaza entre testes
     vi.clearAllMocks();
     cleanup();
   });
@@ -162,6 +163,7 @@ describe('AccountingView — F-AGING-5(b) cross-navigation seed', () => {
 
 describe('AccountingView — deep link do MovementModal (Entrada+Compra → Payable de estoque)', () => {
   beforeEach(() => {
+    window.history.replaceState(null, '', '/'); // a aba vive em ?tab=: não vaza entre testes
     vi.clearAllMocks();
     cleanup();
   });
@@ -171,7 +173,7 @@ describe('AccountingView — deep link do MovementModal (Entrada+Compra → Paya
     render(<AccountingView />);
 
     expect(screen.getByTestId('ap-panel').getAttribute('data-inventory')).toBe('{"productRef":"prod-1","qty":3}');
-    expect(window.location.search).toBe('');
+    expect(window.location.search).toBe('?tab=contas-a-pagar'); // params do seed somem; a aba fica na URL
 
     fireEvent.click(screen.getByRole('tab', { name: /Contas a Receber/ }));
     fireEvent.click(screen.getByRole('tab', { name: /^Contas a Pagar$/ }));
@@ -232,6 +234,7 @@ describe('AccountingView — aba Imobilizado (FE-INCR-FIXED-ASSETS item 1)', () 
 
 describe('AccountingView — erro de carga e lançamento (e69d)', () => {
   beforeEach(() => {
+    window.history.replaceState(null, '', '/'); // a aba vive em ?tab=: não vaza entre testes
     vi.clearAllMocks();
     cleanup();
     hookState.error = null;
