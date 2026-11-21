@@ -24,12 +24,13 @@
  *  - INSUMO_SERVICO: ICMS fica no custo (item 5 — contador P4 "ICMS uso e consumo"; RIR/2018 art. 301 §3º:
  *    só o recuperável sai; a não-recuperabilidade é a pendência P-2 [NC], default conservador);
  *    PIS/COFINS de item TRIBUTADO credita igual à revenda (item 6 — Leis 10.637/10.833 art. 3º II, I);
- *    MONOFÁSICO não credita, com warning — F-ID-4 na etapa (c) até a transcrição da P-1 (item 7).
+ *    MONOFÁSICO por NCM credita pelo percentual básico se `pisCofinsCreditMonofasicoInsumo` (IN RFB 2.121 art. 178; lacuna
+ *    c516, dono 21/11); desligada ou MONOFÁSICO só pelo CST da nota: crédito 0 com warning (item 7).
  *  - IMOBILIZADO (EMENDA 29/09 item 21): mesmo ramo de crédito da REVENDA — a emenda muda a rota, não o
  *    crédito (decisão do dono, 02/10).
  */
 import type { NfeItem, NfeTotais, ParsedNfe } from './nfe';
-import { classifyPisCofinsItem, tabelaPisCofinsItemDe } from '../features/accounting/models/pisCofinsMonofasicoNcm';
+import { classifyPisCofinsItem, findMonofasicoRule, normalizeNcm, tabelaPisCofinsItemDe } from '../features/accounting/models/pisCofinsMonofasicoNcm';
 import { razaoCreditoPisCofins } from '../features/accounting/models/pisCofinsParams';
 import type { LinhaLegal } from '../features/legalParameters/models/legalParameter';
 import type { ItemDestination } from '../features/accounting/models/itemDestination';
@@ -47,6 +48,13 @@ export interface CostRegime {
   pisCofinsCreditExcludesIcms: boolean;
   pisCofinsCreditIncludesIpi: boolean;
   pisCofinsCreditFromSimplesSupplier: boolean;
+  /**
+   * Lacuna c516 (D-5 reaberta pelo dono em 21/11, padrão `true`): crédito de PIS/COFINS do monofásico POR NCM usado como
+   * INSUMO_SERVICO no não cumulativo — IN RFB 2.121/2022 art. 178 (a vedação do art. 160 I não alcança o produto do art. 60
+   * usado como insumo, havendo pagamento em etapa anterior); SC Cosit 496/2017 e 16/2024 (percentual básico, CST 04/06 do
+   * distribuidor inclusive). O contador desliga por cliente.
+   */
+  pisCofinsCreditMonofasicoInsumo: boolean;
 }
 
 export interface ItemCost {
@@ -161,7 +169,11 @@ export function acquisitionCost(
     if (razao && tabelaItem) {
       const c = classifyPisCofinsItem({ ncm: it.ncm, cstPis: it.cstPis, cstCofins: it.cstCofins }, tabelaItem);
       classe = c.classe;
-      if (c.classe === 'TRIBUTADO') {
+      // Lacuna c516: o art. 178 alcança o produto do art. 60 (a tabela de NCM), não o CST de alíquota zero/ST da nota.
+      const ncm8 = normalizeNcm(it.ncm);
+      const porNcm = c.classe === 'MONOFASICO' && ncm8 !== null && findMonofasicoRule(ncm8, tabelaItem.regras) !== null;
+      const monofasicoNcmInsumo = porNcm && insumo && regime.pisCofinsCreditMonofasicoInsumo;
+      if (c.classe === 'TRIBUTADO' || monofasicoNcmInsumo) {
         // base_item = vProd − vDesc + frete/seg/outro do item; − ICMS (Lei 10.833 art. 3º § 2º III, red. Lei 14.592); IPI nunca (P1)
         base =
           it.vProdCents - it.vDescCents - descRest[i] + it.vFreteCents + freteRest[i] + it.vSegCents + segRest[i] + it.vOutroCents + outroRest[i];
@@ -170,12 +182,18 @@ export function acquisitionCost(
         creditoPis = bp(base, razao.pisBp);
         creditoCofins = bp(base, razao.cofinsBp);
         if (c.alerta) warnings.push(`item ${it.nItem} (${it.cProd}): ${c.alerta}`);
+        if (monofasicoNcmInsumo) {
+          warnings.push(`item ${it.nItem} (${it.cProd}): insumo monofásico (${c.motivo}) — crédito de PIS/COFINS pelo percentual básico (IN RFB 2.121 art. 178; SC Cosit 496/2017 e 16/2024); o contador desliga no perfil fiscal`);
+        }
       } else if (c.classe === 'UNKNOWN') {
         warnings.push(`item ${it.nItem} (${it.cProd}): sem crédito de PIS/COFINS — ${c.motivo}`);
       } else if (insumo) {
-        // ITEM-DESTINATION item 7, F-ID-4 etapa (c): até a P-1 (IN RFB 2.121 art. 160 I / SC 4.024/2021) entrar
-        // no corpus, o insumo monofásico não credita em nenhum CST — o comportamento de hoje, agora visível.
-        warnings.push(`item ${it.nItem} (${it.cProd}): insumo monofásico (${c.motivo}) — sem crédito de PIS/COFINS até a validação da pendência P-1 (posição da RFB × contador)`);
+        // ITEM-DESTINATION item 7: chave desligada no perfil, ou monofásico só pelo CST da nota (fora do art. 178).
+        warnings.push(
+          porNcm
+            ? `item ${it.nItem} (${it.cProd}): insumo monofásico (${c.motivo}) — sem crédito de PIS/COFINS: a chave do perfil fiscal está desligada (a IN RFB 2.121 art. 178 permite o crédito)`
+            : `item ${it.nItem} (${it.cProd}): insumo monofásico (${c.motivo}) — sem crédito de PIS/COFINS: o NCM está fora da tabela monofásica (IN RFB 2.121 art. 178 alcança só o produto do art. 60)`,
+        );
       }
     }
     const creditoPisCofins = creditoPis + creditoCofins;

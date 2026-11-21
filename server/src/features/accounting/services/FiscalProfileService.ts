@@ -450,6 +450,7 @@ export class FiscalProfileService {
         pisCofinsCreditExcludesIcms: String(row.pisCofinsCreditExcludesIcms),
         pisCofinsCreditIncludesIpi: String(row.pisCofinsCreditIncludesIpi),
         pisCofinsCreditFromSimplesSupplier: String(row.pisCofinsCreditFromSimplesSupplier),
+        pisCofinsCreditMonofasicoInsumo: String(row.pisCofinsCreditMonofasicoInsumo), // lacuna c516
         icmsRecuperavelAccountId: row.icmsRecuperavelAccountId ?? '',
         pisCofinsRecuperavelAccountId: row.pisCofinsRecuperavelAccountId ?? '',
         insumoExpenseAccountId: row.insumoExpenseAccountId ?? '', // ITEM-DESTINATION item 20 (decisão do dono 02/10)
@@ -592,6 +593,7 @@ export class FiscalProfileService {
       pisCofinsCreditExcludesIcms: row.pisCofinsCreditExcludesIcms,
       pisCofinsCreditIncludesIpi: row.pisCofinsCreditIncludesIpi,
       pisCofinsCreditFromSimplesSupplier: row.pisCofinsCreditFromSimplesSupplier,
+      pisCofinsCreditMonofasicoInsumo: row.pisCofinsCreditMonofasicoInsumo,
       icmsRecuperavelAccountId: row.icmsRecuperavelAccountId,
       pisCofinsRecuperavelAccountId: row.pisCofinsRecuperavelAccountId,
       insumoExpenseAccountId: row.insumoExpenseAccountId,

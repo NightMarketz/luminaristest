@@ -12,7 +12,7 @@ const t: TFn = (_k: string, fb: string, vars?: Record<string, string>) => fb.rep
 
 const view: FiscalProfileView = {
   unitId: 'u1', regimeTributario: 'SIMPLES', icmsContribuinte: false, pisCofinsRegime: 'SIMPLES',
-  pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false, pisCofinsCreditFromSimplesSupplier: false,
+  pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false, pisCofinsCreditFromSimplesSupplier: false, pisCofinsCreditMonofasicoInsumo: true,
   icmsRecuperavelAccountId: null, pisCofinsRecuperavelAccountId: null, insumoExpenseAccountId: null,
   irpjDespesaAccountId: null, csllDespesaAccountId: null, irpjRecolherAccountId: null, csllRecolherAccountId: null,
   partnerAccountRef: null, codMun: '3550308', inscricaoMunicipal: null, cnae: null,
