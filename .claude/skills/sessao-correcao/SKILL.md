@@ -108,6 +108,13 @@ continua; muda o destino do achado:
 - Lacuna da caixa (id `L-…`) é lacuna mapeada para esta sessão: o campo Lacuna leva o id + o `show` dela, a autorização
   é a `D-2026-11-11-LACUNA-VAI-AO-MAESTRO`, e o PR não edita o GAP-MAP (a linha é do maestro).
 
+**"PARE e reporte" leva a solução estrutural** (dono, chat, 2026-11-21 —
+`docs/plano/decisoes/D-2026-11-21-RECOMENDAR-SOLUCAO-ESTRUTURAL.md`). As regras 1 e 3 continuam: esta sessão não toca
+fora da localização. Mas, quando a causa raiz está em outro lugar ou o fix mínimo seria remendo (sobrepor sintoma,
+`!`/override, caso especial no consumidor), o relatório **descreve a correção estrutural** (arquivo/camada dona, o que
+muda, versão incremental se for grande) e ela vai à caixa como `--classe defeito|debito`. O fix mínimo desta sessão
+só entra se for etapa declarada dela, e o relatório diz isso.
+
 **Autorização quando a lacuna é nó do vault.** Lacuna priorizada pode ter nota em `docs/plano/nos/PASSO-*.md`
 (ex.: GAP-MAP 7 = `PASSO-11`): aí a autorização é o campo `autorizacao` dela — vazio = não roteia
 (ORCH-006). O fold da nota entra no próprio PR, via `node scripts/plano-vault.mjs fold <NÓ> --pr <n>`
