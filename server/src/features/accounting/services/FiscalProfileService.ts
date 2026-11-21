@@ -1,4 +1,5 @@
 import { ESTOQUES_CODE, PERFIL_FISCAL_PLANO_PADRAO, isContaDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
+import { findMappingRule } from './StatementMappingFixture';
 import { ForbiddenError, PolicyApprovalRequiredError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -351,7 +352,8 @@ export class FiscalProfileService {
   async validate(scope: AccountingScope, input: FiscalProfilePolicyPayload, tx?: Prisma.TransactionClient): Promise<RegimeEmpresa | null> {
     if (input.icmsRecuperavelAccountId) await this.assertAssetAccount(scope, input.icmsRecuperavelAccountId, 'ICMS a recuperar', tx);
     if (input.pisCofinsRecuperavelAccountId) await this.assertAssetAccount(scope, input.pisCofinsRecuperavelAccountId, 'PIS/COFINS a recuperar', tx);
-    if (input.insumoExpenseAccountId) await this.assertExpenseAccount(scope, input.insumoExpenseAccountId, 'insumo do serviço', tx);
+    // Lacuna 051e (dono 21/11: "Checar em todo PUT"; e "aplica a regra também no kit e no plano padrão"): vale em toda escrita.
+    if (input.insumoExpenseAccountId) await this.assertInsumoCostAccount(scope, input.insumoExpenseAccountId, tx);
     if (input.insumoStockAccountId) await this.assertInsumoStockAccount(scope, input.insumoStockAccountId, tx);
     // X7 item 3 (F-TA-6 a): provisão D despesa / C a recolher (item 15) — despesa = Expense, a recolher = Liability.
     if (input.irpjDespesaAccountId) await this.assertExpenseAccount(scope, input.irpjDespesaAccountId, 'despesa de IRPJ', tx);
@@ -527,12 +529,25 @@ export class FiscalProfileService {
 
   /** ITEM-DESTINATION item 20 (F-ID-5 a): análogo ao `assertAssetAccount` — o insumo do serviço vai para
    *  DESPESA na entrada (F-ID-3 a), então a conta é folha de resultado `nature = Expense` do escopo. */
-  private async assertExpenseAccount(scope: AccountingScope, id: string, label: string, tx?: Prisma.TransactionClient): Promise<void> {
+  private async assertExpenseAccount(scope: AccountingScope, id: string, label: string, tx?: Prisma.TransactionClient): Promise<{ code: string; nature: string }> {
     const account = await this.accountRepo.findById(scope, id, tx);
     if (!account || account.deletedAt) throw new ValidationError(`Conta de ${label} '${id}' não existe neste escopo.`);
     if (!account.acceptsEntries) throw new ValidationError(`Conta de ${label} '${account.code}' não aceita lançamentos (não é folha).`);
     if (account.nature !== 'Expense') {
       throw new ValidationError(`Conta de ${label} '${account.code}' tem natureza ${account.nature}; esperado Expense (insumo vai para despesa na entrada — ITEM-DESTINATION F-ID-3 a).`);
+    }
+    return account;
+  }
+
+  /** Lacuna L-20261121-034042-051e (dono, AskUserQuestion, 2026-11-21: opção (a)): além do `assertExpenseAccount`, a conta de
+   *  insumo precisa ser uma folha que a regra da DRE já classifica como `costOfGoodsSold` (hoje 4.2 e 4.7). A DRE e o J150 leem o
+   *  código, não o papel; despesa operacional ficaria abaixo do lucro bruto (NBC TG 1002 item 5.1 (d)). */
+  private async assertInsumoCostAccount(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<void> {
+    const account = await this.assertExpenseAccount(scope, id, 'insumo do serviço', tx);
+    if (findMappingRule(account.nature, account.code, 'DRE')?.section !== 'costOfGoodsSold') {
+      throw new ValidationError(
+        `Conta de insumo do serviço '${account.code}' não é custo na DRE: escolha uma folha sob 4.7 (Custo dos Serviços Prestados) ou 4.2, senão o insumo fica abaixo do lucro bruto.`,
+      );
     }
   }
 

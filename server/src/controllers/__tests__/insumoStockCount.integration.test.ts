@@ -32,7 +32,7 @@ const putProfile = (body: Record<string, unknown>) =>
   request(app).put('/api/accounting/fiscal-profile').set(authHeader(dono)).send({
     unitId: UNIT, regimeTributario: 'REAL', icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO',
     icmsRecuperavelAccountId: accounts['1.1.8'], pisCofinsRecuperavelAccountId: accounts['1.1.9'],
-    insumoExpenseAccountId: accounts['4.1.9'], ...body,
+    insumoExpenseAccountId: accounts['4.7.1'], ...body,
   });
 const count = (countDate: string, countedValueCents: number) =>
   request(app).post('/api/accounting/insumo-stock-counts').set(authHeader(dono)).send({ unitId: UNIT, countDate, countedValueCents });
@@ -57,7 +57,7 @@ describe('Insumo do serviço — estoque com inventário periódico (cenário 30
     await criarConta('2.1.2.01', 'Fornecedores a Pagar', 'Liability');
     await criarConta('1.1.8', 'ICMS a Recuperar', 'Asset');
     await criarConta('1.1.9', 'PIS/COFINS a Recuperar', 'Asset');
-    await criarConta('4.1.9', 'Insumos do serviço', 'Expense');
+    await criarConta('4.7.1', 'Insumos do serviço (custo)', 'Expense');
     const products = await prisma.dynamicTable.create({
       data: { userId: dono.id, name: 'Products', internalName: 'products', category: 'products', schema: { fields: [{ name: 'name', label: 'Name', type: 'string', required: true }] } },
     });
@@ -87,7 +87,7 @@ describe('Insumo do serviço — estoque com inventário periódico (cenário 30
     const revenda = await putProfile({ insumoStockAccountId: accounts['1.1.3.01'] });
     expect(revenda.status).toBe(400);
     expect(JSON.stringify(revenda.body)).toMatch(/estoque de revenda/);
-    expect((await putProfile({ insumoStockAccountId: accounts['4.1.9'] })).status).toBe(400);
+    expect((await putProfile({ insumoStockAccountId: accounts['4.7.1'] })).status).toBe(400);
     const ok = await putProfile({ insumoStockAccountId: accounts['1.1.3.02'] });
     expect(ok.status).toBe(200);
     const get = await request(app).get('/api/accounting/fiscal-profile').set(authHeader(dono)).query({ unitId: UNIT });
@@ -98,7 +98,7 @@ describe('Insumo do serviço — estoque com inventário periódico (cenário 30
     const res = await request(app).post('/api/nfe/purchase').set(authHeader(dono)).field('unitId', UNIT).field('itemMappings', MAPPINGS)
       .attach('file', XML, { filename: 'nfe.xml', contentType: 'text/xml' });
     expect(res.status).toBe(201);
-    expect(await saldo('4.1.9', '2025-07-01', '2025-07-31')).toBe(0);
+    expect(await saldo('4.7.1', '2025-07-01', '2025-07-31')).toBe(0);
     expect(await saldo('1.1.3.02', '2025-01-01', '2025-07-31')).toBe(INSUMO);
     // a revenda não muda: só ela gera movimento de estoque
     const movs = await prisma.stockMovement.findMany({ where: { inventoryItem: { userId: dono.id, unitId: UNIT } } });
@@ -112,13 +112,13 @@ describe('Insumo do serviço — estoque com inventário periódico (cenário 30
     expect(await prisma.journalEntry.count({ where: { unitId: UNIT, sourceType: 'insumo_stock_count' } })).toBe(0);
   });
 
-  it('item 4 — contagem de 31/08 com zero: o custo vai para agosto (D 4.1.9 / C estoque de insumo)', async () => {
+  it('item 4 — contagem de 31/08 com zero: o custo vai para agosto (D 4.7.1 / C estoque de insumo)', async () => {
     const res = await count('2025-08-31', 0);
     expect(res.status).toBe(201);
     expect(res.body.data).toMatchObject({ bookValueCents: INSUMO, countedValueCents: 0, adjustmentCents: INSUMO });
     expect(res.body.data.entryId).toEqual(expect.any(String));
-    expect(await saldo('4.1.9', '2025-08-01', '2025-08-31')).toBe(INSUMO);
-    expect(await saldo('4.1.9', '2025-07-01', '2025-07-31')).toBe(0);
+    expect(await saldo('4.7.1', '2025-08-01', '2025-08-31')).toBe(INSUMO);
+    expect(await saldo('4.7.1', '2025-07-01', '2025-07-31')).toBe(0);
     expect(await saldo('1.1.3.02', '2025-01-01', '2025-08-31')).toBe(0);
   });
 
@@ -129,14 +129,14 @@ describe('Insumo do serviço — estoque com inventário periódico (cenário 30
     expect(await prisma.journalEntry.count({ where: { unitId: UNIT, sourceType: 'insumo_stock_count' } })).toBe(1);
   });
 
-  it('item 4 — sobra na contagem (contado > saldo): D estoque de insumo / C 4.1.9', async () => {
+  it('item 4 — sobra na contagem (contado > saldo): D estoque de insumo / C 4.7.1', async () => {
     // O saldo até 30/08 ainda é INSUMO (a baixa é de 31/08). Contado INSUMO + 100 ⇒ ajuste −100.
     const res = await count('2025-08-30', INSUMO + 100);
     expect(res.status).toBe(201);
     expect(res.body.data).toMatchObject({ bookValueCents: INSUMO, adjustmentCents: -100 });
     const entry = await prisma.journalEntry.findUniqueOrThrow({ where: { id: res.body.data.entryId }, include: { postings: { include: { account: true } } } });
     const byCode = Object.fromEntries(entry.postings.map((p) => [p.account.code, { d: Number(p.debitCents), c: Number(p.creditCents) }]));
-    expect(byCode).toEqual({ '1.1.3.02': { d: 100, c: 0 }, '4.1.9': { d: 0, c: 100 } });
+    expect(byCode).toEqual({ '1.1.3.02': { d: 100, c: 0 }, '4.7.1': { d: 0, c: 100 } });
   });
 
   const reverse = (lancamentoId: string, reversalPostingDate: string) =>
