@@ -61,17 +61,20 @@ export function LeadTasksPanel({ leadId, onChanged }: LeadTasksPanelProps) {
   const [formAssignee, setFormAssignee] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  // Erro de concluir/reabrir tarefa: o bloco do formulário só existe com o formulário aberto, então vai num alerta próprio.
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const toggleDone = async (taskId: string, currentStatus: string) => {
     if (!tasksTableId) return;
     const nextStatus = currentStatus === 'Done' ? 'To Do' : 'Done';
     setBusyId(taskId);
+    setActionError(null);
     try {
       await DynamicTableService.updateRecord(tasksTableId, taskId, { data: { status: nextStatus } });
       await reload();
       onChanged?.();
     } catch (err) {
-      setFormError(resolveErrorMessage(err, t));
+      setActionError(resolveErrorMessage(err, t));
     } finally {
       setBusyId(null);
     }
@@ -132,6 +135,9 @@ export function LeadTasksPanel({ leadId, onChanged }: LeadTasksPanelProps) {
 
   return (
     <div className="space-y-3">
+      {actionError ? (
+        <p role="alert" className="text-sm font-bold text-rose-600 dark:text-rose-400">{actionError}</p>
+      ) : null}
       {tasks.length === 0 ? (
         <p className="text-sm font-bold text-gray-400">{t('detail.no_tasks', 'Nenhuma tarefa.')}</p>
       ) : (

@@ -6,6 +6,8 @@ import { DynamicTableService } from '../../../lib/services/dynamic-table.service
 import type { ITableSchema } from '../../dashboard/components/shared/dynamic-tables.client';
 import { type CrmRecord } from './useCrmData';
 import { useOwnerFilter, type OwnerOption } from './useOwnerFilter';
+import { notify } from '../../../lib/notifications/notify';
+import { wasNotified } from '../../../lib/notifications/notified';
 
 /** A pipeline stage projected as a Kanban column. */
 export interface PipelineColumn {
@@ -244,6 +246,10 @@ export function usePipelineBoard(config: PipelineBoardConfig): PipelineBoardStat
       } catch (e) {
         console.error(`[${logLabel}] advance failed`, e);
         setLocalRecords(snapshot);
+        // O servidor recusou a mudança de etapa: o card volta sozinho, então avise por quê (sem repetir o toast do apiClient).
+        if (!wasNotified(e)) {
+          notify(e instanceof Error && e.message ? e.message : 'Não foi possível mover o card de etapa.', 'error', 'CRM');
+        }
       }
     },
     [advance, reload, logLabel],
