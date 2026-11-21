@@ -119,6 +119,7 @@ vi.mock('../components/AccountsReceivablePanel', () => ({
 
 describe('AccountingView — F-AGING-5(b) cross-navigation seed', () => {
   beforeEach(() => {
+    window.history.replaceState(null, '', '/'); // a aba vive em ?tab=: não vaza entre testes
     vi.clearAllMocks();
     cleanup();
   });
@@ -162,6 +163,7 @@ describe('AccountingView — F-AGING-5(b) cross-navigation seed', () => {
 
 describe('AccountingView — deep link do MovementModal (Entrada+Compra → Payable de estoque)', () => {
   beforeEach(() => {
+    window.history.replaceState(null, '', '/'); // a aba vive em ?tab=: não vaza entre testes
     vi.clearAllMocks();
     cleanup();
   });
