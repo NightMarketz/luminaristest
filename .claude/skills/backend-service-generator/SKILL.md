@@ -27,7 +27,7 @@ Antes de gerar, leia `.claude/skills/_ARCHITECTURE-CONTRACT.md` — as regras cr
 
 Cada item abaixo é uma REGRA DE GERAÇÃO (o `luminaris-reviewer` cobra exatamente isto na camada Service). Gere já em conformidade.
 
-- [ ] **[SVC-001] Policy-check ANTES de qualquer acesso a dados** em toda operação: `if (!this.<resource>Policy.canXxx(actor, targetId?)) throw new ForbiddenError();` — primeira linha do método, antes de tocar o repository.
+- [ ] **[SVC-001] Policy-check ANTES de devolver ou alterar dados** em toda operação. Sem registro-alvo (create, getAll): `if (!this.<resource>Policy.canXxx(actor)) throw new ForbiddenError();` na primeira linha, antes de tocar o repository. Sobre registro com dono: prefira o dono na própria busca (`repo.findById(actor.id, id)` → `NotFoundError`); buscar e checar depois é aceito se a checagem vier antes de devolver ou alterar qualquer coisa (Contrato §2, Policy-first).
 - [ ] **[SVC-002] Erros tipados de `lib/errors`:** `ForbiddenError` quando policy nega; `NotFoundError` quando recurso não existe (não `null` cru, não `throw new Error`).
 - [ ] **[SVC-003] Cross-tenant = `NotFoundError`, NÃO `ForbiddenError`** — recurso de outro usuário deve parecer inexistente (anti-enumeration).
 - [ ] **[SVC-004] DI por construtor:** `constructor(private <resource>Repository: I<Resource>Repository, private <resource>Policy: I<Resource>Policy) {}`. **Nunca** `new <Resource>Repository()`/`new <Resource>Policy()` dentro do service.

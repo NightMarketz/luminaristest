@@ -100,6 +100,9 @@ describe('Tier-0 (multi-tenant isolation)', () => {
     const t = await seedTable('userA', 'basic_tbl', BASIC_SCHEMA);
     const row = await create(ctxFor('userA'), t.id, { title: 'Hi', status: 'Open' });
     await expect(update(ctxFor('userB'), row.id, { title: 'Hacked' })).rejects.toBeInstanceOf(ForbiddenError);
+    // Contrato §5: além do erro, nada do outro dono foi escrito.
+    const stored = await prisma.dynamicTableData.findUniqueOrThrow({ where: { id: row.id } });
+    expect(JSON.stringify(stored.data)).not.toContain('Hacked');
   });
 });
 
