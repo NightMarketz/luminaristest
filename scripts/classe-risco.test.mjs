@@ -1,7 +1,26 @@
 // node --test scripts/classe-risco.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { classificar, bumpMajor } from './classe-risco.mjs';
+import { classificar, bumpMajor, majorsNoDiff } from './classe-risco.mjs';
+
+// Recorte do diff real do #952 (express 4→5 num PR de várias dependências, título sem versão).
+const DIFF_952 = [
+  'diff --git a/package-lock.json b/package-lock.json',
+  '--- a/package-lock.json',
+  '+++ b/package-lock.json',
+  '-        "express": "^4.18.2",',
+  '+        "express": "^5.3.0",',
+  'diff --git a/server/package.json b/server/package.json',
+  '--- a/server/package.json',
+  '+++ b/server/package.json',
+  '@@ -40,7 +40,7 @@',
+  '-    "express": "^4.18.2",',
+  '+    "express": "^5.3.0",',
+  '@@ -90,7 +90,7 @@',
+  '-    "@types/express": "^4.17.21",',
+  '+    "@types/express": "^5.0.6",',
+].join('\n');
+const TITULO_952 = 'chore(deps): Bump express and @types/express in /server';
 
 test('FE não fiscal, doc de nó e teste são verdes', () => {
   const r = classificar({ arquivos: ['my-app/features/crm/Kanban.tsx', 'docs/plano/nos/W3.md', 'server/src/features/crm/__tests__/x.test.ts'] });
@@ -44,6 +63,50 @@ test('dependência: major é vermelho, minor/patch e grupo são verdes', () => {
   assert.ok(!bumpMajor('chore(deps): Bump zod from 4.1.0 to 4.3.2 in /server'));
   assert.ok(!bumpMajor('chore(deps): Bump the server-minor-patch group in /server with 24 updates'));
   assert.equal(classificar({ arquivos: ['server/package.json'], titulo: 'Bump uuid from 11.1.0 to 14.0.3' }).classe, 'vermelho');
+});
+
+test('#952: major sem versão no título é vermelho pelo diff do package.json, com revisor', () => {
+  assert.ok(!bumpMajor(TITULO_952)); // o título sozinho deixava passar
+  assert.deepEqual(majorsNoDiff(DIFF_952), [
+    'express ^4.18.2 → ^5.3.0 (server/package.json)',
+    '@types/express ^4.17.21 → ^5.0.6 (server/package.json)',
+  ]);
+  const r = classificar({ arquivos: ['package-lock.json', 'server/package.json'], titulo: TITULO_952, diff: DIFF_952 });
+  assert.equal(r.classe, 'vermelho');
+  assert.equal(r.revisor, true);
+});
+
+test('diff de grupo minor-patch continua verde; lockfile, script e versão do pacote não contam', () => {
+  const diff = [
+    'diff --git a/my-app/package.json b/my-app/package.json',
+    '-    "version": "1.4.0",', '+    "version": "2.0.0",',
+    '-    "build": "next build",', '+    "build": "next build --turbo",',
+    '-    "zod": "^4.1.0",', '+    "zod": "^4.3.2",',
+    '-    "react": "~19.0.1",', '+    "react": "~19.3.1",',
+    'diff --git a/package-lock.json b/package-lock.json',
+    '-      "version": "4.18.2",', '+      "version": "5.3.0",',
+    '-        "express": "^4.18.2",', '+        "express": "^5.3.0",',
+  ].join('\n');
+  assert.deepEqual(majorsNoDiff(diff), []);
+  const r = classificar({ arquivos: ['my-app/package.json', 'package-lock.json'],
+    titulo: 'chore(deps): Bump the npm-minor-patch group with 6 updates', diff });
+  assert.equal(r.classe, 'verde', r.motivos.join('; '));
+});
+
+test('0.x: a minor conta como major; spec que não é versão é ignorado', () => {
+  assert.deepEqual(majorsNoDiff('diff --git a/package.json b/package.json\n-  "x": "^0.3.1",\n+  "x": "^0.4.0",'),
+    ['x ^0.3.1 → ^0.4.0 (package.json)']);
+  assert.deepEqual(majorsNoDiff('diff --git a/package.json b/package.json\n-  "y": "workspace:*",\n+  "y": "^2.0.0",\n'
+    + '-  "z": "github:a/b",\n+  "z": "github:a/c",'), []);
+  assert.deepEqual(majorsNoDiff('diff --git a/package.json b/package.json\n-  "w": ">=4.8.4 <6.1.0",\n+  "w": ">=7.0.0",'),
+    ['w >=4.8.4 <6.1.0 → >=7.0.0 (package.json)']);
+});
+
+test('package.json cujo diff não pôde ser lido é vermelho (em dúvida, vermelho); sem package.json não importa', () => {
+  const r = classificar({ arquivos: ['server/package.json'], titulo: TITULO_952, diff: null });
+  assert.equal(r.classe, 'vermelho');
+  assert.equal(r.revisor, true);
+  assert.equal(classificar({ arquivos: ['my-app/a.tsx'], diff: null }).classe, 'verde');
 });
 
 test('draft, "não mergear" no título e lista vazia são vermelhos', () => {

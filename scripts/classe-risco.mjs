@@ -129,16 +129,64 @@ export const VERMELHO = [
 ].map(([glob, motivo]) => ({ glob, motivo, re: globToRegex(glob) }));
 
 // "Bump x from 4.104.0 to 7.43.0" → major mudou. Grupo minor-patch do dependabot não traz versão.
+// O título é só pista: PR de várias dependências ("Bump express and @types/express in /server", #952, express 4→5)
+// não traz versão e passava verde. A prova é o diff dos package.json (majorsNoDiff, abaixo).
 export function bumpMajor(titulo) {
   const m = /from v?(\d+)\.[\w.-]* to v?(\d+)\./.exec(titulo);
   return m ? m[1] !== m[2] : false;
+}
+
+// Major e minor do começo de um spec do npm ("^4.18.2", "~5", ">=4.8.4 <6.1.0", "5.x"). null = não é versão
+// (workspace:, file:, npm:alias, git, URL, tag como "latest", comando de script).
+function versaoDoSpec(spec) {
+  const m = /^(?:[~^=v]|[<>]=?|\s)*(\d+)(?:\.(\d+))?/.exec(spec.trim());
+  return m ? { major: Number(m[1]), minor: m[2] === undefined ? null : Number(m[2]) } : null;
+}
+
+function mudouMajor(de, para) {
+  if (de.major !== para.major) return true;
+  // Em 0.x o semver trata a minor como major (^0.3 não aceita 0.4).
+  return de.major === 0 && de.minor !== null && para.minor !== null && de.minor !== para.minor;
+}
+
+// Lê o diff unificado do PR e devolve cada dependência de package.json cuja major mudou, ex.:
+// "express ^4.18.2 → ^5.3.0 (server/package.json)". O lockfile fica de fora: ele repete as mesmas versões e as
+// transitivas, e quem declara a dependência é o package.json. A chave "version" é a versão do próprio pacote.
+export function majorsNoDiff(diff) {
+  const achados = [];
+  let arquivo = null;
+  let removidas = new Map(); // nome → fila de { spec, v } removidos (o mesmo nome pode estar em dependencies e peer)
+  for (const linha of diff.split(/\r?\n/)) {
+    const cab = /^diff --git a\/(\S+) b\/(\S+)/.exec(linha);
+    if (cab) {
+      removidas = new Map();
+      arquivo = cab[2].split('/').pop() === 'package.json' ? cab[2] : null;
+      continue;
+    }
+    if (!arquivo || linha.startsWith('---') || linha.startsWith('+++')) continue;
+    const m = /^([-+])\s*"([^"]+)"\s*:\s*"([^"]*)"\s*,?\s*$/.exec(linha);
+    if (!m || m[2] === 'version') continue;
+    const [, sinal, nome, spec] = m;
+    const v = versaoDoSpec(spec);
+    if (!v) continue;
+    if (sinal === '-') {
+      removidas.set(nome, [...(removidas.get(nome) ?? []), { spec, v }]);
+      continue;
+    }
+    const antes = removidas.get(nome)?.shift();
+    if (antes && mudouMajor(antes.v, v)) achados.push(`${nome} ${antes.spec} → ${spec} (${arquivo})`);
+  }
+  return achados;
 }
 
 // revisor: o revisor-independente é obrigatório só no vermelho de CÓDIGO (D-2026-11-06-REVISAO-CONVERGENCIA).
 // Arquivo vermelho em .md (cédula, ADR, gate, CLAUDE.md, agente, skill) vai ao lote do dono sem revisor.
 const SO_TEXTO = /\.md$/i;
 
-export function classificar({ arquivos, titulo = '', draft = false }) {
+const PACKAGE_JSON = /(^|\/)package\.json$/;
+
+// diff: texto do `gh pr diff` (modo pr). undefined = não lido (modo arquivos); null = a leitura falhou.
+export function classificar({ arquivos, titulo = '', draft = false, diff }) {
   const motivos = [];
   let revisor = false;
   for (const f of arquivos) {
@@ -148,7 +196,14 @@ export function classificar({ arquivos, titulo = '', draft = false }) {
       if (!SO_TEXTO.test(f)) revisor = true;
     }
   }
-  if (bumpMajor(titulo)) { motivos.push(`dependência major: ${titulo}`); revisor = true; }
+  const majors = typeof diff === 'string' ? majorsNoDiff(diff) : [];
+  for (const d of majors) motivos.push(`dependência major: ${d}`);
+  if (!majors.length && bumpMajor(titulo)) motivos.push(`dependência major: ${titulo}`);
+  if (majors.length || bumpMajor(titulo)) revisor = true;
+  if (diff === null && arquivos.some((f) => PACKAGE_JSON.test(f))) {
+    motivos.push('package.json sem diff legível (em dúvida, vermelho)');
+    revisor = true;
+  }
   if (/n[ãa]o mergear/i.test(titulo)) motivos.push('título pede para não mergear');
   if (draft) motivos.push('PR em draft');
   if (arquivos.length === 0) { motivos.push('sem lista de arquivos (em dúvida, vermelho)'); revisor = true; }
@@ -158,7 +213,16 @@ export function classificar({ arquivos, titulo = '', draft = false }) {
 function lerPr(n) {
   const out = execFileSync('gh', ['pr', 'view', String(n), '--json', 'files,title,isDraft'], { encoding: 'utf8' });
   const pr = JSON.parse(out);
-  return { arquivos: pr.files.map((f) => f.path), titulo: pr.title, draft: pr.isDraft };
+  const arquivos = pr.files.map((f) => f.path);
+  let diff;
+  if (arquivos.some((f) => PACKAGE_JSON.test(f))) {
+    try {
+      diff = execFileSync('gh', ['pr', 'diff', String(n)], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
+    } catch {
+      diff = null; // classificar() marca vermelho: sem o diff não dá para provar que nenhuma major mudou
+    }
+  }
+  return { arquivos, titulo: pr.title, draft: pr.isDraft, diff };
 }
 
 const isMain = process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/').split('/').pop());
