@@ -1,0 +1,301 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Súmula nº 462 do TST",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/jurisprudencia/tst/sumulas/sumula-462.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d6c0159be76282be2cdb1dc03c91346ae6dc9b51/jurisprudencia/tst/sumulas/sumula-462.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "versao_texto": "caderno consolidado do tribunal",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "d6c0159be76282be2cdb1dc03c91346ae6dc9b51",
+      "alertas": [
+        "versao_texto = 'caderno consolidado do tribunal' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T00:58:41-03:00",
+      "sha256": "1cda90833993c12ba8e96a706bb65cb1faeb819caaded455e7c5ebc6b0215136",
+      "arquivo": "docs/D01_sumula-462.md",
+      "texto": "docs/D01_sumula-462.txt",
+      "bytes": 759,
+      "sha256_texto": "d6585e6b69239b91a76c39cfb70adab9b43b1c46c79847406fa22eab303e20a0",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Súmula nº 27 do TST",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/jurisprudencia/tst/sumulas/sumula-27.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d6c0159be76282be2cdb1dc03c91346ae6dc9b51/jurisprudencia/tst/sumulas/sumula-27.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "versao_texto": "caderno consolidado do tribunal",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "d6c0159be76282be2cdb1dc03c91346ae6dc9b51",
+      "alertas": [
+        "versao_texto = 'caderno consolidado do tribunal' (não é texto compilado: alterações posteriores não aparecem)",
+        "corpo curto ou com aviso (texto integral pode faltar)"
+      ],
+      "baixado_em": "2026-11-21T00:58:42-03:00",
+      "sha256": "7b2afa2c4555604e17f2a0c239222d6df89e8102c79530d6ea4fd7f301d19a00",
+      "arquivo": "docs/D02_sumula-27.md",
+      "texto": "docs/D02_sumula-27.txt",
+      "bytes": 533,
+      "sha256_texto": "cc1a127098334bbbb2744c745fcbc89a6293f56355b45bb3c815bb47dc4ddb08",
+      "captura": {
+        "anterior": {
+          "slug": "brief-pes4-f2",
+          "id": "D13",
+          "baixado_em": "2026-11-05T20:23:44-03:00",
+          "sha256_texto": "cc1a127098334bbbb2744c745fcbc89a6293f56355b45bb3c815bb47dc4ddb08"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Súmula nº 51 do TST",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/jurisprudencia/tst/sumulas/sumula-51.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d6c0159be76282be2cdb1dc03c91346ae6dc9b51/jurisprudencia/tst/sumulas/sumula-51.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "versao_texto": "caderno consolidado do tribunal",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "d6c0159be76282be2cdb1dc03c91346ae6dc9b51",
+      "alertas": [
+        "versao_texto = 'caderno consolidado do tribunal' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T00:58:44-03:00",
+      "sha256": "1d355ad2a234b5c72aa15b57009b532abb5fc75388f7d298ecf342c7e00552fd",
+      "arquivo": "docs/D03_sumula-51.md",
+      "texto": "docs/D03_sumula-51.txt",
+      "bytes": 1243,
+      "sha256_texto": "202c3336b0249f71d64ff0ad60c16b2a702f4d0be6f19fc6c3b134851baa5ea7",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "Orientação Jurisprudencial SDI1-394 do TST",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/jurisprudencia/tst/orientacoes-jurisprudenciais/oj-sdi1-394.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d6c0159be76282be2cdb1dc03c91346ae6dc9b51/jurisprudencia/tst/orientacoes-jurisprudenciais/oj-sdi1-394.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "versao_texto": "caderno consolidado do tribunal",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "d6c0159be76282be2cdb1dc03c91346ae6dc9b51",
+      "alertas": [
+        "versao_texto = 'caderno consolidado do tribunal' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T00:58:45-03:00",
+      "sha256": "08f6f1542ab74f7e9ef9a4ae7bd194fa26d20e82a29369021c624cd49dc87f28",
+      "arquivo": "docs/D04_oj-sdi1-394.md",
+      "texto": "docs/D04_oj-sdi1-394.txt",
+      "bytes": 911,
+      "sha256_texto": "fefd5dacbf58cedf1ba4c2423de5e4b44beec813b548744fe90704ff75c6b8e7",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "Orientação Jurisprudencial SDI1-54 do TST",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/jurisprudencia/tst/orientacoes-jurisprudenciais/oj-sdi1-54.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d6c0159be76282be2cdb1dc03c91346ae6dc9b51/jurisprudencia/tst/orientacoes-jurisprudenciais/oj-sdi1-54.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "versao_texto": "caderno consolidado do tribunal",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "d6c0159be76282be2cdb1dc03c91346ae6dc9b51",
+      "alertas": [
+        "versao_texto = 'caderno consolidado do tribunal' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T00:58:47-03:00",
+      "sha256": "bdaf03e1050d74c697ecbc6bbccd0fdd5e58a633a540396158da9d4a845649a5",
+      "arquivo": "docs/D05_oj-sdi1-54.md",
+      "texto": "docs/D05_oj-sdi1-54.txt",
+      "bytes": 972,
+      "sha256_texto": "1f4d8b64f92ae6559fd010b79131778f918b2ddc9843927fb3dc9754227aa2f7",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "Decreto-Lei nº 5.452 de 01/05/1943",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos-lei/1943/del-5452-1943-05-01.md",
+      "url_final": "https://github.com/ctresb/leis/blob/f3db126e93c366f938bd927bbf184a8fcf64b2ea/federal/decretos-lei/1943/del-5452-1943-05-01.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "f3db126e93c366f938bd927bbf184a8fcf64b2ea",
+      "alertas": [],
+      "baixado_em": "2026-11-21T00:58:48-03:00",
+      "sha256": "7eee0da3b620a17fbd7b34a0eb9adc967c4fb6650d1acba37469d247f88f4600",
+      "arquivo": "docs/D06_del-5452-1943-05-01.md",
+      "texto": "docs/D06_del-5452-1943-05-01.txt",
+      "bytes": 690741,
+      "sha256_texto": "f8f704c5245f9eb179f540b7cf913e2de5a309571d7a8c5ebdae64d3f401e002",
+      "captura": {
+        "anterior": {
+          "slug": "parecer-salao-sp-4-pessoas",
+          "id": "D06",
+          "baixado_em": "2026-11-20T16:47:42-03:00",
+          "sha256_texto": "f8f704c5245f9eb179f540b7cf913e2de5a309571d7a8c5ebdae64d3f401e002"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "Lei nº 10.406 de 10/01/2002",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2002/lei-10406-2002-01-10.md",
+      "url_final": "https://github.com/ctresb/leis/blob/40fe0ecf521a6ae5e22077bcc927c90a9477d3a5/federal/leis-ordinarias/2002/lei-10406-2002-01-10.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2002-01-10;10406",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "40fe0ecf521a6ae5e22077bcc927c90a9477d3a5",
+      "alertas": [],
+      "baixado_em": "2026-11-21T00:58:50-03:00",
+      "sha256": "be0cd7d8a1eaacb21cb64f07086929db91f43ad3149b3c721cd33873d328c32c",
+      "arquivo": "docs/D07_lei-10406-2002-01-10.md",
+      "texto": "docs/D07_lei-10406-2002-01-10.txt",
+      "bytes": 678720,
+      "sha256_texto": "0e4b7cd2a2318cc8b363fc81c0eeb25e87d904d1d01439ed3c62c8718ccc8a47",
+      "captura": {
+        "anterior": {
+          "slug": "parecer-salao-sp-4-pessoas",
+          "id": "D07",
+          "baixado_em": "2026-11-20T16:47:44-03:00",
+          "sha256_texto": "0e4b7cd2a2318cc8b363fc81c0eeb25e87d904d1d01439ed3c62c8718ccc8a47"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "Lei nº 8.177 de 01/03/1991",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1991/lei-8177-1991-03-01.md",
+      "url_final": "https://github.com/ctresb/leis/blob/62fb4e80645dd536e3f3b79a7148a604123566f1/federal/leis-ordinarias/1991/lei-8177-1991-03-01.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1991-03-01;8177",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "62fb4e80645dd536e3f3b79a7148a604123566f1",
+      "alertas": [],
+      "baixado_em": "2026-11-21T00:58:52-03:00",
+      "sha256": "a38b30f0e57cbb595c323b6563afd65d2e5e70e844c2a0aa7ee74b01c00356cf",
+      "arquivo": "docs/D08_lei-8177-1991-03-01.md",
+      "texto": "docs/D08_lei-8177-1991-03-01.txt",
+      "bytes": 34814,
+      "sha256_texto": "85fe9530c9dc2d0e5f4eaf87c740437b84a7facb2654fcba4fd9ebb5b9b6a14a",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D09",
+      "titulo": "Lei nº 3.207 de 18/07/1957",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1957/lei-3207-1957-07-18.md",
+      "url_final": "https://github.com/ctresb/leis/blob/4e17e3dea1fe2756a78ac084867716ee896866f5/federal/leis-ordinarias/1957/lei-3207-1957-07-18.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1957-07-18;3207",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "4e17e3dea1fe2756a78ac084867716ee896866f5",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T00:58:53-03:00",
+      "sha256": "d77e8543595a7f791a4bf67ba35dfef22b3201ddea9f6276a08e2fa70aa00c5d",
+      "arquivo": "docs/D09_lei-3207-1957-07-18.md",
+      "texto": "docs/D09_lei-3207-1957-07-18.txt",
+      "bytes": 4206,
+      "sha256_texto": "66de512c6e8244c117231c98730e77be9f52ee965a53fc18ace94d556b75c9de",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D10",
+      "titulo": "D10_2dd7eaba-f12f-c6e4-5641-a711af0f4db1",
+      "url": "https://www.tst.jus.br/documents/10157/0/IRR009.pdf/2dd7eaba-f12f-c6e4-5641-a711af0f4db1?t=1726685298141",
+      "url_final": "https://www.tst.jus.br/documents/10157/0/IRR009.pdf/2dd7eaba-f12f-c6e4-5641-a711af0f4db1?t=1726685298141",
+      "orgao": "TST",
+      "baixado_em": "2026-11-21T01:00:41-03:00",
+      "sha256": "a95a64d08b11ef60d298292d22180933f26037a9e7c501a60a048de71f61b92d",
+      "arquivo": "docs/D10_2dd7eaba-f12f-c6e4-5641-a711af0f4db1.pdf",
+      "texto": "docs/D10_2dd7eaba-f12f-c6e4-5641-a711af0f4db1.txt",
+      "bytes": 514608,
+      "sha256_texto": "d98703f1c09559d5a3b0c58c3bd7c5334bd7b1444cc1c5b0b10398867040a353",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D11",
+      "titulo": "D11_2026_ata_0009a_sessao_ord_setr06-pdf",
+      "url": "https://juslaboris.tst.jus.br/bitstream/handle/20.500.12178/263786/2026_ata_0009a_sessao_ord_setr06.pdf?sequence=2&isAllowed=y",
+      "url_final": "https://juslaboris.tst.jus.br/bitstream/handle/20.500.12178/263786/2026_ata_0009a_sessao_ord_setr06.pdf?sequence=2&isAllowed=y",
+      "orgao": "TST",
+      "baixado_em": "2026-11-21T01:00:47-03:00",
+      "sha256": "650813e4ea0e255e27fb5d52be1ca18a50e30b11e48b6b89646accfb37d1d907",
+      "arquivo": "docs/D11_2026_ata_0009a_sessao_ord_setr06-pdf.pdf",
+      "texto": "docs/D11_2026_ata_0009a_sessao_ord_setr06-pdf.txt",
+      "bytes": 1742963,
+      "sha256_texto": "e80579a9c92ffe7951e93d83de43a4207d8db36bfed0022d232cf4d755d64063",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D12",
+      "titulo": "D12_irr164",
+      "url": "https://www.tst.jus.br/documents/d/guest/irr164",
+      "url_final": "https://www.tst.jus.br/documents/d/guest/irr164",
+      "orgao": "TST",
+      "baixado_em": "2026-11-21T01:04:38-03:00",
+      "sha256": "fa923fc6c360e08a622a275368d8f4d2dd4ab33be2c3921f9eb7a9d22eac3ac4",
+      "arquivo": "docs/D12_irr164.pdf",
+      "texto": "docs/D12_irr164.txt",
+      "bytes": 112091,
+      "sha256_texto": "41baebc686da4b498dff65ec4ffee8e61a82082e2d1c5c7677f902dd18f58476",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D13",
+      "titulo": "D13_irr168",
+      "url": "https://www.tst.jus.br/documents/d/guest/irr168",
+      "url_final": "https://www.tst.jus.br/documents/d/guest/irr168",
+      "orgao": "TST",
+      "baixado_em": "2026-11-21T01:04:38-03:00",
+      "sha256": "29ce44b3ee12f5a6185d36cb0ac73cfa31c86b4f17a636cfb0b766dca6431985",
+      "arquivo": "docs/D13_irr168.pdf",
+      "texto": "docs/D13_irr168.txt",
+      "bytes": 498273,
+      "sha256_texto": "863418b79a0cee6936e131ce68646d88b30f4725bb517a4bb1f04d55375f6af0",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "verificacao-parecer-comissao-cartao",
+  "pergunta": "O parecer do advogado sobre comissão do cabeleireiro CLT em venda parcelada no cartão (SP capital) cita corretamente as normas, súmulas, OJs e precedentes?",
+  "criado": "2026-11-21T00:58:13-03:00"
+}
