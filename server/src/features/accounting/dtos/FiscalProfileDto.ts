@@ -43,6 +43,9 @@ const FiscalProfileFields = z
     pisCofinsCreditExcludesIcms: z.boolean().default(true),
     pisCofinsCreditIncludesIpi: z.boolean().default(false),
     pisCofinsCreditFromSimplesSupplier: z.boolean().default(false),
+    // Lacuna c516 (D-5 reaberta pelo dono em 21/11, padrão ligado): crédito do monofásico por NCM usado como insumo do
+    // serviço no não cumulativo — IN RFB 2.121/2022 art. 178; SC Cosit 496/2017 e 16/2024. O contador desliga.
+    pisCofinsCreditMonofasicoInsumo: z.boolean().default(true),
     icmsRecuperavelAccountId: z.string().min(1).nullable().optional(),
     pisCofinsRecuperavelAccountId: z.string().min(1).nullable().optional(),
     // ITEM-DESTINATION item 20 (F-ID-5 a): conta de despesa (Expense, folha) do insumo do serviço — código do contador.

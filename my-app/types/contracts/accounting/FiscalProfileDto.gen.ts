@@ -7,6 +7,7 @@ pisCofinsRegime: ("SIMPLES" | "CUMULATIVO" | "NAO_CUMULATIVO")
 pisCofinsCreditExcludesIcms?: boolean
 pisCofinsCreditIncludesIpi?: boolean
 pisCofinsCreditFromSimplesSupplier?: boolean
+pisCofinsCreditMonofasicoInsumo?: boolean
 icmsRecuperavelAccountId?: (string | null)
 pisCofinsRecuperavelAccountId?: (string | null)
 insumoExpenseAccountId?: (string | null)
@@ -88,6 +89,7 @@ pisCofinsRegime: ("SIMPLES" | "CUMULATIVO" | "NAO_CUMULATIVO")
 pisCofinsCreditExcludesIcms?: boolean
 pisCofinsCreditIncludesIpi?: boolean
 pisCofinsCreditFromSimplesSupplier?: boolean
+pisCofinsCreditMonofasicoInsumo?: boolean
 icmsRecuperavelAccountId?: (string | null)
 pisCofinsRecuperavelAccountId?: (string | null)
 insumoExpenseAccountId?: (string | null)

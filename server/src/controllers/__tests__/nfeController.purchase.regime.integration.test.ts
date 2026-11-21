@@ -79,7 +79,7 @@ describe('X6 — perfil fiscal + import de compra por regime', () => {
   it('PUT cria o perfil (idempotente) e GET o devolve com defaults conservadores; evento fiscal_profile.updated na trilha', async () => {
     const res = await putProfile({ regimeTributario: 'REAL', icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO' });
     expect(res.status).toBe(200);
-    expect(res.body.data).toEqual(expect.objectContaining({ pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false, pisCofinsCreditFromSimplesSupplier: false, icmsRecuperavelAccountId: null }));
+    expect(res.body.data).toEqual(expect.objectContaining({ pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false, pisCofinsCreditFromSimplesSupplier: false, pisCofinsCreditMonofasicoInsumo: true, icmsRecuperavelAccountId: null })); // c516: padrão ligado (dono 21/11)
     const again = await putProfile({ regimeTributario: 'REAL', icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO', icmsRecuperavelAccountId: accounts['1.1.8'], pisCofinsRecuperavelAccountId: accounts['1.1.9'] });
     expect(again.status).toBe(200);
     expect(await prisma.fiscalProfile.count({ where: { userId: dono.id, unitId: UNIT } })).toBe(1);

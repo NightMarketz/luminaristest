@@ -2407,6 +2407,7 @@
       "codMun": "Issuer municipality (IBGE code, 7 digits)",
       "creditExcludesIcms": "PIS/COFINS credit excludes ICMS from the base",
       "creditFromSimplesSupplier": "Credit on purchases from a Simples supplier",
+      "creditMonofasicoInsumo": "PIS/COFINS credit on single-phase products used as a service input (IN RFB 2.121 art. 178)",
       "creditIncludesIpi": "PIS/COFINS credit includes IPI (fixed rule: no)",
       "dpsSerie": "DPS series",
       "emissaoForaDoMes": "Out-of-month accrual date",
