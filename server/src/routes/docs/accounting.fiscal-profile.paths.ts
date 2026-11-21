@@ -48,6 +48,7 @@
  *                 pisCofinsCreditExcludesIcms: { type: boolean, default: true, description: 'Lei 10.833/2003 art. 3º § 2º III (redação da Lei 14.592/2023)' }
  *                 pisCofinsCreditIncludesIpi: { type: boolean, default: false }
  *                 pisCofinsCreditFromSimplesSupplier: { type: boolean, default: false }
+ *                 pisCofinsCreditMonofasicoInsumo: { type: boolean, default: true }
  *                 icmsRecuperavelAccountId: { type: string, nullable: true }
  *                 pisCofinsRecuperavelAccountId: { type: string, nullable: true }
  *                 partnerAccountRef: { type: string, nullable: true }

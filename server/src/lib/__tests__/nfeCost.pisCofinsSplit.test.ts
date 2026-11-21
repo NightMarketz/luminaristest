@@ -17,6 +17,7 @@ const regime = (over: Partial<CostRegime> = {}): CostRegime => ({
   pisCofinsCreditExcludesIcms: true,
   pisCofinsCreditIncludesIpi: false,
   pisCofinsCreditFromSimplesSupplier: false,
+  pisCofinsCreditMonofasicoInsumo: false,
   ...over,
 });
 
@@ -25,6 +26,18 @@ describe('acquisitionCost — crédito PIS × Cofins separado (X8 item 5)', () =
     const c = acquisitionCost(NFE, ITENS, regime(), undefined, LEGAIS_SEMENTE);
     expect([c.creditoPisCents, c.creditoCofinsCents, c.creditoPisCofinsCents]).toEqual([140, 644, 784]);
     for (const it of c.itens) expect(it.creditoPisCents + it.creditoCofinsCents).toBe(it.creditoPisCofinsCents);
+  });
+
+  // Padrão de produção (chave c516 ligada, revisor #1301 A1): REVENDA não muda o split; só o INSUMO_SERVICO monofásico por
+  // NCM soma 70 + 322 (base 4237, item 2) ao total.
+  it('chave c516 ligada: REVENDA segue 140 + 644; o insumo monofásico por NCM soma PIS 70 + Cofins 322 só no item 2', () => {
+    const r = regime({ pisCofinsCreditMonofasicoInsumo: true });
+    const revenda = acquisitionCost(NFE, ITENS, r, undefined, LEGAIS_SEMENTE);
+    expect([revenda.creditoPisCents, revenda.creditoCofinsCents, revenda.creditoPisCofinsCents]).toEqual([140, 644, 784]);
+    const insumo = acquisitionCost(NFE, ITENS, r, new Map([[2, 'INSUMO_SERVICO' as const]]), LEGAIS_SEMENTE);
+    expect([insumo.itens[1].creditoPisCents, insumo.itens[1].creditoCofinsCents]).toEqual([70, 322]);
+    expect([insumo.creditoPisCents, insumo.creditoCofinsCents, insumo.creditoPisCofinsCents]).toEqual([210, 966, 1176]);
+    for (const it of insumo.itens) expect(it.creditoPisCents + it.creditoCofinsCents).toBe(it.creditoPisCofinsCents);
   });
 
   it('sem crédito (unidade no cumulativo ou no Simples) ⇒ as duas parcelas são 0', () => {

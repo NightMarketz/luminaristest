@@ -49,6 +49,7 @@ describe('Lacuna 35d3 — insumo do serviço importado pela NF-e vai ao custo (c
     ]);
     const perfil = await request(app).put('/api/accounting/fiscal-profile').set(authHeader(dono)).send({
       unitId: UNIT, regimeTributario: 'REAL', icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO',
+      pisCofinsCreditMonofasicoInsumo: false, // c516: chave do monofásico-insumo desligada — o oráculo deste arquivo (feito à mão) é anterior à chave; o crédito novo tem guarda própria em nfeCost.test.ts
       icmsRecuperavelAccountId: accounts['1.1.8'], pisCofinsRecuperavelAccountId: accounts['1.1.9'], insumoExpenseAccountId: accounts['4.7'],
     });
     expect(perfil.status).toBe(200);

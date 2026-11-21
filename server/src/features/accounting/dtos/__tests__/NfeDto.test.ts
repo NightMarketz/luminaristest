@@ -126,7 +126,7 @@ describe('ImportNfePurchaseSchema — itemMapping XOR (productRef estoque × cla
 /** X6: custo por regime NEUTRO (não-contribuinte, CUMULATIVO) — o preview sempre carrega o bloco `custo`. */
 const custoNeutro = (parsed: ReturnType<typeof parseNfe>) =>
   acquisitionCost(parsed, parsed.itens.filter((it) => it.indTot !== '0'), {
-    icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO', pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false, pisCofinsCreditFromSimplesSupplier: false,
+    icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO', pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false, pisCofinsCreditFromSimplesSupplier: false, pisCofinsCreditMonofasicoInsumo: false,
   }, undefined, LEGAIS_SEMENTE);
 
 describe('NfePreviewSchema — contrato de saída (comportamento 2)', () => {

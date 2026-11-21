@@ -17,7 +17,7 @@ import {
 
 const view = (over: Partial<FiscalProfileView> = {}): FiscalProfileView => ({
   unitId: 'u1', regimeTributario: 'SIMPLES', icmsContribuinte: false, pisCofinsRegime: 'SIMPLES',
-  pisCofinsCreditExcludesIcms: false, pisCofinsCreditIncludesIpi: false, pisCofinsCreditFromSimplesSupplier: true,
+  pisCofinsCreditExcludesIcms: false, pisCofinsCreditIncludesIpi: false, pisCofinsCreditFromSimplesSupplier: true, pisCofinsCreditMonofasicoInsumo: false,
   icmsRecuperavelAccountId: 'acc-icms', pisCofinsRecuperavelAccountId: null,
   insumoExpenseAccountId: 'acc-insumo', irpjDespesaAccountId: 'acc-irpj-d', csllDespesaAccountId: null,
   irpjRecolherAccountId: 'acc-irpj-r', csllRecolherAccountId: null,
@@ -56,7 +56,7 @@ describe('toUpsertFiscalProfile (item 5)', () => {
     if (!built.ok) return;
     expect(built.body).toMatchObject({
       unitId: 'u1', dpsSerie: 7, emissaoForaDoMes: 'BLOQUEAR', pacoteFatoGerador: 'VENDA',
-      pisCofinsCreditExcludesIcms: false, pisCofinsCreditFromSimplesSupplier: true, pisCofinsCreditIncludesIpi: false,
+      pisCofinsCreditExcludesIcms: false, pisCofinsCreditFromSimplesSupplier: true, pisCofinsCreditIncludesIpi: false, pisCofinsCreditMonofasicoInsumo: false, // c516: desligada volta desligada (sem o campo, o default do DTO religaria)
       issAliquotaBp: 200, pTotTribSNCent: 1550, regApTribSN: 2, regEspTrib: 3, issRetidoTomadorPj: true,
       icmsRecuperavelAccountId: 'acc-icms', pisCofinsRecuperavelAccountId: null,
       // carregados sem controle na tela (lacuna L2): o PUT total os zeraria se não voltassem
@@ -76,7 +76,7 @@ describe('toUpsertFiscalProfile (item 5)', () => {
       'insumoExpenseAccountId', 'irpjDespesaAccountId', 'irpjRecolherAccountId', 'issAliquotaBp', 'issRetidoTomadorPj',
       'nfceSerie', 'nfeSerie', 'pTotTribEstCent', 'pTotTribFedCent', 'pTotTribMunCent', 'pTotTribSNCent', 'pacoteCNBS', 'pacoteCTribNac',
       'pacoteFatoGerador', 'partnerAccountRef', 'pisCofinsCreditExcludesIcms', 'pisCofinsCreditFromSimplesSupplier',
-      'pisCofinsCreditIncludesIpi', 'pisCofinsRecuperavelAccountId', 'pisCofinsRegime', 'regApTribSN', 'regEspTrib',
+      'pisCofinsCreditIncludesIpi', 'pisCofinsCreditMonofasicoInsumo', 'pisCofinsRecuperavelAccountId', 'pisCofinsRegime', 'regApTribSN', 'regEspTrib',
       'regimeTributario', 'unitId',
     ]);
   });

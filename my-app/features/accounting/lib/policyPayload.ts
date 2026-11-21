@@ -87,6 +87,7 @@ const FIELD_LABEL: Record<string, [string, string]> = {
   pisCofinsCreditExcludesIcms: ['fiscalProfile.field.creditExcludesIcms', 'Crédito de PIS/COFINS exclui o ICMS da base'],
   pisCofinsCreditIncludesIpi: ['fiscalProfile.field.creditIncludesIpi', 'Crédito de PIS/COFINS inclui o IPI (regra fixa: não)'],
   pisCofinsCreditFromSimplesSupplier: ['fiscalProfile.field.creditFromSimplesSupplier', 'Crédito sobre compra de fornecedor do Simples'],
+  pisCofinsCreditMonofasicoInsumo: ['fiscalProfile.field.creditMonofasicoInsumo', 'Crédito de PIS/COFINS do produto monofásico usado como insumo do serviço (IN RFB 2.121 art. 178)'],
   icmsRecuperavelAccountId: ['fiscalProfile.field.icmsRecuperavelAccountId', 'Conta de ICMS a recuperar'],
   pisCofinsRecuperavelAccountId: ['fiscalProfile.field.pisCofinsRecuperavelAccountId', 'Conta de PIS/COFINS a recuperar'],
   depreciationExpenseAccountId: ['fixedAssets.accounts.depreciationExpense', 'Despesa de depreciação'],

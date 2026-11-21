@@ -8,6 +8,7 @@ export interface FiscalProfileData {
   pisCofinsCreditExcludesIcms: boolean;
   pisCofinsCreditIncludesIpi: boolean;
   pisCofinsCreditFromSimplesSupplier: boolean;
+  pisCofinsCreditMonofasicoInsumo: boolean; // lacuna c516
   icmsRecuperavelAccountId?: string | null;
   pisCofinsRecuperavelAccountId?: string | null;
   insumoStockAccountId?: string | null; // INSUMO-INVENTARIO-PERIODICO item 1

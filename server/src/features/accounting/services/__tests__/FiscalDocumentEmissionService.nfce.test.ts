@@ -230,7 +230,7 @@ describe('BE-INCR-NFCE PR-3 — emissão da NFC-e do Simples (NullEmissor)', () 
     const custo = acquisitionCost(
       compra,
       itens,
-      { icmsContribuinte: p.icmsContribuinte, pisCofinsRegime: 'SIMPLES', pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false, pisCofinsCreditFromSimplesSupplier: false },
+      { icmsContribuinte: p.icmsContribuinte, pisCofinsRegime: 'SIMPLES', pisCofinsCreditExcludesIcms: true, pisCofinsCreditIncludesIpi: false, pisCofinsCreditFromSimplesSupplier: false, pisCofinsCreditMonofasicoInsumo: false },
       undefined,
       LEGAIS_SEMENTE,
     );

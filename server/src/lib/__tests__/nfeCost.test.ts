@@ -27,6 +27,8 @@ const regime = (over: Partial<CostRegime> = {}): CostRegime => ({
   pisCofinsCreditExcludesIcms: true,
   pisCofinsCreditIncludesIpi: false,
   pisCofinsCreditFromSimplesSupplier: false,
+  // Lacuna c516: o helper fica com a chave DESLIGADA para os casos do item 7 sem crédito; o DTO liga por padrão (dono 21/11).
+  pisCofinsCreditMonofasicoInsumo: false,
   ...over,
 });
 
@@ -166,26 +168,69 @@ describe('acquisitionCost — destinação por item (ITEM-DESTINATION)', () => {
     expect(insumo.itens[0].creditoPisCofinsCents).toBe(acquisitionCost(NFE, ITENS, r, undefined, LEGAIS_SEMENTE).itens[0].creditoPisCofinsCents);
   });
 
-  it('item 7 (c, até a P-1) — insumo MONOFÁSICO: crédito 0 + warning que cita a pendência; REVENDA monofásica segue 0 sem esse warning', () => {
+  it('item 7, chave c516 desligada — insumo MONOFÁSICO: crédito 0 + warning que cita a chave e o art. 178; REVENDA monofásica segue 0 sem esse warning', () => {
     const r = regime({ pisCofinsRegime: 'NAO_CUMULATIVO' });
     const insumo = acquisitionCost(NFE, ITENS, r, dest({ 2: 'INSUMO_SERVICO', 3: 'INSUMO_SERVICO' }), LEGAIS_SEMENTE);
     expect(insumo.itens[1].classe).toBe('MONOFASICO');
     expect([insumo.itens[1].creditoPisCofinsCents, insumo.itens[2].creditoPisCofinsCents]).toEqual([0, 0]);
     expect(insumo.warnings.filter((w) => /insumo monofásico/.test(w))).toHaveLength(2);
-    expect(insumo.warnings.join(' ')).toMatch(/item 2 \(.+\): insumo monofásico .*P-1/);
+    expect(insumo.warnings.join(' ')).toMatch(/item 2 \(.+\): insumo monofásico .*chave do perfil fiscal está desligada.*art\. 178/);
     const revenda = acquisitionCost(NFE, ITENS, r, undefined, LEGAIS_SEMENTE);
     expect([revenda.itens[1].creditoPisCofinsCents, revenda.itens[2].creditoPisCofinsCents]).toEqual([0, 0]);
     expect(revenda.warnings.join(' ')).not.toMatch(/insumo monofásico/);
   });
 
-  // Review #461 (achado 3): um `it` por ramo de CST (item 7). Na etapa (c) os três dão o mesmo resultado; este é o
-  // caso que muda quando a P-1 fechar e o F-ID-4 virar (a) — CST 02 (fabricante/importador) passará a creditar.
-  it('item 7 (c) — insumo MONOFÁSICO por NCM com CST 02: crédito 0 + warning (até a P-1)', () => {
+  // Review #461 (achado 3): um `it` por ramo de CST (item 7). Com a chave c516 desligada os três dão crédito 0.
+  it('item 7, chave c516 desligada — insumo MONOFÁSICO por NCM com CST 02: crédito 0 + warning', () => {
     const itens = ITENS.map((it) => (it.nItem === 2 ? { ...it, cstPis: '02', cstCofins: '02' } : it));
     const c = acquisitionCost(NFE, itens, regime({ pisCofinsRegime: 'NAO_CUMULATIVO' }), dest({ 2: 'INSUMO_SERVICO' }), LEGAIS_SEMENTE);
     expect(c.itens[1].classe).toBe('MONOFASICO');
     expect(c.itens[1].creditoPisCofinsCents).toBe(0);
     expect(c.warnings.join(' ')).toMatch(/item 2 \(.+\): insumo monofásico/);
+  });
+
+  // Lacuna L-20261120-224253-c516 (D-5 de 10/10 reaberta pelo dono em 21/11, padrão LIGADO): IN RFB 2.121/2022 art. 178 —
+  // a vedação do art. 160 I não se aplica ao produto do art. 60 (monofásico por NCM) usado como insumo, "desde que em alguma
+  // etapa anterior [...] tenha havido o pagamento"; SC Cosit 496/2017 e 16/2024: percentual BÁSICO (1,65% + 7,6%), inclusive
+  // na compra do distribuidor (CST 04/06). À mão, item 2 (NCM 3305.90, vProd 5000): base = 5000 − 272 (vDesc) + 409 (vFrete)
+  // − 900 (ICMS) = 4237; PIS round(4237·1,65%) = 70; COFINS round(4237·7,6%) = 322 → 392.
+  it('lacuna c516 — insumo MONOFÁSICO por NCM (3305.90, CST 04) no não cumulativo com a chave ligada credita 9,25% (392 sobre 4237); desligada 0; cumulativo 0; monofásico só pelo CST da nota segue 0', () => {
+    const itens = ITENS.map((it) => (it.nItem === 2 ? { ...it, cstPis: '04', cstCofins: '04' } : it.nItem === 1 ? { ...it, cstPis: '06', cstCofins: '06' } : it));
+    const destinos = dest({ 1: 'INSUMO_SERVICO', 2: 'INSUMO_SERVICO' });
+    const ligada = acquisitionCost(NFE, itens, regime({ pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditMonofasicoInsumo: true }), destinos, LEGAIS_SEMENTE);
+    const desligada = acquisitionCost(NFE, itens, regime({ pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditMonofasicoInsumo: false }), destinos, LEGAIS_SEMENTE);
+    const presumido = acquisitionCost(NFE, itens, regime({ pisCofinsRegime: 'CUMULATIVO', pisCofinsCreditMonofasicoInsumo: true }), destinos, LEGAIS_SEMENTE);
+    expect(ligada.itens[1].classe).toBe('MONOFASICO');
+    expect(desligada.itens[1].creditoPisCofinsCents).toBe(0);
+    expect(presumido.itens[1].creditoPisCofinsCents).toBe(0);
+    // item 1: NCM fora da tabela, MONOFASICO só pelo CST 06 da nota — o art. 178 alcança o produto do art. 60 (NCM), não o CST.
+    expect(ligada.itens[0].creditoPisCofinsCents).toBe(0);
+    expect(ligada.itens.reduce((a, i) => a + i.custoLiquidoCents, 0)).toBe(ligada.custoEstoqueCents);
+    expect({ base: ligada.itens[1].basePisCofinsCents, pis: ligada.itens[1].creditoPisCents, cofins: ligada.itens[1].creditoCofinsCents, total: ligada.itens[1].creditoPisCofinsCents })
+      .toEqual({ base: 4237, pis: 70, cofins: 322, total: 392 });
+  });
+
+  // Guarda do padrão de produção (chave c516 LIGADA, revisor #1301 A1): o `regime()` do helper nasce com a chave desligada,
+  // então sem este caso nada provava que a chave só vale para INSUMO_SERVICO (BRIEF ITEM-DESTINATION item 7: "REVENDA +
+  // MONOFASICO segue com crédito 0 em qualquer CST"). Sabotagem: tirar `insumo &&` de `monofasicoNcmInsumo` em nfeCost.ts
+  // faz a REVENDA e o IMOBILIZADO creditarem 392 e este teste ficar vermelho.
+  it('lacuna c516 — chave LIGADA: monofásico por NCM só credita como INSUMO_SERVICO; REVENDA e IMOBILIZADO (em qualquer CST), cumulativo e Simples seguem 0', () => {
+    const ligada = (over: Partial<CostRegime>) => regime({ pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditMonofasicoInsumo: true, ...over });
+    const comCst = (cst: string) => ITENS.map((it) => (it.nItem === 2 ? { ...it, cstPis: cst, cstCofins: cst } : it));
+    for (const cst of ['01', '02', '04', '06']) {
+      const itens = comCst(cst);
+      const insumo = acquisitionCost(NFE, itens, ligada({}), dest({ 2: 'INSUMO_SERVICO' }), LEGAIS_SEMENTE);
+      expect([insumo.itens[1].classe, insumo.itens[1].creditoPisCofinsCents]).toEqual(['MONOFASICO', 392]);
+      for (const destino of [undefined, dest({ 2: 'REVENDA' }), dest({ 2: 'IMOBILIZADO' })]) {
+        const c = acquisitionCost(NFE, itens, ligada({}), destino, LEGAIS_SEMENTE);
+        expect([c.itens[1].classe, c.itens[1].creditoPisCofinsCents, c.itens[1].basePisCofinsCents]).toEqual(['MONOFASICO', 0, 0]);
+        expect(c.warnings.join(' ')).not.toMatch(/insumo monofásico/);
+      }
+    }
+    for (const r of [ligada({ pisCofinsRegime: 'CUMULATIVO' }), ligada({ pisCofinsRegime: 'SIMPLES' })]) {
+      const c = acquisitionCost(NFE, ITENS, r, dest({ 1: 'INSUMO_SERVICO', 2: 'INSUMO_SERVICO', 3: 'INSUMO_SERVICO' }), LEGAIS_SEMENTE);
+      expect([c.creditoPisCofinsCents, c.itens[1].creditoPisCofinsCents]).toEqual([0, 0]);
+    }
   });
 
   it('item 8 — Σ custoLiquido === custoEstoqueCents com destinações mistas; no SIMPLES e no CUMULATIVO a destinação não muda crédito', () => {
