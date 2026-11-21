@@ -83,14 +83,18 @@ describe('CRM — falhas deixam de ser silenciosas', () => {
   });
 
   it('Registrar falta: depois de falhar, o botão volta a habilitar para tentar de novo', async () => {
-    const onConfirm = vi.fn().mockRejectedValueOnce(new Error('x')).mockResolvedValue(undefined);
+    // O pai real (Lead360Modal.handleNoShowConfirm) captura o erro, avisa e RESOLVE — o modal não fecha. Um mock que
+    // rejeitasse modelaria um pai que não existe e vazaria como unhandled rejection do onClick async.
+    const onConfirm = vi.fn().mockResolvedValue(undefined);
     render(<NoShowCaptureModal isOpen canRevert onConfirm={onConfirm} onCancel={() => {}} />);
     fireEvent.change(document.querySelector('input[type="datetime-local"]') as HTMLInputElement, { target: { value: '2026-12-01T10:00' } });
-    const confirm = screen.getByRole('button', { name: 'Confirmar' });
     await act(async () => {
-      fireEvent.click(confirm);
-      await Promise.resolve().catch(() => {});
+      fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
     });
     await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar' })).toBeEnabled());
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    });
+    expect(onConfirm).toHaveBeenCalledTimes(2);
   });
 });
