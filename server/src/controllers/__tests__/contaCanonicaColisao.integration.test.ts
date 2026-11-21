@@ -82,4 +82,20 @@ describe('lacuna ad40 — conta do usuário com código canônico não herda pap
     await getFactory().getReferentialMappingService().ensureCanonicalMappings(scope(UNIT_NATUREZA));
     expect(await prisma.referentialMapping.count({ where: { userId: dono.id, unitId: UNIT_NATUREZA, accountId: conta.id } })).toBe(0);
   });
+
+  // Dono, chat, 2026-11-21 ("Nome/natureza + recusar"): além do complemento, a criação manual com código do plano padrão
+  // é recusada — o código canônico é do sistema, que o cria (ou restaura) pelo `ensureChartOfAccounts`.
+  it('criação manual com código do plano padrão ausente no escopo → 400, nenhuma conta criada', async () => {
+    await request(app).get('/api/accounting/accounts').set(authHeader(dono)).query({ unitId: UNIT_NATUREZA }); // plano padrão (a sintética 2.1.7 existe)
+    await prisma.referentialMapping.deleteMany({ where: { userId: dono.id, unitId: UNIT_NATUREZA, account: { code: CODIGO } } });
+    await prisma.fiscalProfile.updateMany({ where: { userId: dono.id, unitId: UNIT_NATUREZA }, data: { retencaoIrrfRecolherAccountId: null } });
+    await prisma.account.deleteMany({ where: { userId: dono.id, unitId: UNIT_NATUREZA, code: CODIGO } });
+    const r = await request(app)
+      .post('/api/accounting/accounts')
+      .set(authHeader(dono))
+      .send({ unitId: UNIT_NATUREZA, code: CODIGO, name: 'Conta Minha', nature: 'Liability', acceptsEntries: true });
+    expect(r.status).toBe(400);
+    expect(JSON.stringify(r.body)).toContain('plano padrão');
+    expect(await prisma.account.count({ where: { userId: dono.id, unitId: UNIT_NATUREZA, code: CODIGO, name: 'Conta Minha' } })).toBe(0);
+  });
 });
