@@ -173,7 +173,7 @@ describe('AccountingView — deep link do MovementModal (Entrada+Compra → Paya
     render(<AccountingView />);
 
     expect(screen.getByTestId('ap-panel').getAttribute('data-inventory')).toBe('{"productRef":"prod-1","qty":3}');
-    expect(window.location.search).toBe('');
+    expect(window.location.search).toBe('?tab=contas-a-pagar'); // params do seed somem; a aba fica na URL
 
     fireEvent.click(screen.getByRole('tab', { name: /Contas a Receber/ }));
     fireEvent.click(screen.getByRole('tab', { name: /^Contas a Pagar$/ }));

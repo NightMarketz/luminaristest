@@ -26,3 +26,9 @@ export function parseInventoryPurchaseSeed(search: string): InventoryPurchaseSee
   const qty = Number(params.get('qty'));
   return Number.isInteger(qty) && qty > 0 ? { productRef, qty } : { productRef };
 }
+
+/** Remove da query só os params do deep link (produto e quantidade) — o resto (`tab`, filtros, âncora) é de quem o pôs. */
+export function stripInventoryPurchaseParams(params: URLSearchParams): void {
+  params.delete(PARAM);
+  params.delete('qty');
+}
