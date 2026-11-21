@@ -9,6 +9,9 @@
 > nó (nota, PRE-ADR/BRIEF, forks ao dono, PR só de `.md`). Não é `executa` de código, não autoriza merge fora da classe de
 > risco.
 >
+> **Forks F-NSP-0..12 RATIFICADOS em 21/11** por questionário ([[D-2026-11-21-NFSE-PAULISTANA-FORKS]]); F-NSP-2 contra a
+> recomendação (modo manual **dentro** do nó, PR-M), e F-NSP-2b perguntado em seguida. Código segue esperando `executa`.
+>
 > **Em duas linhas:** um adaptador `paulistana` no `DfeEmissorPort` monta o RPS do leiaute 2 da prefeitura a partir da
 > mesma montagem da NFS-e, assina e transmite pelo **assinador local** do cliente (o mesmo da NF-e) e grava o
 > `FiscalDocument` que o relatório de ISS do X7 e a apuração de IBS/CBS já leem. **Risco principal (verificado):** o
@@ -138,6 +141,10 @@ validação externa (§7) e não entra na implementação antes dela.
     desliga o adaptador na instância (motivo nomeado, nunca silêncio). O documento já criado segue o `partner` gravado
     (`resolveEmissorFor`, DFE-MANUAL item 9). *Teste:* duas unidades na mesma instância, uma de cada sistema, emitem cada
     uma pelo seu adaptador; `off` ⇒ 409 com o motivo.
+    **F-NSP-2b (a):** dentro da Paulistana, o campo por unidade `nfseEmissao: 'portal' | 'automatica'` (o mesmo do
+    ADL-14 da emenda X10i; quem chegar primeiro à `main` cria, o outro reusa) escolhe o adaptador: `automatica` ⇒
+    `paulistana`; `portal` ⇒ `paulistana-manual` (PR-M). *Teste:* as quatro combinações sistema × emissão resolvem o
+    adaptador certo.
 11. **[fork:F-NSP-12] Código de serviço municipal** (5 dígitos, Anexo I da IN SF/SUREM 8/2011) em
     `ServiceFiscalProfile.codigoServicoSp` e no `FiscalProfile.pacoteCodigoServicoSp` (pacote, espelho do `pacoteCTribNac`).
     Ausente ⇒ faltante nomeado no `preview` e 409 no `emit` (mesmo padrão dos faltantes do D1f). **[pend-ext]** a validação
@@ -213,6 +220,31 @@ validação externa (§7) e não entra na implementação antes dela.
     eventTypes novos (`fiscal.paulistana.teste_envio`, troca de `nfseSistema`), `docs.paths.ts` + guard de path-count do
     openapi para a rota do item 25, `check:arch`, `tsc` dos dois lados (tipo FE gerado). Sem i18n (sem tela).
 
+### PR-M — modo manual da Paulistana (F-NSP-2 b; não depende do assinador local)
+
+32. **[direto] `PaulistanaManualEmissor`** (`name = 'paulistana-manual'`, molde `ManualEmissor`): `kinds: ['NFSE']`,
+    `numbersDps: true` (no site a prefeitura numera a NFS-e direto; a sequência `RPS_SP` não é consumida),
+    `consultar`/`cancelar`/`consultarEventos: false` (chamar é erro de código próprio `dfe_paulistana_manual`, nunca um
+    resultado inventado). *Teste:* capacidades e os dois erros.
+33. **[direto] Ficha** (`GET …/documents/:id/ficha`, rota que já existe): devolve o RPS renderizado (item 3) na ordem
+    dos campos da tela de emissão do site, com o código de serviço de 5 dígitos, a alíquota e o grupo IBS/CBS. *Teste:*
+    ficha de uma venda tem os campos do RPS e nenhum campo da DPS nacional.
+34. **[pend-ext] Retorno manual** (`POST …/documents/:id/retorno-manual`, rota que já existe): aceita o XML da NFS-e
+    emitida no site, lido pelo mesmo leitor do `tpNFE` v2 do item 7, e grava número, código de verificação,
+    `ChaveNotaNacional` e valores; o anexo segue o outbox do `FiscalDocumentPendingAttachment`. **Depende do formato do
+    XML que o site exporta** (§8): se não for o `tpNFE` do webservice, o leitor ganha o ramo do formato exportado.
+    *Teste:* fixture do XML exportado autoriza o documento.
+35. **[direto] Releitura campo a campo** (molde da releitura do DFE-MANUAL, F-MAN-2 c): prestador (IM/CNPJ), tomador,
+    `CodigoServico`, valor, deduções, alíquota, ISS retido, `cLocPrestacao`, NBS e `cClassTrib` da nota × o RPS da ficha.
+    Diferença ⇒ `AUTHORIZED_DIVERGENT` com a lista; IM/CNPJ do prestador diferente ⇒ 400 (nota de outra empresa, não
+    grava). *Teste:* cada campo divergente aparece na lista; prestador errado ⇒ 400 sem escrita.
+36. **[pend-ext] Cancelamento manual:** o operador cancela no site e registra pelo XML da nota com `StatusNFe = C` e
+    `DataCancelamento` (o mesmo leitor); sem esse XML não há prova, e o cancelamento não é registrado (molde do #421, que
+    exige o evento assinado na NFS-e Nacional). Depende do que o site exporta para a nota cancelada (§8). *Teste:* XML
+    com `StatusNFe = N` ⇒ 400; com `C` ⇒ `CANCELLED` e `cancelEvento = 'cancelamentoMunicipal'`.
+37. **[direto] Relatório de ISS e IBS/CBS** veem a nota manual pelo mesmo item 27 (o `payloadJson` da tentativa é o RPS
+    da ficha). *Teste:* nota manual autorizada aparece no `findForIssReport` com município 3550308.
+
 ### Fora do servidor
 
 29. **[direto] Pacote do assinador (C#, AL-PR-5 da EMENDA-4):** os alvos do item 15 (recalcular a cadeia a partir do RPS
@@ -220,7 +252,9 @@ validação externa (§7) e não entra na implementação antes dela.
     do pacote quando ele existir; até lá, só o contrato do PR-3 e o falso.
 30. **[direto] Runbook `RUNBOOK-NFSE-PAULISTANA.md` (gate humano, RUNBOOK-FORMAT):** (1) pareamento do assinador com o
     certificado da PJ; (2) `testarEnvio` real → `Sucesso=true` colado; (3) primeira nota real de valor mínimo; (4)
-    cancelamento dela — prova a cadeia do item 5; (5) a nota aparece no relatório de ISS. Desfecho e assinatura do dono.
+    cancelamento dela — prova a cadeia do item 5; (5) a nota aparece no relatório de ISS; (6) modo manual: uma nota
+    emitida no site com o XML exportado devolvido (prova o formato do item 34) e o cancelamento dela (item 36). Desfecho
+    e assinatura do dono.
     Agente prepara; não executa sem o dono.
 31. **[direto] Vigilância datada** (sem aparato novo): o manual teve 12 versões em 15 meses [D04 changelog]. O BRIEF fixa
     a v3.4.1 e o XSD v02-8 com SHA-256 no dossiê; antes do PR-1 e do PR-4, a sessão de feature compara o SHA-256 do manual
@@ -228,8 +262,9 @@ validação externa (§7) e não entra na implementação antes dela.
 
 ## 3. Ordem e pilha
 
-`integration/nfse-paulistana` (feature com 2+ PRs, D-2026-11-10): PR-0 → PR-1 → PR-2 → (#1146 em `main`) → PR-3 → PR-4.
-PR-1 e PR-2 não dependem do assinador e podem andar antes. A integração só vai à `main` com o PR-4 verde. Classe de risco:
+`integration/nfse-paulistana` (feature com 2+ PRs, D-2026-11-10): PR-0 → PR-1 → PR-2 → PR-M → (#1146 em `main`) → PR-3 →
+PR-4. PR-1, PR-2 e PR-M não dependem do assinador e podem andar antes; o PR-M já entrega a Paulistana pelo site, com
+releitura e ISS no relatório, enquanto o assinador não existe. A integração só vai à `main` com o PR-4 verde. Classe de risco:
 PR-2, PR-3 e PR-4 são vermelhos (schema, contrato do assinador, emissão) ⇒ revisor independente + lote do dono.
 
 ## 4. Contratos esboçados
@@ -331,13 +366,16 @@ export interface DfeCapabilities { /* … */ testeEnvio?: boolean; }
 - **O contrato do assinador** (#1146: `alvo` em 4 valores, `servico` só NF-e, hosts gerados da tabela SEFAZ,
   `selectDfeAssinador` só para `sefaz`) não cobre a Paulistana ⇒ itens 15–18.
 
-## 6. Forks — RATIFICAÇÃO PENDENTE
+## 6. Forks — RATIFICADOS em 21/11 ([[D-2026-11-21-NFSE-PAULISTANA-FORKS]])
+
+Todos pela recomendação, **exceto F-NSP-2 → (b)** (modo manual dentro do nó). A tabela abaixo é o texto que foi ao dono.
 
 | Fork | Caminhos | Recomendação e por quê |
 |---|---|---|
 | **F-NSP-0** Quando executar | (a) executar quando o dono der `executa`, com PR-1/PR-2 já possíveis e PR-3/PR-4 depois do #1146; (b) só com um cliente de SP regime normal contratado (Q9 a de 20/10) | **(a)** — o dono pediu completude e o desenho não depende do cliente; o oráculo real (runbook) é que espera o cliente. A Q9 continua dele. |
 | **F-NSP-1** Quem vai para a Paulistana | (a) campo por unidade `nfseSistema` escolhido pelo operador, com as guardas da lei derivadas do que o banco já tem (SP capital, regime atual ≠ Simples, IM, `CompanyFiscalProfile` sem Simples/MEI de 2027 em diante) e a declaração só quando 2026 foi Simples; (b) derivado automático (sem campo): toda unidade de SP capital fora do Simples vai para a Paulistana; (c) env por instância (`DFE_PARTNER_NFSE=paulistana`) | **(a)** — é a estrutural (por unidade, como o ADL-14 da X10i) e respeita o § 2º com o histórico anual que existe; (b) erra quem saiu do Simples em 2026 depois de 01/11 e tira do operador a escolha que a lei deixa ambígua; (c) quebra instância com filial fora de SP ou no Simples. |
 | **F-NSP-2** Modo manual da Paulistana (operador emite no site e devolve o XML) | (a) fora deste nó — sem assinador, a unidade emite no site e a nota não entra no produto (aviso nomeado); (b) dentro: ficha + upload do XML de exportação da prefeitura + releitura | **(a)** com lacuna na caixa — o pedido é o adaptador; a releitura de outro leiaute é frente própria. Fica aberto: ISS dessa nota fora do relatório enquanto o assinador não roda. |
+| **F-NSP-2b** Como manual e automático convivem (pergunta derivada da resposta b do F-NSP-2) | (a) o mesmo campo por unidade `nfseEmissao: portal \| automatica` da X10i (F-ADL-4); (b) fallback automático: sem assinador pareado e ativo, a nota cai na ficha manual | **(a)** — uma regra só para os dois sistemas, escolhida pelo operador; (b) muda o caminho da nota por estado de máquina. **Ratificado (a).** |
 | **F-NSP-3** O que é "homologação" | (a) adaptador só em produção; `testarEnvio` (TesteEnvioLoteRPS) como operação à parte, sem `FiscalDocument`; homologação ⇒ desabilitado com motivo; (b) homologação chama o teste e grava o documento num status novo `VALIDATED_TEST`; (c) homologação só contra o falso | **(a)** — não inventa resultado (a prefeitura não gera nota no teste) e não mexe na máquina de 9 status (#1162). |
 | **F-NSP-4** De onde sai o RPS | (a) montagem única + renderizador por leiaute (`renderNfse`), o RPS gravado no `payloadJson`; (b) o adaptador traduz a DPS nacional dentro da porta (payload = DPS + grupo SP); (c) montador próprio do RPS no serviço | **(a)** — uma montagem (tie-out com o razão num lugar só) e o registro do que foi enviado é o RPS; (b) esconde a tradução no adaptador e grava o que não foi enviado; (c) duplica a montagem de 1.600 linhas. |
 | **F-NSP-5** Série do RPS | (a) `rpsSerie Int` no perfil, escrito como texto; `FiscalDocument.serie` continua `Int`; (b) coluna nova texto para série alfanumérica | **(a)** — o manual aceita qualquer texto de até 5; número basta e não mexe no modelo. |
@@ -368,13 +406,17 @@ export interface DfeCapabilities { /* … */ testeEnvio?: boolean; }
 - **Mês da saída do Simples:** o banco tem o regime **por ano** (`CompanyFiscalProfile.anoCalendario` + `regime`,
   `schema.prisma:1913`), não a data da exclusão. Por isso a declaração do item 9 existe só para 2026.
 - **Assinador C#** (`assinador-local/`): não existe em `main`; o item 29 espera o AL-PR-5.
+- **Formato do XML que o site da Paulistana exporta** para a nota emitida e para a cancelada (itens 34 e 36): o
+  "Manual de Exportação de NFS-e" de 13/04/2020 [D01] descreve layouts de exportação, não lidos nesta sessão; se o
+  XML for o `tpNFE` do webservice, o leitor do item 7 basta. O PR-M começa por ele (`legal.py baixar` + uma exportação
+  real no runbook, passo 6).
 
 ## 9. Achados fora de escopo (na caixa, `--pai L-20261121-183240-e378`)
 
 - `L-20261121-201050-24af` — tela: campo `nfseSistema`/código SP no perfil e botão "testar envio" (FE).
 - `L-20261121-201051-e0a7` — NFS-e **recebidas** de SP (`ConsultaNFeRecebidas`) para o contas a pagar.
 - `L-20261121-201100-fc2b` — NFTS (nota do tomador) — obrigação de quem contrata prestador de fora de SP.
-- `L-20261121-201053-0536` — modo manual da Paulistana (o ramo recomendado do F-NSP-2 o deixa fora).
+- ~~`L-20261121-201053-0536` — modo manual da Paulistana~~ → entrou no nó pelo F-NSP-2 (b), PR-M (itens 32–37).
 
 ## 10. Write-set
 
@@ -385,6 +427,9 @@ export interface DfeCapabilities { /* … */ testeEnvio?: boolean; }
   `server/src/features/accounting/services/ServiceFiscalProfileService.ts`, `server/src/features/accounting/dfe/resolveEmissor.ts`,
   `server/src/features/accounting/dfe/selectDfeEmissor.ts`, `server/src/features/accounting/repositories/FiscalDocumentRepository.ts`,
   `server/src/features/accounting/services/FiscalDocumentEmissionService.ts`.
+- **PR-M:** `server/src/features/accounting/dfe/paulistana/PaulistanaManualEmissor.ts`,
+  `server/src/features/accounting/dfe/resolveEmissor.ts`, `server/src/features/accounting/services/FiscalDocumentEmissionService.ts`,
+  `server/src/features/accounting/services/FiscalDocumentLifecycleService.ts`, `server/src/lib/paulistana/**`.
 - **PR-3:** `server/src/features/accounting/dtos/DfeSignerDto.ts`, `server/src/features/accounting/dtos/dfeSigner.schema.json`,
   `server/src/features/accounting/dfe/local/**`, `server/src/features/accounting/dfe/selectDfeAssinador.ts`.
 - **PR-4:** `server/src/features/accounting/dfe/paulistana/**`, `server/src/features/accounting/dfe/DfeEmissorPort.ts`,
