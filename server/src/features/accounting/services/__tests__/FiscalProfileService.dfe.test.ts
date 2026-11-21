@@ -286,9 +286,9 @@ describe('FiscalProfileService.upsert — insumoExpenseAccountId (ITEM-DESTINATI
     expect(repo.upsert).not.toHaveBeenCalled();
   });
 
-  it('conta de despesa folha do escopo → gravada, devolvida na view e no evento fiscal_profile.updated (allowlist)', async () => {
+  it.each(['4.7', '4.2.1'])('conta de custo folha do escopo (%s) → gravada, devolvida na view e no evento fiscal_profile.updated (allowlist)', async (code) => {
     const { svc, repo, accounts, append } = build();
-    (accounts.findById as jest.Mock).mockResolvedValue(acc({}));
+    (accounts.findById as jest.Mock).mockResolvedValue(acc({ code }));
     const view = await svc.upsert(scope, { ...base, insumoExpenseAccountId: 'acc-1' });
     expect((repo.upsert as jest.Mock).mock.calls[0][1]).toMatchObject({ insumoExpenseAccountId: 'acc-1' });
     expect(view.insumoExpenseAccountId).toBe('acc-1');

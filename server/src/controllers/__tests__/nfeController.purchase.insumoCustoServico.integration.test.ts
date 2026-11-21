@@ -88,7 +88,10 @@ describe('Lacuna 35d3 — padrão do insumoExpenseAccountId pelo plano padrão (
     const csp = await conta(VAZIO, '4.7');
     expect([csp.name, csp.nature, csp.acceptsEntries]).toEqual(['Custo dos Serviços Prestados', 'Expense', true]);
     const op = await conta(CONFIG, '4.1');
-    expect((await perfil(CONFIG, { insumoExpenseAccountId: op.id })).status).toBe(200);
+    // Perfil legado: gravado antes da lacuna 051e, que hoje recusa a 4.1 no PUT (não é custo na DRE). O padrão não o sobrescreve.
+    expect((await perfil(CONFIG)).status).toBe(200);
+    expect((await perfil(CONFIG, { insumoExpenseAccountId: op.id })).status).toBe(400);
+    await prisma.fiscalProfile.updateMany({ where: { userId: dono.id, unitId: CONFIG }, data: { insumoExpenseAccountId: op.id } });
 
     for (const u of [VAZIO, CONFIG]) await getFactory().getFiscalProfileService().ensureCanonicalAccounts(scope(u));
     const insumo = async (unitId: string) => (await prisma.fiscalProfile.findFirstOrThrow({ where: { userId: dono.id, unitId } })).insumoExpenseAccountId;
