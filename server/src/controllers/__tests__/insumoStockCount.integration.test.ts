@@ -49,7 +49,7 @@ describe('Insumo do serviço — estoque com inventário periódico (cenário 30
     pushTestSchema();
     dono = await prisma.user.create({ data: { name: 'ic', username: 'insumo-count-dono', email: 'insumo-count@test.local', password: 'x', role: 'USER' } });
     await seedUnit({ userId: dono.id, id: UNIT });
-    for (const [year, month] of [[2025, 7], [2025, 8]] as const) {
+    for (const [year, month] of [[2025, 7], [2025, 8], [2025, 9]] as const) {
       await prisma.accountingPeriod.create({ data: { userId: dono.id, unitId: UNIT, year, month, status: 'OPEN', openedAt: new Date(), openedById: dono.id } });
     }
     await criarConta('1.1.3.01', 'Estoques', 'Asset');
@@ -137,5 +137,34 @@ describe('Insumo do serviço — estoque com inventário periódico (cenário 30
     const entry = await prisma.journalEntry.findUniqueOrThrow({ where: { id: res.body.data.entryId }, include: { postings: { include: { account: true } } } });
     const byCode = Object.fromEntries(entry.postings.map((p) => [p.account.code, { d: Number(p.debitCents), c: Number(p.creditCents) }]));
     expect(byCode).toEqual({ '1.1.3.02': { d: 100, c: 0 }, '4.1.9': { d: 0, c: 100 } });
+  });
+
+  const reverse = (lancamentoId: string, reversalPostingDate: string) =>
+    request(app).post('/api/accounting/reverse').set(authHeader(dono)).send({ unitId: UNIT, lancamentoId, reversalPostingDate, reason: 'recontagem' });
+  const countEntry = (sourceId: string) => prisma.journalEntry.findFirstOrThrow({ where: { unitId: UNIT, sourceType: 'insumo_stock_count', sourceId } });
+
+  it('item 4 — estornar e contar de novo (estorno datado DEPOIS da contagem): 201 com o saldo sem a contagem estornada', async () => {
+    // review #1297, achado 1: antes, a recontagem dava 409 e o saldo até 31/08 ainda somava a contagem estornada.
+    const original = await countEntry(`${UNIT}:2025-08-31`);
+    expect((await reverse(original.id, '2025-09-15')).status).toBe(200);
+    const res = await count('2025-08-31', 500);
+    expect(res.status).toBe(201);
+    // saldo até 31/08 = compra (INSUMO) + sobra de 30/08 (100); a baixa de 31/08 estornada fica fora
+    expect(res.body.data).toMatchObject({ bookValueCents: INSUMO + 100, countedValueCents: 500, adjustmentCents: INSUMO + 100 - 500 });
+    expect((await countEntry(`${UNIT}:2025-08-31#2`)).id).toBe(res.body.data.entryId);
+    expect(await saldo('1.1.3.02', '2025-01-01', '2025-08-31')).toBe(500 - INSUMO); // a baixa original só sai em 15/09
+    expect(await saldo('1.1.3.02', '2025-01-01', '2025-09-30')).toBe(500);
+    // a recontagem ativa bloqueia uma 3ª
+    expect((await count('2025-08-31', 0)).status).toBe(409);
+  });
+
+  it('item 4 — estorno no mesmo dia e nova recontagem: usa a sourceId seguinte e o mesmo saldo', async () => {
+    const segunda = await countEntry(`${UNIT}:2025-08-31#2`);
+    expect((await reverse(segunda.id, '2025-08-31')).status).toBe(200);
+    const res = await count('2025-08-31', 0);
+    expect(res.status).toBe(201);
+    expect(res.body.data).toMatchObject({ bookValueCents: INSUMO + 100, adjustmentCents: INSUMO + 100 });
+    expect((await countEntry(`${UNIT}:2025-08-31#3`)).id).toBe(res.body.data.entryId);
+    expect(await saldo('1.1.3.02', '2025-01-01', '2025-09-30')).toBe(0);
   });
 });

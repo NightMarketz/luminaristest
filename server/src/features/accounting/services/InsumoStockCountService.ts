@@ -5,7 +5,7 @@
  *   commit 1 — razão: postEntry(sourceType='insumo_stock_count', sourceId=<unitId>:<countDate>); gate de período dentro da tx
  *              teste: (genérico — PostingService) PostingService.test.ts › "postEntry TOCTOU: preflight passes (OPEN) but authoritative tx-gate fails (period closed between checks) — no write"
  *   commit 2 — nenhum
- *   reconcile — n/a (postEntry idempotente por sourceId; a 2ª contagem na mesma data dá 409 no read-first)
+ *   reconcile — n/a (postEntry idempotente por sourceId; a 2ª contagem ATIVA na mesma data dá 409 no read-first)
  *              teste: insumoStockCount.integration.test.ts › "item 4 — 2ª contagem na mesma data → 409, sem segundo lançamento"
  *   fora da tx — nada
  */
@@ -18,6 +18,7 @@ import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRep
 import type { IJournalEntryRepository } from '../repositories/IJournalEntryRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { PostingService } from './PostingService';
+import type { Posting } from 'generated/prisma';
 import { InsumoStockCountViewSchema, type CreateInsumoStockCountInput, type InsumoStockCountView } from '../dtos/InsumoStockCountDto';
 
 export const INSUMO_STOCK_COUNT_SOURCE_TYPE = 'insumo_stock_count';
@@ -27,6 +28,11 @@ export const INSUMO_STOCK_COUNT_SOURCE_TYPE = 'insumo_stock_count';
  * D-2026-11-21-INSUMO-INVENTARIO-PERIODICO). NBC TG 1002 item 13.6: o estoque vira custo do serviço no período da
  * receita. No inventário periódico o consumo do período é saldo contábil − contado na data, lançado como
  * D `insumoExpenseAccountId` / C `insumoStockAccountId` (o inverso, se sobrou).
+ *
+ * Recontagem (BRIEF item 4, "estorne e conte de novo"): o `reverseEntry` genérico não libera a chave de idempotência
+ * (só a do `closing`), então cada recontagem na mesma (unidade, data) usa a `sourceId` seguinte (`<base>`, `<base>#2`,
+ * `<base>#3`…). Só a última pode estar ativa. O saldo da recontagem exclui as contagens estornadas daquela data e os
+ * estornos delas: se o estorno foi datado depois de `countDate`, a contagem original ainda estaria no saldo.
  *
  * Residual declarado (BRIEF §6): o saldo é lido antes do `postEntry`, fora da tx dele. Uma compra com data até
  * `countDate` lançada depois da contagem fica fora do ajuste. A contagem vale para a sua data; a correção é estornar
@@ -58,17 +64,29 @@ export class InsumoStockCountService {
       throw new ValidationError('insumo_stock_account_not_configured: conta de estoque ou de custo do insumo não existe mais neste escopo.');
     }
 
-    const sourceId = `${scope.unitId}:${input.countDate}`;
-    if (await this.journalEntryRepo.findBySource(scope, INSUMO_STOCK_COUNT_SOURCE_TYPE, sourceId)) {
-      throw new ConflictError(
-        `Já existe contagem do estoque de insumo em ${input.countDate} nesta unidade. Para corrigir, estorne o lançamento e conte de novo.`,
-        'INSUMO_COUNT_ALREADY_POSTED',
-      );
+    const base = `${scope.unitId}:${input.countDate}`;
+    let sourceId = base;
+    let excludedCents = 0; // efeito, na conta de estoque de insumo, das contagens estornadas desta data e dos estornos delas
+    for (let seq = 2; ; seq++) {
+      const prior = await this.journalEntryRepo.findBySource(scope, INSUMO_STOCK_COUNT_SOURCE_TYPE, sourceId);
+      if (!prior) break;
+      if (!prior.reversedById) {
+        throw new ConflictError(
+          `Já existe contagem do estoque de insumo em ${input.countDate} nesta unidade. Para corrigir, estorne o lançamento e conte de novo.`,
+          'INSUMO_COUNT_ALREADY_POSTED',
+        );
+      }
+      excludedCents += stockEffect(prior.postings, stock.id);
+      const reversal = await this.journalEntryRepo.findById(scope, prior.reversedById);
+      if (reversal && reversal.date.getTime() <= endOfDay(input.countDate).getTime()) {
+        excludedCents += stockEffect(reversal.postings, stock.id);
+      }
+      sourceId = `${base}#${seq}`;
     }
 
-    const totals = await this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, { to: new Date(`${input.countDate}T23:59:59.999Z`) });
+    const totals = await this.postingRepo.groupByAccount(scope, LEDGER_STATUSES, { to: endOfDay(input.countDate) });
     const row = totals.find((t) => t.accountId === stock.id);
-    const bookValueCents = row ? row.debitCents - row.creditCents : 0;
+    const bookValueCents = (row ? row.debitCents - row.creditCents : 0) - excludedCents;
     const adjustmentCents = bookValueCents - input.countedValueCents;
 
     let entryId: string | null = null;
@@ -102,4 +120,13 @@ export class InsumoStockCountService {
       entryId,
     });
   }
+}
+
+function endOfDay(dateOnly: string): Date {
+  return new Date(`${dateOnly}T23:59:59.999Z`);
+}
+
+/** Débito − crédito das pernas do lançamento na conta dada (centavos inteiros; as colunas são BigInt). */
+function stockEffect(postings: Posting[], accountId: string): number {
+  return postings.filter((p) => p.accountId === accountId).reduce((acc, p) => acc + Number(p.debitCents) - Number(p.creditCents), 0);
 }

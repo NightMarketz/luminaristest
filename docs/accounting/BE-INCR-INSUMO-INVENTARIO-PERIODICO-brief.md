@@ -55,6 +55,10 @@
      `sourceDocument.rawJson` guarda o contado e o saldo.
    - **Idempotência:** segunda contagem na mesma data e unidade dá 409 `INSUMO_COUNT_ALREADY_POSTED`. Para corrigir,
      estorne o lançamento (fluxo de estorno já existente) e conte de novo.
+   - **Recontagem depois do estorno** (review #1297, achado 1): o `reverseEntry` genérico só libera a chave do
+     `closing`. Por isso cada recontagem usa a `sourceId` seguinte (`<base>#2`, `#3`…), e só a última pode estar ativa.
+     O saldo da recontagem exclui as contagens estornadas da data e os estornos delas. Sem isso, um estorno datado
+     depois de `countDate` deixaria a contagem original no saldo.
    - **Policy:** `canManageFiscalProfile`, a mesma régua de quem fecha período.
    - **Período fechado:** o gate é o do `postEntry`.
    - **Saída:** `{ countDate, bookValueCents, countedValueCents, adjustmentCents, entryId | null }`.
@@ -113,6 +117,8 @@ Os detalhes abaixo decorrem das regras já ratificadas e não abrem fork:
 - **Saldo lido fora da transação do lançamento.** Uma compra com data até `countDate`, lançada depois da contagem, não
   entra no ajuste. É o comportamento do inventário periódico: a contagem vale para a data dela. Para corrigir, estorne
   o lançamento e conte de novo.
+- **Contagem com ajuste zero não grava nada.** Uma 2ª contagem na mesma data, com outro valor, lança normalmente: a
+  1ª não deixou rastro no razão.
 - **Re-drive do `PayableService`** (`buildRecognitionInputFromRow`): é o mesmo residual já registrado para o insumo
   (débito na `1.1.6` na janela de crash). Não muda aqui.
 
