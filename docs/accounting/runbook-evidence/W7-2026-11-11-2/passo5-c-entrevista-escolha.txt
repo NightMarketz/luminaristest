@@ -1,0 +1,72 @@
+Luminaris
+🇺🇸
+EN
+w7-gb
+W
+Set Up Your System
+
+Select the best mode to start organizing your operation and managing your KPIs.
+
+Quick Mode
+Total Control
+AI Interview
+AI interview
+
+Hi! To get started, please tell me about your business or project so I can understand how best to help you set up the system.
+
+I run a small hair salon called Studio Aurora in Sao Paulo with 3 stylists and 40 clients a week.
+
+What services do you offer at Studio Aurora?
+
+We do haircuts, coloring and manicures. I want to control schedule, stock, sales and finances.
+
+Got it. So, in short, your business is: A small hair salon in Sao Paulo called Studio Aurora offering haircuts, coloring, and manicures, serving 40 clients a week while needing to manage scheduling, stock, sales, and finances. Is that correct?
+
+Yes, that sounds right. Please continue.
+
+I'm excited to share that I've found the perfect system for your beauty salon! This software will help you manage your clients, services, and appointments seamlessly. You’ll be able to record sales, manage your products, and keep track of your employees and their commissions easily. Plus, I suggest activating the Contacts and Opportunities modules for even more efficiency! You can uncheck them if you prefer. Would you like to create the system now or customize it first?
+
+Suggested modules
+
+Uncheck what you don't want now; you can install it later.
+
+Funnel
+(included)
+Proposals
+(included)
+Accounts
+Contacts
+Opportunities
+Campaigns
+(included)
+Customers
+(included)
+Suppliers
+(included)
+Sales
+(included)
+Services
+(included)
+Products
+(included)
+Packages
+(included)
+Commissions
+(included)
+Inventory
+(included)
+Schedule
+(included)
+Expenses
+(included)
+Other revenues
+(included)
+Financial baselines
+(included)
+Reports
+(included)
+Goals
+(included)
+Create the system now
+Customize
+Send

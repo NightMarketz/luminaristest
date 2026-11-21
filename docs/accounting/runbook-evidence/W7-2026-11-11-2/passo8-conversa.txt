@@ -1,0 +1,232 @@
+Luminaris
+🇺🇸
+EN
+w7-gb
+W
+Set Up Your System
+
+Select the best mode to start organizing your operation and managing your KPIs.
+
+Quick Mode
+Total Control
+AI Interview
+System features
+
+System: Advanced Beauty Salon ERP
+
+LeadPipelines
+Core
+
+Tabela de LeadPipelines
+
+Fields: Unit, Pipeline Name, Default
+LeadStages
+Core
+
+Tabela de LeadStages
+
+Fields: Pipeline, Stage Name, Stage Type and 2 more...
+Leads
+Core
+
+Tabela de Leads
+
+Fields: Unit, Pipeline, Stage and 21 more...
+LeadActivities
+Core
+
+Tabela de LeadActivities
+
+Fields: Lead, Actor, Type and 4 more...
+LeadProposals
+
+Tabela de LeadProposals
+
+Fields: Lead, Amount, Currency and 4 more...
+CrmContacts
+
+Tabela de CrmContacts
+
+Fields: Unit, Contact Name, Email and 7 more...
+CrmOpportunities
+
+Tabela de CrmOpportunities
+
+Fields: Unit, Lead, Account and 12 more...
+Campaigns
+
+Tabela de Campaigns
+
+Fields: Unit, Campaign Name, Target Audience and 8 more...
+Customers
+Core
+
+Tabela de Customers
+
+Fields: Main Unit, Full Name, Email and 17 more...
+Suppliers
+
+Tabela de Suppliers
+
+Fields: Supplier Name, Contact Person, Email and 11 more...
+Sales
+Core
+
+Tabela de Sales
+
+Fields: Unit, Sale Date, Status and 27 more...
+SaleItems
+Core
+
+Tabela de SaleItems
+
+Fields: Sale, Item Type, Product and 14 more...
+Services
+Core
+
+Tabela de Services
+
+Fields: Name, Category, Price and 6 more...
+Products
+Core
+
+Tabela de Products
+
+Fields: Name, Brand, Description and 3 more...
+Packages
+
+Tabela de Packages
+
+Fields: Name, Package Price, Validity (days) and 1 more...
+Commissions
+
+Tabela de Commissions
+
+Fields: Employee (Commission), Sale, Sale Item and 5 more...
+ProductUnits
+Core
+
+Tabela de ProductUnits
+
+Fields: Product, Unit, Sale Price and 2 more...
+StockMovements
+Core
+
+Tabela de StockMovements
+
+Fields: Product, Unit, Type and 10 more...
+Appointments
+Core
+
+Tabela de Appointments
+
+Fields: Unit, Customer, Simple Customer and 7 more...
+Expenses
+Core
+
+Tabela de Expenses
+
+Fields: Unit, Description, Amount and 6 more...
+OtherRevenues
+
+Tabela de OtherRevenues
+
+Fields: Unit, Revenue Date, Amount and 3 more...
+FinancialBaselines
+
+Tabela de FinancialBaselines
+
+Fields: Unit, Baseline Date, Opening Cash and 3 more...
+Reports
+Core
+
+Tabela de Reports
+
+Fields: Report Type, Description
+Goals
+
+Tabela de Goals
+
+Fields: Unit, Description, Period and 6 more...
+Customization
+Manual
+Conversational AI
+I also need to record the proposal notes
+06:38 PM
+Proponho adicionar um campo para armazenar notas das propostas.
+06:38 PM
+AI proposal
+Add
+Notas da Proposta
+textarea
+Discard
+Apply
+Enter ⏎
+Back to manual mode
+AI interview
+
+Hi! To get started, please tell me about your business or project so I can understand how best to help you set up the system.
+
+I run a small hair salon called Studio Aurora in Sao Paulo with 3 stylists and 40 clients a week.
+
+What services do you offer at Studio Aurora besides haircuts?
+
+We do haircuts, coloring and manicures. I want to control schedule, stock, sales and finances.
+
+Got it. So, in short, your business is: A small hair salon in Sao Paulo offering haircuts, coloring, and manicures, aiming to control schedule, stock, sales, and finances. Is that correct?
+
+Yes, that sounds right. Please continue.
+
+Hello! I'm excited to share that I've found the perfect system for your beauty salon! With this system, you'll be able to manage your clients easily, keep track of services and their prices, schedule appointments seamlessly, and even manage your products and sales efficiently. Plus, you'll have the capability to oversee your employees and their commissions. I also recommend considering the additional modules for Contacts and Opportunities, which you can opt-out of if you prefer. Would you like to create the system now or customize it first?
+
+Customizing the "Advanced Beauty Salon ERP" System
+
+Please check the customization panel on the left to see all the current features of your system.
+
+What would you like to do now?
+
+Add new features
+Remove existing features
+Finish the customization and create the system
+Suggested modules
+
+Uncheck what you don't want now; you can install it later.
+
+Funnel
+(included)
+Proposals
+(included)
+Accounts
+Contacts
+Opportunities
+Campaigns
+(included)
+Customers
+(included)
+Suppliers
+(included)
+Sales
+(included)
+Services
+(included)
+Products
+(included)
+Packages
+(included)
+Commissions
+(included)
+Inventory
+(included)
+Schedule
+(included)
+Expenses
+(included)
+Other revenues
+(included)
+Financial baselines
+(included)
+Reports
+(included)
+Goals
+(included)
+Send

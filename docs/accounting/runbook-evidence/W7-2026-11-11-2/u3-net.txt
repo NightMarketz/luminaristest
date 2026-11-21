@@ -1,0 +1,48 @@
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmwcmkx7v000fcih02o9fxrf4","name":"W7 w7-gb","username":"w7-gb","email":"w7-gb@luminaris.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-11T21:22:46.700Z","updatedAt":"2026-11-11T21:41:25.356Z"}}
+GET /api/dynamic-tables -> 304
+   res: {"success":true,"data":[]}
+GET /api/dashboard/presets -> 304
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","category":"services"},{"key":"aestheticClinic","name":"ERP para Clínica de Estética","description":"Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.","category"
+GET /api/dashboard/presets -> 304
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","category":"services"},{"key":"aestheticClinic","name":"ERP para Clínica de Estética","description":"Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.","category"
+GET /api/dynamic-tables -> 304
+   res: {"success":true,"data":[]}
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmwcmkx7v000fcih02o9fxrf4","name":"W7 w7-gb","username":"w7-gb","email":"w7-gb@luminaris.test","role":"USER","locale":"pt","currency":"BRL","createdAt":"2026-11-11T21:22:46.700Z","updatedAt":"2026-11-11T21:41:25.356Z"}}
+GET /api/dashboard/presets -> 304
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","category":"services"},{"key":"aestheticClinic","name":"ERP para Clínica de Estética","description":"Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.","category"
+GET /api/dynamic-tables -> 304
+   res: {"success":true,"data":[]}
+PATCH /api/users/me/preferences -> 200  req: {"locale":"en"}
+   res: {"success":true,"data":{"id":"cmwcmkx7v000fcih02o9fxrf4","locale":"en","currency":"BRL"}}
+GET /api/dashboard/presets -> 304
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","category":"services"},{"key":"aestheticClinic","name":"ERP para Clínica de Estética","description":"Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.","category"
+GET /api/dynamic-tables -> 304
+   res: {"success":true,"data":[]}
+GET /api/auth/me -> 200
+   res: {"success":true,"data":{"id":"cmwcmkx7v000fcih02o9fxrf4","name":"W7 w7-gb","username":"w7-gb","email":"w7-gb@luminaris.test","role":"USER","locale":"en","currency":"BRL","createdAt":"2026-11-11T21:22:46.700Z","updatedAt":"2026-11-11T21:53:09.877Z"}}
+GET /api/dashboard/presets -> 304
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","category":"services"},{"key":"aestheticClinic","name":"ERP para Clínica de Estética","description":"Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.","category"
+GET /api/dynamic-tables -> 304
+   res: {"success":true,"data":[]}
+GET /api/dashboard/presets -> 304
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","category":"services"},{"key":"aestheticClinic","name":"ERP para Clínica de Estética","description":"Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.","category"
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmwcmkx7v000fcih02o9fxrf4","name":"W7 w7-gb","username":"w7-gb","email":"w7-gb@luminaris.test","role":"USER","locale":"en","currency":"BRL","createdAt":"2026-11-11T21:22:46.700Z","updatedAt":"2026-11-11T21:53:09.877Z"}}
+GET /api/dynamic-tables -> 304
+   res: {"success":true,"data":[]}
+GET /api/dashboard/presets -> 304
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","category":"services"},{"key":"aestheticClinic","name":"ERP para Clínica de Estética","description":"Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.","category"
+GET /api/dynamic-tables -> 304
+   res: {"success":true,"data":[]}
+GET /api/dashboard/presets -> 304
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","category":"services"},{"key":"aestheticClinic","name":"ERP para Clínica de Estética","description":"Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.","category"
+GET /api/dynamic-tables -> 304
+   res: {"success":true,"data":[]}
+GET /api/auth/me -> 304
+   res: {"success":true,"data":{"id":"cmwcmkx7v000fcih02o9fxrf4","name":"W7 w7-gb","username":"w7-gb","email":"w7-gb@luminaris.test","role":"USER","locale":"en","currency":"BRL","createdAt":"2026-11-11T21:22:46.700Z","updatedAt":"2026-11-11T21:53:09.877Z"}}
+GET /api/dashboard/presets -> 304
+   res: {"success":true,"data":[{"key":"beautySalon","name":"Advanced Beauty Salon ERP","description":"Complete management solution for salons with scheduling, inventory, sales, financials, and marketing.","category":"services"},{"key":"aestheticClinic","name":"ERP para Clínica de Estética","description":"Complete management solution for aesthetic clinics: appointments, clinical customer registry, inventory of cosmetics/products, service catalog, prepaid packages, sales, and full financials.","category"
+GET /api/dynamic-tables -> 304
+   res: {"success":true,"data":[]}

@@ -1,0 +1,212 @@
+Luminaris
+🇺🇸
+EN
+w7-uf
+W
+Set Up Your System
+
+Select the best mode to start organizing your operation and managing your KPIs.
+
+Quick Mode
+Total Control
+AI Interview
+System features
+
+System: Advanced Beauty Salon ERP
+
+LeadPipelines
+Core
+
+Tabela de LeadPipelines
+
+Fields: Unit, Pipeline Name, Default
+LeadStages
+Core
+
+Tabela de LeadStages
+
+Fields: Pipeline, Stage Name, Stage Type and 2 more...
+Leads
+Core
+
+Tabela de Leads
+
+Fields: Unit, Pipeline, Stage and 21 more...
+LeadActivities
+Core
+
+Tabela de LeadActivities
+
+Fields: Lead, Actor, Type and 4 more...
+LeadProposals
+
+Tabela de LeadProposals
+
+Fields: Lead, Amount, Currency and 4 more...
+CrmContacts
+
+Tabela de CrmContacts
+
+Fields: Unit, Contact Name, Email and 7 more...
+Campaigns
+
+Tabela de Campaigns
+
+Fields: Unit, Campaign Name, Target Audience and 8 more...
+Customers
+Core
+
+Tabela de Customers
+
+Fields: Main Unit, Full Name, Email and 17 more...
+Suppliers
+
+Tabela de Suppliers
+
+Fields: Supplier Name, Contact Person, Email and 11 more...
+Sales
+Core
+
+Tabela de Sales
+
+Fields: Unit, Sale Date, Status and 27 more...
+SaleItems
+Core
+
+Tabela de SaleItems
+
+Fields: Sale, Item Type, Product and 14 more...
+Services
+Core
+
+Tabela de Services
+
+Fields: Name, Category, Price and 6 more...
+Products
+Core
+
+Tabela de Products
+
+Fields: Name, Brand, Description and 3 more...
+Packages
+
+Tabela de Packages
+
+Fields: Name, Package Price, Validity (days) and 1 more...
+Commissions
+
+Tabela de Commissions
+
+Fields: Employee (Commission), Sale, Sale Item and 5 more...
+ProductUnits
+Core
+
+Tabela de ProductUnits
+
+Fields: Product, Unit, Sale Price and 2 more...
+StockMovements
+Core
+
+Tabela de StockMovements
+
+Fields: Product, Unit, Type and 10 more...
+Appointments
+Core
+
+Tabela de Appointments
+
+Fields: Unit, Customer, Simple Customer and 7 more...
+Expenses
+Core
+
+Tabela de Expenses
+
+Fields: Unit, Description, Amount and 6 more...
+OtherRevenues
+
+Tabela de OtherRevenues
+
+Fields: Unit, Revenue Date, Amount and 3 more...
+FinancialBaselines
+
+Tabela de FinancialBaselines
+
+Fields: Unit, Baseline Date, Opening Cash and 3 more...
+Reports
+Core
+
+Tabela de Reports
+
+Fields: Report Type, Description
+Goals
+
+Tabela de Goals
+
+Fields: Unit, Description, Period and 6 more...
+AI interview
+
+Hi! To get started, please tell me about your business or project so I can understand how best to help you set up the system.
+
+I run a small hair salon called Studio Aurora in Sao Paulo with 3 stylists, about 40 clients a week, and I sell a few hair products.
+
+What types of hair services do you specialize in at Studio Aurora?
+
+We do haircuts, coloring and manicures. I want to control schedule, stock, sales and finances.
+
+Got it. So, in short, your business is: A small hair salon called Studio Aurora in Sao Paulo that offers haircuts, coloring, and manicures, serving about 40 clients a week while selling hair products. Is that correct?
+
+Yes, that sounds right. Please continue.
+
+Hi there! I'm excited to share that I've found the perfect system for your beauty salon! With this solution, you can easily manage your clients, schedule appointments, and keep track of your services and products—all while monitoring your staff's performance and commissions. Plus, you can activate the Contacts module, which includes Customers, Products, Sales, and Employees, although you can uncheck them if you prefer. Would you like to create the system now or would you like to customize it first?
+
+Customizing the "Advanced Beauty Salon ERP" System
+
+Please check the customization panel on the left to see all the current features of your system.
+
+What would you like to do now?
+
+Add new features
+Remove existing features
+Finish the customization and create the system
+Suggested modules
+
+Uncheck what you don't want now; you can install it later.
+
+Funnel
+(included)
+Proposals
+(included)
+Accounts
+Contacts
+Opportunities
+Campaigns
+(included)
+Customers
+(included)
+Suppliers
+(included)
+Sales
+(included)
+Services
+(included)
+Products
+(included)
+Packages
+(included)
+Commissions
+(included)
+Inventory
+(included)
+Schedule
+(included)
+Expenses
+(included)
+Other revenues
+(included)
+Financial baselines
+(included)
+Reports
+(included)
+Goals
+(included)
+Send

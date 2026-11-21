@@ -1,0 +1,72 @@
+Luminaris
+🇺🇸
+EN
+w7-ia
+W
+Set Up Your System
+
+Select the best mode to start organizing your operation and managing your KPIs.
+
+Quick Mode
+Total Control
+AI Interview
+AI interview
+
+Hi! To get started, please tell me about your business or project so I can understand how best to help you set up the system.
+
+I run a hair salon with 3 chairs, we sell hair products too.
+
+What types of hair services do you specialize in at your salon?
+
+I want to track appointments, customers, stock and sales.
+
+Got it. So, in short, your business is: A hair salon with 3 chairs that offers various hair services, sells hair products, and wants to track appointments, customers, stock, and sales. Is that correct?
+
+Yes, that is correct.
+
+I'm so excited to share that I've found the perfect system for your beauty salon! With this system, you'll be able to manage clients, schedule appointments seamlessly, keep track of services and products, and handle sales efficiently. You can also oversee your staff's schedules and commissions! Plus, we can activate the Contacts module for you, which you can uncheck if you prefer. Would you like to create the system now or customize it first?
+
+Suggested modules
+
+Uncheck what you don't want now; you can install it later.
+
+Funnel
+(included)
+Proposals
+(included)
+Accounts
+Contacts
+Opportunities
+Campaigns
+(included)
+Customers
+(included)
+Suppliers
+(included)
+Sales
+(included)
+Services
+(included)
+Products
+(included)
+Packages
+(included)
+Commissions
+(included)
+Inventory
+(included)
+Schedule
+(included)
+Expenses
+(included)
+Other revenues
+(included)
+Financial baselines
+(included)
+Reports
+(included)
+Goals
+(included)
+Create the system now
+Customize
+Send

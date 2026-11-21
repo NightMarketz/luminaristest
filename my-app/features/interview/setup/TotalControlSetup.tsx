@@ -87,7 +87,7 @@ export default function TotalControlSetup() {
       setIsLoading(true);
       setLoadError(null);
       try {
-        setPresets(await SetupService.getPresets());
+        setPresets(await SetupService.getPresets(i18n?.language?.startsWith('en') ? 'en' : 'pt'));
       } catch (err: unknown) {
         setLoadError(err instanceof Error ? err.message : String(err));
       } finally {
@@ -96,7 +96,7 @@ export default function TotalControlSetup() {
     }
 
     fetchPresets();
-  }, [user, authLoading, reloadKey]);
+  }, [user, authLoading, reloadKey, i18n?.language]);
 
   function handleSelectPreset(preset: Preset) {
     setSelectedPreset(preset);
@@ -244,7 +244,7 @@ export default function TotalControlSetup() {
 
                     {selectedPreset?.key === preset.key && (
                       <div className="mt-auto flex items-center text-blue-600 dark:text-blue-400 font-bold text-xs uppercase tracking-widest">
-                        Selecionado
+                        {t('onboardingTotalControlSelected')}
                       </div>
                     )}
                   </button>

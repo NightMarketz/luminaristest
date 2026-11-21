@@ -17,7 +17,8 @@ interface Preset {
 }
 
 export default function QuickSetup() {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
+  const presetLocale = i18n?.language?.startsWith('en') ? 'en' : 'pt';
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -56,7 +57,7 @@ export default function QuickSetup() {
       setIsLoading(true);
       setLoadError(null);
       try {
-        setPresets(await SetupService.getPresets());
+        setPresets(await SetupService.getPresets(presetLocale));
 
       } catch (err) {
         setLoadError((err instanceof Error ? err.message : String(err)) || t('onboardingQuickLoadError'));
@@ -66,7 +67,7 @@ export default function QuickSetup() {
     }
 
     verifyAndLoad();
-  }, [user, authLoading, router, reloadKey]);
+  }, [user, authLoading, router, reloadKey, presetLocale]);
 
   async function handleCreateDashboard(fiscal: FiscalOnboarding) {
     if (!selectedPreset || !unitName.trim()) return;
