@@ -35,7 +35,10 @@ function vinculo(id: string): VinculoSnapshot {
       { id: `${id}-x1`, vigenteDesde: '2025-01-01', vigenteAte: '2026-03-14', salarioCents: '300000', unidadeSalario: '5', jornada: null, cargoId: null, cargoNome: null, sindicatoId: null },
       { id: `${id}-x2`, vigenteDesde: '2026-03-15', vigenteAte: null, salarioCents: '320000', unidadeSalario: '5', jornada: null, cargoId: null, cargoNome: null, sindicatoId: null },
     ],
-    cct: [],
+    cct: [
+      { id: `${id}-c1`, sindicatoId: 's1', chave: 'PISO_SALARIAL_CENTS', discriminador: 'cargo1', valorInt: '180000', vigenteDesde: '2026-01-01', vigenteAte: null },
+      { id: `${id}-c2`, sindicatoId: 's1', chave: 'PISO_SALARIAL_CENTS', discriminador: 'cargo2', valorInt: '190000', vigenteDesde: '2026-01-01', vigenteAte: null },
+    ],
     afastamentos: [
       { id: `${id}-a1`, motivo: '03', inicio: '2026-03-02', fim: '2026-03-03' },
       { id: `${id}-a2`, motivo: '03', inicio: '2026-03-20', fim: null },
@@ -48,7 +51,10 @@ function vinculo(id: string): VinculoSnapshot {
     jornadaApurada: { origem: 'NULO', motivo: 'DP-PONTO desligado na competência 2026-03' },
     dependentes: { irrf: 1, salarioFamilia: [{ idade: 3, invalido: false }, { idade: 20, invalido: true }] },
     jaPagoNoMesDePagamento: { rendimentoCents: '0', irrfRetidoCents: '0' },
-    outrasRemuneracoes: [],
+    outrasRemuneracoes: [
+      { id: `${id}-o1`, remuneracaoCents: '200000', contribuicaoCents: '16000', ordem: 'ANTES', categoriaOutraFonte: 'EMPREGADO' },
+      { id: `${id}-o2`, remuneracaoCents: '50000', contribuicaoCents: '5500', ordem: 'DEPOIS', categoriaOutraFonte: 'CONTRIBUINTE_INDIVIDUAL' },
+    ],
   };
 }
 
@@ -63,8 +69,8 @@ const snapshot = (vinculos: VinculoSnapshot[]): DpSnapshot =>
       pagamento: { ok: true, valor: parametrosParaJson(params(REAL, '2026-04-06')) },
     },
     regras: { ok: true, valor: regrasParaJson(regras(REAL, '2026-03-31')) },
-    feriados: { u1: ['2026-03-01'], u2: [] },
-    modulosAtivos: [],
+    feriados: { u1: ['2026-03-01', '2026-03-19'], u2: [] },
+    modulosAtivos: ['DP-PONTO', 'DP-BEN'],
     vinculos,
   });
 
@@ -92,10 +98,13 @@ describe('snapshot (itens 28 e 53)', () => {
       fc.property(fc.integer({ min: 1, max: 2 ** 30 }), (semente) => {
         const perm: DpSnapshot = {
           ...base,
-          feriados: Object.fromEntries(embaralhar(Object.entries(base.feriados), semente)),
+          feriados: Object.fromEntries(embaralhar(Object.entries(base.feriados), semente).map(([u, ds]) => [u, embaralhar(ds, semente + 7)])),
+          modulosAtivos: embaralhar(base.modulosAtivos, semente + 5),
           vinculos: embaralhar(base.vinculos, semente).map((v, i) => ({
             ...v,
             versoes: embaralhar(v.versoes, semente + i),
+            cct: embaralhar(v.cct, semente + i + 4),
+            outrasRemuneracoes: embaralhar(v.outrasRemuneracoes, semente + i + 5),
             afastamentos: embaralhar(v.afastamentos, semente + i + 1),
             lancamentos: embaralhar(v.lancamentos, semente + i + 2),
             dependentes: { ...v.dependentes, salarioFamilia: embaralhar(v.dependentes.salarioFamilia, semente + i + 3) },
@@ -105,6 +114,15 @@ describe('snapshot (itens 28 e 53)', () => {
       }),
       { numRuns: 100 },
     );
+    // Uma inversão fixa de cada lista (o embaralhamento aleatório pode manter a ordem): o hash não muda.
+    const rev = <T,>(xs: readonly T[]) => [...xs].reverse();
+    const invertido: DpSnapshot = {
+      ...base,
+      feriados: { u2: [], u1: rev(base.feriados.u1) },
+      modulosAtivos: rev(base.modulosAtivos),
+      vinculos: rev(base.vinculos).map((v) => ({ ...v, cct: rev(v.cct), outrasRemuneracoes: rev(v.outrasRemuneracoes), versoes: rev(v.versoes), afastamentos: rev(v.afastamentos), lancamentos: rev(v.lancamentos) })),
+    };
+    expect(snapshotSha256(invertido)).toBe(h);
   });
 
   it('item 28 — mudar um valor muda o hash', () => {

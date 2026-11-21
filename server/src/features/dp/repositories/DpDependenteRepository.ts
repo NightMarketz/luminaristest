@@ -22,9 +22,9 @@ export class DpDependenteRepository implements IDpDependenteRepository {
   public async delete(id: string, tx: Tx): Promise<DpDependente> {
     return tx.dpDependente.update({ where: { id }, data: { deletedAt: new Date() } });
   }
-  public async listDosTrabalhadores(trabalhadorIds: readonly string[]): Promise<DpDependente[]> {
+  public async listDosTrabalhadores(trabalhadorIds: readonly string[], tx?: Tx): Promise<DpDependente[]> {
     if (trabalhadorIds.length === 0) return [];
-    return prisma.dpDependente.findMany({ where: { trabalhadorId: { in: [...trabalhadorIds] }, ...vivo }, orderBy: { id: 'asc' } });
+    return (tx ?? prisma).dpDependente.findMany({ where: { trabalhadorId: { in: [...trabalhadorIds] }, ...vivo }, orderBy: { id: 'asc' } });
   }
 
   public async runTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {

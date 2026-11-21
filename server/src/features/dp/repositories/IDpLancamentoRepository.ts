@@ -41,7 +41,7 @@ export interface IDpLancamentoRepository {
   deleteOutraRemuneracao(id: string, tx: Tx): Promise<DpOutraRemuneracao>;
 
   /** BE-INCR-DP-F2 item 27 (PR-3) — leitura em lote do snapshot: as linhas vivas da competência. */
-  listLancamentosDosVinculos(vinculoIds: readonly string[], competencia: string): Promise<DpLancamento[]>;
-  listOutrasRemuneracoesDosVinculos(vinculoIds: readonly string[], competencia: string): Promise<DpOutraRemuneracao[]>;
+  listLancamentosDosVinculos(vinculoIds: readonly string[], competencia: string, tx?: Tx): Promise<DpLancamento[]>;
+  listOutrasRemuneracoesDosVinculos(vinculoIds: readonly string[], competencia: string, tx?: Tx): Promise<DpOutraRemuneracao[]>;
   runTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T>;
 }

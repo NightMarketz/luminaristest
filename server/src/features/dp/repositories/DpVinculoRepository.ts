@@ -75,8 +75,8 @@ export class DpVinculoRepository implements IDpVinculoRepository {
     return tx.dpVinculoVersao.update({ where: { id }, data });
   }
 
-  public async listVinculosCompletosNoPeriodo(ownerUserId: string, de: string, ate: string): Promise<DpVinculoSnapshotFonte[]> {
-    return prisma.dpVinculo.findMany({
+  public async listVinculosCompletosNoPeriodo(ownerUserId: string, de: string, ate: string, tx?: Tx): Promise<DpVinculoSnapshotFonte[]> {
+    return this.db(tx).dpVinculo.findMany({
       where: { userId: ownerUserId, ...vivo, dataInicio: { lte: ate }, OR: [{ dataTermino: null }, { dataTermino: { gte: de } }] },
       include: {
         trabalhador: true,

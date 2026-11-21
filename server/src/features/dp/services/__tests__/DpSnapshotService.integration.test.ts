@@ -169,6 +169,18 @@ describe('DpSnapshotService.montar (itens 27, 29 e 33)', () => {
     expect(snapshotSha256(await svc.montar(scopeDe(dono), C, 'MENSAL', '2026-04-06'))).not.toBe(h1);
   });
 
+  it('L4 (cédula de 21/11) — regras no último dia da competência e parâmetros na data de pagamento: em 2026-12 vale a linha da EC 141 de 16/12', async () => {
+    const s = await svc.montar(scopeDe(dono), '2026-12' as Competencia, 'MENSAL', '2027-01-06');
+    expect(s.regras.ok).toBe(true);
+    if (s.regras.ok) {
+      expect(s.regras.valor.salarioHoraDivisor.valor).toBe('DIAS_DE_TRABALHO_DA_ESCALA');
+      expect(s.regras.valor.repousoDiasMin.valor).toBe(2);
+    }
+    // A data de pagamento é a de 2027: sem a tabela de 2027 carregada, a ausência cita a data do pagamento, não a da competência.
+    if (!s.parametros.pagamento.ok) expect(s.parametros.pagamento.ausente.data).toBe('2027-01-06');
+    if (!s.parametros.competencia.ok) expect(s.parametros.competencia.ausente.data).toBe('2026-12-31');
+  });
+
   it('Tier-0 — o outro dono não vê o vínculo; competência fora do vínculo não o lê', async () => {
     expect((await svc.montar(scopeDe(outro), C, 'MENSAL', '2026-04-06')).vinculos).toEqual([]);
     expect((await svc.montar(scopeDe(dono), '2025-01' as Competencia, 'MENSAL', '2025-02-05')).vinculos).toEqual([]);

@@ -68,6 +68,6 @@ export interface IDpVinculoRepository {
   updateVersao(id: string, data: Partial<DpVersaoData>, tx: Tx): Promise<DpVinculoVersao>;
 
   /** BE-INCR-DP-F2 item 27 (PR-3) — leitura em lote do snapshot: o que toca o período `de`..`ate` (date-only, inclusivo). */
-  listVinculosCompletosNoPeriodo(ownerUserId: string, de: string, ate: string): Promise<DpVinculoSnapshotFonte[]>;
+  listVinculosCompletosNoPeriodo(ownerUserId: string, de: string, ate: string, tx?: Tx): Promise<DpVinculoSnapshotFonte[]>;
   runTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T>;
 }

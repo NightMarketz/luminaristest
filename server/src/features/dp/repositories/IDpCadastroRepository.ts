@@ -65,6 +65,6 @@ export interface IDpCadastroRepository {
   deleteParametro(id: string, tx: Tx): Promise<DpConvencaoParametro>;
 
   /** BE-INCR-DP-F2 item 27 (PR-3) — leitura em lote do snapshot: o que toca o período `de`..`ate` (date-only, inclusivo). */
-  listParametrosCctNoPeriodo(ownerUserId: string, sindicatoIds: readonly string[], de: string, ate: string): Promise<DpParametroCctComSindicato[]>;
+  listParametrosCctNoPeriodo(ownerUserId: string, sindicatoIds: readonly string[], de: string, ate: string, tx?: Tx): Promise<DpParametroCctComSindicato[]>;
   runTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T>;
 }

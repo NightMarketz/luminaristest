@@ -52,14 +52,14 @@ export class DpLancamentoRepository implements IDpLancamentoRepository {
     return tx.dpOutraRemuneracao.update({ where: { id }, data: morto() });
   }
 
-  public async listLancamentosDosVinculos(vinculoIds: readonly string[], competencia: string): Promise<DpLancamento[]> {
+  public async listLancamentosDosVinculos(vinculoIds: readonly string[], competencia: string, tx?: Tx): Promise<DpLancamento[]> {
     if (vinculoIds.length === 0) return [];
-    return prisma.dpLancamento.findMany({ where: { vinculoId: { in: [...vinculoIds] }, competencia, ...vivo }, orderBy: { id: 'asc' } });
+    return this.db(tx).dpLancamento.findMany({ where: { vinculoId: { in: [...vinculoIds] }, competencia, ...vivo }, orderBy: { id: 'asc' } });
   }
 
-  public async listOutrasRemuneracoesDosVinculos(vinculoIds: readonly string[], competencia: string): Promise<DpOutraRemuneracao[]> {
+  public async listOutrasRemuneracoesDosVinculos(vinculoIds: readonly string[], competencia: string, tx?: Tx): Promise<DpOutraRemuneracao[]> {
     if (vinculoIds.length === 0) return [];
-    return prisma.dpOutraRemuneracao.findMany({ where: { vinculoId: { in: [...vinculoIds] }, competencia, ...vivo }, orderBy: { id: 'asc' } });
+    return this.db(tx).dpOutraRemuneracao.findMany({ where: { vinculoId: { in: [...vinculoIds] }, competencia, ...vivo }, orderBy: { id: 'asc' } });
   }
 
   public async runTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {

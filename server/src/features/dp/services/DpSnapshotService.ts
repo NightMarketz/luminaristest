@@ -1,3 +1,4 @@
+import type { Prisma } from 'generated/prisma';
 import type { IFiscalProfileRepository } from '../../accounting/repositories/IFiscalProfileRepository';
 import type { AccountingScope } from '../../accounting/scope/AccountingScope';
 import type { LegalParameterTabela } from '../../legalParameters/models/legalParameter';
@@ -82,27 +83,28 @@ const tocaMes = (v: { vigenteDesde: string; vigenteAte: string | null }, de: str
  * L4 da cédula `D-2026-11-21-PES4-F2-PR3-PR4-LACUNAS`) e as regras no último dia da competência. Nenhuma leitura de
  * `employees` (D-2 do F0+F1). O resultado passa pelo schema do contrato e sai normalizado (item 28).
  */
+/** `tx`: a transação do `calcular` (item 51, PR-5) — as leituras de DP passam por ela (gate dentro da tx). */
 export class DpSnapshotService {
   constructor(private readonly deps: DpSnapshotDeps) {}
 
-  async montar(scope: AccountingScope, competencia: Competencia, roteiro: Roteiro, dataPagamento: string): Promise<DpSnapshot> {
+  async montar(scope: AccountingScope, competencia: Competencia, roteiro: Roteiro, dataPagamento: string, tx?: Prisma.TransactionClient): Promise<DpSnapshot> {
     const d = this.deps;
     const dono = scope.ownerUserId;
     const de = primeiroDia(competencia);
     const ate = ultimoDia(competencia);
-    const fontes = (await d.vinculos.listVinculosCompletosNoPeriodo(dono, de, ate)).filter((v) =>
+    const fontes = (await d.vinculos.listVinculosCompletosNoPeriodo(dono, de, ate, tx)).filter((v) =>
       (CATEGORIAS_NUCLEO as readonly string[]).includes(v.categoria),
     );
     const vinculoIds = fontes.map((v) => v.id);
     const versoesDoMes = new Map(fontes.map((v) => [v.id, v.versoes.filter((x) => tocaMes(x, de, ate))]));
     const sindicatoIds = [...new Set([...versoesDoMes.values()].flat().flatMap((x) => (x.sindicatoId ? [x.sindicatoId] : [])))];
     const [cct, afastamentos, lancamentos, outras, dependentes, perfis, fotografia, modulosAtivos, portas, anteriores, adiantamentoBp] = await Promise.all([
-      d.cadastros.listParametrosCctNoPeriodo(dono, sindicatoIds, de, ate),
-      d.afastamentos.listAfastamentosDosVinculos(vinculoIds, de, ate),
-      d.lancamentos.listLancamentosDosVinculos(vinculoIds, competencia),
-      d.lancamentos.listOutrasRemuneracoesDosVinculos(vinculoIds, competencia),
-      d.dependentes.listDosTrabalhadores([...new Set(fontes.map((v) => v.trabalhadorId))]),
-      d.fiscalProfiles.findManyByOwner(dono),
+      d.cadastros.listParametrosCctNoPeriodo(dono, sindicatoIds, de, ate, tx),
+      d.afastamentos.listAfastamentosDosVinculos(vinculoIds, de, ate, tx),
+      d.lancamentos.listLancamentosDosVinculos(vinculoIds, competencia, tx),
+      d.lancamentos.listOutrasRemuneracoesDosVinculos(vinculoIds, competencia, tx),
+      d.dependentes.listDosTrabalhadores([...new Set(fontes.map((v) => v.trabalhadorId))], tx),
+      d.fiscalProfiles.findManyByOwner(dono, tx),
       d.legalParams.fotografia([...TABELAS_SNAPSHOT]),
       d.modulosAtivosEm(dono, competencia),
       d.portas.resolver(dono, competencia),

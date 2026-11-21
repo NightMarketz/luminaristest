@@ -96,7 +96,7 @@ integration/dp-f2-motor`). Merge dentro dela só com CI verde e revisor PASSOU, 
 
 | PR | Branch | Itens | Classe | Gates locais | Revisor |
 |---|---|---|---|---|---|
-| #1320 | `claude/dp-f2-pr3` (base `integration/dp-f2-motor`) | 27–33 | vermelha (`legalParameter.ts`, cédula; `revisor: obrigatório`) | tsc (src e testes), check:arch, eslint, `fatiar` (9), `snapshot` (6), integração `DpSnapshotService` (5) | rodada 1 despachada em 21/11 |
+| #1320 | `claude/dp-f2-pr3` (base `integration/dp-f2-motor`) | 27–33 | vermelha (`legalParameter.ts`, cédula; `revisor: obrigatório`) | tsc (src e testes), check:arch, eslint, `fatiar` (9), `snapshot` (6), integração `DpSnapshotService` (5) | rodada 1 (21/11): REPROVOU só pelo A1 (a propriedade do item 28 não exercitava `cct`, `outrasRemuneracoes` e `modulosAtivos`); corrigido no commit seguinte, com a guarda da L4 (N1) e o `tx` opcional nas leituras do snapshot (lacuna do item 51 apontada pelo revisor). **Rodada 2, só no diff novo, pendente** |
 
 **Lacunas decididas (dono, 21/11, [[D-2026-11-21-PES4-F2-PR3-PR4-LACUNAS]]):**
 - **L1 "Data na falta":** o `FALTAS` exige data. Entra no PR-4: coluna, DTO, validação e o `data` no lançamento do snapshot.
