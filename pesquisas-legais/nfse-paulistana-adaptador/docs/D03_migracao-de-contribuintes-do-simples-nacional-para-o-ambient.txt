@@ -1,0 +1,92 @@
+» Migração de contribuintes do Simples Nacional para o Ambiente Nacional - Nota Fiscal Paulistana Migração de contribuintes do Simples Nacional para o Ambiente Nacional – Nota Fiscal Paulistana 
+
+ Ir para o topo1 
+
+ Ir para o conteúdo2 
+
+ Ir para a busca3 
+
+ Ir para o menu4 
+
+ Ir para o rodapé5 
+
+ dark_mode light_mode 
+
+ menu search Buscar no site search Acessar o sistema 
+
+Início
+
+ Perfis expand_more 
+
+ Prestador de Serviços expand_more 
+
+Pessoa Jurídica
+
+Pessoa Física
+
+Simples Nacional
+
+MEI
+
+Tomador de serviços
+
+Contador
+
+Desenvolvedor WebService
+
+Sorteios
+
+Notícias
+
+Serviços
+
+Legislação
+
+Informações Gerais
+
+Reforma tributária
+
+Manuais
+
+ Migração de contribuintes do Simples Nacional para o Ambiente Nacional – Nota Fiscal Paulistana 
+ house chevron_right 
+
+ Notícias chevron_right 
+
+Migração de contribuintes do Simples Nacional para o Ambiente Nacional
+
+Migração de contribuintes do Simples Nacional para o Ambiente Nacional
+
+Publicado em 19/10/2026 às 11:52
+
+Atenção: Contribuintes optantes pelo Simples Nacional deverão utilizar o emissor nacional para emissão de NFS-e a partir de 1º de novembro de 2026
+
+A Resolução CGSN nº 191, de 4 de agosto de 2026, tornou obrigatória a emissão da Nota Fiscal de Serviços eletrônica (NFS-e) de padrão nacional pelas microempresas e empresas de pequeno porte optantes pelo Simples Nacional, com efeitos a partir de 1º de novembro de 2026. A medida altera a Resolução CGSN nº 140, de 2018, e determina que a emissão ocorra por meio do Emissor Nacional da NFS-e, seja pela aplicação web, seja por integração via API.
+
+Informamos que o portal da nota fiscal de serviço eletrônica nacional será atualizado sempre que forem disponibilizadas novas adaptações e o contribuinte poderá acompanhar pelo endereço Documentação Técnica (Homologação/testes) — Portal da Nota Fiscal de Serviço eletrônica para que consiga se adaptar previamente à publicação da versão em ambiente produtivo.
+
+O Sistema da NFS-e do município de São Paulo continuará disponível para consulta e emissão retroativa de notas referentes a fatos geradores de ISS ocorridos até 31/10/2026.
+
+Para mais informações, consulte: Simples Nacional: NFS-e Nacional será obrigatória para ME e EPP a partir de 1º de novembro de 2026
+
+Notícias
+ Ver mais chevron_right 
+
+ Prefeitura reabre inscrições para o programa Fique em Dia até 26 de fevereiro de 2027 
+ Ver mais 
+
+ Morador da Vila Prudente ganha a Nota do Milhão de novembro 
+ Ver mais 
+
+ Nova versão do Manual de Utilização do Webservice de NFS-e 
+ Ver mais 
+
+ Voltar ao topo stat_1 
+
+ error 
+O Javascript do navegador está desabilitado. Habilite o Javascript nas configurações do navegador para a melhor utilização do sistema.
+
+Secretaria Municipal da Fazenda
+
+Rua Líbero Badaró, 190, Centro - CEP: 01008-000
+ mail Fale com a Fazenda phone 156

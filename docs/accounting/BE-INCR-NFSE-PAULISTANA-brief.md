@@ -1,0 +1,396 @@
+# BE-INCR-NFSE-PAULISTANA — NFS-e municipal de São Paulo (Nota Paulistana) emitida pelo produto, no `DfeEmissorPort` — nó NFSE-PAULISTANA
+
+> `sessao-planejamento`, 2026-11-21, sobre `origin/main` `43719baa`. PRE-ADR + BRIEF num documento só (molde do
+> `BE-INCR-CICLO-FISCAL-brief.md`). **Sem código.** Implementação exige `executa` próprio do dono (ORCH-006).
+>
+> **Autorização, literal:** dono, 2026-11-21, questionário da sessão de medição do fiscal, à pergunta *"Fork da NFS-e de
+> São Paulo: … Planejar o adaptador?"*, a resposta *"Planejar o adaptador"*; e no chat do mesmo dia: *"Executa tudo pra
+> liberar e poder rodar em xhigh até terminar"*. Lacuna de origem: `L-20261121-183240-e378`. **Cobre o planejamento** deste
+> nó (nota, PRE-ADR/BRIEF, forks ao dono, PR só de `.md`). Não é `executa` de código, não autoriza merge fora da classe de
+> risco.
+>
+> **Em duas linhas:** um adaptador `paulistana` no `DfeEmissorPort` monta o RPS do leiaute 2 da prefeitura a partir da
+> mesma montagem da NFS-e, assina e transmite pelo **assinador local** do cliente (o mesmo da NF-e) e grava o
+> `FiscalDocument` que o relatório de ISS do X7 e a apuração de IBS/CBS já leem. **Risco principal (verificado):** o
+> público é menor do que o pedido diz — desde 01/11/2026 a IN SF/SUREM 10/2011 art. 1º-A § 2º (red. IN 13/2026) **veda** a
+> Paulistana ao Simples, ao MEI e a quem **sair** do Simples; sobra a PJ de SP capital em regime normal que não passou pelo
+> Simples. E a prefeitura **não tem homologação**: só um método de teste em produção que não gera nota.
+
+## 0. Formulário (contexto fixo)
+
+- **Item a planejar:** nó novo `NFSE-PAULISTANA` (nome já usado na proposta F4 de
+  [`PROPOSTA-COMPLEMENTO-FIN-CTB-FIS-2026-10-20.md`](../plano/PROPOSTA-COMPLEMENTO-FIN-CTB-FIS-2026-10-20.md) linha 248 e
+  na [[FILA-ORDEM]] linha F4). Nota: [`docs/plano/nos/NFSE-PAULISTANA.md`](../plano/nos/NFSE-PAULISTANA.md).
+- **Autorização:** a citação acima. **Confere com o item:** "planejar o adaptador" da NFS-e de SP no `DfeEmissorPort`
+  é exatamente este documento. A Q9 de 20/10 (F4 "só com cliente SP normal") segue aberta e não é decidida aqui: o
+  dono mandou planejar agora; o `executa` continua dele (§6, F-NSP-0).
+- **Insumos lidos (21/11, por leitura de arquivo):**
+  - Código: `server/src/features/accounting/dfe/{DfeEmissorPort,selectDfeEmissor,resolveEmissor,ManualEmissor,
+    selectDfeAssinador,AssinadorRemotoPort}.ts`, `dfe/local/assinadorLocalRuntime.ts`, `dfe/sefaz/SefazTransporte.ts`;
+    `prisma/schema.prisma` (`FiscalProfile` 1763–1910, `FiscalDocument` 2357, `FiscalDocumentAttempt` 2450,
+    `FiscalDocumentSequence` 2469); `repositories/FiscalDocumentRepository.ts:67` (`findForIssReport`);
+    `models/issCompetencia.ts:83` (`locaisDoPayload`); `services/FiscalDocumentEmissionService.ts` (estrutura: `emit`,
+    `createAndSend`, `assemble`, `buildPayload`); PR aberto #1146 (AL-PR-3): `dtos/DfeSignerDto.ts`
+    (`DfeSignerConteudoSchema`, `DfeSignerTarefaTransmitirSchema`), `dfe/local/sefazHosts.ts`.
+  - ADRs/BRIEFs: [`ADR-INCR-DFE-EMISSAO-PARCEIRO`](../adr/ADR-INCR-DFE-EMISSAO-PARCEIRO.md) §13–§14;
+    [`ADR-ASSINADOR-LOCAL`](../adr/ADR-ASSINADOR-LOCAL.md) inteiro;
+    [`BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md`](BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md) (ADL-2, ADL-3,
+    ADL-14, §4.1); notas [[X10a]], [[X10i]], [[DFE-MANUAL]], [[ISS-TRANSICAO-IBS]] (frontmatter e folds).
+  - Fontes oficiais: dossiê [`pesquisas-legais/nfse-paulistana-adaptador`](../../pesquisas-legais/nfse-paulistana-adaptador/relatorio.md)
+    D01–D09 — manual do webservice **v3.4.1 de 19/11/2026** [D04, SHA-256 `8fcea6e81a3f…`], IN SF/SUREM 10/2011
+    compilada [D09], IN SF/SUREM 13/2026 [D06], notícias da SF de 02/01, 19/10 e 19/11/2026 [D02][D03][D07]. **Nenhuma
+    norma municipal de SP do assunto está no acervo `ctresb/leis`** (lido em 21/11): tudo veio da fonte oficial.
+- **Nós vizinhos:**
+  - Consome (fato consumado): [[X10b]] (porta, `FiscalDocument`, montagem da DPS), [[DFE-MANUAL]] (adaptador por
+    documento, `resolveEmissorFor`), [[X11]] (eventos, cancelamento, janela), [[X7]] (relatório de ISS por competência),
+    [[ISS-TRANSICAO-IBS]] (alíquota do ISS 2029–2032).
+  - Consome (em execução, **bloqueia o PR-4**): [[X10a]] EMENDA-4 — fila do assinador (AL-PR-3, **#1146 aberto**) e o
+    pacote `assinador-local/` (AL-PR-5, ainda inexistente na `main`).
+  - Irmão de protocolo: [[X10i]] — a emenda ADN pelo assinador local estende o mesmo contrato (alvos `infDPS`/`infPedReg`,
+    protocolo `rest`, campo `nfseEmissao` por unidade, ADL-14). Este BRIEF estende o mesmo contrato do mesmo jeito.
+  - Consumidores: relatório de ISS do [[X7]], apuração de IBS/CBS ([[IBS-CBS-2027]]), tela fiscal (FE, fora deste BRIEF).
+
+## 1. O que a fonte oficial diz (resumo do dossiê; grau entre parênteses)
+
+1. **Quem emite pela Paulistana (V + I).** NFS-e é obrigatória para todo prestador de SP [D09 art. 1º]. Desde
+   01/11/2026, MEI (tomador CNPJ), ME/EPP do Simples (inclusive opção pendente e impedimento do art. 12 da Res. CGSN 140),
+   autônomo isento (Lei 14.864/2008) e uniprofissional do Simples emitem **só** a NFS-e Nacional [D09 art. 1º-A I–IV,
+   red. IN 13/2026; D06 art. 10]. O § 2º veda o sistema próprio a essas pessoas *"inclusive na hipótese de … virem a ser
+   posteriormente desenquadradas do Simples Nacional"*. **Sobra a PJ de SP capital em regime normal fora do art. 1º-A**
+   (inferido forte: o art. 1º manda emitir e nenhum ato lido manda o regime normal ao Emissor Nacional).
+2. **Transporte (V).** SOAP 1.2, TLS 1.2 com autenticação mútua; o certificado ICP-Brasil (A1/A3/A4) contém o CNPJ e é o
+   mesmo do `CPFCNPJRemetente`; mensagem em XMLDSig enveloped, `rsa-sha1`, `sha1`, c14n 2001, só o certificado do usuário
+   final, sem `KeyValue` nem `X509IssuerSerial` [D04 §3.2.2–§3.2.5].
+3. **Assinaturas adicionais (V).** Cada RPS: RSA-SHA1 de uma cadeia ASCII (v2: IM 12, série 5, número 12, data AAAAMMDD,
+   tributação 1, status 1, ISS retido 1, valor 15, deduções 15, código do serviço 5, indicador + CPF/CNPJ do tomador,
+   indicador + CPF/CNPJ do intermediário, ISS retido pelo intermediário, NIF/NãoNIF) [D04 §4.3.2]. Cada cancelamento: RSA-SHA1
+   de 20 posições (IM 8 + número da NF-e 12) [D04 §4.3.10].
+4. **Endereços (V).** `https://nfews.prefeitura.sp.gov.br/lotenfe.asmx` (síncrono, leiautes 1 e 2) e
+   `…/lotenfeasync.asmx` (assíncrono). O antigo `nfe.prefeitura.sp.gov.br/ws/lotenfe.asmx` não aceita o leiaute 2
+   [D04 §4.1]. Schemas `schemas-reformatributaria-v02-8` (12/11/2026).
+5. **Sem homologação (V).** Só `TesteEnvioLoteRPS`/`TesteEnvioLoteRpsAsync`, no endereço de produção: as mesmas
+   validações, nenhuma NF-e [D04 §2.1.3, §4.3.4]. Consulta e cancelamento não têm teste.
+6. **Reenvio cancela e reemite (V).** Alerta 217: *"RPS reenviado. A NF-e … foi cancelada e uma nova NF-e foi emitida"*
+   [D04 §4.5.2]. `ConsultaNFe` aceita `ChaveRPS` [D04 §4.3.5].
+7. **Cancelamento (V).** `CancelamentoNFe`, só da NF-e gerada por webservice (erro 1306), até 50 por pedido, com prazo
+   (erro 324) que o manual não fixa [D04 §4.3.10, §4.5.1]. A nota cancelada no site aparece na `ConsultaNFe` (`StatusNFe`,
+   `DataCancelamento`).
+8. **Rejeições que encerram o caminho (V):** 394 (regime trocado pelo Simples), 641 (Simples na data), 1647 (contribuinte
+   no CNC deve emitir no ambiente nacional), 631/639 (leiaute 2/1 por data de fato gerador, data `{0}` sem valor no
+   manual) [D04 §4.5.1].
+9. **Leiaute 2 (V).** Em produção desde 01/01/2026, com ISS + IBS + CBS; o leiaute 1 segue aceito na transição [D02]. O
+   retorno do leiaute 2 traz `ChaveNotaNacional` [D04 `tpChaveNFe`].
+
+## 2. Checklist de comportamentos (cada um testável sozinho)
+
+Legenda: **[direto]** sem fork · **[fork:F-NSP-n]** depende do fork, escrito no ramo recomendado · **[pend-ext]** depende de
+validação externa (§7) e não entra na implementação antes dela.
+
+### PR-0 — contrato (só docs + schema, sem comportamento)
+
+1. **[direto] Emenda §15 do `ADR-INCR-DFE-EMISSAO-PARCEIRO`** registra o adaptador `paulistana` (um adaptador por
+   protocolo, como o `adn` da emenda X10i), o roteamento por unidade (F-NSP-1) e o "sem homologação" (F-NSP-3); o
+   `ADR-ASSINADOR-LOCAL` §7 passa a nomear a Paulistana como 3º cliente do assinador. *Teste:* `plano-vault.mjs check` 0 e
+   links do ADR resolvem.
+
+### PR-1 — bibliotecas puras do RPS (sem I/O)
+
+2. **[fork:F-NSP-4] `RpsSpPayloadSchema` (Zod `.strict()`, leiaute 2)** espelha o `tpRPS` v2 + `IBSCBS` do XSD
+   `schemas-reformatributaria-v02-8` (§4.1). *Teste:* as fixtures oficiais de exemplo do leiaute 2 validam; campo extra ⇒
+   erro; `ValorInicialCobrado` ⇒ erro (erro 640 do manual: só `ValorFinalCobrado`).
+3. **[fork:F-NSP-4] Renderizador `rpsSpDaMontagem(montagem, perfilSp)`**, puro: recebe o resultado da montagem única da
+   NFS-e (o mesmo `assemble` do serviço; §4.2) e o perfil SP da unidade; devolve o `RpsSpPayload`. Centavos BigInt-safe, como
+   o resto da porta. *Teste:* a montagem de uma venda de serviço gera RPS com `ValorFinalCobrado` = `vServ` do DPS
+   equivalente (tie-out com o razão, F-DFE-11 a), `CodigoServico` do perfil do serviço, `cLocPrestacao` = 3550308 quando
+   local.
+4. **[direto] Cadeia de assinatura do RPS v2** (`cadeiaRpsV2(rps): string`), exatamente pela tabela de [D04 §4.3.2] (IM
+   12 com zeros à esquerda, série 5 com espaços à direita, … NIF/NãoNIF). *Teste:* o exemplo do manual
+   (`InscricaoPrestador 123456789012`, série `RTNT`, número 1, 2026-01-01, `T`, `N`, `ISSRetido false`, 20500, 5000, 2658,
+   CPF 13167474254) reproduz a cadeia do manual caractere a caractere; série com espaço à esquerda ⇒ erro.
+5. **[pend-ext] Cadeia do cancelamento** (`cadeiaCancelamento(im, numeroNfe)`: IM 8 + número 12, [D04 §4.3.10]). O
+   manual não tem quadro v2 e o RPS v2 usa IM de 12 (ambiguidade 3 do dossiê). Implementa-se a do manual (8) com o teste do
+   exemplo `"31000000000000000009"`; o runbook (item 27) prova contra a prefeitura antes do primeiro cancelamento real.
+6. **[direto] Montagem das mensagens** `PedidoEnvioRPS` (v2, `Cabecalho Versao="2"`, `CPFCNPJRemetente`),
+   `PedidoConsultaNFe` (por `ChaveRPS` e por `ChaveNFe`), `PedidoCancelamentoNFe` (`Transacao=true`, 1 `Detalhe`) e
+   `TesteEnvioLoteRPS`, **sem** a `Signature` (quem assina é o assinador). Regras de preenchimento do [D04 §3.4.4] e
+   escape do §3.4.5. *Teste:* cada mensagem valida no XSD oficial (fixture do XSD commitada com o SHA-256).
+7. **[direto] Leitura dos retornos** (`RetornoEnvioRPS`, `RetornoConsulta`, `RetornoCancelamentoNFe`) → `Sucesso`,
+   `Alerta[]`, `Erro[]`, `ChaveNFe {Numero, CodigoVerificacao, ChaveNotaNacional}`, `StatusNFe`, `DataCancelamento`, valores
+   de ISS/IBS/CBS do `tpNFE` v2. *Teste:* fixtures oficiais; retorno com `Sucesso=false` e erro 1647 vira o código
+   `PAULISTANA_1647`.
+8. **[direto] Tabela de tradução de erros e alertas** (§4.5) em constante única: terminal (394, 641, 1647, 1306, 1305,
+   324) × corrigível pelo operador (dados) × transporte (1101/timeout) × alerta 217 (**nunca** esperado — o adaptador não
+   reenvia; se aparecer, é bug nosso e vira erro `dfe_paulistana_reenvio_inesperado` com alerta OBS).
+   *Teste:* cada código da tabela cai na classe declarada.
+
+### PR-2 — perfil, roteamento por unidade, numeração
+
+9. **[fork:F-NSP-1] Campo `nfseSistema: 'NACIONAL' | 'PAULISTANA'` no `FiscalProfile`** (default `NACIONAL`), com
+   guarda na escrita: `PAULISTANA` exige `codMun = '3550308'`, `regimeTributario ≠ 'SIMPLES'`, `inscricaoMunicipal`
+   preenchida e **nenhuma linha do `CompanyFiscalProfile` (regime por `anoCalendario`) com `regime ∈ {MEI, SIMPLES}` de
+   2027 em diante**; se a linha de **2026** for `SIMPLES`/`MEI`, exige ainda a declaração explícita
+   `paulistanaSemSimplesDesde20261101 = true` (o operador declara que a PJ saiu do Simples antes de 01/11/2026 — § 2º do
+   art. 1º-A; a linha anual não diz o mês; ambiguidade 1 do dossiê). Recusa com 400 nomeado. Mudar o regime para
+   `SIMPLES` com `nfseSistema = PAULISTANA` volta a unidade para `NACIONAL` na mesma tx e audita. *Teste:* as recusas
+   (município, regime atual, IM, ano ≥ 2027 no Simples, 2026 no Simples sem declaração); a troca de regime.
+10. **[fork:F-NSP-1] Seleção por documento:** a NFS-e de uma unidade com `nfseSistema = PAULISTANA` resolve o adaptador
+    `paulistana`; as demais seguem `DFE_PARTNER_NFSE` (§13 item 2 do ADR, inalterado). O env `DFE_PARTNER_PAULISTANA=off`
+    desliga o adaptador na instância (motivo nomeado, nunca silêncio). O documento já criado segue o `partner` gravado
+    (`resolveEmissorFor`, DFE-MANUAL item 9). *Teste:* duas unidades na mesma instância, uma de cada sistema, emitem cada
+    uma pelo seu adaptador; `off` ⇒ 409 com o motivo.
+11. **[fork:F-NSP-12] Código de serviço municipal** (5 dígitos, Anexo I da IN SF/SUREM 8/2011) em
+    `ServiceFiscalProfile.codigoServicoSp` e no `FiscalProfile.pacoteCodigoServicoSp` (pacote, espelho do `pacoteCTribNac`).
+    Ausente ⇒ faltante nomeado no `preview` e 409 no `emit` (mesmo padrão dos faltantes do D1f). **[pend-ext]** a validação
+    contra a tabela oficial entra quando a tabela estiver no repositório (§7 item 2). *Teste:* faltante nomeado; 5 dígitos.
+12. **[direto] Agrupamento:** um RPS por grupo de `cTribNac` (a chave única do `FiscalDocument` não muda). Linhas do
+    mesmo `cTribNac` com `codigoServicoSp` diferentes ⇒ faltante `codigo_servico_sp_divergente` (o RPS tem um só
+    `CodigoServico`). *Teste:* duas linhas, dois códigos SP, mesmo `cTribNac` ⇒ faltante.
+13. **[fork:F-NSP-5] Série do RPS** = `FiscalProfile.rpsSerie Int` (default 1, escrita como texto no XML, ≤ 5
+    caracteres); `FiscalDocument.serie Int` não muda. *Teste:* série 1 ⇒ `<SerieRPS>1</SerieRPS>` e `"1    "` na cadeia.
+14. **[fork:F-NSP-6] Numeração do RPS** na `FiscalDocumentSequence` com a coluna nova `numeracao` na chave
+    (`''` = DPS/NF-e como hoje · `'RPS_SP'`), migração aditiva com default `''`; consumida na tx do `SENT`
+    (`numbersDps: false`). *Teste:* DPS e RPS da mesma unidade e série não compartilham contador; migração sobre base com
+    sequências existentes não muda nenhum `last`.
+
+### PR-3 — contrato do assinador local (servidor) — **depois do #1146 em `main`**
+
+15. **[fork:F-NSP-10] Alvos novos no `ASSINAR`:** `conteudo.alvo` ganha `pedidoPaulistana` (assinatura enveloped do
+    elemento raiz da mensagem, c14n 2001 + sha1, como o `infNFe`) e `cadeiaPaulistana` (RSA-SHA1 de cadeia ASCII, molde do
+    `qrCodeV3Offline`/`baseQrB64`), este com o elemento RPS (ou o `Detalhe` do cancelamento) junto, para o assinador
+    **recalcular a cadeia** a partir do XML e conferir (ADR-ASSINADOR-LOCAL D6) — e conferir que o `CPFCNPJRemetente` tem os
+    14 dígitos do certificado. Sem `tpAmb` (não existe na Paulistana). `dfeSigner.schema.json` regenerado; o teste de
+    divergência gerado × commitado cobre os alvos novos. *Teste:* tarefa `cadeiaPaulistana` com cadeia que não bate com o
+    RPS anexo ⇒ o falso do assinador devolve `CONTEUDO_RECUSADO`.
+16. **[direto] `TRANSMITIR` SOAP da Paulistana:** `servico` ganha `PaulistanaEnvioRPS | PaulistanaConsultaNFe |
+    PaulistanaCancelamentoNFe | PaulistanaTesteEnvioLoteRPS`; o servidor monta o envelope SOAP 1.2 (método *wrapped* com
+    `VersaoSchema` + `MensagemXML` em CDATA, [D04 §4.3.1]) e manda em `envelopeB64`, como hoje. Se o protocolo `rest` da
+    X10i (ADL-3) já estiver em `main`, entra com `protocolo: 'soap12'`. *Teste:* tarefa com `servico` novo valida no schema.
+17. **[direto] Lista de hosts:** `nfews.prefeitura.sp.gov.br` entra na lista que o assinador aceita, gerada de uma tabela
+    `PAULISTANA_ENDPOINTS` no código (molde `sefazHosts.ts`/`ADN_HOSTS`, F-ADN-12 a); o endereço antigo
+    `nfe.prefeitura.sp.gov.br` **não** entra (não aceita o leiaute 2). *Teste:* o JSON commitado bate com o gerado.
+18. **[direto] `selectDfeAssinador` aceita o parceiro `paulistana`** (hoje só `sefaz`), com `local` como único valor
+    válido (`psc` desligado: a Paulistana exige o mTLS com o certificado do contribuinte, que o PSC não abre). *Teste:*
+    `paulistana` + `psc` ⇒ desabilitado com motivo nomeado.
+
+### PR-4 — o adaptador `PaulistanaEmissor` e a ligação no serviço
+
+19. **[direto] `PaulistanaEmissor implements DfeEmissorPort`** com `name = 'paulistana'`, `capabilities = { kinds:
+    ['NFSE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: false, inutilizar: false,
+    cce: false, assinaturaRemota: true, resultadoSincrono: true, consultarEventos: true, analiseFiscal: false }` e
+    `testarEnvio` (F-NSP-3). *Teste:* contrato da porta (`DfeCancelResultContract.test.ts` herdado) e capacidades.
+20. **[fork:F-NSP-7] `emitir` = `EnvioRPS` síncrono, um RPS por documento:** monta → `ASSINAR cadeiaPaulistana` → monta
+    a mensagem → `ASSINAR pedidoPaulistana` → `TRANSMITIR PaulistanaEnvioRPS` → `Sucesso=true` ⇒ `AUTHORIZED` com
+    `nNFSe = ChaveNFe/Numero`, `chaveOuCodigo = ChaveNFe/CodigoVerificacao` (a `ChaveNotaNacional`, quando vier, vai no
+    `resultJson`), valores de ISS/IBS/CBS do retorno; `Sucesso=false` ⇒ `REJECTED` com os códigos traduzidos (item 8).
+    *Teste:* contra o `FakePaulistanaServer` (item 26): autoriza, rejeita, alerta.
+21. **[direto] Falha de transporte nunca reenvia às cegas** (alerta 217): timeout/TLS/HTTP ⇒ documento fica `SENT`
+    e a próxima ação (polling ou `reenviar` do operador) faz **primeiro** `ConsultaNFe` por `ChaveRPS`; só sem NF-e para
+    aquela chave o RPS é enviado de novo, com a **mesma** chave. *Teste:* o falso autoriza e derruba a resposta; o
+    `reenviar` consulta, acha a nota e aplica `AUTHORIZED` sem segundo `EnvioRPS`.
+22. **[direto] `consultar(partnerRef)`** = `ConsultaNFe` por `ChaveRPS` (partnerRef = `IM:série:número`), devolve o mesmo
+    `EmissaoResult`. *Teste:* nota existente, inexistente (erro 1106 ⇒ `PROCESSING` não; `REJECTED` com o código).
+23. **[direto] `cancelar`** = `CancelamentoNFe` com a assinatura do item 5; o `cMotivo`/`xMotivo` do `CancelInput`
+    (obrigatórios na porta) ficam só no `FiscalDocument` e na auditoria — a mensagem da Paulistana não tem motivo. Erro 324
+    ⇒ `OUT_OF_WINDOW`; 1306 ⇒ `REJECTED` (nota não nasceu no webservice); `CancelResult` herdado. *Teste:* os três ramos.
+24. **[fork:F-NSP-9] Cancelamento feito no site da prefeitura:** `consultarEventos(chave)` faz `ConsultaNFe` por
+    `ChaveNFe` e, com `StatusNFe = C`, devolve um evento novo do tipo `cancelamentoMunicipal` com `dhProc` =
+    `DataCancelamento`; o job do X11 aplica `CANCELLED` como faz com o e101101. `EventoNfse` ganha esse ramo (o serviço
+    trata igual ao e101101). *Teste:* nota cancelada no falso aparece `CANCELLED` depois do job; `cancelEvento =
+    'cancelamentoMunicipal'`.
+25. **[fork:F-NSP-3] `testarEnvio(input)`** = `TesteEnvioLoteRPS` com um RPS montado da venda, **sem** criar
+    `FiscalDocument`, sem consumir número (número fixo de teste) — rota `POST /api/nfe/dfe/paulistana/teste` (`server/src/routes/dfe.ts`)
+    (Route → Controller → Service, policy de quem emite, DTO `.strict()`), devolve `Sucesso`/erros/alertas. `ambiente =
+    'homologacao'` com o adaptador `paulistana` ⇒ porta desabilitada com o motivo *"a Prefeitura de São Paulo não tem
+    homologação; use o teste de envio"*. *Teste:* rota responde sem gravar nada; `homologacao` ⇒ 409 nomeado.
+26. **[direto] `FakePaulistanaServer`** (molde `FakePscServer.ts`): SOAP 1.2 com os métodos do item 16, valida a
+    assinatura da mensagem e a cadeia do RPS com a chave do certificado de teste, simula 217 no reenvio e 1647/394.
+    *Teste:* é o oráculo dos testes 20–25; nenhum teste fala com a prefeitura.
+27. **[direto] Relatório de ISS e IBS/CBS veem a nota:** `locaisDoPayload` (`models/issCompetencia.ts:83`) lê também o
+    `RpsSpPayload` (`cLocPrestacao`; `cLocEmi` = `codMun` da unidade) — hoje devolveria `null` e o município sairia vazio;
+    `assertTpAmb` não se aplica ao RPS (o adaptador só existe em produção). *Teste:* uma NFS-e Paulistana autorizada entra
+    no `findForIssReport` com município 3550308 e no `findForIbsCbs`.
+28. **[direto] Gates do diff:** snapshot de shape dos DTOs novos (`__dto-shapes__.json`), `auditCanonical.ts` com os
+    eventTypes novos (`fiscal.paulistana.teste_envio`, troca de `nfseSistema`), `docs.paths.ts` + guard de path-count do
+    openapi para a rota do item 25, `check:arch`, `tsc` dos dois lados (tipo FE gerado). Sem i18n (sem tela).
+
+### Fora do servidor
+
+29. **[direto] Pacote do assinador (C#, AL-PR-5 da EMENDA-4):** os alvos do item 15 (recalcular a cadeia a partir do RPS
+    anexo e conferir o CNPJ de 14 dígitos), os serviços do item 16 (SOAPAction por serviço) e o host do item 17. Entra no PR
+    do pacote quando ele existir; até lá, só o contrato do PR-3 e o falso.
+30. **[direto] Runbook `RUNBOOK-NFSE-PAULISTANA.md` (gate humano, RUNBOOK-FORMAT):** (1) pareamento do assinador com o
+    certificado da PJ; (2) `testarEnvio` real → `Sucesso=true` colado; (3) primeira nota real de valor mínimo; (4)
+    cancelamento dela — prova a cadeia do item 5; (5) a nota aparece no relatório de ISS. Desfecho e assinatura do dono.
+    Agente prepara; não executa sem o dono.
+31. **[direto] Vigilância datada** (sem aparato novo): o manual teve 12 versões em 15 meses [D04 changelog]. O BRIEF fixa
+    a v3.4.1 e o XSD v02-8 com SHA-256 no dossiê; antes do PR-1 e do PR-4, a sessão de feature compara o SHA-256 do manual
+    publicado com o daqui e, se mudou, lê o changelog antes de codar.
+
+## 3. Ordem e pilha
+
+`integration/nfse-paulistana` (feature com 2+ PRs, D-2026-11-10): PR-0 → PR-1 → PR-2 → (#1146 em `main`) → PR-3 → PR-4.
+PR-1 e PR-2 não dependem do assinador e podem andar antes. A integração só vai à `main` com o PR-4 verde. Classe de risco:
+PR-2, PR-3 e PR-4 são vermelhos (schema, contrato do assinador, emissão) ⇒ revisor independente + lote do dono.
+
+## 4. Contratos esboçados
+
+### 4.1 `RpsSpPayloadSchema` (PR-1; forma final = XSD `schemas-reformatributaria-v02-8`, insumo ausente §8)
+
+```ts
+// lib/paulistana/rpsSp.ts — leiaute 2. Valores em centavos (string), BigInt-safe; o XML escreve "205.00".
+const Cents = z.string().regex(/^\d{1,15}$/);
+export const RpsSpPayloadSchema = z.object({
+  layout: z.literal('RPS_SP_V2'),                                // discriminador no payloadJson (item 27)
+  chave: z.object({
+    inscricaoPrestador: z.string().regex(/^\d{1,12}$/),          // CCM (FiscalProfile.inscricaoMunicipal)
+    serieRps: z.string().min(1).max(5).regex(/^\S/),             // F-NSP-5: String(rpsSerie)
+    numeroRps: z.string().regex(/^\d{1,12}$/),                   // F-NSP-6: sequência RPS_SP
+  }).strict(),
+  tipoRps: z.literal('RPS'),
+  dataEmissao: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),           // = dCompet
+  statusRps: z.literal('N'),
+  tributacaoRps: z.enum(['T', 'F', 'A', 'B', 'D', 'M', 'N', 'R', 'S', 'X', 'V', 'P']), // [D04 §4.3.2] item 5
+  valorFinalCobradoCents: Cents,                                 // erro 640: ValorInicialCobrado não
+  valorDeducoesCents: Cents,
+  codigoServico: z.string().regex(/^\d{5}$/),                    // F-NSP-12
+  aliquotaServicosBp: z.number().int().min(0).max(500),
+  issRetido: z.boolean(),
+  tomador: z.object({ cpfCnpj: z.string().regex(/^(\d{11}|\d{14})$/).optional(), nif: z.string().max(40).optional(),
+    naoNif: z.enum(['0', '1', '2']).optional(), razaoSocial: z.string().optional(), email: z.string().email().optional(),
+    endereco: z.unknown().optional() /* tpEnderecoIBSCBS — XSD */ }).strict().optional(),
+  intermediario: z.object({ cpfCnpj: z.string(), issRetido: z.boolean() }).strict().optional(),
+  discriminacao: z.string().min(1),
+  nbs: z.string().regex(/^\d{9}$/),                              // tpRPS v2: NBS 1-1
+  cLocPrestacao: z.string().regex(/^\d{7}$/),                    // choice com cPaisPrestacao
+  exigibilidadeSuspensa: z.literal(0),
+  valorIpiCents: z.literal('0'),
+  ibsCbs: z.object({ cClassTrib: z.string().regex(/^\d{6}$/) /* + finNFSe, indFinal, cIndOp… — XSD */ }).passthrough().optional(),
+}).strict();
+```
+
+### 4.2 Montagem única → renderizador por leiaute (F-NSP-4, ramo recomendado)
+
+```ts
+// FiscalDocumentEmissionService: o `assemble` atual continua produzindo a montagem da NFS-e (grupo por cTribNac, valores,
+// tomador, IBS/CBS). O ramo novo só troca o renderizador:
+type NfseRender = { layout: 'DPS_NACIONAL'; payload: DpsPayload } | { layout: 'RPS_SP_V2'; payload: RpsSpPayload };
+function renderNfse(montagem: MontagemNfse, perfil: FiscalProfileView): NfseRender; // nfseSistema decide
+// FiscalDocumentAttempt.payloadJson grava o que foi ENVIADO (o RPS), imutável por tentativa (F-DFE-10 a).
+```
+
+### 4.3 Perfil e numeração (PR-2)
+
+```prisma
+model FiscalProfile {
+  // …
+  nfseSistema                          String  @default("NACIONAL") // NACIONAL | PAULISTANA (F-NSP-1)
+  paulistanaSemSimplesDesde20261101    Boolean @default(false)       // declaração do operador (IN 10/2011 art. 1º-A § 2º)
+  rpsSerie                             Int     @default(1)           // F-NSP-5
+  pacoteCodigoServicoSp                String?                        // F-NSP-12
+}
+model ServiceFiscalProfile { /* … */ codigoServicoSp String? } // 5 dígitos, Anexo I IN 8/2011
+model FiscalDocumentSequence {
+  // …
+  numeracao String @default("") // '' (DPS/NF-e) | 'RPS_SP'  (F-NSP-6)
+  @@id([userId, unitId, kind, ambiente, numeracao, serie])
+}
+```
+
+### 4.4 Protocolo do assinador (PR-3; acréscimo ao `v1`, como o §4.1 da emenda X10i)
+
+```ts
+const AlvoAssinado = z.enum(['infNFe', 'infEvento', 'infInut', 'qrCodeV3Offline', /* X10i: */ 'infDPS', 'infPedReg',
+  /* NFSE-PAULISTANA: */ 'pedidoPaulistana', 'cadeiaPaulistana']);
+// cadeiaPaulistana: { alvo, cadeiaB64 /* ASCII; sha1 dela = digestB64 */, origemXml /* o <RPS> ou o <Detalhe> */,
+//                     cnpjRemetente /* 14 dígitos, = certificado */ }
+// pedidoPaulistana: { alvo, elementoXml /* raiz c14n */, signedInfoC14nB64, cnpjRemetente }
+const ServicoPaulistana = z.enum(['PaulistanaEnvioRPS', 'PaulistanaConsultaNFe', 'PaulistanaCancelamentoNFe',
+  'PaulistanaTesteEnvioLoteRPS']); // somado ao enum `servico` do TRANSMITIR soap12
+export const PAULISTANA_ENDPOINTS = [{ servico: 'sync', url: 'https://nfews.prefeitura.sp.gov.br/lotenfe.asmx' }] as const;
+```
+
+### 4.5 Porta (PR-4)
+
+```ts
+export type EventoNfse = /* … atuais … */ | { tipo: 'cancelamentoMunicipal'; dhProc: string }; // F-NSP-9
+export interface DfeEmissorPort { /* … */ testarEnvio?(input: EmitirInput): Promise<TesteEnvioResult>; } // F-NSP-3
+export interface TesteEnvioResult { sucesso: boolean; erros: Array<{ code: string; message: string }>; alertas: Array<{ code: string; message: string }>; }
+export interface DfeCapabilities { /* … */ testeEnvio?: boolean; }
+// partnerRef = `${IM}:${serie}:${numero}` (ChaveRPS) — consulta e reenvio por ela (itens 21–22).
+```
+
+## 5. Achados de código que o desenho resolve (lidos em 21/11)
+
+- **A seleção é por instância e por tipo** (`selectDfeEmissor.ts:44-49`, F-NFCE-1 c): `NFSE` é um tipo só para dois
+  leiautes. Unidade de SP regime normal e filial do Simples (ou fora de SP) na mesma instância precisam de adaptadores
+  diferentes ⇒ item 10 / F-NSP-1.
+- **`locaisDoPayload` só entende `infDPS`** (`issCompetencia.ts:83-88`): o relatório de ISS veria a nota sem município ⇒
+  item 27.
+- **`FiscalDocument.serie` é `Int`** e a série do RPS é texto de 5 ⇒ F-NSP-5.
+- **`FiscalDocumentSequence` não separa DPS de RPS** (chave `[userId, unitId, kind, ambiente, serie]`) ⇒ F-NSP-6.
+- **O contrato do assinador** (#1146: `alvo` em 4 valores, `servico` só NF-e, hosts gerados da tabela SEFAZ,
+  `selectDfeAssinador` só para `sefaz`) não cobre a Paulistana ⇒ itens 15–18.
+
+## 6. Forks — RATIFICAÇÃO PENDENTE
+
+| Fork | Caminhos | Recomendação e por quê |
+|---|---|---|
+| **F-NSP-0** Quando executar | (a) executar quando o dono der `executa`, com PR-1/PR-2 já possíveis e PR-3/PR-4 depois do #1146; (b) só com um cliente de SP regime normal contratado (Q9 a de 20/10) | **(a)** — o dono pediu completude e o desenho não depende do cliente; o oráculo real (runbook) é que espera o cliente. A Q9 continua dele. |
+| **F-NSP-1** Quem vai para a Paulistana | (a) campo por unidade `nfseSistema` escolhido pelo operador, com as guardas da lei derivadas do que o banco já tem (SP capital, regime atual ≠ Simples, IM, `CompanyFiscalProfile` sem Simples/MEI de 2027 em diante) e a declaração só quando 2026 foi Simples; (b) derivado automático (sem campo): toda unidade de SP capital fora do Simples vai para a Paulistana; (c) env por instância (`DFE_PARTNER_NFSE=paulistana`) | **(a)** — é a estrutural (por unidade, como o ADL-14 da X10i) e respeita o § 2º com o histórico anual que existe; (b) erra quem saiu do Simples em 2026 depois de 01/11 e tira do operador a escolha que a lei deixa ambígua; (c) quebra instância com filial fora de SP ou no Simples. |
+| **F-NSP-2** Modo manual da Paulistana (operador emite no site e devolve o XML) | (a) fora deste nó — sem assinador, a unidade emite no site e a nota não entra no produto (aviso nomeado); (b) dentro: ficha + upload do XML de exportação da prefeitura + releitura | **(a)** com lacuna na caixa — o pedido é o adaptador; a releitura de outro leiaute é frente própria. Fica aberto: ISS dessa nota fora do relatório enquanto o assinador não roda. |
+| **F-NSP-3** O que é "homologação" | (a) adaptador só em produção; `testarEnvio` (TesteEnvioLoteRPS) como operação à parte, sem `FiscalDocument`; homologação ⇒ desabilitado com motivo; (b) homologação chama o teste e grava o documento num status novo `VALIDATED_TEST`; (c) homologação só contra o falso | **(a)** — não inventa resultado (a prefeitura não gera nota no teste) e não mexe na máquina de 9 status (#1162). |
+| **F-NSP-4** De onde sai o RPS | (a) montagem única + renderizador por leiaute (`renderNfse`), o RPS gravado no `payloadJson`; (b) o adaptador traduz a DPS nacional dentro da porta (payload = DPS + grupo SP); (c) montador próprio do RPS no serviço | **(a)** — uma montagem (tie-out com o razão num lugar só) e o registro do que foi enviado é o RPS; (b) esconde a tradução no adaptador e grava o que não foi enviado; (c) duplica a montagem de 1.600 linhas. |
+| **F-NSP-5** Série do RPS | (a) `rpsSerie Int` no perfil, escrito como texto; `FiscalDocument.serie` continua `Int`; (b) coluna nova texto para série alfanumérica | **(a)** — o manual aceita qualquer texto de até 5; número basta e não mexe no modelo. |
+| **F-NSP-6** Contador do RPS | (a) coluna `numeracao` na chave da `FiscalDocumentSequence` (`''` / `RPS_SP`), migração aditiva; (b) convenção: perfil exige `rpsSerie ≠ dpsSerie`; (c) contador compartilhado | **(a)** — separa por construção; (b) é regra que alguém esquece; (c) mistura numeração de dois sistemas quando a unidade muda de sistema. |
+| **F-NSP-7** Envio | (a) `EnvioRPS` síncrono, um RPS por documento, consulta por `ChaveRPS` na falha; (b) lote assíncrono com protocolo e `ConsultaSituacaoLote` | **(a)** — emissão nasce da venda (um documento por vez), volume de salão/clínica é baixo, e o síncrono novo (`nfews`) aceita o leiaute 2. |
+| **F-NSP-9** Cancelamento feito fora do produto | (a) `consultarEventos` devolve `cancelamentoMunicipal` a partir do `StatusNFe = C` e o job do X11 aplica; (b) só `consultar` mostra e o operador concilia à mão; (c) fora do escopo (aviso) | **(a)** — o X11 já tem o job e a máquina; acrescenta um tipo de evento sem fingir código ADN. |
+| **F-NSP-10** Como o assinador confere a cadeia | (a) o assinador recebe o `<RPS>`/`<Detalhe>`, recalcula a cadeia pela regra do manual e confere com a pedida, e confere o CNPJ de 14 dígitos do remetente; (b) confere só o CNPJ do remetente e assina a cadeia como vem | **(a)** — é o D6 do ADR-ASSINADOR-LOCAL (servidor comprometido não assina nota falsa); (b) deixa o servidor pedir assinatura de qualquer cadeia. |
+| **F-NSP-12** Código de serviço de 5 dígitos | (a) campo `codigoServicoSp` por serviço (e no pacote), validado contra a tabela oficial quando ela entrar; (b) derivado do `cTribNac` por tabela de correlação; (c) campo único por unidade | **(a)** — a prefeitura usa o código dela por serviço; correlação oficial com o `cTribNac` não foi achada (insumo ausente), e (c) erra quem presta dois serviços. |
+
+## 7. Pendente de validação externa
+
+1. **"Posteriormente desenquadradas" (§ 2º do art. 1º-A):** vale para quem saiu do Simples **antes** de 01/11/2026?
+   Leitura do texto: não (só a partir da vigência). Pergunta ao contador no pacote dele. Enquanto isso, a declaração do
+   item 9 cobre a leitura mais segura.
+2. **Tabela oficial dos códigos de serviço** (Anexo I da IN SF/SUREM 8/2011, com as mudanças de 2026 — códigos novos e
+   encerrados, [D02]) e alíquota por código (Lei 13.701/2003 art. 16): baixar pelo método legal antes do PR-2.
+3. **Prazo do cancelamento pela internet** (erro 324): norma municipal não lida; até lá vale o `cancelPrazoDias` do perfil
+   (X11, só avisa).
+4. **Cadeia do cancelamento no leiaute 2** (IM 8 × 12): prova no runbook (item 30, passo 4) ou pergunta à SF/Prodam.
+5. **Erro 1647 / CNC:** quem entra no Cadastro Nacional de Contribuintes em SP. Tratado como terminal (item 8).
+6. **Data do leiaute 2 obrigatório** (`{0}` dos erros 631/639) e efeito do Ato Conjunto RFB/CGIBS 7/2026 na NFS-e de SP:
+   o produto só emite leiaute 2, então só muda a data de aviso.
+
+## 8. Insumos ausentes
+
+- **XSD `schemas-reformatributaria-v02-8` e exemplos XML** (página e zip na notadomilhao): não baixados nesta sessão; o
+  PR-1 começa por eles (`legal.py baixar`), e o §4.1 vira o espelho exato.
+- **Mês da saída do Simples:** o banco tem o regime **por ano** (`CompanyFiscalProfile.anoCalendario` + `regime`,
+  `schema.prisma:1913`), não a data da exclusão. Por isso a declaração do item 9 existe só para 2026.
+- **Assinador C#** (`assinador-local/`): não existe em `main`; o item 29 espera o AL-PR-5.
+
+## 9. Achados fora de escopo (na caixa, `--pai L-20261121-183240-e378`)
+
+- `L-20261121-201050-24af` — tela: campo `nfseSistema`/código SP no perfil e botão "testar envio" (FE).
+- `L-20261121-201051-e0a7` — NFS-e **recebidas** de SP (`ConsultaNFeRecebidas`) para o contas a pagar.
+- `L-20261121-201100-fc2b` — NFTS (nota do tomador) — obrigação de quem contrata prestador de fora de SP.
+- `L-20261121-201053-0536` — modo manual da Paulistana (o ramo recomendado do F-NSP-2 o deixa fora).
+
+## 10. Write-set
+
+- **PR-0:** `docs/adr/ADR-INCR-DFE-EMISSAO-PARCEIRO.md`, `docs/adr/ADR-ASSINADOR-LOCAL.md`.
+- **PR-1:** `server/src/lib/paulistana/**`, `server/src/lib/paulistana/__tests__/**`, `server/src/lib/paulistana/__fixtures__/**`.
+- **PR-2:** `server/prisma/schema.prisma`, `server/prisma/migrations/**`, `server/src/features/accounting/dtos/FiscalProfileDto.ts`,
+  `server/src/features/accounting/dtos/ServiceFiscalProfileDto.ts`, `server/src/features/accounting/services/FiscalProfileService.ts`,
+  `server/src/features/accounting/services/ServiceFiscalProfileService.ts`, `server/src/features/accounting/dfe/resolveEmissor.ts`,
+  `server/src/features/accounting/dfe/selectDfeEmissor.ts`, `server/src/features/accounting/repositories/FiscalDocumentRepository.ts`,
+  `server/src/features/accounting/services/FiscalDocumentEmissionService.ts`.
+- **PR-3:** `server/src/features/accounting/dtos/DfeSignerDto.ts`, `server/src/features/accounting/dtos/dfeSigner.schema.json`,
+  `server/src/features/accounting/dfe/local/**`, `server/src/features/accounting/dfe/selectDfeAssinador.ts`.
+- **PR-4:** `server/src/features/accounting/dfe/paulistana/**`, `server/src/features/accounting/dfe/DfeEmissorPort.ts`,
+  `server/src/features/accounting/models/issCompetencia.ts`, `server/src/features/accounting/services/FiscalDocumentEmissionService.ts`,
+  `server/src/features/accounting/services/FiscalDocumentLifecycleService.ts`, `server/src/controllers/fiscalDocumentController.ts`,
+  `server/src/routes/dfe.ts`, `server/src/routes/docs/nfe.paths.ts`, `docs/accounting/RUNBOOK-NFSE-PAULISTANA.md`.
+- **Choke points (PAR-001):** `server/src/lib/factory.ts`, `server/src/routes/accounting.ts`, `server/src/routes/docs.paths.ts`,
+  `server/public/openapi.json`, `server/src/features/accounting/audit/auditCanonical.ts`,
+  `server/src/features/accounting/dtos/__tests__/__dto-shapes__.json`, `server/prisma/schema.prisma`.
