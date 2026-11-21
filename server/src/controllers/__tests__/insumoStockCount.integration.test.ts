@@ -180,4 +180,18 @@ describe('Insumo do serviço — estoque com inventário periódico (cenário 30
     expect(JSON.stringify(res.body)).toMatch(/INSUMO_COUNT_ALREADY_POSTED/);
     expect(await prisma.journalEntry.count({ where: { unitId: UNIT, sourceType: 'insumo_stock_count', sourceId: `${UNIT}:2025-08-31#4` } })).toBe(0);
   });
+
+  it('item 4 — três estornos em cadeia deixam a contagem sem efeito: a recontagem volta a ser aceita', async () => {
+    // review #1297 rodada 3: a regra de um nível tratava a #3 como ativa e bloqueava a data para sempre.
+    const terceira = await prisma.journalEntry.findUniqueOrThrow({ where: { id: (await countEntry(`${UNIT}:2025-08-31#3`)).id } });
+    const r1 = await prisma.journalEntry.findUniqueOrThrow({ where: { id: terceira.reversedById! } });
+    expect(r1.reversedById).toEqual(expect.any(String)); // r1 já foi estornado pelo caso anterior (r2)
+    expect((await reverse(r1.reversedById!, '2025-08-31')).status).toBe(200); // r3: a #3 volta a ficar sem efeito
+    const res = await count('2025-08-31', 40);
+    expect(res.status).toBe(201);
+    // até 31/08: compra (INSUMO) + sobra de 30/08 (100); a #1 (estornada em 15/09), a #2 e a #3 (cadeias ímpares) ficam fora
+    expect(res.body.data).toMatchObject({ bookValueCents: INSUMO + 100, adjustmentCents: INSUMO + 100 - 40 });
+    expect((await countEntry(`${UNIT}:2025-08-31#4`)).id).toBe(res.body.data.entryId);
+    expect(await saldo('1.1.3.02', '2025-01-01', '2025-09-30')).toBe(40);
+  });
 });

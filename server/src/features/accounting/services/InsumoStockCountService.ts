@@ -70,18 +70,24 @@ export class InsumoStockCountService {
     for (let seq = 2; ; seq++) {
       const prior = await this.journalEntryRepo.findBySource(scope, INSUMO_STOCK_COUNT_SOURCE_TYPE, sourceId);
       if (!prior) break;
-      // Ativa = sem estorno, ou com o estorno estornado de volta (review #1297 rodada 2: estornar o estorno reativa
-      // a contagem; o `reverseEntry` aceita estornar um estorno).
-      const reversal = prior.reversedById ? await this.journalEntryRepo.findById(scope, prior.reversedById) : null;
-      if (!reversal || reversal.reversedById) {
+      // Ativa = cadeia de estornos de tamanho par: 0 (nunca estornada), 2 (estorno estornado de volta)…; ímpar = sem
+      // efeito (review #1297 rodadas 2 e 3: o `reverseEntry` aceita estornar um estorno, em qualquer profundidade).
+      const chain = [prior];
+      for (let next = prior.reversedById; next; ) {
+        const reversal = await this.journalEntryRepo.findById(scope, next);
+        if (!reversal) break;
+        chain.push(reversal);
+        next = reversal.reversedById;
+      }
+      if ((chain.length - 1) % 2 === 0) {
         throw new ConflictError(
           `Já existe contagem do estoque de insumo em ${input.countDate} nesta unidade. Para corrigir, estorne o lançamento e conte de novo.`,
           'INSUMO_COUNT_ALREADY_POSTED',
         );
       }
-      excludedCents += stockEffect(prior.postings, stock.id);
-      if (reversal.date.getTime() <= endOfDay(input.countDate).getTime()) {
-        excludedCents += stockEffect(reversal.postings, stock.id);
+      // Sai do saldo o efeito da cadeia lançado até countDate (o que foi datado depois não está no saldo).
+      for (const e of chain) {
+        if (e.date.getTime() <= endOfDay(input.countDate).getTime()) excludedCents += stockEffect(e.postings, stock.id);
       }
       sourceId = `${base}#${seq}`;
     }
