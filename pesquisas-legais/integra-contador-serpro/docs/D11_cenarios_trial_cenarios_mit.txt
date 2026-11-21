@@ -1,0 +1,257 @@
+SHA256-12 31972f522b0c
+Cenários MIT
+ IMPORTANTE
+ A chamada da API Trial é apenas para demonstração. As APIs disponíveis e suas respectivas URLs (endpoints) para consumo são disponibilizadas (através da documentação dos seus respectivos swaggers) na seção Referência da API.
+ Na chamada da API Trial o parâmetro do tipo header jwt_token não é obrigatório, apenas no contexto real de produção esse parâmetro é obrigatório. Saiba mais sobre o jwt_token na seção Como Autenticar na API.
+ Encerrar Apuração
+ | | header | valor 
+ | jwt_token | vazio (não precisa preencher) 
+ | autenticar_procurador_token | vazio (não precisa preencher) 
+ Body:
+ {
+ "contratante": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "autorPedidoDados": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "contribuinte": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "pedidoDados": {
+ "idSistema": "MIT",
+ "idServico": "ENCAPURACAO314",
+ "versaoSistema": "1.0",
+ "dados": "{\"PeriodoApuracao\":{\"MesApuracao\":1,\"AnoApuracao\":2025\"DadosIniciais\":{\"SemMovimento\":false,\"QualificacaoPj\":\"TributacaoLucro\":2,\"VariacoesMonetarias\":1,\"RegimePisCofins\":\"ResponsavelApuracao\":{\"CpfResponsavel\":\"00000000000\"}\"Debitos\":{\"Irpj\":{\"ListaDebitos\":[{\"IdDebito\":\"CodigoDebito\":\"236208\",\"CnpjScp\":\"88888888888888\\"ValorDebito\":100.00}]},\"Csll\":{\"ListaDebitos\":[{\"IdDebito\":\"CodigoDebito\":\"248408\",\"CnpjScp\":\"88888888888888\\"ValorDebito\":220.00}]},\"PisPasep\":{\"ListaDebitos\[{\"IdDebito\":3,\"CodigoDebito\":\"067904\\"CnpjScp\":\"88888888888888\",\"ValorDebito\":300.00}]},\"Cofins\{\"ListaDebitos\":[{\"IdDebito\":4,\"CodigoDebito\":\"092902\\"CnpjScp\":\"88888888888888\",\"ValorDebito\":444.00}]}}}"
+ }
+}
+ Curl:
+ curl -X 'POST' \
+ 'https://gateway.apiserpro.serpro.gov.br/integra-contador-trial/v1/Declarar' \
+ -H 'accept: text/plain' \
+ -H "Authorization: Bearer 06aef429-a981-3ec5-a1f8-71d38d86481e" \
+ -H 'Content-Type: application/json' \
+ -d '{
+ "contratante": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "autorPedidoDados": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "contribuinte": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "pedidoDados": {
+ "idSistema": "MIT",
+ "idServico": "ENCAPURACAO314",
+ "versaoSistema": "1.0",
+ "dados": "{\"PeriodoApuracao\":{\"MesApuracao\":1,\"AnoApuracao\":2025}\"DadosIniciais\":{\"SemMovimento\":false,\"QualificacaoPj\":1\"TributacaoLucro\":2,\"VariacoesMonetarias\":1,\"RegimePisCofins\":1\"ResponsavelApuracao\":{\"CpfResponsavel\":\"00000000000\"}},\"Debitos\"{\"Irpj\":{\"ListaDebitos\":[{\"IdDebito\":1,\"CodigoDebito\":\"236208\"\"CnpjScp\":\"88888888888888\",\"ValorDebito\":100.00}]},\"Csll\"{\"ListaDebitos\":[{\"IdDebito\":2,\"CodigoDebito\":\"248408\"\"CnpjScp\":\"88888888888888\",\"ValorDebito\":220.00}]},\"PisPasep\"{\"ListaDebitos\":[{\"IdDebito\":3,\"CodigoDebito\":\"067904\"\"CnpjScp\":\"88888888888888\",\"ValorDebito\":300.00}]},\"Cofins\"{\"ListaDebitos\":[{\"IdDebito\":4,\"CodigoDebito\":\"092902\"\"CnpjScp\":\"88888888888888\",\"ValorDebito\":444.00}]}}}"
+ }
+ }'
+ Consulta a situação do encerramento - Resposta sem avisos DCTFWeb
+ | | header | valor 
+ | jwt_token | vazio (não precisa preencher) 
+ | autenticar_procurador_token | vazio (não precisa preencher) 
+ Body:
+ {
+ "contratante": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "autorPedidoDados": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "contribuinte": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "pedidoDados": {
+ "idSistema": "MIT",
+ "idServico": "SITUACAOENC315",
+ "versaoSistema": "1.0",
+ "dados": "{\"protocoloEncerramento\":\"AuYb4wuDp0GvCij3GDOAsA==\"}"
+ }
+}
+ Curl:
+ curl -X 'POST' \
+ 'https://gateway.apiserpro.serpro.gov.br/integra-contador-trial/v1/Apoiar' \
+ -H 'accept: text/plain' \
+ -H "Authorization: Bearer 06aef429-a981-3ec5-a1f8-71d38d86481e" \
+ -H 'Content-Type: application/json' \
+ -d '{
+ "contratante": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "autorPedidoDados": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "contribuinte": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "pedidoDados": {
+ "idSistema": "MIT",
+ "idServico": "SITUACAOENC315",
+ "versaoSistema": "1.0",
+ "dados": "{\"protocoloEncerramento\":\"AuYb4wuDp0GvCij3GDOAsA==\"}"
+ }
+ }'
+ Consulta a situação do encerramento - Resposta com avisos DCTFWeb
+ | | header | valor 
+ | jwt_token | vazio (não precisa preencher) 
+ | autenticar_procurador_token | vazio (não precisa preencher) 
+ Body:
+ {
+ "contratante": {
+ "numero": "11111111111111",
+ "tipo": 2
+ },
+ "autorPedidoDados": {
+ "numero": "11111111111111",
+ "tipo": 2
+ },
+ "contribuinte": {
+ "numero": "11111111111111",
+ "tipo": 2
+ },
+ "pedidoDados": {
+ "idSistema": "MIT",
+ "idServico": "SITUACAOENC315",
+ "versaoSistema": "1.0",
+ "dados": "{\"protocoloEncerramento\":\"ZuAb4wuDp0GvCij3GDOAsA==\"}"
+ }
+}
+ Curl:
+ curl -X 'POST' \
+ 'https://gateway.apiserpro.serpro.gov.br/integra-contador-trial/v1/Apoiar' \
+ -H 'accept: text/plain' \
+ -H "Authorization: Bearer 06aef429-a981-3ec5-a1f8-71d38d86481e" \
+ -H 'Content-Type: application/json' \
+ -d '{
+ "contratante": {
+ "numero": "11111111111111",
+ "tipo": 2
+ },
+ "autorPedidoDados": {
+ "numero": "11111111111111",
+ "tipo": 2
+ },
+ "contribuinte": {
+ "numero": "11111111111111",
+ "tipo": 2
+ },
+ "pedidoDados": {
+ "idSistema": "MIT",
+ "idServico": "SITUACAOENC315",
+ "versaoSistema": "1.0",
+ "dados": "{\"protocoloEncerramento\":\"ZuAb4wuDp0GvCij3GDOAsA==\"}"
+ }
+ }'
+ Consultar Apuração
+ | | header | valor 
+ | jwt_token | vazio (não precisa preencher) 
+ | autenticar_procurador_token | vazio (não precisa preencher) 
+ Body:
+ {
+ "contratante": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "autorPedidoDados": {
+ "cpfCnpj": "00000000000000",
+ "tipo": 2
+ },
+ "contribuinte": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "pedidoDados": {
+ "idSistema": "MIT",
+ "idServico": "CONSAPURACAO316",
+ "dados": "{\"IdApuracao\":0}"
+ }
+}
+ Curl:
+ curl -X 'POST' \
+ 'https://gateway.apiserpro.serpro.gov.br/integra-contador-trial/v1/Consultar' \
+ -H 'accept: text/plain' \
+ -H "Authorization: Bearer 06aef429-a981-3ec5-a1f8-71d38d86481e" \
+ -H 'Content-Type: application/json' \
+ -d '{
+ "contratante": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "autorPedidoDados": {
+ "cpfCnpj": "00000000000000",
+ "tipo": 2
+ },
+ "contribuinte": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "pedidoDados": {
+ "idSistema": "MIT",
+ "idServico": "CONSAPURACAO316",
+ "dados": "{\"IdApuracao\":0}"
+ }
+ }'
+ Listar Apuração por mês e ano com situação encerrada
+ | | header | valor 
+ | jwt_token | vazio (não precisa preencher) 
+ | autenticar_procurador_token | vazio (não precisa preencher) 
+ Body:
+ {
+ "contratante": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "autorPedidoDados": {
+ "cpfCnpj": "00000000000000",
+ "tipo": 2
+ },
+ "contribuinte": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "pedidoDados": {
+ "idSistema": "MIT",
+ "idServico": "LISTAAPURACOES317",
+ "dados": "{\"mesApuracao\":1,\"anoApuracao\":2025,\"situacaoApuracao\":"
+ }
+}
+ Curl:
+ curl -X 'POST' \
+ 'https://gateway.apiserpro.serpro.gov.br/integra-contador-trial/v1/Consultar' \
+ -H 'accept: text/plain' \
+ -H "Authorization: Bearer 06aef429-a981-3ec5-a1f8-71d38d86481e" \
+ -H 'Content-Type: application/json' \
+ -d '{
+ "contratante": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "autorPedidoDados": {
+ "cpfCnpj": "00000000000000",
+ "tipo": 2
+ },
+ "contribuinte": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "pedidoDados": {
+ "idSistema": "MIT",
+ "idServico": "LISTAAPURACOES317",
+ "dados": "{\"mesApuracao\":1,\"anoApuracao\":2025,\"situacaoApuracao\":3"
+ }
+ }'
+ 10 de abril de 2026

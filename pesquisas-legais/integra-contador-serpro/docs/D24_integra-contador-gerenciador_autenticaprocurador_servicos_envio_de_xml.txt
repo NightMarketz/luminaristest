@@ -1,0 +1,45 @@
+SHA256-12 f0864e5f4d78
+Envio de XML assinado com o Termo de Autorização
+ Permite o envio de um documento XML assinado digitalmente pelo Autor Pedido de Dados (Procurador) para receber um TOKEN de autorização que permite o Contratante realizar as requisições em nome do Autor Pedido de Dados.
+ Esse documento XML tem como conteúdo um TERMO DE AUTORIZAÇÃO estruturado na síntaxe XML que deve ser previamente assinado digitalmente por um assinador de documentos XML seguindo os padrões indicados na sessão padrões técnicos de assinatura de XML.
+ Identificação no Pedido de Dados
+ idSistema: AUTENTICAPROCURADOR
+ idServico: ENVIOXMLASSINADO81
+ versaoSistema: "1.0"
+ Dados de Entrada
+ Campo: dados
+ | | Campo | Descrição | Tipo | Obrigatório 
+ | xml | Documento XML assinado previamente com certificado digital do Autor Pedido de Dados (eCPF ou eCNPJ - ICP-Brasil) nos padrões XMLDSig e codificado em base64. | String escapada | Sim 
+ Exemplo: conteúdo body json de entrada
+ {
+ "contratante": {
+ "numero": "99999999999999",
+ "tipo": 2
+ },
+ "autorPedidoDados": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "contribuinte": {
+ "numero": "11111111111111",
+ "tipo": 2
+ },
+ "pedidoDados": {
+ "idSistema": "AUTENTICAPROCURADOR",
+ "idServico": "ENVIOXMLASSINADO81",
+ "versaoSistema": "1.0",
+ "dados": "{\"xml\": \"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\"}"
+ }
+}
+ Dados de Saída
+ | | Campo | Descrição | Tipo 
+ | status | Status HTTP retornado no acionamento do serviço. | Number 
+ | mensagens | Mensagem explicativa retornada no acionamento do serviço. É um array composto de Código e texto da mensagem. O campo Código é uma Texto de tamanho 5 que representa um código interno do negócio. | Array 
+ | dados | Estrutura de dados de retorno. | String escapada - Object: Autentica 
+ Object: Autentica
+ | | Campo | Descrição | Tipo 
+ | autenticar_procurador_token | Token de acesso para ser utilizado nas requisições do Integra Contador via http HEADER. | String 
+ | data_hora_expiracao | Data e hora da expiração do token. | String representando a data e hora. Formato: yyyy-MM-dd'T'HH:mm:ss 
+ Exemplo: conteúdo payload json de saída
+ Json de exemplo: retorno envio XML assinado e recebimento do token de acesso
+ 10 de abril de 2026

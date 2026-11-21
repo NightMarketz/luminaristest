@@ -1,0 +1,13 @@
+SHA256-12 8e5083a0c8b2
+Introdução
+ O que é o Autentica Procurador?
+ É uma funcionalidade de apoio a segurança da API Integra Contador, que permite o Autor do Pedido de Dados autorizar o Contratante a enviar requisições em seu nome por meio de um Termo de Autorização em formato de documento XML assinado digitalmente com certificado digital. Em muitos casos o Autor do Pedido de Dados não é o Contratante da API, mas é um Procurador autorizado previamente pelo Contribuinte pelo portal eCAC.
+ Como funciona o uso via Integra Contador?
+ Para acionar os serviços do Autentica-Procurador, é necessário utilizar a API Integra Contador, que irá gerenciar o pedido de dados que conterá o XML assinado eletronicamente pelo Autor do Pedido de Dados. Esse TERMO DE AUTORIZAÇÃO é validado, junto da autenticidade da assinatura digital e também do certificado digital do Autor do Pedido de Dados. O certificado digital aceito deve ser do tipo eCPF ou eCNPJ no padrão ICP-Brasil (A1 ou A3).
+ ⚠️ Importante: O sistema aceita contribuintes do tipo 1 (Pessoa Física) e 2 (Pessoa Jurídica).
+ Se o termo de autorização for válido, o Autentica-Procurador disponibiliza um token de acesso com um tempo de duração predeterminado. Esse token deve ser informado no header das requisições da API no parâmetro autenticar_procurador_token. Com isso o Contratante terá autorização para acionar a API em nome do Autor do Pedido de Dados com procuração eletrônica no eCAC. A estrutura básica de entrada deve conter os dados do Contratante, Autor do Pedido de Dados, o Contribuinte e os dados do Pedido de Dados. Tudo isso é informado pelo Json do corpo (body) da requisição via post.
+ O documento TERMO DE AUTORIZAÇÃO deve ser assinado utilizando um assinador que siga os padrões XMLDSig do W3C. Após assinado esse XML deve ser submetido via POST como string base64. Esse padrão de assinatura digital segue o mesmo padrão adotado pelos sistemas NFe e eSocial da RFB.
+ SOBRE A VALIDADE DO TOKEN AUTENTICADO
+ O token válido fica disponível até a meia-noite do dia seguinte. Portanto, após receber o token de autenticação, o cliente tem até a meia-noite (horário de Brasília) do dia seguinte para submeter as requisições dos serviços. Assim, se o cliente enviar o Termo de Autorização na madrugada, por exemplo, a meia-noite, o token poderá valer até 24 horas, sem necessidade de submeter o mesmo documento assinado repetidamente.
+ Para mais informações sobre como realizar a assinatura do TERMO DE AUTORIZAÇÃO acesse a sessão Padrões Técnicos de Assinatura de XML.
+ 25 de fevereiro de 2026
