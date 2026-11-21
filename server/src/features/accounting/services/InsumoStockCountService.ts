@@ -70,15 +70,17 @@ export class InsumoStockCountService {
     for (let seq = 2; ; seq++) {
       const prior = await this.journalEntryRepo.findBySource(scope, INSUMO_STOCK_COUNT_SOURCE_TYPE, sourceId);
       if (!prior) break;
-      if (!prior.reversedById) {
+      // Ativa = sem estorno, ou com o estorno estornado de volta (review #1297 rodada 2: estornar o estorno reativa
+      // a contagem; o `reverseEntry` aceita estornar um estorno).
+      const reversal = prior.reversedById ? await this.journalEntryRepo.findById(scope, prior.reversedById) : null;
+      if (!reversal || reversal.reversedById) {
         throw new ConflictError(
           `Já existe contagem do estoque de insumo em ${input.countDate} nesta unidade. Para corrigir, estorne o lançamento e conte de novo.`,
           'INSUMO_COUNT_ALREADY_POSTED',
         );
       }
       excludedCents += stockEffect(prior.postings, stock.id);
-      const reversal = await this.journalEntryRepo.findById(scope, prior.reversedById);
-      if (reversal && reversal.date.getTime() <= endOfDay(input.countDate).getTime()) {
+      if (reversal.date.getTime() <= endOfDay(input.countDate).getTime()) {
         excludedCents += stockEffect(reversal.postings, stock.id);
       }
       sourceId = `${base}#${seq}`;

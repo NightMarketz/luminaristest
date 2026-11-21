@@ -167,4 +167,17 @@ describe('Insumo do serviço — estoque com inventário periódico (cenário 30
     expect((await countEntry(`${UNIT}:2025-08-31#3`)).id).toBe(res.body.data.entryId);
     expect(await saldo('1.1.3.02', '2025-01-01', '2025-09-30')).toBe(0);
   });
+
+  it('item 4 — estornar o estorno reativa a contagem: nova contagem na data → 409', async () => {
+    // review #1297 rodada 2: antes, a #3 reativada não bloqueava e saía uma #4 (duas contagens ativas na data).
+    const terceira = await countEntry(`${UNIT}:2025-08-31#3`);
+    const estorno = await reverse(terceira.id, '2025-08-31');
+    expect(estorno.status).toBe(200);
+    const reversalId = (await prisma.journalEntry.findUniqueOrThrow({ where: { id: terceira.id } })).reversedById!;
+    expect((await reverse(reversalId, '2025-08-31')).status).toBe(200);
+    const res = await count('2025-08-31', 123);
+    expect(res.status).toBe(409);
+    expect(JSON.stringify(res.body)).toMatch(/INSUMO_COUNT_ALREADY_POSTED/);
+    expect(await prisma.journalEntry.count({ where: { unitId: UNIT, sourceType: 'insumo_stock_count', sourceId: `${UNIT}:2025-08-31#4` } })).toBe(0);
+  });
 });
