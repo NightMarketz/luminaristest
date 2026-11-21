@@ -39,7 +39,7 @@ const count = (countDate: string, countedValueCents: number) =>
 /** Saldo (D − C) da conta com lançamentos de `from` a `to` (inclusive), datas YYYY-MM-DD. */
 const saldo = async (code: string, from: string, to: string) => {
   const ps = await prisma.posting.findMany({
-    where: { accountId: accounts[code], journalEntry: { date: { gte: new Date(`${from}T00:00:00.000Z`), lte: new Date(`${to}T23:59:59.999Z`) } } },
+    where: { accountId: accounts[code], entry: { date: { gte: new Date(`${from}T00:00:00.000Z`), lte: new Date(`${to}T23:59:59.999Z`) } } },
   });
   return ps.reduce((a, p) => a + Number(p.debitCents) - Number(p.creditCents), 0);
 };

@@ -28,7 +28,7 @@ import { toPolicyJson } from './policyVersionApply';
 /** Chaves de conta (`Account`) por alvo — rótulo `code — name` no detalhe (item 8). */
 const ACCOUNT_KEYS: Record<PolicyTarget, readonly string[]> = {
   FISCAL_PROFILE: [
-    'icmsRecuperavelAccountId', 'pisCofinsRecuperavelAccountId', 'insumoExpenseAccountId',
+    'icmsRecuperavelAccountId', 'pisCofinsRecuperavelAccountId', 'insumoExpenseAccountId', 'insumoStockAccountId',
     'irpjDespesaAccountId', 'csllDespesaAccountId', 'irpjRecolherAccountId', 'csllRecolherAccountId',
     'pisDespesaAccountId', 'cofinsDespesaAccountId', 'pisRecolherAccountId', 'cofinsRecolherAccountId', // X8 item 2
     'pisCofinsCreditoOutrosAccountId', 'pisCofinsRetidoCompensarAccountId', 'pisCofinsRetencaoConciliarAccountId', // X8 PR-3 (L-5, retenções)
