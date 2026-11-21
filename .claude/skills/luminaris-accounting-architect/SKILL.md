@@ -150,7 +150,7 @@ Depois: `PARECER PRONTO. Entregar ao luminaris-orchestrator para montar o plano 
 - **[ACC-002] NÃO escolha as skills nem monte o plano de execução** — isso é do orquestrador; você dá a lente de domínio.
 - **[ACC-003] NÃO aprove** — reviewer valida o artefato.
 - **NÃO planeje em cima do doc aspiracional sem cruzar com as memórias `accounting-*` e as notas de `docs/plano/trilhos/`/`rejeitadas/`** — o doc contradiz decisões commitadas.
-- **Em dúvida sobre onde o dado vive → Prisma first-class.** Contabilidade nunca é DynamicTable.
+- **Dado de razão ou fiscal → Prisma first-class** (tripwire da Etapa 1 do SEL-001). Contabilidade nunca é DynamicTable. Em dúvida sobre outro dado, vale o contrato §2.1.
 - **Toda afirmação sobre "o projeto já faz X" tem de vir de código/memória lidos** (CBM-001), nunca de suposição.
 
 ## Lacunas e débitos (OPS-007)

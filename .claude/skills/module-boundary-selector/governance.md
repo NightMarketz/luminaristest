@@ -14,7 +14,7 @@ gates:
   SEL-001:
     gate: luminaris-reviewer/REV-005
     kind: design-time
-    note: camada decidida pelas 4 perguntas + tripwires; dúvida → Prisma (coerente com ORCH-002 e AC-2.1-B2/B3)
+    note: camada decidida pelas 4 perguntas + tripwires; dúvida → DynamicTable + postEntry (dono, 14/10; contrato §2.1, coerente com AC-2.1-B2/B3)
   SEL-002:
     gate: luminaris-reviewer/REV-005
     kind: design-time

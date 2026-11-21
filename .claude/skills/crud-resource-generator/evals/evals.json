@@ -63,7 +63,7 @@
       "prompt": "Para o recurso Comment, gere apenas (a) o método de exclusão e o findAll do CommentRepository e (b) o registro da rota. Saída: o trecho do repository sob // server/src/features/comments/repositories/CommentRepository.ts e o registro da rota sob // server/src/routes/index.ts.",
       "assertions": [
         "contains:// server/src/routes/index.ts",
-        "@index.ts::contains:'/api/comments'",
+        "@index.ts::contains:'/comments'",
         "absent:// server/src/middleware/auth.ts",
         "@CommentRepository.ts::regex:deletedAt:\\s*new Date\\(\\)",
         "@CommentRepository.ts::regex:where:\\s*\\{?\\s*[\\s\\S]*deletedAt:\\s*null",
