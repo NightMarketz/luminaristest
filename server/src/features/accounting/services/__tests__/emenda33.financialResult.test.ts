@@ -108,7 +108,8 @@ describe('E2 — resolveFinancialAccountCode / isFinancialAccountUsable', () => 
 
 describe('E3/E26 — DRE: seção financialResult (statement-mapping v5)', () => {
   it('versão do mapeamento é a próxima livre (v5)', () => {
-    expect(STATEMENT_MAPPING_VERSION).toBe('statement-mapping.v5');
+    // v6: a lacuna 35d3 (21/11) somou a regra dre.cogs_services (4.7); o resultado financeiro segue igual.
+    expect(STATEMENT_MAPPING_VERSION).toBe('statement-mapping.v6');
   });
 
   it('first-match: 3.5.x e 4.3.x → financialResult; 4.4.x e 4.6 → expenses', () => {
