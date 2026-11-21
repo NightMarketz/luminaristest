@@ -171,6 +171,7 @@ describe('Lacuna 038d — DRE pelo papel do insumo, ponta a ponta (factory real)
     ]);
     const perfil = await request(app).put('/api/accounting/fiscal-profile').set(authHeader(donoP)).send({
       unitId: PAPEL, regimeTributario: 'REAL', icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO',
+      pisCofinsCreditMonofasicoInsumo: false, // c516 (#1301): chave desligada — o oráculo 8788 é anterior ao crédito do monofásico-insumo
       icmsRecuperavelAccountId: contas['1.1.8'], pisCofinsRecuperavelAccountId: contas['1.1.9'], insumoExpenseAccountId: contas['4.1.9'],
     });
     expect(perfil.status).toBe(200);
@@ -185,7 +186,7 @@ describe('Lacuna 038d — DRE pelo papel do insumo, ponta a ponta (factory real)
   });
 
   const corpo = (insumo?: string) => ({
-    unitId: PAPEL, regimeTributario: 'REAL', icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO',
+    unitId: PAPEL, regimeTributario: 'REAL', icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditMonofasicoInsumo: false,
     icmsRecuperavelAccountId: contas['1.1.8'], pisCofinsRecuperavelAccountId: contas['1.1.9'], ...(insumo ? { insumoExpenseAccountId: insumo } : {}),
   });
 
