@@ -73,7 +73,7 @@ Tokens nomeados existem no `tailwind.config` (`lumi-primary #3b82f6`, `lumi-acce
 ### Card / superfície
 **[FEDS-001]** Superfície de card = `bg-white dark:bg-neutral-900` (nunca `zinc-*`).
 ```tsx
-<div className="rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-white/5 p-5 shadow-sm">…</div>
+<div className="rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 p-5 shadow-sm">…</div>
 ```
 
 ### Header com gradiente + blur blobs (heros de tela/detalhe)

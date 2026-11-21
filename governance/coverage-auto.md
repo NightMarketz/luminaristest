@@ -77,7 +77,7 @@ generated-by: skill-audit coverage
 | `TEST-007` | backend-test-suite-generator | eval:./evals/evals.json#edge-1 | ✅ |
 | `TEST-008` | backend-test-suite-generator | eval:./evals/evals.json#edge-3 | ✅ |
 | `AC-2.1-B1` | backend-workflow-transition-generator | command:grep -rn 'PostingService\\|PayrollService\\|FiscalService' server/src/features/dynamicTables/ | ✅ |
-| `AC-2.1-B4` | backend-workflow-transition-generator | review:luminaris-reviewer/fronteira-2.1 | ✅ |
+| `AC-2.1-B4` | backend-workflow-transition-generator | review:luminaris-reviewer/REV-005 | ✅ |
 | `CHAT-001` | chat-domain-generator | eval:./evals/evals.json#happy-1 | eval:./evals/evals.json#regression-1 | ✅ |
 | `CHAT-002` | chat-domain-generator | eval:./evals/evals.json#happy-1 | ✅ |
 | `CHAT-003` | chat-domain-generator | eval:./evals/evals.json#happy-1 | ✅ |
@@ -105,8 +105,8 @@ generated-by: skill-audit coverage
 | `DOCPROC-004` | document-processing-generator | eval:./evals/evals.json#edge-1 | ✅ |
 | `DOCPROC-005` | document-processing-generator | eval:./evals/evals.json#regression-1 | ✅ |
 | `DOCPROC-006` | document-processing-generator | eval:./evals/evals.json#happy-1 | ✅ |
-| `AC-2.1-B2` | dynamic-table-preset-generator | review:luminaris-reviewer/fronteira-2.1 | ✅ |
-| `AC-2.1-B3` | dynamic-table-preset-generator | review:luminaris-reviewer/fronteira-2.1 | ✅ |
+| `AC-2.1-B2` | dynamic-table-preset-generator | review:luminaris-reviewer/REV-005 | ✅ |
+| `AC-2.1-B3` | dynamic-table-preset-generator | review:luminaris-reviewer/REV-005 | ✅ |
 | `AC-2.2-2` | dynamic-table-preset-generator | review:skill-audit/P6 | ✅ |
 | `AC-2.2-3` | dynamic-table-preset-generator | command:grep -rn \"targetTable: '@@PRESET_TABLE_KEY::\" server/src/features/dynamicTables/presets/modules/ | ✅ |
 | `FEAPI-001` | frontend-api-service-generator | eval:./evals/evals.json#happy-1 | eval:./evals/evals.json#regression-1 | ✅ |
@@ -221,11 +221,11 @@ generated-by: skill-audit coverage
 | `REV-006` | luminaris-reviewer | eval:./evals/evals.json#happy-2 | ✅ |
 | `REV-007` | luminaris-reviewer | eval:./evals/evals.json#happy-3 | ✅ |
 | `REV-008` | luminaris-reviewer | eval:./evals/evals.json#happy-4 | ✅ |
-| `SEL-001` | module-boundary-selector | review:luminaris-reviewer/fronteira-2.1 | ✅ |
-| `SEL-002` | module-boundary-selector | review:luminaris-reviewer/fronteira-2.1 | ✅ |
-| `SEL-003` | module-boundary-selector | review:luminaris-reviewer/fronteira-2.1 | ✅ |
-| `SEL-004` | module-boundary-selector | review:luminaris-reviewer/fronteira-2.1 | ✅ |
-| `SEL-005` | module-boundary-selector | review:luminaris-reviewer/fronteira-2.1 | ✅ |
+| `SEL-001` | module-boundary-selector | review:luminaris-reviewer/REV-005 | ✅ |
+| `SEL-002` | module-boundary-selector | review:luminaris-reviewer/REV-005 | ✅ |
+| `SEL-003` | module-boundary-selector | review:luminaris-reviewer/REV-005 | ✅ |
+| `SEL-004` | module-boundary-selector | review:luminaris-reviewer/REV-005 | ✅ |
+| `SEL-005` | module-boundary-selector | review:luminaris-reviewer/REV-005 | ✅ |
 | `SDATA-001` | structured-data-generator | eval:./evals/evals.json#happy-1 | ✅ |
 | `SDATA-002` | structured-data-generator | eval:./evals/evals.json#happy-1 | eval:./evals/evals.json#edge-1 | ✅ |
 | `SDATA-003` | structured-data-generator | eval:./evals/evals.json#happy-1 | eval:./evals/evals.json#regression-1 | ✅ |

@@ -473,7 +473,7 @@ export default function GenericTabbedView({
                 </div>
             )}
 
-            <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-neutral-950 transition-colors">
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white dark:bg-neutral-950 transition-colors">
 
                 {/* Tabs Navigation (Separated from Header) */}
                 {!isWidgetMode && (
@@ -565,7 +565,7 @@ export default function GenericTabbedView({
                         onPageChange={setCurrentPage}
                     />
                 )}
-            </main>
+            </div>
 
             {/* Bulk-delete confirmation — canonical ConfirmDeleteModal */}
             {enableSelection && (

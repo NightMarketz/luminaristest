@@ -1571,7 +1571,8 @@ export class PayableService implements IFixedAssetDraftRedriver {
   }
 
   /** ITEM-DESTINATION item 11: cada `insumoItems[].accountId` é folha Expense do escopo (reusa o gate do
-   *  `expenseAccountId`); devolve o código por item para o débito agrupado. Uma leitura por conta distinta. */
+   *  `expenseAccountId`); devolve o código por item para o débito agrupado. Uma leitura por conta distinta.
+   *  INSUMO-INVENTARIO-PERIODICO item 3: com `stock: true` a conta é o estoque de insumo, folha de ATIVO. */
   private async resolveInsumoLines(
     scope: AccountingScope,
     dto: CreatePayableInput,
@@ -1580,11 +1581,28 @@ export class PayableService implements IFixedAssetDraftRedriver {
     const out: { accountCode: string; costCents: number }[] = [];
     for (const item of dto.insumoItems ?? []) {
       if (!codeById.has(item.accountId)) {
-        codeById.set(item.accountId, (await this.resolveExpenseAccount(scope, item.accountId)).code);
+        const account = item.stock
+          ? await this.resolveInsumoStockLeaf(scope, item.accountId)
+          : await this.resolveExpenseAccount(scope, item.accountId);
+        codeById.set(item.accountId, account.code);
       }
       out.push({ accountCode: codeById.get(item.accountId)!, costCents: item.costCents });
     }
     return out;
+  }
+
+  /** INSUMO-INVENTARIO-PERIODICO item 3: estoque de insumo = folha de ATIVO do escopo, nunca a `Estoques` da revenda
+   *  (o tie-out LAC-E soma só o subrazão de InventoryItem nela). */
+  private async resolveInsumoStockLeaf(scope: AccountingScope, accountId: string): Promise<Account> {
+    const account = await this.accountRepo.findById(scope, accountId);
+    if (!account || account.deletedAt) throw new ValidationError(`Conta de estoque de insumo '${accountId}' não existe neste escopo.`);
+    if (!account.acceptsEntries || account.nature !== 'Asset') {
+      throw new ValidationError(`Conta de estoque de insumo '${account.code}' precisa ser folha de ATIVO (natureza ${account.nature}).`);
+    }
+    if (account.code === ESTOQUES_CODE) {
+      throw new ValidationError(`Conta de estoque de insumo '${account.code}' é o estoque de revenda — use uma conta de ativo própria.`);
+    }
+    return account;
   }
 
   /** X6: valida as contas a recuperar (existem no escopo, folha, natureza Asset) e devolve o que se persiste. */

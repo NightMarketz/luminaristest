@@ -41,6 +41,9 @@ instinto fundamentado. Mas com uma fronteira clara:
   simplifica. **Não** inline uma policy, **não** pule um DTO, **não** corte o factory "pra ser enxuto".
 - O minimalismo morde no **código solto** (um helper, um fix pontual) — aí sim, seja mínimo. Atalho
   deliberado leva um comentário `atalho:` que nomeia o teto e o upgrade.
+- Minimalismo é sobre a **forma** do código (sem abstração especulativa), nunca sobre **onde** a correção entra: corrigir
+  na causa raiz, no dono certo do dado, é a solução, não excesso. Escolha entre remendo e estrutural segue
+  `D-2026-11-21-RECOMENDAR-SOLUCAO-ESTRUTURAL` (`CLAUDE.md` §Como propor solução).
 - Em dúvida entre enxugar e seguir o padrão da camada → **o contrato prevalece**.
 
 ## skill-audit — predicado de ambiente

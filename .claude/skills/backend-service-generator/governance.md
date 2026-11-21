@@ -76,7 +76,7 @@ rules:
 
 Regras normativas da camada Service, cada uma coberta por pelo menos um caso de eval comportamental:
 
-- `SVC-001` — policy-check ANTES de qualquer acesso a dados (primeira linha do método).
+- `SVC-001` — policy-check antes de devolver ou alterar dados (primeira linha sem registro-alvo; dono na busca, ou checagem antes de devolver/alterar, sobre registro com dono).
 - `SVC-002` — erros tipados de `lib/errors` (`ForbiddenError`/`NotFoundError`), nunca `null` cru ou `throw new Error`.
 - `SVC-003` — cross-tenant retorna `NotFoundError`, não `ForbiddenError` (anti-enumeration) — caso `edge-1`.
 - `SVC-004` — DI 100% por construtor (repo + policy injetados), zero `new <Resource>Repository()`/`Policy()`.

@@ -111,6 +111,19 @@ justificada no relatório.
 (+ Policy), Factory, DTO Zod, soft-delete e rota em 2 toques são requisito (Contrato §2/§3). O minimalismo
 morde só no código solto; em dúvida, **o contrato prevalece**.
 
+## Como propor solução (dono, 2026-11-21 — `docs/plano/decisoes/D-2026-11-21-RECOMENDAR-SOLUCAO-ESTRUTURAL.md`)
+
+Vale para fork, corpo de PR, relatório, pergunta de fim de turno e botões — e prevalece sobre "não narre opções que
+não vai seguir":
+1. **Gere sempre a opção estrutural** (causa raiz no lugar que o Contrato/ADR/camada dona designa). Grande ou arriscada →
+   gere a **versão incremental dela** (opt-in, migração por etapa, PR-0 de contrato) antes de pensar em remendo;
+   "remendo × tudo de uma vez" é dilema falso (caso: #1250 × `D-2026-11-13-REGRA-GLOBAL-INPUT`).
+2. **A recomendação padrão é a estrutural.** O remendo só como alternativa, nomeando o que deixa aberto; recomendado só
+   como etapa declarada dela (contenção com item na caixa), nunca como destino.
+3. **Raio, tamanho de PR, classe vermelha e cerimônia são insumo de plano** (fatiar), não argumento para a opção menor.
+4. **Não sei descrever a estrutural → leio a camada dona antes de propor.** Fora do escopo da sessão → vai descrita no
+   relatório e na pergunta/cartão (e na caixa), nunca some.
+
 ## Gates rápidos (o resto está no contrato)
 
 - `tsc` limpo é gate: `cd server && npx tsc --noEmit` e `cd my-app && npx tsc --noEmit` — não avance vermelho.

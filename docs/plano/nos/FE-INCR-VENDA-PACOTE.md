@@ -11,7 +11,7 @@ prs: ["#519"]
 ancora_sdd: "—"
 perfil_previsto: "sonnet-alto"
 perfil_evidencia: "regra 1 não casa (F-FE-VP-1..3 + 1b ratificados 05/10); regra 2 não casa (sem lançamento, tributo, saldo nem migração Prisma: a ponte e o crédito já existem; muda um preset DynamicTable); regra 4: 12 itens, FE + preset"
-atualizado: "2026-10-05"
+atualizado: "2026-11-11"
 ---
 # FE-INCR-VENDA-PACOTE — Vender pacote pré-pago pelo wizard de venda
 

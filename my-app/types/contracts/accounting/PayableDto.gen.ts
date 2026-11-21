@@ -57,6 +57,7 @@ cProd: string
 nItem: number
 costCents: number
 description?: string
+stock?: true
 }[]
 /**
  * @maxItems 4

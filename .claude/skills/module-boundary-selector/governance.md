@@ -12,23 +12,23 @@ governs-rules:
   - SEL-005
 gates:
   SEL-001:
-    gate: luminaris-reviewer/fronteira-2.1
+    gate: luminaris-reviewer/REV-005
     kind: design-time
-    note: camada decidida pelas 4 perguntas + tripwires; dúvida → Prisma (coerente com ORCH-002 e AC-2.1-B2/B3)
+    note: camada decidida pelas 4 perguntas + tripwires; dúvida → DynamicTable + postEntry (dono, 14/10; contrato §2.1, coerente com AC-2.1-B2/B3)
   SEL-002:
-    gate: luminaris-reviewer/fronteira-2.1
+    gate: luminaris-reviewer/REV-005
     kind: design-time
     note: canônico selecionável exige critério (a) multi-vertical, (b) comportamento cross-entidade ou (c) tela canônica; senão é custom inerte
   SEL-003:
-    gate: luminaris-reviewer/fronteira-2.1
+    gate: luminaris-reviewer/REV-005
     kind: design-time
     note: registro DEVE listar contratos implícitos de nome (tabela/campo → consumidores por grep) — falha silenciosa do motor é risco declarável, não omitível
   SEL-004:
-    gate: luminaris-reviewer/fronteira-2.1
+    gate: luminaris-reviewer/REV-005
     kind: design-time
     note: consequência financeira exige alfândega nomeada (evento/bridge/arquétipo/idempotência no @@unique Prisma — gêmeo de AC-2.1-B5); arquétipo novo = incremento de motor autorizado
   SEL-005:
-    gate: luminaris-reviewer/fronteira-2.1
+    gate: luminaris-reviewer/REV-005
     kind: design-time
     note: saída é Registro de Fronteira com graus de evidência; skill não implementa nem substitui autorização citável (ORCH-006)
 ---

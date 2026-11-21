@@ -55,9 +55,9 @@ Route → Controller → Service → Repository → Prisma
   - **Repository**: único lugar com `prisma.*`. Zero regra de negócio.
   - **Policy**: só decisões `boolean`. Zero `throw`, zero acesso a dados.
 - [ ] **Injeção de dependências via Factory.** Service recebe repo + policy por construtor. **Nunca** `new Repository()`/`new Policy()` dentro do service. Registrar em `lib/factory.ts` (repo/policy antes do service) + getter `get<Resource>Service()`.
-- [ ] **Policy-first.** Toda operação de service começa com `if (!this.policy.canXxx(actor, id)) throw new ForbiddenError()` **antes** de qualquer acesso a dados.
+- [ ] **Policy-first.** Operação sem registro-alvo (criar, listar): `if (!this.policy.canXxx(actor)) throw new ForbiddenError()` na primeira linha, **antes** de tocar o repository. Operação sobre registro com dono: a posse só se sabe lendo o registro, então buscar antes é permitido, desde que a checagem venha **antes de devolver ou alterar qualquer coisa**. Preferível pôr o dono na própria busca (`repo.findLiveById(actor.id, id)`, como `TeammateService` e `LlmCredentialService`), com o acesso de admin em método próprio, chamado só depois da checagem de admin (dono, chat, 21/11).
 - [ ] **Erros tipados de `lib/errors`** (`ForbiddenError`, `NotFoundError`, `ValidationError`, `UnauthorizedError`, `ServiceError`) — nunca `res.status(500)` manual no service, nunca `throw new Error('...')` cru.
-- [ ] **Cross-tenant = `NotFoundError`, NÃO `ForbiddenError`** (recurso de outro usuário deve parecer inexistente — previne enumeration attack).
+- [ ] **Cross-tenant = `NotFoundError`, NÃO `ForbiddenError`** (recurso de outro usuário deve parecer inexistente — previne enumeration attack). Exceção aceita (dono, chat, 21/11: "Fica o 403"): `DocumentService` (editar e apagar), `DynamicTableService` (tudo que passa por `getTableById`) e `ChatInstanceService` respondem `ForbiddenError` e assim ficam. Código novo segue o `NotFoundError`. Inegociável nos dois casos: nada do outro dono é devolvido nem alterado.
 - [ ] **Soft-delete universal.** Todo `findMany`/`findFirst` filtra `where: { …, deletedAt: null }`. Delete = `update({ data: { deletedAt: new Date() } })`. **Nunca** `prisma.<model>.delete()`.
 - [ ] **`findAll` usa `prisma.$transaction([findMany, count])`** — não duas queries sequenciais.
 - [ ] **Validação Zod no controller** antes de qualquer lógica: `const parse = Schema.safeParse(req.body); if (!parse.success) return res.status(400).json({ success:false, error: parse.error.flatten() })`.
@@ -168,7 +168,7 @@ Toda linha de DynamicTable mora em `DynamicTableData.data Json` sobre **SQLite**
   Service de commit único (ex.: fechamento de exercício) está **dentro** do predicado e escreve `commit 2 — nenhum` e `reconcile — n/a (postEntry idempotente por sourceId)`.
 - [ ] **[AC-2.3-3] Sem motor.** Não existe engine de workflow/mutação neste repo. A primitiva `commitThenReconcile(...)` **só nasce de incidente** da classe reconcile (ADR-DOMAIN-MOTOR §3, extensão do gatilho (b) do `ADR-RC-SUBLEDGER-AP-AR-reuse-sanction.md`), migrando só o serviço quebrado; não entra em fila. Motor genérico = decisão rejeitada; reabrir exige ADR citando um dos 4 gatilhos.
 
-> Evidência (2026-09-21, leitura direta): 56 services contábeis, 18 com padrão reconcile em prosa livre, 5 orquestrando razão + outro domínio, **8 chamam `.postEntry(` fora do `PostingService` e nenhum tem cabeçalho** (`grep -rlE "\.postEntry\(" server/src/features/*/services --include=*.ts | grep -v -e __tests__ -e PostingService`); 0 ocorrências de "2 commits"/"reconcile" neste contrato antes desta §. Gate executável (`atomicUntil.boundary.test.ts`) chega no PR-B (GAP-MAP fila 9); até lá a regra é `[PAPEL]` cobrada pelo revisor.
+> Evidência (2026-09-21, leitura direta): 56 services contábeis, 18 com padrão reconcile em prosa livre, 5 orquestrando razão + outro domínio, **8 chamam `.postEntry(` fora do `PostingService` e nenhum tem cabeçalho** (`grep -rlE "\.postEntry\(" server/src/features/*/services --include=*.ts | grep -v -e __tests__ -e PostingService`); 0 ocorrências de "2 commits"/"reconcile" neste contrato antes desta §. Gate executável: `server/src/features/accounting/__tests__/atomicUntil.boundary.test.ts` (entrou no PR-B, #459, 2026-10-01).
 
 ### 2.4 Observabilidade (decisão 2026-10-23, `docs/adr/ADR-OBSERVABILIDADE.md`)
 
@@ -235,7 +235,7 @@ Detalhe completo em `frontend-design-system/SKILL.md`. Regras-gate:
 - [ ] **`beforeEach(() => jest.clearAllMocks())`** sempre.
 - [ ] **Floats monetários com `toBeCloseTo(value, 2)`** — nunca `toBe`/`toEqual`.
 - [ ] **`referenceDate` fixo** (data hardcoded) — nunca `new Date()` sem âncora.
-- [ ] **Cross-tenant testa `NotFoundError`** (não `ForbiddenError`).
+- [ ] **Cross-tenant testa `NotFoundError`** (não `ForbiddenError`; nas três exceções do §2, `ForbiddenError`) **e** que nada foi devolvido nem escrito.
 - [ ] **Factory `buildService(overrides?)`** em testes de service.
 - [ ] **KPI processor:** suíte de Empty Safety (rows vazios → 0, nunca `NaN`).
 

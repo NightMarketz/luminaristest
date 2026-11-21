@@ -610,6 +610,17 @@
                     }
                   ]
                 },
+                "insumoStockAccountId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
                 "irpjDespesaAccountId": {
                   "anyOf": [
                     {
@@ -6752,6 +6763,17 @@
             }
           ]
         },
+        "insumoStockAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "irpjDespesaAccountId": {
           "anyOf": [
             {
@@ -7530,6 +7552,17 @@
           ]
         },
         "insumoExpenseAccountId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "insumoStockAccountId": {
           "anyOf": [
             {
               "type": "string",
@@ -8978,6 +9011,70 @@
         "descricao",
         "valorCents",
         "fonte"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "InsumoStockCountDto.ts": {
+    "CreateInsumoStockCountSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "unitId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "countDate": {
+          "type": "string"
+        },
+        "countedValueCents": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "unitId",
+        "countDate",
+        "countedValueCents"
+      ],
+      "additionalProperties": false
+    },
+    "InsumoStockCountViewSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "countDate": {
+          "type": "string"
+        },
+        "bookValueCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "countedValueCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "adjustmentCents": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "entryId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "countDate",
+        "bookValueCents",
+        "countedValueCents",
+        "adjustmentCents",
+        "entryId"
       ],
       "additionalProperties": false
     }
@@ -12008,6 +12105,10 @@
               "description": {
                 "type": "string",
                 "minLength": 1
+              },
+              "stock": {
+                "type": "boolean",
+                "const": true
               }
             },
             "required": [

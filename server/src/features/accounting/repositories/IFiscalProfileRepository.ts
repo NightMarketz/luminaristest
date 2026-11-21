@@ -10,6 +10,7 @@ export interface FiscalProfileData {
   pisCofinsCreditFromSimplesSupplier: boolean;
   icmsRecuperavelAccountId?: string | null;
   pisCofinsRecuperavelAccountId?: string | null;
+  insumoStockAccountId?: string | null; // INSUMO-INVENTARIO-PERIODICO item 1
   // X7 Fase A (BRIEF item 3, F-TA-6 a)
   irpjDespesaAccountId?: string | null;
   csllDespesaAccountId?: string | null;

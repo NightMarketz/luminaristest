@@ -35,7 +35,7 @@ Leia `.claude/skills/_ARCHITECTURE-CONTRACT.md` §2.1 antes de classificar — o
 
 ## Etapa 1 — Camada: Prisma × DynamicTable
 
-**[SEL-001] A camada é decidida pelas 4 perguntas de segurança + tripwires de plataforma; qualquer resposta na coluna Prisma → Prisma first-class; em dúvida → Prisma.**
+**[SEL-001] A camada é decidida pelas 4 perguntas de segurança + tripwires de plataforma; qualquer resposta na coluna Prisma → Prisma first-class; em dúvida entre os dois critérios → DynamicTable, com a ponte `postEntry` para o que o razão registrar (dono, 2026-10-14; contrato §2.1).**
 
 | # | Pergunta | DynamicTable se… | Prisma se… |
 |---|---|---|---|
