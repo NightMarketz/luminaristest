@@ -577,6 +577,10 @@
                   "default": false,
                   "type": "boolean"
                 },
+                "pisCofinsCreditMonofasicoInsumo": {
+                  "default": true,
+                  "type": "boolean"
+                },
                 "icmsRecuperavelAccountId": {
                   "anyOf": [
                     {
@@ -6730,6 +6734,10 @@
           "default": false,
           "type": "boolean"
         },
+        "pisCofinsCreditMonofasicoInsumo": {
+          "default": true,
+          "type": "boolean"
+        },
         "icmsRecuperavelAccountId": {
           "anyOf": [
             {
@@ -7527,6 +7535,10 @@
         },
         "pisCofinsCreditFromSimplesSupplier": {
           "default": false,
+          "type": "boolean"
+        },
+        "pisCofinsCreditMonofasicoInsumo": {
+          "default": true,
           "type": "boolean"
         },
         "icmsRecuperavelAccountId": {
