@@ -156,6 +156,10 @@ achados fora de escopo (§6). **Fica pronto quando os forks estão listados, nã
    **Pré-condição:** a transcrição da P-1 no corpus. Até lá, o item roda como **(c)**, o comportamento de hoje:
    crédito 0 com warning.
    **Teste:** um `it` por ramo de CST. `REVENDA` + `MONOFASICO` segue com crédito 0 em qualquer CST (regressão).
+   **Emenda 21/11 (lacuna c516, [D-2026-11-21-C516-MONOFASICO-INSUMO-CREDITO](../plano/decisoes/D-2026-11-21-C516-MONOFASICO-INSUMO-CREDITO.md)):**
+   substitui a etapa (c) e a recomendação (a) acima. A IN RFB 2.121 art. 178 credita o monofásico por NCM usado como
+   insumo em qualquer CST (04/06 inclusive), atrás da chave `pisCofinsCreditMonofasicoInsumo` do perfil fiscal, que vem
+   ligada por padrão. Com a chave desligada, ou com monofásico só pelo CST da nota, o crédito é 0 com warning.
 8. **Invariantes:**
    - com destinações mistas, Σ `custoLiquidoCents` = `custoEstoqueCents` (item 9 do X6);
    - num perfil `SIMPLES` ou `CUMULATIVO`, a destinação não muda crédito de PIS/COFINS;

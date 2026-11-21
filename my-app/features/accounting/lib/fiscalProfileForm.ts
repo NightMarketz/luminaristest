@@ -49,6 +49,8 @@ export interface FiscalProfileForm {
   pisCofinsRegime: PisCofinsRegime | '';
   pisCofinsCreditExcludesIcms: boolean;
   pisCofinsCreditFromSimplesSupplier: boolean;
+  /** Lacuna c516: crédito do monofásico por NCM usado como insumo (IN RFB 2.121 art. 178) — default do DTO: ligado. */
+  pisCofinsCreditMonofasicoInsumo: boolean;
   icmsRecuperavelAccountId: string;
   pisCofinsRecuperavelAccountId: string;
   codMun: string;
@@ -93,7 +95,7 @@ export function toFiscalProfileForm(v: FiscalProfileView | null): FiscalProfileF
   if (!v) {
     return {
       regimeTributario: '', icmsContribuinte: false, pisCofinsRegime: '',
-      pisCofinsCreditExcludesIcms: true, pisCofinsCreditFromSimplesSupplier: false, // defaults do DTO
+      pisCofinsCreditExcludesIcms: true, pisCofinsCreditFromSimplesSupplier: false, pisCofinsCreditMonofasicoInsumo: true, // defaults do DTO
       icmsRecuperavelAccountId: '', pisCofinsRecuperavelAccountId: '',
       codMun: '', inscricaoMunicipal: '', cnae: '', regEspTrib: '0', regApTribSN: '', dpsSerie: '1',
       issAliquota: '', issRetidoTomadorPj: false,
@@ -113,6 +115,7 @@ export function toFiscalProfileForm(v: FiscalProfileView | null): FiscalProfileF
     pisCofinsRegime: v.pisCofinsRegime,
     pisCofinsCreditExcludesIcms: v.pisCofinsCreditExcludesIcms,
     pisCofinsCreditFromSimplesSupplier: v.pisCofinsCreditFromSimplesSupplier,
+    pisCofinsCreditMonofasicoInsumo: v.pisCofinsCreditMonofasicoInsumo,
     icmsRecuperavelAccountId: text(v.icmsRecuperavelAccountId),
     pisCofinsRecuperavelAccountId: text(v.pisCofinsRecuperavelAccountId),
     codMun: text(v.codMun),
@@ -185,6 +188,7 @@ export function toUpsertFiscalProfile(unitId: string, f: FiscalProfileForm): Fis
     pisCofinsCreditExcludesIcms: f.pisCofinsCreditExcludesIcms,
     pisCofinsCreditIncludesIpi: false,
     pisCofinsCreditFromSimplesSupplier: f.pisCofinsCreditFromSimplesSupplier,
+    pisCofinsCreditMonofasicoInsumo: f.pisCofinsCreditMonofasicoInsumo,
     icmsRecuperavelAccountId: nullable(f.icmsRecuperavelAccountId),
     pisCofinsRecuperavelAccountId: nullable(f.pisCofinsRecuperavelAccountId),
     insumoExpenseAccountId: f.carried.insumoExpenseAccountId,

@@ -10821,6 +10821,10 @@
                     "type": "boolean",
                     "default": false
                   },
+                  "pisCofinsCreditMonofasicoInsumo": {
+                    "type": "boolean",
+                    "default": true
+                  },
                   "icmsRecuperavelAccountId": {
                     "type": "string",
                     "nullable": true

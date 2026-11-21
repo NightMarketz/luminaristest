@@ -1770,6 +1770,7 @@ model FiscalProfile {
   pisCofinsCreditExcludesIcms         Boolean   @default(true) // Lei 14.592/2023 art. 6º — default conservador
   pisCofinsCreditIncludesIpi          Boolean   @default(false) // IN RFB 2.121/2022 art. 170 [NC] — default sem crédito
   pisCofinsCreditFromSimplesSupplier  Boolean   @default(false) // ADI SRF 15/2007 [NC] — default sem crédito
+  pisCofinsCreditMonofasicoInsumo     Boolean   @default(true) // lacuna c516: IN RFB 2.121 art. 178 — monofásico por NCM usado como insumo credita (dono 21/11)
   icmsRecuperavelAccountId            String? // F-X6-8 a: conta 1.1.x "ICMS a recuperar" (contador, §5)
   icmsRecuperavelAccount              Account?  @relation("FiscalProfileIcmsRecuperavel", fields: [icmsRecuperavelAccountId], references: [id], onDelete: Restrict)
   pisCofinsRecuperavelAccountId       String? // F-X6-8 a: conta 1.1.x "PIS/COFINS a recuperar"

@@ -369,6 +369,10 @@ export function FiscalProfilePanel({ unitId }: FiscalProfilePanelProps) {
                   <input type="checkbox" checked={form.pisCofinsCreditFromSimplesSupplier} onChange={(e) => set('pisCofinsCreditFromSimplesSupplier', e.target.checked)} />
                   {t('fiscalProfile.field.creditFromSimplesSupplier', 'Crédito sobre compra de fornecedor do Simples')}
                 </label>
+                <label className={checkLabel}>
+                  <input type="checkbox" checked={form.pisCofinsCreditMonofasicoInsumo} onChange={(e) => set('pisCofinsCreditMonofasicoInsumo', e.target.checked)} />
+                  {t('fiscalProfile.field.creditMonofasicoInsumo', 'Crédito de PIS/COFINS do produto monofásico usado como insumo do serviço (IN RFB 2.121 art. 178)')}
+                </label>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {accountSelect('icmsRecuperavelAccountId', t('fiscalProfile.field.icmsRecuperavelAccountId', 'Conta de ICMS a recuperar'))}

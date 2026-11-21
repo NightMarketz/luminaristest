@@ -2428,6 +2428,7 @@
       "creditExcludesIcms": "Crédito de PIS/COFINS exclui o ICMS da base",
       "creditIncludesIpi": "Crédito de PIS/COFINS inclui o IPI (regra fixa: não)",
       "creditFromSimplesSupplier": "Crédito sobre compra de fornecedor do Simples",
+      "creditMonofasicoInsumo": "Crédito de PIS/COFINS do produto monofásico usado como insumo do serviço (IN RFB 2.121 art. 178)",
       "icmsRecuperavelAccountId": "Conta de ICMS a recuperar",
       "pisCofinsRecuperavelAccountId": "Conta de PIS/COFINS a recuperar"
     },
