@@ -234,6 +234,7 @@ describe('AccountingView — aba Imobilizado (FE-INCR-FIXED-ASSETS item 1)', () 
 
 describe('AccountingView — erro de carga e lançamento (e69d)', () => {
   beforeEach(() => {
+    window.history.replaceState(null, '', '/'); // a aba vive em ?tab=: não vaza entre testes
     vi.clearAllMocks();
     cleanup();
     hookState.error = null;

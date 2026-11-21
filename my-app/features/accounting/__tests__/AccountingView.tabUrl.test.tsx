@@ -110,6 +110,15 @@ vi.mock('../components/AccountsReceivablePanel', () => ({
   },
 }));
 
+// A AccountingView monta useUnitAccountingActivation e useUnitKit: sem mock, cada render dispara fetch real cuja
+// rejeição chega depois do teardown (unhandled rejection "window is not defined" derrubava o vitest run no CI).
+vi.mock('../../../lib/services/accountingBinding.service', () => ({
+  accountingBindingService: { listActive: vi.fn(async () => []), activateDefault: vi.fn() },
+}));
+vi.mock('../../../lib/services/accountingKit.service', () => ({
+  accountingKitService: { getKit: vi.fn(async () => null), listPending: vi.fn(async () => []) },
+}));
+
 // L-20261113-152232-148c: a aba da contabilidade (28) não ia para a URL — F5 voltava ao Balancete.
 describe('AccountingView — aba na URL (?tab=)', () => {
   beforeEach(() => {
