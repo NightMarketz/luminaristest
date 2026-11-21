@@ -16,6 +16,10 @@ updates:
       # update-types, para os pacotes subirem juntos em qualquer nível, major inclusive.
       stryker:
         patterns: ["@stryker-mutator/*"]
+      # Mesma classe: o CLI `prisma` gera o client e precisa da mesma versão do `@prisma/client`. O #1221 subiu só
+      # o client 6→7 e o `prisma generate` do postinstall quebrou o install (12 jobs do CI). Juntos em qualquer nível.
+      prisma:
+        patterns: ["prisma", "@prisma/*"]
       npm-minor-patch:
         update-types: [minor, patch]
     ignore:
