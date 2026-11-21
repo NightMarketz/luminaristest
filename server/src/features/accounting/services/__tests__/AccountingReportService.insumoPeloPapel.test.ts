@@ -9,6 +9,10 @@
  * sai em despesa operacional, abaixo do lucro bruto.
  *
  * O oráculo é a estrutura do art. 187, não o código da conta: o resultado líquido não pode mudar, só a seção.
+ *
+ * Rodada 1 do revisor (A1) + decisão do dono 21/11 (lacuna f974, "O da versão vigente na data"): o papel é o do
+ * `insumoExpenseAccountId` da versão de política FISCAL_PROFILE APPLIED vigente em `asOf` (AccountingPolicyVersion), não o
+ * do perfil atual — período já fechado/entregue em ECD não muda quando o contador troca o insumo depois.
  */
 import type { IAccountRepository } from '../../repositories/IAccountRepository';
 import type { IPostingRepository } from '../../repositories/IPostingRepository';
@@ -43,8 +47,13 @@ const ROWS: Row[] = [
   { accountId: '4.1.9', debitCents: 3000, creditCents: 0 },
 ];
 
-/** `insumoExpenseAccountId` do perfil fiscal do escopo (null/ausente = sem perfil ou sem insumo). */
-function buildService(insumoExpenseAccountId: string | null | undefined, rows: Row[] = ROWS) {
+type Versao = { version: number; decidedAt: Date | null; insumoExpenseAccountId: string | null };
+
+/**
+ * `insumoExpenseAccountId` do perfil fiscal ATUAL do escopo (null/ausente = sem perfil ou sem insumo) e, opcional, o
+ * histórico de versões FISCAL_PROFILE APPLIED (6º argumento: `IAccountingPolicyVersionRepository.list`, só o `list` é usado).
+ */
+function buildService(insumoExpenseAccountId: string | null | undefined, rows: Row[] = ROWS, versoes: Versao[] = []) {
   const accountRepo = { findManyByUnit: jest.fn(async () => ACCOUNTS) } as unknown as IAccountRepository;
   const postingRepo = {
     groupByAccount: jest.fn(async (_s: unknown, _st: unknown, options?: { to?: Date }) =>
@@ -55,9 +64,15 @@ function buildService(insumoExpenseAccountId: string | null | undefined, rows: R
   const fiscalProfileRepo = {
     findByScope: jest.fn(async () => (insumoExpenseAccountId === undefined ? null : { insumoExpenseAccountId })),
   };
-  // Quinto argumento = leitura do perfil fiscal (o swc/jest não faz type-check; a classe de hoje o ignora).
+  const policyVersionRepo = {
+    list: jest.fn(async (_s: unknown, filter: { target?: string; status?: string }) =>
+      filter.target === 'FISCAL_PROFILE' && filter.status === 'APPLIED'
+        ? versoes.map((v) => ({ id: `v${v.version}`, target: 'FISCAL_PROFILE', status: 'APPLIED', version: v.version, decidedAt: v.decidedAt, payload: { insumoExpenseAccountId: v.insumoExpenseAccountId } }))
+        : []),
+  };
+  // 5º argumento = perfil fiscal atual; 6º = versões de política (o swc/jest não faz type-check).
   const Ctor = AccountingReportService as unknown as new (...a: unknown[]) => AccountingReportService;
-  return new Ctor(accountRepo, postingRepo, journalEntryRepo, policy, fiscalProfileRepo);
+  return Object.assign(new Ctor(accountRepo, postingRepo, journalEntryRepo, policy, fiscalProfileRepo, policyVersionRepo), { policyVersionRepo });
 }
 
 const codes = (s: { accounts: { code: string }[] }) => s.accounts.map((a) => a.code);
@@ -99,5 +114,51 @@ describe('L-038d — DRE classifica o insumo pelo papel (insumoExpenseAccountId)
     expect(codes(dre.costOfGoodsSold)).toEqual(['4.7.1']);
     expect(dre.costOfGoodsSold.totalCents).toBe('-500');
     expect(dre.netResult.amountCents).toBe('5500');
+  });
+});
+
+describe('L-038d (f974) — o papel é o da versão FISCAL_PROFILE vigente em asOf, não o do perfil atual', () => {
+  // v1 (10/01/2026): insumo = 4.1.9 · v2 (15/11/2026): insumo = 4.7.1. O perfil ATUAL aponta 4.7.1.
+  const V1 = { version: 1, decidedAt: new Date('2026-01-10T12:00:00.000Z'), insumoExpenseAccountId: '4.1.9' };
+  const V2 = { version: 2, decidedAt: new Date('2026-11-15T12:00:00.000Z'), insumoExpenseAccountId: '4.7.1' };
+  const rows = [...ROWS, { accountId: '4.7.1', debitCents: 500, creditCents: 0 }];
+
+  it('período anterior à troca (31/10/2026): continua pelo insumo antigo (4.1.9 em custo, 4.7.1 em despesa)', async () => {
+    const dre = await buildService('4.7.1', rows, [V1, V2]).incomeStatement(SCOPE, AS_OF);
+    expect(codes(dre.costOfGoodsSold)).toEqual(['4.1.9']);
+    expect(codes(dre.expenses).sort()).toEqual(['4.1.1']);
+    expect(codes(dre.costOfGoodsSold)).not.toContain('4.7.1');
+  });
+
+  it('período posterior à troca (30/11/2026): vale o insumo novo (4.7.1 em custo; 4.1.9 vira despesa)', async () => {
+    const dre = await buildService('4.7.1', rows, [V1, V2]).incomeStatement(SCOPE, new Date('2026-11-30T23:59:59.999Z'));
+    expect(codes(dre.costOfGoodsSold)).toEqual(['4.7.1']);
+    expect(codes(dre.expenses).sort()).toEqual(['4.1.1', '4.1.9']);
+  });
+
+  it('asOf antes da primeira versão: vale a primeira (a política mais antiga que existe), não o perfil atual', async () => {
+    const dre = await buildService('4.7.1', rows, [V1, V2]).incomeStatement(SCOPE, new Date('2025-12-31T23:59:59.999Z'));
+    expect(codes(dre.costOfGoodsSold)).toEqual(['4.1.9']);
+  });
+
+  it('versão decidida no próprio dia de asOf conta (cutoff = fim do dia de asOf)', async () => {
+    const dre = await buildService('4.7.1', rows, [V1, V2]).incomeStatement(SCOPE, new Date('2026-11-15T00:00:00.000Z'));
+    expect(codes(dre.costOfGoodsSold)).toEqual(['4.7.1']);
+  });
+
+  it('só versões APPLIED do alvo FISCAL_PROFILE são lidas', async () => {
+    const svc = buildService('4.7.1', rows, [V1, V2]);
+    await svc.incomeStatement(SCOPE, AS_OF);
+    expect(svc.policyVersionRepo.list).toHaveBeenCalledWith(SCOPE, { target: 'FISCAL_PROFILE', status: 'APPLIED' });
+  });
+
+  it('sem nenhuma versão (perfil legado anterior ao versionamento): vale o perfil atual', async () => {
+    const dre = await buildService('4.1.9', ROWS, []).incomeStatement(SCOPE, AS_OF);
+    expect(codes(dre.costOfGoodsSold)).toEqual(['4.1.9']);
+  });
+
+  it('versão sem insumo (null) vigente em asOf: nada vai a custo pelo papel', async () => {
+    const dre = await buildService('4.1.9', ROWS, [{ ...V1, insumoExpenseAccountId: null }]).incomeStatement(SCOPE, AS_OF);
+    expect(codes(dre.costOfGoodsSold)).toEqual([]);
   });
 });
