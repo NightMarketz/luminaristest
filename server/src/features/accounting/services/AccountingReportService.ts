@@ -17,6 +17,7 @@ import {
   applySign,
 } from './StatementMappingFixture';
 import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
+import type { IAccountingPolicyVersionRepository } from '../repositories/IAccountingPolicyVersionRepository';
 
 // ─── Trial balance ────────────────────────────────────────────────────────────
 
@@ -190,17 +191,32 @@ export class AccountingReportService {
     private readonly postingRepo: IPostingRepository,
     private readonly journalEntryRepo: IJournalEntryRepository,
     private readonly policy: IAccountingPolicy,
-    /** Lacuna 038d: lê `insumoExpenseAccountId` para a DRE classificar o insumo pelo papel. Ausente = só pelo prefixo. */
+    /** Lacuna 038d: perfil fiscal ATUAL — só o fallback de escopo sem nenhuma versão APPLIED (perfil legado). Ausente = só o prefixo. */
     private readonly fiscalProfileRepo?: Pick<IFiscalProfileRepository, 'findByScope'>,
+    /** Lacuna 038d (f974): histórico de versões FISCAL_PROFILE — o papel do insumo é o da versão vigente em `asOf`. */
+    private readonly policyVersionRepo?: Pick<IAccountingPolicyVersionRepository, 'list'>,
   ) {}
 
   /**
-   * Contas que a DRE trata como custo dos serviços pelo PAPEL (lacuna 038d): a do `insumoExpenseAccountId` do perfil fiscal.
-   * Lida no escopo, uma vez por relatório; sem perfil ou sem insumo, conjunto vazio (vale só o prefixo).
+   * Contas que a DRE trata como custo dos serviços pelo PAPEL (lacuna 038d; dono 21/11, f974 "o da versão vigente na data"):
+   * o `insumoExpenseAccountId` da versão de política FISCAL_PROFILE APPLIED vigente em `asOf` (a última com `decidedAt` até o
+   * fim do dia de `asOf`), não o do perfil atual — trocar o insumo depois não reclassifica período já fechado/entregue em ECD.
+   * `asOf` anterior à primeira versão: vale a primeira (a política mais antiga que existe). Sem nenhuma versão (perfil legado
+   * anterior ao versionamento): o perfil atual. Sem insumo: conjunto vazio (vale só o prefixo).
    */
-  private async custoServicosAccountIds(scope: AccountingScope): Promise<ReadonlySet<string>> {
-    const profile = await this.fiscalProfileRepo?.findByScope(scope);
-    return new Set(profile?.insumoExpenseAccountId ? [profile.insumoExpenseAccountId] : []);
+  private async custoServicosAccountIds(scope: AccountingScope, asOf: Date): Promise<ReadonlySet<string>> {
+    const cutoff = Date.UTC(asOf.getUTCFullYear(), asOf.getUTCMonth(), asOf.getUTCDate(), 23, 59, 59, 999);
+    const versions = ((await this.policyVersionRepo?.list(scope, { target: 'FISCAL_PROFILE', status: 'APPLIED' })) ?? [])
+      .filter((v) => v.decidedAt !== null)
+      .sort((a, b) => a.decidedAt!.getTime() - b.decidedAt!.getTime() || a.version - b.version);
+    let insumo: unknown;
+    if (versions.length > 0) {
+      const vigente = versions.filter((v) => v.decidedAt!.getTime() <= cutoff).pop() ?? versions[0];
+      insumo = (vigente.payload as { insumoExpenseAccountId?: unknown } | null)?.insumoExpenseAccountId;
+    } else {
+      insumo = (await this.fiscalProfileRepo?.findByScope(scope))?.insumoExpenseAccountId;
+    }
+    return new Set(typeof insumo === 'string' && insumo.length > 0 ? [insumo] : []);
   }
 
   // ─── Private helpers ────────────────────────────────────────────────────────
@@ -826,7 +842,7 @@ export class AccountingReportService {
         ),
       ]);
 
-      const custoServicos = await this.custoServicosAccountIds(scope);
+      const custoServicos = await this.custoServicosAccountIds(scope, asOf);
       const grossRevenue = this.buildSection(dreRows, 'DRE', 'grossRevenue', custoServicos);
       const revenueDeductions = this.buildSection(dreRows, 'DRE', 'revenueDeductions', custoServicos);
       const costOfGoodsSold = this.buildSection(dreRows, 'DRE', 'costOfGoodsSold', custoServicos);

@@ -1,4 +1,4 @@
-export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v6';
+export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v7';
 
 /**
  * Declarative mapping rules for BP (Balanço Patrimonial) and DRE (Demonstração

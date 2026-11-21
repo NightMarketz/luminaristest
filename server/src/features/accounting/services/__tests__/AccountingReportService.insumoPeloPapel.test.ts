@@ -24,7 +24,8 @@ type Row = { accountId: string; debitCents: number; creditCents: number };
 
 function makeAccount(code: string, nature: string) {
   return {
-    id: code, code, name: code, nature, userId: 'u1', unitId: 'unit1', acceptsEntries: true,
+    // id ≠ code de propósito: o papel é por ID da conta (insumoExpenseAccountId), não por código — id===code esconde troca de um pelo outro
+    id: `acc-${code}`, code, name: code, nature, userId: 'u1', unitId: 'unit1', acceptsEntries: true,
     createdAt: new Date(), updatedAt: new Date(), deletedAt: null,
   };
 }
@@ -38,13 +39,13 @@ const AS_OF = new Date('2026-10-31T23:59:59.999Z');
 // Receita 10000 no caixa; insumo 3000 em 4.1.9 (despesa fora de 4.2/4.7) e 1000 de despesa comum em 4.1.1.
 const ACCOUNTS = [
   makeAccount('1.1', 'Asset'), makeAccount('3.1', 'Revenue'), makeAccount('4.1.1', 'Expense'),
-  makeAccount('4.1.9', 'Expense'), makeAccount('4.7.1', 'Expense'),
+  makeAccount('4.1.9', 'Expense'), makeAccount('4.1.8', 'Expense'), makeAccount('4.7.1', 'Expense'),
 ];
 const ROWS: Row[] = [
-  { accountId: '1.1', debitCents: 10000, creditCents: 4000 },
-  { accountId: '3.1', debitCents: 0, creditCents: 10000 },
-  { accountId: '4.1.1', debitCents: 1000, creditCents: 0 },
-  { accountId: '4.1.9', debitCents: 3000, creditCents: 0 },
+  { accountId: 'acc-1.1', debitCents: 10000, creditCents: 4000 },
+  { accountId: 'acc-3.1', debitCents: 0, creditCents: 10000 },
+  { accountId: 'acc-4.1.1', debitCents: 1000, creditCents: 0 },
+  { accountId: 'acc-4.1.9', debitCents: 3000, creditCents: 0 },
 ];
 
 type Versao = { version: number; decidedAt: Date | null; insumoExpenseAccountId: string | null };
@@ -79,7 +80,7 @@ const codes = (s: { accounts: { code: string }[] }) => s.accounts.map((a) => a.c
 
 describe('L-038d — DRE classifica o insumo pelo papel (insumoExpenseAccountId), não pelo prefixo', () => {
   it('insumo em 4.1.9 com lançamento: aparece em custo (acima do lucro bruto), não em despesa operacional', async () => {
-    const dre = await buildService('4.1.9').incomeStatement(SCOPE, AS_OF);
+    const dre = await buildService('acc-4.1.9').incomeStatement(SCOPE, AS_OF);
     expect(codes(dre.costOfGoodsSold)).toEqual(['4.1.9']);
     expect(dre.costOfGoodsSold.totalCents).toBe('-3000');
     expect(codes(dre.expenses)).toEqual(['4.1.1']);
@@ -87,7 +88,7 @@ describe('L-038d — DRE classifica o insumo pelo papel (insumoExpenseAccountId)
   });
 
   it('o resultado líquido não muda: o papel só move a conta de seção (10000 − 3000 − 1000 = 6000)', async () => {
-    const svc = buildService('4.1.9');
+    const svc = buildService('acc-4.1.9');
     const dre = await svc.incomeStatement(SCOPE, AS_OF);
     expect(dre.netResult.amountCents).toBe('6000');
     const bp = await svc.balanceSheet(SCOPE, AS_OF);
@@ -95,7 +96,7 @@ describe('L-038d — DRE classifica o insumo pelo papel (insumoExpenseAccountId)
   });
 
   it('o papel é só da conta apontada: outra despesa 4.1.x continua em despesa operacional', async () => {
-    const dre = await buildService('4.1.9').incomeStatement(SCOPE, AS_OF);
+    const dre = await buildService('acc-4.1.9').incomeStatement(SCOPE, AS_OF);
     expect(codes(dre.costOfGoodsSold)).not.toContain('4.1.1');
     expect(codes(dre.expenses)).toContain('4.1.1');
   });
@@ -109,8 +110,8 @@ describe('L-038d — DRE classifica o insumo pelo papel (insumoExpenseAccountId)
   });
 
   it('insumo já sob 4.7: igual a hoje, uma vez só em custo (sem contar em dobro)', async () => {
-    const rows = [...ROWS, { accountId: '4.7.1', debitCents: 500, creditCents: 0 }];
-    const dre = await buildService('4.7.1', rows).incomeStatement(SCOPE, AS_OF);
+    const rows = [...ROWS, { accountId: 'acc-4.7.1', debitCents: 500, creditCents: 0 }];
+    const dre = await buildService('acc-4.7.1', rows).incomeStatement(SCOPE, AS_OF);
     expect(codes(dre.costOfGoodsSold)).toEqual(['4.7.1']);
     expect(dre.costOfGoodsSold.totalCents).toBe('-500');
     expect(dre.netResult.amountCents).toBe('5500');
@@ -118,47 +119,46 @@ describe('L-038d — DRE classifica o insumo pelo papel (insumoExpenseAccountId)
 });
 
 describe('L-038d (f974) — o papel é o da versão FISCAL_PROFILE vigente em asOf, não o do perfil atual', () => {
-  // v1 (10/01/2026): insumo = 4.1.9 · v2 (15/11/2026): insumo = 4.7.1. O perfil ATUAL aponta 4.7.1.
-  const V1 = { version: 1, decidedAt: new Date('2026-01-10T12:00:00.000Z'), insumoExpenseAccountId: '4.1.9' };
-  const V2 = { version: 2, decidedAt: new Date('2026-11-15T12:00:00.000Z'), insumoExpenseAccountId: '4.7.1' };
-  const rows = [...ROWS, { accountId: '4.7.1', debitCents: 500, creditCents: 0 }];
+  // v1 (10/01/2026): insumo = 4.1.9 · v2 (15/11/2026): insumo = 4.1.8. O perfil ATUAL aponta 4.1.8.
+  const V1 = { version: 1, decidedAt: new Date('2026-01-10T12:00:00.000Z'), insumoExpenseAccountId: 'acc-4.1.9' };
+  const V2 = { version: 2, decidedAt: new Date('2026-11-15T12:00:00.000Z'), insumoExpenseAccountId: 'acc-4.1.8' };
+  const rows = [...ROWS, { accountId: 'acc-4.1.8', debitCents: 700, creditCents: 0 }];
 
-  it('período anterior à troca (31/10/2026): continua pelo insumo antigo (4.1.9 em custo, 4.7.1 em despesa)', async () => {
-    const dre = await buildService('4.7.1', rows, [V1, V2]).incomeStatement(SCOPE, AS_OF);
+  it('período anterior à troca (31/10/2026): continua pelo insumo antigo (4.1.9 em custo; 4.1.8 em despesa)', async () => {
+    const dre = await buildService('acc-4.1.8', rows, [V1, V2]).incomeStatement(SCOPE, AS_OF);
     expect(codes(dre.costOfGoodsSold)).toEqual(['4.1.9']);
-    expect(codes(dre.expenses).sort()).toEqual(['4.1.1']);
-    expect(codes(dre.costOfGoodsSold)).not.toContain('4.7.1');
+    expect(codes(dre.expenses).sort()).toEqual(['4.1.1', '4.1.8']);
   });
 
-  it('período posterior à troca (30/11/2026): vale o insumo novo (4.7.1 em custo; 4.1.9 vira despesa)', async () => {
-    const dre = await buildService('4.7.1', rows, [V1, V2]).incomeStatement(SCOPE, new Date('2026-11-30T23:59:59.999Z'));
-    expect(codes(dre.costOfGoodsSold)).toEqual(['4.7.1']);
+  it('período posterior à troca (30/11/2026): vale o insumo novo (4.1.8 em custo; 4.1.9 vira despesa)', async () => {
+    const dre = await buildService('acc-4.1.8', rows, [V1, V2]).incomeStatement(SCOPE, new Date('2026-11-30T23:59:59.999Z'));
+    expect(codes(dre.costOfGoodsSold)).toEqual(['4.1.8']);
     expect(codes(dre.expenses).sort()).toEqual(['4.1.1', '4.1.9']);
   });
 
   it('asOf antes da primeira versão: vale a primeira (a política mais antiga que existe), não o perfil atual', async () => {
-    const dre = await buildService('4.7.1', rows, [V1, V2]).incomeStatement(SCOPE, new Date('2025-12-31T23:59:59.999Z'));
+    const dre = await buildService('acc-4.1.8', rows, [V1, V2]).incomeStatement(SCOPE, new Date('2026-01-05T23:59:59.999Z'));
     expect(codes(dre.costOfGoodsSold)).toEqual(['4.1.9']);
   });
 
   it('versão decidida no próprio dia de asOf conta (cutoff = fim do dia de asOf)', async () => {
-    const dre = await buildService('4.7.1', rows, [V1, V2]).incomeStatement(SCOPE, new Date('2026-11-15T00:00:00.000Z'));
-    expect(codes(dre.costOfGoodsSold)).toEqual(['4.7.1']);
+    const dre = await buildService('acc-4.1.8', rows, [V1, V2]).incomeStatement(SCOPE, new Date('2026-11-15T00:00:00.000Z'));
+    expect(codes(dre.costOfGoodsSold)).toEqual(['4.1.8']);
   });
 
   it('só versões APPLIED do alvo FISCAL_PROFILE são lidas', async () => {
-    const svc = buildService('4.7.1', rows, [V1, V2]);
+    const svc = buildService('acc-4.1.8', rows, [V1, V2]);
     await svc.incomeStatement(SCOPE, AS_OF);
     expect(svc.policyVersionRepo.list).toHaveBeenCalledWith(SCOPE, { target: 'FISCAL_PROFILE', status: 'APPLIED' });
   });
 
   it('sem nenhuma versão (perfil legado anterior ao versionamento): vale o perfil atual', async () => {
-    const dre = await buildService('4.1.9', ROWS, []).incomeStatement(SCOPE, AS_OF);
+    const dre = await buildService('acc-4.1.9', ROWS, []).incomeStatement(SCOPE, AS_OF);
     expect(codes(dre.costOfGoodsSold)).toEqual(['4.1.9']);
   });
 
-  it('versão sem insumo (null) vigente em asOf: nada vai a custo pelo papel', async () => {
-    const dre = await buildService('4.1.9', ROWS, [{ ...V1, insumoExpenseAccountId: null }]).incomeStatement(SCOPE, AS_OF);
+  it('versão sem insumo (null) vigente em asOf: nada vai a custo pelo papel, mesmo com insumo no perfil atual', async () => {
+    const dre = await buildService('acc-4.1.9', ROWS, [{ ...V1, insumoExpenseAccountId: null }]).incomeStatement(SCOPE, AS_OF);
     expect(codes(dre.costOfGoodsSold)).toEqual([]);
   });
 });

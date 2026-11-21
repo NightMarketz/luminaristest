@@ -296,13 +296,13 @@ describe('FiscalProfileService.upsert — insumoExpenseAccountId (ITEM-DESTINATI
     expect(JSON.parse(canonicalizeAuditPayload(evt.eventType, evt.payload))).toMatchObject({ insumoExpenseAccountId: 'acc-1' });
   });
 
-  // Lacuna L-20261121-034042-051e (dono, AskUserQuestion, 2026-11-21: opção (a)): a DRE classifica por código, então a conta de
-  // insumo precisa ser uma folha que a regra da DRE já põe em costOfGoodsSold. Despesa operacional (4.1.9) ficaria abaixo do
-  // lucro bruto (NBC TG 1002 item 5.1 (d)).
-  it('despesa folha fora do custo da DRE (4.1.9) → 400 nomeado, nada gravado', async () => {
+  // Lacuna 038d (dono 21/11, D-2026-11-21-DRE-INSUMO-PELO-PAPEL item 3 + 7c3b "Remover"): a DRE classifica o insumo pelo papel,
+  // então qualquer folha de despesa serve — 4.1.9 (fora da 4.2/4.7) é gravada; a recusa do #1302 saiu.
+  it('despesa folha fora da 4.2/4.7 (4.1.9) → gravada (o papel, não o código, põe o insumo em custo na DRE)', async () => {
     const { svc, repo, accounts } = build();
     (accounts.findById as jest.Mock).mockResolvedValue(acc({ code: '4.1.9' }));
-    await expect(svc.upsert(scope, { ...base, insumoExpenseAccountId: 'acc-1' })).rejects.toThrow(/não é custo na DRE/);
-    expect(repo.upsert).not.toHaveBeenCalled();
+    const view = await svc.upsert(scope, { ...base, insumoExpenseAccountId: 'acc-1' });
+    expect((repo.upsert as jest.Mock).mock.calls[0][1]).toMatchObject({ insumoExpenseAccountId: 'acc-1' });
+    expect(view.insumoExpenseAccountId).toBe('acc-1');
   });
 });
