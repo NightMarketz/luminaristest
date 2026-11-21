@@ -123,6 +123,15 @@ test('sem teto por curinga, trecho vazio ou hífen é dúvida; o teto real vem d
   assert.equal(teto('latest'), null);
 });
 
+// Revisão extra (A1): em 0.x, "qualquer minor" (minor null) é um teto mais alto que uma minor fixa.
+test('0.x indo para qualquer minor é major', () => {
+  for (const [de, para] of [['^0.3.1', '0.x'], ['^0.3.1', '^0'], ['^0.3.1', '<1'], ['^0.3.1', '~0'], ['^0.3.1', '0'],
+    ['^0.3.1', '>=0.3 <1'], ['~0.3.1', '<1.0.0']]) {
+    assert.equal(um({ dependencies: { p: de } }, { dependencies: { p: para } }).majors.length, 1, `${de} → ${para}`);
+  }
+  assert.deepEqual(um({ dependencies: { p: '^0.3.1' } }, { dependencies: { p: '^0.3.4' } }), { majors: [], duvidas: [] });
+});
+
 // Rodada 2 (A3): "No commit found for the ref" também é HTTP 404, mas não é arquivo ausente.
 test('só "Not Found" é arquivo ausente; ref que não resolve é erro', () => {
   assert.ok(arquivoAusente('{"message":"Not Found"}gh: Not Found (HTTP 404)\n'));

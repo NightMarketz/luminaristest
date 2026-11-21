@@ -216,8 +216,9 @@ export function versaoDoSpec(spec) {
 
 function mudouMajor(de, para) {
   if (de.major !== para.major) return true;
-  // Em 0.x o semver trata a minor como major (^0.3 não aceita 0.4).
-  return de.major === 0 && de.minor !== null && para.minor !== null && de.minor !== para.minor;
+  // Em 0.x o semver trata a minor como major (^0.3 não aceita 0.4). minor null = "qualquer 0.x" (versaoDoSpec):
+  // é um valor, não ausência — "^0.3.1" → "<1" sobe o teto de 0.3 para qualquer 0.x (revisão extra do #1310, A1).
+  return de.major === 0 && de.minor !== para.minor;
 }
 
 // Seções em que um package.json declara dependência. "overrides" força versão de transitiva: major ali também conta.
