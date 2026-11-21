@@ -7,7 +7,7 @@ import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { AuditService } from './AuditService';
 import { logger } from '../../../lib/logger';
-import { REFERENCIAL_PLANO_PADRAO } from '../fixtures/ChartOfAccountsFixture';
+import { REFERENCIAL_PLANO_PADRAO, isContaDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
 import type {
   SetReferentialMappingDto,
   UnsetReferentialMappingDto,
@@ -189,6 +189,11 @@ export class ReferentialMappingService {
       for (const entry of REFERENCIAL_PLANO_PADRAO) {
         const account = accounts.find((a) => a.code === entry.accountCode && a.acceptsEntries);
         if (!account || mapped.has(account.id)) continue;
+        // Lacuna ad40: conta do usuário com o código canônico (outro nome/natureza) não herda o referencial.
+        if (!isContaDoPlanoPadrao(account)) {
+          logger.warn('Referencial do plano padrão não gravado: conta com o código diverge no nome ou natureza', { mappingVersion, accountCode: entry.accountCode });
+          continue;
+        }
         // Catálogo da versão carregado sem o código (ou com ele sintético): não inventa nem derruba quem chamou (a
         // instalação do kit) — a folha fica fora e a `coverage` a mostra como não mapeada.
         if (!(await this.destinoAceito(mappingVersion, entry.referentialCode))) {

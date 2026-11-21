@@ -888,7 +888,7 @@ describe('PostingService', () => {
 
       it('resultado com 2 segmentos sob sintética → cria (fora da regra de 4 níveis)', async () => {
         const { svc, accountRepo } = buildService({ accountRepo: plano({ '4': false }) });
-        await svc.createAccount(scope, { code: '4.3', name: 'Despesas Financeiras', nature: 'Expense', acceptsEntries: true, unitId });
+        await svc.createAccount(scope, { code: '4.9', name: 'Outras Despesas', nature: 'Expense', acceptsEntries: true, unitId });
         expect(accountRepo.create).toHaveBeenCalledTimes(1);
       });
     });

@@ -1,4 +1,4 @@
-import { ESTOQUES_CODE, PERFIL_FISCAL_PLANO_PADRAO } from '../fixtures/ChartOfAccountsFixture';
+import { ESTOQUES_CODE, PERFIL_FISCAL_PLANO_PADRAO, isContaDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
 import { findMappingRule } from './StatementMappingFixture';
 import { ForbiddenError, PolicyApprovalRequiredError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
@@ -292,7 +292,13 @@ export class FiscalProfileService {
     const ids: Partial<Record<FiscalProfileAccountField, string>> = {};
     for (const { field, accountCode } of PERFIL_FISCAL_PLANO_PADRAO) {
       const account = await this.accountRepo.findByCode(scope, accountCode);
-      if (account && !account.deletedAt && account.acceptsEntries) ids[field] = account.id;
+      if (!account || account.deletedAt || !account.acceptsEntries) continue;
+      // Lacuna ad40: conta do usuário com o código canônico (outro nome/natureza) não herda o papel.
+      if (!isContaDoPlanoPadrao(account)) {
+        logger.warn('Papel do perfil fiscal não preenchido: conta com código do plano padrão diverge no nome ou natureza', { unitId: scope.unitId, field, accountCode });
+        continue;
+      }
+      ids[field] = account.id;
     }
     if (Object.keys(ids).length === 0) return [];
     try {

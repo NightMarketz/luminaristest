@@ -2,7 +2,7 @@ import { AccountingPeriodNotOpenError, AppError, ForbiddenError, MaxCentsExceede
 import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
 import type { Account, SourceDocument } from 'generated/prisma';
-import { CANONICAL_ACCOUNTS, NIVEL_MINIMO_ANALITICA_PATRIMONIAL, PATRIMONIAL_NATURES } from '../fixtures/ChartOfAccountsFixture';
+import { CANONICAL_ACCOUNTS, NIVEL_MINIMO_ANALITICA_PATRIMONIAL, PATRIMONIAL_NATURES, isCodigoDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
 import { CLOSING_SOURCE_TYPE, reversedClosingSourceId } from '../models/closing';
 import { MAX_CENTS, centsFromDb } from '../models/money';
 import type { CreateAccountInput, PostEntryInput, ReverseEntryInput } from '../dtos/PostingDto';
@@ -985,6 +985,10 @@ export class PostingService {
   async createAccount(scope: AccountingScope, dto: CreateAccountInput): Promise<Account> {
     if (!this.policy.canManage(scope)) {
       throw new ForbiddenError('Você não tem permissão para criar contas.');
+    }
+    // Lacuna ad40 (dono, chat, 2026-11-21): o código do plano padrão é do sistema (`ensureChartOfAccounts` cria ou restaura).
+    if (isCodigoDoPlanoPadrao(dto.code)) {
+      throw new ValidationError(`O código '${dto.code}' é reservado ao plano padrão; use outro código para a conta nova.`);
     }
     await this.assertNivelDoPlano(scope, dto);
     const { userId, unitId } = accountingScopeWhere(scope);
