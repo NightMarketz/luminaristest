@@ -140,9 +140,11 @@ export function bumpMajor(titulo) {
 // "npm:pacote@^5" lê o spec depois do último "@". null = não é versão legível (workspace:, file:, git, URL,
 // "*", tag como "latest"): quem chama trata como dúvida. Pré-release e build ("2.0.0-beta.1", "+sha") não mudam a
 // major e saem antes da leitura; cada versão é lida inteira (major.minor.patch), senão "5.1.7" viraria 5.1 e 7.
+// Trecho aberto para cima (">=4.0.0", ">4", "^4 || >=4.2") admite qualquer major futura: não tem teto, é dúvida.
 function versaoDoSpec(spec) {
   const s = spec.trim().replace(/^npm:.+@(?=[^@]*$)/, '').replace(/(\d)[-+][0-9A-Za-z.-]*[A-Za-z][0-9A-Za-z.-]*/g, '$1');
   if (!s || !/^[~^=v<>\s|.\-xX*\d]+$/.test(s) || !/\d/.test(s)) return null;
+  if (s.split('||').some((trecho) => />/.test(trecho) && !/</.test(trecho))) return null;
   let max = null;
   for (const m of s.matchAll(/(\d+)(?:\.(\d+|[xX*]))?(?:\.(?:\d+|[xX*]))?/g)) {
     const v = { major: Number(m[1]), minor: m[2] === undefined || /[xX*]/.test(m[2]) ? null : Number(m[2]) };
@@ -264,36 +266,46 @@ function gh(args) {
   return execFileSync('gh', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
 }
 
-// Conteúdo do arquivo num commit; null se o arquivo não existe nele (404). Outro erro sobe.
+// Conteúdo do arquivo num commit; null só se o arquivo não existe nele ("gh: Not Found (HTTP 404)"). Outro erro
+// sobe, inclusive "No commit found for the ref … (HTTP 404)": ref que não resolve não é arquivo ausente.
 function conteudo(repo, caminho, sha) {
   try {
     return gh(['api', `repos/${repo}/contents/${caminho.split('/').map(encodeURIComponent).join('/')}?ref=${sha}`,
       '-H', 'Accept: application/vnd.github.raw']);
   } catch (e) {
-    if (/HTTP 404|Not Found/.test(String(e.stderr ?? e.message))) return null;
+    if (arquivoAusente(e.stderr)) return null;
     throw e;
   }
 }
 
+export function arquivoAusente(stderr) {
+  return /gh: Not Found \(HTTP 404\)/.test(String(stderr ?? ''));
+}
+
+const SHA = /^[0-9a-f]{40}$/;
+
 // Lê cada package.json do PR no merge-base (não na ponta da main: mudança que a main fez depois apareceria como
 // bump ao contrário) e na cabeça do PR.
-function lerPacotes(n, arquivos) {
+function lerPacotes(pr, arquivos) {
   const alvo = arquivos.filter((f) => PACKAGE_JSON.test(f));
   if (!alvo.length) return undefined;
   try {
-    const pr = JSON.parse(gh(['pr', 'view', String(n), '--json', 'baseRefOid,headRefOid,url']));
-    const repo = new URL(pr.url).pathname.split('/').slice(1, 3).join('/');
-    const base = gh(['api', `repos/${repo}/compare/${pr.baseRefOid}...${pr.headRefOid}`, '--jq', '.merge_base_commit.sha']).trim();
-    return alvo.map((arquivo) => ({ arquivo, antes: conteudo(repo, arquivo, base), depois: conteudo(repo, arquivo, pr.headRefOid) }));
+    const base = gh(['api', `repos/${pr.repo}/compare/${pr.baseRefOid}...${pr.headRefOid}`, '--jq', '.merge_base_commit.sha']).trim();
+    if (!SHA.test(base) || !SHA.test(pr.headRefOid)) throw new Error(`merge-base ou cabeça inválidos: ${base} ${pr.headRefOid}`);
+    return alvo.map((arquivo) => ({ arquivo, antes: conteudo(pr.repo, arquivo, base), depois: conteudo(pr.repo, arquivo, pr.headRefOid) }));
   } catch {
-    return null;
+    return null; // classificar() marca vermelho: sem os dois lados não dá para provar que nenhuma major mudou
   }
 }
 
+// A lista de arquivos vem paginada da API: `gh pr view --json files` para nos 100 primeiros (o #1099 tem 441 e os
+// package.json ficavam de fora).
 function lerPr(n) {
-  const pr = JSON.parse(gh(['pr', 'view', String(n), '--json', 'files,title,isDraft']));
-  const arquivos = pr.files.map((f) => f.path);
-  return { arquivos, titulo: pr.title, draft: pr.isDraft, pacotes: lerPacotes(n, arquivos) };
+  const pr = JSON.parse(gh(['pr', 'view', String(n), '--json', 'title,isDraft,baseRefOid,headRefOid,url']));
+  pr.repo = new URL(pr.url).pathname.split('/').slice(1, 3).join('/');
+  const arquivos = gh(['api', `repos/${pr.repo}/pulls/${n}/files`, '--paginate', '--jq', '.[].filename'])
+    .split(/\r?\n/).filter(Boolean);
+  return { arquivos, titulo: pr.title, draft: pr.isDraft, pacotes: lerPacotes(pr, arquivos) };
 }
 
 const isMain = process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/').split('/').pop());

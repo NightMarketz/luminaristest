@@ -1,7 +1,7 @@
 // node --test scripts/classe-risco.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { classificar, bumpMajor, compararPackageJson } from './classe-risco.mjs';
+import { classificar, bumpMajor, compararPackageJson, arquivoAusente } from './classe-risco.mjs';
 
 const pj = (obj) => JSON.stringify(obj, null, 2);
 // O #952: express 4→5 num PR de várias dependências, título sem versão.
@@ -95,6 +95,23 @@ test('patch, versão exata e pré-release na mesma major não são major', () =>
     assert.deepEqual(um({ dependencies: { p: de } }, { dependencies: { p: para } }), { majors: [], duvidas: [] }, `${de} → ${para}`);
   }
   assert.equal(um({ dependencies: { p: '1.9.9-rc.1' } }, { dependencies: { p: '2.0.0-rc.1' } }).majors.length, 1);
+});
+
+// Revisão do #1310, rodada 2 (A2): spec aberto para cima admite qualquer major futura.
+test('spec sem teto (">=", ">", "|| >=") é dúvida → vermelho; faixa com teto continua lida', () => {
+  for (const [de, para] of [['^4.0.0', '>=4.0.0'], ['^4.0.0', '>4.0.0'], ['^4.0.0', '^4.0.0 || >=4.2.0'], ['4.x', '4.x.x || >=4']]) {
+    assert.equal(um({ dependencies: { p: de } }, { dependencies: { p: para } }).duvidas.length, 1, `${de} → ${para}`);
+  }
+  assert.deepEqual(um({ dependencies: { p: '>=4.8.4 <6.1.0' } }, { dependencies: { p: '>=4.9.0 <6.1.0' } }),
+    { majors: [], duvidas: [] });
+});
+
+// Rodada 2 (A3): "No commit found for the ref" também é HTTP 404, mas não é arquivo ausente.
+test('só "Not Found" é arquivo ausente; ref que não resolve é erro', () => {
+  assert.ok(arquivoAusente('{"message":"Not Found"}gh: Not Found (HTTP 404)\n'));
+  assert.ok(!arquivoAusente('gh: No commit found for the ref deadbeef (HTTP 404)\n'));
+  assert.ok(!arquivoAusente('gh: Bad credentials (HTTP 401)'));
+  assert.ok(!arquivoAusente(undefined));
 });
 
 // Revisão do #1310, rodada 1 (A1): spec trocado que a régua não lê não pode virar verde em silêncio.
