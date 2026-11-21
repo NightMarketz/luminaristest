@@ -22,3 +22,7 @@ Todo papel de agente ou sessão que era despachado com **Sonnet** passa a **Opus
 - `docs/accounting/ORQUESTRADOR-PASSOS-9-13.md` (emenda; os esforços `medium` dos passos viram `low`).
 
 Continuam como estavam: Haiku (`classificador`) e Opus sem dial (`revisor-independente`). O `docs/SDD-LUMINARIS.md` é snapshot congelado e não é editado.
+
+**Emenda de 10/11/2026:** o agente `executor` foi aposentado, e o Sonnet 5.5 entra em teste só nos itens ainda sem PR da
+faixa 1 da auditoria de estruturas implícitas. Fora desse teste, esta regra continua —
+[D-2026-11-10-METODO-FABLE-5-2](D-2026-11-10-METODO-FABLE-5-2.md).

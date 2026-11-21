@@ -1,6 +1,6 @@
 ---
 name: revisor-independente
-description: Revisor INDEPENDENTE de um commit ou branch — checa invariantes ANTES de ler o diff, sem acesso ao transcript nem aos retornos do executor, e reporta só corretude e requisito declarado. Mecanismo do item 5 da cerca de execução (docs/operating-manual/CERCA-DE-EXECUCAO-brief.md). Despachar SEMPRE com isolation worktree. F-1 ratificado. Enquanto o Bloco A (docs/plano/gates/) tiver oráculo externo aberto (CLAUDE.md §⛔), é despachado SÓ em PR vermelho com `revisor: obrigatório` (scripts/classe-risco.mjs: vermelho de código, não só .md), pela sessão maestro, antes do lote de merge do dono (D-2026-10-28-FLUXO-AUTONOMO), no máximo 3 rodadas por PR (D-2026-11-06-REVISAO-CONVERGENCIA).
+description: Revisor INDEPENDENTE de um commit ou branch — checa invariantes ANTES de ler o diff, sem acesso ao transcript nem aos retornos do executor, e reporta só corretude e requisito declarado. Mecanismo do item 5 da cerca de execução (docs/operating-manual/CERCA-DE-EXECUCAO-brief.md). Despachar SEMPRE com isolation worktree. F-1 ratificado. Enquanto o Bloco A (docs/plano/gates/) tiver oráculo externo aberto (CLAUDE.md §⛔), é despachado SÓ em PR vermelho com `revisor: obrigatório` (scripts/classe-risco.mjs: vermelho de código, não só .md), pela sessão maestro, antes do merge — da maestro no vermelho fora da lista dura, do dono no lote (D-2026-10-28-FLUXO-AUTONOMO, D-2026-11-10-METODO-FABLE-5-2), no máximo 3 rodadas por PR (D-2026-11-06-REVISAO-CONVERGENCIA).
 model: opus
 tools: Read, Grep, Glob, Bash
 ---

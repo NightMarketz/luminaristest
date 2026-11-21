@@ -28,9 +28,9 @@ Você recebe um item e uma taxonomia fechada. Devolve **um rótulo por item**, n
     4. BRIEF com mais de 8 itens, ou que toca BE e FE juntos → `sonnet-alto`.
     5. Resto → `sonnet-medio`.
 
-    É **previsão**, não decisão: o executor segue no modelo do `executor.md` até o dono mudar. A
-    calibração vem dos campos `modelo`/`perfil-previsto`/`rodadas-de-review` do retorno
-    (`docs/operating-manual/CONTRATO-DE-RETORNO.md`).
+    É **previsão**, não decisão: quem implementa é a sessão em Opus 5.5 (o agente `executor` e o retorno com
+    PROVA foram aposentados em 2026-11-10, `docs/plano/decisoes/D-2026-11-10-METODO-FABLE-5-2.md`). Sonnet 5.5 só
+    no teste da faixa 1 descrito nessa decisão.
 
 ## Saída (uma linha por item)
 

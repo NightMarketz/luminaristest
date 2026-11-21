@@ -6,7 +6,9 @@
 
 ## Codebase-memory — consulta antes de escrever código
 
-**Pergunte ao codebase-memory se o canônico já existe.** Isto é o degrau "reuse antes de recriar"
+**O codebase-memory é ferramenta disponível, não passo obrigatório** (dono, 2026-11-10,
+`docs/plano/decisoes/D-2026-11-10-METODO-FABLE-5-2.md`): conferir se o canônico já existe também se faz por Grep e
+leitura. Quando usado, ele é o degrau "reuse antes de recriar"
 (Contrato §0) e a Etapa 1 do critério de reuso feitos por evidência, não por chute:
 
 | Pergunta | Ferramenta cbm |
@@ -20,7 +22,7 @@
 > (símbolos, dependências, call paths, blast radius, arquitetura); a evidência final é **sempre código/teste/git**.
 > Regra dura: **nenhuma conclusão comportamental se sustenta só no grafo** — todo resultado do cbm que vira
 > afirmação sobre o que o código *faz* tem de ser confirmado lendo o arquivo (e o teste, quando aplicável).
-> Use **cbm-primeiro para localizar** ("quem chama X?", "onde isto é implementado?", "o que quebra se eu mudar Y?",
+> Quando a pergunta é estrutural, use **o cbm para localizar** ("quem chama X?", "onde isto é implementado?", "o que quebra se eu mudar Y?",
 > "qual a arquitetura deste domínio?"); use **`Read`/`Grep`/teste direto para confirmar** (condição exata,
 > string/config, o que um teste afirma, contexto integral do arquivo, geração dinâmica/reflexão). Isto **refina**
 > o hook de SessionStart ("cbm FIRST for ANY exploration"): cbm-first vale para *localização estrutural*, não para
