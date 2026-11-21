@@ -40,7 +40,7 @@ A autorização cobre os três itens da lacuna `5cb9`. **Quatro divergências** 
 |---|---|---|---|
 | P1 | **Não existe "folha fechada".** O F2 só tem `ABERTA \| CALCULADA`; o estado `FECHADA` e a reabertura são do F5 | F2 item 48; F2 §7 | O gatilho do lançamento virou o **F-PNT-1**; decidido (a): `FECHADA` e a reabertura entram nesta emenda |
 | P2 | **Esta emenda é a fatia "ponte contábil + patronal" do F5.** O F2 mandou para o F5 a patronal (D-6) e o lançamento, com F-FOL-1..9 pendentes (§7). A nota do PES-4 diz "F5 — fechamento, guias, ponte contábil (F-FOL-1..9 pendentes)" | F2 D-6 e §7; nota do PES-4, tabela de fases | Os F-FOL viram forks desta emenda, relidos com o motor próprio (§4.1). Guias, DCTFWeb, GFD e pagamento ficam no F5 restante |
-| P3 | **"A apuração do Presumido/Real passa a ler a CPP": nenhuma apuração calcula CPP hoje.** `taxAssessmentCalc.ts` não tem CPP; a CPP como tributo a declarar é da DCTFWeb (X9). No Real, a CPP chega ao IRPJ/CSLL pelo resultado do razão; no Presumido, a base é presumida e a despesa não entra | grep em `models/taxAssessmentCalc.ts` (0 ocorrências de `cpp`/`patronal`/`folha`); `taxSimulation.ts:224` | O consumidor real é (i) o **razão** (despesa no resultado do Real, item 34) e (ii) a **simulação** (`cargaComum`, item 36). A declaração da CPP fica com o X9 (encaixe, §7). Não invento comportamento de apuração |
+| P3 | **"A apuração do Presumido/Real passa a ler a CPP": nenhuma apuração calcula CPP hoje.** `taxAssessmentCalc.ts` não tem CPP; a CPP como tributo a declarar é da DCTFWeb (X9). No Real, a CPP chega ao IRPJ/CSLL pelo resultado do razão; no Presumido, a base é presumida e a despesa não entra | grep em `models/taxAssessmentCalc.ts` (0 ocorrências de `cpp`/`patronal`/`folha`); `taxSimulation.ts:224` | O consumidor real é (i) o **razão** (despesa no resultado do Real, item 34) e (ii) a **simulação** (`cargaComum`, item 36). A declaração da CPP fica com o X9 (encaixe, §8). Não invento comportamento de apuração |
 | P4 | **O pedido manda RAT/FAP/terceiros para `legalParameters`, mas o FAP é da empresa, não da lei.** O FAP é por CNPJ (Dec. 3.048 art. 202-A [D06]), o grau de risco do RAT é por estabelecimento (art. 202 § 3º [D06]) e o FPAS é por raiz de CNPJ (IN RFB 2.110 art. 91 [D07]) | dossiê §1 | **F-PNT-3**: a recomendação separava lei de dado da empresa; o dono decidiu (b), tudo em `LegalParameter`, com linha por CNPJ publicada pelo admin (F-PNT-3b) |
 
 Dois forks do PRE-ADR de 22/10 estão **superados** e não voltam ao dono: **F-FOL-1** (fronteira com o software de folha),
@@ -112,7 +112,9 @@ o valor inicial da linha, com a fonte.
    - `ANEXO_IV`: patronal e RAT × FAP como `GERAL`; **terceiros = 0** (LC 123 art. 13 § 3º e art. 18 § 5º-C [D03]);
    - `NO_DAS`: tudo zero, com o nó de prova "CPP no DAS (LC 123 art. 13 VI)" (Anexos I, II, III e V);
    - arredondamento só no total de cada parcela, pela linha `FOLHA_REGRA/ARREDONDAMENTO` do F2;
-   - o produto `ratBp × fap` trunca na 4ª casa do multiplicador **antes** de aplicar à base (art. 202-A § 1º [D06]);
+   - o FAP entra já truncado na 4ª casa (`fapX10000` inteiro; art. 202-A § 1º [D06] trunca o **multiplicador**); o
+     produto `ratBp × fap` e o valor do RAT ficam em fração exata e arredondam só no total da parcela. Se o eSocial/a
+     DCTFWeb arredondarem a alíquota ajustada antes, é pendência externa (§6), não regra decidida;
    - `fpas` nulo com `regimeCpp = GERAL` ⇒ erro nomeado (o chamador vira pendência, item 9).
 5. **Teste da regra de parâmetro** (F2 §0.1): cada parcela roda com duas fotografias (a vigente e uma alterada: RAT 2→3,
    FPAS com Sebrae 0,6→0,7) e espera resultados diferentes; nenhum literal de alíquota no `cpp.ts` (revisor confere).
@@ -144,10 +146,11 @@ o valor inicial da linha, com a fonte.
     (por unidade) `simplesCppForaDoDas: boolean`, informada pelo contador (dado da empresa, não da lei). Sem perfil do ano
     ⇒ pendência bloqueante `PERFIL_FISCAL_AUSENTE`. `MEI` ⇒ pendência `CPP_MEI_FORA_DO_ESCOPO` (LC 123 art. 18-C, não
     lido). **Atividade mista (Anexo IV + outro anexo)**: não suportada (§6).
-11. **CNPJ do estabelecimento:** o leitor recebe o CNPJ da unidade. **Insumo ausente (§7):** o schema não guarda CNPJ
+11. **CNPJ do estabelecimento:** o leitor recebe o CNPJ da unidade. **Insumo ausente (§7 Insumos ausentes):** o schema não guarda CNPJ
     por unidade; o da empresa está em `CompanyFiscalProfile.declarante.cnpj` (por ano). Nesta emenda: instância com uma
     unidade usa o CNPJ do declarante; com mais de uma, pendência bloqueante `CNPJ_ESTABELECIMENTO_AUSENTE` até existir o
-    campo (fica para o dono decidir onde, fora deste BRIEF; caixa).
+    campo (fica para o dono decidir onde, fora deste BRIEF; caixa `0736`). `declarante` ausente (é `Json?`) ⇒ a mesma
+    pendência `CNPJ_ESTABELECIMENTO_AUSENTE`.
 
 ### PR-P2 — fechar e reabrir a folha (F-PNT-1, recomendação (a))
 
@@ -199,7 +202,11 @@ o valor inicial da linha, com a fonte.
       `tx` ao repo;
     - reconcile — `reconciliarFolha(folhaId)`: read-first pelo `@@unique` do razão; fecha "commit 1 ok, commit 2 falhou";
     - fora da tx — nada.
-    Disparo: no fechamento (item 12), **depois** do commit do estado `FECHADA` (F-PNT-1 a). Falha do commit 1 deixa a
+    Disparo: no fechamento (item 12), **depois** do commit do estado `FECHADA` (F-PNT-1 a). **Preflight:** o `fechar`
+    confere antes, fora da tx, que o período contábil da data do lançamento está aberto em cada unidade e que as contas
+    dos papéis existem (item 24); falhou ⇒ 409/400 e a folha continua `CALCULADA`. O gate autoritativo segue dentro do
+    `postEntry`: se o período fechar entre o preflight e o commit 1, a folha fica `FECHADA` com lançamento `PENDENTE`.
+    Nesse estado, `reabrir` é aceito sem estorno (não há lançamento `LANCADO`) e o lançamento `PENDENTE` vira `DESCARTADO`. Falha do commit 1 deixa a
     folha `FECHADA` com `DpFolhaLancamento.estado = PENDENTE` e a pendência visível no `GET` da folha; o reconcile relança.
 23. **Os 3 testes do Contrato §2.3:** (i) período fechado dentro da tx ⇒ nada no razão e o `DpFolhaLancamento` segue
     `PENDENTE`; (ii) commit 2 falha ⇒ razão com o lançamento, reconcile converge; (iii) reconcile 2× ⇒ a 2ª chamada não
@@ -232,10 +239,10 @@ o valor inicial da linha, com a fonte.
     C `provisao13`, `provisaoFerias`, `provisaoEncargos` (papéis novos no item 19).
 32. **Pendência não bloqueante** `PROVISAO_BASE_SEM_MEDIAS` por vínculo com rubrica variável na competência: a provisão
     saiu sem a média (aviso com a matrícula). A **baixa** da provisão (pagamento de férias e 13º) é do F3; o F3 lança o
-    pagamento contra estas contas (encaixe, §7).
+    pagamento contra estas contas (encaixe, §8).
 33. **Guarda de dobra** com o futuro `PROVISOES-AGENDADAS` (F-FOL-4 a, relido): se aquele nó nascer, a ponte recusa
     competência com provisão agendada de férias/13º (400 nomeado). Hoje ele não existe (G14): o item fica como teste de
-    contrato só quando o nó existir; registrado no §7.
+    contrato só quando o nó existir; registrado no §8.
 
 ### PR-P5 — Simples, simulação e a prova do Real
 
@@ -263,7 +270,7 @@ o valor inicial da linha, com a fonte.
 39. **Simulação** (`taxSimulation.ts`, `TaxSimulationService.ts`): a CPP fora do Simples e a do Anexo IV passam a vir de
     `cppPatronal` (item 4, mesma função: `_REUSE-CRITERION`, mesmo objeto e vivo nos dois lados). Sem o encargo do
     estabelecimento cadastrado, a simulação continua com 20% e o aviso de hoje, trocado por um que diz o que falta
-    ("cadastre RAT, FAP e FPAS da unidade"). A **base** da CPP passa a ser a base CP do DP quando houver folha fechada; nos
+    ("falta a linha de RAT_GRAU_ESTABELECIMENTO / FAP_ESTABELECIMENTO / FPAS_EMPRESA do CNPJ; peça ao admin"). A **base** da CPP passa a ser a base CP do DP quando houver folha fechada; nos
     outros meses, o `folhaCents` (com o aviso de que inclui encargos e superestima a base, G11).
 40. **Gates do diff:** snapshot de shape dos DTOs (`dp` e `accounting`), allowlist do `auditCanonical.ts`, paths
     `/api/dp/*` no openapi sem subir o `BASELINE`, paridade i18n dos alertas novos do Simples, classificação do reset,
@@ -376,6 +383,16 @@ Escritos como foram levados ao dono, com a decisão embaixo de cada um. Dois con
   cujo adaptador real é do F5. **Até o F5, o fator r segue pelo histórico digitado** (todo mês do DP sai incompleto).
   O contador ainda pode mudar a leitura (A-1/A-2); a troca muda só a soma do item 36.
 
+### 4.2 Decididos pela casa depois do questionário (o dono pode reverter; regra 4)
+
+| # | Pergunta | Decisão | Outro caminho razoável |
+|---|---|---|---|
+| C-1 | Onde marcar que o estabelecimento do Simples recolhe a CPP fora do DAS (Anexo IV) | `FiscalProfile.simplesCppForaDoDas` (por unidade), informado pelo contador (item 10) | Derivar das atividades da apuração do Simples (anexo por atividade); exige a apuração do mês antes do fechamento da folha |
+| C-2 | CNPJ do estabelecimento enquanto o schema não o tem | Uma unidade: `CompanyFiscalProfile.declarante.cnpj`; mais de uma ou sem declarante: pendência bloqueante (item 11; lacuna `0736`) | Campo novo de CNPJ na unidade já nesta emenda |
+| C-3 | "Montante pago" na leitura de caixa (F-PNT-7 b) | `bases.cp` **bruta** das folhas `FECHADA` pela `dataPagamento` gravada (data prevista, não a do extrato); o adiantamento conta no mês do pagamento dele (item 36) | Líquido pago; ou a data real do pagamento, que só existe com o F5 |
+| C-4 | Recolhimento de FGTS/CPP sem o F5 | `RecolhimentoFolhaPort` com adaptador nulo; mês do DP sai incompleto e o histórico manda (itens 36–37) | Usar o devido como aproximação até o F5 (seria a leitura de competência, que o dono não escolheu) |
+| C-5 | RAT × FAP: onde arredondar | FAP truncado na 4ª casa (norma); produto exato; arredonda só o valor da parcela (item 4) | Arredondar a alíquota ajustada antes (se o eSocial fizer assim; §6) |
+
 ## 5. Contratos (esboço materializável)
 
 ### 5.1 Tipos puros (PR-P0, PR-P3, PR-P4)
@@ -394,7 +411,7 @@ interface EntradaCpp {
 }
 interface CppResultado {
   patronalCents: Cents; ratCents: Cents; terceirosCents: Cents; totalCents: Cents;
-  ratAjustadoX10000: number;              // ratBp × fap, truncado na 4ª casa do FAP
+  ratAjustado: Fracao;                    // ratBp × fapX10000 / 10000, exato (arredonda só o valor, item 4)
   terceirosPorEntidade: Array<{ codigo: string; bp: number; valorCents: Cents }>;
 }
 type PapelContabil =
@@ -427,7 +444,7 @@ interface RecolhimentoFolhaPort { recolhidoNoMes(scope: AccountingScope, mes: st
 ```prisma
 // FiscalProfile (por unidade): + simplesCppForaDoDas Boolean @default(false) (item 10)
 model DpFolhaLancamento { id String @id @default(cuid()); folhaId String; folha DpFolha @relation(fields: [folhaId], references: [id], onDelete: Restrict)
-  unitId String; execucaoId String; tipo String /* MENSAL | ADIANTAMENTO | PROVISAO */; estado String /* PENDENTE | LANCADO | ESTORNADO */
+  unitId String; execucaoId String; tipo String /* MENSAL | ADIANTAMENTO | PROVISAO */; estado String /* PENDENTE | LANCADO | ESTORNADO | DESCARTADO */
   sourceType String; sourceId String; journalEntryId String?; reversalEntryId String?; resumoJson String
   createdAt DateTime @default(now()); updatedAt DateTime @updatedAt
   @@unique([folhaId, unitId, execucaoId, tipo]) @@index([folhaId]) @@map("dp_folha_lancamentos") }
@@ -448,6 +465,7 @@ model DpFolhaLancamento { id String @id @default(cuid()); folhaId String; folha 
 
 - **A-1 e A-2 do dossiê** (folha do fator r: pago × competência; CPP no fator r do Anexo III/V) — pergunta exata no
   dossiê §4. O dono escolheu a leitura de caixa (F-PNT-7 b) até o contador responder; alerta do item 38.
+- **Arredondamento da alíquota ajustada (RAT × FAP)** no eSocial/DCTFWeb: não lido; o item 4 arredonda só o valor (C-5).
 - **A-3 — grau de risco e FPAS do salão:** o enquadramento é da empresa (Dec. 3.048 art. 202 § 5º; IN 2.110 art. 83); o
   contador informa e o sistema só valida contra as tabelas. Nenhuma carga assume o CNAE 9602-5/01.
 - **Simples com atividade mista (Anexo IV + outro anexo):** a regra de proporção da CPP não foi lida; não suportado
@@ -492,6 +510,8 @@ Ids na 1ª linha do relatório da sessão e no corpo do PR (todas com `--pai L-2
    continua (aviso).
 5. `L-20261121-193958-0736` (fork) — o schema não guarda CNPJ por unidade; o enquadramento por CNPJ (F-PNT-3b) precisa
    dele (item 11).
+6. `L-20261121-194408-54c2` (spec) — com a leitura de caixa (F-PNT-7 b), o fator r do DP depende do recolhimento
+   de FGTS/CPP, que é do F5 (sem BRIEF): até lá a lacuna de origem não fecha pelo `comoProvar` dela.
 
 ## 10. Write-set
 
@@ -533,7 +553,8 @@ Ids na 1ª linha do relatório da sessão e no corpo do PR (todas com `--pai L-2
   inclui o II). Se o contador ler diferente, troca uma linha do `cppPatronal`.
 - **Caso adversarial tentado:** pró-labore acima do teto. A CPP patronal de 20% não tem teto (art. 22 III), o INSS do
   sócio tem; o item 6 prova com propriedade. O segundo: duas unidades com FAP diferente na mesma folha — o lançamento é
-  por unidade (F-PNT-2) e o encargo também, então cada unidade usa o seu. O que **não** tentei: empresa com estabelecimento
+  por unidade (F-PNT-2) e o enquadramento é por CNPJ, então cada unidade usaria o seu; **hoje** isso trava no item 11
+  (sem CNPJ por unidade), então o caso só fica coberto quando a lacuna `0736` for decidida. O que **não** tentei: empresa com estabelecimento
   em município com FPAS diferente (IN 2.110 art. 91 diz que o FPAS é da raiz, então não deveria acontecer).
 - **Viés do autor:** reusar o molde do C8 e da receita do Simples em tudo. O contrapeso está nos forks: (b) do F-PNT-6
   (gravar no histórico) é menos código e foi descrito com o custo real.
