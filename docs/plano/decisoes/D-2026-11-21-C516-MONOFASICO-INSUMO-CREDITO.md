@@ -19,11 +19,23 @@ padrão sem crédito, o contador liga") e fecha o item 7 do BRIEF do [[ITEM-DEST
 - Com a chave ligada, o item `INSUMO_SERVICO` que é monofásico **pela tabela de NCM** credita PIS/Cofins pelo percentual
   básico (1,65% + 7,6%) no regime não cumulativo, **em qualquer CST** (inclusive 04/06 do distribuidor), com um warning
   que cita a fonte.
-- Continua com crédito 0, com warning:
+- Continua com crédito 0, **com warning** (só o item `INSUMO_SERVICO` no regime não cumulativo, onde o contador pode
+  ter esperado o crédito):
   - a chave desligada;
-  - o item monofásico só pelo CST da nota, com o NCM fora da tabela;
-  - o item `REVENDA`;
-  - os regimes cumulativo e Simples.
+  - o item monofásico só pelo CST da nota, com o NCM fora da tabela.
+- Continua com crédito 0, **sem warning** (nunca houve expectativa de crédito; avisar geraria um aviso por item em toda
+  nota de revenda, cumulativo ou Simples): o item `REVENDA` (e `IMOBILIZADO`) e os regimes cumulativo e Simples. No
+  cumulativo e no Simples o código nem calcula a razão de crédito (`razao` é `null`), e na revenda só o ramo `insumo` avisa.
+  O teste da revenda assere a ausência do warning (`nfeCost.test.ts`, "lacuna c516 — chave LIGADA").
+
+## Fala do dono (21/11)
+
+- Pergunta (AskUserQuestion): "No #1301 (crédito de PIS/Cofins do monofásico usado como insumo, lacuna c516) ... Para os
+  perfis já existentes, o crédito fica ligado ou desligado?"
+- Resposta, dono, chat (AskUserQuestion), 2026-11-21: **"Todos ligados, inclusive os existentes"**. É a opção que a
+  migração `DEFAULT true` já implementa.
+- Consequência declarada: a migração religa o crédito **sem versão de política e sem evento `fiscal_profile.updated`**
+  onde já há perfil, e inverte a D-5 de "o contador liga" para "o contador desliga".
 
 ## Fonte (dossiê `insumos-salao-sp`, 20/11)
 
