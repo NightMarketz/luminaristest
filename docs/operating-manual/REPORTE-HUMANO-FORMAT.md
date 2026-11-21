@@ -82,11 +82,15 @@ procuração, e é o caso que o verificador existe para reprovar.
 
 ## O verificador
 
+> **O verificador abaixo nunca foi criado** (conferido em 2026-11-20: `scripts/reporte-humano-check.mjs` e
+> `scripts/fixtures/` não existem nem em `git log --all`; a errata de 2026-09-22 do `CONTRATO-DE-RETORNO.md` diz o
+> mesmo). O texto descreve o que ele faria. Hoje a checagem destes campos é leitura humana.
+
 ```bash
-node scripts/reporte-humano-check.mjs
+node scripts/reporte-humano-check.mjs   # não existe
 ```
 
-Varre `docs/**` atrás do marcador `reporte-humano:` e reprova por:
+Varreria `docs/**` atrás do marcador `reporte-humano:` e reprova por:
 
 1. destinatário ausente, placeholder (`[nome]`, `____`) ou coletivo (`o time`, `a equipe`);
 2. `proibido-ao-agente` ausente ou vazio;

@@ -48,7 +48,7 @@ Por que é o par perfeito: camadas estritas + DI + policy-first + erros tipados,
 ## Inputs
 
 - `$ARGUMENTS[0]`: nome do recurso (ex: `comments`)
-- `$ARGUMENTS[1]`: `dynamic-table` | `prisma` — **[CRUD-005]** decidido pelo teste do `_ARCHITECTURE-CONTRACT.md §2.1`, não por gosto: `prisma` quando há invariante financeiro/legal/regulatório ou integridade que o banco deve garantir (`@@unique`/FK/tipos reais); `dynamic-table` só quando o usuário configura o schema em runtime. **Em dúvida → `prisma`.** Recurso com campo de dinheiro que entra em saldo/fechamento é **sempre** `prisma` (money em `data: Json` é float em SQLite e `unique()` de preset é scan TOCTOU, não constraint).
+- `$ARGUMENTS[1]`: `dynamic-table` | `prisma` — **[CRUD-005]** decidido pelo teste do `_ARCHITECTURE-CONTRACT.md §2.1`, não por gosto: `prisma` quando há invariante financeiro/legal/regulatório ou integridade que o banco deve garantir (`@@unique`/FK/tipos reais); `dynamic-table` só quando o usuário configura o schema em runtime. **Em dúvida entre os dois critérios → `dynamic-table`**, com a ponte `postEntry` para o que o razão registrar (dono, 2026-10-14; contrato §2.1). Recurso com campo de dinheiro que entra em saldo/fechamento é **sempre** `prisma` (money em `data: Json` é float em SQLite e `unique()` de preset é scan TOCTOU, não constraint).
 
 ## Execution steps (mesma ordem que fullstack-feature-generator)
 

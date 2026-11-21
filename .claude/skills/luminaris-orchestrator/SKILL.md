@@ -60,7 +60,7 @@ Se a tarefa cria um **módulo/entidade nova**, rode o teste binário do `_ARCHIT
 | Tem invariante financeiro/legal/regulatório que o banco deve garantir (contábil, folha, fiscal, RH)? | **Prisma first-class** → `fullstack-feature-generator` |
 | A integridade depende de `@@unique`/FK/tipos reais, ou é infra do negócio não-configurável? | **Prisma first-class** |
 
-**Em dúvida → Prisma first-class.** "ERP" sozinho NÃO decide: um módulo ERP só é DynamicTable se o **usuário** define o schema; com invariante, é Prisma. **Integração entre os dois mundos (ex.: venda→lançamento contábil) NUNCA entra no plano como edição do `DynamicTableService`/plugin — sobe a um passo de controller/serviço de integração** (§2.1 anti-padrões). Se o plano que você ia montar injeta um serviço Prisma no motor DynamicTable, o roteamento está errado — refaça.
+**Em dúvida entre os dois critérios → DynamicTable**, com a ponte `postEntry(sourceType, sourceId)` para o que o razão precisar registrar (dono, 2026-10-14; `_ARCHITECTURE-CONTRACT.md` §2.1 — substitui o antigo "em dúvida → Prisma"). "ERP" sozinho NÃO decide: um módulo ERP só é DynamicTable se o **usuário** define o schema; com invariante, é Prisma. **Integração entre os dois mundos (ex.: venda→lançamento contábil) NUNCA entra no plano como edição do `DynamicTableService`/plugin — sobe a um passo de controller/serviço de integração** (§2.1 anti-padrões). Se o plano que você ia montar injeta um serviço Prisma no motor DynamicTable, o roteamento está errado — refaça.
 
 ### Lente de domínio contábil — consultar ANTES de planejar tarefa de contabilidade
 

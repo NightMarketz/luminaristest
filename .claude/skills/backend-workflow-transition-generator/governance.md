@@ -16,7 +16,7 @@ gates:
     command: "grep -rn 'PostingService\\|PayrollService\\|FiscalService' server/src/features/dynamicTables/"
     expect: "vazio — nenhum serviço Prisma first-class injetado no motor/transição"
   AC-2.1-B4:
-    gate: luminaris-reviewer/fronteira-2.1
+    gate: luminaris-reviewer/REV-005
     kind: design-time
     note: transição não edita DynamicTableService para integrar dois domínios
 ---
