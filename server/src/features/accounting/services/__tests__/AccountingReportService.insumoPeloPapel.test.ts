@@ -78,7 +78,8 @@ function buildService(insumoExpenseAccountId: string | null | undefined, rows: R
   };
   // 5º argumento = perfil fiscal atual; 6º = versões de política (o swc/jest não faz type-check).
   const Ctor = AccountingReportService as unknown as new (...a: unknown[]) => AccountingReportService;
-  return Object.assign(new Ctor(accountRepo, postingRepo, journalEntryRepo, policy, fiscalProfileRepo, policyVersionRepo), { policyVersionRepo });
+  // `listaVersoes` (e não `policyVersionRepo`): o serviço tem membro privado com esse nome e a interseção de tipos viraria `never`.
+  return Object.assign(new Ctor(accountRepo, postingRepo, journalEntryRepo, policy, fiscalProfileRepo, policyVersionRepo), { listaVersoes: policyVersionRepo.list });
 }
 
 const codes = (s: { accounts: { code: string }[] }) => s.accounts.map((a) => a.code);
@@ -154,7 +155,7 @@ describe('L-038d (f974) — o papel é o da versão FISCAL_PROFILE vigente em as
   it('só versões APPLIED do alvo FISCAL_PROFILE são lidas', async () => {
     const svc = buildService('acc-4.1.8', rows, [V1, V2]);
     await svc.incomeStatement(SCOPE, AS_OF);
-    expect(svc.policyVersionRepo.list).toHaveBeenCalledWith(SCOPE, { target: 'FISCAL_PROFILE', status: 'APPLIED' });
+    expect(svc.listaVersoes).toHaveBeenCalledWith(SCOPE, { target: 'FISCAL_PROFILE', status: 'APPLIED' });
   });
 
   it('sem nenhuma versão (perfil legado anterior ao versionamento): vale o perfil atual', async () => {
