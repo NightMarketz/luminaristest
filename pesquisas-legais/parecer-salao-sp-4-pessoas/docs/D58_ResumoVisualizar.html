@@ -1,0 +1,1166 @@
+
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <title>
+        Mediador - Extrato Termo Aditivo de Conven&#231;&#227;o Coletiva
+    </title>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+    <script src="https://www.google.com/recaptcha/api.js?render=6LdPnewrAAAAADM60VqWAyvhreJD6Jpyr1tORg6G"></script>
+
+    <script src='/sistemas/mediador/WebResource.axd?d=KR0U0NVXVb8HugYpd68mCJxU3hr5Hj3KFK11AbHk6VA7HdkTYWkHbtej7JoqABpxc3Wx4sJBD3EKWgtuAxCIwC3GDr15wrE4p8qKS8Fr-rIf-lOicFqBf3VzJkHsmT97XVFi64_aMivhRvo7CSLyru7sx9EFhWyLWPh9jQJUoQFo3xgCT4WoVDmofRu80KFq0&t=639193666532168144' type='text/javascript'></script>
+<script src='/sistemas/mediador/WebResource.axd?d=Aj57c6Wnn8B5ueW900fFetmXhbSRDA8RYyJe_pE9GLFBE55VFJ8ychF8_95fa9HQJ2pDHt9E0YLUIdiBqVfbIC7tZi1m1F8rSoInFrQ7YYzIFVPItQJ9IsyWF8F6pz25IX7fhMjtILKaPrsk1ms-J2mCrBoo7m0mawUpatJGG3bThGyNzZEW2qimQIUlTtCy1sIQy4fInClDT7P3HPBuIw2&t=639193666532168144' type='text/javascript'></script>
+<script src='/sistemas/mediador/WebResource.axd?d=SHOpR-UlmNlxkt4ZCcJE1oVDiQleI56bVR1m6mb8oYISJM6JWUYsbb_tfXnkikhRqOY16eyHDgRPMZJBTs5MvAxZcx45D9OOxlcBqVZLR3J-GO50WQsDajtU7uDbr1SQsDAUlxjdS_ObnF-o60IcKZyQwLuu9f67LHwEmbOHj6DtWWfvj4jRbqia_tqHSnbH0&t=639193666532168144' type='text/javascript'></script>
+<script src='/sistemas/mediador/WebResource.axd?d=bKTf1yyrDDnsKMwyGHUpYLPLB89QSscykaiEAjW5lhcZZlE2PNzN1n4JpCTc7u0WRENIEtZIs_zwCZcjZXPzDBwhfTM5408UfdH38YSMPvXB68KawkaCfsMc5Rp0uFeVXuj1tA-hZpaGq5BaUkzBVheBNW5HRN15BTMCRQLsptlDTQXZhMxNvjvNTBvp8pTA0&t=639193666532168144' type='text/javascript'></script>
+<script src='/sistemas/mediador/WebResource.axd?d=ge5XXAyUW5Vp23Bt-XwhYaXbRAh8nsZV9iVlfNP2lbkcGuyT6uPRHT6fXxaUuiC4c1I0mMWr-vd_wBkbImztho0U6GMyjSmK6YI8huaLKv3qNaAwRiNxxNFydRgPsOe9LVm0jaxRRZIFv4HoMZfkaKB5KIwkpYGdfBXPnJ8Uvy_ZNfbcr-XzmYTINjW8RPet0&t=639193666532168144' type='text/javascript'></script>
+<script src='/sistemas/mediador/WebResource.axd?d=4IryqpdOjw5CGrTNtGrOniO0z5K8pVczQ4T6vt8LL8Izx0JweslP5X-5ITtG1m3fiG6wEMsOTXcjq7SlMRzza19D00H_2Lk_xUU_sU2drSw7Kfk4rh4LnuHG7JsQw_FE_mpY8x8SBfkhLYkpLzJGJogVhbdDGFJXqSA08DlH398Gyjoe2_Oht6KchJuKhXNl0&t=639193666532168144' type='text/javascript'></script>
+
+
+<script type="text/javascript">
+        var recaptchaSiteKey = '6LdPnewrAAAAADM60VqWAyvhreJD6Jpyr1tORg6G';
+        var pageLoadToken = '';
+        var isPageValidated = false;
+
+        function onRecaptchaLoad() {
+            console.log('reCAPTCHA carregado, validando página...');
+            executePageLoadRecaptcha();
+        }
+
+        function executePageLoadRecaptcha() {
+            if (typeof grecaptcha === 'undefined') {
+                console.error('reCAPTCHA não carregado');
+                return;
+            }
+
+            grecaptcha.ready(function() {
+                grecaptcha.execute(recaptchaSiteKey, {
+                    action: 'page_load_resumo'
+                }).then(function(token) {
+                    console.log('Token de página gerado');
+                    pageLoadToken = token;
+
+                    // Enviar o token para o servidor
+                    validatePageLoadToken(token);
+                }).catch(function(error) {
+                    console.error('Erro no reCAPTCHA de página:', error);
+                    // Em desenvolvimento, permitir continuar
+                });
+            });
+        }
+
+        function validatePageLoadToken(token) {
+            var currentUrl = window.location.href;
+            var queryString = window.location.search;
+            var nrSolicitacao = 'MR060354/2026';
+
+            $.ajax({
+                url: '/sistemas/mediador/Resumo/ValidateResumoPageLoad',
+                type: 'POST',
+                data: {
+                    recaptchaToken: token,
+                    currentUrl: currentUrl,
+                    queryString: queryString,
+                    nrSolicitacao: nrSolicitacao
+                },
+                success: function(response) {
+                    if (response.success) {
+                        console.log('Página validada com sucesso');
+                        isPageValidated = true;
+                        showPageContent();
+                    } else {
+                        console.warn('Validação de página falhou:', response.message);
+                        handleValidationFailed(response);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Erro ao validar página:', error);
+                    handleValidationFailed({ message: 'Erro de comunicação com o servidor' });
+                }
+            });
+        }
+
+        function showPageContent() {
+            // Remover overlay de loading se existir
+            $('#recaptcha-loading').remove();
+            console.log('Conteúdo da página liberado');
+        }
+
+        function handleValidationFailed(response) {
+            // Mostrar mensagem de erro
+            var errorHtml = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+                    <div style="text-align: center; padding: 20px;">
+                        <h2 style="color: #d32f2f;">Validação de Segurança</h2>
+                        <p style="font-size: 16px; margin: 20px 0;">${response.message || 'Falha na validação de segurança.'}</p>
+                        <button onclick="window.location.reload()" style="padding: 10px 20px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Tentar Novamente
+                        </button>
+                        <br><br>
+                        <button onclick="window.location.href='/sistemas/mediador/'" style="padding: 8px 16px; background: #757575; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Voltar para Página Inicial
+                        </button>
+                    </div>
+                </div>
+            `;
+            $('body').prepend(errorHtml);
+        }
+
+        $(document).ready(function() {
+            console.log('Página carregada - ambiente de produção');
+
+            // Pular validação reCAPTCHA em produção
+            setTimeout(function() {
+                if (!isPageValidated) {
+                    console.log('Produção - validando sem reCAPTCHA');
+                    isPageValidated = true;
+                    showPageContent();
+                }
+            }, 1000);
+
+            // Timeout de segurança reduzido
+            setTimeout(function() {
+                if (!isPageValidated) {
+                    console.warn('Timeout na validação - liberando conteúdo');
+                    isPageValidated = true;
+                    showPageContent();
+                }
+            }, 5000); // Reduzido para 5 segundos
+        });
+
+        function Imprimir() {
+            document.getElementById("btnResumoVisualizarImprimir").style.display = "none";
+            document.getElementById("btnResumoVisualizarSalvar").style.display = "none";
+            window.print();
+            document.getElementById("btnResumoVisualizarImprimir").style.display = "";
+            document.getElementById("btnResumoVisualizarSalvar").style.display = "";
+            return true;
+        }
+        $(function () {
+            var marcaDaguaHtml = $('.MarcaDagua').html();
+            var width = $('body').width();
+            var marcaW = $('.MarcaDagua').width();
+
+            var qtdNescessarios = Math.round((width / marcaW) + 0.4);
+            if (qtdNescessarios > 0)
+                for (var incrementador = 0; incrementador < qtdNescessarios; incrementador++) {
+                    $('.MarcaDagua').append("<br />");
+                    $('.MarcaDagua').append(marcaDaguaHtml);
+                }
+        });
+
+
+</script>
+    <style type="text/css">
+        .titulo
+        {
+            font-family: Arial, Verdana, Helvetica, sans-serif;
+            font-size: 14px;
+        }
+        .Subtitulo
+        {
+            font-family: Arial, Verdana, Helvetica, sans-serif;
+            font-size: 13px;
+        }
+        .texto
+        {
+            font-family: Arial, Verdana, Helvetica, sans-serif;
+            font-size: 14px;
+        }
+        .tituloClausula
+        {
+            font-family: Arial, Verdana, Helvetica, sans-serif;
+            font-size: 14px;
+        }
+        .descricaoClausula
+        {
+            font-family: Arial, Verdana, Helvetica, sans-serif;
+            font-size: 14px;
+        }
+        .textogrupo
+        {
+            font-family: Arial, Verdana, Helvetica, sans-serif;
+            font-size: 18px;
+            text-transform: uppercase;
+        }
+        .textosubgrupo
+        {
+            font-family: Arial, Verdana, Helvetica, sans-serif;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+        .textonome
+        {
+            font-family: Arial, Verdana, Helvetica, sans-serif;
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .textofuncao
+        {
+            font-family: Verdana, Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .pagebreak
+        {
+            page-break-after: always;
+        }
+        table.titulo
+        {
+            text-align: left;
+        }
+        @page Section2 {size:21cm 29.7cm ;mso-page-orientation:portrait;margin-top:2cm; margin-rigth:2cm; mso-paper-source:0;}
+        div.Section2 {page:Section2;}
+        pre
+        {
+            white-space: pre-wrap; /* css-3 */
+            white-space: -moz-pre-wrap !important; /* Mozilla, since 1999 */
+            white-space: -pre-wrap; /* Opera 4-6 */
+            white-space: -o-pre-wrap; /* Opera 7 */
+            word-wrap: break-word; /* Internet Explorer 5.5+ */
+            white-space: normal;
+        }
+    </style>
+    <!--[if gte mso 9]>
+    <xml>
+    <w:WordDocument>
+    <w:View>Print</w:View>
+    <w:Zoom>100</w:Zoom>
+    <w:DoNotOptimizeForBrowser/>
+    </w:WordDocument>
+    </xml>
+    <![endif]-->
+</head>
+
+<body>
+    <div class="Section2">
+                <form method="post" action="/sistemas/mediador/Resumo/ResumoVisualizarSalvarMsWordDoc?NrSolicitacao=MR060354/2026">
+                    <input type="button" id="btnResumoVisualizarImprimir" value="Imprimir" onclick="Imprimir();" />
+                    <input type="submit" id="btnResumoVisualizarSalvar" value="Salvar" />
+                </form>
+
+            <div style="text-align: center; z-index: -1000; position: absolute; width: 100%;"
+                 class="MarcaDagua">
+                <img src="/sistemas/mediador/Content/images/carimbo.gif" alt="marcaDAgua" />
+            </div>
+        <center>
+            <table border="0" style="width: 18cm;" id="tblConteudo">
+                <tr>
+                    <td>
+                        <table style="width: 100%;" cellpadding="0" cellspacing="0">
+
+                                                            <tr>
+                                    <td align="center" class="titulo" style="text-transform: uppercase;">
+                                        <b>
+                                            Termo Aditivo a Conven&#231;&#227;o Coletiva De Trabalho 2026/2027
+                                        </b>
+                                        <br />
+                                        <br />
+                                    </td>
+                                </tr>
+                            <tr>
+                                <td>
+                                    <div style="text-align: left;">
+                                        <table border="0" class="titulo" cellpadding="0" cellspacing="0">
+                                                <tr>
+                                                    <td>
+                                                        <b>NÚMERO DE REGISTRO NO MTE:</b>
+                                                    </td>
+                                                    <td style="width: 10px">
+                                                    </td>
+                                                    <td>
+                                                        SP009373/2026
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <b>DATA DE REGISTRO NO MTE:</b>
+                                                    </td>
+                                                    <td style="width: 10px">
+                                                    </td>
+                                                    <td>
+                                                        30/09/2026
+                                                    </td>
+                                                </tr>
+                                            <tr>
+                                                <td>
+                                                    <b>NÚMERO DA SOLICITAÇÃO:</b>
+                                                </td>
+                                                <td style="width: 10px">
+                                                </td>
+                                                <td>
+                                                    MR060354/2026
+                                                </td>
+                                            </tr>
+                                                                                            <tr>
+                                                    <td>
+                                                        <b>NÚMERO DO PROCESSO:</b>
+                                                    </td>
+                                                    <td style="width: 10px">
+                                                    </td>
+                                                    <td>
+                                                        10260.224167/2026-02
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <b>DATA DO PROTOCOLO:</b>
+                                                    </td>
+                                                    <td style="width: 10px">
+                                                    </td>
+                                                    <td>
+17/09/2026                                                    </td>
+                                                </tr>
+                                        </table>
+                                        <br />
+
+                                                    <br />
+                                                    <br />
+                                                    <table border="0" class="titulo" cellpadding="0" cellspacing="0">
+                                                        <tr>
+                                                            <td>
+                                                                <b>
+                                                                    N&#218;MERO DO PROCESSO  DA CONVEN&#199;&#195;O COLETIVA PRINCIPAL:
+                                                                </b>
+                                                            </td>
+                                                            <td style="width: 10px">
+                                                            </td>
+                                                            <td>
+                                                                10260.203710/2026-20
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>
+                                                                <b>
+                                                                    DATA DE REGISTRO  DA CONVEN&#199;&#195;O COLETIVA PRINCIPAL:
+                                                                </b>
+                                                            </td>
+                                                            <td style="width: 10px">
+                                                            </td>
+                                                            <td>
+21/07/2026                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                        <p>
+                                                            <label class="texto">
+                                                                <b>
+                                                                    Confira a autenticidade no endereço http://www3.mte.gov.br/sistemas/mediador/.
+                                                                </b>
+                                                            </label>
+                                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td align="left" class="texto">
+                                    <p align="justify">
+SINDICATO DOS EMPREGADOS EM INSTITUTOS DE BELEZA E CABELEIREIROS DE SENHORAS DE SAO PAULO E REGIAO E DA REGIAO METROPOLITANA DA BAIXADA SANTISTA, CNPJ n. 62.638.937/0001-44, neste ato representado(a) por seu 
+
+Presidente, Sr(a). MARIA DOS ANJOS MESQUITA HELLMEISTER;
+    <br />
+&nbsp;
+    <br />
+                                        <label>
+                                            E
+                                        </label>
+                                        <br />
+                                        <br />
+SIND PATRONAL DOS INST E SALOES DE BEL, CABEL DE SENHORAS, CABEL UNISSEX, BARB, SALOES -PARCEIROS E EMPR DE TRAT  DE BEL DO EST DE SP, CNPJ n. 62.803.648/0001-53, neste ato representado(a) por seu 
+
+Presidente, Sr(a). LUIS CESAR BIGONHA;
+    <br />
+&nbsp;
+    <br />
+                                                                                    celebram
+                                                                                    o
+                                         presente TERMO ADITIVO DE CONVEN&#199;&#195;O COLETIVA DE TRABALHO,
+ estipulando as condi&#231;&#245;es de trabalho previstas nas cl&#225;usulas seguintes:                                                <br />
+                                                <br />
+                                                <label class="tituloClausula">
+                                                    <b>
+                                                        CL&#193;USULA PRIMEIRA - VIG&#202;NCIA E DATA-BASE
+                                                        <br />
+                                                    </b>
+                                                </label>
+                                                <br />
+                                                <label class="descricaoClausula">
+                                                    As partes fixam a vigência do presente Termo Aditivo de Convenção Coletiva de Trabalho no período de 01º de junho de 2026 a 31 de maio de 2027 e a data-base da categoria em 01º de junho.
+                                                </label>
+                                                <br />
+                                                <br />
+                                                <br />
+                                                <label class="tituloClausula">
+                                                    <b>
+                                                        CL&#193;USULA SEGUNDA - ABRANG&#202;NCIA
+                                                        <br />
+                                                    </b>
+                                                </label>
+                                                <br />
+                                                <label class="descricaoClausula">
+                                                    O presente Termo Aditivo de Convenção Coletiva de Trabalho abrangerá a(s) categoria(s) <b>O presente Termo Aditivo de Convenção Coletiva de Trabalho abrangerá a(s) categoria(s) Empregados em Institutos de Beleza e Cabeleireiros de Senhoras (Cabeleireiros, Manicures, Esteticistas, Maquiladores, Depiladores Ajudantes, Copeiros, Faxineiros Caixas, Gerentes e Recepcionistas) nos municípios de Barueri, Bertioga, Cajamar, Carapicuíba, Cotia, Cubatão, Embu das Artes, Guarujá, Guarulhos, Itanhaém, Itapecerica da Serra, Itapevi, Jandira, Mongaguá, Osasco, Peruíbe, Praia Grande, Santana de Parnaíba, Santos, São Paulo, São Roque, São Vicente e Taboão da Serra e a categoria profissional de: Cabeleireiro, Barbeiro, Esteticista, Manicure, Pedicure, Depilador e Maquiador, nos termos da Lei nº 12.592 de 18/01/2012, nos municípios de Bertioga, Cubatão, Guarujá, Itanhaém, Mongaguá, Peruíbe, Praia Grande, Santos e São Vicente, </b>, com abrangência territorial em <b>Barueri/SP, Bertioga/SP, Cajamar/SP, Carapicuíba/SP, Cotia/SP, Cubatão/SP, Embu das Artes/SP, Guarujá/SP, Guarulhos/SP, Itanhaém/SP, Itapecerica da Serra/SP, Itapevi/SP, Jandira/SP, Mongaguá/SP, Osasco/SP, Peruíbe/SP, Praia Grande/SP, Santana de Parnaíba/SP, Santos/SP, São Paulo/SP, São Roque/SP, São Vicente/SP e Taboão da Serra/SP</b>.
+                                                </label>
+                                                <br />
+                                    </p>
+
+                                        <center>
+                                            <br />
+                                            <b>
+                                                <label class="textogrupo">
+                                                    Salários, Reajustes e Pagamento
+                                                    <br />
+                                                </label>
+                                            </b>
+                                        </center>
+                                            <center>
+                                                <b>
+                                                    <label class="textosubgrupo">
+                                                        Piso Salarial
+                                                        <br />
+                                                    </label>
+                                                </b>
+                                            </center>
+                                                <label class="tituloClausula">
+                                                    <b>
+                                                        <br />
+                                                        CL&#193;USULA TERCEIRA - NORMAS: REPIS - REGIME ESPECIAL DE PISO SALARIAL
+                                                        <br />
+                                                                                                                                                                                                                                                                                        
+                                                    </b>
+                                                </label>
+                                                <br />
+                                                <label class="descricaoClausula" >
+                                                    <p style="text-align: justify;">Objetivando dar tratamento diferenciado e favorecido &agrave;s microempresas (ME), empresas de pequeno porte (EPP) e aos microempreendedores individuais (MEI), institui-se o Regime Especial de Piso Salarial &ndash; REPIS, que se reger&aacute; pelas normas a seguir estabelecidas:</p>
+<p style="text-align: justify;"><strong>&sect; 1&ordm; -</strong> Atendidos todos os requisitos previstos na Conven&ccedil;&atilde;o Coletiva de Trabalho (2025/2027) e neste Termo Aditivo, as empresas que optarem pelo REPIS receber&atilde;o da entidade sindical patronal, em conjunto com o sindicato da categoria profissional, sem qualquer &ocirc;nus, certificado de enquadramento no Regime Especial de Piso Salarial &ndash; CERTIFICADO DE ADES&Atilde;O AO REPIS &ndash;, que lhes facultar&aacute; a pr&aacute;tica de pisos salariais com valores diferenciados daqueles previstos para empresas em geral, conforme abaixo.</p>
+<p style="text-align: justify;"><strong><span style="text-decoration: underline;">&sect; 2&ordm; - O PRAZO para as empresas aderirem ao REPIS 2026/2027 se encerrar&aacute; no dia 30 DE SETEMBRO DE 2026</span></strong></p>
+<p style="text-align: justify;"><strong>&sect; 3&ordm; - Defini&ccedil;&atilde;o de ME, EPP e MEI.</strong> Para efeitos desta cl&aacute;usula, consideram-se microempresas (ME), empresas de pequeno porte (EPP) e os microempreendedores individuais (MEI), as pessoas jur&iacute;dicas que aufiram receita bruta anual nos seguintes limites:</p>
+<ul style="text-align: justify;" type="disc">
+<li>Microempresas (ME): faturamento igual ou inferior a R$ 360.000,00 (trezentos e sessenta mil reais);</li>
+<li>Empresas de Pequeno Porte (EPP): faturamento superior a R$ 360.000,00 (trezentos e sessenta mil reais) e inferior a R$ 4.800.000,00 (quatro milh&otilde;es e oitocentos mil reais);</li>
+<li>Microempreendedores Individuais (MEI): faturamento igual ou inferior a R$ 81.000,00 (oitenta e um mil reais).</li>
+</ul>
+<p style="text-align: justify;"><strong>&sect; 4&ordm; -</strong> Havendo legisla&ccedil;&atilde;o superveniente que altere esses limites, prevalecer&atilde;o os novos valores fixados.</p>
+<p style="text-align: justify;"><strong>&sect; 5&ordm; - Solicita&ccedil;&atilde;o do Certificado de Ades&atilde;o ao REPIS.</strong> <strong>Para ades&atilde;o ao REPIS as empresas dever&atilde;o requerer a expedi&ccedil;&atilde;o de CERTIFICADO DE ADES&Atilde;O AO REPIS atrav&eacute;s de encaminhamento ao sindicato patronal de formul&aacute;rio on line por meio do link&nbsp;</strong>&nbsp;<a href="http://cabelereiros.arccasoftware.com/loginempresasolicitacoes.aspx">http://cabelereiros.arccasoftware.com/loginempresasolicitacoes.aspx</a> assinado por s&oacute;cio da empresa e por contabilista respons&aacute;vel, com as seguintes informa&ccedil;&otilde;es:</p>
+<p style="text-align: justify;"><strong>a)&nbsp;&nbsp;&nbsp; </strong>Raz&atilde;o social, n&uacute;mero de inscri&ccedil;&atilde;o no Cadastro Nacional de Pessoa Jur&iacute;dica (CNPJ), C&oacute;digo Nacional de Atividade Econ&ocirc;mica (CNAE), N&uacute;mero de Inscri&ccedil;&atilde;o no Registro de Empresas (NIRE), capital social registrado na Junta Comercial do Estado de S&atilde;o Paulo-JUCESP, faturamento anual, n&uacute;mero de empregados, endere&ccedil;o completo, identifica&ccedil;&atilde;o do s&oacute;cio da empresa e do contabilista respons&aacute;vel;</p>
+<p style="text-align: justify;"><strong>b)&nbsp;&nbsp;&nbsp; </strong>Declara&ccedil;&atilde;o de que a receita auferida no ano-calend&aacute;rio vigente ou proporcional ao m&ecirc;s da declara&ccedil;&atilde;o permite enquadrar a empresa como microempresa (ME), empresa de pequeno porte (EPP) ou microempreendedor individual (MEI), no Regime Especial de Piso Salarial &ndash; REPIS 2025/2027;</p>
+<p style="text-align: justify;"><strong>c)&nbsp;&nbsp;&nbsp; </strong>Compromisso e comprova&ccedil;&atilde;o do cumprimento integral da pressente Conven&ccedil;&atilde;o Coletiva de Trabalho e do Termo Aditivo 2026/2027.</p>
+<p style="text-align: justify;"><strong>&sect; 7&ordm; - Fornecimento do Certificado de Ades&atilde;o ao REPIS. </strong>O cumprimento dos pr&eacute;-requisitos para ades&atilde;o ao REPIS ser&aacute; objeto de an&aacute;lise pelos sindicatos profissional e patronal. Constatado o enquadramento da empresa solicitante, os sindicatos profissional e patronal fornecer&atilde;o, em conjunto, CERTIFICADO DE ADES&Atilde;O AO REPIS, de forma online, no prazo m&aacute;ximo de 60 (sessenta) dias, contados a partir da data do recebimento da solicita&ccedil;&atilde;o, devidamente acompanhada da documenta&ccedil;&atilde;o exigida. Em se constatando qualquer irregularidade, a empresa solicitante ser&aacute; comunicada para que regularize sua situa&ccedil;&atilde;o no prazo m&aacute;ximo de 10 (dez) dias &uacute;teis, sob pena de indeferimento do pedido.</p>
+<p style="text-align: justify;"><strong>&sect; 8&ordm; - Desenquadramento. </strong>A falsidade da declara&ccedil;&atilde;o, uma vez constatada, ocasionar&aacute; o desenquadramento da empresa do REPIS e a incid&ecirc;ncia do piso salarial para empresas em geral durante toda a vig&ecirc;ncia da presente Conven&ccedil;&atilde;o Coletiva de Trabalho.</p>
+<p style="text-align: justify;"><strong>&sect; 9&ordm; - Renova&ccedil;&atilde;o do REPIS. Independentemente de j&aacute; possuir Certid&atilde;o de Ades&atilde;o ao REPIS, com validade at&eacute; 31 de maio de 2026, as empresas que desejarem aderir ao REPIS 2026/2027 dever&atilde;o requerer a Renova&ccedil;&atilde;o da Certid&atilde;o de Ades&atilde;o ao REPIS, nos termos desta cl&aacute;usula.</strong></p>
+<p style="text-align: justify;"><strong>&nbsp;</strong></p>
+                                                </label>
+                                                <br />
+                                                <label class="tituloClausula">
+                                                    <b>
+                                                        <br />
+                                                        CL&#193;USULA QUARTA - PISO SALARIAL DIFERENCIADO (REPIS) VIGENCIA DA CLAUSULA 01/06/26 A 31/05/27
+                                                        <br />
+                                                                                                                                                                                                                                                                                        
+                                                    </b>
+                                                </label>
+                                                <br />
+                                                <label class="descricaoClausula" >
+                                                    <p>Fica institu&iacute;do o Regime Especial de Piso Salarial &ndash; REPIS, que se reger&aacute; pelas normas a seguir estabelecidas. Cumpridas as exig&ecirc;ncias estabelecidas as empresas&nbsp;<strong>QUE SE ENQUADRAREM</strong>&nbsp;na condi&ccedil;&atilde;o da clausula 3&ordf; e par&aacute;grafos, poder&atilde;o praticar os seguintes Pisos Salariais <strong><span style="text-decoration: underline;">entre 1&ordm; de JUNHO de 2026 a 31 de MAIO DE 2027</span></strong>:</p>
+<p>&nbsp;</p>
+<table border="1" cellspacing="0" cellpadding="0">
+<tbody>
+<tr>
+<td valign="top" width="516">
+<p>Demais Empregados (<strong><em>em fun&ccedil;&otilde;es distintas sem descri&ccedil;&atilde;o nesta tabela</em></strong>)</p>
+</td>
+<td valign="top" width="133">
+<p align="center">R$ 1.875,00</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="516">
+<p>Cabeleireiros, Manicures, Depiladores, Maquiladores, Esteticistas</p>
+</td>
+<td valign="top" width="133">
+<p align="center">R$ 1.900,00</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="516">
+<p>Gerente</p>
+</td>
+<td valign="top" width="133">
+<p align="center">R$ 2.227,20</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p><strong>&nbsp;</strong></p>
+<p style="text-align: justify;"><strong>&sect; 1&ordm;-&nbsp;</strong>Considerando as dificuldades financeiras pelas quais as empresas em geral vem passando, bem como, a grave crise e instabilidade econ&ocirc;mica do Pa&iacute;s, fica <strong>facultado</strong> &agrave;s empresas que <strong>N&Atilde;O</strong> se enquadrarem nas condi&ccedil;&otilde;es de MEI, ME ou EPP, solicitarem, mediante o cumprimento de todos os requisitos previstos neste TERMO ADITIVO, inclusive quanto aos prazos de ades&atilde;o, estabelecidos no par&aacute;grafo segundo da Cl&aacute;usula 3&ordf;, para o fim de requererem, o benef&iacute;cio tempor&aacute;rio at&eacute; <strong>31 de maio de 2027</strong> da &ldquo;<em><strong><span style="text-decoration: underline;">EQUIVAL&Ecirc;NCIA SALARIAL</span></strong></em>&rdquo; ao piso do <strong>REPIS</strong>, o que lhes garantir&aacute; <strong>&uacute;nica e exclusivamente a pratica do piso salarial diferenciado previsto nesta cl&aacute;usula, sem os demais benef&iacute;cios concedidos &agrave;s empresas que se enquadrem no REPIS, </strong>sendo concedido a essas empresas &ldquo;<em><strong>CERTID&Atilde;O DE REGULARIDADE DE SITUA&Ccedil;&Atilde;O SINDICAL PARA EQUIVALENCIA SALARIAL AO REPIS &ndash; 2026/2027&rdquo;</strong></em><strong>. </strong></p>
+<p style="text-align: justify;"><strong>&sect; 2&ordm;</strong> - Os valores dos pisos salariais constantes da tabela acima permanecer&atilde;o inalterados at&eacute; 31/05/2027, respeitados, se existentes, os reajustes do sal&aacute;rio m&iacute;nimo (Estadual/Federal), caso este venha superar o valor do piso profissional, eis que sempre ser&aacute; adotado o valor que melhor atenda a categoria dos trabalhadores, al&eacute;m de que ningu&eacute;m pode ganhar menos que o sal&aacute;rio m&iacute;nimo (Estadual/Federal).</p>
+<p style="text-align: justify;"><strong>&sect; 3&ordm;</strong> - Os valores dos pisos salariais diferenciados s&atilde;o estabelecidos para jornada de trabalho de 220 (duzentos e vinte) horas mensais.</p>
+<p style="text-align: justify;"><strong>&sect; 4&ordm; - </strong>O piso salarial diferenciado ser&aacute; reajustado de conformidade com a pol&iacute;tica salarial vigente.</p>
+                                                </label>
+                                                <br />
+                                                <label class="tituloClausula">
+                                                    <b>
+                                                        <br />
+                                                        CL&#193;USULA QUINTA - PISOS SALARIAIS DA CATEGORIA (N&#195;O REPIS) VIGENCIA 01/06/26 A 31/05/27
+                                                        <br />
+                                                                                                                                                                                                                                                                                        
+                                                    </b>
+                                                </label>
+                                                <br />
+                                                <label class="descricaoClausula" >
+                                                    <p>Entre <strong><span style="text-decoration: underline;">1&ordm; de JUNHO de 2026</span></strong>, as empresas que <strong>N&Atilde;O</strong> se enquadrarem ao REPIS, conforme instituiu a clausula 4&ordf; e par&aacute;grafos, ficam estabelecidas as seguintes classifica&ccedil;&otilde;es e pisos salariais para a categoria profissional:&nbsp;</p>
+<table border="1" cellspacing="0" cellpadding="0">
+<tbody>
+<tr>
+<td valign="top" width="520">
+<p>Demais Empregados (<strong><em>em fun&ccedil;&otilde;es distintas sem descri&ccedil;&atilde;o nesta tabela</em></strong>)</p>
+</td>
+<td valign="top" width="123">
+<p align="center">R$ 2.185,00</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="520">
+<p>Cabeleireiros, Manicures, Depiladores, Maquiladores, Esteticistas</p>
+</td>
+<td valign="top" width="123">
+<p align="center">R$ 2.380,00</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="520">
+<p>Gerente</p>
+</td>
+<td valign="top" width="123">
+<p align="center">R$ 2.805,00</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p style="text-align: justify;"><strong>&nbsp;</strong><strong>&sect; 1&ordm;</strong> - Os valores dos pisos salariais constantes da tabela acima permanecer&atilde;o inalterados at&eacute; 31/05/2027, respeitados, se existentes, os reajustes do sal&aacute;rio m&iacute;nimo (Estadual/Federal), caso este venha superar o valor do piso profissional, eis que sempre ser&aacute; adotado o valor que melhor atenda a categoria dos trabalhadores, al&eacute;m de que ningu&eacute;m pode ganhar menos que o sal&aacute;rio m&iacute;nimo (Estadual/Federal).</p>
+<p style="text-align: justify;"><strong>&sect; 2&ordm;</strong> - Nenhum trabalhador da categoria profissional poder&aacute; perceber Sal&aacute;rio inferior ao Piso Normativo, objeto da clausula 5&ordf; desta CCT, independente da sua data de admiss&atilde;o no emprego, salvo &agrave;s empresas enquadradas no regime especial de piso salarial (REPIS), de acordo com esta clausula.</p>
+<p><strong>&sect; 3&ordm;</strong> - Os valores dos pisos salariais s&atilde;o estabelecidos para jornada de trabalho de 220 (duzentos e vinte) horas mensais.</p>
+<p><strong>&sect; 4&ordm; -</strong>O piso salarial ser&aacute; reajustado de conformidade com a pol&iacute;tica salarial vigente.</p>
+                                                </label>
+                                                <br />
+                                            <center>
+                                                <b>
+                                                    <label class="textosubgrupo">
+                                                        Reajustes/Correções Salariais
+                                                        <br />
+                                                    </label>
+                                                </b>
+                                            </center>
+                                                <label class="tituloClausula">
+                                                    <b>
+                                                        <br />
+                                                        CL&#193;USULA SEXTA - REAJUSTES SALARIAIS VIG&#202;NCIA DA CL&#193;USULA: 01/06/2026 A 31/05/2027
+                                                        <br />
+                                                                                                                                                                                                                                                                                        
+                                                    </b>
+                                                </label>
+                                                <br />
+                                                <label class="descricaoClausula" >
+                                                    <p>A partir de <strong><span style="text-decoration: underline;">1&ordm; de JUNHO de 2026</span></strong> os sal&aacute;rios superiores aos Pisos Salariais conforme enquadramentos, ser&atilde;o reajustados com os seguintes percentuais:</p>
+<ul type="disc">
+<li><strong><span style="text-decoration: underline;">Em 4</span></strong><strong><span style="text-decoration: underline;">,80 %</span></strong>aos trabalhadores das empresas devidamente enquadradas no <strong>REPIS</strong>;</li>
+<li><strong><span style="text-decoration: underline;">Em 6</span></strong><strong><span style="text-decoration: underline;">,00</span></strong><strong><span style="text-decoration: underline;"> % </span></strong>aos trabalhadores das empresas <strong>N&Atilde;O enquadradas no REPIS</strong>;</li>
+</ul>
+<p><strong>&sect; 1&ordm;-</strong> Poder&atilde;o ser compensados os aumentos e compensa&ccedil;&otilde;es salariais, espontaneamente ou por imposi&ccedil;&atilde;o legal, concedidos a partir de 01 de junho de 2026.</p>
+<p><strong>&sect; 2&ordm; - </strong>Os sal&aacute;rios dos empregados admitidos ap&oacute;s 01/06/2025 ser&atilde;o reajustados proporcionalmente ao n&uacute;mero de meses trabalhados, na propor&ccedil;&atilde;o de 1/12 (um doze avos).</p>
+<p><strong>&sect; 3&ordm; - </strong>A qualquer altera&ccedil;&atilde;o na pol&iacute;tica salarial do Governo, as partes reunir-se-&atilde;o para revis&atilde;o, readapta&ccedil;&atilde;o e adequa&ccedil;&atilde;o dos sal&aacute;rios.</p>
+                                                </label>
+                                                <br />
+                                                <label class="tituloClausula">
+                                                    <b>
+                                                        <br />
+                                                        CL&#193;USULA S&#201;TIMA - CONTRATA&#199;&#195;O PARA O TRABALHO COM DURA&#199;&#195;O SEMANAL INFERIOR A 44 HORAS
+                                                        <br />
+                                                                                                                                                                                                                                                                                        
+                                                    </b>
+                                                </label>
+                                                <br />
+                                                <label class="descricaoClausula" >
+                                                    <p>A partir de <strong><span style="text-decoration: underline;">1&ordm; de JUNHO de 2026</span></strong>, as jornadas vari&aacute;veis no ato da contrata&ccedil;&atilde;o para o trabalho poder&atilde;o ser estipuladas de acordo com a seguinte tabela:</p>
+<p><strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; I.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </strong>Para as empresas que optaram pela utiliza&ccedil;&atilde;o <strong>do REPIS</strong>, que cumpriram dentro do prazo e forma previsto na clausula 3&ordf; deste instrumento:</p>
+<p>&nbsp;</p>
+<div align="center">
+<table style="width: 676px;" border="1" cellspacing="0" cellpadding="0">
+<tbody>
+<tr>
+<td valign="top" width="91">
+<p align="center"><strong>JORNADA DI&Aacute;RIA</strong></p>
+</td>
+<td valign="top" width="85">
+<p align="center"><strong>DURA&Ccedil;&Atilde;O SEMANAL</strong></p>
+</td>
+<td valign="top" width="85">
+<p align="center"><strong>DIVISOR</strong></p>
+</td>
+<td valign="top" width="132">
+<p align="center"><strong>PISO SALARIAL (Demais Empregados)</strong></p>
+</td>
+<td valign="top" width="142">
+<p align="center"><strong>PISO SALARIAL </strong></p>
+<p align="center"><strong>(Cabeleireiros, Manicures, Depiladores, Maquiladores, Esteticistas)</strong></p>
+</td>
+<td valign="top" width="141">
+<p align="center"><strong>PISO SALARIAL </strong></p>
+<p align="center"><strong>(Gerentes)</strong></p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="91">
+<p>7 h 20 min</p>
+</td>
+<td valign="top" width="85">
+<p>44 horas.</p>
+</td>
+<td valign="top" width="85">
+<p>220 horas.</p>
+</td>
+<td valign="top" width="132">
+<p align="center">R$ 1.875,00</p>
+</td>
+<td valign="top" width="142">
+<p align="center">R$ 1.900,00</p>
+</td>
+<td valign="top" width="141">
+<p align="center">R$ 2.227,20</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="91">
+<p>6 h.</p>
+</td>
+<td valign="top" width="85">
+<p>36 horas.</p>
+</td>
+<td valign="top" width="85">
+<p>180 horas.</p>
+</td>
+<td valign="top" width="132">
+<p align="center">R$ 1.534,09</p>
+</td>
+<td valign="top" width="142">
+<p align="center">R$ 1.554,55</p>
+</td>
+<td valign="top" width="141">
+<p align="center">R$ 1.822,25</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="91">
+<p>4 h.</p>
+</td>
+<td valign="top" width="85">
+<p>24 horas.</p>
+</td>
+<td valign="top" width="85">
+<p>120 horas.</p>
+</td>
+<td valign="top" width="132">
+<p align="center">R$ 1.022,73</p>
+</td>
+<td valign="top" width="142">
+<p align="center">R$ 1.036,36</p>
+</td>
+<td valign="top" width="141">
+<p align="center">R$ 1.214,84</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>&nbsp;</p>
+<p><strong>&nbsp;&nbsp;&nbsp;&nbsp; II.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </strong>Para as empresas que <strong>N&Atilde;O</strong> optaram pela utiliza&ccedil;&atilde;o <strong>do REPIS</strong>, que cumpriram dentro do prazo e forma previsto na clausula 3&ordf; deste instrumento:</p>
+<p>&nbsp;</p>
+<div align="center">
+<table style="width: 676px;" border="1" cellspacing="0" cellpadding="0">
+<tbody>
+<tr>
+<td valign="top" width="91">
+<p align="center"><strong>JORNADA DI&Aacute;RIA</strong></p>
+</td>
+<td valign="top" width="85">
+<p align="center"><strong>DURA&Ccedil;&Atilde;O SEMANAL</strong></p>
+</td>
+<td valign="top" width="85">
+<p align="center"><strong>DIVISOR</strong></p>
+</td>
+<td valign="top" width="132">
+<p align="center"><strong>PISO SALARIAL (Demais Empregados)</strong></p>
+</td>
+<td valign="top" width="142">
+<p align="center"><strong>PISO SALARIAL </strong></p>
+<p align="center"><strong>(Cabeleireiros, Manicures, Depiladores, Maquiladores, Esteticistas)</strong></p>
+</td>
+<td valign="top" width="141">
+<p align="center"><strong>PISO SALARIAL </strong></p>
+<p align="center"><strong>(Gerentes)</strong></p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="91">
+<p>7 h 20 min</p>
+</td>
+<td valign="top" width="85">
+<p>44 horas.</p>
+</td>
+<td valign="top" width="85">
+<p>220 horas.</p>
+</td>
+<td valign="top" width="132">
+<p align="center">R$ 2.185,00</p>
+</td>
+<td valign="top" width="142">
+<p align="center">R$ 2.380,00</p>
+</td>
+<td valign="top" width="141">
+<p align="center">R$ 2.805,00</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="91">
+<p>6 h.</p>
+</td>
+<td valign="top" width="85">
+<p>36 horas.</p>
+</td>
+<td valign="top" width="85">
+<p>180 horas.</p>
+</td>
+<td valign="top" width="132">
+<p align="center">R$ 1.787,73</p>
+</td>
+<td valign="top" width="142">
+<p align="center">R$ 1.947,27</p>
+</td>
+<td valign="top" width="141">
+<p align="center">R$ 2.295,00</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="91">
+<p>4 h.</p>
+</td>
+<td valign="top" width="85">
+<p>24 horas.</p>
+</td>
+<td valign="top" width="85">
+<p>120 horas.</p>
+</td>
+<td valign="top" width="132">
+<p align="center">R$ 1.191,82</p>
+</td>
+<td valign="top" width="142">
+<p align="center">R$ 1.298,18</p>
+</td>
+<td valign="top" width="141">
+<p align="center">R$ 1.530,00</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>&nbsp;</p>
+<p><strong>&sect; 1&deg;</strong> - Em caso de contrata&ccedil;&atilde;o de empregado com jornada n&atilde;o prevista nesta clausula, sob o regime de horista, o empregado ter&aacute; direito ao pagamento do descanso semanal remunerado, devendo este ser calculado de acordo com a m&eacute;dia dos dias trabalhados, respeitando os seguintes sal&aacute;rios hora:</p>
+<p>&nbsp;</p>
+<div align="center">
+<table style="width: 676px;" border="1" cellspacing="0" cellpadding="0">
+<tbody>
+<tr>
+<td valign="top" width="261">
+<p align="center"><strong>DIVISOR</strong></p>
+</td>
+<td valign="top" width="132">
+<p align="center"><strong>PISO SALARIO HORA (Demais Empregados)</strong></p>
+</td>
+<td valign="top" width="142">
+<p align="center"><strong>PISO SALARIO HORA (Cabeleireiros, Manicures, Depiladores, Maquiladores, Esteticistas)</strong></p>
+</td>
+<td valign="top" width="141">
+<p align="center"><strong>PISO SALARIO HORA (Gerentes)</strong></p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="261">
+<p>Para empresas enquadradas no REPIS</p>
+</td>
+<td valign="top" width="132">
+<p align="center">R$ 10,00</p>
+</td>
+<td valign="top" width="142">
+<p align="center">R$ 10,15</p>
+</td>
+<td valign="top" width="141">
+<p align="center">R$ 12,15</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="261">
+<p>Para empresas N&Atilde;O enquadradas no REPIS</p>
+</td>
+<td valign="top" width="132">
+<p align="center">R$ 11,67</p>
+</td>
+<td valign="top" width="142">
+<p align="center">R$ 12,71</p>
+</td>
+<td valign="top" width="141">
+<p align="center">R$ 14,98</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>&nbsp;</p>
+<p><strong>&sect; 2&deg;</strong> &ndash; Quando o empregado for contratado para prestar servi&ccedil;os em jornada de 220 horas mensais ou 44 horas semanais, fica vedado &agrave; empresa a posterior diminui&ccedil;&atilde;o de jornada e de sal&aacute;rio, sem a concord&acirc;ncia do empregado, sob pena de rescis&atilde;o indireta do contrato de trabalho, na forma do artigo 483, letra &ldquo;d&ldquo;, da CLT.&nbsp;</p>
+<p><strong>&sect; 3&deg;</strong> &ndash; Todas as jornadas previstas nesta clausula, est&atilde;o contempladas para uma jornada de 6x1 (seis dias trabalhados e um dia de folga), as empresas poder&atilde;o adotar a jornada de 5x2 (cinco dias trabalhados e dois dias de folgas), em que especificamente dever&atilde;o adequar a quantidade de horas dos Pisos Salariais previstos no caput.</p>
+<p><strong>&sect; 4&deg;</strong> &ndash; &Eacute; vedado a contrata&ccedil;&atilde;o de trabalhadores em regime horista, que comprovarem o cumprimento de jornada semanal prevista no caput, e que n&atilde;o receberem o Piso Salarial previsto, sob pena do pagamento de todas as diferen&ccedil;as apuradas do per&iacute;odo apurado de irregularidade.</p>
+<p><strong>&sect; 5&ordm; -</strong> As empresas somente poder&atilde;o aplicar jornadas de trabalho diferentes e contratos intermitentes, das que constam neste instrumento, mediante Acordo Coletivo de Trabalho, com anu&ecirc;ncia dos sindicatos convenentes.</p>
+<p align="center"><strong>&nbsp;</strong></p>
+                                                </label>
+                                                <br />
+                                        <center>
+                                            <br />
+                                            <b>
+                                                <label class="textogrupo">
+                                                    Gratificações, Adicionais, Auxílios e Outros
+                                                    <br />
+                                                </label>
+                                            </b>
+                                        </center>
+                                            <center>
+                                                <b>
+                                                    <label class="textosubgrupo">
+                                                        Auxílio Alimentação
+                                                        <br />
+                                                    </label>
+                                                </b>
+                                            </center>
+                                                <label class="tituloClausula">
+                                                    <b>
+                                                        <br />
+                                                        CL&#193;USULA OITAVA - CART&#195;O MAGN&#201;TICO VALE COMPRA – CESTA B&#193;SICA  VIG&#202;NCIA: 01/06/26 A 31/05/27
+                                                        <br />
+                                                                                                                                                                                                                                                                                        
+                                                    </b>
+                                                </label>
+                                                <br />
+                                                <label class="descricaoClausula" >
+                                                    <p style="text-align: justify;">A partir de <strong>1&ordm; de junho de 2026</strong>, as empresas conceder&atilde;o aos seus empregados, conforme condi&ccedil;&otilde;es e valores estabelecidos na clausula da CCT, um CART&Atilde;O MAGN&Eacute;TICO VALE COMPRA ALIMENTA&Ccedil;&Atilde;O (Cesta B&aacute;sica), que dever&aacute; ser concedido at&eacute; o dia 15 (quinze) de cada m&ecirc;s, sob pena de indeniza&ccedil;&atilde;o do valor, acrescido de multa. O referido benef&iacute;cio ser&aacute; disponibilizado a todos os empregados celetistas, exceto os empregados nas fun&ccedil;&otilde;es de Cabeleireiros, Depiladores, Maquiladores, Esteticistas e Gerentes, por meio de Cart&atilde;o Magn&eacute;tico Vale Compra no valor de <strong>R$ 250,00 (duzentos e cinquenta reais)</strong>.</p>
+<p style="text-align: justify;"><strong>&sect; 1&ordm; -</strong> &Eacute; vedado o fornecimento do benef&iacute;cio de alimenta&ccedil;&atilde;o (cesta b&aacute;sica) que trata esta clausula, em g&ecirc;nero (produtos aliment&iacute;cios), e somente em caso ou hip&oacute;tese de indeniza&ccedil;&atilde;o, ser&aacute; facultado o fornecimento em dinheiro.</p>
+<p style="text-align: justify;"><strong>&sect; 2&ordm; -</strong> O aux&iacute;lio, sob qualquer das formas previstas nesta cl&aacute;usula, n&atilde;o ter&aacute; natureza remunerat&oacute;ria, nos termos da Lei n&ordm; 6.321 de 14 de abril de 1976, de seus decretos regulamentadores e da Portaria GM/MTE n&ordm; 03, de 01.03.2002 (D.O.U. 05.03.2002) com as altera&ccedil;&otilde;es dadas pela Portaria GM/MTE n&ordm; 08, de 16.04.2002.</p>
+<p style="text-align: justify;"><strong>&sect;3&ordm; - </strong>O benef&iacute;cio aqui estabelecido ser&aacute; concedido tamb&eacute;m durante o per&iacute;odo de licen&ccedil;a maternidade e eventuais afastamentos por motivo de doen&ccedil;a ou acidente de trabalho, desde que o per&iacute;odo n&atilde;o seja superior &agrave; 4 (quatro) meses.</p>
+<p style="text-align: justify;"><strong>&sect; 4&ordm; - </strong>A condi&ccedil;&atilde;o b&aacute;sica para o empregado fazer jus &agrave; Cesta B&aacute;sica de Alimentos ou Vale Alimenta&ccedil;&atilde;o substitutivo, previstos nesta cl&aacute;usula &eacute; a sua pontualidade e sua assiduidade no m&ecirc;s anterior. N&atilde;o perder&aacute; o direito ao benef&iacute;cio as faltas injustificadas e atrasos di&aacute;rios de 15 (quinze minutos), inferiores &agrave; 4 (quatro) dentro do mesmo m&ecirc;s.</p>
+                                                </label>
+                                                <br />
+                                        <center>
+                                            <br />
+                                            <b>
+                                                <label class="textogrupo">
+                                                    Relações Sindicais
+                                                    <br />
+                                                </label>
+                                            </b>
+                                        </center>
+                                            <center>
+                                                <b>
+                                                    <label class="textosubgrupo">
+                                                        Contribuições Sindicais
+                                                        <br />
+                                                    </label>
+                                                </b>
+                                            </center>
+                                                <label class="tituloClausula">
+                                                    <b>
+                                                        <br />
+                                                        CL&#193;USULA NONA - CONTRIBUI&#199;&#195;O ASSISTENCIAL/ NEGOCIAL DOS EMPREGADOS
+                                                        <br />
+                                                                                                                                                                                                                                                                                        
+                                                    </b>
+                                                </label>
+                                                <br />
+                                                <label class="descricaoClausula" >
+                                                    <p>Conforme resolu&ccedil;&atilde;o aprovada por vota&ccedil;&atilde;o na Assembleia Geral Extraordin&aacute;ria dos Empregados, s&oacute;cios e n&atilde;o s&oacute;cios desta entidade sindical, ficou estabelecido que a CONTRIBUI&Ccedil;&Atilde;O ASSISTENCIAL/NEGOCIAL &eacute; devida por todos integrantes da categoria, filiados e n&atilde;o filiados, por autoriza&ccedil;&atilde;o pr&eacute;via e expressa.&nbsp; A CONTRIBUI&Ccedil;&Atilde;O ASSISTENCIAL/ NEGOCIAL &eacute; de 1% mensal, devendo ser descontado sobre a remunera&ccedil;&atilde;o do trabalhador, de junho de 2026 a maio de 2027, incluindo-se os 13&ordm; sal&aacute;rios, limitando-se ao desconto m&aacute;ximo de R$ <strong>77,00</strong> (setenta e sete reais) por m&ecirc;s.</p>
+<p><strong>&sect; 1&ordm; </strong>- A empresa dever&aacute; efetuar o desconto mensalmente dos trabalhadores conforme institui o caput por determina&ccedil;&atilde;o da assembleia, devendo fazer o recolhimento da contribui&ccedil;&atilde;o assistencial/negocial em favor do SINDEBELEZA atrav&eacute;s de boletos banc&aacute;rios que estar&atilde;o dispon&iacute;veis no site do Sindicato com datas de vencimentos pr&oacute;prias, pag&aacute;veis em ag&ecirc;ncia banc&aacute;ria.</p>
+<p><strong>&sect; 2&ordm; -</strong> A inadimpl&ecirc;ncia do empregador quanto aos recolhimentos acarretar&aacute; multa de 10% (dez por cento) sobre o montante, juros de 1% (um por cento) ao m&ecirc;s e atualiza&ccedil;&atilde;o monet&aacute;ria na forma da lei.</p>
+<p><strong>&sect; 3&ordm;</strong> - Para o fim de oposi&ccedil;&atilde;o, pelo prazo de 30 (trinta) dias, a contar da assinatura da Conven&ccedil;&atilde;o Coletiva de Trabalho, em que ser&aacute; promovida a divulga&ccedil;&atilde;o da nova Conven&ccedil;&atilde;o, o empregado filiado ou n&atilde;o que venha a ter interesse em faz&ecirc;-la dever&aacute; manifestar sua inten&ccedil;&atilde;o perante o Sindicato profissional, pessoalmente na sede da Entidade Sindical. Oposi&ccedil;&otilde;es levadas a efeito mediante listas ser&atilde;o consideradas nulas de pleno direito, na forma do artigo 9&ordm; da Consolida&ccedil;&atilde;o das Leis do Trabalho.</p>
+<p><strong>&sect; 4&ordm;</strong> - Para o fim de protocolo dos empregados admitidos posterior a data de encerramento do prazo de oposi&ccedil;&atilde;o, o empregado dever&aacute; comparecer pessoalmente na sede do Sindicato Profissional, manifestando sua inten&ccedil;&atilde;o com a comprova&ccedil;&atilde;o de registro em CTPS pela empresa, dentro do prazo m&aacute;ximo de 20 (vinte) dias, ap&oacute;s o in&iacute;cio do seu contrato.</p>
+<p><strong>&sect; 5&ordm;</strong> - Tal medida se faz necess&aacute;rio em decorr&ecirc;ncia do disposto na Nota t&eacute;cnica n&ordm; 02 de 26 de outubro de 2018, publicada pela Coordenadoria Nacional de Promo&ccedil;&atilde;o da Liberdade Sindical (CONALIS)/ Minist&eacute;rio P&uacute;blico do Trabalho, a qual posicionou entendimento no sentido de que o desconto da contribui&ccedil;&atilde;o assistencial/negocial &eacute; devido por todos integrantes da categoria (filiados ou n&atilde;o).</p>
+<p><strong>&sect; 6&ordm;</strong> - Fica esclarecido para os fins de direito que, a negocia&ccedil;&atilde;o coletiva &eacute; direito fundamental social dos trabalhadores (art 7&ordm;,&nbsp; XXVI e 8&ordm;, VI, da CF) e que, ao sindicato cabe a defesa dos direitos e interesses coletivos ou individuais de toda categoria, o qual negocia e participa compulsoriamente das negocia&ccedil;&otilde;es coletivas, firmando instrumentos normativos que valem para todos os representados, associados ou n&atilde;o associados conforme disposto no artigo 08&ordm;, incisos III e IV da CF e art 611 da CLT. Que a atividade sindical em prol da defesa dos interesses da categoria requer fonte de financiamento leg&iacute;tima, a qual &eacute; regulamentada e definida em assembleia geral extraordin&aacute;ria regularmente convocada para esse fim.&nbsp;</p>
+<p><strong>&sect; 7&ordm; </strong>- Aos profissionais, abrangidos pela clausula 28&ordf; da Conven&ccedil;&atilde;o Coletiva de Trabalho Aditada, dever&aacute; esse profissional fazer uma contribui&ccedil;&atilde;o anual no valor de R$ 90,00 (noventa reais), com vencimento, dentro do prazo de 20 (vinte) dias, ap&oacute;s a requisi&ccedil;&atilde;o do benef&iacute;cio da referida clausula, ou podendo ainda optar por sindicalizar/associar pelo valor mensal de R$ 33,00 (trinta e tr&ecirc;s reais), a fim de se beneficiar da referida clausula&nbsp; e demais servi&ccedil;os e assist&ecirc;ncias sociais promovidas pelo Sindicato.</p>
+<p>&nbsp;</p>
+                                                </label>
+                                                <br />
+                                                <label class="tituloClausula">
+                                                    <b>
+                                                        <br />
+                                                        CL&#193;USULA D&#201;CIMA - CONTRIBUI&#199;&#213;ES DOS EMPREGADORES
+                                                        <br />
+                                                                                                                                                                                                                                                                                        
+                                                    </b>
+                                                </label>
+                                                <br />
+                                                <label class="descricaoClausula" >
+                                                    <p style="text-align: justify;">Com base nas disposi&ccedil;&otilde;es contidas na Constitui&ccedil;&atilde;o Federal em seus Artigos 7&ordm;, inciso XXVI e 8&ordm;, incisos II, IV e VI; no Artigo 513, al&iacute;nea &ldquo;e&rdquo; da CLT; nas Notas T&eacute;cnicas n&ordm; 2 e 3 da CONALIS (Coordenadoria Nacional de Promo&ccedil;&atilde;o da Liberdade Sindical do Minist&eacute;rio P&uacute;blico do Trabalho) e, respeitadas as delibera&ccedil;&otilde;es dos integrantes da categoria econ&ocirc;mica representada pelo Sindicato Patronal dos Institutos e Sal&otilde;es de Beleza, Cabeleireiros de Senhoras, Cabeleireiros Unissex, Barbearias, Sal&otilde;es-Parceiros e Empresas de Tratamento de Beleza do Estado de S&atilde;o Paulo &ndash; <strong>BELEZA / PATRONAL</strong> realizada no dia 15/07/2026, fica aprovada e autorizada a cobran&ccedil;a da&nbsp;<strong>CONTRIBUI&Ccedil;&Atilde;O ASSISTENCIAL</strong>&nbsp;(<strong>2027</strong>) de todas as empresas integrantes da categoria econ&ocirc;mica conforme segue:</p>
+<p style="text-align: justify;"><strong>CONTRIBUI&Ccedil;&Atilde;O ASSISTENCIAL &ndash; 2027</strong></p>
+<table style="width: 780px; height: 395px;" border="0" cellspacing="0" cellpadding="0">
+<tbody>
+<tr>
+<td rowspan="2" valign="top" width="34%">
+<p><strong>FAIXAS DE RECOLHIMENTO&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</strong></p>
+<p><strong>&nbsp;</strong></p>
+<p><strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</strong></p>
+</td>
+<td valign="top" width="14%">
+<p><strong>&nbsp; VALORES</strong></p>
+</td>
+<td colspan="2" width="51%">
+<p>&nbsp;</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="14%">
+<p align="center"><strong>PARCELA &Uacute;NICA</strong></p>
+<p align="center"><strong>31-03-2027</strong></p>
+</td>
+<td valign="top" width="25%">
+<p align="center"><strong>PARCELA &Uacute;NICA COM 10% DE DESCONTO AT&Eacute; 22/03/2027</strong></p>
+</td>
+<td valign="top" width="25%">
+<p align="center"><strong>VALOR DIVIDIDO EM 4 (quatro) PARCELAS FIXAS</strong></p>
+<p align="center"><strong>(1&ordm; VENCIMENTO&nbsp; 31/03/2027)</strong></p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="34%">
+<p>&nbsp;</p>
+</td>
+<td valign="top" width="14%">&nbsp;</td>
+<td valign="top" width="25%">&nbsp;</td>
+<td valign="top" width="25%">&nbsp;</td>
+</tr>
+<tr>
+<td valign="top" width="34%">
+<p><strong>EMPRESAS COM 00&nbsp;</strong><strong>Empregados e/ou Profissionais Parceiros</strong></p>
+</td>
+<td valign="top" width="14%">
+<p align="center">R$ 240,00</p>
+</td>
+<td valign="top" width="25%">
+<p align="center"><strong>R$ 216,00</strong></p>
+</td>
+<td valign="top" width="25%">
+<p align="center">4X DE R$&nbsp; 60,00</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="34%">
+<p><strong>EMPRESAS COM 01 A 05&nbsp;</strong><strong>Empregados e/ou Profissionais Parceiros</strong></p>
+</td>
+<td valign="top" width="14%">
+<p align="center">R$ 420,00</p>
+</td>
+<td valign="top" width="25%">
+<p align="center"><strong>R$ 378,00</strong></p>
+</td>
+<td valign="top" width="25%">
+<p align="center">4X DE R$ 105,00</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="34%">
+<p><strong>EMPRESAS COM 06 A 14&nbsp;</strong><strong>Empregados e/ou Profissionais Parceiros</strong></p>
+</td>
+<td valign="top" width="14%">
+<p align="center">R$ 640,00</p>
+</td>
+<td valign="top" width="25%">
+<p align="center"><strong>R$ 576,00</strong></p>
+</td>
+<td valign="top" width="25%">
+<p align="center">4X DE R$ 160,00</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="34%">
+<p><strong>EMPRESAS COM 15 A 24&nbsp;</strong><strong>Empregados e/ou Profissionais Parceiros</strong></p>
+</td>
+<td valign="top" width="14%">
+<p align="center">R$ 860,00</p>
+</td>
+<td valign="top" width="25%">
+<p align="center"><strong>R$ 774,00</strong></p>
+</td>
+<td valign="top" width="25%">
+<p align="center">4X DE R$ 215,00</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="34%">
+<p><strong>EMPRESAS COM 25 A 50&nbsp;</strong><strong>Empregados e/ou Profissionais Parceiros</strong></p>
+</td>
+<td valign="top" width="14%">
+<p align="center">R$1.040,00</p>
+</td>
+<td valign="top" width="25%">
+<p align="center"><strong>R$ 936,00</strong></p>
+</td>
+<td valign="top" width="25%">
+<p align="center">4X DE R$ 260,00</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="34%">
+<p><strong>EMPREAS COM 51 OU MAIS&nbsp;</strong><strong>Empregados e/ou Profissionais Parceiros</strong></p>
+</td>
+<td valign="top" width="14%">
+<p align="center">R$ 1.800,00</p>
+</td>
+<td valign="top" width="25%">
+<p align="center"><strong>R$ 1.620,00</strong></p>
+</td>
+<td valign="top" width="25%">
+<p align="center">4X DE R$ 450,00</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="34%">
+<p><strong>EMPRESAS M.E.I (00 empregado)</strong></p>
+</td>
+<td valign="top" width="14%">
+<p align="center">R$ 150,00&nbsp;</p>
+</td>
+<td valign="top" width="25%">
+<p align="center"><strong>R$ 135,00</strong><strong>&nbsp;</strong></p>
+</td>
+<td valign="top" width="25%">
+<p align="center">4X DE R$ 37,50</p>
+</td>
+</tr>
+<tr>
+<td valign="top" width="34%">
+<p><strong>EMPRESAS M.E.I </strong></p>
+<p><strong>COM 1 OU MAIS EMPREGADOS</strong></p>
+</td>
+<td colspan="3" valign="top" width="65%">
+<p align="center">&nbsp;</p>
+<p align="center"><strong>OBSERVAR FAIXAS DE RECOLHIMENTO ACIMA</strong></p>
+</td>
+</tr>
+</tbody>
+</table>
+<p><strong>&nbsp;</strong><strong>&sect; 1&ordm; </strong>-&nbsp;O recolhimento das contribui&ccedil;&otilde;es dever&aacute; ser efetuado, nas datas de vencimentos constantes de guias pr&oacute;prias encaminhadas pelo Sindicato Patronal ou podem ser solicitadas atrav&eacute;s dos canais: site: <a href="http://www.belezapatronal.com.br/">www.belezapatronal.com.br</a>, e-mail:&nbsp;&nbsp;<a href="/cdn-cgi/l/email-protection#d1a2b8bfb5b8b3b4bdb4abb091b7b4b2bebcb4a3b2b8beffb2bebcffb3a3"><span class="__cf_email__" data-cfemail="e192888f858883848d849b80a18784828e8c849382888ecf828e8ccf8393">[email&#160;protected]</span></a>, <a href="/cdn-cgi/l/email-protection#50333134312324223f1032353c352a31203124223f3e313c7e333f3d7e3222"><span class="__cf_email__" data-cfemail="3a595b5e5b494e48557a585f565f405b4a5b4e4855545b5614595557145848">[email&#160;protected]</span></a>, <strong>WhatsApp (11) 97050-8322 e telefone (11) 3259-5747</strong>.</p>
+<p><strong>&sect; 2&ordm; </strong>- O n&atilde;o recolhimento das contribui&ccedil;&otilde;es acarretar&aacute; para o empregador multa de 10% (dez por cento) sobre o montante devido e n&atilde;o recolhido, al&eacute;m de juros de 1% (um por cento) ao m&ecirc;s.</p>
+<p><strong>&sect; 3&ordm; </strong>- Os associados (pagantes de mensalidade) do Sindicato Patronal ter&atilde;o desconto de 50% (cinquenta por cento) dos valores mencionados at&eacute; as datas dos vencimentos constantes das guias para recolhimentos.</p>
+                                                </label>
+                                                <br />
+                                        <center>
+                                            <br />
+                                            <b>
+                                                <label class="textogrupo">
+                                                    Disposições Gerais
+                                                    <br />
+                                                </label>
+                                            </b>
+                                        </center>
+                                            <center>
+                                                <b>
+                                                    <label class="textosubgrupo">
+                                                        Outras Disposições
+                                                        <br />
+                                                    </label>
+                                                </b>
+                                            </center>
+                                                <label class="tituloClausula">
+                                                    <b>
+                                                        <br />
+                                                        CL&#193;USULA D&#201;CIMA PRIMEIRA - MANUTEN&#199;&#195;O DAS DEMAIS CLAUSULAS DA CCT 2025/2027
+                                                        <br />
+                                                                                                                                                                                                                                                                                        
+                                                    </b>
+                                                </label>
+                                                <br />
+                                                <label class="descricaoClausula" >
+                                                    <p>Todas as demais cl&aacute;usulas existentes na CCT 2025/2027 ajustada entre as entidades sindicais e aqui n&atilde;o mencionadas ficam mantidas, em direito e obriga&ccedil;&otilde;es, inclusive a obrigatoriedade do fornecimento dos beneficios sociais e telemedicina a todos os empregados.</p>
+                                                </label>
+                                                <br />
+                                    }
+                                    <br />
+                                    <table border="0" cellpadding="0" cellspacing="0" align="center">
+                                        <tr>
+                                            <td align="center">
+                                                    <br />
+    <br />
+    <label class="textonome">
+        MARIA DOS ANJOS MESQUITA HELLMEISTER
+        <br style="height: 5px" />
+        Presidente
+        <br style="height: 5px" />
+        SINDICATO DOS EMPREGADOS EM INSTITUTOS DE BELEZA E CABELEIREIROS DE SENHORAS DE SAO PAULO E REGIAO E DA REGIAO METROPOLITANA DA BAIXADA SANTISTA
+        <br />
+        <br />
+    </label>
+
+    <br />
+    <br />
+    <label class="textonome">
+        LUIS CESAR BIGONHA
+        <br style="height: 5px" />
+        Presidente
+        <br style="height: 5px" />
+        SIND PATRONAL DOS INST E SALOES DE BEL, CABEL DE SENHORAS, CABEL UNISSEX, BARB, SALOES -PARCEIROS E EMPR DE TRAT  DE BEL DO EST DE SP
+        <br />
+        <br />
+    </label>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                        <br />
+                                        <center>
+                                            <label class="textogrupo">
+                                                <b>ANEXOS </b>
+                                            </label>
+                                        </center>
+                                                        <label>
+                                                            <b>
+                                                                <center>
+                                                                    <label class="textogrupo">
+                                                                        ANEXO I - ATA ASSEMBLEIA-
+                                                                    </label>
+                                                                </center>
+                                                                <label class="tituloClausula">
+                                                                                                                                    </label>
+                                                            </b>
+                                                        </label>
+                                                        <b>
+                                                            <label>
+
+                                                            </label>
+                                                        </b>
+                                                        <br />
+                                                        <label class="descricaoClausula" >
+                                                            <p><a href="https://mediador.trabalho.gov.br/sistemas/mediador/imagemAnexo/MR060354_20262026_09_16T09_29_47.pdf" target="_blank">Anexo (PDF)</a></p>
+                                                        </label>
+                                                        <br />
+                                        <!--****************************************** FIM - Anexos ******************************************-->
+                                            <label class="texto">
+                                                &#160;&#160;&#160;&#160;A autenticidade deste documento poderá ser confirmada na
+                                                página do Ministerio do Trabalho e Emprego na Internet, no endereço http://www.mte.gov.br.
+                                            </label>
+                                            <br />
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </center>
+    </div>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+<script>
+    setTimeout(function () {
+        window.history.replaceState({}, '', window.location.pathname);
+    }, 0);
+</script>
+</html>

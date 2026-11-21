@@ -1,0 +1,611 @@
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+30104 De 0 a 5 empregados R$ 236,35
+30104 mais de 5 empregados R$ 362,95
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+30201 De 0 a 5 empregados R$ 236,35
+30201 de 6 a 10 empregados R$ 472,70
+30201 de 11 a 25 empregados R$ 709,05
+30201 mais de 25 empregados R$ 1.451,80
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+30309 De 0 a 5 empregados R$ 236,35
+30309 de 6 a 10 empregados R$ 472,70
+30309 de 11 a 25 empregados R$ 709,05
+30309 mais de 25 empregados R$ 1.451,80
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+30406 De 0 a 5 empregados R$ 236,35
+30406 de 6 a 10 empregados R$ 472,70
+30406 de 11 a 25 empregados R$ 709,05
+30406 mais de 25 empregados R$ 1.451,80
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+30503 De 0 a 5 empregados R$ 236,35
+30503 de 6 a 10 empregados R$ 472,70
+30503 de 11 a 25 empregados R$ 709,05
+30503 mais de 25 empregados R$ 1.451,80
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+30600 De 0 a 5 empregados R$ 236,35
+30600 de 6 a 10 empregados R$ 472,70
+30600 de 11 a 25 empregados R$ 709,05
+30600 mais de 25 empregados R$ 1.088,85
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+30708 De 0 a 5 empregados R$ 236,35
+30708 de 6 a 10 empregados R$ 472,70
+30708 de 11 a 25 empregados R$ 709,05
+30708 mais de 25 empregados R$ 725,90
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+30805 De 0 a 5 empregados R$ 236,35
+30805 de 6 a 10 empregados R$ 472,70
+30805 de 11 a 25 empregados R$ 709,05
+30805 mais de 25empregados R$ 725,90
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+30902 De 0 a 5 empregados R$ 236,35
+30902 de 6 a 10 empregados R$ 472,70
+30902 de 11 a 25 empregados R$ 709,05
+30902 mais de 25empregados R$ 1.088,85
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+31003 De 0 a 5 empregados R$ 236,35
+31003 de 6 a 10 empregados R$ 472,70
+TABELA COM OS VALORES DA TFE PARA 2026
+Agricultura, pecuária, silvicultura, exploração florestal, pesca, aquicultura e 
+serviços relacionados com essas atividades. 
+Indústrias extrativa e de transformação
+Produção e distribuição de eletricidade, gás e água
+Construção civil
+Comércio atacadista de produtos agropecuários “in natura” ; produtos 
+alimentícios para animais.
+Comércio varejista de produtos alimentícios, bebidas e fumo, em lojas 
+especializadas.
+Comércio varejista realizado em vias públicas por ambulantes ou máquinas 
+automáticas.
+Comércio varejista de jornais e revistas realizado em vias públicas.
+Comércio varejista de produtos farmacêuticos, artigos médicos e ortopédicos, de 
+perfumaria e cosméticos.
+Lojas de departamento ou magazines.
+31003 de 11 a 25 empregados R$ 709,05
+31003 mais de 25 empregados R$ 1.088,85
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+31100 De 0 a 50 empregados R$ 1.654,45
+31100 de 51 a 100 empregados R$ 3.072,55
+31100 Acima de 100 empregados R$ 3.629,51
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+31208 De 0 a 5 empregados R$ 236,35
+31208 de 6 a 10 empregados R$ 472,70
+31208 de 11 a 25 empregados R$ 709,05
+31208 mais de 25 empregados R$ 1.451,80
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+31305 De 0 a 5 empregados R$ 236,35
+31305 de 6 a 10 empregados R$ 472,70
+31305 de 11 a 25 empregados R$ 709,05
+31305 mais de 25 empregados R$ 1.088,85
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+31402 De 0 a 5 empregados R$ 236,35
+31402 mais de 5 empregados R$ 362,95
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+31500 De 0 a 5 empregados R$ 236,35
+31500 de 6 a 10 empregados R$ 472,70
+31500 de 11 a 25 empregados R$ 709,05
+31500 de 26 a 50 empregados R$ 1.654,45
+31500 mais de 50 empregados R$ 1.814,75
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+31607 De 0 a 5 empregados R$ 236,35
+31607 de 6 a 10 empregados R$ 472,70
+31607 de 11 a 25 empregados R$ 709,05
+31607 mais de 25 empregados R$ 1.088,85
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+31704 De 0 a 5 empregados R$ 236,35
+31704 mais de 5 empregados R$ 362,95
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+31801 De 0 a 5 empregados R$ 236,35
+31801 mais de 5 empregados R$ 362,95
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+31909 De 0 a 5 empregados R$ 236,35
+31909 de 6 a 10 empregados R$ 472,70
+31909 de 11 a 25 empregados R$ 709,05
+31909 mais de 25 empregados R$ 725,90
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+31950 Torres, antenas e demais instalações de Estação Rádio-Base (ERB) de Serviços 
+de Comunicação Móvel Celular e Especializada. Não depende R$ 14.599,89
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+32000 De 0 a 5 empregados R$ 236,35
+32000 de 6 a 10 empregados R$ 472,70
+32000 de 11 a 25 empregados R$ 709,05
+32000 mais de 25 empregados R$ 725,90
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+Comércio atacadista de produtos de fumo.
+Outras atividades do comércio; reparação de veículos automotores, objetos pessoais e domésticos e 
+de representantes comerciais e agentes do comércio ou não especificadas.
+Alojamento e alimentação
+Transporte terrestre; aquaviário ou aéreo, exceto os efetuados por taxi ou 
+lotação prestados por profissional autônomo.
+Serviço de taxi ou “lotação” prestado por profissional autônomo.
+Atividades anexas e auxiliares do transporte e agências de viagens.
+Correio e telecomunicações.
+Outras atividades relacionadas ao transporte, armazenagem e comunicações
+Comércio atacadista de produtos químicos.
+Lojas de departamento ou magazines.
+Comércio a varejo de combustíveis.
+32107 Intermediação financeira Não depende R$ 4.355,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+32204 De 0 a 5 empregados R$ 236,35
+32204 de 6 a 10 empregados R$ 472,70
+32204 de 11 a 25 empregados R$ 709,05
+32204 mais de 25 empregados R$ 725,90
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+32301 De 0 a 5 empregados R$ 236,35
+32301 mais de 5 empregados R$ 362,95
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+32409 De 0 a 5 empregados R$ 236,35
+32409 de 6 a 10 empregados R$ 472,70
+32409 de 11 a 25 empregados R$ 709,05
+32409 mais de 25 empregados R$ 725,90
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+32506 Depósito e reservatório de combustíveis, inflamáveis e explosivos.Não depende R$ 5.444,26
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+32603 De 0 a 50 empregados R$ 1.654,45
+32603 mais de 50 empregados R$ 2.903,60
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+32700 De 0 a 5 empregados R$ 236,35
+32700 de 6 a 10 empregados R$ 472,70
+32700 de 11 a 25 empregados R$ 709,05
+32700 de 26 a 50 empregados R$ 1.654,45
+32700 de 51 a 100 empregados R$ 3.072,55
+32700 Acima de 100 empregados R$ 3.629,51
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+32808 De 0 a 5 empregados R$ 236,35
+32808 de 6 a 10 empregados R$ 472,70
+32808 de 11 a 25 empregados R$ 709,05
+32808 de 26 a 50 empregados R$ 1.654,45
+32808 mais de 50 empregados R$ 1.814,75
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+32905 De 0 a 5 empregados R$ 236,35
+32905 de 6 a 10 empregados R$ 472,70
+32905 de 11 a 25 empregados R$ 709,05
+32905 mais de 25 empregados R$ 725,90
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+33006 De 0 a 5 empregados R$ 236,35
+33006 mais de 5 empregados R$ 362,95
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+33103 De 0 a 5 empregados R$ 236,35
+33103 de 6 a 10 empregados R$ 472,70
+33103 de 11 a 25 empregados R$ 709,05
+33103 de 26 a 50 empregados R$ 1.654,45
+33103 de 51 a 100 empregados R$ 3.072,55
+33103 Acima de 100 empregados R$ 4.355,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+Depósito de produtos químicos sem venda direta ao consumidor.
+Depósito de produtos químicos para venda ao consumidor final exclusivamente 
+no estabelecimento..
+Outras atividades relacionadas com locação e guarda de bens.
+Atividades de administração pública; defesa e seguridade social.
+Serviços públicos concedidos.
+Depósito de combustíveis e congêneres para venda ao consumidor final 
+exclusivamente no estabelecimento.
+Outras atividades relacionadas à intermediação financeira.
+Atividades imobiliárias, aluguéis e serviços prestados às empresas.
+Publicidade
+33200 De 0 a 5 empregados R$ 236,35
+33200 mais de 5 empregados R$ 362,95
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+33308 De 0 a 5 empregados R$ 236,35
+33308 mais de 5 empregados R$ 362,95
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+33405 De 0 a 5 empregados R$ 236,35
+33405 mais de 5 empregados R$ 362,95
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+33502 Vide Nota 2 R$ 236,35
+33502 Vide Nota 3 R$ 1.088,85
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+33600 De 0 a 5 empregados R$ 236,35
+33600 de 6 a 10 empregados R$ 472,70
+33600 de 11 a 25 empregados R$ 709,05
+33600 de 26 a 50 empregados R$ 1.654,45
+33600 mais de 50 empregados R$ 2.177,70
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+33707 De 0 a 5 empregados R$ 236,35
+33707 de 6 a 10 empregados R$ 472,70
+33707 de 11 a 25 empregados R$ 709,05
+33707 mais de 25 empregados R$ 725,90
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+33804 De 0 a 5 empregados R$ 236,35
+33804 mais de 5 empregados R$ 362,95
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+33901 De 0 a 5 empregados R$ 236,35
+33901 de 6 a 10 empregados R$ 472,70
+33901 de 11 a 25 empregados R$ 709,05
+33901 mais de 25 empregados R$ 1.451,80
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+34002 Espetáculos artísticos, rodeios e cinematográficos; parque de diversões; 
+exposição; associação esportiva com estádio. Não depende R$ 4.355,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+34100 Atividades de academias de dança; discotecas, danceterias e similares; Não depende R$ 4.355,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+34207 Competição de corrida de cavalos. Não depende R$ 43.554,12
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+34304 Competição de cavalos na modalidade “trote”. Não depende R$ 8.710,82
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+34401 De 0 a 5 empregados R$ 236,35
+34401 de 6 a 10 empregados R$ 472,70
+34401 de 11 a 25 empregados R$ 709,05
+34401 de 26 a 50 empregados R$ 1.654,45
+34401 de 51 a 100 empregados R$ 3.072,55
+34401 Acima de 100 empregados R$ 4.355,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+34509 De 0 a 5 empregados R$ 236,35
+34509 de 6 a 10 empregados R$ 472,70
+34509 de 11 a 25 empregados R$ 709,05
+Produção de filmes cinematográficos e fitas de vídeo.
+Atividades recreativas, culturais e desportivas.
+Demais atividades e recreativas, culturais e desportivas
+Atividades associativas.
+Educação
+Saúde; serviços sociais e comunitários.
+Serviços pessoais não especificados
+Bilhar, boliche, tiro ao alvo, vitrola automática e outros aparelhos e jogos de distração; locação de 
+quadras para práticas desportivas; pista de patinação e congêneres.
+Limpeza urbana e de esgoto e atividades conexas.
+Demais atividades de limpeza, conservação e reparação de logradouros públicos 
+e de imóveis, exceto serviços domésticos.
+34509 mais dede 25 empregados R$ 725,90
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+34606 De 0 a 5 empregados R$ 236,35
+34606 de 6 a 10 empregados R$ 472,70
+34606 de 11 a 25 empregados R$ 709,05
+34606 de 26 a 50 empregados R$ 1.654,45
+34606 mais de 50 empregados R$ 2.177,70
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+34703 De 0 a 5 empregados R$ 236,35
+34703 mais de 5 empregados R$ 362,95
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+34800 De 0 a 5 empregados R$ 236,35
+34800 mais de 5 empregados R$ 362,95
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+34916 Espetáculo artístico eventual, realizados em locais com capacidade de lotação 
+acima de 10.000 pessoas Não depende R$ 7.259,02
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+34924 Exposições, feiras e demais atividades exercidas em caráter provisório, em 
+período de 6 a 90 dias Não depende R$ 362,95
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+34932 Exposições, feiras e demais atividades exercidas em caráter provisório, em 
+período de até 5 dias Não depende R$ 72,59
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36005 De 0 a 5 empregados R$ 236,35
+36005 de 6 a 10 empregados R$ 472,70
+36005 de 11 a 25 empregados R$ 709,05
+36005 de 26 a 50 empregados R$ 1.654,45
+36005 de 51 a 100 empregados R$ 3.072,55
+36005 Acima de 100 empregados R$ 4.199,34
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36056 De 0 a 5 empregados R$ 236,35
+36056 de 6 a 10 empregados R$ 472,70
+36056 de 11 a 25 empregados R$ 709,05
+36056 de 26 a 50 empregados R$ 1.654,45
+36056 de 51 a 100 empregados R$ 3.072,55
+36056 Acima de 100 empregados R$ 4.199,34
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36102 De 0 a 5 empregados R$ 236,35
+36102 de 6 a 10 empregados R$ 472,70
+36102 de 11 a 25 empregados R$ 709,05
+36102 de 26 a 50 empregados R$ 1.654,45
+36102 de 51 a 100 empregados R$ 3.072,55
+36102 Acima de 100 empregados R$ 4.199,34
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36153 De 0 a 5 empregados R$ 236,35
+36153 de 6 a 10 empregados R$ 472,70
+36153 de 11 a 25 empregados R$ 709,05
+36153 de 26 a 50 empregados R$ 1.654,45
+36153 de 51 a 100 empregados R$ 3.072,55
+36153 Acima de 100 empregados R$ 4.199,34
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+Serviços funerários e conexos.
+Serviços domésticos.
+Demais atividades não discriminadas e não assemelhadas.
+Indústria de alimentos, aditivos, embalagens, gelo, tintas e vernizes para fins 
+alimentícios.
+Envasadora de água mineral e potável.
+Indústria de drogas, medicamentos, insumos farmacêuticos, correlatos, 
+cosméticos, produtos de higiene e perfumes, saneantes domissanitários.
+Cozinhas industriais; embaladoras de alimentos.
+36200 De 0 a 5 empregados R$ 236,35
+36200 de 6 a 10 empregados R$ 472,70
+36200 de 11 a 25 empregados R$ 709,05
+36200 de 26 a 50 empregados R$ 1.654,45
+36200 mais de 50 empregados R$ 2.939,90
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36250 De 0 a 5 empregados R$ 236,35
+36250 de 6 a 10 empregados R$ 472,70
+36250 de 11 a 25 empregados R$ 709,05
+36250 de 26 a 50 empregados R$ 1.654,45
+36250 mais de 50 empregados R$ 2.939,90
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36307 De 0 a 5 empregados R$ 236,35
+36307 de 6 a 10 empregados R$ 472,70
+36307 de 11 a 25 empregados R$ 709,05
+36307 de 26 a 50 empregados R$ 1.654,45
+36307 mais de 50 empregados R$ 1.676,83
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36358 De 0 a 5 empregados R$ 236,35
+36358 de 6 a 10 empregados R$ 472,70
+36358 de 11 a 25 empregados R$ 709,05
+36358 de 26 a 50 empregados R$ 1.654,45
+36358 mais de 50 empregados R$ 1.676,83
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36404 De 0 a 5 empregados R$ 236,35
+36404 de 6 a 10 empregados R$ 472,70
+36404 de 11 a 25 empregados R$ 709,05
+36404 de 26 a 50 empregados R$ 1.654,45
+36404 mais de 50 empregados R$ 1.676,83
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36455 De 0 a 5 empregados R$ 236,35
+36455 de 6 a 10 empregados R$ 472,70
+36455 de 11 a 25 empregados R$ 709,05
+36455 de 26 a 50 empregados R$ 1.654,45
+36455 mais de 50 empregados R$ 1.676,83
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36501 De 0 a 5 empregados R$ 236,35
+36501 de 6 a 10 empregados R$ 472,70
+36501 de 11 a 25 empregados R$ 709,05
+36501 de 26 a 50 empregados R$ 1.654,45
+36501 mais de 50 empregados R$ 1.676,83
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36552 De 0 a 5 empregados R$ 236,35
+36552 de 6 a 10 empregados R$ 472,70
+36552 de 11 a 25 empregados R$ 709,05
+36552 mais de 25 empregados R$ 1.259,44
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36609 De 0 a 5 empregados R$ 236,35
+36609 de 6 a 10 empregados R$ 472,70
+36609 de 11 a 25 empregados R$ 709,05
+Distribuidora ou depósito de alimentos, bebidas, água mineral ou potável.
+Restaurante, churrascaria, rotissserie, pizzaria, padaria, confeitaria e similares.
+Distribuidora com fracionamento de drogas, medicamentos, insumos 
+farmacêuticos, cosméticos, produtos de higiene e perfumes, saneantes 
+domissanitários.
+Aplicadora de produtos saneantes domissanitários.
+Açougue, avícola, peixaria, lanchonete quiosques, “trailer” e pastelaria.
+Mercearia e congêneres.
+Sorveteria.
+Prestadora de serviços de esterilização.
+Supermercado e congêneres.
+36609 mais de 25 empregados R$ 1.259,44
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36650 De 0 a 5 empregados R$ 236,35
+36650 de 6 a 10 empregados R$ 472,70
+36650 de 11 a 25 empregados R$ 709,05
+36650 mais de 25 empregados R$ 1.259,44
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36706 De 0 a 5 empregados R$ 236,35
+36706 de 6 a 10 empregados R$ 472,70
+36706 de 11 a 25 empregados R$ 709,05
+36706 mais de 25 empregados R$ 1.259,44
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36757 De 0 a 5 empregados R$ 236,35
+36757 de 6 a 10 empregados R$ 472,70
+36757 de 11 a 25 empregados R$ 709,05
+36757 mais de 25 empregados R$ 1.259,44
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36803 De 0 a 5 empregados R$ 236,35
+36803 de 6 a 10 empregados R$ 472,70
+36803 de 11 a 25 empregados R$ 709,05
+36803 mais de 25 empregados R$ 1.259,44
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36854 De 0 a 5 empregados R$ 236,35
+36854 de 6 a 10 empregados R$ 472,70
+36854 de 11 a 25 empregados R$ 709,05
+36854 de 26 a 50 empregados R$ 1.654,45
+36854 mais de 50 empregados R$ 2.097,85
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36900 De 0 a 5 empregados R$ 236,35
+36900 de 6 a 10 empregados R$ 472,70
+36900 de 11 a 25 empregados R$ 709,05
+36900 de 26 a 50 empregados R$ 1.654,45
+36900 mais de 50 empregados R$ 1.676,83
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+36951 De 0 a 5 empregados R$ 236,35
+36951 de 6 a 10 empregados R$ 472,70
+36951 de 11 a 25 empregados R$ 709,05
+36951 mais de 25 empregados R$ 838,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37001 De 0 a 5 empregados R$ 236,35
+37001 de 6 a 10 empregados R$ 472,70
+37001 de 11 a 25 empregados R$ 709,05
+37001 de 26 a 50 empregados R$ 1.654,45
+37001 mais de 50 empregados R$ 1.676,83
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37052 De 0 a 5 empregados R$ 236,35
+37052 de 6 a 10 empregados R$ 472,70
+37052 de 11 a 25 empregados R$ 709,05
+37052 de 26 a 50 empregados R$ 1.654,45
+37052 mais de 50 empregados R$ 2.939,90
+Drogaria.
+Comércio de ovos, de bebidas, frutaria, verdura, legumes, quitanda e bar.
+Estabelecimento de assistência médico-hospitalar até 50 leitos.
+Estabelecimento de assistência médico-hospitalar de 51 a 250 leitos.
+Farmácia.
+Comércio de laticínios e embutidos.
+Dispensário, posto de medicamentos e ervanaria.
+Distribuidora sem fracionamento de drogas, medicamentos, insumos 
+farmacêuticos, correlatos, cosméticos, produtos de higiene e perfumes, 
+saneantes domissanitários, casas de artigos cirúrgicos, dentários.
+Depósito fechado de drogas, medicamentos, insumos farmacêuticos, correlatos, 
+cosméticos, perfumes, produtos de higiene, saneantes domissanitários.
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37109 De 0 a 5 empregados R$ 236,35
+37109 de 6 a 10 empregados R$ 472,70
+37109 de 11 a 25 empregados R$ 709,05
+37109 de 26 a 50 empregados R$ 1.654,45
+37109 de 51 a 100 empregados R$ 3.072,55
+37109 Acima de 100 empregados R$ 4.199,34
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37150 De 0 a 5 empregados R$ 236,35
+37150 de 6 a 10 empregados R$ 472,70
+37150 de 11 a 25 empregados R$ 709,05
+37150 mais de 25 empregados R$ 1.259,44
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37206 De 0 a 5 empregados R$ 236,35
+37206 de 6 a 10 empregados R$ 472,70
+37206 de 11 a 25 empregados R$ 709,05
+37206 de 26 a 50 empregados R$ 1.654,45
+37206 mais de 50 empregados R$ 1.676,83
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37257 De 0 a 5 empregados R$ 236,35
+37257 de 6 a 10 empregados R$ 472,70
+37257 de 11 a 25 empregados R$ 709,05
+37257 de 26 a 50 empregados R$ 1.654,45
+37257 mais de 50 empregados R$ 2.097,85
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37303 De 0 a 5 empregados R$ 236,35
+37303 de 6 a 10 empregados R$ 472,70
+37303 de 11 a 25 empregados R$ 709,05
+37303 mais de 25 empregados R$ 1.048,92
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37354 De 0 a 5 empregados R$ 236,35
+37354 de 6 a 10 empregados R$ 472,70
+37354 de 11 a 25 empregados R$ 709,05
+37354 mais de 25 empregados R$ 838,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37400 De 0 a 5 empregados R$ 236,35
+37400 mais de 5 empregados R$ 417,39
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37451 De 0 a 5 empregados R$ 236,35
+37451 de 6 a 10 empregados R$ 472,70
+37451 de 11 a 25 empregados R$ 709,05
+37451 de 26 a 50 empregados R$ 1.654,45
+37451 mais de 50 empregados R$ 2.097,85
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37508 De 0 a 5 empregados R$ 236,35
+37508 de 6 a 10 empregados R$ 472,70
+37508 de 11 a 25 empregados R$ 709,05
+37508 mais de 25 empregados R$ 1.259,44
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37559 De 0 a 5 empregados R$ 236,35
+Instituto ou clínica de fisioterapia, de ortopedia.
+Unidade nefrológica (hemodiálise, diálise peritonial ambulatorial contínua, diálise 
+peritonial intermitente e congêneres).
+Estabelecimento de assistência médico-hospitalar mais de 250 leitos.
+Estabelecimento de assistência médico-ambulatorial.
+Estabelecimento de assistência médica de urgência.
+Serviço ou instituto de hemoterapia.
+Banco de Sangue.
+Agência transfusional.
+Posto de coleta.
+37559 de 6 a 10 empregados R$ 472,70
+37559 de 11 a 25 empregados R$ 709,05
+37559 mais de 25 empregados R$ 1.259,44
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37605 De 0 a 5 empregados R$ 236,35
+37605 de 6 a 10 empregados R$ 472,70
+37605 de 11 a 25 empregados R$ 709,05
+37605 mais de 25 empregados R$ 838,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37656 De 0 a 5 empregados R$ 236,35
+37656 de 6 a 10 empregados R$ 472,70
+37656 de 11 a 25 empregados R$ 709,05
+37656 mais de 25 empregados R$ 838,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37702 De 0 a 5 empregados R$ 236,35
+37702 de 6 a 10 empregados R$ 472,70
+37702 de 11 a 25 empregados R$ 709,05
+37702 mais de 25 empregados R$ 838,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37753 De 0 a 5 empregados R$ 236,35
+37753 mais de 5 empregados R$ 417,39
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37800 De 0 a 5 empregados R$ 236,35
+37800 de 6 a 10 empregados R$ 472,70
+37800 de 11 a 25 empregados R$ 709,05
+37800 mais de 25 empregados R$ 1.048,92
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37850 De 0 a 5 empregados R$ 236,35
+37850 de 6 a 10 empregados R$ 472,70
+37850 de 11 a 25 empregados R$ 709,05
+37850 mais de 25 empregados R$ 838,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37907 De 0 a 5 empregados R$ 236,35
+37907 mais de 5 empregados R$ 417,39
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+37958 De 0 a 5 empregados R$ 236,35
+37958 de 6 a 10 empregados R$ 472,70
+37958 de 11 a 25 empregados R$ 709,05
+37958 mais de 25 empregados R$ 838,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+38008 De 0 a 5 empregados R$ 236,35
+38008 de 6 a 10 empregados R$ 472,70
+38008 mais de 10 empregados R$ 627,90
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+38059 De 0 a 5 empregados R$ 236,35
+38059 de 6 a 10 empregados R$ 472,70
+38059 de 11 a 25 empregados R$ 709,05
+38059 mais de 25 empregados R$ 1.469,95
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+38105 De 0 a 5 empregados R$ 236,35
+Demais estabelecimento de assistência odontológica.
+Instituto de beleza com responsabilidade médica.
+Instituto de beleza com pedicuro/podólogo.
+Instituto de massagem, de tatuagem, ótica e laboratório de ótica.
+Posto de coleta de laboratório de análises clínicas, patologia clínica, hematologia clínica, anatomia 
+patológica, citologia, líquido céfalo-raquidiano e congêneres.
+Banco de olhos, órgãos, leite e outras secreções.
+Estabelecimento que se destina à prática de esportes com responsabilidade 
+médica.
+Estabelecimento que se destina ao transporte de pacientes.
+Clínica médico-veterinária.
+Consultório odontológicos.
+Laboratório de análises clínicas, patologia, clínica, hematologia clínica, anatomia, 
+citologia, líquido céfalo-raquidiano e congêneres.
+38105 de 6 a 10 empregados R$ 472,70
+38105 de 11 a 25 empregados R$ 709,05
+38105 mais de 25 empregados R$ 838,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+38156 De 0 a 5 empregados R$ 236,35
+38156 de 6 a 10 empregados R$ 472,70
+38156 de 11 a 25 empregados R$ 709,05
+38156 de 26 a 50 empregados R$ 1.654,45
+38156 mais de 50 empregados R$ 1.676,83
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+38202 De 0 a 5 empregados R$ 236,35
+38202 de 6 a 10 empregados R$ 472,70
+38202 mais de 10 empregados R$ 627,90
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+38253 De 0 a 5 empregados R$ 236,35
+38253 de 6 a 10 empregados R$ 472,70
+38253 de 11 a 25 empregados R$ 709,05
+38253 mais de 25 empregados R$ 838,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+38300 De 0 a 5 empregados R$ 236,35
+38300 de 6 a 10 empregados R$ 472,70
+38300 de 11 a 25 empregados R$ 709,05
+38300 mais de 25 empregados R$ 1.259,44
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+38350 De 0 a 5 empregados R$ 236,35
+38350 de 6 a 10 empregados R$ 472,70
+38350 de 11 a 25 empregados R$ 709,05
+38350 mais de 25 empregados R$ 838,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+38407 De 0 a 5 empregados R$ 236,35
+38407 de 6 a 10 empregados R$ 472,70
+38407 de 11 a 25 empregados R$ 709,05
+38407 mais de 25 empregados R$ 1.259,44
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+38458 De 0 a 5 empregados R$ 236,35
+38458 de 6 a 10 empregados R$ 472,70
+38458 de 11 a 25 empregados R$ 709,05
+38458 mais de 25 empregados R$ 838,41
+Código do Estabelecimento Descrição - TFE Número de empregados (vide Nota 1) Valor
+38504 De 0 a 5 empregados R$ 236,35
+38504 de 6 a 10 empregados R$ 472,70
+38504 de 11 a 25 empregados R$ 709,05
+38504 mais de 25 empregados R$ 1.259,44
+Nota 4 : Locação de quadras para práticas desportivas, pista de patinação e congêneres.
+Casa de repouso e de idosos, com responsabilidade médica.
+Casa de repouso e de idosos, sem responsabilidade médica.
+Demais estabelecimentos prestadores de serviços relacionados à saúde, não 
+especificados ou assemelhados, sujeitos à fiscalização sanitária.
+Laboratório ou oficina de prótese dentária.
+Serviço de medicina nuclear in vivo.
+Serviço de medicina nuclear in vitro.
+Serviço de radiologia médica/odontológica.
+Serviço de radioterapia.
+Serviço de radioterapia com conjunto de fontes.
+Nota 1 : Número de empregados em 01/01/2002, se data de início de funcionamento da empresa for menor que 01/01/2003;caso contrário, considerar número de 
+empregados em 01/01/2007.
+Nota 2 : Bilhar, boliche, tiro ao alvo, vitrola automática e outros aparelhos de distração, até 4 unidades.
+Nota 3 : Bilhar, boliche, tiro ao alvo, vitrola automática e outros aparelhos de distração, com mais de 4 unidades.

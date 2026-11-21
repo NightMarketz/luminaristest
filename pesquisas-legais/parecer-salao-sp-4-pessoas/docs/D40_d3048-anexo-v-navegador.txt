@@ -1,0 +1,26 @@
+Decreto nº 3.048, de 6 de maio de 1999 (Regulamento da Previdência Social) — captura pelo navegador embutido
+Motivo: o decreto não está no acervo ctresb/leis (federal/decretos/1999 pula de dec-3047 para dec-3049) e o
+legal.py baixar deu timeout no planalto.gov.br (WinError 10060) em 20/11/2026; normas.leg.br devolveu casca JS (D32).
+Capturado em 2026-11-20 ~18:50 -03:00. SHA-256 calculado no navegador sobre document.body.innerText (UTF-8).
+
+[1] https://www.planalto.gov.br/ccivil_03/decreto/d3048.htm
+    innerText: 1.028.567 caracteres · SHA-256 e5b2a96563dce865ea0d686ef2ffe68a33e6f323732f06f17cfa7fa812c4d971
+    Trecho literal (art. 202):
+    "§ 3º  Considera-se preponderante a atividade que ocupa, em cada estabelecimento da empresa, o maior número de
+    segurados empregados e de trabalhadores avulsos.   (Redação dada pelo Decreto nº 10.410, de 2020)"
+    "§ 4º A atividade econômica preponderante da empresa e os respectivos riscos de acidentes do trabalho compõem a
+    Relação de Atividades Preponderantes e correspondentes Graus de Risco, prevista no Anexo V."
+    "§ 5o  É de responsabilidade da empresa realizar o enquadramento na atividade preponderante, cabendo à Secretaria da
+    Receita Previdenciária do Ministério da Previdência Social revê-lo a qualquer tempo. (Redação dada pelo Decreto nº 6.042, de 2007)"
+    Link do anexo no fim da página: "Download para Regulamento da Previdência Social anexo V" ->
+    https://www.planalto.gov.br/ccivil_03/decreto/D3048anexov-vol1.htm
+
+[2] https://www.planalto.gov.br/ccivil_03/decreto/D3048anexov-vol1.htm
+    innerText: 103.261 caracteres · SHA-256 bb02d1a5b917bf273154379c4ba63bc152f6f75bc9a20648b15d66c498227ac8
+    Cabeçalho literal: "ANEXO V (Redação dada pelo Decreto nº 10.410, de 2020 / RELAÇÃO DE ATIVIDADES PREPONDERANTES E
+    CORRESPONDENTES GRAUS DE RISCO CONFORME A CLASSIFICAÇÃO NACIONAL DE ATIVIDADES ECONÔMICAS / CNAE 2.3 / Descrição / Alíquota (%)"
+    Trecho literal (células separadas por |):
+    "9601-7/02 | Tinturarias | 3 | 9601-7/03 | Toalheiros | 3 | 9602-5/01 | Cabeleireiros, manicure e pedicure | 2 |
+    9602-5/02 | Atividades de estética e outros serviços de cuidados com a beleza | 2 | 9603-3/01 | Gestão e manutenção de cemitérios | 3"
+    Observação: a página traz no topo o rótulo "(Redações anteriores)", mas o próprio anexo se declara na redação do
+    Decreto nº 10.410/2020; não foi achada redação posterior na página principal [1].
