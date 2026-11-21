@@ -295,4 +295,14 @@ describe('FiscalProfileService.upsert — insumoExpenseAccountId (ITEM-DESTINATI
     const evt = (append.mock.calls[0] as unknown[])[2] as { eventType: string; payload: Record<string, unknown> };
     expect(JSON.parse(canonicalizeAuditPayload(evt.eventType, evt.payload))).toMatchObject({ insumoExpenseAccountId: 'acc-1' });
   });
+
+  // Lacuna L-20261121-034042-051e (dono, AskUserQuestion, 2026-11-21: opção (a)): a DRE classifica por código, então a conta de
+  // insumo precisa ser uma folha que a regra da DRE já põe em costOfGoodsSold. Despesa operacional (4.1.9) ficaria abaixo do
+  // lucro bruto (NBC TG 1002 item 5.1 (d)).
+  it('despesa folha fora do custo da DRE (4.1.9) → 400 nomeado, nada gravado', async () => {
+    const { svc, repo, accounts } = build();
+    (accounts.findById as jest.Mock).mockResolvedValue(acc({ code: '4.1.9' }));
+    await expect(svc.upsert(scope, { ...base, insumoExpenseAccountId: 'acc-1' })).rejects.toThrow(/não é custo na DRE/);
+    expect(repo.upsert).not.toHaveBeenCalled();
+  });
 });
