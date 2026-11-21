@@ -189,6 +189,25 @@ export function codigoPosL8(code: string): string {
   return RENOMEACAO_CANONICA_L8.find((r) => r.de === code)?.para ?? code;
 }
 
+/** Código reservado ao plano padrão: o sistema cria (ou restaura) a conta; a criação manual o recusa (lacuna ad40). */
+export function isCodigoDoPlanoPadrao(code: string): boolean {
+  return CANONICAL_ACCOUNTS.some((c) => c.code === code);
+}
+
+const nomeNormalizado = (nome: string): string =>
+  nome.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+/**
+ * Lacuna ad40 (dono, chat, 2026-11-21: "Nome/natureza + recusar"): o plano padrão é create-if-missing por código, então
+ * uma conta do usuário criada com um código que depois virou canônico fica no lugar. O complemento de sistema (papel do
+ * perfil fiscal, referencial RFB) só a trata como a folha canônica quando nome (sem caixa, acento nem espaço extra) e
+ * natureza batem com a definição; senão o papel/referencial fica para configuração manual.
+ */
+export function isContaDoPlanoPadrao(account: { code: string; name: string; nature: string }): boolean {
+  const canonica = CANONICAL_ACCOUNTS.find((c) => c.code === account.code);
+  return !!canonica && canonica.nature === account.nature && nomeNormalizado(canonica.name) === nomeNormalizado(account.name);
+}
+
 /** Natureza que entra na REGRA_VALIDA_NIVEL_CONTAS (Manual ECD L9 p. 120): COD_NAT 01/02/03. */
 export const PATRIMONIAL_NATURES: ReadonlyArray<AccountNature> = ['Asset', 'Liability', 'Equity'];
 
