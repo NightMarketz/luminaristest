@@ -103,6 +103,7 @@ describe('ITEM-DESTINATION PR-2 — default por produto (Prisma real)', () => {
     await criarConta('4.1.9', 'Insumos do serviço', 'Expense');
     const profile = await request(app).put('/api/accounting/fiscal-profile').set(authHeader(dono)).send({
       unitId: UNIT, regimeTributario: 'REAL', icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO',
+      pisCofinsCreditMonofasicoInsumo: false, // c516: chave do monofásico-insumo desligada — o oráculo deste arquivo (feito à mão) é anterior à chave; o crédito novo tem guarda própria em nfeCost.test.ts
       icmsRecuperavelAccountId: accounts['1.1.8'], pisCofinsRecuperavelAccountId: accounts['1.1.9'], insumoExpenseAccountId: accounts['4.1.9'],
     });
     expect(profile.status).toBe(200);

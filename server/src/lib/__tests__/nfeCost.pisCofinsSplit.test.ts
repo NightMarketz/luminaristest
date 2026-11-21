@@ -17,6 +17,7 @@ const regime = (over: Partial<CostRegime> = {}): CostRegime => ({
   pisCofinsCreditExcludesIcms: true,
   pisCofinsCreditIncludesIpi: false,
   pisCofinsCreditFromSimplesSupplier: false,
+  pisCofinsCreditMonofasicoInsumo: false,
   ...over,
 });
 
