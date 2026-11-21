@@ -134,5 +134,85 @@ para outra worktree (L-20261120-220811-4e7d).
 `scripts/lacunas.mjs` na VERSAO 3 (cópia global reinstalada). A caixa de 21/11 não foi triada por esta emenda: o primeiro
 `triar` é do maestro, no ciclo seguinte.
 
+## Emenda de 21/11 (2): o despacho medido, e o que o dono decidiu
+
+Dono, chat, 2026-11-21: "Da pra refinar essa regra muito mais"; no questionário do mesmo dia: dreno → "Cartão de dreno";
+rodadas → "Sim, marcada"; lacunas no mesmo arquivo → "Planeja como resolver tudo no macro em vez de vários remendos";
+caixa real → "Rodar agora"; em seguida, "BRIEF de grupo sem fork pode executar sem a sua ratificação?" → "Sim, executa".
+
+**Medido em 21/11, no `historico` de cada lacuna (VERSAO 4 do script):**
+- **O passo 3b quase não rodou.** Nenhuma lacuna passou por `em-sessao` antes de 20/11 (5 em 20/11, 5 em 21/11). O caminho
+  mais comum foi `aberta → em-pr` (35), levado por sessões que pegaram a lacuna sozinhas. O dreno da caixa depende de
+  uma sessão maestro aberta pelo dono; sem ela, nada anda.
+- **O estado ficou atrás do GitHub.** 24 de 40 `em-pr` tinham PR mergeado; 21 desses PRs tocavam o arquivo da lacuna, 3
+  não (conferido à mão, e o `sincronizar` chegou nos mesmos 3). Ninguém passava `em-pr → resolvida` no merge.
+- **`com-dono` não tinha saída.** `L-…-051e` dizia "Fork respondido" e seguia `com-dono`; `L-…-4521` estava lá havia 9 dias.
+- **A idade contava da criação.** Lacuna reaberta parecia velha, e `em-sessao` de sessão morta nunca aparecia.
+- **Rodadas despejam em lote.** 34 lacunas em 2 min do teste de navegador de 13/11 (~20 viraram PR mergeado) e 13 da
+  triagem de regras de 20/11.
+- **Várias lacunas por arquivo.** 6 não finais em `PostingService.ts`, 5 no simulador do salão.
+
+Aplicado na caixa real em 21/11 (dono: "Rodar agora"): `sincronizar` resolveu 22, deixou 3 em `conferir` (37cb, 7199,
+7cfa); `triar` mandou 11 forks e gates a `com-dono`. Depois disso: 45 `aberta`, 19 `em-pr`, 14 `com-dono`, 53 `resolvida`.
+
+### Regra nova
+
+1. **`sincronizar` antes de tudo no ciclo.** Lê o GitHub: PR mergeado **que toca o arquivo da lacuna** → `resolvida`;
+   mergeado sem tocar → fica e sai em "conferir" (o maestro lê o diff e decide; o #1240 mergeou sem corrigir a 8a05);
+   fechado sem merge → `aberta`; `em-sessao` com PR aberto → `em-pr`. Lacuna antiga sem campo `pr` tem o número lido
+   do destino, só se o PR existir.
+2. **Parada é tempo no estado atual, em todo estado não final:** `aberta` 3 d, `em-sessao` 2 d (sessão morreu sem PR),
+   `com-dono` 3 d (pergunta não respondida, ou respondida e não devolvida), `em-pr` 7 d. `list --paradas` lista; o
+   resumo do dia dá o motivo de cada uma.
+3. **Saída de `com-dono`.** Resposta do dono a um fork ou gate devolve a lacuna à fila no mesmo ciclo:
+   `set <id> --estado aberta --classe <a que a resposta definiu> --destino "dono, <data>: <resposta>"`, ou `descartada`
+   com o motivo. A resposta vira cédula em `docs/plano/decisoes/` quando decide produto, lei ou arquitetura, como
+   qualquer fork.
+4. **Cartão de dreno (dono: "Cartão de dreno").** Toda sessão que registra lacuna roda `lacunas.mjs pulso` antes do
+   relatório. Se ele imprimir `DRENO` (há lacuna aberta e nenhum despacho a `em-sessao` há 1 dia ou mais), a sessão propõe
+   **um** cartão (`start_session`, `own_initiative`) "Drenar a caixa de lacunas (N abertas)", cujo brief é rodar o ciclo
+   do `.claude/prompts/maestro.md` a partir do passo 3b, e roda `pulso --marcar-dreno`. Por 1 dia nenhuma outra sessão
+   propõe o cartão de novo. O dono inicia o cartão. Sessão nascida de cartão proposto por outra sessão pode ter o
+   `start_session` recusado (só propõe cartões, como em 21/10); o brief do cartão manda, nesse caso, pedir ao dono uma
+   linha no próprio chat ("inicia"), que destrava os turnos seguintes.
+5. **Rodada marcada (dono: "Sim, marcada").** Rodada de revisão **autorizada pelo dono** registra seus achados com
+   `--rodada <nome>`. Não é "sair procurando": a rodada já foi pedida, e a caixa é onde o achado dela vira trabalho. O
+   maestro trata a rodada como **grupo** (item 6) e despacha os achados do caminho de uma tarefa antes dos de rodada.
+   Sessão que não foi pedida como rodada continua sem sair procurando.
+6. **Grupo vai a planejamento macro (dono: "Planeja como resolver tudo no macro em vez de vários remendos").**
+   `list --grupos` liga as lacunas não finais por arquivo em comum ou pela mesma rodada, transitivamente. Para cada grupo
+   de 2 ou mais, depois do `triar`:
+   - **uma** `sessao-planejamento` do grupo, com o id de todas as lacunas no brief. O BRIEF resolve o conjunto pela causa
+     comum (refatoração, contrato, componente) e não por um remendo por linha. Ele lista, para cada lacuna, o item que a
+     fecha e o comando que prova;
+   - **BRIEF de grupo sem fork executa sem ratificação** (dono, chat, 21/11, à pergunta "BRIEF de grupo sem fork pode
+     executar sem a sua ratificação?": "Sim, executa"). Essa resposta é a autorização citável (ORCH-006) para esse
+     BRIEF; o maestro não ratifica nada, aplica a resposta do dono. "Sem fork" é binário: a seção de forks do BRIEF está
+     vazia **e** nenhuma lacuna do grupo está `com-dono`. Aí o maestro abre a `sessao-feature` do BRIEF, citando essa
+     linha no brief, no mesmo ciclo. Com um fork que seja, o BRIEF vai à pergunta do dia com os forks e a execução espera
+     a resposta. Em qualquer caso: um PR por item; com 2+ PRs nos mesmos arquivos, `integration/<slug>` (regra de 10/11);
+     o merge segue a classe de risco (vermelho continua no lote do dono). A dispensa vale só para BRIEF de grupo de
+     lacunas da caixa, não para BRIEF de nó do plano;
+   - **só as `aberta` do grupo** passam a `em-sessao` com o destino "planejamento do grupo <slug>". As `com-dono` ficam com
+     o dono e entram no BRIEF como fork pendente; as `em-sessao`/`em-pr` seguem a sessão ou o PR delas, e o BRIEF as cita
+     para não colidir.
+   Lacuna **isolada** segue a tabela §2 como antes.
+7. **O `add` não bloqueia por qualidade, só avisa.** A fraqueza da regra é a lacuna que não entra. O `add` avisa (stderr),
+   sem recusar, quando: o arquivo não existe na checkout (trabalho não commitado; grava `arquivoForaDaCheckout` e o
+   maestro abre a sessão na branch de origem ou espera o merge dela); já há lacuna não final no mesmo arquivo (o grupo
+   do item 6); `defeito`/`debito` vem sem `--como-provar`. Continuam recusados: sem `--local`, sem `--evidencia`, classe
+   fora da lista, `--local` fora da raiz da checkout (emenda anterior).
+
+### Fora desta emenda (não decidido aqui)
+
+- **#1223 em aberto** (`D-2026-11-10-METODO-FABLE-5-2`) junta instrumentação e correção numa sessão só, com commits `test:`
+  e `fix:`. Se mergear, a linha `defeito/debito` da tabela §2 passa a ser essa sessão única; o resto desta emenda não muda.
+  O #1223 também edita `maestro.md` e `_OPERATING-GATES.md`: quem mergear o segundo resolve o conflito de texto.
+- **Fragmentos do GAP-MAP** (`D-2026-11-10-BRANCH-DE-INTEGRACAO-E-GAP-MAP-POR-FEATURE` regra 2, BRIEF pendente): quando a
+  migração rodar, a caixa continua sendo a **entrada** (achado ainda não triado) e o fragmento passa a ser o **mapa**
+  (estado derivado de comando). O `sincronizar` cobre o intervalo até lá; a passagem caixa → fragmento é do BRIEF.
+- **Conferir mecanicamente que toda linha "fora de escopo" de relatório tem id na caixa:** seria gate novo, barrado pela
+  moratória (`CLAUDE.md` §⛔). Fica como está: 1ª linha `LACUNAS NA CAIXA` e o revisor.
+
 - **Fora do alcance:** sessão na nuvem não enxerga o `.git` desta máquina. Lacuna achada lá continua indo na seção
   "Achados fora de escopo" do relatório e do PR, e quem recebe o resultado aqui põe na caixa.
