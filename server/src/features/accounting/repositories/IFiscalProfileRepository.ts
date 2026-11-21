@@ -8,6 +8,7 @@ export interface FiscalProfileData {
   pisCofinsCreditExcludesIcms: boolean;
   pisCofinsCreditIncludesIpi: boolean;
   pisCofinsCreditFromSimplesSupplier: boolean;
+  pisCofinsCreditMonofasicoInsumo: boolean; // lacuna c516
   icmsRecuperavelAccountId?: string | null;
   pisCofinsRecuperavelAccountId?: string | null;
   // X7 Fase A (BRIEF item 3, F-TA-6 a)

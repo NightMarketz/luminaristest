@@ -36,6 +36,7 @@ export interface FiscalProfileView {
   pisCofinsCreditExcludesIcms: boolean;
   pisCofinsCreditIncludesIpi: boolean;
   pisCofinsCreditFromSimplesSupplier: boolean;
+  pisCofinsCreditMonofasicoInsumo: boolean;
   icmsRecuperavelAccountId: string | null;
   pisCofinsRecuperavelAccountId: string | null;
   insumoExpenseAccountId: string | null;
