@@ -29,6 +29,22 @@ atualizado: "2026-11-21"
 
 ## Forks do BRIEF (F-ICR-1..10)
 
-Pendentes na criação desta nota. As respostas do questionário vão para a seção abaixo, com a resposta literal.
+O dono ratificou os dez no questionário (AskUserQuestion) de 21/11, na sessão de planejamento do nó, em três rodadas.
+As perguntas tinham o contexto de cada fork.
 
 ## Respostas
+
+| Fork | Resposta literal | Efeito |
+|---|---|---|
+| F-ICR-1 | "Inclui o Simples impedido (Recomendado)" | RPA = Presumido/Real com IE + Simples impedido pelo sublimite; `icmsApuracao` derivado |
+| F-ICR-2 | "Livro de saída + XML externo (Recomendado)" | Débito pelas notas de saída (emitidas e importadas); venda sem nota → alerta |
+| F-ICR-3 | "Model novo IcmsApuracao (Recomendado)" | Tabela própria com o quadro do RICMS/SP art. 87 III e o saldo credor transportado |
+| F-ICR-4 | "Um lançamento por nota" — **contra a recomendação (a)** | Débito no razão nota a nota (`sourceType='icms_saida'`); a apuração lança só ajustes e compensação (BRIEF itens 23 e 23b, invariante 5) |
+| F-ICR-5 | "Planejar já, atrás de chave (Recomendado)" | ST de substituto no PR-6, atrás de `icmsStSubstituto`, só com IVA-ST `PUBLISHED`. Supera o F-ICMS-3 (b) |
+| F-ICR-6 | "Calcular, com trava de fonte (Recomendado)" | Antecipação calculada (ou alerta sem IVA-ST); complemento e ressarcimento só com a CAT 42/2018 transcrita |
+| F-ICR-7 | "Automático pelo estoque (Recomendado)" | Crédito médio por unidade no estoque; perda gera estorno |
+| F-ICR-8 | "Pilha em integration/icms-rpa (Recomendado)" | 9 PRs empilhados em `integration/icms-rpa` |
+| F-ICR-9 | "Política do contador, padrão 'fora' (Recomendado)" | `icmsBaseIncluiIbsCbs` na política versionada, padrão `false`, com aviso; a pergunta vai ao tributarista |
+| F-ICR-10 | "Absorver neste nó, BRIEF próprio (Recomendado)" | A EFD ICMS/IPI é a fase final do ICMS-EFD, com BRIEF e autorização próprios; lacuna `3b81` (metade ICMS/IPI) aponta para cá |
+
+**Não é "executa".** Cada PR do BRIEF precisa de pedido próprio do dono.

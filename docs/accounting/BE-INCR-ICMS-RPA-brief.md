@@ -1,8 +1,9 @@
 # BE-INCR-ICMS-RPA — BRIEF (nó ICMS-EFD): ICMS próprio e ICMS-ST da revenda no regime periódico de apuração (RPA), SP primeiro
 
 - **Data:** 2026-11-21 · **Sessão:** `sessao-planejamento` (agente) · **Base:** `origin/main` = `43719baaf`
-- **Status:** BRIEF escrito; forks F-ICR-1..10 **RATIFICAÇÃO PENDENTE** (levados ao dono por questionário nesta sessão;
-  as respostas, se vierem, ficam em [[D-2026-11-21-ICMS-RPA-GO-LIVE-2027]] e na §5). **Sem código, sem "executa".**
+- **Status:** BRIEF escrito. Forks F-ICR-1..10 **RATIFICADOS pelo dono no questionário de 21/11**
+  ([[D-2026-11-21-ICMS-RPA-GO-LIVE-2027]]): nove na recomendação e **F-ICR-4 → (b), contra a recomendação**
+  (débito lançado nota a nota). O item 23 foi reescrito para o (b). **Sem código, sem "executa".**
 - **Dossiê legal:** [`pesquisas-legais/icms-revenda-regime-normal-sp/relatorio.md`](../../pesquisas-legais/icms-revenda-regime-normal-sp/relatorio.md)
   (D01–D30; as referências `[Dnn]` abaixo são desse dossiê).
 - **PRE-ADR de origem:** [`PRE-ADR-ICMS-IPI-EFD.md`](PRE-ADR-ICMS-IPI-EFD.md) (10/10; F-ICMS-0..14 ratificados em lote
@@ -56,12 +57,12 @@ deste nó é conta certa sem efeito legal (F-ICR-10).
 | F-ICMS-2 UFs | (a) SP primeiro, UF como dado; interestadual nacional | **Mantido** (itens 2–3) |
 | F-ICMS-3 ST | (b) só substituído; substituto só com tenant substituto | **Reaberto: F-ICR-5** |
 | F-ICMS-4 DIFAL | (b) só o de entrada; o de saída fica com o e-commerce | **Mantido.** Em SP, o DIFAL de entrada do RPA entra na própria apuração (RICMS/SP art. 117 [D15]); item 16 |
-| F-ICMS-5 FCP | (a) linha na tabela de alíquota | **Mantido**, com a pergunta de lei L-ICMS-9 em aberto (§6) |
+| F-ICMS-5 FCP | (a) linha na tabela de alíquota | **Mantido**, com a pergunta de lei L-ICMS-9 em aberto (§8) |
 | F-ICMS-6 IPI | (b) só registrar a entrada | **Mantido** (fora deste BRIEF) |
 | F-ICMS-7 Bloco H/K | (a) H do estoque, K fora | **Mantido.** É da EFD (F-ICR-10), não da apuração |
 | F-ICMS-8 CIAP | (a) quando o gatilho disparar | **Mantido.** O gatilho disparou, e o CIAP vira o PR-7 |
 | F-ICMS-9 GIA/DeSTDA | (b) fora em SP | **Mantido.** A GIA está dispensada no RPA de SP desde 2026 |
-| F-ICMS-10 Simples fora do DAS | (a) restrita ao DIFAL "h"/antecipação "g" 2 | **Fora deste nó**, porque é Simples. Vai à caixa como lacuna (§8) |
+| F-ICMS-10 Simples fora do DAS | (a) restrita ao DIFAL "h"/antecipação "g" 2 | **Fora deste nó**, porque é Simples. Vai à caixa como lacuna (§10) |
 | F-ICMS-11 fonte das tabelas | (a) `LegalParameter` | **Mantido** (itens 2–5) |
 | F-ICMS-12 operação fiscal | (a) catálogo fechado em código → CFOP/CST | **Mantido** (item 11) |
 | F-ICMS-13 livro fiscal | (a) `FiscalBookEntry/Item` | **Mantido; nasce aqui** (divergência 4) |
@@ -97,7 +98,7 @@ deste nó é conta certa sem efeito legal (F-ICR-10).
 | Vencimento: dia do Anexo IV pelo código de prazo; o CPR é atribuído pela SEFAZ pela CNAE; CPR 1200 = dia 20 do mês seguinte; CNAE 47725 e 96025 no CPR 1200; ST retida → CPR 1200 | RICMS/SP arts. 112, 114 [D11]; Anexo IV arts. 2º VI, 3º V, § 1º [D20] | verificado; prorrogação em dia sem expediente (art. 566 [D26]) baixada e não lida |
 | Alíquotas: 18% interna geral; 12% e 7% interestaduais; 4% importado; **25% para perfumes e cosméticos (3303, 3304, 3305, 3307, com exceções)** | RICMS/SP arts. 52 I–III e § 2º, 55 IV [D03] | verificado, com ressalva: a página da SEFAZ intercala redações antigas sem marcar o que está riscado, e o art. 55 IV aparece numa redação só |
 | ST: o substituto recolhe (alíquota interna × base da ST) − imposto próprio; a base é o preço final fixado (40-A), o preço praticado + IVA-ST (41) ou o preço sugerido divulgado (43) | LC 87 arts. 6º, 8º, 9º [D01]; RICMS/SP arts. 40-A, 41, 43, 268 [D21, D10] | verificado |
-| Lista das mercadorias sob ST em SP (com CEST): **Portaria CAT 68/2019**, Anexos I–XXII. O Anexo XI (perfumaria/higiene) foi revogado desde 01/04/2026 (SRE 94/2025), e a SRE 09/26 revoga mais itens a partir de 01/07/2026 | [D16] | verificado. **O percentual do IVA-ST não está na CAT 68**: sai em portarias SRE por setor (nota do art. 43 [D21]; Comunicado SRE-08/22) — insumo ausente (§7) |
+| Lista das mercadorias sob ST em SP (com CEST): **Portaria CAT 68/2019**, Anexos I–XXII. O Anexo XI (perfumaria/higiene) foi revogado desde 01/04/2026 (SRE 94/2025), e a SRE 09/26 revoga mais itens a partir de 01/07/2026 | [D16] | verificado. **O percentual do IVA-ST não está na CAT 68**: sai em portarias SRE por setor (nota do art. 43 [D21]; Comunicado SRE-08/22) — insumo ausente (§9) |
 | Substituído: saída sem destaque, com a indicação do art. 274; entrada com o ST nas "Observações", sem crédito | RICMS/SP arts. 274, 278 [D14, D24] | verificado |
 | Complemento pelo substituído quando a venda final supera a base da retenção (Lei 17.293/20) | RICMS/SP art. 265 [D23] | verificado no caput; a disciplina (Portaria CAT 42/2018) não foi lida |
 | Ressarcimento (venda final abaixo da base, fato gerador não realizado, saída isenta, saída interestadual) | RICMS/SP art. 269 [D12]; Portaria CAT 42/2018 (não lida) | verificado no art. 269 |
@@ -139,7 +140,7 @@ Regra 3: item com regra legal cita a fonte. Item que depende de fork leva o fork
    3305.10.00 → 1800; NCM sem linha → faltante.
 2. **[direto]** Tabela `ICMS_ALIQ_INTERESTADUAL` (nacional): chave `ufOrigem-ufDestino`, discriminador `origem`
    (0–8), valor em bp. Fontes: RICMS/SP art. 52 II, III e § 2º [D03] para a saída de SP; Res. Senado 22/1989 e 13/2012
-   para as outras UFs, **insumo ausente** (§7). As linhas de origem fora de SP ficam `DRAFT` até a transcrição.
+   para as outras UFs, **insumo ausente** (§9). As linhas de origem fora de SP ficam `DRAFT` até a transcrição.
    Teste: SP→RJ = 1200; SP→BA = 700; origem 1 (importado) = 400.
 3. **[direto]** Tabela `ICMS_ST_NCM_UF` regenerada por script a partir da Portaria CAT 68/2019 vigente (todos os
    anexos, com CEST, vigência e revogações, inclusive o Anexo XI até 31/03/2026 e os itens da SRE 09/26 até
@@ -147,12 +148,13 @@ Regra 3: item com regra legal cita a fonte. Item que depende de fork leva o fork
    do Anexo XI em 2026-03-31 → linha; em 2026-04-01 → nenhuma.
 4. **[direto]** Tabela `ICMS_PRAZO_CPR`: chave UF, discriminador CPR, valor `{ regra: 'DIA_MES_SEGUINTE', dia }`.
    Fonte: RICMS/SP art. 112 [D11] e Anexo IV art. 2º [D20]. Só os CPRs que o Anexo IV art. 2º lista. A prorrogação
-   para dia útil fica pendente (art. 566 não lido, §6). Teste: CPR 1200 em out/2026 → 20/11/2026.
+   para dia útil fica pendente (art. 566 não lido, §8). Teste: CPR 1200 em out/2026 → 20/11/2026.
 5. **[F-ICR-1, F-ICR-4]** Perfil da unidade (`FiscalProfile`, migração aditiva):
    - `icmsApuracao: 'SIMPLES_DAS' | 'RPA'`, **derivado e não digitado** (F-ICR-1);
    - `icmsCpr` (4 dígitos, obrigatório quando RPA; o padrão sai da CNAE pelo Anexo IV art. 3º, com o valor informado
      prevalecendo);
-   - contas do contador (`icmsDeducaoAccountId` Revenue, `icmsRecolherAccountId` Liability; mais tarde
+   - contas do contador (`icmsDeducaoAccountId` Revenue, `icmsRecolherAccountId` Liability,
+     `icmsDifalCustoAccountId` Expense/Asset do DIFAL de uso e consumo ou ativo; mais tarde
      `icmsStRecolherAccountId` e `icmsCiapAccountId`);
    - `icmsStSubstituto` (bool, só se F-ICR-5 ≠ c).
    `icmsContribuinte` **mantém** o sentido de "crédito na compra" (X6). Regra nova no `refineFiscalProfile`: RPA sem
@@ -197,8 +199,11 @@ Regra 3: item com regra legal cita a fonte. Item que depende de fork leva o fork
       (rej. 5xx).
     - CST 40/41/60 → sem destaque (art. 274 [D14]).
     - IS: a partir de 2027 entra na base (art. 13 § 1º III), mas só quando houver IS na nota (fora do salão).
-    - IBS/CBS na base: **F-ICR-9**.
-    Teste: tabela de casos com o centavo de arredondamento.
+    - IBS/CBS na base: **F-ICR-9 → (a)**. Chave `icmsBaseIncluiIbsCbs` na política versionada do contador
+      (`AccountingPolicyVersion`, molde F-E6-1), com padrão `false` (fora, como o leiaute). Com a chave `false`, a
+      nota CRT 3 de fato ≥ 2027 com grupo `IBSCBS` leva o aviso `ICMS_BASE_SEM_IBS_CBS_CONFERIR` até o contador
+      confirmar. Com `true`, o `vBC` soma `vIBS + vCBS` do item. A pergunta exata ao tributarista está no §8 item 8.
+    Teste: tabela de casos com o centavo de arredondamento, e a mesma venda com a chave `false` × `true`.
 13. **[direto]** `nfeMontagem` aceita CRT 3: grupos `ICMS00`, `ICMS20`, `ICMS40`, `ICMS60` (`vBCSTRet`/`vICMSSTRet`
     = os da última entrada do item, se o livro tiver; senão zero com aviso, porque o leiaute admite) e `ICMSTot`
     somado (`vBC`, `vICMS`, `vBCST`, `vST`). `CRT3_ICMS_SEM_SPEC` sai. O `NfePayloadDto` ganha os subgrupos com as regras
@@ -238,10 +243,11 @@ Regra 3: item com regra legal cita a fonte. Item que depende de fork leva o fork
     - devolução de venda (entrada CFOP 1202/2202) → crédito (estorno do débito, alínea g) pelo `vICMS` da nota de
       devolução;
     - devolução de compra (saída 5202/6202) → débito;
-    - nota cancelada no próprio mês → fora;
-    - nota cancelada depois de confirmada a apuração do mês → `avisoParametroLegal`-like `RECONFIRMAR` na apuração
-      do mês de origem.
-    Fonte: LC 87 arts. 19–20 [D01]; art. 87 III [D08]. Teste: cancelar depois de confirmar → a apuração mostra o aviso.
+    - nota cancelada no próprio mês → fora da apuração, e o lançamento da nota (item 23) é estornado;
+    - nota cancelada depois de confirmada a apuração do mês → estorno do lançamento da nota e aviso `RECONFIRMAR` na
+      apuração do mês de origem.
+    Fonte: LC 87 arts. 19–20 [D01]; art. 87 III [D08]. Teste: cancelar depois de confirmar → estorno no razão + aviso na
+    apuração.
 20. **[F-ICR-7]** Estorno de crédito por perda, roubo ou deterioração da mercadoria creditada (LC 87 art. 21 [D01]):
     baixa de estoque por perda (FIN-10) no mês → estorno (alínea c). Teste: perda de 2 unidades com crédito médio de 18
     cada → estorno 36.
@@ -253,16 +259,34 @@ Regra 3: item com regra legal cita a fonte. Item que depende de fork leva o fork
 
 ### PR-4 — provisão, vencimento, superfície
 
-23. **[F-ICR-4]** Provisão em 2 commits + reconcile, no molde do `IbsCbsAssessmentService`:
-    - **commit 1:** `postEntry(sourceType='icms_assessment', sourceId)` no último dia do mês, com D
-      `icmsDeducaoAccountId` / C `icmsRecolherAccountId` = débitos + outros débitos + estornos de crédito, e no
-      **mesmo** lançamento D `icmsRecolherAccountId` / C `icmsRecuperavelAccountId` = min(créditos totais, débitos
-      totais);
-    - o saldo credor fica no a-recuperar (não sai do ativo);
-    - reverseEntry da substituída antes do postEntry;
-    - gate de período dentro da tx.
-    Cabeçalho `atomicUntil` (AC-2.3-2). Teste: o kit do IBS/CBS (commit 1, CAS do commit 2, crash entre os dois,
-    reconcile idempotente).
+23. **[F-ICR-4 → (b), dono 21/11, contra a recomendação]** Débito **nota a nota**, em 2 commits + reconcile
+    (`FiscalBookService`, cabeçalho `atomicUntil`, AC-2.3-1/2):
+    - **gatilho:** livro de saída `REGULAR` com Σ `vIcmsCents` > 0, gravado na autorização ou na importação do XML de
+      saída (itens 8–9);
+    - **commit 1:** `postEntry(sourceType='icms_saida', sourceId=<FiscalBookEntry.id>)` na `dataEntradaSaida`. Na venda
+      (5102/6102), D `icmsDeducaoAccountId` / C `icmsRecolherAccountId` = Σ `vIcmsCents`. Na devolução de compra
+      (5202/6202), D `icmsRecolherAccountId` / C `icmsRecuperavelAccountId`, porque estorna o crédito. A devolução de
+      venda (entrada 1202/2202) faz o inverso da venda na importação;
+    - **commit 2:** CAS de `FiscalBookEntry.debitoEntryId` (`where null`), num `runTransaction` próprio;
+    - **cancelamento** (`situacao` → `CANCELADA`): `reverseEntry` do lançamento da nota, achado pela fonte;
+    - **período fechado** na data da nota: o livro fica gravado, o lançamento fica pendente e aparece no alerta
+      `ICMS_NOTA_SEM_LANCAMENTO` da apuração; o reconcile lança quando o período reabrir (gate dentro da tx do
+      `postEntry`);
+    - **reconcile** `reconcileIcmsSaidas()`: read-first e idempotente. Lança as notas sem `debitoEntryId`, inclusive as
+      gravadas no PR-1, antes deste PR existir.
+    Teste: o kit do IBS/CBS por nota (commit 1, CAS, crash entre os dois, reconcile idempotente, 2ª chamada sem
+    lançamento novo), mais cancelamento → estorno e período fechado → pendente.
+23b. **[F-ICR-4 → (b)]** Lançamento da **apuração** (`IcmsAssessmentService`, `sourceType='icms_assessment'`), no
+    último dia do mês e em 2 commits + reconcile. Ele **não** relança os débitos das notas, só lança:
+    - os outros débitos, os estornos de crédito e o DIFAL do art. 117 (item 17): D contrapartida do ajuste (DIFAL de
+      uso e consumo ou ativo → `icmsDifalCustoAccountId`; estorno por perda → `icmsDeducaoAccountId`) / C
+      `icmsRecolherAccountId`;
+    - os outros créditos e os estornos de débito: D `icmsRecolherAccountId` / C contrapartida;
+    - a compensação: D `icmsRecolherAccountId` / C `icmsRecuperavelAccountId` = min(créditos totais, débitos totais).
+      O saldo credor fica no a-recuperar.
+    A substituição estorna o lançamento da substituída antes do `postEntry`, e o gate de período fica dentro da tx. A
+    apuração recusa a confirmação (409 `icms_notas_sem_lancamento`) enquanto houver nota do mês sem `debitoEntryId`,
+    para o razão não divergir da apuração. Teste: tie-out do mês (invariante 5), substituição estorna e reposta.
 24. **[direto]** Vencimento = regra do CPR do perfil (item 4) aplicada ao mês seguinte. Fica gravado na apuração e
     vai para o calendário do CICLO-FISCAL (PR #1322) como origem `ICMS` (aresta: o calendário lê a apuração; este nó não
     edita o job). Teste: CPR 1200 → dia 20.
@@ -292,19 +316,19 @@ Regra 3: item com regra legal cita a fonte. Item que depende de fork leva o fork
     `ICMS_ST_NCM_UF` vigente, vindo de outra UF, sem `vICMSST`, e com o destinatário paulista no RPA. Calcula
     (imposto próprio + ST) com o IVA-ST do item 34 quando a linha estiver `PUBLISHED`. Sem linha, alerta
     `ANTECIPACAO_SEM_IVA` e registro manual da guia paga. A guia é de recolhimento especial, e o prazo vem do Anexo IV
-    (§6). Teste: entrada de MG com NCM sob ST e sem retenção → antecipação ou alerta.
+    (§8). Teste: entrada de MG com NCM sob ST e sem retenção → antecipação ou alerta.
 32. **[F-ICR-6]** Complemento (art. 265 [D23]) e ressarcimento (art. 269 [D12]) por item vendido a consumidor final:
     preço de venda × base da retenção da entrada (`vBCSTRet` do livro). A disciplina da Portaria CAT 42/2018 **não
-    foi lida** (§6): o cálculo só entra com a portaria transcrita. Até lá, o relatório mensal mostra a diferença e não
+    foi lida** (§8): o cálculo só entra com a portaria transcrita. Até lá, o relatório mensal mostra a diferença e não
     lança nada. Teste: venda acima da base → linha "complemento estimado" no relatório.
 33. **[direto]** Estoque de ST na troca de lista (saída da ST em 01/04/2026 e em 01/07/2026): relatório das unidades
     em estoque na véspera, com o ST pago, para o tratamento da Portaria CAT 28/2020 / CAT 44/08. O tratamento em si
-    fica pendente (§6). Teste: item do Anexo XI em estoque em 31/03/2026 → linha no relatório.
+    fica pendente (§8). Teste: item do Anexo XI em estoque em 31/03/2026 → linha no relatório.
 
 ### PR-6 — ST de substituto (só se F-ICR-5 ≠ c)
 
 34. **[F-ICR-5]** Tabela `ICMS_ST_IVA`: chave UF, discriminador CEST (ou NCM), valor `{ ivaBp, portaria, setor }`.
-    Fonte: portarias SRE de IVA-ST por setor (insumo ausente, §7). Linhas `DRAFT` até a transcrição, e sem linha
+    Fonte: portarias SRE de IVA-ST por setor (insumo ausente, §9). Linhas `DRAFT` até a transcrição, e sem linha
     `PUBLISHED` o cálculo de ST recusa com motivo nomeado. Teste: CEST sem linha → 400 `icms_st_sem_iva`.
 35. **[F-ICR-5]** Base e valor da ST na saída do substituto: base = preço praticado + encargos × (1 + IVA-ST)
     (RICMS/SP art. 41), ou preço final fixado (40-A), ou preço sugerido divulgado (43). ST = alíquota interna × base −
@@ -364,6 +388,7 @@ model FiscalBookEntry {
   sourcePayableId  String?  // entrada importada
   fiscalDocumentId String?  // saída emitida pelo Luminaris
   origem           String   // IMPORTADA | EMITIDA | SAIDA_IMPORTADA (F-ICR-2)
+  debitoEntryId    String?  // F-ICR-4 (b): lançamento da nota (commit 2, CAS where null); saída e devolução
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   items            FiscalBookItem[]
@@ -457,7 +482,7 @@ export const IcmsAjusteSchema = z.object({
 
 export const IcmsAssessmentPreviewSchema = z.object({
   unitId: z.string().min(1),
-  ano: z.number().int().min(2027),            // ≥ go-live; ver §6 (2026 só se o dono pedir)
+  ano: z.number().int().min(2027),            // ≥ go-live; ver §8 (2026 só se o dono pedir)
   mes: z.number().int().min(1).max(12),
   tipo: z.enum(ICMS_TIPO_APURACAO).default('PROPRIO'),
   ajustes: z.array(IcmsAjusteSchema).max(200).default([]),
@@ -496,21 +521,23 @@ em update de perfil sem tirar o `default` (memória `zod4-partial-aplica-default
 `POST /api/nfe/import` (existente; aceita a saída própria pelo F-ICR-2) · `GET /api/accounting/icms-st/relatorio?unitId&ano&mes`
 (itens 32–33).
 
-## 7. Forks — RATIFICAÇÃO PENDENTE
+## 7. Forks — RATIFICADOS em 21/11 ([[D-2026-11-21-ICMS-RPA-GO-LIVE-2027]])
 
 Cada um com caminhos, recomendação e o que a alternativa deixa aberto (regra do dono de 21/11: a recomendação padrão é a
 estrutural).
 
 ### F-ICR-1 — Quem apura ICMS no RPA
+- **RATIFICADO 21/11: (a) — "Inclui o Simples impedido (Recomendado)".**
 - **(a)** Presumido/Real com IE **e** o optante do Simples impedido de recolher o ICMS no DAS por excesso de sublimite
   (LC 123 art. 13-A, na redação da LC 214, e art. 20 § 1º). `icmsApuracao` é derivado do regime e do sublimite que o
   `simplesCalc` já calcula.
 - **(b)** Só Presumido/Real com IE. O Simples impedido fica com o contador.
 - **Recomendação: (a).** O impedido apura no RPA a partir do mês seguinte ao excesso, e o sistema já sabe quando isso
   acontece. Deixá-lo de fora é o buraco "o DAS fica barato no valor do ICMS" da lacuna `38c0`. A data exata do início
-  é a pergunta de lei L-ICMS-2 do PRE-ADR (§6), e até lá o aviso usa "mês seguinte ao excesso".
+  é a pergunta de lei L-ICMS-2 do PRE-ADR (§8 item 7), e até lá o aviso usa "mês seguinte ao excesso".
 
 ### F-ICR-2 — De onde vem o débito
+- **RATIFICADO 21/11: (a) — "Livro de saída + XML externo (Recomendado)".**
 - **(a)** Livro de saída gravado na autorização do `FiscalDocument` **e** pela importação do XML de saída emitido fora,
   com alerta `SAIDA_SEM_DOCUMENTO_FISCAL` para a venda sem nota.
 - **(b)** Débito pela venda (`sales`), com ou sem nota, à alíquota do produto.
@@ -521,6 +548,7 @@ estrutural).
   (`selectDfeEmissor.ts:69-73`, X10a).
 
 ### F-ICR-3 — Persistência da apuração
+- **RATIFICADO 21/11: (a) — "Model novo IcmsApuracao (Recomendado)".**
 - **(a)** Model novo `IcmsApuracao` (§6.1), no molde do IBS/CBS (CAS, cascata, provisão), com o estabelecimento como
   chave, o saldo credor transportado e as colunas do art. 87 III.
 - **(b)** Reusar `ConsumptionTaxAssessment` com `tributo='ICMS'` e colunas novas.
@@ -532,6 +560,7 @@ estrutural).
   serviço, e não a tabela.
 
 ### F-ICR-4 — Momento contábil do débito
+- **RATIFICADO 21/11: (b), contra a recomendação (a) — "Um lançamento por nota". O que o (b) abria (estorno por cancelamento, nota em período fechado, 3º caminho de lançamento) está tratado no item 23; o item 23b deixa a apuração só com ajustes e compensação, e a invariante 5 amarra os dois.**
 - **(a)** Um lançamento por apuração, no fim do mês (molde IBS/CBS): D dedução / C a recolher pelos débitos, e no
   mesmo lançamento D a recolher / C a recuperar pela compensação.
 - **(b)** Um lançamento por nota, na autorização (molde OCA: `account.tax` por documento).
@@ -540,6 +569,7 @@ estrutural).
   um estorno por cancelamento de nota.
 
 ### F-ICR-5 — ST de substituto (reabre o F-ICMS-3 b)
+- **RATIFICADO 21/11: (a) — "Planejar já, atrás de chave (Recomendado)". Supera o F-ICMS-3 (b) de 12/10.**
 - **(a)** Planejado neste BRIEF (PR-6), atrás de `icmsStSubstituto` no perfil, calculando só com linha de IVA-ST
   `PUBLISHED`. A tabela entra `DRAFT` até a transcrição das portarias SRE.
 - **(b)** Manter o ratificado: só substituído agora. O substituto fica como nó futuro "quando houver tenant substituto".
@@ -551,6 +581,7 @@ estrutural).
   aberto: o art. 426-A fica sem cálculo para o varejo que compra de outra UF.
 
 ### F-ICR-6 — Antecipação, complemento e ressarcimento do substituído
+- **RATIFICADO 21/11: (a) — "Calcular, com trava de fonte (Recomendado)".**
 - **(a)** Antecipação (426-A) calculada com o IVA-ST do F-ICR-5 e alerta sem ele. Complemento e ressarcimento
   (arts. 265 e 269) calculados **só** depois de transcrita a Portaria CAT 42/2018; até lá, relatório da diferença sem
   lançamento.
@@ -560,6 +591,7 @@ estrutural).
   pagar multa sem saber. Sem a CAT 42 lida, o cálculo não tem fonte, e por isso começa como relatório (regra 3).
 
 ### F-ICR-7 — Estorno de crédito por perda de estoque
+- **RATIFICADO 21/11: (a) — "Automático pelo estoque (Recomendado)".**
 - **(a)** Automático: o estoque guarda o crédito médio por unidade (coluna nova no `InventoryItem`, alimentada pela
   importação). A baixa por perda gera o estorno na apuração do mês.
 - **(b)** Ajuste informado (alínea c) pelo contador, com alerta quando houver baixa por perda no mês.
@@ -568,6 +600,7 @@ estrutural).
   raio do `InventoryItem` pesar.
 
 ### F-ICR-8 — Fatiamento
+- **RATIFICADO 21/11: (a) — "Pilha em integration/icms-rpa (Recomendado)".**
 - **(a)** A tabela da §4: 9 PRs em pilha em `integration/icms-rpa`, cada um com `executa` próprio. PR-0..PR-4 fecham o
   ICMS próprio. PR-5/PR-6 a ST. PR-7 o CIAP. PR-8 a transição.
 - **(b)** O mesmo, com o PR-1 (livro fiscal) direto na `main` como contrato, porque o IBS/CBS e a EFD também o leem.
@@ -575,6 +608,7 @@ estrutural).
   integração.
 
 ### F-ICR-9 — IBS/CBS na base do ICMS (2027–2032) — **ambiguidade de lei**
+- **RATIFICADO 21/11: (a) — "Política do contador, padrão 'fora' (Recomendado)".**
 - **Leituras:** (i) **fora** da base: a NF-e destaca IBS/CBS "por fora" e o leiaute não os soma no `vBC` do ICMS;
   (ii) **dentro**: a base do ICMS é "o valor da operação" (LC 87 art. 13 I), e nem a CF (art. 156-A § 1º IX e art. 195
   § 17 listam os tributos de cuja base o IBS e a CBS não fazem parte, **sem o ICMS** [D30]) nem a LC 87 art. 13 § 1º
@@ -583,10 +617,11 @@ estrutural).
   - **(a)** Política versionada do contador (molde F-E6-1), com padrão "fora" e aviso, mais a pergunta ao tributarista;
   - **(b)** padrão "dentro" (erra para mais imposto, molde da decisão 2 da segregação);
   - **(c)** esperar resposta antes do PR-2.
-- **Recomendação: (a)**, com a pergunta exata no §6. O padrão "fora" segue o leiaute oficial que o PVA e a SEFAZ vão
+- **Recomendação: (a)**, com a pergunta exata no §8 item 8. O padrão "fora" segue o leiaute oficial que o PVA e a SEFAZ vão
   conferir, e o contador troca por política sem PR. (b) cobra a mais, por item, em todo o varejo, sem norma que mande.
 
 ### F-ICR-10 — A EFD ICMS/IPI (lacuna `3b81`)
+- **RATIFICADO 21/11: (a) — "Absorver neste nó, BRIEF próprio (Recomendado)". A EFD continua sem autorização: o BRIEF dela é pedido próprio.**
 - **Fatos (verificados):** a apuração do RPA é **declarada** (art. 87 § 2º [D08], arts. 253–254 [D27]). Em SP, a
   declaração do RPA é só a EFD desde jan/2026 (GIA dispensada, PRE-ADR §2.3; Portaria SRE 2/2025 lida pelo portal). E o
   saldo credor de 2032 só vale "regularmente apurado na escrituração fiscal" (LC 227 art. 132 II [D29]).
@@ -629,16 +664,21 @@ estrutural).
 - O BRIEF do CICLO-FISCAL está no PR #1322, ainda não mergeado: a aresta do item 24 assume a forma "o calendário lê a
   apuração", e isso tem de ser conferido quando o #1322 entrar.
 
-## 10. Achados fora de escopo (vão à caixa — ids no relatório da sessão)
+## 10. Achados fora de escopo (na caixa de lacunas)
 
-1. **ICMS do Simples fora do DAS** (F-ICMS-10 a ratificado: DIFAL "h", antecipação "g" 2, DeSTDA) sem nó. A lacuna
-   `6aa2`/`38c0` da calculadora toca a conta, mas não o módulo.
-2. **O PRE-ADR-ICMS-IPI-EFD não foi movido para `docs/adr/`** (F-ICMS-1 a) nem teve o fold do §12 (nó + arestas). Este
-   BRIEF cria o nó, e mover o arquivo fica para o fold.
-3. **A simulação** (`taxSimulation.ts:368`) passa a poder ler o ICMS do RPA quando o PR-3 existir. Isso é item do
-   montador único (sessão própria), não deste nó.
-4. **Exclusão do ICMS da base do PIS/COFINS** (Tema 69, Lei 14.592) para a revenda: já está como emenda do X8 no EF D10.
-   Fica só registrado aqui.
+1. **ICMS do Simples fora do DAS** (F-ICMS-10 a ratificado: DIFAL "h", antecipação "g" 2, DeSTDA) sem nó. As lacunas
+   `6aa2` e `38c0` da calculadora tocam a conta, mas não o módulo. → `L-20261121-220641-5322` (feature).
+2. **O PRE-ADR-ICMS-IPI-EFD continua em `docs/accounting/`, com status "Proposed"** (F-ICMS-1 a manda movê-lo para
+   `docs/adr/`). Este BRIEF cria o nó; mover o arquivo e atualizar o cabeçalho fica para o fold. →
+   `L-20261121-220642-d46e` (débito).
+3. **O calendário do CICLO-FISCAL** (PR #1322, F-CF-9 a) não tem o ICMS do RPA. O vencimento pelo CPR entra quando o
+   PR-4 existir. → `L-20261121-220644-18f2` (spec).
+4. **A simulação** (`taxSimulation.ts:368`) passa a poder ler o ICMS do RPA quando o PR-3 existir. Isso é item do
+   montador único (sessão própria), não deste nó. → `L-20261121-220645-2c9e` (spec).
+5. **Exclusão do ICMS da base do PIS/COFINS** (Tema 69, Lei 14.592) para a revenda: já está como emenda do X8 no EF D10.
+   Fica só registrado aqui, sem lacuna nova.
+6. **EFD-Contribuições:** continua fork na lacuna `L-20261121-183239-3b81`. Só a metade ICMS/IPI foi respondida
+   (F-ICR-10).
 
 ## 11. Write-set
 
@@ -667,13 +707,18 @@ série com qualquer PR aberto do X10a nesses arquivos.
 3. Σ débito por item do livro de saída `REGULAR` do mês = alínea a, sem arredondamento no total (o arredondamento é por
    item, igual ao `vICMS` da nota).
 4. Nenhum crédito de item `USO_CONSUMO`, `INSUMO_SERVICO` ou com ST.
-5. O razão da apuração viva = (débitos totais em C a recolher) e (min(créditos, débitos) em D a recolher / C a
-   recuperar): o tie-out passa com a apuração substituída estornada.
+5. Tie-out do mês (F-ICR-4 b): Σ lançamentos `icms_saida` vivos do mês (C a recolher) = alínea a − devoluções.
+   O lançamento `icms_assessment` vivo leva as alíneas b, c, f, g e a compensação. A soma dos dois no a-recolher é
+   igual ao `aRecolherCents` da apuração viva, e passa com a apuração substituída estornada e com nota cancelada
+   estornada.
 6. Fato gerador ≥ 2033 nunca gera débito (ADCT 129).
 7. Nenhum cálculo de ST, antecipação ou complemento usa linha `DRAFT`.
 
 ## 13. Fold desta sessão
 
-- Nota nova `docs/plano/nos/ICMS-EFD.md` (`estado: planned`, `write_set`, `registros`). Decisão
-  [[D-2026-11-21-ICMS-RPA-GO-LIVE-2027]] com a citação da autorização. Dossiê legal versionado (manifest + `.txt`).
-- Estado de nenhum outro nó muda. A lacuna `3b81` recebe nota apontando para o F-ICR-10 (sem mudar de estado).
+- Nota nova `docs/plano/nos/ICMS-EFD.md` (`estado: planned`, `write_set`, `registros`).
+- Decisão [[D-2026-11-21-ICMS-RPA-GO-LIVE-2027]] com a citação da autorização e as respostas F-ICR-1..10.
+- Dossiê legal versionado (manifest + `.txt`).
+- Estado de nenhum outro nó muda.
+- A lacuna `3b81` ficou `aberta`, com o destino "metade ICMS/IPI absorvida pelo ICMS-EFD (F-ICR-10 a)".
+- Próximo passo: `executa` do PR-0 (pedido do dono), pela `sessao-feature`.

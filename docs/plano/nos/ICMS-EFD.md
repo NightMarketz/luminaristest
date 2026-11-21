@@ -4,21 +4,21 @@ tipo: "regua-f"
 dominio: "fiscal"
 titulo: "ICMS próprio e ICMS-ST da revenda no regime periódico de apuração (RPA), SP primeiro: livro fiscal por item, NF-e CRT 3, apuração mensal com saldo credor, provisão, ST, CIAP, transição 2029–2033 — e a EFD ICMS/IPI como fase própria (F-ICR-10)"
 estado: "planned"
-estado_detalhe: "21/11 (planejamento): nó criado pelo §12 do PRE-ADR-ICMS-IPI-EFD (F-ICMS-1 a), porque o gatilho g3 disparou por decisão do dono (go-live de 2027, [[D-2026-11-21-ICMS-RPA-GO-LIVE-2027]]). BRIEF BE-INCR-ICMS-RPA: 44 itens em 9 PRs (PR-0..PR-8) em integration/icms-rpa; forks F-ICR-1..10 levados ao dono por questionário em 21/11. Sem 'executa'. A NF-e CRT 3 segue recusada (CRT3_ICMS_SEM_SPEC) até o PR-2"
+estado_detalhe: "21/11 (planejamento): nó criado pelo §12 do PRE-ADR-ICMS-IPI-EFD (F-ICMS-1 a), porque o gatilho g3 disparou por decisão do dono (go-live de 2027, [[D-2026-11-21-ICMS-RPA-GO-LIVE-2027]]). BRIEF BE-INCR-ICMS-RPA: 44 itens em 9 PRs (PR-0..PR-8) em integration/icms-rpa; forks F-ICR-1..10 RATIFICADOS pelo dono por questionário em 21/11 (nove na recomendação; F-ICR-4 → b, débito nota a nota, contra a recomendação). Sem 'executa'. A NF-e CRT 3 segue recusada (CRT3_ICMS_SEM_SPEC) até o PR-2"
 fecha_regua: false
 depende_de: ["[[D-2026-11-21-ICMS-RPA-GO-LIVE-2027]]", "[[D-2026-10-12-QUESTIONARIO-DONO]]", "[[X10a]]", "[[X6]]", "[[LEGAL-PARAMS]]", "[[IBS-CBS-2027]]", "[[X14]]", "[[FIN-10]]?", "[[C8]]?"]
 autorizacao: "dono, chat, 2026-11-21: \"Executa tudo pra liberar e poder rodar em xhigh até terminar\"; questionário do mesmo dia — à pergunta \"Fork do ICMS: … Isso entra no escopo do go-live de 2027?\", a resposta \"Entra, planejar já\" (citação repassada pela sessão de origem e confirmada pelo dono ao iniciar o cartão; [[D-2026-11-21-ICMS-RPA-GO-LIVE-2027]]). Escopo: planejamento (nota + BRIEF + forks), sem 'executa' e sem o BRIEF da EFD (F-ICR-10)"
 ancora_sdd: "—"
 atualizado: "2026-11-21"
 prs: []
-perfil_previsto: "precisa-de-planejamento"
-perfil_evidencia: "regra 1: forks F-ICR-1..10 pendentes até a ratificação; depois deles, opus-medio por PR (família nova de apuração com CAS + cascata + provisão em 2 commits, migração aditiva, parser e montagem de NF-e com regras de rejeição); PR-2 em série com o X10a (nfeMontagem.ts, NfePayloadDto.ts)"
+perfil_previsto: "opus-medio"
+perfil_evidencia: "forks F-ICR-1..10 ratificados em 21/11; opus-medio por PR (família nova de apuração com CAS + cascata + provisão em 2 commits, migração aditiva, parser e montagem de NF-e com regras de rejeição); PR-2 em série com o X10a (nfeMontagem.ts, NfePayloadDto.ts)"
 write_set: ["server/src/features/legalParameters/models/legalParameter.ts", "server/src/features/legalParameters/models/formatoLinha.ts", "server/prisma/data/legal_parameters_icms_*.sql", "server/prisma/migrations/**", "server/src/features/accounting/dtos/FiscalProfileDto.ts", "server/src/features/accounting/dtos/ProductFiscalProfileDto.ts", "server/src/features/accounting/dtos/NfePayloadDto.ts", "server/src/features/accounting/dtos/IcmsAssessmentDto.ts", "server/src/features/accounting/models/icms*.ts", "server/src/features/accounting/models/nfeMontagem.ts", "server/src/features/accounting/models/nfeIbsCbsMontagem.ts", "server/src/features/accounting/models/nfePrecondicoes.ts", "server/src/features/accounting/models/obrigacoesPorRegime.ts", "server/src/lib/nfe.ts", "server/src/lib/nfeCost.ts", "server/src/features/accounting/services/NfeImportService.ts", "server/src/features/accounting/services/FiscalDocumentEmissionService.ts", "server/src/features/accounting/services/FiscalBookService.ts", "server/src/features/accounting/services/IcmsAssessmentService.ts", "server/src/features/accounting/services/IcmsCiapService.ts", "server/src/features/accounting/repositories/*FiscalBook*", "server/src/features/accounting/repositories/*IcmsApuracao*", "server/src/features/accounting/policies/**", "server/src/controllers/*Icms*", "scripts/gerar-icms-*.mjs"]
 registros: ["server/prisma/schema.prisma", "server/src/lib/factory.ts", "server/src/routes/accounting.ts", "server/src/routes/docs/accounting.icms-assessments.paths.ts", "server/src/routes/docs.paths.ts", "server/public/openapi.json", "server/src/features/accounting/audit/auditCanonical.ts", "server/src/features/accounting/dtos/__tests__/dtoShapeSnapshot.test.ts", "server/test/helpers/db.ts"]
 ---
 # ICMS-EFD — ICMS próprio e ICMS-ST da revenda no RPA (SP primeiro)
 
-**Estado:** `planned` — 21/11 (planejamento): BRIEF escrito; forks F-ICR-1..10 levados ao dono. Sem 'executa'.  
+**Estado:** `planned` — 21/11 (planejamento): BRIEF escrito; forks F-ICR-1..10 ratificados (F-ICR-4 → b contra a recomendação). Sem `executa`.  
 **Autorização:** dono, chat, 2026-11-21: "Executa tudo pra liberar e poder rodar em xhigh até terminar" + questionário
 do mesmo dia, "Entra, planejar já" — só planejamento ([[D-2026-11-21-ICMS-RPA-GO-LIVE-2027]])  
 **Depende de:**
