@@ -34,5 +34,6 @@ atualizado: "2026-11-21"
 ## Escopo desta cédula
 
 Planejamento: o BRIEF [`BE-INCR-EFICIENCIA-FISCAL-EMENDA-MONTADOR-UNICO-brief.md`](../../accounting/BE-INCR-EFICIENCIA-FISCAL-EMENDA-MONTADOR-UNICO-brief.md),
-os contratos esboçados e os forks F-MU-1..13 **pendentes**. O código de cada PR espera os forks e o `executa`
-([[D-2026-10-28-FLUXO-AUTONOMO]]: o `executa` cobre BRIEF ratificado e sem fork pendente).
+os contratos esboçados e os forks F-MU-1..13, levados ao dono e **ratificados** em 21/11, todos (a)
+([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]). O código de cada PR espera o `executa` para este BRIEF
+([[D-2026-10-28-FLUXO-AUTONOMO]]: o `executa` cobre BRIEF ratificado e sem fork pendente). PR do planejamento: #1323.

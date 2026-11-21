@@ -2,8 +2,11 @@
 
 > **Sessão:** `sessao-planejamento` (agente). Saída: este documento, a cédula
 > [[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO]], o fold da nota do nó e o dossiê
-> `pesquisas-legais/simulacao-montador-unico/`. **Sem código, sem `executa`, sem merge.** Os forks da §5 estão
-> **PENDENTES** até o dono responder.
+> `pesquisas-legais/simulacao-montador-unico/`. **Sem código, sem `executa`, sem merge.**
+
+> **RATIFICAÇÃO 21/11/2026** ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]): o dono respondeu os forks F-MU-1..13 no
+> questionário, **todos (a)**, a recomendação do BRIEF. Com isso o PR-1b entra (F-MU-8 a). **Não é `executa`:** se o
+> "Executa tudo" de 21/11 cobre o código deste BRIEF, o dono confirma (§0).
 > **Base:** `origin/main` `43719baa` (21/11). Não edita o BRIEF do nó (`BE-INCR-EFICIENCIA-FISCAL-brief.md`), nem os do X7,
 > do X8, do X14 e do IBS-CBS-2027.
 
@@ -14,9 +17,10 @@ A simulação de regime (item 16, `GET /simulacoes/regime`) passa a ler a mesma 
 os regimes por **uma função pura de elegibilidade por ano** (Res. CGSN 140 art. 15; LC 123 art. 3º §§ 9º–10; Lei 9.718 arts.
 13–14), que também gera os alertas de limite da rota. Todo dado que não existe no regime simulado vira **premissa declarada**,
 e o cenário do regime atual é **aferido** contra a apuração confirmada.
+**Forks:** F-MU-1..13 ratificados em 21/11, todos (a).
 **Risco principal:** a extração do `montar` do Simples (1.377 linhas no serviço) tem de deixar a rota idêntica, com a mesma
 `impressao` e o mesmo `parametrosSha256`; e os PRs #1321 (ponte da folha, itens 37 e 39) e #1322 (ciclo fiscal, métodos
-`*PeloSistema`) editam os mesmos serviços. A ordem fica no fork F-MU-13.
+`*PeloSistema`) editam os mesmos serviços. Pelo F-MU-13 (a), o PR-2 desta emenda entra antes deles.
 
 ---
 
@@ -32,10 +36,10 @@ e o cenário do regime atual é **aferido** contra a apuração confirmada.
   - o dono confirmou ao iniciar o cartão desta sessão.
   - **Passo 1 (cobertura):** o questionário escolhe a correção estrutural, e o "Executa tudo" foi dado para liberar as sessões
     de planejamento abertas naquele turno. **Esta sessão lê os dois como autorização para PLANEJAR** a emenda (BRIEF +
-    contratos esboçados + forks pendentes). **Não é `executa` de código:** o BRIEF ainda tem forks abertos, e a regra de
-    28/10 ([[D-2026-10-28-FLUXO-AUTONOMO]]) só deixa o `executa` cobrir BRIEF ratificado e sem fork pendente. Divergência
-    registrada: se o dono quis dizer que o "Executa tudo" já vale para o código depois dos forks, isso precisa ser dito para
-    este BRIEF (ver §9).
+    contratos esboçados + forks levados ao dono). **Não é `executa` de código:** quando o "Executa tudo" foi dito, este
+    BRIEF não existia, e a regra de 28/10 ([[D-2026-10-28-FLUXO-AUTONOMO]]) só deixa o `executa` cobrir BRIEF ratificado e
+    sem fork pendente. Os forks foram ratificados em 21/11 (§6). Divergência registrada: se o "Executa tudo" vale também
+    para o código deste BRIEF, o dono confirma, e a confirmação entra na nota do nó.
 - **Insumos existentes** (fato consumado, lidos nesta sessão — CBM-001):
   - `services/TaxSimulationService.ts:177-323` monta a entrada da simulação de regime à parte: lê subrazão e histórico
     (`:205-222`), agrupa as linhas só pelo `excluir` (`:233-250`), soma o resultado do razão por trimestre (`:265-267`) e
@@ -138,7 +142,7 @@ próprio depois dos forks (regra de 28/10). Escopo **backend**; FE nenhum (nenhu
 |---|---|---|---|
 | PR-0 | contrato: tipos, schemas Zod, catálogo de vedações, interfaces dos montadores; sem comportamento | 1–4 | — |
 | PR-1 | elegibilidade pura + rota do Simples e perfil usando-a + filtro da simulação | 5–12 | `f514`, `35df` |
-| PR-1b | declaração das vedações não deriváveis (só se F-MU-8 = a) | 13–15 | — |
+| PR-1b | declaração das vedações não deriváveis (F-MU-8 a) | 13–15 | — |
 | PR-2 | montador do Simples extraído; rota idêntica; simulação e fator r usando-o | 16–21 | `7bff` |
 | PR-3 | montadores de IRPJ/CSLL, PIS/COFINS e IBS/CBS; premissas declaradas | 22–29 | — |
 | PR-4 | aferição: teste de tie-out + bloco `afericao` na resposta | 30–33 | `a2ce` |
@@ -199,7 +203,7 @@ próprio depois dos forks (regra de 28/10). Escopo **backend**; FE nenhum (nenhu
 12. **Sugestão:** `proporRegime` recusa com 400 `REGIME_VEDADO` quando o `melhor` calculado não é `ELEGIVEL` (defesa em
     profundidade; com o filtro do item 9 só acontece com F-MU-9 = c). Teste de integração.
 
-### PR-1b — declaração das vedações não deriváveis (só se F-MU-8 = a)
+### PR-1b — declaração das vedações não deriváveis (F-MU-8 a)
 
 13. **Prisma:** `CompanyFiscalProfile.declaracaoVedacoes Json?` (`{ [codigo]: 'SIM' | 'NAO' }`, ausente = não declarado) e
     `declaracaoObrigacaoReal Json?` (art. 14 II–VII), por ano. Migração aditiva. Soft-delete não se aplica (campo).
@@ -407,11 +411,14 @@ nova; o `openapi.json` muda só no schema da resposta de `GET /simulacoes/regime
 
 ---
 
-## 6. FORKS — RATIFICAÇÃO PENDENTE
+## 6. FORKS — RATIFICADOS em 21/11/2026 ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]])
 
-Cada um com os caminhos, a recomendação e a justificativa. Nenhum está decidido nesta sessão.
+Cada um com os caminhos, a recomendação e a justificativa, como foram levados ao dono. O dono respondeu os 13 no
+questionário de 21/11, todos na opção recomendada (a). A sessão registrou as respostas; não escolheu nenhuma.
 
 ### F-MU-1 — Onde mora o montador
+> **RATIFICADO 21/11 → (a)** — dono, questionário: *"Classe por tributo"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+
 - (a) **Classe por tributo** em `services/montadores/` (`SimplesEntradaMontador`, `IrpjCsllEntradaMontador`,
   `PisCofinsEntradaMontador`, `IbsCbsEntradaMontador`, `ElegibilidadeEntradaMontador`), injetada pela factory no serviço da
   rota e no `TaxSimulationService`; o serviço da rota fica com policy, gates, gravação e provisão.
@@ -424,6 +431,8 @@ Cada um com os caminhos, a recomendação e a justificativa. Nenhum está decidi
   1.377. (c) junta quatro tributos sem relação numa classe só.
 
 ### F-MU-2 — Entradas digitadas fora da apuração confirmada (deduções, retenções sofridas, ajustes de base, outros créditos)
+> **RATIFICADO 21/11 → (a)** — dono, questionário: *"Premissa nomeada"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+
 - (a) Período do regime atual **com** CONFIRMED ⇒ lê o `entradaInformada` (fato). Período sem confirmação, ou regime
   simulado diferente do atual ⇒ `Premissa` nominal por período e componente, com `valorAssumidoCents = 0` e o motivo
   ("não informado na apuração" / "não existe fora do regime"), e o cenário vira `COM_PREMISSAS`.
@@ -433,12 +442,16 @@ Cada um com os caminhos, a recomendação e a justificativa. Nenhum está decidi
   indisponível na maior parte do ano para quem não confirma todo mês; (a) mostra o mesmo número com o buraco nomeado.
 
 ### F-MU-3 — Métrica do ranking
+> **RATIFICADO 21/11 → (a)** — dono, questionário: *"Pelo devido"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+
 - (a) **Devido** (antes de retenções e compensações): retenção é antecipação do mesmo tributo, não economia. A resposta mostra
   devido e a pagar; a aferição compara os dois.
 - (b) A pagar, como hoje (`aPagarCents`).
 - **Recomendação: (a).** Com (b), uma retenção sofrida num regime e não no outro muda o `melhor` sem mudar a carga real.
 
 ### F-MU-4 — Forma do Real hipotético para quem não está no Real
+> **RATIFICADO 21/11 → (a)** — dono, questionário: *"Trimestral"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+
 - (a) **Trimestral**, como hoje, com premissa declarada (`REAL_TRIMESTRAL_PRESUMIDO`).
 - (b) Anual por estimativa.
 - (c) Os dois, como dois cenários.
@@ -446,6 +459,8 @@ Cada um com os caminhos, a recomendação e a justificativa. Nenhum está decidi
   decisão. Quem já está no Real usa a forma do perfil (fato).
 
 ### F-MU-5 — IBS/CBS do regime regular para quem está no Simples (2027+)
+> **RATIFICADO 21/11 → (a)** — dono, questionário: *"Receita × alíquota"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+
 - (a) **Receita do razão × alíquota vigente** (como o `cargaComum` faz hoje) como premissa declarada, com os créditos dos
   títulos a pagar lidos como fato (`payableRepo.findIbsCbsCredits` existe em qualquer regime).
 - (b) Recalcular a partir dos documentos fiscais emitidos, trocando o destaque pela alíquota regular.
@@ -455,18 +470,24 @@ Cada um com os caminhos, a recomendação e a justificativa. Nenhum está decidi
   comparação que 2027 exige.
 
 ### F-MU-6 — Parte A do Lalur no Real hipotético para quem nunca escriturou
+> **RATIFICADO 21/11 → (a)** — dono, questionário: *"Zero como premissa"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+
 - (a) **Parte A = 0** como premissa declarada por trimestre (`PARTE_A_NAO_ESCRITURADA`), cenário `COM_PREMISSAS`.
 - (b) Cenário Real indisponível para quem não tem Lalur.
 - (c) Estimar adições usuais por conta contábil (multas, brindes, provisões).
 - **Recomendação: (a).** (c) é projeção, da camada de decisão; (b) tira do ranking o regime que mais muda o resultado.
 
 ### F-MU-7 — Exclusão no meio do ano (excesso acima de 20%, LC 123 art. 3º § 9º)
+> **RATIFICADO 21/11 → (a)** — dono, questionário: *"Vedado, com a data"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+
 - (a) **Simples `VEDADO`** no ano, com `efeitosDesde` = mês seguinte ao excesso.
 - (b) Cenário parcial: Simples até o mês do excesso e o regime de destino depois.
 - **Recomendação: (a).** (b) exige escolher o regime de destino, que é decisão; quando a camada de decisão existir, ela
   monta o parcial em cima deste motivo. Excesso de até 20% (§ 9º-A) **não** é fork: `ELEGIVEL` no ano, por lei.
 
 ### F-MU-8 — Vedações e obrigações sem dado no sistema
+> **RATIFICADO 21/11 → (a)** — dono, questionário: *"Declaração por inciso"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+
 - (a) **Declaração por ano no perfil** (`declaracaoVedacoes`, `declaracaoObrigacaoReal`, tri-estado por código do catálogo;
   PR-1b), com as deriváveis preenchidas pelo sistema; ausente ⇒ `NAO_CONFERIDO`.
 - (b) Só as deriváveis; o resto vira um aviso fixo "demais vedações do art. 15 não conferidas".
@@ -475,6 +496,8 @@ Cada um com os caminhos, a recomendação e a justificativa. Nenhum está decidi
   (c) é a versão incremental possível se o dono quiser menos campos agora: copia o ato que a lei já exige, mas perde o motivo.
 
 ### F-MU-9 — Regime `NAO_CONFERIDO` no ranking
+> **RATIFICADO 21/11 → (a)** — dono, questionário: *"Melhor condicional"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+
 - (a) `melhor` só entre `ELEGIVEL`; se o mais barato for `NAO_CONFERIDO`, ele sai em `melhorCondicional`, com os motivos, e
   o POST de sugestão recusa 400 `REGIME_NAO_CONFERIDO` para ele.
 - (b) `NAO_CONFERIDO` fora do ranking, igual a `VEDADO`.
@@ -483,6 +506,8 @@ Cada um com os caminhos, a recomendação e a justificativa. Nenhum está decidi
   (F-MU-8 ainda vazio), (b) tiraria quase todo regime do ranking; (c) repete o defeito da `f514`.
 
 ### F-MU-10 — `projecao2027` (decisão 4 de 28/10)
+> **RATIFICADO 21/11 → (a)** — dono, questionário: *"Manter, com premissas"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+
 - (a) **Manter** como transformação pura da entrada já montada (os fatos de 2026 levados a 2027), com uma `Premissa` por
   componente que a transformação assume (alíquotas 2027, RBT12 deslocado).
 - (b) Tirar da resposta e levar para a camada de decisão (altera a decisão 4).
@@ -490,6 +515,8 @@ Cada um com os caminhos, a recomendação e a justificativa. Nenhum está decidi
   existir.
 
 ### F-MU-11 — Receita usada para os limites: PJ ou unidade
+> **RATIFICADO 21/11 → (a)** — dono, questionário: *"Receita da PJ"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+
 - (a) **Receita da PJ** (todas as unidades do dono), na elegibilidade da rota e da simulação — Res. CGSN 140 art. 16 § 2º
   [D03]; o teto do Presumido já soma assim (`PresumidoTetoService.ts:37`).
 - (b) Unidade, como a rota do Simples faz hoje (`ReceitaFiscalRepository.ts:69`).
@@ -498,12 +525,16 @@ Cada um com os caminhos, a recomendação e a justificativa. Nenhum está decidi
   1).
 
 ### F-MU-12 — Aferição só no teste ou também na resposta
+> **RATIFICADO 21/11 → (a)** — dono, questionário: *"Teste e resposta"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+
 - (a) **Teste de integração + bloco `afericao`** na resposta, com o alerta `AFERICAO_DIVERGENTE`.
 - (b) Só o teste.
 - **Recomendação: (a).** O teste prova o dado da fixture; a aferição na resposta prova o dado de cada cliente, que é onde a
   divergência aparece (I-10 já trata sugestão antiga). Custa uma leitura das linhas confirmadas do ano.
 
 ### F-MU-13 — Ordem com a ponte da folha (#1321) e o ciclo fiscal (#1322)
+> **RATIFICADO 21/11 → (a)** — dono, questionário: *"Montador antes"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+
 - (a) **PR-2 desta emenda antes** do item 37 da ponte e do PR-1 do ciclo: a ponte e o ciclo editam o montador já extraído.
 - (b) A ponte e o ciclo antes; o PR-2 transporta as mudanças deles para o montador.
 - **Recomendação: (a).** Extrair primeiro evita que três sessões editem as mesmas 270 linhas do `montar` e que o item 37 e
@@ -545,8 +576,7 @@ Cada um com os caminhos, a recomendação e a justificativa. Nenhum está decidi
 - Nota do nó: seção "Fold 21/11 — emenda montador único", linha nova em "Docs", prefixo no `estado_detalhe` e no
   `autorizacao`, `write_set` e `registros` acrescidos, `prs` com o PR deste BRIEF. `estado` continua `inflight`.
 - As 4 lacunas ganham `destino` apontando para este BRIEF e o item que as fecha.
-- Quando o dono responder os forks, as respostas vão para uma cédula de forks (`D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS`
-  ou a mesma cédula, emendada) e para esta §6, marcando cada um RATIFICADO com a escolha.
+- Respostas do dono aos forks: cédula [[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]] e §6 (cada fork marcado RATIFICADO).
 
 ## 10. Lacunas registradas nesta sessão
 
@@ -578,8 +608,8 @@ Conflito previsto: `SimplesApuracaoService.ts` e `IbsCbsAssessmentService.ts` co
 1. **Objetivo:** a simulação passa a dizer a mesma coisa que a apuração diria, e nunca recomenda regime vedado — §1, itens
    9, 10, 18 e 30–32.
 2. **Grau:** gates, linhas e campos = **verificado** por leitura nesta sessão (arquivo:linha na §0); a regra legal =
-   **verificada** no acervo e no SIJUT [D01–D03]; o comportamento de `HIPOTESE` dos gates = **proposta** (§5.4), a ratificar
-   junto dos forks; o tamanho do diff de cada PR = **inferido**.
+   **verificada** no acervo e no SIJUT [D01–D03]; o comportamento de `HIPOTESE` dos gates = **proposta** (§5.4), cujas escolhas
+   abertas foram ratificadas nos forks F-MU-2, F-MU-4 e F-MU-5; o tamanho do diff de cada PR = **inferido**.
 3. **Adversarial:** a primeira leitura da lacuna `f514` ("Simples vence acima do EPP ⇒ indisponível") foi conferida contra o
    § 9º-A: excesso de até 20% **mantém** o Simples no ano. O texto atual do alerta da simulação ("fora do Simples") está
    errado nesse caso; o item 11 corrige. Também: a lacuna `35df` sugeria ler `perfil.lucroRealObrigatorio`, mas o DTO só aceita
