@@ -144,4 +144,24 @@ describe('AccountingView — aba na URL (?tab=)', () => {
     render(<AccountingView />);
     expect(screen.getByRole('tab', { name: /Balancete|Trial/i })).toHaveAttribute('aria-selected', 'true');
   });
+
+  // Revisor, A1 do #1285: o seed de compra de estoque (Estoque → Contas a Pagar) limpa os PRÓPRIOS params ao ser consumido;
+  // não pode levar junto o ?tab= que o efeito da aba acabou de gravar (F5 voltaria ao Balancete).
+  it('deep link de compra de estoque: o seed é consumido (params somem) e o ?tab=contas-a-pagar fica', async () => {
+    window.history.replaceState(window.history.state, '', '/accounting?newInventoryPayable=prod-1&qty=3');
+    render(<AccountingView />);
+    expect(screen.getByRole('tab', { name: /Contas a Pagar/ })).toHaveAttribute('aria-selected', 'true');
+    await waitFor(() => expect(new URLSearchParams(window.location.search).get('newInventoryPayable')).toBeNull());
+    const params = new URLSearchParams(window.location.search);
+    expect(params.get('qty')).toBeNull();
+    expect(params.get('tab')).toBe('contas-a-pagar');
+  });
+
+  it('o seed de estoque preserva os outros params da URL', async () => {
+    window.history.replaceState(window.history.state, '', '/accounting?newInventoryPayable=prod-1&qty=3&foo=bar#x');
+    render(<AccountingView />);
+    await waitFor(() => expect(new URLSearchParams(window.location.search).get('newInventoryPayable')).toBeNull());
+    expect(new URLSearchParams(window.location.search).get('foo')).toBe('bar');
+    expect(window.location.hash).toBe('#x');
+  });
 });
