@@ -5,8 +5,8 @@
 - **Status:** **Proposed → forks RATIFICADOS em 21/11** por questionário ([[D-2026-11-21-CICLO-FISCAL-FORKS]]). F-CF-1,
   2, 3, 7, 8, 9 e 10 ficaram na recomendação. **F-CF-4 → (b)** e **F-CF-5 → (b)** foram contra a recomendação. O
   **F-CF-6 foi perguntado de novo**: a 1ª recomendação estava errada, porque o `postEntry` exige período `OPEN`
-  (`PostingService.ts:131,148`). Ficou em (a) "dia de corte com o período aberto". Os detalhes F-CF-4a e F-CF-5a ficaram
-  na recomendação. Nenhum código autorizado sem "executa".
+  (`PostingService.ts:131,148`). Ficou em (a) "dia de corte com o período aberto". Os detalhes F-CF-4a/4b e F-CF-5a/5b ficaram
+  na recomendação (4b e 5b numa 3ª rodada, depois de ler o `registrarDas` e o `SpedEcdRequestSchema`). Nenhum código autorizado sem "executa".
 - **Lacuna de origem:** `L-20261121-184212-4fdb` (classe `feature`): "nenhum job agenda o ciclo fiscal".
 - **Autorização:** dono, chat, 2026-11-21: *"Executa tudo pra liberar e poder rodar em xhigh até terminar"*, em
   resposta à proposta de planejar o job do ciclo fiscal (repassada pela sessão que abriu esta). Cobre este PRE-ADR/BRIEF,
@@ -176,10 +176,17 @@ Cada item é testável sozinho. **[F-CF-n]** = o fork que decidiu o item. Todos 
 
 ### PR-0 — contrato: prazo como dado + calendário puro + modelo (sem job, sem rota)
 
-1. **Tabela `PRAZO_OBRIGACAO`** em `legal_parameters` *(se F-CF-2 a)*: `chave` = obrigação, `discriminador` = regime
-   (`*` = todos), `valorTexto` = regra (enum `REGRAS_PRAZO`), `fonte` + `fonteUrl` + vigência. Semente com as 15 linhas
-   da tabela do dossiê §1, fontes literais de lá. O `formatoLinha.ts` e o `checkLegalParamsFormatoCli` aceitam a tabela.
-   Teste: o check reprova uma regra fora do enum.
+1. **Tabela `PRAZO_OBRIGACAO`** em `legal_parameters` (F-CF-2 → a): `chave` = obrigação, `discriminador` = **modalidade**
+   (`MENSAL` · `TRIMESTRAL` · `ESTIMATIVA` · `AJUSTE_ANUAL` · `ISENTOS_TRIMESTRAL` · `ANUAL`), `valorTexto` = regra (enum
+   `REGRAS_PRAZO`), `fonte` + `fonteUrl` + vigência. O regime não entra na chave: quem decide se a obrigação existe é a
+   matriz e a função do item 4. Uma linha por modalidade resolve o IRPJ/CSLL, que tem três regras, e a Reinf, que tem
+   duas. Semente com 17 linhas, fontes literais do dossiê §1: `DAS/MENSAL`; `DARF_IRPJ` e `DARF_CSLL` × `TRIMESTRAL`,
+   `ESTIMATIVA`, `AJUSTE_ANUAL`; `PIS/MENSAL` e `COFINS/MENSAL` (vigência até 2026-12); `DCTFWEB/MENSAL`;
+   `REINF/MENSAL` e `REINF/ISENTOS_TRIMESTRAL`; `ECD`, `ECF`, `DEFIS` (até a de 2026), `PGDAS_D_ANUAL` (desde 2027) e
+   `DASN_SIMEI`, todos `ANUAL`. **CBS e IBS não ganham linha aqui**: o prazo deles já é a linha
+   `IBS_CBS/<tributo>/VENCIMENTO` (dono, 23/10), lida por `vencimentoIbsCbsDe`, e uma 2ª fonte para o mesmo prazo é
+   proibida. O PGDAS-D mensal não tem linha (vence com o DAS, §7). O `formatoLinha.ts` e o `checkLegalParamsFormatoCli`
+   aceitam a tabela. Teste: o check reprova uma regra fora do enum.
 2. **`REGRAS_PRAZO`** (enum fechado) e o intérprete puro `vencimentoDe(regra, periodo, feriados, codMun)`, que delega
    aos intérpretes que já existem (§1) e acrescenta só o que falta: `DIA_20_ADIA` (DAS), `DIA_25_ANTECIPA` (PIS/COFINS),
    `ULTIMO_DIA_UTIL_DO_MES` com deslocamento (junho/julho do ano seguinte, março do ajuste), `DATA_FIXA` (31/03, último
@@ -187,8 +194,8 @@ Cada item é testável sozinho. **[F-CF-n]** = o fork que decidiu o item. Todos 
    importa `packages/`, core-boundary). Testes por regra, com datas calculadas (conferir na execução):
    DAS 2026-11 → 20/12/2026 é domingo ⇒ **21/12/2026**; PIS/COFINS 2026-09 → 25/10/2026 é domingo ⇒ **23/10/2026**;
    Reinf 2026-07 → 15/08/2026 é sábado ⇒ **17/08/2026**.
-3. **Exceção datada** *(se F-CF-2 a)*: linha `PRAZO_OBRIGACAO` com `discriminador` = `<regime>@<codMun>` (calamidade do
-   art. 40-A) ou vigência estreita (prorrogação da ECF) vence a regra geral. Teste: com a linha de prorrogação publicada,
+3. **Exceção datada** (F-CF-2 → a): uma linha `PRAZO_OBRIGACAO` com `discriminador` = `<modalidade>@<codMun>`
+   (calamidade do art. 40-A) ou com vigência estreita (prorrogação da ECF) vence a regra geral. Teste: com a linha de prorrogação publicada,
    a ECF do ano X vence na data da linha. Sem ela, vence no último dia útil de julho.
 4. **`ocorrenciasEsperadas(perfil, matriz, prazos, ano)`** — puro, sem I/O. A partir de `resolverObrigacoes` (o que é
    `OBRIGATORIA`/`CONDICIONAL`) e das regras de período que o `TaxAssessmentPeriodosService` já usa (forma efetiva,
@@ -198,7 +205,8 @@ Cada item é testável sozinho. **[F-CF-n]** = o fork que decidiu o item. Todos 
    não pode mudar a resposta do `GET /tax-assessments/periodos`** (o teste dele roda igual). [F-CF-9]
    Testes: Simples 2026 ⇒ 12 DAS + DEFIS em 03/2027; Presumido trimestral 2026 ⇒ 4×2 DARF + 12 PIS + 12 COFINS +
    12 DCTFWeb + ECD (se obrigatória) + ECF; Presumido 2027 ⇒ sem PIS/COFINS, com CBS (IBS só com linha publicada);
-   Reinf `CONDICIONAL` aparece com a pergunta pendente; obrigação `NAO_SE_APLICA` não aparece.
+   Reinf `CONDICIONAL` aparece com a pergunta pendente; obrigação `NAO_SE_APLICA` não aparece; MEI 2026 ⇒ DASN-SIMEI
+   em 05/2027 e **nenhum DAS-MEI** até a §9 item 2 fechar o prazo.
 5. **Modelo `ObrigacaoFiscalOcorrencia`** *(se F-CF-1 a)* + migração aditiva + repositório (interface + Prisma,
    `tx` propagado). Chave única `(userId, obrigacao, periodo)`. Transição de estado **só** por
    `updateMany where {id, estado: de, versao}` (CAS). 0 linhas ⇒ `ConflictError` nomeado. Soft-delete (`deletedAt`).
@@ -212,9 +220,12 @@ Cada item é testável sozinho. **[F-CF-n]** = o fork que decidiu o item. Todos 
    acabou e que ainda não estão em estado final. A ordem é cronológica por família: o X8 exige o mês anterior
    confirmado (409 `TAX_ASSESSMENT_ORDER`, `PisCofinsAssessmentService.ts:127`). Cabeçalho `atomicUntil: —`. Teste: 2
    execuções seguidas sem dado novo ⇒ 0 escritas na 2ª (contagem `inalteradas`).
-7. **Catálogo fechado de pré-requisitos** (`PRE_REQUISITOS_CICLO`), cada um com código, mensagem pt/en e a origem
-   **lida** (o job não reimplementa a regra, só mapeia o erro nomeado do serviço dono):
-   `SEM_PERFIL_DO_ANO` · `UNIDADE_NAO_DEFINIDA` [F-CF-10] · `ANO_NAO_ENCERRADO` / `SPED_SEM_SIGNATARIO` (item 21) ·
+7. **Catálogo fechado de pré-requisitos** (`PRE_REQUISITOS_CICLO`), cada um com código, mensagem pt/en e uma de duas
+   origens, ambas **lidas**: (i) o erro nomeado do serviço dono, que o job só mapeia sem reimplementar a regra; ou (ii) um
+   estado lido de repositório que já existe (perfil do ano, unidade, pendência de venda, encerramento do exercício,
+   geração anterior do SPED). Os códigos:
+   `SEM_PERFIL_DO_ANO` · `UNIDADE_NAO_DEFINIDA` [F-CF-10] · `ANO_NAO_ENCERRADO` / `SPED_SEM_GERACAO_ANTERIOR` /
+   `SPED_ENTRADA_INVALIDA` (item 21; o último carrega a mensagem do `ValidationError` do gerador) ·
    `VENDAS_PENDENTES`
    (`ReconcilePending` aberto na competência ou sync bloqueado) · `ORDEM_ANTERIOR_PENDENTE` (409 `…_ORDER`) ·
    `PARAMETRO_LEGAL_AUSENTE` (`ParametroLegalAusenteError`) · `TETO_PRESUMIDO_EXCEDIDO` (`PRESUMIDO_TETO_EXCEDIDO`) ·
@@ -242,7 +253,8 @@ Cada item é testável sozinho. **[F-CF-n]** = o fork que decidiu o item. Todos 
 11. **`GET /api/accounting/obrigacoes?ano&estado?&ate?`** — cadeia Route → Controller → Service → Repository, policy
     `canReadTaxAssessment`, DTO Zod `.strict()`, rota em 2 toques (`routes/accounting.ts` + `docs.paths.ts`), openapi
     (guarda de path-count). Devolve as ocorrências com `vencimento`, `regra`, `fonte`, `estado`, `preRequisitos`,
-    `previa` e a situação do prazo **derivada na leitura** (`NO_PRAZO` · `VENCE_EM_BREVE` [≤ N dias úteis, F-CF-7] ·
+    `previa` e a situação do prazo **derivada na leitura** (`NO_PRAZO` · `VENCE_EM_BREVE` [≤ `AVISO_DIAS_UTEIS` = 5 dias
+    úteis, constante do `cicloFiscal.ts`, F-CF-7 → a] ·
     `VENCIDA`, nunca gravada). Testes: 403 sem permissão; 400 com chave extra; `VENCIDA` muda com o relógio e não com
     escrita.
 12. **Gates do diff no PR-1:** snapshot de shape dos DTOs novos; códigos de pré-requisito e de aviso no catálogo i18n
@@ -280,14 +292,25 @@ Cada item é testável sozinho. **[F-CF-n]** = o fork que decidiu o item. Todos 
 17b. **Provisão estimada do Simples** (F-CF-5 → b; F-CF-5a → a). Com `SIMPLES` na política, a partir do dia de corte,
     com o período `OPEN` e sem DAS oficial registrado, o job lança a provisão pelo valor **calculado** da prévia, no
     último dia da competência. Lançamento: D dedução da receita / C Simples a recolher, contas do perfil, por um método
-    novo `SimplesApuracaoService.provisionarEstimativaPeloSistema` com `sourceType = 'simples.das.provision.estimate'`
-    e `sourceId = <ocorrência>`. O `registrarDas` ganha um passo no commit 1: **estorna a estimada viva da competência
-    antes** de lançar a oficial (o mesmo estorno idempotente que ele já faz para a substituída). Resultado: uma provisão
-    viva por competência, sempre. Prévia mudou antes do registro ⇒ estorna a estimada e lança outra (F-CF-8 → b, nada
-    entregue). Atualizar o cabeçalho `atomicUntil` do serviço com as linhas e os testes novos (`[AC-2.3-2]`).
-    **Emenda o F-SN-10 só neste ponto:** a provisão definitiva continua pelo valor oficial. Testes de integração:
-    estimada lançada sem HTTP; `registrarDas` ⇒ estimada estornada + oficial lançada, 1 viva; repetir o registro não cria
-    linha (reconcile); sem a família na política, nenhuma estimada.
+    novo `SimplesApuracaoService.provisionarEstimativaPeloSistema`, com `sourceType = 'simples.das.provision.estimate'`
+    e `sourceId = <ocorrência>:v<n>`. O `n` cresce a cada estimada nova: o lançamento estornado continua ocupando a
+    chave `@@unique([userId, unitId, sourceType, sourceId])` (`schema.prisma:871`), então reusar o mesmo `sourceId` daria
+    P2002. Prévia mudou antes do registro ⇒ estorna a `v<n>` e lança a `v<n+1>` (F-CF-8 → b, nada entregue).
+    **No `registrarDas`** (F-CF-5b → a):
+    - **período da competência `OPEN`:** o commit 1 ganha um passo. Ele **estorna a estimada viva antes** de lançar a
+      oficial, com o mesmo estorno idempotente que já faz para a substituída (`estornarProvisao`, data = fim da
+      competência). Fica uma provisão viva por competência;
+    - **período fechado:** o `postEntry` e o `reverseEntry` exigem `OPEN` (`PostingService.ts:131,148,590`). A estimada
+      **fica**, e o serviço lança só a **diferença** (oficial − estimada, com sinal) no 1º período aberto, datada nele.
+      O lançamento usa `sourceType = 'simples.das.provision.adjust'`, `sourceId = <id da apuração>`, e o histórico cita a
+      competência de origem. Diferença zero ⇒ nenhum lançamento. É mudança de estimativa (CPC 23, leitura a conferir: §9
+      item 6). Nada fica pendente.
+    Atualizar o cabeçalho `atomicUntil` do serviço com as linhas e os testes novos (`[AC-2.3-2]`). **Emenda o F-SN-10 só
+    neste ponto:** a provisão definitiva continua pelo valor oficial. Testes de integração: estimada lançada sem HTTP;
+    `registrarDas` com o período aberto ⇒ estimada estornada + oficial lançada, 1 viva; com o período fechado ⇒ estimada
+    viva + ajuste no período aberto, e o saldo de "Simples a recolher" da competência somado ao ajuste = valor oficial;
+    repetir o registro não cria linha (reconcile); 2 estimadas seguidas ⇒ `v1` estornada, `v2` viva; sem a família na
+    política, nenhuma estimada.
 18. **Depois de confirmada** [F-CF-8]: a cada passada, a apuração viva é recalculada com `recalcularPeloSistema` e
     comparada como em `mesmosValores` (`TaxAssessmentRecalcService.ts:55`). Se diverge, *(se F-CF-8 b)* reconfirma
     quando nada foi entregue (sem `MitExport` com a apuração e sem DAS registrado). Se algo foi entregue, só grava o
@@ -303,14 +326,22 @@ Cada item é testável sozinho. **[F-CF-n]** = o fork que decidiu o item. Todos 
 20. **MIT/DCTFWeb** [F-CF-4]: quando todas as apurações X7/X8 do mês estão confirmadas, o job chama
     `MitExportService.gerarPeloSistema`. Gera de novo só se uma apuração do mês foi substituída depois do arquivo. Estado
     `ARQUIVO_GERADO` → o humano encerra no MIT (item 14).
-21. **Rascunho de ECD e ECF** (F-CF-4 → b; F-CF-4a → a): uma vez por ano-calendário, quando o encerramento do exercício
-    estiver lançado (`ExerciseClosingService`) e os signatários do SPED estiverem no perfil, o job chama a geração que já
-    existe (`SpedGenerationService` para a ECD; `SpedEcfGenerationService`/`SpedEcfRealGenerationService` pela forma) por
-    métodos `*PeloSistema`. Estado `ARQUIVO_GERADO` → o humano assina e transmite no PVA. Gera de novo só se o razão do
-    ano mudar depois da geração. A detecção (lançamento do ano com `createdAt` posterior ao arquivo, ou estorno) é esboço
-    e se confere na execução (§10 item 6). Sem encerramento ⇒ `AGUARDANDO_PRE_REQUISITO` com `ANO_NAO_ENCERRADO`; sem
-    signatário ⇒ `SPED_SEM_SIGNATARIO`. Testes: exercício encerrado ⇒ 1 arquivo; 2ª passada ⇒ nenhum; lançamento novo no
-    ano ⇒ 1 arquivo novo.
+21. **Rascunho de ECD e ECF** (F-CF-4 → b; F-CF-4a → a; F-CF-4b → a): uma vez por ano-calendário, quando o
+    encerramento do exercício estiver lançado (o lançamento do `ExerciseClosingService.closeExercise` do ano), o job chama
+    a geração que já existe (`SpedGenerationService` para a ECD; `SpedEcfGenerationService`/`SpedEcfRealGenerationService`
+    pela forma) por métodos `*PeloSistema`. **A entrada** (`SpedEcdRequestSchema`: declarante, livro, signatários,
+    `mappingVersion`, termo; a ECF tem o Y600 dos sócios) não tem pré-preenchimento no código. Ela é montada do perfil
+    fiscal do ano (contador, representante legal, CNPJ) e da **entrada da última geração** do mesmo tipo, com o ano
+    trocado. Para isso, o `AccountingDataExchangeJob` ganha a coluna anulável `requestJson`, gravada pelo `generate` de
+    `EXPORT_SPED_ECD`/`EXPORT_SPED_ECF*` daqui em diante (migração aditiva). Os dados pessoais dos signatários já estão
+    no banco; a coluna nunca vai ao log nem à auditoria (OBS-R7, allowlist). Sem geração anterior ⇒
+    `SPED_SEM_GERACAO_ANTERIOR`: a 1ª é sempre do humano. Entrada recusada pelo gerador ⇒ `SPED_ENTRADA_INVALIDA` com a
+    mensagem. Estado `ARQUIVO_GERADO` → o humano assina e transmite no PVA. Gera de novo só se o razão do
+    ano mudar depois da geração. A detecção (lançamento do ano com `createdAt` posterior ao arquivo, ou estorno) e a
+    forma da 2ª geração (substituta pelo `supersedesJobId` do `spedRectificationGate.ts` ou job novo) são esboço e se
+    conferem na execução (§10 item 6). Sem encerramento ⇒ `AGUARDANDO_PRE_REQUISITO` com `ANO_NAO_ENCERRADO`. Testes:
+    exercício encerrado com geração anterior ⇒ 1 arquivo; 2ª passada ⇒ nenhum; lançamento novo no ano ⇒ 1 arquivo
+    novo; sem geração anterior ⇒ nenhum arquivo e o pré-requisito.
 22. **DEFIS, DASN-SIMEI e bloco anual do PGDAS-D**: só ocorrência + prazo + pré-requisito. O job não gera, porque a
     declaração é feita no portal.
 
@@ -336,7 +367,7 @@ model ObrigacaoFiscalOcorrencia {
   previa           Json? // PreviaOcorrenciaSchema
   previaSha256     String?
   entradaInformada Json? // item 15 (F-CF-3 b)
-  sourceType       String? // 'tax_assessment' | 'consumption_tax_assessment' | 'simples_apuracao' | 'reinf_batch' | 'mit_export'
+  sourceType       String? // 'tax_assessment' | 'consumption_tax_assessment' | 'simples_apuracao' | 'reinf_batch' | 'mit_export' | 'accounting_data_exchange_job' (ECD/ECF)
   sourceId         String?
   aviso            String?
   marcadoPorId     String? // PATCH humano (item 14)
@@ -367,7 +398,7 @@ export const ESTADOS_OCORRENCIA = [
   'AGUARDANDO_PRE_REQUISITO', // preRequisitos não vazio
   'PREVIA_CALCULADA',
   'CONFIRMADA',               // apuração CONFIRMED viva (sourceId)
-  'ARQUIVO_GERADO',           // Reinf/MIT gerado
+  'ARQUIVO_GERADO',           // Reinf/MIT/ECD/ECF gerado
   'AGUARDANDO_HUMANO',        // falta passo humano (§3.2)
   'CONCLUIDA',                // derivado (DAS registrado) ou marcado (ENTREGUE/PAGA)
   'DISPENSADA',               // sem fato (Reinf art. 4º) ou marcado com motivo
@@ -446,8 +477,12 @@ export class CicloFiscalService {
     x7: Pick<TaxAssessmentService, 'recalcularPeloSistema' | 'confirmarPeloSistema' | 'reconcileProvisao'>;
     x8: Pick<PisCofinsAssessmentService, 'recalcularPeloSistema' | 'confirmarPeloSistema'>;
     ibsCbs: Pick<IbsCbsAssessmentService, 'previewPeloSistema' | 'confirmarPeloSistema' | 'reconcileIbsCbsProvisao'>;
-    simples: Pick<SimplesApuracaoService, 'calcularPeloSistema'>;
+    simples: Pick<SimplesApuracaoService, 'calcularPeloSistema' | 'provisionarEstimativaPeloSistema'>;
     reinf: Pick<ReinfService, 'gerarPeloSistema'>; mit: Pick<MitExportService, 'gerarPeloSistema'>;
+    ecd: Pick<SpedGenerationService, 'generatePeloSistema'>;
+    ecf: Pick<SpedEcfGenerationService, 'generatePeloSistema'>; ecfReal: Pick<SpedEcfRealGenerationService, 'generatePeloSistema'>;
+    exportJobs: Pick<IAccountingDataExchangeJobRepository, 'ultimoExportDoTipo'>; // requestJson da última geração (item 21)
+    encerramento: Pick<PostingService, 'findEntryBySource'>; // lançamento do closeExercise do ano (esboço: conferir o sourceType)
     pendencias: Pick<IReconcilePendingRepository, 'countAbertasNaCompetencia'>; periodos: Pick<IAccountingPeriodRepository, 'statusDo'>;
   });
   processar(hoje: string): Promise<ResumoCicloFiscal>;
@@ -488,8 +523,9 @@ Em cada fork, a opção (a) é a recomendada, salvo onde se diz outra coisa.
 - **RATIFICADO 21/11: (b)** — na recomendação. A janela "≤ N dias úteis antes do vencimento" foi trocada pelo dia de corte do F-CF-6 (perguntado de novo).
 - (a) **Nunca confirma.** Calcula a prévia, checa, avisa, e o humano confirma (padrão Odoo/ERPNext, §2). Não tem risco
   de valor errado, mas automatiza só o cálculo.
-- (b) **Confirma por política do tenant, opt-in por família** (`X7`, `X8`, `IBS_CBS`), com três travas: período fechado
-  (F-CF-6), prévia sem aviso bloqueante, e só a ≤ N dias úteis do vencimento. Até lá, o usuário pode preencher a
+- (b) **Confirma por política do tenant, opt-in por família** (`X7`, `X8`, `IBS_CBS`; `SIMPLES` pela estimada do
+  F-CF-5), com três travas: dia de corte com o período aberto (F-CF-6, que substituiu a 1ª versão "período fechado" e
+  "≤ N dias úteis do vencimento"), prévia sem aviso bloqueante e nenhuma venda pendente. Até lá, o usuário pode preencher a
   **entrada da ocorrência** (deduções, retenções sofridas, estimativas pagas), e o job confirma com ela, ou com a vazia
   se ninguém preencheu (itens 15–17). Com a política desligada, vale (a).
 - (c) Confirma sempre que a prévia não tiver aviso. É o máximo de automação, mas a dedução não informada vira imposto a
@@ -498,7 +534,7 @@ Em cada fork, a opção (a) é a recomendada, salvo onde se diz outra coisa.
   desligado dela. A chave padrão desligada vem do mercado (§2) e do risco da §4. O Simples fica fora pelo F-CF-5.
 
 **F-CF-4 · Que arquivos o job gera sozinho.**
-- **RATIFICADO 21/11: (b) — contra a recomendação.** Detalhe F-CF-4a → (a), na recomendação: gera uma vez quando o encerramento do exercício estiver lançado e os signatários estiverem no perfil; gera de novo só se o razão do ano mudar (item 21).
+- **RATIFICADO 21/11: (b) — contra a recomendação.** Detalhe F-CF-4a → (a), na recomendação: gera uma vez quando o encerramento do exercício estiver lançado; gera de novo só se o razão do ano mudar. Detalhe F-CF-4b → (a), na recomendação (3ª rodada, depois da leitura do `SpedEcdRequestSchema`, que não tem pré-preenchimento): a entrada vem do perfil do ano + a entrada da última geração (coluna nova `requestJson`); a 1ª geração é do humano (item 21).
 - (a) **Reinf e MIT mensais**, quando a entrada está completa (itens 19–20). O ECD, a ECF e as declarações anuais ficam
   só no calendário, com prazo e pré-requisito, porque pedem ano encerrado, signatários e PVA.
 - (b) (a) + rascunho do ECD/ECF quando o exercício estiver encerrado (`ExerciseClosingService`).
@@ -507,7 +543,7 @@ Em cada fork, a opção (a) é a recomendada, salvo onde se diz outra coisa.
   ECD e ECF pesam vários MB, e o PVA é humano de qualquer forma (gate H1).
 
 **F-CF-5 · Simples: o job para na prévia ou provisiona uma estimativa.**
-- **RATIFICADO 21/11: (b) — contra a recomendação.** Emenda o F-SN-10 só neste ponto: a provisão definitiva continua pelo DAS oficial. Detalhe F-CF-5a → (a), na recomendação: a estimada segue a mesma política opt-in (família `SIMPLES`) e o dia de corte (item 17b).
+- **RATIFICADO 21/11: (b) — contra a recomendação.** Emenda o F-SN-10 só neste ponto: a provisão definitiva continua pelo DAS oficial. Detalhe F-CF-5a → (a), na recomendação: a estimada segue a mesma política opt-in (família `SIMPLES`) e o dia de corte. Detalhe F-CF-5b → (a), na recomendação (3ª rodada, depois da leitura do `registrarDas`): com o período da competência fechado no registro do DAS, a estimada fica e só a diferença vai ao 1º período aberto, como mudança de estimativa (CPC 23, a conferir, §9 item 6) (item 17b).
 - (a) **Para na prévia.** Calcula, mostra o espelho do PGDAS-D e avisa "transmita até <vencimento> e registre o DAS". A
   provisão continua no registro do DAS oficial (F-SN-10 → a).
 - (b) Lança uma provisão estimada pelo valor calculado no último dia da competência e a estorna no registro do DAS
@@ -580,6 +616,9 @@ e a apuração grava a "unidade lida". Não há conceito de matriz no código.
    conta até o último dia útil antes da data (dossiê §4).
 5. **Oráculo do número**: a prévia do job **é** a apuração do serviço dono, então o oráculo continua o deles (PVA,
    H1/H1b/X5, contador). Este nó não cria número novo.
+6. **CPC 23 (mudança de estimativa reconhecida no período da mudança)**: é a base do ajuste do item 17b com o período
+   fechado (F-CF-5b → a, dono, 21/11). Ler o parágrafo vigente (CFC/CPC) pelo método `VERIFICACAO-LEGAL` antes do
+   executa do PR-2. Se a leitura não sustentar o ajuste prospectivo, o item 17b volta ao dono como lacuna de spec.
 
 ## 10. Insumos ausentes
 
@@ -607,7 +646,7 @@ e a apuração grava a "unidade lida". Não há conceito de matriz no código.
 | PR-0 | `server/prisma/schema.prisma`, `server/prisma/migrations/<ts>_ciclo_fiscal_pr0/**`, `server/prisma/data/legal_parameters_prazo_obrigacao_v1.sql`, `server/src/lib/prazoObrigacao.ts` (novo), `server/src/features/accounting/models/cicloFiscal.ts` (novo), `server/src/features/accounting/models/periodosEsperados.ts` (novo, extraído), `server/src/features/accounting/services/TaxAssessmentPeriodosService.ts`, `server/src/features/accounting/repositories/{I,}ObrigacaoFiscalOcorrenciaRepository.ts` (novos), `server/src/features/legalParameters/models/formatoLinha.ts`, `server/src/features/legalParameters/models/legalParameter.ts` (tabela no enum), testes em `__tests__/` |
 | PR-1 | `server/src/features/accounting/services/CicloFiscalService.ts` (novo), `server/src/jobs/CicloFiscalScheduler.ts` (novo), `server/src/jobs/__tests__/schedulerFailureAlert.test.ts`, `server/src/features/accounting/services/{SimplesApuracaoService,IbsCbsAssessmentService,ReinfService,MitExportService}.ts` (métodos `*PeloSistema`), `server/src/features/accounting/dtos/CicloFiscalDto.ts` (novo), `server/src/controllers/cicloFiscalController.ts` (novo), `server/src/routes/obrigacoes.ts` (novo), `server/src/routes/docs/accounting.obrigacoes.paths.ts` (novo), i18n dos códigos |
 | PR-2 | `CicloFiscalService.ts`, `CicloFiscalDto.ts`, `cicloFiscalController.ts`, `routes/obrigacoes.ts`, `server/src/features/accounting/dtos/CompanyFiscalProfileDto.ts`, `server/src/features/accounting/services/SimplesApuracaoService.ts` (estimada + estorno no `registrarDas`, item 17b), `server/prisma/schema.prisma` + migração (campos da política, F-CF-3 b; `unidadeApuracaoId`, F-CF-10) |
-| PR-3 | `CicloFiscalService.ts`, `server/src/features/accounting/services/{SpedGenerationService,SpedEcfGenerationService,SpedEcfRealGenerationService}.ts` (métodos `*PeloSistema`, item 21) e os testes de integração de Reinf/MIT/ECD/ECF |
+| PR-3 | `CicloFiscalService.ts`, `server/src/features/accounting/services/{SpedGenerationService,SpedEcfGenerationService,SpedEcfRealGenerationService}.ts` (métodos `*PeloSistema` + gravação do `requestJson`, item 21), `server/prisma/schema.prisma` + migração (`AccountingDataExchangeJob.requestJson`) e os testes de integração de Reinf/MIT/ECD/ECF |
 
 **Registros (choke points PAR-001):** `server/src/lib/factory.ts`, `server/src/routes/accounting.ts`,
 `server/src/routes/docs.paths.ts`, `server/public/openapi.json`, `server/src/server.ts` (start/stop),
