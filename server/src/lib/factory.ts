@@ -218,6 +218,7 @@ import { ServiceFiscalProfileService } from '../features/accounting/services/Ser
 import { ProductFiscalProfileService } from '../features/accounting/services/ProductFiscalProfileService';
 import { IssBeneficioMunicipalService } from '../features/accounting/services/IssBeneficioMunicipalService';
 import { ProductDestinationService } from '../features/accounting/services/ProductDestinationService';
+import { InsumoStockCountService } from '../features/accounting/services/InsumoStockCountService';
 import { CompanyFiscalProfileService } from '../features/accounting/services/CompanyFiscalProfileService';
 import { CompanySignerService } from '../features/accounting/services/CompanySignerService';
 import { PartnerService } from '../features/accounting/services/PartnerService';
@@ -1029,6 +1030,7 @@ export class ApplicationFactory {
     taxOptimizationReport: TaxOptimizationReportService; // EFICIENCIA-FISCAL PR-4
     servicoFiscalAvaliacao: ServicoFiscalAvaliacaoService; // EFICIENCIA-FISCAL PR-5
     productDestination: ProductDestinationService; // ITEM-DESTINATION PR-2
+    insumoStockCount: InsumoStockCountService; // INSUMO-INVENTARIO-PERIODICO item 4
     companyFiscalProfile: CompanyFiscalProfileService; // X13
     companySigner: CompanySignerService; // X13
     partner: PartnerService; // IRRF-DISTRIBUICAO PR-1
@@ -1873,6 +1875,15 @@ export class ApplicationFactory {
       ),
       // ITEM-DESTINATION PR-2 (item 17, F-ID-2 a): destinação padrão por produto — a mesma porta de existência
       // de produto do LAC-E (reuso), sob a policy fiscal.
+      // INSUMO-INVENTARIO-PERIODICO item 4 (F-ID-3 c): contagem do estoque de insumo — só posta (commit 2 nenhum).
+      insumoStockCount: new InsumoStockCountService(
+        this.repositories.fiscalProfile,
+        this.repositories.account,
+        this.repositories.posting,
+        this.repositories.journalEntry,
+        postingService,
+        this.policies.accounting,
+      ),
       productDestination: new ProductDestinationService(
         this.repositories.productDestinationDefault,
         new DynamicTableProductRefLookup(productRefPort),
@@ -2804,6 +2815,7 @@ export class ApplicationFactory {
   public getTaxOptimizationReportService = (): TaxOptimizationReportService => this.services.taxOptimizationReport;
   public getServicoFiscalAvaliacaoService = (): ServicoFiscalAvaliacaoService => this.services.servicoFiscalAvaliacao;
   public getProductDestinationService = (): ProductDestinationService => this.services.productDestination;
+  public getInsumoStockCountService = (): InsumoStockCountService => this.services.insumoStockCount;
   public getCompanyFiscalProfileService = (): CompanyFiscalProfileService => this.services.companyFiscalProfile;
   public getCompanySignerService = (): CompanySignerService => this.services.companySigner;
   public getPartnerService = (): PartnerService => this.services.partner;

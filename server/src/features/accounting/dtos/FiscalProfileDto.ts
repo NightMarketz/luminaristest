@@ -47,6 +47,9 @@ const FiscalProfileFields = z
     pisCofinsRecuperavelAccountId: z.string().min(1).nullable().optional(),
     // ITEM-DESTINATION item 20 (F-ID-5 a): conta de despesa (Expense, folha) do insumo do serviço — código do contador.
     insumoExpenseAccountId: z.string().min(1).nullable().optional(),
+    // INSUMO-INVENTARIO-PERIODICO item 1 (F-ID-3 c, dono 21/11): estoque de insumo (Asset, folha) — preenchida, o insumo
+    // entra no ativo e sai pela contagem (NBC TG 1002 itens 13.2 e 13.6). Código do contador.
+    insumoStockAccountId: z.string().min(1).nullable().optional(),
     // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, BRIEF item 3, F-TA-6 a): contas da provisão de IRPJ/CSLL — código do contador (P-5).
     irpjDespesaAccountId: z.string().min(1).nullable().optional(),
     csllDespesaAccountId: z.string().min(1).nullable().optional(),
