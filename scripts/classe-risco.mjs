@@ -136,21 +136,82 @@ export function bumpMajor(titulo) {
   return m ? m[1] !== m[2] : false;
 }
 
-// A maior versão que um spec do npm admite ("^4.18.2" → 4.18, ">=4.8.4 <6.1.0" → 6.1, "^8 || ^9" → 9, "5.x" → 5).
-// "npm:pacote@^5" lê o spec depois do último "@". null = não é versão legível (workspace:, file:, git, URL,
-// "*", tag como "latest"): quem chama trata como dúvida. Pré-release e build ("2.0.0-beta.1", "+sha") não mudam a
-// major e saem antes da leitura; cada versão é lida inteira (major.minor.patch), senão "5.1.7" viraria 5.1 e 7.
-// Trecho aberto para cima (">=4.0.0", ">4", "^4 || >=4.2") admite qualquer major futura: não tem teto, é dúvida.
-function versaoDoSpec(spec) {
-  const s = spec.trim().replace(/^npm:.+@(?=[^@]*$)/, '').replace(/(\d)[-+][0-9A-Za-z.-]*[A-Za-z][0-9A-Za-z.-]*/g, '$1');
-  if (!s || !/^[~^=v<>\s|.\-xX*\d]+$/.test(s) || !/\d/.test(s)) return null;
-  if (s.split('||').some((trecho) => />/.test(trecho) && !/</.test(trecho))) return null;
-  let max = null;
-  for (const m of s.matchAll(/(\d+)(?:\.(\d+|[xX*]))?(?:\.(?:\d+|[xX*]))?/g)) {
-    const v = { major: Number(m[1]), minor: m[2] === undefined || /[xX*]/.test(m[2]) ? null : Number(m[2]) };
-    if (!max || v.major > max.major || (v.major === max.major && (v.minor ?? -1) > (max.minor ?? -1))) max = v;
+// Teto de um spec do npm: a maior major (e, em 0.x, a minor) que ele admite, pela gramática de faixas do semver,
+// não pelo maior número escrito (revisão do #1310: cada regex fechava uma forma e deixava a vizinha aberta).
+// Cada trecho do "||" é um conjunto de comparadores; o teto do trecho é o menor teto deles (interseção) e o do spec
+// é o maior entre os trechos (união). { major, minor }: minor null = qualquer minor daquela major.
+// null = sem teto (">=4", "*", "x", trecho vazio, "4 - *", "<=x") ou ilegível (workspace:, git, URL, tag como
+// "latest"): quem chama trata como dúvida. "npm:pacote@^5" lê o spec depois do último "@". Pré-release e build
+// ("2.0.0-beta.1", "+sha") saem antes da leitura: não mudam a major.
+const SEM_TETO = { semTeto: true };
+const curinga = (p) => p === undefined || /^[xX*]$/.test(p);
+
+function maiorTeto(a, b) {
+  if (a.semTeto || b.semTeto) return SEM_TETO;
+  if (a.major !== b.major) return a.major > b.major ? a : b;
+  if (a.minor === null || b.minor === null) return { major: a.major, minor: null };
+  return a.minor >= b.minor ? a : b;
+}
+function menorTeto(a, b) {
+  if (a.semTeto) return b;
+  if (b.semTeto) return a;
+  if (a.major !== b.major) return a.major < b.major ? a : b;
+  if (a.minor === null) return b;
+  if (b.minor === null) return a;
+  return a.minor <= b.minor ? a : b;
+}
+
+// Teto de um comparador já separado: op ("", "=", "^", "~", ">", ">=", "<", "<=") e partes M.m.p (ou curinga).
+function tetoDoComparador(op, M, m, p) {
+  if (op === '>' || op === '>=') return SEM_TETO;
+  if (curinga(M)) return op === '<' ? null : SEM_TETO; // "<x" não admite nada: ilegível
+  const maj = Number(M);
+  const min = curinga(m) ? null : Number(m);
+  if (op === '^') {
+    if (maj > 0) return { major: maj, minor: null };
+    return { major: 0, minor: min }; // ^0.3.1 → 0.3; ^0.x → 0.qualquer
   }
-  return max;
+  if (op === '<') {
+    const pat = curinga(p) ? 0 : Number(p);
+    if ((min ?? 0) === 0 && pat === 0) return maj === 0 ? null : { major: maj - 1, minor: null }; // <6 → 5.x
+    if (pat === 0) return { major: maj, minor: min - 1 }; // <6.1.0 → 6.0
+    return { major: maj, minor: min }; // <6.1.3 → 6.1
+  }
+  return { major: maj, minor: min }; // "", "=", "~", "<=": a própria versão (com curinga, a faixa dela)
+}
+
+const COMPARADOR = /^(\^|~>?|[<>]=?|=)?v?(\d+|[xX*])(?:\.(\d+|[xX*]))?(?:\.(\d+|[xX*]))?$/;
+
+function tetoDoTrecho(trecho) {
+  const hifen = /^(\S+)\s+-\s+(\S+)$/.exec(trecho);
+  if (hifen) {
+    const de = COMPARADOR.exec(hifen[1]);
+    const ate = COMPARADOR.exec(hifen[2]);
+    if (!de || !ate || de[1] || ate[1]) return null;
+    return tetoDoComparador('<=', ate[2], ate[3], ate[4]);
+  }
+  let teto = SEM_TETO; // trecho vazio admite tudo
+  for (const tok of trecho.split(/\s+/).filter(Boolean)) {
+    const c = COMPARADOR.exec(tok);
+    if (!c) return null;
+    const t = tetoDoComparador((c[1] ?? '').replace('~>', '~'), c[2], c[3], c[4]);
+    if (!t) return null;
+    teto = menorTeto(teto, t);
+  }
+  return teto;
+}
+
+export function versaoDoSpec(spec) {
+  const s = spec.trim().replace(/^npm:.+@(?=[^@]*$)/, '')
+    .replace(/(\d)[-+][0-9A-Za-z.-]*[A-Za-z][0-9A-Za-z.-]*/g, '$1') // pré-release / build
+    .replace(/([<>]=?|=|~>?|\^)\s+/g, '$1'); // ">= 1.2.3" → ">=1.2.3"
+  let teto = null;
+  for (const trecho of s.split('||')) {
+    const t = tetoDoTrecho(trecho.trim());
+    if (!t) return null;
+    teto = teto ? maiorTeto(teto, t) : t;
+  }
+  return !teto || teto.semTeto ? null : teto;
 }
 
 function mudouMajor(de, para) {

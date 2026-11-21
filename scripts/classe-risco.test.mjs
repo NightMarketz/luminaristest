@@ -1,7 +1,7 @@
 // node --test scripts/classe-risco.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { classificar, bumpMajor, compararPackageJson, arquivoAusente } from './classe-risco.mjs';
+import { classificar, bumpMajor, compararPackageJson, arquivoAusente, versaoDoSpec } from './classe-risco.mjs';
 
 const pj = (obj) => JSON.stringify(obj, null, 2);
 // O #952: express 4→5 num PR de várias dependências, título sem versão.
@@ -104,6 +104,23 @@ test('spec sem teto (">=", ">", "|| >=") é dúvida → vermelho; faixa com teto
   }
   assert.deepEqual(um({ dependencies: { p: '>=4.8.4 <6.1.0' } }, { dependencies: { p: '>=4.9.0 <6.1.0' } }),
     { majors: [], duvidas: [] });
+});
+
+// Rodada 3 (A4): a mesma classe por outras formas — curinga, trecho vazio, hífen com curinga, teto curinga.
+// O teto vem da gramática (interseção no trecho, união no "||"); conferido contra o semver real em 1898 specs.
+test('sem teto por curinga, trecho vazio ou hífen é dúvida; o teto real vem da gramática', () => {
+  for (const para of ['^4.0.0 || *', '^4.0.0 || x', '^4.0.0 ||', '4.0.0 - x', '4 - *', '>=4.0.0 <=x']) {
+    assert.equal(um({ dependencies: { p: '^4.0.0' } }, { dependencies: { p: para } }).duvidas.length, 1, para);
+  }
+  const teto = (spec) => versaoDoSpec(spec);
+  assert.deepEqual(teto('<6'), { major: 5, minor: null });
+  assert.deepEqual(teto('<6.1.0'), { major: 6, minor: 0 });
+  assert.deepEqual(teto('>=1 <2 || >=4 <5'), { major: 4, minor: null });
+  assert.deepEqual(teto('1 <5'), { major: 1, minor: null }); // interseção: o "1" limita, não o "<5"
+  assert.deepEqual(teto('1.2 - 2'), { major: 2, minor: null });
+  assert.deepEqual(teto('^0.3.1'), { major: 0, minor: 3 });
+  assert.deepEqual(teto('>= 1.2.3 < 3'), { major: 2, minor: null });
+  assert.equal(teto('latest'), null);
 });
 
 // Rodada 2 (A3): "No commit found for the ref" também é HTTP 404, mas não é arquivo ausente.
