@@ -88,18 +88,42 @@ describe('Lacuna 35d3 — padrão do insumoExpenseAccountId pelo plano padrão (
     const csp = await conta(VAZIO, '4.7');
     expect([csp.name, csp.nature, csp.acceptsEntries]).toEqual(['Custo dos Serviços Prestados', 'Expense', true]);
     const op = await conta(CONFIG, '4.1');
-    // Perfil legado: gravado antes da lacuna 051e, que recusa a 4.1 (não é custo na DRE) em toda escrita: PUT, kit e plano padrão
-    // (dono, 21/11: "Checar em todo PUT"; "aplica a regra também no kit e no plano padrão"). O padrão não o sobrescreve.
+    // Perfil legado: gravado antes da lacuna 051e. A regra "custo na DRE" vale quando a escrita TRAZ a conta de insumo (PUT com o campo);
+    // o insumo já gravado vale até o próximo PUT com o campo (dono, 21/11, D-2026-11-21-DRE-INSUMO-PELO-PAPEL item 2) — o kit e o
+    // plano padrão, que não trocam o insumo, não o reprovam (A1 do revisor do #1302). O padrão não o sobrescreve.
     expect((await perfil(CONFIG)).status).toBe(200);
     expect((await perfil(CONFIG, { insumoExpenseAccountId: op.id })).status).toBe(400);
     await prisma.fiscalProfile.updateMany({ where: { userId: dono.id, unitId: CONFIG }, data: { insumoExpenseAccountId: op.id } });
 
     const svc = getFactory().getFiscalProfileService();
     await svc.ensureCanonicalAccounts(scope(VAZIO));
-    await expect(svc.ensureCanonicalAccounts(scope(CONFIG))).rejects.toThrow(/Conta de insumo do serviço '4.1' não é custo na DRE/);
+    await expect(svc.ensureCanonicalAccounts(scope(CONFIG))).resolves.toEqual(expect.arrayContaining(['ibsRecolherAccountId']));
     const row = (unitId: string) => prisma.fiscalProfile.findFirstOrThrow({ where: { userId: dono.id, unitId } });
     expect({ vazio: (await row(VAZIO)).insumoExpenseAccountId, config: (await row(CONFIG)).insumoExpenseAccountId }).toEqual({ vazio: csp.id, config: op.id });
-    // a tx voltou: o campo que o plano padrão grava na unidade VAZIO não foi gravado na CONFIG
-    expect({ vazio: (await row(VAZIO)).ibsRecolherAccountId === null, config: (await row(CONFIG)).ibsRecolherAccountId }).toEqual({ vazio: false, config: null });
+    // a escrita do plano padrão passou na unidade CONFIG: o campo que ele grava lá foi gravado, e o insumo legado ficou
+    expect({ vazio: (await row(VAZIO)).ibsRecolherAccountId === null, config: (await row(CONFIG)).ibsRecolherAccountId === null }).toEqual({ vazio: false, config: false });
+  });
+
+  it('perfil legado na 4.1: PUT sem o campo de insumo e kit (fillNullAccounts) passam e mantêm o insumo; só a escrita que traz o insumo (PUT, setAccounts) reprova', async () => {
+    const LEGADO = 'unit-insumo-csp-legado';
+    await seedUnit({ userId: dono.id, id: LEGADO });
+    expect((await perfil(LEGADO)).status).toBe(200);
+    await request(app).get('/api/accounting/accounts').set(authHeader(dono)).query({ unitId: LEGADO }); // ensureChartOfAccounts
+    const op = await prisma.account.findFirstOrThrow({ where: { userId: dono.id, unitId: LEGADO, code: '4.1', deletedAt: null } });
+    const passivo = await prisma.account.findFirstOrThrow({ where: { userId: dono.id, unitId: LEGADO, nature: 'Liability', acceptsEntries: true, deletedAt: null } });
+    await prisma.fiscalProfile.updateMany({ where: { userId: dono.id, unitId: LEGADO }, data: { insumoExpenseAccountId: op.id } });
+    const insumo = async () => (await prisma.fiscalProfile.findFirstOrThrow({ where: { userId: dono.id, unitId: LEGADO } })).insumoExpenseAccountId;
+    const svc = getFactory().getFiscalProfileService();
+
+    // PUT parcial: não traz o insumo → o legado fica (Prisma ignora o campo ausente) e a escrita passa
+    expect((await perfil(LEGADO, { icmsContribuinte: true })).status).toBe(200);
+    expect(await insumo()).toBe(op.id);
+    // kit: preenche só campo nulo e não troca o insumo
+    await expect(svc.fillNullAccounts(scope(LEGADO), { ibsRecolherAccountId: passivo.id })).resolves.toEqual(['ibsRecolherAccountId']);
+    expect(await insumo()).toBe(op.id);
+    // a escrita que TRAZ o insumo fora do custo da DRE continua reprovada: PUT e aceite de pendência do kit (setAccounts)
+    expect((await perfil(LEGADO, { insumoExpenseAccountId: op.id })).status).toBe(400);
+    await expect(svc.setAccounts(scope(LEGADO), { insumoExpenseAccountId: op.id })).rejects.toThrow(/Conta de insumo do serviço '4.1' não é custo na DRE/);
+    expect(await insumo()).toBe(op.id);
   });
 });

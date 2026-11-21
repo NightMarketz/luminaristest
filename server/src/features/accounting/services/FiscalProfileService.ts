@@ -339,7 +339,9 @@ export class FiscalProfileService {
       const { unitId: _unitId, d1fConfirmado, emissao: _emissao, updatedAt: _updatedAt, ...current } = this.toView(row, null);
       const payload = FiscalProfilePolicyPayloadSchema.parse({ ...current, ...patch });
       await applyDirectInTx(this.policyVersionRepo, scope, 'FISCAL_PROFILE', payload, tx, (policyVersionId) =>
-        this.applyInTx(scope, payload, tx, policyVersionId, { d1fConfirmado }),
+        // Lacuna 051e (dono 21/11, D-2026-11-21-DRE-INSUMO-PELO-PAPEL item 2): o insumo já gravado vale até o próximo PUT que
+        // traz o campo; escrita de sistema (kit, plano padrão) que não troca o insumo não reprova perfil legado fora do custo da DRE.
+        this.applyInTx(scope, payload, tx, policyVersionId, { d1fConfirmado, insumoSemTroca: !fields.includes('insumoExpenseAccountId') }),
       );
       return fields;
     });
@@ -349,11 +351,20 @@ export class FiscalProfileService {
    * Asserções do perfil (contas do escopo + regime da empresa), só leitura. A proposta usa sem `tx` (item 7.3, erro
    * rápido para o dono); `applyInTx` reusa dentro da tx. Devolve o regime da empresa no ano corrente.
    */
-  async validate(scope: AccountingScope, input: FiscalProfilePolicyPayload, tx?: Prisma.TransactionClient): Promise<RegimeEmpresa | null> {
+  async validate(
+    scope: AccountingScope,
+    input: FiscalProfilePolicyPayload,
+    tx?: Prisma.TransactionClient,
+    /** Lacuna 051e: `true` só nas escritas de sistema (kit, plano padrão) que não trocam a conta de insumo. */
+    opts: { insumoSemTroca?: boolean } = {},
+  ): Promise<RegimeEmpresa | null> {
     if (input.icmsRecuperavelAccountId) await this.assertAssetAccount(scope, input.icmsRecuperavelAccountId, 'ICMS a recuperar', tx);
     if (input.pisCofinsRecuperavelAccountId) await this.assertAssetAccount(scope, input.pisCofinsRecuperavelAccountId, 'PIS/COFINS a recuperar', tx);
-    // Lacuna 051e (dono 21/11: "Checar em todo PUT"; e "aplica a regra também no kit e no plano padrão"): vale em toda escrita.
-    if (input.insumoExpenseAccountId) await this.assertInsumoCostAccount(scope, input.insumoExpenseAccountId, tx);
+    // Lacuna 051e (dono 21/11: "Checar em todo PUT"): custo na DRE vale em toda escrita que traz o insumo; sem troca, só despesa.
+    if (input.insumoExpenseAccountId) {
+      if (opts.insumoSemTroca) await this.assertExpenseAccount(scope, input.insumoExpenseAccountId, 'insumo do serviço', tx);
+      else await this.assertInsumoCostAccount(scope, input.insumoExpenseAccountId, tx);
+    }
     if (input.insumoStockAccountId) await this.assertInsumoStockAccount(scope, input.insumoStockAccountId, tx);
     // X7 item 3 (F-TA-6 a): provisão D despesa / C a recolher (item 15) — despesa = Expense, a recolher = Liability.
     if (input.irpjDespesaAccountId) await this.assertExpenseAccount(scope, input.irpjDespesaAccountId, 'despesa de IRPJ', tx);
@@ -417,9 +428,9 @@ export class FiscalProfileService {
     tx: Prisma.TransactionClient,
     policyVersionId: string,
     /** BE-INCR-KIT-SETOR PR-2: o kit preenche contas sem o operador ver os defaults D1f, então não os confirma. */
-    opts: { d1fConfirmado?: boolean } = {},
+    opts: { d1fConfirmado?: boolean; insumoSemTroca?: boolean } = {},
   ): Promise<FiscalProfileView> {
-    const regimeEmpresa = await this.validate(scope, input, tx);
+    const regimeEmpresa = await this.validate(scope, input, tx, { insumoSemTroca: opts.insumoSemTroca });
     const { ibsCbsInformar, ...rest } = input;
     const data = {
       ...rest,
