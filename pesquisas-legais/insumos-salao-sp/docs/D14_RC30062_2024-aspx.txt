@@ -1,0 +1,225 @@
+RC 30062/2024 
+
+Você talvez esteja tentando acessar este site de um navegador seguro no servidor. Habilite os scripts e recarregue esta página.
+
+ Ativar o modo mais acessível 
+
+ Desativar o modo mais acessível 
+
+ Comando para Ignorar Faixa de Opções 
+
+ Ir para o conteúdo principal 
+
+ Desligar Animações 
+
+ Ligar Animações 
+
+Hidden 
+
+Parece que seu navegador não possui JavaScript habilitado. Ative o JavaScript e tente novamente.
+
+/governosp 
+
+/governosp 
+
+ Seu navegador não tem suporte a JavaScript ou está desativado! 
+
+ Você está em: Skip Navigation LinksLegislação > RC 30062/2024 
+
+ Pesquisa de Opinião 
+
+ Hidden 
+
+ > 
+
+ Compartilhar: 
+
+ Cancelar OK 
+
+Compartilhar Caderno .
+
+ Compartilhar: 
+
+ Cancelar OK 
+
+ Busca Avançada 
+
+ Atos Publicados recentemente 
+
+ Ato Data Publicação 
+
+ + Veja mais 
+
+ Atos mais consultados 
+
+ Ato Visualizações 
+
+ + Veja mais 
+
+ RCs Publicados recentemente 
+
+ Ato Data Publicação 
+
+ + Veja mais 
+
+ Indivídual 
+
+ Caderno
+
+ Audio do Texto 
+
+ Notas 
+
+Redações anteriores
+
+ Imprimir 
+
+ Grupo 
+
+ Anexos 
+
+ Novo Ato 
+
+ Nome 
+
+ RC 30062/2024 
+
+ Tipo 
+
+ Subtipo 
+
+ Respostas de Consultas 
+
+ Nº do Ato 
+
+ Data do Ato 
+
+ Data da Publicação 
+
+ 30.062 
+
+ 06/09/2024 
+
+ 09/09/2024 
+
+ Data de Republicação 
+
+ Data da Revogação 
+
+ Envio Informativo 
+
+ Destaques do DOE 
+
+ Ato Anterior 
+
+ Ato Posterior 
+
+ Ano da Formulação 
+
+ 2.024 
+
+ ICMS 
+
+ Apuração do imposto 
+
+ DIFAL 
+
+ Ementa 
+
+ <div class='sefazElement-EmentaRC'><p>ICMS – Substituição tributária – Simples Nacional – Diferencial de Alíquotas – Aquisição interestadual realizada por contribuinte optante peloregime do Simples Nacional.</p>
+
+<p></p>
+
+<p>I. Na aquisição de mercadorias de outras unidades da Federação, o adquirente enquadrado no regime do Simples Nacional deverá recolher, com base no inciso XVI do artigo 2º do RICMS/2000, o valor resultante do percentual correspondente à diferença entre a alíquota interna e a interestadual pela base de cálculo, quando a alíquota interestadual for inferior à interna.</p>
+
+<p></p>
+
+<p>II. Na aquisição de mercadorias de outras unidades da Federação, sujeitas à sistemática da substituição tributária, o adquirente enquadrado no Simples Nacional deverá efetuar antecipadamente o recolhimento do ICMS referente às operações própria e subsequentes, nos termos do artigo 426-A do RICMS/2000, se não houver acordo de substituição tributária entre os Estados. Do contrário, havendo acordo entre os Estados envolvidos, a responsabilidade pelo recolhimento do imposto incidente sobre as operações subsequentes é do estabelecimento remetente.</p>
+
+<p></p>
+
+<p>III. Em ambos os casos, o valor recolhido, seja pelo remetente, seja pelo destinatário, já engloba o diferencial de alíquotas.</p></div> 
+
+ Observação 
+
+ 200 caracteres restantes. 
+
+ Conteúdo 
+
+ Última atualização em: 10/09/2024 04:00 
+
+Conteúdo da Página
+
+RESPOSTA À CONSULTA TRIBUTÁRIA 30062/2024, de 06 de setembro de 2024.
+
+Publicada no Diário Eletrônico em 09/09/2024
+
+Ementa
+
+ICMS – Substituição tributária – Simples Nacional – Diferencial de Alíquotas – Aquisição interestadual realizada por contribuinte optante peloregime do Simples Nacional.
+
+I. Na aquisição de mercadorias de outras unidades da Federação, o adquirente enquadrado no regime do Simples Nacional deverá recolher, com base no inciso XVI do artigo 2º do RICMS/2000, o valor resultante do percentual correspondente à diferença entre a alíquota interna e a interestadual pela base de cálculo, quando a alíquota interestadual for inferior à interna.
+
+II. Na aquisição de mercadorias de outras unidades da Federação, sujeitas à sistemática da substituição tributária, o adquirente enquadrado no Simples Nacional deverá efetuar antecipadamente o recolhimento do ICMS referente às operações própria e subsequentes, nos termos do artigo 426-A do RICMS/2000, se não houver acordo de substituição tributária entre os Estados. Do contrário, havendo acordo entre os Estados envolvidos, a responsabilidade pelo recolhimento do imposto incidente sobre as operações subsequentes é do estabelecimento remetente.
+
+III. Em ambos os casos, o valor recolhido, seja pelo remetente, seja pelo destinatário, já engloba o diferencial de alíquotas.
+
+Relato
+
+1. A Consulente, empresa optante pelo Simples Nacional, cuja atividade econômica principal declarada no Cadastro de Contribuintes do ICMS do Estado de São Paulo – CADESP é o comércio varejista de mercadorias em geral, com predominância de produtos alimentícios - minimercados, mercearias e armazéns (CNAE 47.12-1/00), apresenta sucinta consulta na qual informa não ter localizado convênio celebrado entre os Estados do Paraná e São Paulo e pergunta se deve recolher o diferencial de alíquotas, no valor de 6%, quando da aquisição de mercadorias classificadas no código 4818.10.00 da Nomenclatura Comum do Mercosul (NCM), de empresa localizada em Curitiba/PR, em operação sujeita à alíquota de 12%. 
+
+Interpretação
+
+2. Registre-se inicialmente que, tendo em vista as poucas informações trazidas pela Consulente sobre a mercadoria objeto de dúvida, a presente resposta partirá da premissa de que a mercadoria adquirida está classificada no código 4818.10.00 da NCM, descrita como “papel higiênico”, e que, tendo em vista as atividades exercidas pela Consulente, tais mercadorias estão sendo adquiridas para posterior comercialização.
+
+2.1. Lembramos, neste ponto, que o contribuinte é responsável pela adequada classificação da mercadoria nos códigos da NCM devendo, em caso de dúvida, consultar a Receita Federal do Brasil, a quem compete dirimir questionamentos dessa natureza. 
+
+3. Isso posto, informa-se que, de acordo com o artigo 13, § 1º, inciso XIII, alíneas “a” e “h”, e § 5º, da Lei Complementar nº 123/2006, o regime do Simples Nacional não exclui, respectivamente, a incidência do ICMS correspondente às operações sujeitas à substituição tributária, bem como não exclui a incidência do ICMS correspondente à diferença entre a alíquota interna e a interestadual na entrada de mercadoria não sujeita ao regime de antecipação do recolhimento do imposto proveniente de outro Estado ou do Distrito Federal, tomando-se por base as alíquotas aplicáveis às pessoas jurídicas não optantes pelo Simples Nacional.
+
+4. No Estado de São Paulo, o artigo 2º, inciso XVI e § 6º, e o artigo 115, inciso XV-A, alínea “a” e § 8º, ambos do RICMS/2000, disciplinam a matéria no sentido de que o contribuinte paulista optante pelo Simples Nacional que promover a entrada de mercadoria destinada à industrialização, comercialização, material de uso e consumo ou bem do ativo permanente, proveniente de contribuinte do ICMS optante ou não optante pelo Simples Nacional situado em outra unidade da Federação, deverá recolher mediante guia de recolhimentos especiais, até o último dia do segundo mês subsequente ao da entrada, o valor equivalente à multiplicação do percentual correspondente à diferença entre a alíquota interna e a interestadual (12%, conforme o caso) pela base de cálculo, quando a alíquota interestadual for inferior à interna.
+
+4.1. Nesse contexto, frise-se que as operações internas com as mercadorias em análise sujeitam-se à alíquota de 18% nos termos do artigo 52, inciso I, do RICMS/2000.
+
+5. Informa-se ainda que, com base na Decisão Normativa CAT-12/2009 e nos itens 46 e 47 da Portaria CAT-68/2019, as mercadorias objeto de indagação da Consulente (papel higiênico, classificado no código 4818.10.00 da NCM, conforme premissa adotada no item 2) estão sujeitas ao regime da substituição tributária no Estado de São Paulo. 
+
+6. Neste ponto faz-se importante ressaltar que o Protocolo ICMS-164/2010, firmado entre os Estados de São Paulo e Paraná, dispõe sobre a substituição tributária nas operações com cosméticos, perfumaria, artigos de higiene pessoal e de toucador, atribuindo a responsabilidade pela retenção e pagamento do imposto incidente nas saídas subsequentes de papel higiênico (folha simples e folha dupla), classificados no código 4818.10.00 da NCM (itens 37 e 38), ao remetente das mercadorias, nos termos do inciso III do artigo 313-E do RICMS/2000. 
+
+7. Todavia, ressalte-se que, para o caso de mercadoria sujeita à sistemática da substituição tributária, relativamente ao recolhimento da diferença entre as alíquotas interna e interestadual, previsto no citado artigo 115 do RICMS/2000, o Comunicado CAT n° 26/2008 estabelece que o valor do imposto devido por antecipação, calculado nos termos do artigo 426-A do RICMS/2000 (como na hipótese de recebimento, por qualquer estabelecimento localizado em território paulista, de mercadoria sujeita à substituição tributária diretamente de outro Estado sem a retenção antecipada do imposto), já engloba o valor que seria devido pela diferença entre as alíquotas interna e interestadual, relativamente à entrada da mercadoria procedente de outra unidade da Federação em estabelecimento de contribuinte optante pelo Simples Nacional.
+
+7.1. Por questão de isonomia tributária, este órgão consultivo já se manifestou anteriormente no sentido de que ainda que haja acordo de substituição tributária, o recolhimento do imposto, pelo remetente, a favor de São Paulo, também engloba o diferencial de alíquotas ora tratado. Isso porque o cálculo do imposto devido realizado nos termos do artigo 426-A do RICMS/2000 reflete, justamente, o que seria devido nas operações interestaduais caso houvesse acordo de substituição tributária.
+
+8. Portanto, o fato de o diferencial de alíquotas ora tratado já estar englobado, tanto no recolhimento realizado nos termos do artigo 426-Ado RICMS/2000, como no recolhimento efetuado pelo remetente nos casos em que haja acordo de substituição tributária, não significa que ele não seja devido. Especificamente quanto ao caso da Consulente, considerando que as mercadorias em tela tenham sido adquiridas sem que houvesse retenção antecipada do imposto das operações subsequentes pelo remetente paranaense (o que não fica claro no relato apresentado), caberá à própria Consulente calcular e recolher o imposto devido por antecipação, nos termos do artigo 426-A do RICMS/2000.
+
+8.1. Nesse contexto, cabe ressaltar que, no que tange à responsabilidade solidária da Consulente, o artigo 66-C da Lei nº 6.374/1989 estabelece que a sujeição passiva por substituição não exclui a responsabilidade supletiva do contribuinte pela liquidação total do crédito tributário, observado o procedimento estabelecido em regulamento, sem prejuízo da penalidade cabível por falta de pagamento do imposto. O artigo 267 do RICMS/2000, por sua vez, regulamenta o dispositivo legal citado.
+
+8.2. Nesse sentido, conforme disposto no artigo 11, incisos XI e XII, do RICMS/2000, em caso de não recolhimento do ICMS-ST por parte do remetente, na hipótese em que a operação com a mercadoria esteja sujeita ao regime de substituição tributária, tal recolhimento poderá ser exigido do destinatário paulista, estando este sujeito, inclusive, à imposição de multa.
+
+9. Por fim, a título meramente informativo, esclarecemos que o diferencial de alíquotas aqui tratado (recolhido por optantes do Simples Nacional) não se confunde com o diferencial de alíquotas devido nas operações interestaduais destinadas a consumidor final não contribuinte do imposto, acrescentado à legislação pela Emenda Constitucional n° 87/2015, em vigor desde 01/01/2016.
+
+A Resposta à Consulta Tributária aproveita ao consulente nos termos da legislação vigente. Deve-se atentar para eventuais alterações da legislação tributária.
+
+Comentário
+
+ Gravar Comentário Cancelar 
+
+ Localize Nossas Unidades 
+
+ Buscar 
+
+ Hidden 
+
+ Secretaria da Fazenda e Planejamento do Estado de São Paulo - Av. Rangel Pestana, 300 - São Paulo / SP - 01017-911 – CNPJ: 46.377.222/0001-29 - Fale Conosco: 0800-170110 Política de Privacidade Termos de Uso | Versão 1.0.124.0 
+
+ Governo do Estado de São Paulo Fazenda e Planejamento 
+
+ hidden 
+
+Parece que seu navegador não possui JavaScript habilitado. Ative o JavaScript e tente novamente.
+
+ Ouvidoria 
+
+ Transparência 
+
+ SIC 
+
+Versão 1.0.124.0
