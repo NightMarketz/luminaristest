@@ -188,6 +188,27 @@ describe('acquisitionCost — destinação por item (ITEM-DESTINATION)', () => {
     expect(c.warnings.join(' ')).toMatch(/item 2 \(.+\): insumo monofásico/);
   });
 
+  // Lacuna L-20261120-224253-c516 (D-5 de 10/10 reaberta pelo dono em 21/11, padrão LIGADO): IN RFB 2.121/2022 art. 178 —
+  // a vedação do art. 160 I não se aplica ao produto do art. 60 (monofásico por NCM) usado como insumo, "desde que em alguma
+  // etapa anterior [...] tenha havido o pagamento"; SC Cosit 496/2017 e 16/2024: percentual BÁSICO (1,65% + 7,6%), inclusive
+  // na compra do distribuidor (CST 04/06). À mão, item 2 (NCM 3305.90, vProd 5000): base = 5000 − 272 (vDesc) + 409 (vFrete)
+  // − 900 (ICMS) = 4237; PIS round(4237·1,65%) = 70; COFINS round(4237·7,6%) = 322 → 392.
+  it('lacuna c516 — insumo MONOFÁSICO por NCM (3305.90, CST 04) no não cumulativo com a chave ligada credita 9,25% (392 sobre 4237); desligada 0; cumulativo 0; monofásico só pelo CST da nota segue 0', () => {
+    const itens = ITENS.map((it) => (it.nItem === 2 ? { ...it, cstPis: '04', cstCofins: '04' } : it.nItem === 1 ? { ...it, cstPis: '06', cstCofins: '06' } : it));
+    const destinos = dest({ 1: 'INSUMO_SERVICO', 2: 'INSUMO_SERVICO' });
+    const ligada = acquisitionCost(NFE, itens, regime({ pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditMonofasicoInsumo: true } as Partial<CostRegime>), destinos, LEGAIS_SEMENTE);
+    const desligada = acquisitionCost(NFE, itens, regime({ pisCofinsRegime: 'NAO_CUMULATIVO', pisCofinsCreditMonofasicoInsumo: false } as Partial<CostRegime>), destinos, LEGAIS_SEMENTE);
+    const presumido = acquisitionCost(NFE, itens, regime({ pisCofinsRegime: 'CUMULATIVO', pisCofinsCreditMonofasicoInsumo: true } as Partial<CostRegime>), destinos, LEGAIS_SEMENTE);
+    expect(ligada.itens[1].classe).toBe('MONOFASICO');
+    expect(desligada.itens[1].creditoPisCofinsCents).toBe(0);
+    expect(presumido.itens[1].creditoPisCofinsCents).toBe(0);
+    // item 1: NCM fora da tabela, MONOFASICO só pelo CST 06 da nota — o art. 178 alcança o produto do art. 60 (NCM), não o CST.
+    expect(ligada.itens[0].creditoPisCofinsCents).toBe(0);
+    expect(ligada.itens.reduce((a, i) => a + i.custoLiquidoCents, 0)).toBe(ligada.custoEstoqueCents);
+    expect({ base: ligada.itens[1].basePisCofinsCents, pis: ligada.itens[1].creditoPisCents, cofins: ligada.itens[1].creditoCofinsCents, total: ligada.itens[1].creditoPisCofinsCents })
+      .toEqual({ base: 4237, pis: 70, cofins: 322, total: 392 });
+  });
+
   it('item 8 — Σ custoLiquido === custoEstoqueCents com destinações mistas; no SIMPLES e no CUMULATIVO a destinação não muda crédito', () => {
     const mix = dest({ 1: 'INSUMO_SERVICO', 2: 'REVENDA', 3: 'INSUMO_SERVICO' });
     const c = acquisitionCost(NFE, ITENS, real, mix, LEGAIS_SEMENTE);
