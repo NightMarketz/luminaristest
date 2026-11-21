@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — nfse-paulistana-adaptador
 
 **Pergunta:** Quem emite NFS-e pela Nota Paulistana (SP capital) em 2026-2027, regime normal; webservice oficial (layout RPS, assinatura, metodos, ambiente de teste, cancelamento); regras de RPS e cancelamento
-**Aberto em:** 2026-11-21T16:56:04-03:00 · **Atualizado em:** 2026-11-21T17:05:36-03:00
+**Aberto em:** 2026-11-21T16:56:04-03:00 · **Atualizado em:** 2026-11-21T20:07:27-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -33,8 +33,10 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
 5. **Reenvio do mesmo RPS cancela e reemite (V):** alerta 217 — "RPS reenviado. A NF-e … foi cancelada e uma nova NF-e
    foi emitida" [D04 §4.5.2]. Retentativa às cegas depois de timeout é proibida por desenho; a consulta por `ChaveRPS`
    (`ConsultaNFe`) vem antes [D04 §4.3.5].
-6. **Cancelamento (V):** `CancelamentoNFe`, só da NF-e gerada por webservice (erro 1306), em lote de até 50, com prazo
-   ("ultrapassado o prazo permitido", erro 324) que o manual não diz [D04 §4.3.10, §4.5.1]. A nota cancelada no site
+6. **Cancelamento (V):** `CancelamentoNFe`, só da NF-e gerada por webservice (erro 1306), em lote de até 50 [D04 §4.3.10].
+   O manual não traz código de recusa por prazo no cancelamento: o 324 ("ultrapassado o prazo permitido") é dos métodos de
+   envio (coluna "Onde Ocorre" C, D, E pela legenda do §4.5) [D04 §4.5.1]. A legenda tem linhas incoerentes (ex.: 1305,
+   assinatura de cancelamento, marcada J = Consulta de Informações de Lote), então a coluna é indício, não prova. A nota cancelada no site
    aparece na `ConsultaNFe` (`StatusNFe`, `DataCancelamento`) [D04 tpNFe].
 7. **Leiaute 2 (V):** em uso desde 01/01/2026, com ISS, IBS e CBS; o leiaute 1 segue aceito na transição [D02]. O
    manual já traz os erros 631/639 ("fato gerador a partir/até de {0}") sem a data [D04 §4.5.1]. A NFS-e da Paulistana
@@ -81,8 +83,8 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
    nacional (Res. CGNFS-e 9/2025, citada só por fonte secundária) não foram lidos. Vigilância trimestral.
 
 ## 5. Lacunas
-- Prazo de cancelamento pela internet (erro 324) — a norma não foi lida (Decreto municipal da NFS-e / IN; insumo
-  ausente).
+- Prazo de cancelamento pela internet e o código da recusa por prazo — a norma não foi lida (decreto municipal da NFS-e
+  / IN; insumo ausente) e o manual não traz o código.
 - Tabela oficial dos códigos de serviço de 5 dígitos (Anexo I da IN SF/SUREM 8/2011, alterada em 2026) e a
   correlação com item LC 116/NBS/cClassTrib — não baixada.
 - XSDs `schemas-reformatributaria-v02-8` e exemplos XML — não baixados (zip/páginas); são insumo do PR-1.

@@ -13,8 +13,8 @@
 > recomendação (modo manual **dentro** do nó, PR-M), e F-NSP-2b perguntado em seguida. Código segue esperando `executa`.
 >
 > **Em duas linhas:** um adaptador `paulistana` no `DfeEmissorPort` monta o RPS do leiaute 2 da prefeitura a partir da
-> mesma montagem da NFS-e, assina e transmite pelo **assinador local** do cliente (o mesmo da NF-e) e grava o
-> `FiscalDocument` que o relatório de ISS do X7 e a apuração de IBS/CBS já leem. **Risco principal (verificado):** o
+> mesma montagem da NFS-e, assina e transmite pelo **assinador local** do cliente (o mesmo da NF-e) — ou, no modo manual
+> (PR-M), entrega a ficha, recebe o XML da nota emitida no site e relê — e grava o `FiscalDocument` que o relatório de ISS do X7 e a apuração de IBS/CBS já leem. **Risco principal (verificado):** o
 > público é menor do que o pedido diz — desde 01/11/2026 a IN SF/SUREM 10/2011 art. 1º-A § 2º (red. IN 13/2026) **veda** a
 > Paulistana ao Simples, ao MEI e a quem **sair** do Simples; sobra a PJ de SP capital em regime normal que não passou pelo
 > Simples. E a prefeitura **não tem homologação**: só um método de teste em produção que não gera nota.
@@ -75,8 +75,9 @@
    validações, nenhuma NF-e [D04 §2.1.3, §4.3.4]. Consulta e cancelamento não têm teste.
 6. **Reenvio cancela e reemite (V).** Alerta 217: *"RPS reenviado. A NF-e … foi cancelada e uma nova NF-e foi emitida"*
    [D04 §4.5.2]. `ConsultaNFe` aceita `ChaveRPS` [D04 §4.3.5].
-7. **Cancelamento (V).** `CancelamentoNFe`, só da NF-e gerada por webservice (erro 1306), até 50 por pedido, com prazo
-   (erro 324) que o manual não fixa [D04 §4.3.10, §4.5.1]. A nota cancelada no site aparece na `ConsultaNFe` (`StatusNFe`,
+7. **Cancelamento (V).** `CancelamentoNFe`, só da NF-e gerada por webservice (erro 1306), até 50 por pedido [D04 §4.3.10].
+   O manual não traz código de recusa por prazo no cancelamento: o 324 ("ultrapassado o prazo permitido") aparece nos
+   métodos de **envio** (coluna "Onde Ocorre" C, D, E = Envio de RPS, Envio de Lote, Teste; legenda do §4.5) [D04 §4.5.1]. A nota cancelada no site aparece na `ConsultaNFe` (`StatusNFe`,
    `DataCancelamento`).
 8. **Rejeições que encerram o caminho (V):** 394 (regime trocado pelo Simples), 641 (Simples na data), 1647 (contribuinte
    no CNC deve emitir no ambiente nacional), 631/639 (leiaute 2/1 por data de fato gerador, data `{0}` sem valor no
@@ -113,29 +114,33 @@ validação externa (§7) e não entra na implementação antes dela.
 5. **[pend-ext] Cadeia do cancelamento** (`cadeiaCancelamento(im, numeroNfe)`: IM 8 + número 12, [D04 §4.3.10]). O
    manual não tem quadro v2 e o RPS v2 usa IM de 12 (ambiguidade 3 do dossiê). Implementa-se a do manual (8) com o teste do
    exemplo `"31000000000000000009"`; o runbook (item 27) prova contra a prefeitura antes do primeiro cancelamento real.
-6. **[direto] Montagem das mensagens** `PedidoEnvioRPS` (v2, `Cabecalho Versao="2"`, `CPFCNPJRemetente`),
+6. **[direto] Montagem das mensagens** `PedidoEnvioLoteRPS` com **um** RPS (v2, `Cabecalho Versao="2"`,
+   `CPFCNPJRemetente`, `transacao=true`, `dtInicio = dtFim = DataEmissao`, `QtdeRPS=1`; F-NSP-7 a — o teste da prefeitura
+   recebe a mensagem de lote [D04 §4.3.4 III], então a mensagem testada é a mesma da produção),
    `PedidoConsultaNFe` (por `ChaveRPS` e por `ChaveNFe`), `PedidoCancelamentoNFe` (`Transacao=true`, 1 `Detalhe`) e
-   `TesteEnvioLoteRPS`, **sem** a `Signature` (quem assina é o assinador). Regras de preenchimento do [D04 §3.4.4] e
+   o mesmo `PedidoEnvioLoteRPS` para o `TesteEnvioLoteRPS`, **sem** a `Signature` (quem assina é o assinador). Regras de preenchimento do [D04 §3.4.4] e
    escape do §3.4.5. *Teste:* cada mensagem valida no XSD oficial (fixture do XSD commitada com o SHA-256).
-7. **[direto] Leitura dos retornos** (`RetornoEnvioRPS`, `RetornoConsulta`, `RetornoCancelamentoNFe`) → `Sucesso`,
+7. **[direto] Leitura dos retornos** (`RetornoEnvioLoteRPS`, `RetornoConsulta`, `RetornoCancelamentoNFe`) → `Sucesso`,
    `Alerta[]`, `Erro[]`, `ChaveNFe {Numero, CodigoVerificacao, ChaveNotaNacional}`, `StatusNFe`, `DataCancelamento`, valores
    de ISS/IBS/CBS do `tpNFE` v2. *Teste:* fixtures oficiais; retorno com `Sucesso=false` e erro 1647 vira o código
    `PAULISTANA_1647`.
 8. **[direto] Tabela de tradução de erros e alertas** (§4.5) em constante única: terminal (394, 641, 1647, 1306, 1305,
-   324) × corrigível pelo operador (dados) × transporte (1101/timeout) × alerta 217 (**nunca** esperado — o adaptador não
+   324 — prazo no envio) × corrigível pelo operador (dados) × transporte (1101/timeout) × alerta 217 (**nunca** esperado — o adaptador não
    reenvia; se aparecer, é bug nosso e vira erro `dfe_paulistana_reenvio_inesperado` com alerta OBS).
    *Teste:* cada código da tabela cai na classe declarada.
 
 ### PR-2 — perfil, roteamento por unidade, numeração
 
-9. **[fork:F-NSP-1] Campo `nfseSistema: 'NACIONAL' | 'PAULISTANA'` no `FiscalProfile`** (default `NACIONAL`), com
+9. **[fork:F-NSP-1] [pend-ext §7 itens 1 e 7] Campo `nfseSistema: 'NACIONAL' | 'PAULISTANA'` no `FiscalProfile`** (default `NACIONAL`), com
    guarda na escrita: `PAULISTANA` exige `codMun = '3550308'`, `regimeTributario ≠ 'SIMPLES'`, `inscricaoMunicipal`
-   preenchida e **nenhuma linha do `CompanyFiscalProfile` (regime por `anoCalendario`) com `regime ∈ {MEI, SIMPLES}` de
-   2027 em diante**; se a linha de **2026** for `SIMPLES`/`MEI`, exige ainda a declaração explícita
+   preenchida e **nenhuma linha do `CompanyFiscalProfile` (regime por `anoCalendario`) com `regime = SIMPLES` de 2027 em
+   diante** (o § 2º fala só dos incisos II e IV: *"inclusive na hipótese de as pessoas de que tratam os incisos II e IV virem
+   a ser posteriormente desenquadradas do Simples Nacional"*); se a linha de **2026** for `SIMPLES`, exige ainda a declaração explícita
    `paulistanaSemSimplesDesde20261101 = true` (o operador declara que a PJ saiu do Simples antes de 01/11/2026 — § 2º do
    art. 1º-A; a linha anual não diz o mês; ambiguidade 1 do dossiê). Recusa com 400 nomeado. Mudar o regime para
    `SIMPLES` com `nfseSistema = PAULISTANA` volta a unidade para `NACIONAL` na mesma tx e audita. *Teste:* as recusas
-   (município, regime atual, IM, ano ≥ 2027 no Simples, 2026 no Simples sem declaração); a troca de regime.
+   (município, regime atual, IM, ano ≥ 2027 no Simples, 2026 no Simples sem declaração). Ex-MEI fora do Simples não
+   é barrado (o § 2º não cita o inciso I); fica como pendência (§7 item 7); a troca de regime.
 10. **[fork:F-NSP-1] Seleção por documento:** a NFS-e de uma unidade com `nfseSistema = PAULISTANA` resolve o adaptador
     `paulistana`; as demais seguem `DFE_PARTNER_NFSE` (§13 item 2 do ADR, inalterado). O env `DFE_PARTNER_PAULISTANA=off`
     desliga o adaptador na instância (motivo nomeado, nunca silêncio). O documento já criado segue o `partner` gravado
@@ -159,6 +164,10 @@ validação externa (§7) e não entra na implementação antes dela.
     (`numbersDps: false`). *Teste:* DPS e RPS da mesma unidade e série não compartilham contador; migração sobre base com
     sequências existentes não muda nenhum `last`.
 
+14a. **[direto] Partes do PR-4 que não dependem do assinador entram aqui**, para o PR-M não depender do #1146: o item 27
+    (`locaisDoPayload` lê o RPS) e, do item 24, o tipo `cancelamentoMunicipal` em `EventoNfse` com a aplicação no serviço
+    (como o e101101). Os testes são os dos itens 24 e 27, com documento criado direto no repositório.
+
 ### PR-3 — contrato do assinador local (servidor) — **depois do #1146 em `main`**
 
 15. **[fork:F-NSP-10] Alvos novos no `ASSINAR`:** `conteudo.alvo` ganha `pedidoPaulistana` (assinatura enveloped do
@@ -168,7 +177,7 @@ validação externa (§7) e não entra na implementação antes dela.
     14 dígitos do certificado. Sem `tpAmb` (não existe na Paulistana). `dfeSigner.schema.json` regenerado; o teste de
     divergência gerado × commitado cobre os alvos novos. *Teste:* tarefa `cadeiaPaulistana` com cadeia que não bate com o
     RPS anexo ⇒ o falso do assinador devolve `CONTEUDO_RECUSADO`.
-16. **[direto] `TRANSMITIR` SOAP da Paulistana:** `servico` ganha `PaulistanaEnvioRPS | PaulistanaConsultaNFe |
+16. **[direto] `TRANSMITIR` SOAP da Paulistana:** `servico` ganha `PaulistanaEnvioLoteRPS | PaulistanaConsultaNFe |
     PaulistanaCancelamentoNFe | PaulistanaTesteEnvioLoteRPS`; o servidor monta o envelope SOAP 1.2 (método *wrapped* com
     `VersaoSchema` + `MensagemXML` em CDATA, [D04 §4.3.1]) e manda em `envelopeB64`, como hoje. Se o protocolo `rest` da
     X10i (ADL-3) já estiver em `main`, entra com `protocolo: 'soap12'`. *Teste:* tarefa com `servico` novo valida no schema.
@@ -185,20 +194,27 @@ validação externa (§7) e não entra na implementação antes dela.
     ['NFSE'], numbersDps: false, consultar: true, cancelar: true, webhook: false, substituir: false, inutilizar: false,
     cce: false, assinaturaRemota: true, resultadoSincrono: true, consultarEventos: true, analiseFiscal: false }` e
     `testarEnvio` (F-NSP-3). *Teste:* contrato da porta (`DfeCancelResultContract.test.ts` herdado) e capacidades.
-20. **[fork:F-NSP-7] `emitir` = `EnvioRPS` síncrono, um RPS por documento:** monta → `ASSINAR cadeiaPaulistana` → monta
-    a mensagem → `ASSINAR pedidoPaulistana` → `TRANSMITIR PaulistanaEnvioRPS` → `Sucesso=true` ⇒ `AUTHORIZED` com
+20. **[fork:F-NSP-7] `emitir` = `EnvioLoteRPS` síncrono com um RPS por documento** (o ramo "síncrono, 1 RPS por nota";
+    lote de 1 e não `EnvioRPS` porque o `TesteEnvioLoteRPS` só testa a mensagem de lote e o §4.3.10 descreve o cancelamento
+    das NF-e "geradas a partir do método EnvioLoteRPS"): monta → `ASSINAR cadeiaPaulistana` → monta
+    a mensagem → `ASSINAR pedidoPaulistana` → `TRANSMITIR PaulistanaEnvioLoteRPS` → `Sucesso=true` ⇒ `AUTHORIZED` com
     `nNFSe = ChaveNFe/Numero`, `chaveOuCodigo = ChaveNFe/CodigoVerificacao` (a `ChaveNotaNacional`, quando vier, vai no
     `resultJson`), valores de ISS/IBS/CBS do retorno; `Sucesso=false` ⇒ `REJECTED` com os códigos traduzidos (item 8).
     *Teste:* contra o `FakePaulistanaServer` (item 26): autoriza, rejeita, alerta.
 21. **[direto] Falha de transporte nunca reenvia às cegas** (alerta 217): timeout/TLS/HTTP ⇒ documento fica `SENT`
     e a próxima ação (polling ou `reenviar` do operador) faz **primeiro** `ConsultaNFe` por `ChaveRPS`; só sem NF-e para
     aquela chave o RPS é enviado de novo, com a **mesma** chave. *Teste:* o falso autoriza e derruba a resposta; o
-    `reenviar` consulta, acha a nota e aplica `AUTHORIZED` sem segundo `EnvioRPS`.
+    `reenviar` consulta, acha a nota e aplica `AUTHORIZED` sem segundo envio.
 22. **[direto] `consultar(partnerRef)`** = `ConsultaNFe` por `ChaveRPS` (partnerRef = `IM:série:número`), devolve o mesmo
-    `EmissaoResult`. *Teste:* nota existente, inexistente (erro 1106 ⇒ `PROCESSING` não; `REJECTED` com o código).
+    `EmissaoResult`. **"Nenhuma NF-e para a chave" (erro 1106, F) não é rejeição:** devolve `PROCESSING` com o código
+    `PAULISTANA_RPS_NAO_RECEBIDO` — o RPS não chegou — e só esse código autoriza o reenvio do item 21 (mesma chave). O
+    polling nunca aplica `REJECTED` por ele. *Teste:* nota existente ⇒ `AUTHORIZED`; inexistente ⇒ `PROCESSING` com o código
+    e o documento continua `SENT`; o reenvio seguinte manda o RPS uma vez.
 23. **[direto] `cancelar`** = `CancelamentoNFe` com a assinatura do item 5; o `cMotivo`/`xMotivo` do `CancelInput`
-    (obrigatórios na porta) ficam só no `FiscalDocument` e na auditoria — a mensagem da Paulistana não tem motivo. Erro 324
-    ⇒ `OUT_OF_WINDOW`; 1306 ⇒ `REJECTED` (nota não nasceu no webservice); `CancelResult` herdado. *Teste:* os três ramos.
+    (obrigatórios na porta) ficam só no `FiscalDocument` e na auditoria — a mensagem da Paulistana não tem motivo. 1306 ⇒ `REJECTED`
+    (nota não nasceu no webservice); toda outra recusa ⇒ `REJECTED` com o código preservado. **[pend-ext §7 item 3]**
+    `OUT_OF_WINDOW` só quando o código da recusa por prazo no cancelamento for identificado (o 324 é do envio). *Teste:*
+    cancela; 1306; recusa genérica.
 24. **[fork:F-NSP-9] Cancelamento feito no site da prefeitura:** `consultarEventos(chave)` faz `ConsultaNFe` por
     `ChaveNFe` e, com `StatusNFe = C`, devolve um evento novo do tipo `cancelamentoMunicipal` com `dhProc` =
     `DataCancelamento`; o job do X11 aplica `CANCELLED` como faz com o e101101. `EventoNfse` ganha esse ramo (o serviço
@@ -301,6 +317,9 @@ export const RpsSpPayloadSchema = z.object({
   valorIpiCents: z.literal('0'),
   ibsCbs: z.object({ cClassTrib: z.string().regex(/^\d{6}$/) /* + finNFSe, indFinal, cIndOp… — XSD */ }).passthrough().optional(),
 }).strict();
+// PR-M: a ficha do modo manual não tem RPS numerado — no site a prefeitura emite a NFS-e direto (item 32).
+export const RpsSpFichaPayloadSchema = RpsSpPayloadSchema.omit({ chave: true, layout: true })
+  .extend({ layout: z.literal('RPS_SP_V2_FICHA'), inscricaoPrestador: z.string().regex(/^\d{1,12}$/) }).strict();
 ```
 
 ### 4.2 Montagem única → renderizador por leiaute (F-NSP-4, ramo recomendado)
@@ -319,6 +338,7 @@ function renderNfse(montagem: MontagemNfse, perfil: FiscalProfileView): NfseRend
 model FiscalProfile {
   // …
   nfseSistema                          String  @default("NACIONAL") // NACIONAL | PAULISTANA (F-NSP-1)
+  nfseEmissao                          String  @default("portal")   // portal | automatica — o mesmo do ADL-14 da X10i (F-NSP-2b a); quem chegar primeiro cria
   paulistanaSemSimplesDesde20261101    Boolean @default(false)       // declaração do operador (IN 10/2011 art. 1º-A § 2º)
   rpsSerie                             Int     @default(1)           // F-NSP-5
   pacoteCodigoServicoSp                String?                        // F-NSP-12
@@ -339,7 +359,7 @@ const AlvoAssinado = z.enum(['infNFe', 'infEvento', 'infInut', 'qrCodeV3Offline'
 // cadeiaPaulistana: { alvo, cadeiaB64 /* ASCII; sha1 dela = digestB64 */, origemXml /* o <RPS> ou o <Detalhe> */,
 //                     cnpjRemetente /* 14 dígitos, = certificado */ }
 // pedidoPaulistana: { alvo, elementoXml /* raiz c14n */, signedInfoC14nB64, cnpjRemetente }
-const ServicoPaulistana = z.enum(['PaulistanaEnvioRPS', 'PaulistanaConsultaNFe', 'PaulistanaCancelamentoNFe',
+const ServicoPaulistana = z.enum(['PaulistanaEnvioLoteRPS', 'PaulistanaConsultaNFe', 'PaulistanaCancelamentoNFe',
   'PaulistanaTesteEnvioLoteRPS']); // somado ao enum `servico` do TRANSMITIR soap12
 export const PAULISTANA_ENDPOINTS = [{ servico: 'sync', url: 'https://nfews.prefeitura.sp.gov.br/lotenfe.asmx' }] as const;
 ```
@@ -369,6 +389,8 @@ export interface DfeCapabilities { /* … */ testeEnvio?: boolean; }
 ## 6. Forks — RATIFICADOS em 21/11 ([[D-2026-11-21-NFSE-PAULISTANA-FORKS]])
 
 Todos pela recomendação, **exceto F-NSP-2 → (b)** (modo manual dentro do nó). A tabela abaixo é o texto que foi ao dono.
+Não existem F-NSP-8 nem F-NSP-11 (os candidatos viraram itens diretos: motivo do cancelamento, item 23; leiaute só 2,
+item 2). Depois da ratificação, o F-NSP-7 (a) ficou realizado como lote síncrono de 1 RPS (item 20), dentro do ramo escolhido.
 
 | Fork | Caminhos | Recomendação e por quê |
 |---|---|---|
@@ -392,12 +414,15 @@ Todos pela recomendação, **exceto F-NSP-2 → (b)** (modo manual dentro do nó
    item 9 cobre a leitura mais segura.
 2. **Tabela oficial dos códigos de serviço** (Anexo I da IN SF/SUREM 8/2011, com as mudanças de 2026 — códigos novos e
    encerrados, [D02]) e alíquota por código (Lei 13.701/2003 art. 16): baixar pelo método legal antes do PR-2.
-3. **Prazo do cancelamento pela internet** (erro 324): norma municipal não lida; até lá vale o `cancelPrazoDias` do perfil
-   (X11, só avisa).
+3. **Prazo do cancelamento pela internet e o código da recusa:** a norma municipal não foi lida e o manual não traz código
+   de prazo no cancelamento (o 324 é dos métodos de envio). Até lá vale o `cancelPrazoDias` do perfil (X11, só avisa) e a
+   recusa fica `REJECTED` com o código (item 23).
 4. **Cadeia do cancelamento no leiaute 2** (IM 8 × 12): prova no runbook (item 30, passo 4) ou pergunta à SF/Prodam.
 5. **Erro 1647 / CNC:** quem entra no Cadastro Nacional de Contribuintes em SP. Tratado como terminal (item 8).
 6. **Data do leiaute 2 obrigatório** (`{0}` dos erros 631/639) e efeito do Ato Conjunto RFB/CGIBS 7/2026 na NFS-e de SP:
    o produto só emite leiaute 2, então só muda a data de aviso.
+7. **Ex-MEI** que passa a ME/EPP fora do Simples: o § 2º só cita os incisos II e IV; a leitura literal o deixa na
+   Paulistana. Pergunta ao contador junto com o item 1.
 
 ## 8. Insumos ausentes
 
@@ -406,6 +431,8 @@ Todos pela recomendação, **exceto F-NSP-2 → (b)** (modo manual dentro do nó
 - **Mês da saída do Simples:** o banco tem o regime **por ano** (`CompanyFiscalProfile.anoCalendario` + `regime`,
   `schema.prisma:1913`), não a data da exclusão. Por isso a declaração do item 9 existe só para 2026.
 - **Assinador C#** (`assinador-local/`): não existe em `main`; o item 29 espera o AL-PR-5.
+- **Manual de Acesso Pessoa Jurídica – NFS-e** (`Manual_NFe_PJ.pdf`, 13/10/2026 [D01]): a tela de emissão que a ficha
+  do PR-M espelha (item 33). Não baixado.
 - **Formato do XML que o site da Paulistana exporta** para a nota emitida e para a cancelada (itens 34 e 36): o
   "Manual de Exportação de NFS-e" de 13/04/2020 [D01] descreve layouts de exportação, não lidos nesta sessão; se o
   XML for o `tpNFE` do webservice, o leitor do item 7 basta. O PR-M começa por ele (`legal.py baixar` + uma exportação
@@ -427,7 +454,9 @@ Todos pela recomendação, **exceto F-NSP-2 → (b)** (modo manual dentro do nó
   `server/src/features/accounting/services/ServiceFiscalProfileService.ts`, `server/src/features/accounting/dfe/resolveEmissor.ts`,
   `server/src/features/accounting/dfe/selectDfeEmissor.ts`, `server/src/features/accounting/repositories/FiscalDocumentRepository.ts`,
   `server/src/features/accounting/services/FiscalDocumentEmissionService.ts`.
-- **PR-M:** `server/src/features/accounting/dfe/paulistana/PaulistanaManualEmissor.ts`,
+- **PR-M:** `server/src/features/accounting/dfe/paulistana/PaulistanaManualEmissor.ts`, `server/src/features/accounting/dfe/DfeEmissorPort.ts`,
+  `server/src/features/accounting/dtos/FiscalProfileDto.ts`, `server/src/features/accounting/dtos/FiscalDocumentDto.ts`,
+  `server/src/controllers/fiscalDocumentController.ts`, `server/src/features/accounting/models/issCompetencia.ts`,
   `server/src/features/accounting/dfe/resolveEmissor.ts`, `server/src/features/accounting/services/FiscalDocumentEmissionService.ts`,
   `server/src/features/accounting/services/FiscalDocumentLifecycleService.ts`, `server/src/lib/paulistana/**`.
 - **PR-3:** `server/src/features/accounting/dtos/DfeSignerDto.ts`, `server/src/features/accounting/dtos/dfeSigner.schema.json`,
