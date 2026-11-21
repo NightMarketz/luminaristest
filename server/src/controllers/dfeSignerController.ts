@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { getFactory } from '../lib/factory';
 import { handleApiError } from '../lib/apiUtils';
 import { getUserContextFromRequest } from '../lib/authUtils';
-import { DfeSignerPareamentoBodySchema } from '../features/accounting/dtos/DfeSignerDto';
+import { DfeSignerPareamentoBodySchema, DfeSignerResultadoBodySchema, DfeSignerTarefasQuerySchema } from '../features/accounting/dtos/DfeSignerDto';
 import type { RequestComDispositivo } from '../middleware/dfeSignerDeviceAuth';
 
 /**
@@ -59,6 +59,57 @@ export const parearDfeSigner = async (req: Request, res: Response) => {
     const existente = (req as RequestComDispositivo).dfeSignerDevice ?? null;
     const data = await getFactory().getDfeSignerService().parear(parsed.data, existente);
     return res.status(existente ? 200 : 201).json(data);
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/**
+ * GET /api/dfe-assinador/v1/tarefas?espera=25&versaoAssinador=&tokenPresente=&certThumbprintSha256= — o long-poll do
+ * assinador (AL-7; F-AL-2 a). O poll é o heartbeat (AL-12). Com tarefa ⇒ 200 na hora; sem tarefa até `espera` s ⇒ 204.
+ * A conexão que cai antes solta a espera.
+ */
+export const pollDfeSignerTarefas = async (req: Request, res: Response) => {
+  try {
+    const device = (req as RequestComDispositivo).dfeSignerDevice!;
+    const parsed = DfeSignerTarefasQuerySchema.safeParse(req.query);
+    if (!parsed.success) return bad(res, parsed.error.flatten());
+    const { espera, ...hb } = parsed.data;
+    const abort = new AbortController();
+    res.on('close', () => abort.abort());
+    const tarefas = await getFactory().getDfeSignerTaskService().poll(device, hb, espera, abort.signal);
+    if (!tarefas.length) return res.status(204).end();
+    return res.json({ tarefas });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/**
+ * POST /api/dfe-assinador/v1/tarefas/:id/resultado — o resultado de uma tarefa (AL-6): idempotente por id (mesmo corpo ⇒
+ * 200 sem efeito; outro ⇒ 409), tarefa vencida ⇒ 409. A resposta não ecoa o resultado.
+ */
+export const registrarResultadoDfeSigner = async (req: Request, res: Response) => {
+  try {
+    const device = (req as RequestComDispositivo).dfeSignerDevice!;
+    const parsed = DfeSignerResultadoBodySchema.safeParse(req.body);
+    if (!parsed.success) return bad(res, parsed.error.flatten());
+    const r = await getFactory().getDfeSignerTaskService().registrarResultado(device, req.params.id, parsed.data);
+    return res.json({ success: true, data: r });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
+/**
+ * POST /api/dfe-assinador/v1/tarefas/:id/heartbeat — o caixa renova o lease da tarefa entregue a ele (AL-6). Só a tarefa
+ * do próprio dispositivo (outra ⇒ 404); entregue e não vencida (vencida ⇒ 409). Sem heartbeat, a tarefa volta ao poll.
+ */
+export const heartbeatDfeSignerTarefa = async (req: Request, res: Response) => {
+  try {
+    const device = (req as RequestComDispositivo).dfeSignerDevice!;
+    const r = await getFactory().getDfeSignerTaskService().renovarLease(device, req.params.id);
+    return res.json({ success: true, data: r });
   } catch (error) {
     return handleApiError(error, res);
   }

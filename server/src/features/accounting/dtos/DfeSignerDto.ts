@@ -65,8 +65,129 @@ export const DfeSignerViewSchema = z
   .strict();
 export type DfeSignerView = z.infer<typeof DfeSignerViewSchema>;
 
+/**
+ * AL-7 / AL-12 (contrato §4.2) — o heartbeat do assinador, que vai na query do long-poll. Cada poll grava `lastSeenAt`,
+ * a versão e `tokenPresente` do dispositivo.
+ */
+export const DfeSignerHeartbeatSchema = z
+  .object({
+    versaoAssinador: VERSAO,
+    tokenPresente: z.boolean(),
+    certThumbprintSha256: z.string().regex(/^[0-9a-f]{64}$/),
+  })
+  .strict();
+export type DfeSignerHeartbeat = z.infer<typeof DfeSignerHeartbeatSchema>;
+
+/**
+ * Query de `GET /api/dfe-assinador/v1/tarefas`: o heartbeat chega em string (`tokenPresente=true|false` — nunca
+ * `z.coerce.boolean()`, que leria "false" como true) e `espera` em segundos, 0..25 (padrão 25).
+ */
+export const DfeSignerTarefasQuerySchema = z
+  .object({
+    espera: z.coerce.number().int().min(0).max(25).default(25),
+    versaoAssinador: VERSAO,
+    tokenPresente: z.enum(['true', 'false']).transform((v) => v === 'true'),
+    certThumbprintSha256: z.string().regex(/^[0-9a-f]{64}$/),
+  })
+  .strict();
+export type DfeSignerTarefasQuery = z.infer<typeof DfeSignerTarefasQuerySchema>;
+
+/** AL-10 (F-AL-5 b) — o conteúdo que o assinador reconfere antes de assinar. */
+export const DfeSignerConteudoSchema = z
+  .object({
+    alvo: z.enum(['infNFe', 'infEvento', 'infInut', 'qrCodeV3Offline']),
+    /** O elemento assinado já canonicalizado (c14n 2001, transforms enveloped + c14n): sha1 dele = `DigestValue`. */
+    elementoXml: z.string().max(2_000_000).optional(),
+    /** O `SignedInfo` canonicalizado (c14n 2001), base64: sha1 dele = `digestB64`. */
+    signedInfoC14nB64: z.string().optional(),
+    /** Os parâmetros 1–7 do QR Code v3 off-line (ASCII), base64: sha1 deles = `digestB64`. */
+    baseQrB64: z.string().optional(),
+    /**
+     * 44 dígitos. L-AL-5 (dono, 07/11): opcional SÓ no `infInut`, que não tem chave — o diário do assinador grava o Id
+     * de 41 dígitos do próprio elemento no lugar.
+     */
+    chave: z.string().regex(/^\d{44}$/).optional(),
+    tpAmb: z.enum(['1', '2']),
+  })
+  .strict()
+  .refine((c) => c.alvo === 'infInut' || c.chave !== undefined, { message: 'chave obrigatória fora do infInut (L-AL-5)', path: ['chave'] });
+export type DfeSignerConteudo = z.infer<typeof DfeSignerConteudoSchema>;
+
+export const DfeSignerTarefaAssinarSchema = z
+  .object({
+    id: z.string(),
+    tipo: z.literal('ASSINAR'),
+    algoritmo: z.literal('rsa-sha1'),
+    digestB64: z.string(),
+    conteudo: DfeSignerConteudoSchema,
+    expiraEm: z.string().datetime(),
+  })
+  .strict();
+export type DfeSignerTarefaAssinar = z.infer<typeof DfeSignerTarefaAssinarSchema>;
+
+export const DfeSignerTarefaTransmitirSchema = z
+  .object({
+    id: z.string(),
+    tipo: z.literal('TRANSMITIR'),
+    url: z.string().url().startsWith('https://'),
+    servico: z.enum(['NFeAutorizacao4', 'NFeConsultaProtocolo4', 'NFeInutilizacao4', 'NFeRecepcaoEvento4', 'NFeStatusServico4']),
+    /** SOAP 1.2 já montado pelo servidor, base64. */
+    envelopeB64: z.string(),
+    timeoutMs: z.number().int().min(1_000).max(60_000),
+    expiraEm: z.string().datetime(),
+  })
+  .strict();
+export type DfeSignerTarefaTransmitir = z.infer<typeof DfeSignerTarefaTransmitirSchema>;
+
+export const DfeSignerTarefaSchema = z.discriminatedUnion('tipo', [DfeSignerTarefaAssinarSchema, DfeSignerTarefaTransmitirSchema]);
+export type DfeSignerTarefa = z.infer<typeof DfeSignerTarefaSchema>;
+
+/** Resposta do long-poll com tarefa (sem tarefa: 204 sem corpo). */
+export const DfeSignerTarefasRespostaSchema = z.object({ tarefas: z.array(DfeSignerTarefaSchema) }).strict();
+export type DfeSignerTarefasResposta = z.infer<typeof DfeSignerTarefasRespostaSchema>;
+
+/** Códigos de recusa do assinador (contrato §4.2): os 4 primeiros são do ASSINAR, os 5 últimos do TRANSMITIR. */
+export const DFE_SIGNER_CODIGOS_ERRO = ['TOKEN_AUSENTE', 'PIN_CANCELADO', 'CERT_VENCIDO', 'CONTEUDO_RECUSADO', 'TLS', 'TIMEOUT', 'REDE', 'HTTP', 'HOST_FORA_DA_LISTA'] as const;
+export type DfeSignerCodigoErro = (typeof DFE_SIGNER_CODIGOS_ERRO)[number];
+
+/**
+ * POST /api/dfe-assinador/v1/tarefas/:id/resultado (AL-6). L-AL-1 (D-2026-11-07-X10A-EMENDA-4-LACUNAS): o ASSINAR traz
+ * também a parte pública do certificado que assinou (`certificadoDerB64`) — o servidor confere o sha256 contra o
+ * `certThumbprint` do pareamento e usa o certificado só em memória, no `KeyInfo` da própria nota.
+ */
+export const DfeSignerResultadoBodySchema = z.union([
+  z
+    .object({
+      ok: z.literal(true),
+      tipo: z.literal('ASSINAR'),
+      signatureValueB64: z.string().min(1).max(4_096),
+      certificadoDerB64: z.string().min(100).max(20_000),
+    })
+    .strict(),
+  z
+    .object({
+      ok: z.literal(true),
+      tipo: z.literal('TRANSMITIR'),
+      httpStatus: z.number().int().min(100).max(599),
+      corpoB64: z.string().max(10_000_000),
+    })
+    .strict(),
+  z
+    .object({
+      ok: z.literal(false),
+      code: z.enum(DFE_SIGNER_CODIGOS_ERRO),
+      /** Sem XML, sem PIN, sem caminho local. */
+      message: z.string().max(500),
+    })
+    .strict(),
+]);
+export type DfeSignerResultadoBody = z.infer<typeof DfeSignerResultadoBodySchema>;
+
 /** Os schemas do protocolo servidor ⇄ assinador que vão para o `dfeSigner.schema.json` (AL-17). */
 export const DFE_SIGNER_PROTOCOL_SCHEMAS = {
   PareamentoBody: DfeSignerPareamentoBodySchema,
   PareamentoResposta: DfeSignerPareamentoRespostaSchema,
+  Heartbeat: DfeSignerHeartbeatSchema,
+  TarefasResposta: DfeSignerTarefasRespostaSchema,
+  ResultadoBody: DfeSignerResultadoBodySchema,
 } as const;

@@ -91,6 +91,7 @@ export const REKEY_MODELS = [
   'PscCredential', 'PscAuthorization',
   // X10a EMENDA-4 AL-PR-2: o vínculo do assinador local e o código de pareamento são da unidade, sem hash → REKEY pelo F-RK-5.
   'DfeSignerDeviceUnit', 'DfeSignerPairingCode',
+  'DfeSignerTask', // X10a EMENDA-4 AL-PR-3: a fila do assinador segue a unidade, sem hash → REKEY pelo F-RK-5
   'NfceCsc', // X10a PR-8: CSC da NFC-e por unidade; AAD da cifra = id → REKEY pelo mesmo precedente
   // X10a PR-9: contingência da unidade e a nota órfã (segue o FiscalDocument), sem hash → REKEY pelo F-RK-5.
   'NfceContingencia', 'NfceContingenciaOrfa',

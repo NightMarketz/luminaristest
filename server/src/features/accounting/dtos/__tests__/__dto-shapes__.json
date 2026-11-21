@@ -4208,6 +4208,70 @@
       ],
       "additionalProperties": false
     },
+    "DfeSignerConteudoSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "alvo": {
+          "type": "string",
+          "enum": [
+            "infNFe",
+            "infEvento",
+            "infInut",
+            "qrCodeV3Offline"
+          ]
+        },
+        "elementoXml": {
+          "type": "string",
+          "maxLength": 2000000
+        },
+        "signedInfoC14nB64": {
+          "type": "string"
+        },
+        "baseQrB64": {
+          "type": "string"
+        },
+        "chave": {
+          "type": "string",
+          "pattern": "^\\d{44}$"
+        },
+        "tpAmb": {
+          "type": "string",
+          "enum": [
+            "1",
+            "2"
+          ]
+        }
+      },
+      "required": [
+        "alvo",
+        "tpAmb"
+      ],
+      "additionalProperties": false
+    },
+    "DfeSignerHeartbeatSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "versaoAssinador": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "tokenPresente": {
+          "type": "boolean"
+        },
+        "certThumbprintSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "versaoAssinador",
+        "tokenPresente",
+        "certThumbprintSha256"
+      ],
+      "additionalProperties": false
+    },
     "DfeSignerPareamentoBodySchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "type": "object",
@@ -4289,6 +4353,529 @@
         "unidades",
         "ambiente",
         "protocolo"
+      ],
+      "additionalProperties": false
+    },
+    "DfeSignerResultadoBodySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "ok": {
+              "type": "boolean",
+              "const": true
+            },
+            "tipo": {
+              "type": "string",
+              "const": "ASSINAR"
+            },
+            "signatureValueB64": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "certificadoDerB64": {
+              "type": "string",
+              "minLength": 100,
+              "maxLength": 20000
+            }
+          },
+          "required": [
+            "ok",
+            "tipo",
+            "signatureValueB64",
+            "certificadoDerB64"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ok": {
+              "type": "boolean",
+              "const": true
+            },
+            "tipo": {
+              "type": "string",
+              "const": "TRANSMITIR"
+            },
+            "httpStatus": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 599
+            },
+            "corpoB64": {
+              "type": "string",
+              "maxLength": 10000000
+            }
+          },
+          "required": [
+            "ok",
+            "tipo",
+            "httpStatus",
+            "corpoB64"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ok": {
+              "type": "boolean",
+              "const": false
+            },
+            "code": {
+              "type": "string",
+              "enum": [
+                "TOKEN_AUSENTE",
+                "PIN_CANCELADO",
+                "CERT_VENCIDO",
+                "CONTEUDO_RECUSADO",
+                "TLS",
+                "TIMEOUT",
+                "REDE",
+                "HTTP",
+                "HOST_FORA_DA_LISTA"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "maxLength": 500
+            }
+          },
+          "required": [
+            "ok",
+            "code",
+            "message"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "DfeSignerTarefaAssinarSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "tipo": {
+          "type": "string",
+          "const": "ASSINAR"
+        },
+        "algoritmo": {
+          "type": "string",
+          "const": "rsa-sha1"
+        },
+        "digestB64": {
+          "type": "string"
+        },
+        "conteudo": {
+          "type": "object",
+          "properties": {
+            "alvo": {
+              "type": "string",
+              "enum": [
+                "infNFe",
+                "infEvento",
+                "infInut",
+                "qrCodeV3Offline"
+              ]
+            },
+            "elementoXml": {
+              "type": "string",
+              "maxLength": 2000000
+            },
+            "signedInfoC14nB64": {
+              "type": "string"
+            },
+            "baseQrB64": {
+              "type": "string"
+            },
+            "chave": {
+              "type": "string",
+              "pattern": "^\\d{44}$"
+            },
+            "tpAmb": {
+              "type": "string",
+              "enum": [
+                "1",
+                "2"
+              ]
+            }
+          },
+          "required": [
+            "alvo",
+            "tpAmb"
+          ],
+          "additionalProperties": false
+        },
+        "expiraEm": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        }
+      },
+      "required": [
+        "id",
+        "tipo",
+        "algoritmo",
+        "digestB64",
+        "conteudo",
+        "expiraEm"
+      ],
+      "additionalProperties": false
+    },
+    "DfeSignerTarefaSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "tipo": {
+              "type": "string",
+              "const": "ASSINAR"
+            },
+            "algoritmo": {
+              "type": "string",
+              "const": "rsa-sha1"
+            },
+            "digestB64": {
+              "type": "string"
+            },
+            "conteudo": {
+              "type": "object",
+              "properties": {
+                "alvo": {
+                  "type": "string",
+                  "enum": [
+                    "infNFe",
+                    "infEvento",
+                    "infInut",
+                    "qrCodeV3Offline"
+                  ]
+                },
+                "elementoXml": {
+                  "type": "string",
+                  "maxLength": 2000000
+                },
+                "signedInfoC14nB64": {
+                  "type": "string"
+                },
+                "baseQrB64": {
+                  "type": "string"
+                },
+                "chave": {
+                  "type": "string",
+                  "pattern": "^\\d{44}$"
+                },
+                "tpAmb": {
+                  "type": "string",
+                  "enum": [
+                    "1",
+                    "2"
+                  ]
+                }
+              },
+              "required": [
+                "alvo",
+                "tpAmb"
+              ],
+              "additionalProperties": false
+            },
+            "expiraEm": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            }
+          },
+          "required": [
+            "id",
+            "tipo",
+            "algoritmo",
+            "digestB64",
+            "conteudo",
+            "expiraEm"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "tipo": {
+              "type": "string",
+              "const": "TRANSMITIR"
+            },
+            "url": {
+              "type": "string",
+              "format": "starts_with",
+              "pattern": "^https:\\/\\/.*"
+            },
+            "servico": {
+              "type": "string",
+              "enum": [
+                "NFeAutorizacao4",
+                "NFeConsultaProtocolo4",
+                "NFeInutilizacao4",
+                "NFeRecepcaoEvento4",
+                "NFeStatusServico4"
+              ]
+            },
+            "envelopeB64": {
+              "type": "string"
+            },
+            "timeoutMs": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 60000
+            },
+            "expiraEm": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+            }
+          },
+          "required": [
+            "id",
+            "tipo",
+            "url",
+            "servico",
+            "envelopeB64",
+            "timeoutMs",
+            "expiraEm"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "DfeSignerTarefaTransmitirSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "tipo": {
+          "type": "string",
+          "const": "TRANSMITIR"
+        },
+        "url": {
+          "type": "string",
+          "format": "starts_with",
+          "pattern": "^https:\\/\\/.*"
+        },
+        "servico": {
+          "type": "string",
+          "enum": [
+            "NFeAutorizacao4",
+            "NFeConsultaProtocolo4",
+            "NFeInutilizacao4",
+            "NFeRecepcaoEvento4",
+            "NFeStatusServico4"
+          ]
+        },
+        "envelopeB64": {
+          "type": "string"
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 60000
+        },
+        "expiraEm": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        }
+      },
+      "required": [
+        "id",
+        "tipo",
+        "url",
+        "servico",
+        "envelopeB64",
+        "timeoutMs",
+        "expiraEm"
+      ],
+      "additionalProperties": false
+    },
+    "DfeSignerTarefasQuerySchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "espera": {
+          "default": 25,
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 25
+        },
+        "versaoAssinador": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "tokenPresente": {
+          "type": "string",
+          "enum": [
+            "true",
+            "false"
+          ]
+        },
+        "certThumbprintSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "versaoAssinador",
+        "tokenPresente",
+        "certThumbprintSha256"
+      ],
+      "additionalProperties": false
+    },
+    "DfeSignerTarefasRespostaSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "tarefas": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "tipo": {
+                    "type": "string",
+                    "const": "ASSINAR"
+                  },
+                  "algoritmo": {
+                    "type": "string",
+                    "const": "rsa-sha1"
+                  },
+                  "digestB64": {
+                    "type": "string"
+                  },
+                  "conteudo": {
+                    "type": "object",
+                    "properties": {
+                      "alvo": {
+                        "type": "string",
+                        "enum": [
+                          "infNFe",
+                          "infEvento",
+                          "infInut",
+                          "qrCodeV3Offline"
+                        ]
+                      },
+                      "elementoXml": {
+                        "type": "string",
+                        "maxLength": 2000000
+                      },
+                      "signedInfoC14nB64": {
+                        "type": "string"
+                      },
+                      "baseQrB64": {
+                        "type": "string"
+                      },
+                      "chave": {
+                        "type": "string",
+                        "pattern": "^\\d{44}$"
+                      },
+                      "tpAmb": {
+                        "type": "string",
+                        "enum": [
+                          "1",
+                          "2"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "alvo",
+                      "tpAmb"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "expiraEm": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                  }
+                },
+                "required": [
+                  "id",
+                  "tipo",
+                  "algoritmo",
+                  "digestB64",
+                  "conteudo",
+                  "expiraEm"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "tipo": {
+                    "type": "string",
+                    "const": "TRANSMITIR"
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "starts_with",
+                    "pattern": "^https:\\/\\/.*"
+                  },
+                  "servico": {
+                    "type": "string",
+                    "enum": [
+                      "NFeAutorizacao4",
+                      "NFeConsultaProtocolo4",
+                      "NFeInutilizacao4",
+                      "NFeRecepcaoEvento4",
+                      "NFeStatusServico4"
+                    ]
+                  },
+                  "envelopeB64": {
+                    "type": "string"
+                  },
+                  "timeoutMs": {
+                    "type": "integer",
+                    "minimum": 1000,
+                    "maximum": 60000
+                  },
+                  "expiraEm": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                  }
+                },
+                "required": [
+                  "id",
+                  "tipo",
+                  "url",
+                  "servico",
+                  "envelopeB64",
+                  "timeoutMs",
+                  "expiraEm"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "tarefas"
       ],
       "additionalProperties": false
     },

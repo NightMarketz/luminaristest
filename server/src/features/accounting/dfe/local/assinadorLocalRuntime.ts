@@ -15,3 +15,16 @@ export function ligarTransporteAssinadorLocal(t: SefazTransporte | null): void {
 export function transporteAssinadorLocal(): SefazTransporte | null {
   return transporte;
 }
+
+/**
+ * AL-PR-3 — o transporte que o factory liga no boot. O mTLS de verdade é o `AssinadorLocalTransporte` do DISPOSITIVO da
+ * unidade, que o `DfeAssinaturaResolver` põe em `ctx.assinatura.transporte`; chamada sem esse contexto (o serviço não
+ * resolveu a unidade) não tem caixa para onde ir. Erro nomeado e NÃO de comunicação: não liga contingência.
+ */
+export const DFE_ASSINADOR_SEM_DISPOSITIVO = 'dfe_assinador_sem_dispositivo';
+
+export const transporteSemDispositivo: SefazTransporte = {
+  async call() {
+    throw new Error(`${DFE_ASSINADOR_SEM_DISPOSITIVO}: a transmissão pelo assinador local precisa do dispositivo da unidade do documento`);
+  },
+};

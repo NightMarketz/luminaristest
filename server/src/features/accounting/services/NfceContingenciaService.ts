@@ -30,6 +30,7 @@ import type { FiscalNumberVoidService } from './FiscalNumberVoidService';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { DfeResultApplier } from './dfeEnvio';
 import { isFalhaDeComunicacao, type DfeAmbiente, type DfeCallContext, type DfeEmissorPort, type EmitirInput, type NfceSupl } from '../dfe/DfeEmissorPort';
+import { DFE_ASSINADOR_SEM_DISPOSITIVO } from '../dfe/local/assinadorLocalRuntime';
 import { resolveEmissorFor } from '../dfe/resolveEmissor';
 import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import { resolveAccountingScopeInternal } from '../scope/resolveAccountingScopeInternal';
@@ -334,11 +335,16 @@ export class NfceContingenciaService {
         await this.repo.updateOrfa(orfa.id, { tentativas: orfa.tentativas + 1 }); // rodízio
         return;
       }
+      // A consulta sai pela assinatura da unidade (o caixa do assinador local, quando há dispositivo online). Sem ela, o
+      // transporte do boot (sem dispositivo) recusa a chamada: é "não dá para consultar agora", não erro — a órfã espera o
+      // próximo tick, e o 110112 não fica preso num erro genérico.
+      const ctxConsulta = await this.ctxDe(scope, doc, port, null);
       let consulta;
       try {
-        consulta = await port.consultar(orfa.chave, { ambiente: orfa.ambiente as DfeAmbiente });
+        consulta = await port.consultar(orfa.chave, { ambiente: orfa.ambiente as DfeAmbiente, ...(ctxConsulta?.assinatura ? { assinatura: ctxConsulta.assinatura } : {}) });
       } catch (error) {
-        if (!isFalhaDeComunicacao(error)) throw error;
+        const semDispositivo = error instanceof Error && error.message.startsWith(DFE_ASSINADOR_SEM_DISPOSITIVO);
+        if (!isFalhaDeComunicacao(error) && !semDispositivo) throw error;
         await this.repo.updateOrfa(orfa.id, { tentativas: orfa.tentativas + 1, ultimoErro: (error as Error).message.slice(0, 500) });
         return;
       }

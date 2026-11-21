@@ -24,6 +24,8 @@ import { SefazSoapClient } from '../../dfe/sefaz/SefazSoapClient';
 import { SefazNfeEmissor } from '../../dfe/sefaz/SefazNfeEmissor';
 import { selectDfeEmissor } from '../../dfe/selectDfeEmissor';
 import { resolveEmissorFor } from '../../dfe/resolveEmissor';
+import { transporteSemDispositivo } from '../../dfe/local/assinadorLocalRuntime';
+import { caixaFalso, thumbprintDe } from '../../../../../test/helpers/fakeAssinadorLocal';
 import { FiscalDocumentEmissionService } from '../FiscalDocumentEmissionService';
 import { X509Certificate, verify as verifyRsa } from 'node:crypto';
 import { FiscalDocumentLifecycleService } from '../FiscalDocumentLifecycleService';
@@ -170,6 +172,8 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
   let contingencia: NfceContingenciaService;
   let voidService: { inutilizarOrfa: jest.Mock };
   let agora = new Date('2026-10-29T15:00:00Z');
+  // O assinador local da unidade (AL-PR-3): sem dispositivo por padrão; o teste da órfã põe um caixa falso.
+  let localDaUnidade: () => Promise<unknown>;
 
   const sessaoViva = (): ResolveForEmissionResult => ({
     ok: true,
@@ -213,7 +217,12 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
     audit = { append: jest.fn() };
     pscStub = { resolveForEmission: jest.fn(async () => sessao), registrarConsumo: jest.fn(async () => undefined) };
     cscStub = { resolveForEmission: jest.fn(async () => null) };
-    const resolver = new DfeAssinaturaResolver(pscStub, new PscAssinador(3_000), cscStub);
+    localDaUnidade = async () => ({ ok: false, motivo: 'ASSINADOR_AUSENTE', device: null, fila: null });
+    const resolver = new DfeAssinaturaResolver(pscStub, new PscAssinador(3_000), cscStub, {
+      paraUnidade: () => localDaUnidade(),
+      timeoutAssinaturaMs: () => 2_000,
+      timeoutTransmissaoMs: () => 2_000,
+    } as never);
     const policy = { canEmitFiscalDocument: () => true, canReadFiscalDocument: () => true, canCancelFiscalDocument: () => true };
     emission = new FiscalDocumentEmissionService(
       repo as never,
@@ -373,6 +382,27 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
     expect(await contingencia.tick(FUTURO())).toMatchObject({ transmitidas: 1, orfasResolvidas: 1 });
     expect(voidService.inutilizarOrfa).toHaveBeenCalledWith(SCOPE, expect.objectContaining({ kind: 'NFCE', ambiente: 'homologacao', serie: 3, numero: 1n }));
     expect(cont.orfas[0]).toMatchObject({ status: 'VOID_REQUESTED', voidId: 'void-1' });
+  });
+
+  it('defeito (decisão 6): a órfã é consultada pelo assinador local da unidade — o transporte do boot (sem dispositivo) não pode barrar o 110112', async () => {
+    sefaz.controle.perderRespostaAutorizacao = true;
+    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
+    expect(view.status).toBe('CONTINGENCY');
+    sefaz.controle.perderRespostaAutorizacao = false;
+    // A porta da órfã é a do assinador local, ligada ao transporte do BOOT (sem dispositivo), como em produção.
+    const caixa = caixaFalso({ key, certPem, cnpj: CNPJ, tpAmb: '2', pki });
+    localDaUnidade = async () => ({ ok: true, device: { id: 'dev-1', certThumbprint: thumbprintDe(certPem) }, fila: caixa });
+    (resolveEmissorFor as jest.Mock).mockImplementation(
+      () => new SefazNfeEmissor({ ambiente: 'homologacao', assinador: 'local', soap: transporteSemDispositivo, endpoint: sefaz.endpoint }),
+    );
+    try {
+      const antes = sefaz.controle.chamadas.length;
+      expect(await contingencia.tick(FUTURO())).toMatchObject({ transmitidas: 1, orfasResolvidas: 1, orfasFalharam: 0 });
+      expect(sefaz.controle.chamadas.slice(antes).find((c) => c.servico === 'NFeRecepcaoEvento4')!.corpo).toContain('<tpEvento>110112</tpEvento>');
+      expect(cont.orfas[0]).toMatchObject({ status: 'CANCELLED_SUBST' });
+    } finally {
+      (resolveEmissorFor as jest.Mock).mockImplementation(() => emissor);
+    }
   });
 
   it('decisão 6: o 110112 recusado vira pendência visível no documento (contingencia_orfa_falhou)', async () => {

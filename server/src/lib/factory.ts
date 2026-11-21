@@ -56,6 +56,10 @@ import { PscCredentialRepository } from '../features/accounting/repositories/Psc
 import { DfeSignerRepository } from '../features/accounting/repositories/DfeSignerRepository';
 import type { IDfeSignerRepository } from '../features/accounting/repositories/IDfeSignerRepository';
 import { DfeSignerService } from '../features/accounting/services/DfeSignerService';
+import { DfeSignerTaskService } from '../features/accounting/services/DfeSignerTaskService';
+import { DfeSignerTaskRepository } from '../features/accounting/repositories/DfeSignerTaskRepository';
+import type { IDfeSignerTaskRepository } from '../features/accounting/repositories/IDfeSignerTaskRepository';
+import { ligarTransporteAssinadorLocal, transporteSemDispositivo } from '../features/accounting/dfe/local/assinadorLocalRuntime';
 import type { IPscProviderRepository } from '../features/accounting/repositories/IPscProviderRepository';
 import type { IPscCredentialRepository } from '../features/accounting/repositories/IPscCredentialRepository';
 import { PscProviderService } from '../features/accounting/services/PscProviderService';
@@ -920,6 +924,7 @@ export class ApplicationFactory {
     pscProvider: IPscProviderRepository;
     pscCredential: IPscCredentialRepository;
     dfeSigner: IDfeSignerRepository; // X10a EMENDA-4 AL-PR-2
+    dfeSignerTask: IDfeSignerTaskRepository; // X10a EMENDA-4 AL-PR-3
     nfceCsc: INfceCscRepository; // X10a PR-8
     nfceContingencia: INfceContingenciaRepository; // X10a PR-9
     collectionCharge: ICollectionChargeRepository; // BE-INCR-PAYMENT-PROVIDER PR-2
@@ -1055,6 +1060,7 @@ export class ApplicationFactory {
     pscProvider: PscProviderService;
     pscCredential: PscCredentialService;
     dfeSigner: DfeSignerService; // X10a EMENDA-4 AL-PR-2
+    dfeSignerTask: DfeSignerTaskService; // X10a EMENDA-4 AL-PR-3
     nfceCsc: NfceCscService; // X10a PR-8
     nfceContingencia: NfceContingenciaService; // X10a PR-9
     collectionCharge: CollectionChargeService; // BE-INCR-PAYMENT-PROVIDER PR-2
@@ -1185,6 +1191,7 @@ export class ApplicationFactory {
       pscProvider: new PscProviderRepository(),
       pscCredential: new PscCredentialRepository(),
       dfeSigner: new DfeSignerRepository(), // X10a EMENDA-4 AL-PR-2
+      dfeSignerTask: new DfeSignerTaskRepository(), // X10a EMENDA-4 AL-PR-3
       nfceCsc: new NfceCscRepository(),
       nfceContingencia: new NfceContingenciaRepository(),
       collectionCharge: new CollectionChargeRepository(),
@@ -1643,7 +1650,12 @@ export class ApplicationFactory {
     );
     // X10a PR-8: o CSC da NFC-e (QR Code v2 quando a UF recusa a v3) entra no mesmo contexto do envio.
     const nfceCscService = new NfceCscService(this.repositories.nfceCsc, auditService, this.policies.accounting);
-    const dfeAssinaturaResolver = new DfeAssinaturaResolver(pscCredentialService, new PscAssinador(), nfceCscService);
+    // X10a EMENDA-4 AL-PR-3 (AL-6..AL-9, AL-13): a fila do assinador local. O resolvedor escolhe o assinador pelo
+    // `assinador` da porta (DFE_ASSINADOR_<KIND>) e liga o transporte ao dispositivo da unidade; o transporte do boot só
+    // habilita a porta `sefaz` (sem dispositivo ele falha com erro nomeado, nunca por um transmissor do Luminaris).
+    const dfeSignerTaskService = new DfeSignerTaskService(this.repositories.dfeSignerTask, this.repositories.dfeSigner);
+    ligarTransporteAssinadorLocal(transporteSemDispositivo);
+    const dfeAssinaturaResolver = new DfeAssinaturaResolver(pscCredentialService, new PscAssinador(), nfceCscService, dfeSignerTaskService);
     // BE-INCR-DFE (nó X10b, PR-2): porta+adaptadores e montagem/envio da DPS (Fase B+C).
     const fiscalDocumentEmissionService = new FiscalDocumentEmissionService(
       this.repositories.fiscalDocument,
@@ -1711,6 +1723,8 @@ export class ApplicationFactory {
     pscCredentialService.setOnAuthorized(async (scope) => {
       await fiscalDocumentLifecycleService.enviarPendentesDaUnidade(scope);
     });
+    // X10a EMENDA-4 AL-14 (F-AL-6 a, espelho da decisão 5): o primeiro poll depois da queda envia as PENDING_SIGNATURE.
+    dfeSignerTaskService.setOnRetomada((scope) => fiscalDocumentLifecycleService.enviarPendentesDaUnidade(scope));
     // Extraído como const própria (não só inline no literal abaixo) porque FixedAssetService
     // (BE-INCR-FIXED-ASSETS, nó C8, PR-2) também a injeta (baixa lê disposalGain/LossAccountId).
     const accountingScopeSettingsService = new AccountingScopeSettingsService(
@@ -2357,6 +2371,7 @@ export class ApplicationFactory {
         resolveUnitCnpjFromUnits,
         resolveUnitNameFromUnits,
       ),
+      dfeSignerTask: dfeSignerTaskService, // X10a EMENDA-4 AL-PR-3
       nfceCsc: nfceCscService,
       collectionCharge: collectionChargeService,
       releaseReport: releaseReportService, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-1..P3-5)
@@ -2750,6 +2765,7 @@ export class ApplicationFactory {
   public getPscProviderService = (): PscProviderService => this.services.pscProvider;
   public getPscCredentialService = (): PscCredentialService => this.services.pscCredential;
   public getDfeSignerService = (): DfeSignerService => this.services.dfeSigner; // X10a EMENDA-4 AL-PR-2
+  public getDfeSignerTaskService = (): DfeSignerTaskService => this.services.dfeSignerTask; // X10a EMENDA-4 AL-PR-3
   public getNfceCscService = (): NfceCscService => this.services.nfceCsc;
   public getNfceContingenciaService = (): NfceContingenciaService => this.services.nfceContingencia;
   public getCollectionChargeService = (): CollectionChargeService => this.services.collectionCharge;
