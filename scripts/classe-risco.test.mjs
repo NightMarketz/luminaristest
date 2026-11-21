@@ -1,7 +1,16 @@
 // node --test scripts/classe-risco.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { classificar, bumpMajor } from './classe-risco.mjs';
+import { classificar, bumpMajor, compararPackageJson, arquivoAusente, versaoDoSpec } from './classe-risco.mjs';
+
+const pj = (obj) => JSON.stringify(obj, null, 2);
+// O #952: express 4→5 num PR de várias dependências, título sem versão.
+const ANTES_952 = pj({ name: 'server', version: '1.0.0', dependencies: { express: '^4.18.2', zod: '^4.1.0' },
+  devDependencies: { '@types/express': '^4.17.21' } });
+const DEPOIS_952 = pj({ name: 'server', version: '1.0.0', dependencies: { express: '^5.3.0', zod: '^4.1.0' },
+  devDependencies: { '@types/express': '^5.0.6' } });
+const TITULO_952 = 'chore(deps): Bump express and @types/express in /server';
+const um = (antes, depois, arquivo = 'package.json') => compararPackageJson(pj(antes), pj(depois), arquivo);
 
 test('FE não fiscal, doc de nó e teste são verdes', () => {
   const r = classificar({ arquivos: ['my-app/features/crm/Kanban.tsx', 'docs/plano/nos/W3.md', 'server/src/features/crm/__tests__/x.test.ts'] });
@@ -44,6 +53,121 @@ test('dependência: major é vermelho, minor/patch e grupo são verdes', () => {
   assert.ok(!bumpMajor('chore(deps): Bump zod from 4.1.0 to 4.3.2 in /server'));
   assert.ok(!bumpMajor('chore(deps): Bump the server-minor-patch group in /server with 24 updates'));
   assert.equal(classificar({ arquivos: ['server/package.json'], titulo: 'Bump uuid from 11.1.0 to 14.0.3' }).classe, 'vermelho');
+});
+
+test('#952: major sem versão no título é vermelho pelo package.json da base × PR, com revisor', () => {
+  assert.ok(!bumpMajor(TITULO_952)); // o título sozinho deixava passar
+  assert.deepEqual(compararPackageJson(ANTES_952, DEPOIS_952, 'server/package.json'), {
+    majors: ['express ^4.18.2 → ^5.3.0 (server/package.json)', '@types/express ^4.17.21 → ^5.0.6 (server/package.json)'],
+    duvidas: [],
+  });
+  const r = classificar({ arquivos: ['package-lock.json', 'server/package.json'], titulo: TITULO_952,
+    pacotes: [{ arquivo: 'server/package.json', antes: ANTES_952, depois: DEPOIS_952 }] });
+  assert.equal(r.classe, 'vermelho');
+  assert.equal(r.revisor, true);
+});
+
+test('grupo minor-patch continua verde; scripts, "version" e dependência nova ou retirada não contam', () => {
+  const r = um(
+    { version: '1.4.0', scripts: { build: 'tsc' }, dependencies: { zod: '^4.1.0', react: '~19.0.1', velho: '^1.0.0' } },
+    { version: '2.0.0', scripts: { build: 'tsc && tsc-alias' }, dependencies: { zod: '^4.3.2', react: '~19.3.1', novo: '^9.0.0' } },
+  );
+  assert.deepEqual(r, { majors: [], duvidas: [] });
+  const c = classificar({ arquivos: ['my-app/package.json', 'package-lock.json'],
+    titulo: 'chore(deps): Bump the npm-minor-patch group with 6 updates',
+    pacotes: [{ arquivo: 'my-app/package.json', antes: pj({ dependencies: { zod: '^4.1.0' } }),
+      depois: pj({ dependencies: { zod: '^4.3.2' } }) }] });
+  assert.equal(c.classe, 'verde', c.motivos.join('; '));
+});
+
+test('0.x: a minor conta como major; faixa e "||" usam a maior versão admitida', () => {
+  assert.deepEqual(um({ dependencies: { x: '^0.3.1' } }, { dependencies: { x: '^0.4.0' } }).majors, ['x ^0.3.1 → ^0.4.0 (package.json)']);
+  assert.equal(um({ dependencies: { w: '>=4.8.4 <6.1.0' } }, { dependencies: { w: '>=4.8.4 <7.1.0' } }).majors.length, 1);
+  assert.equal(um({ dependencies: { e: '^8.0.0' } }, { dependencies: { e: '^8.0.0 || ^9.0.0' } }).majors.length, 1);
+  assert.equal(um({ dependencies: { e: '^8.0.0' } }, { dependencies: { e: '^8.1.0 || ^8.2.0' } }).majors.length, 0);
+  assert.equal(um({ dependencies: { a: 'npm:lodash-es@^4.17.0' } }, { dependencies: { a: 'npm:lodash-es@^5.0.0' } }).majors.length, 1);
+});
+
+// Rodando nos PRs reais (#1292, #943): "5.1.7" lido como 5.1 e 7 fazia patch virar major.
+test('patch, versão exata e pré-release na mesma major não são major', () => {
+  for (const [de, para] of [['^5.1.6', '^5.1.7'], ['5.1.7', '^5.1.6'], ['^6.1.18', '^6.1.22'], ['10.1.1', '10.2.0'],
+    ['2.0.0-beta.1', '2.0.0'], ['^1.2.3+build.5', '^1.4.0']]) {
+    assert.deepEqual(um({ dependencies: { p: de } }, { dependencies: { p: para } }), { majors: [], duvidas: [] }, `${de} → ${para}`);
+  }
+  assert.equal(um({ dependencies: { p: '1.9.9-rc.1' } }, { dependencies: { p: '2.0.0-rc.1' } }).majors.length, 1);
+});
+
+// Revisão do #1310, rodada 2 (A2): spec aberto para cima admite qualquer major futura.
+test('spec sem teto (">=", ">", "|| >=") é dúvida → vermelho; faixa com teto continua lida', () => {
+  for (const [de, para] of [['^4.0.0', '>=4.0.0'], ['^4.0.0', '>4.0.0'], ['^4.0.0', '^4.0.0 || >=4.2.0'], ['4.x', '4.x.x || >=4']]) {
+    assert.equal(um({ dependencies: { p: de } }, { dependencies: { p: para } }).duvidas.length, 1, `${de} → ${para}`);
+  }
+  assert.deepEqual(um({ dependencies: { p: '>=4.8.4 <6.1.0' } }, { dependencies: { p: '>=4.9.0 <6.1.0' } }),
+    { majors: [], duvidas: [] });
+});
+
+// Rodada 3 (A4): a mesma classe por outras formas — curinga, trecho vazio, hífen com curinga, teto curinga.
+// O teto vem da gramática (interseção no trecho, união no "||"); conferido contra o semver real em 1898 specs.
+test('sem teto por curinga, trecho vazio ou hífen é dúvida; o teto real vem da gramática', () => {
+  for (const para of ['^4.0.0 || *', '^4.0.0 || x', '^4.0.0 ||', '4.0.0 - x', '4 - *', '>=4.0.0 <=x']) {
+    assert.equal(um({ dependencies: { p: '^4.0.0' } }, { dependencies: { p: para } }).duvidas.length, 1, para);
+  }
+  const teto = (spec) => versaoDoSpec(spec);
+  assert.deepEqual(teto('<6'), { major: 5, minor: null });
+  assert.deepEqual(teto('<6.1.0'), { major: 6, minor: 0 });
+  assert.deepEqual(teto('>=1 <2 || >=4 <5'), { major: 4, minor: null });
+  assert.deepEqual(teto('1 <5'), { major: 1, minor: null }); // interseção: o "1" limita, não o "<5"
+  assert.deepEqual(teto('1.2 - 2'), { major: 2, minor: null });
+  assert.deepEqual(teto('^0.3.1'), { major: 0, minor: 3 });
+  assert.deepEqual(teto('>= 1.2.3 < 3'), { major: 2, minor: null });
+  assert.equal(teto('latest'), null);
+});
+
+// Revisão extra (A1): em 0.x, "qualquer minor" (minor null) é um teto mais alto que uma minor fixa.
+test('0.x indo para qualquer minor é major', () => {
+  for (const [de, para] of [['^0.3.1', '0.x'], ['^0.3.1', '^0'], ['^0.3.1', '<1'], ['^0.3.1', '~0'], ['^0.3.1', '0'],
+    ['^0.3.1', '>=0.3 <1'], ['~0.3.1', '<1.0.0']]) {
+    assert.equal(um({ dependencies: { p: de } }, { dependencies: { p: para } }).majors.length, 1, `${de} → ${para}`);
+  }
+  assert.deepEqual(um({ dependencies: { p: '^0.3.1' } }, { dependencies: { p: '^0.3.4' } }), { majors: [], duvidas: [] });
+});
+
+// Rodada 2 (A3): "No commit found for the ref" também é HTTP 404, mas não é arquivo ausente.
+test('só "Not Found" é arquivo ausente; ref que não resolve é erro', () => {
+  assert.ok(arquivoAusente('{"message":"Not Found"}gh: Not Found (HTTP 404)\n'));
+  assert.ok(!arquivoAusente('gh: No commit found for the ref deadbeef (HTTP 404)\n'));
+  assert.ok(!arquivoAusente('gh: Bad credentials (HTTP 401)'));
+  assert.ok(!arquivoAusente(undefined));
+});
+
+// Revisão do #1310, rodada 1 (A1): spec trocado que a régua não lê não pode virar verde em silêncio.
+test('spec trocado ilegível é dúvida → vermelho: "*", tag, alias, git, workspace', () => {
+  for (const [de, para] of [['4.x', '*'], ['^4.0.0', 'latest'], ['^4.17.0', 'npm:lodash-es@^5.0.0'],
+    ['github:a/b', 'github:a/c'], ['workspace:*', '^2.0.0']]) {
+    const r = um({ dependencies: { p: de } }, { dependencies: { p: para } });
+    if (de === '^4.17.0') assert.equal(r.majors.length, 1, `${de} → ${para}`); // alias legível: 4 → 5
+    else assert.equal(r.duvidas.length, 1, `${de} → ${para}`);
+    const c = classificar({ arquivos: ['package.json'], pacotes: [{ arquivo: 'package.json',
+      antes: pj({ dependencies: { p: de } }), depois: pj({ dependencies: { p: para } }) }] });
+    assert.equal(c.classe, 'vermelho', `${de} → ${para}`);
+    assert.equal(c.revisor, true);
+  }
+});
+
+test('dependência movida de seção é comparada; overrides contam; JSON ilegível é dúvida', () => {
+  assert.equal(um({ devDependencies: { zod: '^3.22.0' } }, { dependencies: { zod: '^4.0.0' } }).majors.length, 1);
+  assert.equal(um({ overrides: { semver: '^6.0.0' } }, { overrides: { semver: '^7.0.0' } }).majors.length, 1);
+  assert.equal(um({ overrides: { a: { b: '^1.0.0' } } }, { overrides: { a: { b: '^2.0.0' } } }).duvidas.length, 1);
+  assert.deepEqual(compararPackageJson('{ quebrado', pj({}), 'x/package.json').duvidas, ['x/package.json: JSON ilegível']);
+  assert.deepEqual(compararPackageJson(null, pj({ dependencies: { a: '^9.0.0' } }), 'novo/package.json'),
+    { majors: [], duvidas: [] }); // package.json novo: tudo é dependência nova
+});
+
+test('package.json do PR que não pôde ser lido é vermelho (em dúvida, vermelho); sem package.json não importa', () => {
+  const r = classificar({ arquivos: ['server/package.json'], titulo: TITULO_952, pacotes: null });
+  assert.equal(r.classe, 'vermelho');
+  assert.equal(r.revisor, true);
+  assert.equal(classificar({ arquivos: ['my-app/a.tsx'], pacotes: null }).classe, 'verde');
 });
 
 test('draft, "não mergear" no título e lista vazia são vermelhos', () => {
