@@ -48,7 +48,12 @@ const ROWS: Row[] = [
   { accountId: 'acc-4.1.9', debitCents: 3000, creditCents: 0 },
 ];
 
-type Versao = { version: number; decidedAt: Date | null; insumoExpenseAccountId: string | null };
+/**
+ * `insumoExpenseAccountId` = o do estado APLICADO (`appliedSnapshot`, a view completa do perfil depois da aplicação).
+ * `payloadInsumo` = o que o `payload` traz: por padrão NADA (um PUT/proposta que não envia o campo grava payload parcial —
+ * o upsert mantém a coluna, o payload não tem a chave); só vale se o teste o definir.
+ */
+type Versao = { version: number; decidedAt: Date | null; insumoExpenseAccountId: string | null; payloadInsumo?: string | null };
 
 /**
  * `insumoExpenseAccountId` do perfil fiscal ATUAL do escopo (null/ausente = sem perfil ou sem insumo) e, opcional, o
@@ -68,7 +73,7 @@ function buildService(insumoExpenseAccountId: string | null | undefined, rows: R
   const policyVersionRepo = {
     list: jest.fn(async (_s: unknown, filter: { target?: string; status?: string }) =>
       filter.target === 'FISCAL_PROFILE' && filter.status === 'APPLIED'
-        ? versoes.map((v) => ({ id: `v${v.version}`, target: 'FISCAL_PROFILE', status: 'APPLIED', version: v.version, decidedAt: v.decidedAt, payload: { insumoExpenseAccountId: v.insumoExpenseAccountId } }))
+        ? versoes.map((v) => ({ id: `v${v.version}`, target: 'FISCAL_PROFILE', status: 'APPLIED', version: v.version, decidedAt: v.decidedAt, payload: v.payloadInsumo === undefined ? {} : { insumoExpenseAccountId: v.payloadInsumo }, appliedSnapshot: { insumoExpenseAccountId: v.insumoExpenseAccountId } }))
         : []),
   };
   // 5º argumento = perfil fiscal atual; 6º = versões de política (o swc/jest não faz type-check).
@@ -160,5 +165,24 @@ describe('L-038d (f974) — o papel é o da versão FISCAL_PROFILE vigente em as
   it('versão sem insumo (null) vigente em asOf: nada vai a custo pelo papel, mesmo com insumo no perfil atual', async () => {
     const dre = await buildService('acc-4.1.9', ROWS, [{ ...V1, insumoExpenseAccountId: null }]).incomeStatement(SCOPE, AS_OF);
     expect(codes(dre.costOfGoodsSold)).toEqual([]);
+  });
+
+  it('A2 (rodada 2): versão de PUT SEM o campo de insumo (payload parcial) vale pelo estado aplicado (appliedSnapshot), não pelo payload', async () => {
+    // v2 não trouxe `insumoExpenseAccountId` no corpo (payload sem a chave), mas o perfil aplicado segue com 4.1.9.
+    const v2SemCampo = { version: 2, decidedAt: new Date('2026-03-01T12:00:00.000Z'), insumoExpenseAccountId: 'acc-4.1.9' };
+    const dre = await buildService('acc-4.1.9', ROWS, [V1, v2SemCampo]).incomeStatement(SCOPE, AS_OF);
+    expect(codes(dre.costOfGoodsSold)).toEqual(['4.1.9']);
+  });
+
+  it('A3 (rodada 2): versão decidida às 22:00 BRT do último dia (01:00Z do dia seguinte) CONTA na DRE desse dia (dia do escopo, não UTC)', async () => {
+    const v2Noite = { ...V2, decidedAt: new Date('2026-11-01T01:00:00.000Z') }; // 22:00 de 31/10 em America/Sao_Paulo
+    const dre = await buildService('acc-4.1.8', rows, [V1, v2Noite]).incomeStatement(SCOPE, AS_OF);
+    expect(codes(dre.costOfGoodsSold)).toEqual(['4.1.8']);
+  });
+
+  it('A3 (rodada 2): versão decidida às 00:30 BRT do dia seguinte (03:30Z) NÃO conta na DRE do dia anterior', async () => {
+    const v2Madrugada = { ...V2, decidedAt: new Date('2026-11-01T03:30:00.000Z') }; // 00:30 de 01/11 em America/Sao_Paulo
+    const dre = await buildService('acc-4.1.8', rows, [V1, v2Madrugada]).incomeStatement(SCOPE, AS_OF);
+    expect(codes(dre.costOfGoodsSold)).toEqual(['4.1.9']);
   });
 });

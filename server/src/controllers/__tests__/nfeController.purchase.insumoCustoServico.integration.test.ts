@@ -183,13 +183,25 @@ describe('Lacuna 038d — DRE pelo papel do insumo, ponta a ponta (factory real)
     expect({ custo: r.custo, despesasTemA419: Object.keys(r.despesas).includes('4.1.9') }).toEqual({ custo: { '4.1.9': '-8788' }, despesasTemA419: false });
   });
 
-  it('trocar o insumo do perfil depois não reclassifica o período anterior (versão vigente em asOf): a DRE de 31/07/2025 não muda', async () => {
+  const corpo = (insumo?: string) => ({
+    unitId: PAPEL, regimeTributario: 'REAL', icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO',
+    icmsRecuperavelAccountId: contas['1.1.8'], pisCofinsRecuperavelAccountId: contas['1.1.9'], ...(insumo ? { insumoExpenseAccountId: insumo } : {}),
+  });
+
+  it('PUT SEM o campo de insumo grava versão de payload parcial, mas o insumo aplicado segue: a DRE de 31/07/2025 não muda (A2)', async () => {
+    // a versão 1 (a do beforeAll) passa a ser anterior ao período; a 2 (PUT sem o campo) também — a vigente em asOf é a mais recente
+    await prisma.accountingPolicyVersion.updateMany({ where: { userId: donoP.id, unitId: PAPEL, version: 1 }, data: { decidedAt: new Date('2025-01-10T12:00:00.000Z') } });
+    const sem = await request(app).put('/api/accounting/fiscal-profile').set(authHeader(donoP)).send(corpo());
+    expect(sem.status).toBe(200);
+    await prisma.accountingPolicyVersion.updateMany({ where: { userId: donoP.id, unitId: PAPEL, version: 2 }, data: { decidedAt: new Date('2025-02-10T12:00:00.000Z') } });
+    const r = await dre();
+    expect({ custo: r.custo, despesasTemA419: Object.keys(r.despesas).includes('4.1.9') }).toEqual({ custo: { '4.1.9': '-8788' }, despesasTemA419: false });
+  });
+
+  it('trocar o insumo do perfil depois do período não reclassifica o período anterior (duas versões ao redor de 31/07/2025)', async () => {
     const antes = await dre();
-    const troca = await request(app).put('/api/accounting/fiscal-profile').set(authHeader(donoP)).send({
-      unitId: PAPEL, regimeTributario: 'REAL', icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO',
-      icmsRecuperavelAccountId: contas['1.1.8'], pisCofinsRecuperavelAccountId: contas['1.1.9'], insumoExpenseAccountId: contas['4.1.8'],
-    });
-    expect(troca.status).toBe(200);
+    const troca = await request(app).put('/api/accounting/fiscal-profile').set(authHeader(donoP)).send(corpo(contas['4.1.8']));
+    expect(troca.status).toBe(200); // versão 3, decidida agora (2026): depois do período
     expect(await dre()).toEqual(antes);
   });
 
