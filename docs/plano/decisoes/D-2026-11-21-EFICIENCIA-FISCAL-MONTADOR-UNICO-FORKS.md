@@ -2,9 +2,9 @@
 id: "D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS"
 tipo: "decisao"
 dominio: "fiscal"
-titulo: "Forks F-MU-1..13 da emenda montador único (simulação de regime do EFICIENCIA-FISCAL) ratificados pelo dono, todos na recomendação (a)"
+titulo: "Forks F-MU-1..16 da emenda montador único (simulação de regime do EFICIENCIA-FISCAL) ratificados pelo dono, todos na recomendação (a)"
 estado: "decided"
-autorizacao: "dono, 2026-11-21, questionário da sessao-planejamento da emenda (4 rodadas de AskUserQuestion), todas as respostas na opção recomendada — ratifica os forks; não é 'executa'"
+autorizacao: "dono, 2026-11-21, questionário da sessao-planejamento da emenda (5 rodadas de AskUserQuestion; F-MU-14..16 na última, abertos pela revisão do BRIEF), todas as respostas na opção recomendada — ratifica os forks; não é 'executa'"
 atualizado: "2026-11-21"
 ---
 # D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS
@@ -29,5 +29,8 @@ O dono respondeu no questionário de 21/11, com o contexto de cada fork na próp
 | F-MU-11 | Receita para os limites | **"Receita da PJ"** | soma de todas as unidades (Res. CGSN 140 art. 16 § 2º); RBT12 por unidade fica na lacuna `L-20261121-200757-976c` |
 | F-MU-12 | Aferição | **"Teste e resposta"** | bloco `afericao` + alerta `AFERICAO_DIVERGENTE` |
 | F-MU-13 | Ordem com #1321 e #1322 | **"Montador antes"** | o PR-2 desta emenda entra antes do item 37 da ponte e do PR-1 do ciclo fiscal |
+| F-MU-14 | Caixa no Presumido/Real hipotético | **"Competência como premissa"** | premissa `CAIXA_SIMULADO_POR_COMPETENCIA` |
+| F-MU-15 | Excesso de até 20% e a sugestão de trocar para o Simples | **"Recusa a sugestão"** | 400 `REGIME_VEDADO_NO_ANO_SEGUINTE` |
+| F-MU-16 | Declarações vazias e o regime atual | **"Regime atual conferido"** | regime atual conferido nos incisos não deriváveis; os outros vão para `melhorCondicional`; economia condicional à parte |
 
 **Não é `executa`.** O código de cada PR espera o `executa` do dono para este BRIEF.

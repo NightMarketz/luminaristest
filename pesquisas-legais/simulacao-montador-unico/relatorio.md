@@ -8,7 +8,7 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
 <!-- ANALISE -->
 ## 1. Conclusão
 A elegibilidade por ano que a simulação de regime e a rota precisam tem base completa em três textos:
-- **Simples:** vedado a quem teve receita acima de R$ 4,8 mi **no ano anterior ou no ano em curso** (Res. CGSN 140 art. 15 I [D03]), com os efeitos do excesso do ano em curso pela LC 123 art. 3º § 9º (acima de 20%: exclusão no mês seguinte), § 9º-A (até 20%: só no ano seguinte) e § 10 (ano de início: retroativo) [D01]; mais as 26 vedações dos incisos II–XXVII do art. 15 [D03], que consolidam a LC 123 art. 3º § 4º e art. 17 [D01]. A receita é a soma de todos os estabelecimentos (art. 16 § 2º [D03]).
+- **Simples:** vedado a quem teve receita acima de R$ 4,8 mi **no ano anterior ou no ano em curso** (Res. CGSN 140 art. 15 I [D03]), com os efeitos do excesso do ano em curso pela LC 123 art. 3º § 9º (acima de 20%: exclusão no mês seguinte), § 9º-A (até 20%: só no ano seguinte), § 10 (ano de início, acima de 20%: retroativo) e § 12 (ano de início, até 20%: sem retroagir, efeitos no ano seguinte) [D01]; mais as 26 vedações dos incisos II–XXVII do art. 15 [D03], que consolidam a LC 123 art. 3º § 4º e art. 17 [D01]. A receita é a soma de todos os estabelecimentos (art. 16 § 2º [D03]).
 - **Presumido:** só para receita total do ano anterior até R$ 78 mi, ou R$ 6,5 mi × meses de atividade (Lei 9.718 art. 13 [D02]).
 - **Real obrigatório:** receita acima do teto e as situações dos incisos II–VII (Lei 9.718 art. 14 [D02]).
 Deriváveis do cadastro de hoje: art. 15 II (PJ no capital), XIII (sócio domiciliado no exterior), IV–VI (interdependência, com a receita global informada) e XXIII (locação de imóvel próprio). O resto depende de declaração.
@@ -20,6 +20,7 @@ Deriváveis do cadastro de hoje: art. 15 II (PJ no capital), XIII (sócio domici
 | Excesso > 20% | LC 123 art. 3º § 9º | [D01] | "fica excluída, no mês subsequente à ocorrência do excesso" |
 | Excesso ≤ 20% | LC 123 art. 3º § 9º-A | [D01] | "dar-se-ão no ano-calendário subsequente se o excesso [...] não for superior a 20%" |
 | Ano de início | LC 123 art. 3º § 10 | [D01] | "com efeitos retroativos ao início de suas atividades" |
+| Ano de início, até 20% | LC 123 art. 3º § 12 | [D01] | "não retroagirá ao início das atividades se o excesso [...] não for superior a 20%" |
 | Todos os estabelecimentos | Res. CGSN 140 art. 16 § 2º | [D03] | "deverá ser considerado o somatório das receitas brutas de todos os estabelecimentos" |
 | PJ no capital | LC 123 art. 3º § 4º I; Res. 140 art. 15 II | [D01] [D03] | "de cujo capital participe outra pessoa jurídica" |
 | Sócio no exterior | LC 123 art. 17 II; Res. 140 art. 15 XIII | [D01] [D03] | "cujo titular ou sócio seja domiciliado no exterior" |

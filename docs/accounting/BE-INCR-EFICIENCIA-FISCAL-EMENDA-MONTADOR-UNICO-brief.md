@@ -4,8 +4,8 @@
 > [[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO]], o fold da nota do nó e o dossiê
 > `pesquisas-legais/simulacao-montador-unico/`. **Sem código, sem `executa`, sem merge.**
 
-> **RATIFICAÇÃO 21/11/2026** ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]): o dono respondeu os forks F-MU-1..13 no
-> questionário, **todos (a)**, a recomendação do BRIEF. Com isso o PR-1b entra (F-MU-8 a). **Não é `executa`:** se o
+> **RATIFICAÇÃO 21/11/2026** ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]): o dono respondeu os forks F-MU-1..16 no
+> questionário (F-MU-14..16 numa 2ª rodada, depois da revisão), **todos (a)**, a recomendação do BRIEF. Com isso o PR-1b entra (F-MU-8 a). **Não é `executa`:** se o
 > "Executa tudo" de 21/11 cobre o código deste BRIEF, o dono confirma (§0).
 > **Base:** `origin/main` `43719baa` (21/11). Não edita o BRIEF do nó (`BE-INCR-EFICIENCIA-FISCAL-brief.md`), nem os do X7,
 > do X8, do X14 e do IBS-CBS-2027.
@@ -17,7 +17,7 @@ A simulação de regime (item 16, `GET /simulacoes/regime`) passa a ler a mesma 
 os regimes por **uma função pura de elegibilidade por ano** (Res. CGSN 140 art. 15; LC 123 art. 3º §§ 9º–10; Lei 9.718 arts.
 13–14), que também gera os alertas de limite da rota. Todo dado que não existe no regime simulado vira **premissa declarada**,
 e o cenário do regime atual é **aferido** contra a apuração confirmada.
-**Forks:** F-MU-1..13 ratificados em 21/11, todos (a).
+**Forks:** F-MU-1..16 ratificados em 21/11, todos (a).
 **Risco principal:** a extração do `montar` do Simples (1.377 linhas no serviço) tem de deixar a rota idêntica, com a mesma
 `impressao` e o mesmo `parametrosSha256`; e os PRs #1321 (ponte da folha, itens 37 e 39) e #1322 (ciclo fiscal, métodos
 `*PeloSistema`) editam os mesmos serviços. Pelo F-MU-13 (a), o PR-2 desta emenda entra antes deles.
@@ -118,9 +118,10 @@ na fonte oficial (Res. CGSN 140 [D03], SIJUT, visão multivigente, 21/11/2026).
 | Vedação: receita bruta acima do limite **no ano anterior ou no ano em curso** | Res. CGSN 140 art. 15 I [D03] | ano anterior acima ⇒ `VEDADO` desde 1º/jan; ano em curso: ver as 3 linhas abaixo |
 | Excesso no ano em curso > 20% ⇒ exclusão no mês seguinte ao excesso | LC 123 art. 3º § 9º [D01] | `VEDADO` com `efeitosDesde` = mês seguinte (F-MU-7) |
 | Excesso ≤ 20% ⇒ efeitos só no ano seguinte | LC 123 art. 3º § 9º-A [D01] | `ELEGIVEL` no ano, com aviso de exclusão em 1º/jan do ano seguinte |
-| Ano de início: limite proporcional; excesso exclui com efeito retroativo ao início | LC 123 art. 3º §§ 2º e 10 [D01] | `VEDADO` desde o início de atividade |
+| Ano de início: limite proporcional; excesso acima de 20% exclui com efeito retroativo ao início | LC 123 art. 3º §§ 2º e 10 [D01] | `VEDADO` desde o início de atividade |
+| Ano de início, excesso de até 20%: não retroage, efeitos no ano seguinte | LC 123 art. 3º § 12 [D01] | `ELEGIVEL` no ano, com o motivo de efeitos em 1º/jan do ano seguinte (como o § 9º-A) |
 | Receita do Simples = soma de **todos os estabelecimentos** | Res. CGSN 140 art. 16 § 2º [D03] | receita da PJ, não da unidade (F-MU-11) |
-| 27 vedações por natureza, sócio, atividade e cadastro | Res. CGSN 140 art. 15 I–XXVII [D03] (consolida LC 123 art. 3º § 4º e art. 17 [D01]) | catálogo de códigos `VEDACAO_SIMPLES_*` (§4.2) |
+| 27 vedações por natureza, sócio, atividade e cadastro | Res. CGSN 140 art. 15 I–XXVII [D03] (consolida LC 123 art. 3º § 4º e art. 17 [D01]) | catálogo de códigos `VEDACAO_SIMPLES_*` (§5.2) |
 | — derivável hoje: PJ no capital | art. 15 II (LC 123 § 4º I) | `Partner.tipoPessoa = 'PJ'` vigente no ano |
 | — derivável hoje: sócio domiciliado no exterior | art. 15 XIII (LC 123 art. 17 II) | `Partner.residenteBrasil = false` vigente no ano |
 | — derivável hoje: interdependência III, IV, V | art. 15 IV–VI | reusa `alertasDeInterdependencia` (`taxOptimizationAlertas.ts:167`) |
@@ -154,7 +155,7 @@ próprio depois dos forks (regra de 28/10). Escopo **backend**; FE nenhum (nenhu
 ### PR-0 — contrato (sem comportamento)
 
 1. **Tipos da entrada etiquetada** em `models/entradaApuracao.ts` (novo): `Origem`, `ValorEtiquetado<T>`, `Premissa`,
-   `EntradaMontada<T>` (§4.1 dos contratos). Teste unitário: um `ValorEtiquetado` com `origem = 'PREMISSA'` exige `premissa`
+   `EntradaMontada<T>` (§5.1 dos contratos). Teste unitário: um `ValorEtiquetado` com `origem = 'PREMISSA'` exige `premissa`
    preenchida (guarda de tipo + função `exigirPremissa`).
 2. **Catálogo de vedações** em `models/regimeElegibilidade.ts` (novo): `CODIGOS_VEDACAO_SIMPLES` (um por inciso do art. 15 da
    Res. CGSN 140, com o inciso e a base no próprio objeto) e `CODIGOS_OBRIGACAO_REAL` (Lei 9.718 art. 14 I–VII). Teste: 27 + 7
@@ -170,9 +171,10 @@ próprio depois dos forks (regra de 28/10). Escopo **backend**; FE nenhum (nenhu
 
 ### PR-1 — elegibilidade única (fecha `f514` e `35df`)
 
-5. **`elegibilidadeRegimeAno(e: EntradaElegibilidade): ElegibilidadeAno`** pura (§4.2), por regime `SIMPLES`, `PRESUMIDO`,
+5. **`elegibilidadeRegimeAno(e: EntradaElegibilidade): ElegibilidadeAno`** pura (§5.2), por regime `SIMPLES`, `PRESUMIDO`,
    `REAL`. Testes unitários, um por linha da tabela da §2: ano anterior acima do EPP; excesso no ano > 20% (efeito no mês
-   seguinte); ≤ 20% (elegível com aviso); ano de início acima do proporcional (retroativo); PJ no capital; sócio no exterior;
+   seguinte); ≤ 20% (elegível com aviso); ano de início acima do proporcional em mais de 20% (retroativo, § 10) e em até
+   20% (sem retroagir, efeitos no ano seguinte, § 12); PJ no capital; sócio no exterior;
    interdependência acima do limite; locação de imóvel próprio; teto do Presumido `EXCEDIDO` ⇒ Presumido `VEDADO` e Real
    obrigatório; `NAO_CONFERIDO` do teto passa adiante; vedação não derivável sem declaração ⇒ `NAO_CONFERIDO`.
 6. **Os limites do Simples saem do serviço:** o privado `SimplesApuracaoService.limites:921-971` vira chamada a
@@ -194,14 +196,20 @@ próprio depois dos forks (regra de 28/10). Escopo **backend**; FE nenhum (nenhu
 10. **Presumido para quem é obrigado ao Real (lacuna `35df`):** teste unitário (o `comoProvar`): teto `EXCEDIDO` e Presumido
     mais barato ⇒ `PRESUMIDO` `VEDADO` (Lei 9.718 arts. 13 e 14 I) e fora do `melhor`. Segundo teste: perfil REAL com
     `lucroRealObrigatorio = true` ⇒ Presumido `VEDADO` pelo motivo declarado. Terceiro: empresa no Simples sem declaração do
-    art. 14 II–VII ⇒ Presumido segue `ELEGIVEL` pelo teto e o motivo `OBRIGACAO_REAL_NAO_DECLARADA` sai em `NAO_CONFERIDO`
-    só se F-MU-8 = (a).
+    art. 14 II–VII ⇒ o motivo `OBRIGACAO_REAL_NAO_DECLARADA` sai `NAO_CONFERIDO` e o Presumido fica `NAO_CONFERIDO` pela
+    regra de agregação (§5.2), indo para `melhorCondicional` (F-MU-9 a); se o Presumido é o regime atual, ele conta como
+    conferido nesses incisos (F-MU-16 a).
 11. **Alertas da simulação vêm da elegibilidade:** os alertas `LIMITE_EPP_EXCEDIDO`, `SUBLIMITE_EXCEDIDO` e `SUBLIMITE_80` de
     `TaxSimulationService.ts:300-306` passam a sair da mesma função (o texto de hoje "fora do Simples" para qualquer excesso
     some: ele contradiz o § 9º-A). `JANELA_OPCAO` continua. Teste: os 4 casos da suíte `taxSimulation.regime.unit.test.ts`
     continuam passando; o caso de excesso ≤ 20% muda de texto e ganha teste próprio.
-12. **Sugestão:** `proporRegime` recusa com 400 `REGIME_VEDADO` quando o `melhor` calculado não é `ELEGIVEL` (defesa em
-    profundidade; com o filtro do item 9 só acontece com F-MU-9 = c). Teste de integração.
+12. **Sugestão** (três códigos, um por caso; teste de integração de cada):
+    - 400 `REGIME_VEDADO`: o regime sugerido está `VEDADO` no ano (defesa em profundidade; o filtro do item 9 já o tira do
+      `melhor`);
+    - 400 `REGIME_NAO_CONFERIDO`: o pedido é sobre o `melhorCondicional` (F-MU-9 a);
+    - 400 `REGIME_VEDADO_NO_ANO_SEGUINTE` (F-MU-15 a): `TROCA_DE_REGIME` para o Simples quando a receita do ano simulado passa
+      o limite da EPP em até 20% — o Simples é `ELEGIVEL` no ano (§ 9º-A), mas vedado desde 1º/jan do ano seguinte (Res. CGSN
+      140 art. 15 I), que é o ano em que a opção valeria. Fecha a segunda metade da lacuna `f514`.
 
 ### PR-1b — declaração das vedações não deriváveis (F-MU-8 a)
 
@@ -244,7 +252,7 @@ próprio depois dos forks (regra de 28/10). Escopo **backend**; FE nenhum (nenhu
     `deducoes`. Modo `APURACAO`: as `deducoes` vêm do DTO, como hoje. Modo `HIPOTESE`: do `entradaInformada` da linha
     CONFIRMED do período quando existe e o regime do ano é o simulado (origem `FATO`); senão, conforme F-MU-2. Gate: a suíte
     do X7 passa sem edição.
-23. **Gates do IRPJ/CSLL no modo `HIPOTESE`** (tabela da §4.3): regime e forma (`:807-815`) não se aplicam; a forma do Real
+23. **Gates do IRPJ/CSLL no modo `HIPOTESE`** (tabela da §5.4): regime e forma (`:807-815`) não se aplicam; a forma do Real
     hipotético segue o F-MU-4; a recusa multiunidade (`:824`) **continua** — vira cenário indisponível com o mesmo motivo; o
     teto (`:863`) sai daqui e vai para a elegibilidade (item 5).
 24. **Real hipotético sem Lalur:** conforme F-MU-6; o cenário sai com `grau = 'COM_PREMISSAS'` e uma `Premissa` por trimestre
@@ -254,9 +262,8 @@ próprio depois dos forks (regra de 28/10). Escopo **backend**; FE nenhum (nenhu
     `ajustesBase`/`outrosCreditos`/`retencoes` (DTO na rota; `entradaInformada` do CONFIRMED na hipótese, ou F-MU-2). A
     modalidade vem do regime simulado (`CUMULATIVO` no Presumido, `NAO_CUMULATIVO` no Real). Gate: suíte do X8 sem edição.
 26. **Gates do PIS/COFINS no modo `HIPOTESE`:** `modalidadeDoRegime` (`:339`) recebe o regime simulado; o caixa (`:345`)
-    continua recusando ⇒ cenário Presumido/Real com caixa = indisponível com o motivo da rota (hoje a simulação troca o caixa
-    por competência em silêncio, `TaxSimulationService.ts:454`; passa a ser premissa declarada se o dono preferir — F-MU-2
-    cobre); `pisCofinsRegime` da unidade (`:350`) não se aplica (é configuração do regime atual). O aviso "sem créditos" de
+    continua recusando **na rota**; na hipótese (F-MU-14 a) o Presumido/Real de empresa no caixa é simulado por competência
+    com a premissa `CAIXA_SIMULADO_POR_COMPETENCIA` (hoje a troca é feita em `TaxSimulationService.ts:454` só com aviso); `pisCofinsRegime` da unidade (`:350`) não se aplica (é configuração do regime atual). O aviso "sem créditos" de
     `taxSimulation.ts:366` só aparece se não houver crédito lido.
 27. **`IbsCbsEntradaMontador`** extraído de `IbsCbsAssessmentService.calcular:379-419` (documentos, vendas sem documento,
     créditos, pacote, split). Regime atual regular ⇒ fato lido; regime simulado regular de empresa do Simples ⇒ conforme
@@ -265,7 +272,7 @@ próprio depois dos forks (regra de 28/10). Escopo **backend**; FE nenhum (nenhu
     receita crua + listas vazias). CPP e ISS fora do Simples continuam como hoje (folha informada × patronal; alíquota do
     perfil), **cada um como `Premissa` declarada** com o motivo que hoje está nos avisos fixos (`:369-370`), até a ponte (#1321
     item 39) e um nó de ISS os trocarem por fato. ICMS da revenda idem (aviso de `:368` vira premissa).
-29. **Métrica do ranking** conforme F-MU-3; `componentes` ganham o par `devido`/`aPagar` se F-MU-3 = (a). Teste unitário: com
+29. **Métrica do ranking** pelo devido (F-MU-3 a); a resposta ganha `componentesDevido` ao lado de `componentes` (a pagar). Teste unitário: com
     retenção informada, o `melhor` não muda por causa dela.
 
 ### PR-4 — aferição (fecha `a2ce`)
@@ -273,9 +280,9 @@ próprio depois dos forks (regra de 28/10). Escopo **backend**; FE nenhum (nenhu
 30. **Teste de tie-out do Simples** (o `comoProvar` da lacuna, integração): a mesma unidade apurada pela rota nos 12 meses
     (`POST /simples/apuracoes/:c/calcular`) ⇒ `cenarios[SIMPLES].componentes.das` = Σ `totalCalculadoCents`.
 31. **Teste de tie-out do Presumido:** 4 trimestres confirmados (`TaxAssessment` CONFIRMED de IRPJ e CSLL) e 12 meses de
-    PIS/COFINS confirmados ⇒ `irpj`, `csll`, `pis`, `cofins` do cenário `PRESUMIDO` = Σ `devidoCents` (ou `aPagarCents`,
-    conforme F-MU-3) das linhas confirmadas. Mesmo teste para o Real com Lalur escriturado.
-32. **Aferição em tempo de execução** (se F-MU-12 = a): a resposta ganha `afericao` (§4.1): para cada período do regime atual
+    PIS/COFINS confirmados ⇒ `irpj`, `csll`, `pis`, `cofins` do cenário `PRESUMIDO` = Σ `devidoCents` e Σ `aPagarCents` das
+    linhas confirmadas (F-MU-3 a: o devido para o ranking, os dois na aferição). Mesmo teste para o Real com Lalur escriturado.
+32. **Aferição em tempo de execução** (F-MU-12 a): a resposta ganha `afericao` (§5.5): para cada período do regime atual
     com apuração confirmada, `simuladoCents`, `apuradoCents`, `diferencaCents`; diferença ≠ 0 ⇒ alerta
     `AFERICAO_DIVERGENTE` com o período e o componente. Período sem confirmação ⇒ `NAO_APURADO`. Teste de integração: dado
     divergente forçado (DAS registrado com valor oficial diferente não conta — compara-se o **calculado**).
@@ -346,7 +353,15 @@ export interface EntradaElegibilidade {
   declaracaoObrigacaoReal: Partial<Record<CodigoObrigacaoReal, 'SIM' | 'NAO'>> | null;
 }
 
-/** Pura. Sem I/O, sem new Date. */
+/**
+ * Pura. Sem I/O, sem new Date. Agregação do `estado` do regime a partir dos motivos (direto, não é fork):
+ *   algum motivo VEDADO ⇒ VEDADO; senão algum NAO_CONFERIDO ⇒ NAO_CONFERIDO; senão ELEGIVEL.
+ * Regime atual (F-MU-16 a): as vedações/obrigações NÃO deriváveis contam como conferidas para o regime em que a empresa
+ * já está no ano (no Simples, a opção inclui a declaração do art. 6º § 4º da Res. CGSN 140); as deriváveis seguem pelo dado.
+ * Consequência com as declarações do F-MU-8 vazias: o regime atual e o Real (sem vedação própria) ficam ELEGIVEL; o outro
+ * regime fica NAO_CONFERIDO e, se for o mais barato, sai em `melhorCondicional`. `economiaCents` = atual − melhor ELEGIVEL;
+ * `economiaCondicionalCents` = atual − melhorCondicional, à parte (F-MU-16 a).
+ */
 export function elegibilidadeRegimeAno(e: EntradaElegibilidade): ElegibilidadeAno;
 /** Pura. Os alertas de limite que o X14 já emite, com os mesmos códigos e textos, + o booleano do sublimite. */
 export function limitesDoSimples(e: EntradaElegibilidade, competencia: string): { alertas: AlertaSimples[]; sublimiteExcedido: boolean };
@@ -380,7 +395,7 @@ sem mudança de campo.
 | outra unidade com movimento | `:824-829` | **mantido** ⇒ cenário indisponível com o mesmo motivo |
 | teto do Presumido (aviso/400) | `:863-865` | sai daqui; é a elegibilidade |
 | modalidade pelo regime | `PisCofinsAssessmentService.ts:339` | modalidade do regime simulado |
-| caixa do PIS/COFINS | `:345` | **mantido** ⇒ indisponível (ou premissa, F-MU-2) |
+| caixa do PIS/COFINS e do IRPJ/CSLL | `:345`; `taxAssessmentCalc.ts:558` | competência + premissa `CAIXA_SIMULADO_POR_COMPETENCIA` (F-MU-14 a) |
 | `pisCofinsRegime` da unidade | `:350` | pulado |
 | ano ≥ 2027 recusa PIS/COFINS | `:344` | mantido (2027 é IBS/CBS) |
 | SIMPLES/MEI recusa IBS/CBS regular | `IbsCbsAssessmentService.ts:384` | pulado; documentos conforme F-MU-5 |
@@ -397,11 +412,12 @@ const MotivoSchema = z.object({ codigo: z.string(), base: z.string(), detalhe: z
 //   elegibilidade: { estado, motivos: MotivoSchema[] }
 //   grau: z.enum(['AFERIDO', 'SO_FATOS', 'COM_PREMISSAS'])
 //   premissas: PremissaSchema[]
-//   (F-MU-3 = a) componentesDevido: ComponentesSchema   — o devido; `componentes` segue sendo o a pagar
+//   (F-MU-3 a) componentesDevido: ComponentesSchema   — o devido; `componentes` segue sendo o a pagar
 // RegimeSimulacaoSchema ganha:
-//   melhorCondicional: z.enum(REGIMES_SIMULADOS).nullable()   (F-MU-9 = a)
+//   melhorCondicional: z.enum(REGIMES_SIMULADOS).nullable()   (F-MU-9 a)
+//   economiaCondicionalCents: signedCents.nullable()           (F-MU-16 a)
 //   afericao: z.array(z.object({ periodo, componente, simuladoCents: signedCents, apuradoCents: signedCents.nullable(),
-//     diferencaCents: signedCents.nullable(), estado: z.enum(['CONFERE', 'DIVERGE', 'NAO_APURADO']) }).strict())  (F-MU-12 = a)
+//     diferencaCents: signedCents.nullable(), estado: z.enum(['CONFERE', 'DIVERGE', 'NAO_APURADO']) }).strict())  (F-MU-12 a)
 ```
 
 Gates que o diff aciona (entram nos itens, não na improvisação): snapshot do DTO (itens 4 e 14), `auditCanonical.ts` (item
@@ -413,8 +429,8 @@ nova; o `openapi.json` muda só no schema da resposta de `GET /simulacoes/regime
 
 ## 6. FORKS — RATIFICADOS em 21/11/2026 ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]])
 
-Cada um com os caminhos, a recomendação e a justificativa, como foram levados ao dono. O dono respondeu os 13 no
-questionário de 21/11, todos na opção recomendada (a). A sessão registrou as respostas; não escolheu nenhuma.
+Cada um com os caminhos, a recomendação e a justificativa, como foram levados ao dono. O dono respondeu os 16 no
+questionário de 21/11 (F-MU-14..16 numa 2ª rodada, abertos pela revisão do BRIEF), todos na opção recomendada (a). A sessão registrou as respostas; não escolheu nenhuma.
 
 ### F-MU-1 — Onde mora o montador
 > **RATIFICADO 21/11 → (a)** — dono, questionário: *"Classe por tributo"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
@@ -540,6 +556,28 @@ questionário de 21/11, todos na opção recomendada (a). A sessão registrou as
 - **Recomendação: (a).** Extrair primeiro evita que três sessões editem as mesmas 270 linhas do `montar` e que o item 37 e
   os `*PeloSistema` precisem ser refeitos. Se o dono preferir liberar o ciclo antes (ele é a trava central do fiscal, handoff
   §2 C1), (b) funciona com um passo de transporte no item 21.
+
+### F-MU-14 — Regime de caixa no Presumido/Real hipotético
+> **RATIFICADO 21/11 → (a)** — dono, questionário (2ª rodada): *"Competência como premissa"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+- (a) **Competência com premissa declarada** (`CAIXA_SIMULADO_POR_COMPETENCIA`), cenário `COM_PREMISSAS`.
+- (b) Cenário indisponível, com o motivo da rota (IN RFB 2.121 art. 127; `taxAssessmentCalc.ts:558`).
+- **Recomendação: (a).** Mantém o comportamento de hoje (troca com aviso), agora nomeado; (b) tira a comparação de quem está
+  no caixa.
+
+### F-MU-15 — Excesso de até 20% e a sugestão de trocar para o Simples
+> **RATIFICADO 21/11 → (a)** — dono, questionário (2ª rodada): *"Recusa a sugestão"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+- (a) Simples `ELEGIVEL` no ano simulado (a carga aparece), mas o POST recusa `TROCA_DE_REGIME` para o Simples com 400
+  `REGIME_VEDADO_NO_ANO_SEGUINTE`.
+- (b) Grava a sugestão com aviso.
+- **Recomendação: (a).** A opção valeria para o ano seguinte, em que o Simples está vedado (Res. CGSN 140 art. 15 I).
+
+### F-MU-16 — Declarações vazias e o regime atual
+> **RATIFICADO 21/11 → (a)** — dono, questionário (2ª rodada): *"Regime atual conferido"* ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]).
+- (a) O regime atual conta como conferido nas vedações e obrigações não deriváveis (a empresa já optou; no Simples a opção
+  inclui a declaração do art. 6º § 4º da Res. CGSN 140); os outros regimes sem declaração vão para `melhorCondicional`; a
+  economia é contra o melhor elegível, e a condicional sai à parte.
+- (b) Nenhuma exceção: até o contador declarar, só o Real é elegível.
+- **Recomendação: (a).** Com (b), o Real vira o `melhor` de todo cliente até as declarações existirem.
 
 ---
 
