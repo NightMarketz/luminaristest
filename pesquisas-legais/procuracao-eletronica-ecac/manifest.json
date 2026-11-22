@@ -1,0 +1,68 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Ato Declaratório SRF nº 55, de 18 de julho de 2000",
+      "url": "rfb:2066",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/2066/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/2066/visao/multivigente",
+      "id_normativo": "rfb:2066",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-22T00:10:48-03:00",
+      "sha256": "a17e106e48e5cfc3f68e57d42bbaabf52dddd2a75991f45595d6c07558de4858",
+      "arquivo": "docs/D01_rfb-2066-multivigente.json",
+      "texto": "docs/D01_rfb-2066-multivigente.txt",
+      "bytes": 30020,
+      "sha256_texto": "96baddf0b80770138547751705636304cb1f432aa0bf25c499cc21821b25273e",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Instrução Normativa RFB nº 2066, de 24 de fevereiro de 2022",
+      "url": "https://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=123085",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/123085/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/123085/visao/multivigente",
+      "id_normativo": "rfb:123085",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-22T00:11:12-03:00",
+      "sha256": "9e563af6a384a514ed6d076d7503ea2e83d3792c14d35a48df2bf3c6f5abcc07",
+      "arquivo": "docs/D02_rfb-123085-multivigente.json",
+      "texto": "docs/D02_rfb-123085-multivigente.txt",
+      "bytes": 54110,
+      "sha256_texto": "3f8f9a1672938b237a6b3382cd0dfa58fab3b0e6a70cc5dbde294072761697a1",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      },
+      "alertas": [
+        "o ato consta como NÃO VIGENTE na fonte (revogado ou sem efeito)"
+      ]
+    },
+    {
+      "id": "D03",
+      "titulo": "Instrução Normativa RFB nº 2320, de 6 de abril de 2026",
+      "url": "https://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=150461",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/150461/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/150461/visao/multivigente",
+      "id_normativo": "rfb:150461",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-22T00:11:26-03:00",
+      "sha256": "771bb41d6a1273470e873be256382fdd4ee29308b4076ca6256ad53b4eca41a3",
+      "arquivo": "docs/D03_rfb-150461-multivigente.json",
+      "texto": "docs/D03_rfb-150461-multivigente.txt",
+      "bytes": 57930,
+      "sha256_texto": "a48a24b9ce6e3a76f5c18002d08a6d1cbcde339126e16adf0a5e04cd66e44ce5",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "procuracao-eletronica-ecac",
+  "pergunta": "Procuração eletrônica no e-CAC (IN RFB vigente): o procurador pode transmitir declarações e emitir guias em nome do outorgante pelo Integra Contador? Validade, substabelecimento, serviços",
+  "criado": "2026-11-22T00:10:48-03:00"
+}

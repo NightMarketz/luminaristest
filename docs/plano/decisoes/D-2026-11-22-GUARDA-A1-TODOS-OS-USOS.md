@@ -22,8 +22,11 @@ atualizado: "2026-11-22"
    `PROCURADOR`).
 3. **Produção espera o parecer de advogado sobre a guarda** (L-ADN-5, `D-2026-10-12-QUESTIONARIO-DONO`). Código,
    testes e ambientes de teste seguem. A 1ª chamada real com o A1 de um terceiro só depois do parecer arquivado.
-4. **Não muda:** [[D-2026-10-30-D5-SEM-CONTRATACAO-BYOK]]. O Luminaris não contrata nem compra certificado, e o A1 é
-   do cliente (BYOK).
+4. **Fica:** o item 1 de [[D-2026-10-30-D5-SEM-CONTRATACAO-BYOK]] (o Luminaris não contrata nem compra certificado;
+   o A1 é do cliente).
+   **Fica em aberto:** o item 2 dela define o BYOK da emissão como *"e-CNPJ em nuvem no PSC … autoriza no Luminaris
+   pela API OAuth"*. Com a guarda de volta, ele pode deixar de ser o único caminho. Isso é do replanejamento do X10a e
+   do X10i (lacuna `L-20261122-030533-63e8`), não desta nota.
 
 ## Contexto apresentado ao dono
 

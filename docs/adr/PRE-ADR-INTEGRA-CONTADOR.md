@@ -39,7 +39,9 @@ guarda (L-ADN-5).
   **cálculo sem transmissão** e **comparação com o nosso valor** [D18]. Nenhum dos dois era conhecido em 14/09.
 - **O que não mudou:** [[D-2026-10-30-D5-SEM-CONTRATACAO-BYOK]] ("o Luminaris não contrata serviço; se um dia
   contratar, será BYOK") e o item 3 de [[D-2026-10-22-NFSE-PORTAL-E-H1-POR-ULTIMO]] ("o Luminaris não guarda o
-  certificado do cliente"). As duas valem integralmente. O desenho recomendado (§5) cabe dentro delas.
+  certificado do cliente"). ~~As duas valem integralmente. O desenho recomendado (§5) cabe dentro delas.~~ *(Superado
+  na ratificação, §10: a 2ª foi revertida pelo dono para todos os usos; da 1ª fica o item 1, "o Luminaris não
+  contrata".)*
 
 ## 2. O que a API entrega de fato (verificado na documentação oficial, 21/11/2026)
 
@@ -192,7 +194,7 @@ do contratante no ERP.
 | Saber se pagou | humano marca `PAGA` | **automático**: `PAGAMENTOS71` depois do vencimento, comprovante anexado | consulta |
 | Transmitir a DCTFWeb fora do MIT | — | fora do nó (não há DCTFWeb gerada pelo Luminaris) | — |
 | Reinf, ECD, ECF, eSocial | humano / porta sem adaptador | **sem mudança**: não estão na API (§2.2) | — |
-| Contratar o Serpro, ter e-CNPJ, manter o assinador ligado | — | **humano (o cliente)** | contrato e identidade |
+| Contratar o Serpro, ter e-CNPJ ~~, manter o assinador ligado~~ (§10.2: ter um **A1 em arquivo** e enviá-lo ao Luminaris) | — | **humano (o cliente ou o escritório)** | contrato e identidade |
 | Opção pelo Simples, opção de regime de caixa | humano | **sem mudança** (o `REGIMEAPURACAO` existe, mas a opção é irretratável) | decisão do contribuinte |
 | Pagar a guia | humano | **sem mudança** | regra de pagamento do produto |
 
@@ -285,13 +287,25 @@ do contratante no ERP.
 ## 8. Pendente de validação externa
 
 1. **Duração do token SAPI** (`expires_in`): não está nas páginas lidas. Define se o F-IC-2 (a) automatiza de verdade.
-2. **Procuração dos serviços MIT:** ausentes da tabela [D05]. Só importa no F-IC-1 (b).
+2. **Procuração dos serviços MIT:** ausentes da tabela [D05]. Com o F-IC-1 ratificado (modo `PROCURADOR` na 1ª fase),
+   **vale já**: o MIT no modo `PROCURADOR` fica recusado com nome até o código ser conhecido (BRIEF item 24).
 3. **A DCTFWeb do contribuinte só com MIT é transmitida no encerramento, ou precisa de `TRANSDECLARACAO310`?** O texto
    diz que as apurações *"terão suas informações transmitidas para a DCTFWeb"* [D12]. Não diz se a declaração fica
    `ATIVA`. Prova: o runbook da 1ª transmissão (F-IC-7), lendo `CONSRECIBO32`.
 4. **Termos de uso e contrato do Serpro** (sigilo fiscal, LGPD, uso por software de terceiro com a credencial do
-   cliente): não lidos. Se o contrato vedar o uso da credencial por terceiro, o F-IC-1 (a) cai.
-5. **Norma da procuração eletrônica (IN RFB vigente):** não lida. Só importa no F-IC-1 (b).
+   cliente): **não são públicos**.
+   - O contrato de adesão aparece no fluxo de contratação, com login e e-CNPJ. A loja só linka a política de
+     privacidade geral (22/11).
+   - **Pista, não fonte deste produto:** outros contratos de adesão do Serpro ligados a dados da RFB proíbem repassar os
+     dados a terceiros e citam a Portaria RFB 34/2021.
+   - Se o contrato do Integra Contador vedar o uso da credencial por software de terceiro, os dois modos do F-IC-1
+     caem. Prova: o cliente do RB-IC-1 lê o contrato ao contratar, e ele vai ao dossiê.
+5. **Norma da procuração eletrônica — RESOLVIDO (22/11).** Vale a **IN RFB 2.320/2026**, que revogou a 2.066/2022.
+   Lida no Sijut: `pesquisas-legais/procuracao-eletronica-ecac` [D03] (lá a numeração dos documentos é a daquele dossiê).
+   - A autorização de acesso tem efeito de procuração (art. 6º p.ú.) e admite atos de confissão (art. 7º § 1º II).
+   - Lista os serviços com exatidão e vale até 5 anos (art. 7º § 1º I e IV); sem substabelecimento (art. 8º § 3º).
+   - **É vedado automatizar a outorga** por sistema de terceiro (art. 13). A Cogea pode limitar o número de autorizações
+     por representante (art. 15; o ato não foi procurado).
 6. **Efeito de confissão pela API = pelo portal:** inferido. A Res. CGSN 140 art. 38 § 2º I não distingue canal (citada
    no BRIEF do ciclo).
 7. **(Desde a ratificação) Parecer de advogado sobre a guarda de certificado de terceiro (L-ADN-5).** Vale para o A1
@@ -312,7 +326,7 @@ do contratante no ERP.
 
 | Fork | Decisão | Na recomendação? | Efeito no desenho |
 |---|---|---|---|
-| F-IC-1 | **BYOK + contador já.** Cada cliente contrata no próprio CNPJ, **ou** o escritório de contabilidade que já tem contrato atua como procurador, as duas na 1ª fase. Antes, o dono pediu pesquisa de opção grátis (*"Pesquise outras soluções grátis se não houver, byok"*). Resultado: não há API oficial gratuita. O Conecta gov.br é gratuito só para órgãos públicos, e a automação de portal (robô) esbarra em CAPTCHA, que o produto não contorna (grau I). O gratuito é o caminho manual que já existe (arquivo do MIT, espelho do PGDAS-D, e-CAC, SicalcWeb) | extensão de (a) com (b) | §10.1 |
+| F-IC-1 | **BYOK + contador já.** Cada cliente contrata no próprio CNPJ, **ou** o escritório de contabilidade que já tem contrato atua como procurador, as duas na 1ª fase. Antes, o dono pediu pesquisa de opção grátis (*"Pesquise outras soluções grátis se não houver, byok"*). Resultado: não há API oficial gratuita. O Conecta gov.br é gratuito só para órgãos públicos, e a automação de portal (robô) esbarra em CAPTCHA, que o produto não contorna. A pesquisa saiu de resumos de busca, então é grau I: [Conecta — catálogo](https://www.gov.br/conecta/catalogo/), [Conecta — quem acessa](https://www.gov.br/governodigital/pt-br/infraestrutura-nacional-de-dados/interoperabilidade/conecta-gov.br/acessar-os-servicos-do-conecta), [emitir DARF (SicalcWeb)](https://www.gov.br/pt-br/servicos/emitir-darf-para-pagamento-de-tributos-federais). O gratuito é o caminho manual que já existe (arquivo do MIT, espelho do PGDAS-D, e-CAC, SicalcWeb) | extensão de (a) com (b) | §10.1 |
 | F-IC-2 | **(b) A1 em arquivo, cifrado no servidor, para todos os usos.** Pergunta de alcance: *"Todos os usos"* (NF-e, NFC-e e NFS-e também) | **não** (recomendado: assinador local) | §10.2; [[D-2026-11-22-GUARDA-A1-TODOS-OS-USOS]] |
 | Parecer da guarda | **Produção espera o parecer** do advogado (L-ADN-5): código e testes seguem; a 1ª chamada real com o A1 de terceiro só depois | sim | gate RB-IC-0 no BRIEF §5 |
 | F-IC-3 | (c) humano por padrão + chave por obrigação | sim | — |
@@ -327,7 +341,8 @@ do contratante no ERP.
 - **`CONTRIBUINTE`:** contratante = autor = a PJ cliente. Sem procuração [D05]. O certificado é o A1 da própria PJ, o
   `FiscalCertificate` da unidade matriz, cujo `cnpjCertificado` tem de ser o contratante [D06].
 - **`PROCURADOR`:** contratante = autor = o escritório de contabilidade; contribuinte = a PJ cliente. Exige a
-  **procuração eletrônica do e-CAC** do cliente para o escritório, nos códigos de cada serviço: `00146` PGDAS-D e DEFIS,
+  **autorização de acesso** (o novo nome da procuração eletrônica, IN RFB 2.320/2026) do cliente para o escritório.
+  Ela é concedida só pelo cliente, no aplicativo oficial, e o Luminaris nunca a automatiza (art. 13). Os códigos de cada serviço são: `00146` PGDAS-D e DEFIS,
   `00103` DCTFWeb, `00004` pagamentos; Sicalc e PGMEI `n/a` [D05]. **MIT: não listado** (§8 item 2). Como contratante e
   autor coincidem, **não** há Termo de Autorização [D23]. O A1 é **do escritório**, guardado cifrado na credencial
   daquela PJ (não no `FiscalCertificate`, que é o certificado da própria PJ).

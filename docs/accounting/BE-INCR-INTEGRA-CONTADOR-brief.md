@@ -59,7 +59,8 @@
    credencial)`** pura, molde `selectDfeEmissor`. Env `RECEITA_GATEWAY` = `integra-contador` | `fake` | ausente
    (= disabled); `INTEGRA_CONTADOR_AMBIENTE` = `producao` | `trial`.
 7. **`IntegraContadorAdapter`** (HTTP): POST em `<base>/<Tipo>` com `Authorization: Bearer`, `jwt_token`,
-   `X-Request-Tag` (§2), e `autenticar_procurador_token` só quando `autorTipo = PROCURADOR` [D03, D09, D23]. A base de
+   `X-Request-Tag` (§2) [D03, D09]. Sem `autenticar_procurador_token`: nos dois modos ratificados, contratante = autor
+   (PRE-ADR §10.1), então o Termo de Autorização [D23] não se aplica. A base de
    produção vem do API Reference (insumo §6 item 1); a de trial é a de [D11]. Timeout do cliente = 30 s [D08].
 8. **Teste de contrato opcional contra o trial** (`scripts/integra-contador-trial.mjs`, fora do CI, sem segredo: token
    público de [D11]). Chama um serviço por tipo (`Apoiar`, `Consultar`, `Declarar`, `Emitir`) e confere o formato do
@@ -84,6 +85,13 @@
       `FiscalCertificate`). A leitura do PKCS#12 sai de `FiscalCertificateService.upload` para uma função pura
       compartilhada, sem duplicar o forge. O CNPJ do A1 tem de ser o `contratanteCnpj`, e a senha **nunca** é gravada.
     - Consumer Key e Secret vão cifrados nos dois modos.
+    - **Autorização de acesso (modo `PROCURADOR`, IN RFB 2.320/2026):**
+      - o cliente concede a autorização ao escritório **no aplicativo oficial da Receita**. O Luminaris só mostra o passo
+        a passo e os serviços a marcar; **nunca** automatiza a outorga, a alteração ou a revogação (art. 13, vedação a
+        sistema de terceiro);
+      - a autorização vale no máximo 5 anos (art. 7º § 1º IV) e não admite substabelecimento (art. 8º § 3º);
+      - o retorno do `OBTERPROCURACAO41` traz `dtexpiracao` e a lista de `sistemas` [D27]. Os dois são gravados, e o job
+        avisa 30 dias antes de vencer (dossiê `pesquisas-legais/procuracao-eletronica-ecac`).
 11. **`SapiTokenPort`** com o adaptador **`A1ServidorSapiToken`** (F-IC-2 → b):
     - decifra o A1 (o do `FiscalCertificate` no modo `CONTRIBUINTE`, o da credencial no `PROCURADOR`) e as chaves só em
       memória;
@@ -103,9 +111,16 @@
     - Testes: duas chamadas concorrentes com a mesma chave ⇒ uma vai à porta (unique); 504 seguido de consulta que
       acha o recibo ⇒ `OK` sem 2º envio.
 13. **Auditoria** (allowlist do `auditCanonical.ts` na mesma mudança): `receita.credencial.set` /
-    `receita.credencial.removed` (ids, CNPJ do contratante, `autorTipo`; nunca segredo) e `receita.requisicao.declarar`
+    `receita.credencial.removed` (ids, CNPJ do contratante, `modo`, impressão digital do A1; nunca segredo nem senha) e `receita.requisicao.declarar`
     (ids, serviço, período, `payloadSha256`, `responseId`, quem aprovou; **sem CPF**). Log estruturado sem payload
     (`ADR-OBSERVABILIDADE`: nível, PII).
+
+11a. **Trava de produção sem parecer** (RB-IC-0; dono, 22/11: *"Produção espera"*):
+    - com `INTEGRA_CONTADOR_AMBIENTE=producao` e o env `RECEITA_GUARDA_PARECER_REF` vazio, o `selectReceitaGateway`
+      devolve `disabled` com o motivo `RECEITA_GUARDA_SEM_PARECER`. O PUT da credencial continua aceito, porque guardar
+      ainda não é usar.
+    - Testes: produção sem a referência ⇒ disabled e 0 chamadas; trial e fake sem a referência ⇒ habilitados; produção
+      com a referência ⇒ `integra-contador`.
 
 ### PR-2 — Simples: PGDAS-D e DAS (F-IC-6 → a)
 
@@ -183,6 +198,9 @@
     - grava o `protocoloEncerramento`;
     - sem atesto ⇒ 409 `MIT_ATESTO_AUSENTE`;
     - `MitExport` `defasado` ⇒ 409 (o arquivo não é mais o vigente).
+    - **Modo `PROCURADOR`:** recusado com 409 `MIT_PROCURACAO_DESCONHECIDA` enquanto o código de procuração dos
+      serviços MIT não for conhecido. A tabela do Serpro não lista o MIT [D05]. O RB-IC-1, ou uma versão nova da
+      tabela, fecha isso, e o recusado vira capacidade.
 25. **Situação pelo job** (`SITUACAOENC315`, **gratuito**): `ENCERRAMENTO EM CURSO` ⇒ espera; `ENCERRADA` ⇒ grava
     `dataEncerramento` e conclui a ocorrência `DCTFWEB` do ciclo; volta a `EM EDIÇÃO` com `avisosDctf` ⇒
     `AGUARDANDO_HUMANO` com os avisos literais [D13 dúvida d].
@@ -234,7 +252,7 @@ export interface ReceitaCapabilities {
 
 export interface ReceitaContexto {
   contratante: string;                          // CNPJ raiz (R8)
-  autor: { numero: string; tipo: 1 | 2 };       // = contribuinte quando autorTipo = CONTRIBUINTE
+  autor: { numero: string; tipo: 1 | 2 };       // = contribuinte no modo CONTRIBUINTE; = escritório no PROCURADOR
   contribuinte: { numero: string; tipo: 2 };
   tokens: { accessToken: string; jwtToken: string };
   // Sem Termo de Autorização: nos dois modos ratificados, contratante = autor (PRE-ADR §10.1).
@@ -298,7 +316,7 @@ model ReceitaCredencial {
   consumerKeyCiphertext    Bytes // cifrado (keyring RECEITA_KEYS)
   consumerSecretCiphertext Bytes
   segredoKeyVersion     Int
-  procuracoesEncontradas Json? // PROCURADOR: códigos do OBTERPROCURACAO41 no último teste
+  procuracoesEncontradas Json? // PROCURADOR: [{ dtexpiracao, sistemas[] }] do OBTERPROCURACAO41 no último teste [D27]
   servicos              Json // ReceitaServico[] que o cliente ligou
   entregaAutomatica     Json // { PGDASD: false, MIT: false, diasAntes: 3 } (F-IC-3 c)
   atestoMitSemOutrosEm  DateTime? // item 27
@@ -386,9 +404,12 @@ pergunta ao dono, nunca escolha do executor.
 
 ## 4. Pendente de validação externa
 
-PRE-ADR §8, itens 1–7. O que trava:
+PRE-ADR §8, itens 1–8. O que trava:
 - **Antes do PR-1:** o item 4, termos do Serpro sobre o uso da credencial do cliente por software de terceiro.
 - **Antes do item 25:** o item 3.
+- **Antes do item 24 no modo `PROCURADOR`:** o item 2 (código de procuração do MIT). Até lá vale o 409 nomeado.
+- O item 5 (norma da procuração) foi **resolvido**: IN RFB 2.320/2026, lida no Sijut em 22/11 (dossiê
+  `pesquisas-legais/procuracao-eletronica-ecac`). Entra no item 10.
 - **Antes de produção:** o item 7, o parecer de advogado sobre a guarda (RB-IC-0).
 - O item 1 (`expires_in`) deixou de travar: com o A1 no servidor, o token se renova sozinho.
 

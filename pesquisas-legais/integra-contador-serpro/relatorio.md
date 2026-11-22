@@ -44,6 +44,7 @@
 | D23–D24 | Autentica Procurador: introdução, envio do XML | …/pt/solucoes/integra-contador-gerenciador/autenticaprocurador/… |
 | D25 | PagtoWeb | …/pt/solucoes/integra-pagamento/pagtoweb/ |
 | D26 | Loja: preço e contratação (captura) | https://loja.serpro.gov.br/product/integracontador |
+| D27 | Procurações: obter procuração | …/pt/solucoes/integra-procuracoes/procuracoes/servicos/obter_procuracao/ |
 
 ## Pistas de mercado (não oficiais, fora do dossiê)
 
@@ -54,4 +55,6 @@ Omie e Alterdata: centrais de ajuda dos fornecedores, lidas em 21/11/2026. Resum
 - O API Reference (swagger de produção), as páginas de saída do PGDAS-D, os dados de domínio do Sicalc e as páginas de
   serviço do PagtoWeb não foram lidos. São insumos do BRIEF §6.
 - A duração do token (`expires_in`) não aparece nas páginas lidas.
+- O contrato de adesão do Integra Contador não é público: fica no fluxo de contratação, com login e e-CNPJ.
+- A norma da procuração (autorização de acesso, IN RFB 2.320/2026) está no dossiê legal `pesquisas-legais/procuracao-eletronica-ecac`.
 - A loja não traz data de atualização da tabela de preços.

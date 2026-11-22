@@ -312,6 +312,18 @@
       "sha256_texto": "f3adcfa404ec65077b540fafd2bebd480b9817063404e194e772ec9470795fa0",
       "texto": "docs/D26_loja-serpro-preco-captura.txt",
       "extracao": "captura manual: a página não traz data de atualização; tabela carregada por JavaScript"
+    },
+    {
+      "id": "D27",
+      "titulo": "Procurações — Obter procuração (OBTERPROCURACAO41)",
+      "url": "https://apicenter.estaleiro.serpro.gov.br/documentacao/api-integra-contador/pt/solucoes/integra-procuracoes/procuracoes/servicos/obter_procuracao/",
+      "orgao": "Serpro — documentação oficial da API Integra Contador (apicenter.estaleiro.serpro.gov.br)",
+      "acervo": false,
+      "baixado_em": "2026-11-21",
+      "sha256_html": "70facc48735bb22b4bc7353b457fa6758ec8d0d23269b51821da94bb056c68e5",
+      "texto": "docs/D27_integra-procuracoes_obter_procuracao.txt",
+      "sha256_texto": "d5634f92f980dc9a7b950bb44ea9bca95baae452469d5f6188ce01a223aa2460",
+      "extracao": "conteúdo do <article> da página MkDocs convertido em texto"
     }
   ]
 }
