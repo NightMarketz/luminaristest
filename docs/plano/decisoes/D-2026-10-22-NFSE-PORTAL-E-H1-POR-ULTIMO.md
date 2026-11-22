@@ -38,7 +38,7 @@ linguagem simples, com as mesmas três opções.
    relê a nota pelo modo manual (`ManualEmissor` / `retornoManual`, [[DFE-MANUAL]], já em `main`) e lança no razão.
 2. *(Superado em 30/10 por [[D-2026-10-30-X10A-EMENDA-4-FORA-DE-ESCOPO]] item 1: a NFS-e automática volta pelo assinador local, sem guarda — [`BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md`](../../accounting/BE-INCR-DFE-ADN-EMENDA-ASSINADOR-LOCAL-brief.md). Os itens 1 e 3 continuam.)* **Emissão automática de NFS-e só quando o PAA da NFS-e for publicado** pela Receita/Sefin. Até lá, não há caminho
    automático de NFS-e no plano.
-3. **O Luminaris não guarda o certificado do cliente.** A L-ADN-5 (parecer de advogado sobre custódia) não é acionada;
+3. *(Superado em 22/11 por [[D-2026-11-22-GUARDA-A1-TODOS-OS-USOS]]: o A1 volta a ser guardado cifrado, para todos os usos; produção espera a L-ADN-5.)* **O Luminaris não guarda o certificado do cliente.** A L-ADN-5 (parecer de advogado sobre custódia) não é acionada;
    o caminho de guarda do `BE-INCR-DFE-ADN-EMISSOR` (PR-0..PR-4, F-ADN-1..13 de 12/10) fica **arquivado** — reabrir
    exige decisão nova do dono.
 4. **Não muda:** NF-e/NFC-e seguem pelo PSC sem guarda (F-E8-1R de 11/10). Seguem abertos no [[D5]]: quem contrata o

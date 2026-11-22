@@ -5,8 +5,11 @@
 > "PRE-ADR"); fontes: [`pesquisas-legais/integra-contador-serpro/`](../../pesquisas-legais/integra-contador-serpro/relatorio.md)
 > (`[Dnn]`).
 >
-> **Forks:** F-IC-1..8 no PRE-ADR §7, **RATIFICAÇÃO PENDENTE**. Este checklist assume as recomendações. Item que
-> depende de um fork diz qual; se o dono decidir outra coisa, o item muda antes da `sessao-feature`.
+> **Forks:** F-IC-1..8 **ratificados pelo dono** por questionário em 21–22/11 (PRE-ADR §10;
+> [[D-2026-11-21-R5-REABERTA-INTEGRA-CONTADOR]]). Contra a recomendação: **F-IC-2 → (b)**, A1 cifrado no servidor, para
+> todos os usos ([[D-2026-11-22-GUARDA-A1-TODOS-OS-USOS]]), e **F-IC-8 → (b)**, DEFIS e DASN-SIMEI no PR-2. O
+> **F-IC-1** ficou BYOK com os dois modos, cliente e escritório de contabilidade, já na 1ª fase. **Produção espera o
+> parecer de advogado sobre a guarda** (RB-IC-0, §5). Este checklist já está na forma ratificada.
 
 ## 0. Formulário (contexto fixo)
 
@@ -28,8 +31,9 @@
   - `lib/secretBox.ts` (cofre com keyring, AAD = id da linha; molde `PscCredential.model.ts`);
   - `ReinfTransmissorPort` (`lib/reinf.ts:129`), porta com função pura de mapeamento de status;
   - BRIEF do ciclo fiscal (PR #1322, **não em `main`**): `ObrigacaoFiscalOcorrencia`, estados, `AGUARDANDO_HUMANO`.
-- **Nós vizinhos:** consome [[X9]], [[X14]], [[X7]], [[IRRF-DISTRIBUICAO]], o assinador local do [[X10a]] (EMENDA-4,
-  **não em `main`**) e o CICLO-FISCAL (#1322). É consumido pelo CICLO-FISCAL (o PR-6 deste BRIEF liga os dois) e pelo
+- **Nós vizinhos:** consome [[X9]], [[X14]], [[X7]], [[IRRF-DISTRIBUICAO]], o `FiscalCertificate` do [[X10i]] (PR-1,
+  em `main`: A1 cifrado por unidade, `FiscalCertificateService.upload` com leitura do PKCS#12) e o CICLO-FISCAL (#1322).
+  O assinador local do [[X10a]] **não** é mais dependência (F-IC-2 → b). É consumido pelo CICLO-FISCAL (o PR-6 deste BRIEF liga os dois) e pelo
   FE (tela de credencial e botão "aprovar entrega", incremento `FE-INCR-INTEGRA-CONTADOR` vizinho, fora deste BRIEF).
 
 ## 1. Checklist numerado (cada item testável sozinho)
@@ -68,17 +72,28 @@
    credencial; a requisição é **imutável** (sem update fora da máquina de estados do item 12, sem delete).
 10. **Rotas da credencial** (Route → Controller → Service → Repository + Policy; DTO Zod `.strict()`; rota em 2
     toques): `GET/PUT/DELETE /api/accounting/receita/credencial` e `POST /api/accounting/receita/credencial/testar`.
-    O teste chama `SICALC/CONSULTAAPOIORECEITAS52` (`/Apoiar`, **gratuito** [D04, D07]) e grava `verificadaEm`. Policy:
-    a mesma de quem gere o certificado fiscal e o PSC da unidade (`AccountingPolicy`, conferir o nome na execução).
-    PUT com `contratanteCnpj` ≠ CNPJ raiz da PJ e `autorTipo = CONTRIBUINTE` ⇒ 400 `RECEITA_CONTRATANTE_DIVERGE`.
-    É a guarda local do 403 `ICGERENCIADOR-016` [D06].
-11. **`SapiTokenPort`** + adaptador do F-IC-2:
-    - **(a)** `AssinadorLocalSapiToken`: cria uma tarefa na fila do assinador local ("autentique no SAPI") e recebe
-      `{ accessToken, jwtToken, expiraEm }`; Consumer Key/Secret ficam no assinador.
-    - Sem assinador em `main`, o adaptador devolve `RECEITA_SEM_TOKEN` com o motivo, e o PR-1 entra com o fake.
+    - **O teste** chama `SICALC/CONSULTAAPOIORECEITAS52` (`/Apoiar`, **gratuito** [D04, D07]) e grava `verificadaEm`.
+      No modo `PROCURADOR`, chama também `PROCURACOES/OBTERPROCURACAO41` (Consultar, cobrado) e grava os códigos de
+      procuração encontrados (`00146`, `00103`, `00004`).
+    - **Policy:** a mesma de quem gere o certificado fiscal e o PSC da unidade (`AccountingPolicy`, conferir o nome na
+      execução).
+    - **Modo `CONTRIBUINTE`** (PRE-ADR §10.1): o contratante tem de ser o CNPJ da matriz da PJ, com `FiscalCertificate`
+      vivo cujo `cnpjCertificado` = contratante e `notAfter` futuro. Senão, 400 `RECEITA_CONTRATANTE_DIVERGE` ou
+      `RECEITA_SEM_CERTIFICADO`. É a guarda local do 403 `ICGERENCIADOR-016` [D06].
+    - **Modo `PROCURADOR`:** o PUT recebe o A1 do escritório (`pfx` + senha, multipart, como o upload do
+      `FiscalCertificate`). A leitura do PKCS#12 sai de `FiscalCertificateService.upload` para uma função pura
+      compartilhada, sem duplicar o forge. O CNPJ do A1 tem de ser o `contratanteCnpj`, e a senha **nunca** é gravada.
+    - Consumer Key e Secret vão cifrados nos dois modos.
+11. **`SapiTokenPort`** com o adaptador **`A1ServidorSapiToken`** (F-IC-2 → b):
+    - decifra o A1 (o do `FiscalCertificate` no modo `CONTRIBUINTE`, o da credencial no `PROCURADOR`) e as chaves só em
+      memória;
+    - faz o POST `client_credentials` com TLS mútuo no `/authenticate` [D03] e recebe `{ accessToken, jwtToken,
+      expiraEm }`.
     - O token fica cifrado (`secretBox`, keyring `RECEITA_KEYS`, AAD = id da credencial), com `expiraEm`. Token vencido
-      não é usado; o job pede outro e, sem resposta, marca a ocorrência com o pré-requisito `RECEITA_ASSINADOR_OFFLINE`
-      (texto: "abra o assinador").
+      ou 401 ⇒ renova uma vez.
+    - A1 vencido ⇒ pré-requisito `RECEITA_CERTIFICADO_VENCIDO` na ocorrência do ciclo, com a data do `notAfter`.
+    - Teste: o mTLS contra um servidor HTTPS local de teste que exige certificado de cliente, com um A1 de teste gerado
+      no próprio teste. Nunca um certificado real.
 12. **Idempotência e 504** (`ReceitaRequisicaoService.executar`):
     - grava a intenção (`PENDENTE`) com `chaveIdempotencia` **antes** de chamar;
     - a mesma chave com `OK` ⇒ devolve o resultado gravado, sem nova chamada;
@@ -125,6 +140,18 @@
     Teste: transmissão OK + DAS 503 ⇒ 1 declaração, 0 DAS; 2ª passada ⇒ DAS registrado, a declaração não reenviada.
 18. **Prévia oficial sem transmitir** (`indicadorTransmissao = false`) **só sob pedido** (`POST …/previa-oficial`), nunca
     no job: custa uma declaração (R$ 0,40 na 1ª faixa; grau I, PRE-ADR §2.4).
+18a. **DEFIS pela API** (F-IC-8 → b; PRE-ADR §10.3): mapper do espelho `SimplesDeclaracaoService.defis` para
+    `DEFIS/TRANSDECLARACAO141`. O leiaute se lê no PR-2 (insumo §6 item 7).
+    - `POST /api/accounting/simples/declaracoes/:ano/defis/entregar` com a mesma aprovação do item 16. Recibo
+      (`CONSULTIMADECREC143`) como `SourceDocument`.
+    - Só para ano-calendário ≤ 2026: de 2027 em diante a rota recusa com `DEFIS_EXTINTA_USE_PGDASD_ANUAL`, porque vira o
+      bloco anual do PGDAS-D (BRIEF do ciclo §6 item 22).
+18b. **DASN-SIMEI pela API** (`DASNSIMEI/TRANSDECLARACAO151`, + `GERARDASEXCESSO153` quando houver excesso): mapper do
+    espelho `SimplesDeclaracaoService.dasnSimei`, rota `…/:ano/dasn-simei/entregar`, a mesma aprovação.
+    - O catálogo não dá data de implantação [D04]. A capacidade `DASNSIMEI_ENTREGAR` só entra no adaptador de produção
+      quando o RB-IC-1 mostrar o serviço respondendo.
+    - Até lá, a rota responde 409 `RECEITA_SERVICO_NAO_IMPLANTADO`, sem chamada.
+    - Teste: com a capacidade desligada, 0 chamadas à porta.
 
 ### PR-3 — DARF pelo Sicalc
 
@@ -170,6 +197,9 @@
     - **DCTFWEB (MIT):** `ARQUIVO_GERADO` ⇒ `AGUARDANDO_HUMANO` "atestar e encerrar" (item 24); com
       `entregaAutomatica.MIT`, **só** se o atestado permanente do item 27 existir.
     - **Pagamento:** consulta diária até 5 dias depois do vencimento (item 22).
+    - **DEFIS e DASN-SIMEI:** no ciclo, hoje só ocorrência, prazo e pré-requisito. Com credencial e serviço ligados, vão
+      para `AGUARDANDO_HUMANO` "aprovar entrega" (18a, 18b); com a chave `entregaAutomatica.DEFIS`/`.DASNSIMEI`,
+      seguem a regra do DAS.
 
     Não cria estado novo na `ObrigacaoFiscalOcorrencia`: o andamento da chamada vive na `ReceitaRequisicao`.
 27. **Atestado permanente do MIT** (opcional, por credencial): *"esta PJ não tem débitos no MIT além dos que o
@@ -192,7 +222,10 @@ export type ReceitaServico =
   | 'PGDASD_ENTREGAR' | 'PGDASD_GERAR_DAS' | 'PGDASD_ULTIMA_DECLARACAO' | 'PGDASD_EXTRATO_DAS'
   | 'SICALC_EMITIR_DARF' | 'SICALC_DARF_CODBARRA' | 'SICALC_APOIO_RECEITAS'
   | 'MIT_ENCERRAR' | 'MIT_SITUACAO' | 'MIT_CONSULTAR' | 'MIT_LISTAR'
-  | 'PAGTOWEB_PAGAMENTOS' | 'PAGTOWEB_COMPROVANTE';
+  | 'PAGTOWEB_PAGAMENTOS' | 'PAGTOWEB_COMPROVANTE'
+  | 'DEFIS_ENTREGAR' | 'DEFIS_ULTIMA_DECLARACAO'                       // F-IC-8 b
+  | 'DASNSIMEI_ENTREGAR' | 'DASNSIMEI_DAS_EXCESSO'                     // F-IC-8 b; capacidade só após RB-IC-1
+  | 'PROCURACOES_OBTER';                                               // teste da credencial no modo PROCURADOR
 
 export interface ReceitaCapabilities {
   servicos: readonly ReceitaServico[];
@@ -204,7 +237,7 @@ export interface ReceitaContexto {
   autor: { numero: string; tipo: 1 | 2 };       // = contribuinte quando autorTipo = CONTRIBUINTE
   contribuinte: { numero: string; tipo: 2 };
   tokens: { accessToken: string; jwtToken: string };
-  tokenProcurador?: string;                     // só F-IC-1 (b)
+  // Sem Termo de Autorização: nos dois modos ratificados, contratante = autor (PRE-ADR §10.1).
   requestTag: string;                           // ≤ 32 [D09]
 }
 
@@ -239,9 +272,12 @@ export type MitSituacao = { idApuracao: number; situacao: 'EM_EDICAO' | 'ENCERRA
 // Os nomes exatos dos campos de saída do PGDAS-D, do DAS e do Pagamentos se confirmam nas páginas de saída e de
 // exemplos na execução (insumo §6 item 3). O tipo acima é a forma de domínio, e o adaptador traduz.
 
-// PR-0 — tokens (F-IC-2)
+// PR-1 — tokens (F-IC-2 → b: A1 no servidor)
 export interface SapiTokenPort {
-  obter(credencialId: string): Promise<{ accessToken: string; jwtToken: string; expiraEm: string } | { indisponivel: 'RECEITA_ASSINADOR_OFFLINE' | 'RECEITA_SEM_CREDENCIAL' }>;
+  obter(credencialId: string): Promise<
+    | { accessToken: string; jwtToken: string; expiraEm: string }
+    | { indisponivel: 'RECEITA_SEM_CREDENCIAL' | 'RECEITA_SEM_CERTIFICADO' | 'RECEITA_CERTIFICADO_VENCIDO' | 'RECEITA_AUTENTICACAO_RECUSADA' }
+  >;
 }
 ```
 
@@ -251,9 +287,18 @@ model ReceitaCredencial {
   id                    String    @id @default(cuid())
   userId                String    @unique // a PJ (R8)
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  contratanteCnpj       String // CNPJ raiz do contratante do Serpro (F-IC-1 a: = o da PJ)
-  autorTipo             String // 'CONTRIBUINTE' | 'PROCURADOR' (PROCURADOR só com F-IC-1 b)
-  autorNumero           String? // CPF/CNPJ do procurador
+  modo                  String // 'CONTRIBUINTE' | 'PROCURADOR' (F-IC-1 ratificado: os dois na 1ª fase)
+  contratanteCnpj       String // = CNPJ da matriz (CONTRIBUINTE) ou do escritório (PROCURADOR); contratante = autor
+  fiscalCertificateId   String? // CONTRIBUINTE: o A1 da própria PJ (X10i)
+  certCiphertext        Bytes? // PROCURADOR: DER do A1 do escritório, cifrado (keyring RECEITA_KEYS, AAD = id)
+  keyCiphertext         Bytes? // PROCURADOR: PKCS#8 do A1 do escritório, cifrado; a senha do pfx nunca é gravada
+  certCnpj              String? // PROCURADOR: CNPJ do A1 (= contratanteCnpj)
+  certNotAfter          String? // AAAA-MM-DD
+  certFingerprintSha256 String?
+  consumerKeyCiphertext    Bytes // cifrado (keyring RECEITA_KEYS)
+  consumerSecretCiphertext Bytes
+  segredoKeyVersion     Int
+  procuracoesEncontradas Json? // PROCURADOR: códigos do OBTERPROCURACAO41 no último teste
   servicos              Json // ReceitaServico[] que o cliente ligou
   entregaAutomatica     Json // { PGDASD: false, MIT: false, diasAntes: 3 } (F-IC-3 c)
   atestoMitSemOutrosEm  DateTime? // item 27
@@ -303,12 +348,19 @@ model ReceitaRequisicao {
 
 ```ts
 // PR-1 — DTOs (Zod .strict())
+// Campos de texto do multipart (o pfx do modo PROCURADOR vem como arquivo, a senha como campo, igual ao
+// upload do FiscalCertificate; a senha só vive na requisição).
 export const ReceitaCredencialPutSchema = z.object({
+  modo: z.enum(['CONTRIBUINTE', 'PROCURADOR']),
   contratanteCnpj: z.string().regex(/^[0-9A-Z]{12}[0-9]{2}$/), // alfanumérico aceito [D06]
-  autorTipo: z.literal('CONTRIBUINTE'),                          // 'PROCURADOR' só com F-IC-1 b
+  consumerKey: z.string().min(1),
+  consumerSecret: z.string().min(1),
+  pfxSenha: z.string().optional(),                               // obrigatória com modo = PROCURADOR (refine)
   servicos: z.array(z.enum(RECEITA_SERVICOS)).min(1),
-  entregaAutomatica: z.object({ PGDASD: z.boolean(), MIT: z.boolean(), diasAntes: z.number().int().min(0).max(20) }).strict(),
+  entregaAutomatica: z.object({ PGDASD: z.boolean(), MIT: z.boolean(), DEFIS: z.boolean(), DASNSIMEI: z.boolean(), diasAntes: z.number().int().min(0).max(20) }).strict(),
 }).strict();
+// View devolvida: nunca as chaves nem o certificado; só modo, contratante, CNPJ/validade/impressão do A1,
+// serviços, entregaAutomatica, verificadaEm, procuracoesEncontradas.
 
 // PR-2
 export const PgdasdEntregarSchema = z.object({
@@ -327,21 +379,34 @@ export const MitEncerrarSchema = z.object({
 
 ## 3. Forks pendentes de ratificação
 
-F-IC-1..8 com caminhos e recomendação no PRE-ADR §7. Itens afetados: F-IC-1 → 9, 10, 11 · F-IC-2 → 11 ·
-F-IC-3 → 16, 26 · F-IC-4 → a ordem dos PRs · F-IC-5 → 23–27 · F-IC-6 → 16 · F-IC-7 → 8 e o runbook · F-IC-8 → nada
-(fora).
+**Nenhum pendente.** F-IC-1..8 foram ratificados em 21–22/11 (PRE-ADR §10). Itens que cada um fixou: F-IC-1 → 9, 10,
+11 (dois modos) · F-IC-2 → 11 (A1 no servidor) · F-IC-3 → 16, 26 · F-IC-4 → a ordem dos PRs · F-IC-5 → 23–27 ·
+F-IC-6 → 16 · F-IC-7 → 8 e o RB-IC-1 · F-IC-8 → 18a, 18b. Decisão nova que aparecer na execução vira lacuna de spec e
+pergunta ao dono, nunca escolha do executor.
 
 ## 4. Pendente de validação externa
 
-PRE-ADR §8, itens 1–6. O que trava a execução: o item 4 (termos do Serpro sobre o uso da credencial do cliente por
-software de terceiro) **antes do PR-1**; o item 1 (`expires_in`) antes do item 11; o item 3 antes do item 25.
+PRE-ADR §8, itens 1–7. O que trava:
+- **Antes do PR-1:** o item 4, termos do Serpro sobre o uso da credencial do cliente por software de terceiro.
+- **Antes do item 25:** o item 3.
+- **Antes de produção:** o item 7, o parecer de advogado sobre a guarda (RB-IC-0).
+- O item 1 (`expires_in`) deixou de travar: com o A1 no servidor, o token se renova sozinho.
 
-## 5. Gate humano (runbook, não sessão de agente)
+## 5. Gates humanos (runbook, não sessão de agente)
 
-- **RB-IC-1 — primeira chamada real** (`RUNBOOK-FORMAT`, desfecho e assinatura do dono): o cliente contrata,
-  configura a credencial e o assinador; `POST …/credencial/testar` (gratuito); depois uma consulta cobrada
-  (`CONSULTIMADECREC14`); e só então a 1ª entrega aprovada do PGDAS-D de um mês real. A evidência é o `responseId` e o
-  recibo. Isto é o oráculo: o agente não o substitui.
+- **RB-IC-0 — parecer sobre a guarda do A1 de terceiro** (L-ADN-5, decisão do dono de 22/11: *"Produção espera"*). O
+  advogado responde por escrito se o Luminaris pode guardar, cifrado, o A1 do cliente e o do escritório (modo
+  `PROCURADOR`) e usá-los para autenticar e assinar em nome deles. Sem o parecer arquivado, a credencial de produção
+  fica recusada: `INTEGRA_CONTADOR_AMBIENTE=producao` exige o env `RECEITA_GUARDA_PARECER_REF` preenchido, e o
+  `selectReceitaGateway` devolve `disabled` com o motivo `RECEITA_GUARDA_SEM_PARECER`. Código, testes e trial seguem.
+- **RB-IC-1 — primeira chamada real** (`RUNBOOK-FORMAT`, desfecho e assinatura do dono), depois do RB-IC-0:
+  1. o cliente contrata e configura a credencial;
+  2. `POST …/credencial/testar` (gratuito);
+  3. uma consulta cobrada (`CONSULTIMADECREC14`);
+  4. só então a 1ª entrega aprovada do PGDAS-D de um mês real.
+
+  A evidência é o `responseId` e o recibo. Isto é o oráculo: o agente não o substitui. O RB-IC-1 também diz se a
+  DASN-SIMEI responde (item 18b) e se a DCTFWeb do MIT fica `ATIVA` sem `TRANSDECLARACAO310` (PRE-ADR §8 item 3).
 
 ## 6. Insumos ausentes
 
@@ -354,15 +419,17 @@ software de terceiro) **antes do PR-1**; o item 1 (`expires_in`) antes do item 1
 5. **Folha de 12 meses para `folhasSalario`** (PA ≥ 2026-11): hoje é digitada no histórico do Simples. A ponte folha
    → razão → Simples é a lacuna `L-20261121-181950-5cb9` (PES-4). O item 14 lê o que existir e falha com nome
    (`PGDASD_FOLHA_OBRIGATORIA`), sem inventar.
-6. **Assinador local** (X10a EMENDA-4, AL-PR-0..6) fora de `main`: o item 11 (a) espera por ele.
+6. ~~Assinador local~~: deixou de ser insumo com o F-IC-2 → (b).
+7. **Leiautes da DEFIS (`TRANSDECLARACAO141`) e da DASN-SIMEI (`TRANSDECLARACAO151`, `GERARDASEXCESSO153`)** na
+   documentação do Serpro: não lidos nesta sessão. Ler no PR-2 (itens 18a, 18b).
 
 ## 7. Write-set
 
 | PR | Edita ou cria |
 |---|---|
 | PR-0 | `server/src/features/accounting/receita/**` (porta, envelope, catálogo, adaptadores, seleção, testes) · `scripts/integra-contador-trial.mjs` |
-| PR-1 | `server/prisma/schema.prisma` · `server/prisma/migrations/**` · `server/src/features/accounting/receita/**` · `server/src/features/accounting/dtos/ReceitaCredencialDto.ts` · `server/src/features/accounting/services/ReceitaCredencialService.ts` · `server/src/features/accounting/services/ReceitaRequisicaoService.ts` · `server/src/features/accounting/repositories/ReceitaCredencialRepository.ts` · `server/src/features/accounting/repositories/ReceitaRequisicaoRepository.ts` · `server/src/controllers/ReceitaController.ts` · `server/src/features/accounting/policies/AccountingPolicy.ts` |
-| PR-2 | `server/src/features/accounting/receita/pgdasd*.ts` · `server/src/features/accounting/dtos/SimplesDto.ts` (ou o DTO do Simples vigente) · `server/src/features/accounting/services/SimplesEntregaService.ts` · `server/src/features/accounting/services/SimplesApuracaoService.ts` (só a chamada a `registrarDas` com origem API) |
+| PR-1 | `server/prisma/schema.prisma` · `server/prisma/migrations/**` · `server/src/features/accounting/receita/**` · `server/src/features/accounting/dtos/ReceitaCredencialDto.ts` · `server/src/features/accounting/services/ReceitaCredencialService.ts` · `server/src/features/accounting/services/ReceitaRequisicaoService.ts` · `server/src/features/accounting/repositories/ReceitaCredencialRepository.ts` · `server/src/features/accounting/repositories/ReceitaRequisicaoRepository.ts` · `server/src/controllers/ReceitaController.ts` · `server/src/features/accounting/policies/AccountingPolicy.ts` · `server/src/features/accounting/services/FiscalCertificateService.ts` (extração da leitura do PKCS#12 para função pura) · `server/src/features/accounting/repositories/FiscalCertificateRepository.ts` (leitura do A1 da matriz) |
+| PR-2 | `server/src/features/accounting/receita/pgdasd*.ts` · `receita/defis*.ts` · `receita/dasnSimei*.ts` · `server/src/features/accounting/dtos/SimplesDto.ts` (ou o DTO do Simples vigente) · `server/src/features/accounting/services/SimplesEntregaService.ts` · `server/src/features/accounting/services/SimplesApuracaoService.ts` (só a chamada a `registrarDas` com origem API) · `server/src/features/accounting/services/SimplesDeclaracaoService.ts` (leitura do espelho da DEFIS/DASN para o mapper) |
 | PR-3 | `server/src/features/accounting/receita/darf*.ts` · `server/src/features/accounting/dtos/DarfDto.ts` · `server/src/features/accounting/services/DarfService.ts` · `TaxAssessmentService.ts`, `ProfitDistributionService.ts`, `InterestOnEquityService.ts` (gancho na confirmação) |
 | PR-4 | `server/src/features/accounting/receita/pagamentos*.ts` · `server/src/features/accounting/services/ReceitaPagamentoService.ts` |
 | PR-5 | `server/src/features/accounting/services/MitExportService.ts` · `server/src/features/accounting/dtos/MitExportDto.ts` · `server/src/features/accounting/services/MitEncerramentoService.ts` |
@@ -383,6 +450,11 @@ software de terceiro) **antes do PR-1**; o item 1 (`expires_in`) antes do item 1
   pode excluir do Simples (mapa de 10/10, `dominio-contabil.md:146`).
 - SITFIS (relatório de situação fiscal) e CND.
 - Parcelamentos do Simples e do MEI (PARCSN/PERTSN/RELPSN…), "NÃO MAPEADO" no mapa de 10/10.
-- DEFIS 2026 e DASN-SIMEI por API (F-IC-8 a).
+- DAS mensal do MEI pela API (`PGMEI/GERARDASPDF21`, sem procuração [D05]). Não pedido; fica ao lado da DASN-SIMEI,
+  que entrou (F-IC-8 b).
+- Conta de escritório de contabilidade compartilhada entre tenants: uma credencial `PROCURADOR` serve a vários clientes.
+  Hoje é uma por PJ (PRE-ADR §10.1).
+- Reversão da guarda para NF-e, NFC-e e NFS-e (F-IC-2, "todos os usos"): replanejar o X10a e o X10i
+  ([[D-2026-11-22-GUARDA-A1-TODOS-OS-USOS]]).
 - Baixa automática do título de imposto pela conciliação quando o pagamento aparece (item C3 do handoff de 21/11).
-- O F-REINF-2 (transmissão da Reinf) pode usar o mesmo assinador local para o mTLS: decisão do nó EFD-REINF.
+- Com a guarda do A1 de volta (F-IC-2 → b), o F-REINF-2 (transmissão da Reinf pelo webservice) pode usar o mesmo A1 guardado no mTLS. A decisão é do nó EFD-REINF.

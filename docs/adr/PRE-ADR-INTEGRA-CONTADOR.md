@@ -1,6 +1,10 @@
 # PRE-ADR-INTEGRA-CONTADOR — entregar à Receita pela API Integra Contador (Serpro) o que hoje só sai como arquivo
 
-- **Status:** Proposed (21/11/2026). Forks F-IC-1..8 com **RATIFICAÇÃO PENDENTE** (§7).
+- **Status:** Accepted (22/11/2026). Forks F-IC-1..8 **ratificados pelo dono** por questionário em 21–22/11
+  ([[D-2026-11-21-R5-REABERTA-INTEGRA-CONTADOR]] §Ratificação). Seis ficaram na recomendação ou numa extensão dela; o
+  **F-IC-2 → (b)** e o **F-IC-8 → (b)** foram **contra** a recomendação. O F-IC-2 reverte, para **todos os usos**, a
+  guarda recusada em 22/10 ([[D-2026-11-22-GUARDA-A1-TODOS-OS-USOS]]). O texto de §1–§6 é o da proposta de 21/11; o
+  que mudou com a ratificação está em **§10**, que prevalece.
 - **Nó:** [[INTEGRA-CONTADOR]] (novo, `planned`). Reabre a [[R5]] ([[D-2026-11-21-R5-REABERTA-INTEGRA-CONTADOR]]).
 - **Autorização:** dono, 2026-11-21, questionário. À pergunta *"Fork R5: a integração com a Receita pela API Integra
   Contador (Serpro) está adiada… Reabrir para planejar a entrega automática?"*, a resposta foi *"Reabrir e planejar"*.
@@ -17,8 +21,9 @@
 
 **Em duas linhas.** A API faz bem mais do que a R5 supunha: transmite o PGDAS-D e gera o DAS, encerra a apuração do
 MIT com o mesmo JSON que o Luminaris já monta, emite DARF pelo Sicalc e consulta pagamentos. **Risco principal:** o
-token exige o **e-CNPJ do contratante** num TLS mútuo. Isso choca com as duas decisões em vigor ("o Luminaris não
-contrata" e "o Luminaris não guarda o certificado do cliente"). O fork F-IC-1/F-IC-2 decide tudo o que vem depois.
+token exige o **e-CNPJ do contratante** num TLS mútuo. O dono decidiu guardar o A1 cifrado no servidor e reverteu a
+decisão de 22/10 (§10). O desenho só funciona com o arquivo A1, e a produção espera o parecer de advogado sobre a
+guarda (L-ADN-5).
 
 ---
 
@@ -200,7 +205,7 @@ do contratante no ERP.
 - A porta `EnvioMit` (D11) continua como tipo + função pura; o adaptador HTTP é o `encerrarApuracaoMit` desta porta, que
   **consome** o `montarArquivoMit` sem mudá-lo.
 
-## 7. Forks — todos com RATIFICAÇÃO PENDENTE
+## 7. Forks (como foram levados ao dono; a ratificação está em §10)
 
 > F-IC-1 e F-IC-2 vêm antes e são acoplados: o contratante define onde precisa estar o e-CNPJ. Os outros forks
 > pressupõem a recomendação deles.
@@ -289,6 +294,8 @@ do contratante no ERP.
 5. **Norma da procuração eletrônica (IN RFB vigente):** não lida. Só importa no F-IC-1 (b).
 6. **Efeito de confissão pela API = pelo portal:** inferido. A Res. CGSN 140 art. 38 § 2º I não distingue canal (citada
    no BRIEF do ciclo).
+7. **(Desde a ratificação) Parecer de advogado sobre a guarda de certificado de terceiro (L-ADN-5).** Vale para o A1
+   da PJ e para o do escritório (modo `PROCURADOR`). É gate de produção (§10, BRIEF §5 RB-IC-0).
 
 ## 9. OPS-001
 
@@ -300,3 +307,56 @@ do contratante no ERP.
 4. **Checagem que falharia se eu estivesse errado:** o runbook da 1ª chamada real (F-IC-7) lê `responseId` e
    `httpStatus`, e o 403 `ICGERENCIADOR-016` prova ou derruba a premissa do NI [D06].
 5. **Primeiras linhas:** o "Em duas linhas" acima.
+
+## 10. Ratificação (dono, questionário, 21–22/11/2026) — prevalece sobre §4, §5 e §7
+
+| Fork | Decisão | Na recomendação? | Efeito no desenho |
+|---|---|---|---|
+| F-IC-1 | **BYOK + contador já.** Cada cliente contrata no próprio CNPJ, **ou** o escritório de contabilidade que já tem contrato atua como procurador, as duas na 1ª fase. Antes, o dono pediu pesquisa de opção grátis (*"Pesquise outras soluções grátis se não houver, byok"*). Resultado: não há API oficial gratuita. O Conecta gov.br é gratuito só para órgãos públicos, e a automação de portal (robô) esbarra em CAPTCHA, que o produto não contorna (grau I). O gratuito é o caminho manual que já existe (arquivo do MIT, espelho do PGDAS-D, e-CAC, SicalcWeb) | extensão de (a) com (b) | §10.1 |
+| F-IC-2 | **(b) A1 em arquivo, cifrado no servidor, para todos os usos.** Pergunta de alcance: *"Todos os usos"* (NF-e, NFC-e e NFS-e também) | **não** (recomendado: assinador local) | §10.2; [[D-2026-11-22-GUARDA-A1-TODOS-OS-USOS]] |
+| Parecer da guarda | **Produção espera o parecer** do advogado (L-ADN-5): código e testes seguem; a 1ª chamada real com o A1 de terceiro só depois | sim | gate RB-IC-0 no BRIEF §5 |
+| F-IC-3 | (c) humano por padrão + chave por obrigação | sim | — |
+| F-IC-4 | (a) Simples primeiro | sim | — |
+| F-IC-5 | (a) MIT só com atestado | sim | — |
+| F-IC-6 | (a) divergência bloqueia; saída com motivo auditado | sim | — |
+| F-IC-7 | (a) fake + trial + runbook da 1ª transmissão real | sim | — |
+| F-IC-8 | **(b) DEFIS e DASN-SIMEI entram no PR do Simples** | **não** (recomendado: fora) | §10.3 |
+
+### 10.1 Dois modos de credencial na 1ª fase (F-IC-1)
+
+- **`CONTRIBUINTE`:** contratante = autor = a PJ cliente. Sem procuração [D05]. O certificado é o A1 da própria PJ, o
+  `FiscalCertificate` da unidade matriz, cujo `cnpjCertificado` tem de ser o contratante [D06].
+- **`PROCURADOR`:** contratante = autor = o escritório de contabilidade; contribuinte = a PJ cliente. Exige a
+  **procuração eletrônica do e-CAC** do cliente para o escritório, nos códigos de cada serviço: `00146` PGDAS-D e DEFIS,
+  `00103` DCTFWeb, `00004` pagamentos; Sicalc e PGMEI `n/a` [D05]. **MIT: não listado** (§8 item 2). Como contratante e
+  autor coincidem, **não** há Termo de Autorização [D23]. O A1 é **do escritório**, guardado cifrado na credencial
+  daquela PJ (não no `FiscalCertificate`, que é o certificado da própria PJ).
+- **Uma credencial por PJ** nas duas formas: o escritório que atende 10 clientes cadastra a credencial em cada um. Uma
+  conta de escritório compartilhada entre tenants exige um vínculo que o produto não tem (sem multiempresa,
+  `AccountingScope`) e vai à caixa como feature.
+- **Quem paga:** quem contratou, direto ao Serpro. O `X-Request-Tag` [D09] por PJ dá ao escritório o rateio do
+  consumo por cliente.
+- **403 sem procuração:** o adaptador mapeia o 403 de acesso negado para `RECEITA_SEM_PROCURACAO`, com o código da
+  procuração do serviço. O 403 é cobrado [D06], e a consulta prévia de procuração (`OBTERPROCURACAO41`, também
+  cobrada) só roda no teste da credencial.
+
+### 10.2 Certificado no servidor (F-IC-2 → b)
+
+- O token SAPI é obtido **pelo servidor**, com o A1 decifrado só em memória para o mTLS do `/authenticate` [D03].
+  Consumer Key e Secret ficam cifrados (`secretBox`, keyring `RECEITA_KEYS`, AAD = id da credencial). Sem dependência
+  do assinador local: a automação do F-IC-3 roda sem máquina do cliente ligada.
+- A assinatura do XML da DCTFWeb [D16], se for preciso (§8 item 3), também sai do servidor, com o A1 do autor.
+- **e-CNPJ em nuvem (PSC) não serve a este nó:** o TLS com o SAPI exige o arquivo .p12/.pfx [D03]. O cliente que
+  quiser a entrega automática precisa de um **A1 em arquivo**.
+- **Fora deste nó (vai à caixa):** a mesma reversão vale para NF-e, NFC-e e NFS-e. Abre a saída (a) do §4.1 de
+  `D5-DECISAO-2026-10-30` (o cliente entrega o A1 para o transporte) e pode desarquivar o BRIEF-ADN de guarda.
+  Replanejar o X10a e o X10i é de outra sessão.
+
+### 10.3 DEFIS e DASN-SIMEI no PR-2 (F-IC-8 → b)
+
+- **DEFIS** (`TRANSDECLARACAO141`, implantado em 25/09/2023 [D04]): mapper do espelho `SimplesDeclaracaoService.defis`
+  para o leiaute da API, com o mesmo par aprovação humana + chave do F-IC-3. Vale para a DEFIS de 2026, entregue em 2027.
+  Em 2027 ela vira o bloco anual do PGDAS-D (BRIEF do ciclo, §6 item 22). O leiaute é insumo do PR-2.
+- **DASN-SIMEI** (`TRANSDECLARACAO151`, **sem data de implantação** [D04]): mesma forma, atrás de uma capacidade do
+  adaptador. Enquanto o serviço não responder em produção, a rota recusa com `RECEITA_SERVICO_NAO_IMPLANTADO`, e nada é
+  inventado. Também entra o DAS de excesso (`GERARDASEXCESSO153`), que acompanha a declaração.

@@ -27,6 +27,22 @@ levou a pergunta ao questionário e repassou a resposta ao cartão desta sessão
 - PRE-ADR, BRIEF e dossiê: ver a nota do [[INTEGRA-CONTADOR]].
 - A R5 de 14/09 fica como histórico. O corpo dela não é reescrito; a nota ganha só o apontador para esta decisão.
 
-## Ratificação dos forks F-IC-1..8
+## Ratificação dos forks F-IC-1..8 (dono, questionário nesta sessão, 21–22/11/2026)
 
-*(pendente — preenchida quando o dono responder ao questionário)*
+Três rodadas de `AskUserQuestion`, cada pergunta com o contexto do fato e da decisão anterior que ela toca. Respostas
+literais:
+
+| Fork | Pergunta (resumo) | Resposta literal do dono | Recomendação | Resultado |
+|---|---|---|---|---|
+| F-IC-1 | Quem contrata o Serpro? | 1ª rodada: *"Tem opção grátis?"*. 2ª: *"Pesquise outras soluções grátis se não houver, byok"*. 3ª, depois da pesquisa (não há API oficial gratuita; o Conecta gov.br é só de órgão público; o robô no portal esbarra em CAPTCHA): *"BYOK + contador já"* | (a) cada cliente | **(a) + (b) na 1ª fase:** a PJ contrata, ou o escritório que já tem contrato atua como procurador |
+| F-IC-2 | Onde fica o e-CNPJ do contratante? | *"Arquivo A1 no servidor"*; alcance: *"Todos os usos"* | (a) assinador local | **(b), contra a recomendação.** Reverte o item 3 de [[D-2026-10-22-NFSE-PORTAL-E-H1-POR-ULTIMO]] para NF-e, NFC-e e NFS-e também ([[D-2026-11-22-GUARDA-A1-TODOS-OS-USOS]]) |
+| Parecer da guarda (L-ADN-5) | A produção espera o parecer? | *"Produção espera (Recomendado)"* | idem | gate RB-IC-0 |
+| F-IC-3 | Quem aperta "transmitir"? | *"Humano + chave (Recomendado)"* | (c) | (c) |
+| F-IC-4 | Ordem dos PRs | *"Simples primeiro (Recomendado)"* | (a) | (a) |
+| F-IC-5 | Encerrar o MIT pela API? | *"Só com atestado (Recomendado)"* | (a) | (a) |
+| F-IC-6 | Divergência do Simples com a Receita | *"Bloqueia; saída com motivo (Recomendado)"* | (a) | (a) |
+| F-IC-7 | Como provar antes da 1ª chamada real | *"Fake + trial + runbook (Recomendado)"* | (a) | (a) |
+| F-IC-8 | DEFIS e DASN-SIMEI | *"Entram no PR do Simples"* | (a) fora | **(b), contra a recomendação** |
+
+**Ainda não é `executa`.** O código de qualquer PR do BRIEF exige autorização própria do dono (ORCH-006). Pela
+`D-2026-10-28-FLUXO-AUTONOMO`, um "executa" do BRIEF vale para PR-0..PR-6.
