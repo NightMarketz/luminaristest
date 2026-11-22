@@ -124,8 +124,28 @@ describe('DP-F2 item 44 — pendências, uma falta por vez (A3): dado visível, 
     expect([codigos(ra), codigos(rb), rb.pendencias[0].dado]).toEqual([['JORNADA_AUSENTE'], ['OUTRO_VINCULO_PENDENTE'], 'A-1']);
   });
 
-  it('todo código da lista fechada é produzido por algum caso deste arquivo ou dos goldens', () => {
+  it('a lista fechada tem 13 códigos (os 9 do §3.1, os 2 da cédula de 21/11 e as 2 leituras do PR-4)', () => {
     expect(DP_PENDENCIA_CODIGOS).toHaveLength(13);
+  });
+
+  it('PARAMETRO_LEGAL_AUSENTE do IRRF (tabela da data de pagamento ausente) nasce depois do cálculo e tira as linhas', () => {
+    const s = snapshotDe(cen([{ ...MENSALISTA, salarioCents: '800000' }]));
+    const r = calcularFolha({ ...s, parametros: { ...s.parametros, irrfPagamento: s.parametros.irrfPagamento.filter((l) => l.tabela !== 'IRRF_PF_MENSAL') } }).resultados[0];
+    expect([r.pendencias.map((p) => [p.codigo, p.dado]), r.linhas]).toEqual([[['PARAMETRO_LEGAL_AUSENTE', 'IRRF_PF_MENSAL em 2026-04-06']], []]);
+  });
+
+  it('A2 (revisor do #1326): o pagamento anterior do mês e a outra remuneração ANTES do vínculo A contam para o B', () => {
+    const a = { ...MENSALISTA, id: 'va', matricula: 'A-1', trabalhadorId: 't1', dataInicio: '2024-01-02', salarioCents: '600000' };
+    const b = { ...MENSALISTA, id: 'vb', matricula: 'B-1', trabalhadorId: 't1', salarioCents: '400000' };
+    const jaPago = { rendimentoCents: '500000', irrfRetidoCents: '50000' };
+    const irrf = (vs: EntradaVinculo[]) => calcularFolha(snapshotDe(cen(vs))).resultados.reduce((s, x) => s + (linha(x, 'IRRF') ?? 0n), 0n);
+    // O IRRF somado do mês não depende do vínculo que carrega o pagamento anterior (Lei 7.713 art. 7º § 1º).
+    expect(irrf([{ ...a, jaPago }, b])).toBe(irrf([a, { ...b, jaPago }]));
+    // Outra remuneração ANTES de 3.000 registrada só em A: A + B não passam do INSS do teto (988,07).
+    const outra = [{ id: 'o1', remuneracaoCents: '300000', contribuicaoCents: '0', ordem: 'ANTES', categoriaOutraFonte: 'EMPREGADO' }];
+    const rs = calcularFolha(snapshotDe(cen([{ ...a, outrasRemuneracoes: outra }, b]))).resultados;
+    expect(rs.reduce((s, x) => s + (linha(x, 'INSS_SEGURADO') ?? 0n), 0n)).toBeLessThanOrEqual(98807n);
+    expect(linha(rs.find((x) => x.vinculoId === 'vb')!, 'INSS_SEGURADO')).toBeUndefined();
   });
 });
 

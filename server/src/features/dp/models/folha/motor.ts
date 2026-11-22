@@ -107,10 +107,15 @@ export interface AcumuladoDoTrabalhador {
   irrfRendimentoCents: Cents;
   irrfRetidoCents: Cents;
   previdenciaCents: Cents;
+  /**
+   * Revisor do #1326 (A2): as outras remunerações `ANTES` registradas nos vínculos anteriores (item 78) também contam
+   * para o teto dos seguintes; o pagamento anterior do mês de cada vínculo entra em `irrf*` acima.
+   */
+  outrasAntes: OutraRemuneracaoNoMes[];
   /** Matrícula de um anterior com pendência bloqueante, se houver. */
   bloqueadoPor: string | null;
 }
-export const ACUMULADO_VAZIO: AcumuladoDoTrabalhador = { basesCp: [], irrfRendimentoCents: 0n, irrfRetidoCents: 0n, previdenciaCents: 0n, bloqueadoPor: null };
+export const ACUMULADO_VAZIO: AcumuladoDoTrabalhador = { basesCp: [], irrfRendimentoCents: 0n, irrfRetidoCents: 0n, previdenciaCents: 0n, outrasAntes: [], bloqueadoPor: null };
 
 /** O contexto da folha que todo vínculo lê (já na forma do leitor). */
 export interface ContextoFolha {
@@ -460,16 +465,15 @@ function mensal(v: VinculoSnapshot, ctx: ContextoFolha, b: Base, acc: AcumuladoD
 }
 
 /** INSS (itens 5, 6, 41, 78), IRRF (item 8, D-3) e FGTS (item 7) pela categoria (item 66). */
-function encargos(v: VinculoSnapshot, ctx: ContextoFolha, acc: AcumuladoDoTrabalhador, h: Holerite, pend: DpPendenciaFolha[]): void {
+function encargos(v: VinculoSnapshot, ctx: ContextoFolha, acc: AcumuladoDoTrabalhador, h: Holerite, pend: DpPendenciaFolha[], extras: CalcNode[]): void {
   const r = ctx.regras;
   const encargo = r.encargoPorCategoria[v.categoria];
   const pc = ctx.parametrosCompetencia;
   let bases = h.bases();
   let inssCents = 0n;
   const outras: OutraRemuneracaoNoMes[] = [
-    ...v.outrasRemuneracoes
-      .filter((o) => (OUTRA_REMUNERACAO_ORDENS as readonly string[]).includes(o.ordem) && (OUTRA_REMUNERACAO_CATEGORIAS as readonly string[]).includes(o.categoriaOutraFonte))
-      .map((o) => ({ remuneracaoCents: BigInt(o.remuneracaoCents), ordem: o.ordem as OutraRemuneracaoNoMes['ordem'], categoriaOutraFonte: o.categoriaOutraFonte as OutraRemuneracaoNoMes['categoriaOutraFonte'] })),
+    ...outrasDoVinculo(v),
+    ...acc.outrasAntes,
     // Item 41: os vínculos anteriores do mesmo trabalhador na instância entram como fonte ANTES desta.
     ...acc.basesCp.map((x) => ({ remuneracaoCents: x.baseCents, ordem: 'ANTES' as const, categoriaOutraFonte: x.categoria })),
   ];
@@ -498,6 +502,7 @@ function encargos(v: VinculoSnapshot, ctx: ContextoFolha, acc: AcumuladoDoTrabal
         ctx.irrfLinhas,
       );
       h.add('IRRF', c);
+      if (c.valor === 0n) extras.push(c.prova); // A3 (revisor do #1326): a dispensa MINIMO_R10 fica na prova
     } catch (e) {
       if (!(e instanceof SemLinhaVigenteError)) throw e;
       pend.push(ausente(v, e));
@@ -505,6 +510,13 @@ function encargos(v: VinculoSnapshot, ctx: ContextoFolha, acc: AcumuladoDoTrabal
   }
   const f = fgtsDaCategoria(bases.fgts, encargo, pc, r.arredondamento);
   if (f) h.add('FGTS_MES', f);
+}
+
+/** Item 77 — as outras remunerações do vínculo na forma da calculadora (ordem e categoria do domínio fechado). */
+function outrasDoVinculo(v: VinculoSnapshot): OutraRemuneracaoNoMes[] {
+  return v.outrasRemuneracoes
+    .filter((o) => (OUTRA_REMUNERACAO_ORDENS as readonly string[]).includes(o.ordem) && (OUTRA_REMUNERACAO_CATEGORIAS as readonly string[]).includes(o.categoriaOutraFonte))
+    .map((o) => ({ remuneracaoCents: BigInt(o.remuneracaoCents), ordem: o.ordem as OutraRemuneracaoNoMes['ordem'], categoriaOutraFonte: o.categoriaOutraFonte as OutraRemuneracaoNoMes['categoriaOutraFonte'] }));
 }
 
 // ── Roteiro ADIANTAMENTO (item 42) ──────────────────────────────────────────────────────────────────────────────────
@@ -545,7 +557,7 @@ export function calcularVinculo(v: VinculoSnapshot, ctx: ContextoFolha, acc: Acu
   if (base === null || pendencias.some((p) => p.bloqueante)) return resultado(v, h, pendencias, extras);
   const pend = [...pendencias];
   mensal(v, ctx, base, acc, h, extras, pend);
-  encargos(v, ctx, acc, h, pend);
+  encargos(v, ctx, acc, h, pend, extras);
   if (v.adiantamentoPagoCents !== undefined && BigInt(v.adiantamentoPagoCents) > 0n) {
     h.add('DESCONTO_ADIANTAMENTO', valorInformado('Desconto do adiantamento pago na competência', BigInt(v.adiantamentoPagoCents), 'BRIEF DP-F2 item 43'));
   }
@@ -624,9 +636,11 @@ function acumular(acc: AcumuladoDoTrabalhador, v: VinculoSnapshot, r: ResultadoV
   const linha = (rub: RubricaCodigo) => r.linhas.find((l) => l.rubrica === rub)?.valorCents ?? 0n;
   return {
     basesCp: inss === 'NENHUM' ? acc.basesCp : [...acc.basesCp, { baseCents: r.bases.cp, categoria: inss === 'EMPREGADO' ? 'EMPREGADO' : 'CONTRIBUINTE_INDIVIDUAL' }],
-    irrfRendimentoCents: acc.irrfRendimentoCents + r.bases.irrf,
-    irrfRetidoCents: acc.irrfRetidoCents + linha('IRRF'),
+    // A2 (revisor do #1326): o que a mesma fonte já pagou a este vínculo no mês entra na soma dos seguintes.
+    irrfRendimentoCents: acc.irrfRendimentoCents + r.bases.irrf + BigInt(v.jaPagoNoMesDePagamento.rendimentoCents),
+    irrfRetidoCents: acc.irrfRetidoCents + linha('IRRF') + BigInt(v.jaPagoNoMesDePagamento.irrfRetidoCents),
     previdenciaCents: acc.previdenciaCents + linha('INSS_SEGURADO'),
+    outrasAntes: [...acc.outrasAntes, ...outrasDoVinculo(v).filter((o) => o.ordem === 'ANTES')],
     bloqueadoPor: null,
   };
 }
