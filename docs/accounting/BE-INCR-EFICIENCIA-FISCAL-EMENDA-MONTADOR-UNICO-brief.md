@@ -5,8 +5,10 @@
 > `pesquisas-legais/simulacao-montador-unico/`. **Sem código, sem `executa`, sem merge.**
 
 > **RATIFICAÇÃO 21/11/2026** ([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]): o dono respondeu os forks F-MU-1..16 no
-> questionário (F-MU-14..16 numa 2ª rodada, depois da revisão), **todos (a)**, a recomendação do BRIEF. Com isso o PR-1b entra (F-MU-8 a). **Não é `executa`:** se o
-> "Executa tudo" de 21/11 cobre o código deste BRIEF, o dono confirma (§0).
+> questionário (F-MU-14..16 numa 2ª rodada, depois da revisão), **todos (a)**, a recomendação do BRIEF. Com isso o PR-1b entra (F-MU-8 a).
+
+> **`EXECUTA` 21/11/2026** — dono, chat, à pergunta *"O 'Executa tudo' de 21/11 vale também para o código deste BRIEF?"*:
+> **"Vale também"**. Cobre PR-0..PR-4 + PR-1b, sem merge.
 > **Base:** `origin/main` `43719baa` (21/11). Não edita o BRIEF do nó (`BE-INCR-EFICIENCIA-FISCAL-brief.md`), nem os do X7,
 > do X8, do X14 e do IBS-CBS-2027.
 

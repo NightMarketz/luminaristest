@@ -35,5 +35,10 @@ atualizado: "2026-11-21"
 
 Planejamento: o BRIEF [`BE-INCR-EFICIENCIA-FISCAL-EMENDA-MONTADOR-UNICO-brief.md`](../../accounting/BE-INCR-EFICIENCIA-FISCAL-EMENDA-MONTADOR-UNICO-brief.md),
 os contratos esboçados e os forks F-MU-1..16, levados ao dono e **ratificados** em 21/11, todos (a)
-([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]). O código de cada PR espera o `executa` para este BRIEF
-([[D-2026-10-28-FLUXO-AUTONOMO]]: o `executa` cobre BRIEF ratificado e sem fork pendente). PR do planejamento: #1323.
+([[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO-FORKS]]). PR do planejamento: #1323.
+
+## `executa` (21/11)
+
+Dono, chat, 21/11, à pergunta *"O 'Executa tudo' de 21/11 vale também para o código deste BRIEF?"*: **"Vale também"**.
+Cobre o BRIEF inteiro (PR-0..PR-4 + PR-1b), sem merge ([[D-2026-10-28-FLUXO-AUTONOMO]]: BRIEF ratificado e sem fork
+pendente). A execução roda pela `sessao-feature`, na base `integration/eficiencia-fiscal-montador-unico`.

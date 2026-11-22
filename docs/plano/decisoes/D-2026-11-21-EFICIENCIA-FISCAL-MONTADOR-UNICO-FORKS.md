@@ -33,4 +33,5 @@ O dono respondeu no questionário de 21/11, com o contexto de cada fork na próp
 | F-MU-15 | Excesso de até 20% e a sugestão de trocar para o Simples | **"Recusa a sugestão"** | 400 `REGIME_VEDADO_NO_ANO_SEGUINTE` |
 | F-MU-16 | Declarações vazias e o regime atual | **"Regime atual conferido"** | regime atual conferido nos incisos não deriváveis; os outros vão para `melhorCondicional`; economia condicional à parte |
 
-**Não é `executa`.** O código de cada PR espera o `executa` do dono para este BRIEF.
+Esta cédula ratifica os forks. O `executa` foi dado à parte, no chat do mesmo dia ("Vale também"), e está registrado em
+[[D-2026-11-21-EFICIENCIA-FISCAL-MONTADOR-UNICO]].
