@@ -1751,12 +1751,12 @@
               "debitCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "creditCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "dimensions": {
                 "type": "array",
@@ -2151,12 +2151,12 @@
         "ibsCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "cbsCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "competencia": {
           "type": "string",
@@ -2193,12 +2193,12 @@
             "ibsCents": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             },
             "cbsCents": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             },
             "competencia": {
               "type": "string",
@@ -5658,12 +5658,12 @@
               "debitCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "creditCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "dimensions": {
                 "type": "array",
@@ -5722,12 +5722,12 @@
               "debitCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "creditCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "dimensions": {
                 "type": "array",
@@ -8469,13 +8469,13 @@
         "costCents": {
           "type": "integer",
           "exclusiveMinimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "residualValueCents": {
           "default": 0,
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "acquiredAt": {
           "type": "string"
@@ -8558,12 +8558,12 @@
         "costCents": {
           "type": "integer",
           "exclusiveMinimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "residualValueCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "acquiredAt": {
           "type": "string"
@@ -8637,7 +8637,7 @@
         "openingAccumulatedCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "version": {
           "type": "integer",
@@ -8671,7 +8671,7 @@
         "proceedsCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "counterpartAccountId": {
           "type": "string",
@@ -9042,7 +9042,7 @@
         "countedValueCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         }
       },
       "required": [
@@ -9128,7 +9128,7 @@
         "totalCents": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "debitoPlAccountId": {
           "type": "string",
@@ -9147,7 +9147,7 @@
               "brutoCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               }
             },
             "required": [
@@ -9299,7 +9299,7 @@
         "totalCents": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "debitoPlAccountId": {
           "type": "string",
@@ -9318,7 +9318,7 @@
               "brutoCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               }
             },
             "required": [
@@ -9531,7 +9531,7 @@
         "totalValueCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "occurredAt": {
           "type": "string"
@@ -9778,7 +9778,7 @@
         "valorCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "histLancamento": {
           "type": "string",
@@ -9860,7 +9860,7 @@
         "valorCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "histLancamento": {
           "anyOf": [
@@ -10068,7 +10068,7 @@
         "saldoIniCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "indSaldoIni": {
           "type": "string",
@@ -10125,7 +10125,7 @@
         "saldoIniCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "indSaldoIni": {
           "type": "string",
@@ -10227,7 +10227,7 @@
         "valorCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "indicador": {
           "type": "string",
@@ -10306,7 +10306,7 @@
         "valorCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "indicador": {
           "type": "string",
@@ -11859,7 +11859,7 @@
         "amountCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "status": {
           "type": "string",
@@ -11871,7 +11871,7 @@
         "usoConsumoCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         }
       },
       "required": [
@@ -11901,7 +11901,7 @@
         "amountCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "motivo": {
           "type": "string",
@@ -11929,13 +11929,13 @@
           "default": 0,
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "pensaoCents": {
           "default": 0,
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         }
       },
       "required": [
@@ -11980,7 +11980,7 @@
         "amountCents": {
           "type": "integer",
           "exclusiveMinimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "expenseAccountId": {
           "type": "string",
@@ -12015,7 +12015,7 @@
               "valueCents": {
                 "type": "integer",
                 "exclusiveMinimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "description": {
                 "type": "string",
@@ -12063,7 +12063,7 @@
               "costCents": {
                 "type": "integer",
                 "exclusiveMinimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "ncm": {
                 "type": "string",
@@ -12112,7 +12112,7 @@
               "costCents": {
                 "type": "integer",
                 "exclusiveMinimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "description": {
                 "type": "string",
@@ -12148,7 +12148,7 @@
                   "amountCents": {
                     "type": "integer",
                     "exclusiveMinimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "kind": {
                     "type": "string",
@@ -12160,17 +12160,17 @@
                   "baseCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "pisCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "cofinsCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   }
                 },
                 "required": [
@@ -12204,7 +12204,7 @@
                   "amountCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "status": {
                     "type": "string",
@@ -12216,7 +12216,7 @@
                   "usoConsumoCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   }
                 },
                 "required": [
@@ -12255,7 +12255,7 @@
               "amountCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "motivo": {
                 "type": "string",
@@ -12283,13 +12283,13 @@
               "default": 0,
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             },
             "pensaoCents": {
               "default": 0,
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             }
           },
           "required": [
@@ -12336,7 +12336,7 @@
         "amountCents": {
           "type": "integer",
           "exclusiveMinimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         }
       },
       "required": [
@@ -13006,12 +13006,12 @@
         "debitCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "creditCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "dimensions": {
           "type": "array",
@@ -13090,12 +13090,12 @@
               "debitCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "creditCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "dimensions": {
                 "type": "array",
@@ -13951,7 +13951,7 @@
         "brutoCents": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "debitoAccountId": {
           "type": "string",
@@ -14509,7 +14509,7 @@
         "amountCents": {
           "type": "integer",
           "exclusiveMinimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "revenueAccountId": {
           "type": "string",
@@ -14555,7 +14555,7 @@
         "amountCents": {
           "type": "integer",
           "exclusiveMinimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         }
       },
       "required": [
@@ -14982,13 +14982,13 @@
         },
         "openingBalanceCents": {
           "type": "integer",
-          "minimum": -2147483647,
-          "maximum": 2147483647
+          "minimum": -8796093022207,
+          "maximum": 8796093022207
         },
         "closingBalanceCents": {
           "type": "integer",
-          "minimum": -2147483647,
-          "maximum": 2147483647
+          "minimum": -8796093022207,
+          "maximum": 8796093022207
         }
       },
       "required": [
@@ -15585,14 +15585,14 @@
         "receitaBrutaCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "folhaCents": {
           "anyOf": [
             {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             },
             {
               "type": "null"
@@ -15632,7 +15632,7 @@
         "receitaCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "motivo": {
           "type": "string",
@@ -15676,7 +15676,7 @@
               "receitaCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "motivo": {
                 "type": "string",
@@ -15983,13 +15983,13 @@
       "properties": {
         "recebidoPaCents": {
           "type": "integer",
-          "minimum": -2147483647,
-          "maximum": 2147483647
+          "minimum": -8796093022207,
+          "maximum": 8796093022207
         },
         "receitaAuferidaPaCents": {
           "type": "integer",
-          "minimum": -2147483647,
-          "maximum": 2147483647
+          "minimum": -8796093022207,
+          "maximum": 8796093022207
         },
         "art20Cents": {
           "type": "object",
@@ -15997,22 +15997,22 @@
             "parcelaVencida": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             },
             "encerramento": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             },
             "retornoCompetencia": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             },
             "exclusao": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             }
           },
           "required": [
@@ -16042,17 +16042,17 @@
         "receitaNaoRecebidaCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "icmsCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "issCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         }
       },
       "required": [
@@ -16102,7 +16102,7 @@
         "valorTotalCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "quantidadeParcelas": {
           "type": "integer",
@@ -16122,7 +16122,7 @@
               "valorCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "vencimento": {
                 "type": "string"
@@ -16136,17 +16136,17 @@
               "valorPagoCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "saldoAReceberCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "incobravelCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               }
             },
             "required": [
@@ -16191,7 +16191,7 @@
         "valorCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "meioCobranca": {
           "type": "string",
@@ -16265,7 +16265,7 @@
         "valorCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "vencimento": {
           "type": "string"
@@ -16347,12 +16347,12 @@
         "rendimentosIsentosCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "rendimentosTributaveisCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "participacaoBp": {
           "type": "integer",
@@ -16362,7 +16362,7 @@
         "irrfCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         }
       },
       "required": [
@@ -16385,7 +16385,7 @@
         "valorCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         }
       },
       "required": [
@@ -16425,7 +16425,7 @@
         "valorCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         }
       },
       "required": [
@@ -16453,17 +16453,17 @@
         "ganhosCapitalCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "ganhosRendaVariavelCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "exportacaoDiretaCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "exportacaoComercial": {
           "maxItems": 100,
@@ -16478,7 +16478,7 @@
               "valorCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               }
             },
             "required": [
@@ -16506,12 +16506,12 @@
               "rendimentosIsentosCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "rendimentosTributaveisCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "participacaoBp": {
                 "type": "integer",
@@ -16521,7 +16521,7 @@
               "irrfCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               }
             },
             "required": [
@@ -16567,7 +16567,7 @@
               "valorCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               }
             },
             "required": [
@@ -16611,18 +16611,18 @@
           "default": 0,
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "ganhosRendaVariavelCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "exportacaoDiretaCents": {
           "default": 0,
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "exportacaoComercial": {
           "default": [],
@@ -16638,7 +16638,7 @@
               "valorCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               }
             },
             "required": [
@@ -16667,12 +16667,12 @@
               "rendimentosIsentosCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "rendimentosTributaveisCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "participacaoBp": {
                 "type": "integer",
@@ -16682,7 +16682,7 @@
               "irrfCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               }
             },
             "required": [
@@ -16729,7 +16729,7 @@
               "valorCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               }
             },
             "required": [
@@ -16771,17 +16771,17 @@
         "ganhosCapitalCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "ganhosRendaVariavelCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "exportacaoDiretaCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "exportacaoComercial": {
           "maxItems": 100,
@@ -16796,7 +16796,7 @@
               "valorCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               }
             },
             "required": [
@@ -16824,12 +16824,12 @@
               "rendimentosIsentosCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "rendimentosTributaveisCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               },
               "participacaoBp": {
                 "type": "integer",
@@ -16839,7 +16839,7 @@
               "irrfCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               }
             },
             "required": [
@@ -16885,7 +16885,7 @@
               "valorCents": {
                 "type": "integer",
                 "minimum": 0,
-                "maximum": 2147483647
+                "maximum": 8796093022207
               }
             },
             "required": [
@@ -17764,27 +17764,27 @@
             "remTrabCents": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             },
             "lucDivCents": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             },
             "jurCapCents": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             },
             "demRendCents": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             },
             "irRetCents": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             }
           },
           "required": [
@@ -17958,27 +17958,27 @@
             "remTrabCents": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             },
             "lucDivCents": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             },
             "jurCapCents": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             },
             "demRendCents": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             },
             "irRetCents": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 2147483647
+              "maximum": 8796093022207
             }
           },
           "required": [
@@ -18275,27 +18275,27 @@
                   "remTrabCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "lucDivCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "jurCapCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "demRendCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "irRetCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   }
                 },
                 "required": [
@@ -18382,27 +18382,27 @@
                   "remTrabCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "lucDivCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "jurCapCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "demRendCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "irRetCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   }
                 },
                 "required": [
@@ -18461,27 +18461,27 @@
         "remTrabCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "lucDivCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "jurCapCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "demRendCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         },
         "irRetCents": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 2147483647
+          "maximum": 8796093022207
         }
       },
       "required": [
@@ -18957,27 +18957,27 @@
                   "remTrabCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "lucDivCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "jurCapCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "demRendCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "irRetCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   }
                 },
                 "required": [
@@ -19064,27 +19064,27 @@
                   "remTrabCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "lucDivCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "jurCapCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "demRendCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   },
                   "irRetCents": {
                     "type": "integer",
                     "minimum": 0,
-                    "maximum": 2147483647
+                    "maximum": 8796093022207
                   }
                 },
                 "required": [

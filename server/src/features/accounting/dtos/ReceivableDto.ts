@@ -35,7 +35,7 @@ const dateOnly = (field: string) =>
  *         description:      { type: string }
  *         issueDate:        { type: string, description: "Data-only YYYY-MM-DD — competência do reconhecimento" }
  *         dueDate:          { type: string, description: "Data-only YYYY-MM-DD — vencimento" }
- *         amountCents:      { type: integer, minimum: 1, maximum: 2147483647, description: "Valor em centavos inteiros. Teto de POLÍTICA (não de persistência — a coluna é BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400. Guarda contra erro de digitação/ordem de grandeza, não limite técnico." }
+ *         amountCents:      { type: integer, minimum: 1, maximum: 8796093022207, description: "Valor em centavos inteiros. Teto de POLÍTICA (não de persistência — a coluna é BigInt desde BE-INCR-MONEY-BIGINT): acima disso a API responde 400. Guarda contra erro de digitação/ordem de grandeza, não limite técnico." }
  *         revenueAccountId: { type: string, description: "Id de uma conta-folha nature=Revenue (contrapartida do reconhecimento)" }
  *         attachmentId:     { type: string, description: "Id de um DocumentAttachment já enviado, anexado ao lançamento de reconhecimento (F4)" }
  */
@@ -65,7 +65,7 @@ export const CreateReceivableSchema = z
  *         unitId:      { type: string }
  *         method:      { type: string, enum: [Cash, Pix, TED, Boleto, ProviderBalance], description: "ProviderBalance (F5 PR-3, P3-9) só na confirmação do F7 — recibo avulso ⇒ 400 provider_balance_requires_payment_account" }
  *         receivedAt:  { type: string, description: "Data-only YYYY-MM-DD — data EFETIVA do crédito bancário (D9), não a data do clique" }
- *         amountCents: { type: integer, minimum: 1, maximum: 2147483647, description: "Valor DESTE recebimento: qualquer parte do saldo em aberto (amountCents − receivedCents), nunca acima dele (BE-INCR-PARTIAL-SETTLEMENT). A checagem contra o saldo vive no serviço (sum-CAS atômico). Teto de POLÍTICA (não de persistência): acima disso a API responde 400." }
+ *         amountCents: { type: integer, minimum: 1, maximum: 8796093022207, description: "Valor DESTE recebimento: qualquer parte do saldo em aberto (amountCents − receivedCents), nunca acima dele (BE-INCR-PARTIAL-SETTLEMENT). A checagem contra o saldo vive no serviço (sum-CAS atômico). Teto de POLÍTICA (não de persistência): acima disso a API responde 400." }
  */
 // "≤ saldo remanescente" vive no serviço (`registerReceipt`) + sum-CAS do repositório — ver PayableDto.
 export const RegisterReceiptSchema = z

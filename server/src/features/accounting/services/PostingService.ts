@@ -277,6 +277,13 @@ export class PostingService {
 
     const sumDebit = input.lines.reduce((acc, line) => acc + line.debitCents, 0);
     const sumCredit = input.lines.reduce((acc, line) => acc + line.creditCents, 0);
+    // F-W2B-2 → (b): o teto por perna é o limite seguro de Number; a SOMA de várias pernas pode passar dele e,
+    // acima de 2^53−1, `+` perde precisão calada e o `!==` abaixo compararia lixo. Recusa alto, com erro de negócio.
+    if (!Number.isSafeInteger(sumDebit) || !Number.isSafeInteger(sumCredit)) {
+      throw new ValidationError(
+        `A soma das partidas excede o limite seguro de centavos (${MAX_CENTS}) — divida o lançamento.`,
+      );
+    }
     if (sumDebit !== sumCredit || sumDebit <= 0) {
       throw new ValidationError('Lançamento desbalanceado: Σdébito deve igualar Σcrédito.');
     }

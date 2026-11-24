@@ -35,8 +35,11 @@ describe('PostingDto — cents Int32 ceiling (ACC-HARDEN-POST-CENTS-001)', () =>
     }
   });
 
-  it('rejects the former ceiling (MAX_SAFE_INTEGER) that used to pass', () => {
-    // Before this fix the cap was Number.MAX_SAFE_INTEGER; that band now fails at the DTO.
+  it('F-W2B-2 → (b): o Int32 deixou de ser o teto — R$ 78 mi numa perna passa no DTO; o teto novo é 2^43−1', () => {
+    // O Int32 (2_147_483_647) deixou de ser o teto em 24/11/2026; a coluna é BigInt (ver models/money.ts).
+    expect(MAX_CENTS).toBe(8_796_093_022_207);
+    expect(PostEntryLineSchema.safeParse(line(7_800_000_000, 0)).success).toBe(true); // R$ 78 mi numa perna
+    expect(PostEntryLineSchema.safeParse(line(2_147_483_648, 0)).success).toBe(true); // 1 centavo acima do antigo teto
     expect(PostEntryLineSchema.safeParse(line(Number.MAX_SAFE_INTEGER, 0)).success).toBe(false);
   });
 
