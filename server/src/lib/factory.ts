@@ -192,7 +192,7 @@ import { FiscalCertificateService } from '../features/accounting/services/Fiscal
 import { resolveUnitCnpjFromUnits, resolveUnitNameFromUnits } from '../features/accounting/services/unitCnpj';
 import { CollectionChargeService } from '../features/accounting/services/CollectionChargeService';
 import { ReleaseReportService } from '../features/accounting/services/ReleaseReportService';
-import { JobWatermarkRepository } from '../jobs/JobWatermarkRepository';
+import { JobWatermarkRepository } from '../jobs/repositories/JobWatermarkRepository';
 import { MercadoPagoCollectionProvider } from '../features/accounting/collection/MercadoPagoCollectionProvider';
 import { TaxAssessmentService } from '../features/accounting/services/TaxAssessmentService';
 import { PresumidoTetoService } from '../features/accounting/services/PresumidoTetoService';
@@ -868,6 +868,7 @@ export class ApplicationFactory {
     dynamicTableVersion: IDynamicTableVersionRepository;
     actionProposal: IActionProposalRepository;
     knowledgeGraph: IKnowledgeGraphRepository;
+    jobWatermark: JobWatermarkRepository; // infra de job (`jobs/repositories/`); o job o pede aqui (regra J1)
     attachment: IAttachmentRepository;
     savedTableView: ISavedTableViewRepository;
     llmCredential: ILlmCredentialRepository; // BE-INCR-TEAMMATES PR-1 (item 7)
@@ -1134,6 +1135,7 @@ export class ApplicationFactory {
       dynamicTableVersion: new DynamicTableVersionRepository(),
       actionProposal: new ActionProposalRepository(),
       knowledgeGraph: new KnowledgeGraphRepository(),
+      jobWatermark: new JobWatermarkRepository(),
       attachment: new AttachmentRepository(),
       savedTableView: new SavedTableViewRepository(),
       llmCredential: new LlmCredentialRepository(),
@@ -1608,7 +1610,7 @@ export class ApplicationFactory {
         if (provider === 'MERCADO_PAGO') return mercadoPagoCollectionProvider;
         throw new Error(`Provedor de cobrança sem adaptador: ${provider}`);
       },
-      new JobWatermarkRepository(),
+      this.repositories.jobWatermark,
       (account) => collectionChargeService.markCredentialInvalid(account),
     );
     const fiscalProfileService = new FiscalProfileService(
@@ -2891,6 +2893,8 @@ export class ApplicationFactory {
   public getUserEmbedder = (): UserEmbedder => this.embedder;
   public getDynamicTableRepository = (): IDynamicTableRepository => this.repositories.dynamicTable;
   public getKnowledgeGraphRepository = (): IKnowledgeGraphRepository => this.repositories.knowledgeGraph;
+  /** Marca d'água por job (`job_watermarks`). Job não importa `repositories/` (regra J1): pede o repositório aqui. */
+  public getJobWatermarkRepository = (): JobWatermarkRepository => this.repositories.jobWatermark;
 }
 
 export function getFactory(): ApplicationFactory {

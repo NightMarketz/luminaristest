@@ -105,7 +105,6 @@ import { ledgerDays, reconcileReceitaFiscalRecebimentos, recebimentoSaleFromRow 
 import type { PackageCreditCommand } from '../features/packages/services/PackageBalanceService';
 import { saleDayAsWritten } from '../features/accounting/models/dates';
 import type { ProductLine } from '../features/accounting/sync/bridges/saleItems';
-import { JobWatermarkRepository } from './JobWatermarkRepository';
 import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
 import type { ReconcilePendingReasonCodeValue } from '../features/accounting/dtos/ReconcilePendingDto';
 import { PACOTES_PRE_PAGOS_CODE } from '../features/accounting/fixtures/ChartOfAccountsFixture';
@@ -1923,7 +1922,7 @@ export async function runAccountingSyncReconcile(): Promise<ReconcileSummary> {
   const sync = factory.getAccountingSyncService();
   const posting = factory.getPostingService();
   const journalRepo = new JournalEntryRepository();
-  const watermarkRepo = new JobWatermarkRepository();
+  const watermarkRepo = factory.getJobWatermarkRepository();
 
   // Everything below is the body of ONE reconciliation round, closed over `updatedAtFrom` (the
   // trailing watermark — see the module docstring and `withReconcileWatermark`). It is invoked

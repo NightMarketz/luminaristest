@@ -39,6 +39,8 @@ jest.mock('../../lib/factory', () => ({
       ),
     }),
     getAccountingSyncService: () => ({ sync: mockSync }),
+    // A marca d'água vem da factory (regra J1: o job não importa `jobs/repositories/`).
+    getJobWatermarkRepository: () => ({ get: jest.fn(async () => null), set: jest.fn(async () => undefined) }),
     getPostingService: () => ({ reverseEntry: jest.fn() }),
     getPackageBalanceService: () => ({ reverseCreditFromSale: async () => 'no_credit' }),
     getInventoryService: () => ({ recordSaleCogs: jest.fn(), reconcileInventory: jest.fn(async () => ({})) }),
@@ -59,9 +61,6 @@ jest.mock('../../features/accounting/repositories/JournalEntryRepository', () =>
 }));
 jest.mock('../../features/packages/repositories/PackageBalanceRepository', () => ({
   PackageBalanceRepository: jest.fn().mockImplementation(() => ({ findMovement: jest.fn(async () => ({ id: 'mv' })) })),
-}));
-jest.mock('../JobWatermarkRepository', () => ({
-  JobWatermarkRepository: jest.fn().mockImplementation(() => ({ get: jest.fn(async () => null), set: jest.fn(async () => undefined) })),
 }));
 jest.mock('../../features/accounting/repositories/ReconcilePendingRepository', () => ({
   ReconcilePendingRepository: jest.fn().mockImplementation(() => ({
