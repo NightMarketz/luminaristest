@@ -6,6 +6,8 @@
  * Os formatos são do guia (PV-2 do RUNBOOK-H2-DFE-MANUAL: o guia dá o tipo do campo, não a máscara — grau INFERIDO).
  */
 
+import { CNPJ_REGEX, CPF_REGEX, stripCnpjMask } from '../../../lib/cnpj';
+
 // atalho: ligar se o runbook mostrar que o portal exige milhar — PV-2
 export const PORTAL_THOUSANDS_SEPARATOR = '';
 
@@ -42,11 +44,11 @@ export function portalPercent(value: string): string {
   return decimal2(value, 'portalPercent');
 }
 
-/** CPF/CNPJ só com dígitos (o portal recebe sem máscara). */
+/** CPF/CNPJ sem máscara (o portal recebe sem máscara). CNPJ alfanumérico (IN RFB 2.229/2024) mantém as letras. */
 export function portalDoc(doc: string): string {
-  const digits = doc.replace(/\D/g, '');
-  if (digits.length !== 11 && digits.length !== 14) throw new Error(`portalDoc: CPF/CNPJ com ${digits.length} dígitos`);
-  return digits;
+  const clean = stripCnpjMask(doc);
+  if (!CPF_REGEX.test(clean) && !CNPJ_REGEX.test(clean)) throw new Error(`portalDoc: CPF/CNPJ com ${clean.length} posições ou formato inválido`);
+  return clean;
 }
 
 /** Código de Tributação Nacional `"010701"` → `"01.07.01"` (G5: o combo do portal o exibe assim). */

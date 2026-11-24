@@ -19,6 +19,15 @@ export const PayerAddressSchema = z
   })
   .strict();
 
+/**
+ * Onda 3.1 (24/11/2026) — `identification.number` do pagador fica NUMÉRICO (CPF 11 / CNPJ 14 dígitos) DE PROPÓSITO.
+ * A documentação do Mercado Pago Developers (payer.identification: `type` CPF|CNPJ, `number` string; exemplos só com CPF)
+ * não declara aceitar CNPJ alfanumérico, e o blog do provedor só diz que o ecossistema "está sendo preparado" (nenhuma
+ * data/contrato de API) — grau: NÃO CONFIRMADO. Mandar letras ao MP sem confirmação trocaria um 400 nosso, claro e
+ * imediato, por uma recusa opaca do provedor depois de o título já estar a cobrar. Reabrir quando o MP publicar o contrato
+ * ou um sandbox aceitar letras: trocar o regex por `CPF_OR_CNPJ_REGEX` de `lib/cnpj.ts` (e o `docTypeFor` do front).
+ * NÃO MEDÍVEL SEM ORÁCULO EXTERNO (sandbox/contrato do MP).
+ */
 export const PayerSchema = z
   .object({
     firstName: z.string().min(1),

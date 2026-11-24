@@ -1622,7 +1622,7 @@
       },
       "empty": "No Parte B account registered.",
       "field": {
-        "cnpjInvalid": "CNPJ has 14 digits.",
+        "cnpjInvalid": "CNPJ has 14 positions (12 letters or digits + 2 digits).",
         "cnpjSitEsp": "Special-situation CNPJ — optional",
         "codCtaB": "Account code (COD_CTA_B)",
         "codCtaBPipe": "The code cannot contain \"|\" — it is the field separator of the SPED file.",
@@ -3845,7 +3845,7 @@
     },
     "field": {
       "nome": "Name",
-      "taxId": "CPF or CNPJ (digits only)",
+      "taxId": "CPF or CNPJ (CNPJ may contain letters)",
       "residencia": "Residence",
       "participacao": "Share of capital (%)",
       "entrada": "Entry",
@@ -3856,7 +3856,7 @@
       "save": "Could not save the partner.",
       "remove": "Could not remove the partner.",
       "nomeObrigatorio": "Enter the partner's name.",
-      "taxIdFormato": "CPF (11 digits) or CNPJ (14 digits), numbers only.",
+      "taxIdFormato": "CPF (11 digits) or CNPJ (14 positions: 12 letters/digits + 2 digits).",
       "participacaoInvalida": "Invalid share: a percentage between 0 and 100.",
       "entradaObrigatoria": "Enter the entry date."
     }

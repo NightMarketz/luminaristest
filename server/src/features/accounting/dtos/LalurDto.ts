@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { MAX_CENTS } from '../models/money';
 import { isValidDateOnly } from '../models/dates';
 import { queryBoolean } from './queryPrimitives';
+import { CNPJ_REGEX } from '../../../lib/cnpj';
 import {
   LALUR_IND_LAN_ANT,
   LALUR_IND_PROC,
@@ -242,7 +243,7 @@ export const ListLalurEntriesQuerySchema = z.object({
  *         codTributo:    { type: string, enum: [I, C], description: "M010.COD_TRIBUTO — I=IRPJ (e-Lalur) · C=CSLL (e-Lacs)" }
  *         saldoIniCents: { type: integer, minimum: 0, description: "M010.VL_SALDO_INI em centavos, sinal em indSaldoIni" }
  *         indSaldoIni:   { type: string, enum: [D, C], description: "M010.IND_VL_SALDO_INI" }
- *         cnpjSitEsp:    { type: string, description: "M010.CNPJ_SIT_ESP — 14 dígitos, opcional" }
+ *         cnpjSitEsp:    { type: string, description: "M010.CNPJ_SIT_ESP — 14 posições (CNPJ alfanumérico), opcional" }
  */
 export const CreateLalurParteBAccountSchema = z
   .object({
@@ -255,7 +256,7 @@ export const CreateLalurParteBAccountSchema = z
     codTributo: z.enum(LALUR_TRIBUTOS),
     saldoIniCents: cents('saldoIniCents'),
     indSaldoIni: z.enum(LALUR_IND_SALDO),
-    cnpjSitEsp: z.string().regex(/^\d{14}$/, 'cnpjSitEsp = 14 dígitos').optional(),
+    cnpjSitEsp: z.string().regex(CNPJ_REGEX, 'cnpjSitEsp = CNPJ de 14 posições [A-Z0-9]{12}[0-9]{2}, sem máscara').optional(),
   })
   .strict();
 
@@ -285,7 +286,7 @@ export const UpdateLalurParteBAccountSchema = z
     dtLimite: dateOnly('dtLimite').nullable().optional(),
     saldoIniCents: cents('saldoIniCents').optional(),
     indSaldoIni: z.enum(LALUR_IND_SALDO).optional(),
-    cnpjSitEsp: z.string().regex(/^\d{14}$/, 'cnpjSitEsp = 14 dígitos').nullable().optional(),
+    cnpjSitEsp: z.string().regex(CNPJ_REGEX, 'cnpjSitEsp = CNPJ de 14 posições [A-Z0-9]{12}[0-9]{2}, sem máscara').nullable().optional(),
   })
   .strict();
 

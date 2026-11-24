@@ -11,6 +11,7 @@ import {
   LalurParteBPeriodSchema,
   LalurProcessoSchema,
   UpdateLalurEntrySchema,
+  UpdateLalurParteBAccountSchema,
   UpdateLalurParteBMovementSchema,
 } from '../LalurDto';
 
@@ -93,6 +94,17 @@ describe('CreateLalurParteBAccountSchema — M010 (p.237)', () => {
     failsOn(CreateLalurParteBAccountSchema, { ...pb, indSaldoIni: 'X' }, 'indSaldoIni');
     failsOn(CreateLalurParteBAccountSchema, { ...pb, cnpjSitEsp: '123' }, 'cnpjSitEsp');
     failsOn(CreateLalurParteBAccountSchema, { ...pb, saldoIniCents: -1 }, 'saldoIniCents');
+  });
+  it('cnpjSitEsp: 14 posições [A-Z0-9]{12}[0-9]{2} (CNPJ alfanumérico, ECF L12 §2.4 CNPJ C 014); letras no DV, minúsculas e máscara → 400', () => {
+    for (const ok of ['11222333000181', '12ABC34501DE35']) {
+      expect(CreateLalurParteBAccountSchema.safeParse({ ...pb, cnpjSitEsp: ok }).success).toBe(true);
+      expect(UpdateLalurParteBAccountSchema.safeParse({ unitId: 'u1', cnpjSitEsp: ok }).success).toBe(true);
+    }
+    expect(UpdateLalurParteBAccountSchema.safeParse({ unitId: 'u1', cnpjSitEsp: null }).success).toBe(true);
+    for (const bad of ['12abc34501de35', '12ABC34501DEA5', '12.ABC.345/01DE-35', '12ABC34501DE3']) {
+      failsOn(CreateLalurParteBAccountSchema, { ...pb, cnpjSitEsp: bad }, 'cnpjSitEsp');
+      failsOn(UpdateLalurParteBAccountSchema, { unitId: 'u1', cnpjSitEsp: bad }, 'cnpjSitEsp');
+    }
   });
 });
 
