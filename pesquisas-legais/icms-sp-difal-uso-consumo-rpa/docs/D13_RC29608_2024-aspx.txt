@@ -1,0 +1,213 @@
+RC 29608/2024 
+
+Você talvez esteja tentando acessar este site de um navegador seguro no servidor. Habilite os scripts e recarregue esta página.
+
+ Ativar o modo mais acessível 
+
+ Desativar o modo mais acessível 
+
+ Comando para Ignorar Faixa de Opções 
+
+ Ir para o conteúdo principal 
+
+ Desligar Animações 
+
+ Ligar Animações 
+
+Hidden 
+
+Parece que seu navegador não possui JavaScript habilitado. Ative o JavaScript e tente novamente.
+
+/governosp 
+
+/governosp 
+
+ Seu navegador não tem suporte a JavaScript ou está desativado! 
+
+ Você está em: Skip Navigation LinksLegislação > RC 29608/2024 
+
+ Pesquisa de Opinião 
+
+ Hidden 
+
+ > 
+
+ Compartilhar: 
+
+ Cancelar OK 
+
+Compartilhar Caderno .
+
+ Compartilhar: 
+
+ Cancelar OK 
+
+ Busca Avançada 
+
+ Atos Publicados recentemente 
+
+ Ato Data Publicação 
+
+ + Veja mais 
+
+ Atos mais consultados 
+
+ Ato Visualizações 
+
+ + Veja mais 
+
+ RCs Publicados recentemente 
+
+ Ato Data Publicação 
+
+ + Veja mais 
+
+ Indivídual 
+
+ Caderno
+
+ Audio do Texto 
+
+ Notas 
+
+Redações anteriores
+
+ Imprimir 
+
+ Grupo 
+
+ Anexos 
+
+ Novo Ato 
+
+ Nome 
+
+ RC 29608/2024 
+
+ Tipo 
+
+ Subtipo 
+
+ Respostas de Consultas 
+
+ Nº do Ato 
+
+ Data do Ato 
+
+ Data da Publicação 
+
+ 29.608 
+
+ 19/04/2024 
+
+ 22/04/2024 
+
+ Data de Republicação 
+
+ Data da Revogação 
+
+ Envio Informativo 
+
+ Destaques do DOE 
+
+ Ato Anterior 
+
+ Ato Posterior 
+
+ Ano da Formulação 
+
+ 2.024 
+
+ ICMS 
+
+ Substituição tributária 
+
+ Base de cálculo 
+
+ Ementa 
+
+ <div class='sefazElement-EmentaRC'><p>ICMS – Substituição tributária – Operação interestadual com bens e mercadorias destinados ao uso, consumo ou ativo imobilizado de adquirente contribuinte paulista – Diferencial de alíquotas – Convênio ICMS 142/2018.</p>
+
+<p>I. Na hipótese de haver acordo de substituição tributária entre os Estados, cabe ao remetente a responsabilidade pelo recolhimento do imposto devido relativo à diferença entre a alíquota interna e a interestadual, devido na entrada decorrente de operação interestadual, em estabelecimento de contribuinte, de mercadoria destinada a uso, consumo ou ativo permanente.</p>
+
+<p>II. Na operação interestadual com bens e mercadorias submetidos ao regime de substituição tributária, destinados a uso, consumo ou ativo imobilizado de adquirente contribuinte paulista, a base de cálculo do imposto devido será o valor da operação interestadual adicionado do imposto correspondente à diferença entre a alíquota interna a consumidor final estabelecida na unidade federada de destino para o bem ou a mercadoria e a alíquota interestadual, nos termos estabelecidos pela cláusula décima segunda do Convênio ICMS 142/2018.</p></div> 
+
+ Observação 
+
+ 200 caracteres restantes. 
+
+ Conteúdo 
+
+ Última atualização em: 23/04/2024 04:00 
+
+Conteúdo da Página
+
+RESPOSTA À CONSULTA TRIBUTÁRIA 29608/2024, de 19 de abril de 2024.
+
+Publicada no Diário Eletrônico em 22/04/2024
+
+Ementa
+
+ICMS – Substituição tributária – Operação interestadual com bens e mercadorias destinados ao uso, consumo ou ativo imobilizado de adquirente contribuinte paulista – Diferencial de alíquotas – Convênio ICMS 142/2018.
+
+I. Na hipótese de haver acordo de substituição tributária entre os Estados, cabe ao remetente a responsabilidade pelo recolhimento do imposto devido relativo à diferença entre a alíquota interna e a interestadual, devido na entrada decorrente de operação interestadual, em estabelecimento de contribuinte, de mercadoria destinada a uso, consumo ou ativo permanente.
+
+II. Na operação interestadual com bens e mercadorias submetidos ao regime de substituição tributária, destinados a uso, consumo ou ativo imobilizado de adquirente contribuinte paulista, a base de cálculo do imposto devido será o valor da operação interestadual adicionado do imposto correspondente à diferença entre a alíquota interna a consumidor final estabelecida na unidade federada de destino para o bem ou a mercadoria e a alíquota interestadual, nos termos estabelecidos pela cláusula décima segunda do Convênio ICMS 142/2018.
+
+Relato
+
+1. A Consulente, localizada no Estado do Rio Grande do Sul e cuja atividade principal registrada no Cadastro de Contribuintes do Estado de São Paulo (CADESP) é a fabricação de pneumáticos e de câmaras-de-ar (CNAE 22.11-1/00), por meio de sua matriz, informa possuir dúvida na operação de venda de mercadorias classificadas no código 4011.20.90 da Nomenclatura Comum do Mercosul (NCM) e no Código Especificador da Substituição Tributária (CEST) 16.002.00, para contribuintes paulistas que irão utilizá-las para uso ou consumo.
+
+2. Após transcrever a cláusula décima segunda do Convênio ICMS 142/2018 e o artigo 24, §8º, item 1, alínea “b”, da Lei 6.374/1989, alega que ambas as legislações dispõem acerca da necessidade do chamado cálculo por dentro do DIFAL-ST, com a diferença de que o Convênio ICMS 142/2018 é específico para operações sujeitas ao regime da substituição tributária (DIFAL-ST), enquanto a hipótese do artigo 24, § 8°, da Lei 6.374/1989 versa sobre o DIFAL na aquisição de mercadorias por consumidor final contribuinte do ICMS não necessariamente sujeitas ao regime da substituição tributária.
+
+3. Por fim, questiona como deve calcular o DIFAL-ST, se deve aplicar a base de cálculo prevista no Convênio ICMS 142/2018 ou se deve aplicar a base de cálculo prevista na Lei 6.374/1989. E ainda solicita demonstração do cálculo.
+
+Interpretação
+
+4. Inicialmente, tendo em vista que a Consulente não informa a descrição detalhada das mercadorias objeto da dúvida apresentada, limitando-se a informar que tais mercadorias estão classificadas no CEST 16.002.00, informa-se que esta resposta será dada em tese, partindo-se da premissa de que as mercadorias que comercializa estão, de fato, sujeita ao ICMS-ST no Estado de São Paulo, sendo a retenção do imposto devido de responsabilidade da Consulente (remetente), em razão do Convênio ICMS 102/2017 que dispõe sobre a substituição tributária nas operações com pneumáticos, câmaras de ar e protetores de borracha relacionados no Anexo XVI do Convênio ICMS 142/2018, bem como, dada a natureza da dúvida apresentada, de que a alíquota interna aplicável neste Estado é maior do que a alíquota interestadual utilizada.
+
+5. Posto isso, cumpre ressaltar que, de acordo com o artigo 2º, inciso VI, do RICMS/2000, ocorre o fato gerador do imposto na entrada em estabelecimento de contribuinte de mercadoria oriunda de outro Estado ou do Distrito Federal destinada a consumo ou ao ativo permanente.
+
+6. O § 5º do artigo 2º do RICMS/2000, em consonância com o disposto no artigo 155, §2º, incisos VII e VIII, “a”, da Constituição Federal, estabelece que será devido a este Estado o imposto correspondente à diferença entre a alíquota interna e a alíquota interestadual.
+
+7. Diante disso, fica claro que o contribuinte paulista, ao adquirir, em operações interestaduais, mercadorias destinadas a uso e consumo ou a ativo imobilizado de seu estabelecimento, deve recolher o imposto correspondente à diferença entre a alíquota interna e a interestadual.
+
+8. Todavia, na hipótese de entrada decorrente de operação interestadual, em estabelecimento de contribuinte, de mercadoria destinada a uso, consumo ou ativo permanente de pneumáticos, câmaras de ar e protetores de borracha relacionados no Anexo XVI do Convênio ICMS 142/2018, entre os Estados de Rio Grande do Sul e São Paulo, conforme Convênio ICMS 102/2017, em relação aos produtos nele arrolados, cabe ao remetente a responsabilidade pelo recolhimento do imposto devido relativo à diferença entre a alíquota interna e a interestadual, sendo a base de cálculo o valor da operação interestadual adicionado do imposto correspondente à diferença entre a alíquota interna a consumidor final estabelecida na unidade federada de destino para o bem ou a mercadoria e a alíquota interestadual, nos termos estabelecidos pela cláusula décima segunda do Convênio ICMS-142/2018.
+
+9. Nesse ponto, sobre a base de cálculo, deve-se esclarecer que a Lei 17.470/2021 promoveu alterações nos dispositivos da Lei 6.374/1989 que estabelecem a base de cálculo da parcela referente ao diferencial de alíquotas devido em operações entre contribuintes (relativo a aquisições interestaduais de material de uso e consumo e de bens destinados ao ativo imobilizado por consumidor final). Conforme o texto anterior do inciso VI do artigo 24 da Lei 6.374/1989, a base de cálculo era o valor sujeito ao imposto na UF de origem.
+
+10. Porém, com a modificação introduzida pela Lei 17.470/2021, a base de cálculo passou a ser o valor sujeito ao imposto neste Estado (destino).
+
+11. Desse modo, uma vez determinada a base de cálculo da parcela referente ao diferencial de alíquotas devido em operações entre contribuintes com base na alíquota interna da UF de destino, deve-se apurar essa parcela do imposto multiplicando-se essa base de cálculo pela alíquota interna da UF de destino e subtraindo-se desse valor o imposto cobrado pela UF de origem. A sistemática dessa apuração, quanto aos deveres instrumentais, está regulada no artigo 117 do RICMS/2000.
+
+12. Quanto à ressalva feita pela Consulente sobre a diferenciação entre as bases de cálculo apresentadas na legislação paulista e no Convênio ICMS 142/2018, vale destacar que, mesmo antes da edição da Lei 17.470/2021 e, nos casos em que a responsabilidade pelo recolhimento da parcela referente ao diferencial de alíquotas ficava atribuída ao remetente da mercadoria localizado em outra UF, já existia previsão em convênio de que a base de cálculo dessa parcela do imposto incluísse o próprio DIFAL “por dentro”, nas operações que envolvessem mercadorias sujeitas ao regime da substituição tributária (conforme Convênio ICMS 52/2017, cláusula décima segunda a décima quarta e Convênio ICMS 142/2018, cláusula décima segunda), cabendo ressaltar que o enunciado destas cláusulas relativos a base de cálculo dessa parcela do imposto é idêntica em ambos os convênios.
+
+13. Por fim, em relação ao exemplo de cálculo solicitado, ressaltamos que o instituto da consulta serve exclusivamente para o contribuinte esclarecer dúvidas pontuais sobre interpretação da legislação tributária estadual paulista, não sendo competência deste órgão consultivo exemplificar o cálculo do imposto devido.
+
+A Resposta à Consulta Tributária aproveita ao consulente nos termos da legislação vigente. Deve-se atentar para eventuais alterações da legislação tributária.
+
+Comentário
+
+ Gravar Comentário Cancelar 
+
+ Localize Nossas Unidades 
+
+ Buscar 
+
+ Hidden 
+
+ Secretaria da Fazenda e Planejamento do Estado de São Paulo - Av. Rangel Pestana, 300 - São Paulo / SP - 01017-911 – CNPJ: 46.377.222/0001-29 - Fale Conosco: 0800-170110 Política de Privacidade Termos de Uso | Versão 1.0.124.0 
+
+ Governo do Estado de São Paulo Fazenda e Planejamento 
+
+ hidden 
+
+Parece que seu navegador não possui JavaScript habilitado. Ative o JavaScript e tente novamente.
+
+ Ouvidoria 
+
+ Transparência 
+
+ SIC 
+
+Versão 1.0.124.0

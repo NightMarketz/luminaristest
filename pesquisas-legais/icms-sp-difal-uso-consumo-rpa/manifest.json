@@ -272,6 +272,86 @@
         },
         "tipo": "IGUAL"
       }
+    },
+    {
+      "id": "D13",
+      "titulo": "RC 29608/2024",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/RC29608_2024.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/RC29608_2024.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T02:32:59-03:00",
+      "sha256": "5fcc36d267dc511eca9a76d6d45350c01c65c292bb980b57eb325d889fb8b246",
+      "arquivo": "docs/D13_RC29608_2024-aspx.html",
+      "texto": "docs/D13_RC29608_2024-aspx.txt",
+      "bytes": 159515,
+      "sha256_texto": "fd1f6a1b86520a9222fa32fa8199e2cae9408639255a03819a6a11c1719d838c",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D14",
+      "titulo": "RC 29830/2024",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/RC29830_2024.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/RC29830_2024.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T02:33:00-03:00",
+      "sha256": "359a0d460bb3c4ccd1101663e68a78704f7845fa83b33b567eabdafb428839bd",
+      "arquivo": "docs/D14_RC29830_2024-aspx.html",
+      "texto": "docs/D14_RC29830_2024-aspx.txt",
+      "bytes": 155803,
+      "sha256_texto": "f4706fe9eb818df5ed725d6171b7a88eca74f38ac94485b59e5f4c068c18b4d8",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D15",
+      "titulo": "RC 25980/2022",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/RC25980_2022.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/RC25980_2022.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T02:33:00-03:00",
+      "sha256": "691c3f9bf527f2078c8a277139f1a2212956a6e830ac34b7be6c6b76c6151c15",
+      "arquivo": "docs/D15_RC25980_2022-aspx.html",
+      "texto": "docs/D15_RC25980_2022-aspx.txt",
+      "bytes": 154987,
+      "sha256_texto": "d54a7e4342934ae78d2f04fdb801e0d5e7df73cc32a6cb0bb3c8ed1d7e64193d",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D16",
+      "titulo": "RC 27026/2023",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/RC27026_2023.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/RC27026_2023.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T02:33:01-03:00",
+      "sha256": "0846c14f67acd8a117a5a530d19c24531d0d35cc3a32fcc7be3c2a8df615fc5a",
+      "arquivo": "docs/D16_RC27026_2023-aspx.html",
+      "texto": "docs/D16_RC27026_2023-aspx.txt",
+      "bytes": 161037,
+      "sha256_texto": "a3d77518de1acb0cb8b65f0e283c620576df7412760b895326faff8bc9de675e",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D17",
+      "titulo": "CONVÊNIO ICMS 236/21 — Conselho Nacional de Política Fazendária CONFAZ",
+      "url": "https://www.confaz.fazenda.gov.br/legislacao/convenios/2021/CV236_21",
+      "url_final": "https://www.confaz.fazenda.gov.br/legislacao/convenios/2021/CV236_21",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T02:33:38-03:00",
+      "sha256": "64d5681c928d83f2ab6b7eb5627f11d1978a612c1eaa7ed14728a9f0132151e0",
+      "arquivo": "docs/D17_CV236_21.html",
+      "texto": "docs/D17_CV236_21.txt",
+      "bytes": 177492,
+      "sha256_texto": "764899365461f29a3eaab8b0b1c0926232188c2ebe25633b3cc9d8cffe978223",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
     }
   ],
   "buscas": [],

@@ -165,6 +165,79 @@
         },
         "tipo": "IGUAL"
       }
+    },
+    {
+      "id": "D09",
+      "titulo": "Instrução Normativa RFB nº 2305, de 31 de dezembro de 2025",
+      "url": "rfb:148694",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/148694/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/148694/visao/multivigente",
+      "id_normativo": "rfb:148694",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-24T02:30:26-03:00",
+      "sha256": "57a65c4eab5d582851f574e8c3c4b7a6afe7cc360321c3b2e8f5171548d23c6a",
+      "arquivo": "docs/D09_rfb-148694-multivigente.json",
+      "texto": "docs/D09_rfb-148694-multivigente.txt",
+      "bytes": 339538,
+      "sha256_texto": "2708064f08b56a43a530fd5a5908058dc9b0d61adf90d1e9af411c78a5c16e4e",
+      "anexos": [
+        {
+          "nome": "Anexo Único.htm (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/148694/anexo/82432"
+        },
+        {
+          "nome": "Anexo Unico.htm",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/148694/anexo/82996"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "lc224-sobra-limite",
+          "id": "D02",
+          "baixado_em": "2026-11-03T19:22:37-03:00",
+          "sha256_texto": "2708064f08b56a43a530fd5a5908058dc9b0d61adf90d1e9af411c78a5c16e4e"
+        },
+        "tipo": "IGUAL"
+      },
+      "alertas": [
+        "2 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D10",
+      "titulo": "D10_82996",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/148694/anexo/82996",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/148694/anexo/82996",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T02:30:40-03:00",
+      "sha256": "5296e0adbd52b098844aeea14dc988511b3442344d1c01d6288bc1672141f704",
+      "arquivo": "docs/D10_82996.html",
+      "texto": "docs/D10_82996.txt",
+      "bytes": 137984,
+      "sha256_texto": "bbcbaac538a0a03a40eb182590d667528a371137fbbfe3b8c08edc70b38bf9c5",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D11",
+      "titulo": "Portaria MF nº 3278, de 31 de dezembro de 2025",
+      "url": "rfb:148711",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/148711/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/148711/visao/multivigente",
+      "id_normativo": "rfb:148711",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-24T02:32:33-03:00",
+      "sha256": "4ec2da0e17903240abc50e223489b6819d11376242aad6861800a2eabbc1e416",
+      "arquivo": "docs/D11_rfb-148711-multivigente.json",
+      "texto": "docs/D11_rfb-148711-multivigente.txt",
+      "bytes": 36522,
+      "sha256_texto": "e1b6bede846f0f905f813c2109be9905f70fd979e3524bf852d9e1249b246992",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
     }
   ],
   "buscas": [],

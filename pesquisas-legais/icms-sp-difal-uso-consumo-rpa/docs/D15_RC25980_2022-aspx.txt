@@ -1,0 +1,207 @@
+RC 25980/2022 
+
+Você talvez esteja tentando acessar este site de um navegador seguro no servidor. Habilite os scripts e recarregue esta página.
+
+ Ativar o modo mais acessível 
+
+ Desativar o modo mais acessível 
+
+ Comando para Ignorar Faixa de Opções 
+
+ Ir para o conteúdo principal 
+
+ Desligar Animações 
+
+ Ligar Animações 
+
+Hidden 
+
+Parece que seu navegador não possui JavaScript habilitado. Ative o JavaScript e tente novamente.
+
+/governosp 
+
+/governosp 
+
+ Seu navegador não tem suporte a JavaScript ou está desativado! 
+
+ Você está em: Skip Navigation LinksLegislação > RC 25980/2022 
+
+ Pesquisa de Opinião 
+
+ Hidden 
+
+ > 
+
+ Compartilhar: 
+
+ Cancelar OK 
+
+Compartilhar Caderno .
+
+ Compartilhar: 
+
+ Cancelar OK 
+
+ Busca Avançada 
+
+ Atos Publicados recentemente 
+
+ Ato Data Publicação 
+
+ + Veja mais 
+
+ Atos mais consultados 
+
+ Ato Visualizações 
+
+ + Veja mais 
+
+ RCs Publicados recentemente 
+
+ Ato Data Publicação 
+
+ + Veja mais 
+
+ Indivídual 
+
+ Caderno
+
+ Audio do Texto 
+
+ Notas 
+
+Redações anteriores
+
+ Imprimir 
+
+ Grupo 
+
+ Anexos 
+
+ Novo Ato 
+
+ Nome 
+
+ RC 25980/2022 
+
+ Tipo 
+
+ Subtipo 
+
+ Respostas de Consultas 
+
+ Nº do Ato 
+
+ Data do Ato 
+
+ Data da Publicação 
+
+ 25.980 
+
+ 22/07/2022 
+
+ 25/07/2022 
+
+ Data de Republicação 
+
+ Data da Revogação 
+
+ Envio Informativo 
+
+ Destaques do DOE 
+
+ Ato Anterior 
+
+ Ato Posterior 
+
+ Ano da Formulação 
+
+ 2.022 
+
+ ICMS 
+
+ Apuração do imposto 
+
+ DIFAL 
+
+ Ementa 
+
+ <div class='sefazElement-EmentaRC'><p>ICMS – Diferencial de alíquotas – Aquisição interestadual de mercadorias por contribuinte optante pelo Simples Nacional.</p>
+
+<p></p>
+
+<p>I. O cálculo do diferencial de alíquotas devido pelos contribuintes optantes pelo Simples Nacional deve ser efetuado sem a inclusão do montante do ICMS devido ao Estado de destino na sua própria base de cálculo, não importando a destinação da mercadoria adquirida (comercialização, industrialização, uso, consumo ou integração ao Ativo Imobilizado).</p></div> 
+
+ Observação 
+
+ 200 caracteres restantes. 
+
+ Conteúdo 
+
+ Última atualização em: 26/07/2022 04:00 
+
+Conteúdo da Página
+
+RESPOSTA À CONSULTA TRIBUTÁRIA 25980/2022, de 22 de julho de 2022.
+
+Publicada no Diário Eletrônico em 25/07/2022
+
+Ementa
+
+ICMS – Diferencial de alíquotas – Aquisição interestadual de mercadorias por contribuinte optante pelo Simples Nacional.
+
+I. O cálculo do diferencial de alíquotas devido pelos contribuintes optantes pelo Simples Nacional deve ser efetuado sem a inclusão do montante do ICMS devido ao Estado de destino na sua própria base de cálculo, não importando a destinação da mercadoria adquirida (comercialização, industrialização, uso, consumo ou integração ao Ativo Imobilizado).
+
+Relato
+
+1. A Consulente, optante pelo Simples Nacional, exerce a atividade principal de “Fabricação de instrumentos não-eletrônicos e utensílios para uso médico, cirúrgico, odontológico e de laboratório” (CNAE32.50-7/01) e a atividade secundária de ”Fabricação de aparelhos eletromédicos e eletroterapêuticos e equipamentos de irradiação” (CNAE 26.60-4/00).
+
+2. Relata que fabrica produtos para uso médico e adquiriu a mercadoria “contato elétrico tungstênio” classificada no código 8101.99.10 da Nomenclatura Comum do Mercosul (NCM), de origem nacional, para uso e consumo, oriunda do Estado de Santa Catarina.
+
+3. Ao final, questiona se a alteração da base de cálculo estabelecida no Decreto 66.559/2022 (base dupla) também se aplica às empresas optantes pelo Simples Nacional.
+
+Interpretação
+
+4. Inicialmente, observamos que a Consulente não trouxe maiores detalhes da descrição da mercadoria, então, para fins da presente resposta, partiremos do pressuposto de que as operações com o “contato elétrico tungstênio”, classificado no código 8101.99.10 da NCM não estão sujeitas ao regime de substituição tributária neste Estado, bem como de que a alíquota interna aplicável é maior do que a alíquota interestadual utilizada.
+
+5. Posto isso, esclarecemos que, de acordo com a alínea “h” do inciso XIII do §1º do artigo 13 da Lei Complementar nº 123/2006 e com o §5º do mesmo artigo, o regime do Simples Nacional não exclui a incidência do ICMS correspondente à diferença entre a alíquota interna e a interestadual na entrada de mercadoria não sujeita ao regime de antecipação do recolhimento do imposto proveniente de outro Estado ou do Distrito Federal, tomando-se por base as alíquotas aplicáveis às pessoas jurídicas não optantes pelo Simples Nacional.
+
+6. No Estado de São Paulo, entende-se que, no que tange aos contribuintes optantes pelo Simples Nacional, tanto o diferencial de alíquotas relativo à aquisição interestadual de material de uso e consumo ou bem do Ativo Imobilizado quanto a equalização devida na entrada interestadual de mercadoria destinada à industrialização ou à comercialização estão disciplinados pelo inciso XVI e § 6º do artigo 2º, bem como pela alínea “a” do inciso XV-A e § 8º do artigo 115, ambos do RICMS/2000.
+
+7. Assim, o contribuinte paulista optante pelo Simples Nacional que promover a entrada de mercadoria destinada à industrialização, comercialização, material de uso e consumo ou bem do Ativo Imobilizado, proveniente de contribuinte do ICMS optante ou não optante pelo Simples Nacional situado em outra unidade da Federação, deverá recolher mediante guia de recolhimentos especiais, até o último dia do segundo mês subsequente ao da entrada, o valor equivalente à multiplicação do percentual correspondente à diferença entre a alíquota interna e a interestadual (4% ou 12%, conforme o caso) pela base de cálculo, quando a alíquota interestadual for inferior à interna.
+
+7.1. Destaque-se que tais dispositivos têm sido interpretados de modo a não requerer a inclusão do montante do imposto devido ao Estado de destino na sua própria base de cálculo.
+
+8. Além disso, a nova redação do artigo 49 do RICMS/2000 não incluiu de forma expressa o inciso XVI do artigo 2º entre os fatos geradores nos quais o montante do imposto integra a sua própria base de cálculo.
+
+9. Diante disso, o cálculo do diferencial de alíquotas devido pelos contribuintes optantes pelo Simples Nacional, que é o caso da Consulente, é efetuado sem a inclusão do montante do ICMS devido ao Estado de destino na sua própria base de cálculo, não importando a destinação da mercadoria adquirida (comercialização, industrialização, uso/consumo ou integração ao Ativo Imobilizado).
+
+10. Assim, consideramos dirimida a dúvida apresentada pela Consulente.
+
+A Resposta à Consulta Tributária aproveita ao consulente nos termos da legislação vigente. Deve-se atentar para eventuais alterações da legislação tributária.
+
+Comentário
+
+ Gravar Comentário Cancelar 
+
+ Localize Nossas Unidades 
+
+ Buscar 
+
+ Hidden 
+
+ Secretaria da Fazenda e Planejamento do Estado de São Paulo - Av. Rangel Pestana, 300 - São Paulo / SP - 01017-911 – CNPJ: 46.377.222/0001-29 - Fale Conosco: 0800-170110 Política de Privacidade Termos de Uso | Versão 1.0.124.0 
+
+ Governo do Estado de São Paulo Fazenda e Planejamento 
+
+ hidden 
+
+Parece que seu navegador não possui JavaScript habilitado. Ative o JavaScript e tente novamente.
+
+ Ouvidoria 
+
+ Transparência 
+
+ SIC 
+
+Versão 1.0.124.0

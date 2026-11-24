@@ -1,0 +1,221 @@
+RC 27026/2023 
+
+Você talvez esteja tentando acessar este site de um navegador seguro no servidor. Habilite os scripts e recarregue esta página.
+
+ Ativar o modo mais acessível 
+
+ Desativar o modo mais acessível 
+
+ Comando para Ignorar Faixa de Opções 
+
+ Ir para o conteúdo principal 
+
+ Desligar Animações 
+
+ Ligar Animações 
+
+Hidden 
+
+Parece que seu navegador não possui JavaScript habilitado. Ative o JavaScript e tente novamente.
+
+/governosp 
+
+/governosp 
+
+ Seu navegador não tem suporte a JavaScript ou está desativado! 
+
+ Você está em: Skip Navigation LinksLegislação > RC 27026/2023 
+
+ Pesquisa de Opinião 
+
+ Hidden 
+
+ > 
+
+ Compartilhar: 
+
+ Cancelar OK 
+
+Compartilhar Caderno .
+
+ Compartilhar: 
+
+ Cancelar OK 
+
+ Busca Avançada 
+
+ Atos Publicados recentemente 
+
+ Ato Data Publicação 
+
+ + Veja mais 
+
+ Atos mais consultados 
+
+ Ato Visualizações 
+
+ + Veja mais 
+
+ RCs Publicados recentemente 
+
+ Ato Data Publicação 
+
+ + Veja mais 
+
+ Indivídual 
+
+ Caderno
+
+ Audio do Texto 
+
+ Notas 
+
+Redações anteriores
+
+ Imprimir 
+
+ Grupo 
+
+ Anexos 
+
+ Novo Ato 
+
+ Nome 
+
+ RC 27026/2023 
+
+ Tipo 
+
+ Subtipo 
+
+ Respostas de Consultas 
+
+ Nº do Ato 
+
+ Data do Ato 
+
+ Data da Publicação 
+
+ 27.026 
+
+ 27/01/2023 
+
+ 30/01/2023 
+
+ Data de Republicação 
+
+ Data da Revogação 
+
+ Envio Informativo 
+
+ Destaques do DOE 
+
+ Ato Anterior 
+
+ Ato Posterior 
+
+ Ano da Formulação 
+
+ 2.023 
+
+ ICMS 
+
+ Apuração do imposto; Substituição tributária 
+
+ DIFAL; Recolhimento - prazo e forma 
+
+ Ementa 
+
+ <div class='sefazElement-EmentaRC'><p>ICMS - Diferencial de alíquotas - Aquisição de mercadorias submetidas ao regime de substituição tributária destinadas ao uso, consumo ou para integração no ativo imobilizado por contribuinte paulista.</p>
+
+<p></p>
+
+<p>I. A aquisição interestadual com destino ao uso, consumo ou à integração no ativo imobilizado de contribuinte paulista, de mercadorias arroladas na Portaria CAT 68/2019, oriundas de fornecedor localizado em Estado que não possui acordo de substituição tributária com o Estado de São Paulo em relação a operações com essas mercadorias, gera ao adquirente a obrigação de recolher a diferença entre o valor do imposto decorrente da aplicação da alíquota interna sobre a base de cálculo correspondente à operação de aquisição e o valor do imposto pago ao outro Estado, em conformidade com a cláusula décima segunda do Convênio ICMS 142/2018 e na forma prevista no artigo 117 do RICMS/2000.</p></div> 
+
+ Observação 
+
+ 200 caracteres restantes. 
+
+ Conteúdo 
+
+ Última atualização em: 31/01/2023 04:00 
+
+Conteúdo da Página
+
+RESPOSTA À CONSULTA TRIBUTÁRIA 27026/2023, de 27 de janeiro de 2023.
+
+Publicada no Diário Eletrônico em 30/01/2023
+
+Ementa
+
+ICMS - Diferencial de alíquotas - Aquisição de mercadorias submetidas ao regime de substituição tributária destinadas ao uso, consumo ou para integração no ativo imobilizado por contribuinte paulista.
+
+I. A aquisição interestadual com destino ao uso, consumo ou à integração no ativo imobilizado de contribuinte paulista, de mercadorias arroladas na Portaria CAT 68/2019, oriundas de fornecedor localizado em Estado que não possui acordo de substituição tributária com o Estado de São Paulo em relação a operações com essas mercadorias, gera ao adquirente a obrigação de recolher a diferença entre o valor do imposto decorrente da aplicação da alíquota interna sobre a base de cálculo correspondente à operação de aquisição e o valor do imposto pago ao outro Estado, em conformidade com a cláusula décima segunda do Convênio ICMS 142/2018 e na forma prevista no artigo 117 do RICMS/2000.
+
+Relato
+
+1. A Consulente, que tem como atividade principal a produção de sementes certificadas de forrageiras para formação de pasto (CNAE 01.41-5/02), e como atividade secundária o comércio atacadista de sementes, flores, plantas e gramas (CNAE 46.23-1/06), relata que adquire de fornecedor optante pelo Simples Nacional, localizado no Estado de Minas Gerais, a mercadoria “pá para hélice de ventilador”, classificada no código 8414.90.20 da Nomenclatura Comum do Mercosul (NCM).
+
+2. Alega que, com fundamento no parágrafo único da cláusula primeira do Protocolo ICMS 159/2009, o estabelecimento remetente localizado no Estado de Minas Gerais deveria recolher antecipadamente o diferencial entre a alíquota interna a consumidor final estabelecida na unidade federada de destino para o bem ou a mercadoria e a alíquota interestadual (ICMS-ST DIFAL), mas que este recolhimento não foi realizado, nem foi destacado nos devidos documentos fiscais, embora tenha infrutiferamente entrado em contato com o fornecedor para regularizar as operações.
+
+3. Questiona sobre qual o procedimento a ser adotado a fim de regularizar a situação. Sobre a necessidade de recolher o ICMS-ST DIFAL em guia separada em substituição ao fornecedor. Se a guia de recolhimento deve sair em nome da Consulente ou do fornecedor com acréscimo de juros e multa. E se deverá utilizar o CFOP 6407 com CST 010 ou 060, ou o CFOP 2556 com CST 090.
+
+4. Por fim, questiona, na hipótese de não ser o ICMS-ST DIFAL, se deve recolher o DIFAL normalmente em sua conta gráfica do ICMS lançando na escrita fiscal.
+
+Interpretação
+
+5. Preliminarmente, saliente-se que a classificação das mercadorias segundo a Nomenclatura Comum do Mercosul (NCM) é de responsabilidade do contribuinte e de competência da Secretaria Especial da Receita Federal do Brasil (RFB). Logo, a resposta aqui formulada tem como pressuposto que a classificação apresentada pela Consulente está correta. No caso de dúvida sobre a classificação fiscal de mercadorias, sugere-se que a Consulente entre em contato com esse órgão federal para confirmação da classificação fiscal.
+
+6. Quanto à operação objeto da presente consulta, verifica-se que a mercadoria “pá para hélice de ventilador”, classificada pela Consulente no código 8414.90.20 da NCM, não mais é listada no Protocolo ICMS 159/2009 desde a publicação do Protocolo ICMS 25/2015, que alterou o referido Protocolo ICMS 159/2009, retirando de seu Anexo Única diversas mercadorias, entre elas – e especificamente - o item 3 – NCM 8414.90.20 – “Partes de ventiladores ou coifas aspirantes”.
+
+7. No entanto, essa mesma mercadoria está, em princípio, listada no item 91, do Anexo XXII da Portaria CAT 68/2019, o qual indica o código da NCM 8414.90.20 e a descrição “partes de ventiladores ou coifas aspirantes”, bem como no item 91 do Anexo XX do Convênio ICMS 142/2018.
+
+8. Logo, e partindo-se do princípio de que essa mercadoria se enquadra no código NCM e na descrição contidas na Portaria CAT 68/2019 e no Convênio ICMS 142/2018, tem-se que as operações que destinem essas mercadorias ao Estado de São Paulo estão sujeitas ao regime da substituição tributária com retenção antecipada do ICMS.
+
+9. Dessa forma, como essa mercadoria não está abrangida por acordo específico celebrado pelos Estados de São Paulo e Minas Gerais, e em conformidade com o Artigo 313-Z19 do RICMS/2000, nas operações destinadas a estabelecimento localizado em território paulista, fica atribuída a responsabilidade pela retenção e pelo pagamento do imposto incidente nas saídas subsequentes ao estabelecimento da Consulente, que deverá efetuar antecipadamente o recolhimento conforme previsto no artigo 426-A do RICMS/2000.
+
+10. Quanto aos questionamentos relativos ao diferencial de alíquota, de acordo com o artigo 2º, inciso VI, do RICMS/2000, ocorre o fato gerador do imposto na entrada em estabelecimento de contribuinte de mercadoria oriunda de outro Estado ou do Distrito Federal destinada a consumo ou ao ativo permanente, devendo ser recolhido a este Estado o imposto correspondente à diferença entre a alíquota interna e a alíquota interestadual, conforme estabelecido no parágrafo 5º do referido artigo 2º.
+
+11. Nesse aspecto, vale elucidar que o artigo 66, inciso V, do RICMS/2000 estabelece que a mercadoria entrada ou adquirida para uso ou consumo do próprio estabelecimento é entendida como a que “não for utilizada na comercialização ou a que não for empregada para integração no produto ou para consumo no respectivo processo de industrialização ou produção rural, ou, ainda, na prestação de serviço sujeita ao imposto”.
+
+12. Fica, pois, claro que o contribuinte paulista, ao adquirir em operações interestaduais mercadorias destinadas a uso e consumo ou a ativo imobilizado de seu estabelecimento, deve recolher o imposto correspondente à diferença entre a alíquota interna e a interestadual.
+
+13. Dessa forma, a aquisição de mercadorias oriundas de outro Estado com destino ao uso e consumo ou ao ativo imobilizado de contribuinte paulista, e que não esteja vinculada a operação subsequente alcançada pela incidência do imposto, gera ao adquirente a obrigação de recolher a diferença entre o valor do imposto decorrente da aplicação da alíquota interna sobre a base de cálculo correspondente à operação de aquisição e o valor do imposto pago ao outro Estado, em princípio, na forma prevista no artigo 117 do RICMS/2000.
+
+14. Informe-se que, nesta hipótese, a apuração do imposto deve ser realizada mensalmente, devendo os valores das operações ou prestações, o valor do imposto a recolher ou, em sendo a hipótese, o saldo credor a ser transportado, obtidos ao final de cada período de apuração, ser declarados em guia de informação (artigo 87, § 1º c/c artigo 109 c/c artigos 253 a 258, todos do RICMS/2000). Assim, os saldos credores e devedores, referentes a cada estabelecimento, compensar-se-ão, resultando, ao final do período de apuração, em valor do imposto a pagar ou em saldo credor a ser mantido na escrita fiscal do estabelecimento, nos casos permitidos pela legislação paulista.
+
+15. Deve ser lembrado que a partir de 14 de março de 2022, encontra-se vigente a nova redação do artigo 49 do RICMS/2000, por meio da qual o montante do imposto, na condição do inciso VI do artigo 2º do RICMS/2000, integra a base de cálculo do diferencial de alíquotas, nos termos estabelecidos pela cláusula décima segunda do Convênio ICMS nº 142/2018.
+
+16. Respondendo de forma objetiva aos questionamentos, tem-se que as operações interestaduais destinadas ao Estado de São Paulo com a mercadoria objeto dessa consulta, é, em princípio, sujeita ao regime de substituição tributária, com responsabilidade pela retenção e pelo pagamento do imposto incidente nas saídas subsequentes atribuída ao estabelecimento da Consulente, que deverá efetuar antecipadamente o recolhimento conforme previsto no artigo 426-A do RICMS/2000.
+
+17. Quanto ao imposto correspondente à diferença entre a alíquota interna e a interestadual, para a operação objeto dessa consulta é obrigação da Consulente recolher a diferença entre o valor do imposto decorrente da aplicação da alíquota interna sobre a base de cálculo correspondente à operação de aquisição e o valor do imposto pago ao outro Estado, em conformidade com a cláusula décima segunda do Convênio ICMS 142/2018 e na forma prevista no caput do artigo 117 do RICMS/2000, devendo ser observados os parágrafos 5º e 6º uma vez que o remetente é optante pelo Simples Nacional.
+
+18. Por fim, caso a Consulente tenha realizado procedimentos sem observar as orientações expostas nesta resposta e, tendo em vista que a análise e determinação de procedimentos cabíveis para sanar irregularidades, em face de caso concreto, é da competência da Coordenadoria de Fiscalização, Cobrança, Arrecadação, Inteligência de Dados e Atendimento, sugere-se à Consulente procurar o Posto Fiscal a que estiverem vinculadas as suas atividades, conforme disposto no artigo 62 do Decreto nº 66.457/2022, para que esse examine a situação de fato e o oriente sobre como proceder, valendo-se do instituto da denúncia espontânea previsto no artigo 529 do RICMS/2000.
+
+A Resposta à Consulta Tributária aproveita ao consulente nos termos da legislação vigente. Deve-se atentar para eventuais alterações da legislação tributária.
+
+Comentário
+
+ Gravar Comentário Cancelar 
+
+ Localize Nossas Unidades 
+
+ Buscar 
+
+ Hidden 
+
+ Secretaria da Fazenda e Planejamento do Estado de São Paulo - Av. Rangel Pestana, 300 - São Paulo / SP - 01017-911 – CNPJ: 46.377.222/0001-29 - Fale Conosco: 0800-170110 Política de Privacidade Termos de Uso | Versão 1.0.124.0 
+
+ Governo do Estado de São Paulo Fazenda e Planejamento 
+
+ hidden 
+
+Parece que seu navegador não possui JavaScript habilitado. Ative o JavaScript e tente novamente.
+
+ Ouvidoria 
+
+ Transparência 
+
+ SIC 
+
+Versão 1.0.124.0

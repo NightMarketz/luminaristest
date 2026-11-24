@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — icms-sp-difal-uso-consumo-rpa
 
 **Pergunta:** Regra do DIFAL de ICMS do material de uso e consumo adquirido de outro estado por contribuinte do regime periódico de apuração (RPA) em SP: alíquota interestadual, base, apuração e prazo (Lei 6.374, RICMS/SP)
-**Aberto em:** 2026-11-24T01:20:24-03:00 · **Atualizado em:** 2026-11-24T01:32:26-03:00
+**Aberto em:** 2026-11-24T01:20:24-03:00 · **Atualizado em:** 2026-11-24T02:35:59-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -29,7 +29,13 @@ Vale para o salão **contribuinte do ICMS** (inscrito, porque também revende) n
    - `base_SP = (valor − ICMS_origem) / (1 − alíq_interna)`
    - `DIFAL = base_SP × alíq_interna − ICMS_origem`
 
-   Grau: **inferido**. A RC confirma a recomposição pela alíquota interna, mas não valida números: "meio impróprio para homologar ou validar os cálculos" [D11 item 19]. Ver a Ambiguidade 1.
+   - **Por que a fórmula é essa.** A lei manda usar a alíquota interestadual para a base da **origem** e a interna para a base **deste Estado** [D04 Lei 6.374 art. 24 § 8º item 1 "a" e "b", red. Lei 17.470/2021; D07 LC 87 art. 13 IX "a" e "b" e § 6º].
+     - O valor da nota já traz o ICMS da origem por dentro [D07 art. 13 § 1º I].
+     - Montar a base de SP com a alíquota interna é, então, tirar o ICMS da origem e embutir o de SP.
+     - A Sefaz-SP descreve a conta: a base é "o valor sujeito ao imposto neste Estado (destino)", e o DIFAL se apura "multiplicando-se essa base de cálculo pela alíquota interna da UF de destino e subtraindo-se desse valor o imposto cobrado pela UF de origem", com a escrituração do art. 117 [D13 RC 29608/2024 itens 10 e 11].
+     - O consulente da RC 33094/2026 descreveu a mesma sequência ("retirar o ICMS interestadual da base, embutir ... a alíquota interna"), e a Sefaz não a contestou [D11 item 5.3].
+
+     Grau: **inferido forte**. A fórmula é dedução aritmética direta da lei e da RC; a Sefaz não homologa números em consulta [D11 item 19; D13 item 13].
 5. **Apuração: dentro da conta mensal do ICMS, sem guia própria.** No mês da entrada, o salão no RPA lança no Registro de Apuração (EFD) [D06 art. 117 caput, I e II; § 1º]:
    - **crédito** do ICMS pago ao outro estado, com a expressão "Inciso I do Art. 117 do RICMS";
    - **débito** de alíquota interna × base_SP, com a expressão "Inciso II do Art. 117 do RICMS".
@@ -70,6 +76,9 @@ Vale para o salão **contribuinte do ICMS** (inscrito, porque também revende) n
 | Remetente do Simples | RICMS/SP art. 117 §§ 5º e 6º | [D06] | "aplicação da alíquota interestadual sobre a base"; "4% ... Resolução do Senado Federal nº 13 ... 12% ... nas demais operações" |
 | Exceções com guia | RICMS/SP art. 117 § 2º | [D06] | "enquadrado no regime de estimativa"; "não obrigado à escrituração fiscal" |
 | Confirmação da Sefaz | RC 33094/2026 ementa I | [D11] | "devendo ser adotado o procedimento previsto no artigo 117, incisos I e II e § 1º, do RICMS/2000" |
+| Base em SP e conta do DIFAL | RC 29608/2024 itens 10 e 11 | [D13] | "deve-se apurar essa parcela do imposto multiplicando-se essa base de cálculo pela alíquota interna da UF de destino e subtraindo-se desse valor o imposto cobrado pela UF de origem" |
+| Base de origem × base de SP | Lei 6.374 art. 24 § 8º item 1 "a" e "b" (Lei 17.470/2021) | [D04] | "a alíquota prevista para a operação ou prestação interestadual, para estabelecer a base de cálculo ... no Estado de origem"; "a alíquota prevista para a operação ou prestação interna, para estabelecer a base de cálculo ... neste Estado" |
+| Optante: base única | RC 29830/2024 ementa I; RC 25980/2022 ementa I | [D14], [D15] | "deve ser efetuado sem a inclusão do montante do ICMS devido ao Estado de destino na sua própria base de cálculo, não importando a destinação da mercadoria adquirida" |
 | Interna 18% | RICMS/SP art. 52 I | [D01] | "nas operações ou prestações internas ... 18% (dezoito por cento)" |
 | Interna 25% cosmético | RICMS/SP art. 55 IV | [D01] | "perfumes e cosméticos, classificados nas posições 3303, 3304, 3305 e 3307, exceto as posições 3305.10 e 3307.20 ..." |
 | Interestadual 12% | Res. Senado 22/1989 art. 1º | [D08] | "nas operações e prestações interestaduais, será de doze por cento"; 7% só "realizadas nas Regiões Sul e Sudeste, destinadas às Regiões Norte, Nordeste e Centro-Oeste e ao Estado do Espírito Santo" |
@@ -82,19 +91,16 @@ Vale para o salão **contribuinte do ICMS** (inscrito, porque também revende) n
 - **Alertas do acervo e como foram resolvidos:**
   - O RICMS/SP não está no acervo. Foi lido no portal oficial da Sefaz-SP [D01]–[D03], [D05], [D06], [D12], baixado hoje. As redações citadas são as vigentes na página, com as notas de "Redação dada".
   - A base dupla (art. 2º VI, art. 37 VI e § 11, art. 49, art. 117 II) é toda do Decreto 66.559/2022, em vigor desde 14/03/2022, que segue a LC 190/2022.
-  - A Lei 6.374 do acervo [D04] veio como "atualizada", não compilada. Não foi usada como fonte de trecho: cada dispositivo citado tem o correspondente no RICMS oficial.
+  - A Lei 6.374 do acervo [D04] veio como "atualizada", texto da Alesp, não o compilado oficial. Só o art. 24 § 8º (Lei 17.470/2021) é citado dela. Ele confere com o RICMS oficial (art. 37 § 11 [D03]), com a LC 87 art. 13 § 6º [D07] e com a RC 29608/2024, que descreve a mesma alteração da Lei 17.470 [D13 itens 9 e 10].
   - As Res. Senado 22/1989 [D08] e 13/2012 [D09] estão em versão original, sem revogação expressa. São textos curtos, sem alteração conhecida no artigo citado.
   - A LC 87 [D07] está compilada, sem alerta.
 - **Redação atual:** as RC 33094/2026 e 34252/2026 [D11], [D10] são deste ano e aplicam o art. 117 vigente.
 
 ## 4. Ambiguidades (só o que precisa de decisão humana)
-1. **A fórmula numérica da base dupla.** O texto diz "recomposição" pela alíquota interna [D10], mas nenhum ato lido traz a conta.
-   - **Leitura (a), a adotada:** tira o ICMS da origem e embute a alíquota de SP: `(V − ICMS_origem)/(1 − aInt)`.
-   - **Leitura (b):** embute a alíquota de SP sobre o valor cheio, sem tirar o ICMS da origem: `V/(1 − aInt)`. Dá DIFAL maior.
-
-   A (a) é a que decorre da LC 87 art. 13 § 6º. A § 6º manda usar a interestadual para a base da origem e a interna para a do destino, o que pressupõe tirar uma e pôr a outra. A (a) é também a fórmula que o consulente da RC 33094 descreve ("retirar o ICMS interestadual da base, embutir ... a alíquota interna") [D11 item 5.3]. A Sefaz não a desmentiu, só não homologou números.
-   - **Pergunta ao contador:** "Salão em SP no Lucro Presumido, contribuinte do ICMS, compra cosmético de MG por R$ 1.000 com 12% destacado, para uso no serviço. Pelo art. 117 II e o art. 37 § 11 do RICMS, o débito é 25% × (1.000 − 120)/0,75 = R$ 293,33, com DIFAL líquido de R$ 173,33?"
-2. **Optante: base por fora.** Para o optante o dossiê `insumos-salao-sp` lê a base "por fora", com RC citadas lá. O § 11 do art. 37, porém, não distingue o regime do adquirente. Este dossiê não reabre essa conta. Se o motor quiser uma regra só, a pergunta vai ao contador: "O § 11 do art. 37 do RICMS (base dupla) alcança também o DIFAL do optante do art. 115 XV-A?"
+- Nenhuma que peça contador.
+  - **A fórmula da base dupla** sai da lei e da RC 29608/2024 (§1, item 4).
+  - **O optante não usa base dupla.** As RC 25980/2022 e 29830/2024 dizem que o DIFAL do optante "deve ser efetuado sem a inclusão do montante do ICMS devido ao Estado de destino na sua própria base de cálculo, não importando a destinação da mercadoria adquirida (... uso e consumo ...)" [D15, D14 ementa I]. O motivo é que a nova redação do art. 49 "não incluiu de forma expressa o inciso XVI do artigo 2º" [D14 item 8].
+  - Fica confirmada a tabela do §1: optante por fora, RPA por dentro.
 
 ## 5. Lacunas
 - Nenhum texto dá prazo próprio ao DIFAL do RPA. O prazo é o do saldo da apuração (item 6), por inferência do art. 117.
@@ -161,6 +167,21 @@ SEÇÃO IV - OUTRAS FORMAS DE PAGAMENTO — Órgãos federais (Receita, ANPD, IN
 ANEXO IV - PRAZOS DE RECOLHIMENTO DO IMPOSTO — Órgãos federais (Receita, ANPD, INSS, etc.)  
   Link oficial: <https://legislacao.fazenda.sp.gov.br/Paginas/l6an4.aspx>  
   Baixado em 2026-11-24T01:30:56-03:00 · arquivo local `docs/D12_l6an4-aspx.html` · SHA-256 `323abf14c591d85b07ba981e167e160cc0815c85dfa1d0d04ff83bb95be3d83d`
+- **[D13]** RC 29608/2024 — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://legislacao.fazenda.sp.gov.br/Paginas/RC29608_2024.aspx>  
+  Baixado em 2026-11-24T02:32:59-03:00 · arquivo local `docs/D13_RC29608_2024-aspx.html` · SHA-256 `5fcc36d267dc511eca9a76d6d45350c01c65c292bb980b57eb325d889fb8b246`
+- **[D14]** RC 29830/2024 — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://legislacao.fazenda.sp.gov.br/Paginas/RC29830_2024.aspx>  
+  Baixado em 2026-11-24T02:33:00-03:00 · arquivo local `docs/D14_RC29830_2024-aspx.html` · SHA-256 `359a0d460bb3c4ccd1101663e68a78704f7845fa83b33b567eabdafb428839bd`
+- **[D15]** RC 25980/2022 — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://legislacao.fazenda.sp.gov.br/Paginas/RC25980_2022.aspx>  
+  Baixado em 2026-11-24T02:33:00-03:00 · arquivo local `docs/D15_RC25980_2022-aspx.html` · SHA-256 `691c3f9bf527f2078c8a277139f1a2212956a6e830ac34b7be6c6b76c6151c15`
+- **[D16]** RC 27026/2023 — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://legislacao.fazenda.sp.gov.br/Paginas/RC27026_2023.aspx>  
+  Baixado em 2026-11-24T02:33:01-03:00 · arquivo local `docs/D16_RC27026_2023-aspx.html` · SHA-256 `0846c14f67acd8a117a5a530d19c24531d0d35cc3a32fcc7be3c2a8df615fc5a`
+- **[D17]** CONVÊNIO ICMS 236/21 — Conselho Nacional de Política Fazendária CONFAZ — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://www.confaz.fazenda.gov.br/legislacao/convenios/2021/CV236_21>  
+  Baixado em 2026-11-24T02:33:38-03:00 · arquivo local `docs/D17_CV236_21.html` · SHA-256 `64d5681c928d83f2ab6b7eb5627f11d1978a612c1eaa7ed14728a9f0132151e0`
 
 ## Registro de buscas
 _Nenhuma busca registrada._

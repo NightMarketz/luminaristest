@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — simples-6-02-6-03-fator-r
 
 **Pergunta:** Os subitens 6.02 (estética, depilação) e 6.03 (massagem) da LC 116 são tributados no Anexo III do Simples sem fator r, ou estão sujeitos ao fator r (LC 123 art. 18 §§ 5º-B a 5º-M; Res. CGSN 140; soluções de consulta)?
-**Aberto em:** 2026-11-24T01:20:23-03:00 · **Atualizado em:** 2026-11-24T01:48:43-03:00
+**Aberto em:** 2026-11-24T01:20:23-03:00 · **Atualizado em:** 2026-11-24T02:37:03-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -17,11 +17,18 @@ O Simples não classifica por subitem da LC 116, e sim pela atividade. O ponto d
   - **Na parceria (Lei 12.592), há texto expresso.** A Res. CGSN 140 art. 25 § 18 manda tributar a receita do salão-parceiro e do profissional-parceiro "na forma prevista no Anexo III ... quanto aos serviços e produtos neles empregados" [D02]. A Lei 12.592 cobre "Cabeleireiro, Barbeiro, **Esteticista**, Manicure, Pedicure, **Depilador** e Maquiador" [D13 arts. 1º e 1º-A]. Esteticista e depilador estão na lista, então o 6.02 em parceria tem regra própria de Anexo III, sem fator r. Grau: **verificado**.
   - O "única atividade" da SC vem do caso consultado. Com revenda junto, cada receita é segregada pela sua atividade [D02 art. 25], e o serviço de estética continua no Anexo III. Grau: **inferido**.
 - **6.03: massagem, banhos, duchas, sauna.** **Nenhum texto achado** que classifique a atividade. O massagista não está na lista da Lei 12.592 [D13 art. 1º], e por isso o § 18 do art. 25 da Res. 140 também não o alcança. Não há inciso nos §§ 5º-B a 5º-I [D01] nem alínea no art. 25 da Res. 140 [D02]. Na busca do SIJUT não apareceu SC sobre o tema. Os CNAE 9609-2/05 e 9602-5/02 não constam dos Anexos VI e VII da Res. 140 [D03], [D04], que listam CNAE impeditivos e ambíguos, não o anexo de tributação.
-  - Pelas regras residuais, a leitura mais fiel é **Anexo III**, pelo mesmo caminho da SC 127/2019: § 5º-F com art. 17 § 2º [D01], e a Res. 140 art. 25 § 1º III "m" [D02], que manda ao Anexo III o serviço que "não tenha por finalidade ... atividade intelectual, de natureza técnica, científica, desportiva, artística ou cultural". A massagem de salão é um cuidado corporal do mesmo tipo dos "congêneres" que a SC agrupa. Grau: **inferido**. Há outras duas leituras, na Ambiguidade 1.
+  - Pelas regras residuais, a leitura mais fiel é **Anexo III**, pelo mesmo caminho da SC 127/2019: § 5º-F com art. 17 § 2º [D01], e a Res. 140 art. 25 § 1º III "m" [D02], que manda ao Anexo III o serviço que "não tenha por finalidade ... atividade intelectual, de natureza técnica, científica, desportiva, artística ou cultural". A massagem de salão é um cuidado corporal do mesmo tipo dos "congêneres" que a SC agrupa. 
+  - **O critério da RFB para "natureza técnica" (§ 5º-I XII) não alcança a massagem de salão.**
+    - A Cosit chama de técnica a atividade que "exige conhecimentos profissionais especializados ... profissionais habilitados especificamente" (aviação agrícola, com curso, ART e registro) [D15 SC Cosit 64/2015 item 6].
+    - O esteticista também é profissão regulamentada, com curso técnico ou superior [D16 Lei 13.643/2018 arts. 3º e 4º]. Mesmo assim a mesma Cosit pôs a estética no **Anexo III** pelo § 5º-F [D09]. Profissão regulamentada, sozinha, não leva ao Anexo V.
+    - O massagista de 1961 [D17 Lei 3.968 arts. 1º e 2º] é figura de saúde, com habilitação e prescrição médica, como a fisioterapia (§ 5º-B XVI). A massagem estética ou relaxante de salão não é esse serviço.
+    - A busca no sistema Normas da RFB (24/11/2026) por massagem, massagista, massoterapia, sauna, "banhos duchas sauna massagens", "6.03", spa, quiropraxia, fisioterapia, terapias integrativas e drenagem linfática, com Simples Nacional, não achou nenhuma SC.
+
+    Grau: **inferido forte** para massagem estética ou relaxante e sauna de salão.
 - **Para o simulador e o motor (item 19 do BRIEF):**
   - 6.02 fica no Anexo III, como hoje. Não há requisito de fator r.
-  - 6.03 fica no Anexo III, mas com aviso de grau: "sem norma nem SC específica; leitura residual". O caso de teste do motor é o 6.03 com folha baixa, que fica no Anexo III, mais o aviso.
-- **A lacuna f821 fica resolvida:** o 6.02 tem fonte, e o 6.03 está descrito como ambíguo, com a pergunta ao contador.
+  - 6.03 fica no Anexo III, sem fator r. A exceção é massoterapia feita como tratamento de saúde (Lei 3.968), que se aproxima da fisioterapia (§ 5º-B XVI, com fator r) e não é o serviço de salão que o simulador modela.
+- **A lacuna f821 fica resolvida:** 6.02 e 6.03 vão ao Anexo III sem fator r, e a pergunta ao contador saiu (pesquisa, 24/11).
 
 ## 2. Fundamentação
 | Ponto | Norma (art.) | Fonte | Trecho literal |
@@ -39,6 +46,9 @@ O Simples não classifica por subitem da LC 116, e sim pela atividade. O ponto d
 | SC vinculada | SC Disit/SRRF01 1011/2019 | [D10] | vinculada à SC Cosit 127/2019 |
 | Parceria no Anexo III | Res. CGSN 140 art. 25 § 18 I | [D02] | "A receita obtida pelo salão-parceiro e pelo profissional-parceiro de que trata a Lei nº 12.592, de 2012, deverá ser tributada: I - na forma prevista no Anexo III desta Resolução, quanto aos serviços e produtos neles empregados" |
 | Profissões da parceria | Lei 12.592 arts. 1º e 1º-A | [D13] | "Cabeleireiro, Barbeiro, Esteticista, Manicure, Pedicure, Depilador e Maquiador" |
+| "Natureza técnica" na RFB | SC Cosit 64/2015 item 6 | [D15] | "notadamente de natureza técnica, já que exige conhecimentos profissionais especializados para seu desempenho" |
+| Esteticista regulamentado | Lei 13.643/2018 arts. 3º e 4º | [D16] | "Técnico em Estética o profissional habilitado em: I – curso técnico"; "Esteticista e Cosmetólogo ... graduado em curso de nível superior" |
+| Massagista de 1961 | Lei 3.968/1961 arts. 1º e 2º | [D17] | "só é permitido a quem possua certificado de habilitação"; "a aplicação da massagem dependerá de prescrição médica" |
 | Itens da LC 116 | LC 116, lista, 6.02 e 6.03 | [D11] | "6.02 - Esteticistas, tratamento de pele, depilação e congêneres."; "6.03 - Banhos, duchas, sauna, massagens e congêneres." |
 
 ## 3. Vigência conferida
@@ -50,17 +60,13 @@ O Simples não classifica por subitem da LC 116, e sim pela atividade. O ponto d
 - **Redação atual da Res. 140:** lida na visão multivigente [D02]. Há alterações de 01/01/2027 pelas Res. CGSN 190 [D05] e 195 [D06]. A 190 altera o art. 25 § 1º III "l" e outros, não a "m" nem o inciso V. A 195 não altera o art. 25.
 - **SC Cosit 127/2019:** "vigente" na fonte [D08]. Pela IN RFB 2.058/2021, a SC da Cosit vincula a RFB. A norma não foi baixada neste dossiê; a informação é do conhecimento do método, grau **assumido**.
 
+- **Leis de profissão:** as Leis 13.643/2018 [D16] e 3.968/1961 [D17] vieram do acervo em versão original, sem revogação marcada. São textos curtos, usados só como apoio do critério, e não como regra de anexo. A SC Cosit 64/2015 [D14], [D15] está vigente na fonte.
+
 ## 4. Ambiguidades (só o que precisa de decisão humana)
-1. **Massagem e sauna (6.03).**
-   - **(a) Anexo III, sem fator r.** É a leitura adotada. Vem do residual do § 5º-F e da Res. 140 III "m", pela analogia com a SC 127/2019 (cuidados corporais "e congêneres").
-   - **(b) Anexo V com fator r, pelo § 5º-I XII.** Vale se a massagem for vista como "atividade intelectual, de natureza técnica". Com folha abaixo de 28% da receita, a tributação sobe para o Anexo V.
-   - **(c) Fator r como fisioterapia, pelo § 5º-B XVI e § 5º-M.** Vale para a massagem terapêutica ou massoterapia feita como tratamento.
-   - **Implicação:** em (b) e (c) o salão com massagista e folha baixa paga a tabela do Anexo V sobre essa receita.
-   - **Mais segura:** (a) para massagem estética e relaxante em salão, sem fim terapêutico. Se o salão anunciar massoterapia ou terapia, (c) fica plausível.
-   - **Pergunta exata ao contador:** "Salão no Simples que presta massagem estética e relaxante (LC 116, subitem 6.03; CNAE 9602-5/02 ou 9609-2/05). A receita vai ao Anexo III pelo art. 18 § 5º-F da LC 123 (como a SC Cosit 127/2019 faz com a estética), ou ao Anexo V com fator r, pelo § 5º-I XII ou pelo § 5º-B XVI (fisioterapia)?"
+- Nenhuma que peça contador. Risco remoto: o fisco ver a massagem de salão como "natureza técnica" (§ 5º-I XII) ou como fisioterapia (§ 5º-B XVI). As duas leituras levam ao fator r. O precedente da estética (SC Cosit 127/2019 [D09], com profissão regulamentada [D16]) e o critério da SC Cosit 64/2015 [D15] pesam contra elas. Se o salão anunciar "massoterapia" ou "terapia", o enquadramento pede nova análise.
 
 ## 5. Lacunas
-- Não há norma nem solução de consulta sobre massagem, sauna, banhos ou duchas no Simples. A busca no SIJUT, só em SC, cobriu os termos massagem, massagens, massagista, massoterapia, sauna, banhos, duchas, spa e 9609-2.
+- Não há norma nem solução de consulta específica sobre massagem, sauna, banhos ou duchas no Simples (a conclusão é por critério e precedente, §1). A busca no SIJUT, só em SC, cobriu os termos massagem, massagens, massagista, massoterapia, sauna, banhos, duchas, spa e 9609-2.
 - Nenhum ato lido atribui anexo do Simples por CNAE. Os Anexos VI e VII da Res. 140 tratam de impeditivos e ambíguos.
 - A divergência do acervo no § 5º-I XII da LC 123 foi registrada na caixa de lacunas, com destino à ferramenta e ao acervo.
 <!-- /ANALISE -->
@@ -114,6 +120,23 @@ O Simples não classifica por subitem da LC 116, e sim pela atividade. O ponto d
   Acervo: <https://github.com/ctresb/leis/blob/a31cf3cd12073c7b195933a53e733b85c00cfe02/federal/leis-ordinarias/2012/lei-12592-2012-01-18.md>  
   Fonte oficial declarada: <https://normas.leg.br/?urn=urn:lex:br:federal:lei:2012-01-18;12592> · versao_texto: compilada (texto vigente) · cópia de 2026-10-13  
   Lido em 2026-11-24T01:48:30-03:00 · arquivo local `docs/D13_lei-12592-2012-01-18.md` · SHA-256 `ae4c4aae44ba1bd08493c05fd82e366cdd2f3bf263b93383f93b1f936541fd00`
+- **[D14]** Solução de Consulta Cosit nº 64, de 4 de março de 2015 — Receita Federal - Sistema Normas (API)  
+  Link oficial: <https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/62900/visao/multivigente>  
+  Baixado em 2026-11-24T02:31:52-03:00 · arquivo local `docs/D14_rfb-62900-multivigente.json` · SHA-256 `6f1953d86632371e816bf4c62d9135af8efc7e3705e29e2ee6a7b370b0307825`  
+  ⚠ 1 anexo binário não baixado (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar
+- **[D15]** SC Cosit nº 064-2015  Publicação — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/62900/anexo/35431>  
+  Baixado em 2026-11-24T02:31:59-03:00 · arquivo local `docs/D15_35431.pdf` · SHA-256 `0b39f27312ba751e87d8249732fa67991d2b46e9809e91381d1e6e8aa6021539`
+- **[D16]** Lei nº 13.643 de 03/04/2018 — Acervo ctresb/leis (espelho de fonte oficial)  
+  Acervo: <https://github.com/ctresb/leis/blob/abda1383f2fd2ef93b940b66ec95cc8e34ba2d2f/federal/leis-ordinarias/2018/lei-13643-2018-04-03.md>  
+  Fonte oficial declarada: <https://normas.leg.br/?urn=urn:lex:br:federal:lei:2018-04-03;13643> · versao_texto: original · cópia de 2026-10-13  
+  Lido em 2026-11-24T02:32:16-03:00 · arquivo local `docs/D16_lei-13643-2018-04-03.md` · SHA-256 `f0ab31238a32cc40dae92374f534bfd829294a1e707f3b76e3a2bd98146dc3de`  
+  ⚠ versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)
+- **[D17]** Lei nº 3.968 de 05/10/1961 — Acervo ctresb/leis (espelho de fonte oficial)  
+  Acervo: <https://github.com/ctresb/leis/blob/da2951586c06200b9755c8fa73bb14948bb18d77/federal/leis-ordinarias/1961/lei-3968-1961-10-05.md>  
+  Fonte oficial declarada: <https://normas.leg.br/?urn=urn:lex:br:federal:lei:1961-10-05;3968> · versao_texto: original · cópia de 2026-10-13  
+  Lido em 2026-11-24T02:32:17-03:00 · arquivo local `docs/D17_lei-3968-1961-10-05.md` · SHA-256 `3b1dc71e88c7f5021a79f6576d56fbdc0abccc14bf8134aaf4907a7dbcfe4491`  
+  ⚠ versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)
 
 ## Registro de buscas
 _Nenhuma busca registrada._

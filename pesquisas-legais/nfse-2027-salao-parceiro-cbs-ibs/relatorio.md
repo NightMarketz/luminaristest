@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — nfse-2027-salao-parceiro-cbs-ibs
 
 **Pergunta:** O leiaute da NFS-e nacional para 2027 permite separar as cotas do salão-parceiro e do profissional-parceiro? O salão responde pela CBS/IBS do parceiro pessoa física (LC 214 art. 24 × Lei 12.592 art. 1º-A § 3º)?
-**Aberto em:** 2026-11-24T01:20:27-03:00 · **Atualizado em:** 2026-11-24T01:44:38-03:00
+**Aberto em:** 2026-11-24T01:20:27-03:00 · **Atualizado em:** 2026-11-24T02:35:11-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -31,11 +31,19 @@ Grau: **verificado** quanto ao leiaute lido.
   - O leiaute confirma em sistema a leitura (b), "mais segura", da Ambiguidade 1 do dossiê `salao-sr27-base-cbs-parceiro-sem-cnpj` (PR #1336): sem documento fiscal do parceiro, a cota integra a base de CBS/IBS. Grau: **inferido**, com o leiaute lido. A ligação "tipo 199 = cota de parceiro" é leitura minha da RN E0463, que oferece ao salão só o 9 ou o 199.
   - **Achado lateral:** com regApIBSCBSSN = 3 (regime regular) e tipo 9, a receita bruta do Simples **não** desconta a cota do parceiro: `vReceitaBrutaSN = vServ − descIncond − vCalcAjusteBCIBSCBS` [D08 RN L111]. Com 1 ou 2 desconta [D08 RN L110]. No SR27, então, o tipo 9 deixaria a cota dentro da receita do DAS, o que destoa da Lei 12.592 § 5º [D02] e da Res. 140 art. 2º § 5º VI [D03]. O caminho que o leiaute deixa para o salão do regime regular é o 199. Grau: **verificado** quanto à regra lida; o efeito é **inferido**.
 
-**(B) Responsabilidade do salão pela CBS/IBS do parceiro pessoa física: não há regra expressa.**
+**(B) Responsabilidade do salão pela CBS/IBS do parceiro pessoa física: o salão não responde.** A Lei 12.592 não basta para criar essa responsabilidade, e nenhuma lei complementar a cria.
 - A LC 214 traz os responsáveis solidários no art. 24 [D01]: quem toma serviço sem documento idôneo, transportador, leiloeiro, desenvolvedor de software, quem concorre para a ocultação, e os recintos aduaneiros. O salão-parceiro não aparece. "Parceir" só aparece no loteamento, e "salão", "beleza" e "12.592" não aparecem na LC 214 nem no Dec. 12.955 [D01], [D05]. Grau: **verificado** (busca e leitura dos arts. 21 a 26).
 - A Lei 12.592 manda o salão **reter e recolher** "os tributos e contribuições sociais e previdenciárias devidos pelo profissional-parceiro" [D02 art. 1º-A § 3º e § 10 II]. O texto é de 2012 e é genérico, sem referência à CBS/IBS.
-- O caso só existe para o parceiro **pessoa física contribuinte** de CBS/IBS: não MEI, nem nanoempreendedor, e habitual [D01 art. 21 I "c"; art. 26 IV]. O parceiro MEI recolhe no DAS-MEI, e o nanoempreendedor não é contribuinte. Ver a Ambiguidade 1.
-- **Para o simulador:** não pôr a CBS/IBS do parceiro como custo do salão. Mostrar a ressalva para o parceiro PF não MEI.
+- O caso só existe para o parceiro **pessoa física contribuinte** de CBS/IBS: não MEI, nem nanoempreendedor, e habitual [D01 art. 21 I "c"; art. 26 IV]. O parceiro MEI recolhe no DAS-MEI, e o nanoempreendedor não é contribuinte.
+- **Por que a Lei 12.592 não basta.**
+  - Para o IBS, a Constituição reserva à **lei complementar** definir como sujeito passivo "a pessoa que concorrer para a realização, a execução ou o pagamento da operação" [D13 CF art. 156-A § 3º]. A regra vale também para a CBS [D13 CF art. 195 § 16].
+  - A LC 214 usou essa competência no art. 24 e em outros pontos, e o salão-parceiro não está entre eles [D01].
+  - O Regulamento do IBS repete o mesmo rol [D15 Res. CGIBS 6/2026 art. 23], e o Dec. 12.955 também [D05 art. 23].
+  - A Lei 12.592 é **lei ordinária** de 2012, anterior à EC 132, e fala de "tributos ... devidos" de forma genérica [D02 art. 1º-A § 3º e § 10 II].
+  - A ressalva do art. 24 ("sem prejuízo das demais hipóteses previstas na Lei nº 5.172 ... e na legislação civil") remete ao CTN, cujo art. 128 exige que a lei atribua a responsabilidade "de modo expresso" [D14], e à lei civil. A Lei 12.592 não é nenhum dos dois, e não fala de CBS ou IBS.
+
+  Grau: **inferido**, pela hierarquia das normas lidas. Nenhum ato da RFB ou do CGIBS trata do tema: a busca no sistema Normas da RFB por "salão-parceiro IBS CBS" e por "Lei nº 12.592" com CBS ou retenção trouxe só a Res. CGSN 140 e soluções sobre o PERSE.
+- **Para o simulador e o motor:** não pôr a CBS/IBS do parceiro como custo ou retenção do salão. O parceiro PF não MEI apura a própria CBS/IBS. O salão continua retendo o que a Lei 12.592 alcança (INSS, IR), e isso fica fora deste dossiê.
 
 ## 2. Fundamentação
 | Ponto | Norma (art.) | Fonte | Trecho literal |
@@ -58,6 +66,10 @@ Grau: **verificado** quanto ao leiaute lido.
 | Parceiro habitual é contribuinte | LC 214 art. 21 I "c" | [D01] | "de forma profissional, ainda que a profissão não seja regulamentada" |
 | Nanoempreendedor não é | LC 214 art. 26 IV | [D01] | "nanoempreendedor, assim entendido a pessoa física que tenha auferido receita bruta inferior a 50% ... do limite ... do MEI" |
 | Mesmo rol no decreto | Dec. 12.955 art. 23 | [D05] | "são solidariamente responsáveis pelo pagamento da CBS: (Art. 24 da Lei Complementar nº 214...)" |
+| Sujeito passivo do IBS só por LC | CF art. 156-A § 3º | [D13] | "Lei complementar poderá definir como sujeito passivo do imposto a pessoa que concorrer para a realização, a execução ou o pagamento da operação" |
+| Idem para a CBS | CF art. 195 § 16 | [D13] | "Aplica-se à contribuição prevista no inciso V do caput o disposto no art. 156-A, § 1º, I a VI, VIII, X a XIII, § 3º ..." |
+| Responsabilidade de terceiro exige lei expressa | CTN art. 128 | [D14] | "a lei pode atribuir de modo expresso a responsabilidade pelo crédito tributário a terceira pessoa, vinculada ao fato gerador" |
+| Rol do Regulamento do IBS | Res. CGIBS 6/2026 art. 23 | [D15] | "são solidariamente responsáveis pelo pagamento do IBS: (Art. 24 da LC 214/2025)" |
 
 ## 3. Vigência conferida
 - **Alertas do acervo e como foram resolvidos:**
@@ -68,19 +80,14 @@ Grau: **verificado** quanto ao leiaute lido.
 - As planilhas foram extraídas para `docs/D07_anexoI_planilha.txt` e `docs/D08_anexoVI_planilha.txt`, com a referência [aba!linha]. O `.txt` que o `legal.py` gera de XLSX são bytes do zip; registrado na caixa como defeito da ferramenta.
 
 ## 4. Ambiguidades (só o que precisa de decisão humana)
-1. **O salão responde pela CBS/IBS do parceiro pessoa física contribuinte?**
-   - **(a) Não.** A LC 214 tem rol próprio de responsáveis (art. 24), e a Lei 12.592 é de 2012, anterior à CBS/IBS. O parceiro contribuinte apura e paga a própria CBS/IBS.
-   - **(b) Sim, como retentor.** A Lei 12.592 § 3º e § 10 II falam de "tributos ... devidos pelo profissional-parceiro" sem limitar a espécie. O art. 24 da LC 214 ressalva as "demais hipóteses previstas" no CTN e na legislação civil. A Lei 12.592, porém, não é CTN nem lei civil.
-   - **Implicação:** em (b), o salão teria de reter e recolher a CBS/IBS sobre a cota do parceiro PF não MEI. Em (a), não. Para parceiro MEI ou nanoempreendedor a questão não existe.
-   - **Mais segura:** que o parceiro seja MEI (ou tenha CNPJ), o que afasta a dúvida e cumpre a Res. 140 art. 59 § 2º. No simulador, ressalva para o parceiro PF não MEI.
-   - **Pergunta exata ao contador:** "Em 2027, profissional-parceiro pessoa física (sem CNPJ, não MEI, habitual) de salão em SP. A Lei 12.592 art. 1º-A § 3º manda o salão reter 'os tributos ... devidos pelo profissional-parceiro'. O salão deve reter e recolher a CBS/IBS do parceiro, ou o parceiro é contribuinte próprio (LC 214 art. 21 I 'c'), sem responsabilidade do salão, já que a LC 214 art. 24 não traz essa hipótese?"
+1. **Risco residual (não pede contador).** Uma fiscalização pode ler o "tributos ... devidos" da Lei 12.592 § 3º como abrangendo a CBS/IBS. Contra isso pesam a reserva de lei complementar (CF art. 156-A § 3º e art. 195 § 16) e o art. 128 do CTN. Quem quiser afastar o risco de vez usa parceiro MEI ou com CNPJ, que também é o que a Res. CGSN 140 art. 59 § 2º pede.
 2. **Tipo 9 × tipo 199 para a cota do parceiro.** O leiaute não diz em que caso usar cada um. A leitura adotada é: tipo 199 quando há nota fiscal do parceiro e o salão quer tirar a cota da base de CBS/IBS; tipo 9 nos demais casos. Até a NT sair da Produção Restrita, isso pode mudar. É monitorar a NT, não perguntar ao contador.
 
 ## 5. Lacunas
 - Não há data de entrada em Produção para o grupo `vAjusteBC`, que hoje está só na Produção Restrita [D12].
 - Não foram lidas: as NT 001, 002, 003, 005, 006, 008 (DANFSe) e 010, os Anexos VII e VIII, o Anexo C e os XSD. A NT 008 pode mostrar se as cotas aparecem ao consumidor (Res. 140 art. 59 § 2º).
 - O Anexo VI [D08] é inconsistente internamente: a nota da linha L54 fala em "códigos 105 a 199", e as RN L94-L95 listam 101 a 105 e 199.
-- O Regulamento do IBS não foi lido para responsáveis. O Dec. 12.955 [D05] cobre só a CBS.
+- O Regulamento do IBS [D15] foi conferido só no art. 23 (responsáveis).
 - Não foi conferido se o profissional pessoa física sem CNPJ consegue emitir NFS-e nacional ao salão. Sem isso, o tipo 199 fica inviável para ele.
 <!-- /ANALISE -->
 
@@ -127,6 +134,16 @@ Grau: **verificado** quanto ao leiaute lido.
   Link oficial: <https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/atualizacoes-e-implantacoes>  
   Baixado em 2026-11-24T01:34:21-03:00 · arquivo local `docs/D12_atualizacoes-e-implantacoes.html` · SHA-256 `5814027431d90f625373d4eabf7e62e3727ea5bf7fb2beaa0589583afffe1641`  
   ⚠ TEXTO MUDOU desde 2026-10-31. Dossiês que citaram a versão anterior: vigilancia-2026-10-31-paa-nfse D02. Conferir se a conclusão deles ainda vale
+- **[D13]** Constituição — Presidência - legislação federal  
+  Link oficial: <https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm>  
+  Baixado em 2026-11-24T02:34:01-03:00 · arquivo local `docs/D13_constituicao-htm.html` · SHA-256 `96bc852cd7dcaf4eac8ac3c3ee7730e614c81186edb80cae42d5a97423eb5159`
+- **[D14]** Lei nº 5.172 de 25/10/1966 — Acervo ctresb/leis (espelho de fonte oficial)  
+  Acervo: <https://github.com/ctresb/leis/blob/04685ef7689b7028d0dc835e5cde644ad7a2d328/federal/leis-ordinarias/1966/lei-5172-1966-10-25.md>  
+  Fonte oficial declarada: <https://normas.leg.br/?urn=urn:lex:br:federal:lei:1966-10-25;5172> · versao_texto: compilada (texto vigente) · cópia de 2026-10-13  
+  Lido em 2026-11-24T02:34:23-03:00 · arquivo local `docs/D14_lei-5172-1966-10-25.md` · SHA-256 `fe8ef71d4ebe8c0d04d3422ca95853e15291c5c7ca6168cd34ae7b8ee6e3983b`
+- **[D15]** D15_30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs-pdf — Órgãos federais (Receita, ANPD, INSS, etc.)  
+  Link oficial: <https://www.cgibs.gov.br/upload/arquivos/202604/30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs.pdf>  
+  Baixado em 2026-11-24T02:34:38-03:00 · arquivo local `docs/D15_30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs-pdf.pdf` · SHA-256 `9ed7032ef9c25bbee51bdb5e90f60e1ad01a2bf56cb41a28221c3db7f61d419a`
 
 ## Registro de buscas
 _Nenhuma busca registrada._
