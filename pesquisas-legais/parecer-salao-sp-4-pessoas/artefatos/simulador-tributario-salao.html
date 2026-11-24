@@ -383,7 +383,7 @@ ul.vir b:first-child{display:inline-grid;place-items:center;width:20px;height:20
         <div class="fld"><label for="f_rat">RAT da atividade</label><div class="in"><input id="f_rat" type="number" min="0" max="3" step="1" style="padding-left:10px"><span>% da folha</span></div><small>CNAE 9602-5/01 (cabeleireiros, manicure e pedicure): 2% (Decreto 3.048, Anexo V).</small></div>
         <div class="fld"><label for="f_fap">FAP do salão</label><div class="in"><input id="f_fap" type="number" min="0.5" max="2" step="0.05" style="padding-left:10px"><span>× RAT</span></div><small>Fator de 0,5 a 2,0 que cada empresa recebe (Lei 10.666 art. 10). 1,0 é neutro; troque pelo FAP publicado do salão.</small></div>
         <div class="fld"><label for="f_terc">Terceiros</label><div class="in"><input id="f_terc" type="number" min="0" max="10" step="0.1" style="padding-left:10px"><span>% da folha</span></div><small>FPAS 515: salário-educação 2,5 + Incra 0,2 + Senac 1,0 + Sesc 1,5 + Sebrae 0,6 (IN RFB 2.110, Anexo III). O salão está no FPAS 515: o Quadro do art. 577 da CLT o põe no 5º grupo da CNC (IN RFB 2.110 art. 84 I e Anexo II). No Simples, o eSocial leva FPAS 515 com terceiros 0000.</small></div>
-        <div class="fld"><label for="f_cred">Despesas que dão crédito <span class="linked" id="lk6"></span></label><div class="in"><span>R$</span><input id="f_cred" type="number" min="0" step="500" inputmode="decimal"></div><small>Parte das outras despesas paga a empresa: aluguel e energia (Leis 10.637 e 10.833 art. 3º; em 2027, LC 214 art. 47). O insumo do serviço tem campo próprio e já entra no crédito: não some aqui.</small></div>
+        <div class="fld"><label for="f_cred">Despesas que dão crédito <span class="linked" id="lk6"></span></label><div class="in"><span>R$</span><input id="f_cred" type="number" min="0" step="500" inputmode="decimal"></div><small>Parte das outras despesas paga a empresa: aluguel e energia (Leis 10.637 e 10.833 art. 3º; em 2027, LC 214 art. 47). O insumo do serviço tem campo próprio e já entra no crédito: não some aqui. Em 2027, digite o valor pago, com CBS e IBS dentro: o crédito é valor × alíquota ÷ (1 + alíquota), como no insumo.</small></div>
         <div class="fld"><label for="f_cbs">Alíquota de referência da CBS em 2027</label><div class="in"><input id="f_cbs" type="number" min="0" max="30" step="0.1" style="padding-left:10px"><span>%</span></div><small>11,3% é o cálculo do TCU, ainda sem resolução do Senado. A CBS de 2027 é essa alíquota menos 0,1 ponto (LC 214 art. 347).</small></div>
         <div class="fld"><label for="f_rep27">CBS e IBS de 2027 repassados ao preço</label><div class="in"><input id="f_rep27" type="number" min="0" max="100" step="10" style="padding-left:10px"><span>% do tributo</span></div><small>No Presumido e no Real de 2027, quanto da CBS e do IBS o salão põe no preço do serviço: 100% sobe o preço pela alíquota inteira. Vazio: o preço fica o de 2026. No Simples, com ou sem a opção pelo regime regular, a conta mantém o preço de 2026.</small></div>
         <div class="fld"><label for="f_fd27">Fornecedores das despesas com crédito em 2027</label><select class="das-sel" id="f_fd27"><option value="REG">Regime regular (destacam CBS e IBS)</option><option value="SN">Optantes pelo Simples</option></select><small>O fornecedor do regime regular destaca a CBS e o IBS na nota (LC 214 art. 47). O do Simples dá crédito só do que paga no DAS (art. 47 § 9º II). Aluguel pago a pessoa física que não passou de R$ 240 mil de aluguel nem de 3 imóveis no ano anterior não dá crédito (art. 251 § 1º I): não o marque como "dá crédito". Acima disso, o locador cobra CBS e IBS com redução de 70% (art. 261 p.ú.).</small></div>
@@ -441,7 +441,7 @@ ul.vir b:first-child{display:inline-grid;place-items:center;width:20px;height:20
         <div id="dpEmpty" class="empty">Sem itens: a conta usa o total de "Outras despesas" e de "Despesas que dão crédito" digitado na ficha. Com o primeiro item, os dois campos passam a ser a soma desta lista.</div>
         <div class="tbl-wrap" id="dpWrap"><table class="cat" id="tDp"><thead><tr><th>Despesa</th><th class="r">Valor no mês</th><th>Dá crédito</th><th><span style="position:absolute;left:-9999px">Remover</span></th></tr></thead><tbody></tbody>
           <tfoot><tr><td>Outras despesas no mês</td><td class="r num" id="dpTot"></td><td class="num" id="dpCr"></td><td></td></tr></tfoot></table></div>
-        <div class="cat-tools"><button class="btn" id="addDp" type="button">+ Adicionar despesa</button><span class="law">Marque "dá crédito" na despesa paga a empresa que gera crédito de PIS e Cofins no Real e de CBS e IBS em 2027, como aluguel de imóvel e energia (Leis 10.637 e 10.833 art. 3º; LC 214 art. 47). Só pesa fora do Simples e, em 2027, no Simples com CBS e IBS por fora. Insumo, pró-labore, taxa do cartão e equipe têm campo próprio: não repita aqui.</span></div>
+        <div class="cat-tools"><button class="btn" id="addDp" type="button">+ Adicionar despesa</button><span class="law">Marque "dá crédito" na despesa paga a empresa que gera crédito de PIS e Cofins no Real e de CBS e IBS em 2027, como aluguel de imóvel e energia (Leis 10.637 e 10.833 art. 3º; LC 214 art. 47). Só pesa fora do Simples e, em 2027, no Simples com CBS e IBS por fora. Insumo, pró-labore, taxa do cartão e equipe têm campo próprio: não repita aqui. O valor é o pago, com CBS e IBS dentro: em 2027 o crédito é valor × alíquota ÷ (1 + alíquota).</span></div>
         <h3 style="margin-top:18px">Equipamentos</h3>
         <div id="bnEmpty" class="empty">Sem equipamentos: a conta não deprecia nada. Cadastre cadeiras, lavatórios, secadores, ar-condicionado, móveis e computador com o valor de compra e a vida útil. A depreciação do mês entra no resultado em todos os regimes; no Lucro Real ela também sai do lucro tributável. Dá crédito de PIS/Cofins no Real de 2026 e, em 2027, de CBS e IBS no Presumido, no Real e no Simples com CBS e IBS por fora.</div>
         <div class="tbl-wrap" id="bnWrap"><table class="cat" id="tBn"><thead><tr><th>Equipamento</th><th class="r">Valor de compra</th><th class="r">Vida útil (anos)</th><th class="r">Depreciação do mês</th><th><span style="position:absolute;left:-9999px">Remover</span></th></tr></thead><tbody></tbody>
@@ -729,6 +729,9 @@ function cenario(x,modo){
     // impedido: ISS de 5% à Prefeitura (Lei SP 13.701 art. 16 IV); em 2027 o IBS também sai do DAS (LC 123 art. 13-A, red. LC 214), a 0,1% (LC 214 art. 344)
     out.issFora=ap.impedido?r2c(servSalao*0.05):0;
     out.ibsFora=ap.impedido&&+ano>=2027?r2c((servSalao-out.issFora+x.rev)*0.001):0;
+    // impedido: o ICMS da revenda também sai do DAS (taxas1) e vai ao regime normal de SP, com a conta do regimes():
+    // alíquota interna sobre a revenda menos as compras (Lei SP 6.374 arts. 34 e 36), supondo compra em SP de fornecedor do regime normal
+    out.icmsFora=ap.impedido&&numP(x.rev)>0?r2c(Math.max(0,numP(x.rev)*(1-x.cmv/100))*icmsAlRev(x)):0;
     out.irpjMes=(g.serv.IRPJ||0)+(g.rev.IRPJ||0);
   }
   // comissao-pct v1: a remuneração do CLT é o fixo (p.s) mais a comissão em % dos serviços que ele faz no catálogo (p.com)
@@ -759,7 +762,7 @@ function cenario(x,modo){
   out.dep=numP(x.dep);
   // lalur v1: gastos do mês que o lucro real não aceita (multas, brindes, doações, alimentação dos sócios...): despesa em todos os regimes
   out.ajDesp=["aMul","aBri","aDoa","aAli","aNn","aGra","aOut"].reduce((a,k)=>a+numP(x[k]),0);
-  out.resultado=recMes-(out.das||0)-(out.issFora||0)-(out.ibsFora||0)-out.folha-out.enc.tot-x.desp-out.cmv-out.insumo-out.difal-out.cartao-repSem-out.dep-out.ajDesp;
+  out.resultado=recMes-(out.das||0)-(out.issFora||0)-(out.ibsFora||0)-(out.icmsFora||0)-out.folha-out.enc.tot-x.desp-out.cmv-out.insumo-out.difal-out.cartao-repSem-out.dep-out.ajDesp;
   out.lucroAno=out.resultado*12;
   out.limIsento=e3?(.32*servSalao+.08*x.rev)*12-out.irpjMes*12:null;
   out.porSocio=out.resultado/x.soc;
@@ -784,6 +787,8 @@ const GRP={IRPJ:"lucro","IRPJ adicional":"lucro",CSLL:"lucro",CPP:"folha","INSS 
 // acima de R$ 5 mi de receita no ano, as presunções sobem 10% sobre a parte excedente, proporcional ao período e a cada atividade (LC 224 art. 4º §§ 4º VII e 5º; Decreto 12.808 art. 12).
 const FORA={pIrRev:.08,pCsRev:.12,lc224Lim:5000000,lc224:.10};
 const pctF=(v,d)=>Math.min(100,v==null||v===""?d:numP(v))/100;
+// ICMS da revenda: 25% na parte em cosmético fora do xampu e do desodorante (rcos × (1 − rxam)), 18% no resto (Lei SP 6.374 art. 34)
+function icmsAlRev(x){const s25=pctF(x.rcos,100)*(1-pctF(x.rxam,0));return INS_LEI.cos*s25+INS_LEI.ger*(1-s25)}
 function lc224Fator(recAno){return recAno>FORA.lc224Lim?1+FORA.lc224*(recAno-FORA.lc224Lim)/recAno:1}
 // tributo do regime k com a revenda (Rg[k].tot é só dos serviços, base dos gráficos de virada)
 function totReg(Rg,k){const r=Rg&&Rg[k];return r?r.tot+(r.rev?r.rev.tot:0):null}
@@ -798,9 +803,10 @@ function regimes(x,modo,ano){
   const cbsAl=Math.max(0,(x.cbs||0)/100-LEI.cbsRed);
   // parceiro-cbs v1: a cota do parceiro sem CNPJ entra na base da CBS/IBS de 2027 (LC 214 art. 12 § 1º e § 2º IV; Res. CGSN 140 art. 59 § 2º)
   // premissas-2027 v1: (a) repasse da CBS/IBS ao preço no Presumido e no Real (bF); (b) crédito das despesas de fornecedor do Simples = % da nota
-  // (LC 214 art. 47 § 9º II; Res. CGSN 140 art. 58 §§ 4º e 5º); (c) presunção de 2027 (Lei 9.249 arts. 15 § 1º III "a" e 20 I; vazio = 32%)
+  // (LC 214 art. 47 § 9º II; Res. CGSN 140 art. 58 §§ 4º e 5º); do fornecedor do regime regular, o valor digitado é o pago, com CBS e IBS dentro:
+  // crédito = cred × a27/(1+a27), a convenção do insumo (insumoCalc) e da depreciação (credito-2027 v1); (c) presunção de 2027 (Lei 9.249 arts. 15 § 1º III "a" e 20 I; vazio = 32%)
   const a27c=cbsAl+LEI.ibs27, rep27=ano>=2027?Math.min(100,numP(x.rep27))/100:0, bF=b*(1+rep27*a27c);
-  const fdSN=x.fd27==="SN", credB27=fdSN?(a27c>0?cred*Math.min(30,numP(x.fd27a))/100/a27c:0):cred, pr27=numP(x.pres27), presF=ano>=2027&&pr27>0?Math.min(100,pr27)/100:LEI.pres;
+  const fdSN=x.fd27==="SN", credB27=fdSN?(a27c>0?cred*Math.min(30,numP(x.fd27a))/100/a27c:0):cred/(1+a27c), pr27=numP(x.pres27), presF=ano>=2027&&pr27>0?Math.min(100,pr27)/100:LEI.pres;
   const repS=numP(c.repSem), blCI=repS>0?"receita com a cota do parceiro sem CNPJ − ISS − créditos":"receita − ISS − créditos";
   const plB=numP(x.pl);
   // rescisao v1: no Real a provisão de rescisão, com os encargos dela, não é dedutível ao ser feita (IN RFB 1.700 art. 70; adição A.178)
@@ -827,7 +833,7 @@ function regimes(x,modo,ano){
     :[{k:"CBS",bl:blCI,base:bb+repS-issV-credB27-insB27-depB27,al:cbsAl},{k:"IBS",bl:blCI,base:bb+repS-issV-credB27-insB27-depB27,al:LEI.ibs27}];
   // revenda: a parte em cosmético (rcos) e, dela, a parte fora dos 25% de ICMS (rxam: xampu 33.05.10, desodorante 33.07.20, antissolar)
   const rev=numP(x.rev), cmv=c.cmv, rcos=pctF(x.rcos,100), rxam=pctF(x.rxam,0), s25=rcos*(1-rxam), nm=1-rcos;
-  const icmsAl=INS_LEI.cos*s25+INS_LEI.ger*(1-s25);
+  const icmsAl=icmsAlRev(x);
   const icmsIt=()=>rev>0?[{k:"ICMS da revenda",bl:"revenda − compras",base:rev-cmv,al:icmsAl}]:[];
   const revPC=nc=>!(rev>0)?[]:ano===2026
     ?(nm>0?(nc?[{k:"PIS da revenda",bl:"revenda − compras, sem ICMS, fora o cosmético",base:(rev-cmv)*nm*(1-INS_LEI.ger),al:LEI.pisNC},{k:"Cofins da revenda",bl:"revenda − compras, sem ICMS, fora o cosmético",base:(rev-cmv)*nm*(1-INS_LEI.ger),al:LEI.cofNC}]
@@ -844,7 +850,8 @@ function regimes(x,modo,ano){
     if(c.ibsFora>0)sItems.push({k:"IBS fora do DAS",bl:"receita − ISS",base:c.servSalao-c.issFora,al:LEI.ibs27});
     out.S=fecha(sItems);
     const gr=c.guia.rev;
-    out.S.rev=fecha(rev>0?[{k:"DAS da revenda",bl:"DAS do Anexo I",base:c.dasRev,al:1},...(c.ibsFora>0?[{k:"IBS fora do DAS (revenda)",bl:"revenda",base:rev,al:LEI.ibs27}]:[])]:[]);
+    const icmsIm=c.icmsFora>0?[{k:"ICMS fora do DAS (revenda)",bl:"revenda − compras",base:c.icmsFora/icmsAl,al:icmsAl}]:[];
+    out.S.rev=fecha(rev>0?[{k:"DAS da revenda",bl:"DAS do Anexo I",base:c.dasRev,al:1},...icmsIm,...(c.ibsFora>0?[{k:"IBS fora do DAS (revenda)",bl:"revenda",base:rev,al:LEI.ibs27}]:[])]:[]);
     /* mono-das v1 */ // 2026: o DAS da revenda já sai sem o PIS e a Cofins do cosmético monofásico (guiaDAS); monoPC é quanto saiu, para o texto
     out.S.monoPC=c.guia.monoPC||0;
     if(ano>=2027){ // LC 123 art. 13 § 9º (red. LC 227): CBS e IBS saem do DAS e vão ao regime regular
@@ -852,7 +859,7 @@ function regimes(x,modo,ano){
       out.SR=fecha(sItems.filter(i=>i.k!=="CBS"&&i.k!=="IBS"&&i.k!=="IBS fora do DAS").map(i=>({...i})).concat(consumo(true,issDas)));
       // revenda: o DAS do Anexo I sem a CBS e o IBS, e os dois por fora, sem o ICMS do DAS na base e com crédito da compra sem ICMS
       const cbR=(gr.CBS||0)+(gr.IBS||0), bR=rev-(gr.ICMS||0)-cmv*(1-icmsAl);
-      out.SR.rev=fecha(rev>0?[{k:"DAS da revenda",bl:"DAS do Anexo I sem CBS e IBS",base:c.dasRev-cbR,al:1},{k:"CBS da revenda",bl:"revenda − ICMS − compras sem ICMS",base:bR,al:cbsAl},{k:"IBS da revenda",bl:"revenda − ICMS − compras sem ICMS",base:bR,al:LEI.ibs27}]:[]);
+      out.SR.rev=fecha(rev>0?[{k:"DAS da revenda",bl:"DAS do Anexo I sem CBS e IBS",base:c.dasRev-cbR,al:1},...icmsIm,{k:"CBS da revenda",bl:"revenda − ICMS − compras sem ICMS",base:bR,al:cbsAl},{k:"IBS da revenda",bl:"revenda − ICMS − compras sem ICMS",base:bR,al:LEI.ibs27}]:[]);
     }
   }
   const F=lc224Fator(x.lc224Rec>0?x.lc224Rec:12*(bF+rev)), issV=LEI.iss*bF, lp=presF*F*bF, lpR=FORA.pIrRev*F*rev, lcR=FORA.pCsRev*F*rev;
@@ -1083,11 +1090,11 @@ function regKey(x,Rg,reg){reg=reg||{};
 function cenarioReg(x,modo,reg){
   const c=cenario(x,modo), Rg=regimes(x,modo,+x.ano), k=regKey(x,Rg,reg);
   c.reg=k; c.regs=Rg;
-  if(k==="S"){c.tribTot=c.foraSimples?null:c.das+(c.issFora||0)+(c.ibsFora||0);return c}
+  if(k==="S"){c.tribTot=c.foraSimples?null:c.das+(c.issFora||0)+(c.ibsFora||0)+(c.icmsFora||0);return c}
   const r=Rg[k], its=r.items.concat(r.rev?r.rev.items:[]), g={receita:0,folha:0,lucro:0}; its.forEach(i=>g[i.g]+=i.v);
   const sr=k==="SR", tot=totReg(Rg,k), das=sr?its.filter(i=>i.bl.startsWith("DAS")).reduce((a,i)=>a+i.v,0):0, rec=sr?c.recMes:Rg.bF+numP(x.rev), rs=sr?c.repSem:0;
   Object.assign(c,{trib:r,tribIt:its,tribTot:tot,tribG:g,dasReg:das,recMes:rec});
-  if(sr){c.ibsFora=0;c.cbsReg=tot-das-(c.issFora||0)}else{c.repSem=0;c.limIsento=null}
+  if(sr){c.ibsFora=0;c.cbsReg=tot-das-(c.issFora||0)-(c.icmsFora||0)}else{c.repSem=0;c.limIsento=null}
   /* regime-fora v1 */ // Presumido: sem escrituração, sai isento por ano a base do IRPJ menos IRPJ, CSLL, PIS e Cofins (IN RFB 1.700 art. 238 § 2º I).
   // Em 2027 não há PIS nem Cofins, e a norma não fala da CBS e do IBS: a conta desconta só IRPJ e CSLL, como está escrito (ponto aberto na aba Lucro).
   if(k==="PR"){c.limIsento=12*(r.presBase-its.filter(i=>/^(IRPJ|CSLL|Adicional|PIS|Cofins)/.test(i.k)).reduce((a,i)=>a+i.v,0));
@@ -1325,7 +1332,7 @@ function render(){
 
   // KPIs
   $("#kpis").innerHTML=[
-    c.reg!=="S"?["Tributos do mês",R(c.tribTot),(c.reg==="SR"?"DAS "+R(c.dasReg)+" + CBS e IBS regulares":NOME[c.reg])+" · "+P(c.recMes>0?c.tribTot/c.recMes:0,1)+" da receita"]:["DAS do mês",c.foraSimples?"fora do Simples":R(c.das+(c.issFora||0)+(c.ibsFora||0)),c.foraSimples?(c.ap.retro.excl||c.ap.ini==="seg"&&c.ap.porAnt.excl?"acima do limite proporcional do início de atividade":"receita acima de R$ 4,8 mi"):"alíquota efetiva "+P(c.ef3)+" nos serviços"],
+    c.reg!=="S"?["Tributos do mês",R(c.tribTot),(c.reg==="SR"?"DAS "+R(c.dasReg)+" + CBS e IBS regulares":NOME[c.reg])+" · "+P(c.recMes>0?c.tribTot/c.recMes:0,1)+" da receita"]:["DAS do mês",c.foraSimples?"fora do Simples":R(c.das+(c.issFora||0)+(c.ibsFora||0)+(c.icmsFora||0)),c.foraSimples?(c.ap.retro.excl||c.ap.ini==="seg"&&c.ap.porAnt.excl?"acima do limite proporcional do início de atividade":"receita acima de R$ 4,8 mi"):"alíquota efetiva "+P(c.ef3)+" nos serviços"],
     ["Pessoal do mês",R(pessoalC(c)),"equipe CLT "+R(c.folha+c.enc.ben+c.enc.vt)+(c.enc.pl>0?" + pró-labore "+R(c.enc.pl):" · sem pró-labore na ficha")],
     ["Resultado do salão",R(c.resultado),c.enc.pl>0?"por mês, depois de imposto, equipe, pró-labore e despesas":"por mês; sem pró-labore na ficha, inclui a retirada do sócio"],
     ["Lucro do ano",R(c.lucroAno),c.reg==="RE"?"no Real sai isento o lucro da escrituração (IN RFB 1.700 art. 238 § 3º)":c.limIsento==null?(c.am?"soma dos 12 meses":"12 meses iguais"):(c.am?"soma dos 12 meses · teto isento: ":"teto isento sem contabilidade: ")+R(c.limIsento)+" por ano"]
@@ -1400,7 +1407,7 @@ function render(){
           :ap.porAnt.imp&&ap.ini==="seg"?`a receita do ano da abertura (${R(ap.ant)}) passou do sublimite proporcional de ${R(ap.SA)}, e o impedimento vale o ano todo (LC 123 art. 3º §§ 11 e 13; Res. CGSN 140 art. 12 § 4º)`
           :ap.porAnt.imp?`a receita do ano passado (${R(ap.ant)}) passou do sublimite de R$ 3,6 milhões, e o impedimento vale o ano todo (LC 123 arts. 13-A e 20 §§ 1º e 1º-A)`
           :`a receita do ano até o mês anterior (${R(ap.rbaAnt)}) passou mais de 20% do sublimite, e o impedimento vale desde o mês seguinte ao excesso (LC 123 arts. 13-A e 20 §§ 1º e 1º-A)`;
-        h+=`<div class="callout warn"><b>${y27?"ISS e IBS fora":"ISS fora"} do DAS: ${R(c.issFora+(c.ibsFora||0))} em guia própria.</b><span>Motivo: ${porQue}. ISS de 5% à Prefeitura: ${R(c.issFora)} (Lei SP 13.701 art. 16 IV).${y27?` IBS no regime regular, a 0,1%: ${R(c.ibsFora)} (LC 214 art. 344), sem créditos${rev?" e sem tirar o ICMS da base":""}.`:""}${rev?" O ICMS da revenda também sai do DAS e é apurado pelo regime normal do Estado, fora desta conta.":""}</span></div>`;
+        h+=`<div class="callout warn"><b>${(rev?(y27?"ISS, ICMS e IBS":"ISS e ICMS"):(y27?"ISS e IBS":"ISS"))+" fora"} do DAS: ${R(c.issFora+(c.ibsFora||0)+(c.icmsFora||0))} em guia própria.</b><span>Motivo: ${porQue}. ISS de 5% à Prefeitura: ${R(c.issFora)} (Lei SP 13.701 art. 16 IV).${y27?` IBS no regime regular, a 0,1%: ${R(c.ibsFora)} (LC 214 art. 344), sem créditos${rev?" e sem tirar o ICMS da base":""}.`:""}${rev?` O ICMS da revenda também sai do DAS e vai ao regime normal do Estado: ${R(c.icmsFora)}, a alíquota interna sobre a revenda menos as compras (Lei SP 6.374 arts. 34 e 36), supondo compra em SP de fornecedor do regime normal, em GARE.`:""}</span></div>`;
       }else if(c.faixa===5){
         h+=`<div class="callout info"><b>RBT12 acima de R$ 3,6 milhões, sem impedimento: ${loc} ${y27?"seguem":"segue"} no DAS.</b><span>${y27?"Calculados":"Calculado"} pela fórmula da 5ª faixa sobre o RBT12, com o ISS limitado a 5% e a diferença levada aos tributos federais${y27?" e ao IBS":""} (Res. CGSN 140 art. 21 III${y27?", red. Res. CGSN 190":' "a" e "b"'}).</span></div>`;
       }
@@ -1578,7 +1585,7 @@ function render(){
   // 6 calendário
   const cal=[c.reg==="PR"||c.reg==="RE"?["A cada serviço","NFS-e: Emissor Nacional ou Paulistana","o salão que optou pelo Simples continua no Emissor Nacional mesmo depois de sair dele (IN SF/SUREM 10/2011 art. 1º-A § 2º, red. IN SF/SUREM 13/2026); o que nunca optou emite a NFS-e Paulistana, pela leitura da pesquisa (art. 1º): confirme com o contador"]:["A cada serviço","NFS-e pelo Emissor Nacional",parc?"com as duas cotas e o CNPJ do parceiro":"Res. CGSN 140 art. 59"],
     ...(c.reg==="PR"||c.reg==="RE"?calReg(x,c)
-      :[["Dia 20","DAS do mês anterior",c.foraSimples?"—":R(c.reg==="SR"?c.dasReg:c.das+(c.issFora||0)+(c.ibsFora||0))]].concat(c.reg==="SR"?[["Último dia útil","CBS e IBS no regime regular",R(c.cbsReg)+" fora do DAS, do mês anterior (opção de 2027; Decreto 12.955 art. 45; Res. CGIBS 6/2026 art. 45)"]]:[])),
+      :[["Dia 20","DAS do mês anterior",c.foraSimples?"—":R(c.reg==="SR"?c.dasReg:c.das+(c.issFora||0)+(c.ibsFora||0))]].concat(c.icmsFora>0?[["Dia 20","ICMS da revenda (regime normal de SP)",R(c.icmsFora)+" em GARE, do mês anterior (RICMS/SP art. 112; Anexo IV, CPR 1200); sem expediente, o dia útil seguinte, como na agenda da Sefaz-SP"]]:[]).concat(c.reg==="SR"?[["Último dia útil","CBS e IBS no regime regular",R(c.cbsReg)+" fora do DAS, do mês anterior (opção de 2027; Decreto 12.955 art. 45; Res. CGIBS 6/2026 art. 45)"]]:[])),
     ["Dia 20","FGTS do mês anterior",R(c.equipe.reduce((a,p)=>a+p.fgts,0))+" (Lei 8.036 art. 15)"],
     ["Dia 15","eSocial: folha e fechamento (S-1200 e S-1299)",plE(c.empregados)+"; dia útil seguinte se não for útil (MOS S-1.3)"],
     ["Dia 20","IRRF de salário e pró-labore; INSS retido do pró-labore","antecipa se não for útil (Lei 11.196 art. 70 I \"e\"; Lei 10.666 art. 4º)"],
@@ -1985,7 +1992,7 @@ function renderDash(x,c,A,B){
   const parc=x.mod==="PARC";
   const sum=k=>c.equipe.reduce((a,p)=>a+p[k],0);
   const sal=sum("s"), fg=sum("fgts")+sum("fgts2"), d13=sum("d13"), fer=sum("fer")+sum("terco");
-  const e=c.enc, rb=c.recMes, ded=c.reg==="SR"?c.tribTot:c.das+(c.issFora||0)+(c.ibsFora||0), rl=rb-ded, rs=c.repSem||0, df=c.difal||0, lb=rl-c.cmv-(c.insumo||0)-df-rs, pes=c.folha+e.vt+e.ben+e.pl, outr=x.desp+e.tfeMes+(e.capMes||0)+(c.cartao||0)+(c.dep||0)+(c.ajDesp||0), res=c.resultado;
+  const e=c.enc, rb=c.recMes, ded=c.reg==="SR"?c.tribTot:c.das+(c.issFora||0)+(c.ibsFora||0)+(c.icmsFora||0), rl=rb-ded, rs=c.repSem||0, df=c.difal||0, lb=rl-c.cmv-(c.insumo||0)-df-rs, pes=c.folha+e.vt+e.ben+e.pl, outr=x.desp+e.tfeMes+(e.capMes||0)+(c.cartao||0)+(c.dep||0)+(c.ajDesp||0), res=c.resultado;
   const pc=v=>rb>0?P(v/rb,1):"—";
   const cell=(v,neg)=>`<td class="r num${neg&&v>0?" neg":""}">${neg&&v>0?"(":""}${R(Math.abs(v))}${neg&&v>0?")":""}</td>`;
   const row=(lbl,v,{neg=false,cls=""}={})=>`<tr class="${cls}"><td>${lbl}</td>${cell(v,neg)}${c.am?"":cell(v*12,neg)}<td class="r num">${pc(v)}</td></tr>`;
@@ -2004,6 +2011,7 @@ function renderDash(x,c,A,B){
     ${c.reg==="SR"?row("(−) CBS e IBS no regime regular (opção de 2027)",c.cbsReg,{neg:true}):""}
     ${c.issFora?row("(−) ISS fora do DAS (acima do sublimite)",c.issFora,{neg:true}):""}
     ${c.ibsFora?row("(−) IBS fora do DAS (acima do sublimite)",c.ibsFora,{neg:true}):""}
+    ${c.icmsFora?row("(−) ICMS da revenda fora do DAS (acima do sublimite)",c.icmsFora,{neg:true}):""}
     ${row("Receita líquida",rl,{cls:"tot"})}
     ${x.rev>0?row("(−) Custo das mercadorias vendidas",c.cmv,{neg:true}):""}
     ${c.insumo>0?row("(−) Custo dos serviços prestados (insumos)",c.insumo,{neg:true}):""}
