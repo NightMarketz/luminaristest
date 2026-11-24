@@ -1,5 +1,5 @@
 import type { KitUpgradePending, KitUpgradeRun, Prisma } from 'generated/prisma';
-import type { BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 import type { ConflictReason, KitPendingStatus, KitUpgradeMode, KitUpgradeRunStatus } from '../models/kitUpgradeTypes';
 
 export interface CreateKitUpgradeRunInput {

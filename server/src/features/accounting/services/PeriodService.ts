@@ -2,7 +2,8 @@ import { AccountantRequiredError, ForbiddenError, ValidationError } from '../../
 import logger from '../../../lib/logger';
 import type { AccountingPeriod } from 'generated/prisma';
 import type { IAccountingPeriodRepository } from '../repositories/IAccountingPeriodRepository';
-import type { ActiveAccountant, IAccountingPolicy } from '../policies/IAccountingPolicy';
+import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
+import type { ActiveAccountant } from '../models/AccountantAssignment.model';
 import type { IAccountantAssignmentRepository } from '../repositories/IAccountantAssignmentRepository';
 import type { IPostingRepository } from '../repositories/IPostingRepository';
 import type { AuditService } from './AuditService';

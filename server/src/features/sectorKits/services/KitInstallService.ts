@@ -23,7 +23,8 @@
  * já há binding `Active` do setor.
  */
 import { ForbiddenError, ValidationError } from '../../../lib/errors';
-import type { BindingScope, IAccountingBindingRepository } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { IAccountingBindingRepository } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 import type { ActivationPeriodPort } from '../../accountingBinding/services/BindingActivationService';
 import { BindingSectorConflictError } from '../../accountingBinding/models/bindingSectorConflict';
 import type { BindingCompileService, CompileBindingResult } from '../../accountingBinding/services/BindingCompileService';

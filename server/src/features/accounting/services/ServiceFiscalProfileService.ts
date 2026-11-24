@@ -71,6 +71,8 @@ export class ServiceFiscalProfileService {
     if (!this.policy.canManageServiceFiscalProfile(scope)) throw new ForbiddenError('Você não tem permissão para alterar o perfil fiscal de serviços.');
     const { unitId: _unitId, ...data } = input;
     const lista = await this.lc116(scope);
+    // MODULE-BOUNDARIES PR-1a (`L6`; dono, questionário, 24/11: "Vai para o service", revoga a L-8 do BE-INCR-LEGAL-PARAMS): cTribNac na lista nacional vigente.
+    if (!findLc116(data.cTribNac, lista)) throw new ValidationError('cTribNac fora da lista nacional de serviços (Anexo I MUN.INCID_INFO.SERV.)');
     return this.repo.runTransaction(async (tx) => {
       // IBS-CBS-2027 PR-1, L1 (dono, questionário, 21/10: conferir ao salvar) — RN E0959 do leiaute da DPS: os 3
       // primeiros dígitos do cClassTrib = CST do IBS/CBS do perfil da unidade. Perfil sem CST: nada a conferir (o grupo

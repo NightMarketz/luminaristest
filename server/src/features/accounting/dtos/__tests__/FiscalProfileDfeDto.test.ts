@@ -38,9 +38,12 @@ describe('UpsertFiscalProfileSchema — campos BE-INCR-DFE', () => {
     expect(UpsertFiscalProfileSchema.safeParse({ ...normal, dpsSerie: 49999 }).success).toBe(true);
   });
 
-  it('issAliquotaBp > 500 (pAliq [312], RN E0595 "superior a 5%") → 400', () => {
-    expect(UpsertFiscalProfileSchema.safeParse({ ...normal, issAliquotaBp: 501 }).success).toBe(false);
+  // MODULE-BOUNDARIES PR-1a (dono, 24/11: "Vai para o service"): o máximo da ISS_LIMITE (pAliq [312], RN E0595) saiu do DTO para o
+  // FiscalProfileService.validate — o caso 501 → 400 está em services/__tests__/FiscalProfileService.dfe.test.ts.
+  it('issAliquotaBp: o DTO confere só o formato (inteiro ≥ 0); o máximo da tabela é do serviço', () => {
     expect(UpsertFiscalProfileSchema.safeParse({ ...normal, issAliquotaBp: 500 }).success).toBe(true);
+    expect(UpsertFiscalProfileSchema.safeParse({ ...normal, issAliquotaBp: -1 }).success).toBe(false);
+    expect(UpsertFiscalProfileSchema.safeParse({ ...normal, issAliquotaBp: 1.5 }).success).toBe(false);
   });
 
   it('codMun precisa de 7 dígitos IBGE (cLocEmi [112])', () => {
@@ -78,8 +81,9 @@ describe('UpsertServiceFiscalProfileSchema (BRIEF item 8)', () => {
     expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, cTribNac: '060201' }).success).toBe(true);
   });
 
-  it('cTribNac fora da lista nacional transcrita → 400 (6 dígitos válidos mas inexistentes: 069999)', () => {
-    expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, cTribNac: '069999' }).success).toBe(false);
+  // MODULE-BOUNDARIES PR-1a (dono, 24/11: "Vai para o service"): a lista nacional saiu do DTO para o ServiceFiscalProfileService.upsert — o
+  // caso 069999 → 400 está em services/__tests__/FiscalProfileService.dfe.test.ts.
+  it('cTribNac fora do formato de 6 dígitos → 400', () => {
     expect(UpsertServiceFiscalProfileSchema.safeParse({ ...base, cTribNac: '60101' }).success).toBe(false); // zero à esquerda obrigatório
   });
 
@@ -133,8 +137,8 @@ describe('UpsertFiscalProfileSchema — pacoteCTribNac / pacoteCNBS (13a)', () =
     expect(UpsertFiscalProfileSchema.safeParse(normal).success).toBe(true);
   });
 
-  it('cTribNac fora da lista nacional, ou fora do formato, → 400', () => {
-    expect(UpsertFiscalProfileSchema.safeParse({ ...normal, pacoteCTribNac: '999999' }).success).toBe(false);
+  // MODULE-BOUNDARIES PR-1a (dono, 24/11: "Vai para o service"): a lista nacional é do FiscalProfileService.validate (999999 → 400 lá).
+  it('cTribNac ou cNBS fora do formato → 400', () => {
     expect(UpsertFiscalProfileSchema.safeParse({ ...normal, pacoteCTribNac: '06010' }).success).toBe(false);
     expect(UpsertFiscalProfileSchema.safeParse({ ...normal, pacoteCNBS: '12345678' }).success).toBe(false);
   });
