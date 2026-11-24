@@ -29,6 +29,28 @@
         },
         "tipo": "IGUAL"
       }
+    },
+    {
+      "id": "D02",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:50:05-03:00",
+      "sha256": "6db9981e0bf8f7ebc7cc06d19810d1610ed9689c7172218dd5cef3c42034c9a3",
+      "arquivo": "docs/D02_lcp214-htm.html",
+      "texto": "docs/D02_lcp214-htm.txt",
+      "bytes": 5403923,
+      "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3",
+      "captura": {
+        "anterior": {
+          "slug": "icms-revenda-regime-normal-sp",
+          "id": "D17",
+          "baixado_em": "2026-11-21T16:59:14-03:00",
+          "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3"
+        },
+        "tipo": "IGUAL"
+      }
     }
   ],
   "buscas": [],

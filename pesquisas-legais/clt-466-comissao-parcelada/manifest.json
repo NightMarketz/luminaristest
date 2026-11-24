@@ -51,6 +51,22 @@
       "captura": {
         "tipo": "PRIMEIRA"
       }
+    },
+    {
+      "id": "D03",
+      "titulo": "L3207",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/l3207.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/l3207.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:47:55-03:00",
+      "sha256": "0e9effcd68d7954abb463f724810ecc77d9673c1d85597edc4ee7600d2ffaa99",
+      "arquivo": "docs/D03_l3207-htm.html",
+      "texto": "docs/D03_l3207-htm.txt",
+      "bytes": 11620,
+      "sha256_texto": "8ece6608b43275231a84693d3065975035898d4bc05f1845419cedb463a0cea0",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
     }
   ],
   "buscas": [],
