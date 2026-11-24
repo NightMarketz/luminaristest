@@ -13,6 +13,7 @@ import type {
   FiscalSequenceView,
   IFiscalDocumentRepository,
   NumberedDocumentView,
+  PollStatePatch,
   SequenceAmbiente,
   TransitionData,
 } from './IFiscalDocumentRepository';
@@ -122,11 +123,29 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     return (r._sum.vServCents ?? 0n) - (r._sum.vDescIncondCents ?? 0n);
   }
 
-  public async listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
+  public async listPending(olderThan: Date, opts: { limit?: number; now?: Date } = {}, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {
+    const now = opts.now ?? new Date();
     return this.db(tx).fiscalDocument.findMany({
-      where: { status: { in: ['SENT', 'PROCESSING'] }, deletedAt: null, updatedAt: { lt: olderThan } },
+      where: {
+        status: { in: ['SENT', 'PROCESSING'] },
+        deletedAt: null,
+        updatedAt: { lt: olderThan },
+        // Onda 4 / 4.1: o documento em backoff ou abandonado pelo job não volta à fila; o manual nunca é consultado.
+        pollGaveUpAt: null,
+        partner: { not: 'manual' },
+        OR: [{ nextPollAt: null }, { nextPollAt: { lte: now } }],
+      },
       orderBy: [{ updatedAt: 'asc' }],
+      ...(opts.limit !== undefined ? { take: opts.limit } : {}),
     });
+  }
+
+  public async updatePollState(scope: AccountingScope, id: string, patch: PollStatePatch, tx?: Prisma.TransactionClient): Promise<boolean> {
+    const r = await this.db(tx).fiscalDocument.updateMany({
+      where: { id, ...accountingScopeWhere(scope), deletedAt: null },
+      data: patch,
+    });
+    return r.count === 1;
   }
 
   public async listParaEventos(desde: Date, limit: number, partners: readonly string[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]> {

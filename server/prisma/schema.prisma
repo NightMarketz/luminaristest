@@ -2405,6 +2405,14 @@ model FiscalDocument {
   // X10a PR-9 (E-9, F-NFCE-E1-6 b) — infNFeSupl {qrCode, urlChave} da NFC-e emitida em contingência off-line: o DANFE sai
   // antes da autorização, então o BE entrega o QR Code da nota impressa. null na emissão normal.
   contingenciaSuplJson    String?
+  // Onda 4 / 4.1 — o polling de SENT|PROCESSING (`dfe_poll_pending`) não repete para sempre o mesmo documento que falha:
+  // `pollAttempts` conta as falhas seguidas da consulta (zera no sucesso), `nextPollAt` é o relógio do backoff exponencial
+  // (NÃO é o `updatedAt`, que alimenta o rodízio das outras varreduras), `pollGaveUpAt` marca o teto atingido — o job para de
+  // consultar e alerta; o documento NÃO muda de status (REJECTED liberaria o reenvio sem a SEFAZ ter dito que não recebeu).
+  pollAttempts            Int                     @default(0)
+  nextPollAt              DateTime?
+  pollGaveUpAt            DateTime?
+  pollLastError           String? // truncado a 500
   createdById             String?
   createdAt               DateTime                @default(now())
   updatedAt               DateTime                @updatedAt
