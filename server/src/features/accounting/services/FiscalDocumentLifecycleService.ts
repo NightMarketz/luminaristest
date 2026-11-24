@@ -40,9 +40,9 @@ import type { PostingService } from './PostingService';
 import type { FiscalDocumentEmissionService, FiscalDocumentView } from './FiscalDocumentEmissionService';
 import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import { resolveEmissorFor } from '../dfe/resolveEmissor';
-import { ambienteFromTpAmb, assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
+import { ambienteFromTpAmb, assertTpAmb, isFalhaDeComunicacao, tpAmbFor } from '../dfe/DfeEmissorPort';
 import type { CancelInput, CancelResult, DfeAmbiente, DfeCallContext, DfeEmissorPort, EmissaoResult, EventoNfse } from '../dfe/DfeEmissorPort';
-import { AssinaturaRemotaError, isSessaoPscVencida } from '../dfe/AssinadorRemotoPort';
+import { AssinaturaRemotaError, isAssinaturaPendente, isSessaoPscVencida } from '../dfe/AssinadorRemotoPort';
 import { bloqueioSessaoPsc } from './DfeAssinaturaResolver';
 import { enviarTentativa, type DfeContingenciaHandler } from './dfeEnvio';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
@@ -100,6 +100,19 @@ const REENVIAVEIS: readonly FiscalDocumentStatus[] = ['REJECTED', 'PENDING_SIGNA
 export const DFE_NAO_RECEBIDA = 'dfe_nao_recebida';
 export const NAO_CONSTA_MAX_CONSULTAS = 5;
 export const NAO_CONSTA_ESPACO_MS = 120_000;
+/**
+ * F-AL-6 (dono, chat, 2026-11-24): NFC-e normal que ficou `SENT` por timeout e tem a contingência ligada — a SEFAZ "não a conhece"
+ * na 2ª consulta 217 espaçada (≥ 2 min depois da 1ª), e aí a venda sai em contingência. Sem contingência disponível vale
+ * `NAO_CONSTA_MAX_CONSULTAS` e a rejeição `dfe_nao_recebida`, como antes.
+ */
+export const NAO_CONSTA_CONSULTAS_ANTES_DA_CONTINGENCIA = 2;
+/**
+ * F-AL-6 (dono, chat, 2026-11-24): X — a consulta de uma NFC-e normal `SENT`/`PROCESSING` que falha por COMUNICAÇÃO com a SEFAZ há este
+ * tempo contingencia a nota pelo mesmo handler do 217. Com a SEFAZ calada (timeout/reset) a consulta também falha e nunca chega ao 217;
+ * sem isto a nota espera até o job desistir (~3 h) e o modo AUTO da unidade nunca liga. A âncora (`consultaFalhandoDesde`) fica no
+ * `resultJson` da tentativa corrente: não é `updatedAt` (o poll o mexe) e a primeira resposta da SEFAZ a apaga (o `applyResult` regrava o JSON).
+ */
+export const CONSULTA_FALHANDO_ATE_CONTINGENCIA_MS = 5 * 60_000;
 const NAO_CONSTA_CODES = new Set(['217']);
 
 /** A chave de 44 dígitos do `infNFe/@Id` ("NFe" + chave) do payload da tentativa; `null` na DPS ou sem numeração. */
@@ -107,6 +120,27 @@ function chaveDaTentativa(payloadJson: string): string | null {
   try {
     const id = (JSON.parse(payloadJson) as { infNFe?: { Id?: unknown } }).infNFe?.Id;
     return typeof id === 'string' && /^NFe\d{44}$/.test(id) ? id.slice(3) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** `tpEmis` (B22) do payload da tentativa; `null` na DPS ou ilegível. */
+function tpEmisDaTentativa(payloadJson: string): number | null {
+  try {
+    const tpEmis = (JSON.parse(payloadJson) as { infNFe?: { ide?: { tpEmis?: unknown } } }).infNFe?.ide?.tpEmis;
+    return typeof tpEmis === 'number' ? tpEmis : null;
+  } catch {
+    return null;
+  }
+}
+
+/** O instante (ms) em que a consulta começou a falhar, guardado no `resultJson` da tentativa; `null` sem âncora ou ilegível. */
+function consultaFalhandoDesde(resultJson: string | null): number | null {
+  try {
+    const v = (JSON.parse(resultJson ?? '{}') as { consultaFalhandoDesde?: unknown } | null)?.consultaFalhandoDesde;
+    const t = typeof v === 'string' ? Date.parse(v) : Number.NaN;
+    return Number.isNaN(t) ? null : t;
   } catch {
     return null;
   }
@@ -129,6 +163,7 @@ export function naoRecebida(
   resultJsonAnterior: string | null,
   result: EmissaoResult,
   agora: Date,
+  maxConsultas: number = NAO_CONSTA_MAX_CONSULTAS,
 ): { result: EmissaoResult; naoConsta?: NaoConstaContagem } {
   if (!isNaoConsta(result)) return { result };
   let previo: Partial<NaoConstaContagem> = {};
@@ -143,7 +178,7 @@ export function naoRecebida(
   const naoConsta: NaoConstaContagem = espacada
     ? { naoConsta: n + 1, naoConstaEm: agora.toISOString() }
     : { naoConsta: n, naoConstaEm: previo.naoConstaEm as string };
-  if (naoConsta.naoConsta < NAO_CONSTA_MAX_CONSULTAS) return { result, naoConsta };
+  if (naoConsta.naoConsta < maxConsultas) return { result, naoConsta };
   return {
     result: {
       status: 'REJECTED',
@@ -151,7 +186,7 @@ export function naoRecebida(
       errors: [
         {
           code: DFE_NAO_RECEBIDA,
-          message: `a SEFAZ não achou a nota (217) em ${NAO_CONSTA_MAX_CONSULTAS} consultas espaçadas — reenvie com o mesmo número`,
+          message: `a SEFAZ não achou a nota (217) em ${maxConsultas} consultas espaçadas — reenvie com o mesmo número`,
         },
       ],
     },
@@ -269,14 +304,104 @@ export class FiscalDocumentLifecycleService {
     // não a tem gravada, e a consulta pela chave "não depende de resposta anterior": vem do payload da tentativa.
     const ref = doc.partnerRef ?? (full ? chaveDaTentativa(this.currentAttempt(full).payloadJson) : null) ?? attemptRef(doc.id, doc.currentAttemptNo);
     const ctx = full ? await this.ctxDe(scope, full, port, false) : undefined;
-    const result = ctx ? await port.consultar(ref, ctx) : await port.consultar(ref);
+    let result: EmissaoResult;
+    try {
+      result = ctx ? await port.consultar(ref, ctx) : await port.consultar(ref);
+    } catch (error) {
+      if (await this.contingenciarSeConsultaFalhaHaMuito(scope, doc, port, ctx, error)) return;
+      throw error;
+    }
     if (!isNaoConsta(result)) {
       await this.applyResult(scope, doc, result);
       return;
     }
-    const anterior = this.currentAttempt(full ?? (await this.comTentativas(scope, doc))).resultJson;
-    const { result: decidido, naoConsta } = naoRecebida(anterior, result, new Date());
+    const atual = full ?? (await this.comTentativas(scope, doc));
+    const tentativa = this.currentAttempt(atual);
+    // F-AL-6: a NFC-e normal (tpEmis 1) com a contingência ligada não vira "rejeitada, reenvie" — a SEFAZ não a conhecer é o que contingencia.
+    const comContingencia = doc.kind === 'NFCE' && this.contingencia !== null && port.capabilities.contingenciaOffline && tpEmisDaTentativa(tentativa.payloadJson) === 1;
+    const { result: decidido, naoConsta } = naoRecebida(tentativa.resultJson, result, new Date(), comContingencia ? NAO_CONSTA_CONSULTAS_ANTES_DA_CONTINGENCIA : undefined);
+    if (comContingencia && decidido.status === 'REJECTED' && decidido.errors.some((e) => e.code === DFE_NAO_RECEBIDA)) {
+      if (await this.contingenciarNaoRecebida(scope, atual, port, ctx)) return;
+      // A contingência falhou: a nota segue consultável (PROCESSING com a contagem); o próximo poll tenta de novo.
+      await this.applyResult(scope, doc, result, undefined, naoConsta);
+      return;
+    }
     await this.applyResult(scope, doc, decidido, undefined, naoConsta);
+  }
+
+  /**
+   * F-AL-6 (X = 5 min) — a consulta de uma NFC-e normal falhou por COMUNICAÇÃO com a SEFAZ (`DfeTransporteError`). A 1ª falha grava a
+   * âncora no `resultJson` da tentativa; as seguintes só a leem; a que passa de `CONSULTA_FALHANDO_ATE_CONTINGENCIA_MS` contingencia
+   * (o handler liga o modo AUTO da unidade e a nota normal vira órfã, decisão 6). Devolve `true` se contingenciou (a nota saiu do poll).
+   * Não contam: erro de código ou do assinador (`dfe_*`, sem dispositivo, `AssinaturaRemotaError`) — sem a SEFAZ calar não há o que
+   * decidir, e a contingência também assina pelo assinador; e nota que não é NFC-e normal (tpEmis 9 já é de contingência).
+   */
+  private async contingenciarSeConsultaFalhaHaMuito(
+    scope: AccountingScope,
+    doc: FiscalDocument,
+    port: DfeEmissorPort,
+    ctx: DfeCallContext | undefined,
+    error: unknown,
+  ): Promise<boolean> {
+    if (!isFalhaDeComunicacao(error) || doc.kind !== 'NFCE' || !this.contingencia || !port.capabilities.contingenciaOffline) return false;
+    if (doc.status !== 'SENT' && doc.status !== 'PROCESSING') return false;
+    const full = await this.comTentativas(scope, doc);
+    const tentativa = this.currentAttempt(full);
+    if (tpEmisDaTentativa(tentativa.payloadJson) !== 1) return false;
+    const agora = Date.now();
+    const desde = consultaFalhandoDesde(tentativa.resultJson);
+    if (desde === null) {
+      try {
+        let previo: Record<string, unknown> = {};
+        try {
+          const p = tentativa.resultJson ? (JSON.parse(tentativa.resultJson) as unknown) : null;
+          if (p && typeof p === 'object' && !Array.isArray(p)) previo = p as Record<string, unknown>;
+        } catch {
+          previo = {}; // resultJson ilegível: a âncora recomeça
+        }
+        await this.repo.transition(scope, doc.id, {
+          status: doc.status as FiscalDocumentStatus,
+          attemptResult: {
+            attemptNo: doc.currentAttemptNo,
+            resultStatus: tentativa.resultStatus ?? 'PROCESSING',
+            resultJson: JSON.stringify({ ...previo, consultaFalhandoDesde: new Date(agora).toISOString() }),
+          },
+          whenStatusIn: [doc.status as FiscalDocumentStatus],
+        });
+      } catch (e) {
+        logger.warn('dfe_contingencia: não gravou a âncora da consulta falhando — tenta de novo no próximo poll', {
+          documentId: doc.id,
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+      return false;
+    }
+    if (agora - desde < CONSULTA_FALHANDO_ATE_CONTINGENCIA_MS) return false;
+    logger.warn('dfe_contingencia: a consulta da NFC-e falha por comunicação há mais de 5 min — contingência', { documentId: doc.id, desdeMs: agora - desde });
+    return this.contingenciarNaoRecebida(scope, full, port, ctx);
+  }
+
+  /** F-AL-6 — a SEFAZ não conhece a chave da NFC-e normal que deu timeout: re-emite a venda off-line (o mesmo handler do envio, decisão 4). */
+  private async contingenciarNaoRecebida(scope: AccountingScope, doc: FiscalDocumentWithAttempts, port: DfeEmissorPort, ctx: DfeCallContext | undefined): Promise<boolean> {
+    const payload = NfePayloadSchema.parse(JSON.parse(this.currentAttempt(doc).payloadJson));
+    try {
+      await this.contingencia!(scope, doc, port, {
+        kind: doc.kind as FiscalDocumentKind,
+        ref: attemptRef(doc.id, doc.currentAttemptNo),
+        ambiente: doc.ambiente as DfeAmbiente,
+        cnpjEmitente: payload.infNFe.emit.CNPJ,
+        partnerAccountRef: null,
+        payload,
+        ...(ctx ? { ctx: { ...ctx, payload } } : {}),
+      });
+      return true;
+    } catch (error) {
+      logger.error('dfe_contingencia: a entrada em contingência depois do 217 falhou — a nota segue consultável', {
+        documentId: doc.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    }
   }
 
   private async comTentativas(scope: AccountingScope, doc: FiscalDocument): Promise<FiscalDocumentWithAttempts> {
@@ -803,7 +928,7 @@ export class FiscalDocumentLifecycleService {
     try {
       result = ctx ? await port.cancelar(partnerRef, cancelInput, ctx) : await port.cancelar(partnerRef, cancelInput);
     } catch (error) {
-      if (isSessaoPscVencida(error)) throw bloqueioSessaoPsc((error as AssinaturaRemotaError).code as 'CREDENCIAL_EXPIRADA' | 'CREDENCIAL_REVOGADA');
+      if (isAssinaturaPendente(error)) throw bloqueioSessaoPsc((error as AssinaturaRemotaError).code as 'CREDENCIAL_EXPIRADA' | 'CREDENCIAL_REVOGADA' | 'ASSINADOR_INDISPONIVEL');
       throw error;
     }
 

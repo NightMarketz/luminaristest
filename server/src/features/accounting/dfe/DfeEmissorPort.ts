@@ -142,6 +142,22 @@ export function isFalhaDeComunicacao(error: unknown): error is DfeTransporteErro
   return error instanceof DfeTransporteError;
 }
 
+/**
+ * O transporte NÃO está disponível do LADO DE CÁ (assinador local fora, sem token, sem dispositivo na unidade): a chamada nem
+ * chegou ao fisco. Não é falha de comunicação com a SEFAZ (não liga contingência — `isFalhaDeComunicacao` é falso) nem erro do
+ * documento: o polling adia o documento SEM gastar tentativa (a nota já foi enviada; a consulta volta quando a caixa voltar).
+ * Quem implementa um transporte que depende de dispositivo local lança esta classe, nunca um `Error` solto.
+ */
+export class DfeTransporteIndisponivelError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'DfeTransporteIndisponivelError';
+  }
+}
+
 /** X10a PR-9 — o grupo `infNFeSupl` da NFC-e (QR Code + urlChave), entregue ao FE para o DANFE (F-NFCE-E1-6 b). */
 export interface NfceSupl {
   qrCode: string;
@@ -172,7 +188,15 @@ export interface CscDaUnidade {
  */
 export interface DfeCallContext {
   ambiente: DfeAmbiente;
-  assinatura?: { assinador: AssinadorRemotoPort; credencial: CredencialPscResolvida };
+  assinatura?: {
+    assinador: AssinadorRemotoPort;
+    credencial: CredencialPscResolvida;
+    /**
+     * X10a EMENDA-4 (AL-9): o transporte da SEFAZ já ligado ao assinador local da unidade do documento (o mTLS sai do
+     * caixa). Ausente ⇒ o transporte do adaptador. Forma estrutural do `SefazTransporte` (sem importar o pacote sefaz).
+     */
+    transporte?: { call(url: string, servico: string, xml: string): Promise<string> };
+  };
   payload?: unknown;
   /** X10a PR-8 (E-3, F-NFCE-E1-4 c): CSC da unidade no ambiente, para o QR Code v2 quando a UF recusa a v3 (rej. 407). */
   csc?: CscDaUnidade;

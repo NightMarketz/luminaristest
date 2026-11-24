@@ -24,12 +24,19 @@ import { PostingService } from '../PostingService';
 import { AccountingPeriodNotOpenError, ForbiddenError, MaxCentsExceededError, NotFoundError, ValidationError } from '../../../../lib/errors';
 import { CANONICAL_ACCOUNTS } from '../../fixtures/ChartOfAccountsFixture';
 import { MAX_CENTS } from '../../models/money';
+import logger from '../../../../lib/logger';
 import type { AccountingScope } from '../../scope/AccountingScope';
 
 // prisma.$transaction runs the callback with a fake tx handle; repos are mocked so the
 // tx is just threaded through (they ignore it here).
 const txHandle = { __tx: true };
 const $transaction = jest.fn(async (fn: (tx: unknown) => unknown) => fn(txHandle));
+// Lacuna 1fd7: a regra do ano fiscal mora só em `fiscalYearOf`; o mock mantém a real e deixa o teste trocá-la.
+jest.mock('../../models/dates', () => {
+  const actual = jest.requireActual('../../models/dates');
+  return { ...actual, fiscalYearOf: jest.fn(actual.fiscalYearOf) };
+});
+import { fiscalYearOf } from '../../models/dates';
 jest.mock('../../../../lib/prisma', () => ({
   __esModule: true,
   default: { $transaction: (fn: (tx: unknown) => unknown) => $transaction(fn) },
@@ -83,6 +90,9 @@ function buildService(over: {
     softDelete: jest.fn(),
     // null = no soft-deleted row to revive → a P2002 in ensureChartOfAccounts is a benign race.
     restoreByCode: jest.fn(async () => null),
+    // null = nenhuma linha apagada segura o código (lacuna ad40).
+    findDeletedByCode: jest.fn(async () => null),
+    softDeleteReleasingCode: jest.fn(),
     ...over.accountRepo,
   };
 
@@ -951,7 +961,7 @@ describe('PostingService', () => {
 
     it('postEntry: fiscalYear on Jan 1 matches the period gate (no America/Sao_Paulo shift into the prior year)', async () => {
       const { svc, journalEntryRepo } = buildService();
-      // Regression guard: fiscalYearFrom used to convert UTC midnight to America/Sao_Paulo
+      // Regression guard: fiscalYearOf (ex-fiscalYearFrom) used to convert UTC midnight to America/Sao_Paulo
       // (UTC-3), landing on Dec 31 21:00 BRT and reporting 2025 for an entry the period
       // gate (extractYearMonth, UTC-only) correctly placed in 2026-01.
       await svc.postEntry(scope, { ...balancedInput, date: '2026-01-01' });
@@ -959,6 +969,30 @@ describe('PostingService', () => {
         expect.objectContaining({ fiscalYear: 2026 }),
         txHandle,
       );
+    });
+
+    it('postEntry: o ano fiscal vem de fiscalYearOf, o lugar único da regra (lacuna 1fd7)', async () => {
+      const { svc, postingRepo } = buildService();
+      jest.mocked(fiscalYearOf).mockReturnValueOnce(1999);
+      await svc.postEntry(scope, { ...balancedInput, date: '2026-06-10' });
+      expect(postingRepo.nextEntryNumber).toHaveBeenCalledWith(scope, 1999, txHandle);
+    });
+
+    it('reverseEntry: o ano fiscal do estorno também vem de fiscalYearOf (lacuna 1fd7)', async () => {
+      const original = {
+        id: 'orig-1fd7', date: new Date('2026-06-15'), status: 'Posted', reversedById: null, fiscalYear: 2026, entryNumber: 10,
+        postings: [
+          { accountId: 'acc-A', debitCents: 5000, creditCents: 0 },
+          { accountId: 'acc-B', debitCents: 0, creditCents: 5000 },
+        ],
+      };
+      const { svc, postingRepo } = buildService({
+        journalEntryRepo: { findById: jest.fn(async () => original), findBySource: jest.fn(async () => null) },
+        postingRepo: { nextEntryNumber: jest.fn(async () => 11) },
+      });
+      jest.mocked(fiscalYearOf).mockReturnValueOnce(1998);
+      await svc.reverseEntry(scope, { unitId, lancamentoId: 'orig-1fd7', reversalPostingDate: '2026-06-24', reason: 'motivo de teste' });
+      expect(postingRepo.nextEntryNumber).toHaveBeenCalledWith(scope, 1998, txHandle);
     });
 
     it('postEntry: nextEntryNumber NOT called on idempotent hit (no number consumed)', async () => {
@@ -1598,5 +1632,74 @@ describe('listAccounts × unidade apagada (I6)', () => {
     const ensure = jest.spyOn(svc, 'ensureChartOfAccounts').mockResolvedValue(undefined);
     await svc.listAccounts(scope);
     expect(ensure).toHaveBeenCalledWith(scope);
+  });
+});
+
+describe('conta canônica pela identidade, não só pelo código (lacunas 4e1f, ad40, 13dd)', () => {
+  const PERDA = { userId: 'u1', unitId: 'unit-1', code: '4.7', name: 'Perda na Baixa de Imobilizado', nature: 'Expense', acceptsEntries: true };
+  const CSP = { userId: 'u1', unitId: 'unit-1', code: '4.7', name: 'Custo dos Serviços Prestados', nature: 'Expense', acceptsEntries: true };
+  const viva = (row: object | null) => (code: string) => (code === '4.7' ? row : { id: `acc-${code}`, ...CANONICAL_ACCOUNTS.find((c) => c.code === code) });
+
+  it('deleteAccount: conta do usuário no código 4.7 apaga e libera o código (4e1f)', async () => {
+    const { svc, accountRepo } = buildService({
+      accountRepo: { findById: jest.fn(async (_s: AccountingScope, id: string) => ({ id, ...PERDA })) },
+    });
+    await svc.deleteAccount(scope, 'acc-perda');
+    expect(accountRepo.softDeleteReleasingCode).toHaveBeenCalledWith(scope, 'acc-perda', expect.anything());
+    expect(accountRepo.softDelete).not.toHaveBeenCalled();
+  });
+
+  it('deleteAccount: a 4.7 do plano padrão (nome e natureza da definição) continua 409', async () => {
+    const { svc, accountRepo } = buildService({
+      accountRepo: { findById: jest.fn(async (_s: AccountingScope, id: string) => ({ id, ...CSP })) },
+    });
+    await expect(svc.deleteAccount(scope, 'acc-csp')).rejects.toMatchObject({ statusCode: 409 });
+    expect(accountRepo.softDeleteReleasingCode).not.toHaveBeenCalled();
+  });
+
+  it('ensureChartOfAccounts: linha apagada do usuário no código não é restaurada; o código é liberado e a canônica nasce (ad40)', async () => {
+    const create = jest.fn(async (data: { code: string }) => {
+      if (data.code === '4.7' && create.mock.calls.filter((c) => c[0].code === '4.7').length === 1) throw p2002();
+      return { id: `acc-${data.code}`, ...data };
+    });
+    const { svc, accountRepo } = buildService({
+      accountRepo: {
+        findByCode: jest.fn(async (_s: AccountingScope, code: string) => (code === '4.7' ? null : viva(null)(code))),
+        findDeletedByCode: jest.fn(async () => ({ id: 'acc-perda', ...PERDA, deletedAt: new Date() })),
+        create,
+      },
+    });
+    await svc.ensureChartOfAccounts(scope);
+    expect(accountRepo.restoreByCode).not.toHaveBeenCalled();
+    expect(accountRepo.softDeleteReleasingCode).toHaveBeenCalledWith(scope, 'acc-perda');
+    expect(create.mock.calls.filter((c) => c[0].code === '4.7')).toHaveLength(2);
+    expect(create).toHaveBeenLastCalledWith(expect.objectContaining({ code: '4.7', name: 'Custo dos Serviços Prestados' }));
+  });
+
+  it('ensureChartOfAccounts: linha apagada que É a canônica continua sendo restaurada', async () => {
+    const { svc, accountRepo } = buildService({
+      accountRepo: {
+        findByCode: jest.fn(async (_s: AccountingScope, code: string) => (code === '4.7' ? null : viva(null)(code))),
+        findDeletedByCode: jest.fn(async () => ({ id: 'acc-csp', ...CSP, deletedAt: new Date() })),
+        create: jest.fn(async () => { throw p2002(); }),
+      },
+    });
+    await svc.ensureChartOfAccounts(scope);
+    expect(accountRepo.restoreByCode).toHaveBeenCalledWith(scope, '4.7');
+    expect(accountRepo.softDeleteReleasingCode).not.toHaveBeenCalled();
+  });
+
+  it('ensureChartOfAccounts: conta viva do usuário no código fica no lugar e o aviso sai uma vez por escopo e código (13dd)', async () => {
+    const escopo = { ...scope, unitId: 'unit-aviso-4.7' };
+    const { svc, accountRepo } = buildService({
+      accountRepo: { findByCode: jest.fn(async (_s: AccountingScope, code: string) => viva({ id: 'acc-perda', ...PERDA })(code)) },
+    });
+    jest.mocked(logger.warn).mockClear();
+    await svc.ensureChartOfAccounts(escopo);
+    await svc.ensureChartOfAccounts(escopo);
+    const avisos = jest.mocked(logger.warn).mock.calls.filter((c) => String(c[0]).startsWith('Conta do plano padrão não criada'));
+    expect(avisos).toHaveLength(1);
+    expect(avisos[0][1]).toMatchObject({ unitId: 'unit-aviso-4.7', code: '4.7', accountId: 'acc-perda' });
+    expect(accountRepo.create).not.toHaveBeenCalled();
   });
 });

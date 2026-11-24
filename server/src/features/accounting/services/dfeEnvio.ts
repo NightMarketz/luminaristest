@@ -3,7 +3,7 @@ import logger from '../../../lib/logger';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IFiscalDocumentRepository } from '../repositories/IFiscalDocumentRepository';
 import { isFalhaDeComunicacao, type DfeEmissorPort, type EmissaoResult, type EmitirInput } from '../dfe/DfeEmissorPort';
-import { isSessaoPscVencida } from '../dfe/AssinadorRemotoPort';
+import { isAssinaturaPendente, type AssinaturaRemotaError } from '../dfe/AssinadorRemotoPort';
 
 /** F-ADN-5 a — quem aplica o resultado síncrono do envio (o `applyResult` do ciclo). */
 export type DfeResultApplier = (scope: AccountingScope, doc: FiscalDocument, result: EmissaoResult) => Promise<void>;
@@ -45,11 +45,12 @@ export async function enviarTentativa(
     result = await port.emitir(input);
   } catch (emitError) {
     const message = emitError instanceof Error ? emitError.message : String(emitError);
-    if (isSessaoPscVencida(emitError)) {
-      logger.warn('DfeEmissorPort.emitir: sessão do PSC vencida — documento fica PENDING_SIGNATURE', { documentId: doc.id });
+    // EMENDA-4 (F-AL-6 a): o assinador local fora do ar no meio do envio também deixa a nota esperando — sem contingência.
+    if (isAssinaturaPendente(emitError)) {
+      logger.warn('DfeEmissorPort.emitir: assinatura indisponível (sessão do PSC ou assinador local) — documento fica PENDING_SIGNATURE', { documentId: doc.id });
       await repo.transition(scope, doc.id, {
         status: 'PENDING_SIGNATURE',
-        errorsJson: JSON.stringify([{ code: 'psc_sessao_vencida', message }]),
+        errorsJson: JSON.stringify([{ code: (emitError as AssinaturaRemotaError).code === 'ASSINADOR_INDISPONIVEL' ? 'assinador_indisponivel' : 'psc_sessao_vencida', message }]),
         whenStatusIn: ['SENT'],
       });
       return;
@@ -65,7 +66,13 @@ export async function enviarTentativa(
         });
         return;
       }
-      if (tpEmis === 1 && contingencia) {
+      // F-AL-6 (dono, chat, 2026-11-24): o TIMEOUT é ambíguo — a SEFAZ pode ter autorizado a nota. Não contingencia na hora (a
+      // mesma venda sairia duas vezes): a nota fica `SENT` na MESMA chave e o poll consulta; só a consulta que diz que a SEFAZ não
+      // a conhece (217, `FiscalDocumentLifecycleService.consultarEAplicar`) contingencia. As demais falhas de comunicação (TLS,
+      // HTTP, rede fora do ar) continuam contingenciando na hora: a requisição não chegou a ser processada.
+      if (tpEmis === 1 && contingencia && emitError.code === 'sefaz_timeout') {
+        logger.warn('dfe_contingencia: timeout na transmissão da NFC-e — a nota fica SENT; o poll consulta a chave antes de contingenciar', { documentId: doc.id });
+      } else if (tpEmis === 1 && contingencia) {
         try {
           await contingencia(scope, doc, port, input);
           return;

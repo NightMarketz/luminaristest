@@ -192,6 +192,7 @@ export async function resetDb(): Promise<void> {
   await prisma.pscCredential.deleteMany();
   await prisma.pscProvider.deleteMany();
   // X10a EMENDA-4 AL-PR-2: o vínculo referencia o dispositivo (FK Restrict) — cai antes dele.
+  await prisma.dfeSignerTask.deleteMany();
   await prisma.dfeSignerDeviceUnit.deleteMany();
   await prisma.dfeSignerDevice.deleteMany();
   await prisma.dfeSignerPairingCode.deleteMany();
