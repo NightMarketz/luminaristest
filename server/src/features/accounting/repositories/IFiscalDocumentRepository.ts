@@ -11,6 +11,8 @@ export type FiscalDocumentKind = (typeof FISCAL_DOCUMENT_KINDS)[number];
 // das pendentes no callback OAuth (D-2026-10-29-X10A-PR7-9-FORKS decisão 5).
 // CONTINGENCY — X10a PR-9 (E-9, F-NFCE-E1-5 b): NFC-e emitida em contingência off-line (tpEmis=9), com número e DANFE,
 // ainda não transmitida. O job a transmite enquanto a SEFAZ responder (decisão 7); o resultado sai pelo `applyResult`.
+// DENIED — NF-e/NFC-e de uso denegado (cStat 110/301/302; L-20261124-054021-cbc8): terminal; tem protocolo e CONSOME o número
+// (MOC 7.0 VG §5.1.6, Tab. 5-4), então ocupa a numeração (inutilizacao.ts) e NÃO é reenviável (≠ REJECTED).
 // CANCEL_ANALYSIS — BE-INCR-DFE-EVENTOS (nó X11, PR-3, item 20; F-EVT-4 b): NFS-e com a Solicitação de Análise Fiscal
 // para Cancelamento (e101103, Anexo II [4]) registrada e sem resposta. Sai por e105104 (deferido → CANCELLED) ou e105105
 // (indeferido → o status de antes, `statusAntesAnalise`). Com ela pendente o fisco recusa cancelamento direto (matriz
@@ -25,6 +27,7 @@ export const FISCAL_DOCUMENT_STATUSES = [
   'PENDING_SIGNATURE',
   'CONTINGENCY',
   'CANCEL_ANALYSIS',
+  'DENIED',
 ] as const;
 export type FiscalDocumentStatus = (typeof FISCAL_DOCUMENT_STATUSES)[number];
 
@@ -90,6 +93,14 @@ export interface AppendAttemptData {
 }
 
 /** Campos que uma transição de status pode gravar (BRIEF item 24 — a máquina de estados é do serviço). */
+/** Onda 4 / 4.1 — o controle de retentativa da consulta do job; `null` limpa. */
+export interface PollStatePatch {
+  pollAttempts?: number;
+  nextPollAt?: Date | null;
+  pollGaveUpAt?: Date | null;
+  pollLastError?: string | null;
+}
+
 export interface TransitionData {
   status: FiscalDocumentStatus;
   partnerRef?: string | null;
@@ -108,6 +119,11 @@ export interface TransitionData {
   cancelMotivo?: number | null;
   cancelReason?: string | null;
   errorsJson?: string | null;
+  /** Onda 4 / 4.1 — controle de retentativa da consulta do job (`dfe_poll_pending`). */
+  pollAttempts?: number;
+  nextPollAt?: Date | null;
+  pollGaveUpAt?: Date | null;
+  pollLastError?: string | null;
   xmlAttachmentId?: string | null;
   pdfAttachmentId?: string | null;
   sourceDocumentId?: string | null;
@@ -206,8 +222,18 @@ export interface IFiscalDocumentRepository {
   findForIbsCbs(scope: AccountingScope, from: string, to: string, statuses: readonly FiscalDocumentStatus[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
   /** IBS-CBS-2027 PR-2 (item 7; dono 21/10): das vendas pedidas, as que têm documento AUTHORIZED/AUTHORIZED_DIVERGENT vivo em produção, em qualquer mês. */
   saleIdsWithAuthorizedDocument(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<string[]>;
-  /** SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos. */
-  listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  /**
+   * SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos.
+   * Onda 4 / 4.1: só os DEVIDOS (`nextPollAt` nulo ou `<= now`, sem `pollGaveUpAt`, fora do modo manual, que nunca é
+   * consultado), em rodízio por `updatedAt`, até `limit` — o documento que falha sai da vez (backoff) e não ocupa o teto.
+   */
+  listPending(olderThan: Date, opts?: { limit?: number; now?: Date }, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  /**
+   * Onda 4 / 4.1 — grava SÓ o controle de retentativa da consulta (nunca o `status`: o resultado da consulta pode ter
+   * mudado o documento entre a leitura e esta escrita). Escrever bumpa o `updatedAt`, que é o que manda o documento
+   * para o fim do rodízio. `false` se o documento não existe mais no escopo.
+   */
+  updatePollState(scope: AccountingScope, id: string, patch: PollStatePatch, tx?: Prisma.TransactionClient): Promise<boolean>;
   /**
    * BE-INCR-DFE-EVENTOS (PR-2, item 18) — alvo da consulta de eventos: NFS-e `AUTHORIZED*` vivas, com chave, e com
    * `nfseDhProc >= desde` (o teto de 2 anos, Anexo I [114]), de todas as unidades (mesmo desenho de `listPending`). Vêm

@@ -1,4 +1,5 @@
 import { ForbiddenError } from '../../../lib/errors';
+import { reaisToCents } from '../../../lib/saleLine';
 import { CLOSING_SOURCE_TYPE } from '../models/closing';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { mesBounds } from '../models/Lalur.model';
@@ -14,6 +15,7 @@ import type { IProductFiscalProfileRepository } from '../repositories/IProductFi
 import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import { segregacaoPorNcm } from '../models/segregacaoNcm';
+import { divHalfUp } from '../models/retencaoParams';
 import { UF_IBGE } from '../models/nfeMontagem';
 import type { SimplesEntradasService } from './SimplesEntradasService';
 
@@ -46,9 +48,13 @@ export interface TieOut {
  * Item 15 — rateio PURO dos créditos que o razão lançou (`splitRevenueCredit`, o mesmo do `SaleFinalizedMapper`) pelos
  * itens da venda, na proporção de quantidade × preço dentro de cada natureza. O resíduo de centavo de cada natureza vai
  * para o último item dela, então Σ das linhas = crédito 3.1 + crédito 3.3 da venda, exatamente.
+ *
+ * Onda 2.3 (auditoria de 24/11/2026): o total entra por `reaisToCents` (o conversor canônico, o mesmo arredondamento do
+ * `SaleFinalizedMapper` — o tie-out depende de os dois lados converterem igual) e a proporção é de INTEIROS — peso = centavos
+ * da linha, `divHalfUp` em BigInt —, não `lineReais / base` em float, que perdia o centavo de um empate exato (0,01 de 0,20 × 10).
  */
 export function ratearReceita(amount: number, lines: readonly SaleRevenueLine[]): Array<{ line: SaleRevenueLine | null; natureza: 'SERVICO' | 'REVENDA'; receitaCents: number }> {
-  const totalCents = Math.round(amount * 100);
+  const totalCents = reaisToCents(amount);
   const serviceReais = lines.filter((l) => l.nature === 'Service').reduce((s, l) => s + l.lineReais, 0);
   const productReais = lines.filter((l) => l.nature === 'Product').reduce((s, l) => s + l.lineReais, 0);
   const creditos = splitRevenueCredit(totalCents, { serviceReais, productReais });
@@ -63,7 +69,8 @@ export function ratearReceita(amount: number, lines: readonly SaleRevenueLine[])
     ['Product', 'REVENDA', credito(RESALE_REVENUE_ACCOUNT)],
   ] as const) {
     const doBalde = lines.filter((l) => l.nature === nature && l.lineReais > 0);
-    const base = doBalde.reduce((s, l) => s + l.lineReais, 0);
+    const pesos = doBalde.map((l) => BigInt(reaisToCents(l.lineReais)));
+    const base = pesos.reduce((s, p) => s + p, 0n);
     // Defesa (review PR-2): crédito numa natureza sem item positivo — o rateio não teria onde pôr; uma linha sintética
     // leva o valor inteiro para nenhum centavo sumir do subrazão.
     if (doBalde.length === 0) {
@@ -72,7 +79,8 @@ export function ratearReceita(amount: number, lines: readonly SaleRevenueLine[])
     }
     let resto = cents;
     doBalde.forEach((l, i) => {
-      const v = i === doBalde.length - 1 ? resto : Math.round(cents * (l.lineReais / base));
+      // Pesos todos < 0,5 centavo (base 0): nada a proporcionar, o último item leva o crédito inteiro (o resíduo).
+      const v = i === doBalde.length - 1 ? resto : base > 0n ? Number(divHalfUp(BigInt(cents) * pesos[i], base)) : 0;
       resto -= v;
       out.push({ line: l, natureza, receitaCents: v });
     });
@@ -124,7 +132,7 @@ export class ReceitaFiscalService {
         const contrato = await this.entradas.contratoEmEfeito(scope, l.employeeRef, venda.dia);
         if (contrato) {
           parceriaContratoId = contrato.id;
-          cotaProfissionalCents = BigInt(Math.round((r.receitaCents * (10000 - contrato.cotaSalaoBp)) / 10000));
+          cotaProfissionalCents = divHalfUp(BigInt(r.receitaCents) * BigInt(10000 - contrato.cotaSalaoBp), 10_000n);
         }
       }
       linhas.push({

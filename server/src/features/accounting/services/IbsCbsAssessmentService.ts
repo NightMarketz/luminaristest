@@ -57,7 +57,7 @@ import {
   type IbsCbsAssessmentPreviewInput,
 } from '../dtos/IbsCbsAssessmentDto';
 import { apurarIbsCbsMes, type IbsCbsDocumento, type ResultadoIbsCbs } from '../models/ibsCbsCompetencia';
-import { tabelaIbsCbsDe, tabelaProvisoriaCbsDe, vencimentoIbsCbsDe, type TributoConsumo } from '../models/ibsCbsParams';
+import { antesDoInicioDaApuracaoIbsCbs, tabelaIbsCbsDe, tabelaProvisoriaCbsDe, vencimentoIbsCbsDe, type TributoConsumo } from '../models/ibsCbsParams';
 import { resumoIbsCbs } from '../../../lib/ibsCbsApuracao';
 import { fimDoMes } from '../models/taxAssessmentCalcAnual';
 import { mesBounds } from '../models/Lalur.model';
@@ -151,7 +151,7 @@ export class IbsCbsAssessmentService {
   /** Item 13 — GET por ano (todas as linhas vivas, CONFIRMED e SUPERSEDED). */
   async list(scope: AccountingScope, q: IbsCbsAssessmentListQuery): Promise<IbsCbsAssessmentView[]> {
     this.assertRead(scope);
-    assertAno(q.anoCalendario);
+    await this.assertCompetenciaApuravel(`${q.anoCalendario}-12`); // o ano inteiro antes do marco ⇒ 400
     const perfil = await this.companyProfileRepo.findByYear(scope, q.anoCalendario);
     if (perfil) assertRegime(perfil.regime);
     return (await this.repo.findMany(scope.ownerUserId, q.anoCalendario)).map(toView);
@@ -378,7 +378,7 @@ export class IbsCbsAssessmentService {
   /** Lê perfil da PJ, documentos e vendas do mês e chama a função pura. Recusas do item 10 (400). */
   private async calcular(scope: AccountingScope, input: IbsCbsAssessmentPreviewInput, opts: { taxaProvisoria?: boolean } = {}): Promise<Calculo> {
     const { anoCalendario: ano, mes, tributo } = input;
-    assertAno(ano);
+    await this.assertCompetenciaApuravel(`${ano}-${mm(mes)}`);
     const perfil = await this.companyProfileRepo.findByYear(scope, ano);
     if (!perfil) throw new ValidationError(`perfil fiscal da empresa de ${ano} ausente — cadastre-o antes de apurar IBS/CBS.`);
     assertRegime(perfil.regime);
@@ -418,6 +418,15 @@ export class IbsCbsAssessmentService {
     return { perfil, resultado, parametros, provisoria: antecipacao.provisoria };
   }
 
+  /**
+   * F-IBS-7 (b): nada é apurado antes do início da apuração — Onda 3.2: o marco é a linha `OBRIGACAO_REGIME/IBS_CBS_APURACAO`
+   * (`inicioApuracaoIbsCbs`), não `2027` em código/DTO. Sem linha ⇒ 400 `PARAMETRO_LEGAL_AUSENTE` (fail-closed).
+   */
+  private async assertCompetenciaApuravel(competencia: string): Promise<void> {
+    const linhas = await this.legalParams.fotografia(['OBRIGACAO_REGIME']);
+    if (antesDoInicioDaApuracaoIbsCbs(linhas, competencia)) throw new ValidationError(IBS_CBS_ANTES_DE_2027, null, 'IBS_CBS_ANTES_DE_2027');
+  }
+
   private assertRead(scope: AccountingScope): void {
     if (!this.policy.canReadTaxAssessment(scope)) throw new ForbiddenError('Você não tem permissão para ler a apuração de IBS/CBS.');
   }
@@ -428,10 +437,6 @@ export class IbsCbsAssessmentService {
 }
 
 const mm = (m: number): string => String(m).padStart(2, '0');
-
-function assertAno(ano: number): void {
-  if (ano < 2027) throw new ValidationError(IBS_CBS_ANTES_DE_2027, null, 'IBS_CBS_ANTES_DE_2027');
-}
 
 function assertRegime(regime: string): void {
   if (regime === 'SIMPLES' || regime === 'MEI') throw new ValidationError(IBS_CBS_SIMPLES_MEI, null, 'IBS_CBS_SIMPLES_MEI');

@@ -26,9 +26,11 @@ import { splitCents } from '../dfe/splitCents';
 import { DpsManualPayloadSchema, DpsPayloadSchema, toManualDps } from '../dtos/DpsPayloadDto';
 import type { DpsManualPayload, DpsPayload } from '../dtos/DpsPayloadDto';
 import { NfePayloadSchema, NfePayloadSemNumeracaoSchema } from '../dtos/NfePayloadDto';
+import { issuesIbsCbs } from '../dtos/NfeIbsCbsDto';
 import type { NfePayload, NfePayloadSemNumeracao } from '../dtos/NfePayloadDto';
 import { crtDoRegime, faltantesDosItens } from '../models/nfePrecondicoes';
 import { CRT3_ICMS_SEM_SPEC, ibsCbsDoProduto } from '../models/nfeIbsCbsMontagem';
+import { TABELAS_IBS_CBS, tabelasIbsCbsDe } from '../models/ibsCbsTabelas';
 import {
   RTC_SIMPLES_DESDE,
   RTC_SIMPLES_NAO_TRANSCRITO,
@@ -1082,10 +1084,12 @@ export class FiscalDocumentEmissionService {
     const perfilPorRef = new Map(perfis.map((p) => [p.productRef, p]));
     if (crt !== null) {
       faltantes.push(...faltantesDosItens(kind, crt, productLines.map((l) => l.productRef), perfis));
+      // Onda 3.2 fatia 5: CST/cClassTrib do IT 2025.002 vêm das linhas de LegalParameter (fotografia); tabela sem linha ⇒ 400 PARAMETRO_LEGAL_AUSENTE.
+      const tabelasIbsCbs = crt === 3 && perfis.length ? tabelasIbsCbsDe(await this.legalParams.fotografia([...TABELAS_IBS_CBS]), today) : null;
       for (const ref of new Set(productLines.map((l) => l.productRef))) {
         const perfil = perfilPorRef.get(ref);
         if (perfil && crt === 3) {
-          const r = ibsCbsDoProduto(ref, perfil, kind === 'NFCE' ? 65 : 55, today);
+          const r = ibsCbsDoProduto(ref, perfil, kind === 'NFCE' ? 65 : 55, today, tabelasIbsCbs!);
           if ('faltantes' in r) faltantes.push(...r.faltantes);
         }
         if (!perfil || crt !== 1) continue;
@@ -1189,6 +1193,14 @@ export class FiscalDocumentEmissionService {
     // Item 12: as regras da SEFAZ que o cadastro pode violar (ex.: CSOSN × CFOP, rej. 386) voltam como faltantes nomeados.
     const parsed = NfePayloadSemNumeracaoSchema.safeParse(semNumero);
     if (!parsed.success) bloquear(parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`));
+    // Grupo UB e totais W03 (NT 2025.002 v1.52), com as tabelas do IT 2025.002 lidas da fotografia (Onda 3.2 fatia 5; antes eram
+    // regra do refine do schema). Só aqui, onde a nota é montada: reler payload já emitido não as reaplica.
+    const notaUb = parsed.data!.infNFe;
+    const tabelasUb = notaUb.det.some((d) => d.imposto.IBSCBS)
+      ? tabelasIbsCbsDe(await this.legalParams.fotografia([...TABELAS_IBS_CBS]), notaUb.ide.dhEmi.slice(0, 10))
+      : undefined;
+    const issuesUb = issuesIbsCbs(notaUb, tabelasUb);
+    if (issuesUb.length > 0) bloquear(issuesUb);
 
     return {
       groups: [{ cTribNac: '', vServCents: ledgerCents, payload: parsed.data! }],

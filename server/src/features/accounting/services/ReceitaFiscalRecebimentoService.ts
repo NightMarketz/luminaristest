@@ -1,4 +1,5 @@
 import { ValidationError } from '../../../lib/errors';
+import { reaisToCents } from '../../../lib/saleLine';
 import { dateOnlyFromDayNumber, dayNumberFromDateOnly } from '../models/dates';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFiscalProfileRepository';
@@ -37,7 +38,9 @@ export class ReceitaFiscalRecebimentoService {
 
   /** Grava o recebimento da venda (idempotente). Devolve true quando criou a linha. */
   async registrar(scope: AccountingScope, r: RecebimentoDaVenda): Promise<boolean> {
-    const valorCents = Math.round(r.amount * 100);
+    // Onda 2.3: o conversor canônico (o do razão). NaN/Infinity e acima de MAX_CENTS agora recusam na borda (ValidationError
+    // do conversor); `0`, negativo e ausente seguem na mensagem do recebimento.
+    const valorCents = reaisToCents(r.amount);
     if (!Number.isSafeInteger(valorCents) || valorCents <= 0) {
       throw new ValidationError(`Valor inválido para o recebimento da venda '${r.saleId}'.`);
     }

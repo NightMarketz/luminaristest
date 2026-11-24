@@ -14,7 +14,7 @@ import type { IProductDestinationDefaultRepository } from '../repositories/IProd
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { Payable } from 'generated/prisma';
-import { TABELA_USO_CONSUMO, creditoIbsCbsEntrada, listaUsoConsumoDe, type CreditoIbsCbsEntrada } from '../models/ibsCbsCredito';
+import { TABELA_USO_CONSUMO, creditoIbsCbsEntrada, type CreditoIbsCbsEntrada } from '../models/ibsCbsCredito';
 
 /**
  * NfeImportService — fiscal NF-e de COMPRA (BE-INCR-NFE / A2). Integration service (Contract §2.1 / T10):
@@ -100,7 +100,7 @@ export class NfeImportService {
 
     // Parse (PURE) — rejects loud on cStat∉{100,150}, mod≠55, homologação, DTD/XXE, chave mismatch (D5).
     // IBS-CBS-2027 PR-3 (item 15): + a lista de uso/consumo pessoal (art. 57).
-    const legais = await this.legalParams.fotografia([...TABELAS_LEGAIS_NFE, TABELA_USO_CONSUMO]);
+    const legais = await this.legalParams.fotografia([...TABELAS_LEGAIS_NFE, TABELA_USO_CONSUMO, 'OBRIGACAO_REGIME']);
     const nfe = parseNfe(xml, legais);
 
     // Counterparty D6 — NEVER auto-create the emitente. If the operator confirmed a counterpartyId,
@@ -131,7 +131,7 @@ export class NfeImportService {
       dataEmissao: nfe.ide.dhEmiDate,
       regimeRegular: regime.regimeTributario !== 'SIMPLES',
       itens: costed,
-      lista: listaUsoConsumoDe(legais),
+      linhas: legais, // Onda 3.2: lista de uso/consumo E o início da apuração (OBRIGACAO_REGIME/IBS_CBS_APURACAO) saem das linhas
     });
     const custo = this.incorporarIbsCbsNaoCreditavel(acquisitionCost(nfe, costed, regime, resolved.byNItem, legais), creditoIbsCbs);
     const custoTotalCents = custo.custoBrutoCents + creditoIbsCbs.ibsCents + creditoIbsCbs.cbsCents;

@@ -88,11 +88,15 @@ export class CollectionChargeRepository implements ICollectionChargeRepository {
     });
   }
 
-  public async findPollable(staleBefore: Date): Promise<CollectionCharge[]> {
+  public async findPollable(staleBefore: Date, now: Date = new Date()): Promise<CollectionCharge[]> {
     return prisma.collectionCharge.findMany({
       where: {
         deletedAt: null,
-        OR: [{ status: 'PENDING' }, { status: 'CREATING', updatedAt: { lt: staleBefore } }],
+        // Onda 4 / 4.3: a PENDING em backoff (`nextPollAt` no futuro) fica fora até vencer; a que o job abandonou, até um webhook/ação manual a reabilitar.
+        OR: [
+          { status: 'PENDING', pollGaveUpAt: null, OR: [{ nextPollAt: null }, { nextPollAt: { lte: now } }] },
+          { status: 'CREATING', updatedAt: { lt: staleBefore } },
+        ],
       },
       orderBy: [{ createdAt: 'asc' }],
     });
@@ -106,6 +110,14 @@ export class CollectionChargeRepository implements ICollectionChargeRepository {
   ): Promise<number> {
     const r = await (tx ?? prisma).collectionCharge.updateMany({ where: { id, status: from, deletedAt: null }, data });
     return r.count;
+  }
+
+  public async updatePollState(
+    id: string,
+    patch: { pollAttempts?: number; pollPermanentCount?: number; nextPollAt?: Date | null; pollGaveUpAt?: Date | null; pollLastError?: string | null },
+    tx?: Prisma.TransactionClient,
+  ): Promise<void> {
+    await (tx ?? prisma).collectionCharge.updateMany({ where: { id, deletedAt: null }, data: patch });
   }
 
   public async findCompanyName(userId: string): Promise<string | null> {
