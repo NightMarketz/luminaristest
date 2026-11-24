@@ -10,7 +10,7 @@ import { LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO, legalParamsSeedRows } from '@test
 import { SemLinhaVigenteError, type LegalParameterTabela } from '../../../legalParameters/models/legalParameter';
 import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
 import { issAliquotaMaxBp } from '../issLimite';
-import { exigirIssNaoExtinto, fatorReducaoIssBp, fimIss, inicioTransicaoIss, IssExtintoError, issExtinto, ISS_EXTINTO_MENSAGEM } from '../issTransicao';
+import { exigirIssNaoExtinto, fatorReducaoIssBp, fimIss, IssExtintoError, issExtinto, ISS_EXTINTO_MENSAGEM } from '../issTransicao';
 import { parametroIbsCbsVigente, tabelaIbsCbsDe } from '../ibsCbsParams';
 import { apurarIbsCbsMes } from '../ibsCbsCompetencia';
 import { agregarIssPorCompetencia, type IssDocInput } from '../issCompetencia';
@@ -80,23 +80,20 @@ describe('item 3 — fatorReducaoIssBp e issExtinto', () => {
     expect(() => fatorReducaoIssBp(todas, '2033-01-01')).toThrow(ISS_EXTINTO_MENSAGEM);
   });
 
+  it('2029 sem a linha publicada ⇒ SemLinhaVigenteError, nunca 0 (o início da transição segue literal até o MARCO_LEGAL — Onda 3.2 #3)', () => {
+    const sem2029 = todas.filter((l) => l.id !== 'lp-iss-transicao-2029');
+    expect(() => fatorReducaoIssBp(sem2029, '2029-03-10')).toThrow(SemLinhaVigenteError);
+    const rascunho = todas.map((l) => (l.id === 'lp-iss-transicao-2029' ? { ...l, status: 'DRAFT' } : l));
+    expect(() => fatorReducaoIssBp(rascunho, '2029-03-10')).toThrow(SemLinhaVigenteError);
+  });
+
   it('uma linha de dentro da transição ausente ou em rascunho ⇒ SemLinhaVigenteError, nunca 0', () => {
     const sem2030 = todas.filter((l) => l.id !== 'lp-iss-transicao-2030');
     expect(() => fatorReducaoIssBp(sem2030, '2030-03-10')).toThrow(SemLinhaVigenteError);
-    const rascunho = todas.map((l) => (l.id === 'lp-iss-transicao-2030' ? { ...l, status: 'DRAFT' } : l));
-    expect(() => fatorReducaoIssBp(rascunho, '2030-03-10')).toThrow(SemLinhaVigenteError);
-  });
-
-  it('Onda 3.2 #3: o início da transição é o da 1ª linha publicada — sem a de 2029 (ou em rascunho) a transição só começa em 2030 e 2029 dá 0', () => {
-    const sem2029 = todas.filter((l) => l.id !== 'lp-iss-transicao-2029');
-    expect(inicioTransicaoIss(sem2029, '2029-03-10')).toBe('2030-01-01');
-    expect(fatorReducaoIssBp(sem2029, '2029-03-10')).toBe(0);
-    expect(fatorReducaoIssBp(sem2029, '2030-03-10')).toBe(2000);
   });
 
   it('issExtinto: falso em 2032-12-31, verdadeiro em 2033-01-01 — o fim é a linha ISS_LIMITE + 1 dia (Onda 3.2 #4)', () => {
     expect(fimIss(todas, '2030-01-01')).toBe('2033-01-01');
-    expect(inicioTransicaoIss(todas, '2030-01-01')).toBe('2029-01-01');
     expect(issExtinto(todas, '2032-12-31')).toBe(false);
     expect(issExtinto(todas, '2033-01-01')).toBe(true);
   });

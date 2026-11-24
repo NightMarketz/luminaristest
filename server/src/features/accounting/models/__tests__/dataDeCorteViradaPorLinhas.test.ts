@@ -4,9 +4,10 @@
  * Tese: a data de corte de uma lei é uma linha de `legal_parameters` (`vigenteDesde`/`vigenteAte`), nunca um literal de
  * código. A prova é que a virada do ano (2026-12-31 → 2027-01-01 e 2032-12-31 → 2033-01-01) se faz ALTERANDO SÓ LINHAS:
  * cada caso abaixo roda a MESMA função com a semente real (a lei como publicada) e com uma cópia em que só as datas das
- * linhas mudaram — o resultado tem de acompanhar as linhas. Os literais que o código tinha (`INICIO_TRANSICAO_ISS`,
- * `FIM_ISS`, `IBS_CBS_REDUCAO_NBS_DESDE`, `FIM_MONOFASICO_PIS_COFINS`) ignoravam a cópia, e é por isso que estes
+ * linhas mudaram — o resultado tem de acompanhar as linhas. Os literais que o código tinha (`FIM_ISS`, `IBS_CBS_REDUCAO_NBS_DESDE`, `FIM_MONOFASICO_PIS_COFINS`) ignoravam a cópia, e é por isso que estes
  * casos eram vermelhos antes do fix.
+ *
+ * #3 (`INICIO_TRANSICAO_ISS`) fica de fora desta fatia: o dono (chat, 24/11/2026) escolheu esperar o `MARCO_LEGAL` (fatia 4).
  *
  * Autorização: dono, chat, 24/11/2026 (forks da Onda 3.2: #5 monofásico deriva da linha PIS_COFINS, revertendo
  * `D-2026-10-27-EFICIENCIA-FISCAL-PR2-EXECUCAO` nesse ponto).
@@ -61,32 +62,6 @@ describe('#4 FIM_ISS — o fim do ISS é o vigenteAte da ISS_LIMITE/ALIQUOTA_MAX
       jest.useRealTimers();
       storePublished('ISS_LIMITE', original);
     }
-  });
-});
-
-describe('#3 INICIO_TRANSICAO_ISS — o início da transição é o menor vigenteDesde da ISS_TRANSICAO (LC 116 art. 8º-B)', () => {
-  const deslocada = (n: number) => [
-    ...mudaDatas(
-      seed,
-      (l) => l.tabela === 'ISS_TRANSICAO',
-      (l) => ({ vigenteDesde: ano(l.vigenteDesde, n), vigenteAte: l.vigenteAte ? ano(l.vigenteAte, n) : l.vigenteAte }),
-    ).map((l) => (ehMaxIss(l) && l.vigenteAte ? { ...l, vigenteAte: ano(l.vigenteAte, n) } : l)),
-  ];
-
-  it('semente real: 2028-12-31 ⇒ 0; 2029-01-01 ⇒ 1000 (controle verde)', () => {
-    expect(fatorReducaoIssBp(seed, '2028-12-31')).toBe(0);
-    expect(fatorReducaoIssBp(seed, '2029-01-01')).toBe(1000);
-  });
-
-  it('transição publicada um ano depois (linhas 2030–2033): 2029-06-01 ⇒ 0; 2030-01-01 ⇒ 1000; 2033-12-31 ⇒ 4000', () => {
-    const l = deslocada(1);
-    expect(fatorReducaoIssBp(l, '2029-06-01')).toBe(0);
-    expect(fatorReducaoIssBp(l, '2030-01-01')).toBe(1000);
-    expect(fatorReducaoIssBp(l, '2033-12-31')).toBe(4000);
-  });
-
-  it('sem nenhuma linha de ISS_TRANSICAO não há início publicado ⇒ fail-closed (SemLinhaVigenteError), mesmo antes de 2029', () => {
-    expect(() => fatorReducaoIssBp(semTabela(seed, 'ISS_TRANSICAO'), '2028-06-01')).toThrow(SemLinhaVigenteError);
   });
 });
 
