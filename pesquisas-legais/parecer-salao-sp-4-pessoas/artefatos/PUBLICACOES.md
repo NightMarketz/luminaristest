@@ -5,8 +5,8 @@ o `.gitattributes` (`*.html -text`) impede o Windows de trocar o fim de linha. Q
 mesmo PR em que o arquivo muda. Conferência: `sha256sum simulador-tributario-salao.html` = sha da última linha.
 
 **A página está congelada desde a v50** (F-SIM-8, `D-2026-11-21-SIMULACAO-COMPLETA-PRE-ADR`): a conta nova vai para o motor
-do produto (nó SIMULACAO-CENARIO). Mudança de texto só com resposta ao fork F-G1 de
-`../../simulador-salao-pendencias/BRIEF-GRUPO-LACUNAS-2026-11-24.md`.
+do produto (nó SIMULACAO-CENARIO). Exceção (dono, chat, 24/11, F-G1 = "(b) Fix the calculation"): a página descongela só para os quatro defeitos de
+conta do item 20 de `../../simulador-salao-pendencias/BRIEF-GRUPO-LACUNAS-2026-11-24.md` e congela de novo depois do 20d.
 
 | Data | Versão | SHA-256 | Bytes | Base + patches | Testes |
 |---|---|---|---|---|---|

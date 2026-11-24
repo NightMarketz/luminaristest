@@ -92,20 +92,49 @@ kit setorial do salão no motor (F-SIM-6).
 | 16 | 43d7 · 37f3 | Leiaute da NFS-e nacional de 2027 (a nota conjunta separa as cotas?) e a responsabilidade do salão pela CBS/IBS do parceiro pessoa física (LC 214 art. 24 × Lei 12.592 § 3º) | Conclusão com [Dnn]; ambiguidade descrita se não houver regra |
 | 17 | bfa2 | Artigos de energia elétrica do Decreto 12.955 (crédito de CBS/IBS) | Artigos lidos; confirma ou corrige o art. 47 da LC 214 |
 | 18 | 95f3 | O Decreto 3.048 mudou desde 20/11: reler o Anexo V (RAT do CNAE 9602-5/01), citado como D40 | `legal.py baixar` com o texto novo e a conclusão "vale" ou "muda" |
+| 18b | 60ca | Padrão de mercado de salão pequeno com fonte e faixa (F-SIM-6): insumo, cartão, rotatividade, VT, equipamentos, pró-labore | Cada valor com fonte citável e faixa; o que não tiver fonte fica sem padrão e com aviso |
 
 ### Requisitos do motor (C2, nó SIMULACAO-CENARIO; não é código desta sessão)
 19. A planejadora do `SIMULACAO-CENARIO` recebe estas lacunas como requisitos, cada uma com o caso que a página erra e o teste
     que o motor tem de passar:
-    - 38c0: ICMS normal da revenda no Simples impedido;
-    - 967b: uma só convenção para o crédito de CBS/IBS de 2027, com o preço com ou sem tributo;
     - 883f: estabilidades da CCT na provisão de rescisão;
-    - 60ca: valores padrão por pesquisa, com faixa (F-SIM-6/7);
-    - f821 e 368c, depois dos itens 12 e 13;
+    - f821, depois do item 12;
+    - 38c0, 967b, 368c e 60ca também, para o motor nascer com a conta certa: a página os corrige antes (item 20), e o
+      teste do item 20 serve de caso para o motor;
     - as fatias p10f (visão de caixa), p10g (importação CSV) e p10h (PDF do PGDAS-D e sistema de caixa) do item 7. O dono as
       escolheu em 21/11 (F7, `DECISOES-2026-11-21.md`), mas a página congelou antes delas. A F-SIM-3 (entrada em camadas)
       do #1332 é onde elas cabem.
 
     Prova: o BRIEF do motor cita os ids. Este grupo não edita aquele BRIEF (regra 1 da sessão de planejamento).
+
+### Correção da conta na página (F-G1 = (b), dono, chat, 24/11)
+A página descongela só para estes quatro defeitos e congela de novo depois da publicação do item 20d. Cada subitem é um
+patch (`p14`…) sobre o arquivo de `artefatos/`, com a bateria (`tm-meses`, `pg-meses`, `tx-p11`) e um caso novo que falha na
+v50 e passa depois. Cada um é publicado com uma linha em `PUBLICACOES.md`.
+
+20. a. **38c0, ICMS da revenda no Simples impedido.** Com `ap.impedido` (receita acima do sublimite de R$ 3,6 mi), o
+       `cenario()` passa a cobrar o ICMS normal da revenda com a conta que o `regimes()` já faz (`icmsAl` sobre revenda −
+       compras; Lei SP 6.374 arts. 34 e 36, dossiê `regime-fora-simples-salao`). O ICMS entra em `out.icmsFora`, no
+       resultado, nos tributos do mês e no calendário (dia 20, GARE). O texto "fora desta conta" da aba DAS sai.
+       Caso de teste: o `tm-meses` já tem o mês com `imp true`; com revenda, o resultado cai pelo ICMS, e a identidade do
+       mês continua fechando.
+    b. **967b, uma convenção só para o crédito de CBS/IBS de 2027.** O valor digitado da despesa com crédito passa a ser o
+       valor pago, com CBS e IBS dentro. O crédito vira `cred × a27/(1+a27)`, a mesma conta que o `insumoCalc` e a
+       depreciação (p04) já usam; o texto do campo diz isso. A escolha não é fork: é a convenção que dois dos três pontos já
+       usam, e a lacuna pedia só a unificação.
+       Caso de teste: `cred = 6.000` com `a27 = 11,3%` dá crédito de R$ 609,16 por mês em PR27, RE27 e SR27, não R$ 678,00.
+    c. **368c, DIFAL no Presumido e no Real.** Depende do item 13. O `insumoCalc` aplica a regra do optante (RICMS/SP art. 115
+       XV-A) só em S e SR; em PR e RE, aplica a regra do contribuinte do regime normal que o item 13 trouxer, e os textos das
+       linhas 1249 e 1719-1720 da v43 passam a depender do regime.
+       Caso de teste: o mesmo insumo de fora do estado dá DIFAL diferente em S26 e em RE26, cada um pela regra citada.
+    d. **60ca, exemplo com custos reais.** Depende de uma pesquisa de padrão de mercado com fonte e faixa (F-SIM-6), que
+       entra como item 18b: insumo em % da receita, taxa média do cartão, rotatividade, vale-transporte, equipamentos e
+       pró-labore de salão pequeno, de fonte citável (Sebrae, IBGE, CCT, Banco Central), sem valor inventado. O `DEF` e o
+       `DEF_EQ` passam a usar esses valores. O aviso do exemplo cita as fontes, e o resultado mostra a faixa (F-SIM-7).
+       Caso de teste: nenhum campo de custo do exemplo fica em zero sem aviso, e cada valor tem fonte no rodapé.
+
+    Ordem: a e b já (sem pesquisa); c depois do item 13; d depois do 18b. Duplicar a conta que o motor vai ter é o custo
+    aceito desta escolha (lacuna b34e); o caso de teste de cada subitem vai ao motor pelo item 19.
 
 ## 3. Contratos
 
@@ -118,7 +147,7 @@ kit setorial do salão no motor (F-SIM-6).
 - **Dossiê.** O formato do `legal.py relatorio`: conclusão, fundamentação, vigência, ambiguidades, lacunas e fontes com
   hash.
 
-## 4. Forks (RATIFICAÇÃO PENDENTE)
+## 4. Forks
 
 **F-G1. O que a página congelada diz sobre os defeitos de conta já conhecidos.** São quatro:
 - 38c0: no Simples impedido, a conta não cobra o ICMS normal da revenda;
@@ -132,9 +161,12 @@ Caminhos:
 - (b) corrigir a conta na página antes de congelar;
 - (c) nada; a página já é só protótipo.
 
-**Recomendação: (a).** É estrutural dentro do F-SIM-8: a correção vive no motor (item 19), e a página não engana quem a lê
-nesse meio-tempo. A (b) reabre a página que o dono congelou e duplica a conta que o motor vai ter (a mesma divergência da
-lacuna b34e). A (c) deixa números errados sem aviso numa página publicada.
+Recomendação da sessão: (a). A (b) reabre a página que o F-SIM-8 congelou e duplica a conta que o motor vai ter (lacuna
+b34e).
+
+**RATIFICADO: (b)** (dono, chat, 24/11: "(b) Fix the calculation"). Vira o item 20. Com isso a seção de forks fica sem
+pendência; a 2c8a continua `com-dono`, mas é gate de dado externo, não decisão. Os itens 7 a 20 executam pela resposta do
+dono e por "BRIEF de grupo sem fork — 'Sim, executa'" (dono, chat, 21/11).
 
 ## 5. Pendente de validação externa (contador; não é fork do dono)
 
@@ -172,8 +204,10 @@ lacuna b34e). A (c) deixa números errados sem aviso numa página publicada.
 | 4f10 | já na v44+: `calReg` com o ICMS no dia 20 (RICMS art. 112) e o IBS no último dia útil (Res. CGIBS 6/2026 art. 45) | resolvida |
 | 4e7d | a cópia de `main` (#1309) é a canônica; a de `git-commit-auth-repeat-3da007` é mais velha (o D37 dela virou D40) | resolvida |
 | 99cc | 6 (cópia = versão no ar); a conferência do PGDAS-D entra pelo #1332 | em-pr |
-| c574 f88e 0952 4f67 ec55 f821 368c 7c15 6aa2 43d7 37f3 bfa2 95f3 | 7 a 18 (já planejadas; o conteúdo não depende do F-G1, só a regra do BRIEF com fork) | aberta, esperando o fork L-20261124-035723-5d95 |
-| 38c0 967b 883f 60ca | 19 e F-G1 | aberta, esperando o fork 5d95 |
+| c574 f88e 0952 4f67 ec55 f821 7c15 6aa2 43d7 37f3 bfa2 95f3 | 7 a 18 | aberta, para as sessões de pesquisa (F-G1 respondido em 24/11) |
+| 38c0 967b | 20a, 20b (e 19) | aberta, para a sessão de feature do item 20 |
+| 368c 60ca | 13 → 20c; 18b → 20d (e 19) | aberta, para a pesquisa e depois o item 20 |
+| 883f | 19 | aberta, requisito do motor |
 | ca7a e9c8 | §5 (contador) | com-dono |
 | 59df | §7 | aberta (fora do grupo) |
 | 2c8a ea2b | com o dono antes deste BRIEF | sem mudança |
