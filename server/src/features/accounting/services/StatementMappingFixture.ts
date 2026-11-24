@@ -1,4 +1,6 @@
-export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v7';
+import { CANONICAL_ACCOUNTS, isContaDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
+
+export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v8';
 
 /**
  * Declarative mapping rules for BP (Balanço Patrimonial) and DRE (Demonstração
@@ -48,35 +50,65 @@ export const STATEMENT_MAPPING_RULES = [
 export type StatementMappingRule = (typeof STATEMENT_MAPPING_RULES)[number];
 export type StatementId = 'BP' | 'DRE';
 
-/** Returns the first matching rule for (row.nature, row.code, statement), or undefined. */
+/** Does `rule` match (nature, code) in `statement` by the rule table alone (nature + `codePrefix`)? */
+function matchesByTable(r: StatementMappingRule, nature: string, code: string, statement: StatementId): boolean {
+  if (r.statement !== statement) return false;
+  if (r.match.nature !== nature) return false;
+  if ('codePrefix' in r.match && !code.startsWith(r.match.codePrefix)) return false;
+  return true;
+}
+
+/**
+ * Returns the first matching rule for (row.nature, row.code, statement), or undefined — the rule TABLE alone, without the
+ * account's identity. The BP and the aging use it; every DRE reader uses `findDreRule` (papel + identidade da folha).
+ */
 export function findMappingRule(
   nature: string,
   code: string,
   statement: StatementId,
 ): StatementMappingRule | undefined {
-  return STATEMENT_MAPPING_RULES.find((r) => {
-    if (r.statement !== statement) return false;
-    if (r.match.nature !== nature) return false;
-    if ('codePrefix' in r.match && !code.startsWith(r.match.codePrefix)) return false;
-    return true;
-  });
+  return STATEMENT_MAPPING_RULES.find((r) => matchesByTable(r, nature, code, statement));
+}
+
+/** Folhas analíticas do plano padrão: uma regra cujo `codePrefix` é uma delas designa ESSA conta, não um grupo. */
+const FOLHAS_DO_PLANO_PADRAO: ReadonlySet<string> = new Set(CANONICAL_ACCOUNTS.filter((a) => a.acceptsEntries).map((a) => a.code));
+
+/**
+ * Regra de folha do plano padrão em `Expense` (hoje `dre.cogs` 4.2 e `dre.cogs_services` 4.7). Só `Expense`: é a única
+ * natureza com regra genérica a seguir (`dre.expenses`). Uma conta alheia de `Revenue` num código de folha segue pelo
+ * prefixo — sem regra seguinte ela sairia da DRE e o J150 divergiria do I355 (BRIEF BE-INCR-CONTA-CANONICA-PAPEL, achado 1).
+ */
+function isRegraDeFolhaExpense(r: StatementMappingRule): boolean {
+  return r.match.nature === 'Expense' && 'codePrefix' in r.match && FOLHAS_DO_PLANO_PADRAO.has(r.match.codePrefix);
+}
+
+/** A linha de saldo que a DRE classifica: a identidade da conta (código, nome, natureza) e o id (papel). */
+export interface DreRow {
+  accountId: string;
+  code: string;
+  name: string;
+  nature: string;
 }
 
 /**
- * Regra da DRE por PAPEL (lacuna 038d; cédula D-2026-11-21-DRE-INSUMO-PELO-PAPEL, Lei 6.404/76 art. 187 II/III): a conta
- * apontada em `insumoExpenseAccountId` do perfil fiscal é custo dos serviços, acima do lucro bruto, qualquer que seja o
- * código. O papel só vale para `Expense`; fora disso (ou conta fora do conjunto) vale o prefixo, como em `findMappingRule`.
+ * A regra da DRE de uma conta — a ÚNICA função que os leitores da DRE usam (seções, resultado, diagnóstico, J150).
+ * 1. Papel (lacuna 038d; cédula D-2026-11-21-DRE-INSUMO-PELO-PAPEL, Lei 6.404/76 art. 187 II/III): a conta apontada em
+ *    `insumoExpenseAccountId` do perfil fiscal é custo dos serviços, qualquer que seja o código. Só para `Expense`.
+ * 2. Identidade da folha (lacuna 13dd; dono, 21/11, "pelo papel/natureza, não só pelo código"): a conta que ocupa o
+ *    código EXATO de uma folha do plano padrão em `Expense` só casa a regra da folha se É essa folha (nome + natureza da
+ *    definição, `isContaDoPlanoPadrao`). A conta do usuário nesse código (ex.: 4.7 "Perda na Baixa de Imobilizado") cai
+ *    na regra seguinte, `dre.expenses`. Os outros códigos do prefixo (subcontas legadas) seguem a tabela, como antes.
+ * 3. O resto: a tabela de regras por natureza + prefixo, como `findMappingRule`.
  */
-export function findDreRule(
-  nature: string,
-  code: string,
-  accountId: string,
-  custoServicosAccountIds: ReadonlySet<string>,
-): StatementMappingRule | undefined {
-  if (nature === 'Expense' && custoServicosAccountIds.has(accountId)) {
+export function findDreRule(row: DreRow, custoServicosAccountIds: ReadonlySet<string>): StatementMappingRule | undefined {
+  if (row.nature === 'Expense' && custoServicosAccountIds.has(row.accountId)) {
     return STATEMENT_MAPPING_RULES.find((r) => r.id === 'dre.cogs_services');
   }
-  return findMappingRule(nature, code, 'DRE');
+  return STATEMENT_MAPPING_RULES.find(
+    (r) =>
+      matchesByTable(r, row.nature, row.code, 'DRE') &&
+      (!isRegraDeFolhaExpense(r) || !('codePrefix' in r.match) || row.code !== r.match.codePrefix || isContaDoPlanoPadrao(row)),
+  );
 }
 
 /** Applies the sign convention and returns a signed integer (cents). */
