@@ -565,7 +565,9 @@ lacunas `L-20261124-214606-ba98` e `L-20261124-214609-44a5`.
   1:1; `utils/` virou a lista nominal dos 5 arquivos, `validation/` saiu porque `services/` já a cobre). A skill passa
   a mandar a suíte importar o tipo de `../presetTypes`: importar de `..` fecha ciclo.
 - **`check-registries.mjs`** (gate de wiring do `skill-audit run`): 6 caminhos trocados para `domain/presets/`. A pasta
-  `.claude/skills/skill-audit/**` é negada para escrita de agente; o dono aplicou o patch ("Você aplica o patch").
+  `.claude/skills/skill-audit/**` é negada para escrita de agente: a troca entra por patch que o dono aplica ("Você
+  aplica o patch") e a sessão commita. Sem esse commit o `skill-audit run` reprova o PR com "registro ausente" nos 3
+  registros de preset.
 
 **Baseline antes/depois (server, `.dependency-cruiser-known-violations.json`)**
 
