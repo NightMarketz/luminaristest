@@ -1343,6 +1343,16 @@ export class PayableService implements IFixedAssetDraftRedriver {
         // estorno no subrazão. NUNCA cai no finalize abaixo: finalizar como pago um lançamento Reversed reabriria a divergência.
         if (settlement && isReversedEntry(settlement)) {
           const csrf = this.withholding ? await this.withholding.repo.findActiveByOriginSettlement(scope, payment.id) : [];
+          // Mesmo pré-cheque do cancelPayment (review #307 F1) ANTES de qualquer estorno do razão da CSRF: invariante já quebrado ⇒ BLOCKED sem escrever.
+          const csrfCents = csrf.filter((l) => l.settlementId).reduce((sum, l) => sum + Number(l.amountCents), 0);
+          const current = await this.payableRepo.findById(scope, payment.payableId);
+          if (!current || centsFromDb(current.paidCents) < centsFromDb(payment.amountCents) + csrfCents) {
+            throw new ValidationError(
+              'Não foi possível estornar o pagamento: o saldo liquidado não comporta o estorno (invariante violado).',
+              null,
+              PAYMENT_REVERSAL_INVARIANT_CODE,
+            );
+          }
           if (csrf.length > 0) {
             // Mesma ordem do cancelPayment: imposto já recolhido ⇒ 409 (BLOCKED) antes de mexer; depois o estorno idempotente do razão da CSRF,
             // na data do estorno que o razão já tem (período fechado ⇒ ACCOUNTING_PERIOD_NOT_OPEN ⇒ BLOCKED).
