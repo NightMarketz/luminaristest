@@ -36,6 +36,7 @@ Cada item abaixo é uma REGRA DE GERAÇÃO (o `luminaris-reviewer` cobra exatame
 - [ ] **[POL-007]** **Actor `IUser | null`** — `null` = não autenticado; retorna `false` (exceto signup público explícito).
 - [ ] **[POL-006]** **Zero acesso a dados** — a policy só inspeciona campos do `actor` já carregado; nunca consulta o banco.
 - [ ] **[POL-008]** Imports: `import type { IUser } from '../../users/models/User.model'` + `import { Role } from '../../users/models/User.model'`.
+- [ ] **De outra feature, só o tipo, por `features/<x>/public/<nome>.types.ts`** (Contrato §2; regras `M1` e `L5` do `npm run check:arch`): policy não importa `public/<nome>.ts` (porta executável), `repositories/` nem `services/` de outra feature. Se o arquivo de tipo não existe, crie-o em `public/` da feature **alvo** no mesmo PR.
 
 ## When to use
 
