@@ -1,6 +1,6 @@
 import { LEGAL_PARAMS_SEED_FILE_IBS_CBS_TABELAS, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { ParametroLegalAusenteError, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
-import { tabelasIbsCbsDe } from '../ibsCbsTabelas';
+import { buscarCCredPres, buscarCst, tabelasIbsCbsDe } from '../ibsCbsTabelas';
 import { ibsCbsDoProduto } from '../nfeIbsCbsMontagem';
 
 /**
@@ -39,6 +39,24 @@ describe('virada só por linhas — ibsCbsDoProduto', () => {
     const l = seed().map((x) => (x.id === 'ibscbs-cclass-000001' ? { ...x, valorJson: JSON.stringify({ ...JSON.parse(x.valorJson ?? '{}'), indNFCe: 0 }) } : x));
     expect(faltantes(l, '2026-10-27', 65)).toContain('UB14-25, rej. 1025');
     expect(faltantes(l, '2026-10-27', 55)).toBe('');
+  });
+
+  it('linha de CST/cCredPres publicada hoje com início em 2027 NÃO vale hoje: a versão é escolhida pela data, como a do cClassTrib', () => {
+    const cst000 = seed().find((l) => l.id === 'ibscbs-cst-000')!;
+    const cred01 = seed().find((l) => l.id === 'ibscbs-credpres-01')!;
+    const futuras: LinhaLegal[] = [
+      { ...cst000, id: 'virada-cst-000', vigenteDesde: '2027-01-01', valorJson: JSON.stringify({ ...JSON.parse(cst000.valorJson ?? '{}'), ind_gIBSCBS: 0 }) },
+      { ...cred01, id: 'virada-cred-01', vigenteDesde: '2028-01-01', valorJson: JSON.stringify({ ...JSON.parse(cred01.valorJson ?? '{}'), indNFe: 0 }) },
+    ];
+    const linhas = [...seed(), ...futuras];
+    expect(buscarCst(tabelasIbsCbsDe(linhas, '2026-10-27'), '000')?.ind_gIBSCBS).toBe(1);
+    expect(buscarCst(tabelasIbsCbsDe(linhas, '2027-02-01'), '000')?.ind_gIBSCBS).toBe(0);
+    expect(buscarCCredPres(tabelasIbsCbsDe(linhas, '2026-10-27'), '01')?.indNFe).toBe(1);
+    expect(buscarCCredPres(tabelasIbsCbsDe(linhas, '2027-02-01'), '01')?.indNFe).toBe(1);
+    expect(buscarCCredPres(tabelasIbsCbsDe(linhas, '2028-02-01'), '01')?.indNFe).toBe(0);
+    // só existe a versão futura ⇒ o código existe (a vigência é outra regra), não vira "inexistente"
+    const soFutura = [...seed().filter((l) => l.id !== 'ibscbs-cst-000'), futuras[0]];
+    expect(buscarCst(tabelasIbsCbsDe(soFutura, '2026-10-27'), '000')).toBeDefined();
   });
 
   it('sem linha de CST ⇒ PARAMETRO_LEGAL_AUSENTE (fail-closed); sem o código dentro de tabela existente ⇒ inexistente', () => {

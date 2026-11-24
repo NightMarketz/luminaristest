@@ -3,6 +3,8 @@ import type { LegalParameter } from 'generated/prisma';
 import { ParametroLegalAusenteError } from '../../../legalParameters/models/legalParameter';
 import { storePublished } from '../../../legalParameters/services/legalParameterCache';
 import { regrasIbsCbs, type NfeIbsCbs, type NotaParaRegrasIbsCbs } from '../NfeIbsCbsDto';
+import { NfePayloadSchema, type NfePayload } from '../NfePayloadDto';
+import { nfceNumerada } from '../../models/__tests__/nfeMontagem.fixture';
 
 /**
  * Onda 3.2 fatia 5 (dono, 24/11/2026) — VIRADA SÓ POR LINHAS: as regras do grupo UB (CST/cClassTrib/cCredPres do IT 2025.002)
@@ -70,6 +72,22 @@ describe('virada só por linhas — NfeIbsCbsDto.regrasIbsCbs', () => {
   it('sem NENHUMA linha de uma das tabelas ⇒ PARAMETRO_LEGAL_AUSENTE (fail-closed), não "tudo inexistente"', () => {
     publicar(seed().filter((l) => l.tabela !== 'CST_IBS_CBS'));
     expect(() => rejeicoes(nota(65, '2026-10-27T10:00:00-03:00'))).toThrow(ParametroLegalAusenteError);
+  });
+
+  it('PELO NfePayloadSchema (o que a produção vê): tabela sem linha ⇒ o parse LANÇA ParametroLegalAusenteError (400 PARAMETRO_LEGAL_AUSENTE), não vira issues nem 500', () => {
+    const p = JSON.parse(JSON.stringify(nfceNumerada())) as NfePayload;
+    p.infNFe.emit.CRT = 3;
+    p.infNFe.det[0].imposto.ICMS = { ICMS00: { orig: 0, CST: '00', modBC: 3, vBC: '59.99', pICMS: '18.00', vICMS: '10.80' } };
+    p.infNFe.det[0].imposto.IBSCBS = { CST: '000', cClassTrib: '000001', gIBSCBS: { vBC: '59.99', gIBSUF: { pIBSUF: '0.1000', vIBSUF: '0.06' }, gIBSMun: { pIBSMun: '0.0000', vIBSMun: '0.00' }, vIBS: '0.06', gCBS: { pCBS: '0.9000', vCBS: '0.54' } } };
+    publicar(seed().filter((l) => l.tabela !== 'CCLASSTRIB_IBS_CBS'));
+    let erro: unknown;
+    try {
+      NfePayloadSchema.safeParse(p);
+    } catch (e) {
+      erro = e;
+    }
+    expect(erro).toBeInstanceOf(ParametroLegalAusenteError);
+    expect(erro).toMatchObject({ statusCode: 400, errorCode: 'PARAMETRO_LEGAL_AUSENTE' });
   });
 
   it('nota sem item com IBSCBS não lê as tabelas (UB12-10 e W03 seguem sem elas)', () => {

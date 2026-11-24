@@ -133,13 +133,20 @@ function lerJson<S extends z.ZodType>(schema: S, l: LinhaLegal): z.infer<S> & { 
   return r.data as z.infer<S> & { ordem: number };
 }
 
-/** Uma linha por código: a de `vigenteDesde` mais recente (supersedes já resolvido por `linhasEmVigor`). */
-function maisNovaPorChave(linhas: readonly LinhaLegal[], tabela: string): LinhaLegal[] {
+/**
+ * Uma linha por código, escolhida PELA DATA (como a versão do cClassTrib): a que cobre `data` (a de `vigenteDesde` mais recente);
+ * se nenhuma cobre, a última que já começou (vigência encerrada) e, só se todas começam depois, a que começa primeiro — o código
+ * EXISTE, a vigência é outra regra. Assim uma linha publicada hoje com início em 2027 não passa a valer hoje. `supersedes` já
+ * resolvido por `linhasEmVigor`.
+ */
+function porChaveNaData(linhas: readonly LinhaLegal[], tabela: string, data: string): LinhaLegal[] {
+  const classe = (l: LinhaLegal): 0 | 1 | 2 => (l.vigenteDesde > data ? 2 : l.vigenteAte === null || data <= l.vigenteAte ? 0 : 1); // cobre | já encerrou | ainda não começou
+  const melhor = (a: LinhaLegal, b: LinhaLegal): boolean => (classe(a) !== classe(b) ? classe(a) < classe(b) : classe(a) === 2 ? a.vigenteDesde < b.vigenteDesde : a.vigenteDesde > b.vigenteDesde);
   const porChave = new Map<string, LinhaLegal>();
   for (const l of linhasEmVigor(linhas)) {
     if (l.tabela !== tabela) continue;
     const atual = porChave.get(l.chave);
-    if (!atual || l.vigenteDesde > atual.vigenteDesde) porChave.set(l.chave, l);
+    if (!atual || melhor(l, atual)) porChave.set(l.chave, l);
   }
   return [...porChave.values()];
 }
@@ -150,8 +157,8 @@ function maisNovaPorChave(linhas: readonly LinhaLegal[], tabela: string): LinhaL
  * Ausência de UM código dentro de tabela existente continua sendo "inexistente" (rej. 1020/1023/1055).
  */
 export function tabelasIbsCbsDe(linhas: readonly LinhaLegal[], data: string): TabelasIbsCbs {
-  const cstLinhas = maisNovaPorChave(linhas, 'CST_IBS_CBS');
-  const credLinhas = maisNovaPorChave(linhas, 'CCREDPRES_IBS_CBS');
+  const cstLinhas = porChaveNaData(linhas, 'CST_IBS_CBS', data);
+  const credLinhas = porChaveNaData(linhas, 'CCREDPRES_IBS_CBS', data);
   // cClassTrib guarda TODAS as versões do código: a virada de vigência é uma linha nova, não a troca da antiga.
   const classLinhas = linhasEmVigor(linhas).filter((l) => l.tabela === 'CCLASSTRIB_IBS_CBS');
   if (cstLinhas.length === 0) throw new ParametroLegalAusenteError('CST_IBS_CBS', data);
