@@ -24,8 +24,12 @@ for(const ano of ["2026","2027"])for(const sr of ano==="2027"?[false,true]:[fals
     if(!sr)ok(Math.abs(cm.tribTot-cm.das-cm.issFora-(cm.ibsFora||0)-esp)<0.01,nm+" mes "+(i+1)+" tribTot = DAS + ISS + IBS + ICMS");
     else ok(Math.abs(cm.tribTot-cm.dasReg-cm.cbsReg-cm.issFora-esp)<0.01,nm+" mes "+(i+1)+" tribTot = DAS + CBS/IBS + ISS + ICMS");});
   ok(imp===12,nm+": 12 meses impedidos, achou "+imp);
-  // o resultado cai pelo ICMS: o mesmo mês sem revenda não tem ICMS; com revenda, o resultado é o da revenda menos CMV, DAS da revenda e ICMS
-  const c1=cenarioReg({...x,mes:6},"CAD",reg);ok(!c1.ap.impedido||Math.abs((c1.icmsFora||0)-esp)<0.01,nm+" cenarioReg icmsFora");}
+  // o resultado cai pelo ICMS: com compras de 100% da revenda não há ICMS (base revenda − compras = 0); de 100% para 50%,
+  // o resultado sobe 1.500 de CMV e desce 375 de ICMS (no S; no SR a base da CBS/IBS da revenda também muda com as compras)
+  const c1=cenarioReg({...x,mes:6},"CAD",reg), c2=cenarioReg({...x,cmv:100,mes:6},"CAD",reg);
+  ok(c1.ap.impedido&&Math.abs((c1.icmsFora||0)-esp)<0.01,nm+" cenarioReg impedido e icmsFora");
+  ok(!(c2.icmsFora>0),nm+" compras = revenda: sem ICMS");
+  if(!sr)ok(Math.abs(c1.resultado-c2.resultado-(1500-esp))<0.01,nm+" resultado cai pelo ICMS: Δ "+(c1.resultado-c2.resultado).toFixed(2)+" esperado "+(1500-esp).toFixed(2));}
 // sem impedimento não há ICMS fora do DAS
 {const c=cenarioReg({...base,ano:"2026",mes:6},"CAD",{r:"S"});ok(!c.ap.impedido&&!(c.icmsFora>0),"S26 normal: sem ICMS fora");}
 // a aba DAS não diz mais "fora desta conta"
