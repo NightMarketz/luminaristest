@@ -1,0 +1,170 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D01_DESCONTODA-trimestre-trimestre-",
+      "url": "https://olinda.bcb.gov.br/olinda/servico/MPV_DadosAbertos/versao/v1/odata/DESCONTODA(trimestre=@trimestre)?@trimestre='20252'&$format=json",
+      "url_final": "https://olinda.bcb.gov.br/olinda/servico/MPV_DadosAbertos/versao/v1/odata/DESCONTODA(trimestre=@trimestre)?@trimestre='20252'&$format=json",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:39:35-03:00",
+      "sha256": "f0848c7ceae46000ce982c6609181961c26438ba1e2c2e393d56798a37d9bdfb",
+      "arquivo": "docs/D01_DESCONTODA-trimestre-trimestre-.html",
+      "texto": "docs/D01_DESCONTODA-trimestre-trimestre-.txt",
+      "bytes": 238499,
+      "sha256_texto": "f0848c7ceae46000ce982c6609181961c26438ba1e2c2e393d56798a37d9bdfb",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "D02_DESCONTODA-trimestre-trimestre-",
+      "url": "https://olinda.bcb.gov.br/olinda/servico/MPV_DadosAbertos/versao/v1/odata/DESCONTODA(trimestre=@trimestre)?@trimestre='20253'&$format=json",
+      "url_final": "https://olinda.bcb.gov.br/olinda/servico/MPV_DadosAbertos/versao/v1/odata/DESCONTODA(trimestre=@trimestre)?@trimestre='20253'&$format=json",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:39:36-03:00",
+      "sha256": "e826d9c86fae4ff206f44991e6ced4d6b2359fa295c40bd2e7e24c55be41560a",
+      "arquivo": "docs/D02_DESCONTODA-trimestre-trimestre-.html",
+      "texto": "docs/D02_DESCONTODA-trimestre-trimestre-.txt",
+      "bytes": 188330,
+      "sha256_texto": "e826d9c86fae4ff206f44991e6ced4d6b2359fa295c40bd2e7e24c55be41560a",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "D03_DESCONTODA-trimestre-trimestre-",
+      "url": "https://olinda.bcb.gov.br/olinda/servico/MPV_DadosAbertos/versao/v1/odata/DESCONTODA(trimestre=@trimestre)?@trimestre='20254'&$format=json",
+      "url_final": "https://olinda.bcb.gov.br/olinda/servico/MPV_DadosAbertos/versao/v1/odata/DESCONTODA(trimestre=@trimestre)?@trimestre='20254'&$format=json",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:39:40-03:00",
+      "sha256": "6f6829968e2032c12eff4d5b181e855832aa3ae446f1b47a5fbf5d87269686f9",
+      "arquivo": "docs/D03_DESCONTODA-trimestre-trimestre-.html",
+      "texto": "docs/D03_DESCONTODA-trimestre-trimestre-.txt",
+      "bytes": 138731,
+      "sha256_texto": "6f6829968e2032c12eff4d5b181e855832aa3ae446f1b47a5fbf5d87269686f9",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "D04_DESCONTODA-trimestre-trimestre-",
+      "url": "https://olinda.bcb.gov.br/olinda/servico/MPV_DadosAbertos/versao/v1/odata/DESCONTODA(trimestre=@trimestre)?@trimestre='20261'&$format=json",
+      "url_final": "https://olinda.bcb.gov.br/olinda/servico/MPV_DadosAbertos/versao/v1/odata/DESCONTODA(trimestre=@trimestre)?@trimestre='20261'&$format=json",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:39:44-03:00",
+      "sha256": "4da4111e5382239d58a871024270512110078fde7a183bb44382f1eaaca3ef11",
+      "arquivo": "docs/D04_DESCONTODA-trimestre-trimestre-.html",
+      "texto": "docs/D04_DESCONTODA-trimestre-trimestre-.txt",
+      "bytes": 91314,
+      "sha256_texto": "4da4111e5382239d58a871024270512110078fde7a183bb44382f1eaaca3ef11",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "D05_DESCONTODA-trimestre-trimestre-",
+      "url": "https://olinda.bcb.gov.br/olinda/servico/MPV_DadosAbertos/versao/v1/odata/DESCONTODA(trimestre=@trimestre)?@trimestre='20262'&$format=json",
+      "url_final": "https://olinda.bcb.gov.br/olinda/servico/MPV_DadosAbertos/versao/v1/odata/DESCONTODA(trimestre=@trimestre)?@trimestre='20262'&$format=json",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:39:45-03:00",
+      "sha256": "339b2c0e8dc0e61c1824efbc7adb20397aacef01ecad887ede9db19192bab396",
+      "arquivo": "docs/D05_DESCONTODA-trimestre-trimestre-.html",
+      "texto": "docs/D05_DESCONTODA-trimestre-trimestre-.txt",
+      "bytes": 44516,
+      "sha256_texto": "339b2c0e8dc0e61c1824efbc7adb20397aacef01ecad887ede9db19192bab396",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "IBGE, Pesquisa Anual de Serviços 2023 — tabelas em xlsx (zip)",
+      "url": "https://ftp.ibge.gov.br/Comercio_e_Servicos/Pesquisa_Anual_de_Servicos/pas2023/xlsx/tabelas_2023_xlsx.zip",
+      "url_final": "https://ftp.ibge.gov.br/Comercio_e_Servicos/Pesquisa_Anual_de_Servicos/pas2023/xlsx/tabelas_2023_xlsx.zip",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:40:57-03:00",
+      "sha256": "7bd51e1a484dabeb15e8a9766603454563e0c85f4b959b1819e1ff336d143b68",
+      "arquivo": "docs/D06_tabelas_2023_xlsx-zip.html",
+      "texto": "docs/D06_tabelas_2023_xlsx-zip.txt",
+      "bytes": 1126093,
+      "sha256_texto": "83f16885f1cb6e3c026ee191a47ee269f9d160a38a0b1ccb975f42936114fe27",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      },
+      "alertas": [
+        "o arquivo é um zip de planilhas; o .txt é a extração das linhas usadas (Tabelas 5, 6, 9, 10, 11 e 13), feita por openpyxl, não o texto do zip"
+      ]
+    },
+    {
+      "id": "D07",
+      "titulo": "Tabelas de resultados",
+      "url": "https://ftp.ibge.gov.br/Comercio_e_Servicos/Pesquisa_Anual_de_Servicos/pas2023/tabelas_2023_indice.pdf",
+      "url_final": "https://ftp.ibge.gov.br/Comercio_e_Servicos/Pesquisa_Anual_de_Servicos/pas2023/tabelas_2023_indice.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:40:58-03:00",
+      "sha256": "073cee77a45a0b7fa6f2a0d336f7b24e4a0124ef583d266e8c2805284e3e0f9a",
+      "arquivo": "docs/D07_tabelas_2023_indice-pdf.pdf",
+      "texto": "docs/D07_tabelas_2023_indice-pdf.txt",
+      "bytes": 121932,
+      "sha256_texto": "31db619410bf0629f48728621a87a4bb9c6ed47aff835d827d07909b4181b86d",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "Tarifa de ônibus será corrigida abaixo da inflação a partir de 6 de janeiro - Prefeitura de São Paulo - Prefeitura",
+      "url": "https://prefeitura.sp.gov.br/w/tarifa-de-%C3%B4nibus-ser%C3%A1-corrigida-abaixo-da-infla%C3%A7%C3%A3o-a-partir-de-6-de-janeiro",
+      "url_final": "https://prefeitura.sp.gov.br/w/tarifa-de-%C3%B4nibus-ser%C3%A1-corrigida-abaixo-da-infla%C3%A7%C3%A3o-a-partir-de-6-de-janeiro",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:42:16-03:00",
+      "sha256": "5c2eca31823653550ee4e7b29d216cbf4c48672a62bd67cf50b46a715246a902",
+      "arquivo": "docs/D08_tarifa-de-C3-B4nibus-ser-C3-A1-corrigida-abaixo-da-infla-C3-.html",
+      "texto": "docs/D08_tarifa-de-C3-B4nibus-ser-C3-A1-corrigida-abaixo-da-infla-C3-.txt",
+      "bytes": 285152,
+      "sha256_texto": "784fb6d0a6b4bf9209a33929bd93b096ac634a37ec0b3eb87b731163be51fc12",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D09",
+      "titulo": "Tarifa de ônibus será atualizada a partir de 6 de janeiro - Prefeitura de São Paulo - Prefeitura",
+      "url": "https://prefeitura.sp.gov.br/w/tarifa-de-%C3%B4nibus-ser%C3%A1-atualizada-a-partir-de-6-de-janeiro-1",
+      "url_final": "https://prefeitura.sp.gov.br/w/tarifa-de-%C3%B4nibus-ser%C3%A1-atualizada-a-partir-de-6-de-janeiro-1",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:42:25-03:00",
+      "sha256": "8e106da3e6be3659bccb49c69b8e984fe9e245bdd183401b83c152e995008e5b",
+      "arquivo": "docs/D09_tarifa-de-C3-B4nibus-ser-C3-A1-atualizada-a-partir-de-6-de-j.html",
+      "texto": "docs/D09_tarifa-de-C3-B4nibus-ser-C3-A1-atualizada-a-partir-de-6-de-j.txt",
+      "bytes": 285740,
+      "sha256_texto": "7dc8780c37c3ebeb669be27b03a092eb05f162f5efd973754a7c2b9946e36065",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [
+    {
+      "quando": "2026-11-24T01:45:14-03:00",
+      "fonte": "WebSearch (pista, não fonte): Sebrae",
+      "termos": [
+        "Sebrae",
+        "salão de beleza",
+        "investimento",
+        "equipamentos",
+        "custo de produtos",
+        "% do faturamento"
+      ],
+      "n": 18,
+      "nota": "cartilhas do Sebrae PR, BA, MG, MT e DF com listas de equipamentos e partilha do investimento; barbearia BA 2019: investimento entre R$ 20 mil e R$ 40 mil; nenhuma com custo de insumo em % da receita nem valor de equipamento de salão de SP atual. Não usadas como padrão."
+    }
+  ],
+  "slug": "salao-padrao-mercado-sp",
+  "pergunta": "Valores padrão, com fonte citável e faixa, para o exemplo de salão pequeno em SP capital (F-SIM-6/7): insumo em % da receita, taxa média do cartão, rotatividade da equipe CLT, vale-transporte, equipamentos e pró-labore. Sem fonte, fica sem padrão.",
+  "criado": "2026-11-24T01:39:28-03:00"
+}
