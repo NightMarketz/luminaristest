@@ -85,7 +85,7 @@ export interface FakeSefazControle {
   atrasoMs: number;
   /** X10a PR-8: a UF não aceita o QR Code v3 (RV ZX02-220, rej. 407). */
   recusarQrV3: boolean;
-  /** X10a PR-9: a SEFAZ está fora — derruba a conexão ANTES de processar (nada fica na base). */
+  /** X10a PR-9: a SEFAZ está fora — responde 503 sem processar (nada fica na base). Conexão derrubada é `perderRespostaAutorizacao`. */
   foraDoAr: boolean;
   chamadas: Array<{ servico: string; corpo: string }>;
 }
@@ -122,7 +122,8 @@ export class FakeSefaz {
             // Registra ANTES do atraso: a chamada lenta de um teste não pode cair na contagem do teste seguinte.
             this.controle.chamadas.push({ servico, corpo });
             if (this.controle.foraDoAr) {
-              req.socket.destroy();
+              res.writeHead(503, { 'Content-Type': 'text/plain' });
+              res.end('Service Unavailable');
               return;
             }
             if (this.controle.atrasoMs) await new Promise((r) => setTimeout(r, this.controle.atrasoMs));

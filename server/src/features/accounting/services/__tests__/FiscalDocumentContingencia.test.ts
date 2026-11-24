@@ -268,6 +268,15 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
   };
   const FUTURO = () => new Date(Date.now() + 60_000); // as órfãs criadas no teste já são "mais velhas" que isto
   const PASSADO = () => new Date(Date.now() - 60_000); // nenhuma órfã é processada
+  // A SEFAZ processou e AUTORIZOU a normal, mas a venda foi para a contingência (a ambiguidade que a F-AL-6 resolve consultando antes; aqui
+  // ela já aconteceu — o gateway devolveu 503 depois de processar): fica a órfã autorizada que o 110112 (decisão 6) resolve.
+  const emitirComNormalJaNaSefaz = async () => {
+    sefaz.controle.foraDoAr = true;
+    const r = await emission.emit(SCOPE, 'sale-1', 'NFCE');
+    sefaz.controle.foraDoAr = false;
+    sefaz.autorizadas.set(payloadDe(r[0].id, 1).infNFe.Id.slice(3), { digVal: 'ZGlnZXN0', nProt: '135999999999001' });
+    return r;
+  };
 
   it('decisão 4: SEFAZ fora ⇒ a venda sai off-line na hora — unidade AUTO, número novo tpEmis=9, nota normal órfã, QR v3 off-line assinado', async () => {
     sefaz.controle.foraDoAr = true;
@@ -347,10 +356,8 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
   });
 
   it('decisão 6: a normal chegou e foi autorizada (resposta perdida) ⇒ depois da de contingência autorizada, 110112 apontando-a ⇒ CANCELLED_SUBST', async () => {
-    sefaz.controle.perderRespostaAutorizacao = true;
-    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
+    const [view] = await emitirComNormalJaNaSefaz();
     expect(view.status).toBe('CONTINGENCY');
-    sefaz.controle.perderRespostaAutorizacao = false;
     const antes = sefaz.controle.chamadas.length;
     expect(await contingencia.tick(FUTURO())).toMatchObject({ transmitidas: 1, orfasResolvidas: 1, orfasFalharam: 0 });
     const evento = sefaz.controle.chamadas.slice(antes).find((c) => c.servico === 'NFeRecepcaoEvento4')!.corpo;
@@ -365,9 +372,7 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
   });
 
   it('decisão 6: a de contingência ainda não autorizada ⇒ a órfã espera (o 110112 sem a substituta na base daria 912)', async () => {
-    sefaz.controle.perderRespostaAutorizacao = true;
-    await emission.emit(SCOPE, 'sale-1', 'NFCE');
-    sefaz.controle.perderRespostaAutorizacao = false;
+    await emitirComNormalJaNaSefaz();
     sefaz.controle.cStatAutorizacao = '704'; // a de contingência volta rejeitada
     const antes = sefaz.controle.chamadas.length;
     expect(await contingencia.tick(FUTURO())).toMatchObject({ orfasResolvidas: 0, orfasFalharam: 0 });
@@ -410,6 +415,19 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
     expect(autorizacoes(antes)).toBe(1); // uma só autorização para a venda
   }, 30_000);
 
+  it('F-AL-6 (conexão derrubada depois do envio): a SEFAZ autorizou e a resposta se perdeu (reset) ⇒ tão ambíguo quanto o timeout: SENT, sem contingência; o poll autoriza a MESMA chave', async () => {
+    const antes = sefaz.controle.chamadas.length;
+    sefaz.controle.perderRespostaAutorizacao = true; // processa, autoriza e derruba a conexão sem responder
+    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
+    sefaz.controle.perderRespostaAutorizacao = false;
+    expect(view).toMatchObject({ status: 'SENT', numero: '1', currentAttemptNo: 1 });
+    expect(cont.estados.size).toBe(0);
+    expect(cont.orfas).toEqual([]);
+    expect(await lifecycle.pollPendingOnce(FUTURO())).toMatchObject({ updated: 1, failed: 0 });
+    expect((await emission.getById(SCOPE, view.id)).status).toBe('AUTHORIZED');
+    expect(autorizacoes(antes)).toBe(1);
+  }, 30_000);
+
   it('F-AL-6: timeout e a SEFAZ não conhece a chave (217) ⇒ a 1ª consulta só conta; a 2ª, 2 min depois, contingencia (número novo, tpEmis 9, normal órfã)', async () => {
     const view = await timeoutNaTransmissao();
     const chave = payloadDe(view.id).infNFe.Id.slice(3);
@@ -434,10 +452,8 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
   }, 30_000);
 
   it('defeito (decisão 6): a órfã é consultada pelo assinador local da unidade — o transporte do boot (sem dispositivo) não pode barrar o 110112', async () => {
-    sefaz.controle.perderRespostaAutorizacao = true;
-    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
+    const [view] = await emitirComNormalJaNaSefaz();
     expect(view.status).toBe('CONTINGENCY');
-    sefaz.controle.perderRespostaAutorizacao = false;
     // A porta da órfã é a do assinador local, ligada ao transporte do BOOT (sem dispositivo), como em produção.
     const caixa = caixaFalso({ key, certPem, cnpj: CNPJ, tpAmb: '2', pki });
     localDaUnidade = async () => ({ ok: true, device: { id: 'dev-1', certThumbprint: thumbprintDe(certPem) }, fila: caixa });
@@ -455,9 +471,7 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
   });
 
   it('decisão 6: o 110112 recusado vira pendência visível no documento (contingencia_orfa_falhou)', async () => {
-    sefaz.controle.perderRespostaAutorizacao = true;
-    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
-    sefaz.controle.perderRespostaAutorizacao = false;
+    const [view] = await emitirComNormalJaNaSefaz();
     await contingencia.tick(PASSADO()); // a de contingência sai autorizada
     sefaz.controle.cStatEvento = '501';
     expect(await contingencia.tick(FUTURO())).toMatchObject({ orfasFalharam: 1, alertas: [{ evento: 'ORFA_FALHOU', documentId: view.id }] });
