@@ -149,12 +149,12 @@ export class MercadoPagoCollectionProvider implements CollectionProviderPort {
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     let res: Response;
     try {
+      // Timeout por tentativa no wrapper; GET é re-tentado em falha transitória, POST (sem chave) nunca.
       res = await outboundFetch('mercado_pago', `${this.baseUrl}${path}`, {
         method,
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
-        signal: AbortSignal.timeout(60_000),
-      });
+      }, { timeoutMs: 60_000 });
     } catch (error) {
       throw new CollectionProviderError(`Mercado Pago inacessível: ${error instanceof Error ? error.name : 'erro de rede'}`, null);
     }
@@ -178,12 +178,12 @@ export class MercadoPagoCollectionProvider implements CollectionProviderPort {
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     let res: Response;
     try {
+      // X-Idempotency-Key presente ⇒ o wrapper re-tenta POST em 5xx/429/timeout com a MESMA chave; sem chave, nunca.
       res = await outboundFetch('mercado_pago', `${this.baseUrl}${path}`, {
         method,
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
-        signal: AbortSignal.timeout(15_000),
-      });
+      }, { timeoutMs: 15_000 });
     } catch (error) {
       // Mensagem sem o token: só o motivo de rede (P1-7 / invariante 10).
       throw new CollectionProviderError(`Mercado Pago inacessível: ${error instanceof Error ? error.name : 'erro de rede'}`, null);
