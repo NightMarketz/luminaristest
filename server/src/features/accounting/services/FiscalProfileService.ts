@@ -1,5 +1,4 @@
 import { ESTOQUES_CODE, PERFIL_FISCAL_PLANO_PADRAO, isContaDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
-import { findMappingRule } from './StatementMappingFixture';
 import { ForbiddenError, PolicyApprovalRequiredError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -339,9 +338,7 @@ export class FiscalProfileService {
       const { unitId: _unitId, d1fConfirmado, emissao: _emissao, updatedAt: _updatedAt, ...current } = this.toView(row, null);
       const payload = FiscalProfilePolicyPayloadSchema.parse({ ...current, ...patch });
       await applyDirectInTx(this.policyVersionRepo, scope, 'FISCAL_PROFILE', payload, tx, (policyVersionId) =>
-        // Lacuna 051e (dono 21/11, D-2026-11-21-DRE-INSUMO-PELO-PAPEL item 2): o insumo já gravado vale até o próximo PUT que
-        // traz o campo; escrita de sistema (kit, plano padrão) que não troca o insumo não reprova perfil legado fora do custo da DRE.
-        this.applyInTx(scope, payload, tx, policyVersionId, { d1fConfirmado, insumoSemTroca: !fields.includes('insumoExpenseAccountId') }),
+        this.applyInTx(scope, payload, tx, policyVersionId, { d1fConfirmado }),
       );
       return fields;
     });
@@ -355,16 +352,12 @@ export class FiscalProfileService {
     scope: AccountingScope,
     input: FiscalProfilePolicyPayload,
     tx?: Prisma.TransactionClient,
-    /** Lacuna 051e: `true` só nas escritas de sistema (kit, plano padrão) que não trocam a conta de insumo. */
-    opts: { insumoSemTroca?: boolean } = {},
   ): Promise<RegimeEmpresa | null> {
     if (input.icmsRecuperavelAccountId) await this.assertAssetAccount(scope, input.icmsRecuperavelAccountId, 'ICMS a recuperar', tx);
     if (input.pisCofinsRecuperavelAccountId) await this.assertAssetAccount(scope, input.pisCofinsRecuperavelAccountId, 'PIS/COFINS a recuperar', tx);
-    // Lacuna 051e (dono 21/11: "Checar em todo PUT"): custo na DRE vale em toda escrita que traz o insumo; sem troca, só despesa.
-    if (input.insumoExpenseAccountId) {
-      if (opts.insumoSemTroca) await this.assertExpenseAccount(scope, input.insumoExpenseAccountId, 'insumo do serviço', tx);
-      else await this.assertInsumoCostAccount(scope, input.insumoExpenseAccountId, tx);
-    }
+    // Lacuna 038d (dono 21/11, D-2026-11-21-DRE-INSUMO-PELO-PAPEL item 3): qualquer folha de despesa serve — a DRE classifica o
+    // insumo pelo papel (insumoExpenseAccountId), não pelo prefixo; a recusa fora de 4.2/4.7 do #1302 saiu.
+    if (input.insumoExpenseAccountId) await this.assertExpenseAccount(scope, input.insumoExpenseAccountId, 'insumo do serviço', tx);
     if (input.insumoStockAccountId) await this.assertInsumoStockAccount(scope, input.insumoStockAccountId, tx);
     // X7 item 3 (F-TA-6 a): provisão D despesa / C a recolher (item 15) — despesa = Expense, a recolher = Liability.
     if (input.irpjDespesaAccountId) await this.assertExpenseAccount(scope, input.irpjDespesaAccountId, 'despesa de IRPJ', tx);
@@ -428,9 +421,9 @@ export class FiscalProfileService {
     tx: Prisma.TransactionClient,
     policyVersionId: string,
     /** BE-INCR-KIT-SETOR PR-2: o kit preenche contas sem o operador ver os defaults D1f, então não os confirma. */
-    opts: { d1fConfirmado?: boolean; insumoSemTroca?: boolean } = {},
+    opts: { d1fConfirmado?: boolean } = {},
   ): Promise<FiscalProfileView> {
-    const regimeEmpresa = await this.validate(scope, input, tx, { insumoSemTroca: opts.insumoSemTroca });
+    const regimeEmpresa = await this.validate(scope, input, tx);
     const { ibsCbsInformar, ...rest } = input;
     const data = {
       ...rest,
@@ -549,18 +542,6 @@ export class FiscalProfileService {
       throw new ValidationError(`Conta de ${label} '${account.code}' tem natureza ${account.nature}; esperado Expense (insumo vai para despesa na entrada — ITEM-DESTINATION F-ID-3 a).`);
     }
     return account;
-  }
-
-  /** Lacuna L-20261121-034042-051e (dono, AskUserQuestion, 2026-11-21: opção (a)): além do `assertExpenseAccount`, a conta de
-   *  insumo precisa ser uma folha que a regra da DRE já classifica como `costOfGoodsSold` (hoje 4.2 e 4.7). A DRE e o J150 leem o
-   *  código, não o papel; despesa operacional ficaria abaixo do lucro bruto (NBC TG 1002 item 5.1 (d)). */
-  private async assertInsumoCostAccount(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<void> {
-    const account = await this.assertExpenseAccount(scope, id, 'insumo do serviço', tx);
-    if (findMappingRule(account.nature, account.code, 'DRE')?.section !== 'costOfGoodsSold') {
-      throw new ValidationError(
-        `Conta de insumo do serviço '${account.code}' não é custo na DRE: escolha uma folha sob 4.7 (Custo dos Serviços Prestados) ou 4.2, senão o insumo fica abaixo do lucro bruto.`,
-      );
-    }
   }
 
   /** X14 PR-3 item 21 / F-PCB-1R: a dedução da receita (DAS; PIS/COFINS) é folha de natureza Revenue com saldo devedor,

@@ -1,4 +1,4 @@
-export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v6';
+export const STATEMENT_MAPPING_VERSION = 'statement-mapping.v7';
 
 /**
  * Declarative mapping rules for BP (Balanço Patrimonial) and DRE (Demonstração
@@ -60,6 +60,23 @@ export function findMappingRule(
     if ('codePrefix' in r.match && !code.startsWith(r.match.codePrefix)) return false;
     return true;
   });
+}
+
+/**
+ * Regra da DRE por PAPEL (lacuna 038d; cédula D-2026-11-21-DRE-INSUMO-PELO-PAPEL, Lei 6.404/76 art. 187 II/III): a conta
+ * apontada em `insumoExpenseAccountId` do perfil fiscal é custo dos serviços, acima do lucro bruto, qualquer que seja o
+ * código. O papel só vale para `Expense`; fora disso (ou conta fora do conjunto) vale o prefixo, como em `findMappingRule`.
+ */
+export function findDreRule(
+  nature: string,
+  code: string,
+  accountId: string,
+  custoServicosAccountIds: ReadonlySet<string>,
+): StatementMappingRule | undefined {
+  if (nature === 'Expense' && custoServicosAccountIds.has(accountId)) {
+    return STATEMENT_MAPPING_RULES.find((r) => r.id === 'dre.cogs_services');
+  }
+  return findMappingRule(nature, code, 'DRE');
 }
 
 /** Applies the sign convention and returns a signed integer (cents). */

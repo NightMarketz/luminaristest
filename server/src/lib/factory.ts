@@ -1392,7 +1392,9 @@ export class ApplicationFactory {
       this.repositories.account,
       this.repositories.posting,
       this.repositories.journalEntry,
-      this.policies.accounting
+      this.policies.accounting,
+      this.repositories.fiscalProfile, // lacuna 038d: DRE classifica o insumo pelo papel (fallback sem versão)
+      this.repositories.accountingPolicyVersion, // lacuna 038d (f974): papel da versão FISCAL_PROFILE vigente em asOf
     );
     // BE-INCR-TAX-ASSESSMENT (nó X7): hoisted no X8 PR-3 — o PisCofinsAssessmentService reusa a provisão (item 17).
     // BE-INCR-SIMPLES-NACIONAL PR-2 (nó X14): entradas da apuração + subrazão fiscal de receita (lê o contrato de parceria).
