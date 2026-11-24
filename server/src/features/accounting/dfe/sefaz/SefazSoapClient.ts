@@ -67,6 +67,7 @@ export class SefazSoapClient implements SefazTransporte {
     const body = envelopeSoap(servico, xml);
     const startedAt = Date.now();
     const { transporte, connectTimeoutMs = 10_000, responseTimeoutMs = 30_000 } = this.opts;
+    let requisicaoEscrita = false; // `finish` do ClientRequest: o corpo já foi entregue ao socket — a SEFAZ pode tê-lo recebido
     try {
       const resposta = await new Promise<{ status: number; body: string }>((resolve, reject) => {
         const req = request(
@@ -90,6 +91,9 @@ export class SefazSoapClient implements SefazTransporte {
             res.on('error', reject);
           },
         );
+        req.on('finish', () => {
+          requisicaoEscrita = true;
+        });
         req.on('timeout', () => req.destroy(new SefazTransporteError('sefaz_timeout', 'conexão')));
         req.on('error', reject);
         req.end(body);
@@ -113,10 +117,12 @@ export class SefazSoapClient implements SefazTransporte {
       });
       const code = (error as NodeJS.ErrnoException).code ?? '';
       const texto = code + String(error);
-      // Conexão derrubada DEPOIS de a requisição sair (reset, pipe quebrado, "socket hang up") é tão ambígua quanto o timeout: a SEFAZ
-      // pode ter processado e perdido a resposta (F-AL-6, dono 2026-11-24) — mesmo código, para o envio consultar a chave antes de
-      // contingenciar. Falha de certificado/TLS (inclusive "disconnected before secure TLS connection") continua `sefaz_tls`.
-      const codigo = /CERT|SSL|TLS|EPROTO/i.test(texto) ? 'sefaz_tls' : /ECONNRESET|EPIPE|socket hang up/i.test(texto) ? 'sefaz_timeout' : 'sefaz_http';
+      // Conexão derrubada DEPOIS de a requisição ter sido escrita no socket (reset, pipe quebrado, "socket hang up") é tão ambígua quanto
+      // o timeout: a SEFAZ pode ter processado e perdido a resposta (F-AL-6, dono 2026-11-24) — mesmo código, para o envio consultar a
+      // chave antes de contingenciar. Reset/recusa ANTES de a requisição sair (connect) nada levou à SEFAZ: segue contingenciando na hora
+      // (`sefaz_tls`, como antes). Falha de certificado/TLS, antes ou depois, é `sefaz_tls`.
+      const derrubada = /ECONNRESET|EPIPE|socket hang up/i.test(texto);
+      const codigo = /CERT|SSL|TLS|EPROTO/i.test(texto) ? 'sefaz_tls' : derrubada ? (requisicaoEscrita ? 'sefaz_timeout' : 'sefaz_tls') : 'sefaz_http';
       throw new SefazTransporteError(codigo, code || String(error));
     }
   }

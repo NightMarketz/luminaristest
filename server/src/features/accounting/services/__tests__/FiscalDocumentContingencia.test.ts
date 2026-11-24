@@ -451,6 +451,80 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
     expect(eventos()).toContain('dfe.contingency_entered');
   }, 30_000);
 
+  // F-AL-6 (dono, chat, 2026-11-24): com a SEFAZ calada (timeout/reset) a consulta do poll também falha e nunca chega ao 217; depois de
+  // X = 5 min de consulta falhando (`CONSULTA_FALHANDO_ATE_CONTINGENCIA_MS`) a NFC-e normal contingencia pelo MESMO handler do 217.
+  const MIN = 60_000;
+  const avancar = (ms: number) => jest.setSystemTime(new Date(Date.now() + ms));
+  const resultadoDaTentativa = (id: string) => JSON.parse(repo.attempts.get(id)!.at(-1)!.resultJson ?? '{}') as { consultaFalhandoDesde?: string; naoConsta?: number };
+
+  it('F-AL-6 (consulta falhando): < 5 min não contingencia; ≥ 5 min contingencia UMA vez — modo AUTO ligado, número novo, normal órfã', async () => {
+    const view = await timeoutNaTransmissao();
+    const chave = payloadDe(view.id).infNFe.Id.slice(3);
+    sefaz.autorizadas.clear();
+    sefaz.controle.foraDoAr = true; // a SEFAZ cai: a consulta falha (503)
+    const t0 = Date.now();
+
+    expect(await lifecycle.pollPendingOnce(FUTURO())).toMatchObject({ failed: 1, updated: 0 });
+    expect(Date.parse(resultadoDaTentativa(view.id).consultaFalhandoDesde!)).toBe(t0); // a âncora é o instante da 1ª consulta que falhou
+    avancar(4 * MIN);
+    expect(await lifecycle.pollPendingOnce(FUTURO())).toMatchObject({ failed: 1, updated: 0 });
+    expect((await emission.getById(SCOPE, view.id)).status).toBe('SENT');
+    expect(cont.estados.size).toBe(0);
+    expect(Date.parse(resultadoDaTentativa(view.id).consultaFalhandoDesde!)).toBe(t0); // as falhas seguintes não movem a âncora
+
+    avancar(1 * MIN + 1_000); // 5 min e 1 s depois da primeira falha
+    expect(await lifecycle.pollPendingOnce(FUTURO())).toMatchObject({ failed: 0, updated: 1 });
+    expect(await emission.getById(SCOPE, view.id)).toMatchObject({ status: 'CONTINGENCY', numero: '2', currentAttemptNo: 2 });
+    expect(payloadDe(view.id, 2).infNFe.ide).toMatchObject({ tpEmis: 9, nNF: 2 });
+    expect(cont.estados.get('homologacao')).toMatchObject({ ativa: true, origem: 'AUTO' });
+    expect(cont.orfas).toEqual([expect.objectContaining({ documentId: view.id, numero: 1n, chave, status: 'PENDING' })]);
+
+    expect(await lifecycle.pollPendingOnce(FUTURO())).toMatchObject({ total: 0 }); // uma vez só: a nota saiu da fila do poll
+    expect(cont.orfas).toHaveLength(1);
+  }, 30_000);
+
+  it('F-AL-6 (consulta falhando): a consulta que volta a responder zera a âncora — os 5 min recomeçam na próxima falha', async () => {
+    const view = await timeoutNaTransmissao();
+    sefaz.autorizadas.clear();
+    sefaz.controle.foraDoAr = true;
+    await lifecycle.pollPendingOnce(FUTURO()); // t0: âncora
+    expect(resultadoDaTentativa(view.id).consultaFalhandoDesde).toBeDefined();
+
+    avancar(3 * MIN);
+    sefaz.controle.foraDoAr = false; // a SEFAZ volta e diz 217 (1ª): a consulta respondeu
+    await lifecycle.pollPendingOnce(FUTURO());
+    expect((await emission.getById(SCOPE, view.id)).status).toBe('PROCESSING');
+    expect(resultadoDaTentativa(view.id)).toMatchObject({ naoConsta: 1 });
+    expect(resultadoDaTentativa(view.id).consultaFalhandoDesde).toBeUndefined();
+
+    avancar(1 * MIN); // t0 + 4 min: cai de novo — a âncora nova nasce aqui
+    sefaz.controle.foraDoAr = true;
+    await lifecycle.pollPendingOnce(FUTURO());
+    avancar(4 * MIN); // t0 + 8 min: 8 min desde a 1ª âncora, mas só 4 desde a nova
+    expect(await lifecycle.pollPendingOnce(FUTURO())).toMatchObject({ failed: 1, updated: 0 });
+    expect((await emission.getById(SCOPE, view.id)).status).toBe('PROCESSING');
+    expect(cont.estados.size).toBe(0);
+
+    avancar(90_000); // 5,5 min desde a âncora nova
+    expect(await lifecycle.pollPendingOnce(FUTURO())).toMatchObject({ updated: 1 });
+    expect((await emission.getById(SCOPE, view.id)).status).toBe('CONTINGENCY');
+  }, 30_000);
+
+  it('F-AL-6 (consulta falhando): erro que não é de comunicação com a SEFAZ (assinador, código) não conta — nem âncora nem contingência', async () => {
+    const view = await timeoutNaTransmissao();
+    const consultar = jest.spyOn(emissor, 'consultar').mockRejectedValue(new Error('dfe_assinador_sem_dispositivo: sem caixa'));
+    try {
+      await lifecycle.pollPendingOnce(FUTURO());
+      avancar(10 * MIN);
+      expect(await lifecycle.pollPendingOnce(FUTURO())).toMatchObject({ failed: 1, updated: 0 });
+    } finally {
+      consultar.mockRestore();
+    }
+    expect((await emission.getById(SCOPE, view.id)).status).toBe('SENT');
+    expect(resultadoDaTentativa(view.id).consultaFalhandoDesde).toBeUndefined();
+    expect(cont.estados.size).toBe(0);
+  }, 30_000);
+
   it('defeito (decisão 6): a órfã é consultada pelo assinador local da unidade — o transporte do boot (sem dispositivo) não pode barrar o 110112', async () => {
     const [view] = await emitirComNormalJaNaSefaz();
     expect(view.status).toBe('CONTINGENCY');

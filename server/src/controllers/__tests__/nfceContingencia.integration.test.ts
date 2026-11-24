@@ -3,8 +3,19 @@
  * off-line da NFC-e por unidade e ambiente e o repositório Prisma real (estado e nota normal órfã): uma linha por
  * (unidade, ambiente), audit da allowlist sem o xJust, a saída AUTO que não derruba a MANUAL e tenancy.
  */
+// A seleção do adaptador é a única dublê: a SEFAZ "calada" é o `consultar` da porta. O banco (SQLite), os repositórios, a numeração,
+// a transação da contingência, a órfã e o audit são os reais — é o que o repositório em memória do teste unitário não prova.
+const mockPorta = { current: null as unknown };
+jest.mock('@/features/accounting/dfe/resolveEmissor', () => ({ __esModule: true, resolveEmissorFor: () => mockPorta.current }));
+jest.mock('@/features/accounting/dfe/selectDfeEmissor', () => ({ __esModule: true, selectDfeEmissor: () => ({ enabled: true, port: mockPorta.current, ambiente: 'homologacao' }) }));
+
 import request from 'supertest';
 import prisma from '@/lib/prisma';
+import { getFactory } from '@/lib/factory';
+import { SefazTransporteError } from '@/features/accounting/dfe/sefaz/SefazSoapClient';
+import { CONSULTA_FALHANDO_ATE_CONTINGENCIA_MS } from '@/features/accounting/services/FiscalDocumentLifecycleService';
+import { inputNfce } from '@/features/accounting/models/__tests__/nfeMontagem.fixture';
+import { montarNfe, numerarNfe } from '@/features/accounting/models/nfeMontagem';
 import { NfceContingenciaViewSchema } from '@/features/accounting/dtos/NfceContingenciaDto';
 import { NfceContingenciaRepository } from '@/features/accounting/repositories/NfceContingenciaRepository';
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
@@ -105,6 +116,106 @@ describe('X10a PR-9 — contingência off-line da NFC-e por unidade', () => {
     await new Promise((r) => setTimeout(r, 15));
     await repo.updateOrfa(a.id, { tentativas: 1 }); // o job tocou a que espera
     expect((await repo.listOrfasPendentes(futuro, 1)).map((o) => o.id)).toEqual([b.id]);
+  });
+
+  // F-AL-6 (dono, 2026-11-24) em SQLite real: a SEFAZ calada ⇒ a consulta do poll falha por comunicação; depois de 5 min contingencia.
+  describe('F-AL-6 — consulta da NFC-e normal que a SEFAZ não responde (SQLite real; só a porta é dublê)', () => {
+    const consultar = jest.fn();
+    let n = 800;
+    const soData = () =>
+      jest.useFakeTimers({
+        doNotFake: ['hrtime', 'nextTick', 'performance', 'queueMicrotask', 'requestAnimationFrame', 'cancelAnimationFrame', 'requestIdleCallback', 'cancelIdleCallback', 'setImmediate', 'clearImmediate', 'setInterval', 'clearInterval', 'setTimeout', 'clearTimeout'],
+      });
+    const avancar = (ms: number) => jest.setSystemTime(new Date(Date.now() + ms));
+
+    beforeEach(() => {
+      consultar.mockReset();
+      mockPorta.current = { name: 'sefaz', capabilities: { consultar: true, contingenciaOffline: true, assinaturaRemota: false, resultadoSincrono: false }, consultar };
+    });
+    afterEach(() => jest.useRealTimers());
+
+    /** Uma NFC-e normal (tpEmis 1) já `SENT` no banco — o estado depois do timeout do envio. */
+    async function notaEnviada() {
+      const scope = resolveAccountingScopeInternal({ userId: dono.id }, unitId);
+      n += 1;
+      const payload = numerarNfe(montarNfe(inputNfce({ ambiente: 'homologacao' })), n, String(48151623 + n));
+      const doc = await getFactory().getFiscalDocumentRepository().createSent(scope, {
+        kind: 'NFCE',
+        saleId: `sale-${n}`,
+        cTribNac: '',
+        anchorEntryId: `entry-${n}`,
+        ambiente: 'homologacao',
+        partner: 'sefaz',
+        serie: payload.infNFe.ide.serie,
+        numero: BigInt(payload.infNFe.ide.nNF),
+        dCompet: '2026-11-24',
+        vServCents: 6000n,
+        tpRetISSQN: 1,
+        payloadJson: JSON.stringify(payload),
+      });
+      return { scope, doc, chave: payload.infNFe.Id.slice(3) };
+    }
+    const poll = () => getFactory().getFiscalDocumentLifecycleService().pollPendingOnce(new Date(Date.now() + 60_000));
+    const attemptsDe = (id: string) => prisma.fiscalDocumentAttempt.findMany({ where: { documentId: id }, orderBy: { attemptNo: 'asc' } });
+    const statusDe = async (id: string) => (await prisma.fiscalDocument.findUniqueOrThrow({ where: { id } })).status;
+
+    it('consulta falhando < 5 min não contingencia; ≥ 5 min contingencia UMA vez — AUTO ligado, número novo da sequência, normal órfã, audit', async () => {
+      const { doc, chave } = await notaEnviada();
+      consultar.mockRejectedValue(new SefazTransporteError('sefaz_timeout', 'resposta'));
+      soData();
+      expect(await poll()).toMatchObject({ failed: 1, updated: 0 });
+      const ancora = JSON.parse((await attemptsDe(doc.id))[0].resultJson!).consultaFalhandoDesde as string;
+      expect(Date.parse(ancora)).toBe(Date.now()); // a âncora ficou na tentativa (não em updatedAt)
+      avancar(CONSULTA_FALHANDO_ATE_CONTINGENCIA_MS - 1_000);
+      expect(await poll()).toMatchObject({ failed: 1, updated: 0 });
+      expect(await statusDe(doc.id)).toBe('SENT');
+      expect(await prisma.nfceContingencia.count({ where: { userId: dono.id, ambiente: 'homologacao', ativa: true } })).toBe(0);
+
+      avancar(2_000); // passou dos 5 min desde a 1ª falha
+      expect(await poll()).toMatchObject({ failed: 0, updated: 1 });
+      const depois = await prisma.fiscalDocument.findUniqueOrThrow({ where: { id: doc.id } });
+      expect(depois).toMatchObject({ status: 'CONTINGENCY', currentAttemptNo: 2 });
+      expect(depois.numero).not.toBe(doc.numero); // número novo da sequência (Anexo IV p. 8)
+      const tentativas = await attemptsDe(doc.id);
+      expect(tentativas).toHaveLength(2);
+      expect(JSON.parse(tentativas[1].payloadJson).infNFe.ide).toMatchObject({ tpEmis: 9 });
+      expect(await prisma.nfceContingencia.findFirst({ where: { userId: dono.id, ambiente: 'homologacao' } })).toMatchObject({ ativa: true, origem: 'AUTO' });
+      expect(await prisma.nfceContingenciaOrfa.findMany({ where: { documentId: doc.id } })).toEqual([expect.objectContaining({ status: 'PENDING', chave })]);
+      expect(await prisma.auditEvent.count({ where: { eventType: 'dfe.contingency_entered' } })).toBeGreaterThanOrEqual(1);
+
+      expect(await poll()).toMatchObject({ updated: 0 }); // uma vez só: a nota saiu do poll
+      expect(await prisma.nfceContingenciaOrfa.count({ where: { documentId: doc.id } })).toBe(1);
+    });
+
+    it('217 duas vezes (PROCESSING no banco) contingencia pelo mesmo handler; autorizada na consulta não contingencia', async () => {
+      const a = await notaEnviada();
+      consultar.mockResolvedValue({ status: 'PROCESSING', partnerRef: a.chave, errors: [{ code: '217', message: 'NF-e nao consta na base de dados da SEFAZ' }] });
+      soData();
+      await poll();
+      expect(await statusDe(a.doc.id)).toBe('PROCESSING');
+      avancar(121_000);
+      await poll();
+      expect(await prisma.fiscalDocument.findUniqueOrThrow({ where: { id: a.doc.id } })).toMatchObject({ status: 'CONTINGENCY', currentAttemptNo: 2 });
+      expect(await prisma.nfceContingenciaOrfa.count({ where: { documentId: a.doc.id, chave: a.chave } })).toBe(1);
+
+      const b = await notaEnviada();
+      consultar.mockReset();
+      consultar.mockResolvedValue({ status: 'AUTHORIZED', partnerRef: b.chave, chaveOuCodigo: b.chave, numero: String(b.doc.numero), errors: [] });
+      await poll();
+      expect(await prisma.fiscalDocument.findUniqueOrThrow({ where: { id: b.doc.id } })).toMatchObject({ status: 'AUTHORIZED', currentAttemptNo: 1 });
+      expect(await prisma.nfceContingenciaOrfa.count({ where: { documentId: b.doc.id } })).toBe(0);
+    });
+
+    it('consulta falhando por erro que não é de comunicação (assinador/código) não ancora nem contingencia', async () => {
+      const { doc } = await notaEnviada();
+      consultar.mockRejectedValue(new Error('dfe_assinador_sem_dispositivo: sem caixa'));
+      soData();
+      await poll();
+      avancar(10 * 60_000);
+      expect(await poll()).toMatchObject({ failed: 1, updated: 0 });
+      expect((await attemptsDe(doc.id))[0].resultJson).toBeNull();
+      expect(await statusDe(doc.id)).toBe('SENT');
+    });
   });
 
   it('tenancy: outro usuário não lê nem liga a contingência desta unidade', async () => {
