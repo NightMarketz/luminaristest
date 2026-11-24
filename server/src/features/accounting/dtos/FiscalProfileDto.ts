@@ -1,6 +1,4 @@
 import { z } from 'zod';
-import { isLc116Codigo, listaLc116DoCache } from '../models/lc116ListaNacional';
-import { issAliquotaMaxBpDoCache } from '../models/issLimite';
 import { ISS_EXTINTO_MENSAGEM, issExtinto } from '../models/issTransicao';
 import { hojeDateOnly } from '../../legalParameters/models/hoje';
 
@@ -118,7 +116,8 @@ const FiscalProfileFields = z
     regEspTrib: z.number().int().min(0).max(9).default(0),
     regApTribSN: z.number().int().min(1).max(3).nullable().optional(),
     // BE-INCR-DFE — D1f configurável (5a–5f), defaults = recomendação do ADR
-    // BE-INCR-LEGAL-PARAMS PR-2 (item 22; L-8): o máximo vem da tabela ISS_LIMITE (cache síncrono). D-4 (mínimo de 2%)
+    // BE-INCR-LEGAL-PARAMS PR-2 (item 22): o máximo vem da tabela ISS_LIMITE — conferido no FiscalProfileService.validate
+    // (MODULE-BOUNDARIES PR-1a (`L6`; dono, questionário, 24/11: "Vai para o service", revoga a L-8 do BE-INCR-LEGAL-PARAMS)). D-4 (mínimo de 2%)
     // é pendência de contador — não corrigida. ISS-TRANSICAO-IBS PR-1 (item 4; F-ISS-5 a): de 01/01/2033 em diante a
     // ISS_LIMITE não tem linha (LC 214 art. 543 IV) — valor não nulo ⇒ 400 nomeado, antes de ler o máximo; null passa.
     issAliquotaBp: z
@@ -128,7 +127,6 @@ const FiscalProfileFields = z
       .superRefine((v, ctx) => {
         const hoje = hojeDateOnly();
         if (issExtinto(hoje)) ctx.addIssue({ code: 'custom', message: ISS_EXTINTO_MENSAGEM });
-        else if (v > issAliquotaMaxBpDoCache(hoje)) ctx.addIssue({ code: 'custom', message: 'issAliquotaBp acima do máximo da tabela ISS_LIMITE (pAliq [312]; RN E0595)' });
       })
       .nullable()
       .optional(),
@@ -136,11 +134,11 @@ const FiscalProfileFields = z
     pacoteFatoGerador: z.enum(PACOTE_FATO_GERADOR).default('CONSUMO'),
     // BE-INCR-PACOTE-VALIDADE 13a (F-PV-9b a): o código do PACOTE para a NFS-e (pacote VENDA e saldo vencido em
     // CONSUMO) — validado como o ServiceFiscalProfile: cTribNac [195] 6 dígitos na lista nacional, cNBS [198] 9.
-    // Do contador (PE-4): sem ele a nota do pacote não sai (pendência nomeada).
+    // Do contador (PE-4): sem ele a nota do pacote não sai (pendência nomeada). A lista nacional é conferida no
+    // FiscalProfileService.validate (MODULE-BOUNDARIES PR-1a (`L6`; dono, questionário, 24/11: "Vai para o service", revoga a L-8 do BE-INCR-LEGAL-PARAMS)).
     pacoteCTribNac: z
       .string()
       .regex(/^\d{6}$/)
-      .refine((c) => isLc116Codigo(c, listaLc116DoCache()), 'pacoteCTribNac fora da lista nacional de serviços (Anexo I MUN.INCID_INFO.SERV.)')
       .nullable()
       .optional(),
     pacoteCNBS: z.string().regex(/^\d{9}$/).nullable().optional(),

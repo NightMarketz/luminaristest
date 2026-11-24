@@ -18,24 +18,6 @@
     }
   },
   {
-    "type": "dependency",
-    "from": "src/features/accounting/models/issLimite.ts",
-    "to": "src/features/legalParameters/services/legalParameterCache.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L6-model-dto-are-leaves"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/accounting/models/lc116ListaNacional.ts",
-    "to": "src/features/legalParameters/services/legalParameterCache.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L6-model-dto-are-leaves"
-    }
-  },
-  {
     "type": "cycle",
     "from": "src/features/accounting/services/IInventoryService.ts",
     "to": "src/features/accounting/services/InventoryService.ts",
