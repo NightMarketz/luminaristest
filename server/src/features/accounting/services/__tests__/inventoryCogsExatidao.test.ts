@@ -26,7 +26,7 @@ function servicoCom(item: Pick<InventoryItem, 'qtyOnHand' | 'totalValueCents'>) 
   const policy = { canManageInventory: () => true } as never;
   return { service: new InventoryService(repo, {} as never, {} as never, {} as never, policy), baixas };
 }
-const baixar = (s: InventoryService, qty: number) => s.recordSaleCogs(scope, { saleId: 'v1', occurredAt: new Date('2026-11-10T12:00:00Z'), lines: [{ productRef: 'p1', qty }] });
+const baixar = (s: InventoryService, qty: number) => s.recordSaleCogs(scope, { saleId: 'v1', unitId: 'unit-1', occurredAt: new Date('2026-11-10T12:00:00Z'), lines: [{ productRef: 'p1', qty }] });
 
 describe('recordSaleCogs — quantidade fracionária é recusada (qtyOnHand é Int)', () => {
   it.each([0.333, 2.5, 1 / 3, -1, 0])('qty %p ⇒ ValidationError "A quantidade deve ser um inteiro positivo."', async (qty) => {
@@ -51,12 +51,24 @@ describe('recordSaleCogs — CMV pelo custo médio, meio-para-cima', () => {
     expect(baixas).toEqual([{ qty, valueDelta: Number(esperado) }]);
   });
 
-  it('total × qty acima de 2^53 (R$ 21,4 mi × 5.000.001 un.): igual ao oráculo BigInt', async () => {
+  it('total × qty acima de 2^53 (R$ 21,4 mi × 5.000.001 un.): igual ao oráculo BigInt (controle: o float antigo também acerta aqui)', async () => {
     const total = 2_147_483_647n;
     const qty = 5_000_001;
     const onHand = 10_000_002; // meio exato: 1.073.741.823,5
     expect(Number(total) * qty).toBeGreaterThan(Number.MAX_SAFE_INTEGER);
     const { service } = servicoCom({ qtyOnHand: onHand, totalValueCents: total });
     expect((await baixar(service, qty)).totalCogsCents).toBe(Number(meioParaCima(total * BigInt(qty), BigInt(onHand))));
+  });
+
+  it('contraexemplo que o float erra: 2146733094 × 3465662 ÷ 4931083 = 1508766189 exato (Math.round de float dava 1508766190)', async () => {
+    const total = 2_146_733_094n;
+    const qty = 3_465_662;
+    const onHand = 4_931_083;
+    // Prova que o caso morde: o código antigo (`Math.round((total * qty) / onHand)` em float) diverge do oráculo.
+    expect(Math.round((Number(total) * qty) / onHand)).toBe(1_508_766_190);
+    expect(meioParaCima(total * BigInt(qty), BigInt(onHand))).toBe(1_508_766_189n);
+    const { service, baixas } = servicoCom({ qtyOnHand: onHand, totalValueCents: total });
+    expect((await baixar(service, qty)).totalCogsCents).toBe(1_508_766_189);
+    expect(baixas).toEqual([{ qty, valueDelta: 1_508_766_189 }]);
   });
 });
