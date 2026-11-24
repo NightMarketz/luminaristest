@@ -1,4 +1,5 @@
 import { centsFromReais } from '../../features/accountingBinding/interpreter/money';
+import { ValidationError } from '../errors';
 import { reaisToCents } from '../saleLine';
 
 /**
@@ -43,8 +44,13 @@ const TABELA: ReadonlyArray<readonly [string, number, number, number]> = [
 ];
 
 describe('CENTAVOS-EXATOS PR-0 — o oráculo confere a si mesmo', () => {
-  it.each(TABELA)('oráculo(%s) = %i', (_nome, x, esperadoOraculo) => {
+  it.each(TABELA)('oráculo(%s) bate com a tabela do BRIEF', (_nome, x, esperadoOraculo) => {
     expect(oraculoCentavos(x)).toBe(BigInt(esperadoOraculo));
+  });
+
+  it('notação científica nos dois sentidos: 1e21 reais = 10^23 centavos; -1e-7 vira 0', () => {
+    expect(oraculoCentavos(1e21)).toBe(10n ** 23n);
+    expect(oraculoCentavos(-1e-7)).toBe(0n);
   });
 
   it('negativo: o meio afasta de zero (F-CE-6 a) — o legado (Math.round) iria para +∞', () => {
@@ -68,17 +74,23 @@ describe('CENTAVOS-EXATOS PR-0 — caracterização do legado (o que os converso
     expect(centsFromReais(x, 'ctx')).toBe(legado);
   });
 
-  it('os dois conversores vivos (A1 e A2) dão o MESMO número hoje para toda a tabela positiva', () => {
-    for (const [, x, , legado] of TABELA) {
-      if (legado <= 0) continue;
-      expect(reaisToCents(x)).toBe(centsFromReais(x, 'ctx'));
+  it('a borda A2 recusa o que dá 0 centavo (1e-7) e o negativo; A1 (sem a guarda de > 0) devolve o legado', () => {
+    expect(() => centsFromReais(1e-7, 'ctx')).toThrow(ValidationError);
+    expect(() => centsFromReais(-1.005, 'ctx')).toThrow(ValidationError);
+    expect(reaisToCents(-1.005)).toBe(-100); // Math.round: o meio de um negativo vai para +∞ (o F-CE-6 muda isto no PR-3)
+  });
+
+  it('o legado dos varridos abaixo é o do conversor vivo A1, não só a fórmula: reaisToCents(x) == Math.round(x*100) na faixa', () => {
+    for (let k = 5; k < 100_000; k += 10) {
+      const x = Number((k / 1000).toFixed(3));
+      expect(reaisToCents(x)).toBe(Math.round(x * 100));
     }
   });
 });
 
 describe('CENTAVOS-EXATOS PR-0 — o conjunto exato de divergências legado × oráculo (o PR-3 muda isto de propósito)', () => {
   it('na tabela, divergem exatamente 1.005, 0.285 e 8.665', () => {
-    const divergentes = TABELA.filter(([, x]) => BigInt(Math.round(x * 100)) !== oraculoCentavos(x)).map(([nome]) => nome);
+    const divergentes = TABELA.filter(([, x]) => BigInt(reaisToCents(x)) !== oraculoCentavos(x)).map(([nome]) => nome);
     expect(divergentes).toEqual(['1.005', '0.285', '8.665']);
   });
 
@@ -88,7 +100,7 @@ describe('CENTAVOS-EXATOS PR-0 — o conjunto exato de divergências legado × o
     for (let k = 5; k < 100_000; k += 10) {
       const x = Number((k / 1000).toFixed(3));
       total += 1;
-      if (BigInt(Math.round(x * 100)) !== oraculoCentavos(x)) divergem += 1;
+      if (BigInt(reaisToCents(x)) !== oraculoCentavos(x)) divergem += 1;
     }
     expect(total).toBe(10_000);
     expect(divergem).toBe(572);
@@ -98,12 +110,12 @@ describe('CENTAVOS-EXATOS PR-0 — o conjunto exato de divergências legado × o
     const diferentes: number[] = [];
     for (let k = 1; k <= 200_000; k += 1) {
       const x = k / 100;
-      if (BigInt(Math.round(x * 100)) !== oraculoCentavos(x)) diferentes.push(k);
+      if (BigInt(reaisToCents(x)) !== oraculoCentavos(x)) diferentes.push(k);
     }
     expect(diferentes).toEqual([]);
   });
 
-  it('valor CALCULADO em float que traz o erro no texto (o "86,655" do teste do #1360) dá 8665 nos dois — só aritmética decimal na origem o muda', () => {
+  it('valor CALCULADO em float que traz o erro no texto (o "86,655" do teste do #1360) dá 8665 nos dois', () => {
     const calculado = 0.333 * 10 + 2.5 * 33.33;
     expect(String(calculado)).toBe('86.65499999999999');
     expect(Math.round(calculado * 100)).toBe(8665);
