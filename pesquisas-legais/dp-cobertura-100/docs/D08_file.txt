@@ -1,0 +1,1689 @@
+EFD-Reinf
+Manual de Orientação do Desenvolvedor
+Versão 2.8
+Agosto de 2026
+Histórico de Versões
+Data Versão Descrição
+13/06/2018 1.3.03
+ - inclusão URL para os dois ambientes em a) Dados para a chamada ao Webservice de 
+Envio de Lote de Eventos
+ - inclusão do item Recuperação do RECIBO DE ENTREGA do evento.
+ - inclusão do item Retorno dos eventos totalizadores
+ - alterado item Dados para a chamada ao Webservice de Consulta Evento de 
+Fechamento.
+ - inclusão do item b.2) consulta do evento de fechamento (R-2099)
+ - inclusão do item Comportamento sistêmico para controle do ID dos eventos
+ - alteração de descrição em campo  tpAmb, tag  ideEvento
+ - inclusão de orientação de URL dos dois ambientes em item URL dos Web Services
+ - inclusão do item  Visão Global
+20/11/2018 1.04.00  - Inclusão dos itens ‘WebService de Consulta de Recibo de Entrega do Evento’ (R-
+1000,R-1070,R-2010,R-2020,R-2030,R-2040,R-2050,R-2060,R-2098,R-2099,R-3010)
+19/04/2021 1.05.01
+- Alteração da versão dos schemas para 1.05.01;
+- Alteração do Item Alteração no nome do serviço de consulta ao R-5011
+- Alteração do Item Alteração nos nomes dos parâmetros utilizados para a chamada ao  
+serviço de consulta ao R-5011
+- Inclusão no Item Identificação da Escrituração enviada para a DCTF
+- Inclusão do item WebService de Consulta a Recibo de Entrega do Evento R-2055
+24/10/2022 2.0
+ - Geração da versão unificada do manual anterior (transmissão síncrona) com as novas 
+informações para transmissão assíncrona (especialmente da família 4000)
+ - Adicionados itens relacionados a transmissão de lotes no modelo assíncrono.
+ - Simplificação dos itens e melhorias diversas na redação.
+03/02/2023 2.1
+- Atualização itens 5.4 e 7.2 relativos aos retornos HTTP esperados nas novas APIs do 
+modelo assíncrono.
+- Atualização item “9.Consulta Recibo Evento”, adicionando a nova API REST para 
+consultas dos recibo de entrega dos eventos.
+08/02/2023 2.2 - Atualização item “9.2”, para os novos endpoints de consulta a recibo de eventos da 
+série R-4000
+01/08/2023 2.3
+- Atualização item “3.6”, relativo a assinatura digital para certificados de raiz ICP Brasil 
+V10
+- Atualização URLs produção das APIs de envio e consulta do modelo assíncrono.
+- Atualização dos principais códigos de retorno HTTP e seu significado para as novas 
+APIs do modelo assíncrono.
+27/12/2023 2.4
+- Atualização de informações sobre o protocolo TLS 1.2 e cifras criptográficas (item 
+3.4.1)
+- Ajuste na orientação para tratamento dos erros HTTP 500
+14/05/2024 2.5 - Atualização de url para consulta de recibos para produção
+26/02/2025 2.6
+- Limitação da quantidade de eventos possíveis de serem recebidos com sucesso no 
+ambiente de Produção Restrita, e tempo de guarda dos dados neste ambiente (itens 11.2 e 
+11.3).
+2
+01/10/2025 2.7
+- Remoção do capítulo 4 “Envio de Lote - modelo síncrono”
+- Remoção do capítulo 6 “Envio de Lote – Convívio dos modelos síncrono e assíncrono”
+- Remoção do capítulo 8 “Consulta Resultado Processamento Evento R-2099 recebido 
+em Lote modelo Síncrono”
+- Remoção da seção 9.1 “WebService SOAP para Consulta a Recibo de Entrega de 
+Evento”
+- Alteração de trechos referentes a remoção do envio e consulta de eventos e lotes via 
+modelo síncrono.
+25/08/2026 2.8 - Adequações para utilização de CNPJ alfanumérico
+3
+Índice
+1. INTRODUÇÃO.................................................................................................................................. .5
+1.1. VISÃO GERAL............................................................................................................................... .5
+2. LOTES E EVENTOS...........................................................................................................................5
+2.1. LOTES DE EVENTOS...................................................................................................................... .5
+2.2. NÍVEIS DE VALIDAÇÃO..................................................................................................................5
+2.3. RECIBO E PROTOCOLO DE RECEBIMENTO DOS EVENTOS..............................................................6
+2.4. VERSIONAMENTO DOS LEIAUTES DOS EVENTOS........................................................................... .6
+2.5. EVENTOS........................................................................................................................................7
+2.6. VALIDAÇÕES................................................................................................................................10
+3. PADRÕES TÉCNICOS.................................................................................................................... .14
+3.1. PADRÃO DE DOCUMENTO XML...................................................................................................14
+3.2. DECLARAÇÃO NAMESPACE......................................................................................................... .14
+3.3. SCHEMAS XSD........................................................................................................................... .15
+3.4. PADRÃO DE COMUNICAÇÃO....................................................................................................... .15
+3.5. PADRÃO DE CERTIFICADO DIGITAL.............................................................................................17
+3.6. ASSINATURA DIGITAL................................................................................................................ .18
+3.7. PADRÃO DE ASSINATURA DIGITAL..............................................................................................19
+4. ENVIO DE LOTE – MODELO ASSÍNCRONO............................................................................. .20
+4.1. API ENVIO LOTE MODELO ASSÍNCRONO..................................................................................... .20
+4.2. PROTOCOLO DE RECEBIMENTO DO LOTE ASSÍNCRONO............................................................. .21
+4.3. NAMESPACE DE ENVIO DE LOTE ASSÍNCRONO............................................................................21
+4.4. PROCESSO DE ENVIO E RECEPÇÃO LOTE ASSÍNCRONO...............................................................21
+5. CONSULTA LOTE.......................................................................................................................... .22
+5.1. API CONSULTA LOTE MODELO ASSÍNCRONO...............................................................................22
+5.2. PROCESSO DE CONSULTA DE UM LOTE ASSÍNCRONO...................................................................22
+5.3. USO ABUSIVO / RATE LIMITING....................................................................................................23
+6. CONSULTA RECIBO EVENTO......................................................................................................24
+6.1. API REST PARA CONSULTA A RECIBO DE ENTREGA DE EVENTO..............................................24
+7. RECOMENDAÇÕES E BOAS PRÁTICAS.....................................................................................43
+7.1. RESPEITAR A ORDEM DE PRECEDÊNCIA NO ENVIO DOS EVENTOS EM LOTES...............................43
+7.2. ENVIO DE EVENTOS DE FECHAMENTO........................................................................................ .43
+7.3. EVITAR O ENVIO DE EVENTOS DURANTE O PROCESSAMENTO DO EVENTO DE FECHAMENTO......43
+7.4. OTIMIZAÇÃO NA MONTAGEM DO ARQUIVO................................................................................ .43
+7.5. VALIDAÇÃO DE SCHEMA............................................................................................................ .44
+7.6. COMPORTAMENTO SISTÊMICO PARA CONTROLE DO ID DOS EVENTOS........................................44
+8. SOBRE A PRODUÇÃO RESTRITA................................................................................................44
+8.1. RESTRIÇÕES................................................................................................................................ .45
+8.2. QUANTIDADE DE EVENTOS PERMITIDOS..................................................................................... .45
+8.3. TEMPO DE GUARDA DOS DADOS................................................................................................. .45
+8.4. REGRA PARA IDENTIFICAÇÃO DO AMBIENTE.............................................................................. .46
+8.5. LIMPAR BASE DE DADOS PARA O CONTRIBUINTE INFORMADO....................................................46
+4
+1. Introdução
+A EFD-Reinf foi instituída pela IN R FB nº 1701 de 14 de março de 2017, tendo em vista o  
+disposto no art. 16 da Lei n º 9.779, de 19 de janeiro de 1999, e no Decreto n º 6.022, de 22 de janeiro  
+de 2007.
+Este documento tem por objetivo definir critérios e especificações técnicas necessários para a  
+integração entre o Sistema dos empregadores, pessoas físicas e/ou jurídicas, e o Sistema EFD-REINF.
+1.1. Visão Geral
+A Escrituração Fiscal Digital de Retenções e Outras Informações Fiscais (EFD-Reinf) é uma  
+obrigação acessória que reúne diversas informações relativas a escriturações de retenções e outras  
+informações fiscais de interesse da Secretaria da Receita Federal do Brasil (RFB). A obrigação é  
+constituída por um conjunto de arquivos a serem entregues em leiautes específicos, por meio do  
+ambiente do Sistema Público de Escrituração Digital (Sped), utilizando certificado digital válido,  
+emitido por entidade credenciada pela Infraestrutura de Chaves Públicas Brasileira (ICP-Brasil) e será  
+considerada válida após a confirmação de recebimento e validação do conteúdo dos arquivos que a  
+contém.  Os  arquivos  deverão  estar  assinados  digitalmente  pelo  representante  legal  da  entidade 
+declarante ou procurador constituído nos termos da Instrução Normativa (IN) RFB nº 1701 de 14 de  
+março de 2017. Nos casos de procuração eletrônica, o declarante deverá habilitar poderes específicos  
+para esta obrigação acessória, no portal do e-CAC.
+2. Lotes e Eventos
+2.1. Lotes de Eventos
+Os  eventos  deverão  ser  transmitidos  para  o  Ambiente  Nacional  em  agrupamentos  
+denominados lote de eventos. O arquivo de lote é um XML, que contém os XML’s de eventos.
+2.2. Níveis de Validação
+Validação do lote
+Executada no momento da recepção, quando serão verificados, inicialmente, o certificado da  
+conexão, a estrutura e versão do lote. Caso ocorra erro na validação do lote este não será  
+recebido, o lote será recusado e nenhuma validação de evento realizada.
+Validação dos eventos do lote
+Para  transmissão  no  modelo  assíncrono,  os  lotes  são  recepcionados  e  os  eventos  são 
+processados em um segundo momento. O resultado do processamento dos eventos é realizado  
+através de um serviço de consulta de resultado do processamento dos lotes.
+5
+Validação de estrutura (schema xsd)
+A EFD-Reinf valida primeiro a estrutura de acordo com o tipo de lote/tipo de evento. Caso  
+ocorra erro na validação de estrutura, o XML não será recebido e não serão realizadas as  
+demais validações.
+Validação de conteúdo
+É a validações dos valores informados no evento. Caso seja detectada alguma inconsistência, o  
+evento não será recebido. 
+2.3. Recibo e Protocolo de Recebimento dos Eventos
+Lote no modelo assíncrono: A EFD-REINF retornará um protocolo de recebimento do lote.  
+Posteriormente deverá ser consultado o resultado do processamento do lote através do número do  
+protocolo. O sistema retornará um XML contendo os erros de validação e/ou recibos de entrega dos  
+eventos contidos no lote enviado.
+2.4. Versionamento dos leiautes dos eventos
+O versionamento dos leiautes dos eventos será por tipo de evento. Assim, a alteração do  
+leiaute de um determinado tipo de evento não afeta a versão dos demais tipos de eventos.
+Os leiautes válidos em um determinado período serão empacotados e distribuídos através dos  
+“Pacotes de liberação”. Cada pacote de liberação tem os leiautes dos tipos de eventos suportados pela  
+EFD-REINF com as suas respectivas versões.
+Seguem abaixo os princípios que serão considerados no versionamento dos leiautes:
+ O leiaute do tipo de evento compreende apenas a sua estrutura. Assim um mesmo leiaute  
+pode ter diferente conjunto de regras e valores válidos durante o seu período de vigência.  
+A alteração dos valores válidos ou do conjunto de regras de um leiaute, sem alteração de  
+sua estrutura, será realizada através da atualização desse manual, ou seja, não haverá  
+alteração da versão do leiaute.
+ Para cada tipo de evento haverá apenas uma versão de leiaute vigente em um determinado  
+período.
+ Cada XSD é identificado por um único  namespace e cada XSD representa apenas um  
+leiaute.
+ O Sistema EFD-REINF identificará o tipo e a versão do leiaute do evento através do  
+namespace do XML do evento.
+ Padrão de identificação da versão de Leiaute será X.Y.Z e do Schema XML - XSD X_Y_Z
+Onde:
+X -> utilizado para representar mudanças muito significativas (Reestruturação do evento)
+Y -> utilizado para representar mudanças estruturais comuns (Inclusão/exclusão de campos,  
+alteração de tipo ou formato do conteúdo de campo, dentre outras).
+Z -> utilizados para corrigir erros em XSD publicados e, possivelmente, já utilizados. Neste  
+caso haverá uma substituição do “Pacote de liberação” do referido período.
+6
+Observação:  A necessidade de alteração da versão do leiaute de um determinado tipo de  
+evento, sem a alteração da sua estrutura, o que representa uma exceção, implicará a criação de um  
+novo XSD. Assim, não haverá nenhuma modificação estrutural no XSD, apenas o namespace será  
+modificado para acompanhar a nova versão do leiaute. 
+2.5. Eventos
+As informações relativas à elaboração dos documentos XML contendo o evento e o retorno do  
+processamento estão detalhados abaixo:
+Estrutura do evento
+Cada evento tem sua própria estrutura, obedecendo ao leiaute estabelecido nesse manual. A  
+verificação  da  estrutura  dos  eventos  será  realizada  através  de  XSD  (Xml  Schema  Definition), 
+conforme seus respectivos leiautes.
+Cada XSD que representa um leiaute tem o seu próprio namespace. 
+Exemplo: http://www.reinf.esocial.gov.br/schemas/evtInfoContribuinte/v1_05_01
+http://www.reinf.esocial.gov.br/schemas/ Estabelece que o XSD é de um evento da EFD-REINF.
+evtInfoContribuinte Identificação do tipo do evento.
+v1_05_01 Identificação da versão do XSD e do Leiaute.
+A imagem abaixo ilustra a estrutura básica de um evento:
+ 
+7
+tag: REINF
+descrição: Tag raiz do documento da EFD-REINF
+obrigatório? Sim
+ocorrência Única
+campo obrigatoriedade ocorrência valores válidos descrição
+xmlns obrigatório 1 Namespace Namespace do Xsd que representa o  
+leiaute do tipo do evento.
+tag: evtInfoContri
+descrição: Tag que identifica o tipo do evento (O nome dessa tag está presente também no 
+namespace do XSD da estrutura do evento).
+Em cada tipo de evento essa tag tem um nome específico.
+obrigatório? Sim
+ocorrência Única
+campo obrigatoriedade ocorrência valores válidos descrição
+Id obrigatório 1 - Identificação única do evento.
+tag: ideEvento
+descrição: Contém informações gerais do evento.
+obrigatório? Sim
+ocorrência Única
+campo obrigatoriedade ocorrência valores válidos descrição
+tpAmb obrigatório 1 1 – Produção;
+2 – Pré-produção
+Identificação do ambiente para o qual o 
+evento está sendo transmitido.
+OBSERVAÇÃO: Não basta informar 
+o código para encaminhar para o 
+ambiente desejado (produção / 
+produção restrita). É necessário 
+utilizar a URL correspondente ao 
+ambiente informado em tpAmb.
+8
+procEmi obrigatório 1 1 – Aplicativo do 
+contribuinte;
+2 – Aplicativo 
+governamental.
+Origem do documento.
+verProc obrigatório 1 - Versão do aplicativo emissor do evento.
+tag: ideContri
+descrição: Contém identificação e informações do contribuinte.
+obrigatório? Sim
+ocorrência Única
+campo obrigatoriedade ocorrência valores válidos descrição
+tpInsc obrigatório 1 1 – CNPJ;
+2 – CPF
+Contém  o  tipo  de  inscrição  do  
+contribuinte.
+nrInsc obrigatório 1 - Contém  o  número  de  inscrição  do  
+contribuinte.
+tag: infoContri
+descrição: Identificação da operação (inclusão, alteração ou exclusão) e das respectivas 
+informações do contribuinte.
+Em cada tipo de evento essa "tag" tem um nome específico.
+obrigatório? Sim
+ocorrência Única
+tag: Signature
+descrição: Contém a assinatura do evento.
+obrigatório? Obrigatório
+ocorrência Única
+Observações:
+O padrão de assinatura do evento está descrito no item “3.7. Padrão de Assinatura Digital”
+9
+Identificação do evento
+Cada evento da EFD-REINF possui uma identificação única, gerada pelo próprio declarante,  
+conforme o padrão abaixo:
+Campo 
+Fixo
+Parte Numérica
+ID Conforme regra de formação abaixo:
+T – Tipo de Inscrição do Contribuinte (1 - CNPJ; 2 - CPF);
+XXXXXXXXXXXXXX – Número do CNPJ ou CPF do empregador – Completar com 
+zeros;
+AAAAMMDD – Ano, mês e dia da geração do evento;
+HHMMSS – Hora, minuto e segundo da geração do evento;
+QQQQQ – Número sequencial da chave. Incrementar somente quando ocorrer geração de 
+eventos na mesma data/hora.
+2 posições 34 posições
+Exemplos: 
+ID1123456789012342024121913424900001  (36 posições)
+ID1A2CD567H0000002025010218431700099
+ID100000012EA56782025100113424900015
+ID2123456789010002026110219152700021
+2.6. Validações
+O objetivo desta seção é informar aos usuários algumas das validações que são realizadas nos 
+eventos.
+Validação do número do processo administrativo
+O número do processo informado no leiaute R1070 - Tabela de Processos 
+Administrativos/Judiciais deve ser um número de processo válido.
+Para número de processo administrativo, o número único atribuído ao processo, quando da sua 
+autuação, será constituído de quinze dígitos, devendo ainda, ser acrescido de mais dois dígitos de 
+verificação (DV). Com o acréscimo dos dígitos verificadores, o número atribuído ao processo será 
+composto por dezessete dígitos; separados em grupos (00000.000000/0000-00), conforme descrito 
+abaixo: 
+I – o primeiro grupo é constituído de cinco dígitos 
+II – o segundo grupo é constituído de seis dígitos, separado do primeiro por um ponto
+III – o terceiro grupo, constituído de quatro dígitos, separado do segundo grupo por uma barra – indica 
+o ano de formação do processo; e 
+10
+IV – o quarto grupo, constituído de dois dígitos, separado do terceiro grupo por "hífen", indica os 
+Dígitos Verificadores (DV)
+Metodologia para calcular os Dígitos Verificadores (DV) 
+Serão utilizados dois dígitos em acréscimo ao número único de processo - dígitos verificadores (DV), 
+definidos por módulo 11 (onze) e pesos correspondentes à posição dos dígitos, da direita para a 
+esquerda, em progressão aritmética de razão 1 (um), com o primeiro termo igual a 2 (dois). O último 
+termo, consequentemente, será igual a 16 (dezesseis). 
+Cálculo do 1º Dígito Verificador (DV): 
+I – multiplica-se cada um dos quinze algarismos do número único de processo pelo respectivo peso, 
+somando os produtos parciais; 
+II – a soma encontrada (ponderada) será dividida por 11 (onze); e 
+III – com relação ao resto da divisão por 11, que poderá ser de l0 (dez) a 0 (zero), a tabela a seguir 
+conduzirá ao dígito procurado: 
+[NL]MÓD (menos) RESTO[NL]------------> DV 
+[NL]11[NL][NL]11[NL][NL]11[NL][NL]11[NL][NL]11[NL][NL]11
+[NL]10[NL][NL]9[NL][NL]8[NL][NL]7[NL][NL]6[NL][NL]5
+1[NL][NL]2[NL][NL]3[NL][NL]4[NL][NL]5[NL][NL]6[NL]
+Cálculo do 2º Dígito Verificador (DV): 
+O primeiro algarismo, obtido na etapa precedente, será colocado imediatamente à direita do número 
+único de processo, utilizando-se o mesmo procedimento do 1º Dígito Verificador, com a diferença de 
+que os pesos, sempre da direita para a esquerda, partirão de 2 (dois) - 1º termo da progressão - 
+finalizando em 17 (dezessete), último termo da progressão aritmética. 
+1º Exemplo: 
+Dado o número único de processo 35041.000387/2000, os dígitos verificadores serão calculados do 
+seguinte modo: 
+a) (0x2)+(0x3)+(0x4)+(2x5)+(7x6)+(8x7)+(3x8)+(0x9)+(0x10)+
+(0x11)+(1x12)+(4x13)+(0x14)+(5x15)+(3x16);
+b) 0+0+0+10+42+56+24+0+0+0+12+52+0+75+48= 319
+c) 319÷11 = 29; RESTO = 0; 
+d) 11-0= 11– despreza-se a casa da dezena; e 
+e) o 1º DV será 1 (um). 
+11
+OBSERVAÇÃO: o número encontrado para o 1º DV, deverá ser colocado à direita do número único 
+de processo, dando continuidade aos procedimentos relativos ao cálculo do 2º DV, conforme a 
+seguir: 
+a) (lx2)+(0x3)+(0x4)+(0x5)+(2x6)+(7x7)+(8x8)+(3x9)+(0x10)+(0x11)+(0x12)+
+(1x13)+(4x14)+(0x15)+(5x16)+(3x17);
+b) 2+0+0+0+12+49+64+27+0+0+0+13+56+0+80+51= 354 
+c) 354÷11 = 32; RESTO = 2; 
+d) 11-2= 9; e 
+e) O 2º DV será 9 (nove). 
+Assim sendo, o número único do processo dado como exemplo, será acrescido dos dígitos 
+verificadores 35041.000387/2000-19. 
+2º Exemplo: 
+Dado o número único de processo 04000.001412/2000, calcular os dígitos verificadores. 
+a) (0x2)+(0x3)+(0x4)+(2x5)+(2x6)+(1x7)+(4x8)+(1x9)+(0x10)+ 
+(0x11)+(0x12)+(0x13)+(0x14)+(4x15)+(0x16);
+b) 0+0+0+10+12+7+32+9+0+0+0+0+0+60+0= 130; 
+c) 130÷11 = 11; RESTO = 9; 
+d) 11-9= 2; e 
+e) O 1º DV será 2 (dois). 
+Para o segundo DV: 
+a) (2x2)+(0x3)+(0x4)+(0x5)+(2x6)+(2x7)+(1x8)+(4x9)+(1x10)+ 
+(0x11)+(0x12)+(0x13)+(0x14)+(0x15)+(4x16)+(0x17);
+b) 4+0+0+0+12+14+8+36+10+0+0+0+0+0+64+0= 148; 
+c) 148÷11=13; RESTO= 5;
+d) 11-5= 6; e 
+e) O 2º DV será 6 (seis). 
+Assim sendo, o número único de processo dado como exemplo, será acrescido dos dígitos 
+verificadores 4000.001412/2000-26.
+12
+Validação do número do processo judicial
+O número do processo judicial deverá seguir a estrutura NNNNNNN-DD.AAAA.J.TR.OOOO e 
+efetuar as validações abaixo: 
+Regra de Formação dos dígitos verificadores:
+O campo (DD), com 2 (dois) dígitos, identifica o dígito verificador, cujo cálculo de verificação deve 
+ser efetuado conforme o Anexo VIII da Resolução CNJ nº 65, de 16 de dezembro de 2008.
+O cálculo dos dígitos verificadores (DD) da numeração única dos processos deve ser efetuado pela 
+aplicação do algoritmo
+Módulo 97 Base 10, conforme Norma ISO 7064:2003, de acordo com as seguintes instruções:
+I – Todos os campos do número único dos processos devem ser considerados no cálculo dos dígitos 
+verificadores;
+II – Inicialmente, os dígitos verificadores D1 D0 devem ser deslocados para o final do número do 
+processo e receber valor zero:
+N6 N5 N4 N3 N2 N1 N0 A3 A2 A1 A0 J2 T1 R0 O3 O2 O1 O0 01 00
+III – Os dígitos de verificação D1 D0 serão calculados pela aplicação da seguinte fórmula, na qual 
+“módulo” é a operação “resto da divisão inteira”:
+D1 D0 = 98 – (N6 N5 N4 N3 N2 N1 N0 A3 A2 A1 A0 J2 T1 R0 O3 O2 O1 O0 01 00 módulo 97)
+IV – O resultado da fórmula deve ser formatado em dois dígitos, incluindo o zero à esquerda, se 
+necessário. Os dígitos resultantes são os dígitos verificadores, que devem ser novamente deslocados 
+para a posição original (NNNNNNNDD.AAAA.JTR.OOOO).
+V – No caso de limitação técnica de precisão computacional que impeça a aplicação da fórmula sobre 
+a integralidade do número do processo em uma única operação, pode ser realizada a sua fatoração, nos 
+seguintes termos:
+R1 = (N6 N5 N4 N3 N2 N1 N0 módulo 97)
+R2 = ((R1 concatenado com A3 A2 A1 A0 J2 T1 R0) módulo 97)
+R3 = ((R2 concatenado com O3O2O1O0 01 00) módulo 97)
+D1 D0 = 98 - R3
+VI – A verificação da correção do número único do processo deve ser realizada pela aplicação da 
+seguinte fórmula, cujo resultado deve ser igual a 1 (um):
+N6 N5 N4 N3 N2 N1 N0 A3 A2 A1 A0 J2 T1 R0 O3 O2 O1 O0 D1D0módulo 97
+A 14ª posição do número de processo judicial (CAMPO J) não pode ser igual a (2 ou 5 ou 6 ou 7 ou 9)
+13
+3. Padrões Técnicos
+3.1. Padrão de documento XML
+A  especificação  do  documento  XML  adotada  é  a  recomendação  W3C  para  XML  1.0, 
+disponível em http://www.w3.org/TR/REC-xml. 
+A codificação dos caracteres será em UTF-8, assim todos os documentos XML serão iniciados  
+com a seguinte declaração:
+<?xml version="1.0" encoding="UTF-8"?>
+Um  arquivo  XML  poderá  ter  uma  única  declaração  <?xml  version="1.0" 
+encoding="UTF-8"?>.  Mesmo  nas  situações  em  que  um  documento  XML  contenha  outros 
+documentos XML, como ocorre no documento de Lotes de Eventos, deve-se atentar para que exista  
+uma única declaração no início do documento. 
+Os caracteres especiais abaixo quando forem inseridos como dado de conteúdo deverão ser  
+substituídos pelos seus respectivos caracteres de escape conforme detalhado a seguir:
+Caractere Escape
+> (sinal de maior) &gt;
+< (sinal de menor) &lt;
+& (e comercial) &amp;
+Demais caracteres especiais não são aceitos como informação relativa a conteúdo.
+3.2. Declaração namespace
+Cada evento XML deverá ter uma única declaração de namespace no elemento raiz do evento,  
+conforme tipo do evento, com o seguinte padrão:
+<REINF xmlns="http://www.reinf.esocial.gov.br/schemas/[NOME_DO_EVENTO]/[VERSAO]" >
+O trecho [ NOME_DO_EVENTO] deve ser substituído pelo nome do evento enviado, conforme o  
+leiaute vigente da EFD-REINF. Não é permitido o uso de declaração de  namespace diferente do  
+padrão estabelecido. O trecho referente à versão do leiaute ([ VERSAO]) deve ser atualizado sempre que  
+necessário, quando houver atualizações do Schema .xsd.
+A  declaração  do  namespace da  assinatura  digital  deverá  ser  realizada  na  própria  tag 
+<Signature>, conforme exemplo abaixo:
+<Reinf xmlns="http://www.reinf.esocial.gov.br/schemas/[NOME_DO_EVENTO]/[VERSAO] ">
+<!-- Xml do Evento -->
+<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+<.../>
+</Signature>
+</Reinf>
+14
+3.3. Schemas XSD
+A estrutura dos XML recebidos pela EFD-REINF é especificada e checada por um Schema, 
+que é um recurso que define a estrutura de um documento XML, descrevendo os seus elementos, a  
+organização destes dentro do documento, além de estabelecer regras de preenchimento do conteúdo e  
+da obrigatoriedade de cada elemento ou grupo de elementos. O Schema é representado por um  
+arquivo de extensão XSD.
+Os serviços disponibilizados pela EFD-REINF, tem como entrada de dados mensagens no  
+formato XML, as quais são validadas com os Schemas que as define. Assim, os aplicativos que fazem  
+solicitações ao sistema EFD-REINF devem estar preparados para gerar lotes de eventos no formato  
+definido pelo XSD em vigor.
+As alterações da estrutura de dados XML realizadas nas mensagens são controladas através da  
+versão definida no namespace do Schema. A identificação da versão dos Schemas será realizada com  
+o acréscimo do número da versão como sufixo no  namespace do XML e no nome do arquivo,  
+conforme o exemplo abaixo:
+Exemplo:
+- namespace envio lote modelo síncrono:
+http://www.reinf.esocial.gov.br/schemas/envioLoteEventos/v1_05_01
+- nome arquivo: envioLoteEventos-v1_05_01.xsd 
+As  modificações  de  leiaute  das  mensagens  do  Webservice podem  ser  causadas  por  
+necessidades técnicas ou em razão da modificação de alguma legislação. As modificações decorrentes  
+de alteração da legislação deverão ser implementadas nos prazos previstos no ato normativo que  
+introduziu a alteração. As modificações de ordem técnica serão divulgadas pela Receita Federal e  
+poderão ocorrer sempre que se fizerem necessárias.
+Haverá dois pacotes de Schemas:
+Comunicação:  contém  os  Schemas  envolvidos  no  processo  de  comunicação  (Schema  de 
+Envio de Lote, Schema de Retorno do Evento, Schema de Retorno de Lote). 
+Eventos: contém os Schemas dos eventos de negócio previstos para a EFD-REINF.
+3.4. Padrão de Comunicação
+O meio físico de comunicação utilizado será a internet, com o uso do protocolo HTTPS (TLS),  
+com autenticação mútua, que além de garantir um duto de comunicação seguro na Internet, permite a  
+identificação do servidor e do cliente através de certificados digitais. Caso seja necessário transmitir  
+vários  XML´s  em  sequência  sugere-se  a  utilização  de  conexão  HTTPS  persistente,  conforme 
+estabelecido na versão 1.1 do protocolo HTTP, evitando assim fechar e reestabelecer a conexão  
+HTTPS para cada evento enviado.
+3.4.1 Padrão de cifras
+As cifras são algoritmos usados para criptografar dados. Antes de uma conexão segura ser  
+estabelecida, o protocolo e a cifra são negociados entre o servidor que enviará dados e o servidor da  
+EFD-REINF, com base na disponibilidade de cifras em ambos os lados. Para isso, basta que a  
+aplicação dos clientes tenha pelo menos uma cifra compatível com as cifras dos servidores da EFD-
+REINF.
+15
+A partir de 20/01/2023, os servidores da EFD-REINF estarão configurados para trabalhar  
+somente com  os protocolos TLS 1.2 e versões superiores , desabilitando o suporte aos protocolos  
+TLS 1.0 e TLS 1.1.
+As cifras suportadas na versão TLS 1.2 serão:
+ TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 
+ TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 
+ TLS_DHE_RSA_WITH_AES_128_GCM_SHA256 
+ TLS_DHE_RSA_WITH_AES_256_GCM_SHA384 
+ TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256 
+ TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA 
+ TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384 
+ TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA 
+ TLS_DHE_RSA_WITH_AES_128_CBC_SHA256 
+ TLS_DHE_RSA_WITH_AES_128_CBC_SHA 
+ TLS_DHE_RSA_WITH_AES_256_CBC_SHA256 
+ TLS_DHE_RSA_WITH_AES_256_CBC_SHA 
+ TLS_RSA_WITH_AES_128_GCM_SHA256 
+ TLS_RSA_WITH_AES_256_GCM_SHA384 
+ TLS_RSA_WITH_AES_128_CBC_SHA256 
+ TLS_RSA_WITH_AES_256_CBC_SHA256 
+ TLS_RSA_WITH_AES_128_CBC_SHA 
+ TLS_RSA_WITH_AES_256_CBC_SHA 
+ TLS_DHE_RSA_WITH_AES_256_CCM_8 
+ TLS_DHE_RSA_WITH_AES_256_CCM 
+ TLS_DHE_RSA_WITH_AES_128_CCM_8 
+ TLS_DHE_RSA_WITH_AES_128_CCM 
+ TLS_RSA_WITH_AES_256_CCM_8 
+ TLS_RSA_WITH_AES_256_CCM 
+ TLS_RSA_WITH_AES_128_CCM_8 
+ TLS_RSA_WITH_AES_128_CCM 
+ TLS_ECDHE_RSA_WITH_CAMELLIA_256_CBC_SHA384 
+ TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA256 
+ TLS_ECDHE_RSA_WITH_CAMELLIA_128_CBC_SHA256 
+ TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA256 
+ TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA 
+ TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA 
+ TLS_RSA_WITH_CAMELLIA_256_CBC_SHA256 
+ TLS_RSA_WITH_CAMELLIA_128_CBC_SHA256 
+ TLS_RSA_WITH_CAMELLIA_256_CBC_SHA 
+ TLS_RSA_WITH_CAMELLIA_128_CBC_SHA
+E para o protocolo TLS 1.3 as crifras suportadas serão:
+ TLS_AES_128_GCM_SHA256
+16
+ TLS_AES_256_GCM_SHA384
+ TLS_CHACHA20_POLY1305_SHA256
+Recomenda-se seguir sempre a última atualização do protocolo e cifras mais novas seguindo o  
+padrão de mercado, assim como fazem OpenSSL, Microsoft e demais navegadores, para determinar as 
+cifras a serem suportadas.
+Em caso de dúvidas, é recomendado consultar a documentação oficial do TLS1.2, disponível  
+em https://www.ietf.org/rfc/rfc5246.txt .
+3.4.2 APIs REST
+Para a recepção e consulta de lotes no modelo assíncrono, serão disponibilizadas API’s REST.  
+Mais  detalhes  na  seção  que  trata  especificamente  nos  serviços  de  recepção  de  lotes  modelo 
+assíncrono.
+3.5. Padrão de Certificado Digital
+Os certificados digitais utilizados no acesso aos serviços disponibilizados pelo sistema e na  
+assinatura dos arquivos XML enviados deverão atender aos seguintes critérios:
+ A raiz da cadeia de certificação deverá pertencer à Autoridade Certificadora Raiz Brasileira  
+(ICP-Brasil).
+ A formação da cadeia de certificação até sua raiz deve ser confiável.
+ O certificado não poderá estar revogado.
+ O certificado não poderá estar expirado na data da verificação.
+ O certificado deverá ser do tipo e-CNPJ, e-PJ, e-CPF ou e-PF.
+ O  certificado  digital  deve  ser  do  tipo  e-CNPJ  ou  e-PJ  cujo  CNPJ  base  seja  do  mesmo 
+contribuinte responsável pela informação, ou do tipo e-CPF ou e-PF cujo CPF pertença ao  
+representante legal do contribuinte ou qualquer certificado que pertença a um procurador  
+devidamente habilitado no sistema de Procuração Eletrônica da RFB. No caso de contribuinte  
+PJ a procuração eletrônica deve ser feita em relação ao CNPJ matriz.
+O certificado digital  utilizado no sistema EFD-REINF deverá ser emitido por Autoridade  
+Certificadora credenciada pela Infraestrutura de Chaves Públicas Brasileira – ICP-Brasil.
+Este certificado digital deverá pertencer à série A.  Existem duas séries às quais os certificados  
+podem pertencer, a série A e a série S. A série A reúne os certificados de assinatura digital utilizados  
+na confirmação de identidade na Web, em e-mails, em redes privadas virtuais (VPN) e em documentos 
+eletrônicos com verificação da integridade de suas informações. A  série S  reúne os certificados de  
+sigilo que são utilizados na codificação de documentos, de bases de dados, de mensagens e de outras  
+informações eletrônicas sigilosas.
+O certificado digital deverá ser do tipo A1 ou A3. Certificados digitais de tipo A1 ficam  
+armazenados no próprio computador a partir do qual ele será utilizado. Certificados digitais do tipo  
+A3 são armazenados em dispositivo portátil inviolável do tipo smart card ou token, que possuem um  
+chip com capacidade de realizar a assinatura digital. Este tipo de dispositivo é bastante seguro, pois  
+toda operação é realizada pelo chip existente no dispositivo, sem qualquer acesso externo à chave  
+privada do certificado digital.
+17
+Para que um certificado seja aceito na função de transmissor de solicitações este deverá ser do  
+tipo e-CPF (e-PF) ou e-CNPJ (e-PJ). A recomendação de uso é que o tamanho máximo da chave  
+pública  do  certificado  seja  de  2048  bits,  o  que  fornece  um  nível  adequado  de  segurança  sem 
+comprometer a performance das aplicações.
+Os certificados digitais serão exigidos em dois momentos distintos:
+ Transmissão: antes de ser iniciada a transmissão de solicitações ao sistema EFD-REINF, o  
+certificado  digital  do  solicitante  é  utilizado  para  reconhecer  o  transmissor  e  garantir  a 
+segurança do tráfego das informações na INTERNET. 
+ Assinatura de documentos : para garantir o não repúdio e a integridade das informações os  
+documentos eletrônicos enviados para a EFD-REINF são assinados digitalmente. 
+Os certificados digitais serão utilizados tanto nas conexões transmissão dos lotes de eventos  
+para a EFD-REINF, usando o protocolo de segurança TLS, quanto para a assinatura dos  
+eventos. 
+O usuário que consumirá os Webservices da EFD-REINF deverá instalar em seus servidores a 
+cadeia de certificado que está disponível em: 
+https://certificados.serpro.gov.br/serproacf/certificate-chain. Para que a conexão HTTPS(TLS) 
+seja feita com sucesso, estes certificados devem ser instalados como certificados confiáveis na 
+máquina que será cliente dos Webservices.
+Os efeitos da validação do certificado digital podem se dar para todo o lote (no caso do erro  
+ser gerado a partir do certificado de transmissão) como para um evento específico (no caso do  
+erro ser gerado a partir da assinatura do XML do evento).
+3.6. Assinatura Digital
+Para  enviar  informações  para  a  EFD-Reinf  o  contribuinte  deverá  gerar  arquivos  xml 
+denominados eventos. Os eventos deverão ser assinados digitalmente, transformando este arquivo em  
+um documento eletrônico nos termos da legislação brasileira, de maneira a garantir a integridade dos  
+dados e a autoria do emissor. Os eventos deverão ser assinados digitalmente utilizando o e-CNPJ do  
+contribuinte ou o e-CPF de seu representante legal ou o e-CPF ou e-CNPJ de seu procurador. 
+No caso de procurador, a procuração eletrônica deverá ser cadastrada no portal do e-CAC  
+(https://cav.receita.fazenda.gov.br/eCAC/publico/login.aspx),  utilizando  o  acesso  via  certificado 
+digital e indicando, especificamente, poderes referentes a EFD-Reinf.
+Conforme a Resolução 179 de 20/10/2020, do Comitê Gestor da ICP Brasil, no item 7.1.2.7 
+inciso b, (https://www.gov.br/iti/pt-br/assuntos/legislacao/resolucoes/resolucoes-old/
+resolucao179_doc-icp-04_compilada.pdf), os certificados de autenticação de servidor (SSL/TLS) não 
+podem mais ter o atributo "não repúdio" habilitado. Sendo assim, os certificados de raiz v10 que não 
+possuírem esse atributo devem ser utilizados apenas para autenticação, evitando-se o seu uso para 
+assinaturas digitais.
+18
+3.7. Padrão de Assinatura Digital
+O sistema EFD-REINF utiliza um subconjunto do padrão de assinatura XML definido pelo  
+http://www.w3.org/TR/xmldsig-core/.
+ Padrão de assinatura: XML Digital Signature, utilizando o formato Enveloped 
+(http://www.w3.org/TR/xmldsig-core/)
+ Certificado digital: emitido por AC credenciada no ICP-Brasil 
+(http://www.w3.org/2000/09/xmldsig#X509Data)
+ Cadeia de certificação: EndCertOnly (Incluir na assinatura apenas o certificado do usuário 
+final)
+o Tipo do certificado: A1 ou A3
+ Tamanho da chave criptográfica: compatível com os certificados A1 e A3
+ Função criptográfica assimétrica: RSA (http://www.w3.org/2001/04/xmldsig-more#rsa-
+sha256)
+ Função de message digest: SHA-256.  (http://www.w3.org/2001/04/xmlenc#sha256)
+ Codificação: Base64 (http://www.w3.org/2000/09/xmldsig#base64)
+ Transformações exigidas: útil para realizar a canonicalização do XML enviado para realizar 
+a validação correta da assinatura digital. São elas:
+o Enveloped (http://www.w3.org/2000/09/xmldsig#enveloped-signature)
+o C14N (http://www.w3.org/TR/2001/REC-xml-c14n-20010315)
+ As informações necessárias à identificação do assinante estão presentes dentro do certificado  
+digital, tornando desnecessária a sua representação individualizada no arquivo XML. Portanto,  
+o arquivo XML assinado deve conter apenas a tag X509Certificate nas informações que dizem  
+respeito ao certificado.
+O procedimento de validação da assinatura digital adotado pelo sistema EFD-REINF é:
+1. Extrair a chave pública do certificado;
+2. Verificar o prazo de validade do certificado utilizado;
+3. Montar e validar a cadeia de confiança dos certificados validando também a LCR (Lista de  
+Certificados Revogados) de cada certificado da cadeia;
+4. Validar o uso da chave utilizada (assinatura digital) de forma a aceitar certificados somente do  
+tipo A (não serão aceitos certificados do tipo S);
+5. Garantir que o certificado utilizado é de um usuário final e não de uma autoridade certificadora;
+6. Adotar as regras definidas pelo RFC 3280 para as LCR e cadeia de confiança;
+7. Validar a integridade de todas as LCR utilizadas pelo sistema;
+8. Validar datas inicial e final do prazo de validade de cada LCR utilizada. 
+19
+4. Envio de Lote – modelo assíncrono
+A princípio para os lotes no modelo assíncrono a quantidade máxima será de 50 (cinquenta)  
+eventos. Essa quantidade poderá ser alterada durante os testes e até o efetivo início da recepção em  
+produção. Neste caso o manual será atualizado.
+A comunicação será baseada em API’s REST.
+O meio físico de comunicação utilizado será a internet, com o uso do protocolo HTTPS (TLS), 
+com autenticação mútua, que além de garantir um duto de comunicação seguro na internet, permite a 
+identificação do servidor e do cliente através de certificados digitais.
+Caso seja necessário transmitir vários eventos em sequência sugere-se a utilização de conexão
+HTTPS persistente, conforme estabelecido na versão 1.1 do protocolo HTTP, evitando assim fechar e
+reestabelecer a conexão HTTPS para cada evento enviado.
+4.1. API envio lote modelo assíncrono
+Método HTTP POST
+Body / Media Type application/xml
+Requer Certificado 
+de Cliente?
+Sim
+Schema Envio envioLoteEventosAssincrono-v1_00_00.xsd
+Schema Retorno retornoLoteEventosAssincrono-v1_00_00.xsd
+URL
+Ambiente de Produção:
+https://reinf.receita.economia.gov.br/recepcao/lotes
+Ambiente de Produção Restrita:
+https://pre-reinf.receita.economia.gov.br/recepcao/lotes
+Documentação 
+Swagger
+(Será disponibilizada somente em produção restrita)
+https://pre-reinf.receita.economia.gov.br/recepcao/swagger/index.html
+20
+4.2. Protocolo de Recebimento do Lote Assíncrono
+Para cada lote assíncrono recebido a EFD-REINF retornará um número de protocolo para 
+consulta posterior ao resultado de seu processamento.
+4.3. Namespace de envio de Lote Assíncrono
+O lote deverá ter uma única declaração de namespace no elemento raiz, com o seguinte padrão:
+<Reinf xmlns="http://www.reinf.esocial.gov.br/schemas/envioLoteEventosAssincrono/v1_00_00">
+4.4. Processo de Envio e Recepção Lote Assíncrono
+Para realizar o envio de um lote assíncrono, o sistema cliente deve:
+ Utilizar certificado digital na conexão HTTPS à API.
+ Efetuar um HTTP POST no endpoint passando no body o conteúdo do XML de Lote 
+Assíncrono.
+ Usar media type "application/xml" e encoding UTF-8.
+ Tamanho máximo da mensagem: 54 MB.
+Principais códigos de retorno HTTP 
+HTTP 201 Lote recebido com sucesso pela API da EFD-Reinf.
+No body é retornado o XML contendo o protocolo do lote recebido.
+HTTP 405 Método HTTP incorreto. Use o método POST para enviar lotes.
+HTTP 413 Tamanho da mensagem é maior que o permitido. Tamanho máximo : 54 MB
+HTTP 415 media type não é 'application/xml', ou o conteúdo do body informado não é um 
+XML.
+HTTP 429 Excesso de conexões em sequência. Aguarde alguns minutos e tente novamente.
+HTTP 422 Lote não foi recebido pois possui inconsistências. No body é retornado o XML 
+com as ocorrências a serem resolvidas pela instituição declarante.
+HTTP 495, 496 Certificado não aceito na conexão à API. Verifique se o certificado está 
+expirado ou revogado.
+HTTP 500 Erro interno na recepção da escrituração EFD-REINF.
+Aguarde alguns minutos e tente enviar o lote novamente.
+HTTP 503 Serviço indisponível momentaneamente. Aguarde alguns minutos e tente 
+novamente.
+21
+Retorno recepção XML Lote Assíncrono – campo cdResposta
+O XML no body de retorno seguirá o schema definido neste manual.
+Valores possíveis para a tag cdResposta :
+ 1 →  Indica que o lote está em processamento pela EFD-REINF.
+ 7 → Lote não foi recebido pois possui ocorrências a serem corrigidas.
+ 99 → Erro interno na EFD-REINF.
+5. Consulta Lote
+A partir da entrada dos novos eventos da série R-4000, a EFD-REINF possuirá o modelo de 
+envio de lote assíncrono. 
+Para obter o resultado do processado de um lote assíncrono, o sistema cliente efetuar a 
+chamada à API REST abaixo.
+5.1. API consulta lote modelo assíncrono
+Método HTTP GET
+Requer Certificado 
+de Cliente?
+Sim.
+Parâmetro/uri numeroProtocolo
+Schema Retorno retornoLoteEventosAssincrono-v1_00_00.xsd
+URL
+Ambiente de Produção:
+https://reinf.receita.economia.gov.br/consulta/lotes/{numeroProtocolo}
+Ambiente de Produção Restrita:
+https://pre-reinf.receita.economia.gov.br/consulta/lotes/{numeroProtocolo}
+Documentação 
+Swagger
+(Será disponibilizada somente em produção restrita)
+https://pre-reinf.receita.economia.gov.br/consulta/swagger/index.html
+5.2. Processo de consulta de um lote assíncrono
+Para realizar a consulta de um lote assíncrono, o sistema cliente deve:
+ Utilizar certificado digital na conexão HTTPS  à API.
+ Efetuar um HTTP GET no endpoint passando o 'numeroProtocolo' na uri.
+22
+Principais códigos de retorno HTTP 
+HTTP 200
+Lote encontrado. No body é retornado o XML com o resultado dos eventos do 
+lote processados e seus respectivos recibos. Caso o lote ainda não tenha sido 
+processado, será retornado o XML de lote informando que ainda está em 
+andamento.
+HTTP 404 Lote não encontrado com o protocolo informado.
+No body é retornado o XML contendo a informação de lote não encontrado.
+HTTP 405 Método HTTP incorreto. Use o método GET para efetuar consultas.
+HTTP 422
+A consulta realizada possui inconsistências.
+No body é retornado o XML com as ocorrências a serem resolvidas pelo sistema 
+consultante.
+HTTP 429 Excesso de consultas/conexões em sequência.
+Aguarde alguns minutos e tente novamente.
+HTTP 495, 496 Certificado não aceito na conexão a API.
+Verifique se o certificado está expirado ou revogado.
+HTTP 500 Erro interno na EFD-REINF.
+Aguarde alguns minutos e tente realizar a consulta novamente.
+HTTP 503 Serviço indisponível momentaneamente. Aguarde alguns minutos e tente 
+novamente.
+Retorno consulta XML Lote Assíncrono
+Quando a API retornar um XML no body de retorno, este seguirá o schema retorno conforme 
+definido nesse manual.
+ Valores possíveis para a tag cdResposta:
+1 → Indica que o lote ainda está em processamento pela EFD-REINF.
+2 → O lote foi processado. Todos os eventos foram processados com sucesso.
+3 → O lote foi processado. Possui um ou mais eventos com ocorrências.
+8 → A própria consulta possui ocorrências e a busca do lote não foi executada. Verificar 
+ocorrências no XML de retorno.
+9 → A consulta foi executada, porém o lote não foi encontrado.
+99 → Erro interno na EFD-REINF.
+5.3. Uso abusivo / rate limiting
+O excesso de tentativas de consultas em sequência poderá ser considerado uso abusivo do 
+sistema, e a API responderá com código HTTP 429 para esses casos.
+23
+6. Consulta Recibo Evento
+O ambiente nacional da REINF permite duas formas a recuperação do número do recibo de 
+transmissão dos eventos enviados: a partir de serviços de consulta a recibos ou reenviando o mesmo 
+evento válido já enviado anteriormente. Neste segundo caso, para que seja possível a recuperação do 
+número do recibo, o evento deve ser reenviado ao ambiente nacional seguindo as seguintes premissas:
+a. O evento deve ser o mesmo enviado anteriormente;
+b. Deve possuir o mesmo HASH;
+c. Deve ser mantido o mesmo ID do que foi enviado na primeira tentativa;
+O ambiente nacional da REINF retornará uma mensagem de erro com o código na tag 
+codResp=MS0022 e dscResp=“O evento já se encontra na base de dados do sistema” e na tag 
+nrRecArqBase retornará o número do recibo do evento original.
+Caso ocorra alguma alteração na composição do ID do evento e mesmo que as informações no  
+conteúdo permaneçam as mesmas, não será possível a recuperação do recibo de entrega. O ambiente  
+nacional retornará uma mensagem de erro conforme o tipo de evento enviado e sem o número do  
+recibo.
+Existe um serviço REST para realizar esta consulta, onde poderão ser consultados todos os  
+eventos.
+6.1. API REST para Consulta a Recibo de Entrega de Evento
+Para cada tipo de evento, há um endpoint e parâmetros específicos.
+O endereço para consultas terá o seguinte padrão: 
+https://[dominio]/consulta/reciboevento/[endpoint]/[parametros]
+Onde :
+[dominio]       :  ambiente (produção restrita/produção) conforme URL base abaixo.
+[endpoint]      :  endpoint específico de cada evento
+[parametros]  :  parâmetros específicos de cada evento. Conforme definidos abaixo neste documento.
+Exemplo (para uma consulta de evento R-1000 em produção restrita) : 
+https://pre-reinf.receita.economia.gov.br/consulta/reciboevento/R1000/1/12345678
+Neste caso será consultado um evento R-1000, para tpInsc = 1 e nrInsc = 12345678
+Método HTTP GET
+Requer Certificado de 
+Cliente?
+Sim.
+Parâmetro/uri Específicos por tipo de evento
+Schema Retorno retornoRecibosChaveEvento-v1_05_01.xsd
+24
+URL base
+Ambiente de Produção:
+https://reinf.receita.economia.gov.br/consulta/reciboevento/     + [endpoint e 
+parâmetros específicos de cada evento]
+Ambiente de Produção Restrita:
+https://pre-reinf.receita.economia.gov.br/consulta/reciboevento/ + [endpoint 
+e parâmetros específicos de cada evento]
+Documentação 
+Swagger
+(Será disponibilizada somente em produção restrita)
+https://pre-reinf.receita.economia.gov.br/consulta/swagger/index.html
+Retornos HTTP esperados
+ HTTP 200: Foram encontrados dados para os parâmetros informados. No body é retornado o xml 
+conforme o schema Retorno.
+ HTTP 404: Endpoint não encontrado ou não forma encontradas informações de eventos 
+transmitidos que atendessem aos parâmetros informados. Verifique se foi montado o endpoint 
+com todos os parâmetros corretamente, e em caso positivo, no body será retornado o xml 
+contendo a informação de dados não encontrados.
+ HTTP 422: Consulta realizada gerou ocorrências. No body é retornado o xml com as ocorrências 
+a serem resolvidas pelo cliente.
+ HTTP 495, 496: Certificado não aceito na conexão a API. Verifique se o certificado está 
+expirado ou revogado.
+ HTTP 500: Erro interno na EFD-REINF. Aguarde alguns minutos e tente novamente.
+Endpoint REST Consulta Recibo – Evento R-1000
+Endpoint /R1000/{tpInsc}/{nrInsc}
+Parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a  “1”  (CNPJ) ou “2” (CPF).
+nrInsc Obrigatório
+Informar o número de inscrição do contribuinte de acordo com o 
+tipo de inscrição indicado no campo {tpInsc}.
+Se {tpInsc} for igual a [1], deve ser um número de CNPJ válido. Se 
+{tpInsc} for igual a [2], deve ser um CPF válido. Se for um CNPJ 
+deve ser informada a raiz/base de oito posições, exceto se a natureza 
+jurídica do contribuinte declarante for de Administração Pública 
+Direta Federal, ou seja, [101-5, 104-0, 107-4, 116-3 ou 134-1], 
+situação em que o campo deve ser informado com o CNPJ completo 
+(14 posições).
+25
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os períodos válidos para o contribuinte  
+informado  na  pesquisa.  Ou  seja,  o  sistema  deve  retornar  uma  estrutura  com  zero  ou  mais  grupos  das 
+informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Início do Período (iniValid) Texto 7 AAAA-MM
+Fim do Período (fimValid) Texto 7
+AAAA-MM
+(ou brancos, caso não tenha sido informado no 
+evento)
+Endpoint REST Consulta Recibo – Evento R-1050
+Endpoint /R1050/{tpInsc}/{nrInsc}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a  “1”  (CNPJ) ou “2” (CPF).
+nrInsc Obrigatório
+Informar o número de inscrição do contribuinte de acordo com 
+o tipo de inscrição indicado no campo {tpInsc}.
+Se {tpInsc} for igual a [1], deve ser um número de CNPJ 
+válido. Se {tpInsc} for igual a [2], deve ser um CPF válido. Se 
+for um CNPJ deve ser informada a raiz/base de oito posições, 
+exceto se a natureza jurídica do contribuinte declarante for de 
+Administração Pública Direta Federal, ou seja, [101-5, 104-0, 
+107-4, 116-3 ou 134-1], situação em que o campo deve ser 
+informado com o CNPJ completo (14 posições).
+Leiaute da Mensagem de Retorno
+A  consulta  deve  retornar  as  informações  abaixo,  relativas  a  todos  os  períodos  válidos  para  o 
+contribuinte informado na pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais  
+grupos das informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Classificação da entidade 
+ligada (tpEntLig) Numérico 1
+1 - Fundo de investimento;
+2 - Fundo de investimento imobiliário;
+3 - Clube de investimento;
+4 - Sociedade em conta de participação.
+ Valores válidos: 1, 2, 3, 4.
+CNPJ da Entidade Ligada 
+(cnpjLig) Texto 14 Apenas caracteres alfanuméricos
+Início do Período 
+(iniValid) Texto 7 AAAA-MM
+Fim do Período (fimValid) Texto 7
+AAAA-MM
+(ou branco, caso não tenha sido informado no 
+evento)
+26
+Endpoint REST Consulta Recibo – Evento R-1070
+Endpoint /R1070/{tpInsc}/{nrInsc}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a “1” (CNPJ) ou “2” (CPF).
+nrInsc Obrigatório
+Informar o número de inscrição do contribuinte de acordo com o tipo 
+de inscrição indicado no campo {tpInsc}.
+Se {tpInsc} for igual a [1], deve ser um número de CNPJ válido. Se 
+{tpInsc} for igual a [2], deve ser um CPF válido. Se for um CNPJ deve 
+ser informada a raiz/base de oito posições, exceto se a natureza 
+jurídica do contribuinte declarante for de Administração Pública Direta 
+Federal, ou seja, [101-5, 104-0, 107-4, 116-3 ou 134-1], situação em 
+que o campo deve ser informado com o CNPJ completo (14 posições).
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os períodos válidos para o contribuinte  
+informado  na  pesquisa.  Ou  seja,  o  sistema  deve  retornar  uma  estrutura  com  zero  ou  mais  grupos  das 
+informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Tipo de Processo (tpProc) Numérico 1 1 – Administrativo ou
+2 – Judicial.
+Número do processo 
+(nrProc) Texto 21
+Início do Período (iniValid) Texto 7 AAAA-MM
+Fim do Período (fimValid) Texto 7 AAAA-MM
+(ou brancos, caso não tenha sido informado no evento)
+ 
+Endpoint REST Consulta Recibo – Evento R-2010
+Endpoint /R2010/{tpInsc}/{nrInsc}/{perApur}/{tpInscEstab}/{nrInscEstab}/
+{cnpjPrestador}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a “1” (CNPJ) ou “2” (CPF).
+nrInsc Obrigatório Informar o número de inscrição do contribuinte de acordo com o tipo de 
+inscrição indicado no campo {tpInsc}.
+Se {tpInsc} for igual a [1], deve ser um número de CNPJ válido. Se {tpInsc} 
+for igual a [2], deve ser um CPF válido. Se for um CNPJ deve ser informada 
+a raiz/base de oito posições, exceto se a natureza jurídica do contribuinte 
+declarante for de Administração Pública Direta Federal, ou seja, [101-5, 
+27
+104-0, 107-4, 116-3 ou 134-1], situação em que o campo deve ser informado 
+com o CNPJ completo (14 posições).
+perApur Obrigatório Período de Apuração
+Formato: “AAAA-MM”
+tpInscEstab Obrigatório Tipo de Inscrição do Estabelecimento
+Valores válidos: “1” (CNPJ) ou “4” (CNO).
+nrInscEstab Obrigatório Número de inscrição do estabelecimento conforme o tipo informado.
+cnpjPrestador Obrigatório CNPJ do Prestador de Serviços (14 caracteres alfanuméricos)
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do evento 
+pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1
+1- Ativo
+2 - Retificado
+3 - Excluído
+Aplicação de recepção Numérico 1
+1 - Webservice Lote Síncrono
+2 - Portal Web
+3- Api Lote Assíncrono
+Endpoint REST Consulta Recibo – Evento R-2020
+Endpoint /R2020/{tpInsc}/{nrInsc}/{perApur}/{nrInscEstabPrest}/
+{tpInscTomador}/{nrInscTomador}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a “1” (CNPJ)
+nrInsc Obrigatório
+Número de inscrição do contribuinte.
+Deve ser informada a raiz/base de oito posições, exceto se a 
+natureza jurídica do contribuinte declarante for de 
+Administração Pública Direta Federal, ou seja, [101-5, 104-
+0, 107-4, 116-3 ou 134-1], situação em que o campo deve 
+ser informado com o CNPJ completo (14 posições)
+perApur Obrigatório Período de Apuração
+Formato “AAAA-MM”
+nrInscEstabPrest Obrigatório Número de inscrição do estabelecimento prestador de 
+serviços (14 caracteres alfanuméricos).
+tpInscTomador Obrigatório Tipo de inscrição do tomador 
+Valores válidos: “1” (CNPJ) ou “4” (CNO).
+28
+nrInscTomador Obrigatório Número de inscrição do tomador de serviços conforme o 
+tipo informado.
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do evento 
+pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1
+1- Ativo
+2 - Retificado
+3 - Excluído
+Aplicação de recepção Numérico 1
+1 - Webservice Lote Síncrono
+2 - Portal Web
+3- Api Lote Assíncrono
+Endpoint REST Consulta Recibo – Evento R-2030
+Endpoint /R2030/{tpInsc}/{nrInsc}/{perApur}/{nrInscEstab}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a  “1”  (CNPJ)
+nrInsc Obrigatório
+Número de inscrição do contribuinte. Deve ser informada a 
+raiz/base de oito posições, exceto se a natureza jurídica do 
+contribuinte declarante for de Administração Pública Direta 
+Federal, ou seja, [101-5, 104-0, 107-4, 116-3 ou 134-1], situação 
+em que o campo deve ser informado com o CNPJ completo (14 
+posições)
+perApur Obrigatório Período de Apuração
+Formato “AAAA-MM”
+nrInscEstab Obrigatório
+Número de Inscrição do Estabelecimento da Associação 
+Desportiva que Recebeu os Recursos (14 caracteres 
+alfanuméricos).
+29
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do evento 
+pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1
+1- Ativo
+2 - Retificado
+3 - Excluído
+Aplicação de recepção Numérico 1
+1 – Webservice Lote Síncrono
+2 - Portal Web
+3- Api Lote Assíncrono
+Endpoint REST Consulta Recibo – Evento R-2040
+Endpoint /R2040/{tpInsc}/{nrInsc}/{perApur}/{nrInscEstab}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a  “1”  (CNPJ)
+nrInsc Obrigatório
+Número de inscrição do contribuinte.
+Deve ser informada a raiz/base de oito posições, exceto se a 
+natureza jurídica do contribuinte declarante for de Administração 
+Pública Direta Federal, ou seja, [101-5, 104-0, 107-4, 116-3 ou 
+134-1], situação em que o campo deve ser informado com o 
+CNPJ completo (14 posições)
+perApur Obrigatório Período de Apuração
+Formato “AAAA-MM”
+nrInscEstab Obrigatório Número de Inscrição do Estabelecimento que Repassou Recursos 
+(14 caracteres alfanuméricos).
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do evento 
+pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+30
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1
+1- Ativo
+2 - Retificado
+3 - Excluído
+Aplicação de recepção Numérico 1
+1 – Webservice Lote Síncrono
+2 - Portal Web
+3- Api Lote Assíncrono
+Endpoint REST Consulta Recibo – Evento R-2050
+Endpoint /R2050/{tpInsc}/{nrInsc}/{perApur}/{nrInscEstab}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a  “1”  (CNPJ).
+nrInsc Obrigatório
+Número de inscrição do contribuinte.
+Deve ser informada a raiz/base de oito posições, exceto se a natureza 
+jurídica do contribuinte declarante for de Administração Pública Direta 
+Federal, ou seja, [101-5, 104-0, 107-4, 116-3 ou 134-1], situação em que o 
+campo deve ser informado com o CNPJ completo (14 posições)
+perApur Obrigatório Período de Apuração
+Formato “AAAA-MM”
+nrInscEstab Obrigatório Número de Inscrição do Estabelecimento que Comercializou a Produção 
+(14 caracteres alfanuméricos).
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do evento 
+pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1
+1- Ativo
+2 - Retificado
+3 - Excluído
+Aplicação de recepção Numérico 1
+1 – Webservice Lote 
+Síncrono
+2 - Portal Web
+3- Api Lote Assíncrono
+31
+Endpoint REST Consulta Recibo – Evento R-2055 
+Endpoint /R2055/{tpInsc}/{nrInsc}/{perApur}/{tpInscAdq}/{nrInscAdq}/{tpInscProd}/
+{nrInscProd}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a  “1”  (CNPJ).
+nrInsc Obrigatório
+Número de inscrição do contribuinte.
+Deve ser informada a raiz/base de oito posições, exceto se a natureza jurídica 
+do contribuinte declarante for de Administração Pública Direta Federal, ou 
+seja, [101-5, 104-0, 107-4, 116-3 ou 134-1], situação em que o campo deve 
+ser informado com o CNPJ completo (14 posições)
+perApur Obrigatório Período de Apuração
+Formato “AAAA-MM”
+tpInscAdq Obrigatório Tipo de inscrição do estabelecimento adquirente da produção.
+Deve ser igual a  “1”  (CNPJ) ou "3" (CAEPF).
+nrInscAdq Obrigatório Número de Inscrição do Estabelecimento adquirente da produção.
+tpInscProd Obrigatório Tipo de inscrição do produtor rural.
+Deve ser igual a  “1”  (CNPJ) ou "2" (CPF).
+nrInscProd Obrigatório Número de Inscrição do produtor rural.
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do evento 
+pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1
+1- Ativo
+2 - Retificado
+3 - Excluído
+Aplicação de recepção Numérico 1
+1 - Webservice Lote Síncrono
+2 - Portal Web
+3- Api Lote Assíncrono
+32
+Endpoint REST Consulta Recibo – Evento R-2060 
+Endpoint /R2060/{tpInsc}/{nrInsc}/{perApur}/{tpInscEstab}/{nrInscEstab}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a  “1”  (CNPJ).
+nrInsc Obrigatório
+Número de inscrição do contribuinte.
+Deve ser informada a raiz/base de oito posições, exceto se a natureza 
+jurídica do contribuinte declarante for de Administração Pública 
+Direta Federal, ou seja, [101-5, 104-0, 107-4, 116-3 ou 134-1], 
+situação em que o campo deve ser informado com o CNPJ completo 
+(14 posições)
+perApur Obrigatório Período de Apuração
+Formato “AAAA-MM”
+tpInscEstab Obrigatório Tipo de inscrição do estabelecimento que auferiu a receita bruta.
+Deve ser igual a “1” (CNPJ) ou “4” (CNO).
+nrInscEstab Obrigatório Número de inscrição do estabelecimento que auferiu a receita bruta 
+(12 ou14 posições).
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do evento 
+pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1
+1- Ativo
+2 - Retificado
+3 - Excluído
+Aplicação de recepção Numérico 1
+1 – Webservice Lote Síncrono
+2 - Portal Web
+3- Api Lote Assíncrono
+Endpoint REST Consulta Recibo – Evento R-2098
+Endpoint /R2098/{tpInsc}/{nrInsc}/{perApur}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a “1” (CNPJ) ou “2” (CPF).
+nrInsc Obrigatório Número de inscrição do contribuinte.
+33
+Se {tpInsc} for igual a [1], deve ser um número de CNPJ válido. Se 
+{tpInsc} for igual a [2], deve ser um CPF válido. Se for um CNPJ 
+deve ser informada a raiz/base de oito posições, exceto se a natureza 
+jurídica do contribuinte declarante for de Administração Pública 
+Direta Federal, ou seja, [101-5, 104-0, 107-4, 116-3 ou 134-1], 
+situação em que o campo deve ser informado com o CNPJ completo 
+(14 posições)
+perApur Obrigatório Período de Apuração
+Formato “AAAA-MM”
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do evento 
+pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1
+1- Ativo
+2 - Retificado
+3 - Excluído
+Aplicação de recepção Numérico 1
+1 – Webservice Lote Síncrono
+2 - Portal Web
+3- Api Lote Assíncrono
+Endpoint REST Consulta Recibo – Evento R-2099
+Endpoint /R2099/{tpInsc}/{nrInsc}/{perApur}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a  “1”  (CNPJ) ou “2” (CPF).
+nrInsc Obrigatório
+Número de inscrição do contribuinte.
+Se {tpInsc} for igual a [1], deve ser um número de CNPJ válido. Se 
+{tpInsc} for igual a [2], deve ser um CPF válido. Se for um CNPJ deve 
+ser informada a raiz/base de oito posições, exceto se a natureza jurídica 
+do contribuinte declarante for de Administração Pública Direta Federal, 
+ou seja, [101-5, 104-0, 107-4, 116-3 ou 134-1], situação em que o 
+campo deve ser informado com o CNPJ completo (14 posições)
+perApur Obrigatório Período de Apuração
+Formato “AAAA-MM”
+34
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do evento 
+pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do Protocolo de entrega do 
+evento Alfanumérico 49
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+Retornado apenas se o fechamento foi 
+processado com sucesso, ou seja, se a 
+situação = 1 - Ativo.
+Id do Evento Alfanumérico 36
+Situação do Evento Numérico 1
+1 - Ativo
+4 - Em processamento
+5 - Recusado
+Aplicação de recepção Numérico 1
+1 – Webservice Lote Síncrono
+2 - Portal Web
+3- Api Lote Assíncrono
+Endpoint REST Consulta Recibo – Evento R-3010
+Endpoint /R3010/{tpInsc}/{nrInsc}/{dtApur}/{nrInscEstabelecimento}
+parâmetro obrigatoriedad
+e
+descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a  “1”  (CNPJ).
+nrInsc Obrigatório
+Número de inscrição do contribuinte.
+Deve ser informada a raiz/base de oito posições, exceto se a natureza 
+jurídica do contribuinte declarante for de Administração Pública 
+Direta Federal, ou seja, [101-5, 104-0, 107-4, 116-3 ou 134-1], 
+situação em que o campo deve ser informado com o CNPJ completo 
+(14 posições)
+dtApur Obrigatório Data de realização do espetáculo desportivo consultada. Formato 
+AAAA-MM-DD
+nrInscEstabelecimento Obrigatório Número de inscrição do estabelecimento (14 caracteres 
+alfanuméricos).
+35
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do evento 
+pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1
+1- Ativo
+2 - Retificado
+3 - Excluído
+Aplicação de recepção Numérico 1
+1 – Webservice Lote Síncrono
+2 - Portal Web
+3- Api Lote Assíncrono
+Endpoint REST Consulta Recibo – Evento R-4010
+Endpoint /R4010/{tpInsc}/{nrInsc}/{perApur}/{tpInscEstab}/{nrInscEstab}/{cpfBenef}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a  “1”  (CNPJ) ou “2” (CPF).
+nrInsc Obrigatório
+Informar o número de inscrição do contribuinte de acordo com o 
+tipo de inscrição indicado no campo {tpInsc}.
+Se {tpInsc} for igual a [1], deve ser um número de CNPJ válido. 
+Se {tpInsc} for igual a [2], deve ser um CPF válido. Se for um 
+CNPJ deve ser informada a raiz/base de oito posições, exceto se a 
+natureza jurídica do contribuinte declarante for de Administração 
+Pública Direta Federal, ou seja, [101-5, 104-0, 107-4, 116-3 ou 
+134-1], situação em que o campo deve ser informado com o CNPJ 
+completo (14 posições).
+perApur Obrigatório Período de Apuração
+Formato “AAAA-MM”
+tpInscEstab Obrigatório
+Tipo de inscrição do estabelecimento
+Código correspondente ao tipo de inscrição: 1 - CNPJ; 2 - CPF; 3 - 
+CAEPF. Valores válidos: 1, 2, 3.
+nrInscEstab Obrigatório Número de inscrição do estabelecimento de acordo com o tipo de 
+inscrição indicado no campo {tpInscEstab} (14 ou 11 posições).
+cpfBenef Obrigatório CPF do beneficiário
+36
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do 
+evento pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1
+1- Ativo
+2 - Retificado
+3 - Excluído
+Aplicação de recepção Numérico 1
+1 – Webservice Lote Síncrono
+2 - Portal Web
+3- Api Lote Assíncrono
+Endpoint REST Consulta Recibo – Evento R-4010
+(para eventos onde não foi informado o CPF do beneficiário)
+Endpoint /R4010/semCpfBeneficiario/{tpInsc}/{nrInsc}/{perApur}/{tpInscEstab}/{nrInscEstab}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a  “1”  (CNPJ) ou “2” (CPF).
+nrInsc Obrigatório
+Informar o número de inscrição do contribuinte de acordo com o tipo de 
+inscrição indicado no campo {tpInsc}.
+Se {tpInsc} for igual a [1], deve ser um número de CNPJ válido. Se 
+{tpInsc} for igual a [2], deve ser um CPF válido. Se for um CNPJ deve ser 
+informada a raiz/base de oito posições, exceto se a natureza jurídica do 
+contribuinte declarante for de Administração Pública Direta Federal, ou 
+seja, [101-5, 104-0, 107-4, 116-3 ou 134-1], situação em que o campo deve 
+ser informado com o CNPJ completo (14 posições).
+perApur Obrigatório Período de Apuração
+Formato “AAAA-MM”
+tpInscEstab Obrigatório
+Tipo de inscrição do estabelecimento
+Código correspondente ao tipo de inscrição: 1 - CNPJ; 2 - CPF; 3 - CAEPF. 
+Valores válidos: 1, 2, 3.
+nrInscEstab Obrigatório Número de inscrição do estabelecimento de acordo com o tipo de inscrição 
+indicado no campo {tpInscEstab} (14 ou 11 posições).
+37
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do 
+evento pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1
+1- Ativo
+2 - Retificado
+3 - Excluído
+Aplicação de recepção Numérico 1
+1 – Webservice Lote Síncrono
+2 - Portal Web
+3- Api Lote Assíncrono
+Endpoint REST Consulta Recibo – Evento R-4020
+Endpoint /R4020/{tpInsc}/{nrInsc}/{perApur}/{tpInscEstab}/{nrInscEstab}/{cnpfBenef}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a  “1”  (CNPJ) ou “2” (CPF).
+nrInsc Obrigatório
+Número de inscrição do contribuinte.
+Se {tpInsc} for igual a [1], deve ser um número de CNPJ válido. 
+Se {tpInsc} for igual a [2], deve ser um CPF válido. Se for um 
+CNPJ deve ser informada a raiz/base de oito posições, exceto se a 
+natureza jurídica do contribuinte declarante for de Administração 
+Pública Direta Federal, ou seja, [101-5, 104-0, 107-4, 116-3 ou 
+134-1], situação em que o campo deve ser informado com o CNPJ 
+completo (14 posições).
+perApur Obrigatório Período de Apuração
+Formato “AAAA-MM”
+tpInscEstab Obrigatório
+Tipo de inscrição do estabelecimento
+Código correspondente ao tipo de inscrição: 1 - CNPJ; 2 - CPF; 3 - 
+CAEPF. Valores válidos: 1, 2, 3.
+nrInscEstab Obrigatório Número de inscrição do estabelecimento de acordo com o tipo de 
+inscrição indicado no campo {tpInscEstab} (14 ou 11 posições)
+cnpjBenef Obrigatório CNPJ do beneficiário
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo:
+38
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do 
+evento pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1
+1- Ativo
+2 - Retificado
+3 - Excluído
+Aplicação de recepção Numérico 1
+1 – Webservice Lote Síncrono
+2 - Portal Web
+3- Api Lote Assíncrono
+Endpoint REST Consulta Recibo – Evento R-4020 
+(para eventos onde não foi informado o CNPJ do beneficiário)
+Endpoint /R4020/semCnpjBeneficiario/{tpInsc}/{nrInsc}/{perApur}/{tpInscEstab}/{nrInscEstab}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a  “1”  (CNPJ) ou “2” (CPF).
+nrInsc Obrigatório
+Número de inscrição do contribuinte.
+Se {tpInsc} for igual a [1], deve ser um número de CNPJ válido. 
+Se {tpInsc} for igual a [2], deve ser um CPF válido. Se for um 
+CNPJ deve ser informada a raiz/base de oito posições, exceto se 
+a natureza jurídica do contribuinte declarante for de 
+Administração Pública Direta Federal, ou seja, [101-5, 104-0, 
+107-4, 116-3 ou 134-1], situação em que o campo deve ser 
+informado com o CNPJ completo (14 posições).
+perApur Obrigatório Período de Apuração
+Formato “AAAA-MM”
+tpInscEstab Obrigatório
+Tipo de inscrição do estabelecimento
+Código correspondente ao tipo de inscrição: 1 - CNPJ; 2 - CPF; 
+3 - CAEPF. Valores válidos: 1, 2, 3.
+nrInscEstab Obrigatório Número de inscrição do estabelecimento de acordo com o tipo de 
+inscrição indicado no campo {tpInscEstab} (14 ou 11 posições)
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo.
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do 
+evento pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+39
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1
+1- Ativo
+2 - Retificado
+3 - Excluído
+Aplicação de recepção Numérico 1
+1 – Webservice Lote Síncrono
+2 - Portal Web
+3- Api Lote Assíncrono
+Endpoint REST Consulta Recibo – Evento R-4040
+Endpoint /R4040/{tpInsc}/{nrInsc}/{perApur}/{tpInscEstab}/{nrInscEstab}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a “1” (CNPJ)
+nrInsc Obrigatório
+Número de inscrição do contribuinte.
+Deve ser informada a raiz/base de oito posições, exceto se a natureza 
+jurídica do contribuinte declarante for de administração pública direta 
+federal, situação em que o campo deve ser informado com o CNPJ 
+completo (14 posições).
+perApur Obrigatório Período de Apuração
+Formato “AAAA-MM”
+tpInscEstab Obrigatório Tipo de inscrição do estabelecimento
+Código correspondente ao tipo de inscrição: 1 - CNPJ
+nrInscEstab Obrigatório Número de inscrição do estabelecimento de acordo com o tipo de 
+inscrição indicado no campo {tpInscEstab} (14 posições).
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo:
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do 
+evento pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1
+1- Ativo
+2 - Retificado
+3 - Excluído
+Aplicação de recepção Numérico 1
+1 – Webservice Lote Síncrono
+2 - Portal Web
+3- Api Lote Assíncrono
+40
+Endpoint REST Consulta Recibo – Evento R-4080
+Endpoint /R4080/{tpInsc}/{nrInsc}/{perApur}/{tpInscEstab}/{nrInscEstab}/{cnpjFonte}
+parâmetro obrigatorieda
+de
+descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a “1” (CNPJ)
+nrInsc Obrigatório
+Número de inscrição do contribuinte.
+Deve ser informada a raiz/base de oito posições, exceto se a natureza jurídica 
+do contribuinte declarante for de Administração Pública Direta Federal, ou 
+seja, [101-5, 104-0, 107-4, 116-3 ou 134-1], situação em que o campo deve 
+ser informado com o CNPJ completo (14 posições).
+perApur Obrigatório Período de Apuração
+Formato “AAAA-MM”
+tpInscEstab Obrigatório Tipo de inscrição do estabelecimento
+Código correspondente ao tipo de inscrição: 1 - CNPJ
+nrInscEstab Obrigatório Número de inscrição do estabelecimento de acordo com o tipo de inscrição 
+indicado no campo {tpInscEstab} (14 posições)
+cnpjFonte Obrigatório Cnpj da fonte pagadora
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo:
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do 
+evento pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1
+1 - Ativo
+2 - Retificado
+3 - Excluído
+Aplicação de recepção Numérico 1
+1 - Webservice Lote Síncrono
+2 - Portal Web
+3 - Api Lote Assíncrono
+41
+Endpoint REST Consulta Recibo – Evento R-4099
+Endpoint /R4099/{tpInsc}/{nrInsc}/{perApur}
+parâmetro obrigatoriedade descrição
+tpInsc Obrigatório Tipo de inscrição do contribuinte. 
+Deve ser igual a “1” (CNPJ) ou “2” (CPF).
+nrInsc Obrigatório
+Número de inscrição do contribuinte.
+Se {tpInsc} for igual a [1], deve ser um número de CNPJ válido. Se 
+{tpInsc} for igual a [2], deve ser um CPF válido. Se for um CNPJ 
+deve ser informada a raiz/base de oito posições, exceto se a natureza 
+jurídica do contribuinte declarante for de Administração Pública 
+Direta Federal, ou seja, [101-5, 104-0, 107-4, 116-3 ou 134-1], 
+situação em que o campo deve ser informado com o CNPJ completo 
+(14 posições).
+perApur Obrigatório Período de Apuração
+Formato “AAAA-MM”
+Leiaute da Mensagem de Retorno
+A consulta deve retornar as informações abaixo, relativas a todos os eventos encontrados que atendam  
+aos critérios de pesquisa. Ou seja, o sistema deve retornar uma estrutura com zero ou mais grupos das  
+informações abaixo:
+Parâmetro Tipo Tamanho Formato
+Data/hora de recebimento do 
+evento pelo sistema
+Texto 14 AAAAMMDDHHMMSS
+Número do recibo gerado na 
+recepção do evento Alfanumérico 52
+ID do evento Alfanumérico 36
+Situação do Evento Numérico 1 1 - Ativo
+5 - Recusado
+Aplicação de recepção Numérico 1
+1 - Webservice Lote Síncrono
+2 - Portal Web
+3 - Api Lote Assíncrono
+42
+7. Recomendações e boas práticas
+O objetivo desta seção é orientar os usuários dos Webservices a utilizarem a EFD-REINF 
+seguindo boas práticas, facilitando a integração com o sistema.
+7.1. Respeitar a ordem de precedência no envio dos eventos em lotes
+A EFD-REINF controla a precedência do recebimento dos eventos, de acordo com as regras  
+estabelecidas pelo leiaute, com o objetivo de garantir a integridade dos dados declarados.
+Os eventos iniciais e de tabelas são dados que constituem o contribuinte na EFD-REINF,  
+sendo referenciados por praticamente todos os eventos. Por isso, quando são processados, requerem  
+maior atenção quanto as regras de precedência.
+Recomenda-se  fortemente  que  o  transmissor  faça  primeiramente  a  transmissão  dos  seus 
+eventos iniciais e de tabelas. Em seguida, envie os eventos periódicos. Caso as regras de precedência  
+não forem seguidas, a EFD-REINF rejeitará o evento.
+7.2. Envio de eventos de fechamento
+Recomenda-se que o evento de fechamento seja enviado em lote separado, e somente após a  
+confirmação de recibo de todos os eventos periódicos do período de apuração.
+7.3. Evitar o envio de eventos durante o processamento do evento de fechamento
+Durante o processamento do evento R-2099 – Fechamento dos Eventos Periódicos  a EFD-
+REINF não recepcionará nenhum evento daquele contribuinte e período de apuração, com o objetivo  
+de garantir a integridade dos dados no sistema. Caso algum evento do contribuinte e período de  
+apuração seja enviado durante o processamento do fechamento, ele será rejeitado. Nesta situação, o  
+transmissor deve aguardar o término do processamento do fechamento e retransmitir o(s) evento(s). 
+7.4. Otimização na montagem do arquivo
+Não deverá ser incluída a tag de campo com conteúdo zero (para campos tipo numérico) ou  
+vazio (para campos tipo caractere) na geração do arquivo XML para servir de insumo e de resposta  
+para  os  serviços  disponibilizados  pela  EFD-REINF.  Exceto  para  os  campos  identificados  como 
+obrigatórios no modelo, neste caso, deverá constar a tag com o valor correspondente (mesmo que este 
+seja zero ou vazio) e, para os demais campos, deverão ser eliminadas tais tags.
+Para  reduzir  o  tamanho  final  do  arquivo  XML  a  ser  transportado  alguns  cuidados  de 
+programação deverão ser assumidos:
+ Não incluir “zeros não significativos” para campos numéricos, exceto quando o campo possuir  
+um universo definido de valores válidos;
+ Não incluir “espaços” no início ou no final de campos numéricos e alfanuméricos;
+ Não incluir comentários no arquivo XML;
+ Não incluir anotação e documentação no arquivo XML (tag annotation e tag documentation);
+ Não incluir caracteres de formatação.
+43
+7.5. Validação de Schema
+Para garantir minimamente a integridade das informações prestadas e a correta formação dos  
+arquivos XML, o consumidor dos serviços deverá submeter as mensagens XML para validação pelo  
+Schema do XML (XSD – XML Schema Definition), disponibilizado no portal do SPED, antes do seu  
+envio.
+7.6. Comportamento sistêmico para controle do ID dos eventos
+Uma vez aberta uma conexão de transmissão e se inicie o envio do lote, até que se retorne uma  
+mensagem seja ela de processado ou não, os sistemas devem preservar o ID dos xml’s transmitidos no  
+lote.
+Este processo permite que os sistemas de transmissão consigam garantir que o evento foi  
+recepcionado pelo ambiente nacional caso não ocorra a visualização do recibo de transmissão.
+8. Sobre a Produção Restrita
+O  ambiente  de  Produção  Restrita  da  EFD-REINF  tem  o  objetivo  de  disponibilizar  uma 
+infraestrutura para as empresas realizarem os testes funcionais de suas aplicações.
+A  Produção  Restrita  terá  a  mesma  versão  da  EFD-REINF  que  será  disponibilizada  em 
+ambiente de produção. Toda evolução da EFD-REINF será implantada primeiramente no ambiente de  
+Produção Restrita, onde ficará disponível para os testes das empresas por um determinado tempo a ser  
+definido de acordo a característica/tamanho da mudança. Em seguida, será implantada no ambiente de  
+Produção.
+Com isso, as empresas farão uso do ambiente de produção, somente após as suas aplicações  
+estarem amadurecidas e estabilizadas diante dos testes realizados na Produção Restrita.
+É muito importante ressaltar que a Produção Restrita não é um ambiente para as Empresas  
+realizarem testes de carga ou de performance antes de transmitirem para a Produção.
+Seguem abaixo as características dos ambientes:
+Ambiente de Produção Restrita Ambiente de Produção
+Menor capacidade de processamento Grande capacidade de processamento
+Disponibilidade 24 x 7 (com maior flexibilidade 
+para realização de janelas de manutenção) Disponibilidade 24 x7
+Tempo limitado de guarda dos dados.
+(ver seção “Tempo de guarda dos dados” deste 
+documento)
+Tempo de guarda dos dados conforme 
+legislação.
+Limitação da quantidade de eventos permitidos por 
+contribuinte e tipo de evento (ver seção 
+“Quantidade de eventos permitidos” deste 
+documento)
+Sem limite na quantidade de eventos 
+permitidos
+44
+Este ambiente não dá validade jurídica às 
+informações recebidas. Dessa forma, os dados 
+transmitidos pelas empresas podem ser reais ou 
+fictícios.
+As informações recebidas possuem 
+validade jurídica.
+Testes funcionais -
+8.1. Restrições
+O ambiente de Produção Restrita da EFD-REINF obrigará que o certificado digital usado para  
+assinar os eventos seja do mesmo contribuinte (CNPJ) declarado nos eventos a serem enviados. Não  
+serão aceitos certificados digitais do representante legal nem do procurador do contribuinte declarante.
+Especificamente para os eventos abaixo serão aplicadas as seguintes restrições:
+R-2010 – Retenção Contribuição Previdenciária – Serviços Tomados:
+ O grupo idePrestServ poderá ter no máximo 5 ocorrências;
+ O grupo nfs poderá ter no máximo 10 ocorrências;
+R-2020 – Retenção Contribuição Previdenciária – Serviços Prestados 
+ O grupo ideTomador poderá ter no máximo 5 ocorrências;
+ O grupo nfs poderá ter no máximo 10 ocorrências;
+8.2. Quantidade de eventos permitidos
+O ambiente de Produção Restrita está limitado a receber com sucesso uma quantidade máxima  
+de 1000 eventos para cada contribuinte e tipo de evento.
+Após o contribuinte atingir este limite para um determinado tipo de evento, os novos eventos  
+enviados deste tipo específico não serão mais processados, e retornarão mensagem de erro orientando  
+a limpar a base de dados para este contribuinte declarante. Esta limpeza é realizada conforme descrito  
+na seção “Limpar base de dados para o contribuinte informado”. 
+Após limpar a base de dados para o contribuinte, novos eventos do tipo em questão voltarão a  
+ser processados normalmente.
+8.3. Tempo de guarda dos dados
+Considerando que a Produção Restrita é um ambiente para realização de testes funcionais para  
+os empregadores testarem suas aplicações e que os dados recebidos não possuem validade jurídica,  
+não existe a necessidade de armazenamento da mesma forma que é previsto para o ambiente de  
+produção.
+Nesse  sentido,  todos  os  eventos  enviados  ao  ambiente  de  Produção  Restrita  serão  
+completamente excluídos periodicamente ou quando houver a necessidade de manutenção que gere  
+impacto significativo para o sistema.
+45
+8.4. Regra para identificação do ambiente
+Todos os eventos gerados para o ambiente de Produção Restrita deverão ter a informação de  
+identificação do ambiente, conforme abaixo:
+A tag tpAmb deve ser preenchida com o valor 2 – Produção Restrita.
+8.5. Limpar base de dados para o contribuinte informado
+Para excluir todos os dados de um contribuinte informado nos ambientes de Produção 
+Restrita ou de Homologação os seguintes procedimentos descritos abaixo devem ser seguidos: 
+Enviar um evento R-1000 - Informações do Contribuinte, com as seguintes condições para que 
+a exclusão dos eventos seja realizada:
+1. A tag <verProc> deverá ser igual a "RemoverContribuinte"
+2. A tag <classTrib> deverá ser igual a "00"
+3. A tag <tpAmb> deverá ser igual a "2 – Produção Restrita"
+Caso todas as condições sejam atendidas e existam dados para o contribuinte, o sistema exclui  
+da  base  todas  as  informações  do  contribuinte  informado.  A  seguinte  mensagem  será  retornada: 
+Sucesso.
+Caso todas as condições sejam atendidas e o sistema identifica que não existem registros a  
+serem excluídos, a seguinte mensagem será retornada: Não existem informações deste contribuinte, 
+na base de dados, para serem excluídas.
+46
