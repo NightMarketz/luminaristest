@@ -1,0 +1,314 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Instrução Normativa RFB nº 2003, de 18 de janeiro de 2021",
+      "url": "rfb:114965",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/114965/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/114965/visao/multivigente",
+      "id_normativo": "rfb:114965",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-24T01:33:10-03:00",
+      "sha256": "f12ac0d01b43b55445a7856883ba0f6c289387320d77fefb0b573344d9877b79",
+      "arquivo": "docs/D01_rfb-114965-multivigente.json",
+      "texto": "docs/D01_rfb-114965-multivigente.txt",
+      "bytes": 54548,
+      "sha256_texto": "41da0d5ccfd4029a063208249db8d6b82621a741257c775c3fd54ddec5729186",
+      "captura": {
+        "anterior": {
+          "slug": "ciclo-fiscal-prazos",
+          "id": "D05",
+          "baixado_em": "2026-11-21T16:05:59-03:00",
+          "sha256_texto": "41da0d5ccfd4029a063208249db8d6b82621a741257c775c3fd54ddec5729186"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 8.981 de 20/01/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-8981-1995-01-20.md",
+      "url_final": "https://github.com/ctresb/leis/blob/8bf2e5070525043cb82294b9de8630a4aea5e53d/federal/leis-ordinarias/1995/lei-8981-1995-01-20.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-01-20;8981",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "8bf2e5070525043cb82294b9de8630a4aea5e53d",
+      "alertas": [],
+      "baixado_em": "2026-11-24T01:33:44-03:00",
+      "sha256": "b567b47ee6be147deb0aeea63f5cc92d7c93652f40fae948125979dac84680e7",
+      "arquivo": "docs/D02_lei-8981-1995-01-20.md",
+      "texto": "docs/D02_lei-8981-1995-01-20.txt",
+      "bytes": 86250,
+      "sha256_texto": "357afab8cd203455b5ade0fd675f9b9cf2a5ae29511ba1d2d036471a62aa6a8a",
+      "captura": {
+        "anterior": {
+          "slug": "pc1-memoria-calculo",
+          "id": "D03",
+          "baixado_em": "2026-11-03T00:34:50-03:00",
+          "sha256_texto": "357afab8cd203455b5ade0fd675f9b9cf2a5ae29511ba1d2d036471a62aa6a8a"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Lei nº 10.406 de 10/01/2002",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2002/lei-10406-2002-01-10.md",
+      "url_final": "https://github.com/ctresb/leis/blob/40fe0ecf521a6ae5e22077bcc927c90a9477d3a5/federal/leis-ordinarias/2002/lei-10406-2002-01-10.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2002-01-10;10406",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "40fe0ecf521a6ae5e22077bcc927c90a9477d3a5",
+      "alertas": [],
+      "baixado_em": "2026-11-24T01:33:46-03:00",
+      "sha256": "be0cd7d8a1eaacb21cb64f07086929db91f43ad3149b3c721cd33873d328c32c",
+      "arquivo": "docs/D03_lei-10406-2002-01-10.md",
+      "texto": "docs/D03_lei-10406-2002-01-10.txt",
+      "bytes": 678720,
+      "sha256_texto": "0e4b7cd2a2318cc8b363fc81c0eeb25e87d904d1d01439ed3c62c8718ccc8a47",
+      "captura": {
+        "anterior": {
+          "slug": "verificacao-parecer-comissao-cartao",
+          "id": "D07",
+          "baixado_em": "2026-11-21T00:58:50-03:00",
+          "sha256_texto": "0e4b7cd2a2318cc8b363fc81c0eeb25e87d904d1d01439ed3c62c8718ccc8a47"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "Lei nº 9.249 de 26/12/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d955e7e66c4a7176278ee8ac74513668de7fc989/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-12-26;9249",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "d955e7e66c4a7176278ee8ac74513668de7fc989",
+      "alertas": [],
+      "baixado_em": "2026-11-24T01:33:48-03:00",
+      "sha256": "18cb96b64a850a3f9b738da870044230b76a336068e3fae79cb83f10b14d4699",
+      "arquivo": "docs/D04_lei-9249-1995-12-26.md",
+      "texto": "docs/D04_lei-9249-1995-12-26.txt",
+      "bytes": 45124,
+      "sha256_texto": "591b0a142e86869e4b27eca9dc3e0a4dc041842dd7a9c599f4ec0915fffcf555",
+      "captura": {
+        "anterior": {
+          "slug": "regime-fora-simples-salao",
+          "id": "D03",
+          "baixado_em": "2026-11-21T08:39:29-03:00",
+          "sha256_texto": "591b0a142e86869e4b27eca9dc3e0a4dc041842dd7a9c599f4ec0915fffcf555"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "Lei nº 15.270 de 26/11/2025",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2025/lei-15270-2025-11-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/4f02311c78e8f4f559c63b67861c2bd33d691ea2/federal/leis-ordinarias/2025/lei-15270-2025-11-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2025-11-26;15270",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "4f02311c78e8f4f559c63b67861c2bd33d691ea2",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-24T01:33:50-03:00",
+      "sha256": "32c63ec7cff289c036bab1475951631181b42d4f5ced56ceb3304526d50779b9",
+      "arquivo": "docs/D05_lei-15270-2025-11-26.md",
+      "texto": "docs/D05_lei-15270-2025-11-26.txt",
+      "bytes": 24779,
+      "sha256_texto": "32a3ddba205531ddd2c6c2edcb8eddf9df035f9216850ac7ca52465f338e86ff",
+      "captura": {
+        "anterior": {
+          "slug": "parecer-salao-sp-4-pessoas",
+          "id": "D10",
+          "baixado_em": "2026-11-20T16:48:30-03:00",
+          "sha256_texto": "32a3ddba205531ddd2c6c2edcb8eddf9df035f9216850ac7ca52465f338e86ff"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "Lei nº 9.250 de 26/12/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-9250-1995-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ec2d052273aea51cd30fac55a779a8d933c11046/federal/leis-ordinarias/1995/lei-9250-1995-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-12-26;9250",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "ec2d052273aea51cd30fac55a779a8d933c11046",
+      "alertas": [],
+      "baixado_em": "2026-11-24T01:34:08-03:00",
+      "sha256": "aa9eedaae0195205b7f5bcde33c46572d4f1f5352de3cf92ec1e36342e88befd",
+      "arquivo": "docs/D06_lei-9250-1995-12-26.md",
+      "texto": "docs/D06_lei-9250-1995-12-26.txt",
+      "bytes": 49701,
+      "sha256_texto": "70925b98e546737ec19a034c451aef94dbe734bdbe969b5cf90434e81a66a214",
+      "captura": {
+        "anterior": {
+          "slug": "parecer-salao-sp-4-pessoas",
+          "id": "D09",
+          "baixado_em": "2026-11-20T16:47:47-03:00",
+          "sha256_texto": "70925b98e546737ec19a034c451aef94dbe734bdbe969b5cf90434e81a66a214"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "L9250",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/l9250.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/l9250.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:34:23-03:00",
+      "sha256": "5a157ec5a19239f7b1576b6b549c69022fcb1a4bbe3541fb90baf52fb3ffb803",
+      "arquivo": "docs/D07_l9250-htm.html",
+      "texto": "docs/D07_l9250-htm.txt",
+      "bytes": 269117,
+      "sha256_texto": "1382d55a943586d33bd0ef08e1fb2bb3fa8a66b1767cfc730c20ff4c650a2f4c",
+      "captura": {
+        "anterior": {
+          "slug": "retencoes-fonte-pr1-reinf-tabelas",
+          "id": "D04",
+          "baixado_em": "2026-10-24T17:16:23-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "SEM_COMPARACAO"
+      },
+      "alertas": [
+        "há captura de 2026-10-24 (retencoes-fonte-pr1-reinf-tabelas D04), mas o texto dela não foi guardado"
+      ]
+    },
+    {
+      "id": "D08",
+      "titulo": "Instrução Normativa RFB nº 1700, de 14 de março de 2017",
+      "url": "rfb:81268",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/81268/visao/multivigente",
+      "id_normativo": "rfb:81268",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-24T01:34:59-03:00",
+      "sha256": "0ffa45faae60ed62285940fb442dcb472b5c2529ccb0ae491c20cec9c5446c42",
+      "arquivo": "docs/D08_rfb-81268-multivigente.json",
+      "texto": "docs/D08_rfb-81268-multivigente.txt",
+      "bytes": 2664935,
+      "sha256_texto": "04d3e7f1a6ad70c872df1aad456c05a126734f195cb6364e979908b484857f87",
+      "anexos": [
+        {
+          "nome": "ANEXO I.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51960"
+        },
+        {
+          "nome": "Anexo I.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/52020"
+        },
+        {
+          "nome": "ANEXO II.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51961"
+        },
+        {
+          "nome": "Anexo II.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/52021"
+        },
+        {
+          "nome": "Anexo .html (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43237"
+        },
+        {
+          "nome": "tabela.html",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43557"
+        },
+        {
+          "nome": "Anexo IV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43258"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43259"
+        },
+        {
+          "nome": "Anexo VI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43260"
+        },
+        {
+          "nome": "Anexo VII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43261"
+        },
+        {
+          "nome": "Anexo VIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43262"
+        },
+        {
+          "nome": "Anexo IX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43263"
+        },
+        {
+          "nome": "Anexo X.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51971"
+        },
+        {
+          "nome": "Anexo XI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51972"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "regime-fora-simples-salao",
+          "id": "D12",
+          "baixado_em": "2026-11-21T08:43:38-03:00",
+          "sha256_texto": "04d3e7f1a6ad70c872df1aad456c05a126734f195cb6364e979908b484857f87"
+        },
+        "tipo": "IGUAL"
+      },
+      "alertas": [
+        "14 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D09",
+      "titulo": "Decreto-Lei nº 1.598 de 26/12/1977",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos-lei/1977/del-1598-1977-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d5fce5484986fb975f9fe9c086c943774d63859f/federal/decretos-lei/1977/del-1598-1977-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto.lei:1977-12-26;1598",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "d5fce5484986fb975f9fe9c086c943774d63859f",
+      "alertas": [],
+      "baixado_em": "2026-11-24T01:35:16-03:00",
+      "sha256": "3a4f02e9cca3d46efbd8ed906783149fbf170a2205948643344ca153a5fdf7ed",
+      "arquivo": "docs/D09_del-1598-1977-12-26.md",
+      "texto": "docs/D09_del-1598-1977-12-26.txt",
+      "bytes": 123461,
+      "sha256_texto": "803b0a7c8c4bfd3e688f0e6c6a281ba505ce7c66f27769f019b0b71808442a02",
+      "captura": {
+        "anterior": {
+          "slug": "triagem-contador-2026-10-30",
+          "id": "D06",
+          "baixado_em": "2026-10-30T02:21:01-03:00",
+          "sha256_texto": "803b0a7c8c4bfd3e688f0e6c6a281ba505ce7c66f27769f019b0b71808442a02"
+        },
+        "tipo": "IGUAL"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "ecd-presumido-real-in2003",
+  "pergunta": "Pela IN RFB 2.003/2021 art. 3º, a ECD é obrigatória para o salão no Lucro Presumido (inclusive quando distribui lucro acima do limite sem escrituração) e no Lucro Real? Vale para 2026 e 2027?",
+  "criado": "2026-11-24T01:33:09-03:00"
+}
