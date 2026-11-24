@@ -619,9 +619,11 @@ ul.vir b:first-child{display:inline-grid;place-items:center;width:20px;height:20
   </section>
 
   <footer>
+        <div id="exFontes"></div>
         <div>Base: dossiê <span class="num">pesquisas-legais/parecer-salao-sp-4-pessoas</span> (normas lidas em 20/11/2026): LC 123 e Anexos I e III, LC 214 (arts. 12, 47, 57, 344, 347, 349, 542 e Anexo XX), Res. CGSN 140, Lei 12.592, Lei SP 13.701, Leis 9.249, 9.250, 9.430, 9.715, 9.718, 7.689, 10.637, 10.833, 10.666, 9.424, 8.036, 8.212, 4.090, Decreto 3.048 (Anexo V), CLT, Código Civil, IN RFB 2.110 (art. 84 e Anexos II e III), 2.237 e 2.003, NBC TG 1002; Res. CGSN 190; Leis 7.418, 11.196, 11.482 e 3.207; Decreto 10.854; quadro do art. 577 da CLT; Leis SP 13.477 e 13.647; Portaria SMS.G 266/2025; CCT SP006651/2026 e aditivo SP009373/2026; TST IRR 57 e 65; STF ADI 5.625.</div>
         <div>A conta supõe receita igual nos 12 meses, salvo quando o bloco "Meses do ano" da ficha traz sazonalidade ou a receita de cada mês, e não inclui o PIS/Cofins monofásico embutido no preço de compra do cosmético (a aba Insumos explica por que ele não vira conta). Vale-transporte, benefícios, taxa do cartão e TFE vêm da ficha; o pró-labore, da ficha ou dos sócios cadastrados na equipe; as outras despesas, da ficha ou da lista de despesas; a depreciação, da lista de equipamentos dos Cadastros (vida útil do Anexo III da IN RFB 1.700); o adicional por tempo de serviço, dos anos de casa de cada CLT (CCT cl. 17ª: 1,5% por ano, até 15%; 1% com REPIS), sobre o salário fixo; a provisão de rescisão, da rotatividade da ficha (aviso prévio, 13º e férias do aviso, FGTS, multa de 40%, trintídio e homologação); as adições e exclusões do Real, do bloco "Ajustes do lucro real"; o DIFAL do insumo de outro estado, da aba Insumos. A comissão em % dos serviços leva o descanso semanal remunerado: comissão ÷ dias trabalhados × domingos e feriados do ano (TST Súmula 27; Lei 605 art. 7º "c"; dossiê <span class="num">pesquisas-legais/simulador-salao-monofasico-dsr</span>, 21/11/2026). Não substitui o PGDAS-D, que calcula o DAS oficial.</div>
         <div>Insumos: dossiê <span class="num">pesquisas-legais/insumos-salao-sp</span> (20/11/2026): LC 123 arts. 13, 18 e 23, Lei 10.147, Leis 10.637 e 10.833 art. 3º, IN RFB 2.121 arts. 160, 176 e 178, SC Cosit 496/2017 e 16/2024, STJ Tema 779, LC 214 arts. 12, 13, 47, 57 e 542, Decreto 12.955 arts. 16 e 62, Lei SP 6.374 arts. 7º e 34, RICMS/SP art. 115, Portaria SRE 94/2025, Lei SP 13.701 art. 14, Res. CGSN 140 art. 25 § 18, RIR art. 302, NBC TG 1002 Seções 5 e 13.</div>
+        <div>DIFAL no Presumido e no Real: dossiê <span class="num">pesquisas-legais/icms-sp-difal-uso-consumo-rpa</span> (24/11/2026): RICMS/SP arts. 2º VI e § 5º, 37 VI e § 11, 49, 52 I, 55 IV, 117 e Anexo IV; LC 87 arts. 12 XV, 13 § 6º e 33 I; Res. Senado 22/1989 e 13/2012; RC 34252/2026 e 33094/2026.</div>
         <div>Fora do Simples: dossiê <span class="num">pesquisas-legais/regime-fora-simples-salao</span> (21/11/2026): Lei 8.212 arts. 22, 28 e 30, STF Temas 69 e 985, STJ Tema 1.008, Lei 9.249 arts. 10, 15 e 20, Lei 9.430 arts. 1º, 2º, 5º, 6º e 28, LC 224 arts. 4º e 14, Decreto 12.808 art. 12, IN RFB 1.700 art. 238, Lei 10.147 arts. 1º e 2º, Leis 10.637 e 10.833 art. 3º, MP 2.158-35 art. 18, Decreto SP 53.151 arts. 71 e 74, Decreto 12.955 art. 45, Lei SP 6.374 arts. 34 e 36.</div>
         <div>Depreciação: dossiê <span class="num">pesquisas-legais/salao-depreciacao-equipamentos</span> (21/11/2026): IN RFB 1.700 arts. 121, 123 e 124 e Anexo III, DL 1.598 art. 15, RIR arts. 313, 317 e 323, Leis 10.637 e 10.833 art. 3º VI e §§ 1º III e 14, Lei 11.774 art. 1º XII, LC 214 arts. 47, 108 e 380.</div>
         <div>Adicional por tempo de serviço: dossiê <span class="num">pesquisas-legais/salao-cct-adicional-tempo-servico</span> (21/11/2026): CCT SP006651/2026 cl. 4ª, 17ª e 36ª, aditivo SP009373/2026 cl. 5ª, TST Súmula 203.</div>
@@ -878,12 +880,12 @@ function regimes(x,modo,ano){
   // depreciacao v1: a quota do mês sai do lucro real; é dedutível no IRPJ e na CSLL (IN RFB 1.700 arts. 121 § 5º e 123)
   /* real-insumo v1 */ // o insumo aplicado no serviço é custo do serviço vendido e sai do lucro (RIR, Decreto 9.580, art. 302 I; CSLL sobre o mesmo resultado, Lei 7.689 art. 2º)
   // cartao v1: a taxa da adquirente é despesa operacional, como as outras despesas da ficha
-  // lucro-fecha v2: o DIFAL do insumo (não recuperável, LC 87 art. 33 I) também sai do lucro real e da base da CSLL (RIR arts. 302 I e 352)
+  // lucro-fecha v2: o DIFAL do insumo (não recuperável, LC 87 art. 33 I) também sai do lucro real e da base da CSLL (RIR arts. 302 I e 352); difal-rpa v1: o do RPA (art. 117)
   // lalur v1: Lc = lucro contábil antes do IRPJ e da CSLL. Lucro real = Lc + adições (gastos indedutíveis da ficha e a provisão de rescisão, A.178)
   // − exclusões − compensação de prejuízo fiscal até 30% do lucro ajustado (Lei 9.065 arts. 15 e 16; IN RFB 1.700 art. 64), até 1/12 do saldo por mês.
   // A gratificação a administradores é adição só no IRPJ (RIR art. 315; A.163). A CSLL não sai da base do IRPJ (A.058): a conta nunca a deduz.
   // A compensação é uma só, sobre o total com a revenda; os ajustes ficam na parte dos serviços (L, LC) e a revenda soma o resto.
-  const ajD=numP(c.ajDesp), Lc=bF-pre.tot-c.folha-c.enc.tot-desp-(c.insumo||0)-(c.difal||0)-(c.cartao||0)-depM-ajD;
+  const ajD=numP(c.ajDesp), Lc=bF-pre.tot-c.folha-c.enc.tot-desp-(c.insumo||0)-(qI.difalRPA||0)-(c.cartao||0)-depM-ajD;
   const adI=ajD+provNd, adC=adI-numP(x.aGra), exc=numP(x.eOut), preR=fecha([...icmsIt(),...revPC(true)]), Lrev=rev-cmv-preR.tot;
   const TI=Lc+Lrev+adI-exc, TC=Lc+Lrev+adC-exc, compI=Math.min(numP(x.pfis)/12,.3*Math.max(0,TI)), compC=Math.min(numP(x.bneg)/12,.3*Math.max(0,TC));
   const L=Lc+adI-exc-compI, LC=Lc+adC-exc-compC, aj=adI!==0||exc>0||compI>0||compC>0;
@@ -1064,6 +1066,13 @@ function guiaDAS(ano,ap,rbt,e3,e1,serv,rev,mono){mono=+ano<2027?Math.min(1,Math.
 // Insumo do serviço: o que a lei dá em número. o = {fora: % de outro estado, cos: % cosmético, inter: 0.12|0.04, forn: "REG"|"SN", efForn: % do fornecedor do Simples}
 // ICMS interno em SP: 25% para cosméticos 33.03, 33.04, 33.05 (exceto 33.05.10) e 33.07; 18% para o resto (Lei SP 6.374 art. 34 I e § 1º 1 e § 5º 3).
 // DIFAL do optante com inscrição estadual: (interna − 12% ou 4%) × valor, por fora (RICMS/SP art. 115 XV-A "a" e § 8º; RC 25481/2022).
+// difal-rpa v1: no Presumido e no Real (RPA), crédito do ICMS da origem e débito da interna sobre a base por dentro, na apuração do mês
+// (RICMS/SP art. 117 I e II; art. 37 VI e § 11; art. 49; LC 87 art. 13 § 6º II). Leitura (a): base = (valor − ICMS da origem) ÷ (1 − interna);
+// (b): base = valor ÷ (1 − interna). Dossiê icms-sp-difal-uso-consumo-rpa, Ambiguidade 1; pergunta ao contador na aba 7.
+const DIFAL_RPA_LEITURA="a";
+function difalRpaParte(vb,al,inter,l){const io=vb*inter, base=((l==="b"?vb:vb-io))/(1-al);return{vb,io,base,deb:base*al,d:Math.max(0,base*al-io)}}
+const difalRpaPct=(al,inter)=>difalRpaParte(1,al,inter,DIFAL_RPA_LEITURA).d;
+const difalDe=(q,k)=>k==="PR"||k==="RE"?q.difalRPA:q.difal;
 // Crédito: Simples 0 (LC 123 art. 23; em 2027, LC 214 art. 47 § 9º I); Presumido 2026 0 (cumulativo); Real 2026 9,25% (Lei 10.833 art. 3º II; IN RFB 2.121 art. 178);
 // 2027 regime regular: CBS/IBS destacados (LC 214 art. 47); fornecedor do Simples: a fatia de CBS/IBS do DAS dele, 15,33% + 0,17% da alíquota efetiva (LC 214 art. 47 § 9º II; Anexo XVIII).
 const INS_LEI={cos:.25,ger:.18,pisCofNC:.0925,irpj:.15,csll:.09,dasI27:(15.33+.17)/100,ibs27:.001,cbsRed:.001};
@@ -1072,9 +1081,11 @@ function insumoCalc(x,o){o=o||{};
   const inter=+o.inter===.04?.04:.12, contrib=numP(x.rev)>0; // quem revende tem inscrição estadual e é contribuinte (Lei SP 6.374 art. 7º)
   const vf=v*fora, dCos=vf*cos*(INS_LEI.cos-inter), dGer=vf*(1-cos)*(INS_LEI.ger-inter);
   const difal=contrib?dCos+dGer:0;
+  const lA=DIFAL_RPA_LEITURA, lB=lA==="a"?"b":"a", rC=difalRpaParte(vf*cos,INS_LEI.cos,inter,lA), rG=difalRpaParte(vf*(1-cos),INS_LEI.ger,inter,lA);
+  const difalRPA=contrib?rC.d+rG.d:0, difalRPAalt=contrib?difalRpaParte(vf*cos,INS_LEI.cos,inter,lB).d+difalRpaParte(vf*(1-cos),INS_LEI.ger,inter,lB).d:0;
   const a27=Math.max(0,numP(x.cbs)/100-INS_LEI.cbsRed)+INS_LEI.ibs27, efF=numP(o.efForn)/100;
   const reg27=o.forn==="SN"?(efF>0?v*efF*INS_LEI.dasI27:null):v*a27/(1+a27);
-  return{v,fora,cos,inter,contrib,vf,dCos,dGer,difal,a27,efF,forn:o.forn==="SN"?"SN":"REG",
+  return{v,fora,cos,inter,contrib,vf,dCos,dGer,difal,rC,rG,difalRPA,difalRPAalt,a27,efF,forn:o.forn==="SN"?"SN":"REG",
     cred:{S26:0,PR26:0,RE26:v*INS_LEI.pisCofNC,S27:0,SR27:reg27,PR27:reg27,RE27:reg27},irRE:v*(INS_LEI.irpj+INS_LEI.csll)};
 }
 /* regime aplicado v1 */
@@ -1094,7 +1105,7 @@ function cenarioReg(x,modo,reg){
   const r=Rg[k], its=r.items.concat(r.rev?r.rev.items:[]), g={receita:0,folha:0,lucro:0}; its.forEach(i=>g[i.g]+=i.v);
   const sr=k==="SR", tot=totReg(Rg,k), das=sr?its.filter(i=>i.bl.startsWith("DAS")).reduce((a,i)=>a+i.v,0):0, rec=sr?c.recMes:Rg.bF+numP(x.rev), rs=sr?c.repSem:0;
   Object.assign(c,{trib:r,tribIt:its,tribTot:tot,tribG:g,dasReg:das,recMes:rec});
-  if(sr){c.ibsFora=0;c.cbsReg=tot-das-(c.issFora||0)-(c.icmsFora||0)}else{c.repSem=0;c.limIsento=null}
+  if(sr){c.ibsFora=0;c.cbsReg=tot-das-(c.issFora||0)-(c.icmsFora||0)}else{c.repSem=0;c.limIsento=null;c.difal=insumoCalc(x,x.ins||{}).difalRPA||0}
   /* regime-fora v1 */ // Presumido: sem escrituração, sai isento por ano a base do IRPJ menos IRPJ, CSLL, PIS e Cofins (IN RFB 1.700 art. 238 § 2º I).
   // Em 2027 não há PIS nem Cofins, e a norma não fala da CBS e do IBS: a conta desconta só IRPJ e CSLL, como está escrito (ponto aberto na aba Lucro).
   if(k==="PR"){c.limIsento=12*(r.presBase-its.filter(i=>/^(IRPJ|CSLL|Adicional|PIS|Cofins)/.test(i.k)).reduce((a,i)=>a+i.v,0));
@@ -1224,15 +1235,29 @@ function sugestoes(x,reg){
 }
 /* ===== /CALC ===== */
 
-const DEF={fonte:"CAT",serv:40000,rev:0,cmv:50,desp:8000,soc:1,ano:"2026",rat:2,fap:1,terc:5.8,cred:6000,cbs:11.3,insumo:0,vt:0,cesta:250,ben:57.1,pl:0,teto:0,tfe:236.35,rcos:100,rxam:0,mdr:0,dsem:6,odo:0,cap:0,repis:"N",rot:0,rep27:0,fd27:"REG",fd27a:0,pres27:32,aMul:0,aBri:0,aDoa:0,aAli:0,aNn:0,aGra:0,aOut:0,eOut:0,pfis:0,bneg:0};
+const DEF={fonte:"CAT",serv:40000,rev:0,cmv:50,desp:8000,soc:1,ano:"2026",rat:2,fap:1,terc:5.8,cred:6000,cbs:11.3,insumo:2880,vt:0,cesta:250,ben:57.1,pl:1621,teto:0,tfe:236.35,rcos:100,rxam:0,mdr:0,dsem:6,odo:0,cap:0,repis:"N",rot:0,rep27:0,fd27:"REG",fd27a:0,pres27:32,aMul:0,aBri:0,aDoa:0,aAli:0,aNn:0,aGra:0,aOut:0,eOut:0,pfis:0,bneg:0};
 // catálogo de exemplo: soma R$ 40.000 de serviços, igual ao parecer
 const TIPOS={"6.01c":["Cabelo, barba","060101","LC 116 subitem 6.01"],"6.01m":["Manicure, pedicure","060101","LC 116 subitem 6.01"],"6.02":["Estética, depilação","060201","LC 116 subitem 6.02"],"6.03":["Massagem","060301","LC 116 subitem 6.03"]};
 const DEF_CAT={sv:[
-  {n:"Corte feminino",t:"6.01c",q:"p1",p:120,m:50},{n:"Coloração",t:"6.01c",q:"p1",p:250,m:40},{n:"Hidratação",t:"6.01c",q:"p1",p:90,m:30},{n:"Penteado",t:"6.01c",q:"p1",p:130,m:10},
-  {n:"Corte feminino",t:"6.01c",q:"p2",p:120,m:70},{n:"Escova",t:"6.01c",q:"p2",p:80,m:100},{n:"Corte masculino",t:"6.01c",q:"p2",p:60,m:60}],pd:[],dp:[],bens:[]};
+  // exemplo-mercado v1: insumo por atendimento = 7,2% do preço (IBGE, PAS 2023; DEF_FONTES)
+  {n:"Corte feminino",t:"6.01c",q:"p1",p:120,m:50,i:8.64},{n:"Coloração",t:"6.01c",q:"p1",p:250,m:40,i:18},{n:"Hidratação",t:"6.01c",q:"p1",p:90,m:30,i:6.48},{n:"Penteado",t:"6.01c",q:"p1",p:130,m:10,i:9.36},
+  {n:"Corte feminino",t:"6.01c",q:"p2",p:120,m:70,i:8.64},{n:"Escova",t:"6.01c",q:"p2",p:80,m:100,i:5.76},{n:"Corte masculino",t:"6.01c",q:"p2",p:60,m:60,i:4.32}],pd:[],dp:[],bens:[]};
 // equipe de exemplo: R$ 20.000 de serviços para cada cabeleireiro
 const DEF_EQ=[{id:"p1",n:"Cabeleireiro 1",f:"cab",v:"CLT",s:6000,cota:50,cnpj:true},{id:"p2",n:"Cabeleireiro 2",f:"cab",v:"CLT",s:6000,cota:50,cnpj:true},
   {id:"p3",n:"Assistente",f:"ass",v:"CLT",s:2000,cota:50,cnpj:false},{id:"p4",n:"Recepcionista",f:"rec",v:"CLT",s:2000,cota:50,cnpj:false}];
+// exemplo-mercado v1 (F-SIM-6/7): cada custo do exemplo com padrão e fonte, ou vazio com aviso. Dossiê pesquisas-legais/salao-padrao-mercado-sp (24/11/2026).
+const DEF_FONTES=[
+  {k:"insumo",n:"Insumos",pad:"7,2% do preço de cada serviço do catálogo (R$ 2.880 no mês)",faixa:[.072,.094],fonte:"IBGE, Pesquisa Anual de Serviços 2023, Tabelas 5 e 6: materiais de consumo e reposição sobre a receita operacional líquida, 7,2% nos salões com 20 ou mais pessoas e 9,4% em serviços pessoais de todos os portes"},
+  {k:"pl",n:"Pró-labore",pad:"R$ 1.621 por sócio, o salário mínimo de 2026",faixa:[1621,5635],fonte:"Decreto 12.797/2025 art. 1º; IBGE, PAS 2023, Tabelas 10 e 11: R$ 1.527 (serviços pessoais) a R$ 5.635 (salões com 20 ou mais pessoas) por sócio por mês, em valores de 2023"},
+  {k:"mdr",n:"Taxa do cartão",faixa:[0,1.79],aviso:"vazia: nenhuma fonte aceita dá a parte da receita do salão que entra pelo cartão. O desconto médio é de 1,79% do que passa no cartão (Banco Central, 2º trimestre de 2026: 1,05% no débito a 2,30% no crédito parcelado); com tudo no cartão, o campo seria 1,79%"},
+  {k:"vt",n:"Vale-transporte",aviso:"vazio: a tarifa de R$ 5,30 da Prefeitura de SP daria R$ 275,60 por empregado (2 × R$ 5,30 × 26 dias; de R$ 233,20 a R$ 551,20), mas a Prefeitura não está entre as fontes aceitas para o exemplo, e isso espera decisão"},
+  {k:"rot",n:"Rotatividade",aviso:"vazia: nenhuma fonte aceita (Sebrae, IBGE, convenção coletiva, Banco Central) mede a rotatividade de salão; sem ela, a conta não provisiona rescisão"},
+  {k:"bens",n:"Equipamentos",aviso:"lista vazia: nenhuma fonte aceita dá o preço de cada bem. O setor compra de 1,5% a 5,7% da receita por ano em máquinas, equipamentos e móveis (IBGE, PAS 2023, Tabela 13); sem a lista, a conta não deprecia"}];
+// faixa do resultado do exemplo: os custos com padrão na ponta alta (insumo 9,4%, pró-labore de R$ 5.635 por sócio) e o cartão a 1,79%
+function faixaEx(x,reg,D0){const f=k=>DEF_FONTES.find(d=>d.k===k).faixa, fi=f("insumo"), s=fi[1]/fi[0], pH=f("pl")[1];
+  const hi={...x,insumo:x.insumo*s,insPor:x.insPor?Object.fromEntries(Object.entries(x.insPor).map(([k,v])=>[k,v*s])):x.insPor,pl:pH*x.soc,plList:x.plList?x.plList.map(()=>pH):x.plList,mdr:f("mdr")[1]};
+  return{alto:cenarioReg({...x,...D0},"CAD",reg).resultado,baixo:cenarioReg({...hi,...D0},"CAD",reg).resultado}}
+const exFontesHtml=()=>"<b>Exemplo</b> (dossiê <span class=\"num\">pesquisas-legais/salao-padrao-mercado-sp</span>, 24/11/2026): "+DEF_FONTES.map(d=>d.fonte?`${d.n}: ${d.pad} (${d.fonte})`:`${d.n}: ${d.aviso}`).join("; ")+". O resultado do exemplo sai como faixa, do custo mais baixo ao mais alto das fontes.";
 let EQ=JSON.parse(JSON.stringify(DEF_EQ));
 const KEY="sts-ficha-v2";
 let CAT=JSON.parse(JSON.stringify(DEF_CAT));
@@ -1328,13 +1353,14 @@ function render(){
   const A=cenarioReg(x,"CLT",REG), B=cenarioReg(x,"PARC",REG);
   const canon=o=>JSON.stringify(Object.keys(o).sort().map(k=>[k,o[k]])); // a ordem das chaves não pode decidir se a ficha é o exemplo
   const isEx=canon(raw)===canon(useCat?{...DEF,serv:raw.serv,rev:raw.rev,cmv:raw.cmv,insumo:raw.insumo}:DEF)&&JSON.stringify(CAT)===JSON.stringify(DEF_CAT)&&JSON.stringify(EQ)===JSON.stringify(DEF_EQ);
-  $("#exNote").textContent=isEx?"Os valores iniciais são um exemplo, não os números de um salão real.":"Conta feita com os números que você preencheu.";
+  const fx=isEx&&!c.am?faixaEx(x,REG,D0):null;
+  $("#exNote").innerHTML=isEx?"Os valores iniciais são um exemplo, não os números de um salão real. Com fonte: "+DEF_FONTES.filter(d=>d.fonte).map(d=>d.n.toLowerCase()+", "+d.pad).join("; ")+". Vazios, sem padrão de fonte aceita: "+DEF_FONTES.filter(d=>!d.fonte).map(d=>d.n.toLowerCase()).join(", ")+". As fontes e o motivo de cada campo vazio estão no rodapé. Preencha com os números do seu salão.":"Conta feita com os números que você preencheu.";
 
   // KPIs
   $("#kpis").innerHTML=[
     c.reg!=="S"?["Tributos do mês",R(c.tribTot),(c.reg==="SR"?"DAS "+R(c.dasReg)+" + CBS e IBS regulares":NOME[c.reg])+" · "+P(c.recMes>0?c.tribTot/c.recMes:0,1)+" da receita"]:["DAS do mês",c.foraSimples?"fora do Simples":R(c.das+(c.issFora||0)+(c.ibsFora||0)+(c.icmsFora||0)),c.foraSimples?(c.ap.retro.excl||c.ap.ini==="seg"&&c.ap.porAnt.excl?"acima do limite proporcional do início de atividade":"receita acima de R$ 4,8 mi"):"alíquota efetiva "+P(c.ef3)+" nos serviços"],
     ["Pessoal do mês",R(pessoalC(c)),"equipe CLT "+R(c.folha+c.enc.ben+c.enc.vt)+(c.enc.pl>0?" + pró-labore "+R(c.enc.pl):" · sem pró-labore na ficha")],
-    ["Resultado do salão",R(c.resultado),c.enc.pl>0?"por mês, depois de imposto, equipe, pró-labore e despesas":"por mês; sem pró-labore na ficha, inclui a retirada do sócio"],
+    ["Resultado do salão",R(c.resultado),fx?"exemplo: de "+R(fx.baixo)+" a "+R(fx.alto)+" por mês com os custos da faixa das fontes (rodapé), depois de imposto, equipe, pró-labore e despesas":c.enc.pl>0?"por mês, depois de imposto, equipe, pró-labore e despesas":"por mês; sem pró-labore na ficha, inclui a retirada do sócio"],
     ["Lucro do ano",R(c.lucroAno),c.reg==="RE"?"no Real sai isento o lucro da escrituração (IN RFB 1.700 art. 238 § 3º)":c.limIsento==null?(c.am?"soma dos 12 meses":"12 meses iguais"):(c.am?"soma dos 12 meses · teto isento: ":"teto isento sem contabilidade: ")+R(c.limIsento)+" por ano"]
   ].map(([t,v,s],i)=>`<div class="kpi"><small>${t}</small><span class="v">${v}</span><small>${c.am&&i<3?"em "+String(c.mesN).padStart(2,"0")+"/"+x.ano+" · ":""}${s}</small></div>`).join("");
 
@@ -1593,7 +1619,8 @@ function render(){
   if(parc)cal.push(["Mensal","Repasse aos parceiros",R(c.repasse)+", com retenção e nota do parceiro"]);
   if(c.retINSS>0||c.retIR>0)cal.push(["Dia 20","INSS e IRRF retidos do parceiro sem CNPJ",R(c.retINSS)+" de INSS e "+R(c.retIR)+" de IRRF (Lei 10.666 art. 4º; Lei 11.196 art. 70 I \"e\")"]);
   if(x.rev>0)cal.push(["A cada venda","NFC-e (ou NF-e) do produto","exige inscrição estadual antes de vender (RICMS/SP art. 19); CF-e-SAT vedado desde 01/01/2026"]);
-  {const q=insumoCalc(x,INS);if(q.difal>0)cal.push(["Último dia do 2º mês","DIFAL do insumo de outro estado",R(q.difal)+" em guia de recolhimentos especiais (RICMS/SP art. 115 XV-A)"])}
+  if(c.difal>0)cal.push(c.reg==="PR"||c.reg==="RE"?["Dia 20","DIFAL do insumo de outro estado",R(c.difal)+" dentro da apuração do ICMS do mês anterior (RICMS/SP art. 117 I e II), no saldo pago em GARE, CPR 1200 (Anexo IV); sem expediente bancário, o dia útil seguinte (art. 596 § 2º)"]
+    :["Último dia do 2º mês","DIFAL do insumo de outro estado",R(c.difal)+" em guia de recolhimentos especiais (RICMS/SP art. 115 XV-A)"]);
   if(c.enc.vt>0)cal.push(["Antes do mês","Vale-transporte",R(c.enc.vt)+" da parte do salão (Decreto 10.854 art. 114)"]);
   if(c.enc.ben>0)cal.push(["Dias 10 e 15","Benefícios da convenção",R(c.enc.ben)+": Seguro + Social até o dia 10, cesta até o dia 15"]);
   cal.push(["Fev a nov · 20/12","13º: adiantamento e saldo","e DCTFWeb anual até 20/12"],
@@ -1625,6 +1652,7 @@ function render(){
     ["Provisão de rescisão: aviso do 1º ano, base da multa e teto da convenção",numP(x.rot)>0,"Com 1 ano completo de casa, o aviso prévio é de 33 ou de 30 dias (Lei 12.506; Nota Técnica MTE 184/2012)? A multa de 40% inclui o FGTS do aviso prévio indenizado (OJ-SDI1-42 II)? A cl. 38ª da CCT, com 60 dias para o empregado com mais de 45 anos e mais de 2 anos de casa, soma ou limita os dias da Lei 12.506?","A conta usa a leitura mais cara para o salão: 33 dias com 1 ano completo, multa sobre os depósitos e o FGTS da rescisão, e os dias da Lei 12.506 sem o piso da cl. 38ª, que depende da idade (o cadastro não tem a idade). A Nota Técnica 184/2012 foi lida só em fonte secundária."],
     ["Lucro Real: retirada variável do sócio",c.reg==="RE","A retirada do sócio que não é pró-labore mensal e fixo é adição no lucro real (IN RFB 1.700 art. 78; Anexo I, A.181)? E o bônus ao sócio-gerente é gratificação a administrador, adição só no IRPJ (RIR art. 315; A.163)?","O A.181 remete à Lei 4.506 art. 47 § 5º e ao DL 5.844 art. 43, que a pesquisa não leu: a leitura de que a retirada variável é adição é inferida. Se o salão paga ao sócio um valor que muda todo mês, lance a parte variável em \"Outras adições\" ou na gratificação, conforme a resposta."],
     ["Parceria: quando nasce o vínculo",c.parc||c.equipe.some(p=>PARC_OK.includes(p.f)),"O art. 1º-C da Lei 12.592 liga os dois casos de vínculo com 'e' (I - sem contrato de parceria formalizado; e II - parceiro em função diferente da do contrato). O vínculo exige os dois juntos, ou basta um?","A conta e a aba 4 usam a leitura segura: basta um. Pela letra, os incisos seriam cumulativos, o que reduz o risco do salão. Enquanto durar a parceria formalizada, não há relação de emprego (art. 1º-A § 11)."],
+    ["DIFAL no Presumido e no Real: a base por dentro",(c.reg==="PR"||c.reg==="RE")&&c.difal>0,"Salão em SP no Lucro Presumido, contribuinte do ICMS, compra cosmético de MG por R$ 1.000 com 12% destacado, para uso no serviço. Pelo art. 117 II e o art. 37 § 11 do RICMS, o débito é 25% × (1.000 − 120) ÷ 0,75 = R$ 293,33, com DIFAL líquido de R$ 173,33?",`O RICMS manda formar a base com a alíquota interna e pôr o imposto dentro dela (arts. 37 § 11 e 49), e a Sefaz-SP fala em recomposição, sem dar a conta (RC 34252/2026; RC 33094/2026 item 19). A conta usa ${DIFAL_RPA_LEITURA==="a"?"(valor − ICMS da origem) ÷ (1 − interna), a leitura que decorre da LC 87 art. 13 § 6º":"valor ÷ (1 − interna), a leitura mais cara para o salão"}; pela outra, o DIFAL do exemplo seria ${DIFAL_RPA_LEITURA==="a"?"R$ 213,33":"R$ 173,33"}. No Simples e no SR vale outra regra (art. 115 XV-A).`],
     ["Insumo estético aplicado no cliente e o crédito de CBS (2027)",x.ano==="2027","Produtos cosméticos (NCM 3305) aplicados pelo profissional no cliente, dentro do salão, enquadram-se no art. 57 § 3º III da LC 214 (Decreto 12.955 art. 62 p.ú. III \"b\") e dão crédito de CBS a quem está no regime regular?","Só pesa fora do DAS ou com a opção pelo regime regular. A leitura mais provável é que dá crédito; a conservadora é não tomá-lo até haver resposta (aba Insumos)."]];
   $("#o7").innerHTML=`<h3>Respondido pela pesquisa</h3><div class="qs">${res7.map(([t,a,f])=>`<div class="q"><h3>${t}</h3><span>${a}</span><span class="law">${f}</span></div>`).join("")}</div>
     <h3>Ainda é decisão</h3><div class="qs">${qs.map(([t,rel,ask,ex])=>`<div class="q"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><h3>${t}</h3>${rel?'<span class="pill">vale para a sua ficha</span>':'<span class="pill">não se aplica agora</span>'}</div><span class="ask">"${esc(ask)}"</span>${ex?`<span class="law">${ex}</span>`:""}</div>`).join("")}</div>`;
@@ -1814,6 +1842,7 @@ function renderRegime(x,c){
     ${RF.S&&RF.S.monoPC>0?`<li>No Simples de 2026, a revenda de cosmético monofásico é segregada e não paga PIS nem Cofins no DAS: ${R(RF.S.monoPC)} por mês a menos (LC 123 art. 18 §§ 4º-A I e 12; Lei 10.147 art. 2º). A parte monofásica é o campo "Revenda em cosmético" da ficha. Em 2027 isso acaba, com a revogação da Lei 10.147.</li>`:""}
     ${R26.lc224Mono?`<li>Ponto aberto: a LC 224 leva a 10% da alíquota padrão a alíquota zero que estiver no demonstrativo de gastos tributários da LOA 2026 (art. 4º §§ 2º I e 4º I); essa lista não foi conferida. Se o PIS e a Cofins zero do varejo de cosmético (Lei 10.147 art. 2º) estiverem nela, a revenda paga ${R(R26.lc224Mono.PR)} a mais por mês no Presumido e ${R(R26.lc224Mono.RE)} no Real, em 2026. A conta usa zero.</li>`:""}
     <li>Real: lucro contábil = receita − tributos − equipe − insumos e o DIFAL deles − outras despesas − depreciação − os gastos do bloco "Ajustes do lucro real". O lucro real soma esses gastos e a provisão de rescisão (adições), tira as exclusões e compensa o prejuízo fiscal até 30% do lucro ajustado (Lei 9.065 arts. 15 e 16), no quadro da aba Lucro com a página no Lucro Real. A gratificação a administradores é adição só no IRPJ; a CSLL não sai da base do IRPJ. Com meses iguais, o trimestre e a estimativa mensal dão o mesmo imposto no ano. Com os meses do ano variando, o IRPJ e a CSLL saem por trimestre ou pelo lucro real do ano com estimativas (seletor do bloco "Fora do Simples"), com adicional acima de R$ 20 mil × os meses do período (Lei 9.249 art. 3º § 1º; Lei 9.430 arts. 1º e 2º); no Presumido, sempre por trimestre (art. 25).</li>
+    ${(()=>{const q=insumoCalc(x,x.ins||{});return q.difal>0?`<li>DIFAL do insumo de outro estado (aba Insumos): é custo do insumo e não entra nos tributos desta comparação, mas sai do resultado. No Simples, com ou sem CBS e IBS no regime regular, vale a regra do optante: ${R(q.difal)} por mês, por fora, em guia própria até o último dia do 2º mês (RICMS/SP art. 115 XV-A). No Presumido e no Real vale a do regime periódico: ${R(q.difalRPA)}, com a base por dentro, na apuração do mês e no saldo do dia 20 (art. 117 I e II; CPR 1200).</li>`:""})()}
     <li>Insumo do serviço: no Real de 2026 dá crédito de 9,25% de PIS/Cofins (${R(R26.insCred)} no mês; Lei 10.833 art. 3º II), e o custo que sai do lucro é o insumo menos esse crédito (RIR art. 301 § 3º). Em 2027, ${R27.insCred27?"o crédito de CBS e IBS do insumo entra ("+R(R27.insCred)+" no mês), pela leitura mais provável":"o crédito de CBS e IBS do insumo fica fora, pela leitura conservadora"} da LC 214 art. 57 (escolha na aba Insumos).</li>
     <li>Depreciação dos equipamentos: valor de compra ÷ vida útil, por mês (${R(R26.dep||0)} hoje), em todos os regimes. No Real sai do lucro do IRPJ e da CSLL (IN RFB 1.700 arts. 121 § 5º e 123) e, em 2026, dá crédito de 9,25% de PIS/Cofins sobre a quota do mês (Lei 10.833 art. 3º VI e § 1º III). Em 2027 o crédito de CBS e IBS é da compra, de uma vez (LC 214 arts. 47 e 108): com meses iguais, a conta supõe a compra de reposição no ritmo da depreciação, com CBS e IBS no preço. No Presumido de 2026 e no Simples que paga tudo no DAS ela não muda o imposto.</li>
     ${R26.provNd>0?`<li>Provisão de rescisão: rotatividade × custo de uma saída sem justa causa ÷ 12, na folha de cada CLT, em todos os regimes. No Real ela não é dedutível ao ser feita (IN RFB 1.700 art. 70; RIR art. 339): volta ao lucro como adição (A.178), ${R(R26.provNd)} por mês com os encargos dela. A exclusão quando a rescisão é paga (E.125) não está na conta: ela mostra o ano em que a provisão começa; com saídas no mesmo ritmo todo ano, a exclusão das rescisões pagas compensa a adição.</li>`:""}
@@ -2277,23 +2306,28 @@ fillINS();
 [["i_inter","inter"],["i_forn","forn"],["i_c27","cred27"]].forEach(([id,k])=>$("#"+id).addEventListener("change",e=>{INS[k]=e.target.value;saveINS();fillINS();render()}));
 $("#reset").addEventListener("click",()=>{INS={...INS_DEF};saveINS();fillINS()});
 function renderInsumos(x,c){
-  const q=insumoCalc(x,INS), el=$("#oI"), at=x.fonte==="CAT"?CAT.sv.reduce((a,s)=>a+nz(s.m),0):0;
+  const q=insumoCalc(x,INS), el=$("#oI"), at=x.fonte==="CAT"?CAT.sv.reduce((a,s)=>a+nz(s.m),0):0, rpa=c.reg==="PR"||c.reg==="RE", dif=difalDe(q,c.reg);
   const pct=x.serv>0?q.v/x.serv:0, y27=x.ano==="2027";
   let h=`<div class="kpis"><div class="kpi"><small>Insumo do mês</small><span class="v">${R(q.v)}</span><small>${x.fonte==="CAT"?"soma do catálogo":"campo da ficha"}</small></div>
     <div class="kpi"><small>Sobre os serviços</small><span class="v">${P(pct,1)}</span><small>do que os clientes pagam</small></div>
     <div class="kpi"><small>Por atendimento</small><span class="v">${at>0?R(q.v/at):"—"}</span><small>${at>0?at.toLocaleString("pt-BR")+" atendimentos":"só no modo catálogo"}</small></div>
     <div class="kpi"><small>Crédito no Simples</small><span class="v">${R(0)}</span><small>2026 e 2027, sem opção pelo regular</small></div></div>`;
   if(q.v<=0)h+=`<div class="callout info"><b>Nenhum insumo informado.</b><span>Preencha a coluna "Insumo por atendimento" dos serviços nos Cadastros${x.fonte==="CAT"?"":", ou o campo \"Insumos do mês\" da ficha"}. Com zero, a conta abaixo fica zerada e o resultado do salão não muda.</span></div>`;
-  else h+=`<p class="law">O insumo entra no demonstrativo como custo dos serviços prestados e reduz o resultado do salão em ${R(q.v+q.difal)} por mês${q.difal>0?", com o DIFAL":""}. O DAS não muda: no Simples o insumo não sai da receita nem da base do ISS (Lei SP 13.701 art. 14; a dedução de material da LC 123 art. 18 § 23 vale só para os subitens 7.02 e 7.05).</p>`;
+  else h+=`<p class="law">O insumo entra no demonstrativo como custo dos serviços prestados e reduz o resultado do salão em ${R(q.v+dif)} por mês${dif>0?", com o DIFAL":""}. O DAS não muda: no Simples o insumo não sai da receita nem da base do ISS (Lei SP 13.701 art. 14; a dedução de material da LC 123 art. 18 § 23 vale só para os subitens 7.02 e 7.05).</p>`;
   // ICMS da compra
   h+=`<h3>ICMS da compra</h3>`;
   if(!q.contrib)h+=`<div class="callout info"><b>O salão não revende: sem inscrição estadual, não é contribuinte do ICMS.</b><span>Na compra de outro estado, o DIFAL é do fornecedor (Lei SP 6.374 art. 7º § 2º item 2) e já vem no preço. Dentro de SP não há DIFAL, e o cosmético saiu da substituição tributária em 1º/4/2026 (Portaria SRE 94/2025).</span></div>`;
   else{
-    h+=`<div class="formula"><div class="row"><span>Insumo de outro estado</span><span class="eq">${R(q.v)} × ${P(q.fora,0)} =</span><b>${R(q.vf)}</b></div>
+    const pr=(n,p,al)=>`<div class="row"><span>${n} (interna ${P(al,0)})</span><span class="eq">(${DIFAL_RPA_LEITURA==="a"?R(p.vb)+" − "+R(p.io):R(p.vb)}) ÷(1 − ${P(al,0)}) = base ${R(p.base)}; × ${P(al,0)} − ${R(p.io)} =</span><b>${R(p.d)}</b></div>`;
+    if(rpa)h+=`<div class="formula"><div class="row"><span>Insumo de outro estado</span><span class="eq">${R(q.v)} × ${P(q.fora,0)} =</span><b>${R(q.vf)}</b></div>
+      ${pr("Cosmético",q.rC,.25)}${pr("Outros",q.rG,.18)}
+      <div class="row"><span>DIFAL do mês</span><b>${R(q.difalRPA)}</b><span class="law">dentro da apuração do ICMS do mês, com o saldo no dia 20 do mês seguinte (CPR 1200); é custo a mais do insumo e sai do resultado do salão no demonstrativo</span></div></div>
+      <p class="law">No ${NOME[c.reg]} o salão está no regime periódico de apuração do ICMS. O DIFAL do material de uso e consumo que vem de outro estado entra na apuração do mês: crédito do ICMS pago na origem e débito da alíquota interna sobre a base "por dentro" (RICMS/SP art. 117 I e II; art. 37 VI e § 11; art. 49; LC 87 art. 13 § 6º II), sem guia própria. A conta ${DIFAL_RPA_LEITURA==="a"?"tira o ICMS da origem do valor e põe o de SP dentro: (valor − ICMS da origem) ÷ (1 − interna)":"põe o ICMS de SP dentro do valor cheio: valor ÷ (1 − interna)"}. A fórmula é inferida: a Sefaz-SP confirma a recomposição pela alíquota interna (RC 34252/2026, itens 10 e 14), mas não valida números (RC 33094/2026, item 19). Pela outra leitura daria ${R(q.difalRPAalt)}: pergunta na aba 7. A interestadual é a da nota: 12% de qualquer estado, 4% no importado (Res. Senado 22/1989 e 13/2012); com remetente do Simples, o crédito é calculado a essas alíquotas (art. 117 §§ 5º e 6º). Interna: 25% no perfume e cosmético das posições 33.03 a 33.07, salvo as exceções do art. 55 IV (xampu, desodorante e outras); 18% no resto (arts. 52 I e 55 IV). É custo: o ICMS do uso e consumo só dá crédito a partir de 2033 (LC 87 art. 33 I). No Simples, pela regra do optante (art. 115 XV-A), seria ${R(q.difal)}.</p>`;
+    else h+=`<div class="formula"><div class="row"><span>Insumo de outro estado</span><span class="eq">${R(q.v)} × ${P(q.fora,0)} =</span><b>${R(q.vf)}</b></div>
       <div class="row"><span>Cosmético (interna 25%)</span><span class="eq">${R(q.vf)} × ${P(q.cos,0)} × (25% − ${P(q.inter,0)}) =</span><b>${R(q.dCos)}</b></div>
       <div class="row"><span>Outros (interna 18%)</span><span class="eq">${R(q.vf)} × ${P(1-q.cos,0)} × (18% − ${P(q.inter,0)}) =</span><b>${R(q.dGer)}</b></div>
       <div class="row"><span>DIFAL do mês</span><b>${R(q.difal)}</b><span class="law">até o último dia do 2º mês depois da entrada; é custo a mais do insumo, fora do DAS, e sai do resultado do salão no demonstrativo</span></div></div>
-      <p class="law">O salão revende, então tem inscrição estadual e recolhe o DIFAL do material de uso e consumo que vem de outro estado (LC 123 art. 13 § 1º XIII "h"; RICMS/SP art. 115 XV-A "a"). A base é o valor da compra, sem pôr o ICMS dentro dela (RC 25481/2022). SP manda usar 12% como interestadual em qualquer origem, ou 4% no importado (art. 115 § 8º). Interna: 25% de ICMS para perfume e cosmético das posições 33.03, 33.04, 33.05 e 33.07, exceto xampu (33.05.10), desodorante (33.07.20), os códigos 33.07.10.0100 e 33.07.90.0500 e o antissolar e o bronzeador (3304); 18% para o resto, inclusive higiene bucal (33.06) (Lei SP 6.374 art. 34 § 5º item 3).</p>`;
+      <p class="law">O salão revende, então tem inscrição estadual e recolhe o DIFAL do material de uso e consumo que vem de outro estado (LC 123 art. 13 § 1º XIII "h"; RICMS/SP art. 115 XV-A "a"). A base é o valor da compra, sem pôr o ICMS dentro dela (RC 25481/2022). SP manda usar 12% como interestadual em qualquer origem, ou 4% no importado (art. 115 § 8º). Interna: 25% de ICMS para perfume e cosmético das posições 33.03, 33.04, 33.05 e 33.07, exceto xampu (33.05.10), desodorante (33.07.20), os códigos 33.07.10.0100 e 33.07.90.0500 e o antissolar e o bronzeador (3304); 18% para o resto, inclusive higiene bucal (33.06) (Lei SP 6.374 art. 34 § 5º item 3). No Presumido e no Real a regra é outra (art. 117: base por dentro, na apuração do mês): ${R(q.difalRPA)}.</p>`;
   }
   // crédito por regime
   const cr=q.cred, cel=v=>v==null?'<td class="r law">preencha a alíquota do fornecedor</td>':`<td class="r num">${R(v)}</td>`;
@@ -2316,7 +2350,7 @@ function renderInsumos(x,c){
   const ids=new Set((c.parceiros||[]).map(p=>p.id)), insP=x.insPor?Object.keys(x.insPor).filter(k=>ids.has(k)).reduce((a,k)=>a+nz(x.insPor[k]),0):0;
   const difEf=!c.foraSimples&&c.ef1!=null?c.ef3-c.ef1:null;
   h+=`<h3>Planejamento lícito com insumos</h3><div class="two">
-    <div class="card"><h3>Comprar em SP ou fora</h3><p class="law">${q.contrib?"Com inscrição estadual, a compra de outro estado paga 13% de DIFAL no cosmético e 6% no resto (25% ou 18% menos 12%). Compare o preço final, porque o fornecedor paulista embute os 25% de ICMS.":"Sem inscrição estadual, o DIFAL da compra de fora é do fornecedor e já vem no preço. Compare só o preço final."}</p></div>
+    <div class="card"><h3>Comprar em SP ou fora</h3><p class="law">${q.contrib?(rpa?`No ${NOME[c.reg]}, a compra de outro estado com 12% na origem paga ${P(difalRpaPct(.25,.12),1)} de DIFAL no cosmético e ${P(difalRpaPct(.18,.12),1)} no resto, sobre o valor da nota, porque a base leva o ICMS de SP dentro (RICMS/SP art. 117). Compare o preço final, porque o fornecedor paulista embute os 25% de ICMS.`:"Com inscrição estadual, a compra de outro estado paga 13% de DIFAL no cosmético e 6% no resto (25% ou 18% menos 12%). Compare o preço final, porque o fornecedor paulista embute os 25% de ICMS."):"Sem inscrição estadual, o DIFAL da compra de fora é do fornecedor e já vem no preço. Compare só o preço final."}</p></div>
     <div class="card"><h3>Fornecedor do regime regular × do Simples</h3><p class="law">Só muda o crédito a partir de 2027 e só para quem está no regime regular: o fornecedor regular dá a CBS e o IBS destacados; o do Simples dá cerca de 15,5% da alíquota efetiva dele (LC 214 art. 47 § 9º II). Para o salão que fica no DAS, a diferença é só de preço.</p></div>
     <div class="card"><h3>Insumo no preço ou cobrado à parte</h3><p class="law">O produto empregado no serviço é tributado com o serviço, no Anexo III (Res. CGSN 140 art. 25 § 18 I), e a nota mostra "serviços e produtos neles empregados" (art. 59 § 2º). Destacar a tinta aplicada como "venda" para levá-la ao Anexo I${difEf!=null?`, que hoje sairia ${P(difEf,2)} mais barato sobre a parte destacada,`:""} não muda a natureza do que foi feito. O documento que não merece fé pode ser arbitrado (CTN art. 148; em 2027, LC 214 art. 13).</p></div>
     <div class="card"><h3>Kit vendido ao cliente</h3><p class="law">O produto que o cliente leva para casa é revenda: Anexo I, inscrição estadual e NFC-e (Res. CGSN 140 art. 25 § 18 II). Em 2026, a receita de revenda de cosmético monofásico sai da base do PIS e da Cofins do DAS (LC 123 art. 18 § 4º-A I); isso acaba em 2027. Em 2027, o kit dá crédito ao salão no regime regular (LC 214 art. 57 § 3º III).</p></div>
@@ -2407,7 +2441,8 @@ function sgLucro(S){
 function sgInsumos(x,c){
   const q=insumoCalc(x,INS); if(q.v<=0)return"";
   const y27=x.ano==="2027";
-  if(q.difal>0)return sgCard({k:"Sugestão",tone:"info",t:`Compare o preço final: o insumo de outro estado paga ${R(q.difal)} por mês de DIFAL.`,why:"Fornecedor de outro estado só compensa se o preço dele for menor que o paulista em mais que esse valor. No Simples o insumo não dá crédito, então só o preço pesa.",law:"RICMS/SP art. 115 XV-A; LC 123 art. 23."});
+  const rpa=c.reg==="PR"||c.reg==="RE", dif=difalDe(q,c.reg);
+  if(dif>0)return sgCard({k:"Sugestão",tone:"info",t:`Compare o preço final: o insumo de outro estado paga ${R(dif)} por mês de DIFAL.`,why:rpa?"Fornecedor de outro estado só compensa se o preço dele for menor que o paulista em mais que esse valor. O DIFAL é custo: o ICMS do material de uso e consumo não dá crédito até 2033.":"Fornecedor de outro estado só compensa se o preço dele for menor que o paulista em mais que esse valor. No Simples o insumo não dá crédito, então só o preço pesa.",law:rpa?"RICMS/SP art. 117 I e II; LC 87 art. 33 I.":"RICMS/SP art. 115 XV-A; LC 123 art. 23."});
   return sgCard({k:"Sugestão",tone:"info",t:"No Simples, escolha o fornecedor de insumo só pelo preço.",why:`O optante não toma crédito do insumo${y27?", nem de CBS e IBS (LC 214 art. 47 § 9º I)":""}, e ${q.contrib?"a compra dentro de SP não tem DIFAL":"sem inscrição estadual o DIFAL da compra de fora é do fornecedor e já vem no preço"}.`,law:"LC 123 art. 23."});
 }
 function sgStrip(S,c){
@@ -2544,6 +2579,7 @@ addPagers();
 showTab(location.hash.slice(1));
 document.querySelectorAll("#p-ficha input:not([data-ms])").forEach(el=>el.addEventListener("input",render));
 document.querySelectorAll("#p-ficha select:not([data-ms])").forEach(el=>el.addEventListener("change",render));
+$("#exFontes").innerHTML=exFontesHtml();
 $("#reset").addEventListener("click",()=>{CAT=JSON.parse(JSON.stringify(DEF_CAT));EQ=JSON.parse(JSON.stringify(DEF_EQ));fillForm(DEF);renderEq();renderCatalog();renderDp();renderBn();render()});
 render();
 })();
