@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — loa2026-dgt-lei10147-art2
 
 **Pergunta:** O demonstrativo de gastos tributários anexo à LOA 2026 inclui o art. 2º da Lei 10.147 (alíquota zero de PIS/Cofins do varejo de cosmético monofásico)? Efeito pela LC 224 art. 4º §§ 2º I e 4º I e Decreto 12.808
-**Aberto em:** 2026-11-24T01:20:22-03:00 · **Atualizado em:** 2026-11-24T01:39:37-03:00
+**Aberto em:** 2026-11-24T01:20:22-03:00 · **Atualizado em:** 2026-11-24T01:50:07-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -12,8 +12,8 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
   - **(a)** o DGT não discrimina o benefício: o item que cita a Lei 10.147 é o de medicamentos;
   - **(b)** o § 2º II "d" 1 lista só o **art. 3º** da Lei 10.147, que é o crédito presumido dos medicamentos [D01; D02; D06 art. 3º].
 
-  A Receita lê o requisito assim: "para um determinado benefício tributário ser alcançado pela redução, ele deverá ... estar listado no Demonstrativo de Gastos Tributários – DGT ou estar incluído entre os regimes indicados" [D08 pergunta 4]. Ela aplica esse critério para afastar benefícios "não discriminad[os] no DGT" (perguntas 20 e seguintes [D08]). O documento que ela chama de "DGT anexo à LOA 2026" é o divulgado em setembro de 2025, com a legislação de 20/08/2025 [D08 pergunta 21], isto é, o DGT do PLOA 2026 lido aqui [D04], [D05]. Grau: **inferido**, com leitura direta dos textos. A RFB não responde nominalmente sobre o art. 2º da Lei 10.147, e a busca por "10.147", "monofásico", "perfumaria" e "higiene" no P&R v5 deu zero [D08].
-- **Para o simulador:** em 2026 a revenda de cosmético monofásico (posições 33.03 a 33.07, exceto 33.06 [D06 art. 1º I "b"]) segue com **PIS/Cofins a zero** (art. 2º [D06]), sem os 10% do padrão (LC 224 art. 4º § 4º I [D01]). A página já usa zero e mostra o valor alternativo; a escolha fica confirmada, e o valor alternativo pode sair ou virar nota de risco (ver §4). Em 2027 a Lei 10.147 deixa de valer pela reforma (dossiê `insumos-salao-sp`), e a questão some.
+  A Receita lê o requisito assim: "para um determinado benefício tributário ser alcançado pela redução, ele deverá ... estar listado no Demonstrativo de Gastos Tributários – DGT ou estar incluído entre os regimes indicados" [D08 pergunta 4]. Ela aplica esse critério para afastar benefícios "não discriminad[os] no DGT" (perguntas 20 e seguintes [D08]). O documento que ela chama de "DGT anexo à LOA 2026" é o divulgado em setembro de 2025, com a legislação de 20/08/2025 [D08 pergunta 21], isto é, o DGT do PLOA 2026 lido aqui [D04], [D05]. Grau: **inferido**, com leitura direta dos textos. A RFB não responde nominalmente sobre o art. 2º da Lei 10.147. O índice das 38 perguntas do P&R v5 foi lido por inteiro, e nenhuma trata de monofásico, revenda, perfumaria ou higiene [D08]. A IN RFB 2.305/2025, que regulamenta a redução, **não foi lida** (§5); o Anexo Único dela lista o que o DGT traz e fica **fora** da redução, então não decide o que entra.
+- **Para o simulador:** em 2026 a revenda de cosmético monofásico (posições 33.03 a 33.07, exceto 33.06 [D06 art. 1º I "b"]) segue com **PIS/Cofins a zero** (art. 2º [D06]), sem os 10% do padrão (LC 224 art. 4º § 4º I [D01]). A página já usa zero e mostra o valor alternativo. O DGT, a LC 224 e o P&R sustentam essa escolha, mas ela não está fechada: a IN RFB 2.305 não foi lida, e há a Ambiguidade 1. O valor alternativo deve ficar como nota de risco (ver §4). Em 2027 a Lei 10.147 deixa de valer pela reforma (dossiê `insumos-salao-sp`), e a questão some.
 
 ## 2. Fundamentação
 | Ponto | Norma (art.) | Fonte | Trecho literal |
@@ -43,12 +43,16 @@ conferida quando há evidência de texto mais novo. Documentos salvos com hash p
 1. **O item "Medicamentos" cita "arts. 2º e 3º" da Lei 10.147.**
    - **(a) Leitura adotada:** o gasto discriminado é o de medicamentos. O item tem esse nome e descreve o crédito presumido dos fabricantes e importadores de medicamentos. A alíquota zero do art. 2º na revenda de cosmético não é um gasto discriminado e não sofre a redução.
    - **(b) Leitura alternativa:** a citação do art. 2º leva junto todo o dispositivo, inclusive a revenda de cosmético. Nesse caso a revenda pagaria 10% do padrão: 0,065% + 0,30% no cumulativo, ou 0,165% + 0,76% no não cumulativo [D01 art. 4º § 3º III, § 4º I].
-   - **Implicação:** em (b), o salão do Presumido ou do Real que revende cosmético paga PIS/Cofins residual sobre a revenda a partir da data de efeitos do art. 4º. O art. 14 I "a" da LC 224 [D01] fixa o primeiro dia do quarto mês após a publicação para os tributos sujeitos à noventena. Este dossiê não conferiu se o PIS/Cofins entra nessa regra (CF art. 195 § 6º) ou no inciso III (1º/1/2026).
+   - **Implicação:** em (b), o salão do Presumido ou do Real que revende cosmético paga PIS/Cofins residual sobre a revenda desde 01/04/2026, que é a data que a RFB aplica aos tributos que não são o IRPJ e o II [D08 pergunta 6], com base na LC 224 art. 14 I "a" [D01].
    - **Mais segura para o contribuinte:** (b), recolher. **Mais fiel ao texto:** (a), pelo nome e pela descrição do item e pelo § 2º II "d", que lista só o art. 3º. O simulador deve seguir (a) e manter o aviso de (b) como risco.
-   - **Pergunta exata ao contador:** "Salão no Lucro Presumido que revende cosmético monofásico (Lei 10.147 art. 1º I 'b'), com alíquota zero na revenda pelo art. 2º. Desde a data de efeitos da LC 224 (art. 14), essa revenda sofre a redução da LC 224 art. 4º § 4º I (10% da alíquota padrão)? O DGT do PLOA 2026 cita 'Lei 10.147, arts. 2º e 3º' só no item 'Medicamentos'."
+   - **Pergunta exata ao contador:** "Salão no Lucro Presumido que revende cosmético monofásico (Lei 10.147 art. 1º I 'b'), com alíquota zero na revenda pelo art. 2º. Desde 01/04/2026, essa revenda sofre a redução da LC 224 art. 4º § 4º I (10% da alíquota padrão)? O DGT do PLOA 2026 cita 'Lei 10.147, arts. 2º e 3º' só no item 'Medicamentos'."
 
 ## 5. Lacunas
-- A IN RFB 2.305/2025 e o Anexo Único dela, substituído pela IN RFB 2.307/2026, não foram lidos. Pela P&R [D08 pergunta 10], o anexo lista benefícios do DGT **excluídos** da redução e não é exaustivo. Ele não muda a conclusão, porque o benefício do cosmético não está no DGT.
+- **A IN RFB 2.305/2025** (alterada pelas IN 2.306/2026 e 2.307/2026, esta última com novo Anexo Único) **não foi lida**:
+  - a busca do sistema Normas da RFB não carregou no navegador embutido;
+  - o DOU (in.gov.br) recusou o download (HTTP 403) e a navegação.
+
+  Pela P&R [D08 pergunta 10], o Anexo Único lista benefícios do DGT **excluídos** da redução e não é exaustivo. Se a IN tiver regra sobre monofásico, a conclusão muda; registrado na caixa de lacunas.
 - A Portaria MF 3.278/2025, citada nas notícias como base da IN 2.305, não foi lida.
 - A LOA 2026 (a lei) não foi lida. A RFB trata o DGT do PLOA 2026 como o "DGT anexo à LOA 2026" [D08 pergunta 21].
 <!-- /ANALISE -->

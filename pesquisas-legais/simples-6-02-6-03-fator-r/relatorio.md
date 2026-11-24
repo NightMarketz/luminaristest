@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — simples-6-02-6-03-fator-r
 
 **Pergunta:** Os subitens 6.02 (estética, depilação) e 6.03 (massagem) da LC 116 são tributados no Anexo III do Simples sem fator r, ou estão sujeitos ao fator r (LC 123 art. 18 §§ 5º-B a 5º-M; Res. CGSN 140; soluções de consulta)?
-**Aberto em:** 2026-11-24T01:20:23-03:00 · **Atualizado em:** 2026-11-24T01:43:02-03:00
+**Aberto em:** 2026-11-24T01:20:23-03:00 · **Atualizado em:** 2026-11-24T01:48:43-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -14,8 +14,9 @@ O Simples não classifica por subitem da LC 116, e sim pela atividade. O ponto d
   - a pessoa jurídica "cuja única atividade é a prestação de serviços de estética e cuidados com a beleza, tais como tratamento de pele, depilação, manicure, pedicure, cabeleireiro, barbeiro e congêneres, deve tributar suas receitas na forma do Anexo III" [D09 item 8].
 
   A SC Disit/SRRF01 1011/2019 [D10] se vincula a ela. Estética e depilação não aparecem em nenhum inciso dos §§ 5º-B, 5º-C, 5º-D ou 5º-I [D01], nem no art. 25 da Res. CGSN 140 com nome próprio [D02]. Grau: **verificado** (SC Cosit lida no inteiro teor; texto da LC conferido).
+  - **Na parceria (Lei 12.592), há texto expresso.** A Res. CGSN 140 art. 25 § 18 manda tributar a receita do salão-parceiro e do profissional-parceiro "na forma prevista no Anexo III ... quanto aos serviços e produtos neles empregados" [D02]. A Lei 12.592 cobre "Cabeleireiro, Barbeiro, **Esteticista**, Manicure, Pedicure, **Depilador** e Maquiador" [D13 arts. 1º e 1º-A]. Esteticista e depilador estão na lista, então o 6.02 em parceria tem regra própria de Anexo III, sem fator r. Grau: **verificado**.
   - O "única atividade" da SC vem do caso consultado. Com revenda junto, cada receita é segregada pela sua atividade [D02 art. 25], e o serviço de estética continua no Anexo III. Grau: **inferido**.
-- **6.03: massagem, banhos, duchas, sauna.** **Nenhum texto achado** que classifique a atividade. Não há inciso nos §§ 5º-B a 5º-I [D01] nem alínea no art. 25 da Res. 140 [D02]. Na busca do SIJUT não apareceu SC sobre o tema. Os CNAE 9609-2/05 e 9602-5/02 não constam dos Anexos VI e VII da Res. 140 [D03], [D04], que listam CNAE impeditivos e ambíguos, não o anexo de tributação.
+- **6.03: massagem, banhos, duchas, sauna.** **Nenhum texto achado** que classifique a atividade. O massagista não está na lista da Lei 12.592 [D13 art. 1º], e por isso o § 18 do art. 25 da Res. 140 também não o alcança. Não há inciso nos §§ 5º-B a 5º-I [D01] nem alínea no art. 25 da Res. 140 [D02]. Na busca do SIJUT não apareceu SC sobre o tema. Os CNAE 9609-2/05 e 9602-5/02 não constam dos Anexos VI e VII da Res. 140 [D03], [D04], que listam CNAE impeditivos e ambíguos, não o anexo de tributação.
   - Pelas regras residuais, a leitura mais fiel é **Anexo III**, pelo mesmo caminho da SC 127/2019: § 5º-F com art. 17 § 2º [D01], e a Res. 140 art. 25 § 1º III "m" [D02], que manda ao Anexo III o serviço que "não tenha por finalidade ... atividade intelectual, de natureza técnica, científica, desportiva, artística ou cultural". A massagem de salão é um cuidado corporal do mesmo tipo dos "congêneres" que a SC agrupa. Grau: **inferido**. Há outras duas leituras, na Ambiguidade 1.
 - **Para o simulador e o motor (item 19 do BRIEF):**
   - 6.02 fica no Anexo III, como hoje. Não há requisito de fator r.
@@ -36,6 +37,8 @@ O Simples não classifica por subitem da LC 116, e sim pela atividade. O ponto d
 | 6.02 no Anexo III | SC Cosit 127/2019, itens 7 e 8 | [D09] | "cuja única atividade é a prestação de serviços de estética e cuidados com a beleza, tais como tratamento de pele, depilação ... deve tributar suas receitas na forma do Anexo III" |
 | Pergunta era sobre fator r | SC Cosit 127/2019, relatório | [D09] | "utilizar o Anexo III ... por não depender do fator 'R' do Anexo V?" |
 | SC vinculada | SC Disit/SRRF01 1011/2019 | [D10] | vinculada à SC Cosit 127/2019 |
+| Parceria no Anexo III | Res. CGSN 140 art. 25 § 18 I | [D02] | "A receita obtida pelo salão-parceiro e pelo profissional-parceiro de que trata a Lei nº 12.592, de 2012, deverá ser tributada: I - na forma prevista no Anexo III desta Resolução, quanto aos serviços e produtos neles empregados" |
+| Profissões da parceria | Lei 12.592 arts. 1º e 1º-A | [D13] | "Cabeleireiro, Barbeiro, Esteticista, Manicure, Pedicure, Depilador e Maquiador" |
 | Itens da LC 116 | LC 116, lista, 6.02 e 6.03 | [D11] | "6.02 - Esteticistas, tratamento de pele, depilação e congêneres."; "6.03 - Banhos, duchas, sauna, massagens e congêneres." |
 
 ## 3. Vigência conferida
@@ -107,6 +110,10 @@ O Simples não classifica por subitem da LC 116, e sim pela atividade. O ponto d
   Link oficial: <https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp123.htm>  
   Baixado em 2026-11-24T01:33:33-03:00 · arquivo local `docs/D12_lcp123-htm.html` · SHA-256 `090781a7a5d9b5221bd6ebe1774f14d871dfca633ec4707cf610305a702cdb58`  
   ⚠ há captura de 2026-10-17 (verif-2026-10-17-simples-mei D13), mas o texto dela não foi guardado
+- **[D13]** Lei nº 12.592 de 18/01/2012 — Acervo ctresb/leis (espelho de fonte oficial)  
+  Acervo: <https://github.com/ctresb/leis/blob/a31cf3cd12073c7b195933a53e733b85c00cfe02/federal/leis-ordinarias/2012/lei-12592-2012-01-18.md>  
+  Fonte oficial declarada: <https://normas.leg.br/?urn=urn:lex:br:federal:lei:2012-01-18;12592> · versao_texto: compilada (texto vigente) · cópia de 2026-10-13  
+  Lido em 2026-11-24T01:48:30-03:00 · arquivo local `docs/D13_lei-12592-2012-01-18.md` · SHA-256 `ae4c4aae44ba1bd08493c05fd82e366cdd2f3bf263b93383f93b1f936541fd00`
 
 ## Registro de buscas
 _Nenhuma busca registrada._

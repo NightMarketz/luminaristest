@@ -41,10 +41,10 @@ Grau: **verificado** quanto ao leiaute lido.
 | Ponto | Norma (art.) | Fonte | Trecho literal |
 |---|---|---|---|
 | Salão: só tipo 9 ou 199 | Anexo VI NT 009, RN E0463 | [D08] | "Se o código de tributação nacional (cTribNac) = 6.01 ou 6.02, então o tipo da ajuste (tpAjusteBC) informado deve ser 'Profissional Parceiro' (tpAjusteBC = 9) ou 'Outros reembolsos ...' (tpAjusteBC = 199)" |
-| Tipo 9 não ajusta CBS/IBS | Anexo VI, aba AJUSTE_BC_REPERCUSSÃO L12 | [D08] | "9 \| Profissional parceiro \| 2022-01-01 \| \| V \| X \| \| V" (ISS sim, IBS/CBS não, receita SN sim) |
+| Tipo 9 não ajusta CBS/IBS | Anexo VI, aba AJUSTE_BC_REPERCUSSÃO, células E12/F12/H12 | [D08] | E12 = "V" (Ajusta BC do ISSQN), F12 = "X" (Ajusta BC do IBS/CBS), H12 = "V" (Ajusta Receita Bruta do SN). A aba não tem legenda: V = sim e X = não é leitura pela linha 3 (percentual, só ISS) e pela RN E1531 |
 | Tipo 199 ajusta CBS/IBS | idem, L19 | [D08] | "199 \| Outros reembolsos ... \| V \| V \| LC 214/2025: Art. 12, § 2º, inciso IV \| V" |
 | 199 exige documento fiscal | RN E0479 | [D08] | "Para os tipos de ajuste (tpAjusteBC) = 101, 103, 104 ou 199, deve ser informado um documento fiscal." |
-| 9 fora do ajuste de CBS/IBS | RN E1531 | [D08] | tipos "2, 5, 6, 7, 8, 9 ou 99" não compõem vCalcAjusteBCIBSCBS |
+| 9 fora do ajuste de CBS/IBS | RN L93 (90), E1531 | [D08] | "Não é permitido informar ... (vCalcAjusteBCIBSCBS) ... se ... os tipos de ajuste (tpAjusteBC) for igual a: 2, 5, 6, 7, 8, 9 ou 99." |
 | 9 aceita documento não fiscal | Leiaute L312 | [D08] | "Grupo de informações de documento não fiscal" (docOutro) |
 | Receita SN no regime regular | RN L111 (108) | [D08] | "regApIBSCBSSN = 3 ..., o vReceitaBrutaSN = vServ - descIncond - vCalcAjusteBCIBSCBS" |
 | Só na Produção Restrita | Atualizações e Implantações, 20/10/2026 | [D12] | "Criação do grupo vAjusteBC a partir do merge dos grupos vDedRed e gReeRepRes (item 2.3 da Nota Técnica 009)", com Produção "-" |
