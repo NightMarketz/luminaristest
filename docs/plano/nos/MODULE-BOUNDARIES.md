@@ -9,7 +9,7 @@ depende_de: []
 autorizacao: "dono, 2026-11-24, questionário (AskUserQuestion) da sessão de planejamento: \"Sim, planejar o BRIEF\" — cobre o BRIEF, esta nota com write_set, a medida nova e um PR só de documentação. Não é 'executa' de nenhum PR do BRIEF. A ratificação dos forks F-MB-1..12 (dono, 2026-11-24, questionário; D-2026-11-24-MODULE-BOUNDARIES-FORKS) também não é 'executa'"
 ancora_sdd: "—"
 atualizado: "2026-11-24"
-prs: []
+prs: ["#1367"]
 perfil_previsto: "precisa-de-planejamento"
 perfil_evidencia: "11 forks F-MBE-1..11 pendentes (onde os PRs entram, tamanho do PR da M2, public/ × regras de camada, reader em transação, forma da regra de posse, destino de fixtures/ e do widget de chat); depois deles, PR-0/PR-1/PR-2 são mecânicos e o renome é diff grande de path"
 write_set: ["docs/architecture/MODULE-BOUNDARIES-brief.md", "docs/adr/ADR-MODULE-BOUNDARIES.md", "server/src/features/*/public/**", "server/src/features/*/domain/**", "server/src/features/*/adapters/**", "server/src/features/dynamicTables/**", "server/src/features/analytics/**", "server/src/features/sectorKits/**", "server/src/features/accountingBinding/**", "server/src/features/interview/**", "server/src/features/crm/**", "server/src/features/fx/clients/**", "server/src/features/sales/services/**", "server/src/features/packages/services/**", "server/src/features/attachments/services/**", "server/src/features/chat/{models,repositories,services}/**", "server/src/features/accounting/{scope,sync,dfe,collection,audit,fixtures}/**", "server/src/features/accounting/models/{issLimite,lc116ListaNacional,outstandingLines}.ts", "server/src/features/accounting/repositories/{I,}AccountantAssignmentRepository.ts", "server/src/features/accounting/policies/IAccountingPolicy.ts", "server/src/jobs/**", "server/prisma-model-owners.cjs", "server/eslint-rules/**", "docs/architecture/lint-layer-gate.md", "docs/claude-skills/GENERATION_CONTRACTS.md", ".claude/skills/**", "scripts/{activate-salon-binding,anexo-iii-to-fixture,anexo-xi-to-fixture,classe-risco,ecf-tabelas-dinamicas-to-catalog}.mjs", "my-app/components/widgets/**", "my-app/components/layout/Navbar.tsx", "my-app/features/{dashboard,crm,chat,shell}/**", "my-app/pages/_app.tsx"]
@@ -17,7 +17,7 @@ registros: ["server/.dependency-cruiser.cjs", "server/.dependency-cruiser-known-
 ---
 # MODULE-BOUNDARIES — fronteira entre features, peça fora de camada, job como entrypoint, posse de model
 
-**Estado:** `planned`. **ADR:** [`ADR-MODULE-BOUNDARIES.md`](../../adr/ADR-MODULE-BOUNDARIES.md), Accepted em 24/11/2026 (o §10 prevalece sobre os §2–§4).
+**Estado:** `planned` — 24/11: ADR-MODULE-BOUNDARIES Accepted (forks F-MB-1..12 ratificados; D-2026-11-24-MODULE-BOUNDARIES-FORKS, PR #1366) · 24/11: BRIEF de execução escrito (sessao-planejamento), com a medida nova na main d3f3a201c (M1 393, M1a 49, M2 879, J1 18, U8 11, U9 45; posse 138/146) e 11 forks novos F-MBE-1..11 com RATIFICAÇÃO PENDENTE · execução de código NÃO autorizada (falta 'executa'); nenhuma regra ligada, nenhum arquivo movido  
 **Autorização:** frontmatter. Cobre o BRIEF; cada PR de código pede o `executa` do dono.
 **Desbloqueia:** —
 
