@@ -967,11 +967,28 @@ describe('PostingService', () => {
       );
     });
 
-    it('postEntry e reverseEntry: o ano fiscal vem de fiscalYearOf, o lugar único da regra (lacuna 1fd7)', async () => {
+    it('postEntry: o ano fiscal vem de fiscalYearOf, o lugar único da regra (lacuna 1fd7)', async () => {
       const { svc, postingRepo } = buildService();
       jest.mocked(fiscalYearOf).mockReturnValueOnce(1999);
       await svc.postEntry(scope, { ...balancedInput, date: '2026-06-10' });
       expect(postingRepo.nextEntryNumber).toHaveBeenCalledWith(scope, 1999, txHandle);
+    });
+
+    it('reverseEntry: o ano fiscal do estorno também vem de fiscalYearOf (lacuna 1fd7)', async () => {
+      const original = {
+        id: 'orig-1fd7', date: new Date('2026-06-15'), status: 'Posted', reversedById: null, fiscalYear: 2026, entryNumber: 10,
+        postings: [
+          { accountId: 'acc-A', debitCents: 5000, creditCents: 0 },
+          { accountId: 'acc-B', debitCents: 0, creditCents: 5000 },
+        ],
+      };
+      const { svc, postingRepo } = buildService({
+        journalEntryRepo: { findById: jest.fn(async () => original), findBySource: jest.fn(async () => null) },
+        postingRepo: { nextEntryNumber: jest.fn(async () => 11) },
+      });
+      jest.mocked(fiscalYearOf).mockReturnValueOnce(1998);
+      await svc.reverseEntry(scope, { unitId, lancamentoId: 'orig-1fd7', reversalPostingDate: '2026-06-24', reason: 'motivo de teste' });
+      expect(postingRepo.nextEntryNumber).toHaveBeenCalledWith(scope, 1998, txHandle);
     });
 
     it('postEntry: nextEntryNumber NOT called on idempotent hit (no number consumed)', async () => {
