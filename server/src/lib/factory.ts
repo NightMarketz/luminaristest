@@ -1605,6 +1605,7 @@ export class ApplicationFactory {
       this.repositories.companyFiscalProfile, // X13 PR-2: regime da empresa (itens 15/17)
       this.repositories.accountantAssignment, // GOV-CONTADOR política versionada (item 13)
       this.repositories.accountingPolicyVersion,
+      legalParameterService, // Onda 3.2 #4: fotografia ISS_LIMITE (fim do ISS)
     );
     // BE-INCR-DFE (nó X10b, PR-1): perfil fiscal do serviço (F-DFE-6 a) — extraído como const própria
     // (não só inline no literal abaixo) porque FiscalDocumentEmissionService (PR-2) também a injeta.

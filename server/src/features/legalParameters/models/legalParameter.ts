@@ -146,6 +146,43 @@ export function linhaLegalVigente<T extends LinhaLegal>(
 }
 
 /**
+ * Onda 3.2 (datas de corte de lei como linha) — as linhas em vigor da tabela (e da chave, quando dada), em qualquer data.
+ * Só `linhasEmVigor`: rascunho, revogada e substituída não definem marco (uma substituída aberta não "estende" o fim).
+ */
+function linhasDoMarco(linhas: readonly LinhaLegal[], tabela: string, chave: string | null): LinhaLegal[] {
+  return linhasEmVigor(linhas).filter((l) => l.tabela === tabela && (chave === null || l.chave === chave));
+}
+
+/**
+ * Onda 3.2 — o primeiro dia em que a tabela/chave tem linha em vigor (menor `vigenteDesde`): o marco de lei que JÁ é uma
+ * linha, no lugar do literal em código. Sem nenhuma linha ⇒ `ParametroLegalAusenteError` (fail-closed, nunca um
+ * default). `dataConsultada` só nomeia o fato gerador na mensagem.
+ */
+export function inicioDeVigencia(linhas: readonly LinhaLegal[], tabela: LegalParameterTabela, chave: string | null, dataConsultada: string): string {
+  const doMarco = linhasDoMarco(linhas, tabela, chave);
+  if (doMarco.length === 0) throw new ParametroLegalAusenteError(tabela, dataConsultada, chave ?? undefined);
+  return doMarco.reduce((menor, l) => (l.vigenteDesde < menor ? l.vigenteDesde : menor), doMarco[0].vigenteDesde);
+}
+
+/**
+ * Onda 3.2 — o dia em que a lei deixa de valer: o dia seguinte ao maior `vigenteAte` das linhas em vigor da tabela/chave.
+ * Três estados: nenhuma linha ⇒ `ParametroLegalAusenteError` (fail-closed); alguma linha em vigor sem `vigenteAte` ⇒ `null`
+ * (sem fim publicado — a lei não acabou segundo o dado); caso contrário o dia seguinte ao último `vigenteAte`.
+ */
+export function diaSeguinteAoFimDeVigencia(linhas: readonly LinhaLegal[], tabela: LegalParameterTabela, chave: string | null, dataConsultada: string): string | null {
+  const doMarco = linhasDoMarco(linhas, tabela, chave);
+  if (doMarco.length === 0) throw new ParametroLegalAusenteError(tabela, dataConsultada, chave ?? undefined);
+  let ultimo = '';
+  for (const l of doMarco) {
+    if (l.vigenteAte === null) return null;
+    if (l.vigenteAte > ultimo) ultimo = l.vigenteAte;
+  }
+  const d = new Date(`${ultimo}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
  * PR-2 — tabelas-LISTA (CST, CFOP, cStat, NCM, LC 116, feriados…): as linhas em vigor da tabela na `data` do fato, em
  * qualquer chave. Ausência de UMA chave = "não está na lista"; ausência da tabela INTEIRA na data é erro explícito
  * (item 4: sem linha vigente ⇒ erro), nunca uma lista vazia que recusaria tudo em silêncio.

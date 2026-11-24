@@ -656,7 +656,7 @@ export class SimplesApuracaoService {
       beneficios.set(`${e.natureza}|${e.cTribNac ?? ''}`, b);
       if (b.tipo === 'VALOR_FIXO') {
         alertas.push({ severity: 'INFO', codigo: 'ISS_VALOR_FIXO_MUNICIPAL', detalhe: `serviço ${e.cTribNac}: valor fixo municipal de ISS (${b.legislacao}) — fora do cálculo do DAS (Res. CGSN 140 arts. 31 II e 33)` });
-      } else if (!issExtinto(dataPa)) {
+      } else if (!issExtinto(linhas, dataPa)) {
         pisoIssBp ??= issAliquotaMinBp(linhas, dataPa);
         e.beneficioIss = { tipo: b.tipo, reducaoBpPorFaixa: b.reducaoBpPorFaixa, pisoIssBp };
       }

@@ -953,7 +953,7 @@ export class FiscalDocumentEmissionService {
     const shares = splitCents(ledgerCents, weights);
 
     const fp = fiscalProfile!;
-    const linhasIssTransicao = await this.legalParams.fotografia(['ISS_TRANSICAO']);
+    const linhasIssTransicao = await this.legalParams.fotografia(['ISS_TRANSICAO', 'ISS_LIMITE']);
     const groups = orderedGroups.map((g, i) => {
       const vDescIncondCents = pacoteVenda ? 0 : descontoDoGrupo(g);
       const vServCents = shares[i] + vDescIncondCents;
@@ -1339,7 +1339,7 @@ export class FiscalDocumentEmissionService {
 
     const fp = fiscalProfile!;
     const profile = this.pacoteServiceProfile(fp);
-    const linhasIssTransicao = await this.legalParams.fotografia(['ISS_TRANSICAO']);
+    const linhasIssTransicao = await this.legalParams.fotografia(['ISS_TRANSICAO', 'ISS_LIMITE']);
     const payload = this.buildPayload({
       fp,
       cnpjEmitente: unitCnpj,
@@ -1375,7 +1375,7 @@ export class FiscalDocumentEmissionService {
     dCompet: string;
     tomador: { cnpj?: string; cpf?: string; xNome: string } | null;
     ambiente: DfeAmbiente;
-    /** ISS-TRANSICAO-IBS PR-2 item 8: fotografia de `ISS_TRANSICAO` (fator de 2029–2032). */
+    /** ISS-TRANSICAO-IBS PR-2 item 8: fotografia de `ISS_TRANSICAO` (fator de 2029–2032) + `ISS_LIMITE` (o fim do ISS, Onda 3.2 #4). */
     linhasIssTransicao: readonly LinhaLegal[];
   }): DpsPayload {
     const { fp, group, vServCents, xDescServ, dCompet, tomador } = args;
