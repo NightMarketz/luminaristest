@@ -21,6 +21,7 @@ import { DfeSignerCodigoViewSchema, DfeSignerTarefasRespostaSchema, type DfeSign
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { selectDfeEmissor } from '@/features/accounting/dfe/selectDfeEmissor';
 import { DFE_ASSINADOR_SEM_DISPOSITIVO, transporteAssinadorLocal } from '@/features/accounting/dfe/local/assinadorLocalRuntime';
+import { DfeTransporteIndisponivelError, isFalhaDeComunicacao } from '@/features/accounting/dfe/DfeEmissorPort';
 import { SefazNfeEmissor } from '@/features/accounting/dfe/sefaz/SefazNfeEmissor';
 import { SefazTransporteError } from '@/features/accounting/dfe/sefaz/SefazSoapClient';
 import { AssinaturaRemotaError } from '@/features/accounting/dfe/AssinadorRemotoPort';
@@ -142,6 +143,11 @@ describe('X10a EMENDA-4 AL-PR-3 — NFC-e pelo assinador local, fila real, compo
     const sel = selectDfeEmissor(process.env, 'NFCE', { transporteLocal: null });
     expect(sel).toMatchObject({ enabled: false, reason: expect.stringContaining('assinador local não está ligado') });
     await expect(transporteAssinadorLocal()!.call('https://x.invalid', 'NFeAutorizacao4', '<x/>')).rejects.toThrow(DFE_ASSINADOR_SEM_DISPOSITIVO);
+    // L-…580f: o erro é TIPADO (o polling do #1349 adia sem gastar tentativa) e NÃO é falha de comunicação com a SEFAZ (não liga contingência)
+    const erro = await transporteAssinadorLocal()!.call('https://x.invalid', 'NFeAutorizacao4', '<x/>').catch((e: unknown) => e);
+    expect(erro).toBeInstanceOf(DfeTransporteIndisponivelError);
+    expect(isFalhaDeComunicacao(erro)).toBe(false);
+    expect((erro as DfeTransporteIndisponivelError).code).toBe(DFE_ASSINADOR_SEM_DISPOSITIVO);
   });
 
   it('emissão NFC-e: ASSINAR e TRANSMITIR passam pela fila real, o caixa devolve, a SEFAZ autoriza ⇒ AUTHORIZED; payload apagado', async () => {
