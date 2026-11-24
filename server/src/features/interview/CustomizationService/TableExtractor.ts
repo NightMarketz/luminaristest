@@ -1,8 +1,11 @@
 import { logger } from '../../../lib/logger';
 import { ICustomizableTable } from '../models/InterviewTypes';
 import type { ISchemaField } from '../../../features/dynamicTables/models/DynamicTable.model';
-import type { BridgeKey, PresetTableDefinition } from '../../dynamicTables/domain/presets';
-import { computeTableLocks } from '../../dynamicTables/domain/presets/removability';
+import {
+  type BridgeKey,
+  type PresetTableDefinition,
+  computeTableLocks,
+} from '../../dynamicTables/public/presets';
 
 interface IPreset {
   key: string;

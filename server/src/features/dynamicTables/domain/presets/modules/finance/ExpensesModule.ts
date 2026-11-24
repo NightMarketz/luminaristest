@@ -10,7 +10,7 @@ import {
   unitId,
 } from '../../fields';
 import { paymentStatus as paymentStatusSelect } from '../../fields/select/SelectPresets';
-import type { AnalyticsConfiguration } from '@/features/analytics/core/models/AnalyticsConfiguration';
+import type { AnalyticsConfiguration } from '@/features/analytics/public/analyticsConfiguration';
 
 /**
  * @description Módulo base para a tabela "expenses" (despesas operacionais),

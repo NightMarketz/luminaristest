@@ -1,5 +1,5 @@
 import type { ITableSchema } from '../../../../models/DynamicTable.model';
-import type { AnalyticsConfiguration } from '@/features/analytics/core/models/AnalyticsConfiguration';
+import type { AnalyticsConfiguration } from '@/features/analytics/public/analyticsConfiguration';
 import {
   campaignId,
   channelSelect,

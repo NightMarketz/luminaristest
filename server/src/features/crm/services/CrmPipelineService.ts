@@ -1,6 +1,6 @@
 import type { UserContext } from '../../../lib/authUtils';
 import { ModuleNotInstalledError, NotFoundError, ValidationError } from '../../../lib/errors';
-import { moduleOfTable } from '../../dynamicTables/domain/presets/modules/registry';
+import { moduleOfTable } from '../../dynamicTables/public/presets';
 import logger from '../../../lib/logger';
 import type { DynamicTableService } from '../../dynamicTables/services/DynamicTableService';
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';

@@ -1,5 +1,5 @@
 import { IMessage } from '../models/InterviewTypes';
-import { IPresetKnowledge, presetKnowledgeBase } from '../../dynamicTables/domain/presets/ai/PresetKnowledgeBase';
+import { IPresetKnowledge, presetKnowledgeBase } from '../../dynamicTables/public/presetKnowledge';
 import { OpenAIService } from '../../../lib/openai/OpenAIService';
 import { logger } from '../../../lib/logger';
 

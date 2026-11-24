@@ -1,4 +1,4 @@
-import type { SelectablePresetSuite } from '..';
+import type { SelectablePresetSuite } from '../presetTypes';
 import { composeModuleTables, MODULE_KEYS, MODULE_REGISTRY } from '../modules/registry';
 
 // BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: o registro deixou de ser só CRM — a suíte compõe só a categoria `crm`.

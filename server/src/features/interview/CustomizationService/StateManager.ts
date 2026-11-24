@@ -6,9 +6,13 @@ import {
 } from '../models/InterviewSession.model';
 import type { IInterviewSessionRepository } from '../repositories/IInterviewSessionRepository';
 import { presetService } from '../../dynamicTables/services/PresetService';
-import { computeTableLocks } from '../../dynamicTables/domain/presets/removability';
-import { CoreSystemPreset } from '../../dynamicTables/domain/presets';
-import { MODULE_REGISTRY, moduleOfTable, type ModuleKey } from '../../dynamicTables/domain/presets/modules/registry';
+import {
+  computeTableLocks,
+  CoreSystemPreset,
+  MODULE_REGISTRY,
+  moduleOfTable,
+  type ModuleKey,
+} from '../../dynamicTables/public/presets';
 import type { ISchemaField } from '../../dynamicTables/models/DynamicTable.model';
 import { ADDED_TABLE_KEY_PATTERN } from '../../dynamicTables/dtos/CreateDashboard.dto';
 import { composeSessionTables } from './sessionComposition';

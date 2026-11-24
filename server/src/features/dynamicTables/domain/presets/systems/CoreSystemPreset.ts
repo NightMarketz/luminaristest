@@ -1,5 +1,5 @@
 import type { ITableSchema } from '../../../models/DynamicTable.model';
-import type { PresetSuite } from '..';
+import type { PresetSuite } from '../presetTypes';
 import { createTableFromModule } from '../../TableFactory';
 import { unitsModule } from '../modules/core/UnitsModule';
 import { employeesModule } from '../modules/core/EmployeesModule';

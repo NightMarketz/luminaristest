@@ -12,7 +12,7 @@ import type { DocumentSearchService } from '../../documents/services/DocumentSea
 import { SearchDocumentsToolArgsSchema } from '../../documents/dtos/DocumentDto';
 import { wrapUntrustedData } from '../../../lib/untrustedData';
 import type { RagTurn } from './ragTurn';
-import { SchemaValidator } from '../../dynamicTables/services/SchemaValidator';
+import { SchemaValidator } from '../../dynamicTables/public/schemaValidator';
 import type { ITableSchema } from '../../dynamicTables/models/DynamicTable.model';
 
 const proposalValidator = new SchemaValidator();

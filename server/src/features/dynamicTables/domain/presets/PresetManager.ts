@@ -1,4 +1,4 @@
-import type { PresetSuite } from '.';
+import type { PresetSuite } from './presetTypes';
 import { logger } from '@/lib/logger';
 
 /**

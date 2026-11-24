@@ -1,8 +1,16 @@
 import { NotFoundError, ValidationError } from '../../../lib/errors';
-import { CoreSystemPreset, tablePresetSuites } from '../../dynamicTables/domain/presets';
-import type { PresetSuite, PresetTableDefinition } from '../../dynamicTables/domain/presets';
-import { composeModuleTables, expandModuleSelectors, suiteModuleOptions, type ModuleSelector } from '../../dynamicTables/domain/presets/modules/registry';
-import { applySelectOverrides, resolveModuleSelection } from '../../dynamicTables/domain/presets/modules/moduleSelection';
+import {
+  CoreSystemPreset,
+  tablePresetSuites,
+  type PresetSuite,
+  type PresetTableDefinition,
+  composeModuleTables,
+  expandModuleSelectors,
+  suiteModuleOptions,
+  type ModuleSelector,
+  applySelectOverrides,
+  resolveModuleSelection,
+} from '../../dynamicTables/public/presets';
 import { validateConfigurations } from '../../analytics/services/AnalyticsValidator';
 import type { ITableSchema } from '../../dynamicTables/models/DynamicTable.model';
 

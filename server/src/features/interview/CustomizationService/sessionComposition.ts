@@ -1,7 +1,13 @@
 import type { ISchemaField } from '../../dynamicTables/models/DynamicTable.model';
-import { CoreSystemPreset, type PresetSuite, type PresetTableDefinition } from '../../dynamicTables/domain/presets';
-import { composeModuleTables, suiteModuleOptions, type ModuleKey } from '../../dynamicTables/domain/presets/modules/registry';
-import { resolveModuleSelection } from '../../dynamicTables/domain/presets/modules/moduleSelection';
+import {
+  CoreSystemPreset,
+  type PresetSuite,
+  type PresetTableDefinition,
+  composeModuleTables,
+  suiteModuleOptions,
+  type ModuleKey,
+  resolveModuleSelection,
+} from '../../dynamicTables/public/presets';
 import type { CustomCreationDraft } from '../dtos/CustomCreationDraft.dto';
 import type { ICustomizationState } from '../models/InterviewTypes';
 

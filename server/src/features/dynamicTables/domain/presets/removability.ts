@@ -1,6 +1,6 @@
-import { z } from 'zod';
 import { ValidationError } from '../../../../lib/errors';
-import { BRIDGE_REQUIRES, type BridgeKey, type PresetTableDefinition } from '.';
+import type { TableLock } from '../../models/TableLock';
+import { BRIDGE_REQUIRES, type BridgeKey, type PresetTableDefinition } from './presetTypes';
 import { MODULE_REGISTRY, moduleOfTable, type ModuleKey } from './modules/registry';
 
 /**
@@ -13,22 +13,10 @@ import { MODULE_REGISTRY, moduleOfTable, type ModuleKey } from './modules/regist
  * create aplica a mesma regra (400 `TABLE_LOCKED`).
  */
 
-export const TABLE_LOCK_REASONS = [
-  'FIXED_MODULE',
-  'ACCOUNTING',
-  'REQUIRED_RELATION',
-  'REQUIRED_TABLE',
-  'REQUIRED_CAPABILITY',
-] as const;
-
-export const tableLockSchema = z
-  .object({
-    reason: z.enum(TABLE_LOCK_REASONS),
-    /** Origens (REQUIRED_*) ou a chave do módulo (FIXED_MODULE). */
-    by: z.array(z.string().min(1)).optional(),
-  })
-  .strict();
-export type TableLock = z.infer<typeof tableLockSchema>;
+// Motivos e forma da trava: declarados em `models/TableLock.ts` (folha que o model de outra feature alcança por
+// `public/presets.types.ts`) e reexportados aqui.
+export { TABLE_LOCK_REASONS, tableLockSchema } from '../../models/TableLock';
+export type { TableLock } from '../../models/TableLock';
 
 const PRESET_REF = '@@PRESET_TABLE_KEY::';
 

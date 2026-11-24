@@ -1,6 +1,6 @@
 import type { ITableSchema, ISchemaField } from '../models/DynamicTable.model';
 import type { DynamicTableCategory } from '../models/TableCategories';
-import type { PresetTableDefinition } from './presets';
+import type { PresetTableDefinition } from './presets/presetTypes';
 
 /**
  * Opções de configuração para a criação de uma tabela a partir de um módulo base.

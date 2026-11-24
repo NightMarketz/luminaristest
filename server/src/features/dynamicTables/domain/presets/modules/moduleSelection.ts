@@ -1,7 +1,7 @@
 import { ValidationError } from '../../../../../lib/errors';
 import { describeBridgeRequirement, type RemovalRefusal } from '../removability';
 import type { ISchemaField } from '../../../models/DynamicTable.model';
-import { BRIDGE_REQUIRES, type BridgeKey, type PresetSuite, type PresetTableDefinition } from '..';
+import { BRIDGE_REQUIRES, type BridgeKey, type PresetSuite, type PresetTableDefinition } from '../presetTypes';
 import {
   composeModuleTables,
   MODULE_REGISTRY,

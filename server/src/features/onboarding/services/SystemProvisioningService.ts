@@ -2,7 +2,7 @@ import logger from '../../../lib/logger';
 import { AppError, ForbiddenError, OnboardingRolledBackError, OnboardingRollbackFailedError } from '../../../lib/errors';
 import type { UserContext } from '../../../types/UserContext';
 import type { DynamicTableService } from '../../dynamicTables/services/DynamicTableService';
-import type { PresetTableDefinition } from '../../dynamicTables/domain/presets';
+import type { PresetTableDefinition } from '../../dynamicTables/public/presets';
 import type { UnitInput } from '../../dynamicTables/dtos/CreateDashboard.dto';
 import { UpsertCompanyFiscalProfileSchema } from '../../accounting/dtos/CompanyFiscalProfileDto';
 import type { OnboardingFiscalInput } from '../../accounting/dtos/CompanyFiscalProfileDto';
