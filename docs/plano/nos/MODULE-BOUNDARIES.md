@@ -48,6 +48,7 @@ F-MBE-1 branch de integração · F-MBE-2 `M2` por feature · F-MBE-3 regra `M3`
 - BRIEF: [`MODULE-BOUNDARIES-brief.md`](../../architecture/MODULE-BOUNDARIES-brief.md) (24/11; forks F-MBE-1..12 ratificados; `executa` do BRIEF inteiro em 24/11).
 - ADR: [`ADR-MODULE-BOUNDARIES.md`](../../adr/ADR-MODULE-BOUNDARIES.md); mecânica do gate em [`ADR-ARCH-BOUNDARIES.md`](../../adr/ADR-ARCH-BOUNDARIES.md) §3–§5.
 - Decisão dos forks F-MB-1..12: [[D-2026-11-24-MODULE-BOUNDARIES-FORKS]] (na `main` desde o #1366).
+- Respostas do dono às lacunas de spec da execução (PR-2, PR de `users/public`, PR-2b): [[D-2026-11-24-MODULE-BOUNDARIES-EXECUCAO-RESPOSTAS]]; o que mudou no fatiamento está no §13 do BRIEF.
 - Vizinhos: [[PAIS-NA-BORDA]] (mesmos choke points, `paises/<cc>/`, `ChartOfAccountsFixture`), [[BUILDER-VERTICAIS]] (`dynamicTables/presets`).
 
 ## Lacunas registradas na sessão de planejamento (caixa do maestro)
