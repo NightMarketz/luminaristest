@@ -1569,6 +1569,7 @@ export class ApplicationFactory {
       this.repositories.collectionCharge, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-6)
       this.repositories.companyFiscalProfile, // IBS-CBS-2027 PR-4 (item 19a): regime da competência do split
       this.repositories.fiscalProfile, // IBS-CBS-2027 PR-4 (item 19a): contas de IBS/CBS a recolher
+      legalParameterService, // Onda 3.2: fotografia OBRIGACAO_REGIME (início da apuração de IBS/CBS)
     );
     // BE-INCR-PAYMENT-PROVIDER PR-2: o adaptador sai do `provider` da conta — MP é o único da porta hoje (P2-1).
     const collectionChargeService = new CollectionChargeService(
