@@ -156,6 +156,67 @@ describe('outboundFetch — timeout e retry (servidor HTTP real)', () => {
     expect(eventLines().filter((l) => l.event === 'integration.failed')).toHaveLength(3);
   });
 
+  describe('deadlineMs — prazo TOTAL da chamada (o retry respeita)', () => {
+    const never: Handler = () => {
+      /* nunca responde */
+    };
+    const decorrido = async (fn: () => Promise<unknown>) => {
+      const t0 = Date.now();
+      const resultado = await fn().then(
+        () => 'ok' as const,
+        (e: unknown) => e as { name: string },
+      );
+      return { ms: Date.now() - t0, resultado };
+    };
+
+    it('GET que estoura o timeout a cada tentativa: o prazo total corta o retry (sem deadline seriam 5 × 300 ms)', async () => {
+      handler = never;
+      const { ms, resultado } = await decorrido(() =>
+        outboundFetch('bcb_ptax', `${base}/x`, undefined, { timeoutMs: 300, deadlineMs: 500, retry: { maxAttempts: 5, baseDelayMs: 1, maxDelayMs: 5 } }),
+      );
+      expect(resultado).toMatchObject({ name: 'TimeoutError' });
+      expect(ms).toBeLessThan(900); // 300 + 200 (a 2ª tentativa só ganha o que resta do prazo) + folga; antes: ~1500
+      expect(hits).toBeLessThanOrEqual(2);
+    });
+
+    it('a tentativa não passa do que resta do prazo, mesmo com timeout por tentativa maior', async () => {
+      handler = never;
+      const { ms, resultado } = await decorrido(() => outboundFetch('bcb_ptax', `${base}/x`, undefined, { timeoutMs: 10_000, deadlineMs: 150, retry: false }));
+      expect(resultado).toMatchObject({ name: 'TimeoutError' });
+      expect(ms).toBeLessThan(700);
+    });
+
+    it('5xx com Retry-After maior que o que resta: devolve a resposta JÁ, sem dormir o Retry-After (o chamador decide)', async () => {
+      handler = (_req, res) => {
+        res.statusCode = 503;
+        res.setHeader('retry-after', '2');
+        res.end('x');
+      };
+      let status = 0;
+      const { ms } = await decorrido(async () => {
+        status = (await outboundFetch('bcb_ptax', `${base}/x`, undefined, { deadlineMs: 400, retry: { maxAttempts: 3, baseDelayMs: 1, maxDelayMs: 4_000 } })).status;
+      });
+      expect(status).toBe(503);
+      expect(hits).toBe(1);
+      expect(ms).toBeLessThan(1_000); // antes: dormia ~2 s e voltava
+    });
+
+    it('com o prazo sobrando, o retry segue normal (503, 503, 200 dentro do deadline)', async () => {
+      handler = (_req, res, hit) => status(hit < 3 ? 503 : 200)(_req, res, hit);
+      const res = await outboundFetch('bcb_ptax', `${base}/x`, undefined, { deadlineMs: 5_000, retry: FAST });
+      expect(res.status).toBe(200);
+      expect(hits).toBe(3);
+    });
+
+    it('o signal do chamador continua mandando: abortado por ele ⇒ AbortError, mesmo com deadline', async () => {
+      handler = never;
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), 50);
+      await expect(outboundFetch('bcb_ptax', `${base}/x`, { signal: controller.signal }, { deadlineMs: 5_000, retry: FAST })).rejects.toMatchObject({ name: 'AbortError' });
+      expect(hits).toBe(1);
+    });
+  });
+
   it('o log nunca carrega URL, cabeçalho ou corpo, nem com retry', async () => {
     handler = (_req, res, hit) => status(hit < 2 ? 503 : 200)(_req, res, hit);
     await outboundFetch('bcb_ptax', `${base}/segredo?token=abc`, { headers: { Authorization: 'Bearer tok-9' } }, { retry: FAST });

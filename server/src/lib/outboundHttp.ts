@@ -22,6 +22,11 @@ export type OutboundIntegration = 'mercado_pago' | 'bcb_ptax' | 'psc' | 'sefaz';
  *   an idempotency key is never retried: resending blind would duplicate the effect. A caller abort is never retried.
  *   Each attempt leaves its own `integration.call`/`integration.failed` line; the last response/error is the caller's.
  *
+ * - deadline (`options.deadlineMs`, opt-in): the TOTAL budget of the call, retries and backoff included. Each attempt's
+ *   timeout is capped at what is left of it, and a retry whose backoff would not fit in what is left is not made — the
+ *   last response/error is returned/thrown at once. Without it the worst case is `maxAttempts × timeoutMs + backoff`
+ *   (e.g. 3 × 60 s). A caller `init.signal` still governs and is combined with the deadline, never replaced.
+ *
  * Never logged: the URL (it can carry a credential or a query), headers, request or response body (OBS-R7).
  * `alertWebhook.ts` stays on bare `fetch`: logging the alert sink through itself would loop.
  */
@@ -39,6 +44,11 @@ export interface OutboundOptions {
   timeoutMs?: number;
   /** `false` desliga o retry; objeto ajusta a política. Só chamada idempotente é re-tentada de qualquer jeito. */
   retry?: false | OutboundRetryPolicy;
+  /**
+   * Prazo TOTAL da chamada em ms (todas as tentativas e esperas). Opt-in: ausente = só o timeout por tentativa vale. Cada
+   * tentativa recebe no máximo o que resta; retry que não cabe no que resta não é feito (devolve a última resposta/erro).
+   */
+  deadlineMs?: number;
 }
 
 /** Timeout padrão por tentativa (ms) — configurável por integração; o chamador sobrescreve com `options.timeoutMs`. */
@@ -82,13 +92,21 @@ export async function outboundFetch(
   const policy: Required<OutboundRetryPolicy> | null =
     options?.retry === false || !isIdempotent(method, init) ? null : { ...DEFAULT_RETRY, ...options?.retry };
   const maxAttempts = policy?.maxAttempts ?? 1;
+  const deadlineAt = options?.deadlineMs !== undefined && Number.isFinite(options.deadlineMs) && options.deadlineMs > 0 ? Date.now() + options.deadlineMs : null;
+  const restante = (): number => (deadlineAt === null ? Number.POSITIVE_INFINITY : deadlineAt - Date.now());
+  const naoCabe = (esperaMs: number): boolean => deadlineAt !== null && restante() <= esperaMs;
+  const sinalDaTentativa = (): AbortSignal => {
+    const doPrazo = deadlineAt === null ? null : AbortSignal.timeout(Math.max(1, restante()));
+    if (callerSignal) return doPrazo ? AbortSignal.any([callerSignal, doPrazo]) : callerSignal;
+    return AbortSignal.timeout(Math.max(1, Math.min(timeoutMs, restante())));
+  };
 
   for (let attempt = 1; ; attempt += 1) {
     const startedAt = Date.now();
     const last = attempt >= maxAttempts;
     let res: Response;
     try {
-      res = await fetch(input, { ...init, signal: callerSignal ?? AbortSignal.timeout(timeoutMs) });
+      res = await fetch(input, { ...init, signal: sinalDaTentativa() });
     } catch (error) {
       logger.event('warn', 'integration.failed', 'outbound call failed', {
         integration,
@@ -98,7 +116,9 @@ export async function outboundFetch(
         errorName: error instanceof Error ? error.name : 'UnknownError',
       });
       if (last || policy === null || callerSignal?.aborted) throw error;
-      await sleep(backoffMs(attempt, policy, null));
+      const espera = backoffMs(attempt, policy, null);
+      if (naoCabe(espera)) throw error; // o prazo total não comporta outra tentativa
+      await sleep(espera);
       continue;
     }
     logger.event(res.ok ? 'info' : 'warn', 'integration.call', 'outbound call', {
@@ -109,11 +129,13 @@ export async function outboundFetch(
       durationMs: Date.now() - startedAt,
     });
     if (last || policy === null || !isTransientStatus(res.status)) return res;
+    const espera = backoffMs(attempt, policy, res.headers.get('retry-after'));
+    if (naoCabe(espera)) return res; // o prazo total não comporta outra tentativa: o chamador decide sobre esta resposta
     try {
       await res.body?.cancel(); // libera o socket antes de re-tentar
     } catch (error) {
       logger.warn('outbound: não cancelou o corpo da resposta antes de re-tentar', { integration, error });
     }
-    await sleep(backoffMs(attempt, policy, res.headers.get('retry-after')));
+    await sleep(espera);
   }
 }
