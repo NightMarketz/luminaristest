@@ -28,7 +28,7 @@ async function dispositivo(opts: { lastSeenAt: Date | null; certNotAfter?: strin
   });
   return d.id;
 }
-async function nota(unitId: string, status: 'PENDING_SIGNATURE' | 'CONTINGENCY', atualizadaHa: number, over: { deletedAt?: Date } = {}) {
+async function nota(unitId: string, status: 'PENDING_SIGNATURE' | 'CONTINGENCY', atualizadaHa: number, over: { deletedAt?: Date; kind?: 'NFE' | 'NFCE' | 'NFSE'; partner?: string } = {}) {
   seq += 1;
   await prisma.fiscalDocument.create({
     data: {
@@ -82,6 +82,21 @@ describe('X10a EMENDA-4 AL-PR-4 — saúde do assinador local (AL-15)', () => {
     // o mesmo dispositivo sem poll cai no caso (a), nunca nos dois
     await prisma.dfeSignerDevice.update({ where: { id }, data: { lastSeenAt: minAtras(20) } });
     expect((await alertasDe()).map((a) => a.evento)).toEqual(['ASSINADOR_SEM_POLL_COM_PENDENTE']);
+  });
+
+  it('(d)/(a) NFS-e em PENDING_SIGNATURE (sessão do PSC vencida) NÃO é nota presa pelo assinador; NF-e antiga na mesma unidade continua alertando (lacuna 9228)', async () => {
+    const id = await dispositivo({ lastSeenAt: minAtras(1), units: ['u-p1', 'u-p2'] });
+    await nota('u-p1', 'PENDING_SIGNATURE', 90, { kind: 'NFSE', partner: 'psc' }); // espera o PSC, com o assinador no ar
+    expect(await alertasDe()).toEqual([]);
+    await nota('u-p2', 'PENDING_SIGNATURE', 40, { kind: 'NFE' }); // controle positivo: NF-e presa dispara
+    await nota('u-p2', 'PENDING_SIGNATURE', 70, { kind: 'NFSE', partner: 'psc' }); // a NFS-e da mesma unidade não entra na conta
+    expect(await alertasDe()).toEqual([
+      { evento: 'ASSINADOR_ONLINE_COM_PENDENTE_PRESA', dispositivoId: id, unitIds: ['u-p2'], detalhe: { notasEmEspera: 1, minutosPresa: 40 } },
+    ]);
+    await prisma.dfeSignerDevice.update({ where: { id }, data: { lastSeenAt: minAtras(20) } });
+    expect(await alertasDe()).toEqual([
+      { evento: 'ASSINADOR_SEM_POLL_COM_PENDENTE', dispositivoId: id, unitIds: ['u-p2'], detalhe: { notasEmEspera: 1, minutosSemPoll: 20 } },
+    ]);
   });
 
   it('(a) dispositivo que nunca fez poll conta como sem poll (minutosSemPoll = -1)', async () => {

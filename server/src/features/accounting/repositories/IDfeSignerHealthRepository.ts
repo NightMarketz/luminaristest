@@ -10,8 +10,10 @@ export interface DfeSignerHealthDevice {
 export interface DfeSignerHealthEmEspera {
   unitId: string;
   status: 'PENDING_SIGNATURE' | 'CONTINGENCY';
+  /** `NFSE | NFE | NFCE` — a NFS-e em `PENDING_SIGNATURE` espera o PSC, não o assinador local; quem decide é o serviço. */
+  kind: string;
   quantidade: number;
-  /** `updatedAt` da mais antiga desse estado na unidade. */
+  /** `updatedAt` da mais antiga desse estado e tipo na unidade. */
   maisAntigaDesde: Date;
 }
 

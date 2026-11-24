@@ -16,7 +16,7 @@ export class DfeSignerHealthRepository implements IDfeSignerHealthRepository {
   public async resumoEmEspera(unitIds: readonly string[]): Promise<DfeSignerHealthEmEspera[]> {
     if (unitIds.length === 0) return [];
     const grupos = await prisma.fiscalDocument.groupBy({
-      by: ['unitId', 'status'],
+      by: ['unitId', 'status', 'kind'],
       where: { unitId: { in: [...unitIds] }, status: { in: ['PENDING_SIGNATURE', 'CONTINGENCY'] }, deletedAt: null },
       _count: { _all: true },
       _min: { updatedAt: true },
@@ -24,6 +24,7 @@ export class DfeSignerHealthRepository implements IDfeSignerHealthRepository {
     return grupos.map((g) => ({
       unitId: g.unitId,
       status: g.status as DfeSignerHealthEmEspera['status'],
+      kind: g.kind,
       quantidade: g._count._all,
       maisAntigaDesde: g._min.updatedAt!,
     }));

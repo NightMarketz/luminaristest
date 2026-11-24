@@ -1,5 +1,5 @@
 import { logger } from '../../../lib/logger';
-import { DFE_SIGNER_ALERTA_CERT_DIAS, DFE_SIGNER_ALERTA_PRESA_MS, DFE_SIGNER_ALERTA_SEM_POLL_MS, type DfeSignerAlertaEvento } from '../models/DfeSigner.model';
+import { DFE_SIGNER_ALERTA_CERT_DIAS, DFE_SIGNER_ALERTA_PRESA_MS, DFE_SIGNER_ALERTA_SEM_POLL_MS, DFE_SIGNER_KINDS_QUE_DEPENDEM, type DfeSignerAlertaEvento } from '../models/DfeSigner.model';
 import type { IDfeSignerHealthRepository } from '../repositories/IDfeSignerHealthRepository';
 
 /** Um alerta do AL-15. Sem PII: ids, contagens e dias — nunca certificado, subject, token, nome ou XML (AL-16). */
@@ -35,7 +35,8 @@ function diaUtc(ymd: string): number {
  *  (d) `ASSINADOR_ONLINE_COM_PENDENTE_PRESA` — o assinador está no ar e a nota está em `PENDING_SIGNATURE` há mais de 15 min: a
  *      retomada (AL-14) tem teto por dispositivo e janela, e depois dele só o `reenviar` do operador tira a nota (a perda da
  *      marca em memória ou o PIN sem resposta caem aqui também). Complementa (a): os dois nunca disparam juntos.
- * Um dispositivo que nunca fez poll conta como sem poll.
+ * Um dispositivo que nunca fez poll conta como sem poll. Só NF-e e NFC-e contam como "nota esperando o assinador": a NFS-e em
+ * `PENDING_SIGNATURE` espera a reautorização do PSC e não é culpa do assinador (lacuna 9228, `DFE_SIGNER_KINDS_QUE_DEPENDEM`).
  */
 export class DfeSignerHealthService {
   constructor(private readonly repo: IDfeSignerHealthRepository) {}
@@ -48,13 +49,14 @@ export class DfeSignerHealthService {
       const semPollMs = d.lastSeenAt ? now.getTime() - d.lastSeenAt.getTime() : Number.POSITIVE_INFINITY;
       const semPoll = semPollMs > DFE_SIGNER_ALERTA_SEM_POLL_MS;
       const minutosSemPoll = Number.isFinite(semPollMs) ? Math.floor(semPollMs / 60_000) : -1; // -1 = nunca fez poll
-      const doDispositivo = emEspera.filter((e) => d.unitIds.includes(e.unitId));
+      // Só NF-e/NFC-e dependem do assinador local: a NFS-e em PENDING_SIGNATURE espera o PSC (lacuna 9228; DFE_SIGNER_KINDS_QUE_DEPENDEM).
+      const doDispositivo = emEspera.filter((e) => d.unitIds.includes(e.unitId) && (DFE_SIGNER_KINDS_QUE_DEPENDEM as readonly string[]).includes(e.kind));
       const cobre = (status: 'PENDING_SIGNATURE' | 'CONTINGENCY', soAntigas: boolean) => {
         const linhas = doDispositivo.filter(
           (e) => e.status === status && (!soAntigas || now.getTime() - e.maisAntigaDesde.getTime() > DFE_SIGNER_ALERTA_SEM_POLL_MS),
         );
         const maisAntigaMs = linhas.reduce((m, l) => Math.max(m, now.getTime() - l.maisAntigaDesde.getTime()), 0);
-        return { unitIds: linhas.map((l) => l.unitId), notas: linhas.reduce((s, l) => s + l.quantidade, 0), maisAntigaMs };
+        return { unitIds: [...new Set(linhas.map((l) => l.unitId))], notas: linhas.reduce((s, l) => s + l.quantidade, 0), maisAntigaMs };
       };
 
       if (!semPoll) {

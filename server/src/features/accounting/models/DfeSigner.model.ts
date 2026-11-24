@@ -96,6 +96,12 @@ export const DFE_SIGNER_ALERTA_CERT_DIAS = 30;
  * (`DFE_SIGNER_RETOMADA_MAX`/janela, em memória): depois dele só o `reenviar` do operador a tira — e nenhum poll "volta".
  */
 export const DFE_SIGNER_ALERTA_PRESA_MS = 15 * 60 * 1000;
+/**
+ * AL-15: os tipos de nota que dependem do ASSINADOR LOCAL (assinatura e transmissão mTLS na SEFAZ pelo caixa do cliente). A NFS-e
+ * também fica em `PENDING_SIGNATURE`, mas esperando a reautorização do PSC (E-13, F-PSC-6 a) — a causa não é o assinador, e culpá-lo
+ * mandaria o operador olhar o lugar errado. Só estes tipos entram na contagem de (a), (c) e (d).
+ */
+export const DFE_SIGNER_KINDS_QUE_DEPENDEM = ['NFE', 'NFCE'] as const;
 /** Os quatro casos do AL-15; o alerta é no máximo 1 por dispositivo, caso e dia. */
 export const DFE_SIGNER_ALERTA_EVENTOS = [
   'ASSINADOR_SEM_POLL_COM_PENDENTE',
