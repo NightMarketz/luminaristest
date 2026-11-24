@@ -3,6 +3,7 @@
 - **Data:** 2026-11-15
 - **Status:** **Proposed — forks F-PB-1..9 RATIFICADOS em 24/11** (dono, questionário; §5.1 e `docs/plano/decisoes/D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA.md`). A direção é do dono (§0). A redação da regra do §1 ainda não foi ratificada e precisa ser reescrita conforme o §5.1 (F-PB-1 a, F-PB-4 b, F-PB-7 a). Não autoriza código sozinho. O ADR com a guarda (§6) é o passo seguinte, e os BRIEFs com `executa` são emendados pela regra antes do código (D-2026-11-24 §6).
 - **Publicação:** escrito em 15/11 na worktree `claude/personal-dept-coverage-c7fea7` e publicado sem alteração em 24/11 pela sessão maestro, com exceção deste cabeçalho e do §5.1. Os dois links abaixo para `D-2026-11-15-PAIS-NA-BORDA.md` e `BE-INCR-LEGAL-REGRAS-brief.md` ainda apontam para arquivos não publicados daquela worktree (lacuna na caixa).
+- **ADR (24/11):** [`ADR-PAIS-NA-BORDA.md`](ADR-PAIS-NA-BORDA.md) reescreve a regra do §1 para as respostas do §5.1 e planeja a guarda e as fatias; a redação do §1 abaixo fica como histórico.
 - **Classe:** DECISÃO ARQUITETURAL (fronteira).
 - **Relaciona:** `ADR-ARCH-BOUNDARIES.md` (guarda mecânica), `ADR-PERSISTENCE-BOUNDARY-user-designed-vs-law-designed.md` (o que a lei desenha é Prisma first-class), `ADR-DOMAIN-MOTOR-rejected.md` (não reabre), fase P-i18n do `docs/SDD-LUMINARIS.md` §IV.1 e invariante 8 de `docs/plano/destino/17-…md`, [`BE-INCR-LEGAL-REGRAS-brief.md`](../accounting/BE-INCR-LEGAL-REGRAS-brief.md) (motor de leis, F-ML-13).
 - **Decisão que o abre:** `docs/plano/decisoes/D-2026-11-15-PAIS-NA-BORDA.md`.
