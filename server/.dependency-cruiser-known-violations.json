@@ -3,6 +3,12 @@
     "type": "cycle",
     "from": "src/features/accounting/services/IInventoryService.ts",
     "to": "src/features/accounting/services/InventoryService.ts",
+    "unresolvedTo": "./InventoryService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "X3-no-circular"
@@ -30,6 +36,12 @@
     "type": "cycle",
     "from": "src/features/accountingBinding/services/BindingActivationService.ts",
     "to": "src/features/sectorKits/services/KitInstallService.ts",
+    "unresolvedTo": "../../sectorKits/services/KitInstallService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "X3-no-circular"
@@ -57,6 +69,12 @@
     "type": "cycle",
     "from": "src/features/dynamicTables/presets/index.ts",
     "to": "src/features/dynamicTables/presets/modules/registry.ts",
+    "unresolvedTo": "./modules/registry",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "X3-no-circular"
@@ -83,7 +101,90 @@
   {
     "type": "cycle",
     "from": "src/features/dynamicTables/presets/index.ts",
+    "to": "src/features/dynamicTables/presets/systems/AestheticClinicPreset.ts",
+    "unresolvedTo": "./systems/AestheticClinicPreset",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "X3-no-circular"
+    },
+    "cycle": [
+      {
+        "name": "src/features/dynamicTables/presets/systems/AestheticClinicPreset.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/features/dynamicTables/presets/modules/registry.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      },
+      {
+        "name": "src/features/dynamicTables/presets/index.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/features/dynamicTables/presets/index.ts",
+    "to": "src/features/dynamicTables/presets/systems/BeautySalonPreset.ts",
+    "unresolvedTo": "./systems/BeautySalonPreset",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "X3-no-circular"
+    },
+    "cycle": [
+      {
+        "name": "src/features/dynamicTables/presets/systems/BeautySalonPreset.ts",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "src/features/dynamicTables/presets/modules/registry.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      },
+      {
+        "name": "src/features/dynamicTables/presets/index.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "src/features/dynamicTables/presets/index.ts",
     "to": "src/features/dynamicTables/presets/systems/CoreSystemPreset.ts",
+    "unresolvedTo": "./systems/CoreSystemPreset",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "X3-no-circular"
@@ -110,6 +211,11 @@
     "type": "cycle",
     "from": "src/features/dynamicTables/presets/index.ts",
     "to": "src/features/dynamicTables/presets/systems/CrmModulePreset.ts",
+    "unresolvedTo": "./systems/CrmModulePreset",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "X3-no-circular"
@@ -136,6 +242,11 @@
     "type": "cycle",
     "from": "src/features/dynamicTables/presets/modules/registry.ts",
     "to": "src/features/dynamicTables/utils/TableFactory.ts",
+    "unresolvedTo": "../../utils/TableFactory",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "X3-no-circular"
@@ -168,76 +279,13 @@
   },
   {
     "type": "cycle",
-    "from": "src/features/dynamicTables/presets/systems/AestheticClinicPreset.ts",
-    "to": "src/features/dynamicTables/presets/modules/registry.ts",
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/dynamicTables/presets/modules/registry.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/index.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/systems/AestheticClinicPreset.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/features/dynamicTables/presets/systems/BeautySalonPreset.ts",
-    "to": "src/features/dynamicTables/presets/modules/registry.ts",
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/dynamicTables/presets/modules/registry.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/index.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/systems/BeautySalonPreset.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
     "from": "src/features/dynamicTables/presets/systems/CoreSystemPreset.ts",
     "to": "src/features/dynamicTables/utils/TableFactory.ts",
+    "unresolvedTo": "../../utils/TableFactory",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "X3-no-circular"
@@ -271,6 +319,11 @@
     "type": "cycle",
     "from": "src/features/dynamicTables/presets/systems/CrmModulePreset.ts",
     "to": "src/features/dynamicTables/presets/modules/registry.ts",
+    "unresolvedTo": "../modules/registry",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "X3-no-circular"
@@ -304,6 +357,12 @@
     "type": "cycle",
     "from": "src/features/sectorKits/services/kitInstallPorts.ts",
     "to": "src/features/accountingBinding/services/BindingActivationService.ts",
+    "unresolvedTo": "../../accountingBinding/services/BindingActivationService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "X3-no-circular"
