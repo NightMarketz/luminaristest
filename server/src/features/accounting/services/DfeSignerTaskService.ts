@@ -55,6 +55,13 @@ function hashResultado(body: DfeSignerResultadoBody): string {
   return createHash('sha256').update(JSON.stringify(ordenado), 'utf8').digest('hex');
 }
 
+/** O retorno de `onRetomada` sem nada enviado nem falho (`enviarPendentesDaUnidade`): não havia `PENDING_SIGNATURE`. Forma desconhecida ⇒ falso. */
+function semPendentes(r: unknown): boolean {
+  if (typeof r !== 'object' || r === null) return false;
+  const { enviadas, falhas } = r as { enviadas?: unknown; falhas?: unknown };
+  return enviadas === 0 && falhas === 0;
+}
+
 function envMs(raw: string | undefined, padrao: number): number {
   const n = Number(raw);
   return Number.isFinite(n) && n > 0 ? n : padrao;
@@ -87,9 +94,11 @@ export class DfeSignerTaskService {
    * AL-14 — dispositivos cuja tarefa venceu sem resposta (pega ou não; a nota foi para `PENDING_SIGNATURE`): o próximo
    * poll retoma, uma vez por marca, dentro do freio de `reservarRetomada`. É o evento que criou a pendência, não o relógio do heartbeat: a nota pende com 20 s de silêncio e o
    * `lastSeenAt` só denuncia a queda depois de 90 s, então um caixa que volta entre os dois nunca seria "voltou".
-   * Em memória, como `esperandoResultado` (uma instância por cliente, ADR-M2).
+   * Em memória, como `esperandoResultado` (uma instância por cliente, ADR-M2). O valor é o instante da marca: ela é posta quando a
+   * tarefa vence, ANTES de a nota virar `PENDING_SIGNATURE` (o resultado volta ao serviço de envio, que só então grava a nota); a retomada que
+   * não acha nada a enviar devolve a marca (e o slot do freio) por `DFE_SIGNER_ONLINE_MS`, em vez de queimá-los (`retomar`).
    */
-  private readonly retomarNoProximoPoll = new Set<string>();
+  private readonly retomarNoProximoPoll = new Map<string, number>();
   /** Quando cada dispositivo teve retomada por marca (a janela do freio, `reservarRetomada`). */
   private readonly retomadasPorMarca = new Map<string, number[]>();
   private onRetomada: ((scope: AccountingScope) => Promise<unknown>) | null = null;
@@ -149,6 +158,7 @@ export class DfeSignerTaskService {
       new Date(now.getTime() - DFE_SIGNER_ONLINE_MS),
     );
     let retomarAgora = voltou && tokenPresente;
+    let porMarca: number | null = null; // instante da marca, quando é ela (e não `voltou`) que dispara esta retomada
     // Marca de tarefa vencida. Sem token ela fica (quando ele volta, `voltou` cobre); com `voltou`, a retomada já sai e a marca morre.
     if (tokenPresente && this.retomarNoProximoPoll.has(device.id)) {
       if (retomarAgora) this.retomarNoProximoPoll.delete(device.id);
@@ -156,9 +166,10 @@ export class DfeSignerTaskService {
         const reserva = this.reservarRetomada(device.id, now);
         if (reserva !== 'espaco') this.retomarNoProximoPoll.delete(device.id); // `espaco` = cedo demais: a marca fica para o poll seguinte
         retomarAgora = reserva === 'ok';
+        if (retomarAgora) porMarca = this.retomarNoProximoPoll.get(device.id) ?? now.getTime();
       }
     }
-    if (retomarAgora) this.retomar(device);
+    if (retomarAgora) this.retomar(device, porMarca === null ? undefined : { marca: porMarca, reservaEm: now.getTime() });
 
     const fim = now.getTime() + esperaS * 1000;
     for (;;) {
@@ -250,7 +261,7 @@ export class DfeSignerTaskService {
     // Nos dois casos a nota vai para `PENDING_SIGNATURE` (AL-13/F-AL-6) e o próximo poll deste dispositivo a retoma (AL-14).
     // O servidor não distingue "caixa caiu ou reiniciou com a tarefa na mão" de "PIN aberto": a retomada vale nos dois, e o
     // freio (`reservarRetomada`) é que impede o laço retomada → tarefa nova → vence → retomada.
-    this.retomarNoProximoPoll.add(device.id);
+    this.retomarNoProximoPoll.set(device.id, this.now().getTime());
     if (await this.repo.expirarPendente(task.id)) return 'NAO_ENTREGUE';
     await this.repo.expire(task.id);
     return 'ENTREGUE';
@@ -307,18 +318,35 @@ export class DfeSignerTaskService {
   }
 
   /** AL-14 — fora do caminho do poll: o reenvio cria tarefas ASSINAR que este mesmo poll (ou o próximo) entrega. */
-  private retomar(device: DfeSignerDeviceWithUnits): void {
+  private retomar(device: DfeSignerDeviceWithUnits, porMarca?: { marca: number; reservaEm: number }): void {
     const fn = this.onRetomada;
     if (!fn) return;
-    for (const u of device.units) {
+    const vazias = device.units.map((u) => {
       const scope = resolveAccountingScopeInternal({ userId: device.userId }, u.unitId);
-      void fn(scope).catch((error: unknown) => {
-        logger.warn('dfe_signer: retomada das notas pendentes falhou — ficam para o reenviar', {
-          unitId: u.unitId,
-          dispositivoId: device.id,
-          errorName: error instanceof Error ? error.name : 'UnknownError',
-        });
-      });
-    }
+      return fn(scope).then(
+        (r) => semPendentes(r),
+        (error: unknown) => {
+          logger.warn('dfe_signer: retomada das notas pendentes falhou — ficam para o reenviar', {
+            unitId: u.unitId,
+            dispositivoId: device.id,
+            errorName: error instanceof Error ? error.name : 'UnknownError',
+          });
+          return false;
+        },
+      );
+    });
+    if (porMarca) void Promise.all(vazias).then((v) => v.every(Boolean) && this.devolverMarca(device.id, porMarca));
+  }
+
+  /**
+   * A retomada por marca que não achou nenhuma `PENDING_SIGNATURE` (a nota ainda não tinha sido gravada: a marca é posta antes
+   * dela) não gasta a marca nem um slot do freio — senão o poll que chega nessa janela de ms deixa a nota para o `reenviar`
+   * manual. Vale só enquanto a marca é recente (`DFE_SIGNER_ONLINE_MS`): sem nota pendente nunca, o poll para de procurar.
+   */
+  private devolverMarca(deviceId: string, { marca, reservaEm }: { marca: number; reservaEm: number }): void {
+    const reservas = this.retomadasPorMarca.get(deviceId);
+    const i = reservas ? reservas.lastIndexOf(reservaEm) : -1;
+    if (reservas && i >= 0) reservas.splice(i, 1);
+    if (this.now().getTime() - marca < DFE_SIGNER_ONLINE_MS && !this.retomarNoProximoPoll.has(deviceId)) this.retomarNoProximoPoll.set(deviceId, marca);
   }
 }

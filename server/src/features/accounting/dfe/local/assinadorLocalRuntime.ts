@@ -1,3 +1,4 @@
+import { DfeTransporteIndisponivelError } from '../DfeEmissorPort';
 import type { SefazTransporte } from '../sefaz/SefazTransporte';
 
 /**
@@ -25,6 +26,6 @@ export const DFE_ASSINADOR_SEM_DISPOSITIVO = 'dfe_assinador_sem_dispositivo';
 
 export const transporteSemDispositivo: SefazTransporte = {
   async call() {
-    throw new Error(`${DFE_ASSINADOR_SEM_DISPOSITIVO}: a transmissão pelo assinador local precisa do dispositivo da unidade do documento`);
+    throw new DfeTransporteIndisponivelError(DFE_ASSINADOR_SEM_DISPOSITIVO, `${DFE_ASSINADOR_SEM_DISPOSITIVO}: a transmissão pelo assinador local precisa do dispositivo da unidade do documento`);
   },
 };

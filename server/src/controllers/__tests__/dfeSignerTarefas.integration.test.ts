@@ -172,6 +172,42 @@ describe('X10a EMENDA-4 AL-PR-3 — fila do assinador local pela HTTP', () => {
     }
   });
 
+  it('AL-14 (janela da marca): poll que chega ANTES de a nota virar PENDING_SIGNATURE não consome a marca nem o teto — a retomada sai no poll seguinte, quando há o que enviar', async () => {
+    const ASSINAR = { tipo: 'ASSINAR' as const, algoritmo: 'rsa-sha1' as const, digestB64: 'aGFzaA==', conteudo: CONTEUDO };
+    const svc = getFactory().getDfeSignerTaskService();
+    const sec = () => new Promise((r) => setTimeout(r, 20));
+    let pendentes = 0; // a marca é posta quando a tarefa vence; a nota só vira PENDING_SIGNATURE alguns awaits depois (dfeEnvio.ts)
+    svc.setOnRetomada(async (scope) => {
+      retomadas.push(scope.unitId);
+      return { enviadas: pendentes, falhas: 0 };
+    });
+    process.env.DFE_SIGNER_RETOMADA_MAX = '1'; // um único slot de retomada na janela: a retomada vazia não pode gastá-lo
+    process.env.DFE_SIGNER_RETOMADA_JANELA_MS = '3000';
+    try {
+      await new Promise((r) => setTimeout(r, 3100)); // o histórico dos testes anteriores sai da janela
+      await poll();
+      await sec();
+      retomadas.length = 0;
+      expect(await (await fila()).executar(ASSINAR, 50)).toBe('NAO_ENTREGUE');
+      await poll(); // a nota ainda não é PENDING_SIGNATURE: a retomada roda e não acha nada
+      await sec();
+      expect(retomadas).toHaveLength(2);
+      pendentes = 1; // agora a nota está pendente
+      await poll();
+      await sec();
+      expect(retomadas).toHaveLength(4); // a marca continuou valendo e o slot do teto estava livre: a nota é retomada
+      await poll();
+      await sec();
+      expect(retomadas).toHaveLength(4); // enviou ⇒ consumida: o poll seguinte não retoma de novo
+    } finally {
+      delete process.env.DFE_SIGNER_RETOMADA_MAX;
+      delete process.env.DFE_SIGNER_RETOMADA_JANELA_MS;
+      svc.setOnRetomada(async (scope) => {
+        retomadas.push(scope.unitId);
+      });
+    }
+  });
+
   it('AL-12: o poll é o heartbeat — a view fica online, com a versão e o token; L-AL-6: outro certificado = sem token', async () => {
     await poll({ versaoAssinador: '1.2.3' });
     let v = DfeSignerViewSchema.parse((await request(app).get(`/api/accounting/dfe-assinador/${centro}`).set(authHeader(dono))).body.data);
