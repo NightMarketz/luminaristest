@@ -69,9 +69,18 @@ describe('BcbPtaxClient.fetchClosing (item 22)', () => {
     expect(quotes).toHaveLength(3);
   });
 
-  it('HTTP não-2xx → PtaxClientError', async () => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 503, json: async () => ({}) }) as unknown as typeof fetch;
+  it('HTTP não-2xx → PtaxClientError (5xx é GET idempotente: o wrapper tenta 3× antes de entregar o 503)', async () => {
+    const fetchMock = jest.fn(async () => new Response('{}', { status: 503 }));
+    global.fetch = fetchMock as unknown as typeof fetch;
     await expect(new BcbPtaxClient().fetchClosing('USD', '2026-09-24', '2026-09-28')).rejects.toThrow(/503/);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('HTTP 404 é permanente → 1 chamada só', async () => {
+    const fetchMock = jest.fn(async () => new Response('{}', { status: 404 }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    await expect(new BcbPtaxClient().fetchClosing('USD', '2026-09-24', '2026-09-28')).rejects.toThrow(/404/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('erro de rede ou timeout (abort) → PtaxClientError', async () => {

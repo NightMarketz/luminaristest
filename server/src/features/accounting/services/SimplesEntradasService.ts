@@ -68,10 +68,11 @@ export class SimplesEntradasService {
   /**
    * Item 10 — meses da janela do RBT12 do PA (`janelaRbt12`, PR-1) sem receita declarada no histórico NEM no subrazão
    * (`mesesComSubrazao`, do `ReceitaFiscalService`) ⇒ `RBT12_INCOMPLETO`; a apuração não confirma (PR-3, item 20).
+   * Onda 3.2 fatia 4: `inicioLc214` (`YYYY-MM`) é o marco `MARCO_LEGAL/INICIO_LC214_RBT12`, lido pelo chamador (sem dependência nova aqui).
    */
-  async alertaRbt12(scope: AccountingScope, competencia: string, mesesComSubrazao: ReadonlySet<string>): Promise<AlertaEntradaSimples | null> {
+  async alertaRbt12(scope: AccountingScope, competencia: string, mesesComSubrazao: ReadonlySet<string>, inicioLc214: string): Promise<AlertaEntradaSimples | null> {
     this.assertRead(scope);
-    const j = janelaRbt12(competencia);
+    const j = janelaRbt12(competencia, inicioLc214);
     const meses: string[] = [];
     for (let m = j.de; m <= j.ate; m = proximoMes(m)) meses.push(m);
     const declarados = new Set((await this.repo.findHistorico(scope, meses)).map((h) => h.competencia));

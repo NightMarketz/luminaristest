@@ -6,7 +6,7 @@ import prisma from '@/lib/prisma';
 import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ActionProposalRepository } from '../repositories/ActionProposalRepository';
 import { KnowledgeGraphRepository } from '../repositories/KnowledgeGraphRepository';
-import type { KnowledgeGraphData } from '../services/KnowledgeGraphService';
+import type { KnowledgeGraphData } from '../models/KnowledgeGraph.model';
 
 const makeUser = (n: number) =>
   prisma.user.create({ data: { name: `purga-${n}`, username: `purga-user-${n}`, email: `purga-${n}@test.local`, password: 'x', role: 'USER' } });

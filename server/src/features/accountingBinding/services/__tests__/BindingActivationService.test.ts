@@ -2,7 +2,8 @@ import { ForbiddenError, ValidationError } from '../../../../lib/errors';
 import { BindingSectorConflictError } from '../../models/bindingSectorConflict';
 import { AccountingBindingPolicy } from '../../policies/AccountingBindingPolicy';
 import type { IAccountingBindingPolicy } from '../../policies/IAccountingBindingPolicy';
-import type { BindingScope, IAccountingBindingRepository } from '../../repositories/IAccountingBindingRepository';
+import type { IAccountingBindingRepository } from '../../repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../scope/BindingScope';
 import {
   BindingActivationService,
   type ActivationChartPort,

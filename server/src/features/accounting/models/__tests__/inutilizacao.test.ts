@@ -3,7 +3,7 @@ import path from 'path';
 import { LEGAL_PARAMS_SEED_FILE_INUT_NAO_SE_APLICA, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
 import type { LegalParameterTabela, LinhaLegal } from '../../../legalParameters/models/legalParameter';
-import { NFCE_PRESUNCAO, avisoDeInutilizacao, guardaDaFaixa, lacunasDeNumeracao } from '../inutilizacao';
+import { NFCE_PRESUNCAO, STATUS_QUE_OCUPAM_NUMERO, avisoDeInutilizacao, guardaDaFaixa, lacunasDeNumeracao } from '../inutilizacao';
 
 /**
  * BE-INCR-NFCE (nó X10a, PR-4) — itens 24 (guardas `[NFE-INUT-REGRAS]`), 25 (lacunas) e EMENDA-3 E3-2 (a) (aviso por UF a
@@ -125,5 +125,12 @@ describe('EMENDA-3 E3-2 (a) — aviso da UF com data ≥ 01/11/2026 (parâmetro 
     const aviso = avisoDeInutilizacao(seed, 'NFCE', SP, '2026-11-01');
     const [l] = lacunasDeNumeracao({ sequencias: [{ ambiente: 'producao', serie: 1, last: 1n }], documentos: [], homologadas: [], aviso });
     expect(l).toMatchObject({ numero: '1', documentId: null, status: null, avisos: aviso.avisos, presuncao: NFCE_PRESUNCAO });
+  });
+});
+
+describe('STATUS_QUE_OCUPAM_NUMERO — denegada × rejeitada (MOC 7.0 VG §5.1.6, Tab. 5-4)', () => {
+  it('DENIED consome o número (recebe protocolo); REJECTED não (é descartada)', () => {
+    expect(STATUS_QUE_OCUPAM_NUMERO).toContain('DENIED');
+    expect(STATUS_QUE_OCUPAM_NUMERO).not.toContain('REJECTED');
   });
 });

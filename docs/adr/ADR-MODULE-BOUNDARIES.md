@@ -1,7 +1,7 @@
 # ADR-MODULE-BOUNDARIES — Fronteira entre features, peça fora de camada e job como entrypoint (extensão do `check:arch`)
 
 - **Data:** 2026-10-20
-- **Status:** **Proposed** — nada ligado. Nenhuma regra entrou no `.dependency-cruiser.cjs`, nenhum arquivo foi movido. Ligar qualquer regra daqui exige ratificação do dono (forks §7) e é emenda datada a este ADR (`ADR-ARCH-BOUNDARIES.md` §5).
+- **Status:** **Accepted 2026-11-24** (dono, questionário; forks F-MB-1..12 ratificados — §10 e `docs/plano/decisoes/D-2026-11-24-MODULE-BOUNDARIES-FORKS.md`). **Não é "executa":** nada ligado, nada movido; ligar regra e mover pasta pedem BRIEF e "executa". Texto de 20/10: nada ligado. Nenhuma regra entrou no `.dependency-cruiser.cjs`, nenhum arquivo foi movido. Ligar qualquer regra daqui exige ratificação do dono (forks §7) e é emenda datada a este ADR (`ADR-ARCH-BOUNDARIES.md` §5).
 - **Classe:** DECISÃO ARQUITETURAL (gate estático — extensão de regra, não gate novo)
 - **Autorização:** pedido do dono no chat, 20/10/2026, de uma **medida** do encapsulamento e de uma **sugestão** de arquitetura para separar melhor os módulos (relayed pela sessão que abriu esta). Cobre **propor**. Não cobre ligar regra nem mover código. Formulário: `sessao-planejamento`.
 - **Depende de:** `ADR-ARCH-BOUNDARIES.md` (L1–L6, B1/B7, F1, X1–X3, I6; U1–U7; mecânica de baseline §3; exceção ⛔ §4); `.claude/skills/_ARCHITECTURE-CONTRACT.md` §0 (canônicos do FE), §2 (cadeia de camadas), §2.1 (motor × first-class).
@@ -215,7 +215,7 @@ Isto **estende o `check:arch`**, a exceção ratificada em 13/10 (`ADR-ARCH-BOUN
 | `_REUSE-CRITERION.md` | mover canônicos do §0 (F-MB-7) poderia criar uma segunda cópia | **Sem colisão** se for **mover**, não copiar: um canônico continua um só. O `BindingScope` duplicado de `AccountingScope` é divergência de posse já sancionada (`BindingScope.ts:2-10`), e este ADR mantém |
 | Contrato §2.1 / CLAUDE.md "PARE" | F-MB-3 opção (b) mexe no `RuleContext` do motor | Registrado no fork. A recomendação é (a), que não toca o motor |
 
-## 7. Forks — RATIFICAÇÃO PENDENTE (dono)
+## 7. Forks — RATIFICADOS em 24/11/2026 (decisões no §10; a tabela abaixo é a proposta de 20/10)
 
 | Fork | Caminhos | Recomendação |
 |---|---|---|
@@ -259,3 +259,86 @@ Isto **estende o `check:arch`**, a exceção ratificada em 13/10 (`ADR-ARCH-BOUN
 **Achados fora de escopo:**
 - `U5-no-backend-import` usa a regex `(^|/)server/`, que casa com `next/dist/server/` quando `next` resolve fora de `my-app/node_modules` (24 falsos neste worktree). Não investiguei se o mesmo acontece em CI. Se acontecer, precisa de âncora (`^\.\./server/|^server/`).
 - O X3 (16 ciclos) não é tratado aqui.
+
+## 10. Emenda de 24/11/2026 — ratificação dos forks (dono, questionário)
+
+Registro com as respostas literais: `docs/plano/decisoes/D-2026-11-24-MODULE-BOUNDARIES-FORKS.md`. Esta emenda **não
+liga regra nem move arquivo**: o que segue é o que o BRIEF de execução tem de cumprir. Onde a decisão diverge do texto
+dos §2–§4, vale esta seção.
+
+> `F-MB-1..6` também nomeia os forks de `D-2026-10-31-MODULOS-BASE-SUBMODULOS` (outro assunto). Fora deste ADR, cite
+> estes como "F-MB-n do ADR-MODULE-BOUNDARIES".
+
+### 10.1 Decisões
+
+| Fork | Decisão | Efeito sobre o texto de 20/10 |
+|---|---|---|
+| F-MB-1 | **(b)** pasta `features/<x>/public/` | M1 e U9 trocam o alvo permitido de `index\.ts` para `/public/`. Em todo o ADR, "pelo index" passa a ler "pela pasta `public/`". As condições seguem: sem efeito colateral, sem reexportar repositório; o registro de processadores do `analytics/index.ts` sai para o bootstrap |
+| F-MB-2 | **(a)** `models/` e `dtos/` também pela API pública | M1 não ganha o `pathNot` de `(models\|dtos)`. Baseline de 20/10: 264 |
+| F-MB-3 | **(c), opção nova** — porta estreita de dados | Ver §10.2. `rules/` entra no `LAYER_DIR` como pasta do motor e fica fora da D1 (como na opção a); o contrato do plugin encolhe |
+| F-MB-4 | **(a)** `domain/` + `ports/` + `adapters/` | Como proposto; o comentário da D1 diz "função pura, não engine" |
+| F-MB-5 | **(a)** `fixtures/` de produção → `domain/` | `computeCompiledFromHash` vira função pura antes |
+| F-MB-6 | **(a)** 3 CLIs de migração única + `jobs/repositories/` isentas por nome; `app.ts`/`server.ts` = composition roots | Como proposto. O `$executeRaw` do `rekeyLegacyUnitCli.ts:412` foi lido em 24/11: `UPDATE` de `unitId` em tx, com conferência de contagem e rollback |
+| F-MB-7 | **(a)** separar o kit do `features/dashboard` | Como proposto, com §0 do Contrato e skills no mesmo PR |
+| F-MB-8 | **(a)** tudo ligado já, com baseline | Troca a ordem do §4 — ver §10.3 |
+| F-MB-9 | **(a)** `DynamicTableReader` na API pública do motor | Insumo fechado em 24/11: nenhuma das chamadas dos 7 serviços passa `tx` (lido pelos argumentos das chamadas, não por execução). São 10 pontos de guarda copiada em `CrmPipelineService` (5), `RegisterPaymentService` (1), `SalesCancellationService` (1) e `PackageAcceptanceService` (3) |
+| F-MB-10 | **(b)** `Navbar` vai para uma feature | U8 fica sem exceção nomeada; baseline U8 3 → 0 depois da mudança |
+| F-MB-11 (novo) | **(a)** posse de model no ESLint do server | Ver §10.4 |
+| F-MB-12 (novo) | **(a)** o PR que liga a M2 move as pastas | Ver §10.3 |
+
+### 10.2 F-MB-3 (c) — `RuleDataAccess`
+
+Medida de 24/11 (leitura de `dynamicTables/rules/**`): os 10 plugins usam **8 dos 31 métodos** do
+`IDynamicTableRepository`, para **ler e gravar** outras tabelas (reserva de estoque, comissão, agendamento, métricas
+do cliente) com o repositório preso à transação da linha (`DynamicTableService.ts:603-620`, `:809-823`, `:929-943`).
+O efeito no mesmo commit é o que o motor entrega, e a decisão o preserva.
+
+```ts
+// rules/RuleTypes.ts — hoje: repository: IDynamicTableRepository
+interface RuleDataAccess {
+  findDataById; findRowsByFieldValue; findDataByTableId;
+  findTableByInternalName; findTablesByUserId;
+  createData; updateData; deleteData;
+}
+interface RuleContext { /* … */ data: RuleDataAccess; }
+```
+
+- Mudança só de tipo: o `txRepo` que o serviço já passa satisfaz a porta. Comportamento igual, provado pelos testes
+  dos plugins sem alteração de asserção.
+- O plugin deixa de alcançar `createTable`, `deleteTable`, `deleteTablesByUserId`, `deleteAllDataByUserId` e
+  `withTransaction`.
+- Funções puras dos plugins (`discountGuard`, cálculos) vão para `domain/` e entram na D1.
+- Não é o caso "PARE" do `CLAUDE.md` raiz: nenhum serviço Prisma entra no `RuleContext`.
+- **Fica aberto (declarado ao dono na pergunta):** o plugin grava em outra tabela sem passar pela validação dela, e a
+  lógica de venda/CRM mora dentro de `features/dynamicTables`. A opção "plugin puro que devolve efeitos" fecha os dois,
+  pede PRE-ADR próprio e entra **depois** desta, não no lugar.
+
+### 10.3 Ordem de pagamento com F-MB-8 (a) e F-MB-12 (a)
+
+1. **P0 e P1** como no §4 (repontar `BindingScope`; pagar as 15 L3–L6).
+2. **Ligação única:** M1a, M1, J1, D1, U8 e U9 entram com baseline no mesmo PR. Com a M1 ligada e nenhuma `public/`
+   existente, todo import novo entre features cria o arquivo em `public/` da feature alvo no mesmo PR.
+3. **M2 liga no PR que move as pastas** (o P4 do §4), e esse PR sobe para logo depois da ligação: não há período com
+   duas pastas. `dynamicTables/presets` é choke point com PRs abertos (BUILDER-VERTICAIS PR-5/PR-6): o BRIEF marca a
+   janela sem PR paralelo e a ordem de rebase.
+4. **P3** (M1a 32 → 0, com o `DynamicTableReader`), **F-MB-3 (c)**, **F-MB-11** e **P5** (frontend) seguem, um PR por
+   item.
+
+Os baselines deste ADR são de 20/10 (`310a92b4`). O BRIEF mede de novo antes de gravar qualquer baseline.
+
+### 10.4 F-MB-11 (a) — posse de model do Prisma
+
+A M1a barra import; não barra `prisma.<model>.update(...)` de um model alheio, que não importa nada da feature dona.
+Medida de 24/11 (regex sobre `server/src`, 146 models, 138 com escrita em produção): **nenhum repositório grava model
+de outra feature**. Escritas fora da dona: `DynamicTableService.ts:501` → `user.updateMany` (exceção nominal já
+comentada no código, onboarding na tx do install) e jobs/`server.ts` (`PurgeDeletedRecords`, as CLIs do F-MB-6,
+`server.ts` → `document`), que a J1 trata.
+
+- Mapa versionado `model → feature dona` (um arquivo, 146 linhas; model compartilhado declara o núcleo dono).
+- Regra no ESLint do server, no job de lint que já roda: `create`, `createMany`, `update`, `updateMany`, `upsert`,
+  `delete`, `deleteMany` e `$executeRaw*` de um model só dentro de `repositories/` da dona. Baseline = as exceções
+  acima, nomeadas.
+- **Exceção nova à regra ⛔ do `CLAUDE.md` raiz**, no molde do `no-console` (dono, 23/10): o dependency-cruiser não
+  enxerga chamada do Prisma. A linha entra no `CLAUDE.md` raiz no PR que ligar a regra, citando esta data.
+- Limite da medida: regex, não AST. A regra de lint é a medida definitiva; se ela achar mais que o baseline acima,
+  o achado vai à caixa antes de qualquer supressão.

@@ -45,6 +45,9 @@
             "ICMS_ST_NCM_UF",
             "ENCARGO_FOLHA",
             "IBS_CBS_REDUCAO_NBS",
+            "CST_IBS_CBS",
+            "CCLASSTRIB_IBS_CBS",
+            "CCREDPRES_IBS_CBS",
             "INSS_EMPREGADO",
             "ESOCIAL_CATEGORIA",
             "ESOCIAL_NATUREZA_RUBRICA",
@@ -52,7 +55,8 @@
             "ESOCIAL_MOTIVO_AFASTAMENTO",
             "FOLHA_REGRA",
             "DP_CATEGORIA_ENCARGO",
-            "ESOCIAL_TIPO_DEPENDENTE"
+            "ESOCIAL_TIPO_DEPENDENTE",
+            "MARCO_LEGAL"
           ]
         },
         "chave": {
@@ -159,6 +163,9 @@
             "ICMS_ST_NCM_UF",
             "ENCARGO_FOLHA",
             "IBS_CBS_REDUCAO_NBS",
+            "CST_IBS_CBS",
+            "CCLASSTRIB_IBS_CBS",
+            "CCREDPRES_IBS_CBS",
             "INSS_EMPREGADO",
             "ESOCIAL_CATEGORIA",
             "ESOCIAL_NATUREZA_RUBRICA",
@@ -166,7 +173,8 @@
             "ESOCIAL_MOTIVO_AFASTAMENTO",
             "FOLHA_REGRA",
             "DP_CATEGORIA_ENCARGO",
-            "ESOCIAL_TIPO_DEPENDENTE"
+            "ESOCIAL_TIPO_DEPENDENTE",
+            "MARCO_LEGAL"
           ]
         },
         "status": {
@@ -256,6 +264,9 @@
             "ICMS_ST_NCM_UF",
             "ENCARGO_FOLHA",
             "IBS_CBS_REDUCAO_NBS",
+            "CST_IBS_CBS",
+            "CCLASSTRIB_IBS_CBS",
+            "CCREDPRES_IBS_CBS",
             "INSS_EMPREGADO",
             "ESOCIAL_CATEGORIA",
             "ESOCIAL_NATUREZA_RUBRICA",
@@ -263,7 +274,8 @@
             "ESOCIAL_MOTIVO_AFASTAMENTO",
             "FOLHA_REGRA",
             "DP_CATEGORIA_ENCARGO",
-            "ESOCIAL_TIPO_DEPENDENTE"
+            "ESOCIAL_TIPO_DEPENDENTE",
+            "MARCO_LEGAL"
           ]
         },
         "chave": {

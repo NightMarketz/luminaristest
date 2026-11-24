@@ -66,6 +66,13 @@ export const RECEIPT_STATUSES = ['ACTIVE', 'CANCELLED'] as const;
 export type ReceiptStatus = (typeof RECEIPT_STATUSES)[number];
 
 /**
+ * Onda 2.1 — código do erro "o razão JÁ está estornado, mas o subrazão não comporta o estorno" (invariante
+ * `receivedCents ≥ recibo` violado). Não há o que retentar: o reconcile conta como BLOCKED (lista local, NÃO a
+ * `SYNC_SKIP_ERROR_CODES` das pontes) e deixa o título para intervenção humana.
+ */
+export const RECEIPT_REVERSAL_INVARIANT_CODE = 'RECEIPT_REVERSAL_INVARIANT_VIOLATED';
+
+/**
  * Dual fato gerador — two distinct ledger events keyed on DISTINCT source ids (D3):
  *   - recognition posts under `sourceId = receivableId`,
  *   - receipt posts under `sourceId = receiptId` (NEVER receivableId — else a re-receipt after a
