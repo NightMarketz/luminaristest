@@ -1,17 +1,14 @@
-# BE-INCR-CENTAVOS-EXATOS — um conversor reais→centavos, arredondamento decimal exato em razão e subrazão (BRIEF; ainda sem nó no vault)
+# BE-INCR-CENTAVOS-EXATOS — um conversor reais→centavos, arredondamento decimal exato em razão e subrazão (BRIEF, nó CENTAVOS-EXATOS)
 
-> **Sessão:** `sessao-planejamento` — produz decisão, não código. Fork **não** se auto-ratifica; todos os forks abaixo estão
-> **RATIFICAÇÃO PENDENTE**.
+> **Sessão:** `sessao-planejamento` — produz decisão, não código. **Forks F-CE-1..9 RATIFICADOS pelo dono em 24/11**
+> (questionário, todos na recomendação): [`D-2026-11-24-CENTAVOS-EXATOS-FORKS`](../plano/decisoes/D-2026-11-24-CENTAVOS-EXATOS-FORKS.md).
 > **Origem:** lacuna `L-20261124-062159-5b0a` (classe `fork`, nó X14), com as irmãs `L-20261124-062159-9d1e`
 > (`splitRevenueCredit`) e `L-20261124-062201-33b2` (`NfeIbsCbsDto` escala). Surgiram na onda 2.3 da auditoria
 > fiscal/contábil de 24/11/2026 (PR #1360, **ainda não mergeado**).
-> **Autorização (ORCH-006 — leia antes de usar):** **não há citação do dono que autorize planejar este item.** A sessão foi
-> aberta pela sessão-mãe (orquestração) a pedido do usuário, para produzir este BRIEF e levar os forks à pergunta do dia.
-> `D-2026-11-11-LACUNA-VAI-AO-MAESTRO` §2 manda a lacuna de classe `fork` **ao dono** (`com-dono`), não a uma sessão; a frase do
-> dono de 11/11 (*"o orquestrador já vai lançar outras sessões que vão resolver essas lacunas"*) cobre as demais classes, e
-> citá-la aqui como autorização do BRIEF seria esticá-la. Por isso: (i) o BRIEF é só documento, sem código; (ii) **não foi
-> criada nota em `docs/plano/nos/`** (isso diria, no vault, que há autorização) — o write-set está em §7 para quando o dono
-> autorizar o nó; (iii) todos os forks estão **RATIFICAÇÃO PENDENTE**. Cada PR de código pede o `executa` do dono.
+> **Autorização:** dono, chat, 2026-11-24, questionário: ratificou os forks F-CE-1..9 e autorizou a nota do nó
+> [`CENTAVOS-EXATOS`](../plano/nos/CENTAVOS-EXATOS.md) com write-set. **Não é `executa`**: cada PR de código pede o `executa` do dono.
+> Histórico: o BRIEF nasceu sem citação do dono para planejar (`D-2026-11-11` §2 manda a classe `fork` ao dono); a nota do
+> nó só foi criada depois dessa resposta.
 > **Base:** `origin/main` `7b9225e23` (re-fetch 2026-11-24). Todo `arquivo:linha` abaixo é desse commit; o #1360 move
 > parte deles (§1, grupo A5).
 > **Escopo:** backend.
@@ -161,7 +158,7 @@ export function splitRevenueCredit(totalCents: number, r?: { serviceReais: numbe
 **Interpretação assumida (marcada):** "decimal exato" = o decimal que o usuário vê (`String(x)`), não o valor binário do double
 (que é o que o float de hoje já faz). O F-CE-1 depende disso.
 
-## 5. Forks — RATIFICAÇÃO PENDENTE (decisão do dono, fora desta sessão)
+## 5. Forks — RATIFICADOS (dono, 24/11: todos na recomendação; a coluna "Recomendação" é o que valeu)
 
 | Fork | Pergunta fechada | Caminhos | Recomendação |
 |---|---|---|---|
@@ -195,7 +192,7 @@ subrazão não foi lido); o desenho completo do `reconcileReceitaFiscal*` (lido 
 
 **Achados fora de escopo:** registrado na caixa — `L-20261124-184345-26dd` (debito, `--pai L-20261124-062159-5b0a`): o comentário do teste do #1360 chama de "86,655" um valor calculado (§0). Os parsers do grupo C (`NfePayloadDto.ts:220`, `FiscalDocumentEmissionService.ts:503`) ficam no escopo condicional do F-CE-7 (c), não na caixa.
 
-## 7. Write-set (a gravar no frontmatter do nó quando o dono autorizar a nota; hoje não há nota)
+## 7. Write-set (gravado no frontmatter do nó `CENTAVOS-EXATOS`)
 
 - PR-0: `server/src/lib/__tests__/reaisToCentsExato.oraculo.test.ts`, `server/src/features/accounting/sync/mappers/__tests__/Sale*Mapper.test.ts`.
 - PR-1: `server/src/lib/decimalMoney.ts` (novo), `server/src/lib/saleLine.ts`, `server/src/features/accountingBinding/interpreter/money.ts`.
@@ -203,7 +200,7 @@ subrazão não foi lido); o desenho completo do `reconcileReceitaFiscal*` (lido 
 - PR-3: `server/src/features/accounting/sync/mappers/revenueSplit.ts`, `server/src/features/accounting/services/__tests__/receitaFiscalFloat.*`, `server/src/features/accounting/services/ReceitaFiscal*Service.ts`.
 - PR-4: `server/src/features/dynamicTables/rules/plugins/SalesPlugin.ts`, `server/src/features/dynamicTables/rules/plugins/sales/discountGuard.ts`, `server/src/features/accounting/sync/bridges/saleItems.ts`.
 - PR-5: `server/src/features/accounting/dtos/{NfeIbsCbsDto,NfePayloadDto}.ts`, `server/src/features/accounting/services/FiscalDocumentEmissionService.ts`.
-- Choke points da PAR-001: nenhum (sem `factory.ts`, `docs.paths.ts`, `schema.prisma`).
+- Choke points da PAR-001: `server/eslint.config.mjs` (F-CE-8, a trava; entra no PR-3 ou num PR próprio depois da virada, com o baseline dos pontos que sobrarem). Sem `factory.ts`, `docs.paths.ts`, `schema.prisma`.
 - Gates que o diff **não** aciona: snapshot de shape de DTO (o PR-5 mexe em `refine`, não em shape — conferir no PR), paridade i18n, allowlist do `auditCanonical`, path-count do openapi. Conflito de lote: `paralelo.mjs` apontou `FiscalDocumentEmissionService.ts` também no #1146 (PR-5).
 
 ## 8. Que teste prova o quê (`docs/operating-manual/TESTES.md`)
