@@ -18,6 +18,9 @@ PENDENTE**). O mais caro é o **F-SIM-9**: o esboço põe contagem, dias e ponto
 recebe `executa` depois que os sete estiverem respondidos.
 
 
+> **Ratificação 24/11:** R1–R7 e F-PBA-1..7 ratificados, todos (a) ([[D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS]]). Os forks F-PBA citados abaixo
+> já não travam nada; o PR-0 segue sem `executa`, com F-SIM-9..15 pendentes; o texto fica como registro do que dependia de cada um.
+>
 > **EMENDA PAÍS NA BORDA (24/11/2026)** — [`ADR-PAIS-NA-BORDA`](../adr/ADR-PAIS-NA-BORDA.md) (Proposed).
 > - **Autorização:** dono, 24/11, questionário da sessão maestro. À pergunta sobre os BRIEFs ratificados, a resposta foi
 >   **"Já nascem pela regra"** (D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA §6). Para a simulação completa, a resposta foi **"Planejar

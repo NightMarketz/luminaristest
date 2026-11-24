@@ -12,6 +12,9 @@
 > **Base:** `origin/main` `43719baa` (21/11). Não edita o BRIEF do nó (`BE-INCR-EFICIENCIA-FISCAL-brief.md`), nem os do X7,
 > do X8, do X14 e do IBS-CBS-2027.
 
+> **Ratificação 24/11:** R1–R7 e F-PBA-1..7 ratificados, todos (a) ([[D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS]]). Os forks F-PBA citados abaixo
+> já não travam nada; o texto fica como registro do que dependia de cada um.
+>
 > **EMENDA PAÍS NA BORDA (24/11/2026)** — [`ADR-PAIS-NA-BORDA`](../adr/ADR-PAIS-NA-BORDA.md) (Proposed; R1–R7 e F-PBA-1..7
 > **RATIFICAÇÃO PENDENTE**). **Autorização:** dono, 24/11, à pergunta *"Esses BRIEFs seguem como foram escritos ou já
 > nascem pela regra?"*: **"Já nascem pela regra"** ([[D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA]] §6). O `executa` de 21/11

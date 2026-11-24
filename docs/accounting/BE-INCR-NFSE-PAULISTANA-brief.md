@@ -19,6 +19,9 @@
 > Paulistana ao Simples, ao MEI e a quem **sair** do Simples; sobra a PJ de SP capital em regime normal que não passou pelo
 > Simples. E a prefeitura **não tem homologação**: só um método de teste em produção que não gera nota.
 
+> **Ratificação 24/11:** R1–R7 e F-PBA-1..7 ratificados, todos (a) ([[D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS]]). Os forks F-PBA citados abaixo
+> já não travam nada; o texto fica como registro do que dependia de cada um.
+>
 > **EMENDA PAÍS NA BORDA (24/11/2026)** — [`ADR-PAIS-NA-BORDA`](../adr/ADR-PAIS-NA-BORDA.md) (Proposed).
 > - **Autorização:** dono, 24/11, à pergunta *"Esses BRIEFs seguem como foram escritos ou já nascem pela regra?"*: **"Já
 >   nascem pela regra"** (D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA §6). O `executa` de 24/11 (§4 da mesma cédula)

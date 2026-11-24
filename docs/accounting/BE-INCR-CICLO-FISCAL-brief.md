@@ -18,6 +18,9 @@
 - **Dossiê legal:** [`pesquisas-legais/ciclo-fiscal-prazos/relatorio.md`](../../pesquisas-legais/ciclo-fiscal-prazos/relatorio.md)
   (21/11/2026; fontes D01–D10). Prazos já conferidos em dossiês anteriores são citados por eles.
 
+> **Ratificação 24/11:** R1–R7 e F-PBA-1..7 ratificados, todos (a) ([[D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS]]). Os forks F-PBA citados abaixo
+> já não travam nada; o texto fica como registro do que dependia de cada um.
+>
 > **EMENDA PAÍS NA BORDA (24/11/2026)** — `sessao-planejamento`, sobre `claude/maestro-caixa-2026-11-24` (#1331) +
 > `claude/simulacao-completa-publicar` (#1332).
 >

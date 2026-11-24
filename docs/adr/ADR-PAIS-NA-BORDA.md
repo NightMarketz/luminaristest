@@ -1,11 +1,12 @@
 # ADR-PAIS-NA-BORDA — conceito universal no centro, nomeado em inglês; país em `features/<dominio>/paises/<cc>/`
 
 - **Data:** 2026-11-24
-- **Status:** **Proposed.** A direção é do dono (15/11), e os forks F-PB-1..9 foram ratificados em 24/11
+- **Status:** **Accepted 2026-11-24** (dono, questionário: redação R1–R7 e forks F-PBA-1..7 ratificados, todos na
+  recomendação; F-PNT-PB-1 → (b), contra ela; cédula [`D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS`](../plano/decisoes/D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS.md)). Antes, F-PB-1..9 em 24/11
   ([`D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA`](../plano/decisoes/D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA.md) §1;
-  [`PRE-ADR-PAIS-NA-BORDA`](PRE-ADR-PAIS-NA-BORDA.md) §5.1). **Pendentes de ratificação:** a redação da regra R1–R7 (§1)
-  e os forks novos F-PBA-1..7 (§6). Este ADR **não autoriza código sozinho**. A guarda (§3) é implementada como item 0
-  do primeiro PR de código de um dos BRIEFs emendados que receber `executa`, no molde da `D1` (ADR-ARCH-BOUNDARIES §1.1).
+  [`PRE-ADR-PAIS-NA-BORDA`](PRE-ADR-PAIS-NA-BORDA.md) §5.1). Não é `executa`: a guarda (§3) é implementada como item 0 do
+  primeiro PR de código dos BRIEFs emendados (o PR-0 do montador), no molde da `D1` (ADR-ARCH-BOUNDARIES §1.1). Nó:
+  [[PAIS-NA-BORDA]].
 - **Classe:** DECISÃO ARQUITETURAL (fronteira mecanizada).
 - **Substitui:** a redação proposta do PRE-ADR §1, escrita para F-PB-1 (c) e F-PB-4 (a), que o dono não escolheu.
 - **Relaciona:** [`ADR-ARCH-BOUNDARIES.md`](ADR-ARCH-BOUNDARIES.md) (a guarda é emenda dele, §4 e §5 de lá);
@@ -26,7 +27,7 @@ Conceito que existe em qualquer país mora no centro de cada domínio e nasce co
 mora em `server/src/features/<dominio>/paises/br/**`, e o `check:arch` reprova o centro importando essa pasta (regra `P1`).
 **Risco principal:** a guarda por pasta só enxerga o que já foi movido. Até cada fatia mover a sua área, o código brasileiro
 que ainda está fora de `paises/br` continua invisível para ela, e quem consome a borda nova precisa de um escopo nomeado
-(F-PBA-5). Nenhum dos cinco BRIEFs emendados roda antes de o dono ratificar F-PBA-1..7.
+(F-PBA-5). F-PBA-1..7 foram ratificados em 24/11; o PR-0 da simulação segue com F-SIM-9..15 pendentes.
 
 ---
 
@@ -41,7 +42,7 @@ que ainda está fora de `paises/br` continua invisível para ela, e quem consome
   a no novo), F-PB-5 (a no novo), F-PB-6 (a), F-PB-8 (a), F-PB-3 (a, inteiro, por consequência do F-PB-7).
 - Os BRIEFs com `executa` nascem pela regra (D-2026-11-24 §6, 2º questionário: *"Já nascem pela regra"*).
 
-## 1. A regra (redação para F-PB-1 a, F-PB-4 b, F-PB-7 a, F-PB-9 b) — RATIFICAÇÃO PENDENTE
+## 1. A regra (redação para F-PB-1 a, F-PB-4 b, F-PB-7 a, F-PB-9 b) — RATIFICADA 24/11
 
 - **R1 — Centro é conceito, e o nome é em inglês.** O centro de cada domínio modela o que existe em qualquer país:
   lançamento, conta, período, documento fiscal, tributo, alíquota, base, retenção, apuração, obrigação acessória, prazo,
@@ -213,9 +214,9 @@ diz quais destas entradas ele usa.
 
 ## 5. Fatias do existente (F-PB-7 a, F-PB-9 b) — ordem, prazo e dono
 
-Cada fatia tem BRIEF próprio (sessão de planejamento), `executa` próprio e prazo. **Dono** = o nó `PAIS-NA-BORDA` (nasce no
-fold da ratificação deste ADR) e a sessão que recebe o `executa` da fatia; o maestro cobra o prazo pela caixa. Os prazos
-abaixo são **proposta** (F-PBA-6), contados a partir do go-live em 2027.
+Cada fatia tem BRIEF próprio (sessão de planejamento), `executa` próprio e prazo. **Dono** = o nó [[PAIS-NA-BORDA]] (nasceu no
+fold da ratificação de 24/11) e a sessão que recebe o `executa` da fatia; o maestro cobra o prazo pela caixa. Os prazos
+abaixo foram **ratificados** (F-PBA-6 a, 24/11).
 
 | # | Fatia | Escopo | Lacunas que fecha | Prazo proposto |
 |---|---|---|---|---|
@@ -232,11 +233,10 @@ abaixo são **proposta** (F-PBA-6), contados a partir do go-live em 2027.
 
 Fora das fatias: o front (`my-app`), que tem a mesma pergunta e não foi medido por conceito (PRE-ADR §8).
 
-## 6. Forks novos — RATIFICAÇÃO PENDENTE
+## 6. Forks novos — RATIFICADOS em 24/11 (todos na recomendação (a); [`D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS`](../plano/decisoes/D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS.md))
 
-Nenhum foi decidido por esta sessão. A cédula de 24/11 não cobre nenhum deles (conferido na §1 dela e no PRE-ADR §5.1). A
-recomendação é a estrutural (D-2026-11-21-RECOMENDAR-SOLUCAO-ESTRUTURAL). **O que cada um trava** está na última coluna:
-pela regra de 28/10, fork novo para o `executa` do nó até a resposta.
+A tabela é o texto que foi ao dono. Nenhum foi decidido pela sessão sozinha. A cédula de 24/11 não cobre nenhum deles (conferido na §1 dela e no PRE-ADR §5.1). A
+recomendação é a estrutural (D-2026-11-21-RECOMENDAR-SOLUCAO-ESTRUTURAL). A última coluna dizia o que cada um travava até a resposta (regra de 28/10); depois de 24/11, nada mais trava por eles.
 
 | Fork | Evidência lida | Caminhos | Recomendação | Trava |
 |---|---|---|---|---|
@@ -248,10 +248,9 @@ pela regra de 28/10, fork novo para o `executa` do nó até a resposta.
 | **F-PBA-6** Prazo e dono por fatia | F-PB-9 (b) pede prazo e dono por fatia; a cédula não fixa os valores | (a) os prazos e o dono da §5 (nó `PAIS-NA-BORDA`, sessão do `executa`, cobrança pelo maestro); (b) prazo por fatia só quando o BRIEF da fatia for escrito; (c) outros valores | **(a).** Sem data agora, a convivência fica sem fim, que é o defeito que a F-PB-9 (b) evita | nenhum PR dos 5 BRIEFs; trava o nó `PAIS-NA-BORDA` |
 | **F-PBA-7** Tabela nova de `LegalParameter` de país antes da F3 | O ciclo (item 1, `PRAZO_OBRIGACAO`) e a ponte (itens 1–3 e 7, seis tabelas) registram formato no `formatoLinha.ts`, que é plataforma e já importa 7 modelos da contabilidade (lacuna `0d37`). Com o formato em `paises/br`, o `formatoLinha.ts` importaria a borda e a `P1` reprovaria | (a) a F3 (registro de formato por domínio e país) entra **antes** do PR-0 do ciclo e do PR-P0 da ponte, e as tabelas novas já nascem registradas de `paises/br/legalParameters/`; (b) as tabelas novas entram no `formatoLinha.ts` como hoje, ele entra no escopo da R7 até a F3, e a F3 as move | **(a).** É a causa raiz da `0d37`, e o registro é pequeno; a (b) põe na plataforma mais sete formatos de país para a F3 tirar depois | ciclo PR-0; DP-ponte PR-P0 e PR-P1 |
 
-**Forks novos dentro dos BRIEFs** (também pendentes; travam só o PR indicado): **F-PNT-PB-1**, por qual rota o `BrUnit` entra
-pela API (a `units` é linha de DynamicTable, sem recurso Prisma nem rota; recomendada `GET|PUT /api/accounting/units/:unitId/br`),
-trava o PR-P1 da ponte (BRIEF DP-PONTE §4.3); **F-SIM-13**, ganhou o ramo (d), recomendado, e segue pendente com os F-SIM-9..15
-(BRIEF do PR-0 da simulação §5).
+**Forks novos dentro dos BRIEFs:** **F-PNT-PB-1**, por qual rota o `BrUnit` entra pela API, **RATIFICADO (b)** em 24/11, contra
+a recomendação: pelo `PUT /accounting/fiscal-profile/br` (BRIEF DP-PONTE §4.3). **F-SIM-13** ganhou o ramo (d), recomendado,
+e segue **pendente** com os F-SIM-9..15 (BRIEF do PR-0 da simulação §5).
 
 ## 7. Pendente de validação externa e insumos ausentes
 

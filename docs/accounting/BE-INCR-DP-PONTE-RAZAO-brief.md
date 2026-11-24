@@ -18,6 +18,9 @@
 > (D01–D10). As referências [Dnn] abaixo são dele; [FOL-Dnn] são do `pesquisas-legais/folha-contabil-2026-10-22/`;
 > [F2-Dnn] do `brief-pes4-f2/`; [F1-Dnn] do `brief-pes4-f0-f1/`.
 
+> **Ratificação 24/11:** R1–R7 e F-PBA-1..7 ratificados, todos (a) ([[D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS]]). Os forks F-PBA citados abaixo
+> já não travam nada; o texto fica como registro do que dependia de cada um.
+>
 > **EMENDA PAÍS NA BORDA (24/11/2026)** — `sessao-planejamento`, pela regra do
 > [`ADR-PAIS-NA-BORDA`](../adr/ADR-PAIS-NA-BORDA.md) (Proposed; redação R1–R7 e forks F-PBA-1..7 **RATIFICAÇÃO PENDENTE**).
 > **Autorização:** dono, questionário, 24/11 ([[D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA]]): §4, `executa` do BRIEF
@@ -49,8 +52,8 @@
 >
 > **O que trava em fork novo** (regra de 28/10: o `executa` espera a resposta): F-PBA-1 e F-PBA-2 (nomes) travam todo
 > código; F-PBA-4 (rota do satélite) trava o PR-P1 (`BrFiscalProfile`, `BrUnit`) e o PR-P3 (`/accounting/settings/br`); F-PBA-5 trava o PR-P5 (o `SimplesApuracaoService` e o `TaxSimulationService` passam a consumir a borda); F-PBA-7 trava o PR-P0 e o PR-P1, e no ramo (a) a fatia **F3** do ADR
-> (registro de formato por domínio e país) entra antes do PR-P0; **F-PNT-PB-1** (rota do `BrUnit`, abaixo, §4.3) trava o
-> PR-P1. O PR-P2 não cria nome novo de borda e só depende do F-PBA-1.
+> (registro de formato por domínio e país) entra antes do PR-P0; **F-PNT-PB-1** (rota do `BrUnit`, §4.3) foi **ratificado (b)** em 24/11. Todos os F-PBA foram
+> ratificados em 24/11 ([[D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS]]): nada mais trava por eles; o PR-P0 espera a fatia F3 (F-PBA-7 a) e o PR-P1 vem depois. O PR-P2 não cria nome novo de borda e só depende do F-PBA-1.
 > **Pré-requisito:** o item 0 da guarda (ADR §3: `P1`, `P2`, ajustes G1–G5) entra no primeiro PR de código entre os cinco
 > BRIEFs emendados; se este for o primeiro, o PR-P0 o carrega.
 > **Escopo `LEGADO_BR` usado** (ADR §3.1, F-PBA-5 a): `SimplesApuracaoService.ts` e `TaxSimulationService.ts`, no PR-P5.
@@ -197,12 +200,14 @@ o valor inicial da linha, com a fonte.
     `lib/cnpj`, alfanumérico), `@@unique([userId, unitId])`, soft-delete (`deletedAt`). Camada inteira na borda, em
     `features/accounting/paises/br/` (a unidade é resolvida pelo `AccountingScopeResolver`, que valida o `unitId` contra a
     `units` do dono; o CNPJ também serve ao declarante fiscal, não só ao DP): `repositories/{I,}BrUnitRepository.ts`,
-    `services/BrUnitService.ts` (policy do perfil fiscal da unidade), `dtos/BrUnitDto.ts` (`.strict()`), controller em
-    `src/controllers/brUnitController.ts` (F-PBA-3 a), rota `GET|PUT /api/accounting/units/:unitId/br` (F-PNT-PB-1, §4.3;
-    path novo ⇒ guarda de path-count do openapi). O DTO em `paises/br/dtos/` só entra no snapshot com o ajuste G2 da guarda.
+    sem rota própria (**F-PNT-PB-1 → (b)**, dono, 24/11, §4.3): o campo `cnpjEstabelecimento` entra no
+    `BrFiscalProfileDto` (`.strict()`) do `PUT /api/accounting/fiscal-profile/br`, e o `BrFiscalProfileService` grava o
+    `BrFiscalProfile` e o `BrUnit` da unidade do escopo **na mesma tx** (`tx` ao repositório); o GET devolve os dois. Unidade
+    sem perfil fiscal não recebe CNPJ: salvar o perfil vem antes. O DTO em `paises/br/dtos/` só entra no snapshot com o ajuste G2 da guarda.
     Auditoria `fiscal.unidade_br.atualizada` `['unitId', 'campos']` (o CNPJ é dado da empresa, não de pessoa; entra na
     allowlist central como hoje, que a fatia F2 do ADR reparte). O leitor do item 9 lê o CNPJ do `BrUnit` da unidade de cada
-    vínculo; unidade **sem** linha no `BrUnit` ⇒ pendência bloqueante `CNPJ_ESTABELECIMENTO_AUSENTE` com o nome da unidade,
+    vínculo; unidade **sem** linha no `BrUnit` ⇒ pendência bloqueante `CNPJ_ESTABELECIMENTO_AUSENTE` com o nome da unidade (e, sem
+    perfil fiscal, "salve o perfil fiscal da unidade e informe o CNPJ"),
     só quando o regime da competência exige CPP fora do DAS (item 10). Não há mais o atalho do
     `CompanyFiscalProfile.declarante.cnpj` (decisão C-2 da §4.2, superada). Testes: DV inválido ⇒ 400; duas linhas para a
     mesma unidade ⇒ 409 nomeado (P2002 traduzido); unidade de outro dono ⇒ 404 pelo resolver; leitor sem linha ⇒ a pendência.
@@ -363,7 +368,7 @@ o valor inicial da linha, com a fonte.
     outros meses, o `folhaCents` (com o aviso de que inclui encargos e superestima a base, G11).
 40. **Gates do diff:** snapshot de shape dos DTOs (`dp`, `accounting` e `accounting/paises/br`, este pelo ajuste G2 da
     guarda), allowlist do `auditCanonical.ts`, paths `/api/dp/*` e os três da borda (`/accounting/fiscal-profile/br`,
-    `/accounting/settings/br`, `/accounting/units/:unitId/br`) no openapi pela guarda de path-count, paridade i18n dos
+    `/accounting/settings/br`; o CNPJ entra pelo primeiro, F-PNT-PB-1 b) no openapi pela guarda de path-count, paridade i18n dos
     alertas novos do Simples, classificação do reset, `check:arch` (sem ciclo; `D1` do DP; `P1`: nenhum arquivo do centro
     em `features/dp` ou `features/accounting` fora do `LEGADO_BR` importa `paises/`; `P2`).
 
@@ -487,6 +492,7 @@ Escritos como foram levados ao dono, com a decisão embaixo de cada um. Dois con
 ### 4.3 Fork novo da emenda país na borda — RATIFICAÇÃO PENDENTE
 
 ### F-PNT-PB-1 — Por onde o CNPJ do estabelecimento (`BrUnit`) entra pela API
+> **RATIFICADO 24/11 → (b)**, contra a recomendação — dono, questionário: *"Pelo fiscal-profile/br"* ([[D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS]]).
 
 - **Evidência:** a cédula §2 manda o CNPJ para "tabela BR 1:1 da unidade" e a implementação para esta emenda. O F-PBA-4
   (a) do ADR põe a rota do satélite **sob o recurso do centro**, mas a unidade não tem recurso Prisma nem rota própria: é
@@ -622,8 +628,7 @@ model BrUnit {            // a units é linha de DynamicTable (schema.prisma:584
 | `GET /dp/folhas/:id/lancamentos` | por unidade: `{ porPapel, porConta, ok }` (tie-out, dinheiro como string) |
 | `POST /dp/folhas/:id/lancamentos/reconciliar` | 200 `{ relancados, jaLancados }` |
 | `GET\|PUT /accounting/settings/br` (borda, F-PBA-4 a) | contas dos papéis BR (`BrAccountingScopeSettings`); a do centro segue no `PUT /accounting/settings` |
-| `GET\|PUT /accounting/fiscal-profile/br` (borda, F-PBA-4 a) | `{ simplesCppForaDoDas }` da unidade do escopo (`BrFiscalProfile`; compartilhado com o NFSE-PAULISTANA) |
-| `GET\|PUT /accounting/units/:unitId/br` (borda, F-PNT-PB-1 a) | `{ cnpj }` (`BrUnit`, item 11) |
+| `GET\|PUT /accounting/fiscal-profile/br` (borda, F-PBA-4 a; F-PNT-PB-1 b) | `{ simplesCppForaDoDas, cnpjEstabelecimento }` da unidade do escopo (`BrFiscalProfile` + `BrUnit`, mesma tx; compartilhado com o NFSE-PAULISTANA) |
 
 ## 6. Pendente de validação externa (não entra no checklist como decidido)
 
@@ -642,7 +647,7 @@ model BrUnit {            // a units é linha de DynamicTable (schema.prisma:584
 
 ## 7. Insumos ausentes
 
-- Rota de unidade: não existe (`grep "/units"` em `server/src/routes/`, 24/11); o path do `BrUnit` é o do F-PNT-PB-1.
+- Rota de unidade: não existe (`grep "/units"` em `server/src/routes/`, 24/11); o `BrUnit` entra pelo `fiscal-profile/br` (F-PNT-PB-1 b).
 
 - Anexo V do Dec. 3.048 (CNAE → grau de risco) e Anexo II da IN RFB 2.110 (quadros do FPAS): não lidos (dossiê §5).
 - Regra da CPP do Simples com atividade mista e do MEI com empregado (acima).
@@ -689,7 +694,7 @@ Emendado em 24/11 (país na borda). `paises/br` = `server/src/features/<dominio>
 | PR | Arquivos |
 |---|---|
 | PR-P0 | `server/src/features/dp/paises/br/models/folha/cpp.ts` (+ `__tests__`); `server/src/features/dp/paises/br/legalParameters/formatosEncargos.ts` (+ `__tests__`; F-PBA-7 a, depois da fatia F3); `server/prisma/data/legal_parameters_dp_encargos_v1.sql`; `server/src/features/legalParameters/models/legalParameter.ts`; `server/src/features/legalParameters/dtos/__tests__/__dto-shapes__.json`; `server/test/helpers/legalParams.ts` (no ramo (b) do F-PBA-7, também `formatoLinha.ts`) |
-| PR-P1 | `server/src/features/dp/paises/br/models/enquadramentoCpp.ts` (+ `__tests__`); `formatosEncargos.ts` (as 3 tabelas por CNPJ); `server/src/features/accounting/paises/br/{repositories,services,dtos}/*BrFiscalProfile*` e `*BrUnit*` (+ `__tests__`); `server/src/features/accounting/paises/br/dtos/__tests__/__dto-shapes__.json` (ajuste G2); `server/src/controllers/brFiscalProfileController.ts`, `server/src/controllers/brUnitController.ts`; `server/src/routes/accounting.ts`; `server/src/routes/docs/accounting.settings.paths.ts` (ou o arquivo de docs da rota); `server/public/openapi.json`; `server/prisma/schema.prisma` (`BrFiscalProfile`, `BrUnit`); `server/prisma/migrations/**`; `server/src/features/accounting/audit/auditCanonical.ts` |
+| PR-P1 | `server/src/features/dp/paises/br/models/enquadramentoCpp.ts` (+ `__tests__`); `formatosEncargos.ts` (as 3 tabelas por CNPJ); `server/src/features/accounting/paises/br/{repositories,services,dtos}/*BrFiscalProfile*` e `repositories/*BrUnit*` (+ `__tests__`); `server/src/features/accounting/dtos/__tests__/__dto-shapes__.json` (o G2 grava a borda no arquivo do domínio); `server/src/controllers/brFiscalProfileController.ts`; `server/src/routes/accounting.ts`; `server/src/routes/docs/accounting.settings.paths.ts` (ou o arquivo de docs da rota); `server/public/openapi.json`; `server/prisma/schema.prisma` (`BrFiscalProfile`, `BrUnit`); `server/prisma/migrations/**`; `server/src/features/accounting/audit/auditCanonical.ts` |
 | PR-P2 | `server/src/features/dp/services/DpFolhaService.ts`; `server/src/features/dp/models/erros.ts`; `server/src/controllers/dpFolhaController.ts`; `server/prisma/schema.prisma` (`DpFolha.closedAt/closedById`); rotas/openapi/migração/auditoria como no PR-P1 |
 | PR-P3 | `server/src/features/dp/services/PayrollPostingService.ts`; `server/src/features/dp/ports/PayrollJournalComposerPort.ts`; `server/src/features/dp/models/payrollAccountRole.ts`; `server/src/features/dp/repositories/*PayrollPosting*`; `server/src/features/dp/paises/br/models/contabil/papeis.ts`; `server/src/features/dp/paises/br/adapters/ComposicaoLancamentoFolhaBr.ts`; `server/src/features/accounting/paises/br/{repositories,services,dtos}/*BrAccountingScopeSettings*`; `server/src/controllers/brAccountingScopeSettingsController.ts`; `server/src/features/accounting/fixtures/ChartOfAccountsFixture.ts`; `server/src/features/accounting/services/AccountingScopeSettingsService.ts`; `server/src/features/accounting/dtos/AccountingScopeSettingsDto.ts`; `server/src/features/accounting/models/accountingResetClassification.ts`; `my-app/types/contracts/accounting/*.gen.ts`; schema/migração/auditoria/rotas/openapi |
 | PR-P4 | `server/src/features/dp/paises/br/models/contabil/provisao.ts`; `PayrollPostingService.ts`; `ComposicaoLancamentoFolhaBr.ts`; papéis e contas do PR-P3 |
