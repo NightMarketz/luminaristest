@@ -443,5 +443,855 @@
         ]
       }
     ]
+  },
+  {
+    "type": "dependency",
+    "from": "components/layout/Navbar.tsx",
+    "to": "lib/services/user.service.ts",
+    "unresolvedTo": "../../lib/services/user.service",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U8-components-no-domain-service"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/chat/components/DocumentSelector.tsx",
+    "to": "lib/services/document.service.ts",
+    "unresolvedTo": "@/lib/services/document.service",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U8-components-no-domain-service"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/chat/hooks/useChatInstance.ts",
+    "to": "lib/services/chat.service.ts",
+    "unresolvedTo": "@/lib/services/chat.service",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U8-components-no-domain-service"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/chat/hooks/useChatMessages.ts",
+    "to": "lib/services/chat.service.ts",
+    "unresolvedTo": "@/lib/services/chat.service",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U8-components-no-domain-service"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
+    "to": "lib/services/crmReports.service.ts",
+    "unresolvedTo": "@/lib/services/crmReports.service",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U8-components-no-domain-service"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/dashboard-grid/dashboard-grid.tsx",
+    "to": "lib/services/dashboardLayout.service.ts",
+    "unresolvedTo": "@/lib/services/dashboardLayout.service",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U8-components-no-domain-service"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/dashboard-grid/types/dashboard-grid.types.ts",
+    "to": "lib/services/dashboardLayout.service.ts",
+    "unresolvedTo": "@/lib/services/dashboardLayout.service",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U8-components-no-domain-service"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/erp-view/ErpViewWidget.tsx",
+    "to": "lib/services/dynamic-table.service.ts",
+    "unresolvedTo": "@/lib/services/dynamic-table.service",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U8-components-no-domain-service"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/shared/hooks/useChatInstance.ts",
+    "to": "lib/services/chat.service.ts",
+    "unresolvedTo": "@/lib/services/chat.service",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U8-components-no-domain-service"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/shared/hooks/useChatInstances.ts",
+    "to": "lib/services/chat.service.ts",
+    "unresolvedTo": "@/lib/services/chat.service",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U8-components-no-domain-service"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/shared/hooks/useChatMessages.ts",
+    "to": "lib/services/chat.service.ts",
+    "unresolvedTo": "@/lib/services/chat.service",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U8-components-no-domain-service"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/AccountsPayablePanel.tsx",
+    "to": "features/dashboard/shared/components/StandardPagination.tsx",
+    "unresolvedTo": "../../dashboard/shared/components/StandardPagination",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/AccountsReceivablePanel.tsx",
+    "to": "features/dashboard/shared/components/StandardPagination.tsx",
+    "unresolvedTo": "../../dashboard/shared/components/StandardPagination",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/BankSettlementPanel.tsx",
+    "to": "features/dashboard/shared/components/StandardPagination.tsx",
+    "unresolvedTo": "../../dashboard/shared/components/StandardPagination",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/CollectionChargesList.tsx",
+    "to": "features/dashboard/shared/components/StandardPagination.tsx",
+    "unresolvedTo": "../../dashboard/shared/components/StandardPagination",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/dfe/AssinadorLocalSection.tsx",
+    "to": "features/dashboard/category-views/finance/utils/formatters.ts",
+    "unresolvedTo": "../../../dashboard/category-views/finance/utils/formatters",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/EntryApprovalsPanel.tsx",
+    "to": "features/dashboard/shared/components/StandardPagination.tsx",
+    "unresolvedTo": "../../dashboard/shared/components/StandardPagination",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/FixedAssetsSection.tsx",
+    "to": "features/dashboard/shared/components/StandardPagination.tsx",
+    "unresolvedTo": "../../dashboard/shared/components/StandardPagination",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/LalurParteBMovementsSection.tsx",
+    "to": "features/dashboard/shared/utils/formatters.ts",
+    "unresolvedTo": "@/features/dashboard/shared/utils/formatters",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/LegalParametersPanel.tsx",
+    "to": "features/dashboard/shared/components/StandardPagination.tsx",
+    "unresolvedTo": "../../dashboard/shared/components/StandardPagination",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/RecalcJobsSection.tsx",
+    "to": "features/dashboard/shared/components/StandardPagination.tsx",
+    "unresolvedTo": "../../dashboard/shared/components/StandardPagination",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/ReconciliationPanel.tsx",
+    "to": "features/dashboard/shared/components/StandardPagination.tsx",
+    "unresolvedTo": "../../dashboard/shared/components/StandardPagination",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/SimplesDefisModal.tsx",
+    "to": "features/dashboard/components/forms/RelationSelector.tsx",
+    "unresolvedTo": "@/features/dashboard/components/forms/RelationSelector",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/SimplesDefisModal.tsx",
+    "to": "features/dashboard/components/shared/relation-utils.client.ts",
+    "unresolvedTo": "@/features/dashboard/components/shared/relation-utils.client",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/SimplesParceriasPanel.tsx",
+    "to": "features/dashboard/components/forms/RelationSelector.tsx",
+    "unresolvedTo": "@/features/dashboard/components/forms/RelationSelector",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/SimplesParceriasPanel.tsx",
+    "to": "features/dashboard/components/shared/relation-utils.client.ts",
+    "unresolvedTo": "@/features/dashboard/components/shared/relation-utils.client",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/components/TaxAssessmentPanel.tsx",
+    "to": "features/dashboard/shared/utils/formatters.ts",
+    "unresolvedTo": "../../dashboard/shared/utils/formatters",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/accounting/lib/formatDate.ts",
+    "to": "features/dashboard/shared/utils/formatters.ts",
+    "unresolvedTo": "@/features/dashboard/shared/utils/formatters",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/components/analytics/CrmAnalyticsDashboard.tsx",
+    "to": "features/dashboard/category-views/finance/components/analytics/charts/ChartRenderer.tsx",
+    "unresolvedTo": "../../../dashboard/category-views/finance/components/analytics/charts/ChartRenderer",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/components/analytics/CrmAnalyticsDashboard.tsx",
+    "to": "features/dashboard/category-views/finance/components/analytics/dashboard/DashboardKpiCard.tsx",
+    "unresolvedTo": "../../../dashboard/category-views/finance/components/analytics/dashboard/DashboardKpiCard",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/components/analytics/CrmAnalyticsDashboard.tsx",
+    "to": "features/dashboard/category-views/finance/types/analytics.types.ts",
+    "unresolvedTo": "../../../dashboard/category-views/finance/types/analytics.types",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/components/CrmPipelineBoard.tsx",
+    "to": "features/dashboard/components/shared/FloatingActionButton.tsx",
+    "unresolvedTo": "../../dashboard/components/shared/FloatingActionButton",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/components/CrmTableScreen.tsx",
+    "to": "features/dashboard/category-views/shared/GenericTabbedView.tsx",
+    "unresolvedTo": "../../dashboard/category-views/shared/GenericTabbedView",
+    "dependencyTypes": [
+      "local",
+      "dynamic-import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/components/CrmTableScreen.tsx",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "unresolvedTo": "../../dashboard/components/shared/dynamic-tables.client",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/components/OpportunityCreateModal.tsx",
+    "to": "features/accounting/lib/parseBrl.ts",
+    "unresolvedTo": "../../accounting/lib/parseBrl",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/components/reports/CrmReportBuilder.tsx",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "unresolvedTo": "../../../dashboard/components/shared/dynamic-tables.client",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/components/reports/CrmReportEditor.tsx",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "unresolvedTo": "../../../dashboard/components/shared/dynamic-tables.client",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/components/reports/CrmReportResult.tsx",
+    "to": "features/dashboard/category-views/finance/components/analytics/charts/ChartRenderer.tsx",
+    "unresolvedTo": "../../../dashboard/category-views/finance/components/analytics/charts/ChartRenderer",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/components/reports/CrmReportResult.tsx",
+    "to": "features/dashboard/category-views/finance/components/analytics/dashboard/DashboardKpiCard.tsx",
+    "unresolvedTo": "../../../dashboard/category-views/finance/components/analytics/dashboard/DashboardKpiCard",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/components/reports/CrmReportResult.tsx",
+    "to": "features/dashboard/category-views/finance/types/analytics.types.ts",
+    "unresolvedTo": "../../../dashboard/category-views/finance/types/analytics.types",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/components/reports/CrmReportResult.tsx",
+    "to": "features/dashboard/category-views/shared/components/GenericTable.tsx",
+    "unresolvedTo": "../../../dashboard/category-views/shared/components/GenericTable",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/components/reports/CrmReportResult.tsx",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "unresolvedTo": "../../../dashboard/components/shared/dynamic-tables.client",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/context/Lead360Context.tsx",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "unresolvedTo": "../../dashboard/components/shared/dynamic-tables.client",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/hooks/useActorNames.ts",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "unresolvedTo": "../../dashboard/components/shared/dynamic-tables.client",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/hooks/useCrmPipelineBoard.ts",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "unresolvedTo": "../../dashboard/components/shared/dynamic-tables.client",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/hooks/useOwnerFilter.ts",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "unresolvedTo": "../../dashboard/components/shared/dynamic-tables.client",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/hooks/usePipelineBoard.ts",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "unresolvedTo": "../../dashboard/components/shared/dynamic-tables.client",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/hooks/useReportSources.ts",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "unresolvedTo": "../../dashboard/components/shared/dynamic-tables.client",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/crm/lib/reportBuilder.ts",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "unresolvedTo": "../../dashboard/components/shared/dynamic-tables.client",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/dashboard/category-views/finance/components/sales/SaleDetailPanel.tsx",
+    "to": "features/accounting/components/dfe/EmitNfseButton.tsx",
+    "unresolvedTo": "@/features/accounting/components/dfe/EmitNfseButton",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/dashboard/category-views/finance/components/sales/SaleDetailPanel.tsx",
+    "to": "features/accounting/components/dfe/FiscalDocumentsSection.tsx",
+    "unresolvedTo": "@/features/accounting/components/dfe/FiscalDocumentsSection",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/dashboard/category-views/inventory/components/MovementModal.tsx",
+    "to": "features/accounting/lib/inventoryPurchaseLink.ts",
+    "unresolvedTo": "../../../../accounting/lib/inventoryPurchaseLink",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/dashboard/category-views/shared/GenericTabbedView.tsx",
+    "to": "features/crm/hooks/useOwnerFilter.ts",
+    "unresolvedTo": "../../../crm/hooks/useOwnerFilter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/dev/seed.ts",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "unresolvedTo": "../dashboard/components/shared/dynamic-tables.client",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/dev/seed/SeedService.ts",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "unresolvedTo": "../../dashboard/components/shared/dynamic-tables.client",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "features/interview/components/LeftSidebar/index.tsx",
+    "to": "features/dashboard/category-views/shared/hooks/a11yProps.ts",
+    "unresolvedTo": "../../../dashboard/category-views/shared/hooks/a11yProps",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U9-cross-feature-via-public"
+    }
   }
 ]
