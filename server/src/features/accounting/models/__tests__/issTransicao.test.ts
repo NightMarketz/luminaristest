@@ -130,3 +130,43 @@ describe('item 4 — perfil fiscal a partir do fim do ISS (F-ISS-5 a; Onda 3.2 #
     expect(UpsertFiscalProfileSchema.safeParse({ ...perfil, issAliquotaBp: 501 }).success).toBe(false);
   });
 });
+
+describe('item 5 — IBS 2029–2032 em DRAFT (F-ISS-6 a; LC 214 arts. 361–364)', () => {
+  it('oito linhas DRAFT sem valor: IBS UF e MUN × 2029..2032', () => {
+    const ibs = pr1.filter((l) => l.tabela === 'IBS_CBS').map((l) => [l.chave, l.discriminador, l.vigenteDesde, l.vigenteAte, l.valorInt, l.status, l.fonte.slice(0, 20)]);
+    expect(ibs).toEqual(
+      [2029, 2030, 2031, 2032].flatMap((ano, i) => [
+        ['IBS', 'ALIQUOTA_UF', `${ano}-01-01`, `${ano}-12-31`, null, 'DRAFT', `LC 214/2025 art. ${361 + i}`],
+        ['IBS', 'ALIQUOTA_MUN', `${ano}-01-01`, `${ano}-12-31`, null, 'DRAFT', `LC 214/2025 art. ${361 + i}`],
+      ]),
+    );
+  });
+
+  it('sem linha PUBLISHED ⇒ SemLinhaVigenteError; a conferência cai em CONFERENCIA_SEM_ALIQUOTA (invariante 10.7)', () => {
+    const tabela = tabelaIbsCbsDe(todas);
+    expect(() => parametroIbsCbsVigente(tabela, 'IBS', 'ALIQUOTA_MUN', '2029-03-10')).toThrow(SemLinhaVigenteError);
+    expect(() => parametroIbsCbsVigente(tabela, 'IBS', 'ALIQUOTA_UF', '2032-12-31')).toThrow('Sem linha vigente de IBS_CBS/IBS/ALIQUOTA_UF em 2032-12-31');
+    const r = apurarIbsCbsMes({
+      ano: 2029, mes: 3, tributo: 'IBS', tabela, vendasSemDocumento: [],
+      documentos: [{ fiscalDocumentId: 'fd1', dataEmissaoLocal: '2029-03-10', status: 'AUTHORIZED', ibsCents: 1234n, cbsCents: 900n, baseCents: 10000n, cClassTrib: null, natureza: 'SERVICO' }],
+    });
+    expect(r.debitosCents).toBe(1234n);
+    expect(r.memoria.map((l) => l.codigo)).toContain('CONFERENCIA_SEM_ALIQUOTA');
+  });
+});
+
+describe('item 6 — relatório do X7 soma o vIss do documento em qualquer ano (invariante 10.4)', () => {
+  const doc = (over: Partial<IssDocInput>): IssDocInput => ({ dCompet: '2029-01-15', municipioIbge: '3550308', tpRetISSQN: 1, vServCents: 10000n, baseIssCents: 10000n, vIssCents: 450n, divergente: false, ...over });
+
+  it('2029-01 e 2032-12: a soma é a do documento, sem fator', () => {
+    const r = agregarIssPorCompetencia([
+      doc({ vIssCents: 450n }),
+      doc({ vIssCents: 500n }), // documento com valor fora da escala: o relatório não corrige
+      doc({ dCompet: '2032-12-20', vIssCents: 300n }),
+    ]);
+    expect(r.map((l) => [l.competencia, l.vIssCents, l.baseIssCents])).toEqual([
+      ['2029-01', '950', '20000'],
+      ['2032-12', '300', '10000'],
+    ]);
+  });
+});
