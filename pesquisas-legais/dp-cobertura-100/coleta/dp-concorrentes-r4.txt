@@ -1,0 +1,149 @@
+DP CONCORRENTES - RODADA R4 (leitor, coleta crua, sem classificação)
+Data da coleta: 2026-11-14
+Legenda: "aberta" = página lida no navegador embutido (get_page_text / JS) ou WebFetch; "snippet" = só resultado de busca (WebSearch ou busca interna do TDN), página não aberta.
+
+=====================================================================
+1. TOTVS (TDN: Linha RM / FOP e Linha Protheus / SIGAGPE)
+=====================================================================
+
+Rotas que falharam antes e resultado nesta rodada:
+- tdn.totvs.com/x/T_JUE (rodada anterior 404 no WebFetch) — abre no navegador e redireciona para ESO0003 (ver abaixo).
+- tdn.totvs.com/display/PROT/eSocial+%7C+Protheus+-+Entregas+Legais+-+Principais+Rotinas+eSocial+SIGAGPE — aberta, página "em construção" (sem conteúdo).
+- Busca interna TDN: https://tdn.totvs.com/dosearchsite.action?queryString=... — funciona no navegador (retorna milhares de resultados; só títulos/trechos).
+
+Páginas abertas:
+- Índice "FOP - Linha RM" — https://tdn.totvs.com/display/public/LRM/FOP — aberta. Filhas listadas como escritas: Reintegração; Renomear lteracaoMascaraGerencial; Retificação Arquivo eSocial; Rotinas Anuais 2013; S-2100 - Evento Cadastramento Inicial de Vínculo; S-2220 - Monitoramento da Saúde do Trabalhador - SMT; S-3000 - Exclusão de Eventos - RHU; Sugestão de ordem para importação dos layouts; Ambiente de Trabalho - SMT (SM); Integração Folha de Pagamento x Gestão Financeira (S-1210 - Autônomos); RAIS - Relação Anual de Informações Sociais. Árvore de menu da página não expôs rotinas de férias, rescisão, 13º, ponto ou benefícios.
+- Índice "eSocial | Protheus - Entregas Legais" — https://tdn.totvs.com/display/public/PROT/eSocial+%7C+Protheus+-+Entregas+Legais — aberta. Assuntos como escritos: 1. Qualificação Cadastral; 2. Saneamento de Dados; 3. Parametrização TAF/Middleware; 4. Parametrização TSS; 5. Processos Trabalhistas; 7. Eventos de Tabelas (Carga Inicial); 9. Eventos Não Periódicos (Eventos SST / Folha); 10. Eventos Periódicos; 11. FAQs eSocial; 12. FAQs Consultoria Tributaria; 13. Webinar eSocial Responde; 14. Layout eSocial. Filhas (títulos de página): Tabelas Iniciais - 2.5; Tabelas iniciais - S-1.0; Tabelas iniciais - S-1.1; Tabelas iniciais - S-1.3; Principais Rotinas eSocial SIGAGPE; Schedule GPE; Saneamento da Base; Schedule MDT; Processos Trabalhistas. Atualização destacada: "NT 07/2026 - Atualização importante para o correto envio do evento S-2230" e "Leiaute S-1.3: Principais Alterações". Notícias listadas: Nota Técnica S-1.3 Nº 07/2026 (com complemento "Afast. Férias"); Rubricas de Férias e Abono Salarial (PIS); Nota Orientativa Nº 09/2026 (vigência 01/05/2026); Nota Técnica S-1.3 Nº 06/2026 (vigência 27/04/2026); NT 04/2025; NT 03/2025; INSTRUÇÃO NORMATIVA RFB Nº 2.137/2023 - IRRF NA DCTFWeb. Novidades listadas: Relatório de Conferência INSS Patronal; Relatório Excel S-2299; Processo Trabalhista; FGTS Digital; Geração de Alterações Contratuais em Lote; Novo Controle do ideDmDev.
+- Página "eSocial | Protheus - Entregas Legais - Processos Trabalhistas" — https://tdn.totvs.com/display/public/PROT/eSocial+%7C+Protheus+-+Entregas+Legais+-+Processos+Trabalhistas — aberta. Eventos citados: S-2500 Processo Trabalhista; S-2501 Informações dos Tributos Decorrentes de Processo Trabalhista; S-3500 Exclusão de Eventos - Processo Trabalhista. Prazo: até dia 15 do mês subsequente ao trânsito em julgado (ou acordo CCP/Ninter). Pré-requisito: envio do S-1000; cadastro do processo pela rotina APTA100 no SIGAGPE. Tags da página citam GPEM045, GPEM046, GPEM024 (apenas nas tags, sem texto de rotina).
+- Página "ESO0003 Saneamento da base eSocial" — https://tdn.totvs.com/display/public/PROT/ESO0003_Saneamento_da_base_eSocial — aberta. Itens como escritos: Parâmetros (Sindicato de Empregados; Cadastro de Agente de Integração Estágio; Cadastro de Centro de Custo; Informações do Funcionário; Cadastro de Verbas); Cadastro de Funcionários; Estagiários; Sucessão de Vínculos; Temporários; Beneficiários; Dependentes; Tabela 32 - Tipos de Rescisão (campo Motivo eSocial); Tabela 14 - Encargos da Empresa (campo Indicativo da Contribuição Substituída, optantes pelo Simples).
+- Página comercial de folha — https://www.totvs.com/rh/folha-de-pagamento/ — aberta (navegador). Título "Sistema de folha de pagamento com precisão - TOTVS". Texto: "Automatize cálculos, encargos e integrações contábeis"; "Mais de 25% da folha de pagamento CLT no Brasil é processada pelos sistemas de folha de pagamento da TOTVS"; linhas LINHA PROTHEUS, LINHA DATASUL, LINHA RM. Sem lista de rotinas.
+
+Snippets (busca interna TDN; página não aberta):
+- Cálculo de Férias (GPEM030 - SIGAGPE - V12) — snippet, https://tdn.totvs.com/dosearchsite.action?queryString=GPEM030%20ferias%20calculo — trecho: "O módulo Gestão de Pessoal permite o processamento do Cálculo das Férias de todas as categorias funcionais. Como pré-requisito o Cadastro de Programação..." Demais snippets: PE GPREFTRAB (desabilita regras da reforma trabalhista no GPEM030, DRHCALCPRT-21161, 29/10/2026); MP - GPEM030 - Como excluir o cálculo de férias (tipo de cálculo N/P); PSIGAGPE0745 (INSS de outras empresas nas férias); PSIGAGPE0715 (IR sobre férias).
+- Pensão alimentícia (Protheus/RM) — snippet, https://tdn.totvs.com/dosearchsite.action?queryString=GPEM%20pensao%20alimenticia — títulos: "Código de Cálculo 120 - Pensão Alimentícia Sobre 13º Salário" (RM; eventos de pensão sobre férias com código de cálculo 113, dedutível IRRF férias); "Código de Cálculo 121 - Pensão Alimentícia Sobre Participação nos Lucros" (RM); "Parametrização de Pensão Alimentícia" (RM, FAQ, módulo Pensão Alimentícia); "Parametrização para cálculo de Pensão Alimentícia no RM Labore" (v12.1); "Base de Cálculo - Pensão Alimentícia - Base Líquida" (RM); "IRRF - Pensão Alimentícia - Aplicação de Redução" (Consultoria de Segmentos, 16/10/2026); "Pensão alimentícia, valores extras de pensão" (RM); "FP1742 - Consulta Beneficiários Pensão Aliment." (Datasul); "DRHROTDTS-12602 Cadastro do responsável para o depósito bancário da pensão alimentícia".
+- PLR (Protheus/Datasul/RM) — snippet, https://tdn.totvs.com/dosearchsite.action?queryString=GPE%20PLR%20participacao%20lucros%20resultados — títulos: "Participação Lucros e Resultados (PLR) - MFP" (Linha RM/Datasul, documento de referência v12); "Cálculo Participação nos Lucros e Resultados (PLR) - MFP"; "Manutenção Parâmetros Cálculo PLR - FP0900" (Datasul); "Manutenção Complemento Parâmetros Cálculo PLR - FP0910" (RM); "Cadastro de Tipos de Ausências (GPEA430 - SIGAGPE - V12)" (campo que informa influência na PLR); "Pagamento de PLR à Diretores" (Protheus); "Como Tratar de Imposto de Renda Sobre PLR" (Consultoria de Segmentos); "Artigo 444 / 611A - Item XV - Participação nos Lucros ou Resultados" (verba 0174, código de cálculo 126, Protheus).
+- Consignado / eConsignado (Protheus/RM/Datasul) — snippet, https://tdn.totvs.com/dosearchsite.action?queryString=GPE%20consignado%20eConsignado%20Protheus — títulos: "Integração eConsignado via API - Job TAF_CFGJOB" (12.1.2410, DSERTAF1-39821); "GPE - eConsignado - Integração de dados via API entre o Portal Emprega Brasil e Protheus" (artigo centraldeatendimento.totvs.com); "DRHCALCDTS-9856 Cálculo gerando evento consignado indevido (migração eConsignado)" (rescisão); "DRHMAISSALDO-973 Tratamento para personalização da margem consignável" (Protheus; campo no cadastro de verba para margem consignável); "DSERTAF1-40954 Erro de API Consignado quando TSS possui autenticação - Middleware GPE" (GPEM815A, MV_MID); "Dúvidas sobre Crédito do Trabalhador - eConsignado - Linhas Datasul | Protheus | RM" (FAQ, incl. desconto de até 35% da rescisão).
+- Banco de horas / ponto (Protheus/RM) — snippet, https://tdn.totvs.com/dosearchsite.action?queryString=GPE%20banco%20de%20horas%20ponto%20SIGAGPE — títulos: "Ajuste totalizadores do relatório de banco de Horas do Ponto" (DRHPONTP-577/578, Protheus, Ponto eletrônico); "TOTVS Automação de Ponto - Banco de Horas" (RM, 'Parametrizações Banco de Horas do RM'); "GPE - Movimentação de Horas" (Fast Analytics, 'Banco de Horas'); "Ponto-de-Entrada - PN80GRBH - Banco de horas" (Protheus; gravação da tabela SPB); "DRHMEURH-19036 Apresentação do Saldo Aberto do Banco de Horas no Espelho Ponto"; "PSIGAPON0147 - PONR010 espelho do ponto com banco de horas"; "Cadastro de Lançamentos/Banco de Horas".
+- SST / ASO / PPP (Protheus) — snippet, https://tdn.totvs.com/dosearchsite.action?queryString=GPE%20ASO%20PPP%20SST%20SIGAGPE — títulos: "eSocial - SST - PPP eletrônico" (Consultoria de Segmentos, 06/07/2022: PPP eletrônico, S-2220 e S-2240); "Impressão PPP (U_GPERPPP - SIGAGPE - V12)" (rotinas Período Pro...); "LP GPE (CTBA080 - SIGAGPE - V12)" (contabilização); "S071 - Integração RM Classis/GPE (GPEA320 - SIGAGPE - V12)" (Classis/SST). Resultados de ASO na busca eram de Soluções Saúde (módulo Clínicas, fora de RH).
+- Meu RH / benefícios (Protheus) — snippet, https://tdn.totvs.com/dosearchsite.action?queryString=Meu%20RH%20Protheus%20vale%20transporte%20beneficios — títulos: "Login do Meu RH Integrado ao Protheus e Active Directory" (MV_LOGINT; Meu RH, 11/03/2026); "Login do Meu RH Protheus Integrado com o Fluig Identity" (28/10/2026); "How To RH - APP MEU RH PROTHEUS - Suporte Técnico Protheus" (23/10/2023); "Migração das funcionalidades de RH do Portal Corpore RM para o Meu RH". Não apareceu rotina de VT/VR/VA com título próprio nesta busca.
+- Rescisão (Protheus) — snippet (rodada anterior/R4 busca GPEM040): "GPEM040 - Cálculo da Rescisão"; "GPER140 - Impressão da Rescisão / IMPRESH (TRCT)"; "Rescisão e Encargos Folha no Protheus" (PDF 403 no WebFetch). Ver também Questor/Odoo em outras rodadas.
+- Férias e 13º: "Complemento do 13º Salário na Folha e eSocial" (PDF snippet); "GPE - Provisão de férias e 13º salário - novos tratamentos" (PDF snippet); "Liberação do recibo de férias no portal" (PDF snippet); "Alteração no cálculo de férias (TFDERG)" (PDF snippet).
+- Estabilidade: busca não feita nesta rodada.
+
+Não aberto / inacessível nesta rodada:
+- tdn.totvs.com/display/public/PROT/ (espaço PROT, sem busca direta): não aberto como índice; navegação de árvore lateral não exposta no DOM (só links do cabeçalho).
+- Principais Rotinas eSocial SIGAGPE — aberta, "em construção", sem lista.
+- Rotinas de cálculo GPEM020, GPEM013, GPER140 e árvores: só snippet da rodada anterior; não reabertas.
+- PDF "Rescisão e Encargos Folha no Protheus" — 403 (rodada anterior); não reaberto.
+
+Contagem TOTVS R4: abertas 6 (FOP índice; Entregas Legais índice; Processos Trabalhistas; ESO0003; Principais Rotinas SIGAGPE (vazia); página comercial folha); snippets: ~6 buscas internas (GPEM030, pensão, PLR, consignado, banco de horas, ASO/PPP, Meu RH) com 25+ títulos.
+
+=====================================================================
+2. DOMÍNIO (Thomson Reuters)
+=====================================================================
+
+Páginas abertas:
+- Home - https://www.dominiosistemas.com.br/ — aberta (navegador). Produtos: "Domínio One" ("Inclui módulos de Contabilidade, Folha, Fiscal e portais para compartilhamento de arquivos com clientes e seus colaboradores"); "Domínio Pro"; "Domínio Max" ("Acesso ilimitado a todos os módulos atuais e futuros"). Suporte: "Suporte e treinamento"; "Portal de atendimento".
+- eSocial (Treinamentos) - https://www.dominiosistemas.com.br/esocial-treinamentos/ — aberta (navegador). Links: Agenda de Treinamentos; Central de Soluções; TRIA - Assistente virtual do eSocial; Passo a passo DCTFWeb. Temas de treinamento: Cadastramento Inicial Fase 2; S-2230 Afastamento Férias eSocial; S-2190 Admissão Preliminar; S-2200 Admissão; Como enviar para o eSocial as empresas já enviadas por outro sistema; Como enviar o DCTF Web. Dúvidas: prazos de envio por grupo; "Como saber qual grupo do eSocial a empresa está enquadrada"; "Como configurar os Parâmetros da empresa para envio do eSocial"; "Onde verificar os eventos que foram validados no eSocial".
+- Página /folha (rodada anterior) — redirecionou para home (navegador); WebFetch leu a home. Nenhuma rotina de folha na página.
+- /departamento-pessoal — redirecionou para home (navegador).
+
+Snippets (WebSearch "Domínio Folha de Pagamento rotinas férias rescisão 13º suporte dominioatendimento"):
+- "Como configurar Rotinas Automáticas? Módulo Folha" — https://suporte.dominioatendimento.com/central/faces/solucao.html?codigo=106 — snippet: rotina anual serve para emitir Comprovante de Rendimentos e rodar rotinas de 13º; mensais rodam no dia e horário definidos; opção específica para cálculo de férias programadas. Também em https://suporte.dominioatendimento.com/central/faces/solucao-onvio.html?codigo=106.
+- "Central de Soluções" — snippet: destaques da versão 10.6A-07 (julho/2026): opção para não aplicar regras de redução da Lei 15.270/2025 no IRRF sobre diferenças de 13º — https://suporte.dominioatendimento.com/central/faces/central-solucoes.html
+- Snippet de fórum (2015, contabeis.com.br): rubricas não configuradas para rescisão e provisão de férias na integração folha/contábil — https://www.contabeis.com.br/forum/tecnologia-contabil/198368/dominio-sistemas-integracoes/ (antigo; citado só como snippet)
+
+Inacessível nesta rodada:
+- suporte.dominioatendimento.com/central/faces/index.html e /pesquisa.html — HTTP 503 ("Central de Soluções indisponível para manutenção"; a página indica consultar a TRIA no sistema). Abertas no navegador: a resposta foi a página de manutenção, sem conteúdo de rotina.
+- dominiosistemas.com.br/esocial — 403 (WebFetch, rodada anterior).
+- web.archive.org — recusado (WebFetch, rodada anterior).
+
+Contagem Domínio R4: abertas 2 (home; esocial-treinamentos); snippets 3 (rotinas automáticas folha; destaques 10.6A-07; fórum 2015); rotinas de férias/rescisão/13º/pensão/PLR/ponto/SST como título de páginas Domínio: 0 encontradas.
+
+=====================================================================
+3. SENIOR (Gestão de Pessoas HCM)
+=====================================================================
+
+Rotas que falharam antes e resultado nesta rodada:
+- documentacao.senior.com.br/gestao-de-pessoas-hcm/ — redireciona (página "Estamos redirecionando você" para a versão mais atual). Não lida como índice.
+- Página de produto e rotas WebFetch: não repetidas.
+
+Páginas abertas:
+- Administração de Pessoal (versão 6.10.4) — https://documentacao.senior.com.br/gestao-de-pessoas-hcm/6.10.4/rubi/administracao-de-pessoal/ — aberta (navegador). Características como escritas: controle de pessoal; "Administra o vale-transporte"; "Controla os dependentes para Imposto de Renda (IR), salário família e caderneta vacinação"; "Calcula pensão judicial e controla os seus beneficiários"; "Efetua cálculos da folha de pagamento: semanais, quinzenais, mensais, adiantamentos salariais, complementares, participação nos lucros, 13º salário, férias (normais, coletivas e programadas) e rescisões contratuais e complementares"; "Calcula o RPCI dos autônomos que prestam serviços à empresa"; "Cálculo de provisões de férias, 13º salário e encargos legais"; "Emissão da relação das últimas 36 contribuições ao INSS, bem como da CAT"; "Regras Particulares" (cálculos definidos pelo usuário).
+- Snippets com títulos de páginas (WebSearch, allowed_domains documentacao.senior.com.br, consulta 1 "pensão alimentícia PLR banco de horas estabilidade"):
+  - "Relação de Características" — https://documentacao.senior.com.br/gestao-de-pessoas-hcm/6.10.4/rubi/relacao-caracteristicas.htm — snippet
+  - "O que há de novo no Gestão de Pessoas" (6.10.4) — https://documentacao.senior.com.br/gestao-de-pessoas-hcm/notas-da-versao/6-10-4/ — snippet
+  - "Gerar Exigibilidade Suspensa - S-1210" — https://documentacao.senior.com.br/gestao-de-pessoas-hcm/6.10.4/rubi/frgerexs/ — snippet; cita rubrica de PLR (9054) e tipo "5 - Pensão alimentícia" nas incidências de IR
+  - "Banco de Horas" (controle de ponto) — https://documentacao.senior.com.br/gestao-de-pessoas-hcm/6.10.4/manual-processos/relacoes-trabalhistas/controle-de-ponto/banco-de-horas/ — snippet (versão 6.10.3 também: .../6.10.3/manual-processos/relacoes-trabalhistas/controle-de-ponto/banco-de-horas.htm)
+  - "Banco de Horas - Cadastro" — https://documentacao.senior.com.br/gestao-de-pessoas-hcm/6.10.3/ronda/fr011bhr.htm — snippet
+  - "Natureza das rubricas" — https://documentacao.senior.com.br/seniorxplatform/manual-do-usuario/hcm/cadastros-gerais/obrigacoes-legais/natureza-da-rubrica/ — snippet
+  - "Definições de Cálculos" — https://documentacao.senior.com.br/gestao-de-pessoas-hcm/6.10.4/vetorh/fr044cal.htm — snippet
+  - "Integrador - HCM" — https://documentacao.senior.com.br/seniorxplatform/manual-do-usuario/hcm/implantacao/integrador/ — snippet
+  - Pensão alimentícia: documento de notas da versão 6.10.4 e "Relação de Características" citam rubricas de pensão (PLR código 54, 13º, férias); FPPA001 lista PLR (14) na pensão — snippet.
+  - Estabilidade: nenhum título retornado (sem resultado na busca).
+- Snippets (WebSearch, consulta 2 "13º salário férias coletivas rescisão complementar vale-transporte consignado insalubridade"):
+  - "Gestão de Férias - Documentação" — https://documentacao.senior.com.br/gestao-de-pessoas-hcm/6.10.4/manual-processos/relacoes-trabalhistas/administracao-de-pessoal/ferias.htm — snippet: fracionamento em até três períodos, aviso de 30 dias por escrito.
+  - "Rotinas de Férias do Módulo Administração de Pessoal" — https://documentacao.senior.com.br/gestao-de-pessoas-hcm/6.10.4/informacoes-adicionais/rotinas/ap/ferias/ — snippet: férias coletivas pelo menu Coletivas; regra de saldo negativo com três opções.
+  - "Gestão de férias" (Painel de Gestão) — https://documentacao.senior.com.br/seniorxplatform/manual-do-usuario/hcm/painel-gestao/gestao-de-ferias/ — snippet
+  - "Cálculo de 13º Salário" — https://documentacao.senior.com.br/gestao-de-pessoas-hcm/6.10.4/manual-processos/relacoes-trabalhistas/administracao-de-pessoal/decimo-terceiro/ — snippet
+  - "Décimo Terceiro Salário - Cálculo do 13º" — https://documentacao.senior.com.br/gestao-de-pessoas-hcm/6.10.4/informacoes-adicionais/rotinas/ap/decimo-terceiro-salario/calculo-do-decimo-terceiro/ — snippet: adiantamento até 31/01 por pedido escrito; complementar até 10/01 do ano seguinte; médias de insalubridade, periculosidade e adicional noturno quando o adicional deixa de ser recebido
+  - "Rotinas de Décimo Terceiro Salário" — https://documentacao.senior.com.br/gestao-de-pessoas-hcm/6.10.4/informacoes-adicionais/rotinas/ap/decimo-terceiro-salario/decimo-terceiro/ — snippet: 13º em dois SEFIP
+  - "Férias Programadas" — https://documentacao.senior.com.br/gestao-de-pessoas-hcm/6.10.4/rubi/frferprg/ — snippet
+  - "Programação de Férias - Individual" — https://documentacao.senior.com.br/gestao-de-pessoas-hcm/6.10.4/rubi/fr040prg/ — snippet
+- Não encontrados nas buscas: rescisão complementar como página própria; vale-transporte como página própria (só menção na página de Administração de Pessoal); consignado; contrato de experiência; insalubridade/periculosidade como página própria; folha de estagiário; autônomo/RPA (menção RPCI na Administração de Pessoal); comprovante de rendimentos; estabilidade.
+
+Contagem Senior R4: abertas 1 (Administração de Pessoal 6.10.4); snippets 15 títulos (2 buscas); não encontrados: estabilidade, rescisão complementar como página, consignado, VT como página, contrato de experiência, estagiário, comprovante de rendimentos. Consultas restantes não feitas: 6 de 8 por limite de orçamento desta rodada (consultas por tópico separadas para consignado, VT, rescisão complementar, estabilidade).
+
+=====================================================================
+4. ALTERDATA (Departamento Pessoal / Folha, ajuda.alterdata.com.br/wdp)
+=====================================================================
+
+Páginas abertas (navegador):
+- Índice Departamento Pessoal — https://ajuda.alterdata.com.br/wdp/ — aberta. Menu como escrito: Primeiros Passos - DP; Integrações - DP; Empresa - DP; Envio de documentos para o app do colaborador; Funcionário - DP; Contribuinte; Folha; Férias; Décimo Terceiro - DP; Rescisão - DP; Guias - DP; eSocial - DP; Obrigações Acessórias; Contábil; Remessa Bank - DP; Tabelas; Manutenção - DP; Configurações Opções; Meu Gerente - DP; Central eSocial - DP; Crédito Trabalhador; Rotinas Automáticas - DP; Contrato de Licença - DP; Novidades do Departamento Pessoal; Área de Treinamento - DP.
+- Folha — https://ajuda.alterdata.com.br/wdp/folha-31295470.html — aberta. Itens: Cálculo da Folha; Cálculo do Adiantamento; Folha Dinâmica; Consulta de Valores - Folha; Anulação de Processos; Eventos (Rubricas); Lançamento por Funcionário; Dias Úteis para Vale Transporte; Múltiplos Vínculos; Outros Lançamentos - DP; Exclusão; Relatório da Folha de Pagamento / Adiantamento; Outros Relatórios; Calculadora de INSS e IRRF - DP; Folha - Como realizar anulação de processos com os eventos S-1200 e S-1210 enviados.
+- Férias — https://ajuda.alterdata.com.br/wdp/ferias-31299010.html — aberta. Itens: Cálculo de Férias; Consulta de Valores; Calcular Férias Coletivas; Agendamento - DP; Pré-Agendamento de Férias; Anulação de Processos; Eventos (Rubricas); Lançamento por Funcionário; Faltas; Outros Lançamentos; Exclusão; Relatórios de Férias; Previsão; Notificação; Provisão; Outros Relatórios.
+- Décimo Terceiro - DP — https://ajuda.alterdata.com.br/wdp/decimo-terceiro-dp-31299233.html — aberta. Itens: Pré-Análise do 13°; Cálculo do 13°; Consulta de Valores; Eventos (Rubricas); Lançamento por Funcionário; Faltas; Múltiplos Vínculos; Outros Lançamentos; Exclusão; Relatórios de Décimo Terceiro; Provisão; Outros Relatórios; Relatório Contábil.
+- Rescisão - DP — https://ajuda.alterdata.com.br/wdp/rescisao-dp-31299263.html — aberta. Itens: Cálculo Rescisão; Simulação/Prévia da Rescisão; Consulta de Valores; Outras Rescisões; Anulação de Processos; Eventos (Rubricas); Lançamento por Funcionário; Lançamento por Departamento; Outros Lançamentos; Exclusão; Relatórios de Rescisão; Aviso Prévio / Dispensa; Seguro Desemprego; Salário Contribuição; Outros Relatórios; Relatório Contábil.
+- eSocial - DP — https://ajuda.alterdata.com.br/wdp/esocial-dp-95073409.html — aberta (texto conceitual; eventos citados por tipo: iniciais e de tabelas; periódicos; não periódicos, com exemplos Admissão, Alteração Contratual, Rescisão Contratual e Folha de Pagamento). Não listou códigos S-xxxx na parte lida (truncado em 1800 caracteres).
+- Crédito Trabalhador — https://ajuda.alterdata.com.br/wdp/credito-trabalhador-267026701.html — aberta. Texto: "plataforma do governo federal de crédito consignado para trabalhadores CLT, instituída pela Medida Provisória 1.292/2025"; importação pela aba Crédito Trabalhador (API ou JSON manual do Emprega Brasil); "Apuração do Crédito do Trabalhador na rescisão"; "Como conferir o cálculo do Crédito do Trabalhador na rescisão".
+- Índice Alterdata eSocial (display WDP) e Central eSocial (Central eSocial - DP, /wdp/central-esocial-dp-95073231.html) — não abertos nesta rodada.
+- Ponto (rodada anterior, aberta): https://www.alterdata.com.br/contabil/ponto-eletronico — "Integração nativa ao DP Alterdata"; "banco de horas" e turnos complexos; "relatórios AEJ e AFDT"; "recibos de folha, férias, 13º salário, informe de rendimentos" (app ePessoal). Aberta na rodada anterior.
+
+Snippets (WebSearch, rodada R4): "Folha de Pagamento 2025" — https://ajuda.alterdata.com.br/nps/folha-de-pagamento-2025-320307353.html — snippet.
+
+Não encontrados nas páginas lidas: página de SST, PLR, pensão alimentícia, contabilização como página própria (aparece só como item "Contábil"/"Relatório Contábil"); estabilidade. Cadastro de Áreas de Recursos Humanos (rodada anterior, snippet FP3218).
+
+Contagem Alterdata R4: abertas 7 (índice DP; Folha; Férias; 13º; Rescisão; eSocial - DP; Crédito Trabalhador); snippets 1 nesta rodada (+ 8 da rodada anterior); não abertas: Central eSocial, Consignado sem página própria (Crédito Trabalhador é a única página de crédito).
+Erros: /wdp/ferias.html, /wdp/rescisao-dp.html, /wdp/esocial-dp.html — 404 (URLs construídas à mão; os URLs corretos estão no índice acima).
+
+=====================================================================
+5. ODOO / OCA l10n-brazil (branch 18.0)
+=====================================================================
+
+Páginas abertas:
+- l10n_br_hr (18.0) — https://github.com/OCA/l10n-brazil/tree/18.0/l10n_br_hr — aberta. README (texto como escrito, "Brazilian Localization HR"): "Este é o módulo base dos recursos humanos brasileiro e implementa adaptações nos modelos básicos do cadastro de Empregados e suas dependências". Campos listados: CPF com formatação e validação; CPTS com validação; PIS/PASEP; Certificado de serviço militar; Naturalidade; Escolaridade (usar hr_skills); Dependentes (usar hr_employee_relative); RG; Título de eleitor; Paternidade; Etnia; Tipo sanguíneo; Incapacidade física; Tipo: Funcionário / Autônomo / Terceirizado / Cedido. Dependência: pacote Python erpbrasil.base. Autores: KMEE; mantido pela OCA. Seções Installation/Configuration/Usage vazias ("Este módulo não requer nenhuma configuração especial"; Usage sem texto).
+- l10n_br_hr_contract (18.0) — https://github.com/OCA/l10n-brazil/tree/18.0/l10n_br_hr_contract — aberta. README: "Este módulo adapta o módulo 'hrcontract' aos requisitos da Legislação Brasileira/e-social". Campos/itens listados: Tipo de admissão; Tipo de contrato de trabalho; Motivo de encerramento de contrato; Motivo de demissão; Tipo de regime previdenciário; Sindicato; Salário Mínimo. Known issues/Roadmap: "TODO!". Usage: "go to ..." (placeholder). Autores: KMEE; mantido pela OCA.
+- Observação de página: o branch 18.0 do repositório mostra "16018 commits ahead of and 9216 commits behind 19.0" (rodapé da árvore; o padrão indicado pela rodada anterior era 19.0).
+
+Campos eSocial explícitos: o README de l10n_br_hr não lista código S-xxxx nem rótulo "eSocial" por campo; o README de l10n_br_hr_contract cita "e-social" só no texto introdutório e lista os sete itens acima. Nenhum evento S-xxxx aparece nos dois READMEs.
+
+Não encontrado nas duas páginas: 13º, férias, rescisão, ponto, SST, benefícios, consignado, pensão, PLR, contabilização (conforme rodada anterior, consistente).
+
+Contagem OCA R4: abertas 2 (READMEs de l10n_br_hr e l10n_br_hr_contract); snippets 0 nesta rodada.
+
+=====================================================================
+RESUMO DE LEITURA R4 (contagem por alvo)
+=====================================================================
+- TOTVS: abertas 6; snippets ~25+ títulos (buscas internas TDN); inacessível: nenhuma nova. Lista de rotinas por evento S-xxxx completa do Entregas Legais não obtida (páginas filhas de eventos periódicos e não periódicos não abertas, só o índice).
+- Domínio: abertas 2; snippets 3; inacessível: Central de Soluções (503, manutenção).
+- Senior: abertas 1; snippets 15 títulos; não buscados nesta rodada: consignado, VT, rescisão complementar, contrato de experiência, estagiário, autônomo/RPA, comprovante de rendimentos (6 de 8 consultas por tópico não feitas).
+- Alterdata: abertas 7; snippets 1; 404 em 3 URLs montadas à mão.
+- Odoo/OCA: abertas 2; snippets 0; README não traz lista de campos eSocial.
+
+Inacessível ou não obtido nesta rodada:
+- Central de Soluções Domínio (503).
+- Árvores de eventos periódicos/não periódicos do Protheus e a rotina S-xxxx por rotina de cálculo.
+- Senior: estabilidade e temas de consignado/VT/rescisão complementar em páginas próprias.
+- Alterdata: página Central eSocial e lista de eventos S-xxxx.
+
+Lacunas registradas: 0 (sem fila de lacunas aplicável nesta leitura; itens abertos acima são de coleta, não de tarefa do repositório).

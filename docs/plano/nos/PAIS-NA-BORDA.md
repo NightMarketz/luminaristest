@@ -5,7 +5,7 @@ dominio: "plataforma"
 titulo: "País na borda: centro em inglês, país em features/<dominio>/paises/<cc>/; guarda P1/P2 no check:arch e fatias F0–F8 do existente (ADR-PAIS-NA-BORDA)"
 estado: "planned"
 estado_detalhe: "24/11: ADR-PAIS-NA-BORDA Accepted (R1–R7, F-PBA-1..7 na recomendação, F-PNT-PB-1 → b; [[D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS]]). Os 5 BRIEFs com executa foram emendados pela regra (PR #1338). Fatias F0–F8 com prazo (F-PBA-6 a); a F0 (guarda) é o item 0 do PR-0 do montador único; F1..F8 pedem BRIEF e executa próprios. Próximo: BRIEF da F1 (razão × fiscal BR) e o da F3 (registro de formato de LegalParameter por domínio e país), que vem antes do PR-0 do CICLO-FISCAL e do PR-P0 da ponte do DP (F-PBA-7 a)"
-depende_de: ["[[D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA]]", "[[D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS]]"]
+depende_de: ["[[D-2026-11-15-PAIS-NA-BORDA]]", "[[D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA]]", "[[D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS]]"]
 autorizacao: "dono, chat, 2026-11-24, questionário (AskUserQuestion) a pedido dele: ratifica o ADR-PAIS-NA-BORDA e os prazos e o dono das fatias (F-PBA-6 a: o nó nasce neste fold) — não é executa de nenhuma fatia; a F0 roda dentro do executa do BRIEF do montador único (D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA §4 e §6)"
 ancora_sdd: "§IV.1 (P-i18n, lei preventiva)"
 atualizado: "2026-11-24"
@@ -38,7 +38,7 @@ registros: ["server/src/lib/factory.ts", "server/prisma/schema.prisma", "server/
 ## Docs
 
 - [`ADR-PAIS-NA-BORDA.md`](../../adr/ADR-PAIS-NA-BORDA.md) e [`PRE-ADR-PAIS-NA-BORDA.md`](../../adr/PRE-ADR-PAIS-NA-BORDA.md).
-- Decisões: `D-2026-11-15-PAIS-NA-BORDA` (publicada no PR #1334), [[D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA]], [[D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS]].
+- Decisões: [[D-2026-11-15-PAIS-NA-BORDA]], [[D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA]], [[D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS]].
 - BRIEF da F3: [`BE-INCR-PAIS-NA-BORDA-F3-brief.md`](../../accounting/BE-INCR-PAIS-NA-BORDA-F3-brief.md) (24/11; forks F-F3-1..5 pendentes, sem `executa`).
 - BRIEFs emendados pela regra (24/11): [[EFICIENCIA-FISCAL]] (montador único), [[CICLO-FISCAL]], [[NFSE-PAULISTANA]],
   [[PES-4]] (ponte do DP), [[SIMULACAO-CENARIO]] (PR-0).

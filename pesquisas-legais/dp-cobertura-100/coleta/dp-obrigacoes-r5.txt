@@ -1,0 +1,230 @@
+DP-OBRIGACOES-R5 - leitura crua (sem interpretacao, sem recomendacao)
+Data da leitura: 2026-11-14. Grau: [OF] = lido em fonte oficial nesta rodada (URL). [OF-listagem] = titulo/data lidos em pagina oficial, sem texto do item. [AC] = acervo ctresb/leis (campo versao_texto/baixado_em citado). [SEC] = fonte nao oficial, so pista. NAO ENCONTRADO = nada lido.
+
+=====================================================================
+1. PAT (Programa de Alimentacao do Trabalhador)
+=====================================================================
+
+1.1 Decreto 10.854/2021 (texto do acervo: versao_texto "original", NAO compilado; alterado pelo Dec. 12.712/2025)
+    URL oficial: https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2021-11-10;10854 | acervo: federal/decretos/2021/dec-10854-2021-11-10.md [AC]
+    - Art. 178 (caput): "A parcela paga in natura pela pessoa juridica beneficiaria, no ambito do PAT, ou disponibilizada na forma de instrumentos de pagamento, vedado o seu pagamento em dinheiro:" (incisos I-III: nao tem natureza salarial; nao se incorpora a remuneracao; nao constitui base de incidencia do FGTS).
+    - Art. 182: "A portabilidade gratuita do servico de pagamento de alimentacao oferecido pela pessoa juridica beneficiaria do PAT sera facultativa, mediante a solicitacao expressa do trabalhador." (Art. 182 nao foi alterado pelo Dec. 12.712 - ver item 1.2.)
+    - Art. 184: "Fica autorizado o armazenamento, em meio eletronico, optico ou equivalente, de documentos relativos a deveres e obrigacoes trabalhistas [...] nos termos do disposto no art. 2o-A da Lei no 12.682, de 9 de julho de 2012, [...]" [AC]
+    - Status: RESOLVIDO para os arts. citados, com ressalva: texto do acervo nao e a versao compilada.
+
+1.2 Decreto 12.712/2025 (publicacao 11/11/2025; ementa: "Altera o Decreto no 10.854 [...] para dispor sobre o Programa de Alimentacao do Trabalhador [...]")
+    URL oficial: https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2025-11-11;12712 | acervo: federal/decretos/2025/dec-12712-2025-11-11.md, versao_texto "original" [AC]
+    - Art. 182-B (caput, incisos I-II): limites "em qualquer transacao": "I - 3,6% (tres inteiros e seis decimos por cento) relativos a taxa de desconto (merchant discount rate - MDR) cobrada pela credenciadora PAT dos restaurantes e demais estabelecimentos comerciais; e" (inciso II: tarifa de intercambio, lido em [AC]).
+    - Art. 182-B, paragrafo unico: "E vedada a cobranca de outras taxas, tarifas, encargos ou despesas adicionais as previstas no caput nas transacoes que envolvam emissora PAT, credenciadora PAT e restaurantes e outros estabelecimentos comerciais."
+    - Art. 182-C: "A liquidacao financeira das transacoes realizadas nos arranjos de pagamento referidos no art. 174 ocorrera no prazo de ate quinze dias corridos, contado da data da transacao."
+    - Art. 182-D (prazos contados da publicacao do Dec. 12.712): I - art. 174 §1o (abertura de arranjos), 180 dias, para arranjos que atendam mais de 500 mil trabalhadores; II - art. 177 (interoperabilidade), 360 dias, independentemente do art. 182-H, V; III - art. 182-B (limites de taxa de desconto e tarifa de intercambio), 90 dias; IV - art. 182-C (prazo de liquidacao), 90 dias. Paragrafo unico: arranjos com contratos com Estados/DF/Municipios, 360 dias para o art. 182-C.
+    - Art. 174 §1o (nova redacao): arranjos "poderao ser abertos ou fechados, exceto aqueles que atenderem a mais de quinhentos mil trabalhadores, que deverao ser obrigatoriamente abertos." §4o: "E vedado o estabelecimento de quaisquer criterios de exclusividade aos arranjos de pagamento abertos."
+    - Art. 182-E: descumprimento sujeita as sancoes do art. 3o-A, caput, I a III, da Lei 6.321/1976.
+    - Art. 182-F (facilitadoras de aquisicao de refeicoes ou generos alimenticios; nova redacao): nao poderao prever "I - qualquer tipo de desagio ou descontos sobre o valor contratado; II - prazos de repasse que descaracterizem a natureza pre-paga dos valores [...]; ou III - verbas e beneficios diretos ou indiretos [...] nao vinculados diretamente a promocao da saude e seguranca alimentar do trabalhador."
+    - Art. 182-G: ato conjunto MTE/MF institui o Comite Gestor Interministerial do PAT. Art. 182-H (competencias do Comite, incisos I-V: parametros de taxas/CET/periodo de pagamento; alterar limites de 182-B e prazo de 182-D; abertura de arranjo; regras de arranjos abertos com limites de taxas; normas de interoperabilidade). [AC]
+    - Art. 3o (Dec. 12.712): "Sao vedados quaisquer beneficios vinculados a saude do trabalhador que nao estejam diretamente relacionados a saude e a seguranca alimentar e nutricional proporcionada pelo beneficio [...]" [AC]
+    - Art. 2o: altera art. 167 §5o (fiscalizacao pelo MTE de arts. 168 a 171, 173 a 182-B, 182-C e 182-D).
+    - Portabilidade, pagamento em dinheiro, taxas ao trabalhador: NAO ha dispositivo sobre portabilidade no Dec. 12.712 (art. 182 da 10.854 permanece). Nenhum dispositivo sobre "dinheiro" no Dec. 12.712 alem do ja citado em 1.1 (art. 178).
+    - Status: RESOLVIDO [AC].
+
+1.3 Lei 14.442/2022 (02/09/2022; ementa: "Dispoe sobre o pagamento de auxilio-alimentacao ao empregado e altera a Lei no 6.321 [...] e a CLT")
+    URL oficial: https://normas.leg.br/?urn=urn:lex:br:federal:lei:2022-09-02;14442 | acervo: federal/leis-ordinarias/2022/lei-14442-2022-09-02.md, versao_texto "original", baixado_em 2026-10-13 [AC]
+    - Art. 1: "Esta Lei dispoe sobre o pagamento de auxilio-alimentacao ao empregado [...]". (Geral; nao trata de dinheiro.)
+    - Art. 2: "As importancias pagas pelo empregador a titulo de auxilio-alimentacao de que trata o §2o do art. 457 da CLT deverao ser utilizadas para o pagamento de refeicoes em restaurantes e estabelecimentos similares ou para a aquisicao de generos alimenticios em estabelecimentos comerciais."
+    - Art. 3 (caput): "O empregador, ao contratar pessoa juridica para o fornecimento do auxilio-alimentacao [...] nao podera exigir ou receber: I - qualquer tipo de desagio ou imposicao de descontos sobre o valor contratado; II - prazos de repasse ou pagamento que descaracterizem a natureza pre-paga dos valores [...]; ou III - outras verbas e beneficios diretos ou indiretos [...] nao vinculados diretamente a promocao de saude e seguranca alimentar do empregado [...]."
+    - Art. 3, §1o: vedacao nao se aplica a contratos vigentes "ate seu encerramento ou ate que tenha decorrido o prazo de 14 (quatorze) meses, contado da data de publicacao desta Lei, o que ocorrer primeiro."
+    - Art. 3, §2o: "E vedada a prorrogacao de contrato de fornecimento de auxilio-alimentacao em desconformidade com o disposto no caput deste artigo."
+    - Art. 4: multa de R$ 5.000,00 a R$ 50.000,00 por execucao inadequada/desvio (em dobro em reincidencia ou embaraco).
+    - Observacao: a Lei 14.442 nao contem vedacao de pagamento em dinheiro; essa vedacao esta no Dec. 10.854, art. 178 (item 1.1).
+    - Status: RESOLVIDO (arts. 1 a 4 lidos) [AC].
+
+1.4 Portarias MTP 672/2021, MTE 1.707/2024 (vedacoes) e Portaria 2026 do Comite
+    - Portaria Interministerial MTE/MF no 30, de 15/05/2026 - "Institui o Comite Gestor do Programa de Alimentacao do Trabalhador e dispoe sobre sua composicao e funcionamento." [OF]
+      URL: https://www.gov.br/trabalho-e-emprego/pt-br/servicos/empregador/programa-de-alimentacao-do-trabalhador-pat/portaria-comite-gestor.pdf (PDF baixado pela WebFetch; texto extraido com pdftotext; arquivo local em scratchpad\r5\portaria-comite-gestor-pat.txt)
+      DOU: Publicado em 22/05/2026, Edicao 95, Secao 1, pagina 116, orgao MTE/Gabinete do Ministro (cabecalho do PDF). Assinantes: Luiz Marinho (MTE) e Dario Carnevalli Durigan (MF).
+      Art. 1: "Fica institudo o Comite Gestor do Programa de Alimentacao do Trabalhador - CGEPAT, orgao colegiado de natureza deliberativa, criado pelo art. 182-G do Decreto no 10.854, de 10 de novembro de 2021."
+      Art. 2: competencias I-V (parametros de taxas, CET e periodo de pagamento; alterar limite de desconto/tarifa de intercambio do art. 182-B e prazo do art. 182-D; abertura de arranjo; regras de arranjos abertos; normas complementares de interoperabilidade do art. 177). Espelha art. 182-H do Dec. 10.854 (Dec. 12.712).
+      Art. 3: composicao: MTE (coordena), Casa Civil da Presidencia da Republica, Ministerio da Fazenda; titulares e suplentes designados por ato do Ministro do MTE.
+      Art. 4 (§§1o a 4o): quorum de maioria absoluta; deliberacao por maioria simples; coordenador com voto de qualidade em empate.
+      Art. 5: Secretaria-Executiva do CGEPAT exercida pela do MTE.
+      Art. 6: regimento interno em 30 dias contados da instalacao.
+      Art. 7: funcionamento dispensa relatorios periodicos.
+      Art. 8: entra em vigor na data de publicacao.
+      Status: RESOLVIDO [OF].
+    - Portaria MTP 672/2021: NAO ENCONTRADO (nao ha pasta de portarias federais no acervo; nao lida em fonte oficial nesta rodada).
+    - Portaria MTE 1.707/2024: NAO ENCONTRADO (idem).
+    - Pista [SEC]: pagina gov.br "legislacao-pat" (decretos) apareceu em busca; nao lida. Pagina "perguntas e respostas maio2026" do PAT (PDF) apareceu em busca; nao lida.
+
+=====================================================================
+2. EFD-REINF
+=====================================================================
+
+2.1 Notas Tecnicas EFD-Reinf 01/2026, 02/2026 e 03/2026 (sped.rfb.gov.br)
+    - NT 01/2026: fonte oficial NAO LIDA (tentativa de http://sped.rfb.gov.br/arquivo/show/8070 falhou: ECONNREFUSED 200.198.239.243:443). [SEC] Tecnospeed (blog.tecnospeed.com.br/efd-reinf-nota-tecnica-01-2026/) e Senior/Portal de Exigencias Legais (2026-03-30): "Ajustes nos leiautes da versao 2.1.2"; decorre da reducao de beneficios fiscais da LC 224/2025; publicada em 09/03/2026 (secundaria); republicada com referencia a Perguntas e Respostas de 27/03/2026 (secundaria); vigencia "a partir de abril de 2026" (secundaria, sem confirmacao); "nao exige modificacoes nos XSD da versao 2.1.2" (secundaria). Status: NAO ENCONTRADO em fonte oficial; pista apenas.
+    - NT 02/2026: [SEC] Senior/Portal de Exigencias Legais (2026-05-11): "Registro de lucros e dividendos na EFD-Reinf" (secundaria). Oficial NAO LIDA. Status: NAO ENCONTRADO em fonte oficial.
+    - NT 03/2026: NAO ENCONTRADO (nao pesquisada com resultado).
+
+2.2 Eventos R-xxxx relacionados a folha/INSS/IRRF/CPRB (manual do desenvolvedor v2.8, Agosto/2026)
+    Fonte: dossie local pesquisas-legais/dp-cobertura-100/docs/D08_file.txt (manual v2.8, "Publicado em 28/08/2026"; URL: https://www.gov.br/sped/pt-br/assuntos/escrituracoes-digitais/efd-reinf/manuais-e-documentos-tecnicos/manualorientacaodesenvolvedor-reinf-v2-8.pdf/@@display-file/file) [AC]
+    - R-2010 - "Retencao Contribuicao Previdenciaria - Servicos Tomados" (linha 1647 do txt). Periodicidade: nao lida no manual.
+    - R-2020 - "Retencao Contribuicao Previdenciaria - Servicos Prestados" (linha 1650). Periodicidade: nao lida.
+    - R-2099 - "Fechamento dos Eventos Periodicos" (linha 1575: "Durante o processamento do evento R-2099 - Fechamento dos Eventos Periodicos [...]"). Periodicidade: nao lida em texto de definicao.
+    - R-2030, R-2040, R-2050, R-2055, R-2060, R-2098, R-4010, R-4020, R-4040, R-4080, R-4099: aparecem apenas como titulos de "Endpoint REST Consulta Recibo" (linhas 975 a 1525). NOME LITERAL E PERIODICIDADE NAO LIDOS no manual v2.8 nesta rodada.
+    - R-9000: NAO encontrado no texto do manual v2.8 (grep).
+    - CPRB: NAO verificado.
+    Status: PARCIAL (3 eventos com nome lido; demais NAO LIDOS).
+
+=====================================================================
+3. GUARDA DE DOCUMENTOS
+=====================================================================
+
+3.1 Decreto 3.048/1999, art. 225 §§ (prazo de guarda)
+    - Fonte oficial: https://www.planalto.gov.br/ccivil_03/decreto/d3048.htm. Tentativa com curl: timeout. Tentativas WebFetch com offsets 0, 100000 e 200000: texto de 474.214 caracteres; o trecho lido nao alcancou o art. 225 (ultimo artigo lido: ate art. 32 no trecho 100000-200000). Nao lido.
+    - Versao informada no proprio texto: "Decreto no 13.054, de 2026" como alteracao mais recente citada (WebFetch, planalto). [OF-listagem]
+    - [SEC] Busca retornou agregadores (legjur, admdireito) com redacao atual de §5o do art. 225 dizendo que a empresa mantem documentos "ate que ocorra a prescricao" e que o texto original dizia "durante 10 anos"; e tabela citando "10 anos" para documentos fiscalizados pelo INSS (art. 348) e §22 do art. 225 para sistemas eletronicos. NAO CONFIRMADO em texto oficial. Status: DIVERGENTE (agregadores) / SEM FONTE OFICIAL ACHADA para o texto atual.
+    - Decreto 3.048 nao esta no acervo (pasta federal/decretos/1999 nao contem o numero 3048; 398 arquivos listados).
+
+3.2 CLT art. 11 (prescricao) [AC]
+    - Art. 11 (caput), redacao Lei 13.467/2017: "A pretensao quanto a creditos resultantes das relacoes de trabalho prescreve em cinco anos para os trabalhadores urbanos e rurais, ate o limite de dois anos apos a extincao do contrato de trabalho."
+    - Art. 11-A: "Ocorre a prescricao intercorrente no processo do trabalho no prazo de dois anos."
+    - Fonte: acervo, arquivo clt.md (Decreto-Lei 5.452/1943; versao_texto "compilada (texto vigente)"). URL oficial: https://www.planalto.gov.br/ccivil_03/decreto-lei/del5452.htm (nao lida nesta rodada).
+    - Status: RESOLVIDO [AC].
+
+3.3 CLT art. 74 §2o [AC]
+    - "Para os estabelecimentos com mais de 20 (vinte) trabalhadores sera obrigatoria a anotacao da hora de entrada e de saida, em registro manual, mecanico ou eletronico, conforme instrucoes expedidas pela Secretaria Especial de Previdencia e Trabalho do Ministerio da Economia, permitida a pre-assinalacao do periodo de repouso." (redacao dada pela Lei 13.874/2019 - cabecalho do dispositivo, texto truncado no arquivo).
+    - Status: RESOLVIDO [AC].
+
+3.4 CF art. 7o, XXIX (acervo trabalhista) - NAO LIDO nesta rodada (nao foi localizado texto da CF no acervo consultado; planalto nao acessado). Status: NAO ENCONTRADO.
+
+3.5 Lei 8.036/1990, art. 23, §5o (apontado no brief como "acervo")
+    - Texto do acervo (federal/leis-ordinarias/1990/lei-8036-1990-05-11.md, versao_texto "compilada (texto vigente)") [AC]:
+      "§ 5o O processo de fiscalizacao, de autuacao e de imposicao de multas regera-se pelo disposto no Titulo VII da CLT. (Paragrafo com redacao dada pela Lei no 13.932, de 11/12/2019)"
+    - O §5o do art. 23 NAO trata de acervo ou prazo de guarda. DIVERGENCIA com a premissa do brief.
+    - Prescricao do FGTS, art. 23 e 23-A (acervo): art. 23-A: "A notificacao do empregador relativa aos debitos com o FGTS, o inicio de procedimento administrativo ou a medida de fiscalizacao interrompem o prazo prescricional." (§§1o e 2o lidos.)
+    - Status: RESOLVIDO com divergencia [AC].
+
+3.6 STF ARE 709212 (prazo de cobranca do FGTS)
+    - Fonte oficial (stf.jus.br) NAO LIDA. Busca [SEC]: Tema 608 (julgado 2014; cobranca de FGTS em 5 anos, com modulacao; pagina de mercado cita 13/11/2014 e publicacao em fev/2015); um resultado (Wagner Advogados) menciona "Plenario conclui julgamento" com 30 anos, sem texto oficial do STF lido (noticias.stf.jus.br/?p=41649, 16/03/2017, sem corpo).
+    - Status: DIVERGENTE entre fontes secundarias; NAO CONFIRMADO em STF.
+
+3.7 Portaria MTE sobre guarda de registro de ponto/AFD ("Portaria 671 arts. 81 a 85, tempo de armazenamento")
+    - Texto lido: Portaria 671/2021 compilada (arquivo D04_WORDPortarian671de8denovembrode2021compilada21-07-2026-pdf.txt, dossie local) [AC/OF-compilada].
+    - Art. 81: "Todos os tipos de sistema de registro eletronico de ponto devem gerar o Arquivo Fonte de Dados, conforme especificacoes disponiveis no portal gov.br. (Redacao dada pela Portaria MTP no 1.486, de 3 de junho de 2022)"
+    - Art. 85: "O empregador devera disponibilizar os arquivos eletronicos gerados e relatorios emitidos pelo programa de tratamento de registro de ponto ao Auditor-Fiscal do Trabalho, quando solicitados, no prazo minimo de dois dias, a criterio deste."
+    - Arts. 81-85 NAO contem prazo de guarda (armazenamento) de registro de ponto. NAO ENCONTRADO nesses artigos.
+    - Ressalva: arts. 151-152 (RAIS) da mesma portaria trazem "no prazo de cinco anos a contar da data de envio" para guarda da copia (art. 152), mas o proprio texto indica REVOGADO pela Portaria Consolidada MTE no 1, de 17/12/2025. Nao se aplica ao registro de ponto. Registrado so como pista.
+    - Status: NAO ENCONTRADO (arts. 81-85) + pista revogada.
+
+3.8 Portaria Consolidada MTE 1/2025 (arts. 15-17, registro de empregados) [AC/OF-DOU]
+    - Arquivo: scratchpad portaria-consolidada-mte1-2025.txt (DOU 30/12/2025, Edicao 248, Secao 1, p.132; republicada por erro material).
+    - Art. 16: "Os empregadores ficam dispensados de atualizar os livros e as fichas de registro, bem como de mantê-los no local de trabalho, a partir da data de entrada em vigencia desta Portaria, ressalvado o disposto no § 3o."
+    - §1o: aplica-se aos optantes do registro eletronico (31/10/2019 para grupos 1 a 3 do eSocial; 22/08/2022 para grupo 4; ou data da opcao).
+    - §2o: "Os empregadores deverao apresentar os documentos mencionados no caput quando exigidos pela fiscalizacao do trabalho, para comprovacao das anotacoes relativas ao periodo de sua utilizacao."
+    - §3o: nao optantes ate a vigencia so ficam dispensados apos prestar ao eSocial as informacoes vigentes dos vinculos ativos.
+    - Status: RESOLVIDO [OF-DOU via arquivo].
+
+=====================================================================
+4. HOLERITE / DOCUMENTOS TRABALHISTAS ELETRONICOS
+=====================================================================
+
+4.1 Lei 14.063/2020 [AC]
+    - URL: https://normas.leg.br/?urn=urn:lex:br:federal:lei:2020-09-23;14063 (acervo versao_texto "original", baixado_em 2026-10-13).
+    - Art. 4: classifica as assinaturas eletronicas em: I - simples; II - avancada; III - qualificada ("a que utiliza certificado digital, nos termos do §1o do art. 10 da MP 2.200-2, de 24/08/2001").
+    - Art. 4, §1o: "Os 3 (tres) tipos de assinatura referidos [...] caracterizam o nivel de confianca sobre a identidade e a manifestacao de vontade de seu titular, e a assinatura eletronica qualificada e a que possui nivel mais elevado de confiabilidade [...]."
+    - Art. 5 (interacao com ente publico): simples admitida em interacao "de menor impacto e que nao envolvam informacoes protegidas por grau de sigilo"; qualificada "sera admitida em qualquer interacao eletronica com ente publico, independentemente de cadastramento previo".
+    - Art. 5, §2o: "E obrigatorio o uso de assinatura eletronica qualificada:" (hipoteses no texto - nao transcritas).
+    - Escopo: a Lei 14.063 regula interacoes com entes publicos, atos de pessoas juridicas e saude; NAO regula contrato de trabalho entre particulares (leitura literal do art. 1o e do art. 5o).
+    - Status: RESOLVIDO [AC].
+
+4.2 MP 2.200-2/2001, art. 10 [AC]
+    - URL oficial (acervo aponta camara.leg.br): https://www2.camara.leg.br/legin/fed/medpro/2001/medidaprovisoria-2200-2-24-agosto-2001-391394-normaatualizada-pe.html (acervo versao_texto "compilada", "Em vigor por forca do art. 2o da EC 32/2001").
+    - Art. 10: "Consideram-se documentos publicos ou particulares, para todos os fins legais, os documentos eletronicos de que trata esta Medida Provisoria."
+    - §1o: "As declaracoes constantes dos documentos em forma eletronica produzidos com a utilizacao de processo de certificacao disponibilizado pela ICP-Brasil presumem-se verdadeiros em relacao aos signatarios [...]."
+    - §2o: "O disposto nesta Medida Provisoria nao obsta a utilizacao de outro meio de comprovacao da autoria e integridade de documentos em forma eletronica, inclusive os que utilizem certificados nao emitidos pela ICP-Brasil, desde que admitido pelas partes como valido [...]."
+    - Status: RESOLVIDO [AC].
+
+4.3 Decreto 10.854/2021, art. 184 (armazenamento eletronico de documentos trabalhistas): ver item 1.1. Status: RESOLVIDO [AC].
+
+4.4 Portaria MTE sobre CTPS Digital e livro/ficha eletronica: NAO PESQUISADO nesta rodada (sem resultado). Livro/ficha eletronica: ver 3.8 (Portaria Consolidada 1/2025, art. 16). Status: PARCIAL (livro/ficha); CTPS Digital NAO ENCONTRADO.
+
+4.5 Lei 14.129/2021: NAO LIDA (aplicabilidade nao verificada). Status: NAO ENCONTRADO.
+
+4.6 Holerite / contracheque digital (norma MTE sobre emissao/assinatura): NAO ENCONTRADO em fonte oficial nesta rodada (busca nao realizada; nenhum texto lido).
+
+=====================================================================
+5. MEI E SEGURADO ESPECIAL NO eSOCIAL; DOMESTICO (DAE)
+=====================================================================
+
+5.1 Manuais eSocial - listagem oficial [OF-listagem]
+    URL: https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais
+    - MEI: "Manual do Usuario - eSocial WEB MEI" (arquivo "Manual do Usuario - eSocial WEB MEI.pdf"), publicado 23/12/2022 10h26. Conteudo (lista de eventos e prazo) NAO LIDO.
+    - Empregador domestico: "Manual_de_Orientacao_do_eSocial_para_o_Empregador_Domestico.pdf", publicado 07/03/2023 10h26 (versao nao consta na pagina; dossie D11 informa "Versao 23/12/2022" no proprio texto - [AC]). Conteudo NAO LIDO nesta rodada.
+    - Segurado especial: nao ha manual na listagem; so link de menu "Manual do Segurado Especial" sem data. NAO ENCONTRADO.
+    - Pagina a pagina nao lida: lista de eventos MEI com 1 empregado; prazo.
+
+5.2 Domestico - DAE / vencimento [AC]
+    - LC 150/2015, art. 35 (acervo federal/leis-complementares/2015/lcp-150-2015-06-01.md; versao_texto "compilada (texto vigente)"): "O empregador domestico e obrigado a pagar a remuneracao devida ao empregado domestico e a arrecadar e a recolher a contribuicao prevista no inciso I do art. 34, assim como a arrecadar e a recolher as contribuicoes, os depositos e o imposto a seu cargo discriminados nos incisos II, III, IV, V e VI do caput do art. 34, ate o dia 7 do mes seguinte ao da competencia."
+    - Resolucao CGSN (DAE/MEI): NAO PESQUISADA.
+    - Status: RESOLVIDO [AC] para o vencimento do domestico (dia 7 do mes seguinte).
+
+=====================================================================
+6. CRONOGRAMA DE IMPLANTACAO eSOCIAL (por grupo)
+=====================================================================
+
+6.1 Portaria Conjunta SEPRT-RFB/ME no 71, de 29/06/2021 (publicada no DOU 02/07/2021) [OF]
+    URL: https://www.gov.br/previdencia/pt-br/assuntos/rpps/legislacao-dos-rpps/portarias/PortariaConjuntaSEPRTRFBMEde29jun2021atualizadaem20abr2022.pdf
+    Cabecalho: "Atualizada ate 20/04/2022". Ementa: "Dispoe sobre o cronograma de implantacao do Sistema Simplificado de Escrituracao Digital de Obrigacoes Previdenciarias, Trabalhistas e Fiscais (eSocial)." Processo 19964.107809/2021-34.
+    Art. 2 (grupos): 1o grupo = entidades do "Grupo 2 - Entidades Empresariais" do Anexo V (maiores, por faturamento); 2o grupo = demais entidades do Grupo 2; 3o grupo - PJ = entidades obrigadas nao pertencentes aos 1o, 2o e 4o; 3o grupo - PF = empregadores/contribuintes PF, exceto os de inciso V; 4o grupo = entes publicos do "Grupo 1 - Administracao Publica" e organizacoes internacionais e instituicoes do "Grupo 5".
+    Art. 4 (inicio da obrigatoriedade por fase), extraido e confirmado pela tabela do Anexo unico (consolidacao):
+    - 1o grupo: 1a fase 08/01/2018; 2a fase 01/03/2018; 3a fase 01/05/2018 (fatos a partir dessa data); 4a fase (SST) 13/10/2021.
+    - 2o grupo: 1a fase 16/07/2018; 2a fase 10/10/2018; 3a fase 10/01/2019 (fatos a partir de 01/01/2019); 4a fase (SST) 10/01/2022.
+    - 3o grupo PJ: 1a fase 10/01/2019; 2a fase 10/04/2019; 3a fase 10/05/2021 (fatos a partir de 01/05/2021); 4a fase (SST) 10/01/2022.
+    - 3o grupo PF: 1a fase 10/01/2019; 2a fase 10/04/2019; 3a fase 19/07/2021 (fatos a partir de 01/07/2021); 4a fase (SST) 10/01/2022.
+    - 4o grupo: 1a fase 21/07/2021 (com prazo para S-1010 ate o inicio da 3a fase); 2a fase 22/11/2021; 3a fase 22/08/2022; 4a fase (SST) 01/01/2023.
+    - Nota de rodape da tabela (SST): "O empregador domestico fica obrigado ao envio do evento S-2210 a partir dessa data (Redacao dada pela Portaria Conjunta MTP-RFB/ME no 3, de 19/04/2022)."
+    - Art. 10: entra em vigor na publicacao.
+    - Reinf e DCTFWeb por grupo: NAO constam nesta portaria (ela trata do eSocial). SEM FONTE OFICIAL ACHADA para o cronograma Reinf/DCTFWeb por grupo.
+    - 2027: NENHUMA data de 2027 consta no texto lido (texto "atualizado" ate 20/04/2022).
+    - Ressalva: a PC 71/2021 e a versao de 20/04/2022; alteracoes posteriores nao foram lidas. A pagina oficial "Cronograma de implantacao" do gov.br/esocial NAO foi lida com texto.
+    - [SEC] Busca indicou adiamentos do 3o grupo (inclusive PF, optantes do Simples e MEI) e fontes com datas diferentes; NAO confirmadas em fonte oficial.
+    - Status: RESOLVIDO para o texto de 2021/2022 [OF]; PARCIAL para vigencia atual (ver DIVERGENCIA D-6).
+
+=====================================================================
+LACUNAS (nao registradas: este agente nao tem fila; ver item 6 e 7)
+=====================================================================
+- Decreto 3.048 art. 225 §§: texto oficial nao alcancado (planalto truncado/timeout).
+- CF art. 7o, XXIX: nao lido.
+- STF ARE 709212: fonte stf.jus.br nao lida; divergencia entre fontes.
+- Portaria MTP 672/2021 e MTE 1.707/2024: nao localizadas no acervo nem lidas em fonte oficial.
+- NT EFD-Reinf 01/2026 (sped.rfb.gov.br/arquivo/show/8070): conexao recusada; NT 02/2026 e 03/2026 sem fonte oficial.
+- EFD-Reinf manual v2.8: nomes e periodicidade de R-2030, R-2040, R-2050, R-2055, R-2060, R-2098, R-4010, R-4020, R-4040, R-4080, R-4099 nao lidos; CPRB nao verificado; R-9000 nao encontrado no texto.
+- MEI (Manual do Usuario eSocial WEB MEI): conteudo e lista de eventos nao lidos.
+- Manual do empregador domestico (versao 2026): nao localizado; conteudo nao lido.
+- Holerite/contracheque digital (norma MTE): nao pesquisado com resultado.
+- CTPS Digital: nao pesquisado.
+- Lei 14.129/2021: nao lida.
+- Cronograma eSocial: pagina oficial "Cronograma de implantacao" nao lida; alteracoes posteriores a 20/04/2022 nao lidas; nenhuma data de 2027 lida.
+- Reinf/DCTFWeb por grupo: sem fonte oficial.
+- Guarda de registro de ponto/AFD (Portaria 671 arts. 81-85): sem prazo no texto lido; fonte oficial atual (compilada) nao confirmada.
+
+=====================================================================
+DIVERGENCIAS ENTRE FONTES (nao resolvidas)
+=====================================================================
+- D-1 Lei 8.036 art. 23 §5o: brief o apontava como "acervo"; texto do acervo trata de processo de fiscalizacao (Titulo VII CLT), nao de guarda. [AC] - divergencia com a premissa do brief.
+- D-2 Decreto 3.048 art. 225 §5o: agregador (legjur/admdireito) diz "ate a prescricao", original "10 anos"; nao confirmado em planalto. [SEC] vs [OF nao lido].
+- D-3 STF ARE 709212: Tema 608 (5 anos, 2014) em fontes de mercado vs. noticia de 2017 com 30 anos (sem corpo lido). [SEC].
+- D-4 NT EFD-Reinf 01/2026: vigencia "abril/2026" e data 09/03/2026 (Tecnospeed), republicacao apos 27/03/2026 (Senior); nao confirmado em sped.rfb.gov.br.
+- D-5 Decreto 10.854 (acervo, versao_texto "original") vs. Decreto 12.712 que altera os arts. 167-182-H: a leitura do art. 182 e 178 na 10.854 original precisa ser cruzada com a versao compilada (nao baixada).
+- D-6 Cronograma eSocial: PC 71/2021 (atualizada ate 20/04/2022) vs. noticias de adiamentos posteriores do 3o grupo [SEC]; sem texto oficial posterior lido.
+
+=====================================================================
+FONTES EM ARQUIVO LOCAL (scratchpad\r5)
+=====================================================================
+- scratchpad\r5\d12712.md, l14442.md, d10854.md, l14063.md, l8036.md, lc150.md, mp2200.md, l14063.md
+- scratchpad\r5\portaria-comite-gestor-pat.txt (PDF oficial, DOU 22/05/2026)
+- scratchpad\r5\portaria-conjunta-71-2021.txt (PDF oficial, atualizada ate 20/04/2022)
+- scratchpad\portaria-consolidada-mte1-2025.txt (DOU 30/12/2025)
+- scratchpad\acervo\clt.md (CLT, versao compilada)
+- dossie: pesquisas-legais\dp-cobertura-100\docs\D04_... (Portaria 671, compilada 21/07/2026), D08_file.txt (manual Reinf v2.8)
+
+Contagem: RESOLVIDOS = 14 (1.1, 1.2, 1.3, 1.4-Portaria 30/2026, 2.2-parcial nao contado, 3.2, 3.3, 3.5, 3.7-negativo, 3.8, 4.1, 4.2, 4.3, 5.2, 6.1); NAO ENCONTRADOS = 13 (Dec. 3048 art. 225; CF 7 XXIX; STF ARE 709212 em fonte oficial; Portaria 672/2021; Portaria 1.707/2024; NT Reinf 01, 02, 03/2026 em fonte oficial; CTPS Digital; holerite MTE; Lei 14.129; MEI lista de eventos; segurado especial; cronograma 2027/Reinf/DCTFWeb por grupo); DIVERGENCIAS = 6 (D-1 a D-6).

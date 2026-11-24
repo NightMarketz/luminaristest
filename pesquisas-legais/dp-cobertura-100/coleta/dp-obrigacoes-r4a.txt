@@ -1,0 +1,178 @@
+DP-OBRIGACOES-R4A - coleta literal, SIJUT (Sistema Normas RFB)
+Data da coleta: 2026-11-14. Visao usada: multivigente (texto com redacoes e marcacoes). Dossie: pesquisas-legais\dp-cobertura-100\docs (D13-D31).
+Metodo: idAto obtido na busca de normas.receita.fazenda.gov.br (linha da lista -> window.open -> normasinternet2 .../consulta/externa/<idAto>); baixado com legal.py baixar dp-cobertura-100 rfb:<idAto>.
+ATENCAO: idAto != numero do ato. O rfb:2237 que usei na 1a tentativa baixou o ADE 69/2000 (arquivo D12, ERRADO; remover do dossie).
+
+=====================================================================
+1. IN RFB 2.237/2024 (DCTFWeb) - idAto 141910 (D13). Publicada DOU 05/12/2024.
+=====================================================================
+Art. 6 (caput) - VIGENTE:
+  "A DCTFWeb mensal deverá ser apresentada até o último dia útil do mês seguinte ao da ocorrência dos fatos geradores."
+  [Redação dada pela IN RFB 2248/2025, vigência 07/02/2025, rfb:142687]
+  Texto original riscado: "...até o dia 25 do mês seguinte ao da ocorrência dos fatos geradores."
+Art. 6 § 1º - REVOGADO pela IN 2248 (vig. 07/02/2025, rfb:142687). Original: "Caso a data prevista no caput recaia em dia não útil ... até o primeiro dia útil subsequente."
+Art. 6 § 3º - INCLUÍDO pela IN 2248 (vig. 07/02/2025): "Fica prorrogado para o último dia útil do mês de março de 2025 o prazo de entrega da DCTFWeb relativa a fatos geradores ocorridos no mês de janeiro de 2025."
+Art. 7 I - "DCTFWeb anual, para a prestação de informações relativas ao décimo terceiro salário, a qual deverá ser transmitida até o dia 20 de dezembro de cada ano ou, caso este recaia em dia não útil para fins fiscais, até o dia útil imediatamente anterior;" (sem alteração de redação no texto lido)
+Art. 7 III - DCTFWeb Aferição de Obras: "até o último dia útil do mês em que realizar a aferição da obra por meio do Sero".
+Art. 9 § 1º - "O disposto no caput não se aplica aos valores relativos: I ao IRPJ, à CSLL, à Contribuição para o PIS/Pasep e à Cofins retidos na fonte, os quais deverão ser escriturados na EFD-Reinf; e II à Contribuição para o PIS/Pasep incidente sobre a folha de salários, os quais deverão ser escriturados no eSocial."
+Art. 8 § 9º (incl. IN 2248, vig. 07/02/2025): contribuição do inc. XI (apostas de quota fixa) recolhida "até o dia 20 (vinte) do mês subsequente ao da apuração".
+Art. 11 caput - multas (texto ao citar: "intimado a apresentá-la ... e ficará sujeito às seguintes multas").
+Art. 11 I - "de 2% (dois por cento) ao mês-calendário ou fração, incidente sobre o montante dos tributos informados na DCTFWeb, ainda que integralmente pagos, ... limitada a 20% (vinte por cento)"
+Art. 11 II - "de R$ 20,00 (vinte reais) para cada grupo de dez informações incorretas ou omitidas."
+Art. 11 § 2º - redução para 50% (apresentada depois do prazo, antes de procedimento de ofício) ou 25% (apresentada no prazo fixado na intimação).
+Art. 11 § 3º - valor mínimo: R$ 200,00 (omissão/atraso de declaração sem movimento); R$ 500,00 (demais casos).
+Art. 11 § 5º - reduções do mínimo: 90% para MEI; 50% para ME/EPP optante do Simples Nacional.
+Art. 13 caput (retificação): "A alteração de informações prestadas na DCTFWeb, nas hipóteses em que admitida, deverá ser efetuada mediante apresentação de DCTFWeb retificadora, que terá a mesma natureza da declaração originalmente apresentada, substituindo-a integralmente."
+Art. 13 § 9º: direito de retificar "extingue-se no prazo de cinco anos, contado do primeiro dia do exercício seguinte ao qual se refere a declaração."
+Art. 1º § 1º I: aplica-se a fatos geradores "que ocorrerem a partir de 1º de janeiro de 2025".
+
+Histórico de alterações (lista do SIJUT, todos com vigência já passada; o único "[AGENDADO]" do texto é a legenda do cabeçalho):
+  - IN 2248/2025, DOU 07/02/2025, vig. 07/02/2025, rfb:142687 (altera art. 6, 8 §§ 9-10; revoga art. 6 § 1º)
+  - IN 2267/2025, DOU 28/05/2025, vig. 28/05/2025, rfb:144416 (altera art. 3 XII; inclui art. 16-A e § 2º: "até o último dia útil do mês de julho de 2025"; art. 16-A passa ao Cap. XI, "DISPOSIÇÕES TRANSITÓRIAS")
+  - IN 2319/2026 (ato de 30/03/2026), vig. 06/04/2026, rfb:150345 (art. 8 V: CSLL e Adicional da CSLL, Lei 15.079/2024)
+  - IN 2325/2026 (ato de 12/05/2026), vig. 14/05/2026, rfb:151067 (art. 15: impugnação, "vinte dias úteis")
+
+Resposta à pergunta "a IN 2.248/2025 mudou o prazo?": SIM. O caput do art. 6 passou de "dia 25" para "último dia útil do mês seguinte" (vig. 07/02/2025). Fonte: texto do próprio art. 6 e da IN 2248 (art. 1º, "Art. 6º ..." (NR)).
+
+=====================================================================
+IN RFB 2.248/2025 - idAto 142687 (D14): altera a 2237 (art. 6 caput; inclui § 3º do art. 6; art. 8 §§ 9º e 10; revoga § 1º do art. 6). Art. 3º: entra em vigor na publicação (DOU 07/02/2025).
+IN RFB 2.267/2025 - idAto 144416 (D15): altera a 2237 (art. 3 XII; art. 16-A). DOU 28/05/2025. Art. 4º: entra em vigor na publicação.
+=====================================================================
+
+=====================================================================
+2. IN RFB 2.181/2024 e IN RFB 2.043/2021 (DIRF / EFD-Reinf)
+=====================================================================
+IN RFB 2.181/2024 - idAto 136650 (D16). DOU 15/03/2024. Vigência 15/03/2024 (art. 2º).
+  Ementa: "Altera a IN RFB nº 2.043, de 12 de agosto de 2021 ... EFD-Reinf."
+  Art. 1º (alteração): "§ 1º A Declaração do Imposto sobre a Renda Retido na Fonte - Dirf de que trata a Instrução Normativa RFB nº 1.990, de 2020, será substituída, em relação aos fatos ocorridos a partir de 1º de janeiro de 2025:" (NR)
+IN RFB 2.043/2021 - idAto 119859 (D17). DOU 13/08/2021. Art. 3º § 1º (texto vigente, com redação dada pela 2181):
+  "§ 1º A Declaração do Imposto sobre a Renda Retido na Fonte - Dirf de que trata a Instrução Normativa RFB nº 1.990, de 2020, será substituída, em relação aos fatos ocorridos a partir de 1º de janeiro de 2025:"
+  I - "pelos eventos da série R-4000 da EFD-Reinf;"
+  II - "pelo evento S-1210 do ... eSocial e pelos demais eventos por ele referenciados; e"
+  III - "pelo evento S-2501 do eSocial."
+  Redações anteriores riscadas: "...fica dispensada a apresentação da Dirf ... em relação aos fatos ocorridos a partir de 1º de janeiro de 2024" (incl. IN 2096/2022); "...a partir de 1º de janeiro de 2024" (red. IN 2163/2023, vig. 11/10/2023).
+  Histórico 2043 (SIJUT): 2080/2022 (vig. 09/05/2022, rfb:123880); 2096/2022 (vig. 01/08/2022, rfb:125062); 2133/2023 (vig. 01/03/2023, rfb:129220); 2163/2023 (vig. 11/10/2023, rfb:133987); 2181/2024 (vig. 15/03/2024, rfb:136650). Nenhum ato posterior a 2181 na lista.
+Desfecho do "pedido de revogação": NAO ENCONTRADO. Nenhum ato revoga a 2181 nem a 2043 no historico lido. A 2181 so altera o § 1º do art. 3º da 2043. Nao fiz busca textual por "Dirf" em 2024-2026 para confirmar que nao ha outro ato.
+
+=====================================================================
+3. IN RFB 2.060/2021 (Comprovante de Rendimentos) - idAto 122177 (D18). DOU 15/12/2021.
+=====================================================================
+Art. 2º (caput): "A pessoa física ou jurídica que tenha pago a pessoa física rendimentos com retenção do imposto sobre a renda na fonte durante o ano-calendário, ainda que em um único mês, fornecer-lhe-á o Comprovante de Rendimentos Pagos e de Imposto sobre a Renda Retido na Fonte, conforme modelo constante do Anexo I..."
+Art. 2º § 3º: "A fonte pagadora que emitir o comprovante por meio de processamento eletrônico de dados poderá adotar leiaute diferente do estabelecido no § 1º, ... dispensada assinatura ou chancela mecânica."
+Art. 3º (caput): "O comprovante deverá ser fornecido até o último dia útil do mês de fevereiro do ano subsequente ao do pagamento dos rendimentos ou por ocasião da rescisão do contrato de trabalho, se esta ocorrer antes da referida data."
+Art. 3º § 2º: extincao de PJ (cisao total, encerramento de liquidacao, fusao, incorporacao): "até o último dia útil do mês subsequente ao da ocorrência do evento, se este ocorrer antes do prazo referido no caput."
+Art. 3º § 3º (forma digital): "É permitida a disponibilização, por meio da Internet, do comprovante para a pessoa física, ou o seu encaminhamento para quem possua endereço eletrônico e, nesses casos, fica dispensado o fornecimento da via impressa."
+  Observacao literal: o texto torna a via digital PERMITIDA, nao obrigatoria.
+Art. 5º: multa de "R$ 41,43 (quarenta e um reais e quarenta e três centavos) por comprovante" para a fonte pagadora que nao fornecer no prazo do art. 3º ou fornecer com inexatidao.
+Art. 6º: multa de 300% sobre cada valor omitido ou acrescido em informacao falsa.
+Historico de alteracoes: nenhum listado no SIJUT para esta IN (texto sem secao "Histórico de alterações"). Revogou a IN 1215/2011 e alteracoes (vig. 01/01/2022).
+
+=====================================================================
+4. IN RFB 2.110/2022 - idAto 126687 (D19). DOU 19/10/2022. Lista de titulos (sem texto integral).
+=====================================================================
+Titulo II (Contribuicoes previdenciarias):
+  Cap. I - Do Fato Gerador das Contribuicoes (linha 353)
+  Cap. II - Da Base de Calculo (linha 394):
+    Secao I - Da Base de Calculo da Contribuicao dos Segurados (arts. 30-31)
+      Art. 31 caput: "Considera-se salário de contribuição:" I - para segurados empregado e trabalhador avulso: "a remuneração auferida em uma ou mais empresas ... a totalidade dos rendimentos que lhes são pagos, devidos ou creditados a qualquer título, durante o mês, destinados a retribuir o trabalho..."
+    Secao II - Da Base de Calculo da Contribuicao do Empregador Domestico (art. 32)
+    Secao III - Das Bases de Calculo das Contribuicoes das Empresas em Geral (art. 33)
+    Secao IV - Das Parcelas Nao Integrantes da Base de Calculo (art. 34, unico artigo da secao)
+      Art. 34 caput: "Não integram a base de cálculo para fins de incidência das contribuições sociais previdenciárias:" I - "os benefícios da Previdência Social, nos termos e limites legais, salvo o salário-maternidade no caso da contribuição a cargo das seguradas"; II - "a ajuda de custo e o adicional mensal percebidos pelo aeronauta..."; III - "o auxílio-alimentação, inclusive na forma de tíquetes ou congêneres..." (lista continua, nao lida integralmente)
+  Cap. III - Das Contribuicoes dos Segurados, do Empregador Domestico e das Empresas (linha 519):
+    Secao I - Segurado Empregado, Empregado Domestico e Trabalhador Avulso (arts. 35-36)
+    Secao II - Da Contribuicao do Segurado Contribuinte Individual (arts. 37-40 e 41; a Secao vai da linha 536 a 572)
+      Art. 37: aliquota do contribuinte individual. Art. 38: remuneracao inferior ao minimo. Art. 39: contribuinte individual que presta a mais de uma empresa. Art. 40: mesmo mes, empresa e atividade concomitante.
+    Secao III - Do Segurado Facultativo (art. 42)
+    Secao IV - Das Contribuicoes da Empresa (linha 583)
+    Secao VII - Da Responsabilidade pelo Recolhimento (linha 646)
+    Secao VIII - Dos Prazos de Vencimento (linha 705)
+  Cap. IV - Do Salario-Familia e do Salario-Maternidade (linha 717):
+    Secao I - Do Salario-Familia; Secao II - Do Salario-Maternidade (linha 742; arts. 58-62 tratam de salario-maternidade, NAO de parcelas nao integrantes)
+  Cap. V - Do Decimo Terceiro Salario (linha 772): Secao I - Das Contribuicoes Incidentes; Secao II - Dos Prazos de Vencimento (linha 784)
+  Cap. VI - Da Reclamatoria e do Dissidio Trabalhista (linha 795)
+Termo "pró-labore": NAO aparece no texto da 2110 (busca literal, zero ocorrencias). Contribuinte individual esta na Secao II acima.
+Historico de alteracoes (SIJUT):
+  - IN 2185/2024, vig. 09/04/2024, rfb:137160
+  - IN 2289/2025, vig. 13/11/2025, rfb:147671
+  - IN 2321/2026, vig. 14/04/2026, rfb:150565
+
+=====================================================================
+5. IRRF mensal 2026 (Lei 15.270/2025: isencao/redutor)
+=====================================================================
+IN RFB 2.299/2025 - idAto 148383 (D26). DOU 18/12/2025. Altera a IN RFB 1.500/2014. Vigencia da redacao 18/12/2025.
+  Art. 65 (redacao dada pela 2299): "O imposto sobre a renda mensal é calculado mediante a utilização das tabelas progressivas constantes do Anexo II, observado o disposto no art. 65-A."
+  Art. 65-A (incluido pela 2299, vig. 18/12/2025): "Ao imposto apurado na forma do art. 65, a partir do mês de janeiro de 2026, será concedida uma redução conforme a tabela de que trata o Anexo X."
+  Art. 65-A § 1º: "O valor da redução de que trata o caput fica limitado ao valor do imposto determinado de acordo com as tabelas progressivas constantes do Anexo II, observado o disposto no art. 52."
+  Anexo X (incluido pela 2299, "TABELA DE REDUÇÃO DO IMPOSTO MENSAL - A PARTIR DE 1º DE JANEIRO DE 2026"): NO TEXTO "(sem texto)". Conteudo em anexo binario, nao baixado: https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/148383/anexo/82205
+  Art. 22, art. 26 e art. 55 (texto da IN 1500 consolidada, D27) remetem a "tabela de redução constante do Anexo X".
+Anexo II (tabela progressiva mensal, da IN 1500 consolidada): "Anexo II" aparece com redacao dada pela 2299 (vig. 18/12/2025); conteudo em PDF binario, nao baixado. Valores literais NAO extraidos.
+Desconto simplificado - artigos que o mencionam (IN 1500 consolidada, idAto 57670, D27):
+  Art. 52 § 3º (incl. IN 2141/2023, vig. 24/05/2023, rfb:130822): "Alternativamente às deduções previstas no caput, o a fonte pagadora utilizará desconto simplificado mensal, correspondente a 25% (vinte e cinco por cento) do valor máximo da faixa com alíquota de 0% (zero por cento) da tabela progressiva mensal, caso seja mais benéfico ao contribuinte, dispensadas a comprovação da despesa e a indicação de sua espécie." (texto literal, com "o a" no original)
+  Art. 13 § 8º (gratificação natalina, incl. IN 2141/2023) e art. 29 § 5º (férias) trazem a mesma regra.
+  Art. 56 § 3º (carnê-leão; marcação de inclusão não conferida na leitura): mesma regra para o contribuinte.
+Lei 15.270/2025: NAO aparece no texto da IN 2299 nem da IN 1500 consolidada (busca literal "15.270" nos dois). A 2299 cita LC 222/2025 (arts. 9º, 22, 25) e Lei 14.119/2021 no preambulo.
+Ato Declaratório sobre IRRF 2026: NAO ENCONTRADO na busca textual do SIJUT ("imposto de renda retido na fonte rendimentos do trabalho", e a combinacao com "15.270 ... redutor", que retornou zero). Na lista de atos com esses termos, o unico IN de 2025 relevante foi a 2299.
+
+=====================================================================
+6. Simples Nacional - Resolucao CGSN 140/2018, 190/2026 e 191/2026
+=====================================================================
+Resolucao CGSN 140/2018 - idAto 92278 (D30) - texto multivigente, DOU 24/05/2018. Versao vigente (ainda sem a 190):
+  Art. 21 II "a": "RBT12: receita bruta acumulada nos doze meses anteriores ao período de apuração;"
+  Art. 26 caput (fator "r"): "I - folha de salários, incluídos encargos, nos 12 (doze) meses anteriores ao período de apuração; e II - receita bruta total ... nos 12 (doze) meses anteriores ao período de apuração." (II do vigente, sem alteracao textual lida)
+  Art. 26 § 1º (vigente; redacao dada pela Res. 145/2019, vig. 14/06/2019, rfb:101537): "considera-se folha de salários, incluídos encargos, o montante pago nos 12 (doze) meses anteriores ao do período de apuração a título de remuneração a pessoas físicas decorrentes do trabalho e de pró-labore, acrescido do montante efetivamente recolhido a título de contribuição patronal previdenciária e para o Fundo de Garantia do Tempo de Serviço (FGTS)." (inclui CPP/INSS patronal e FGTS desde 2019)
+  Art. 154: "Esta Resolução entra em vigor na data de sua publicação..." (texto historico da 140 original, produz efeitos em 01/08/2018 para os demais dispositivos)
+
+Resolucao CGSN 190/2026 - idAto 152832 (D20). Ementa: "Altera a Resolução CGSN nº 140". Resolucao de 04/08/2026, DOU 10/08/2026.
+  Art. 9º (VIGENCIA, literal): "Esta Resolução entra em vigor na data de sua publicação no Diário Oficial da União e produzirá efeitos a partir de 1º de janeiro de 2027."
+  Todas as 379 marcacoes de vigencia da 190 sao "vigência 01/01/2027" (contagem literal no arquivo).
+  Art. 21 II "a" (nova redacao, vig. 01/01/2027): "a) RBT12: receita bruta acumulada nos doze meses antecedentes ao mês anterior ao do período de apuração;"
+  Art. 21 § 1º (vig. 01/01/2027): "Para efeito de determinação da alíquota, o sujeito passivo utilizará a RBT12 de que trata a alínea 'a' do inciso II do art. 21."
+  Art. 26 I (vig. 01/01/2027): "folha de salários, incluídos encargos, nos 12 (doze) meses antecedentes ao mês anterior ao período de apuração; e"
+  Art. 26 II (vig. 01/01/2027): "receita bruta total acumulada auferida nos mercados interno e externo nos 12 (doze) meses antecedentes ao mês anterior ao período de apuração."
+  Art. 26 § 1º (vig. 01/01/2027): "considera-se folha de salários, incluídos encargos, o montante pago nos 12 (doze) meses antecedente ao mês anterior ao do período de apuração a título de remuneração a pessoas físicas decorrentes do trabalho e de pró-labore, acrescido do montante efetivamente recolhido a título de contribuição patronal previdenciária e para o FGTS." (CPP e FGTS ja estavam no § 1º vigente; a 190 muda a janela de 12 meses)
+  Art. 2º IV e V (vig. 01/01/2027): "empresa em início de atividade" passa a "...CNPJ, até o final do ano-calendário..."; e "data de início de atividade a data de inscrição no CNPJ".
+  Art. 4º (incisos VIII a XXIII, incluem CBS, IBS, IS e demais tributos, vig. 01/01/2027) - lido só pelos títulos dos incisos, nao integralmente.
+  Anexos I a V e Anexo Unico da 190 (tabelas de aliquotas e repartição): PDF binario, NAO baixados. URLs: .../ato/152832/anexo/85769 (I), 85770 (II), 85771 (III), 85775 (IV), 85773 (V), 85784 (Unico). Nao li as aliquotas nem a repartição do DAS.
+  Na 140 (D30), 379 marcacoes apontam a 190 (rfb:152832), todas com vigencia 01/01/2027.
+
+Resolucao CGSN 191/2026 - idAto 152781 (D31). Resolucao de 04/08/2026, DOU 10/08/2026.
+  Altera art. 59 (NFS-e: "§ 1º ... a Nota Fiscal de Serviço eletrônica (NFS-e) de padrão nacional, emitida pelo Emissor Nacional da NFS-e...") e art. 79 (documento fiscal eletrônico, "quando a obrigatoriedade estiver prevista em norma específica").
+  Art. 2º: "Fica revogada a Resolução CGSN nº 189, de 23 de abril de 2026." (revogação, vig. 10/08/2026, rfb:150788)
+  Art. 3º (VIGENCIA, literal): "Esta Resolução entra em vigor na data de sua publicação no Diário Oficial da União e produzirá efeitos: I - a partir de 01 de novembro de 2026, em relação ao art. 1º; e II - imediatamente, em relação aos demais artigos."
+  O texto lido da 191 nao altera RBT12 nem a folha/CPP (busca literal "RBT12" e "patronal": zero ocorrencias na 191).
+
+Resposta direta (efeito inicial): o que muda o RBT12 e a folha/CPP (190) produz efeitos em 01/01/2027 (art. 9º da 190). O 01/11/2026 aparece SOMENTE para o art. 1º da 191 (NFS-e e documento fiscal eletronico, arts. 59 e 79 da 140). Nao ha, no texto lido, data de 01/11/2026 para RBT12 ou para a CPP patronal.
+
+=====================================================================
+DIVERGENCIAS ENTRE FONTES / ACHADOS
+=====================================================================
+D1. D12 (rfb:2237 digitado como numero) baixou o ADE 69/2000 - ERRADO. Correto: IN 2237 = idAto 141910. Remover D12 do dossie.
+D2. D28 (idAto 116138) e a RETIFICACAO da Res. CGSN 140 (publicada 24/03/2021, § 8º do art. 12), nao a resolucao. A resolucao principal e idAto 92278 (D30). A pergunta do usuario sobre a 140 deve usar D30.
+D3. IN 2110 - art. 58 a 62 tratam de SALARIO-MATERNIDADE (Cap. IV, Secao II), NAO de parcelas nao integrantes. As parcelas nao integrantes estao no art. 34 (Secao IV). O pedido apontava "art. 58 a 62 ou equivalentes": a referencia estava errada.
+D4. "pró-labore" aparece na 140 (art. 26 § 1º) e na 190, mas NAO no texto da IN 2110.
+D5. Prazo da DCTFWeb: a IN 2237 original dizia "dia 25". A 2248 trocou para "último dia útil do mês seguinte" (vig. 07/02/2025). Nao ha divergencia entre as fontes; so mudanca.
+D6. Extincao da DIRF: a IN 2043 (art. 3º § 1º, redacao da 2181) diz "será substituída" (nao "extinta") para fatos a partir de 01/01/2025. Mesmo texto em D17.
+D7. Vigencia do Simples: 190 = 01/01/2027 (art. 9º). 191 = 01/11/2026 apenas para o art. 1º (NFS-e). Nao conflitam; datas em dispositivos diferentes.
+
+=====================================================================
+RESOLVIDOS / NAO ENCONTRADOS
+=====================================================================
+Resolvidos (texto literal lido, idAto confirmado):
+  IN 2237 (141910); IN 2248 (142687); IN 2267 (144416); IN 2181 (136650); IN 2043 (119859); IN 2060 (122177); IN 2110 (126687, titulos e art. 31/34/37-42); IN 2299 (148383); IN 1500 consolidada (57670, arts. 52, 56, 65, 65-A); Res. CGSN 140 (92278); Res. CGSN 190 (152832); Res. CGSN 191 (152781).
+  Total: 12 atos.
+Nao encontrados / nao resolvidos:
+  N1. Tabela mensal com valores literais: Anexo II (IN 1500) e Anexo X (IN 2299) - anexos binarios, nao baixados. Anexo I da 2299 nao localizado como tabela de valores.
+  N2. Lei 15.270/2025: nao aparece em nenhum texto lido (2299, 1500). Sem ato proprio sobre IRRF 2026 localizado pela busca.
+  N3. Ato Declaratório sobre IRRF 2026: nao encontrado.
+  N4. Desfecho do "pedido de revogação" da IN 2181/2024: nenhum ato revogador no historico da 2043 (nem da 2181).
+  N5. Aliquotas e repartição do DAS (Anexos I-V e Unico da Res. 190): binarios, nao lidos.
+
+=====================================================================
+LACUNAS (para o dono / fila)
+=====================================================================
+L1. Baixar e extrair os anexos binarios: Anexo II e X da IN 2299/1500 (tabela IRRF mensal 2026) e Anexos I-V e Unico da Res. CGSN 190 (aliquotas do DAS 2027). Pendente de autorizacao de download de arquivo (PDF) pelo chat.
+L2. Confirmar pela busca textual se existe ato RFB ou ADE sobre a Lei 15.270/2025 (redutor/isencao), com termo "15.270" isolado e sem filtro de ano (busca com varios termos retornou zero).
+L3. Remover D12 (ADE 69/2000) do dossie pesquisas-legais\dp-cobertura-100\docs (download errado).
+
+Arquivos do dossie (docs): D12 (errado), D13 (2237), D14 (2248), D15 (2267), D16 (2181), D17 (2043), D18 (2060), D19 (2110), D20 (190), D26 (IN 2299), D27 (IN 1500), D28 (retif. 140), D30 (140), D31 (191).

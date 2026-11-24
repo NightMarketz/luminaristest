@@ -1,0 +1,446 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei Complementar nº 123 de 14/12/2006",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2006/lcp-123-2006-12-14.md",
+      "url_final": "https://github.com/ctresb/leis/blob/394a7e97c8604703a3ea6638df61ab1873cecc6e/federal/leis-complementares/2006/lcp-123-2006-12-14.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2006-12-14;123",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "394a7e97c8604703a3ea6638df61ab1873cecc6e",
+      "alertas": [],
+      "baixado_em": "2026-11-24T01:24:05-03:00",
+      "sha256": "62ae5f126e5d6a0bf1e149614362aeca97730684067c128251c92cc1f732bdd9",
+      "arquivo": "docs/D01_lcp-123-2006-12-14.md",
+      "texto": "docs/D01_lcp-123-2006-12-14.txt",
+      "bytes": 255709,
+      "sha256_texto": "b88e53d46978e27b2d1087c98d45e295958791aae98a10e0b3a15ad08fe72adc",
+      "captura": {
+        "anterior": {
+          "slug": "icms-revenda-regime-normal-sp",
+          "id": "D19",
+          "baixado_em": "2026-11-21T17:01:10-03:00",
+          "sha256_texto": "b88e53d46978e27b2d1087c98d45e295958791aae98a10e0b3a15ad08fe72adc"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Resolução CGSN nº 140, de 22 de maio de 2018",
+      "url": "rfb:92278",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/92278/visao/multivigente",
+      "id_normativo": "rfb:92278",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-24T01:24:37-03:00",
+      "sha256": "158a09df9d0832b58264f9a0f625f75b9238563c44c967c7b5ea03bde5f48cb3",
+      "arquivo": "docs/D02_rfb-92278-multivigente.json",
+      "texto": "docs/D02_rfb-92278-multivigente.txt",
+      "bytes": 1465038,
+      "sha256_texto": "b5a0230413794b2737aa224e5fd3b8cfbd7bd87a28642b2649e4236a64b094f3",
+      "anexos": [
+        {
+          "nome": "Anexo I .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48430"
+        },
+        {
+          "nome": "Anexo II .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48431"
+        },
+        {
+          "nome": "Anexo III .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48432"
+        },
+        {
+          "nome": "Anexo IV .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48433"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48446"
+        },
+        {
+          "nome": "Anexo VI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48458"
+        },
+        {
+          "nome": "Anexo VI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/50966"
+        },
+        {
+          "nome": "Anexo VII .pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48436"
+        },
+        {
+          "nome": "Anexo VII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/50967"
+        },
+        {
+          "nome": "Anexo VII.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54769"
+        },
+        {
+          "nome": "Anexo VII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/58338"
+        },
+        {
+          "nome": "Anexo VIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48459"
+        },
+        {
+          "nome": "Anexo IX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48460"
+        },
+        {
+          "nome": "Anexo X .pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48439"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/48461"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/52778"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54307"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54308"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/54995"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/59531"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/64455"
+        },
+        {
+          "nome": "Anexo XI.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/77593"
+        },
+        {
+          "nome": "Anexo XI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/81177"
+        },
+        {
+          "nome": "Anexo XII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/58339"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "nfse-2027-salao-parceiro-cbs-ibs",
+          "id": "D03",
+          "baixado_em": "2026-11-24T01:24:30-03:00",
+          "sha256_texto": "b5a0230413794b2737aa224e5fd3b8cfbd7bd87a28642b2649e4236a64b094f3"
+        },
+        "tipo": "IGUAL"
+      },
+      "alertas": [
+        "alteração com vigência futura: Alterado(a) pelo(a) Resolução CGSN nº 190, de 4 de agosto de 2026, a partir de 01/01/2027 (rfb:152832)",
+        "alteração com vigência futura: Alterado(a) pelo(a) Resolução CGSN nº 195, de 21 de outubro de 2026, a partir de 01/01/2027 (rfb:154194)",
+        "24 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D03",
+      "titulo": "ANEXO VI DA RESOLUÇÃO CGSN Nº 140,  DE 2018",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/50966",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/50966",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:25:03-03:00",
+      "sha256": "2e324391b6a71b66643806c281989491ac5bf8d3b3f7b75b978d2f51cd5274cd",
+      "arquivo": "docs/D03_50966.pdf",
+      "texto": "docs/D03_50966.txt",
+      "bytes": 226739,
+      "sha256_texto": "4e93f66b1173acddda265d40538399e751bf1e712d6f645f92354bd71fcd5cb8",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "D04_58338",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/58338",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/92278/anexo/58338",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:25:03-03:00",
+      "sha256": "720a45577269001346a01e07be89d336196a983a4a5803edb5c2ce0bab1753d2",
+      "arquivo": "docs/D04_58338.pdf",
+      "texto": "docs/D04_58338.txt",
+      "bytes": 35391,
+      "sha256_texto": "80ab57a10befbbf63c2237cc118a0543d76a71348bfe620e89c9b9f1213950ef",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "Resolução CGSN nº 190, de 4 de agosto de 2026",
+      "url": "rfb:152832",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/152832/visao/multivigente",
+      "id_normativo": "rfb:152832",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-24T01:25:17-03:00",
+      "sha256": "9d1b3419c37266069da0ff3eb51292886279aac4674436e4e540b1bbf57dce6b",
+      "arquivo": "docs/D05_rfb-152832-multivigente.json",
+      "texto": "docs/D05_rfb-152832-multivigente.txt",
+      "bytes": 401679,
+      "sha256_texto": "7abf091d0d84b78c9bb164c0e430b9f04420ec8bf87870829dd223aa84707ad7",
+      "anexos": [
+        {
+          "nome": "Anexo I.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85769"
+        },
+        {
+          "nome": "Anexo II.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85770"
+        },
+        {
+          "nome": "Anexo III.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85771"
+        },
+        {
+          "nome": "Anexo IV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85775"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85773"
+        },
+        {
+          "nome": "Anexo Único.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85784"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "nfse-2027-salao-parceiro-cbs-ibs",
+          "id": "D04",
+          "baixado_em": "2026-11-24T01:24:30-03:00",
+          "sha256_texto": "7abf091d0d84b78c9bb164c0e430b9f04420ec8bf87870829dd223aa84707ad7"
+        },
+        "tipo": "IGUAL"
+      },
+      "alertas": [
+        "6 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D06",
+      "titulo": "Resolução CGSN nº 195, de 21 de outubro de 2026",
+      "url": "rfb:154194",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/154194/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/154194/visao/multivigente",
+      "id_normativo": "rfb:154194",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-24T01:25:17-03:00",
+      "sha256": "744914843138b566449799d31c8bb6264fa34bd58fc7222babf23c60968b0579",
+      "arquivo": "docs/D06_rfb-154194-multivigente.json",
+      "texto": "docs/D06_rfb-154194-multivigente.txt",
+      "bytes": 12515,
+      "sha256_texto": "9ccdd0719d69bddf4f1164f18513d7fa735e3c65e9ff65a2fff1862b1df23287",
+      "captura": {
+        "anterior": {
+          "slug": "ciclo-fiscal-prazos",
+          "id": "D10",
+          "baixado_em": "2026-11-21T16:10:17-03:00",
+          "sha256_texto": "9ccdd0719d69bddf4f1164f18513d7fa735e3c65e9ff65a2fff1862b1df23287"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "Normas",
+      "url": "https://normas.receita.fazenda.gov.br/sijut2consulta/anexoOutros.action?idArquivoBinario=51835",
+      "url_final": "https://normas.receita.fazenda.gov.br/sijut2consulta/anexoOutros.action?idArquivoBinario=51835",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:26:07-03:00",
+      "sha256": "9f9413e20884b24680269927744a2abbf407243127ba5087a1489fd91fc8153a",
+      "arquivo": "docs/D07_anexoOutros-action.html",
+      "texto": "docs/D07_anexoOutros-action.txt",
+      "bytes": 45247,
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "Solução de Consulta Cosit nº 127, de 27 de março de 2019",
+      "url": "rfb:99744",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/99744/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/99744/visao/multivigente",
+      "id_normativo": "rfb:99744",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-24T01:28:53-03:00",
+      "sha256": "3fc001f4bd305a1123a18056fa021769f6847ff65e242e8e1e631a87e187a19f",
+      "arquivo": "docs/D08_rfb-99744-multivigente.json",
+      "texto": "docs/D08_rfb-99744-multivigente.txt",
+      "bytes": 3708,
+      "sha256_texto": "102b8663c39c7059eebe7cddcbebcbc562fb01353c936d3c92aaf7c030c417c8",
+      "anexos": [
+        {
+          "nome": "SC Cosit nº 127-2019.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/99744/anexo/51835"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "insumos-salao-sp",
+          "id": "D22",
+          "baixado_em": "2026-11-20T19:21:52-03:00",
+          "sha256_texto": "102b8663c39c7059eebe7cddcbebcbc562fb01353c936d3c92aaf7c030c417c8"
+        },
+        "tipo": "IGUAL"
+      },
+      "alertas": [
+        "1 anexo binário não baixado (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D09",
+      "titulo": "SC Cosit nº 127-2019 Publicação",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/99744/anexo/51835",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/99744/anexo/51835",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:29:08-03:00",
+      "sha256": "7833af6a5a580426fdd95f4cb07d3f41269f38d54dfbb9cb19ce8494d23cbbea",
+      "arquivo": "docs/D09_51835.pdf",
+      "texto": "docs/D09_51835.txt",
+      "bytes": 26783,
+      "sha256_texto": "8807f27c76c67db5abd6cb7f25a8067b8a1dbbcf246c0ef6c25e4bb1cc6aaad7",
+      "captura": {
+        "anterior": {
+          "slug": "insumos-salao-sp",
+          "id": "D24",
+          "baixado_em": "2026-11-20T19:22:03-03:00",
+          "sha256_texto": "8807f27c76c67db5abd6cb7f25a8067b8a1dbbcf246c0ef6c25e4bb1cc6aaad7"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D10",
+      "titulo": "Solução de Consulta Disit/SRRF01 nº 1011, de 12 de agosto de 2019",
+      "url": "rfb:105154",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/105154/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/105154/visao/multivigente",
+      "id_normativo": "rfb:105154",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-24T01:31:29-03:00",
+      "sha256": "95c4e98e4bf686327658a0ba9dea367c93cab4c115f4d11f86e448d91374b6b2",
+      "arquivo": "docs/D10_rfb-105154-multivigente.json",
+      "texto": "docs/D10_rfb-105154-multivigente.txt",
+      "bytes": 6450,
+      "sha256_texto": "5993e70105fdafd6ad6b47b2403b78825340d1ad7f400a041219079e70dd10a2",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D11",
+      "titulo": "Lei Complementar nº 116 de 31/07/2003",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2003/lcp-116-2003-07-31.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ae234474cd3e1e3f6e871eaa102aeb862ec17541/federal/leis-complementares/2003/lcp-116-2003-07-31.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2003-07-31;116",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "ae234474cd3e1e3f6e871eaa102aeb862ec17541",
+      "alertas": [],
+      "baixado_em": "2026-11-24T01:31:42-03:00",
+      "sha256": "ee5663cd6f75d06dc795b4b9b49b52e4a9d7ad9c2575d817375088a5ed3098b9",
+      "arquivo": "docs/D11_lcp-116-2003-07-31.md",
+      "texto": "docs/D11_lcp-116-2003-07-31.txt",
+      "bytes": 48020,
+      "sha256_texto": "3de7769e0c311fb6ab3f2396d652c6c1931950242e19cbbcdcce4b35a323fae9",
+      "captura": {
+        "anterior": {
+          "slug": "insumos-salao-sp",
+          "id": "D08",
+          "baixado_em": "2026-11-20T19:17:05-03:00",
+          "sha256_texto": "3de7769e0c311fb6ab3f2396d652c6c1931950242e19cbbcdcce4b35a323fae9"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D12",
+      "titulo": "Lcp 123",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp123.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp123.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:33:33-03:00",
+      "sha256": "090781a7a5d9b5221bd6ebe1774f14d871dfca633ec4707cf610305a702cdb58",
+      "arquivo": "docs/D12_lcp123-htm.html",
+      "texto": "docs/D12_lcp123-htm.txt",
+      "bytes": 1644422,
+      "sha256_texto": "4a0633ba6a0b0c42313cb679f22cf165430c2c7b32ad73c3947b9e48276a26e0",
+      "captura": {
+        "anterior": {
+          "slug": "verif-2026-10-17-simples-mei",
+          "id": "D13",
+          "baixado_em": "2026-10-17T09:54:51-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "SEM_COMPARACAO"
+      },
+      "alertas": [
+        "há captura de 2026-10-17 (verif-2026-10-17-simples-mei D13), mas o texto dela não foi guardado"
+      ]
+    },
+    {
+      "id": "D13",
+      "titulo": "Lei nº 12.592 de 18/01/2012",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2012/lei-12592-2012-01-18.md",
+      "url_final": "https://github.com/ctresb/leis/blob/a31cf3cd12073c7b195933a53e733b85c00cfe02/federal/leis-ordinarias/2012/lei-12592-2012-01-18.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2012-01-18;12592",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "a31cf3cd12073c7b195933a53e733b85c00cfe02",
+      "alertas": [],
+      "baixado_em": "2026-11-24T01:48:30-03:00",
+      "sha256": "ae4c4aae44ba1bd08493c05fd82e366cdd2f3bf263b93383f93b1f936541fd00",
+      "arquivo": "docs/D13_lei-12592-2012-01-18.md",
+      "texto": "docs/D13_lei-12592-2012-01-18.txt",
+      "bytes": 7614,
+      "sha256_texto": "31185ae8508e1a64836cd8a4e6bee29072f2c9c6492fb7ae78ac0eb935c8f2ba",
+      "captura": {
+        "anterior": {
+          "slug": "nfse-2027-salao-parceiro-cbs-ibs",
+          "id": "D02",
+          "baixado_em": "2026-11-24T01:24:29-03:00",
+          "sha256_texto": "31185ae8508e1a64836cd8a4e6bee29072f2c9c6492fb7ae78ac0eb935c8f2ba"
+        },
+        "tipo": "IGUAL"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "simples-6-02-6-03-fator-r",
+  "pergunta": "Os subitens 6.02 (estética, depilação) e 6.03 (massagem) da LC 116 são tributados no Anexo III do Simples sem fator r, ou estão sujeitos ao fator r (LC 123 art. 18 §§ 5º-B a 5º-M; Res. CGSN 140; soluções de consulta)?",
+  "criado": "2026-11-24T01:20:23-03:00"
+}

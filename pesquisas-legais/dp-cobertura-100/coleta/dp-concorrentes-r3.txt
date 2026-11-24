@@ -1,0 +1,147 @@
+DP CONCORRENTES - RODADA R3 (leitor, coleta crua, sem classificação)
+Data da coleta: 2026-11-14
+Legenda: "aberta (browser)" = página renderizada no navegador embutido (get_page_text / JS);
+"aberta (WebFetch)" = lida pelo WebFetch; "snippet" = só texto de resultado de busca (não aberta);
+"arquivada" = não usada nesta rodada (web.archive.org recusado pelo WebFetch: "unable to fetch from web.archive.org").
+
+=====================================================================
+1. QUESTOR (Gestão Contábil - Folha de Pagamento)
+=====================================================================
+
+Rotas que falharam antes e resultado nesta rodada:
+- docs.questor.com.br/pt-br/ — WebFetch 404 (rodada anterior). Não repetido.
+- web.archive.org/web/2026/https://docs.questor.com.br/pt-br/ — WebFetch recusou (unable to fetch from web.archive.org).
+- Rota que funcionou: navegador embutido (renderiza o JS do Questor Docs; WebFetch só via título).
+
+Índice do módulo de folha:
+- Índice "Folha de Pagamento" (menu lateral: 31 seções) — https://docs.questor.com.br/pt-br/Produtos/Gest%C3%A3oCont%C3%A1bil/FolhadePagamento/ — aberta (browser)
+  Seções listadas no menu, como escritas: O que há de Novo?; Configurações da Empresa; eSocial; Guia de Erros eSocial por Evento; Cadastro de Empregados e Configurações; Cadastro de Benefícios; Cadastro de Afastamentos; Configurações do Ponto; Cálculo da Folha e Impostos; Folha e Rescisão Complementar; Área de Trabalho de Dissídio Coletivo; Cadastro de Faltas; Desoneração; Férias; Intermitente; Rescisão; Relatórios; Terceiros - Configurações e Pagamentos; Outras Empresas - Configurações e Pagamentos; Notas Emitidas; Múltiplos Vínculos; Transferências; Provisões; Contabilização; 13º Salário; Professor; Cálculo Automatizado; Compensação Cruzada; SST; DIRF; Cadastro e Liberação de Usuários no Sistema; FGTS Digital; Empréstimo e-Consignado - Crédito do Trabalhador (URL .../Produtos/GestãoContábil/FolhadePagamento/e-Consignado-Credito-do-Trabalhador); Cadastro e Impostos - Cálculo Patronal (URL .../Produtos/GestãoContábil/FolhadePagamento/Calculo_Patronal).
+
+Páginas abertas:
+- Rescisão — https://docs.questor.com.br/pt-br/Produtos/Gest%C3%A3oCont%C3%A1bil/FolhadePagamento/Rescis%C3%A3o — aberta (browser)
+  Subtópicos como escritos: Área de Trabalho de Rescisão; Simulação de Rescisão; Aviso Prévio; Aviso Prévio Proporcional (aviso coletivo); Cálculo de Rescisão: Empregado, Pró-Labore, Rescisão Indireta, Indireta com Data Retroativa, Justa Causa, Estagiário, Aprendiz, Falecimento, iniciativa da empresa no período de experiência, iniciativa do funcionário no período de experiência, fim de contrato de experiência, iniciativa do funcionário com aviso prévio reavido, Acordo, Coletiva; Médias e eventos na rescisão; Médias na Rescisão; corrigir faltas que não reduzem férias e 13º na rescisão; Reintegração de Empregado; Geração do Seguro Desemprego; FAQ Rescisão.
+- Férias — https://docs.questor.com.br/pt-br/Produtos/Gest%C3%A3oCont%C3%A1bil/FolhadePagamento/F%C3%A9rias — aberta (browser)
+  Subtópicos: Cálculo das Férias; Cálculo das Férias Coletivas; Exemplos de Forma de Geração das Férias Coletivas; férias em períodos quebrados; Médias de Férias; Programação de Férias; Automatização do Cálculo das Férias Programadas; Simulação de Férias; Lançamento de Licença Maternidade Durante as Férias; Adiantamento de Férias - Situação Lic. Maternidade; Convenção Coletiva\Férias; Cálculo de Férias e Folha Mensal de acordo com o Parâmetro "Pgto. Férias Mensalista"; Desconto de Valores Sindicais nas Férias; Ajustar Recibo de Férias Anteriores; Alterar Período Aquisitivo de Férias Incorreto; Relatórios: Recibo de Férias.
+- Configuração do Ponto — https://docs.questor.com.br/pt-br/Produtos/Gest%C3%A3oCont%C3%A1bil/FolhadePagamento/Configura%C3%A7%C3%A3o_Ponto — aberta (browser)
+  Subtópicos: Digitação do Ponto; Digitação Cartão Ponto; Integração com Sistema de Ponto; Relacionamento de eventos para integração com sistema Ponto; Emissão relatório de Ficha Ponto.
+  (Nenhum item de banco de horas, Portaria 671 ou REP nesta página.)
+- SST — https://docs.questor.com.br/pt-br/Produtos/Gest%C3%A3oCont%C3%A1bil/FolhadePagamento/SST — aberta (browser)
+  Subtópicos: Configurações Iniciais SST; SST / PPP; Configurações Iniciais - SST/Responsáveis Técnicos; CAT - Comunicação de Acidente de Trabalho (S-2210); Exames Médicos e ASO's (S-2220); Exame Toxicológico do Motorista Profissional Empregado (S-2221); Laudos Médicos; Condições Ambientais do Trabalho (S-2240); Importação de XML de SST.
+- eSocial — https://docs.questor.com.br/pt-br/Produtos/Gest%C3%A3oCont%C3%A1bil/FolhadePagamento/eSocial — aberta (browser; texto truncado em 2500 caracteres)
+  Itens como escritos: Área de Trabalho - eSocial; Placar; Manual de Utilização da IA Assistente do eSocial; Status eSocial; Geração de Eventos; Configurações Iniciais (Opção eSocial); Processos Trabalhistas; Lotação Tributária; Alteração de Tributação (Não optante pelo Cálculo Patronal); Troca de Regime Tributário; Eventos de Tabela (S-1000, S-1005, S-1020, S-1070; S-1270 Contratação de Trabalhadores Avulsos Não Portuários); Eventos Periódicos (S-1200 remunerações, S-1210 pagamento, S-1299 fechamento); Retificação de Eventos Periódicos; Eventos Não Periódicos (S-2190; S-2206 e S-2306 alterações contratuais). Texto: "O prazo máximo para envio dos eventos periódicos e de fechamento do período é até o dia 15 do mês seguinte..."
+- Cálculo da Folha e Impostos — https://docs.questor.com.br/pt-br/Produtos/Gest%C3%A3oCont%C3%A1bil/FolhadePagamento/C%C3%A1lculo_Folha_e_Impostos — aberta (browser; truncado em 1800)
+  Subtópicos: Grupo de Processamento; Período de Cálculo (criar, anterior, excluir, duplicar a partir de outra empresa); Adiantamento Salarial; Cadastro de Faltas; Eventos Fixos (múltiplos); Eventos Variáveis (importação por planilha CSV; múltiplos); Desconto de Vales (Rotina de Vales); Pensão Judicial (Cadastro e Cálculo de Pensão); Alocação de Funcionários (Obras e Tomadores); Alocação de Mão de Obra; Correção da Ficha Rateada; Calculando a Folha; Recalcular período anterior; Memória de Cálculo dos Eventos; Distribuição de Lucros; Faixa de Remuneração; Holerite; Relação de Cálculo - Geral; Impostos: débitos de INSS, débitos de IRRF, IRRF na folha de adiantamento, Tabela de IRRF, PIS sobre Folha; FGTS Digital (procuração, conferência do recolhimento para fins rescisórios, saldo da rescisão, Guia Rápida); FGTS.
+- 13º Salário Integral Diferente Mês 12 — https://docs.questor.com.br/pt-br/Produtos/Gest%C3%A3oCont%C3%A1bil/FolhadePagamento/13%C2%BA_Sal%C3%A1rio/13mesdiferentede12 — aberta (browser)
+  Texto (resumido por fato, sem classificar): cita Nota Orientativa nº 10/2018; "Tipo de Cálculo" 23 - 13º salário integral (Mês diferente de 12); em dezembro, tipo de cálculo 21 (13º integral) e envio S-1200 e S-1299; "INSS e IRRF: recolhidos somente em dezembro"; "FGTS: recolhido junto com a folha mensal"; S-1200: valores do 13º em mês diferente de dezembro informados junto com a folha mensal; evento 299 (Desconto 13º Salário Adiantamento) gerado automaticamente; procedimento 99 para evento auxiliar; bloqueios de cálculo por Empresa (sem Grupo de Processamento nem Seleção Múltipla).
+- Rescisão e 13º antecipado: o texto cita diferença de avos na rescisão quando o 13º integral antecipado é menor que o 13º proporcional da rescisão (evento auxiliar).
+
+Páginas NÃO abertas (só título ou snippet):
+- Intermitente (https://docs.questor.com.br/pt-br/Produtos/GestãoContábilCloud/FolhadePagamento/Intermitente/trabalhador-contrato-intermitente) — snippet (busca nesta rodada) e rodada anterior: convocação precisa de cálculo e Recibo antes da rescisão; férias e 13º incluídos manualmente para o vínculo. Índice "Intermitente" existe no menu (aberto como item de índice, sem subpágina lida).
+- Transferência de funcionários entre empresas (https://docs.questor.com.br/pt-br/Produtos/Gest%C3%A3oCont%C3%A1bil/FolhadePagamento/Transfer%C3%AAncia/transferencia-entre-empresas) — snippet (rodada anterior).
+- Provisão de 13º e férias / contabilização (https://docs.questor.com.br/pt-br/Produtos/GestãoContábil/FolhadePagamento/Provisão/provisao-contabilizacao) — WebFetch só título "Questor Docs"; snippet de busca: "a folha e as provisões de 13º e férias podem ser contabilizadas diretamente no módulo contábil do Questor".
+- Conferência INSS patronal (https://docs.questor.com.br/pt-br/Produtos/GestãoContábil/FolhadePagamento/eSocial/conferencia_inss_patronal) — snippet: manual para conferir divergências entre valores do Questor e da DCTFWeb.
+- 13º mês diferente de 12 em rota WebFetch: título apenas (superado pela leitura no navegador acima).
+
+Inacessível nesta rodada:
+- Rotas WebFetch para docs.questor.com.br: título apenas ou 404 (não repetido).
+- questor.com.br (site institucional): não tentado nesta rodada.
+
+Contagem Questor: abertas 8 (índice + Rescisão + Férias + Configuração do Ponto + SST + eSocial + Cálculo da Folha e Impostos + 13º mês diferente de 12); snippets 5 (Intermitente, Transferência, Provisão, INSS patronal, rota de conferência); inacessível: questor.com.br.
+
+=====================================================================
+2. TOTVS (RM / Protheus / Datasul)
+=====================================================================
+
+Rotas que falharam antes e resultado nesta rodada:
+- totvs.com/rh/folha-de-pagamento/ — WebFetch 402 (rodada anterior) — ABERTA via navegador (ver abaixo).
+- tdn.totvs.com/display/public/LRM/FOP — WebFetch 403 — ABERTA via navegador (ver abaixo).
+- tdn.totvs.com/x/T_JUE — WebFetch 404 — ABERTA via navegador: redirecionou para ESO0003 (ver abaixo).
+- tdn.totvs.com/x/WCDvH — WebFetch 403 — não tentado no navegador.
+- web.archive.org/web/2026*/totvs.com/rh/folha-de-pagamento — WebFetch recusou (unable to fetch from web.archive.org).
+- totvs.com/blog/ — WebFetch 402 (não tentado no navegador).
+- centraldeatendimento.totvs.com — WebFetch 403 (não tentado no navegador).
+- Rescisão e Encargos Folha no Protheus (PDF tdn 200423) — WebFetch 403 (não tentado no navegador).
+
+Páginas abertas:
+- Página comercial de folha - https://www.totvs.com/rh/folha-de-pagamento/ — aberta (browser). Título: "Sistema de folha de pagamento com precisão - TOTVS". Texto: "Simplifique sua gestão com o sistema de folha de pagamento da TOTVS"; "Automatize cálculos, encargos e integrações contábeis"; "Mais de 25% da folha de pagamento CLT no Brasil é processada pelos sistemas de folha de pagamento da TOTVS"; linhas de produto: LINHA PROTHEUS, LINHA DATASUL, LINHA RM. Nenhuma lista de rotina nem código de rotina na página.
+- Índice "FOP - Linha RM" - https://tdn.totvs.com/display/public/LRM/FOP — aberta (browser). Título "FOP - Linha RM - TDN". Itens listados como escritos: Reintegração; Renomear lteracaoMascaraGerencial; Retificação Arquivo eSocial; Rotinas Anuais 2013; S-2100 - Evento Cadastramento Inicial de Vínculo; S-2220 - Monitoramento da Saúde do Trabalhador - SMT; S-3000 - Exclusão de Eventos - RHU; Sugestão de ordem para importação dos layouts; Ambiente de Trabalho - SMT (SM); Integração Folha de Pagamento x Gestão Financeira (S-1210 - Autônomos); RAIS - Relação Anual de Informações Sociais.
+- ESO0003 Saneamento da base eSocial (destino do redirect de tdn.totvs.com/x/T_JUE) - https://tdn.totvs.com/display/public/PROT/ESO0003_Saneamento_da_base_eSocial — aberta (browser). Linha Microsiga Protheus. Tabelas a sanear: Parâmetros (Sindicato de Empregados; Cadastro de Agente de Integração Estágio; Cadastro de Centro de Custo; Informações do Funcionário; Cadastro de Verbas); Tabela 32 - Tipos de Rescisão (campo Motivo eSocial); Tabela 14 - Encargos da Empresa (campo Indicativo da Contribuição Substituída, optantes pelo Simples). Menciona "SIGAGPE" e "RET".
+
+Rotinas de folha (GPEM/GPER) por snippet de busca (nenhuma aberta como página própria):
+- GPEM040 "Cálculo da Rescisão" — caminho Miscelânea / Cálculos / Rescisão — snippet (busca "site:tdn.totvs.com GPEM040 rescisão"). Fontes de snippet: https://tdn.totvs.com.br/download/attachments/26315023/GPE_Calculo%20_da_Rescisao_TDUFRQ.pdf?api=v2 (boletim "GPE Calculo da Rescisao"); https://tdn.totvs.com/download/attachments/201750378/GPE_BT_Importacao_do_plano_de_saude_na_rescisao_BRA_TSEOE9.pdf?api=v2 (importação do plano de saúde na rescisão, nova opção no GPEM040); https://tdn.totvs.com.br/download/attachments/181961222/GPE_BT_Multa_Contrato_Determinado_BRA_TQBGDX.pdf?api=v2 (multa de contrato determinado; RA_DTFIMCT; GPEA150 parâmetro 32); https://tdn.totvs.com/download/attachments/396660941/GPE_BT_Criacao%20%20ID%20para%20Media%20da%20Multa%20por%20Dissidio_BRA_TFNR03.pdf?api=v2 (multa por dissídio).
+- GPER140 "Impressão da Rescisão" / IMPRESH (TRCT) — snippet: https://tdn.totvs.com/download/attachments/201750475/GPE_BT_TRCT_Impressao_TRGJJS.pdf?api=v2
+- Cabeçalho TRCT — snippet: https://tdn.totvs.com/download/attachments/63275947/GPE_BT_Cabecalho_TRCT_%20BRA_THGAGR.pdf?api=v2
+- Rescisão e GRRF (tema) — snippet: https://tdn.totvs.com.br/download/attachments/758497581/Tira%20Duvidas%20Suporte%20RH%20Protheus%20-%20Tema%20Rescisao%20e%20GRRF%20270422.pdf?api=v2
+- Rescisão e Encargos Folha no Protheus (200423) — snippet: https://tdn.totvs.com.br/download/attachments/758498250/Tira%20Duvidas%20Suporte%20RH%20Protheus%20-%20Rescis%C3%A3o%20e%20Encargos%20Folha%20no%20Protheus%20200423.pdf?api=v2 (PDF não aberto, WebFetch 403)
+- Verbas rescisórias / data desligamento (RAIS) — snippet: https://tdn.totvs.com.br/download/attachments/233756301/Orienta%C3%A7%C3%A3o%20Consultoria%20de%20Segmentos%20TUTEOL%20-%20Data%20desligamento%20e%20Verbas%20Rescis%C3%B3rias%20Rais%20-%20V3.pdf?api=v2
+- GPEM030 "Cálculo de Férias"/Miscelânea / Cálculos / Férias — snippet: https://tdn.totvs.com.br/download/attachments/73074495/GPE_BT_Diferenca_Media_Ferias_%20BRA_TGNVOT.pdf?api=v2
+- Provisão de férias e 13º ("novos tratamentos") — snippet: https://tdn.totvs.com.br/download/attachments/364914692/GPE%20-%20Provisao%20de%20ferias%20e%2013o%20salario%20-%20novos%20tratamentos.pdf?api=v2
+- Liberação do recibo de férias no portal — snippet: https://tdn.totvs.com/download/attachments/201750386/GPE_BT_Liberacao%20do%20recibo%20de%20ferias%20no%20portal_BRA_TS6031.pdf?api=v2
+- Alteração no cálculo de férias (TFDERG) — snippet: https://tdn.totvs.com.br/download/attachments/73082284/gpe_bt_alteracao%20no%20calculo_de%20ferias_ang_tfderg.doc.pdf?api=v2
+- Complemento do 13º na folha e eSocial — snippet: https://tdn.totvs.com.br/download/attachments/758497581/Complemento%2013%C2%B0%20Salario%20na%20Folha%20e%20e-Social.pdf
+- GPEM020 "Cálculo da Folha de Pagamento" (árvore) — snippet: https://tdn.totvs.com/x/ASklD (não aberta)
+- Desoneração da folha (GPEM013) — snippet: https://tdn.totvs.com.br/download/attachments/59441854/GPE_BT_Desoneracao_Folha_%20BRA_TFJWCN.pdf?api=v2
+- Eventos eSocial S-1200/S-1210/S-1299 e S-5011 (Suporte Responde, RM) — snippet: https://tdn.totvs.com.br/download/attachments/840389446/Suporte_Responde_Folha_Pagamento_Dicas_Gerais_Ago-24_Linha-RM.pdf (rodada anterior)
+- Boletim eSocial 11a entrega (MFP BT eSocial BRA HCM) — snippet: https://tdn.totvs.com/download/attachments/201726713/MFP_BT_eSocial_BRA_HCM_eSocial_11a_Entrega.pdf?api=v2
+- Boletim eSocial 12 1 8 — snippet: https://tdn.totvs.com.br/download/attachments/242385546/eSocial_12_1_8.pdf?api=v2
+- Ponto (REP-P, Portaria 671) TOTVS — snippet: https://tdn.totvs.com.br/download/attachments/809504336/ANEXO-IX-REQUISITOS-DO-REGISTRADOR-ELETRONICO-DE-PONTO-VIA-PROGRAMA-REP-P.pdf?api=v2
+
+Contagem TOTVS: abertas 4 (página comercial folha; índice FOP Linha RM; ESO0003 Saneamento eSocial; e o índice T_JUE redirecionado, contado na ESO0003); snippets: 18+ (GPEM040, GPER140, GPEM030, GPEM020, GPEM013, férias, 13º, rescisão, eSocial boletins, REP-P); inacessível: totvs.com/blog/ (402), centraldeatendimento.totvs.com (403), tdn.totvs.com/x/WCDvH (403), PDF "Rescisão e Encargos Folha" (403), web.archive.org (recusado), árvore eSocial "Entregas Legais" T_JUE (404 no WebFetch, redirecionada no navegador para ESO0003 apenas; árvore completa com lista de eventos S-xxxx não obtida).
+
+=====================================================================
+3. TANGERINO (pertence à Sólides; site redirecionado)
+=====================================================================
+
+Rotas que falharam antes e resultado nesta rodada:
+- www.tangerino.com.br — erro TLS (rodada anterior, WebFetch). Navegador: https://tangerino.com.br/ carregou e redirecionou para solides.com.br (página Sólides "Departamento Pessoal"). Nenhuma página do Tangerino em si foi lida.
+- web.archive.org/web/2026/https://tangerino.com.br — WebFetch recusou (unable to fetch from web.archive.org).
+- blog.tangerino.com.br — WebFetch: 301 para tangerino.com.br/blog, que redirecionou para solides.com.br/blog.
+- solides.com.br/tangerino — WebFetch 404.
+- Google Play br.com.tangerino.app — WebFetch 404 (não tentado em App Store).
+
+Páginas abertas:
+- Sólides - Departamento Pessoal - https://solides.com.br/solucoes/departamento-pessoal/ — aberta (browser; destino do redirect de tangerino.com.br). Itens como escritos: "Controle de Ponto digital" (registro online e offline; escalas personalizadas; reconhecimento facial; geolocalização inteligente; controle de permissões; assinatura eletrônica; integração com WhatsApp para envio de folha de ponto e lembretes); "Folha de Pagamento Digital" (integração ao eSocial; armazenamento em nuvem; controle de permissões; selo de segurança; conformidade garantida). Chamadas: "controle de ponto, admissão, gestão de documentos, férias e central do contador". Menção: "Portaria 671".
+- Controle de Ponto Digital (Sólides) - https://solides.com.br/controle-de-ponto-digital/ — aberta (browser). Itens como escritos: "Ponto Digital e Eletrônico"; "Controle de jornada centralizado" (turnos, banco de horas, escalas 12x36; processa horas extras e faltas); "30+ Relatórios automatizados"; "Gestão de colaboradores ágil". Afirmações de marketing na página: "Fechamento de folha de pagamento até 25x mais rápido"; "Redução comprovada de erros de cálculo em 98%"; "Apoio às exigências da Portaria 671". Tour interativo e vídeo demonstrativo referenciados, não lidos.
+- Blog Sólides - https://solides.com.br/blog (WebFetch) — aberta. Só 1 artigo listado: "Fim da escala 6x1..." https://solides.com.br/blog/duvidas-fim-da-escala-6x1/ (menciona banco de horas no resumo). Demais: vídeos do canal https://www.youtube.com/@SolidesOficial ("Controle de Ponto: como fazer e o que o DP precisa saber"; "Folha de Pagamento: chega de dúvidas na hora de calcular!"). Plataforma: https://app.tangerino.com.br/Tangerino/ (link de login, não aberto).
+
+Snippets (busca "Tangerino ponto banco de horas Portaria 671 folha site oficial"):
+- https://solides.com.br/blog/app-de-banco-de-horas-e-valido-legalmente/ — snippet: app de banco de horas como REP-A (segundo a Sólides; afirmação do fabricante).
+- https://solides.com.br/blog/portaria-671/ — snippet.
+- https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/legislacao/portarias-1/portarias-vigentes-3/PDFPortarian671de8denovembrode2021compilada13.05.2025.pdf — snippet: Portaria MTP 671/2021, texto compilado (atualizado 13/05/2025); tratamento de dados para acréscimo de omissões no registro, inclusive banco de horas.
+- https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/inspecao-do-trabalho/fiscalizacao-do-trabalho/Perguntas%20e%20Respostas%20REP — snippet (FAQ REP).
+
+Contagem Tangerino: abertas 2 páginas Sólides (departamento pessoal e controle de ponto) + blog Sólides (WebFetch); funcionalidades do Tangerino em si: 0 lidas diretamente (conteúdo é o da Sólides); snippets 4; inacessível: www.tangerino.com.br (TLS, rodada anterior), solides.com.br/tangerino (404), Google Play (404), web.archive.org (recusado).
+
+=====================================================================
+4. DOMÍNIO (Thomson Reuters - Soluções Domínio)
+=====================================================================
+
+Rotas que falharam antes e resultado nesta rodada:
+- dominiosistemas.com.br/folha — navegador: redirecionou para a home (sem página de folha). WebFetch: lido a home; nenhuma rotina de folha.
+- dominiosistemas.com.br/departamento-pessoal — navegador: redirecionou para a home.
+- dominiosistemas.com.br/esocial — WebFetch 403.
+- web.archive.org — recusado pelo WebFetch (não tentado no navegador).
+- suporte.dominioatendimento.com/central — não tentado nesta rodada (rodada anterior: não aberta).
+
+Páginas abertas:
+- Home Domínio - https://www.dominiosistemas.com.br/ — aberta (browser e WebFetch). Itens: "Domínio One" ("Inclui módulos de Contabilidade, Folha, Fiscal e portais para compartilhamento de arquivos com clientes e seus colaboradores"); "Domínio Pro"; "Domínio Max" (acesso a todos os módulos atuais e futuros). Seção Suporte: "atualização do sistema de contabilidade, sessões de treinamento". Menu: Suporte; "eSocial" (link para esocial-treinamentos); Calendário Contábil > eSocial; Domínio Portal do Empregado (módulos adicionais); Benefícios (Serviços Financeiros, sem descrição).
+- WebFetch dominiosistemas.com.br/folha — lido: "A página não traz descrições de rotinas de folha"; sem admissão, férias, rescisão, 13º, pensão, ponto, SST.
+- WebFetch dominiosistemas.com.br/esocial — 403 (ver acima). Nota: WebFetch do /folha respondeu com itens da home, não com a página de folha.
+
+Snippets: nenhum novo nesta rodada.
+
+Contagem Domínio: abertas 1 (home) + 1 leitura WebFetch de /folha (sem conteúdo de folha); rotinas de folha/ponto/SST/férias/rescisão/13º/pensão encontradas: 0; inacessível: /esocial (403), /departamento-pessoal (redirect para home), /folha no navegador (redirect para home).
+
+=====================================================================
+RESUMO DE ITENS POR FORNECEDOR (contagem)
+=====================================================================
+- Questor: abertas 8 | snippets 5 | inacessível: questor.com.br (não tentado), web.archive.org (recusado)
+- TOTVS: abertas 3 páginas (comercial, FOP Linha RM, ESO0003) | snippets ~18 | inacessível: totvs.com/blog (402), centraldeatendimento (403), tdn WCDvH (403), PDF Rescisão/Encargos (403), árvore eSocial Entregas Legais (sem lista de eventos S-xxxx obtida), web.archive.org (recusado)
+- Tangerino: abertas 2 páginas Sólides + 1 blog Sólides | snippets 4 (incl. gov.br Portaria 671) | inacessível: www.tangerino.com.br (TLS na rodada anterior; redirect para Sólides no navegador), solides.com.br/tangerino (404), Google Play (404), web.archive.org (recusado)
+- Domínio: abertas 1 (home) | snippets 0 | inacessível: /esocial (403), /folha e /departamento-pessoal (sem página; redirect para home), web.archive.org (recusado)
+
+Lacunas de leitura (para registro):
+- TOTVS: rotinas de folha com nome e código só por snippet de busca (GPEM020, GPEM030, GPEM040, GPER140, GPEM013); nenhuma página-índice GPE de rotina aberta. Árvore eSocial "Entregas Legais" sem lista de eventos.
+- Questor: Intermitente, Provisão/Contabilização, Transferência e INSS patronal por snippet; Ponto (Configuração do Ponto) sem item de banco de horas ou Portaria 671.
+- Tangerino: nenhuma página do próprio produto Tangerino lida; conteúdo de ponto/banco de horas é da Sólides.
+- Domínio: nenhuma página de rotina de folha/ponto/SST encontrada.

@@ -66,11 +66,26 @@ Cruzamento do plano com a lei e com ERPs de referência. Entram nos BRIEFs que a
 - **F5:** comprovante anual de rendimentos; alerta de cota de aprendiz/PCD e do Relatório de Transparência Salarial.
 - **SST:** PGR, PCMSO, LTCAT, PPP eletrônico, ficha de EPI.
 
+**2ª rodada (14/11)** — [[D-2026-11-14-DP-ESCOPO-LACUNAS-2]], decidida pela lei, sem questionário (dono, chat, 14/11):
+- **F3:** licença-paternidade e salário-paternidade (Lei 15.371, vigência **01/01/2027**; 10/15/20 dias como `LegalParameter`
+  por data de efeito); aviso prévio, médias, rescisão complementar e férias proporcionais; contrato intermitente e
+  teletrabalho; intervalo suprimido, sobreaviso e prontidão; folha complementar e diferenças de CCT/dissídio.
+- **F4:** S-2306, S-2555, qualificação cadastral antes do S-2200/S-2205/S-2300, transferência e sucessão de vínculo; S-2230
+  com o motivo de licença-paternidade.
+- **F5:** guarda e prescrição de documentos (CF 7º XXIX, Lei 8.036 art. 23, Decreto 3.048 art. 225).
+- **SST:** riscos psicossociais no PGR (NR-1, **em vigor desde 26/05/2026**).
+- **DP-APP:** comunicação obrigatória da Lei 15.377/2026 (em vigor desde 02/04/2026). **Fora:** simulação.
+- Datas resolvidas: EC 141 — 42 h e 2 dias de repouso de 16/12/2026, 40 h de 16/12/2027 (LC 95 art. 8º §1º).
+
 ## Docs
 
 - [`BE-INCR-DP-PONTE-RAZAO-brief.md`](../../accounting/BE-INCR-DP-PONTE-RAZAO-brief.md) — 21/11: emenda do PES-4 (lacuna
   `L-20261121-181950-5cb9`), 40 itens em PR-P0..PR-P5, forks F-PNT-1..7 decididos ([[D-2026-11-21-DP-PONTE-RAZAO]]); relê os F-FOL de 22/10 (F-FOL-1 e
   F-FOL-9 superados); dossiê `pesquisas-legais/emenda-pes4-ponte-folha/`. Empilha depois do PR-6 do F2
+- [`BE-INCR-LEGAL-REGRAS-brief.md`](../../accounting/BE-INCR-LEGAL-REGRAS-brief.md) — 14/11: motor de leis **da plataforma**, nó
+  [[LEGAL-REGRAS]] (a forma da regra também é dado; reabre F-DP-5/F-PES-9 por pedido do dono, [[D-2026-11-14-MOTOR-DE-LEIS]]).
+  O DP é o primeiro domínio a adotar (vocabulário `folha`, PR-4 de lá; regras do F3 como `LEI_REGRA`, PR-5 de lá). Forks
+  F-ML-0..14 **RATIFICAÇÃO PENDENTE** (15/11: o F-ML-0, motor × variantes de código por vigência, decide se o BRIEF segue); sem `executa`. Não muda o BRIEF do F2 nem o `executa` dele
 - [`BE-INCR-DP-F2-brief.md`](../../accounting/BE-INCR-DP-F2-brief.md) — 05/11, revisto 06/11: 78 itens em PR-0R + PR-0..PR-6 (§0.1: regras legais e escala como dado); forks
   F-DPF-1..13 decididos em 06/11 ([[D-2026-11-06-DP-BRIEF-F2]]); dossiê `pesquisas-legais/brief-pes4-f2/` (inclui a EC 141/2026) e `pesquisas-legais/brief-pes4-f2-contador/` (perguntas ao contador, 06/11)
 - [`BE-INCR-DP-F0-F1-brief.md`](../../accounting/BE-INCR-DP-F0-F1-brief.md) — 02/11: 62 itens em PR-0..PR-6; forks

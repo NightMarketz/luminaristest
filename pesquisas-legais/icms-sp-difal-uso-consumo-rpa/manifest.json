@@ -1,0 +1,281 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "RICMS - Artigo 52 a 56 C\r\n\t\t\t\t\t\t\r\nSEÇÃO II - DA ALÍQUOTA",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art052.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art052.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:26:01-03:00",
+      "sha256": "0ec3581720e55e1a169926c32a16ac6efa26dd2a647a786b33fcf9d3dcdf3252",
+      "arquivo": "docs/D01_art052-aspx.html",
+      "texto": "docs/D01_art052-aspx.txt",
+      "bytes": 213915,
+      "sha256_texto": "262d22ca9e1ddd4e4d84faac7f6a07be33abab15cedaa4b2ac9bf96307758dda",
+      "captura": {
+        "anterior": {
+          "slug": "icms-revenda-regime-normal-sp",
+          "id": "D03",
+          "baixado_em": "2026-11-21T16:58:02-03:00",
+          "sha256_texto": "262d22ca9e1ddd4e4d84faac7f6a07be33abab15cedaa4b2ac9bf96307758dda"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "RICMS - Artigo 115\r\n\t\t\t\t\t\t\r\nSEÇÃO III - DO PAGAMENTO POR GUIA DE RECOLHIMENTOS ESPECIAIS",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art115.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art115.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:26:02-03:00",
+      "sha256": "e44b136ff63143b8f722b9e76eac9b070a718ce51cbec543ec60a8750e5acdca",
+      "arquivo": "docs/D02_art115-aspx.html",
+      "texto": "docs/D02_art115-aspx.txt",
+      "bytes": 178788,
+      "sha256_texto": "eb1af7510c401038031ea1cd176862136c6eee90e6822d37d21e7b88f75f06df",
+      "captura": {
+        "anterior": {
+          "slug": "icms-revenda-regime-normal-sp",
+          "id": "D09",
+          "baixado_em": "2026-11-21T16:58:05-03:00",
+          "sha256_texto": "eb1af7510c401038031ea1cd176862136c6eee90e6822d37d21e7b88f75f06df"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "RICMS - Artigo 37 a 51\r\n\t\t\t\t\t\t\r\nCAPÍTULO II - DO CÁLCULO DO IMPOSTO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art037.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art037.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:26:04-03:00",
+      "sha256": "d6a069fe6e264b5f5a36c650d98f5e03fef79f683ed77471c5c093c8e005c263",
+      "arquivo": "docs/D03_art037-aspx.html",
+      "texto": "docs/D03_art037-aspx.txt",
+      "bytes": 194226,
+      "sha256_texto": "6854628fe0447d208c3765b102f1ab587765617649e68d642892347b0c3c8172",
+      "captura": {
+        "anterior": {
+          "slug": "icms-revenda-regime-normal-sp",
+          "id": "D21",
+          "baixado_em": "2026-11-21T17:04:35-03:00",
+          "sha256_texto": "6854628fe0447d208c3765b102f1ab587765617649e68d642892347b0c3c8172"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "Lei nº 6.374, de 01/03/1989",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/estaduais/SP/leis-ordinarias/1989/lei-6374-1989-03-01-id25030.md",
+      "url_final": "https://github.com/ctresb/leis/blob/a04d818af03dd02ec234f777e89fc809126702e5/estaduais/SP/leis-ordinarias/1989/lei-6374-1989-03-01-id25030.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.al.sp.gov.br/norma/25030",
+      "versao_texto": "atualizada",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "a04d818af03dd02ec234f777e89fc809126702e5",
+      "alertas": [
+        "versao_texto = 'atualizada' (não é texto compilado: alterações posteriores não aparecem)",
+        "consta como revogada (situacao='Sem revogação expressa', revogada=false)"
+      ],
+      "baixado_em": "2026-11-24T01:26:07-03:00",
+      "sha256": "419917e3106054a23498fa31fdd8030acc29517f69b657b4d108999b2cded724",
+      "arquivo": "docs/D04_lei-6374-1989-03-01-id25030.md",
+      "texto": "docs/D04_lei-6374-1989-03-01-id25030.txt",
+      "bytes": 349593,
+      "sha256_texto": "237c5f3815481be162678a960884a35c980bc14d1364456a0bd515c4c1075f8b",
+      "captura": {
+        "anterior": {
+          "slug": "ricms-sp-art566-vencimento",
+          "id": "D05",
+          "baixado_em": "2026-11-24T01:21:50-03:00",
+          "sha256_texto": "237c5f3815481be162678a960884a35c980bc14d1364456a0bd515c4c1075f8b"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "RICMS - Artigo 1º a 4º\r\n\t\t\t\t\t\t\r\nCAPÍTULO I - DA INCIDÊNCIA",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art001.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art001.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:26:18-03:00",
+      "sha256": "83960f1c04ebb3aaae394b1fec521ba47e7a8838f41c80d0ab3d4d4a22a77109",
+      "arquivo": "docs/D05_art001-aspx.html",
+      "texto": "docs/D05_art001-aspx.txt",
+      "bytes": 176086,
+      "sha256_texto": "15b13b9e5376be00a683710a9ee60421eda4920f639adaad757e49c886872ea1",
+      "captura": {
+        "anterior": {
+          "slug": "icms-revenda-regime-normal-sp",
+          "id": "D28",
+          "baixado_em": "2026-11-21T17:04:37-03:00",
+          "sha256_texto": "15b13b9e5376be00a683710a9ee60421eda4920f639adaad757e49c886872ea1"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "RICMS - Artigo 116 a 118\r\n\t\t\t\t\t\t\r\nSEÇÃO IV - OUTRAS FORMAS DE PAGAMENTO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art116.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art116.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:26:25-03:00",
+      "sha256": "31d3b3e9f3cf31e41d96d5331382c39422fbc2fb72facff0938bed2e6ef22c2e",
+      "arquivo": "docs/D06_art116-aspx.html",
+      "texto": "docs/D06_art116-aspx.txt",
+      "bytes": 161527,
+      "sha256_texto": "f61e7d5c979860458fc9c78f369bc340ebd40541dd7c19aa24291bd3ae545269",
+      "captura": {
+        "anterior": {
+          "slug": "icms-revenda-regime-normal-sp",
+          "id": "D15",
+          "baixado_em": "2026-11-21T16:58:32-03:00",
+          "sha256_texto": "f61e7d5c979860458fc9c78f369bc340ebd40541dd7c19aa24291bd3ae545269"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "Lei Complementar nº 87 de 13/09/1996",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/1996/lcp-87-1996-09-13.md",
+      "url_final": "https://github.com/ctresb/leis/blob/0ee2fd30e01d0fb9cb3fb42d7ede8de312ea77e4/federal/leis-complementares/1996/lcp-87-1996-09-13.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:1996-09-13;87",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "0ee2fd30e01d0fb9cb3fb42d7ede8de312ea77e4",
+      "alertas": [],
+      "baixado_em": "2026-11-24T01:29:25-03:00",
+      "sha256": "9467cc843bf7020babf5400b56dbaadd1b7ee2464dc756c2ba1462afc72f43b8",
+      "arquivo": "docs/D07_lcp-87-1996-09-13.md",
+      "texto": "docs/D07_lcp-87-1996-09-13.txt",
+      "bytes": 66997,
+      "sha256_texto": "3fc5c35d96927b9d3814823c70230a71f45fb2f602502aa6d85d104afaa366e2",
+      "captura": {
+        "anterior": {
+          "slug": "icms-revenda-regime-normal-sp",
+          "id": "D01",
+          "baixado_em": "2026-11-21T16:57:21-03:00",
+          "sha256_texto": "3fc5c35d96927b9d3814823c70230a71f45fb2f602502aa6d85d104afaa366e2"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "Resolução nº 22, de 1989",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/resolucoes-senado/1989/rsf-22-1989-05-19.md",
+      "url_final": "https://github.com/ctresb/leis/blob/6b9308d1da378562fa53395b5c2e9cd311bf86cc/federal/resolucoes-senado/1989/rsf-22-1989-05-19.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www2.camara.leg.br/legin/fed/ressen/1989/resolucao-22-19-maio-1989-481183-publicacaooriginal-1-pl.html",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "6b9308d1da378562fa53395b5c2e9cd311bf86cc",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)",
+        "consta como revogada (situacao='Não consta revogação expressa', revogada=false)"
+      ],
+      "baixado_em": "2026-11-24T01:29:36-03:00",
+      "sha256": "d9ca5a31d845bbdf2c8e4b1b9bc107685dec953fd0b360997011fc89524907a4",
+      "arquivo": "docs/D08_rsf-22-1989-05-19.md",
+      "texto": "docs/D08_rsf-22-1989-05-19.txt",
+      "bytes": 1921,
+      "sha256_texto": "1bc312d92db06ba3b8ac725118efcfbcb7c7fcad6c30b674f38b228a6ac408fd",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D09",
+      "titulo": "Resolução nº 13, de 2012",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/resolucoes-senado/2012/rsf-13-2012-04-25.md",
+      "url_final": "https://github.com/ctresb/leis/blob/6b9308d1da378562fa53395b5c2e9cd311bf86cc/federal/resolucoes-senado/2012/rsf-13-2012-04-25.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www2.camara.leg.br/legin/fed/ressen/2012/resolucao-13-25-abril-2012-612768-publicacaooriginal-135841-pl.html",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "6b9308d1da378562fa53395b5c2e9cd311bf86cc",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)",
+        "consta como revogada (situacao='Não consta revogação expressa', revogada=false)"
+      ],
+      "baixado_em": "2026-11-24T01:29:37-03:00",
+      "sha256": "4b24e80069ebce6a595a10c63295c8fed8b539adc1f47a17a738ff48d621aa30",
+      "arquivo": "docs/D09_rsf-13-2012-04-25.md",
+      "texto": "docs/D09_rsf-13-2012-04-25.txt",
+      "bytes": 3319,
+      "sha256_texto": "2a6372ff6c5c94bfca081e2252c366a17ba2657ac6b9cc492ea23e5e6935582a",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D10",
+      "titulo": "RC 34252/2026",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/RC34252_2026.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/RC34252_2026.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:30:17-03:00",
+      "sha256": "b5df2bc3e9d99baff10e15bb6ccde298bf3a529e64738a0714af192b1f13040f",
+      "arquivo": "docs/D10_RC34252_2026-aspx.html",
+      "texto": "docs/D10_RC34252_2026-aspx.txt",
+      "bytes": 158662,
+      "sha256_texto": "b251df87d990f72c46edc120d92142de8522a4deebcb0d8395cfa341fe6d7305",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D11",
+      "titulo": "RC 33094/2026",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/RC33094_2026.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/RC33094_2026.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:30:18-03:00",
+      "sha256": "62e268ab5596010420b36be7df9b120fdd49862652dd64a4a1e7c831adc89d18",
+      "arquivo": "docs/D11_RC33094_2026-aspx.html",
+      "texto": "docs/D11_RC33094_2026-aspx.txt",
+      "bytes": 159484,
+      "sha256_texto": "35e5a09884b3f585c3744145a7443fc54920f9d1a58a2cb25438df3a7153cdd5",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D12",
+      "titulo": "RICMS - Anexo IV - Artigo 1º ao 3º\r\n\t\t\t\t\t\t\r\nANEXO IV - PRAZOS DE RECOLHIMENTO DO IMPOSTO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/l6an4.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/l6an4.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:30:56-03:00",
+      "sha256": "323abf14c591d85b07ba981e167e160cc0815c85dfa1d0d04ff83bb95be3d83d",
+      "arquivo": "docs/D12_l6an4-aspx.html",
+      "texto": "docs/D12_l6an4-aspx.txt",
+      "bytes": 204107,
+      "sha256_texto": "66a50c8286938616230f679171b92fadde299d6de369a85974492ca5b7606a55",
+      "captura": {
+        "anterior": {
+          "slug": "ricms-sp-art566-vencimento",
+          "id": "D08",
+          "baixado_em": "2026-11-24T01:24:17-03:00",
+          "sha256_texto": "66a50c8286938616230f679171b92fadde299d6de369a85974492ca5b7606a55"
+        },
+        "tipo": "IGUAL"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "icms-sp-difal-uso-consumo-rpa",
+  "pergunta": "Regra do DIFAL de ICMS do material de uso e consumo adquirido de outro estado por contribuinte do regime periódico de apuração (RPA) em SP: alíquota interestadual, base, apuração e prazo (Lei 6.374, RICMS/SP)",
+  "criado": "2026-11-24T01:20:24-03:00"
+}

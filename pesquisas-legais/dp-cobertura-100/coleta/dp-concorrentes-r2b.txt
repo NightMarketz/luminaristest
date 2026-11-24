@@ -1,0 +1,184 @@
+DP CONCORRENTES - RODADA 2B (fatos crus, sem classificação)
+Data da coleta: 2026-11-14
+Legenda: aberta = página/arquivo lido (gh api ou WebFetch; WebFetch devolve resumo do modelo, não texto literal)
+         snippet = só resultado de busca (WebSearch ou search API), não aberto
+
+=====================================================================
+1. ODOO / OCA / KMEE / AKRETION / ENGENERE
+=====================================================================
+
+[OCA/l10n-brazil]
+- Branches 16.0, 17.0, 18.0, 19.0 existem; default 19.0; descrição "Localização brasileira oficial do Odoo." — https://github.com/OCA/l10n-brazil — aberta (gh api matching-refs e repo)
+- Addons com "hr" no nome, por branch (listagem de diretório/tree):
+  - 16.0: l10n_br_hr, l10n_br_hr_contract, l10n_br_hr_expense_invoice — https://github.com/OCA/l10n-brazil/tree/16.0 — aberta (listagem)
+  - 17.0: l10n_br_hr, l10n_br_hr_contract, l10n_br_hr_expense_invoice — https://github.com/OCA/l10n-brazil/tree/17.0 — aberta (listagem)
+  - 18.0: l10n_br_hr, l10n_br_hr_contract — https://github.com/OCA/l10n-brazil/tree/18.0 — aberta (listagem)
+  - 19.0: l10n_br_hr — https://github.com/OCA/l10n-brazil/tree/19.0 — aberta (listagem)
+- Nomes com "payroll", "esocial", "folha", "rais", "ponto", "sst", "rescis", "13", "ferias" nos manifests de 16.0-19.0: 0 hits de esocial/payroll/folha/ponto/sst; hits só de contract/hr/expense. Verificação por nome de arquivo (tree recursivo), não por conteúdo. — https://api.github.com/repos/OCA/l10n-brazil/git/trees/19.0?recursive=1 — aberta
+- Addon l10n_br_hr 19.0: manifest v19.0.1.7.0, depends [hr, l10n_br_base, hr_employee_relative], summary "Brazilian Localization HR" — https://github.com/OCA/l10n-brazil/tree/19.0/l10n_br_hr — aberta
+- l10n_br_hr 19.0 DESCRIPTION (readme/DESCRIPTION.md): cadastro de empregado: CPF com validação, CPTS, PIS/PASEP, certificado de reservista, naturalidade, escolaridade (hr_skills), dependentes (hr_employee_relative), RG, título de eleitor, paternidade, etnia, tipo sanguíneo, incapacidade física, tipo (Funcionário/Autônomo/Terceirizado/Cedido). Nenhum cálculo de folha, 13º, férias ou rescisão citado. — https://github.com/OCA/l10n-brazil/blob/19.0/l10n_br_hr/readme/DESCRIPTION.md — aberta
+- l10n_br_hr_contract 18.0: manifest v18.0.1.3.0, depends [hr_contract, l10n_br_hr] — https://github.com/OCA/l10n-brazil/tree/18.0/l10n_br_hr_contract — aberta
+- l10n_br_hr_contract 18.0 DESCRIPTION: "adapta o módulo 'hrcontract' aos requisitos da Legislação Brasileira/e-social": tipo de admissão, tipo de contrato de trabalho, motivo de encerramento, motivo de demissão, tipo de regime previdenciário, sindicato, salário mínimo. — https://github.com/OCA/l10n-brazil/blob/18.0/l10n_br_hr_contract/readme/DESCRIPTION.md — aberta
+- l10n_br_hr_expense_invoice 16.0: manifest v16.0.1.0.2, summary "Customization of HR Expense Invoice module for implementations in Brazil.", depends [l10n_br_fiscal, hr_expense_invoice] — https://github.com/OCA/l10n-brazil/tree/16.0/l10n_br_hr_expense_invoice — aberta
+- l10n_br_hr 16.0/17.0/18.0 e l10n_br_hr_contract 16.0/17.0 (manifests): existência confirmada pela listagem; conteúdo NÃO lido — snippet/listagem
+
+[OCA/payroll]
+- Branches 13.0 a 20.0; default 19.0; descrição "Odoo modules for payroll management" — https://github.com/OCA/payroll — aberta (gh api)
+- payroll 19.0 (único addon da raiz de módulos: payroll, setup): manifest v19.0.1.0.2, summary "Manage your employee payroll records", license LGPL-3, depends [hr_holidays, mail]; data inclui hr_payroll_structure, salary_rule, payslip, payslip_run, contribution_register, report_payslip — https://github.com/OCA/payroll/tree/19.0/payroll — aberta
+- payroll 19.0 README: "This module is a backport from Odoo SA"; sem menção a Brasil, 13º, férias, eSocial, INSS/IRRF/FGTS — https://github.com/OCA/payroll/blob/19.0/payroll/readme/DESCRIPTION.md — aberta (README.rst lido: sem termos BR)
+
+[KMEE / odoo-brazil (repos KMEE)]
+- Lista de repos da org KMEE obtida (orgs/KMEE/repos). Itens relevantes: l10n-brazil, odoo-brazil-hr, odoo-brazil-eletronic-documents, odoo-brazil-commission, odoo-brazil-banking, odoo-brazil-sped, odoo-brazil-reports, odoo-brazil-addons, odoo-hr-ng, odoo-brazil-buildout — https://api.github.com/orgs/KMEE/repos — aberta (listagem). Nota: a listagem trouxe nomes de repos também presentes em outras orgs.
+- KMEE/odoo-brazil-hr: default branch 8.0-develop; último push 2019-09-18; descrição vazia — https://github.com/KMEE/odoo-brazil-hr — aberta (metadados)
+  - README (8.0-develop): "Repositório da localização brasileira para módulos referentes a Recursos Humanos"; só badges, sem lista de funcionalidades — https://github.com/KMEE/odoo-brazil-hr/blob/8.0-develop/README.md — aberta
+- KMEE/odoo-brazil-hr 8.0-develop, addons (manifests __openerp__.py, Odoo 8):
+  - l10n_br_hr_payroll: name "Brazilian Localization HR Payroll", v8.0.0.0.1; depends [hr_payroll, l10n_br_resource, l10n_br_hr_holiday, l10n_br_hr_contract, l10n_br_hr_vacation]; external dep pybrasil; data: categorias, sequência de contrato, tabela INSS, tabela IR, tabela IR dependente, tabela RAT/FAP, decimal precision — https://github.com/KMEE/odoo-brazil-hr/tree/8.0-develop/l10n_br_hr_payroll — aberta
+  - l10n_br_hr_vacation: name "Employees vacation / Vacation Prevision", summary "Employees vacation prevision", v8.0.1.0.0 — aberta
+  - l10n_br_hr_holiday: name "L10n Br Hr Holiday", v8.0.1.0.0 — aberta (nome/versão)
+  - l10n_br_hr_payroll_report: "Reports for l10n_br_hr_payslip", v8.0.1.0.0 — aberta
+  - l10n_br_hr_payroll_account: "Brazilian Localization HR Payroll Account", v8.0.0.0.1 — aberta (nome/versão)
+  - l10n_br_hr_validacao_folha: "Validacao da Folha de Pagamento", v8.0.0.0.1 — aberta (nome/versão)
+  - l10n_br_hr_arquivos_governo: "l10n br hr Arquivos Governo", v8.0.0.0.1 — aberta (nome/versão)
+  - l10n_br_hr_gerador_holerite: "Brazilian Localization HR Payroll Generator", v8.0.1.0.0 — aberta (nome/versão)
+  - l10n_br_hr_payment_order: "L10n Br Hr Payment Order", summary (bloco multilinha), v8.0.1.0.0 — aberta (nome/versão)
+  - l10n_br_hr_syndicate: "Brazilian Localization HR Syndicate", v8.0.0.0.1 — aberta (nome/versão)
+  - l10n_br_hr_backup: "Backup HR", v8.0.0.0.1 — aberta (nome/versão)
+  - l10n_br_hr_allowance: manifest/__openerp__ não encontrado no branch 8.0-develop (404) — inacessível
+  - Demais diretórios listados: l10n_br_resource, test, oca_dependencies.txt — listagem
+  - Não lido: RAIS, eSocial, 13º e rescisão como regra nominal (sem README por addon acessível)
+- KMEE/odoo-hr-ng (org KMEE, branch master, último push 2015-07-07): descrição "Enhanced Human Resources functionality for Odoo. This addon adds enhanced payroll management, attendance and scheduling, and Leave Management." Diretórios incluem hr_payroll_extension, hr_payroll_period, hr_payroll_register, hr_payroll_register_report, hr_accrual, hr_policy_absence, hr_policy_accrual, hr_labour_union, hr_family, hr_infraction. Não é específico de Brasil pelo nome dos módulos — https://github.com/KMEE/odoo-hr-ng — aberta (metadados + listagem)
+  - Nota: a descrição vem como KMEE/kmee/odoo-hr-ng no retorno; não lido o conteúdo dos manifests.
+- odoo-brazil/odoo-brazil-esocial: default develop, último push 2019-05-10, descrição vazia — https://github.com/odoo-brazil/odoo-brazil-esocial — aberta (metadados). Listagem de conteúdo retornou vazia: conteúdo NÃO lido.
+
+[Akretion / Engenere]
+- Busca de repos por "payroll" em Akretion, Engenere, KMEE: 0 resultados (search API) — aberta (busca)
+- Listagem org Akretion (filtro hr|payroll|brazil|brasil): só l10n-brazil — https://api.github.com/orgs/akretion/repos — aberta
+- Listagem org Engenere (primeiros 30 nomes): brcobranca, l10n-brazil, doodba, febraban-python, erpbrasil.edoc, erpbrasil.assinatura, engenere-addons, pyopenssl, python-sped-trust, xsdata, nfelib, l10n_br_fiscal_ncm_generator, entre outros; nenhum com payroll/hr no nome. Listagem truncada aos primeiros 30 — https://api.github.com/orgs/Engenere/repos — aberta (parcial)
+- Resultado: nenhum repositório Akretion/Engenere de payroll/hr encontrado. Listagem Engenere não completa.
+
+=====================================================================
+2. ERPNEXT / FRAPPE
+=====================================================================
+
+- frappe/hrms README (Frappe HR): "complete HRMS solution with over 13 different modules"; Payroll & Taxation: "Create salary structures, configure income tax slabs, run standard payroll, accommodate additional salaries and off cycle payments". Nenhuma menção a Brasil/eSocial (grep no README: 0 hits para brazil/brasil). Localização não citada. — https://github.com/frappe/hrms — aberta (readme via gh api)
+- search/code "Brazil repo:frappe/hrms": total 0 — https://api.github.com/search/code — aberta (resultado 0; pode estar limitado pela API)
+- Busca de repos "erpnext_brazil": Intelligence8official/ERPNext_Brazil_NF — "Monitor de NF-e, NFS-e, CT-e integrado ao ERPNext" (fiscal, não folha) — https://github.com/Intelligence8official/ERPNext_Brazil_NF — snippet (metadados da busca)
+- moacirbishopcamata/erpnext_brasil — sem descrição, último push 2026-10-26 — https://github.com/moacirbishopcamata/erpnext_brasil — snippet (busca API); conteúdo não lido
+- rtsantanna/frappe-translations-pt-br — tradução pt-BR de Frappe CRM, Helpdesk, ERPNext, HRMS etc. (não é folha) — https://github.com/rtsantanna/frappe-translations-pt-br — snippet
+- discuss.frappe.io "Regional Brasileira (Brazil Compliance) NFE" — comunidade, foco NF-e e tributos; não menciona folha/eSocial — https://discuss.frappe.io/t/regional-brasileira-brazil-compliance-nfe/89121 — snippet
+- ecosire.com "erpnext-brazil-nfe-sped" — vendor de app customizado (não Frappe Marketplace), NF-e/SPED — https://ecosire.com/pt/apps/erpnext/erpnext-brazil-nfe-sped — snippet
+- Buscas por "frappe folha", "erpnext folha", "hrms folha", "frappe esocial", "frappe brazil payroll": 0 resultados de repo de folha BR — busca
+- Resultado: nenhum módulo de folha BR (13º, férias, rescisão, eSocial, INSS/IRRF/FGTS) encontrado em fonte oficial nem comunitária.
+
+=====================================================================
+3. CONVENIA
+=====================================================================
+
+- Home https://www.convenia.com.br/ — aberta (WebFetch, resumo). Menu de produtos: "Folha de Pagamento" (marcado NOVO) -> /gestao-de-folha-de-pagamento; "Férias" -> /departamento-pessoal#ferias; "Ponto" -> /departamento-pessoal#ponto; "Departamento pessoal" -> /departamento-pessoal. Sem item de menu para eSocial, rescisão ou 13º.
+- https://www.convenia.com.br/gestao-de-folha-de-pagamento — aberta (WebFetch, resumo):
+  - "adiantamento de 13º e 13º integral" citados como tipos de folha; cálculo não descrito
+  - férias "conectado ao fechamento" junto com ponto, benefícios e eventos
+  - "Distribuição de holerites" (módulo DP), sem detalhe
+  - "relatório consolidado da pré-folha", "Todos os lançamentos em um só relatório"; "Relatórios personalizados"
+  - "integração nativa com Domínio e LG"; Convenia Sync; Portal da Contabilidade
+  - encargos e tributos "calculados pela Contabilidade, não pela Convenia"
+  - NÃO aparecem: eSocial, pró-labore, cálculo de rescisão, INSS/IRRF/FGTS pelo nome
+- https://www.convenia.com.br/departamento-pessoal — aberta (WebFetch, resumo):
+  - "Admissão e demissão rápidos e personalizados" (acompanhamento, checklist, notificação à contabilidade)
+  - "O fluxo de férias mais completo" (aprovação, cronograma, histórico, férias individuais e coletivas)
+  - "Controle de espelho de ponto": importa arquivos, compatível com ACJEF e AFDT
+  - gestão de documentos e recibos/informes em holerites
+  - NÃO aparecem: rescisão, 13º, eSocial
+  - Links citados: /gestao-de-folha-de-pagamento, /gestao-da-informacao, /trial
+- https://www.convenia.com.br/gestao-da-informacao — aberta (WebFetch): gestão de documentos; "Histórico completo: da admissão ao desligamento"; férias só como item de menu sem descrição; NÃO aparecem eSocial, 13º, rescisão
+- Ponto (página de controle de ponto, URL não confirmada na sessão anterior; ver nota): NÃO aberta nesta rodada
+- Probes HTTP: /esocial 404; /rescisao 404; /ferias 404; /13-salario 404; /decimo-terceiro 404; /folha-de-pagamento 404 — inacessível/inexistente
+- Resultado: não há subpágina dedicada a eSocial, rescisão, férias ou 13º (férias citada dentro de /departamento-pessoal; 13º só como tipo de folha).
+
+=====================================================================
+4. SOLIDES
+=====================================================================
+
+- https://solides.com.br/produtos/folha-digital — aberta (WebFetch, resumo):
+  - Processamento "roda na nossa estrutura"
+  - eSocial: "A Folha Digital Sólides já contempla os processos relacionados ao eSocial"; "A IA re-checa as obrigações"
+  - Ponto: "Horas trabalhadas, faltas, atrasos, banco de horas e horas extras alimentam a folha"
+  - Férias e afastamentos: "Solicitações e períodos aprovados são considerados nos cálculos"
+  - Rescisão: "As movimentações necessárias para o cálculo da rescisão ficam centralizadas"
+  - Benefícios; alterações salariais refletem na folha; IA traduz cálculos em linguagem simples
+  - NÃO aparecem: 13º, holerite (por nome), SST
+  - Links citados: /folha-de-pagamento-digital/, /controle-de-ponto-digital/, /solucoes/departamento-pessoal/, /saude-ocupacional/, /modulo-de-nr-1/, /planos-e-precos-completos/
+- https://solides.com.br/folha-de-pagamento-digital/ — aberta (WebFetch, resumo): eSocial "a IA re-checa as obrigações dentro do fluxo da folha"; rescisão "o cálculo da rescisão ficam centralizadas"; férias como integração; NÃO aparecem: 13º, INSS/IRRF/FGTS, holerite, provisões. Relatórios só indiretos.
+- https://solides.com.br/controle-de-ponto-digital/ — aberta (WebFetch, resumo): banco de horas (10+ opções); registro digital com precisão de segundos, offline com sincronização; app, web e WhatsApp; geolocalização GPS e reconhecimento facial; marcações enviadas automaticamente à folha; "mais de 30 relatórios automatizados"
+- https://solides.com.br/solucoes/departamento-pessoal/ — aberta (WebFetch, resumo): Admissão (envio de documentos, WhatsApp, assinatura eletrônica, API); GED com alertas de vencimento; Gestão de Férias integrada ao Controle de Ponto, férias coletivas; Folha "até 25x mais rápido"; "Integração ao eSocial" listada como item da Folha. NÃO aparecem: 13º, rescisão
+- https://solides.com.br/saude-ocupacional/ — aberta (WebFetch, resumo): ASO (agendamento em rede de 1.200+ clínicas, laudo digital); PGR (mapa de riscos por setor e função); PCMSO (módulo de gestão); eSocial SST: geração e envio automático dos eventos S-2220 e S-2240, validação antes do envio; laudos digitais; NR
+- https://solides.com.br/modulo-de-nr-1/ — aberta (WebFetch, resumo): riscos psicossociais; pesquisas; dashboards em tempo real; alertas de risco; relatórios; histórico auditável; envio S-2240 ao eSocial; geração de PGR com laudo assinado. Planos de ação não descritos explicitamente.
+- Não encontrado: subpáginas dedicadas a eSocial, rescisão, 13º (confirmado: nenhum link)
+
+=====================================================================
+5. PRODUTOS NOVOS
+=====================================================================
+
+[ADP Brasil]
+- https://br.adp.com/ — aberta (WebFetch, resumo). Itens: Folha de pagamento (/o-que-oferecemos/folha-de-pagamento.aspx) "Gestão e tecnologia para folha de pagamento com mais controle sobre cálculos"; HCM (/o-que-oferecemos/hcm-human-capital-management.aspx) "payroll data, HR administration, talent, time, personnel"; Controle de Ponto (/o-que-oferecemos/ponto-e-frequencia.aspx) "gerencie solicitações de férias" e integração com folha; Gestão da força de trabalho; Gestão de Talentos; Insights de RH; Serviços de RH (BPO); Folha SaaS (/folha-de-pagamento/software.aspx); BPO Folha (/folha-de-pagamento/servicos-terceirizacao.aspx); Folha global; ADP eXpert e ADP Global Payroll (só nome, sem descrição). NÃO aparecem: 13º, rescisão, eSocial, SST.
+- Snippet: br.adp.com/conteudo/insights/... "Folha de pagamento" (cálculos de folha e impostos) — snippet
+- Snippet b2bstack ADP Expert vs Senior — snippet (terceiro)
+- Não aberta: página de produto ADP eXpert (/produtos/adp-expert.aspx) e subpáginas por porte.
+
+[Nasajon (Persona / Pessoas)]
+- https://nasajon.com.br/ — aberta (WebFetch, resumo). Persona: aparece como case; módulo "Gestão de Pessoal" (RH, DP em um sistema) com folha integrada a Ponto, Avaliação e Portal; eSocial citado como atualização do Ponto e da Folha; SST NÃO aparece; folha contratável separadamente junto com Fiscal, Contábil, Financeiro. Links específicos ausentes ("#").
+- https://nasajon.com.br/folha-de-pagamento-conheca-o-erp-persona-usado-pelos-hoteis-windsor/ — aberta (WebFetch, resumo): Persona descrito como ERP de folha; 13º NÃO aparece; férias e rescisão via "Meu RH" (solução complementar); eSocial mencionado em depoimento de cliente ("envio de eSocial"); IRRF na lista de obrigações (GPS/GRFC citados, INSS/FGTS não nomeados); "Ponto Web" produto separado (registro pelo celular, geolocalização, reconhecimento facial); SST NÃO; holerite NÃO por nome (recibos e guias).
+- Snippet: indeed.com/cmp/Nasajon — vaga "Product Manager — Folha de Pagamento" (indica produto de folha) — snippet
+
+[Metadados]
+- https://www.metadados.com.br/solucoes/departamento-pessoal — aberta (WebFetch, resumo): Folha de Pagamento (precisão, "integração nativa com o eSocial e encargos", relatórios); Remunerações (previsão de custos, pesquisa salarial, tabelas); Ponto (jornada, banco de horas, abonos, registro pelo celular); EasyMOB (ponto online/offline, geolocalização, selfie ou biometria); Portal do RH (férias, banco de horas, ponto, EPIs); Benefícios Corporativos (integrados à folha; vale-transporte, auxílio-alimentação); Assinatura Eletrônica; Admissão Digital; Analytics (turnover, absenteísmo, painéis de riscos trabalhistas); SST (treinamentos, PCMSO, PGR, afastamentos, rastreamento de EPIs). NÃO aparecem: 13º, rescisão. Links de CTA levam a formulário, sem subpágina por módulo.
+- https://www.metadados.com.br/moduloesocial — aberta (WebFetch, resumo): "envio correto dos eventos" (FAQ); integração com eSocial evita redigitação; envios automatizados; mudanças de cargo/promoção enviadas à folha; SST como módulo ligado à folha com alertas de exames periódicos; S-1.3 NÃO mencionado na página; 13º, rescisão e férias NÃO aparecem.
+- Snippet: metadados.com.br/blog/versao-1-3-do-esocial (S-1.3 com novo layout para DP) — snippet
+- Snippet: "Flow" como nome do sistema de DP (busca) — snippet
+
+[Contabilizei / Sage]
+- Contabilizei: https://www.contabilizei.com.br/ — aberta (WebFetch, resumo): nenhum item de folha, DP, eSocial, RH, ponto, férias ou 13º. Só menção genérica a "obrigações ... trabalhistas" na FAQ de mensalidade. Não há produto de folha próprio descrito; serviço contábil.
+- Sage (Brasil): busca "Sage Gestão RH folha eSocial Brasil" — resultados só Portugal (sage.com/pt-pt/sage-business-cloud/hr/) — snippet. Nenhum produto Sage de folha/eSocial BR encontrado. Não aberta a página Sage pt-pt.
+
+[Rhid / Control iD]
+- https://www.controlid.com.br/ — aberta (WebFetch, resumo): relógios de ponto (facial, biométrico, proximidade, código de barras, Portaria 373, software de apuração de ponto, software de ponto mobile); controle de acesso (facial, biométrico, proximidade, senha, UHF, catraca, controladoras, software). NÃO aparecem na home: RHiD, iDCloud, eSocial, SST, integração com folha.
+- Snippet: controlid.com.br/manual/rhid-datasheet.pdf — RHiD sincroniza nativamente com REPs Control iD via iDCloud (bidirecional); demais fabricantes via arquivo AFD — snippet (não aberto)
+- Snippet: controlid.com.br/suporte/manual_rhid (manual) — RHiD gera arquivo para importar no sistema de folha; layouts para sistemas de folha citados — snippet (não aberto; cópia Scribd não lida)
+- Snippet: documentação Senior — REP-P homologado para folha Senior via driver Control iD — snippet
+- Nota: manuais em snippet têm datas 2020-2023.
+
+[Secullum]
+- https://www.secullum.com.br/ — aberta (WebFetch, resumo): Secullum RH (produto de gestão de pessoas para RH e DP); Ponto (reconhecimento facial, assinatura eletrônica, cálculos); Central do funcionário (app: consulta ponto, ajustes, assinatura de documentos); Controle de férias (avisos e períodos aquisitivos, evitar conflitos de datas); Gestão de arquivos; Secullum Card (conta digital/multibenefícios); Auditoria preventiva por IA; menu: Sistemas de Acesso, Produtos Descontinuados (sem descrição). NÃO aparecem: folha, Mini Folha, integração com folha, SST, eSocial, 13º, rescisão.
+- Snippet: secullum.com.br/docs/portugues/WebFolderPontoSecullum4.pdf e ApresentacaoPontoSecullum4.pdf — Ponto Secullum 4 exporta cálculos para folha; interface com folha gerando TXT — snippet (não aberto)
+- Snippet: secullum.com.br/docs/portugues/WebFolderMiniFolhaNet.pdf — Mini Folha.Net integra com Ponto Secullum 4; a própria Secullum diz que não substitui folha completa — snippet (não aberto)
+
+[Nexti]
+- https://nexti.com/ — aberta (WebFetch, resumo; página com lorem ipsum em algumas FAQs): Controle de Jornada (ponto eletrônico facial, escalas automáticas, gestão de afastados; "atestados e férias") — https://nexti.com/rh-operacional/ ; Admissão (coleta e validação de documentos, assinatura de contrato, prontuário eletrônico) — https://nexti.com/rs-e-admissao/ ; Apuração de Horas e Benefícios (banco de horas, benefícios), Benefícios Corporativos (Nexti Flex). Folha: sem descrição de módulo; cita integração com sistemas de folha (TOTVS, Senior, ADP). Demissão não mencionada. eSocial, SST, EPI, 13º, rescisão: NÃO aparecem.
+- Snippet b2bstack (diretório, não Nexti): lista Folha de Pagamento como funcionalidade de Nexti — snippet (https://www.b2bstack.com.br/product/nexti/funcionalidades)
+
+[Feedz]
+- https://www.feedz.com.br/ — HTTP 301 para https://totvs.com/feedz; https://totvs.com/feedz — HTTP 402 (Payment Required). INACESSÍVEL via WebFetch.
+- Snippet: https://www.feedz.com.br/blog/?p=75707 — blog oficial: módulo novo de DP que digitaliza o DP e integra com RH; importar holerites e distribuir com um clique; colaborador acessa holerites — snippet (não aberto)
+- Snippet: b2bstack comparativo — preço inicial R$ 380,00/mês (pode estar desatualizado) — snippet
+- SST na Feedz: não encontrado em nenhuma fonte acessada
+
+=====================================================================
+RESUMO DE CONTAGEM (abertos vs snippet / inacessível)
+=====================================================================
+- Odoo/OCA/KMEE/Akretion/Engenere: ~24 itens abertos (gh api: repos, branches, manifests, READMEs); ~8 snippet/listagem apenas (16.0-18.0 l10n_br_hr e contract; odoo-brazil-esocial conteúdo vazio). Inacessível: KMEE l10n_br_hr_allowance (404 em 8.0-develop); odoo-brazil-esocial contents (listagem vazia). Akretion/Engenere: sem repo de payroll/hr encontrado; listagem Engenere truncada em 30.
+- ERPNext/Frappe: 2 abertos (frappe/hrms README, search/code 0); 4 snippet (ERPNext_Brazil_NF, erpnext_brasil, frappe-translations-pt-br, fórum Frappe NF-e, ecosire). Nenhuma localização BR de folha encontrada.
+- Convenia: 3 abertos (home, /gestao-de-folha-de-pagamento, /departamento-pessoal) + /gestao-da-informacao (aberta, 4 abertos no total); inacessível: /folha-de-pagamento, /esocial, /rescisao, /ferias, /13-salario, /decimo-terceiro (404). Página de ponto não aberta nesta rodada.
+- Solides: 6 abertos (produtos/folha-digital; folha-de-pagamento-digital; controle-de-ponto-digital; solucoes/departamento-pessoal; saude-ocupacional; modulo-de-nr-1); planos-e-precos-completos não aberto.
+- ADP: 1 aberto (home); 2 snippet; subpáginas não abertas.
+- Nasajon: 2 abertos (home; case Persona); 1 snippet.
+- Metadados: 2 abertos (solucoes/departamento-pessoal; moduloesocial); 2 snippet.
+- Contabilizei: 1 aberto (home; sem folha). Sage BR: 0 abertos; 1 snippet (só Portugal).
+- Control iD: 1 aberto (home); 3 snippet (datasheet RHiD, manual RHiD, Senior driver).
+- Secullum: 1 aberto (home); 2 snippet (PDFs Ponto 4, Mini Folha.Net).
+- Nexti: 1 aberto (home); 1 snippet (b2bstack).
+- Feedz: 0 abertos; 2 snippet (blog ?p=75707; b2bstack preço). feedz.com.br e totvs.com/feedz: inacessíveis (301 e 402).
+
+Notas de método
+- WebFetch devolve resumo produzido por modelo; citações entre aspas nesta rodada são do resumo, não do texto original. Para citação literal, reabrir por gh/curl.
+- gh search repos (endpoint /search) retornou vazio para várias consultas; usado search/repositories via gh api.
+- Nenhum item foi classificado ou comparado; fatos crus.
