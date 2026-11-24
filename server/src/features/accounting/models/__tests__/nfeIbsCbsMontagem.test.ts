@@ -1,4 +1,4 @@
-import { LEGAL_PARAMS_SEED_FILE_IBS_CBS, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { LEGAL_PARAMS_SEED_FILE_IBS_CBS, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL_V2, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { SemLinhaVigenteError } from '../../../legalParameters/models/legalParameter';
 import { NfeIbsCbsSchema, NfeIbsCbsTotSchema } from '../../dtos/NfeIbsCbsDto';
 import { tabelaIbsCbsDe } from '../ibsCbsParams';
@@ -10,7 +10,8 @@ import { aliquotasIbsCbsVigentes, baseIbsCbsCents, ibsCbsDoProduto, montarIbsCbs
  */
 const tabela = tabelaIbsCbsDe(legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_IBS_CBS));
 const DIA = '2026-10-27';
-const aliq2026 = aliquotasIbsCbsVigentes(tabela, DIA);
+const marcos = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL_V2);
+const aliq2026 = aliquotasIbsCbsVigentes(tabela, DIA, marcos);
 const produto = (cst: string, cClassTrib: string, mod: 55 | 65 = 65) => {
   const r = ibsCbsDoProduto('p1', { ibsCbsCst: cst, ibsCbsClassTrib: cClassTrib }, mod, DIA);
   if ('faltantes' in r) throw new Error(r.faltantes.join(' | '));
@@ -23,7 +24,7 @@ describe('aliquotasIbsCbsVigentes — tabela legal IBS_CBS (UB18/UB37/UB56)', ()
   });
 
   it('2027: a CBS de referência não tem linha publicada ⇒ 400 nomeado (SemLinhaVigenteError)', () => {
-    expect(() => aliquotasIbsCbsVigentes(tabela, '2027-02-01')).toThrow(SemLinhaVigenteError);
+    expect(() => aliquotasIbsCbsVigentes(tabela, '2027-02-01', marcos)).toThrow(SemLinhaVigenteError);
   });
 });
 
