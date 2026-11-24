@@ -68,7 +68,7 @@ function build(opts: { existing?: FiscalProfile | null; canManage?: boolean; reg
     setAppliedSnapshot: jest.fn(async () => ({ id: 'pv-1' })),
   } as unknown as IAccountingPolicyVersionRepository;
   return {
-    svc: new FiscalProfileService(repo, accounts, policy, audit, companyRepo, assignmentRepo, policyVersionRepo),
+    svc: new FiscalProfileService(repo, accounts, policy, audit, companyRepo, assignmentRepo, policyVersionRepo, legalParamsSemente),
     repo, append, companyRepo, accounts,
   };
 }

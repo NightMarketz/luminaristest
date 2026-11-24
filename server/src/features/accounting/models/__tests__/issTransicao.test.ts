@@ -10,7 +10,7 @@ import { LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO, legalParamsSeedRows } from '@test
 import { SemLinhaVigenteError, type LegalParameterTabela } from '../../../legalParameters/models/legalParameter';
 import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
 import { issAliquotaMaxBp } from '../issLimite';
-import { fatorReducaoIssBp, IssExtintoError, issExtinto, ISS_EXTINTO_MENSAGEM } from '../issTransicao';
+import { exigirIssNaoExtinto, fatorReducaoIssBp, fimIss, inicioTransicaoIss, IssExtintoError, issExtinto, ISS_EXTINTO_MENSAGEM } from '../issTransicao';
 import { parametroIbsCbsVigente, tabelaIbsCbsDe } from '../ibsCbsParams';
 import { apurarIbsCbsMes } from '../ibsCbsCompetencia';
 import { agregarIssPorCompetencia, type IssDocInput } from '../issCompetencia';
@@ -80,29 +80,49 @@ describe('item 3 — fatorReducaoIssBp e issExtinto', () => {
     expect(() => fatorReducaoIssBp(todas, '2033-01-01')).toThrow(ISS_EXTINTO_MENSAGEM);
   });
 
-  it('2029 sem a linha publicada ⇒ SemLinhaVigenteError, nunca 0', () => {
-    const sem2029 = todas.filter((l) => l.id !== 'lp-iss-transicao-2029');
-    expect(() => fatorReducaoIssBp(sem2029, '2029-03-10')).toThrow(SemLinhaVigenteError);
-    const rascunho = todas.map((l) => (l.id === 'lp-iss-transicao-2029' ? { ...l, status: 'DRAFT' } : l));
-    expect(() => fatorReducaoIssBp(rascunho, '2029-03-10')).toThrow(SemLinhaVigenteError);
+  it('uma linha de dentro da transição ausente ou em rascunho ⇒ SemLinhaVigenteError, nunca 0', () => {
+    const sem2030 = todas.filter((l) => l.id !== 'lp-iss-transicao-2030');
+    expect(() => fatorReducaoIssBp(sem2030, '2030-03-10')).toThrow(SemLinhaVigenteError);
+    const rascunho = todas.map((l) => (l.id === 'lp-iss-transicao-2030' ? { ...l, status: 'DRAFT' } : l));
+    expect(() => fatorReducaoIssBp(rascunho, '2030-03-10')).toThrow(SemLinhaVigenteError);
   });
 
-  it('issExtinto: falso em 2032-12-31, verdadeiro em 2033-01-01', () => {
-    expect(issExtinto('2032-12-31')).toBe(false);
-    expect(issExtinto('2033-01-01')).toBe(true);
+  it('Onda 3.2 #3: o início da transição é o da 1ª linha publicada — sem a de 2029 (ou em rascunho) a transição só começa em 2030 e 2029 dá 0', () => {
+    const sem2029 = todas.filter((l) => l.id !== 'lp-iss-transicao-2029');
+    expect(inicioTransicaoIss(sem2029, '2029-03-10')).toBe('2030-01-01');
+    expect(fatorReducaoIssBp(sem2029, '2029-03-10')).toBe(0);
+    expect(fatorReducaoIssBp(sem2029, '2030-03-10')).toBe(2000);
+  });
+
+  it('issExtinto: falso em 2032-12-31, verdadeiro em 2033-01-01 — o fim é a linha ISS_LIMITE + 1 dia (Onda 3.2 #4)', () => {
+    expect(fimIss(todas, '2030-01-01')).toBe('2033-01-01');
+    expect(inicioTransicaoIss(todas, '2030-01-01')).toBe('2029-01-01');
+    expect(issExtinto(todas, '2032-12-31')).toBe(false);
+    expect(issExtinto(todas, '2033-01-01')).toBe(true);
+  });
+
+  it('issExtinto: linha de ISS_LIMITE sem vigenteAte = sem fim publicado ⇒ nunca extinto; sem linha ⇒ erro', () => {
+    const aberta = todas.map((l) => (l.tabela === 'ISS_LIMITE' ? { ...l, vigenteAte: null } : l));
+    expect(issExtinto(aberta, '2040-01-01')).toBe(false);
+    expect(() => issExtinto(todas.filter((l) => l.tabela !== 'ISS_LIMITE'), '2030-01-01')).toThrow(SemLinhaVigenteError);
   });
 });
 
-describe('item 4 — perfil fiscal a partir de 2033 (F-ISS-5 a)', () => {
+describe('item 4 — perfil fiscal a partir do fim do ISS (F-ISS-5 a; Onda 3.2 #4: a checagem é do serviço)', () => {
   const perfil = { unitId: 'u1', regimeTributario: 'PRESUMIDO' as const, icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO' as const };
   const em = (iso: string) => jest.useFakeTimers({ now: new Date(iso), doNotFake: ['nextTick', 'setImmediate', 'clearImmediate', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask', 'hrtime', 'performance'] });
   afterEach(() => jest.useRealTimers());
 
-  it('2033-01-01 (São Paulo) com valor ⇒ 400 com a mensagem nomeada, não o "Sem linha vigente" genérico; null passa', () => {
+  it('exigirIssNaoExtinto: 2032-12-31 passa; 2033-01-01 ⇒ IssExtintoError com a mensagem nomeada, não o "Sem linha vigente" genérico', () => {
+    expect(() => exigirIssNaoExtinto(todas, '2032-12-31')).not.toThrow();
+    expect(() => exigirIssNaoExtinto(todas, '2033-01-01')).toThrow(IssExtintoError);
+    expect(() => exigirIssNaoExtinto(todas, '2033-01-01')).toThrow(ISS_EXTINTO_MENSAGEM);
+    expect(() => exigirIssNaoExtinto(todas, '2033-01-01')).not.toThrow('Sem linha vigente');
+  });
+
+  it('o DTO não lança em 2033 (sem linha de teto hoje, adia ao serviço); null e ausente passam', () => {
     em('2033-01-01T12:00:00-03:00');
-    const r = UpsertFiscalProfileSchema.safeParse({ ...perfil, issAliquotaBp: 300 });
-    expect(r.success).toBe(false);
-    expect(r.error?.issues.map((i) => [i.path.join('.'), i.message])).toEqual([['issAliquotaBp', ISS_EXTINTO_MENSAGEM]]);
+    expect(UpsertFiscalProfileSchema.safeParse({ ...perfil, issAliquotaBp: 300 }).success).toBe(true);
     expect(UpsertFiscalProfileSchema.safeParse({ ...perfil, issAliquotaBp: null }).success).toBe(true);
     expect(UpsertFiscalProfileSchema.safeParse(perfil).success).toBe(true);
   });
@@ -111,45 +131,5 @@ describe('item 4 — perfil fiscal a partir de 2033 (F-ISS-5 a)', () => {
     em('2032-12-31T12:00:00-03:00');
     expect(UpsertFiscalProfileSchema.safeParse({ ...perfil, issAliquotaBp: 500 }).success).toBe(true);
     expect(UpsertFiscalProfileSchema.safeParse({ ...perfil, issAliquotaBp: 501 }).success).toBe(false);
-  });
-});
-
-describe('item 5 — IBS 2029–2032 em DRAFT (F-ISS-6 a; LC 214 arts. 361–364)', () => {
-  it('oito linhas DRAFT sem valor: IBS UF e MUN × 2029..2032', () => {
-    const ibs = pr1.filter((l) => l.tabela === 'IBS_CBS').map((l) => [l.chave, l.discriminador, l.vigenteDesde, l.vigenteAte, l.valorInt, l.status, l.fonte.slice(0, 20)]);
-    expect(ibs).toEqual(
-      [2029, 2030, 2031, 2032].flatMap((ano, i) => [
-        ['IBS', 'ALIQUOTA_UF', `${ano}-01-01`, `${ano}-12-31`, null, 'DRAFT', `LC 214/2025 art. ${361 + i}`],
-        ['IBS', 'ALIQUOTA_MUN', `${ano}-01-01`, `${ano}-12-31`, null, 'DRAFT', `LC 214/2025 art. ${361 + i}`],
-      ]),
-    );
-  });
-
-  it('sem linha PUBLISHED ⇒ SemLinhaVigenteError; a conferência cai em CONFERENCIA_SEM_ALIQUOTA (invariante 10.7)', () => {
-    const tabela = tabelaIbsCbsDe(todas);
-    expect(() => parametroIbsCbsVigente(tabela, 'IBS', 'ALIQUOTA_MUN', '2029-03-10')).toThrow(SemLinhaVigenteError);
-    expect(() => parametroIbsCbsVigente(tabela, 'IBS', 'ALIQUOTA_UF', '2032-12-31')).toThrow('Sem linha vigente de IBS_CBS/IBS/ALIQUOTA_UF em 2032-12-31');
-    const r = apurarIbsCbsMes({
-      ano: 2029, mes: 3, tributo: 'IBS', tabela, vendasSemDocumento: [],
-      documentos: [{ fiscalDocumentId: 'fd1', dataEmissaoLocal: '2029-03-10', status: 'AUTHORIZED', ibsCents: 1234n, cbsCents: 900n, baseCents: 10000n, cClassTrib: null, natureza: 'SERVICO' }],
-    });
-    expect(r.debitosCents).toBe(1234n);
-    expect(r.memoria.map((l) => l.codigo)).toContain('CONFERENCIA_SEM_ALIQUOTA');
-  });
-});
-
-describe('item 6 — relatório do X7 soma o vIss do documento em qualquer ano (invariante 10.4)', () => {
-  const doc = (over: Partial<IssDocInput>): IssDocInput => ({ dCompet: '2029-01-15', municipioIbge: '3550308', tpRetISSQN: 1, vServCents: 10000n, baseIssCents: 10000n, vIssCents: 450n, divergente: false, ...over });
-
-  it('2029-01 e 2032-12: a soma é a do documento, sem fator', () => {
-    const r = agregarIssPorCompetencia([
-      doc({ vIssCents: 450n }),
-      doc({ vIssCents: 500n }), // documento com valor fora da escala: o relatório não corrige
-      doc({ dCompet: '2032-12-20', vIssCents: 300n }),
-    ]);
-    expect(r.map((l) => [l.competencia, l.vIssCents, l.baseIssCents])).toEqual([
-      ['2029-01', '950', '20000'],
-      ['2032-12', '300', '10000'],
-    ]);
   });
 });

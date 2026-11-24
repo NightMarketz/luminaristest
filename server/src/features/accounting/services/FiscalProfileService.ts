@@ -9,6 +9,10 @@ import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFi
 import { regimeUnidadeEsperado } from '../models/regimeEmpresa';
 import type { RegimeEmpresa } from '../models/regimeEmpresa';
 import { scopeToday } from '../models/dates';
+import { exigirIssNaoExtinto } from '../models/issTransicao';
+import { issAliquotaMaxBp } from '../models/issLimite';
+import { hojeDateOnly } from '../../legalParameters/models/hoje';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { AuditService } from './AuditService';
 import type { IAccountantAssignmentRepository } from '../repositories/IAccountantAssignmentRepository';
 import type { IAccountingPolicyVersionRepository } from '../repositories/IAccountingPolicyVersionRepository';
@@ -227,6 +231,8 @@ export class FiscalProfileService {
     // GOV-CONTADOR política versionada (item 13): gate do PUT com contador ativo + versão APPLIED.
     private readonly assignmentRepo: IAccountantAssignmentRepository,
     private readonly policyVersionRepo: IAccountingPolicyVersionRepository,
+    // Onda 3.2 #4: o fim do ISS (LC 214 art. 543 IV) é a linha de ISS_LIMITE, não literal — a checagem do PUT lê a fotografia.
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   /** Regime da empresa no ano corrente (fuso do escopo), ou `null` sem perfil da empresa naquele ano. */
@@ -353,6 +359,14 @@ export class FiscalProfileService {
     input: FiscalProfilePolicyPayload,
     tx?: Prisma.TransactionClient,
   ): Promise<RegimeEmpresa | null> {
+    // Onda 3.2 #4 (ISS-TRANSICAO-IBS PR-1 item 4; F-ISS-5 a): alíquota de ISS informada a partir do fim do ISS ⇒ 400 nomeado
+    // (o DTO deixa passar quando não há linha vigente da ISS_LIMITE); sem linha vigente do teto fora disso ⇒ fail-closed.
+    if (input.issAliquotaBp != null) {
+      const hoje = hojeDateOnly();
+      const limite = await this.legalParams.fotografia(['ISS_LIMITE']);
+      exigirIssNaoExtinto(limite, hoje);
+      issAliquotaMaxBp(limite, hoje);
+    }
     if (input.icmsRecuperavelAccountId) await this.assertAssetAccount(scope, input.icmsRecuperavelAccountId, 'ICMS a recuperar', tx);
     if (input.pisCofinsRecuperavelAccountId) await this.assertAssetAccount(scope, input.pisCofinsRecuperavelAccountId, 'PIS/COFINS a recuperar', tx);
     // Lacuna 038d (dono 21/11, D-2026-11-21-DRE-INSUMO-PELO-PAPEL item 3): qualquer folha de despesa serve — a DRE classifica o

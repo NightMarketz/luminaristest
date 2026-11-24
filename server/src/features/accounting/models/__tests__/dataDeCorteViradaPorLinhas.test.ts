@@ -51,7 +51,7 @@ describe('#4 FIM_ISS — o fim do ISS é o vigenteAte da ISS_LIMITE/ALIQUOTA_MAX
 
   it('DTO do perfil fiscal: com o fim da ISS_LIMITE adiado, 2033-06-01 não é recusado pelo DTO (a data é da linha)', () => {
     const original = linhasEmCacheSincrono('ISS_LIMITE');
-    const adiada = mudaDatas(original as LinhaLegal[], ehMaxIss, (l) => ({ vigenteAte: l.vigenteAte ? ano(l.vigenteAte, 1) : l.vigenteAte })) as unknown as typeof original;
+    const adiada = mudaDatas(original as unknown as LinhaLegal[], ehMaxIss, (l) => ({ vigenteAte: l.vigenteAte ? ano(l.vigenteAte, 1) : l.vigenteAte })) as unknown as typeof original;
     storePublished('ISS_LIMITE', adiada);
     jest.useFakeTimers({ now: new Date('2033-06-01T12:00:00-03:00'), doNotFake: ['nextTick', 'setImmediate', 'clearImmediate', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask', 'hrtime', 'performance'] });
     try {

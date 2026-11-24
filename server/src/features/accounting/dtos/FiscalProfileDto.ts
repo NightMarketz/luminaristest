@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { isLc116Codigo, listaLc116DoCache } from '../models/lc116ListaNacional';
 import { issAliquotaMaxBpDoCache } from '../models/issLimite';
-import { ISS_EXTINTO_MENSAGEM, issExtinto } from '../models/issTransicao';
+import { SemLinhaVigenteError } from '../../legalParameters/models/legalParameter';
 import { hojeDateOnly } from '../../legalParameters/models/hoje';
 
 /**
@@ -126,9 +126,17 @@ const FiscalProfileFields = z
       .int()
       .min(0)
       .superRefine((v, ctx) => {
+        // Onda 3.2 #4: o fim do ISS (ISS_EXTINTO) é da linha de ISS_LIMITE, decidido no serviço (`exigirIssNaoExtinto`,
+        // que também falha fechado sem linha). O DTO só confere o teto quando HÁ linha vigente hoje; sem ela, adia ao serviço.
         const hoje = hojeDateOnly();
-        if (issExtinto(hoje)) ctx.addIssue({ code: 'custom', message: ISS_EXTINTO_MENSAGEM });
-        else if (v > issAliquotaMaxBpDoCache(hoje)) ctx.addIssue({ code: 'custom', message: 'issAliquotaBp acima do máximo da tabela ISS_LIMITE (pAliq [312]; RN E0595)' });
+        let max: number;
+        try {
+          max = issAliquotaMaxBpDoCache(hoje);
+        } catch (e) {
+          if (e instanceof SemLinhaVigenteError) return;
+          throw e;
+        }
+        if (v > max) ctx.addIssue({ code: 'custom', message: 'issAliquotaBp acima do máximo da tabela ISS_LIMITE (pAliq [312]; RN E0595)' });
       })
       .nullable()
       .optional(),

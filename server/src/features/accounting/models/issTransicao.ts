@@ -1,5 +1,5 @@
 import { ValidationError } from '../../../lib/errors';
-import { linhaLegalVigente, SemLinhaVigenteError, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import { diaSeguinteAoFimDeVigencia, inicioDeVigencia, linhaLegalVigente, SemLinhaVigenteError, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 
 /**
  * ISS-TRANSICAO-IBS PR-1 (BRIEF `docs/accounting/BE-INCR-ISS-TRANSICAO-IBS-brief.md` item 3) — fator de redução do ISS
@@ -8,8 +8,19 @@ import { linhaLegalVigente, SemLinhaVigenteError, type LinhaLegal } from '../../
  * incluído pela LC 214 art. 508 (10/20/30/40% de 2029 a 2032 sobre a alíquota municipal de 31/12/2028); LC 116 revogada a
  * partir de 01/01/2033 (LC 214 art. 543 IV; art. 544 V). Quem aplica o fator é o PR-2 (F-ISS-1), não este arquivo.
  */
-export const INICIO_TRANSICAO_ISS = '2029-01-01';
-export const FIM_ISS = '2033-01-01';
+export function inicioTransicaoIss(linhas: readonly LinhaLegal[], dataConsultada: string): string {
+  return inicioDeVigencia(linhas, 'ISS_TRANSICAO', 'FATOR_REDUCAO_BP', dataConsultada);
+}
+
+/**
+ * Onda 3.2 (#3 e #4; dono, chat, 24/11/2026) — as datas de corte do ISS NÃO são literais: o início da transição é o menor
+ * `vigenteDesde` de `ISS_TRANSICAO` (LC 116 art. 8º-B, linhas 2029–2032) e o fim do ISS é o dia seguinte ao maior
+ * `vigenteAte` de `ISS_LIMITE/ALIQUOTA_MAX_BP` (LC 214 art. 543 IV: 2032-12-31 ⇒ 2033-01-01). Virar o ano é publicar linha.
+ * Sem linha ⇒ `ParametroLegalAusenteError` (fail-closed); linha sem `vigenteAte` ⇒ `null` (sem fim publicado).
+ */
+export function fimIss(linhas: readonly LinhaLegal[], dataConsultada: string): string | null {
+  return diaSeguinteAoFimDeVigencia(linhas, 'ISS_LIMITE', 'ALIQUOTA_MAX_BP', dataConsultada);
+}
 
 /** Item 4 (F-ISS-5 a) — a mensagem do 400 do perfil fiscal e do erro abaixo. */
 export const ISS_EXTINTO_MENSAGEM = 'ISS extinto a partir de 01/01/2033 (LC 214 art. 543 IV): deixe a alíquota de ISS em branco';
@@ -23,14 +34,27 @@ export class IssExtintoError extends ValidationError {
   }
 }
 
-export function issExtinto(data: string): boolean {
-  return data >= FIM_ISS;
+/** `linhas` = fotografia que contém `ISS_LIMITE` (o fim vem da linha, não de literal). */
+export function issExtinto(linhas: readonly LinhaLegal[], data: string): boolean {
+  const fim = fimIss(linhas, data);
+  return fim !== null && data >= fim;
 }
 
-/** 0 antes de 2029; a linha vigente de 2029 a 2032; sem linha publicada nesse intervalo ⇒ `SemLinhaVigenteError`, nunca 0. */
+/**
+ * PUT do perfil fiscal com alíquota de ISS (ISS-TRANSICAO-IBS PR-1 item 4; F-ISS-5 a): o fim do ISS vem da `ISS_LIMITE`, e o
+ * DTO estático não decide sobre ele (Onda 3.2 #4) — a checagem é do serviço, com a mesma mensagem nomeada.
+ */
+export function exigirIssNaoExtinto(linhas: readonly LinhaLegal[], hoje: string): void {
+  if (issExtinto(linhas, hoje)) throw new IssExtintoError(hoje);
+}
+
+/**
+ * 0 antes do início da transição; a linha vigente na transição; sem linha publicada nesse intervalo ⇒ `SemLinhaVigenteError`,
+ * nunca 0. `linhas` carrega `ISS_TRANSICAO` e `ISS_LIMITE` (início e fim vêm das linhas).
+ */
 export function fatorReducaoIssBp(linhas: readonly LinhaLegal[], data: string): number {
-  if (issExtinto(data)) throw new IssExtintoError(data);
-  if (data < INICIO_TRANSICAO_ISS) return 0;
+  if (issExtinto(linhas, data)) throw new IssExtintoError(data);
+  if (data < inicioTransicaoIss(linhas, data)) return 0;
   const l = linhaLegalVigente(linhas, 'ISS_TRANSICAO', 'FATOR_REDUCAO_BP', data);
   if (l?.valorInt == null) throw new SemLinhaVigenteError('ISS_TRANSICAO', data, 'FATOR_REDUCAO_BP');
   return l.valorInt;

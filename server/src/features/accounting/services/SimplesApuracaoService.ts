@@ -46,7 +46,7 @@ import { alertasDeInterdependencia, alertasDeParceria, alertasDeProjecao, receit
 import type { IIssBeneficioMunicipalRepository } from '../repositories/IIssBeneficioMunicipalRepository';
 import { beneficioDaAtividade, excecaoPisoIss, type BeneficioCadastrado } from '../models/issBeneficio';
 import { issAliquotaMinBp } from '../models/issLimite';
-import { INICIO_TRANSICAO_ISS, issExtinto } from '../models/issTransicao';
+import { inicioTransicaoIss, issExtinto } from '../models/issTransicao';
 import { toBeneficio } from './IssBeneficioMunicipalService';
 import { TABELA_ANEXO_XI, anexoXiVigente, cnaesForaDoAnexo, enquadramentoDasOcupacoes, transportadorNaTabelaB, ocupacoesExcluidas, type OcupacaoAnexoXi } from '../models/meiAnexoXi';
 import type { IssBeneficioTipo } from '../dtos/IssBeneficioMunicipalDto';
@@ -65,7 +65,7 @@ export const SIMPLES_DAS_SUBSTITUIDO = 'tax.simples_das.substituido';
 /** BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-8 (a): documento anexado a um DAS já registrado (ramo idempotente). */
 export const SIMPLES_DAS_DOCUMENTO_ANEXADO = 'tax.simples_das.documento_anexado';
 
-const TABELAS: readonly LegalParameterTabela[] = ['SIMPLES_ANEXO_FAIXA', 'SIMPLES_ANEXO_REPARTICAO', 'SIMPLES_TETO_ISS', 'SIMPLES_ENQUADRAMENTO', 'SIMPLES_LIMITE', 'ISS_LIMITE'];
+const TABELAS: readonly LegalParameterTabela[] = ['SIMPLES_ANEXO_FAIXA', 'SIMPLES_ANEXO_REPARTICAO', 'SIMPLES_TETO_ISS', 'SIMPLES_ENQUADRAMENTO', 'SIMPLES_LIMITE', 'ISS_LIMITE', 'ISS_TRANSICAO'];
 
 export type { AlertaSimples, CodigoAlertaSimples } from '../dtos/SimplesDto';
 /** Última competência em que a ME/EPP ainda pode usar documento municipal (NFS-e nacional obrigatória desde 01/11/2026). */
@@ -656,16 +656,18 @@ export class SimplesApuracaoService {
       beneficios.set(`${e.natureza}|${e.cTribNac ?? ''}`, b);
       if (b.tipo === 'VALOR_FIXO') {
         alertas.push({ severity: 'INFO', codigo: 'ISS_VALOR_FIXO_MUNICIPAL', detalhe: `serviço ${e.cTribNac}: valor fixo municipal de ISS (${b.legislacao}) — fora do cálculo do DAS (Res. CGSN 140 arts. 31 II e 33)` });
-      } else if (!issExtinto(dataPa)) {
+      } else if (!issExtinto(linhas, dataPa)) {
         pisoIssBp ??= issAliquotaMinBp(linhas, dataPa);
         e.beneficioIss = { tipo: b.tipo, reducaoBpPorFaixa: b.reducaoBpPorFaixa, pisoIssBp };
       }
     }
     // Item 12: benefício que começou antes de 2029 e segue vigente em 01/01/2029 — aviso (não bloqueio) no PA 2029-01 com a
     // regra aplicada (P-ISS-2 → ramo § 3º do ADCT art. 128: o percentual do benefício fica mantido até 31/12/2032).
-    if (competencia === INICIO_TRANSICAO_ISS.slice(0, 7)) {
+    // Onda 3.2 #3: o 1º dia da transição é o da linha ISS_TRANSICAO (hoje 2029-01-01), lido só quando há benefício.
+    const inicioTransicao = beneficios.size > 0 ? inicioTransicaoIss(linhas, dataPa) : null;
+    if (inicioTransicao !== null && competencia === inicioTransicao.slice(0, 7)) {
       for (const b of new Set(beneficios.values())) {
-        if (b.vigenteDesde >= INICIO_TRANSICAO_ISS || (b.vigenteAte !== null && b.vigenteAte < INICIO_TRANSICAO_ISS)) continue;
+        if (b.vigenteDesde >= inicioTransicao || (b.vigenteAte !== null && b.vigenteAte < inicioTransicao)) continue;
         alertas.push({
           severity: 'WARNING',
           codigo: 'BENEFICIO_ISS_TRANSICAO_8B',
