@@ -4,20 +4,20 @@ tipo: "plataforma"
 dominio: "plataforma"
 titulo: "Fronteira entre features (public/), peça fora de pasta de camada, job como entrypoint e posse de model do Prisma (ADR-MODULE-BOUNDARIES)"
 estado: "planned"
-estado_detalhe: "24/11: ADR-MODULE-BOUNDARIES Accepted (forks F-MB-1..12 ratificados; D-2026-11-24-MODULE-BOUNDARIES-FORKS, PR #1366) · 24/11: BRIEF de execução escrito (sessao-planejamento), com a medida nova na main d3f3a201c (M1 393, M1a 49, M2 879, J1 18, U8 11, U9 45; posse 138/146) e 11 forks novos F-MBE-1..11 com RATIFICAÇÃO PENDENTE · execução de código NÃO autorizada (falta 'executa'); nenhuma regra ligada, nenhum arquivo movido"
-depende_de: []
-autorizacao: "dono, 2026-11-24, questionário (AskUserQuestion) da sessão de planejamento: \"Sim, planejar o BRIEF\" — cobre o BRIEF, esta nota com write_set, a medida nova e um PR só de documentação. Não é 'executa' de nenhum PR do BRIEF. A ratificação dos forks F-MB-1..12 (dono, 2026-11-24, questionário; D-2026-11-24-MODULE-BOUNDARIES-FORKS) também não é 'executa'"
+estado_detalhe: "24/11: forks do BRIEF F-MBE-1..12 RATIFICADOS pelo dono por questionário ([[D-2026-11-24-MODULE-BOUNDARIES-BRIEF-FORKS]]): execução em duas branches de integração (backend e frontend), M2 por feature, regra M3 para public/, D2, reader com inTx, lint de posse com tipo, critério components × features (visual × lógica, peça mista sempre se divide) · 24/11: BRIEF de execução escrito (sessao-planejamento), com a medida nova na main d3f3a201c (M1 393, M1a 49, M2 879, J1 18, U8 11, U9 45; posse 138/146) · 24/11: ADR-MODULE-BOUNDARIES Accepted (forks F-MB-1..12; D-2026-11-24-MODULE-BOUNDARIES-FORKS, PR #1366) · execução de código NÃO autorizada (falta 'executa'); nenhuma regra ligada, nenhum arquivo movido"
+depende_de: ["[[D-2026-11-24-MODULE-BOUNDARIES-BRIEF-FORKS]]"]
+autorizacao: "dono, 2026-11-24, questionário (AskUserQuestion) da sessão de planejamento: \"Sim, planejar o BRIEF\" — cobre o BRIEF, esta nota com write_set, a medida nova e um PR só de documentação. Não é 'executa' de nenhum PR do BRIEF. A ratificação dos forks F-MB-1..12 (dono, 2026-11-24, questionário; D-2026-11-24-MODULE-BOUNDARIES-FORKS) também não é 'executa' · dono, 2026-11-24, chat: \"Sim, abrir forks\" — ratifica os forks F-MBE-1..12 do BRIEF por questionário (respostas literais na decisão); também não é 'executa'"
 ancora_sdd: "—"
 atualizado: "2026-11-24"
 prs: ["#1367"]
-perfil_previsto: "precisa-de-planejamento"
-perfil_evidencia: "11 forks F-MBE-1..11 pendentes (onde os PRs entram, tamanho do PR da M2, public/ × regras de camada, reader em transação, forma da regra de posse, destino de fixtures/ e do widget de chat); depois deles, PR-0/PR-1/PR-2 são mecânicos e o renome é diff grande de path"
+perfil_previsto: "opus-medio"
+perfil_evidencia: "forks F-MBE-1..12 decididos em 24/11; PR-0/PR-1/PR-2 são mecânicos (import e config), o renome é diff grande de path por feature, e reader/RuleDataAccess/posse têm contrato esboçado no BRIEF §5"
 write_set: ["docs/architecture/MODULE-BOUNDARIES-brief.md", "docs/adr/ADR-MODULE-BOUNDARIES.md", "server/src/features/*/public/**", "server/src/features/*/domain/**", "server/src/features/*/adapters/**", "server/src/features/dynamicTables/**", "server/src/features/analytics/**", "server/src/features/sectorKits/**", "server/src/features/accountingBinding/**", "server/src/features/interview/**", "server/src/features/crm/**", "server/src/features/fx/clients/**", "server/src/features/sales/services/**", "server/src/features/packages/services/**", "server/src/features/attachments/services/**", "server/src/features/chat/{models,repositories,services}/**", "server/src/features/accounting/{scope,sync,dfe,collection,audit,fixtures}/**", "server/src/features/accounting/models/{issLimite,lc116ListaNacional,outstandingLines}.ts", "server/src/features/accounting/repositories/{I,}AccountantAssignmentRepository.ts", "server/src/features/accounting/policies/IAccountingPolicy.ts", "server/src/jobs/**", "server/prisma-model-owners.cjs", "server/eslint-rules/**", "docs/architecture/lint-layer-gate.md", "docs/claude-skills/GENERATION_CONTRACTS.md", ".claude/skills/**", "scripts/{activate-salon-binding,anexo-iii-to-fixture,anexo-xi-to-fixture,classe-risco,ecf-tabelas-dinamicas-to-catalog}.mjs", "my-app/components/widgets/**", "my-app/components/layout/Navbar.tsx", "my-app/features/{dashboard,crm,chat,shell}/**", "my-app/pages/_app.tsx"]
 registros: ["server/.dependency-cruiser.cjs", "server/.dependency-cruiser-known-violations.json", "my-app/.dependency-cruiser.cjs", "my-app/.dependency-cruiser-known-violations.json", "docs/adr/ADR-ARCH-BOUNDARIES.md", "server/src/lib/factory.ts", "server/eslint.config.mjs", "CLAUDE.md"]
 ---
 # MODULE-BOUNDARIES — fronteira entre features, peça fora de camada, job como entrypoint, posse de model
 
-**Estado:** `planned` — 24/11: ADR-MODULE-BOUNDARIES Accepted (forks F-MB-1..12 ratificados; D-2026-11-24-MODULE-BOUNDARIES-FORKS, PR #1366) · 24/11: BRIEF de execução escrito (sessao-planejamento), com a medida nova na main d3f3a201c (M1 393, M1a 49, M2 879, J1 18, U8 11, U9 45; posse 138/146) e 11 forks novos F-MBE-1..11 com RATIFICAÇÃO PENDENTE · execução de código NÃO autorizada (falta 'executa'); nenhuma regra ligada, nenhum arquivo movido  
+**Estado:** `planned` — 24/11: forks do BRIEF F-MBE-1..12 RATIFICADOS pelo dono por questionário ([[D-2026-11-24-MODULE-BOUNDARIES-BRIEF-FORKS]]): execução em duas branches de integração (backend e frontend), M2 por feature, regra M3 para public/, D2, reader com inTx, lint de posse com tipo, critério components × features (visual × lógica, peça mista sempre se divide) · 24/11: BRIEF de execução escrito (sessao-planejamento), com a medida nova na main d3f3a201c (M1 393, M1a 49, M2 879, J1 18, U8 11, U9 45; posse 138/146) · 24/11: ADR-MODULE-BOUNDARIES Accepted (forks F-MB-1..12; D-2026-11-24-MODULE-BOUNDARIES-FORKS, PR #1366) · execução de código NÃO autorizada (falta 'executa'); nenhuma regra ligada, nenhum arquivo movido  
 **Autorização:** frontmatter. Cobre o BRIEF; cada PR de código pede o `executa` do dono.
 **Desbloqueia:** —
 
@@ -37,13 +37,15 @@ Medida de encapsulamento pedida pelo dono em 20/10 (ADR proposto) e ratificada p
 | `U9` (alvo `public/`) | 40 | 45 |
 | Posse: models com escrita / escritas fora de `repositories/` | 138 / exceções nomeadas | 138 / 15 chamadas + 1 SQL cru |
 
-## Forks pendentes (BRIEF §7)
+## Forks do BRIEF — ratificados em 24/11 ([[D-2026-11-24-MODULE-BOUNDARIES-BRIEF-FORKS]])
 
-F-MBE-1 onde os PRs entram (`main` × `integration/module-boundaries`) · F-MBE-2 tamanho do PR da `M2` (único × por feature) · F-MBE-3 `public/` cega `L2`/`L5`/`L6`/`M1a` (regra `M3`) · F-MBE-4 nome `D1` já em uso (`D2`) · F-MBE-5 `M2` × `paises/<cc>/` · F-MBE-6 destino de `accounting/fixtures/` · F-MBE-7 `DynamicTableReader` dentro de transação · F-MBE-8 widget de chat no frontend · F-MBE-9 feature do `Navbar` · F-MBE-10 como a regra de posse reconhece o Prisma · F-MBE-11 branches `modulos-base-pr5/pr6` × renome de `presets/`.
+F-MBE-1 branch de integração · F-MBE-2 `M2` por feature · F-MBE-3 regra `M3` para `public/` · F-MBE-4 `D2-domain-is-pure` · F-MBE-5 pastas de camada dentro de `paises/<cc>/` · F-MBE-6 `accounting/fixtures/` → `paises/br/domain/` · F-MBE-7 `DynamicTableReader.inTx(tx)` · F-MBE-8 chat em `features/chat/widgets/` · F-MBE-9 `Navbar` em `features/shell/` · F-MBE-10 lint de posse com tipo · F-MBE-11 renome de `dynamicTables` antes das branches `modulos-base-pr5/pr6` · F-MBE-12 duas integrações (backend e frontend). Critério do my-app: `components/` = visual, `features/` = lógica; peça mista sempre se divide.
+
+Falta o `executa` do dono. Primeiro comando da sessão de feature: BRIEF §12.
 
 ## Docs
 
-- BRIEF: [`MODULE-BOUNDARIES-brief.md`](../../architecture/MODULE-BOUNDARIES-brief.md) (24/11; forks F-MBE-1..11 pendentes, sem `executa`).
+- BRIEF: [`MODULE-BOUNDARIES-brief.md`](../../architecture/MODULE-BOUNDARIES-brief.md) (24/11; forks F-MBE-1..12 ratificados, sem `executa`).
 - ADR: [`ADR-MODULE-BOUNDARIES.md`](../../adr/ADR-MODULE-BOUNDARIES.md); mecânica do gate em [`ADR-ARCH-BOUNDARIES.md`](../../adr/ADR-ARCH-BOUNDARIES.md) §3–§5.
 - Decisão dos forks F-MB-1..12: `docs/plano/decisoes/D-2026-11-24-MODULE-BOUNDARIES-FORKS.md` (entra na `main` pelo PR #1366; o link de vault entra aqui no fold seguinte ao merge dele).
 - Vizinhos: [[PAIS-NA-BORDA]] (mesmos choke points, `paises/<cc>/`, `ChartOfAccountsFixture`), [[BUILDER-VERTICAIS]] (`dynamicTables/presets`).

@@ -2,12 +2,12 @@
 
 - **Data:** 2026-11-24 · **Sessão:** `sessao-planejamento` · **Nó:** [`MODULE-BOUNDARIES`](../plano/nos/MODULE-BOUNDARIES.md)
 - **Medido em:** `main` = `d3f3a201c` (24/11/2026). Os números do ADR (264, 45, 823, 16, 40) são de 20/10 (`310a92b4`).
-- **Estado:** BRIEF escrito, **11 forks novos com RATIFICAÇÃO PENDENTE** (§7). **Não é "executa"**: nenhuma regra ligada, nenhum arquivo movido, nenhum código escrito.
+- **Estado:** BRIEF escrito e **forks F-MBE-1..12 RATIFICADOS em 24/11/2026** (dono, questionário; §7 e [`D-2026-11-24-MODULE-BOUNDARIES-BRIEF-FORKS`](../plano/decisoes/D-2026-11-24-MODULE-BOUNDARIES-BRIEF-FORKS.md)). **Não é "executa"**: nenhuma regra ligada, nenhum arquivo movido, nenhum código escrito.
 
 ## TLDR (2 linhas)
 
 A dívida cresceu desde 20/10: `M1` 264 → **393** arestas entre features, `M1a` 45 → **49**, `M2` 823 → **879**, `J1` 16 → **18**, `U8` 3 → **11**, `U9` 40 → **45**. A regra de posse confere com o ADR (138 de 146 models com escrita; 1 exceção em feature).
-Risco principal: a medida abriu 11 decisões que o §10 do ADR não cobre (§7). Três delas mudam o desenho do que foi ratificado: o `DynamicTableReader` precisa de leitura dentro de transação (F-MBE-7), a pasta `public/` deixa as regras L2/L5/L6 cegas (F-MBE-3) e o PR único de renome toca 209 módulos em pastas com 5 PRs abertos (F-MBE-2).
+Risco principal: o dono decidiu executar em branch de integração (F-MBE-1 b), uma para o backend e outra para o frontend (F-MBE-12). A trava do server só chega à `main` quando o backend inteiro fechar; até lá a `main` segue sem a regra (sem trava, a `M1` cresceu 129 arestas em 35 dias) e o baseline é medido de novo no fechamento.
 
 ## 0. Contexto fixo
 
@@ -118,28 +118,28 @@ Baseline atual do my-app (23 entradas): `U2` 1 · `U3` 18 · `U7` 4. Sem mudanç
 
 ## 2. Fatiamento em PRs (ordem do ADR §10.3)
 
-A ordem abaixo supõe as recomendações dos forks F-MBE-1 (direto na `main`) e F-MBE-2 (renome por feature). Se o dono decidir diferente, as linhas PR-3.x e a coluna "base" mudam; o resto não.
+**Onde entram (F-MBE-1 b e F-MBE-12, ratificados):** duas branches de integração. `integration/module-boundaries-be` recebe PR-0 a PR-8 (pilha nativa, `gh stack init --base integration/module-boundaries-be`); `integration/module-boundaries-fe` recebe os PR-9.x. Cada uma vai para a `main` em **um** PR quando fecha. Dentro da integração a sessão que coordena o tema mergeia com CI verde; a coluna "classe" abaixo é a de cada PR da pilha, e o PR de fechamento `integration/module-boundaries-be` → `main` é vermelho com revisor obrigatório (toca `features/accounting/**`), então vai ao lote do dono. A `M2` entra por feature (F-MBE-2 c).
 
 Classe de risco: saída de `node scripts/classe-risco.mjs arquivos <lista prevista>` rodado em 24/11 para PR-0, PR-1b, PR-2, PR-2b, PR-3.x (`dynamicTables` e `sectorKits`), PR-4, PR-5, PR-6 e PR-9 (a/c); as outras linhas são **inferidas** dos mesmos globs. A lista de arquivos é a prevista, então a sessão de feature confirma com `node scripts/classe-risco.mjs pr <n>`.
 
 | PR | O quê | Efeito esperado (a medir no PR) | Classe esperada |
 |---|---|---|---|
-| **PR-0** (P0) | Como no ADR §4: repontar os 19 imports que só trazem `BindingScope`/`bindingScopeWhere`/`resolveBindingScope` (13 de `sectorKits`, 3 de `accountingBinding`, 3 de `jobs`) para `accountingBinding/scope/BindingScope.ts`; tirar o reexport da linha 6 do `IAccountingBindingRepository.ts`. Não cria `public/` (a forma dela depende do F-MBE-3); as 13 arestas de `sectorKits` continuam na `M1` | `L5` 4 → 0 · `M1a` 49 → 36 · `J1` 18 → 16 · `M1` 393 (igual) | vermelho, revisor obrigatório (`features/accountingBinding/**`) |
+| **PR-0** (P0) | Criar `accountingBinding/public/bindingScope.types.ts` (o tipo `BindingScope`, para as policies) e `accountingBinding/public/bindingScope.ts` (`bindingScopeWhere`, `resolveBindingScope`), no formato do F-MBE-3 (a). Repontar os 19 imports que só trazem esses nomes: os 13 de `sectorKits` e os 3 de `jobs` para `public/`, os 3 de `accountingBinding` para `../scope/BindingScope`. Tirar o reexport da linha 6 do `IAccountingBindingRepository.ts` | `L5` 4 → 0 · `M1a` 49 → 36 · `J1` 18 → 16 · `M1` 393 → 380 | vermelho, revisor obrigatório (`features/accountingBinding/**`) |
 | **PR-1a** (P1, accounting) | `ActiveAccountant` → `accounting/models/`; `outstandingLines` recebe as linhas (ou o tipo da linha em `models/`); `issLimite`/`lc116ListaNacional` recebem as linhas do parâmetro por argumento | `L4` 4 → 2 · `L6` 4 → 0 | vermelho, revisor obrigatório (`features/accounting/**`) |
 | **PR-1b** (P1, chat) | `KnowledgeGraphData` → `chat/models/` | `L4` 2 → 0 | verde |
-| **PR-2** (ligação única) | `M1a`, `M1`, `J1`, `D2` (nasce 0), `U8`, `U9` com baseline, nas duas configs; emenda datada no `ADR-ARCH-BOUNDARIES.md` §1/§2 e no `ADR-MODULE-BOUNDARIES.md` com baseline antes/depois; um plantio por regra (§4). Sem mover arquivo de feature | gate passa a barrar violação nova; `X3` 15 → 12 no arquivo (entradas já pagas) | vermelho, **revisor não** (só `.md` casa glob: `docs/adr/**`; a config do depcruise não está na lista — lacuna na caixa) |
+| **PR-2** (ligação única) | `M1a`, `M1`, `J1`, `D2` (nasce 0), `M3` (nasce 0) e o ajuste de `L5`/`L6` para `public/` (F-MBE-3 a), `U8`, `U9` com baseline, nas duas configs; emenda datada no `ADR-ARCH-BOUNDARIES.md` §1/§2 e no `ADR-MODULE-BOUNDARIES.md` com baseline antes/depois; um plantio por regra (§4). Sem mover arquivo de feature | gate passa a barrar violação nova; `X3` 15 → 12 no arquivo (entradas já pagas) | vermelho, **revisor não** (só `.md` casa glob: `docs/adr/**`; a config do depcruise não está na lista — lacuna na caixa) |
 | **PR-2b** | `JobWatermarkRepository.ts` → `src/jobs/repositories/` | `J1` −1 | verde |
 | **PR-3.x** (renome + `M2`) | Um PR por feature, na ordem do §3.3: move as pastas da tabela §5.3 e acrescenta a feature à `M2` no mesmo PR. O da `accounting` atualiza `I6` e (se o #1356 já estiver na `main`) `LEDGER_CORE_ALLOWED` da `C1` | `M2` 879 → 0 ao fim da série; `D2` cobre o que entrou em `domain/` | `dynamicTables`, `analytics`, `interview`, `crm`, `fx`: verde, salvo se tocar `.claude/**` (skills) → vermelho com revisor só se o arquivo de skill não for `.md` (`skill-audit/check-registries.mjs`). `sectorKits` (toca `kits/_shared/**`), `accountingBinding`, `accounting`: vermelho, revisor obrigatório |
 | **PR-4** (P3, motor) | `DynamicTableReader` em `dynamicTables/public/`; os 9 consumidores trocam o `IDynamicTableRepository` por ele; um teste de guarda de posse por chamador | `M1a` −9 · 13 comparações de guarda → 0 | vermelho, revisor obrigatório (`sales/services/SaleFiscalGuardService.ts` casa `features/**/*iscal*`) |
 | **PR-5** (F-MB-3 c) | `RuleDataAccess` em `rules/RuleTypes.ts`; `RuleContext.repository` → `RuleContext.data`; funções puras dos plugins → `dynamicTables/domain/` | contrato do plugin encolhe de 32 para 8 métodos; testes dos plugins sem mudança de asserção | verde |
-| **PR-6** (F-MB-11) | mapa `model → dona` + regra de lint + linha de exceção no `CLAUDE.md` raiz + emenda no ADR | baseline nominal do §1.4 | vermelho, revisor **não** se só `CLAUDE.md`/`docs/adr` casarem (`server/eslint.config.mjs` não está na lista) |
+| **PR-6** (F-MB-11) | mapa `model → dona` + regra de lint com informação de tipo (F-MBE-10 b; o PR mede o tempo do job de lint antes e depois) + linha de exceção no `CLAUDE.md` raiz + emenda no ADR | baseline nominal do §1.4 | vermelho, revisor **não** se só `CLAUDE.md`/`docs/adr` casarem (`server/eslint.config.mjs` não está na lista) |
 | **PR-7.x** (J1) | jobs passam por `lib/factory`, um PR por job ou grupo pequeno | `J1` 16 → 0 | job com `*ccounting*`/`*egalParams*`/`migratePlano*` no nome: vermelho, revisor obrigatório; os outros: verde |
 | **PR-8.x** (P3, resto) | `M1a` restante: `IUserRepository` 4, `legalParameters` 3, `chat` 3, `accounting` 6, demais; cada um cria a porta em `public/` da dona | `M1a` → 0 | por feature tocada (accounting/legalParameters: vermelho, revisor obrigatório) |
-| **PR-9.x** (P5, frontend) | (a) widgets de domínio para `features/*/widgets/` e o registro `dashboard-grid` para `features/dashboard/`; (b) `Navbar` para uma feature; (c) kit do dashboard: UI genérica → `components/`, contrato de dado → `lib/`, com Contrato §0 e skills no mesmo PR | `U3` 18 → 0 · `U8` 11 → 0 · `U9` 45 → ≤ 5 | (c) vermelho (`.claude/**` e, por repontar imports, `my-app/features/accounting/**`), revisor obrigatório; (a)/(b) verdes se não tocarem `features/accounting` |
+| **PR-9.x** (P5, frontend) | Pelo critério ratificado (§7.2: `components/` = só o visual, `features/` = a lógica; peça mista sempre se divide): (a) cada widget de domínio vira container em `features/<x>/widgets/` (`crm`, `chat`, `dashboard`) e parte visual em `components/`; o registro `dashboard-grid` vai para `features/dashboard/`; (b) `Navbar`: container em `features/shell/`, visual em `components/layout/`; (c) kit do dashboard: UI genérica → `components/`, contrato de dado → `lib/`, com Contrato §0 e skills no mesmo PR | `U3` 18 → 0 · `U8` 11 → 0 · `U9` 45 → ≤ 5 | (c) vermelho (`.claude/**` e, por repontar imports, `my-app/features/accounting/**`), revisor obrigatório; (a)/(b) verdes se não tocarem `features/accounting` |
 
 **`M1` não tem PR de pagamento próprio:** as 393 arestas caem conforme cada PR que cruza feature cria o arquivo em `public/` da feature alvo (consequência 2 da decisão). O ritmo de crescimento sem a trava foi de 264 → 393 em 35 dias.
 
-**`integration/<slug>`:** a regra do `CLAUDE.md` raiz (tema com 2+ PRs e arquivos em comum) manda usar `integration/module-boundaries`. A recomendação deste BRIEF é a exceção, e por isso é fork (F-MBE-1).
+**Fechamento da integração do backend:** antes do PR para a `main`, a branch absorve a `main` (merge), move para o destino os arquivos que a `main` criou nas pastas antigas, roda as configs e **regenera o baseline com a medida do dia** (as arestas que a `main` ganhou sem trava entram no baseline nesse momento; o diff do baseline mostra quantas). A emenda do ADR registra o número de 24/11, o da ligação dentro da integração e o do fechamento.
 
 ## 3. Janela do renome
 
@@ -169,6 +169,15 @@ Outros PRs em arquivos que este BRIEF toca fora do renome: `jobs/` em #1354, #13
 4. **`accounting`** por último (`dfe`, `sync`, `scope`, `collection`, `audit`, `fixtures`): é onde estão os 5 PRs abertos e a branch `integration/x10a`. Entra depois de #1356, #1358, #1353 e #1345 mergeados ou fechados; a `integration/x10a` (#1146, #1354) rebaseia por cima.
 5. **Regra de rebase:** quem está aberto numa pasta no dia do PR-3.x dela rebaseia por cima do renome. `git` segue o arquivo movido quando o conteúdo é igual; conflito só aparece em arquivo que o PR criou na pasta antiga, que o autor move para o destino da tabela §5.3. A `M2` ligada para a feature barra o arquivo novo na pasta antiga, então o erro aparece no `check:arch` do PR rebaseado.
 6. **Janela:** cada PR-3.x abre e mergeia no mesmo dia. Um PR de renome que fica aberto acumula conflito a cada merge na pasta.
+
+### 3.4 O que a branch de integração muda na janela (F-MBE-1 b, F-MBE-11 a)
+
+Os PR-3.x entram em `integration/module-boundaries-be`, não na `main`. Com isso:
+
+- A ordem do §3.3 se mantém (`dynamicTables` primeiro, `accounting` por último). As branches `modulos-base-pr5/pr6` rebaseiam por cima do renome depois que a integração fechar (F-MBE-11 a).
+- Os itens 5 e 6 do §3.3 passam a valer para o **fechamento**: quem está aberto contra a `main` numa pasta movida não rebaseia a cada PR-3.x; a integração absorve a `main` (merge) antes de cada PR-3.x e antes de fechar, e é nesse merge que o arquivo novo criado na pasta antiga é movido para o destino da tabela §5.3.
+- Depois do fechamento, todo PR aberto contra a `main` nas pastas movidas rebaseia uma vez, por cima do renome inteiro.
+- Quanto mais a integração do backend demora, maior o merge de absorção na `accounting` (5 PRs abertos lá em 24/11).
 
 ## 4. Prova de que cada regra morde (ADR §8 item 3, ajustado para `public/`)
 
@@ -223,7 +232,19 @@ const M2_FEATURES = '(dynamicTables)'; // cresce a cada PR-3.x; termina em [^/]+
   to: { path: '^features/[^/]+/', pathNot: ['^features/$1/', '^features/[^/]+/public/'] } },
 ```
 
-Com F-MBE-2 (a) (PR único), `M2_FEATURES` nasce como `[^/]+` e a linha some.
+`M2_FEATURES` cresce uma feature por PR-3.x (F-MBE-2 c) e termina como `[^/]+`. A regra de pureza nasce como `D2` (F-MBE-4 a). A `M3` e o ajuste de `L5`/`L6` (F-MBE-3 a):
+
+```js
+const FOREIGN_PUBLIC_EXEC = '^src/features/[^/]+/public/(?!.*\\.types\\.ts$)'; // public/ que não é *.types.ts
+{ name: 'M3-public-no-repository', severity: 'error',
+  from: { path: '^src/features/[^/]+/public/', pathNot: TEST },
+  to: { path: '/repositories/' } },
+// L5 e L6: o `to` de hoje ganha FOREIGN_PUBLIC_EXEC (policy e models/dtos não importam porta executável de outra feature)
+// lint (server/eslint.config.mjs), files: src/features/*/public/**:
+//   no-restricted-syntax → ExportAllDeclaration (`export *`) e ImportDeclaration sem specifier (`import './x'`)
+```
+
+O `(?!…)` da `FOREIGN_PUBLIC_EXEC` é esboço: a sessão de feature prova com o plantio do §4 que `public/x.types.ts` passa e `public/x.ts` reprova quando importado por uma policy.
 
 ### 5.2 `DynamicTableReader` e `RuleDataAccess`
 
@@ -269,7 +290,7 @@ export interface RuleContext { /* … */ data: RuleDataAccess; }
 | | `index.ts` | apagar ou `public/` | **não tem importador de produção em 24/11** (medido); confirmar como os processadores se registram antes de mexer |
 | `sectorKits` | `kits/` (16/40), `registry.ts` (1/11) | `domain/` | `kits/_shared/**` é vermelho na régua |
 | `accountingBinding` | `archetypes/` (8/8), `interpreter/` (3/5) | `domain/` | |
-| | `scope/` (1/7) | `models/` | os 19 imports repontados no PR-0 mudam de caminho de novo aqui (ou vão para `public/`, conforme o F-MBE-3) |
+| | `scope/` (1/7) | `models/` | os dois arquivos de `public/` criados no PR-0 passam a reexportar de `models/` |
 | | `runtime/` (1/3) | `services/` | |
 | | `fixtures/` (4/19) | `domain/` (F-MB-5 a) | antes: `computeCompiledFromHash` vira função pura |
 | `interview` | `{Interview,Customization,FieldCustomization}Service/` (19/35) | `services/<x>/` | dois `index.ts` sem importador de produção |
@@ -278,7 +299,8 @@ export interface RuleContext { /* … */ data: RuleDataAccess; }
 | | `sync/` (11/56) | serviço → `services/`; `AccountingSyncPort` → `ports/`; mappers → `domain/` | 5 mappers sem importador de produção |
 | | `dfe/` (15/54), `collection/` (2/5) | `*Port` → `ports/`; clientes/provedores → `adapters/` | `dfe` dobrou desde 20/10 (7 → 15); 3 arquivos sem importador de produção |
 | | `audit/` (2/3) | `domain/` | citado na `C1` do #1356 |
-| | `fixtures/` (1 `.ts`/29 + 2 `.json`) | **F-MBE-6** | conflito de destino com o PAIS-NA-BORDA |
+| | `fixtures/` (1 `.ts`/29 + 2 `.json`) | `accounting/paises/br/domain/` (F-MBE-6 a) | um movimento só. O `PostingService` importa o fixture e a `P1` proíbe o centro importar `paises/`: pede a porta do F-PBF1-7; sem ela no dia, a pasta fica no baseline da `M2` como etapa declarada |
+| | `paises/br/*.ts` soltos (4, se o #1356 já estiver na `main`) | `paises/br/adapters/` (F-MBE-5 a) | dentro de `paises/<cc>/` valem as pastas de camada |
 
 Cada PR-3.x repõe no mesmo diff os caminhos em texto que o `tsc` não vê (medida de 24/11 por `grep`): `.claude/skills/**` 18 arquivos, 124 ocorrências; `docs/claude-skills/GENERATION_CONTRACTS.md` 4; `scripts/` 5 arquivos (`activate-salon-binding.mjs`, `anexo-iii-to-fixture.mjs`, `anexo-xi-to-fixture.mjs`, `classe-risco.mjs`, `ecf-tabelas-dinamicas-to-catalog.mjs`); `server/.dependency-cruiser.cjs` 1 (`I6`); `governance/` 1; `docs/architecture/lint-layer-gate.md` 1. E 100 arquivos de `server/src` fora de `features/` (testes de integração, controllers, `lib/factory.ts`, jobs) importam as pastas movidas. ADRs e BRIEFs já ratificados (`docs/adr` 118 ocorrências, `docs/operating-manual` 45) são texto histórico e **não se reescrevem**.
 
@@ -307,7 +329,7 @@ Gate de cada PR que toca `.claude/skills/**`: `node .claude/skills/skill-audit/s
 ## 6. Checklist numerado (cada item testável sozinho)
 
 **PR-0**
-1. Nenhum arquivo importa `IAccountingBindingRepository` só para obter `BindingScope`/`bindingScopeWhere`/`resolveBindingScope`; todos apontam `accountingBinding/scope/BindingScope.ts`. Teste: `npm run check:arch:baseline` encolhe as 4 `L5`; o diff é só de caminho de import.
+1. Nenhum arquivo importa `IAccountingBindingRepository` só para obter `BindingScope`/`bindingScopeWhere`/`resolveBindingScope`: `sectorKits` e `jobs` apontam `accountingBinding/public/` (as policies, o arquivo `*.types.ts`); `accountingBinding` aponta `../scope/BindingScope`. Teste: `npm run check:arch:baseline` encolhe as 4 `L5`; o diff é de caminho de import mais os dois arquivos de `public/`, que só reexportam.
 2. O reexport saiu do `IAccountingBindingRepository.ts`; `npx tsc --noEmit` limpo.
 
 **PR-1a / PR-1b**
@@ -350,10 +372,40 @@ Gate de cada PR que toca `.claude/skills/**`: `node .claude/skills/skill-audit/s
 **PR-9.x (frontend; BRIEF `FE-INCR` próprio se o dono quiser separar — a casa separa BE de FE)**
 26. `U3` 18 → 0 e `U8` 11 → 0, baseline do my-app só encolhe.
 27. Canônicos do Contrato §0 movidos (não copiados): §0, `GENERATION_CONTRACTS.md` e golden refs no mesmo PR; `skill-audit` 0 findings; `npx tsc --noEmit` e `npm run test:types` no my-app; tela conferida contra build de produção.
+28. Toda peça mista dividida (§7.2): nenhum arquivo de `components/` importa `lib/services/` (`U8` em 0 sem exceção), e cada container em `features/<x>/` renderiza a parte visual que ficou em `components/`. O `Navbar` tem o container em `features/shell/` e `pages/_app.tsx` importa de lá.
 
-## 7. Forks novos — RATIFICAÇÃO PENDENTE
+**Regras e fechamento (decisões de 24/11)**
+29. `M3` em 0 e plantio do §4 mordendo; `L5`/`L6` reprovam policy ou model que importa `public/` executável de outra feature e aceitam `*.types.ts` (plantio e contraprova).
+30. Fechamento de cada integração: a `main` foi absorvida, nenhum arquivo `.ts` de produção sobrou nas pastas antigas (`M2` em 0 sem baseline), o baseline foi regenerado no dia e o diff dele está no PR de fechamento.
 
-Nenhum foi decidido. "F-MBE" = forks de **e**xecução do ADR-MODULE-BOUNDARIES (para não colidir com F-MB-1..12 nem com os F-MB de `D-2026-10-31-MODULOS-BASE-SUBMODULOS`).
+## 7. Forks — RATIFICADOS em 24/11/2026 (dono, questionário)
+
+Respostas literais em [`D-2026-11-24-MODULE-BOUNDARIES-BRIEF-FORKS`](../plano/decisoes/D-2026-11-24-MODULE-BOUNDARIES-BRIEF-FORKS.md). "F-MBE" = forks de **e**xecução do ADR-MODULE-BOUNDARIES (para não colidir com F-MB-1..12 nem com os F-MB de `D-2026-10-31-MODULOS-BASE-SUBMODULOS`).
+
+### 7.1 Decisões
+
+| Fork | Decisão | Recomendação seguida? |
+|---|---|---|
+| F-MBE-1 | **(b)** branch de integração | não |
+| F-MBE-2 | **(c)** `M2` por feature | sim |
+| F-MBE-3 | **(a)** regra `M3` + `L5`/`L6` ajustadas + lint em `public/` | sim |
+| F-MBE-4 | **(a)** `D2-domain-is-pure` | sim |
+| F-MBE-5 | **(a)** pastas de camada dentro de `paises/<cc>/` | sim |
+| F-MBE-6 | **(a)** `accounting/fixtures/` → `accounting/paises/br/domain/`, um movimento | sim |
+| F-MBE-7 | **(a)** `DynamicTableReader.inTx(tx)` | sim |
+| F-MBE-8 | **(a)** `features/chat/widgets/` (container), visual em `components/` | sim |
+| F-MBE-9 | `features/shell/` para o `Navbar` (container), visual em `components/layout/` | sim na pergunta original; na refeita a recomendação era deixar em `components/` |
+| F-MBE-10 | **(b)** lint com informação de tipo | sim |
+| F-MBE-11 | **(a)** o renome de `dynamicTables` primeiro | sim |
+| F-MBE-12 (novo, nasceu da resposta ao F-MBE-1) | duas integrações: backend e frontend | não (rec. era uma por etapa) |
+
+### 7.2 Critério components × features (my-app)
+
+Dono: *"Components deveriam ser o visual e em feature a lógica de frontend não?"* e, sobre a peça mista, *"Sempre divide em dois"*. `components/` = só o visual (recebe dado e ação por props ou contexto, nunca chama `lib/services/`); `features/<x>/` = a lógica de frontend (chama serviço, guarda estado de domínio); peça mista vira parte visual em `components/` e container na feature. Vale para os 11 casos da `U8` e revê o "widget de domínio mora em `features/<x>/widgets/`" do ADR §3: mora lá a lógica.
+
+Leitura do agente, a confirmar na execução: no `Navbar`, "Vai para features/shell/" somado a "Sempre divide em dois" dá o container em `features/shell/` e o visual em `components/layout/`.
+
+### 7.3 Proposta original (de 24/11, para registro; as recomendações abaixo são as da pergunta, não a decisão)
 
 | Fork | Caminhos | Recomendação |
 |---|---|---|
@@ -416,7 +468,7 @@ Ids na nota do nó e no corpo do PR.
 
 Por PR (globs; arquivo novo = caminho literal):
 
-- **PR-0:** `server/src/features/accountingBinding/{policies,repositories}/**`, `server/src/features/sectorKits/{repositories,services,policies}/**`, `server/src/jobs/{installSectorKitCli,upgradeSectorKitsCli,migratePlano4NiveisCli}.ts`
+- **PR-0:** `server/src/features/accountingBinding/public/bindingScope.ts`, `server/src/features/accountingBinding/public/bindingScope.types.ts`, `server/src/features/accountingBinding/{policies,repositories}/**`, `server/src/features/sectorKits/{repositories,services,policies}/**`, `server/src/jobs/{installSectorKitCli,upgradeSectorKitsCli,migratePlano4NiveisCli}.ts`
 - **PR-1a/1b:** `server/src/features/accounting/{models,repositories,policies,services}/**`, `server/src/features/chat/{models,repositories,services}/**`
 - **PR-2/2b:** as duas configs, os dois baselines, os dois ADRs, `docs/claude-skills/GENERATION_CONTRACTS.md`, `.claude/skills/**`, `server/src/jobs/repositories/JobWatermarkRepository.ts`
 - **PR-3.x:** `server/src/features/{dynamicTables,analytics,sectorKits,accountingBinding,interview,crm,fx,accounting}/**`, `server/src/{controllers,jobs,__tests__,lib}/**` (só path de import), `.claude/skills/**`, `scripts/{activate-salon-binding,anexo-iii-to-fixture,anexo-xi-to-fixture,classe-risco,ecf-tabelas-dinamicas-to-catalog}.mjs`, `governance/**`, `docs/architecture/lint-layer-gate.md`
@@ -430,13 +482,15 @@ Por PR (globs; arquivo novo = caminho literal):
 
 ## 12. Primeiro comando da sessão de feature
 
-Depois do "executa" do dono e dos forks F-MBE-1..4 decididos (os que o PR-0 e o PR-2 usam):
+Depois do "executa" do dono (os forks já estão decididos):
 
 ```
 node scripts/worktree-deps.mjs && cd server && npm run check:arch
 ```
 
 Tem de sair 0 com "27 known violations ignored" (ou o número do dia) antes de qualquer edição: é a linha de base contra a qual o PR-0 prova `L5` 4 → 0.
+
+Em seguida, a branch de integração do backend (F-MBE-1 b): `git fetch origin && git switch -c integration/module-boundaries-be origin/main && git push -u origin integration/module-boundaries-be`, e a pilha com `gh stack init --base integration/module-boundaries-be`.
 
 ## Gates de envio [OPS-001]
 
