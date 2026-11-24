@@ -31,7 +31,7 @@ export const FiscalDocumentListQuerySchema = z
     unitId: z.string().min(1),
     saleId: z.string().optional(),
     status: z
-      .enum(['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED', 'PENDING_SIGNATURE', 'CONTINGENCY', 'CANCEL_ANALYSIS'])
+      .enum(['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED', 'PENDING_SIGNATURE', 'CONTINGENCY', 'CANCEL_ANALYSIS', 'DENIED'])
       .optional(), // AUTHORIZED_DIVERGENT: F-MAN-2 (c); PENDING_SIGNATURE: F-PSC-6 a; CANCEL_ANALYSIS: X11 PR-3 (F-EVT-4 b)
     // item 30 (PR-3): true = só documentos com pendências (sale_cancelled_with_live_document |
     // cancelled_without_replacement). `queryBoolean()`, nunca `z.coerce.boolean()` (memória
@@ -184,7 +184,7 @@ export const LacunaDeNumeracaoSchema = z
     serie: z.number().int(),
     numero: z.string().regex(/^\d+$/),
     documentId: z.string().nullable(),
-    status: z.enum(['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED', 'PENDING_SIGNATURE', 'CONTINGENCY']).nullable(),
+    status: z.enum(['SENT', 'PROCESSING', 'AUTHORIZED', 'AUTHORIZED_DIVERGENT', 'REJECTED', 'CANCELLED', 'PENDING_SIGNATURE', 'CONTINGENCY', 'DENIED']).nullable(),
     avisos: z.array(z.string()),
     presuncao: z.string().optional(),
   })
