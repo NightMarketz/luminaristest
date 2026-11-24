@@ -1,24 +1,6 @@
 [
   {
     "type": "dependency",
-    "from": "src/features/accounting/repositories/AccountantAssignmentRepository.ts",
-    "to": "src/features/accounting/policies/IAccountingPolicy.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L4-repository-is-the-floor"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/accounting/repositories/IAccountantAssignmentRepository.ts",
-    "to": "src/features/accounting/policies/IAccountingPolicy.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L4-repository-is-the-floor"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/chat/repositories/IKnowledgeGraphRepository.ts",
     "to": "src/features/chat/services/KnowledgeGraphService.ts",
     "rule": {
@@ -48,24 +30,6 @@
     "type": "dependency",
     "from": "src/features/accounting/models/lc116ListaNacional.ts",
     "to": "src/features/legalParameters/services/legalParameterCache.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L6-model-dto-are-leaves"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/accounting/models/outstandingLines.ts",
-    "to": "src/features/accounting/repositories/IPayableRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L6-model-dto-are-leaves"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/accounting/models/outstandingLines.ts",
-    "to": "src/features/accounting/repositories/IReceivableRepository.ts",
     "rule": {
       "severity": "error",
       "name": "L6-model-dto-are-leaves"

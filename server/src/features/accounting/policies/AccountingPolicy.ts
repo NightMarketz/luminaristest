@@ -1,5 +1,6 @@
 import type { AccountingScope } from '../scope/AccountingScope';
-import type { ActiveAccountant, IAccountingPolicy } from './IAccountingPolicy';
+import type { IAccountingPolicy } from './IAccountingPolicy';
+import type { ActiveAccountant } from '../models/AccountantAssignment.model';
 import type { PolicyTarget } from '../models/AccountingPolicyVersion.model';
 
 /**

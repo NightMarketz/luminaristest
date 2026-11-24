@@ -10,7 +10,7 @@
 import type { Prisma } from 'generated/prisma';
 import { AccountantRequiredError, PolicyApprovalRequiredError, PolicyNoAccountantError } from '../../../../lib/errors';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
-import type { ActiveAccountant } from '../../policies/IAccountingPolicy';
+import type { ActiveAccountant } from '../../models/AccountantAssignment.model';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 import type { IAccountantAssignmentRepository } from '../../repositories/IAccountantAssignmentRepository';

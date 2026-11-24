@@ -8,3 +8,12 @@ export const ACCOUNTANT_ASSIGNMENT_ENDED = 'accountant_assignment.ended';
 
 /** `endReason` gravado quando o aceite de um novo contador encerra o anterior (item 7). */
 export const ASSIGNMENT_SUPERSEDED_REASON = 'SUPERSEDED';
+
+/** Atribuição ACTIVE do contador responsável, como a policy a enxerga (BE-INCR-ACCOUNTANT-GOVERNANCE §4.2). */
+export interface ActiveAccountant {
+  id: string;
+  ownerUserId: string; // = AccountantAssignment.userId
+  unitId: string;
+  accountantUserId: string;
+  crcNumber: string; // snapshot normalizado
+}
