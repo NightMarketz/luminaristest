@@ -1,11 +1,11 @@
 [
   {
     "rule": "JOB-005",
-    "corrected": "happy-2: `absent:getFactory(` tropeçava no comentário 'jobs do NOT go through getFactory()'. Trocado por `absent-code:getFactory(` (ignora comentário; falha só se o job realmente chamar a factory).",
-    "assertion": "absent-code:getFactory(",
+    "corrected": "happy-2 (2026-11-24, regra J1): o job passa pelo getFactory() e não importa lib/prisma. Assertion `absent-code:lib/prisma` (ignora comentário; falha só se o job realmente importar o singleton). Antes de 24/11 a regra era o inverso (`absent-code:getFactory(`).",
+    "assertion": "absent-code:lib/prisma",
     "file": "chunk.ts",
-    "good": "// jobs do NOT use getFactory()\nimport prisma from '../lib/prisma';\nexport async function run(): Promise<void> { await prisma.actionProposal.deleteMany({ where: {} }); }",
-    "bad": "import { getFactory } from '../lib/factory';\nexport async function run(): Promise<void> { const f = getFactory(); await f.proposalService.purge(); }"
+    "good": "// jobs do NOT import lib/prisma\nimport { getFactory } from '../lib/factory';\nexport async function run(): Promise<void> { await getFactory().getProposalService().purgeExpired(); }",
+    "bad": "import prisma from '../lib/prisma';\nexport async function run(): Promise<void> { await prisma.actionProposal.deleteMany({ where: {} }); }"
   },
   {
     "rule": "JOB-007",

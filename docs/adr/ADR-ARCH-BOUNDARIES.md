@@ -241,8 +241,8 @@ sem arquivo de sonda).
   `L2`, `I6`, `X1` e `J1`.
 - `PUBLIC_EXEC` não distingue a feature de origem: uma policy que importa o `public/` executável da **própria** feature
   também reprova (medido no plantio). Dentro da feature o import vai direto ao arquivo de camada.
-- `export *` e import por efeito colateral em `public/` (a parte de lint do F-MBE-3 a) não estão barrados: o BRIEF
-  não atribui essa regra a nenhum PR (lacuna `L-20261124-193620-f833`). A `M3` vê a aresta de um `export *` que
-  aponta para `repositories/`, mas não barra o `export *` em si.
+- `export *` e import por efeito colateral em `public/` não são vistos aqui: o dependency-cruiser enxerga a aresta,
+  não a forma do `export`. Quem barra é o lint do server, regra R6 de `server/eslint.config.mjs`
+  (`docs/architecture/lint-layer-gate.md` §R6; F-MBE-3 a; dono, questionário, 24/11: "No PR-2").
 - O baseline do my-app foi gerado no Windows, com o `node_modules` resolvido pela junção do depósito. O resultado que
   vale é o do CI (Linux).

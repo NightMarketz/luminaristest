@@ -16,7 +16,7 @@ metadata:
 
 ## Purpose
 
-Gera jobs de background em `server/src/jobs/` ou fixtures de seed em `my-app/features/dev/seed/modules/`. Jobs usam Prisma diretamente (sem factory) para operações de manutenção.
+Gera jobs de background em `server/src/jobs/` ou fixtures de seed em `my-app/features/dev/seed/modules/`. Job é ponto de entrada: pega o service pelo `getFactory()` e o chama; não importa `lib/prisma` nem repository de feature (regra `J1` do `npm run check:arch`). Prisma direto fica só no seed de volume em `server/scripts/`.
 
 ## Contrato obrigatório
 
@@ -28,7 +28,7 @@ Antes de gerar, leia `.claude/skills/_ARCHITECTURE-CONTRACT.md` — as regras cr
 - [ ] **[JOB-002] Seeds tagueiam os registros** — cada registro semeado leva `data.__demo = true`; no início, o seed apaga os `__demo` anteriores (`findMany` → filtra `r.data.__demo === true` → `deleteMany`) antes de reinserir. Sem tag + cleanup, duplica a cada execução.
 - [ ] **[JOB-003] Cron/agendamento explícito** — se o job roda periodicamente, registrar a chamada/agendamento no boot (`server.ts`) com o intervalo documentado. Se é one-shot, declarar isso.
 - [ ] **[JOB-004] Log e alerta no padrão dos schedulers** (Contrato §2.4, OBS-R2/R5/R9/R11; espelhe `server/src/jobs/PtaxRateScheduler.ts`) — a mensagem é a constante `const JOB = '<nome_do_job>'`, nunca texto interpolado; toda linha sai por `log.event(nível, '<evento>', JOB, { job: JOB, ...métricas })` com evento do catálogo `LOG_EVENTS` (`server/src/lib/logEvents.ts`: `job.scheduled`, `job.completed`, `job.skipped`, `job.failed`…), com `log` injetado (tipo `EventLogger`, default `logger`); `alert` é injetado com default `sendAlertWebhook` (`../lib/alertWebhook`) e, no `catch` do `runOnce`, o job registra `job.failed` com `{ error }` (a borda, OBS-R5), dispara `alert({ source, event: 'job_failed', timestamp, job: JOB, error })` e relança; a `source` nova entra em `AlertPayload.source` na mesma mudança; teste de falha com `run`/`log`/`alert` falsos prova que o alerta sai e o erro sobe (caso em `server/src/jobs/__tests__/schedulerFailureAlert.test.ts`).
-- [ ] **[JOB-005] Prisma direto é aceitável em script de seed/job — mas documentar** que bypassa factory, schema-validation, rules/plugins e policy. Anotar no topo do arquivo o que está sendo contornado.
+- [ ] **[JOB-005] Job em `server/src/jobs/` não importa `lib/prisma` nem repository de feature** (regra `J1-job-is-entrypoint` do `npm run check:arch`; `docs/adr/ADR-MODULE-BOUNDARIES.md` §11): o job pega o service pelo `getFactory()` (`import { getFactory } from '../lib/factory'`) e chama o service. Acesso a dado que só o job faz mora em `server/src/jobs/repositories/`. **Prisma direto continua aceitável só em seed de volume (`server/scripts/seed-*-demo.js`), e documentado:** anotar no topo do script que ele bypassa factory, schema-validation, rules/plugins e policy.
 - [ ] **[JOB-006] Guard de produção em seed:** `if (process.env.NODE_ENV === 'production') throw/return` no topo. Seed de volume é dev-only, standalone (nunca endpoint), escopado a um `userId` resolvido por `--email`.
 - [ ] **[JOB-007] Resolver tabelas/pais por `internalName`/`id`, nunca por `[0]`** — a API ordena `createdAt desc` e o `prisma.findMany` default difere; posição não é estável.
 - [ ] **[JOB-008] Cobrir a variabilidade que a view ramifica** (seed): múltiplos status/scores, **>1 registro-pai** (ex.: 2 pipelines) e datas passadas/futuras — é assim que se pega bug de view (colunas duplicadas de Kanban) escondido por dados happy-path.
@@ -47,7 +47,8 @@ Antes de gerar, leia `.claude/skills/_ARCHITECTURE-CONTRACT.md` — as regras cr
 ## Repository patterns to inspect first
 
 ```
-server/src/jobs/PurgeDeletedRecords.ts                  ← background job (Prisma direto)
+server/src/jobs/PtaxRateScheduler.ts                    ← background job pelo factory (`getFactory().get…Service()`), o molde
+server/src/jobs/PurgeDeletedRecords.ts                  ← ⚠️ importa `lib/prisma`: dívida no baseline da `J1` até o PR-7.x do BRIEF MODULE-BOUNDARIES — NÃO espelhe o acesso a dado
 server/scripts/seed-crm-demo.js                         ← seed de VOLUME idempotente (Prisma direto)
 my-app/features/dev/seed/                               ← seed fixtures via API (SeedService + módulos Seed*.ts)
 server/src/lib/logger.ts
@@ -63,7 +64,7 @@ server/src/lib/logger.ts
 
 1. Arquivo: `server/src/jobs/<JobName>.ts`
 2. Exportar named async function: `export async function run<JobName>(): Promise<void>`
-3. Usar `prisma` diretamente — jobs não passam pelo factory
+3. Pegar o service pelo `getFactory()` (`import { getFactory } from '../lib/factory'`) e chamar o service — o job não importa `lib/prisma` nem repository de feature (`J1`). A chamada entra por dependência injetada com esse default (como o `sync` do `PtaxRateScheduler`). Leitura ou escrita que só o job faz: repository em `server/src/jobs/repositories/`
 4. Logging (JOB-004): `const JOB = '<nome_do_job>'` como mensagem e `log.event('info', 'job.completed', JOB, { job: JOB, affected: N })` (`warn` se parcial); `job.skipped`/`job.scheduled` pelo mesmo `log.event`; `log` injetado com default `logger`. Nada de `logger.info('Job started')`/`'Job completed'` nem mensagem interpolada
 5. Error handling (JOB-004): `alert` injetado com default `sendAlertWebhook`; no `catch` do `runOnce`, `log.event('error', 'job.failed', JOB, { job: JOB, error })` + `alert({ source: '<fonte>', event: 'job_failed', timestamp, job: JOB, error })` + `throw error`; `<fonte>` entra em `AlertPayload.source`; teste de falha em `jobs/__tests__/schedulerFailureAlert.test.ts`
 6. Registrar chamada em `server.ts` se agendado no boot
@@ -99,17 +100,18 @@ server/scripts/seed-<dominio>-demo.js                   ← NEW (seed de volume,
 
 ```bash
 cd server && npx tsc --noEmit
+cd server && npm run check:arch   # J1: job não importa lib/prisma nem repository
 ```
 
 ## Anti-patterns
 
-- Não use `getFactory()` em jobs — crie acesso Prisma direto
+- Não importe `lib/prisma` nem repository de feature em job — a `J1` do `check:arch` barra; use `getFactory()` e chame o service
 - Não esqueça logging de início e fim com métricas
 - Seeds de dev não devem rodar em produção — guard com `if (process.env.NODE_ENV === 'production') return`
 - Seed de volume sem marca `__demo` + cleanup = duplica a cada execução; sempre torne idempotente
 - Não resolva tabelas/pais por posição de array (`[0]`) — a ordenação da API (`createdAt desc`) difere do `findMany`; resolva por `internalName`/`id`
 - Não deixe um job periódico sem agendamento registrado no boot — declarar o cron/intervalo, senão o job nunca roda
-- Não use Prisma direto sem documentar o bypass — anote no topo que pula factory/validação/rules/policy (aceitável em seed/job, mas explícito)
+- Não use Prisma direto sem documentar o bypass — anote no topo que pula factory/validação/rules/policy (aceitável só em seed de volume em `server/scripts/`, e explícito)
 - Não escreva seed de volume idempotente sem cleanup dos `__demo` anteriores — re-rodar tem que ser seguro; sem isso, duplica
 
 ## Lacunas e débitos (OPS-007)

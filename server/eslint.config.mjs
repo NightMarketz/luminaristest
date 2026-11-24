@@ -33,6 +33,42 @@ const EXPRESS = {
   message: 'Layer boundary (contrato §2): Service não importa Express (sem req/res). HTTP fica no Controller.',
 };
 
+/**
+ * OBS-R8 — `.catch(...)` silencioso (ADR-OBSERVABILIDADE, F-OBS-13 a). Constante porque o bloco de `public/` mais
+ * abaixo redefine `no-restricted-syntax` para os arquivos dele e precisa repetir estes seletores.
+ */
+const SILENT_CATCH = [
+  "ArrowFunctionExpression[body.type='Literal']",
+  "ArrowFunctionExpression[body.type='Identifier'][body.name='undefined']",
+  "ArrowFunctionExpression[body.type='UnaryExpression'][body.operator='void']",
+  "ArrowFunctionExpression[body.type='BlockStatement'][body.body.length=0]",
+].map((arrow) => ({
+  selector: `CallExpression[callee.property.name='catch'] > ${arrow}.arguments`,
+  message:
+    'OBS-R8 (ADR-OBSERVABILIDADE): `.catch` silencioso. Registre com logger.warn({ error }) ou acima; se o erro ' +
+    'é tratado por outro caminho, suprima com `-- SANCTIONED: <por quê>` e declare no bloco debt-ledger.',
+}));
+
+/**
+ * R6 — `public/` de feature é lista explícita (ADR-MODULE-BOUNDARIES §11, F-MBE-3 a).
+ * `export *` esconde o que a feature expõe; import por efeito colateral (`import './x'`) executa código de quem só
+ * queria um nome.
+ */
+const PUBLIC_EXPLICIT = [
+  {
+    selector: 'ExportAllDeclaration',
+    message:
+      'R6 (ADR-MODULE-BOUNDARIES §11): `export *` em public/ de feature. Reexporte por nome: ' +
+      "`export { x } from '../models/…'` ou `export type { T } from …`.",
+  },
+  {
+    selector: 'ImportDeclaration[specifiers.length=0]',
+    message:
+      'R6 (ADR-MODULE-BOUNDARIES §11): import por efeito colateral em public/ de feature. public/ só expõe nomes; ' +
+      'registro e bootstrap ficam fora dela.',
+  },
+];
+
 export default tseslint.config(
   {
     ignores: ['dist/**', 'generated/**', 'node_modules/**', 'coverage/**', '**/*.js', '**/*.mjs'],
@@ -85,20 +121,16 @@ export default tseslint.config(
     ignores: ['src/jobs/*Cli.ts', 'src/scripts/**'],
     rules: {
       'no-empty': ['error', { allowEmptyCatch: false }],
-      'no-restricted-syntax': [
-        'error',
-        ...[
-          "ArrowFunctionExpression[body.type='Literal']",
-          "ArrowFunctionExpression[body.type='Identifier'][body.name='undefined']",
-          "ArrowFunctionExpression[body.type='UnaryExpression'][body.operator='void']",
-          "ArrowFunctionExpression[body.type='BlockStatement'][body.body.length=0]",
-        ].map((arrow) => ({
-          selector: `CallExpression[callee.property.name='catch'] > ${arrow}.arguments`,
-          message:
-            'OBS-R8 (ADR-OBSERVABILIDADE): `.catch` silencioso. Registre com logger.warn({ error }) ou acima; se o erro ' +
-            'é tratado por outro caminho, suprima com `-- SANCTIONED: <por quê>` e declare no bloco debt-ledger.',
-        })),
-      ],
+      'no-restricted-syntax': ['error', ...SILENT_CATCH],
+    },
+  },
+  // ADR-MODULE-BOUNDARIES §11 (F-MBE-3 a; dono, questionário de 24/11 e chat de 24/11: "No PR-2"): `public/` de
+  // feature não usa `export *` nem import por efeito colateral. No flat config o bloco mais específico substitui o
+  // `no-restricted-syntax` do bloco acima para estes arquivos, por isso os seletores do OBS-R8 vão junto.
+  {
+    files: ['src/features/*/public/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': ['error', ...SILENT_CATCH, ...PUBLIC_EXPLICIT],
     },
   },
   // Testes não são camada de produção — fora do gate.

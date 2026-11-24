@@ -421,10 +421,28 @@ o `node_modules` pela junção do depósito; o resultado do CI (Linux) é o que 
 - **`L5`/`L6` na própria feature:** o texto do F-MBE-3 (a) fala em "`public/` de outra feature". A regra gravada barra
   também a policy que importa o `public/` executável da própria feature (linha "própria feature" do §11.3), porque o
   `to` não enxerga a feature do `from`. Hoje a medida é 0 nos dois casos.
-- **Lint de `public/`** (`export *` e import por efeito colateral, F-MBE-3 a): não entrou. O BRIEF não atribui essa
-  regra a nenhum PR; lacuna `L-20261124-193620-f833`.
-- **Skill `job-generator`:** ainda manda o job usar o Prisma direto, o contrário da `J1`. O BRIEF só pede nas skills as
-  regras de `public/` e de pasta de camada; lacuna `L-20261124-193622-4901`.
+- **Lint de `public/`** (`export *` e import por efeito colateral, F-MBE-3 a): o BRIEF não atribuía a regra a nenhum
+  PR (lacuna `L-20261124-193620-f833`). Dono, questionário, 24/11: "No PR-2". Entrou como R6 no
+  `server/eslint.config.mjs` (`no-restricted-syntax` em `src/features/*/public/**`; spec em
+  `docs/architecture/lint-layer-gate.md` §R6), no job de lint que já roda. Baseline 0. Prova (24/11):
+  `fx/public/__sondaLint.ts` com `export * from '../models/ptax'` ⇒ `npx eslint` exit 1 (`R6 … export * em public/ de
+  feature`); com `import '../models/ptax'` ⇒ exit 1 (`R6 … import por efeito colateral`); com
+  `export type { PtaxRate } from '../models/ptax'` ⇒ exit 0; `npm run lint` inteiro ⇒ exit 0. O bloco de `public/`
+  repete os seletores do `catch` silencioso (OBS-R8), que seguem valendo ali (plantio: exit 1). A linha de exceção no
+  `CLAUDE.md` raiz não foi acrescentada: a decisão do F-MBE-3 não a pede, ao contrário do §10.4 para a regra de posse.
+- **Skill `job-generator` × `J1`:** a skill mandava o job usar o Prisma direto e não usar o `getFactory()` (lacuna
+  `L-20261124-193622-4901`). Dono, questionário, 24/11: "Regra agora". A regra `JOB-005`, o passo 3 do contrato de
+  geração, os anti-padrões, o caso `happy-2` dos evals e o controle do `skill-audit` passam a mandar o job pelo
+  `getFactory()`; Prisma direto fica só no seed de volume em `server/scripts/`. `jobs/PurgeDeletedRecords.ts` está
+  marcado na skill como dívida do baseline da `J1` até o PR-7.x. O eval comportamental da skill não foi rodado de novo.
+- **`IUser` e `Role` × `M1`:** as skills mandam service e policy importarem `IUser` e `Role` de
+  `features/users/models/User.model` (`SVC-006`, `POL-008`, linha "Actor" do Contrato §2, `GENERATION_CONTRACTS.md`).
+  Plantio de 24/11: `crm/services/__sondaIUser.ts` com esse import ⇒ `error M1-cross-feature-via-public`, exit 1. O
+  baseline tem 17 arestas `M1` com esse destino. Dono, questionário, 24/11: "Tudo em user.types.ts":
+  `users/public/user.types.ts` reexporta o tipo `IUser` e o enum `Role` de `models/`; `*.types.ts` passa a valer para
+  tipo e enum/constante de `models/`, com regra nova que impede o arquivo de importar outra pasta. Vai em PR próprio na
+  pilha, antes do PR-3.x, que reponta os imports existentes e as regras das skills. **Até lá as skills citadas seguem
+  apontando `users/models/`** (lacuna `L-20261124-194301-a802`).
 - **Contrato e skills:** o §2 do `_ARCHITECTURE-CONTRACT.md`, o `GENERATION_CONTRACTS.md` e as skills geradoras de
   service, repository, policy, dto, workflow, CRUD, fullstack e feature de frontend passam a dizer as duas regras
   (import entre features só por `public/`; peça de feature em pasta de camada).

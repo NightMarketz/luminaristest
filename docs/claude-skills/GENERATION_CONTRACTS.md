@@ -80,8 +80,8 @@ For DynamicTable-backed domains (leads, ERP, CRM) the service orchestrates `Dyna
 > Gate: `cd server && npm run check:arch` (rules `M1`, `M1a`, `M3`, `D2`; decision in `docs/adr/ADR-MODULE-BOUNDARIES.md` §10–§11).
 
 - Layer folders of `server/src/features/<resource>/`: `services/`, `repositories/`, `policies/`, `models/`, `dtos/`, `domain/`, `ports/`, `adapters/`, `public/`. New feature code goes into one of them — no loose file and no new ad-hoc folder at the feature root
-- Pure logic (calculation, mapping, static table): `server/src/features/<resource>/domain/<name>.ts` — never imports a repository, service, controller, route, `lib/prisma` or Express
-- Interface of something external to the feature: `server/src/features/<resource>/ports/<Name>Port.ts`; its implementation: `server/src/features/<resource>/adapters/<Name>Adapter.ts`
+- Pure logic (calculation, mapping, static table): `server/src/features/<resource>/domain/` — never imports a repository, service, controller, route, `lib/prisma` or Express
+- Interface of something external to the feature: `server/src/features/<resource>/ports/`; its implementation: `server/src/features/<resource>/adapters/`
 - Cross-feature import: only `server/src/features/<other>/public/**`. Never `<other>/repositories/`, `services/`, `models/` or `dtos/`
 - Missing public file: create it in the **target** feature in the same change — types in `public/<name>.types.ts`, functions or executable ports in `public/<name>.ts`. `public/` only re-exports; it never imports `repositories/`
 - Policies, models and DTOs import from another feature only `public/<name>.types.ts`
