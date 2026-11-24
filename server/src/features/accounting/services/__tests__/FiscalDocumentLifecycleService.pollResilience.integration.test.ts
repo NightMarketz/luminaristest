@@ -180,7 +180,7 @@ describe('Onda 4 / 4.1 — polling de DF-e: teto, backoff e sem head-of-line (SQ
     expect(r.pollGaveUpAt).toBeNull();
   });
 
-  it('envio com 5xx/timeout (DfeTransporteError): o documento fica SENT, NUNCA é reenviado às cegas — o polling CONSULTA pela chave', async () => {
+  it('envio com 5xx/timeout (DfeTransporteError): o documento fica SENT, NUNCA é reenviado às cegas — o polling CONSULTA (consultar, não emitir)', async () => {
     const d = await prepararEnvio('envio-5xx');
     const emitir = jest.fn(async () => {
       throw new DfeTransporteError('sefaz_http', 'HTTP 503');
