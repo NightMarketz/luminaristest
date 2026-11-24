@@ -1,5 +1,6308 @@
 [
   {
+    "type": "dependency",
+    "from": "src/jobs/accountingSyncReconcile.job.ts",
+    "to": "src/features/accounting/repositories/AccountingPeriodRepository.ts",
+    "unresolvedTo": "../features/accounting/repositories/AccountingPeriodRepository",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/jobs/accountingSyncReconcile.job.ts",
+    "to": "src/features/accounting/repositories/JournalEntryRepository.ts",
+    "unresolvedTo": "../features/accounting/repositories/JournalEntryRepository",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/jobs/accountingSyncReconcile.job.ts",
+    "to": "src/features/accounting/repositories/ReconcilePendingRepository.ts",
+    "unresolvedTo": "../features/accounting/repositories/ReconcilePendingRepository",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/jobs/accountingSyncReconcile.job.ts",
+    "to": "src/features/packages/repositories/PackageBalanceRepository.ts",
+    "unresolvedTo": "../features/packages/repositories/PackageBalanceRepository",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/jobs/accountingSyncReconcile.job.ts",
+    "to": "src/lib/prisma.ts",
+    "unresolvedTo": "../lib/prisma",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/jobs/accountingSyncReconcileCli.ts",
+    "to": "src/lib/prisma.ts",
+    "unresolvedTo": "../lib/prisma",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/jobs/checkLegalParamsFormatoCli.ts",
+    "to": "src/lib/prisma.ts",
+    "unresolvedTo": "../lib/prisma",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/jobs/grantPlatformAdminCli.ts",
+    "to": "src/features/users/repositories/IUserRepository.ts",
+    "unresolvedTo": "../features/users/repositories/IUserRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/jobs/grantPlatformAdminCli.ts",
+    "to": "src/features/users/repositories/UserRepository.ts",
+    "unresolvedTo": "../features/users/repositories/UserRepository",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/jobs/grantPlatformAdminCli.ts",
+    "to": "src/lib/prisma.ts",
+    "unresolvedTo": "../lib/prisma",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/jobs/installSectorKitCli.ts",
+    "to": "src/lib/prisma.ts",
+    "unresolvedTo": "../lib/prisma",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/jobs/JobWatermarkRepository.ts",
+    "to": "src/lib/prisma.ts",
+    "unresolvedTo": "../lib/prisma",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/jobs/PurgeDeletedRecords.ts",
+    "to": "src/lib/prisma.ts",
+    "unresolvedTo": "../lib/prisma",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/jobs/ragReindexCli.ts",
+    "to": "src/lib/prisma.ts",
+    "unresolvedTo": "../lib/prisma",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/jobs/upgradeSectorKitsCli.ts",
+    "to": "src/features/sectorKits/repositories/KitInstallationRepository.ts",
+    "unresolvedTo": "../features/sectorKits/repositories/KitInstallationRepository",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/jobs/upgradeSectorKitsCli.ts",
+    "to": "src/lib/prisma.ts",
+    "unresolvedTo": "../lib/prisma",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "J1-job-is-entrypoint"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/dtos/FiscalProfileDto.ts",
+    "to": "src/features/legalParameters/models/hoje.ts",
+    "unresolvedTo": "../../legalParameters/models/hoje",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/FixedAsset.model.ts",
+    "to": "src/features/legalParameters/models/formatoLinha.ts",
+    "unresolvedTo": "../../legalParameters/models/formatoLinha",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/FixedAsset.model.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/ibsCbsAntecipacao.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/ibsCbsCompetencia.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/ibsCbsCredito.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/ibsCbsParams.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/interestOnEquity.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/inutilizacao.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/issLimite.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/issTransicao.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/itemDestination.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/lc116ListaNacional.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/meiAnexoXi.ts",
+    "to": "src/features/legalParameters/models/formatoLinha.ts",
+    "unresolvedTo": "../../legalParameters/models/formatoLinha",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/meiAnexoXi.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/nfceContingencia.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/nfeMontagem.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/obrigacoesPorRegime.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/pisCofinsMonofasicoNcm.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/pisCofinsParams.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/presumidoTeto.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/profitDistribution.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/reinfLote.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/retencaoParams.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/segregacaoNcm.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/servicoFiscalAvaliacao.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/simplesCalc.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/taxAssessmentParams.ts",
+    "to": "src/features/legalParameters/models/formatoLinha.ts",
+    "unresolvedTo": "../../legalParameters/models/formatoLinha",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/taxAssessmentParams.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/taxSimulation.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/models/withholdingCalc.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/AccountantAssignmentService.ts",
+    "to": "src/features/users/repositories/IUserRepository.ts",
+    "unresolvedTo": "../../users/repositories/IUserRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/CompanyFiscalProfileService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/DanfeService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/DataExchangeExportService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/DepreciationRateService.ts",
+    "to": "src/features/legalParameters/models/hoje.ts",
+    "unresolvedTo": "../../legalParameters/models/hoje",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/FiscalDocumentEmissionService.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/FiscalDocumentEmissionService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/FiscalNumberVoidService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/FiscalProfileService.ts",
+    "to": "src/features/legalParameters/models/hoje.ts",
+    "unresolvedTo": "../../legalParameters/models/hoje",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/FiscalProfileService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/IbsCbsAssessmentService.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/IbsCbsAssessmentService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/InterestOnEquityService.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/InterestOnEquityService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/MitExportService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/NfceContingenciaService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/NfeImportService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/NfePreviewService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/NfeSaleReconciliationService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/PhysicalStockSync.ts",
+    "to": "src/features/integration/services/IDynamicTableWriteEffects.ts",
+    "unresolvedTo": "../../integration/services/IDynamicTableWriteEffects",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/PisCofinsAssessmentService.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/PisCofinsAssessmentService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/PresumidoTetoService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/ProfitDistributionService.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/ProfitDistributionService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/ReceitaFiscalService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/ReinfService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/ServiceFiscalProfileService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/ServicoFiscalAvaliacaoService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/SimplesApuracaoService.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/SimplesApuracaoService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/SimplesDeclaracaoService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/SpedEcfGenerationService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/SpedEcfRealGenerationService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/SpedGenerationService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/TaxAssessmentPeriodosService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/TaxAssessmentRecalcService.ts",
+    "to": "src/features/legalParameters/repositories/ILegalParameterRecalcJobRepository.ts",
+    "unresolvedTo": "../../legalParameters/repositories/ILegalParameterRecalcJobRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/TaxAssessmentRecalcService.ts",
+    "to": "src/features/legalParameters/repositories/ILegalParameterRepository.ts",
+    "unresolvedTo": "../../legalParameters/repositories/ILegalParameterRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/TaxAssessmentService.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/TaxAssessmentService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/TaxOptimizationReportService.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/TaxSimulationService.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/TaxSimulationService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/WithholdingProfileService.ts",
+    "to": "src/features/legalParameters/repositories/ILegalParameterRepository.ts",
+    "unresolvedTo": "../../legalParameters/repositories/ILegalParameterRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/WithholdingService.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accountingBinding/dtos/ActivateDefaultBindingDto.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accountingBinding/dtos/ActivateDefaultBindingDto.ts",
+    "to": "src/features/sectorKits/dtos/KitInstallationDto.ts",
+    "unresolvedTo": "../../sectorKits/dtos/KitInstallationDto",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accountingBinding/fixtures/bindingPosL8.ts",
+    "to": "src/features/accounting/fixtures/ChartOfAccountsFixture.ts",
+    "unresolvedTo": "../../accounting/fixtures/ChartOfAccountsFixture",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accountingBinding/fixtures/sectorBindingRegistry.ts",
+    "to": "src/features/sectorKits/registry.ts",
+    "unresolvedTo": "../../sectorKits/registry",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accountingBinding/interpreter/interpret.ts",
+    "to": "src/features/accounting/dtos/PostingDto.ts",
+    "unresolvedTo": "../../accounting/dtos/PostingDto",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accountingBinding/interpreter/interpret.ts",
+    "to": "src/features/accounting/sync/mappers/IAccountingEventMapper.ts",
+    "unresolvedTo": "../../accounting/sync/mappers/IAccountingEventMapper",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accountingBinding/interpreter/interpret.ts",
+    "to": "src/features/accounting/sync/mappers/revenueSplit.ts",
+    "unresolvedTo": "../../accounting/sync/mappers/revenueSplit",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accountingBinding/interpreter/InterpretedEventMapper.ts",
+    "to": "src/features/accounting/dtos/PostingDto.ts",
+    "unresolvedTo": "../../accounting/dtos/PostingDto",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accountingBinding/interpreter/InterpretedEventMapper.ts",
+    "to": "src/features/accounting/sync/mappers/IAccountingEventMapper.ts",
+    "unresolvedTo": "../../accounting/sync/mappers/IAccountingEventMapper",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accountingBinding/interpreter/money.ts",
+    "to": "src/features/accounting/models/money.ts",
+    "unresolvedTo": "../../accounting/models/money",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accountingBinding/services/AccountingBindingFeederService.ts",
+    "to": "src/features/accounting/sync/mappers/IAccountingEventMapper.ts",
+    "unresolvedTo": "../../accounting/sync/mappers/IAccountingEventMapper",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accountingBinding/services/BindingActivationService.ts",
+    "to": "src/features/sectorKits/models/kitInstallTypes.ts",
+    "unresolvedTo": "../../sectorKits/models/kitInstallTypes",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accountingBinding/services/BindingActivationService.ts",
+    "to": "src/features/sectorKits/services/KitInstallService.ts",
+    "unresolvedTo": "../../sectorKits/services/KitInstallService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/analytics/core/ProcessorRegistry.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "@/features/dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/analytics/dynamic/processors/AggregatePipelineProcessor.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "@/features/dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/analytics/dynamic/processors/StatusDistributionProcessor.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "@/features/dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/analytics/engine/AnalyticsResolver.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "@/features/dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/analytics/engine/AnalyticsResolver.ts",
+    "to": "src/features/dynamicTables/services/DynamicTableService.ts",
+    "unresolvedTo": "@/features/dynamicTables/services/DynamicTableService",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/analytics/kpis/crm/CrmFunnelProcessor.ts",
+    "to": "src/features/crm/constants.ts",
+    "unresolvedTo": "../../../crm/constants",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/analytics/kpis/crm/CrmRelatedProcessors.ts",
+    "to": "src/features/crm/constants.ts",
+    "unresolvedTo": "../../../crm/constants",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/analytics/kpis/crm/CrmSegmentationProcessors.ts",
+    "to": "src/features/crm/constants.ts",
+    "unresolvedTo": "../../../crm/constants",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/analytics/kpis/profit/ProfitByDimensionProcessor.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "@/features/dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/analytics/services/AnalyticsDefinitionValidator.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "@/features/dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/analytics/services/AnalyticsService.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/analytics/services/AnalyticsService.ts",
+    "to": "src/features/dynamicTables/presets/index.ts",
+    "unresolvedTo": "../../dynamicTables/presets",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/analytics/services/AnalyticsService.ts",
+    "to": "src/features/dynamicTables/presets/modules/moduleSelection.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/moduleSelection",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/analytics/services/AnalyticsValidator.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "@/features/dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/attachments/policies/AttachmentPolicy.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/attachments/policies/IAttachmentPolicy.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/attachments/services/AttachmentService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/attachments/services/AttachmentService.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chat/services/ChatService.ts",
+    "to": "src/features/chatMessages/models/ChatMessage.model.ts",
+    "unresolvedTo": "@/features/chatMessages/models/ChatMessage.model",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chat/services/ChatService.ts",
+    "to": "src/features/chatMessages/services/ChatMessageService.ts",
+    "unresolvedTo": "@/features/chatMessages/services/ChatMessageService",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chat/services/ChatService.ts",
+    "to": "src/features/documents/services/DocumentSearchService.ts",
+    "unresolvedTo": "@/features/documents/services/DocumentSearchService",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chat/services/KnowledgeGraphService.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chat/services/KnowledgeGraphService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chat/services/LuminarisAgentService.ts",
+    "to": "src/features/documents/dtos/DocumentDto.ts",
+    "unresolvedTo": "../../documents/dtos/DocumentDto",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chat/services/LuminarisAgentService.ts",
+    "to": "src/features/documents/services/DocumentSearchService.ts",
+    "unresolvedTo": "../../documents/services/DocumentSearchService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chat/services/LuminarisAgentService.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chat/services/LuminarisAgentService.ts",
+    "to": "src/features/dynamicTables/policies/IDynamicTablePolicy.ts",
+    "unresolvedTo": "../../dynamicTables/policies/IDynamicTablePolicy",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chat/services/LuminarisAgentService.ts",
+    "to": "src/features/dynamicTables/services/DynamicTableService.ts",
+    "unresolvedTo": "../../dynamicTables/services/DynamicTableService",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chat/services/LuminarisAgentService.ts",
+    "to": "src/features/dynamicTables/validation/SchemaValidator.ts",
+    "unresolvedTo": "../../dynamicTables/validation/SchemaValidator",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chat/services/LuminarisAgentService.ts",
+    "to": "src/features/integration/services/IDynamicTableWriteEffects.ts",
+    "unresolvedTo": "../../integration/services/IDynamicTableWriteEffects",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chat/services/ragTurn.ts",
+    "to": "src/features/documents/dtos/DocumentDto.ts",
+    "unresolvedTo": "@/features/documents/dtos/DocumentDto",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chatMessages/dtos/ChatMessageDto.ts",
+    "to": "src/features/chat/dtos/ChatDto.ts",
+    "unresolvedTo": "@/features/chat/dtos/ChatDto",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chatMessages/services/ChatMessageService.ts",
+    "to": "src/features/chat/dtos/ChatDto.ts",
+    "unresolvedTo": "@/features/chat/dtos/ChatDto",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chatMessages/services/ChatMessageService.ts",
+    "to": "src/features/chatInstances/repositories/IChatInstanceRepository.ts",
+    "unresolvedTo": "../../chatInstances/repositories/IChatInstanceRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/policies/CrmReportDefinitionPolicy.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmAnalyticsService.ts",
+    "to": "src/features/analytics/core/index.ts",
+    "unresolvedTo": "../../analytics/core",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmAnalyticsService.ts",
+    "to": "src/features/analytics/kpis/crm/index.ts",
+    "unresolvedTo": "../../analytics/kpis/crm",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmAnalyticsService.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmAnalyticsService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmAnalyticsService.ts",
+    "to": "src/features/dynamicTables/services/DynamicTableService.ts",
+    "unresolvedTo": "../../dynamicTables/services/DynamicTableService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmPipelineService.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmPipelineService.ts",
+    "to": "src/features/dynamicTables/presets/modules/registry.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmPipelineService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmPipelineService.ts",
+    "to": "src/features/dynamicTables/services/DynamicTableService.ts",
+    "unresolvedTo": "../../dynamicTables/services/DynamicTableService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmPipelineService.ts",
+    "to": "src/features/integration/services/IDynamicTableWriteEffects.ts",
+    "unresolvedTo": "../../integration/services/IDynamicTableWriteEffects",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmReportService.ts",
+    "to": "src/features/analytics/core/index.ts",
+    "unresolvedTo": "../../analytics/core",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmReportService.ts",
+    "to": "src/features/analytics/core/pipeline/Pipeline.ts",
+    "unresolvedTo": "../../analytics/core/pipeline/Pipeline",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmReportService.ts",
+    "to": "src/features/analytics/dynamic/processors/AggregatePipelineProcessor.ts",
+    "unresolvedTo": "../../analytics/dynamic/processors/AggregatePipelineProcessor",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmReportService.ts",
+    "to": "src/features/analytics/utils/CurrencyUtils.ts",
+    "unresolvedTo": "../../analytics/utils/CurrencyUtils",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmReportService.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmReportService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmReportService.ts",
+    "to": "src/features/dynamicTables/services/DynamicTableService.ts",
+    "unresolvedTo": "../../dynamicTables/services/DynamicTableService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmReportService.ts",
+    "to": "src/features/fx/models/ptax.ts",
+    "unresolvedTo": "../../fx/models/ptax",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmReportService.ts",
+    "to": "src/features/fx/repositories/IPtaxRateRepository.ts",
+    "unresolvedTo": "../../fx/repositories/IPtaxRateRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dashboardLayout/policies/DashboardLayoutPolicy.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../../features/users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/documents/policies/DocumentPolicy.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/documents/services/DocumentProcessingPipeline.ts",
+    "to": "src/features/users/repositories/IUserRepository.ts",
+    "unresolvedTo": "../../users/repositories/IUserRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/documents/services/DocumentService.ts",
+    "to": "src/features/users/repositories/IUserRepository.ts",
+    "unresolvedTo": "../../users/repositories/IUserRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/dtos/DpCadastrosDto.ts",
+    "to": "src/features/accounting/models/money.ts",
+    "unresolvedTo": "../../accounting/models/money",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/dtos/DpLancamentoDto.ts",
+    "to": "src/features/accounting/models/money.ts",
+    "unresolvedTo": "../../accounting/models/money",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/dtos/DpVinculoDto.ts",
+    "to": "src/features/accounting/models/money.ts",
+    "unresolvedTo": "../../accounting/models/money",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/competencia.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/escala.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/escala.ts",
+    "to": "src/features/legalParameters/models/formatoLinha.ts",
+    "unresolvedTo": "../../legalParameters/models/formatoLinha",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/escala.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/escala.ts",
+    "to": "src/features/packages/models/validity.ts",
+    "unresolvedTo": "../../packages/models/validity",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/folha/afastamento.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/folha/encargos.ts",
+    "to": "src/features/accounting/models/withholdingCalc.ts",
+    "unresolvedTo": "../../../accounting/models/withholdingCalc",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/folha/encargos.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/folha/faltas.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/folha/fracao.ts",
+    "to": "src/features/legalParameters/models/formatoLinha.ts",
+    "unresolvedTo": "../../../legalParameters/models/formatoLinha",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/parametrosFolha.ts",
+    "to": "src/features/accounting/models/retencaoParams.ts",
+    "unresolvedTo": "../../accounting/models/retencaoParams",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/parametrosFolha.ts",
+    "to": "src/features/accounting/models/taxSimulation.ts",
+    "unresolvedTo": "../../accounting/models/taxSimulation",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/parametrosFolha.ts",
+    "to": "src/features/legalParameters/models/formatoLinha.ts",
+    "unresolvedTo": "../../legalParameters/models/formatoLinha",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/parametrosFolha.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/regrasFolha.ts",
+    "to": "src/features/legalParameters/models/formatoLinha.ts",
+    "unresolvedTo": "../../legalParameters/models/formatoLinha",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/regrasFolha.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/models/vigencia.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/policies/DpPolicy.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/policies/IDpPolicy.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpAfastamentoFeriasService.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpAfastamentoFeriasService.ts",
+    "to": "src/features/accounting/services/AuditService.ts",
+    "unresolvedTo": "../../accounting/services/AuditService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpAfastamentoFeriasService.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpAfastamentoFeriasService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpCadastroService.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpCadastroService.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpCadastroService.ts",
+    "to": "src/features/accounting/services/AuditService.ts",
+    "unresolvedTo": "../../accounting/services/AuditService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpCadastroService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpDependenteService.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpDependenteService.ts",
+    "to": "src/features/accounting/services/AuditService.ts",
+    "unresolvedTo": "../../accounting/services/AuditService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpDependenteService.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpDependenteService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpLancamentoService.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpLancamentoService.ts",
+    "to": "src/features/accounting/services/AuditService.ts",
+    "unresolvedTo": "../../accounting/services/AuditService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpModuleService.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpModuleService.ts",
+    "to": "src/features/accounting/services/AuditService.ts",
+    "unresolvedTo": "../../accounting/services/AuditService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpRubricaService.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpVinculoService.ts",
+    "to": "src/features/accounting/repositories/ICompanyFiscalProfileRepository.ts",
+    "unresolvedTo": "../../accounting/repositories/ICompanyFiscalProfileRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpVinculoService.ts",
+    "to": "src/features/accounting/repositories/IPartnerRepository.ts",
+    "unresolvedTo": "../../accounting/repositories/IPartnerRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpVinculoService.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpVinculoService.ts",
+    "to": "src/features/accounting/services/AuditService.ts",
+    "unresolvedTo": "../../accounting/services/AuditService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpVinculoService.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpVinculoService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dynamicTables/policies/DynamicTablePolicy.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dynamicTables/presets/index.ts",
+    "to": "src/features/analytics/core/models/AnalyticsConfiguration.ts",
+    "unresolvedTo": "@/features/analytics/core/models/AnalyticsConfiguration",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dynamicTables/presets/modules/finance/ExpensesModule.ts",
+    "to": "src/features/analytics/core/models/AnalyticsConfiguration.ts",
+    "unresolvedTo": "@/features/analytics/core/models/AnalyticsConfiguration",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dynamicTables/presets/modules/finance/SalesModule.ts",
+    "to": "src/features/analytics/core/models/AnalyticsConfiguration.ts",
+    "unresolvedTo": "@/features/analytics/core/models/AnalyticsConfiguration",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/fx/clients/BcbPtaxClient.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/fx/models/ptax.ts",
+    "to": "src/features/crm/constants.ts",
+    "unresolvedTo": "../../crm/constants",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/integration/services/DynamicTableWriteEffects.ts",
+    "to": "src/features/analytics/services/KpiCacheService.ts",
+    "unresolvedTo": "../../analytics/services/KpiCacheService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/integration/services/DynamicTableWriteEffects.ts",
+    "to": "src/features/chat/services/KnowledgeGraphService.ts",
+    "unresolvedTo": "../../chat/services/KnowledgeGraphService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/CustomizationService.ts",
+    "to": "src/features/dynamicTables/presets/ai/PresetKnowledgeBase.ts",
+    "unresolvedTo": "../../dynamicTables/presets/ai/PresetKnowledgeBase",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/CustomizationService.ts",
+    "to": "src/features/dynamicTables/presets/modules/moduleSelection.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/moduleSelection",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/CustomizationService.ts",
+    "to": "src/features/dynamicTables/presets/modules/registry.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/CustomizationService.ts",
+    "to": "src/features/dynamicTables/presets/removability.ts",
+    "unresolvedTo": "../../dynamicTables/presets/removability",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/CustomizationService.ts",
+    "to": "src/features/dynamicTables/services/PresetService.ts",
+    "unresolvedTo": "../../dynamicTables/services/PresetService",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/sessionComposition.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/sessionComposition.ts",
+    "to": "src/features/dynamicTables/presets/index.ts",
+    "unresolvedTo": "../../dynamicTables/presets",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/sessionComposition.ts",
+    "to": "src/features/dynamicTables/presets/modules/moduleSelection.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/moduleSelection",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/sessionComposition.ts",
+    "to": "src/features/dynamicTables/presets/modules/registry.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/StateManager.ts",
+    "to": "src/features/dynamicTables/dtos/CreateDashboard.dto.ts",
+    "unresolvedTo": "../../dynamicTables/dtos/CreateDashboard.dto",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/StateManager.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/StateManager.ts",
+    "to": "src/features/dynamicTables/presets/index.ts",
+    "unresolvedTo": "../../dynamicTables/presets",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/StateManager.ts",
+    "to": "src/features/dynamicTables/presets/modules/registry.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/StateManager.ts",
+    "to": "src/features/dynamicTables/presets/removability.ts",
+    "unresolvedTo": "../../dynamicTables/presets/removability",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/StateManager.ts",
+    "to": "src/features/dynamicTables/services/PresetService.ts",
+    "unresolvedTo": "../../dynamicTables/services/PresetService",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/TableExtractor.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "../../../features/dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/TableExtractor.ts",
+    "to": "src/features/dynamicTables/presets/index.ts",
+    "unresolvedTo": "../../../features/dynamicTables/presets",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/CustomizationService/TableExtractor.ts",
+    "to": "src/features/dynamicTables/presets/removability.ts",
+    "unresolvedTo": "../../../features/dynamicTables/presets/removability",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/dtos/ChatInterviewDto.ts",
+    "to": "src/features/dynamicTables/presets/modules/registry.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/dtos/CustomCreationDraft.dto.ts",
+    "to": "src/features/dynamicTables/dtos/CreateDashboard.dto.ts",
+    "unresolvedTo": "../../dynamicTables/dtos/CreateDashboard.dto",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/dtos/InterviewModules.dto.ts",
+    "to": "src/features/dynamicTables/presets/modules/registry.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/FieldCustomizationService/FieldPresetMatcher.ts",
+    "to": "src/features/dynamicTables/presets/fields/FieldPresetKnowledgeBase.ts",
+    "unresolvedTo": "../../../features/dynamicTables/presets/fields/FieldPresetKnowledgeBase",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/FieldCustomizationService/FieldProposal.ts",
+    "to": "src/features/dynamicTables/dtos/DynamicTable.dto.ts",
+    "unresolvedTo": "../../dynamicTables/dtos/DynamicTable.dto",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/FieldCustomizationService/FieldProposal.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/FieldCustomizationService/FieldUpdater.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/FieldCustomizationService/index.ts",
+    "to": "src/features/dynamicTables/presets/fields/FieldPresetKnowledgeBase.ts",
+    "unresolvedTo": "../../dynamicTables/presets/fields/FieldPresetKnowledgeBase",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/FieldCustomizationService/ManualChanges.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/FieldCustomizationService/Types.ts",
+    "to": "src/features/dynamicTables/dtos/DynamicTable.dto.ts",
+    "unresolvedTo": "../../dynamicTables/dtos/DynamicTable.dto",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/InterviewService/InterviewService.ts",
+    "to": "src/features/dynamicTables/presets/modules/registry.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/InterviewService/InterviewService.ts",
+    "to": "src/features/dynamicTables/services/PresetService.ts",
+    "unresolvedTo": "../../dynamicTables/services/PresetService",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/InterviewService/ModuleSuggester.ts",
+    "to": "src/features/dynamicTables/presets/ai/ModuleKnowledgeBase.ts",
+    "unresolvedTo": "../../dynamicTables/presets/ai/ModuleKnowledgeBase",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/InterviewService/ModuleSuggester.ts",
+    "to": "src/features/dynamicTables/presets/index.ts",
+    "unresolvedTo": "../../dynamicTables/presets",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/InterviewService/ModuleSuggester.ts",
+    "to": "src/features/dynamicTables/presets/modules/moduleSelection.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/moduleSelection",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/InterviewService/ModuleSuggester.ts",
+    "to": "src/features/dynamicTables/presets/modules/registry.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/InterviewService/PresetMatcher.ts",
+    "to": "src/features/dynamicTables/presets/ai/PresetKnowledgeBase.ts",
+    "unresolvedTo": "../../dynamicTables/presets/ai/PresetKnowledgeBase",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/InterviewService/StageHandlers.ts",
+    "to": "src/features/dynamicTables/presets/ai/PresetKnowledgeBase.ts",
+    "unresolvedTo": "../../dynamicTables/presets/ai/PresetKnowledgeBase",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/InterviewService/StageHandlers.ts",
+    "to": "src/features/dynamicTables/presets/modules/registry.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/models/InterviewTypes.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/models/InterviewTypes.ts",
+    "to": "src/features/dynamicTables/presets/modules/registry.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/interview/models/InterviewTypes.ts",
+    "to": "src/features/dynamicTables/presets/removability.ts",
+    "unresolvedTo": "../../dynamicTables/presets/removability",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/legalParameters/dtos/LegalParameterDto.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/legalParameters/models/formatoLinha.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/legalParameters/models/formatoLinha.ts",
+    "to": "src/features/accounting/models/ibsCbsParams.ts",
+    "unresolvedTo": "../../accounting/models/ibsCbsParams",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/legalParameters/models/formatoLinha.ts",
+    "to": "src/features/accounting/models/obrigacoesPorRegime.ts",
+    "unresolvedTo": "../../accounting/models/obrigacoesPorRegime",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/legalParameters/models/formatoLinha.ts",
+    "to": "src/features/accounting/models/regimeEmpresa.ts",
+    "unresolvedTo": "../../accounting/models/regimeEmpresa",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/legalParameters/models/formatoLinha.ts",
+    "to": "src/features/accounting/models/retencaoParams.ts",
+    "unresolvedTo": "../../accounting/models/retencaoParams",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/legalParameters/models/formatoLinha.ts",
+    "to": "src/features/accounting/models/segregacaoNcm.ts",
+    "unresolvedTo": "../../accounting/models/segregacaoNcm",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/legalParameters/models/formatoLinha.ts",
+    "to": "src/features/accounting/models/simplesCalc.ts",
+    "unresolvedTo": "../../accounting/models/simplesCalc",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/legalParameters/services/LegalParameterService.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/legalParameters/services/LegalParameterService.ts",
+    "to": "src/features/accounting/services/AuditService.ts",
+    "unresolvedTo": "../../accounting/services/AuditService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/buildQuickPreset.ts",
+    "to": "src/features/analytics/services/AnalyticsValidator.ts",
+    "unresolvedTo": "../../analytics/services/AnalyticsValidator",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/buildQuickPreset.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/buildQuickPreset.ts",
+    "to": "src/features/dynamicTables/presets/index.ts",
+    "unresolvedTo": "../../dynamicTables/presets",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/buildQuickPreset.ts",
+    "to": "src/features/dynamicTables/presets/modules/moduleSelection.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/moduleSelection",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/buildQuickPreset.ts",
+    "to": "src/features/dynamicTables/presets/modules/registry.ts",
+    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/deriveUnitFiscalProfile.ts",
+    "to": "src/features/accounting/dtos/CompanyFiscalProfileDto.ts",
+    "unresolvedTo": "../../accounting/dtos/CompanyFiscalProfileDto",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/deriveUnitFiscalProfile.ts",
+    "to": "src/features/accounting/dtos/FiscalProfileDto.ts",
+    "unresolvedTo": "../../accounting/dtos/FiscalProfileDto",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/accounting/dtos/CompanyFiscalProfileDto.ts",
+    "unresolvedTo": "../../accounting/dtos/CompanyFiscalProfileDto",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/accounting/dtos/FiscalProfileDto.ts",
+    "unresolvedTo": "../../accounting/dtos/FiscalProfileDto",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/accounting/models/obrigacoesPorRegime.ts",
+    "unresolvedTo": "../../accounting/models/obrigacoesPorRegime",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
+    "unresolvedTo": "../../accounting/scope/resolveAccountingScopeInternal",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/accounting/services/AccountingScopeResetService.ts",
+    "unresolvedTo": "../../accounting/services/AccountingScopeResetService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/accounting/services/CompanyFiscalProfileService.ts",
+    "unresolvedTo": "../../accounting/services/CompanyFiscalProfileService",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/accounting/services/FiscalProfileService.ts",
+    "unresolvedTo": "../../accounting/services/FiscalProfileService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/analytics/services/KpiCacheService.ts",
+    "unresolvedTo": "../../analytics/services/KpiCacheService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/attachments/repositories/IAttachmentRepository.ts",
+    "unresolvedTo": "../../attachments/repositories/IAttachmentRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/chat/repositories/IActionProposalRepository.ts",
+    "unresolvedTo": "../../chat/repositories/IActionProposalRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/chat/repositories/IKnowledgeGraphRepository.ts",
+    "unresolvedTo": "../../chat/repositories/IKnowledgeGraphRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/chatInstances/repositories/IChatInstanceRepository.ts",
+    "unresolvedTo": "../../chatInstances/repositories/IChatInstanceRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/crm/repositories/ICrmReportDefinitionRepository.ts",
+    "unresolvedTo": "../../crm/repositories/ICrmReportDefinitionRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/dashboardLayout/repositories/IDashboardLayoutRepository.ts",
+    "unresolvedTo": "../../dashboardLayout/repositories/IDashboardLayoutRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/dynamicTables/dtos/CreateDashboard.dto.ts",
+    "unresolvedTo": "../../dynamicTables/dtos/CreateDashboard.dto",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/dynamicTables/presets/index.ts",
+    "unresolvedTo": "../../dynamicTables/presets",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/dynamicTables/services/DynamicTableService.ts",
+    "unresolvedTo": "../../dynamicTables/services/DynamicTableService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/integration/services/IDynamicTableWriteEffects.ts",
+    "unresolvedTo": "../../integration/services/IDynamicTableWriteEffects",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/savedViews/repositories/ISavedTableViewRepository.ts",
+    "unresolvedTo": "../../savedViews/repositories/ISavedTableViewRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/dtos/PackageAcceptanceDto.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/dtos/PackageBalanceDto.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/models/validity.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/models/validity.ts",
+    "to": "src/features/accounting/models/expiryKey.ts",
+    "unresolvedTo": "../../accounting/models/expiryKey",
+    "dependencyTypes": [
+      "local",
+      "export"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/models/validity.ts",
+    "to": "src/features/legalParameters/models/legalParameter.ts",
+    "unresolvedTo": "../../legalParameters/models/legalParameter",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/models/validityNotice.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/policies/IPackageAcceptancePolicy.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/policies/IPackageBalancePolicy.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/policies/PackageAcceptancePolicy.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/policies/PackageBalancePolicy.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/repositories/IPackageAcceptanceRepository.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/repositories/IPackageBalanceRepository.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/repositories/PackageAcceptanceRepository.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/repositories/PackageBalanceRepository.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageAcceptanceService.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageAcceptanceService.ts",
+    "to": "src/features/accounting/repositories/IFiscalProfileRepository.ts",
+    "unresolvedTo": "../../accounting/repositories/IFiscalProfileRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageAcceptanceService.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageAcceptanceService.ts",
+    "to": "src/features/accounting/sync/bridges/saleItems.ts",
+    "unresolvedTo": "../../accounting/sync/bridges/saleItems",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageAcceptanceService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageAcceptanceService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageAcceptanceService.ts",
+    "to": "src/features/users/repositories/IUserRepository.ts",
+    "unresolvedTo": "../../users/repositories/IUserRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageBalanceService.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageBalanceService.ts",
+    "to": "src/features/accounting/models/money.ts",
+    "unresolvedTo": "../../accounting/models/money",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageBalanceService.ts",
+    "to": "src/features/accounting/repositories/IFiscalProfileRepository.ts",
+    "unresolvedTo": "../../accounting/repositories/IFiscalProfileRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageBalanceService.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageBalanceService.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/unitHolidayCalendar.ts",
+    "to": "src/features/accounting/repositories/IFiscalProfileRepository.ts",
+    "unresolvedTo": "../../accounting/repositories/IFiscalProfileRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/unitHolidayCalendar.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/unitHolidayCalendar.ts",
+    "to": "src/features/legalParameters/services/LegalParameterService.ts",
+    "unresolvedTo": "../../legalParameters/services/LegalParameterService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/RegisterPaymentService.ts",
+    "to": "src/features/accounting/scope/resolveAccountingScopeInternal.ts",
+    "unresolvedTo": "../../accounting/scope/resolveAccountingScopeInternal",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/RegisterPaymentService.ts",
+    "to": "src/features/accounting/sync/bridges/SaleSettlementBridge.ts",
+    "unresolvedTo": "../../accounting/sync/bridges/SaleSettlementBridge",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/RegisterPaymentService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/RegisterPaymentService.ts",
+    "to": "src/features/dynamicTables/services/DynamicTableService.ts",
+    "unresolvedTo": "../../dynamicTables/services/DynamicTableService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/RegisterPaymentService.ts",
+    "to": "src/features/integration/services/IDynamicTableWriteEffects.ts",
+    "unresolvedTo": "../../integration/services/IDynamicTableWriteEffects",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/RegisterPaymentService.ts",
+    "to": "src/features/packages/services/PackageBalanceService.ts",
+    "unresolvedTo": "../../packages/services/PackageBalanceService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/SaleFiscalGuardService.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/SaleFiscalGuardService.ts",
+    "to": "src/features/accounting/models/taxOptimization.ts",
+    "unresolvedTo": "../../accounting/models/taxOptimization",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/SaleFiscalGuardService.ts",
+    "to": "src/features/accounting/repositories/IInventoryRepository.ts",
+    "unresolvedTo": "../../accounting/repositories/IInventoryRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/SaleFiscalGuardService.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/SaleFiscalGuardService.ts",
+    "to": "src/features/accounting/services/TaxOptimizationService.ts",
+    "unresolvedTo": "../../accounting/services/TaxOptimizationService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/SaleFiscalGuardService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/SaleFiscalGuardService.ts",
+    "to": "src/features/dynamicTables/services/DynamicTableService.ts",
+    "unresolvedTo": "../../dynamicTables/services/DynamicTableService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/SaleFiscalGuardService.ts",
+    "to": "src/features/integration/services/IDynamicTableWriteEffects.ts",
+    "unresolvedTo": "../../integration/services/IDynamicTableWriteEffects",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/SalesCancellationService.ts",
+    "to": "src/features/accounting/sync/bridges/SaleReversalBridge.ts",
+    "unresolvedTo": "../../accounting/sync/bridges/SaleReversalBridge",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/SalesCancellationService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/SalesCancellationService.ts",
+    "to": "src/features/dynamicTables/services/DynamicTableService.ts",
+    "unresolvedTo": "../../dynamicTables/services/DynamicTableService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/SalesCancellationService.ts",
+    "to": "src/features/integration/services/IDynamicTableWriteEffects.ts",
+    "unresolvedTo": "../../integration/services/IDynamicTableWriteEffects",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/savedViews/policies/ISavedTableViewPolicy.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/savedViews/policies/SavedTableViewPolicy.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/savedViews/services/SavedTableViewService.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/controllers/kitRoleOverrideController.ts",
+    "to": "src/features/accountingBinding/scope/BindingScope.ts",
+    "unresolvedTo": "../../accountingBinding/scope/BindingScope",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/controllers/kitUpgradeController.ts",
+    "to": "src/features/accountingBinding/scope/BindingScope.ts",
+    "unresolvedTo": "../../accountingBinding/scope/BindingScope",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/dtos/KitInstallationDto.ts",
+    "to": "src/features/accounting/models/dates.ts",
+    "unresolvedTo": "../../accounting/models/dates",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/dtos/RoleAccountOverrideDto.ts",
+    "to": "src/features/accountingBinding/models/accountingBindingStatus.ts",
+    "unresolvedTo": "../../accountingBinding/models/accountingBindingStatus",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/dtos/SectorKitDto.ts",
+    "to": "src/features/accounting/fixtures/ChartOfAccountsFixture.ts",
+    "unresolvedTo": "../../accounting/fixtures/ChartOfAccountsFixture",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/dtos/SectorKitDto.ts",
+    "to": "src/features/accountingBinding/dtos/AccountingBindingDto.ts",
+    "unresolvedTo": "../../accountingBinding/dtos/AccountingBindingDto",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/kits/_shared/referencial2025Canonico.ts",
+    "to": "src/features/accounting/fixtures/ChartOfAccountsFixture.ts",
+    "unresolvedTo": "../../../accounting/fixtures/ChartOfAccountsFixture",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/kits/aestheticClinic/kit.v1.ts",
+    "to": "src/features/accountingBinding/fixtures/clinicBinding.ts",
+    "unresolvedTo": "../../../accountingBinding/fixtures/clinicBinding",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/kits/aestheticClinic/kit.v2.ts",
+    "to": "src/features/accountingBinding/fixtures/clinicBinding.ts",
+    "unresolvedTo": "../../../accountingBinding/fixtures/clinicBinding",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/kits/aestheticClinic/kit.v3.ts",
+    "to": "src/features/accountingBinding/fixtures/clinicBinding.ts",
+    "unresolvedTo": "../../../accountingBinding/fixtures/clinicBinding",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/kits/aestheticClinic/kit.v4.ts",
+    "to": "src/features/accountingBinding/fixtures/clinicBinding.ts",
+    "unresolvedTo": "../../../accountingBinding/fixtures/clinicBinding",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/kits/aestheticClinic/kit.v5.ts",
+    "to": "src/features/accountingBinding/fixtures/clinicBinding.ts",
+    "unresolvedTo": "../../../accountingBinding/fixtures/clinicBinding",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/kits/aestheticClinic/kit.v6.ts",
+    "to": "src/features/accountingBinding/fixtures/clinicBinding.ts",
+    "unresolvedTo": "../../../accountingBinding/fixtures/clinicBinding",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/kits/beautySalon/kit.v1.ts",
+    "to": "src/features/accountingBinding/fixtures/saleBinding.ts",
+    "unresolvedTo": "../../../accountingBinding/fixtures/saleBinding",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/kits/beautySalon/kit.v2.ts",
+    "to": "src/features/accountingBinding/fixtures/saleBinding.ts",
+    "unresolvedTo": "../../../accountingBinding/fixtures/saleBinding",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/kits/beautySalon/kit.v3.ts",
+    "to": "src/features/accountingBinding/fixtures/saleBinding.ts",
+    "unresolvedTo": "../../../accountingBinding/fixtures/saleBinding",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/kits/beautySalon/kit.v4.ts",
+    "to": "src/features/accountingBinding/fixtures/saleBinding.ts",
+    "unresolvedTo": "../../../accountingBinding/fixtures/saleBinding",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/kits/beautySalon/kit.v5.ts",
+    "to": "src/features/accountingBinding/fixtures/saleBinding.ts",
+    "unresolvedTo": "../../../accountingBinding/fixtures/saleBinding",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/kits/beautySalon/kit.v6.ts",
+    "to": "src/features/accountingBinding/fixtures/saleBinding.ts",
+    "unresolvedTo": "../../../accountingBinding/fixtures/saleBinding",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/applyRoleOverrides.ts",
+    "to": "src/features/accountingBinding/dtos/AccountingBindingDto.ts",
+    "unresolvedTo": "../../accountingBinding/dtos/AccountingBindingDto",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/classifyKitDiff.ts",
+    "to": "src/features/accountingBinding/dtos/AccountingBindingDto.ts",
+    "unresolvedTo": "../../accountingBinding/dtos/AccountingBindingDto",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/kitInstallPorts.ts",
+    "to": "src/features/accountingBinding/services/BindingActivationService.ts",
+    "unresolvedTo": "../../accountingBinding/services/BindingActivationService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/KitInstallService.ts",
+    "to": "src/features/accountingBinding/models/bindingSectorConflict.ts",
+    "unresolvedTo": "../../accountingBinding/models/bindingSectorConflict",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/KitInstallService.ts",
+    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
+    "unresolvedTo": "../../accountingBinding/repositories/IAccountingBindingRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/KitInstallService.ts",
+    "to": "src/features/accountingBinding/services/BindingActivationService.ts",
+    "unresolvedTo": "../../accountingBinding/services/BindingActivationService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/KitInstallService.ts",
+    "to": "src/features/accountingBinding/services/BindingCompileService.ts",
+    "unresolvedTo": "../../accountingBinding/services/BindingCompileService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/KitPendingService.ts",
+    "to": "src/features/accountingBinding/services/BindingCompileService.ts",
+    "unresolvedTo": "../../accountingBinding/services/BindingCompileService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/KitTraceService.ts",
+    "to": "src/features/accountingBinding/dtos/AccountingBindingDto.ts",
+    "unresolvedTo": "../../accountingBinding/dtos/AccountingBindingDto",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/KitTraceService.ts",
+    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
+    "unresolvedTo": "../../accountingBinding/repositories/IAccountingBindingRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/KitUpgradeService.ts",
+    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
+    "unresolvedTo": "../../accountingBinding/repositories/IAccountingBindingRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/KitUpgradeService.ts",
+    "to": "src/features/accountingBinding/services/BindingCompileService.ts",
+    "unresolvedTo": "../../accountingBinding/services/BindingCompileService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/RoleAccountOverrideService.ts",
+    "to": "src/features/accountingBinding/models/types.ts",
+    "unresolvedTo": "../../accountingBinding/models/types",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/RoleAccountOverrideService.ts",
+    "to": "src/features/accountingBinding/services/BindingActivationService.ts",
+    "unresolvedTo": "../../accountingBinding/services/BindingActivationService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/RoleAccountOverrideService.ts",
+    "to": "src/features/accountingBinding/services/BindingCompileService.ts",
+    "unresolvedTo": "../../accountingBinding/services/BindingCompileService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/RoleAccountOverrideService.ts",
+    "to": "src/features/accountingBinding/services/BindingValidationService.ts",
+    "unresolvedTo": "../../accountingBinding/services/BindingValidationService",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/RoleOverrideSource.ts",
+    "to": "src/features/accountingBinding/dtos/AccountingBindingDto.ts",
+    "unresolvedTo": "../../accountingBinding/dtos/AccountingBindingDto",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/RoleOverrideSource.ts",
+    "to": "src/features/accountingBinding/services/BindingCompileService.ts",
+    "unresolvedTo": "../../accountingBinding/services/BindingCompileService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/teammates/models/Teammate.model.ts",
+    "to": "src/features/accounting/scope/AccountingScope.ts",
+    "unresolvedTo": "../../accounting/scope/AccountingScope",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/teammates/policies/ILlmCredentialPolicy.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/teammates/policies/ITeammatePolicy.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/teammates/policies/LlmCredentialPolicy.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/teammates/policies/TeammatePolicy.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/teammates/repositories/AgentTurnRepository.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/teammates/services/LlmCredentialService.ts",
+    "to": "src/features/accounting/services/AuditService.ts",
+    "unresolvedTo": "../../accounting/services/AuditService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/teammates/services/LlmCredentialService.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/teammates/services/TeammateRunner.ts",
+    "to": "src/features/chat/models/AgentTool.model.ts",
+    "unresolvedTo": "../../chat/models/AgentTool.model",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/teammates/services/TeammateRunner.ts",
+    "to": "src/features/chat/repositories/IActionProposalRepository.ts",
+    "unresolvedTo": "../../chat/repositories/IActionProposalRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/teammates/services/TeammateRunner.ts",
+    "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
+    "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/teammates/services/TeammateService.ts",
+    "to": "src/features/accounting/services/AuditService.ts",
+    "unresolvedTo": "../../accounting/services/AuditService",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/teammates/services/TeammateService.ts",
+    "to": "src/features/users/models/User.model.ts",
+    "unresolvedTo": "../../users/models/User.model",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/users/services/UserService.ts",
+    "to": "src/features/documents/repositories/IChunkVectorRepository.ts",
+    "unresolvedTo": "../../documents/repositories/IChunkVectorRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1-cross-feature-via-public"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/AccountantAssignmentService.ts",
+    "to": "src/features/users/repositories/IUserRepository.ts",
+    "unresolvedTo": "../../users/repositories/IUserRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/TaxAssessmentRecalcService.ts",
+    "to": "src/features/legalParameters/repositories/ILegalParameterRecalcJobRepository.ts",
+    "unresolvedTo": "../../legalParameters/repositories/ILegalParameterRecalcJobRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/TaxAssessmentRecalcService.ts",
+    "to": "src/features/legalParameters/repositories/ILegalParameterRepository.ts",
+    "unresolvedTo": "../../legalParameters/repositories/ILegalParameterRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/accounting/services/WithholdingProfileService.ts",
+    "to": "src/features/legalParameters/repositories/ILegalParameterRepository.ts",
+    "unresolvedTo": "../../legalParameters/repositories/ILegalParameterRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/attachments/services/AttachmentService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chat/services/KnowledgeGraphService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/chatMessages/services/ChatMessageService.ts",
+    "to": "src/features/chatInstances/repositories/IChatInstanceRepository.ts",
+    "unresolvedTo": "../../chatInstances/repositories/IChatInstanceRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmAnalyticsService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmPipelineService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmReportService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/crm/services/CrmReportService.ts",
+    "to": "src/features/fx/repositories/IPtaxRateRepository.ts",
+    "unresolvedTo": "../../fx/repositories/IPtaxRateRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/documents/services/DocumentProcessingPipeline.ts",
+    "to": "src/features/users/repositories/IUserRepository.ts",
+    "unresolvedTo": "../../users/repositories/IUserRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/documents/services/DocumentService.ts",
+    "to": "src/features/users/repositories/IUserRepository.ts",
+    "unresolvedTo": "../../users/repositories/IUserRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpVinculoService.ts",
+    "to": "src/features/accounting/repositories/ICompanyFiscalProfileRepository.ts",
+    "unresolvedTo": "../../accounting/repositories/ICompanyFiscalProfileRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/dp/services/DpVinculoService.ts",
+    "to": "src/features/accounting/repositories/IPartnerRepository.ts",
+    "unresolvedTo": "../../accounting/repositories/IPartnerRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/attachments/repositories/IAttachmentRepository.ts",
+    "unresolvedTo": "../../attachments/repositories/IAttachmentRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/chat/repositories/IActionProposalRepository.ts",
+    "unresolvedTo": "../../chat/repositories/IActionProposalRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/chat/repositories/IKnowledgeGraphRepository.ts",
+    "unresolvedTo": "../../chat/repositories/IKnowledgeGraphRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/chatInstances/repositories/IChatInstanceRepository.ts",
+    "unresolvedTo": "../../chatInstances/repositories/IChatInstanceRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/crm/repositories/ICrmReportDefinitionRepository.ts",
+    "unresolvedTo": "../../crm/repositories/ICrmReportDefinitionRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/dashboardLayout/repositories/IDashboardLayoutRepository.ts",
+    "unresolvedTo": "../../dashboardLayout/repositories/IDashboardLayoutRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
+    "to": "src/features/savedViews/repositories/ISavedTableViewRepository.ts",
+    "unresolvedTo": "../../savedViews/repositories/ISavedTableViewRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageAcceptanceService.ts",
+    "to": "src/features/accounting/repositories/IFiscalProfileRepository.ts",
+    "unresolvedTo": "../../accounting/repositories/IFiscalProfileRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageAcceptanceService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageAcceptanceService.ts",
+    "to": "src/features/users/repositories/IUserRepository.ts",
+    "unresolvedTo": "../../users/repositories/IUserRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/PackageBalanceService.ts",
+    "to": "src/features/accounting/repositories/IFiscalProfileRepository.ts",
+    "unresolvedTo": "../../accounting/repositories/IFiscalProfileRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/packages/services/unitHolidayCalendar.ts",
+    "to": "src/features/accounting/repositories/IFiscalProfileRepository.ts",
+    "unresolvedTo": "../../accounting/repositories/IFiscalProfileRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/RegisterPaymentService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/SaleFiscalGuardService.ts",
+    "to": "src/features/accounting/repositories/IInventoryRepository.ts",
+    "unresolvedTo": "../../accounting/repositories/IInventoryRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/SaleFiscalGuardService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sales/services/SalesCancellationService.ts",
+    "to": "src/features/dynamicTables/repositories/IDynamicTableRepository.ts",
+    "unresolvedTo": "../../dynamicTables/repositories/IDynamicTableRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/KitInstallService.ts",
+    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
+    "unresolvedTo": "../../accountingBinding/repositories/IAccountingBindingRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/KitTraceService.ts",
+    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
+    "unresolvedTo": "../../accountingBinding/repositories/IAccountingBindingRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/sectorKits/services/KitUpgradeService.ts",
+    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
+    "unresolvedTo": "../../accountingBinding/repositories/IAccountingBindingRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/teammates/services/TeammateRunner.ts",
+    "to": "src/features/chat/repositories/IActionProposalRepository.ts",
+    "unresolvedTo": "../../chat/repositories/IActionProposalRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/features/users/services/UserService.ts",
+    "to": "src/features/documents/repositories/IChunkVectorRepository.ts",
+    "unresolvedTo": "../../documents/repositories/IChunkVectorRepository",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "M1a-no-foreign-repository"
+    }
+  },
+  {
     "type": "cycle",
     "from": "src/features/accounting/services/IInventoryService.ts",
     "to": "src/features/accounting/services/InventoryService.ts",

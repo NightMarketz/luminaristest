@@ -8,6 +8,9 @@
 
 const TEST = '(__tests__|\\.test\\.ts$)';
 const PRISMA = '^src/lib/prisma\\.ts$';
+// ADR-MODULE-BOUNDARIES §10, F-MBE-3 (a): arquivo de `public/` que NÃO é `*.types.ts` é porta executável. Policy e
+// models/dtos não a importam (L5/L6); o `*.types.ts` é só tipo e passa.
+const PUBLIC_EXEC = '^src/features/[^/]+/public/(?!.*\\.types\\.ts$)';
 const FEATURE_LOGIC = '^src/features/[^/]+/(?!models/).+';
 const FISCAL_LIB =
   '^src/lib/(sped|ecf|ecfReal|nfe|nfeCost|nfeSignature|nfse|nfseEvento|nfseReadback|nfseSignature|mit|cnab|ofx|cnpj|cpf|referentialCatalog)\\.ts$';
@@ -49,14 +52,14 @@ module.exports = {
       severity: 'error',
       comment: 'Policy = decisão boolean: zero acesso a dados (nem interface de repository), zero service.',
       from: { path: '/policies/', pathNot: TEST },
-      to: { path: `(/repositories/|/services/|/controllers/|${PRISMA})` },
+      to: { path: `(/repositories/|/services/|/controllers/|${PRISMA}|${PUBLIC_EXEC})` },
     },
     {
       name: 'L6-model-dto-are-leaves',
       severity: 'error',
       comment: 'models/ e dtos/ são folhas de tipo/contrato: não importam camada executável.',
       from: { path: '/(models|dtos)/', pathNot: TEST },
-      to: { path: `(/repositories/|/services/|/controllers/|^src/routes/|${PRISMA})` },
+      to: { path: `(/repositories/|/services/|/controllers/|^src/routes/|${PRISMA}|${PUBLIC_EXEC})` },
     },
     // ---- §2.1 DynamicTable × Prisma first-class ----
     {
@@ -130,6 +133,60 @@ module.exports = {
       comment: 'Sem ciclo de import. lib/factory.ts (composition root) é a exceção.',
       from: { path: '^src/' },
       to: { circular: true, viaNot: '^src/lib/factory\\.ts$' },
+    },
+    // ---- fronteira entre features — ADR-MODULE-BOUNDARIES §10 (ligadas em 24/11/2026, PR-2 do BRIEF) ----
+    // A M2 (peça de feature em pasta de camada) entra por feature, a cada PR de renome (F-MBE-2 c).
+    {
+      name: 'M1a-no-foreign-repository',
+      severity: 'error',
+      comment:
+        'Nenhuma feature importa `repositories/` de outra (nem a interface, nem por `import type`). Quem precisa do ' +
+        'dado de outra feature pede a porta que a dona expõe em `public/`.',
+      from: { path: '^src/features/([^/]+)/', pathNot: TEST },
+      to: { path: '^src/features/[^/]+/repositories/', pathNot: '^src/features/$1/' },
+    },
+    {
+      name: 'M1-cross-feature-via-public',
+      severity: 'error',
+      comment:
+        'Import de outra feature só por `features/<x>/public/`. Controller, route, job e lib/factory.ts ficam fora ' +
+        'do `from` (são a camada de aplicação).',
+      from: { path: '^src/features/([^/]+)/', pathNot: TEST },
+      to: { path: '^src/features/[^/]+/', pathNot: ['^src/features/$1/', '^src/features/[^/]+/public/'] },
+    },
+    {
+      name: 'M3-public-no-repository',
+      severity: 'error',
+      comment:
+        'F-MBE-3 (a): `public/` não importa nem reexporta `repositories/` (senão a M1a se paga trocando o caminho ' +
+        'do import, não a dependência). Nasce em 0: nunca entra no known-violations.',
+      from: { path: '^src/features/[^/]+/public/', pathNot: TEST },
+      to: { path: '/repositories/' },
+    },
+    {
+      name: 'D2-domain-is-pure',
+      severity: 'error',
+      comment:
+        'F-MB-4 / F-MBE-4 (a): `domain/` é função pura, não engine — sem repository, service, controller, route, ' +
+        'Prisma nem Express. Nasce em 0: nunca entra no known-violations.',
+      from: { path: '/domain/', pathNot: TEST },
+      to: { path: `(/repositories/|/services/|/controllers/|^src/routes/|${PRISMA}|node_modules/express/)` },
+    },
+    {
+      name: 'J1-job-is-entrypoint',
+      severity: 'error',
+      comment:
+        'Job é ponto de entrada: fala com o lib/factory.ts, não com repository nem com o singleton Prisma. Fora da ' +
+        'regra: `jobs/repositories/` e as 3 CLIs de migração/seed nomeadas (ADR-MODULE-BOUNDARIES §10).',
+      from: {
+        path: '^src/jobs/',
+        pathNot: [
+          TEST,
+          '^src/jobs/repositories/',
+          '^src/jobs/(migratePlano4NiveisCli|rekeyLegacyUnitCli|seedAccountingFixtureCli)\\.ts$',
+        ],
+      },
+      to: { path: `(/repositories/|${PRISMA})` },
     },
   ],
   options: {
