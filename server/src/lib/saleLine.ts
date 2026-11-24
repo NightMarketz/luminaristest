@@ -8,10 +8,11 @@
  * - Quantidade da linha para as guardas: `quantity` (1 se a coluna não existe — preset só-serviços). As pontes contábeis
  *   seguem `quantity × unitPrice` cru (contrato do X14/REVENUE-SPLIT), e o subtotal do SalesPlugin também, desde o VP-1b
  *   (D-2026-11-04-VENDA-QUANTIDADE-SERVICO-E-PV-A; antes contava serviço como 1, divergência do review do #913).
- * - Fronteira reais → centavos: `Math.round(reais × 100)`; ausente ⇒ 0, lixo/NaN/Infinity e acima de `MAX_CENTS` ⇒
+ * - Fronteira reais → centavos: o arredondamento é do `lib/decimalMoney` (hoje `Math.round(reais × 100)`; CENTAVOS-EXATOS); ausente ⇒ 0, lixo/NaN/Infinity e acima de `MAX_CENTS` ⇒
  *   `ValidationError` (SOT F-11.1, Q-07 = a, dono, questionário 2026-11-10).
  */
 
+import { roundReaisToCents } from './decimalMoney';
 import { ValidationError } from './errors';
 import { MAX_CENTS } from '../features/accounting/models/money';
 
@@ -28,7 +29,7 @@ export function reaisToCents(v: unknown): number {
   if (v === undefined || v === null || v === '') return 0;
   const n = Number(v);
   if (!Number.isFinite(n)) throw new ValidationError('Valor em reais inválido: não é um número finito.');
-  const cents = Math.round(n * 100);
+  const cents = roundReaisToCents(n);
   if (Math.abs(cents) > MAX_CENTS) throw new ValidationError('Valor em reais fora da faixa suportada de centavos.');
   return cents;
 }
