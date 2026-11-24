@@ -2,6 +2,7 @@ import { AccountingPeriodNotOpenError, AppError, ForbiddenError, MaxCentsExceede
 import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
 import type { Account, SourceDocument } from 'generated/prisma';
+import { fiscalYearOf } from '../models/dates';
 import { CANONICAL_ACCOUNTS, NIVEL_MINIMO_ANALITICA_PATRIMONIAL, PATRIMONIAL_NATURES, isCodigoDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
 import { CLOSING_SOURCE_TYPE, reversedClosingSourceId } from '../models/closing';
 import { MAX_CENTS, centsFromDb } from '../models/money';
@@ -104,21 +105,6 @@ export class PostingService {
     // Date-only strings (YYYY-MM-DD) are parsed as UTC midnight by JS — no tz conversion needed.
     const d = new Date(dateStr);
     return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
-  }
-
-  /**
-   * Fiscal year from a posting date (ADR-INCR3 Emenda 3: numbering must match the
-   * calendar year of the posting date, never drift to the prior/next year at the
-   * boundary). Must use the SAME UTC-only parsing as extractYearMonth — both read the
-   * same date-only `input.date` string, and the period gate (extractYearMonth) is
-   * authoritative for which year/month a posting belongs to. Converting to
-   * America/Sao_Paulo here (as a prior version did) shifts UTC midnight on Jan 1 back
-   * to Dec 31 21:00 BRT, so entries dated 2026-01-01 were numbered under fiscal year
-   * 2025 even though the period gate correctly placed them in 2026-01 — the two
-   * disagreed on the fiscal year of the exact same date.
-   */
-  private fiscalYearFrom(dateStr: string): number {
-    return new Date(dateStr).getUTCFullYear();
   }
 
   /**
@@ -395,7 +381,7 @@ export class PostingService {
         // value) at the cost of mislabeling its entry as DRE-excluded — audited like every post.
         this.assertDimensionGateForLines(sourceType, resolvedLines);
 
-        const fiscalYear = this.fiscalYearFrom(input.date);
+        const fiscalYear = fiscalYearOf(input.date);
         const entryNumber = await this.postingRepo.nextEntryNumber(scope, fiscalYear, tx);
 
         const created = await this.journalEntryRepo.create(
@@ -649,7 +635,7 @@ export class PostingService {
         // AUTHORITATIVE PERIOD GATE — inside the tx, on the reversal date.
         const { jaFechado } = await this.assertPeriodOpenTx(tx, scope, input.reversalPostingDate);
 
-        const reversalFiscalYear = this.fiscalYearFrom(input.reversalPostingDate);
+        const reversalFiscalYear = fiscalYearOf(input.reversalPostingDate);
         const reversalEntryNumber = await this.postingRepo.nextEntryNumber(
           scope,
           reversalFiscalYear,
