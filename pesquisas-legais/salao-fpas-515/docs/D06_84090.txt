@@ -1,0 +1,137 @@
+ANEXO I
+(Anexo III da Instrução Normativa RFB nº 2.110, de 17 de outubro de 2022)
+CÓDIGO DO 
+FPAS
+ALÍQUOTAS (%)
+Prev. Social Gilrat Salário- 
+Educação
+Incra Senai Sesi Senac Sesc Sebrae DPC Fundo 
+Aeroviário
+Senar Sest Senat Sescoop Total 
+Terceiros
+--- --- 0001 0002 0004 0008 0016 0032 0064 0128 0256 0512 1024 2048 4096
+507 20 Variável 2,5 0,2 1,0 1,5 --- --- 0,6 --- --- --- --- --- --- 5,8
+507 Cooperativa 20 Variável 2,5 0,2 --- --- --- --- 0,6 --- --- --- --- --- 2,5 5,8
+515 20 Variável 2,5 0,2 --- --- 1,0 1,5 0,6 --- --- --- --- --- --- 5,8
+515 Cooperativa 20 Variável 2,5 0,2 --- --- --- --- 0,6 --- --- --- --- --- 2,5 5,8
+523 20 Variável 2,5 0,2 --- --- --- --- --- --- --- --- --- --- --- 2,7
+531 20 Variável 2,5 2,7 --- --- --- --- --- --- --- --- --- --- --- 5,2
+540 20 Variável 2,5 0,2 --- --- --- --- --- 2,5 --- --- --- --- --- 5,2
+558 20 Variável 2,5 0,2 --- --- --- --- --- --- 2,5 --- --- --- --- 5,2
+566 20 Variável 2,5 0,2 --- --- --- 1,5 0,3 --- --- --- --- --- --- 4,5
+566 Cooperativa 20 Variável 2,5 0,2 --- --- --- --- 0,3 --- --- --- --- --- 2,5 5,5
+574 20 Variável 2,5 0,2 --- --- --- 1,5 0,3 --- --- --- --- --- --- 4,5
+574 Cooperativa 20 Variável 2,5 0,2 --- --- --- --- 0,3 --- --- --- --- --- 2,5 5,5
+582 20 Variável --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+590 20 Variável 2,5 --- --- --- --- --- --- --- --- --- --- --- --- 2,5
+604 --- --- 2,5 0,2 --- --- --- --- --- --- --- --- --- --- --- 2,7
+612 20 Variável 2,5 0,2 --- --- --- --- 0,6 --- --- --- 1,5 1,0 --- 5,8
+612 Cooperativa 20 Variável 2,5 0,2 --- --- --- --- 0,6 --- --- --- --- --- 2,5 5,8
+620 20 --- --- --- --- --- --- --- --- --- --- --- 1,5 1,0 --- 2,5
+639 --- --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+647 --- --- 2,5 0,2 --- --- --- 1,5 0,3 --- --- --- --- --- --- 4,5
+655 20 Variável 2,5 --- --- --- --- --- --- --- --- --- --- --- --- 2,5
+680 20 Variável 2,5 0,2 --- --- --- --- --- 2,5 --- --- --- --- --- 5,2
+680 Operador 
+portuário sujeito à 
+CPRB
+--- Variável 2,5 0,2 --- --- --- --- --- 2,5 --- --- --- --- --- 5,2
+736 22,5 Variável 2,5 0,2 --- --- --- --- --- --- --- --- --- --- --- 2,7
+736 Cooperativa 
+(1)
+22,5 Variável 2,5 0,2 --- --- --- --- --- --- --- --- --- --- --- 2,7
+744 Seg. Especial 
+(2)
+1,2 0,1 --- --- --- --- --- --- --- --- --- 0,2 --- --- --- 0,2
+744 Pessoa Física 
+(2)
+1,2
+Até 
+31/3/2026
+1,32
+A partir de 
+1º/4/2026
+0,1
+Até 
+31/3/2026
+0,11
+A partir de 
+1º/4/2026
+--- --- --- --- --- --- --- --- --- 0,2 --- --- --- 0,2
+744 Pessoa 
+Jurídica (3)
+1,7
+Até 
+31/3/2026
+1,87
+A partir de 
+1º/4/2026
+0,1
+Até 
+31/3/2026
+0,11
+A partir de 
+1º/4/2026
+--- --- --- --- --- --- --- --- --- 0,25 --- --- --- 0,25
+744 Agroindústria 2,5 0,1 --- --- --- --- --- --- --- --- --- 0,25 --- --- --- 0,25
+779 5,0 --- --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+787 20 Variável 2,5 0,2 --- --- --- --- --- --- --- 2,5 --- --- --- 5,2
+787 Cooperativa 
+(1)
+20 Variável 2,5 0,2 --- --- --- --- --- --- --- --- --- --- 2,5 5,2
+795 Cooperativa 20 Variável 2,5 2,7 --- --- --- --- --- --- --- --- --- --- 2,5 7,7
+825 --- --- 2,5 2,7 --- --- --- --- --- --- --- --- --- --- --- 5,2
+833 --- --- 2,5 0,2 1,0 1,5 --- --- 0,6 --- --- --- --- --- --- 5,8
+876 20 Variável --- --- --- --- --- --- --- --- --- --- --- --- --- ---
+Nota (1): As cooperativas de crédito contribuem para o Serviço Nacional de Aprendizagem do Cooperativismo - Sescoop, em substituição à contribuição 
+patronal adicional de 2,5% (dois inteiros e cinco décimos por cento), com enquadramento no código FPAS 787 (art. 99,caput, inciso II, da Instrução Normativa RFB 
+nº 2.110, de 17 de outubro de 2022). As demais cooperativas que desenvolvem atividades do código FPAS 736 sujeitam-se à contribuição patronal adicional devida 
+à Seguridade Social de 2,5% (dois inteiros e cinco décimos por cento), sem contribuição para o Sescoop por não estarem abrangidas pelo art. 10, caput, inciso I, e 
+§ 10, da Medida Provisória nº 2.168-40, de 24 de agosto de 2001.
+Nota (2): A alíquota da contribuição previdenciária do produtor rural pessoa física e do segurado especial incidente sobre a receita bruta, prevista no art. 25, 
+caput, inciso I, da Lei nº 8.212, de 24 de julho de 1991, é de:
+(2.1) 2% (dois por cento), até 31 de dezembro de 2017, em decorrência da alteração promovida pela Lei nº 8.540, de 22 de dezembro de 1992;
+(2.2) 1,2% (um inteiro e dois décimos por cento), a partir de 1º de janeiro de 2018, para o segurado especial;
+(2.3) 1,2% (um inteiro e dois décimos por cento), de 1º de janeiro de 2018 até 31 de março de 2026, em decorrência do disposto no art. 4º, § 4º, inciso VI, e 
+art. 14, da Lei Complementar nº 224, de 26 de dezembro de 2025, para o produtor rural pessoa física; e
+(2.4) 1,32% (um inteiro e trinta e dois centésimos por cento), a partir de 1º de abril de 2026, em decorrência do disposto no art. 4º, § 4º, inciso VI, e art. 14, 
+da Lei Complementar nº 224, de 26 de dezembro de 2025, para o produtor rural pessoa física.
+Nota (3): A alíquota da contribuição previdenciária do produtor rural pessoa jurídica incidente sobre a receita bruta, prevista no art. 25, caput, inciso I, da Lei 
+nº 8.870, de 15 de abril de 1994, é de:
+(3.1) 2,5% (dois inteiros e cinco décimos por cento), até 17 de abril de 2018, com redação anterior à Lei nº 13.606, de 9 de janeiro de 2018;
+(3.2) 1,7% (um inteiro e sete décimos por cento), de 18 de abril de 2018 até 31 de março de 2026, em decorrência do disposto no art. 15 da Lei nº 13.606, 
+de 9 de janeiro de 2018, e no art. 4º, § 4º, inciso VI, e art. 14, da Lei Complementar nº 224, de 26 de dezembro de 2025; e
+(3.3) 1,87% (um inteiro e oitenta e sete centésimos por cento), a partir de 1º de abril de 2026, em decorrência do disposto no art. 4º, § 4º, inciso VI, e art. 
+14, da Lei Complementar nº 224, de 26 de dezembro de 2025.
+Nota: Fundamentação legal das contribuições devidas a terceiros e observações relevantes:
+· SALÁRIO-EDUCAÇÃO - Constituição Federal, art. 212, § 5º; Lei nº 9.424, de 24 de dezembro de 1996, art. 15; Decreto nº 6.003, de 28 de dezembro de 
+2006, arts. 1º e 2º.
+· INCRA - Lei nº 2.613, de 23 de setembro de 1.955, art. 2º, caput, inciso II; Decreto-Lei nº 1.146, de 31 de dezembro de 1970; Lei nº 7.787, de 30 de junho 
+de 1989. Contribuição de 2,5% (dois inteiros e cinco décimos por cento) e adicional de 0,2% (dois décimos por cento). O art. 3º do Decreto-Lei nº 1.146, de 31 de 
+dezembro de 1970, estabelece adicional de 0,4% (quatro décimos por cento). Contudo o art. 1º, caput, inciso I, item 1, destina apenas 50% (cinquenta por cento) 
+dessa contribuição adicional ao Incra.
+· SENAI - Decreto-Lei nº 4.048, de 22 de janeiro de 1942, arts. 4º e 6º; Decreto-Lei nº 4.936, de 7 de novembro de 1942, art. 3º; Decreto-Lei nº 6.246, de 5 
+de fevereiro de 1944, arts. 1º e 2º.
+· SESI - Decreto-Lei nº 9.403, de 25 de junho de 1946, art. 3º; Lei nº 8.036, de 11 de maio de 1990, art. 30.
+· SENAC - Decreto-Lei nº 8.621, de 10 de janeiro de 1946, art. 4º.
+· SESC - Decreto-Lei nº 9.853, de 13 de setembro de 1946, art. 3º; Lei nº 8.036, de 11 de maio de 1990, art. 30.
+· SENAR - Lei nº 8.315, de 23 de dezembro de 1991, art. 3º; Lei nº 9.528, de 10 de dezembro de 1997, art. 6º; Lei nº 8.212, de 24 de julho de 1991, art. 22-
+A, § 5º; Lei nº 8.870, de 15 de abril de 1994, art. 25, § 1º.
+· SEST e SENAT - Lei nº 8.706, de 14 de setembro de 1993, art. 7º. As contribuições devidas ao Sesi, no percentual de 1,5% (um inteiro e cinco décimos 
+por cento), devidas pelas empresas de transporte rodoviário, foram transferidas ao Sest; e as devidas ao Senai, no percentual de 1% (um por cento), foram 
+transferidas ao Senat.
+· SESCOOP - Medida Provisória nº 2.168-40, de 24 de agosto de 2001, art. 10. De acordo com o art. 10, § 2º, da Medida Provisória nº 2.168-40, de 24 de 
+agosto de 2001, a contribuição de 2,5% (dois inteiros e cinco décimos por cento), devida pelas cooperativas ao Sescoop, substitui as devidas ao Sesi, Senai, Sesc, 
+Senac, Sest, Senat e Senar.
+· SEBRAE - Lei nº 8.029, de 12 de abril de 1990, art. 8º, § 3º, alínea "c". O adicional de 0,3% (três décimos por cento) para o Sebrae deve incidir sobre 
+cada uma das contribuições devidas ao Sesc, Senac, Sesi e Senai, alcançando até 0,6% (seis décimos por cento) na empresa.
+· FUNDO AEROVIÁRIO - Decreto-Lei nº 1.305, de 8 de janeiro de 1974, art. 1º. A contribuição de 1% (um por cento), que era devida ao Senai (art. 1º do 
+Decreto-Lei nº 6.246, de 5 de fevereiro de 1944) pelas empresas aeroportuárias, passou a ser recolhida ao Fundo Aeroviário. Também a contribuição de 1,5% (um 
+inteiro e cinco décimos por cento), devida ao Sesi e ao Sesc (art. 24 da Lei nº 5.107, de 13 de setembro de 1966, e art. 30 da Lei nº 8.036, de 11 de maio de 1990) 
+por tais empresas, passou a ser devida ao Fundo, totalizando assim o percentual de 2,5% (dois inteiros e cinco décimos por cento) para o Fundo Aeroviário, 
+conforme estabelece o Decreto-Lei nº 1.305, de 8 de janeiro de 1974.
+· DPC - Lei nº 5.461, de 25 de junho de 1968, art. 1º. A contribuição de 1% (um por cento), que era devida ao Senai (art. 1º do Decreto-Lei nº 6.246, de 5 de 
+fevereiro de 1944) pelas empresas de navegação e portuárias, passou a ser recolhida ao Fundo de Desenvolvimento do Ensino Profissional Marítimo - FDEPM - 
+Diretoria de Portos e Costas. Também a contribuição de 1,5% (um inteiro e cinco décimos por cento), devida por tais empresas ao Sesi e ao Sesc (art. 24 da Lei nº 
+5.107, de 13 de setembro de 1966, e art. 30 da Lei nº 8.036, de 11 de maio de 1990), passou a ser devida ao Fundo, totalizando assim o percentual de 2,5% (dois 
+inteiros e cinco décimos por cento) para o FDEPM, conforme estabelece o art. 1º da Lei nº 5.461, de 25 de junho de 1968.

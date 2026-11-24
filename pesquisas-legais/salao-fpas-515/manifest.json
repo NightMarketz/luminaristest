@@ -1,0 +1,288 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "DEL5452",
+      "url": "https://www.planalto.gov.br/ccivil_03/decreto-lei/del5452.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/decreto-lei/del5452.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:20:25-03:00",
+      "sha256": "3c3df8f3ffe2f21509ec0ff440f8e2cdb8cd736664eb8299cadcd828351e1df5",
+      "arquivo": "docs/D01_del5452-htm.html",
+      "texto": "docs/D01_del5452-htm.txt",
+      "bytes": 3531637,
+      "sha256_texto": "71887e2bf7a44b4bc8ca4fd480cdcf8e56aed503fb9c2c9d0aa89dd38e3dd6b2",
+      "captura": {
+        "anterior": {
+          "slug": "parecer-salao-sp-4-pessoas",
+          "id": "D75",
+          "baixado_em": "2026-11-20T21:45:00-03:00",
+          "sha256_texto": "a4d020022a993a10624e533bc10f7fac575d9cab65161737a5d5c9a8938e4019"
+        },
+        "tipo": "TEXTO_MUDOU",
+        "citado_em": [
+          {
+            "slug": "parecer-salao-sp-4-pessoas",
+            "id": "D75"
+          }
+        ],
+        "diferencas": [
+          "-Fonte: https://www.planalto.gov.br/ccivil_03/decreto-lei/del5452.htm#anexo",
+          "-Transcrição: texto lido no navegador embutido (document.body.innerText) em 20/11/2026 e transcrito, com as quebras de linha e tabulações normalizadas; as palavras são as da página.",
+          "-Cabeçalho do anexo na página: \"ANEXO / Quadro a que se refere o art. 577 da Consolidação das Leis do Trabalho\""
+        ]
+      },
+      "alertas": [
+        "TEXTO MUDOU desde 2026-11-20. Dossiês que citaram a versão anterior: parecer-salao-sp-4-pessoas D75. Conferir se a conclusão deles ainda vale"
+      ]
+    },
+    {
+      "id": "D02",
+      "titulo": "DEL9853-46",
+      "url": "https://www.planalto.gov.br/ccivil_03/decreto-lei/1937-1946/del9853.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/decreto-lei/1937-1946/del9853.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:20:44-03:00",
+      "sha256": "6f610535f92b9f0245023ba400daafe59fa042b5003659e4edc2e4629855116d",
+      "arquivo": "docs/D02_del9853-htm.html",
+      "texto": "docs/D02_del9853-htm.txt",
+      "bytes": 12452,
+      "sha256_texto": "f54aa48c283e23e0d4371a988359b962fea9eee00f60bd309db98f95da34799e",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Del1146",
+      "url": "https://www.planalto.gov.br/ccivil_03/decreto-lei/1965-1988/del1146.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/decreto-lei/1965-1988/del1146.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:20:44-03:00",
+      "sha256": "1f0b8ce6d5065ca0e5c249b06a344c982e09756c53de56d6837c581f3639c1a7",
+      "arquivo": "docs/D03_del1146-htm.html",
+      "texto": "docs/D03_del1146-htm.txt",
+      "bytes": 16656,
+      "sha256_texto": "25d1de2063c11d7b6dff9601b6e7dc35574511286305399a6d29f3b18968bdff",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "Instrução Normativa RFB nº 2110, de 17 de outubro de 2022",
+      "url": "rfb:126687",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/126687/visao/multivigente",
+      "id_normativo": "rfb:126687",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-24T01:21:26-03:00",
+      "sha256": "86982870db15f3c896ab8af4dab8e179a1b87008df9369f93f12c179b4108241",
+      "arquivo": "docs/D04_rfb-126687-multivigente.json",
+      "texto": "docs/D04_rfb-126687-multivigente.txt",
+      "bytes": 1480223,
+      "sha256_texto": "42a53a387e057cb438c09f591cc5030b5cd1a4544a9e0696ba63fa3d05bec7c3",
+      "anexos": [
+        {
+          "nome": "Anexo I.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67105"
+        },
+        {
+          "nome": "Anexo II.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67106"
+        },
+        {
+          "nome": "Anexo III.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67108"
+        },
+        {
+          "nome": "Anexo III.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/84090"
+        },
+        {
+          "nome": "Anexo IV.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67123"
+        },
+        {
+          "nome": "Anexo IV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/84091"
+        },
+        {
+          "nome": "Anexo V.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67124"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/84092"
+        },
+        {
+          "nome": "Anexo VI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67111"
+        },
+        {
+          "nome": "Anexo VII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67112"
+        },
+        {
+          "nome": "Anexo VIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67113"
+        },
+        {
+          "nome": "Anexo IX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/84093"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "parecer-salao-sp-4-pessoas",
+          "id": "D34",
+          "baixado_em": "2026-11-20T18:53:57-03:00",
+          "sha256_texto": "42a53a387e057cb438c09f591cc5030b5cd1a4544a9e0696ba63fa3d05bec7c3"
+        },
+        "tipo": "IGUAL"
+      },
+      "alertas": [
+        "12 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D05",
+      "titulo": "D05_67106",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67106",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67106",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:21:26-03:00",
+      "sha256": "c488e91a3c76ad5b6df724658490fa6e21d2bfaf08aa265316eaddf593c8e8d2",
+      "arquivo": "docs/D05_67106.pdf",
+      "texto": "docs/D05_67106.txt",
+      "bytes": 38412,
+      "sha256_texto": "c06c564f71aa673b3b71d21e370641bc24ab38efe23e76457b922cf082e69557",
+      "captura": {
+        "anterior": {
+          "slug": "parecer-salao-sp-4-pessoas",
+          "id": "D35",
+          "baixado_em": "2026-11-20T18:54:12-03:00",
+          "sha256_texto": "c06c564f71aa673b3b71d21e370641bc24ab38efe23e76457b922cf082e69557"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "D06_84090",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/84090",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/84090",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:21:26-03:00",
+      "sha256": "086341e32ed3e9a4d50ebad945e7a196ba36651d6b7823a22e1a8ad97e763cf6",
+      "arquivo": "docs/D06_84090.pdf",
+      "texto": "docs/D06_84090.txt",
+      "bytes": 251818,
+      "sha256_texto": "20073efe83aa162f344b94891a32f2f1b7b57ab87fa7d285e28ebbd67b226718",
+      "captura": {
+        "anterior": {
+          "slug": "parecer-salao-sp-4-pessoas",
+          "id": "D36",
+          "baixado_em": "2026-11-20T18:54:12-03:00",
+          "sha256_texto": "20073efe83aa162f344b94891a32f2f1b7b57ab87fa7d285e28ebbd67b226718"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "Lei nº 8.036 de 11/05/1990",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1990/lei-8036-1990-05-11.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ccdcc898b79c13be701c7841b195174e1898ccf8/federal/leis-ordinarias/1990/lei-8036-1990-05-11.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1990-05-11;8036",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "ccdcc898b79c13be701c7841b195174e1898ccf8",
+      "alertas": [],
+      "baixado_em": "2026-11-24T01:24:53-03:00",
+      "sha256": "2306b761562d936ac63fd74447e2def11fe8f71d86910d324d83ea5614f2bd22",
+      "arquivo": "docs/D07_lei-8036-1990-05-11.md",
+      "texto": "docs/D07_lei-8036-1990-05-11.txt",
+      "bytes": 95035,
+      "sha256_texto": "87772ff6aba807b1f712a80d3a7e6daabf33f42cb1876dcae68115f10e3599d5",
+      "captura": {
+        "anterior": {
+          "slug": "parecer-salao-sp-4-pessoas",
+          "id": "D04",
+          "baixado_em": "2026-11-20T16:47:39-03:00",
+          "sha256_texto": "87772ff6aba807b1f712a80d3a7e6daabf33f42cb1876dcae68115f10e3599d5"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "Lei Complementar nº 11 de 25/05/1971",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/1971/lcp-11-1971-05-25.md",
+      "url_final": "https://github.com/ctresb/leis/blob/bb95336663e0bdcfd48d51d280064530b51041b4/federal/leis-complementares/1971/lcp-11-1971-05-25.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:1971-05-25;11",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "bb95336663e0bdcfd48d51d280064530b51041b4",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-24T01:24:54-03:00",
+      "sha256": "855c04b5a86f7b005c7876c253fe61b2a676273f02e0844508747882423364dd",
+      "arquivo": "docs/D08_lcp-11-1971-05-25.md",
+      "texto": "docs/D08_lcp-11-1971-05-25.txt",
+      "bytes": 73504,
+      "sha256_texto": "da63250083c727d462f50f9b06253e3f6f5a2a77c22dd17f4f3fa907407a43b8",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D09",
+      "titulo": "Lei nº 7.787 de 30/06/1989",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1989/lei-7787-1989-06-30.md",
+      "url_final": "https://github.com/ctresb/leis/blob/7d6f729c8058824f285518d0c007c16272362e0a/federal/leis-ordinarias/1989/lei-7787-1989-06-30.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1989-06-30;7787",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "7d6f729c8058824f285518d0c007c16272362e0a",
+      "alertas": [],
+      "baixado_em": "2026-11-24T01:24:56-03:00",
+      "sha256": "e62d1d5392d120299aecbea19c075a99cd5777b99e6a7160b9d39eee845358d8",
+      "arquivo": "docs/D09_lei-7787-1989-06-30.md",
+      "texto": "docs/D09_lei-7787-1989-06-30.txt",
+      "bytes": 11372,
+      "sha256_texto": "66fd5e25bbcb40a5f517e439d2dc016b3e259ae0b11b15e1d002bdc508a335cc",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D10",
+      "titulo": "Lcp11",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp11.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp11.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:25:10-03:00",
+      "sha256": "1d5c8cd2b6caa665eedeba0a4ec1b980321f3bf3d514eb67779e826022539673",
+      "arquivo": "docs/D10_lcp11-htm.html",
+      "texto": "docs/D10_lcp11-htm.txt",
+      "bytes": 32190,
+      "sha256_texto": "70137d6bbbc6adb02375bb604936252064445c560958bb83445b0de47c23de5e",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "salao-fpas-515",
+  "pergunta": "O salão de beleza (CNAE 9602-5/01, SP capital) está no FPAS 515? Quadro do art. 577 da CLT na fonte oficial, DL 9.853/1946 (Sesc) e DL 1.146/1970 (Incra) compilados.",
+  "criado": "2026-11-24T01:20:23-03:00"
+}

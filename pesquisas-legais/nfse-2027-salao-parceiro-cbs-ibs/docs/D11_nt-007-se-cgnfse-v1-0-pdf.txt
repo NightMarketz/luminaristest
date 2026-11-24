@@ -1,0 +1,449 @@
+ 
+Secretaria-Executiva do Comitê Gestor da Nota Fiscal de Serviço Eletrônica 
+de Padrão Nacional (SE/CGNFS-e) 
+ 
+ 
+ 
+ 
+ 
+Projeto Reforma Tributária do Consumo – 
+Adequações NFS-e 
+ 
+ Nota Técnica Nº 007 – Versão 1.0 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+7 de fevereiro de 2026 
+ 
+2 
+ 
+Sumário 
+ 
+1. Introdução ................................................................................................................................................. 3 
+2. Atualizações ............................................................................................................................................... 3 
+3. Esclarecimentos ......................................................................................................................................... 7 
+ 
+ 
+ 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+3 
+ 
+ 
+ 
+1. Introdução 
+ 
+ Este documento contempla atualizações e esclarecimentos acerca do layout da Nota Fiscal 
+de Serviço eletrônica – NFS-e padrão nacional. 
+ Junto a esta nota técnica, foram também publicadas, na seção de documentação técnica do 
+portal da NFS -e (https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica), atualizações dos 
+dois anexos listados abaixo: 
+ 
+• AnexoVI-LeiautesRN_RTC_IBSCBS-V1.03.00 – NT007.xlsx 
+Este anexo possui o layout da NFS-e com os novos grupos referentes ao IBS e à CBS 
+(“Leiaute DPS_NFS-e - RT”) e regras de negócio da NFS-e; 
+ 
+• AnexoVII-IndOp_IBSCBS_V1.01.00.xlsx 
+Composto por uma tabela com os códigos indicadores da operação que são 
+referenciados no campo “cIndOp” da DPS. A tabela foi baseada no art. 11 da Lei 
+Complementar – LC Nº 214, de 16 de janeiro de 2025. 
+ 
+2. Atualizações 
+ 
+ 
+a) Inserção do campo “indZFMALC” 
+ 
+Observou-se a necessidade de inclusão de um campo, na Declaração de Prestação de Serviços 
+(DPS), ou seja, declaratório pelo emitente, para constar a indicação de enquadramento nas situações 
+previstas nos artigos 451 e 466 da Lei Complementar (LC) nº 214, de 16 de janeiro de 2025. Nessas 
+situações, o contribuinte terá a alíquota da Contribuição Social sobre Bens e Serviços (CBS) reduzida 
+à zero. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+CAMINHO NO XML CAMPO ELE TIPO OCOR. TAM. DESCRIÇÃO 
+NFSe/infNFSe/DPS/infDPS/ IBSCBS G - 0-1 - Grupo de informações declaradas pelo emitente referentes ao IBS e 
+à CBS 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/ indZFMALC E N 0-1 1 
+Indicador da operação de fornecimento favorecido com alíquota 
+zero de CBS (conforme art. 451 e art. 466 da Lei Complementar nº 
+214/2025) 
+ 
+0 - Não; 
+1 - Sim. 
+ 
+4 
+ 
+b) AnexoVII 
+ 
+Foi disponibilizada uma nova ver são da tabela de códigos indicadores da operação que são 
+referenciados no campo “cIndOp” da DPS, baseada no art. 11 da Lei Complementar – LC Nº 214, de 
+16 de janeiro de 2025. Essa versão contempla ajustes e novos códigos que foram criados para albergar 
+os novos fatores geradores que serão formalizados pela NFS -e, além da possibilidade de utilização 
+da mesma codificação em outros documentos fiscais. 
+ 
+c) PIS/COFINS 
+ 
+Foi observada a necessi dade de atualização  do layout da NFS -e referente às informa ções de 
+tributação federal, mais especificamente relaci onadas ao PIS e à COFINS. Atualmente, na DPS do 
+documento fiscal existem  apenas dois campos respo nsáveis pela  informação dos valores desses 
+tributos: “vPis” e “vCofins”. Esses campos dizem respeito aos valores de sses tributos devidos na 
+operação, ou seja, valores de débitos de apura ção própria. De maneira equi vocada, muitos 
+contribuintes utilizavam esses c ampos para que fossem informados os valores RETIDOS desses 
+tributos.  
+Esses equívocos acarretaram a diminuição indevida da Base de Cálculo do IBS e da CBS nesses 
+documentos fiscais, uma vez que de acordo com o inciso V do § 2º do art. 12 da Lei Complementar 
+nº 214, de 16 de janeiro de 2025, o valor desses tributos não deve compor essa base de cálculo. Dessa 
+forma, houve a necessidade de atualização de campos de dom ínio e de regras do grupo “piscofins” 
+em NFSe/infNFSe/DPS/infDPS/valores/trib/tribFed/. Informa-se que essas atualizações, descritas 
+abaixo, estarão disponíve is nos ambientes de Produ ção e Produção Rest rita 
+(homologação/testes) no dia 09 de fevereiro de 2026. 
+ 
+• Arredondamento e Tolerância de R$0,01 para “vPis” e “vCofins” 
+ 
+Informa-se que, para fins de cálculo e regras relacionadas aos valores correspondentes ao PIS 
+(“vPIS”) e à COFINS ( “vCofins”), será adotado o método de arredondamento bancário ( half-even), 
+conforme prática amplamente utilizada em operações financeiras e contábeis . Adicionalmente, será 
+aplicada tolerância máxima de arredondamento de R$ 0,01 (um centavo de real), admitindo -se 
+variações dentro desse limite sem caracterização de divergência nos valores informados. 
+ 
+ 
+5 
+ 
+• Código da Situação Tributária 
+Atualização do domínio no campo “CST”.  
+ 
+• Tipo de Retenção PIS/COFINS e CSLL 
+ 
+Também foi alterado o domínio do campo “tpRetPisCofins”. Foram conservados os valores 
+atuais aceitos para esse campo (1 e 2) e acrescentados os códigos 0 e 3 a 9. Cumpre esclarecer que os 
+valores 1 e 2, atualmente vigentes e com destaque em vermelho abaixo, serão suprimidos do schema 
+da NFS -e quando o s grupos “IBSCBS” se t ornarem obrigatórios para a autorização /recepção do 
+documento fiscal. A manutenção desses códigos deve-se ao fato de que há a necessidade de uma 
+CAMINHO NO XML CAMPO ELE TIPO OCOR. TAM. DESCRIÇÃO 
+NFSe/infNFSe/DPS/infDPS/valores
+/trib/tribFed/ piscofins G - 0-1 - Grupo de informações dos tributos PIS/COFINS 
+NFSe/infNFSe/DPS/infDPS/valores/trib/
+tribFed/piscofins/ CST E N 1-1 2 
+Código de Situação Tributária do PIS/COFINS (CST):  
+  
+00 - Nenhum;  
+01 - Operação Tributável com Alíquota Básica; 
+02 - Operação Tributável com Alíquota Diferenciada; 
+03 - Operação Tributável com Alíquota por Unidade de Medida de Produto;  
+04 - Operação Tributável monofásica - Revenda a Alíquota Zero; 
+05 - Operação Tributável por Substituição Tributária; 
+06 - Operação Tributável a Alíquota Zero; 
+07 - Operação Isenta da Contribuição; 
+08 - Operação sem Incidência da Contribuição; 
+09 - Operação com Suspensão da Contribuição; 
+49 - Outras Operações de Saída; 
+50 - Operação com Direito a Crédito – Vinculada Exclusivamente a Receita 
+Tributada no Mercado Interno; 
+51 - Operação com Direito a Crédito – Vinculada Exclusivamente a Receita 
+Não-Tributada no Mercado Interno; 
+52 - Operação com Direito a Crédito – Vinculada Exclusivamente a Receita 
+de Exportação; 
+53 - Operação com Direito a Crédito – Vinculada a Receitas Tributadas e 
+Não-Tributadas no Mercado Interno; 
+54 - Operação com Direito a Crédito – Vinculada a Receitas Tributadas no 
+Mercado Interno e de Exportação; 
+55 - Operação com Direito a Crédito – Vinculada a Receitas Não Tributadas 
+no Mercado Interno e de Exportação; 
+56 - Operação com Direito a Crédito – Vinculada a Receitas Tributadas e 
+Não-Tributadas no Mercado Interno e de Exportação; 
+60 - Crédito Presumido – Operação de Aquisição Vinculada Exclusivamente 
+a Receita Tributada no Mercado Interno; 
+61 - Crédito Presumido – Operação de Aquisição Vinculada Exclusivamente 
+a Receita Não-Tributada no Mercado Interno; 
+62 - Crédito Presumido – Operação de Aquisição Vinculada Exclusivamente 
+a Receita de Exportação; 
+63 - Crédito Presumido – Operação de Aquisição Vinculada a Receitas 
+Tributadas e Não-Tributadas no Mercado Interno; 
+64 - Crédito Presumido – Operação de Aquisição Vinculada a Receitas 
+Tributadas no Mercado Interno e de Exportação; 
+65 - Crédito Presumido – Operação de Aquisição Vinculada a Receitas Não-
+Tributadas no Mercado Interno e de Exportação; 
+66 - Crédito Presumido – Operação de Aquisição Vinculada a Receitas 
+Tributadas e Não-Tributadas no Mercado Interno e de Exportação; 
+67 - Crédito Presumido – Outras Operações; 
+70 - Operação de Aquisição sem Direito a Crédito; 
+71 - Operação de Aquisição com Isenção; 
+72 - Operação de Aquisição com Suspensão; 
+73 - Operação de Aquisição a Alíquota Zero; 
+74 - Operação de Aquisição sem Incidência da Contribuição;  
+75 - Operação de Aquisição por Substituição Tributária; 
+98 - Outras Operações de Entrada; 
+99 - Outras Operações. 
+ 
+6 
+ 
+transição gradual para que todos os municípios que compartilham seu s documentos fiscais com o 
+Ambiente de Dados Nacional ( ADN) e todos os cont ribuintes que utilizam a API Sefin possam se 
+adaptar, nos próximos meses, ao novo domínio que será aceito, qual seja: aquele que diz respeito às 
+informações de retenção dos três tributos de contribuição social: CSLL (Contribuição Social sobre o 
+Lucro Líquido), PIS e COFINS, ou seja, códigos 0 e 3 a 9.  
+ 
+Observação: Em que pese o atual AnexoI com o layout da NFS-e prever quatro informações possíveis 
+para o campo “tpRetPisCofins” (1 - PIS/COFINS Retido; 2 - PIS/COFINS Não Retido; 3 - PIS 
+Retido/COFINS Não Retido  e 4 - PIS Não Retido/COFINS Retido ), atualmente no schema só são 
+permitidos os tipos 1 e 2, os quais foram mantidos nessa versão ( em vermelho, acima). Reitera-se 
+que esses tipos  (1 e 2) serão s uprimidos quando os grupos “IBSCBS” passarem a ser 
+obrigatórios no documento fiscal. 
+ 
+• Valor Relativo às Retenções de Contribuições Sociais 
+ 
+Se houver valores de retenções de PIS, de COFINS e/ou de CSLL, eles deverão ser SOMADOS 
+e informados no campo “vRetCSLL” de acordo com o que foi informado no campo 
+“tpRetPisCofins”. Importante men cionar que essa agregação no campo  “vRetCSLL” dos valores 
+retidos dessas três Contribuições Sociais não deve mudar a forma de prestação dessas informações 
+na Escrituração Fiscal Digital de Retenções e Outras Informações Fiscais (EFD -Reinf). Frisa-se, 
+novamente, que os campos “vPis” e “vCofins” não devem ser utilizados para a informação dos valores 
+RETIDOS desses respectivos tributos. 
+ 
+ 
+ 
+CAMINHO NO XML CAMPO ELE TIPO OCOR. TAM. DESCRIÇÃO 
+NFSe/infNFSe/DPS/infDPS/valores
+/trib/tribFed/ piscofins G - 0-1 - Grupo de informações dos tributos PIS/COFINS 
+NFSe/infNFSe/DPS/infDPS/valores/trib/
+tribFed/piscofins/ tpRetPisCofins E N 0-1 1 
+Tipo de Retenção PIS/COFINS e CSLL 
+ 
+0 - PIS/COFINS/CSLL Não Retidos; 
+1 - PIS/COFINS Retido; 
+2 - PIS/COFINS Não Retido; 
+3 - PIS/COFINS/CSLL Retidos; 
+4 - PIS/COFINS Retidos, CSLL Não Retido; 
+5 - PIS Retido, COFINS/CSLL Não Retido; 
+6 - COFINS Retido, PIS/CSLL Não Retido; 
+7 - PIS Não Retido, COFINS/CSLL Retidos; 
+8 - PIS/COFINS Não Retidos, CSLL Retido; 
+9 - COFINS Não Retido, PIS/CSLL Retidos; 
+ 
+7 
+ 
+3. Esclarecimentos 
+ 
+a) Novos Fatos Geradores 
+  
+Em relação às operações que serão formalizadas por NFS-e e que são enquadradas como novos 
+fatos geradores, no campo de incidência do IBS e da CBS, mas que não eram operações formalizadas 
+por documento fiscal, deve-se esclarecer alguns pontos: 
+ 
+• Haverá códigos específicos para essas operações 
+ 
+Conforme descritos na Nota Técnica SE/CGNFS-e nº 005, de 19 de novembro de 2025 , os 
+novos fatos geradores deverão ser for malizados a partir da informação dos n ovos códigos 
+(“cTribNac”) que serão criados: 
+Código Descrição 
+99.02.01 
+Operações com Bens Imateriais Não 
+Classificados em Itens Anteriores 
+99.03.01 Locação de Bens Imóveis 
+99.03.02 Cessão Onerosa de Bens Imóveis 
+99.03.03 Arrendamento de Bens Imóveis 
+99.03.04 
+Servidão, Cessão de Uso ou de Espaço de 
+Bens Imóveis (quando não caracterizem 
+operações tributáveis pelo ISSQN) 
+99.03.05 
+Permissão de Uso ou Direito de Passagem 
+de Bens Imóveis (quando não caracterizem 
+operações tributáveis pelo ISSQN) 
+99.04.01 Locação de Bens Móveis 
+ 
+Observação: o código “99.01.01 - Outros s erviços sem a incidência de ISSQN e ICMS ”, 
+atualmente vigente na plataforma nacional  NFS-e, deverá ser utilizado somente quando houver 
+operação que eventualmente incida IBS ou CBS , mas não o ISSQN, e que n ão se enquadre  em 
+nenhum dos casos descritos na tabela acima. 
+ 
+ 
+ 
+ 
+8 
+ 
+• As autorizações de NFS -e relativas a essas  operações deverão ser processadas 
+diretamente na plataforma nacional 
+ 
+Os d ocumentos fisca is desses novos fatos geradores deverão ser auto rizados exclusiva e 
+diretamente pelos Emissores Públicos Nacionais (Sefin Nacional), seja via API, seja via Emissor Web, 
+seja via emissor para dispositivos móveis ( APP), se for o caso . Esses documentos não deverão ser 
+autorizados nos sistemas próprios dos municípios  para posterior compartilhamento com o 
+repositório nacional . Caso os municípios autorizem esses documentos fiscais em seus sistemas 
+próprios, eles serão rejeitados ao serem compartilhados com o ADN (repositório nacional) da NFS-
+e.  
+ 
+• Todas as pessoas, físicas ou jurídicas, estarão autorizadas a emitir esses documentos 
+na plataforma nacional 
+ 
+Conforme esclarecido acima,  como os documentos que for malizarão essas operações , 
+consideradas como novos fatos geradores, serão autorizados no ambiente nacional, inicialmente todo 
+CPF e todo CNJP será autorizado a utilizar os emissores públicos nacionais dispon íveis (API, Web 
+ou APP), mesmo que o seu Município de domicílio/estabelecimento tenha optado por não utilizar os 
+emissores públicos nacionais, conforme parametrização no Painel Administrativo Municipal.  
+ 
+ 
+• As evoluções da plataforma NFS-e para a formalização dos documentos fiscais dessas 
+operações estão em desenvolvimento 
+ 
+Em razão dos ajustes necessários para a formalização dessas operações, o layout da NFS-e e os 
+Emissores Públicos Nacionais estão sendo  adaptados para refletirem essas  evoluções, a exemplo 
+daquelas trazidas nesta NT e na NT SE/CGNFS-e nº 005. Essas evoluções ainda não estão 
+disponíveis e o cronograma dessas implantações será publicado no portal da NFS-e. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+9 
+ 
+b) Números da NFS-e 
+ 
+Na plataforma NFS-e, quando da emissão pelos emissores públicos nacionais, a numeração das 
+notas fiscais (número da NFS-e, campo “nNFSe”) não é definida pelo contribuinte , sendo atribuída 
+exclusivamente pela Sefin Nacional quando uma DPS é recepcionada e processada para conversão 
+em NFS‑e. 
+Esse modelo centralizado de geração de numeração, embora padronizado e alinhado a diretrizes 
+nacionais, pode resultar em situações nas quais determinados números sequenciais são reservados 
+pela plataforma, mas não culminam na efetiva emissão e persistência da NFS‑e no Ambiente de Dados 
+Nacional (ADN). Essa circunstância acarreta a possibilidade de  existência de intervalos, 
+popularmente denominados “pulos”, na sequência numérica das notas fiscais de um mesmo 
+contribuinte. 
+Esse processo ocorre, de forma simplificada, conforme a seguinte dinâmica: 
+ 
+1) O contribuinte encaminha uma ou múltiplas DPS simultaneamente, prática comum em 
+sistemas informatizados que operam com processamento concorrente (múltiplas threads); 
+2) Para cada DPS recepcionada, a Sefin Nacional executa as seguintes etapas: 
+Reserva um número sequencial de NFS‑e; 
+Processa a geração da nota fiscal e tenta persistir os respectivos dados no ADN. 
+ 
+Uma vez reservado, o número sequencial passa a estar vinculado de forma irrevogável àquele 
+processo específico de geração da NFS‑e. 
+Em determinadas situações, a NFS‑e pode não ser persistida no ADN, mesmo após a reserva 
+do número sequencial. Isso pode ocorrer, entre outros motivos, em razão de: 
+• Timeouts ou falhas temporárias de banco de dados; 
+• Erros internos não previamente catalogados; 
+• Indisponibilidades momentâneas dos serviços da Plataforma Nacional; 
+• Alta concorrência de processamento, especialmente quando múltiplas requisições 
+simultâneas tentam gerar notas fiscais. 
+Nessas hipóteses, embora a NFS‑e não seja efetivamente registrada no ADN, o número 
+previamente reservado não pode ser reutilizado, em observância aos princípios de unicidade, 
+rastreabilidade e integridade do processo de emissão fiscal. 
+Como consequência direta desse mecanismo, podem surgir lacunas na numeração das NFS‑e, 
+não existindo, para determinado número, uma nota fiscal válida associada. Tais intervalos decorrem 
+ 
+10 
+ 
+exclusivamente do funcionamento técnico do processo de geração /autorização da Sefin Nacional e 
+não representam irregularidade fiscal, falha do contribuinte ou inconsistência cadastral. 
+ 
+ 
+ 
+c) NFS-e Via: Apuração do ISSQN e o Módulo de Apuração Nacional (MAN) 
+ 
+ 
+Informa-se que, no âmbito da implementação da NFS -e Via, a metodologia de apuração do 
+Imposto Sobre Serviços de Qualquer Natureza (ISSQN) e os fluxos de arrecadação municipais devem 
+permanecer inalterados. As obrigações acessórias e o recolhimento do tributo devem seguir 
+rigorosamente os dispositivos estabelecidos nas legislações municipais vigentes.  
+Sugere-se que a sistemática atual de apuração deva ser mantida de forma integral até que ocorra 
+o desenvolvimento completo e a efetiva implantação do Módulo de Apuração Nacional (MAN). Este 
+módulo, que será de adesão voluntária pelos municípios, quando disponível, atuará como a ferramenta 
+centralizadora e automatizadora da inteligência fiscal da plataforma para apuração do ISSQN. 
+Diante da natureza progressiva do projeto, a emissão da NFS -e Via não implica, de imediato, 
+na alteração dos processos de lançamento e cobrança por parte das administrações tributárias locais. 
+Portanto, as prefeituras devem dar continuidade aos seus proced imentos de controle da arrecadação 
+conforme os sistemas eletrônicos de gestão fazendária já homologados em cada localidade. 
+ Cumpre esclarecer que as NFS -e Via autorizadas no ambiente nacional são distribuídas para 
+todos os municípios envolvidos nos respectivos trechos de concessão destacados nos documentos 
+fiscais (cadastrados pelas concess ionárias explorador as de rodovi as). Até que o MAN esteja 
+disponível e integrado com a NFS-e Via, o s municípios pode m, opcionalmente,  utilizar esses 
+documentos fiscais distribuídos para a apuração local do ISSQN, desde que adaptem suas legislações 
+tributárias municipais para utilizarem esses documentos fiscais como insumo para essa apuração.  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+CARLOS EDUARDO BURKLE 
+Auditor Fiscal de Tributos – Londrina/PR 
+Secretário-Executivo da Secretaria-Executiva do Comitê Gestor da Nota Fiscal de Serviço 
+Eletrônica de Padrão Nacional (SE/CGNFS-e) 

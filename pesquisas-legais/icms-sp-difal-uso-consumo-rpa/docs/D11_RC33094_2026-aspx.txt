@@ -1,0 +1,239 @@
+RC 33094/2026 
+
+Você talvez esteja tentando acessar este site de um navegador seguro no servidor. Habilite os scripts e recarregue esta página.
+
+ Ativar o modo mais acessível 
+
+ Desativar o modo mais acessível 
+
+ Comando para Ignorar Faixa de Opções 
+
+ Ir para o conteúdo principal 
+
+ Desligar Animações 
+
+ Ligar Animações 
+
+Hidden 
+
+Parece que seu navegador não possui JavaScript habilitado. Ative o JavaScript e tente novamente.
+
+/governosp 
+
+/governosp 
+
+ Seu navegador não tem suporte a JavaScript ou está desativado! 
+
+ Você está em: Skip Navigation LinksLegislação > RC 33094/2026 
+
+ Pesquisa de Opinião 
+
+ Hidden 
+
+ > 
+
+ Compartilhar: 
+
+ Cancelar OK 
+
+Compartilhar Caderno .
+
+ Compartilhar: 
+
+ Cancelar OK 
+
+ Busca Avançada 
+
+ Atos Publicados recentemente 
+
+ Ato Data Publicação 
+
+ + Veja mais 
+
+ Atos mais consultados 
+
+ Ato Visualizações 
+
+ + Veja mais 
+
+ RCs Publicados recentemente 
+
+ Ato Data Publicação 
+
+ + Veja mais 
+
+ Indivídual 
+
+ Caderno
+
+ Audio do Texto 
+
+ Notas 
+
+Redações anteriores
+
+ Imprimir 
+
+ Grupo 
+
+ Anexos 
+
+ Novo Ato 
+
+ Nome 
+
+ RC 33094/2026 
+
+ Tipo 
+
+ Subtipo 
+
+ Respostas de Consultas 
+
+ Nº do Ato 
+
+ Data do Ato 
+
+ Data da Publicação 
+
+ 33.094 
+
+ 23/02/2026 
+
+ 24/02/2026 
+
+ Data de Republicação 
+
+ Data da Revogação 
+
+ Envio Informativo 
+
+ Destaques do DOE 
+
+ Não 
+
+ Ato Anterior 
+
+ Ato Posterior 
+
+ Ano da Formulação 
+
+ 2.026 
+
+ ICMS 
+
+ Apuração do imposto 
+
+ DIFAL 
+
+ Ementa 
+
+ <div class='sefazElement-EmentaRC'><p>ICMS – Aquisição de mercadorias de outro Estado destinadas a uso e consumo – Recolhimento de diferencial de alíquota – Redução de base de cálculo do imposto na operação interna.</p>
+
+<p></p>
+
+<p>I – Nas aquisições destinadas ao ativo imobilizado e materiais de uso e consumo, o adquirente deverá recolher a diferença de imposto, decorrente da aplicação das alíquotas interna e interestadual, para o Estado de São Paulo, nos termos dos artigos 2º, inciso VI e § 5º, da Lei 6.374/89, devendo ser adotado o procedimento previsto no artigo 117, incisos I e II e § 1º, do RICMS/2000.</p>
+
+<p></p>
+
+<p>II – Redução da base de cálculo não equivale a redução de alíquota.</p></div> 
+
+ Observação 
+
+ 200 caracteres restantes. 
+
+ Conteúdo 
+
+ Última atualização em: 06/03/2026 12:00 
+
+Conteúdo da Página
+
+RESPOSTA À CONSULTA TRIBUTÁRIA 33094/2026, de 23 de fevereiro de 2026.
+
+Publicada no Diário Eletrônico em 24/02/2026
+
+Ementa
+
+ICMS – Aquisição de mercadorias de outro Estado destinadas a uso e consumo – Recolhimento de diferencial de alíquota – Redução de base de cálculo do imposto na operação interna.
+
+I – Nas aquisições destinadas ao ativo imobilizado e materiais de uso e consumo, o adquirente deverá recolher a diferença de imposto, decorrente da aplicação das alíquotas interna e interestadual, para o Estado de São Paulo, nos termos dos artigos 2º, inciso VI e § 5º, da Lei 6.374/89, devendo ser adotado o procedimento previsto no artigo 117, incisos I e II e § 1º, do RICMS/2000.
+
+II – Redução da base de cálculo não equivale a redução de alíquota.
+
+Relato
+
+1. A Consulente, que, conforme consulta ao Cadastro de Contribuintes do ICMS do Estado de São Paulo (CADESP), exerce a atividade principal de “transporte rodoviário coletivo de passageiros, sob regime de fretamento, intermunicipal, interestadual e internacional” (CNAE: 49.29-9/02), além de outras atividades secundárias, relata que adquiriu do Estado do Santa Catarina duas “catracas de freio automática dianteira direita”, classificadas no código 8716.90.90 da Nomenclatura Comum do Mercosul (NCM) pelo fornecedor.
+
+2. Afirma que uma catraca será utilizada na manutenção de um reboque que faz parte de seu ativo imobilizado e que a outra catraca será utilizada na manutenção de um ônibus, que também faz parte do seu ativo imobilizado.
+
+3. A Consulente entende que deve ser recolhido diferencial de alíquotas (conforme artigo 117 do Regulamento do ICMS do Estado de São Paulo - RICMS/2000) relativamente à operação de aquisição das aludidas catracas, considerando que o fornecedor está localizado em outro estado e as catracas serão destinadas para uso e consumo.
+
+4. Em prosseguimento, afirma que a alíquota interna para a mercadoria em questão é de 18%, porém o inciso III do artigo 65 do Anexo II do RICMS/2000 prevê redução na base de cálculo de modo que a carga tributária resulte em um percentual de 12% para as “partes de reboques e semirreboques, para quaisquer veículos e outros veículos não autopropulsados”.
+
+5. Diante do exposto, indaga:
+
+5.1. se a catraca utilizada na manutenção do ônibus fará jus à aludida redução de base de cálculo, embora não venha a ser utilizada em reboques e semirreboques e outros veículos não autopropulsados, considerando que, em tese, poderia ser utilizada como partes de reboques e semirreboques de outros veículos não autopropulsados;
+
+5.2. relativamente à operação de compra da catraca que será utilizada na manutenção de seu reboque, se a Consulente deve considerar a redução de base de cálculo em questão no cálculo do diferencial de alíquotas;
+
+5.3. Em sendo afirmativas as respostas às indagações reproduzidas nos subitens 5.1 e 5.2, ou apenas um dos questionamentos, como ficaria o cálculo, cabendo ressaltar que a Consulente apresenta seu questionamento com os seguintes termos: “A consulente deve após retirar o ICMS interestadual da base, embutir diretamente os 12% ou deve embutir a alíquota interna de 18% para somente depois reduzir a base de cálculo do DIFAL conforme exemplos (...)?”. 
+
+Interpretação
+
+6. Preliminarmente, esclarecemos que a Consulente é responsável pela adequada classificação fiscal da mercadoria nos códigos da NCM, devendo, em caso de dúvida, consultar a Receita Federal do Brasil - RFB. Deste modo, adotaremos a premissa para a resposta de que a classificação fiscal apresentada pela Consulente para a mercadoria questionada está correta.
+
+7. Salienta-se também que, para fins de resposta aos questionamentos apresentados, partimos da premissa de que as mercadorias objeto da presente consulta são materiais de uso e consumo, conforme afirmado pela Consulente. 
+
+8. Isso posto, é importante tecer os seguintes comentários sobre a aplicação do benefício previsto no artigo 65 do Anexo II do RICMS/2000, bem como sobre o fato gerador do ICMS na entrada em estabelecimento de contribuinte de mercadoria oriunda de outro Estado ou do Distrito Federal destinada a consumo ou ao ativo permanente (diferencial de alíquotas).
+
+9. O inciso III do artigo 65 do Anexo II do RICMS/2000 estabelece a redução da base de cálculo do imposto incidente nas saídas internas dos “reboques e semirreboques, para quaisquer veículos; outros veículos não autopropulsados; suas partes”, desde que classificados na posição 8716 da NCM, de forma que a carga tributária resulte no percentual de 12% (doze por cento).
+
+10. Em consulta à NCM, constata-se que a descrição da posição 8716 é a seguinte:
+
+“87.16 - Reboques e semirreboques, para quaisquer veículos; outros veículos não autopropulsados; suas partes.”
+
+11. Assim, como a descrição da posição é exatamente a mesma trazida no inciso III do artigo 65 do Anexo II do RICMS/2000, ela engloba todos os itens ali elencados, desde que corretamente classificados nessa posição 8716 da NCM.
+
+12. Concluindo, a redução de base de cálculo prevista no artigo 65, inciso III, do Anexo II do RICMS/2000 será aplicável às saídas internas de “catraca de freio automática dianteira direita”, classificada no código 8716.90.90 da NCM, desde que a aludida mercadoria esteja corretamente classificada nesse código.
+
+13. Quanto ao diferencial de alíquotas, salienta-se que, conforme artigo 2º, inciso VI, da Lei nº 6.374/89, ocorre o fato gerador do imposto na entrada em estabelecimento de contribuinte de mercadoria oriunda de outro Estado ou do Distrito Federal destinada a consumo ou ao ativo permanente”
+
+14. O § 5º do referido artigo 2º, em consonância com o disposto no artigo 155, § 2º, VII, “a”, e VIII, da Constituição Federal, estabelece que a obrigação do contribuinte consistirá, afinal, em pagar o imposto correspondente à diferença entre a alíquota interna e a interestadual.
+
+15. Cabe ressaltar, nesse ponto, que redução de base de cálculo não equivale a redução de alíquota.
+
+16. Assim, nas aquisições destinadas a seu ativo imobilizado ou uso e consumo, a Consulente deverá recolher a diferença de imposto, decorrente da aplicação das alíquotas interna e interestadual, para o Estado de São Paulo, nos termos dos artigos 2°, inciso VI e § 5º, da Lei nº 6.374/89, devendo ser adotado o procedimento previsto no artigo 117, incisos I e II e § 1º, do RICMS/2000. 
+
+17. Diante de todo o exposto, respondendo objetivamente aos questionamentos reproduzidos nos subitens 5.1. e 5.2., considerando que os Anexos do RICMS/2000 têm natureza taxativa, desde que as “catracas de freio automáticas dianteira direita” em questão se enquadrem, por sua descrição e posição na NCM, como “reboque e semirreboque, para quaisquer veículos; outros veículos não autopropulsados; suas partes”, classificado na posição 8716 da NCM (conforme inciso III do artigo 65 do Anexo II do RICMS/2000), pode-se falar em aplicação da redução da base de cálculo, em operação interna com as aludidas mercadorias, de forma que a carga tributária resulte no percentual de 12% (doze por cento).
+
+18. Não obstante, conforme já mencionado no item 15, a redução de base de cálculo não equivale a redução de alíquota. Assim, nas aquisições, de fornecedor estabelecido em outro Estado, de “catracas de freio automática dianteira direita”, classificadas no código 8716.90.90 da NCM, destinadas para uso e consumo, a Consulente deverá recolher a diferença de imposto, decorrente da aplicação das alíquotas interna e interestadual, para o Estado de São Paulo, nos termos dos artigos 2°, inciso VI e § 5º, da Lei nº 6.374/89, devendo ser adotado o procedimento previsto no artigo 117, incisos I e II e § 1º, do RICMS/2000.
+
+19. Por fim, diante da conclusão acima, resta prejudicado o questionamento reproduzido no subitem 5.3, cabendo registrar também que o instrumento de consulta serve, exclusivamente, ao esclarecimento de dúvida pontual sobre a interpretação e aplicação da legislação tributária paulista, nos termos do disposto nos artigos 510 e seguintes do RICMS/2000, apresentando-se como meio impróprio para homologar ou validar os cálculos apresentados pelos contribuintes.
+
+A Resposta à Consulta Tributária aproveita ao consulente nos termos da legislação vigente. Deve-se atentar para eventuais alterações da legislação tributária.
+
+Comentário
+
+ Gravar Comentário Cancelar 
+
+ Localize Nossas Unidades 
+
+ Buscar 
+
+ Hidden 
+
+ Secretaria da Fazenda e Planejamento do Estado de São Paulo - Av. Rangel Pestana, 300 - São Paulo / SP - 01017-911 – CNPJ: 46.377.222/0001-29 - Fale Conosco: 0800-170110 Política de Privacidade Termos de Uso | Versão 1.0.124.0 
+
+ Governo do Estado de São Paulo Fazenda e Planejamento 
+
+ hidden 
+
+Parece que seu navegador não possui JavaScript habilitado. Ative o JavaScript e tente novamente.
+
+ Ouvidoria 
+
+ Transparência 
+
+ SIC 
+
+Versão 1.0.124.0

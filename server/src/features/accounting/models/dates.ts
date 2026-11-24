@@ -62,7 +62,7 @@ export function saleDayAsWritten(scope: { timeZone: string }, value?: string): s
  *
  * ⚠ A REGRA DELICADA (por isso o short-circuit): uma string que JÁ É date-only volta INTACTA. Um
  * `YYYY-MM-DD` não é um instante — é um dia-calendário que alguém já escolheu. Reinterpretá-lo num
- * fuso é o bug que o doc de `PostingService.fiscalYearFrom` documenta: '2026-01-01' parseia como
+ * fuso é o bug que o doc de `fiscalYearOf` (abaixo) documenta: '2026-01-01' parseia como
  * meia-noite UTC, que em BRT é 31/12/2025 21:00, e o ano fiscal recuaria para 2025. Converter só o
  * que é instante de verdade (datetime ISO ou Date) é o que mantém as duas noções de acordo.
  *
@@ -131,4 +131,19 @@ export function dateOnlyFromDayNumber(dayNumber: number): string {
   const m = String(d.getUTCMonth() + 1).padStart(2, '0');
   const day = String(d.getUTCDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+/**
+ * Ano fiscal de uma data de lançamento — o ÚNICO lugar que sabe a regra (lacuna 1fd7; dono, chat, 14/11: "deixar
+ * desacoplado desde já"). Quem numera lançamento (`PostingService.postEntry`/estorno e `EntryApprovalService.approve`)
+ * chama esta função; não há cópia privada.
+ *
+ * Regra atual (ADR-INCR3 Emenda 3): o ano-calendário da data, lido em UTC, a MESMA leitura de `extractYearMonth` (o gate
+ * de período decide a que ano/mês o lançamento pertence). Converter para America/Sao_Paulo, como uma versão anterior
+ * fazia, recua a meia-noite UTC de 1º/1 para 31/12 21:00 e numerava '2026-01-01' no ano fiscal 2025, enquanto o gate de
+ * período o punha em 2026-01. Sem parâmetro de regra: o escopo ainda não tem regra de ano fiscal (parâmetro aceito e
+ * ignorado é defeito); quando tiver, a assinatura muda aqui.
+ */
+export function fiscalYearOf(day: string | Date): number {
+  return (typeof day === 'string' ? new Date(day) : day).getUTCFullYear();
 }
