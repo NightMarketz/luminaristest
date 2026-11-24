@@ -215,6 +215,36 @@ describe('outboundFetch — timeout e retry (servidor HTTP real)', () => {
       await expect(outboundFetch('bcb_ptax', `${base}/x`, { signal: controller.signal }, { deadlineMs: 5_000, retry: FAST })).rejects.toMatchObject({ name: 'AbortError' });
       expect(hits).toBe(1);
     });
+
+    it('signal do chamador que NÃO aborta + deadline: o prazo corta mesmo assim (TimeoutError), o signal não o substitui', async () => {
+      handler = never;
+      const controller = new AbortController(); // nunca abortado: só o prazo pode encerrar a chamada
+      // guarda: se o prazo não for combinado ao signal do chamador a chamada pende para sempre — falha limpa, sem esperar o timeout do jest
+      const travou = new Promise<'travou'>((resolve) => setTimeout(() => resolve('travou'), 1_500).unref());
+      const chamada = outboundFetch('bcb_ptax', `${base}/x`, { signal: controller.signal }, { timeoutMs: 10_000, deadlineMs: 150, retry: false }).then(
+        () => 'ok' as const,
+        (e: unknown) => e as { name: string },
+      );
+      const t0 = Date.now();
+      const resultado = await Promise.race([chamada, travou]);
+      expect(resultado).toMatchObject({ name: 'TimeoutError' });
+      expect(Date.now() - t0).toBeLessThan(700);
+      expect(controller.signal.aborted).toBe(false);
+      expect(hits).toBe(1);
+    });
+
+    it('signal do chamador + deadline: o prazo também corta o retry (sem ele, 5 tentativas pendentes para sempre)', async () => {
+      handler = never;
+      const controller = new AbortController();
+      const travou = new Promise<'travou'>((resolve) => setTimeout(() => resolve('travou'), 1_500).unref());
+      const chamada = outboundFetch('bcb_ptax', `${base}/x`, { signal: controller.signal }, { deadlineMs: 200, retry: { maxAttempts: 5, baseDelayMs: 1, maxDelayMs: 5 } }).then(
+        () => 'ok' as const,
+        (e: unknown) => e as { name: string },
+      );
+      const resultado = await Promise.race([chamada, travou]);
+      expect(resultado).toMatchObject({ name: 'TimeoutError' });
+      expect(hits).toBeLessThanOrEqual(2);
+    });
   });
 
   it('o log nunca carrega URL, cabeçalho ou corpo, nem com retry', async () => {
