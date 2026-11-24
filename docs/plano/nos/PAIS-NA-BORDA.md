@@ -12,8 +12,8 @@ atualizado: "2026-11-24"
 prs: [1338, 1334]
 perfil_previsto: "precisa-de-planejamento"
 perfil_evidencia: "cada fatia F1..F8 pede BRIEF próprio; a F0 está no BRIEF do montador único (item 0)"
-write_set: ["docs/adr/ADR-PAIS-NA-BORDA.md", "docs/adr/ADR-ARCH-BOUNDARIES.md", "server/.dependency-cruiser.cjs", "server/src/features/*/paises/**", "server/src/features/*/ports/**"]
-registros: ["server/src/lib/factory.ts", "server/prisma/schema.prisma"]
+write_set: ["docs/adr/ADR-PAIS-NA-BORDA.md", "docs/adr/ADR-ARCH-BOUNDARIES.md", "server/.dependency-cruiser.cjs", "server/src/features/*/paises/**", "server/src/features/*/ports/**", "server/src/features/legalParameters/**", "server/src/features/accounting/models/{taxAssessmentParams,FixedAsset.model,meiAnexoXi,obrigacoesPorRegime}.ts", "server/src/features/accounting/models/__tests__/**", "server/src/features/accounting/services/{SimplesApuracaoService,TaxSimulationService,WithholdingService}.ts", "server/src/features/dp/models/{escala,parametrosFolha,regrasFolha}.ts", "server/src/features/dp/models/folha/fracao.ts", "server/src/features/dp/models/__tests__/**", "server/src/__tests__/legalParameter*.integration.test.ts", "server/src/jobs/__tests__/checkLegalParamsFormatoCli.test.ts", "server/src/controllers/legalParameterController.ts", "server/src/routes/legalParameters.ts", "server/public/openapi.json", "my-app/types/contracts/legalParameters/**"]
+registros: ["server/src/lib/factory.ts", "server/prisma/schema.prisma", "server/src/routes/docs.paths.ts"]
 ---
 # PAIS-NA-BORDA — conceito universal no centro, país na borda
 
@@ -39,5 +39,6 @@ registros: ["server/src/lib/factory.ts", "server/prisma/schema.prisma"]
 
 - [`ADR-PAIS-NA-BORDA.md`](../../adr/ADR-PAIS-NA-BORDA.md) e [`PRE-ADR-PAIS-NA-BORDA.md`](../../adr/PRE-ADR-PAIS-NA-BORDA.md).
 - Decisões: [[D-2026-11-15-PAIS-NA-BORDA]], [[D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA]], [[D-2026-11-24-ADR-PAIS-NA-BORDA-FORKS]].
+- BRIEF da F3: [`BE-INCR-PAIS-NA-BORDA-F3-brief.md`](../../accounting/BE-INCR-PAIS-NA-BORDA-F3-brief.md) (24/11; forks F-F3-1..5 pendentes, sem `executa`).
 - BRIEFs emendados pela regra (24/11): [[EFICIENCIA-FISCAL]] (montador único), [[CICLO-FISCAL]], [[NFSE-PAULISTANA]],
   [[PES-4]] (ponte do DP), [[SIMULACAO-CENARIO]] (PR-0).
