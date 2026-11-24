@@ -1,7 +1,7 @@
 # PRE-ADR-PAIS-NA-BORDA — conceito universal no centro, país na borda
 
 - **Data:** 2026-11-15
-- **Status:** **Proposed — forks F-PB-1..9 RATIFICADOS em 24/11** (dono, questionário; §5.1 e `docs/plano/decisoes/D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA.md`). A direção é do dono (§0). A redação da regra do §1 ainda não foi ratificada e precisa ser reescrita conforme o §5.1 (F-PB-1 a, F-PB-4 b, F-PB-7 a). Não autoriza código: o ADR com a guarda (§6) é o passo seguinte.
+- **Status:** **Proposed — forks F-PB-1..9 RATIFICADOS em 24/11** (dono, questionário; §5.1 e `docs/plano/decisoes/D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA.md`). A direção é do dono (§0). A redação da regra do §1 ainda não foi ratificada e precisa ser reescrita conforme o §5.1 (F-PB-1 a, F-PB-4 b, F-PB-7 a). Não autoriza código sozinho. O ADR com a guarda (§6) é o passo seguinte, e os BRIEFs com `executa` são emendados pela regra antes do código (D-2026-11-24 §6).
 - **Publicação:** escrito em 15/11 na worktree `claude/personal-dept-coverage-c7fea7` e publicado sem alteração em 24/11 pela sessão maestro, com exceção deste cabeçalho e do §5.1. Os dois links abaixo para `D-2026-11-15-PAIS-NA-BORDA.md` e `BE-INCR-LEGAL-REGRAS-brief.md` ainda apontam para arquivos não publicados daquela worktree (lacuna na caixa).
 - **Classe:** DECISÃO ARQUITETURAL (fronteira).
 - **Relaciona:** `ADR-ARCH-BOUNDARIES.md` (guarda mecânica), `ADR-PERSISTENCE-BOUNDARY-user-designed-vs-law-designed.md` (o que a lei desenha é Prisma first-class), `ADR-DOMAIN-MOTOR-rejected.md` (não reabre), fase P-i18n do `docs/SDD-LUMINARIS.md` §IV.1 e invariante 8 de `docs/plano/destino/17-…md`, [`BE-INCR-LEGAL-REGRAS-brief.md`](../accounting/BE-INCR-LEGAL-REGRAS-brief.md) (motor de leis, F-ML-13).
@@ -148,7 +148,7 @@ Fonte: sessão maestro de 24/11, por AskUserQuestion, com o contexto de cada for
 | F-PB-8 | "DP pela regra + razão 1º" | **(a)**: o primeiro corte é razão × fiscal brasileiro dentro de `features/accounting` |
 | F-PB-2 | "Tabela do país no novo" | **(c) no existente até a fatia dele, (a) no dado novo**: dado brasileiro novo nasce em tabela do país ligada 1:1 |
 | F-PB-5 | "Tabela do país no novo" | **(a) em model novo, (b) nos existentes até a fatia** |
-| F-PB-4 | "Centro em inglês" | **(b)**: os conceitos do centro são nomeados em inglês, contra a recomendação (a). A renomeação entra em cada fatia; código novo do centro já nasce em inglês |
+| F-PB-4 | "Centro em inglês" | **(b)**: os conceitos do centro são nomeados em inglês, contra a recomendação (a). A renomeação do existente entra em cada fatia. Para código novo, o dono decidiu no 2º questionário do dia que os BRIEFs já ratificados nascem pela regra (D-2026-11-24 §6) |
 | F-PB-6 | "DP pela regra + razão 1º" | **(a)**: do F3 em diante o DP nasce pela regra, com o cálculo brasileiro em `features/dp/paises/br` |
 
 Consequências que o ADR precisa resolver: (1) o §1 (R1–R6) foi escrito para F-PB-1 (c) e F-PB-4 (a), e a redação muda;

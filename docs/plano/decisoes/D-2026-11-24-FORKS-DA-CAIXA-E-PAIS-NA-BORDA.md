@@ -67,3 +67,30 @@ As notas dos três nós citam esta cédula no campo `autorizacao`.
   cédula `D-2026-11-21-FORKS-DA-CAIXA` a listava como pendente. Vale a decisão registrada na lacuna, e ela volta à fila.
 - **L-20261121-041104-92ab** estava classificada como `gate`, mas é defeito de script (`skill-audit.mjs:323` aceita
   gate inexistente). Foi reclassificada para `defeito`.
+
+## 6. BRIEFs ratificados × país na borda (2º questionário do dia)
+
+À pergunta "Esses BRIEFs seguem como foram escritos ou já nascem pela regra?", o dono respondeu **"Já nascem pela
+regra"**, contra a recomendação ("Seguem até o ADR"). A pergunta citava os arquivos novos em português, fora de
+`paises/br`, do montador único (`models/entradaApuracao.ts`, `models/regimeElegibilidade.ts`,
+`services/montadores/SimplesEntradaMontador.ts`) e dizia que CICLO-FISCAL, NFSE-PAULISTANA e DP-PONTE-RAZAO deviam seguir o
+mesmo padrão. Consequências:
+
+- Antes de qualquer código, cada BRIEF com `executa` é emendado pela regra: conceito do centro nomeado em inglês (F-PB-4 b)
+  e cálculo brasileiro em `features/<dominio>/paises/br/**` (F-PB-1 a). Isso vale para **EFICIENCIA-FISCAL (emenda do
+  montador único), CICLO-FISCAL, NFSE-PAULISTANA e PES-4 (emenda DP-PONTE-RAZAO)**. O `executa` desses nós continua, mas
+  vale para o BRIEF já emendado.
+- O cartão `task_434bc05d` (sessao-feature do montador como estava escrito) foi retirado. No lugar dele foi proposto um
+  planejamento: reescrever a regra do PRE-ADR como ADR, com a guarda, e emendar os quatro BRIEFs.
+- Código que não cria conceito novo no centro (correção dentro de arquivo existente, como a conta canônica do
+  `PostingService`) segue pelas fatias do F-PB-7 (a). A sessão que planejar a correção diz no BRIEF se ela cria algo novo
+  no centro e, se criar, já o cria pela regra.
+
+## 7. Simulação completa de 12 meses (L-20261121-181921-ea2b)
+
+À pergunta sobre a nota do nó, o BRIEF do PR-0 e a régua F, o dono respondeu **"Planejar já"**, contra a recomendação
+("Planejar após o montador"). Isso autoriza o planejamento em paralelo ao montador único, sem `executa`. A pergunta dizia
+que a sessão não tinha deixado BRIEF. Isso estava errado: o BRIEF do PR-0, o PRE-ADR e a nota do nó `SIMULACAO-CENARIO`
+estão no commit local `d4002f85a` da branch `claude/accounting-simulation-realism-7220d1`, que não foi enviado ao GitHub. A
+cédula de ratificação `D-2026-11-21-SIMULACAO-COMPLETA-PRE-ADR.md` estava não rastreada na mesma worktree. A publicação é
+um PR próprio, e o BRIEF do PR-0 também nasce pela regra (§6).
