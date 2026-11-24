@@ -87,7 +87,22 @@ export interface CollectionPollSummary {
   redriven: number;
   refreshed: number;
   failed: number;
+  /** Onda 4 / 4.3 — cobranças que viraram FAILED neste tick por 4xx definitivo repetido do provedor. Ausente se 0. */
+  abandoned?: number;
 }
+
+/**
+ * Onda 4 / 4.3 — a re-consulta (`getCharge`) que falha não repete a cada tick para sempre. Falha de 5xx/rede/429/408 é
+ * TRANSITÓRIA: a cobrança segue PENDING (o provedor volta e ela pode estar paga) e só é espaçada por backoff exponencial
+ * (`nextPollAt`: 10 min, 20 min, … até 4 h; o tick é de 15 min). 4xx DEFINITIVO (404/403/422…, a mesma lista de
+ * `isDefinitive`) repetido `POLL_PERMANENT_MAX` vezes seguidas ⇒ FAILED terminal + audit + `logger.error` (a F9 dá a
+ * terminal baixa só à mão; se o MP disser pago depois, sai o alerta `collection_charge_paid_after_terminal`). 401 é da
+ * credencial (P2-4) e não conta.
+ */
+export const POLL_PERMANENT_MAX = 3;
+const POLL_BACKOFF_BASE_MS = 600_000;
+const POLL_BACKOFF_MAX_MS = 4 * 3_600_000;
+const POLL_LAST_ERROR_MAX = 500;
 
 /**
  * CollectionChargeService — cobrança por provedor contra um título do AR (BE-INCR-PAYMENT-PROVIDER PR-2, P2-2..P2-15;
@@ -272,6 +287,7 @@ export class CollectionChargeService {
     try {
       const result = await this.callProvider(account, () => port.getCharge(resolved, verification.resourceRef));
       await this.applyProviderResult(charge.id, result);
+      await this.limparPollState(charge);
     } catch (error) {
       logger.error('webhook de cobrança: falha ao re-consultar — fica para o job', {
         collectionChargeId: charge.id,
@@ -284,7 +300,7 @@ export class CollectionChargeService {
   /** Job (P2-9): re-consulta as PENDING e reenvia as CREATING com mais de 10 min (P2-3). */
   async pollPending(): Promise<CollectionPollSummary> {
     const summary: CollectionPollSummary = { scanned: 0, redriven: 0, refreshed: 0, failed: 0 };
-    const rows = await this.repo.findPollable(new Date(this.now().getTime() - STALE_CREATING_MS));
+    const rows = await this.repo.findPollable(new Date(this.now().getTime() - STALE_CREATING_MS), this.now());
     if (rows.length === 0) return summary;
     let keyring: Keyring;
     try {
@@ -310,8 +326,15 @@ export class CollectionChargeService {
         } else if (row.providerRef) {
           const resolved = this.resolve(account, keyring);
           const port = this.providerFor(account.provider);
-          const result = await this.callProvider(account, () => port.getCharge(resolved, row.providerRef!));
+          let result: ChargeResult;
+          try {
+            result = await port.getCharge(resolved, row.providerRef);
+          } catch (error) {
+            if (await this.registrarFalhaDePoll(row, error)) summary.abandoned = (summary.abandoned ?? 0) + 1;
+            throw await this.translateProviderError(account, error);
+          }
           await this.applyProviderResult(row.id, result);
+          await this.limparPollState(row);
           summary.refreshed += 1;
         }
       } catch (error) {
@@ -323,6 +346,60 @@ export class CollectionChargeService {
       }
     }
     return summary;
+  }
+
+  /**
+   * 4.3 — uma falha do `getCharge` no job. Devolve `true` se a cobrança virou FAILED (4xx definitivo no teto). Falha ao
+   * gravar o controle não derruba o tick: vira `logger.error` e a cobrança volta no próximo (sem backoff).
+   */
+  private async registrarFalhaDePoll(row: CollectionCharge, error: unknown): Promise<boolean> {
+    const status = error instanceof CollectionProviderError ? error.httpStatus : null;
+    if (status === 401) return false; // credencial: a conta sai do job (P2-4); não é falha da cobrança
+    const attempts = row.pollAttempts + 1;
+    const lastError = (error instanceof Error ? error.message : String(error)).slice(0, POLL_LAST_ERROR_MAX);
+    const definitivo = isDefinitive(status) && status !== 408;
+    try {
+      if (definitivo && attempts >= POLL_PERMANENT_MAX) {
+        const scope = resolveAccountingScopeInternal({ userId: row.userId }, row.unitId);
+        const reason = `provider_getcharge_${status}: ${lastError}`.slice(0, POLL_LAST_ERROR_MAX);
+        const virou = await this.repo.runTransaction(async (tx) => {
+          const n = await this.repo.casStatus(row.id, 'PENDING', { status: 'FAILED', failReason: reason, pollAttempts: attempts, pollLastError: lastError, nextPollAt: null }, tx);
+          if (n === 1) await this.audit(tx, scope, COLLECTION_CHARGE_FAILED, row.id, { fromStatus: 'PENDING', toStatus: 'FAILED' });
+          return n === 1;
+        });
+        if (virou) {
+          logger.error('collection_charge_poll: 4xx definitivo repetido do provedor — cobrança FAILED (terminal, conferir no provedor)', {
+            collectionChargeId: row.id,
+            httpStatus: status,
+            attempts,
+            error: lastError,
+          });
+        }
+        return virou;
+      }
+      const delay = Math.min(POLL_BACKOFF_BASE_MS * 2 ** (attempts - 1), POLL_BACKOFF_MAX_MS);
+      await this.repo.updatePollState(row.id, { pollAttempts: attempts, nextPollAt: new Date(this.now().getTime() + delay), pollLastError: lastError });
+      return false;
+    } catch (writeError) {
+      logger.error('collection_charge_poll: não gravou o controle de retentativa — a cobrança volta no próximo tick', {
+        collectionChargeId: row.id,
+        error: writeError instanceof Error ? writeError.message : String(writeError),
+      });
+      return false;
+    }
+  }
+
+  /** Re-consulta que deu certo zera a contagem e o backoff — só escreve se havia algo a limpar. */
+  private async limparPollState(row: CollectionCharge): Promise<void> {
+    if (!(row.pollAttempts > 0 || row.nextPollAt || row.pollLastError)) return;
+    try {
+      await this.repo.updatePollState(row.id, { pollAttempts: 0, nextPollAt: null, pollLastError: null });
+    } catch (error) {
+      logger.warn('collection_charge_poll: não limpou o controle de retentativa', {
+        collectionChargeId: row.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   // ── Leituras ───────────────────────────────────────────────────────────────
