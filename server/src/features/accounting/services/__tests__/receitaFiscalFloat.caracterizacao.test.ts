@@ -59,10 +59,9 @@ describe('ratearReceita — linhas de quantidade × preço fracionários (a cont
 });
 
 describe('ratearReceita — empate exato de meio centavo (onde a razão em float erra)', () => {
-  it('10 centavos entre linhas de 0,01 e 0,19: o float de 0,01/0,20 é 0,04999… e o centavo do empate se perde', () => {
-    // 10 × 1/20 = 0,5 EXATO ⇒ meio-para-cima daria 1 à primeira linha. Hoje: 0 (a 2ª leva o resto, 10).
+  it('10 centavos entre linhas de 0,01 e 0,19: 10 × 1/20 = 0,5 exato ⇒ meio-para-cima dá 1 à 1ª (antes da onda 2.3, o float dava [0, 10])', () => {
     const r = ratearReceita(0.1, [L('a', 'Service', 0.01), L('b', 'Service', 0.19)]);
-    expect(cents(r)).toEqual([0, 10]);
+    expect(cents(r)).toEqual([1, 9]);
   });
 
   it('empates que o float acerta: 1 centavo entre duas linhas iguais vai à 1ª; 3 centavos entre duas, 2 e 1', () => {
@@ -124,15 +123,22 @@ describe('ReceitaFiscalRecebimentoService.registrar — valor do recebimento (bo
     expect(criadas.map((c) => c.valorCents)).toEqual([100n]);
   });
 
-  it('0, negativo e NaN: ValidationError "Valor inválido para o recebimento da venda"', async () => {
-    for (const bad of [0, -5, Number.NaN]) {
+  it('0 e negativo: ValidationError "Valor inválido para o recebimento da venda"', async () => {
+    for (const bad of [0, -5]) {
       await expect(registrar(bad)).rejects.toThrow("Valor inválido para o recebimento da venda 'v1'.");
     }
     expect(criadas).toHaveLength(0);
   });
 
-  it('valor acima de MAX_CENTS (R$ 21.474.836,48): hoje GRAVA (a borda do recebimento não tem o teto do razão)', async () => {
-    await registrar(21_474_836.48);
-    expect(criadas.map((c) => c.valorCents)).toEqual([2_147_483_648n]);
+  it('NaN/Infinity: ValidationError do conversor canônico (antes da onda 2.3: a mensagem do recebimento)', async () => {
+    for (const bad of [Number.NaN, Number.POSITIVE_INFINITY]) {
+      await expect(registrar(bad)).rejects.toThrow('Valor em reais inválido: não é um número finito.');
+    }
+    expect(criadas).toHaveLength(0);
+  });
+
+  it('valor acima de MAX_CENTS (R$ 21.474.836,48): recusa na borda como o razão (antes da onda 2.3 GRAVAVA 2.147.483.648)', async () => {
+    await expect(registrar(21_474_836.48)).rejects.toThrow('Valor em reais fora da faixa suportada de centavos.');
+    expect(criadas).toHaveLength(0);
   });
 });
