@@ -106,6 +106,12 @@ describe('CreateLalurParteBAccountSchema — M010 (p.237)', () => {
       failsOn(UpdateLalurParteBAccountSchema, { unitId: 'u1', cnpjSitEsp: bad }, 'cnpjSitEsp');
     }
   });
+  it('cnpjSitEsp: forma certa com DÍGITO VERIFICADOR errado → 400 (numérico e alfanumérico; DV por ASCII−48, 12ABC34501DE → 35)', () => {
+    for (const bad of ['11222333000182', '12ABC34501DE36', '12ABC34501DE45']) {
+      failsOn(CreateLalurParteBAccountSchema, { ...pb, cnpjSitEsp: bad }, 'cnpjSitEsp');
+      failsOn(UpdateLalurParteBAccountSchema, { unitId: 'u1', cnpjSitEsp: bad }, 'cnpjSitEsp');
+    }
+  });
 });
 
 // ─── ECF Fase 3C (ADR EMENDA 2026-09-12, 3ª) — M410, processos, M312 links, sem '|' ────────────

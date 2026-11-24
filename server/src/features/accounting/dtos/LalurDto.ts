@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { MAX_CENTS } from '../models/money';
 import { isValidDateOnly } from '../models/dates';
 import { queryBoolean } from './queryPrimitives';
-import { CNPJ_REGEX } from '../../../lib/cnpj';
+import { CNPJ_REGEX, isValidCnpj } from '../../../lib/cnpj';
 import {
   LALUR_IND_LAN_ANT,
   LALUR_IND_PROC,
@@ -256,7 +256,10 @@ export const CreateLalurParteBAccountSchema = z
     codTributo: z.enum(LALUR_TRIBUTOS),
     saldoIniCents: cents('saldoIniCents'),
     indSaldoIni: z.enum(LALUR_IND_SALDO),
-    cnpjSitEsp: z.string().regex(CNPJ_REGEX, 'cnpjSitEsp = CNPJ de 14 posições [A-Z0-9]{12}[0-9]{2}, sem máscara').optional(),
+    cnpjSitEsp: z
+      .string()
+      .regex(CNPJ_REGEX, 'cnpjSitEsp = CNPJ de 14 posições [A-Z0-9]{12}[0-9]{2}, sem máscara')
+      .refine(isValidCnpj, 'cnpjSitEsp: dígito verificador inválido').optional(),
   })
   .strict();
 
@@ -286,7 +289,10 @@ export const UpdateLalurParteBAccountSchema = z
     dtLimite: dateOnly('dtLimite').nullable().optional(),
     saldoIniCents: cents('saldoIniCents').optional(),
     indSaldoIni: z.enum(LALUR_IND_SALDO).optional(),
-    cnpjSitEsp: z.string().regex(CNPJ_REGEX, 'cnpjSitEsp = CNPJ de 14 posições [A-Z0-9]{12}[0-9]{2}, sem máscara').nullable().optional(),
+    cnpjSitEsp: z
+      .string()
+      .regex(CNPJ_REGEX, 'cnpjSitEsp = CNPJ de 14 posições [A-Z0-9]{12}[0-9]{2}, sem máscara')
+      .refine(isValidCnpj, 'cnpjSitEsp: dígito verificador inválido').nullable().optional(),
   })
   .strict();
 
