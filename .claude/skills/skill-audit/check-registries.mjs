@@ -39,9 +39,9 @@ const REGISTRIES = [
   },
   {
     name: 'preset suite em tablePresetSuites',
-    dir: 'server/src/features/dynamicTables/presets/systems', kind: 'files', match: /Preset\.ts$/,
+    dir: 'server/src/features/dynamicTables/domain/presets/systems', kind: 'files', match: /Preset\.ts$/,
     ignore: ['CoreSystemPreset.ts'], // exportado à parte de propósito (não é suite selecionável)
-    registry: 'server/src/features/dynamicTables/presets/index.ts',
+    registry: 'server/src/features/dynamicTables/domain/presets/index.ts',
     ref: (f) => basename(f, '.ts'), // identificador importado e usado no objeto tablePresetSuites
   },
   // I8 (BE-INCR-CRM-MODULE-COMPOSITION) c13: tabela de preset do CRM sem módulo no registro — a tabela
@@ -49,14 +49,14 @@ const REGISTRIES = [
   // os módulos Lead* de core/ + todo crm/.
   {
     name: 'tabela de preset CRM em modules/registry.ts (core/Lead*)',
-    dir: 'server/src/features/dynamicTables/presets/modules/core', kind: 'files', match: /^Lead.*Module\.ts$/,
-    registry: 'server/src/features/dynamicTables/presets/modules/registry.ts',
+    dir: 'server/src/features/dynamicTables/domain/presets/modules/core', kind: 'files', match: /^Lead.*Module\.ts$/,
+    registry: 'server/src/features/dynamicTables/domain/presets/modules/registry.ts',
     ref: (f) => `'./core/${basename(f, '.ts')}'`,
   },
   {
     name: 'tabela de preset CRM em modules/registry.ts (crm/)',
-    dir: 'server/src/features/dynamicTables/presets/modules/crm', kind: 'files', match: /Module\.ts$/,
-    registry: 'server/src/features/dynamicTables/presets/modules/registry.ts',
+    dir: 'server/src/features/dynamicTables/domain/presets/modules/crm', kind: 'files', match: /Module\.ts$/,
+    registry: 'server/src/features/dynamicTables/domain/presets/modules/registry.ts',
     ref: (f) => `'./crm/${basename(f, '.ts')}'`,
   },
   // STUBS desativados — reativar só com falha real:
