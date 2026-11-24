@@ -285,3 +285,158 @@ const CCRED_POR_CODIGO = new Map(CCREDPRES_IBSCBS.map((c) => [c.cCredPres, c]));
 export const cstIbsCbs = (cst: string): CstIbsCbs | undefined => CST_POR_CODIGO.get(cst);
 export const cClassTribIbsCbs = (c: string): CClassTribIbsCbs | undefined => CCLASS_POR_CODIGO.get(c);
 export const cCredPresIbsCbs = (c: string): CCredPresIbsCbs | undefined => CCRED_POR_CODIGO.get(c);
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+// Onda 3.2 fatia 5 (dono, 24/11/2026) — as mesmas tabelas como LegalParameter: CST_IBS_CBS, CCLASSTRIB_IBS_CBS e
+// CCREDPRES_IBS_CBS (seed gerado da TSV por `scripts/gerar-carga-ibs-cbs-tabelas.mjs`). A leitura é PURA, parametrizada pela
+// fotografia das três tabelas; sem linha de uma delas ⇒ `PARAMETRO_LEGAL_AUSENTE` (fail-closed, nunca "tudo inexistente").
+// ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+import { z } from 'zod';
+import { LinhaLegalIlegivelError, ParametroLegalAusenteError, linhasEmVigor, type LinhaLegal, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
+import { linhasEmCacheSincrono } from '../../legalParameters/services/legalParameterCache';
+import { hojeDateOnly } from '../../legalParameters/models/hoje';
+
+export const TABELAS_IBS_CBS = ['CST_IBS_CBS', 'CCLASSTRIB_IBS_CBS', 'CCREDPRES_IBS_CBS'] as const satisfies readonly LegalParameterTabela[];
+
+const IndJson = z.union([z.literal(0), z.literal(1)]);
+const Ordem = z.number().int().min(1);
+const DataJson = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+/** `valorJson` das linhas de CST_IBS_CBS (chave = CST de 3 dígitos). */
+export const CstIbsCbsJson = z
+  .object({
+    ordem: Ordem, descricao: z.string().min(1), ind_gIBSCBS: IndJson, ind_gIBSCBSMono: IndJson, ind_gRed: IndJson, ind_gDif: IndJson,
+    ind_gTransfCred: IndJson, ind_gCredPresIBSZFM: IndJson, ind_gAjusteCompet: IndJson, ind_RedutorBC: IndJson,
+  })
+  .strict();
+/** `valorJson` das linhas de CCLASSTRIB_IBS_CBS (chave = cClassTrib de 6 dígitos; vigência da planilha = vigenteDesde/vigenteAte). */
+export const CClassTribIbsCbsJson = z
+  .object({
+    ordem: Ordem, cst: z.string().regex(/^\d{3}$/), tipoAliquota: z.string().min(1), pRedIBS: z.number().min(0).max(100), pRedCBS: z.number().min(0).max(100),
+    ind_gTribRegular: IndJson, ind_gCredPresOper: IndJson, ind_gMonoPadrao: IndJson, ind_gMonoReten: IndJson, ind_gMonoRet: IndJson,
+    ind_gpBioDiferenca: IndJson, ind_gEstornoCred: IndJson, tpRBSN: z.number().int(), tpDoacao: z.number().int(), indNFe: IndJson, indNFCe: IndJson,
+  })
+  .strict();
+/** `valorJson` das linhas de CCREDPRES_IBS_CBS (chave = cCredPres de 2 dígitos; as duas vigências, CBS e IBS, ficam aqui). */
+export const CCredPresIbsCbsJson = z
+  .object({
+    ordem: Ordem, apropriaViaNf: IndJson, apropriaViaEvento: IndJson, indDeduzCredPres: IndJson.nullable(), ind_gCBSCredPres: IndJson.nullable(),
+    ind_gIBSCredPres: IndJson.nullable(), cClassTribNotaReferenciada: z.string().min(1), dIniVigCBS: DataJson.nullable(), dFimVigCBS: DataJson.nullable(),
+    dIniVigIBS: DataJson.nullable(), dFimVigIBS: DataJson.nullable(), indNFe: IndJson, indNFCe: IndJson,
+  })
+  .strict();
+
+/** As três tabelas lidas da fotografia: em ordem da planilha (para reserializar a TSV) e indexadas por código. */
+export interface TabelasIbsCbs {
+  cst: readonly CstIbsCbs[];
+  cClassTrib: readonly CClassTribIbsCbs[];
+  cCredPres: readonly CCredPresIbsCbs[];
+  /** cClassTrib → todas as versões (vigências) do código, da mais antiga para a mais nova. */
+  readonly cClassTribPorCodigo: ReadonlyMap<string, readonly CClassTribIbsCbs[]>;
+  readonly cstPorCodigo: ReadonlyMap<string, CstIbsCbs>;
+  readonly cCredPresPorCodigo: ReadonlyMap<string, CCredPresIbsCbs>;
+}
+
+function lerJson<S extends z.ZodType>(schema: S, l: LinhaLegal): z.infer<S> & { ordem: number } {
+  let bruto: unknown;
+  try {
+    bruto = JSON.parse(l.valorJson ?? '');
+  } catch {
+    throw new LinhaLegalIlegivelError(l.id, l.tabela, l.chave);
+  }
+  const r = schema.safeParse(bruto);
+  if (!r.success) throw new LinhaLegalIlegivelError(l.id, l.tabela, l.chave);
+  return r.data as z.infer<S> & { ordem: number };
+}
+
+/** Uma linha por código: a de `vigenteDesde` mais recente (supersedes já resolvido por `linhasEmVigor`). */
+function maisNovaPorChave(linhas: readonly LinhaLegal[], tabela: string): LinhaLegal[] {
+  const porChave = new Map<string, LinhaLegal>();
+  for (const l of linhasEmVigor(linhas)) {
+    if (l.tabela !== tabela) continue;
+    const atual = porChave.get(l.chave);
+    if (!atual || l.vigenteDesde > atual.vigenteDesde) porChave.set(l.chave, l);
+  }
+  return [...porChave.values()];
+}
+
+/**
+ * A fotografia → as três tabelas. Falta tabela INTEIRA (carga incompleta) ⇒ `ParametroLegalAusenteError` (400
+ * `PARAMETRO_LEGAL_AUSENTE`), nunca uma tabela vazia que recusaria todo CST/cClassTrib como "inexistente" em silêncio.
+ * Ausência de UM código dentro de tabela existente continua sendo "inexistente" (rej. 1020/1023/1055).
+ */
+export function tabelasIbsCbsDe(linhas: readonly LinhaLegal[], data: string): TabelasIbsCbs {
+  const cstLinhas = maisNovaPorChave(linhas, 'CST_IBS_CBS');
+  const credLinhas = maisNovaPorChave(linhas, 'CCREDPRES_IBS_CBS');
+  // cClassTrib guarda TODAS as versões do código: a virada de vigência é uma linha nova, não a troca da antiga.
+  const classLinhas = linhasEmVigor(linhas).filter((l) => l.tabela === 'CCLASSTRIB_IBS_CBS');
+  if (cstLinhas.length === 0) throw new ParametroLegalAusenteError('CST_IBS_CBS', data);
+  if (classLinhas.length === 0) throw new ParametroLegalAusenteError('CCLASSTRIB_IBS_CBS', data);
+  if (credLinhas.length === 0) throw new ParametroLegalAusenteError('CCREDPRES_IBS_CBS', data);
+
+  const porOrdem = <T extends { ordem: number }>(xs: T[]): T[] => xs.sort((a, b) => a.ordem - b.ordem);
+  const semOrdem = <T extends { ordem: number }>(xs: T[]): Omit<T, 'ordem'>[] => xs.map(({ ordem: _o, ...r }) => r);
+  const cst = semOrdem(
+    porOrdem(
+      cstLinhas.map((l) => {
+        const v = lerJson(CstIbsCbsJson, l);
+        return { ...v, cst: l.chave };
+      }),
+    ),
+  ) as CstIbsCbs[];
+  const cClassTrib = semOrdem(
+    porOrdem(
+      classLinhas.map((l) => {
+        const v = lerJson(CClassTribIbsCbsJson, l);
+        return { ...v, cClassTrib: l.chave, dIniVig: l.vigenteDesde, dFimVig: l.vigenteAte };
+      }),
+    ),
+  ) as CClassTribIbsCbs[];
+  const cCredPres = semOrdem(
+    porOrdem(
+      credLinhas.map((l) => {
+        const v = lerJson(CCredPresIbsCbsJson, l);
+        return { ...v, cCredPres: l.chave };
+      }),
+    ),
+  ) as CCredPresIbsCbs[];
+
+  const versoes = new Map<string, CClassTribIbsCbs[]>();
+  for (const c of cClassTrib) versoes.set(c.cClassTrib, [...(versoes.get(c.cClassTrib) ?? []), c]);
+  for (const v of versoes.values()) v.sort((a, b) => a.dIniVig.localeCompare(b.dIniVig));
+  return {
+    cst,
+    cClassTrib,
+    cCredPres,
+    cClassTribPorCodigo: versoes,
+    cstPorCodigo: new Map(cst.map((c) => [c.cst, c])),
+    cCredPresPorCodigo: new Map(cCredPres.map((c) => [c.cCredPres, c])),
+  };
+}
+
+/**
+ * Só para o DTO Zod estático (emenda §9 L-8, dono 07/10: "DTO lê o cache síncrono"): as tabelas do cache aquecido no boot.
+ * Cache frio é defeito de inicialização (erro explícito de `linhasEmCacheSincrono`), tabela vazia é `PARAMETRO_LEGAL_AUSENTE`.
+ */
+export function tabelasIbsCbsDoCache(data: string = hojeDateOnly()): TabelasIbsCbs {
+  return tabelasIbsCbsDe(TABELAS_IBS_CBS.flatMap((t) => linhasEmCacheSincrono(t)) as unknown as LinhaLegal[], data);
+}
+
+export const buscarCst = (t: TabelasIbsCbs, cst: string): CstIbsCbs | undefined => t.cstPorCodigo.get(cst);
+export const buscarCCredPres = (t: TabelasIbsCbs, c: string): CCredPresIbsCbs | undefined => t.cCredPresPorCodigo.get(c);
+/**
+ * O cClassTrib do código: a versão vigente em `data`; se nenhuma cobre a data, a mais recente (o código EXISTE — a vigência
+ * é outra regra, a da montagem, que dá a mensagem "fora da vigência"). Sem `data`, a mais recente.
+ */
+export function buscarCClassTrib(t: TabelasIbsCbs, codigo: string, data?: string): CClassTribIbsCbs | undefined {
+  const v = t.cClassTribPorCodigo.get(codigo);
+  if (!v || v.length === 0) return undefined;
+  if (data) {
+    for (let i = v.length - 1; i >= 0; i--) {
+      const fim = v[i].dFimVig;
+      if (data >= v[i].dIniVig && (fim === null || data <= fim)) return v[i];
+    }
+  }
+  return v[v.length - 1];
+}

@@ -19,6 +19,7 @@ import {
   TRIBUTOS_CSRF,
 } from '../../accounting/models/retencaoParams';
 import { IcmsStNcmJsonSchema } from '../../accounting/models/segregacaoNcm';
+import { CCredPresIbsCbsJson, CClassTribIbsCbsJson, CstIbsCbsJson } from '../../accounting/models/ibsCbsTabelas';
 import type { LegalParameterTabela } from './legalParameter';
 
 /**
@@ -398,6 +399,20 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
   IBS_CBS_REDUCAO_NBS: {
     valor: 'int',
     checar: (l) => so(/^\d{5,9}$/.test(l.chave) && semDisc(l) && bp(l) && (l.valorInt ?? 0) > 0, 'chave = prefixo de NBS (5 a 9 dígitos); sem discriminador; valorInt = redução em bp (1..10000)'),
+  },
+  // Onda 3.2 fatia 5 (dono, 24/11/2026): tabelas NT do IT 2025.002 v1.70. Chave = código da planilha, sem discriminador;
+  // valorJson = as colunas que a montagem e as regras do UB leem (o que `models/ibsCbsTabelas.ts` parseia).
+  CST_IBS_CBS: {
+    valor: 'json',
+    checar: (l) => so(/^\d{3}$/.test(l.chave) && semDisc(l), 'chave = CST de 3 dígitos; sem discriminador') ?? jsonOk(CstIbsCbsJson, l.valorJson, 'valorJson = { ordem, descricao, ind_* }'),
+  },
+  CCLASSTRIB_IBS_CBS: {
+    valor: 'json',
+    checar: (l) => so(/^\d{6}$/.test(l.chave) && semDisc(l), 'chave = cClassTrib de 6 dígitos; sem discriminador') ?? jsonOk(CClassTribIbsCbsJson, l.valorJson, 'valorJson = { ordem, cst, tipoAliquota, pRed*, ind_*, tpRBSN, tpDoacao, indNFe, indNFCe }'),
+  },
+  CCREDPRES_IBS_CBS: {
+    valor: 'json',
+    checar: (l) => so(/^\d{2}$/.test(l.chave) && semDisc(l), 'chave = cCredPres de 2 dígitos; sem discriminador') ?? jsonOk(CCredPresIbsCbsJson, l.valorJson, 'valorJson = { ordem, apropria*, ind_*, cClassTribNotaReferenciada, dIniVig/dFimVig CBS e IBS, indNFe, indNFCe }'),
   },
   // IBS-CBS-2027 PR-3 (item 15; dono 21/10): lista de uso ou consumo pessoal (LC 214 art. 57) — chave = prefixo de NCM.
   IBS_CBS_USO_CONSUMO: {
