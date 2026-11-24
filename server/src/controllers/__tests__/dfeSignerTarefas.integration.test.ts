@@ -13,6 +13,9 @@ import { resolveAccountingScopeInternal } from '@/features/accounting/scope/reso
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { makeTestCert } from '@test/helpers/nfeSignature';
 import { DFE_SIGNER_LEASE_MS } from '@/features/accounting/models/DfeSigner.model';
+import { DfeSignerRepository } from '@/features/accounting/repositories/DfeSignerRepository';
+import { DfeSignerTaskRepository } from '@/features/accounting/repositories/DfeSignerTaskRepository';
+import { DfeSignerTaskService } from '@/features/accounting/services/DfeSignerTaskService';
 
 const app = makeApp();
 const derB64 = (pem: string) => pem.replace(/-----(BEGIN|END) CERTIFICATE-----/g, '').replace(/\s+/g, '');
@@ -113,35 +116,37 @@ describe('X10a EMENDA-4 AL-PR-3 — fila do assinador local pela HTTP', () => {
 
   it('AL-14 (teto): a retomada que gera tarefa que vence sem resposta rearma, mas só até o teto por dispositivo — o laço acaba sozinho', async () => {
     const ASSINAR = { tipo: 'ASSINAR' as const, algoritmo: 'rsa-sha1' as const, digestB64: 'aGFzaA==', conteudo: CONTEUDO };
-    const svc = getFactory().getDfeSignerTaskService();
+    // Relógio injetado numa instância própria do serviço (mesmos repositórios reais, freio em memória limpo): a janela de 2 s é medida
+    // por ele, nunca pelo tempo real do laço — numa CI lenta o laço de polls podia passar de 2 s e tirar reservas da janela.
+    let agora = Date.now();
+    const svc = new DfeSignerTaskService(new DfeSignerTaskRepository(), new DfeSignerRepository(), {
+      now: () => new Date(agora),
+      env: { DFE_SIGNER_RETOMADA_MAX: '3', DFE_SIGNER_RETOMADA_JANELA_MS: '2000', DFE_SIGNER_RETOMADA_ESPACO_MS: '1' } as NodeJS.ProcessEnv,
+    });
+    const device = (await getFactory().getDfeSignerService().autenticarDispositivo(token))!;
+    const hb = { versaoAssinador: '1.0.0', tokenPresente: true, certThumbprintSha256: THUMB };
+    const filaDe = (unitId: string) => svc.fila(device, resolveAccountingScopeInternal({ userId: dono.id }, unitId));
     const tarefasDaRetomada: Promise<unknown>[] = [];
     svc.setOnRetomada((scope) => {
       retomadas.push(scope.unitId);
-      const p = fila(scope.unitId).then((f) => f.executar(ASSINAR, 50)); // o reenvio das pendentes: uma ASSINAR por unidade, nunca respondida
+      const p = filaDe(scope.unitId).executar(ASSINAR, 50); // o reenvio das pendentes: uma ASSINAR por unidade, nunca respondida
       tarefasDaRetomada.push(p); // empilhado já no disparo (síncrono dentro do poll): o teste espera a cadeia inteira
       return p;
     });
-    process.env.DFE_SIGNER_RETOMADA_MAX = '3';
-    process.env.DFE_SIGNER_RETOMADA_JANELA_MS = '2000';
-    await new Promise((r) => setTimeout(r, 2100)); // o histórico dos testes anteriores sai da janela
-    try {
-      await poll();
-      retomadas.length = 0;
-      expect(await (await fila()).executar(ASSINAR, 50)).toBe('NAO_ENTREGUE'); // o caixa estava fora: marca a volta
-      for (let i = 0; i < 8; i += 1) {
-        await poll(); // o caixa volta mas nunca responde (espera 0: não segura a tarefa nova)
-        await Promise.all(tarefasDaRetomada.splice(0));
-      }
-      expect(retomadas).toHaveLength(3 * 2); // 3 retomadas (teto) × as 2 unidades do dispositivo, não 8
-      await poll();
-      expect(retomadas).toHaveLength(3 * 2); // teto atingido: a marca foi descartada, nada mais dispara
-    } finally {
-      delete process.env.DFE_SIGNER_RETOMADA_MAX;
-      delete process.env.DFE_SIGNER_RETOMADA_JANELA_MS;
-      svc.setOnRetomada(async (scope) => {
-        retomadas.push(scope.unitId);
-      });
+    const poll1 = async () => {
+      agora += 100; // 8 polls = 800 ms de relógio injetado, dentro da janela de 2 s, quanto o laço real demore
+      return svc.poll(device, hb, 0);
+    };
+    await poll1();
+    retomadas.length = 0;
+    expect(await filaDe(centro).executar(ASSINAR, 50)).toBe('NAO_ENTREGUE'); // o caixa estava fora: marca a volta
+    for (let i = 0; i < 8; i += 1) {
+      await poll1(); // o caixa volta mas nunca responde (espera 0: não segura a tarefa nova)
+      await Promise.all(tarefasDaRetomada.splice(0));
     }
+    expect(retomadas).toHaveLength(3 * 2); // 3 retomadas (teto) × as 2 unidades do dispositivo, não 8
+    await poll1();
+    expect(retomadas).toHaveLength(3 * 2); // teto atingido: a marca foi descartada, nada mais dispara
   });
 
   it('AL-14 (espaçamento): outra queda logo depois de uma retomada espera o intervalo mínimo — a marca fica e dispara no poll seguinte ao intervalo', async () => {
