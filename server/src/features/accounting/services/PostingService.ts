@@ -586,9 +586,6 @@ export class PostingService {
     }
     const { userId, unitId } = accountingScopeWhere(scope);
 
-    // PERIOD GATE — gate on the REVERSAL date (not the original entry date).
-    await this.assertPeriodOpen(scope, input.reversalPostingDate);
-
     const original = await this.journalEntryRepo.findById(scope, input.lancamentoId);
     if (!original) {
       throw new NotFoundError(`Lançamento '${input.lancamentoId}' não foi encontrado.`);
@@ -614,6 +611,12 @@ export class PostingService {
       });
       return { reversal: priorReversal, original };
     }
+
+    // PERIOD GATE — gate on the REVERSAL date (not the original entry date). Only a reversal that is
+    // still going to WRITE is gated: the idempotent hits above write nothing, and gating them made a
+    // retry of a half-done cancel (razão já estornado, subrazão não) fail once that period closed
+    // (Onda 2.1). The authoritative in-tx gate below is unchanged.
+    await this.assertPeriodOpen(scope, input.reversalPostingDate);
 
     // INCR4-B (ADR-INCR7 D5): a Reconciled entry must be un-reconciled first — a
     // clear error instead of silently reversing over reconciled state.

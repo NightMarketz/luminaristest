@@ -13,13 +13,18 @@
  *              teste: PayableService.test.ts › "does NOT re-post when the recognition already exists (idempotent)"
  *   fora da tx — entrada de estoque (receiveStock; falha não compensa, o reconcile re-dirige) e rascunho de imobilizado (modo 4)
  *              teste: PayableService.test.ts › "does NOT compensate the recognition when the INBOUND fails (reconcile re-drives)"
+ *   estorno — cancelPayment: reverseEntry (commit 1, idempotente) e DEPOIS a tx do subrazão (commit 2). Crash entre os dois = razão estornado +
+ *              pagamento ACTIVE/título PAID: reconcilePayables() re-dirige a direção REVERSA (lê o lançamento Reversed, estorna a CSRF da parcela se
+ *              houver e conclui a tx do subrazão; nunca finaliza como pago o pagamento cujo lançamento já está estornado)
+ *              teste: SubledgerReversalAtomicity.integration.test.ts › "razão estornado + pagamento ACTIVE → reconcilePayables conclui o estorno (CANCELLED, título reaberto, 1 auditoria, sem 2º estorno)"
+ *              teste: SubledgerReversalAtomicity.integration.test.ts › "o estorno já está no razão e o período FECHOU → repetir cancelPayment conclui"
  *   RETENCOES-FONTE PR-2 (F-RET-10 a) — a retenção feita é baixa SEM caixa (kind WITHHOLDING) gravada na tx1 do título (ou na
  *              tx da baixa, para a CSRF) com a TaxWithholding e o título de imposto; o razão vem depois, em postEntry próprio
  *              (sourceType='ap.withholding', sourceId=paymentId): D 2.1.2 / C conta a recolher. Falha do post ⇒ o reconcile refaz.
  *              teste: retencoesFontePr2.integration.test.ts › "item 15: R$ 1.000 a PJ Presumido ⇒ IRRF R$ 15,00, paidCents 1500, razão balanceado"
  *              teste: retencoesFontePr2.integration.test.ts › "item 21: reconcile refaz o lançamento WITHHOLDING que faltou, idempotente"
  */
-import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
+import { AppError, ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
 import type { Account, Payable, PayablePayment, TaxWithholding } from 'generated/prisma';
@@ -39,6 +44,7 @@ import {
   PAYABLE_SETTLEABLE_STATUSES,
   PAYABLE_TRANSITIONS,
   payableStatusForBalance,
+  PAYMENT_REVERSAL_INVARIANT_CODE,
   resolvePaymentMethodAccount,
   type PayableStatus,
 } from '../models/Payable.model';
@@ -147,6 +153,25 @@ function withBalance(payable: PayableWithPayments): PayableWithBalance {
  */
 function assertPayableRecalc(from: string, to: PayableStatus): void {
   if (from !== to) assertTransition(PAYABLE_TRANSITIONS, from as PayableStatus, to, 'Conta a pagar');
+}
+
+/** Lançamento já estornado no razão (commit 1 de um cancelamento feito). `findBySource` devolve também os `Reversed`. */
+function isReversedEntry(entry: { status: string; reversedById: string | null }): boolean {
+  return entry.status === 'Reversed' || entry.reversedById != null;
+}
+
+/** Motivo gravado quando é o reconcile (não um DTO) quem conclui o estorno que o razão já tem. */
+const RECONCILE_REVERSAL_REASON = 'Reconciliação: estorno já lançado no razão, subrazão concluído';
+
+/**
+ * Códigos que o reconcile do AP conta como BLOCKED (determinísticos, sem o que retentar) além da lista das pontes
+ * (`syncSkipErrorCode`): o invariante do subrazão violado com o razão já estornado, e o imposto da CSRF já recolhido.
+ */
+const RECONCILE_BLOCKED_CODES: readonly string[] = [PAYMENT_REVERSAL_INVARIANT_CODE, 'IMPOSTO_JA_RECOLHIDO'];
+function reconcileBlockedCode(error: unknown): string | null {
+  const bridge = syncSkipErrorCode(error);
+  if (bridge) return bridge;
+  return error instanceof AppError && RECONCILE_BLOCKED_CODES.includes(error.errorCode) ? error.errorCode : null;
 }
 
 export class PayableService implements IFixedAssetDraftRedriver {
@@ -1080,28 +1105,48 @@ export class PayableService implements IFixedAssetDraftRedriver {
     // RETENCOES-FONTE PR-2 (item 21): estorno, no razão, das baixas sem caixa da CSRF desta parcela (idempotente).
     await this.reverterLancamentosDeRetencao(scope, csrf, dto);
 
-    // The reversal above runs in PostingService's own tx (reverseEntry takes no `tx`); the
-    // balance/status change lives in ONE tx here, so decrement + recompute never split. A crash in
-    // between is converged by re-running cancelPayment (reverseEntry is idempotent).
+    // The reversal above runs in PostingService's own tx (commit 1, reverseEntry takes no `tx`); the balance/status change lives in
+    // ONE tx (commit 2, shared with the reconcile re-drive), so decrement + recompute never split. A crash in between is converged
+    // by re-running cancelPayment (reverseEntry is idempotent) or by reconcilePayables (reverse direction).
+    return (await this.completePaymentCancellation(scope, payment, csrf, reversalEntryId, dto.reason)).payment;
+  }
+
+  /**
+   * COMMIT 2 do estorno do pagamento (subrazão): flip ACTIVE→CANCELLED + CSRF da parcela + devolução do saldo + status +
+   * auditoria numa tx. Compartilhado por `cancelPayment` e pelo re-drive do reconcile (lançamento já `Reversed`, pagamento
+   * ainda ACTIVE). Invariante violado com o razão JÁ estornado ⇒ erro com `PAYMENT_REVERSAL_INVARIANT_CODE`: a tx desfaz tudo
+   * e o reconcile conta como BLOCKED, em vez de retentar para sempre.
+   */
+  private async completePaymentCancellation(
+    scope: AccountingScope,
+    payment: PayablePayment,
+    csrf: readonly TaxWithholding[],
+    reversalEntryId: string | null,
+    reason: string | undefined,
+  ): Promise<{ payment: PayablePayment; completed: boolean }> {
+    const paymentId = payment.id;
+    const payableId = payment.payableId;
     return this.payableRepo.runTransaction(async (tx) => {
       // Authoritative idempotency gate INSIDE the tx (review #307 F8): the out-of-tx "already
-      // CANCELLED" read above is a fast path only. Two concurrent cancels of the same payment both
+      // CANCELLED" read is a fast path only. Two concurrent cancels of the same payment both
       // pass it; only the one that flips ACTIVE → CANCELLED here gives the cents back.
       const flipped = await this.payableRepo.cancelPaymentIfActive(scope, paymentId, tx);
       if (flipped === 0) {
         const already = await this.payableRepo.findPaymentById(scope, paymentId, tx);
         if (!already) throw new NotFoundError(`Pagamento '${paymentId}' não foi encontrado.`);
-        return already; // idempotent — no release, no second audit
+        return { payment: already, completed: false }; // idempotent — no release, no second audit
       }
       const cancelled = { ...payment, status: 'CANCELLED' };
       // RETENCOES-FONTE PR-2 (item 21): a CSRF da parcela sai na mesma tx (título de imposto encolhe; baixado ⇒ 409).
       const liberadoCsrf = csrf.length > 0 ? await this.withholding!.service.reverterNaTx(scope, csrf, tx) : 0;
       // F-PS3 → a: atomic decrement — the only refusal is the invariant (`paidCents >= cents`); the
-      // pre-check above already screened it, so a 0 here is a race that broke the invariant.
+      // pre-check in cancelPayment already screened it, so a 0 here is a race that broke the invariant.
       const released = await this.payableRepo.releaseSettlement(scope, payableId, centsFromDb(payment.amountCents) + liberadoCsrf, tx);
       if (released === 0) {
         throw new ValidationError(
           'Não foi possível estornar o pagamento: o saldo liquidado não comporta o estorno (invariante violado).',
+          null,
+          PAYMENT_REVERSAL_INVARIANT_CODE,
         );
       }
       const row = await this.payableRepo.findById(scope, payableId, tx);
@@ -1112,19 +1157,27 @@ export class PayableService implements IFixedAssetDraftRedriver {
         // Guarda defensiva (BRIEF item 9): a reversal can never leave the title fully paid again.
         const status = payableStatusForBalance(centsFromDb(row.paidCents), centsFromDb(row.amountCents));
         if (status === 'PAID') {
-          throw new ValidationError('Estorno inconsistente: o saldo continuaria integralmente pago após o estorno.');
+          throw new ValidationError(
+            'Estorno inconsistente: o saldo continuaria integralmente pago após o estorno.',
+            null,
+            PAYMENT_REVERSAL_INVARIANT_CODE,
+          );
         }
         assertPayableRecalc(row.status, status);
         await this.payableRepo.updatePayable(scope, payableId, { status }, tx);
+      } else if (centsFromDb(row.paidCents) === 0) {
+        // PAYING é de um pagamento em trânsito, e o claim soma os centavos DELE em paidCents na mesma CAS: saldo 0 ⇒ não há
+        // pagamento em trânsito (era este, preso por um crash). Sem isto o título ficaria PAYING para sempre.
+        await this.payableRepo.updatePayable(scope, payableId, { status: 'OPEN' }, tx);
       }
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
         eventType: 'payable.settlement_cancelled',
         targetType: 'payable',
         targetId: payableId,
-        payload: { payableId, paymentId, reversalEntryId, reason: dto.reason },
+        payload: { payableId, paymentId, reversalEntryId, reason },
       });
-      return cancelled;
+      return { payment: cancelled, completed: true };
     });
   }
 
@@ -1140,13 +1193,14 @@ export class PayableService implements IFixedAssetDraftRedriver {
    */
   async reconcilePayables(
     scope: AccountingScope,
-  ): Promise<{ recognitionsPosted: number; settlementsPosted: number; finalized: number; blocked: number; failed: number }> {
+  ): Promise<{ recognitionsPosted: number; settlementsPosted: number; finalized: number; reversalsCompleted: number; blocked: number; failed: number }> {
     if (!this.policy.canManagePayable(scope)) {
       throw new ForbiddenError('Você não tem permissão para reconciliar contas a pagar.');
     }
     let recognitionsPosted = 0;
     let settlementsPosted = 0;
     let finalized = 0;
+    let reversalsCompleted = 0;
     let blocked = 0;
     let failed = 0;
 
@@ -1218,7 +1272,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
           // MAX_CENTS poison, same discipline as the sync bridges) is BLOCKED, never a bug; anything
           // else is a genuinely unexpected FAILURE. Both used to collapse into the same silent warn,
           // making {0,0,0} indistinguishable from "every item this pass hit a real error".
-          const skipCode = syncSkipErrorCode(error);
+          const skipCode = reconcileBlockedCode(error);
           if (skipCode) {
             blocked += 1;
             logger.warn('AP reconcile: inventory purchase re-drive blocked — deterministic non-retriable code', {
@@ -1246,7 +1300,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
         await this.posting.postEntry(scope, this.buildRecognitionInputFromRow(scope, payable, expenseAccount));
         recognitionsPosted += 1;
       } catch (error) {
-        const skipCode = syncSkipErrorCode(error);
+        const skipCode = reconcileBlockedCode(error);
         if (skipCode) {
           blocked += 1;
           logger.warn('AP reconcile: recognition re-drive blocked — deterministic non-retriable code', {
@@ -1285,6 +1339,22 @@ export class PayableService implements IFixedAssetDraftRedriver {
           continue;
         }
         let settlement = await this.posting.findEntryBySource(scope, AP_PAYMENT_SOURCE_TYPE, payment.id);
+        // DIREÇÃO REVERSA (Onda 2.1): o razão já estornou o pagamento (commit 1 de um cancelPayment) e ele segue ACTIVE ⇒ conclui o
+        // estorno no subrazão. NUNCA cai no finalize abaixo: finalizar como pago um lançamento Reversed reabriria a divergência.
+        if (settlement && isReversedEntry(settlement)) {
+          const csrf = this.withholding ? await this.withholding.repo.findActiveByOriginSettlement(scope, payment.id) : [];
+          if (csrf.length > 0) {
+            // Mesma ordem do cancelPayment: imposto já recolhido ⇒ 409 (BLOCKED) antes de mexer; depois o estorno idempotente do razão da CSRF,
+            // na data do estorno que o razão já tem (período fechado ⇒ ACCOUNTING_PERIOD_NOT_OPEN ⇒ BLOCKED).
+            await this.withholding!.service.assertEstornavel(scope, csrf);
+            const reversal = await this.posting.findEntryBySource(scope, 'reversal', settlement.id);
+            const reversalDate = reversal ? reversal.date.toISOString().slice(0, 10) : scopeToday(scope);
+            await this.reverterLancamentosDeRetencao(scope, csrf, { reversalDate, reason: RECONCILE_REVERSAL_REASON });
+          }
+          const done = await this.completePaymentCancellation(scope, payment, csrf, settlement.reversedById, RECONCILE_REVERSAL_REASON);
+          if (done.completed) reversalsCompleted += 1;
+          continue;
+        }
         if (!settlement) {
           const payable = await this.payableRepo.findByIdWithPayments(scope, payment.payableId);
           if (!payable) continue;
@@ -1339,7 +1409,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
           });
         }
       } catch (error) {
-        const skipCode = syncSkipErrorCode(error);
+        const skipCode = reconcileBlockedCode(error);
         if (skipCode) {
           blocked += 1;
           logger.warn('AP reconcile: settlement re-drive blocked — deterministic non-retriable code', {
@@ -1352,8 +1422,8 @@ export class PayableService implements IFixedAssetDraftRedriver {
       }
     }
 
-    logger.info('AP reconcile pass complete', { recognitionsPosted, settlementsPosted, finalized, blocked, failed });
-    return { recognitionsPosted, settlementsPosted, finalized, blocked, failed };
+    logger.info('AP reconcile pass complete', { recognitionsPosted, settlementsPosted, finalized, reversalsCompleted, blocked, failed });
+    return { recognitionsPosted, settlementsPosted, finalized, reversalsCompleted, blocked, failed };
   }
 
   /**
