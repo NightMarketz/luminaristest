@@ -95,7 +95,7 @@ export interface CollectionPollSummary {
  * Onda 4 / 4.3 — a re-consulta (`getCharge`) que falha não repete a cada tick para sempre. Falha de 5xx/rede/429/408 é
  * TRANSITÓRIA: a cobrança segue PENDING (o provedor volta e ela pode estar paga) e só é espaçada por backoff exponencial
  * (`nextPollAt`: 10 min, 20 min, … até 4 h; o tick é de 15 min). 4xx DEFINITIVO (404/403/422…, a mesma lista de
- * `isDefinitive`) repetido `POLL_PERMANENT_MAX` vezes seguidas ⇒ `pollGaveUpAt`: o job PARA de consultar, `logger.error` e
+ * `isDefinitive`) repetido `POLL_PERMANENT_MAX` vezes SEGUIDAS (`pollPermanentCount`; um 5xx/rede/429/408 no meio reinicia a sequência e só espaça por backoff) ⇒ `pollGaveUpAt`: o job PARA de consultar, `logger.error` e
  * alerta, mas a cobrança segue PENDING (e VIVA). NÃO vira FAILED: FAILED solta o índice de uma-viva-por-título, e um 400/403
  * pode ser da conta ou do provedor inteiro, não da cobrança — o Pix/boleto ainda pode ser pago. Reabilita sozinha quando um
  * webhook válido traz o estado (`limparPollState`); cancelar/consultar à mão continua valendo. 401 é da credencial (P2-4) e
@@ -360,9 +360,12 @@ export class CollectionChargeService {
     const attempts = row.pollAttempts + 1;
     const lastError = (error instanceof Error ? error.message : String(error)).slice(0, POLL_LAST_ERROR_MAX);
     const definitivo = isDefinitive(status) && status !== 408;
+    // Só 4xx definitivo CONSECUTIVO conta para o abandono: falha transitória reinicia a sequência (e `pollAttempts` segue
+    // contando todas as falhas seguidas só para o expoente do backoff).
+    const permanentes = definitivo ? row.pollPermanentCount + 1 : 0;
     try {
-      if (definitivo && attempts >= POLL_PERMANENT_MAX) {
-        await this.repo.updatePollState(row.id, { pollAttempts: attempts, pollGaveUpAt: this.now(), nextPollAt: null, pollLastError: lastError });
+      if (definitivo && permanentes >= POLL_PERMANENT_MAX) {
+        await this.repo.updatePollState(row.id, { pollAttempts: attempts, pollPermanentCount: permanentes, pollGaveUpAt: this.now(), nextPollAt: null, pollLastError: lastError });
         logger.error('collection_charge_poll: 4xx definitivo repetido do provedor — o job parou de consultar a cobrança (segue PENDING; conferir no provedor)', {
           collectionChargeId: row.id,
           httpStatus: status,
@@ -372,7 +375,7 @@ export class CollectionChargeService {
         return true;
       }
       const delay = Math.min(POLL_BACKOFF_BASE_MS * 2 ** (attempts - 1), POLL_BACKOFF_MAX_MS);
-      await this.repo.updatePollState(row.id, { pollAttempts: attempts, nextPollAt: new Date(this.now().getTime() + delay), pollLastError: lastError });
+      await this.repo.updatePollState(row.id, { pollAttempts: attempts, pollPermanentCount: permanentes, nextPollAt: new Date(this.now().getTime() + delay), pollLastError: lastError });
       return false;
     } catch (writeError) {
       logger.error('collection_charge_poll: não gravou o controle de retentativa — a cobrança volta no próximo tick', {
@@ -385,9 +388,9 @@ export class CollectionChargeService {
 
   /** Re-consulta que deu certo zera a contagem, o backoff e a desistência — só escreve se havia algo a limpar. */
   private async limparPollState(row: CollectionCharge): Promise<void> {
-    if (!(row.pollAttempts > 0 || row.nextPollAt || row.pollGaveUpAt || row.pollLastError)) return;
+    if (!(row.pollAttempts > 0 || row.pollPermanentCount > 0 || row.nextPollAt || row.pollGaveUpAt || row.pollLastError)) return;
     try {
-      await this.repo.updatePollState(row.id, { pollAttempts: 0, nextPollAt: null, pollGaveUpAt: null, pollLastError: null });
+      await this.repo.updatePollState(row.id, { pollAttempts: 0, pollPermanentCount: 0, nextPollAt: null, pollGaveUpAt: null, pollLastError: null });
     } catch (error) {
       logger.warn('collection_charge_poll: não limpou o controle de retentativa', {
         collectionChargeId: row.id,

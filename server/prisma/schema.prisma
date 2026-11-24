@@ -3291,6 +3291,8 @@ model CollectionCharge {
   // `pollGaveUpAt` (o job para e alerta) — a cobrança segue PENDING e VIVA (FAILED soltaria o índice de uma-viva-por-título
   // com o Pix/boleto ainda pagável no provedor).
   pollAttempts         Int            @default(0)
+  // Falhas de 4xx DEFINITIVO seguidas (um 5xx/rede/429/408 ou um sucesso zera): só ela decide o abandono (`pollGaveUpAt`).
+  pollPermanentCount   Int            @default(0)
   nextPollAt           DateTime?
   pollGaveUpAt         DateTime?
   pollLastError        String?

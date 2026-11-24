@@ -1,7 +1,7 @@
 -- Onda 4 / 4.3 (auditoria fiscal/contábil de 24/11/2026): o job `collection_charge_poll` re-consultava a cobrança PENDING
 -- a cada tick mesmo quando o `getCharge` falhava sempre (4xx definitivo ou 5xx contínuo), sem espaçamento nem fim.
--- Quatro colunas novas em collection_charges, sem FK e sem dado a migrar: `pollAttempts` com DEFAULT 0 (o caso de toda
--- cobrança anterior: nenhuma falha seguida), `nextPollAt`, `pollGaveUpAt` e `pollLastError` nullable (NULL = "sem backoff",
+-- Cinco colunas novas em collection_charges, sem FK e sem dado a migrar: `pollAttempts` e `pollPermanentCount` (4xx definitivo
+-- seguidos) com DEFAULT 0 (o caso de toda cobrança anterior: nenhuma falha seguida), `nextPollAt`, `pollGaveUpAt` e `pollLastError` nullable (NULL = "sem backoff",
 -- "o job não desistiu", "sem erro").
 --
 -- Prólogo defensivo (memória `migracao-sqlite-nao-e-transacional`): SQLite não tem `ADD COLUMN IF NOT EXISTS` e não
@@ -11,6 +11,7 @@
 
 -- AlterTable — CollectionCharge
 ALTER TABLE "collection_charges" ADD COLUMN "pollAttempts" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "collection_charges" ADD COLUMN "pollPermanentCount" INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE "collection_charges" ADD COLUMN "nextPollAt" DATETIME;
 ALTER TABLE "collection_charges" ADD COLUMN "pollGaveUpAt" DATETIME;
 ALTER TABLE "collection_charges" ADD COLUMN "pollLastError" TEXT;

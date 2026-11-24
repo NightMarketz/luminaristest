@@ -210,6 +210,45 @@ describe('Onda 4 / 4.3 — pollPending: 4xx definitivo não reenfileira para sem
     expect(fim.pollAttempts).toBe(0);
   });
 
+  it('5xx, 5xx e depois 404: o abandono conta só 4xx definitivo — 5xx não soma, então NÃO abandona (guarda do 1º 404)', async () => {
+    const c = await novaCobranca();
+    const o = mp.orders.get(c.providerRef)!;
+    o.getMode = 503;
+    await poll();
+    await vencerBackoff(c.id);
+    await poll();
+    expect((await row(c.id)).pollAttempts).toBe(2);
+    await vencerBackoff(c.id);
+
+    o.getMode = 404;
+    const s3 = await poll();
+    expect(s3.abandoned).toBeUndefined();
+    const r = await row(c.id);
+    expect(r.status).toBe('PENDING');
+    expect(r.pollGaveUpAt).toBeNull(); // 3 falhas seguidas, mas só 1 é 4xx definitivo
+    expect(r.nextPollAt!.getTime()).toBeGreaterThan(Date.now()); // segue em backoff, não abandonada
+  });
+
+  it('404, 404, 5xx: o 5xx interrompe a sequência de 4xx definitivos (reinicia a contagem) — só 3 seguidos abandonam', async () => {
+    const c = await novaCobranca();
+    const o = mp.orders.get(c.providerRef)!;
+    // 404, 404, 503, 404, 404: nunca 3 definitivos seguidos
+    for (const modo of [404, 404, 503, 404, 404] as const) {
+      o.getMode = modo;
+      const s = await poll();
+      expect(s.abandoned).toBeUndefined();
+      expect((await row(c.id)).pollGaveUpAt).toBeNull();
+      await vencerBackoff(c.id);
+    }
+    // o 3º 404 seguido (4º, 5º e este) abandona
+    o.getMode = 404;
+    const s = await poll();
+    expect(s.abandoned).toBe(1);
+    const r = await row(c.id);
+    expect(r.pollGaveUpAt).not.toBeNull();
+    expect(r.status).toBe('PENDING');
+  });
+
   it('a cobrança que falha não impede a sadia de ser atualizada no mesmo tick', async () => {
     const ruim = await novaCobranca();
     const boa = await novaCobranca();

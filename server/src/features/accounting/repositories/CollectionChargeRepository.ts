@@ -114,7 +114,7 @@ export class CollectionChargeRepository implements ICollectionChargeRepository {
 
   public async updatePollState(
     id: string,
-    patch: { pollAttempts?: number; nextPollAt?: Date | null; pollGaveUpAt?: Date | null; pollLastError?: string | null },
+    patch: { pollAttempts?: number; pollPermanentCount?: number; nextPollAt?: Date | null; pollGaveUpAt?: Date | null; pollLastError?: string | null },
     tx?: Prisma.TransactionClient,
   ): Promise<void> {
     await (tx ?? prisma).collectionCharge.updateMany({ where: { id, deletedAt: null }, data: patch });

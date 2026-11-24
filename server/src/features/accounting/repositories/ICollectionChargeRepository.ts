@@ -67,7 +67,7 @@ export interface ICollectionChargeRepository {
    * Onda 4 / 4.3 — grava SÓ o controle de retentativa do job (nunca o `status`): `pollAttempts`, `nextPollAt`,
    * `pollGaveUpAt`, `pollLastError`. `null` limpa. Bumpa o `updatedAt` (não decide nada para PENDING; a CREATING velha tem o próprio relógio).
    */
-  updatePollState(id: string, patch: { pollAttempts?: number; nextPollAt?: Date | null; pollGaveUpAt?: Date | null; pollLastError?: string | null }, tx?: Prisma.TransactionClient): Promise<void>;
+  updatePollState(id: string, patch: { pollAttempts?: number; pollPermanentCount?: number; nextPollAt?: Date | null; pollGaveUpAt?: Date | null; pollLastError?: string | null }, tx?: Prisma.TransactionClient): Promise<void>;
   findCompanyName(userId: string): Promise<string | null>;
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }
