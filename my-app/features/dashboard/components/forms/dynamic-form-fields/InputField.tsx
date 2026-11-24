@@ -1,4 +1,5 @@
 import React from 'react';
+import { cnpjInput, formatCnpj } from '../../../../../lib/cnpj';
 
 /**
  * `format` is strictly typed to the tax-ID variants this component actually
@@ -79,26 +80,24 @@ function InputField({ type, name, value, onChange, className, required, label, f
   const isTaxId = format === 'cpf' || format === 'cnpj' || lowerName === 'taxid' || lowerName === 'cpf' || lowerName === 'cnpj' || lowerLabel.includes('cpf') || lowerLabel.includes('cnpj');
 
   if (isTaxId && type === 'text') {
-    inputProps.inputMode = 'numeric';
+    // CNPJ alfanumérico (IN RFB 2.229/2024): campo que pode ser CNPJ guarda `[0-9A-Z]` (nunca `\D`, que apagaria as letras); só o
+    // campo declarado CPF fica numérico. A validação (DV inclusive) é do servidor.
+    const soCpf = format === 'cpf' || (format !== 'cnpj' && lowerName !== 'taxid' && !lowerName.includes('cnpj') && !lowerLabel.includes('cnpj'));
+    inputProps.inputMode = soCpf ? 'numeric' : 'text';
     inputProps.placeholder = '000.000.000-00';
     inputProps.onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      let v = e.target.value.replace(/\D/g, '');
-      if (v.length > 14) v = v.slice(0, 14);
+      const v = soCpf ? e.target.value.replace(/\D/g, '').slice(0, 14) : cnpjInput(e.target.value);
 
       let masked = '';
-      if (v.length <= 11) {
+      if (v.length <= 11 && !/[A-Z]/.test(v)) {
         // CPF
         if (v.length <= 3) masked = v;
         else if (v.length <= 6) masked = `${v.slice(0, 3)}.${v.slice(3)}`;
         else if (v.length <= 9) masked = `${v.slice(0, 3)}.${v.slice(3, 6)}.${v.slice(6)}`;
         else masked = `${v.slice(0, 3)}.${v.slice(3, 6)}.${v.slice(6, 9)}-${v.slice(9)}`;
       } else {
-        // CNPJ
-        if (v.length <= 2) masked = v;
-        else if (v.length <= 5) masked = `${v.slice(0, 2)}.${v.slice(2)}`;
-        else if (v.length <= 8) masked = `${v.slice(0, 2)}.${v.slice(2, 5)}.${v.slice(5)}`;
-        else if (v.length <= 12) masked = `${v.slice(0, 2)}.${v.slice(2, 5)}.${v.slice(5, 8)}/${v.slice(8)}`;
-        else masked = `${v.slice(0, 2)}.${v.slice(2, 5)}.${v.slice(5, 8)}/${v.slice(8, 12)}-${v.slice(12)}`;
+        // CNPJ (numérico ou alfanumérico)
+        masked = formatCnpj(v);
       }
 
       e.target.value = masked;
