@@ -164,9 +164,10 @@ export class DfeSignerTaskService {
       if (retomarAgora) this.retomarNoProximoPoll.delete(device.id);
       else {
         const reserva = this.reservarRetomada(device.id, now);
+        const marca = this.retomarNoProximoPoll.get(device.id) ?? now.getTime(); // lê ANTES do delete: a idade da marca é a de quando a tarefa venceu
         if (reserva !== 'espaco') this.retomarNoProximoPoll.delete(device.id); // `espaco` = cedo demais: a marca fica para o poll seguinte
         retomarAgora = reserva === 'ok';
-        if (retomarAgora) porMarca = this.retomarNoProximoPoll.get(device.id) ?? now.getTime();
+        if (retomarAgora) porMarca = marca;
       }
     }
     if (retomarAgora) this.retomar(device, porMarca === null ? undefined : { marca: porMarca, reservaEm: now.getTime() });
