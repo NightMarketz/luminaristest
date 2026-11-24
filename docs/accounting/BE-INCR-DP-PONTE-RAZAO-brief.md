@@ -48,7 +48,7 @@
 > | rotas `/dp/folhas/:id/{fechar,reabrir,lancamentos}`, eventos `dp.folha.*`, `sourceType` `dp.folha.*` | **iguais** | completam recurso e conjunto legados (F-PBA-1 a) |
 >
 > **O que trava em fork novo** (regra de 28/10: o `executa` espera a resposta): F-PBA-1 e F-PBA-2 (nomes) travam todo
-> código; F-PBA-4 (rota do satélite) trava o PR-P1; F-PBA-7 trava o PR-P0 e o PR-P1, e no ramo (a) a fatia **F3** do ADR
+> código; F-PBA-4 (rota do satélite) trava o PR-P1 (`BrFiscalProfile`, `BrUnit`) e o PR-P3 (`/accounting/settings/br`); F-PBA-5 trava o PR-P5 (o `SimplesApuracaoService` e o `TaxSimulationService` passam a consumir a borda); F-PBA-7 trava o PR-P0 e o PR-P1, e no ramo (a) a fatia **F3** do ADR
 > (registro de formato por domínio e país) entra antes do PR-P0; **F-PNT-PB-1** (rota do `BrUnit`, abaixo, §4.3) trava o
 > PR-P1. O PR-P2 não cria nome novo de borda e só depende do F-PBA-1.
 > **Pré-requisito:** o item 0 da guarda (ADR §3: `P1`, `P2`, ajustes G1–G5) entra no primeiro PR de código entre os cinco

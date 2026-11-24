@@ -42,7 +42,8 @@ nenhum PR deste BRIEF.
 **Escopo `LEGADO_BR` que este BRIEF usa** (ADR §3.1, ramo (a) do F-PBA-5): `services/SimplesApuracaoService.ts` (PR-1 limites,
 PR-2 montador), `services/TaxSimulationService.ts` (PR-1 a PR-4), `services/TaxAssessmentService.ts`,
 `services/PisCofinsAssessmentService.ts` e `services/IbsCbsAssessmentService.ts` (PR-3), `services/CompanyFiscalProfileService.ts`
-(PR-1, avisos do teto). Nenhum arquivo do centro importa a borda: o centro só declara tipos, schemas e a porta.
+(PR-1, avisos do teto). Nenhum arquivo do centro importa a borda: o centro só declara tipos, schemas e a porta. O `models/taxSimulation.ts` (legado BR) **não** entra no escopo: ele recebe as entradas já montadas, tipadas pelos tipos do
+centro e pelos inputs legados (`ApuracaoInput`, `PresumidoTrimestralInput`…), sem importar `paises/br`; se o PR-3 precisar, é emenda datada do ADR.
 
 **Item 0 (guarda) entra no PR-0 deste BRIEF**, porque ele é o 1º PR de código entre os cinco BRIEFs emendados pela ordem do
 F-MU-13 (ADR §3, "Quem implementa"). Se outro BRIEF emendado receber o `executa` e chegar antes à `main`, o item 0 vai com ele
