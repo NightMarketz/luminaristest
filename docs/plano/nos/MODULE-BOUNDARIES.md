@@ -1,0 +1,59 @@
+---
+id: "MODULE-BOUNDARIES"
+tipo: "plataforma"
+dominio: "plataforma"
+titulo: "Fronteira entre features (public/), peça fora de pasta de camada, job como entrypoint e posse de model do Prisma (ADR-MODULE-BOUNDARIES)"
+estado: "inflight"
+estado_detalhe: "24/11: 'executa' do BRIEF inteiro (dono, chat); PR-0 aberto (#1368, base integration/module-boundaries-be): BindingScope sai por accountingBinding/public/ e o reexport deixa o IAccountingBindingRepository (L5 4 → 0; M1a 49 → 36, M1 393 → 380 e J1 18 → 16 medidas, ainda não ligadas) · 24/11: forks do BRIEF F-MBE-1..12 RATIFICADOS pelo dono por questionário ([[D-2026-11-24-MODULE-BOUNDARIES-BRIEF-FORKS]]): execução em duas branches de integração (backend e frontend), M2 por feature, regra M3 para public/, D2, reader com inTx, lint de posse com tipo, critério components × features (visual × lógica, peça mista sempre se divide) · 24/11: BRIEF de execução escrito (sessao-planejamento), com a medida nova na main d3f3a201c (M1 393, M1a 49, M2 879, J1 18, U8 11, U9 45; posse 138/146) · 24/11: ADR-MODULE-BOUNDARIES Accepted (forks F-MB-1..12; D-2026-11-24-MODULE-BOUNDARIES-FORKS, PR #1366) · nenhuma regra nova ligada, nenhuma pasta movida"
+depende_de: ["[[D-2026-11-24-MODULE-BOUNDARIES-BRIEF-FORKS]]"]
+autorizacao: "dono, 2026-11-24, questionário (AskUserQuestion) da sessão de planejamento: \"Sim, planejar o BRIEF\" — cobre o BRIEF, esta nota com write_set, a medida nova e um PR só de documentação. Não é 'executa' de nenhum PR do BRIEF. A ratificação dos forks F-MB-1..12 (dono, 2026-11-24, questionário; D-2026-11-24-MODULE-BOUNDARIES-FORKS) também não é 'executa' · dono, 2026-11-24, chat: \"Sim, abrir forks\" — ratifica os forks F-MBE-1..12 do BRIEF por questionário (respostas literais na decisão); também não é 'executa' · dono, 2026-11-24, chat da sessão de feature do PR-0, em resposta à pergunta \"o 'executa' vale para o BRIEF inteiro ou só para o PR-0?\": \"Executa o BRIEF inteiro\" — 'executa' de todos os PRs do BRIEF (PR-0 a PR-9.x) pela regra de 28/10 (D-2026-10-28-FLUXO-AUTONOMO: BRIEF ratificado, sem fork pendente; fork novo para o nó e vira pergunta). No mesmo chat: \"Mergeia #1366 e #1367\" (merge dos dois PRs de documentação)"
+ancora_sdd: "—"
+atualizado: "2026-11-24"
+prs: ["#1367", "#1368", "#1369", "#1370"]
+perfil_previsto: "opus-medio"
+perfil_evidencia: "forks F-MBE-1..12 decididos em 24/11; PR-0/PR-1/PR-2 são mecânicos (import e config), o renome é diff grande de path por feature, e reader/RuleDataAccess/posse têm contrato esboçado no BRIEF §5"
+write_set: ["docs/architecture/MODULE-BOUNDARIES-brief.md", "docs/adr/ADR-MODULE-BOUNDARIES.md", "server/src/features/*/public/**", "server/src/features/*/domain/**", "server/src/features/*/adapters/**", "server/src/features/dynamicTables/**", "server/src/features/analytics/**", "server/src/features/sectorKits/**", "server/src/features/accountingBinding/**", "server/src/features/interview/**", "server/src/features/crm/**", "server/src/features/fx/clients/**", "server/src/features/sales/services/**", "server/src/features/packages/services/**", "server/src/features/attachments/services/**", "server/src/features/chat/{models,repositories,services}/**", "server/src/features/accounting/{scope,sync,dfe,collection,audit,fixtures}/**", "server/src/features/accounting/models/{issLimite,lc116ListaNacional,outstandingLines}.ts", "server/src/features/accounting/repositories/{I,}AccountantAssignmentRepository.ts", "server/src/features/accounting/policies/IAccountingPolicy.ts", "server/src/jobs/**", "server/prisma-model-owners.cjs", "server/eslint-rules/**", "docs/architecture/lint-layer-gate.md", "docs/claude-skills/GENERATION_CONTRACTS.md", ".claude/skills/**", "scripts/{activate-salon-binding,anexo-iii-to-fixture,anexo-xi-to-fixture,classe-risco,ecf-tabelas-dinamicas-to-catalog}.mjs", "my-app/components/widgets/**", "my-app/components/layout/Navbar.tsx", "my-app/features/{dashboard,crm,chat,shell}/**", "my-app/pages/_app.tsx"]
+registros: ["server/.dependency-cruiser.cjs", "server/.dependency-cruiser-known-violations.json", "my-app/.dependency-cruiser.cjs", "my-app/.dependency-cruiser-known-violations.json", "docs/adr/ADR-ARCH-BOUNDARIES.md", "server/src/lib/factory.ts", "server/eslint.config.mjs", "CLAUDE.md"]
+---
+# MODULE-BOUNDARIES — fronteira entre features, peça fora de camada, job como entrypoint, posse de model
+
+**Estado:** `inflight` — 24/11: 'executa' do BRIEF inteiro (dono, chat); PR-0 aberto (#1368, base integration/module-boundaries-be): BindingScope sai por accountingBinding/public/ e o reexport deixa o IAccountingBindingRepository (L5 4 → 0; M1a 49 → 36, M1 393 → 380 e J1 18 → 16 medidas, ainda não ligadas) · 24/11: forks do BRIEF F-MBE-1..12 RATIFICADOS pelo dono por questionário ([[D-2026-11-24-MODULE-BOUNDARIES-BRIEF-FORKS]]): execução em duas branches de integração (backend e frontend), M2 por feature, regra M3 para public/, D2, reader com inTx, lint de posse com tipo, critério components × features (visual × lógica, peça mista sempre se divide) · 24/11: BRIEF de execução escrito (sessao-planejamento), com a medida nova na main d3f3a201c (M1 393, M1a 49, M2 879, J1 18, U8 11, U9 45; posse 138/146) · 24/11: ADR-MODULE-BOUNDARIES Accepted (forks F-MB-1..12; D-2026-11-24-MODULE-BOUNDARIES-FORKS, PR #1366) · nenhuma regra nova ligada, nenhuma pasta movida  
+**Autorização:** frontmatter. `executa` do BRIEF inteiro dado em 24/11 (dono, chat); fork novo para o nó e vira pergunta.
+**Desbloqueia:** —
+
+## Origem
+
+Medida de encapsulamento pedida pelo dono em 20/10 (ADR proposto) e ratificada por questionário em 24/11: API pública por pasta `features/<x>/public/`, todas as regras de import ligadas já com baseline, a `M2` ligada no PR que move as pastas, `DynamicTableReader` com a guarda de tenant num lugar só, porta estreita `RuleDataAccess` no motor e regra de posse de model no ESLint do server (exceção nova à regra ⛔ do `CLAUDE.md` raiz).
+
+## Medida de 24/11 (`main` = `d3f3a201c`)
+
+| Regra | 20/10 | 24/11 |
+|---|---|---|
+| `M1` (alvo `public/`) | 264 | 393 |
+| `M1a` | 45 | 49 |
+| `M2` (como o §10 escreve) | 823 | 879 arestas, 196 módulos |
+| `J1` | 16 | 18 |
+| `U8` | 3 | 11 |
+| `U9` (alvo `public/`) | 40 | 45 |
+| Posse: models com escrita / escritas fora de `repositories/` | 138 / exceções nomeadas | 138 / 15 chamadas + 1 SQL cru |
+
+## Forks do BRIEF — ratificados em 24/11 ([[D-2026-11-24-MODULE-BOUNDARIES-BRIEF-FORKS]])
+
+F-MBE-1 branch de integração · F-MBE-2 `M2` por feature · F-MBE-3 regra `M3` para `public/` · F-MBE-4 `D2-domain-is-pure` · F-MBE-5 pastas de camada dentro de `paises/<cc>/` · F-MBE-6 `accounting/fixtures/` → `paises/br/domain/` · F-MBE-7 `DynamicTableReader.inTx(tx)` · F-MBE-8 chat em `features/chat/widgets/` · F-MBE-9 `Navbar` em `features/shell/` · F-MBE-10 lint de posse com tipo · F-MBE-11 renome de `dynamicTables` antes das branches `modulos-base-pr5/pr6` · F-MBE-12 duas integrações (backend e frontend). Critério do my-app: `components/` = visual, `features/` = lógica; peça mista sempre se divide.
+
+`executa` do BRIEF inteiro dado em 24/11 (dono, chat: "Executa o BRIEF inteiro"). PR-0 aberto em #1368 contra `integration/module-boundaries-be`; próximos: PR-1a e PR-1b (BRIEF §2).
+
+## Docs
+
+- BRIEF: [`MODULE-BOUNDARIES-brief.md`](../../architecture/MODULE-BOUNDARIES-brief.md) (24/11; forks F-MBE-1..12 ratificados, sem `executa`).
+- ADR: [`ADR-MODULE-BOUNDARIES.md`](../../adr/ADR-MODULE-BOUNDARIES.md); mecânica do gate em [`ADR-ARCH-BOUNDARIES.md`](../../adr/ADR-ARCH-BOUNDARIES.md) §3–§5.
+- Decisão dos forks F-MB-1..12: [[D-2026-11-24-MODULE-BOUNDARIES-FORKS]] (na `main` desde o #1366).
+- Vizinhos: [[PAIS-NA-BORDA]] (mesmos choke points, `paises/<cc>/`, `ChartOfAccountsFixture`), [[BUILDER-VERTICAIS]] (`dynamicTables/presets`).
+
+## Lacunas registradas na sessão de planejamento (caixa do maestro)
+
+- `L-20261124-135606-0dc7` — nota do BUILDER-VERTICAIS cita #1114/#1115, fechados sem merge.
+- `L-20261124-135607-990d` — a régua de classe de risco não lista as configs dos gates de fronteira.
+- `L-20261124-135608-6827` — hooks de chat duplicados em `components/widgets/{chat,shared}/hooks/`.
+- `L-20261124-135609-e7de` — 8 models do schema sem escrita direta em produção.
+- `L-20261124-135610-07f5` — 13 módulos fora de camada sem importador de produção.

@@ -41,6 +41,8 @@ import type { ICollectionChargeRepository } from '../repositories/ICollectionCha
 import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFiscalProfileRepository';
 import type { IFiscalProfileRepository } from '../repositories/IFiscalProfileRepository';
 import { IBS_CBS_ANTES_DE_2027 } from '../dtos/IbsCbsAssessmentDto';
+import { antesDoInicioDaApuracaoIbsCbs } from '../models/ibsCbsParams';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import { IBS_CBS_SIMPLES_MEI } from './IbsCbsAssessmentService';
 import {
   BANK_CHARGE_SOURCE_TYPE,
@@ -150,6 +152,8 @@ export class BankSettlementService {
     // IBS-CBS-2027 PR-4 (item 19a): regime da competência do split e contas de IBS/CBS a recolher (as mesmas do item 12).
     private readonly companyProfileRepo: Pick<ICompanyFiscalProfileRepository, 'findByYear'>,
     private readonly fiscalProfileRepo: Pick<IFiscalProfileRepository, 'findByScope'>,
+    // Onda 3.2 (fatia 3): o início da apuração de IBS/CBS é linha (`OBRIGACAO_REGIME/IBS_CBS_APURACAO`), não `2027-01` no DTO.
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   // ── Scan (itens 2, 3, 10) ─────────────────────────────────────────────────────────────────────
@@ -714,7 +718,9 @@ export class BankSettlementService {
     let split: SplitCtx | null = null;
     if (splitValues) {
       const competencia = splitValues.competencia ?? competenciaPadraoDoSplit(day);
-      if (competencia < '2027-01') throw new ValidationError(IBS_CBS_ANTES_DE_2027, null, 'IBS_CBS_ANTES_DE_2027');
+      if (antesDoInicioDaApuracaoIbsCbs(await this.legalParams.fotografia(['OBRIGACAO_REGIME']), competencia)) {
+        throw new ValidationError(IBS_CBS_ANTES_DE_2027, null, 'IBS_CBS_ANTES_DE_2027');
+      }
       const ano = Number(competencia.slice(0, 4));
       const perfil = await this.companyProfileRepo.findByYear(scope, ano, tx);
       if (!perfil) throw new ValidationError(`perfil fiscal da empresa de ${ano} ausente — cadastre-o antes de informar o split.`);

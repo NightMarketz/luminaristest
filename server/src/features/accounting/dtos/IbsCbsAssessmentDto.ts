@@ -4,11 +4,12 @@ import { isValidDateOnly } from '../models/dates';
 /**
  * IBS-CBS-2027 PR-2 (BRIEF `docs/accounting/BE-INCR-IBS-CBS-2027-brief.md` §4.2, itens 9, 10, 13) — `.strict()`.
  * `unitId` = unidade lida (escopo/policy + proveniência), como nos DTOs do X7/X8: o resolver de escopo exige a unidade.
- * `anoCalendario < 2027` ⇒ 400 nomeado já na borda (F-IBS-7 b; o serviço repete).
+ * `anoCalendario` antes do início da apuração ⇒ 400 nomeado (F-IBS-7 b) — Onda 3.2: o marco é a linha
+ * `OBRIGACAO_REGIME/IBS_CBS_APURACAO` (`inicioApuracaoIbsCbs`), que um DTO não lê; a recusa mora no serviço, com esta mensagem.
  */
 export const IBS_CBS_ANTES_DE_2027 = 'apuração de IBS/CBS começa em 01/2027 — F-IBS-7 (b), dispensa do art. 348 § 1º';
 
-const AnoCalendario = z.number().int().min(2027, { message: IBS_CBS_ANTES_DE_2027 });
+const AnoCalendario = z.number().int();
 
 const PreviewFields = {
   unitId: z.string().min(1),
@@ -25,7 +26,7 @@ export const IbsCbsAssessmentConfirmSchema = z.object({ ...PreviewFields, expect
 export type IbsCbsAssessmentConfirmInput = z.infer<typeof IbsCbsAssessmentConfirmSchema>;
 
 export const IbsCbsAssessmentListQuerySchema = z
-  .object({ unitId: z.string().min(1), anoCalendario: z.coerce.number().int().min(2027, { message: IBS_CBS_ANTES_DE_2027 }) })
+  .object({ unitId: z.string().min(1), anoCalendario: z.coerce.number().int() })
   .strict();
 export type IbsCbsAssessmentListQuery = z.infer<typeof IbsCbsAssessmentListQuerySchema>;
 

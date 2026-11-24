@@ -59,10 +59,15 @@ export interface ICollectionChargeRepository {
   ): Promise<{ items: CollectionChargeWithReceivableNumber[]; total: number }>;
   findLastByCounterparty(scope: AccountingScope, counterpartyId: string): Promise<CollectionCharge | null>;
   /** PENDING (inclusive vencidas) + CREATING com `updatedAt` anterior a `staleBefore` (P2-3/P2-9). */
-  findPollable(staleBefore: Date): Promise<CollectionCharge[]>;
+  findPollable(staleBefore: Date, now?: Date): Promise<CollectionCharge[]>;
   /** CAS: aplica `data` só se o status atual for `from`. Devolve quantas linhas mudaram (0 ou 1). */
   casStatus(id: string, from: string, data: Prisma.CollectionChargeUncheckedUpdateInput, tx?: Prisma.TransactionClient): Promise<number>;
   /** `declarante.nome` do perfil fiscal mais recente da PJ — para a descrição enviada ao MP (F9). */
+  /**
+   * Onda 4 / 4.3 — grava SÓ o controle de retentativa do job (nunca o `status`): `pollAttempts`, `nextPollAt`,
+   * `pollGaveUpAt`, `pollLastError`. `null` limpa. Bumpa o `updatedAt` (não decide nada para PENDING; a CREATING velha tem o próprio relógio).
+   */
+  updatePollState(id: string, patch: { pollAttempts?: number; pollPermanentCount?: number; nextPollAt?: Date | null; pollGaveUpAt?: Date | null; pollLastError?: string | null }, tx?: Prisma.TransactionClient): Promise<void>;
   findCompanyName(userId: string): Promise<string | null>;
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

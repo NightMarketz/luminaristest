@@ -8,7 +8,7 @@
  * `CashForecastReportService.test.ts` (repos MOCKADOS) e `outstandingLines.integration.test.ts`
  * (SQLite real, mas um único dono) — nunca ponta-a-ponta pela rota+auth real
  * (`authMiddleware → rota → DTO → controller → resolveAccountingScope → service →
- * loadOutstandingPayables/Receivables → PayableRepository/ReceivableRepository → Prisma`, produção
+ * findOutstanding → outstandingLinesFromPayables/Receivables → PayableRepository/ReceivableRepository → Prisma`, produção
  * rodando).
  *
  * A FORMA DA RECUSA (conforme o mecanismo real, lido em `AccountingScope.ts`/`AccountingPolicy.ts`,

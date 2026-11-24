@@ -1,7 +1,8 @@
-import { LEGAL_PARAMS_SEED_FILE_IBS_CBS, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL_V2, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { LEGAL_PARAMS_SEED_FILE_IBS_CBS, LEGAL_PARAMS_SEED_FILE_IBS_CBS_TABELAS, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL_V2, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { SemLinhaVigenteError } from '../../../legalParameters/models/legalParameter';
 import { NfeIbsCbsSchema, NfeIbsCbsTotSchema } from '../../dtos/NfeIbsCbsDto';
 import { tabelaIbsCbsDe } from '../ibsCbsParams';
+import { tabelasIbsCbsDe } from '../ibsCbsTabelas';
 import { aliquotasIbsCbsVigentes, baseIbsCbsCents, ibsCbsDoProduto, montarIbsCbsItem, totaisIbsCbs } from '../nfeIbsCbsMontagem';
 
 /**
@@ -10,10 +11,11 @@ import { aliquotasIbsCbsVigentes, baseIbsCbsCents, ibsCbsDoProduto, montarIbsCbs
  */
 const tabela = tabelaIbsCbsDe(legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_IBS_CBS));
 const DIA = '2026-10-27';
+const tabelasNt = tabelasIbsCbsDe(legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_IBS_CBS_TABELAS), DIA);
 const marcos = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL_V2);
 const aliq2026 = aliquotasIbsCbsVigentes(tabela, DIA, marcos);
 const produto = (cst: string, cClassTrib: string, mod: 55 | 65 = 65) => {
-  const r = ibsCbsDoProduto('p1', { ibsCbsCst: cst, ibsCbsClassTrib: cClassTrib }, mod, DIA);
+  const r = ibsCbsDoProduto('p1', { ibsCbsCst: cst, ibsCbsClassTrib: cClassTrib }, mod, DIA, tabelasNt);
   if ('faltantes' in r) throw new Error(r.faltantes.join(' | '));
   return r;
 };
@@ -30,7 +32,7 @@ describe('aliquotasIbsCbsVigentes — tabela legal IBS_CBS (UB18/UB37/UB56)', ()
 
 describe('ibsCbsDoProduto — pré-condições do item (item 20)', () => {
   it('produto sem CST/cClassTrib ⇒ os dois nos faltantes', () => {
-    expect(ibsCbsDoProduto('p1', { ibsCbsCst: null, ibsCbsClassTrib: null }, 65, DIA)).toEqual({
+    expect(ibsCbsDoProduto('p1', { ibsCbsCst: null, ibsCbsClassTrib: null }, 65, DIA, tabelasNt)).toEqual({
       faltantes: ['produto p1: ibsCbsCst (CRT 3, UB13)', 'produto p1: ibsCbsClassTrib (CRT 3, UB14)'],
     });
   });
@@ -51,7 +53,7 @@ describe('ibsCbsDoProduto — pré-condições do item (item 20)', () => {
     ['410', '410030', 55, 'estorno de crédito'],
     ['410', '410003', 65, 'indDoacao'],
   ] as const)('CST %s / cClassTrib %s no modelo %s ⇒ faltante (%s)', (cst, cc, mod, motivo) => {
-    const r = ibsCbsDoProduto('p1', { ibsCbsCst: cst, ibsCbsClassTrib: cc }, mod, DIA);
+    const r = ibsCbsDoProduto('p1', { ibsCbsCst: cst, ibsCbsClassTrib: cc }, mod, DIA, tabelasNt);
     expect('faltantes' in r && r.faltantes.join(' ')).toContain(motivo);
   });
 

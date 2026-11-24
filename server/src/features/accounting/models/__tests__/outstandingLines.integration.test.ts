@@ -1,5 +1,5 @@
 /**
- * Integration test: `loadOutstandingPayables`/`loadOutstandingReceivables` (the shared helper
+ * Integration test: `findOutstanding` → `outstandingLinesFromPayables`/`outstandingLinesFromReceivables` (the shared helper
  * extracted for FE-INCR-CASH-FORECAST, item 2 of the checklist) against a REAL SQLite database.
  * No mocks — proves the SCHEMA-LEVEL read (`findOutstanding` WHERE-clause + the `BigInt -> number`
  * `centsFromDb` bridge at the read boundary) that a mocked service test cannot
@@ -21,7 +21,7 @@ import { execSync } from 'child_process';
 import { PrismaClient } from 'generated/prisma';
 import { PayableRepository } from '../../repositories/PayableRepository';
 import { ReceivableRepository } from '../../repositories/ReceivableRepository';
-import { loadOutstandingPayables, loadOutstandingReceivables } from '../outstandingLines';
+import { outstandingLinesFromPayables, outstandingLinesFromReceivables } from '../outstandingLines';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import { normalizeCounterpartyName } from '../Counterparty.model';
 
@@ -38,7 +38,7 @@ const scope: AccountingScope = {
   timeZone: 'America/Sao_Paulo',
 };
 
-describe('outstandingLines (loadOutstandingPayables/Receivables) — real SQLite DB (FE-INCR-CASH-FORECAST)', () => {
+describe('outstandingLines (findOutstanding → outstandingLinesFromPayables/Receivables) — real SQLite DB (FE-INCR-CASH-FORECAST)', () => {
   let db: PrismaClient;
   let dbPath: string;
 
@@ -99,12 +99,12 @@ describe('outstandingLines (loadOutstandingPayables/Receivables) — real SQLite
     }
   });
 
-  it('loadOutstandingPayables: lê SÓ OPEN (exclui PAID); amountCents e dueDate íntegros no boundary BigInt->number', async () => {
+  it('outstandingLinesFromPayables: lê SÓ OPEN (exclui PAID); amountCents e dueDate íntegros no boundary BigInt->number', async () => {
     const repo = new PayableRepository();
     // Injeta o client de teste dedicado (o repo, sem `tx`, cairia no `prisma` compartilhado —
     // que aponta para `test-integration.db`, não para este arquivo temporário — ver
     // AgingOutstanding.integration.test.ts:106, mesmo padrão).
-    const lines = await loadOutstandingPayables(scope, repo, db as any);
+    const lines = outstandingLinesFromPayables(await repo.findOutstanding(scope, db as any));
     expect(lines.map((l) => l.id)).toEqual(['p-open']);
     expect(lines[0].amountCents).toBe(300_000_000);
     expect(Number.isSafeInteger(lines[0].amountCents)).toBe(true);
@@ -112,9 +112,9 @@ describe('outstandingLines (loadOutstandingPayables/Receivables) — real SQLite
     expect(lines[0].counterpartyName).toBe('Fornecedor Grande');
   });
 
-  it('loadOutstandingReceivables: inclui RECEIVING (em trânsito, F-CF4→a herdado); customerName como snapshot', async () => {
+  it('outstandingLinesFromReceivables: inclui RECEIVING (em trânsito, F-CF4→a herdado); customerName como snapshot', async () => {
     const repo = new ReceivableRepository();
-    const lines = await loadOutstandingReceivables(scope, repo, db as any);
+    const lines = outstandingLinesFromReceivables(await repo.findOutstanding(scope, db as any));
     expect(lines.map((l) => l.id)).toEqual(['r-receiving']);
     expect(lines[0].amountCents).toBe(250_000_000);
     expect(lines[0].counterpartyName).toBe('Cliente Grande');

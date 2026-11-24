@@ -1,5 +1,5 @@
 /**
- * IBS-CBS-2027 PR-2 — contrato de entrada/saída (BRIEF §4.2): `.strict()`, ano ≥ 2027 com 400 nomeado, memória com
+ * IBS-CBS-2027 PR-2 — contrato de entrada/saída (BRIEF §4.2): `.strict()`, ano sem teto fixo (marco = linha, Onda 3.2), memória com
  * código do enum (sufixo `_n` só nas linhas por documento).
  */
 import { IBS_CBS_ANTES_DE_2027, IbsCbsAssessmentConfirmSchema, IbsCbsAssessmentListQuerySchema, IbsCbsAssessmentPreviewSchema, MemoriaIbsCbsSchema } from '../IbsCbsAssessmentDto';
@@ -14,12 +14,14 @@ describe('IbsCbsAssessmentDto', () => {
     expect(IbsCbsAssessmentPreviewSchema.safeParse({ ...base, tributo: 'PIS' }).success).toBe(false);
   });
 
-  it('ano < 2027 ⇒ mensagem nomeada (F-IBS-7 b), também na query', () => {
-    const r = IbsCbsAssessmentPreviewSchema.safeParse({ ...base, anoCalendario: 2026 });
-    expect(r.success).toBe(false);
-    expect(JSON.stringify(r.error?.flatten())).toContain(IBS_CBS_ANTES_DE_2027);
-    expect(IbsCbsAssessmentListQuerySchema.safeParse({ unitId: 'u1', anoCalendario: '2026' }).success).toBe(false);
+  // Onda 3.2: o início da apuração é a linha OBRIGACAO_REGIME/IBS_CBS_APURACAO — o DTO não a lê. A recusa de ano/competência
+  // anterior ao marco é do serviço (400 com IBS_CBS_ANTES_DE_2027; ver ibsCbsAssessment.integration e ibsCbsViradaPorLinhas.test).
+  it('ano não é limitado pelo schema (o marco vem das linhas): 2026 passa o DTO; a mensagem nomeada segue exportada', () => {
+    expect(IbsCbsAssessmentPreviewSchema.safeParse({ ...base, anoCalendario: 2026 }).success).toBe(true);
+    expect(IbsCbsAssessmentListQuerySchema.safeParse({ unitId: 'u1', anoCalendario: '2026' }).success).toBe(true);
     expect(IbsCbsAssessmentListQuerySchema.safeParse({ unitId: 'u1', anoCalendario: '2027' }).success).toBe(true);
+    expect(IbsCbsAssessmentListQuerySchema.safeParse({ unitId: 'u1', anoCalendario: '2026.5' }).success).toBe(false);
+    expect(IBS_CBS_ANTES_DE_2027).toMatch(/começa em 01\/2027/);
   });
 
   it('confirmação exige expectedSupersedesId (string ou null)', () => {

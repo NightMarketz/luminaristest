@@ -52,7 +52,7 @@ describe('SefazNfeEmissor', () => {
     await psc.stop();
   });
   afterEach(() => {
-    Object.assign(sefaz.controle, { cStatAutorizacao: null, perderRespostaAutorizacao: false, cStatEvento: null, cStatInutilizacao: null, atrasoMs: 0 });
+    Object.assign(sefaz.controle, { cStatAutorizacao: null, perderRespostaAutorizacao: false, cStatConsulta: null, cStatEvento: null, cStatInutilizacao: null, atrasoMs: 0 });
   });
 
   const emitir = (payload: NfePayload) => emissor.emitir({ kind: 'NFCE', ref: 'd:1', ambiente: 'homologacao', cnpjEmitente: payload.infNFe.emit.CNPJ, partnerAccountRef: null, payload, ctx });
@@ -115,6 +115,28 @@ describe('SefazNfeEmissor', () => {
   it('E-8: nota que não consta (217) ⇒ PROCESSING com o código — quem rejeita é o ciclo (F-ADN-8 a)', async () => {
     const p = nova();
     expect(await emissor.consultar(p.infNFe.Id.slice(3), ctx)).toMatchObject({ status: 'PROCESSING', errors: [{ code: '217' }] });
+  });
+
+  // L-20261124-054021-cbc8 — MOC 7.0 VG §5.1.6 (Tab. 5-4): denegada recebe protocolo e CONSOME o número; por isso não é REJECTED
+  // (a rejeitada libera o reenvio com o mesmo número) nem PROCESSING (o polling a repetiria para sempre).
+  it.each(['110', '301', '302'])('E-8: uso denegado (cStat %s) ⇒ DENIED terminal com o código — nunca PROCESSING nem REJECTED', async (cStat) => {
+    const p = nova();
+    sefaz.controle.cStatConsulta = cStat;
+    expect(await emissor.consultar(p.infNFe.Id.slice(3), ctx)).toMatchObject({ status: 'DENIED', errors: [{ code: cStat }] });
+  });
+
+  it('E-8: cStat da consulta que NÃO diz nada sobre a nota (serviço paralisado 108, consumo indevido 656) segue PROCESSING', async () => {
+    const p = nova();
+    for (const cStat of ['108', '109', '656']) {
+      sefaz.controle.cStatConsulta = cStat;
+      expect(await emissor.consultar(p.infNFe.Id.slice(3), ctx)).toMatchObject({ status: 'PROCESSING', errors: [{ code: cStat }] });
+    }
+  });
+
+  it('E-5: denegada já na resposta síncrona do lote (prot 110) ⇒ DENIED, não REJECTED', async () => {
+    const p = nova();
+    sefaz.controle.cStatAutorizacao = '110';
+    expect(await emitir(p)).toMatchObject({ status: 'DENIED', partnerRef: p.infNFe.Id.slice(3), errors: [{ code: '110' }] });
   });
 
   it('E-7: cancelamento 110111 assinado; 135 ⇒ CANCELLED; 501 ⇒ OUT_OF_WINDOW', async () => {

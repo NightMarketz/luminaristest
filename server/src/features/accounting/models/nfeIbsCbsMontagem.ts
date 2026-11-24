@@ -1,6 +1,7 @@
 import type { NfeIbsCbs, NfeIbsCbsTot } from '../dtos/NfeIbsCbsDto';
+import { divHalfUp } from './retencaoParams';
 import { parametroIbsCbsVigente, type ParametroIbsCbs } from './ibsCbsParams';
-import { cClassTribIbsCbs, cstIbsCbs, type CClassTribIbsCbs, type CstIbsCbs } from './ibsCbsTabelas';
+import { buscarCClassTrib, buscarCst, type CClassTribIbsCbs, type CstIbsCbs, type TabelasIbsCbs } from './ibsCbsTabelas';
 import { dataDoMarco } from './marcoLegal';
 import type { LinhaLegal } from '../../legalParameters/models/legalParameter';
 
@@ -50,7 +51,7 @@ export type IbsCbsDoProduto = { cst: CstIbsCbs; cClassTrib: CClassTribIbsCbs } |
 
 /**
  * Item 20 — o produto tem o que a montagem precisa? CST e cClassTrib no perfil, existentes e compatíveis (UB13-10, UB14-10,
- * UB14-20), permitidos no modelo (UB14-25), vigentes na data (dIniVig/dFimVig da tabela) e sem exigir subgrupo cujo dado o
+ * UB14-20), permitidos no modelo (UB14-25), vigentes na data (vigenteDesde/vigenteAte da linha do cClassTrib) e sem exigir subgrupo cujo dado o
  * perfil não carrega (decisão do dono de 27/10). Faltantes no formato do 400 agregado da emissão (`produto <ref>: …`).
  */
 export function ibsCbsDoProduto(
@@ -58,6 +59,7 @@ export function ibsCbsDoProduto(
   perfil: { ibsCbsCst: string | null; ibsCbsClassTrib: string | null },
   mod: 55 | 65,
   data: string,
+  tabelas: TabelasIbsCbs,
 ): IbsCbsDoProduto {
   const f = (s: string) => `produto ${ref}: ${s}`;
   if (!perfil.ibsCbsCst || !perfil.ibsCbsClassTrib) {
@@ -68,8 +70,8 @@ export function ibsCbsDoProduto(
       ],
     };
   }
-  const cst = cstIbsCbs(perfil.ibsCbsCst);
-  const cc = cClassTribIbsCbs(perfil.ibsCbsClassTrib);
+  const cst = buscarCst(tabelas, perfil.ibsCbsCst);
+  const cc = buscarCClassTrib(tabelas, perfil.ibsCbsClassTrib, data);
   if (!cst) return { faltantes: [f(`CST do IBS/CBS ${perfil.ibsCbsCst} inexistente na tabela de CST (UB13-10, rej. 1020)`)] };
   if (!cc) return { faltantes: [f(`cClassTrib ${perfil.ibsCbsClassTrib} inexistente na tabela de cClassTrib (UB14-10, rej. 1023)`)] };
   const faltantes: string[] = [];
@@ -104,11 +106,26 @@ const moneyDe = (cents: number): string => {
   if (!Number.isInteger(cents) || cents < 0) throw new Error(`ibscbs_valor_invalido: ${cents}`);
   return `${Math.trunc(cents / 100)}.${String(cents % 100).padStart(2, '0')}`;
 };
-const p10k = (p: string): number => Math.round(Number(p) * 10_000);
-/** vBC × p% em centavos, meio-para-cima (p com 4 casas): inteiro, sem erro de ponto flutuante. */
-const valorCents = (vBCCents: number, p: string): number => Math.floor((vBCCents * p10k(p) + 500_000) / 1_000_000);
-/** UB28-10: pAliqEfet = p × (1 − pRedAliq/100), 4 casas, arredondada na última. */
-const aliqEfet = (p: string, pRed: number): string => (Math.round(p10k(p) * (100 - pRed) / 100) / 10_000).toFixed(4);
+/**
+ * Texto decimal não-negativo → inteiro na escala dada (`casas`), POR TEXTO (nunca `Number(s) * 10^n`): "0.1000" → 1000 (4 casas),
+ * "12.34" → 1234 (2 casas). Dígitos além da escala arredondam meio-para-cima. Onda 2.3 (auditoria de 24/11/2026): as alíquotas e
+ * os valores da NF-e já chegam em texto de 4 e 2 casas, e o float só podia errar num texto com casa a mais.
+ */
+const escalaTexto = (s: string, casas: number): number => {
+  const m = /^(\d+)(?:\.(\d*))?$/.exec(s.trim());
+  if (!m) throw new Error(`ibscbs_decimal_invalido: ${s}`);
+  const frac = m[2] ?? '';
+  const arredonda = frac.length > casas && frac.charCodeAt(casas) >= 53 ? 1n : 0n; // 53 = '5'
+  return Number(BigInt(m[1] + frac.slice(0, casas).padEnd(casas, '0')) + arredonda);
+};
+const p10k = (p: string): number => escalaTexto(p, 4);
+/** vBC × p% em centavos, meio-para-cima (p com 4 casas): inteiro em BigInt, sem erro de ponto flutuante. */
+const valorCents = (vBCCents: number, p: string): number => Number(divHalfUp(BigInt(vBCCents) * BigInt(p10k(p)), 1_000_000n));
+/** UB28-10: pAliqEfet = p × (1 − pRedAliq/100), 4 casas, arredondada na última (inteiros: p10k × (100% − pRed em 10^-4)). */
+const aliqEfet = (p: string, pRed: number): string => {
+  const e = divHalfUp(BigInt(p10k(p)) * BigInt(1_000_000 - escalaTexto(pRed.toFixed(4), 4)), 1_000_000n);
+  return `${e / 10_000n}.${String(e % 10_000n).padStart(4, '0')}`;
+};
 
 /**
  * Item 20 — o grupo IBSCBS de um item. `ind_gIBSCBS = 0` (isenção, imunidade…) ⇒ só CST e cClassTrib (UB13-20). Senão o
@@ -141,7 +158,7 @@ export function montarIbsCbsItem(produto: { cst: CstIbsCbs; cClassTrib: CClassTr
 /** W34–W56b — totais do IBS/CBS pela soma dos itens montados (sem monofásico nem estorno: a montagem não os preenche). */
 export function totaisIbsCbs(itens: readonly NfeIbsCbs[]): NfeIbsCbsTot {
   const soma = (f: (b: NonNullable<NfeIbsCbs['gIBSCBS']>) => string) =>
-    itens.reduce((s, g) => s + (g.gIBSCBS ? Math.round(Number(f(g.gIBSCBS)) * 100) : 0), 0);
+    itens.reduce((s, g) => s + (g.gIBSCBS ? escalaTexto(f(g.gIBSCBS), 2) : 0), 0);
   const zero = '0.00';
   return {
     vBCIBSCBS: moneyDe(soma((b) => b.vBC)),
