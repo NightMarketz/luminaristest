@@ -228,10 +228,10 @@ describe('item 8 — segregação (§ 4º-A, § 12)', () => {
     expect(a.tributos.ICMS).toBe(6_022); // 2.500 × 7,19% × 33,5% = 60,21625 → 60,22 (só a parcela sem ST)
   });
 
-  it('a apuração devolve as linhas da tabela que usou (id + fonte + vigência)', () => {
+  it('a apuração devolve as linhas da tabela que usou (id + fonte + vigência), inclusive a do marco MARCO_LEGAL da LC 214', () => {
     const r = apurar(base('2026-06', { atividades: [servico(100_000)] }), LINHAS);
     expect(r.tabela.map((t) => t.legalParameterId).sort()).toEqual(
-      ['sn1-enq-servico-060101', 'sn1-teto-iii-2018-01-01', 'sn1-rep-iii-2018-01-01-f3', ...[1, 2, 3, 4, 5, 6].map((f) => `sn1-faixa-iii-2018-01-01-f${f}`)].sort(),
+      ['lp-marco-lc214-rbt12', 'sn1-enq-servico-060101', 'sn1-teto-iii-2018-01-01', 'sn1-rep-iii-2018-01-01-f3', ...[1, 2, 3, 4, 5, 6].map((f) => `sn1-faixa-iii-2018-01-01-f${f}`)].sort(),
     );
   });
 });

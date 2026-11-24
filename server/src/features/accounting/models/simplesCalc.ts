@@ -12,7 +12,7 @@ import { z } from 'zod';
 import { AtividadeSemAnexoError, SimplesRegraNaoRegulamentadaError } from '../../../lib/errors';
 import { ParametroLegalAusenteError, linhaLegalVigente, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 import { excecaoPisoIss, reducaoBpDaFaixa } from './issBeneficio';
-import { inicioLc214Competencia } from './marcoLegal';
+import { linhaDoMarco } from './marcoLegal';
 
 export const TRIBUTOS_SIMPLES = [
   'IRPJ',
@@ -325,7 +325,10 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
   const input = ApuracaoInputSchema.parse(entrada);
   const data = `${input.competencia}-01`;
   const usadas = new Map<string, Usada>();
-  const base = rbt12(input.historico, input.competencia, input.inicioAtividade, input.receitaPaCents, inicioLc214Competencia(linhas, data));
+  // Proveniência: a linha do marco entra em `tabela` (→ `tabelaVersao`), como as demais linhas lidas; trocar o marco muda a versão.
+  const marco = linhaDoMarco(linhas, 'INICIO_LC214_RBT12', data);
+  usadas.set(marco.id, { id: marco.id, fonte: marco.fonte, vigenteDesde: marco.vigenteDesde });
+  const base = rbt12(input.historico, input.competencia, input.inicioAtividade, input.receitaPaCents, marco.valorTexto.slice(0, 7));
   const sublimite = SUBLIMITE[base.janela.regra];
 
   const atividades = input.atividades.map((at): AtividadeApurada => {

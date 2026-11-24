@@ -64,6 +64,15 @@ describe('MARCO_LEGAL/INICIO_LC214_RBT12 — o marco do RBT12 da LC 214 vem da l
     expect(com.janelaRbt12).toEqual({ de: '2025-11', ate: '2026-10', regra: 'LC214-art517' });
   });
 
+  it('proveniência: a linha do marco entra em `tabela` (→ tabelaVersao), e trocar o marco troca o id lido', () => {
+    const marco = SEMENTE.find((l) => l.tabela === 'MARCO_LEGAL')!;
+    expect(apurar(entrada(), SEMENTE).tabela.map((t) => t.legalParameterId)).toContain(marco.id);
+    const nova: LinhaLegal = { ...marco, id: 'lp-marco-lc214-rbt12-v2', valorTexto: '2028-01-01', supersedesId: marco.id };
+    const ids = apurar(entrada(), [...SEMENTE, nova]).tabela.map((t) => t.legalParameterId);
+    expect(ids).toContain(nova.id);
+    expect(ids).not.toContain(marco.id);
+  });
+
   it('sem a linha do marco o cálculo recusa (fail-closed): PARAMETRO_LEGAL_AUSENTE, nunca um default em código', () => {
     expect(() => apurar(entrada(), semMarco())).toThrow(ParametroLegalAusenteError);
     expect(() => apurar(entrada(), semMarco())).toThrow(/MARCO_LEGAL\/INICIO_LC214_RBT12/);

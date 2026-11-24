@@ -18,15 +18,20 @@ export const MARCOS_LEGAIS = [
 ] as const;
 export type MarcoLegal = (typeof MARCOS_LEGAIS)[number];
 
-/** A data (`YYYY-MM-DD`) do marco na linha em vigor; várias em vigor ⇒ a de `vigenteDesde` mais recente. */
-export function dataDoMarco(linhas: readonly LinhaLegal[], marco: MarcoLegal, dataConsultada: string): string {
+/** A linha em vigor do marco (a de `vigenteDesde` mais recente); sem linha ⇒ `ParametroLegalAusenteError`. Devolve a linha para a proveniência. */
+export function linhaDoMarco(linhas: readonly LinhaLegal[], marco: MarcoLegal, dataConsultada: string): LinhaLegal & { valorTexto: string } {
   let melhor: LinhaLegal | undefined;
   for (const l of linhasEmVigor(linhas)) {
     if (l.tabela !== 'MARCO_LEGAL' || l.chave !== marco || l.discriminador !== null) continue;
     if (!melhor || l.vigenteDesde > melhor.vigenteDesde) melhor = l;
   }
   if (!melhor?.valorTexto) throw new ParametroLegalAusenteError('MARCO_LEGAL', dataConsultada, marco);
-  return melhor.valorTexto;
+  return { ...melhor, valorTexto: melhor.valorTexto };
+}
+
+/** A data (`YYYY-MM-DD`) do marco na linha em vigor. */
+export function dataDoMarco(linhas: readonly LinhaLegal[], marco: MarcoLegal, dataConsultada: string): string {
+  return linhaDoMarco(linhas, marco, dataConsultada).valorTexto;
 }
 
 /** Competência (`YYYY-MM`) em que a redação da LC 214 sobre o RBT12 passa a valer — o mês da data do marco. */
