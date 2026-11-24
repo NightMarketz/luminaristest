@@ -3,7 +3,7 @@
  * dela no cálculo do DAS (F-PI-3 b). Valores esperados = aritmética sobre Res. CGSN 140 arts. 31 p.ú. e 32 § 1º; o
  * oráculo (PGDAS-D com benefício municipal) é gate humano — a elevação a 2% acima da tabela é afirmação do dono (§5.0).
  */
-import { SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { apurar, type ApuracaoInput } from '../simplesCalc';
 import { beneficioDaAtividade, issComBeneficio, sobrepoe } from '../issBeneficio';
 import { IssBeneficioMunicipalCreateDto } from '../../dtos/IssBeneficioMunicipalDto';
@@ -81,7 +81,7 @@ describe('contrato — IssBeneficioMunicipalCreateDto (.strict)', () => {
 });
 
 describe('F-PI-3 (b) — o benefício reduz a parcela ISS do DAS (Res. CGSN 140 art. 32 § 1º)', () => {
-  const SEMENTE = legalParamsSeedRows(SIMPLES_SEED_FILES);
+  const SEMENTE = legalParamsSeedRows([...SIMPLES_SEED_FILES, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL]);
   // Linha FICTÍCIA de teste: 07.02 enquadrado como o 06.01 (Anexo III), só para exercitar a exceção do piso no cálculo.
   const LINHAS = [
     ...SEMENTE,

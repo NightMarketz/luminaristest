@@ -3,11 +3,13 @@
  * arquivo que a migração carrega). Os valores esperados são aritmética sobre a lei, não oráculo: o oráculo é o DAS do
  * portal (gate humano X14-DAS).
  */
-import { SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, SIMPLES_SEED_FILES, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { AtividadeSemAnexoError } from '../../../../lib/errors';
 import { SEGREGACAO_EXCLUI, apurar, apurarSimei, janelaRbt12, rbt12, type ApuracaoInput, type MesReceita } from '../simplesCalc';
 
-const LINHAS = legalParamsSeedRows(SIMPLES_SEED_FILES);
+const LINHAS = legalParamsSeedRows([...SIMPLES_SEED_FILES, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL]);
+/** O marco `MARCO_LEGAL/INICIO_LC214_RBT12` da semente (2027-01-01) como competência — o que `apurar` lê das linhas. */
+const INICIO_LC214 = '2027-01';
 
 const somaMeses = (comp: string, d: number) => {
   const [a, m] = comp.split('-').map(Number);
@@ -67,48 +69,48 @@ describe('item 9 — exemplo numérico do PRE-ADR §7 (RBT12 R$ 600.000)', () =>
 
 describe('item 5 — RBT12', () => {
   it('janela: até 2026, os 12 meses anteriores ao PA; a partir de 2027, os 12 antecedentes ao mês anterior', () => {
-    expect(janelaRbt12('2026-12')).toEqual({ de: '2025-12', ate: '2026-11', regra: 'LC123-art18-§1' });
-    expect(janelaRbt12('2027-01')).toEqual({ de: '2025-12', ate: '2026-11', regra: 'LC214-art517' });
-    expect(janelaRbt12('2027-03')).toEqual({ de: '2026-02', ate: '2027-01', regra: 'LC214-art517' });
+    expect(janelaRbt12('2026-12', INICIO_LC214)).toEqual({ de: '2025-12', ate: '2026-11', regra: 'LC123-art18-§1' });
+    expect(janelaRbt12('2027-01', INICIO_LC214)).toEqual({ de: '2025-12', ate: '2026-11', regra: 'LC214-art517' });
+    expect(janelaRbt12('2027-03', INICIO_LC214)).toEqual({ de: '2026-02', ate: '2027-01', regra: 'LC214-art517' });
   });
 
   it('o mês fora da janela não entra (2027: o mês anterior ao PA fica de fora)', () => {
     const h = historico('2027-03', 100_000);
     h.find((m) => m.competencia === '2027-02')!.receitaBrutaCents = 99_999_999;
-    expect(rbt12(h, '2027-03', null, 0).cents).toBe(1_200_000);
+    expect(rbt12(h, '2027-03', null, 0, INICIO_LC214).cents).toBe(1_200_000);
   });
 
   it('meses ausentes são listados (o alerta RBT12_INCOMPLETO é do PR-2)', () => {
     const h = historico('2026-06', 100_000).filter((m) => m.competencia !== '2026-01');
-    expect(rbt12(h, '2026-06', null, 0).mesesFaltantes).toEqual(['2026-01']);
+    expect(rbt12(h, '2026-06', null, 0, INICIO_LC214).mesesFaltantes).toEqual(['2026-01']);
   });
 
   it('início de atividade: 1º mês = receita do PA × 12; depois, média dos meses anteriores × 12 (Res. 140 art. 22 §§ 2º–3º)', () => {
-    expect(rbt12([], '2026-03', '2026-03', 400_000)).toMatchObject({ cents: 4_800_000, metodo: 'INICIO_PRIMEIRO_MES' });
+    expect(rbt12([], '2026-03', '2026-03', 400_000, INICIO_LC214)).toMatchObject({ cents: 4_800_000, metodo: 'INICIO_PRIMEIRO_MES' });
     const h = [{ competencia: '2026-03', receitaBrutaCents: 100_000 }, { competencia: '2026-04', receitaBrutaCents: 200_001 }];
-    expect(rbt12(h, '2026-05', '2026-03', 0)).toMatchObject({ cents: 1_800_006, metodo: 'INICIO_MEDIA' });
+    expect(rbt12(h, '2026-05', '2026-03', 0, INICIO_LC214)).toMatchObject({ cents: 1_800_006, metodo: 'INICIO_MEDIA' });
   });
 
   // Res. CGSN 140 art. 22 §§ 2º e 4º, red. Res. CGSN 190/2026 (efeitos em 01/01/2027, art. 9º) — dossiê
   // pesquisas-legais/verif-2026-10-17-simples-mei [D16]: 1ª faixa no 1º e no 2º mês; média dos meses antecedentes ao mês
   // anterior × 12 do 3º ao 13º; regra geral (§ 1º) a partir do 14º.
   it('início de atividade a partir de 2027: 1º e 2º mês na 1ª faixa, mesmo com receita alta (art. 22 § 2º I, red. Res. 190)', () => {
-    expect(rbt12([], '2027-02', '2027-02', 400_000).metodo).toBe('INICIO_PRIMEIRA_FAIXA');
+    expect(rbt12([], '2027-02', '2027-02', 400_000, INICIO_LC214).metodo).toBe('INICIO_PRIMEIRA_FAIXA');
     const h = [{ competencia: '2027-02', receitaBrutaCents: 50_000_000 }];
-    expect(rbt12(h, '2027-03', '2027-02', 50_000_000).metodo).toBe('INICIO_PRIMEIRA_FAIXA');
+    expect(rbt12(h, '2027-03', '2027-02', 50_000_000, INICIO_LC214).metodo).toBe('INICIO_PRIMEIRA_FAIXA');
     const a = apurar(base('2027-03', { historico: h, inicioAtividade: '2027-02', receitaPaCents: 50_000_000, atividades: [servico(50_000_000)] }), LINHAS).atividades[0];
     expect([a.faixa, a.aliquotaEfetiva]).toEqual([1, '6.0000']);
     // 2º mês em jan/2027 de quem abriu em dez/2026: a regra é a do PA (2027).
-    expect(rbt12([{ competencia: '2026-12', receitaBrutaCents: 50_000_000 }], '2027-01', '2026-12', 0).metodo).toBe('INICIO_PRIMEIRA_FAIXA');
+    expect(rbt12([{ competencia: '2026-12', receitaBrutaCents: 50_000_000 }], '2027-01', '2026-12', 0, INICIO_LC214).metodo).toBe('INICIO_PRIMEIRA_FAIXA');
   });
 
   it('início de atividade a partir de 2027: 3º ao 13º mês pela média × 12; 14º mês pela regra geral (art. 22 §§ 2º II e 4º, red. Res. 190)', () => {
     const h = [{ competencia: '2027-02', receitaBrutaCents: 100_000 }, { competencia: '2027-03', receitaBrutaCents: 99_999_999 }];
-    expect(rbt12(h, '2027-04', '2027-02', 0)).toMatchObject({ cents: 1_200_000, metodo: 'INICIO_MEDIA', meses: ['2027-02'] });
+    expect(rbt12(h, '2027-04', '2027-02', 0, INICIO_LC214)).toMatchObject({ cents: 1_200_000, metodo: 'INICIO_MEDIA', meses: ['2027-02'] });
     const ano = Array.from({ length: 13 }, (_, k) => ({ competencia: somaMeses('2027-02', k), receitaBrutaCents: 100_000 }));
-    expect(rbt12(ano, '2028-02', '2027-02', 0)).toMatchObject({ cents: 1_200_000, metodo: 'INICIO_MEDIA' });
-    expect(rbt12(ano, '2028-02', '2027-02', 0).meses).toHaveLength(11);
-    expect(rbt12(ano, '2028-03', '2027-02', 0)).toMatchObject({ cents: 1_200_000, metodo: 'ACUMULADO' });
+    expect(rbt12(ano, '2028-02', '2027-02', 0, INICIO_LC214)).toMatchObject({ cents: 1_200_000, metodo: 'INICIO_MEDIA' });
+    expect(rbt12(ano, '2028-02', '2027-02', 0, INICIO_LC214).meses).toHaveLength(11);
+    expect(rbt12(ano, '2028-03', '2027-02', 0, INICIO_LC214)).toMatchObject({ cents: 1_200_000, metodo: 'ACUMULADO' });
   });
 
   it('RBT12 zero conta como R$ 1,00 só para a alíquota (Res. 140 art. 21 p.ú.) — 1ª faixa, alíquota efetiva = nominal', () => {

@@ -84,6 +84,9 @@ export const LEGAL_PARAMETER_TABELAS = [
   // BE-INCR-DP-F2 PR-1 (item 13): Tabela 07 do eSocial (tipos de dependente), no padrão do D-8 do F0+F1. Consumidor =
   // features/dp/services/DpDependenteService.ts.
   'ESOCIAL_TIPO_DEPENDENTE',
+  // Onda 3.2 fatia 4 (dono, 24/11/2026): marcos de lei sem linha temática própria — chave = nome do marco, valorTexto = data
+  // (YYYY-MM-DD), fonte obrigatória. Consumidor = models/marcoLegal.ts (hoje: INICIO_LC214_RBT12 em simplesCalc.ts).
+  'MARCO_LEGAL',
 ] as const;
 export type LegalParameterTabela = (typeof LEGAL_PARAMETER_TABELAS)[number];
 

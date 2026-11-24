@@ -52,7 +52,8 @@
             "ESOCIAL_MOTIVO_AFASTAMENTO",
             "FOLHA_REGRA",
             "DP_CATEGORIA_ENCARGO",
-            "ESOCIAL_TIPO_DEPENDENTE"
+            "ESOCIAL_TIPO_DEPENDENTE",
+            "MARCO_LEGAL"
           ]
         },
         "chave": {
@@ -166,7 +167,8 @@
             "ESOCIAL_MOTIVO_AFASTAMENTO",
             "FOLHA_REGRA",
             "DP_CATEGORIA_ENCARGO",
-            "ESOCIAL_TIPO_DEPENDENTE"
+            "ESOCIAL_TIPO_DEPENDENTE",
+            "MARCO_LEGAL"
           ]
         },
         "status": {
@@ -263,7 +265,8 @@
             "ESOCIAL_MOTIVO_AFASTAMENTO",
             "FOLHA_REGRA",
             "DP_CATEGORIA_ENCARGO",
-            "ESOCIAL_TIPO_DEPENDENTE"
+            "ESOCIAL_TIPO_DEPENDENTE",
+            "MARCO_LEGAL"
           ]
         },
         "chave": {

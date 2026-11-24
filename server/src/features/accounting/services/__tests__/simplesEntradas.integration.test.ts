@@ -121,9 +121,9 @@ describe('itens 10–11 — histórico pré-adoção', () => {
     for (let m = 7; m <= 12; m++) await f().getSimplesEntradasService().upsertHistorico(scope(), `2025-${String(m).padStart(2, '0')}`, { unitId: UNIT, receitaBrutaCents: 100 });
     for (let m = 1; m <= 4; m++) await f().getSimplesEntradasService().upsertHistorico(scope(), `2026-0${m}`, { unitId: UNIT, receitaBrutaCents: 100 });
     // PA 2026-06 → janela 2025-06..2026-05: falta só 2026-05.
-    const alerta = await f().getSimplesEntradasService().alertaRbt12(scope(), '2026-06', new Set());
+    const alerta = await f().getSimplesEntradasService().alertaRbt12(scope(), '2026-06', new Set(), '2027-01');
     expect(alerta).toEqual({ codigo: 'RBT12_INCOMPLETO', detalhe: 'sem receita declarada em 2026-05' });
-    expect(await f().getSimplesEntradasService().alertaRbt12(scope(), '2026-06', new Set(['2026-05']))).toBeNull();
+    expect(await f().getSimplesEntradasService().alertaRbt12(scope(), '2026-06', new Set(['2026-05']), '2027-01')).toBeNull();
   });
 });
 
