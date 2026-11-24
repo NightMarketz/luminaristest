@@ -1,23 +1,5 @@
 [
   {
-    "type": "dependency",
-    "from": "src/features/chat/repositories/IKnowledgeGraphRepository.ts",
-    "to": "src/features/chat/services/KnowledgeGraphService.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L4-repository-is-the-floor"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/chat/repositories/KnowledgeGraphRepository.ts",
-    "to": "src/features/chat/services/KnowledgeGraphService.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L4-repository-is-the-floor"
-    }
-  },
-  {
     "type": "cycle",
     "from": "src/features/accounting/services/IInventoryService.ts",
     "to": "src/features/accounting/services/InventoryService.ts",
@@ -66,31 +48,6 @@
         "dependencyTypes": [
           "local",
           "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/features/chat/repositories/IKnowledgeGraphRepository.ts",
-    "to": "src/features/chat/services/KnowledgeGraphService.ts",
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/chat/services/KnowledgeGraphService.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/chat/repositories/IKnowledgeGraphRepository.ts",
-        "dependencyTypes": [
-          "local",
           "import"
         ]
       }
