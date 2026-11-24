@@ -9,6 +9,7 @@ import { resolveAccountingScopeInternal } from '../../accounting/scope/resolveAc
 import type { PackageBalanceService } from '../../packages/services/PackageBalanceService';
 import type { RegisterPaymentInput } from '../dtos/RegisterPaymentDto';
 import { describeSale } from './SaleFiscalGuardService';
+import { roundReaisToCents } from '../../../lib/decimalMoney';
 
 /**
  * RegisterPaymentService — server-side orchestration of the sale payment transition
@@ -160,7 +161,7 @@ export class RegisterPaymentService {
     if (typeof totalAmount !== 'number' || !Number.isFinite(totalAmount)) {
       throw new ValidationError(`Valor da ${await saleLabel()} inválido para consumo de saldo de pacote.`);
     }
-    const cents = Math.round(totalAmount * 100);
+    const cents = roundReaisToCents(totalAmount);
     if (!Number.isSafeInteger(cents) || cents <= 0) {
       throw new ValidationError(
         `Valor da ${await saleLabel()} fora da faixa válida para consumo de saldo de pacote.`,

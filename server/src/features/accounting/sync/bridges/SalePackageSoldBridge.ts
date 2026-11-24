@@ -22,6 +22,7 @@ import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingSco
 import { saleDayAsWritten } from '../../models/dates';
 import { buildSalePackageSoldEvent, syncSkipErrorCode } from '../AccountingSyncPort';
 import { loadPackageValidityDays, loadSalePackageInfo } from './saleItems';
+import { roundReaisToCents } from '../../../../lib/decimalMoney';
 
 /** The minimal shape this bridge reads from a DynamicTable data row (create/update result). */
 interface SaleRow {
@@ -101,7 +102,7 @@ export async function maybeSyncSalePackageSold(
           customerId,
           packageId,
           saleId: row.id,
-          amountCents: Math.round(totalAmount * 100),
+          amountCents: roundReaisToCents(totalAmount),
           saleDate: event.occurredAt,
           validityDays: await loadPackageValidityDays(actor.userId, packageId),
         });

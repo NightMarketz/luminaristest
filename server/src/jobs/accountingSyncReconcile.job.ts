@@ -109,6 +109,7 @@ import { JobWatermarkRepository } from './JobWatermarkRepository';
 import { ReconcilePendingRepository } from '../features/accounting/repositories/ReconcilePendingRepository';
 import type { ReconcilePendingReasonCodeValue } from '../features/accounting/dtos/ReconcilePendingDto';
 import { PACOTES_PRE_PAGOS_CODE } from '../features/accounting/fixtures/ChartOfAccountsFixture';
+import { roundReaisToCents } from '../lib/decimalMoney';
 
 /**
  * BE-INCR-RECONCILE-PENDING (nó C7, Fork 2-b) — one item newly/still pending after a pass'
@@ -1306,7 +1307,7 @@ export async function reconcileSalePackageOrigin(
             customerId: sale.customerId,
             packageId: sale.packageId,
             saleId: sale.saleId,
-            amountCents: Math.round(sale.amount * 100),
+            amountCents: roundReaisToCents(sale.amount),
             // Same day the bridge uses: the sale `date` read AS WRITTEN (the engine stores it as ISO at UTC midnight).
             saleDate: saleDayAsWritten(scope, sale.occurredAt),
             validityDays: await deps.loadValidityDays(sale.ownerUserId, sale.packageId),
@@ -1433,7 +1434,7 @@ export async function reconcileSalePackageConsumption(
         customerId: sale.customerId,
         packageId: sale.paidWithPackageId,
         saleId: sale.saleId,
-        amountCents: Math.round(sale.amount * 100),
+        amountCents: roundReaisToCents(sale.amount),
       });
       summary.synced++;
       logger.info('Reconcile debited package balance', { saleId: sale.saleId });

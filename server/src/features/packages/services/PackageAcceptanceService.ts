@@ -23,6 +23,7 @@ import { expiresAtToDb, expiresOnFromDb } from '../models/validity';
 import { PACKAGE_VALIDITY_NOTICE_VERSION, buildValidityNotice, type ValidityNotice } from '../models/validityNotice';
 import type { IPackageAcceptancePolicy } from '../policies/IPackageAcceptancePolicy';
 import type { IPackageAcceptanceRepository } from '../repositories/IPackageAcceptanceRepository';
+import { roundReaisToCents } from '../../../lib/decimalMoney';
 
 /** Metadata + bytes for streaming the generated receipt (same shape as ReceiptService's artifact). */
 export interface PackageSaleReceiptArtifact {
@@ -162,7 +163,7 @@ export class PackageAcceptanceService {
         unitName,
         customerName,
         packageName,
-        amountCents: Math.round(facts.totalAmount * 100),
+        amountCents: roundReaisToCents(facts.totalAmount),
         // Com aceite, a data impressa é a gravada junto da cláusula (a venda pode ter sido editada depois — I4).
         saleDate: accepted ? (expiresOnFromDb(accepted.saleDate) as string) : facts.saleDate,
         clause,

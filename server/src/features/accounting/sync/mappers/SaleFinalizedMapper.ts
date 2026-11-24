@@ -4,6 +4,7 @@ import type { AccountingEvent } from '../AccountingSyncPort';
 import type { IAccountingEventMapper } from './IAccountingEventMapper';
 import { splitRevenueCredit } from './revenueSplit';
 import { A_RECEBER_CODE } from '../../fixtures/ChartOfAccountsFixture';
+import { roundReaisToCents } from '../../../../lib/decimalMoney';
 
 /**
  * Maps `sale.finalized` → revenue recognition entry (Incremento C):
@@ -35,7 +36,7 @@ export class SaleFinalizedMapper implements IAccountingEventMapper {
         `Valor inválido para lançamento de receita (venda '${event.sourceId}'): não é um número finito.`,
       );
     }
-    const amountCents = Math.round(amount * 100);
+    const amountCents = roundReaisToCents(amount);
     if (!Number.isSafeInteger(amountCents)) {
       throw new ValidationError(
         `Valor fora da faixa segura de centavos (venda '${event.sourceId}').`,
