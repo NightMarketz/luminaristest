@@ -371,7 +371,8 @@ import type { ISystemProvisioningPolicy } from '../features/onboarding/policies/
 import type { IAccountingEventMapper } from '../features/accounting/sync/mappers/IAccountingEventMapper';
 import type { PostEntryInput } from '../features/accounting/dtos/PostingDto';
 import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
-import type { BindingScope, IAccountingBindingRepository } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
+import type { IAccountingBindingRepository } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../features/accountingBinding/public/bindingScope.types';
 import { AccountingBindingV1Schema } from '../features/accountingBinding/dtos/AccountingBindingDto';
 import { ValidationError } from './errors';
 import type { ChartLookupPort, PostingValidatePort } from '../features/accountingBinding/models/types';
@@ -1605,7 +1606,7 @@ export class ApplicationFactory {
       this.repositories.companyFiscalProfile, // X13 PR-2: regime da empresa (itens 15/17)
       this.repositories.accountantAssignment, // GOV-CONTADOR política versionada (item 13)
       this.repositories.accountingPolicyVersion,
-      legalParameterService, // Onda 3.2 #4: fotografia ISS_LIMITE (fim do ISS)
+      legalParameterService, // MODULE-BOUNDARIES PR-1a: fotografia ISS_LIMITE + LC116_SERVICO (validate)
     );
     // BE-INCR-DFE (nó X10b, PR-1): perfil fiscal do serviço (F-DFE-6 a) — extraído como const própria
     // (não só inline no literal abaixo) porque FiscalDocumentEmissionService (PR-2) também a injeta.

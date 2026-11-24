@@ -1,7 +1,8 @@
 import type { Prisma, ServiceCostEvidence, TaxOptimizationPolicy, TaxOptimizationSuggestion } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import type { AccountingScope } from '../scope/AccountingScope';
-import type { ActiveAccountant, IAccountingPolicy } from '../policies/IAccountingPolicy';
+import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
+import type { ActiveAccountant } from '../models/AccountantAssignment.model';
 import type { IAccountantAssignmentRepository } from '../repositories/IAccountantAssignmentRepository';
 import type { ITaxOptimizationRepository, TaxOptimizationPolicyData } from '../repositories/ITaxOptimizationRepository';
 import type { AuditService } from './AuditService';

@@ -1,12 +1,12 @@
 import prisma from '../../../lib/prisma';
 import type { AccountingBinding, Prisma } from 'generated/prisma';
 import type { AccountingBindingStatus } from '../models/accountingBindingStatus';
-import { bindingScopeWhere } from './IAccountingBindingRepository';
+import { bindingScopeWhere } from '../scope/BindingScope';
 import type {
-  BindingScope,
   CreateAccountingBindingInput,
   IAccountingBindingRepository,
 } from './IAccountingBindingRepository';
+import type { BindingScope } from '../scope/BindingScope';
 
 /**
  * Prisma-backed repository for compiled bindings (`accounting_bindings`). Único lugar com

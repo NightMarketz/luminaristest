@@ -15,7 +15,7 @@
  *      leftovers of a failed prior run;
  *   4. executes the real migration.sql.
  * It asserts fiscalYear under UTC semantics (ADR-INCR3 Emenda 3 — must match
- * PostingService.fiscalYearFrom), gapless chronological entryNumber per
+ * fiscalYearOf em models/dates), gapless chronological entryNumber per
  * partition, and sequence seeding.
  */
 import * as path from 'path';
@@ -131,7 +131,7 @@ INSERT INTO "journal_entry_sequences" ("userId","unitId","fiscalYear","last") VA
     for (const id of ['e5', 'm1', 'm2']) expect(byId.get(id)?.fiscalYear).toBe(2026);
   });
 
-  it('uses UTC semantics at the year boundary (ADR-INCR3 Emenda 3 — matches fiscalYearFrom)', async () => {
+  it('uses UTC semantics at the year boundary (ADR-INCR3 Emenda 3 — matches fiscalYearOf)', async () => {
     // 2026-01-01T00:00:00Z: America/Sao_Paulo would classify it as 2025 (Dec 31 21:00).
     const e4 = (await rows()).find((r) => r.id === 'e4');
     expect(e4?.fiscalYear).toBe(2026);

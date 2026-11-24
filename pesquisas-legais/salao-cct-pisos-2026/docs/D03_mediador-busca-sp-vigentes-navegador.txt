@@ -1,0 +1,99 @@
+### busca: categoria/tipo = barbeiro/convencao · UF registro SP · vigentes
+Resultado: 4 Instrumento(s) Coletivo(s) Encontrado(s) - Página 1 de 1
+Nº do Registro
+SP003636/2026	Nº da Solicitação	MR011267/2026
+Tipo do Instrumento
+Convenção Coletiva	Vigência	01/01/2026 - 31/12/2027
+Partes	SINDICATO DOS EMPREGADOS EM INSTITUTOS DE BELEZA E CABELEIREIROS DE SENHORAS DE SAO PAULO E REGIAO E DA REGIAO METROPOLITANA DA BAIXADA SANTISTA
+SINDICATO PATRONAL DOS EMPREGADORES EM EMPRESAS E PROFISSIONAIS LIBERAIS EM ESTETICA E COSMETOLOGIA DO ESTADO DE SAO PAULO - SP
+	 Download  Visualizar Instrumento Coletivo
+Nº do Registro
+SP003705/2026	Nº da Solicitação	MR015232/2026
+Tipo do Instrumento
+Convenção Coletiva	Vigência	01/01/2026 - 31/12/2026
+Partes	SIND. ESPECIFICO EMP. EMPRESAS DE LIMP.URB. AR.VERDES, LIMP.
+SIND DAS EMPRESAS DE A E CONSERV NO EST DE SAO PAULO
+	 Download  Visualizar Instrumento Coletivo
+Nº do Registro
+SP006651/2026	Nº da Solicitação	MR008673/2026
+Tipo do Instrumento
+Convenção Coletiva	Vigência	01/06/2025 - 31/05/2027
+Partes	SINDICATO DOS EMPREGADOS EM INSTITUTOS DE BELEZA E CABELEIREIROS DE SENHORAS DE SAO PAULO E REGIAO E DA REGIAO METROPOLITANA DA BAIXADA SANTISTA
+SIND PATRONAL DOS INST E SALOES DE BEL, CABEL DE SENHORAS, CABEL UNISSEX, BARB, SALOES -PARCEIROS E EMPR DE TRAT DE BEL DO EST DE SP
+	 Download  Visualizar Instrumento Coletivo
+Nº do Registro
+SP007311/2025	Nº da Solicitação	MR026453/2025
+Tipo do Instrumento
+Convenção Coletiva	Vigência	01/03/2025 - 28/02/2027
+Partes	SIND. ESPECIFICO EMP. EMPRESAS DE LIMP.URB. AR.VERDES, LIMP. CONS. MUNIC. DE SOROCABA E REGIAO
+SINDICATO DAS EMPRESAS DE MANUTENCAO E EXECUCAO DE AREA
+	 Download  Visualizar Instrumento Coletivo
+1
+
+### busca: categoria/tipo = pedicure/convencao · UF registro SP · vigentes
+Resultado: 3 Instrumento(s) Coletivo(s) Encontrado(s) - Página 1 de 1
+Nº do Registro
+SP003636/2026	Nº da Solicitação	MR011267/2026
+Tipo do Instrumento
+Convenção Coletiva	Vigência	01/01/2026 - 31/12/2027
+Partes	SINDICATO DOS EMPREGADOS EM INSTITUTOS DE BELEZA E CABELEIREIROS DE SENHORAS DE SAO PAULO E REGIAO E DA REGIAO METROPOLITANA DA BAIXADA SANTISTA
+SINDICATO PATRONAL DOS EMPREGADORES EM EMPRESAS E PROFISSIONAIS LIBERAIS EM ESTETICA E COSMETOLOGIA DO ESTADO DE SAO PAULO - SP
+	 Download  Visualizar Instrumento Coletivo
+Nº do Registro
+SP004442/2026	Nº da Solicitação	MR015625/2026
+Tipo do Instrumento
+Convenção Coletiva	Vigência	01/02/2026 - 31/01/2027
+Partes	SINDICATO DOS EMPREGADOS EM ESTABELECIMENTOS DE SERVICOS DE SAUDE DE PIRACICABA
+SINDICATO DAS SANTAS CASAS DE M E HOSP F EST DE S P
+	 Download  Visualizar Instrumento Coletivo
+Nº do Registro
+SP006651/2026	Nº da Solicitação	MR008673/2026
+Tipo do Instrumento
+Convenção Coletiva	Vigência	01/06/2025 - 31/05/2027
+Partes	SINDICATO DOS EMPREGADOS EM INSTITUTOS DE BELEZA E CABELEIREIROS DE SENHORAS DE SAO PAULO E REGIAO E DA REGIAO METROPOLITANA DA BAIXADA SANTISTA
+SIND PATRONAL DOS INST E SALOES DE BEL, CABEL DE SENHORAS, CABEL UNISSEX, BARB, SALOES -PARCEIROS E EMPR DE TRAT DE BEL DO EST DE SP
+	 Download  Visualizar Instrumento Coletivo
+1
+
+### busca: categoria/tipo = cabeleireiro/termoAditivoConvecao · UF registro SP · vigentes
+Resultado: 3 Instrumento(s) Coletivo(s) Encontrado(s) - Página 1 de 1
+Nº do Registro
+SP005544/2026	Nº da Solicitação	MR022389/2026
+Tipo do Instrumento
+Termo Aditivo de Convenção Coletiva	Vigência	01/03/2026 - 28/02/2027
+Partes	SIND. ESPECIFICO EMP. EMPRESAS DE LIMP.URB. AR.VERDES, LIMP.
+SINDICATO DAS EMPRESAS DE MANUTENCAO E EXECUCAO DE AREA
+	 Download  Visualizar Instrumento Coletivo
+Nº do Registro
+SP009373/2026	Nº da Solicitação	MR060354/2026
+Tipo do Instrumento
+Termo Aditivo de Convenção Coletiva	Vigência	01/06/2026 - 31/05/2027
+Partes	SINDICATO DOS EMPREGADOS EM INSTITUTOS DE BELEZA E CABELEIREIROS DE SENHORAS DE SAO PAULO E REGIAO E DA REGIAO METROPOLITANA DA BAIXADA SANTISTA
+SIND PATRONAL DOS INST E SALOES DE BEL, CABEL DE SENHORAS, CABEL UNISSEX, BARB, SALOES -PARCEIROS E EMPR DE TRAT DE BEL DO EST DE SP
+	 Download  Visualizar Instrumento Coletivo
+Nº do Registro
+SP009440/2026	Nº da Solicitação	MR061963/2026
+Tipo do Instrumento
+Termo Aditivo de Convenção Coletiva	Vigência	01/12/2025 - 31/03/2027
+Partes	SEEDESP-SIND DOS EMPREG COND EM EMP DIS GEN ALI REM JORN REV GAS MAT ESC PCS ACESS VEIC MAT CONST SUC MAT P REC LOC PREST SERV VEIC DO EST DE SP
+SINDICATO INTERMUNICIPAL DE LAVANDERIAS NO ESTADO DE SAO PAU
+	 Download  Visualizar Instrumento Coletivo
+1
+
+### busca: categoria/tipo = barbeiro/termoAditivoConvecao · UF registro SP · vigentes
+Resultado: 2 Instrumento(s) Coletivo(s) Encontrado(s) - Página 1 de 1
+Nº do Registro
+SP005544/2026	Nº da Solicitação	MR022389/2026
+Tipo do Instrumento
+Termo Aditivo de Convenção Coletiva	Vigência	01/03/2026 - 28/02/2027
+Partes	SIND. ESPECIFICO EMP. EMPRESAS DE LIMP.URB. AR.VERDES, LIMP.
+SINDICATO DAS EMPRESAS DE MANUTENCAO E EXECUCAO DE AREA
+	 Download  Visualizar Instrumento Coletivo
+Nº do Registro
+SP009373/2026	Nº da Solicitação	MR060354/2026
+Tipo do Instrumento
+Termo Aditivo de Convenção Coletiva	Vigência	01/06/2026 - 31/05/2027
+Partes	SINDICATO DOS EMPREGADOS EM INSTITUTOS DE BELEZA E CABELEIREIROS DE SENHORAS DE SAO PAULO E REGIAO E DA REGIAO METROPOLITANA DA BAIXADA SANTISTA
+SIND PATRONAL DOS INST E SALOES DE BEL, CABEL DE SENHORAS, CABEL UNISSEX, BARB, SALOES -PARCEIROS E EMPR DE TRAT DE BEL DO EST DE SP
+	 Download  Visualizar Instrumento Coletivo
+1

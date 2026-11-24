@@ -1,6 +1,7 @@
 import prisma from '../../../lib/prisma';
 import type { KitUpgradePending, KitUpgradeRun, Prisma } from 'generated/prisma';
-import { bindingScopeWhere, type BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import { bindingScopeWhere } from '../../accountingBinding/public/bindingScope';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 import type { KitPendingStatus, KitUpgradeRunStatus } from '../models/kitUpgradeTypes';
 import type { CreateKitPendingInput, CreateKitUpgradeRunInput, IKitUpgradeRepository } from './IKitUpgradeRepository';
 

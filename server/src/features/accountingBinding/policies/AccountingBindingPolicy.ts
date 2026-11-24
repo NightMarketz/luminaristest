@@ -1,4 +1,4 @@
-import type { BindingScope } from '../repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../scope/BindingScope';
 import type { IAccountingBindingPolicy } from './IAccountingBindingPolicy';
 
 /**

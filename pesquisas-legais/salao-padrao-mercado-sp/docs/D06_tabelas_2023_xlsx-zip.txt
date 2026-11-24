@@ -1,0 +1,103 @@
+Extração das Tabelas 5, 6, 9, 10, 11 e 13 da PAS 2023 (IBGE), do arquivo D06 (tabelas_2023_xlsx.zip, SHA-256 7bd51e1a484dabeb15e8a9766603454563e0c85f4b959b1819e1ff336d143b68).
+Feita por openpyxl (valores das células, sem arredondar). Unidade: 1 000 R$, salvo número de empresas e pessoas.
+Linhas: título, cabeçalhos, a linha "Total" e as linhas de "Serviços pessoais" e "Cabeleireiros e outros serviços de tratamento de beleza" de cada bloco (total das empresas; empresas com 20 ou mais pessoas ocupadas), e as notas de rodapé.
+
+=== Tabela 5 ===
+Tabela 5 - Receita das empresas de serviços prestados principalmente às famílias, 
+total e empresas com 20 ou mais pessoas ocupadas, 
+segundo as atividades - Brasil - 2023
+(continua)
+Atividades | Receita bruta | Deduções | Receita operacional líquida
+Prestação de serviços | Revenda de mercadorias  (1) | Outras atividades (2)
+1 000  R$
+Total das empresas de serviços prestados principalmente às famílias
+               Total | 388917984 | 7362726 | 1984096 | 31572788 | 366692019
+Serviços pessoais | 28155192 | 674148 | 128294 | 3057043 | 25900591
+Empresas com 20 ou mais pessoas ocupadas (4)
+               Total | 211150880 | 3983268 | 1501164 | 18307073 | 198328239
+Serviços pessoais | 11531783 | 111853 | 125219 | 1501735 | 10267119
+Cabeleireiros e outros serviços de tratamento de beleza | 2390918 | 13631 | 93737 | 483482 | 2014804
+
+=== Tabela 6 ===
+Tabela 6 - Custos das empresas de serviços prestados principalmente às famílias,
+ total e empresas com 20 ou mais pessoas ocupadas, 
+segundo as atividades - Brasil - 2023
+Atividades | Total | Mercadorias, materiais de consumo e de reposição | Custo de mercadorias revendidas (1) | Combustíveis  e  lubrificantes | Outros custos
+1 000  R$
+Total das empresas de serviços prestados principalmente às famílias
+               Total | 94107613 | 79740820 | 9988603 | 1358452 | 3019737
+Serviços pessoais | 3189428 | 2438540 | 363250 | 236323 | 151314
+Empresas com 20 ou mais pessoas ocupadas (2)
+               Total | 52365444 | 44926963 | 4808014 | 704336 | 1926130
+Serviços pessoais | 1526470 | 1239792 | 48426 | 179424 | 58828
+Cabeleireiros e outros serviços de tratamento de beleza | 190689 | 145808 | 11748 | 1079 | 32054
+Fonte: IBGE, Diretoria de Pesquisas, Coordenação de Estatísticas Estruturais e Temáticas em Empresas, Pesquisa Anual de Serviços 2023.
+(1) Inclusive receita de venda e aluguel de imóveis próprios.  (2)  Empresas com 20 ou mais pessoas ocupadas são as que compõem o estrato certo da 
+
+=== Tabela 9 ===
+Tabela 9 - Depreciação, amortização, despesas não operacionais e constituição de provisões,
+das empresas de serviços prestados principalmente às famílias, total e empresas com 20 ou mais
+pessoas ocupadas, segundo as atividades - Brasil - 2023
+Atividades | Depreciação, amortização, despesas não operacionais e constituição de provisões
+Total | Depreciação e amortização | Despesas  não operacionais | Provisão para Imposto de Renda e Contribuição Social | Outras provisões (1)
+1 000  R$
+Total das empresas de serviços prestados principalmente às famílias
+               Total | 12342496 | 6635771 | 686071 | 4245318 | 775335
+Serviços pessoais | 1361103 | 666744 | 33112 | 604833 | 56414
+Empresas com 20 ou mais pessoas ocupadas (2)
+               Total | 10718879 | 5625762 | 672323 | 3661936 | 758859
+Serviços pessoais | 1070696 | 530113 | 27689 | 462244 | 50650
+Cabeleireiros e outros serviços de tratamento de beleza | 147880 | 107645 | 1429 | 37468 | 1338
+Fonte: IBGE, Diretoria de Pesquisas, Coordenação de Estatísticas Estruturais e Temáticas em Empresas, Pesquisa Anual de Serviços 2023.
+(1) Provisão para devedores duvidosos etc.  (2) Empresas com 20 ou mais pessoas ocupadas são as que compõem o estrato certo da pesquisa, ou seja, 
+
+=== Tabela 10 ===
+Tabela 10 - Gastos com pessoal das empresas de serviços prestados principalmente às famílias,
+total e empresas com 20 ou mais pessoas ocupadas, 
+segundo as atividades - Brasil - 2023
+(continua)
+Atividades | Gastos com pessoal
+Total | Salários   e outras remunerações | Participação nos lucros e honorários da diretoria (1) | Remuneração dos sócios cooperados  (2) | Retiradas  pró-labore dos proprietários e sócios
+1 000  R$
+Total das empresas de serviços prestados às famílias
+               Total | 97761461 | 66021907 | 1119406 | 71061 | 7968516
+Serviços pessoais | 8393546 | 5441884 | 42147 | 3748 | 1013128
+Empresas com 20 ou mais pessoas ocupadas (4)
+               Total | 53625283 | 35896955 | 599122 | 15084 | 1177628
+Serviços pessoais | 4099817 | 2691117 | 27516 | 709 | 98577
+Cabeleireiros e outros serviços de tratamento de beleza | 885299 | 565206 | 10892 | 147 | 15822
+
+=== Tabela 11 ===
+Tabela 11 - Número de empresas e pessoal ocupado em 31.12, das empresas de serviços prestados
+principalmente às famílias, total e empresas com 20 ou mais pessoas ocupadas, 
+segundo as atividades - Brasil - 2023
+Atividades | Número  de empresas | Pessoal ocupado em 31.12
+Total | Pessoal assalariado | Pessoal não assalariado
+Proprietários  e sócios com atividade na empresa | Sócios cooperados | Membros da família sem remuneração
+Total das empresas de serviços prestados principalmente às famílias
+               Total | 446291 | 3014125 | 2535491 | 436835 | 2330 | 39469
+Serviços pessoais | 57320 | 253566 | 194267 | 55306 | 126 | 3867
+Empresas com 20 ou mais pessoas ocupadas (1)
+               Total | 23211 | 1289238 | 1260853 | 27196 | 442 | 747
+Serviços pessoais | 1426 | 84197 | 82407 | 1743 | 26 | 21
+Cabeleireiros e outros serviços de tratamento de beleza | 226 | 13982 | 13745 | 234 | 3 | -
+Fonte: IBGE, Diretoria de Pesquisas, Coordenação de Estatísticas Estruturais e Temáticas em Empresas, Pesquisa Anual de Serviços 2023.
+(1) Empresas com 20 ou mais pessoas ocupadas são as que compõem o estrato certo da pesquisa, ou seja, são as que no cadastro básico de seleção 
+
+=== Tabela 13 ===
+Tabela 13 - Aquisições do ativo tangível no ano, das empresas de serviços prestados principalmente às famílias, 
+total e empresas com 20 ou mais pessoas ocupadas,
+ segundo as atividades - Brasil - 2023
+Atividades | Aquisições do ativo tangível no ano
+Total | Terrenos | Edificações | Máquinas, equipamentos e instalações (1) | Meios de transporte | Outros (2)
+1 000  R$
+Total das empresas de serviços prestados principalmente às famílias
+               Total | 17997974 | 1508224 | 3700183 | 5466356 | 745633 | 6577577
+Serviços pessoais | 1918145 | 73975 | 239331 | 600465 | 135246 | 869127
+Empresas com 20 ou mais pessoas ocupadas (3)
+               Total | 15931105 | 1484676 | 3100742 | 4776855 | 421940 | 6146894
+Serviços pessoais | 1628884 | 67811 | 235913 | 397102 | 70154 | 857903
+Cabeleireiros e outros serviços de tratamento de beleza | 34210 | - | 2037 | 26721 | 1767 | 3685
+Fonte: IBGE, Diretoria de Pesquisas, Coordenação de Estatísticas Estruturais e Temáticas em Empresas, Pesquisa Anual de Serviços 2023.
+(1) Inclusive equipamentos de processamento de dados. (2) Móveis e utensílios etc. (3)  Empresas com 20 ou mais pessoas ocupadas são as que com-
+

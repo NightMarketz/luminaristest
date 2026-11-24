@@ -1,6 +1,6 @@
 import { ForbiddenError, ValidationError } from '../../../lib/errors';
 import { logger } from '../../../lib/logger';
-import type { BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 import type { ServiceFiscalCatalogItem } from '../dtos/SectorKitDto';
 import type { PendingServiceSuggestion, Suggestion } from '../dtos/ServiceFiscalSuggestionDto';
 import type { ISectorKitPolicy } from '../policies/ISectorKitPolicy';
