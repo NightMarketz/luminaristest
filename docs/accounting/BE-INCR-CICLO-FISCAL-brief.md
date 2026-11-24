@@ -18,6 +18,49 @@
 - **Dossiê legal:** [`pesquisas-legais/ciclo-fiscal-prazos/relatorio.md`](../../pesquisas-legais/ciclo-fiscal-prazos/relatorio.md)
   (21/11/2026; fontes D01–D10). Prazos já conferidos em dossiês anteriores são citados por eles.
 
+> **EMENDA PAÍS NA BORDA (24/11/2026)** — `sessao-planejamento`, sobre `claude/maestro-caixa-2026-11-24` (#1331) +
+> `claude/simulacao-completa-publicar` (#1332).
+>
+> - **Autorização:** dono, chat, 24/11, 2º questionário da sessão maestro, à pergunta *"Esses BRIEFs seguem como foram
+>   escritos ou já nascem pela regra?"*: **"Já nascem pela regra"** (D-2026-11-24-FORKS-DA-CAIXA-E-PAIS-NA-BORDA §6). O
+>   `executa` de 24/11 (mesma cédula §4, "CICLO-FISCAL") **continua** e vale para este BRIEF **já emendado**. A regra é a do
+>   [`ADR-PAIS-NA-BORDA`](../adr/ADR-PAIS-NA-BORDA.md) (Proposed; R1–R7 e F-PBA-1..7 com ratificação PENDENTE). Esta
+>   emenda está escrita no **ramo recomendado** de cada F-PBA e não ratifica nenhum.
+> - **Divergência com a regra 1 da `sessao-planejamento`** ("não edita spec existente de outro item"): a tarefa e a cédula
+>   §6 mandam emendar este BRIEF no lugar, para o executor seguir uma spec só. Os forks F-CF-1..10 (§8) ficam como foram
+>   ratificados, com os nomes da época; o checklist (§6), os contratos (§7) e o write-set (§12) já usam os nomes novos.
+>   As citações `arquivo:linha` de código existente não mudaram.
+> - **O código deste BRIEF não roda antes** de o dono ratificar F-PBA-1..7 (regra de 28/10: fork novo para o `executa`).
+>   O que trava cada parte: **F-PBA-1** e **F-PBA-2** — todo nome novo (todo o código); **F-PBA-3** — o item 2
+>   (`vencimentoDe` na borda, não em `lib/`) e o lugar do job e do controller; **F-PBA-7** — o item 1 e o PR-0 inteiro (no
+>   ramo (a) a fatia **F3** do ADR, registro de formato por domínio e país, entra **antes** do PR-0); **F-PBA-5** — o item
+>   4 (o `TaxAssessmentPeriodosService` importa a função extraída para a borda). F-PBA-4 e F-PBA-6 não travam este BRIEF.
+> - **Pré-requisito:** o **item 0 da guarda** (ADR §3: regras `P1`/`P2`, ajustes G1–G5, plantio) vem no 1º PR de código
+>   emendado entre os cinco BRIEFs, pela ordem do F-MU-13 o PR-0 do montador único. Se o PR-0 deste BRIEF for o primeiro,
+>   ele carrega o item 0.
+> - **`LEGADO_BR` usado** (ADR §3.1, F-PBA-5 a): só `features/accounting/services/TaxAssessmentPeriodosService.ts`
+>   (item 4). Ele **não** está na lista da §3.1 do ADR e precisa entrar nela no item 0 (sai na fatia F5). O orquestrador
+>   (`ComplianceCycleService`) é centro e fala com o legado BR **só** por porta; os adaptadores BR chamam os `*PeloSistema`
+>   dos serviços legados (borda → legado, permitido).
+>
+> | De (21/11) | Para (24/11) | Lado |
+> |---|---|---|
+> | model `ObrigacaoFiscalOcorrencia` (`obrigacao_fiscal_ocorrencias`), colunas em português | `TaxObligationOccurrence` (`tax_obligation_occurrences`), colunas em inglês (§7) | centro |
+> | `models/cicloFiscal.ts` (estados, transições, catálogo, `ocorrenciasEsperadas`) | `models/complianceCycle.ts` (estados em inglês, transições, `ExpectedOccurrence`, `DueStatus`, `CENTER_PREREQUISITES`, `NOTICE_BUSINESS_DAYS`) + `paises/br/models/cicloFiscal.ts` (`OBRIGACOES_CICLO`, `REGRAS_PRAZO`, `PRE_REQUISITOS_BR`, `FAMILIAS_POLITICA_BR`, `ocorrenciasEsperadas`) | centro + borda |
+> | `PREVISTA`, `AGUARDANDO_PRE_REQUISITO`, `PREVIA_CALCULADA`, `CONFIRMADA`, `ARQUIVO_GERADO`, `AGUARDANDO_HUMANO`, `CONCLUIDA`, `DISPENSADA` | `EXPECTED`, `AWAITING_PREREQUISITE`, `PREVIEW_CALCULATED`, `CONFIRMED`, `FILE_GENERATED`, `AWAITING_HUMAN`, `COMPLETED`, `WAIVED` | centro |
+> | `SEM_PERFIL_DO_ANO`, `UNIDADE_NAO_DEFINIDA`, `ANO_NAO_ENCERRADO`, `VENDAS_PENDENTES`, `ORDEM_ANTERIOR_PENDENTE`, `PARAMETRO_LEGAL_AUSENTE`, `CONTAS_DE_PROVISAO` | `NO_PROFILE_FOR_YEAR`, `UNIT_NOT_DEFINED`, `YEAR_NOT_CLOSED`, `PENDING_SALES`, `PREVIOUS_PERIOD_PENDING`, `LEGAL_PARAMETER_MISSING`, `PROVISION_ACCOUNTS_MISSING` (os outros sete ficam em português na borda) | centro / borda |
+> | `NO_PRAZO`, `VENCE_EM_BREVE`, `VENCIDA`; `AVISO_DIAS_UTEIS` | `ON_TIME`, `DUE_SOON`, `OVERDUE`; `NOTICE_BUSINESS_DAYS` | centro |
+> | `lib/prazoObrigacao.ts` (`vencimentoDe`) | `paises/br/models/prazoObrigacao.ts` (F-PBA-3 a) | borda |
+> | `models/periodosEsperados.ts` (extraído) | `paises/br/models/periodosEsperados.ts` | borda |
+> | formato `PRAZO_OBRIGACAO` no `legalParameters/models/formatoLinha.ts` | `paises/br/legalParameters/prazoObrigacao.ts` pelo registro da F3 (F-PBA-7 a) | borda |
+> | `CicloFiscalService` com `Pick<X7>`, `Pick<X8>`, `Pick<Simples>`… | `ComplianceCycleService` com `ObligationCalendarPort` + `ObligationHandlerPort[]` (portas em `features/accounting/ports/`); adaptadores em `paises/br/adapters/` | centro + borda |
+> | `jobs/CicloFiscalScheduler.ts`; `CICLO_FISCAL_ENABLED`, `CICLO_FISCAL_INTERVAL_MS`; fonte `ciclo_fiscal` | `jobs/ComplianceCycleScheduler.ts`; `COMPLIANCE_CYCLE_ENABLED`, `COMPLIANCE_CYCLE_INTERVAL_MS`; fonte `compliance_cycle` | centro |
+> | `/api/accounting/obrigacoes` (`?ano&estado&ate`), `/:id/reprocessar`, `/:id/entrada`; `routes/obrigacoes.ts`, `cicloFiscalController.ts`, `accounting.obrigacoes.paths.ts` | `/api/accounting/tax-obligations` (`?year&state&until`), `/:id/reprocess`, `/:id/input`; `routes/taxObligations.ts`, `complianceCycleController.ts`, `accounting.tax-obligations.paths.ts` | centro |
+> | `dtos/CicloFiscalDto.ts` (chaves em português) | `dtos/ComplianceCycleDto.ts` (chaves em inglês) | centro |
+> | `fiscal.obrigacao.marcada` (`ocorrenciaId`, `obrigacao`, `periodo`, `de`, `para`); `ENTREGUE`/`PAGA` | `fiscal.tax_obligation.marked` (`occurrenceId`, `obligation`, `period`, `from`, `to`); `FILED`/`PAID` | centro |
+> | `cicloFiscalAutoConfirmar`, `cicloFiscalDiaCorteUtil`, `unidadeApuracaoId` no `CompanyFiscalProfile` | `complianceAutoConfirmFamilies`, `complianceCutoffBusinessDay`, `assessmentUnitId` (colunas novas em inglês, F-PBA-1 a) | centro |
+> | `CICLO_TRANSICAO_INVALIDA` | `TAX_OBLIGATION_INVALID_TRANSITION` / `TAX_OBLIGATION_TRANSITION_CONFLICT` | centro |
+
 ## Divergências registradas (passo 1 da `sessao-planejamento`)
 
 1. **A nota do nó nasce antes do PRE-ADR ratificado.** O `docs/plano/README.md` §Fold diz que proposta nova só vira nota
@@ -99,7 +142,7 @@ o comportamento quando a chave está desligada.
    lei (com fonte), estado, pré-requisitos faltando, referência à apuração ou ao artefato, e a prévia. Lei desenha igual
    para todos, a chave única é a idempotência do job e o estado é uma máquina com transição por CAS. Pela tabela STOP do
    `CLAUDE.md` é Prisma, não DynamicTable: o usuário não desenha o esquema, a lei desenha.
-2. **Job** (`CicloFiscalScheduler` + `CicloFiscalService`). Clone do par do LEGAL-PARAMS PR-4. Uma vez por dia, para
+2. **Job** (`ComplianceCycleScheduler` + `ComplianceCycleService`). Clone do par do LEGAL-PARAMS PR-4. Uma vez por dia, para
    cada PJ com perfil fiscal do ano: (a) materializa as ocorrências; (b) checa os pré-requisitos; (c) calcula a prévia
    pelos serviços que existem; (d) confirma só o que a política deixa, a partir do dia de corte (F-CF-3, F-CF-6),
    incluindo a provisão estimada do Simples (F-CF-5 → b); (e) gera Reinf e MIT quando a entrada está completa, e o
@@ -135,7 +178,7 @@ o mesmo bug de reconcile em três serviços ou mais de três pessoas na equipe. 
 - a **ordem é fixa no código** e é a da lei: prévia → confirmação → arquivo. Não há DAG, workflow por tenant nem plugin;
 - a fila é a própria tabela do calendário, varrida pelo scheduler, como `legal_parameter_recalc_jobs`. Não há
   Redis/bull;
-- cada efeito no razão continua no serviço dono, com o próprio `atomicUntil`. O `CicloFiscalService` não chama
+- cada efeito no razão continua no serviço dono, com o próprio `atomicUntil`. O `ComplianceCycleService` não chama
   `postEntry` (cabeçalho `atomicUntil: —`, como o `TaxAssessmentRecalcService`);
 - a política do tenant é **chave liga/desliga por família**, não sequência configurável.
 
@@ -145,7 +188,7 @@ o mesmo bug de reconcile em três serviços ou mais de três pessoas na equipe. 
 |---|---|
 | Confirmação automática com dedução que o usuário não informou superestima o imposto | política desligada por padrão; entrada por ocorrência que o usuário preenche antes; confirmação só a partir do dia de corte (F-CF-3 b, F-CF-6 a) |
 | Provisão no período já fechado | o `postEntry` recusa período que não está `OPEN` (`PostingService.ts:131,148`); o job confirma, a provisão fica pendente com aviso "reabra o período" (mecanismo do X7 item 15) e o `reconcile` completa quando reabrir |
-| Prévia calculada com venda ainda não lançada subestima | pré-requisito `VENDAS_PENDENTES` (`ReconcilePending` aberto ou sync bloqueado na competência) |
+| Prévia calculada com venda ainda não lançada subestima | pré-requisito `PENDING_SALES` (`ReconcilePending` aberto ou sync bloqueado na competência) |
 | Job e usuário confirmam ao mesmo tempo | a confirmação já tem CAS (`expectedAPagarCents`, `ALREADY_CONFIRMED`); o job lê o 409 como "já confirmada" |
 | Duas réplicas rodam o job | lock local não protege; a chave única e o CAS da transição protegem (2ª passada sem efeito) |
 | Parâmetro legal ausente ou DRAFT (CBS de referência) | pré-requisito nomeado; `CALCULATED_PROVISIONAL` nunca confirma sozinho |
@@ -185,109 +228,152 @@ Cada item é testável sozinho. **[F-CF-n]** = o fork que decidiu o item. Todos 
    `REINF/MENSAL` e `REINF/ISENTOS_TRIMESTRAL`; `ECD`, `ECF`, `DEFIS` (até a de 2026), `PGDAS_D_ANUAL` (desde 2027) e
    `DASN_SIMEI`, todos `ANUAL`. **CBS e IBS não ganham linha aqui**: o prazo deles já é a linha
    `IBS_CBS/<tributo>/VENCIMENTO` (dono, 23/10), lida por `vencimentoIbsCbsDe`, e uma 2ª fonte para o mesmo prazo é
-   proibida. O PGDAS-D mensal não tem linha (vence com o DAS, §7). O `formatoLinha.ts` e o `checkLegalParamsFormatoCli`
-   aceitam a tabela. Teste: o check reprova uma regra fora do enum.
+   proibida. O PGDAS-D mensal não tem linha (vence com o DAS, §7). **O formato da tabela é registrado pela borda**, em
+   `features/accounting/paises/br/legalParameters/prazoObrigacao.ts`, pelo registro de formato por domínio e país da fatia
+   F3 do ADR-PAIS-NA-BORDA (F-PBA-7 a), e **não** no `formatoLinha.ts`; o `checkLegalParamsFormatoCli` lê o registro. O
+   nome da tabela entra pelo mesmo registro (se a F3 mantiver o enum central de nomes de `legalParameter.ts`, ele ganha a
+   linha `PRAZO_OBRIGACAO`). Teste: o check reprova uma regra fora do enum `REGRAS_PRAZO`.
 2. **`REGRAS_PRAZO`** (enum fechado) e o intérprete puro `vencimentoDe(regra, periodo, feriados, codMun)`, que delega
    aos intérpretes que já existem (§1) e acrescenta só o que falta: `DIA_20_ADIA` (DAS), `DIA_25_ANTECIPA` (PIS/COFINS),
    `ULTIMO_DIA_UTIL_DO_MES` com deslocamento (junho/julho do ano seguinte, março do ajuste), `DATA_FIXA` (31/03, último
-   dia de maio) e `JANELA` (bloco anual do PGDAS-D, jan–mar). Mora em `lib/`, ao lado dos outros (o núcleo contábil não
-   importa `packages/`, core-boundary). Testes por regra, com datas calculadas (conferir na execução):
+   dia de maio) e `JANELA` (bloco anual do PGDAS-D, jan–mar). **Borda:** `REGRAS_PRAZO` mora em
+   `features/accounting/paises/br/models/cicloFiscal.ts` e `vencimentoDe` em
+   `features/accounting/paises/br/models/prazoObrigacao.ts` (F-PBA-3 a: lib pura nova de país é folha da borda, não
+   `lib/`); ela importa os intérpretes de `lib/` que já existem (borda → `lib/` é permitido), e a fatia F8 os move depois.
+   Testes por regra, com datas calculadas (conferir na execução):
    DAS 2026-11 → 20/12/2026 é domingo ⇒ **21/12/2026**; PIS/COFINS 2026-09 → 25/10/2026 é domingo ⇒ **23/10/2026**;
    Reinf 2026-07 → 15/08/2026 é sábado ⇒ **17/08/2026**.
 3. **Exceção datada** (F-CF-2 → a): uma linha `PRAZO_OBRIGACAO` com `discriminador` = `<modalidade>@<codMun>`
    (calamidade do art. 40-A) ou com vigência estreita (prorrogação da ECF) vence a regra geral. Teste: com a linha de prorrogação publicada,
    a ECF do ano X vence na data da linha. Sem ela, vence no último dia útil de julho.
-4. **`ocorrenciasEsperadas(perfil, matriz, prazos, ano)`** — puro, sem I/O. A partir de `resolverObrigacoes` (o que é
+4. **`ocorrenciasEsperadas(perfil, matriz, prazos, ano)`** — puro, sem I/O, na borda
+   (`paises/br/models/cicloFiscal.ts`), devolvendo o tipo do centro `ExpectedOccurrence[]` (§7). O centro só o vê pelo
+   adaptador do `ObligationCalendarPort` (item 6). A partir de `resolverObrigacoes` (o que é
    `OBRIGATORIA`/`CONDICIONAL`) e das regras de período que o `TaxAssessmentPeriodosService` já usa (forma efetiva,
-   trimestres/meses em atividade, modalidade), devolve `{obrigacao, periodo, vencimento, regra, fonte}[]`. As guias
+   trimestres/meses em atividade, modalidade), devolve `ExpectedOccurrence[]` (`{obligation, period, dueDate, dueRule, dueSource, dueRuleParameterId}`; os valores de `obligation` e `dueRule` são os códigos BR). As guias
    (DAS, DARF IRPJ/CSLL, PIS/COFINS, CBS/IBS) vêm do regime. As declarações (DCTFWeb, Reinf, ECD, ECF, DEFIS,
    DASN-SIMEI, bloco anual do PGDAS-D) vêm da matriz. **A extração da regra de períodos para função pura compartilhada
-   não pode mudar a resposta do `GET /tax-assessments/periodos`** (o teste dele roda igual). [F-CF-9]
+   não pode mudar a resposta do `GET /tax-assessments/periodos`** (o teste dele roda igual). [F-CF-9] A função extraída
+   é regra brasileira (forma do IRPJ, trimestres, modalidade de PIS/COFINS) e nasce em
+   `paises/br/models/periodosEsperados.ts`; o `TaxAssessmentPeriodosService` (legado BR) passa a importá-la, e por isso
+   **usa a entrada `LEGADO_BR`** dele na `P1` (ADR-PAIS-NA-BORDA R7, F-PBA-5 a; ver o bloco da emenda).
    Testes: Simples 2026 ⇒ 12 DAS + DEFIS em 03/2027; Presumido trimestral 2026 ⇒ 4×2 DARF + 12 PIS + 12 COFINS +
    12 DCTFWeb + ECD (se obrigatória) + ECF; Presumido 2027 ⇒ sem PIS/COFINS, com CBS (IBS só com linha publicada);
    Reinf `CONDICIONAL` aparece com a pergunta pendente; obrigação `NAO_SE_APLICA` não aparece; MEI 2026 ⇒ DASN-SIMEI
    em 05/2027 e **nenhum DAS-MEI** até a §9 item 2 fechar o prazo.
-5. **Modelo `ObrigacaoFiscalOcorrencia`** *(se F-CF-1 a)* + migração aditiva + repositório (interface + Prisma,
-   `tx` propagado). Chave única `(userId, obrigacao, periodo)`. Transição de estado **só** por
-   `updateMany where {id, estado: de, versao}` (CAS). 0 linhas ⇒ `ConflictError` nomeado. Soft-delete (`deletedAt`).
+5. **Modelo `TaxObligationOccurrence`** (centro, tabela `tax_obligation_occurrences`) *(se F-CF-1 a)* + migração
+   aditiva + repositório `{I,}TaxObligationOccurrenceRepository.ts` em `features/accounting/repositories/` (interface +
+   Prisma, `tx` propagado). Chave única `(userId, obligation, period)`. Transição de estado **só** por
+   `updateMany where {id, state: from, version}` (CAS) e pela tabela `OCCURRENCE_TRANSITIONS` de
+   `models/complianceCycle.ts`. 0 linhas ⇒ `ConflictError` nomeado `TAX_OBLIGATION_TRANSITION_CONFLICT`. Soft-delete (`deletedAt`).
    Teste de integração: duas transições concorrentes do mesmo `de` ⇒ uma vence, a outra recebe 409.
 
 ### PR-1 — job: prévia, pré-requisitos, alerta de operação, leitura
 
-6. **`CicloFiscalService.processar(hoje)`** — enumera as PJs com `CompanyFiscalProfile` do ano de `hoje` (e do ano
+6. **`ComplianceCycleService.process(today)`** (centro, `features/accounting/services/`; recebe só as portas
+   `ObligationCalendarPort` e `ObligationHandlerPort[]`, ligadas no `lib/factory.ts`; **não importa `paises/`**, regra `P1`)
+   — enumera as PJs com `CompanyFiscalProfile` do ano de `hoje` (e do ano
    anterior até o último prazo anual dele). Materializa as ocorrências esperadas por *upsert* na chave única: a 2ª
-   passada não cria linha, só atualiza o vencimento quando a regra mudou. Depois processa as ocorrências cujo período já
-   acabou e que ainda não estão em estado final. A ordem é cronológica por família: o X8 exige o mês anterior
-   confirmado (409 `TAX_ASSESSMENT_ORDER`, `PisCofinsAssessmentService.ts:127`). Cabeçalho `atomicUntil: —`. Teste: 2
+   passada não cria linha, só atualiza o vencimento quando a regra mudou. As ocorrências esperadas vêm de
+   `calendar.expectedOccurrences(scope, fiscalYear)` (adaptador BR do item 4). Depois processa as ocorrências cujo período já
+   acabou e que ainda não estão em estado final, entregando cada uma ao tratador da família dela
+   (`ObligationHandlerPort`, por `obligations`). A ordem é cronológica por família: o X8 exige o mês anterior
+   confirmado (409 `TAX_ASSESSMENT_ORDER`, `PisCofinsAssessmentService.ts:127`). **Não é motor de domínio**
+   (`ADR-DOMAIN-MOTOR-rejected` §3; §3.4 acima): a lista de tratadores é fixa no `lib/factory.ts`, a ordem é fixa no
+   código (mês a mês dentro da família, a família pela ordem da lista), sem DAG, fila própria nem configuração por tenant. Cabeçalho `atomicUntil: —`. Teste: 2
    execuções seguidas sem dado novo ⇒ 0 escritas na 2ª (contagem `inalteradas`).
-7. **Catálogo fechado de pré-requisitos** (`PRE_REQUISITOS_CICLO`), cada um com código, mensagem pt/en e uma de duas
+7. **Catálogo fechado de pré-requisitos, em duas metades:** os universais em `CENTER_PREREQUISITES`
+   (`models/complianceCycle.ts`, inglês: `NO_PROFILE_FOR_YEAR`, `UNIT_NOT_DEFINED`, `YEAR_NOT_CLOSED`, `PENDING_SALES`,
+   `PREVIOUS_PERIOD_PENDING`, `LEGAL_PARAMETER_MISSING`, `PROVISION_ACCOUNTS_MISSING`) e os brasileiros em
+   `PRE_REQUISITOS_BR` (`paises/br/models/cicloFiscal.ts`: `TETO_PRESUMIDO_EXCEDIDO`, `LALUR_PARTE_B`,
+   `CBS_REFERENCIA_PROVISORIA`, `REINF_SEM_CNPJ_DECLARANTE`, `REINF_SEM_CONTATO`, `SPED_SEM_GERACAO_ANTERIOR`,
+   `SPED_ENTRADA_INVALIDA`). Cada um com código, mensagem pt/en e uma de duas
    origens, ambas **lidas**: (i) o erro nomeado do serviço dono, que o job só mapeia sem reimplementar a regra; ou (ii) um
    estado lido de repositório que já existe (perfil do ano, unidade, pendência de venda, encerramento do exercício,
    geração anterior do SPED). Os códigos:
-   `SEM_PERFIL_DO_ANO` · `UNIDADE_NAO_DEFINIDA` [F-CF-10] · `ANO_NAO_ENCERRADO` / `SPED_SEM_GERACAO_ANTERIOR` /
+   `NO_PROFILE_FOR_YEAR` · `UNIT_NOT_DEFINED` [F-CF-10] · `YEAR_NOT_CLOSED` / `SPED_SEM_GERACAO_ANTERIOR` /
    `SPED_ENTRADA_INVALIDA` (item 21; o último carrega a mensagem do `ValidationError` do gerador) ·
-   `VENDAS_PENDENTES`
-   (`ReconcilePending` aberto na competência ou sync bloqueado) · `ORDEM_ANTERIOR_PENDENTE` (409 `…_ORDER`) ·
-   `PARAMETRO_LEGAL_AUSENTE` (`ParametroLegalAusenteError`) · `TETO_PRESUMIDO_EXCEDIDO` (`PRESUMIDO_TETO_EXCEDIDO`) ·
-   `CONTAS_DE_PROVISAO` (`provisaoContasConfiguradas = false`) · `LALUR_PARTE_B` (Real, sem Parte B no `A00`/trimestre) ·
+   `PENDING_SALES`
+   (`ReconcilePending` aberto na competência ou sync bloqueado) · `PREVIOUS_PERIOD_PENDING` (409 `…_ORDER`) ·
+   `LEGAL_PARAMETER_MISSING` (`ParametroLegalAusenteError`) · `TETO_PRESUMIDO_EXCEDIDO` (`PRESUMIDO_TETO_EXCEDIDO`) ·
+   `PROVISION_ACCOUNTS_MISSING` (`provisaoContasConfiguradas = false`) · `LALUR_PARTE_B` (Real, sem Parte B no `A00`/trimestre) ·
    `CBS_REFERENCIA_PROVISORIA` (`CALCULATED_PROVISIONAL`) · `REINF_SEM_CNPJ_DECLARANTE` / `REINF_SEM_CONTATO`
-   (`ReinfService.ts:344,348`). O `catch` pega **só** esses erros nomeados, pelo código. Qualquer outro sobe e conta como
+   (`ReinfService.ts:344,348`). O mapeamento erro nomeado → pré-requisito é do **tratador da família**
+   (`ObligationHandlerPort.toPrerequisite`, no adaptador BR, que conhece os erros do serviço dono); o centro lê o estado
+   dos repositórios do centro (perfil do ano, unidade, `ReconcilePending`, encerramento do exercício). O `catch` do centro
+   pega **só** o que o tratador traduziu (`toPrerequisite(err) !== null`). Qualquer outro sobe e conta como
    falha da PJ (memória "skip+log só com erro próprio"). Teste por código: o serviço dono lança o erro ⇒ a ocorrência
-   fica `AGUARDANDO_PRE_REQUISITO` com aquele código. Um `Error` genérico ⇒ `falhas + 1` e a ocorrência não muda.
-8. **Métodos `*PeloSistema` que faltam**, no molde do LEGAL-PARAMS PR-4 (sem policy, ator `PLATFORM`):
+   fica `AWAITING_PREREQUISITE` com aquele código. Um `Error` genérico ⇒ `falhas + 1` e a ocorrência não muda.
+8. **Métodos `*PeloSistema` que faltam**, no molde do LEGAL-PARAMS PR-4 (sem policy, ator `PLATFORM`), **nos serviços
+   legados BR onde já moram** (não se movem nesta emenda; a fatia F5 os move):
    `SimplesApuracaoService.calcularPeloSistema`, `IbsCbsAssessmentService.previewPeloSistema`/`confirmarPeloSistema`,
-   `ReinfService.gerarPeloSistema`, `MitExportService.gerarPeloSistema`. Os do X7/X8 já existem. Guarda: teste de
-   fronteira que reprova chamador de `*PeloSistema` fora da allowlist (`TaxAssessmentRecalcService`,
-   `CicloFiscalService`).
+   `ReinfService.gerarPeloSistema`, `MitExportService.gerarPeloSistema`. Os do X7/X8 já existem. Quem os chama são os
+   **adaptadores BR** de `features/accounting/paises/br/adapters/obrigacoes/` (`X7ObrigacaoAdapter`, `X8ObrigacaoAdapter`,
+   `IbsCbsObrigacaoAdapter`, `SimplesObrigacaoAdapter`, `ReinfObrigacaoAdapter`, `MitObrigacaoAdapter`,
+   `SpedObrigacaoAdapter`), cada um implementando o `ObligationHandlerPort` (borda → legado é permitido pela `P1`).
+   Guarda: teste de fronteira que reprova chamador de `*PeloSistema` fora da allowlist (`TaxAssessmentRecalcService` e os
+   sete adaptadores de `paises/br/adapters/obrigacoes/`; o `ComplianceCycleService` **não** chama `*PeloSistema`).
 9. **Prévia persistida na ocorrência:** valores por tributo, `parametrosSha256`, avisos com código e `calculadaEm`. Ela é
-   recalculada a cada passada até o estado sair de `PREVIA_CALCULADA`, e só se grava quando o hash muda.
-   **Simples:** depois da prévia, o estado vai a `AGUARDANDO_HUMANO` ("transmita o PGDAS-D até <vencimento> e registre o
+   recalculada a cada passada até o estado sair de `PREVIEW_CALCULATED`, e só se grava quando o hash muda.
+   **Simples:** depois da prévia, o estado vai a `AWAITING_HUMAN` ("transmita o PGDAS-D até <vencimento> e registre o
    DAS"), com a prévia como espelho. A provisão estimada é o item 17b (PR-2, F-CF-5 → b).
-10. **`CicloFiscalScheduler.ts`**, clone do `LegalParamsRecalcScheduler`: lock local, eventos `job.scheduled/completed/
+10. **`ComplianceCycleScheduler.ts`**, clone do `LegalParamsRecalcScheduler`: lock local, eventos `job.scheduled/completed/
     skipped/failed`, `alert` injetado (padrão `sendAlertWebhook`) que dispara `job_failed` no `catch` do `runOnce`.
-    A fonte `ciclo_fiscal` entra em `AlertPayload.source` na mesma mudança (OBS-R11). Intervalo
-    `CICLO_FISCAL_INTERVAL_MS` (padrão 6 h) e atraso inicial pelo `readMsEnv`. Fica desligado sob `NODE_ENV=test` sem
-    `allowInTest` e desligado sem `CICLO_FISCAL_ENABLED=true`. Registrado no `start`/`stop` de `server.ts`. Teste: o caso
+    A fonte `compliance_cycle` entra em `AlertPayload.source` na mesma mudança (OBS-R11). Intervalo
+    `COMPLIANCE_CYCLE_INTERVAL_MS` (padrão 6 h) e atraso inicial pelo `readMsEnv`. Fica desligado sob `NODE_ENV=test` sem
+    `allowInTest` e desligado sem `COMPLIANCE_CYCLE_ENABLED=true`. Registrado no `start`/`stop` de `server.ts`. O arquivo é
+    `server/src/jobs/ComplianceCycleScheduler.ts` (job é camada de aplicação, fica em `jobs/`, F-PBA-3 a). Teste: o caso
     entra na tabela do `schedulerFailureAlert.test.ts` (que acha o arquivo por glob). Com `falhas > 0`, o
     `job.completed` sai em `warn`.
-11. **`GET /api/accounting/obrigacoes?ano&estado?&ate?`** — cadeia Route → Controller → Service → Repository, policy
+11. **`GET /api/accounting/tax-obligations?year&state?&until?`** (recurso novo do centro, path e chaves em inglês,
+    F-PBA-1 a; controller `src/controllers/complianceCycleController.ts`, F-PBA-3 a) — cadeia Route → Controller → Service → Repository, policy
     `canReadTaxAssessment`, DTO Zod `.strict()`, rota em 2 toques (`routes/accounting.ts` + `docs.paths.ts`), openapi
     (guarda de path-count). Devolve as ocorrências com `vencimento`, `regra`, `fonte`, `estado`, `preRequisitos`,
-    `previa` e a situação do prazo **derivada na leitura** (`NO_PRAZO` · `VENCE_EM_BREVE` [≤ `AVISO_DIAS_UTEIS` = 5 dias
-    úteis, constante do `cicloFiscal.ts`, F-CF-7 → a] ·
-    `VENCIDA`, nunca gravada). Testes: 403 sem permissão; 400 com chave extra; `VENCIDA` muda com o relógio e não com
+    `previa` e a situação do prazo **derivada na leitura** (`ON_TIME` · `DUE_SOON` [≤ `NOTICE_BUSINESS_DAYS` = 5 dias
+    úteis, constante do `models/complianceCycle.ts`; a contagem de dias úteis vem de
+    `ObligationCalendarPort.businessDaysUntil`, porque o calendário de feriados é do país; F-CF-7 → a] ·
+    `OVERDUE`, nunca gravada). Testes: 403 sem permissão; 400 com chave extra; `OVERDUE` muda com o relógio e não com
     escrita.
-12. **Gates do diff no PR-1:** snapshot de shape dos DTOs novos; códigos de pré-requisito e de aviso no catálogo i18n
-    pt/en (paridade); `npm run check:arch` sem violação nova (o controller usa o resolver HTTP, nunca o
-    `resolveAccountingScopeInternal`).
+12. **Gates do diff no PR-1:** snapshot de shape dos DTOs novos (o `ComplianceCycleDto.ts` do centro e, se houver, os
+    de `paises/br/dtos/`, que o snapshot só enxerga com o ajuste G2 do ADR); códigos de pré-requisito e de aviso no
+    catálogo i18n pt/en (paridade); `npm run check:arch` sem violação nova: o controller usa o resolver HTTP, nunca o
+    `resolveAccountingScopeInternal`, e o `ComplianceCycleService`, o `complianceCycle.ts` e as duas portas **não importam
+    `paises/`** (`P1`).
 
 ### PR-2 — reprocessamento, marcação humana e confirmação por política
 
-13. **`POST /api/accounting/obrigacoes/:id/reprocessar`** (policy `canManageTaxAssessment`) — roda só aquela ocorrência
+13. **`POST /api/accounting/tax-obligations/:id/reprocess`** (policy `canManageTaxAssessment`) — roda só aquela ocorrência
     agora, pelo mesmo caminho do job, com o mesmo resultado. Teste: reprocessar duas vezes seguidas sem dado novo ⇒ a
     2ª não escreve.
-14. **`PATCH /api/accounting/obrigacoes/:id`** — o humano marca o que se cumpre fora do sistema (`ENTREGUE` com recibo
-    opcional, `PAGA`, `DISPENSADA` com motivo) nas obrigações sem registro próprio (DCTFWeb encerrada no MIT, ECD/ECF no
+14. **`PATCH /api/accounting/tax-obligations/:id`** — o humano marca o que se cumpre fora do sistema (`kind` = `FILED`
+    com recibo opcional, `PAID`, `WAIVED` com motivo) nas obrigações sem registro próprio (DCTFWeb encerrada no MIT, ECD/ECF no
     PVA, DEFIS, DASN-SIMEI). As que têm registro próprio derivam o estado dele e recusam o PATCH (400 nomeado): DAS
-    registrado ⇒ `CONCLUIDA`; `ReinfBatch.status = TRANSMITIDO/ACEITO`. Evento de auditoria novo
-    `fiscal.obrigacao.marcada` na allowlist do `auditCanonical.ts` (campos: `ocorrenciaId`, `obrigacao`, `periodo`,
-    `de`, `para`; o recibo é texto livre e passa pelo `auditFreeTextMask`).
-15. **Entrada por ocorrência** (F-CF-3 → b): `PUT /api/accounting/obrigacoes/:id/entrada`. Guarda as deduções,
+    registrado ⇒ `COMPLETED`; `ReinfBatch.status = TRANSMITIDO/ACEITO`. Quem sabe se há registro próprio é o tratador
+    (`ObligationHandlerPort.ownRecordState`, adaptador BR). Evento de auditoria novo
+    `fiscal.tax_obligation.marked` na allowlist do `auditCanonical.ts` (campos: `occurrenceId`, `obligation`, `period`,
+    `from`, `to`; a allowlist continua central até a fatia F2 do ADR; o recibo é texto livre e passa pelo `auditFreeTextMask`).
+15. **Entrada por ocorrência** (F-CF-3 → b): `PUT /api/accounting/tax-obligations/:id/input`. Guarda as deduções,
     retenções sofridas, estimativas pagas e o modo mensal que a confirmação do X7/X8/IBS-CBS aceita, validados **pelo
-    mesmo schema** do preview da família (sem schema paralelo). O job usa essa entrada; sem ela, usa a vazia.
-16. **Política no perfil fiscal do ano** (F-CF-3 → b; F-CF-5a → a): `cicloFiscalAutoConfirmar` (lista fechada de
-    famílias: `X7`, `X8`, `IBS_CBS`, `SIMPLES`; vazia por padrão) e `cicloFiscalDiaCorteUtil` (o n-ésimo dia útil do mês
+    mesmo schema** do preview da família (sem schema paralelo). O schema é do país: o centro chama
+    `ObligationHandlerPort.parseInput(raw)` e o adaptador BR valida com o schema da família (X7, X8, IBS/CBS); o DTO do
+    centro não importa a borda. O job usa essa entrada; sem ela, usa a vazia.
+16. **Política no perfil fiscal do ano** (F-CF-3 → b; F-CF-5a → a), em **colunas novas em inglês** no
+    `CompanyFiscalProfile` (F-PBA-1 a; o model fica bilíngue até a fatia F6): `complianceAutoConfirmFamilies` (lista de
+    famílias; os valores são os códigos ratificados `X7`, `X8`, `IBS_CBS`, `SIMPLES`, declarados pelo país em
+    `FAMILIAS_POLITICA_BR` de `paises/br/models/cicloFiscal.ts`; o DTO aceita `z.array(z.string())` e o serviço reprova com
+    400 a família que nenhum tratador registrado declara, para o DTO do centro não importar a borda; vazia por padrão) e `complianceCutoffBusinessDay` (o n-ésimo dia útil do mês
     seguinte à competência, padrão 5, F-CF-6 → a), com migração aditiva. Os campos novos entram no evento de auditoria do
     perfil (guarda de allowlist: campo novo exige guarda, memória "Allowlist de auditoria").
 17. **Confirmação automática** (F-CF-3 → b, F-CF-6 → a): a família está na política, a prévia não tem aviso bloqueante,
-    não há `VENDAS_PENDENTES`, e `hoje` ≥ dia de corte. Então o job chama `confirmarPeloSistema` com a entrada do item 15
-    e `expectedAPagarCents` da prévia **da mesma passada**. A provisão segue o caminho do serviço dono (X7: best-effort
+    não há `PENDING_SALES`, e `hoje` ≥ dia de corte. Então o job chama `confirmarPeloSistema` com a entrada do item 15
+    e `expectedAPagarCents` da prévia **da mesma passada**, sempre por `ObligationHandlerPort.confirm` (o adaptador BR chama
+    o `confirmarPeloSistema` do serviço dono). A provisão segue o caminho do serviço dono (X7: best-effort
     depois do commit 1; ocorrência confirmada com `provisaoEntryId = null` ⇒ o job chama `reconcileProvisao` na passada
     seguinte). **Período já fechado** quando o job chega: confirma, e a provisão fica pendente com o aviso "reabra o
     período para lançar a provisão", porque o `postEntry` exige `OPEN` (`PostingService.ts:131,148`). O `reconcile`
     completa quando o período reabrir. Testes de integração: confirma e provisiona sem HTTP (é o `comoProvar` da lacuna);
     antes do dia de corte não confirma; com o período `SOFT_CLOSED`, a confirmação existe e a provisão fica pendente com o
-    aviso; 409 `ALREADY_CONFIRMED` porque o usuário confirmou antes ⇒ ocorrência `CONFIRMADA` apontando para a dele, sem
+    aviso; 409 `ALREADY_CONFIRMED` porque o usuário confirmou antes ⇒ ocorrência `CONFIRMED` apontando para a dele, sem
     2ª linha; `CALCULATED_PROVISIONAL` nunca confirma.
 17b. **Provisão estimada do Simples** (F-CF-5 → b; F-CF-5a → a). Com `SIMPLES` na política, a partir do dia de corte,
     com o período `OPEN` e sem DAS oficial registrado, o job lança a provisão pelo valor **calculado** da prévia, no
@@ -320,12 +406,12 @@ Cada item é testável sozinho. **[F-CF-n]** = o fork que decidiu o item. Todos 
 ### PR-3 — arquivos
 
 19. **EFD-Reinf** [F-CF-4]: com o período encerrado e o R-1000 completo, o job chama `gerarPeloSistema` uma vez por
-    competência. `ReinfNadaAGerarError` com `REINF_SEM_FATO` ⇒ `DISPENSADA` com a fonte (IN 2.043 art. 4º, "dispensa sem
+    competência. `ReinfNadaAGerarError` com `REINF_SEM_FATO` ⇒ `WAIVED` com a fonte (IN 2.043 art. 4º, "dispensa sem
     fato"). Gera de novo só quando o lote está `defasado` (leitura que já existe). Estado final automático =
-    `ARQUIVO_GERADO`; a transmissão é humana até o PR-4 do EFD-REINF.
+    `FILE_GENERATED`; a transmissão é humana até o PR-4 do EFD-REINF.
 20. **MIT/DCTFWeb** [F-CF-4]: quando todas as apurações X7/X8 do mês estão confirmadas, o job chama
     `MitExportService.gerarPeloSistema`. Gera de novo só se uma apuração do mês foi substituída depois do arquivo. Estado
-    `ARQUIVO_GERADO` → o humano encerra no MIT (item 14).
+    `FILE_GENERATED` → o humano encerra no MIT (item 14).
 21. **Rascunho de ECD e ECF** (F-CF-4 → b; F-CF-4a → a; F-CF-4b → a): uma vez por ano-calendário, quando o
     encerramento do exercício estiver lançado (o lançamento do `ExerciseClosingService.closeExercise` do ano), o job chama
     a geração que já existe (`SpedGenerationService` para a ECD; `SpedEcfGenerationService`/`SpedEcfRealGenerationService`
@@ -336,10 +422,10 @@ Cada item é testável sozinho. **[F-CF-n]** = o fork que decidiu o item. Todos 
     `EXPORT_SPED_ECD`/`EXPORT_SPED_ECF*` daqui em diante (migração aditiva). Os dados pessoais dos signatários já estão
     no banco; a coluna nunca vai ao log nem à auditoria (OBS-R7, allowlist). Sem geração anterior ⇒
     `SPED_SEM_GERACAO_ANTERIOR`: a 1ª é sempre do humano. Entrada recusada pelo gerador ⇒ `SPED_ENTRADA_INVALIDA` com a
-    mensagem. Estado `ARQUIVO_GERADO` → o humano assina e transmite no PVA. Gera de novo só se o razão do
+    mensagem. Estado `FILE_GENERATED` → o humano assina e transmite no PVA. Gera de novo só se o razão do
     ano mudar depois da geração. A detecção (lançamento do ano com `createdAt` posterior ao arquivo, ou estorno) e a
     forma da 2ª geração (substituta pelo `supersedesJobId` do `spedRectificationGate.ts` ou job novo) são esboço e se
-    conferem na execução (§10 item 6). Sem encerramento ⇒ `AGUARDANDO_PRE_REQUISITO` com `ANO_NAO_ENCERRADO`. Testes:
+    conferem na execução (§10 item 6). Sem encerramento ⇒ `AWAITING_PREREQUISITE` com `YEAR_NOT_CLOSED`. Testes:
     exercício encerrado com geração anterior ⇒ 1 arquivo; 2ª passada ⇒ nenhum; lançamento novo no ano ⇒ 1 arquivo
     novo; sem geração anterior ⇒ nenhum arquivo e o pré-requisito.
 22. **DEFIS, DASN-SIMEI e bloco anual do PGDAS-D**: só ocorrência + prazo + pré-requisito. O job não gera, porque a
@@ -347,154 +433,229 @@ Cada item é testável sozinho. **[F-CF-n]** = o fork que decidiu o item. Todos 
 
 ## 7. Contratos esboçados
 
-```prisma
-// PR-0 (F-CF-1 a). Calendário de obrigações: 1 linha por PJ × obrigação × período.
-model ObrigacaoFiscalOcorrencia {
-  id               String    @id @default(cuid())
-  userId           String // a PJ (R8)
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  unitId           String? // unidade do escopo usada na prévia (F-CF-10); null até haver
-  obrigacao        String // OBRIGACOES_CICLO (abaixo)
-  periodo          String // "2026-11" | "2026-T03" | "2026-A05" | "2026" (anual)
-  anoCalendario    Int
-  vencimento       String // date-only
-  regraPrazo       String // REGRAS_PRAZO
-  prazoParametroId String? // linha PRAZO_OBRIGACAO usada (proveniência)
-  fontePrazo       String
-  estado           String // ESTADOS_OCORRENCIA
-  versao           Int       @default(0) // CAS da transição
-  preRequisitos    Json? // { codigo, detalhe }[]
-  previa           Json? // PreviaOcorrenciaSchema
-  previaSha256     String?
-  entradaInformada Json? // item 15 (F-CF-3 b)
-  sourceType       String? // 'tax_assessment' | 'consumption_tax_assessment' | 'simples_apuracao' | 'reinf_batch' | 'mit_export' | 'accounting_data_exchange_job' (ECD/ECF)
-  sourceId         String?
-  aviso            String?
-  marcadoPorId     String? // PATCH humano (item 14)
-  ultimaPassadaEm  DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  deletedAt        DateTime?
+Emendados em 24/11 pela regra do país na borda. **Centro** (inglês, `features/accounting/`): o model, o
+`complianceCycle.ts`, as duas portas, o serviço, o DTO e o job. **Borda BR** (português, `features/accounting/paises/br/`):
+os códigos de obrigação, de regra de prazo e de pré-requisito do Brasil, `vencimentoDe`, `ocorrenciasEsperadas` e os
+adaptadores.
 
-  @@unique([userId, obrigacao, periodo])
-  @@index([userId, anoCalendario, estado])
-  @@index([estado, vencimento])
-  @@map("obrigacao_fiscal_ocorrencias")
+```prisma
+// PR-0 (F-CF-1 a). Centro: calendário de obrigações, 1 linha por PJ × obrigação × período.
+model TaxObligationOccurrence {
+  id                 String    @id @default(cuid())
+  userId             String // a PJ (R8)
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unitId             String? // unidade do escopo usada na prévia (F-CF-10); null até haver
+  obligation         String // código do país (BR: OBRIGACOES_CICLO, paises/br/models/cicloFiscal.ts)
+  period             String // "2026-11" | "2026-T03" | "2026-A05" | "2026" (anual)
+  fiscalYear         Int
+  dueDate            String // date-only
+  dueRule            String // código do país (BR: REGRAS_PRAZO)
+  dueRuleParameterId String? // linha PRAZO_OBRIGACAO usada (proveniência)
+  dueSource          String
+  state              String // OCCURRENCE_STATES
+  version            Int       @default(0) // CAS da transição
+  prerequisites      Json? // Prerequisite[]
+  preview            Json? // OccurrencePreviewSchema
+  previewSha256      String?
+  informedInput      Json? // item 15 (F-CF-3 b); validado pelo tratador do país
+  sourceType         String? // 'tax_assessment' | 'consumption_tax_assessment' | 'simples_apuracao' | 'reinf_batch' | 'mit_export' | 'accounting_data_exchange_job' (ECD/ECF)
+  sourceId           String?
+  notice             String?
+  markedById         String? // PATCH humano (item 14)
+  lastRunAt          DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  @@unique([userId, obligation, period])
+  @@index([userId, fiscalYear, state])
+  @@index([state, dueDate])
+  @@map("tax_obligation_occurrences")
 }
+// PR-2 — CompanyFiscalProfile (model misto legado; colunas NOVAS em inglês, F-PBA-1 a; F-CF-3 b, F-CF-6 a, F-CF-10 a):
+//   complianceAutoConfirmFamilies Json?            // string[]; vazio/null = desligado
+//   complianceCutoffBusinessDay   Int @default(5)  // n-ésimo dia útil do mês seguinte à competência
+//   assessmentUnitId              String?          // F-CF-10
+// PR-3 — AccountingDataExchangeJob (centro): requestJson Json? (item 21)
 ```
 
 ```ts
-// PR-0 — server/src/features/accounting/models/cicloFiscal.ts
+// PR-0 — CENTRO: server/src/features/accounting/models/complianceCycle.ts (folha: não importa paises/)
+export const OCCURRENCE_STATES = [
+  'EXPECTED',              // período ainda não acabou
+  'AWAITING_PREREQUISITE', // prerequisites não vazio
+  'PREVIEW_CALCULATED',
+  'CONFIRMED',             // apuração CONFIRMED viva (sourceId)
+  'FILE_GENERATED',        // arquivo gerado (BR: Reinf/MIT/ECD/ECF)
+  'AWAITING_HUMAN',        // falta passo humano (§3.2)
+  'COMPLETED',             // derivado (registro próprio) ou marcado (FILED/PAID)
+  'WAIVED',                // sem fato (BR: Reinf art. 4º) ou marcado com motivo
+] as const;
+export type OccurrenceState = (typeof OCCURRENCE_STATES)[number];
+/** Fora da tabela ⇒ ConflictError 'TAX_OBLIGATION_INVALID_TRANSITION'. Qualquer estado não final → WAIVED só com motivo. */
+export const OCCURRENCE_TRANSITIONS: Readonly<Record<OccurrenceState, readonly OccurrenceState[]>> = {
+  EXPECTED: ['AWAITING_PREREQUISITE', 'PREVIEW_CALCULATED', 'WAIVED'],
+  AWAITING_PREREQUISITE: ['PREVIEW_CALCULATED', 'WAIVED'],
+  PREVIEW_CALCULATED: ['AWAITING_PREREQUISITE', 'CONFIRMED', 'AWAITING_HUMAN', 'WAIVED'],
+  CONFIRMED: ['FILE_GENERATED', 'AWAITING_HUMAN', 'PREVIEW_CALCULATED' /* superseded */, 'WAIVED'],
+  FILE_GENERATED: ['AWAITING_HUMAN', 'COMPLETED', 'WAIVED'],
+  AWAITING_HUMAN: ['COMPLETED', 'WAIVED'],
+  COMPLETED: [],
+  WAIVED: [],
+};
+export const CENTER_PREREQUISITES = [
+  'NO_PROFILE_FOR_YEAR', 'UNIT_NOT_DEFINED', 'YEAR_NOT_CLOSED', 'PENDING_SALES',
+  'PREVIOUS_PERIOD_PENDING', 'LEGAL_PARAMETER_MISSING', 'PROVISION_ACCOUNTS_MISSING',
+] as const;
+export interface Prerequisite { code: string; detail: string } // code ∈ CENTER_PREREQUISITES ∪ códigos do país
+export interface ExpectedOccurrence {
+  obligation: string;          // código do país
+  period: string;
+  dueDate: string;
+  dueRule: string;             // código do país
+  dueSource: string;
+  dueRuleParameterId: string | null;
+  pendingQuestion?: string;    // CONDICIONAL da matriz do país
+}
+export const DUE_STATUSES = ['ON_TIME', 'DUE_SOON', 'OVERDUE'] as const;
+export type DueStatus = (typeof DUE_STATUSES)[number];
+export const NOTICE_BUSINESS_DAYS = 5; // F-CF-7 a
+/** Pura: derivada na leitura, nunca gravada; null em estado final. */
+export function dueStatusOf(state: OccurrenceState, dueDate: string, today: string, businessDaysToDue: number): DueStatus | null;
+export function assertTransition(from: OccurrenceState, to: OccurrenceState, reason?: string): void;
+```
+
+```ts
+// PR-1 — CENTRO: server/src/features/accounting/ports/ObligationCalendarPort.ts
+export interface ObligationCalendarPort {
+  /** O que a lei do país espera da PJ no ano (F-CF-9). BR: ocorrenciasEsperadas + vencimentoDe + perfil, matriz, prazos, feriados. */
+  expectedOccurrences(scope: AccountingScope, fiscalYear: number, tx?: Prisma.TransactionClient): Promise<ExpectedOccurrence[]>;
+  /** Dias úteis de `today` até `dueDate` pelo calendário do país (feriado nacional e, no BR, o municipal: §9 item 1). */
+  businessDaysUntil(dueDate: string, today: string, codMun: string | null): number;
+  /** Os códigos de pré-requisito que o país acrescenta aos do centro (i18n e DTO de leitura). */
+  readonly countryPrerequisites: readonly string[];
+}
+
+// PR-1 — CENTRO: server/src/features/accounting/ports/ObligationHandlerPort.ts
+export interface OccurrencePreview {
+  taxes: Record<string, { baseCents: string; dueCents: string; payableCents: string }>;
+  parametersSha256: string;
+  notices: Array<{ code: string; detail: string; blocking: boolean }>;
+  calculatedAt: string;
+}
+export interface ObligationHandlerPort {
+  readonly family: string;                  // BR: 'X7' | 'X8' | 'IBS_CBS' | 'SIMPLES' | 'REINF' | 'MIT' | 'SPED'
+  readonly obligations: readonly string[];  // as obrigações que trata (BR: OBRIGACOES_CICLO)
+  readonly autoConfirmable: boolean;        // entra na política do item 16 (BR: X7, X8, IBS_CBS, SIMPLES)
+  parseInput(raw: unknown): unknown;        // item 15: schema do preview da família; ValidationError ⇒ 400
+  preview(scope: AccountingScope, occ: OccurrenceRef, input: unknown): Promise<OccurrencePreview>;
+  confirm?(scope: AccountingScope, occ: OccurrenceRef, input: unknown, expectedPayableCents: string): Promise<{ sourceType: string; sourceId: string }>;
+  recalculate?(scope: AccountingScope, occ: OccurrenceRef): Promise<{ sameValues: boolean; delivered: boolean }>; // item 18
+  reconcile?(scope: AccountingScope, occ: OccurrenceRef): Promise<void>;          // provisão pendente (item 17)
+  provisionEstimate?(scope: AccountingScope, occ: OccurrenceRef, preview: OccurrencePreview): Promise<void>; // BR: Simples, item 17b
+  generateFile?(scope: AccountingScope, occ: OccurrenceRef): Promise<{ sourceType: string; sourceId: string } | { waived: string }>; // itens 19–21
+  ownRecordState?(scope: AccountingScope, occ: OccurrenceRef): Promise<OccurrenceState | null>; // item 14
+  /** Erro nomeado do serviço dono → pré-requisito; null = não é pré-requisito e sobe como falha da PJ (item 7). */
+  toPrerequisite(err: unknown): Prerequisite | null;
+}
+export type OccurrenceRef = Pick<TaxObligationOccurrence, 'id' | 'obligation' | 'period' | 'fiscalYear' | 'unitId' | 'sourceType' | 'sourceId' | 'version'>;
+```
+
+```ts
+// PR-1 — CENTRO: dtos/ComplianceCycleDto.ts (chaves em inglês, F-PBA-1 a)
+export const TaxObligationListQuerySchema = z.object({
+  year: z.coerce.number().int().min(2025).max(2100),
+  state: z.enum(OCCURRENCE_STATES).optional(),
+  until: dateOnly('until').optional(), // dueDate <= until
+}).strict();
+
+// O código é do centro ou do país; o enum fechado de cada lado é conferido no serviço (item 7), não aqui.
+export const PrerequisiteSchema = z.object({ code: z.string().min(1).max(64), detail: z.string().max(500) }).strict();
+
+export const OccurrencePreviewSchema = z.object({
+  taxes: z.record(z.string(), z.object({ baseCents: CentsStr, dueCents: CentsStr, payableCents: CentsStr }).strict()),
+  parametersSha256: z.string().length(64),
+  notices: z.array(z.object({ code: z.string(), detail: z.string(), blocking: z.boolean() }).strict()),
+  calculatedAt: z.string().datetime(),
+}).strict();
+
+export const TaxObligationViewSchema = z.object({
+  id: z.string(), obligation: z.string(), period: z.string(), dueDate: z.string(),
+  dueRule: z.string(), dueSource: z.string(), state: z.enum(OCCURRENCE_STATES),
+  dueStatus: z.enum(DUE_STATUSES).nullable(), // null em estado final
+  businessDaysToDue: z.number().int(),
+  prerequisites: z.array(PrerequisiteSchema), preview: OccurrencePreviewSchema.nullable(),
+  sourceType: z.string().nullable(), sourceId: z.string().nullable(), notice: z.string().nullable(),
+}).strict();
+
+// PR-2
+export const TaxObligationMarkSchema = z.object({
+  state: z.enum(['COMPLETED', 'WAIVED']),
+  kind: z.enum(['FILED', 'PAID', 'WAIVED']),
+  receipt: z.string().max(120).optional(),
+  reason: z.string().max(500).optional(), // obrigatório se WAIVED (refine)
+}).strict();
+// PUT /:id/input (F-CF-3 b): corpo `unknown` no DTO do centro; o tratador do país valida com o schema de preview da
+// família SEM unitId/ano/periodo (vêm da ocorrência): BR X7 → TaxAssessmentPreviewFields.pick({ deducoes, modoMensal,
+// estimativasPagas }); X8 → o do PisCofins; IBS_CBS → o do IbsCbs.
+```
+
+```ts
+// PR-1 — CENTRO: services/ComplianceCycleService.ts (atomicUntil: — ; só ordena chamadas, como o TaxAssessmentRecalcService)
+export interface ComplianceCycleSummary { companies: number; failures: number; materialized: number; previews: number;
+  confirmed: number; files: number; awaiting: number; unchanged: number }
+export class ComplianceCycleService {
+  constructor(deps: {
+    repo: ITaxObligationOccurrenceRepository; profiles: ICompanyFiscalProfileRepository;
+    calendar: ObligationCalendarPort; handlers: readonly ObligationHandlerPort[]; // lista fixa, montada no lib/factory.ts
+    closing: Pick<PostingService, 'findEntryBySource'>; // YEAR_NOT_CLOSED (esboço: conferir o sourceType do closeExercise)
+    pending: Pick<IReconcilePendingRepository, 'countAbertasNaCompetencia'>; periods: Pick<IAccountingPeriodRepository, 'statusDo'>;
+  });
+  process(today: string): Promise<ComplianceCycleSummary>;
+  processOne(scope: AccountingScope, id: string): Promise<TaxObligationView>;  // item 13
+  list(scope: AccountingScope, q: TaxObligationListQuery): Promise<TaxObligationView[]>;
+  mark(scope: AccountingScope, id: string, body: TaxObligationMark): Promise<TaxObligationView>;
+  setInput(scope: AccountingScope, id: string, raw: unknown): Promise<TaxObligationView>; // item 15
+}
+// PR-1 — lib/alertWebhook.ts: AlertPayload.source ganha 'compliance_cycle'
+// jobs/ComplianceCycleScheduler.ts: deps { run?, log?, alert? } idênticos aos do LegalParamsRecalcScheduler
+```
+
+```ts
+// PR-0 — BORDA BR: server/src/features/accounting/paises/br/models/cicloFiscal.ts (português, F-PBA-2 a)
+import type { ExpectedOccurrence } from '../../../models/complianceCycle'; // borda → centro (permitido)
 export const OBRIGACOES_CICLO = [
   'DAS', 'DARF_IRPJ', 'DARF_CSLL', 'PIS', 'COFINS', 'CBS', 'IBS',
   'DCTFWEB', 'REINF', 'ECD', 'ECF', 'DEFIS', 'PGDAS_D_ANUAL', 'DASN_SIMEI',
 ] as const;
 // O PGDAS-D mensal NÃO é ocorrência própria: vence junto com o DAS (Res. CGSN 140 art. 38 § 2º II, "até o vencimento
-// do prazo para pagamento") e é o passo humano da ocorrência DAS (AGUARDANDO_HUMANO). A linha PGDAS_D da matriz
+// do prazo para pagamento") e é o passo humano da ocorrência DAS (AWAITING_HUMAN). A linha PGDAS_D da matriz
 // `OBRIGACAO_REGIME` mapeia para a ocorrência DAS.
-
-export const ESTADOS_OCORRENCIA = [
-  'PREVISTA',                 // período ainda não acabou
-  'AGUARDANDO_PRE_REQUISITO', // preRequisitos não vazio
-  'PREVIA_CALCULADA',
-  'CONFIRMADA',               // apuração CONFIRMED viva (sourceId)
-  'ARQUIVO_GERADO',           // Reinf/MIT/ECD/ECF gerado
-  'AGUARDANDO_HUMANO',        // falta passo humano (§3.2)
-  'CONCLUIDA',                // derivado (DAS registrado) ou marcado (ENTREGUE/PAGA)
-  'DISPENSADA',               // sem fato (Reinf art. 4º) ou marcado com motivo
-] as const;
-// Transições permitidas (tabela fechada; fora dela ⇒ ConflictError 'CICLO_TRANSICAO_INVALIDA'):
-// PREVISTA→{AGUARDANDO_PRE_REQUISITO,PREVIA_CALCULADA,DISPENSADA}; AGUARDANDO_PRE_REQUISITO↔PREVIA_CALCULADA;
-// PREVIA_CALCULADA→{CONFIRMADA,AGUARDANDO_HUMANO}; CONFIRMADA→{ARQUIVO_GERADO,AGUARDANDO_HUMANO,PREVIA_CALCULADA (superseded)};
-// ARQUIVO_GERADO→{AGUARDANDO_HUMANO,CONCLUIDA}; AGUARDANDO_HUMANO→CONCLUIDA; *→DISPENSADA só com motivo.
-
 export const REGRAS_PRAZO = [
   'DIA_20_ADIA', 'DIA_25_ANTECIPA', 'DIA_15_ADIA', 'DIA_15_2O_MES_POS_TRIMESTRE_ADIA',
   'ULTIMO_DIA_UTIL_MES_SEGUINTE', 'ULTIMO_DIA_UTIL_MARCO_ANO_SEGUINTE',
   'ULTIMO_DIA_UTIL_JUNHO_ANO_SEGUINTE', 'ULTIMO_DIA_UTIL_JULHO_ANO_SEGUINTE',
   'DATA_FIXA_31_MARCO_ANO_SEGUINTE', 'DATA_FIXA_ULTIMO_DIA_MAIO', 'JANELA_JAN_MAR', 'DATA_DA_LINHA',
 ] as const; // DATA_DA_LINHA = prorrogação: valorJson.data
-
-export interface OcorrenciaEsperada {
-  obrigacao: (typeof OBRIGACOES_CICLO)[number];
-  periodo: string;
-  vencimento: string;
-  regra: (typeof REGRAS_PRAZO)[number];
-  fonte: string;
-  prazoParametroId: string | null;
-  perguntaPendente?: string; // CONDICIONAL da matriz
-}
+export const PRE_REQUISITOS_BR = [
+  'TETO_PRESUMIDO_EXCEDIDO', 'LALUR_PARTE_B', 'CBS_REFERENCIA_PROVISORIA',
+  'REINF_SEM_CNPJ_DECLARANTE', 'REINF_SEM_CONTATO', 'SPED_SEM_GERACAO_ANTERIOR', 'SPED_ENTRADA_INVALIDA',
+] as const;
+export const FAMILIAS_POLITICA_BR = ['X7', 'X8', 'IBS_CBS', 'SIMPLES'] as const; // item 16
 export function ocorrenciasEsperadas(perfil: PerfilDoAno, matriz: readonly LinhaMatriz[], prazos: readonly LinhaLegal[],
-  feriados: Feriados, ano: number): OcorrenciaEsperada[];
+  feriados: Feriados, ano: number): ExpectedOccurrence[];
+
+// PR-0 — BORDA BR: paises/br/models/prazoObrigacao.ts (F-PBA-3 a; delega a lib/prazoReinf, lib/vencimentoRetencao, lib/ibsCbsApuracao)
 export function vencimentoDe(regra: RegraPrazo, periodo: string, feriados: Feriados, codMun: string | null,
   linha?: LinhaLegal): string;
-```
+// PR-0 — BORDA BR: paises/br/models/periodosEsperados.ts (extraído do TaxAssessmentPeriodosService, item 4)
+// PR-0 — BORDA BR: paises/br/legalParameters/prazoObrigacao.ts — registra o formato PRAZO_OBRIGACAO no registro da F3 (F-PBA-7 a)
 
-```ts
-// PR-1 — dtos/CicloFiscalDto.ts
-export const ObrigacaoListQuerySchema = z.object({
-  ano: z.coerce.number().int().min(2025).max(2100),
-  estado: z.enum(ESTADOS_OCORRENCIA).optional(),
-  ate: dateOnly('ate').optional(), // vencimento <= ate
-}).strict();
-
-export const PreRequisitoSchema = z.object({ codigo: z.enum(PRE_REQUISITOS_CICLO), detalhe: z.string().max(500) }).strict();
-
-export const PreviaOcorrenciaSchema = z.object({
-  tributos: z.record(z.string(), z.object({ baseCents: CentsStr, devidoCents: CentsStr, aPagarCents: CentsStr }).strict()),
-  parametrosSha256: z.string().length(64),
-  avisos: z.array(z.object({ codigo: z.string(), detalhe: z.string() }).strict()),
-  calculadaEm: z.string().datetime(),
-}).strict();
-
-export const ObrigacaoViewSchema = z.object({
-  id: z.string(), obrigacao: z.enum(OBRIGACOES_CICLO), periodo: z.string(), vencimento: z.string(),
-  regraPrazo: z.enum(REGRAS_PRAZO), fontePrazo: z.string(), estado: z.enum(ESTADOS_OCORRENCIA),
-  situacaoPrazo: z.enum(['NO_PRAZO', 'VENCE_EM_BREVE', 'VENCIDA']).nullable(), // null em estado final
-  diasUteisParaVencer: z.number().int(),
-  preRequisitos: z.array(PreRequisitoSchema), previa: PreviaOcorrenciaSchema.nullable(),
-  sourceType: z.string().nullable(), sourceId: z.string().nullable(), aviso: z.string().nullable(),
-}).strict();
-
-// PR-2
-export const ObrigacaoMarcarSchema = z.object({
-  estado: z.enum(['CONCLUIDA', 'DISPENSADA']),
-  tipo: z.enum(['ENTREGUE', 'PAGA', 'DISPENSADA']),
-  recibo: z.string().max(120).optional(),
-  motivo: z.string().max(500).optional(), // obrigatório se DISPENSADA (refine)
-}).strict();
-// PUT /:id/entrada (F-CF-3 b): o corpo é o schema de preview da família SEM unitId/ano/periodo (vêm da ocorrência):
-//   X7 → TaxAssessmentPreviewFields.pick({ deducoes, modoMensal, estimativasPagas }); X8 → o do PisCofins; IBS_CBS → o do IbsCbs.
-```
-
-```ts
-// PR-1 — services/CicloFiscalService.ts (atomicUntil: — ; só ordena chamadas, como o TaxAssessmentRecalcService)
-export interface ResumoCicloFiscal { pjs: number; falhas: number; materializadas: number; previas: number;
-  confirmadas: number; arquivos: number; aguardando: number; inalteradas: number }
-export class CicloFiscalService {
-  constructor(deps: {
-    repo: IObrigacaoFiscalOcorrenciaRepository; perfis: ICompanyFiscalProfileRepository; legalParams: LegalParameterService;
-    x7: Pick<TaxAssessmentService, 'recalcularPeloSistema' | 'confirmarPeloSistema' | 'reconcileProvisao'>;
-    x8: Pick<PisCofinsAssessmentService, 'recalcularPeloSistema' | 'confirmarPeloSistema'>;
-    ibsCbs: Pick<IbsCbsAssessmentService, 'previewPeloSistema' | 'confirmarPeloSistema' | 'reconcileIbsCbsProvisao'>;
-    simples: Pick<SimplesApuracaoService, 'calcularPeloSistema' | 'provisionarEstimativaPeloSistema'>;
-    reinf: Pick<ReinfService, 'gerarPeloSistema'>; mit: Pick<MitExportService, 'gerarPeloSistema'>;
-    ecd: Pick<SpedGenerationService, 'generatePeloSistema'>;
-    ecf: Pick<SpedEcfGenerationService, 'generatePeloSistema'>; ecfReal: Pick<SpedEcfRealGenerationService, 'generatePeloSistema'>;
-    exportJobs: Pick<IAccountingDataExchangeJobRepository, 'ultimoExportDoTipo'>; // requestJson da última geração (item 21)
-    encerramento: Pick<PostingService, 'findEntryBySource'>; // lançamento do closeExercise do ano (esboço: conferir o sourceType)
-    pendencias: Pick<IReconcilePendingRepository, 'countAbertasNaCompetencia'>; periodos: Pick<IAccountingPeriodRepository, 'statusDo'>;
-  });
-  processar(hoje: string): Promise<ResumoCicloFiscal>;
-  processarUma(scope: AccountingScope, id: string): Promise<ObrigacaoView>; // item 13
-  listar(scope: AccountingScope, q: ObrigacaoListQuery): Promise<ObrigacaoView[]>;
-  marcar(scope: AccountingScope, id: string, body: ObrigacaoMarcar): Promise<ObrigacaoView>;
-}
-```
-
-```ts
-// PR-1 — lib/alertWebhook.ts: AlertPayload.source ganha 'ciclo_fiscal'
-// jobs/CicloFiscalScheduler.ts: deps { run?, log?, alert? } idênticos aos do LegalParamsRecalcScheduler
+// PR-1..3 — BORDA BR: paises/br/adapters/
+//   CalendarioObrigacoesBrAdapter implements ObligationCalendarPort (ocorrenciasEsperadas + vencimentoDe + feriados)
+//   obrigacoes/{X7,X8,IbsCbs,Simples,Reinf,Mit,Sped}ObrigacaoAdapter implements ObligationHandlerPort, cada um com
+//   Pick<ServiçoLegado, '*PeloSistema' | 'reconcile*'>; o SpedObrigacaoAdapter recebe também
+//   Pick<IAccountingDataExchangeJobRepository, 'ultimoExportDoTipo'> (requestJson da última geração, item 21).
 ```
 
 ## 8. Forks — RATIFICADOS em 21/11 (questionário; cédula em [[D-2026-11-21-CICLO-FISCAL-FORKS]])
@@ -612,7 +773,7 @@ e a apuração grava a "unidade lida". Não há conceito de matriz no código.
 2. **DAS do MEI**: o prazo e a regra de dia não útil não foram lidos (LC 123 art. 18-A). Até lá, o DAS-MEI não entra no
    PR-0.
 3. **IBS**: prazo DRAFT até o regulamento do CG-IBS (P-IBS-5). A ocorrência IBS só nasce com a linha publicada.
-4. **Datas fixas sem regra de dia não útil** (DEFIS, DASN-SIMEI, bloco anual): o prazo não muda. O `VENCE_EM_BREVE`
+4. **Datas fixas sem regra de dia não útil** (DEFIS, DASN-SIMEI, bloco anual): o prazo não muda. O `DUE_SOON`
    conta até o último dia útil antes da data (dossiê §4).
 5. **Oráculo do número**: a prévia do job **é** a apuração do serviço dono, então o oráculo continua o deles (PVA,
    H1/H1b/X5, contador). Este nó não cria número novo.
@@ -641,14 +802,20 @@ e a apuração grava a "unidade lida". Não há conceito de matriz no código.
 
 ## 12. Write-set
 
+Emendado em 24/11 (país na borda). `paises/br` abrevia `server/src/features/accounting/paises/br`.
+
 | PR | Edita / cria |
 |---|---|
-| PR-0 | `server/prisma/schema.prisma`, `server/prisma/migrations/<ts>_ciclo_fiscal_pr0/**`, `server/prisma/data/legal_parameters_prazo_obrigacao_v1.sql`, `server/src/lib/prazoObrigacao.ts` (novo), `server/src/features/accounting/models/cicloFiscal.ts` (novo), `server/src/features/accounting/models/periodosEsperados.ts` (novo, extraído), `server/src/features/accounting/services/TaxAssessmentPeriodosService.ts`, `server/src/features/accounting/repositories/{I,}ObrigacaoFiscalOcorrenciaRepository.ts` (novos), `server/src/features/legalParameters/models/formatoLinha.ts`, `server/src/features/legalParameters/models/legalParameter.ts` (tabela no enum), testes em `__tests__/` |
-| PR-1 | `server/src/features/accounting/services/CicloFiscalService.ts` (novo), `server/src/jobs/CicloFiscalScheduler.ts` (novo), `server/src/jobs/__tests__/schedulerFailureAlert.test.ts`, `server/src/features/accounting/services/{SimplesApuracaoService,IbsCbsAssessmentService,ReinfService,MitExportService}.ts` (métodos `*PeloSistema`), `server/src/features/accounting/dtos/CicloFiscalDto.ts` (novo), `server/src/controllers/cicloFiscalController.ts` (novo), `server/src/routes/obrigacoes.ts` (novo), `server/src/routes/docs/accounting.obrigacoes.paths.ts` (novo), i18n dos códigos |
-| PR-2 | `CicloFiscalService.ts`, `CicloFiscalDto.ts`, `cicloFiscalController.ts`, `routes/obrigacoes.ts`, `server/src/features/accounting/dtos/CompanyFiscalProfileDto.ts`, `server/src/features/accounting/services/SimplesApuracaoService.ts` (estimada + estorno no `registrarDas`, item 17b), `server/prisma/schema.prisma` + migração (campos da política, F-CF-3 b; `unidadeApuracaoId`, F-CF-10) |
-| PR-3 | `CicloFiscalService.ts`, `server/src/features/accounting/services/{SpedGenerationService,SpedEcfGenerationService,SpedEcfRealGenerationService}.ts` (métodos `*PeloSistema` + gravação do `requestJson`, item 21), `server/prisma/schema.prisma` + migração (`AccountingDataExchangeJob.requestJson`) e os testes de integração de Reinf/MIT/ECD/ECF |
+| PR-0 | `server/prisma/schema.prisma`, `server/prisma/migrations/<ts>_compliance_cycle_pr0/**`, `server/prisma/data/legal_parameters_prazo_obrigacao_v1.sql`, `server/src/features/accounting/models/complianceCycle.ts` (novo, centro), `server/src/features/accounting/repositories/{I,}TaxObligationOccurrenceRepository.ts` (novos, centro), `paises/br/models/cicloFiscal.ts`, `paises/br/models/prazoObrigacao.ts`, `paises/br/models/periodosEsperados.ts` (novos, borda; o último extraído), `paises/br/legalParameters/prazoObrigacao.ts` (novo, registro do formato, F-PBA-7 a), `server/src/features/accounting/services/TaxAssessmentPeriodosService.ts` (`LEGADO_BR`), `server/src/features/legalParameters/models/legalParameter.ts` (nome da tabela, só se a F3 mantiver o enum central), testes em `__tests__/` ao lado de cada arquivo |
+| PR-1 | `server/src/features/accounting/ports/{ObligationCalendarPort,ObligationHandlerPort}.ts` (novos, centro), `server/src/features/accounting/services/ComplianceCycleService.ts` (novo, centro), `server/src/jobs/ComplianceCycleScheduler.ts` (novo), `server/src/jobs/__tests__/schedulerFailureAlert.test.ts`, `paises/br/adapters/CalendarioObrigacoesBrAdapter.ts` e `paises/br/adapters/obrigacoes/{X7,X8,IbsCbs,Simples,Reinf,Mit}ObrigacaoAdapter.ts` (novos, borda), `server/src/features/accounting/services/{SimplesApuracaoService,IbsCbsAssessmentService,ReinfService,MitExportService}.ts` (métodos `*PeloSistema`, legado BR), `server/src/features/accounting/dtos/ComplianceCycleDto.ts` (novo, centro), `server/src/controllers/complianceCycleController.ts` (novo), `server/src/routes/taxObligations.ts` (novo), `server/src/routes/docs/accounting.tax-obligations.paths.ts` (novo), i18n dos códigos |
+| PR-2 | `ComplianceCycleService.ts`, `ComplianceCycleDto.ts`, `complianceCycleController.ts`, `routes/taxObligations.ts`, `paises/br/adapters/obrigacoes/{X7,X8,IbsCbs,Simples}ObrigacaoAdapter.ts` (confirm, reconcile, estimada), `server/src/features/accounting/dtos/CompanyFiscalProfileDto.ts`, `server/src/features/accounting/services/SimplesApuracaoService.ts` (estimada + estorno no `registrarDas`, item 17b), `server/prisma/schema.prisma` + migração (colunas da política em inglês, F-CF-3 b; `assessmentUnitId`, F-CF-10) |
+| PR-3 | `ComplianceCycleService.ts`, `paises/br/adapters/obrigacoes/{Reinf,Mit,Sped}ObrigacaoAdapter.ts`, `server/src/features/accounting/services/{SpedGenerationService,SpedEcfGenerationService,SpedEcfRealGenerationService}.ts` (métodos `*PeloSistema` + gravação do `requestJson`, item 21), `server/prisma/schema.prisma` + migração (`AccountingDataExchangeJob.requestJson`) e os testes de integração de Reinf/MIT/ECD/ECF |
 
-**Registros (choke points PAR-001):** `server/src/lib/factory.ts`, `server/src/routes/accounting.ts`,
+**Pré-requisitos de outros PRs:** o item 0 da guarda (ADR-PAIS-NA-BORDA §3; vem no 1º PR de código emendado entre os
+cinco BRIEFs) e, no ramo (a) do F-PBA-7, a fatia F3 (registro de formato por domínio e país) antes do PR-0.
+
+**Registros (choke points PAR-001):** `server/src/lib/factory.ts` (as duas portas e os adaptadores BR ligados ao
+`ComplianceCycleService`), `server/src/routes/accounting.ts`,
 `server/src/routes/docs.paths.ts`, `server/public/openapi.json`, `server/src/server.ts` (start/stop),
 `server/src/lib/alertWebhook.ts` (`AlertPayload.source`), `server/src/features/accounting/audit/auditCanonical.ts`
 (PR-2), o snapshot de shape dos DTOs.
