@@ -3,6 +3,11 @@
     "type": "dependency",
     "from": "lib/context/ToastContext.tsx",
     "to": "components/ui/feedback/Toast.tsx",
+    "unresolvedTo": "../../components/ui/feedback/Toast",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U2-lib-not-ui"
@@ -12,6 +17,14 @@
     "type": "dependency",
     "from": "components/widgets/analytics/AnalyticsWidget.tsx",
     "to": "features/dashboard/category-views/finance/components/analytics/charts/ChartRenderer.tsx",
+    "unresolvedTo": "@/features/dashboard/category-views/finance/components/analytics/charts/ChartRenderer",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U3-components-not-features"
@@ -21,6 +34,14 @@
     "type": "dependency",
     "from": "components/widgets/analytics/AnalyticsWidget.tsx",
     "to": "features/dashboard/category-views/finance/hooks/index.ts",
+    "unresolvedTo": "@/features/dashboard/category-views/finance/hooks",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U3-components-not-features"
@@ -30,6 +51,15 @@
     "type": "dependency",
     "from": "components/widgets/analytics/AnalyticsWidget.tsx",
     "to": "features/dashboard/category-views/finance/types/index.ts",
+    "unresolvedTo": "@/features/dashboard/category-views/finance/types",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "type-only",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U3-components-not-features"
@@ -39,6 +69,15 @@
     "type": "dependency",
     "from": "components/widgets/analytics/GoldKpiWidgetView.tsx",
     "to": "features/dashboard/category-views/finance/types/index.ts",
+    "unresolvedTo": "@/features/dashboard/category-views/finance/types",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "type-only",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U3-components-not-features"
@@ -48,6 +87,100 @@
     "type": "dependency",
     "from": "components/widgets/analytics/GoldKpiWidgetView.tsx",
     "to": "features/dashboard/category-views/finance/utils/kpiHelpers.ts",
+    "unresolvedTo": "@/features/dashboard/category-views/finance/utils/kpiHelpers",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
+    "to": "features/crm/components/reports/CrmReportResult.tsx",
+    "unresolvedTo": "@/features/crm/components/reports/CrmReportResult",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
+    "to": "features/crm/hooks/useReportSources.ts",
+    "unresolvedTo": "@/features/crm/hooks/useReportSources",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
+    "to": "features/crm/lib/reportBuilder.ts",
+    "unresolvedTo": "@/features/crm/lib/reportBuilder",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
+    "to": "features/crm/lib/reportWidget.ts",
+    "unresolvedTo": "@/features/crm/lib/reportWidget",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "U3-components-not-features"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
+    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "unresolvedTo": "@/features/dashboard/components/shared/dynamic-tables.client",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "type-only",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U3-components-not-features"
@@ -57,6 +190,14 @@
     "type": "dependency",
     "from": "components/widgets/erp-view/ErpViewWidget.tsx",
     "to": "features/dashboard/category-views/finance/FinanceView.tsx",
+    "unresolvedTo": "@/features/dashboard/category-views/finance/FinanceView",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U3-components-not-features"
@@ -66,6 +207,14 @@
     "type": "dependency",
     "from": "components/widgets/erp-view/ErpViewWidget.tsx",
     "to": "features/dashboard/category-views/inventory/InventoryView.tsx",
+    "unresolvedTo": "@/features/dashboard/category-views/inventory/InventoryView",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U3-components-not-features"
@@ -75,6 +224,14 @@
     "type": "dependency",
     "from": "components/widgets/erp-view/ErpViewWidget.tsx",
     "to": "features/dashboard/category-views/people/PeopleView.tsx",
+    "unresolvedTo": "@/features/dashboard/category-views/people/PeopleView",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U3-components-not-features"
@@ -84,6 +241,14 @@
     "type": "dependency",
     "from": "components/widgets/erp-view/ErpViewWidget.tsx",
     "to": "features/dashboard/category-views/planning/PlanningView.tsx",
+    "unresolvedTo": "@/features/dashboard/category-views/planning/PlanningView",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U3-components-not-features"
@@ -93,6 +258,14 @@
     "type": "dependency",
     "from": "components/widgets/erp-view/ErpViewWidget.tsx",
     "to": "features/dashboard/category-views/products/InternalProductsView.tsx",
+    "unresolvedTo": "@/features/dashboard/category-views/products/InternalProductsView",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U3-components-not-features"
@@ -102,6 +275,14 @@
     "type": "dependency",
     "from": "components/widgets/erp-view/ErpViewWidget.tsx",
     "to": "features/dashboard/category-views/services/ServicesView.tsx",
+    "unresolvedTo": "@/features/dashboard/category-views/services/ServicesView",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U3-components-not-features"
@@ -111,6 +292,14 @@
     "type": "dependency",
     "from": "components/widgets/erp-view/ErpViewWidget.tsx",
     "to": "features/dashboard/category-views/shared/GenericTabbedView.tsx",
+    "unresolvedTo": "@/features/dashboard/category-views/shared/GenericTabbedView",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-base-url",
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U3-components-not-features"
@@ -120,6 +309,14 @@
     "type": "dependency",
     "from": "components/widgets/erp-view/ErpViewWidget.tsx",
     "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
+    "unresolvedTo": "@/features/dashboard/components/shared/dynamic-tables.client",
+    "dependencyTypes": [
+      "aliased",
+      "aliased-tsconfig",
+      "aliased-tsconfig-paths",
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U3-components-not-features"
@@ -129,6 +326,11 @@
     "type": "cycle",
     "from": "features/accounting/components/QualifAssinanteSelect.tsx",
     "to": "features/accounting/components/SpedGenerationPanel.tsx",
+    "unresolvedTo": "./SpedGenerationPanel",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U7-no-circular"
@@ -154,6 +356,11 @@
     "type": "cycle",
     "from": "features/accounting/components/ReviewDetailModal.tsx",
     "to": "features/accounting/components/ReviewPanel.tsx",
+    "unresolvedTo": "./ReviewPanel",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U7-no-circular"
@@ -179,6 +386,11 @@
     "type": "cycle",
     "from": "features/accounting/components/SpedEcfRealPanel.tsx",
     "to": "features/accounting/components/SpedGenerationPanel.tsx",
+    "unresolvedTo": "./SpedGenerationPanel",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U7-no-circular"
@@ -204,6 +416,12 @@
     "type": "cycle",
     "from": "features/dashboard/category-views/finance/components/expenses/ExpensesRow.tsx",
     "to": "features/dashboard/category-views/finance/components/expenses/ExpensesTable.tsx",
+    "unresolvedTo": "./ExpensesTable",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
     "rule": {
       "severity": "error",
       "name": "U7-no-circular"
@@ -225,50 +443,5 @@
         ]
       }
     ]
-  },
-  {
-    "type": "dependency",
-    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
-    "to": "features/dashboard/components/shared/dynamic-tables.client.ts",
-    "rule": {
-      "severity": "error",
-      "name": "U3-components-not-features"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
-    "to": "features/crm/lib/reportWidget.ts",
-    "rule": {
-      "severity": "error",
-      "name": "U3-components-not-features"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
-    "to": "features/crm/lib/reportBuilder.ts",
-    "rule": {
-      "severity": "error",
-      "name": "U3-components-not-features"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
-    "to": "features/crm/hooks/useReportSources.ts",
-    "rule": {
-      "severity": "error",
-      "name": "U3-components-not-features"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "components/widgets/crm-report/CrmReportWidget.tsx",
-    "to": "features/crm/components/reports/CrmReportResult.tsx",
-    "rule": {
-      "severity": "error",
-      "name": "U3-components-not-features"
-    }
   }
 ]
