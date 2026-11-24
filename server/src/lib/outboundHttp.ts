@@ -109,8 +109,11 @@ export async function outboundFetch(
       durationMs: Date.now() - startedAt,
     });
     if (last || policy === null || !isTransientStatus(res.status)) return res;
-    // eslint-disable-next-line no-restricted-syntax -- SANCTIONED: cancelar o corpo só libera o socket; falhar aqui não muda a decisão de re-tentar (OBS-R8)
-    await res.body?.cancel().catch(() => undefined);
+    try {
+      await res.body?.cancel(); // libera o socket antes de re-tentar
+    } catch (error) {
+      logger.warn('outbound: não cancelou o corpo da resposta antes de re-tentar', { integration, error });
+    }
     await sleep(backoffMs(attempt, policy, res.headers.get('retry-after')));
   }
 }
