@@ -79,6 +79,8 @@ interface Cenario {
   customer?: Record<string, unknown> | null;
   /** EFICIENCIA-FISCAL PR-1 item 6: guarda fiscal da venda (porta estrutural). */
   guard?: { check: jest.Mock };
+  /** Onda 3.2 fatia 5: fotografia de LegalParameter diferente da semente (ex.: sem as tabelas do IBS/CBS). */
+  legalParams?: { fotografia: (tabelas: readonly string[]) => Promise<unknown[]> };
 }
 
 function montar(c: Cenario = {}) {
@@ -120,7 +122,7 @@ function montar(c: Cenario = {}) {
     { get: jest.fn() } as never,
     { canEmitFiscalDocument: () => true, canReadFiscalDocument: () => true } as never,
     auditService as never,
-    legalParamsSemente,
+    (c.legalParams ?? legalParamsSemente) as never,
     productFiscalProfileService as never,
     c.guard,
   );
@@ -290,6 +292,16 @@ describe('BE-INCR-NFCE PR-3 — emissão da NFC-e do Simples (NullEmissor)', () 
     const produtos = [perfilProduto('prod-1', { csosn: null, cstIcms: '00', ibsCbsCst: '000', ibsCbsClassTrib: '000001' })];
     const { service } = montar({ fiscalProfile: perfilSimples({ regimeTributario: 'PRESUMIDO' }), produtos });
     expect((await service.preview(SCOPE, SALE_ID, 'NFCE')).faltantes).toEqual([CRT3_ICMS_SEM_SPEC]);
+  });
+
+  it('Onda 3.2 fatia 5 — perfil PRESUMIDO com CST/cClassTrib e SEM as linhas das tabelas do IT 2025.002 ⇒ PARAMETRO_LEGAL_AUSENTE (fail-closed), não "CST inexistente"', async () => {
+    const produtos = [perfilProduto('prod-1', { csosn: null, cstIcms: '00', ibsCbsCst: '000', ibsCbsClassTrib: '000001' })];
+    const semTabelasNt = { fotografia: async (tabelas: readonly string[]) => (await legalParamsSemente.fotografia(tabelas)).filter((l) => !/^C(ST|CLASSTRIB|CREDPRES)_IBS_CBS$/.test(l.tabela)) };
+    const { service } = montar({ fiscalProfile: perfilSimples({ regimeTributario: 'PRESUMIDO' }), produtos, legalParams: semTabelasNt });
+    const r = await service.preview(SCOPE, SALE_ID, 'NFCE');
+    expect(r.ok).toBe(false);
+    expect(r.faltantes.join(' ')).toContain('Sem linha vigente de CST_IBS_CBS');
+    expect(r.faltantes.join(' ')).not.toContain('inexistente');
   });
 
   it('item 20 — cClassTrib que exige subgrupo sem dado no perfil (diferimento) ⇒ faltante nomeado', async () => {

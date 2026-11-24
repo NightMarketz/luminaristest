@@ -29,6 +29,7 @@ import { NfePayloadSchema, NfePayloadSemNumeracaoSchema } from '../dtos/NfePaylo
 import type { NfePayload, NfePayloadSemNumeracao } from '../dtos/NfePayloadDto';
 import { crtDoRegime, faltantesDosItens } from '../models/nfePrecondicoes';
 import { CRT3_ICMS_SEM_SPEC, ibsCbsDoProduto } from '../models/nfeIbsCbsMontagem';
+import { TABELAS_IBS_CBS, tabelasIbsCbsDe } from '../models/ibsCbsTabelas';
 import {
   RTC_SIMPLES_DESDE,
   RTC_SIMPLES_NAO_TRANSCRITO,
@@ -1082,10 +1083,12 @@ export class FiscalDocumentEmissionService {
     const perfilPorRef = new Map(perfis.map((p) => [p.productRef, p]));
     if (crt !== null) {
       faltantes.push(...faltantesDosItens(kind, crt, productLines.map((l) => l.productRef), perfis));
+      // Onda 3.2 fatia 5: CST/cClassTrib do IT 2025.002 vêm das linhas de LegalParameter (fotografia); tabela sem linha ⇒ 400 PARAMETRO_LEGAL_AUSENTE.
+      const tabelasIbsCbs = crt === 3 && perfis.length ? tabelasIbsCbsDe(await this.legalParams.fotografia([...TABELAS_IBS_CBS]), today) : null;
       for (const ref of new Set(productLines.map((l) => l.productRef))) {
         const perfil = perfilPorRef.get(ref);
         if (perfil && crt === 3) {
-          const r = ibsCbsDoProduto(ref, perfil, kind === 'NFCE' ? 65 : 55, today);
+          const r = ibsCbsDoProduto(ref, perfil, kind === 'NFCE' ? 65 : 55, today, tabelasIbsCbs!);
           if ('faltantes' in r) faltantes.push(...r.faltantes);
         }
         if (!perfil || crt !== 1) continue;

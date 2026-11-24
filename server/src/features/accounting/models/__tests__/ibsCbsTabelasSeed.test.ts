@@ -5,13 +5,12 @@ import { LEGAL_PARAMS_SEED_FILE_IBS_CBS_TABELAS, legalParamsSeedRows } from '@te
 import { LEGAL_PARAMS_SEEDS } from '@test/helpers/templateDb';
 import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
 import { ParametroLegalAusenteError, TABELAS_MIGRADAS, type LegalParameterTabela } from '../../../legalParameters/models/legalParameter';
-import { CCLASSTRIB_IBSCBS, CCREDPRES_IBSCBS, CST_IBSCBS } from '../ibsCbsTabelas';
 import { TABELAS_IBS_CBS, buscarCClassTrib, buscarCCredPres, buscarCst, tabelasIbsCbsDe } from '../ibsCbsTabelas';
 
 /**
- * Onda 3.2 fatia 5 (dono, 24/11/2026) — o SEED das três tabelas do IT 2025.002 v1.70 (gerado da TSV da transcrição) é a
- * mesma tabela que a const `ibsCbsTabelas.ts` carregava: paridade linha a linha ANTES de a const sair, e a guarda de sha256
- * (a da const, mantida) reserializando a TSV a partir das linhas do seed.
+ * Onda 3.2 fatia 5 (dono, 24/11/2026) — o SEED das três tabelas do IT 2025.002 v1.70 é gerado da TSV da transcrição. A
+ * paridade linha a linha seed × const (a const que `ibsCbsTabelas.ts` carregava) foi provada no commit anterior, ANTES de a
+ * const sair; aqui fica a guarda de sha256 da const, mantida, reserializando a TSV a partir das linhas do seed.
  */
 const SEED = LEGAL_PARAMS_SEED_FILE_IBS_CBS_TABELAS;
 const linhas = legalParamsSeedRows(SEED);
@@ -34,13 +33,6 @@ describe('Onda 3.2 fatia 5 — seed das tabelas do IBS/CBS', () => {
     for (const l of linhas) {
       expect(erroDeFormato({ tabela: l.tabela as LegalParameterTabela, chave: l.chave, discriminador: l.discriminador, valorInt: l.valorInt, valorTexto: l.valorTexto, valorJson: l.valorJson ? JSON.parse(l.valorJson) : undefined })).toBeNull();
     }
-  });
-
-  it('PARIDADE seed × const: as três tabelas lidas do seed são IDÊNTICAS às da const (valores, ordem e vigências)', () => {
-    const t = tabelasIbsCbsDe(linhas, HOJE);
-    expect(t.cst).toEqual(CST_IBSCBS);
-    expect(t.cClassTrib).toEqual(CCLASSTRIB_IBSCBS);
-    expect(t.cCredPres).toEqual(CCREDPRES_IBSCBS);
   });
 
   it('o migration.sql carrega exatamente os INSERTs do seed (teste-guarda de igualdade) e a migração está na lista do banco-modelo', () => {
