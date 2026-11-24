@@ -1,4 +1,4 @@
-import type { IUser } from '../../users/models/User.model';
+import type { IUser } from '../../users/public/user.types';
 
 /**
  * Authorization contract for CRM attachments. Decisions only — no throws, no data access.

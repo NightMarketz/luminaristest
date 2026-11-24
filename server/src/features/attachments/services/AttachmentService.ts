@@ -1,6 +1,6 @@
 import type { CrmAttachment } from 'generated/prisma';
-import type { IUser } from '../../users/models/User.model';
-import { Role } from '../../users/models/User.model';
+import type { IUser } from '../../users/public/user.types';
+import { Role } from '../../users/public/user.types';
 import type { IAttachmentRepository } from '../repositories/IAttachmentRepository';
 import type { IAttachmentPolicy } from '../policies/IAttachmentPolicy';
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';

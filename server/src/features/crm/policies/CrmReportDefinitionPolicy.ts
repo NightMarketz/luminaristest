@@ -1,4 +1,4 @@
-import { Role } from '../../users/models/User.model';
+import { Role } from '../../users/public/user.types';
 import type { UserContext } from '../../../types/UserContext';
 import type { ICrmReportDefinitionPolicy } from './ICrmReportDefinitionPolicy';
 

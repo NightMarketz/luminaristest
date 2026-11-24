@@ -1,7 +1,7 @@
 import { IDocument } from '../models/Document.model';
 import { UserContext } from '../../../lib/authUtils';
 import { IDocumentPolicy } from './IDocumentPolicy';
-import { Role } from '../../users/models/User.model';
+import { Role } from '../../users/public/user.types';
 
 /**
  * Policy implementation for Document authorization rules.

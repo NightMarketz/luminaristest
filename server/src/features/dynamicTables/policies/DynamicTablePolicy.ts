@@ -1,7 +1,7 @@
 import type { UserContext } from '../../../lib/authUtils';
 import { IDynamicTable, ITableSchema } from '../models/DynamicTable.model';
 import { IDynamicTablePolicy } from './IDynamicTablePolicy';
-import { Role } from '../../users/models/User.model';
+import { Role } from '../../users/public/user.types';
 
 export class DynamicTablePolicy implements IDynamicTablePolicy {
   // Ninguém pode criar tabelas via API. A criação é gerenciada pelo sistema.

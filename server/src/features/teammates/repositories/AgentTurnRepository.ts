@@ -1,7 +1,7 @@
 import prisma from '../../../lib/prisma';
 import type { AgentChannelMessage, AgentTurn, Prisma } from 'generated/prisma';
 import type { UserContext } from '../../../lib/authUtils';
-import type { Role } from '../../users/models/User.model';
+import type { Role } from '../../users/public/user.types';
 import type { AgentTurnFinish, IAgentTurn, ITurnChannelMessage } from '../models/AgentTurn.model';
 import type { IAgentTurnRepository, ITurnContextRepository } from './IAgentTurnRepository';
 

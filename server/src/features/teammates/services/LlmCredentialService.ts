@@ -1,4 +1,4 @@
-import type { IUser } from '../../users/models/User.model';
+import type { IUser } from '../../users/public/user.types';
 import { ForbiddenError, NotFoundError } from '../../../lib/errors';
 import { loadKeyring, open, seal } from '../../../lib/secretBox';
 import type { LlmProviderId } from '../../../lib/llm/LlmProvider';

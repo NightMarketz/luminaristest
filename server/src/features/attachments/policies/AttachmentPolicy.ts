@@ -1,5 +1,5 @@
-import type { IUser } from '../../users/models/User.model';
-import { Role } from '../../users/models/User.model';
+import type { IUser } from '../../users/public/user.types';
+import { Role } from '../../users/public/user.types';
 import type { IAttachmentPolicy } from './IAttachmentPolicy';
 
 /**
