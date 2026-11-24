@@ -1,6 +1,6 @@
 import type { NfeIbsCbs, NfeIbsCbsTot } from '../dtos/NfeIbsCbsDto';
 import { parametroIbsCbsVigente, type ParametroIbsCbs } from './ibsCbsParams';
-import { cClassTribIbsCbs, cstIbsCbs, type CClassTribIbsCbs, type CstIbsCbs } from './ibsCbsTabelas';
+import { buscarCClassTrib, buscarCst, type CClassTribIbsCbs, type CstIbsCbs, type TabelasIbsCbs } from './ibsCbsTabelas';
 
 /**
  * BE-INCR-NFCE (nó X10a, item 20) — montagem PURA do grupo IBSCBS (UB12) do regime normal (CRT 3) a partir do
@@ -47,7 +47,7 @@ export type IbsCbsDoProduto = { cst: CstIbsCbs; cClassTrib: CClassTribIbsCbs } |
 
 /**
  * Item 20 — o produto tem o que a montagem precisa? CST e cClassTrib no perfil, existentes e compatíveis (UB13-10, UB14-10,
- * UB14-20), permitidos no modelo (UB14-25), vigentes na data (dIniVig/dFimVig da tabela) e sem exigir subgrupo cujo dado o
+ * UB14-20), permitidos no modelo (UB14-25), vigentes na data (vigenteDesde/vigenteAte da linha do cClassTrib) e sem exigir subgrupo cujo dado o
  * perfil não carrega (decisão do dono de 27/10). Faltantes no formato do 400 agregado da emissão (`produto <ref>: …`).
  */
 export function ibsCbsDoProduto(
@@ -55,6 +55,7 @@ export function ibsCbsDoProduto(
   perfil: { ibsCbsCst: string | null; ibsCbsClassTrib: string | null },
   mod: 55 | 65,
   data: string,
+  tabelas: TabelasIbsCbs,
 ): IbsCbsDoProduto {
   const f = (s: string) => `produto ${ref}: ${s}`;
   if (!perfil.ibsCbsCst || !perfil.ibsCbsClassTrib) {
@@ -65,8 +66,8 @@ export function ibsCbsDoProduto(
       ],
     };
   }
-  const cst = cstIbsCbs(perfil.ibsCbsCst);
-  const cc = cClassTribIbsCbs(perfil.ibsCbsClassTrib);
+  const cst = buscarCst(tabelas, perfil.ibsCbsCst);
+  const cc = buscarCClassTrib(tabelas, perfil.ibsCbsClassTrib, data);
   if (!cst) return { faltantes: [f(`CST do IBS/CBS ${perfil.ibsCbsCst} inexistente na tabela de CST (UB13-10, rej. 1020)`)] };
   if (!cc) return { faltantes: [f(`cClassTrib ${perfil.ibsCbsClassTrib} inexistente na tabela de cClassTrib (UB14-10, rej. 1023)`)] };
   const faltantes: string[] = [];

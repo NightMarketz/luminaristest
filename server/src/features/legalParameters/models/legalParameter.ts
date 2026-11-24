@@ -68,6 +68,12 @@ export const LEGAL_PARAMETER_TABELAS = [
   // EFICIENCIA-FISCAL PR-5 (item 32; F-EF-8/11 a): serviços de saúde com redução de 60 % do IBS/CBS a partir de 2027 (LC 214
   // art. 130 e Anexo III), chave = prefixo de NBS. Consumidor = models/servicoFiscalAvaliacao.ts.
   'IBS_CBS_REDUCAO_NBS',
+  // Onda 3.2 fatia 5 (dono, 24/11/2026: tabelas NT CST/cClassTrib viram LegalParameter): as três tabelas do IT 2025.002 v1.70 que
+  // as regras do grupo UB da NF-e consultam, uma por forma de linha (chave = código; valorJson = colunas da planilha, `ordem` =
+  // posição na aba; cClassTrib leva a vigência da planilha em vigenteDesde/vigenteAte). Consumidor = models/ibsCbsTabelas.ts.
+  'CST_IBS_CBS',
+  'CCLASSTRIB_IBS_CBS',
+  'CCREDPRES_IBS_CBS',
   // BE-INCR-DP-F0-F1 PR-2 (nó PES-4, itens 20 e 23): tabela progressiva do INSS do empregado (EC 103 art. 28) e as tabelas
   // do eSocial como dado (precedente NATUREZA_RENDIMENTO). Consumidor = features/dp/models/parametrosFolha.ts e o
   // cadastro do DP (categoria do vínculo, natureza e incidência das rubricas, motivo do afastamento).

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { CNPJ_REGEX, CPF_REGEX, classifyTaxId, isValidCnpj, nfeChaveCheckDigit } from '../../../lib/cnpj';
 import { NFCE_CFOP } from '../models/nfePrecondicoes';
-import { NfeIbsCbsSchema, NfeIbsCbsTotSchema, NfeIsSchema, NfeIsTotSchema, regrasIbsCbs } from './NfeIbsCbsDto';
+import { NfeIbsCbsSchema, NfeIbsCbsTotSchema, NfeIsSchema, NfeIsTotSchema } from './NfeIbsCbsDto';
 
 /**
  * BE-INCR-NFCE (nó X10a, item 12) — leiaute de SAÍDA da NF-e 55 / NFC-e 65, transcrito de
@@ -260,8 +260,8 @@ function regrasNfe(inf: InfNFeComum & { ide: { cNF?: string; nNF?: number; cDV?:
   const semPagamento = pag.detPag.every((p) => p.tPag === '90' || p.tPag === '91');
   if (!semPagamento && somaPag < cents(t.vNF)) add('rej. 865: Σ vPag < vNF — YA03-10', ['pag']);
 
-  // Grupo UB e totais W03 (NT 2025.002 v1.52) — `NfeIbsCbsDto.regrasIbsCbs`.
-  regrasIbsCbs(inf, add);
+  // Grupo UB e totais W03 (NT 2025.002 v1.52): `NfeIbsCbsDto.regrasIbsCbs` NÃO roda aqui (Onda 3.2 fatia 5) — precisa das tabelas
+  // do IT 2025.002, que são linhas de LegalParameter; o serviço que monta a nota a chama (`FiscalDocumentEmissionService`).
 
   // Contingência (X10a PR-9; Anexo I B28-10 rej. 556, B28-20 rej. 557; B22-10 rej. 711 na 55).
   if (ide.tpEmis === 1 && (ide.dhCont !== undefined || ide.xJust !== undefined)) {

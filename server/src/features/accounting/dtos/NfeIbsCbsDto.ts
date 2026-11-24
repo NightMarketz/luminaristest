@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { cClassTribIbsCbs, cCredPresIbsCbs, cstIbsCbs, type CClassTribIbsCbs, type CstIbsCbs, type Ind } from '../models/ibsCbsTabelas';
+import { buscarCClassTrib, buscarCCredPres, buscarCst, type CClassTribIbsCbs, type CstIbsCbs, type Ind, type TabelasIbsCbs } from '../models/ibsCbsTabelas';
 
 /**
  * BE-INCR-NFCE (nó X10a, item 20; F-NFCE-12 b, F-NFCE-12b b) — grupo UB (`det/imposto/IS` e `det/imposto/IBSCBS`) e grupo W03
@@ -9,8 +9,10 @@ import { cClassTribIbsCbs, cCredPresIbsCbs, cstIbsCbs, type CClassTribIbsCbs, ty
  * `gRed`, `gALCZFMCBS`, `gTribRegular`, `gTribCompraGov`, monofásico (`gIBSCBSMono`, ad rem e ad valorem), `gTransfCred`,
  * `gAjusteCompet`, `gEstornoCred`, `gCredPresOper` e `gCredPresIBSZFM`.
  *
- * As regras da §7 viram `regrasIbsCbs` (chamada pelo `superRefine` do `NfePayloadDto`), com o código de rejeição na mensagem.
- * As que dependem de indicador consultam as tabelas do IT 2025.002 v1.70 (`models/ibsCbsTabelas.ts`). NÃO são aplicadas:
+ * As regras da §7 viram `regrasIbsCbs`, com o código de rejeição na mensagem. Desde a Onda 3.2 fatia 5 ela NÃO roda no `superRefine`
+ * do `NfePayloadDto`: o schema é estrutural e o serviço que MONTA a nota (`FiscalDocumentEmissionService`) a chama com as tabelas lidas da
+ * fotografia de LegalParameter (`issuesIbsCbs`). Reler um payload já emitido não reaplica as regras do UB.
+ * As que dependem de indicador consultam as tabelas do IT 2025.002 v1.70 (`models/ibsCbsTabelas.ts`, lidas das linhas de LegalParameter desde a Onda 3.2 fatia 5). NÃO são aplicadas:
  *  - as marcadas "Implementação Futura" na NT (UB01–UB11 do IS, UB13-40, UB16-10, UB105a/b, W33-10, W60-05/10) — a SEFAZ
  *    também não as aplica hoje;
  *  - as que leem campo fora do leiaute transcrito (comb/pBio, cProdANP, gCompraGov, tpNFDebito, tpNFCredito, ISUFemit):
@@ -220,8 +222,19 @@ const aliqEfet10k = (p: string, pRed: string): number => Math.round(Number(p) * 
 
 type Add = (message: string, path: (string | number)[]) => void;
 
+/**
+ * As rejeições do UB/W03 no formato do 400 agregado da montagem (`infNFe.det.0.imposto.IBSCBS.cClassTrib: rej. 1023 …`), o mesmo
+ * texto que o `safeParse` do schema completo dava antes de a regra sair do refine. `tabelas` pode faltar só se a nota não tem item
+ * com IBSCBS.
+ */
+export function issuesIbsCbs(nota: NotaParaRegrasIbsCbs, tabelas?: TabelasIbsCbs): string[] {
+  const out: string[] = [];
+  regrasIbsCbs(nota, (message, path) => out.push(`${['infNFe', ...path].join('.')}: ${message}`), tabelas);
+  return out;
+}
+
 /** As regras da §7 do grupo UB e do W03 (ver o cabeçalho para as que não se aplicam). */
-export function regrasIbsCbs(nota: NotaParaRegrasIbsCbs, add: Add): void {
+export function regrasIbsCbs(nota: NotaParaRegrasIbsCbs, add: Add, tabelasDadas?: TabelasIbsCbs): void {
   const { ide, emit, det, total } = nota;
   const data = ide.dhEmi.slice(0, 10);
   const ano = Number(ide.dhEmi.slice(0, 4));
@@ -233,6 +246,12 @@ export function regrasIbsCbs(nota: NotaParaRegrasIbsCbs, add: Add): void {
       ? data >= (ide.tpAmb === 2 ? IBSCBS_EXIGIDO_DESDE.crt3Homologacao : IBSCBS_EXIGIDO_DESDE.crt3Producao)
       : data >= IBSCBS_EXIGIDO_DESDE.simples;
   const tiposZfm = new Map<number, number>();
+  // Onda 3.2 fatia 5 (dono, 24/11/2026): as tabelas do IT 2025.002 são linhas de LegalParameter e chegam PRONTAS pelo serviço (a
+  // fotografia vira `TabelasIbsCbs` fora daqui); refine de DTO não lê linha. Só é exigida quando a nota tem item com IBSCBS.
+  const tabelasDe = (): TabelasIbsCbs => {
+    if (!tabelasDadas) throw new Error('regrasIbsCbs: nota com item IBSCBS exige as tabelas do IT 2025.002 (TabelasIbsCbs) — o serviço as monta da fotografia');
+    return tabelasDadas;
+  };
 
   det.forEach((d, i) => {
     const at = (...p: (string | number)[]) => ['det', i, 'imposto', 'IBSCBS', ...p];
@@ -242,8 +261,9 @@ export function regrasIbsCbs(nota: NotaParaRegrasIbsCbs, add: Add): void {
       if (exigeIbsCbs) add(`rej. 1115: grupo IBSCBS não informado ${nItem} — UB12-10`, ['det', i, 'imposto', 'IBSCBS']);
       return;
     }
-    const cst: CstIbsCbs | undefined = cstIbsCbs(g.CST);
-    const cc: CClassTribIbsCbs | undefined = cClassTribIbsCbs(g.cClassTrib);
+    const tabelas = tabelasDe();
+    const cst: CstIbsCbs | undefined = buscarCst(tabelas, g.CST);
+    const cc: CClassTribIbsCbs | undefined = buscarCClassTrib(tabelas, g.cClassTrib, data);
     if (!cst) add(`rej. 1020: CST do IBS/CBS ${g.CST} inexistente ${nItem} — UB13-10`, at('CST'));
     if (!cc) add(`rej. 1023: cClassTrib ${g.cClassTrib} inexistente ${nItem} — UB14-10`, at('cClassTrib'));
     else {
@@ -334,7 +354,7 @@ export function regrasIbsCbs(nota: NotaParaRegrasIbsCbs, add: Add): void {
 
       // UB54a-10 (rej. 1150): vIBS = vIBSUF + vIBSMun − vCredPres (se indDeduzCredPres = 1).
       const cp = g.gCredPresOper;
-      const deduz = cp && cCredPresIbsCbs(cp.cCredPres)?.indDeduzCredPres === 1 ? c(cp.gIBSCredPres?.vCredPres) : 0;
+      const deduz = cp && buscarCCredPres(tabelas, cp.cCredPres)?.indDeduzCredPres === 1 ? c(cp.gIBSCredPres?.vCredPres) : 0;
       if (c(b.vIBS) !== c(b.gIBSUF.vIBSUF) + c(b.gIBSMun.vIBSMun) - deduz) add(`rej. 1150: vIBS do item difere de vIBSUF + vIBSMun − vCredPres ${nItem} — UB54a-10`, at('gIBSCBS', 'vIBS'));
 
       // gALCZFMCBS (UB66a-10/20, UB66c-10, UB66e-10).
@@ -352,8 +372,8 @@ export function regrasIbsCbs(nota: NotaParaRegrasIbsCbs, add: Add): void {
       if (!tribRegular && tr) add(`rej. 1114: cClassTrib ${g.cClassTrib} não permite a tributação regular ${nItem} — UB68-11`, at('gIBSCBS', 'gTribRegular'));
       if (tr) {
         const aq = (...p2: string[]) => at('gIBSCBS', 'gTribRegular', ...p2);
-        if (!cstIbsCbs(tr.CSTReg)) add(`rej. 1066: CSTReg ${tr.CSTReg} inexistente ${nItem} — UB69-10`, aq('CSTReg'));
-        if (!cClassTribIbsCbs(tr.cClassTribReg)) add(`rej. 1067: cClassTribReg ${tr.cClassTribReg} inexistente ${nItem} — UB70-10`, aq('cClassTribReg'));
+        if (!buscarCst(tabelas, tr.CSTReg)) add(`rej. 1066: CSTReg ${tr.CSTReg} inexistente ${nItem} — UB69-10`, aq('CSTReg'));
+        if (!buscarCClassTrib(tabelas, tr.cClassTribReg, data)) add(`rej. 1067: cClassTribReg ${tr.cClassTribReg} inexistente ${nItem} — UB70-10`, aq('cClassTribReg'));
         if (difere(c(tr.vTribRegIBSUF), vezesPct(vBC, tr.pAliqEfetRegIBSUF))) add(`rej. 1040: vTribRegIBSUF difere do calculado ${nItem} — UB72-10`, aq('vTribRegIBSUF'));
         if (difere(c(tr.vTribRegIBSMun), vezesPct(vBC, tr.pAliqEfetRegIBSMun))) add(`rej. 1051: vTribRegIBSMun difere do calculado ${nItem} — UB72b-10`, aq('vTribRegIBSMun'));
         if (difere(c(tr.vTribRegCBS), vezesPct(vBC, tr.pAliqEfetRegCBS))) add(`rej. 1068: vTribRegCBS difere do calculado ${nItem} — UB72d-10`, aq('vTribRegCBS'));
@@ -445,7 +465,7 @@ export function regrasIbsCbs(nota: NotaParaRegrasIbsCbs, add: Add): void {
       if (ide.mod === 65) add(`rej. 1049: crédito presumido não permitido na NFC-e ${nItem} — UB120-10`, aq());
       else {
         if (cc.ind_gCredPresOper === 0) add(`rej. 1175: cClassTrib ${g.cClassTrib} não permite crédito presumido na operação ${nItem} — UB120-20`, aq());
-        const tab = cCredPresIbsCbs(cp.cCredPres);
+        const tab = buscarCCredPres(tabelas, cp.cCredPres);
         if (!tab) add(`rej. 1055: cCredPres ${cp.cCredPres} inexistente ${nItem} — UB122-10`, aq('cCredPres'));
         else {
           if (tab.ind_gIBSCredPres !== 1 && cp.gIBSCredPres) add(`rej. 1053: crédito presumido do IBS informado indevidamente ${nItem} — UB123-10`, aq('gIBSCredPres'));
