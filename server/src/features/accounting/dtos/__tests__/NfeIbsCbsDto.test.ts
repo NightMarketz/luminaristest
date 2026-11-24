@@ -301,6 +301,18 @@ describe('gCredPresOper — crédito presumido da operação (UB120..UB130, UB54
   });
   it('cCredPres 05 (só CBS): IBS indevido ⇒ 1053; CBS ausente ⇒ 1058; condição suspensiva em 2026 ⇒ 1056', () =>
     rej(nota([{ CST: '000', cClassTrib: '000003', gIBSCBS: g000(), gCredPresOper: cp('05', { pCredPres: '1.00', vCredPresCondSus: '1.00' }) }], { mod: 55 }), '1053', '1058', '1056'));
+  it('UB130-10 (rej. 1060): vCredPresCondSus da CBS só existe no brechó (04) a partir de 2027 — antes disso, ou em outro cCredPres, ⇒ 1060 (mutação: sem a regra, cai aqui)', () => {
+    const cbs = { pCredPres: '1.00', vCredPresCondSus: '1.00' }; // o schema exige vCredPres XOR vCredPresCondSus (UB129/UB130)
+    const item = (cCredPres: string, extra: { ibs?: CredPres } = {}) => ({ CST: '000', cClassTrib: '000003', gIBSCBS: g000(), gCredPresOper: cp(cCredPres, extra.ibs, cbs) });
+    // 2026 (padrão do helper): vedado em qualquer cCredPres, brechó inclusive (ano < 2027)
+    rej(nota([item('05')], { mod: 55 }), '1060');
+    rej(nota([item('04', { ibs: { pCredPres: '1.00', vCredPres: '0.05' } })], { mod: 55 }), '1060');
+    // 2027 em diante: fora do brechó continua vedado; no brechó a regra não dispara
+    rej(nota([item('05')], { mod: 55, dhEmi: '2027-02-01T10:00:00-03:00' }), '1060');
+    expect(msgs(nota([item('04', { ibs: { pCredPres: '1.00', vCredPres: '0.05' } })], { mod: 55, dhEmi: '2027-02-01T10:00:00-03:00' })).join(' | ')).not.toContain('rej. 1060');
+    // sem vCredPresCondSus da CBS a regra não dispara
+    expect(msgs(nota([{ CST: '000', cClassTrib: '000003', gIBSCBS: g000(), gCredPresOper: cp('05', undefined, { pCredPres: '1.00', vCredPres: '1.00' }) }], { mod: 55 })).join(' | ')).not.toContain('rej. 1060');
+  });
   it('cCredPres 04 (brechó, deduz do vIBS): vCredPres > vProd ⇒ 1107; vIBS sem a dedução ⇒ 1150', () =>
     rej(nota([{ CST: '000', cClassTrib: '000003', gIBSCBS: g000(), gCredPresOper: cp('04', { pCredPres: '1.00', vCredPres: '150.00' }, { pCredPres: '1.00', vCredPres: '1.00' }) }], { mod: 55 }), '1107', '1150'));
   it('cCredPres 04 com vIBS = UF + Mun − vCredPres e totais conferidos passa', () =>
