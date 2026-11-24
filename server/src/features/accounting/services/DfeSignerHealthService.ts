@@ -1,5 +1,5 @@
 import { logger } from '../../../lib/logger';
-import { DFE_SIGNER_ALERTA_CERT_DIAS, DFE_SIGNER_ALERTA_SEM_POLL_MS, type DfeSignerAlertaEvento } from '../models/DfeSigner.model';
+import { DFE_SIGNER_ALERTA_CERT_DIAS, DFE_SIGNER_ALERTA_PRESA_MS, DFE_SIGNER_ALERTA_SEM_POLL_MS, type DfeSignerAlertaEvento } from '../models/DfeSigner.model';
 import type { IDfeSignerHealthRepository } from '../repositories/IDfeSignerHealthRepository';
 
 /** Um alerta do AL-15. Sem PII: ids, contagens e dias — nunca certificado, subject, token, nome ou XML (AL-16). */
@@ -32,6 +32,9 @@ function diaUtc(ymd: string): number {
  *  (b) `CERTIFICADO_VENCENDO` — o certificado do dispositivo vence em até 30 dias (ou já venceu: o pré-voo já bloqueia);
  *  (c) `CONTINGENCIA_COM_ASSINADOR_FORA` — NFC-e em contingência off-line com o assinador sem poll há mais de 15 min. O
  *      alerta do PRAZO da contingência é do PR-9 (`NfceContingenciaService.tick`); aqui só o MOTIVO por que ela não sai.
+ *  (d) `ASSINADOR_ONLINE_COM_PENDENTE_PRESA` — o assinador está no ar e a nota está em `PENDING_SIGNATURE` há mais de 15 min: a
+ *      retomada (AL-14) tem teto por dispositivo e janela, e depois dele só o `reenviar` do operador tira a nota (a perda da
+ *      marca em memória ou o PIN sem resposta caem aqui também). Complementa (a): os dois nunca disparam juntos.
  * Um dispositivo que nunca fez poll conta como sem poll.
  */
 export class DfeSignerHealthService {
@@ -50,9 +53,21 @@ export class DfeSignerHealthService {
         const linhas = doDispositivo.filter(
           (e) => e.status === status && (!soAntigas || now.getTime() - e.maisAntigaDesde.getTime() > DFE_SIGNER_ALERTA_SEM_POLL_MS),
         );
-        return { unitIds: linhas.map((l) => l.unitId), notas: linhas.reduce((s, l) => s + l.quantidade, 0) };
+        const maisAntigaMs = linhas.reduce((m, l) => Math.max(m, now.getTime() - l.maisAntigaDesde.getTime()), 0);
+        return { unitIds: linhas.map((l) => l.unitId), notas: linhas.reduce((s, l) => s + l.quantidade, 0), maisAntigaMs };
       };
 
+      if (!semPoll) {
+        const presas = cobre('PENDING_SIGNATURE', true);
+        if (presas.notas > 0 && presas.maisAntigaMs > DFE_SIGNER_ALERTA_PRESA_MS) {
+          alertas.push({
+            evento: 'ASSINADOR_ONLINE_COM_PENDENTE_PRESA',
+            dispositivoId: d.id,
+            unitIds: presas.unitIds,
+            detalhe: { notasEmEspera: presas.notas, minutosPresa: Math.floor(presas.maisAntigaMs / 60_000) },
+          });
+        }
+      }
       if (semPoll) {
         const pendentes = cobre('PENDING_SIGNATURE', true);
         if (pendentes.notas > 0) {
@@ -80,7 +95,8 @@ export class DfeSignerHealthService {
       }
     }
     for (const a of alertas) {
-      logger.event('warn', 'dfe.signer_offline', `dfe_signer: ${a.evento}`, { dispositivoId: a.dispositivoId, evento: a.evento, ...a.detalhe });
+      const nome = a.evento === 'ASSINADOR_ONLINE_COM_PENDENTE_PRESA' ? 'dfe.signer_pendente_presa' : 'dfe.signer_offline';
+      logger.event('warn', nome, `dfe_signer: ${a.evento}`, { dispositivoId: a.dispositivoId, evento: a.evento, ...a.detalhe });
     }
     return { dispositivos: devices.length, alertas };
   }

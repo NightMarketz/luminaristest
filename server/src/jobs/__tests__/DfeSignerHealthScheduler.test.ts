@@ -13,6 +13,9 @@ const alertaCert: DfeSignerAlerta = { evento: 'CERTIFICADO_VENCENDO', dispositiv
 const alertaContingencia: DfeSignerAlerta = {
   evento: 'CONTINGENCIA_COM_ASSINADOR_FORA', dispositivoId: 'dev-2', unitIds: ['u2'], detalhe: { notasEmContingencia: 1, minutosSemPoll: 40 },
 };
+const alertaPresa: DfeSignerAlerta = {
+  evento: 'ASSINADOR_ONLINE_COM_PENDENTE_PRESA', dispositivoId: 'dev-3', unitIds: ['u3'], detalhe: { notasEmEspera: 2, minutosPresa: 60 },
+};
 const resumo = (alertas: DfeSignerAlerta[]): DfeSignerHealthSummary => ({ dispositivos: 2, alertas });
 
 function montar(verificar: () => Promise<DfeSignerHealthSummary>) {
@@ -34,6 +37,15 @@ describe('DfeSignerHealthScheduler (AL-15)', () => {
     );
     expect(log.event).toHaveBeenCalledWith('warn', 'job.completed', 'dfe_signer_health', expect.objectContaining({ dispositivos: 2, alertas: 3 }));
     expect(JSON.stringify(alert.mock.calls)).not.toMatch(/"(token\w*|cpf\w*|subject|nome|certificadoDer\w*|certificadoPem)"/i);
+  });
+
+  it('nota presa em PENDING_SIGNATURE com o assinador ONLINE (teto da retomada) vai ao webhook, contada à parte (L-…9d92)', async () => {
+    const { scheduler, alert } = montar(async () => resumo([alertaPresa]));
+    await scheduler.runOnce();
+    expect(alert).toHaveBeenCalledTimes(1);
+    expect(alert).toHaveBeenCalledWith(
+      expect.objectContaining({ source: 'dfe_signer_health', onlineComPendentePresa: 1, semPollComPendente: 0, alertas: [alertaPresa] }),
+    );
   });
 
   it('sem alerta, nada vai ao webhook e o job.completed é info', async () => {

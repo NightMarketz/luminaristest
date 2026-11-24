@@ -1,7 +1,7 @@
 /**
  * DfeSignerHealthScheduler — X10a EMENDA-4 AL-15 (ADR-OBSERVABILIDADE OBS-R11, gate F-OBS-14). Varre os assinadores locais
- * vivos e alerta (webhook) os três casos do `DfeSignerHealthService`: assinador sem poll com nota esperando, certificado
- * vencendo e NFC-e em contingência com o assinador fora. Mesmo desenho do `DfePollScheduler`: lock process-local, sem
+ * vivos e alerta (webhook) os quatro casos do `DfeSignerHealthService`: assinador sem poll com nota esperando, certificado
+ * vencendo, NFC-e em contingência com o assinador fora e nota presa em `PENDING_SIGNATURE` com o assinador ONLINE (teto da retomada). Mesmo desenho do `DfePollScheduler`: lock process-local, sem
  * timer sob NODE_ENV=test a menos que `allowInTest`, `job_failed` no `catch` do `runOnce`.
  *
  * ⚠️ Lock PROCESS-LOCAL — mesma ressalva do `AccountingSyncScheduler` (uma instância por cliente, ADR-M2).
@@ -68,6 +68,7 @@ export class DfeSignerHealthScheduler {
           semPollComPendente: conta('ASSINADOR_SEM_POLL_COM_PENDENTE'),
           certificadoVencendo: conta('CERTIFICADO_VENCENDO'),
           contingenciaComAssinadorFora: conta('CONTINGENCIA_COM_ASSINADOR_FORA'),
+          onlineComPendentePresa: conta('ASSINADOR_ONLINE_COM_PENDENTE_PRESA'),
           alertas: novas,
         });
       }

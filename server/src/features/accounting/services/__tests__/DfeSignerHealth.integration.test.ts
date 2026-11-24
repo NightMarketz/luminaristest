@@ -66,9 +66,22 @@ describe('X10a EMENDA-4 AL-PR-4 — saúde do assinador local (AL-15)', () => {
     await dispositivo({ lastSeenAt: minAtras(20), units: ['u-b1'] });
     await nota('u-b1', 'PENDING_SIGNATURE', 5); // pendente há 5 min: ainda dentro da tolerância
     await dispositivo({ lastSeenAt: minAtras(1), units: ['u-b2'] });
-    await nota('u-b2', 'PENDING_SIGNATURE', 60); // assinador vivo: a retomada resolve sozinha
+    await nota('u-b2', 'PENDING_SIGNATURE', 10); // assinador vivo, pendente há 10 min: a retomada (AL-14) ainda está agindo
     await dispositivo({ lastSeenAt: minAtras(120), units: ['u-b3'] }); // fora, mas nada esperando
     expect(await alertasDe()).toEqual([]);
+  });
+
+  it('(d) assinador ONLINE com nota PENDING_SIGNATURE há mais de 15 min ⇒ alerta: a retomada (AL-14) tem teto e a nota está presa (L-…9d92)', async () => {
+    const id = await dispositivo({ lastSeenAt: minAtras(1), units: ['u-h1', 'u-h2'] });
+    await nota('u-h1', 'PENDING_SIGNATURE', 60); // o teto de retomadas (3 em 10 min) já cortou: a nota só sai pelo reenviar
+    await nota('u-h1', 'PENDING_SIGNATURE', 20);
+    await nota('u-h2', 'PENDING_SIGNATURE', 5); // recente: não conta como presa
+    expect(await alertasDe()).toEqual([
+      { evento: 'ASSINADOR_ONLINE_COM_PENDENTE_PRESA', dispositivoId: id, unitIds: ['u-h1'], detalhe: { notasEmEspera: 2, minutosPresa: 60 } },
+    ]);
+    // o mesmo dispositivo sem poll cai no caso (a), nunca nos dois
+    await prisma.dfeSignerDevice.update({ where: { id }, data: { lastSeenAt: minAtras(20) } });
+    expect((await alertasDe()).map((a) => a.evento)).toEqual(['ASSINADOR_SEM_POLL_COM_PENDENTE']);
   });
 
   it('(a) dispositivo que nunca fez poll conta como sem poll (minutosSemPoll = -1)', async () => {

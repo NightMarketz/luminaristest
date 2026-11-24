@@ -91,6 +91,16 @@ export const FALTANTE_ASSINADOR_LOCAL = 'assinador local';
 export const DFE_SIGNER_ALERTA_SEM_POLL_MS = 15 * 60 * 1000;
 /** AL-15 (b): certificado do dispositivo vence em até 30 dias (ou já venceu) ⇒ alerta. */
 export const DFE_SIGNER_ALERTA_CERT_DIAS = 30;
-/** Os três casos do AL-15; o alerta é no máximo 1 por dispositivo, caso e dia. */
-export const DFE_SIGNER_ALERTA_EVENTOS = ['ASSINADOR_SEM_POLL_COM_PENDENTE', 'CERTIFICADO_VENCENDO', 'CONTINGENCIA_COM_ASSINADOR_FORA'] as const;
+/**
+ * AL-15 (d): assinador ONLINE e nota em `PENDING_SIGNATURE` há mais de 15 min ⇒ a nota está presa. A retomada (AL-14) tem teto
+ * (`DFE_SIGNER_RETOMADA_MAX`/janela, em memória): depois dele só o `reenviar` do operador a tira — e nenhum poll "volta".
+ */
+export const DFE_SIGNER_ALERTA_PRESA_MS = 15 * 60 * 1000;
+/** Os quatro casos do AL-15; o alerta é no máximo 1 por dispositivo, caso e dia. */
+export const DFE_SIGNER_ALERTA_EVENTOS = [
+  'ASSINADOR_SEM_POLL_COM_PENDENTE',
+  'CERTIFICADO_VENCENDO',
+  'CONTINGENCIA_COM_ASSINADOR_FORA',
+  'ASSINADOR_ONLINE_COM_PENDENTE_PRESA',
+] as const;
 export type DfeSignerAlertaEvento = (typeof DFE_SIGNER_ALERTA_EVENTOS)[number];
