@@ -83,7 +83,7 @@ export const PostEntrySchema = z.object({
   // unitId is the second tenancy axis (Contract §2): the security boundary is userId
   // (from auth), unitId is a user-owned sub-partition supplied by the request.
   unitId: z.string().min(1),
-  // Date-only, no time component: fiscalYearFrom/extractYearMonth (PostingService) both
+  // Date-only, no time component: fiscalYearOf (models/dates) / extractYearMonth (PostingService) both
   // parse this as UTC midnight — a datetime string would let the local calendar date and
   // the UTC calendar date disagree, reintroducing the fiscal-year boundary bug this format
   // was tightened to close.
