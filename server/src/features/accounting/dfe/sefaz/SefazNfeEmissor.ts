@@ -46,7 +46,8 @@ import type { SefazTransporte } from './SefazTransporte';
  *   `nfeProc` (NFe + protNFe); rejeição ⇒ `REJECTED` com o cStat em `errors[].code`; duplicidade (204/539) ⇒
  *   `NFeConsultaProtocolo4` pela chave antes de qualquer outra decisão. `partnerRef` = chave (44).
  * - `consultar` (E-8): `consSitNFe` pela chave; 100/150 ⇒ `AUTHORIZED` (re-assina a mesma nota — a assinatura é
- *   determinística — e confere o `digVal` do protocolo); 217 ⇒ `PROCESSING` com o código, e quem decide o
+ *   determinística — e confere o `digVal` do protocolo); 110/301/302 ⇒ `DENIED` (terminal, o número fica consumido — L-20261124-054021-cbc8);
+ *   217 ⇒ `PROCESSING` com o código, e quem decide o
  *   `dfe_nao_recebida` é o ciclo (F-ADN-8 a, D-2026-10-29-X10A-PR7-9-FORKS). Nunca reenvia.
  * - `inutilizar` (E-6) e `cancelar` 110111 (E-7) montam, assinam e enviam o pedido; o `nProt` do cancelamento vem da
  *   consulta (sem coluna nova).
@@ -78,6 +79,7 @@ const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_
 
 const AUTORIZADO = new Set(['100', '150']); // [WS-CSTAT] 100 autorizado; 150 autorizado fora de prazo
 const DUPLICIDADE = new Set(['204', '539']); // [WS-CSTAT] duplicidade de NF-e
+const DENEGADO = new Set(['110', '301', '302']); // [WS-CSTAT] 110 uso denegado; 301/302 = denegação por irregularidade do emitente/destinatário (Anexo I do MOC)
 const NAO_CONSTA = '217'; // [WS-CSTAT] NF-e não consta na base de dados da SEFAZ
 const QR_V3_RECUSADO = '407'; // RV ZX02-220 (D02 p. 11): "QR Code versão 3 e UF não aceita esta versão"
 
@@ -146,6 +148,7 @@ export class SefazNfeEmissor implements DfeEmissorPort {
     const { ret, prot, cStat, xMotivo } = envio;
     if (AUTORIZADO.has(cStat)) return this.autorizado(chave, payload, assinado, extrairProtNFe(ret), prot);
     if (DUPLICIDADE.has(cStat)) return this.consultar(chave, ctx ? { ...ctx, payload } : { ambiente: this.opts.ambiente, payload });
+    if (DENEGADO.has(cStat)) return { status: 'DENIED', partnerRef: chave, errors: [{ code: cStat, message: xMotivo }] };
     return { status: 'REJECTED', partnerRef: chave, errors: [{ code: cStat || 'sefaz_sem_cstat', message: xMotivo }] };
   }
 
@@ -189,6 +192,10 @@ export class SefazNfeEmissor implements DfeEmissorPort {
       }
       return this.autorizado(partnerRef, payload, assinado, extrairProtNFe(ret), prot);
     }
+    // Denegada (MOC 7.0 VG §5.1.6, Tab. 5-4): tem protocolo, "Gravar" e CONSOME o número — terminal, mas não é REJECTED (a rejeitada
+    // é descartada e libera o reenvio com o mesmo número). O cStat vem no retorno da consulta ou no `infProt` (ER08).
+    const denegacao = [cStat, str(prot.cStat)].find((c) => DENEGADO.has(c));
+    if (denegacao) return { status: 'DENIED', partnerRef, errors: [{ code: denegacao, message: str(prot.xMotivo) || str(r.xMotivo) }] };
     return { status: 'PROCESSING', partnerRef, errors: [{ code: cStat || 'sefaz_sem_cstat', message: str(r.xMotivo) }] };
   }
 

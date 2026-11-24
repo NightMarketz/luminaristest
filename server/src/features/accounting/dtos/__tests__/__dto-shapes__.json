@@ -5989,7 +5989,8 @@
             "CANCELLED",
             "PENDING_SIGNATURE",
             "CONTINGENCY",
-            "CANCEL_ANALYSIS"
+            "CANCEL_ANALYSIS",
+            "DENIED"
           ]
         },
         "pendencias": {
@@ -6436,7 +6437,8 @@
                 "REJECTED",
                 "CANCELLED",
                 "PENDING_SIGNATURE",
-                "CONTINGENCY"
+                "CONTINGENCY",
+                "DENIED"
               ]
             },
             {

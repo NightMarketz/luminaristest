@@ -1,5 +1,6 @@
 import type { FiscalDocument, FiscalDocumentPendingAttachment } from 'generated/prisma';
 import { Prisma } from 'generated/prisma';
+import { ZodError } from 'zod';
 import { SubstituicaoBloqueadaError } from '../../../lib/errors';
 import { foraDaJanela, janelaEventos } from '../models/janelaEventos';
 import { cancelamentoEmVoo, desfechoDaAnalise, EVENTOS_POR_TICK, nomeDaNota } from '../models/eventosNfse';
@@ -40,7 +41,7 @@ import type { PostingService } from './PostingService';
 import type { FiscalDocumentEmissionService, FiscalDocumentView } from './FiscalDocumentEmissionService';
 import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import { resolveEmissorFor } from '../dfe/resolveEmissor';
-import { ambienteFromTpAmb, assertTpAmb, tpAmbFor } from '../dfe/DfeEmissorPort';
+import { ambienteFromTpAmb, assertTpAmb, DfeTransporteError, DfeTransporteIndisponivelError, tpAmbFor } from '../dfe/DfeEmissorPort';
 import type { CancelInput, CancelResult, DfeAmbiente, DfeCallContext, DfeEmissorPort, EmissaoResult, EventoNfse } from '../dfe/DfeEmissorPort';
 import { AssinaturaRemotaError, isSessaoPscVencida } from '../dfe/AssinadorRemotoPort';
 import { bloqueioSessaoPsc } from './DfeAssinaturaResolver';
@@ -64,10 +65,10 @@ import type { AccountingScope } from '../scope/AccountingScope';
  *  AUTHORIZED, com seu próprio guard). Mutation target: se alguém adicionar 'CANCELLED' aqui, o
  *  teste da tabela de transições tem que acusar. */
 const VALID_RESULT_TRANSITIONS: Partial<Record<FiscalDocumentStatus, FiscalDocumentStatus[]>> = {
-  SENT: ['AUTHORIZED', 'REJECTED', 'PROCESSING'],
-  PROCESSING: ['AUTHORIZED', 'REJECTED', 'PROCESSING'],
+  SENT: ['AUTHORIZED', 'REJECTED', 'PROCESSING', 'DENIED'],
+  PROCESSING: ['AUTHORIZED', 'REJECTED', 'PROCESSING', 'DENIED'],
   // X10a PR-9 (decisão 7): o job transmite a NFC-e off-line e o retorno da SEFAZ é aplicado daqui.
-  CONTINGENCY: ['AUTHORIZED', 'REJECTED', 'PROCESSING'],
+  CONTINGENCY: ['AUTHORIZED', 'REJECTED', 'PROCESSING', 'DENIED'],
 };
 
 export function isValidResultTransition(from: FiscalDocumentStatus, to: FiscalDocumentStatus): boolean {
@@ -195,11 +196,21 @@ async function raceToConflict<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
+/** Onda 4 / 4.1 — `limit` por tick e o relógio (`now`) do backoff, injetável para o teste não esperar horas. */
+export interface PollPendingOptions {
+  limit?: number;
+  now?: Date;
+}
+
 export interface PollSummary {
   total: number;
   updated: number;
   skipped: number;
   failed: number;
+  /** Onda 4 / 4.1 — documentos que bateram o teto (ou erro permanente) NESTE tick: o job parou de consultá-los e alerta. Ausente se 0. */
+  gaveUp?: number;
+  /** Ids dos documentos de `gaveUp` (para o alerta apontar a nota; cuid, sem PII). */
+  gaveUpIds?: string[];
   /** BE-INCR-DFE-ANEXO-PENDENTE item 7 — resultado da varredura de pendências de anexo no mesmo tick. */
   attachments?: PendingAttachmentDrainSummary;
   /** X10a PR-9 (decisões 6 e 7) — transmissão das NFC-e off-line, prazo e órfãs no mesmo tick. */
@@ -214,6 +225,33 @@ const PENDING_BACKOFF_BASE_MS = 120_000;
 const PENDING_BACKOFF_MAX_MS = 3_600_000;
 const PENDING_LAST_ERROR_MAX = 500;
 const PENDING_DRAIN_LIMIT = 50;
+
+/**
+ * Onda 4 / 4.1 — `dfe_poll_pending` não repete para sempre o documento cuja consulta falha. Falha seguida => `pollAttempts++`
+ * e backoff exponencial (2 min ... 1 h, mesmo molde do dreno de anexo, F-PA-6) em `nextPollAt`; no teto (ou em erro
+ * permanente) => `pollGaveUpAt` + alerta. O documento NAO muda de status: REJECTED libera o `reenviar` com o MESMO numero,
+ * e so a SEFAZ dizendo "nao consta" (o caminho 217, `NAO_CONSTA_MAX_CONSULTAS`) autoriza isso. A consulta manual
+ * (`consultarUm`) continua valendo e, se der certo, devolve o documento ao polling.
+ */
+export const POLL_MAX_ATTEMPTS = 8;
+const POLL_BACKOFF_BASE_MS = 120_000;
+const POLL_BACKOFF_MAX_MS = 3_600_000;
+/** Documento que o tick nao pode consultar (porta desligada para o tipo): volta daqui a 1 h, sem gastar tentativa. */
+const POLL_ADIAR_MS = 3_600_000;
+const POLL_LAST_ERROR_MAX = 500;
+/** Teto de documentos consultados por tick: a fila longa nao vira um tick sem fim (o resto fica para o proximo). */
+export const POLL_PENDING_LIMIT = 100;
+
+/** A mensagem que fica em `pollLastError` e nos logs: a falha de transporte da SEFAZ leva o código (`sefaz_http`, `sefaz_timeout`...). */
+function descreverErroDePoll(error: unknown): string {
+  if (error instanceof DfeTransporteError || error instanceof DfeTransporteIndisponivelError) return `${error.code}: ${error.message}`;
+  return error instanceof Error ? error.message : String(error);
+}
+
+/** Erro que nao se cura repetindo: o schema recusou o dado (ZodError). Desiste na 1a vez em vez de gastar o teto. */
+function isPermanentPollError(error: unknown): boolean {
+  return error instanceof ZodError;
+}
 
 export class FiscalDocumentLifecycleService {
   constructor(
@@ -305,6 +343,7 @@ export class FiscalDocumentLifecycleService {
       );
     }
     await this.consultarEAplicar(scope, doc, port);
+    await this.limparFalhaDePoll(scope, doc); // 4.1: a consulta manual que deu certo devolve o documento ao polling
     return this.emissionService.getById(scope, documentId);
   }
 
@@ -314,43 +353,112 @@ export class FiscalDocumentLifecycleService {
    * `accountingSyncReconcile.job.ts`: `resolveAccountingScopeInternal({userId: doc.userId}, doc.unitId)`)
    * e aplica o resultado. Erro de código próprio `dfe_*` = skip+log; qualquer outro = alerta.
    */
-  async pollPendingOnce(olderThan: Date): Promise<PollSummary> {
-    const pending = await this.repo.listPending(olderThan);
+  async pollPendingOnce(olderThan: Date, opts: PollPendingOptions = {}): Promise<PollSummary> {
+    const now = opts.now ?? new Date();
+    const pending = await this.repo.listPending(olderThan, { limit: opts.limit ?? POLL_PENDING_LIMIT, now });
     const summary: PollSummary = { total: pending.length, updated: 0, skipped: 0, failed: 0 };
     for (const doc of pending) {
+      const scope = resolveAccountingScopeInternal({ userId: doc.userId }, doc.unitId);
       // Porta desabilitada para o TIPO do documento (BE-INCR-NFCE item 5) — não é erro do documento, só não há o que
-      // consultar. Skip silencioso (o `status` endpoint já avisa disso, por tipo).
+      // consultar. Skip (o `status` endpoint já avisa disso, por tipo); adiado 1 h para não ocupar a vaga do tick.
       if (!selectDfeEmissor(process.env, doc.kind as FiscalDocumentKind).enabled) {
         summary.skipped++;
+        await this.adiarPoll(scope, doc, now);
         continue;
       }
-      const scope = resolveAccountingScopeInternal({ userId: doc.userId }, doc.unitId);
       try {
         // BE-INCR-DFE-MANUAL (itens 9 e 10): o adaptador é o do DOCUMENTO; o que não consulta (modo manual) é pulado.
         const port = resolveEmissorFor(doc.partner, doc.kind as FiscalDocumentKind);
         if (!port.capabilities.consultar) {
           summary.skipped++;
+          await this.adiarPoll(scope, doc, now);
           continue;
         }
         await this.consultarEAplicar(scope, doc, port);
+        await this.limparFalhaDePoll(scope, doc);
         summary.updated++;
       } catch (error) {
+        const message = descreverErroDePoll(error);
+        if (error instanceof DfeTransporteIndisponivelError) {
+          // O transporte local não está de pé (assinador fora): a nota já foi enviada, a consulta nem saiu daqui. Adia sem
+          // gastar tentativa e sem tocar a contagem/backoff que o documento já tinha — a caixa desligada à noite não faz o
+          // polling desistir (L-…580f).
+          logger.warn('dfe_poll_pending: transporte indisponível — documento adiado, sem gastar tentativa', { documentId: doc.id, error: message });
+          summary.skipped++;
+          await this.adiarPoll(scope, doc, now);
+          continue;
+        }
         if (isDfeSkippableError(error)) {
-          logger.warn('dfe_poll_pending: skip (erro de código próprio)', {
-            documentId: doc.id,
-            error: error instanceof Error ? error.message : String(error),
-          });
+          logger.warn('dfe_poll_pending: skip (erro de código próprio)', { documentId: doc.id, error: message });
           summary.skipped++;
         } else {
-          logger.error('dfe_poll_pending: falha ao consultar documento — alerta', {
-            documentId: doc.id,
-            error: error instanceof Error ? error.message : String(error),
-          });
+          logger.error('dfe_poll_pending: falha ao consultar documento — alerta', { documentId: doc.id, error: message });
           summary.failed++;
+        }
+        if (await this.registrarFalhaDePoll(scope, doc, message, isPermanentPollError(error), now)) {
+          summary.gaveUp = (summary.gaveUp ?? 0) + 1;
+          (summary.gaveUpIds ??= []).push(doc.id);
         }
       }
     }
     return summary;
+  }
+
+  /**
+   * 4.1 — uma falha da consulta: conta, agenda o backoff (`nextPollAt`) ou, no teto/erro permanente, para (`pollGaveUpAt`).
+   * `true` => o job desistiu deste documento neste tick (alerta). Falha ao gravar o controle nunca derruba o tick nem trava
+   * os outros documentos: vira `logger.error` e o documento volta na próxima varredura (sem backoff, mas sem head-of-line).
+   */
+  private async registrarFalhaDePoll(scope: AccountingScope, doc: FiscalDocument, message: string, permanente: boolean, now: Date): Promise<boolean> {
+    const attempts = doc.pollAttempts + 1;
+    const lastError = message.slice(0, POLL_LAST_ERROR_MAX);
+    const desiste = permanente || attempts >= POLL_MAX_ATTEMPTS;
+    try {
+      if (desiste) {
+        await this.repo.updatePollState(scope, doc.id, { pollAttempts: attempts, pollLastError: lastError, pollGaveUpAt: now, nextPollAt: null });
+        logger.error('dfe_poll_pending: teto de tentativas — o job para de consultar o documento (consulta manual segue valendo)', {
+          documentId: doc.id,
+          attempts,
+          permanente,
+          error: lastError,
+        });
+        return true;
+      }
+      const delay = Math.min(POLL_BACKOFF_BASE_MS * 2 ** (attempts - 1), POLL_BACKOFF_MAX_MS);
+      await this.repo.updatePollState(scope, doc.id, { pollAttempts: attempts, pollLastError: lastError, nextPollAt: new Date(now.getTime() + delay) });
+      return false;
+    } catch (error) {
+      logger.error('dfe_poll_pending: não gravou o controle de retentativa — o documento volta no próximo tick', {
+        documentId: doc.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    }
+  }
+
+  /** O documento que não pode ser consultado agora sai da vez por 1 h, sem contar tentativa (a vaga do tick é das outras). */
+  private async adiarPoll(scope: AccountingScope, doc: FiscalDocument, now: Date): Promise<void> {
+    try {
+      await this.repo.updatePollState(scope, doc.id, { nextPollAt: new Date(now.getTime() + POLL_ADIAR_MS) });
+    } catch (error) {
+      logger.warn('dfe_poll_pending: não adiou o documento que não é consultável', {
+        documentId: doc.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  /** Consulta que deu certo zera a contagem, o backoff e a desistência — só escreve se havia algo a limpar. */
+  private async limparFalhaDePoll(scope: AccountingScope, doc: FiscalDocument): Promise<void> {
+    if (!(doc.pollAttempts > 0 || doc.nextPollAt || doc.pollGaveUpAt || doc.pollLastError)) return;
+    try {
+      await this.repo.updatePollState(scope, doc.id, { pollAttempts: 0, nextPollAt: null, pollGaveUpAt: null, pollLastError: null });
+    } catch (error) {
+      logger.warn('dfe_poll_pending: não limpou o controle de retentativa após a consulta', {
+        documentId: doc.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   /**
@@ -1427,17 +1535,20 @@ export class FiscalDocumentLifecycleService {
       return;
     }
 
-    if (result.status === 'REJECTED') {
+    if (result.status === 'REJECTED' || result.status === 'DENIED') {
+      // DENIED (uso denegado, MOC 7.0 VG §5.1.6): terminal pelo mesmo caminho da rejeição (errorsJson + auditoria), mas fora de
+      // `REENVIAVEIS` e dentro de `STATUS_QUE_OCUPAM_NUMERO` — o número foi consumido. L-20261124-054021-cbc8.
+      const denegada = result.status === 'DENIED';
       await this.repo.runTransaction(async (tx) => {
         await this.repo.transition(
           scope,
           doc.id,
-          { status: 'REJECTED', errorsJson: JSON.stringify(result.errors), attemptResult, whenStatusIn: guardaDoResultado(doc) },
+          { status: result.status, errorsJson: JSON.stringify(result.errors), attemptResult, whenStatusIn: guardaDoResultado(doc) },
           tx,
         );
         await this.auditService.append(tx, scope, {
           actorUserId: scope.actorUserId,
-          eventType: 'dfe.rejected',
+          eventType: denegada ? 'dfe.denied' : 'dfe.rejected',
           targetType: 'fiscal_document',
           targetId: doc.id,
           // JSON.stringify explícito — canonicalizeAuditPayload faz String(v) em cada valor, e
