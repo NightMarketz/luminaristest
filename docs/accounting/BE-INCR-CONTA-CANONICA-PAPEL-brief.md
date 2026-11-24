@@ -105,9 +105,11 @@ existe (ano fiscal = ano-calendário da data do lançamento, ADR-INCR3 Emenda 3)
 ### PR-3 — DRE pela identidade (13dd parte "DRE")
 
 7. **Regra de folha canônica só casa a folha canônica.** Em `StatementMappingFixture.ts`, a regra cujo `codePrefix` é o código
-   de uma folha analítica do plano padrão (hoje `dre.cogs` 4.2 e `dre.cogs_services` 4.7, entre as de `Expense`) casa só a conta
-   que **é** essa folha: código igual (não `startsWith`, que hoje casaria `4.70`) e `isContaDoPlanoPadrao`. A conta alheia nesse
-   código cai na regra seguinte da mesma natureza (`dre.expenses`). O conjunto de regras de folha é derivado do fixture
+   de uma folha analítica do plano padrão (hoje `dre.cogs` 4.2 e `dre.cogs_services` 4.7, entre as de `Expense`): a conta que
+   ocupa o código **exato** da folha só casa a regra se **é** essa folha (`isContaDoPlanoPadrao`). A conta alheia nesse código cai
+   na regra seguinte da mesma natureza (`dre.expenses`). Os outros códigos do prefixo (subconta legada como `4.7.1`) seguem a
+   tabela, como antes: não há nenhum no `dev.db`, nos kits nem no código de produção (consulta de 24/11), e mudar o caso deles
+   não é desta lacuna. O conjunto de regras de folha é derivado do fixture
    (`CANONICAL_ACCOUNTS` com `acceptsEntries: true`), não listado à mão.
    **Limite:** vale só para `Expense`, a única natureza com regra genérica por natureza. Uma conta alheia de `Revenue` num código
    de folha (3.1–3.4) segue pelo prefixo: sem regra seguinte, sairia da DRE e o J150 divergiria do I355. Esse caso vai à caixa
@@ -117,10 +119,10 @@ existe (ano fiscal = ano-calendário da data do lançamento, ADR-INCR3 Emenda 3)
    da DRE (:356–363) e o resultado do período (:801) usam todos `findDreRule`. `findMappingRule` continua para o BP e para o
    aging (sem regra de prefixo). O papel (`insumoExpenseAccountId`) continua vencendo o prefixo, como no #1318.
 9. **`STATEMENT_MAPPING_VERSION` → `statement-mapping.v8`** (ADR-INCR4 Q4.1; precedentes #1296, #1318). Testes que fixam `v7`
-   sobem junto. **Teste-guarda** (integração, no arquivo do PR-2 ou próprio): escopo com `4.7` Expense "Perda na Baixa" com
+   sobem junto. **Teste-guarda** (`dreContaCanonicaIdentidade.integration.test.ts`): escopo com `4.7` Expense "Perda na Baixa" com
    partida → `GET /api/accounting/income-statement` → a conta aparece em `expenses`, não em `costOfGoodsSold` (hoje: em
    `costOfGoodsSold`); escopo com a `4.7` canônica com partida → em `costOfGoodsSold` (sem regressão do #1296). Unitário de
-   `findDreRule`: `4.70` Expense não casa `dre.cogs_services`; papel continua vencendo.
+   `findDreRule`: identidade no código exato, subconta `4.7.1` segue o custo, papel continua vencendo, `Revenue` pelo prefixo.
 
 ### PR-1 — ano fiscal num lugar só (1fd7)
 
@@ -164,8 +166,8 @@ Sem migração de schema e sem migração de dado: o tombamento do código acont
 |---|---|---|
 | 4e1f | 1, 2, 6 | `npx jest src/controllers/__tests__/contaCanonicaIdentidade.integration.test.ts --runInBand` (DELETE 200 e a "Perda" não volta) |
 | ad40 | 3, 4, 5, 6 | o mesmo arquivo (linha apagada alheia não ressuscita) + `npx jest src/features/accounting/services/__tests__/PostingService.test.ts --selectProjects unit` (aviso uma vez) |
-| 13dd | 2–4, 7–9 | o mesmo arquivo de integração (canônica nasce após o delete; "Perda" em `expenses` na DRE) + unitário do `StatementMappingFixture` |
-| 1fd7 | 10, 11 | `npx jest <teste do item 11> --selectProjects unit` |
+| 13dd | 2–4, 7–9 | `contaCanonicaIdentidade.integration.test.ts` (canônica nasce após o delete) + `npx jest src/controllers/__tests__/dreContaCanonicaIdentidade.integration.test.ts --runInBand` ("Perda" em `expenses`) + `npx jest src/features/accounting/fixtures/__tests__/ChartOfAccountsFixture.custoServicos.test.ts --selectProjects unit` |
+| 1fd7 | 10, 11 | `npx jest src/features/accounting/services/__tests__/PostingService.test.ts src/features/accounting/services/__tests__/EntryApprovalService.test.ts --selectProjects unit -t 1fd7` |
 
 ## Forks pendentes de ratificação
 
@@ -203,6 +205,9 @@ Nenhum.
 | PR-2 | `server/src/features/accounting/services/PostingService.ts` (`ensureChartOfAccounts`, `deleteAccount`), `server/src/features/accounting/repositories/{IAccountRepository,AccountRepository}.ts`, `server/src/controllers/__tests__/contaCanonicaIdentidade.integration.test.ts`, `server/src/features/accounting/services/__tests__/PostingService.test.ts` (e fakes de `IAccountRepository` que o `tsc` apontar) |
 | PR-3 | `server/src/features/accounting/services/StatementMappingFixture.ts`, `server/src/features/accounting/services/AccountingReportService.ts`, testes que fixam `statement-mapping.v7`, teste de integração da DRE |
 
+Execução (24/11): PR-1 #1333, PR-2 #1335 (sobre o #1333), PR-3 #1337.
+
 Choke points da PAR-001: nenhum (`factory.ts`, `docs.paths.ts`, `schema.prisma` intactos). Como PR-1 e PR-2 editam o
 `PostingService.ts`, os três PRs vão para `integration/conta-canonica-papel` (`D-2026-11-10-BRANCH-DE-INTEGRACAO-E-GAP-MAP-POR-FEATURE`),
-cada um com base nela; a `main` recebe um PR só quando os três entrarem. O grupo não tem nota de nó própria; o write-set fica aqui.
+o PR-1 e o PR-3 com base nela e o PR-2 empilhado sobre o PR-1 (os dois mexem no mesmo import do `PostingService.ts`; a
+pilha dentro da integração é livre); a `main` recebe um PR só quando os três entrarem. O grupo não tem nota de nó própria; o write-set fica aqui.
