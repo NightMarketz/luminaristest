@@ -1,6 +1,6 @@
 import { ISchemaField } from '../../dynamicTables/models/DynamicTable.model';
-import type { TableLock } from '../../dynamicTables/presets/removability';
-import type { ModuleKey } from '../../dynamicTables/presets/modules/registry';
+import type { TableLock } from '../../dynamicTables/domain/presets/removability';
+import type { ModuleKey } from '../../dynamicTables/domain/presets/modules/registry';
 import type { IFieldHistoryEntry, IPendingProposal } from '../FieldCustomizationService/Types';
 import type { CustomCreationDraft } from '../dtos/CustomCreationDraft.dto';
 

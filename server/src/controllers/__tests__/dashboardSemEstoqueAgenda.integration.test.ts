@@ -17,9 +17,9 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { getFactory } from '@/lib/factory';
-import { CoreSystemPreset } from '@/features/dynamicTables/presets';
-import { composeModuleTables } from '@/features/dynamicTables/presets/modules/registry';
-import { resolveModuleSelection } from '@/features/dynamicTables/presets/modules/moduleSelection';
+import { CoreSystemPreset } from '@/features/dynamicTables/domain/presets';
+import { composeModuleTables } from '@/features/dynamicTables/domain/presets/modules/registry';
+import { resolveModuleSelection } from '@/features/dynamicTables/domain/presets/modules/moduleSelection';
 
 const app = makeApp();
 type Actor = { id: string; username: string };

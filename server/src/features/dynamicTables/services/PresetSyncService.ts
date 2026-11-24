@@ -5,10 +5,10 @@ import type { DynamicTableService } from './DynamicTableService';
 import type { IDynamicTableRepository } from '../repositories/IDynamicTableRepository';
 import type { IDynamicTablePolicy } from '../policies/IDynamicTablePolicy';
 import type { ISchemaField, ITableSchema } from '../models/DynamicTable.model';
-import { CoreSystemPreset } from '../presets/systems/CoreSystemPreset';
-import { tablePresetSuites } from '../presets';
-import { composeModuleTables, moduleOfTable } from '../presets/modules/registry';
-import type { PresetTableDefinition } from '../presets';
+import { CoreSystemPreset } from '../domain/presets/systems/CoreSystemPreset';
+import { tablePresetSuites } from '../domain/presets';
+import { composeModuleTables, moduleOfTable } from '../domain/presets/modules/registry';
+import type { PresetTableDefinition } from '../domain/presets';
 import type { CreateDynamicTableDtoType } from '../dtos/DynamicTable.dto';
 
 const PRESET_TABLE_KEY_PREFIX = '@@PRESET_TABLE_KEY::';

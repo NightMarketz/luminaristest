@@ -9,9 +9,9 @@ import { PresetMatcher } from '../PresetMatcher';
 import { StageHandlers } from '../StageHandlers';
 import type { OpenAIService } from '../../../../lib/openai/OpenAIService';
 import { presetService } from '../../../dynamicTables/services/PresetService';
-import { tablePresetSuites, type PresetSuite } from '../../../dynamicTables/presets';
-import { presetKnowledgeBase } from '../../../dynamicTables/presets/ai/PresetKnowledgeBase';
-import { MODULE_REGISTRY, type ModuleDef, type ModuleKey } from '../../../dynamicTables/presets/modules/registry';
+import { tablePresetSuites, type PresetSuite } from '../../../dynamicTables/domain/presets';
+import { presetKnowledgeBase } from '../../../dynamicTables/domain/presets/ai/PresetKnowledgeBase';
+import { MODULE_REGISTRY, type ModuleDef, type ModuleKey } from '../../../dynamicTables/domain/presets/modules/registry';
 import type { IMessage, InterviewModuleOption } from '../../models/InterviewTypes';
 import type { CustomizationService } from '../../CustomizationService/CustomizationService';
 

@@ -7,9 +7,9 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { getFactory } from '@/lib/factory';
-import { CoreSystemPreset } from '@/features/dynamicTables/presets';
-import { composeSuiteDefaultTables } from '@/features/dynamicTables/presets/modules/moduleSelection';
-import BeautySalonPreset from '@/features/dynamicTables/presets/systems/BeautySalonPreset';
+import { CoreSystemPreset } from '@/features/dynamicTables/domain/presets';
+import { composeSuiteDefaultTables } from '@/features/dynamicTables/domain/presets/modules/moduleSelection';
+import BeautySalonPreset from '@/features/dynamicTables/domain/presets/systems/BeautySalonPreset';
 
 const app = makeApp();
 let n = 0;

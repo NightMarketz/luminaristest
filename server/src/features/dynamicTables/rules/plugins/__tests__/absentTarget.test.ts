@@ -12,9 +12,9 @@ import {
   cancelLinkedAppointmentsIfScheduled,
   validateServiceAppointmentCoherence,
 } from '../sales/appointmentSync';
-import { CoreSystemPreset } from '../../../presets';
-import { composeModuleTables, type ModuleKey } from '../../../presets/modules/registry';
-import { resolveModuleSelection } from '../../../presets/modules/moduleSelection';
+import { CoreSystemPreset } from '../../../domain/presets';
+import { composeModuleTables, type ModuleKey } from '../../../domain/presets/modules/registry';
+import { resolveModuleSelection } from '../../../domain/presets/modules/moduleSelection';
 
 beforeEach(() => jest.clearAllMocks());
 

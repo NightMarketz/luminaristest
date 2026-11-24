@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { moduleSelectorSchema } from '../../dynamicTables/presets/modules/registry';
+import { moduleSelectorSchema } from '../../dynamicTables/domain/presets/modules/registry';
 
 /**
  * W1 (F-W1-6 → a + sincronização, dono, questionário 2026-10-24) — corpo de `POST /api/dashboard/ai/InterviewModules`.

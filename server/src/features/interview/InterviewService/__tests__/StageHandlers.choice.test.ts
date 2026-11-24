@@ -8,7 +8,7 @@ import { StageHandlers } from '../StageHandlers';
 import { InterviewService } from '../InterviewService';
 import { PresetMatcher } from '../PresetMatcher';
 import { ModuleSuggester } from '../ModuleSuggester';
-import { presetKnowledgeBase } from '../../../dynamicTables/presets/ai/PresetKnowledgeBase';
+import { presetKnowledgeBase } from '../../../dynamicTables/domain/presets/ai/PresetKnowledgeBase';
 import { postChatInterview } from '../../../../controllers/interviewController';
 import type { OpenAIService } from '../../../../lib/openai/OpenAIService';
 import type { CustomizationService } from '../../CustomizationService/CustomizationService';

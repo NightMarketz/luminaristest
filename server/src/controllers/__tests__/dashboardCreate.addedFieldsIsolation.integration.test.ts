@@ -8,7 +8,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 // BE-INCR-MODULOS-BASE-SUBMODULOS PR-2: `customers` virou tabela do PES-0 — o singleton compartilhado é o módulo-fonte.
-import { customerModule } from '@/features/dynamicTables/presets/modules/people/CustomerModule';
+import { customerModule } from '@/features/dynamicTables/domain/presets/modules/people/CustomerModule';
 
 const app = makeApp();
 let n = 0;

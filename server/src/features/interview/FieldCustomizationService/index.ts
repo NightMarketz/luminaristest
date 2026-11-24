@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import type OpenAI from 'openai';
 import { logger } from '../../../lib/logger';
 import type { OpenAIService } from '../../../lib/openai/OpenAIService';
-import { fieldPresetKnowledgeBase } from '../../dynamicTables/presets/fields/FieldPresetKnowledgeBase';
+import { fieldPresetKnowledgeBase } from '../../dynamicTables/domain/presets/fields/FieldPresetKnowledgeBase';
 import type { ICustomizableTable } from '../models/InterviewTypes';
 import { DEFAULT_INTERVIEW_LOCALE, replyIn, type InterviewLocale } from '../models/interviewText';
 import type { IInterviewSessionHandle, StateManager } from '../CustomizationService/StateManager';

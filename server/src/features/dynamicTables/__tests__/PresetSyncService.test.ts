@@ -21,8 +21,8 @@ import type { UserContext } from '../../../lib/authUtils';
 import type { IDynamicTable, ISchemaField, ITableSchema } from '../models/DynamicTable.model';
 import { NotFoundError, ValidationError } from '../../../lib/errors';
 import { Role } from '../../users/models/User.model';
-import { leadsModule } from '../presets/modules/core/LeadsModule';
-import { opportunitiesModule } from '../presets/modules/crm/OpportunitiesModule';
+import { leadsModule } from '../domain/presets/modules/core/LeadsModule';
+import { opportunitiesModule } from '../domain/presets/modules/crm/OpportunitiesModule';
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 

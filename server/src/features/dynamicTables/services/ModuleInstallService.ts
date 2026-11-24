@@ -4,7 +4,7 @@ import logger from '../../../lib/logger';
 import type { IDynamicTableRepository } from '../repositories/IDynamicTableRepository';
 import type { IDynamicTablePolicy } from '../policies/IDynamicTablePolicy';
 import type { PresetSyncService } from './PresetSyncService';
-import { MODULE_REGISTRY, expandModuleSelectors, type ModuleKey, type ModuleSelector } from '../presets/modules/registry';
+import { MODULE_REGISTRY, expandModuleSelectors, type ModuleKey, type ModuleSelector } from '../domain/presets/modules/registry';
 import type { InstallModuleResult } from '../dtos/InstallModule.dto';
 
 const PRESET_TABLE_KEY_PREFIX = '@@PRESET_TABLE_KEY::';

@@ -1,6 +1,6 @@
 import { DynamicTableService } from '../../../dynamicTables/services/DynamicTableService';
 import { CrmPipelineService } from '../CrmPipelineService';
-import { opportunitiesModule } from '../../../dynamicTables/presets/modules/crm/OpportunitiesModule';
+import { opportunitiesModule } from '../../../dynamicTables/domain/presets/modules/crm/OpportunitiesModule';
 import { ValidationError } from '../../../../lib/errors';
 
 // Lacuna (teste vivo 2026-09-25): oportunidade Ganha continua editável — mudar o valor depois do

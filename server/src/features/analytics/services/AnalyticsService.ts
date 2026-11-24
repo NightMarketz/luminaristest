@@ -5,8 +5,8 @@
  * to generate analytics preset groups for the frontend.
  */
 
-import { tablePresetSuites } from '../../dynamicTables/presets';
-import { composeSuiteDefaultTables } from '../../dynamicTables/presets/modules/moduleSelection';
+import { tablePresetSuites } from '../../dynamicTables/domain/presets';
+import { composeSuiteDefaultTables } from '../../dynamicTables/domain/presets/modules/moduleSelection';
 import type { AnalyticsPresetGroup, ChartPreset, ChartType } from '../core/models/ChartPreset';
 import type { AnalyticsConfiguration } from '../core/models/AnalyticsConfiguration';
 import type { PipelineSpec } from '../core/pipeline/Pipeline';
@@ -17,7 +17,7 @@ import { kpiCacheService } from './KpiCacheService';
 import { getFactory } from '@/lib/factory';
 import { logger } from '@/lib/logger';
 import type { IDynamicTable, ITableSchema } from '../../dynamicTables/models/DynamicTable.model';
-import type { PresetTableDefinition, PresetSuite } from '../../dynamicTables/presets';
+import type { PresetTableDefinition, PresetSuite } from '../../dynamicTables/domain/presets';
 import type { UserContext } from '@/types/UserContext';
 
 /**

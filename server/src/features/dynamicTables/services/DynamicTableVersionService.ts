@@ -18,7 +18,7 @@ import type {
   ListVersionsQuery, RowVersionDetail, RowVersionDiff, RowVersionList, RowVersionMeta, SchemaVersionDetail,
   SchemaVersionDiff, SchemaVersionList, SchemaVersionMeta,
 } from '../dtos/DynamicTableVersion.dto';
-import { diffRowData, diffSchemas } from '../utils/versionDiff';
+import { diffRowData, diffSchemas } from '../domain/versionDiff';
 
 type Against = number | 'current' | undefined;
 

@@ -2,10 +2,10 @@ import { IMessage, InterviewStage, IInterviewTurnResult, CreationChoice, Creatio
 import OpenAI from 'openai';
 import { logger } from '../../../lib/logger';
 import { OpenAIService } from '../../../lib/openai/OpenAIService';
-import { IPresetKnowledge } from '../../dynamicTables/presets/ai/PresetKnowledgeBase';
+import { IPresetKnowledge } from '../../dynamicTables/domain/presets/ai/PresetKnowledgeBase';
 import { stageConfig } from './PromptConfig';
 import { CustomizationService } from '../CustomizationService/CustomizationService';
-import type { ModuleSelector } from '../../dynamicTables/presets/modules/registry';
+import type { ModuleSelector } from '../../dynamicTables/domain/presets/modules/registry';
 import { DEFAULT_INTERVIEW_LOCALE, INTERVIEW_TEXT, type InterviewLocale } from '../models/interviewText';
 
 /**

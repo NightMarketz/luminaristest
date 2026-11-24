@@ -8,7 +8,7 @@
  * verificada diretamente aqui, não só inferida.
  */
 import { PresetMatcher } from '../PresetMatcher';
-import { presetKnowledgeBase } from '../../../dynamicTables/presets/ai/PresetKnowledgeBase';
+import { presetKnowledgeBase } from '../../../dynamicTables/domain/presets/ai/PresetKnowledgeBase';
 import type { OpenAIService } from '../../../../lib/openai/OpenAIService';
 import type { IMessage } from '../../models/InterviewTypes';
 

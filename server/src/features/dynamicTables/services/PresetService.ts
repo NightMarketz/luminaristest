@@ -1,5 +1,5 @@
-import { tablePresetSuites } from '../presets';
-import { presetModuleViews } from '../presets/modules/registry';
+import { tablePresetSuites } from '../domain/presets';
+import { presetModuleViews } from '../domain/presets/modules/registry';
 
 /**
  * Service class for handling business logic related to dashboard presets.

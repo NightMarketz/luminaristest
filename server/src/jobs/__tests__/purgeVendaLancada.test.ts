@@ -14,7 +14,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { salesModule } from '../../features/dynamicTables/presets/modules/finance/SalesModule';
+import { salesModule } from '../../features/dynamicTables/domain/presets/modules/finance/SalesModule';
 
 const BRIDGES = path.resolve(__dirname, '../../features/accounting/sync/bridges');
 const LANCADA_DEPOIS = ['Cancelled', 'Returned']; // SaleReversalBridge: a venda lançada que sai de Finalized
