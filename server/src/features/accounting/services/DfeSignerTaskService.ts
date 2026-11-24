@@ -229,6 +229,8 @@ export class DfeSignerTaskService {
 
   private async entregar(deviceId: string): Promise<DfeSignerTarefa[]> {
     const now = this.now();
+    // Tarefa que o processo esperava e perdeu (reinício, queda) não é entregue nem fica aberta: vence aqui, com o payload apagado.
+    await this.repo.expirarVencidas(deviceId, now);
     const tarefas = await this.repo.claim(deviceId, now, new Date(now.getTime() + DFE_SIGNER_LEASE_MS));
     return tarefas.map((t) => DfeSignerTarefaSchema.parse({ ...(JSON.parse(t.payload ?? '{}') as object), id: t.id, expiraEm: t.expiresAt.toISOString() }));
   }

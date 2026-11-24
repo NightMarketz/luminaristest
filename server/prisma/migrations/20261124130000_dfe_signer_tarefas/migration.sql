@@ -1,6 +1,7 @@
 -- X10a EMENDA-4 AL-PR-3 (AL-6, AL-7): fila servidor → assinador local. Tabela nova, sem dado a migrar.
+-- Prólogo defensivo (SQLite não é transacional: um abort deixa metade aplicada): IF NOT EXISTS torna a reaplicação inócua.
 -- CreateTable
-CREATE TABLE "dfe_signer_tasks" (
+CREATE TABLE IF NOT EXISTS "dfe_signer_tasks" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "userId" TEXT NOT NULL,
     "deviceId" TEXT NOT NULL,
@@ -17,7 +18,7 @@ CREATE TABLE "dfe_signer_tasks" (
 );
 
 -- CreateIndex
-CREATE INDEX "dfe_signer_tasks_deviceId_status_idx" ON "dfe_signer_tasks"("deviceId", "status");
+CREATE INDEX IF NOT EXISTS "dfe_signer_tasks_deviceId_status_idx" ON "dfe_signer_tasks"("deviceId", "status");
 
 -- CreateIndex
-CREATE INDEX "dfe_signer_tasks_userId_unitId_idx" ON "dfe_signer_tasks"("userId", "unitId");
+CREATE INDEX IF NOT EXISTS "dfe_signer_tasks_userId_unitId_idx" ON "dfe_signer_tasks"("userId", "unitId");

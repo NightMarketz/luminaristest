@@ -33,4 +33,11 @@ export interface IDfeSignerTaskRepository {
   /** `PENDING | DELIVERED` ⇒ `EXPIRED` e apaga o payload; false se já saiu desses estados. */
   expire(id: string): Promise<boolean>;
   /** `PENDING` ⇒ `EXPIRED` só se ainda não foi entregue (atômico com `claim`); false se já foi entregue ou saiu. */
-  expirarPendente(id: string): Promise<boolean>;}
+  expirarPendente(id: string): Promise<boolean>;
+  /**
+   * AL-6 (tarefa vencida não fica órfã) — `PENDING | DELIVERED` do dispositivo com `expiresAt <= now` ⇒ `EXPIRED` e
+   * apaga o payload. É o que sobra quando o processo que esperava o resultado caiu (a espera é em memória): ninguém
+   * mais chamaria `expire`. Devolve quantas linhas mudaram.
+   */
+  expirarVencidas(deviceId: string, now: Date): Promise<number>;
+}
