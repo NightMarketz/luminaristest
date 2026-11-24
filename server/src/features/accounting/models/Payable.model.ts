@@ -112,6 +112,13 @@ export function hasSingleInventorySku(payable: {
 }
 
 /**
+ * Onda 2.1 — código do erro "o razão JÁ está estornado, mas o subrazão não comporta o estorno" (invariante
+ * `paidCents ≥ pagamento` violado). Não há o que retentar: o reconcile conta como BLOCKED (lista local, NÃO a
+ * `SYNC_SKIP_ERROR_CODES` das pontes) e deixa o título para intervenção humana.
+ */
+export const PAYMENT_REVERSAL_INVARIANT_CODE = 'PAYMENT_REVERSAL_INVARIANT_VIOLATED';
+
+/**
  * Dual fato gerador — two distinct ledger events keyed on DISTINCT source ids (D3):
  *   - recognition posts under `sourceId = payableId`,
  *   - settlement posts under `sourceId = paymentId` (NEVER payableId — else a re-payment after a
