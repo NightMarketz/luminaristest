@@ -1,0 +1,22 @@
+idioma	arquivo	chaves_folha
+en	accounting.json	2819
+en	analytics.json	125
+en	chatMessages.json	34
+en	common.json	615
+en	crm.json	396
+en	database.json	247
+en	finance_view.json	172
+en	inventory_view.json	78
+en	products_view.json	3
+pt	accounting.json	2819
+pt	analytics.json	125
+pt	chatMessages.json	34
+pt	common.json	615
+pt	crm.json	396
+pt	database.json	247
+pt	finance_view.json	172
+pt	inventory_view.json	78
+pt	products_view.json	3
+
+TOTAL en: 4489 chaves-folha
+TOTAL pt: 4489 chaves-folha
