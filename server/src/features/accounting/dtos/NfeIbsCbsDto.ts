@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { buscarCClassTrib, buscarCCredPres, buscarCst, tabelasIbsCbsDoCache, type CClassTribIbsCbs, type CstIbsCbs, type Ind, type TabelasIbsCbs } from '../models/ibsCbsTabelas';
+import { buscarCClassTrib, buscarCCredPres, buscarCst, type CClassTribIbsCbs, type CstIbsCbs, type Ind, type TabelasIbsCbs } from '../models/ibsCbsTabelas';
 
 /**
  * BE-INCR-NFCE (nó X10a, item 20; F-NFCE-12 b, F-NFCE-12b b) — grupo UB (`det/imposto/IS` e `det/imposto/IBSCBS`) e grupo W03
@@ -9,7 +9,9 @@ import { buscarCClassTrib, buscarCCredPres, buscarCst, tabelasIbsCbsDoCache, typ
  * `gRed`, `gALCZFMCBS`, `gTribRegular`, `gTribCompraGov`, monofásico (`gIBSCBSMono`, ad rem e ad valorem), `gTransfCred`,
  * `gAjusteCompet`, `gEstornoCred`, `gCredPresOper` e `gCredPresIBSZFM`.
  *
- * As regras da §7 viram `regrasIbsCbs` (chamada pelo `superRefine` do `NfePayloadDto`), com o código de rejeição na mensagem.
+ * As regras da §7 viram `regrasIbsCbs`, com o código de rejeição na mensagem. Desde a Onda 3.2 fatia 5 ela NÃO roda no `superRefine`
+ * do `NfePayloadDto`: o schema é estrutural e o serviço que MONTA a nota (`FiscalDocumentEmissionService`) a chama com as tabelas lidas da
+ * fotografia de LegalParameter (`issuesIbsCbs`). Reler um payload já emitido não reaplica as regras do UB.
  * As que dependem de indicador consultam as tabelas do IT 2025.002 v1.70 (`models/ibsCbsTabelas.ts`, lidas das linhas de LegalParameter desde a Onda 3.2 fatia 5). NÃO são aplicadas:
  *  - as marcadas "Implementação Futura" na NT (UB01–UB11 do IS, UB13-40, UB16-10, UB105a/b, W33-10, W60-05/10) — a SEFAZ
  *    também não as aplica hoje;
@@ -220,6 +222,17 @@ const aliqEfet10k = (p: string, pRed: string): number => Math.round(Number(p) * 
 
 type Add = (message: string, path: (string | number)[]) => void;
 
+/**
+ * As rejeições do UB/W03 no formato do 400 agregado da montagem (`infNFe.det.0.imposto.IBSCBS.cClassTrib: rej. 1023 …`), o mesmo
+ * texto que o `safeParse` do schema completo dava antes de a regra sair do refine. `tabelas` pode faltar só se a nota não tem item
+ * com IBSCBS.
+ */
+export function issuesIbsCbs(nota: NotaParaRegrasIbsCbs, tabelas?: TabelasIbsCbs): string[] {
+  const out: string[] = [];
+  regrasIbsCbs(nota, (message, path) => out.push(`${['infNFe', ...path].join('.')}: ${message}`), tabelas);
+  return out;
+}
+
 /** As regras da §7 do grupo UB e do W03 (ver o cabeçalho para as que não se aplicam). */
 export function regrasIbsCbs(nota: NotaParaRegrasIbsCbs, add: Add, tabelasDadas?: TabelasIbsCbs): void {
   const { ide, emit, det, total } = nota;
@@ -233,10 +246,12 @@ export function regrasIbsCbs(nota: NotaParaRegrasIbsCbs, add: Add, tabelasDadas?
       ? data >= (ide.tpAmb === 2 ? IBSCBS_EXIGIDO_DESDE.crt3Homologacao : IBSCBS_EXIGIDO_DESDE.crt3Producao)
       : data >= IBSCBS_EXIGIDO_DESDE.simples;
   const tiposZfm = new Map<number, number>();
-  // Onda 3.2 fatia 5: as tabelas do IT 2025.002 vêm das linhas de LegalParameter (cache síncrono, emenda §9 L-8: o DTO Zod estático
-  // não tem serviço). Lidas só quando a nota tem item com IBSCBS; tabela inteira sem linha ⇒ PARAMETRO_LEGAL_AUSENTE (fail-closed).
-  let tabelasLidas = tabelasDadas;
-  const tabelasDe = (): TabelasIbsCbs => (tabelasLidas ??= tabelasIbsCbsDoCache(data));
+  // Onda 3.2 fatia 5 (dono, 24/11/2026): as tabelas do IT 2025.002 são linhas de LegalParameter e chegam PRONTAS pelo serviço (a
+  // fotografia vira `TabelasIbsCbs` fora daqui); refine de DTO não lê linha. Só é exigida quando a nota tem item com IBSCBS.
+  const tabelasDe = (): TabelasIbsCbs => {
+    if (!tabelasDadas) throw new Error('regrasIbsCbs: nota com item IBSCBS exige as tabelas do IT 2025.002 (TabelasIbsCbs) — o serviço as monta da fotografia');
+    return tabelasDadas;
+  };
 
   det.forEach((d, i) => {
     const at = (...p: (string | number)[]) => ['det', i, 'imposto', 'IBSCBS', ...p];

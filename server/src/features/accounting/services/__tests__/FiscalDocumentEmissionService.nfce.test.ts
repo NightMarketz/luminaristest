@@ -304,6 +304,31 @@ describe('BE-INCR-NFCE PR-3 — emissão da NFC-e do Simples (NullEmissor)', () 
     expect(r.faltantes.join(' ')).not.toContain('inexistente');
   });
 
+  describe('Onda 3.2 fatia 5 — virada só por linhas (a fotografia muda, o código não)', () => {
+    const produtos = () => [perfilProduto('prod-1', { csosn: null, cstIcms: '00', ibsCbsCst: '000', ibsCbsClassTrib: '000001' })];
+    /** A semente com UMA linha alterada — é tudo que muda entre o caso e a semente. */
+    const comLinha = (id: string, muda: (l: { vigenteAte: string | null; valorJson: string | null }) => Record<string, unknown>) => ({
+      fotografia: async (tabelas: readonly string[]) => (await legalParamsSemente.fotografia(tabelas)).map((l) => (l.id === id ? { ...l, ...muda(l) } : l)),
+    });
+    const faltantesCom = async (legalParams?: { fotografia: (t: readonly string[]) => Promise<unknown[]> }) => {
+      const { service } = montar({ fiscalProfile: perfilSimples({ regimeTributario: 'PRESUMIDO' }), produtos: produtos(), legalParams });
+      return (await service.preview(SCOPE, SALE_ID, 'NFCE')).faltantes.join(' | ');
+    };
+
+    it('semente: 000001 vigente desde 2026-01-01 e permitido na NFC-e ⇒ só a recusa do ICMS (CRT3_ICMS_SEM_SPEC)', async () => {
+      expect(await faltantesCom()).toBe(CRT3_ICMS_SEM_SPEC);
+    });
+
+    it('trocar só o vigenteAte da linha do cClassTrib para 2026-06-30 ⇒ "fora da vigência"', async () => {
+      expect(await faltantesCom(comLinha('ibscbs-cclass-000001', () => ({ vigenteAte: '2026-06-30' })))).toContain('cClassTrib 000001 fora da vigência (2026-01-01–2026-06-30, IT 2025.002 v1.70)');
+    });
+
+    it('trocar só indNFCe da linha para 0 ⇒ UB14-25 (rej. 1025) na NFC-e', async () => {
+      const m = await faltantesCom(comLinha('ibscbs-cclass-000001', (l) => ({ valorJson: JSON.stringify({ ...JSON.parse(l.valorJson ?? '{}'), indNFCe: 0 }) })));
+      expect(m).toContain('cClassTrib 000001 não permitido no modelo 65 (UB14-25, rej. 1025)');
+    });
+  });
+
   it('item 20 — cClassTrib que exige subgrupo sem dado no perfil (diferimento) ⇒ faltante nomeado', async () => {
     const produtos = [perfilProduto('prod-1', { csosn: null, cstIcms: '00', ibsCbsCst: '510', ibsCbsClassTrib: '510001' })];
     const { service } = montar({ fiscalProfile: perfilSimples({ regimeTributario: 'PRESUMIDO' }), produtos });

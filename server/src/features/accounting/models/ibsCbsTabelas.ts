@@ -14,8 +14,6 @@
 
 import { z } from 'zod';
 import { LinhaLegalIlegivelError, ParametroLegalAusenteError, linhasEmVigor, type LinhaLegal, type LegalParameterTabela } from '../../legalParameters/models/legalParameter';
-import { linhasEmCacheSincrono } from '../../legalParameters/models/legalParameterCache';
-import { hojeDateOnly } from '../../legalParameters/models/hoje';
 
 export type Ind = 0 | 1;
 
@@ -203,14 +201,6 @@ export function tabelasIbsCbsDe(linhas: readonly LinhaLegal[], data: string): Ta
     cstPorCodigo: new Map(cst.map((c) => [c.cst, c])),
     cCredPresPorCodigo: new Map(cCredPres.map((c) => [c.cCredPres, c])),
   };
-}
-
-/**
- * Só para o DTO Zod estático (emenda §9 L-8, dono 07/10: "DTO lê o cache síncrono"): as tabelas do cache aquecido no boot.
- * Cache frio é defeito de inicialização (erro explícito de `linhasEmCacheSincrono`), tabela vazia é `PARAMETRO_LEGAL_AUSENTE`.
- */
-export function tabelasIbsCbsDoCache(data: string = hojeDateOnly()): TabelasIbsCbs {
-  return tabelasIbsCbsDe(TABELAS_IBS_CBS.flatMap((t) => linhasEmCacheSincrono(t)) as unknown as LinhaLegal[], data);
 }
 
 export const buscarCst = (t: TabelasIbsCbs, cst: string): CstIbsCbs | undefined => t.cstPorCodigo.get(cst);

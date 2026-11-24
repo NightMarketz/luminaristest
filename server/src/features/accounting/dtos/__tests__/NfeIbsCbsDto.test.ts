@@ -1,6 +1,11 @@
-import { NfeIbsCbsSchema, NfeIbsCbsTotSchema, NfeIsSchema, regrasIbsCbs, type NfeIbsCbs, type NotaParaRegrasIbsCbs } from '../NfeIbsCbsDto';
+import { LEGAL_PARAMS_SEED_FILE_IBS_CBS_TABELAS, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { NfeIbsCbsSchema, NfeIbsCbsTotSchema, NfeIsSchema, issuesIbsCbs, regrasIbsCbs, type NfeIbsCbs, type NotaParaRegrasIbsCbs } from '../NfeIbsCbsDto';
+import { tabelasIbsCbsDe } from '../../models/ibsCbsTabelas';
 import { NfePayloadSchema, type NfePayload } from '../NfePayloadDto';
 import { nfceNumerada } from '../../models/__tests__/nfeMontagem.fixture';
+
+/** Onda 3.2 fatia 5: as tabelas do IT 2025.002 vêm das linhas do seed (o serviço as lê da fotografia). */
+const TABELAS = tabelasIbsCbsDe(legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_IBS_CBS_TABELAS), '2026-10-27');
 
 /**
  * BE-INCR-NFCE (nó X10a, item 20; F-NFCE-12b b) — um bloco por subgrupo do UB (e o W03), cada caso vermelho com o código de
@@ -49,7 +54,7 @@ function nota(itens: Array<NfeIbsCbs | undefined>, o: Opc = {}): NotaParaRegrasI
 }
 const msgs = (n: NotaParaRegrasIbsCbs): string[] => {
   const out: string[] = [];
-  regrasIbsCbs(n, (m) => out.push(m));
+  regrasIbsCbs(n, (m) => out.push(m), TABELAS);
   return out;
 };
 const rej = (n: NotaParaRegrasIbsCbs, ...codigos: string[]) => {
@@ -71,6 +76,8 @@ describe('base gIBSCBS válida e a NFC-e CRT 3 inteira pelo NfePayloadSchema', (
     inf.total.IBSCBSTot = totDe([g]);
     const r = NfePayloadSchema.safeParse(p);
     expect(r.success ? [] : r.error.issues.map((i) => i.message)).toEqual([]);
+    // o schema é estrutural; as regras do UB rodam à parte, com as tabelas (o serviço que monta a nota)
+    expect(issuesIbsCbs(inf, TABELAS)).toEqual([]);
   });
 });
 
