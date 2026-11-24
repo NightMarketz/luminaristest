@@ -1,0 +1,1097 @@
+ 
+Secretaria-Executiva do Comitê Gestor da Nota Fiscal de Serviço Eletrônica 
+de Padrão Nacional (SE/CGNFS-e) 
+ 
+ 
+ 
+ 
+ 
+Projeto Reforma Tributária do Consumo – 
+Adequações NFS-e 
+ 
+ Nota Técnica Nº 004 – Versão 2.0 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+10 de dezembro de 2025 
+ 
+2 
+ 
+Sumário 
+ 
+1. Introdução ................................................................................................................................................. 3 
+1.1 Desligamento das Regras de Validação de Obrigatoriedade dos Grupos “IBSCBS” .............................. 4 
+1.2 Disponibilização de Ambiente de Testes para os Grupos “IBSCBS” - Piloto .......................................... 5 
+1.3.  Disponibilização da NFS-e Via ............................................................................................................... 7 
+2. Layout NFS-e: Novos Grupos no Contexto da EC nº 132/2023 .................................................................. 8 
+2.1. Novos Grupos na DPS da NFS-e .......................................................................................................... 10 
+2.1.2 (REMOVIDO) Grupo de Informações Relativas ao Adquirente ................................................. 12 
+2.1.2. Grupo de Informações de Operações Relacionadas a Bens Imóveis, Exceto Obras ................. 13 
+2.1.3 Grupo de Informações Relativas ao Serviço Prestado para IBS e CBS ...................................... 14 
+2.2. Novos Grupos na NFS-e ...................................................................................................................... 16 
+2.2.1. Grupo de Informações Comuns Relativas ao IBS e à CBS ......................................................... 16 
+2.2.2. Grupo de Informações de Valores Brutos Relativos ao IBS e à CBS.......................................... 16 
+2.2.3. Grupos Totalizadores ................................................................................................................ 17 
+2.2.4. Grupo de Informações Relativas às Totalizações do IBS ........................................................... 18 
+2.2.5. Grupo de Informações Relativas às Totalizações da CBS .......................................................... 19 
+ 
+ 
+ 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+3 
+ 
+ 
+ 
+ 
+1. Introdução 
+ 
+ Este documento contempla a quarta versão dos novos agrupamentos e campos opcionais do 
+layout da Nota Fiscal de Serviço eletrônica – NFS-e padrão nacional relacionados à tributação do 
+Imposto sobre Bens e Serviços – IBS e da Contribuição sobre Bens e Serviços – CBS incidentes nas 
+operações de serviços, em atendimento às alterações previstas na Emenda Constitucional nº 132 de, 
+20 de dezembro de 2023, que deu ensejo à Reforma Tributária do Consumo – RTC. Importante 
+observar que esta nota técnica substitui as versões anteriores. 
+ Os novos agrupamentos de campos foram inseridos a partir do layout atual da NFS-e, presente 
+no documento  “ANEXO_I-SEFIN_ADN-DPS_NFSe-SNNFSe-v1.00-20251210.xlsx”, aba 
+“LEIAUTE NFS -e ADN” que consta na sessão de documentação técnica no Portal da NFS -e: 
+https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica. 
+ Importante esclarecer que o conjunto de campos apresentados neste documento é uma quarta 
+versão, resultado de estudos técnicos realizados tomando como base o texto da Lei Complementar – 
+LC nº 214, de 16 de janeiro de 2025 , e sua divulgação objetiva dar transparência aos  Estados, aos 
+Municípios, às empresas prestadoras de serviço e de Tecnologia da Informação – TI e contribuintes 
+para que possam se familiarizar com o novo padrão que deve rá vigorar a partir de janeiro de 2026. 
+Os estudos técnicos permanecem e novas versões deverão ser publicadas nas próximas semanas com 
+atualizações do layout proposto. 
+ Para melhor compreensão dos agrupamentos que serão apresentados no próximo tópico desta 
+Nota Técnica, a seguir é apresentada a modelagem do processo de emissão  da NFS-e. O emissor 
+(prestador de serviços ) preenche a Declaração de Prestação de Serviço  (DPS) que será enviada à 
+“Sefin Nacional”, responsável pela validação das informações, cálculo dos tributos e autorização da 
+NFS-e. Caso as informações atendam aos requisitos, será gerada a NFS-e em formato XML com o 
+destaque dos tributos devidos e que poderá ser acessada pelo emissor  e demais envolvidos na 
+operação. É importante observar que a DPS é assinada e encapsulada no interior da nota gerada e que, 
+dessa forma, há dois grupos de informações apresentados neste documento: um relativo à DPS com 
+campos que serão informados pelo contribuinte e outro que, a partir dessas informações, terá campos 
+calculados pela plataforma. 
+ 
+ 
+ 
+4 
+ 
+ 
+ 
+ 
+Junto a esta nota técnica, foram também publicados dois anexos  na seção de documentação 
+técnica do portal da NFS-e (https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica): 
+ 
+• AnexoVI-LeiautesRN_RTC_IBSCBS-V1.01.03 - NT004.xlsx 
+Composto por duas tabelas, este anexo possui o layout da NFS-e com os novos grupos 
+referentes ao IBS e à CBS (“Leiaute DPS_NFS -e - RTC”) e as regras de negócio do 
+grupo “IBSCBS” da DPS e da NFS-e (“RN DPS_NFS-e - RTC_IBSCBS”); 
+ 
+• AnexoVII-IndOp_IBSCBS_V1.00.00-.xlsx 
+Composto por uma tabela com os códigos indicadores da operação que serão 
+referenciados no campo “cIndOp” da DPS. A tabela foi baseada no art. 11 da Lei 
+Complementar – LC Nº 214, de 16 de janeiro de 2025. 
+ 
+ 
+1.1 Desligamento das Regras de Validação de Obrigatoriedade dos Grupos “IBSCBS” 
+ 
+ 
+As validações dos dados relativos aos grupos “IBSCBS” não devem impedir a emissão do 
+documento fiscal no início de 2026 , sendo assim, essas  regras de negócio  referentes à  
+obrigatoriedade de informação dos grupos “IBSCBS”, tanto da Declaração de Prestação de Serviços 
+– DPS (para aqueles que irão autorizar os documentos fiscais no ambiente nacional) quanto da própria 
+NFS-e (para os municípios que optaram pela manutenção do em issor próprio com posterior 
+compartilhamento), ainda não estarão sendo aplicadas  nos ambientes de Produção Restrita 
+(homologação/testes) e Produção (quando disponível) , ficando temporariamente suspensas . Dessa 
+forma, nesse momento inicial, os documentos fiscais emitidos/compartilhados sem esses grupos de 
+informações serão autorizados/recepcionados no Ambiente de Dados Nacional – ADN da NFS-e. 
+Acerca desse fato, cumpre esclarecer alguns pontos de suma importância: 
+
+ 
+5 
+ 
+1) Os documentos de contribuintes/municípios que informarem os grupos “IBSCBS” (DPS 
+e/ou NFS-e) terão o conjunto de validações  e regras de negócio , referentes ao conteúdo 
+desses grupos, verificado. Dessa forma, a única regra que será suspensa é a que verifica a 
+própria obrigatoriedade de informação do s grupos “IBSCBS” (sendo estes facultativos 
+para a geração/recepção do documento fiscal); 
+2) A suspensão de verificação da regra de obrigatoriedade de informação do s grupos 
+“IBSCBS” não guarda relação com a obrigatoriedade, por parte dos entes 
+municipais, de se integrarem à plataforma NFS-e até 1º de janeiro de 2026, inclusive 
+compartilhando os documentos fiscais emitidos em sistema próprio, segundo o que 
+preconiza o art. 62 da Lei Complementar nº 214, de 16 de janeiro de 2025.  
+Para os Municípios, o prazo para integração à plataforma NFS-e continua em pleno 
+vigor, inclusive com a possibilidade de suspensão das transferências voluntárias para 
+aqueles que não se integrarem, sanção prevista no § 7º do mesmo artigo. 
+Importante reiterar que, para se integrarem, os Municípios devem seguir os seguintes 
+passos: 
+a. Aderirem ao Convênio  para integração  à plataforma NFS -e antes do prazo 
+assinalado, a fim de permitir seguir os passos seguintes; e 
+b. Ativarem os convênios  (que ocorre ao concluir as parametrizações no Painel 
+Administrativo Municipal e alcançar a data de expectativa para início de vigência, 
+a qual deve ser, no limite, 1º de janeiro de 2026); e 
+c. Para aqueles que optaram, no Painel Administrativo Municipal, pela utilização do 
+emissor próprio, compartilharem imediatamente ou a partir de 1º de janeiro 
+de 2026, os documentos no layout padrão da NFS-e para o repositório nacional 
+(ADN). 
+ 
+1.2 Disponibilização de Ambiente de Testes para os Grupos “IBSCBS” - Piloto 
+ 
+ 
+No dia 10 de dezembro  de 2025  foi implantado no ambiente de Produção Restrita 
+(homologação/testes) o primeiro ambiente NFS -e com os novos grupos de informações “IBSCBS”. 
+O ambiente, disponível para todas as empresas e municípios que desejam testá-lo, possui atualizações 
+que contemplam o layout objeto desta Nota Técnica e será aquele disponível no ambiente de 
+Produção, com validade jurídica, a partir de 5 de janeiro de 2026.  
+ 
+6 
+ 
+Conforme já exposto na própria nota, as evoluções de layout trazidas especificamente pela 
+Nota Técnica SE\CGNFS-e nº 005, de 19 de novembro de 2025, não serão implantadas no ambiente 
+Produção em janeiro de 2026: essas evoluções serão disponibilizadas em data futura, ao longo do ano 
+de 2026. Cronograma com novas datas de implantação será publicado no portal da NFS -e nas 
+próximas semanas. 
+O que contempla a atualização do ambiente RTC (Reforma Tributária do Consumo) em 
+Produção Restrita disponível no dia 10 de dezembro de 2025: 
+• API Sefin – Emissões de DPS com a possibilidade de emissão com o novo grupo 
+“IBSCBS” e geração da NFS-e a partir da integração com a Calculadora de Tributos e de 
+acordo com as regras de negócio publicadas; 
+• API de Compartilhamento (ADN) – Recepção de NFS -e com os grupos “IBSCBS” e 
+validações de suas informações (para os municípios que optarem pelos emissores 
+próprios). 
+O que NÃO contempla a atualização do ambiente RTC em Produção Restrita: 
+• Emissor Nacional Web – estão em desenvolvimento as atualizações no Emissor Nacional 
+Web (Portal do Contribuinte) para contemplar as informações dos grupos “IBSCBS”; 
+• Consulta Pública – mesmo que a NFS-e seja gerada com os grupos “IBSCBS” (no arquivo 
+XML), eles não serão exibidos na consulta pública; 
+• DANFS-e – a exemplo da Consulta Pública, os grupos “IBSCBS” também não serão 
+exibidos no Documento Auxiliar da NFS -e (mera representação de dados básicos  do 
+documento fiscal eletrônico e que com ele não se pode confundir). 
+Algumas observações importantes acerca do ambiente de homologação/testes: 
+1)  A tabela de correlações publicada na seção de Documentação Técnica do portal da NFS-
+e, AnexoVIII -CorrelacaoItemNBSIndOpCClassTrib_IBSCBS, por se tratar de um 
+trabalho inicial e ainda em desenvolvimento, não ensejou a criação de regras de negócio 
+para os g rupos “IBSCBS”. Nesta fase in icial, esse anexo deve servir apenas como um 
+norteador para o correto preenchimento desses grupos de informações; 
+2) Importante ressaltar que os módulos não contemplados no ambiente RTC de Produção 
+Restrita, descritos acima, podem passar por instabilidades durante esse período de testes 
+até que suas atualizações estejam disponíveis. 
+ 
+ 
+7 
+ 
+1.3.  Disponibilização da NFS-e Via - Piloto 
+  
+A Nota Fiscal de Serviço  Eletrônica de Exploração de Via (NFS -e Via) faz parte do Sistema 
+Nacional da Nota Fiscal de Serviço eletrônica de padrão nacional. Este documento fiscal eletrônico, 
+de uso restrito pelas Concessionárias de Exploração de Rodovias para o serviço classificado sob 
+o Código Tributário Nacional  22.01.01 (ANEXO_B-NBS2-LISTA_SERVICO_NACIONAL-
+SNNFSe-v1.00-20251210), abrange: 
+• Serviços de exploração de rodovia mediante cobrança de preço ou pedágio dos usuários (que 
+inclui atividades envolvidas que incluem conservação, manutenção, melhoramentos para 
+adequação de capacidade e segurança de trânsito, operação, monitoração, assistência aos 
+usuários, e outros serviços definidos em contratos ou normas oficiais). 
+ 
+A NFS-e Via é gerada pelo contribuinte e transmitida para um Ambiente Nacional próprio, onde 
+é validada, conforme especificações técnicas, e a resposta é dada de forma síncrona (via API REST). 
+As informações são fornecidas a partir de arquivos XML, com definições de campos e regras de 
+preenchimento segundo layout que será submetido à aprovação pelo Comitê Gestor da NFS-e. 
+ 
+• Gestão e Consulta 
+O sistema possui ferramentas específicas para gestão e consulta: 
+• Portal de Gestão NFS -e Via : de uso restrito, é utilizado para a parametrização de 
+informações essenciais, como o cadastro de Contratos, Trechos de concessão, Praças de 
+pedágio, Municípios de abrangência, extensão da via em cada município e a alíquota dos 
+tributos. Esses dados servem como fonte para validação no layout da NFS-e Via; 
+• APIs de Recepção: Permitem o recebimento e validação da NFS -e Via, bem como eventos 
+de Cancelamento e Substituição; 
+• APIs de Consultas: Permitem que as concessionárias consultem o resultado da recepção ou 
+validação por protocolo ou chave de acesso, e consultem a Alíquota Efetiva por trechos sob 
+concessão. 
+ 
+• Projeto Piloto - Liberação no Ambiente de Produção Restrita  
+ 
+8 
+ 
+O Projeto Piloto, iniciado em agosto, foi concluído com sucesso graças à colaboração das 
+empresas participantes, que auxiliaram na validação do  layout e das regras no ambiente de 
+homologação. 
+ 
+Para as Concessionárias: 
+Nos próximos dias , o  ambiente de Produção Restrita será liberado  para testes  e todas as 
+Concessionárias poderão utilizá-lo para se adaptarem ao novo modelo operacional. 
+• O Portal das Concessionárias (para configuração de contratos, trechos, praças e municípios) 
+logo estará disponível em ambiente de Produção; 
+• Os links de acesso às aplicações estão disponíveis em: NFS-e Via — Portal da Nota Fiscal 
+de Serviço eletrônica. 
+ 
+ 
+2. Layout NFS-e: Novos Grupos no Contexto da EC nº 132/2023 
+ 
+ Para melhor compreensão das informações disponibilizadas  nos layouts dispostos 
+neste tópico, segue um breve glossário. 
+• CAMINHO NO XML 
+O XML (Extensible Markup Language) é uma linguagem de marcação utilizada para 
+estruturar e armazenar dados em um formato legível por máquina  que obedece aos 
+layouts dispostos neste documento e que possui regras a serem seguidas, em uma 
+sequência pré-definida e ordenada. Esta coluna informa o path, ou caminho, ordenado 
+em que as informações devem ser dispostas na formatação do XML. 
+ 
+• CAMPO 
+Nome do campo/informação que deve constar no XML. 
+ 
+ 
+• ELE 
+Elemento ou valor do campo que deve ser informado. Pode ser dos tipos: 
+o ID: Campo identificador do documento; 
+o E: Element (Elemento), atributo deve ser informado no campo; 
+o G: Group (Grupo), tag que identifica um grupo de informações que será 
+formado por elements (E), choice elements (CE) ou outros grupos; 
+ 
+9 
+ 
+o CG: Choice Group (Grupo de Escolha), tag que identifica um grupo que deverá 
+ser informado a depender da escolha do emitente; 
+o CE: Choice Element  (Elemento de Escolha), elemento de uma lista pré -
+determinada, a ser preenchida pelo emitente. 
+ 
+• TIPO 
+Tipo do campo que deve ser informado para a tag específica. Pode ser dos tipos: 
+o N: Numérico; 
+o C: Caractere; 
+o D: Data. 
+ 
+Nas tags G ou CG ( Group ou Choice Group ), como são apenas informações de 
+agrupamento de campos, não há um tipo relacionado. 
+ 
+• OCOR. 
+Quantidade de ocorrências possíveis para o campo/tag. 
+Por exemplo: 
+o 0-1: A informação não é obrigatória e, caso seja informada, só será possível de 
+ser informada uma única vez no documento; 
+o 1-1: Informação obrigatória e que deverá ser informada apenas uma vez no 
+documento; 
+o 1-60: Informação obrigatória que deverá ser informada até, no máximo, 60 
+vezes no documento. 
+• TAM. 
+  Tamanho da informação para o campo/tag. 
+  Por exemplo: 
+o 14: Campo de tamanho fixo com 14 caracteres ou números; 
+o 1-150: Campo de tamanho variável, podendo possuir de 1 a 150 caracteres  ou 
+números; 
+o 1-3V2: Campo de tamanho variável, podendo possuir de 1 a 3 números mais duas 
+casas decimais. 
+ 
+Nas tags G ou CG ( Group ou Choice Group ), como são apenas informações de 
+agrupamento de campos, não há um tamanho relacionado. 
+ 
+10 
+ 
+ 
+• DESCRIÇÃO 
+Descrição sucinta do que representa cada campo e como deve ser preenchido. 
+ 
+ 
+2.1.Novos Grupos na DPS da NFS-e 
+ 
+ Na DPS, foi criado o grupo IBSCBS (caminho NFSe/infNFSe/DPS/infDPS/). Neste grupo 
+serão dispostos todos os subgrupos e informações relativas aos novos tributos: IBS  e CBS; e que 
+deverão ser informados pelo contribuinte na emissão. Importante observar que os campos/tags/células 
+listados abaixo em laranja se referem a campos que foram modificados em relação à versão anterior, 
+publicada na Nota Técnica SE/CGNFS-e nº 003, de 04 de julho de 2025. 
+CAMINHO NO XML CAMPO ELE TIPO OCOR. TAM. DESCRIÇÃO 
+NFSe/infNFSe/DPS/infDPS/ IBSCBS G - 0-1 - Grupo de informações declaradas pelo emitente 
+referentes ao IBS e à CBS 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/ finNFSe E N 1-1 1 
+Indicador da finalidade da emissão de NFS-e  
+ 
+0 = NFS-e regular 
+1 = NFS-e de crédito 
+2 = NFS-e de débito 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/ indFinal  E N 0-1 1 
+Indica operação de uso ou consumo pessoal.  
+ 
+0=Não 
+1=Sim 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/ cIndOp E N 1-1 6 Código indicador da operação de fornecimento, conforme tabela 
+“código indicador de operação” 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/ tpOper E N 0-1 1 
+Tipo de Operação com Entes Governanementais ou outros 
+serviços sobre bens imóveis: 
+ 
+1 – Fornecimento com pagamento posterior; 
+2 - Recebimento do pagamento com fornecimento já realizado; 
+3 – Fornecimento com pagamento já realizado; 
+4 – Recebimento do pagamento com fornecimento posterior; 
+5 – Fornecimento e recebimento do pagamento concomitantes.  
+NFSe/infNFSe/DPS/infDPS/IBSCBS/ gRefNFSe G - 0-1 - Grupo de NFS-e referenciadas. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/gRefNFSe/ refNFSe E C 1-99 50 Chave da NFS-e referenciada. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/ tpEnteGov E N 0-1 1 
+Tipo de ente governamental 
+ 
+Para administração pública direta e suas autarquias e 
+fundações:  
+1 = União  
+2 = Estado  
+3 = Distrito Federal  
+4 = Município 
+9 = Outro 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/ xTpEnteGov E C 0-1 100 
+Se tpEnteGov informado for igual a 9 = outro, este campo deve 
+informar qual a descrição do ente. Exemplo: "Comitê Gestor do 
+IBS". 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/ indPessoas 
+indDest E N 1-1 1 
+A respeito do Destinatário dos serviços: 
+ 
+0 – o destinatário é o próprio tomador/adquirente identificado 
+na NFS-e (tomador=adquirente=destinatário); 
+1 – o destinatário não é o próprio adquirente, podendo ser 
+outra pessoa, física ou jurídica (ou equiparada), ou um 
+estabelecimento diferente do indicado como tomador 
+(tomador=adquirente≠destinatário); 
+ 
+2 - O adquirente e o destinatário são a mesma pessoa, mas 
+diferente do tomador de serviços; (tomador  ≠ adquirente = 
+destinatário) 
+3 - O tomador e o destinatário são a mesma pessoa, diferente 
+do adquirente; (tomador =  destinatário ≠ adquirente) 
+ 
+11 
+ 
+ 
+ 
+Algumas observações importantes acerca dos campos acima: 
+1. O campo “cIndOp” se refere à tabela de indicador da operação publicada no ANEXO 
+AnexoVII-IndOp_IBSCBS_V1.00.00-.xlsx; 
+2. As notas de ajuste, de crédito e de débito, estão em processo de estudos e atualizações 
+serão publicadas nas próximas notas técnicas. Portanto, a menção a essas notas de ajuste 
+na descrição do campo “finNFSe” tem, por enquanto, o único objetivo de esclarecer a 
+necessidade da criação desse campo. 
+ 
+2.1.1 Grupo de Informações Relativas ao Destinatário 
+ 
+CAMINHO NO XML CAMPO ELE TIPO OCOR. TAM. DESCRIÇÃO 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/ dest G - 0-1 - Grupo de informações relativas ao Destinatário 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/ CNPJ CE N 1-1 14 Número da inscrição no Cadastro Nacional de 
+Pessoa Jurídica (CNPJ) do destinatário de serviço 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/ CPF CE N 1-1 11 Número da inscrição no Cadastro Nacional de 
+Pessoa Física (CPF) do destinatário do serviço 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/ NIF CE C 1-1 40 Número de identificação fiscal fornecido por órgão 
+de administração tributária no exterior 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/ cNaoNIF CE N 1-1 1 
+Motivo para não informação do NIF: 
+  
+ 0 - Não informado na nota de origem; 
+ 1 - Dispensado do NIF; 
+ 2 - Não exigência do NIF; 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/ xNome E C 1-1 150 Nome / Nome Empresarial do destinatário 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/ end G - 0-1 - Grupo de informações do endereço do destinatário 
+do serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/end/ endNac CG - 1-1 - Grupo de informações do endereço nacional. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/end/endNac/ cMun E N 1-1 7 
+Código do município do endereço do destinatário do 
+serviço. 
+  (Tabela do IBGE)  
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/end/endNac/ CEP E C 1-1 8 
+Código numérico do Endereçamento Postal nacional 
+(CEP)  
+  do endereço do destinatário do serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/end/ endExt CG - 1-1 - Grupo de informações do endereço no exterior. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/end/endExt/ cPais E C 1-1 2 
+Código do país do endereço do destinatário do 
+serviço. 
+  (Tabela de Países ISO) 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/end/endExt/ cEndPost E C 1-1 1-11 Código alfanumérico do Endereçamento Postal no 
+exterior do destinatário do serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/end/endExt/ xCidade E C 1-1 1-60 Nome da cidade no exterior do destinatário do 
+serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/end/endExt/ xEstProvReg E C 1-1 1-60 Estado, província ou região da cidade no exterior do 
+destinatário do serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/end/ xLgr E C 1-1 1-
+255 
+Tipo e nome do logradouro do endereço do 
+destinatário do serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/end/ nro E C 1-1 1-60 Número no logradouro do endereço do destinatário 
+do serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/end/ xCpl E C 0-1 1-
+156 
+Complemento do endereço do destinatário do 
+serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/end/ xBairro E C 1-1 1-60 Bairro do endereço do destinatário do serviço. 
+4 - O tomador, o adquirente e o destinatário são pessoas 
+distintas que devem ser identificadas. (tomador ≠ adquirente ≠ 
+destinatário) 
+ 
+12 
+ 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/ fone E N 0-1 6-20 
+Número do telefone do destinatário. 
+ (Preencher com o Código DDD + número do 
+telefone.  Nas operações com exterior é permitido 
+informar o código do país + código da localidade + 
+número do telefone) 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/dest/ email E C 0-1 1-80 E-mail do destinatário. 
+ 
+ 
+ 
+2.1.2 (REMOVIDO) Grupo de Informações Relativas ao Adquirente 
+ 
+Para o padrão da NFS-e nacional, o Tomador de Serviços (conceito da Lei Complementar nº 
+116, de 31 de julho de 2003) e o Adquirente (conceito da Lei Complementar nº 214 , de 16 de 
+janeiro de 2025) são identificados como a mesma pessoa, pois é quem: 
+ 
+a) se obriga ao pagamento ou outra forma de contraprestação pelo fornecimento; ou; 
+ 
+b) nos casos de pagamento ou de qualquer outra forma de contraprestação por conta e ordem 
+ou em nome de terceiros, aquele por conta de quem ou em nome de quem decorre a obrigação 
+de pagamento ou de qualquer outra forma de contraprestação pelo fornecimento do bem ou 
+do serviço.  
+ 
+Dessa forma, o grupo “adq” em “NFSe/infNFSe/DPS/infDPS/IBSCBS/” foi suprimido do 
+layout nesta Nota Técnica, uma vez que o Adquirente já está sendo identificado no grupo “toma” 
+em “NFSe/infNFSe/DPS/infDPS/”. 
+O Tomador/Adquirente pode ser também o próprio destinatário.  O Destinatário é a pessoa a 
+quem é fornecido o bem ou o serviço. 
+ 
+CAMINHO NO XML CAMPO ELE TIPO OCOR. TAM. DESCRIÇÃO 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/ adq G - 0-1 - Grupo de informações relativas ao Adquirente 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/ CNPJ CE N 1-1 14 Número da inscrição no Cadastro Nacional de Pessoa 
+Jurídica (CNPJ) do adquirente de serviço 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/ CPF CE N 1-1 11 Número da inscrição no Cadastro de Pessoa Física 
+(CPF) do adquirente do serviço 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/ NIF CE C 1-1 40 Número de identificação fiscal fornecido por órgão de 
+administração tributária no exterior 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/ cNaoNIF CE N 1-1 1 
+Motivo para não informação do NIF: 
+  
+ 0 - Não informado na nota de origem; 
+ 1 - Dispensado do NIF; 
+ 2 - Não exigência do NIF; 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/ CAEPF E N 0-1 14 Número do Cadastro de Atividade Econômica da 
+Pessoa Física (CAEPF) do adquirente do serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/ xNome E C 1-1 150 Nome / Nome Empresarial do adquirente 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/ end G - 0-1 - Grupo de informações do endereço do adquirente do 
+serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/end/ endNac CG - 1-1 - Grupo de informações do endereço nacional. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/end/endNac/ cMun E N 1-1 7 
+Código do município do endereço do adquirente do 
+serviço. 
+  (Tabela do IBGE) 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/end/endNac/ CEP E C 1-1 8 
+Código numérico do Endereçamento Postal nacional 
+(CEP)  
+  do endereço do adquirente do serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/end/ endExt CG - 1-1 - Grupo de informações do endereço no exterior. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/end/endExt/ cPais E C 1-1 2 
+Código do país do endereço do adquirente do 
+serviço. 
+  (Tabela de Países ISO) 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/end/endExt/ cEndPost E C 1-1 1-11 Código alfanumérico do Endereçamento Postal no 
+exterior do adquirente do serviço. 
+ 
+13 
+ 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/end/endExt/ xCidade E C 1-1 1-60 Nome da cidade no exterior do adquirente do 
+serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/end/endExt/ xEstProvReg E C 1-1 1-60 Estado, província ou região da cidade no exterior do 
+adquirente do serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/end/ xLgr E C 1-1 1-
+255 
+Tipo e nome do logradouro do endereço do 
+adquirente do serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/end/ nro E C 1-1 1-60 Número no logradouro do endereço do adquirente do 
+serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/end/ xCpl E C 0-1 1-
+156 Complemento do endereço do adquirente do serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/end/ xBairro E C 1-1 1-60 Bairro do endereço do adquirente do serviço. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/ fone E N 0-1 6-20 
+Número do telefone do adquirente do serviço. 
+ (Preencher com o Código DDD + número do 
+telefone. Nas operações com exterior é permitido 
+informar o código do país + código da localidade + 
+número do telefone) 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/adq/ email E C 0-1 1-80 E-mail do adquirente. 
+ 
+ 
+2.1.2. Grupo de Informações de Operações Relacionadas a Bens Imóveis, Exceto Obras 
+ 
+CAMINHO NO XML CAMPO ELE TIPO OCOR. TAM. DESCRIÇÃO 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/ imovel G - 0-1 - Grupo de informações de operações 
+relacionadas a bens imóveis, exceto obras. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/imovel/ inscImobFisc E C 0-1 1-30 
+Inscrição imobiliária fiscal  
+ (código fornecido pela prefeitura para a 
+identificação da obra ou para fins de recolhimento 
+do IPTU) 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/imovel/ cCIB CE C 1-1 8 Código do Cadastro Imobiliário Brasileiro - CIB 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/imovel/ end CG - 1-1 - Grupo de informações do endereço do imóvel. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/imovel/end/ CEP CE C 1-1 8 Código de Endereçamento Postal numérico do 
+endereço nacional do imóvel. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/imovel/end/ endExt CG - 1-1 - Grupo de informações descritivas do endereço do 
+imóvel no exterior. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/imovel/end/endExt/ cEndPost E C 1-1 1-11 Código de Endereçamento Postal alfanumérico do 
+endereço do imóvel no exterior. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/imovel/end/endExt/ xCidade E C 1-1 1-60 Nome da cidade no exterior, local do imóvel. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/imovel/end/endExt/ xEstProvReg E C 1-1 1-60 Estado, província ou região da cidade no exterior, 
+local do imóvel. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/imovel/end/ xLgr E C 1-1 1-
+255 Tipo e nome do logradouro do endereço do imóvel. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/imovel/end/ nro E C 1-1 1-60 Número no logradouro do endereço do imóvel. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/imovel/end/ xCpl E C 0-1 1-
+156 Complemento do endereço do imóvel. 
+NFSe/infNFSe/DPS/infDPS/IBSCBS/imovel/end/ xBairro E C 1-1 1-60 Bairro do endereço do imóvel. 
+ 
+Observação importante acerca dos campos acima: 
+1. O grupo “obra” em “ NFSe/infNFSe/DPS/infDPS/serv” deverá ser utilizado quando se 
+tratar de um serviço de obra.  
+ 
+ 
+ 
+ 
+ 
+ 
+14 
+ 
+2.1.3 Grupo de Informações Relativas ao Serviço Prestado para IBS e CBS 
+ 
+ 
+ 
+CAMINHO NO XML CAMPO ELE TIPO OCO
+R. TAM. DESCRIÇÃO 
+NFSe/infNFSe/DPS/infDPS/
+IBSCBS/ valores G - 1-1 - Grupo de informações relativas aos valores do 
+serviço prestado para IBS e CBS 
+NFSe/infNFSe/DPS/infDPS/
+IBSCBS/valores/ gReeRepRes G - 0-1 - 
+Grupo de informações relativas a valores 
+incluídos neste documento e recebidos por 
+motivo de estarem relacionadas a operações de 
+terceiros, objeto de reembolso, repasse ou 
+ressarcimento pelo recebedor, já tributados e 
+aqui referenciados 
+NFSe/infNFSe/DPS/infDPS/
+IBSCBS/valores/gReeRepRe
+s/ 
+documentos G - 
+1-
+100
+0 
+- 
+Grupo relativo aos documentos referenciados 
+nos casos de reembolso, repasse e 
+ressarcimento que serão considerados na base 
+de cálculo do ISSQN, do IBS e da CBS. 
+NFSe/infNFSe/DPS/infDPS/
+IBSCBS/valores/gReeRepRe
+s/documentos/ 
+dFeNacional CG - 1-1 - 
+Grupo de informações de documentos fiscais 
+eletrônicos que se encontram no repositório 
+nacional. 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/dFeNacional/ 
+tipoChaveDFe E N 1-1 1 
+Documento fiscal a que se refere a chaveDfe que seja 
+um dos documentos do Repositório Nacional: 
+1 = NFS-e 
+2 = NF-e 
+3 = CT-e 
+9 = Outro 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/dFeNacional/ 
+xTipoChaveDFe E C 0-1 255 
+Descrição da DF-e a que se refere a chaveDfe que 
+seja um dos documentos do Repositório Nacional. 
+Deve ser preenchido apenas quando tipoChaveDFe = 
+9 (Outro). 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/dFeNacional/ 
+chaveDFe E C 1-1 1-50 
+Chave do Documento Fiscal eletrônico do repositório 
+nacional referenciado para os casos de operações já 
+tributadas. 
+NFSe/infNFSe/DPS/infDPS/
+IBSCBS/valores/gReeRepRe
+s/documentos/ 
+docFiscalOutro CG - 1-1 - 
+Grupo de informações de documento fiscais, 
+eletrônicos ou não, que não se encontram no 
+repositório nacional. 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/docFiscalOutro/ 
+cMunDocFiscal E N 1-1 7 Código do município emissor do documento fiscal que 
+não se encontra no repositório nacional 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/docFiscalOutro/ 
+nDocFiscal E C 1-1 1-
+255 
+Número do documento fiscal que não se encontra no 
+repositório nacional 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/docFiscalOutro/ 
+xDocFiscal E C 1-1 1-
+255 Descrição do documento fiscal 
+NFSe/infNFSe/DPS/infDPS/
+IBSCBS/valores/gReeRepRe
+s/documentos/ 
+docOutro CG - 1-1 - Grupo de informações de documento não fiscal. 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/docOutro/ 
+nDoc E C 1-1 1-
+255 Número do documento não fiscal. 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/docOutro/ 
+xDoc E C 1-1 1-
+255 Descrição do documento não fiscal. 
+NFSe/infNFSe/DPS/infDPS/
+IBSCBS/valores/gReeRepRe
+s/documentos/ 
+fornec G - 0-1 - Grupo de informações do fornecedor do 
+documento referenciado 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/fornec/ 
+CNPJ CE N 1-1 14 Número da inscrição federal (CNPJ) do fornecedor. 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/fornec/ 
+CPF CE N 1-1 11 Número da inscrição federal (CPF) do fornecedor. 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/fornec/ 
+NIF CE C 1-1 40 Este elemento só deverá ser preenchido para 
+fornecedores não residentes no Brasil. 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/fornec/ 
+cNaoNIF CE N 1-1 1 
+Motivo para não informação do NIF: 
+ 
+0 - Não informado na nota de origem; 
+1 - Dispensado do NIF; 
+2 - Não exigência do NIF; 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/fornec/ 
+xNome E C 1-1 1-
+150 Nome / Razão Social do fornecedor. 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/ 
+dtEmiDoc E D 1-1 - Data da emissão do documento dedutível. 
+Ano, mês e dia (AAAA-MM-DD) 
+ 
+15 
+ 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/ 
+dtCompDoc E D 1-1 - Data da competência do documento dedutível. 
+Ano, mês e dia (AAAA-MM-DD) 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/ 
+tpReeRepRes E N 1-1 2 
+Tipo de valor incluído neste documento, recebido por 
+motivo de estarem relacionadas a operações de 
+terceiros, objeto de reembolso, repasse ou 
+ressarcimento pelo recebedor, já tributados e aqui 
+referenciados 
+ 
+  01 = Repasse de remuneração por intermediação de 
+imóveis a demais corretores  
+           envolvidos na operação 
+  02 = Repasse de valores a fornecedor relativo a 
+fornecimento intermediado por  
+           agência de turismo 
+  03 = Reembolso ou ressarcimento recebido por 
+agência de propaganda e  
+           publicidade por valores pagos relativos a 
+serviços de produção externa por conta                            
+           e ordem de terceiro 
+  04 = Reembolso ou ressarcimento recebido por 
+agência de propaganda e  
+           publicidade por valores pagos relativos a 
+serviços de mídia por conta                            
+           e ordem de terceiro 
+  99 = Outros reembolsos ou ressarcimentos 
+recebidos por valores pagos relativos a  
+           operações por conta e ordem de terceiro 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/ 
+xTpReeRepRes E C 0-1 0-
+150 
+Descrição do reembolso ou ressarcimento quando a 
+opção é "99 – Outros reembolsos ou ressarcimentos 
+recebidos por valores pagos relativos a operações por 
+conta e ordem de terceiro". 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/gReeRepRes/docume
+ntos/ 
+vlrReeRepRes E N 1-1 1-
+15V2 
+Valor monetário (total ou parcial, conforme 
+documento informado) utilizado para não inclusão na 
+base de cálculo do ISS e do IBS e da CBS da NFS-e 
+que está sendo emitida (R$). 
+NFSe/infNFSe/DPS/infDPS/
+IBSCBS/valores/ trib G - 1-1 - Grupo de informações relacionados aos tributos 
+IBS e CBS 
+NFSe/infNFSe/DPS/infDPS/
+IBSCBS/valores/trib/ gIBSCBS G - 1-1 - Grupo de informações relacionadas ao IBS e à 
+CBS 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/trib/gIBSCBS/ CST E N 1-1 3 Código de Situação Tributária do  
+IBS e da CBS 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/trib/gIBSCBS/ cClassTrib E N 1-1 6 Código de Classificação Tributária  
+do IBS e da CBS 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/trib/gIBSCBS/ cCredPres E N 0-1 2 Código e classificação do crédito presumido: IBS e 
+CBS. 
+NFSe/infNFSe/DPS/infDPS/
+IBSCBSSEL/valores/trib/gIB
+SCBS/ 
+gTribRegular G - 0-1 - Grupo de informações da Tributação Regular 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BSSEL/valores/trib/gIBSCBS/gTr
+ibRegular/ 
+CSTReg E N 1-1 3 Código de Situação Tributária do  
+IBS e da CBS de tributação regular 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BSSEL/valores/trib/gIBSCBS/gTr
+ibRegular/ 
+cClassTribReg E N 1-1 6 Código da Classificação Tributária do  
+IBS e da CBS de tributação regular 
+NFSe/infNFSe/DPS/infDPS/
+IBSCBS/valores/trib/gIBSC
+BS/ 
+gDif G - 0-1 - Grupo de informações relacionadas ao 
+diferimento para IBS e CBS 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/trib/gIBSCBS/gDif/ pDifUF E N 1-1 1-
+3V2 Percentual de diferimento para o IBS estadual. 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/trib/gIBSCBS/gDif/ pDifMun E N 1-1 1-
+3V2 Percentual de diferimento para o IBS municipal. 
+NFSe/infNFSe/DPS/infDPS/IBSC
+BS/valores/trib/gIBSCBS/gDif/ pDifCBS E N 1-1 1-
+3V2 Percentual de diferimento para a CBS. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+16 
+ 
+2.2. Novos Grupos na NFS-e 
+ 
+  Nos novos grupos que constam na NFS -e, fora dos limites da  DPS, os campos aqui 
+apresentados são os que deverão ser  parametrizados pelos Estados, pelos Municípios e pela 
+União ou aqueles que a própria plataforma, dadas as suas regras e cálculos, fornecerá de forma 
+automatizada a partir dos dados emitidos pelos contribuintes na DPS, listados no tópico 
+anterior.  
+  De forma análoga ao novo grupo criado na DPS, aqui também foi criado o grupo IBSCBS 
+(caminho NFSe/infNFSe/). Neste grupo serão dispostos todos os subgrupos e informações relativas 
+aos novos tributos: IBS  e CBS. Importante observar que os campos/tags/células listados abaixo 
+em amarelo se referem a campos que foram modificados em relação à versão anterior, 
+publicada na Nota Técnica SE/CGNFS-e nº 002, de 28 de fevereiro de 2025. 
+ 
+CAMINHO NO XML CAMPO ELE TIPO OCOR. TAM. DESCRIÇÃO 
+NFSe/infNFSe/ IBSCBS G - 0-1 - Grupo de informações geradas pelo sistema 
+referentes ao IBS e à CBS 
+ 
+  
+ 
+2.2.1. Grupo de Informações Comuns Relativas ao IBS e à CBS 
+ 
+CAMINHO NO XML CAMPO ELE  TIPO OCOR. TAM. DESCRIÇÃO 
+NFSe/infNFSe/ IBSCBS G  - 0-1 - Grupo de informações geradas pelo sistema referentes ao  
+IBS e à CBS 
+NFSe/infNFSe/IBSCBS/ cLocalidadeIncid E  N 1-1 7 Código IBGE da localidade de incidência do IBS/CBS (local da  
+operação). 
+NFSe/infNFSe/IBSCBS/ xLocalidadeIncid E  C 1-1 600 Nome da localidade de incidência do IBS/CBS. 
+NFSe/infNFSe/IBSCBS/ xIndOp E  C 1-1 500 Descrição do código indicador da operação de fornecimento,  
+conforme tabela “código indicador de operação” 
+NFSe/infNFSe/IBSCBS/ xCST E  C 1-1 600 Descrição do Código de Situação Tributária do IBS/CBS. 
+NFSe/infNFSe/IBSCBS/ xCClassTrib E  C 1-1 600 Descrição do Código de Classificação Tributária do IBS/CBS  
+NFSe/infNFSe/IBSCBS/ pRedutor E  C 0-1 1-2V2 Percentual de redução de aliquota em compra governamental. 
+ 
+2.2.2. Grupo de Informações de Valores Brutos Relativos ao IBS e à CBS 
+ 
+ 
+CAMINHO NO XML CAMPO ELE TIPO OCOR. TAM. DESCRIÇÃO 
+NFSe/infNFSe/IBSCBS/ valores G - 1-1 - Grupo de valores brutos referentes ao IBS e à 
+CBS 
+NFSe/infNFSe/IBSCBS/valores/ vBC E N 1-1 1-15V2 
+Valor da base de cálculo (BC) do IBS/CBS antes das 
+reduções para cálculo do tributo bruto.  
+ 
+vBC = vServ - descIncond – vCalcReeRepRes – vISSQN – 
+vPIS - vCOFINS (até 2026) 
+ 
+ou 
+ 
+vBC = vServ - descIncond – vCalcReeRepRes – vISSQN 
+(até 2032) 
+ 
+NFSe/infNFSe/IBSCBS/valores/ vCalcReeRepRes E N 0-1 1-15V2 
+Valor monetário (R$) total relativo ao fornecimento 
+próprio de bens materiais ou relacionados a operações 
+de terceiros, objeto de reembolso, repasse ou 
+ 
+17 
+ 
+ressarcimento pelo recebedor, já tributados e aqui 
+referenciados e que não integram da base de cálculo 
+(BC) do ISSQN, do IBS e da CBS. 
+NFSe/infNFSe/IBSCBS/valores/ uf         Grupo de Informações relativas aos valores do 
+IBS Estadual 
+NFSe/infNFSe/IBSCBS/valores/uf/ pIBSUF E N 1-1 1-2V2 
+Alíquota da UF para IBS da localidade de incidência 
+parametrizada  
+no sistema. 
+NFSe/infNFSe/IBSCBS/valores/uf/ pRedAliqUF E N 1-1 1-3V2 Percentual de redução de alíquota estadual. 
+NFSe/infNFSe/IBSCBS/valores/uf/ pAliqEfetUF E N 1-1 1-2V2 
+pAliqEfetUF = pIBSUF x (1 - pRedAliqUF) x (1 - pRedutor) 
+ 
+Se pRedAliqUF não for informado na DPS, então 
+pAliqEfetUF é a própria pIBSUF. 
+ 
+NFSe/infNFSe/IBSCBS/valores/ mun         Grupo de Informações relativas aos valores do 
+IBS Municipal 
+NFSe/infNFSe/IBSCBS/valores/mun/ pIBSMun E N 1-1 1-2V2 
+Alíquota da UF para IBS da localidade de incidência 
+parametrizada  
+no sistema. 
+NFSe/infNFSe/IBSCBS/valores/mun/ pRedAliqMun E N 1-1 1-3V2 Percentual de redução de alíquota municipal. 
+NFSe/infNFSe/IBSCBS/valores/mun/ pAliqEfetMun E N 1-1 1-2V2 
+pAliqEfetMun = pIBSMun x (1 - pRedAliqMun) x (1 - 
+pRedutor) 
+ 
+Se pRedAliqMun não for informado na DPS, então 
+pAliqEfetMun é a própria pIBSMun. 
+ 
+NFSe/infNFSe/IBSCBS/valores/ fed         Grupo de Informações relativas aos valores da 
+CBS 
+NFSe/infNFSe/IBSCBS/valores/fed/ pCBS E N 1-1 1-2V2 
+Alíquota da UF para IBS da localidade de incidência 
+parametrizada  
+no sistema. 
+NFSe/infNFSe/IBSCBS/valores/fed/ pRedAliqCBS E N 1-1 1-3V2 Percentual da redução de alíquota. 
+NFSe/infNFSe/IBSCBS/valores/fed/ pAliqEfetCBS E N 1-1 1-2V2 
+pAliqEfetCBS = pCBS x (1 - pRedAliqCBS) x (1 - 
+pRedutor) 
+ 
+Se pRedAliqCBS não for informado na DPS, então 
+pAliqEfetCBS é a própria pCBS. 
+ 
+ 
+ 
+2.2.3. Grupos Totalizadores 
+CAMINHO NO XML CAMPO ELE TIPO OCOR. TAM. DESCRIÇÃO 
+NFSe/infNFSe/IBSCBS/ totCIBS G - 1-1 - Grupo de Totalizadores 
+NFSe/infNFSe/IBSCBS/totCIBS/ vTotNF E N 1-1 1-15V2 
+Valor Total da NF considerando os impostos 
+por fora: IBS e CBS. 
+O IBS e a CBS são por fora, por isso seus 
+valores devem ser adicionados ao valor 
+total da NF. 
+ 
+ vTotNF = vLiq (em 2026) 
+ 
+ vTotNF = vLiq + vCBS + vIBSTot (a partir 
+de 2027) 
+NFSe/infNFSe/IBSCBS/totCIBS/ gTribRegular G - 0-1 - 
+Grupo de informações de tributação 
+regular 
+NFSe/infNFSe/IBSCBS/totCIBS/gTribRegular/ pAliqEfeRegIBSUF E N 1-1 1-2V2 
+Alíquota efetiva de tributação regular do 
+IBS estadual 
+NFSe/infNFSe/IBSCBS/totCIBS/gTribRegular/ vTribRegIBSUF E N 1-1 1-15V2 
+Valor da tributação regular do IBS estadual. 
+ 
+vTribRegIBSUF = vBC x pAliqEfeRegIBSUF 
+NFSe/infNFSe/IBSCBS/totCIBS/gTribRegular/ pAliqEfeRegIBSMun E N 1-1 1-2V2 
+Alíquota efetiva de tributação regular do 
+IBS municipal 
+NFSe/infNFSe/IBSCBS/totCIBS/gTribRegular/ vTribRegIBSMun E N 1-1 1-15V2 
+Valor da tributação regular do IBS 
+municipal. 
+ 
+vTribRegIBSMun = vBC x 
+pAliqEfeRegIBSMun 
+ 
+18 
+ 
+NFSe/infNFSe/IBSCBS/totCIBS/gTribRegular/ pAliqEfeRegCBS E N 1-1 1-2V2 
+Alíquota efetiva de tributação regular da 
+CBS 
+NFSe/infNFSe/IBSCBS/totCIBS/gTribRegular/ vTribRegCBS E N 1-1 1-15V2 
+Valor da tributação regular da CBS. 
+ 
+vTribRegCBS = vBC x pAliqEfeRegCBS 
+NFSe/infNFSe/IBSCBS/totCIBS/ gTribCompraGov G - 0-1 - 
+Grupo de informações da composição 
+do valor do IBS e da CBS em compras 
+governamentais 
+NFSe/infNFSe/IBSCBS/totCIBS/gTribCompraGov pIBSUF E N 1-1 1-2V2 Alíquota do IBS de competência do Estado 
+NFSe/infNFSe/IBSCBS/totCIBS/gTribCompraGov vIBSUF E N 1-1 1-15V2 Valor do Tributo do IBS da UF calculado 
+NFSe/infNFSe/IBSCBS/totCIBS/gTribCompraGov pIBSMun E N 1-1 1-2V2 
+Alíquota do IBS de competência do 
+Município 
+NFSe/infNFSe/IBSCBS/totCIBS/gTribCompraGov vIBSMun E N 1-1 1-15V2 
+Valor do Tributo do IBS do Município 
+calculado 
+NFSe/infNFSe/IBSCBS/totCIBS/gTribCompraGov pCBS E N 1-1 1-2V2 Alíquota da CBS 
+NFSe/infNFSe/IBSCBS/totCIBS/gTribCompraGov vCBS E N 1-1 1-15V2 Valor do Tributo da CBS calculado 
+ 
+ 
+2.2.4. Grupo de Informações Relativas às Totalizações do IBS 
+ 
+ 
+ 
+ 
+CAMINHO NO XML CAMPO ELE TIPO OCOR. TAM. DESCRIÇÃO 
+NFSe/infNFSe/IBSCBS/totCIBS/ gIBS G - 1-1 - Grupo de totalizadores referentes ao IBS 
+NFSe/infNFSe/IBSCBS/totCIBS/gIBS/ vIBSTot E N 1-1 1-
+15V2 
+Valor total do IBS. 
+ 
+vIBSTot = vIBSUF + vIBSMun 
+NFSe/infNFSe/IBSCBS/totCIBS/gIBS/ gIBSCredPres G - 0-1 - Grupo de valores referentes ao crédito 
+presumido para IBS 
+NFSe/infNFSe/IBSCBS/totCIBS/gIBS/gIBSCredPres/ pCredPresIBS E N 1-1 1-
+2V2 Alíquota do crédito presumido para o IBS 
+NFSe/infNFSe/IBSCBS/totCIBS/gIBS/gIBSCredPres/ vCredPresIBS E N 1-1 1-
+15V2 
+Valor do Crédito Presumido para o IBS 
+ 
+vCredPresIBS = vBC x pCredPresIBS 
+NFSe/infNFSe/IBSCBS/totCIBS/gIBS/ gIBSUFTot G - 1-1 - Grupo de valores referentes ao IBS Estadual 
+NFSe/infNFSe/IBSCBS/totCIBS/gIBS/gIBSUFTot/ vDifUF E N 0-1 1-
+15V2 
+Total do Diferimento do IBS estadual. 
+ 
+vDifUF = vIBSUF x pDifUF 
+NFSe/infNFSe/IBSCBS/totCIBS/gIBS/gIBSUFTot/ vIBSUF E N 1-1 1-
+15V2 
+Total valor do IBS estadual. 
+ 
+vIBSUF = vBC x (pIBSUF ou pAliqEfetUF) 
+NFSe/infNFSe/IBSCBS/totCIBS/gIBS/ gIBSMunTot G - 1-1 - Grupo de valores referentes ao IBS Municipal 
+NFSe/infNFSe/IBSCBS/totCIBS/gIBS/gIBSMunTot/ vDifMun E N 0-1 1-
+15V2 
+Total do Diferimento do IBS municipal. 
+ 
+vDifMun = vIBSMun x pDifMun 
+NFSe/infNFSe/IBSCBS/totCIBS/gIBS/gIBSMunTot/ vIBSMun E N 1-1 1-
+15V2 
+Total valor do IBS municipal. 
+ 
+vIBSMun = vBC x (pIBSMun ou pAliqEfetMun) 
+ 
+19 
+ 
+2.2.5. Grupo de Informações Relativas às Totalizações da CBS 
+ 
+CAMINHO NO XML CAMPO ELE TIPO OCOR. TAM. DESCRIÇÃO 
+NFSe/infNFSe/IBSCBS/totCIBS/ gCBS G - 0-1 - Grupo de valores referentes à CBS 
+NFSe/infNFSe/IBSCBS/totCIBS/gCBS/ gCBSCredPres G - 0-1 - Grupo de valores referentes ao crédito 
+presumido para CBS 
+NFSe/infNFSe/IBSCBS/totCIBS/gCBS/gCBSCredPres/ pCredPresCBS E N 1-1 1-2V2 Alíquota do crédito presumido para a CBS 
+NFSe/infNFSe/IBSCBS/totCIBS/gCBS/gCBSCredPres/ vCredPresCBS E N 1-1 1-
+15V2 
+Valor do Crédito Presumido da CBS. 
+ 
+vCredPresCBS = vBC x pCredPresCBS 
+NFSe/infNFSe/IBSCBS/totCIBS/gCBS/ vDifCBS E N 0-1 1-
+15V2 
+Total do Diferimento CBS. 
+ 
+vDifCBS = vCBS x pDifCBS 
+NFSe/infNFSe/IBSCBS/totCIBS/gCBS/ vCBS E N 1-1 1-
+15V2 
+Total valor da CBS da União. 
+ 
+vCBS = vBC x (pCBS ou pAliqEfetCBS) 
+ 
+ 
+ 
+ 
+ 
+Carlos Eduardo Burkle 
+Auditor-Fiscal de Tributos – Londrina (PR) 
+Secretário-Executivo da Secretaria-Executiva do Comitê Gestor da Nota Fiscal de Serviço 
+Eletrônica de Padrão Nacional (SE/CGNFS-e) 
+ 
