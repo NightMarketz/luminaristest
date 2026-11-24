@@ -146,6 +146,22 @@
       "captura": {
         "tipo": "PRIMEIRA"
       }
+    },
+    {
+      "id": "D10",
+      "titulo": "D12797",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/decreto/d12797.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/decreto/d12797.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:59:01-03:00",
+      "sha256": "2f404a89da06d350add2cb7e4951c82198f7ea8cf52321e1ad2872f0f3e851f5",
+      "arquivo": "docs/D10_d12797-htm.html",
+      "texto": "docs/D10_d12797-htm.txt",
+      "bytes": 10327,
+      "sha256_texto": "516e8918ecee5288541749c82c4b29550b7b0ebb38d62cdc2c2b42b41a864d07",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
     }
   ],
   "buscas": [

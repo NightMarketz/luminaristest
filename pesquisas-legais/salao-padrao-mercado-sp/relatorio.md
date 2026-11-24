@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — salao-padrao-mercado-sp
 
 **Pergunta:** Valores padrão, com fonte citável e faixa, para o exemplo de salão pequeno em SP capital (F-SIM-6/7): insumo em % da receita, taxa média do cartão, rotatividade da equipe CLT, vale-transporte, equipamentos e pró-labore. Sem fonte, fica sem padrão.
-**Aberto em:** 2026-11-24T01:39:28-03:00 · **Atualizado em:** 2026-11-24T01:45:25-03:00
+**Aberto em:** 2026-11-24T01:39:28-03:00 · **Atualizado em:** 2026-11-24T01:59:31-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -18,7 +18,7 @@ lista entra como **candidata**, marcada, e não como padrão.
 | Rotatividade da equipe CLT (`rot`, `f_rot`) | % que sai por ano | **sem padrão** | — | nenhuma das fontes aceitas mede | sem padrão (candidata fora da lista na seção 4) |
 | Vale-transporte por empregado (`vt`, `f_vt`) | R$ por mês | R$ 275,60 (2 × R$ 5,30 × 26 dias) | R$ 233,20 a R$ 551,20 | Prefeitura de SP, tarifa de 2026 [D09] | **candidata** (fonte oficial fora da lista) |
 | Equipamentos (lista `bens`: valor e vida útil) | R$ por bem | compra anual de máquinas, equipamentos e móveis = **1,5% da receita líquida** | 1,5% a 5,7% por ano | IBGE PAS 2023 [D06] | padrão como ordem de grandeza (I) |
-| Pró-labore dos sócios (`pl`, `f_pl`) | R$ por mês, total | **R$ 1.527 por sócio por mês** (valor de 2023) | R$ 1.527 a R$ 5.635 por sócio | IBGE PAS 2023 [D06] | padrão |
+| Pró-labore dos sócios (`pl`, `f_pl`) | R$ por mês, total | **R$ 1.621 por sócio por mês**, o salário mínimo de 2026, porque o dado da PAS fica abaixo dele | R$ 1.621 a R$ 5.635 por sócio (PAS 2023: R$ 1.527 a R$ 5.635) | IBGE PAS 2023 [D06]; Decreto 12.797/2025 art. 1º [D10] | padrão |
 
 **Insumo (grau: verificado no dado; a escolha do padrão é inferida).** A PAS 2023 do IBGE publica o detalhe da atividade
 "Cabeleireiros e outros serviços de tratamento de beleza" **só para empresas com 20 ou mais pessoas ocupadas**. As menores
@@ -34,7 +34,10 @@ escritório), então o 7,2% é teto do "insumo puro" dessa amostra, e não piso 
 serviço), dá cerca de R$ 2.900 por mês.
 
 **Taxa do cartão (verificado).** Dados abertos do Banco Central, série "Taxas de desconto (MDR) e volumetria". A média é
-ponderada pelo valor das transações, somando bandeiras e formas de captura [D01]:
+ponderada pelo valor das transações, somando bandeiras e formas de captura [D01]. Leio o campo `valorDesconto` como o valor das
+transações, e não o valor descontado (I): a soma dá cerca de R$ 1,1 tri por trimestre, ordem de grandeza do volume de cartões,
+enquanto o valor descontado seria uns 2% disso. A documentação da API não foi lida.
+
 
 | Trimestre | Todas as funções | Débito | Crédito à vista | Crédito parcelado | Pré-pago |
 |---|---|---|---|---|---|
@@ -66,6 +69,11 @@ sócios com atividade na empresa" em 31/12/2023 [D06, Tabelas 10 e 11]:
 
 São valores nominais de 2023, sem correção: nenhum índice foi escolhido e corrigir seria inventar. O motor mostra o ano.
 
+**O ponto baixo fica abaixo do salário mínimo de 2026, que é R$ 1.621,00** [D10, Decreto 12.797/2025 art. 1º]. O sócio que
+trabalha no salão contribui ao INSS como contribuinte individual. Usar R$ 1.527 como padrão daria uma base de INSS abaixo do
+piso. Por isso o padrão é o salário mínimo do ano, e a PAS dá a faixa até R$ 5.635 (I: o piso da base do contribuinte
+individual é regra da Lei 8.212, não relida neste dossiê).
+
 **Vale-transporte (candidata).** A tarifa do ônibus municipal de SP é R$ 5,30 desde 06/01/2026, com integração gratuita em até
 quatro ônibus em três horas no Bilhete Único [D09; a de 2025 era R$ 5,00, D08]. Com uma tarifa por trajeto, dois trajetos por
 dia e a jornada 6x1 da CCT (dossiê `salao-cct-pisos-2026` [D01], aditivo cl. 7ª § 3º: "jornada de 6x1 (seis dias trabalhados e um dia de folga)"):
@@ -80,7 +88,7 @@ na lista que o dono aceitou. Por isso fica **candidata**, para o dono decidir (s
 tem `bens: []`. Com este dossiê, o item 20d pode preencher:
 - `insumo` ≈ 7,2% da receita;
 - `mdr` com o MDR de 1,79% vezes uma fração no cartão que o aviso declara como suposição, ou deixar `mdr` em zero com aviso;
-- `pl` = R$ 1.527 por sócio.
+- `pl` = R$ 1.621 por sócio (salário mínimo de 2026), com a faixa da PAS.
 
 `rot` fica zero com o aviso "sem padrão de fonte aceita". `vt` e `bens` dependem da resposta do dono à seção 4. O aviso do
 exemplo cita estas fontes, e o resultado mostra a faixa (F-SIM-7).
@@ -88,7 +96,7 @@ exemplo cita estas fontes, e o resultado mostra a faixa (F-SIM-7).
 ## 2. Fundamentação
 | Ponto | Fonte | Onde | Dado literal |
 |---|---|---|---|
-| MDR por função | Banco Central, dados abertos `DESCONTODA` | [D01] (consulta a partir de 2025T2; traz 2025T2 a 2026T2) | campos `funcaoCartao`, `numeroparcelas`, `valorDesconto` (valor das transações), `txMediaDesconto` |
+| MDR por função | Banco Central, dados abertos `DESCONTODA` | [D01] (consulta a partir de 2025T2; traz 2025T2 a 2026T2) | campos `funcaoCartao`, `numeroparcelas`, `valorDesconto` (valor das transações, I), `txMediaDesconto` |
 | Insumo, salões 20+ | IBGE PAS 2023, Tabela 6 | [D06] | "Cabeleireiros e outros serviços de tratamento de beleza \| 190689 \| 145808 \| 11748 \| 1079 \| 32054" (Total; Mercadorias, materiais de consumo e de reposição; CMV; combustíveis; outros; 1 000 R$) |
 | Receita, salões 20+ | IBGE PAS 2023, Tabela 5 | [D06] | "… \| 2390918 \| 13631 \| 93737 \| 483482 \| 2014804" (serviços; revenda; outras; deduções; receita operacional líquida) |
 | Insumo, serviços pessoais | Tabelas 6 e 5, total das empresas | [D06] | "Serviços pessoais \| 3189428 \| 2438540 …"; "Serviços pessoais \| 28155192 \| … \| 25900591" |
@@ -165,6 +173,9 @@ pague acima dela (I).
 - **[D09]** Tarifa de ônibus será atualizada a partir de 6 de janeiro - Prefeitura de São Paulo - Prefeitura — Órgãos federais (Receita, ANPD, INSS, etc.)  
   Link oficial: <https://prefeitura.sp.gov.br/w/tarifa-de-%C3%B4nibus-ser%C3%A1-atualizada-a-partir-de-6-de-janeiro-1>  
   Baixado em 2026-11-24T01:42:25-03:00 · arquivo local `docs/D09_tarifa-de-C3-B4nibus-ser-C3-A1-atualizada-a-partir-de-6-de-j.html` · SHA-256 `8e106da3e6be3659bccb49c69b8e984fe9e245bdd183401b83c152e995008e5b`
+- **[D10]** D12797 — Presidência - legislação federal  
+  Link oficial: <https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/decreto/d12797.htm>  
+  Baixado em 2026-11-24T01:59:01-03:00 · arquivo local `docs/D10_d12797-htm.html` · SHA-256 `2f404a89da06d350add2cb7e4951c82198f7ea8cf52321e1ad2872f0f3e851f5`
 
 ## Registro de buscas
 - 2026-11-24T01:45:14-03:00 · WebSearch (pista, não fonte): Sebrae · `Sebrae salão de beleza investimento equipamentos custo de produtos % do faturamento` → 18 resultado(s)

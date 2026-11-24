@@ -1,13 +1,14 @@
 # Relatório de pesquisa legal — salao-fpas-515
 
 **Pergunta:** O salão de beleza (CNAE 9602-5/01, SP capital) está no FPAS 515? Quadro do art. 577 da CLT na fonte oficial, DL 9.853/1946 (Sesc) e DL 1.146/1970 (Incra) compilados.
-**Aberto em:** 2026-11-24T01:20:23-03:00 · **Atualizado em:** 2026-11-24T01:26:25-03:00
+**Aberto em:** 2026-11-24T01:20:23-03:00 · **Atualizado em:** 2026-11-24T01:59:41-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
 <!-- ANALISE -->
 ## 1. Conclusão
-**Sim. O salão de beleza fica no FPAS 515.** Grau: **verificado** em cada elo, lido no texto oficial vigente em 24/11/2026.
+**Sim. O salão de beleza fica no FPAS 515.** Grau: **verificado** em cada um dos quatro elos abaixo, lido no texto oficial vigente em 24/11/2026. A
+decomposição dos 0,2% do Incra é inferida (seção 2).
 A cadeia de quatro elos:
 1. **A RFB manda classificar a atividade pelo quadro do art. 577 da CLT.** A classificação usa a atividade principal do objeto
    social e do CNPJ [D04, IN RFB 2.110 art. 84 I e II]. Com ela, a empresa recebe o código FPAS dos quadros do Anexo II
