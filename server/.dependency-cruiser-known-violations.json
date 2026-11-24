@@ -1758,34 +1758,6 @@
   },
   {
     "type": "dependency",
-    "from": "src/features/analytics/services/AnalyticsService.ts",
-    "to": "src/features/dynamicTables/presets/index.ts",
-    "unresolvedTo": "../../dynamicTables/presets",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/analytics/services/AnalyticsService.ts",
-    "to": "src/features/dynamicTables/presets/modules/moduleSelection.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/moduleSelection",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/analytics/services/AnalyticsValidator.ts",
     "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
     "unresolvedTo": "@/features/dynamicTables/models/DynamicTable.model",
@@ -1972,20 +1944,6 @@
   {
     "type": "dependency",
     "from": "src/features/chat/services/LuminarisAgentService.ts",
-    "to": "src/features/dynamicTables/validation/SchemaValidator.ts",
-    "unresolvedTo": "../../dynamicTables/validation/SchemaValidator",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/chat/services/LuminarisAgentService.ts",
     "to": "src/features/integration/services/IDynamicTableWriteEffects.ts",
     "unresolvedTo": "../../integration/services/IDynamicTableWriteEffects",
     "dependencyTypes": [
@@ -2147,20 +2105,6 @@
     "dependencyTypes": [
       "local",
       "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/crm/services/CrmPipelineService.ts",
-    "to": "src/features/dynamicTables/presets/modules/registry.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
-    "dependencyTypes": [
-      "local",
       "import"
     ],
     "rule": {
@@ -3031,60 +2975,6 @@
   },
   {
     "type": "dependency",
-    "from": "src/features/dynamicTables/presets/index.ts",
-    "to": "src/features/analytics/core/models/AnalyticsConfiguration.ts",
-    "unresolvedTo": "@/features/analytics/core/models/AnalyticsConfiguration",
-    "dependencyTypes": [
-      "aliased",
-      "aliased-tsconfig",
-      "aliased-tsconfig-paths",
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/dynamicTables/presets/modules/finance/ExpensesModule.ts",
-    "to": "src/features/analytics/core/models/AnalyticsConfiguration.ts",
-    "unresolvedTo": "@/features/analytics/core/models/AnalyticsConfiguration",
-    "dependencyTypes": [
-      "aliased",
-      "aliased-tsconfig",
-      "aliased-tsconfig-paths",
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/dynamicTables/presets/modules/finance/SalesModule.ts",
-    "to": "src/features/analytics/core/models/AnalyticsConfiguration.ts",
-    "unresolvedTo": "@/features/analytics/core/models/AnalyticsConfiguration",
-    "dependencyTypes": [
-      "aliased",
-      "aliased-tsconfig",
-      "aliased-tsconfig-paths",
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/fx/clients/BcbPtaxClient.ts",
     "to": "src/features/accounting/models/dates.ts",
     "unresolvedTo": "../../accounting/models/dates",
@@ -3144,62 +3034,6 @@
   {
     "type": "dependency",
     "from": "src/features/interview/CustomizationService/CustomizationService.ts",
-    "to": "src/features/dynamicTables/presets/ai/PresetKnowledgeBase.ts",
-    "unresolvedTo": "../../dynamicTables/presets/ai/PresetKnowledgeBase",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/CustomizationService/CustomizationService.ts",
-    "to": "src/features/dynamicTables/presets/modules/moduleSelection.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/moduleSelection",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/CustomizationService/CustomizationService.ts",
-    "to": "src/features/dynamicTables/presets/modules/registry.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/CustomizationService/CustomizationService.ts",
-    "to": "src/features/dynamicTables/presets/removability.ts",
-    "unresolvedTo": "../../dynamicTables/presets/removability",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/CustomizationService/CustomizationService.ts",
     "to": "src/features/dynamicTables/services/PresetService.ts",
     "unresolvedTo": "../../dynamicTables/services/PresetService",
     "dependencyTypes": [
@@ -3219,48 +3053,6 @@
     "dependencyTypes": [
       "local",
       "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/CustomizationService/sessionComposition.ts",
-    "to": "src/features/dynamicTables/presets/index.ts",
-    "unresolvedTo": "../../dynamicTables/presets",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/CustomizationService/sessionComposition.ts",
-    "to": "src/features/dynamicTables/presets/modules/moduleSelection.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/moduleSelection",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/CustomizationService/sessionComposition.ts",
-    "to": "src/features/dynamicTables/presets/modules/registry.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
-    "dependencyTypes": [
-      "local",
       "import"
     ],
     "rule": {
@@ -3290,48 +3082,6 @@
     "dependencyTypes": [
       "local",
       "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/CustomizationService/StateManager.ts",
-    "to": "src/features/dynamicTables/presets/index.ts",
-    "unresolvedTo": "../../dynamicTables/presets",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/CustomizationService/StateManager.ts",
-    "to": "src/features/dynamicTables/presets/modules/registry.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/CustomizationService/StateManager.ts",
-    "to": "src/features/dynamicTables/presets/removability.ts",
-    "unresolvedTo": "../../dynamicTables/presets/removability",
-    "dependencyTypes": [
-      "local",
       "import"
     ],
     "rule": {
@@ -3370,80 +3120,9 @@
   },
   {
     "type": "dependency",
-    "from": "src/features/interview/CustomizationService/TableExtractor.ts",
-    "to": "src/features/dynamicTables/presets/index.ts",
-    "unresolvedTo": "../../../features/dynamicTables/presets",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/CustomizationService/TableExtractor.ts",
-    "to": "src/features/dynamicTables/presets/removability.ts",
-    "unresolvedTo": "../../../features/dynamicTables/presets/removability",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/dtos/ChatInterviewDto.ts",
-    "to": "src/features/dynamicTables/presets/modules/registry.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/interview/dtos/CustomCreationDraft.dto.ts",
     "to": "src/features/dynamicTables/dtos/CreateDashboard.dto.ts",
     "unresolvedTo": "../../dynamicTables/dtos/CreateDashboard.dto",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/dtos/InterviewModules.dto.ts",
-    "to": "src/features/dynamicTables/presets/modules/registry.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/FieldCustomizationService/FieldPresetMatcher.ts",
-    "to": "src/features/dynamicTables/presets/fields/FieldPresetKnowledgeBase.ts",
-    "unresolvedTo": "../../../features/dynamicTables/presets/fields/FieldPresetKnowledgeBase",
     "dependencyTypes": [
       "local",
       "import"
@@ -3499,20 +3178,6 @@
   },
   {
     "type": "dependency",
-    "from": "src/features/interview/FieldCustomizationService/index.ts",
-    "to": "src/features/dynamicTables/presets/fields/FieldPresetKnowledgeBase.ts",
-    "unresolvedTo": "../../dynamicTables/presets/fields/FieldPresetKnowledgeBase",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/interview/FieldCustomizationService/ManualChanges.ts",
     "to": "src/features/dynamicTables/models/DynamicTable.model.ts",
     "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
@@ -3544,124 +3209,10 @@
   {
     "type": "dependency",
     "from": "src/features/interview/InterviewService/InterviewService.ts",
-    "to": "src/features/dynamicTables/presets/modules/registry.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/InterviewService/InterviewService.ts",
     "to": "src/features/dynamicTables/services/PresetService.ts",
     "unresolvedTo": "../../dynamicTables/services/PresetService",
     "dependencyTypes": [
       "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/InterviewService/ModuleSuggester.ts",
-    "to": "src/features/dynamicTables/presets/ai/ModuleKnowledgeBase.ts",
-    "unresolvedTo": "../../dynamicTables/presets/ai/ModuleKnowledgeBase",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/InterviewService/ModuleSuggester.ts",
-    "to": "src/features/dynamicTables/presets/index.ts",
-    "unresolvedTo": "../../dynamicTables/presets",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/InterviewService/ModuleSuggester.ts",
-    "to": "src/features/dynamicTables/presets/modules/moduleSelection.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/moduleSelection",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/InterviewService/ModuleSuggester.ts",
-    "to": "src/features/dynamicTables/presets/modules/registry.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/InterviewService/PresetMatcher.ts",
-    "to": "src/features/dynamicTables/presets/ai/PresetKnowledgeBase.ts",
-    "unresolvedTo": "../../dynamicTables/presets/ai/PresetKnowledgeBase",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/InterviewService/StageHandlers.ts",
-    "to": "src/features/dynamicTables/presets/ai/PresetKnowledgeBase.ts",
-    "unresolvedTo": "../../dynamicTables/presets/ai/PresetKnowledgeBase",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/InterviewService/StageHandlers.ts",
-    "to": "src/features/dynamicTables/presets/modules/registry.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
-    "dependencyTypes": [
-      "local",
-      "type-only",
       "import"
     ],
     "rule": {
@@ -3676,36 +3227,6 @@
     "unresolvedTo": "../../dynamicTables/models/DynamicTable.model",
     "dependencyTypes": [
       "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/models/InterviewTypes.ts",
-    "to": "src/features/dynamicTables/presets/modules/registry.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/interview/models/InterviewTypes.ts",
-    "to": "src/features/dynamicTables/presets/removability.ts",
-    "unresolvedTo": "../../dynamicTables/presets/removability",
-    "dependencyTypes": [
-      "local",
-      "type-only",
       "import"
     ],
     "rule": {
@@ -3905,48 +3426,6 @@
     "dependencyTypes": [
       "local",
       "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/onboarding/services/buildQuickPreset.ts",
-    "to": "src/features/dynamicTables/presets/index.ts",
-    "unresolvedTo": "../../dynamicTables/presets",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/onboarding/services/buildQuickPreset.ts",
-    "to": "src/features/dynamicTables/presets/modules/moduleSelection.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/moduleSelection",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/onboarding/services/buildQuickPreset.ts",
-    "to": "src/features/dynamicTables/presets/modules/registry.ts",
-    "unresolvedTo": "../../dynamicTables/presets/modules/registry",
-    "dependencyTypes": [
-      "local",
       "import"
     ],
     "rule": {
@@ -4209,21 +3688,6 @@
     "from": "src/features/onboarding/services/SystemProvisioningService.ts",
     "to": "src/features/dynamicTables/dtos/CreateDashboard.dto.ts",
     "unresolvedTo": "../../dynamicTables/dtos/CreateDashboard.dto",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/onboarding/services/SystemProvisioningService.ts",
-    "to": "src/features/dynamicTables/presets/index.ts",
-    "unresolvedTo": "../../dynamicTables/presets",
     "dependencyTypes": [
       "local",
       "type-only",
@@ -6176,294 +5640,6 @@
         "dependencyTypes": [
           "local",
           "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/features/dynamicTables/presets/index.ts",
-    "to": "src/features/dynamicTables/presets/modules/registry.ts",
-    "unresolvedTo": "./modules/registry",
-    "dependencyTypes": [
-      "local",
-      "type-only",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/dynamicTables/presets/modules/registry.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/index.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/features/dynamicTables/presets/index.ts",
-    "to": "src/features/dynamicTables/presets/systems/AestheticClinicPreset.ts",
-    "unresolvedTo": "./systems/AestheticClinicPreset",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/dynamicTables/presets/systems/AestheticClinicPreset.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/modules/registry.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/index.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/features/dynamicTables/presets/index.ts",
-    "to": "src/features/dynamicTables/presets/systems/BeautySalonPreset.ts",
-    "unresolvedTo": "./systems/BeautySalonPreset",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/dynamicTables/presets/systems/BeautySalonPreset.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/modules/registry.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/index.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/features/dynamicTables/presets/index.ts",
-    "to": "src/features/dynamicTables/presets/systems/CoreSystemPreset.ts",
-    "unresolvedTo": "./systems/CoreSystemPreset",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/dynamicTables/presets/systems/CoreSystemPreset.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/index.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/features/dynamicTables/presets/index.ts",
-    "to": "src/features/dynamicTables/presets/systems/CrmModulePreset.ts",
-    "unresolvedTo": "./systems/CrmModulePreset",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/dynamicTables/presets/systems/CrmModulePreset.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/index.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/features/dynamicTables/presets/modules/registry.ts",
-    "to": "src/features/dynamicTables/utils/TableFactory.ts",
-    "unresolvedTo": "../../utils/TableFactory",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/dynamicTables/utils/TableFactory.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/index.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/modules/registry.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/features/dynamicTables/presets/systems/CoreSystemPreset.ts",
-    "to": "src/features/dynamicTables/utils/TableFactory.ts",
-    "unresolvedTo": "../../utils/TableFactory",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/dynamicTables/utils/TableFactory.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/index.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/systems/CoreSystemPreset.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/features/dynamicTables/presets/systems/CrmModulePreset.ts",
-    "to": "src/features/dynamicTables/presets/modules/registry.ts",
-    "unresolvedTo": "../modules/registry",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/dynamicTables/presets/modules/registry.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/index.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/systems/CrmModulePreset.ts",
-        "dependencyTypes": [
-          "local",
           "import"
         ]
       }
