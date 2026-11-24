@@ -11,14 +11,21 @@ contrato com a memória externa, que vale para qualquer agente.
 - **Modelo de Tenancy:** `B2B Multi-Tenant (userId)` — contabilidade escopada por `AccountingScope` (owner/actor userId + unitId), sem multiempresa
 - **Origem desta máquina:** `este PC`
 
+- **Auto-memória do Claude Code (dono, 24/11/2026):** continua em uso, em `C:\Users\smurf\.claude\projects\C--Users-smurf-Downloads-Luminaris\memory\MEMORY.md`,
+  e tem **o mesmo peso do vault** na consulta. Nenhuma das duas manda na outra; conflito entre elas se resolve pela
+  hierarquia de verdade (decisão recente do dono → código/git → nota semântica → procedural → episódica).
+
 ### 1. Leitura Obrigatória (Pre-Flight)
 Antes de planejar, criar cercas/testes, abrir worktrees ou perguntar forks ao dono:
-1. Leia `30 Projects\Luminaris\MEMORY.md` para decisões e armadilhas específicas deste projeto.
+1. Leia `30 Projects\Luminaris\MEMORY.md` para decisões e armadilhas específicas deste projeto — e, no Claude Code,
+   também a auto-memória (o índice já vem carregado no contexto; abra as notas relevantes), com o mesmo peso.
 2. Consulte o acervo transversal (1.013+ notas, ~3 ms):
    `node "$env:USERPROFILE\.gemini\config\plugins\engineering-rigor\scripts\vault-search.mjs" --query "<termos>" --top 5`
 3. Em caso de conflito entre nota episódica antiga e código atual, **re-derive no código/git** antes de agir.
 
 ### 2. Escrita Governada (Quando e Como Gravar no Vault)
+No Claude Code, a gravação na auto-memória segue como o harness instrui; o protocolo abaixo vale para a escrita no vault.
+
 Grave no vault **somente** conhecimento durável (nova armadilha/falso verde, correção explícita do dono, decisão-marco de arquitetura/domínio ou falha de primeira classe). **Nunca** grave logs crus, segredos, tokens, PII real ou texto duplicado de commit/PR.
 
 Ao gravar uma nota nova:
