@@ -1,0 +1,285 @@
+SHA256-12 ad992a147da9
+Entregar declaração mensal - Orientações para os dados de Entrada
+ Serviço que permite a transmissão de uma Declaração do Simples Nacional, original ou retificadora.
+ Identificação no Pedido de Dados
+ idSistema: PGDASD
+ idServico: TRANSDECLARACAO11
+ versaoSistema: "1.0"
+ Dados de Entrada
+ Objeto Dados:
+ | | Campo | Descrição | Tipo | Obrigatório 
+ | cnpjCompleto | Cnpj completo sem formatação | String (14) | SIM 
+ | pa | Período de apuração da declaração em formato AAAAMM | Number | SIM 
+ | indicadorTransmissao | Indica se a declaração deve ser transmitida. No caso de "false", serão devolvidos os valores devidos sem transmissão | Boolean | SIM 
+ | indicadorComparacao | Indica se há a necessidade de comparação dos valoresParaComparacao enviados na entrada com os valores calculados antes da transmissão. Ver regra. | Boolean | SIM 
+ | declaracao | Objeto contendo os dados da declaração. Ver declaracao. | Object | SIM 
+ | valoresParaComparacao | Valores para comparação com o valor apurado pelo sistema. Obrigatório, exceto quando não há valor devido. Ver regra. | Array de Object valorDevido | NÃO 
+ Objeto Declaracao:
+ | | Campo | Descrição | Tipo | Obrigatório 
+ | tipoDeclaracao | Tipo da declaração | Number | SIM 
+ | receitaPaCompetenciaInterno | Receita do mercado interno no pa de regime de competência | Number | SIM 
+ | receitaPaCompetenciaExterno | Receita do mercado externo no pa de regime de competência | Number | SIM 
+ | receitaPaCaixaInterno | Receita do mercado interno no pa de regime de caixa | Number | NÃO 
+ | receitaPaCaixaExterno | Receita do mercado externo no pa de regime de caixa | Number | NÃO 
+ | valorFixoIcms | Valor fixo de ICMS, deve ser maior que zero e obedecer às regras de negócio | Number | NÃO 
+ | valorFixoIss | valor fixo de ISS, deve ser maior que zero e obedecer às regras de negócio | Number | NÃO 
+ | receitasBrutasAnteriores | Lista de receita bruta anterior. Ver regra. | Array de Object ReceitaBrutaAnterior | NÃO 
+ | folhasSalario | Valores de folha de salário. | Array de Object FolhaSalario | SIM (pa >= 202611 
+ | naoOptante | Informações de não optante | Object | NÃO 
+ | estabelecimentos | Estabelecimentos da declaração. Deve conter todos os estabelecimentos vigentes à época do período de apuração da declaração. | Array de Object Estabelecimento | SIM 
+ Objeto ReceitaBrutaAnterior:
+ | | Campo | Descrição | Tipo | Obrigatório 
+ | pa | Período de Apuração em formato AAAAMM | Number | SIM 
+ | valorInterno | Valor no mercado interno | Number | SIM 
+ | valorExterno | Valor no mercado externo | Number | SIM 
+ Objeto FolhaSalario:
+ | | Campo | Descrição | Tipo | Obrigatório 
+ | pa | Período de Apuração em formato AAAAMM | Number | SIM 
+ | valor | Valor | Number | SIM 
+ Objeto NaoOptante:
+ | | Campo | Descrição | Tipo | Obrigatório 
+ | esferaAdm | 1 = Federal, 2= Distrital, 3 = Estadual, 4 = Municipal | String (1) | SIM 
+ | uf | Uf do processo | String (2) | SIM 
+ | codMunicipio | Código do município do processo | String (4) | SIM 
+ | processo | Número do processo sem formatação | String | SIM 
+ Objeto Estabelecimento:
+ | | Campo | Descrição | Tipo | Obrigatório 
+ | cnpjCompleto | Cnpj do estabelecimento sem formatação | String (14) | SIM 
+ | atividades | Atividades do estabelecimento. Se não houve atividade para o estabelecimento, não enviar esta lista. | Array de Object Atividade | NÃO 
+ Objeto Atividade:
+ | | Campo | Descrição | Tipo | Obrigatório 
+ | idAtividade | Id da atividade | Number | SIM 
+ | valorAtividade | Valor da atividade | Number | SIM 
+ | receitasAtividade | Parcela de receita da atividade. | Array de Object ReceitaAtividade | SIM 
+ Objeto ReceitaAtividade:
+ | | Campo | Descrição | Tipo | Obrigatório 
+ | valor | Valor da parcela | Number | SIM 
+ | codigoOutroMunicipio | Código do município no caso de atividade em outro município | String | NÃO 
+ | outraUf | UF no caso de atividade em outro município/UF | String | NÃO 
+ | isencoes | Informações de Isencao. | Array de Object Isencao | NÃO 
+ | reducoes | Informações de Reducao. | Array de Object Reducao | NÃO 
+ | qualificacoesTributarias | Informações de qualificacao. | Array de Object qualificacao | NÃO 
+ | exigibilidadesSuspensas | Informações de Exigibilidade Suspensa. | Array de Object Exigibilidade Suspensa | NÃO 
+ Objeto Isencao:
+ | | Campo | Descrição | Tipo | Obrigatório 
+ | codTributo | Código do tributo | Number | SIM 
+ | valor | Valor da isenção | Number | SIM 
+ | identificador | Identificador do tipo de isenção | Number | SIM 
+ Objeto Reducao:
+ | | Campo | Descrição | Tipo | Obrigatório 
+ | codTributo | Código do tributo | Number | SIM 
+ | valor | Valor da redução | Number | SIM 
+ | percentualReducao | Percentual da redução | Number | SIM 
+ | identificador | Identificador do tipo de redução | Number | SIM 
+ Objeto Qualificação Tributária:
+ | | Campo | Descrição | Tipo | Obrigatório 
+ | codigoTributo | Código do tributo | Number | SIM 
+ | id | Id da qualificacao | Number | SIM 
+ Objeto Exigibilidade Suspensa:
+ | | Campo | Descrição | Tipo | Obrigatório 
+ | codTributo | Código do tributo | Number | SIM 
+ | numeroProcesso | Número do processo da exigibilidade suspensa | Number | SIM 
+ | codMunicipio | Código de município da exigibilidade suspensa | String | NÃO 
+ | uf | Uf da exigibilidade suspensa | String | SIM 
+ | vara | Vara do processo da exigibilidade suspensa | String | SIM 
+ | existeDeposito | Indicador de existência de depósito | Boolean | SIM 
+ | motivo | Motivo da exigibilidade suspensa | Number | SIM 
+ Objeto ValorDevido:
+ | | Campo | Descrição | Tipo 
+ | codigoTributo | Código do tributo | Number 
+ | valor | Valor devido do tributo | Number 
+ Regras
+ a) Para efeitos de receitas e tipo de declaração, será considerado o que já foi transmitido. Se no momento da chamada do Integra SN, ocorra uma transmissão pela Web, a declaração pelo IntegraSN deverá ser retificadora, mesmo que a transmissão anterior tenha ocorrido segundos antes.
+ b) No caso de qualquer erro encontrado, nenhum dado será salvo. 
+ c) As mensagens de negócio do PGDASD 2018 foram preservadas e podem ser apresentadas (estouros de limite, atividades sem preenchimento de qualificação tributária obrigatória, valores possíveis em valores fixos, entre outros). Consulte o manual do PGDASD. 
+ d) As receitas brutas: são obrigatórias na primeira declaração em relação aos períodos anteriores ao início de opção ou anteriores ao primeiro PA após decadência (5 anos atrás) e para períodos anteriores onde o contribuinte não foi optante.
+ Não serão consideradas as receitas enviadas para API que já foram informadas em outra transmissão ou períodos onde houve transmissão de declaração. Mesmo se enviadas, serão ignoradas e serão utilizadas as receitas já armazenadas na base. Receitas brutas para períodos de não optante ou na primeira declaração de PA após decadência (5 anos atrás) poderão ser enviados e os valores serão considerados no cálculo. É o mesmo comportamento do PGDASD WEB. Para períodos habilitados na tela de coleta do RBT, poderá ser enviado o novo valor de RBT. Para períodos desabilitados na tela de coleta do RBT, mesmo que enviados na API, serão ignorados. 
+ e) Valores decimais devem ser enviados com o valor mínimo zero.
+ f) Se o indicadorComparacao for enviado como true, serão comparados os valores devidos calculados pelo sistema com os valores enviados na lista valorParaComparacao. A lista de valoresParaComparacao deve ser exatamente igual ao que for calculado pelo sistema. Diferença de 0,01, por exemplo, não permitirá a transmissão. 
+ Schema do Json
+ Schema de entrada.
+ Json detalhado de exemplo
+ Exemplo: conteúdo body json de entrada
+ {
+ "contratante": {
+ "numero": "00000000000100",
+ "tipo": 2
+ },
+ "autorPedidoDados": {
+ "numero": "00000000000100",
+ "tipo": 2
+ },
+ "contribuinte": {
+ "numero": "00000000000100",
+ "tipo": 2
+ },
+ "pedidoDados": {
+ "idSistema": "PGDASD",
+ "idServico": "TRANSDECLARACAO11",
+ "versaoSistema": "1.0",
+ "dados": "{\"cnpjCompleto\":\"00000000000100\",\"pa\":20210\"indicadorTransmissao\":true,\"indicadorComparacao\":tru\"declaracao\":{\"tipoDeclaracao\":\"receitaPaCompetenciaInterno\":10000.0\"receitaPaCompetenciaExterno\":0.00,\"receitaPaCaixaInterno\":nul\"receitaPaCaixaExterno\":null,\"valorFixoIcms\":100.0\"valorFixoIss\":null,\"receitasBrutasAnteriores\":[{\"pa\":20200\"valorInterno\":100.00,\"valorExterno\":200.00},{\"pa\":20200\"valorInterno\":300.00,\"valorExterno\":0.00},{\"pa\":20200\"valorInterno\":0.00,\"valorExterno\":0.00},{\"pa\":20200\"valorInterno\":0.00,\"valorExterno\":0.00},{\"pa\":20200\"valorInterno\":0.00,\"valorExterno\":0.00},{\"pa\":20200\"valorInterno\":0.00,\"valorExterno\":0.00},{\"pa\":20200\"valorInterno\":0.00,\"valorExterno\":0.00},{\"pa\":20200\"valorInterno\":0.00,\"valorExterno\":0.00},{\"pa\":20200\"valorInterno\":0.00,\"valorExterno\":0.00},{\"pa\":20201\"valorInterno\":0.00,\"valorExterno\":0.00},{\"pa\":20201\"valorInterno\":0.00,\"valorExterno\":0.00},{\"pa\":20201\"valorInterno\":0.00,\"valorExterno\":0.00}],\"folhasSalario\[{\"pa\":202001,\"valor\":2000.00},{\"pa\":202002,\"valor\":2000.00{\"pa\":202003,\"valor\":2000.00},{\"pa\":202004,\"valor\":2000.00{\"pa\":202005,\"valor\":0.00},{\"pa\":202006,\"valor\":0.00{\"pa\":202007,\"valor\":0.00},{\"pa\":202008,\"valor\":0.00{\"pa\":202009,\"valor\":0.00},{\"pa\":202010,\"valor\":0.00{\"pa\":202011,\"valor\":0.00},{\"pa\":202012,\"valor\":0.00}\"naoOptante\":null,\"estabelecimentos\[{\"cnpjCompleto\":\"0000000000100\",\"atividades\":[{\"idAtividade\":\"valorAtividade\":4000.00,\"receitasAtividade\":[{\"valor\":4000.0\"codigoOutroMunicipio\":null,\"outraUf\":null,\"isencoes\[{\"codTributo\":1007,\"valor\":100.00,\"identificador\":1}\"reducoes\":[{\"codTributo\":1007,\"valor\":1500.0\"percentualReducao\":50.00,\"identificador\":1}\"qualificacoesTributarias\":[],\"exigibilidadesSuspensas\":null}]{\"idAtividade\":10,\"valorAtividade\":6000.00,\"receitasAtividade\[{\"valor\":6000.00,\"codigoOutroMunicipio\":9701,\"outraUf\":\"DF\\"isencoes\":null,\"reducoes\":null,\"qualificacoesTributarias\":nul\"exigibilidadesSuspensas\":null}]}]}]},\"valoresParaComparacao\[{\"codigoTributo\":1001,\"valor\":23.20},{\"codigoTributo\":100\"valor\":18.20},{\"codigoTributo\":1004,\"valor\":66.53{\"codigoTributo\":1005,\"valor\":14.43},{\"codigoTributo\":100\"valor\":222.64},{\"codigoTributo\":1007,\"valor\":100.00{\"codigoTributo\":1010,\"valor\":120.60}]}"
+ }
+}
+ Exemplo: conteúdo body do campo dados sem scaped Texto para uma melhor visualização
+ {
+ "cnpjCompleto": "00000000000100",
+ "pa": 202101,
+ "indicadorTransmissao": true,
+ "indicadorComparacao": true,
+ "declaracao": {
+ "tipoDeclaracao": 1,
+ "receitaPaCompetenciaInterno": 10000.00,
+ "receitaPaCompetenciaExterno": 0.00,
+ "receitaPaCaixaInterno": null,
+ "receitaPaCaixaExterno": null,
+ "valorFixoIcms": 100.00,
+ "valorFixoIss": null,
+ "receitasBrutasAnteriores": [{
+ "pa": 202001,
+ "valorInterno": 100.00,
+ "valorExterno": 200.00
+ }, {
+ "pa": 202002,
+ "valorInterno": 300.00,
+ "valorExterno": 0.00
+ }, {
+ "pa": 202003,
+ "valorInterno": 0.00,
+ "valorExterno": 0.00
+ }, {
+ "pa": 202004,
+ "valorInterno": 0.00,
+ "valorExterno": 0.00
+ }, {
+ "pa": 202005,
+ "valorInterno": 0.00,
+ "valorExterno": 0.00
+ }, {
+ "pa": 202006,
+ "valorInterno": 0.00,
+ "valorExterno": 0.00
+ }, {
+ "pa": 202007,
+ "valorInterno": 0.00,
+ "valorExterno": 0.00
+ }, {
+ "pa": 202008,
+ "valorInterno": 0.00,
+ "valorExterno": 0.00
+ }, {
+ "pa": 202009,
+ "valorInterno": 0.00,
+ "valorExterno": 0.00
+ }, {
+ "pa": 202010,
+ "valorInterno": 0.00,
+ "valorExterno": 0.00
+ }, {
+ "pa": 202011,
+ "valorInterno": 0.00,
+ "valorExterno": 0.00
+ }, {
+ "pa": 202012,
+ "valorInterno": 0.00,
+ "valorExterno": 0.00
+ }],
+ "folhasSalario": [{
+ "pa": 202001,
+ "valor": 2000.00
+ }, {
+ "pa": 202002,
+ "valor": 2000.00
+ }, {
+ "pa": 202003,
+ "valor": 2000.00
+ }, {
+ "pa": 202004,
+ "valor": 2000.00
+ }, {
+ "pa": 202005,
+ "valor": 0.00
+ }, {
+ "pa": 202006,
+ "valor": 0.00
+ }, {
+ "pa": 202007,
+ "valor": 0.00
+ }, {
+ "pa": 202008,
+ "valor": 0.00
+ }, {
+ "pa": 202009,
+ "valor": 0.00
+ }, {
+ "pa": 202010,
+ "valor": 0.00
+ }, {
+ "pa": 202011,
+ "valor": 0.00
+ }, {
+ "pa": 202012,
+ "valor": 0.00
+ }],
+ "naoOptante": null,
+ "estabelecimentos": [{
+ "cnpjCompleto": "0000000000100",
+ "atividades": [{
+ "idAtividade": 1,
+ "valorAtividade": 4000.00,
+ "receitasAtividade": [{
+ "valor": 4000.00,
+ "codigoOutroMunicipio": null,
+ "outraUf": null,
+ "isencoes": [{
+ "codTributo": 1007,
+ "valor": 100.00,
+ "identificador": 1
+ }],
+ "reducoes": [{
+ "codTributo": 1007,
+ "valor": 1500.00,
+ "percentualReducao": 50.00,
+ "identificador": 1
+ }],
+ "qualificacoesTributarias": [],
+ "exigibilidadesSuspensas": null
+ }]
+ }, {
+ "idAtividade": 10,
+ "valorAtividade": 6000.00,
+ "receitasAtividade": [{
+ "valor": 6000.00,
+ "codigoOutroMunicipio": 9701,
+ "outraUf": "DF",
+ "isencoes": null,
+ "reducoes": null,
+ "qualificacoesTributarias": null,
+ "exigibilidadesSuspensas": null
+ }]
+ }]
+ }]
+ },
+ "valoresParaComparacao": [{
+ "codigoTributo": 1001,
+ "valor": 23.20
+ }, {
+ "codigoTributo": 1002,
+ "valor": 18.20
+ }, {
+ "codigoTributo": 1004,
+ "valor": 66.53
+ }, {
+ "codigoTributo": 1005,
+ "valor": 14.43
+ }, {
+ "codigoTributo": 1006,
+ "valor": 222.64
+ }, {
+ "codigoTributo": 1007,
+ "valor": 100.00
+ }, {
+ "codigoTributo": 1010,
+ "valor": 120.60
+ }]
+}
+ 3 de novembro de 2026

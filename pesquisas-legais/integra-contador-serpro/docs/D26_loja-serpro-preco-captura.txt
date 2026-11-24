@@ -1,0 +1,48 @@
+Captura manual (navegador embutido, 2026-11-21, aba "Preço" e "Forma de Contratação" de https://loja.serpro.gov.br/product/integracontador; a página carrega a tabela por JavaScript e não traz data de atualização). Texto literal do innerText:
+
+Tabela de preços
+
+Você paga apenas pelo que consumir, o pagamento é calculado direto na faixa do consumo.
+
+Confira abaixo a tabela de preços e as faixas de consumo:
+
+Consulta
+Faixa	Consumo	Preço
+1	De 1 até 300	R$ 0,24
+2	De 301 até 1.000	R$ 0,21
+3	De 1.001 até 3.000	R$ 0,18
+4	De 3.001 até 7.000	R$ 0,16
+5	De 7.001 até 15.000	R$ 0,14
+6	De 15.001 até 23.000	R$ 0,11
+7	De 23.001 até 30.000	R$ 0,09
+8	Acima de 30.000	R$ 0,06
+
+Emissão
+Faixa	Consumo	Preço
+1	De 1 até 500	R$ 0,32
+2	De 501 até 5.000	R$ 0,29
+3	De 5.001 até 10.000	R$ 0,26
+4	De 10.001 até 15.000	R$ 0,22
+5	De 15.001 até 25.000	R$ 0,19
+6	De 25.001 até 35.000	R$ 0,16
+7	De 35.001 até 50.000	R$ 0,12
+8	Acima de 50.000	R$ 0,08
+
+Declaração
+Faixa	Consumo	Preço
+1	De 1 até 100	R$ 0,40
+2	De 101 até 500	R$ 0,36
+3	De 501 até 1.000	R$ 0,32
+4	De 1.001 até 3.000	R$ 0,28
+5	De 3.001 até 5.000	R$ 0,24
+6	De 5.001 até 8.000	R$ 0,20
+7	De 8.001 até 10.000	R$ 0,16
+8	Acima de 10.000	R$ 0,12
+
+Passo a passo da contratação
+Inicie a contratação — Selecione a opção quero contratar para iniciar o processo online.
+Contrate digitalmente — Informe os dados do contratante e assine o contrato com o e-CNPJ, tudo direto pela plataforma.
+Veja como acessar — Assim que a contratação é concluída, ativamos o serviço e enviamos um e-mail com as orientações para começar a usar.
+Comece a usar o serviço!
+
+Características (trecho): "Para utilizá-lo, é necessário desenvolver uma solução técnica própria ou optar por um software contábil já compatível com o Integra Contador." "Os solicitantes de requisições que contrataram o produto, mas não possuem procuração do contribuinte (ex. software-houses) e desejam executar um serviço em nome do procurador (ex. escritórios de contabilidade), deverão enviar um documento XML (Termo de Autorização) assinado digitalmente pelo certificado digital do procurador, por meio de um serviço auxiliar de Autenticação Procurador."

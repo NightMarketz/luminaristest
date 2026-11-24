@@ -1,0 +1,146 @@
+SHA256-12 1c78c44b5243
+Guias rápidos
+ Como autenticar na API
+ As APIs disponibilizadas pela plataforma API SERPRO utilizam o protocolo OAuth2 para realizar a autenticação e autorização de acesso das APIs contratadas. Siga os passos abaixo para se autenticar e consumir a API. 
+ 1. Primeiro passo - Obtenha Consumer Key e Consumer Secret
+ Para consumir as APIs, você deverá utilizar os dois códigos (Consumer Key e Consumer Secret) disponibilizados na Área do Cliente. Esses códigos servem para identificar o contrato. As credenciais de acesso devem ser obtidas a partir da área do cliente Serpro em https://cliente.serpro.gov.br.
+ Exemplos de códigos: 
+ Consumer Key: djaR21PGoYp1iyK2n2ACOH9REdUb 
+ Consumer Secret: ObRsAJWOL4fv2Tp27D1vd8fB3Ote
+ Aviso importante
+ O Consumer Key e Consumer Secret identificam seu usuário e seu contrato com o SERPRO. Mantenha essas informações protegidas.
+ 2. Segundo passo - Solicite o Bearer Token e JWT Token
+ Para consultar as APIs, é necessário obter um token de acesso temporário (Bearer) e um JWT token. O token de acesso possui um tempo de validade e sempre que expirado, este passo de requisição de um novo token de acesso deve ser repetido.
+ API protegida com Certificado Digital SSL
+ Todo Bearer Token gerado solicitará o certificado digital (e-CNPJ nos padrões ICP Brasil). Esse certificado digital deve ser o mesmo utilizado na contratação do produto. Para utilizar o Integra Contador o Contratante deve utilizar o seu certificado junto com as credenciais da API Serpro que são disponibilizadas após contratação. A obrigatoriedade da utilização do certificado digital e-CNPJ obedece o padrão de acesso aos sistemas da Receita Federal do Brasil (RFB).
+ Como solicitar os Tokens de Acesso Bearer e JWT token
+ Para solicitar os tokens temporários, é necessário realizar uma requisição HTTP POST para o endpoint authenticate https://autenticacao.sapi.serpro.gov.br/authenticate, com as seguintes características:
+ a) Certificado Digital e-CNPJ padrão ICP-Brasil válido;
+b) HTTP Header:
+- "Authorization": "Basic (base64(consumerKey:consumerSecret))"
+- "role-type": "TERCEIROS"
+- "content-type": "application/x-www-form-urlencoded"
+ Para utilização no parâmetro Authorization, é necessário concatenar os códigos Consumer Key e Consumer Secret, separados pelo caracter :, e converter o resultado em BASE64. No exemplo a seguir, é retornada a string ZGphUjIx[...]IzT3RlCg:
+ echo -n "djaR21PGoYp1iyK2n2ACOH9REdUb:ObRsAJWOL4fv2Tp27D1vd8fB3Ote" | base64
+ Resultado:
+ ZGphUjIxUEdvWXAxaXlLMm4yQUNPSDlSRWRVYjpPYlJzQUpXT0w0ZnYyVHAyN0QxdmQ4ZkIzT3RlCg
+ Abaixo segue um exemplo de chamada via cUrl:
+ curl -i -X POST \
+ -H "Authorization:BasiZGphUjIxUEdvWXAxaXlLMm4yQUNPSDlSRWRVYjpPYlJzQUpXT0w0ZnYyVHAyN0QxdmQ4ZkIzT3RlCg" \
+ -H "Role-Type:TERCEIROS" \
+ -H "Content-Type:application/x-www-form-urlencoded" \
+ -d 'grant_type=client_credentials' \
+ --cert-type P12 \
+ --cert arquivo_certificado.p12:senha_certificado \
+ 'https://autenticacao.sapi.serpro.gov.br/authenticate' 
+ API protegida com Certificado Digital SSL
+ Toda requisição de autenticação na loja do Serpro deverá ser informado o arquivo do certificado digital do tipo .p12 ou .pfx acompanhado da senha do certificado. Para executar esse script via curl, é necessário mudar para a pasta do arquivo do certificado.
+ Content-type
+ Caso experiencie erros de 415 Unsupported Media Type na chamada de solicitação do Token, utilize o campo do Header Content-Type com o valor application/x-www-form-urlencoded
+ [HEADER] Content-type: "application/x-www-form-urlencoded"
+ 3. Terceiro passo - Receba o Token
+ Access token e JWT token
+ O retorno da autenticação será o "payload" demonstrado abaixo, com os dois tokens temporários (access_token e jwt_token) para serem utilizados no consumo dos serviços até a expiração (expires_in):
+ Exemplos do Json de retorno:
+{
+ "expires_in": 2008,
+ "scope": "default",
+ "token_type": "Bearer",
+ "access_token": "af012866-daae-3aef-8b40-bd14e8cfac99",
+ "jwt_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+}
+ ou
+ {
+ "expires_in": 2008,
+ "scope": "default",
+ "token_type": "Bearer",
+ "access_token": "eyJ4NXQiOiJOamMyWkRabU5XWXlZVFF4T1ROaE4yVTFNell6TWpobVpEbGlaREU0WWpkaU1tVTNZV1kxTUEiLCJraWQiOiJORFUwTXpBMU1XWTJNVGxrT1RKaU1UWTFNemczT1dJeVpETXhaV1UxWlRnME0yTTBORFF4T1dWaFlUTTJOamhpWlRZd01XRTJaR0U0TnpnelpqYzRPUV9SUzI1NiIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJ1c2VydGVzdCIsImF1dCI6IkFQUExJQ0FUSU9OIiwiYXVkIjoiWEkxYVBmWXllcmVURmhLTFRuMTRXRmhOdmhJYSIsIm5iZiI6MTY3Nzg1MjAyMSwiYXpwIjoiWEkxYVBmWXllcmVURmhLTFRuMTRXRmhOdmhJYSIsInNjb3BlIjoiZGVmYXVsdCIsImlzcyI6Imh0dHBzOlwvXC9wdWJsaXNoZXIuYXBpc2VycHJvLnNlcnByby5nb3YuYnI6NDQzXC9vYXV0aDJcL3Rva2VuIiwicmVhbG0iOnsic2lnbmluZ190ZW5hbnQiOiJjYXJib24uc3VwZXIifSwiZXhwIjoxNjc3ODU1NjIxLCJpYXQiOjE2Nzc4NTIwMjEsImp0aSI6ImM0OWM1NWVjLWU4YjEtNGFiNi05YThiLTdhZDEzMTFkNjA0NSJ9.U11tZXy6XoT64AMMCUdMd5Yv8j9q5fzNKwnRT89R_expGIY_PPh3vRyckaqcW6NHWklMHMIgDbDJ-wKeoLWrBHW4F4Z_f8v-zXAlLduoqtJv55x7sjr2cevP4_hHqRTARX-lbK7Mx3MmChLWkNZN_DQ-DJjaXbczxIv6u7YgNdlVJ6jHm7TYPv8iRl4qV7x8KNFTP4H6JfWQQQaSO15AGJsLJ83X8PNQHnjmcFDecd_05IYEpTrTXb9eAQbFNu90ZziWpx0rmDB3wtd_OutnpDgQO8JTtbmhREzjB1wbrqHzqa4O1Qo-3DnQKkZhE5bvzM-lJHTbxnX6NRYsJ8ehrQ",
+ "jwt_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+}
+ Renovação do access token e JWT token
+ Atentar que sempre que o token de acesso temporário expirar, o gateway vai retornar um HTTP CODE 401 após realizar uma requisição para uma API. Neste caso, deve ser repetido o Segundo Passo Solicite o Bearer Token e JWT Token) para uma nova autenticação.
+ 4. Quarto passo - Fazendo uma requisição
+ De posse dos access_token e jwt_token, faça a requisição a API.
+ curl -i -X POST \
+ -H "Authorization:Bearer af012866-daae-3aef-8b40-bd14e8cfac99" \
+ -H "Content-Type:application/json" \
+ -H "jwt_token:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJeyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfSflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c" \
+ -d \
+'{
+ "contratante": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "autorPedidoDados": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "contribuinte": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "pedidoDados": {
+ "idSistema": "PGDASD",
+ "idServico": "CONSEXTRATO16",
+ "versaoSistema": "1.0",
+ "dados": "{ \"numeroDas\": \"99999999999999999\" }"
+ } 
+}' \
+ 'https://gateway.apiserpro.serpro.gov.br/integra-contador/v1/Consultar'
+ No exemplo acima foram utilizados os seguintes parâmetros:
+ [HEADER] Accept: application/json
+ Informamos o tipo de dados que estamos requerendo, nesse caso JSON
+ [HEADER] Authorization: Bearer f4fb70c9-83d8-3996-9e7c-e481d8200527
+ Informamos o token de acesso recebido
+ [HEADER] jwt_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiO... Informamos um jwt token válido retornado na autenticação via SAPI.
+ [POST] https://gateway.apiserpro.serpro.gov.br/integra-contador/v1/Consultar Chamamos a url da API e o método desejado. No caso, a url base é "https://gateway.apiserpro.serpro.gov.br/integra-contador/v1/", e o método é "Consultar/.
+ [BODY]: Neste exemplo a requisição está ocorrendo no sistema PGDASD no serviço Consulta Extrato do DAS. Vide a sessão Documentação/Integra Contador para mais detalhes de cada solução disponível para consumo.
+ Exemplo do body para envio no post:
+ {
+ "contratante": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "autorPedidoDados": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "contribuinte": {
+ "numero": "00000000000000",
+ "tipo": 2
+ },
+ "pedidoDados": {
+ "idSistema": "PGDASD",
+ "idServico": "CONSEXTRATO16",
+ "versaoSistema": "1.0",
+ "dados": "{ \"numeroDas\": \"99999999999999999\" }"
+ } 
+}
+ Exemplo de resposta esperada:
+ {
+ "contratante": {
+ "numero": "string",
+ "tipo": number
+ },
+ "autorPedidoDados": {
+ "numero": "string",
+ "tipo": number
+ },
+ "contribuinte": {
+ "numero": "string",
+ "tipo": number
+ },
+ "pedidoDados": {
+ "idSistema": "string",
+ "idServico": "string",
+ "versaoSistema": "string",
+ "dados": "string"
+ },
+ "status": number,
+ "dados": "string",
+ "mensagens": [{
+ "codigo": "string",
+ "texto": "string"
+ }]
+} 
+ 10 de abril de 2026

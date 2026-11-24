@@ -1,0 +1,14 @@
+SHA256-12 261ea508dc05
+Introdução
+ O que é o Integra PAGTOWEB?
+ É uma solução integrada ao sistema PagtoWeb. Permite ao contribuinte a consulta dos seus pagamentos e saldo e a emissão de Comprovantes de Pagamento, instrumento que garante que o documento está pago e armazenado nas bases de dados da Receita Federal.
+ Como funciona o uso via Integra Contador?
+ Para utilizar os serviços do Integra Pagamento, é necessário fazer uma chamada à API por meio do Integra Contador, que é responsável por gerenciar o envio e o recebimento dos dados.
+ A requisição deve ser feita via método POST, com um corpo (body) em formato JSON, contendo as seguintes informações:
+ Contratante
+ Autor do Pedido de Dados
+ Contribuinte
+ Pedido de Dados
+ ⚠️ Importante: O sistema aceita contribuintes do tipo 1 (Pessoa Física) e 2 (Pessoa Jurídica).
+ O Integra Contador estabelece um canal seguro de comunicação com o sistema PAGTOWEB, garantindo a integridade e a confidencialidade das informações transmitidas.
+ 25 de fevereiro de 2026
