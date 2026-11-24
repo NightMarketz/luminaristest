@@ -6,7 +6,8 @@
 - **Autorização:** `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`, emenda de 21/11 (2), item 6. O dono pediu:
   *"Planeja como resolver tudo no macro em vez de vários remendos"*. Sobre executar um BRIEF de grupo sem fork:
   *"Sim, executa"* (dono, chat, 21/11).
-- **Fato consumado que este BRIEF respeita.** `D-2026-11-21-SIMULACAO-COMPLETA-PRE-ADR`, no PR #1332, ainda aberto:
+- **Fato consumado que este BRIEF respeita.** `D-2026-11-21-SIMULACAO-COMPLETA-PRE-ADR`, no PR #1332, ainda aberto. **Este PR
+  depende do #1332**: a decisão citada só existe lá. Mergeie o #1332 primeiro.
   - **F-SIM-1 (c):** a simulação vive no produto, e a página é o protótipo.
   - **F-SIM-6 (a+b):** os valores padrão vêm de pesquisa com fonte e faixa, e o kit setorial os carrega.
   - **F-SIM-7 (a):** o resultado calculado com padrão sai como faixa.
@@ -60,8 +61,20 @@ kit setorial do salão no motor (F-SIM-6).
    - Na v48: 12 falhas, ou seja, o teste pega a falta dos textos.
    - Na v49: 0 falhas e 0 erros de script.
    - A 375 px, os quatro KPIs do topo ficam em `nowrap` e sem corte (lacuna a579).
-6. A v49 (v48 + p11 + p12) foi copiada para `artefatos/simulador-tributario-salao.html` e publicada a partir dela.
-   O id da versão e o SHA-256 estão em `artefatos/PUBLICACOES.md`. **Depois dela, a página congela (F-SIM-8).**
+6. A v49 (v48 + p11 + p12) foi publicada. Depois disso, a conferência achado a achado do
+   `REVISAO-CONTEUDO-2026-11-21.md` mostrou três pontos ainda abertos da mesma rodada. O **p13** fecha os três:
+   - R18 (b9d2): uma frase só para os 25% × 18%, na ficha e nos Insumos, pela Lei SP 6.374 art. 34 § 5º item 3 vigente
+     (insumos D17). A frase inclui os códigos 33.07.10.0100 e 33.07.90.0500 e o bronzeador, que nenhuma das duas trazia.
+   - R21 (300d): o glossário da aba 1 ganha GARE, CPR 1200, FPAS, DCTFWeb, VRE e MOS.
+   - R05 (fe42): a ressalva de grau no ramo "nunca optou → Paulistana" e o alcance certo do § 2º (o optante que depois sai).
+
+   Os números R22 a R25 não existem no relatório: a numeração pula de R21 para R26. A **v50** (v49 + p13) saiu de
+   `artefatos/simulador-tributario-salao.html`. Versões e SHA-256 estão em `artefatos/PUBLICACOES.md`.
+   **Depois da v50, a página congela (F-SIM-8).**
+   - Testes na v50: `tm-meses` 311/0, com saída idêntica à da v48;
+   - `pg-meses` 960/0;
+   - `tx-p11` 32/0, contra 17 falhas na v48;
+   - CALC idêntico ao da v49.
 
 ### A executar depois da resposta aos forks (uma sessão de pesquisa por linha; cada uma termina num PR de `pesquisas-legais/`)
 
@@ -87,7 +100,10 @@ kit setorial do salão no motor (F-SIM-6).
     - 967b: uma só convenção para o crédito de CBS/IBS de 2027, com o preço com ou sem tributo;
     - 883f: estabilidades da CCT na provisão de rescisão;
     - 60ca: valores padrão por pesquisa, com faixa (F-SIM-6/7);
-    - f821 e 368c, depois dos itens 12 e 13.
+    - f821 e 368c, depois dos itens 12 e 13;
+    - as fatias p10f (visão de caixa), p10g (importação CSV) e p10h (PDF do PGDAS-D e sistema de caixa) do item 7. O dono as
+      escolheu em 21/11 (F7, `DECISOES-2026-11-21.md`), mas a página congelou antes delas. A F-SIM-3 (entrada em camadas)
+      do #1332 é onde elas cabem.
 
     Prova: o BRIEF do motor cita os ids. Este grupo não edita aquele BRIEF (regra 1 da sessão de planejamento).
 
@@ -145,8 +161,9 @@ lacuna b34e). A (c) deixa números errados sem aviso numa página publicada.
 
 | Lacuna | Item | Estado |
 |---|---|---|
-| 8890 3c1b d3bf 693c a600 7ebe 2945 38c6 ee62 079e add7 db88 b9d2 c365 300d (rodada) | 3, 5, 6 (p11 na v49) | resolvida |
-| fe42 (rodada) | 4, 5, 6 (p12 na v49) | resolvida |
+| 8890 3c1b d3bf 693c a600 7ebe 2945 38c6 ee62 079e add7 db88 c365 (rodada) | 3, 5, 6 (p11 na v49) | resolvida |
+| b9d2 300d (rodada) | 6 (p11 + p13 na v50) | resolvida |
+| fe42 (rodada) | 4, 6 (p12 + p13 na v50; o ramo da Paulistana fica com grau "leitura da pesquisa") | resolvida |
 | a579 | 5 (KPI a 375 px; marcador `kpis-375 v1/v2` desde a v48) | resolvida |
 | a3a5 | já na v48: `normaliza(partilha3…)` e o texto "as fatias são reescaladas" (decisão de 21/11) | resolvida |
 | 445d | já na v48: `presTot` não existe mais (grep = 0) | resolvida |
@@ -155,15 +172,15 @@ lacuna b34e). A (c) deixa números errados sem aviso numa página publicada.
 | 4f10 | já na v44+: `calReg` com o ICMS no dia 20 (RICMS art. 112) e o IBS no último dia útil (Res. CGIBS 6/2026 art. 45) | resolvida |
 | 4e7d | a cópia de `main` (#1309) é a canônica; a de `git-commit-auth-repeat-3da007` é mais velha (o D37 dela virou D40) | resolvida |
 | 99cc | 6 (cópia = versão no ar); a conferência do PGDAS-D entra pelo #1332 | em-pr |
-| c574 f88e 0952 4f67 ec55 f821 368c 7c15 6aa2 43d7 37f3 bfa2 95f3 | 7 a 18 | aberta, esperando o F-G1 |
-| 38c0 967b 883f 60ca | 19 e F-G1 | aberta, esperando o F-G1 |
+| c574 f88e 0952 4f67 ec55 f821 368c 7c15 6aa2 43d7 37f3 bfa2 95f3 | 7 a 18 (já planejadas; o conteúdo não depende do F-G1, só a regra do BRIEF com fork) | aberta, esperando o fork L-20261124-035723-5d95 |
+| 38c0 967b 883f 60ca | 19 e F-G1 | aberta, esperando o fork 5d95 |
 | ca7a e9c8 | §5 (contador) | com-dono |
 | 59df | §7 | aberta (fora do grupo) |
 | 2c8a ea2b | com o dono antes deste BRIEF | sem mudança |
 
 ## Write-set
-- Este PR: `pesquisas-legais/{revisao-conteudo-simulador-salao,salao-*,simulador-salao-pendencias,clt-466-comissao-parcelada,lc123-opcao-cbs-ibs-prazo,lc214-simples-prazo-opcao,lc227-simples-cbs-ibs-prazo}/**`
-  e, em `pesquisas-legais/parecer-salao-sp-4-pessoas/artefatos/`: `simulador-tributario-salao.html`, `.gitattributes` e
-  `PUBLICACOES.md`.
+- Este PR (depende do #1332): `pesquisas-legais/{revisao-conteudo-simulador-salao,salao-*,simulador-salao-pendencias,clt-466-comissao-parcelada,lc123-opcao-cbs-ibs-prazo,lc214-simples-prazo-opcao,lc227-simples-cbs-ibs-prazo}/**`
+  e, em `pesquisas-legais/parecer-salao-sp-4-pessoas/artefatos/`: `simulador-tributario-salao.html`, `.gitattributes` (só
+  para esse arquivo) e `PUBLICACOES.md`.
 - Itens 7 a 18: um `pesquisas-legais/<slug-novo>/**` por item.
 - Nenhum choke point (PAR-001).

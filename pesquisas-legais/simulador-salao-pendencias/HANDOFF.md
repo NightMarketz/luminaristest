@@ -114,10 +114,11 @@ Decisões do dono: [DECISOES-2026-11-21.md](DECISOES-2026-11-21.md). Patches rea
   (não rastreados) para o PR do planejamento do grupo; os quatro dossiês em branco da `roda-maestro-dia-099ee9` também.
 - A premissa "o p11 espera a publicação do item 7" estava velha: a v48 (item 7) estava no ar desde 21/11, byte a byte igual a
   `simulador-v48.html`.
-- **v49 publicada** (1795492403-d85a) = v48 + `p11_revisao_conteudo.py` + `p12_nfse_regime_normal.py`. Fonte da publicação
+- **v49 publicada** (1795492403-d85a) = v48 + `p11_revisao_conteudo.py` + `p12_nfse_regime_normal.py`; depois a **v50** = v49 +
+  `p13_fecho_revisao.py` (R18, R21 e o grau do R05, que a conferência achado a achado mostrou abertos). Fonte da publicação
   daqui em diante: `parecer-salao-sp-4-pessoas/artefatos/simulador-tributario-salao.html`, registro em `PUBLICACOES.md` ao lado.
 - Teste novo: `testes/tx-p11.js <html> [pasta-capturas]` (textos por regime + KPI a 375 px). Os nomes do `cfg4.js` levam
   o sufixo "n" (S26n...).
 - **F-SIM-8: a página congela depois desta rodada de texto.** Os p10f, p10g e p10h (caixa, importação CSV, PDF do PGDAS-D)
-  não entram na página: vão como requisito do motor do produto (nó SIMULACAO-CENARIO).
+  não entram na página: vão como requisito do motor do produto (nó SIMULACAO-CENARIO), item 19 do BRIEF de grupo.
 - O que falta do grupo: `BRIEF-GRUPO-LACUNAS-2026-11-24.md` (pesquisas 7 a 18, requisitos do motor 19, fork F-G1).

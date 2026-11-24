@@ -1,4 +1,4 @@
-// uso: node tx-p11.js <html> (v48 + p11 + p12) [pasta-das-capturas]
+// uso: node tx-p11.js <html> (v48 + p11 + p12 + p13) [pasta-das-capturas]
 // Abre cada aba da página em S26, PR26, RE26, RE27 e SR27 (configs do cfg4.js), soma os erros de script e confere os textos
 // do p11 (revisão de conteúdo de 21/11), inclusive os que dependem do regime. Os nomes do cfg4.js levam o sufixo "n" (S26n...). No fim, captura o topo a 375 px (iPhone 13) para o KPI.
 // Depende do Playwright e do cfg4.js do scratchpad da sessão de 21/11 (caminho PW abaixo).
@@ -12,7 +12,7 @@ const TABS = ["ficha", "catalogo", "regime", "das", "equipe", "parceria", "lucro
 const EXP = [
   ["S26", "calendario", "NFS-e pelo Emissor Nacional", "Emissor Nacional ou Paulistana"],
   ["PR26", "calendario", "NFS-e: Emissor Nacional ou Paulistana", "no emissor que a Prefeitura de SP exigir"],
-  ["RE26", "calendario", "IN SF/SUREM 10/2011 arts. 1º e 1º-A § 2º", null],
+  ["RE26", "calendario", "IN SF/SUREM 10/2011 art. 1º-A § 2º", null],
   ["S26", "decisoes", "os pontos que ainda têm mais de uma leitura", "os dois pontos com mais de uma leitura"],
   ["S26", "decisoes", "Parceria: quando nasce o vínculo", null],
   ["S26", "ficha", "Telemedicina e Seguro + Social da convenção", "Seguro Social da convenção"],
@@ -21,6 +21,11 @@ const EXP = [
   ["S26", "ficha", "arts. 68, 69 e 83", null],
   ["S26", "ficha", "Os códigos A.nnn e E.nnn", null],
   ["S26", "insumos", null, "L-…-35d3"],
+  // p13 (fecho da revisão): R18, R21 e o grau do R05
+  ["S26", "ficha", "33.07.10.0100 e 33.07.90.0500", "o resto do cosmético, 25%"],
+  ["S26", "insumos", "inclusive higiene bucal (33.06)", "exceto xampu 33.05.10 e desodorante 33.07.20; 18%"],
+  ["S26", "regime", "GARE é a guia do ICMS de SP", null],
+  ["PR26", "calendario", "pela leitura da pesquisa (art. 1º)", "o que nunca foi emite"],
   ["S26", "parceria", null, "não põe a condição do CNPJ (I)"],
 ];
 (async () => {
@@ -34,7 +39,7 @@ const EXP = [
   };
   for (const cn of ["S26", "PR26", "RE26", "RE27", "SR27"]) {
     const { p, ctx } = await open(cn); const txt = {};
-    for (const t of TABS) { await p.goto(u + "#" + t); await p.waitForTimeout(80); txt[t] = await p.locator("#p-" + t).innerText(); }
+    for (const t of TABS) { await p.goto(u + "#" + t); await p.waitForTimeout(80); txt[t] = await p.locator("#p-" + t).evaluate(e => e.textContent); /* textContent: inclui o <details> fechado */ }
     for (const [c, t, yes, no] of EXP) if (c === cn) {
       if (yes) ok(txt[t].includes(yes), cn + " " + t + " sem: " + yes);
       if (no) ok(!txt[t].includes(no), cn + " " + t + " ainda com: " + no);
