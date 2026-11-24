@@ -6,7 +6,7 @@ allowed-tools: Read, Grep, Glob, Write, Edit
 compatibility: Claude Code; requer o monorepo Luminaris (server/ com tsc + Role/IUser expostos por users/public/user.types). Sem efeitos externos — apenas gera/edita arquivos no repositório.
 metadata:
   governance-skill-id: "SKL-BACKEND-POL"
-  governance-version: "1.0.0"
+  governance-version: "1.1.0"
   governance-status: "validated"
   governance-owner: "engineering"
   governance-last-evaluated: "2026-06-25"
