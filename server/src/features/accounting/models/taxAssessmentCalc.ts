@@ -8,6 +8,7 @@ import {
   type CodigoReceitaVigente,
   mulBp,
   parametroVigente,
+  primeiraVigenciaDe,
   type ParametroApuracao,
   type TabelaApuracao,
 } from './taxAssessmentParams';
@@ -147,8 +148,11 @@ const F_15_3 = 'IN RFB 2.305/2025 art. 15 § 3º';
 const F_15_4 = 'IN RFB 2.305/2025 art. 15 § 4º';
 const F_15_5 = 'IN RFB 2.305/2025 art. 15 § 5º';
 const F_15_9 = 'IN RFB 2.305/2025 art. 15 § 9º';
-/** F-E1-1 (a): a CSLL só tem a LC 224 desde 01/04/2026 (art. 3º II; P&R LC 224 v5 item 13; SC Disit/SRRF10 10010/2026). */
-const CSLL_LC224_DESDE = '2026-04-01';
+/**
+ * F-E1-1 (a): a CSLL só tem a LC 224 desde 01/04/2026 (art. 3º II; P&R LC 224 v5 item 13; SC Disit/SRRF10 10010/2026).
+ * Onda 3.2: a data NÃO é mais literal aqui — é o `vigenteDesde` da linha `TAX_ASSESSMENT/LC224_ACRESCIMO_CSLL` (a mesma que
+ * dá o acréscimo), lida por `primeiraVigenciaDe`. Sem essa linha a CSLL não tem acréscimo da LC 224 ⇒ `vigente: false`.
+ */
 
 export interface EntradaLc224 {
   /** BE-INCR-LEGAL-PARAMS (F-LP-4 a): fotografia das linhas de plataforma, montada pelo serviço. */
@@ -201,7 +205,9 @@ export function parcelaExcedenteLc224(e: EntradaLc224): ResultadoLc224 {
   const dataFim = fimDoTrimestre(e.ano, e.periodo);
   const limiteParam = linhaVigente(e.tabela, 'LC224_LIMITE_TRIMESTRE_CENTS', dataFim);
   // F-E1-1 (a): para a CSLL, trimestre anterior a 01/04/2026 conta como fora de atividade (§ 9º).
-  const inicio = e.tributo === 'CSLL' && (e.inicioAtividadeEm ?? '') < CSLL_LC224_DESDE ? CSLL_LC224_DESDE : e.inicioAtividadeEm;
+  const csllDesde = e.tributo === 'CSLL' ? primeiraVigenciaDe(e.tabela, 'LC224_ACRESCIMO_CSLL') : undefined;
+  if (e.tributo === 'CSLL' && csllDesde === undefined) return { vigente: false, limiteTrimestreCents: 0n, sobraAnteriorCents: 0n, excedenteCents: 0n, memoria: [] };
+  const inicio = csllDesde !== undefined && (e.inicioAtividadeEm ?? '') < csllDesde ? csllDesde : e.inicioAtividadeEm;
   const ativos = trimestresEmAtividade(e.ano, inicio, e.encerramentoAtividadeEm);
   if (!limiteParam || !ativos.includes(e.periodo)) {
     return { vigente: false, limiteTrimestreCents: 0n, sobraAnteriorCents: 0n, excedenteCents: 0n, memoria: [] };
