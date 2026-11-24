@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { PERIODOS_PIS_COFINS } from '../models/pisCofinsCalc';
-import { PIS_COFINS_REVOGACAO_FONTE } from '../models/pisCofinsParams';
 
 /**
  * BE-INCR-PIS-COFINS PR-2 (nó X8, BRIEF itens 7–14, contrato §2) — `.strict()`, centavos como string de dígitos.
@@ -73,11 +72,9 @@ const Cents = z.string().regex(/^\d+$/);
  */
 const PisCofinsPreviewFields = {
   unitId: z.string().min(1),
-  anoCalendario: z
-    .number()
-    .int()
-    .min(2025)
-    .max(2026, { message: `PIS/Cofins revogados a partir de 2027-01 (${PIS_COFINS_REVOGACAO_FONTE}) — CBS é da onda 3.` }),
+  // Onda 3.2: sem teto no schema — o fim do PIS/Cofins é a ausência de linha `PIS_COFINS` vigente (o serviço recusa com o 400
+  // nomeado da revogação, LC 214 art. 542, `parametrosDoMes`); o teto fixo em 2026 não lia a linha.
+  anoCalendario: z.number().int().min(2025),
   periodo: z.enum(PERIODOS_PIS_COFINS),
   ajustesBase: z
     .array(

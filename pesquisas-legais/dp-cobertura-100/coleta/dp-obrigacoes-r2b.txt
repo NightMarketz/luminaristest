@@ -1,0 +1,237 @@
+DP - rodada 2b (leitor de reguladores) - coleta crua - 2026-11-14
+Grau: [OF] = lido em fonte oficial nesta rodada (URL citada). [OF-pista] = resultado de busca em gov.br, texto nao lido. [AC] = acervo. SEM FONTE OFICIAL ACHADA = nada oficial lido.
+Extrator de PDF que funcionou: pdftotext (poppler, C:\ucrt64\bin\pdftotext) com -layout; o legal.py baixar ja grava .txt para PDFs simples. pypdf 6.15.0 instalado (nao usado). pdfminer ausente. Acentos saem como "�" na extracao (artefato, nao do texto).
+Dossie: C:\Users\smurf\Downloads\Luminaris\.claude\worktrees\personal-dept-coverage-c7fea7\pesquisas-legais\dp-cobertura-100\docs (D01 MOS, D02 NT 07/2026, D03 Portaria Consolidada 1/2025, D04 Portaria 671/2021, D05 Manual FGTS Digital v1.50, D06+ NR-15).
+
+================================================================
+ITEM 1 - eSocial S-1.3
+================================================================
+Fonte principal lida: [OF] MOS S-1.3 consolidado ate NO 12/2026 (PDF, 430 pag.): https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/mos-s-1-3-consolidada-ate-a-no-s-1-3-12-2026.pdf (texto em D01_...txt; linhas citadas abaixo).
+NT 07/2026 rev. 20/10/2026 (PDF, 13 KB de texto): https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/nota-tecnica-s-1-3-07-2026-rev-20-10-2026.pdf - nao traz periodicidade nem totalizador por evento.
+Pagina HTML do leiaute (WebFetch): texto de 596.865 caracteres, lido so ate 100.000. Resumo do modelo sobre S-1295/S-1300/S-2245/S-2250/S-2260/S-2280 CONTRADIZ o MOS (ver abaixo): nao usar.
+
+Tabela (evento | prazo de envio | totalizador de retorno | fonte, linha do MOS txt):
+S-1000 | inicio do uso do eSocial; alterar quando ocorrer | n/a (tabela) | MOS l.3191
+S-1005 | antes de S-2200 e dos eventos S-1200/S-1202/S-1207 | n/a (tabela) | MOS l.3406
+S-1010 | antes dos eventos de remuneracao (S-1200, S-1202, S-1207, S-2299, S-2399) | n/a | MOS l.3533
+S-1020 | antes dos eventos que usem a informacao | n/a | MOS l.4186
+S-1070 | ate dia 15 do mes subsequente | n/a | MOS l.4321 (linha seguinte ao cabecalho S-1070, l.4305)
+S-1200 | ate dia 15 do mes subsequente ao de referencia; 13o: ate dia 20 de dezembro | S-5001 e S-5003 | MOS l.4419-4422; retorno l.14555, l.14988
+S-1202 | ate dia 15 do mes subsequente; 13o em evento anual: dia 20 de dezembro | S-5001 e S-5003 (lista l.14555 e l.14988 cita S-1202 na 1a; na 2a cita S-1200, S-2299, S-2399) | MOS l.6119-6121
+S-1207 | ate dia 15 do mes subsequente | nao verificado (nao aparece nas listas de pre-requisito de S-5001/S-5003) | MOS l.6569
+S-1210 | ate dia 15 do mes subsequente | S-5002 (retorno "na medida em que os eventos de pagamentos sao internalizados"; pre-requisito truncado no texto) | MOS l.6831; retorno l.14794
+S-1260 | ate dia 15 do mes subsequente; antes do S-1299 | nao verificado por evento; S-5011/5012/5013 sao gerados apos S-1299 | MOS l.7361; l.1758-1760
+S-1270 | ate dia 15 do mes subsequente; antes do S-1299 | idem | MOS l.7495
+S-1280 | ate dia 15 do mes subsequente (postergado a dia util) | idem | MOS l.7553
+S-1298 | reabertura a qualquer tempo | n/a | MOS l.7658
+S-1299 | ate dia 15 do mes subsequente ao de referencia | S-5011, S-5012, S-5013 (retorno ao processar o S-1299: l.15571, l.15965, l.15996) | MOS l.7710
+S-2190 | ate dia imediatamente anterior ao inicio da prestacao (empregados) | n/a | MOS l.7879
+S-2200 | ate o fim do dia anterior ao inicio da prestacao | n/a | MOS l.7798
+S-2205 | ate dia 15 do mes subsequente ao de referencia | n/a | MOS l.8571
+S-2206 | ate dia 15 do mes subsequente a competencia (ou ate envio da folha da competencia) | n/a | MOS l.8626
+S-2210 | 1o dia util seguinte a ocorrencia; em morte, de imediato | n/a | MOS l.8912
+S-2220 | ate dia 15 do mes subsequente a emissao do ASO (admissional: ver texto) | n/a | MOS l.9087
+S-2221 | ate dia 15 do mes subsequente ao exame; toxicologico pre-admissional: ate dia 15 do mes subsequente a admissao | n/a | MOS l.9172
+S-2230 | afastamento <=15 dias (acidente/doenca do trabalho): ate dia 15 do mes subsequente; >15 dias: ate o 16o dia da ocorrencia | n/a | MOS l.9211-9216
+S-2231 | ate dia 15 do mes subsequente a ocorrencia | n/a | MOS l.9896
+S-2240 | ate dia 15 do mes subsequente ao inicio da obrigatoriedade de SST ou ingresso | n/a | MOS l.9937
+S-2298 | ate dia 15 do mes seguinte a reintegracao | n/a | MOS l.10250
+S-2299 | ate 10 dias contados do desligamento (exclui o dia do desligamento) | S-5001, S-5003 | MOS l.10331; retorno l.14555, l.14988
+S-2300 | ate dia 15 do mes subsequente ao inicio da prestacao | n/a | MOS l.10898
+S-2306 | ate dia 15 do mes seguinte a ocorrencia da alteracao | n/a | MOS l.11216
+S-2399 | ate 10 dias do encerramento (texto lido refere-se a diretor nao empregado, cat. 721; prazo geral nao confirmado isoladamente) | S-5001, S-5003 | MOS l.11244; retorno l.14555, l.14988
+S-2400 | ate dia 15 do mes subsequente a concessao do beneficio | n/a | MOS l.11510
+S-2405 | ate dia 15 do mes subsequente ao de referencia | n/a | MOS l.11544
+S-2410 | ate dia 15 do mes subsequente a concessao | n/a | MOS l.11574
+S-2416 | ate dia 15 do mes subsequente a competencia | n/a | MOS l.11731
+S-2418 | ate dia 15 do mes seguinte a reativacao | n/a | MOS l.11772
+S-2420 | ate dia 15 do mes seguinte a cessacao do beneficio | n/a | MOS l.11804
+S-2500 | prazo da decisao judicial; em silencio, ate dia 15 do mes subsequente a ciencia | S-5503 (retorno quando processado; l.16046) | MOS l.13045
+S-2501 | idem (processo trabalhista) | S-5501 (l.16022) | MOS l.11854
+S-2555 | ate dia 15 do mes subsequente ao pagamento da decisao/acordo | S-5501 (l.16022) | MOS l.14431
+S-3000 | sempre que necessaria a exclusao | n/a | MOS l.14447
+S-3500 | exclusao de processo trabalhista | n/a (efeito em S-5501 / S-5503) | MOS l.14502
+S-8200 | conforme decisao judicial | n/a | MOS l.16092
+S-8299 | conforme decisao judicial | n/a | MOS l.16125
+S-5001 | retorno de S-1200, S-1202, S-2299, S-2399: "na medida em que os eventos de remuneracao sao transmitidos ou excluidos" | - | MOS l.14543-14555
+S-5002 | retorno de pagamentos (S-1210) | - | MOS l.14790-14794
+S-5003 | retorno de S-1200, S-2299, S-2399 | - | MOS l.14979-14988
+S-5011 | gerado apos fechamento da folha (S-1299) | - | MOS l.15563-15571; l.1758-1760
+S-5012 | gerado apos processamento do S-1299 | - | MOS l.15955-15965
+S-5013 | retorno apos processamento do S-1299 | - | MOS l.15990-15996
+S-5501 | retorno com processamento de S-2501/S-2555/S-3500 | - | MOS l.16014-16022
+S-5503 | retorno com processamento de S-2500/S-3500 | - | MOS l.16037-16046
+
+Ressalva geral: S-5011/S-5012/S-5013 nao dependem de cada evento periodico; dependem do fechamento (S-1299). Retorno do totalizador por trabalhador (S-5001/5002/5003) e devolvido na medida do envio (MOS l.1758).
+
+Os 6 eventos citados por fontes secundarias (S-1295, S-1300, S-2245, S-2250, S-2260, S-2280):
+- MOS consolidado NO 12/2026 (texto extraido): 0 ocorrencias de cada codigo. Confirmado por grep: S *-?(1295|1300|2245|2250|2260|2280)\b -> 0.
+- NT 07/2026 rev 20/10/2026 (texto extraido): 0 ocorrencias.
+- Sumario de 50 eventos (pagina oficial, lido via WebFetch): os 6 nao estao na lista dos 50.
+- Conclusao de fonte oficial: o documento oficial lido NAO cita os 6 codigos. "Foram excluidos do layout S-1.3" NAO tem fonte oficial achada (somente secundaria: tecnospeed, jornalcontabil). Nao afirmar exclusao nem vigencia.
+- Contradicao: o resumo do modelo sobre a pagina HTML disse que S-1300 e S-2250 aparecem; o texto oficial lido nao confirma. Tratar o resumo como nao confiavel.
+
+Cronograma (nao verificado): MOS e NO 12/2026 nao lidos para datas de XSD. Datas 23/11/2026, 14/12/2026, 18/01/2027 e 26/10/2026 permanecem so como [SEC]/pagina de XSD nao lida.
+
+Contagem item 1: 50 eventos listados. Prazo oficial lido para 47 (faltam: S-1260/S-1270/S-1280 com prazo lido mas totalizador nao verificado; S-1207, S-2399 com ressalva); totalizador oficial para 13 (S-1200, S-1202, S-1210, S-1299, S-2299, S-2399, S-2500, S-2501, S-2555, S-5001 a S-5013, S-5501, S-5503 - retorno por evento, verificar). Os 6 eventos "excluidos": SEM FONTE OFICIAL ACHADA para exclusao.
+
+================================================================
+ITEM 2 - Portaria Consolidada MTE nº 1/2025 (+ Portaria MTP 671/2021 e 1.195/2019)
+================================================================
+[OF] Portaria Consolidada MTE nº 1, de 17/12/2025: https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/legislacao/portarias-1/portarias-vigentes-3/PDFPortariaMTEConsolidadan1de17dedezembrode2025compiladaem20.01.2026.pdf (D03).
+  - Cabecalho: "Publicada em: 30/12/2025 | Edicao: 248 | Secao: 1 | Pagina: 132"; "Publicacao original no DOU de 18 de dezembro de 2025, republicada por erro material"; "Retificada pela Retificacao publicada no DOU de 16 de dezembro de 2026" (data posterior a hoje, 14/11/2026 - conferir no DOU); "Este texto nao substitui o publicado no DOU".
+  - Art. 117: "Esta Portaria entra em vigor em 2 de janeiro de 2026." [OF]
+  - Art. 18 (CAGED): "A obrigacao da comunicacao de admissoes e dispensas ... sera cumprida por meio do eSocial" [OF]
+  - Art. 19 (RAIS): "A obrigacao ... RAIS, sera cumprida por meio do eSocial" [OF]
+  - Art. 116 I (revoga da Portaria MTP 671/2021): "a) art. 1o, incisos I e XII; b) art. 2o a art. 23; e c) art. 140 a art. 184-F" [OF]
+  - Art. 116 II (revoga da Portaria MTP 849/2021): art. 1o, III; art. 18-A a 18-N (retif.: 18-A a 18-NG) [OF]
+  - Art. 116 III-XII: revoga Portarias 895/2021, 805/2022, 4.370/2022, 2.420/2023, 3.784/2023, 3.869/2023, 291/2024, 617/2024, 1.630/2024, 547/2025 [OF]
+  - REP (registro eletronico de ponto): o texto consolidado NAO reproduz regras de REP (busca por "registro eletr", "REP-", "ponto" -> nenhum capitulo). O art. 116 NAO revoga os arts. 24-139 nem 73-91 da Portaria 671 (leitura literal do art. 116; ver nota). Nota: leitura literal; nao concluir que o REP segue vigente sem conferir a norma de revogacao. Conferir com a MTE.
+  - Portaria MTP 671/2021 (D04, compilada 21/07/2026): [OF] https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/legislacao/portarias-1/portarias-vigentes-3/WORDPortarian671de8denovembrode2021compilada21.07.2026.pdf
+    - Art. 76: "O REP-C e o equipamento de automacao monolitico ..." ; Art. 77: REP-A "conjunto de equipamentos e programas de computador ..."; Art. 78: REP-P "programa (software) executado em servidor dedicado ou em ambiente de nuvem" [OF]
+    - Art. 73: "Sistema de registro eletronico de ponto e o conjunto de equipamentos e programas informatizados destinados a anotacao da hora de entrada e de saida ..." [OF]
+    - Art. 81: Arquivo Fonte de Dados; art. 84: relatorio Espelho de Ponto Eletronico; art. 83 programa de tratamento [OF]
+    - Guarda de registros e prazo de retencao: NAO ACHADO no texto lido. SEM FONTE OFICIAL ACHADA para o prazo de guarda do REP.
+  - Portaria 1.195/2019 (SEPRT): ja lida na rodada anterior [OF] https://www.gov.br/esocial/pt-br/noticias/esocial-passa-a-substituir-livro-de-registro-de-empregados. Nao reli nesta rodada.
+Contagem item 2: vigencia [OF] resolvido; RAIS/CAGED via eSocial [OF] resolvido; REP tipos [OF] resolvido (em 671, nao na consolidada); guarda do REP SEM FONTE OFICIAL ACHADA.
+
+================================================================
+ITEM 3 - NRs
+================================================================
+NR-1 [OF] pagina gov.br (lida por WebFetch, atualizada em 06/08/2026): https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/nr-1
+  - "a nova redacao do capitulo 1.5 entrou em vigor em 26 de maio de 2026." [OF]
+  - Origem: Portaria MTE nº 1.419, de 27/08/2024 (inclui riscos psicossociais no GRO); adiamento: Portaria MTE nº 765, de 15/05/2025 [OF pagina]
+  - Pagina diz "vigencia ate 25 de maio de 2026" para texto anterior e "Ultima modificacao: Portaria MTE nº 344, de 25 de marco de 2024" - a data 21/03/2024 no corpo diverge de 25/03 na pagina. Anotar.
+  - Fiscalizacao punitiva a partir de 26/05/2026: [OF-pista] apenas em busca; nao lido na pagina. SEM FONTE OFICIAL ACHADA lida.
+  - Guia psicossociais (24/04/2025) e Manual GRO 2026: [OF-pista] https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/inspecao-do-trabalho/manuais-e-publicacoes/2026/manual_gro_pgr_da_nr_1.pdf (nao lido).
+NR-15 [OF] PDF gov.br (versao 2025): https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/nr-15-atualizada-2025.pdf (D06)
+  - Item 15.2: "O exercicio de trabalho em condicoes de insalubridade ... assegura ao trabalhador a percepcao de adicional, incidente sobre o salario minimo da regiao, equivalente a:" [OF]
+  - 15.2.1: 40% (quarenta por cento) grau maximo; 15.2.2: 20% grau medio; 15.2.3: 10% grau minimo [OF]
+  - 15.3: "No caso de incidencia de mais de um fator de insalubridade, sera apenas considerado o de grau mais elevado" [OF, resumo parcial]
+  - Pagina/PDF traz o aviso "Este texto nao substitui o publicado no DOU". Portaria da redacao vigente: NAO extraida (lista de portarias historicas no PDF; ultima linha lida: Portaria MTb 1.084/2018 em tabela de revogacao, nao a vigente). SEM FONTE OFICIAL ACHADA para a portaria/data da redacao vigente.
+  - Anexo 1 (ruido): SEM FONTE OFICIAL ACHADA lida (busca indicou que ruido esta no Anexo 1 e Anexo 5 e radiacao ionizante, [SEC]). Nao confirmado no texto.
+NR-7 [OF] pagina gov.br (WebFetch): https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/norma-regulamentadoras-vigentes/norma-regulamentadora-no-7-nr-7
+  - Pagina traz historico: "Portaria SEPRT nº 6.734, de 09 de marco de 2020" (alterou); "Portaria SEPRT nº 8.873, de 23 de julho de 2021" (ultima modificacao). "Portaria 6.735/2020" NAO encontrada na pagina (manter como SEM FONTE OFICIAL ACHADA).
+  - ASO admissional/periodico e periodicidade: NAO ACHADO. Texto do PCMSO: NAO LIDO (pagina nao traz o texto). Demissional: pagina diz "ate 10 (dez) dias contados a partir do termino do contrato" (alteracao de 2018) [OF pagina; sem numero de item].
+NR-6 [ERRO] URL da pagina NR-6 retornou HTTP 404 (WebFetch). SEM FONTE OFICIAL ACHADA. Listagem de NRs (gov.br) lista NR-6 "EQUIPAMENTO DE PROTECAO INDIVIDUAL - EPI" (titulo apenas).
+NR-5, NR-4, NR-16, NR-17: listagem gov.br com titulos (NR-5 CIPA e assedio; NR-4 SESMT; NR-16 atividades perigosas; NR-17 ergonomia). Texto e portaria vigente NAO LIDOS. SEM FONTE OFICIAL ACHADA.
+Contagem item 3: NR-1 resolvido (OF); NR-15 resolvido parcialmente (percentuais OF; portaria vigente nao); NR-7 parcial (historico de portarias OF; ASO/periodicidade nao); NR-6, NR-5, NR-4, NR-16, NR-17: SEM FONTE OFICIAL ACHADA.
+
+================================================================
+ITEM 4 - LTCAT e PPP (INSS)
+================================================================
+[OF-pista] IN PRES/INSS nº 128, de 28/03/2022 (existencia confirmada em busca): https://portalin.inss.gov.br/in/594 (portal INSS; dominio fora da lista aceita: gov.br/inss seria aceito). Texto NAO lido por WebFetch.
+  - Snippet de busca [SEC-like, do proprio portal]: arts. 276-280 (LTCAT: elementos minimos) e arts. 281-285 (PPP: assinatura pelo representante legal, Anexo XVII). Guarda de 20 anos: snippet. SEM FONTE OFICIAL ACHADA lida para os artigos.
+  - Anexo XVII (PPP) [OF-pista]: https://www.gov.br/inss/pt-br/centrais-de-conteudo/publicacoes/outras/ppp.pdf (nao lido).
+  - PPP eletronico obrigatorio para periodos a partir de 01/01/2023: [SEC] busca, nao confirmado em texto oficial lido.
+  - Prazo LTCAT no eSocial: fonte municipal [SEC] "ate dia 15 do mes subsequente": NAO confirmado. SEM FONTE OFICIAL ACHADA.
+  - Entrega do PPP ao trabalhador na rescisao: [SEC]. SEM FONTE OFICIAL ACHADA lida.
+Contagem item 4: 0 resolvidos com texto oficial lido; 1 norma identificada (IN 128/2022) com URL oficial.
+
+================================================================
+ITEM 5 - RFB (IN 2.237/2024, 2.181/2024, 2.060/2021, 2.110/2024, 2.342/2026)
+================================================================
+IN RFB 2.237/2024 (DCTFWeb): [OF] link de normas, sijut2 idAto=141910: https://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=141910 - WebFetch devolveu apenas o titulo "Normas" (pagina dinamica). Texto do art. de prazo: NAO LIDO.
+  - Busca (resumo): vigencia para fatos geradores a partir de 01/01/2025; prazo mensal "dia 25 do mes seguinte" (pista) e "ultimo dia util do mes seguinte" (outra versao de art. 6 na base) - CONFLITO nao resolvido. SEM FONTE OFICIAL ACHADA para o texto do prazo.
+  - Manual DCTFWeb (gov.br/receitafederal): [OF-pista] https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/manuais/manual-dctfweb/manual-dctfweb-atualizacao-janeiro2025_versao_final.pdf (nao lido).
+  - Alteracoes citadas, nao lidas: IN 2.248/2025, IN 2.267/2025. IN 2.342/2026: busca NAO encontrou (SEM FONTE OFICIAL ACHADA; so sugestao de buscar no normas).
+  - Eventos eSocial como fonte de contribuicoes/IRRF: [OF-pista] manual DCTFWeb (nao lido).
+IN RFB 2.181/2024 (altera IN 2.043/2021, EFD-Reinf): [SEC] busca indicou que DIRF e substituida por EFD-Reinf a partir de fatos de 01/01/2025. Texto oficial da IN 2.181: NAO LIDO. SEM FONTE OFICIAL ACHADA lida.
+  - IN 2.043/2021 original (busca): prazo de transmissao mensal "ate o dia 15 do mes seguinte" [SEC/pista normas]. NAO lido. SEM FONTE OFICIAL ACHADA lida.
+IN RFB 2.060/2021 (comprovante de rendimentos): NAO LIDA. Pista oficial: "Perguntas e Respostas IRPF 2026" (Receita, gov.br, 23/04/2026) https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/perguntas-e-respostas/dirpf/p-r-irpf-2026-v1-00-2026-04-23.pdf - resumo de busca diz: fonte pagadora entrega "ate o ultimo dia util de fevereiro do ano seguinte", multa R$ 41,43 por documento. [OF-pista, nao lido por WebFetch].
+IN RFB 2.110/2024 (salario-de-contribuicao/multiplas fontes): NAO PESQUISADA nesta rodada (ja tratada no projeto; sem leitura nova). SEM FONTE OFICIAL ACHADA nesta rodada.
+Contagem item 5: 0 literal oficial lido; 2 pistas oficiais (DCTFWeb, IRPF 2026 Q&A); 1 norma sem existencia confirmada (2.342/2026).
+
+================================================================
+ITEM 6 - FGTS Digital
+================================================================
+[OF] Manual de Orientacao FGTS Digital v1.50 (20/03/2026): https://www.gov.br/trabalho-e-emprego/pt-br/servicos/empregador/fgtsdigital/manual-e-documentacao-tecnica/manual-do-orientacao-do-fgts-digital-versao-1-50-20-03-2026.pdf (D05, 16 MB). Lido por pdftotext.
+  - Cronograma: "1o de marco de 2024: entrada em producao do FGTS Digital e substituicao do SEFIP/Conectividade Social para os debitos de FGTS de fatos geradores a partir da competencia marco/2024." [OF]
+  - "O criterio para definicao de qual sistema devera ser utilizado sera a data do fato gerador (regime de competencia)." Exemplos: FGTS mensal fev/2024 via SEFIP (venc. 07/03/2024); rescisorio de 26/02/2024 via GRRF; FGTS mensal mar/2024 via FGTS Digital (venc. 19/04/2024); rescisorio de 04/03/2024 via FGTS Digital (venc. 14/03/2024). [OF]
+  - "Os debitos de competencias ate o mes imediatamente anterior a implementacao continuarao sendo quitados por meio de guias emitidas pela CAIXA e ... pela SEFIP." [OF]
+  - Diferencas/retificacoes: usar o sistema original que gerou o recolhimento (ex.: diferenca de nov/2022 via SEFIP) [OF].
+  - Valores de periodos anteriores a marco/2024 em folha de marco/2024: texto lido parcialmente (sem resultado final).
+  - Portaria MTE nº 240/2024 (regulamenta FGTS Digital; art. 17-A Lei 8.036): [SEC busca] anttlegis e fgts.gov.br. Texto oficial da portaria NAO LIDO.
+  - Portaria MTE 506/2026 (citada em busca como mudanca a partir de fev/2026): NAO encontrada no manual v1.50 (grep "506" sem hit). SEM FONTE OFICIAL ACHADA.
+  - Justica do Trabalho / SEFIP 650/660 para decisoes sem declaracao no eSocial: [SEC busca] (manual v1.50 citado na busca: 'SEFIP codigos 650/660' e GRRF para multa). Nao confirmado no trecho do manual lido.
+  - Consolidada MTE 1/2025 (D03) menciona FGTS Digital em arts. 96-111 (perfis de acesso) [OF]; nao dispoe sobre prazo.
+Contagem item 6: cronograma e regra de transicao [OF] resolvidos; portaria 240/2024 texto e Portaria 506/2026 SEM FONTE OFICIAL ACHADA lida; GFIP/SEFIP ainda usado para ação trabalhista: pista [SEC], nao confirmada no manual lido.
+
+================================================================
+ITEM 7 - EFD-Reinf
+================================================================
+Busca apenas (dominio sped.rfb.gov.br - NAO esta na lista de dominios aceitos da rodada; gov.br/sped esta). Pistas:
+  - Manual da EFD-Reinf v2.1.2.1: http://sped.rfb.gov.br/estatico/28/40FAAC1C636CC110D4C12D2790B43C641C6BCA/Manual%20da%20EFD-Reinf%20vers%C3%A3o%202.1.2.1.pdf (nao lido)
+  - Nota Tecnica EFD-Reinf 01/2026: http://sped.rfb.gov.br/arquivo/show/8070 ; NT 02/2026: .../8180 ; NT 03/2026 (CNPJ alfanumerico, versao 2.1.2): ... (nao lidas). Resumo de busca diz producao a partir de julho (2026), data a comunicar.
+  - Manual de Orientacao MOR: http://sped.rfb.gov.br/arquivo/download/5759 (nao lido)
+Eventos R-2010/R-2020/R-2099/R-2098/R-4000/R-4099: [SEC] (rodada anterior). NAO confirmado no leiaute oficial lido.
+Versao do leiaute vigente em 2026: SEM FONTE OFICIAL ACHADA lida (busca indica 2.1.2 e NTs 2026 [OF-pista]).
+Contagem item 7: 0 resolvidos com texto lido; pista oficial (sped.rfb.gov.br fora da lista) identificada.
+
+================================================================
+ITEM 8 - Credito do Trabalhador (consignado CLT)
+================================================================
+[OF-pista] MP 1.292/2025 (Planalto): https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/mpv/mpv1292.htm - busca: convertida em Lei 15.179/2025 (sancao 24/07/2025 segundo LexML) que alterou a Lei 10.820/2003. Texto da lei NAO LIDO nesta rodada.
+[OF-pista] eSocial, noticia "Credito do Trabalhador: orientacoes sobre o emprestimo consignado no eSocial": https://www.gov.br/esocial/pt-br/noticias/credito-do-trabalhador-orientacoes-sobre-o-emprestimo-consignado-no-esocial (nao lida).
+[OF-pista] Manual operacional do empregador (gov.br FGTS Digital, v2 16/05/2025): https://www.gov.br/trabalho-e-emprego/pt-br/servicos/empregador/fgtsdigital/manual-e-documentacao-tecnica-old/manual-operacional-do-empregador-programa-credito-do-trabalhador-v2-16-05-25.pdf (nao lido).
+  - Dados de busca (sem leitura oficial): desconto no eSocial por evento S-1200/S-2299/S-2399 com rubrica 9253; limite 35% da renda liquida; repasse via eSocial ou Guia FGTS Digital (fontes conflitantes). SEM FONTE OFICIAL ACHADA lida para prazo de repasse.
+CNPS (regulamentacao): NAO ENCONTRADO. SEM FONTE OFICIAL ACHADA.
+Portaria MTE nº 434/2025 (de 20/03/2025, pista de busca, compilada em 28/07/2025): https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/legislacao/portarias-1/portarias-vigentes-3/PDFPortariaMTEn434de20demarode2025compiladaem28.07.2025.pdf - NAO LIDA (identificada como possivel regulamentacao; nao confirmada).
+Contagem item 8: 0 literal lido; norma identificada (Lei 15.179/2025, pista Planalto), CNPS nao achado.
+
+================================================================
+ITEM 9 - Simples Nacional 2027 (LC 214/LC 227, RBT12, CPP)
+================================================================
+[OF] LC 214/2025 (Planalto): https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm - texto lido na rodada anterior (art. 41 §3º etc.). Nao reli RBT12/2027 nesta rodada.
+[OF-pista] LC 227/2026: https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp227.htm - nao lida nesta rodada.
+Busca (resultados secundarios, Parana, Rio Grande do Sul, SEBRAE): RBT12 2027 = 12 meses ate o mes anterior ao mes anterior (ex.: jan/2027 usa dez/2025 a nov/2026); LC 214 acrescenta §19 ao art. 3º da LC 123 (soma de receitas de todos os CNPJs). [SEC] - divergencia com a leitura da rodada anterior: NAO CONFIRMADO no texto oficial.
+Repartição CBS/IBS na faixa 1 (0,6132% / 0,0068% = 4%): [SEC PR]. NAO confirmado nos anexos oficiais.
+Resolucao CGSN (texto de 2027): NAO ENCONTRADA. SEM FONTE OFICIAL ACHADA.
+CPP patronal no Simples 2027: SEM FONTE OFICIAL ACHADA (nao pesquisada em texto oficial nesta rodada).
+Contagem item 9: 0 resolvidos nesta rodada (LC 214 ja lida antes; RBT12 2027 nao confirmada no texto oficial lido).
+
+================================================================
+ITEM 10 - Relatorio de Transparencia Salarial e cotas
+================================================================
+[OF] Lei 14.611/2023 art. 5º (acervo [AC]; fonte planalto/normas.leg.br): https://normas.leg.br/?urn=urn:lex:br:federal:lei:2023-07-03;14611 (rodada anterior): publicacao semestral pelas PJ com 100+ empregados; multa de ate 3% da folha, limitada a 100 salarios minimos (art. 5º §3º).
+[OF] Noticias gov.br (MTE):
+  - 5o Relatorio de Transparencia Salarial lancado em 27/04/2026 (MTE e MMulheres): https://www.gov.br/trabalho-e-emprego/pt-br/noticias-e-conteudo/2026/abril/mte-e-mmulheres-lancam-5o-relatorio-de-transparencia-salarial-nesta-segunda-feira-27
+  - Prazo para publicacao das empresas com 100+ empregados prorrogado de 31/03 para 06/04/2026 (problemas tecnicos): https://www.gov.br/trabalho-e-emprego/pt-br/noticias-e-conteudo/2026/marco/mte-amplia-prazo-para-empresas-divulgarem-o-5o-relatorio-de-transparencia-salarial
+  - Ciclo 2025: dados complementares ate 31/08/2025; publicacao ate 31/03/2025 (2025 nota: "ate 31 de marco"). Links: https://www.gov.br/trabalho-e-emprego/pt-br/noticias-e-conteudo/2025/agosto/empresas-tem-ate-31-de-agosto-para-enviar-dados-para-relatorio-de-transparencia-salarial e .../2025/marco/empresas-com-100-ou-mais-empregados-tem-ate-31-de-marco-para-divulgar-relatorio-de-transparencia-salarial (noticias lidas apenas por snippet de busca).
+Portaria MTE nº 3.714/2023 (procedimentos do relatorio, 24/11/2023): identificada em busca em anttlegis (NAO oficial pela lista). Texto oficial NAO LIDO. SEM FONTE OFICIAL ACHADA lida.
+Decreto 11.795/2023 (regulamenta Lei 14.611): [SEC]. Nao lido.
+Semestralidade de publicacao (marco e setembro, segundo busca): [SEC]. SEM FONTE OFICIAL ACHADA lida para o calendario de 2026/2027.
+Lei de cotas (Lei 8.213 art. 93): ja em [AC] rodada anterior. Instrucao de fiscalizacao: NAO PESQUISADA nesta rodada. SEM FONTE OFICIAL ACHADA.
+Contagem item 10: 1 lei [OF/AC] resolvida; noticias gov.br resolvem datas de 2026 (5o relatorio); portaria 3.714 e calendario semestral SEM FONTE OFICIAL ACHADA lida.
+
+================================================================
+ITEM 11 - Jornada / EC 141/2026 (norma regulamentadora 2026)
+================================================================
+EC 141/2026 (texto): [OF] Planalto, ja lido na rodada anterior.
+Busca em gov.br: [OF-pista] noticias MTE (out/nov 2026): "MTE recebe representantes da ABIR para discutir regulamentacao da jornada 5x2" (https://www.gov.br/trabalho-e-emprego/pt-br/noticias-e-conteudo/2026/outubro/mte-recebe-representantes-da-abir-para-discutir-regulamentacao-da-jornada-5x2) e "Congresso Nacional promulga PEC que reduz jornada..." (https://www.gov.br/trabalho-e-emprego/pt-br/noticias-e-conteudo/2026/outubro/congresso-nacional-promulga-pec-que-reduz-jornada-de-trabalho-e-estabelece-dois-dias-de-descanso-remunerado). Noticias lidas por snippet.
+  - Segundo as noticias (snippet): MTE diz que prepara manual para orientar a Inspecao do Trabalho e que ha portaria prevista sobre implementacao. [OF-pista] Sem texto publicado lido.
+  - Portaria ou nota orientativa de 2026 sobre 42 h: NAO ENCONTRADA em texto oficial lido. Resultado: "nao encontrado" para norma publicada.
+  - Transicao (texto EC 141 art. 6º I e II, lido na rodada anterior): 42 h 2 meses apos publicacao; 40 h 1 ano depois. Divergencia nas datas de inicio (busca): [SEC].
+Contagem item 11: 0 norma regulamentadora 2026 encontrada; 2 noticias oficiais indicam manual/portaria em preparacao.
+
+================================================================
+RESUMO DE CONTAGEM (r2b)
+================================================================
+Itens do pedido: 11 (ao todo ~43 pontos da lista original; esta rodada cobre os de regulador).
+- Resolvido com texto oficial lido (OF): item 1 (prazos e totalizadores por evento, 50 eventos); item 2 (vigencia, RAIS/CAGED via eSocial, revogacoes, tipos de REP em 671); item 3 parcial (NR-1 vigencia; NR-15 percentuais; NR-7 historico); item 6 (cronograma FGTS Digital e regra de transicao); item 10 (Lei 14.611 e datas 2026 em noticias gov.br); item 5: nenhum literal.
+- Pistas oficiais, texto nao lido: itens 4, 5 (DCTFWeb, IRPF Q&A), 7 (sped.rfb.gov.br fora da lista), 8 (Lei 15.179 e MP 1.292 no Planalto), 9 (LC 227), 11 (noticias MTE).
+- SEM FONTE OFICIAL ACHADA (lista):
+  * eSocial: exclusao dos 6 eventos (S-1295, S-1300, S-2245, S-2250, S-2260, S-2280) - documento oficial lido nao cita os codigos
+  * eSocial: regra de guarda do REP; prazo de guarda do PPP/LTCAT (IN 128 nao lida)
+  * RFB: IN 2.237 (prazo 25 vs ultimo dia util - conflito), IN 2.181, IN 2.060, IN 2.110 (nao pesquisada), IN 2.342/2026 (nao encontrada)
+  * FGTS Digital: Portaria 240/2024 texto; Portaria 506/2026 (nao encontrada no manual)
+  * EFD-Reinf: versao vigente de leiaute em 2026
+  * Credito do Trabalhador: CNPS; prazo de repasse
+  * Simples 2027: RBT12 (secundaria), Resolucao CGSN 2027, CPP patronal
+  * Transparencia: portaria 3.714/2023 (texto), calendario 2026-27 (so noticias)
+  * NR-5, NR-4, NR-6 (URL 404), NR-16, NR-17: texto nao lido; NR-7 ASO/periodicidade; NR-15 portaria vigente; NR-15 Anexo 1 (ruido)
+  * LTCAT e PPP (IN 128/2022 arts. 276-285 - nao lidos literalmente)
+  * EC 141: norma regulamentadora 2026 (nao encontrada); manual MTE em preparacao [OF-pista]
+- Divergencias registradas: (a) Portaria Consolidada: "Retificada pela Retificacao publicada no DOU de 16 de dezembro de 2026" (data futura); (b) NR-1 pagina: vigencia anterior 25/05 vs 26/05 e Portaria 344 (21/03 vs 25/03/2024); (c) DCTFWeb prazo; (d) resumo do modelo sobre pagina HTML do eSocial x MOS (6 eventos).
+
+Dominios fora da lista aceita da rodada usados como pista: sped.rfb.gov.br (EFD-Reinf), portalin.inss.gov.br (IN 128), anttlegis.antt.gov.br (Portaria 240, 3.714), legisweb/normaslegais (rodada anterior, [SEC]).

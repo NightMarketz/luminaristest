@@ -1,4 +1,4 @@
-import type { BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 
 /** Policy do kit de setor (BE-INCR-KIT-SETOR, PR-2 e PR-3). */
 export interface ISectorKitPolicy {

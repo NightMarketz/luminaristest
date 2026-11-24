@@ -686,6 +686,29 @@ describe('IBS-CBS-2027 PR-3 — crédito de IBS/CBS na NF-e de entrada', () => {
     expect(regular.createPayable.mock.calls[0][1].recoverableTaxLines).toBeUndefined();
   });
 
+  // Onda 3.2 (fatia 3, #6): o início do crédito é a linha OBRIGACAO_REGIME/IBS_CBS_APURACAO da fotografia, não `2027-01-01` em código.
+  it('VIRADA — o mesmo XML de 2027 perde o crédito se a linha do marco passar para 2028; sem a linha, nenhum crédito (fail-closed)', async () => {
+    const comMarco = (desde: string | null) => ({
+      fotografia: async (t: readonly string[]) =>
+        (await legalParamsSemente.fotografia(t)).flatMap((l: { tabela: string; chave: string; discriminador: string | null }) => {
+          if (l.tabela !== 'OBRIGACAO_REGIME' || l.chave !== 'IBS_CBS_APURACAO' || l.discriminador === 'SIMPLES' || l.discriminador === 'MEI') return [l];
+          return desde === null ? [] : [{ ...l, vigenteDesde: desde }];
+        }),
+    });
+    const hoje = build({ profile: CONTAS });
+    await hoje.service.importPurchase(scope, NOTA_2027, dto({ itemMappings: MAPS }));
+    expect(hoje.createPayable.mock.calls[0][1].recoverableTaxLines).toHaveLength(2);
+
+    const adiado = build({ profile: CONTAS, legalParams: comMarco('2028-01-01') });
+    await adiado.service.importPurchase(scope, NOTA_2027, dto({ itemMappings: MAPS }));
+    expect(adiado.createPayable.mock.calls[0][1].recoverableTaxLines).toBeUndefined();
+    expect(adiado.createPayable.mock.calls[0][1].amountCents).toBe(15000);
+
+    const semLinha = build({ profile: CONTAS, legalParams: comMarco(null) });
+    await semLinha.service.importPurchase(scope, NOTA_2027, dto({ itemMappings: MAPS }));
+    expect(semLinha.createPayable.mock.calls[0][1].recoverableTaxLines).toBeUndefined();
+  });
+
   it('item 15 — item na lista de uso/consumo (prefixo de NCM): o IBS/CBS dele vai ao custo do próprio item, a linha guarda usoConsumoCents', async () => {
     const lista = {
       id: 'uc-1', tabela: 'IBS_CBS_USO_CONSUMO', chave: '2203', discriminador: null, valorInt: null, valorTexto: null, valorJson: null,

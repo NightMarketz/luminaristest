@@ -3293,6 +3293,17 @@ model CollectionCharge {
   payerSnapshotJson    String // PII — fora do AuditEvent (P2-14)
   instrumentJson       String?
   failReason           String?
+  // Onda 4 / 4.3 — a re-consulta do job (`collection_charge_poll`) não repete para sempre a cobrança cujo `getCharge` falha:
+  // `pollAttempts` conta as falhas seguidas (zera no sucesso), `nextPollAt` é o relógio do backoff (NÃO é o `updatedAt`,
+  // que decide a CREATING velha), `pollLastError` o último motivo. 5xx/rede só espaça; 4xx definitivo repetido ⇒
+  // `pollGaveUpAt` (o job para e alerta) — a cobrança segue PENDING e VIVA (FAILED soltaria o índice de uma-viva-por-título
+  // com o Pix/boleto ainda pagável no provedor).
+  pollAttempts         Int            @default(0)
+  // Falhas de 4xx DEFINITIVO seguidas (um 5xx/rede/429/408 ou um sucesso zera): só ela decide o abandono (`pollGaveUpAt`).
+  pollPermanentCount   Int            @default(0)
+  nextPollAt           DateTime?
+  pollGaveUpAt         DateTime?
+  pollLastError        String?
   createdById          String?
   cancelledById        String?
   createdAt            DateTime       @default(now())

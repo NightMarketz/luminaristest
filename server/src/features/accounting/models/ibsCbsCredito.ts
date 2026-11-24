@@ -7,12 +7,14 @@
  * - Uso ou consumo pessoal fica fora (art. 57 [D03]) por lista versionada em `legal_parameters` (tabela
  *   `IBS_CBS_USO_CONSUMO`, chave = prefixo de NCM — dono 21/10). O conteúdo é do contador (P-IBS-2): sem linha publicada
  *   nenhum item é excluído e o resultado avisa. O IBS/CBS do item excluído é custo do item (não recuperável).
- * - Nota emitida antes de 2027 não gera crédito (F-IBS-7 b: nada é apurado em 2026).
+ * - Nota emitida antes do início da apuração não gera crédito (F-IBS-7 b: nada é apurado em 2026). O início é a linha
+ *   `OBRIGACAO_REGIME/IBS_CBS_APURACAO` da fotografia (`inicioApuracaoIbsCbs`, Onda 3.2) — sem linha ⇒ nenhum crédito + aviso
+ *   (fail-closed: crédito sem marco publicado seria benefício sem base legal).
  */
 import { linhasEmVigor, type LinhaLegal } from '../../legalParameters/models/legalParameter';
+import { inicioApuracaoIbsCbs } from './ibsCbsParams';
 
 export const TABELA_USO_CONSUMO = 'IBS_CBS_USO_CONSUMO';
-export const INICIO_CREDITO_IBS_CBS = '2027-01-01';
 
 export interface LinhaUsoConsumo {
   /** Prefixo de NCM (2 a 8 dígitos). */
@@ -81,20 +83,27 @@ export function creditoIbsCbsEntrada(input: {
   dataEmissao: string;
   regimeRegular: boolean;
   itens: readonly ItemEntradaIbsCbs[];
-  lista: readonly LinhaUsoConsumo[];
+  /** Fotografia das linhas legais (`IBS_CBS_USO_CONSUMO` + `OBRIGACAO_REGIME`); a função deriva a lista e o marco dela. */
+  linhas: readonly LinhaLegal[];
 }): CreditoIbsCbsEntrada {
-  if (!input.regimeRegular || input.dataEmissao < INICIO_CREDITO_IBS_CBS) return SEM_CREDITO;
+  if (!input.regimeRegular) return SEM_CREDITO;
+  const inicio = inicioApuracaoIbsCbs(input.linhas);
+  if (inicio === null) {
+    return { ...SEM_CREDITO, avisos: [`início da apuração de IBS/CBS (OBRIGACAO_REGIME/IBS_CBS_APURACAO) sem linha publicada — nenhum crédito apropriado em ${input.dataEmissao} (LC 214 arts. 41 § 1º e 45 § 6º)`] };
+  }
+  if (input.dataEmissao < inicio) return SEM_CREDITO;
+  const lista = listaUsoConsumoDe(input.linhas);
   const comGrupo = input.itens.filter((it) => it.ibsCbs);
   if (comGrupo.length === 0) return SEM_CREDITO;
 
   const out: CreditoIbsCbsEntrada = { ibsCents: 0, cbsCents: 0, usoConsumo: [], naoCreditavelPorItem: new Map(), avisos: [] };
-  if (!input.lista.some((l) => l.vigenteDesde <= input.dataEmissao && (l.vigenteAte === null || input.dataEmissao <= l.vigenteAte))) {
+  if (!lista.some((l) => l.vigenteDesde <= input.dataEmissao && (l.vigenteAte === null || input.dataEmissao <= l.vigenteAte))) {
     out.avisos.push(`lista de uso ou consumo pessoal (${TABELA_USO_CONSUMO}) sem linha publicada em ${input.dataEmissao} — nenhum item excluído do crédito (P-IBS-2; LC 214 art. 57)`);
   }
   for (const it of comGrupo) {
     const ibs = centavos(it.ibsCbs!.vIBSCents, `vIBS do item ${it.nItem}`);
     const cbs = centavos(it.ibsCbs!.vCBSCents, `vCBS do item ${it.nItem}`);
-    const linha = usoConsumoDoNcm(input.lista, it.ncm, input.dataEmissao);
+    const linha = usoConsumoDoNcm(lista, it.ncm, input.dataEmissao);
     if (linha) {
       out.usoConsumo.push({ nItem: it.nItem, ncm: it.ncm, ibsCents: ibs, cbsCents: cbs, fonte: linha.fonte });
       if (ibs + cbs > 0) out.naoCreditavelPorItem.set(it.nItem, ibs + cbs);

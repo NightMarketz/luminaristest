@@ -3,12 +3,13 @@ import path from 'path';
 import { LEGAIS_SEMENTE, LEGAL_PARAMS_SEED_FILE_ICMS_ST_NCM_UF, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
 import type { LegalParameterTabela, LinhaLegal } from '../../../legalParameters/models/legalParameter';
-import { FIM_MONOFASICO_PIS_COFINS, icmsStDaNcm, segregacaoPorNcm } from '../segregacaoNcm';
+import { fimMonofasicoPisCofins, icmsStDaNcm, segregacaoPorNcm } from '../segregacaoNcm';
 
 /**
  * BE-INCR-EFICIENCIA-FISCAL PR-2 (nó EFICIENCIA-FISCAL, BRIEF itens 11–12; ADR D7, I-9) e as decisões do dono de 27/10
  * (D-2026-10-27-EFICIENCIA-FISCAL-PR2-EXECUCAO): ST só SP DRAFT até 31/03/2026; sem linha PUBLISHED não exclui ICMS;
  * monofásico ≥ 2027 tratado na função.
+ * Onda 3.2 #5 (dono, chat, 24/11/2026) REVERTEU esse último ponto: o fim do monofásico é o `vigenteAte` da linha `PIS_COFINS` + 1 dia.
  */
 const seedSt = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_ICMS_ST_NCM_UF) as LinhaLegal[];
 const SP = '35';
@@ -68,9 +69,11 @@ describe('item 12 — segregacaoPorNcm (pura)', () => {
     expect(segregacaoPorNcm(SHAMPOO, null, '2026-03-10', comSt)).toEqual(['PIS', 'COFINS']);
   });
 
-  it(`I-9: a partir de ${FIM_MONOFASICO_PIS_COFINS} não há PIS/COFINS a excluir (LC 214 art. 542 XI), sem mexer nas linhas da tabela`, () => {
+  it('I-9: no dia seguinte ao fim das linhas PIS_COFINS (2027-01-01) não há PIS/COFINS a excluir (LC 214 art. 542 XI) — o fim vem da linha PIS_COFINS, não de literal', () => {
+    expect(fimMonofasicoPisCofins(legais, '2026-12-31')).toBe('2027-01-01');
     expect(segregacaoPorNcm(CREME, SP, '2026-12-31', legais)).toEqual(['PIS', 'COFINS']);
     expect(segregacaoPorNcm(CREME, SP, '2027-01-01', legais)).toEqual([]);
+    // As linhas do monofásico NCM seguem sem fim: a importação de NF-e (X6) as lê (D-2026-10-27 decisão 3, parte que permanece).
     expect(legais.filter((l) => l.tabela === 'PIS_COFINS_MONOFASICO_NCM' && l.vigenteAte !== null)).toEqual([]);
   });
 

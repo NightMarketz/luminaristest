@@ -1,0 +1,229 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "RICMS - Artigo 566\r\n\t\t\t\t\t\t\r\nCapítulo III - DA ATUALIZAÇÃO MONETÁRIA",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art566.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art566.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:20:37-03:00",
+      "sha256": "0d41b49fb58d038ba5caa79da0bacb3f2f1c22ba2d20dea600fcacfbdcf9d7fc",
+      "arquivo": "docs/D01_art566-aspx.html",
+      "texto": "docs/D01_art566-aspx.txt",
+      "bytes": 155004,
+      "sha256_texto": "0877a3b1ab6aa3c91793338268de53cb3560660eadbf1e952ba11d15f7dde6f4",
+      "captura": {
+        "anterior": {
+          "slug": "icms-revenda-regime-normal-sp",
+          "id": "D26",
+          "baixado_em": "2026-11-21T17:04:37-03:00",
+          "sha256_texto": "0877a3b1ab6aa3c91793338268de53cb3560660eadbf1e952ba11d15f7dde6f4"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Decreto 67616 de 2023",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/Decreto-67616-de-2023.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/Decreto-67616-de-2023.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:21:23-03:00",
+      "sha256": "b2d3d19d3389cf4cb10fa46bf776011cfc53962cba4fc04ca87431d14f72fb5c",
+      "arquivo": "docs/D02_Decreto-67616-de-2023-aspx.html",
+      "texto": "docs/D02_Decreto-67616-de-2023-aspx.txt",
+      "bytes": 151122,
+      "sha256_texto": "34b38ab6af73f487f86ee5369c0a7b662c935feb12629c670fa2767e58113366",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "RICMS - Artigo 565\r\n\t\t\t\t\t\t\r\nCapítulo",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art565.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art565.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:21:33-03:00",
+      "sha256": "6e156ba623ebae6881157351530597a5c0f2d46de1ed30f29b7a0a0695a5809e",
+      "arquivo": "docs/D03_art565-aspx.html",
+      "texto": "docs/D03_art565-aspx.txt",
+      "bytes": 177143,
+      "sha256_texto": "9f6c36e17fc5d7c6eeba8de913f50750b03ea8044f3db39d71f9f93ad8a0f86b",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "RICMS - Artigo 567 a 569\r\n\t\t\t\t\t\t\r\nCapítulo IV - DAS DISPOSIÇÕES COMUNS AOS JUROS DE MORA E À ATUALIZAÇÃO MONETÁRIA",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art567.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art567.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:21:34-03:00",
+      "sha256": "927db012c4b050e10637ccf2de535155ed6fed2e59674ccac2bf7a8d2aa6cbef",
+      "arquivo": "docs/D04_art567-aspx.html",
+      "texto": "docs/D04_art567-aspx.txt",
+      "bytes": 154056,
+      "sha256_texto": "fd6c02813b4c82de06e567620523b670ece591cfc0ddc0d077ff049ad8f47bb3",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "Lei nº 6.374, de 01/03/1989",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/estaduais/SP/leis-ordinarias/1989/lei-6374-1989-03-01-id25030.md",
+      "url_final": "https://github.com/ctresb/leis/blob/a04d818af03dd02ec234f777e89fc809126702e5/estaduais/SP/leis-ordinarias/1989/lei-6374-1989-03-01-id25030.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.al.sp.gov.br/norma/25030",
+      "versao_texto": "atualizada",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "a04d818af03dd02ec234f777e89fc809126702e5",
+      "alertas": [
+        "versao_texto = 'atualizada' (não é texto compilado: alterações posteriores não aparecem)",
+        "consta como revogada (situacao='Sem revogação expressa', revogada=false)"
+      ],
+      "baixado_em": "2026-11-24T01:21:50-03:00",
+      "sha256": "419917e3106054a23498fa31fdd8030acc29517f69b657b4d108999b2cded724",
+      "arquivo": "docs/D05_lei-6374-1989-03-01-id25030.md",
+      "texto": "docs/D05_lei-6374-1989-03-01-id25030.txt",
+      "bytes": 349593,
+      "sha256_texto": "237c5f3815481be162678a960884a35c980bc14d1364456a0bd515c4c1075f8b",
+      "captura": {
+        "anterior": {
+          "slug": "icms-revenda-regime-normal-sp",
+          "id": "D02",
+          "baixado_em": "2026-11-21T16:57:23-03:00",
+          "sha256_texto": "237c5f3815481be162678a960884a35c980bc14d1364456a0bd515c4c1075f8b"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "Lei nº 5.172 de 25/10/1966",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1966/lei-5172-1966-10-25.md",
+      "url_final": "https://github.com/ctresb/leis/blob/04685ef7689b7028d0dc835e5cde644ad7a2d328/federal/leis-ordinarias/1966/lei-5172-1966-10-25.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1966-10-25;5172",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "04685ef7689b7028d0dc835e5cde644ad7a2d328",
+      "alertas": [],
+      "baixado_em": "2026-11-24T01:21:52-03:00",
+      "sha256": "fe8ef71d4ebe8c0d04d3422ca95853e15291c5c7ca6168cd34ae7b8ee6e3983b",
+      "arquivo": "docs/D06_lei-5172-1966-10-25.md",
+      "texto": "docs/D06_lei-5172-1966-10-25.txt",
+      "bytes": 148085,
+      "sha256_texto": "4c9a86703705688e85cada4149409411b13921ff4505569b0578a20eb9841bee",
+      "captura": {
+        "anterior": {
+          "slug": "insumos-salao-sp",
+          "id": "D06",
+          "baixado_em": "2026-11-20T19:17:02-03:00",
+          "sha256_texto": "4c9a86703705688e85cada4149409411b13921ff4505569b0578a20eb9841bee"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "Comunicado SRE 10 de 2026",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/Comunicado-SRE-10-de-2026.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/Comunicado-SRE-10-de-2026.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:24:17-03:00",
+      "sha256": "89f62711abbed86be28dc1d15f3363dbd8d4732d12a186a53d51c7d2568e9c2b",
+      "arquivo": "docs/D07_Comunicado-SRE-10-de-2026-aspx.html",
+      "texto": "docs/D07_Comunicado-SRE-10-de-2026-aspx.txt",
+      "bytes": 166398,
+      "sha256_texto": "a32c320deb389748f3a123ce75007b9dedd05700ec047ba3ddd3f4f0c4b0af8d",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "RICMS - Anexo IV - Artigo 1º ao 3º\r\n\t\t\t\t\t\t\r\nANEXO IV - PRAZOS DE RECOLHIMENTO DO IMPOSTO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/l6an4.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/l6an4.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:24:17-03:00",
+      "sha256": "6044128fd89b4bfd5f5197a4f868b55556206563a117fc6cb0a31f13e1bf1706",
+      "arquivo": "docs/D08_l6an4-aspx.html",
+      "texto": "docs/D08_l6an4-aspx.txt",
+      "bytes": 204123,
+      "sha256_texto": "66a50c8286938616230f679171b92fadde299d6de369a85974492ca5b7606a55",
+      "captura": {
+        "anterior": {
+          "slug": "icms-revenda-regime-normal-sp",
+          "id": "D20",
+          "baixado_em": "2026-11-21T17:01:53-03:00",
+          "sha256_texto": "66a50c8286938616230f679171b92fadde299d6de369a85974492ca5b7606a55"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D09",
+      "titulo": "RICMS - Artigo 112 a 114\r\n\t\t\t\t\t\t\r\nSEÇÃO II - DOS PRAZOS PARA PAGAMENTO NO REGIME PERIÓDICO DE APURAÇÃO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art112.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art112.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:24:18-03:00",
+      "sha256": "afa0d1cc76a8533404fa7a3f7308eee6268353161c88eb007d29baddf98778f7",
+      "arquivo": "docs/D09_art112-aspx.html",
+      "texto": "docs/D09_art112-aspx.txt",
+      "bytes": 151106,
+      "sha256_texto": "b27fdd183b9ed1a5a95925e43f8a4fd602a97f6e95b5bea691288a7ea063eaa4",
+      "captura": {
+        "anterior": {
+          "slug": "icms-revenda-regime-normal-sp",
+          "id": "D11",
+          "baixado_em": "2026-11-21T16:58:30-03:00",
+          "sha256_texto": "b27fdd183b9ed1a5a95925e43f8a4fd602a97f6e95b5bea691288a7ea063eaa4"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D10",
+      "titulo": "RICMS - Artigo 596\r\n\t\t\t\t\t\t\r\nLIVRO V - DAS DISPOSIÇÕES FINAIS E TRANSITÓRIAS",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art596.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art596.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:24:53-03:00",
+      "sha256": "a6415e03c47fd92b08e26ab3eb204ebc25227cf65019acfec6a487c4b0f1fa4d",
+      "arquivo": "docs/D10_art596-aspx.html",
+      "texto": "docs/D10_art596-aspx.txt",
+      "bytes": 150740,
+      "sha256_texto": "bbb480de3aeb8b5f08c9a6d3dd5e0eb6916431525002cb57ba4e80095dc0dcf8",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D11",
+      "titulo": "RC 4264/2014",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/RC4264_2014.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/RC4264_2014.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:24:53-03:00",
+      "sha256": "b41bb5da49997c4a3c959cbd12b8ac843ea34bcdd80987dca0a1f9a2d8a227f0",
+      "arquivo": "docs/D11_RC4264_2014-aspx.html",
+      "texto": "docs/D11_RC4264_2014-aspx.txt",
+      "bytes": 170886,
+      "sha256_texto": "e6de7ef1e9bdc5dc2aff531890756ff6175844e55c2237a8c2bb2cc889702e77",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "ricms-sp-art566-vencimento",
+  "pergunta": "O que diz o RICMS/SP art. 566 sobre vencimento de imposto em dia sem expediente bancário/fazendário?",
+  "criado": "2026-11-24T01:20:25-03:00"
+}

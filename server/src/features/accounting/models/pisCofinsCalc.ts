@@ -138,7 +138,43 @@ export function modalidadeDoRegime(regime: string): ModalidadePisCofins {
   throw new ValidationError(`regime '${regime}' sem apuração de PIS/Cofins.`);
 }
 
-/** Item 3 / ADR D9: linha vigente no último dia do mês; sem linha ⇒ 400 (revogação a partir de 2027-01). */
+/** Dia seguinte a um date-only `YYYY-MM-DD` (UTC; sem fuso). */
+function diaSeguinte(data: string): string {
+  const d = new Date(`${data}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Onda 3.2 / fatia 3 (#9) — a recusa "sem linha `PIS_COFINS` vigente" e o texto dela vêm das LINHAS: o início da revogação
+ * é o dia seguinte ao maior `vigenteAte` já vencido (qualquer modalidade), não um ano em código. Estender o `vigenteAte` da
+ * linha move a mensagem junto. Sem nenhuma linha vencida (tabela vazia ou data anterior à primeira vigência) a mensagem
+ * não afirma revogação: diz que não há linha publicada.
+ */
+function recusaSemLinhaVigente(tabela: readonly ParametroPisCofins[], ano: number, periodo: PeriodoPisCofins, data: string): ValidationError {
+  let fim: string | undefined;
+  for (const p of tabela) if (p.vigenteAte < data && (!fim || p.vigenteAte > fim)) fim = p.vigenteAte;
+  if (!fim) {
+    return new ValidationError(`${periodo}/${ano}: sem linha PIS_COFINS vigente em ${data} — publique a linha (LegalParameter) antes de apurar PIS/Cofins.`);
+  }
+  const desde = diaSeguinte(fim);
+  const desdeTxt = desde.endsWith('-01') ? desde.slice(0, 7) : desde;
+  return new ValidationError(`${periodo}/${ano}: PIS/Cofins revogados a partir de ${desdeTxt} (${PIS_COFINS_REVOGACAO_FONTE}) — CBS é da onda 3.`);
+}
+
+/**
+ * Onda 3.2 / fatia 3 (#9) — recusa independente da modalidade: o mês só apura se alguma modalidade tem PIS e Cofins
+ * vigentes no último dia dele. Roda ANTES de ler o perfil fiscal (que decide a modalidade), para quem apura um ano revogado
+ * ler a revogação e não ser mandado cadastrar um perfil inútil.
+ */
+export function exigirLinhaPisCofinsVigente(tabela: readonly ParametroPisCofins[], ano: number, periodo: PeriodoPisCofins): void {
+  const data = fimDoMes(ano, mesDoPeriodo(periodo));
+  const modalidades: readonly ModalidadePisCofins[] = ['CUMULATIVO', 'NAO_CUMULATIVO'];
+  const ok = modalidades.some((m) => parametroPisCofinsVigente(tabela, 'PIS', m, data) && parametroPisCofinsVigente(tabela, 'COFINS', m, data));
+  if (!ok) throw recusaSemLinhaVigente(tabela, ano, periodo, data);
+}
+
+/** Item 3 / ADR D9: linha vigente no último dia do mês; sem linha ⇒ 400 (revogação lida da linha — ver `recusaSemLinhaVigente`). */
 export function parametrosDoMes(
   tabela: readonly ParametroPisCofins[],
   ano: number,
@@ -148,9 +184,7 @@ export function parametrosDoMes(
   const data = fimDoMes(ano, mesDoPeriodo(periodo));
   const pis = parametroPisCofinsVigente(tabela, 'PIS', modalidade, data);
   const cofins = parametroPisCofinsVigente(tabela, 'COFINS', modalidade, data);
-  if (!pis || !cofins) {
-    throw new ValidationError(`${periodo}/${ano}: PIS/Cofins revogados a partir de 2027-01 (${PIS_COFINS_REVOGACAO_FONTE}) — CBS é da onda 3.`);
-  }
+  if (!pis || !cofins) throw recusaSemLinhaVigente(tabela, ano, periodo, data);
   return { PIS: pis, COFINS: cofins };
 }
 

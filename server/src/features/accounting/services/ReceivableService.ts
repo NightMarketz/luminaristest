@@ -11,9 +11,15 @@
  *   reconcile — reconcileReceivables(): read-first, reposta só o que falta e finaliza RECEIVING preso
  *              teste: ReceivableService.test.ts › "re-posts a missing receipt AND finalizes a RECEIVING receivable"
  *              teste: ReceivableService.test.ts › "does NOT re-post when the recognition already exists (idempotent)"
+ *   estorno — cancelReceipt/cancelReceivable: reverseEntry (commit 1, idempotente) e DEPOIS a tx do subrazão (commit 2). Crash entre os dois =
+ *              razão estornado + recibo ACTIVE/título OPEN: reconcileReceivables() re-dirige a direção REVERSA (lê o lançamento Reversed e conclui
+ *              a tx do subrazão; nunca finaliza como recebido o recibo cujo lançamento já está estornado)
+ *              teste: SubledgerReversalAtomicity.integration.test.ts › "razão estornado + recibo ACTIVE → reconcileReceivables conclui o estorno (recibo CANCELLED, título reaberto, 1 auditoria, sem 2º estorno)"
+ *              teste: SubledgerReversalAtomicity.integration.test.ts › "o estorno já está no razão e o período dele FECHOU → repetir cancelReceipt conclui (a idempotência do reverseEntry vem ANTES do gate de período)"
+ *              teste: SubledgerReversalAtomicity.integration.test.ts › "reconhecimento estornado + título OPEN → reconcileReceivables conclui o cancelamento (CANCELLED, deletedAt, chave de negócio liberada)"
  *   fora da tx — nada
  */
-import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
+import { AppError, ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
 import type { Account, Receivable, ReceivableReceipt } from 'generated/prisma';
@@ -27,6 +33,7 @@ import {
   receivableStatusForBalance,
   resolveReceiptMethodAccount,
   PROVIDER_BALANCE_METHOD,
+  RECEIPT_REVERSAL_INVARIANT_CODE,
 } from '../models/Receivable.model';
 import type {
   CancelReceivableInput,
@@ -81,6 +88,25 @@ export type ReceivableWithBalance = ReceivableWithReceipts & { remainingCents: b
 
 function withBalance(receivable: ReceivableWithReceipts): ReceivableWithBalance {
   return { ...receivable, remainingCents: receivable.amountCents - receivable.receivedCents };
+}
+
+/** Lançamento já estornado no razão (commit 1 de um cancelamento feito). `findBySource` devolve também os `Reversed`. */
+function isReversedEntry(entry: { status: string; reversedById: string | null }): boolean {
+  return entry.status === 'Reversed' || entry.reversedById != null;
+}
+
+/** Motivo gravado quando é o reconcile (não um DTO) quem conclui o estorno que o razão já tem. */
+const RECONCILE_REVERSAL_REASON = 'Reconciliação: estorno já lançado no razão, subrazão concluído';
+
+/**
+ * Códigos que o reconcile do AR conta como BLOCKED (determinísticos, sem o que retentar) além da lista das pontes
+ * (`syncSkipErrorCode`): o invariante do subrazão violado com o razão já estornado, e a cobrança viva no provedor.
+ */
+const RECONCILE_BLOCKED_CODES: readonly string[] = [RECEIPT_REVERSAL_INVARIANT_CODE, RECEIVABLE_HAS_LIVE_CHARGE];
+function reconcileBlockedCode(error: unknown): string | null {
+  const bridge = syncSkipErrorCode(error);
+  if (bridge) return bridge;
+  return error instanceof AppError && RECONCILE_BLOCKED_CODES.includes(error.errorCode) ? error.errorCode : null;
 }
 
 export class ReceivableService {
@@ -388,6 +414,20 @@ export class ReceivableService {
       reversalEntryId = reversal.id;
     }
 
+    return this.completeReceivableCancellation(scope, receivable, reversalEntryId, dto.reason);
+  }
+
+  /**
+   * COMMIT 2 do cancelamento do título (subrazão): CANCELLED + rename-on-delete + auditoria numa tx. Compartilhado por
+   * `cancelReceivable` e pelo re-drive do reconcile (reconhecimento já estornado no razão, título ainda OPEN).
+   */
+  private async completeReceivableCancellation(
+    scope: AccountingScope,
+    receivable: Pick<Receivable, 'id' | 'documentNumber'>,
+    reversalEntryId: string | null,
+    reason: string | undefined,
+  ): Promise<Receivable> {
+    const receivableId = receivable.id;
     return this.receivableRepo.runTransaction(async (tx) => {
       await this.assertNoLiveCharge(scope, receivableId, tx);
       const cancelled = await this.receivableRepo.updateReceivable(
@@ -397,7 +437,7 @@ export class ReceivableService {
           status: 'CANCELLED',
           deletedAt: new Date(),
           cancelledById: scope.actorUserId,
-          cancelReason: dto.reason ?? null,
+          cancelReason: reason ?? null,
           documentNumber: deletedDocumentNumber(receivableId, receivable.documentNumber),
         },
         tx,
@@ -407,7 +447,7 @@ export class ReceivableService {
         eventType: 'receivable.cancelled',
         targetType: 'receivable',
         targetId: receivableId,
-        payload: { receivableId, reversalEntryId, reason: dto.reason },
+        payload: { receivableId, reversalEntryId, reason },
       });
       return cancelled;
     });
@@ -459,20 +499,40 @@ export class ReceivableService {
       reversalEntryId = reversal.id;
     }
 
-    // Reversal in PostingService's own tx; balance + status in ONE tx here (mirror of AP cancelPayment).
+    // Reversal in PostingService's own tx (commit 1); balance + status in ONE tx (commit 2, shared with the reconcile re-drive).
+    return (await this.completeReceiptCancellation(scope, receipt, reversalEntryId, dto.reason)).receipt;
+  }
+
+  /**
+   * COMMIT 2 do estorno do recebimento (subrazão): flip ACTIVE→CANCELLED + devolução do saldo + status + auditoria numa tx.
+   * Compartilhado por `cancelReceipt` e pelo re-drive do reconcile (lançamento já `Reversed`, recibo ainda ACTIVE).
+   * Invariante violado com o razão JÁ estornado (`released === 0`, "Estorno inconsistente") ⇒ erro com código próprio
+   * (`RECEIPT_REVERSAL_INVARIANT_CODE`): a tx desfaz tudo e o reconcile conta como BLOCKED, em vez de retentar para sempre.
+   */
+  private async completeReceiptCancellation(
+    scope: AccountingScope,
+    receipt: ReceivableReceipt,
+    reversalEntryId: string | null,
+    reason: string | undefined,
+  ): Promise<{ receipt: ReceivableReceipt; completed: boolean }> {
+    const receiptId = receipt.id;
+    const receivableId = receipt.receivableId;
+    const cents = centsFromDb(receipt.amountCents);
     return this.receivableRepo.runTransaction(async (tx) => {
       // Authoritative idempotency gate INSIDE the tx (review #307 F8) — mirror of AP cancelPayment.
       const flipped = await this.receivableRepo.cancelReceiptIfActive(scope, receiptId, tx);
       if (flipped === 0) {
         const already = await this.receivableRepo.findReceiptById(scope, receiptId, tx);
         if (!already) throw new NotFoundError(`Recebimento '${receiptId}' não foi encontrado.`);
-        return already;
+        return { receipt: already, completed: false };
       }
       const cancelled = { ...receipt, status: 'CANCELLED' };
       const released = await this.receivableRepo.releaseSettlement(scope, receivableId, cents, tx);
       if (released === 0) {
         throw new ValidationError(
           'Não foi possível estornar o recebimento: o saldo recebido não comporta o estorno (invariante violado).',
+          null,
+          RECEIPT_REVERSAL_INVARIANT_CODE,
         );
       }
       const row = await this.receivableRepo.findById(scope, receivableId, tx);
@@ -480,18 +540,26 @@ export class ReceivableService {
       if (row.status !== 'RECEIVING') {
         const status = receivableStatusForBalance(centsFromDb(row.receivedCents), centsFromDb(row.amountCents));
         if (status === 'RECEIVED') {
-          throw new ValidationError('Estorno inconsistente: o saldo continuaria integralmente recebido após o estorno.');
+          throw new ValidationError(
+            'Estorno inconsistente: o saldo continuaria integralmente recebido após o estorno.',
+            null,
+            RECEIPT_REVERSAL_INVARIANT_CODE,
+          );
         }
         await this.receivableRepo.updateReceivable(scope, receivableId, { status }, tx);
+      } else if (centsFromDb(row.receivedCents) === 0) {
+        // RECEIVING é de um recibo em trânsito, e o claim soma os centavos DELE em receivedCents na mesma CAS: saldo 0 ⇒
+        // não há recibo em trânsito (era este, preso por um crash). Sem isto o título ficaria RECEIVING para sempre.
+        await this.receivableRepo.updateReceivable(scope, receivableId, { status: 'OPEN' }, tx);
       }
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
         eventType: 'receivable.settlement_cancelled',
         targetType: 'receivable',
         targetId: receivableId,
-        payload: { receivableId, receiptId, reversalEntryId, reason: dto.reason },
+        payload: { receivableId, receiptId, reversalEntryId, reason },
       });
-      return cancelled;
+      return { receipt: cancelled, completed: true };
     });
   }
 
@@ -507,13 +575,14 @@ export class ReceivableService {
    */
   async reconcileReceivables(
     scope: AccountingScope,
-  ): Promise<{ recognitionsPosted: number; receiptsPosted: number; finalized: number; blocked: number; failed: number }> {
+  ): Promise<{ recognitionsPosted: number; receiptsPosted: number; finalized: number; reversalsCompleted: number; blocked: number; failed: number }> {
     if (!this.policy.canManageReceivable(scope)) {
       throw new ForbiddenError('Você não tem permissão para reconciliar contas a receber.');
     }
     let recognitionsPosted = 0;
     let receiptsPosted = 0;
     let finalized = 0;
+    let reversalsCompleted = 0;
     let blocked = 0;
     let failed = 0;
 
@@ -522,7 +591,31 @@ export class ReceivableService {
     for (const receivable of receivables) {
       if (receivable.status === 'CANCELLED') continue;
       const recognition = await this.posting.findEntryBySource(scope, AR_RECEIVABLE_SOURCE_TYPE, receivable.id);
-      if (recognition) continue;
+      if (recognition) {
+        // DIREÇÃO REVERSA (Onda 2.1): reconhecimento já estornado (commit 1 de um cancelReceivable) e título ainda OPEN ⇒ conclui o
+        // cancelamento. Título com recebimento ativo não é desfeito às cegas (receita estornada com caixa recebido): BLOCKED.
+        if (isReversedEntry(recognition) && receivable.status === 'OPEN') {
+          try {
+            if (await this.receivableRepo.findActiveReceipt(scope, receivable.id)) {
+              blocked += 1;
+              logger.warn('AR reconcile: recognition is reversed but the receivable still has an ACTIVE receipt — blocked', { receivableId: receivable.id });
+              continue;
+            }
+            await this.completeReceivableCancellation(scope, receivable, recognition.reversedById, RECONCILE_REVERSAL_REASON);
+            reversalsCompleted += 1;
+          } catch (error) {
+            const blockedCode = reconcileBlockedCode(error);
+            if (blockedCode) {
+              blocked += 1;
+              logger.warn('AR reconcile: receivable cancellation re-drive blocked', { receivableId: receivable.id, code: blockedCode });
+            } else {
+              failed += 1;
+              logger.warn('AR reconcile: receivable cancellation re-drive failed', { receivableId: receivable.id, error });
+            }
+          }
+        }
+        continue;
+      }
       try {
         const revenueAccount = await this.accountRepo.findById(scope, receivable.revenueAccountId);
         if (!revenueAccount) {
@@ -536,7 +629,7 @@ export class ReceivableService {
       } catch (error) {
         // TRIAGEM-AUDIT-2026-08-15 A4 — MIRROR of PayableService: a skip-listed deterministic code
         // is BLOCKED (never a bug), anything else is a genuinely unexpected FAILURE.
-        const skipCode = syncSkipErrorCode(error);
+        const skipCode = reconcileBlockedCode(error);
         if (skipCode) {
           blocked += 1;
           logger.warn('AR reconcile: recognition re-drive blocked — deterministic non-retriable code', {
@@ -554,6 +647,13 @@ export class ReceivableService {
     for (const receipt of receipts) {
       try {
         let settlement = await this.posting.findEntryBySource(scope, AR_RECEIPT_SOURCE_TYPE, receipt.id);
+        // DIREÇÃO REVERSA (Onda 2.1): o razão já estornou o recebimento (commit 1 de um cancelReceipt) e o recibo segue ACTIVE ⇒ conclui o
+        // estorno no subrazão. NUNCA cai no finalize abaixo: finalizar como recebido um lançamento Reversed reabriria a divergência.
+        if (settlement && isReversedEntry(settlement)) {
+          const done = await this.completeReceiptCancellation(scope, receipt, settlement.reversedById, RECONCILE_REVERSAL_REASON);
+          if (done.completed) reversalsCompleted += 1;
+          continue;
+        }
         if (!settlement) {
           const receivable = await this.receivableRepo.findByIdWithReceipts(scope, receipt.receivableId);
           if (!receivable) continue;
@@ -606,7 +706,7 @@ export class ReceivableService {
           });
         }
       } catch (error) {
-        const skipCode = syncSkipErrorCode(error);
+        const skipCode = reconcileBlockedCode(error);
         if (skipCode) {
           blocked += 1;
           logger.warn('AR reconcile: receipt re-drive blocked — deterministic non-retriable code', {
@@ -619,8 +719,8 @@ export class ReceivableService {
       }
     }
 
-    logger.info('AR reconcile pass complete', { recognitionsPosted, receiptsPosted, finalized, blocked, failed });
-    return { recognitionsPosted, receiptsPosted, finalized, blocked, failed };
+    logger.info('AR reconcile pass complete', { recognitionsPosted, receiptsPosted, finalized, reversalsCompleted, blocked, failed });
+    return { recognitionsPosted, receiptsPosted, finalized, reversalsCompleted, blocked, failed };
   }
 
   // ---------------------------------------------------------------------------
