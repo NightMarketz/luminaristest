@@ -9,6 +9,11 @@ import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFi
 import { regimeUnidadeEsperado } from '../models/regimeEmpresa';
 import type { RegimeEmpresa } from '../models/regimeEmpresa';
 import { scopeToday } from '../models/dates';
+import { issAliquotaMaxBp } from '../models/issLimite';
+import { isLc116Codigo, listaLc116De } from '../models/lc116ListaNacional';
+import { issExtinto } from '../models/issTransicao';
+import { hojeDateOnly } from '../../legalParameters/models/hoje';
+import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { AuditService } from './AuditService';
 import type { IAccountantAssignmentRepository } from '../repositories/IAccountantAssignmentRepository';
 import type { IAccountingPolicyVersionRepository } from '../repositories/IAccountingPolicyVersionRepository';
@@ -227,6 +232,8 @@ export class FiscalProfileService {
     // GOV-CONTADOR política versionada (item 13): gate do PUT com contador ativo + versão APPLIED.
     private readonly assignmentRepo: IAccountantAssignmentRepository,
     private readonly policyVersionRepo: IAccountingPolicyVersionRepository,
+    /** MODULE-BOUNDARIES PR-1a (`L6`; dono, questionário, 24/11: "Vai para o service", revoga a L-8 do BE-INCR-LEGAL-PARAMS): fotografia ISS_LIMITE + LC116_SERVICO para o `validate`. */
+    private readonly legalParams: Pick<LegalParameterService, 'fotografia'>,
   ) {}
 
   /** Regime da empresa no ano corrente (fuso do escopo), ou `null` sem perfil da empresa naquele ano. */
@@ -353,6 +360,7 @@ export class FiscalProfileService {
     input: FiscalProfilePolicyPayload,
     tx?: Prisma.TransactionClient,
   ): Promise<RegimeEmpresa | null> {
+    await this.assertParametrosLegais(input);
     if (input.icmsRecuperavelAccountId) await this.assertAssetAccount(scope, input.icmsRecuperavelAccountId, 'ICMS a recuperar', tx);
     if (input.pisCofinsRecuperavelAccountId) await this.assertAssetAccount(scope, input.pisCofinsRecuperavelAccountId, 'PIS/COFINS a recuperar', tx);
     // Lacuna 038d (dono 21/11, D-2026-11-21-DRE-INSUMO-PELO-PAPEL item 3): qualquer folha de despesa serve — a DRE classifica o
@@ -408,6 +416,26 @@ export class FiscalProfileService {
       );
     }
     return regimeEmpresa;
+  }
+
+  /**
+   * MODULE-BOUNDARIES PR-1a (`L6`; dono, questionário, 24/11: "Vai para o service", revoga a L-8 do BE-INCR-LEGAL-PARAMS) — o que o DTO estático lia do cache síncrono, agora pela fotografia (F-LP-4 a), na mesma data
+   * (`hojeDateOnly`) e com as mesmas mensagens: `issAliquotaBp` ≤ máximo vigente da ISS_LIMITE (pAliq [312], RN E0595;
+   * de 2033 em diante o DTO já recusou com `ISS_EXTINTO_MENSAGEM`) e `pacoteCTribNac` na lista nacional (Anexo I).
+   */
+  private async assertParametrosLegais(input: FiscalProfilePolicyPayload): Promise<void> {
+    const hoje = hojeDateOnly();
+    if (input.issAliquotaBp != null && !issExtinto(hoje)) {
+      if (input.issAliquotaBp > issAliquotaMaxBp(await this.legalParams.fotografia(['ISS_LIMITE']), hoje)) {
+        throw new ValidationError('issAliquotaBp acima do máximo da tabela ISS_LIMITE (pAliq [312]; RN E0595)');
+      }
+    }
+    if (input.pacoteCTribNac != null) {
+      const lista = listaLc116De(await this.legalParams.fotografia(['LC116_SERVICO']), hoje);
+      if (!isLc116Codigo(input.pacoteCTribNac, lista)) {
+        throw new ValidationError('pacoteCTribNac fora da lista nacional de serviços (Anexo I MUN.INCID_INFO.SERV.)');
+      }
+    }
   }
 
   /**

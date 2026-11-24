@@ -1,5 +1,5 @@
 import { ForbiddenError } from '../../../lib/errors';
-import type { BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 import { SectorKitV1Schema } from '../dtos/SectorKitDto';
 import { BEAUTY_SALON_KIT_V1 } from '../kits/beautySalon/kit.v1';
 import { KitInstallStepFailedError } from '../models/kitInstallTypes';

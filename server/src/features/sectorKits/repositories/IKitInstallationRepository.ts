@@ -1,5 +1,5 @@
 import type { KitInstallation, Prisma } from 'generated/prisma';
-import type { BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 import type { KitInstallSteps } from '../dtos/KitInstallationDto';
 import type { KitInstallStatus } from '../models/kitInstallTypes';
 

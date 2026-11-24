@@ -68,7 +68,7 @@ function build(opts: { existing?: FiscalProfile | null; canManage?: boolean; reg
     setAppliedSnapshot: jest.fn(async () => ({ id: 'pv-1' })),
   } as unknown as IAccountingPolicyVersionRepository;
   return {
-    svc: new FiscalProfileService(repo, accounts, policy, audit, companyRepo, assignmentRepo, policyVersionRepo),
+    svc: new FiscalProfileService(repo, accounts, policy, audit, companyRepo, assignmentRepo, policyVersionRepo, legalParamsSemente),
     repo, append, companyRepo, accounts,
   };
 }
@@ -124,6 +124,21 @@ describe('FiscalProfileService — BE-INCR-DFE (itens 6/7/9)', () => {
     expect(kept).toMatchObject({ codMun: '3550308', issAliquotaBp: '500', emissaoForaDoMes: 'AVISAR' });
   });
 
+  // MODULE-BOUNDARIES PR-1a (dono, 24/11: "Vai para o service"): o máximo da ISS_LIMITE e a lista nacional do pacote saíram do DTO para o validate.
+  it('issAliquotaBp acima do máximo da ISS_LIMITE (pAliq [312], RN E0595) e pacoteCTribNac fora da lista nacional → 400 antes de gravar', async () => {
+    const { svc, repo } = build();
+    const perfil = { unitId: 'unit-1', regimeTributario: 'REAL' as const, icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO' as const };
+    await expect(svc.upsert(scope, UpsertFiscalProfileSchema.parse({ ...perfil, issAliquotaBp: 501 }))).rejects.toThrow(
+      new ValidationError('issAliquotaBp acima do máximo da tabela ISS_LIMITE (pAliq [312]; RN E0595)'),
+    );
+    await expect(svc.upsert(scope, UpsertFiscalProfileSchema.parse({ ...perfil, pacoteCTribNac: '999999' }))).rejects.toThrow(
+      new ValidationError('pacoteCTribNac fora da lista nacional de serviços (Anexo I MUN.INCID_INFO.SERV.)'),
+    );
+    expect(repo.upsert).not.toHaveBeenCalled();
+    await svc.upsert(scope, UpsertFiscalProfileSchema.parse({ ...perfil, issAliquotaBp: 500, pacoteCTribNac: '060101' }));
+    expect(repo.upsert).toHaveBeenCalledTimes(1);
+  });
+
   it('policy: canManageFiscalProfile=false → 403 antes de tocar o repositório', async () => {
     const { svc, repo } = build({ canManage: false });
     await expect(svc.upsert(scope, UpsertFiscalProfileSchema.parse({ unitId: 'unit-1', regimeTributario: 'REAL', icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO' }))).rejects.toBeInstanceOf(ForbiddenError);
@@ -151,6 +166,15 @@ describe('ServiceFiscalProfileService (BRIEF item 8/9)', () => {
     const fiscalProfiles = { findByScope: jest.fn(async () => (opts.ibsCbsCst === undefined ? null : { ibsCbsCst: opts.ibsCbsCst })) } as never;
     return { svc: new ServiceFiscalProfileService(repo, policy, { append } as unknown as AuditService, legalParamsSemente, fiscalProfiles), repo, append };
   }
+
+  // MODULE-BOUNDARIES PR-1a (dono, 24/11: "Vai para o service"): a lista nacional saiu do DTO para o upsert.
+  it('cTribNac de 6 dígitos fora da lista nacional (069999) → 400 antes de gravar', async () => {
+    const { svc, repo } = buildSvc();
+    await expect(svc.upsert(scope, 'svc-x', UpsertServiceFiscalProfileSchema.parse({ unitId: 'unit-1', cTribNac: '069999' }))).rejects.toThrow(
+      new ValidationError('cTribNac fora da lista nacional de serviços (Anexo I MUN.INCID_INFO.SERV.)'),
+    );
+    expect(repo.upsert).not.toHaveBeenCalled();
+  });
 
   it('upsert idempotente devolve a view com a descrição da lista nacional e audita só códigos', async () => {
     const { svc, append } = buildSvc();
