@@ -158,7 +158,7 @@ tira do gate em silêncio):
 | # | O que | Por quê (lido) | Mudança |
 |---|---|---|---|
 | G1 | `FEATURE_LOGIC` do `.dependency-cruiser.cjs` | `'^src/features/[^/]+/(?!models/).+'`: `features/accounting/paises/br/models/x.ts` conta como lógica de feature, e `F1`/`X1` passariam a reprovar `lib/sped.ts` lendo um modelo brasileiro movido | `'^src/features/[^/]+/(?!models/\|paises/[^/]+/models/).+'` (o grupo opcional com lookahead não serve: o motor recua e casa) |
-| G2 | `dtoShapeSnapshot.test.ts` (`features/accounting/dtos/__tests__/`) | descobre só `src/features/<domínio>/dtos/` (linhas 10 e 121–125) | também `src/features/<domínio>/paises/<cc>/dtos/`, com a chave `<domínio>/paises/<cc>` no JSON |
+| G2 | `dtoShapeSnapshot.test.ts` (`features/accounting/dtos/__tests__/`) | descobre só `src/features/<domínio>/dtos/` (linhas 10 e 121–125) | também `src/features/<domínio>/paises/<cc>/dtos/`, gravados no **mesmo** `features/<domínio>/dtos/__tests__/__dto-shapes__.json` do domínio, com o módulo prefixado `paises/<cc>/` (ex.: `paises/br/BrCompanyFiscalProfileDto`); o `.gen.ts` do FE vai para `my-app/types/contracts/<domínio>/paises/<cc>/` |
 | G3 | `atomicUntil.boundary.test.ts` (`features/accounting/__tests__/`, linhas 22–26) | varre só `features/<x>/services/` | também `features/<x>/paises/<cc>/services/` |
 | G4 | `scripts/classe-risco.mjs` | `server/src/features/accounting/**` já cobre `accounting/paises/br/**`; `features/dp/**` não foi lido | conferir o glob do DP e o de `features/**/*iscal*` (linha 100); só ajustar se não cobrir |
 | G5 | `scripts/paralelo.mjs`, `server/eslint.config.mjs`, `jest.config` (`testMatch`) | não lidos (insumo ausente) | conferir que alcançam `features/*/paises/*/**` no item 0 |
@@ -189,10 +189,12 @@ mover. **Nenhum arquivo do centro entra aqui:** o centro sempre usa porta.
 | `features/accounting/services/TaxAssessmentService.ts` | IRPJ/CSLL (Presumido e Real) | montador (PR-3) | F5 |
 | `features/accounting/services/PisCofinsAssessmentService.ts` | PIS/COFINS | montador (PR-3) | F5 |
 | `features/accounting/services/IbsCbsAssessmentService.ts` | IBS/CBS (LC 214) | montador (PR-3) | F5 |
+| `features/accounting/services/TaxAssessmentPeriodosService.ts` | períodos esperados do IRPJ/CSLL, PIS/COFINS e Simples | ciclo (item 4: a regra de períodos extraída para `paises/br/models/periodosEsperados.ts`) | F5 |
 | `features/accounting/services/CompanyFiscalProfileService.ts` | regime do ano (MEI, Simples, Presumido, Real) e avisos do teto | montador (PR-1) | F6 |
 | `features/accounting/services/FiscalDocumentEmissionService.ts` | montagem da DPS/NF-e | NFS-e SP (renderizador do RPS) | F5 |
 | `features/accounting/services/FiscalDocumentLifecycleService.ts` | eventos da NFS-e/NF-e | NFS-e SP | F5 |
-| `features/accounting/dfe/selectDfeEmissor.ts`, `dfe/resolveEmissor.ts` | seleção de adaptador DF-e | NFS-e SP (adaptadores `paulistana`) | F5 |
+| `features/accounting/dfe/**` (a pasta inteira: SEFAZ, ADN, NFC-e, assinador local, seleção e resolução do adaptador) | DF-e é instância brasileira | NFS-e SP (adaptadores `paulistana`, hosts e protocolo do assinador) | F5 |
+| `features/accounting/services/FiscalProfileService.ts` | perfil fiscal da unidade (model misto, 48/117) | NFS-e SP (volta a `NACIONAL` na troca de regime, mesma tx do satélite) | F6 |
 | `features/accounting/models/issCompetencia.ts` | ISS por município | NFS-e SP (`locaisDoPayload` lê o RPS) | F5 |
 | `features/legalParameters/models/formatoLinha.ts` | **não é BR** (é plataforma); entra só no ramo (b) do F-PBA-7 | ciclo, DP-ponte (formatos de tabela nova) | F3 |
 
