@@ -1,0 +1,136 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Resoluções - CGIBS - Comitê Gestor do IBS",
+      "url": "https://www.cgibs.gov.br/resolucoes",
+      "url_final": "https://www.cgibs.gov.br/resolucoes",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:32:34-03:00",
+      "sha256": "21327a0ef8fddf88afc1e80903c8de5c086f0701c7bcc5bb42b11bfb2ef75961",
+      "arquivo": "docs/D01_resolucoes.html",
+      "texto": "docs/D01_resolucoes.txt",
+      "bytes": 67591,
+      "sha256_texto": "50c5ab5066b12db0fd0c6ee315489fbdd7774c2447fd8de7a450b4ec9d7dd55d",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Regulamentos - CGIBS - Comitê Gestor do IBS",
+      "url": "https://www.cgibs.gov.br/regulamentos",
+      "url_final": "https://www.cgibs.gov.br/regulamentos",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:32:48-03:00",
+      "sha256": "3791d7c951fffe6e8709599ec0110558401c8f8bbe6c97d87f19eadd7ac05814",
+      "arquivo": "docs/D02_regulamentos.html",
+      "texto": "docs/D02_regulamentos.txt",
+      "bytes": 50150,
+      "sha256_texto": "e64f1ccdac902fdd144e1827a764cc84aefe89fcd62ab2dfb9575da4cebec6b2",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Notícias - CGIBS - Comitê Gestor do IBS",
+      "url": "https://www.cgibs.gov.br/noticias-menu",
+      "url_final": "https://www.cgibs.gov.br/noticias",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:32:50-03:00",
+      "sha256": "bfd5ee7f0a85206317d83581b5e937d68ee0faa6322ab64aac03f2b1097bb49f",
+      "arquivo": "docs/D03_noticias.html",
+      "texto": "docs/D03_noticias.txt",
+      "bytes": 53946,
+      "sha256_texto": "882839ccda2bc24e835eaec36f017958277d9ed983aac10faa266bc3f814dd7a",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "CGIBS aprova ajustes ao Regulamento do Imposto Sobre Bens e Serviços e prorroga a DeRE em Reunião Ordinária - CGIBS - Comitê Gestor do IBS",
+      "url": "https://www.cgibs.gov.br/cgibs-aprova-ajustes-ao-regulamento-do-ibs-e-prorroga-a-dere-em-reuniao-em-joinville",
+      "url_final": "https://www.cgibs.gov.br/cgibs-aprova-ajustes-ao-regulamento-do-ibs-e-prorroga-a-dere-em-reuniao-em-joinville",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:33:14-03:00",
+      "sha256": "182071b8784163072a516ddeddbec1a00e18fe223c21d8ba53d93685e32cfe82",
+      "arquivo": "docs/D04_cgibs-aprova-ajustes-ao-regulamento-do-ibs-e-prorroga-a-dere.html",
+      "texto": "docs/D04_cgibs-aprova-ajustes-ao-regulamento-do-ibs-e-prorroga-a-dere.txt",
+      "bytes": 52765,
+      "sha256_texto": "05c903e7fb5aa9b7fadee8921125a3062643010aa2b59e395b4a037b2584dae2",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "RFB, CGIBS e CFC vão orientar mais de 25 mil profissionais da contabilidade sobre destaques da CBS/IBS nos DF-e - CGIBS - Comitê Gestor do IBS",
+      "url": "https://www.cgibs.gov.br/rfb-cgibs-e-cfc-vao-orientar-mais-de-25-mil-profissionais-da-contabilidade-sobre-destaques-da-cbs-ibs",
+      "url_final": "https://www.cgibs.gov.br/rfb-cgibs-e-cfc-vao-orientar-mais-de-25-mil-profissionais-da-contabilidade-sobre-destaques-da-cbs-ibs",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:34:04-03:00",
+      "sha256": "f9da448cb50c1b17222f305a662303034e2d8082d267f14b30eee5b52d89732a",
+      "arquivo": "docs/D05_rfb-cgibs-e-cfc-vao-orientar-mais-de-25-mil-profissionais-da.html",
+      "texto": "docs/D05_rfb-cgibs-e-cfc-vao-orientar-mais-de-25-mil-profissionais-da.txt",
+      "bytes": 52997,
+      "sha256_texto": "610d3a6d40f987d75e317d3e7c8b860403fe9d00ff96f2943936a7b06a97656c",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "RFB e CGIBS alinham próximos passos da Reforma Tributária e reforçam compromisso com a conformidade - CGIBS - Comitê Gestor do IBS",
+      "url": "https://www.cgibs.gov.br/rfb-e-cgibs-alinham-proximos-passos-da-implementacao-da-reforma-tributaria-e-reforcam-compromisso-com-a-conformidade-fiscal",
+      "url_final": "https://www.cgibs.gov.br/rfb-e-cgibs-alinham-proximos-passos-da-implementacao-da-reforma-tributaria-e-reforcam-compromisso-com-a-conformidade-fiscal",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:34:06-03:00",
+      "sha256": "b33c9bce21ef9833efaf609c0e48b258d9f7180b7ae264758734b69c9ba9def9",
+      "arquivo": "docs/D06_rfb-e-cgibs-alinham-proximos-passos-da-implementacao-da-refo.html",
+      "texto": "docs/D06_rfb-e-cgibs-alinham-proximos-passos-da-implementacao-da-refo.txt",
+      "bytes": 51696,
+      "sha256_texto": "cf143b00cd557e9f7117e2500d2d51fa44b0110027495aa871e55e2c3e63bd40",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "D07_30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs-pdf",
+      "url": "https://www.cgibs.gov.br/upload/arquivos/202604/30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs.pdf",
+      "url_final": "https://www.cgibs.gov.br/upload/arquivos/202604/30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:34:27-03:00",
+      "sha256": "9ed7032ef9c25bbee51bdb5e90f60e1ad01a2bf56cb41a28221c3db7f61d419a",
+      "arquivo": "docs/D07_30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs-pdf.pdf",
+      "texto": "docs/D07_30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs-pdf.txt",
+      "bytes": 2896452,
+      "sha256_texto": "21d8be4312aa7cd5acd1203ef82734317d78c03e58691d8490689bf5fc89ba51",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "D08_22121010-resolucao-cgibs-n-13-de-22-de-julho-de-2026-pdf",
+      "url": "https://www.cgibs.gov.br/upload/arquivos/202607/22121010-resolucao-cgibs-n-13-de-22-de-julho-de-2026.pdf",
+      "url_final": "https://www.cgibs.gov.br/upload/arquivos/202607/22121010-resolucao-cgibs-n-13-de-22-de-julho-de-2026.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:34:27-03:00",
+      "sha256": "527f5b01b2c8effd984c0334ab1c3068d3926f4f77f90d023211758ee67f7222",
+      "arquivo": "docs/D08_22121010-resolucao-cgibs-n-13-de-22-de-julho-de-2026-pdf.pdf",
+      "texto": "docs/D08_22121010-resolucao-cgibs-n-13-de-22-de-julho-de-2026-pdf.txt",
+      "bytes": 481153,
+      "sha256_texto": "fa5deff287b41e7c023187308a9aa88011bd9cd88acd18e430857fbb827968e9",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "regulamento-ibs-v2-art45",
+  "pergunta": "A versão 2 do Regulamento do IBS (aprovada pelo CGIBS em 10/11/2026) já foi publicada? Mudou o art. 45 (prazo de pagamento do IBS)?",
+  "criado": "2026-11-24T01:20:26-03:00"
+}

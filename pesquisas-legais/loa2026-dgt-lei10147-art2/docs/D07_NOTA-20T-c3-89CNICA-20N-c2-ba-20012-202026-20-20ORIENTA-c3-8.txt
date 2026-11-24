@@ -1,0 +1,380 @@
+NOTA TÉCNICA Nº 012 2026  - ORIENTAÇÃO PARA OS CONTRIBUINTES DE 
+PIS/COFINS.  
+Assunto: Redução linear de incentivos e benefícios – Lei Complementar nº 224, 
+de 2025 – EFD-Contribuições 
+ 
+Introdução 
+Os contribuintes que passarem a efetuar operações sujeitas à redução linear de 
+incentivos e benefícios de natureza tributária em conformidade com a Lei 
+Complementar nº 224, de 2025 e Instrução Normativa RFB nº 2.305, de 2025, 
+devem seguir as orientações desta nota técnica. 
+Como regra geral, para fins da escrituração das operações de isenção, alíquota zero 
+e créditos tributários (incluído crédito presumido ou fictício) na EFD-Contribuições, 
+não devem ser alteradas as informações de código de situação tributária – CST 
+originalmente previstas na legislação.  
+A demonstração dos valores de PIS/Cofins ajustados à redução dos benefícios será 
+efetuada através dos registros de ajustes e respectivas regras de escrituração 
+atualmente disponíveis no leiaute da EFD-Contribuições: 
+• Registro M110: Ajustes do Crédito de PIS/Pasep Apurado 
+• Registro M115: Detalhamento dos Ajustes do Crédito de PIS/Pasep 
+Apurado 
+• Registro M220: Ajustes da Contribuição para o PIS/Pasep Apurada 
+• Registro M225: Detalhamento dos Ajustes da Contribuição Para o 
+Pis/Pasep Apurada 
+• Registro M510: Ajustes do Crédito de Cofins Apurado 
+• Registro M515: Detalhamento dos Ajustes do Crédito de Cofins Apurado 
+• Registro M620: Ajustes da Cofins Apurada 
+• Registro M625: Detalhamento dos Ajustes da Cofins Apurada 
+Nos casos de alíquota reduzida ou de redução de base de cálculo, os documentos 
+fiscais já devem ser emitidos de forma a refletir as novas alíquotas e base de 
+cálculo, em conformidade com a LC nº 224, de 2025. Dessa forma, a escrituração 
+destes documentos fi scais na EFD -Contribuições também refletirá estas novas 
+alíquotas ou base de cálculo. 
+ 
+Isenção e alíquota zero 
+Nas operações de PIS/Pasep e Cofins que originalmente possuem alíquota zero 
+ou isenção, mas que passaram a sofrer redução de benefícios conforme o art. 4º, 
+§4º, I da LC nº 224, de 2025, o contribuinte deve continuar emitindo a respectiva 
+nota fiscal com o CST originalmente previsto para a operação, 06 – Operação 
+Tributável à alíquota zero ou 07 – Operação Isenta da Contribuição, conforme 
+explicação do item 34.1 das Perguntas e Respostas sobre a Redução dos Incentivos 
+e Benefícios Tributários da Receita Federal.  
+No caso específico da NF -e, a nota fiscal deve obrigatoriamente trazer, no campo 
+“infAdFisco – Informações Adicionais de Interesse do Fisco” , a informação de 
+que a operação está sujeita ao disposto na LC nº 224, de 2025 , garantindo 
+transparência ao tratamento tributário aplicado. Essa mesma informação deve ser 
+reproduzida no Registro C110 da EFD-Contribuições, que é o espaço destinado às 
+informações complementares vinculadas ao documento fiscal 1, caso o 
+contribuinte esteja escriturando as suas operações de forma individual2. 
+Para fins de cálculo da redução do benefício, o contribuinte deverá seguir a fórmula 
+de implementação disciplinada na IN RFB nº 2.305, de 2025 (art. 7º). Os valores 
+encontrados devem ser escriturados como ajustes de acréscimo nos Registros 
+M220, para o PIS,  e M620, para a Cofins, viabilizando a correta recomposição 
+parcial da carga tributária, conforme exigido pela legislação.  
+Como se trata de registros filhos de um registro M210 (PIS) e M610 (Cofins), estes 
+ajustes deverão estar vinculados corretamente à respectiva contribuição social:  
+• 01 - Contribuição não-cumulativa apurada a alíquota básica; ou 
+• 51 - Contribuição cumulativa apurada a alíquota básica 
+Caso o contribuinte não possua nenhum registro M210 ou M610 com estas 
+características, eles deverão ser criados manualmente. 
+ 
+ 
+Exemplos: 
+Exemplo prático 1 
+Contribuinte sujeito ao regime não cumulativo emitiu uma nota fiscal eletrônica 
+com dois itens, um tributado com alíquota básica (CST 01) e outro, com alíquota 
+ 
+1 Todos os dados contidos no campo Informações Complementares da Nota Fiscal, que sejam de 
+interesse do Fisco ou conforme disponha a legislação, e que estejam explicitamente citadas no 
+documento fiscal devem ser informados no registro C110. 
+2 No caso de optar pela apuração com base nos registros de consolidação das operações por NF -e 
+(C180 e C190) ou pela escrituração consolidada da pessoa jurídica submetida ao regime de 
+tributação com base no lucro presumido não é possível utilizar o registro C110. 
+zero (CST 06). O produto tributado à alíquota zero está sujeito à redução de 
+benefício a partir de 01/04/2026. 
+• Base de cálculo de PIS/Cofins relativa ao item com CST 01: R$ 100,00. 
+• Base de cálculo de PIS/Cofins relativa ao item com CST 06: R$ 250,00.  
+ 
+1.1 Escrituração dos fatos geradores ocorridos até 31/03/20263 
+ a) Escrituração de forma individualizada em C100 
+Registro C100 
+Registro C100 
+Código do modelo do documento fiscal, conforme a Tabela 4.1.1 55 
+Código da situação do documento fiscal 00 
+Número do documento fiscal 1 
+Data da emissão do documento fiscal 01032026 
+Data da entrada ou da saída 01032026 
+Valor total do documento fiscal 350 
+ 
+Registro C110 
+Sem conteúdo 
+ 
+Registros C170 
+Texto fixo contendo “C170” C170 C170 
+Número sequencial do item no documento fiscal 1 2 
+Código do item (campo 02 do Registro 0200) 1 2 
+Valor total do item (mercadorias ou serviços) 100 250 
+Código da Situação Tributária referente ao PIS 01 06 
+Valor da base de cálculo do PIS 100 250 
+Alíquota do PIS (em percentual) 1,65 0 
+Código da Situação Tributária referente ao COFINS 01 06 
+Valor da base de cálculo da COFINS 100 250 
+Alíquota do COFINS (em percentual) 7,6 0 
+ 
+ 
+ 
+3 Os registros específicos de Cofins C185, M600, M610, M800 e M810 estão omitidos somente por 
+simplificação da orientação. Alguns campos dos registros apresentados também estão omitidos por 
+simplificação. O conteúdo completo de cada registro está disponível  no Guia Prático da EFD -
+Contribuições. 
+ b) Escrituração de forma consolidada em C180 
+Registros C180 
+Registro C180 C180 
+Modelo 55 55 
+Código do item (campo 02 do Registro 0200) 1 2 
+Código da Nomenclatura Comum do Mercosul 94033000 31052000 
+Valor Total do Item 100 250 
+ 
+Registros C181 
+Registro C181 C181 
+Código da Situação Tributária referente ao PIS/Pasep 01 06 
+Valor total do item 100 250 
+Valor da base de cálculo do PIS/Pasep 100 250 
+Alíquota do PIS/Pasep (em percentual) 1,65 0 
+Valor do PIS/Pasep 1,65 0 
+ 
+ c) Escrituração de forma consolidada (lucro presumido)4 
+Registro F550 (ou F500)5 
+Registro F550 F550 
+Valor total da receita auferida, referente à combinação de CST e 
+Alíquota 100 250 
+Código da Situação Tributária referente ao PIS/Pasep 01 06 
+Valor da base de cálculo do PIS/Pasep 100 0 
+Alíquota do PIS/Pasep (em percentual) 0,65 0 
+Valor do PIS/Pasep 0,65 0 
+Código da Situação Tributária referente a COFINS 01 06 
+Valor da base de cálculo da COFINS 100 0 
+Alíquota da COFINS (em percentual) 3 0 
+Valor da COFINS 3 0 
+ 
+ d) Apuração da Contribuição e Crédito de PIS/PASEP e da COFINS 
+(bloco M) 
+Registro M200 
+Registro M200 
+Valor Total da Contribuição Não Cumulativa do Período (recuperado do campo 13 
+do Registro M210, quando o campo COD_CONT for igual a 01, 02, 03, 04, 32 e 71) 1,65 
+Valor Total da Contribuição Não Cumulativa Devida (02 - 03 - 04) 1,65 
+ 
+4 Supondo que no exemplo o contribuinte estivesse sujeito ao regime cumulativo e optasse pela 
+escrituração consolidada das suas operações (registro 0110) 
+5 O registro F500 possui estrutura semelhante ao registro F550. 
+Registro M200 
+Valor da Contribuição Não Cumulativa a Recolher/Pagar (05 - 06 - 07) 1,65 
+Valor da Contribuição Cumulativa a Recolher/Pagar (09 - 10 - 11) 0 
+Valor Total da Contribuição a Recolher/Pagar no Período (08 + 12) 1,65 
+Registro M210 
+Registro M210 
+Código da contribuição social apurada no período, conforme a Tabela 4.3.5. 01 
+Valor da Receita Bruta 100 
+Valor da Base de Cálculo da Contribuição 100 
+Valor do total dos ajustes de acréscimo da base de cálculo da contribuição a que 
+se refere o Campo 04 0 
+Valor do total dos ajustes de redução da base de cálculo da contribuição a que 
+se refere o Campo 04 0 
+Valor da Base de Cálculo da Contribuição, após os ajustes (Campo 07 = Campo 
+04 + Campo 05 - Campo 06) 100 
+Alíquota do PIS/Pasep (em percentual) 1,65 
+Valor total da contribuição social apurada 1,65 
+Valor total dos ajustes de acréscimo 0 
+Valor total dos ajustes de redução 0 
+Valor Total da Contribuição do Período (11 + 12 - 13 - 14 + 15) 1,65 
+ 
+Registro M400 
+Texto fixo contendo M400 M400 
+Código de Situação Tributária - CST das demais receitas auferidas no período, 
+sem incidência da contribuição, ou sem contribuição apurada a pagar, conforme 
+a Tabela 4.3.3. 06 
+Valor total da receita bruta no período. 250 
+Descrição Complementar da Natureza da Receita Alíquota zero 
+ 
+Registro M410 
+Registro M410 
+Natureza da Receita 101 
+Valor da receita bruta no período, relativo a natureza da receita (NAT_REC) 250 
+Descrição Complementar da Natureza da Receita Adubos 
+ 
+1.2 Escrituração dos fatos geradores ocorridos a partir de 01/04/2026 
+Registro C100 
+Sem modificação 
+ 
+ 
+ 
+Registro C110 
+Registro C110 
+Código da informação complementar do documento 
+fiscal (campo 02 do Registro 0450) 1 
+Descrição complementar do código de referência Operação sujeita à redução linear de 
+benefícios da LC 224/2025 
+Registros C170 
+Sem modificação 
+ 
+Registros C180 
+Sem modificação 
+ 
+Registros C181 
+Sem modificação 
+ 
+Registros F550 (ou F500) 
+Sem modificação 
+ 
+Registro M200 
+Registro M200 
+Valor Total da Contribuição Não Cumulativa do Período (recuperado do campo 13 
+do Registro M210, quando o campo COD_CONT for igual a 01, 02, 03, 04, 32 e 71) 2,06 
+Valor Total da Contribuição Não Cumulativa Devida (02 - 03 - 04) 2,06 
+Valor da Contribuição Não Cumulativa a Recolher/Pagar (05 - 06 - 07) 2,06 
+Valor da Contribuição Cumulativa a Recolher/Pagar (09 - 10 - 11) 0 
+Valor Total da Contribuição a Recolher/Pagar no Período (08 + 12) 2,06 
+ 
+Registro M210 
+Registro M210 
+Código da contribuição social apurada no período, conforme a Tabela 4.3.5. 01 
+Valor da Receita Bruta 100 
+Valor da Base de Cálculo da Contribuição 100 
+Valor do total dos ajustes de acréscimo da base de cálculo da contribuição a que 
+se refere o Campo 04 0 
+Valor do total dos ajustes de redução da base de cálculo da contribuição a que 
+se refere o Campo 04 0 
+Valor da Base de Cálculo da Contribuição, após os ajustes (Campo 07 = Campo 
+04 + Campo 05 - Campo 06) 100 
+Alíquota do PIS/Pasep (em percentual) 1,65 
+Valor total da contribuição social apurada 1,65 
+Valor total dos ajustes de acréscimo 0,41 
+Valor total dos ajustes de redução 0 
+Valor Total da Contribuição do Período (11 + 12 - 13 - 14 + 15) 2,06 
+ 
+ 
+Registro M220 
+Registro M220 
+Indicador do tipo de ajuste 1 – Ajuste de acréscimo 
+Valor do ajuste 0,41 
+Código do ajuste, conforme a Tabela indicada no item 4.3.8. 
+11 - Ajuste referente à redução 
+linear dos incentivos e 
+benefícios de natureza 
+tributária, financeira ou 
+creditícia - alíquota zero 
+Número do documento / processo / declaração ao qual o 
+ajuste está vinculado, se houver Chave da NFe 
+Descrição resumida do ajuste. 
+Redução linear de benefícios 
+fiscais - LC 224/2025 
+Data de referência do ajuste (ddmmaaaa) 01042026 
+ 
+Registro M2256 
+Registro M225 
+Detalhamento do valor da contribuição reduzida ou acrescida, informado 
+no Campo 03 (VL_AJ) do registro M220 0,41 
+Código de Situação Tributária referente à operação detalhada neste 
+registro 06 
+Detalhamento da base de cálculo geradora de ajuste de contribuição 250 
+Detalhamento da alíquota a que se refere o ajuste de contribuição 0,165 
+Data da operação a que se refere o ajuste informado neste registro 01042026 
+Descrição da(s) operação(ões) a que se refere o valor informado no 
+Campo 02 (DET_VALOR_AJ) Chave da NFe 
+ 
+6 Conforme o Guia Prático da EFD-Contribuições o registro M225 deve ser preenchido para que seja 
+demonstrado e detalhado à Receita Federal quais as operações realizadas que ensejaram os ajustes 
+informados no registro M220, quando a informação prestada no Re gistro M220 não seja 
+suficientemente analítica, de forma a detalhar a(s) operação(ões) ensejadora(s) do ajuste. No caso 
+da redução dos benefícios fiscais da LC nº 224, de 2025, a informação deve ser detalhada por chave 
+de documento fiscal eletrônico, ou sé rie/número de documento fiscal não eletrônico. Assim, caso 
+não seja informada a chave ou a série/número do documento no registro M220, deverá ocorrer este 
+detalhamento no registro M225 correspondente. 
+Informação complementar Redução linear dos 
+benefícios 
+ 
+Registro M400 / M410 
+Sem modificação 
+  
+Concessão de crédito, inclusive presumido ou fictício 
+Para fins de cálculo da redução do benefício, no caso de concessão de crédito, 
+inclusive presumido ou fictício, o contribuinte deverá seguir a fórmula de 
+implementação disciplinada na IN RFB nº 2.305, de 2025 (art. 10), ou seja, 
+aproveitamento é limitado a  90% (noventa por cento) do valor original do crédito, 
+cancelando-se o valor não aproveitado.  
+Os valores a serem cancelados (10% excedentes) devem ser escriturados como 
+ajustes de redução nos Registros M110 , para o PIS,  e M510, para a Cofins, 
+viabilizando o não aproveitamento integral do valor originalmente apurado do 
+crédito presumido.  
+Os ajustes de redução em M110 e M510 devem ser efetuados com nível de 
+detalhamento da base legal do crédito presumido, conforme itens do art. 4º, 
+§2º, II, d da LC nº 224, de 2025: 
+1. art. 3º da Lei nº 10.147, de 21 de dezembro de 2000; 
+2. art. 8º da Lei nº 10.925, de 23 de julho de 2004; 
+3. arts. 33 e 34 da Lei nº 12.058, de 13 de outubro de 2009; 
+4. arts. 55 e 56 da Lei nº 12.350, de 20 de dezembro de 2010; 
+5. arts. 5º e 6º da Lei nº 12.599, de 23 de março 2012; 
+6. art. 15 da Lei nº 12.794, de 2 de abril de 2013; 
+7. art. 31 da Lei nº 12.865, de 9 de outubro de 2013; 
+8. art. 2º-A da Lei nº 14.592, de 30 de maio de 2023; 
+Caso o ajuste efetuado pelo contribuinte não atenda ao disposto no parágrafo 
+anterior, o detalhamento deverá ser efetuado nos registros filho M115, para o PIS, e 
+M515 para a Cofins, conforme regras previstas no Guia Prático da EFD -
+Contribuições. 
+ 
+ 
+Exemplo prático 2 
+Contribuinte sujeito ao regime não cumulativo apurou crédito presumido da 
+agroindústria em conformidade com o art. 8º da Lei 10.925, de 2004. Este crédito 
+presumido se enquadra em um dos itens do art. 4º, §2º, II, d da LC nº 224, de 2025, 
+estando sujeito à  redução de benefício a partir de 01/04/2026, limitado a 90% 
+(noventa por cento) do valor original do crédito (art. 4º, §4º, IV da LC nº 224, de 
+2025). 
+ 
+ 
+2.1 Escrituração dos fatos geradores ocorridos até 31/03/2026 
+Registro M100 
+Registro M100 
+Código de Tipo de Crédito apurado no período, conforme a Tabela 4.3.6 106 
+Valor da Base de Cálculo do Crédito 100 
+Alíquota do PIS/Pasep (em percentual) 0,5775 
+Valor total do crédito apurado no período 0,58 
+Valor total dos ajustes de acréscimo 0 
+Valor total dos ajustes de redução 0 
+Valor total do crédito diferido no período 0 
+Valor Total do Crédito Disponível relativo ao Período (07 + 08 - 09 - 10) 0,58 
+Indicador de utilização do crédito disponível no período. 0 
+Valor do Crédito disponível, descontado da contribuição apurada no próprio período 0,58 
+Saldo de créditos a utilizar em períodos futuros (12 - 14) 0 
+ 
+2.2 Escrituração dos fatos geradores ocorridos a partir de 01/04/2026 
+Registro M100 
+Registro M100 
+Código de Tipo de Crédito apurado no período, conforme a Tabela 4.3.6 106 
+Valor da Base de Cálculo do Crédito 100 
+Alíquota do PIS/Pasep (em percentual) 0,5775 
+Valor total do crédito apurado no período 0,58 
+Valor total dos ajustes de acréscimo 0 
+Valor total dos ajustes de redução 0,06 
+Valor total do crédito diferido no período 0 
+Valor Total do Crédito Disponível relativo ao Período (07 + 08 - 09 - 10) 0,52 
+Indicador de utilização do crédito disponível no período. 0 
+Valor do Crédito disponível, descontado da contribuição apurada no próprio período 0,52 
+Saldo de créditos a utilizar em períodos futuros (12 - 14) 0 
+ 
+Registro M110 
+Registro M110 
+Indicador do tipo de ajuste. 0 – Ajuste de redução 
+Valor do ajuste 0,06 
+Código do ajuste, conforme a Tabela 
+indicada no item 4.3.8. 
+12 - Ajuste referente à redução linear dos incentivos e 
+benefícios de natureza tributária, financeira ou 
+creditícia - concessão de crédito tributário 
+Número do documento / processo / 
+declaração ao qual o ajuste está 
+vinculado, se houver. 
+Art. 8º da Lei nº 10.925, de 23 de julho de 2004 
+Descrição resumida do ajuste. LC 224/2025 - Redução de benefícios - 
+Data de referência do ajuste 
+(ddmmaaaa) 30042026 
+Registro M115 
+Registro M115 
+Detalhamento do valor do crédito reduzido ou acrescido, 
+informado no Campo 03 (VL_AJ) do registro M110 0,06 
+Código de Situação Tributária referente à operação detalhada 
+neste registro 60 
+Detalhamento da base de cálculo geradora de ajuste de crédito 100 
+*Detalhamento da alíquota a que se refere o ajuste de crédito 0,0577 
+Data da operação a que se refere o ajuste informado neste 
+registro 30042026 
+Descrição da(s) operação(ões) a que se refere o valor informado 
+no Campo 02 (DET_VALOR_AJ) 
+Art. 8º da Lei nº 10.925, de 
+23 de julho de 2004 
+Informação complementar LC 224/2025 - Redução de 
+benefícios 
+* Para o campo “Detalhamento da alíquota a que se refere o ajuste de crédito”, o valor deve 
+ser truncado para quatro casas decimais (por exemplo: 0,0577), descartando-se as casas 
+excedentes, sem arredondamento. 
