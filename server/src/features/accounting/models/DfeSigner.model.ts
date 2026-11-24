@@ -85,3 +85,28 @@ export const DFE_SIGNER_SEM_DISPOSITIVO = 'dfe_assinador_sem_dispositivo';
 
 /** AL-13 (F-AL-6 a): o faltante nomeado do pré-voo, como o `FALTANTE_SESSAO_PSC` do PR-7. */
 export const FALTANTE_ASSINADOR_LOCAL = 'assinador local';
+
+// ── Saúde do assinador (AL-PR-4: AL-15; ADR-OBSERVABILIDADE OBS-R11) ─────────────────────────────────────────────────
+/** AL-15 (a): sem poll há mais de 15 min COM nota esperando (`PENDING_SIGNATURE`) há mais de 15 min ⇒ alerta. */
+export const DFE_SIGNER_ALERTA_SEM_POLL_MS = 15 * 60 * 1000;
+/** AL-15 (b): certificado do dispositivo vence em até 30 dias (ou já venceu) ⇒ alerta. */
+export const DFE_SIGNER_ALERTA_CERT_DIAS = 30;
+/**
+ * AL-15 (d): assinador ONLINE e nota em `PENDING_SIGNATURE` há mais de 15 min ⇒ a nota está presa. A retomada (AL-14) tem teto
+ * (`DFE_SIGNER_RETOMADA_MAX`/janela, em memória): depois dele só o `reenviar` do operador a tira — e nenhum poll "volta".
+ */
+export const DFE_SIGNER_ALERTA_PRESA_MS = 15 * 60 * 1000;
+/**
+ * AL-15: os tipos de nota que dependem do ASSINADOR LOCAL (assinatura e transmissão mTLS na SEFAZ pelo caixa do cliente). A NFS-e
+ * também fica em `PENDING_SIGNATURE`, mas esperando a reautorização do PSC (E-13, F-PSC-6 a) — a causa não é o assinador, e culpá-lo
+ * mandaria o operador olhar o lugar errado. Só estes tipos entram na contagem de (a), (c) e (d).
+ */
+export const DFE_SIGNER_KINDS_QUE_DEPENDEM = ['NFE', 'NFCE'] as const;
+/** Os quatro casos do AL-15; o alerta é no máximo 1 por dispositivo, caso e dia. */
+export const DFE_SIGNER_ALERTA_EVENTOS = [
+  'ASSINADOR_SEM_POLL_COM_PENDENTE',
+  'CERTIFICADO_VENCENDO',
+  'CONTINGENCIA_COM_ASSINADOR_FORA',
+  'ASSINADOR_ONLINE_COM_PENDENTE_PRESA',
+] as const;
+export type DfeSignerAlertaEvento = (typeof DFE_SIGNER_ALERTA_EVENTOS)[number];
