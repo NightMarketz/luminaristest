@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { RowExpandButton } from './RowExpandButton';
 import { useTranslation } from 'next-i18next';
-import { FiChevronDown, FiChevronRight, FiPlusCircle, FiDollarSign, FiXCircle, FiRotateCcw, FiSend, FiList } from 'react-icons/fi';
+import { FiPlusCircle, FiDollarSign, FiXCircle, FiRotateCcw, FiSend, FiList } from 'react-icons/fi';
 import {
   accountsReceivableService,
   CHARGEABLE_RECEIVABLE_STATUSES,
@@ -9,6 +10,7 @@ import {
   type ReceivableReceipt,
   type ReceivableStatus,
   type ReceiptMethod,
+  type ReceiptRecordMethod,
 } from '../../../lib/services/accountsReceivable.service';
 import { accountingService, type Account } from '../../../lib/services/accounting.service';
 import { counterpartiesService, type Counterparty } from '../../../lib/services/counterparties.service';
@@ -33,11 +35,6 @@ import { useAccountingT } from '../lib/useAccountingT';
 // but `total` comes back on every page so StandardPagination has what it needs).
 const RECEIVABLES_PER_PAGE = 50;
 
-
-/** Sum of the ACTIVE receipts on a receivable (in cents). */
-function sumActive(receipts: ReceivableReceipt[]): number {
-  return receipts.filter((r) => r.status === 'ACTIVE').reduce((acc, r) => acc + r.amountCents, 0);
-}
 
 // ── status badge ─────────────────────────────────────────────────────────────
 
@@ -70,6 +67,13 @@ function StatusBadge({ status }: { status: ReceivableStatus }) {
 
 // ── receipts drawer ──────────────────────────────────────────────────────────
 
+/** Rótulo do método gravado (SOT F-02.2): `ProviderBalance` e `SplitPayment` vêm do servidor, não do modal. */
+const RECEIPT_METHOD_LABEL: Partial<Record<ReceiptRecordMethod, string>> = {
+  Cash: 'Dinheiro',
+  ProviderBalance: 'Saldo no provedor',
+  SplitPayment: 'Split payment (IBS/CBS)',
+};
+
 function ReceiptsDrawer({ receivable }: { receivable: ReceivableWithReceipts }) {
   const { t } = useTranslation('accounting');
   return (
@@ -88,7 +92,9 @@ function ReceiptsDrawer({ receivable }: { receivable: ReceivableWithReceipts }) 
             {receivable.receipts.map((r) => (
               <tr key={r.id} className="border-t border-neutral-800/50">
                 <td className="py-1 pr-4 tabular-nums text-neutral-300">{formatDate(r.receivedAt)}</td>
-                <td className="py-1 pr-4 text-neutral-300">{r.method}</td>
+                <td className="py-1 pr-4 text-neutral-300">
+                  {t('contasAReceber.actionModal.method.' + r.method, RECEIPT_METHOD_LABEL[r.method] ?? r.method)}
+                </td>
                 <td className="py-1 pr-4 text-right tabular-nums text-neutral-300">{formatCents(r.amountCents)}</td>
                 <td className="py-1 text-neutral-400">
                   {r.status === 'ACTIVE'
@@ -140,7 +146,7 @@ function ReceivableRow({ receivable, onReceive, onCancel, onUndoReceipt, chargeS
         onClick={() => hasReceipts && setExpanded((v) => !v)}
       >
         <td className="w-8 px-3 py-2.5 text-neutral-500">
-          {hasReceipts ? (expanded ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />) : null}
+          {hasReceipts ? <RowExpandButton expanded={expanded} onToggle={() => setExpanded((v) => !v)} label={t('contasAReceber.col.expand', 'Expandir')} /> : null}
         </td>
         <td className="px-4 py-2.5 text-neutral-100">
           <span className="line-clamp-1 font-medium">{receivable.customerName}</span>
@@ -390,7 +396,7 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
       id: r.id,
       customerName: r.customerName,
       description: r.description,
-      openCents: r.amountCents - sumActive(r.receipts),
+      openCents: r.remainingCents,
     });
   }
 
@@ -438,7 +444,7 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
     setActionLiveCharge(false);
     try {
       if (action.type === 'receive') {
-        const remaining = action.receivable.amountCents - sumActive(action.receivable.receipts);
+        const remaining = action.receivable.remainingCents;
         await accountsReceivableService.registerReceipt(action.receivable.id, {
           unitId,
           method,
@@ -550,7 +556,7 @@ export function AccountsReceivablePanel({ unitId, onLedgerChange, onNavigateToPe
 
       {/* Table */}
       {!loading && receivables.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/50">
+        <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/50">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-800 text-left text-neutral-400">

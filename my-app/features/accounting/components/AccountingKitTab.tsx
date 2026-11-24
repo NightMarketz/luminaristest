@@ -363,7 +363,7 @@ function KitPendingList({
   useEffect(() => { reloadRows(); }, [reloadRows]);
 
   const reasonLabel = (reason: string) => {
-    const known = REASON_LABELS[reason as Reason]; // ponytail: folha string → união; código fora da lista cai no cru
+    const known = REASON_LABELS[reason as Reason]; // atalho: folha string → união; código fora da lista cai no cru
     return known ? t(known.key, known.fallback) : reason;
   };
 
@@ -371,7 +371,7 @@ function KitPendingList({
     if (kind === 'reject') {
       return t('kit.decide.effects.reject', 'Recusar mantém o valor desta unidade; a pendência não volta nesta versão do kit.');
     }
-    const known = ACCEPT_EFFECTS[pending.reason as Reason]; // ponytail: folha string → união; código fora da lista cai no genérico
+    const known = ACCEPT_EFFECTS[pending.reason as Reason]; // atalho: folha string → união; código fora da lista cai no genérico
     return known
       ? t(known.key, known.fallback)
       : t('kit.decide.effects.generic', 'Esta decisão altera o plano ou o binding da unidade.');

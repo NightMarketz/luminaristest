@@ -1,0 +1,29 @@
+SHA256-12 c4318e680ab0
+Introdução
+ O que é a DCTFWeb?
+ Os débitos e créditos na DCTFWeb são gerados, regra geral, a partir das informações prestadas nas escriturações do Sistema de Escrituração Digital das Obrigações Fiscais, Previdenciárias e Trabalhistas (eSocial) e Escrituração Fiscal Digital de Retenções e Outras Informações Fiscais (EFD-Reinf), módulos integrantes do Sistema Público de Escrituração Digital (Sped). Por isso, para alterar seus valores é necessário, regra geral, corrigir as escriturações.
+ Prazo: O prazo mensal para entregar a Declaração de Débitos e Créditos Tributários Federais Previdenciários e de Outras Entidades e Fundos (DCTFWeb) é até o dia 15 (quinze) do mês seguinte ao da ocorrência dos fatos geradores. Por exemplo, os débitos e créditos decorrentes do mês de janeiro, devem ser declarados no mês de fevereiro.
+ Se você é um contribuinte obrigado por lei a entregar a declaração, mas enviar após o prazo, será cobrada Multa por Atraso na Entrega de Declaração (MAED).
+ Quem pode utilizar este serviço?
+ Pessoas físicas ou jurídicas sujeitas ao recolhimento de contribuições e/ou informações à Previdência Social.
+ Somente poderão enviar a DCTFWeb os contribuintes enquadrados nos grupos específicos, de acordo com o cronograma de implantação do Sistema de Escrituração Digital das Obrigações Fiscais, Previdenciárias e Trabalhistas (eSocial), definidos pela Portaria SEPRT 1.419/2019.
+ Para enviar a declaração, você precisará assiná-la utilizando certificado digital.
+ Como funciona o uso via Integra Contador?
+ Para utilizar os serviços do Integra DCTFWeb, é necessário fazer uma chamada à API por meio do Integra Contador, que é responsável por gerenciar o envio e o recebimento dos dados.
+ A requisição deve ser feita via método POST, com um corpo (body) em formato JSON, contendo as seguintes informações:
+ Contratante
+ Autor do Pedido de Dados
+ Contribuinte
+ Pedido de Dados
+ ⚠️ Importante: O sistema aceita contribuintes do tipo 1 (Pessoa Física) ou tipo 2 (Pessoa Jurídica).
+ O Integra Contador estabelece um canal seguro de comunicação com o sistema DCTFWeb, garantindo a integridade e a confidencialidade das informações transmitidas.
+ Sumário dos serviços
+ ATENÇÃO
+ É essencial a leitura cuidadosa da documentação de cada serviço no menu Documentação > Soluções > Integra-DCTFWeb > DCTFWEB > Serviços para a utilização correta dos mesmos. Verifique também as páginas Mensagens para um melhor entendimento das informações retornadas pela API e Erros comuns ao usar o serviço para um detalhamento dos temas sobre os quais mais recebemos dúvidas.
+ Lembrando que às declarações já transmitidas é atribuida a situação ATIVA, e às ainda não transmitidas, EM ANDAMENTO. Os serviços de Consultar Recibo de transmissão, Consultar Declaração Completa e Gerar Documento de Arrecadação só podem ser acionado para declarações já transmitidas.
+ Consultar XML da declaração: Consulta o xml de uma declaração ATIVA (e portanto já assinada e transmitida), ou gera o xml de uma declaração EM ANDAMENTO, para posterior assinatura e transmissão a partir do serviço Transmitir declaração. Em ambos os casos, o xml retornado estará codificado em base64.
+ Transmitir declaração: Efetua a transmissão de uma declaração EM ANDAMENTO a partir da informação do xml gerado no serviço Consultar XML da declaração. O xml deverá ser assinado digitalmente pelo contribuinte antes de acionar este serviço e codificado em base64.
+ Consultar Recibo de transmissão: Consulta o recibo de transmissão de uma declaração.
+ Consultar Declaração Completa: Consulta relatório de declaração completa transmitida.
+ Gerar Documento de Arrecadação: Gera o documento de arrecadação para uma declaração na situação ATIVA.
+ 25 de fevereiro de 2026

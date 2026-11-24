@@ -13,7 +13,7 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
 - **Critério reuse-vs-bespoke:** `.claude/skills/_REUSE-CRITERION.md`
 - **Observabilidade (log, nível, PII, alerta) →** `docs/adr/ADR-OBSERVABILIDADE.md`
 - **Scaffolding (nomes/paths por camada):** `docs/claude-skills/GENERATION_CONTRACTS.md`
-- **Disciplina operacional do agente (OPS-001..006):** `.claude/skills/_OPERATING-GATES.md`
+- **Disciplina operacional do agente (OPS-001..007; OPS-007 = lacuna achada vai à caixa do maestro):** `.claude/skills/_OPERATING-GATES.md`
   (versão portável p/ outros projetos: `docs/operating-manual/PORTABLE-GUIDE.md`;
   política de raciocínio T1–T8: `docs/operating-manual/REASONING-TRAITS.md`;
   tuning por modelo — Opus 5.5 ativo: delegar pouco, sem scaffolding de verificação, escopo
@@ -35,6 +35,12 @@ As regras pesadas vivem nos docs abaixo — este arquivo é só a orientação s
   implementar spec / instrumentar lacuna / corrigir lacuna / integrar branch **roda pela sessão**
   (invoque a skill e trabalhe pelo formulário) — executar esses tipos de mão livre é violação de
   escopo, não atalho. A autorização citável continua obrigatória; a sessão não a substitui.
+- **Lacuna achada fora do escopo não fica no relatório** (dono, 2026-11-11): o que é da tarefa a sessão resolve; o resto
+  vai à caixa `node scripts/lacunas.mjs add` (nunca por `SendMessage`; worktree antiga sem o arquivo usa a cópia
+  `node "$HOME/.claude/tools/lacunas/lacunas.mjs"`, mesma caixa), e o maestro abre a sessão que resolve —
+  `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`. **Registrou alguma? Rode `lacunas.mjs pulso`:** se
+  imprimir `DRENO` (nenhum maestro despachou há 1 dia), proponha um cartão "Drenar a caixa de lacunas" e rode
+  `pulso --marcar-dreno` (dono, 21/11). Rodada de revisão pedida pelo dono registra com `--rodada <nome>`.
 - **Gate humano e dado externo NÃO têm sessão de agente** — PVA, sign-off de browser, deploy, XML de
   NF-e, arquivo RFB. O artefato deles é `docs/operating-manual/RUNBOOK-FORMAT.md`: evidência colada
   (nunca frase), desfecho em 3 estados, assinatura humana. **Agente prepara o runbook e, sob comando
@@ -103,9 +109,22 @@ confirma lendo o arquivo/teste. Tabela e regra integral em `docs/operating-manua
 CrmPipelineService…). Bespoke só com divergência de **shape ou posse** sancionada pelo critério de reuso,
 justificada no relatório.
 
-**3. Padrão de camada não é over-engineering** (ponytail × projeto): Route→Controller→Service→Repository→Prisma
+**3. Padrão de camada não é over-engineering**: Route→Controller→Service→Repository→Prisma
 (+ Policy), Factory, DTO Zod, soft-delete e rota em 2 toques são requisito (Contrato §2/§3). O minimalismo
 morde só no código solto; em dúvida, **o contrato prevalece**.
+
+## Como propor solução (dono, 2026-11-21 — `docs/plano/decisoes/D-2026-11-21-RECOMENDAR-SOLUCAO-ESTRUTURAL.md`)
+
+Vale para fork, corpo de PR, relatório, pergunta de fim de turno e botões — e prevalece sobre "não narre opções que
+não vai seguir":
+1. **Gere sempre a opção estrutural** (causa raiz no lugar que o Contrato/ADR/camada dona designa). Grande ou arriscada →
+   gere a **versão incremental dela** (opt-in, migração por etapa, PR-0 de contrato) antes de pensar em remendo;
+   "remendo × tudo de uma vez" é dilema falso (caso: #1250 × `D-2026-11-13-REGRA-GLOBAL-INPUT`).
+2. **A recomendação padrão é a estrutural.** O remendo só como alternativa, nomeando o que deixa aberto; recomendado só
+   como etapa declarada dela (contenção com item na caixa), nunca como destino.
+3. **Raio, tamanho de PR, classe vermelha e cerimônia são insumo de plano** (fatiar), não argumento para a opção menor.
+4. **Não sei descrever a estrutural → leio a camada dona antes de propor.** Fora do escopo da sessão → vai descrita no
+   relatório e na pergunta/cartão (e na caixa), nunca some.
 
 ## Gates rápidos (o resto está no contrato)
 
@@ -143,7 +162,28 @@ morde só no código solto; em dúvida, **o contrato prevalece**.
 sozinha (squash) com todos os checks verdes, sem conflito e fora de draft. **Vermelho** → revisor-independente e
 depois o **lote diário**: liste os PRs (número · título · motivo do vermelho · CI · veredito do revisor) e espere o
 dono confirmar por número. Fora da maestro, nenhuma sessão mergeia, nem verde. Regra em
-`docs/plano/decisoes/D-2026-10-28-FLUXO-AUTONOMO.md`.
+`docs/plano/decisoes/D-2026-10-28-FLUXO-AUTONOMO.md`. Exceção (dono, 2026-11-10): vermelho da faixa 1 da auditoria de
+estruturas implícitas entra como verde com revisor PASS — `docs/plano/decisoes/D-2026-11-10-FAIXA1-MERGE-LIVRE.md`.
+
+## Branch de integração e GAP-MAP por feature (dono, 2026-11-10 — `docs/plano/decisoes/D-2026-11-10-BRANCH-DE-INTEGRACAO-E-GAP-MAP-POR-FEATURE.md`)
+- **Feature/tema com 2+ PRs** (mesmo nó, mesma faixa, arquivos em comum) usa `integration/<slug>`: os PRs formam uma **pilha
+  nativa (`gh stack init --base integration/<slug>`, `submit`, `merge`)** com a integração como base, livre dentro dela (o GitHub
+  rebaseia os de cima; sem `rebase --onto` manual; piloto testou 2 camadas); a sessão que coordena o tema mergeia neles com CI verde; a `main` só recebe **um** PR
+  `integration/<slug>` → `main` quando a feature fecha (classe de risco normal: verde → maestro, vermelho → lote do dono).
+- **PR isolado, sem irmãos, vai direto para a `main`** (regra abaixo, de 08/11). **A Faixa 1 de estruturas implícitas fica
+  fora da integração:** ela segue direto na `main` pela `D-2026-11-10-FAIXA1-MERGE-LIVRE`.
+- **GAP-MAP:** o `GAP-MAP.md` vira índice/glossário gerado; cada achado tem o seu fragmento `docs/gap-map/<ID>.md` (padrão
+  towncrier: um arquivo por achado, nenhum PR edita o índice), e a lacuna é uma máquina de estados com estado derivado de
+  comando. **Depois da migração, não edite o `GAP-MAP.md` para registrar lacuna** (BRIEF pendente, só roda quando a Faixa 1
+  fechar; até lá valem a regra antiga e o escritor único da Faixa 1). Detalhe e sequência na decisão.
+
+## Pilhas e tamanho de PR (dono, 2026-11-08; emendado em 2026-11-10 acima)
+- **Um PR por item do GAP-MAP**, mergeado direto na `main` sempre que a dependência permitir, ou na `integration/<slug>` do tema.
+- **Profundidade máxima entre a `main` e o resto: 2** (`main` → integração → pilha). Dentro de uma `integration/<slug>` a pilha é livre
+  (acima de 4 camadas, reporte no lote). **Fora de integração**, filho sobre pai não mergeado continua proibido; a raiz entra primeiro.
+- Dependência que não cabe em 2 níveis fora de integração: separe o contrato em PR próprio, que entra antes.
+- **Não junte tarefas extras num PR** só para reduzir a contagem de PRs: PR grande piora a revisão.
+- Ao mergear o pai (squash), rebaseie o filho com `git rebase --onto` e troque a base do PR para a `main` antes de nova rodada de CI.
 
 ## Gates de envio [OPS-001] — antes de fechar resposta/relatório/PR
 

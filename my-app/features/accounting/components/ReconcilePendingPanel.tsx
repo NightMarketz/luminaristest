@@ -154,7 +154,7 @@ export function ReconcilePendingPanel({ unitId }: ReconcilePendingPanelProps) {
         <Field label={t('pendencias.filter.reason', 'Motivo')}>
           <select
             value={reasonCode}
-            onChange={(e) => setReasonCode(e.target.value as ReconcilePendingReasonCode | '')} // ponytail: o <select> só tem as opções do enum
+            onChange={(e) => setReasonCode(e.target.value as ReconcilePendingReasonCode | '')} // atalho: o <select> só tem as opções do enum
             className={inputClass}
           >
             <option value="">{t('pendencias.filter.all', 'Todos')}</option>

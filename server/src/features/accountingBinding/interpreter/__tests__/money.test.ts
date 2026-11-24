@@ -39,15 +39,6 @@ describe('centsFromReais — Variante 1 verbatim (float reais → centavos)', ()
     expect(() => centsFromReais('200' as unknown, 'ctx')).toThrow(ValidationError);
   });
 
-  it('NÃO impõe MAX_CENTS — divergência de teto preservada (F-BP-4, decorrência)', () => {
-    // MAX_CENTS = 2_147_483_647 centavos = R$ 21.474.836,47. Um valor em reais que produza
-    // amountCents ACIMA de MAX_CENTS mas ainda dentro de Number.isSafeInteger deve PASSAR aqui —
-    // é a janela estreita que a Variante 1 aceita e a Variante 2 rejeitaria.
-    const reaisAboveMaxCents = (MAX_CENTS + 1000) / 100;
-    const cents = centsFromReais(reaisAboveMaxCents, 'ctx');
-    expect(cents).toBeGreaterThan(MAX_CENTS);
-  });
-
   it('mensagem de erro carrega o context recebido', () => {
     expect(() => centsFromReais(0, 'liquidação (venda sale-9)')).toThrow(/liquidação \(venda sale-9\)/);
   });
@@ -74,6 +65,23 @@ describe('assertCentsInRange — Variante 2 verbatim (centavos já prontos, reva
 
   it('rejeita acima de MAX_CENTS e aceita exatamente MAX_CENTS — fronteira dedicada', () => {
     expect(assertCentsInRange(MAX_CENTS, 'ctx')).toBe(MAX_CENTS);
+    expect(() => assertCentsInRange(MAX_CENTS + 1, 'ctx')).toThrow(ValidationError);
+  });
+});
+
+// SOT F-11.1 (Q-07 = a, dono, questionário 2026-11-10): "valor inválido dá erro e o teto MAX_CENTS vale em todos os
+// caminhos de reais → centavos do servidor". Caminhos 2 e 3 de 3: as duas variantes deste módulo.
+describe('SOT F-11.1 — o teto MAX_CENTS vale nas duas variantes', () => {
+  it('SOT F-11.1: centsFromReais rejeita reais que dão centavos acima de MAX_CENTS', () => {
+    expect(() => centsFromReais((MAX_CENTS + 1000) / 100, 'ctx')).toThrow(ValidationError);
+  });
+
+  it('SOT F-11.1: centsFromReais aceita exatamente MAX_CENTS', () => {
+    expect(centsFromReais(MAX_CENTS / 100, 'ctx')).toBe(MAX_CENTS);
+  });
+
+  it('SOT F-11.1: assertCentsInRange rejeita lixo e acima de MAX_CENTS (já conforme — referência)', () => {
+    expect(() => assertCentsInRange('abc', 'ctx')).toThrow(ValidationError);
     expect(() => assertCentsInRange(MAX_CENTS + 1, 'ctx')).toThrow(ValidationError);
   });
 });

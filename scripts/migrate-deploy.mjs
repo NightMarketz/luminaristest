@@ -30,7 +30,7 @@
 //   todo o conteúdo do -wal de volta no .db principal e trunca o -wal a zero — copiar os três
 //   arquivos depois disso é seguro mesmo com o app de pé (TRUNCATE é uma operação atômica do
 //   próprio SQLite sob o lock normal de escrita; não exige parar o processo).
-//   ponytail: não há retry/backoff em torno do checkpoint — se outro processo segura um write
+//   atalho: não há retry/backoff em torno do checkpoint — se outro processo segura um write
 //   lock no instante exato, o checkpoint pode devolver `busy` e falhar; teto conhecido: o script
 //   ABORTA (não migra, não é um backup ruim que passa batido) e a mensagem pede rodar de novo.
 //   Upgrade path se isso morder na prática: loop com backoff curto (poucas tentativas, poucos

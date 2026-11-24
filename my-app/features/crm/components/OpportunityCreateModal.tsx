@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useId } from 'react';
 import { useTranslation } from 'next-i18next';
 import { Modal } from '../../../components/ui/Modal';
 import { CrmService, type ConvertLeadToOpportunityPayload } from '../../../lib/services/crm.service';
@@ -6,6 +6,7 @@ import { resolveErrorMessage } from '../../../lib/utils/error-handler';
 import { DynamicTableService } from '../../../lib/services/dynamic-table.service';
 import { fetchAllRows } from '../lib/crmFetch';
 import { DEFAULT_CURRENCY } from '../lib/constants';
+import { parseBrl } from '../../accounting/lib/parseBrl';
 import type { CrmRecord } from '../hooks/useCrmData';
 
 type Currency = 'BRL' | 'USD' | 'EUR';
@@ -41,6 +42,7 @@ export function OpportunityCreateModal({
   onCreated,
 }: OpportunityCreateModalProps) {
   const { t } = useTranslation('crm');
+  const uid = useId();
 
   const [name, setName] = useState('');
   const [pipelineId, setPipelineId] = useState('');
@@ -53,12 +55,16 @@ export function OpportunityCreateModal({
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Falha ao carregar pipelines/contas: sem isto o "Criar" ficava desabilitado (pipeline vazio) sem dizer por quê.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   // Load the pipelines + accounts (by internalName, fetch-all) when the modal opens.
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
     (async () => {
+      setLoadFailed(false);
       try {
         const tablesRes = await DynamicTableService.getTables();
         const tables: DynTable[] = (tablesRes?.data ?? []) as DynTable[];
@@ -75,13 +81,14 @@ export function OpportunityCreateModal({
         if (!cancelled) {
           setPipelines([]);
           setAccounts([]);
+          setLoadFailed(true);
         }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, [isOpen, reloadKey]);
 
   // Reset the form each time the modal (re)opens — prefill name with the lead name
   // and default the account link when the lead is already converted.
@@ -97,7 +104,8 @@ export function OpportunityCreateModal({
     }
   }, [isOpen, leadName, defaultAccountId]);
 
-  const amountValue = Number(amount);
+  // BRD F-74.1: BR money input ("1.234,56") via the canonical parser; the DTO takes reais.
+  const amountValue = parseBrl(amount) / 100;
   const isValid = name.trim() !== '' && pipelineId !== '';
 
   const handleConfirm = async () => {
@@ -105,7 +113,7 @@ export function OpportunityCreateModal({
     setSubmitting(true);
     setError(null);
 
-    const hasAmount = amount.trim() !== '' && Number.isFinite(amountValue);
+    const hasAmount = amount.trim() !== '';
     const payload: ConvertLeadToOpportunityPayload = {
       leadId,
       name: name.trim(),
@@ -134,6 +142,10 @@ export function OpportunityCreateModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      isDirty={
+        !submitting &&
+        (name !== (leadName ?? '') || pipelineId !== '' || amount !== '' || accountId !== (defaultAccountId ?? ''))
+      }
       title={t('opp.create', 'Criar Oportunidade')}
       maxWidth="max-w-lg"
       footer={
@@ -168,8 +180,8 @@ export function OpportunityCreateModal({
         ) : null}
 
         <div>
-          <label className={labelClass}>{t('opp.name', 'Nome')} *</label>
-          <input
+          <label className={labelClass} htmlFor={`${uid}-1`}>{t('opp.name', 'Nome')} *</label>
+          <input id={`${uid}-1`}
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -178,9 +190,18 @@ export function OpportunityCreateModal({
           />
         </div>
 
+        {loadFailed ? (
+          <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-300">
+            <span>{t('opp.load_error', 'Não foi possível carregar os pipelines.')}</span>
+            <button type="button" onClick={() => setReloadKey((k) => k + 1)} className="rounded-lg border border-rose-300 px-2 py-1 dark:border-rose-800">
+              {t('common.retry', 'Tentar novamente')}
+            </button>
+          </div>
+        ) : null}
+
         <div>
-          <label className={labelClass}>{t('opp.pipeline', 'Pipeline')} *</label>
-          <select value={pipelineId} onChange={(e) => setPipelineId(e.target.value)} className={inputClass}>
+          <label className={labelClass} htmlFor={`${uid}-2`}>{t('opp.pipeline', 'Pipeline')} *</label>
+          <select id={`${uid}-2`} value={pipelineId} onChange={(e) => setPipelineId(e.target.value)} className={inputClass}>
             <option value="">{t('opp.pipeline_ph', 'Selecione um pipeline')}</option>
             {pipelines.map((p) => (
               <option key={p.id} value={p.id}>
@@ -192,11 +213,10 @@ export function OpportunityCreateModal({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className={labelClass}>{t('opp.amount', 'Valor')}</label>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
+            <label className={labelClass} htmlFor={`${uid}-3`}>{t('opp.amount', 'Valor')}</label>
+            <input id={`${uid}-3`}
+              type="text"
+              inputMode="decimal"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className={inputClass}
@@ -204,8 +224,8 @@ export function OpportunityCreateModal({
             />
           </div>
           <div>
-            <label className={labelClass}>{t('opp.currency', 'Moeda')}</label>
-            <select value={currency} onChange={(e) => setCurrency(e.target.value as Currency)} className={inputClass}>
+            <label className={labelClass} htmlFor={`${uid}-4`}>{t('opp.currency', 'Moeda')}</label>
+            <select id={`${uid}-4`} value={currency} onChange={(e) => setCurrency(e.target.value as Currency)} className={inputClass}>
               {CURRENCIES.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -216,8 +236,8 @@ export function OpportunityCreateModal({
         </div>
 
         <div>
-          <label className={labelClass}>{t('opp.account', 'Conta')}</label>
-          <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputClass}>
+          <label className={labelClass} htmlFor={`${uid}-5`}>{t('opp.account', 'Conta')}</label>
+          <select id={`${uid}-5`} value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputClass}>
             <option value="">{t('opp.account_ph', 'Sem conta')}</option>
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>

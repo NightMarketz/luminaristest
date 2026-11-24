@@ -12,6 +12,10 @@ import { InterviewSessionNotFoundError, isInterviewSessionError } from '../model
 import { expandModuleSelectors, moduleOfTable, MODULE_REGISTRY, type ModuleKey, type ModuleSelector } from '../../dynamicTables/presets/modules/registry';
 import { resolveModuleSelection } from '../../dynamicTables/presets/modules/moduleSelection';
 import { composeSessionTables, toCustomCreation } from './sessionComposition';
+import { z } from 'zod';
+
+// BRD F-58.1: the AI's new-table JSON must carry non-empty strings, not just truthy values.
+const NewTableInfoSchema = z.object({ tableName: z.string().min(1), description: z.string().min(1) });
 
 /**
  * @description
@@ -324,16 +328,17 @@ ${replyIn(locale)}`;
       try {
         const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
         const jsonCandidate = jsonMatch ? jsonMatch[0] : aiResponse.trim();
-        const tableInfo = JSON.parse(jsonCandidate);
+        const parsedInfo = NewTableInfoSchema.safeParse(JSON.parse(jsonCandidate));
 
         // Verifica se as informações são válidas
-        if (!tableInfo.tableName || !tableInfo.description) {
+        if (!parsedInfo.success) {
           return {
             response: tx.addMissing,
             nextStage: 'CUSTOMIZATION_IN_PROGRESS',
             sessionId
           };
         }
+        const tableInfo = parsedInfo.data;
 
         // Adiciona a tabela ao estado
         const success = await this.stateManager.addTable(

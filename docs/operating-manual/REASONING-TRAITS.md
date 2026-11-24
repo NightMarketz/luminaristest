@@ -81,6 +81,10 @@ Formato de cada traço: **gatilho** (quando dispara) → **política** (o que fa
   falha. Preserva o bom, torna a melhoria comparável, e evita regressão por regeneração.
 - **Anti-default:** regenerar tudo — parece trabalho, destrói o que era bom e impede o leitor de
   ver o que mudou.
+- **Fronteira (dono, 2026-11-21):** T6 trata de **revisar** um artefato já quase certo. Não decide
+  entre remendo e correção na causa raiz: essa escolha segue
+  `docs/plano/decisoes/D-2026-11-21-RECOMENDAR-SOLUCAO-ESTRUTURAL.md` (a estrutural é a padrão).
+  "Patch" aqui é a forma da entrega, não o tamanho da solução.
 
 ## T7. Memorável ≠ executável
 

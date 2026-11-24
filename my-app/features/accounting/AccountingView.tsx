@@ -32,6 +32,7 @@ import { CounterpartiesPanel } from './components/CounterpartiesPanel';
 import { DimensionsPanel } from './components/DimensionsPanel';
 import { FixedAssetsPanel, type FixedAssetsSectionId } from './components/FixedAssetsPanel';
 import { FiscalProfilePanel } from './components/FiscalProfilePanel';
+import { AssinadorLocalSection } from './components/dfe/AssinadorLocalSection';
 import { TaxAssessmentPanel } from './components/TaxAssessmentPanel';
 import { MeiEnquadramentoSection } from './components/MeiEnquadramentoSection';
 import { PresumidoServicosSection } from './components/PresumidoServicosSection';
@@ -49,7 +50,7 @@ import { ClientModeStrip, PendingInvitesBanner, clientLabel } from './governance
 import { PolicyVersionsPanel } from './governance/PolicyVersionsPanel';
 import { AccountingActivationBanner } from './components/AccountingActivationBanner';
 import { ReconcilePendingPanel } from './components/ReconcilePendingPanel';
-import { parseInventoryPurchaseSeed, type InventoryPurchaseSeed } from './lib/inventoryPurchaseLink';
+import { parseInventoryPurchaseSeed, stripInventoryPurchaseParams, type InventoryPurchaseSeed } from './lib/inventoryPurchaseLink';
 import { AccountingKitTab } from './components/AccountingKitTab';
 import { useUnitKit } from './hooks/useUnitKit';
 
@@ -156,7 +157,7 @@ export function AccountingView() {
   }, [activeAssignments, chosenContext, assignmentsLoaded, ownUnitsEmpty]);
   const governance = useMemo(() => (selectedAssignment ? toGovernanceScope(selectedAssignment) : undefined), [selectedAssignment]);
 
-  const { units, unitId: ownUnitId, setUnitId, report, loadingUnits, loadingReport, error, reload } =
+  const { units, unitId: ownUnitId, setUnitId, report, loadingUnits, loadingReport, error, unitsFailed, reload, retryUnits } =
     useAccountingData(governance);
   useEffect(() => { setOwnUnitsEmpty(!loadingUnits && units.length === 0); }, [loadingUnits, units.length]);
   const unitId = governance ? governance.unitId : ownUnitId;
@@ -177,12 +178,31 @@ export function AccountingView() {
   const [activationNonce, setActivationNonce] = useState(0);
   const [kitNonce, setKitNonce] = useState(0);
 
-  const [rawTab, setRawTab] = useState<Tab>(() => (inventoryPurchaseSeed ? 'contas-a-pagar' : 'balancete'));
+  // A aba mora na URL (?tab=): F5 e link compartilhado voltam à mesma aba. O seed de compra de estoque tem prioridade.
+  const [rawTab, setRawTab] = useState<Tab>(() => {
+    if (inventoryPurchaseSeed) return 'contas-a-pagar';
+    if (typeof window === 'undefined') return 'balancete';
+    const fromUrl = new URLSearchParams(window.location.search).get('tab');
+    return TABS.some((tb) => tb.id === fromUrl) ? (fromUrl as Tab) : 'balancete';
+  });
   // Allowlist por construção: no modo cliente nenhuma aba fora de `DELEGATED_TABS` chega a renderizar (item 8.1).
   // A aba "Kit de setor" sem kit carregado (outra unidade, erro) volta ao Balancete.
   const activeTab: Tab =
     governance && !DELEGATED_TABS.includes(rawTab) ? 'periodos' : rawTab === 'kit' && !kitTabVisible ? 'balancete' : rawTab;
   const setActiveTab = setRawTab;
+  // ÚNICO escritor da URL desta tela. Consumido o seed de compra de estoque (`inventoryPurchaseSeed === null`), os params
+  // do deep link saem daqui, junto com a aba — dois efeitos escrevendo a query se atropelavam (o de baixo apagava o `tab=`).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (activeTab === 'balancete') url.searchParams.delete('tab');
+    else url.searchParams.set('tab', activeTab);
+    if (!inventoryPurchaseSeed) stripInventoryPurchaseParams(url.searchParams);
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    if (next !== `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+      window.history.replaceState(window.history.state, '', next);
+    }
+  }, [activeTab, inventoryPurchaseSeed]);
   // Seção em que a aba Imobilizado abre — a NF-e aponta "Classes"/"Taxas"; volta a "Bens" ao sair da aba.
   const [fixedAssetsSection, setFixedAssetsSection] = useState<FixedAssetsSectionId>('bens');
   useEffect(() => { if (activeTab !== 'imobilizado') setFixedAssetsSection('bens'); }, [activeTab]);
@@ -239,8 +259,7 @@ export function AccountingView() {
   useEffect(() => {
     // Só depois que o painel montou (precisa do unitId): até lá o SEED ainda não foi capturado.
     if (!inventoryPurchaseSeed || !unitId || activeTab !== 'contas-a-pagar') return;
-    setInventoryPurchaseSeed(null);
-    window.history.replaceState(window.history.state, '', window.location.pathname);
+    setInventoryPurchaseSeed(null); // a URL é limpa pelo efeito da aba, que reroda com o seed nulo
   }, [inventoryPurchaseSeed, unitId, activeTab]);
 
   function openNewEntryModal() {
@@ -254,9 +273,9 @@ export function AccountingView() {
         setIsModalOpen(true);
       })
       .catch(() => {
-        // Still open the modal; it will show an empty account list
+        // Não abre o lançamento com a lista de contas vazia (o select ficaria sem opção e o usuário sem saída):
+        // a falha já virou toast pelo apiClient; clicar em "Novo lançamento" de novo tenta outra vez.
         setModalAccounts([]);
-        setIsModalOpen(true);
       });
     dimensionsService
       .listCatalog({ unitId })
@@ -372,8 +391,15 @@ export function AccountingView() {
 
       {/* ── Error banner ───────────────────────────────────────────────────── */}
       {error && !governance && (
-        <div className="mb-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
-          {error}
+        <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-300">
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => void (unitsFailed ? retryUnits() : reload())}
+            className="rounded-lg border border-red-800 px-3 py-1 text-xs font-semibold text-red-200 hover:bg-red-900/40"
+          >
+            {t('view.retry', 'Tentar novamente')}
+          </button>
         </div>
       )}
 
@@ -604,6 +630,8 @@ export function AccountingView() {
       {activeTab === 'perfil-fiscal' && unitId && (
         <div className="space-y-8">
           <FiscalProfilePanel unitId={unitId} />
+          {/* FE-INCR-NFCE-ASSINADOR FA-3 (F-FEAS-1 a): assinador local logo depois do perfil fiscal da unidade */}
+          <AssinadorLocalSection unitId={unitId} />
           <PartnersSection unitId={unitId} />
           <MeiEnquadramentoSection unitId={unitId} anoInicial={meiAno} />
           <PresumidoServicosSection unitId={unitId} />

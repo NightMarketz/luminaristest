@@ -192,7 +192,7 @@ function RightSidebar({ selectedTable, isVisible, sessionId, onUpdateTable, onSe
 
   return (
     <div 
-      className={`fixed top-0 right-0 h-full z-50 transition-transform duration-300 ease-in-out w-[400px] md:w-[500px] ${isVisible ? 'translate-x-0' : 'translate-x-full'}`}
+      className={`fixed top-0 right-0 h-full z-50 transition-transform duration-300 ease-in-out w-[min(400px,100vw)] md:w-[500px] ${isVisible ? 'translate-x-0' : 'translate-x-full'}`}
     >
       <div className="bg-white dark:bg-neutral-800 h-full shadow-xl flex flex-col border-l border-neutral-200 dark:border-neutral-700">
         {/* Cabeçalho */}

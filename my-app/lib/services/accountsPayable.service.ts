@@ -25,7 +25,12 @@ interface ApiEnvelope<T> {
 
 // ── Domain types ───────────────────────────────────────────────────────────────
 export type PayableStatus = 'OPEN' | 'PARTIALLY_PAID' | 'PAYING' | 'PAID' | 'CANCELLED' | 'DEFERRED';
-export type PaymentMethod = 'Cash' | 'Pix' | 'TED' | 'Boleto';
+/** Método aceito na escrita — deriva do contrato gerado (SOT F-02.1). */
+export type PaymentMethod = RegisterPaymentInput['method'];
+/** Método gravado no pagamento: os da escrita + `'NONE'` da baixa de retenção (`WITHHOLDING_METHOD`, `Payable.model.ts`). */
+export type PaymentRecordMethod = PaymentMethod | 'NONE';
+/** `kind` da baixa — espelho de `SETTLEMENT_KINDS` (`BankSettlement.model.ts`). */
+export type SettlementKind = 'PAYMENT' | 'DISCOUNT' | 'SPLIT_IBS_CBS' | 'WITHHOLDING';
 export type PaymentStatus = 'ACTIVE' | 'CANCELLED';
 
 export const PAYMENT_METHODS: readonly PaymentMethod[] = ['Cash', 'Pix', 'TED', 'Boleto'];
@@ -36,7 +41,8 @@ export interface PayablePayment {
   unitId: string;
   payableId: string;
   amountCents: number;
-  method: PaymentMethod;
+  method: PaymentRecordMethod;
+  kind: SettlementKind;
   paidAt: string;
   paidByUserId: string | null;
   status: PaymentStatus;
@@ -75,6 +81,8 @@ export interface Payable {
 /** List/get reads embed the payment history. */
 export interface PayableWithPayments extends Payable {
   payments: PayablePayment[];
+  /** Saldo em aberto derivado pelo servidor (`amountCents − paidCents`, `PayableService.withBalance`) — SOT F-01.1. */
+  remainingCents: number;
 }
 
 // ── Request payloads ─────────────────────────────────────────────────────────────

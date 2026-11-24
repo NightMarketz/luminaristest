@@ -43,10 +43,16 @@ const FiscalProfileFields = z
     pisCofinsCreditExcludesIcms: z.boolean().default(true),
     pisCofinsCreditIncludesIpi: z.boolean().default(false),
     pisCofinsCreditFromSimplesSupplier: z.boolean().default(false),
+    // Lacuna c516 (D-5 reaberta pelo dono em 21/11, padrão ligado): crédito do monofásico por NCM usado como insumo do
+    // serviço no não cumulativo — IN RFB 2.121/2022 art. 178; SC Cosit 496/2017 e 16/2024. O contador desliga.
+    pisCofinsCreditMonofasicoInsumo: z.boolean().default(true),
     icmsRecuperavelAccountId: z.string().min(1).nullable().optional(),
     pisCofinsRecuperavelAccountId: z.string().min(1).nullable().optional(),
     // ITEM-DESTINATION item 20 (F-ID-5 a): conta de despesa (Expense, folha) do insumo do serviço — código do contador.
     insumoExpenseAccountId: z.string().min(1).nullable().optional(),
+    // INSUMO-INVENTARIO-PERIODICO item 1 (F-ID-3 c, dono 21/11): estoque de insumo (Asset, folha) — preenchida, o insumo
+    // entra no ativo e sai pela contagem (NBC TG 1002 itens 13.2 e 13.6). Código do contador.
+    insumoStockAccountId: z.string().min(1).nullable().optional(),
     // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, BRIEF item 3, F-TA-6 a): contas da provisão de IRPJ/CSLL — código do contador (P-5).
     irpjDespesaAccountId: z.string().min(1).nullable().optional(),
     csllDespesaAccountId: z.string().min(1).nullable().optional(),

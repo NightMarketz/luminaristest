@@ -1,0 +1,255 @@
+SHA256-12 caf0be7c555e
+Catálogo de Serviços
+ Este catálogo de serviços do Integra Contador exibe a situação de todos os serviços. Não é uma página de Health Check, mas sim um local que contém o "roadmap" de todos os serviços do produto. 
+ Informação
+ As colunas idSistema e idServico são utilizados no do pedido de dados. A coluna Tipo representa o método a ser invocado pelo serviço.
+ Integra-SN
+ | | Sequencial | Código | idSistema | idServico | Situação e Data da Implantação | Tipo | Descrição 
+ | 001 | 1.1 | PGDASD | TRANSDECLARACAO11 | 
+23/09/2022 | Declarar | Entregar declaração mensal 
+ | 002 | 1.2 | PGDASD | GERARDAS12 | 
+23/09/2022 | Emitir | Gerar DAS 
+ | 003 | 1.3 | PGDASD | CONSDECLARACAO13 | 
+23/09/2022 | Consultar | Consultar Declarações transmitidas 
+ | 004 | 1.4 | PGDASD | CONSULTIMADECREC14 | 
+23/09/2022 | Consultar | Consultar a Última Declaração/Recibo transmitida 
+ | 005 | 1.5 | PGDASD | CONSDECREC15 | 
+23/09/2022 | Consultar | Consultar Declaração/Recibo 
+ | 006 | 1.6 | PGDASD | CONSEXTRATO16 | 
+23/09/2022 | Consultar | Consultar Extrato do DAS 
+ | 007 | 1.7 | PGDASD | GERARDASCOBRANCA17 | 
+27/11/2024 | Emitir | Gerar um DAS referente a um período no sistema de Cobrança da RFB. 
+ | 008 | 1.8 | PGDASD | GERARDASPROCESSO18 | 
+27/11/2024 | Emitir | Gerar um DAS referente a um processo no sistema de Cobrança da RFB. 
+ | 009 | 1.9 | PGDASD | GERARDASAVULSO19 | 
+27/11/2024 | Emitir | Gerar um DAS Avulso para declarações transmitidas no período de apuração. 
+ | 010 | 10.1 | REGIMEAPURACAO | EFETUAROPCAOREGIME101 | 
+24/07/2023 | Declarar | Efetuar a opção pelo Regime de Apuração de Receitas 
+ | 011 | 10.2 | REGIMEAPURACAO | CONSULTARANOSCALENDARIOS102 | 
+24/07/2023 | Consultar | Consultar todas as opções de Regime de Apuração de Receitas 
+ | 012 | 10.3 | REGIMEAPURACAO | CONSULTAROPCAOREGIME103 | 
+24/07/2023 | Consultar | Consultar a opção pelo Regime de Apuração de Receitas 
+ | 013 | 10.4 | REGIMEAPURACAO | CONSULTARRESOLUCAO104 | 
+24/07/2023 | Consultar | Consultar a resolução para o Regime de Caixa 
+ | 014 | 14.1 | DEFIS | TRANSDECLARACAO141 | 
+25/09/2023 | Declarar | Transmissão da declaração das informações socioeconômicas e fiscais (DEFIS). 
+ | 015 | 14.2 | DEFIS | CONSDECLARACAO142 | 
+25/09/2023 | Consultar | Consulta que devolve uma lista com todas os números de declarações DEFIS transmitidas à base da RFB, para um contribuinte. 
+ | 016 | 14.3 | DEFIS | CONSULTIMADECREC143 | 
+25/09/2023 | Consultar | Consulta uma cópia do pdf do recibo de entrega e declaração referentes à última declaração transmitida à RFB em um determinado ano-calendário. 
+ | 017 | 14.4 | DEFIS | CONSDECREC144 | 
+25/09/2023 | Consultar | Consulta o pdf de uma declaração específica e seu recibo de entrega. 
+ Integra-MEI
+ | | Sequencial | Código | idSistema | idServico | Situação e Data da Implantação | Tipo | Descrição 
+ | 018 | 2.1 | PGMEI | GERARDASPDF21 | 
+23/09/2022 | Emitir | Gerar DAS em PDF 
+ | 019 | 2.2 | PGMEI | GERARDASCODBARRA22 | 
+23/09/2022 | Emitir | Gerar DAS em código de barras 
+ | 020 | 2.3 | PGMEI | ATUBENEFICIO23 | 
+23/09/2022 | Emitir | Atualizar Benefício 
+ | 021 | 2.4 | PGMEI | DIVIDAATIVA24 | 
+23/09/2022 | Consultar | Consultar Dívida Ativa 
+ | 022 | 12.1 | CCMEI | EMITIRCCMEI121 | 
+01/10/2024 | Emitir | Emissão do Certificado de Condição de MEI em formato PDF. 
+ | 023 | 12.2 | CCMEI | DADOSCCMEI122 | 
+01/10/2024 | Consultar | Consulta os dados do Certificado de Condição MEI. 
+ | 024 | 12.3 | CCMEI | CCMEISITCADASTRAL123 | 
+01/10/2024 | Consultar | Consulta a situação cadastral dos CNPJ MEI vinculados ao CPF. 
+ | 025 | 15.1 | DASNSIMEI | TRANSDECLARACAO151 | | Declarar | Permite a entrega da declaração anual do MEI (DASN-SIMEI). 
+ | 026 | 15.2 | DASNSIMEI | CONSULTIMADECREC152 | | Consultar | Consulta uma cópia da última declaração transmitida à RFB em um determinado ano-calendário. 
+ | 027 | 15.3 | DASNSIMEI | GERARDASEXCESSO153 | | Emitir | Emissão do DAS de excesso de receitas. 
+ Integra-DCTFWeb
+ | | Sequencial | Código | idSistema | idServico | Situação e Data da Implantação | Tipo | Descrição 
+ | 028 | 3.1 | DCTFWEB | GERARGUIA31 | 
+23/09/2022 | Emitir | Gerar Guia Declaração 
+ | 029 | 3.2 | DCTFWEB | CONSRECIBO32 | 
+23/09/2022 | Consultar | Consultar o Recibo da Declaração 
+ | 030 | 3.3 | DCTFWEB | CONSDECCOMPLETA33 | 
+23/09/2022 | Consultar | Consultar Declaração Completa 
+ | 031 | 3.4 | DCTFWEB | CONSRELCREDITO34 | | Consultar | Consultar Relatório de Crédito 
+ | 032 | 3.5 | DCTFWEB | CONSRELDEBITO35 | | Consultar | Consultar Relatório de Débito 
+ | 033 | 3.6 | DCTFWEB | GERARGUIAMAED36 | | Emitir | Emitir Guia do DARF da MAED 
+ | 034 | 3.7 | DCTFWEB | CONSNOTIFMAED37 | | Consultar | Consultar Notificação da MAED 
+ | 035 | 3.8 | DCTFWEB | CONSXMLDECLARACAO38 | 
+23/09/2022 | Consultar | Consultar o XML da declaração 
+ | 036 | 3.9 | DCTFWEB | APLVINCULACAO39 | | Emitir | Aplicar Vinculação 
+ | 037 | 3.10 | DCTFWEB | TRANSDECLARACAO310 | 
+23/09/2022 | Declarar | Transmitir Declaração 
+ | 038 | 3.11 | DCTFWEB | GERARGUIACOMABATIMENTO311 | | Emitir | Gerar guia residual com abatimento de DARF pago anteriormente e DCOMP. 
+ | 039 | 3.12 | DCTFWEB | EDITARVALORSUSPENSO312 | | Emitir | Editar valor Suspenso 
+ | 040 | 3.13 | DCTFWEB | GERARGUIAANDAMENTO313 | 
+28/03/2025 | Emitir | Gerar Documento de Arrecadação para Declaração em Andamento. 
+ | 041 | 3.14 | MIT | ENCAPURACAO314 | 
+28/03/2025 | Declarar | Encerrar Apuração MIT. 
+ | 042 | 3.15 | MIT | SITUACAOENC315 | 
+28/03/2025 | Apoiar | Consultar Situação Encerramento MIT. 
+ | 043 | 3.16 | MIT | CONSAPURACAO316 | 
+28/03/2025 | Consultar | Consultar Apuração MIT. 
+ | 044 | 3.17 | MIT | LISTAAPURACOES317 | 
+28/03/2025 | Consultar | Consultar Apurações MIT por ano ou mês. Permite listar todas as apurações MIT por ano ou mês. 
+ Integra-Procurações
+ | | Sequencial | Código | idSistema | idServico | Situação e Data da Implantação | Tipo | Descrição 
+ | 045 | 4.1 | PROCURACOES | OBTERPROCURACAO41 | 
+23/09/2022 | Consultar | Obter Procuração 
+ Integra-Sicalc
+ | | Sequencial | Código | idSistema | idServico | Situação e Data da Implantação | Tipo | Descrição 
+ | 046 | 5.1 | SICALC | CONSOLIDARGERARDARF51 | 
+23/09/2022 | Emitir | Consolidar e Emitir um DARF em documento PDF 
+ | 047 | 5.2 | SICALC | CONSULTAAPOIORECEITAS52 | 
+23/09/2022 | Apoiar | Apoio de consulta Receitas do Sicalc 
+ | 048 | 5.3 | SICALC | GERARDARFCODBARRA53 | 
+04/12/2023 | Emitir | Consolidar e Emitir um DARF em código de barras 
+ | 049 | 5.4 | SICALC | CONSOLIDAR54 | 
+15/10/2026 | Consultar | Realiza a consolidação do débito com cálculo dos acréscimos legais, mas sem emitir o DARF. 
+ Integra-CaixaPostal
+ | | Sequencial | Código | idSistema | idServico | Situação e Data da Implantação | Tipo | Descrição 
+ | 050 | 6.1 | CAIXAPOSTAL | MSGCONTRIBUINTE61 | 
+23/09/2022 | Consultar | Consulta de Mensagens por Contribuinte 
+ | 051 | 6.2 | CAIXAPOSTAL | MSGDETALHAMENTO62 | 
+23/09/2022 | Consultar | Obter detalhes de uma mensagem específica 
+ | 052 | 6.3 | CAIXAPOSTAL | INNOVAMSG63 | 
+23/09/2022 | Monitorar | Obter Indicador de novas mensagens 
+ | 053 | 11.1 | DTE | CONSULTASITUACAODTE111 | 
+01/09/2023 | Consultar | Consulta a situação do contribuinte quanto a adesão ao Caixa Postal do Simples Nacional e eCAC 
+ Integra-Pagamento
+ | | Sequencial | Código | idSistema | idServico | Situação e Data da Implantação | Tipo | Descrição 
+ | 054 | 7.1 | PAGTOWEB | PAGAMENTOS71 | 
+23/09/2022 | Consultar | Consulta Pagamentos 
+ | 055 | 7.2 | PAGTOWEB | COMPARRECADACAO72 | 
+23/09/2022 | Emitir | Emitir Comprovante de Arrecadação 
+ | 056 | 7.3 | PAGTOWEB | CONTACONSDOCARRPG73 | 
+23/09/2022 | Consultar | Contar Consulta Documento de Arrecadação Pago 
+ Integra-Contador-Gerenciador
+ | | Sequencial | Código | idSistema | idServico | Situação e Data da Implantação | Tipo | Descrição 
+ | 057 | 8.1 | AUTENTICAPROCURADOR | ENVIOXMLASSINADO81 | 
+23/09/2022 | Apoiar | Envio de XML assinado digitalmente pelo procurador para receber um TOKEN de autorização do Procurador 
+ | 058 | 8.2 | AUTENTICAPROCURADOR | EXPIRARAUTORIZACAO82 | 
+Descontinuado 
+ em 01/04/2024 | Apoiar | Expirar o TOKEN de autorização para efetuar “logout” da autorização do Procurador 
+ | 059 | 13.1 | EVENTOSATUALIZACAO | SOLICEVENTOSPF131 | 
+01/04/2024 | Monitorar | Solicita de forma assíncrona os últimos eventos de atualização em lote de Pessoa Física, tudo de acordo com os eventos pré-definidos no catálogo de eventos. 
+ | 060 | 13.2 | EVENTOSATUALIZACAO | SOLICEVENTOSPJ132 | 
+01/04/2024 | Monitorar | Solicita de forma assíncrona os últimos eventos de atualização em lote de Pessoa Jurídica, tudo de acordo com os eventos pré-definidos no catálogo de eventos. 
+ | 061 | 13.3 | EVENTOSATUALIZACAO | OBTEREVENTOSPF133 | 
+01/04/2024 | Monitorar | Consulta para obter os últimos eventos de atualização de Pessoa Física de forma assíncrona solicitado em lote. 
+ | 062 | 13.4 | EVENTOSATUALIZACAO | OBTEREVENTOSPJ134 | 
+01/04/2024 | Monitorar | Consulta para obter os últimos eventos de atualização de Pessoa Jurídica de forma assíncrona solicitado em lote. 
+ Integra-SITFIS
+ | | Sequencial | Código | idSistema | idServico | Situação e Data da Implantação | Tipo | Descrição 
+ | 063 | 9.1 | SITFIS | SOLICITARPROTOCOLO91 | 
+01/09/2023 | Apoiar | Solicitação de geração de protocolo para baixar o relatório de Situação Fiscal de forma assíncrona 
+ | 064 | 9.2 | SITFIS | RELATORIOSITFIS92 | 
+01/09/2023 | Emitir | Emissão de Relatório de Situação Fiscal 
+ Integra-Parcelamentos
+ | | Sequencial | Código | idSistema | idServico | Situação e Data da Implantação | Tipo | Descrição 
+ | 065 | 16.1 | PARCSN | GERARDAS161 | 
+11/11/2024 | Emitir | Emitir documento de arrecadação. 
+ | 066 | 16.2 | PARCSN | PARCELASPARAGERAR162 | 
+11/11/2024 | Consultar | Consultar parcelas disponíveis para impressão (geração do DAS). 
+ | 067 | 16.3 | PARCSN | PEDIDOSPARC163 | 
+11/11/2024 | Consultar | Consultar todos os pedidos de parcelamentos existentes na modalidade PARCSN ordinário. 
+ | 068 | 16.4 | PARCSN | OBTERPARC164 | 
+11/11/2024 | Consultar | Consultar um parcelamento específico. 
+ | 069 | 16.5 | PARCSN | DETPAGTOPARC165 | 
+11/11/2024 | Consultar | Consultar detalhe de pagamento de DAS de parcelamento ordinário. 
+ | 070 | 17.1 | PARCSN-ESP | GERARDAS171 | 
+11/11/2024 | Emitir | Emitir documento de arrecadação na modalidade especial. 
+ | 071 | 17.2 | PARCSN-ESP | PARCELASPARAGERAR172 | 
+11/11/2024 | Consultar | Consultar parcelas disponíveis para impressão (geração do DAS) na modalidade de parcelamento especial. 
+ | 072 | 17.3 | PARCSN-ESP | PEDIDOSPARC173 | 
+11/11/2024 | Consultar | Consultar todos os pedidos de parcelamentos existentes na modalidade de parcelamento especial. 
+ | 073 | 7.4 | PARCSN-ESP | OBTERPARC174 | 
+11/11/2024 | Consultar | Consultar um parcelamento específico na modalidade especial. 
+ | 074 | 17.5 | PARCSN-ESP | DETPAGTOPARC175 | 
+11/11/2024 | Consultar | Consultar detalhe de pagamento de DAS de parcelamento especial. 
+ | 075 | 18.1 | PERTSN | GERARDAS181 | 
+11/11/2024 | Emitir | Emitir documento de arrecadação na modalidade PERTSN. 
+ | 076 | 18.2 | PERTSN | PARCELASPARAGERAR182 | 
+11/11/2024 | Consultar | Consultar parcelas disponíveis para impressão (geração do DAS) na modalidade de parcelamento PERTSN. 
+ | 077 | 18.3 | PERTSN | PEDIDOSPARC183 | 
+11/11/2024 | Consultar | Consultar todos os pedidos de parcelamentos existentes na modalidade de parcelamento PERTSN. 
+ | 078 | 18.4 | PERTSN | OBTERPARC184 | 
+11/11/2024 | Consultar | Consultar um parcelamento específico na modalidade PERTSN. 
+ | 079 | 18.5 | PERTSN | DETPAGTOPARC185 | 
+11/11/2024 | Consultar | Consultar detalhe de pagamento de DAS de parcelamento PERTSN. 
+ | 080 | 19.1 | RELPSN | GERARDAS191 | 
+11/11/2024 | Emitir | Emitir documento de arrecadação na modalidade RELPSN. 
+ | 081 | 19.2 | RELPSN | PARCELASPARAGERAR192 | 
+11/11/2024 | Consultar | Consultar parcelas disponíveis para impressão (geração do DAS) na modalidade de parcelamento RELPSN. 
+ | 082 | 19.3 | RELPSN | PEDIDOSPARC193 | 
+11/11/2024 | Consultar | Consultar todos os pedidos de parcelamentos existentes na modalidade de parcelamento RELPSN. 
+ | 083 | 19.4 | RELPSN | OBTERPARC194 | 
+11/11/2024 | Consultar | Consultar um parcelamento específico na modalidade RELPSN. 
+ | 084 | 19.5 | RELPSN | DETPAGTOPARC195 | 
+11/11/2024 | Consultar | Consultar detalhe de pagamento de DAS de parcelamento RELPSN. 
+ | 085 | 20.1 | PARCMEI | GERARDAS201 | 
+11/11/2024 | Emitir | Emitir documento de arrecadação na modalidade PARCMEI convencional. 
+ | 086 | 20.2 | PARCMEI | PARCELASPARAGERAR202 | 
+11/11/2024 | Consultar | Consultar parcelas disponíveis para impressão (geração do DAS) na modalidade PARCMEI convencional. 
+ | 087 | 20.3 | PARCMEI | PEDIDOSPARC203 | 
+11/11/2024 | Consultar | Consultar todos os pedidos de parcelamentos existentes na modalidade PARCMEI convencional. 
+ | 088 | 20.4 | PARCMEI | OBTERPARC204 | 
+11/11/2024 | Consultar | Consultar um parcelamento específico na modalidade PARCMEI convencional. 
+ | 089 | 20.5 | PARCMEI | DETPAGTOPARC205 | 
+11/11/2024 | Consultar | Consultar detalhe de pagamento de DAS de parcelamento PARCMEI convencional. 
+ | 090 | 21.1 | PARCMEI-ESP | GERARDAS211 | 
+11/11/2024 | Emitir | Emitir documento de arrecadação na modalidade PARCMEI especial. 
+ | 091 | 21.2 | PARCMEI-ESP | PARCELASPARAGERAR212 | 
+11/11/2024 | Consultar | Consultar parcelas disponíveis para impressão (geração do DAS) na modalidade de parcelamento PARCMEI especial. 
+ | 092 | 21.3 | PARCMEI-ESP | PEDIDOSPARC213 | 
+11/11/2024 | Consultar | Consultar todos os pedidos de parcelamentos existentes na modalidade de PARCMEI especial. 
+ | 093 | 21.4 | PARCMEI-ESP | OBTERPARC214 | 
+11/11/2024 | Consultar | Consultar um parcelamento específico na modalidade PARCMEI especial. 
+ | 094 | 21.5 | PARCMEI-ESP | DETPAGTOPARC215 | 
+11/11/2024 | Consultar | Consultar detalhe de pagamento de DAS de PARCMEI especial. 
+ | 095 | 22.1 | PERTMEI | GERARDAS221 | 
+11/11/2024 | Emitir | Emitir documento de arrecadação na modalidade PERTMEI. 
+ | 096 | 22.2 | PERTMEI | PARCELASPARAGERAR222 | 
+11/11/2024 | Consultar | Consultar parcelas disponíveis para impressão (geração do DAS) na modalidade de parcelamento PERTMEI. 
+ | 097 | 22.3 | PERTMEI | PEDIDOSPARC223 | 
+11/11/2024 | Consultar | Consultar todos os pedidos de parcelamentos existentes na modalidade de parcelamento PERTMEI. 
+ | 098 | 22.4 | PERTMEI | OBTERPARC224 | 
+11/11/2024 | Consultar | Consultar um parcelamento específico na modalidade PERTMEI. 
+ | 099 | 22.5 | PERTMEI | DETPAGTOPARC225 | 
+11/11/2024 | Consultar | Consultar detalhe de pagamento de DAS de parcelamento PERTMEI. 
+ | 100 | 23.1 | RELPMEI | GERARDAS231 | 
+11/11/2024 | Emitir | Emitir documento de arrecadação na modalidade RELPMEI. 
+ | 101 | 23.2 | RELPMEI | PARCELASPARAGERAR232 | 
+11/11/2024 | Consultar | Consultar parcelas disponíveis para impressão (geração do DAS) na modalidade de parcelamento RELPMEI. 
+ | 102 | 23.3 | RELPMEI | PEDIDOSPARC233 | 
+11/11/2024 | Consultar | Consultar todos os pedidos de parcelamentos existentes na modalidade de parcelamento RELPMEI. 
+ | 103 | 23.4 | RELPMEI | OBTERPARC234 | 
+11/11/2024 | Consultar | Consultar um parcelamento específico na modalidade RELPMEI. 
+ | 104 | 23.5 | RELPMEI | DETPAGTOPARC235 | 
+11/11/2024 | Consultar | Consultar detalhe de pagamento de DAS de parcelamento RELPMEI. 
+ | 105 | 24.1 | PARC-PAEX | OBTEREXTRATOPDF171 | | Consultar | Obter Extrato em formato PDF. 
+ | 106 | 24.2 | PARC-PAEX | OBTEREXTRATOJSON172 | | Consultar | Obter Extrato em formato JSON. 
+ | 107 | 24.3 | PARC-PAEX | EMITIRDOCARRECADACAO173 | | Emitir | Obter Obter documento de arrecadação. 
+ | 108 | 25.1 | PARC-SIPADE | OBTEREXTRATOPDF181 | | Consultar | Obter Extrato em formato PDF. 
+ | 109 | 25.2 | PARC-SIPADE | OBTEREXTRATOJSON182 | | Consultar | Obter Extrato em formato JSON. 
+ | 110 | 25.3 | PARC-SIPADE | EMITIRDOCARRECADACAO183 | | Emitir | Obter Obter documento de arrecadação. 
+ Integra-Redesim
+ | | Sequencial | Código | idSistema | idServico | Situação e Data da Implantação | Tipo | Descrição 
+ | 111 | 26.1 | PNRCONTADOR | CONSVINCULOS261 | 
+2/12/2025 | Consultar | Consultar Vínculos. 
+ | 112 | 26.2 | PNRCONTADOR | SOLICRENUNCIA262 | 
+2/12/2025 | Declarar | Solicitar Renúncia de Vínculo. 
+ | 113 | 26.3 | PNRCONTADOR | CONSRENUNCIA263 | 
+2/12/2025 | Consultar | Consultar Renúncias. 
+ | 114 | 26.4 | PNRCONTADOR | COMPRENUNCIA264 | 
+2/12/2025 | Emitir | Emitir Comprovante de Renúncia. 
+ | 115 | 26.5 | PNRCONTADOR | SITSOLICRENUNCIA265 | 
+2/12/2025 | Consultar | Consultar a situação da solicitação de renúncia. 
+ Integra-e-Processo
+ | | Sequencial | Código | idSistema | idServico | Situação e Data da Implantação | Tipo | Descrição 
+ | 116 | 27.1 | EPROCESSO | CONSPROCPORINTER271 | 
+10/11/2025 | Consultar | Consultar Processos por Interessado. 
+ | 117 | 27.2 | EPROCESSO | OBTLISTDOCSPROC272 | | Consultar | Obter Lista dos Documentos do Processo. 
+ | 118 | 27.3 | EPROCESSO | OBTDOCPROC273 | | Consultar | Obter Documento do Processo. 
+ | 119 | 27.4 | EPROCESSO | CONSCOMUNINTIM274 | | Consultar | Consultar Comunicados e Intimações. 
+ Legenda
+ | | | | | | | 
+ | | | | | | 
+ | Em produção | Em demonstração | Em construção | Em prospecção | Cancelado | 
+ | Disponível em produção | Disponível em demonstração | Em desenvolvimento | Em análise e planejamento. | Serviço Descontinuado. | 
+ 15 de outubro de 2026

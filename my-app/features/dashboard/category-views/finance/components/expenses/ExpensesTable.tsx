@@ -14,6 +14,7 @@ import { CustomizeColumnsPanel } from '@/features/dashboard/shared/components/Cu
 import { ConfirmDeleteModal } from '@/features/dashboard/shared/components/ConfirmDeleteModal';
 import type { SortOption } from '@/features/dashboard/category-views/shared/SortSelect';
 
+import { sortableThProps } from '../../../shared/hooks/a11yProps';
 /** @deprecated — ColumnDefinition now includes type?: string. Kept as alias for backward compat. */
 export type ExpensesColumn = ColumnDefinition & { relation?: unknown };
 
@@ -170,7 +171,7 @@ export function ExpensesTable({
                                 return (
                                     <th
                                         key={col.id}
-                                        onClick={sortable ? () => handleColSort(col.id) : undefined}
+                                        {...sortableThProps(sortable, sortState, () => handleColSort(col.id))}
                                         className={`relative group px-4 py-3 border-b border-gray-200 dark:border-gray-800 transition-colors hover:bg-gray-200/50 dark:hover:bg-neutral-700/50 select-none ${sortable ? 'cursor-pointer' : ''} ${isCenter ? 'text-center' : isRight ? 'text-right' : 'text-left'}`}
                                         style={{ width, minWidth: width, maxWidth: width }}
                                     >

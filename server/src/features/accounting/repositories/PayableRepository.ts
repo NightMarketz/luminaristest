@@ -2,7 +2,7 @@ import prisma from '../../../lib/prisma';
 import type { Payable, PayablePayment, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { accountingScopeWhere } from '../scope/AccountingScope';
-import { PAYABLE_ORIGIN_WITHHOLDING_TAX, PAYABLE_OUTSTANDING_STATUSES, PAYABLE_SETTLEABLE_STATUSES } from '../models/Payable.model';
+import { PAYABLE_ORIGIN_WITHHOLDING_TAX, PAYABLE_OUTSTANDING_STATUSES, PAYABLE_SETTLEABLE_STATUSES, type PayableStatus } from '../models/Payable.model';
 import { scopeToday } from '../models/dates';
 import { buildSubledgerFilterWhere } from './subledgerFilters';
 import { separarCreditoPisCofins, type CreditoPisCofinsNota, type RazaoCreditoPisCofins } from '../models/pisCofinsParams';
@@ -258,6 +258,27 @@ export class PayableRepository implements IPayableRepository {
         paidCents: { gte: cents },
       },
       data: { paidCents: { decrement: cents } },
+    });
+    return result.count;
+  }
+
+  /**
+   * INV F-11.2 — desfaz o claim de uma baixa que não chegou ao razão: devolve os centavos só enquanto o título está PAYING e o
+   * saldo os comporta (mesma guarda do `releaseSettlement`). 0 = o título saiu de PAYING ou o invariante quebrou.
+   */
+  public async releaseClaim(scope: AccountingScope, id: string, cents: number, tx?: Prisma.TransactionClient): Promise<number> {
+    const result = await (tx ?? prisma).payable.updateMany({
+      where: { id, ...accountingScopeWhere(scope), status: 'PAYING', paidCents: { gte: cents } },
+      data: { paidCents: { decrement: cents } },
+    });
+    return result.count;
+  }
+
+  /** INV F-11.2 — status do claim desfeito: CAS sobre PAYING (o recálculo pelo saldo é do service). */
+  public async resolveRevertedClaim(scope: AccountingScope, id: string, status: PayableStatus, tx?: Prisma.TransactionClient): Promise<number> {
+    const result = await (tx ?? prisma).payable.updateMany({
+      where: { id, ...accountingScopeWhere(scope), status: 'PAYING' },
+      data: { status },
     });
     return result.count;
   }

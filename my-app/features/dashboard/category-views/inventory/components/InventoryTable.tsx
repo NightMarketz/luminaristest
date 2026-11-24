@@ -23,6 +23,7 @@ import type { IDynamicTable, IDynamicTableData, ISchemaField } from '../../../co
 import { useRenderTypedValue } from '../../../shared/hooks/useRenderTypedValue';
 import { RelationCell } from '../../shared/components/RelationCell';
 
+import { sortableThProps } from '../../shared/hooks/a11yProps';
 const STRUCTURAL = new Set(['productId', 'unitId', 'stock', 'reserved', 'salePrice']);
 
 interface InventoryTableProps {
@@ -206,7 +207,7 @@ export function InventoryTable({
                                     className={`relative group px-2 py-3 text-left text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-gray-800 select-none
                                         ${sortable ? 'cursor-pointer hover:bg-gray-200 dark:hover:bg-neutral-700/50' : ''}
                                     `}
-                                    onClick={sortable ? () => handleColSort(col.id) : undefined}
+                                    {...sortableThProps(sortable, sortState, () => handleColSort(col.id))}
                                 >
                                     <div className="flex items-center">
                                         <span className="truncate">{col.label}</span>
@@ -352,6 +353,7 @@ export function InventoryTable({
                                                                             onFocus={() => { if (inv) { setEditingPriceId(inv.id); setEditingPriceValue(salePrice > 0 ? formatCurrencyInput((salePrice * 100).toFixed(0)) : ''); } }}
                                                                             onBlur={() => setTimeout(() => { if (editingPriceId === inv?.id) { setEditingPriceId(null); setEditingPriceValue(''); } }, 150)}
                                                                             onKeyDown={(e) => { if (e.key === 'Enter' && inv) onSavePrice(inv.id, parseCurrencyToNumber(editingPriceValue)); }}
+                                                                            data-own-style
                                                                             className="w-20 pl-7 pr-2 py-1 text-right text-xs font-bold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-neutral-800 text-emerald-600 dark:text-emerald-400 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 outline-none transition-all"
                                                                             placeholder="0,00"
                                                                             disabled={isSavingPrice}

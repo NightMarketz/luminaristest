@@ -332,7 +332,7 @@ function AxisCard({
   const isActive = definition.status === 'ACTIVE';
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/50">
+    <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/50">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 border-b border-neutral-800 px-4 py-3">
         <div className="flex items-center gap-2">

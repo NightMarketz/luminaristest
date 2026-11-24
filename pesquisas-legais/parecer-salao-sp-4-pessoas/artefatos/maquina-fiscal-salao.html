@@ -1,0 +1,404 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Máquina Fiscal do Salão</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: cabeçalho do caso → máquina da competência em faixa → obrigações (lista à esquerda, trilho de estados e ficha à direita) → calendário → legenda */
+:root{
+  --bg:#f4f6f7; --surface:#ffffff; --sunk:#eaeef0; --ink:#15212b; --muted:#5a6772; --line:#d9dfe3;
+  --accent:#0d6b66; --accent-soft:#d9efed;
+  --v:#1d7438; --v-soft:#dcf0e2; --i:#9a5b00; --i-soft:#f7ead3; --x:#b0242b; --x-soft:#f8dfe0;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1316; --surface:#151c21; --sunk:#1b242a; --ink:#e4eaee; --muted:#93a0aa; --line:#27323a;
+  --accent:#47b9ae; --accent-soft:#163532;
+  --v:#62c784; --v-soft:#173323; --i:#e3a54d; --i-soft:#3a2b14; --x:#f06f74; --x-soft:#3d1b1d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1316; --surface:#151c21; --sunk:#1b242a; --ink:#e4eaee; --muted:#93a0aa; --line:#27323a;
+  --accent:#47b9ae; --accent-soft:#163532;
+  --v:#62c784; --v-soft:#173323; --i:#e3a54d; --i-soft:#3a2b14; --x:#f06f74; --x-soft:#3d1b1d; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:36px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(28px,4.2vw,40px);font-weight:700;line-height:1.1}
+h2{font-size:22px;font-weight:600}
+h3{font-size:17px;font-weight:600}
+p{margin:0;max-width:68ch}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mono{font-family:var(--f-mono);font-size:12.5px}
+header.case{display:grid;gap:18px}
+.case-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:820px){.case-grid{grid-template-columns:1fr}}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.fact{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:14px;min-width:0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--sunk)}
+.seg button{font:inherit;font-size:13.5px;border:0;background:transparent;color:var(--ink);padding:8px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--surface);font-weight:600}
+.seg button:focus-visible,.ob:focus-visible,.node:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.meter{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--sunk)}
+.meter span{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.tag{font-family:var(--f-mono);font-size:11px;font-weight:500;border-radius:5px;padding:2px 7px;white-space:nowrap}
+.tag.V{background:var(--v-soft);color:var(--v)} .tag.I{background:var(--i-soft);color:var(--i)} .tag.X{background:var(--x-soft);color:var(--x)}
+.big{font-family:var(--f-display);font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{display:grid;gap:2px}
+.stat small{color:var(--muted);font-size:12.5px}
+section{display:grid;gap:14px}
+.sec-head{display:grid;gap:6px}
+.sec-head p{color:var(--muted)}
+/* trilho de estados */
+.rail-scroll{overflow-x:auto;padding-bottom:6px}
+.rail{display:flex;align-items:stretch;gap:0;min-width:min-content}
+.node{all:unset;cursor:pointer;display:grid;gap:6px;align-content:start;min-width:132px;max-width:170px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--c,var(--line));border-radius:8px;padding:10px 12px}
+.node .nm{font-family:var(--f-display);font-weight:600;font-size:13.5px;line-height:1.25}
+.node .who{font-size:12px;color:var(--muted)}
+.node[aria-current="true"]{background:var(--accent-soft);border-color:var(--accent);border-left-color:var(--c)}
+.node.alt{border-style:dashed;border-left-style:solid}
+.arrow{display:flex;align-items:center;justify-content:center;width:26px;flex:0 0 26px;color:var(--muted)}
+.arrow svg{width:18px;height:18px}
+.node.V{--c:var(--v)} .node.I{--c:var(--i)} .node.X{--c:var(--x)}
+/* obrigações */
+.ob-grid{display:grid;grid-template-columns:260px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.ob-grid{grid-template-columns:1fr}}
+.ob-list{display:grid;gap:14px}
+.ob-group{display:grid;gap:6px}
+.ob{all:unset;cursor:pointer;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:9px 12px;border-radius:8px;border:1px solid transparent}
+.ob:hover{background:var(--sunk)}
+.ob[aria-current="true"]{background:var(--surface);border-color:var(--line)}
+.ob .t{font-weight:600;font-size:14px}
+.ob .s{font-size:12px;color:var(--muted)}
+.mini{display:flex;gap:2px}
+.mini i{display:block;width:6px;height:14px;border-radius:2px}
+.detail{display:grid;gap:12px;border-top:1px solid var(--line);padding-top:14px}
+.kv{display:grid;grid-template-columns:120px minmax(0,1fr);gap:6px 14px;font-size:14px}
+.kv dt{color:var(--muted);font-size:13px}
+.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+@media (max-width:520px){.kv{grid-template-columns:1fr}.kv dt{margin-top:6px}}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{all:unset;cursor:pointer;font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+.chip:hover{border-color:var(--accent)}
+.note{font-size:13.5px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px}
+.rule{background:var(--sunk);border-radius:8px;padding:10px 12px;font-size:14px}
+/* calendário */
+.cal{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.cal .d{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;display:grid;gap:4px}
+.cal .when{font-family:var(--f-mono);font-size:12.5px;color:var(--accent);font-weight:500}
+.cal .what{font-weight:600;font-size:14px}
+.cal .src{font-size:12px;color:var(--muted)}
+footer{font-size:13px;color:var(--muted);display:grid;gap:6px;border-top:1px solid var(--line);padding-top:16px}
+@media (prefers-reduced-motion:no-preference){.node,.ob{transition:background-color .12s,border-color .12s}}
+</style>
+
+<div class="wrap">
+  <header class="case">
+    <div class="eyebrow">Salão de beleza · São Paulo capital · Simples Nacional, Anexo III</div>
+    <h1>Máquina Fiscal do Salão</h1>
+    <div class="case-grid">
+      <div style="display:grid;gap:14px">
+        <p>Cada obrigação do salão anda por estados, da competência aberta até a revisão do contador. Cada estado diz o que o faz entrar, quem o move, que registro prova que ele aconteceu e se o Luminaris já tem esse dado.</p>
+        <div class="facts">
+          <span class="fact">2 cabeleireiros</span><span class="fact">1 assistente (CLT)</span><span class="fact">1 recepcionista (CLT)</span><span class="fact">NFS-e pelo Emissor Nacional</span><span class="fact">ECD dispensada</span>
+        </div>
+        <div style="display:grid;gap:8px">
+          <div class="eyebrow">Cenário dos cabeleireiros</div>
+          <div class="seg" role="group" aria-label="Cenário dos cabeleireiros">
+            <button id="scA" type="button" aria-pressed="true">A · todos CLT</button>
+            <button id="scB" type="button" aria-pressed="false">B · 2 parceiros (Lei 12.592)</button>
+          </div>
+          <p class="note" id="scNote"></p>
+        </div>
+      </div>
+      <div class="panel" aria-live="polite">
+        <div class="eyebrow">O que o produto já cobre neste cenário</div>
+        <div class="meter" id="meter" aria-hidden="true"></div>
+        <div class="stats" id="stats"></div>
+        <div class="legend">
+          <span><span class="dot" style="background:var(--v)"></span>no código</span>
+          <span><span class="dot" style="background:var(--i)"></span>derivável ou parcial</span>
+          <span><span class="dot" style="background:var(--x)"></span>sem dado hoje</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">Nível 1 · o mês</div>
+      <h2>A competência</h2>
+      <p>O mês só fecha quando todas as obrigações dele estão num estado final. Essa leitura é derivada dos registros que já existem: não é motor, fila nem gate.</p>
+    </div>
+    <div class="panel">
+      <div class="rail-scroll"><div class="rail" id="railComp"></div></div>
+      <div class="detail" id="detComp"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">Nível 2 · cada obrigação</div>
+      <h2>Obrigações e seus estados</h2>
+      <p>Escolha uma obrigação à esquerda e um estado no trilho para ver a regra, a prova e a lei.</p>
+    </div>
+    <div class="ob-grid">
+      <nav class="ob-list" id="obList" aria-label="Obrigações"></nav>
+      <div class="panel">
+        <div style="display:grid;gap:4px">
+          <div class="eyebrow" id="obCad"></div>
+          <h3 id="obTitle"></h3>
+          <p class="note" id="obLaw"></p>
+        </div>
+        <div class="rail-scroll"><div class="rail" id="railOb"></div></div>
+        <div class="detail" id="detOb"></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">Nível 3 · o tempo</div>
+      <h2>Calendário que move os estados</h2>
+      <p>Datas da lei que fazem uma obrigação passar de "devida" para "vencida".</p>
+    </div>
+    <div class="cal" id="cal"></div>
+  </section>
+
+  <footer>
+    <div>Fonte: dossiê <span class="mono">pesquisas-legais/parecer-salao-sp-4-pessoas</span> (74 documentos com hash, lidas em 20/11/2026) e leitura do schema e dos serviços do Luminaris. Os números do exemplo são ilustrativos: R$ 40 mil/mês de serviços.</div>
+    <div>Graus de cada estado: "no código" foi lido no schema ou no serviço; "derivável" sai de dados que existem, mas ninguém calcula hoje; "sem dado" não tem registro no produto.</div>
+  </footer>
+</div>
+
+<script>
+(function(){
+const W={sis:"sistema",dono:"dono",cont:"contador",ext:"oráculo externo"};
+// ---------- Competência ----------
+const COMP=[
+ {id:"aberta",nm:"Aberta",who:W.sis,d:"V",entra:"O período do mês passa a OPEN.",prova:"AccountingPeriod.status = OPEN",base:"Gate de posting em 2 níveis (CONT-02).",next:["mov"]},
+ {id:"mov",nm:"Movimento registrado",who:W.sis,d:"V",entra:"Venda, recebimento, compra e pacote viram lançamento pelas pontes.",prova:"JournalEntry Posted com SourceDocument (proveniência)",base:"Pontes de venda (ADR-C01); NBC TG 1002, competência.",next:["conc"]},
+ {id:"conc",nm:"Conciliada",who:W.dono,d:"V",entra:"O extrato OFX/CNAB bate com os lançamentos.",prova:"BankStatementLine com match",base:"FIN-05.",next:["insumo"]},
+ {id:"insumo",nm:"Insumo fechado",who:W.dono,d:"V",entra:"Ninguém mais lança receita do mês.",prova:"AccountingPeriod.status = SOFT",base:"CONT-02.",next:["apurada"]},
+ {id:"apurada",nm:"Obrigações apuradas",who:W.sis,d:"I",entra:"Toda obrigação mensal chegou a Conferida (DAS) ou Calculada (folha).",prova:"Leitura derivada: não existe hoje",base:"Composição dos estados do nível 2.",next:["quitada"],nota:"A regra é simples de derivar para o DAS. Para a folha falta o motor mensal."},
+ {id:"quitada",nm:"Obrigações quitadas",who:W.sis,d:"X",entra:"DAS, FGTS e DCTFWeb pagos; repasse feito (cenário B).",prova:"Sem registro: o pagamento do DAS não se liga à apuração, e folha/FGTS/DCTFWeb não têm estado.",base:"Res. CGSN 140 art. 40; Lei 8.036 art. 15; IN RFB 2.237 art. 6º.",next:["fechada"]},
+ {id:"fechada",nm:"Fechada",who:W.cont,d:"V",entra:"O período trava para escrita.",prova:"AccountingPeriod.status = HARD",base:"CONT-02.",next:["entregue"],nota:"Hoje o HARD não exige as obrigações quitadas. Essa ligação é a peça que falta."},
+ {id:"entregue",nm:"Entregue ao contador",who:W.sis,d:"V",entra:"O pacote do mês sai para o contador.",prova:"AccountingDeliveryLog.status = SENT",base:"C6 / C6b.",next:["revisada"]},
+ {id:"revisada",nm:"Revisada",who:W.cont,d:"V",entra:"O contador assina a revisão.",prova:"AccountingReview.status = SIGNED_OFF (ou REJECTED)",base:"C11.",next:[]}
+];
+
+// ---------- Obrigações ----------
+const OB=[
+ {id:"nfse",grp:"Por evento",t:"NFS-e de cada serviço",cad:"A cada atendimento",law:"Res. CGSN 140 art. 59 § 1º (Emissor Nacional, desde 01/11/2026); no cenário B, § 2º: a nota discrimina as duas cotas e o CNPJ do parceiro.",
+  st:[
+  {id:"sent",nm:"Enviada",who:W.sis,d:"V",entra:"A DPS sai para o ADN.",prova:"FiscalDocument.status = SENT",base:"Res. CGSN 140 art. 59 § 1º",next:["proc"]},
+  {id:"proc",nm:"Processando",who:W.ext,d:"V",entra:"O ADN ainda não respondeu.",prova:"status = PROCESSING",base:"",next:["aut","rej"]},
+  {id:"aut",nm:"Autorizada",who:W.ext,d:"V",entra:"O ADN devolve a NFS-e.",prova:"status = AUTHORIZED, com XML anexado",base:"",next:["div","canan"]},
+  {id:"div",nm:"Autorizada divergente",who:W.sis,d:"V",alt:1,entra:"A releitura do XML não bate com a DPS.",prova:"status = AUTHORIZED_DIVERGENT",base:"F-MAN-2 (c)",next:["canan"]},
+  {id:"rej",nm:"Rejeitada",who:W.ext,d:"V",alt:1,entra:"O ADN recusa a DPS.",prova:"status = REJECTED, com a tentativa registrada",base:"",next:[]},
+  {id:"canan",nm:"Cancelamento em análise",who:W.ext,d:"V",entra:"Pedido de cancelamento aguarda análise fiscal.",prova:"status = CANCEL_ANALYSIS",base:"Nó X11, PR-3",next:["canc"]},
+  {id:"canc",nm:"Cancelada",who:W.ext,d:"V",entra:"O cancelamento é aceito.",prova:"status = CANCELLED, com cMotivo",base:"",next:[]}
+  ],nota:"Os estados existem. A prova no ambiente nacional real (nó X10i) segue bloqueada."},
+
+ {id:"das",grp:"Mensal",t:"DAS do Simples",cad:"Mensal · vence dia 20",law:"LC 123 Anexo III; Res. CGSN 140 art. 40 (dia 20). Em 2027–2028 o DAS total não muda: CBS + IBS = PIS + Cofins (LC 214, Anexo XX).",
+  st:[
+  {id:"esp",nm:"Esperada",who:W.sis,d:"V",entra:"O calendário diz que a competência é devida.",prova:"GET /tax-assessments/periodos",base:"TAX-ASSESSMENT-PERIODOS",next:["seg"]},
+  {id:"seg",nm:"Receita segregada",who:W.sis,d:"V",entra:"A receita do mês é separada em serviço (Anexo III) e revenda (Anexo I); a cota do parceiro sai da base.",prova:"ReceitaFiscalLinha (cotaProfissionalCents)",base:"Res. CGSN 140 art. 25 § 18; LC 123 art. 13 § 1º-A",next:["calc"]},
+  {id:"calc",nm:"Calculada",who:W.sis,d:"V",entra:"O espelho do PGDAS-D é calculado: RBT12, faixa, alíquota efetiva e partilha.",prova:"memória da apuração (SimplesApuracao.memoria)",base:"LC 123 art. 18 e Anexo III",next:["ofic"],ex:true},
+  {id:"ofic",nm:"Oficial registrada",who:W.dono,d:"V",entra:"O dono lança o DAS emitido no portal: valor, número e vencimento.",prova:"SimplesApuracao CONFIRMED + PDF do DAS",base:"O PGDAS-D é o oráculo, não o Luminaris",next:["conf","dvg"]},
+  {id:"conf",nm:"Conferida",who:W.sis,d:"V",entra:"Valor oficial = valor calculado.",prova:"divergenciaCents = 0",base:"",next:["prov"]},
+  {id:"dvg",nm:"Divergente",who:W.sis,d:"V",alt:1,entra:"Valor oficial ≠ valor calculado.",prova:"divergenciaCents ≠ 0",base:"",next:["ret","prov"]},
+  {id:"prov",nm:"Provisionada",who:W.sis,d:"V",entra:"Lançamento: D dedução da receita (DAS) / C Simples a recolher.",prova:"provisaoEntryId",base:"SimplesApuracaoService.ts:1284-1296",next:["paga","venc"]},
+  {id:"paga",nm:"Paga",who:W.ext,d:"I",entra:"O débito do banco baixa o Simples a recolher.",prova:"Derivável da conciliação; o serviço do Simples não liga a baixa à apuração",base:"",next:[]},
+  {id:"venc",nm:"Vencida",who:W.sis,d:"I",alt:1,entra:"Passou o dia 20 sem baixa.",prova:"Derivável de vencimento + ausência de baixa",base:"Res. CGSN 140 art. 40",next:["paga"]},
+  {id:"ret",nm:"Retificada",who:W.dono,d:"V",alt:1,entra:"Nova apuração substitui a anterior.",prova:"status = SUPERSEDED + supersedesId",base:"",next:["ofic"]}
+  ]},
+
+ {id:"folha",grp:"Mensal",t:"Folha e eSocial",cad:"Mensal",law:"CLT art. 457 § 1º (comissão integra o salário); NBC TG 1002 item 28.2 (despesa por competência, encargos junto).",
+  st:[
+  {id:"vinc",nm:"Vínculos ativos",who:W.dono,d:"V",entra:"Cadastro dos empregados do mês.",prova:"DpTrabalhador + DpVinculo (versões)",base:"PES-4 F0+F1",next:["lanc"],cnt:true},
+  {id:"lanc",nm:"Lançamentos informados",who:W.dono,d:"V",entra:"Comissão, horas extras, faltas, afastamentos.",prova:"DpLancamento por competência",base:"",next:["calc"]},
+  {id:"calc",nm:"Calculada",who:W.sis,d:"I",entra:"Salário, DSR, INSS e IRRF do empregado, FGTS.",prova:"Funções em dp/models/folha; o motor mensal (F2) ainda é BRIEF",base:"EC 103 art. 28; Lei 8.036 art. 15",next:["esoc"]},
+  {id:"esoc",nm:"eSocial enviado",who:W.ext,d:"X",entra:"Folha (S-1200) e fechamento (S-1299) transmitidos até o dia 15 do mês seguinte.",prova:"Sem registro",base:"MOS S-1.3",next:["paga"]},
+  {id:"paga",nm:"Paga",who:W.dono,d:"X",entra:"Salário líquido pago.",prova:"Sem registro nem conta de salários a pagar no plano padrão",base:"",next:["provis"]},
+  {id:"provis",nm:"Provisões lançadas",who:W.sis,d:"X",entra:"Férias + 1/3 e 13º do mês, com FGTS.",prova:"Sem contas de provisão no plano padrão (lacuna registrada)",base:"NBC TG 1002 itens 28.2 e 28.3",next:[]}
+  ]},
+
+ {id:"fgts",grp:"Mensal",t:"FGTS",cad:"Mensal · dia 20",law:"Lei 8.036 art. 15: 8% da remuneração do mês anterior, até o dia 20. No Simples, a CPP já está no DAS; o FGTS não.",
+  st:[
+  {id:"dev",nm:"Devido",who:W.sis,d:"X",entra:"Folha calculada.",prova:"Depende da folha (estado Calculada)",base:"Lei 8.036 art. 15",next:["guia"]},
+  {id:"guia",nm:"Guia emitida",who:W.ext,d:"X",entra:"FGTS Digital gera a guia Pix.",prova:"Sem registro",base:"",next:["pago","venc"]},
+  {id:"pago",nm:"Pago",who:W.ext,d:"X",entra:"Pix compensado.",prova:"Sem registro",base:"",next:[]},
+  {id:"venc",nm:"Vencido",who:W.sis,d:"X",alt:1,entra:"Passou o dia 20.",prova:"Sem registro",base:"",next:["pago"]}
+  ]},
+
+ {id:"dctf",grp:"Mensal",t:"DCTFWeb",cad:"Mensal · último dia útil do mês seguinte",law:"IN RFB 2.237 arts. 3º I e 6º. Com mais de 1 empregado exige certificado ICP-Brasil (art. 5º § 2º II): este salão precisa de e-CNPJ. Os tributos do DAS não entram nela (art. 8º § 4º).",
+  st:[
+  {id:"dev",nm:"Devida",who:W.sis,d:"X",entra:"eSocial da competência encerrado.",prova:"Sem registro",base:"IN RFB 2.237 art. 3º I",next:["trans"]},
+  {id:"trans",nm:"Transmitida",who:W.dono,d:"I",entra:"Declaração assinada com e-CNPJ.",prova:"Nó X9 (DCTFWeb + MIT) em andamento",base:"IN RFB 2.237 arts. 5º e 6º",next:["paga"]},
+  {id:"paga",nm:"Paga",who:W.ext,d:"X",entra:"DARF do INSS retido do empregado pago.",prova:"Sem registro",base:"",next:[]}
+  ]},
+
+ {id:"parc",grp:"Mensal",t:"Repasse ao parceiro",cad:"Mensal · só no cenário B",onlyB:true,law:"Lei 12.592 art. 1º-A §§ 3º, 5º, 8º e 10; Res. CGSN 140 art. 59 § 3º (o parceiro emite nota ao salão) e art. 2º § 5º VI (só com CNPJ).",
+  st:[
+  {id:"contr",nm:"Contrato vigente",who:W.dono,d:"V",entra:"Contrato escrito, homologado no sindicato, dentro da vigência.",prova:"SalaoParceriaContrato (homologadoEm, sindicato, vigenteDesde, naturezaCota)",base:"Lei 12.592 art. 1º-A §§ 8º e 10",next:["cota","alert"]},
+  {id:"alert",nm:"Alerta de parceria",who:W.sis,d:"I",alt:1,entra:"Sem homologação, parceiro sem CNPJ, contrato vencido ou função administrativa.",prova:"Alertas do nó EFICIENCIA-FISCAL (itens 19 e 33), em andamento",base:"Lei 12.592 art. 1º-C (vínculo)",next:["contr"]},
+  {id:"cota",nm:"Cota separada",who:W.sis,d:"V",entra:"A receita do serviço é dividida em cota do salão e cota do parceiro.",prova:"cotaProfissionalCents fora da receita bruta",base:"Lei 12.592 § 5º; LC 123 art. 13 § 1º-A",next:["ret"]},
+  {id:"ret",nm:"Retenção calculada",who:W.sis,d:"X",entra:"O salão calcula os tributos do parceiro a reter.",prova:"Sem registro",base:"Lei 12.592 § 3º",next:["nota"]},
+  {id:"nota",nm:"Nota do parceiro recebida",who:W.dono,d:"X",entra:"O parceiro emite nota ao salão pelas cotas recebidas.",prova:"Sem registro",base:"Res. CGSN 140 art. 59 § 3º",next:["rep"]},
+  {id:"rep",nm:"Repassado",who:W.dono,d:"X",entra:"Pagamento da cota líquida ao parceiro.",prova:"Sem conta de repasse no plano padrão",base:"Lei 12.592 § 10 III",next:[]}
+  ]},
+
+ {id:"defis",grp:"Anual",t:"DEFIS / informação anual",cad:"Anual · até 31/03; de 2027 em diante, jan–mar no PGDAS-D",law:"Até 2026: DEFIS até 31/03 (Res. CGSN 140 art. 72 § 1º). A Res. CGSN 190 revoga o art. 72 a partir de 01/01/2027 (art. 8º XXI): as informações do ano anterior passam a ir uma vez no PGDAS-D, de janeiro a março (novo art. 38-B § 1º). Os dados de 2026 já seguem a regra nova (leitura).",
+  st:[
+  {id:"esp",nm:"Esperada",who:W.sis,d:"I",entra:"Ano anterior encerrado no Simples.",prova:"Derivável do perfil fiscal e do ano",base:"",next:["dig"]},
+  {id:"dig",nm:"Digitada",who:W.dono,d:"V",entra:"Informações socioeconômicas preenchidas.",prova:"SimplesDeclaracaoAnual (tipo DEFIS)",base:"BE-INCR-SIMPLES-DEFIS-MANUAL",next:["ent"]},
+  {id:"ent",nm:"Entregue",who:W.ext,d:"X",entra:"Transmitida no PGDAS-D.",prova:"Sem campo de estado nem recibo",base:"Res. CGSN 140 art. 72 § 1º",next:[]}
+  ]},
+
+ {id:"d13",grp:"Anual",t:"13º salário",cad:"Anual · fev–nov e 20/12",law:"Lei 4.090 art. 1º § 1º (1/12 por mês); adiantamento entre fevereiro e novembro e saldo até 20/12 (Lei 4.749); DCTFWeb anual até 20/12 (IN RFB 2.237 art. 7º I).",
+  st:[
+  {id:"prov",nm:"Provisionado mês a mês",who:W.sis,d:"X",entra:"1/12 por mês trabalhado.",prova:"Sem conta de provisão",base:"NBC TG 1002 item 28.2",next:["p1"]},
+  {id:"p1",nm:"1ª parcela paga",who:W.dono,d:"X",entra:"Adiantamento entre fevereiro e novembro.",prova:"Sem registro",base:"Lei 4.749",next:["p2"]},
+  {id:"p2",nm:"2ª parcela paga",who:W.dono,d:"X",entra:"Saldo até 20/12.",prova:"Sem registro",base:"Lei 4.749",next:["dctf"]},
+  {id:"dctf",nm:"DCTFWeb anual",who:W.dono,d:"X",entra:"Declaração do 13º até 20/12.",prova:"Sem registro",base:"IN RFB 2.237 art. 7º I",next:[]}
+  ]},
+
+ {id:"exerc",grp:"Anual",t:"Encerramento e lucros",cad:"Anual",law:"CC art. 1.179; NBC TG 1002 item 3.6 (BP, DRE e DLPA); LC 123 art. 14 (lucro isento; acima do limite presumido só com escrituração, § 2º); Lei 9.250 art. 6º-A (IRRF de 10% acima de R$ 50 mil/mês).",
+  st:[
+  {id:"enc",nm:"Exercício encerrado",who:W.cont,d:"V",entra:"Resultado transferido a lucros acumulados.",prova:"Encerramento I350/I355 (CONT-10)",base:"CC art. 1.179",next:["dem"]},
+  {id:"dem",nm:"Demonstrações prontas",who:W.sis,d:"I",entra:"BP, DRE e DLPA do exercício.",prova:"BP e DRE existem (CONT-08); a DLPA não foi conferida",base:"NBC TG 1002 item 3.6",next:["lim"]},
+  {id:"lim",nm:"Limite de lucro isento",who:W.sis,d:"I",entra:"Comparar 32% da receita − IRPJ do DAS com o lucro contábil.",prova:"Derivável da receita e das apurações; ninguém calcula",base:"LC 123 art. 14 §§ 1º e 2º",next:["dist"],ex:true},
+  {id:"dist",nm:"Lucro distribuído",who:W.dono,d:"V",entra:"D Lucros acumulados / C Dividendos a pagar; IRRF de 10% sobre o total se passar de R$ 50 mil/mês a um sócio, também no Simples (RFB, P&R de altas rendas, pergunta 10).",prova:"Nó IRRF-DISTRIBUICAO (contas 2.1.7.01 e 2.1.7.03)",base:"Lei 9.250 art. 6º-A",next:[]}
+  ],nota:"ECD não é exigida: IN RFB 2.003 art. 3º § 1º I, salvo aporte de investidor-anjo (§ 2º)."},
+
+ {id:"lanc",grp:"Contínuo",t:"Lançamento contábil",cad:"Sempre",law:"Lançamento com numeração sem buraco, cadeia de hash e aprovação por duas pessoas.",
+  st:[
+  {id:"dr",nm:"Rascunho",who:W.dono,d:"V",entra:"Lançamento manual criado.",prova:"JournalEntry.status = Draft",base:"CONT-03",next:["pa"]},
+  {id:"pa",nm:"Aguardando aprovação",who:W.dono,d:"V",entra:"Enviado ao aprovador.",prova:"PendingApproval",base:"CONT-06",next:["po"]},
+  {id:"po",nm:"Lançado",who:W.dono,d:"V",entra:"Aprovado; número e ano fiscal nascem aqui.",prova:"Posted",base:"",next:["rc","rv"]},
+  {id:"rc",nm:"Conciliado",who:W.dono,d:"V",entra:"Batido com o extrato.",prova:"Reconciled",base:"FIN-05",next:[]},
+  {id:"rv",nm:"Estornado",who:W.dono,d:"V",alt:1,entra:"Estorno por novo lançamento.",prova:"Reversed",base:"",next:[]}
+  ]},
+
+ {id:"sug",grp:"Contínuo",t:"Sugestão de economia",cad:"Quando surge",law:"Prática lícita com o artigo citado: parceria, desconto incondicional, segregação por NCM, remuneração do sócio.",
+  st:[
+  {id:"pr",nm:"Proposta",who:W.sis,d:"V",entra:"O simulador acha economia lícita.",prova:"TaxOptimizationSuggestion PROPOSED",base:"ADR-INCR-EFICIENCIA-FISCAL",next:["ac","rj","ex"]},
+  {id:"ac",nm:"Aceita",who:W.dono,d:"V",entra:"O dono aceita.",prova:"ACCEPTED",base:"",next:[]},
+  {id:"rj",nm:"Recusada",who:W.dono,d:"V",alt:1,entra:"O dono recusa.",prova:"REJECTED",base:"",next:[]},
+  {id:"ex",nm:"Expirada",who:W.sis,d:"V",alt:1,entra:"A condição mudou.",prova:"EXPIRED",base:"",next:[]}
+  ]}
+];
+
+const CAL=[
+ {w:"A cada serviço",what:"NFS-e pelo Emissor Nacional",src:"Res. CGSN 140 art. 59 § 1º"},
+ {w:"Dia 20",what:"DAS do mês anterior",src:"Res. CGSN 140 art. 40"},
+ {w:"Dia 20",what:"FGTS do mês anterior",src:"Lei 8.036 art. 15"},
+ {w:"Último dia útil",what:"DCTFWeb do mês anterior (e-CNPJ)",src:"IN RFB 2.237 arts. 5º e 6º"},
+ {w:"Mensal",what:"Repasse e retenção do parceiro",src:"Lei 12.592 art. 1º-A §§ 3º e 10",onlyB:true},
+ {w:"Fev a nov · 20/12",what:"13º: adiantamento e saldo; DCTFWeb anual",src:"Lei 4.749; IN RFB 2.237 art. 7º I"},
+ {w:"Dia 15",what:"eSocial: folha e fechamento do mês anterior",src:"MOS S-1.3 (S-1200 e S-1299)"},
+ {w:"Dia 20 (antecipa)",what:"IRRF de salário e pró-labore; INSS retido do pró-labore",src:"Lei 11.196 art. 70 I \"e\"; Lei 10.666 art. 4º"},
+ {w:"Jan a mar",what:"Informações anuais do ano anterior no PGDAS-D (até 2026: DEFIS até 31/03)",src:"Res. CGSN 140 arts. 72 e 38-B (Res. CGSN 190)"},
+ {w:"31/03",what:"Contribuição assistencial patronal da CCT",src:"CCT SP006651/2026, aditivo SP009373/2026, cl. 10ª"},
+ {w:"10/07",what:"TFE do ano (R$ 236,35 em 2026, até 5 empregados)",src:"Lei SP 13.477 e 13.647; tabela da SF"},
+ {w:"Anual",what:"Balanço, DRE e DLPA",src:"CC art. 1.179; NBC TG 1002 item 3.6"}
+];
+
+const SC={
+ A:{note:"Os 4 são empregados. O DAS incide sobre toda a receita do serviço.",das:"Exemplo: RBT12 R$ 480 mil, 3ª faixa, alíquota efetiva 9,825%. DAS de R$ 3.930 sobre R$ 40 mil.",vinc:"4 vínculos: 2 cabeleireiros, assistente e recepcionista.",lim:"Exemplo: 32% × R$ 480 mil − R$ 1.886,40 de IRPJ dentro do DAS (Res. CGSN 140 art. 145 § 1º) = R$ 151.713,60 por ano isentos sem escrituração."},
+ B:{note:"Os cabeleireiros são parceiros com CNPJ e contrato homologado. A cota deles sai da receita do salão.",das:"Exemplo: só a cota do salão (50%) entra. RBT12 R$ 240 mil, 2ª faixa, 7,30%. DAS de R$ 1.460 sobre R$ 20 mil.",vinc:"2 vínculos: assistente e recepcionista.",lim:"Exemplo: 32% × R$ 240 mil − R$ 700,80 de IRPJ dentro do DAS (Res. CGSN 140 art. 145 § 1º) = R$ 76.099,20 por ano isentos sem escrituração."}
+};
+
+let sc="A", obSel="das", stSel={}, compSel="apurada";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const LBL={V:"no código",I:"derivável ou parcial",X:"sem dado"};
+const ARROW='<span class="arrow" aria-hidden="true"><svg viewBox="0 0 18 18"><path d="M3 9h10m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+
+function visibleOb(){return OB.filter(o=>!o.onlyB||sc==="B")}
+
+function rail(el,states,cur,onPick){
+  el.innerHTML=states.map((s,i)=>(i?ARROW:"")+
+    `<button class="node ${s.d}${s.alt?" alt":""}" type="button" data-id="${s.id}" aria-current="${s.id===cur}">
+      <span class="nm">${esc(s.nm)}</span><span class="who">${esc(s.who)}</span><span><span class="tag ${s.d}">${LBL[s.d]}</span></span></button>`).join("");
+  el.querySelectorAll(".node").forEach(b=>b.addEventListener("click",()=>onPick(b.dataset.id)));
+}
+
+function detail(el,s,states,onPick,extra){
+  const nx=s.next.map(id=>states.find(x=>x.id===id)).filter(Boolean);
+  el.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><h3>${esc(s.nm)}</h3><span class="tag ${s.d}">${LBL[s.d]}</span>${s.alt?'<span class="tag" style="background:var(--sunk);color:var(--muted)">ramo alternativo</span>':""}</div>
+  <dl class="kv">
+   <dt>Entra quando</dt><dd>${esc(s.entra)}</dd>
+   <dt>Quem move</dt><dd>${esc(s.who)}</dd>
+   <dt>Prova</dt><dd class="mono">${esc(s.prova)}</dd>
+   ${s.base?`<dt>Base</dt><dd>${esc(s.base)}</dd>`:""}
+   <dt>Segue para</dt><dd>${nx.length?'<span class="chips">'+nx.map(n=>`<button class="chip" type="button" data-id="${n.id}">${esc(n.nm)}</button>`).join("")+"</span>":"estado final"}</dd>
+  </dl>${s.nota?`<p class="note">${esc(s.nota)}</p>`:""}${extra?`<div class="rule">${esc(extra)}</div>`:""}`;
+  el.querySelectorAll(".chip").forEach(b=>b.addEventListener("click",()=>onPick(b.dataset.id)));
+}
+
+function renderComp(){
+  const pick=id=>{compSel=id;renderComp()};
+  rail($("#railComp"),COMP,compSel,pick);
+  const s=COMP.find(x=>x.id===compSel);
+  detail($("#detComp"),s,COMP,pick, s.id==="quitada"&&sc==="B"?"No cenário B também entra o repasse da cota a cada parceiro.":"");
+}
+
+function renderList(){
+  const obs=visibleOb(); if(!obs.find(o=>o.id===obSel)) obSel="das";
+  const groups=[...new Set(obs.map(o=>o.grp))];
+  $("#obList").innerHTML=groups.map(g=>`<div class="ob-group"><div class="eyebrow">${g}</div>${obs.filter(o=>o.grp===g).map(o=>
+    `<button class="ob" type="button" data-id="${o.id}" aria-current="${o.id===obSel}"><span><span class="t">${esc(o.t)}</span><br><span class="s">${esc(o.cad)}</span></span>
+     <span class="mini" aria-label="cobertura">${o.st.map(s=>`<i style="background:var(--${s.d.toLowerCase()})"></i>`).join("")}</span></button>`).join("")}</div>`).join("");
+  $("#obList").querySelectorAll(".ob").forEach(b=>b.addEventListener("click",()=>{obSel=b.dataset.id;renderList();renderOb()}));
+}
+
+function renderOb(){
+  const o=OB.find(x=>x.id===obSel);
+  $("#obCad").textContent=o.grp+" · "+o.cad; $("#obTitle").textContent=o.t; $("#obLaw").textContent=o.law;
+  const cur=stSel[o.id]||o.st[0].id;
+  const pick=id=>{stSel[o.id]=id;renderOb()};
+  rail($("#railOb"),o.st,cur,pick);
+  const s=o.st.find(x=>x.id===cur);
+  let extra="";
+  if(o.id==="das"&&s.ex) extra=SC[sc].das;
+  if(o.id==="folha"&&s.cnt) extra=SC[sc].vinc;
+  if(o.id==="exerc"&&s.ex) extra=SC[sc].lim;
+  if(!extra&&o.nota&&s===o.st[0]) extra=o.nota;
+  detail($("#detOb"),s,o.st,pick,extra);
+}
+
+function renderStats(){
+  const all=[...COMP,...visibleOb().flatMap(o=>o.st)];
+  const c={V:0,I:0,X:0}; all.forEach(s=>c[s.d]++); const n=all.length;
+  $("#meter").innerHTML=["V","I","X"].map(k=>`<span style="width:${c[k]/n*100}%;background:var(--${k.toLowerCase()})"></span>`).join("");
+  $("#stats").innerHTML=["V","I","X"].map(k=>`<div class="stat"><span class="big" style="color:var(--${k.toLowerCase()})">${c[k]}</span><small>${LBL[k]} · ${Math.round(c[k]/n*100)}%</small></div>`).join("")
+   +`<div class="stat" style="grid-column:1/-1"><small>${n} estados em ${visibleOb().length} obrigações + a competência</small></div>`;
+}
+
+function renderCal(){
+  $("#cal").innerHTML=CAL.filter(d=>!d.onlyB||sc==="B").map(d=>`<div class="d"><span class="when">${esc(d.w)}</span><span class="what">${esc(d.what)}</span><span class="src">${esc(d.src)}</span></div>`).join("");
+}
+
+function setSc(v){
+  sc=v; $("#scA").setAttribute("aria-pressed",v==="A"); $("#scB").setAttribute("aria-pressed",v==="B");
+  $("#scNote").textContent=SC[v].note;
+  try{localStorage.setItem("mfs-sc",v)}catch(e){}
+  renderStats(); renderComp(); renderList(); renderOb(); renderCal();
+}
+$("#scA").addEventListener("click",()=>setSc("A"));
+$("#scB").addEventListener("click",()=>setSc("B"));
+let saved="A"; try{saved=localStorage.getItem("mfs-sc")||"A"}catch(e){}
+setSc(saved==="B"?"B":"A");
+})();
+</script>
+
+</body></html>

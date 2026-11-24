@@ -1,0 +1,10 @@
+SHA256-12 34a17efb9263
+Introdução
+ O que é o Integra Contador?
+ O Integra Contador é uma plataforma que disponibiliza serviços voltados ao mercado contábil e fiscal, incluindo escritórios de contabilidade e demais empresas do ramo contábil, otimizando a prestação de serviços aos contribuintes.
+ Como funciona?
+ O Integra Contador é uma plataforma de serviços (APIs), disponibilizada aos clientes que obtiverem credenciais de acesso, mediante contratação junto à loja Serpro, utilizando certificado digital e-CNPJ.
+ Uma vez realizada a contratação de uso da plataforma, o conjunto de serviços estará disponibilizado, podendo o contratante consumir cada serviço individualmente, conforme a sua necessidade. 
+ Para os serviços que necessitam de procuração digital do contribuinte, deverá ser realizado junto ao sistema de procurações eletrônicas do Portal e-CAC a permissão de acesso ao serviço utilizado. Existindo essa relação, o sistema permitirá que a requisição seja efetuada. Caso contrário, será exibida uma mensagem informando que a requisição não foi permitida.
+ Os solicitantes de requisições que contrataram o produto, mas não possuem procuração do contribuinte (ex. software-houses) e desejam executar um serviço em nome do procurador (ex. escritórios de contabilidade), deverão enviar um documento XML assinado digitalmente pelo certificado digital do procurador, por meio de um serviço auxiliar de Autenticação Procurador.
+ 25 de fevereiro de 2026

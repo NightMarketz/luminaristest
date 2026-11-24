@@ -125,6 +125,10 @@ export const CANONICAL_ACCOUNTS: ReadonlyArray<CanonicalAccount> = [
   // Tarifa bancária/de gateway (EMENDA T, E26; F-ENC-1 a): despesa operacional, fora do resultado financeiro e do e-Lalur
   // (L9). Folha `4.6`, não `4.5`: o kit v3 (KIT-SETOR F-KE-1 a) já usa 4.5.1/4.5.2 para IRPJ/CSLL (dono, 13/10).
   { code: '4.6', name: 'Tarifas Bancárias e de Intermediação', nature: 'Expense', acceptsEntries: true },
+  // Lacuna L-20261120-223329-35d3 (nó ITEM-DESTINATION; dono, AskUserQuestion, 2026-11-21: "4.7"): o insumo do serviço é custo
+  // dos serviços prestados, acima do lucro bruto (NBC TG 1002 item 5.1 (d)). DRE → `costOfGoodsSold` (dre.cogs_services);
+  // referencial 3.01.01.03.01.03 (`REFERENCIAL_PLANO_PADRAO`); padrão do `insumoExpenseAccountId` só se vazio.
+  { code: '4.7', name: 'Custo dos Serviços Prestados', nature: 'Expense', acceptsEntries: true },
 ];
 
 /**
@@ -187,6 +191,25 @@ export const CANONICAL_ACCOUNTS_PRE_L8: ReadonlyArray<CanonicalAccount> = [
 /** Código novo de um código antigo do de-para L8 (ou o próprio código, se não está na tabela). */
 export function codigoPosL8(code: string): string {
   return RENOMEACAO_CANONICA_L8.find((r) => r.de === code)?.para ?? code;
+}
+
+/** Código reservado ao plano padrão: o sistema cria (ou restaura) a conta; a criação manual o recusa (lacuna ad40). */
+export function isCodigoDoPlanoPadrao(code: string): boolean {
+  return CANONICAL_ACCOUNTS.some((c) => c.code === code);
+}
+
+const nomeNormalizado = (nome: string): string =>
+  nome.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+/**
+ * Lacuna ad40 (dono, chat, 2026-11-21: "Nome/natureza + recusar"): o plano padrão é create-if-missing por código, então
+ * uma conta do usuário criada com um código que depois virou canônico fica no lugar. O complemento de sistema (papel do
+ * perfil fiscal, referencial RFB) só a trata como a folha canônica quando nome (sem caixa, acento nem espaço extra) e
+ * natureza batem com a definição; senão o papel/referencial fica para configuração manual.
+ */
+export function isContaDoPlanoPadrao(account: { code: string; name: string; nature: string }): boolean {
+  const canonica = CANONICAL_ACCOUNTS.find((c) => c.code === account.code);
+  return !!canonica && canonica.nature === account.nature && nomeNormalizado(canonica.name) === nomeNormalizado(account.name);
 }
 
 /** Natureza que entra na REGRA_VALIDA_NIVEL_CONTAS (Manual ECD L9 p. 120): COD_NAT 01/02/03. */
@@ -269,6 +292,8 @@ export const MULTAS_OFICIO_CODE = '4.4.1';
 export const MULTAS_NAO_TRIBUTARIAS_CODE = '4.4.2';
 /** Tarifa bancária/de intermediação (E26). `4.6` por decisão do dono de 13/10 (o `4.5` é do kit fiscal). */
 export const BANK_FEE_CODE = '4.6';
+/** Custo dos Serviços Prestados (lacuna 35d3; dono 21/11: "4.7"): o insumo do serviço da NF-e de entrada. Resolved by CODE. */
+export const CUSTO_SERVICOS_CODE = '4.7';
 
 /**
  * BE-INCR-IRRF-DISTRIBUICAO PR-1 (item 6; dono 21/10, opção (b): "mapear as contas do plano padrão fora dos kits") —
@@ -297,6 +322,9 @@ export const REFERENCIAL_PLANO_PADRAO: ReadonlyArray<{ accountCode: string; refe
   // existem (1.01.03.02 = Estoques de Produtos). PROVISÓRIO: revisar com a tabela do ano-calendário 2027.
   { accountCode: '1.1.9.01', referentialCode: '1.01.02.03.40', label: 'Outros Impostos e Contribuições a Recuperar' },
   { accountCode: '1.1.9.02', referentialCode: '1.01.02.03.40', label: 'Outros Impostos e Contribuições a Recuperar' },
+  // Lacuna 35d3 (dono 21/11): mesmo código em L300A e P150A; rótulo do catálogo 2025 (`referential_accounts`). A PROPOSTA-REFERENCIAL
+  // de 10/10 já indicava esta linha para o insumo do serviço (ORIENTAÇÃO: "gastos que compõem o custo total da prestação de serviço").
+  { accountCode: CUSTO_SERVICOS_CODE, referentialCode: '3.01.01.03.01.03', label: '(-) Custo dos Serviços Prestados' },
 ];
 
 /**
@@ -305,7 +333,13 @@ export const REFERENCIAL_PLANO_PADRAO: ReadonlyArray<{ accountCode: string; refe
  * `FiscalProfileService.ensureCanonicalAccounts` (só campo nulo; unidade sem a folha fica manual).
  */
 export const PERFIL_FISCAL_PLANO_PADRAO: ReadonlyArray<{
-  field: 'ibsRecolherAccountId' | 'cbsRecolherAccountId' | 'ibsRecuperarAccountId' | 'cbsRecuperarAccountId' | 'retencaoIrrfRecolherAccountId';
+  field:
+    | 'ibsRecolherAccountId'
+    | 'cbsRecolherAccountId'
+    | 'ibsRecuperarAccountId'
+    | 'cbsRecuperarAccountId'
+    | 'retencaoIrrfRecolherAccountId'
+    | 'insumoExpenseAccountId';
   accountCode: string;
 }> = [
   { field: 'ibsRecolherAccountId', accountCode: '2.1.8.01' },
@@ -318,4 +352,7 @@ export const PERFIL_FISCAL_PLANO_PADRAO: ReadonlyArray<{
   // (P-RET-4; dono, chat, 2026-10-24: "Folhas fora até o P-RET-4") — sem referencial, derrubariam a cobertura da ECD de toda
   // unidade já mapeada. Até lá, os 6 papéis são configurados à mão no perfil fiscal.
   { field: 'retencaoIrrfRecolherAccountId', accountCode: '2.1.7.03' },
+  // Lacuna 35d3 (dono 21/11: "preenche se vazio"; emenda o F-ID-5 (a) de 29/09): o insumo do serviço vai à 4.7 quando o contador
+  // não escolheu outra conta. Perfil já configurado (ex.: 4.1) fica como está; histórico não se reclassifica.
+  { field: 'insumoExpenseAccountId', accountCode: CUSTO_SERVICOS_CODE },
 ];

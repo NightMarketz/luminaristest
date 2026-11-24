@@ -107,3 +107,9 @@ cd server && npx jest features/<domain> --passWithNoTests
 - **Não re-adicione allowlist de proteção em `auth.ts`** — o middleware é deny-by-default (`protectedApiPaths` não existe mais); rota pública é a única edição válida (`publicApiRoutes`).
 - **Não duplique o engine** — leituras/escritas vão por `DynamicTableService`, não `prisma.*` direto.
 - **Não injete serviço Prisma first-class na transição** (`PostingService`, `PayrollService`…) — uma transição que precisa "também lançar na contabilidade" NÃO resolve isso dentro do `runInTransaction` do motor DynamicTable. A integração cross-módulo sobe a controller/serviço de integração; o módulo Prisma expõe a própria API. Ver `_ARCHITECTURE-CONTRACT.md §2.1`.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

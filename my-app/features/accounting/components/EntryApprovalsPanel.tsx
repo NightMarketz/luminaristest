@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { RowExpandButton } from './RowExpandButton';
 import { useTranslation } from 'next-i18next';
-import { FiChevronDown, FiChevronRight, FiPlusCircle, FiEdit2, FiSend, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import { FiPlusCircle, FiEdit2, FiSend, FiCheckCircle, FiXCircle } from 'react-icons/fi';
 import {
   entryApprovalsService,
   type ApprovalEntry,
@@ -20,7 +21,7 @@ import { useAccountingT } from '../lib/useAccountingT';
 // Server-side page size for the "Aguardando aprovação" queue (FRENTE 5 fix). This
 // section has its own status-scoped endpoint (`/entry-approvals/pending`,
 // findManyByStatus) with a real per-status `total`, so it CAN be paginated safely.
-// "Rascunhos" below is a DIFFERENT case — see the ponytail note at its fetch site.
+// "Rascunhos" below is a DIFFERENT case — see the `atalho:` note at its fetch site.
 const PENDING_PER_PAGE = 50;
 
 function totalDebit(entry: ApprovalEntry): number {
@@ -94,6 +95,7 @@ interface EntryRowProps {
 }
 
 function EntryRow({ entry, actions }: EntryRowProps) {
+  const { t } = useTranslation('accounting');
   const [expanded, setExpanded] = useState(false);
   return (
     <>
@@ -102,7 +104,7 @@ function EntryRow({ entry, actions }: EntryRowProps) {
         onClick={() => setExpanded((v) => !v)}
       >
         <td className="w-8 px-3 py-2.5 text-neutral-500">
-          {expanded ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />}
+          <RowExpandButton expanded={expanded} onToggle={() => setExpanded((v) => !v)} label={t('approvals.col.expand', 'Expandir')} />
         </td>
         <td className="px-4 py-2.5 tabular-nums text-neutral-300">{formatDate(entry.date)}</td>
         <td className="max-w-xs px-4 py-2.5 text-neutral-100">
@@ -146,7 +148,7 @@ function EntrySection({ heading, note, emptyLabel, entries, renderActions, pagin
           {emptyLabel}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/50">
+        <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/50">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-800 text-left text-neutral-400">
@@ -242,7 +244,7 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
       // findManyByStatus) with a real per-status `total` — paginated below via StandardPagination.
       // Drafts do NOT have that: GET /accounting/entries has no `status` filter and its `total`
       // counts ALL statuses, not just Draft (PostingDto.ts ListEntriesQuerySchema; PostingService
-      // .listEntries → journalEntryRepo.findManyByUnit). ponytail: one page of 200 (backend max)
+      // .listEntries → journalEntryRepo.findManyByUnit). atalho: one page of 200 (backend max)
       // remains for drafts — a unit with >200 entries can push an old draft off this page.
       // Upgrade path: add a `status` filter to GET /accounting/entries (the repository already
       // has a status-scoped read, `findManyByStatus` — JournalEntryRepository.ts:99 — it just
@@ -349,7 +351,7 @@ export function EntryApprovalsPanel({ unitId, onLedgerChange, onNavigateToPeriod
           'Alguém alterou este lançamento enquanto esta tela estava aberta. A lista foi recarregada — confira e tente de novo.',
         );
         const fresh = await fetchAll();
-        // ponytail: the row may have changed STATUS too (someone else approved it). We don't
+        // atalho: the row may have changed STATUS too (someone else approved it). We don't
         // re-derive whether the command still applies — the server owns the state machine and
         // answers with its own error. We only guarantee the version is fresh.
         const refreshed = fresh ? [...fresh.drafts, ...fresh.pending].find((e) => e.id === entry.id) : undefined;

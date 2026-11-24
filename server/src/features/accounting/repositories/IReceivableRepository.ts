@@ -1,5 +1,6 @@
 import type { Receivable, ReceivableReceipt, Prisma } from 'generated/prisma';
 import type { AccountingScope } from '../scope/AccountingScope';
+import type { ReceivableStatus } from '../models/Receivable.model';
 
 /** A Receivable with its receipt children eagerly loaded (used by the cancel/remaining guards). */
 export type ReceivableWithReceipts = Receivable & { receipts: ReceivableReceipt[] };
@@ -141,6 +142,12 @@ export interface IReceivableRepository {
     cents: number,
     tx?: Prisma.TransactionClient,
   ): Promise<number>;
+
+  /** INV F-11.2 — MIRROR de `IPayableRepository.releaseClaim`: status = RECEIVING AND `receivedCents >= cents`. */
+  releaseClaim(scope: AccountingScope, id: string, cents: number, tx?: Prisma.TransactionClient): Promise<number>;
+
+  /** INV F-11.2 — MIRROR de `IPayableRepository.resolveRevertedClaim`: CAS sobre RECEIVING. */
+  resolveRevertedClaim(scope: AccountingScope, id: string, status: ReceivableStatus, tx?: Prisma.TransactionClient): Promise<number>;
 
   updateReceivable(
     scope: AccountingScope,

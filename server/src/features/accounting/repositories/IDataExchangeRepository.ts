@@ -5,6 +5,7 @@ import type {
   UpdateJobInput,
   CreateRowInput,
   UpdateRowInput,
+  StaleFailedJob,
 } from '../models/DataExchange.model';
 
 /**
@@ -13,6 +14,9 @@ import type {
  * tenancy via AccountingScope on every read/update.
  */
 export interface IDataExchangeRepository {
+  /** EFX F-18.2: leva a FAILED (CAS por linha) todo job PROCESSING com `updatedAt < olderThan`, de qualquer escopo
+   * (só a varredura do sistema chama). Devolve os que esta chamada venceu. */
+  failStaleProcessing(olderThan: Date): Promise<StaleFailedJob[]>;
   createJob(data: CreateJobInput, tx?: Prisma.TransactionClient): Promise<AccountingDataExchangeJob>;
   findJobById(
     scope: AccountingScope,

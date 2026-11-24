@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { INTERVIEW_LOCALES } from '../models/interviewText';
 
 /**
  * BE-INCR-W6-CUSTOMIZE-FIELDS (nó W6, item 2; BRIEF WIZARD-W6 §2.1) — corpo de `POST /api/dashboard/ai/CustomizeFields`.
@@ -30,7 +31,8 @@ const ManualChangeSchema = z.discriminatedUnion('action', [
 ]);
 
 export const CustomizeFieldsDto = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('message'), ...SessionRef, message: z.string().trim().min(1).max(2000) }).strict(),
+  // `locale`: idioma da UI; a resposta e o rótulo proposto saem nele (L-20261111-214837-3484). Sem ele, português.
+  z.object({ kind: z.literal('message'), ...SessionRef, message: z.string().trim().min(1).max(2000), locale: z.enum(INTERVIEW_LOCALES).optional() }).strict(),
   z
     .object({
       kind: z.literal('decision'),

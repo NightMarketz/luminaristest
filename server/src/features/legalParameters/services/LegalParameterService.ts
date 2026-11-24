@@ -13,7 +13,7 @@ import type {
   ProposeLegalParameterInput,
   VigenteLegalParameterQuery,
 } from '../dtos/LegalParameterDto';
-import { LEGAL_PARAMETER_TABELAS, TABELAS_MIGRADAS, linhaLegalVigente, linhasEmVigor, type LegalParameterTabela } from '../models/legalParameter';
+import { LEGAL_PARAMETER_TABELAS, LinhaLegalIlegivelError, TABELAS_MIGRADAS, linhaLegalVigente, linhasEmVigor, type LegalParameterTabela } from '../models/legalParameter';
 import { TEM_REGRA_DE_FORMATO, erroDeFormato } from '../models/formatoLinha';
 import { cachedPublished, storePublished } from './legalParameterCache';
 
@@ -64,6 +64,15 @@ export interface LinhaPublicadaForaDoFormato {
 const mesmaLinhaLogica = (a: Pick<LegalParameter, 'tabela' | 'chave' | 'discriminador'>, b: Pick<LegalParameter, 'tabela' | 'chave' | 'discriminador'>) =>
   a.tabela === b.tabela && a.chave === b.chave && a.discriminador === b.discriminador;
 
+function parseValorJson(r: LegalParameter): unknown {
+  if (r.valorJson === null) return null;
+  try {
+    return JSON.parse(r.valorJson) as unknown;
+  } catch {
+    throw new LinhaLegalIlegivelError(r.id, r.tabela, r.chave); // BRD F-69.1
+  }
+}
+
 function toView(r: LegalParameter): LegalParameterView {
   return {
     id: r.id,
@@ -72,7 +81,7 @@ function toView(r: LegalParameter): LegalParameterView {
     discriminador: r.discriminador,
     valorInt: r.valorInt,
     valorTexto: r.valorTexto,
-    valorJson: r.valorJson === null ? null : (JSON.parse(r.valorJson) as unknown),
+    valorJson: parseValorJson(r),
     fonte: r.fonte,
     fonteUrl: r.fonteUrl,
     fonteSha256: r.fonteSha256,

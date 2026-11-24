@@ -2,7 +2,7 @@ import { AccountingPeriodNotOpenError, AppError, ForbiddenError, MaxCentsExceede
 import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
 import type { Account, SourceDocument } from 'generated/prisma';
-import { CANONICAL_ACCOUNTS, NIVEL_MINIMO_ANALITICA_PATRIMONIAL, PATRIMONIAL_NATURES } from '../fixtures/ChartOfAccountsFixture';
+import { CANONICAL_ACCOUNTS, NIVEL_MINIMO_ANALITICA_PATRIMONIAL, PATRIMONIAL_NATURES, isCodigoDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
 import { CLOSING_SOURCE_TYPE, reversedClosingSourceId } from '../models/closing';
 import { MAX_CENTS, centsFromDb } from '../models/money';
 import type { CreateAccountInput, PostEntryInput, ReverseEntryInput } from '../dtos/PostingDto';
@@ -500,7 +500,7 @@ export class PostingService {
       });
       return entry;
     } catch (error) {
-      // ponytail: authoritative race-close — @@unique([userId,unitId,sourceType,sourceId])
+      // atalho: authoritative race-close — @@unique([userId,unitId,sourceType,sourceId])
       // is a REAL DB constraint. A concurrent poster that wins the race trips P2002;
       // re-fetch and return its entry.
       if (
@@ -713,7 +713,7 @@ export class PostingService {
           }
         }
 
-        await this.journalEntryRepo.setStatus(scope, original.id, 'Reversed', tx);
+        await this.journalEntryRepo.setStatus(scope, original.id, 'Reversed', tx, 'Posted');
         await this.journalEntryRepo.setReversedBy(scope, original.id, reversal.id, tx);
 
         // FREE THE IDEMPOTENCY KEY (D5): a closing entry keys on sourceId=String(year); once
@@ -743,7 +743,7 @@ export class PostingService {
         return { ...reversal, postings: reversalPostings };
       });
     } catch (error) {
-      // ponytail: authoritative race-close — @@unique([userId,unitId,sourceType,sourceId]) blocks
+      // atalho: authoritative race-close — @@unique([userId,unitId,sourceType,sourceId]) blocks
       // a second reversal. A concurrent reverser that loses the race trips P2002; re-fetch under the
       // reversal's actual sourceType (='closing' when reversing a closing entry — N1).
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -985,6 +985,10 @@ export class PostingService {
   async createAccount(scope: AccountingScope, dto: CreateAccountInput): Promise<Account> {
     if (!this.policy.canManage(scope)) {
       throw new ForbiddenError('Você não tem permissão para criar contas.');
+    }
+    // Lacuna ad40 (dono, chat, 2026-11-21): o código do plano padrão é do sistema (`ensureChartOfAccounts` cria ou restaura).
+    if (isCodigoDoPlanoPadrao(dto.code)) {
+      throw new ValidationError(`O código '${dto.code}' é reservado ao plano padrão; use outro código para a conta nova.`);
     }
     await this.assertNivelDoPlano(scope, dto);
     const { userId, unitId } = accountingScopeWhere(scope);

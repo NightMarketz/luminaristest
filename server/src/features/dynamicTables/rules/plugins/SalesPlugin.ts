@@ -169,6 +169,11 @@ export const SalesPlugin: RulePlugin = {
       if (simple && !simpleName) {
         throw new ValidationError('Nome do "cliente simples" é obrigatório quando habilitado.');
       }
+      // INV F-14.2: venda só de pacote credita saldo ao cliente — sem `customerId` a ponte lança o passivo e pula o crédito.
+      const isPackageOnly = items.every((it) => (it.data?.type ? String(it.data.type) === 'Package' : !!it.data?.packageId));
+      if (isPackageOnly && !custId) {
+        throw new ValidationError('Venda de pacote exige cliente cadastrado (o saldo do pacote é do cliente).');
+      }
 
       // Serviços precisam ter agendamento pronto antes de finalizar
       await assertServiceAppointmentsReady(ctx, items);
@@ -198,6 +203,17 @@ export const SalesPlugin: RulePlugin = {
       const unitId = String(afterCreate?.unitId || '').trim();
       if (!unitId) {
         throw new ValidationError('Unidade de negócio é obrigatória para criar uma venda.');
+      }
+
+      // INV F-40.2 (Q-11, dono 10/11): de fora do sistema a venda nasce rascunho; finalizar é por atualização (com as guardas).
+      if (!ctx.isSystem && String(afterCreate?.status || '') === 'Finalized') {
+        throw new ValidationError('A venda é criada como rascunho; finalize-a depois de incluir os itens.');
+      }
+
+      // INV F-40.1 (Q-11, dono 10/11): o total na criação não é o do navegador — grava 0; o afterUpdate recalcula dos itens.
+      if (!ctx.isSystem && ctx.after) {
+        ctx.after['subtotal'] = 0;
+        ctx.after['totalAmount'] = 0;
       }
 
       // Auto-fill date with today if not provided

@@ -10,13 +10,23 @@ import { homedir } from 'node:os';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-// US$ por milhão de tokens — skill claude-api, tabela "Current Models" (cached 2026-09-25).
-// Escrita de cache: 1,25× o input (TTL 5 min) e 2× (TTL 1 h) — shared/prompt-caching.md §Economics.
+// US$ por milhão de tokens — platform.claude.com/docs/en/about-claude/pricing (lido em 2026-11-20).
+// Escrita de cache: 1,25× o input (TTL 5 min) e 2× (TTL 1 h), em todos os modelos da tabela.
+// Cache hit NÃO é sempre 0,1×: Fable 5.2 é 0,025×, Opus/Sonnet 5.5 são 0,05× — por isso o valor explícito.
 export const PRICES = {
+  'claude-fable-5-2': { input: 8, output: 40, cacheRead: 0.2 },
   'claude-opus-5-5': { input: 4, output: 20, cacheRead: 0.2 },
-  'claude-sonnet-5-5': { input: 2, output: 10, cacheRead: 0.2 },
+  'claude-sonnet-5-5': { input: 2, output: 10, cacheRead: 0.1 },
+  // Haiku 5.5 cobra por tamanho de prompt: acima de 100k (input + cache read + cache write) a requisição
+  // inteira paga a faixa `long`, inclusive o output.
+  'claude-haiku-5-5': { input: 0.1, output: 0.5, cacheRead: 0.01, long: { above: 100_000, input: 0.5, output: 2.5, cacheRead: 0.05 } },
   'claude-haiku-4-5': { input: 1, output: 5, cacheRead: 0.1 },
 };
+
+function priceFor(model, promptTokens) {
+  const p = PRICES[model];
+  return p?.long && promptTokens > p.long.above ? p.long : p;
+}
 
 // Cada bloco de conteúdo vira uma linha com o mesmo message.id e o mesmo usage — conta uma vez por id.
 export function tally(records) {
@@ -37,8 +47,8 @@ export function tally(records) {
     t.cacheRead += u.cache_read_input_tokens ?? 0;
     t.output += u.output_tokens ?? 0;
     t.requests += 1;
-    const p = PRICES[m.model];
-    // ponytail: fast mode = 2× tudo (preço oficial do Opus 5.5 fast é 2× input/output; cache read assumido 2×)
+    const p = priceFor(m.model, (u.input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0) + cw5m + cw1h);
+    // atalho: fast mode = 2× tudo (preço oficial do Opus 5.5 fast é 2× input/output; cache read assumido 2×)
     const k = u.speed === 'fast' ? 2 : 1;
     if (p) t.usd += k * ((u.input_tokens ?? 0) * p.input + cw5m * p.input * 1.25 + cw1h * p.input * 2
       + (u.cache_read_input_tokens ?? 0) * p.cacheRead + (u.output_tokens ?? 0) * p.output) / 1e6;

@@ -163,8 +163,9 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   'bank_settlement.rejected':  ['itemId', 'reason'],
   'bank_settlement.failed':    ['itemId', 'step', 'failReason'],
   // BE-INCR-NFE-COST-REGIME (nó X6, item 5): perfil fiscal — só enum/boolean/id, zero texto livre.
-  'fiscal_profile.updated': ['regimeTributario', 'icmsContribuinte', 'pisCofinsRegime', 'pisCofinsCreditExcludesIcms', 'pisCofinsCreditIncludesIpi', 'pisCofinsCreditFromSimplesSupplier', 'icmsRecuperavelAccountId', 'pisCofinsRecuperavelAccountId',
+  'fiscal_profile.updated': ['regimeTributario', 'icmsContribuinte', 'pisCofinsRegime', 'pisCofinsCreditExcludesIcms', 'pisCofinsCreditIncludesIpi', 'pisCofinsCreditFromSimplesSupplier', 'pisCofinsCreditMonofasicoInsumo', 'icmsRecuperavelAccountId', 'pisCofinsRecuperavelAccountId',
     'insumoExpenseAccountId', // ITEM-DESTINATION item 20 (decisão do dono 02/10: a troca da conta de insumo fica na trilha)
+    'insumoStockAccountId', // INSUMO-INVENTARIO-PERIODICO item 1 (só id)
     'irpjDespesaAccountId', 'csllDespesaAccountId', 'irpjRecolherAccountId', 'csllRecolherAccountId', // X7 item 3 (F-TA-6 a)
     'pisDespesaAccountId', 'cofinsDespesaAccountId', 'pisRecolherAccountId', 'cofinsRecolherAccountId', // X8 item 2 (F-PCB-1 b)
     'pisCofinsCreditoOutrosAccountId', 'pisCofinsRetidoCompensarAccountId', 'pisCofinsRetencaoConciliarAccountId', // X8 PR-3 (L-5, retenções; dono 06/10)

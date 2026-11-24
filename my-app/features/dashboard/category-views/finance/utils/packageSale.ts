@@ -25,6 +25,11 @@ export function lineQuantity(item: { itemType?: SaleItemKind; type?: SaleItemKin
     return Number(item.quantity || 1);
 }
 
+/** Subtotal da venda: Σ das linhas, cada uma arredondada a centavos — a regra do formulário e do detalhe (SOT F-23.1). */
+export function saleLinesSubtotal(items: ReadonlyArray<Parameters<typeof lineQuantity>[0] & { unitPrice?: number | string }>): number {
+    return items.reduce((sum, item) => sum + Math.round(lineQuantity(item) * Number(item.unitPrice || 0) * 100), 0) / 100;
+}
+
 const toCents = (v: number) => Math.round(Number(v || 0) * 100);
 
 /** Preço unitário acima do catálogo (comparado em centavos: evita ruído de float). */

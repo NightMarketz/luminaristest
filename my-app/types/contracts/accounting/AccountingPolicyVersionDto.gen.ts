@@ -24,9 +24,11 @@ pisCofinsRegime: ("SIMPLES" | "CUMULATIVO" | "NAO_CUMULATIVO")
 pisCofinsCreditExcludesIcms?: boolean
 pisCofinsCreditIncludesIpi?: boolean
 pisCofinsCreditFromSimplesSupplier?: boolean
+pisCofinsCreditMonofasicoInsumo?: boolean
 icmsRecuperavelAccountId?: (string | null)
 pisCofinsRecuperavelAccountId?: (string | null)
 insumoExpenseAccountId?: (string | null)
+insumoStockAccountId?: (string | null)
 irpjDespesaAccountId?: (string | null)
 csllDespesaAccountId?: (string | null)
 irpjRecolherAccountId?: (string | null)

@@ -39,7 +39,6 @@ Qualquer entidade contábil (`Account`, `JournalEntry`, `Posting`, período, led
 **Model + Service + Repository + Policy próprios** — **nunca** linha de DynamicTable, **nunca**
 serviço Prisma injetado no motor de plugins. Integração com o resto do ERP (venda→lançamento)
 é **ponte de controller/serviço de integração pós-commit**, fora do engine. Ver memórias
-`accounting-is-first-class-prisma`, `new-modules-use-prisma-not-dynamictable`,
 `dynamictable-vs-prisma-boundary`.
 
 ## Phase 1 — Ancorar na REALIDADE do projeto (sempre antes de opinar)
@@ -66,7 +65,7 @@ parecer, leia o estado real e reconcilie — **nunca** planeje em cima do doc se
 |---|---|
 | Torre `Workspace → LegalEntity → Establishment → Ledger` ("C reduzido") | **Rejeitada.** Tenancy = **`AccountingScope`** (`ownerUserId`≠`actorUserId` + `unitId` + ledger DEFAULT implícito). SEM torre multiempresa. Ver memória `accounting-scope-foundation-no-multicompany`. |
 | Reforço via constraint de exclusão / recursos PostgreSQL | **Fica em SQLite** (WAL + busy_timeout). PG foi descartado, não é pré-requisito de nada. Ver memória `stay-on-sqlite-no-postgres`. Todo "use exclusion constraint" do doc → traduzir para **gate transacional em app** + `@@unique`. |
-| `SourceDocument` + `JournalEntrySource` como novidade | Proveniência mínima **já começou**: D1 = `externalReference`. Ver memórias `accounting-increment-d1-settlement` / `accounting-incr6-data-exchange-plan`. Avaliar *estender*, não recriar. |
+| `SourceDocument` + `JournalEntrySource` como novidade | Proveniência mínima **já começou**: D1 = `externalReference`. Ver memória `accounting-increments-rollup`. Avaliar *estender*, não recriar. |
 | `Int` para centavos | **Integer cents já é a regra**; confirme `BigInt` onde o teto de 32 bits (~R$ 21,4M) aperta. Ver memória `dynamictable-money-and-uniqueness-limits`. |
 | Muitos módulos "faltando" | Já mergeados: períodos (INCR-1), audit hash-chain (INCR-2), BP+DRE (INCR-4), anexos (INCR-5), export/import (INCR-6). Confirme o que existe **antes** de listar como novo. |
 
@@ -114,7 +113,7 @@ os garante. São os pontos onde "compila" ≠ "correto":
 ### Relatórios
 - **[ACC-021]** BP = saldo acumulado numa data; DRE = fluxo entre datas — semânticas distintas, não misturar.
   Só `POSTED` entra em relatório oficial. Regra de sinal centralizada (`debit - credit` normalizado),
-  nunca espalhada em componente React. Ver memória `accounting-incr4-bp-dre`.
+  nunca espalhada em componente React. Ver memórias `accounting-increments-rollup` e `bp-dre-diagnostics-test-must-mix-natures`.
 
 ## Phase 3 — Produzir o PARECER DE DOMÍNIO (handoff ao orquestrador)
 
@@ -151,5 +150,11 @@ Depois: `PARECER PRONTO. Entregar ao luminaris-orchestrator para montar o plano 
 - **[ACC-002] NÃO escolha as skills nem monte o plano de execução** — isso é do orquestrador; você dá a lente de domínio.
 - **[ACC-003] NÃO aprove** — reviewer valida o artefato.
 - **NÃO planeje em cima do doc aspiracional sem cruzar com as memórias `accounting-*` e as notas de `docs/plano/trilhos/`/`rejeitadas/`** — o doc contradiz decisões commitadas.
-- **Em dúvida sobre onde o dado vive → Prisma first-class.** Contabilidade nunca é DynamicTable.
+- **Dado de razão ou fiscal → Prisma first-class** (tripwire da Etapa 1 do SEL-001). Contabilidade nunca é DynamicTable. Em dúvida sobre outro dado, vale o contrato §2.1.
 - **Toda afirmação sobre "o projeto já faz X" tem de vir de código/memória lidos** (CBM-001), nunca de suposição.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Invariante, regra legal ou contábil que o plano não cobre e que você encontrou vai à caixa como `spec` (se o BRIEF devia cobrir) ou `fork` (se depende de escolha do dono), com a fonte lida em `--evidencia`.

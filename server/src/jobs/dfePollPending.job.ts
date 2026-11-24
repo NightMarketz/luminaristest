@@ -7,18 +7,17 @@
  */
 import { getFactory } from '../lib/factory';
 import type { PollSummary } from '../features/accounting/services/FiscalDocumentLifecycleService';
+import { readMsEnv } from './readMsEnv';
 
 const DEFAULT_POLL_AFTER_MS = 120_000; // 2 minutos — dá tempo do parceiro responder antes de reconsultar
 
-function readMsEnv(name: string, fallback: number): number {
-  const raw = process.env[name];
-  if (raw === undefined || raw === '') return fallback;
-  const n = Number(raw);
-  return Number.isInteger(n) && n >= 0 ? n : fallback;
+/** BRD F-71.1: inválido lança (antes caía no default em silêncio); o `DfePollScheduler.start()` lê no boot. */
+export function readDfePollAfterMs(): number {
+  return readMsEnv('DFE_POLL_AFTER_MS', DEFAULT_POLL_AFTER_MS, 0);
 }
 
 export async function runDfePollPending(): Promise<PollSummary> {
-  const olderThan = new Date(Date.now() - readMsEnv('DFE_POLL_AFTER_MS', DEFAULT_POLL_AFTER_MS));
+  const olderThan = new Date(Date.now() - readDfePollAfterMs());
   const service = getFactory().getFiscalDocumentLifecycleService();
   const summary = await service.pollPendingOnce(olderThan);
   // X10a PR-9 (decisões 6 e 7): transmite as NFC-e off-line, alerta o prazo e resolve as órfãs — antes do dreno, para a

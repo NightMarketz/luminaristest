@@ -7,7 +7,6 @@ import { ChatService } from '../services/ChatService';
 import { LuminarisAgentService } from '../services/LuminarisAgentService';
 import { TOOL_CLASS } from '@/features/teammates/models/ActionClass.model';
 import { UNTRUSTED_CLOSE, UNTRUSTED_OPEN, wrapUntrustedData } from '@/lib/untrustedData';
-import { ValidationError } from '@/lib/errors';
 import { ctxFor } from '@test/helpers/auth';
 import type { DocumentSearchHit } from '@/features/documents/dtos/DocumentDto';
 
@@ -63,11 +62,12 @@ describe('search_documents (item 16)', () => {
     expect(payload.results).toContain('A multa rescisória é de 10% do valor.');
   });
 
-  it('args fora do schema (chave extra) → ValidationError, sem busca', async () => {
+  // BRD F-57.2: a recusa volta ao modelo (AgentToolError), não vira ValidationError/4xx para o usuário.
+  it('args fora do schema (chave extra) → AgentToolError ARGUMENTOS_INVALIDOS, sem busca', async () => {
     const search = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- colaboradores não usados
     const agent = new LuminarisAgentService({} as any, {} as any, {} as any, {} as any, { search } as any);
-    await expect(agent.handleToolCall(ana, 'search_documents', { query: 'x', documentIds: ['d'] })).rejects.toBeInstanceOf(ValidationError);
+    await expect(agent.handleToolCall(ana, 'search_documents', { query: 'x', documentIds: ['d'] })).resolves.toMatchObject({ error: 'ARGUMENTOS_INVALIDOS' });
     expect(search).not.toHaveBeenCalled();
   });
 });

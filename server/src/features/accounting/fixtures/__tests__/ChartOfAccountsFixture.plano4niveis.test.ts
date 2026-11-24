@@ -54,8 +54,9 @@ describe('plano canônico em 4 níveis (item 1)', () => {
     // Resultado não muda (fora da regra): mesmos códigos e nomes antes e depois.
     const resultado = (l: ReadonlyArray<{ code: string; name: string; nature: string }>) =>
       l.filter((a) => a.nature === 'Revenue' || a.nature === 'Expense').map((a) => `${a.code} ${a.name}`);
-    // Folhas de resultado criadas DEPOIS da L8 não são renomeação: IRRF-DISTRIBUICAO PR-1 item 6 (4.3.4 JCP).
-    const posL8 = new Set(['4.3.4']);
+    // Folhas de resultado criadas DEPOIS da L8 não são renomeação: IRRF-DISTRIBUICAO PR-1 item 6 (4.3.4 JCP) e a lacuna 35d3
+    // de 21/11 (4.7 Custo dos Serviços Prestados).
+    const posL8 = new Set(['4.3.4', '4.7']);
     expect(resultado(CANONICAL_ACCOUNTS.filter((a) => !posL8.has(a.code)))).toEqual(resultado(CANONICAL_ACCOUNTS_PRE_L8));
   });
 });

@@ -50,7 +50,7 @@ o PC travava na sabotagem do revisor, e o Windows registrou memória virtual ins
 | componente ou hook do front | `cd my-app && npx vitest run <pasta>` ou `npm run test:changed` | suíte inteira |
 | data/fuso no front | o mesmo; o `vitest.config.ts` fixa `TZ=America/Sao_Paulo` em toda execução, local e CI (PR NightMarketz/luminaristest#1070) | — |
 | tipos do front | `cd my-app && npx tsc --noEmit` e `npm run test:types` | build |
-| `scripts/*.mjs` / `*.cjs` da raiz | `node --test scripts/<nome>.test.mjs` | **ninguém roda hoje** (pesquisa §6.2) |
+| `scripts/*.mjs` / `*.cjs` da raiz | `node --test scripts/<nome>.test.mjs` | `node --test scripts/*.test.mjs` (job "Scripts" do `ci.yml`) |
 | `.claude/skills/**` | `node .claude/skills/skill-audit/skill-audit.mjs run` (0 findings) | o mesmo |
 | tela atrás de `withAuth` | `node scripts/runbook-tela.mjs <roteiro.json>` contra **build de produção** em `127.0.0.1` | — |
 | caso só verificável por oráculo externo | o runbook, só os passos EXT/DEC | — |

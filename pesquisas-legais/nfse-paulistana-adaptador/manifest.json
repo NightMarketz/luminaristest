@@ -1,0 +1,152 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "» Manuais - Nota Fiscal PaulistanaManuais – Nota Fiscal Paulistana",
+      "url": "https://notadomilhao.sf.prefeitura.sp.gov.br/manuais/",
+      "url_final": "https://notadomilhao.sf.prefeitura.sp.gov.br/manuais/",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:56:53-03:00",
+      "sha256": "194209e5334c222d4093adba4008ffe90873c75b9287b7fa3fcc48d8f86b5eb4",
+      "arquivo": "docs/D01_manuais.html",
+      "texto": "docs/D01_manuais.txt",
+      "bytes": 95962,
+      "sha256_texto": "3014d31116a5941a4fb14f19275647fced67ab9236511b72bae2b7de2c0eae34",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Prefeitura de São Paulo implementa novo layout da NFS-e com destaque de IBS e CBS - Secretaria Municipal da Fazenda - Prefeitura",
+      "url": "https://prefeitura.sp.gov.br/web/fazenda/w/novolayoutimplementado",
+      "url_final": "https://prefeitura.sp.gov.br/web/fazenda/w/novolayoutimplementado",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:56:53-03:00",
+      "sha256": "b7313822e033f7d4fcfc4e0406989add6fbdd00f35e657d9ee1d990949e06f91",
+      "arquivo": "docs/D02_novolayoutimplementado.html",
+      "texto": "docs/D02_novolayoutimplementado.txt",
+      "bytes": 195477,
+      "sha256_texto": "bcc10de75cc54f31e79163a33e775e551f4fd2c0bc5ba46a328131fe9f1a8724",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "» Migração de contribuintes do Simples Nacional para o Ambiente Nacional - Nota Fiscal PaulistanaMigração de contribuintes do Simples Nacional para o Ambiente Nacional – Nota Fiscal PaulistanaMigração de contribuintes do Simples Nacional para o Ambiente Nacional – Nota Fiscal Paulistana",
+      "url": "https://notadomilhao.sf.prefeitura.sp.gov.br/noticias/migracao-de-contribuintes-do-simples-nacional-para-o-ambiente-nacional/",
+      "url_final": "https://notadomilhao.sf.prefeitura.sp.gov.br/noticias/migracao-de-contribuintes-do-simples-nacional-para-o-ambiente-nacional/",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:56:54-03:00",
+      "sha256": "ba4f646821a42b3f04df912faa4d12843bff197465803393b3bf56897daae5e0",
+      "arquivo": "docs/D03_migracao-de-contribuintes-do-simples-nacional-para-o-ambient.html",
+      "texto": "docs/D03_migracao-de-contribuintes-do-simples-nacional-para-o-ambient.txt",
+      "bytes": 94810,
+      "sha256_texto": "86dfa775bc31e45e63b70315e17b6c15b80c042f6f9b7d97a14f138807bbf667",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "Microsoft Word - NFe_Web_Service v3.4.1_AlteradoProdam_ - Copia",
+      "url": "https://notadomilhao.sf.prefeitura.sp.gov.br/wp-content/uploads/2026/11/NFe_Web_Service.pdf",
+      "url_final": "https://notadomilhao.sf.prefeitura.sp.gov.br/wp-content/uploads/2026/11/NFe_Web_Service.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:57:16-03:00",
+      "sha256": "8fcea6e81a3f252f419215057e49a7a0e79ce7b03127b9c07198e80fea3c003a",
+      "arquivo": "docs/D04_NFe_Web_Service-pdf.pdf",
+      "texto": "docs/D04_NFe_Web_Service-pdf.txt",
+      "bytes": 5091738,
+      "sha256_texto": "ce5328a6e338b41a1f252e81a85c12afd08e5710fd9a2a9480a0cb655301449f",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "   ",
+      "url": "https://notadomilhao.sf.prefeitura.sp.gov.br/wp-content/uploads/2025/05/NFe_Layout_RPS.pdf",
+      "url_final": "https://notadomilhao.sf.prefeitura.sp.gov.br/wp-content/uploads/2025/05/NFe_Layout_RPS.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:57:18-03:00",
+      "sha256": "9a8c2bbf4ecaf63d363f62652e77bb0d331bffb55334cfb669058b2f81c7354e",
+      "arquivo": "docs/D05_NFe_Layout_RPS-pdf.pdf",
+      "texto": "docs/D05_NFe_Layout_RPS-pdf.txt",
+      "bytes": 702371,
+      "sha256_texto": "44aa8bbf6c042f478300d84805223c4734068a37355ed04a1778e97a0ac60c99",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "INSTRUÇÃO NORMATIVA SECRETARIA MUNICIPAL DA FAZENDA - SF/SUREM Nº 13 DE 4 DE NOVEMBRO DE 2026 « Catálogo de Legislação Municipal",
+      "url": "https://legislacao.prefeitura.sp.gov.br/instrucao-normativa-secretaria-municipal-da-fazenda-sf-surem-13-de-4-de-novembro-de-2026",
+      "url_final": "https://legislacao.prefeitura.sp.gov.br/instrucao-normativa-secretaria-municipal-da-fazenda-sf-surem-13-de-4-de-novembro-de-2026",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:20-03:00",
+      "sha256": "5359d3d4debd810fb2468ea21f2d4f43eba249c8c889528f6330a90a0b7237fd",
+      "arquivo": "docs/D06_instrucao-normativa-secretaria-municipal-da-fazenda-sf-surem.html",
+      "texto": "docs/D06_instrucao-normativa-secretaria-municipal-da-fazenda-sf-surem.txt",
+      "bytes": 32002,
+      "sha256_texto": "c5dc5d30036afadd11d757dc713892b7aee9150a415de66ae073d7d4b1760fc5",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "Novos prazos para emissão de documentos fiscais com IBS e CBS - Secretaria Municipal da Fazenda - Prefeitura",
+      "url": "https://prefeitura.sp.gov.br/web/fazenda/w/usoemissornacional",
+      "url_final": "https://prefeitura.sp.gov.br/web/fazenda/w/usoemissornacional",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:20-03:00",
+      "sha256": "0ced34dbceb83466acc6c44137f535937a63330e33433b868bf27c0ad7478bb1",
+      "arquivo": "docs/D07_usoemissornacional.html",
+      "texto": "docs/D07_usoemissornacional.txt",
+      "bytes": 181397,
+      "sha256_texto": "70b0dc7e10b5e72f2e8705482b3327de655adedb4b571b2a78a7c752826627e6",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "» Prestadores - Nota Fiscal PaulistanaPrestadores – Nota Fiscal Paulistana",
+      "url": "https://notadomilhao.sf.prefeitura.sp.gov.br/prestador/",
+      "url_final": "https://notadomilhao.sf.prefeitura.sp.gov.br/prestador/",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:20-03:00",
+      "sha256": "2056b1e2bb324e68687e525abcc5f82aefbe07d3dc836ee2e6d644d78cf82f33",
+      "arquivo": "docs/D08_prestador.html",
+      "texto": "docs/D08_prestador.txt",
+      "bytes": 92894,
+      "sha256_texto": "da03f30b27cbeac3d6a36c9fb4ebb29bae53b5fea5036469870b778eaa9467ac",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D09",
+      "titulo": "INSTRUÇÃO NORMATIVA SECRETARIA MUNICIPAL DE FINANÇAS - SF/SUREM Nº 10 DE 12 DE AGOSTO DE 2011 « Catálogo de Legislação Municipal",
+      "url": "https://legislacao.prefeitura.sp.gov.br/leis/instrucao-normativa-secret-mun-de-financas-e-desenv-economico-surem-10-de-13-de-agosto-de-2011",
+      "url_final": "https://legislacao.prefeitura.sp.gov.br/instrucao-normativa-secret-mun-de-financas-e-desenv-economico-surem-10-de-13-de-agosto-de-2011",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T17:00:30-03:00",
+      "sha256": "c262bd4c73a90e80eeb846707e81cbb0e168e8abd9e8692b8befbc3b9feb943c",
+      "arquivo": "docs/D09_instrucao-normativa-secret-mun-de-financas-e-desenv-economic.html",
+      "texto": "docs/D09_instrucao-normativa-secret-mun-de-financas-e-desenv-economic.txt",
+      "bytes": 35300,
+      "sha256_texto": "91703ae400028125c904c1b6d5a0480c3ebc99ae6e1f3c31b4ba31f59d6be4a2",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "nfse-paulistana-adaptador",
+  "pergunta": "Quem emite NFS-e pela Nota Paulistana (SP capital) em 2026-2027, regime normal; webservice oficial (layout RPS, assinatura, metodos, ambiente de teste, cancelamento); regras de RPS e cancelamento",
+  "criado": "2026-11-21T16:56:04-03:00"
+}

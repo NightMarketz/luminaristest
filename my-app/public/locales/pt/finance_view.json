@@ -187,6 +187,7 @@
       "none": "Sem validade",
       "accept_label": "Li este texto ao cliente e ele concordou",
       "accept_failed": "A venda foi criada, mas o aceite da validade não foi registrado. Abra a venda e registre o aceite.",
+      "accept_failed_draft": "A venda foi criada como rascunho e NÃO foi finalizada: o aceite da validade não foi registrado. Abra a venda, registre o aceite e finalize.",
       "download_receipt": "Baixar comprovante (PDF)",
       "accepted_by": "Aceite registrado por {{who}} em {{when}} (texto {{version}})",
       "not_registered": "Aceite não registrado",

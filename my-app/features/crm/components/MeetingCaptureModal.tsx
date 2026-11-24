@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useId } from 'react';
 import { useTranslation } from 'next-i18next';
 import { Modal } from '../../../components/ui/Modal';
 
@@ -18,6 +18,7 @@ interface MeetingCaptureModalProps {
  */
 export function MeetingCaptureModal({ isOpen, stageName, onCancel, onConfirm }: MeetingCaptureModalProps) {
   const { t } = useTranslation('crm');
+  const uid = useId();
   const [when, setWhen] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -70,10 +71,10 @@ export function MeetingCaptureModal({ isOpen, stageName, onCancel, onConfirm }: 
           <span className="font-black text-gray-700 dark:text-gray-200">{stageName}</span>.
         </p>
         <div>
-          <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-gray-400">
+          <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-gray-400" htmlFor={`${uid}-1`}>
             {t('meeting_capture.when', 'Data e horário')}
           </label>
-          <input
+          <input id={`${uid}-1`}
             type="datetime-local"
             value={when}
             onChange={(e) => setWhen(e.target.value)}

@@ -1,0 +1,50 @@
+SHA256-12 2013dcb14c6e
+Como usar a demonstração da API
+ Neste ambiente é demonstrado cenários de dados simulados (mock objects) e com isso entender o funcionamento da API. Abaixo segue como utilizr esse modo de demonstração: 
+ Acesse o menu Demonstração 
+ Escolha o método (endpoint) a testar
+ Clique em Try it Out
+ Insira os cabeçalhos que desejar e/ou altere o conteúdo do corpo da requisição
+ Clique em Execute
+ IMPORTANTE
+ A chamada da API Trial é apenas para demonstração. As APIs disponíveis e suas respectivas URLs (endpoints) para consumo são disponibilizadas (através da documentação dos seus respectivos swaggers) na seção Referência da API.
+ Dados para uso trial
+ Copie e cole os dados simulados listados abaixo.
+ Integra-SN
+ Cenários do PGDASD
+ Cenários da DEFIS
+ Cenários do REGIMEAPURACAO
+ Integra-MEI
+ Cenários do PGMEI
+ Cenários do CCMEI
+ Integra-DCTFWeb
+ Cenários da DCTFWEB
+ Cenários do MIT
+ Integra-Procurações
+ Cenários do PROCURACOES
+ Integra-Sicalc
+ Cenários do SICALC
+ Integra-CaixaPostal
+ Cenários do CAIXAPOSTAL
+ Cenários do DTE
+ Integra-Pagamento
+ Cenários do PAGTOWEB
+ Integra-Contador-Gerenciador
+ Cenários do AUTENTICAPROCURADOR
+ Cenários do EVENTOSATUALIZACAO
+ Integra-SITFIS
+ Cenários do SITFIS
+ Integra-Parcelamentos
+ Cenários do PARCSN
+ Cenários do PARCSN-ESP
+ Cenários do PERTSN
+ Cenários do RELPSN
+ Cenários do PARCMEI
+ Cenários do PARCMEI-ESP
+ Cenários do PERTMEI
+ Cenários do RELPMEI
+ Integra-Redesim
+ Cenários do PNRCONTADOR
+ Integra-e-Processo
+ Cenários do E-PROCESSO
+ 25 de fevereiro de 2026

@@ -62,7 +62,9 @@ function toMessage(entry: ITable['conversationHistory'][number]): IAiMessage {
  * quem muda a tabela é o `decision:'apply'`, e a tabela que sobe é a que o servidor devolveu.
  */
 function AIChatMode({ tableData, sessionId, onSaveChanges, onSync, onClose, onSessionLost }: AIChatModeProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
+  // Idioma da UI (mesma regra do useAiInterview): a IA responde nele; sem instância i18n, o servidor assume português.
+  const localeField = i18n?.language ? { locale: i18n.language.startsWith('en') ? ('en' as const) : ('pt' as const) } : {};
   // Item 14: o histórico é o do servidor; o cliente só acrescenta notas locais de erro até a próxima resposta.
   const [history, setHistory] = useState<IAiMessage[]>(() => (tableData.conversationHistory ?? []).map(toMessage));
   const [notes, setNotes] = useState<IAiMessage[]>([]);
@@ -129,7 +131,7 @@ function AIChatMode({ tableData, sessionId, onSaveChanges, onSync, onClose, onSe
     setPendingMessage(message);
     setIsSending(true);
     try {
-      const body = { kind: 'message', sessionId, tableKey: tableData.key, message } satisfies CustomizeFieldsDtoInput;
+      const body = { kind: 'message', sessionId, tableKey: tableData.key, message, ...localeField } satisfies CustomizeFieldsDtoInput;
       applyResult(await InterviewService.customizeFields(body));
     } catch (error) {
       handleError(error, t('onboardingFieldsAiSendFailed'));
@@ -245,6 +247,7 @@ function AIChatMode({ tableData, sessionId, onSaveChanges, onSync, onClose, onSe
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder={t('onboardingFieldsAiInputPlaceholder')}
+              data-own-style
               className="w-full border border-neutral-300 dark:border-neutral-600 rounded-md p-3 pr-10 resize-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-700 dark:text-neutral-100"
               rows={2}
               onKeyDown={(e) => {

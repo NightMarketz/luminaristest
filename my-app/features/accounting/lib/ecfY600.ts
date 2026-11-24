@@ -189,12 +189,12 @@ function toRepresentante(r: RepresentanteDraft): RepresentanteLegalInput | undef
   const cpf = onlyDigits(r.cpf);
   const qualif = r.qualif.trim();
   if (!cpf || !qualif) return undefined;
-  // ponytail: folha string → união; o <select> só oferece qualifRepLegOptions e o servidor valida o enum.
+  // atalho: folha string → união; o <select> só oferece qualifRepLegOptions e o servidor valida o enum.
   return { cpf, qualif: qualif as RepresentanteLegalInput['qualif'] };
 }
 
 function toSocio(v: Y600Vigencia, s: SocioDraft): SocioEcfInput {
-  // ponytail: folha string → união; o <select> só oferece qualifOptions do caso e o servidor valida o enum.
+  // atalho: folha string → união; o <select> só oferece qualifOptions do caso e o servidor valida o enum.
   const out: SocioEcfInput = { partnerId: v.partnerId, qualif: s.qualif.trim() as SocioEcfInput['qualif'], valores: toValores(s.valores) };
   if (!v.residenteBrasil) out.pais = s.pais.trim();
   if (s.percVot.trim()) out.percCapVotBp = percentToBp(s.percVot);
@@ -207,7 +207,7 @@ function toDirigente(d: DirigenteDraft): DirigenteEcfInput {
   const out: DirigenteEcfInput = {
     nome: d.nome.trim(),
     cpf: onlyDigits(d.cpf),
-    // ponytail: folha string → união; o <select> só oferece QUALIF_DIRIGENTE e o servidor valida o enum.
+    // atalho: folha string → união; o <select> só oferece QUALIF_DIRIGENTE e o servidor valida o enum.
     qualif: d.qualif.trim() as DirigenteEcfInput['qualif'],
     dtAltSoc: d.dtAltSoc.trim(),
     valores: toValores(d.valores),

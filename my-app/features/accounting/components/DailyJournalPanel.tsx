@@ -11,7 +11,7 @@ const inputClass = 'rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-
 function EntryCard({ entry }: { entry: DailyJournalEntry }) {
   const { t } = useTranslation('accounting');
   return (
-    <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/50">
+    <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/50">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800 px-4 py-2.5">
         <div className="text-sm">
           <span className="font-semibold text-neutral-200">{t('dailyJournal.entry.number', 'Lançamento nº {{number}}', { number: entry.entryNumber })}</span>

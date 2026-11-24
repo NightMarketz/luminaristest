@@ -35,7 +35,7 @@ export class AccountingPeriodRepository implements IAccountingPeriodRepository {
     const { userId, unitId } = accountingScopeWhere(scope);
     const client = tx ?? prisma;
 
-    // ponytail: upsert 12x — createMany.skipDuplicates not supported on SQLite
+    // atalho: upsert 12x — createMany.skipDuplicates not supported on SQLite
     for (let m = 1; m <= 12; m++) {
       await client.accountingPeriod.upsert({
         where: { userId_unitId_year_month: { userId, unitId, year, month: m } },

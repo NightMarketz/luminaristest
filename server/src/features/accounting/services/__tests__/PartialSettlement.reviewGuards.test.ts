@@ -58,6 +58,8 @@ function buildAp(f: Fakes) {
     claimForPayment: jest.fn(async () => 1),
     finalizeIfPaying: jest.fn(async () => 1),
     releaseSettlement: jest.fn(async () => f.releaseResult ?? 1),
+    releaseClaim: jest.fn(async () => 1),
+    resolveRevertedClaim: jest.fn(async () => 1),
     updatePayable: jest.fn(async (_s: unknown, id: string, data: Row) => ({ ...f.inTxRow, id, ...data })),
     createPayment: jest.fn(async (data: Row) => child({ id: 'paym-new', ...data })),
     findPaymentById: jest.fn(async () => f.childRow ?? child()),
@@ -88,6 +90,8 @@ function buildAr(f: Fakes) {
     claimForReceipt: jest.fn(async () => 1),
     finalizeIfReceiving: jest.fn(async () => 1),
     releaseSettlement: jest.fn(async () => f.releaseResult ?? 1),
+    releaseClaim: jest.fn(async () => 1),
+    resolveRevertedClaim: jest.fn(async () => 1),
     updateReceivable: jest.fn(async (_s: unknown, id: string, data: Row) => ({ ...f.inTxRow, id, ...data })),
     createReceipt: jest.fn(async (data: Row) => child({ id: 'recp-new', ...data })),
     findReceiptById: jest.fn(async () => f.childRow ?? child()),
@@ -120,14 +124,13 @@ describe('F2 — revertClaim recomputa o status do row RE-LIDO na tx (nunca de p
   it('AP: leitura pré-CAS viu 0; outra liquidação de 20000 completou; falha pré-post → status PARTIALLY_PAID, não OPEN', async () => {
     const { service, repo } = buildAp({ preCasRow: base(), inTxRow: base({ status: 'PAYING', paidCents: BigInt(20000) }), postRejects: true });
     await expect(service.registerPayment(scope, 'pay-1', payDto as never)).rejects.toThrow('period closed');
-    const writes = statusWrites(repo.updatePayable.mock.calls as unknown[][]);
-    expect(writes.at(-1)).toBe('PARTIALLY_PAID'); // LACUNA: hoje 'OPEN' (derivado de paidBefore=0)
+    expect(repo.resolveRevertedClaim).toHaveBeenLastCalledWith(scope, 'pay-1', 'PARTIALLY_PAID', expect.anything()); // não 'OPEN' (paidBefore=0)
   });
 
   it('AR espelho', async () => {
     const { service, repo } = buildAr({ preCasRow: base(), inTxRow: base({ status: 'RECEIVING', receivedCents: BigInt(20000) }), postRejects: true });
     await expect(service.registerReceipt(scope, 'pay-1', recDto as never)).rejects.toThrow('period closed');
-    expect(statusWrites(repo.updateReceivable.mock.calls as unknown[][]).at(-1)).toBe('PARTIALLY_RECEIVED');
+    expect(repo.resolveRevertedClaim).toHaveBeenLastCalledWith(scope, 'pay-1', 'PARTIALLY_RECEIVED', expect.anything());
   });
 });
 

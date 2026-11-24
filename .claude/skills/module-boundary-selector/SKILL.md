@@ -35,7 +35,7 @@ Leia `.claude/skills/_ARCHITECTURE-CONTRACT.md` §2.1 antes de classificar — o
 
 ## Etapa 1 — Camada: Prisma × DynamicTable
 
-**[SEL-001] A camada é decidida pelas 4 perguntas de segurança + tripwires de plataforma; qualquer resposta na coluna Prisma → Prisma first-class; em dúvida → Prisma.**
+**[SEL-001] A camada é decidida pelas 4 perguntas de segurança + tripwires de plataforma; qualquer resposta na coluna Prisma → Prisma first-class; em dúvida entre os dois critérios → DynamicTable, com a ponte `postEntry` para o que o razão registrar (dono, 2026-10-14; contrato §2.1).**
 
 | # | Pergunta | DynamicTable se… | Prisma se… |
 |---|---|---|---|
@@ -104,3 +104,9 @@ Roteamento típico: DynamicTable canônico → `dynamic-table-preset-generator` 
 
 - Para implementar (roteie ao orquestrador/geradoras) ou para auditar skills (`skill-audit`).
 - Para ratificar forks de produto — isso é do dono, via sessão de planejamento.
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Módulo vizinho, skill geradora ou ADR que a decisão de fronteira exige e não existe vai à caixa como `spec`, `feature` ou `fork`.

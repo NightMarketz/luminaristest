@@ -189,14 +189,14 @@ describe('updateUser', () => {
   // H2 C7 achado 21-1 (03/11): a senha atual errada/ausente vinha como 401, que o apiClient do my-app trata como
   // sessão expirada e desloga. A sessão é válida; o que falhou foi um campo — 400 nomeado, nunca 401.
   it.each([
-    ['ausente', {}],
-    ['errada', { currentPassword: 'Errada99' }],
-  ])('senha atual %s ao trocar o e-mail → 400 CURRENT_PASSWORD_INVALID, não 401', async (_n, extra) => {
+    ['ausente', {}, 'A senha atual é obrigatória para trocar a senha ou o e-mail.'],
+    ['errada', { currentPassword: 'Errada99' }, 'A senha atual está incorreta.'],
+  ])('senha atual %s ao trocar o e-mail → 400 CURRENT_PASSWORD_INVALID, não 401, com mensagem em PT', async (_n, extra, message) => {
     const u = await seedUser({ username: 'self', password: await bcrypt.hash('OldPass1', 4) });
     const ctx = ctxFor({ id: u.id, username: u.username, role: Role.USER });
     const err = await service.updateUser(u.id, { email: 'novo@test.co', ...extra }, ctx).catch((e: unknown) => e);
     expect(err).not.toBeInstanceOf(UnauthorizedError);
-    expect(err).toMatchObject({ statusCode: 400, errorCode: 'CURRENT_PASSWORD_INVALID' });
+    expect(err).toMatchObject({ statusCode: 400, errorCode: 'CURRENT_PASSWORD_INVALID', message });
   });
 
   it('rejects an empty update with ValidationError', async () => {

@@ -35,6 +35,7 @@ function NewFieldForm({ newField, setNewField, onAddField, onCancel }: NewFieldF
             value={newField.name}
             onChange={(e) => setNewField({ ...newField, name: e.target.value })}
             placeholder={t('onboardingFieldsTechNamePlaceholder')}
+            data-own-style
             className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:border-neutral-600 dark:text-white"
           />
         </div>
@@ -52,6 +53,7 @@ function NewFieldForm({ newField, setNewField, onAddField, onCancel }: NewFieldF
             value={newField.label}
             onChange={(e) => setNewField({ ...newField, label: e.target.value })}
             placeholder={t('onboardingFieldsLabelPlaceholder')}
+            data-own-style
             className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:border-neutral-600 dark:text-white"
           />
         </div>
@@ -67,6 +69,7 @@ function NewFieldForm({ newField, setNewField, onAddField, onCancel }: NewFieldF
             id="field-type"
             value={newField.type}
             onChange={(e) => setNewField({ ...newField, type: e.target.value })}
+            data-own-style
             className="w-full px-3 py-2 border border-neutral-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-800 dark:border-neutral-600 dark:text-white"
           >
             {MANUAL_FORM_TYPES.map((type) => (

@@ -10344,7 +10344,7 @@
     "/api/accounting/depreciation-rates/{id}/hide": {
       "post": {
         "summary": "Hide a depreciation rate (soft — item 2)",
-        "description": "Never deletes: a rate a FixedAsset already snapshotted stays readable by id. CUSTOM rows only — an Anexo III row is platform data (BE-INCR-LEGAL-PARAMS PR-3) and answers 404. Audited as depreciation_rate.hidden.",
+        "description": "Never deletes: a rate a FixedAsset already snapshotted stays readable by id. CUSTOM rows only — an Anexo III row is platform data (BE-INCR-LEGAL-PARAMS PR-3) and answers 409 with code DEPRECIATION_RATE_NOT_HIDEABLE (L-14). An unknown id (or one from another scope) answers 404. Audited as depreciation_rate.hidden.",
         "tags": [
           "Accounting"
         ],
@@ -10820,6 +10820,10 @@
                   "pisCofinsCreditFromSimplesSupplier": {
                     "type": "boolean",
                     "default": false
+                  },
+                  "pisCofinsCreditMonofasicoInsumo": {
+                    "type": "boolean",
+                    "default": true
                   },
                   "icmsRecuperavelAccountId": {
                     "type": "string",
@@ -13945,6 +13949,68 @@
           },
           "409": {
             "$ref": "#/components/responses/UnitDeleted"
+          }
+        }
+      }
+    },
+    "/api/accounting/insumo-stock-counts": {
+      "post": {
+        "summary": "Post the periodic count of the service-supply stock (F-ID-3 c, NBC TG 1002 item 13.6)",
+        "description": "The unit's fiscal profile must have insumoStockAccountId and insumoExpenseAccountId (400 insumo_stock_account_not_configured otherwise). bookValueCents is the balance of the supply-stock account up to countDate; adjustmentCents = book − counted. A positive adjustment posts D insumoExpense / C insumoStock (consumption), a negative one the reverse, zero posts nothing. One count per (unit, countDate): a second one is 409 INSUMO_COUNT_ALREADY_POSTED (reverse the entry to recount). The period gate is the ledger's.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId",
+                  "countDate",
+                  "countedValueCents"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  },
+                  "countDate": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "countedValueCents": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "InsumoStockCountView ({ countDate, bookValueCents, countedValueCents, adjustmentCents, entryId })"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "description": "INSUMO_COUNT_ALREADY_POSTED — count already posted for this date"
           }
         }
       }
@@ -23915,6 +23981,14 @@
                         "type": "string",
                         "minLength": 1,
                         "maxLength": 2000
+                      },
+                      "locale": {
+                        "type": "string",
+                        "enum": [
+                          "pt",
+                          "en"
+                        ],
+                        "description": "Idioma da UI; a resposta da IA sai nele (padrão pt)"
                       }
                     }
                   },

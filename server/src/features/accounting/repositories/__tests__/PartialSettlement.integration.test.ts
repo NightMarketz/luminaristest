@@ -204,6 +204,31 @@ describe('PartialSettlement — sum-CAS, invariante campo↔filhos, backfill (re
     expect(await apRepo.releaseSettlement(scope, 'ps-inflight', 20001, db as any)).toBe(0);
   }, 30000);
 
+  it('SM F-01.2 / INV F-11.2: releaseClaim e resolveRevertedClaim só tocam título em trânsito (PAYING/RECEIVING) e com saldo', async () => {
+    await seedPayable('ps-rc-ok', 50000, 'PAYING', 30000);
+    expect(await apRepo.releaseClaim(scope, 'ps-rc-ok', 30001, db as any)).toBe(0); // saldo não comporta
+    expect(await apRepo.releaseClaim(scope, 'ps-rc-ok', 10000, db as any)).toBe(1);
+    expect(await apRepo.resolveRevertedClaim(scope, 'ps-rc-ok', 'PARTIALLY_PAID', db as any)).toBe(1);
+    const ok = await db.payable.findUniqueOrThrow({ where: { id: 'ps-rc-ok' } });
+    expect([Number(ok.paidCents), ok.status]).toEqual([20000, 'PARTIALLY_PAID']);
+
+    // Título que já saiu de PAYING (aqui, CANCELLED): nenhuma das duas escritas o toca.
+    await seedPayable('ps-rc-gone', 50000, 'CANCELLED', 30000);
+    expect(await apRepo.releaseClaim(scope, 'ps-rc-gone', 10000, db as any)).toBe(0);
+    expect(await apRepo.resolveRevertedClaim(scope, 'ps-rc-gone', 'OPEN', db as any)).toBe(0);
+    const gone = await db.payable.findUniqueOrThrow({ where: { id: 'ps-rc-gone' } });
+    expect([Number(gone.paidCents), gone.status]).toEqual([30000, 'CANCELLED']);
+
+    await seedReceivable('ps-rc-ar', 50000, 'RECEIVED', 50000);
+    expect(await arRepo.releaseClaim(scope, 'ps-rc-ar', 10000, db as any)).toBe(0);
+    expect(await arRepo.resolveRevertedClaim(scope, 'ps-rc-ar', 'PARTIALLY_RECEIVED', db as any)).toBe(0);
+    await seedReceivable('ps-rc-ar2', 50000, 'RECEIVING', 30000);
+    expect(await arRepo.releaseClaim(scope, 'ps-rc-ar2', 30000, db as any)).toBe(1);
+    expect(await arRepo.resolveRevertedClaim(scope, 'ps-rc-ar2', 'OPEN', db as any)).toBe(1);
+    const ar2 = await db.receivable.findUniqueOrThrow({ where: { id: 'ps-rc-ar2' } });
+    expect([Number(ar2.receivedCents), ar2.status]).toEqual([0, 'OPEN']);
+  }, 30000);
+
   it('AR mirror — sum-CAS by receivedCents: 3 × 15000 fit a 50000 title, the 4th loses by balance', async () => {
     await seedReceivable('ps-ar', 50000);
     const results: number[] = [];

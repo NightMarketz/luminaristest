@@ -286,13 +286,23 @@ describe('FiscalProfileService.upsert — insumoExpenseAccountId (ITEM-DESTINATI
     expect(repo.upsert).not.toHaveBeenCalled();
   });
 
-  it('conta de despesa folha do escopo → gravada, devolvida na view e no evento fiscal_profile.updated (allowlist)', async () => {
+  it.each(['4.7', '4.2.1'])('conta de custo folha do escopo (%s) → gravada, devolvida na view e no evento fiscal_profile.updated (allowlist)', async (code) => {
     const { svc, repo, accounts, append } = build();
-    (accounts.findById as jest.Mock).mockResolvedValue(acc({}));
+    (accounts.findById as jest.Mock).mockResolvedValue(acc({ code }));
     const view = await svc.upsert(scope, { ...base, insumoExpenseAccountId: 'acc-1' });
     expect((repo.upsert as jest.Mock).mock.calls[0][1]).toMatchObject({ insumoExpenseAccountId: 'acc-1' });
     expect(view.insumoExpenseAccountId).toBe('acc-1');
     const evt = (append.mock.calls[0] as unknown[])[2] as { eventType: string; payload: Record<string, unknown> };
     expect(JSON.parse(canonicalizeAuditPayload(evt.eventType, evt.payload))).toMatchObject({ insumoExpenseAccountId: 'acc-1' });
+  });
+
+  // Lacuna 038d (dono 21/11, D-2026-11-21-DRE-INSUMO-PELO-PAPEL item 3 + 7c3b "Remover"): a DRE classifica o insumo pelo papel,
+  // então qualquer folha de despesa serve — 4.1.9 (fora da 4.2/4.7) é gravada; a recusa do #1302 saiu.
+  it('despesa folha fora da 4.2/4.7 (4.1.9) → gravada (o papel, não o código, põe o insumo em custo na DRE)', async () => {
+    const { svc, repo, accounts } = build();
+    (accounts.findById as jest.Mock).mockResolvedValue(acc({ code: '4.1.9' }));
+    const view = await svc.upsert(scope, { ...base, insumoExpenseAccountId: 'acc-1' });
+    expect((repo.upsert as jest.Mock).mock.calls[0][1]).toMatchObject({ insumoExpenseAccountId: 'acc-1' });
+    expect(view.insumoExpenseAccountId).toBe('acc-1');
   });
 });

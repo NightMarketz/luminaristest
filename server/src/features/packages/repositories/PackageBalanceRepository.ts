@@ -79,7 +79,7 @@ export class PackageBalanceRepository implements IPackageBalanceRepository {
     });
   }
 
-  // ponytail: varredura sem índice em customer_package_balances (BRIEF item 14); upgrade = @@index([expiresAt]).
+  // atalho: varredura sem índice em customer_package_balances (BRIEF item 14); upgrade = @@index([expiresAt]).
   public async listExpiryCandidates(): Promise<CustomerPackageBalance[]> {
     return prisma.customerPackageBalance.findMany({
       where: { expiresAt: { not: null }, balanceCents: { gt: 0 }, deletedAt: null },

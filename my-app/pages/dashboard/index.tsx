@@ -2,7 +2,7 @@ import { useRouter } from 'next/router';
 import { getCookie, deleteCookie } from 'cookies-next';
 import { useAuth } from '../../lib/context/AuthContext';
 import type { IDynamicTable } from '../../features/dashboard/components/shared/dynamic-tables.client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DynamicTableService } from '../../lib/services/dynamic-table.service';
 import { DashboardSidebar } from '../../features/dashboard/DashboardSidebar';
 import dynamic from 'next/dynamic';
@@ -10,6 +10,8 @@ import { isNavigable } from '../../features/dashboard/category-views/shared/util
 import DashboardOverview from '../../features/dashboard/components/DashboardOverview';
 import { GetServerSideProps } from 'next';
 import { runDevSeed } from '../../features/dev/seed';
+import { notify } from '../../lib/notifications/notify';
+import { wasNotified } from '../../lib/notifications/notified';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useTranslation } from 'next-i18next';
 import Head from 'next/head';
@@ -52,18 +54,46 @@ const GenericTabbedView = dynamic(
 
 interface DashboardPageProps {
   allTables: IDynamicTable[];
+  /** Status HTTP (>= 400, fora 401/403) da carga SSR das tabelas: mostra o erro com "tentar de novo" em vez de mandar ao login. */
+  loadError?: number;
+}
+
+function DashboardLoadError() {
+  const { t } = useTranslation('common');
+  const router = useRouter();
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-6 text-center">
+      <p role="alert" className="text-sm font-semibold text-red-600 dark:text-red-400">
+        {t('errorLoading', 'Error loading.')}
+      </p>
+      <button
+        type="button"
+        onClick={() => void router.replace(router.asPath)}
+        className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700"
+      >
+        {t('try_again', 'Try again')}
+      </button>
+    </div>
+  );
+}
+
+export default function DashboardPageEntry(props: DashboardPageProps) {
+  return props.loadError ? <DashboardLoadError /> : <DashboardPage allTables={props.allTables} />;
 }
 
 function DashboardPage({ allTables }: DashboardPageProps) {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const { t } = useTranslation('common');
+  const tRef = useRef(t);
+  tRef.current = t;
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
-    if (router.isReady && router.query.category) {
-      setSelectedCategory(router.query.category as string);
+    const category = router.query.category;
+    if (router.isReady && typeof category === 'string' && category) {
+      setSelectedCategory(category);
     }
   }, [router.isReady, router.query.category]);
   const [tables, setTables] = useState<IDynamicTable[]>(allTables || []);
@@ -100,10 +130,11 @@ function DashboardPage({ allTables }: DashboardPageProps) {
         setSeeding(true);
         await runDevSeed(tables, () => { });
         window.sessionStorage.setItem('dev_seed_ran', '1');
-        const j = await DynamicTableService.getTables().catch(() => ({ data: [] as IDynamicTable[] }));
-        if (Array.isArray(j?.data)) setTables(j.data as IDynamicTable[]);
+        const j = await DynamicTableService.getTables().catch(() => null); // falha já notificada pelo apiClient; o painel mantém as tabelas
+        if (Array.isArray(j?.data)) setTables(j.data as unknown as IDynamicTable[]);
       } catch (e: unknown) {
         console.error('Seed failed:', e);
+        if (!wasNotified(e)) notify(e instanceof Error ? e.message : String(e), 'error', tRef.current('seedFailed'));
       } finally {
         setSeeding(false);
       }
@@ -226,10 +257,11 @@ function DashboardPage({ allTables }: DashboardPageProps) {
             try {
               setSeeding(true);
               await runDevSeed(tables, () => { });
-              const j = await DynamicTableService.getTables().catch(() => ({ data: [] as IDynamicTable[] }));
-              if (Array.isArray(j?.data)) setTables(j.data as IDynamicTable[]);
+              const j = await DynamicTableService.getTables().catch(() => null); // falha já notificada pelo apiClient; o painel mantém as tabelas
+              if (Array.isArray(j?.data)) setTables(j.data as unknown as IDynamicTable[]);
             } catch (e: unknown) {
               console.error('Manual seed failed:', e);
+              if (!wasNotified(e)) notify(e instanceof Error ? e.message : String(e), 'error', t('seedFailed'));
             } finally {
               setSeeding(false);
             }
@@ -237,17 +269,16 @@ function DashboardPage({ allTables }: DashboardPageProps) {
           seedingText={t('seeding')}
           seedDataText={t('seedData')}
         />
-        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {renderContent()}
           </div>
-        </main>
+        </div>
       </div>
     </>
   );
 }
 
-export default DashboardPage;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const { req, res } = context;
@@ -319,11 +350,14 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   if (status >= 400) {
-    console.log('[Dashboard SSR] API request failed (not ok), redirecting');
+    // Sessão válida + API com erro (5xx, 404...): redirecionar ao login só devolvia o usuário logado para "/" e
+    // escondia o erro. A página mostra a falha com "tentar de novo".
+    console.log('[Dashboard SSR] API request failed (not ok), rendering error state');
     return {
-      redirect: {
-        destination: `/users/login`,
-        permanent: false,
+      props: {
+        allTables: [],
+        loadError: status,
+        ...translations,
       },
     };
   }

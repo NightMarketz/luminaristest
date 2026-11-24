@@ -1,0 +1,69 @@
+Luminaris
+🇺🇸
+EN
+h2-21d-ai
+H
+My Profile
+
+Manage your account information and security settings.
+
+Profile updated successfully!
+H
+H2 21d AI Tester
+
+@h2-21d-ai
+
+USER
+
+EMAIL
+
+h2-21d-ai2@luminaris.test
+
+ID
+
+cmwck42vm0000ciiwxus3gkiw
+
+MEMBRO DESDE
+
+—
+
+PLANO ATUAL
+
+Gratuito
+
+Gerencie sua assinatura e aproveite mais recursos.
+
+Gerenciar Assinatura
+Personal Information
+
+Update your name, username, and email address.
+
+FULL NAME
+USERNAME
+EMAIL
+Security
+
+Change your password. Leave blank to keep the current one.
+
+CURRENT PASSWORD
+
+Required to change your password or email.
+
+NEW PASSWORD (OPTIONAL)
+
+Minimum 6 characters if changing password.
+
+Preferências de Região
+
+Idioma da interface e moeda padrão para valores financeiros.
+
+IDIOMA
+🇧🇷 Português (BR)
+🇺🇸 English (US)
+MOEDA
+🇧🇷 Real Brasileiro (R$)
+🇺🇸 Dólar Americano ($)
+🇪🇺 Euro (€)
+Salvar Preferências
+Cancel
+Save Changes

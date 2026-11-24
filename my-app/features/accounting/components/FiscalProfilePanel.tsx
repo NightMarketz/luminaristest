@@ -132,7 +132,7 @@ export function FiscalProfilePanel({ unitId }: FiscalProfilePanelProps) {
   const saving = governed.busy;
   const saveError = formError ?? governed.error;
 
-  // ponytail: os `as` dos <select> abaixo são folha string → união (cada <option> já é um membro da união), nunca objeto.
+  // atalho: os `as` dos <select> abaixo são folha string → união (cada <option> já é um membro da união), nunca objeto.
   const regime = form.regimeTributario;
   const simples = regime === 'SIMPLES';
   const faltanteLabel = (name: string) => (name in FALTANTE_LABEL ? t(`fiscalProfile.faltante.${name}`, FALTANTE_LABEL[name]) : name);
@@ -368,6 +368,10 @@ export function FiscalProfilePanel({ unitId }: FiscalProfilePanelProps) {
                 <label className={checkLabel}>
                   <input type="checkbox" checked={form.pisCofinsCreditFromSimplesSupplier} onChange={(e) => set('pisCofinsCreditFromSimplesSupplier', e.target.checked)} />
                   {t('fiscalProfile.field.creditFromSimplesSupplier', 'Crédito sobre compra de fornecedor do Simples')}
+                </label>
+                <label className={checkLabel}>
+                  <input type="checkbox" checked={form.pisCofinsCreditMonofasicoInsumo} onChange={(e) => set('pisCofinsCreditMonofasicoInsumo', e.target.checked)} />
+                  {t('fiscalProfile.field.creditMonofasicoInsumo', 'Crédito de PIS/COFINS do produto monofásico usado como insumo do serviço (IN RFB 2.121 art. 178)')}
                 </label>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

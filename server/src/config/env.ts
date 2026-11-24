@@ -122,7 +122,12 @@ export type Env = z.infer<ReturnType<typeof buildEnvSchema>>;
 
 /** Validates a source (defaults to process.env); throws a single aggregated error on failure. */
 export function validateEnv(source: NodeJS.ProcessEnv = process.env): Env {
-  const nodeEnv = source.NODE_ENV ?? 'development';
+  // BRD F-03.4 (dono, 2026-11-10, Q6 = a): no implicit 'development' — a deploy without NODE_ENV would leak
+  // stacks in 500s and skip the "refuse production" guards of the fake adapters.
+  if (!source.NODE_ENV) {
+    throw new Error('[env] Invalid environment configuration:\n  - NODE_ENV: required (development | test | production)');
+  }
+  const nodeEnv = source.NODE_ENV;
   const parsed = buildEnvSchema(nodeEnv).safeParse(source);
   if (!parsed.success) {
     const details = parsed.error.issues

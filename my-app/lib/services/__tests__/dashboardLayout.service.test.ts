@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NETWORK_ERROR_MESSAGE } from '../../api/api-client'; // BRD F-72.1
 import { DashboardLayoutService } from '../dashboardLayout.service';
 import { notify } from '../../notifications/notify';
 
@@ -63,8 +64,8 @@ describe('DashboardLayoutService', () => {
     expect(notify).not.toHaveBeenCalled();
   });
 
-  it('falha de rede vira Error com a mensagem nativa', async () => {
+  it('falha de rede vira Error com a mensagem de rede do cliente (BRD F-72.1)', async () => {
     vi.mocked(globalThis.fetch).mockRejectedValue(new TypeError('Failed to fetch'));
-    await expect(DashboardLayoutService.list()).rejects.toEqual(new Error('Failed to fetch'));
+    await expect(DashboardLayoutService.list()).rejects.toEqual(new Error(NETWORK_ERROR_MESSAGE));
   });
 });

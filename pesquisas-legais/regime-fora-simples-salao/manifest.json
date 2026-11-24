@@ -1,0 +1,504 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 8.212 de 24/07/1991",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1991/lei-8212-1991-07-24.md",
+      "url_final": "https://github.com/ctresb/leis/blob/9b29f44078e25755cfaf358456dd815043075924/federal/leis-ordinarias/1991/lei-8212-1991-07-24.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1991-07-24;8212",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "9b29f44078e25755cfaf358456dd815043075924",
+      "alertas": [],
+      "baixado_em": "2026-11-21T08:39:24-03:00",
+      "sha256": "6ace89674b04578f1f2ff4e16d4ab89e4a251e1da7b44b288870cc63ec2bb0b7",
+      "arquivo": "docs/D01_lei-8212-1991-07-24.md",
+      "texto": "docs/D01_lei-8212-1991-07-24.txt",
+      "bytes": 161522,
+      "sha256_texto": "d2d2d71eeab276e294c083cacb84fddb1fe87653c06cf93b4f4cb5ccdf0f8582",
+      "captura": {
+        "anterior": {
+          "slug": "brief-pes4-f2",
+          "id": "D04",
+          "baixado_em": "2026-11-05T20:18:58-03:00",
+          "sha256_texto": "d2d2d71eeab276e294c083cacb84fddb1fe87653c06cf93b4f4cb5ccdf0f8582"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 9.430 de 27/12/1996",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1996/lei-9430-1996-12-27.md",
+      "url_final": "https://github.com/ctresb/leis/blob/6c8aa8aa7d6126d14c332df3ab07f956b17f4bf2/federal/leis-ordinarias/1996/lei-9430-1996-12-27.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1996-12-27;9430",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "6c8aa8aa7d6126d14c332df3ab07f956b17f4bf2",
+      "alertas": [],
+      "baixado_em": "2026-11-21T08:39:26-03:00",
+      "sha256": "6e8e20371d0e7796244402441b7e3fc72df83a7bbe640029d4919359a6115bcc",
+      "arquivo": "docs/D02_lei-9430-1996-12-27.md",
+      "texto": "docs/D02_lei-9430-1996-12-27.txt",
+      "bytes": 117629,
+      "sha256_texto": "484dfc5f82cfd701b6ef85be6b5e525d40bede29704b1292e0d3d26219218fbd",
+      "captura": {
+        "anterior": {
+          "slug": "brief-pes4-f2",
+          "id": "D07",
+          "baixado_em": "2026-11-05T20:18:59-03:00",
+          "sha256_texto": "484dfc5f82cfd701b6ef85be6b5e525d40bede29704b1292e0d3d26219218fbd"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Lei nº 9.249 de 26/12/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d955e7e66c4a7176278ee8ac74513668de7fc989/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-12-26;9249",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "d955e7e66c4a7176278ee8ac74513668de7fc989",
+      "alertas": [],
+      "baixado_em": "2026-11-21T08:39:29-03:00",
+      "sha256": "18cb96b64a850a3f9b738da870044230b76a336068e3fae79cb83f10b14d4699",
+      "arquivo": "docs/D03_lei-9249-1995-12-26.md",
+      "texto": "docs/D03_lei-9249-1995-12-26.txt",
+      "bytes": 45124,
+      "sha256_texto": "591b0a142e86869e4b27eca9dc3e0a4dc041842dd7a9c599f4ec0915fffcf555",
+      "captura": {
+        "anterior": {
+          "slug": "triagem-contador-2026-10-30",
+          "id": "D03",
+          "baixado_em": "2026-10-30T02:20:56-03:00",
+          "sha256_texto": "591b0a142e86869e4b27eca9dc3e0a4dc041842dd7a9c599f4ec0915fffcf555"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "Lei nº 10.147 de 21/12/2000",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2000/lei-10147-2000-12-21.md",
+      "url_final": "https://github.com/ctresb/leis/blob/dc08d8291baac23e97bb4c5095389052d6846822/federal/leis-ordinarias/2000/lei-10147-2000-12-21.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2000-12-21;10147",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "dc08d8291baac23e97bb4c5095389052d6846822",
+      "alertas": [],
+      "baixado_em": "2026-11-21T08:39:32-03:00",
+      "sha256": "3e15396e59ce53f5cec18fe5bdce6341dc281ef23e9924b977a80a696d687d37",
+      "arquivo": "docs/D04_lei-10147-2000-12-21.md",
+      "texto": "docs/D04_lei-10147-2000-12-21.txt",
+      "bytes": 9849,
+      "sha256_texto": "cf0782f3037fcdb6f2e3ae19a4f23005da150b3a35573fb4d896a44c0d859334",
+      "captura": {
+        "anterior": {
+          "slug": "eficiencia-fiscal-praticas",
+          "id": "D05",
+          "baixado_em": "2026-10-20T11:40:37-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "Lei nº 10.637 de 30/12/2002",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2002/lei-10637-2002-12-30.md",
+      "url_final": "https://github.com/ctresb/leis/blob/823c54bedbd9e523afea8ab05e3cd715bd70a18d/federal/leis-ordinarias/2002/lei-10637-2002-12-30.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2002-12-30;10637",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "823c54bedbd9e523afea8ab05e3cd715bd70a18d",
+      "alertas": [],
+      "baixado_em": "2026-11-21T08:39:36-03:00",
+      "sha256": "f165259701b4081b0e9f73921c214895bea18d10081ade540630de3ee2a5ad8e",
+      "arquivo": "docs/D05_lei-10637-2002-12-30.md",
+      "texto": "docs/D05_lei-10637-2002-12-30.txt",
+      "bytes": 79264,
+      "sha256_texto": "4b6406f8f06136a5d20657a14d9cdb062f8a2e435797f21b392df48481cda6ad",
+      "captura": {
+        "anterior": {
+          "slug": "eficiencia-fiscal-praticas",
+          "id": "D17",
+          "baixado_em": "2026-10-20T11:45:44-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "Lei nº 10.833 de 29/12/2003",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2003/lei-10833-2003-12-29.md",
+      "url_final": "https://github.com/ctresb/leis/blob/17688c9637f6a90b7faace6d797aedfa3f6b2ff0/federal/leis-ordinarias/2003/lei-10833-2003-12-29.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2003-12-29;10833",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "17688c9637f6a90b7faace6d797aedfa3f6b2ff0",
+      "alertas": [],
+      "baixado_em": "2026-11-21T08:39:40-03:00",
+      "sha256": "fa0d994627d9e1476d625a9f0b588e596181735b922bdcdf9c1c0336fd06b9fc",
+      "arquivo": "docs/D06_lei-10833-2003-12-29.md",
+      "texto": "docs/D06_lei-10833-2003-12-29.txt",
+      "bytes": 176687,
+      "sha256_texto": "1586972bc1932da6422885dc583607b026e0c531b826a781f603c37e57ea5946",
+      "captura": {
+        "anterior": {
+          "slug": "brief-2026-10-22-retencoes-fonte",
+          "id": "D01",
+          "baixado_em": "2026-10-22T13:21:29-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "Medida Provisória nº 2.158-35, de 24 de Agosto de 2001",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/medidas-provisorias/2001/mpv-2158-35-2001-08-24.md",
+      "url_final": "https://github.com/ctresb/leis/blob/6b9308d1da378562fa53395b5c2e9cd311bf86cc/federal/medidas-provisorias/2001/mpv-2158-35-2001-08-24.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www2.camara.leg.br/legin/fed/medpro/2001/medidaprovisoria-2158-35-24-agosto-2001-390566-normaatualizada-pe.html",
+      "versao_texto": "compilada",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "6b9308d1da378562fa53395b5c2e9cd311bf86cc",
+      "alertas": [],
+      "baixado_em": "2026-11-21T08:39:42-03:00",
+      "sha256": "18c9046ac3464f29c87475bb4df443c64ad2c577eb8ef68f9d10f8a01161605e",
+      "arquivo": "docs/D07_mpv-2158-35-2001-08-24.md",
+      "texto": "docs/D07_mpv-2158-35-2001-08-24.txt",
+      "bytes": 87239,
+      "sha256_texto": "a4f676cba3c39f714b311396cb20fe5fd814222847256427a53fd8debdb60176",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "Tema de repercussão geral nº 985 do STF",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/jurisprudencia/stf/repercussao-geral/tema-985.md",
+      "url_final": "https://github.com/ctresb/leis/blob/884f5576d909a13584854496f9da490da28578db/jurisprudencia/stf/repercussao-geral/tema-985.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://pangeabnp.pdpj.jus.br/api/v1/precedentes",
+      "versao_texto": "Banco Nacional de Precedentes do CNJ",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "884f5576d909a13584854496f9da490da28578db",
+      "alertas": [
+        "versao_texto = 'Banco Nacional de Precedentes do CNJ' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T08:40:41-03:00",
+      "sha256": "7e98a248a0c4d78da86f76a1628c8f0bd4f1feee3b8be8f3009025d26ed8ea44",
+      "arquivo": "docs/D08_tema-985.md",
+      "texto": "docs/D08_tema-985.txt",
+      "bytes": 3498,
+      "sha256_texto": "28d6bed85db699b30734178ded86087c3429e5a18e2153234bb63ac1827180e4",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D09",
+      "titulo": "Tema de repercussão geral nº 69 do STF",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/jurisprudencia/stf/repercussao-geral/tema-69.md",
+      "url_final": "https://github.com/ctresb/leis/blob/884f5576d909a13584854496f9da490da28578db/jurisprudencia/stf/repercussao-geral/tema-69.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://pangeabnp.pdpj.jus.br/api/v1/precedentes",
+      "versao_texto": "Banco Nacional de Precedentes do CNJ",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "884f5576d909a13584854496f9da490da28578db",
+      "alertas": [
+        "versao_texto = 'Banco Nacional de Precedentes do CNJ' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T08:40:44-03:00",
+      "sha256": "f355a46085af48bbf3f2700a7c73cad69ba912ca92c30950760bf9f513660741",
+      "arquivo": "docs/D09_tema-69.md",
+      "texto": "docs/D09_tema-69.txt",
+      "bytes": 2896,
+      "sha256_texto": "109e91246073c5e977bf0f40471d879634c0f4be669b72057afd740024b6a464",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D10",
+      "titulo": "Lei Complementar nº 224 de 26/12/2025",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2025/lcp-224-2025-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/27a3371bb8bcc8f1c5d753672d422f89680f8830/federal/leis-complementares/2025/lcp-224-2025-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2025-12-26;224",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "27a3371bb8bcc8f1c5d753672d422f89680f8830",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T08:42:55-03:00",
+      "sha256": "6d2c451c17be08da1e811f15c80f188b47b66c7d3811220ade0fb69ee8b0a07c",
+      "arquivo": "docs/D10_lcp-224-2025-12-26.md",
+      "texto": "docs/D10_lcp-224-2025-12-26.txt",
+      "bytes": 25875,
+      "sha256_texto": "4d0324c9b154e0852eec5dc7232927ebde1d189e881bf879f8eade834b50c1bd",
+      "captura": {
+        "anterior": {
+          "slug": "lc224-sobra-limite",
+          "id": "D01",
+          "baixado_em": "2026-11-03T19:22:15-03:00",
+          "sha256_texto": "4d0324c9b154e0852eec5dc7232927ebde1d189e881bf879f8eade834b50c1bd"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D11",
+      "titulo": "Lcp 224",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp224.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp224.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T08:43:30-03:00",
+      "sha256": "ee5a106d653e65639b7151905cc57fcd96aa6d50cf7105519e6d9fe798cb853a",
+      "arquivo": "docs/D11_lcp224-htm.html",
+      "texto": "docs/D11_lcp224-htm.txt",
+      "bytes": 87083,
+      "sha256_texto": "052d49812305138106b3de213ded2115a93234778bbdab564b72802b47d22f08",
+      "captura": {
+        "anterior": {
+          "slug": "lc224-sobra-limite",
+          "id": "D04",
+          "baixado_em": "2026-11-03T19:27:21-03:00",
+          "sha256_texto": "052d49812305138106b3de213ded2115a93234778bbdab564b72802b47d22f08"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D12",
+      "titulo": "Instrução Normativa RFB nº 1700, de 14 de março de 2017",
+      "url": "rfb:81268",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/81268/visao/multivigente",
+      "id_normativo": "rfb:81268",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-21T08:43:38-03:00",
+      "sha256": "0ffa45faae60ed62285940fb442dcb472b5c2529ccb0ae491c20cec9c5446c42",
+      "arquivo": "docs/D12_rfb-81268-multivigente.json",
+      "texto": "docs/D12_rfb-81268-multivigente.txt",
+      "bytes": 2664935,
+      "sha256_texto": "04d3e7f1a6ad70c872df1aad456c05a126734f195cb6364e979908b484857f87",
+      "anexos": [
+        {
+          "nome": "ANEXO I.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51960"
+        },
+        {
+          "nome": "Anexo I.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/52020"
+        },
+        {
+          "nome": "ANEXO II.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51961"
+        },
+        {
+          "nome": "Anexo II.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/52021"
+        },
+        {
+          "nome": "Anexo .html (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43237"
+        },
+        {
+          "nome": "tabela.html",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43557"
+        },
+        {
+          "nome": "Anexo IV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43258"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43259"
+        },
+        {
+          "nome": "Anexo VI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43260"
+        },
+        {
+          "nome": "Anexo VII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43261"
+        },
+        {
+          "nome": "Anexo VIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43262"
+        },
+        {
+          "nome": "Anexo IX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43263"
+        },
+        {
+          "nome": "Anexo X.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51971"
+        },
+        {
+          "nome": "Anexo XI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51972"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "irrf-distribuicao",
+          "id": "D11",
+          "baixado_em": "2026-10-17T11:26:14-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "SEM_COMPARACAO"
+      },
+      "alertas": [
+        "14 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar",
+        "há captura de 2026-10-17 (irrf-distribuicao D11), mas o texto dela não foi guardado"
+      ]
+    },
+    {
+      "id": "D13",
+      "titulo": "Lei nº 6.374, de 01/03/1989",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/estaduais/SP/leis-ordinarias/1989/lei-6374-1989-03-01-id25030.md",
+      "url_final": "https://github.com/ctresb/leis/blob/a04d818af03dd02ec234f777e89fc809126702e5/estaduais/SP/leis-ordinarias/1989/lei-6374-1989-03-01-id25030.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.al.sp.gov.br/norma/25030",
+      "versao_texto": "atualizada",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "a04d818af03dd02ec234f777e89fc809126702e5",
+      "alertas": [
+        "versao_texto = 'atualizada' (não é texto compilado: alterações posteriores não aparecem)",
+        "consta como revogada (situacao='Sem revogação expressa', revogada=false)"
+      ],
+      "baixado_em": "2026-11-21T08:44:35-03:00",
+      "sha256": "419917e3106054a23498fa31fdd8030acc29517f69b657b4d108999b2cded724",
+      "arquivo": "docs/D13_lei-6374-1989-03-01-id25030.md",
+      "texto": "docs/D13_lei-6374-1989-03-01-id25030.txt",
+      "bytes": 349593,
+      "sha256_texto": "237c5f3815481be162678a960884a35c980bc14d1364456a0bd515c4c1075f8b",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D14",
+      "titulo": "DECRETO Nº 53.151 DE 17 DE MAIO DE 2012 « Catálogo de Legislação Municipal",
+      "url": "https://legislacao.prefeitura.sp.gov.br/leis/decreto-53151-de-17-de-maio-de-2012",
+      "url_final": "https://legislacao.prefeitura.sp.gov.br/decreto-53151-de-17-de-maio-de-2012",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T08:44:54-03:00",
+      "sha256": "61fd9b18c6e7813aefe21a18d0de2ed0a849d1534e3814401218c327b976285f",
+      "arquivo": "docs/D14_decreto-53151-de-17-de-maio-de-2012.html",
+      "texto": "docs/D14_decreto-53151-de-17-de-maio-de-2012.txt",
+      "bytes": 285541,
+      "sha256_texto": "4a2fd29fdf5997fa0a2c7341351b856a0fb8d86afbdf7510287f0058f10ca570",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D15",
+      "titulo": "Decreto nº 12.808 de 29/12/2025",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2025/dec-12808-2025-12-29.md",
+      "url_final": "https://github.com/ctresb/leis/blob/517db958cd0ae2ba36c1f0b524b3cc55fe4198c6/federal/decretos/2025/dec-12808-2025-12-29.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2025-12-29;12808",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "517db958cd0ae2ba36c1f0b524b3cc55fe4198c6",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T08:50:51-03:00",
+      "sha256": "e8fb5ed38f64bc698d588768532e9bf4167cc22d71d527ce2b6a415318c48f6f",
+      "arquivo": "docs/D15_dec-12808-2025-12-29.md",
+      "texto": "docs/D15_dec-12808-2025-12-29.txt",
+      "bytes": 14131,
+      "sha256_texto": "ce9b8693f4fd64f4be4ba5ae8ea417592d495dd6df8e5d735a62170dae407ca5",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D16",
+      "titulo": "Decreto nº 12.955 de 29/04/2026",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2026/dec-12955-2026-04-29.md",
+      "url_final": "https://github.com/ctresb/leis/blob/517db958cd0ae2ba36c1f0b524b3cc55fe4198c6/federal/decretos/2026/dec-12955-2026-04-29.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2026-04-29;12955",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "517db958cd0ae2ba36c1f0b524b3cc55fe4198c6",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T08:50:53-03:00",
+      "sha256": "5527dbfe923a984a86c22b27ef1c5c0b6f4f0c2996bbe14315e8804afd08bbd9",
+      "arquivo": "docs/D16_dec-12955-2026-04-29.md",
+      "texto": "docs/D16_dec-12955-2026-04-29.txt",
+      "bytes": 779823,
+      "sha256_texto": "5e9edac0c08cbfc7d89c1bbcf32151b31396209c73c4afe4aeeffc93c344ec82",
+      "captura": {
+        "anterior": {
+          "slug": "fila-2026-10-27-bloco3-eficiencia",
+          "id": "D04",
+          "baixado_em": "2026-10-27T11:05:56-03:00",
+          "sha256_texto": "5e9edac0c08cbfc7d89c1bbcf32151b31396209c73c4afe4aeeffc93c344ec82"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D17",
+      "titulo": "Tema repetitivo nº 1008 do STJ",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/jurisprudencia/stj/repetitivos/tema-1008.md",
+      "url_final": "https://github.com/ctresb/leis/blob/8431a0f1642e726006aac605e365c363b5675ba6/jurisprudencia/stj/repetitivos/tema-1008.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://dadosabertos.web.stj.jus.br/dataset/4238da2f-c07b-4c1a-b345-4402accacdcf/resource/df29da13-7d6b-41ba-ad96-cd1a5bbd191c/download/temas.csv",
+      "versao_texto": "dados abertos do tribunal",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "8431a0f1642e726006aac605e365c363b5675ba6",
+      "alertas": [
+        "versao_texto = 'dados abertos do tribunal' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T08:50:55-03:00",
+      "sha256": "ca9eed70e161ec5f5bd18b72f64f1b374297ee6baa05a74b196166a137a61136",
+      "arquivo": "docs/D17_tema-1008.md",
+      "texto": "docs/D17_tema-1008.txt",
+      "bytes": 3786,
+      "sha256_texto": "20c19881f41d801457fc544ed5bac9b35b58793147a61019044cf33874c7f186",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "regime-fora-simples-salao",
+  "pergunta": "Fora do Simples (Presumido e Real), salão de SP: INSS/RAT/terceiros sobre 13º e férias; revenda (ICMS SP, PIS/Cofins monofásico, presunção 8%/12%, CBS/IBS 2027); lucro isento sem escrituração; prazos das guias",
+  "criado": "2026-11-21T08:38:05-03:00"
+}

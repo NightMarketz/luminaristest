@@ -52,6 +52,32 @@ export function validateMagicBytes(buffer: Buffer, mimetype: string): boolean {
   return true;
 }
 
+/** Rótulo de cada MIME para o 415 (BRD F-62.1). `octet-stream` é o fallback do navegador, não um tipo a pedir. */
+const MIME_LABEL: Record<string, string> = {
+  'application/pdf': 'PDF',
+  'image/png': 'PNG',
+  'image/jpeg': 'JPEG',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
+  'application/msword': 'DOC',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX',
+  'text/csv': 'CSV',
+  'text/plain': 'TXT',
+  'text/xml': 'XML',
+  'application/xml': 'XML',
+  'application/x-pkcs12': 'PFX/P12',
+  'application/pkcs12': 'PFX/P12',
+  'application/x-ofx': 'OFX',
+  'application/ofx': 'OFX',
+  'application/rtf': 'RTF',
+  'text/rtf': 'RTF',
+};
+
+/** BRD F-62.1: a mensagem do 415 sai da allowlist de quem chamou, não de um texto fixo. */
+export function allowedTypesMessage(allowedTypes: Iterable<string>): string {
+  const labels = [...new Set([...allowedTypes].filter((m) => m !== 'application/octet-stream').map((m) => MIME_LABEL[m] ?? m))];
+  return `File type not supported. Allowed: ${labels.join(', ')}.`;
+}
+
 /** Wraps a multer single-field middleware and converts multer errors to HTTP responses. */
 export function makeUploadMiddleware(
   allowedTypes: Set<string>,
@@ -108,13 +134,13 @@ export function makeUploadMiddleware(
         next();
         return;
       }
-      handleUploadError(err, res, next, maxMb);
+      handleUploadError(err, res, next, maxMb, allowedTypes);
     });
   };
 }
 
 /** Erros do multer → HTTP (compartilhado pelos middlewares de 1 campo e de vários campos). */
-function handleUploadError(err: unknown, res: Response, next: NextFunction, maxMb: number): void {
+function handleUploadError(err: unknown, res: Response, next: NextFunction, maxMb: number, allowedTypes: Iterable<string>): void {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
       res.status(413).json({
@@ -129,7 +155,7 @@ function handleUploadError(err: unknown, res: Response, next: NextFunction, maxM
   if (err instanceof Error && err.message === 'INVALID_FILE_TYPE') {
     res.status(415).json({
       success: false,
-      error: 'File type not supported. Allowed: PDF, PNG, JPEG, DOCX, XLSX, CSV, TXT.',
+      error: allowedTypesMessage(allowedTypes),
     });
     return;
   }
@@ -171,7 +197,7 @@ export function makeUploadFieldsMiddleware(
         next();
         return;
       }
-      handleUploadError(err, res, next, maxMb);
+      handleUploadError(err, res, next, maxMb, fields.flatMap((f) => [...f.allowedTypes]));
     });
   };
 }

@@ -24,7 +24,7 @@ import type { IDynamicTableWriteEffects } from '../../integration/services/IDyna
  * chave fora do schema é removida antes do plugin). O plugin isenta a validação manual de compra
  * pelo PREFIXO 'ACCOUNTING_PAYABLE:' do detailKey. `unique` de DynamicTable é scan TOCTOU, então
  * o read-first cobre o retry do reconcile.
- * // ponytail: corrida residual de dois requests simultâneos pode duplicar o movimento físico —
+ * // atalho: corrida residual de dois requests simultâneos pode duplicar o movimento físico —
  * // a passada físico×contábil do job (LAC-E) acusa; chave dura exigiria mover o log p/ Prisma.
  */
 

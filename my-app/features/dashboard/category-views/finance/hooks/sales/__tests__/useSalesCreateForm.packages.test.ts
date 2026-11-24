@@ -6,7 +6,8 @@ import type { PackageCatalog } from '../../../utils/packageSale';
 import type { SaleData } from '../../../types/sales.types';
 
 vi.mock('../../../services/FinanceService', () => ({
-    FinanceService: { createSaleWithItems: vi.fn(async () => 'sale-1') },
+    // INV F-40.2: o "Finalizar" cria o rascunho e finaliza por updateSale.
+    FinanceService: { createSaleWithItems: vi.fn(async () => 'sale-1'), updateSale: vi.fn(async () => ({})) },
 }));
 
 const catalog: PackageCatalog = {

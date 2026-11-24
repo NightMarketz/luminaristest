@@ -574,7 +574,7 @@ export function buildEcfFile(input: EcfFileInput): string[] {
 }
 
 /**
- * Self-check executável (ponytail: a lógica de valor/data/contagem deixa um
+ * Self-check executável (atalho: a lógica de valor/data/contagem deixa um
  * teste que falha se quebrar). Não é framework — asserts + throws.
  */
 export function __selfCheck(): void {

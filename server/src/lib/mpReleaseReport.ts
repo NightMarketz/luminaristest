@@ -124,10 +124,22 @@ function detectSeparator(headerLine: string): string {
   return ',';
 }
 
+/**
+ * BRD F-65.3: o `new Date` rola data impossível (2026-02-30 vira 03-02). Confere o dia ESCRITO contra o calendário,
+ * como `isValidDateOnly`; só confere — o dia contábil continua vindo do instante (P3-2).
+ */
+function writtenDayExists(v: string): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v);
+  if (!m) return true; // formato que não começa por AAAA-MM-DD: fica com a checagem do `new Date`
+  const [y, mo, day] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const check = new Date(Date.UTC(y, mo - 1, day));
+  return check.getUTCFullYear() === y && check.getUTCMonth() === mo - 1 && check.getUTCDate() === day;
+}
+
 function instantOf(raw: string, rowNumber: number): Date {
   const v = raw.trim();
   const d = new Date(v);
-  if (!OFFSET_RE.test(v) || Number.isNaN(d.getTime())) {
+  if (!OFFSET_RE.test(v) || Number.isNaN(d.getTime()) || !writtenDayExists(v)) {
     throw new ValidationError(`${RELEASE_REPORT_INVALID}: linha ${rowNumber}: DATE '${raw}' tem de ser instante ISO com offset.`, {
       code: RELEASE_REPORT_INVALID,
     });

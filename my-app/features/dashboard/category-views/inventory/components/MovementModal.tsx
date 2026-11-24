@@ -194,6 +194,7 @@ export function MovementModal({
                             <select
                                 value={movementType}
                                 onChange={(e) => setMovementType(e.target.value as MovementType)}
+                                data-own-style
                                 className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-gray-700 text-sm font-bold focus:ring-2 focus:ring-blue-500 transition-all outline-none"
                             >
                                 <option value="In">{t('inventory_view:movements.in', 'Entrada')} (+)</option>
@@ -205,6 +206,7 @@ export function MovementModal({
                             <select
                                 value={movementReason}
                                 onChange={(e) => setMovementReason(e.target.value as MovementReason)}
+                                data-own-style
                                 className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-gray-700 text-sm font-bold focus:ring-2 focus:ring-blue-500 transition-all outline-none"
                             >
                                 <option value="Purchase">{t('inventory_view:reasons.Purchase', 'Compra')}</option>
@@ -233,6 +235,7 @@ export function MovementModal({
                                 inputMode="numeric"
                                 value={movementQty || ''}
                                 onChange={(e) => handleQuantityChange(e.target.value)}
+                                data-own-style
                                 className="flex-1 px-4 py-3 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-gray-700 text-2xl font-black text-center text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
                                 placeholder="0"
                             />
@@ -276,6 +279,7 @@ export function MovementModal({
                                         value={movementCost}
                                         onChange={(e) => setMovementCost(formatCurrencyInput(e.target.value))}
                                         placeholder="0,00"
+                                        data-own-style
                                         className="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 dark:bg-neutral-800 border border-gray-100 dark:border-gray-700 text-lg font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none text-right"
                                     />
                                 </div>

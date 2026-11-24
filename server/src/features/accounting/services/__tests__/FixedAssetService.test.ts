@@ -226,6 +226,45 @@ describe('FixedAssetService.activateAsset — item 9', () => {
     expect(activate).toHaveBeenCalled();
   });
 
+  it('INV F-16.3: openingAccumulatedCents acima de costCents − residualValueCents → 400, nada ativado', async () => {
+    // custo 100.000, residual 10.000 → base depreciável 90.000; abertura 90.001 deixaria o ativo ACTIVE com acumulado acima da
+    // base, e o DepreciationService passaria a pular todo mês sem nunca virar FULLY_DEPRECIATED (exige igualdade).
+    const { service, activate, auditAppend } = build({
+      earliestOpen: { year: 2026, month: 6 },
+      asset: makeAsset({ costCents: 100_000n, residualValueCents: 10_000n }),
+    });
+    await expect(
+      service.activateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', activatedAt: '2026-01-01', openingAccumulatedCents: 90_001, version: 1 }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    expect(activate).not.toHaveBeenCalled();
+    expect(auditAppend).not.toHaveBeenCalled();
+  });
+
+  it('INV F-16.3: custo baixado entre a leitura externa e a tx → guarda re-checada dentro da tx recusa, nada ativado', async () => {
+    // updateAsset grava custo/residual sem incrementar `version`: o CAS do activate não enxerga a edição concorrente.
+    const { service, activate, auditAppend, findById } = build({
+      earliestOpen: { year: 2026, month: 6 },
+      asset: makeAsset({ costCents: 100_000n, residualValueCents: 0n }),
+    });
+    findById
+      .mockImplementationOnce(async () => makeAsset({ costCents: 100_000n, residualValueCents: 0n }))
+      .mockImplementation(async () => makeAsset({ costCents: 50_000n, residualValueCents: 0n }));
+    await expect(
+      service.activateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', activatedAt: '2026-01-01', openingAccumulatedCents: 90_000, version: 1 }),
+    ).rejects.toBeInstanceOf(ValidationError);
+    expect(activate).not.toHaveBeenCalled();
+    expect(auditAppend).not.toHaveBeenCalled();
+  });
+
+  it('INV F-16.3 (controle): openingAccumulatedCents igual à base depreciável passa', async () => {
+    const { service, activate } = build({
+      earliestOpen: { year: 2026, month: 6 },
+      asset: makeAsset({ costCents: 100_000n, residualValueCents: 10_000n }),
+    });
+    await service.activateAsset(scope, 'asset-1', { unitId: 'unit-1', assetId: 'asset-1', activatedAt: '2026-01-01', openingAccumulatedCents: 90_000, version: 1 });
+    expect(activate).toHaveBeenCalled();
+  });
+
   it('CAS: version divergente (repo devolve null) → ConflictError', async () => {
     const { service } = build({ activateResult: null });
     await expect(

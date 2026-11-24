@@ -9,7 +9,7 @@ export interface ServiceOption {
 /**
  * Catálogo `services` do tenant (DynamicTable) para o painel de perfis fiscais de serviço (FE-INCR-DFE PR-0, item 7).
  * Mesma técnica de `loadProductOptions`: `serviceRef` = id da linha, rótulo = `data.name` (cai no id).
- * // ponytail: limit=500, paginar quando um tenant passar disso (BRIEF A7 — mesmo teto do NfePanel).
+ * // atalho: limit=500, paginar quando um tenant passar disso (BRIEF A7 — mesmo teto do NfePanel).
  */
 export async function loadServiceOptions(): Promise<ServiceOption[]> {
   const tables = await DynamicTableService.getTables();

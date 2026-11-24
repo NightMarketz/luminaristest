@@ -26,7 +26,7 @@ export type AgingBucketId = (typeof AGING_BUCKETS)[number];
 /**
  * Rótulo do grupo para linhas sem contraparte (counterpartyId NULL).
  *
- * ponytail: inalcançável por constraint desde a 2ª migração (SEC-A1-5 — `counterpartyId` é NOT NULL
+ * atalho: inalcançável por constraint desde a 2ª migração (SEC-A1-5 — `counterpartyId` é NOT NULL
  * nas duas tabelas). MANTIDO de propósito (fork F-NN5(b), ratificado 2026-08-14): custa um `??` que
  * nunca dispara e é a rede se alguma linha legada aparecer por caminho não previsto — um relatório
  * que agrupa é melhor que um relatório que quebra. Remover só se a nulidade voltar a ser impossível

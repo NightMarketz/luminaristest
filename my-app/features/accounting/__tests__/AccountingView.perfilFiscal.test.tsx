@@ -26,12 +26,17 @@ vi.mock('../../../lib/services/accountantAssignments.service', () => ({
 vi.mock('../components/FiscalProfilePanel', () => ({
   FiscalProfilePanel: (p: { unitId: string }) => <div data-testid="unit-profile" data-unit={p.unitId} />,
 }));
+// FE-INCR-NFCE-ASSINADOR FA-3: a seção do assinador local entra logo depois do perfil da unidade.
+vi.mock('../components/dfe/AssinadorLocalSection', () => ({
+  AssinadorLocalSection: (p: { unitId: string }) => <div data-testid="assinador-local" data-unit={p.unitId} />,
+}));
 vi.mock('../components/ServiceFiscalProfilesPanel', () => ({
   ServiceFiscalProfilesPanel: (p: { unitId: string }) => <div data-testid="service-profiles" data-unit={p.unitId} />,
 }));
 
 describe('AccountingView — aba Perfil fiscal', () => {
   beforeEach(() => {
+    window.history.replaceState(null, '', '/'); // a aba vive em ?tab=: não vaza entre testes
     vi.clearAllMocks();
     cleanup();
     vi.mocked(DynamicTableService.getTables).mockResolvedValue({ data: [{ id: 't1', internalName: 'units' }] } as never);
@@ -52,6 +57,10 @@ describe('AccountingView — aba Perfil fiscal', () => {
     expect(unit).toHaveAttribute('data-unit', 'u1');
     expect(services).toHaveAttribute('data-unit', 'u1');
     expect(unit.compareDocumentPosition(services) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const assinador = screen.getByTestId('assinador-local');
+    expect(assinador).toHaveAttribute('data-unit', 'u1');
+    expect(unit.compareDocumentPosition(assinador) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(unit.nextElementSibling).toBe(assinador);
   });
 
   it('não é aba do modo cliente (allowlist DELEGATED_TABS)', () => {

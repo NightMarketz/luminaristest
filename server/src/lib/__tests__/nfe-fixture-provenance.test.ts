@@ -7,7 +7,7 @@ import { join } from 'path';
  * obrigatório na branch protection do main, o merge fica travado. Trocar o fixture sintético pela
  * NF-e 4.00 real anonimizada (e remover o marcador) faz o teste passar. Ver fixtures/nfe/README.md.
  *
- * ponytail: o teste é a trava — sem workflow/label extra. Some sozinho quando a nota real chega.
+ * atalho: o teste é a trava — sem workflow/label extra. Some sozinho quando a nota real chega.
  */
 const FIXTURE_DIR = join(__dirname, 'fixtures', 'nfe');
 const SENTINEL = 'SYNTHETIC-FIXTURE-NOT-REAL';

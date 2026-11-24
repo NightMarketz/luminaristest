@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useLatestRequest } from './useLatestRequest';
 import { CrmService, type AttachmentMeta } from '../../../lib/services/crm.service';
 
 export interface LeadAttachmentsState {
@@ -21,7 +22,10 @@ export function useLeadAttachments(leadId: string): LeadAttachmentsState {
   const [error, setError] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<AttachmentMeta[]>([]);
 
+  const begin = useLatestRequest();
+
   const reload = useCallback(async () => {
+    const isCurrent = begin();
     if (!leadId) {
       setAttachments([]);
       setLoading(false);
@@ -31,14 +35,16 @@ export function useLeadAttachments(leadId: string): LeadAttachmentsState {
     setError(null);
     try {
       const res = await CrmService.listAttachments('lead', leadId);
+      if (!isCurrent()) return;
       setAttachments(res?.data ?? []);
     } catch (e) {
+      if (!isCurrent()) return;
       setAttachments([]);
       setError(e instanceof Error ? e.message : 'Falha ao carregar anexos');
     } finally {
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
-  }, [leadId]);
+  }, [leadId, begin]);
 
   useEffect(() => {
     void reload();

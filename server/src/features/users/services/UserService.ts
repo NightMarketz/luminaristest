@@ -198,8 +198,11 @@ export class UserService {
     const isSelf = actor.userId === id;
     if (isSelf && (data.password || data.email !== undefined)) {
       const withHash = await this.userRepository.getUserByUsername(existingUser.username);
-      if (!data.currentPassword || !withHash || !(await bcrypt.compare(data.currentPassword, withHash.password))) {
-        throw new AppError('Current password is required to change password or email', 400, 'CURRENT_PASSWORD_INVALID');
+      if (!data.currentPassword) {
+        throw new AppError('A senha atual é obrigatória para trocar a senha ou o e-mail.', 400, 'CURRENT_PASSWORD_INVALID');
+      }
+      if (!withHash || !(await bcrypt.compare(data.currentPassword, withHash.password))) {
+        throw new AppError('A senha atual está incorreta.', 400, 'CURRENT_PASSWORD_INVALID');
       }
     }
 

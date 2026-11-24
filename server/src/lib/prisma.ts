@@ -13,7 +13,7 @@ if (process.env.NODE_ENV !== 'production') {
   global.prisma = prisma;
 }
 
-// ponytail: skip the fire-and-forget pragma setup under Jest. It resolves/rejects
+// atalho: skip the fire-and-forget pragma setup under Jest. It resolves/rejects
 // after a worker's teardown → "Cannot log after tests are done" flips the process
 // exit to 1 (TECH-DEBT-TEST-001). Prisma's SQLite connector already sets
 // foreign_keys=ON per connection; WAL/busy_timeout are concurrency tuning a

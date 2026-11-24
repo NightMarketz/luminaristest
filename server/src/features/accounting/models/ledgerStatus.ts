@@ -11,7 +11,7 @@
  *     reconciled entry vanish from the reports.
  *   - 'Draft' never contributes (D6).
  *
- * ponytail: plain `string[]`, not `as const` — the two consumer signatures (groupByAccount,
+ * atalho: plain `string[]`, not `as const` — the two consumer signatures (groupByAccount,
  * findManyForExport) take mutable `string[]`; a readonly tuple would break tsc and force
  * widening both interfaces for no runtime gain.
  */

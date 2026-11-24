@@ -12,6 +12,9 @@ export const STATUS_LABEL: Record<FiscalDocumentStatus, string> = {
   AUTHORIZED_DIVERGENT: 'Autorizada com divergência',
   REJECTED: 'Rejeitada',
   CANCELLED: 'Cancelada',
+  PENDING_SIGNATURE: 'Aguardando reautorização do assinador',
+  CONTINGENCY: 'Emitida em contingência, aguardando transmissão',
+  CANCEL_ANALYSIS: 'Cancelamento em análise pelo fisco',
 };
 
 export const PENDENCIA_LABEL: Record<FiscalDocumentPendencia, string> = {

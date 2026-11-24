@@ -56,6 +56,8 @@ export default function ErpViewWidget({ onClose, initialConfig, onConfigChange }
     const [config, setConfig] = useState<ErpWidgetConfig>(initialConfig || {});
     const [availableTables, setAvailableTables] = useState<IDynamicTable[]>([]);
     const [loadingTables, setLoadingTables] = useState(false);
+    // BRD F-73.2: falha ao listar as tabelas não pode virar módulo vazio.
+    const [tablesFailed, setTablesFailed] = useState(false);
 
     // Fetch available tables when user is authenticated
     useEffect(() => {
@@ -63,12 +65,14 @@ export default function ErpViewWidget({ onClose, initialConfig, onConfigChange }
             if (!user) return;
             try {
                 setLoadingTables(true);
+                setTablesFailed(false);
                 const body = await DynamicTableService.getTables();
                 if (Array.isArray(body?.data)) {
                     setAvailableTables(body.data as unknown as IDynamicTable[]);
                 }
             } catch (err) {
                 console.error('Failed to fetch tables for widget config', err);
+                setTablesFailed(true);
             } finally {
                 setLoadingTables(false);
             }
@@ -195,6 +199,12 @@ export default function ErpViewWidget({ onClose, initialConfig, onConfigChange }
                     <div className="flex-grow flex items-center justify-center">
                         <p className="text-gray-500 animate-pulse text-sm">
                             {t('loading_data', 'Carregando dados...')}
+                        </p>
+                    </div>
+                ) : tablesFailed ? (
+                    <div role="alert" className="flex-grow flex items-center justify-center p-4 text-center">
+                        <p className="text-red-600 dark:text-red-400 text-sm font-bold">
+                            {t('common:error_loading_data', 'Erro ao carregar os dados.')}
                         </p>
                     </div>
                 ) : (

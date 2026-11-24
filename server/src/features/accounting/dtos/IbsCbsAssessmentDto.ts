@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidDateOnly } from '../models/dates';
 
 /**
  * IBS-CBS-2027 PR-2 (BRIEF `docs/accounting/BE-INCR-IBS-CBS-2027-brief.md` §4.2, itens 9, 10, 13) — `.strict()`.
@@ -71,7 +72,7 @@ export const IbsCbsResumoSchema = z
     anoCalendario: z.number(),
     mes: z.number(),
     saldoARecolherCents: z.bigint().nonnegative(),
-    vencimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+    vencimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(isValidDateOnly, 'Data inválida no calendário.').nullable(),
     avisos: z.array(z.string()),
     memoria: MemoriaIbsCbsSchema,
   })

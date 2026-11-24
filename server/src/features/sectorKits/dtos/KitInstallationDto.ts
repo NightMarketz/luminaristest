@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidDateOnly } from '../../accounting/models/dates';
 import { KIT_INSTALL_STATUSES, KIT_INSTALL_WARNINGS, LAST_KIT_INSTALL_STEP } from '../models/kitInstallTypes';
 
 /**
@@ -37,7 +38,7 @@ export const InstallKitInputSchema = z
     installChartIfEmpty: z.boolean(),
     openCurrentPeriodIfMissing: z.boolean(),
     /** Data-only `YYYY-MM-DD` do mês a abrir e do dry-run do compile. */
-    today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(isValidDateOnly, 'Data inválida no calendário.'),
   })
   .strict();
 export type InstallKitInput = z.infer<typeof InstallKitInputSchema>;

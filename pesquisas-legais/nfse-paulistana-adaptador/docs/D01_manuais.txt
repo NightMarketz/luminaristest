@@ -1,0 +1,205 @@
+» Manuais - Nota Fiscal Paulistana Manuais – Nota Fiscal Paulistana 
+
+ Ir para o topo1 
+
+ Ir para o conteúdo2 
+
+ Ir para a busca3 
+
+ Ir para o menu4 
+
+ Ir para o rodapé5 
+
+ dark_mode light_mode 
+
+ menu search Buscar no site search Acessar o sistema 
+
+Início
+
+ Perfis expand_more 
+
+ Prestador de Serviços expand_more 
+
+Pessoa Jurídica
+
+Pessoa Física
+
+Simples Nacional
+
+MEI
+
+Tomador de serviços
+
+Contador
+
+Desenvolvedor WebService
+
+Sorteios
+
+Notícias
+
+Serviços
+
+Legislação
+
+Informações Gerais
+
+Reforma tributária
+
+Manuais
+
+ house chevron_right 
+
+Manuais
+
+Manuais
+
+Manual de Utilização do Web Service de NFS-e
+
+19/11/2026
+
+Apresenta a definição das especificações e critérios técnicos necessários para utilização do Web Service disponibilizado pela Prefeitura de São Paulo para as empresas prestadoras e/ou tomadoras de serviços. 
+
+ Autenticidade do arquivo: HASH MD5 2caec35c8bd4fff2ea0260d7c61cf795 
+
+ download Baixar pdf 
+
+Manual de Utilização do Web Service de NFTS
+
+30/12/2025
+
+Apresenta a definição das especificações e critérios técnicos necessários para utilização do Web Service NFTS disponibilizado pela Prefeitura de São Paulo para as empresas prestadoras e/ou tomadoras de serviços. 
+
+ Autenticidade do arquivo: HASH MD5 46dd921b97e626df27e05fc1a0867b1a 
+
+ download Baixar pdf 
+
+Manual de Acesso Pessoa Jurídica – NFS-e
+
+13/10/2026
+
+Apresenta informações do Programa da Nota Fiscal Paulistana e auxilia o usuário na emissão da NFS-e. 
+
+ Autenticidade do arquivo: HASH MD5 76a074a358a990c30bb4ecb3947a0d91 
+
+ download Baixar pdf 
+
+Manual de Acesso Pessoa Física – NFS-e
+
+28/01/2026
+
+Apresenta informações do Programa da Nota Fiscal Paulistana. 
+
+ Autenticidade do arquivo: HASH MD5 b86b5e24afec46d88f236f5c4ed6bd00 
+
+ download Baixar pdf 
+
+Manual de Nota Fiscal Eletrônica do Tomador/Intermediário de Serviços – NFTS
+
+28/01/2026
+
+Auxilia o usuário na emissão da NFTS. 
+
+ Autenticidade do arquivo: HASH MD5 a58206f3135f57d7616e5f841622ee81 
+
+ download Baixar pdf 
+
+Manual de Envio de Arquivo – Emissão de NFS-e em lote
+
+01/09/2023
+
+Auxilia o usuário na emissão de NFS-e em lote. 
+
+ Autenticidade do arquivo: HASH MD5 c6ec762b6ac7e492a2dc9f305ae9dc82 
+
+ download Baixar pdf 
+
+Manual de Envio de Arquivo – Emissão de NFTS em lote
+
+16/07/2020
+
+Auxilia o usuário na emissão da NFTS em lote.
+
+ Autenticidade do arquivo: HASH MD5 2d6c8ead582942ae13fb84dcc4c41ddf 
+
+ download Baixar pdf 
+
+Manual de Exportação de NFS-e
+
+13/04/2020
+
+Apresenta os layouts utilizados pelo Sistema da Nota Fiscal de Serviços Eletrônica – NFS-e da Prefeitura de São Paulo na exportação de NFS-e, permitindo que sejam transferidas informações da Prefeitura para os contribuintes em arquivos texto. 
+
+ Autenticidade do arquivo: HASH MD5 cfdfb21a5267bb9bf90374e63e268e0b 
+
+ download Baixar pdf 
+
+Manual de Exportação de NFTS
+
+16/01/2017
+
+Apresenta o layout utilizado pelo Sistema da Nota Fiscal de Serviços Eletrônica – NFS-e da Prefeitura de São Paulo na exportação da Nota Fiscal do Tomador/Intermediário de Serviços – NFTS, permitindo que sejam transferidas informações da Prefeitura para os tomadores ou intermediários de serviço em arquivos texto. 
+
+ Autenticidade do arquivo: HASH MD5 3015013f4f7f182939631203cf3968c1 
+
+ download Baixar pdf 
+
+Manual da Declaração de Plano de Saúde – DPS
+
+01/05/2024
+
+Auxilia o usuário na elaboração da Declaração de Plano de Saúde. 
+
+ Autenticidade do arquivo: HASH MD5 41f17402c0efc42da8737518ed12a529 
+
+ download Baixar pdf 
+
+Manual de Envio de Repasses – Planos de Saúde
+
+02/05/2024
+
+Auxilia o usuário no envio das informações relativas aos repasses do Plano de Saúde, dos contribuintes para a Prefeitura, em arquivos no formato texto. 
+
+ Autenticidade do arquivo: HASH MD5 24898dddb74be9e21a99ac0512ecac56 
+
+ download Baixar pdf 
+
+Manual do Sistema Eletrônico da Construção Civil – SISCON
+
+28/01/2024
+
+Auxilia o usuário na utilização do Sistema Eletrônico da Construção Civil – SISCON. 
+
+ Autenticidade do arquivo: HASH MD5 266f5a0cff9e453de985a0f106616e15 
+
+ download Baixar pdf 
+
+Manual de Envio de Arquivo – Criação de RMD em lote
+
+27/07/2017
+
+Manual descontinuado. Conforme Instrução Normativa SF/SUREM nº 14 de 12 de novembro de 2021, o registro das deduções de materiais deverá ser efetuado por meio de “upload” dos documentos fiscais digitais estaduais, em formato XML. Utilize o manual do Sistema Eletrônico da Construção Civil – SISCON.
+
+ Autenticidade do arquivo: HASH MD5 553bd947bb93e270ce5784ac0e39e077 
+
+ download Baixar pdf 
+
+Manual Serviço de Valet
+
+18/10/2021
+
+O Sistema Serviço de Valet permite registrar, acompanhar ou cancelar pedidos de cupons de estacionamento, e imprimir ou cancelar guias de pagamento do ISS devido. 
+
+ Autenticidade do arquivo: HASH MD5 c7e2cd06b937616d78787c825cc4fe9a 
+
+ download Baixar pdf 
+
+ Voltar ao topo stat_1 
+
+ error 
+O Javascript do navegador está desabilitado. Habilite o Javascript nas configurações do navegador para a melhor utilização do sistema.
+
+Secretaria Municipal da Fazenda
+
+Rua Líbero Badaró, 190, Centro - CEP: 01008-000
+ mail Fale com a Fazenda phone 156

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { notify } from '../../lib/notifications/notify';
 import Link from 'next/link';
 import { useAuth } from '../../lib/context/AuthContext';
 import withAuth from '../../lib/hoc/withAuth';
@@ -24,6 +25,13 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => ({
         ...(await serverSideTranslations(locale ?? 'en', ['common'])),
     },
 });
+
+// Classes literais (o Tailwind só gera o que aparece inteiro no fonte).
+const ACCENT_SHADOW: Record<string, string> = {
+    blue: 'shadow-blue-500/20',
+    violet: 'shadow-violet-500/20',
+    amber: 'shadow-amber-500/20',
+};
 
 interface Plan {
     id: string;
@@ -122,7 +130,8 @@ function SubscriptionPage(props: InferGetServerSidePropsType<typeof getServerSid
     };
 
     const handleConfirm = () => {
-        // Purely visual — no backend call
+        // Sem cobrança nem troca de plano no backend ainda: fechar em silêncio parecia sucesso. Avisa o que (não) aconteceu.
+        notify('A contratação de planos ainda não está disponível. Nada foi alterado na sua conta.', 'info', 'Em breve');
         setShowConfirmModal(false);
         setSelectedPlan(null);
     };
@@ -190,7 +199,7 @@ function SubscriptionPage(props: InferGetServerSidePropsType<typeof getServerSid
                             <div className="p-6 lg:p-8">
                                 {/* Plan icon & name */}
                                 <div className="flex items-center gap-3 mb-4">
-                                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${plan.gradient} flex items-center justify-center text-white shadow-lg shadow-${plan.accentColor}-500/20`}>
+                                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${plan.gradient} flex items-center justify-center text-white shadow-lg ${ACCENT_SHADOW[plan.accentColor] ?? ''}`}>
                                         {plan.icon}
                                     </div>
                                     <div>

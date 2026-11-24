@@ -52,7 +52,7 @@ function pruneOldErrorLogs(dir: string): void {
  *
  * Synchronous on purpose: `uncaughtException` logs and then shuts down, and that is precisely the
  * failure worth keeping — an async write would still be queued when the process exits.
- * ponytail: append-only NDJSON, rotated by day. If volume ever makes the sync write hurt, the upgrade
+ * atalho: append-only NDJSON, rotated by day. If volume ever makes the sync write hurt, the upgrade
  * path is a real log shipper (Sentry/pino transport), not a buffer bolted on here.
  */
 function appendToErrorLog(jsonLine: string, timestamp: string): void {

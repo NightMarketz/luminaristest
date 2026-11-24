@@ -14,6 +14,7 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { sanitizeUserInput, wrapSystemPrompt } from '@/lib/PromptSanitizer';
 import { wrapUntrustedData } from '@/lib/untrustedData';
 import { RagTurn } from './ragTurn';
+import { agentToolError } from '../models/AgentTool.model';
 
 // System prompts are intentionally written in Portuguese: the assistant's persona is
 // a Portuguese-speaking ERP/CRM agent. Technical values (IDs, enums) stay language-neutral.
@@ -230,6 +231,12 @@ Pergunta Reformulada:
               toolArgs = JSON.parse(toolCall.function.arguments);
             } catch (parseError) {
               logger.warn('Failed to parse tool args, skipping', { toolName: toolCall.function.name });
+              // BRD F-57.1: every tool_call needs its tool message, or the next round sends an unanswered call.
+              messages.push({
+                role: 'tool',
+                tool_call_id: toolCall.id,
+                content: JSON.stringify(agentToolError('ARGUMENTOS_INVALIDOS', 'Os argumentos da ferramenta não são um JSON válido.')),
+              });
               continue;
             }
             const result = await this.agentService.handleToolCall(

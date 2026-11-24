@@ -6,6 +6,7 @@ import withAuth from '../../lib/hoc/withAuth';
 import { CrmProvider } from '../../lib/context/CrmContext';
 import { useCrmTable } from '../../features/crm/hooks/useCrmTable';
 import { CrmLayout } from '../../features/crm/components/CrmLayout';
+import { CrmLoadError } from '../../features/crm/components/CrmLoadError';
 import { StandardPagination } from '../../features/dashboard/shared/components/StandardPagination';
 
 const TYPE_DOT: Record<string, string> = {
@@ -24,7 +25,7 @@ const ITEMS_PER_PAGE = 25;
 
 function ActivitiesInner() {
   const { t } = useTranslation('crm');
-  const { loading, error, rows } = useCrmTable('leadActivities');
+  const { loading, error, rows, reload } = useCrmTable('leadActivities');
   const [currentPage, setCurrentPage] = useState(1);
 
   const sorted = useMemo(() => [...rows].sort((a, b) => {
@@ -50,12 +51,8 @@ function ActivitiesInner() {
       <h1 className="mb-4 text-2xl font-black tracking-tight text-gray-900 dark:text-white">
         {t('activities.title', 'Atividades')}
       </h1>
-      {error ? (
-        <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-300">
-          {error}
-        </div>
-      ) : null}
-      {loading ? (
+      {error ? <CrmLoadError message={error} onRetry={() => void reload()} /> : null}
+      {error ? null : loading ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('common.loading', 'Carregando…')}</p>
       ) : sorted.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('activities.empty', 'Nenhuma atividade registrada.')}</p>

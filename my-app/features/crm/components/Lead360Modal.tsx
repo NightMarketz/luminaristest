@@ -182,6 +182,7 @@ export function Lead360Modal({ isOpen, onClose, lead, stages, onChanged }: Lead3
     <Modal isOpen={isOpen} onClose={onClose} title={String(d.leadName ?? t('detail.unnamed_lead', 'Unnamed lead'))} maxWidth="max-w-4xl">
       <div className="space-y-6 p-5">
         <GradientHeader
+          as="h2"
           avatar={String(d.leadName ?? 'L')}
           title={String(d.leadName ?? t('detail.unnamed_lead', 'Unnamed lead'))}
           subtitle={String(d.source ?? '')}

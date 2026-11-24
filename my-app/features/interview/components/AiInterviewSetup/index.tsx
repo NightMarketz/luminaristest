@@ -123,7 +123,7 @@ function AiInterviewSetup() {
         <button
           onClick={() => setShowCustomizationPanel(!showCustomizationPanel)}
           className={`fixed top-1/2 -translate-y-1/2 z-50 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-all duration-300 ease-in-out focus:outline-none`}
-          style={{ left: showCustomizationPanel ? '405px' : '20px' }}
+          style={{ left: showCustomizationPanel ? 'min(405px, calc(100vw - 60px))' : '20px' }}
           aria-label={showCustomizationPanel ? t('onboardingHideFeaturesPanel') : t('onboardingShowFeaturesPanel')}
         >
           {showCustomizationPanel ? (
@@ -142,7 +142,7 @@ function AiInterviewSetup() {
         <button
           onClick={() => setShowRightPanel(!showRightPanel)}
           className={`fixed top-1/2 -translate-y-1/2 z-50 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-all duration-300 ease-in-out focus:outline-none`}
-          style={{ right: showRightPanel ? '505px' : '20px' }}
+          style={{ right: showRightPanel ? 'min(505px, calc(100vw - 60px))' : '20px' }}
           aria-label={showRightPanel ? t('onboardingHideCustomizePanel') : t('onboardingShowCustomizePanel')}
         >
           {showRightPanel ? (

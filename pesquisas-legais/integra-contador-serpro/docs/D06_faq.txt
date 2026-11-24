@@ -1,0 +1,82 @@
+SHA256-12 8e7a44eeed59
+Dúvidas/FAQ
+ Questões Frequentes
+ ❓ O novo CNPJ alfanumérico impacta os CNPJs já existentes ou o uso da API Integra Contador?
+ Não. Conforme a Instrução Normativa RFB nº 2.119, de 6 de dezembro de 2022, o CNPJ em formato alfanumérico será atribuído, a partir de julho de 2026, exclusivamente para novas inscrições.
+ Os CNPJs já existentes não sofrerão qualquer alteração e continuarão válidos no formato atual.
+ A API Integra Contador permanece compatível com ambos os formatos, aceitando CNPJs com validação de dígito verificador (DV), tanto para o contratante da API quanto para autores e contribuintes envolvidos, contemplando o novo padrão alfanumérico.
+ Referência: https://www.gov.br/receitafederal/pt-br/acesso-a-informacao/acoes-e-programas/programas-e-atividades/cnpj-alfanumerico
+ ❓ Clientes com CNPJ alfanumérico podem contratar a API Integra Contador?
+ Sim. Clientes que possuam CNPJ no formato alfanumérico poderão contratar e utilizar a API Integra Contador normalmente. Com a adoção do novo padrão de CNPJ, conforme a Instrução Normativa RFB nº 2.119/2022, a API foi preparada para aceitar inscrições com validação de dígito verificador (DV), independentemente de serem:
+ CNPJ em formato numérico
+ CNPJ em formato alfanumérico
+ Dessa forma, não há restrição quanto ao formato do CNPJ do contratante, desde que este esteja válido perante a Receita Federal.
+ ❓ Houve mudança nos campos numero da estrutura do JSON de payload?
+ Não. Não houve alteração estrutural nos campos numero do JSON de payload da API Integra Contador. O campo numero continua sendo utilizado para representar o identificador de inscrição do contribuinte. No entanto, com a introdução do CNPJ em formato alfanumérico, houve uma ampliação do formato aceito para este campo.
+ ⚠️ Formato do campo numero O campo numero pode representar:
+ CPF
+ CNPJ (formato atual numérico)
+ CNPJ em novo formato alfanumérico
+ Embora o nome do campo seja numero, não há restrição a valores exclusivamente numéricos. Com a entrada em vigor do CNPJ alfanumérico, o campo passa a aceitar também caracteres alfanuméricos, mantendo-se a validação pelo dígito verificador (DV).
+ ✅ Exemplo de payload com CNPJ alfanumérico
+ Exemplo de um contratante com CNPJ alfanumérico invocando um serviço para um contribuinte também com CNPJ alfanumérico:
+ {
+ "contratante": {
+ "numero": "12ABC34501DE35",
+ "tipo": 2
+ },
+ "autorPedidoDados": {
+ "numero": "12345678901",
+ "tipo": 1
+ },
+ "contribuinte": {
+ "numero": "98XYZ76500FG91",
+ "tipo": 2
+ },
+ "pedidoDados": {
+ "idSistema": "SISTEMA_EXEMPLO",
+ "idServico": "SERVICO_EXEMPLO",
+ "versaoSistema": "1.0",
+ "dados": "conteudo do pedido"
+ }
+}
+ 🔎 Observações importantes
+ O campo numero deve ser sempre tratado como string, podendo conter:
+ apenas números (CPF ou CNPJ atual)
+ ou caracteres alfanuméricos (novo CNPJ)
+ O campo tipo indica o tipo de inscrição:
+ 1 → CPF
+ 2 → CNPJ
+ O campo Contrante continua só aceitamdo CNPJ.
+ A validação do identificador (inclusive alfanumérico) continua considerando o dígito verificador (DV).
+ ✅ Boa prática para quem consome a API
+ Não restringir o campo numero a regex apenas numérica ([0-9]+)
+ Aceitar caracteres alfanuméricos ([A-Za-z0-9]+)
+ Os caracteres de A-Z devem ser maiúsculos
+ Garantir que o campo seja tratado como texto em todas as camadas (frontend, backend e banco)
+ ❓ Onde eu encontro exemplos de validação do cálculo de DV do novo CNPJ?
+ Utilize a documentação oficial da Receita Federal (RECOMENDADO).
+ A Receita publicou o material técnico com o algoritmo completo:
+ Documentação técnica: https://www.gov.br/receitafederal/pt-br/acesso-a-informacao/acoes-e-programas/programas-e-atividades/cnpj-alfanumerico
+ ❓ Quero mais informações sobre a API Integra Contador, onde encontrá-las?
+ Acesse a página do Integra Contador para mais informações sobre o serviço.
+ ❓ Quero contratar a API Integra Contador, como faço?
+ Acesse nosso passo a passo explicando como contratar.
+ ❓ Contratei a API Integra Contador, onde obtenho informações para usar o serviço?
+ Suas informações de contrato, como status de ativação do contrato, Consumer key, Consumer secret, endpoint consumir, link para documentação, estão na sua área de cliente em https://cliente.serpro.gov.br.
+ ❓ Quais chamadas são cobradas na API Integra Contador?
+ Todas as solicitações com o código de retorno 200, 202 e 403 são cobradas. Exceto nos casos de serviços gratuitos acionados pelos caminhos /Apoiar ou /Monitorar, em que a regra anterior não se aplica. Para ver quais códigos são retornados pela API Integra Contador, visite Códigos de retorno.
+ ❓ Como saber se o serviço exige procuração eletrônica?
+ Consulte a sessão Serviços x Procuração para saber quais serviços exigem procuração eletrônica do Portal eCAC.
+ ❓ Ao fazer uma requisição, recebo erro 403 com a mensagem '[AcessoNegado-ICGERENCIADOR-016] - NI do Contratante inválido'. O que isso significa e como resolver?
+ A resposta 403 - [AcessoNegado-ICGERENCIADOR-016] indica uma inconsistência entre o NI (Número de Inscrição) do Contratante informado na requisição e o NI extraído do certificado digital validado por meio do jwt_token no sistema SAPI. Para autenticação bem-sucedida, é necessário utilizar as credenciais (Customer Key e Customer Secret) e o e-CNPJ do próprio Contratante da API Integra Contador. O acesso será negado caso essa correspondência não seja respeitada.
+ O sistema realiza uma verificação de segurança comparando:
+ O NI informado na requisição;
+ O NI obtido a partir do certificado digital do Contratante (esse certificado é informado no momento da autenticação da API).
+ Se os valores forem diferentes, o acesso é negado.
+ Como proceder:
+ Verifique o certificado digital utilizado na autenticação:
+ Confirme se ele pertence ao Contratante correto.
+ O NI extraído do certificado deve coincidir com o informado na requisição.
+ Persistindo o erro: - Entre em contato com o suporte da API Integra Contador ou do sistema SAPI para análise detalhada.
+ 25 de maio de 2026

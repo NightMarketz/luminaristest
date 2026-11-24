@@ -73,7 +73,7 @@ Tokens nomeados existem no `tailwind.config` (`lumi-primary #3b82f6`, `lumi-acce
 ### Card / superfície
 **[FEDS-001]** Superfície de card = `bg-white dark:bg-neutral-900` (nunca `zinc-*`).
 ```tsx
-<div className="rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-white/5 p-5 shadow-sm">…</div>
+<div className="rounded-2xl bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 p-5 shadow-sm">…</div>
 ```
 
 ### Header com gradiente + blur blobs (heros de tela/detalhe)
@@ -148,3 +148,9 @@ Verificação visual: subir o preview e navegar a tela. **Use um build de produ�
 - **[FEDS-006]** Não faça badges sólidos — use o padrão `color/10` (fundo) + `color/20` (borda) + `color-600` (texto)
 - Não invente cores fora da paleta — acento primário é blue, positivo é emerald, negativo é rose, warning é amber
 - Não pule a verificação visual — comparar com uma tela existente é a única forma de garantir paridade
+
+## Lacunas e débitos (OPS-007)
+
+O que é desta tarefa você termina; o que está fora vai à caixa do maestro na hora (`node scripts/lacunas.mjs add`), e a
+1ª linha do relatório final é `LACUNAS NA CAIXA: <n>`. Regra: `.claude/skills/_OPERATING-GATES.md` OPS-007.
+Ao gerar, entregue o artefato inteiro que a skill pede (sem stub, TODO ou "preparado para depois"). O que o gerado precisa e esta skill não cobre (rota, registro, tela, teste, i18n, outro artefato) vai à caixa como `spec` ou `debito`, a menos que outra skill do mesmo plano o gere.

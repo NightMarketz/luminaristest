@@ -88,7 +88,7 @@ export function toEcdSignerPayload(s: EcdSignerDraft): EcdSignerInput {
   const out: EcdSignerInput = {
     identNom: s.identNom.trim(),
     identCpfCnpj: s.identCpfCnpj.trim(),
-    // ponytail: folha string → união; o input é livre até o FE-INCR-SPED-SIGNERS (combobox).
+    // atalho: folha string → união; o input é livre até o FE-INCR-SPED-SIGNERS (combobox).
     codAssin: s.codAssin.trim() as EcdSignerInput['codAssin'],
     indRespLegal: s.indRespLegal,
   };
@@ -98,7 +98,7 @@ export function toEcdSignerPayload(s: EcdSignerDraft): EcdSignerInput {
   if (email) out.email = email;
   const fone = s.fone?.trim();
   if (fone) out.fone = fone;
-  // ponytail: folha string → união (o <select> só oferece UF_CODES).
+  // atalho: folha string → união (o <select> só oferece UF_CODES).
   const ufCrc = s.ufCrc?.trim();
   if (ufCrc) out.ufCrc = ufCrc as EcdSignerInput['ufCrc'];
   return out;
@@ -108,7 +108,7 @@ export function toEcdDeclarantPayload(d: EcdDeclarantDraft): GenerateEcdPayload[
   return {
     nome: d.nome,
     cnpj: d.cnpj,
-    uf: d.uf as GenerateEcdPayload['declarant']['uf'], // ponytail: folha string → união (<select> de UF_CODES)
+    uf: d.uf as GenerateEcdPayload['declarant']['uf'], // atalho: folha string → união (<select> de UF_CODES)
     codMun: d.codMun,
     indNire: d.indNire,
     indGrandePorte: d.indGrandePorte,
@@ -128,7 +128,7 @@ export function toEcfSignerPayload(s: EcfSignerDraft): EcfSignerInput {
   const out: EcfSignerInput = {
     identNom: s.identNom.trim(),
     identCpfCnpj: s.identCpfCnpj.trim(),
-    // ponytail: folha string → união; input livre até o FE-INCR-SPED-SIGNERS (combobox).
+    // atalho: folha string → união; input livre até o FE-INCR-SPED-SIGNERS (combobox).
     identQualif: s.identQualif.trim() as EcfSignerInput['identQualif'],
     email: s.email.trim(),
     fone: s.fone.trim(),
@@ -147,7 +147,7 @@ export function toEcfDeclarantPayload(d: EcfDeclarantDraft): GenerateEcfPayload[
     cnaeFiscal: d.cnaeFiscal,
     endereco: d.endereco,
     bairro: d.bairro,
-    uf: d.uf as GenerateEcfPayload['declarant']['uf'], // ponytail: folha string → união (<select> de UF_CODES)
+    uf: d.uf as GenerateEcfPayload['declarant']['uf'], // atalho: folha string → união (<select> de UF_CODES)
     codMun: d.codMun,
     cep: d.cep,
     email: d.email,

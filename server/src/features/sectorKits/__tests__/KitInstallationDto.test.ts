@@ -25,4 +25,10 @@ describe('KitInstallationDto (BE-INCR-KIT-SETOR PR-2)', () => {
     expect(InstallKitInputSchema.safeParse({ ...base, today: '2026-10-08T00:00:00Z' }).success).toBe(false);
     expect(InstallKitInputSchema.safeParse({ ...base, regime: 'LUCRO_REAL' }).success).toBe(false);
   });
+
+  it('SOT F-12.1: today recusa data que o calendário não tem (2026-02-30 rolaria para março)', () => {
+    const base = { kitKey: 'beautySalon', ano: 2026, installChartIfEmpty: false, openCurrentPeriodIfMissing: false };
+    expect(InstallKitInputSchema.safeParse({ ...base, today: '2026-02-30' }).success).toBe(false);
+    expect(InstallKitInputSchema.safeParse({ ...base, today: '2026-02-28' }).success).toBe(true);
+  });
 });

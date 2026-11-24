@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { RowExpandButton } from './RowExpandButton';
 import { useTranslation } from 'next-i18next';
-import { FiChevronDown, FiChevronRight, FiPlusCircle, FiDollarSign, FiXCircle, FiRotateCcw } from 'react-icons/fi';
+import { FiPlusCircle, FiDollarSign, FiXCircle, FiRotateCcw } from 'react-icons/fi';
 import {
   accountsPayableService,
   PAYMENT_METHODS,
@@ -8,6 +9,7 @@ import {
   type PayablePayment,
   type PayableStatus,
   type PaymentMethod,
+  type PaymentRecordMethod,
 } from '../../../lib/services/accountsPayable.service';
 import { accountingService, type Account } from '../../../lib/services/accounting.service';
 import { counterpartiesService, type Counterparty } from '../../../lib/services/counterparties.service';
@@ -28,11 +30,6 @@ import { useAccountingT } from '../lib/useAccountingT';
 // but `total` comes back on every page so StandardPagination has what it needs).
 const PAYABLES_PER_PAGE = 50;
 
-
-/** Sum of the ACTIVE payments on a payable (in cents). */
-function sumActive(payments: PayablePayment[]): number {
-  return payments.filter((p) => p.status === 'ACTIVE').reduce((acc, p) => acc + p.amountCents, 0);
-}
 
 // ── status badge ─────────────────────────────────────────────────────────────
 
@@ -67,6 +64,12 @@ function StatusBadge({ status }: { status: PayableStatus }) {
 
 // ── payments drawer ──────────────────────────────────────────────────────────
 
+/** Rótulo do método gravado (SOT F-02.2): `NONE` é a baixa de retenção, sem saída de caixa. */
+const PAYMENT_METHOD_LABEL: Partial<Record<PaymentRecordMethod, string>> = {
+  Cash: 'Dinheiro',
+  NONE: 'Retenção (sem saída de caixa)',
+};
+
 function PaymentsDrawer({ payable }: { payable: PayableWithPayments }) {
   const { t } = useTranslation('accounting');
   return (
@@ -85,7 +88,9 @@ function PaymentsDrawer({ payable }: { payable: PayableWithPayments }) {
             {payable.payments.map((p) => (
               <tr key={p.id} className="border-t border-neutral-800/50">
                 <td className="py-1 pr-4 tabular-nums text-neutral-300">{formatDate(p.paidAt)}</td>
-                <td className="py-1 pr-4 text-neutral-300">{p.method}</td>
+                <td className="py-1 pr-4 text-neutral-300">
+                  {t('contasAPagar.actionModal.method.' + p.method, PAYMENT_METHOD_LABEL[p.method] ?? p.method)}
+                </td>
                 <td className="py-1 pr-4 text-right tabular-nums text-neutral-300">{formatCents(p.amountCents)}</td>
                 <td className="py-1 text-neutral-400">
                   {p.status === 'ACTIVE'
@@ -126,7 +131,7 @@ function PayableRow({ payable, onPay, onCancel, onUndoPayment }: RowProps) {
         onClick={() => hasPayments && setExpanded((v) => !v)}
       >
         <td className="w-8 px-3 py-2.5 text-neutral-500">
-          {hasPayments ? (expanded ? <FiChevronDown size={14} /> : <FiChevronRight size={14} />) : null}
+          {hasPayments ? <RowExpandButton expanded={expanded} onToggle={() => setExpanded((v) => !v)} label={t('contasAPagar.col.expand', 'Expandir')} /> : null}
         </td>
         <td className="px-4 py-2.5 text-neutral-100">
           <span className="line-clamp-1 font-medium">{payable.supplierName}</span>
@@ -345,7 +350,7 @@ export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPerio
     setActionPeriodError(false);
     try {
       if (action.type === 'pay') {
-        const remaining = action.payable.amountCents - sumActive(action.payable.payments);
+        const remaining = action.payable.remainingCents;
         await accountsPayableService.registerPayment(action.payable.id, {
           unitId,
           method,
@@ -452,7 +457,7 @@ export function AccountsPayablePanel({ unitId, onLedgerChange, onNavigateToPerio
 
       {/* Table */}
       {!loading && payables.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/50">
+        <div className="overflow-x-auto rounded-2xl border border-neutral-800 bg-neutral-900/50">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-800 text-left text-neutral-400">

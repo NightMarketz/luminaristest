@@ -187,6 +187,7 @@
       "none": "No validity",
       "accept_label": "I read this text to the customer and they agreed",
       "accept_failed": "The sale was created, but the validity acceptance was not recorded. Open the sale and record the acceptance.",
+      "accept_failed_draft": "The sale was created as a draft and was NOT finalized: the validity acceptance was not recorded. Open the sale, record the acceptance and finalize.",
       "download_receipt": "Download receipt (PDF)",
       "accepted_by": "Acceptance recorded by {{who}} on {{when}} (text {{version}})",
       "not_registered": "Acceptance not recorded",

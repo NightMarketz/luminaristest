@@ -159,6 +159,7 @@ export function TaxAssessmentPanel({ unitId, onIrParaEnquadramentoMei }: Props) 
               const n = Number(v);
               if (/^\d{4}$/.test(v) && n >= 2000 && n <= 2100) setAno(n);
             }}
+            data-own-style
             className="w-24 rounded-xl border border-neutral-700 bg-neutral-800 px-2 py-1 text-neutral-100"
           />
         </label>

@@ -114,7 +114,7 @@ export function fromOpenAiResponse(res: OpenAiChatResponse): LlmCompleteResult {
   };
 }
 
-function toProviderError(error: unknown): LlmProviderError {
+export function toProviderError(error: unknown): LlmProviderError {
   if (error instanceof LlmProviderError) return error;
   if (error instanceof APIError) {
     // `insufficient_quota` (429 da OpenAI quando o crédito acabou) → QUOTA.

@@ -96,4 +96,22 @@ describe('LeadConvertModal — Porte/Papel vêm das opções instaladas do tenan
     expect(payload.account.size).toBeUndefined();
     expect(payload.contact.role).toBeUndefined();
   });
+
+  // L-20261113-152228-04e6: Esc/clique fora descartava o formulário preenchido
+  it('Esc com o formulário editado pede confirmação em vez de fechar', async () => {
+    const onClose = vi.fn();
+    render(<LeadConvertModal isOpen onClose={onClose} leadId="l1" leadName="ACME" onConverted={() => {}} />);
+    const city = screen.getByText('Cidade').parentElement!.querySelector('input')!;
+    fireEvent.change(city, { target: { value: 'Recife' } });
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).not.toHaveBeenCalled();
+    expect(await screen.findAllByRole('dialog')).toHaveLength(2);
+  });
+
+  it('Esc sem edição fecha direto', () => {
+    const onClose = vi.fn();
+    render(<LeadConvertModal isOpen onClose={onClose} leadId="l1" leadName="ACME" onConverted={() => {}} />);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });

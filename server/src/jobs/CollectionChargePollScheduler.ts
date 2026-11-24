@@ -4,7 +4,7 @@
  * 10 min (P2-3, F3 a). Cobre webhook perdido. Sem timer sob NODE_ENV=test a menos que `allowInTest`.
  *
  * ⚠️ Lock PROCESS-LOCAL — mesma ressalva do DfePollScheduler (não protege multi-réplica).
- * ponytail: lock local; teto = 1 réplica (SQLite single-host); upgrade a lease distribuída só se multi-réplica.
+ * atalho: lock local; teto = 1 réplica (SQLite single-host); upgrade a lease distribuída só se multi-réplica.
  */
 import logger, { type EventLogger } from '../lib/logger';
 import { sendAlertWebhook, type AlertPayload } from '../lib/alertWebhook';

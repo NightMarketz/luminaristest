@@ -6,22 +6,21 @@ import {
   DndContext,
   closestCenter,
   DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
   useDroppable,
 } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { CrmLoadError } from './CrmLoadError';
 import { OpportunityCard } from './OpportunityCard';
 import { Opp360Modal } from './Opp360Modal';
 import { ProposalCaptureModal } from './ProposalCaptureModal';
+import { usePipelineSensors } from '../hooks/usePipelineSensors';
 import { useOppPipelineBoard, type PipelineColumn } from '../hooks/useOppPipelineBoard';
 import { OWNER_FILTER_ALL } from '../hooks/useOwnerFilter';
 import type { CrmRecord } from '../hooks/useCrmData';
 
 /** A draggable opportunity card (mirror of SortableLeadCard). */
-function SortableOpportunityCard({
+export function SortableOpportunityCard({
   opportunity,
   ownerNames,
   onClick,
@@ -30,7 +29,7 @@ function SortableOpportunityCard({
   ownerNames: Map<string, string>;
   onClick: (id: string) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
     id: opportunity.id,
   });
   const style = {
@@ -39,8 +38,8 @@ function SortableOpportunityCard({
     opacity: isDragging ? 0 : 1,
   };
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <OpportunityCard opportunity={opportunity} ownerNames={ownerNames} onClick={onClick} />
+    <div ref={setNodeRef} style={style}>
+      <OpportunityCard opportunity={opportunity} ownerNames={ownerNames} onClick={onClick} dragProps={{ ...attributes, ...listeners }} dragRef={setActivatorNodeRef} />
     </div>
   );
 }
@@ -140,7 +139,7 @@ export function OppPipelineBoard() {
 
   const [selectedOppId, setSelectedOppId] = useState<string | null>(null);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const sensors = usePipelineSensors();
 
   // id → owner display name (for the card + Opp360), built from the owner filter options.
   const ownerNames = useMemo(() => {
@@ -200,6 +199,7 @@ export function OppPipelineBoard() {
               <select
                 value={activePipelineId ?? ''}
                 onChange={(e) => setActivePipelineId(e.target.value)}
+                aria-label={t('pipeline.select_label', 'Pipeline')}
                 className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-gray-700 dark:border-white/10 dark:bg-neutral-800 dark:text-gray-200"
               >
                 {pipelines.map((p) => (
@@ -213,13 +213,9 @@ export function OppPipelineBoard() {
         ) : null}
       </div>
 
-      {error ? (
-        <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900 dark:bg-rose-950 dark:text-rose-300">
-          {error}
-        </div>
-      ) : null}
+      {error ? <CrmLoadError message={error} onRetry={() => void reload()} /> : null}
 
-      {loading ? (
+      {error ? null : loading ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('common.loading', 'Carregando…')}</p>
       ) : notInstalled ? (
         <div className="flex flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 p-10 text-center dark:border-white/10">

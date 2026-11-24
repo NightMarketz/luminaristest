@@ -6,6 +6,9 @@ import { useTheme } from '../../lib/hooks/useTheme';
 import { FiCheckCircle } from 'react-icons/fi';
 import { IoLanguageOutline, IoChevronDownOutline, IoSunnyOutline, IoMoonOutline } from 'react-icons/io5';
 
+const AVATAR_STYLES = ['bg-gradient-to-br from-indigo-500 to-blue-600', 'bg-gradient-to-br from-emerald-500 to-teal-600', 'bg-gradient-to-br from-amber-500 to-orange-600', 'bg-gradient-to-br from-fuchsia-500 to-purple-600'];
+const AVATAR_INITIALS = ['A', 'M', 'J', 'R'];
+
 interface AuthSplitLayoutProps {
   children: React.ReactNode;
   title: string;
@@ -152,9 +155,10 @@ export const AuthSplitLayout: React.FC<AuthSplitLayoutProps> = ({ children, titl
                
                <div className="flex items-center justify-between">
                  <div className="flex -space-x-4">
-                   {[1,2,3,4].map(idx => (
-                     <div key={idx} className="w-12 h-12 rounded-full border-4 border-lumi-dark-500 bg-slate-800 flex items-center justify-center overflow-hidden transition-transform hover:scale-110 hover:z-20 cursor-pointer">
-                        <img src={`https://i.pravatar.cc/150?u=${idx + 10}`} alt="User" className="w-full h-full object-cover" />
+                   {/* Avatares decorativos locais: nada de imagem de terceiro numa tela pública (IP do visitante, sem tamanho). */}
+                   {AVATAR_STYLES.map((cls, idx) => (
+                     <div key={idx} aria-hidden="true" className={`w-12 h-12 rounded-full border-4 border-lumi-dark-500 flex items-center justify-center text-white text-sm font-bold overflow-hidden transition-transform hover:scale-110 hover:z-20 ${cls}`}>
+                       {AVATAR_INITIALS[idx]}
                      </div>
                    ))}
                    <div className="w-12 h-12 rounded-full border-4 border-lumi-dark-500 bg-blue-600 flex items-center justify-center text-white text-xs font-bold transition-transform hover:scale-110 hover:z-20 cursor-pointer">

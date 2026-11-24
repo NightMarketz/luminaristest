@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { getFactory } from '@/lib/factory';
 import { handleApiError } from '@/lib/apiUtils';
+import { parsePageParam } from '@/lib/pagination';
 import { getUserContextFromRequest } from '@/lib/authUtils';
 import { ValidationError } from '@/lib/errors';
 import { z } from 'zod';
@@ -85,8 +86,8 @@ export async function getTableData(req: Request, res: Response) {
     const pageRaw = req.query.page;
     const sizeRaw = req.query.pageSize ?? req.query.limit;
     if (pageRaw !== undefined || sizeRaw !== undefined) {
-      const page = Math.max(1, Number(pageRaw) || 1);
-      const pageSize = Math.min(1000, Math.max(1, Number(sizeRaw) || 50));
+      const page = parsePageParam('page', pageRaw, 1);
+      const pageSize = parsePageParam(req.query.pageSize !== undefined ? 'pageSize' : 'limit', sizeRaw, 50, 1000);
       const result = await service.getTableData(ctx, req.params.tableId, page, pageSize);
       return res.json({
         success: true,
@@ -157,8 +158,12 @@ export async function updateTableData(req: Request, res: Response) {
     // idempotent. tableId comes from the route param of PUT /:tableId/data/:dataId.
     // Finalize is anti-revenue-gated for all-Package sales (Incremento G P4); the package-sold
     // bridge books their origin instead. Exactly one of the two acts.
-    await maybeSyncSaleFinalized(ctx, req.params.tableId, updated);
-    await maybeSyncSalePackageSold(ctx, req.params.tableId, updated);
+    // INV F-40.1: as pontes leem a linha como gravada DEPOIS do afterUpdate (o SalesPlugin recalcula o total pelos itens),
+    // não a devolvida antes dele — senão o razão leva o total que o navegador mandou.
+    const [persisted] = await service.getTableDataByIds(ctx, updated.dynamicTableId, [updated.id]);
+    const syncRow = persisted ?? updated;
+    await maybeSyncSaleFinalized(ctx, req.params.tableId, syncRow);
+    await maybeSyncSalePackageSold(ctx, req.params.tableId, syncRow);
 
     return res.json({ success: true, data: updated });
   } catch (error) {

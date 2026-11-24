@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidDateOnly } from './dates';
 import type { MemoriaLinha } from './taxAssessmentCalc';
 
 /**
@@ -16,8 +17,8 @@ export const RastreioContaSchema = z
   .object({
     accountCode: z.string().min(1),
     accountName: z.string(),
-    from: z.string().regex(DIA), // janela usada no cálculo
-    to: z.string().regex(DIA),
+    from: z.string().regex(DIA).refine(isValidDateOnly, 'Data inválida no calendário.'), // janela usada no cálculo
+    to: z.string().regex(DIA).refine(isValidDateOnly, 'Data inválida no calendário.'),
     movimentoCents: z.string().regex(CENTAVOS),
     saldoFinalCents: z.string().regex(CENTAVOS).optional(), // F-RT-2: saldo no fim da janela, congelado
   })

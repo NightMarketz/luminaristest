@@ -1,4 +1,5 @@
 import React from 'react';
+import type { ButtonHTMLAttributes, Ref } from 'react';
 import { useTranslation } from 'next-i18next';
 import type { CrmRecord } from '../hooks/useCrmData';
 import { ScoreGauge } from './ui/ScoreGauge';
@@ -6,15 +7,20 @@ import { DEFAULT_CURRENCY } from '../lib/constants';
 
 interface LeadCardProps {
   lead: CrmRecord;
+  /** Props/ref de arrasto do dnd-kit: ficam no próprio <button> (uma só parada de Tab por card). */
+  dragProps?: ButtonHTMLAttributes<HTMLButtonElement>;
+  dragRef?: Ref<HTMLButtonElement>;
   onClick?: (leadId: string) => void;
 }
 
-export function LeadCard({ lead, onClick }: LeadCardProps) {
+export function LeadCard({ lead, onClick, dragProps, dragRef }: LeadCardProps) {
   const { t } = useTranslation('crm');
   const d = lead.data || {};
   return (
     <button
       type="button"
+      {...dragProps}
+      ref={dragRef}
       onClick={() => onClick?.(lead.id)}
       className="w-full rounded-2xl border border-gray-200 bg-white p-3.5 text-left shadow-sm transition hover:border-blue-400 hover:shadow-md dark:border-white/5 dark:bg-neutral-800 dark:hover:border-blue-500/40"
     >

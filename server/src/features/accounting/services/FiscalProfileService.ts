@@ -1,4 +1,4 @@
-import { PERFIL_FISCAL_PLANO_PADRAO } from '../fixtures/ChartOfAccountsFixture';
+import { ESTOQUES_CODE, PERFIL_FISCAL_PLANO_PADRAO, isContaDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
 import { ForbiddenError, PolicyApprovalRequiredError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -82,6 +82,7 @@ export interface FiscalProfileView extends CostRegime {
   icmsRecuperavelAccountId: string | null;
   pisCofinsRecuperavelAccountId: string | null;
   insumoExpenseAccountId: string | null;
+  insumoStockAccountId: string | null; // INSUMO-INVENTARIO-PERIODICO item 1
   // X7 Fase A (BRIEF item 3, F-TA-6 a)
   irpjDespesaAccountId: string | null;
   csllDespesaAccountId: string | null;
@@ -290,7 +291,13 @@ export class FiscalProfileService {
     const ids: Partial<Record<FiscalProfileAccountField, string>> = {};
     for (const { field, accountCode } of PERFIL_FISCAL_PLANO_PADRAO) {
       const account = await this.accountRepo.findByCode(scope, accountCode);
-      if (account && !account.deletedAt && account.acceptsEntries) ids[field] = account.id;
+      if (!account || account.deletedAt || !account.acceptsEntries) continue;
+      // Lacuna ad40: conta do usuário com o código canônico (outro nome/natureza) não herda o papel.
+      if (!isContaDoPlanoPadrao(account)) {
+        logger.warn('Papel do perfil fiscal não preenchido: conta com código do plano padrão diverge no nome ou natureza', { unitId: scope.unitId, field, accountCode });
+        continue;
+      }
+      ids[field] = account.id;
     }
     if (Object.keys(ids).length === 0) return [];
     try {
@@ -341,10 +348,17 @@ export class FiscalProfileService {
    * Asserções do perfil (contas do escopo + regime da empresa), só leitura. A proposta usa sem `tx` (item 7.3, erro
    * rápido para o dono); `applyInTx` reusa dentro da tx. Devolve o regime da empresa no ano corrente.
    */
-  async validate(scope: AccountingScope, input: FiscalProfilePolicyPayload, tx?: Prisma.TransactionClient): Promise<RegimeEmpresa | null> {
+  async validate(
+    scope: AccountingScope,
+    input: FiscalProfilePolicyPayload,
+    tx?: Prisma.TransactionClient,
+  ): Promise<RegimeEmpresa | null> {
     if (input.icmsRecuperavelAccountId) await this.assertAssetAccount(scope, input.icmsRecuperavelAccountId, 'ICMS a recuperar', tx);
     if (input.pisCofinsRecuperavelAccountId) await this.assertAssetAccount(scope, input.pisCofinsRecuperavelAccountId, 'PIS/COFINS a recuperar', tx);
+    // Lacuna 038d (dono 21/11, D-2026-11-21-DRE-INSUMO-PELO-PAPEL item 3): qualquer folha de despesa serve — a DRE classifica o
+    // insumo pelo papel (insumoExpenseAccountId), não pelo prefixo; a recusa fora de 4.2/4.7 do #1302 saiu.
     if (input.insumoExpenseAccountId) await this.assertExpenseAccount(scope, input.insumoExpenseAccountId, 'insumo do serviço', tx);
+    if (input.insumoStockAccountId) await this.assertInsumoStockAccount(scope, input.insumoStockAccountId, tx);
     // X7 item 3 (F-TA-6 a): provisão D despesa / C a recolher (item 15) — despesa = Expense, a recolher = Liability.
     if (input.irpjDespesaAccountId) await this.assertExpenseAccount(scope, input.irpjDespesaAccountId, 'despesa de IRPJ', tx);
     if (input.csllDespesaAccountId) await this.assertExpenseAccount(scope, input.csllDespesaAccountId, 'despesa de CSLL', tx);
@@ -429,9 +443,11 @@ export class FiscalProfileService {
         pisCofinsCreditExcludesIcms: String(row.pisCofinsCreditExcludesIcms),
         pisCofinsCreditIncludesIpi: String(row.pisCofinsCreditIncludesIpi),
         pisCofinsCreditFromSimplesSupplier: String(row.pisCofinsCreditFromSimplesSupplier),
+        pisCofinsCreditMonofasicoInsumo: String(row.pisCofinsCreditMonofasicoInsumo), // lacuna c516
         icmsRecuperavelAccountId: row.icmsRecuperavelAccountId ?? '',
         pisCofinsRecuperavelAccountId: row.pisCofinsRecuperavelAccountId ?? '',
         insumoExpenseAccountId: row.insumoExpenseAccountId ?? '', // ITEM-DESTINATION item 20 (decisão do dono 02/10)
+        insumoStockAccountId: row.insumoStockAccountId ?? '', // INSUMO-INVENTARIO-PERIODICO item 1
         // X7 item 3 (F-TA-6 a): contas da provisão — só ids
         irpjDespesaAccountId: row.irpjDespesaAccountId ?? '',
         csllDespesaAccountId: row.csllDespesaAccountId ?? '',
@@ -501,15 +517,31 @@ export class FiscalProfileService {
     }
   }
 
+  /**
+   * INSUMO-INVENTARIO-PERIODICO item 1 (F-ID-3 c, dono 21/11): o estoque de insumo é folha de ATIVO do escopo e NÃO é
+   * a conta `Estoques` da revenda (`ESTOQUES_CODE`) — lá o tie-out LAC-E exige Σ InventoryItem = saldo, e o insumo
+   * não tem InventoryItem.
+   */
+  private async assertInsumoStockAccount(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<void> {
+    await this.assertAssetAccount(scope, id, 'estoque de insumo do serviço', tx);
+    const account = await this.accountRepo.findById(scope, id, tx);
+    if (account?.code === ESTOQUES_CODE) {
+      throw new ValidationError(
+        `Conta de estoque de insumo '${account.code}' é o estoque de revenda (tie-out do subrazão de estoque) — use uma conta de ativo própria para o insumo do serviço.`,
+      );
+    }
+  }
+
   /** ITEM-DESTINATION item 20 (F-ID-5 a): análogo ao `assertAssetAccount` — o insumo do serviço vai para
    *  DESPESA na entrada (F-ID-3 a), então a conta é folha de resultado `nature = Expense` do escopo. */
-  private async assertExpenseAccount(scope: AccountingScope, id: string, label: string, tx?: Prisma.TransactionClient): Promise<void> {
+  private async assertExpenseAccount(scope: AccountingScope, id: string, label: string, tx?: Prisma.TransactionClient): Promise<{ code: string; nature: string }> {
     const account = await this.accountRepo.findById(scope, id, tx);
     if (!account || account.deletedAt) throw new ValidationError(`Conta de ${label} '${id}' não existe neste escopo.`);
     if (!account.acceptsEntries) throw new ValidationError(`Conta de ${label} '${account.code}' não aceita lançamentos (não é folha).`);
     if (account.nature !== 'Expense') {
       throw new ValidationError(`Conta de ${label} '${account.code}' tem natureza ${account.nature}; esperado Expense (insumo vai para despesa na entrada — ITEM-DESTINATION F-ID-3 a).`);
     }
+    return account;
   }
 
   /** X14 PR-3 item 21 / F-PCB-1R: a dedução da receita (DAS; PIS/COFINS) é folha de natureza Revenue com saldo devedor,
@@ -542,9 +574,11 @@ export class FiscalProfileService {
       pisCofinsCreditExcludesIcms: row.pisCofinsCreditExcludesIcms,
       pisCofinsCreditIncludesIpi: row.pisCofinsCreditIncludesIpi,
       pisCofinsCreditFromSimplesSupplier: row.pisCofinsCreditFromSimplesSupplier,
+      pisCofinsCreditMonofasicoInsumo: row.pisCofinsCreditMonofasicoInsumo,
       icmsRecuperavelAccountId: row.icmsRecuperavelAccountId,
       pisCofinsRecuperavelAccountId: row.pisCofinsRecuperavelAccountId,
       insumoExpenseAccountId: row.insumoExpenseAccountId,
+      insumoStockAccountId: row.insumoStockAccountId,
       irpjDespesaAccountId: row.irpjDespesaAccountId,
       csllDespesaAccountId: row.csllDespesaAccountId,
       irpjRecolherAccountId: row.irpjRecolherAccountId,

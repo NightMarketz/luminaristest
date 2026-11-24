@@ -221,13 +221,14 @@ function GenericChatWidget({
 
                                         if (isBeingRenamed) {
                                             return (
-                                                <div key={instance.id} className="p-2 bg-slate-50 dark:bg-zinc-700">
+                                                <div key={instance.id} className="p-2 bg-slate-50 dark:bg-neutral-700">
                                                     <input
                                                         type="text"
                                                         value={renameValue}
                                                         onChange={(e) => setRenameValue(e.target.value)}
                                                         placeholder="Novo nome..."
-                                                        className="w-full px-2 py-1 text-sm rounded border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-800"
+                                                        data-own-style
+                                                        className="w-full px-2 py-1 text-sm rounded border border-slate-300 dark:border-neutral-600 bg-white dark:bg-neutral-800"
                                                         autoFocus
                                                         onKeyDown={(e) => {
                                                             if (e.key === 'Enter') confirmRename(instance.id, renameValue);
@@ -236,7 +237,7 @@ function GenericChatWidget({
                                                     />
                                                     <div className="flex gap-1 mt-1">
                                                         <button onClick={() => confirmRename(instance.id, renameValue)} disabled={isRenamingInstance} className="flex-1 px-2 py-1 text-xs bg-indigo-500 text-white rounded hover:bg-indigo-600 disabled:opacity-50">{isRenamingInstance ? '...' : t('actions.save', 'Save')}</button>
-                                                        <button onClick={cancelRename} className="flex-1 px-2 py-1 text-xs bg-slate-200 dark:bg-zinc-600 rounded">{t('actions.cancel', 'Cancel')}</button>
+                                                        <button onClick={cancelRename} className="flex-1 px-2 py-1 text-xs bg-slate-200 dark:bg-neutral-600 rounded">{t('actions.cancel', 'Cancel')}</button>
                                                     </div>
                                                 </div>
                                             );
@@ -248,7 +249,7 @@ function GenericChatWidget({
                                                     <p className="text-xs text-red-600 dark:text-red-400 mb-2">{t('actions.delete', 'Delete')} &ldquo;{instance.title || 'Chat'}&rdquo;?</p>
                                                     <div className="flex gap-1">
                                                         <button onClick={() => confirmDeleteInstance(instance.id)} disabled={isDeletingInstance} className="flex-1 px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50">{isDeletingInstance ? '...' : t('actions.delete', 'Delete')}</button>
-                                                        <button onClick={cancelDeleteConfirmation} className="flex-1 px-2 py-1 text-xs bg-slate-200 dark:bg-zinc-600 rounded">{t('actions.cancel', 'Cancel')}</button>
+                                                        <button onClick={cancelDeleteConfirmation} className="flex-1 px-2 py-1 text-xs bg-slate-200 dark:bg-neutral-600 rounded">{t('actions.cancel', 'Cancel')}</button>
                                                     </div>
                                                 </div>
                                             );
@@ -286,10 +287,10 @@ function GenericChatWidget({
 
             {isDropdownOpen && <div className="fixed inset-0 z-40" onClick={toggleDropdown} />}
 
-            {contextProvider && <div className="px-3 py-2 border-b border-slate-200 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-900/50">{contextProvider}</div>}
+            {contextProvider && <div className="px-3 py-2 border-b border-slate-200 dark:border-neutral-700 bg-slate-50/50 dark:bg-neutral-900/50">{contextProvider}</div>}
 
             {/* Messages */}
-            <div className="flex-grow overflow-y-auto p-4 space-y-4 custom-scrollbar">
+            <div role="log" aria-live="polite" aria-label={t('chat.messages_label', 'Mensagens do chat')} className="flex-grow overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 {messages.length === 0 ? (
                     <div className="flex items-center justify-center h-full text-gray-400 dark:text-gray-500">
                         <div className="text-center">
@@ -336,12 +337,14 @@ function GenericChatWidget({
                         onChange={(e) => setInputValue(e.target.value)}
                         onKeyDown={handleKeyPress}
                         placeholder={inputPlaceholder}
+                        aria-label={t('chat.input_label', 'Mensagem')}
                         rows={1}
                         disabled={isLoading}
+                        data-own-style
                         className="flex-1 resize-none rounded custom-scrollbar border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-neutral-800/80 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white disabled:opacity-50"
                         style={{ minHeight: '38px', maxHeight: '120px' }}
                     />
-                    <button onClick={handleSend} disabled={isLoading || !inputValue.trim()} className="flex-shrink-0 p-2 rounded bg-black dark:bg-white text-white dark:text-black hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                    <button type="button" aria-label={t('chat.send_button', 'Enviar')} onClick={handleSend} disabled={isLoading || !inputValue.trim()} className="flex-shrink-0 p-2 rounded bg-black dark:bg-white text-white dark:text-black hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                     </button>
                 </div>

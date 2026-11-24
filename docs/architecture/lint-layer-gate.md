@@ -134,6 +134,7 @@ em silêncio (o script falha se achar mais de um).
     "server/src/features/dynamicTables/services/DynamicTableService.ts": 1,
     "server/src/jobs/AccountingSyncScheduler.ts": 1,
     "server/src/jobs/CollectionChargePollScheduler.ts": 1,
+    "server/src/jobs/DataExchangeStaleSweepScheduler.ts": 1,
     "server/src/jobs/DfePollScheduler.ts": 1,
     "server/src/jobs/LegalParamsRecalcScheduler.ts": 2,
     "server/src/jobs/MpReleaseReportScheduler.ts": 1,

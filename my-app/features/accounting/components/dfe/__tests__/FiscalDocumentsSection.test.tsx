@@ -227,3 +227,31 @@ describe('FiscalDocumentsSection', () => {
     expect(screen.getByTestId('fiscal-doc-n2')).toBeInTheDocument();
   });
 });
+
+// ── SOT F-18.1 — os 3 status do servidor que a união do front não tinha ─────────────────────────────────────
+// `FISCAL_DOCUMENT_STATUSES` do servidor (`IFiscalDocumentRepository.ts`) tem 9 valores e o contrato gerado
+// (`FiscalDocumentDto.gen.ts`, `FiscalDocumentListQueryInput.status`) também; a união à mão do front tinha 6.
+// Comportamento correto: os 3 que faltavam chegam à tela com rótulo e cor próprios, não com o literal cru e a
+// cor de fallback (a de CANCELLED).
+describe('SOT F-18.1 — FiscalDocumentsSection conhece os 9 status do servidor', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(dfeService.getStatus).mockResolvedValue({ enabled: true, partner: 'manual', ambiente: 'homologacao' });
+    vi.mocked(dfeService.ficha).mockResolvedValue(ficha());
+  });
+  afterEach(async () => { await new Promise((r) => setTimeout(r, 0)); cleanup(); });
+
+  it.each(['PENDING_SIGNATURE', 'CONTINGENCY', 'CANCEL_ANALYSIS'])(
+    'SOT F-18.1: status %s tem rótulo e cor próprios',
+    async (status) => {
+      renderSection([
+        doc({ id: 'novo', status: status as FiscalDocumentView['status'] }),
+        doc({ id: 'can', status: 'CANCELLED' }),
+      ]);
+      const badge = within(await screen.findByTestId('fiscal-doc-novo')).getByTestId('fiscal-doc-status');
+      const cancelledBadge = within(card('can')).getByTestId('fiscal-doc-status');
+      expect(badge.textContent, `SOT F-18.1: ${status} aparece cru na tela, sem rótulo`).not.toBe(status);
+      expect(badge.className, `SOT F-18.1: ${status} cai na cor de fallback (a de CANCELLED)`).not.toBe(cancelledBadge.className);
+    },
+  );
+});

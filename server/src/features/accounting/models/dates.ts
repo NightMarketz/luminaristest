@@ -20,12 +20,17 @@ export function isValidDateOnly(s: string): boolean {
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
 }
 
+/** True iff `s` is a real calendar month in strict YYYY-MM form (competência) — SOT F-12.1. */
+export function isValidCompetencia(s: string): boolean {
+  return /^\d{4}-\d{2}$/.test(s) && isValidDateOnly(`${s}-01`);
+}
+
 /**
  * Dia-calendário de um campo `date` de DynamicTable, LIDO COMO ESCRITO. O motor normaliza o campo `date` (date-only)
  * para ISO à meia-noite UTC (`2026-11-25T00:00:00.000Z`): isso é um DIA, não um instante — `scopeDay` o converteria para
  * o dia anterior em Brasília (24/11). Aceita `YYYY-MM-DD` ou esse ISO; devolve os 10 primeiros caracteres se forem um
  * calendário real; senão lança `ValidationError` (nunca inventa "hoje" em cima de lixo).
- * ponytail: prefixo literal; um datetime com offset fora da meia-noite não é a convenção do campo `date`.
+ * atalho: prefixo literal; um datetime com offset fora da meia-noite não é a convenção do campo `date`.
  * Memória motor-grava-date-como-iso-utc-scopeday-recua-um-dia.
  */
 export function calendarDayAsWritten(value: string): string {

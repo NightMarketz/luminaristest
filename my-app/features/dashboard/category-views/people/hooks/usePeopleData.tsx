@@ -128,9 +128,11 @@ export function usePeopleData(tables: IDynamicTable[]) {
             try {
                 // 1. Fetch records for every people table in parallel
                 const results: PersonRecord[] = [];
+                // BRD F-73.2: tabela que falha não pode aparecer como tabela vazia.
+                let failedTables = 0;
                 await Promise.all(peopleTables.map(async (table) => {
                     try {
-                        const res = await DynamicTableService.getTableData(table.id).catch(() => null);
+                        const res = await DynamicTableService.getTableData(table.id);
                         const records = (res?.data ?? []) as RawRecord[];
                         for (const record of records) {
                             const data: Record<string, unknown> = record.data || {};
@@ -152,10 +154,12 @@ export function usePeopleData(tables: IDynamicTable[]) {
                         }
                     } catch (e) {
                         console.error(`Error processing table ${table.name}:`, e);
+                        failedTables++;
                     }
                 }));
 
                 if (cancelled) return;
+                if (failedTables > 0) setError('Error loading people data');
                 results.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
                 setAggregatedData(results);
 

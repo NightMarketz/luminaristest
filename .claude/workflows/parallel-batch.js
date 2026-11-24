@@ -90,7 +90,7 @@ for (const f of fail) log(`FAIL — fora da integração: ${f.branch} — ${f.ev
 if (!pass.length) { log('Nenhuma branch passou no review — Fase B abortada.'); return { schemaApplied: !!spec.schema, passed: [], failed: fail.map(f => f.branch) } }
 
 // ── Fase B — integrador serial: merge + deltas de registro, tsc ENTRE cada (PAR-003 Fase B) ──
-// ponytail: integração é intrinsecamente serial (choke points PAR-001 são pontos únicos). Um agente, um merge por vez.
+// atalho: integração é intrinsecamente serial (choke points PAR-001 são pontos únicos). Um agente, um merge por vez.
 phase('Fase B — Integração')
 await agent(
   `Você é o integrador (serial). Na branch ${baseBranch}, integre SÓ as branches aprovadas, na ordem: ${pass.map(p => p.branch).join(', ')}.\n` +

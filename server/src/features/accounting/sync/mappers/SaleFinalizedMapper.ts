@@ -27,7 +27,7 @@ export class SaleFinalizedMapper implements IAccountingEventMapper {
     // in reais (SalesModule: numberFormat:'currency'); accounting stores integer cents.
     // Convert here, exactly once, with hard guards — this is the single point where float
     // imprecision could re-enter the exact-integer money path.
-    // ponytail: Math.round(reais*100) is the ceiling; if sales ever store cents natively,
+    // atalho: Math.round(reais*100) is the ceiling; if sales ever store cents natively,
     // drop the *100 and the round.
     const amount = event.amount;
     if (typeof amount !== 'number' || !Number.isFinite(amount)) {

@@ -704,6 +704,7 @@ model Account {
   bankChargeIncomeOf                 AccountingScopeSettings[] @relation("ScopeSettingsBankChargeIncome") // conta de encargo RECEBIDO (F7 Fase C)
   icmsRecuperavelOf                  FiscalProfile[]           @relation("FiscalProfileIcmsRecuperavel") // X6 F-X6-8 a: crédito de ICMS a recuperar
   insumoExpenseOf                    FiscalProfile[]           @relation("FiscalProfileInsumoExpense") // ITEM-DESTINATION F-ID-5 a: despesa do insumo do serviço
+  insumoStockOf                      FiscalProfile[]           @relation("FiscalProfileInsumoStock") // INSUMO-INVENTARIO-PERIODICO item 1: estoque de insumo (ativo)
   irpjDespesaOf                      FiscalProfile[]           @relation("FiscalProfileIrpjDespesa") // X7 F-TA-6 a
   csllDespesaOf                      FiscalProfile[]           @relation("FiscalProfileCsllDespesa") // X7 F-TA-6 a
   irpjRecolherOf                     FiscalProfile[]           @relation("FiscalProfileIrpjRecolher") // X7 F-TA-6 a
@@ -1770,12 +1771,15 @@ model FiscalProfile {
   pisCofinsCreditExcludesIcms         Boolean   @default(true) // Lei 14.592/2023 art. 6º — default conservador
   pisCofinsCreditIncludesIpi          Boolean   @default(false) // IN RFB 2.121/2022 art. 170 [NC] — default sem crédito
   pisCofinsCreditFromSimplesSupplier  Boolean   @default(false) // ADI SRF 15/2007 [NC] — default sem crédito
+  pisCofinsCreditMonofasicoInsumo     Boolean   @default(true) // lacuna c516: IN RFB 2.121 art. 178 — monofásico por NCM usado como insumo credita (dono 21/11)
   icmsRecuperavelAccountId            String? // F-X6-8 a: conta 1.1.x "ICMS a recuperar" (contador, §5)
   icmsRecuperavelAccount              Account?  @relation("FiscalProfileIcmsRecuperavel", fields: [icmsRecuperavelAccountId], references: [id], onDelete: Restrict)
   pisCofinsRecuperavelAccountId       String? // F-X6-8 a: conta 1.1.x "PIS/COFINS a recuperar"
   pisCofinsRecuperavelAccount         Account?  @relation("FiscalProfilePisCofinsRecuperavel", fields: [pisCofinsRecuperavelAccountId], references: [id], onDelete: Restrict)
   insumoExpenseAccountId              String? // ITEM-DESTINATION F-ID-5 a: conta de resultado (Expense, folha) do insumo do serviço — código do contador
   insumoExpenseAccount                Account?  @relation("FiscalProfileInsumoExpense", fields: [insumoExpenseAccountId], references: [id], onDelete: Restrict)
+  insumoStockAccountId                String? // INSUMO-INVENTARIO-PERIODICO item 1 (F-ID-3 c, dono 21/11): estoque de insumo (Asset, folha, ≠ Estoques da revenda) — código do contador
+  insumoStockAccount                  Account?  @relation("FiscalProfileInsumoStock", fields: [insumoStockAccountId], references: [id], onDelete: Restrict)
   // BE-INCR-TAX-ASSESSMENT Fase A (nó X7, BRIEF item 3, F-TA-6 a): contas da provisão de IRPJ/CSLL — código do contador (P-5)
   irpjDespesaAccountId                String? // Expense
   irpjDespesaAccount                  Account?  @relation("FiscalProfileIrpjDespesa", fields: [irpjDespesaAccountId], references: [id], onDelete: Restrict)

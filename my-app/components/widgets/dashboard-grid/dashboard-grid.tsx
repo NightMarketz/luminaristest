@@ -6,6 +6,7 @@ import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 // Persistência de chat removida
 
+import { useTranslation } from 'next-i18next';
 import { useAuth } from '@/lib/context/AuthContext';
 import DocumentChatWidget from '../chat/components/DocumentChatWidget';
 import GenericChatWidget from '../generic-chat/components/GenericChatWidget';
@@ -24,6 +25,7 @@ import { getWidgetDimensions } from './utils/dashboard-grid.utils';
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export default function DashboardGrid() {
+  const { t } = useTranslation('common');
   const { user } = useAuth();
   // Só o id: o AuthContext troca o objeto `user` a cada navegação, e recarregar as abas com a lista ainda em voo
   // criava a aba padrão duas vezes no primeiro login (H2 21-4).
@@ -100,9 +102,15 @@ export default function DashboardGrid() {
   }, [userId, setLayout]);
 
   useEffect(function saveLayoutOnChange() {
-    // Skip during initial load, on error, or with no active tab.
-    if (isInitialMount.current || isLoading || !!error || !activeLayoutId) {
-      if (!isLoading) isInitialMount.current = false;
+    // Skip during initial load or with no active tab (a failed load leaves no active tab). `error` must NOT gate
+    // this: a failed save sets it, and gating on it stopped every later auto-save until a reload.
+    if (isInitialMount.current || isLoading || !activeLayoutId) {
+      if (!isLoading && isInitialMount.current) {
+        isInitialMount.current = false;
+        // This run already consumed the programmatic load (setLayout in the same commit): do not let the flag
+        // swallow the first real user edit.
+        switchingRef.current = false;
+      }
       return;
     }
 
@@ -129,7 +137,7 @@ export default function DashboardGrid() {
     return () => {
       clearTimeout(handler);
     };
-  }, [items, isLoading, activeLayoutId, error]);
+  }, [items, isLoading, activeLayoutId]);
 
   // A funcionalidade de carregamento automático do último chat salvo foi removida
 
@@ -397,6 +405,16 @@ export default function DashboardGrid() {
         onDelete={handleDeleteLayout}
       />
       <div ref={gridContainerRef} className="flex-1 w-full overflow-y-auto overflow-x-hidden custom-scrollbar relative">
+        {items.length === 0 && !error ? (
+          <div className="pointer-events-none absolute inset-0 z-0 flex flex-col items-center justify-center gap-2 p-6 text-center" data-testid="dashboard-empty">
+            <p className="text-base font-bold text-gray-700 dark:text-gray-200">
+              {t('dashboardGridEmptyTitle', 'Seu dashboard está vazio')}
+            </p>
+            <p className="max-w-sm text-sm text-gray-500 dark:text-gray-400">
+              {t('dashboardGridEmptyHint', 'Use o botão + no canto da tela para adicionar o primeiro widget.')}
+            </p>
+          </div>
+        ) : null}
         {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">{error}</div>}
       <ResponsiveGridLayout
         className="min-h-full"

@@ -11,6 +11,7 @@ import { LeadCard } from '../../features/crm/components/LeadCard';
 import { Lead360Modal } from '../../features/crm/components/Lead360Modal';
 import { CrmLayout } from '../../features/crm/components/CrmLayout';
 import { GradientHeader } from '../../features/crm/components/ui/GradientHeader';
+import { CrmLoadError } from '../../features/crm/components/CrmLoadError';
 
 function CrmOverviewInner() {
   const { t } = useTranslation('crm');
@@ -52,23 +53,23 @@ function CrmOverviewInner() {
       />
 
       {error ? (
-        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/40 dark:text-rose-300">
-          {error}
+        <div className="mt-4">
+          <CrmLoadError message={error} onRetry={() => void reload()} />
         </div>
       ) : null}
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-        <DashboardKpiCard title={t('kpi.total', 'Total de Leads')} value={loading ? '—' : String(kpis.totalLeads)} change="" trend="flat" details={[]} showGraph={false} />
-        <DashboardKpiCard title={t('kpi.open', 'Em aberto')} value={loading ? '—' : String(kpis.openLeads)} change="" trend="flat" details={[]} showGraph={false} />
-        <DashboardKpiCard title={t('kpi.won', 'Ganhos')} value={loading ? '—' : String(kpis.wonLeads)} change="" trend="flat" details={[]} showGraph={false} />
-        <DashboardKpiCard title={t('kpi.pipeline_value', 'Valor do Pipeline')} value={loading ? '—' : currency(kpis.pipelineValue)} change="" trend="flat" details={[]} isCurrency showGraph={false} />
-        <DashboardKpiCard title={t('kpi.win_rate', 'Win Rate')} value={loading ? '—' : `${kpis.winRate}%`} change="" trend="flat" details={[]} showGraph={false} />
+        <DashboardKpiCard title={t('kpi.total', 'Total de Leads')} value={loading || error ? '—' : String(kpis.totalLeads)} change="" trend="flat" details={[]} showGraph={false} />
+        <DashboardKpiCard title={t('kpi.open', 'Em aberto')} value={loading || error ? '—' : String(kpis.openLeads)} change="" trend="flat" details={[]} showGraph={false} />
+        <DashboardKpiCard title={t('kpi.won', 'Ganhos')} value={loading || error ? '—' : String(kpis.wonLeads)} change="" trend="flat" details={[]} showGraph={false} />
+        <DashboardKpiCard title={t('kpi.pipeline_value', 'Valor do Pipeline')} value={loading || error ? '—' : currency(kpis.pipelineValue)} change="" trend="flat" details={[]} isCurrency showGraph={false} />
+        <DashboardKpiCard title={t('kpi.win_rate', 'Win Rate')} value={loading || error ? '—' : `${kpis.winRate}%`} change="" trend="flat" details={[]} showGraph={false} />
       </div>
 
       <h2 className="mb-3 mt-8 text-[11px] font-black uppercase tracking-widest text-gray-400">
         {t('overview.hot_leads', 'Leads mais quentes')}
       </h2>
-      {loading ? (
+      {error ? null : loading ? (
         <p className="text-sm font-semibold text-gray-400">{t('common.loading', 'Carregando…')}</p>
       ) : hotLeads.length === 0 ? (
         <p className="text-sm font-semibold text-gray-400">{t('overview.empty', 'Nenhum lead encontrado.')}</p>

@@ -100,10 +100,11 @@ describe('ITEM-DESTINATION PR-2 — default por produto (Prisma real)', () => {
     await criarConta('2.1.2.01', 'Fornecedores a Pagar', 'Liability');
     await criarConta('1.1.8', 'ICMS a Recuperar', 'Asset');
     await criarConta('1.1.9', 'PIS/COFINS a Recuperar', 'Asset');
-    await criarConta('4.1.9', 'Insumos do serviço', 'Expense');
+    await criarConta('4.7.1', 'Insumos do serviço (custo)', 'Expense');
     const profile = await request(app).put('/api/accounting/fiscal-profile').set(authHeader(dono)).send({
       unitId: UNIT, regimeTributario: 'REAL', icmsContribuinte: true, pisCofinsRegime: 'NAO_CUMULATIVO',
-      icmsRecuperavelAccountId: accounts['1.1.8'], pisCofinsRecuperavelAccountId: accounts['1.1.9'], insumoExpenseAccountId: accounts['4.1.9'],
+      pisCofinsCreditMonofasicoInsumo: false, // c516: chave do monofásico-insumo desligada — o oráculo deste arquivo (feito à mão) é anterior à chave; o crédito novo tem guarda própria em nfeCost.test.ts
+      icmsRecuperavelAccountId: accounts['1.1.8'], pisCofinsRecuperavelAccountId: accounts['1.1.9'], insumoExpenseAccountId: accounts['4.7.1'],
     });
     expect(profile.status).toBe(200);
     const mappings = JSON.stringify([
@@ -131,7 +132,7 @@ describe('ITEM-DESTINATION PR-2 — default por produto (Prisma real)', () => {
       '1.1.3.01': { d: 7961, c: 0 },
       '1.1.8': { d: 1800, c: 0 },
       '1.1.9': { d: 784, c: 0 },
-      '4.1.9': { d: 8788, c: 0 },
+      '4.7.1': { d: 8788, c: 0 },
       '2.1.2.01': { d: 0, c: 19333 },
     });
     // F-ID-9 (a): o override REVENDA do item 1 não virou default de refs[0].

@@ -41,7 +41,7 @@ Consulte nesta ordem — a primeira que der tarefa concreta vence:
 5. **`docs/learnings/<esforço>.md`** — decisões/pitfalls por esforço; itens `pitfall` sem fix
    viram tarefa.
 6. **Varreduras sob demanda:** `node .claude/skills/skill-audit/skill-audit.mjs run` (drift de
-   skills/clones/hotspots) e `/ponytail-debt` (shortcuts `ponytail:` esquecidos no código).
+   skills/clones/hotspots) e `git grep -n "atalho:"` (atalhos `atalho:` esquecidos no código).
 
 **Regra de decisão entre fontes:** invariante quebrado > pendência de incremento já aberto >
 padronização (CRM) > débito de skill/lint. Em empate, menor blast radius primeiro.

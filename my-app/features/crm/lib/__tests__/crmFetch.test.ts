@@ -43,9 +43,8 @@ describe('fetchAllRows', () => {
     expect(getTableData.mock.calls.length).toBeLessThanOrEqual(1000);
   });
 
-  it('degrada para [] quando a primeira página falha', async () => {
+  it('rejeita quando a primeira página falha (BRD F-73.2: lista vazia pareceria dado real)', async () => {
     getTableData.mockRejectedValueOnce(new Error('boom'));
-    const rows = await fetchAllRows('t1');
-    expect(rows).toEqual([]);
+    await expect(fetchAllRows('t1')).rejects.toThrow('boom');
   });
 });

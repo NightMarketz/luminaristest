@@ -211,6 +211,46 @@ vermelho pelo motivo certo, depois `fix:` que o faz passar. O fold do vault entr
 
 ---
 
+## [OPS-007] Lacuna achada não fica para trás
+
+Dono, chat, 2026-11-11: o modelo "sempre deixa lacunas, sempre deixa débitos, alguma coisa que ele não tocou", e isso
+"vai acontecer em todos os lugares". Vale para **toda** skill, agente, subagente e sessão deste repo, de qualquer tipo.
+Regra completa: `docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`.
+
+1. **O que é da sua tarefa, você termina.** Caso que o pedido ou a spec cobre, teste que o seu diff exige, erro que o
+   seu código introduziu, arquivo que você gerou pela metade, TODO que você escreveu: nada disso é "fora de escopo" nem
+   "follow-up". Não feche com "deixei preparado", "fica para depois" ou "valeria também…" sobre algo do seu escopo.
+2. **O que está fora do escopo vai à caixa, na hora em que aparece**, sem corrigir (a cerca de escopo de cada skill
+   continua valendo): `node scripts/lacunas.mjs add --local <arquivo:linha> --classe <defeito|debito|spec|feature|fork|gate>
+   --o-que "…" --evidencia "…" [--como-provar "…"] [--no <NÓ>] [--pr <n>] [--pai <id>]`. Débito técnico conta: código
+   morto, duplicação, `atalho:` vencido, tipo frouxo, teste que não assere o que diz.
+   **Worktree sem `scripts/lacunas.mjs`** (cortada antes de 11/11; "Cannot find module"): o mesmo script, com a mesma
+   caixa, está em `node "$HOME/.claude/tools/lacunas/lacunas.mjs" add …` (Bash e PowerShell). Falhar o comando não
+   dispensa o registro.
+3. **Sem Bash (subagente só de leitura)?** Devolva as lacunas numa seção `Lacunas` do retorno, com os mesmos campos; quem
+   te despachou põe na caixa. Quem despacha subagente confere essa seção antes de usar o resultado.
+4. **Fechamento:** 1ª linha do relatório/resposta final `LACUNAS NA CAIXA: <n> (<ids>)` ou `LACUNAS NA CAIXA: 0`.
+   Nunca por `SendMessage` ao maestro (turno aberto por mensagem de sessão não abre sessão e a cadeia para).
+   **Registrou alguma?** Rode `lacunas.mjs pulso` antes do relatório. Se ele imprimir `DRENO`, proponha **um** cartão
+   "Drenar a caixa de lacunas (N abertas)" (`start_session`, `own_initiative`; brief: rodar o ciclo do
+   `.claude/prompts/maestro.md` a partir do passo 3b) e rode `pulso --marcar-dreno`. A caixa só anda quando um maestro roda.
+5. **Quem resolve:** o maestro lê a caixa a cada ciclo e abre a sessão certa sem perguntar ao dono; fork, gate e
+   cadeia longa (geração > 3) vão ao dono (`lacunas.mjs triar` faz isso sem julgamento, no começo do ciclo). Duas ou
+   mais lacunas com arquivo em comum, ou da mesma rodada, são um **grupo** (`list --grupos`): vão a **um** planejamento
+   que resolve o conjunto pela causa comum, não a um remendo por lacuna; o BRIEF do grupo sem fork executa sem ratificação
+   (dono, chat, 21/11: "Sim, executa"), com fork vai à pergunta do dia. A caixa é fila de trabalho, não rodada de
+   descoberta: ninguém sai procurando lacuna, registra a que apareceu no caminho. Rodada de revisão que o dono pediu
+   registra os achados com `--rodada <nome>`.
+6. **Ligar ao PR e ao tempo:** `--local` é caminho relativo à raiz da checkout (fora dela o `add` recusa; o resto da
+   qualidade o `add` só avisa, para não perder o registro). Ao abrir o PR, `set <id> --estado em-pr --pr <n>` (sem
+   `--pr` o script recusa); no merge, `lacunas.mjs sincronizar` resolve o que o PR tocou. Parada é tempo no estado atual
+   (`aberta` 3 d, `em-sessao` 2 d, `com-dono` 3 d, `em-pr` 7 d): `list --paradas` lista e o resumo do dia dá o motivo.
+
+**Prova:** `node scripts/lacunas.mjs list --abertas` mostra a lacuna com id; o relatório traz o id; nenhuma linha
+"fora de escopo" de relatório sem id correspondente.
+
+---
+
 ## Mapa regra → enforcement
 
 | Regra | O que enforça hoje | Gap conhecido |
@@ -221,6 +261,7 @@ vermelho pelo motivo certo, depois `fix:` que o faz passar. O fold do vault entr
 | OPS-004 | item 5 vira artefato obrigatório do relatório (FAIL de forma se ausente) | passos 1–4 são processo, não gate |
 | OPS-005 | **probe objetivo** (`gh pr list --state open` — a única OPS com fonte externa, não auto-reportada); estado da fila vira artefato do relatório | o revisor independente **não** vê a fila (revisa um diff, não o estado de PRs do repo) — quem abre a frente é quem conta |
 | OPS-006 | predicado checável no diff (`git diff --numstat` + caminhos); os dois commits `test:`→`fix:` provam a ordem | a classificação é declarada pelo agente — o veto do dono é o freio |
+| OPS-007 | `scripts/lacunas.mjs add` recusa entrada sem `arquivo:linha` e evidência; o maestro roda `sincronizar` (estado ← GitHub), `triar`, `list --paradas` e `list --grupos` a cada ciclo; `pulso` faz a sessão que registra propor o cartão de dreno quando nenhum maestro despachou há 1 dia; o resumo do dia lista toda lacuna com destino | o registro é auto-reportado: lacuna que o agente não registra não aparece. Os freios são a 1ª linha `LACUNAS NA CAIXA` e o revisor, que manda o pré-existente à caixa. O dreno depende de o dono iniciar o maestro ou o cartão. O sinal do `pulso` é qualquer `em-sessao` gravado, por qualquer sessão: um despacho fora do maestro também zera o relógio |
 
 Gaps declarados de propósito (OPS-001 gate 5 aplicado a este próprio doc): a metade auto-reportada
 dessas regras só fecha com **review independente** (`reviewer-independence-separate-agent`) — que já é

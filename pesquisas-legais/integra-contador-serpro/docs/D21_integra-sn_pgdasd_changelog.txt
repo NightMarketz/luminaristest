@@ -1,0 +1,8 @@
+SHA256-12 727c5a9d4958
+Changelog
+ [1.0.0] - 2022-09-23
+ Added
+ versão inicial de lançamento.
+ Changed
+ campo folhasSalario passa a ser obrigatório para PA posterior a 10/2026.
+ 3 de novembro de 2026

@@ -104,6 +104,23 @@ export interface CreateJobInput {
 }
 
 /** Partial mutation of a job (status transitions, artifact metadata, commit counters). */
+/**
+ * EFX F-18.2 (SM Q-07 = a, dono, 2026-11-10): PROCESSING mais velho que isto = queda entre o `createJob` e a tx do
+ * EXPORTED; a varredura (`DataExchangeStaleSweepScheduler`) leva o job a FAILED. Nos 5 geradores (export de
+ * relatório, ECD, ECF, ECF real, Reinf) o conteúdo é montado ANTES do `createJob`: o PROCESSING só cobre a gravação
+ * em disco e uma tx interativa do Prisma (default 5 s), segundos. 10 min é o mesmo limite do `claimStaleConfirming`
+ * (`BANK_SETTLEMENT_CONFIRMING_STALE_MS`, SM-07), com folga de duas ordens de grandeza.
+ */
+export const DATA_EXCHANGE_PROCESSING_STALE_MS = 10 * 60 * 1000;
+
+/** Job que a varredura levou de PROCESSING a FAILED (EFX F-18.2). */
+export interface StaleFailedJob {
+  id: string;
+  userId: string;
+  unitId: string;
+  kind: string;
+}
+
 export interface UpdateJobInput {
   status?: DataExchangeStatus;
   originalName?: string | null;

@@ -27,7 +27,7 @@ export const UpdateUserSchema = z.object({
   password: z.string()
     .min(6, 'Password must be at least 6 characters long')
     .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,}$/,
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/,
       'Password must contain at least one uppercase letter, one lowercase letter, and one number'
     )
     .optional(),
@@ -64,7 +64,7 @@ export const CreateUserSchema = z.object({
   password: z.string()
     .min(6, 'Password must be at least 6 characters long')
     .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{6,}$/,
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/,
       'Password must contain at least one uppercase letter, one lowercase letter, and one number'
     ),
   role: z.nativeEnum(Role, { message: 'Invalid role' }).optional(),

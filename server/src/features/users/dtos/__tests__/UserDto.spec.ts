@@ -41,6 +41,13 @@ describe('CreateUserSchema', () => {
     expect(CreateUserSchema.safeParse({ ...valid, email: 'not-an-email' }).success).toBe(false);
   });
 
+  // H2 07/11 (H2-21d-2, dono): símbolo fora do conjunto antigo (hífen, underscore, ponto, #, espaço) não reprova senha.
+  it.each(['H2-tmp-Senha-07!', 'Senha_Forte.07', 'Senha#Forte07', 'Senha Forte 07'])(
+    'accepts a password with any printable symbol: %s', (password) => {
+      expect(CreateUserSchema.safeParse({ ...valid, password }).success).toBe(true);
+      expect(UpdateUserSchema.safeParse({ password }).success).toBe(true);
+    });
+
   it('rejects a weak password (no uppercase/number, too short)', () => {
     expect(CreateUserSchema.safeParse({ ...valid, password: 'weak' }).success).toBe(false);
     expect(CreateUserSchema.safeParse({ ...valid, password: 'alllowercase1' }).success).toBe(false);

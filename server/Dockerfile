@@ -48,4 +48,7 @@ COPY --from=builder /app/server/package.json ./package.json
 
 EXPOSE 3001
 
+# BRD F-03.4: o servidor não sobe sem NODE_ENV; a imagem é a de deploy.
+ENV NODE_ENV=production
+
 CMD ["node", "dist/server.js"]

@@ -93,6 +93,28 @@ que não morde não é pronto.
 
 ## Notas de operação neste repo (aditivas — não alteram as regras acima)
 
+**Achado fora de escopo vai à caixa do maestro, não morre no relatório** — OPS-007 (dono, chat, 2026-11-11 —
+`docs/plano/decisoes/D-2026-11-11-LACUNA-VAI-AO-MAESTRO.md`). A regra de não corrigir o que está fora do escopo
+continua; muda o destino do achado:
+- O que é da sua tarefa você resolve antes de fechar: caso que a spec pede, teste que o seu diff exige, erro que o seu
+  código introduziu. Isso não é "fora de escopo".
+- Cada linha de "Achados fora de escopo" / "Lacunas de spec" vira uma entrada na caixa, antes do relatório:
+  `node scripts/lacunas.mjs add --local <arquivo:linha> --classe <defeito|debito|spec|feature|fork|gate> --o-que "…"
+  --evidencia "…" [--como-provar "…"] [--no <NÓ>] [--pr <n>] [--pai <id>]` (`--pai` = o id da lacuna que originou esta
+  sessão, se veio de uma). O id entra na linha do relatório e no corpo do PR.
+- 1ª linha do relatório final: `LACUNAS NA CAIXA: <n> (<ids>)` ou `LACUNAS NA CAIXA: 0`.
+- **Não envie a lacuna por `SendMessage` ao maestro**: turno aberto por mensagem de sessão não abre sessão, e a cadeia
+  para. O maestro lê a caixa quando volta.
+- Lacuna da caixa (id `L-…`) é lacuna mapeada para esta sessão: o campo Lacuna leva o id + o `show` dela, a autorização
+  é a `D-2026-11-11-LACUNA-VAI-AO-MAESTRO`, e o PR não edita o GAP-MAP (a linha é do maestro).
+
+**"PARE e reporte" leva a solução estrutural** (dono, chat, 2026-11-21 —
+`docs/plano/decisoes/D-2026-11-21-RECOMENDAR-SOLUCAO-ESTRUTURAL.md`). As regras 1 e 3 continuam: esta sessão não toca
+fora da localização. Mas, quando a causa raiz está em outro lugar ou o fix mínimo seria remendo (sobrepor sintoma,
+`!`/override, caso especial no consumidor), o relatório **descreve a correção estrutural** (arquivo/camada dona, o que
+muda, versão incremental se for grande) e ela vai à caixa como `--classe defeito|debito`. O fix mínimo desta sessão
+só entra se for etapa declarada dela, e o relatório diz isso.
+
 **Autorização quando a lacuna é nó do vault.** Lacuna priorizada pode ter nota em `docs/plano/nos/PASSO-*.md`
 (ex.: GAP-MAP 7 = `PASSO-11`): aí a autorização é o campo `autorizacao` dela — vazio = não roteia
 (ORCH-006). O fold da nota entra no próprio PR, via `node scripts/plano-vault.mjs fold <NÓ> --pr <n>`

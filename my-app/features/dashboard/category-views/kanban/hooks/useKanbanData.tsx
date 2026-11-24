@@ -23,6 +23,8 @@ export function useKanbanData(tables: IDynamicTable[]) {
     const [error, setError] = useState<string | null>(null);
     // Emenda 1 (F-KRO-1/2): a última busca falhou? Ref para o listener `online` não re-registrar
     const lastFetchFailed = useRef(false);
+    // BRD F-73.2: alguma busca já trouxe dado? Sem isso, a primeira carga com todas as tabelas falhando vira quadro vazio.
+    const hasLoadedOnce = useRef(false);
 
     const fetchData = useCallback(async () => {
         if (kanbanTables.length === 0) {
@@ -95,6 +97,11 @@ export function useKanbanData(tables: IDynamicTable[]) {
             setAggregatedData(prev => [...results, ...prev.filter(t => typeof t.dynamicTableId === 'string' && failedTableIds.has(t.dynamicTableId))]);
             setSchemaMap(newSchemaMap);
             lastFetchFailed.current = failedTableIds.size > 0;
+            if (failedTableIds.size < kanbanTables.length) {
+                hasLoadedOnce.current = true;
+            } else if (!hasLoadedOnce.current) {
+                setError('Failed to load tasks');
+            }
         } catch (err) {
             console.error('Error fetching kanban data:', err);
             setError('Failed to load tasks');

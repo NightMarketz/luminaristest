@@ -59,6 +59,8 @@ const ALLOWED_ACCOUNTING_IMPORTS: ReadonlyArray<{ suffix: RegExp; names: readonl
   { suffix: /accounting\/models\/money$/, names: ['MAX_CENTS'] },
   // BE-INCR-PLANO-4-NIVEIS (F-L8-8 a, dono 13/10): o binding V2 deriva do V1 pelo de-para da L8 (fonte única).
   { suffix: /accounting\/fixtures\/ChartOfAccountsFixture$/, names: ['codigoPosL8'] },
+  // SOT F-12.1 (dono, chat, 10/11: "Liberar"): a validação de data e competência pelo calendário tem casa única.
+  { suffix: /accounting\/models\/dates$/, names: ['isValidDateOnly', 'isValidCompetencia'] },
 ];
 
 /** Extrai os nomes de um import — nomeado (`{ a, b as c, type d }`) ou default (`a`) — a partir de

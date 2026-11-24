@@ -36,7 +36,7 @@ export function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;');
 }
 
-// ponytail: display-only money via integer split (no float) + manual thousands grouping
+// atalho: display-only money via integer split (no float) + manual thousands grouping
 // (NOT toLocaleString — it silently drops the separator on a small-ICU Node). cents arrive here
 // as plain `number` (BE-INCR-MONEY-BIGINT/F-W2B-3: the bigint->number conversion — guarded by
 // `centsFromDb`, models/money.ts — already happened at the repository/service read boundary
@@ -50,7 +50,7 @@ export function centsToBRL(cents: number): string {
   return `${neg ? '-' : ''}R$ ${reais},${cent}`;
 }
 
-// ponytail: UTC getters render the stored calendar date without the local-tz day-shift
+// atalho: UTC getters render the stored calendar date without the local-tz day-shift
 // (memory date-only-rendering-utc-shift-class-bug). entry.date is a UTC-midnight DateTime.
 function dateBR(d: Date): string {
   const dd = String(d.getUTCDate()).padStart(2, '0');

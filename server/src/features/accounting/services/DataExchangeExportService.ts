@@ -14,7 +14,7 @@ import type { CandidatePosting, MatchedLineForExport } from '../models/Reconcili
 import { describeExportJob } from '../models/AccountingDelivery.model';
 import type { AuditService } from './AuditService';
 import type { ExportRequestDto } from '../dtos/DataExchangeDto';
-import type { ImportKind } from '../models/DataExchange.model';
+import { DATA_EXCHANGE_PROCESSING_STALE_MS, type ImportKind, type StaleFailedJob } from '../models/DataExchange.model';
 import { LEDGER_STATUSES } from '../models/ledgerStatus';
 import { centsFromDb } from '../models/money';
 import { sampleEntries, type SampleableLeg } from '../models/entrySample';
@@ -516,6 +516,11 @@ export class DataExchangeExportService {
   }
 
   /** Renders + persists an export artifact and records the job + audit. Returns the job summary. */
+  /** EFX F-18.2 (SM Q-07 = a): job PROCESSING sem desfecho há mais de `DATA_EXCHANGE_PROCESSING_STALE_MS` vira FAILED. */
+  public async failStaleProcessing(now: Date = new Date()): Promise<StaleFailedJob[]> {
+    return this.repo.failStaleProcessing(new Date(now.getTime() - DATA_EXCHANGE_PROCESSING_STALE_MS));
+  }
+
   public async export(scope: AccountingScope, dto: ExportRequestDto): Promise<DataExchangeJobResponse> {
     if (!this.policy.canRead(scope)) {
       throw new ForbiddenError('Não autorizado a exportar dados contábeis.');
@@ -662,6 +667,11 @@ export class DataExchangeExportService {
     }
     const job = await this.repo.findJobById(scope, id);
     if (!job || !job.storageKey) throw new NotFoundError('Artefato não encontrado.');
+    // O banco pode apontar para binário que não está mais no disco (ATTACHMENTS_DIR trocado,
+    // worktree removida). Erro de domínio legível, sem caminho absoluto — nunca ENOENT/500.
+    if (!(await storage.fileExists(job.storageKey))) {
+      throw new NotFoundError('O arquivo deste artefato não está mais disponível no armazenamento. Gere a exportação novamente.');
+    }
 
     if (process.env.AUDIT_DATA_EXCHANGE_DOWNLOADS === 'true') {
       await this.repo.runTransaction(async (tx) => {

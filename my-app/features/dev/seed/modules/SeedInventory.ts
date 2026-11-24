@@ -73,7 +73,8 @@ export class SeedInventory {
                     type: 'In',
                     quantity: prod.initialStock,
                     date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-                    reason: 'Purchase',
+                    // INV F-41.1: o servidor recusa compra manual (entra pelo Contas a Pagar); estoque inicial do seed é ajuste.
+                    reason: 'Adjustment',
                     sourceType: 'SEED',
                     cost: this.gen.randomInt(500, 5000), // Total cost for batch
                     supplierId

@@ -1,0 +1,157 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei Complementar nº 123 de 14/12/2006",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2006/lcp-123-2006-12-14.md",
+      "url_final": "https://github.com/ctresb/leis/blob/394a7e97c8604703a3ea6638df61ab1873cecc6e/federal/leis-complementares/2006/lcp-123-2006-12-14.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2006-12-14;123",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "394a7e97c8604703a3ea6638df61ab1873cecc6e",
+      "alertas": [],
+      "baixado_em": "2026-11-21T10:42:01-03:00",
+      "sha256": "62ae5f126e5d6a0bf1e149614362aeca97730684067c128251c92cc1f732bdd9",
+      "arquivo": "docs/D01_lcp-123-2006-12-14.md",
+      "texto": "docs/D01_lcp-123-2006-12-14.txt",
+      "bytes": 255709,
+      "sha256_texto": "b88e53d46978e27b2d1087c98d45e295958791aae98a10e0b3a15ad08fe72adc",
+      "captura": {
+        "anterior": {
+          "slug": "triagem-contador-2026-10-30",
+          "id": "D08",
+          "baixado_em": "2026-10-30T02:21:04-03:00",
+          "sha256_texto": "b88e53d46978e27b2d1087c98d45e295958791aae98a10e0b3a15ad08fe72adc"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 605 de 05/01/1949",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1949/lei-605-1949-01-05.md",
+      "url_final": "https://github.com/ctresb/leis/blob/8b1889b66586a63a2d4756b874dc2082bf982f67/federal/leis-ordinarias/1949/lei-605-1949-01-05.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1949-01-05;605",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "8b1889b66586a63a2d4756b874dc2082bf982f67",
+      "alertas": [],
+      "baixado_em": "2026-11-21T10:42:03-03:00",
+      "sha256": "6c29fe16e8c5f4052f345e2d2576f4232d703ea9c2f03a35b41e01be7f2b7f10",
+      "arquivo": "docs/D02_lei-605-1949-01-05.md",
+      "texto": "docs/D02_lei-605-1949-01-05.txt",
+      "bytes": 8656,
+      "sha256_texto": "f912f3cf0e4eacc26458422b1cd7b59236ba58bd3fe60fe1fc670f4eef0ca5c4",
+      "captura": {
+        "anterior": {
+          "slug": "brief-pes4-f2",
+          "id": "D01",
+          "baixado_em": "2026-11-05T20:18:57-03:00",
+          "sha256_texto": "f912f3cf0e4eacc26458422b1cd7b59236ba58bd3fe60fe1fc670f4eef0ca5c4"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Súmula nº 27 do TST",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/jurisprudencia/tst/sumulas/sumula-27.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d6c0159be76282be2cdb1dc03c91346ae6dc9b51/jurisprudencia/tst/sumulas/sumula-27.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "versao_texto": "caderno consolidado do tribunal",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "d6c0159be76282be2cdb1dc03c91346ae6dc9b51",
+      "alertas": [
+        "versao_texto = 'caderno consolidado do tribunal' (não é texto compilado: alterações posteriores não aparecem)",
+        "corpo curto ou com aviso (texto integral pode faltar)"
+      ],
+      "baixado_em": "2026-11-21T10:42:22-03:00",
+      "sha256": "7b2afa2c4555604e17f2a0c239222d6df89e8102c79530d6ea4fd7f301d19a00",
+      "arquivo": "docs/D03_sumula-27.md",
+      "texto": "docs/D03_sumula-27.txt",
+      "bytes": 533,
+      "sha256_texto": "cc1a127098334bbbb2744c745fcbc89a6293f56355b45bb3c815bb47dc4ddb08",
+      "captura": {
+        "anterior": {
+          "slug": "brief-pes4-f2",
+          "id": "D13",
+          "baixado_em": "2026-11-05T20:23:44-03:00",
+          "sha256_texto": "cc1a127098334bbbb2744c745fcbc89a6293f56355b45bb3c815bb47dc4ddb08"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "TRIBUNAL SUPERIOR DO TRABALHO",
+      "url": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "url_final": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "orgao": "TST",
+      "baixado_em": "2026-11-21T10:42:59-03:00",
+      "sha256": "46321b2d8d04840eeeb55417937c5a6657c9df5ac40fed1d44a2bf0989c06e8a",
+      "arquivo": "docs/D04_Livro-Internet-pdf.pdf",
+      "texto": "docs/D04_Livro-Internet-pdf.txt",
+      "bytes": 3496811,
+      "sha256_texto": "b631ff24a3b0bdd8840328ba516e6736030fefb4142e1121177b379c7749d0e0",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "Decreto nº 10.854 de 10/11/2021",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2021/dec-10854-2021-11-10.md",
+      "url_final": "https://github.com/ctresb/leis/blob/39239e708b021186cea3d407a5fc7984f2c725f5/federal/decretos/2021/dec-10854-2021-11-10.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2021-11-10;10854",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "39239e708b021186cea3d407a5fc7984f2c725f5",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T11:02:30-03:00",
+      "sha256": "691460deea1935e3aab2096909a9fd11c701d64455a0dbaca537b470d85cfecb",
+      "arquivo": "docs/D05_dec-10854-2021-11-10.md",
+      "texto": "docs/D05_dec-10854-2021-11-10.txt",
+      "bytes": 111476,
+      "sha256_texto": "7511cfd9214ecd1b3671d411292d241b30fc1a04e0864bacb248d607b90e48b7",
+      "captura": {
+        "anterior": {
+          "slug": "brief-pes4-f2",
+          "id": "D10",
+          "baixado_em": "2026-11-05T20:19:08-03:00",
+          "sha256_texto": "7511cfd9214ecd1b3671d411292d241b30fc1a04e0864bacb248d607b90e48b7"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "D10854",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2021/decreto/D10854.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2021/decreto/d10854.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T11:02:45-03:00",
+      "sha256": "283caeafd80f46fbb71b91f379da5e37f352877991ee4f7966d4d50502bfadca",
+      "arquivo": "docs/D06_d10854-htm.html",
+      "texto": "docs/D06_d10854-htm.txt",
+      "bytes": 308673,
+      "sha256_texto": "e4fefe2de775603621ac0179fcefd4b3e06c51cca5554c92bf372017e70fc4b6",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "simulador-salao-monofasico-dsr",
+  "pergunta": "No Simples de 2026, a revenda de cosmético monofásico paga PIS e Cofins dentro do DAS? E o empregado que recebe comissão em % dos serviços tem direito a repouso semanal remunerado sobre a comissão, e como se calcula?",
+  "criado": "2026-11-21T10:41:49-03:00"
+}

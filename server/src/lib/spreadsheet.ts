@@ -1,4 +1,5 @@
 import ExcelJS from 'exceljs';
+import { ValidationError } from './errors';
 
 /**
  * Minimal tabular (de)serializer for the accounting Data Exchange (BE-INCR-6).
@@ -9,7 +10,7 @@ import ExcelJS from 'exceljs';
  * (untyped) and XLSX (typed) behave identically downstream; money columns are integer
  * cents strings that the validators parse.
  *
- * ponytail: hand-rolled CSV covers quoting/escaping/newlines/BOM — reach for a csv lib
+ * atalho: hand-rolled CSV covers quoting/escaping/newlines/BOM — reach for a csv lib
  * only if an RFC-4180 edge case (embedded NUL, exotic delimiters) actually bites.
  */
 
@@ -31,7 +32,7 @@ export interface OutTable {
 const BOM = '﻿';
 
 /** Cell-count ceiling for an imported XLSX grid — zip-bomb guard (SEC audit 2026-07-15). */
-const MAX_IMPORT_CELLS = 2_000_000;
+export const MAX_IMPORT_CELLS = 2_000_000;
 
 /** RFC-4180-core CSV parse into a matrix of raw string cells (quotes/escapes/newlines handled). */
 function parseCsvMatrix(text: string): string[][] {
@@ -100,14 +101,19 @@ export async function parseTable(buffer: Buffer, format: SpreadsheetFormat): Pro
     // Node's global Buffer is generic in newer @types/node and doesn't structurally match
     // exceljs's own Buffer param, though they're identical at runtime. Cast through unknown
     // to the exact expected type (no `any`).
-    await wb.xlsx.load(buffer as unknown as Parameters<typeof wb.xlsx.load>[0]);
+    try {
+      await wb.xlsx.load(buffer as unknown as Parameters<typeof wb.xlsx.load>[0]);
+    } catch {
+      // BRD F-65.1: an unreadable file is the client's error (400), not a 500.
+      throw new ValidationError('The XLSX file could not be read (corrupted or not a spreadsheet).');
+    }
     const ws = wb.worksheets[0];
     matrix = [];
     if (ws) {
       // Zip-bomb guard: a small compressed XLSX can expand to a huge grid. Reject an
       // absurd cell count before we build the matrix + run validation (bounds downstream
       // memory/CPU). (SEC audit 2026-07-15)
-      // ponytail: this caps AFTER exceljs decompresses into its row model — the true
+      // atalho: this caps AFTER exceljs decompresses into its row model — the true
       // decompression cap needs a streaming reader (exceljs WorkbookReader) or an unzip
       // size check; deferred until a real bomb is observed. Upload is already ≤10 MB.
       if (ws.rowCount * ws.columnCount > MAX_IMPORT_CELLS) {

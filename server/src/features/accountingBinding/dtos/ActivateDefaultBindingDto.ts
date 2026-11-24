@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isValidCompetencia } from '../../accounting/models/dates';
 import { KitRefSchema } from '../../sectorKits/dtos/KitInstallationDto';
 
 /**
@@ -45,7 +46,7 @@ export const ActivationBlockingIssueSchema = z
     slot: z.string().optional(),
     accountCode: z.string().optional(),
     /** Só em `ACCOUNTING_PERIOD_NOT_OPEN` — contrato da emenda I3 (ONBOARDING-WIZARD-plano-grafo-brief §3). */
-    period: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+    period: z.string().regex(/^\d{4}-\d{2}$/).refine(isValidCompetencia, 'Competência inválida no calendário.').optional(),
     /** Só em `KIT_INSTALL_STEP_FAILED` — o passo da instalação do kit que falhou (BE-INCR-KIT-SETOR item 14). */
     step: z.number().int().min(1).max(7).optional(),
   })

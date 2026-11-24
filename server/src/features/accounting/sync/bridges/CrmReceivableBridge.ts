@@ -45,7 +45,7 @@ import { CRM_LEGACY_SOURCE_TYPE } from '../AccountingSyncPort';
 export { CRM_LEGACY_SOURCE_TYPE };
 
 /** Revenue leaf for CRM deals (canonical chart). CRM has no line items, so the whole amount is
- *  service revenue. ponytail: single 3.1 credit is the ceiling — a Receivable carries ONE
+ *  service revenue. atalho: single 3.1 credit is the ceiling — a Receivable carries ONE
  *  revenueAccountId, so a per-nature split (3.1×3.3) needs the AR model to grow line natures. */
 export const CRM_REVENUE_ACCOUNT_CODE = '3.1';
 
@@ -129,7 +129,7 @@ export class CrmReceivableBridge {
       documentNumber,
       description: `Receita CRM — ${fact.label}`,
       issueDate: dateOnly,
-      dueDate: dateOnly, // ponytail: CRM has no dueDate; aging counts from close date
+      dueDate: dateOnly, // atalho: CRM has no dueDate; aging counts from close date
       amountCents,
       revenueAccountId: revenueAccount.id,
     });

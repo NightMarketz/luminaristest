@@ -20,9 +20,20 @@ const app = makeApp();
 type Actor = { id: string; username: string; role: string };
 type Row = { id: string; dynamicTableId: string; data: Record<string, unknown>; deletedAt: Date | null };
 
-/** Data de referência literal (A8) para os campos de agenda. */
-const PROXIMA_ACAO = '2026-11-10T13:00:00.000Z';
-const REAGENDADO = '2026-11-12T15:30:00.000Z';
+/**
+ * Datas de agenda relativas a agora: o motor recusa `meetingAt`/`nextActionAt` no passado e
+ * `estimatedCloseDate` antes de hoje, então literal de calendário vence (vencido em 10/11/2026).
+ * Dia UTC de hoje + N, numa hora fixa em UTC; com N >= 7 o instante fica no futuro em qualquer
+ * fuso e a qualquer hora da execução, inclusive na janela 00:00–03:00 UTC.
+ */
+function diaUtcMais(dias: number, hora: number, minuto = 0): Date {
+  const d = new Date();
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + dias, hora, minuto));
+}
+const PROXIMA_ACAO = diaUtcMais(7, 13).toISOString();
+const REAGENDADO = diaUtcMais(9, 15, 30).toISOString();
+/** Campo `date` (só o dia), bem adiante de "hoje" no fuso do processo. */
+const FECHAMENTO_ESTIMADO = diaUtcMais(30, 12).toISOString().slice(0, 10);
 
 let n = 0;
 async function novoUsuario(): Promise<Actor> {
@@ -176,7 +187,7 @@ describe('CRM pipeline pela pilha real (FIX-TESTES item 3)', () => {
 
     it('item 4: proposal → 201; a proposta relida e o snapshot do lead atualizado', async () => {
       const r = await post(c.user, 'proposal', {
-        leadId: c.leadAberto, amount: 3200, currency: 'USD', winProbability: 70, estimatedCloseDate: '2026-12-15',
+        leadId: c.leadAberto, amount: 3200, currency: 'USD', winProbability: 70, estimatedCloseDate: FECHAMENTO_ESTIMADO,
       });
       expect(r.status).toBe(201);
 
@@ -185,7 +196,7 @@ describe('CRM pipeline pela pilha real (FIX-TESTES item 3)', () => {
       expect(proposta.data).toMatchObject({ leadId: c.leadAberto, amount: 3200, currency: 'USD', winProbability: 70, status: 'Draft' });
       const lead = await linha(c.leadAberto);
       // O motor grava o campo `date` como ISO UTC (meia-noite); o dia escrito é o que importa.
-      expect(String(lead.data.latestProposalEtaClose).slice(0, 10)).toBe('2026-12-15');
+      expect(String(lead.data.latestProposalEtaClose).slice(0, 10)).toBe(FECHAMENTO_ESTIMADO);
       expect(lead.data).toMatchObject({
         latestProposalAmount: 3200, latestProposalCurrency: 'USD', latestProposalWinProbability: 70,
       });

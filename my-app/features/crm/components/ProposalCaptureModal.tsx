@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useId } from 'react';
 import { useTranslation } from 'next-i18next';
 import { Modal } from '../../../components/ui/Modal';
 import { DEFAULT_CURRENCY } from '../lib/constants';
@@ -23,6 +23,7 @@ interface ProposalCaptureModalProps {
  */
 export function ProposalCaptureModal({ isOpen, stageName, onCancel, onConfirm, requireWinProbability = true }: ProposalCaptureModalProps) {
   const { t } = useTranslation('crm');
+  const uid = useId();
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState<Currency>(DEFAULT_CURRENCY as Currency);
   const [winProbability, setWinProbability] = useState('');
@@ -88,10 +89,10 @@ export function ProposalCaptureModal({ isOpen, stageName, onCancel, onConfirm, r
         </p>
 
         <div>
-          <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-gray-400">
+          <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-gray-400" htmlFor={`${uid}-1`}>
             {t('capture.amount', 'Valor')}
           </label>
-          <input
+          <input id={`${uid}-1`}
             type="number"
             min={0}
             step="0.01"
@@ -105,10 +106,10 @@ export function ProposalCaptureModal({ isOpen, stageName, onCancel, onConfirm, r
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-gray-400">
+            <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-gray-400" htmlFor={`${uid}-2`}>
               {t('capture.currency', 'Moeda')}
             </label>
-            <select
+            <select id={`${uid}-2`}
               value={currency}
               onChange={(e) => setCurrency(e.target.value as Currency)}
               className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-gray-800 outline-none focus:border-blue-400 dark:border-white/10 dark:bg-neutral-800 dark:text-gray-200"
@@ -121,10 +122,10 @@ export function ProposalCaptureModal({ isOpen, stageName, onCancel, onConfirm, r
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-gray-400">
+            <label className="mb-1 block text-[10px] font-black uppercase tracking-widest text-gray-400" htmlFor={`${uid}-3`}>
               {t('capture.win_probability', 'Win %')}
             </label>
-            <input
+            <input id={`${uid}-3`}
               type="number"
               min={0}
               max={100}

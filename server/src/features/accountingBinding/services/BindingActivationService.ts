@@ -61,7 +61,7 @@ export interface ActivationPeriodPort {
  * — é esse o mês que o gate `assertPeriodOpen` checa; abrir o mês de outro relógio deixaria o compile
  * Draft na virada de mês. O ano desse `today` é o ano do referencial (item 12).
  *
- * ponytail: o pré-check do passo 3 e a instalação são idas separadas ao banco (TOCTOU, mesmo teto aceito
+ * atalho: o pré-check do passo 3 e a instalação são idas separadas ao banco (TOCTOU, mesmo teto aceito
  * no CLI): duas chamadas simultâneas podem ambas instalar; o compile pula quando já há Active e supersede
  * atomicamente, então sobra UMA Active (no pior caso, uma versão extra). Upgrade: mover o pré-check para
  * dentro da tx do `begin` da instalação.

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, useEffect, useRef, FormEvent } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../../lib/context/AuthContext';
@@ -113,9 +113,12 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
   const [prefSuccess, setPrefSuccess] = useState<string | null>(null);
   const [prefError, setPrefError] = useState<string | null>(null);
 
-  // Sync form data when actor loads
+  // Sync form data only when the actor first loads (or a different user appears). Saving preferences swaps the
+  // actor object in AuthContext; re-copying here would wipe unsaved name/e-mail/password edits.
+  const syncedActorId = useRef<string | null>(null);
   useEffect(() => {
-    if (actor) {
+    if (actor && syncedActorId.current !== actor.id) {
+      syncedActorId.current = actor.id;
       setFormData({
         name: actor.name || '',
         email: actor.email || '',
@@ -205,7 +208,7 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
 
     try {
       // Save to DB
-      // ponytail: os dois vêm de <select> com as opções do contrato (pt|en, BRL|USD|EUR); o servidor devolve 400 se divergir.
+      // atalho: os dois vêm de <select> com as opções do contrato (pt|en, BRL|USD|EUR); o servidor devolve 400 se divergir.
       await UserService.updatePreferences({
         locale: preferencesLocale as UpdatePreferencesInput['locale'],
         currency: preferencesCurrency as UpdatePreferencesInput['currency'],
@@ -346,7 +349,12 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
                     </div>
                     <div>
                       <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Plano Atual</p>
-                      <p className={`text-sm font-bold ${planStyle.text}`}>{PLAN_LABELS[currentPlan] || 'Gratuito'}</p>
+                      <p className={`text-sm font-bold ${planStyle.text}`}>
+                        {PLAN_LABELS[currentPlan] || 'Gratuito'}
+                        <span className="ml-2 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:bg-neutral-800 dark:text-gray-400">
+                          {t('planComingSoon', 'Em breve')}
+                        </span>
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -397,6 +405,7 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
                       id="name"
                       required
                       autoComplete="name"
+                      data-own-style
                       className="block w-full px-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
                       placeholder={t('userEditNamePlaceholder', 'Nome completo')}
                       value={formData.name}
@@ -416,6 +425,7 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
                       required
                       minLength={3}
                       autoComplete="username"
+                      data-own-style
                       className="block w-full px-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
                       placeholder={t('userEditUsernamePlaceholder', 'nome_de_usuario')}
                       value={formData.username}
@@ -434,6 +444,7 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
                       id="email"
                       required
                       autoComplete="email"
+                      data-own-style
                       className="block w-full px-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
                       placeholder={t('userEditEmailPlaceholder', 'email@luminaris.com')}
                       value={formData.email}
@@ -467,6 +478,7 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
                       name="currentPassword"
                       id="currentPassword"
                       autoComplete="current-password"
+                      data-own-style
                       className="block w-full px-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
                       value={formData.currentPassword ?? ''}
                       onChange={handleChange}
@@ -484,6 +496,7 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
                       name="password"
                       id="password"
                       autoComplete="new-password"
+                      data-own-style
                       className="block w-full px-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
                       placeholder={t('passwordPlaceholderProfile', 'Deixe em branco para manter a senha atual')}
                       value={formData.password}
@@ -527,14 +540,16 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
 
                   {/* Language dropdown */}
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    <label htmlFor="preferencesLocale" className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                       {t('languageLabel', 'Idioma')}
                     </label>
                     <div className="relative">
                       <IoGlobeOutline size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                       <select
+                        id="preferencesLocale"
                         value={preferencesLocale}
                         onChange={(e) => setPreferencesLocale(e.target.value)}
+                        data-own-style
                         className="block w-full pl-9 pr-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                       >
                         <option value="pt">🇧🇷 Português (BR)</option>
@@ -545,14 +560,16 @@ function UserProfilePage(props: InferGetServerSidePropsType<typeof getServerSide
 
                   {/* Currency dropdown */}
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                    <label htmlFor="preferencesCurrency" className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                       {t('currencyLabel', 'Moeda')}
                     </label>
                     <div className="relative">
                       <IoCashOutline size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                       <select
+                        id="preferencesCurrency"
                         value={preferencesCurrency}
                         onChange={(e) => setPreferencesCurrency(e.target.value)}
+                        data-own-style
                         className="block w-full pl-9 pr-4 py-2.5 bg-white dark:bg-neutral-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm"
                       >
                         {SUPPORTED_CURRENCIES.map((c) => (

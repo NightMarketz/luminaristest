@@ -2,7 +2,8 @@
   "permissions": {
     "defaultMode": "plan",
     "ask": [
-      "Bash(git push:*)",
+      "Bash(git push origin main*)",
+      "Bash(git push * main)",
       "Bash(prisma migrate:*)",
       "Bash(npx prisma migrate:*)"
     ],
