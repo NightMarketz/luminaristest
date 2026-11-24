@@ -66,7 +66,7 @@ Regras normativas da camada Policy, cada uma coberta por um caso de eval comport
 - `POL-005` — classe `implements I<Resource>Policy` (a interface é o contrato injetado no service).
 - `POL-006` — zero acesso a dados na policy: inspeciona só campos do `actor` já carregado; nunca consulta o banco (caso `regression-1`).
 - `POL-007` — actor `IUser | null`; `null` → `false` (exceto signup público explícito) (caso `edge-1`).
-- `POL-008` — imports de `../../users/models/User.model` (`IUser` type-only + `Role` local), nunca `@prisma/client`.
+- `POL-008` — imports de `../../users/public/user.types` (`IUser` type-only + `Role` local), nunca `users/models/User.model` direto nem `@prisma/client`.
 
 `status: validated` (frontmatter é autoritativo — ver `REPORT.md` do skill-audit).
 `eval-score`/`last-evaluated` serão **projeção** do `REPORT.md` quando a skill for promovida — nunca editados à mão.

@@ -3,7 +3,7 @@ name: backend-policy-generator
 description: Gera a camada Policy (classe `<Resource>Policy` + interface `I<Resource>Policy`) com métodos `canXxx` de autorização puramente booleanos, baseados em role (`Role.ADMIN`) e ownership (`actor.id === ownerId`). Use ao criar um recurso que precisa de controle de acesso, ao adicionar regra de autorização a recurso existente, ou ao diferenciar permissões ADMIN vs USER vs proprietário. Trigger terms: policy, autorização, authorization, canCreate/canView/canUpdate/canDelete/canListAll, role, ownership, ForbiddenError. Domínio/arquivos: server/src/features/<resource>/policies/.
 argument-hint: "[NomeDoRecurso]"
 allowed-tools: Read, Grep, Glob, Write, Edit
-compatibility: Claude Code; requer o monorepo Luminaris (server/ com tsc + Role/IUser em users/models/User.model). Sem efeitos externos — apenas gera/edita arquivos no repositório.
+compatibility: Claude Code; requer o monorepo Luminaris (server/ com tsc + Role/IUser expostos por users/public/user.types). Sem efeitos externos — apenas gera/edita arquivos no repositório.
 metadata:
   governance-skill-id: "SKL-BACKEND-POL"
   governance-version: "1.0.0"
@@ -35,8 +35,8 @@ Cada item abaixo é uma REGRA DE GERAÇÃO (o `luminaris-reviewer` cobra exatame
 - [ ] **[POL-001]** **ZERO `throw`** dentro de qualquer método `can*` — quem lança `ForbiddenError` é o service, depois de checar a policy.
 - [ ] **[POL-007]** **Actor `IUser | null`** — `null` = não autenticado; retorna `false` (exceto signup público explícito).
 - [ ] **[POL-006]** **Zero acesso a dados** — a policy só inspeciona campos do `actor` já carregado; nunca consulta o banco.
-- [ ] **[POL-008]** Imports: `import type { IUser } from '../../users/models/User.model'` + `import { Role } from '../../users/models/User.model'`.
-- [ ] **De outra feature, só o tipo, por `features/<x>/public/<nome>.types.ts`** (Contrato §2; regras `M1` e `L5` do `npm run check:arch`): policy não importa `public/<nome>.ts` (porta executável), `repositories/` nem `services/` de outra feature. Se o arquivo de tipo não existe, crie-o em `public/` da feature **alvo** no mesmo PR.
+- [ ] **[POL-008]** Imports: `import type { IUser } from '../../users/public/user.types'` + `import { Role } from '../../users/public/user.types'`. Nunca `users/models/User.model` direto (a `M1` do `npm run check:arch` barra `models/` de outra feature) nem `@prisma/client`.
+- [ ] **De outra feature, só tipo, enum ou constante de `models/`, por `features/<x>/public/<nome>.types.ts`** (Contrato §2; regras `M1`, `L5` e `M4` do `npm run check:arch`): policy não importa `public/<nome>.ts` (porta executável), `repositories/` nem `services/` de outra feature. Se o arquivo de tipo não existe, crie-o em `public/` da feature **alvo** no mesmo PR.
 
 ## When to use
 
@@ -65,7 +65,7 @@ server/src/features/users/models/User.model.ts
 
 1. Interface: `I<Resource>Policy.ts` com assinaturas booleanas
 2. Classe: `export class <Resource>Policy implements I<Resource>Policy`
-3. Import obrigatório: `import type { IUser } from '../../users/models/User.model'` + `import { Role } from '../../users/models/User.model'`
+3. Import obrigatório: `import type { IUser } from '../../users/public/user.types'` + `import { Role } from '../../users/public/user.types'`
 4. Actor: sempre `actor: IUser | null` — null = não autenticado
 5. Métodos obrigatórios: `canCreate`, `canView`, `canUpdate`, `canDelete`, `canListAll`
 6. Padrão de ownership: `actor.id === targetOwnerId`
