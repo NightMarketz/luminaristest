@@ -1,0 +1,2018 @@
+categoria	termo	camada	codigo
+BANCO	boleto	accounting-dtos	1
+BANCO	boleto	accounting-models	5
+BANCO	boleto	accounting-outros	5
+BANCO	boleto	accounting-services	9
+BANCO	boleto	fe-features-accounting	25
+BANCO	boleto	fe-lib	9
+BANCO	boleto	fe-types-gerados	6
+BANCO	boleto	schema	4
+BANCO	cnab	accounting-models	1
+BANCO	cnab	accounting-repositories	1
+BANCO	cnab	accounting-services	3
+BANCO	cnab	controllers	2
+BANCO	cnab	dp	1
+BANCO	cnab	fe-features-accounting	3
+BANCO	cnab	fe-lib	1
+BANCO	cnab	lib-fiscal	12
+BANCO	cnab	schema	2
+BANCO	cnab	scripts	4
+BANCO	febraban	scripts	7
+BANCO	mercado pago	accounting-dtos	4
+BANCO	mercado pago	accounting-models	2
+BANCO	mercado pago	accounting-outros	12
+BANCO	mercado pago	accounting-services	11
+BANCO	mercado pago	fe-features-accounting	18
+BANCO	mercado pago	fe-lib	4
+BANCO	mercado pago	fe-types-gerados	3
+BANCO	mercado pago	lib-outros	5
+BANCO	mercado pago	schema	1
+BANCO	mercadopago	accounting-outros	1
+BANCO	pix	accounting-models	7
+BANCO	pix	accounting-outros	6
+BANCO	pix	accounting-services	5
+BANCO	pix	dp	1
+BANCO	pix	dynamicTables-presets	1
+BANCO	pix	fe-features-accounting	24
+BANCO	pix	fe-features-dashboard	1
+BANCO	pix	fe-lib	9
+BANCO	pix	fe-types-gerados	7
+BANCO	pix	jobs	2
+BANCO	pix	sales	1
+BANCO	pix	schema	4
+BANCO	pix	scripts	6
+BANCO	split payment	accounting-models	3
+BANCO	split payment	accounting-services	1
+BANCO	split payment	fe-features-accounting	1
+BANCO	split payment	fe-lib	1
+BANCO	ted	accounting-models	2
+BANCO	ted	fe-lib	4
+BANCO	ted	fe-types-gerados	4
+BANCO	ted	schema	2
+CLASSIF	cclasstrib	accounting-models	2
+CLASSIF	cclasstrib	scripts	1
+CLASSIF	cest	accounting-dtos	2
+CLASSIF	cest	accounting-models	3
+CLASSIF	cest	accounting-repositories	1
+CLASSIF	cest	accounting-services	3
+CLASSIF	cest	escopo-e-primitivas	1
+CLASSIF	cest	fe-types-gerados	5
+CLASSIF	cest	legalParameters	1
+CLASSIF	cest	schema	1
+CLASSIF	cest	seed-legal	13
+CLASSIF	cfop	accounting-dtos	11
+CLASSIF	cfop	accounting-models	10
+CLASSIF	cfop	accounting-repositories	1
+CLASSIF	cfop	accounting-services	4
+CLASSIF	cfop	escopo-e-primitivas	1
+CLASSIF	cfop	fe-features-accounting	1
+CLASSIF	cfop	fe-lib	1
+CLASSIF	cfop	fe-types-gerados	10
+CLASSIF	cfop	legalParameters	3
+CLASSIF	cfop	lib-fiscal	8
+CLASSIF	cfop	schema	1
+CLASSIF	cfop	seed-legal	2
+CLASSIF	codigo de receita	accounting-models	5
+CLASSIF	codigo de receita	accounting-services	3
+CLASSIF	codigo de receita	fe-features-accounting	1
+CLASSIF	codigo de receita	legalParameters	2
+CLASSIF	csosn	accounting-dtos	6
+CLASSIF	csosn	accounting-models	8
+CLASSIF	csosn	accounting-repositories	1
+CLASSIF	csosn	accounting-services	7
+CLASSIF	csosn	escopo-e-primitivas	1
+CLASSIF	csosn	fe-types-gerados	9
+CLASSIF	csosn	lib-fiscal	5
+CLASSIF	csosn	schema	1
+CLASSIF	lc116	accounting-dtos	4
+CLASSIF	lc116	accounting-models	14
+CLASSIF	lc116	accounting-services	27
+CLASSIF	lc116	fe-features-accounting	1
+CLASSIF	lc116	fe-types-gerados	3
+CLASSIF	lc116	legalParameters	4
+CLASSIF	lc116	lib-outros	3
+CLASSIF	lc116	schema	1
+CLASSIF	lc116	scripts	4
+CLASSIF	lc116	sectorKits	14
+CLASSIF	lc116	seed-legal	350
+CLASSIF	nbs	accounting-dtos	3
+CLASSIF	nbs	accounting-models	18
+CLASSIF	nbs	accounting-repositories	1
+CLASSIF	nbs	accounting-services	18
+CLASSIF	nbs	escopo-e-primitivas	1
+CLASSIF	nbs	fe-features-accounting	11
+CLASSIF	nbs	fe-lib	2
+CLASSIF	nbs	fe-types-gerados	11
+CLASSIF	nbs	legalParameters	3
+CLASSIF	nbs	lib-fiscal	5
+CLASSIF	nbs	schema	2
+CLASSIF	nbs	scripts	3
+CLASSIF	nbs	sectorKits	24
+CLASSIF	nbs	seed-legal	20
+CLASSIF	ncm	accounting-dtos	15
+CLASSIF	ncm	accounting-models	56
+CLASSIF	ncm	accounting-repositories	4
+CLASSIF	ncm	accounting-services	33
+CLASSIF	ncm	escopo-e-primitivas	3
+CLASSIF	ncm	fe-features-accounting	24
+CLASSIF	ncm	fe-lib	3
+CLASSIF	ncm	fe-types-gerados	15
+CLASSIF	ncm	legalParameters	13
+CLASSIF	ncm	lib-fiscal	11
+CLASSIF	ncm	lib-outros	3
+CLASSIF	ncm	schema	3
+CLASSIF	ncm	scripts	14
+CLASSIF	ncm	seed-legal	369
+CONTABIL	ano calendario	accounting-dtos	16
+CONTABIL	ano calendario	accounting-models	16
+CONTABIL	ano calendario	accounting-repositories	37
+CONTABIL	ano calendario	accounting-services	87
+CONTABIL	ano calendario	escopo-e-primitivas	9
+CONTABIL	ano calendario	fe-features-accounting	5
+CONTABIL	ano calendario	fe-lib	1
+CONTABIL	ano calendario	fe-types-gerados	15
+CONTABIL	ano calendario	lib-fiscal	8
+CONTABIL	ano calendario	lib-outros	5
+CONTABIL	ano calendario	schema	13
+CONTABIL	ano calendario	seed-legal	6
+CONTABIL	anoCalendario	accounting-dtos	16
+CONTABIL	anoCalendario	accounting-models	16
+CONTABIL	anoCalendario	accounting-repositories	37
+CONTABIL	anoCalendario	accounting-services	87
+CONTABIL	anoCalendario	escopo-e-primitivas	9
+CONTABIL	anoCalendario	fe-features-accounting	5
+CONTABIL	anoCalendario	fe-lib	1
+CONTABIL	anoCalendario	fe-types-gerados	15
+CONTABIL	anoCalendario	lib-fiscal	8
+CONTABIL	anoCalendario	lib-outros	5
+CONTABIL	anoCalendario	schema	13
+CONTABIL	anoCalendario	seed-legal	6
+CONTABIL	bp	accounting-dtos	39
+CONTABIL	bp	accounting-models	207
+CONTABIL	bp	accounting-outros	1
+CONTABIL	bp	accounting-repositories	13
+CONTABIL	bp	accounting-services	150
+CONTABIL	bp	accountingBinding	1
+CONTABIL	bp	dp	42
+CONTABIL	bp	escopo-e-primitivas	7
+CONTABIL	bp	fe-features-accounting	82
+CONTABIL	bp	fe-lib	11
+CONTABIL	bp	fe-types-gerados	35
+CONTABIL	bp	jobs	1
+CONTABIL	bp	legalParameters	27
+CONTABIL	bp	lib-fiscal	15
+CONTABIL	bp	sales	11
+CONTABIL	bp	schema	15
+CONTABIL	bp	scripts	12
+CONTABIL	bp	seed-legal	356
+CONTABIL	cfc	accounting-dtos	1
+CONTABIL	cfc	accounting-models	2
+CONTABIL	cfc	accounting-services	1
+CONTABIL	cfc	fe-features-accounting	2
+CONTABIL	cfc	schema	2
+CONTABIL	cfc	scripts	1
+CONTABIL	dfc	fe-features-accounting	9
+CONTABIL	dfc	seed-legal	302
+CONTABIL	dre	accounting-dtos	2
+CONTABIL	dre	accounting-services	64
+CONTABIL	dre	fe-features-accounting	17
+CONTABIL	dre	fe-lib	1
+CONTABIL	dre	lib-fiscal	2
+CONTABIL	exercicio	accounting-dtos	6
+CONTABIL	exercicio	accounting-models	2
+CONTABIL	exercicio	accounting-services	9
+CONTABIL	exercicio	fe-features-accounting	28
+CONTABIL	exercicio	fe-lib	2
+CONTABIL	exercicio	jobs	4
+CONTABIL	exercicio	lib-fiscal	2
+CONTABIL	exercicio	schema	3
+CONTABIL	exercicio	scripts	3
+CONTABIL	exercicio	seed-legal	15
+CONTABIL	fiscalYear	accounting-repositories	4
+CONTABIL	fiscalYear	accounting-services	10
+CONTABIL	fiscalYear	escopo-e-primitivas	1
+CONTABIL	fiscalYear	fe-features-accounting	7
+CONTABIL	fiscalYear	fe-lib	1
+CONTABIL	fiscalYear	lib-outros	2
+CONTABIL	fiscalYear	nucleo-razao	13
+CONTABIL	fiscalYear	schema	6
+CONTABIL	itg	accounting-services	2
+CONTABIL	itg	fe-features-accounting	1
+CONTABIL	itg	lib-outros	1
+CONTABIL	itg	nucleo-razao	2
+CONTABIL	plano de contas	accounting-outros	1
+CONTABIL	plano de contas	accounting-services	2
+CONTABIL	plano de contas	accountingBinding	2
+CONTABIL	plano de contas	fe-features-accounting	16
+CONTABIL	plano de contas	jobs	2
+CONTABIL	plano de contas	nucleo-razao	2
+CONTABIL	plano de contas	scripts	2
+CONTABIL	plano de contas	sectorKits	4
+DOCFISCAL	a1	accounting-models	5
+DOCFISCAL	a1	accounting-services	10
+DOCFISCAL	a1	analytics	3
+DOCFISCAL	a1	dp	1
+DOCFISCAL	a1	fe-components	7
+DOCFISCAL	a1	fe-features-accounting	6
+DOCFISCAL	a1	fe-features-dashboard	5
+DOCFISCAL	a1	fe-features-outros	4
+DOCFISCAL	a1	fe-outros	1
+DOCFISCAL	a1	fe-pages	1
+DOCFISCAL	a1	schema	5
+DOCFISCAL	a1	scripts	12
+DOCFISCAL	a1	seed-legal	24
+DOCFISCAL	a1	server-outros	1
+DOCFISCAL	adn	accounting-outros	1
+DOCFISCAL	adn	accounting-services	1
+DOCFISCAL	adn	jobs	1
+DOCFISCAL	adn	lib-outros	2
+DOCFISCAL	adn	schema	2
+DOCFISCAL	adn	scripts	8
+DOCFISCAL	certificado	accounting-dtos	2
+DOCFISCAL	certificado	accounting-models	10
+DOCFISCAL	certificado	accounting-outros	4
+DOCFISCAL	certificado	accounting-repositories	2
+DOCFISCAL	certificado	accounting-services	39
+DOCFISCAL	certificado	fe-features-accounting	5
+DOCFISCAL	certificado	fe-types-gerados	2
+DOCFISCAL	certificado	jobs	1
+DOCFISCAL	certificado	lib-fiscal	16
+DOCFISCAL	certificado	lib-outros	1
+DOCFISCAL	certificado	schema	4
+DOCFISCAL	chave de acesso	fe-features-accounting	1
+DOCFISCAL	chave de acesso	lib-fiscal	3
+DOCFISCAL	chave de acesso	scripts	1
+DOCFISCAL	contingencia	accounting-dtos	10
+DOCFISCAL	contingencia	accounting-models	8
+DOCFISCAL	contingencia	accounting-outros	5
+DOCFISCAL	contingencia	accounting-repositories	34
+DOCFISCAL	contingencia	accounting-services	98
+DOCFISCAL	contingencia	controllers	6
+DOCFISCAL	contingencia	fe-features-accounting	1
+DOCFISCAL	contingencia	fe-types-gerados	5
+DOCFISCAL	contingencia	jobs	10
+DOCFISCAL	contingencia	lib-outros	13
+DOCFISCAL	contingencia	routes	3
+DOCFISCAL	contingencia	schema	5
+DOCFISCAL	cstat	accounting-outros	8
+DOCFISCAL	cstat	accounting-services	2
+DOCFISCAL	cstat	fe-features-accounting	1
+DOCFISCAL	cstat	fe-types-gerados	3
+DOCFISCAL	cstat	legalParameters	2
+DOCFISCAL	cstat	lib-fiscal	2
+DOCFISCAL	cstat	lib-outros	1
+DOCFISCAL	cstat	seed-legal	2
+DOCFISCAL	danfe	accounting-dtos	2
+DOCFISCAL	danfe	accounting-models	1
+DOCFISCAL	danfe	accounting-services	12
+DOCFISCAL	danfe	controllers	4
+DOCFISCAL	danfe	fe-types-gerados	1
+DOCFISCAL	danfe	lib-fiscal	76
+DOCFISCAL	danfe	lib-outros	4
+DOCFISCAL	danfe	routes	2
+DOCFISCAL	danfe	scripts	3
+DOCFISCAL	dps	accounting-dtos	19
+DOCFISCAL	dps	accounting-models	9
+DOCFISCAL	dps	accounting-outros	17
+DOCFISCAL	dps	accounting-repositories	1
+DOCFISCAL	dps	accounting-services	60
+DOCFISCAL	dps	escopo-e-primitivas	1
+DOCFISCAL	dps	fe-features-accounting	18
+DOCFISCAL	dps	fe-lib	4
+DOCFISCAL	dps	fe-types-gerados	10
+DOCFISCAL	dps	lib-fiscal	23
+DOCFISCAL	dps	schema	4
+DOCFISCAL	dps	scripts	5
+DOCFISCAL	dps	seed-legal	338
+DOCFISCAL	icp	lib-fiscal	5
+DOCFISCAL	inutilizacao	accounting-models	3
+DOCFISCAL	inutilizacao	accounting-outros	3
+DOCFISCAL	inutilizacao	accounting-services	5
+DOCFISCAL	inutilizacao	lib-outros	1
+DOCFISCAL	inutilizacao	schema	1
+DOCFISCAL	inutilizacao	scripts	1
+DOCFISCAL	inutilizacao	seed-legal	6
+DOCFISCAL	nfce	accounting-dtos	28
+DOCFISCAL	nfce	accounting-models	28
+DOCFISCAL	nfce	accounting-outros	51
+DOCFISCAL	nfce	accounting-repositories	59
+DOCFISCAL	nfce	accounting-services	80
+DOCFISCAL	nfce	controllers	15
+DOCFISCAL	nfce	escopo-e-primitivas	3
+DOCFISCAL	nfce	fe-features-accounting	5
+DOCFISCAL	nfce	fe-lib	1
+DOCFISCAL	nfce	fe-types-gerados	22
+DOCFISCAL	nfce	jobs	5
+DOCFISCAL	nfce	legalParameters	4
+DOCFISCAL	nfce	lib-outros	29
+DOCFISCAL	nfce	routes	7
+DOCFISCAL	nfce	schema	12
+DOCFISCAL	nfce	scripts	1
+DOCFISCAL	nfce	seed-legal	8
+DOCFISCAL	nfe	accounting-dtos	55
+DOCFISCAL	nfe	accounting-models	45
+DOCFISCAL	nfe	accounting-outros	51
+DOCFISCAL	nfe	accounting-repositories	8
+DOCFISCAL	nfe	accounting-services	145
+DOCFISCAL	nfe	controllers	16
+DOCFISCAL	nfe	escopo-e-primitivas	1
+DOCFISCAL	nfe	fe-features-accounting	119
+DOCFISCAL	nfe	fe-lib	29
+DOCFISCAL	nfe	fe-types-gerados	28
+DOCFISCAL	nfe	legalParameters	4
+DOCFISCAL	nfe	lib-fiscal	92
+DOCFISCAL	nfe	lib-outros	23
+DOCFISCAL	nfe	routes	7
+DOCFISCAL	nfe	schema	9
+DOCFISCAL	nfe	scripts	3
+DOCFISCAL	nfe	seed-legal	14
+DOCFISCAL	nfe	server-outros	1
+DOCFISCAL	nfse	accounting-dtos	11
+DOCFISCAL	nfse	accounting-models	6
+DOCFISCAL	nfse	accounting-outros	13
+DOCFISCAL	nfse	accounting-repositories	8
+DOCFISCAL	nfse	accounting-services	64
+DOCFISCAL	nfse	controllers	1
+DOCFISCAL	nfse	fe-features-accounting	9
+DOCFISCAL	nfse	fe-features-dashboard	3
+DOCFISCAL	nfse	fe-lib	2
+DOCFISCAL	nfse	fe-types-gerados	13
+DOCFISCAL	nfse	jobs	7
+DOCFISCAL	nfse	lib-fiscal	29
+DOCFISCAL	nfse	lib-outros	3
+DOCFISCAL	nfse	schema	5
+DOCFISCAL	nfse	scripts	20
+DOCFISCAL	sefaz	accounting-models	2
+DOCFISCAL	sefaz	accounting-outros	74
+DOCFISCAL	sefaz	accounting-services	3
+DOCFISCAL	sefaz	fe-features-accounting	1
+DOCFISCAL	sefaz	lib-fiscal	1
+DOCFISCAL	sefaz	lib-outros	1
+DOCFISCAL	sefaz	schema	1
+DOCFISCAL	sefaz	seed-legal	19
+ENDERECO	+55	scripts	2
+ENDERECO	bairro	accounting-dtos	5
+ENDERECO	bairro	accounting-models	3
+ENDERECO	bairro	accounting-repositories	1
+ENDERECO	bairro	accounting-services	7
+ENDERECO	bairro	fe-features-accounting	8
+ENDERECO	bairro	fe-features-dashboard	2
+ENDERECO	bairro	fe-lib	1
+ENDERECO	bairro	fe-types-gerados	14
+ENDERECO	bairro	lib-fiscal	7
+ENDERECO	bairro	schema	1
+ENDERECO	cep	accounting-dtos	5
+ENDERECO	cep	accounting-models	3
+ENDERECO	cep	accounting-repositories	1
+ENDERECO	cep	accounting-services	7
+ENDERECO	cep	fe-features-accounting	8
+ENDERECO	cep	fe-features-dashboard	23
+ENDERECO	cep	fe-lib	8
+ENDERECO	cep	fe-types-gerados	14
+ENDERECO	cep	lib-fiscal	8
+ENDERECO	cep	schema	1
+ENDERECO	ddd	accounting-dtos	2
+ENDERECO	ddd	fe-features-dashboard	1
+ENDERECO	ddd	lib-fiscal	2
+ENDERECO	ibge	accounting-dtos	14
+ENDERECO	ibge	accounting-models	12
+ENDERECO	ibge	accounting-services	9
+ENDERECO	ibge	fe-features-accounting	7
+ENDERECO	ibge	legalParameters	4
+ENDERECO	ibge	schema	4
+ENDERECO	ibge	scripts	3
+ENDERECO	logradouro	accounting-dtos	1
+ENDERECO	logradouro	accounting-models	2
+ENDERECO	logradouro	accounting-repositories	1
+ENDERECO	logradouro	accounting-services	4
+ENDERECO	logradouro	fe-features-dashboard	1
+ENDERECO	logradouro	fe-lib	1
+ENDERECO	logradouro	fe-types-gerados	3
+ENDERECO	logradouro	schema	1
+ENDERECO	municipio	accounting-dtos	6
+ENDERECO	municipio	accounting-models	14
+ENDERECO	municipio	accounting-repositories	1
+ENDERECO	municipio	accounting-services	19
+ENDERECO	municipio	fe-features-accounting	13
+ENDERECO	municipio	fe-types-gerados	3
+ENDERECO	municipio	legalParameters	1
+ENDERECO	municipio	lib-fiscal	3
+ENDERECO	municipio	lib-outros	3
+ENDERECO	municipio	schema	3
+ENDERECO	municipio	scripts	3
+ENDERECO	viacep	fe-lib	2
+IDENT	cnae	accounting-dtos	3
+IDENT	cnae	accounting-models	4
+IDENT	cnae	accounting-repositories	1
+IDENT	cnae	accounting-services	9
+IDENT	cnae	fe-features-accounting	21
+IDENT	cnae	fe-lib	2
+IDENT	cnae	fe-types-gerados	8
+IDENT	cnae	legalParameters	2
+IDENT	cnae	lib-fiscal	3
+IDENT	cnae	schema	1
+IDENT	cnae	scripts	13
+IDENT	cnae	seed-legal	471
+IDENT	cnpj	accounting-dtos	66
+IDENT	cnpj	accounting-models	75
+IDENT	cnpj	accounting-outros	21
+IDENT	cnpj	accounting-repositories	7
+IDENT	cnpj	accounting-services	152
+IDENT	cnpj	dp	22
+IDENT	cnpj	dynamicTables-motor	16
+IDENT	cnpj	dynamicTables-presets	2
+IDENT	cnpj	escopo-e-primitivas	5
+IDENT	cnpj	fe-features-accounting	75
+IDENT	cnpj	fe-features-dashboard	5
+IDENT	cnpj	fe-lib	10
+IDENT	cnpj	fe-types-gerados	63
+IDENT	cnpj	lib-fiscal	116
+IDENT	cnpj	lib-outros	5
+IDENT	cnpj	outras-features	1
+IDENT	cnpj	schema	16
+IDENT	cnpj	scripts	3
+IDENT	cnpj	seed-legal	1
+IDENT	cpf	accounting-dtos	51
+IDENT	cpf	accounting-models	51
+IDENT	cpf	accounting-outros	7
+IDENT	cpf	accounting-repositories	3
+IDENT	cpf	accounting-services	24
+IDENT	cpf	dp	33
+IDENT	cpf	dynamicTables-motor	13
+IDENT	cpf	dynamicTables-presets	7
+IDENT	cpf	fe-features-accounting	49
+IDENT	cpf	fe-features-dashboard	5
+IDENT	cpf	fe-lib	7
+IDENT	cpf	fe-types-gerados	42
+IDENT	cpf	lib-fiscal	67
+IDENT	cpf	lib-outros	1
+IDENT	cpf	schema	9
+IDENT	cpf	scripts	1
+IDENT	cpf	seed-legal	1
+IDENT	crc	accounting-dtos	79
+IDENT	crc	accounting-models	39
+IDENT	crc	accounting-outros	1
+IDENT	crc	accounting-repositories	7
+IDENT	crc	accounting-services	37
+IDENT	crc	escopo-e-primitivas	3
+IDENT	crc	fe-features-accounting	68
+IDENT	crc	fe-lib	11
+IDENT	crc	fe-types-gerados	30
+IDENT	crc	lib-fiscal	20
+IDENT	crc	schema	10
+IDENT	crc	scripts	1
+IDENT	inscricao estadual	accounting-dtos	1
+IDENT	inscricao estadual	accounting-repositories	1
+IDENT	inscricao estadual	accounting-services	5
+IDENT	inscricao estadual	escopo-e-primitivas	1
+IDENT	inscricao estadual	fe-types-gerados	3
+IDENT	inscricao estadual	lib-fiscal	4
+IDENT	inscricao estadual	schema	1
+IDENT	inscricao municipal	accounting-dtos	1
+IDENT	inscricao municipal	accounting-repositories	1
+IDENT	inscricao municipal	accounting-services	2
+IDENT	inscricao municipal	fe-features-accounting	7
+IDENT	inscricao municipal	fe-lib	1
+IDENT	inscricao municipal	fe-types-gerados	3
+IDENT	inscricao municipal	lib-fiscal	1
+IDENT	inscricao municipal	schema	1
+IDENT	pasep	lib-fiscal	2
+IDENT	pasep	scripts	1
+IDENT	pasep	sectorKits	1
+IDENT	pasep	seed-legal	1
+IDENT	razao social	accounting-dtos	1
+IDENT	razao social	accounting-models	2
+IDENT	razao social	accounting-repositories	1
+IDENT	razao social	accounting-services	4
+IDENT	razao social	fe-features-accounting	1
+IDENT	razao social	fe-types-gerados	3
+IDENT	razao social	lib-fiscal	2
+IDENT	razao social	schema	1
+LOCALE	-03:00	accounting-models	2
+LOCALE	-03:00	accounting-outros	1
+LOCALE	-03:00	chat-e-ia	1
+LOCALE	-03:00	outras-features	1
+LOCALE	America/Sao_Paulo	accounting-models	2
+LOCALE	America/Sao_Paulo	accounting-services	2
+LOCALE	America/Sao_Paulo	analytics	2
+LOCALE	America/Sao_Paulo	chat-e-ia	1
+LOCALE	America/Sao_Paulo	crm	1
+LOCALE	America/Sao_Paulo	escopo-e-primitivas	2
+LOCALE	America/Sao_Paulo	fe-features-accounting	1
+LOCALE	America/Sao_Paulo	fe-features-dashboard	1
+LOCALE	America/Sao_Paulo	fe-outros	1
+LOCALE	America/Sao_Paulo	jobs	4
+LOCALE	America/Sao_Paulo	legalParameters	2
+LOCALE	America/Sao_Paulo	lib-outros	2
+LOCALE	America/Sao_Paulo	outras-features	1
+LOCALE	America/Sao_Paulo	scripts	1
+LOCALE	UTC-3	fe-features-dashboard	2
+LOCALE	brt	accounting-models	2
+LOCALE	brt	accounting-services	6
+LOCALE	dia util	accounting-models	15
+LOCALE	dia util	accounting-services	5
+LOCALE	dia util	analytics	14
+LOCALE	dia util	dp	1
+LOCALE	dia util	fe-features-dashboard	3
+LOCALE	dia util	lib-outros	3
+LOCALE	dia util	packages	1
+LOCALE	dia util	seed-legal	3
+LOCALE	feriado	accounting-models	1
+LOCALE	feriado	accounting-services	9
+LOCALE	feriado	dp	2
+LOCALE	feriado	fe-features-accounting	2
+LOCALE	feriado	fe-types-gerados	3
+LOCALE	feriado	legalParameters	4
+LOCALE	feriado	lib-outros	3
+LOCALE	feriado	packages	4
+LOCALE	feriado	seed-legal	16
+LOCALE	pt-BR	accounting-models	2
+LOCALE	pt-BR	accounting-services	5
+LOCALE	pt-BR	analytics	1
+LOCALE	pt-BR	fe-features-accounting	11
+LOCALE	pt-BR	fe-features-crm	9
+LOCALE	pt-BR	fe-features-dashboard	30
+LOCALE	pt-BR	fe-lib	3
+LOCALE	pt-BR	fe-pages	3
+LOCALE	pt-BR	lib-fiscal	1
+LOCALE	pt-BR	lib-outros	2
+LOCALE	pt-BR	scripts	11
+LOCALE	pt-BR	seed-legal	464
+LOCALE	timeZone	accounting-models	18
+LOCALE	timeZone	accounting-services	8
+LOCALE	timeZone	analytics	59
+LOCALE	timeZone	chat-e-ia	16
+LOCALE	timeZone	controllers	2
+LOCALE	timeZone	crm	16
+LOCALE	timeZone	escopo-e-primitivas	6
+LOCALE	timeZone	fe-components	2
+LOCALE	timeZone	fe-features-accounting	1
+LOCALE	timeZone	fe-features-crm	6
+LOCALE	timeZone	fe-features-dashboard	4
+LOCALE	timeZone	fe-lib	1
+LOCALE	timeZone	fe-types-gerados	4
+LOCALE	timeZone	jobs	4
+LOCALE	timeZone	legalParameters	2
+LOCALE	timeZone	lib-outros	4
+LOCALE	timeZone	outras-features	2
+LOCALE	timeZone	scripts	1
+LOCALE	timeZone	server-outros	1
+LOCALE	toLocaleDateString	fe-components	1
+LOCALE	toLocaleDateString	fe-features-accounting	2
+LOCALE	toLocaleDateString	fe-features-crm	3
+LOCALE	toLocaleDateString	fe-features-dashboard	7
+LOCALE	toLocaleDateString	fe-pages	2
+LOCALE	toLocaleString	accounting-models	2
+LOCALE	toLocaleString	accounting-services	4
+LOCALE	toLocaleString	fe-features-accounting	8
+LOCALE	toLocaleString	fe-features-crm	5
+LOCALE	toLocaleString	fe-features-dashboard	21
+LOCALE	toLocaleString	fe-pages	3
+LOCALE	toLocaleString	scripts	4
+MOEDA	Intl.NumberFormat	fe-features-crm	5
+MOEDA	Intl.NumberFormat	fe-features-dashboard	7
+MOEDA	Intl.NumberFormat	fe-lib	2
+MOEDA	Intl.NumberFormat	scripts	2
+MOEDA	R$	accounting-models	8
+MOEDA	R$	accounting-services	10
+MOEDA	R$	fe-features-accounting	11
+MOEDA	R$	fe-features-crm	2
+MOEDA	R$	fe-features-dashboard	8
+MOEDA	R$	fe-lib	1
+MOEDA	R$	fe-pages	3
+MOEDA	R$	jobs	4
+MOEDA	R$	lib-outros	1
+MOEDA	R$	scripts	4
+MOEDA	R$	seed-legal	7
+MOEDA	brl	accounting-models	5
+MOEDA	brl	accounting-outros	5
+MOEDA	brl	accounting-services	5
+MOEDA	brl	accountingBinding	1
+MOEDA	brl	analytics	1
+MOEDA	brl	chat-e-ia	1
+MOEDA	brl	crm	8
+MOEDA	brl	dynamicTables-presets	30
+MOEDA	brl	escopo-e-primitivas	2
+MOEDA	brl	fe-features-accounting	59
+MOEDA	brl	fe-features-crm	18
+MOEDA	brl	fe-features-dashboard	22
+MOEDA	brl	fe-lib	5
+MOEDA	brl	fe-pages	3
+MOEDA	brl	fe-types-gerados	16
+MOEDA	brl	jobs	11
+MOEDA	brl	legalParameters	1
+MOEDA	brl	lib-outros	8
+MOEDA	brl	outras-features	4
+MOEDA	brl	schema	2
+MOEDA	brl	scripts	3
+MOEDA	centavos	accounting-dtos	1
+MOEDA	centavos	accounting-models	37
+MOEDA	centavos	accounting-outros	6
+MOEDA	centavos	accounting-services	28
+MOEDA	centavos	accountingBinding	4
+MOEDA	centavos	dp	21
+MOEDA	centavos	dynamicTables-motor	2
+MOEDA	centavos	escopo-e-primitivas	1
+MOEDA	centavos	fe-features-accounting	4
+MOEDA	centavos	legalParameters	6
+MOEDA	centavos	lib-fiscal	4
+MOEDA	centavos	lib-outros	4
+MOEDA	centavos	nucleo-razao	1
+MOEDA	centavos	packages	1
+MOEDA	centavos	sales	6
+MOEDA	centavos	schema	2
+MOEDA	centavos	seed-legal	1
+MOEDA	cents	accounting-dtos	289
+MOEDA	cents	accounting-models	877
+MOEDA	cents	accounting-outros	74
+MOEDA	cents	accounting-repositories	219
+MOEDA	cents	accounting-services	1599
+MOEDA	cents	accountingBinding	41
+MOEDA	cents	chat-e-ia	1
+MOEDA	cents	dp	144
+MOEDA	cents	dynamicTables-motor	17
+MOEDA	cents	dynamicTables-presets	15
+MOEDA	cents	escopo-e-primitivas	48
+MOEDA	cents	fe-features-accounting	354
+MOEDA	cents	fe-features-dashboard	11
+MOEDA	cents	fe-lib	156
+MOEDA	cents	fe-types-gerados	353
+MOEDA	cents	jobs	63
+MOEDA	cents	legalParameters	14
+MOEDA	cents	lib-fiscal	337
+MOEDA	cents	lib-outros	52
+MOEDA	cents	nucleo-razao	38
+MOEDA	cents	packages	43
+MOEDA	cents	sales	95
+MOEDA	cents	schema	89
+MOEDA	cents	scripts	29
+MOEDA	cents	seed-legal	107
+MOEDA	currency	accounting-outros	20
+MOEDA	currency	accounting-services	2
+MOEDA	currency	accountingBinding	1
+MOEDA	currency	analytics	76
+MOEDA	currency	chat-e-ia	1
+MOEDA	currency	controllers	1
+MOEDA	currency	crm	65
+MOEDA	currency	dynamicTables-motor	5
+MOEDA	currency	dynamicTables-presets	51
+MOEDA	currency	escopo-e-primitivas	2
+MOEDA	currency	fe-components	3
+MOEDA	currency	fe-features-accounting	2
+MOEDA	currency	fe-features-crm	132
+MOEDA	currency	fe-features-dashboard	211
+MOEDA	currency	fe-lib	32
+MOEDA	currency	fe-outros	1
+MOEDA	currency	fe-pages	18
+MOEDA	currency	fe-types-gerados	21
+MOEDA	currency	jobs	21
+MOEDA	currency	legalParameters	1
+MOEDA	currency	lib-outros	1
+MOEDA	currency	outras-features	51
+MOEDA	currency	schema	3
+MOEDA	currency	scripts	17
+MOEDA	toFixed(2)	accounting-models	2
+MOEDA	toFixed(2)	accounting-services	8
+MOEDA	toFixed(2)	fe-features-accounting	6
+MOEDA	toFixed(2)	fe-features-crm	1
+MOEDA	toFixed(2)	fe-features-dashboard	1
+MOEDA	toFixed(2)	fe-features-outros	2
+MOEDA	toFixed(2)	fe-pages	2
+MOEDA	toFixed(2)	lib-fiscal	7
+MOEDA	toFixed(2)	scripts	6
+NORMA	Art. 1	seed-legal	1
+NORMA	Art. 25	seed-legal	1
+NORMA	Art. 3	seed-legal	1
+NORMA	Art. 474	seed-legal	1
+NORMA	Art. 65	seed-legal	1
+NORMA	Art. 9	seed-legal	1
+NORMA	CLT	dp	5
+NORMA	CLT	schema	1
+NORMA	CLT	seed-legal	23
+NORMA	CTN	dynamicTables-motor	1
+NORMA	CTN	sales	5
+NORMA	Decreto 12.955	accounting-models	9
+NORMA	Decreto 12.955	lib-outros	1
+NORMA	Decreto 12.955	seed-legal	3
+NORMA	Decreto 45.490	scripts	1
+NORMA	Decreto 8.264	accounting-dtos	1
+NORMA	Decreto 9.580	scripts	1
+NORMA	Decreto 9.580	seed-legal	7
+NORMA	Decreto 99.684	seed-legal	1
+NORMA	Decreto nº 11.864	seed-legal	1
+NORMA	Decreto nº 12.342	seed-legal	1
+NORMA	Decreto nº 12.797	seed-legal	1
+NORMA	EC 103	dp	2
+NORMA	EC 103	seed-legal	5
+NORMA	EC 132	seed-legal	4
+NORMA	EC 141	seed-legal	6
+NORMA	EC 20	seed-legal	2
+NORMA	EC 41	seed-legal	1
+NORMA	IN RFB 1.500	dp	1
+NORMA	IN RFB 1.700	accounting-dtos	6
+NORMA	IN RFB 1.700	accounting-models	19
+NORMA	IN RFB 1.700	accounting-services	10
+NORMA	IN RFB 1.700	fe-features-accounting	1
+NORMA	IN RFB 1.700	scripts	2
+NORMA	IN RFB 1.700	seed-legal	237
+NORMA	IN RFB 1.942	seed-legal	2
+NORMA	IN RFB 2.003	accounting-dtos	1
+NORMA	IN RFB 2.003	accounting-models	1
+NORMA	IN RFB 2.003	scripts	1
+NORMA	IN RFB 2.003	seed-legal	4
+NORMA	IN RFB 2.004	accounting-dtos	2
+NORMA	IN RFB 2.004	accounting-models	1
+NORMA	IN RFB 2.004	accounting-services	1
+NORMA	IN RFB 2.004	scripts	1
+NORMA	IN RFB 2.004	seed-legal	4
+NORMA	IN RFB 2.043	accounting-services	1
+NORMA	IN RFB 2.043	seed-legal	4
+NORMA	IN RFB 2.110	dp	6
+NORMA	IN RFB 2.121	accounting-dtos	1
+NORMA	IN RFB 2.121	accounting-models	6
+NORMA	IN RFB 2.121	accounting-services	4
+NORMA	IN RFB 2.121	schema	1
+NORMA	IN RFB 2.121	seed-legal	20
+NORMA	IN RFB 2.237	seed-legal	4
+NORMA	IN RFB 2.305	accounting-models	9
+NORMA	IN RFB 2.305	seed-legal	3
+NORMA	IN RFB 2.315	seed-legal	9
+NORMA	IN RFB 765	schema	1
+NORMA	LC 116	accounting-models	2
+NORMA	LC 116	accounting-services	5
+NORMA	LC 116	lib-outros	1
+NORMA	LC 116	scripts	2
+NORMA	LC 116	sectorKits	14
+NORMA	LC 116	seed-legal	13
+NORMA	LC 123	accounting-dtos	2
+NORMA	LC 123	accounting-models	12
+NORMA	LC 123	accounting-services	15
+NORMA	LC 123	fe-features-accounting	2
+NORMA	LC 123	sales	1
+NORMA	LC 123	scripts	10
+NORMA	LC 123	seed-legal	349
+NORMA	LC 155	scripts	1
+NORMA	LC 155	seed-legal	62
+NORMA	LC 167	seed-legal	1
+NORMA	LC 188	seed-legal	2
+NORMA	LC 214	accounting-models	27
+NORMA	LC 214	accounting-services	4
+NORMA	LC 214	dynamicTables-motor	2
+NORMA	LC 214	lib-outros	1
+NORMA	LC 214	sales	8
+NORMA	LC 214	scripts	3
+NORMA	LC 214	seed-legal	318
+NORMA	LC 224	accounting-models	5
+NORMA	LC 224	accounting-services	1
+NORMA	LC 224	seed-legal	9
+NORMA	LC 227	scripts	1
+NORMA	LC 227	seed-legal	250
+NORMA	LC 87	accounting-models	1
+NORMA	LC 87	sales	3
+NORMA	LGPD	chat-e-ia	1
+NORMA	LGPD	dynamicTables-presets	1
+NORMA	LGPD	outras-features	1
+NORMA	LGPD	scripts	1
+NORMA	Lei 1.535	seed-legal	2
+NORMA	Lei 10.097	seed-legal	3
+NORMA	Lei 10.147	accounting-models	1
+NORMA	Lei 10.147	scripts	1
+NORMA	Lei 10.147	seed-legal	38
+NORMA	Lei 10.485	scripts	1
+NORMA	Lei 10.485	seed-legal	85
+NORMA	Lei 10.607	seed-legal	7
+NORMA	Lei 10.637	accounting-models	2
+NORMA	Lei 10.637	scripts	1
+NORMA	Lei 10.637	seed-legal	1
+NORMA	Lei 10.666	seed-legal	1
+NORMA	Lei 10.833	accounting-models	3
+NORMA	Lei 10.833	accounting-services	1
+NORMA	Lei 10.833	scripts	2
+NORMA	Lei 10.833	seed-legal	6
+NORMA	Lei 10.865	scripts	1
+NORMA	Lei 11.180	seed-legal	1
+NORMA	Lei 11.340	seed-legal	1
+NORMA	Lei 11.482	accounting-models	1
+NORMA	Lei 11.482	seed-legal	5
+NORMA	Lei 11.638	accounting-services	1
+NORMA	Lei 11.638	schema	1
+NORMA	Lei 11.718	seed-legal	1
+NORMA	Lei 11.727	seed-legal	1
+NORMA	Lei 11.770	seed-legal	3
+NORMA	Lei 11.788	seed-legal	2
+NORMA	Lei 12.546	seed-legal	2
+NORMA	Lei 12.592	accounting-models	7
+NORMA	Lei 12.592	fe-features-accounting	2
+NORMA	Lei 12.592	schema	1
+NORMA	Lei 12.592	scripts	1
+NORMA	Lei 12.592	seed-legal	1
+NORMA	Lei 12.741	accounting-services	1
+NORMA	Lei 12.741	schema	1
+NORMA	Lei 12.814	seed-legal	2
+NORMA	Lei 13.097	scripts	1
+NORMA	Lei 13.097	seed-legal	4
+NORMA	Lei 13.301	seed-legal	1
+NORMA	Lei 13.352	scripts	1
+NORMA	Lei 13.467	seed-legal	1
+NORMA	Lei 13.643	accounting-models	2
+NORMA	Lei 13.707	seed-legal	5
+NORMA	Lei 13.982	seed-legal	1
+NORMA	Lei 14.020	seed-legal	1
+NORMA	Lei 14.183	seed-legal	3
+NORMA	Lei 14.446	seed-legal	1
+NORMA	Lei 14.457	seed-legal	2
+NORMA	Lei 14.592	schema	1
+NORMA	Lei 14.592	scripts	1
+NORMA	Lei 14.663	seed-legal	1
+NORMA	Lei 14.759	seed-legal	1
+NORMA	Lei 14.973	seed-legal	1
+NORMA	Lei 15.156	seed-legal	1
+NORMA	Lei 15.191	seed-legal	5
+NORMA	Lei 15.270	accounting-models	1
+NORMA	Lei 15.270	seed-legal	4
+NORMA	Lei 15.371	seed-legal	1
+NORMA	Lei 5.889	seed-legal	1
+NORMA	Lei 5.929	seed-legal	1
+NORMA	Lei 6.019	seed-legal	1
+NORMA	Lei 6.802	seed-legal	1
+NORMA	Lei 605	dp	4
+NORMA	Lei 605	seed-legal	3
+NORMA	Lei 662	seed-legal	7
+NORMA	Lei 7.238	seed-legal	1
+NORMA	Lei 7.664	seed-legal	1
+NORMA	Lei 7.689	seed-legal	6
+NORMA	Lei 7.713	dp	1
+NORMA	Lei 8.036	accounting-models	1
+NORMA	Lei 8.036	dp	1
+NORMA	Lei 8.036	seed-legal	4
+NORMA	Lei 8.069	seed-legal	1
+NORMA	Lei 8.137	dynamicTables-motor	1
+NORMA	Lei 8.137	sales	2
+NORMA	Lei 8.212	accounting-models	4
+NORMA	Lei 8.212	accounting-services	1
+NORMA	Lei 8.212	dp	1
+NORMA	Lei 8.212	seed-legal	10
+NORMA	Lei 8.213	dp	5
+NORMA	Lei 8.213	schema	2
+NORMA	Lei 8.213	seed-legal	3
+NORMA	Lei 8.245	accounting-services	1
+NORMA	Lei 8.981	seed-legal	1
+NORMA	Lei 9.093	seed-legal	6
+NORMA	Lei 9.249	accounting-dtos	1
+NORMA	Lei 9.249	accounting-models	5
+NORMA	Lei 9.249	accounting-services	5
+NORMA	Lei 9.249	seed-legal	7
+NORMA	Lei 9.250	accounting-dtos	1
+NORMA	Lei 9.250	accounting-models	7
+NORMA	Lei 9.250	accounting-services	2
+NORMA	Lei 9.250	fe-features-accounting	2
+NORMA	Lei 9.250	schema	1
+NORMA	Lei 9.250	seed-legal	8
+NORMA	Lei 9.394	seed-legal	1
+NORMA	Lei 9.430	accounting-dtos	1
+NORMA	Lei 9.430	accounting-models	6
+NORMA	Lei 9.430	dp	1
+NORMA	Lei 9.430	seed-legal	1
+NORMA	Lei 9.601	seed-legal	1
+NORMA	Lei 9.666	seed-legal	4
+NORMA	Lei 9.718	accounting-dtos	1
+NORMA	Lei 9.718	accounting-models	3
+NORMA	Lei 9.718	accounting-services	2
+NORMA	Lei 9.718	scripts	1
+NORMA	Lei 9.718	seed-legal	3
+NORMA	Lei 9.876	seed-legal	1
+NORMA	Lei Complementar 116	scripts	1
+NORMA	Lei Complementar 123	scripts	1
+NORMA	Lei Complementar 64	seed-legal	1
+NORMA	Lei nº 12.485	seed-legal	2
+NORMA	MP 1.034	seed-legal	1
+NORMA	MP 1.115	seed-legal	1
+NORMA	MP 936	seed-legal	1
+NORMA	Súmula 335	accounting-services	1
+NORMA	art. 1	accounting-dtos	2
+NORMA	art. 1	accounting-models	11
+NORMA	art. 1	accounting-services	1
+NORMA	art. 1	dynamicTables-motor	1
+NORMA	art. 1	fe-features-accounting	2
+NORMA	art. 1	sales	2
+NORMA	art. 1	schema	2
+NORMA	art. 1	seed-legal	92
+NORMA	art. 10	accounting-models	6
+NORMA	art. 10	accounting-services	1
+NORMA	art. 10	seed-legal	1
+NORMA	art. 100	accounting-services	2
+NORMA	art. 100	scripts	1
+NORMA	art. 100	seed-legal	3
+NORMA	art. 101	accounting-dtos	1
+NORMA	art. 101	accounting-services	6
+NORMA	art. 101	fe-features-accounting	1
+NORMA	art. 101	scripts	3
+NORMA	art. 101	seed-legal	6
+NORMA	art. 106	accounting-services	2
+NORMA	art. 109	accounting-services	2
+NORMA	art. 109	seed-legal	1
+NORMA	art. 11	accounting-models	8
+NORMA	art. 115	accounting-services	7
+NORMA	art. 12	accounting-models	2
+NORMA	art. 12	accounting-services	2
+NORMA	art. 12	dynamicTables-motor	2
+NORMA	art. 12	sales	4
+NORMA	art. 12	seed-legal	5
+NORMA	art. 120	accounting-dtos	9
+NORMA	art. 120	accounting-models	1
+NORMA	art. 120	accounting-services	1
+NORMA	art. 122	accounting-dtos	1
+NORMA	art. 122	accounting-models	2
+NORMA	art. 122	accounting-services	2
+NORMA	art. 127	accounting-services	1
+NORMA	art. 128	accounting-services	1
+NORMA	art. 128	seed-legal	6
+NORMA	art. 13	accounting-dtos	1
+NORMA	art. 13	accounting-models	7
+NORMA	art. 13	accounting-services	3
+NORMA	art. 13	sales	4
+NORMA	art. 13	scripts	2
+NORMA	art. 13	seed-legal	4
+NORMA	art. 130	accounting-models	3
+NORMA	art. 130	accounting-services	1
+NORMA	art. 130	seed-legal	21
+NORMA	art. 134	seed-legal	1
+NORMA	art. 14	accounting-models	1
+NORMA	art. 14	accounting-services	2
+NORMA	art. 14	scripts	1
+NORMA	art. 14	seed-legal	10
+NORMA	art. 144	seed-legal	4
+NORMA	art. 145	accounting-models	1
+NORMA	art. 145	fe-features-accounting	1
+NORMA	art. 145	lib-outros	1
+NORMA	art. 148	dynamicTables-motor	1
+NORMA	art. 148	sales	4
+NORMA	art. 15	accounting-dtos	1
+NORMA	art. 15	accounting-models	14
+NORMA	art. 15	accounting-services	2
+NORMA	art. 15	dp	1
+NORMA	art. 15	seed-legal	10
+NORMA	art. 150	seed-legal	2
+NORMA	art. 157	seed-legal	1
+NORMA	art. 158	seed-legal	1
+NORMA	art. 16	accounting-services	3
+NORMA	art. 17	accounting-models	2
+NORMA	art. 17	seed-legal	1
+NORMA	art. 170	schema	1
+NORMA	art. 18	accounting-models	3
+NORMA	art. 18	accounting-services	3
+NORMA	art. 18	fe-features-accounting	1
+NORMA	art. 18	scripts	4
+NORMA	art. 18	seed-legal	34
+NORMA	art. 19	accounting-services	1
+NORMA	art. 2	accounting-models	5
+NORMA	art. 2	accounting-services	1
+NORMA	art. 2	scripts	4
+NORMA	art. 2	seed-legal	9
+NORMA	art. 20	accounting-dtos	5
+NORMA	art. 20	accounting-models	2
+NORMA	art. 20	accounting-services	2
+NORMA	art. 20	seed-legal	4
+NORMA	art. 21	accounting-services	2
+NORMA	art. 21	fe-features-accounting	1
+NORMA	art. 21	seed-legal	1
+NORMA	art. 215	accounting-models	9
+NORMA	art. 215	accounting-services	1
+NORMA	art. 215	fe-features-accounting	1
+NORMA	art. 215	seed-legal	2
+NORMA	art. 22	accounting-models	2
+NORMA	art. 22	seed-legal	1
+NORMA	art. 223	accounting-models	1
+NORMA	art. 23	accounting-dtos	1
+NORMA	art. 23	scripts	1
+NORMA	art. 25	accounting-models	2
+NORMA	art. 25	accounting-services	1
+NORMA	art. 25	scripts	3
+NORMA	art. 25	seed-legal	6
+NORMA	art. 26	accounting-models	1
+NORMA	art. 26	accounting-services	1
+NORMA	art. 27	accounting-services	3
+NORMA	art. 27	lib-outros	1
+NORMA	art. 27	schema	1
+NORMA	art. 28	dp	3
+NORMA	art. 28	seed-legal	6
+NORMA	art. 29	accounting-models	1
+NORMA	art. 29	accounting-services	1
+NORMA	art. 29	seed-legal	3
+NORMA	art. 3	accounting-dtos	1
+NORMA	art. 3	accounting-models	13
+NORMA	art. 3	accounting-services	4
+NORMA	art. 3	dp	1
+NORMA	art. 3	lib-outros	1
+NORMA	art. 3	sales	1
+NORMA	art. 3	schema	5
+NORMA	art. 3	scripts	3
+NORMA	art. 3	seed-legal	108
+NORMA	art. 30	accounting-services	1
+NORMA	art. 30	seed-legal	10
+NORMA	art. 301	scripts	1
+NORMA	art. 31	accounting-models	2
+NORMA	art. 31	accounting-services	2
+NORMA	art. 31	seed-legal	6
+NORMA	art. 313	seed-legal	13
+NORMA	art. 32	accounting-dtos	2
+NORMA	art. 32	accounting-services	1
+NORMA	art. 32	schema	2
+NORMA	art. 32	seed-legal	1
+NORMA	art. 33	accounting-models	3
+NORMA	art. 33	seed-legal	2
+NORMA	art. 331	accounting-services	1
+NORMA	art. 333	accounting-services	2
+NORMA	art. 343	seed-legal	1
+NORMA	art. 344	seed-legal	2
+NORMA	art. 346	seed-legal	1
+NORMA	art. 347	seed-legal	1
+NORMA	art. 348	accounting-dtos	1
+NORMA	art. 348	accounting-models	2
+NORMA	art. 349	accounting-models	5
+NORMA	art. 349	seed-legal	1
+NORMA	art. 35	accounting-services	1
+NORMA	art. 36	dp	3
+NORMA	art. 36	schema	1
+NORMA	art. 36	seed-legal	1
+NORMA	art. 361	seed-legal	2
+NORMA	art. 362	seed-legal	2
+NORMA	art. 363	seed-legal	2
+NORMA	art. 364	seed-legal	2
+NORMA	art. 38	seed-legal	2
+NORMA	art. 394	seed-legal	1
+NORMA	art. 4	accounting-services	1
+NORMA	art. 4	schema	1
+NORMA	art. 4	scripts	1
+NORMA	art. 4	seed-legal	11
+NORMA	art. 40	accounting-dtos	1
+NORMA	art. 40	accounting-models	5
+NORMA	art. 40	fe-features-accounting	3
+NORMA	art. 40	seed-legal	3
+NORMA	art. 41	accounting-services	1
+NORMA	art. 41	seed-legal	2
+NORMA	art. 428	schema	1
+NORMA	art. 428	seed-legal	2
+NORMA	art. 43	schema	1
+NORMA	art. 433	seed-legal	1
+NORMA	art. 44	seed-legal	3
+NORMA	art. 45	accounting-models	2
+NORMA	art. 45	lib-outros	1
+NORMA	art. 45	seed-legal	2
+NORMA	art. 452	seed-legal	16
+NORMA	art. 47	accounting-models	6
+NORMA	art. 476	seed-legal	1
+NORMA	art. 477	seed-legal	1
+NORMA	art. 479	seed-legal	1
+NORMA	art. 48	accounting-models	1
+NORMA	art. 480	seed-legal	1
+NORMA	art. 487	accounting-models	1
+NORMA	art. 49	accounting-models	2
+NORMA	art. 49	accounting-services	1
+NORMA	art. 49	dp	2
+NORMA	art. 49	schema	1
+NORMA	art. 5	chat-e-ia	1
+NORMA	art. 5	seed-legal	1
+NORMA	art. 50	accounting-services	5
+NORMA	art. 508	seed-legal	4
+NORMA	art. 509	seed-legal	1
+NORMA	art. 517	scripts	1
+NORMA	art. 517	seed-legal	21
+NORMA	art. 518	seed-legal	2
+NORMA	art. 519	scripts	2
+NORMA	art. 519	seed-legal	250
+NORMA	art. 52	accounting-models	1
+NORMA	art. 52	accounting-services	1
+NORMA	art. 520	seed-legal	20
+NORMA	art. 54	accounting-services	1
+NORMA	art. 542	accounting-models	1
+NORMA	art. 543	accounting-models	1
+NORMA	art. 543	seed-legal	2
+NORMA	art. 544	accounting-models	1
+NORMA	art. 544	scripts	1
+NORMA	art. 544	seed-legal	1
+NORMA	art. 57	accounting-models	4
+NORMA	art. 57	legalParameters	1
+NORMA	art. 58	dp	1
+NORMA	art. 58	scripts	2
+NORMA	art. 59	dp	1
+NORMA	art. 59	seed-legal	1
+NORMA	art. 6	accounting-models	4
+NORMA	art. 6	accounting-services	3
+NORMA	art. 6	dp	1
+NORMA	art. 6	schema	1
+NORMA	art. 6	scripts	1
+NORMA	art. 6	seed-legal	9
+NORMA	art. 60	accounting-models	1
+NORMA	art. 60	dp	2
+NORMA	art. 60	seed-legal	1
+NORMA	art. 63	dp	1
+NORMA	art. 63	seed-legal	1
+NORMA	art. 64	dp	1
+NORMA	art. 64	seed-legal	2
+NORMA	art. 66	schema	1
+NORMA	art. 66	seed-legal	1
+NORMA	art. 67	dp	1
+NORMA	art. 68	accounting-dtos	1
+NORMA	art. 68	seed-legal	1
+NORMA	art. 685	accounting-models	1
+NORMA	art. 7	accounting-services	1
+NORMA	art. 7	dp	3
+NORMA	art. 7	sales	2
+NORMA	art. 7	schema	1
+NORMA	art. 7	seed-legal	15
+NORMA	art. 714	accounting-models	2
+NORMA	art. 714	schema	1
+NORMA	art. 714	seed-legal	1
+NORMA	art. 716	accounting-models	1
+NORMA	art. 716	seed-legal	1
+NORMA	art. 718	accounting-models	1
+NORMA	art. 718	seed-legal	1
+NORMA	art. 72	accounting-services	1
+NORMA	art. 72	seed-legal	2
+NORMA	art. 73	dp	1
+NORMA	art. 73	seed-legal	4
+NORMA	art. 75	accounting-services	3
+NORMA	art. 77	accounting-dtos	2
+NORMA	art. 77	accounting-services	1
+NORMA	art. 78	dp	1
+NORMA	art. 785	seed-legal	4
+NORMA	art. 8	accounting-dtos	5
+NORMA	art. 8	accounting-services	6
+NORMA	art. 8	seed-legal	14
+NORMA	art. 9	accounting-services	1
+NORMA	art. 9	seed-legal	8
+NORMA	art.18	outras-features	1
+NORMA	§ 1	accounting-dtos	9
+NORMA	§ 1	accounting-models	22
+NORMA	§ 1	accounting-services	11
+NORMA	§ 1	dp	5
+NORMA	§ 1	fe-features-accounting	2
+NORMA	§ 1	lib-outros	1
+NORMA	§ 1	sales	2
+NORMA	§ 1	schema	5
+NORMA	§ 1	scripts	4
+NORMA	§ 1	seed-legal	29
+NORMA	§ 10	accounting-models	5
+NORMA	§ 10	fe-features-accounting	1
+NORMA	§ 10	seed-legal	2
+NORMA	§ 11	accounting-models	1
+NORMA	§ 12	accounting-models	1
+NORMA	§ 15	seed-legal	1
+NORMA	§ 2	accounting-dtos	1
+NORMA	§ 2	accounting-models	6
+NORMA	§ 2	accounting-services	12
+NORMA	§ 2	dp	4
+NORMA	§ 2	sales	2
+NORMA	§ 2	seed-legal	13
+NORMA	§ 3	accounting-dtos	2
+NORMA	§ 3	accounting-models	4
+NORMA	§ 3	accounting-services	6
+NORMA	§ 3	dp	2
+NORMA	§ 3	dynamicTables-motor	2
+NORMA	§ 3	sales	4
+NORMA	§ 3	schema	3
+NORMA	§ 3	seed-legal	28
+NORMA	§ 4	accounting-models	14
+NORMA	§ 4	accounting-services	8
+NORMA	§ 4	fe-features-accounting	1
+NORMA	§ 4	schema	1
+NORMA	§ 4	scripts	2
+NORMA	§ 4	seed-legal	6
+NORMA	§ 5	accounting-models	20
+NORMA	§ 5	accounting-services	2
+NORMA	§ 5	schema	1
+NORMA	§ 5	scripts	1
+NORMA	§ 5	seed-legal	7
+NORMA	§ 6	accounting-models	7
+NORMA	§ 6	seed-legal	10
+NORMA	§ 7	accounting-models	3
+NORMA	§ 7	schema	1
+NORMA	§ 7	seed-legal	4
+NORMA	§ 8	accounting-models	3
+NORMA	§ 8	fe-features-accounting	1
+NORMA	§ 8	schema	1
+NORMA	§ 8	seed-legal	1
+NORMA	§ 9	accounting-dtos	1
+NORMA	§ 9	accounting-models	3
+NORMA	§ 9	accounting-services	1
+NORMA	§0	schema	1
+NORMA	§0	sectorKits	5
+NORMA	§1	accounting-dtos	2
+NORMA	§1	accounting-models	4
+NORMA	§1	fe-lib	1
+NORMA	§1	lib-fiscal	1
+NORMA	§1	schema	4
+NORMA	§1	sectorKits	9
+NORMA	§1	seed-legal	8
+NORMA	§13	accounting-models	1
+NORMA	§2	accounting-services	1
+NORMA	§2	dp	1
+NORMA	§2	jobs	2
+NORMA	§2	lib-fiscal	1
+NORMA	§2	schema	6
+NORMA	§2	scripts	6
+NORMA	§2	seed-legal	6
+NORMA	§3	accounting-dtos	1
+NORMA	§3	fe-outros	3
+NORMA	§3	schema	3
+NORMA	§3	scripts	1
+NORMA	§3	seed-legal	1
+NORMA	§4	accounting-dtos	5
+NORMA	§4	accounting-services	1
+NORMA	§4	lib-fiscal	1
+NORMA	§4	schema	1
+NORMA	§4	scripts	5
+NORMA	§4	seed-legal	8
+NORMA	§5	accounting-outros	2
+NORMA	§5	schema	2
+NORMA	§5	scripts	1
+NORMA	§5	seed-legal	2
+NORMA	§5	server-outros	1
+NORMA	§6	accounting-models	1
+NORMA	§6	schema	4
+NORMA	§6	seed-legal	14
+NORMA	§7	accounting-outros	1
+NORMA	§7	accounting-services	1
+NORMA	§7	dynamicTables-presets	1
+NORMA	§7	jobs	1
+NORMA	§7	schema	1
+NORMA	§8	jobs	2
+NORMA	§8	schema	1
+NORMA	§8	scripts	1
+NORMA	§8	server-outros	1
+NORMA	§9	dp	13
+NORMA	§9	legalParameters	1
+NORMA	§9	schema	2
+OBRIGACAO	darf	accounting-dtos	2
+OBRIGACAO	darf	accounting-models	6
+OBRIGACAO	darf	accounting-services	13
+OBRIGACAO	darf	fe-types-gerados	3
+OBRIGACAO	darf	seed-legal	1
+OBRIGACAO	dctf	scripts	3
+OBRIGACAO	dctf	seed-legal	27
+OBRIGACAO	dctfweb	accounting-models	3
+OBRIGACAO	dctfweb	accounting-services	1
+OBRIGACAO	dctfweb	scripts	1
+OBRIGACAO	dctfweb	seed-legal	4
+OBRIGACAO	dirf	lib-fiscal	1
+OBRIGACAO	ecd	accounting-dtos	33
+OBRIGACAO	ecd	accounting-models	32
+OBRIGACAO	ecd	accounting-repositories	17
+OBRIGACAO	ecd	accounting-services	129
+OBRIGACAO	ecd	controllers	10
+OBRIGACAO	ecd	escopo-e-primitivas	8
+OBRIGACAO	ecd	fe-features-accounting	131
+OBRIGACAO	ecd	fe-lib	15
+OBRIGACAO	ecd	fe-types-gerados	10
+OBRIGACAO	ecd	legalParameters	2
+OBRIGACAO	ecd	lib-fiscal	21
+OBRIGACAO	ecd	lib-outros	2
+OBRIGACAO	ecd	nucleo-razao	1
+OBRIGACAO	ecd	routes	3
+OBRIGACAO	ecd	schema	20
+OBRIGACAO	ecd	scripts	9
+OBRIGACAO	ecd	sectorKits	2
+OBRIGACAO	ecd	seed-legal	5
+OBRIGACAO	ecf	accounting-dtos	57
+OBRIGACAO	ecf	accounting-models	90
+OBRIGACAO	ecf	accounting-repositories	18
+OBRIGACAO	ecf	accounting-services	209
+OBRIGACAO	ecf	controllers	25
+OBRIGACAO	ecf	escopo-e-primitivas	10
+OBRIGACAO	ecf	fe-features-accounting	206
+OBRIGACAO	ecf	fe-lib	20
+OBRIGACAO	ecf	fe-types-gerados	14
+OBRIGACAO	ecf	legalParameters	2
+OBRIGACAO	ecf	lib-fiscal	65
+OBRIGACAO	ecf	lib-outros	15
+OBRIGACAO	ecf	routes	10
+OBRIGACAO	ecf	schema	28
+OBRIGACAO	ecf	scripts	26
+OBRIGACAO	ecf	sectorKits	1
+OBRIGACAO	ecf	seed-legal	13
+OBRIGACAO	efd	accounting-dtos	4
+OBRIGACAO	efd	accounting-models	4
+OBRIGACAO	efd	accounting-repositories	1
+OBRIGACAO	efd	accounting-services	11
+OBRIGACAO	efd	lib-outros	2
+OBRIGACAO	efd	routes	1
+OBRIGACAO	efd	schema	1
+OBRIGACAO	efd	scripts	13
+OBRIGACAO	efd	seed-legal	323
+OBRIGACAO	esocial	dp	10
+OBRIGACAO	esocial	fe-types-gerados	3
+OBRIGACAO	esocial	legalParameters	18
+OBRIGACAO	esocial	lib-fiscal	2
+OBRIGACAO	esocial	schema	4
+OBRIGACAO	esocial	seed-legal	455
+OBRIGACAO	gps	seed-legal	1
+OBRIGACAO	lacs	accounting-dtos	3
+OBRIGACAO	lacs	accounting-models	12
+OBRIGACAO	lacs	accounting-services	9
+OBRIGACAO	lacs	fe-features-accounting	5
+OBRIGACAO	lacs	fe-lib	4
+OBRIGACAO	lacs	fe-types-gerados	4
+OBRIGACAO	lacs	lib-fiscal	3
+OBRIGACAO	lacs	lib-outros	1
+OBRIGACAO	lacs	nucleo-razao	1
+OBRIGACAO	lacs	schema	4
+OBRIGACAO	lacs	scripts	3
+OBRIGACAO	lalur	accounting-dtos	67
+OBRIGACAO	lalur	accounting-models	84
+OBRIGACAO	lalur	accounting-outros	6
+OBRIGACAO	lalur	accounting-repositories	120
+OBRIGACAO	lalur	accounting-services	292
+OBRIGACAO	lalur	controllers	62
+OBRIGACAO	lalur	escopo-e-primitivas	14
+OBRIGACAO	lalur	fe-features-accounting	364
+OBRIGACAO	lalur	fe-lib	96
+OBRIGACAO	lalur	fe-types-gerados	21
+OBRIGACAO	lalur	jobs	5
+OBRIGACAO	lalur	lib-fiscal	15
+OBRIGACAO	lalur	lib-outros	18
+OBRIGACAO	lalur	nucleo-razao	5
+OBRIGACAO	lalur	routes	35
+OBRIGACAO	lalur	schema	62
+OBRIGACAO	lalur	scripts	5
+OBRIGACAO	mit	accounting-dtos	6
+OBRIGACAO	mit	accounting-models	1
+OBRIGACAO	mit	accounting-repositories	12
+OBRIGACAO	mit	accounting-services	25
+OBRIGACAO	mit	controllers	7
+OBRIGACAO	mit	escopo-e-primitivas	1
+OBRIGACAO	mit	fe-types-gerados	4
+OBRIGACAO	mit	lib-fiscal	32
+OBRIGACAO	mit	lib-outros	13
+OBRIGACAO	mit	routes	5
+OBRIGACAO	mit	schema	4
+OBRIGACAO	mit	scripts	11
+OBRIGACAO	pva	accounting-services	2
+OBRIGACAO	pva	fe-features-accounting	4
+OBRIGACAO	pva	scripts	4
+OBRIGACAO	referencial	accounting-models	3
+OBRIGACAO	referencial	accounting-services	21
+OBRIGACAO	referencial	controllers	4
+OBRIGACAO	referencial	fe-features-accounting	17
+OBRIGACAO	referencial	fe-lib	1
+OBRIGACAO	referencial	lib-fiscal	5
+OBRIGACAO	referencial	schema	8
+OBRIGACAO	referencial	scripts	5
+OBRIGACAO	referencial	sectorKits	90
+OBRIGACAO	reinf	accounting-dtos	35
+OBRIGACAO	reinf	accounting-models	55
+OBRIGACAO	reinf	accounting-repositories	30
+OBRIGACAO	reinf	accounting-services	78
+OBRIGACAO	reinf	controllers	10
+OBRIGACAO	reinf	escopo-e-primitivas	2
+OBRIGACAO	reinf	fe-types-gerados	21
+OBRIGACAO	reinf	lib-fiscal	42
+OBRIGACAO	reinf	lib-outros	15
+OBRIGACAO	reinf	routes	6
+OBRIGACAO	reinf	schema	6
+OBRIGACAO	reinf	scripts	7
+OBRIGACAO	reinf	seed-legal	315
+OBRIGACAO	sped	accounting-dtos	35
+OBRIGACAO	sped	accounting-models	25
+OBRIGACAO	sped	accounting-repositories	1
+OBRIGACAO	sped	accounting-services	82
+OBRIGACAO	sped	controllers	22
+OBRIGACAO	sped	escopo-e-primitivas	5
+OBRIGACAO	sped	fe-features-accounting	201
+OBRIGACAO	sped	fe-lib	15
+OBRIGACAO	sped	fe-types-gerados	7
+OBRIGACAO	sped	legalParameters	2
+OBRIGACAO	sped	lib-fiscal	124
+OBRIGACAO	sped	lib-outros	16
+OBRIGACAO	sped	routes	12
+OBRIGACAO	sped	schema	2
+OBRIGACAO	sped	scripts	17
+OBRIGACAO	sped	seed-legal	306
+ORGAO	cgsn	accounting-dtos	4
+ORGAO	cgsn	accounting-models	4
+ORGAO	cgsn	accounting-services	29
+ORGAO	cgsn	fe-features-accounting	2
+ORGAO	cgsn	scripts	21
+ORGAO	cgsn	seed-legal	491
+ORGAO	mte	schema	1
+ORGAO	receita federal	seed-legal	22
+ORGAO	rfb	accounting-dtos	13
+ORGAO	rfb	accounting-models	39
+ORGAO	rfb	accounting-repositories	1
+ORGAO	rfb	accounting-services	34
+ORGAO	rfb	dp	7
+ORGAO	rfb	escopo-e-primitivas	2
+ORGAO	rfb	fe-features-accounting	25
+ORGAO	rfb	fe-lib	1
+ORGAO	rfb	fe-types-gerados	2
+ORGAO	rfb	lib-fiscal	14
+ORGAO	rfb	schema	7
+ORGAO	rfb	scripts	38
+ORGAO	rfb	seed-legal	586
+REGIME	anexo	accounting-dtos	10
+REGIME	anexo	accounting-models	74
+REGIME	anexo	accounting-repositories	3
+REGIME	anexo	accounting-services	68
+REGIME	anexo	fe-features-accounting	21
+REGIME	anexo	fe-features-crm	2
+REGIME	anexo	fe-lib	6
+REGIME	anexo	fe-types-gerados	7
+REGIME	anexo	jobs	2
+REGIME	anexo	legalParameters	21
+REGIME	anexo	lib-outros	7
+REGIME	anexo	outras-features	1
+REGIME	anexo	schema	16
+REGIME	anexo	scripts	90
+REGIME	anexo	sectorKits	14
+REGIME	anexo	seed-legal	1474
+REGIME	crt	accounting-dtos	6
+REGIME	crt	accounting-models	15
+REGIME	crt	accounting-services	11
+REGIME	crt	fe-types-gerados	4
+REGIME	crt	lib-fiscal	14
+REGIME	crt	schema	2
+REGIME	defis	accounting-dtos	22
+REGIME	defis	accounting-models	4
+REGIME	defis	accounting-repositories	1
+REGIME	defis	accounting-services	22
+REGIME	defis	controllers	6
+REGIME	defis	fe-features-accounting	119
+REGIME	defis	fe-lib	10
+REGIME	defis	fe-types-gerados	6
+REGIME	defis	jobs	1
+REGIME	defis	lib-outros	1
+REGIME	defis	routes	4
+REGIME	defis	schema	2
+REGIME	defis	scripts	5
+REGIME	defis	seed-legal	3
+REGIME	fator r	accounting-dtos	4
+REGIME	fator r	accounting-models	22
+REGIME	fator r	accounting-services	19
+REGIME	fator r	controllers	3
+REGIME	fator r	fe-features-accounting	5
+REGIME	fator r	fe-lib	2
+REGIME	fator r	fe-types-gerados	2
+REGIME	fator r	legalParameters	1
+REGIME	fator r	routes	4
+REGIME	fator r	scripts	3
+REGIME	fator r	seed-legal	6
+REGIME	lucro presumido	accounting-dtos	4
+REGIME	lucro presumido	accounting-models	4
+REGIME	lucro presumido	accounting-services	1
+REGIME	lucro presumido	fe-features-accounting	5
+REGIME	lucro presumido	lib-fiscal	1
+REGIME	lucro presumido	seed-legal	1
+REGIME	lucro real	accounting-dtos	3
+REGIME	lucro real	accounting-models	22
+REGIME	lucro real	accounting-repositories	1
+REGIME	lucro real	accounting-services	13
+REGIME	lucro real	escopo-e-primitivas	1
+REGIME	lucro real	fe-features-accounting	9
+REGIME	lucro real	fe-lib	1
+REGIME	lucro real	fe-types-gerados	1
+REGIME	lucro real	lib-fiscal	5
+REGIME	lucro real	schema	1
+REGIME	mei	accounting-dtos	15
+REGIME	mei	accounting-models	13
+REGIME	mei	accounting-repositories	5
+REGIME	mei	accounting-services	95
+REGIME	mei	dp	3
+REGIME	mei	escopo-e-primitivas	3
+REGIME	mei	fe-features-accounting	101
+REGIME	mei	fe-features-outros	1
+REGIME	mei	fe-lib	8
+REGIME	mei	fe-types-gerados	16
+REGIME	mei	legalParameters	5
+REGIME	mei	lib-fiscal	2
+REGIME	mei	outras-features	1
+REGIME	mei	schema	7
+REGIME	mei	scripts	4
+REGIME	mei	sectorKits	3
+REGIME	mei	seed-legal	487
+REGIME	pgdas	accounting-models	3
+REGIME	pgdas	accounting-services	3
+REGIME	pgdas	fe-features-accounting	1
+REGIME	pgdas	scripts	6
+REGIME	pgdas	seed-legal	2
+REGIME	presumido	accounting-dtos	18
+REGIME	presumido	accounting-models	58
+REGIME	presumido	accounting-repositories	2
+REGIME	presumido	accounting-services	43
+REGIME	presumido	fe-features-accounting	44
+REGIME	presumido	fe-features-outros	2
+REGIME	presumido	fe-types-gerados	13
+REGIME	presumido	jobs	3
+REGIME	presumido	legalParameters	3
+REGIME	presumido	lib-fiscal	9
+REGIME	presumido	lib-outros	4
+REGIME	presumido	outras-features	2
+REGIME	presumido	schema	9
+REGIME	presumido	scripts	2
+REGIME	presumido	sectorKits	23
+REGIME	presumido	seed-legal	12
+REGIME	rbt12	accounting-dtos	1
+REGIME	rbt12	accounting-models	16
+REGIME	rbt12	accounting-services	16
+REGIME	rbt12	fe-features-accounting	12
+REGIME	rbt12	fe-lib	4
+REGIME	rbt12	fe-types-gerados	1
+REGIME	simei	accounting-dtos	1
+REGIME	simei	accounting-models	16
+REGIME	simei	accounting-repositories	1
+REGIME	simei	accounting-services	28
+REGIME	simei	controllers	4
+REGIME	simei	fe-features-accounting	17
+REGIME	simei	fe-lib	5
+REGIME	simei	fe-types-gerados	3
+REGIME	simei	jobs	1
+REGIME	simei	legalParameters	1
+REGIME	simei	routes	4
+REGIME	simei	schema	1
+REGIME	simei	scripts	3
+REGIME	simei	seed-legal	29
+REGIME	simples	accounting-dtos	91
+REGIME	simples	accounting-models	103
+REGIME	simples	accounting-repositories	82
+REGIME	simples	accounting-services	279
+REGIME	simples	controllers	40
+REGIME	simples	dynamicTables-motor	3
+REGIME	simples	escopo-e-primitivas	9
+REGIME	simples	fe-features-accounting	447
+REGIME	simples	fe-features-outros	2
+REGIME	simples	fe-lib	70
+REGIME	simples	fe-types-gerados	59
+REGIME	simples	jobs	7
+REGIME	simples	legalParameters	12
+REGIME	simples	lib-fiscal	9
+REGIME	simples	lib-outros	52
+REGIME	simples	outras-features	2
+REGIME	simples	routes	21
+REGIME	simples	schema	41
+REGIME	simples	scripts	33
+REGIME	simples	sectorKits	3
+REGIME	simples	seed-legal	817
+REGIME	simples nacional	accounting-dtos	3
+REGIME	simples nacional	accounting-models	1
+REGIME	simples nacional	accounting-services	22
+REGIME	simples nacional	fe-features-accounting	8
+REGIME	simples nacional	fe-features-outros	1
+REGIME	simples nacional	lib-fiscal	3
+REGIME	simples nacional	routes	1
+REGIME	simples nacional	schema	1
+REGIME	simples nacional	scripts	6
+REGIME	simples nacional	seed-legal	335
+REGIME	sublimite	accounting-dtos	3
+REGIME	sublimite	accounting-models	12
+REGIME	sublimite	accounting-services	17
+REGIME	sublimite	fe-features-accounting	2
+REGIME	sublimite	fe-types-gerados	3
+REGIME	sublimite	lib-fiscal	1
+REGIME	sublimite	scripts	1
+REGIME	sublimite	seed-legal	1
+TEXTO_PT	texto-pt-be	accounting-dtos	263
+TEXTO_PT	texto-pt-be	accounting-models	469
+TEXTO_PT	texto-pt-be	accounting-outros	38
+TEXTO_PT	texto-pt-be	accounting-repositories	1
+TEXTO_PT	texto-pt-be	accounting-services	953
+TEXTO_PT	texto-pt-be	accountingBinding	53
+TEXTO_PT	texto-pt-be	analytics	371
+TEXTO_PT	texto-pt-be	chat-e-ia	146
+TEXTO_PT	texto-pt-be	controllers	27
+TEXTO_PT	texto-pt-be	crm	11
+TEXTO_PT	texto-pt-be	dp	186
+TEXTO_PT	texto-pt-be	dynamicTables-motor	122
+TEXTO_PT	texto-pt-be	dynamicTables-presets	93
+TEXTO_PT	texto-pt-be	escopo-e-primitivas	1
+TEXTO_PT	texto-pt-be	jobs	86
+TEXTO_PT	texto-pt-be	legalParameters	43
+TEXTO_PT	texto-pt-be	lib-fiscal	133
+TEXTO_PT	texto-pt-be	lib-outros	52
+TEXTO_PT	texto-pt-be	nucleo-razao	31
+TEXTO_PT	texto-pt-be	outras-features	12
+TEXTO_PT	texto-pt-be	packages	20
+TEXTO_PT	texto-pt-be	routes	1
+TEXTO_PT	texto-pt-be	sales	18
+TEXTO_PT	texto-pt-be	sectorKits	158
+TEXTO_PT	texto-pt-be	server-outros	12
+TEXTO_PT	texto-pt-fe	fe-components	52
+TEXTO_PT	texto-pt-fe	fe-features-accounting	321
+TEXTO_PT	texto-pt-fe	fe-features-crm	29
+TEXTO_PT	texto-pt-fe	fe-features-dashboard	166
+TEXTO_PT	texto-pt-fe	fe-features-outros	70
+TEXTO_PT	texto-pt-fe	fe-pages	51
+TRABALHO	13	accounting-dtos	20
+TRABALHO	13	accounting-models	26
+TRABALHO	13	accounting-outros	1
+TRABALHO	13	accounting-services	14
+TRABALHO	13	dp	1
+TRABALHO	13	escopo-e-primitivas	1
+TRABALHO	13	fe-components	4
+TRABALHO	13	fe-features-accounting	17
+TRABALHO	13	fe-features-dashboard	26
+TRABALHO	13	fe-pages	5
+TRABALHO	13	fe-types-gerados	6
+TRABALHO	13	jobs	3
+TRABALHO	13	lib-fiscal	7
+TRABALHO	13	lib-outros	18
+TRABALHO	13	outras-features	1
+TRABALHO	13	sales	4
+TRABALHO	13	schema	13
+TRABALHO	13	scripts	9
+TRABALHO	13	sectorKits	24
+TRABALHO	13	seed-legal	116
+TRABALHO	13	server-outros	1
+TRABALHO	afastamento	controllers	14
+TRABALHO	afastamento	dp	87
+TRABALHO	afastamento	escopo-e-primitivas	3
+TRABALHO	afastamento	fe-types-gerados	7
+TRABALHO	afastamento	jobs	1
+TRABALHO	afastamento	legalParameters	3
+TRABALHO	afastamento	lib-outros	9
+TRABALHO	afastamento	routes	3
+TRABALHO	afastamento	schema	3
+TRABALHO	afastamento	seed-legal	60
+TRABALHO	aprendiz	dp	22
+TRABALHO	aprendiz	legalParameters	7
+TRABALHO	aprendiz	seed-legal	6
+TRABALHO	aviso previo	seed-legal	7
+TRABALHO	cbo	dp	6
+TRABALHO	cbo	escopo-e-primitivas	3
+TRABALHO	cbo	fe-types-gerados	2
+TRABALHO	cbo	schema	1
+TRABALHO	cct	dp	9
+TRABALHO	cct	schema	1
+TRABALHO	clt	dp	5
+TRABALHO	clt	schema	1
+TRABALHO	clt	seed-legal	23
+TRABALHO	convencao	accounting-models	1
+TRABALHO	convencao	controllers	13
+TRABALHO	convencao	dp	96
+TRABALHO	convencao	escopo-e-primitivas	6
+TRABALHO	convencao	fe-types-gerados	6
+TRABALHO	convencao	jobs	2
+TRABALHO	convencao	routes	5
+TRABALHO	convencao	schema	9
+TRABALHO	convencao	seed-legal	9
+TRABALHO	dsr	dp	23
+TRABALHO	dsr	legalParameters	1
+TRABALHO	dsr	seed-legal	6
+TRABALHO	estagio	chat-e-ia	2
+TRABALHO	estagio	dp	3
+TRABALHO	estagio	dynamicTables-motor	5
+TRABALHO	ferias	controllers	15
+TRABALHO	ferias	dp	73
+TRABALHO	ferias	escopo-e-primitivas	3
+TRABALHO	ferias	fe-types-gerados	4
+TRABALHO	ferias	jobs	1
+TRABALHO	ferias	legalParameters	2
+TRABALHO	ferias	lib-outros	9
+TRABALHO	ferias	routes	6
+TRABALHO	ferias	schema	5
+TRABALHO	ferias	seed-legal	39
+TRABALHO	folha	accounting-dtos	10
+TRABALHO	folha	accounting-models	43
+TRABALHO	folha	accounting-repositories	1
+TRABALHO	folha	accounting-services	46
+TRABALHO	folha	accountingBinding	1
+TRABALHO	folha	analytics	1
+TRABALHO	folha	dp	66
+TRABALHO	folha	fe-features-accounting	21
+TRABALHO	folha	fe-features-crm	8
+TRABALHO	folha	fe-features-outros	1
+TRABALHO	folha	fe-lib	1
+TRABALHO	folha	fe-types-gerados	9
+TRABALHO	folha	jobs	1
+TRABALHO	folha	legalParameters	15
+TRABALHO	folha	lib-fiscal	26
+TRABALHO	folha	schema	10
+TRABALHO	folha	scripts	1
+TRABALHO	folha	sectorKits	2
+TRABALHO	folha	seed-legal	247
+TRABALHO	holerite	dp	2
+TRABALHO	holerite	schema	1
+TRABALHO	pro labore	accounting-dtos	6
+TRABALHO	pro labore	accounting-models	20
+TRABALHO	pro labore	accounting-services	4
+TRABALHO	pro labore	dp	12
+TRABALHO	pro labore	fe-types-gerados	6
+TRABALHO	pro labore	schema	2
+TRABALHO	pro labore	seed-legal	9
+TRABALHO	rubrica	controllers	1
+TRABALHO	rubrica	dp	40
+TRABALHO	rubrica	escopo-e-primitivas	3
+TRABALHO	rubrica	fe-types-gerados	5
+TRABALHO	rubrica	legalParameters	6
+TRABALHO	rubrica	lib-outros	4
+TRABALHO	rubrica	routes	1
+TRABALHO	rubrica	schema	1
+TRABALHO	rubrica	seed-legal	340
+TRABALHO	salario minimo	accounting-models	6
+TRABALHO	salario minimo	accounting-services	5
+TRABALHO	salario minimo	dp	4
+TRABALHO	salario minimo	fe-features-accounting	2
+TRABALHO	salario minimo	fe-lib	1
+TRABALHO	salario minimo	fe-types-gerados	3
+TRABALHO	salario minimo	legalParameters	1
+TRABALHO	salario minimo	seed-legal	4
+TRABALHO	sindicato	accounting-dtos	2
+TRABALHO	sindicato	accounting-models	1
+TRABALHO	sindicato	accounting-repositories	1
+TRABALHO	sindicato	accounting-services	2
+TRABALHO	sindicato	controllers	8
+TRABALHO	sindicato	dp	71
+TRABALHO	sindicato	escopo-e-primitivas	6
+TRABALHO	sindicato	fe-features-accounting	11
+TRABALHO	sindicato	fe-lib	1
+TRABALHO	sindicato	fe-types-gerados	11
+TRABALHO	sindicato	jobs	1
+TRABALHO	sindicato	schema	8
+TRABALHO	sindicato	seed-legal	2
+TRABALHO	vale transporte	seed-legal	3
+TRIBUTO	aliquota	accounting-dtos	19
+TRIBUTO	aliquota	accounting-models	330
+TRIBUTO	aliquota	accounting-repositories	2
+TRIBUTO	aliquota	accounting-services	53
+TRIBUTO	aliquota	dp	7
+TRIBUTO	aliquota	escopo-e-primitivas	1
+TRIBUTO	aliquota	fe-features-accounting	22
+TRIBUTO	aliquota	fe-lib	5
+TRIBUTO	aliquota	fe-types-gerados	12
+TRIBUTO	aliquota	legalParameters	15
+TRIBUTO	aliquota	lib-fiscal	5
+TRIBUTO	aliquota	lib-outros	1
+TRIBUTO	aliquota	schema	5
+TRIBUTO	aliquota	scripts	9
+TRIBUTO	aliquota	seed-legal	154
+TRIBUTO	base de calculo	accounting-models	14
+TRIBUTO	base de calculo	dp	1
+TRIBUTO	base de calculo	lib-fiscal	3
+TRIBUTO	base de calculo	seed-legal	57
+TRIBUTO	cbs	accounting-dtos	154
+TRIBUTO	cbs	accounting-models	394
+TRIBUTO	cbs	accounting-outros	1
+TRIBUTO	cbs	accounting-repositories	42
+TRIBUTO	cbs	accounting-services	243
+TRIBUTO	cbs	controllers	22
+TRIBUTO	cbs	escopo-e-primitivas	11
+TRIBUTO	cbs	fe-features-accounting	33
+TRIBUTO	cbs	fe-lib	10
+TRIBUTO	cbs	fe-types-gerados	199
+TRIBUTO	cbs	jobs	1
+TRIBUTO	cbs	legalParameters	13
+TRIBUTO	cbs	lib-fiscal	49
+TRIBUTO	cbs	lib-outros	35
+TRIBUTO	cbs	routes	8
+TRIBUTO	cbs	schema	25
+TRIBUTO	cbs	scripts	8
+TRIBUTO	cbs	seed-legal	237
+TRIBUTO	cofins	accounting-dtos	63
+TRIBUTO	cofins	accounting-models	129
+TRIBUTO	cofins	accounting-repositories	22
+TRIBUTO	cofins	accounting-services	174
+TRIBUTO	cofins	controllers	7
+TRIBUTO	cofins	escopo-e-primitivas	5
+TRIBUTO	cofins	fe-features-accounting	49
+TRIBUTO	cofins	fe-lib	7
+TRIBUTO	cofins	fe-types-gerados	91
+TRIBUTO	cofins	jobs	3
+TRIBUTO	cofins	legalParameters	10
+TRIBUTO	cofins	lib-fiscal	49
+TRIBUTO	cofins	lib-outros	10
+TRIBUTO	cofins	outras-features	4
+TRIBUTO	cofins	routes	4
+TRIBUTO	cofins	schema	24
+TRIBUTO	cofins	scripts	7
+TRIBUTO	cofins	sectorKits	19
+TRIBUTO	cofins	seed-legal	281
+TRIBUTO	cprb	accounting-dtos	2
+TRIBUTO	cprb	accounting-models	12
+TRIBUTO	cprb	accounting-repositories	1
+TRIBUTO	cprb	accounting-services	3
+TRIBUTO	cprb	fe-types-gerados	4
+TRIBUTO	cprb	lib-fiscal	4
+TRIBUTO	cprb	schema	1
+TRIBUTO	cprb	seed-legal	3
+TRIBUTO	csll	accounting-dtos	25
+TRIBUTO	csll	accounting-models	137
+TRIBUTO	csll	accounting-repositories	6
+TRIBUTO	csll	accounting-services	114
+TRIBUTO	csll	escopo-e-primitivas	5
+TRIBUTO	csll	fe-features-accounting	27
+TRIBUTO	csll	fe-lib	6
+TRIBUTO	csll	fe-types-gerados	39
+TRIBUTO	csll	jobs	1
+TRIBUTO	csll	legalParameters	9
+TRIBUTO	csll	lib-fiscal	10
+TRIBUTO	csll	lib-outros	1
+TRIBUTO	csll	schema	17
+TRIBUTO	csll	scripts	4
+TRIBUTO	csll	sectorKits	17
+TRIBUTO	csll	seed-legal	353
+TRIBUTO	csrf	accounting-dtos	5
+TRIBUTO	csrf	accounting-models	31
+TRIBUTO	csrf	accounting-repositories	1
+TRIBUTO	csrf	accounting-services	32
+TRIBUTO	csrf	escopo-e-primitivas	3
+TRIBUTO	csrf	fe-types-gerados	5
+TRIBUTO	csrf	legalParameters	3
+TRIBUTO	csrf	schema	6
+TRIBUTO	csrf	seed-legal	9
+TRIBUTO	difal	lib-fiscal	1
+TRIBUTO	fap	accounting-models	1
+TRIBUTO	fcp	lib-fiscal	5
+TRIBUTO	fgts	accounting-models	4
+TRIBUTO	fgts	dp	38
+TRIBUTO	fgts	legalParameters	6
+TRIBUTO	fgts	seed-legal	27
+TRIBUTO	ibs	accounting-dtos	152
+TRIBUTO	ibs	accounting-models	394
+TRIBUTO	ibs	accounting-outros	1
+TRIBUTO	ibs	accounting-repositories	40
+TRIBUTO	ibs	accounting-services	239
+TRIBUTO	ibs	controllers	22
+TRIBUTO	ibs	escopo-e-primitivas	11
+TRIBUTO	ibs	fe-features-accounting	33
+TRIBUTO	ibs	fe-lib	10
+TRIBUTO	ibs	fe-types-gerados	205
+TRIBUTO	ibs	jobs	1
+TRIBUTO	ibs	legalParameters	13
+TRIBUTO	ibs	lib-fiscal	56
+TRIBUTO	ibs	lib-outros	35
+TRIBUTO	ibs	routes	8
+TRIBUTO	ibs	schema	24
+TRIBUTO	ibs	scripts	11
+TRIBUTO	ibs	seed-legal	220
+TRIBUTO	icms	accounting-dtos	43
+TRIBUTO	icms	accounting-models	31
+TRIBUTO	icms	accounting-outros	2
+TRIBUTO	icms	accounting-repositories	5
+TRIBUTO	icms	accounting-services	50
+TRIBUTO	icms	escopo-e-primitivas	4
+TRIBUTO	icms	fe-features-accounting	45
+TRIBUTO	icms	fe-features-outros	13
+TRIBUTO	icms	fe-lib	10
+TRIBUTO	icms	fe-types-gerados	50
+TRIBUTO	icms	jobs	1
+TRIBUTO	icms	legalParameters	6
+TRIBUTO	icms	lib-fiscal	71
+TRIBUTO	icms	lib-outros	2
+TRIBUTO	icms	outras-features	8
+TRIBUTO	icms	schema	7
+TRIBUTO	icms	scripts	12
+TRIBUTO	icms	sectorKits	1
+TRIBUTO	icms	seed-legal	565
+TRIBUTO	icmsst	accounting-dtos	1
+TRIBUTO	icmsst	fe-types-gerados	2
+TRIBUTO	icmsst	lib-fiscal	4
+TRIBUTO	inss	accounting-dtos	8
+TRIBUTO	inss	accounting-models	47
+TRIBUTO	inss	accounting-repositories	3
+TRIBUTO	inss	accounting-services	22
+TRIBUTO	inss	dp	42
+TRIBUTO	inss	escopo-e-primitivas	3
+TRIBUTO	inss	fe-types-gerados	22
+TRIBUTO	inss	legalParameters	12
+TRIBUTO	inss	lib-fiscal	1
+TRIBUTO	inss	schema	10
+TRIBUTO	inss	seed-legal	20
+TRIBUTO	ipi	accounting-dtos	8
+TRIBUTO	ipi	accounting-models	2
+TRIBUTO	ipi	accounting-repositories	1
+TRIBUTO	ipi	accounting-services	2
+TRIBUTO	ipi	escopo-e-primitivas	1
+TRIBUTO	ipi	fe-features-accounting	3
+TRIBUTO	ipi	fe-lib	3
+TRIBUTO	ipi	fe-types-gerados	10
+TRIBUTO	ipi	lib-fiscal	28
+TRIBUTO	ipi	schema	1
+TRIBUTO	ipi	scripts	1
+TRIBUTO	ipi	seed-legal	42
+TRIBUTO	irpf	accounting-dtos	1
+TRIBUTO	irpf	accounting-models	10
+TRIBUTO	irpf	accounting-services	2
+TRIBUTO	irpf	fe-types-gerados	1
+TRIBUTO	irpf	seed-legal	2
+TRIBUTO	irpj	accounting-dtos	17
+TRIBUTO	irpj	accounting-models	113
+TRIBUTO	irpj	accounting-repositories	4
+TRIBUTO	irpj	accounting-services	93
+TRIBUTO	irpj	escopo-e-primitivas	3
+TRIBUTO	irpj	fe-features-accounting	18
+TRIBUTO	irpj	fe-lib	5
+TRIBUTO	irpj	fe-types-gerados	23
+TRIBUTO	irpj	jobs	1
+TRIBUTO	irpj	legalParameters	8
+TRIBUTO	irpj	lib-fiscal	9
+TRIBUTO	irpj	lib-outros	1
+TRIBUTO	irpj	schema	13
+TRIBUTO	irpj	scripts	4
+TRIBUTO	irpj	sectorKits	17
+TRIBUTO	irpj	seed-legal	300
+TRIBUTO	irrf	accounting-dtos	25
+TRIBUTO	irrf	accounting-models	93
+TRIBUTO	irrf	accounting-repositories	11
+TRIBUTO	irrf	accounting-services	109
+TRIBUTO	irrf	controllers	8
+TRIBUTO	irrf	dp	56
+TRIBUTO	irrf	escopo-e-primitivas	8
+TRIBUTO	irrf	fe-features-accounting	8
+TRIBUTO	irrf	fe-types-gerados	37
+TRIBUTO	irrf	jobs	2
+TRIBUTO	irrf	legalParameters	19
+TRIBUTO	irrf	lib-outros	13
+TRIBUTO	irrf	routes	4
+TRIBUTO	irrf	schema	22
+TRIBUTO	irrf	scripts	2
+TRIBUTO	irrf	seed-legal	120
+TRIBUTO	iss	accounting-dtos	38
+TRIBUTO	iss	accounting-models	135
+TRIBUTO	iss	accounting-outros	5
+TRIBUTO	iss	accounting-repositories	30
+TRIBUTO	iss	accounting-services	159
+TRIBUTO	iss	controllers	22
+TRIBUTO	iss	escopo-e-primitivas	8
+TRIBUTO	iss	fe-features-accounting	43
+TRIBUTO	iss	fe-lib	9
+TRIBUTO	iss	fe-types-gerados	41
+TRIBUTO	iss	jobs	2
+TRIBUTO	iss	legalParameters	11
+TRIBUTO	iss	lib-fiscal	7
+TRIBUTO	iss	lib-outros	10
+TRIBUTO	iss	routes	11
+TRIBUTO	iss	schema	17
+TRIBUTO	iss	scripts	25
+TRIBUTO	iss	seed-legal	607
+TRIBUTO	iss	server-outros	2
+TRIBUTO	issqn	accounting-dtos	2
+TRIBUTO	issqn	accounting-models	3
+TRIBUTO	issqn	accounting-repositories	1
+TRIBUTO	issqn	accounting-services	14
+TRIBUTO	issqn	fe-features-accounting	6
+TRIBUTO	issqn	fe-lib	2
+TRIBUTO	issqn	fe-types-gerados	4
+TRIBUTO	issqn	lib-fiscal	22
+TRIBUTO	issqn	schema	3
+TRIBUTO	issqn	seed-legal	1
+TRIBUTO	jcp	accounting-dtos	31
+TRIBUTO	jcp	accounting-models	38
+TRIBUTO	jcp	accounting-repositories	7
+TRIBUTO	jcp	accounting-services	129
+TRIBUTO	jcp	controllers	20
+TRIBUTO	jcp	escopo-e-primitivas	2
+TRIBUTO	jcp	fe-features-accounting	1
+TRIBUTO	jcp	fe-types-gerados	20
+TRIBUTO	jcp	legalParameters	2
+TRIBUTO	jcp	lib-outros	2
+TRIBUTO	jcp	routes	7
+TRIBUTO	jcp	schema	8
+TRIBUTO	jcp	scripts	2
+TRIBUTO	jcp	seed-legal	5
+TRIBUTO	monofasico	accounting-dtos	3
+TRIBUTO	monofasico	accounting-models	18
+TRIBUTO	monofasico	accounting-services	3
+TRIBUTO	monofasico	fe-features-accounting	4
+TRIBUTO	monofasico	fe-types-gerados	5
+TRIBUTO	monofasico	legalParameters	4
+TRIBUTO	monofasico	lib-fiscal	10
+TRIBUTO	monofasico	lib-outros	1
+TRIBUTO	monofasico	scripts	8
+TRIBUTO	monofasico	seed-legal	134
+TRIBUTO	rat	accounting-models	1
+TRIBUTO	rat	seed-legal	1
+TRIBUTO	retencao	accounting-dtos	16
+TRIBUTO	retencao	accounting-models	76
+TRIBUTO	retencao	accounting-repositories	14
+TRIBUTO	retencao	accounting-services	133
+TRIBUTO	retencao	analytics	1
+TRIBUTO	retencao	dp	3
+TRIBUTO	retencao	escopo-e-primitivas	2
+TRIBUTO	retencao	fe-features-accounting	5
+TRIBUTO	retencao	fe-features-outros	1
+TRIBUTO	retencao	fe-lib	1
+TRIBUTO	retencao	fe-types-gerados	28
+TRIBUTO	retencao	jobs	2
+TRIBUTO	retencao	legalParameters	7
+TRIBUTO	retencao	lib-fiscal	9
+TRIBUTO	retencao	lib-outros	5
+TRIBUTO	retencao	schema	27
+TRIBUTO	retencao	scripts	2
+TRIBUTO	retencao	seed-legal	284
+VIGENCIA	ano-literal	accounting-dtos	34
+VIGENCIA	ano-literal	accounting-models	61
+VIGENCIA	ano-literal	accounting-services	23
+VIGENCIA	ano-literal	chat-e-ia	4
+VIGENCIA	ano-literal	dp	1
+VIGENCIA	ano-literal	fe-features-accounting	8
+VIGENCIA	ano-literal	jobs	2
+VIGENCIA	ano-literal	legalParameters	3
+VIGENCIA	ano-literal	lib-fiscal	9
+VIGENCIA	ano-literal	lib-outros	1
+VIGENCIA	ano-literal	schema	3
+VIGENCIA	ano-literal	scripts	17
+VIGENCIA	ano-literal	sectorKits	16
+VIGENCIA	ano-literal	server-outros	4
+VIGENCIA	data-literal	accounting-dtos	2
+VIGENCIA	data-literal	accounting-models	16
+VIGENCIA	data-literal	accounting-services	3
+VIGENCIA	data-literal	lib-fiscal	5
+VIGENCIA	data-literal	scripts	3
