@@ -10,7 +10,7 @@ import { LEGAIS_SEMENTE, LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO, legalParamsSeedRo
 import { SemLinhaVigenteError, type LegalParameterTabela } from '../../../legalParameters/models/legalParameter';
 import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
 import { issAliquotaMaxBp } from '../issLimite';
-import { fatorReducaoIssBp, IssExtintoError, issExtinto, ISS_EXTINTO_MENSAGEM } from '../issTransicao';
+import { exigirIssNaoExtinto, fatorReducaoIssBp, fimIss, IssExtintoError, issExtinto, ISS_EXTINTO_MENSAGEM } from '../issTransicao';
 import { parametroIbsCbsVigente, tabelaIbsCbsDe } from '../ibsCbsParams';
 import { apurarIbsCbsMes } from '../ibsCbsCompetencia';
 import { agregarIssPorCompetencia, type IssDocInput } from '../issCompetencia';
@@ -80,29 +80,46 @@ describe('item 3 — fatorReducaoIssBp e issExtinto', () => {
     expect(() => fatorReducaoIssBp(todas, '2033-01-01')).toThrow(ISS_EXTINTO_MENSAGEM);
   });
 
-  it('2029 sem a linha publicada ⇒ SemLinhaVigenteError, nunca 0', () => {
+  it('2029 sem a linha publicada ⇒ SemLinhaVigenteError, nunca 0 (o início da transição segue literal até o MARCO_LEGAL — Onda 3.2 #3)', () => {
     const sem2029 = todas.filter((l) => l.id !== 'lp-iss-transicao-2029');
     expect(() => fatorReducaoIssBp(sem2029, '2029-03-10')).toThrow(SemLinhaVigenteError);
     const rascunho = todas.map((l) => (l.id === 'lp-iss-transicao-2029' ? { ...l, status: 'DRAFT' } : l));
     expect(() => fatorReducaoIssBp(rascunho, '2029-03-10')).toThrow(SemLinhaVigenteError);
   });
 
-  it('issExtinto: falso em 2032-12-31, verdadeiro em 2033-01-01', () => {
-    expect(issExtinto('2032-12-31')).toBe(false);
-    expect(issExtinto('2033-01-01')).toBe(true);
+  it('uma linha de dentro da transição ausente ou em rascunho ⇒ SemLinhaVigenteError, nunca 0', () => {
+    const sem2030 = todas.filter((l) => l.id !== 'lp-iss-transicao-2030');
+    expect(() => fatorReducaoIssBp(sem2030, '2030-03-10')).toThrow(SemLinhaVigenteError);
+  });
+
+  it('issExtinto: falso em 2032-12-31, verdadeiro em 2033-01-01 — o fim é a linha ISS_LIMITE + 1 dia (Onda 3.2 #4)', () => {
+    expect(fimIss(todas, '2030-01-01')).toBe('2033-01-01');
+    expect(issExtinto(todas, '2032-12-31')).toBe(false);
+    expect(issExtinto(todas, '2033-01-01')).toBe(true);
+  });
+
+  it('issExtinto: linha de ISS_LIMITE sem vigenteAte = sem fim publicado ⇒ nunca extinto; sem linha ⇒ erro', () => {
+    const aberta = todas.map((l) => (l.tabela === 'ISS_LIMITE' ? { ...l, vigenteAte: null } : l));
+    expect(issExtinto(aberta, '2040-01-01')).toBe(false);
+    expect(() => issExtinto(todas.filter((l) => l.tabela !== 'ISS_LIMITE'), '2030-01-01')).toThrow(SemLinhaVigenteError);
   });
 });
 
-describe('item 4 — perfil fiscal a partir de 2033 (F-ISS-5 a)', () => {
+describe('item 4 — perfil fiscal a partir do fim do ISS (F-ISS-5 a; Onda 3.2 #4: a checagem é do serviço)', () => {
   const perfil = { unitId: 'u1', regimeTributario: 'PRESUMIDO' as const, icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO' as const };
   const em = (iso: string) => jest.useFakeTimers({ now: new Date(iso), doNotFake: ['nextTick', 'setImmediate', 'clearImmediate', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask', 'hrtime', 'performance'] });
   afterEach(() => jest.useRealTimers());
 
-  it('2033-01-01 (São Paulo) com valor ⇒ 400 com a mensagem nomeada, não o "Sem linha vigente" genérico; null passa', () => {
+  it('exigirIssNaoExtinto: 2032-12-31 passa; 2033-01-01 ⇒ IssExtintoError com a mensagem nomeada, não o "Sem linha vigente" genérico', () => {
+    expect(() => exigirIssNaoExtinto(todas, '2032-12-31')).not.toThrow();
+    expect(() => exigirIssNaoExtinto(todas, '2033-01-01')).toThrow(IssExtintoError);
+    expect(() => exigirIssNaoExtinto(todas, '2033-01-01')).toThrow(ISS_EXTINTO_MENSAGEM);
+    expect(() => exigirIssNaoExtinto(todas, '2033-01-01')).not.toThrow('Sem linha vigente');
+  });
+
+  it('o DTO não lança em 2033 (sem linha de teto hoje, adia ao serviço); null e ausente passam', () => {
     em('2033-01-01T12:00:00-03:00');
-    const r = UpsertFiscalProfileSchema.safeParse({ ...perfil, issAliquotaBp: 300 });
-    expect(r.success).toBe(false);
-    expect(r.error?.issues.map((i) => [i.path.join('.'), i.message])).toEqual([['issAliquotaBp', ISS_EXTINTO_MENSAGEM]]);
+    expect(UpsertFiscalProfileSchema.safeParse({ ...perfil, issAliquotaBp: 300 }).success).toBe(true);
     expect(UpsertFiscalProfileSchema.safeParse({ ...perfil, issAliquotaBp: null }).success).toBe(true);
     expect(UpsertFiscalProfileSchema.safeParse(perfil).success).toBe(true);
   });

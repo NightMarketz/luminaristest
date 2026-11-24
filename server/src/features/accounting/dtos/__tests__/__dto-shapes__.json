@@ -8764,7 +8764,7 @@
         },
         "anoCalendario": {
           "type": "integer",
-          "minimum": 2027,
+          "minimum": -9007199254740991,
           "maximum": 9007199254740991
         },
         "mes": {
@@ -8810,7 +8810,7 @@
         },
         "anoCalendario": {
           "type": "integer",
-          "minimum": 2027,
+          "minimum": -9007199254740991,
           "maximum": 9007199254740991
         }
       },
@@ -8830,7 +8830,7 @@
         },
         "anoCalendario": {
           "type": "integer",
-          "minimum": 2027,
+          "minimum": -9007199254740991,
           "maximum": 9007199254740991
         },
         "mes": {
@@ -12681,7 +12681,7 @@
         "anoCalendario": {
           "type": "integer",
           "minimum": 2025,
-          "maximum": 2026
+          "maximum": 9007199254740991
         },
         "periodo": {
           "type": "string",
@@ -12830,7 +12830,7 @@
         "anoCalendario": {
           "type": "integer",
           "minimum": 2025,
-          "maximum": 2026
+          "maximum": 9007199254740991
         },
         "periodo": {
           "type": "string",

@@ -20,7 +20,9 @@ import type { IAccountantAssignmentRepository } from '../../repositories/IAccoun
 import type { IAccountingPolicyVersionRepository } from '../../repositories/IAccountingPolicyVersionRepository';
 import type { FiscalProfile, Prisma, ServiceFiscalProfile } from 'generated/prisma';
 
-import { legalParamsSemente } from '@test/helpers/legalParams';
+import { fotografiaSemente, legalParamsSemente } from '@test/helpers/legalParams';
+import { IssExtintoError } from '../../models/issTransicao';
+import { SemLinhaVigenteError } from '../../../legalParameters/models/legalParameter';
 const scope: AccountingScope = { ownerUserId: 'u1', actorUserId: 'u1', unitId: 'unit-1', ledgerCode: 'DEFAULT', baseCurrencyCode: 'BRL', timeZone: 'America/Sao_Paulo' };
 
 function rowFrom(data: Partial<FiscalProfileData> & { regimeTributario: string }): FiscalProfile {
@@ -37,7 +39,7 @@ function rowFrom(data: Partial<FiscalProfileData> & { regimeTributario: string }
   } as FiscalProfile;
 }
 
-function build(opts: { existing?: FiscalProfile | null; canManage?: boolean; regimeEmpresa?: string | null } = {}) {
+function build(opts: { existing?: FiscalProfile | null; canManage?: boolean; regimeEmpresa?: string | null; legalParams?: { fotografia: (t: readonly string[]) => Promise<never[]> } } = {}) {
   let stored: FiscalProfile | null = opts.existing ?? null;
   const repo: IFiscalProfileRepository = {
     findByScope: jest.fn(async () => stored),
@@ -68,7 +70,7 @@ function build(opts: { existing?: FiscalProfile | null; canManage?: boolean; reg
     setAppliedSnapshot: jest.fn(async () => ({ id: 'pv-1' })),
   } as unknown as IAccountingPolicyVersionRepository;
   return {
-    svc: new FiscalProfileService(repo, accounts, policy, audit, companyRepo, assignmentRepo, policyVersionRepo, legalParamsSemente),
+    svc: new FiscalProfileService(repo, accounts, policy, audit, companyRepo, assignmentRepo, policyVersionRepo, (opts.legalParams ?? legalParamsSemente) as never),
     repo, append, companyRepo, accounts,
   };
 }
@@ -124,6 +126,34 @@ describe('FiscalProfileService — BE-INCR-DFE (itens 6/7/9)', () => {
     expect(kept).toMatchObject({ codMun: '3550308', issAliquotaBp: '500', emissaoForaDoMes: 'AVISAR' });
   });
 
+  describe('Onda 3.2 #4 — o fim do ISS é a linha de ISS_LIMITE (a checagem do PUT é do serviço, sem literal)', () => {
+    const base = { unitId: 'unit-1', regimeTributario: 'REAL' as const, icmsContribuinte: false, pisCofinsRegime: 'CUMULATIVO' as const, issAliquotaBp: 300 };
+    const doTempo = (iso: string) => jest.useFakeTimers({ now: new Date(iso), doNotFake: ['nextTick', 'setImmediate', 'clearImmediate', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask', 'hrtime', 'performance'] });
+    afterEach(() => jest.useRealTimers());
+    /** A semente de ISS_LIMITE, com só o vigenteAte do máximo mudado (a "publicação" da virada). */
+    const limite = (ate: string | null) => ({ fotografia: async () => fotografiaSemente(['ISS_LIMITE']).map((l) => (l.chave === 'ALIQUOTA_MAX_BP' ? { ...l, vigenteAte: ate } : l)) as never[] });
+
+    it.each([
+      ['2032-12-31', '2033-01-01'],
+      ['2033-12-31', '2034-01-01'],
+    ])('linha ISS_LIMITE até %s: PUT passa no último dia e é IssExtintoError no dia seguinte (%s)', async (ate, extinto) => {
+      const dia = (d: string) => `${d}T12:00:00-03:00`;
+      const ultimo = new Date(`${extinto}T00:00:00Z`);
+      ultimo.setUTCDate(ultimo.getUTCDate() - 1);
+      doTempo(dia(ultimo.toISOString().slice(0, 10)));
+      await expect(build({ legalParams: limite(ate) }).svc.upsert(scope, UpsertFiscalProfileSchema.parse(base))).resolves.toBeDefined();
+      doTempo(dia(extinto));
+      await expect(build({ legalParams: limite(ate) }).svc.upsert(scope, UpsertFiscalProfileSchema.parse(base))).rejects.toBeInstanceOf(IssExtintoError);
+    });
+
+    it('alíquota null passa mesmo extinto; sem linha de teto fora do fim publicado ⇒ SemLinhaVigenteError (fail-closed)', async () => {
+      doTempo('2040-01-01T12:00:00-03:00');
+      await expect(build({ legalParams: limite('2032-12-31') }).svc.upsert(scope, UpsertFiscalProfileSchema.parse({ ...base, issAliquotaBp: null }))).resolves.toBeDefined();
+      doTempo('2026-11-24T12:00:00-03:00');
+      const semTeto = { fotografia: async () => [] as never[] };
+      await expect(build({ legalParams: semTeto }).svc.upsert(scope, UpsertFiscalProfileSchema.parse(base))).rejects.toBeInstanceOf(SemLinhaVigenteError);
+    });
+  });
   // MODULE-BOUNDARIES PR-1a (dono, 24/11: "Vai para o service"): o máximo da ISS_LIMITE e a lista nacional do pacote saíram do DTO para o validate.
   it('issAliquotaBp acima do máximo da ISS_LIMITE (pAliq [312], RN E0595) e pacoteCTribNac fora da lista nacional → 400 antes de gravar', async () => {
     const { svc, repo } = build();

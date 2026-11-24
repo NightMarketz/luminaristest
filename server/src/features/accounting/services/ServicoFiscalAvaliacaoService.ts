@@ -12,7 +12,7 @@ import type { TaxOptimizationService } from './TaxOptimizationService';
 import type { ServicoFiscalAvaliacaoView } from '../dtos/ServicoFiscalAvaliacaoDto';
 import { receitaBrutaPorAtividade } from './receitaBrutaPorAtividade';
 import { quarterWindows } from './SpedEcfGenerationService';
-import { alertaPacote, alertasDeEnquadramento, cargaIbsCbsDoServico, IBS_CBS_REDUCAO_NBS_DESDE, type AlertaServico } from '../models/servicoFiscalAvaliacao';
+import { alertaPacote, alertasDeEnquadramento, cargaIbsCbsDoServico, inicioReducaoNbs, type AlertaServico } from '../models/servicoFiscalAvaliacao';
 import { repartirReceitaHospitalar, type LinhaServicoReceita } from '../models/presuncaoHospitalar';
 import { atividadeDoServico, tabelaApuracaoDe } from '../models/taxAssessmentParams';
 import { apurarPresumidoTrimestral, type MemoriaAnterior, type PeriodoTrimestral, type TributoApuracao } from '../models/taxAssessmentCalc';
@@ -86,7 +86,9 @@ export class ServicoFiscalAvaliacaoService {
     }
 
     // Item 32 — NBS_SAUDE_2027: serviço estético (ou sem finalidade, I-17) com NBS de saúde ⇒ alíquota cheia + decisão humana.
-    const data2027 = ano >= 2027 ? `${ano}-01-01` : IBS_CBS_REDUCAO_NBS_DESDE; // ano anterior ⇒ projeção sobre 01/01/2027
+    // Onda 3.2 #7: o 1º dia da redução é o da linha (hoje 2027-01-01) — ano anterior ⇒ projeção sobre esse dia.
+    const inicioNbs = servicos.length > 0 ? inicioReducaoNbs(linhasLegais, `${ano}-01-01`) : '';
+    const data2027 = `${ano}-01-01` >= inicioNbs ? `${ano}-01-01` : inicioNbs;
     for (const s of servicos) {
       if ((s.finalidade ?? 'ESTETICA') !== 'ESTETICA') continue;
       const carga = cargaIbsCbsDoServico({ cNBS: s.cNBS, finalidade: s.finalidade }, data2027, linhasLegais);

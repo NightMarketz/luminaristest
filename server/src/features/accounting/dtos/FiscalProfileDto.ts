@@ -1,6 +1,4 @@
 import { z } from 'zod';
-import { ISS_EXTINTO_MENSAGEM, issExtinto } from '../models/issTransicao';
-import { hojeDateOnly } from '../../legalParameters/models/hoje';
 
 /**
  * BE-INCR-NFE-COST-REGIME (nó X6) — DTOs do perfil fiscal (BRIEF §2 + EMENDA 2026-09-15). `.strict()`.
@@ -124,10 +122,6 @@ const FiscalProfileFields = z
       .number()
       .int()
       .min(0)
-      .superRefine((v, ctx) => {
-        const hoje = hojeDateOnly();
-        if (issExtinto(hoje)) ctx.addIssue({ code: 'custom', message: ISS_EXTINTO_MENSAGEM });
-      })
       .nullable()
       .optional(),
     issRetidoTomadorPj: z.boolean().default(false),

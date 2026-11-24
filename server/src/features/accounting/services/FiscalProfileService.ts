@@ -9,9 +9,9 @@ import type { ICompanyFiscalProfileRepository } from '../repositories/ICompanyFi
 import { regimeUnidadeEsperado } from '../models/regimeEmpresa';
 import type { RegimeEmpresa } from '../models/regimeEmpresa';
 import { scopeToday } from '../models/dates';
+import { exigirIssNaoExtinto } from '../models/issTransicao';
 import { issAliquotaMaxBp } from '../models/issLimite';
 import { isLc116Codigo, listaLc116De } from '../models/lc116ListaNacional';
-import { issExtinto } from '../models/issTransicao';
 import { hojeDateOnly } from '../../legalParameters/models/hoje';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
 import type { AuditService } from './AuditService';
@@ -425,8 +425,11 @@ export class FiscalProfileService {
    */
   private async assertParametrosLegais(input: FiscalProfilePolicyPayload): Promise<void> {
     const hoje = hojeDateOnly();
-    if (input.issAliquotaBp != null && !issExtinto(hoje)) {
-      if (input.issAliquotaBp > issAliquotaMaxBp(await this.legalParams.fotografia(['ISS_LIMITE']), hoje)) {
+    if (input.issAliquotaBp != null) {
+      // Onda 3.2 #4 (ISS-TRANSICAO-IBS PR-1 item 4; F-ISS-5 a): valor não nulo a partir do fim do ISS ⇒ 400 nomeado; sem linha vigente do teto ⇒ fail-closed.
+      const limite = await this.legalParams.fotografia(['ISS_LIMITE']);
+      exigirIssNaoExtinto(limite, hoje);
+      if (input.issAliquotaBp > issAliquotaMaxBp(limite, hoje)) {
         throw new ValidationError('issAliquotaBp acima do máximo da tabela ISS_LIMITE (pAliq [312]; RN E0595)');
       }
     }

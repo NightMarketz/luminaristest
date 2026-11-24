@@ -167,7 +167,7 @@ export class ReceitaFiscalService {
     const [perfis, fiscal, linhas] = await Promise.all([
       this.productFiscalRepo.findManyByProductRefs(scope, produtos),
       this.fiscalProfileRepo.findByScope(scope),
-      this.legalParams.fotografia(['PIS_COFINS_MONOFASICO_NCM', 'ICMS_ST_NCM_UF']),
+      this.legalParams.fotografia(['PIS_COFINS_MONOFASICO_NCM', 'ICMS_ST_NCM_UF', 'PIS_COFINS']),
     ]);
     const cUf = fiscal?.codMun && UF_IBGE[fiscal.codMun.slice(0, 2)] ? fiscal.codMun.slice(0, 2) : null;
     return new Map(perfis.map((p) => [p.productRef, segregacaoPorNcm(p.ncm, cUf, venda.dia, linhas)]));
