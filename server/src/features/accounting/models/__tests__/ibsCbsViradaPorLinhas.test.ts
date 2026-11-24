@@ -8,7 +8,7 @@ import { fotografiaSemente } from '@test/helpers/legalParams';
 import { ParametroLegalAusenteError, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { creditoIbsCbsEntrada, type ItemEntradaIbsCbs } from '../ibsCbsCredito';
 import { antesDoInicioDaApuracaoIbsCbs, exigirInicioApuracaoIbsCbs, inicioApuracaoIbsCbs } from '../ibsCbsParams';
-import { parametrosDoMes } from '../pisCofinsCalc';
+import { exigirLinhaPisCofinsVigente, parametrosDoMes } from '../pisCofinsCalc';
 import { tabelaPisCofinsDe } from '../pisCofinsParams';
 import { PisCofinsPreviewSchema } from '../../dtos/PisCofinsDto';
 
@@ -105,5 +105,35 @@ describe('#9 — fim do PIS/Cofins = ausência de linha PIS_COFINS vigente (não
     const tabela = tabelaPisCofinsDe(estendidoAte2027());
     expect(parametrosDoMes(tabela, 2027, 'M03', 'CUMULATIVO').PIS).toBeDefined();
     expect(() => parametrosDoMes(tabela, 2028, 'M03', 'CUMULATIVO')).toThrow(/revogados/);
+  });
+
+  it('VIRADA da MENSAGEM: o mês/ano da revogação sai do `vigenteAte` da linha, não de "2027-01" em código', () => {
+    const msg = (linhas: readonly LinhaLegal[], ano: number) => {
+      try {
+        parametrosDoMes(tabelaPisCofinsDe(linhas), ano, 'M03', 'CUMULATIVO');
+      } catch (e) {
+        return (e as Error).message;
+      }
+      return null;
+    };
+    expect(msg(linhasPis(), 2027)).toMatch(/revogados a partir de 2027-01 \(/);
+    expect(msg(estendidoAte2027(), 2028)).toMatch(/revogados a partir de 2028-01 \(/);
+    expect(msg(estendidoAte2027(), 2028)).not.toMatch(/2027-01/);
+    // fim no meio do mês ⇒ a data exata (dia seguinte), não um mês inteiro inventado
+    const meio = linhasPis().map((l) => (l.vigenteAte === '2026-12-31' ? { ...l, vigenteAte: '2027-02-14' } : l));
+    expect(msg(meio, 2027)).toMatch(/revogados a partir de 2027-02-15 \(/);
+  });
+
+  it('sem NENHUMA linha vencida (tabela vazia) a mensagem não afirma revogação: diz que falta a linha', () => {
+    expect(() => parametrosDoMes([], 2027, 'M03', 'CUMULATIVO')).toThrow(/sem linha PIS_COFINS vigente em 2027-03-31/);
+  });
+
+  it('exigirLinhaPisCofinsVigente (antes do perfil, sem modalidade): semente aceita 2026 e recusa 2027; estender a linha move a recusa', () => {
+    const tabela = tabelaPisCofinsDe(linhasPis());
+    expect(() => exigirLinhaPisCofinsVigente(tabela, 2026, 'M12')).not.toThrow();
+    expect(() => exigirLinhaPisCofinsVigente(tabela, 2027, 'M01')).toThrow(/revogados a partir de 2027-01 \(LC 214\/2025 art\. 542/);
+    const estendida = tabelaPisCofinsDe(estendidoAte2027());
+    expect(() => exigirLinhaPisCofinsVigente(estendida, 2027, 'M12')).not.toThrow();
+    expect(() => exigirLinhaPisCofinsVigente(estendida, 2028, 'M01')).toThrow(/revogados a partir de 2028-01/);
   });
 });
