@@ -39,18 +39,15 @@ export class BcbPtaxClient implements IPtaxClient {
       `${this.baseUrl}/CotacaoMoedaPeriodo(moeda=@moeda,dataInicial=@dataInicial,dataFinalCotacao=@dataFinalCotacao)` +
       `?@moeda='${currency}'&@dataInicial='${toBcbDate(fromDate)}'&@dataFinalCotacao='${toBcbDate(toDate)}'&$format=json`;
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
     let body: unknown;
     try {
-      const res = await outboundFetch('bcb_ptax', url, { headers: { Accept: 'application/json' }, signal: controller.signal });
+      // Timeout por tentativa e retry de GET (5xx/429/rede) ficam no wrapper.
+      const res = await outboundFetch('bcb_ptax', url, { headers: { Accept: 'application/json' } }, { timeoutMs: this.timeoutMs });
       if (!res.ok) throw new PtaxClientError(`BCB PTAX respondeu ${res.status} para ${currency} ${fromDate}..${toDate}.`);
       body = await res.json();
     } catch (error) {
       if (error instanceof PtaxClientError) throw error;
       throw new PtaxClientError(`Falha ao consultar a PTAX ${currency} ${fromDate}..${toDate}: ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      clearTimeout(timeoutId);
     }
     return parseClosings(currency, body);
   }

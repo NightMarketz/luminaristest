@@ -9,7 +9,7 @@
  * `jest.setSystemTime` é o oráculo: sem congelar o relógio, este teste passaria/falharia conforme a
  * hora em que a suíte roda — exatamente a razão pela qual o defeito sobreviveu.
  */
-import { calendarDayAsWritten, isValidDateOnly, saleDayAsWritten, scopeDay, scopeToday } from '../dates';
+import { calendarDayAsWritten, fiscalYearOf, isValidDateOnly, saleDayAsWritten, scopeDay, scopeToday } from '../dates';
 import { ValidationError } from '../../../../lib/errors';
 
 const BRT = { timeZone: 'America/Sao_Paulo' };
@@ -26,7 +26,7 @@ describe('scopeDay — dia-calendário de um INSTANTE, no fuso do escopo', () =>
   /**
    * A REGRA DELICADA. Um YYYY-MM-DD já é um dia escolhido, não um instante: reinterpretá-lo em BRT
    * o puxaria um dia para trás (meia-noite UTC = 21h do dia anterior em BRT) — exatamente o bug que
-   * PostingService.fiscalYearFrom documenta ter sofrido. Sem este short-circuit, consertar as pontes
+   * fiscalYearOf (models/dates) documenta ter sofrido. Sem este short-circuit, consertar as pontes
    * QUEBRARIA toda venda cujo `date` do preset já é date-only.
    */
   it('date-only entra e sai INTACTO — nunca é reinterpretado num fuso', () => {
@@ -146,5 +146,15 @@ describe('calendarDayAsWritten / saleDayAsWritten — o campo `date` do motor é
     expect(saleDayAsWritten(scope, '2026-11-25T23:30:00.000Z')).toBe(scopeDay(scope, '2026-11-25T23:30:00.000Z'));
     expect(saleDayAsWritten(scope, undefined)).toBe(scopeToday(scope));
     expect(() => saleDayAsWritten(scope, 'lixo')).toThrow(ValidationError);
+  });
+});
+
+describe('fiscalYearOf — ano fiscal de uma data de lançamento (lacuna 1fd7)', () => {
+  it('ano-calendário da data date-only, lido em UTC: 1º/1 e 31/12 não mudam de ano', () => {
+    expect(fiscalYearOf('2026-01-01')).toBe(2026);
+    expect(fiscalYearOf('2026-12-31')).toBe(2026);
+  });
+  it('Date gravada à meia-noite UTC (entry.date do Prisma) dá o mesmo ano da string', () => {
+    expect(fiscalYearOf(new Date('2026-01-01'))).toBe(2026);
   });
 });

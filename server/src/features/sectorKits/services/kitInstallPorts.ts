@@ -1,5 +1,5 @@
 import type { Prisma } from 'generated/prisma';
-import type { BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 import type { ActivationChartPort } from '../../accountingBinding/services/BindingActivationService';
 
 /**

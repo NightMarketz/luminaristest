@@ -1,3 +1,9 @@
+// Lacuna 1fd7: a regra do ano fiscal mora só em `fiscalYearOf`; o mock mantém a real e deixa o teste trocá-la.
+jest.mock('../../models/dates', () => {
+  const actual = jest.requireActual('../../models/dates');
+  return { ...actual, fiscalYearOf: jest.fn(actual.fiscalYearOf) };
+});
+import { fiscalYearOf } from '../../models/dates';
 import { EntryApprovalService } from '../EntryApprovalService';
 import { AppError, ForbiddenError, NotFoundError, ValidationError } from '../../../../lib/errors';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
@@ -219,6 +225,13 @@ describe('EntryApprovalService.approveEntry — the money moment', () => {
     await expect(
       service.approveEntry(checker, 'entry-1', { unitId: 'unit-1', expectedVersion: 2 } as never),
     ).rejects.toThrow(ForbiddenError);
+  });
+
+  it('approve: o ano fiscal do número vem de fiscalYearOf, o mesmo lugar do postEntry (lacuna 1fd7)', async () => {
+    const { service, nextEntryNumber } = build({ entry: pending });
+    jest.mocked(fiscalYearOf).mockReturnValueOnce(1999);
+    await service.approveEntry(maker, 'entry-1', { unitId: 'unit-1', expectedVersion: 2 } as never);
+    expect(nextEntryNumber).toHaveBeenCalledWith(expect.anything(), 1999, expect.anything());
   });
 
   it('SoD OFF (single-user staging): the creator CAN approve their own entry and it posts (F3 re-ratified)', async () => {

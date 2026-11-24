@@ -93,6 +93,14 @@ export interface AppendAttemptData {
 }
 
 /** Campos que uma transição de status pode gravar (BRIEF item 24 — a máquina de estados é do serviço). */
+/** Onda 4 / 4.1 — o controle de retentativa da consulta do job; `null` limpa. */
+export interface PollStatePatch {
+  pollAttempts?: number;
+  nextPollAt?: Date | null;
+  pollGaveUpAt?: Date | null;
+  pollLastError?: string | null;
+}
+
 export interface TransitionData {
   status: FiscalDocumentStatus;
   partnerRef?: string | null;
@@ -111,6 +119,11 @@ export interface TransitionData {
   cancelMotivo?: number | null;
   cancelReason?: string | null;
   errorsJson?: string | null;
+  /** Onda 4 / 4.1 — controle de retentativa da consulta do job (`dfe_poll_pending`). */
+  pollAttempts?: number;
+  nextPollAt?: Date | null;
+  pollGaveUpAt?: Date | null;
+  pollLastError?: string | null;
   xmlAttachmentId?: string | null;
   pdfAttachmentId?: string | null;
   sourceDocumentId?: string | null;
@@ -209,8 +222,18 @@ export interface IFiscalDocumentRepository {
   findForIbsCbs(scope: AccountingScope, from: string, to: string, statuses: readonly FiscalDocumentStatus[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
   /** IBS-CBS-2027 PR-2 (item 7; dono 21/10): das vendas pedidas, as que têm documento AUTHORIZED/AUTHORIZED_DIVERGENT vivo em produção, em qualquer mês. */
   saleIdsWithAuthorizedDocument(scope: AccountingScope, saleIds: readonly string[], tx?: Prisma.TransactionClient): Promise<string[]>;
-  /** SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos. */
-  listPending(olderThan: Date, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  /**
+   * SENT|PROCESSING mais velhos que `olderThan` — alvo do job de polling (BRIEF item 27). Sem escopo: o job varre todos.
+   * Onda 4 / 4.1: só os DEVIDOS (`nextPollAt` nulo ou `<= now`, sem `pollGaveUpAt`, fora do modo manual, que nunca é
+   * consultado), em rodízio por `updatedAt`, até `limit` — o documento que falha sai da vez (backoff) e não ocupa o teto.
+   */
+  listPending(olderThan: Date, opts?: { limit?: number; now?: Date }, tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
+  /**
+   * Onda 4 / 4.1 — grava SÓ o controle de retentativa da consulta (nunca o `status`: o resultado da consulta pode ter
+   * mudado o documento entre a leitura e esta escrita). Escrever bumpa o `updatedAt`, que é o que manda o documento
+   * para o fim do rodízio. `false` se o documento não existe mais no escopo.
+   */
+  updatePollState(scope: AccountingScope, id: string, patch: PollStatePatch, tx?: Prisma.TransactionClient): Promise<boolean>;
   /**
    * BE-INCR-DFE-EVENTOS (PR-2, item 18) — alvo da consulta de eventos: NFS-e `AUTHORIZED*` vivas, com chave, e com
    * `nfseDhProc >= desde` (o teto de 2 anos, Anexo I [114]), de todas as unidades (mesmo desenho de `listPending`). Vêm

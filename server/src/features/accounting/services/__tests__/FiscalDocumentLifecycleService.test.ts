@@ -130,6 +130,7 @@ function makeService(opts: { docs?: Record<string, ReturnType<typeof baseDoc>> }
     findById: jest.fn(async (_scope: unknown, id: string) => (docsById[id] ? { ...docsById[id], attempts: [] } : null)),
     findByPartnerRef: jest.fn(async (ref: string) => Object.values(docsById).find((d) => d.partnerRef === ref) ?? null),
     listPending: jest.fn(async () => Object.values(docsById).filter((d) => d.status === 'SENT' || d.status === 'PROCESSING')),
+    updatePollState: jest.fn(async () => true),
     // stateful no status: a drenagem da pendência (DFE-ANEXO-PENDENTE) relê o documento depois da autorização.
     transition: jest.fn(async (_scope: unknown, id: string, data: { status: string }) => {
       if (docsById[id]) docsById[id] = { ...docsById[id], status: data.status };

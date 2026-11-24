@@ -1,5 +1,5 @@
 import type { Prisma, RoleAccountOverride } from 'generated/prisma';
-import type { BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 
 /** A linha + o código da conta (lido mesmo se a conta foi apagada depois — o validador do compile reprova). */
 export type RoleAccountOverrideWithCode = RoleAccountOverride & { account: { code: string } };

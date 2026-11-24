@@ -1,5 +1,5 @@
 import type { KnowledgeGraph } from 'generated/prisma';
-import { KnowledgeGraphData } from '../services/KnowledgeGraphService';
+import type { KnowledgeGraphData } from '../models/KnowledgeGraph.model';
 
 export interface IKnowledgeGraphRepository {
     findByUserId(userId: string): Promise<KnowledgeGraph | null>;
