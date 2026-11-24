@@ -64,10 +64,10 @@ import type { AccountingScope } from '../scope/AccountingScope';
  *  AUTHORIZED, com seu próprio guard). Mutation target: se alguém adicionar 'CANCELLED' aqui, o
  *  teste da tabela de transições tem que acusar. */
 const VALID_RESULT_TRANSITIONS: Partial<Record<FiscalDocumentStatus, FiscalDocumentStatus[]>> = {
-  SENT: ['AUTHORIZED', 'REJECTED', 'PROCESSING'],
-  PROCESSING: ['AUTHORIZED', 'REJECTED', 'PROCESSING'],
+  SENT: ['AUTHORIZED', 'REJECTED', 'PROCESSING', 'DENIED'],
+  PROCESSING: ['AUTHORIZED', 'REJECTED', 'PROCESSING', 'DENIED'],
   // X10a PR-9 (decisão 7): o job transmite a NFC-e off-line e o retorno da SEFAZ é aplicado daqui.
-  CONTINGENCY: ['AUTHORIZED', 'REJECTED', 'PROCESSING'],
+  CONTINGENCY: ['AUTHORIZED', 'REJECTED', 'PROCESSING', 'DENIED'],
 };
 
 export function isValidResultTransition(from: FiscalDocumentStatus, to: FiscalDocumentStatus): boolean {
@@ -1427,17 +1427,20 @@ export class FiscalDocumentLifecycleService {
       return;
     }
 
-    if (result.status === 'REJECTED') {
+    if (result.status === 'REJECTED' || result.status === 'DENIED') {
+      // DENIED (uso denegado, MOC 7.0 VG §5.1.6): terminal pelo mesmo caminho da rejeição (errorsJson + auditoria), mas fora de
+      // `REENVIAVEIS` e dentro de `STATUS_QUE_OCUPAM_NUMERO` — o número foi consumido. L-20261124-054021-cbc8.
+      const denegada = result.status === 'DENIED';
       await this.repo.runTransaction(async (tx) => {
         await this.repo.transition(
           scope,
           doc.id,
-          { status: 'REJECTED', errorsJson: JSON.stringify(result.errors), attemptResult, whenStatusIn: guardaDoResultado(doc) },
+          { status: result.status, errorsJson: JSON.stringify(result.errors), attemptResult, whenStatusIn: guardaDoResultado(doc) },
           tx,
         );
         await this.auditService.append(tx, scope, {
           actorUserId: scope.actorUserId,
-          eventType: 'dfe.rejected',
+          eventType: denegada ? 'dfe.denied' : 'dfe.rejected',
           targetType: 'fiscal_document',
           targetId: doc.id,
           // JSON.stringify explícito — canonicalizeAuditPayload faz String(v) em cada valor, e

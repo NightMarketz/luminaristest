@@ -198,7 +198,8 @@ export interface EmitirInput {
 }
 
 export interface EmissaoResult {
-  status: 'PROCESSING' | 'AUTHORIZED' | 'REJECTED';
+  /** `DENIED` = uso denegado (NF-e/NFC-e, cStat 110/301/302): protocolo gravado e número consumido; terminal, sem reenvio. */
+  status: 'PROCESSING' | 'AUTHORIZED' | 'REJECTED' | 'DENIED';
   partnerRef: string;
   numero?: string;
   serie?: string;

@@ -11,6 +11,8 @@ export type FiscalDocumentKind = (typeof FISCAL_DOCUMENT_KINDS)[number];
 // das pendentes no callback OAuth (D-2026-10-29-X10A-PR7-9-FORKS decisão 5).
 // CONTINGENCY — X10a PR-9 (E-9, F-NFCE-E1-5 b): NFC-e emitida em contingência off-line (tpEmis=9), com número e DANFE,
 // ainda não transmitida. O job a transmite enquanto a SEFAZ responder (decisão 7); o resultado sai pelo `applyResult`.
+// DENIED — NF-e/NFC-e de uso denegado (cStat 110/301/302; L-20261124-054021-cbc8): terminal; tem protocolo e CONSOME o número
+// (MOC 7.0 VG §5.1.6, Tab. 5-4), então ocupa a numeração (inutilizacao.ts) e NÃO é reenviável (≠ REJECTED).
 // CANCEL_ANALYSIS — BE-INCR-DFE-EVENTOS (nó X11, PR-3, item 20; F-EVT-4 b): NFS-e com a Solicitação de Análise Fiscal
 // para Cancelamento (e101103, Anexo II [4]) registrada e sem resposta. Sai por e105104 (deferido → CANCELLED) ou e105105
 // (indeferido → o status de antes, `statusAntesAnalise`). Com ela pendente o fisco recusa cancelamento direto (matriz
@@ -25,6 +27,7 @@ export const FISCAL_DOCUMENT_STATUSES = [
   'PENDING_SIGNATURE',
   'CONTINGENCY',
   'CANCEL_ANALYSIS',
+  'DENIED',
 ] as const;
 export type FiscalDocumentStatus = (typeof FISCAL_DOCUMENT_STATUSES)[number];
 
