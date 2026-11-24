@@ -59,6 +59,15 @@ export const DFE_TRANSMITIR_FOLGA_MS = 5_000;
  * Constante de operação (não regra fiscal).
  */
 export const DFE_SIGNER_LEASE_MS = 30_000;
+/**
+ * AL-14 — freio da retomada disparada pela tarefa vencida (não pela volta depois de 90 s de silêncio): no máximo `MAX`
+ * retomadas por dispositivo em `JANELA_MS`, com `ESPACO_MS` entre uma e outra. Sem ele, retomada → tarefa nova → vence →
+ * retomada… não tem fim enquanto o caixa fizer poll e não responder. Constantes de operação (env
+ * `DFE_SIGNER_RETOMADA_MAX` / `_JANELA_MS` / `_ESPACO_MS`), não regra fiscal.
+ */
+export const DFE_SIGNER_RETOMADA_MAX_PADRAO = 3;
+export const DFE_SIGNER_RETOMADA_JANELA_PADRAO_MS = 10 * 60 * 1000;
+export const DFE_SIGNER_RETOMADA_ESPACO_PADRAO_MS = 60_000;
 
 export const DFE_SIGNER_TAREFA_NAO_ENCONTRADA = 'dfe_signer_tarefa_nao_encontrada';
 /** AL-6: o mesmo taskId com resultado diferente do já registrado. */
