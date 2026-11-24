@@ -55,7 +55,7 @@ export function createTableFromModule(
 
 /**
  * W2 item 3 (BE-INCR-WIZARD-REMOVABILITY, F-W2-2 ratificado 2026-10-15): marca a tabela da suíte como lida pela
- * contabilidade do setor (`meta.lockedBy: 'accounting'`), o que a trava no onboarding (`presets/removability.ts`).
+ * contabilidade do setor (`meta.lockedBy: 'accounting'`), o que a trava no onboarding (`domain/presets/removability.ts`).
  * Nunca muta a definição recebida.
  */
 export function lockedByAccounting(def: PresetTableDefinition): PresetTableDefinition {

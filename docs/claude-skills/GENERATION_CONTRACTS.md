@@ -113,12 +113,12 @@ For DynamicTable-backed domains (leads, ERP, CRM) the service orchestrates `Dyna
 
 ## Dynamic Table Preset Contract
 
-- File: `server/src/features/dynamicTables/presets/modules/<category>/<Name>Module.ts`
+- File: `server/src/features/dynamicTables/domain/presets/modules/<category>/<Name>Module.ts`
 - Export: named `export const <name>Module = { name, description, category, schema: { defaultDisplayField, fields: [...] } }`
 - Field types: `string`, `number`, `date`, `datetime`, `boolean`, `select`, `relation`
 - Relation fields: `{ type: 'relation', relation: { targetTable: '@@PRESET_TABLE_KEY::<internalName>' } }`
-- Field presets: reuse from `presets/fields/` (e.g., `import { email, phone } from '../../fields/text/TextPresets'`)
-- Registration: Add to system preset in `presets/systems/<System>Preset.ts`
+- Field presets: reuse from `domain/presets/fields/` (e.g., `import { email, phone } from '../../fields/text/TextPresets'`)
+- Registration: Add to system preset in `domain/presets/systems/<System>Preset.ts`
 - **Limites de plataforma (gate — ver Contrato §2.1):** dinheiro = inteiro em **centavos** (`numberFormat:'integer'`), nunca decimal/float; hierarquia por **code codificado** (`parentId` auto-relacional NÃO é suportado — não há precedente nem tree view); `compositeUnique` é app-level/TOCTOU, **não** constraint de DB.
 
 ## Analytics KPI Contract

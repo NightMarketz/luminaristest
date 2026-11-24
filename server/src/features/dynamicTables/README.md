@@ -23,9 +23,9 @@ Start with the doc for your need:
 | Understand the data model, the operation lifecycle, the DTOs and preset installation | [`docs/architecture.md`](./docs/architecture.md) |
 | Know **how and where** each rule runs (guards, advanced validation, no-overlap, system bypass) | [`docs/validation-and-governance.md`](./docs/validation-and-governance.md) |
 | Work with **plugins** (contract, hooks, table detection, metadata×plugin boundary, catalog) | [`docs/rules-engine.md`](./docs/rules-engine.md) |
-| **Author** tables/presets and the full reference for **each metadata** (fields → modules → systems) | [`presets/README.md`](./presets/README.md) |
+| **Author** tables/presets and the full reference for **each metadata** (fields → modules → systems) | [`domain/presets/README.md`](./domain/presets/README.md) |
 
-> Division rule: `presets/README.md` is **what to declare** (authoring); `docs/validation-and-governance.md`
+> Division rule: `domain/presets/README.md` is **what to declare** (authoring); `docs/validation-and-governance.md`
 > is **how it executes**; `docs/rules-engine.md` is **plugins**; `docs/architecture.md` is **model/flow/contracts**.
 
 ---
@@ -40,19 +40,19 @@ features/dynamicTables/
 ├── models/                    # DynamicTable.model.ts — ITableSchema, ISchemaField, governance rules
 ├── policies/                  # IDynamicTablePolicy + DynamicTablePolicy (authorization)
 ├── repositories/              # IDynamicTableRepository + DynamicTableRepository (Prisma; indexed queries; ONE class — `withTransaction`/`runInTransaction` are the tx seam)
-├── validation/                # SchemaValidator (Zod engine) + GovernanceEngine (guards + advanced rules + no-overlap)
-├── services/                  # DynamicTableService (orchestrator; installPresetAsSystem lives here) + PresetSyncService/ModuleInstallService (admin, policy-first) + PresetService (catalog)
+├── services/                  # DynamicTableService (orchestrator; installPresetAsSystem lives here) + PresetSyncService/ModuleInstallService (admin, policy-first) + SchemaValidator (Zod engine) + GovernanceEngine (guards + advanced rules + no-overlap)
 ├── rules/                     # plugin engine: RuleRegistry, RuleTypes, shared/, plugins/ (+ plugins/sales/)
-├── utils/                     # TableFactory (composes modules) + ValidationUtils (cpf/cnpj/phone)
-└── presets/                   # fields/ · modules/ · systems/ + README (authoring reference)
+├── domain/                    # pure functions: TableFactory (composes modules) + ValidationUtils (cpf/cnpj/phone) + versionDiff
+│   └── presets/               # fields/ · modules/ · systems/ + README (authoring reference)
+└── public/                    # what other features import: presets.ts · presets.types.ts · presetKnowledge.ts · schemaValidator.ts
 ```
 
 ---
 
 ## Core concepts (summary)
 
-- **Dynamic validation:** `validation/SchemaValidator` builds a Zod validator at runtime
-  (`buildZodSchema`) from the table's `schema`; `validation/GovernanceEngine` applies the guards and the
+- **Dynamic validation:** `services/SchemaValidator` builds a Zod validator at runtime
+  (`buildZodSchema`) from the table's `schema`; `services/GovernanceEngine` applies the guards and the
   advanced rules. `DynamicTableService` only orchestrates. Detail in
   [`docs/validation-and-governance.md`](./docs/validation-and-governance.md).
 - **Declarative governance:** `readOnly`, `searchable`, `requiredIf` (field) and `deleteConstraints`,
@@ -62,7 +62,7 @@ features/dynamicTables/
   checks against `now`). Plugins are opt-in via `supports()`. Detail in
   [`docs/rules-engine.md`](./docs/rules-engine.md).
 - **Presets:** complete ERPs composed in 3 layers (fields → modules → systems), installed in 2 passes
-  with relation resolution (`@@PRESET_TABLE_KEY::`). Detail in [`presets/README.md`](./presets/README.md).
+  with relation resolution (`@@PRESET_TABLE_KEY::`). Detail in [`domain/presets/README.md`](./domain/presets/README.md).
 
 ---
 
@@ -117,8 +117,8 @@ All under `/api/dynamic-tables` (prefix protected by `authMiddleware`).
 
 | Collaborator | Responsibility |
 |---|---|
-| `validation/SchemaValidator` | `buildZodSchema` + `validateDataAgainstSchema` (pure) |
-| `validation/GovernanceEngine` | guards `readOnly`/`immutableAfter`/`lifecycle` (+ delete-side `assertNotImmutableForDelete`) + `validateAdvancedRules` + `enforceNoOverlap` |
+| `services/SchemaValidator` | `buildZodSchema` + `validateDataAgainstSchema` (pure) |
+| `services/GovernanceEngine` | guards `readOnly`/`immutableAfter`/`lifecycle` (+ delete-side `assertNotImmutableForDelete`) + `validateAdvancedRules` + `enforceNoOverlap` |
 | `repositories/DynamicTableRepository` | the only Prisma client holder; `runInTransaction`/`withTransaction` are the transaction seam the service composes writes with |
 | `rules/RuleRegistry` | resolves and runs the plugins per hook |
 

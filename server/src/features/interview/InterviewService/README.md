@@ -22,7 +22,7 @@ preset.
 - **`PromptConfig` (`stageConfig`)** — system prompts for the **processable stages**.
 - **`CustomizationService`** (singleton) — delegated to when the conversation enters customization.
 
-> The preset knowledge base (`presetKnowledgeBase`) lives in `features/dynamicTables/presets/ai/`,
+> The preset knowledge base (`presetKnowledgeBase`) lives in `features/dynamicTables/domain/presets/ai/`,
 > **not** in this module — it is consumed via `PresetMatcher` and by `CustomizationService`.
 
 ## Stages (`InterviewStage`)

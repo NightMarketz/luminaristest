@@ -398,7 +398,7 @@ node .claude/skills/skill-audit/skill-audit.mjs wiring
 Cobre (cada um é tsc-cego):
 - **rota** montada em `server/src/routes/index.ts`
 - **categoria de KPI** importada em `analytics/kpis/index.ts`
-- **preset suite** em `dynamicTables/presets/index.ts` (`tablePresetSuites`)
+- **preset suite** em `dynamicTables/domain/presets/index.ts` (`tablePresetSuites`)
 - **i18n** paridade de chaves `en`↔`pt`
 
 `exit≠0` = artefato órfão → **FAIL** com o nome ausente e o arquivo de registro. Reporte como os demais

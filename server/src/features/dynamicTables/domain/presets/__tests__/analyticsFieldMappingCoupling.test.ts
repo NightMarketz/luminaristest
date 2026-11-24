@@ -355,7 +355,7 @@ describe('presets de analytics × schema das tabelas de módulo', () => {
   });
 
   it('F-TAP-6 — o manifesto PROCESSOR_KPI_SOURCES bate com os nomes e as fontes do código dos processadores', () => {
-    const kpisDir = path.resolve(__dirname, '../../../analytics/kpis');
+    const kpisDir = path.resolve(__dirname, '../../../../analytics/kpis');
     const sourceOf: Record<string, KpiSource> = { mainTableSource: 'main', expenseTableSource: 'expense', mixedTableSource: 'mixed' };
     const drift: string[] = [];
     for (const [templateKey, proc] of Object.entries(PROCESSOR_KPI_SOURCES)) {

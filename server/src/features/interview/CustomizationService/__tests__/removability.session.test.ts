@@ -1,6 +1,6 @@
 /**
  * BE-INCR-WIZARD-REMOVABILITY (nó W2) — itens 4, 5 e 6 do BRIEF: a sessão da Entrevista com IA usa a regra única de
- * trava (`presets/removability.ts`). Antes do W2, `TableExtractor` marcava as 17 tabelas do salão com `isCore:true` e
+ * trava (`dynamicTables/domain/presets/removability.ts`). Antes do W2, `TableExtractor` marcava as 17 tabelas do salão com `isCore:true` e
  * nada podia ser removido. A IA é stub: só `getAiResponse` (que nomeia a tabela a remover) é trocado.
  */
 import { TableExtractor } from '../TableExtractor';

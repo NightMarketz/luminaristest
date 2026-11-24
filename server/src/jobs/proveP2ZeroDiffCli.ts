@@ -7,18 +7,19 @@
  *
  * Perímetro (fonte: ADR-P2 §2 item 2 + PARECER-ARCHITECT-ADR-P2.md §1.5, leitura AMPLA ratificada
  * pela emenda 2026-08-22 + F-P2-10 → (c)):
- *   - motor DynamicTable: services/, repositories/, policies/, rules/, validation/, dtos/, models/,
- *     utils/ (sob `features/dynamicTables/`)
- *   - `presets/PresetManager.ts` + `presets/fields/` (motor de preset)
+ *   - motor DynamicTable: services/ (inclui `SchemaValidator` e `GovernanceEngine`, que vieram de validation/),
+ *     repositories/, policies/, rules/, dtos/, models/ e os cinco utilitários que vieram de utils/ para domain/
+ *     (sob `features/dynamicTables/`)
+ *   - `domain/presets/PresetManager.ts` + `domain/presets/fields/` (motor de preset)
  *   - `features/accounting/` inteiro (núcleo do ledger + `sync/mappers`/`sync/bridges`)
  *   - o intérprete: `features/accountingBinding/{archetypes,interpreter,models}`
  *   - `server/src/controllers/dynamicTablesController.ts` (EMENDA 2026-08-25, F-P2-10 → (c))
  *
  * EXPLICITAMENTE FORA (não checar, mesmo que um prefixo acima pareça abranger):
- *   - `features/dynamicTables/presets/ai/` (emenda 2026-08-22 — comportamento 3 PRECISA editar
+ *   - `features/dynamicTables/domain/presets/ai/` (emenda 2026-08-22 — comportamento 3 PRECISA editar
  *     `PresetKnowledgeBase.ts`; exigir zero-diff ali reprovaria a prova por fazer o que o ADR §1
  *     autoriza)
- *   - `features/dynamicTables/presets/systems/` e `presets/modules/` (camada PRESET/DADO — cresce
+ *   - `features/dynamicTables/domain/presets/systems/` e `domain/presets/modules/` (camada PRESET/DADO — cresce
  *     por vertical, por desenho; só um arquivo EXISTENTE e COMPARTILHADO dali é vetado — ver
  *     `VETOED_SHARED_FILES` abaixo, F-P2-5)
  *   - `features/accountingBinding/{services,dtos,repositories,policies,controllers}` (só
@@ -29,8 +30,13 @@
  *     questionário: "(b) + exceção da factory"): é composição de dependências, muda a cada nó, e a prova da P2 já fechou
  *
  * `VETOED_SHARED_FILES` é uma checagem SEPARADA do perímetro do motor: `CustomerModule.ts` não
- * mora em nenhum diretório protegido acima (presets/modules/ pode crescer), mas F-P2-5 → (a) VETA
+ * mora em nenhum diretório protegido acima (domain/presets/modules/ pode crescer), mas F-P2-5 → (a) VETA
  * editar esse arquivo ESPECÍFICO (compartilhado com o salão) — é o comportamento 2 do BRIEF.
+ *
+ * Caminhos traduzidos em 24/11/2026 pelo renome do ADR-MODULE-BOUNDARIES (PR-3.x de dynamicTables): presets/ →
+ * domain/presets/, utils/ → domain/, validation/ → services/. O prefixo `utils/` virou a lista nominal dos cinco
+ * arquivos que existiam nele (não há prefixo que diga 'domain/ menos domain/presets/'); `validation/` saiu da lista
+ * porque `services/` já a cobre.
  */
 import { execFileSync } from 'child_process';
 import * as path from 'path';
@@ -42,12 +48,15 @@ export const PERIMETER_PREFIXES = [
   'server/src/features/dynamicTables/repositories/',
   'server/src/features/dynamicTables/policies/',
   'server/src/features/dynamicTables/rules/',
-  'server/src/features/dynamicTables/validation/',
   'server/src/features/dynamicTables/dtos/',
   'server/src/features/dynamicTables/models/',
-  'server/src/features/dynamicTables/utils/',
-  'server/src/features/dynamicTables/presets/PresetManager.ts',
-  'server/src/features/dynamicTables/presets/fields/',
+  'server/src/features/dynamicTables/domain/RelationUtils.ts',
+  'server/src/features/dynamicTables/domain/TableFactory.ts',
+  'server/src/features/dynamicTables/domain/TableUtils.ts',
+  'server/src/features/dynamicTables/domain/ValidationUtils.ts',
+  'server/src/features/dynamicTables/domain/versionDiff.ts',
+  'server/src/features/dynamicTables/domain/presets/PresetManager.ts',
+  'server/src/features/dynamicTables/domain/presets/fields/',
   'server/src/features/accounting/',
   'server/src/features/accountingBinding/archetypes/',
   'server/src/features/accountingBinding/interpreter/',
@@ -56,7 +65,7 @@ export const PERIMETER_PREFIXES = [
 ] as const;
 
 /** Fora do perímetro mesmo que um prefixo acima pareça abranger (ver header). */
-export const EXPLICITLY_EXEMPT_PREFIXES = ['server/src/features/dynamicTables/presets/ai/'] as const;
+export const EXPLICITLY_EXEMPT_PREFIXES = ['server/src/features/dynamicTables/domain/presets/ai/'] as const;
 
 /** Harness de teste não é ledger nem motor (ADR-P2 §2 "núcleo"; EMENDA 2026-09-15, decisão do dono por
  *  questionário no PR #320): um `__tests__/` que replaya migração quebra a cada coluna nova e teria de
@@ -66,7 +75,7 @@ export const EXEMPT_PATH_SEGMENT = '/__tests__/';
 
 /** Arquivos compartilhados vetados por regra própria (F-P2-5), independente da árvore do motor. */
 export const VETOED_SHARED_FILES = [
-  'server/src/features/dynamicTables/presets/modules/people/CustomerModule.ts',
+  'server/src/features/dynamicTables/domain/presets/modules/people/CustomerModule.ts',
 ] as const;
 
 /**

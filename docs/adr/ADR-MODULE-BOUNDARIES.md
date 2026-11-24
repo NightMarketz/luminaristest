@@ -343,7 +343,7 @@ comentada no código, onboarding na tx do install) e jobs/`server.ts` (`PurgeDel
 - Limite da medida: regex, não AST. A regra de lint é a medida definitiva; se ela achar mais que o baseline acima,
   o achado vai à caixa antes de qualquer supressão.
 
-## 11. Emenda de 24/11/2026 — ligação das regras (PR-2 do BRIEF de execução; §11.5 = `users/public/` e `M4`)
+## 11. Emenda de 24/11/2026 — ligação das regras (PR-2 do BRIEF de execução; §11.5 = `users/public/` e `M4`; §11.6 = renome de `dynamicTables` e `M2`)
 
 Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro". Esta emenda registra o que o §8 item 4 pede: o baseline
 antes/depois de cada regra ligada e a prova de que cada uma morde. As regras valem na branch
@@ -524,3 +524,98 @@ src/features/accountingBinding/scope/BindingScope.ts`, exit 1.
   assertions. O eval comportamental da skill não foi rodado de novo.
 - **Ambiente da prova:** Windows, com o `node_modules` pela junção do depósito (daí o caminho do pacote externo no
   caso 4). O resultado do CI (Linux) é o que vale.
+
+### 11.6 Emenda de 24/11/2026 — renome de `dynamicTables` e regra `M2` (primeiro PR-3.x do BRIEF)
+
+Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro"; questionário de 24/11 (sessão deste PR), quatro
+respostas: "Você aplica o patch (Recommended)", "Extrair para models/ (Recommended)", "Quebrar os ciclos (Recommended)"
+e "Porta em analytics/public (Recommended)". PR na pilha de `integration/module-boundaries-be`, sobre o PR-2b. Fecha as
+lacunas `L-20261124-214606-ba98` e `L-20261124-214609-44a5`.
+
+**O que entrou**
+
+- **Renome (tabela §5.3 do BRIEF):** `dynamicTables/presets/` → `domain/presets/` (67 arquivos), `utils/` → `domain/`
+  (5 arquivos e 2 testes), `validation/` → `services/` (2 arquivos e 1 teste). `rules/` fica. 166 imports repontados
+  em 100 arquivos; o commit do movimento não muda conteúdo além do caminho.
+- **Regra `M2-feature-code-in-layer-folder`**, severidade de erro: `from ^src/` (fora testes) → `to`
+  `^src/features/(dynamicTables)/.+\.ts$` com `pathNot` em `LAYER_DIR`
+  (`/(services|repositories|policies|models|dtos|controllers|domain|ports|adapters|public)/`),
+  `^src/features/dynamicTables/rules/` e testes. Sem exceção para `index.ts` (F-MB-1 b). `M2_FEATURES` cresce uma
+  feature por PR de renome (F-MBE-2 c). Nasce em 0 para `dynamicTables` e não entra no known-violations.
+- **O renome muda a chave de 45 entradas do baseline** (37 `M1`, 8 `X3`). Nenhuma foi regravada com o caminho novo;
+  as 45 foram pagas:
+  - 30 `M1` de services de `analytics`, `chat`, `crm`, `interview` e `onboarding`: portas em `dynamicTables/public/`
+    (`presets.ts`, `presetKnowledge.ts`, `schemaValidator.ts`), reexport por nome. 18 arquivos repontados.
+  - 4 `M1` de `interview/models/InterviewTypes.ts` e de dois DTOs de `interview` ("Extrair para models/"): model e DTO
+    só importam `public/*.types.ts`, e a `M4` só deixa esse arquivo ler `models/` e `dtos/`. As chaves, os grupos e o
+    seletor de módulo foram para `dynamicTables/models/PresetModuleKeys.ts` e a trava para `models/TableLock.ts`; saem
+    por `public/presets.types.ts`. `registry.ts` e `removability.ts` importam de `models/` e reexportam os mesmos nomes.
+  - 8 `X3` ("Quebrar os ciclos"): os tipos do preset e as pontes (`PresetTableDefinition`, `PresetSuite`,
+    `SelectablePresetSuite`, `PresetAiProfile`, `BRIDGE_*`) saíram do `presets/index.ts`, que também agrega as suítes,
+    para o arquivo-folha `domain/presets/presetTypes.ts`. O `index.ts` reexporta; `registry.ts`, `moduleSelection.ts`,
+    `removability.ts`, `PresetManager.ts`, `TableFactory.ts`, `CoreSystemPreset.ts` e `CrmModulePreset.ts` importam da
+    folha.
+  - 3 `M1` com origem em `presets/` para `analytics/core/models/AnalyticsConfiguration` ("Porta em analytics/public"):
+    `analytics/public/analyticsConfiguration.ts` reexporta só o tipo. Não é `*.types.ts`, porque a `M4` só aceita
+    `models/` e `dtos/` na raiz da feature e o tipo mora em `core/models/`.
+- **Caminhos em texto:** skill `dynamic-table-preset-generator` (SKILL.md e o `command:` do governance.md),
+  `luminaris-implementer`, `luminaris-reviewer`, `module-boundary-selector`, linha "Field presets" do Contrato §0,
+  `GENERATION_CONTRACTS.md`, `ATOM_REGISTRY.md`, README e `docs/` da feature, READMEs de `interview`, comentários que
+  citavam a pasta, e as listas de caminho do `jobs/proveP2ZeroDiffCli.ts` (perímetro zero-diff do ADR-P2, traduzido
+  1:1; `utils/` virou a lista nominal dos 5 arquivos, `validation/` saiu porque `services/` já a cobre). A skill passa
+  a mandar a suíte importar o tipo de `../presetTypes`: importar de `..` fecha ciclo.
+- **`check-registries.mjs`** (gate de wiring do `skill-audit run`): 6 caminhos trocados para `domain/presets/`. A pasta
+  `.claude/skills/skill-audit/**` é negada para escrita de agente; o dono aplicou o patch ("Você aplica o patch").
+
+**Baseline antes/depois (server, `.dependency-cruiser-known-violations.json`)**
+
+| Regra | Depois do PR-2b | Depois deste PR |
+|---|---|---|
+| `M1` | 359 | **322** (−34 de outras features para as pastas movidas, −3 de `presets/` para `analytics/core/models/`) |
+| `M1a` | 36 | 36 |
+| `J1` | 15 | 15 |
+| `X3` | 11 | **3** |
+| `M2` | — (regra nova) | **0** (não entra no arquivo) |
+| Total | 421 | **376** |
+
+Diff do baseline: 45 entradas removidas, 0 acrescentadas (conferido por conjunto de `regra + from → to`; nos ciclos,
+regra + conjunto ordenado dos módulos). Antes dos pagamentos, com o movimento feito e a `M2` ligada, a medida dava as
+mesmas 421 com 45 chaves trocadas e `M2`, `D2`, `M3`, `M4`, `L5` e `L6` em 0.
+
+**Prova de que a `M2` morde** (saída literal de `npm run check:arch`, 24/11; 376 conhecidas ignoradas; cada caso
+planta a sonda e um importador novo)
+
+| Caso | Sonda ← importador | Saída | Exit |
+|---|---|---|---|
+| raiz da feature, importada por um service | `dynamicTables/__sondaM2.ts` ← `dynamicTables/services/__sondaM2Importer.ts` | `error M2-feature-code-in-layer-folder: src/features/dynamicTables/services/__sondaM2Importer.ts → src/features/dynamicTables/__sondaM2.ts` · `x 1 dependency violations (1 errors, 0 warnings). 2178 modules, 10016 dependencies cruised.` | 1 |
+| pasta antiga `presets/` (recriada para o plantio) | `dynamicTables/presets/__sondaM2.ts` ← o mesmo service | `error M2-feature-code-in-layer-folder: src/features/dynamicTables/services/__sondaM2Importer.ts → src/features/dynamicTables/presets/__sondaM2.ts` · 2178 módulos | 1 |
+| raiz da feature, importada por um controller de fora | `dynamicTables/__sondaM2.ts` ← `src/controllers/__sondaM2Importer.ts` | `error M2-feature-code-in-layer-folder: src/controllers/__sondaM2Importer.ts → src/features/dynamicTables/__sondaM2.ts` · 2178 módulos | 1 |
+| contraprova: a mesma sonda em `domain/` | `dynamicTables/domain/__sondaM2.ts` ← o mesmo service | `✔ no dependency violations found (2178 modules, 10016 dependencies cruised)` | 0 |
+| contraprova: `rules/`, isenta por nome | `dynamicTables/rules/__sondaM2.ts` ← o mesmo service | `✔ no dependency violations found (2178 modules, 10016 dependencies cruised)` | 0 |
+| contraprova: feature fora de `M2_FEATURES` | `analytics/__sondaM2.ts` ← `analytics/services/__sondaM2Importer.ts` | `✔ no dependency violations found (2178 modules, 10016 dependencies cruised)` | 0 |
+| ponto cego: sonda sem importador | `dynamicTables/__sondaM2.ts` | `✔ no dependency violations found (2177 modules, 10015 dependencies cruised)` | 0 |
+
+Sem sonda o gate cruza 2176 módulos; com sonda e importador, 2178; só com a sonda, 2177: a sonda entrou no grafo em
+todos os casos. Depois de cada caso os arquivos foram removidos (e a pasta `presets/`, criada só para o plantio);
+`git status` sem sobra.
+
+**Declarado**
+
+- **A `M2` casa pelo `to`:** arquivo fora de pasta de camada que ninguém importa não aparece (último caso da tabela).
+  O item 10 do checklist do BRIEF foi conferido também por `find` (0 arquivos `.ts` de produção de `dynamicTables` fora
+  de `LAYER_DIR`, tirando `rules/`). O gate não cobre isso sozinho: lacuna `L-20261124-222007-2aaa`.
+- **`D2` em 0 com uma ressalva:** `domain/RelationUtils.ts` importa `lib/factory` e chama o repositório por ele. A
+  `D2` não lista `lib/factory`, então passa. O arquivo e o `TableUtils.ts` não têm importador (nem teste); foram para
+  `domain/` porque a tabela §5.3 manda. Lacuna `L-20261124-222009-90dd`.
+- **`analytics/public/analyticsConfiguration.ts` é porta executável pelo nome**, embora só reexporte um tipo: policy,
+  model e DTO de outra feature não podem importá-lo (`L5`/`L6`). Nenhum importa hoje. Se o PR-3.x da `analytics` levar
+  `core/models/` para `models/`, o arquivo pode virar `*.types.ts`.
+- **Perímetro do ADR-P2:** a tradução do `proveP2ZeroDiffCli.ts` cobre os mesmos arquivos de antes, mas arquivo novo
+  direto em `domain/` fica fora (antes, arquivo novo em `utils/` entrava). O CLI não roda no CI. Lacuna
+  `L-20261124-222012-137a`.
+- **O que não mudou:** nenhum comportamento. Os testes existentes passam sem mudança de asserção; os únicos testes
+  editados trocam caminho (`proveP2ZeroDiffCli.test.ts`, strings de caminho; `analyticsFieldMappingCoupling.test.ts`,
+  um `path.resolve` relativo ao arquivo movido). O snapshot de DTO (`__dto-shapes__.json`) não tem diff.
+- **Classe do PR:** o BRIEF previa verde. Saiu vermelho com revisor obrigatório: o diff tem arquivo de skill que não é
+  `.md` (`skill-audit/check-registries.mjs`) e um comentário em `features/accounting/models/Counterparty.model.ts`.
+- **Ambiente da prova:** Windows, com o `node_modules` pela junção do depósito. O resultado do CI (Linux) é o que vale.

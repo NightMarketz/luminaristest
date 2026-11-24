@@ -1,9 +1,9 @@
 # Preset Ecosystem — Dynamic Tables
 
-> 📍 Part of the feature's doc set — see the [documentation map](../README.md#️-documentation-map).
+> 📍 Part of the feature's doc set — see the [documentation map](../../README.md#️-documentation-map).
 > This file is the **authoring** reference (what to declare). For **how/where** each metadata executes,
-> see [`../docs/validation-and-governance.md`](../docs/validation-and-governance.md);
-> for **plugins**, see [`../docs/rules-engine.md`](../docs/rules-engine.md).
+> see [`../../docs/validation-and-governance.md`](../../docs/validation-and-governance.md);
+> for **plugins**, see [`../../docs/rules-engine.md`](../../docs/rules-engine.md).
 
 This document is the complete reference for the preset system. It explains how dynamic tables are
 defined, how presets compose in layers, and **every available metadata** with real examples.
@@ -122,7 +122,7 @@ fields: [
 They live in `presets/modules/<category>/`. Each module describes **one table**:
 
 ```typescript
-import type { ITableSchema } from '../../../models/DynamicTable.model';
+import type { ITableSchema } from '../../../../models/DynamicTable.model';
 import { name, brand, sku, usageType } from '../../fields';
 
 export const productModule = {
@@ -163,7 +163,7 @@ They live in `presets/systems/`. A system is a complete ERP, composed of modules
 `createTableFromModule()`:
 
 ```typescript
-import { createTableFromModule } from '../../utils/TableFactory';
+import { createTableFromModule } from '../../TableFactory';
 import { customerModule } from '../modules/people/CustomerModule';
 import { productModule, productUnitModule } from '../modules/product/ProductModule';
 // ...

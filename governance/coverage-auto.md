@@ -108,7 +108,7 @@ generated-by: skill-audit coverage
 | `AC-2.1-B2` | dynamic-table-preset-generator | review:luminaris-reviewer/REV-005 | ✅ |
 | `AC-2.1-B3` | dynamic-table-preset-generator | review:luminaris-reviewer/REV-005 | ✅ |
 | `AC-2.2-2` | dynamic-table-preset-generator | review:skill-audit/P6 | ✅ |
-| `AC-2.2-3` | dynamic-table-preset-generator | command:grep -rn \"targetTable: '@@PRESET_TABLE_KEY::\" server/src/features/dynamicTables/presets/modules/ | ✅ |
+| `AC-2.2-3` | dynamic-table-preset-generator | command:grep -rn \"targetTable: '@@PRESET_TABLE_KEY::\" server/src/features/dynamicTables/domain/presets/modules/ | ✅ |
 | `FEAPI-001` | frontend-api-service-generator | eval:./evals/evals.json#happy-1 | eval:./evals/evals.json#regression-1 | ✅ |
 | `FEAPI-002` | frontend-api-service-generator | eval:./evals/evals.json#happy-1 | ✅ |
 | `FEAPI-003` | frontend-api-service-generator | eval:./evals/evals.json#happy-1 | ✅ |

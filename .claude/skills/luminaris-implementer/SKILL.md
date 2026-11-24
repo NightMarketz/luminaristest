@@ -109,8 +109,8 @@ const previousValue = previousCount > 0 ? previousTotal / previousCount : undefi
 ### Para `dynamic-table-preset-generator`
 
 **Referências obrigatórias:**
-- `server/src/features/dynamicTables/presets/modules/core/LeadsModule.ts` — estrutura completa
-- `server/src/features/dynamicTables/presets/fields/` — field presets disponíveis
+- `server/src/features/dynamicTables/domain/presets/modules/core/LeadsModule.ts` — estrutura completa
+- `server/src/features/dynamicTables/domain/presets/fields/` — field presets disponíveis
 
 **Sintaxe de relação inter-tabela:**
 ```typescript
