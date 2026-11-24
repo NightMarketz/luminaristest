@@ -1,0 +1,62 @@
+ANEXO II
+CÓDIGOS FPAS POR GRUPOS DE ATIVIDADE
+QUADRO 1: CONFEDERAÇÃO NACIONAL DA INDÚSTRIA
+Grupo de atividade Código FPAS
+1º - Alimentação 507
+2º - Vestuário 507
+3º - Construção e mobiliário 507
+4º - Urbanas (saneamento, coleta e tratamento de resíduos, energia, gás, água e esgoto) 507
+507
+5º - Extrativas 507
+6º - Fiação e tecelagem 507
+7º - Artefatos de couro 507
+8º - Artefatos de borracha 507
+9º - Joalheiras, lapidação de pedras preciosas 507
+10º - Químicas e farmacêuticas 507
+11º - Papel, papelão, cortiça 507
+12º - Gráficas 507
+13º - Vidros, cristais, espelhos, cerâmicas, louças, porcelanas 507
+14º - Instrumentos musicais, brinquedos 507
+15º - Cinematográficas 507
+16º - Beneficiamentos 507
+17º - Artesanatos (pessoa jurídica) 507
+18º - Metalúrgicas, mecânicas, materiais elétricos 507
+QUADRO 2: CONFEDERAÇÃO NACIONAL DO COMÉRCIO
+Grupo de atividade Código FPAS
+1º - Comércio atacadista 515
+2º - Comércio varejista 515
+3º - Agentes autônomos do comércio 515
+4º - Comércio armazenador 515
+5º - Turismo e hospitalidade 515
+6º - Serviços de saúde 515
+QUADRO 3: CONFEDERAÇÃO NACIONAL DOS TRANSPORTES MARÍTIMOS, FLUVIAIS E AÉREOS
+Grupo de atividade Código FPAS
+1º - Empresas de navegação marítima e fluvial 540
+2º - Empresas aeroviárias 558
+3º - Empresários e administradores de portos 540
+4º - Empresas prestadoras de serviços portuários 540
+5º - Empresas de pesca 540
+6º - Empresas de dragagem 540
+QUADRO 4: CONFEDERAÇÃO NACIONAL DOS TRANSPORTES TERRESTRES
+Grupo de atividade Código FPAS
+1º - Empresas ferroviárias 507
+2º - Empresas de transporte rodoviário de cargas ou passageiros 612
+3º - Empresas de carris urbanos (inclusive cabos aéreos) 507
+4º - Empresas metroviárias 507
+5º - Empresas de transporte de valores 612
+6º - Empresas de locação de veículos 612
+7º - Empresas de distribuição de petróleo 612
+QUADRO 5: CONFEDERAÇÃO NACIONAL DE COMUNICAÇÕES E PUBLICIDADES
+Grupo de atividade Código 
+FPAS
+1º - Empresas de comunicações (telegráficas, empresa de correios, inclusive franqueadas e 
+telefônicas) 507
+2º - Empresas de publicidade (agências de propaganda) 566
+3º - Empresas jornalísticas (agências de radiodifusão, televisão aberta e por assinatura, 
+agências noticiosas, jornais e revistas) 566
+QUADRO 6: CONFEDERAÇÃO NACIONAL DE EDUCAÇÃO E CULTURA
+Grupo de atividade Código FPAS
+1º - Estabelecimentos de ensino 574
+2º - Empresas de difusão cultural e artística 566
+3º - Estabelecimentos de cultura física 566
+4º - Estabelecimentos hípicos 566
