@@ -41,6 +41,7 @@ import type { PostingService } from './PostingService';
 import type { FiscalDocumentEmissionService, FiscalDocumentView } from './FiscalDocumentEmissionService';
 import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import { resolveEmissorFor } from '../dfe/resolveEmissor';
+import { deveAlertarAdiamento, gravarAdiamentoTransporte, lerAdiamentoTransporte } from '../models/dfePollAdiamento';
 import { ambienteFromTpAmb, assertTpAmb, DfeTransporteError, DfeTransporteIndisponivelError, tpAmbFor } from '../dfe/DfeEmissorPort';
 import type { CancelInput, CancelResult, DfeAmbiente, DfeCallContext, DfeEmissorPort, EmissaoResult, EventoNfse } from '../dfe/DfeEmissorPort';
 import { AssinaturaRemotaError, isSessaoPscVencida } from '../dfe/AssinadorRemotoPort';
@@ -211,6 +212,13 @@ export interface PollSummary {
   gaveUp?: number;
   /** Ids dos documentos de `gaveUp` (para o alerta apontar a nota; cuid, sem PII). */
   gaveUpIds?: string[];
+  /**
+   * Lacuna 92c5 (dono 24/11) — documentos cujo transporte (assinador local) está indisponível há `POLL_TRANSPORTE_ALERTA_APOS_MS`
+   * ou mais e que ainda não tinham alertado: sai UMA vez por episódio. O documento segue adiado (nada desiste). Ausente se 0.
+   */
+  transporteAdiadoAlerta?: number;
+  /** Ids dos documentos de `transporteAdiadoAlerta` (cuid, sem PII). */
+  transporteAdiadoIds?: string[];
   /** BE-INCR-DFE-ANEXO-PENDENTE item 7 — resultado da varredura de pendências de anexo no mesmo tick. */
   attachments?: PendingAttachmentDrainSummary;
   /** X10a PR-9 (decisões 6 e 7) — transmissão das NFC-e off-line, prazo e órfãs no mesmo tick. */
@@ -238,6 +246,12 @@ const POLL_BACKOFF_BASE_MS = 120_000;
 const POLL_BACKOFF_MAX_MS = 3_600_000;
 /** Documento que o tick nao pode consultar (porta desligada para o tipo): volta daqui a 1 h, sem gastar tentativa. */
 const POLL_ADIAR_MS = 3_600_000;
+/**
+ * Lacuna 92c5 (dono 24/11/2026) — transporte local indisponível (`DfeTransporteIndisponivelError`) adia o documento sem gastar
+ * tentativa; passada esta janela desde o 1º adiamento do episódio, UM alerta avisa que a nota segue sem consulta. Só alerta:
+ * não há teto de idade nem desistência (política não pedida).
+ */
+export const POLL_TRANSPORTE_ALERTA_APOS_MS = 3_600_000;
 const POLL_LAST_ERROR_MAX = 500;
 /** Teto de documentos consultados por tick: a fila longa nao vira um tick sem fim (o resto fica para o proximo). */
 export const POLL_PENDING_LIMIT = 100;
@@ -385,7 +399,11 @@ export class FiscalDocumentLifecycleService {
           // polling desistir (L-…580f).
           logger.warn('dfe_poll_pending: transporte indisponível — documento adiado, sem gastar tentativa', { documentId: doc.id, error: message });
           summary.skipped++;
-          await this.adiarPoll(scope, doc, now);
+          // Lacuna 92c5: depois de POLL_TRANSPORTE_ALERTA_APOS_MS adiado, UM alerta por episódio (só alerta, não desiste).
+          if (await this.adiarPorTransporte(scope, doc, message, now)) {
+            summary.transporteAdiadoAlerta = (summary.transporteAdiadoAlerta ?? 0) + 1;
+            (summary.transporteAdiadoIds ??= []).push(doc.id);
+          }
           continue;
         }
         if (isDfeSkippableError(error)) {
@@ -446,6 +464,37 @@ export class FiscalDocumentLifecycleService {
         error: error instanceof Error ? error.message : String(error),
       });
     }
+  }
+
+  /**
+   * Lacuna 92c5 — adia por transporte indisponível (1 h, sem tentativa) e guarda o episódio em `pollLastError` (ver
+   * `dfePollAdiamento`). `true` => este tick deve alertar: o episódio dura `POLL_TRANSPORTE_ALERTA_APOS_MS` ou mais e o alerta
+   * ainda não saiu. Só devolve `true` se o marcador "alertado" foi gravado — se a gravação falha, o próximo tick tenta de novo
+   * (melhor um alerta repetido que nenhum).
+   */
+  private async adiarPorTransporte(scope: AccountingScope, doc: FiscalDocument, message: string, now: Date): Promise<boolean> {
+    const anterior = lerAdiamentoTransporte(doc.pollLastError);
+    const alertar = deveAlertarAdiamento(anterior, now, POLL_TRANSPORTE_ALERTA_APOS_MS);
+    const episodio = { desde: anterior?.desde ?? now, alertado: alertar || (anterior?.alertado ?? false) };
+    try {
+      await this.repo.updatePollState(scope, doc.id, {
+        nextPollAt: new Date(now.getTime() + POLL_ADIAR_MS),
+        pollLastError: gravarAdiamentoTransporte(episodio, message).slice(0, POLL_LAST_ERROR_MAX),
+      });
+    } catch (error) {
+      logger.warn('dfe_poll_pending: não adiou o documento de transporte indisponível', {
+        documentId: doc.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    }
+    if (alertar) {
+      logger.error('dfe_poll_pending: transporte indisponível além da janela de alerta — documento segue adiado', {
+        documentId: doc.id,
+        adiadoDesde: episodio.desde.toISOString(),
+      });
+    }
+    return alertar;
   }
 
   /** Consulta que deu certo zera a contagem, o backoff e a desistência — só escreve se havia algo a limpar. */

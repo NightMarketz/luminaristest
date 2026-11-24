@@ -69,6 +69,7 @@ export class DfePollScheduler {
       if (
         summary.failed > 0 ||
         (summary.gaveUp ?? 0) > 0 ||
+        (summary.transporteAdiadoAlerta ?? 0) > 0 ||
         (summary.attachments?.failed ?? 0) > 0 ||
         (c && c.failed + c.orfasFalharam + c.pertoDoPrazo + c.vencidas > 0) ||
         (e && e.failed + e.ignorados + e.substituidasFora > 0)
@@ -88,6 +89,18 @@ export class DfePollScheduler {
           job: JOB,
           pollGaveUp: summary.gaveUp,
           pollGaveUpDocumentIds: summary.gaveUpIds ?? [],
+        });
+      }
+      // Lacuna 92c5 (dono 24/11): documento adiado por transporte (assinador local) indisponível há ≥ 1 h. O service devolve o id
+      // UMA vez por episódio (marcador `alertado` no documento), então não há dedupe de dia aqui. O documento segue adiado.
+      if ((summary.transporteAdiadoAlerta ?? 0) > 0) {
+        this.alert({
+          source: 'dfe_poll',
+          event: 'reconcile_summary',
+          timestamp: new Date().toISOString(),
+          job: JOB,
+          transporteAdiado: summary.transporteAdiadoAlerta,
+          transporteAdiadoDocumentIds: summary.transporteAdiadoIds ?? [],
         });
       }
       // X10a PR-9 (decisões 6, 7 e 9): NFC-e off-line perto do prazo/vencida ou órfã não resolvida ⇒ alerta remoto.

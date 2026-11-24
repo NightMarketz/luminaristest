@@ -151,3 +151,18 @@ describe('DfePollScheduler — o job desistiu de consultar documento (Onda 4 / 4
     expect(alert).not.toHaveBeenCalled();
   });
 });
+
+describe('DfePollScheduler — transporte adiado há ≥ 1 h (lacuna 92c5)', () => {
+  it('o resumo do tick com documento adiado alerta o job com os ids (o service garante UMA vez por episódio)', async () => {
+    const { scheduler, alert } = montar({ total: 1, updated: 0, skipped: 1, failed: 0, transporteAdiadoAlerta: 1, transporteAdiadoIds: ['doc-x'] } as PollSummary);
+    await scheduler.runOnce();
+    expect(alert).toHaveBeenCalledTimes(1);
+    expect(alert.mock.calls[0][0]).toMatchObject({ source: 'dfe_poll', event: 'reconcile_summary', job: 'dfe_poll_pending', transporteAdiado: 1, transporteAdiadoDocumentIds: ['doc-x'] });
+  });
+
+  it('controle: tick sem documento adiado há ≥ 1 h não alerta por isso', async () => {
+    const { scheduler, alert } = montar({ total: 1, updated: 0, skipped: 1, failed: 0 } as PollSummary);
+    await scheduler.runOnce();
+    expect(alert).not.toHaveBeenCalled();
+  });
+});

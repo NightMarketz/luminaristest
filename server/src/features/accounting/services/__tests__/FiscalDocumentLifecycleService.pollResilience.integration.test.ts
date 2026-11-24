@@ -236,6 +236,43 @@ describe('Onda 4 / 4.1 — polling de DF-e: teto, backoff e sem head-of-line (SQ
     expect((await row(d2.id)).status).toBe('AUTHORIZED');
   });
 
+  it('lacuna 92c5 (dono 24/11): transporte indisponível — adiada há <1 h NÃO alerta; ≥1 h alerta UMA vez (não a cada tick); segue adiada, sem teto nem desistência', async () => {
+    const d = await pendente('adiada-alerta');
+    portaCom(d.id, () => new DfeTransporteIndisponivelError('dfe_assinador_sem_dispositivo', 'caixa desligada'));
+    const alertou = (t: Awaited<ReturnType<typeof tick>>) => (t.transporteAdiadoIds ?? []).includes(d.id);
+
+    // 1º adiamento do episódio: adiada há 0 (o documento é mais velho que 1 h pelo relógio simulado, mas "adiada há" conta
+    // do primeiro adiamento, não da idade da nota).
+    expect(alertou(await tick({ avanco: HORA }))).toBe(false);
+    // 30 min depois: o documento nem volta à fila (nextPollAt = +1 h) — nada consulta, nada alerta.
+    const antes = chamadasDe(d.id);
+    expect(alertou(await tick({ avanco: HORA / 2 }))).toBe(false);
+    expect(chamadasDe(d.id)).toBe(antes);
+    // 1 h desde o 1º adiamento e transporte ainda fora ⇒ alerta, com o id da nota.
+    const t = await tick({ avanco: HORA / 2 });
+    expect(alertou(t)).toBe(true);
+    expect(t.transporteAdiadoAlerta).toBeGreaterThanOrEqual(1);
+    // ticks seguintes (2 h, 3 h adiada): o MESMO episódio não alerta de novo.
+    expect(alertou(await tick({ avanco: HORA }))).toBe(false);
+    expect(alertou(await tick({ avanco: HORA }))).toBe(false);
+
+    // só alerta: a nota segue PROCESSING, sem tentativa gasta, sem desistência.
+    const fora = await row(d.id);
+    expect(fora.status).toBe('PROCESSING');
+    expect(fora.pollAttempts).toBe(0);
+    expect(fora.pollGaveUpAt).toBeNull();
+    expect(fora.nextPollAt).not.toBeNull();
+
+    // a caixa volta: autoriza e o controle do episódio é limpo (um episódio futuro alertaria de novo).
+    mockPort.consultar.mockImplementation(
+      async (ref: string): Promise<EmissaoResult> => ({ status: 'AUTHORIZED', partnerRef: ref, chaveOuCodigo: `CH-${ref}`, numero: '1', errors: [] }),
+    );
+    await tick({ avanco: HORA });
+    const ok = await row(d.id);
+    expect(ok.status).toBe('AUTHORIZED');
+    expect(ok.pollLastError).toBeNull();
+  });
+
   it('consulta manual (consultarUm) de documento que o job abandonou: se der certo, volta ao polling', async () => {
     const d = await pendente('manual-volta');
     portaCom(d.id, () => new DfeTransporteError('sefaz_http', 'HTTP 503'));
