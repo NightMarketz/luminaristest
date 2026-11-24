@@ -2,7 +2,7 @@
 
 ## O que é
 
-> **Emenda 2026-11-24 (dono, chat, questionário, F-W2B-2 → b):** `MAX_CENTS` passou de `2_147_483_647` para
+> **Emenda 2026-11-24 (ratificada pelo dono no chat em 24/11/2026, F-W2B-2 → b):** `MAX_CENTS` passou de `2_147_483_647` para
 > `2^43−1` = `8_796_093_022_207` (≈ R$ 87,96 bi por perna). O texto abaixo descreve o teto ANTIGO (R$ 21,47 mi) e
 > fica como histórico; a decisão de 2026-08-31 de manter o teto foi substituída por esta. O dono pediu "perto de
 > 2^53−1"; o valor exato (2^53−1) foi descartado porque um lançamento no teto + qualquer outro na mesma conta
