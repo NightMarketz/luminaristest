@@ -1,0 +1,216 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 9.249 de 26/12/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d955e7e66c4a7176278ee8ac74513668de7fc989/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-12-26;9249",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "d955e7e66c4a7176278ee8ac74513668de7fc989",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:54:29-03:00",
+      "sha256": "18cb96b64a850a3f9b738da870044230b76a336068e3fae79cb83f10b14d4699",
+      "arquivo": "docs/D01_lei-9249-1995-12-26.md",
+      "texto": "docs/D01_lei-9249-1995-12-26.txt",
+      "bytes": 45124,
+      "sha256_texto": "591b0a142e86869e4b27eca9dc3e0a4dc041842dd7a9c599f4ec0915fffcf555",
+      "captura": {
+        "anterior": {
+          "slug": "salao-lucro-real-adicoes-exclusoes",
+          "id": "D02",
+          "baixado_em": "2026-11-21T11:49:35-03:00",
+          "sha256_texto": "591b0a142e86869e4b27eca9dc3e0a4dc041842dd7a9c599f4ec0915fffcf555"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei Complementar nº 224 de 26/12/2025",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2025/lcp-224-2025-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/27a3371bb8bcc8f1c5d753672d422f89680f8830/federal/leis-complementares/2025/lcp-224-2025-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2025-12-26;224",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "27a3371bb8bcc8f1c5d753672d422f89680f8830",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T11:54:30-03:00",
+      "sha256": "6d2c451c17be08da1e811f15c80f188b47b66c7d3811220ade0fb69ee8b0a07c",
+      "arquivo": "docs/D02_lcp-224-2025-12-26.md",
+      "texto": "docs/D02_lcp-224-2025-12-26.txt",
+      "bytes": 25875,
+      "sha256_texto": "4d0324c9b154e0852eec5dc7232927ebde1d189e881bf879f8eade834b50c1bd",
+      "captura": {
+        "anterior": {
+          "slug": "lc224-sobra-limite",
+          "id": "D01",
+          "baixado_em": "2026-11-03T19:22:15-03:00",
+          "sha256_texto": "4d0324c9b154e0852eec5dc7232927ebde1d189e881bf879f8eade834b50c1bd"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Lei Complementar nº 214 de 16/01/2025",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2025/lcp-214-2025-01-16.md",
+      "url_final": "https://github.com/ctresb/leis/blob/571468687b4dc8d8f1a3b1dbd5f958ff85fad0cf/federal/leis-complementares/2025/lcp-214-2025-01-16.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2025-01-16;214",
+      "versao_texto": "republicação/retificação",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "571468687b4dc8d8f1a3b1dbd5f958ff85fad0cf",
+      "alertas": [
+        "versao_texto = 'republicação/retificação' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T11:54:31-03:00",
+      "sha256": "f1f80d77a11f96d8eaf7777d647e577d04abd0fc28420ec22664be7a76ed8851",
+      "arquivo": "docs/D03_lcp-214-2025-01-16.md",
+      "texto": "docs/D03_lcp-214-2025-01-16.txt",
+      "bytes": 1880,
+      "sha256_texto": "69a75533fb995e70146dcbfb8c354916fe2d155b3a163e10d2a110aeaed37e93",
+      "captura": {
+        "anterior": {
+          "slug": "salao-prazo-ibs-icms-revenda",
+          "id": "D01",
+          "baixado_em": "2026-11-21T11:47:31-03:00",
+          "sha256_texto": "69a75533fb995e70146dcbfb8c354916fe2d155b3a163e10d2a110aeaed37e93"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T11:54:43-03:00",
+      "sha256": "fdf77ec8a2fde5e035257322569f9683d91adff09df83e2409518acba18befc6",
+      "arquivo": "docs/D04_lcp214-htm.html",
+      "texto": "docs/D04_lcp214-htm.txt",
+      "bytes": 5403923,
+      "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3",
+      "captura": {
+        "anterior": {
+          "slug": "salao-prazo-ibs-icms-revenda",
+          "id": "D03",
+          "baixado_em": "2026-11-21T11:47:39-03:00",
+          "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "Lcp 224",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp224.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp224.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T11:54:43-03:00",
+      "sha256": "b53e2d65e79fbb12ad99049655192ad58b3f980d6db46a23f2f49f39ceae49e0",
+      "arquivo": "docs/D05_lcp224-htm.html",
+      "texto": "docs/D05_lcp224-htm.txt",
+      "bytes": 87083,
+      "sha256_texto": "052d49812305138106b3de213ded2115a93234778bbdab564b72802b47d22f08",
+      "captura": {
+        "anterior": {
+          "slug": "lc224-sobra-limite",
+          "id": "D04",
+          "baixado_em": "2026-11-03T19:27:21-03:00",
+          "sha256_texto": "052d49812305138106b3de213ded2115a93234778bbdab564b72802b47d22f08"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "d12955",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/D12955.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T11:54:46-03:00",
+      "sha256": "6ff7ecc3685c8cc4d9e234cfcc1034eb8c5253a078ba821321db27b2ccc270aa",
+      "arquivo": "docs/D06_d12955-htm.html",
+      "texto": "docs/D06_d12955-htm.txt",
+      "bytes": 3184515,
+      "sha256_texto": "fdd17260256d367e90aaa8f51c289974e9c97078b68b0810b55927533f18671f",
+      "captura": {
+        "anterior": {
+          "slug": "salao-prazo-ibs-icms-revenda",
+          "id": "D04",
+          "baixado_em": "2026-11-21T11:47:41-03:00",
+          "sha256_texto": "fdd17260256d367e90aaa8f51c289974e9c97078b68b0810b55927533f18671f"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "Resolução CGSN nº 190, de 4 de agosto de 2026",
+      "url": "rfb:152832",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/152832/visao/multivigente",
+      "id_normativo": "rfb:152832",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-21T11:56:53-03:00",
+      "sha256": "9d1b3419c37266069da0ff3eb51292886279aac4674436e4e540b1bbf57dce6b",
+      "arquivo": "docs/D07_rfb-152832-multivigente.json",
+      "texto": "docs/D07_rfb-152832-multivigente.txt",
+      "bytes": 401679,
+      "sha256_texto": "7abf091d0d84b78c9bb164c0e430b9f04420ec8bf87870829dd223aa84707ad7",
+      "anexos": [
+        {
+          "nome": "Anexo I.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85769"
+        },
+        {
+          "nome": "Anexo II.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85770"
+        },
+        {
+          "nome": "Anexo III.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85771"
+        },
+        {
+          "nome": "Anexo IV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85775"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85773"
+        },
+        {
+          "nome": "Anexo Único.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/152832/anexo/85784"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "salao-sr27-base-cbs-parceiro-sem-cnpj",
+          "id": "D09",
+          "baixado_em": "2026-11-21T11:46:52-03:00",
+          "sha256_texto": "7abf091d0d84b78c9bb164c0e430b9f04420ec8bf87870829dd223aa84707ad7"
+        },
+        "tipo": "IGUAL"
+      },
+      "alertas": [
+        "6 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    }
+  ],
+  "buscas": [],
+  "slug": "salao-2027-premissas-fora-simples",
+  "pergunta": "Presunção de 32% IRPJ/CSLL de serviços em 2027; crédito de CBS/IBS na despesa paga a fornecedor do Simples (art. 47 §9º), aluguel pago a PF e energia elétrica em 2027",
+  "criado": "2026-11-21T11:44:05-03:00"
+}

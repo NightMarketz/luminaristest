@@ -1,0 +1,3 @@
+# Cópias publicadas de artifacts: o arquivo do repositório é a fonte da publicação e tem de ter os mesmos bytes da versão no ar
+# (o SHA-256 registrado em PUBLICACOES.md). Sem isto, o autocrlf do Windows troca LF por CRLF no checkout.
+*.html -text

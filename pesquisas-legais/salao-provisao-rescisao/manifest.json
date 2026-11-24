@@ -1,0 +1,542 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Mediador - Extrato Convenção Coletiva",
+      "url": "https://mediador.trabalho.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR008673%2F2026",
+      "url_final": "https://mediador.trabalho.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR008673%2F2026",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:45:22-03:00",
+      "sha256": "ad8a587ed6d1e8972a313bba59e78b894c081fac88afffabe048d1477a442be2",
+      "arquivo": "docs/D01_ResumoVisualizar.html",
+      "texto": "docs/D01_ResumoVisualizar.txt",
+      "bytes": 261147,
+      "sha256_texto": "3d0e597bcf186b7a09bffb28282700e2e54ac219d80318a4dfd0c1648bae2ca3",
+      "captura": {
+        "anterior": {
+          "slug": "salao-cct-adicional-tempo-servico",
+          "id": "D01",
+          "baixado_em": "2026-11-21T11:45:21-03:00",
+          "sha256_texto": "3d0e597bcf186b7a09bffb28282700e2e54ac219d80318a4dfd0c1648bae2ca3"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Mediador - Extrato Termo Aditivo de Convenção Coletiva",
+      "url": "https://mediador.trabalho.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR060354%2F2026",
+      "url_final": "https://mediador.trabalho.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR060354%2F2026",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:45:23-03:00",
+      "sha256": "5f76f7adcb4f5b9bb962833da79429e6cc0c0aa75b14f772c846a87f52c685e3",
+      "arquivo": "docs/D02_ResumoVisualizar.html",
+      "texto": "docs/D02_ResumoVisualizar.txt",
+      "bytes": 76661,
+      "sha256_texto": "1749b0906855cafdb0e803ee52cbf3a2415e050ade67dc03b0aced385497d02b",
+      "captura": {
+        "anterior": {
+          "slug": "salao-cct-adicional-tempo-servico",
+          "id": "D02",
+          "baixado_em": "2026-11-21T11:45:21-03:00",
+          "sha256_texto": "1749b0906855cafdb0e803ee52cbf3a2415e050ade67dc03b0aced385497d02b"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Decreto-Lei nº 5.452 de 01/05/1943",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos-lei/1943/del-5452-1943-05-01.md",
+      "url_final": "https://github.com/ctresb/leis/blob/f3db126e93c366f938bd927bbf184a8fcf64b2ea/federal/decretos-lei/1943/del-5452-1943-05-01.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "f3db126e93c366f938bd927bbf184a8fcf64b2ea",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:46:34-03:00",
+      "sha256": "7eee0da3b620a17fbd7b34a0eb9adc967c4fb6650d1acba37469d247f88f4600",
+      "arquivo": "docs/D03_del-5452-1943-05-01.md",
+      "texto": "docs/D03_del-5452-1943-05-01.txt",
+      "bytes": 690741,
+      "sha256_texto": "f8f704c5245f9eb179f540b7cf913e2de5a309571d7a8c5ebdae64d3f401e002",
+      "captura": {
+        "anterior": {
+          "slug": "salao-cct-adicional-tempo-servico",
+          "id": "D03",
+          "baixado_em": "2026-11-21T11:46:19-03:00",
+          "sha256_texto": "f8f704c5245f9eb179f540b7cf913e2de5a309571d7a8c5ebdae64d3f401e002"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "Lei nº 8.036 de 11/05/1990",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1990/lei-8036-1990-05-11.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ccdcc898b79c13be701c7841b195174e1898ccf8/federal/leis-ordinarias/1990/lei-8036-1990-05-11.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1990-05-11;8036",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "ccdcc898b79c13be701c7841b195174e1898ccf8",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:46:35-03:00",
+      "sha256": "2306b761562d936ac63fd74447e2def11fe8f71d86910d324d83ea5614f2bd22",
+      "arquivo": "docs/D04_lei-8036-1990-05-11.md",
+      "texto": "docs/D04_lei-8036-1990-05-11.txt",
+      "bytes": 95035,
+      "sha256_texto": "87772ff6aba807b1f712a80d3a7e6daabf33f42cb1876dcae68115f10e3599d5",
+      "captura": {
+        "anterior": {
+          "slug": "salao-cct-adicional-tempo-servico",
+          "id": "D04",
+          "baixado_em": "2026-11-21T11:46:21-03:00",
+          "sha256_texto": "87772ff6aba807b1f712a80d3a7e6daabf33f42cb1876dcae68115f10e3599d5"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "Lei nº 12.506 de 11/10/2011",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2011/lei-12506-2011-10-11.md",
+      "url_final": "https://github.com/ctresb/leis/blob/3549980ec9c5319a860d6c0a06d5aab04d9ea6c0/federal/leis-ordinarias/2011/lei-12506-2011-10-11.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2011-10-11;12506",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "3549980ec9c5319a860d6c0a06d5aab04d9ea6c0",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T11:46:37-03:00",
+      "sha256": "9f85bd014508766e62bb51c4cdf40ba47dd536f9a6d9d63ede812aea8349f8b9",
+      "arquivo": "docs/D05_lei-12506-2011-10-11.md",
+      "texto": "docs/D05_lei-12506-2011-10-11.txt",
+      "bytes": 1465,
+      "sha256_texto": "3266dcb7ceba8494b2a9d1aad06d38d1e8c87cf2ad9c0090240d13db00a08dbe",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "Lei Complementar nº 110 de 29/06/2001",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2001/lcp-110-2001-06-29.md",
+      "url_final": "https://github.com/ctresb/leis/blob/6a41d4561539564a02dd7bbf23e156e095c157d8/federal/leis-complementares/2001/lcp-110-2001-06-29.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2001-06-29;110",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "6a41d4561539564a02dd7bbf23e156e095c157d8",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:46:38-03:00",
+      "sha256": "8cafc13a860b49747ec63dd2176f5bfda16ff3ecd29b9737a5766c44366d25d5",
+      "arquivo": "docs/D06_lcp-110-2001-06-29.md",
+      "texto": "docs/D06_lcp-110-2001-06-29.txt",
+      "bytes": 14901,
+      "sha256_texto": "25cb5798df7ffe18b646562424f579e6f5203786c1e11cf93ac701c8457167ca",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "Lei nº 13.932 de 11/12/2019",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2019/lei-13932-2019-12-11.md",
+      "url_final": "https://github.com/ctresb/leis/blob/4a9e54bd7d60c85337ae85b45d3a7d4ea8e3be2a/federal/leis-ordinarias/2019/lei-13932-2019-12-11.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2019-12-11;13932",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "4a9e54bd7d60c85337ae85b45d3a7d4ea8e3be2a",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:46:40-03:00",
+      "sha256": "029a39bc41db9e0177899bd6a930a6e7d887f34521f01c5e7aef1ff97c14e3f0",
+      "arquivo": "docs/D07_lei-13932-2019-12-11.md",
+      "texto": "docs/D07_lei-13932-2019-12-11.txt",
+      "bytes": 42617,
+      "sha256_texto": "57a30b9cbe9dcf4d09d2b2bd413cb2dbf6cafae4dc0838d5bc5b0185c15e26e0",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "Lei nº 8.212 de 24/07/1991",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1991/lei-8212-1991-07-24.md",
+      "url_final": "https://github.com/ctresb/leis/blob/9b29f44078e25755cfaf358456dd815043075924/federal/leis-ordinarias/1991/lei-8212-1991-07-24.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1991-07-24;8212",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "9b29f44078e25755cfaf358456dd815043075924",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:46:41-03:00",
+      "sha256": "6ace89674b04578f1f2ff4e16d4ab89e4a251e1da7b44b288870cc63ec2bb0b7",
+      "arquivo": "docs/D08_lei-8212-1991-07-24.md",
+      "texto": "docs/D08_lei-8212-1991-07-24.txt",
+      "bytes": 161522,
+      "sha256_texto": "d2d2d71eeab276e294c083cacb84fddb1fe87653c06cf93b4f4cb5ccdf0f8582",
+      "captura": {
+        "anterior": {
+          "slug": "salao-cct-adicional-tempo-servico",
+          "id": "D05",
+          "baixado_em": "2026-11-21T11:46:22-03:00",
+          "sha256_texto": "d2d2d71eeab276e294c083cacb84fddb1fe87653c06cf93b4f4cb5ccdf0f8582"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D09",
+      "titulo": "Lei nº 4.090 de 13/07/1962",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1962/lei-4090-1962-07-13.md",
+      "url_final": "https://github.com/ctresb/leis/blob/20775c2cef862b096ea72544740d35e0653b3849/federal/leis-ordinarias/1962/lei-4090-1962-07-13.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1962-07-13;4090",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "20775c2cef862b096ea72544740d35e0653b3849",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:46:42-03:00",
+      "sha256": "07f6d7929f10c8349173691920021a1d37759e1319f14689da0ad541716fa752",
+      "arquivo": "docs/D09_lei-4090-1962-07-13.md",
+      "texto": "docs/D09_lei-4090-1962-07-13.txt",
+      "bytes": 2074,
+      "sha256_texto": "dc0c993c9f575780a02ee0298c7628e073989261ba0808b810e7e0d6dafd7eb1",
+      "captura": {
+        "anterior": {
+          "slug": "salao-cct-adicional-tempo-servico",
+          "id": "D06",
+          "baixado_em": "2026-11-21T11:46:24-03:00",
+          "sha256_texto": "dc0c993c9f575780a02ee0298c7628e073989261ba0808b810e7e0d6dafd7eb1"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D10",
+      "titulo": "Lei nº 7.238 de 29/10/1984",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1984/lei-7238-1984-10-29.md",
+      "url_final": "https://github.com/ctresb/leis/blob/f369b5b1a443668aeebac28caaf1b60aaabd2668/federal/leis-ordinarias/1984/lei-7238-1984-10-29.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1984-10-29;7238",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "f369b5b1a443668aeebac28caaf1b60aaabd2668",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T11:46:44-03:00",
+      "sha256": "428ebdb3efbec2a296c27afe9beeb620635cf2a2864078858332fce07a1beaf3",
+      "arquivo": "docs/D10_lei-7238-1984-10-29.md",
+      "texto": "docs/D10_lei-7238-1984-10-29.txt",
+      "bytes": 10089,
+      "sha256_texto": "6cfb9b5a538f3babea72168710cbf3e72296b67aceb09297d346809c34d083e9",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D11",
+      "titulo": "Súmula nº 305 do TST",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/jurisprudencia/tst/sumulas/sumula-305.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d6c0159be76282be2cdb1dc03c91346ae6dc9b51/jurisprudencia/tst/sumulas/sumula-305.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "versao_texto": "caderno consolidado do tribunal",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "d6c0159be76282be2cdb1dc03c91346ae6dc9b51",
+      "alertas": [
+        "versao_texto = 'caderno consolidado do tribunal' (não é texto compilado: alterações posteriores não aparecem)",
+        "corpo curto ou com aviso (texto integral pode faltar)"
+      ],
+      "baixado_em": "2026-11-21T11:46:45-03:00",
+      "sha256": "1e58eb0447f8d8550024d6940fbb91bb91022659a9097c5fd2105a1819c9e619",
+      "arquivo": "docs/D11_sumula-305.md",
+      "texto": "docs/D11_sumula-305.txt",
+      "bytes": 608,
+      "sha256_texto": "62b60e44cf4116d71ae72c55e25448131ef5acd5d320e7eef53d5107210ab36a",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D12",
+      "titulo": "Tema repetitivo nº 478 do STJ",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/jurisprudencia/stj/repetitivos/tema-478.md",
+      "url_final": "https://github.com/ctresb/leis/blob/8431a0f1642e726006aac605e365c363b5675ba6/jurisprudencia/stj/repetitivos/tema-478.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://dadosabertos.web.stj.jus.br/dataset/4238da2f-c07b-4c1a-b345-4402accacdcf/resource/df29da13-7d6b-41ba-ad96-cd1a5bbd191c/download/temas.csv",
+      "versao_texto": "dados abertos do tribunal",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "8431a0f1642e726006aac605e365c363b5675ba6",
+      "alertas": [
+        "versao_texto = 'dados abertos do tribunal' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T11:46:47-03:00",
+      "sha256": "46b3b1d735d10d5ad022f1fe27b97a0af0682b8d63294e701f7881ae2a831598",
+      "arquivo": "docs/D12_tema-478.md",
+      "texto": "docs/D12_tema-478.txt",
+      "bytes": 4687,
+      "sha256_texto": "74228057afcc7619daac2e1e4200940805750376eeb8ba12710d123f8e6ab10d",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D13",
+      "titulo": "Súmula nº 182 do TST",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/jurisprudencia/tst/sumulas/sumula-182.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d6c0159be76282be2cdb1dc03c91346ae6dc9b51/jurisprudencia/tst/sumulas/sumula-182.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "versao_texto": "caderno consolidado do tribunal",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "d6c0159be76282be2cdb1dc03c91346ae6dc9b51",
+      "alertas": [
+        "versao_texto = 'caderno consolidado do tribunal' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T11:46:49-03:00",
+      "sha256": "99b849aead3109d2dfbe6b1f9cafef3b374dd060ceb9c7400a66f0cd6b529e52",
+      "arquivo": "docs/D13_sumula-182.md",
+      "texto": "docs/D13_sumula-182.txt",
+      "bytes": 943,
+      "sha256_texto": "b764598bfdae79279671fab7fb1d9ddeb79f9863a293b8808e27ca30db735417",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D14",
+      "titulo": "Súmula nº 371 do TST",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/jurisprudencia/tst/sumulas/sumula-371.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d6c0159be76282be2cdb1dc03c91346ae6dc9b51/jurisprudencia/tst/sumulas/sumula-371.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "versao_texto": "caderno consolidado do tribunal",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "d6c0159be76282be2cdb1dc03c91346ae6dc9b51",
+      "alertas": [
+        "versao_texto = 'caderno consolidado do tribunal' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T11:46:50-03:00",
+      "sha256": "fee46c342e1bcd6fe7f85f206f8048335364c3be846deeb857519fc4659b190c",
+      "arquivo": "docs/D14_sumula-371.md",
+      "texto": "docs/D14_sumula-371.txt",
+      "bytes": 1012,
+      "sha256_texto": "9c1366e5943d3f2353e297d3ae9386a6b48812a7c8e77d65f76a4c048b6ffbb7",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D15",
+      "titulo": "Lcp110",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp110.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp110.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T11:47:34-03:00",
+      "sha256": "2df25bd81db092222b57f2b75ed6a0c75d3a7b3bb959d5d5e2398fd6d88162c5",
+      "arquivo": "docs/D15_lcp110-htm.html",
+      "texto": "docs/D15_lcp110-htm.txt",
+      "bytes": 33447,
+      "sha256_texto": "533a896b19748c363c85415481e72e827ef9a6020a71074e09ad8f20e5beb1e5",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D16",
+      "titulo": "L12506",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2011/lei/l12506.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2011/lei/l12506.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T11:47:34-03:00",
+      "sha256": "4a3a3c9606882312f8f1050b1e55d48a25e50c3726827fd0cc33e9ab70c12960",
+      "arquivo": "docs/D16_l12506-htm.html",
+      "texto": "docs/D16_l12506-htm.txt",
+      "bytes": 5569,
+      "sha256_texto": "aea10fef1c8031697821fc783e6cc6d3217a623b3cd99cbe75ea212d16106d64",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D17",
+      "titulo": "D3048",
+      "url": "https://www.planalto.gov.br/ccivil_03/decreto/d3048.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/decreto/d3048.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T11:47:35-03:00",
+      "sha256": "782e757ca4d1b8e166ad23c580d9b0e5a888bfd1731bb0829fa1705cab30bb22",
+      "arquivo": "docs/D17_d3048-htm.html",
+      "texto": "docs/D17_d3048-htm.txt",
+      "bytes": 2390338,
+      "sha256_texto": "249d9616e52067d0a42ccd9bd807c0482855fbd9f2ee2739e6b89c3ae072d1f7",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D18",
+      "titulo": "TRIBUNAL SUPERIOR DO TRABALHO",
+      "url": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "url_final": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "orgao": "TST",
+      "baixado_em": "2026-11-21T11:48:05-03:00",
+      "sha256": "46321b2d8d04840eeeb55417937c5a6657c9df5ac40fed1d44a2bf0989c06e8a",
+      "arquivo": "docs/D18_Livro-Internet-pdf.pdf",
+      "texto": "docs/D18_Livro-Internet-pdf.txt",
+      "bytes": 3496811,
+      "sha256_texto": "b631ff24a3b0bdd8840328ba516e6736030fefb4142e1121177b379c7749d0e0",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D19",
+      "titulo": "L7238",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/1980-1988/l7238.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/1980-1988/l7238.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T11:52:05-03:00",
+      "sha256": "4c171eda36e07d0b7a2954dfe5540b7580af9814c249bbc30a31ae462603f9a5",
+      "arquivo": "docs/D19_l7238-htm.html",
+      "texto": "docs/D19_l7238-htm.txt",
+      "bytes": 18626,
+      "sha256_texto": "4abbdc209df5b0d47f78c292d474fbe41d6cf750aef9e8e6b923acd561a70755",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D20",
+      "titulo": "Normas.leg.br: Legislação Federal",
+      "url": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1984-10-29;7238",
+      "url_final": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1984-10-29;7238",
+      "orgao": "Normas - Congresso Nacional",
+      "baixado_em": "2026-11-21T11:52:05-03:00",
+      "sha256": "fa27c6b6784a6c56e3b984ca2b8d86544f2e51556cddcf26db40c33506905ae1",
+      "arquivo": "docs/D20_doc.html",
+      "texto": "docs/D20_doc.txt",
+      "bytes": 66002,
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D21",
+      "titulo": "Pesquisa de jurisprudência",
+      "url": "https://www.tst.jus.br/sumulas",
+      "url_final": "https://jurisprudencia.tst.jus.br/?tipoJuris=SUM&orgao=TST&pesquisar=1",
+      "orgao": "TST",
+      "baixado_em": "2026-11-21T11:52:40-03:00",
+      "sha256": "db15ed4f1573ecd41335e3c2f814980b037785819ec1151cc61bbd776791ab98",
+      "arquivo": "docs/D21_doc.html",
+      "texto": "docs/D21_doc.txt",
+      "bytes": 1041,
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D22",
+      "titulo": "Instrução Normativa RFB nº 2110, de 17 de outubro de 2022",
+      "url": "rfb:126687",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/126687/visao/multivigente",
+      "id_normativo": "rfb:126687",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-21T11:53:21-03:00",
+      "sha256": "86982870db15f3c896ab8af4dab8e179a1b87008df9369f93f12c179b4108241",
+      "arquivo": "docs/D22_rfb-126687-multivigente.json",
+      "texto": "docs/D22_rfb-126687-multivigente.txt",
+      "bytes": 1480223,
+      "sha256_texto": "42a53a387e057cb438c09f591cc5030b5cd1a4544a9e0696ba63fa3d05bec7c3",
+      "anexos": [
+        {
+          "nome": "Anexo I.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67105"
+        },
+        {
+          "nome": "Anexo II.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67106"
+        },
+        {
+          "nome": "Anexo III.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67108"
+        },
+        {
+          "nome": "Anexo III.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/84090"
+        },
+        {
+          "nome": "Anexo IV.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67123"
+        },
+        {
+          "nome": "Anexo IV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/84091"
+        },
+        {
+          "nome": "Anexo V.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67124"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/84092"
+        },
+        {
+          "nome": "Anexo VI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67111"
+        },
+        {
+          "nome": "Anexo VII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67112"
+        },
+        {
+          "nome": "Anexo VIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/67113"
+        },
+        {
+          "nome": "Anexo IX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/126687/anexo/84093"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "verif-2026-10-17-lgpd-cdc-obrigacoes",
+          "id": "D23",
+          "baixado_em": "2026-10-17T09:58:46-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "SEM_COMPARACAO"
+      },
+      "alertas": [
+        "12 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar",
+        "há captura de 2026-10-17 (verif-2026-10-17-lgpd-cdc-obrigacoes D23), mas o texto dela não foi guardado"
+      ]
+    }
+  ],
+  "buscas": [],
+  "slug": "salao-provisao-rescisao",
+  "pergunta": "Provisão mensal da rescisão sem justa causa de empregado CLT de salão em SP: aviso prévio proporcional, multa de 40% do FGTS, LC 110, FGTS/INSS do aviso indenizado, férias/13º proporcionais e cláusulas da CCT SP006651/2026",
+  "criado": "2026-11-21T11:45:20-03:00"
+}

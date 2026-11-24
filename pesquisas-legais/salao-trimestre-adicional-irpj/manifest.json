@@ -1,0 +1,175 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei nº 9.249 de 26/12/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d955e7e66c4a7176278ee8ac74513668de7fc989/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-12-26;9249",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "d955e7e66c4a7176278ee8ac74513668de7fc989",
+      "alertas": [],
+      "baixado_em": "2026-11-21T13:21:53-03:00",
+      "sha256": "18cb96b64a850a3f9b738da870044230b76a336068e3fae79cb83f10b14d4699",
+      "arquivo": "docs/D01_lei-9249-1995-12-26.md",
+      "texto": "docs/D01_lei-9249-1995-12-26.txt",
+      "bytes": 45124,
+      "sha256_texto": "591b0a142e86869e4b27eca9dc3e0a4dc041842dd7a9c599f4ec0915fffcf555",
+      "captura": {
+        "anterior": {
+          "slug": "salao-2027-premissas-fora-simples",
+          "id": "D01",
+          "baixado_em": "2026-11-21T11:54:29-03:00",
+          "sha256_texto": "591b0a142e86869e4b27eca9dc3e0a4dc041842dd7a9c599f4ec0915fffcf555"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 9.430 de 27/12/1996",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1996/lei-9430-1996-12-27.md",
+      "url_final": "https://github.com/ctresb/leis/blob/6c8aa8aa7d6126d14c332df3ab07f956b17f4bf2/federal/leis-ordinarias/1996/lei-9430-1996-12-27.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1996-12-27;9430",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "6c8aa8aa7d6126d14c332df3ab07f956b17f4bf2",
+      "alertas": [],
+      "baixado_em": "2026-11-21T13:21:55-03:00",
+      "sha256": "6e8e20371d0e7796244402441b7e3fc72df83a7bbe640029d4919359a6115bcc",
+      "arquivo": "docs/D02_lei-9430-1996-12-27.md",
+      "texto": "docs/D02_lei-9430-1996-12-27.txt",
+      "bytes": 117629,
+      "sha256_texto": "484dfc5f82cfd701b6ef85be6b5e525d40bede29704b1292e0d3d26219218fbd",
+      "captura": {
+        "anterior": {
+          "slug": "brief-pes4-f2",
+          "id": "D07",
+          "baixado_em": "2026-11-05T20:18:59-03:00",
+          "sha256_texto": "484dfc5f82cfd701b6ef85be6b5e525d40bede29704b1292e0d3d26219218fbd"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Lei nº 8.981 de 20/01/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-8981-1995-01-20.md",
+      "url_final": "https://github.com/ctresb/leis/blob/8bf2e5070525043cb82294b9de8630a4aea5e53d/federal/leis-ordinarias/1995/lei-8981-1995-01-20.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-01-20;8981",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "8bf2e5070525043cb82294b9de8630a4aea5e53d",
+      "alertas": [],
+      "baixado_em": "2026-11-21T13:21:57-03:00",
+      "sha256": "b567b47ee6be147deb0aeea63f5cc92d7c93652f40fae948125979dac84680e7",
+      "arquivo": "docs/D03_lei-8981-1995-01-20.md",
+      "texto": "docs/D03_lei-8981-1995-01-20.txt",
+      "bytes": 86250,
+      "sha256_texto": "357afab8cd203455b5ade0fd675f9b9cf2a5ae29511ba1d2d036471a62aa6a8a",
+      "captura": {
+        "anterior": {
+          "slug": "salao-lucro-real-adicoes-exclusoes",
+          "id": "D04",
+          "baixado_em": "2026-11-21T11:49:38-03:00",
+          "sha256_texto": "357afab8cd203455b5ade0fd675f9b9cf2a5ae29511ba1d2d036471a62aa6a8a"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "Lei nº 4.749 de 12/08/1965",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1965/lei-4749-1965-08-12.md",
+      "url_final": "https://github.com/ctresb/leis/blob/f62d522f3eeeafab36afa361fa7a548a6c355b91/federal/leis-ordinarias/1965/lei-4749-1965-08-12.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1965-08-12;4749",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "f62d522f3eeeafab36afa361fa7a548a6c355b91",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T13:21:59-03:00",
+      "sha256": "5758bc36d54c80c9a89f578c59631977fd012733a2805ecf32a05f7ad749c9bf",
+      "arquivo": "docs/D04_lei-4749-1965-08-12.md",
+      "texto": "docs/D04_lei-4749-1965-08-12.txt",
+      "bytes": 2690,
+      "sha256_texto": "a682d8f65fd3bdb1d71472116212af65937b38270183e977758a89872d1a848e",
+      "captura": {
+        "anterior": {
+          "slug": "folha-contabil-2026-10-22",
+          "id": "D04",
+          "baixado_em": "2026-10-22T22:11:01-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "Decreto-Lei nº 5.452 de 01/05/1943",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos-lei/1943/del-5452-1943-05-01.md",
+      "url_final": "https://github.com/ctresb/leis/blob/f3db126e93c366f938bd927bbf184a8fcf64b2ea/federal/decretos-lei/1943/del-5452-1943-05-01.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "f3db126e93c366f938bd927bbf184a8fcf64b2ea",
+      "alertas": [],
+      "baixado_em": "2026-11-21T13:22:10-03:00",
+      "sha256": "7eee0da3b620a17fbd7b34a0eb9adc967c4fb6650d1acba37469d247f88f4600",
+      "arquivo": "docs/D05_del-5452-1943-05-01.md",
+      "texto": "docs/D05_del-5452-1943-05-01.txt",
+      "bytes": 690741,
+      "sha256_texto": "f8f704c5245f9eb179f540b7cf913e2de5a309571d7a8c5ebdae64d3f401e002",
+      "captura": {
+        "anterior": {
+          "slug": "salao-provisao-rescisao",
+          "id": "D03",
+          "baixado_em": "2026-11-21T11:46:34-03:00",
+          "sha256_texto": "f8f704c5245f9eb179f540b7cf913e2de5a309571d7a8c5ebdae64d3f401e002"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "L4749",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/l4749.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/l4749.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T13:23:07-03:00",
+      "sha256": "b87ec53067026f867ec0da84d4070609745bff97417140147fd7edb6fcd17872",
+      "arquivo": "docs/D06_l4749-htm.html",
+      "texto": "docs/D06_l4749-htm.txt",
+      "bytes": 8327,
+      "sha256_texto": "0f12389bef814143aad80ce6ea322a737104f3cf231a1ebf19d31b675cdff1f9",
+      "captura": {
+        "anterior": {
+          "slug": "folha-contabil-2026-10-22",
+          "id": "D08",
+          "baixado_em": "2026-10-22T22:11:35-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "SEM_COMPARACAO"
+      },
+      "alertas": [
+        "há captura de 2026-10-22 (folha-contabil-2026-10-22 D08), mas o texto dela não foi guardado"
+      ]
+    }
+  ],
+  "buscas": [],
+  "slug": "salao-trimestre-adicional-irpj",
+  "pergunta": "Adicional do IRPJ por trimestre/estimativa/ajuste anual (Lei 9.249 art. 3º § 1º; Lei 9.430 arts. 1º, 2º, 3º, 4º, 5º, 6º, 25, 28; Lei 8.981 art. 35) e datas de pagamento do 13º (Lei 4.749) e férias (CLT art. 145) para o simulador mês a mês do salão",
+  "criado": "2026-11-21T13:21:35-03:00"
+}

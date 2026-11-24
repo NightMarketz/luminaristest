@@ -1,0 +1,199 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Mediador - Extrato Convenção Coletiva",
+      "url": "https://mediador.trabalho.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR008673%2F2026",
+      "url_final": "https://mediador.trabalho.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR008673%2F2026",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:45:21-03:00",
+      "sha256": "597dbc67c4f055fec95b3f584750fe21767796f6048b298e36e98922d70c9197",
+      "arquivo": "docs/D01_ResumoVisualizar.html",
+      "texto": "docs/D01_ResumoVisualizar.txt",
+      "bytes": 261147,
+      "sha256_texto": "3d0e597bcf186b7a09bffb28282700e2e54ac219d80318a4dfd0c1648bae2ca3",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Mediador - Extrato Termo Aditivo de Convenção Coletiva",
+      "url": "https://mediador.trabalho.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR060354%2F2026",
+      "url_final": "https://mediador.trabalho.gov.br/sistemas/mediador/Resumo/ResumoVisualizar?NrSolicitacao=MR060354%2F2026",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:45:21-03:00",
+      "sha256": "0f1d4dd502c80faef38fe6fffafbea016710621008f760000b98edae5601e002",
+      "arquivo": "docs/D02_ResumoVisualizar.html",
+      "texto": "docs/D02_ResumoVisualizar.txt",
+      "bytes": 76661,
+      "sha256_texto": "1749b0906855cafdb0e803ee52cbf3a2415e050ade67dc03b0aced385497d02b",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Decreto-Lei nº 5.452 de 01/05/1943",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos-lei/1943/del-5452-1943-05-01.md",
+      "url_final": "https://github.com/ctresb/leis/blob/f3db126e93c366f938bd927bbf184a8fcf64b2ea/federal/decretos-lei/1943/del-5452-1943-05-01.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto.lei:1943-05-01;5452",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "f3db126e93c366f938bd927bbf184a8fcf64b2ea",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:46:19-03:00",
+      "sha256": "7eee0da3b620a17fbd7b34a0eb9adc967c4fb6650d1acba37469d247f88f4600",
+      "arquivo": "docs/D03_del-5452-1943-05-01.md",
+      "texto": "docs/D03_del-5452-1943-05-01.txt",
+      "bytes": 690741,
+      "sha256_texto": "f8f704c5245f9eb179f540b7cf913e2de5a309571d7a8c5ebdae64d3f401e002",
+      "captura": {
+        "anterior": {
+          "slug": "verificacao-parecer-comissao-cartao",
+          "id": "D06",
+          "baixado_em": "2026-11-21T00:58:48-03:00",
+          "sha256_texto": "f8f704c5245f9eb179f540b7cf913e2de5a309571d7a8c5ebdae64d3f401e002"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "Lei nº 8.036 de 11/05/1990",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1990/lei-8036-1990-05-11.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ccdcc898b79c13be701c7841b195174e1898ccf8/federal/leis-ordinarias/1990/lei-8036-1990-05-11.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1990-05-11;8036",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "ccdcc898b79c13be701c7841b195174e1898ccf8",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:46:21-03:00",
+      "sha256": "2306b761562d936ac63fd74447e2def11fe8f71d86910d324d83ea5614f2bd22",
+      "arquivo": "docs/D04_lei-8036-1990-05-11.md",
+      "texto": "docs/D04_lei-8036-1990-05-11.txt",
+      "bytes": 95035,
+      "sha256_texto": "87772ff6aba807b1f712a80d3a7e6daabf33f42cb1876dcae68115f10e3599d5",
+      "captura": {
+        "anterior": {
+          "slug": "brief-pes4-f0-f1",
+          "id": "D04",
+          "baixado_em": "2026-11-02T20:11:40-03:00",
+          "sha256_texto": "87772ff6aba807b1f712a80d3a7e6daabf33f42cb1876dcae68115f10e3599d5"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "Lei nº 8.212 de 24/07/1991",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1991/lei-8212-1991-07-24.md",
+      "url_final": "https://github.com/ctresb/leis/blob/9b29f44078e25755cfaf358456dd815043075924/federal/leis-ordinarias/1991/lei-8212-1991-07-24.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1991-07-24;8212",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "9b29f44078e25755cfaf358456dd815043075924",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:46:22-03:00",
+      "sha256": "6ace89674b04578f1f2ff4e16d4ab89e4a251e1da7b44b288870cc63ec2bb0b7",
+      "arquivo": "docs/D05_lei-8212-1991-07-24.md",
+      "texto": "docs/D05_lei-8212-1991-07-24.txt",
+      "bytes": 161522,
+      "sha256_texto": "d2d2d71eeab276e294c083cacb84fddb1fe87653c06cf93b4f4cb5ccdf0f8582",
+      "captura": {
+        "anterior": {
+          "slug": "brief-pes4-f2",
+          "id": "D04",
+          "baixado_em": "2026-11-05T20:18:58-03:00",
+          "sha256_texto": "d2d2d71eeab276e294c083cacb84fddb1fe87653c06cf93b4f4cb5ccdf0f8582"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "Lei nº 4.090 de 13/07/1962",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1962/lei-4090-1962-07-13.md",
+      "url_final": "https://github.com/ctresb/leis/blob/20775c2cef862b096ea72544740d35e0653b3849/federal/leis-ordinarias/1962/lei-4090-1962-07-13.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1962-07-13;4090",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "20775c2cef862b096ea72544740d35e0653b3849",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:46:24-03:00",
+      "sha256": "07f6d7929f10c8349173691920021a1d37759e1319f14689da0ad541716fa752",
+      "arquivo": "docs/D06_lei-4090-1962-07-13.md",
+      "texto": "docs/D06_lei-4090-1962-07-13.txt",
+      "bytes": 2074,
+      "sha256_texto": "dc0c993c9f575780a02ee0298c7628e073989261ba0808b810e7e0d6dafd7eb1",
+      "captura": {
+        "anterior": {
+          "slug": "folha-contabil-2026-10-22",
+          "id": "D03",
+          "baixado_em": "2026-10-22T22:10:59-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "Súmula nº 203 do TST",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/jurisprudencia/tst/sumulas/sumula-203.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d6c0159be76282be2cdb1dc03c91346ae6dc9b51/jurisprudencia/tst/sumulas/sumula-203.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "versao_texto": "caderno consolidado do tribunal",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "d6c0159be76282be2cdb1dc03c91346ae6dc9b51",
+      "alertas": [
+        "versao_texto = 'caderno consolidado do tribunal' (não é texto compilado: alterações posteriores não aparecem)",
+        "corpo curto ou com aviso (texto integral pode faltar)"
+      ],
+      "baixado_em": "2026-11-21T11:46:25-03:00",
+      "sha256": "030c6e2f17023792b1fb58f0af4e1706a34666ac7ac5ea6606e4eb12b9d07ef7",
+      "arquivo": "docs/D07_sumula-203.md",
+      "texto": "docs/D07_sumula-203.txt",
+      "bytes": 579,
+      "sha256_texto": "8af5720464900ebffe5a245d1327a5ab1a26d289d33e592d225fba5ff6a5679c",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "TRIBUNAL SUPERIOR DO TRABALHO",
+      "url": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "url_final": "https://www.tst.jus.br/documents/10157/63003/Livro-Internet.pdf",
+      "orgao": "TST",
+      "baixado_em": "2026-11-21T11:49:36-03:00",
+      "sha256": "46321b2d8d04840eeeb55417937c5a6657c9df5ac40fed1d44a2bf0989c06e8a",
+      "arquivo": "docs/D08_Livro-Internet-pdf.pdf",
+      "texto": "docs/D08_Livro-Internet-pdf.txt",
+      "bytes": 3496811,
+      "sha256_texto": "b631ff24a3b0bdd8840328ba516e6736030fefb4142e1121177b379c7749d0e0",
+      "captura": {
+        "anterior": {
+          "slug": "salao-provisao-rescisao",
+          "id": "D18",
+          "baixado_em": "2026-11-21T11:48:05-03:00",
+          "sha256_texto": "b631ff24a3b0bdd8840328ba516e6736030fefb4142e1121177b379c7749d0e0"
+        },
+        "tipo": "IGUAL"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "salao-cct-adicional-tempo-servico",
+  "pergunta": "Cláusula 17ª da CCT SP006651/2026 (adicional por tempo de serviço): base, contagem, teto, regra REPIS, efeito do aditivo SP009373/2026 e integração à remuneração (FGTS, 13º, férias)",
+  "criado": "2026-11-21T11:45:20-03:00"
+}

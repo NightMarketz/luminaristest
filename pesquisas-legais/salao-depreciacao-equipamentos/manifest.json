@@ -1,0 +1,404 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Decreto nº 9.580 de 22/11/2018",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "url_final": "https://github.com/ctresb/leis/blob/39239e708b021186cea3d407a5fc7984f2c725f5/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2018-11-22;9580",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "39239e708b021186cea3d407a5fc7984f2c725f5",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T11:46:11-03:00",
+      "sha256": "2c328212c1a8408eaa64072debe9860ecb435a731150296702b0583f00acfe6e",
+      "arquivo": "docs/D01_dec-9580-2018-11-22.md",
+      "texto": "docs/D01_dec-9580-2018-11-22.txt",
+      "bytes": 1624,
+      "sha256_texto": "5934a1d17e8377ff29a590ebde2063d3c373344bb35cbf32cfe4ba5ea2d9a769",
+      "captura": {
+        "anterior": {
+          "slug": "salao-difal-insumo-lucro-real",
+          "id": "D01",
+          "baixado_em": "2026-11-21T11:44:50-03:00",
+          "sha256_texto": "5934a1d17e8377ff29a590ebde2063d3c373344bb35cbf32cfe4ba5ea2d9a769"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 10.637 de 30/12/2002",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2002/lei-10637-2002-12-30.md",
+      "url_final": "https://github.com/ctresb/leis/blob/823c54bedbd9e523afea8ab05e3cd715bd70a18d/federal/leis-ordinarias/2002/lei-10637-2002-12-30.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2002-12-30;10637",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "823c54bedbd9e523afea8ab05e3cd715bd70a18d",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:46:13-03:00",
+      "sha256": "f165259701b4081b0e9f73921c214895bea18d10081ade540630de3ee2a5ad8e",
+      "arquivo": "docs/D02_lei-10637-2002-12-30.md",
+      "texto": "docs/D02_lei-10637-2002-12-30.txt",
+      "bytes": 79264,
+      "sha256_texto": "4b6406f8f06136a5d20657a14d9cdb062f8a2e435797f21b392df48481cda6ad",
+      "captura": {
+        "anterior": {
+          "slug": "insumos-salao-sp",
+          "id": "D03",
+          "baixado_em": "2026-11-20T19:16:57-03:00",
+          "sha256_texto": "4b6406f8f06136a5d20657a14d9cdb062f8a2e435797f21b392df48481cda6ad"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Lei nº 10.833 de 29/12/2003",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2003/lei-10833-2003-12-29.md",
+      "url_final": "https://github.com/ctresb/leis/blob/17688c9637f6a90b7faace6d797aedfa3f6b2ff0/federal/leis-ordinarias/2003/lei-10833-2003-12-29.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2003-12-29;10833",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "17688c9637f6a90b7faace6d797aedfa3f6b2ff0",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:46:15-03:00",
+      "sha256": "fa0d994627d9e1476d625a9f0b588e596181735b922bdcdf9c1c0336fd06b9fc",
+      "arquivo": "docs/D03_lei-10833-2003-12-29.md",
+      "texto": "docs/D03_lei-10833-2003-12-29.txt",
+      "bytes": 176687,
+      "sha256_texto": "1586972bc1932da6422885dc583607b026e0c531b826a781f603c37e57ea5946",
+      "captura": {
+        "anterior": {
+          "slug": "insumos-salao-sp",
+          "id": "D04",
+          "baixado_em": "2026-11-20T19:16:59-03:00",
+          "sha256_texto": "1586972bc1932da6422885dc583607b026e0c531b826a781f603c37e57ea5946"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "Lei Complementar nº 214 de 16/01/2025",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2025/lcp-214-2025-01-16.md",
+      "url_final": "https://github.com/ctresb/leis/blob/571468687b4dc8d8f1a3b1dbd5f958ff85fad0cf/federal/leis-complementares/2025/lcp-214-2025-01-16.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2025-01-16;214",
+      "versao_texto": "republicação/retificação",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "571468687b4dc8d8f1a3b1dbd5f958ff85fad0cf",
+      "alertas": [
+        "versao_texto = 'republicação/retificação' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T11:46:16-03:00",
+      "sha256": "f1f80d77a11f96d8eaf7777d647e577d04abd0fc28420ec22664be7a76ed8851",
+      "arquivo": "docs/D04_lcp-214-2025-01-16.md",
+      "texto": "docs/D04_lcp-214-2025-01-16.txt",
+      "bytes": 1880,
+      "sha256_texto": "69a75533fb995e70146dcbfb8c354916fe2d155b3a163e10d2a110aeaed37e93",
+      "captura": {
+        "anterior": {
+          "slug": "salao-sr27-base-cbs-parceiro-sem-cnpj",
+          "id": "D01",
+          "baixado_em": "2026-11-21T11:44:13-03:00",
+          "sha256_texto": "69a75533fb995e70146dcbfb8c354916fe2d155b3a163e10d2a110aeaed37e93"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "Lei nº 9.249 de 26/12/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d955e7e66c4a7176278ee8ac74513668de7fc989/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-12-26;9249",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "d955e7e66c4a7176278ee8ac74513668de7fc989",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:46:17-03:00",
+      "sha256": "18cb96b64a850a3f9b738da870044230b76a336068e3fae79cb83f10b14d4699",
+      "arquivo": "docs/D05_lei-9249-1995-12-26.md",
+      "texto": "docs/D05_lei-9249-1995-12-26.txt",
+      "bytes": 45124,
+      "sha256_texto": "591b0a142e86869e4b27eca9dc3e0a4dc041842dd7a9c599f4ec0915fffcf555",
+      "captura": {
+        "anterior": {
+          "slug": "triagem-contador-2026-10-30",
+          "id": "D03",
+          "baixado_em": "2026-10-30T02:20:56-03:00",
+          "sha256_texto": "591b0a142e86869e4b27eca9dc3e0a4dc041842dd7a9c599f4ec0915fffcf555"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "D9580",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T11:46:26-03:00",
+      "sha256": "b260447bc230ee6c9ff593b46af14f5c47a1bd62a59c6be987ec2c2acb678f87",
+      "arquivo": "docs/D06_d9580-htm.html",
+      "texto": "docs/D06_d9580-htm.txt",
+      "bytes": 2944670,
+      "sha256_texto": "308eef1ab300503de35e5f95cd330efac875ed092e31da5d7cff109b0421d222",
+      "captura": {
+        "anterior": {
+          "slug": "salao-difal-insumo-lucro-real",
+          "id": "D05",
+          "baixado_em": "2026-11-21T11:45:02-03:00",
+          "sha256_texto": "308eef1ab300503de35e5f95cd330efac875ed092e31da5d7cff109b0421d222"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T11:46:28-03:00",
+      "sha256": "fd6e941f1fd5a442adb1de8845f050d112e7f77318e4235cb1a1c4cfe0bf874f",
+      "arquivo": "docs/D07_lcp214-htm.html",
+      "texto": "docs/D07_lcp214-htm.txt",
+      "bytes": 5403923,
+      "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3",
+      "captura": {
+        "anterior": {
+          "slug": "salao-sr27-base-cbs-parceiro-sem-cnpj",
+          "id": "D05",
+          "baixado_em": "2026-11-21T11:44:26-03:00",
+          "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "Instrução Normativa RFB nº 1700, de 14 de março de 2017",
+      "url": "rfb:81268",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/81268/visao/multivigente",
+      "id_normativo": "rfb:81268",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-21T11:46:29-03:00",
+      "sha256": "0ffa45faae60ed62285940fb442dcb472b5c2529ccb0ae491c20cec9c5446c42",
+      "arquivo": "docs/D08_rfb-81268-multivigente.json",
+      "texto": "docs/D08_rfb-81268-multivigente.txt",
+      "bytes": 2664935,
+      "sha256_texto": "04d3e7f1a6ad70c872df1aad456c05a126734f195cb6364e979908b484857f87",
+      "anexos": [
+        {
+          "nome": "ANEXO I.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51960"
+        },
+        {
+          "nome": "Anexo I.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/52020"
+        },
+        {
+          "nome": "ANEXO II.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51961"
+        },
+        {
+          "nome": "Anexo II.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/52021"
+        },
+        {
+          "nome": "Anexo .html (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43237"
+        },
+        {
+          "nome": "tabela.html",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43557"
+        },
+        {
+          "nome": "Anexo IV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43258"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43259"
+        },
+        {
+          "nome": "Anexo VI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43260"
+        },
+        {
+          "nome": "Anexo VII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43261"
+        },
+        {
+          "nome": "Anexo VIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43262"
+        },
+        {
+          "nome": "Anexo IX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43263"
+        },
+        {
+          "nome": "Anexo X.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51971"
+        },
+        {
+          "nome": "Anexo XI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51972"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "salao-difal-insumo-lucro-real",
+          "id": "D06",
+          "baixado_em": "2026-11-21T11:45:03-03:00",
+          "sha256_texto": "04d3e7f1a6ad70c872df1aad456c05a126734f195cb6364e979908b484857f87"
+        },
+        "tipo": "IGUAL"
+      },
+      "alertas": [
+        "14 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D09",
+      "titulo": "Decreto-Lei nº 1.598 de 26/12/1977",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos-lei/1977/del-1598-1977-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d5fce5484986fb975f9fe9c086c943774d63859f/federal/decretos-lei/1977/del-1598-1977-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto.lei:1977-12-26;1598",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "d5fce5484986fb975f9fe9c086c943774d63859f",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:46:49-03:00",
+      "sha256": "3a4f02e9cca3d46efbd8ed906783149fbf170a2205948643344ca153a5fdf7ed",
+      "arquivo": "docs/D09_del-1598-1977-12-26.md",
+      "texto": "docs/D09_del-1598-1977-12-26.txt",
+      "bytes": 123461,
+      "sha256_texto": "803b0a7c8c4bfd3e688f0e6c6a281ba505ce7c66f27769f019b0b71808442a02",
+      "captura": {
+        "anterior": {
+          "slug": "salao-difal-insumo-lucro-real",
+          "id": "D02",
+          "baixado_em": "2026-11-21T11:44:52-03:00",
+          "sha256_texto": "803b0a7c8c4bfd3e688f0e6c6a281ba505ce7c66f27769f019b0b71808442a02"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D10",
+      "titulo": "D10_43557",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43557",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43557",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:47:12-03:00",
+      "sha256": "d526ac53071a0532cca69ebb366a3ea3371accbf1e6699267fa1de6fcfc01d8d",
+      "arquivo": "docs/D10_43557.html",
+      "texto": "docs/D10_43557.txt",
+      "bytes": 464572,
+      "sha256_texto": "9697eb789e0f4776131f46a74ab8f9c53977cd8c8c6b6da993693ca31380bfdc",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D11",
+      "titulo": "Lei nº 11.774 de 17/09/2008",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2008/lei-11774-2008-09-17.md",
+      "url_final": "https://github.com/ctresb/leis/blob/ac8d27e8c8d08898484c408609dd351404e744f0/federal/leis-ordinarias/2008/lei-11774-2008-09-17.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2008-09-17;11774",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "ac8d27e8c8d08898484c408609dd351404e744f0",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:48:12-03:00",
+      "sha256": "566cf87e8c9714c196b4582283b70da43dad689f7d61b643bdde5d99506dad11",
+      "arquivo": "docs/D11_lei-11774-2008-09-17.md",
+      "texto": "docs/D11_lei-11774-2008-09-17.txt",
+      "bytes": 32695,
+      "sha256_texto": "dc7af98c8b0e93d18920b93711a164555373417493987236cb118538ea8cbad1",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D12",
+      "titulo": "Lei nº 12.546 de 14/12/2011",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2011/lei-12546-2011-12-14.md",
+      "url_final": "https://github.com/ctresb/leis/blob/4fbb5d105ae40e82c1f5afc2d01ca728f47e5e66/federal/leis-ordinarias/2011/lei-12546-2011-12-14.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2011-12-14;12546",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "4fbb5d105ae40e82c1f5afc2d01ca728f47e5e66",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:48:14-03:00",
+      "sha256": "ae4a2cb31093920893030d91f9460b536c801ba7c5400d2a77ce857b8d644ab1",
+      "arquivo": "docs/D12_lei-12546-2011-12-14.md",
+      "texto": "docs/D12_lei-12546-2011-12-14.txt",
+      "bytes": 90388,
+      "sha256_texto": "974f58f6032be4858a7e1125c79ba0375c5e2cced78c3d7af7057e1b849c53c3",
+      "captura": {
+        "anterior": {
+          "slug": "retencoes-inss-cprb-pr-dado",
+          "id": "D01",
+          "baixado_em": "2026-10-29T03:27:37-03:00",
+          "sha256_texto": "974f58f6032be4858a7e1125c79ba0375c5e2cced78c3d7af7057e1b849c53c3"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D13",
+      "titulo": "Lei Complementar nº 123 de 14/12/2006",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2006/lcp-123-2006-12-14.md",
+      "url_final": "https://github.com/ctresb/leis/blob/394a7e97c8604703a3ea6638df61ab1873cecc6e/federal/leis-complementares/2006/lcp-123-2006-12-14.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2006-12-14;123",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "394a7e97c8604703a3ea6638df61ab1873cecc6e",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:49:12-03:00",
+      "sha256": "62ae5f126e5d6a0bf1e149614362aeca97730684067c128251c92cc1f732bdd9",
+      "arquivo": "docs/D13_lcp-123-2006-12-14.md",
+      "texto": "docs/D13_lcp-123-2006-12-14.txt",
+      "bytes": 255709,
+      "sha256_texto": "b88e53d46978e27b2d1087c98d45e295958791aae98a10e0b3a15ad08fe72adc",
+      "captura": {
+        "anterior": {
+          "slug": "salao-sr27-base-cbs-parceiro-sem-cnpj",
+          "id": "D03",
+          "baixado_em": "2026-11-21T11:44:16-03:00",
+          "sha256_texto": "b88e53d46978e27b2d1087c98d45e295958791aae98a10e0b3a15ad08fe72adc"
+        },
+        "tipo": "IGUAL"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "salao-depreciacao-equipamentos",
+  "pergunta": "Depreciação fiscal de cadeiras, lavatórios, secadores, móveis e equipamentos do salão: taxa, bem de pequeno valor, dedutibilidade no Real, crédito de PIS/Cofins, crédito de CBS/IBS em 2027 e efeito no Presumido/Simples",
+  "criado": "2026-11-21T11:43:39-03:00"
+}

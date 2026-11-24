@@ -1,0 +1,306 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Decreto nº 9.580 de 22/11/2018",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "url_final": "https://github.com/ctresb/leis/blob/39239e708b021186cea3d407a5fc7984f2c725f5/federal/decretos/2018/dec-9580-2018-11-22.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2018-11-22;9580",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "39239e708b021186cea3d407a5fc7984f2c725f5",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-21T11:49:33-03:00",
+      "sha256": "2c328212c1a8408eaa64072debe9860ecb435a731150296702b0583f00acfe6e",
+      "arquivo": "docs/D01_dec-9580-2018-11-22.md",
+      "texto": "docs/D01_dec-9580-2018-11-22.txt",
+      "bytes": 1624,
+      "sha256_texto": "5934a1d17e8377ff29a590ebde2063d3c373344bb35cbf32cfe4ba5ea2d9a769",
+      "captura": {
+        "anterior": {
+          "slug": "salao-depreciacao-equipamentos",
+          "id": "D01",
+          "baixado_em": "2026-11-21T11:46:11-03:00",
+          "sha256_texto": "5934a1d17e8377ff29a590ebde2063d3c373344bb35cbf32cfe4ba5ea2d9a769"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 9.249 de 26/12/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "url_final": "https://github.com/ctresb/leis/blob/d955e7e66c4a7176278ee8ac74513668de7fc989/federal/leis-ordinarias/1995/lei-9249-1995-12-26.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-12-26;9249",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "d955e7e66c4a7176278ee8ac74513668de7fc989",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:49:35-03:00",
+      "sha256": "18cb96b64a850a3f9b738da870044230b76a336068e3fae79cb83f10b14d4699",
+      "arquivo": "docs/D02_lei-9249-1995-12-26.md",
+      "texto": "docs/D02_lei-9249-1995-12-26.txt",
+      "bytes": 45124,
+      "sha256_texto": "591b0a142e86869e4b27eca9dc3e0a4dc041842dd7a9c599f4ec0915fffcf555",
+      "captura": {
+        "anterior": {
+          "slug": "salao-depreciacao-equipamentos",
+          "id": "D05",
+          "baixado_em": "2026-11-21T11:46:17-03:00",
+          "sha256_texto": "591b0a142e86869e4b27eca9dc3e0a4dc041842dd7a9c599f4ec0915fffcf555"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Lei nº 9.065 de 20/06/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-9065-1995-06-20.md",
+      "url_final": "https://github.com/ctresb/leis/blob/2fe7d2c98c7d8bf2fc725fb77b42405b02a0cb5c/federal/leis-ordinarias/1995/lei-9065-1995-06-20.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-06-20;9065",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "2fe7d2c98c7d8bf2fc725fb77b42405b02a0cb5c",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:49:36-03:00",
+      "sha256": "5a68cf95708d0bf02d9032181a605412384d0fa2440a9629f2fe59e06f4a2fac",
+      "arquivo": "docs/D03_lei-9065-1995-06-20.md",
+      "texto": "docs/D03_lei-9065-1995-06-20.txt",
+      "bytes": 25144,
+      "sha256_texto": "68b70435e6811a8a7af8068ff33874034dad797b49de4de02b6a9aee28a4eb44",
+      "captura": {
+        "anterior": {
+          "slug": "eficiencia-fiscal-praticas",
+          "id": "D15",
+          "baixado_em": "2026-10-20T11:45:41-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "Lei nº 8.981 de 20/01/1995",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1995/lei-8981-1995-01-20.md",
+      "url_final": "https://github.com/ctresb/leis/blob/8bf2e5070525043cb82294b9de8630a4aea5e53d/federal/leis-ordinarias/1995/lei-8981-1995-01-20.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1995-01-20;8981",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "8bf2e5070525043cb82294b9de8630a4aea5e53d",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:49:38-03:00",
+      "sha256": "b567b47ee6be147deb0aeea63f5cc92d7c93652f40fae948125979dac84680e7",
+      "arquivo": "docs/D04_lei-8981-1995-01-20.md",
+      "texto": "docs/D04_lei-8981-1995-01-20.txt",
+      "bytes": 86250,
+      "sha256_texto": "357afab8cd203455b5ade0fd675f9b9cf2a5ae29511ba1d2d036471a62aa6a8a",
+      "captura": {
+        "anterior": {
+          "slug": "salao-difal-insumo-lucro-real",
+          "id": "D03",
+          "baixado_em": "2026-11-21T11:44:53-03:00",
+          "sha256_texto": "357afab8cd203455b5ade0fd675f9b9cf2a5ae29511ba1d2d036471a62aa6a8a"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "Lei nº 7.689 de 15/12/1988",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/1988/lei-7689-1988-12-15.md",
+      "url_final": "https://github.com/ctresb/leis/blob/109b06481773474599dbf7e4d73a01309b658007/federal/leis-ordinarias/1988/lei-7689-1988-12-15.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1988-12-15;7689",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "109b06481773474599dbf7e4d73a01309b658007",
+      "alertas": [],
+      "baixado_em": "2026-11-21T11:49:38-03:00",
+      "sha256": "7c57b2c916e9d1627edd79bf85758f111d036cbf52c0964fb2527090ac0ed22b",
+      "arquivo": "docs/D05_lei-7689-1988-12-15.md",
+      "texto": "docs/D05_lei-7689-1988-12-15.txt",
+      "bytes": 11412,
+      "sha256_texto": "523cb3bccb3886bb4c8b1dc26ea08ada89bdc3677fc919c8f4558400ba28a041",
+      "captura": {
+        "anterior": {
+          "slug": "salao-difal-insumo-lucro-real",
+          "id": "D04",
+          "baixado_em": "2026-11-21T11:44:55-03:00",
+          "sha256_texto": "523cb3bccb3886bb4c8b1dc26ea08ada89bdc3677fc919c8f4558400ba28a041"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "D9580",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9580.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T11:49:42-03:00",
+      "sha256": "71818ba603307a0dd46052694cc88b14a78457d9542894ae4c4e4ed86aff09d2",
+      "arquivo": "docs/D06_d9580-htm.html",
+      "texto": "docs/D06_d9580-htm.txt",
+      "bytes": 2944670,
+      "sha256_texto": "308eef1ab300503de35e5f95cd330efac875ed092e31da5d7cff109b0421d222",
+      "captura": {
+        "anterior": {
+          "slug": "salao-depreciacao-equipamentos",
+          "id": "D06",
+          "baixado_em": "2026-11-21T11:46:26-03:00",
+          "sha256_texto": "308eef1ab300503de35e5f95cd330efac875ed092e31da5d7cff109b0421d222"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "Instrução Normativa RFB nº 1700, de 14 de março de 2017",
+      "url": "rfb:81268",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/visao/multivigente",
+      "orgao": "Receita Federal - Sistema Normas (API)",
+      "fonte_oficial": "https://normasinternet2.receita.fazenda.gov.br/#/consulta/externa/81268/visao/multivigente",
+      "id_normativo": "rfb:81268",
+      "visao": "multivigente",
+      "baixado_em": "2026-11-21T11:49:42-03:00",
+      "sha256": "0ffa45faae60ed62285940fb442dcb472b5c2529ccb0ae491c20cec9c5446c42",
+      "arquivo": "docs/D07_rfb-81268-multivigente.json",
+      "texto": "docs/D07_rfb-81268-multivigente.txt",
+      "bytes": 2664935,
+      "sha256_texto": "04d3e7f1a6ad70c872df1aad456c05a126734f195cb6364e979908b484857f87",
+      "anexos": [
+        {
+          "nome": "ANEXO I.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51960"
+        },
+        {
+          "nome": "Anexo I.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/52020"
+        },
+        {
+          "nome": "ANEXO II.pdf (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51961"
+        },
+        {
+          "nome": "Anexo II.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/52021"
+        },
+        {
+          "nome": "Anexo .html (versão substituída)",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43237"
+        },
+        {
+          "nome": "tabela.html",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43557"
+        },
+        {
+          "nome": "Anexo IV.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43258"
+        },
+        {
+          "nome": "Anexo V.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43259"
+        },
+        {
+          "nome": "Anexo VI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43260"
+        },
+        {
+          "nome": "Anexo VII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43261"
+        },
+        {
+          "nome": "Anexo VIII.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43262"
+        },
+        {
+          "nome": "Anexo IX.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/43263"
+        },
+        {
+          "nome": "Anexo X.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51971"
+        },
+        {
+          "nome": "Anexo XI.pdf",
+          "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/51972"
+        }
+      ],
+      "captura": {
+        "anterior": {
+          "slug": "salao-depreciacao-equipamentos",
+          "id": "D08",
+          "baixado_em": "2026-11-21T11:46:29-03:00",
+          "sha256_texto": "04d3e7f1a6ad70c872df1aad456c05a126734f195cb6364e979908b484857f87"
+        },
+        "tipo": "IGUAL"
+      },
+      "alertas": [
+        "14 anexos binários não baixados (o texto integral pode estar neles): as URLs estão no fim do texto e no campo 'anexos'; baixe com 'legal.py baixar' os que a pesquisa citar"
+      ]
+    },
+    {
+      "id": "D08",
+      "titulo": "Anexo I",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/52020",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/52020",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:49:44-03:00",
+      "sha256": "08da13aec3b718f28d8a72c88de45528c9afcd6b0ef341a8ece47b7179a4cb0d",
+      "arquivo": "docs/D08_52020.pdf",
+      "texto": "docs/D08_52020.txt",
+      "bytes": 238894,
+      "sha256_texto": "d8c86748a65075118b13278fe55da5178505d19e69c4662e89aa61dfadc0dc4b",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D09",
+      "titulo": "Anexo II",
+      "url": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/52021",
+      "url_final": "https://normasinternet2.receita.fazenda.gov.br/api/consulta-externa/ato/81268/anexo/52021",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T11:49:45-03:00",
+      "sha256": "dd5bf2617b90f1d262f1a2ea5087555a7802510a7aefe21f796980f396b89430",
+      "arquivo": "docs/D09_52021.pdf",
+      "texto": "docs/D09_52021.txt",
+      "bytes": 184146,
+      "sha256_texto": "f0fb630ed1dd1858ffb325afa1cfe2efa9e71d2d7dfb56bf06d8a98cd4773198",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D10",
+      "titulo": "L9249",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/l9249.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/l9249.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T11:51:11-03:00",
+      "sha256": "4744fc4430fcfd80d5ec29e93e13c43074973d627c59f2f26ea481f8bead7133",
+      "arquivo": "docs/D10_l9249-htm.html",
+      "texto": "docs/D10_l9249-htm.txt",
+      "bytes": 117246,
+      "sha256_texto": "840b4d0e5139b95614e39909d196311fdee61d076bf638ba46d557152aff503d",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "salao-lucro-real-adicoes-exclusoes",
+  "pergunta": "Adições e exclusões do LALUR/LACS de um salão de beleza no Lucro Real, inclusive provisão de rescisão por rotatividade",
+  "criado": "2026-11-21T11:43:40-03:00"
+}
