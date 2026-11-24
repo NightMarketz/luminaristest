@@ -72,6 +72,9 @@ export type OutboundPolicy = Pick<OutboundOptions, 'timeoutMs' | 'retry' | 'dead
  * SEFAZ — mude só aqui.
  */
 const RETRY_ONCE: OutboundRetryPolicy = { maxAttempts: 2 };
+/** SEFAZ SOAP: prazo TOTAL de cada chamada (conexão + resposta), no `SefazSoapClient` (não usa `outboundFetch`). PROVISÓRIO
+ *  (linha 11 da tabela): sem SLA oficial nem medida por UF — curto ⇒ contingência AUTO cedo + órfã; longo ⇒ balcão preso. */
+export const SEFAZ_CALL_TOTAL_MS = 30_000;
 export const MP_ORDER_DEADLINE_MS = 35_000; // 2 × 15 s + 5 s — provisório (linhas 1/2/4 da tabela)
 export const MP_REPORT_DEADLINE_MS = 125_000; // 2 × 60 s + 5 s
 export const BCB_PTAX_DEADLINE_MS = 25_000; // 2 × 10 s + 5 s

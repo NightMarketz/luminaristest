@@ -1,5 +1,6 @@
 import { request } from 'node:https';
 import { logger } from '../../../../lib/logger';
+import { SEFAZ_CALL_TOTAL_MS } from '../../../../lib/outboundHttp';
 import { DfeTransporteError } from '../DfeEmissorPort';
 import type { SefazServico } from './sefazConfig';
 import type { SefazTransporte } from './SefazTransporte';
@@ -45,8 +46,12 @@ export class SefazTransporteError extends DfeTransporteError {
 
 export interface SefazSoapOptions {
   transporte: TransporteTls;
+  /** Inatividade da conexão/socket (reinicia a cada byte). */
   connectTimeoutMs?: number;
+  /** Inatividade da resposta (reinicia a cada byte). */
   responseTimeoutMs?: number;
+  /** Prazo TOTAL da chamada (conexão + resposta, sem reiniciar). Padrão `SEFAZ_CALL_TOTAL_MS` (30 s; dono, 24/11/2026). */
+  totalTimeoutMs?: number;
 }
 
 export const envelopeSoap = (servico: SefazServico, xml: string): string =>
@@ -66,7 +71,8 @@ export class SefazSoapClient implements SefazTransporte {
   async call(url: string, servico: SefazServico, xml: string): Promise<string> {
     const body = envelopeSoap(servico, xml);
     const startedAt = Date.now();
-    const { transporte, connectTimeoutMs = 10_000, responseTimeoutMs = 30_000 } = this.opts;
+    const { transporte, connectTimeoutMs = 10_000, responseTimeoutMs = 30_000, totalTimeoutMs = SEFAZ_CALL_TOTAL_MS } = this.opts;
+    let relogio: NodeJS.Timeout | undefined;
     try {
       const resposta = await new Promise<{ status: number; body: string }>((resolve, reject) => {
         const req = request(
@@ -92,6 +98,11 @@ export class SefazSoapClient implements SefazTransporte {
         );
         req.on('timeout', () => req.destroy(new SefazTransporteError('sefaz_timeout', 'conexão')));
         req.on('error', reject);
+        // Os dois timeouts acima são de INATIVIDADE (resposta em conta-gotas não os dispara): o prazo total corta de vez.
+        relogio = setTimeout(() => {
+          reject(new SefazTransporteError('sefaz_timeout', 'total'));
+          req.destroy();
+        }, totalTimeoutMs);
         req.end(body);
       });
       logger.event(resposta.status < 400 ? 'info' : 'warn', 'integration.call', 'outbound call', {
@@ -113,6 +124,8 @@ export class SefazSoapClient implements SefazTransporte {
       });
       const code = (error as NodeJS.ErrnoException).code ?? '';
       throw new SefazTransporteError(/CERT|SSL|TLS|EPROTO|ECONNRESET/i.test(code + String(error)) ? 'sefaz_tls' : 'sefaz_http', code || String(error));
+    } finally {
+      clearTimeout(relogio);
     }
   }
 }
