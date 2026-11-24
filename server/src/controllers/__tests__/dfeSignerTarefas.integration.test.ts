@@ -86,6 +86,28 @@ describe('X10a EMENDA-4 AL-PR-3 — fila do assinador local pela HTTP', () => {
     expect(retomadas).toHaveLength(2); // assinador no ar: o poll seguinte não retoma de novo
   });
 
+  it('AL-14 (queda curta): tarefa sem resposta com o assinador DENTRO dos 90 s ⇒ o próximo poll retoma, uma vez só (nunca fica para o reenviar manual)', async () => {
+    const ASSINAR = { tipo: 'ASSINAR' as const, algoritmo: 'rsa-sha1' as const, digestB64: 'aGFzaA==', conteudo: CONTEUDO };
+    await poll(); // o último poll é de agora: bem abaixo dos 90 s, então o gatilho "voltou depois de 90 s" não existe
+    retomadas.length = 0;
+    // (1) o caixa não pegou a tarefa (fora, sem poll aberto): vence como NAO_ENTREGUE
+    expect(await (await fila()).executar(ASSINAR, 50)).toBe('NAO_ENTREGUE');
+    expect(retomadas).toHaveLength(0); // ainda não: o assinador só "volta" quando o próximo poll chega
+    await poll();
+    await new Promise((r) => setImmediate(r));
+    expect(retomadas.sort()).toEqual([centro, filial].sort());
+    await poll();
+    expect(retomadas).toHaveLength(2); // consumida: o poll seguinte não retoma de novo
+    // (2) o caixa pegou a tarefa e não respondeu (janela do PIN aberta): vence como ENTREGUE
+    retomadas.length = 0;
+    const entregue = (await fila()).executar(ASSINAR, 300);
+    expect(DfeSignerTarefasRespostaSchema.parse((await poll({ espera: '5' })).body).tarefas).toHaveLength(1);
+    expect(await entregue).toBe('ENTREGUE');
+    await poll();
+    await new Promise((r) => setImmediate(r));
+    expect(retomadas.sort()).toEqual([centro, filial].sort());
+  });
+
   it('AL-12: o poll é o heartbeat — a view fica online, com a versão e o token; L-AL-6: outro certificado = sem token', async () => {
     await poll({ versaoAssinador: '1.2.3' });
     let v = DfeSignerViewSchema.parse((await request(app).get(`/api/accounting/dfe-assinador/${centro}`).set(authHeader(dono))).body.data);

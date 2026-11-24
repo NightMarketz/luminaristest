@@ -65,7 +65,9 @@ function envMs(raw: string | undefined, padrao: number): number {
  *   dispositivo: cria a tarefa, acorda o long-poll e espera o resultado até o prazo; sem resultado, a tarefa vence.
  * - `poll` (GET /v1/tarefas): o poll é o heartbeat (AL-12; L-AL-6: certificado diferente do pareamento = sem token);
  *   entrega as tarefas na hora ou segura até `espera` s e devolve vazio (204). O primeiro poll depois de uma queda
- *   dispara a retomada das `PENDING_SIGNATURE` das unidades do dispositivo (AL-14), uma vez só (update condicional).
+ *   dispara a retomada das `PENDING_SIGNATURE` das unidades do dispositivo (AL-14), uma vez só (update condicional). O
+ *   poll que segue uma tarefa vencida sem resposta também retoma, uma vez só (marca em memória): a queda curta, abaixo
+ *   dos 90 s do heartbeat, não pode deixar a nota para o `reenviar` manual.
  * - `registrarResultado` (POST /v1/tarefas/:id/resultado): idempotente por taskId (mesmo corpo ⇒ 200 sem efeito; corpo
  *   diferente ⇒ 409); tarefa vencida ⇒ 409.
  * - **O resultado nunca é gravado** (o ASSINAR traz o certificado, com o CPF do responsável — L-AL-1): vai ao chamador
@@ -77,6 +79,13 @@ export class DfeSignerTaskService {
   private readonly env: NodeJS.ProcessEnv;
   private readonly esperandoResultado = new Map<string, Resolver>();
   private readonly esperandoTarefa = new Map<string, Set<() => void>>();
+  /**
+   * AL-14 — dispositivos cuja tarefa venceu sem resposta (a nota foi para `PENDING_SIGNATURE`): o próximo poll retoma, uma
+   * vez só. É o evento que criou a pendência, não o relógio do heartbeat: a nota pende com 20 s de silêncio e o
+   * `lastSeenAt` só denuncia a queda depois de 90 s, então um caixa que volta entre os dois nunca seria "voltou".
+   * Em memória, como `esperandoResultado` (uma instância por cliente, ADR-M2).
+   */
+  private readonly retomarNoProximoPoll = new Set<string>();
   private onRetomada: ((scope: AccountingScope) => Promise<unknown>) | null = null;
 
   constructor(
@@ -133,7 +142,9 @@ export class DfeSignerTaskService {
       { versaoAssinador: hb.versaoAssinador, tokenPresente, at: now },
       new Date(now.getTime() - DFE_SIGNER_ONLINE_MS),
     );
-    if (voltou && tokenPresente) this.retomar(device);
+    // `delete` devolve true uma vez só por marca (um poll só consome). Sem token a marca fica: quando ele volta, `voltou` cobre.
+    const pendenciaAberta = tokenPresente && this.retomarNoProximoPoll.delete(device.id);
+    if ((voltou || pendenciaAberta) && tokenPresente) this.retomar(device);
 
     const fim = now.getTime() + esperaS * 1000;
     for (;;) {
@@ -222,6 +233,8 @@ export class DfeSignerTaskService {
     if (r) return r;
     // Sem resultado no prazo. Ainda `PENDING` ⇒ ninguém a pega depois (a expiração é atômica com a entrega). Já entregue ⇒
     // o caixa pode estar executando: `ENTREGUE`, que o adaptador trata como timeout da SEFAZ (AL-9), nunca como "não saiu".
+    // Nos dois casos a nota vai para `PENDING_SIGNATURE` (AL-13/F-AL-6): o próximo poll deste dispositivo a retoma (AL-14).
+    this.retomarNoProximoPoll.add(device.id);
     if (await this.repo.expirarPendente(task.id)) return 'NAO_ENTREGUE';
     await this.repo.expire(task.id);
     return 'ENTREGUE';
