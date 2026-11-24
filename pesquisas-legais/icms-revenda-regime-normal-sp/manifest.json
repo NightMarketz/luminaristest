@@ -1,0 +1,554 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lei Complementar nº 87 de 13/09/1996",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/1996/lcp-87-1996-09-13.md",
+      "url_final": "https://github.com/ctresb/leis/blob/0ee2fd30e01d0fb9cb3fb42d7ede8de312ea77e4/federal/leis-complementares/1996/lcp-87-1996-09-13.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:1996-09-13;87",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "0ee2fd30e01d0fb9cb3fb42d7ede8de312ea77e4",
+      "alertas": [],
+      "baixado_em": "2026-11-21T16:57:21-03:00",
+      "sha256": "9467cc843bf7020babf5400b56dbaadd1b7ee2464dc756c2ba1462afc72f43b8",
+      "arquivo": "docs/D01_lcp-87-1996-09-13.md",
+      "texto": "docs/D01_lcp-87-1996-09-13.txt",
+      "bytes": 66997,
+      "sha256_texto": "3fc5c35d96927b9d3814823c70230a71f45fb2f602502aa6d85d104afaa366e2",
+      "captura": {
+        "anterior": {
+          "slug": "brief-eficiencia-fiscal",
+          "id": "D04",
+          "baixado_em": "2026-10-22T13:20:40-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "Lei nº 6.374, de 01/03/1989",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/estaduais/SP/leis-ordinarias/1989/lei-6374-1989-03-01-id25030.md",
+      "url_final": "https://github.com/ctresb/leis/blob/a04d818af03dd02ec234f777e89fc809126702e5/estaduais/SP/leis-ordinarias/1989/lei-6374-1989-03-01-id25030.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://www.al.sp.gov.br/norma/25030",
+      "versao_texto": "atualizada",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "a04d818af03dd02ec234f777e89fc809126702e5",
+      "alertas": [
+        "versao_texto = 'atualizada' (não é texto compilado: alterações posteriores não aparecem)",
+        "consta como revogada (situacao='Sem revogação expressa', revogada=false)"
+      ],
+      "baixado_em": "2026-11-21T16:57:23-03:00",
+      "sha256": "419917e3106054a23498fa31fdd8030acc29517f69b657b4d108999b2cded724",
+      "arquivo": "docs/D02_lei-6374-1989-03-01-id25030.md",
+      "texto": "docs/D02_lei-6374-1989-03-01-id25030.txt",
+      "bytes": 349593,
+      "sha256_texto": "237c5f3815481be162678a960884a35c980bc14d1364456a0bd515c4c1075f8b",
+      "captura": {
+        "anterior": {
+          "slug": "regime-fora-simples-salao",
+          "id": "D13",
+          "baixado_em": "2026-11-21T08:44:35-03:00",
+          "sha256_texto": "237c5f3815481be162678a960884a35c980bc14d1364456a0bd515c4c1075f8b"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "RICMS - Artigo 52 a 56 C\r\n\t\t\t\t\t\t\r\nSEÇÃO II - DA ALÍQUOTA",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art052.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art052.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:02-03:00",
+      "sha256": "88ec2c2f334e5c8bfdbe1ea20b1589130d0500eb56ccdbdb34e2a80b76f77d9f",
+      "arquivo": "docs/D03_art052-aspx.html",
+      "texto": "docs/D03_art052-aspx.txt",
+      "bytes": 213931,
+      "sha256_texto": "262d22ca9e1ddd4e4d84faac7f6a07be33abab15cedaa4b2ac9bf96307758dda",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "RICMS - Artigo 59 a 60\r\n\t\t\t\t\t\t\r\nCapítulo IV - DA NÃO-CUMULATIVIDADE",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art059.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art059.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:03-03:00",
+      "sha256": "b9f843628fe4a70799274ce2b68fecac6a1f78c43522dc34cbbd87734ce7fa25",
+      "arquivo": "docs/D04_art059-aspx.html",
+      "texto": "docs/D04_art059-aspx.txt",
+      "bytes": 155195,
+      "sha256_texto": "e723b4488dd45ce8179c9ef53cd7530176a4864a016e19246fe52b496e5268b9",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "RICMS - Artigo 61\r\n\t\t\t\t\t\t\r\nSEÇÃO II - DO CRÉDITO DO IMPOSTO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art061.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art061.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:03-03:00",
+      "sha256": "a3e8cc6e4921633b654f2050c3211a74913b428f054e6f3f309b9cfc38875972",
+      "arquivo": "docs/D05_art061-aspx.html",
+      "texto": "docs/D05_art061-aspx.txt",
+      "bytes": 164779,
+      "sha256_texto": "975979353fb408c5d4b0574b72198e25cf01fdb87d360a9716bbd68916b2ef22",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "RICMS - Artigo 66\r\n\t\t\t\t\t\t\r\nSUBSEÇÃO II - DA VEDAÇÃO DO CRÉDITO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art066.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art066.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:04-03:00",
+      "sha256": "bd59e2acccad2467fe967c29ef4b69a8984451cc54f9de3f2dc16867f9ca35da",
+      "arquivo": "docs/D06_art066-aspx.html",
+      "texto": "docs/D06_art066-aspx.txt",
+      "bytes": 155192,
+      "sha256_texto": "4f04279dd1642f3a18ea0ee8963eb35b86febd690e2a73a2c24f64384fb59be8",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "RICMS - Artigo 85 a 86\r\n\t\t\t\t\t\t\r\nCapítulo VI - DA APURAÇÃO DO IMPOSTO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art085.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art085.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:04-03:00",
+      "sha256": "ee59ed8548ac8cf631af9c7bdaa6a14005677c1cefda06e044ad1195ec6c3b4f",
+      "arquivo": "docs/D07_art085-aspx.html",
+      "texto": "docs/D07_art085-aspx.txt",
+      "bytes": 150667,
+      "sha256_texto": "5c417517468e402461b6d95c56450569776cf8941eb6f347b719143abfd993d2",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "RICMS - Artigo 87\r\n\t\t\t\t\t\t\r\nSEÇÃO II - DO REGIME PERIÓDICO DE APURAÇÃO E DO REGIME DE ESTIMATIVA",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art087.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art087.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:04-03:00",
+      "sha256": "b373c2ccf9dc00e18757dbe63734e8a9d21b1903076325c6bb2d2729724f83f7",
+      "arquivo": "docs/D08_art087-aspx.html",
+      "texto": "docs/D08_art087-aspx.txt",
+      "bytes": 152768,
+      "sha256_texto": "574d021a6ecd41072cb9a4dc88895cb834c7e08feefbd70fc7dcdd3a4a936a17",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D09",
+      "titulo": "RICMS - Artigo 115\r\n\t\t\t\t\t\t\r\nSEÇÃO III - DO PAGAMENTO POR GUIA DE RECOLHIMENTOS ESPECIAIS",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art115.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art115.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:05-03:00",
+      "sha256": "b5458bf303f580e438bc0ce16f3b3c7a291901fc9eddc6e0d39c5e777d14d233",
+      "arquivo": "docs/D09_art115-aspx.html",
+      "texto": "docs/D09_art115-aspx.txt",
+      "bytes": 178804,
+      "sha256_texto": "eb1af7510c401038031ea1cd176862136c6eee90e6822d37d21e7b88f75f06df",
+      "captura": {
+        "anterior": {
+          "slug": "insumos-salao-sp",
+          "id": "D20",
+          "baixado_em": "2026-11-20T19:19:30-03:00",
+          "sha256_texto": "eb1af7510c401038031ea1cd176862136c6eee90e6822d37d21e7b88f75f06df"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D10",
+      "titulo": "RICMS - Artigo 268\r\n\t\t\t\t\t\t\r\nSUBSEÇÃO II - DO IMPOSTO RETIDO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art268.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art268.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:06-03:00",
+      "sha256": "430d6aab1b08dbcf39114d54476059e32045e458bdfe2df52daa69e67c4f58fd",
+      "arquivo": "docs/D10_art268-aspx.html",
+      "texto": "docs/D10_art268-aspx.txt",
+      "bytes": 155835,
+      "sha256_texto": "a1c3afbc90e9c7621053859562c47e1eb7d55921931699b4036d75a52139e238",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D11",
+      "titulo": "RICMS - Artigo 112 a 114\r\n\t\t\t\t\t\t\r\nSEÇÃO II - DOS PRAZOS PARA PAGAMENTO NO REGIME PERIÓDICO DE APURAÇÃO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art112.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art112.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:30-03:00",
+      "sha256": "77faa2fb0f6e4a97fe9773a1bb09729ad2e5f88e0f68b63e654c914043ed6220",
+      "arquivo": "docs/D11_art112-aspx.html",
+      "texto": "docs/D11_art112-aspx.txt",
+      "bytes": 151106,
+      "sha256_texto": "b27fdd183b9ed1a5a95925e43f8a4fd602a97f6e95b5bea691288a7ea063eaa4",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D12",
+      "titulo": "RICMS - Artigo 269 a 272\r\n\t\t\t\t\t\t\r\nSUBSEÇÃO III - DO RESSARCIMENTO DO IMPOSTO RETIDO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art269.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art269.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:31-03:00",
+      "sha256": "5d4893e31456b828fa900cc4ef7bba32f6a042f90d4110003183d0e06ef37928",
+      "arquivo": "docs/D12_art269-aspx.html",
+      "texto": "docs/D12_art269-aspx.txt",
+      "bytes": 167447,
+      "sha256_texto": "054be9c298ac5d560e39c32f0edc1c750f5fa3742d001abee5671eddb48a02d9",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D13",
+      "titulo": "RICMS - Artigo 273\r\n\t\t\t\t\t\t\r\nSUBSEÇÃO IV - DA EMISSÃO DE DOCUMENTOS FISCAIS PELO SUJEITO PASSIVO POR",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art273.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art273.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:31-03:00",
+      "sha256": "71a76b919c2bed5594f3ab510f03b3659cc0b62cd641ad09dd288ef0592744b1",
+      "arquivo": "docs/D13_art273-aspx.html",
+      "texto": "docs/D13_art273-aspx.txt",
+      "bytes": 154403,
+      "sha256_texto": "efb7f27f66eb03920ee3821d58d763db01ac53d58da99457e05414a1ad5c8a97",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D14",
+      "titulo": "RICMS - Artigo 274\r\n\t\t\t\t\t\t\r\nSUBSEÇÃO V - DA EMISSÃO DE DOCUMENTOS FISCAIS PELO CONTRIBUINTE",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art274.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art274.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:31-03:00",
+      "sha256": "8451d2ec1a60fbb2e1c04474066066700660932c0a47ce0f76f5a6482cd83891",
+      "arquivo": "docs/D14_art274-aspx.html",
+      "texto": "docs/D14_art274-aspx.txt",
+      "bytes": 152565,
+      "sha256_texto": "c2282585b6a2f1b6dbeff5f8e453d8df2679cc8c39e1e21f938ec0e5ce9ac258",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D15",
+      "titulo": "RICMS - Artigo 116 a 118\r\n\t\t\t\t\t\t\r\nSEÇÃO IV - OUTRAS FORMAS DE PAGAMENTO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art116.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art116.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:32-03:00",
+      "sha256": "b3b692e9aae915696652159433c110502a79beff182f6ab9afb49f0f985e729c",
+      "arquivo": "docs/D15_art116-aspx.html",
+      "texto": "docs/D15_art116-aspx.txt",
+      "bytes": 161527,
+      "sha256_texto": "f61e7d5c979860458fc9c78f369bc340ebd40541dd7c19aa24291bd3ae545269",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D16",
+      "titulo": "Portaria CAT 68 de 2019",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/Portaria-CAT-68-de-2019.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/Portaria-CAT-68-de-2019.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T16:58:33-03:00",
+      "sha256": "9c150f4c7cb5e8b1703b6654b4696968850e0fb84d983183a8ada547bb146acb",
+      "arquivo": "docs/D16_Portaria-CAT-68-de-2019-aspx.html",
+      "texto": "docs/D16_Portaria-CAT-68-de-2019-aspx.txt",
+      "bytes": 942725,
+      "sha256_texto": "8b236d5d6c77fe9d035fce52516b895998b5551f40f8d91cdee2eed612830382",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D17",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T16:59:14-03:00",
+      "sha256": "dd969c5d1cd635eed6fd031fecc73c0f9dcccf492cc7db75d575bed09e82b9d3",
+      "arquivo": "docs/D17_lcp214-htm.html",
+      "texto": "docs/D17_lcp214-htm.txt",
+      "bytes": 5403923,
+      "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3",
+      "captura": {
+        "anterior": {
+          "slug": "insumos-salao-sp",
+          "id": "D09",
+          "baixado_em": "2026-11-20T19:17:15-03:00",
+          "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D18",
+      "titulo": "Emenda Constitucional nº 132",
+      "url": "https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc132.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc132.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T16:59:14-03:00",
+      "sha256": "de9bfe55b1ef8232573c166488f3944aae666e6f835dd041c8c25bf9d283f19f",
+      "arquivo": "docs/D18_emc132-htm.html",
+      "texto": "docs/D18_emc132-htm.txt",
+      "bytes": 510399,
+      "sha256_texto": "12ce4dcbd54548285f84a2553053bcc02b89a317ab41e7cf1657f1fc4ae71070",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D19",
+      "titulo": "Lei Complementar nº 123 de 14/12/2006",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-complementares/2006/lcp-123-2006-12-14.md",
+      "url_final": "https://github.com/ctresb/leis/blob/394a7e97c8604703a3ea6638df61ab1873cecc6e/federal/leis-complementares/2006/lcp-123-2006-12-14.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2006-12-14;123",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "394a7e97c8604703a3ea6638df61ab1873cecc6e",
+      "alertas": [],
+      "baixado_em": "2026-11-21T17:01:10-03:00",
+      "sha256": "62ae5f126e5d6a0bf1e149614362aeca97730684067c128251c92cc1f732bdd9",
+      "arquivo": "docs/D19_lcp-123-2006-12-14.md",
+      "texto": "docs/D19_lcp-123-2006-12-14.txt",
+      "bytes": 255709,
+      "sha256_texto": "b88e53d46978e27b2d1087c98d45e295958791aae98a10e0b3a15ad08fe72adc",
+      "captura": {
+        "anterior": {
+          "slug": "simulador-salao-monofasico-dsr",
+          "id": "D01",
+          "baixado_em": "2026-11-21T10:42:01-03:00",
+          "sha256_texto": "b88e53d46978e27b2d1087c98d45e295958791aae98a10e0b3a15ad08fe72adc"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D20",
+      "titulo": "RICMS - Anexo IV - Artigo 1º ao 3º\r\n\t\t\t\t\t\t\r\nANEXO IV - PRAZOS DE RECOLHIMENTO DO IMPOSTO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/l6an4.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/l6an4.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T17:01:53-03:00",
+      "sha256": "ea36f04ff5519e6c34d9ea5dbcc1f3334a9df5f6e8e43df320762b03c949738f",
+      "arquivo": "docs/D20_l6an4-aspx.html",
+      "texto": "docs/D20_l6an4-aspx.txt",
+      "bytes": 204107,
+      "sha256_texto": "66a50c8286938616230f679171b92fadde299d6de369a85974492ca5b7606a55",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D21",
+      "titulo": "RICMS - Artigo 37 a 51\r\n\t\t\t\t\t\t\r\nCAPÍTULO II - DO CÁLCULO DO IMPOSTO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art037.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art037.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T17:04:35-03:00",
+      "sha256": "269a3c4b83745bf3d4272ba1a8ab002a28e57f786223618d661e73a2e5ffddd0",
+      "arquivo": "docs/D21_art037-aspx.html",
+      "texto": "docs/D21_art037-aspx.txt",
+      "bytes": 194210,
+      "sha256_texto": "6854628fe0447d208c3765b102f1ab587765617649e68d642892347b0c3c8172",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D22",
+      "titulo": "RICMS - Artigo 260\r\n\t\t\t\t\t\t\r\nLIVRO II - DA SUJEIÇÃO PASSIVA POR SUBSTITUIÇÃO, DA SUSPENSÃO, DO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art260.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art260.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T17:04:36-03:00",
+      "sha256": "6790044dab1d5a692d745dceb5be9e6874d74e53eec485df500638d8dfa6eb94",
+      "arquivo": "docs/D22_art260-aspx.html",
+      "texto": "docs/D22_art260-aspx.txt",
+      "bytes": 149966,
+      "sha256_texto": "a5e8a4d5e3499397044c067b78b65371253a4736c9ca5ba4d627e553fd2652a8",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D23",
+      "titulo": "RICMS - Artigo 261 a 267\r\n\t\t\t\t\t\t\r\nTítulo II - DA RETENÇÃO ANTECIPADA, DA SUSPENSÃO, DO DIFERIMENTO E DO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art261.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art261.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T17:04:36-03:00",
+      "sha256": "7578b22e296a0c2debe0e9f30e16c4a0261f42ff82923fc2aa757b34faf07123",
+      "arquivo": "docs/D23_art261-aspx.html",
+      "texto": "docs/D23_art261-aspx.txt",
+      "bytes": 175084,
+      "sha256_texto": "dc53099178a13a2c0e4357bedd03f87e3ec734d2499dc2938f1e8bf7f43713f1",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D24",
+      "titulo": "RICMS - Artigo 278 a 280\r\n\t\t\t\t\t\t\r\nSUBSEÇÃO VII - DA ESCRITURAÇÃO FISCAL PELO CONTRIBUINTE SUBSTITUÍDO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art278.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art278.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T17:04:36-03:00",
+      "sha256": "6ea345963b817224d340d7e1683018b37de51d750acadc1d4776f2b93dab9b0d",
+      "arquivo": "docs/D24_art278-aspx.html",
+      "texto": "docs/D24_art278-aspx.txt",
+      "bytes": 154656,
+      "sha256_texto": "c482dd0d0cd3042c7d5e317b979121eadeac6bb73b9102908679be68634e5a88",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D25",
+      "titulo": "RICMS - Artigo 426 A a 426 C\r\n\t\t\t\t\t\t\r\nCAPÍTULO VIII - DO PAGAMENTO ANTECIPADO",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art426A.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art426A.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T17:04:37-03:00",
+      "sha256": "519375bd8b71b9a74be6dba85eee7e72845912d4d234e4f0cd73e9c06f509171",
+      "arquivo": "docs/D25_art426A-aspx.html",
+      "texto": "docs/D25_art426A-aspx.txt",
+      "bytes": 176233,
+      "sha256_texto": "f64629600ce41b500e69885bcd3b3243a2c377724146ab826c8c7e1d851b4633",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D26",
+      "titulo": "RICMS - Artigo 566\r\n\t\t\t\t\t\t\r\nCapítulo III - DA ATUALIZAÇÃO MONETÁRIA",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art566.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art566.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T17:04:37-03:00",
+      "sha256": "f4c9209bb367184ceede97fd5911acf8d4953aa8cd71ade76ef6c3cd6a0688e4",
+      "arquivo": "docs/D26_art566-aspx.html",
+      "texto": "docs/D26_art566-aspx.txt",
+      "bytes": 155020,
+      "sha256_texto": "0877a3b1ab6aa3c91793338268de53cb3560660eadbf1e952ba11d15f7dde6f4",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D27",
+      "titulo": "RICMS - Artigo 253 a 258\r\n\t\t\t\t\t\t\r\nCapítulo V - DAS INFORMAÇÕES ECONÔMICO-FISCAIS",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art253.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art253.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T17:04:37-03:00",
+      "sha256": "0df7ac098ec3ec0e5684eb18ea6fc9f4b7e277407655938f75db26686cf10dd0",
+      "arquivo": "docs/D27_art253-aspx.html",
+      "texto": "docs/D27_art253-aspx.txt",
+      "bytes": 171889,
+      "sha256_texto": "65964dc988ba7dfbc7324715cf787881d78170daf2c66b7ac532f6c9f4b60648",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D28",
+      "titulo": "RICMS - Artigo 1º a 4º\r\n\t\t\t\t\t\t\r\nCAPÍTULO I - DA INCIDÊNCIA",
+      "url": "https://legislacao.fazenda.sp.gov.br/Paginas/art001.aspx",
+      "url_final": "https://legislacao.fazenda.sp.gov.br/Paginas/art001.aspx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-21T17:04:37-03:00",
+      "sha256": "569d32e12cf3691d692184a6a4bad5e3be1bae852d722501c7c6f8254003c24d",
+      "arquivo": "docs/D28_art001-aspx.html",
+      "texto": "docs/D28_art001-aspx.txt",
+      "bytes": 176102,
+      "sha256_texto": "15b13b9e5376be00a683710a9ee60421eda4920f639adaad757e49c886872ea1",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D29",
+      "titulo": "Lcp 227",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp227.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp227.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T17:06:06-03:00",
+      "sha256": "16f6e0cd0ee9a8d21a06ac74b2f03a4dead7744dce1bbf5d49199f074443295f",
+      "arquivo": "docs/D29_lcp227-htm.html",
+      "texto": "docs/D29_lcp227-htm.txt",
+      "bytes": 1334008,
+      "sha256_texto": "91617116cd2882a8d1f0de0ed26ae0b3a797e6bde89fad912a032209dfb732ed",
+      "captura": {
+        "anterior": {
+          "slug": "eficiencia-fiscal-praticas",
+          "id": "D27",
+          "baixado_em": "2026-10-20T11:46:12-03:00",
+          "sha256_texto": null
+        },
+        "tipo": "SEM_COMPARACAO"
+      },
+      "alertas": [
+        "há captura de 2026-10-20 (eficiencia-fiscal-praticas D27), mas o texto dela não foi guardado"
+      ]
+    },
+    {
+      "id": "D30",
+      "titulo": "Constituição",
+      "url": "https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-21T17:06:07-03:00",
+      "sha256": "40f9642bdd986cd7d6cba282b3d9c9bf7cd99297f82133bf542a1a91f90a23c1",
+      "arquivo": "docs/D30_constituicao-htm.html",
+      "texto": "docs/D30_constituicao-htm.txt",
+      "bytes": 1847715,
+      "sha256_texto": "28adb5ee9508b1ff0c7aea98eb5a30cd9f625282afc1327ba2350f0dcda93c75",
+      "captura": {
+        "anterior": {
+          "slug": "brief-pes4-f0-f1",
+          "id": "D12",
+          "baixado_em": "2026-11-02T21:37:20-03:00",
+          "sha256_texto": "28adb5ee9508b1ff0c7aea98eb5a30cd9f625282afc1327ba2350f0dcda93c75"
+        },
+        "tipo": "IGUAL"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "icms-revenda-regime-normal-sp",
+  "pergunta": "Apuração de ICMS próprio e ICMS-ST da revenda de mercadoria fora do Simples, em SP: débito, crédito (não cumulatividade), ST substituto/substituído com MVA, DIFAL, apuração mensal com saldo credor, prazo de recolhimento e obrigações; transição 2027-2033",
+  "criado": "2026-11-21T16:56:58-03:00"
+}
