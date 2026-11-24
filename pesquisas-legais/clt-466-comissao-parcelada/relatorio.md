@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — clt-466-comissao-parcelada
 
 **Pergunta:** Comissão de empregado em venda parcelada no cartão: exigível no mês da venda ou por parcela liquidada (CLT art. 466 §1º)?
-**Aberto em:** 2026-11-21T08:49:12-03:00 · **Atualizado em:** 2026-11-24T01:48:56-03:00
+**Aberto em:** 2026-11-21T08:49:12-03:00 · **Atualizado em:** 2026-11-24T02:00:04-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -55,7 +55,7 @@ O resumo:
 - **Leitura 1 (segura):** inteira no mês. O cliente quitou no dia [D01, art. 466 caput].
 - **Leitura 2:** proporcional a cada parcela [D01, art. 466 § 1º; por analogia, D03, art. 5º]. Tem três limites:
   - o teto de um trimestre da própria Lei 3.207 [D03, art. 4º p.ú.];
-  - a alteração contratual só por mútuo consentimento e sem prejuízo [CLT art. 468];
+  - a alteração contratual só por mútuo consentimento e sem prejuízo [D01, CLT art. 468];
   - o risco da multa diária da CCT por pagamento depois do dia 5 (parecer D56, cl. 9ª § 1º).
 - A pergunta exata ao advogado trabalhista está no parecer (§4). Só vale se o salão quiser a leitura 2.
 
