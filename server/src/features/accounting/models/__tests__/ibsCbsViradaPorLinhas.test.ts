@@ -95,10 +95,10 @@ describe('#9 — fim do PIS/Cofins = ausência de linha PIS_COFINS vigente (não
     expect(PisCofinsPreviewSchema.safeParse({ ...base, anoCalendario: 2024 }).success).toBe(false); // o piso (2025) segue no DTO
   });
 
-  it('semente: 2026 apura, 2027 ⇒ 400 nomeado da revogação (LC 214 art. 542)', () => {
+  it('semente: 2026 apura, 2027 ⇒ 400 nomeado da revogação, citando a `fonte` da linha', () => {
     const tabela = tabelaPisCofinsDe(linhasPis());
     expect(parametrosDoMes(tabela, 2026, 'M03', 'CUMULATIVO').PIS).toBeDefined();
-    expect(() => parametrosDoMes(tabela, 2027, 'M03', 'CUMULATIVO')).toThrow(/PIS\/Cofins revogados a partir de 2027-01 \(LC 214\/2025 art\. 542/);
+    expect(() => parametrosDoMes(tabela, 2027, 'M03', 'CUMULATIVO')).toThrow(/PIS\/Cofins revogados a partir de 2027-01 \(fonte da linha: IN RFB 2\.121\/2022/);
   });
 
   it('VIRADA: estender o vigenteAte das linhas para 2027-12-31 faz 2027 apurar — mesmo código, só a linha', () => {
@@ -124,6 +124,25 @@ describe('#9 — fim do PIS/Cofins = ausência de linha PIS_COFINS vigente (não
     expect(msg(meio, 2027)).toMatch(/revogados a partir de 2027-02-15 \(/);
   });
 
+  it('a CITAÇÃO da mensagem sai do campo `fonte` da linha que marca o fim — não de "LC 214/2025 art. 542" em código (ressalva do #1361)', () => {
+    const msg = (linhas: readonly LinhaLegal[], ano: number) => {
+      try {
+        parametrosDoMes(tabelaPisCofinsDe(linhas), ano, 'M03', 'CUMULATIVO');
+      } catch (e) {
+        return (e as Error).message;
+      }
+      return null;
+    };
+    const FONTE_NOVA = 'Fonte de teste X — art. 999 (linha publicada pelo dono)';
+    const comFonte = linhasPis().map((l) => ({ ...l, fonte: FONTE_NOVA }));
+    expect(msg(comFonte, 2027)).toContain(FONTE_NOVA);
+    expect(msg(comFonte, 2027)).not.toContain('art. 542');
+    // estendida até 2027-12-31 com outra fonte: a mensagem de 2028 cita a fonte da linha estendida, não a da revogação original
+    const estendida = comFonte.map((l) => (l.vigenteAte === '2026-12-31' ? { ...l, vigenteAte: '2027-12-31', fonte: 'Fonte da linha estendida — art. 1' } : l));
+    expect(msg(estendida, 2028)).toContain('Fonte da linha estendida — art. 1');
+    expect(msg(estendida, 2028)).not.toMatch(/art\. 542|art\. 544/);
+  });
+
   it('sem NENHUMA linha vencida (tabela vazia) a mensagem não afirma revogação: diz que falta a linha', () => {
     expect(() => parametrosDoMes([], 2027, 'M03', 'CUMULATIVO')).toThrow(/sem linha PIS_COFINS vigente em 2027-03-31/);
   });
@@ -131,7 +150,7 @@ describe('#9 — fim do PIS/Cofins = ausência de linha PIS_COFINS vigente (não
   it('exigirLinhaPisCofinsVigente (antes do perfil, sem modalidade): semente aceita 2026 e recusa 2027; estender a linha move a recusa', () => {
     const tabela = tabelaPisCofinsDe(linhasPis());
     expect(() => exigirLinhaPisCofinsVigente(tabela, 2026, 'M12')).not.toThrow();
-    expect(() => exigirLinhaPisCofinsVigente(tabela, 2027, 'M01')).toThrow(/revogados a partir de 2027-01 \(LC 214\/2025 art\. 542/);
+    expect(() => exigirLinhaPisCofinsVigente(tabela, 2027, 'M01')).toThrow(/revogados a partir de 2027-01 \(fonte da linha: IN RFB 2\.121\/2022/);
     const estendida = tabelaPisCofinsDe(estendidoAte2027());
     expect(() => exigirLinhaPisCofinsVigente(estendida, 2027, 'M12')).not.toThrow();
     expect(() => exigirLinhaPisCofinsVigente(estendida, 2028, 'M01')).toThrow(/revogados a partir de 2028-01/);

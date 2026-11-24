@@ -73,7 +73,7 @@ const Cents = z.string().regex(/^\d+$/);
 const PisCofinsPreviewFields = {
   unitId: z.string().min(1),
   // Onda 3.2: sem teto no schema — o fim do PIS/Cofins é a ausência de linha `PIS_COFINS` vigente (o serviço recusa com o 400
-  // nomeado da revogação, LC 214 art. 542, `parametrosDoMes`); o teto fixo em 2026 não lia a linha.
+  // nomeado da revogação, com a `fonte` da linha, `parametrosDoMes`); o teto fixo em 2026 não lia a linha.
   anoCalendario: z.number().int().min(2025),
   periodo: z.enum(PERIODOS_PIS_COFINS),
   ajustesBase: z
