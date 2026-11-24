@@ -2133,7 +2133,7 @@
           },
           "cnpjSitEsp": {
             "type": "string",
-            "description": "M010.CNPJ_SIT_ESP — 14 dígitos, opcional"
+            "description": "M010.CNPJ_SIT_ESP — 14 posições (CNPJ alfanumérico), opcional"
           }
         }
       },
