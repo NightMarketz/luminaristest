@@ -1,7 +1,7 @@
 # Relatório de pesquisa legal — salao-padrao-mercado-sp
 
 **Pergunta:** Valores padrão, com fonte citável e faixa, para o exemplo de salão pequeno em SP capital (F-SIM-6/7): insumo em % da receita, taxa média do cartão, rotatividade da equipe CLT, vale-transporte, equipamentos e pró-labore. Sem fonte, fica sem padrão.
-**Aberto em:** 2026-11-24T01:39:28-03:00 · **Atualizado em:** 2026-11-24T01:59:31-03:00
+**Aberto em:** 2026-11-24T01:39:28-03:00 · **Atualizado em:** 2026-11-24T02:29:36-03:00
 **Método:** acervo ctresb/leis como fonte primária (texto convertido de fonte oficial); fonte oficial
 conferida quando há evidência de texto mais novo. Documentos salvos com hash para referência.
 
@@ -16,7 +16,7 @@ lista entra como **candidata**, marcada, e não como padrão.
 | Insumos do mês (`insumo`, `f_ins`) | R$ por mês | **7,2% da receita operacional líquida** | 7,2% a 9,4% | IBGE PAS 2023 [D06] | padrão |
 | Taxa do cartão (`mdr`, `f_mdr`) | % da receita total | **MDR médio de 1,79%** sobre o que passa no cartão | 1,05% (débito) a 2,30% (crédito parcelado) | Banco Central, 2º tri de 2026 [D01] | MDR com padrão; **fração da receita no cartão sem padrão** |
 | Rotatividade da equipe CLT (`rot`, `f_rot`) | % que sai por ano | **sem padrão** | — | nenhuma das fontes aceitas mede | sem padrão (candidata fora da lista na seção 4) |
-| Vale-transporte por empregado (`vt`, `f_vt`) | R$ por mês | R$ 275,60 (2 × R$ 5,30 × 26 dias) | R$ 233,20 a R$ 551,20 | Prefeitura de SP, tarifa de 2026 [D09] | **candidata** (fonte oficial fora da lista) |
+| Vale-transporte por empregado (`vt`, `f_vt`) | R$ por mês | R$ 275,60 (2 × R$ 5,30 × 26 dias) | R$ 233,20 a R$ 551,20 | Prefeitura de SP, tarifa de 2026 [D09] | padrão (fonte aceita pelo dono, chat, 24/11/2026: "Sim, aceitar") |
 | Equipamentos (lista `bens`: valor e vida útil) | R$ por bem | compra anual de máquinas, equipamentos e móveis = **1,5% da receita líquida** | 1,5% a 5,7% por ano | IBGE PAS 2023 [D06] | padrão como ordem de grandeza (I) |
 | Pró-labore dos sócios (`pl`, `f_pl`) | R$ por mês, total | **R$ 1.621 por sócio por mês**, o salário mínimo de 2026, porque o dado da PAS fica abaixo dele | R$ 1.621 a R$ 5.635 por sócio (PAS 2023: R$ 1.527 a R$ 5.635) | IBGE PAS 2023 [D06]; Decreto 12.797/2025 art. 1º [D10] | padrão |
 
@@ -74,15 +74,15 @@ trabalha no salão contribui ao INSS como contribuinte individual. Usar R$ 1.527
 piso. Por isso o padrão é o salário mínimo do ano, e a PAS dá a faixa até R$ 5.635 (I: o piso da base do contribuinte
 individual é regra da Lei 8.212, não relida neste dossiê).
 
-**Vale-transporte (candidata).** A tarifa do ônibus municipal de SP é R$ 5,30 desde 06/01/2026, com integração gratuita em até
+**Vale-transporte (padrão; fonte aceita pelo dono em 24/11).** A tarifa do ônibus municipal de SP é R$ 5,30 desde 06/01/2026, com integração gratuita em até
 quatro ônibus em três horas no Bilhete Único [D09; a de 2025 era R$ 5,00, D08]. Com uma tarifa por trajeto, dois trajetos por
 dia e a jornada 6x1 da CCT (dossiê `salao-cct-pisos-2026` [D01], aditivo cl. 7ª § 3º: "jornada de 6x1 (seis dias trabalhados e um dia de folga)"):
 - 26 dias × 2 × R$ 5,30 = **R$ 275,60 por mês**;
 - 5x2 (22 dias): R$ 233,20;
 - duas tarifas por trajeto: R$ 551,20.
 
-O salão paga só o que passar de 6% do salário básico, e a página já desconta isso. A Prefeitura é fonte oficial, mas não está
-na lista que o dono aceitou. Por isso fica **candidata**, para o dono decidir (seção 4).
+O salão paga só o que passar de 6% do salário básico, e a página já desconta isso. A Prefeitura é fonte oficial fora da lista inicial (Sebrae, IBGE,
+CCT, Banco Central). O dono a aceitou para o VT (chat, 24/11/2026: "Sim, aceitar"; seção 4, A1).
 
 **O que isso destrava (item 20d).** O `DEF` da página tem `insumo: 0`, `mdr: 0`, `rot: 0`, `vt: 0` e `pl: 0`, e o `DEF_CAT`
 tem `bens: []`. Com este dossiê, o item 20d pode preencher:
@@ -90,7 +90,8 @@ tem `bens: []`. Com este dossiê, o item 20d pode preencher:
 - `mdr` com o MDR de 1,79% vezes uma fração no cartão que o aviso declara como suposição, ou deixar `mdr` em zero com aviso;
 - `pl` = R$ 1.621 por sócio (salário mínimo de 2026), com a faixa da PAS.
 
-`rot` fica zero com o aviso "sem padrão de fonte aceita". `vt` e `bens` dependem da resposta do dono à seção 4. O aviso do
+`vt` = R$ 275,60 por empregado (faixa R$ 233,20 a R$ 551,20). `rot` fica zero com o aviso "sem padrão de fonte aceita".
+`bens` fica vazio com o aviso da ordem de grandeza da PAS. O aviso do
 exemplo cita estas fontes, e o resultado mostra a faixa (F-SIM-7).
 
 ## 2. Fundamentação
@@ -125,6 +126,9 @@ exemplo cita estas fontes, e o resultado mostra a faixa (F-SIM-7).
 - **Efeito:** só muda o exemplo e o kit setorial. Nenhum dos dois toca imposto.
 - **Recomendação:** (ii) para o VT, porque a tarifa é ato oficial e a conta é aritmética. Para a rotatividade, (ii) só depois de
   uma pesquisa própria no Novo Caged, que este dossiê não fez.
+- **Decisão do VT (dono, chat, 24/11/2026):** "Sim, aceitar", em resposta a "Aceitar a tarifa da Prefeitura de SP como fonte
+  do vale-transporte padrão?". O VT passa a padrão. A decisão não cobre a rotatividade: ela continua sem padrão até haver uma
+  pesquisa no Novo Caged e uma decisão sobre essa fonte.
 
 **A2. Fração da receita paga em cartão.** Sem fonte aceita. O motor pergunta ao usuário. Se o exemplo precisar de um número,
 o aviso diz "suposição" e mostra a faixa de 0% (tudo em Pix ou dinheiro) a 1,79% (tudo no cartão, ao MDR médio).
