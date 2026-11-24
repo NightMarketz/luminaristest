@@ -1,0 +1,285 @@
+DP OBRIGACOES - RODADA 4B (LEITOR: COLETA CRUA, SEM INTERPRETACAO)
+Data da coleta: 14/11/2026
+Legenda de fonte: [ACERVO] = ctresb/leis (baixado_em indicado); [PLANALTO]/[GOV.BR]/[IN.GOV.BR] = fonte oficial lida; [SECUNDARIO] = pista, nao oficial.
+Arquivos baixados: C:\Users\smurf\AppData\Local\Temp\claude\f0badddb04093940\f55b431a-b6b1-43ab-a911-93e3c14366ec\scratchpad\r4b\acervo\ (acervo) e C:\Users\smurf\Downloads\Luminaris\.claude\worktrees\personal-dept-coverage-c7fea7\pesquisas-legais\dp-cobertura-100\docs\ (D21 a D25, D29 e D28 do dossie; txt).
+
+=====================================================================
+ITEM 1 - PPP, LTCAT, IN PRES/INSS 128 e Decreto 3.048
+=====================================================================
+1.1 Decreto 3.048/1999, art. 68 (texto vigente, redacao dada pelo Decreto 10.410/2020) [PLANALTO, D21, baixado 14/11/2026; acervo: dec-3048 AUSENTE em federal/decretos/1999]
+   URL: https://www.planalto.gov.br/ccivil_03/decreto/d3048.htm
+   § 2º (2020): "A avaliação qualitativa de riscos e agentes prejudiciais à saúde será comprovada pela descrição: I - das circunstâncias de exposição ocupacional ... II - de todas as fontes ... III - dos meios de contato ou exposição ..."
+   § 3º (2020): "A comprovação da efetiva exposição do segurado a agentes prejudiciais à saúde será feita por meio de documento, em meio físico ou eletrônico, emitido pela empresa ... com base em laudo técnico de condições ambientais do trabalho expedido por médico do trabalho ou engenheiro de segurança do trabalho."
+   § 4º (2020): "Os agentes reconhecidamente cancerígenos ... serão avaliados em conformidade com o disposto nos § 2º e § 3º ..."
+   § 5º (2020): "O laudo técnico a que se refere o § 3º conterá informações sobre a existência de tecnologia de proteção coletiva ou individual e sobre a sua eficácia e será elaborado com observância às normas editadas pela Secretaria Especial de Previdência e Trabalho do Ministério Economia e aos procedimentos adotados pelo INSS."
+   § 6º (2020): "A empresa que não mantiver laudo técnico atualizado ... ou que emitir documento de comprovação ... em desacordo com o referido laudo incorrerá na infração a que se refere a alínea 'n' do inciso II do caput do art. 283."
+   § 8º (2020): "A empresa deverá elaborar e manter atualizado o perfil profissiográfico previdenciário, ou o documento eletrônico que venha a substituí-lo, ... garantido ao trabalhador o acesso às informações nele contidas, sob pena de sujeição às sanções previstas na alínea 'h' do inciso I do caput do art. 283."
+   § 9º (2020): PPP = "o documento que contenha o histórico laboral do trabalhador, elaborado de acordo com o modelo instituído pelo INSS."
+   § 10 (2020): "O trabalhador ou o seu preposto terá acesso às informações prestadas pela empresa sobre o seu perfil profissiográfico previdenciário e poderá ... solicitar a retificação de informações que estejam em desacordo com a realidade do ambiente de trabalho, conforme orientação estabelecida em ato do Ministro de Estado da Economia."
+   § 11 (2020) e § 13 (2020): avaliações ambientais segundo classificacao, limites de tolerancia e metodologia da FUNDACENTRO; § 13: "caberá ao Ministério da Economia indicar outras instituições para estabelecê-los."
+   Historico (nao vigente, marcado no texto): § 8º versao 2013 fixava entrega "no prazo de trinta dias da rescisão do seu contrato de trabalho".
+   NOTA: a palavra "LTCAT" nao aparece no Decreto 3.048; o laudo e tratado como "laudo técnico de condições ambientais do trabalho" (§§ 2º, 3º, 5º).
+
+1.2 Decreto 3.048/1999, art. 225, § 5º (texto de 2020) [PLANALTO, D21]
+   "A empresa manterá arquivados os documentos comprobatórios do cumprimento das obrigações de que trata este artigo e os documentos comprobatórios do pagamento de benefícios previdenciários reembolsados até que ocorra a prescrição relativa aos créditos decorrentes das operações a que os documentos se refiram, observados o disposto no § 22 e nas normas estabelecidas pela Secretaria Especial da Receita Federal do Brasil ..." (Redacao dada pelo Decreto 10.410/2020.)
+   Historico (superado): "durante dez anos" (Decreto 4.729/2003).
+
+1.3 Lei 8.213/1991, art. 58, §§ 1º a 4º [ACERVO lei8213, versao "compilada (texto vigente)", baixado 13/10/2026; fonte https://normas.leg.br/?urn=urn:lex:br:federal:lei:1991-07-24;8213]
+   caput: "A relação dos agentes nocivos ... será definida pelo Poder Executivo."
+   § 1º: "A comprovação da efetiva exposição do segurado aos agentes nocivos será feita mediante formulário, na forma estabelecida pelo ... INSS, emitido pela empresa ou seu preposto, com base em laudo técnico de condições ambientais do trabalho expedido por médico do trabalho ou engenheiro de segurança do trabalho ..."
+   § 2º: laudo deve informar existencia de tecnologia de protecao coletiva ou individual que diminua a intensidade do agente a limites de tolerancia.
+   § 3º: "A empresa que não mantiver laudo técnico atualizado ... estará sujeita à penalidade prevista no art. 133 desta Lei."
+   § 4º: "A empresa deverá elaborar e manter atualizado perfil profissiográfico abrangendo as atividades desenvolvidas pelo trabalhador e fornecer a este, quando da rescisão do contrato de trabalho, cópia autêntica desse documento."
+
+1.4 Prazo de entrega do PPP ao trabalhador: DIVERGENCIA entre fontes lidas
+   - Lei 8.213, art. 58, § 4º: entrega "quando da rescisão do contrato de trabalho" (ACERVO, compilada).
+   - Decreto 3.048, art. 68, § 8º (2020): "garantido ao trabalhador o acesso às informações nele contidas" (sem prazo em dias; PLANALTO).
+   - Decreto 3.048, art. 68, § 10 (2020): acesso e pedido de retificacao (PLANALTO).
+   Nao lido: prazo em IN PRES/INSS 128 (ver 1.5).
+
+1.5 IN PRES/INSS 128/2022 (texto consolidado / artigos sobre PPP eletronico, LTCAT, prazos): TEXTO NAO LIDO
+   - Acervo: NAO CONTEM a IN 128 (pasta reguladores/inss/instrucoes-normativas/2022 nao tem o n. 128).
+   - DOU (in.gov.br/web/dou/-/instrucao-normativa-pres/inss-n-128-de-28-de-marco-de-2022-389275446): HTTP 403 (redirecionamento a partir do gov.br; tentativas por WebFetch e pelo legal.py falharam).
+   - Pagina oficial da IN (gov.br/inss, listagem 2022, lida em 14/11/2026): "INSTRUÇÃO NORMATIVA PRES/INSS Nº 128, DE 28 DE MARÇO DE 2022 (Alterada) — última modificação 12/08/2026".
+   - Alteracoes listadas NESSA pagina oficial (lista de atos que alteram a IN 128): 133, 136, 141, 151, 155, 162 (revoga arts. 654 a 657), 164, 167, 170, 173, 174 (revoga Anexo XXVI), 188, 195 ("Dispositivos ALTERADOS", DOU 22/09/2025), 203 ("Dispositivos ALTERADOS", DOU 24/04/2026), 208 ("Dispositivos ALTERADOS", DOU 20/05/2026), 212 ("Dispositivos ALTERADOS", DOU 11/08/2026, Edicao Extra).
+   - Pagina oficial NAO lista IN 205/2026 nem IN 210/2026 como alteradoras da IN 128 (IN 205 aparece como alteradora da IN 140, pagina da IN 140).
+   - Status: SEM TEXTO OFICIAL LIDO para PPP eletronico, LTCAT e prazo de entrega na IN 128.
+
+1.6 Alteracoes com trecho de PPP lido [ACERVO in170 (IN PRES/INSS 170/2024, DOU 08/07/2024, p. 65/68, publicacao original)]
+   Trecho de alteracao: "Art. 272 ... II - o Perfil Profissiográfico Previdenciário - PPP - emitido a partir de 18 de julho de 2002." e "IV - para períodos laborados a partir de 1º de janeiro de 2004, o documento a ser apresentado deverá ser o PPP, conforme estabelecido na Instrução Normativa nº 99 INSS/DC, de 5 de dezembro de 2003, observado o disposto no § 3º do art. 68 do RPS."
+   Trecho: "Art. 281 ... § 4º-A. Quando da emissão do PPP, devem ser observadas as seguintes orientações acerca da dispensa de informações: I ... II ... III ..."
+   NOTA: o texto acima e a redacao DADA a esses dispositivos pela IN 170; a numeracao e a do texto da alteracao, nao foi conferida no consolidado da IN 128.
+
+1.7 IN PRES/INSS 195/2025 [ACERVO in195, publicacao original, DOU 22/09/2025 p.152]
+   Ementa: "Altera a Instrução Normativa PRES/INSS nº 128, de 28 de março de 2022". Texto lido: reescreve art. 416, VI (OPM/TA), e art. 417 (reabilitacao profissional: incisos I a III). NAO ha, no trecho lido, revogacao de "§§ 1º e 2º do art. 417" nem "VI e VII do art. 421" (ver Divergencias D-3).
+
+1.8 IN PRES/INSS 205/2026 (2 copias no acervo: 706270507 e 707504279, esta marcada "(*)") e IN 210/2026 [ACERVO, publicacao original]: nenhum trecho sobre PPP, LTCAT ou prazo foi encontrado nos textos lidos (grep: 128/PPP/perfil sem resultado). A IN 205 altera a IN 140 (pagina oficial da IN 140).
+
+1.9 IN PRES/INSS 212/2026 (altera IN 128, DOU 11/08/2026 Ed. Extra): texto NAO lido (fora do acervo).
+
+1.10 LTCAT: nenhum texto oficial lido nesta rodada. Decreto 3.048 art. 68 §§ 2º, 3º, 5º e 11 tratam do laudo (ver 1.1). Prazo de emissao/atualizacao do LTCAT: SEM FONTE LIDA.
+
+1.11 eSocial SST (r3b, nao reconferido nesta rodada): MOS S-1.3 (consolidado ate NO S-1.3 10.2026, D01 local) afirma que eventos SST "substituirão os atuais formulários" de CAT e PPP. Ver r3b item 8.
+
+STATUS ITEM 1: resolvidos = Decreto 3.048 art. 68 (§§ 2º a 13) e art. 225 § 5º; Lei 8.213 art. 58 §§ 1º a 4º; alteracoes da IN 128 (lista oficial). NAO resolvidos = texto da IN 128 (PPP eletronico, LTCAT, prazo de entrega ao trabalhador); IN 212/2026 texto.
+
+=====================================================================
+ITEM 2 - NRs (CIPA, SESMT, EPI, PCMSO)
+=====================================================================
+2.1 NR-7 (PCMSO) - redacao vigente e portaria: [GOV.BR pagina NR-7, lida em r3b; PDF nr-07-atualizada-2022-1.pdf; NAO relido nesta rodada]
+   Ultima modificacao (pagina): Portaria SEPRT nº 8.873, de 23 de julho de 2021 (conforme r3b).
+   Item 7.5.8 (periodicidade), 7.5.11 (demissional: "em até 10 (dez) dias contados do término do contrato", dispensa se exame ha menos de 135 dias para GR 1 e 2 e menos de 90 dias para GR 3 e 4), 7.5.19 (ASO), 7.6.1.1 (prontuario: "no mínimo, por 20 (vinte) anos após o seu desligamento") - texto conforme r3b.
+   Coordenador/encarregado e relatorio analitico: NAO transcritos nesta rodada (nao reconferido).
+
+2.2 NR-5 (CIPA) - [GOV.BR NR05atualizada2023.pdf, r3b; pagina: Ultima atualizacao Portaria MTP 4.219/2022]
+   Item 5.4.6 (mandato): "O mandato dos membros eleitos da CIPA terá a duração de um ano, permitida uma reeleição."
+   Item 5.4.12 (estabilidade): "É vedada a dispensa arbitrária ou sem justa causa do empregado eleito para cargo de direção da CIPA desde o registro de sua candidatura até um ano após o final de seu mandato."
+   Quadro I (dimensionamento): PDF pagina 11. Extracao de texto DESORDENADA (colunas e linhas do Grau de Risco 1 a 4 nao separadas com seguranca). Nenhum numero transcrito. Rendering de pagina indisponivel (sem pdftoppm). Status: NAO TRANSCRITO COM SEGURANCA.
+   Eleicao: item 5.5 (edital e votacao) - ver PDF; sem transcricao nesta rodada.
+
+2.3 NR-4 (SESMT) - [GOV.BR nr-04-atualizada-2023.pdf, r3b; ultima modificacao (pagina): Portaria MTP 2.318/2022]
+   Anexo II - Dimensionamento do SESMT: PDF pagina 30. Texto extraido DESORDENADO (faixas de trabalhadores x Grau de Risco nao separadas com seguranca). Nenhum numero transcrito. Status: NAO TRANSCRITO COM SEGURANCA.
+   Item 4.5 (dimensionamento) e Anexo I (CNAE x grau de risco) existem (r3b).
+
+2.4 NR-6 (EPI) - [GOV.BR pagina NR-6, lida em 14/11/2026, D29; "Última modificação: Portaria MTE nº 57, de 16 de janeiro de 2025"]
+   URL: https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/norma-regulamentadora-no-6-nr-6
+   [ACERVO] Portaria MTE nº 57, de 16/01/2025 (DOU 17/01/2025, publicacao original): "Altera o item 6.9.4 da Norma Regulamentadora nº 6 ..., aprovada pela Portaria MTP nº 2.175, de 28 de julho de 2022." Art. 2: "Esta Portaria entra em vigor 6 (seis) meses após a data de sua publicação."
+   Base vigente indicada pelas fontes: NR-6 aprovada pela Portaria MTP nº 2.175, de 28/07/2022 (resolve a duvida D2 da r3b; ver Divergencias D-2).
+   Itens do PDF 2023 (r3b, nr06-2023.txt; nao reconferidos contra 2.175/2022):
+   6.5.1 d: "registrar o seu fornecimento ao empregado, podendo ser adotados livros, fichas ou sistema eletrônico, inclusive, por sistema biométrico;"
+   6.5.1 c: "fornecer ao empregado, gratuitamente, EPI adequado ao risco, em perfeito estado de conservação e funcionamento ..."
+   6.5.1 g: "substituir imediatamente, quando danificado ou extraviado;"
+   6.5.1.1: "O sistema eletrônico, para fins de registro de fornecimento de EPI, caso seja adotado, deve permitir a extração de relatórios."
+   6.4.1: "O EPI ... só pode ser posto à venda ou utilizado com a indicação do Certificado de Aprovação - CA ..."
+   6.9.2.1: "O EPI deve ser comercializado com o CA válido."
+   Prazo de guarda da ficha de EPI: NAO HA no texto lido.
+   Cruzamento (MOS S-1.3, r3b): "A informação relativa aos EPIs não substitui a obrigatoriedade do registro de entrega destes equipamentos conforme disposição normativa."
+
+2.5 NR-1 (ver item 3 abaixo).
+
+STATUS ITEM 2: NR-7 (resolvida em r3b, nao reconferida); NR-6 (base resolvida: 2.175/2022 + 57/2025, texto de item 6.5.1 do PDF 2023); NR-5 (mandato/estabilidade lidos; Quadro I NAO transcrito); NR-4 (Anexo II NAO transcrito).
+
+=====================================================================
+ITEM 3 - NR-1: vigencia do GRO/PGR e riscos psicossociais
+=====================================================================
+3.1 Portaria MTE nº 1.419, de 27/08/2024 [ACERVO p1419, publicacao original, DOU 28/08/2024]
+   Art. 1º: "O capítulo '1.5 Gerenciamento de riscos ocupacionais' da NR-1 ... passa a vigorar com a redação constante do Anexo desta Portaria."
+   Art. 4º: "Esta Portaria entra em vigor 270 (duzentos e setenta) dias após a data de sua publicação."
+
+3.2 Portaria MTE nº 765, de 15/05/2025 [ACERVO p765, publicacao original, DOU 16/05/2025 p.87]
+   Art. 1º: "Prorrogar até 25 de maio de 2026, o início da vigência da nova redação do capítulo '1.5 ...' da NR-1 ..., aprovada pela Portaria MTE nº 1.419, de 27 de agosto de 2024."
+   Art. 2º: "Esta Portaria entra em vigor na data de sua publicação."
+
+3.3 NR-1 texto consolidado (PDF oficial nr-01-atualizada-2025-i-3.pdf, r3b, gov.br)
+   Linha de vigencia: "Entra em vigor em 26 de maio de 2026 (Portaria MTE nº 765, de 15 de maio de 2025)".
+   DIVERGENCIA: art. 1º da Portaria 765 diz 25/05/2026; o PDF diz 26/05/2026 (ver D-1).
+   Item 1.5.3.1.4: "O gerenciamento de riscos ocupacionais deve abranger os riscos que decorrem dos agentes físicos, químicos, biológicos, riscos de acidentes e riscos relacionados aos fatores ergonômicos, incluindo os fatores de risco psicossociais relacionados ao trabalho."
+   Item 1.5.3.2.1: "A organização deve considerar as condições de trabalho, nos termos da NR-17, incluindo os fatores de risco psicossociais relacionados ao trabalho."
+   Item 1.5.4.4.6 (revisao do PGR/avaliacao de riscos): "A avaliação de riscos deve constituir um processo contínuo e ser revista a cada dois anos ou quando da ocorrência das seguintes situações: a) após implementação das medidas de prevenção, para avaliação de riscos residuais; ..."
+   Item 1.5.4.4.5.3: "Para a probabilidade de ocorrência das lesões ou agravos à saúde decorrentes de fatores ergonômicos, incluindo os fatores de riscos psicossociais relacionados ao trabalho, a avaliação de risco deve considerar as exigências da atividade de trabalho e a eficácia das medidas de prevenção implementadas."
+   Historico do capitulo 1.5 no PDF (notas de insercao) registra "Portaria MTE nº 1.419, de 27 de agosto de 2024 - vigência em 26 de maio de 2025" (redacao original antes da prorrogacao; NR-1 PDF).
+
+3.4 Portaria "344": Portaria MTE nº 344, de 21/03/2024 [ACERVO p344, DOU 22/03/2024 p.102]
+   Objeto: "Altera o Anexo I - Termos e definições - da Norma Regulamentadora nº 01 (NR-01)" (acrescenta termos e altera definicao de "Responsável técnico pela capacitação"). NAO trata do GRO/PGR nem de psicossociais. O PDF da NR-1 (r3b) anota-a como "vigente até 25 de maio de 2025" apenas para definicoes.
+   Conclusao literal: a "Portaria 344" nao e a que fixa a vigencia do item de riscos psicossociais.
+
+3.5 Portaria MTE nº 1.418 / 1.419: a NR-16 (historico) cita "Portaria MTE nº 1.418, de 27 de agosto de 2024", enquanto o acervo e o PDF da NR-1 citam 1.419 (DIVERGENCIA de numero, D-4; a data 27/08/2024 coincide).
+
+STATUS ITEM 3: vigencia e item 1.5.3.1.4 resolvidos; prazo de revisao (1.5.4.4.6: dois anos) resolvido; "344" esclarecida (nao e a da vigencia); divergencia 25 x 26/05/2026 registrada.
+
+=====================================================================
+ITEM 4 - NR-16 (Anexos e percentuais)
+=====================================================================
+4.1 Item 16.2 (texto oficial, PDF nr16-2025.txt, r3b; pagina NR-16): "O exercício de trabalho em condições de periculosidade assegura ao trabalhador a percepção de adicional de 30% (trinta por cento), incidente sobre o salário, sem os acréscimos resultantes de gratificações ..."
+   Item 16.2.1: "O empregado poderá optar pelo adicional de insalubridade que porventura lhe seja devido."
+   Percentuais: o texto da NR-16 traz SOMENTE 30% (item 16.2 e tabelas "Adicional de 30%"). Busca por "%" no texto inteiro: nenhum percentual de 5% ou outro. Status: 5% NAO ENCONTRADO na NR-16.
+
+4.2 Anexos da NR-16 (titulo e portaria de aprovacao, conforme o PDF oficial):
+   - Anexo I - Explosivos (texto redacao SSMT 02/1979). Adicional 30% (item 16.2).
+   - Anexo II - Inflamaveis. Sem portaria de aprovacao indicada no trecho lido.
+   - Anexo III - Vigilancia/roubos e violencia (Aprovado pela Portaria MTE nº 1.885, de 02/12/2013). Tabela com "Adicional de 30%".
+   - Anexo IV - Energia eletrica (Aprovado pela Portaria MTE nº 1.078, de 16/07/2014).
+   - Anexo V - Atividades perigosas em motocicleta (Aprovado pela Portaria MTE nº 2.021, de 03/12/2025): "(Entra em vigor a partir de 03 de abril de 2026)". [ACERVO p2021, DOU 04/12/2025; art. 4º: "entra em vigor no prazo de 120 (cento e vinte) dias após a data de sua publicação".]
+   - Anexo V - Atividades perigosas em motocicleta (Aprovado pela Portaria MTE nº 1.565, de 13/10/2014): marcado no PDF como "ANULADO POR DECISÃO JUDICIAL". Nao e o Anexo vigente.
+   - Anexo VI - Atividades perigosas dos agentes das autoridades de transito (Inserido pela Portaria MTE nº 1.411, de 22/08/2025) [ACERVO p1411, DOU 25/08/2025].
+   - Anexo (*) - Radiacoes ionizantes ou substancias radioativas (sem numero no trecho lido).
+   Adicional por anexo: NAO HA percentual diferente de 30% no texto lido; o Anexo V (2.021/2025) e o VI (1.411/2025) nao trazem percentual no trecho lido (ver item 4.1).
+
+4.3 Historico NR-16 (cabecalho do PDF): Portaria MTb 3.214/1978 (DOU 06/07/78); SSMT 02/1979; MTb 3.393/1987; SSST 25/1994; MTE 545/2000; MTE 1.885/2013; MTE 1.078/2014; SEPRT 1.357/2019; MTE 1.418/2024 (28/08/24); MTE 1.411/2025 (Rep. 26/08/25); MTE 2.021/2025 (04/12/25).
+
+STATUS ITEM 4: anexos listados; duplicidade do Anexo V RESOLVIDA (vigente = 2.021/2025; 1.565/2014 anulado por decisao judicial, segundo o PDF oficial); percentual: somente 30%; "5%" nao encontrado.
+
+=====================================================================
+ITEM 5 - CLT (arts. 62, 74, 75-A a 75-E)
+=====================================================================
+[ACERVO clt, Decreto-Lei 5.452/1943, versao "compilada (texto vigente)", baixado 13/10/2026; fonte https://normas.leg.br/?urn=urn:lex:br:federal:decreto.lei:1943-05-01;5452]
+
+5.1 Art. 62 (caput: "Não são abrangidos pelo regime previsto neste capítulo:")
+   I - "os empregados que exercem atividade externa incompatível com a fixação de horário de trabalho, ..."
+   II - "os gerentes, assim considerados os exercentes de cargos de gestão, aos quais se equiparam ... os diretores e chefes de departamento ou filial;"
+   III - "os empregados em regime de teletrabalho que prestam serviço por produção ou tarefa." (Inciso III: Lei 13.467/2017, redacao MP 1.108/2022 convertida na Lei 14.442/2022.)
+   Paragrafo unico: "O regime previsto neste capítulo será aplicável aos empregados mencionados no inciso II deste artigo, quando o salário do cargo de confiança, compreendendo a gratificação de função, se houver, for inferior ao valor do respectivo salário efetivo acrescido de 40% (quarenta por cento)."
+   Marcacao de EC 141/2026 no art. 62: NAO HA (a EC 141 nao esta no acervo; a acervo traz so EC 139/2026).
+   Efeito da EC 141/2026, art. 8º (texto oficial, ver item 5.5): excecao propria, nao marcada no art. 62.
+
+5.2 Art. 74 (texto do acervo, marcacoes):
+   caput: "O horário de trabalho será anotado em registro de empregados." (redação Lei 13.874/2019)
+   § 1º: "(Revogado pela Lei nº 13.874, de 20/9/2019)"
+   § 2º: "Para os estabelecimentos com mais de 20 (vinte) trabalhadores será obrigatória a anotação da hora de entrada e de saída, em registro manual, mecânico ou eletrônico, conforme instruções expedidas pela Secretaria Especial de Previdência e Trabalho do Ministério da Economia, permitida a pré-assinalação do período de repouso." (Lei 13.874/2019)
+   § 3º: "Se o trabalho for executado fora do estabelecimento, o horário dos empregados constará do registro manual, mecânico ou eletrônico em seu poder, sem prejuízo do que dispõe o caput deste artigo." (Lei 13.874/2019)
+   § 4º: "Fica permitida a utilização de registro de ponto por exceção à jornada regular de trabalho, mediante acordo individual escrito, convenção coletiva ou acordo coletivo de trabalho." (acrescido pela Lei 13.874/2019)
+   [Lacuna L8 da r3b (CLT art. 74 § 4º nao lido) FECHADA aqui.]
+
+5.3 Arts. 75-A a 75-E (Capitulo II-A, acrescido pela Lei 13.467/2017; §§ de 75-B com MP 1.108/2022 / Lei 14.442/2022):
+   75-A: "A prestação de serviços pelo empregado em regime de teletrabalho observará o disposto neste Capítulo."
+   75-B: "Considera-se teletrabalho ou trabalho remoto a prestação de serviços fora das dependências do empregador, de maneira preponderante ou não, com a utilização de tecnologias de informação e de comunicação, que, por sua natureza, não configure trabalho externo." § 1º (comparecimento habitual nao descaracteriza); § 2º (jornada ou producao/tarefa); § 3º (producao/tarefa: nao se aplica o Capitulo II do Titulo II); § 4º (nao se equipara a telemarketing); § 5º (tempo de uso de equipamentos fora da jornada nao e tempo a disposicao, salvo previsao em acordo ou CCT); § 6º (estagiarios e aprendizes); § 7º (legislacao local/CCT da base territorial do estabelecimento de lotacao); § 8º (teletrabalho fora do territorio nacional: legislacao brasileira, salvo disposicao contraria entre as partes); § 9º (acordo individual pode dispor sobre horarios e meios de comunicacao, assegurados os repousos legais).
+   75-C: "A prestação de serviços na modalidade de teletrabalho deverá constar expressamente do instrumento de contrato individual de trabalho." § 1º (alteracao mediante mutuo acordo, aditivo contratual); § 2º (retorno ao presencial por determinacao do empregador, prazo de transicao minimo de quinze dias, registro em aditivo); § 3º (despesas do retorno, salvo disposicao contraria).
+   75-D: "As disposições relativas à responsabilidade pela aquisição, manutenção ou fornecimento dos equipamentos tecnológicos e da infraestrutura necessária e adequada à prestação do trabalho remoto, bem como ao reembolso de despesas arcadas pelo empregado, serão previstas em contrato escrito." Parágrafo unico: "As utilidades mencionadas no caput deste artigo não integram a remuneração do empregado."
+   75-E: "O empregador deverá instruir os empregados, de maneira expressa e ostensiva, quanto às precauções a tomar a fim de evitar doenças e acidentes de trabalho." Parágrafo unico: "O empregado deverá assinar termo de responsabilidade comprometendo-se a seguir as instruções fornecidas pelo empregador."
+
+5.4 Art. 75 (penalidade, antes do Capitulo II-A): "Os infratores dos dispositivos do presente capítulo incorrerão na multa de cinquenta a cinco mil cruzeiros ..." (texto historico do acervo, sem atualizacao monetaria no texto; nao reconferido).
+
+5.5 EC 141/2026 (texto oficial) [PLANALTO D22, baixado 14/11/2026; https://planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc141.htm; "Brasília, 16 de outubro de 2026"]
+   Art. 8º: "Ao empregado portador de diploma de nível superior e que perceba remuneração mensal igual ou superior a duas vezes e meia o limite máximo dos benefícios do Regime Geral de Previdência Social não se aplicam as regras relativas à duração do trabalho e ao controle da jornada, salvo por liberalidade do empregador ou se houver previsão em acordo ou convenção coletiva de trabalho, respeitados o inciso XV e o § 2º do art. 7º da Constituição Federal."
+   Art. 8º § 1º: "O disposto no caput deste artigo não se aplica aos empregados públicos da administração direta e indireta de quaisquer dos Poderes da União, dos Estados, do Distrito Federal e dos Municípios."
+   Art. 8º § 2º: "Compete à Justiça do Trabalho processar e julgar as ações relativas ao disposto no caput deste artigo."
+   Art. 6º, I: "2 (dois) meses após a publicação desta Emenda Constitucional, a duração do trabalho normal não excederá a 42 (quarenta e duas) horas semanais;"
+   Art. 6º, II: "1 (um) ano após o decurso do prazo de que trata o inciso I deste artigo, a duração do trabalho normal não excederá a 40 (quarenta) horas semanais."
+   Art. 10, I: "após decorridos 2 (dois) meses de sua publicação, em relação à alteração promovida pelo art. 1º desta Emenda Constitucional no inciso XV do caput do art. 7º da Constituição Federal;"
+   Art. 10, II: "na data de sua publicação, em relação aos demais dispositivos."
+   Nota: a pagina do Planalto avisa que o texto nao substitui o DOU de 16/10/2026 (r3b). Art. 8º nao foi mencionado nos secundarios da r3b como de texto de lei; agora lido.
+
+STATUS ITEM 5: CLT arts. 62, 74 (§§ 1º a 4º) e 75-A a 75-E lidos no acervo (compilada). EC 141 art. 8º lido. Marcacao de EC 141 no art. 62 da CLT: inexistente no acervo.
+
+=====================================================================
+ITEM 6 - Transparencia salarial (Lei 14.611/2023; Decreto 11.795/2023), cota de aprendizagem
+=====================================================================
+6.1 Lei 14.611/2023 [ACERVO lei14611, "original", baixado 13/10/2026; PLANALTO D25 https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14611.htm]
+   Art. 5º: "Fica determinada a publicação semestral de relatórios de transparência salarial e de critérios remuneratórios pelas pessoas jurídicas de direito privado com 100 (cem) ou mais empregados, observada a proteção de dados pessoais ..."
+   § 3º: "Na hipótese de descumprimento do disposto no caput deste artigo, será aplicada multa administrativa cujo valor corresponderá a até 3% (três por cento) da folha de salários do empregador, limitado a 100 (cem) salários mínimos, sem prejuízo das sanções aplicáveis aos casos de discriminação salarial e de critérios remuneratórios."
+   Art. 6º: "Ato do Poder Executivo instituirá protocolo de fiscalização contra a discriminação salarial e de critérios remuneratórios entre mulheres e homens."
+   Art. 3º (CLT art. 461 § 7º): multa de 10 vezes o novo salario devido, dobrada na reincidencia (art. 510 da CLT, conforme redacao da lei).
+   NOTA: a penalidade administrativa do relatorio esta no art. 5º § 3º da Lei 14.611 (DIVERGENCIA D-5 da r3b resolvida pelo texto).
+
+6.2 Decreto 11.795/2023 [ACERVO dec11795 "original" + PLANALTO D23 https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/decreto/d11795.htm]
+   Art. 1º, paragrafo unico: aplica-se a "pessoas jurídicas de direito privado com cem ou mais empregados".
+   Art. 2º, § 4º: "A publicação dos Relatórios deverá ocorrer nos meses de março e setembro, conforme detalhado em ato do Ministério do Trabalho e Emprego."
+   Art. 4º (MTE): I (ferramenta informatizada para envio e divulgacao); II (notificar desigualdade, por meio da Auditoria-Fiscal, para plano em 90 dias); III (canal de denuncias); IV (fiscalizar envio); V (analisar informacoes).
+   Art. 5º: conjuntamente MMulheres e MTE: medidas complementares e monitoramento.
+
+6.3 Ato do MTE sobre calendario e sistema: IN GM/MTE nº 6, de 17/09/2024 [ACERVO reguladores/mte/instrucoes-normativas/2024, "publicação original", DOU 18/09/2024 p.82; fonte https://www.in.gov.br/web/dou/-/instrucao-normativa-gm-/mte-n-6-de-17-de-setembro-de-2024-585124105]
+   Art. 5º: "As pessoas jurídicas de direito privado com 100 (cem) ou mais empregados devem publicar, duas vezes ao ano, o Relatório de Transparência Salarial e de Critérios Remuneratórios, conforme disposto no art. 2º, § 4º, do Decreto 11.795 ..."
+   Art. 6º: aba "Igualdade Salarial e de Critérios Remuneratórios" na area do empregador do Portal Emprega Brasil, em https://servicos.mte.gov.br/empregador/#/ (acesso pelo perfil "colaborador" no gov.br - art. 7º).
+   Art. 10, § 2º: "O envio das informações pelas empresas por meio do Portal Emprega Brasil ocorrerá nos meses de fevereiro e agosto de cada ano."
+   Art. 13: "A publicação do Relatório de Transparência Salarial e de Critérios Remuneratórios deverá ocorrer duas vezes ao ano, nos meses de março e setembro, sem possibilidade de edição, até a publicação do próximo relatório."
+   Art. 14: publicizado "nos sítios eletrônicos das empresas, redes sociais ou instrumentos similares" (caput e § 1º: local visível e de fácil acesso).
+   Art. 15: MTE publica o relatório pelo PDET.
+   Art. 17: Auditoria-Fiscal notifica para comprovar publicidade, nos termos do art. 628-A da CLT e da IN MTP nº 2, de 8/11/2021 (citada, nao lida).
+   Pagina oficial gov.br (noticia 2026/julho, lida em r3b): "entre 3 e 31 de agosto", "Portal Emprega Brasil", para empregadores com "100 ou mais empregados".
+   Portaria MTE nº 3.714/2023 (regulamenta o Decreto 11.795, citada no art. 6º da IN 6/2024): texto oficial NAO LIDO. Pista secundaria (lex.com.br / normaslegais.com.br, buscados em 14/11/2026): publicada no DOU em 27/11/2023 e vigente a partir de 01/12/2023 (SECUNDARIO, nao verificado).
+   Status: calendario resolvido com fonte oficial (IN GM/MTE 6/2024, acervo); a Portaria 3.714 nao lida.
+
+6.4 Divergencia de calendario (r3b D3): NAO e divergencia real. Decreto 11.795 art. 2º § 4º e IN GM 6/2024 art. 13 fixam PUBLICACAO em marco e setembro; IN GM 6/2024 art. 10 § 2º fixa ENVIO em fevereiro e agosto. Secundarios que falam em "declaracao em fevereiro e agosto" referem-se ao envio.
+
+6.5 Cota de aprendizagem:
+   Decreto 9.579/2018 [ACERVO dec9579, "original"; PLANALTO D24 https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/decreto/d9579.htm]
+   Art. 51 (texto vigente): "Estabelecimentos de qualquer natureza são obrigados a empregar e matricular nos cursos oferecidos pelos serviços nacionais de aprendizagem o número de aprendizes equivalente a cinco por cento, no mínimo, e quinze por cento, no máximo, dos trabalhadores existentes em cada estabelecimento cujas funções demandem formação profissional."
+   Art. 51, § 1º: "... as frações de unidade serão arredondadas para o número inteiro subsequente ..."
+   Art. 51, § 3º (incluido pelo Decreto 11.479/2023): "O Ministério do Trabalho e Emprego disponibilizará sistema eletrônico que permita aos estabelecimentos a emissão de certidão de cumprimento de cota de aprendiz para a comprovação do atendimento às exigências estabelecidas na Lei nº 14.133, de 1º de abril de 2021."
+   Arts. 51-A, 51-B e 51-C (incluidos pelo Decreto 11.061/2022): marcados "(Revogado pelo Decreto nº 11.479, de 2023)".
+   Art. 54 (exclusoes da base de calculo; redacao Decreto 11.479/2023; texto nao lido integralmente).
+   Ato de fiscalizacao vigente: IN MTP nº 2, de 8/11/2021 (arts. 71-72, "prioritariamente de forma indireta, por notificação" - SECUNDARIO, da r3b). Acervo: reguladores/mte/instrucoes-normativas/2021 contem so a IN MTP nº 1/2021. URL oficial tentada (in-2-de-8-denovembro-de-2021.pdf): HTTP 404. Status: IN MTP 2/2021 NAO ENCONTRADA em fonte oficial nesta rodada.
+   Portaria MTE Consolidada nº 1/2025 (cota: certidao de cumprimento; r3b): texto integral nao varrido.
+
+6.6 Lei 14.611/2023 x Decreto 11.795/2023 e a pagina oficial do MTE: sem divergencia de texto.
+
+STATUS ITEM 6: resolvidos = Lei 14.611 art. 5º (inclusive § 3º penalidade), Decreto 11.795 art. 2º § 4º e art. 4º, IN GM/MTE 6/2024 (calendario e sistema); cota: Decreto 9.579 art. 51 e § 3º. Nao encontrados = Portaria MTE 3.714/2023 (texto oficial), IN MTP 2/2021 (texto), ato de fiscalizacao vigente da cota alem da IN 2/2021.
+
+=====================================================================
+EC 141/2026 - ato do MTE (verificacao extra, item 7 da r3b)
+=====================================================================
+   Nao foi refeita a busca de ato do MTE sobre a EC 141 (r3b L10: NAO ENCONTRADO). Acervo nao tem ato da EC 141 (acervo 2026 de EC: so emc-139).
+
+=====================================================================
+DIVERGENCIAS ENTRE FONTES
+=====================================================================
+D-1. NR-1, vigencia do capitulo 1.5 (GRO/PGR com psicossociais): Portaria MTE 765/2025 art. 1º = "até 25 de maio de 2026" [ACERVO, DOU 16/05/2025]; NR-1 consolidado (PDF gov.br) = "Entra em vigor em 26 de maio de 2026". Nao resolvido: diferenca de 1 dia. Portaria 1.419 art. 4º = 270 dias apos publicacao (28/08/2024).
+D-2. NR-6 base vigente: PDF 2023 (r3b) x Portaria MTE 57/2025 (que se refere a NR-6 "aprovada pela Portaria MTP nº 2.175, de 28 de julho de 2022") e pagina oficial "Última modificação: Portaria MTE nº 57, de 16 de janeiro de 2025". Resolvido quanto a base (2.175/2022 + alteracao 57/2025 do item 6.9.4); o PDF de 2023 usado na r3b nao confere com 6.9.4 alterado (texto de 6.9.4 nao lido no PDF 2023).
+D-3. IN PRES/INSS 195/2025 x r3b: r3b disse que a IN 195 "revoga arts. 417 §§1º e 2º e 421 VI e VII da IN 128". Texto lido (acervo in195): altera art. 416 VI e reescreve art. 417 (incisos I a III). Nao foi lido "revogacao" de §§1º e 2º do art. 417 nem de art. 421 VI e VII no trecho acervo. Pagina oficial lista apenas "Dispositivos ALTERADOS" pela 195. Nao resolvido sem o texto integral da IN 195.
+D-4. NR-1 Portaria: NR-16 (historico do PDF) cita "Portaria MTE nº 1.418, de 27 de agosto de 2024"; acervo e PDF da NR-1 citam 1.419 (mesma data). Divergencia de numero; nao afeta a vigencia.
+D-5. Penalidade do relatorio de transparencia: r3b (D4) dizia que o Decreto 11.795 nao tinha penalidade. Resolvido: Lei 14.611 art. 5º § 3º (multa de ate 3% da folha, limitada a 100 salarios minimos). Nao e mais divergencia.
+D-6. Entrega do PPP ao trabalhador: Lei 8.213 art. 58 § 4º ("quando da rescisão do contrato") x Decreto 3.048 art. 68 § 8º (2020: "garantido ao trabalhador o acesso às informações") — sem prazo em dias no texto vigente lido. O prazo de 30 dias so aparece no texto de 2013 (superado). Nao resolvido sem IN 128.
+D-7. Alteracoes da IN 128: lista oficial (gov.br) inclui 195, 203, 208 e 212; nao inclui 205 nem 210. Acervo tem IN 205 (2 copias) e IN 210 sem alterar a IN 128 (no trecho lido). Divergencia com a r3b (que citava 205 como alteradora da IN 128): nao confirmada.
+D-8. Cota de aprendizagem: r3b citava "art. 51 com 5% a 15%" — confirmado no texto vigente (art. 51). Art. 51-A a 51-C revogados pelo Decreto 11.479/2023 (marcacao do texto). Nao divergente.
+D-9. EC 141 inicio: r3b (D5) secundarios 16/12 x 17/12/2026. Texto oficial (art. 10, I: "2 meses de sua publicação", publicada em 16/10/2026) indica 16/12/2026 (nao 17/12) — conferir a data da publicacao no DOU; nao resolvido com texto do DOU.
+D-10. NR-16 Anexo V: duplicado. RESOLVIDO: 1.565/2014 "ANULADO POR DECISÃO JUDICIAL"; vigente Anexo V = 2.021/2025, a partir de 03/04/2026.
+
+=====================================================================
+NAO ENCONTRADOS / NAO LIDOS
+=====================================================================
+N-1. IN PRES/INSS 128/2022 - texto (PPP eletronico, LTCAT, prazos): DOU 403; gov.br so listagem. Sem texto.
+N-2. LTCAT - prazo de emissao/atualizacao: sem fonte lida.
+N-3. Prazo de entrega do PPP ao trabalhador em IN 128: sem fonte lida.
+N-4. IN PRES/INSS 212/2026 - texto: fora do acervo, nao lido.
+N-5. Portaria MTE 3.714/2023 - texto oficial: nao lido (apenas secundarios).
+N-6. IN MTP 2/2021 (fiscalizacao da cota) - texto: nao encontrado (URL 404; acervo sem n. 2).
+N-7. NR-5 Quadro I e NR-4 Anexo II - tabelas ilegiveis na extracao de texto (PDF pag. 11 e 30; sem renderizacao de pagina disponivel).
+N-8. Ato do MTE sobre EC 141/2026 (jornada, DSR, ponto): nao rebuscado nesta rodada; r3b L10 mantida.
+N-9. Decreto 3.048: fora do acervo (dec-3048 ausente); texto obtido do Planalto.
+N-10. NR-5 e NR-7 e NR-4: nao reconferidos contra o texto (exceto os itens citados).
+
+=====================================================================
+LACUNAS (para registro por quem despachou; nao registradas em fila nesta sessao)
+=====================================================================
+L1. IN PRES/INSS 128/2022 texto integral (PPP eletronico, LTCAT, prazo de entrega ao trabalhador, guarda): ler em in.gov.br por navegador (site nao permitido na sessao atual) ou em gov.br/inss pelo link da IN 128 (pagina lida; link leva a DOU 403).
+L2. IN PRES/INSS 212/2026 e IN 195/2025 (texto integral, para confirmar D-3).
+L3. Portaria MTE 3.714/2023 texto oficial (gov.br/portarias-avulsas ou in.gov.br).
+L4. IN MTP 2/2021 texto oficial (fiscalizacao da cota).
+L5. NR-5 Quadro I (PDF pag. 11) e NR-4 Anexo II (PDF pag. 30): transcricao com renderizacao visual.
+L6. Confirmar a data de inicio da EC 141 (D-9) no DOU de 16/10/2026.
+L7. Confirmar item 6.9.4 da NR-6 vigente (texto consolidado 2025 ou 2.175/2022 com 57/2025) - D-2.
+
+Resumo de contagem:
+- Resolvidos (texto oficial ou acervo lido): Decreto 3.048 art. 68 e 225; Lei 8.213 art. 58; IN 128 (lista oficial de alteracoes); IN 170 e 195 (trechos); NR-1 (1.419, 765, 344, PDF); NR-16 (anexos e 30%); NR-6 (base 2.175/2022 + 57/2025); CLT 62, 74 (inclusive § 4º, fecha L8 da r3b), 75-A a 75-E; EC 141 arts. 6, 8, 10; Lei 14.611 art. 5º; Decreto 11.795 arts. 2º § 4º e 4º; IN GM/MTE 6/2024 arts. 5º, 6º, 10 § 2º, 13, 14, 17; Decreto 9.579 art. 51 e § 3º.
+- Nao encontrados / nao lidos: 9 (N-1 a N-9 acima; N-10 e reconferencias).
+- Divergencias entre fontes: 10 (D-1 a D-10), das quais resolvidas: D-5, D-8, D-10 (e D-2 quanto a base); nao resolvidas: D-1, D-3, D-4, D-6, D-7, D-9.

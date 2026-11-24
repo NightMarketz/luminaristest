@@ -1,0 +1,323 @@
+DP OBRIGACOES - RODADA 3B (LEITOR: COLETA CRUA, SEM INTERPRETACAO)
+Data da coleta: 14/11/2026
+Fontes: gov.br / planalto.gov.br / in.gov.br; onde nao houve fonte oficial lida, marcado.
+Arquivos locais em: C:\Users\smurf\AppData\Local\Temp\claude\f0badddb04093940\f55b431a-b6b1-43ab-a911-93e3c14366ec\scratchpad\r3b\
+
+Legenda de status: RESOLVIDO (texto oficial lido) | PARCIAL | SEM FONTE OFICIAL ACHADA | DIVERGENTE
+
+==============================================================
+ITEM 1 - PONTO / REP
+Status: RESOLVIDO COM LACUNAS
+==============================================================
+Norma-base lida: Portaria MTP 671/2021 - texto compilado (arquivo local D04_WORD...compilada21-07-2026-pdf.pdf.txt, copia de gov.br).
+Versao: compilada, alteracoes ate Portaria MTP 4.198/2022 e 1.486/2022 (ver cabecalho do arquivo).
+Portaria Consolidada MTE 1/2025 (arquivo local portaria-consolidada-mte1-2025.txt): publicada 30/12/2025; publicacao original DOU 18/12/2025, republicada; texto nao substitui o DOU.
+
+Regra por tema, com norma que a contem:
+
+a) REP-C (Portaria 671, art. 76):
+  "O REP-C é o equipamento de automação monolítico, identificado pelo seu número de fabricação ... utilizado exclusivamente para o registro de jornada de trabalho"
+  Par. 1: "O REP-C deve estar sempre no local da prestação do serviço e disponível para pronta extração e impressão de dados pelo Auditor-Fiscal do Trabalho."
+  Norma: Portaria MTP 671/2021, art. 76 e par. 1. Consolidada 1/2025: nao contem.
+
+b) REP-A (Portaria 671, art. 77):
+  "O REP-A é o conjunto de equipamentos e programas de computador que tem sua utilização destinada ao registro da jornada de trabalho, autorizado por convenção ou acordo coletivo de trabalho."
+  Par. 2: "O REP-A somente poderá ser utilizado durante a vigência da convenção ou acordo coletivo de trabalho autorizador, sendo vedada a ultratividade ..."
+  Norma: Portaria 671/2021, art. 77. Consolidada 1/2025: nao contem.
+
+c) REP-P (Portaria 671, art. 78):
+  "O REP-P é o programa (software) executado em servidor dedicado ou em ambiente de nuvem com certificado de registro nos termos do art. 91 ..."
+  Norma: Portaria 671/2021, art. 78; certificado: art. 91 (INPI). Consolidada 1/2025: nao contem.
+
+d) Ponto por exceção:
+  Portaria 671 art. 74, inciso II: marcacao automatica "não se confundindo com o registro por exceção previsto no art. 74, § 4º, do Decreto-Lei 5.452/1943 - CLT"
+  Portaria 671 arts. 93 par. unico e 94 par. unico: "É permitida a utilização de registro de ponto manual [mecânico] por exceção à jornada regular de trabalho, mediante acordo individual escrito, convenção coletiva ou acordo coletivo de trabalho."
+  Norma: a regra de "por exceção" em si esta na CLT art. 74 § 4º (remissao). CLT art. 74 NAO foi lida nesta rodada. Status: PARCIAL.
+  Consolidada 1/2025: nao contem.
+
+e) Marcacao por aplicativo:
+  Portaria 671 Anexo V (AFD), campo "Identificador do coletor da marcação": "01": aplicativo mobile; "02": browser (navegador internet); "03": aplicativo desktop; "04": dispositivo ...
+  Norma: Portaria 671/2021, Anexo V (leiaute do AFD). Nao ha artigo de corpo que autorize ou discipline marcacao por aplicativo como REP; a menção esta no leiaute. Status: PARCIAL (a regra de aceitacao do aplicativo como REP nao foi localizada no corpo da Portaria 671 compilada).
+  Art. 77 (REP-A) e art. 78 (REP-P) limitam a tipologia de REP. Consolidada 1/2025: menciona "aplicativo Carteira de Trabalho Digital" (CTPS), NAO e ponto.
+
+f) Comprovante de registro de ponto (Portaria 671, art. 79 e 80):
+  Art. 79: REP-C e REP-P "devem emitir ou disponibilizar acesso ao comprovante de registro de ponto do trabalhador"; campos minimos I a IX: titulo "Comprovante de Registro de Ponto do Trabalhador"; NSR; identificacao do empregador (CNPJ/CPF, CEI/CAEPF/CNO); local; trabalhador (nome e CPF); data e horario; modelo e numero de fabricacao (REP-C) ou numero no INPI (REP-P); "código hash (SHA-256) da marcação, exclusivamente para o REP-P"; assinatura eletronica (se impresso).
+  Art. 80 par. unico: se eletronico, "o arquivo deve ter o formato Portable Document Format - PDF"; inciso II: "ao trabalhador deve ser disponibilizado, por meio de sistema eletrônico, acesso ao comprovante após cada marcação, independentemente de prévia solicitação e autorização"; inciso III: "o empregador deve possibilitar a extração, pelo empregado, dos comprovantes de registro de ponto das marcações realizadas, no mínimo, nas últimas quarenta e oito horas."
+  Norma: Portaria 671/2021, arts. 79-80. Consolidada 1/2025: nao contem.
+
+g) AFD (Arquivo Fonte de Dados) e AEJ (Arquivo Eletronico de Jornada):
+  Art. 81: "Todos os tipos de sistema de registro eletrônico de ponto devem gerar o Arquivo Fonte de Dados, conforme especificações disponíveis no portal gov.br." (Redacao: Portaria MTP 1.486/2022.)
+  Par. 1: REP-C: "o Arquivo Fonte de Dados deve ser gravado em dispositivo externo de memória, por meio de porta de saída padrão USB externa, denominada Porta Fiscal, de uso exclusivo pelo Auditor-Fiscal do Trabalho."
+  Par. 2: REP-A e REP-P: "o Arquivo Fonte de Dados deve ser prontamente gerado e entregue, quando solicitado pelo Auditor-Fiscal do Trabalho."
+  Art. 83 (redacao Portaria 1.486/2022): o programa de tratamento deve gerar "I - o Arquivo Eletrônico de Jornada, conforme especificações disponíveis no portal gov.br; e II - o relatório Espelho de Ponto Eletrônico, conforme art. 84."
+  Anexo V = leiaute AFD (campo 1 NSR; 2 tipo "7"; 3 data/hora da marcacao; 4 CPF; 5 data/hora de gravacao; 6 identificador do coletor).
+  Anexo VI = leiaute AEJ (citado no art. 83 da versao original; redacao atual remete ao portal gov.br).
+  Norma: Portaria 671/2021, arts. 81, 83 e Anexos V e VI. Consolidada 1/2025: nao contem.
+
+h) Espelho de Ponto (art. 84): deve conter, no minimo, I a VI (identificacao do empregador; do trabalhador com nome, CPF, admissao e cargo; data de emissao e periodo; horario e jornada contratual; marcacoes efetuadas e tratadas; duracao das jornadas). Par. unico: o trabalhador tem acesso ao espelho "por meio de sistema informatizado, mensalmente de forma eletrônica ou impressa ou em prazo inferior, a critério da empresa."
+  Norma: Portaria 671/2021, art. 84.
+
+i) Assinatura eletronica (arts. 86-88): "A assinatura eletrônica será utilizada como meio de comprovação da autoria e integridade de documentos eletrônicos gerados pelo sistema de registro eletrônico de ponto e pelo programa de tratamento de registro de ponto, nos termos do art. 10 da Medida Provisória nº 2.200-2 ..." Art. 88 e Anexo: formato CAdES (p7s destacado).
+  Norma: Portaria 671/2021, arts. 86-88.
+
+j) Guarda dos registros de ponto (tempo):
+  NAO ENCONTRADO na Portaria 671 compilada para registros de ponto (REP/AFD/AEJ/espelho). Os unicos prazos de cinco anos do texto estao em:
+  - Art. 152 (contexto RAIS: "a empresa deverá manter em sua guarda ... no prazo de cinco anos a contar da data de envio, cópia do arquivo e do recibo de entrega da ..." - o objeto exato aparece cortado no arquivo; contexto indica RAIS/declaracao, NAO ponto). Status: inferido, nao confirmado.
+  - Art. 2/Art. 152 § 2º (CAGED/outra declaracao): mesma linha.
+  Consolidada 1/2025: nao contem prazo de guarda de ponto.
+  Status: SEM FONTE OFICIAL ACHADA para prazo de guarda de registros de ponto nas duas normas lidas.
+  Nota de fonte cruzada (NR-7, item 7.6.1.1 - lida nesta rodada): prontuario medico do empregado, 20 anos apos desligamento - NAO e ponto.
+
+k) Prazo para disponibilizar ao Auditor-Fiscal:
+  Art. 85: "O empregador deverá disponibilizar os arquivos eletrônicos gerados e relatórios emitidos pelo programa de tratamento de registro de ponto ao Auditor-Fiscal do Trabalho, quando solicitados, no prazo mínimo de dois dias, a critério deste."
+  Art. 100: "O empregador deve fornecer os dados constantes em sistemas eletrônicos admitidos pela legislação que possibilitem a aferição da jornada de trabalho dos empregados, a exemplo dos sistemas de rastreamento via satélite, quando solicitados pelo Auditor-Fiscal do Trabalho."
+  Art. 76 par. 1 (REP-C): disponivel para pronta extracao.
+  Norma: Portaria 671/2021, arts. 76, 85, 100. Texto de art. 85 ("prazo minimo de dois dias, a criterio deste") e literal mas a expressao e ambigua e deve ser lida com cuidado. Consolidada 1/2025: nao contem.
+
+l) Prazo de transicao (historico): art. 97 - "até 11 de janeiro de 2023" (Redacao Portaria 3.717/2022). Ja vencido; registrado so por contexto.
+
+Consolidada MTE 1/2025 - unica referencia a ponto encontrada: Art. 16 (livros e fichas de registro): empregadores optantes pelo registro eletronico "ficam dispensados de atualizar os livros e as fichas de registro, bem como de mantê-los no local de trabalho" (a partir de 31/10/2019 para grupos 1, 2 e 3; 22/08/2022 para grupo 4 - par. 1). Norma: Portaria Consolidada MTE 1/2025, art. 16 e par. 1º. NAO e regra de REP.
+
+REGISTRO DE QUAL NORMA CONTEM CADA REGRA:
+- REP-C, REP-A, REP-P, comprovante, AFD, AEJ, espelho, assinatura, prazo ao auditor: Portaria 671/2021 (compilada).
+- Ponto por exceção: remissão na Portaria 671 (art. 74, II e arts. 93-94 par. unico) para CLT art. 74 § 4º; CLT nao lida.
+- Marcacao por aplicativo: somente leiaute (Anexo V) na Portaria 671; regra de aceitacao nao localizada.
+- Guarda de registros de ponto: nao localizada em nenhuma das duas normas.
+- Consolidada 1/2025: apenas art. 16 (livros e fichas de registro).
+
+==============================================================
+ITEM 2 - NRs DE SEGURANCA E SAUDE (DP)
+==============================================================
+
+2.1 NR-1 (GRO/PGR; riscos psicossociais) - RESOLVIDO
+  Fonte: https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/nr-1
+  PDF oficial lido: nr-01-atualizada-2025-i-3.pdf (gov.br, mesma pasta).
+  Redacao: "Redação dada pela Portaria MTE nº 1.419, de 27 de agosto de 2024"; capitulo 1.5 e Anexo I.
+  Vigencia, literal no PDF: "Entra em vigor em 26 de maio de 2026 (Portaria MTE nº 765, de 15 de maio de 2025)".
+  Trecho item 1.5 (PDF): "...incluindo os fatores de risco psicossociais relacionados ao trabalho" (Portaria 1.419 - vigencia em 26 de maio de 2025, depois prorrogada para 26/05/2026 pela Portaria 765/2025).
+  Status: RESOLVIDO. Vigente em 14/11/2026 pela data literal.
+  Lacuna de fonte: a pagina oficial cita "Portaria MTE 1.419... vigência em 26 de maio de 2025"; a data 26/05/2026 esta no PDF oficial, nao no corpo do capitulo. (Sem divergencia.)
+  NOTA NAO VERIFICADA (secundaria, nao oficial): fiscalizacao orientativa por 90 dias apos vigencia, e perguntas e respostas do MTE de 30/04/2026. Nao localizado em gov.br nesta rodada. Status: SEM FONTE OFICIAL ACHADA.
+
+2.2 NR-5 (CIPA) - PARCIAL
+  Fonte: https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/norma-regulamentadora-no-5-nr-5
+  PDF oficial lido: NR05atualizada2023.pdf (gov.br).
+  Ultima atualizacao (pagina oficial): "(Última atualização: Portaria MTP nº 4.219, de 20 de dezembro de 2022)".
+  Dimensionamento, item 5.4.1: "A CIPA será constituída por estabelecimento e composta de representantes da organização e dos empregados, de acordo com o dimensionamento previsto no Quadro I desta NR, ressalvadas as disposições para setores econômicos específicos."
+  Quadro I - Dimensionamento da CIPA: existe (faixas de numero de empregados x Grau de Risco 1 a 4). Tabela NAO extraida com seguranca (layout do PDF embaralhado em pdftotext). Numeros do quadro: NAO TRANSCRITOS (sem fonte legivel). Status: PARCIAL.
+  Mandato, item 5.4.6: "O mandato dos membros eleitos da CIPA terá a duração de um ano, permitida uma reeleição."
+  Posse, item 5.4.7: "...empossados no primeiro dia útil após o término do mandato anterior."
+  Estabilidade, item 5.4.12: "É vedada a dispensa arbitrária ou sem justa causa do empregado eleito para cargo de direção da CIPA desde o registro de sua candidatura até um ano após o final de seu mandato."
+  Item 5.4.12.1: "O término do contrato de trabalho por prazo determinado não caracteriza dispensa arbitrária..."
+  Item 5.4.10: CIPA nao pode ter numero reduzido nem ser desativada antes do fim do mandato, "exceto no caso de encerramento das atividades do estabelecimento."
+  Status: RESOLVIDO (mandato e estabilidade); PARCIAL (Quadro I).
+
+2.3 NR-6 (EPI) - RESOLVIDO
+  URL (pagina oficial): https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/norma-regulamentadora-no-6-nr-6
+  PDF oficial lido: NR06atualizada2023.pdf (gov.br). Publicacao original: Portaria MTb 3.214/1978 (DOU 06/07/78).
+  Item 6.5.1, alinea "d": "registrar o seu fornecimento ao empregado, podendo ser adotados livros, fichas ou sistema eletrônico, inclusive, por sistema biométrico;"
+  Item 6.5.1, alinea "c": "fornecer ao empregado, gratuitamente, EPI adequado ao risco, em perfeito estado de conservação e funcionamento..."
+  Item 6.5.1, alinea "a": "adquirir somente o aprovado pelo órgão de âmbito nacional competente ..."
+  Item 6.5.1, alinea "g": "substituir imediatamente, quando danificado ou extraviado;"
+  Item 6.5.1.1: "O sistema eletrônico, para fins de registro de fornecimento de EPI, caso seja adotado, deve permitir a extração de relatórios."
+  Item 6.4.1: "O EPI ... só pode ser posto à venda ou utilizado com a indicação do Certificado de Aprovação - CA, expedido pelo órgão de âmbito nacional competente..."
+  Item 6.9.2: "O CA concedido ao EPI tem validade vinculada ao prazo da avaliação da conformidade ..."
+  Item 6.9.2.1: "O EPI deve ser comercializado com o CA válido."
+  Item 6.7.2: "Quando do fornecimento de EPI, a organização deve assegurar a prestação de informações..."
+  Nota: a pagina oficial do CAEPI e a Portaria MTP 672/2021 (procedimentos de CA) apareceram na busca, mas nao foram lidas integralmente. URL da rodada anterior 404: nao reutilizada; URL acima e a atual.
+  Nota de divergencia: resultado de busca (secundaria) cita "Portaria MTP 2.175/2022 - Nova NR 06". O PDF oficial lido e de 2023 e sua capa nao exibe 2.175/2022 como ultima atualizacao (nao verificado nesta rodada). Status: DIVERGENTE (menor) - conferir qual e a versao vigente.
+  Ficha de EPI: sem prazo de guarda na NR-6 (nao encontrado no texto lido). Item 6.5.1 d) e a unica obrigacao de registro encontrada.
+  Cruzamento: MOS S-1.3 (eSocial), p. 54 (fonte oficial): "A informação relativa aos EPIs não substitui a obrigatoriedade do registro de entrega destes equipamentos conforme disposição normativa." (Evento S-2240.)
+
+2.4 NR-7 (PCMSO / exames) - RESOLVIDO
+  URL: https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/norma-regulamentadora-no-7-nr-7
+  PDF oficial lido: nr-07-atualizada-2022-1.pdf (gov.br). Ultima modificacao (pagina oficial): Portaria SEPRT nº 8.873, de 23 de julho de 2021.
+  Item 7.5.8 (periodicidades): "O exame clínico deve obedecer aos prazos e à seguinte periodicidade: I - no exame admissional: ser realizado antes que o empregado assuma suas atividades;"
+    II - periodico, alinea "a": expostos a riscos identificados no PGR: "a cada ano ou a intervalos menores, a critério do médico responsável"; alinea "b": "para os demais empregados, o exame clínico deve ser realizado a cada dois anos."
+  Item 7.5.9 (retorno): "...quando ausente por período igual ou superior a 30 (trinta) dias por motivo de doença ou acidente, de natureza ocupacional ou não."
+  Item 7.5.10 (mudanca de risco): "...deve, obrigatoriamente, ser realizado antes da data da mudança..."
+  Item 7.5.11 (demissional): "No exame demissional, o exame clínico deve ser realizado em até 10 (dez) dias contados do término do contrato, podendo ser dispensado caso o exame clínico ocupacional mais recente tenha sido realizado há menos de 135 (cento e trinta e cinco) dias, para as organizações graus de risco 1 e 2, e há menos de 90 (noventa) dias, para as organizações graus de risco 3 e 4."
+  Item 7.5.17 (complementares no admissional): "...poderão ser aceitos exames complementares realizados nos 90 (noventa) dias anteriores, exceto quando definidos prazos diferentes..."
+  Item 7.5.19 (ASO): "...ASO, que deve ser comprovadamente disponibilizado ao empregado, devendo ser fornecido em meio físico quando solicitado." Item 7.5.19.1: conteudo minimo (razao social, CNPJ/CAEPF; nome, CPF e funcao; perigos/fatores de risco...).
+  Item 7.6.1.1 (prontuario): "O prontuário do empregado deve ser mantido pela organização, no mínimo, por 20 (vinte) anos após o seu desligamento..."
+  Item 7.5.5 e 7.5.8, exames: admissional, periodico, retorno, mudanca de risco, demissional (7.5.7, alineas a-e).
+  Item 1.12 (Anexo de hiperbarica, citado) nao usado.
+  eSocial S-2220 NAO citado no texto da NR-7 lido (ver item 8).
+  Status: RESOLVIDO.
+
+2.5 NR-4 (SESMT) - PARCIAL
+  URL: https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/norma-regulamentadora-no-4-nr-4
+  PDF oficial lido: nr-04-atualizada-2023.pdf (gov.br). Ultima modificacao (pagina oficial): Portaria MTP nº 2.318, de 3 de agosto de 2022.
+  Item 4.5 "Dimensionamento" e Anexo II "Dimensionamento do SESMT" existem. Tabela do Anexo II NAO extraida com seguranca (layout garbled). Grau de risco: Anexo I (CNAE, graus 1 a 4).
+  Status: PARCIAL.
+
+2.6 NR-16 (periculosidade; adicional 30%) - RESOLVIDO
+  URL: https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/norma-regulamentadora-no-16-nr-16
+  PDF oficial lido: nr-16-atualizada-2025-ii.pdf (gov.br).
+  Item 16.2: "O exercício de trabalho em condições de periculosidade assegura ao trabalhador a percepção de adicional de 30% (trinta por cento), incidente sobre o salário, sem os acréscimos resultantes de gratificações..."
+  Item 16.2.1: "O empregado poderá optar pelo adicional de insalubridade que porventura lhe seja devido."
+  Anexos (titulo, como no PDF):
+    Anexo I - Atividades e operações perigosas com explosivos (red. Portaria SSMT 2/1979)
+    Anexo II - Atividades e operações perigosas com inflamáveis
+    Anexo III - Atividades e operações perigosas com exposição a roubos ou outras espécies de violência física nas atividades profissionais de segurança pessoal ou patrimonial
+    Anexo IV - Atividades e operações perigosas com energia elétrica (aprovado pela Portaria MTE 1.078/2014)
+    Anexo V - Atividades perigosas em motocicleta (aprovado pela Portaria MTE 2.021/2025)
+    Anexo V - Atividades perigosas em motocicleta (aprovado pela Portaria MTE 1.565/2014) - SEGUNDO ANEXO V COM O MESMO NUMERO
+    Anexo VI - Atividades perigosas dos agentes das autoridades de trânsito (inserido pela Portaria MTE 1.411/2025)
+    Anexo (*) - Atividades e operações perigosas com radiações ionizantes ou substâncias radioativas
+  Histórico (cabecalho): Portaria MTb 3.214/1978; SSMT 02/1979; MTb 3.393/1987; SSST 25/1994; MTE 545/2000 (e demais).
+  Status: RESOLVIDO. DIVERGENTE: Anexo V aparece duas vezes com numeros de portaria diferentes (2.021/2025 e 1.565/2014). Nao resolvido qual esta em vigor (ver Divergencias).
+
+2.7 NR-15 (insalubridade) - do arquivo local nr15-2025.txt
+  Item 15.2 (adicional): "...adicional, incidente sobre o salário mínimo da região, equivalente a:"
+  15.2.1 "40% (quarenta por cento), para insalubridade de grau máximo;"
+  15.2.2 "20% (vinte por cento), para insalubridade de grau médio;"
+  15.2.3 "10% (dez por cento), para insalubridade de grau mínimo;"
+  15.3: "No caso de incidência de mais de um fator de insalubridade, será apenas considerado o de grau ... mais elevado" (texto truncado no arquivo; conferir).
+  Anexos (numeros, do arquivo local): 1, 2, 3, 4, 5, 6, 7 (laudo de inspecao), 8, 9, 10, 11, 12, 13, 13-A, 14. Titulos NAO extraidos nesta rodada.
+  Nota: texto diz "salário mínimo da região" (literal). Nao interpretado aqui.
+  Status: RESOLVIDO (graus e base); titulos dos anexos: PARCIAL.
+
+2.8 NR-24 / NR-17 - NAO LIDAS. Nao citadas como obrigacao de DP no pedido.
+
+==============================================================
+ITEM 3 - LTCAT e PPP (Previdencia)
+Status: SEM FONTE OFICIAL ACHADA (texto de IN PRES/INSS); PARCIAL (relacao com eSocial)
+==============================================================
+- IN PRES/INSS 128/2022 (texto vigente): NAO LIDA. Tentativas de download de PDF oficial gov.br (URLs in128pres-inss.pdf) retornaram 404. Pagina de listagem oficial https://www.gov.br/inss/pt-br/centrais-de-conteudo/legislacao/instrucao-normativa/2022 existe, mas estava truncada e nao expôs o item de IN 128 nesta leitura.
+- Alteracoes conhecidas por busca (secundarias, NAO lidas em fonte oficial): IN PRES/INSS 170/2024 (inclui PPP como documento comprobatorio de atividade especial para periodos a partir de 01/01/2004, conforme IN 99/INSS/DC, citado por trecho secundario); IN PRES/INSS 195/2025 (revoga arts. 417 §§1º e 2º e 421 VI e VII da IN 128); IN PRES/INSS 205/2026 (15/05/2026); IN PRES/INSS 210/2026 (07/07/2026); IN PRES/INSS 212/2026 (06/08/2026, altera a IN 128 - publicada 11/08/2026 segundo fonte secundaria). Nenhuma foi lida em gov.br/in.gov.br. Status: SEM FONTE OFICIAL ACHADA para o texto dos artigos sobre PPP eletronico, LTCAT e prazos.
+- Relacao com eSocial (FONTE OFICIAL LIDA - MOS S-1.3, consolidado ate NO S-1.3 10.2026, publicado em 28/04/2026, pag. 54):
+  "Os eventos de SST constituem a nova forma de cumprimento das obrigações tributárias acessórias referentes ao dever de emissão da CAT e da elaboração e atualização do PPP e, por essa razão, substituirão os atuais formulários utilizados para o cumprimento dessas obrigações."
+  Evento S-2240: "são prestadas as informações da exposição do trabalhador aos agentes nocivos..." (prazo ver item 8).
+  Nota MOS: "As informações são obrigatórias só para segurados vinculados ao RGPS."
+- LTCAT: nenhum texto oficial lido nesta rodada. SEM FONTE OFICIAL ACHADA.
+- Prazo de emissao e entrega do PPP ao trabalhador: SEM FONTE OFICIAL ACHADA (nao lido).
+- URL do MOS (fonte oficial): https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/mos-s-1-3-consolidada-ate-a-no-s-1-3-10-2026.pdf/@@download/file
+
+==============================================================
+ITEM 4 - EXAMES (complemento)
+Status: RESOLVIDO (S-2221) ; SEM FONTE OFICIAL ACHADA (portaria toxicologico)
+==============================================================
+- NR-7: ver item 2.4 (exames admissional/periodico/retorno/mudanca/demissional; 10 dias demissional).
+- S-2221 (MOS S-1.3, pag. 247, fonte oficial): "Quem está obrigado: O empregador que mantém empregado exercendo cargo de motorista profissional de transporte rodoviário de cargas ou de passageiros."
+  "Prazo de envio: até o dia 15 (quinze) do mês subsequente ao da realização do exame, salvo para o relativo ao exame toxicológico pré-admissional, hipótese em que o evento deve ser enviado até o dia 15 (quinze) do mês subsequente ao da admissão."
+  Item 1.4: "O envio deste evento independe do resultado do exame, se positivo ou negativo."
+  Pre-requisito: evento S-2190 ou S-2200.
+- Portaria/norma especifica do exame toxicologico (Lei 13.103/2015 e CTB): NAO PESQUISADA nesta rodada. SEM FONTE OFICIAL ACHADA.
+
+==============================================================
+ITEM 5 - (excluido por instrucao: ja coberto por outro leitor)
+==============================================================
+
+==============================================================
+ITEM 6 - RELATORIO DE TRANSPARENCIA SALARIAL E COTA
+Status: PARCIAL
+==============================================================
+6.1 Decreto 11.795/2023 - RESOLVIDO (fonte oficial)
+  URL: https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/decreto/D11795.htm
+  Art. 1º, paragrafo unico: aplica-se a "pessoas jurídicas de direito privado com cem ou mais empregados".
+  Art. 2º (caput): o Relatorio "tem por finalidade a comparação objetiva entre salários, remunerações e a proporção de ocupação de cargos".
+  Art. 2º, § 3º: divulgacao "nos sítios eletrônicos das próprias empresas, nas redes sociais ou em instrumentos similares".
+  Art. 2º, § 4º: "A publicação dos Relatórios deverá ocorrer nos meses de março e setembro."
+  Art. 4º, III: menciona "denúncias relacionadas à discriminação salarial e de critérios remuneratórios".
+  Sancoes: o decreto lido nao traz artigo de penalidade (divergencia com o texto secundario que cita multa - ver Divergencias).
+
+6.2 Portaria MTE 3.714/2023 (regulamenta o Decreto 11.795) - SEM FONTE OFICIAL ACHADA (texto literal nao lido em gov.br). Unica copia encontrada: espelho do ANTT (nao oficial): https://anttlegis.antt.gov.br/... (PORTARIA MTE Nº 3.714, DE 24 DE NOVEMBRO DE 2023). Busca indicou gov.br/portarias-avulsas como oficial (nao aberta).
+
+6.3 Calendario / quem declara / onde (2026) - FONTE OFICIAL (noticia gov.br, 2026/julho):
+  URL: https://www.gov.br/trabalho-e-emprego/pt-br/noticias-e-conteudo/2026/julho/empresas-com-100-ou-mais-empregados-devem-atualizar-informacoes-para-o-6o-relatorio-de-transparencia-salarial
+  Literal: "os empregadores com 100 ou mais empregados" devem atualizar as informacoes "entre 3 e 31 de agosto", no "Portal Emprega Brasil", acesso restrito a area do empregador.
+  Nota: o texto da noticia nao cita numero de portaria (cita apenas a Lei 14.611/2023). Ano inferido 2026 pelo titulo "6º relatório".
+  Obs. de calendario: secundarios citam declaracao em fevereiro e agosto (Portaria 3.714, art. ... nao lido). Publicacao em marco e setembro = Decreto art. 2 § 4º (fonte oficial). Divergencia: janela de declaracao (fev/ago) x publicacao (mar/set) - ver Divergencias.
+
+6.4 Cota de aprendizagem e PCD - fiscalizacao (busca em gov.br; textos NAO lidos):
+  - IN MTP nº 2, de 8 de novembro de 2021 (fiscalizacao da aprendizagem e PcD). Publicada 12/11/2021. URL oficial (busca): https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/inspecao-do-trabalho/areas-de-atuacao/in-2-de-8-denovembro-de-2021.pdf
+    Literal de busca (nao verificado no PDF): fiscalizacao "prioritariamente de forma indireta, por notificação" (arts. 71 e 72). Status: PARCIAL (nao lido o texto).
+  - Manual da Aprendizagem Profissional, edicao 2024, Inspecao do Trabalho (gov.br). Status: NAO LIDO.
+  - Portaria MTE Consolidada nº 1, de 17/12/2025 (publicada 30/12/2025), gov.br: arquivo local portaria-consolidada-mte1-2025.txt. Cota: certidao de cumprimento da reserva legal; aprendizes e PcD informados ao eSocial. Texto integral NAO varrido nesta rodada (apenas art. 16 lido).
+  - IN 98 (Lei de Cotas) citada por secundario, sem ano confirmado. Status: SEM FONTE OFICIAL ACHADA.
+  - Lei 8.213 art. 93 e CLT art. 429: fora do escopo (outro leitor).
+
+==============================================================
+ITEM 7 - JORNADA POS-EC 141/2026
+Status: EC 141 RESOLVIDO (fonte oficial); ATO DO MTE: NAO ENCONTRADO
+==============================================================
+7.1 Emenda Constitucional nº 141, de 16 de outubro de 2026 - fonte oficial:
+  URL: https://planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc141.htm
+  Art. 7º, XIII (texto dado): "duração do trabalho normal não superior a 8 (oito) horas diárias e 40 (quarenta) horas semanais"
+  Art. 6º, I: "a duração do trabalho normal não excederá a 42 (quarenta e duas) horas semanais"
+  Art. 6º, II: "a duração do trabalho normal não excederá a 40 (quarenta) horas semanais"
+  Art. 7º, XV: "repouso semanal remunerado de 2 (dois) dias, um dos quais preferencialmente aos domingos"
+  Art. 10, I: "após decorridos 2 (dois) meses de sua publicação, em relação à alteração promovida pelo art. 1º"
+  Art. 10, II: "na data de sua publicação, em relação aos demais dispositivos"
+  Art. 6º, II: "1 (um) ano após o decurso do prazo de que trata o inciso I deste artigo"
+  Nota de leitura (sem interpretacao): a pagina do Planalto avisa que o texto nao substitui a publicacao no DOU de 16.10.2026. Caracteres corrompidos na pagina lida (acentos); citacoes acima com grafia corrigida.
+  Datas de inicio: a secundaria diz 17/12/2026 (42 h) e 17/12/2027 (40 h); outra diz 16/12. Pelo art. 10, I, o marco e "2 meses de sua publicação" (publicacao 16/10/2026). Divergencia de 1 dia nas fontes secundarias - ver Divergencias.
+
+7.2 Ato do MTE (portaria, nota tecnica ou orientacao) sobre a nova jornada/DSR/controle de ponto, out-nov/2026:
+  NAO ENCONTRADO. Consultas feitas: (i) WebSearch geral "EC 141/2026 jornada 42 horas DSR portaria Ministerio do Trabalho controle de ponto nota tecnica novembro 2026" - so materiais de escritorios, nenhum ato MTE; (ii) WebSearch restrita a gov.br/in.gov.br "Ministerio do Trabalho ... emenda constitucional 141 portaria nota tecnica controle de jornada ponto" - retornou apenas REP antigo (Portaria 1.510/2009, FAQ do REP, Portaria 373/2011, Portaria 1.629/2024). Nenhum ato sobre EC 141.
+  Secundario (nao oficial, nao verificado): "entrou em vigor a desregulamentação do controle de jornada para trabalhadores com curso superior que recebam remuneração igual ou superior a 2,5 vezes o teto do INSS". NAO confirmado em fonte oficial. Status: SEM FONTE OFICIAL ACHADA (nao incluir sem verificar o texto da EC/lei).
+
+==============================================================
+ITEM 8 - eSocial SST (S-2210, S-2220, S-2221, S-2240)
+Status: RESOLVIDO (MOS S-1.3 consolidado oficial)
+==============================================================
+Fonte: MOS S-1.3 - "Versão S-1.3 - (Consol. até a NO S-1.3 - 10.2026)", aprovado pela Portaria Conjunta RFB/MPS/MTE nº 13 de 25/06/2024 (DOU 28/06/2024), consolidacao publicada em 28/04/2026.
+URL: https://www.gov.br/esocial/pt-br/documentacao-tecnica/manuais/mos-s-1-3-consolidada-ate-a-no-s-1-3-10-2026.pdf/@@download/file
+(Existe consolidacao mais recente em gov.br - "...ate-a-no-s-1-3-12-2026..." - NAO lida; ver Lacunas.)
+
+S-2210 (CAT):
+  "Prazo de envio: a comunicação do acidente de trabalho deve ser registrada até o primeiro dia útil seguinte ao da ocorrência e, em caso de morte, de imediato."
+  Obrigatoriedade (resumo por categoria, pag. 54): 1XX Obrigatorio; 2XX Obrigatorio; 3XX Obrigatorio em relacao a servidores vinculados ao RGPS.
+
+S-2220 (monitoramento da saude):
+  "Prazo de envio: até o dia 15 (quinze) do mês subsequente ao da realização do exame ..." (Prazo literal do MOS; "salvo para ..." - ver texto para admissional: "...até o dia 15 (quinze) do mês subsequente ao da admissão.")
+  Obrigatoriedade: 1XX "Obrigatório, exceto para domésticos"; 2XX "Facultativo"; 3XX "Facultativo".
+  Nota MOS: "Esses prazos não alteram o prazo legal para a realização dos exames..." (registro no eSocial, nao o exame).
+
+S-2221 (exame toxicologico do motorista): ver item 4 - prazo: ate o dia 15 do mes seguinte ao exame; pre-admissional: 15 do mes seguinte a admissao.
+
+S-2240 (condicoes ambientais / agentes nocivos):
+  "Prazo de envio: até o dia 15 (quinze) do mês subsequente ao início da obrigatoriedade dos eventos de SST ou do ingresso/admissão do trabalhador." (texto literal truncado no leitor; ver texto.)
+  Alteracoes: "...deve ser enviado até o dia 15 (quinze) do mês subsequente à ocorrência da alteração, postergando-se este prazo para o primeiro dia útil quando cair em dia não útil."
+  Obrigatoriedade: 1XX "Obrigatório, exceto para domésticos"; 2XX "Obrigatório"; 3XX "Obrigatório, em relação a servidores vinculados ao RGPS."
+  Nota MOS: "A informação relativa aos EPIs não substitui a obrigatoriedade do registro de entrega destes equipamentos conforme disposição normativa."
+
+Status: RESOLVIDO para prazos e obrigatoriedade por categoria (categoria 1XX/2XX/3XX com texto de tabela; a leitura integral da tabela do MOS nao foi extraida linha a linha).
+
+==============================================================
+DIVERGENTES / ALERTAS
+==============================================================
+D1. NR-16 - Anexo V aparece duas vezes: "Aprovado pela Portaria MTE nº 2.021, de 03 de dezembro de 2025" e "Aprovado pela Portaria MTE nº 1.565, de 13 de outubro de 2014". Status em vigor nao resolvido.
+D2. NR-6 - busca secundaria cita Portaria MTP 2.175/2022 como atualizacao da NR-6; PDF oficial lido e de 2023 (sem essa referencia na capa lida). Conferir versao vigente.
+D3. Decreto 11.795 art. 2 § 4º fixa publicacao em MARÇO e SETEMBRO (fonte oficial); secundarios falam em declaracao FEV/AGO (pode ser janela de declaracao, nao publicacao - nao resolvido). Janela 2026 "3 a 31 de agosto" e fonte oficial gov.br (noticia), para atualizacao de 100+ empregados.
+D4. Decreto 11.795: nenhuma penalidade no texto lido; secundario cita multa. Penalidade pode estar em outra norma (Portaria 3.714/2023 nao lida).
+D5. EC 141 (inicio da reducao): secundarios 16/12 vs 17/12 de 2026. Oficial: "2 (dois) meses de sua publicação" (publicada 16/10/2026).
+D6. NR-1 - secundario cita MTE Q&A de 30/04/2026 com fiscalizacao orientativa de 90 dias; NAO confirmado em gov.br. Vigencia oficial 26/05/2026 confirmada.
+D7. Portaria 671 art. 85 "no prazo mínimo de dois dias, a critério deste" - redacao ambigua; nao resolvida.
+D8. Portaria Consolidada 1/2025 x Portaria 671 - nenhuma sobreposicao de regra de REP; art. 16 da Consolidada trata livros/fichas (ver item 1).
+D9. NR-5 Quadro I - tabela nao extraida; nao ha numeros transcritos.
+
+==============================================================
+LACUNAS (nao registradas em fila - nenhum acesso a scripts/lacunas.mjs nesta sessao; devolvidas aqui)
+==============================================================
+L1. IN PRES/INSS 128/2022 consolidada (e alteracoes 170/2024, 195/2025, 205/2026, 210/2026, 212/2026): texto oficial nao lido (PPP eletronico, LTCAT, prazos). Caminho: https://www.gov.br/inss/pt-br/centrais-de-conteudo/legislacao/instrucao-normativa/2022 (listagem truncada; abrir o item pelo link).
+L2. Portaria MTE 3.714/2023 (texto literal) e Decreto 11.795 art. 2 § 4º vs calendario de declaracao: ler portaria em gov.br/portarias-avulsas.
+L3. Portaria/IN de fiscalizacao da cota (IN MTP 2/2021 - arts. 71-72 e validade atual): ler no PDF oficial.
+L4. Portaria/norma do exame toxicologico (Lei 13.103/2015 e CTB): nao pesquisada.
+L5. NR-4 Anexo II e NR-5 Quadro I: tabelas nao extraidas do PDF (layout). Extrair com outra ferramenta ou no PDF visual.
+L6. NR-15 titulos dos anexos 1-14 nao extraidos do arquivo local.
+L7. MOS S-1.3 mais recente (consolidada ate NO S-1.3 12.2026, em gov.br) nao lida; verificar se houve alteracao de prazo SST.
+L8. CLT art. 74 § 4º (ponto por excecao) nao lido.
+L9. Portaria 671 - prazo de guarda de registros de ponto (REP/AFD/AEJ): nao localizado nas duas normas; verificar outra norma (ex.: Portaria 671 art. 85 e Anexo; Lei/CLT) antes de concluir.
+L10. Ato do MTE sobre EC 141/2026 (jornada/DSR/ponto): nao localizado.
+L11. Secundario "2,5 vezes o teto do INSS" (controle de jornada de alta renda) - nao verificado em fonte oficial.
+
+==============================================================
+CONTAGEM
+==============================================================
+Itens (com subitens) RESOLVIDOS (texto oficial lido, sem lacuna relevante): NR-1; NR-6; NR-7; NR-16; S-2210/S-2220/S-2240 (prazo e obrigatoriedade); S-2221; EC 141 (texto); Decreto 11.795 (texto); calendario 2026 (noticia gov.br); NR-5 (mandato/estabilidade); Portaria 671 (REP-C/A/P, comprovante, AFD/AEJ, espelho, assinatura, prazo ao auditor).
+PARCIAIS: NR-4 (tabela); NR-5 (Quadro I); NR-15 (titulos dos anexos); Portaria 671 (ponto por excecao, aplicativo); cota (IN 2/2021 nao lida); Portaria 3.714 (texto).
+SEM FONTE OFICIAL ACHADA: IN 128 / PPP / LTCAT / prazos de PPP; prazo de guarda de ponto; portaria do exame toxicologico; portaria 3.714 (texto literal); ato MTE sobre EC 141 (NAO ENCONTRADO); penalidades do Decreto 11.795; IN 98.
+DIVERGENTES: 9 (ver secao DIVERGENTES / ALERTAS: D1 a D9).
+Lacunas registradas em fila: 0 (sem acesso ao registro); 11 devolvidas na secao LACUNAS (L1 a L11).

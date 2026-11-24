@@ -1,0 +1,366 @@
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+NOTA TÉCNICA S-1.3 Nº 07/2026 (rev. 20/10/2026) 
+ 
+Ajustes dos Leiautes Versão S-1.3 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+20/10/2026 
+ 
+ 
+
+ 
+  Nota Técnica S-1.3 nº 07/2026 (rev. 20/10/2026) 
+ 
+Página 2 de 7 
+ 
+1. Objetivo e considerações iniciais 
+ 
+Esta Nota Técnica revisada tem como objetivo apresentar os ajustes dos leiautes do eSocial que se 
+fazem necessários. 
+Nesta revisão  houve novo ajuste na validação do campo {infoMesmoMtv} do evento S -2230, de 
+forma mais flexível. De acordo com essa nova validação, caso a data de início do afastamento seja igual 
+ou posterior a 26/10/2026: 
+• se o código do motivo de afastamento for diferente de [01, 03], o campo {infoMesmoMtv} não 
+deverá ser informado; 
+• se o código do motivo de afastamento for igual a [01, 03] e se houver para o mesmo contrato do 
+trabalhador outro afastamento anterior dentro do período de 60 (sessenta) dias com o mesmo 
+código de motivo de afastamento, o campo {infoMesmoMtv} deverá ser informado com um dos 
+valores [S, N]; 
+• se o código do motivo de afastamento for igual a [01, 03] e se não existir para o mesmo contrato 
+do trabalhador outro afastamento anterior dentro do período de 60 (sessenta) dias com o mesmo 
+código de motivo de afastamento,  o campo {infoMesmoMtv} não deverá ser preenchido ou 
+deverá ser informado o valor [N]. 
+As alterações da revisão em 24/09/2026 são as seguintes: 
+a) Exclusão do valor "I - Indeterminado (não consta CID) " do campo {infoMesmoMtv} do evento S -
+2230; 
+b) Inclusão dos códigos [52, 53] na Tabela 18; e 
+c) Alteração de descrição dos códigos [18, 20, 47, 48, 51] da Tabela 18. 
+2. Leiautes, Tabelas, Regras de validação e esquemas XSD 
+ 
+Juntamente com esta Nota Técnica são publicados os seguintes documentos: 
+• Leiautes do eSocial v. S-1.3 (cons. até NT 07.2026 rev. 20/10/2026) 
+• Leiautes do eSocial v. S-1.3 - Anexo I - Tabelas (cons. até NT 07.2026 rev. 20/10/2026) 
+• Leiautes do eSocial v. S-1.3 - Anexo II - Regras (cons. até NT 07.2026 rev. 20/10/2026) 
+• Esquemas XSD v. S-1.3 (NT 07.2026 rev. 20/10/2026) 
+ 
+ 
+  Nota Técnica S-1.3 nº 07/2026 (rev. 20/10/2026) 
+ 
+Página 3 de 7 
+ 
+3. Alterações introduzidas nesta Nota Técnica e previsão de implantação 
+ 
+3.1 Alterações já implantadas nos ambientes de produção restrita e produção: 
+ 
+• Esquemas XSD: não há 
+ 
+LEIAUTE DESCRIÇÃO DA ALTERAÇÃO MOTIVO 
+S-2500 
+Campo {infoContr/tpContr} – alterada validação. 
+1) Possibilitar a informação de um evento S-
+2500 com 2 contratos (sendo um deles por 
+responsabilidade indireta). 
+2) Possibilitar a informação de evento S -
+2500 relativo a contrato de servidor público 
+declarado nulo. 
+Campo {indContr} – alterada validação. 
+Possibilitar a informação de um evento S -
+2500 com 2 contratos (sendo um deles por 
+responsabilidade indireta). 
+S-5002 Campo {consolidApurMen/descRendimento} – 
+alterada origem e incluída validação. 
+Não retornar o campo se 
+{consolidApurMen/vlrIsenOutros} = 0. 
+TABELAS 
+Tabela 01 – alterada descrição do código [313]. 
+Melhoria de redação, para contemplar 
+demais atividades vinculadas ao regime 
+próprio. 
+Tabela 29 – incluído código [166451]. Inclusão de código referente à contribuição 
+adicional ao SENAI. 
+ 
+3.2 Alterações previstas para serem implantadas nas seguintes datas: 
+ 
+• Ambiente de produção restrita: 25/09/2026 
+• Ambientes de produção: 29/09/2026 
+• Esquemas XSD: não há 
+ 
+LEIAUTE DESCRIÇÃO DA ALTERAÇÃO MOTIVO 
+S-2410 
+Grupo {instPenMorte} – alterada condição. 
+Não exigir o preenchimento do grupo no s 
+casos de transferência de benefício para 
+outro órgão ou de mudança de CPF. 
+Campo {dtIniBeneficio} – alterada validação da 
+alínea "c". 
+Possibilitar o envio de transferência de 
+benefício iniciado antes da obrigatoriedade 
+dos eventos não periódicos para o ente 
+público no eSocial. 
+S-2410 e S-2416 Campo {tpBeneficio} – alterada validação. 
+Possibilitar o uso de código do grupo [08] da 
+Tabela 25 nos casos de transferência de 
+benefício para outro órgão ou de mudança 
+de CPF. 
+ 
+3.3 Alterações previstas para serem implantadas nas seguintes datas: 
+ 
+• Ambiente de produção restrita: 13/10/2026 
+• Ambiente de produção: 26/10/2026 
+• Esquemas XSD: link "Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) - produção em 
+26/10/2026" 
+ 
+ 
+  Nota Técnica S-1.3 nº 07/2026 (rev. 20/10/2026) 
+ 
+Página 4 de 7 
+ 
+LEIAUTE DESCRIÇÃO DA ALTERAÇÃO MOTIVO 
+S-1202 
+Grupo {evtRmnRPPS} – incluída 
+REGRA_RUBRICA_COMPATIVEL_DECTERCEIRO. Inclusão de regra ao evento. 
+Campo {cnpjOrgaoAnt} – alterada validação. 
+Flexibilização de validação, permitindo 
+informar número de inscrição igual a 
+estabelecimento cadastrado no evento S -
+1005 se a natureza jurídica do declarante for 
+Administração Pública. 
+S-2200 e S-2205 Campo {infoCota} – alterada validação. O campo deixará de ser informado. 
+S-2205 Grupo {infoDeficiencia} – alterada condição. 
+Exigir o preenchimento do grupo caso haja 
+informação de deficiência no Registro de 
+Eventos Trabalhistas (RET). 
+S-2230 
+Campo {infoMesmoMtv} – incluída validação e 
+alterada descrição. 
+OBS: A inclusão de valor válido, trazida pela Nota 
+Técnica nº 07/2026, foi excluída. 
+1) Melhoria de redação da descrição. 
+2) Inclusão de  validação, conforme ajuste 
+mencionado no item 1 desta revisão. 
+S-2231 Campo {cnpjCess} – alterada validação. 
+Flexibilização de validação, permitindo 
+informar número de inscrição igual a 
+estabelecimento cadastrado no evento S -
+1005 se a natureza jurídica do declarante for 
+Administração Pública. 
+S-2299, S-2399 
+e S-2420 Campo {indCPFDesvinc} – criado. 
+Possibilitar a mudança de CPF quando o 
+novo CPF não possui vinculação com o 
+antigo CPF na base da RFB. 
+S-2300 Campo {cnpjCednt} – alterada validação. Flexibilização de validação, permitindo 
+informar número de inscrição igual a 
+estabelecimento cadastrado no evento S -
+1005 se a natureza jurídica do declarante for 
+Administração Pública. 
+S-2410 Campo {cnpjOrgaoAnt} – alterada validação. 
+S-2420 Campo {cnpjOrgaoSuc} – alterada validação. 
+S-2500 
+Criado o grupo {localTrabalho} e respectivos 
+subgrupos e campos. 
+Grupo criado para possibilitar a informação 
+do local de trabalho. 
+Campo {nmSoc} – criado. Campo criado para possibilitar a informação 
+do nome social. 
+Campo {nmCargo} – criado. Campo criado para possibilitar a informação 
+do nome do cargo. 
+Campo {codCBO} – alteradas descrição e validação. 
+Melhoria de redação da descrição e ajuste 
+de validação para contemplar {codCateg} = 
+[906]. 
+Campo {nmFuncao} – criado. 
+Campo criado para possibilitar a informação 
+do nome da função de confiança/cargo em 
+comissão. 
+Campo {CBOFuncao} – criado. 
+Campo criado para possibilitar a informação 
+da CBO da função de confiança/cargo em 
+comissão. 
+S-8200 
+Campo {nmCargo} – criado. Campo criado para possibilitar a informação 
+do nome do cargo. 
+Campo {codMotAfast} – alterada validação. Inclusão do código de motivo de 
+afastamento [43] na validação. 
+ 
+  Nota Técnica S-1.3 nº 07/2026 (rev. 20/10/2026) 
+ 
+Página 5 de 7 
+ 
+LEIAUTE DESCRIÇÃO DA ALTERAÇÃO MOTIVO 
+REGRAS 
+REGRA_DESLIG_JA_EXISTE_BAIXA – alterada 
+descrição. 
+Regra alterada para exigir identidade entre 
+os campos {dtDeslig}, {mtvDeslig} e, se for o 
+caso, {dtProjFimAPI} dos eventos S-8200 e S-
+2299. 
+REGRA_DESLIG_TRABALHADOR_AFASTADO – 
+alterada descrição. 
+Inclusão dos códigos de motivo de 
+desligamento [01, 17] na regra. 
+REGRA_VALIDA_FECHAMENTO_FOPAG – alterada 
+descrição da alínea "b1". 
+Inclusão dos códigos de motivo de 
+afastamento [44, 45] na alínea. 
+ 
+3.4 Alterações previstas para serem implantadas nas seguintes datas: 
+ 
+• Ambiente de produção restrita: 09/11/2026 
+• Ambiente de produção: 23/11/2026 
+• Esquemas XSD: link "Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) - produção em 
+23/11/2026" 
+ 
+LEIAUTE DESCRIÇÃO DA ALTERAÇÃO MOTIVO 
+S-1000 Campo {indOptRegEletron} – alterada ocorrência e 
+incluída validação. O campo deixará de ser informado. 
+S-1010 Campo {observacao} – incluída validação. O campo precisará ser informado no caso de 
+rubrica informativa dedutora. 
+S-1210 e S-2501 Campo {infoDep/cpfDep} – alterada validação. O CPF do dependente será validado na base 
+da RFB. 
+S-1210 e S-5002 Campo {indOrgReemb} – incluído valor [3]. 
+Inclusão de valor relativo a ressarcimento 
+pelo empregador de despesas com plano de 
+saúde do trabalhador. 
+S-1210 
+Campo {frmTribut} – alterada validação. Permitir rendimento tributável sem rubrica 
+de IRRF nos casos de pensão/aposentadoria. 
+Campos {dedDepen/cpfDep}, {penAlim/cpfDep}, 
+{benefPen/cpfDep} e {infoDepSau/cpfDep} – 
+alterada validação. 
+Não permitir a informação de CPF inválido. 
+S-2200, S-2205, 
+S-2300, S-2400 
+e S-2405 
+Campo {cpfDep} – alterada validação. O CPF do dependente será validado na base 
+da RFB. 
+S-2200 e S-2206 
+Campo {qtdHrsSem} – alterada validação. Tornar o preenchimento do campo 
+compatível com o campo {tmpParc}. 
+Campo {tmpParc} – alterada validação. Tornar o preenchimento do campo 
+compatível com o tipo de jornada 12 X 36. 
+S-2299 Campo {sucessaoVinc/nrInsc} – alterada validação. Verificar se o empregador sucessor existe na 
+base da RFB. 
+S-2501 Campos {dedDepen/cpfDep}, {penAlim/cpfDep} e 
+{benefPen/cpfDep} – alterada validação. Não permitir a informação de CPF inválido. 
+REGRAS 
+REGRA_RUBRICA_COMPATIVEL_CATEGORIA – 
+alterada numeração do item "1" (para "1a"), 
+incluídos itens "1b" e "1c", e alterada descrição do 
+último parágrafo. 
+Não permitir informar rubricas com 
+{codIncCP} em S -1010 = [21, 22] para 
+trabalhadores avulsos, contribuintes 
+individuais e MEI. 
+ 
+ 
+ 
+  Nota Técnica S-1.3 nº 07/2026 (rev. 20/10/2026) 
+ 
+Página 6 de 7 
+ 
+3.5 Alterações previstas para serem implantadas nas seguintes datas: 
+ 
+• Ambiente de produção restrita: 07/12/2026 
+• Ambiente de produção: 14/12/2026 
+• Esquemas XSD: link "Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) - produção em 
+14/12/2026" 
+ 
+LEIAUTE DESCRIÇÃO DA ALTERAÇÃO MOTIVO 
+S-1000 Campo {indSiafi} – criado. 
+Campo criado para o órgão da 
+Administração Pública Federal indicar se 
+utiliza o SIAFI  (Sistema Integrado de 
+Administração Financeira). 
+S-1010 Campo {codIncCP} – incluídos valores [23, 24, 27, 
+28]. 
+Inclusão de valores re ferentes a salário -
+paternidade. 
+S-2500 
+Grupo {infoFGTS} – alterada condição. 
+Restringir valores a recolher no FGTS Digital 
+a determinados códigos de categoria e tipos 
+de regime trabalhista, análogo à condição do 
+grupo {infoBaseFGTS} do S-5003. 
+Campo {tpRegTrab} – incluído valor [3]. Inclusão de valor relativo a contrato de 
+servidor público declarado nulo. 
+S-2501 
+Campo {vrCR13} – alterada validação. 
+Não permitir o preenchimento do campo 
+caso o Código de Receita seja a [188951] - 
+IRRF - RRA. 
+Campo {vrRendMoleGrave13} – alterada validação 
+Campo {vrRendIsen65Dec} – alterada validação. 
+Campo {vrJurosMora13} – alterada validação. 
+Campo {vrPrevOficial13} – alterada validação. 
+S-5001 
+Campo {tpValor} – incluído valor [33]. 
+Inclusão de valor referente a salário -
+paternidade. 
+Campo {valor} – alterada validação. 
+Campo {tpVrPerRef} – incluído valor [33]. 
+Campo {vrPerRef} – alterada validação. 
+S-5011 Campo {vrSalPat} – criado. Criação de campo relativo ao valor do 
+salário-paternidade. 
+TABELAS 
+Tabela 03 – incluídos códigos [4052, 4053, 9928, 
+9929]. 
+Incluídas naturezas de rubrica relativas a 
+salário-paternidade. 
+Tabela 18 – incluídos códigos [46, 47, 48, 49, 50, 51, 
+52, 53] e alterada descrição dos códigos [18, 20]. 
+OBS: Nesta Nota Técnica revisada houve inclusão 
+dos códigos [52, 53] e alteração de descrição dos 
+códigos [18, 20, 47, 48, 51]. 
+1) Incluídos motivos de afastamento refe -
+rentes a licença-paternidade. 
+2) Incluído motivo de afastamento relativo a 
+licença-maternidade quando houver 
+afastamento de atividade insalubre em caso 
+de inexistência de atividade/local salubre. 
+3) Alterações de descrição decorrentes da 
+Lei 15.371/2026. 
+ 
+ 
+ 
+  Nota Técnica S-1.3 nº 07/2026 (rev. 20/10/2026) 
+ 
+Página 7 de 7 
+ 
+3.6 Alterações previstas para serem implantadas nas seguintes datas: 
+ 
+• Ambiente de produção: 18/01/2027 
+• Esquema XSD: link "Esquemas XSD eSocial - Leiautes v. S-1.3 (até NT 07/2026 rev.) - produção em 
+18/01/2027" 
+ 
+LEIAUTE DESCRIÇÃO DA ALTERAÇÃO MOTIVO 
+S-8200 Criado o grupo {observacoes} e respectivo campo. Possibilitar a informação de condições 
+especiais de trabalho.  
+ 

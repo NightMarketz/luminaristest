@@ -1,0 +1,186 @@
+DP - rodada 3a (leitor, coleta crua) - 2026-11-14
+Grau: [OF] = lido em fonte oficial nesta rodada (URL citada; trecho transcrito via WebFetch, conferir no DOU/planalto antes de citar em peca). [OF-pista] = URL oficial encontrada em busca, texto NAO lido. [SEC] = fonte secundaria (noticia, escritorio, reproducao) - nao vale como fonte. SEM FONTE OFICIAL ACHADA = nada oficial lido para o ponto.
+Limite: normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=... devolve so o titulo "Normas" via WebFetch e redireciona para tela administrativa no navegador embutido. Por isso, textos de INs da RFB ficaram sem leitura literal nesta rodada.
+
+================================================================
+ITEM 1 - IN RFB 2.237/2024 (DCTFWeb) e alteracoes
+================================================================
+Texto atual compilado (art. 6 e prazo): SEM FONTE OFICIAL ACHADA. Tentativas: sijut idAto=141910 (WebFetch: so titulo; navegador: redirecionado para normasinternet2.receita.fazenda.gov.br). Publicacao original: DOU de 05/12/2024, secao 1, p. 57 [SEC, busca].
+
+Prazo mensal (conflito entre fontes, nao resolvido por leitura oficial):
+- Redacao original [SEC]: dia 25 do mes seguinte, postergado para o dia util seguinte quando o dia 25 nao for util (Portal de Exigencias Legais).
+- Alteracao IN RFB 2.248/2025 [SEC, reproducao de texto]: "Art. 6º A DCTFWeb mensal deverá ser apresentada até o último dia útil do mês seguinte ao da ocorrência dos fatos geradores." Vigencia: data da publicacao (DOU 07/02/2025, a confirmar). Mesma IN: acrescenta § 10 ao art. 6 (postergacao para o dia util seguinte se nao houver expediente bancario no dia 20) e revoga o § 1º do art. 6 da IN 2.237 [SEC].
+- Caso jan/2025: prazo prorrogado para o ultimo dia util de marco/2025 [SEC].
+- Pagina gov.br DCTFWeb (WebFetch, [OF]): nao traz o prazo nem cita artigo; cita IN 2.237/2024 e IN 2.005/2021 e nao lista alteradoras. Sem trecho de prazo.
+Resultado: texto literal do prazo SEM FONTE OFICIAL ACHADA; a regra "ultimo dia util do mes seguinte" aparece so em fonte secundaria que cita a IN 2.248/2025.
+
+Fatos geradores da folha (DCTFWeb / eSocial como fonte): SEM FONTE OFICIAL ACHADA lida. Manual DCTFWeb [OF-pista]: https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/manuais/manual-dctfweb/manual-dctfweb-atualizacao-janeiro2025_versao_final.pdf (nao lido).
+
+Alteracoes posteriores (ementa / artigos tocados; origem [SEC] salvo indicado):
+- IN RFB 2.248/2025 (05/02/2025): prazo mensal (art. 6, caput, § 10 novo, § 1 revogado) - ver acima.
+- IN RFB 2.267/2025 (27/05/2025, DOU ~28/05/2025, data divergente entre fontes): inclui no rol de obrigados da DCTFWeb as entidades que atuam como fonte retentora (IRRF, IRPJ, CSLL, PIS/Pasep, Cofins); acrescenta art. 16-A; renomeia o Capitulo XI para "DISPOSICOES TRANSITORIAS"; regra de transicao para cotas de IRPJ/CSLL do 4º trimestre de 2024 (declaracao via DCTF/PGD, aba "Trimestre Anterior"). Fonte: lex.com.br e okai.com.br (reproducao) [SEC].
+- IN RFB 2.319/2026 (30/03/2026 ou 06/04/2026, datas divergentes [SEC]): inclui CSLL e CSLL adicional (Lei 15.079/2024) entre os tributos declarados na DCTFWeb [SEC].
+- IN RFB 2.325/2026 (12/05/2026 [SEC]): altera prazos processuais (impugnacao/lancamento); revoga o inciso IV do paragrafo unico do art. 15 [SEC].
+- IN RFB 2.342/2026 (15/09/2026): DIVERGENTE com o pedido. [OF] Lido em lex.com.br (reproducao textual): ementa "Altera a Instrução Normativa RFB nº 2.228, de 3 de outubro de 2024 ... Regras Globais Contra a Erosão da Base Tributária"; Art. 1º "A Instrução Normativa RFB nº 2.228, de 3 de outubro de 2024, passa a vigorar com as seguintes alterações". NAO menciona a IN 2.237. Nao e alteradora da 2.237. Trata de CSLL (Pilar 2). Fonte: https://www.lex.com.br/instrucao-normativa-rfb-no-2-342-de-15-de-setembro-de-2026/ [SEC - reproducao]. PDF oficial de referencia citado em busca (nao lido): https://www.reformatributaria.com/... (nao oficial).
+
+Contagem item 1: SEM FONTE OFICIAL ACHADA para o texto do prazo e para os fatos geradores; alteracoes 2.248, 2.267, 2.319, 2.325 com fonte apenas secundaria; 2.342/2026 DIVERGENTE (altera IN 2.228, nao 2.237).
+
+================================================================
+ITEM 2 - DIRF / EFD-Reinf / IN 2.181/2024 / IN 2.060/2021 (comprovante)
+================================================================
+[OF] Perguntas e Respostas IRPF 2026 (Receita Federal, 23/04/2026), PDF lido por download (pdftotext, copia local em scratchpad/irpf2026_qa.txt):
+  https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/perguntas-e-respostas/dirpf/p-r-irpf-2026-v1-00-2026-04-23.pdf
+- Pergunta 055 (comprovante): "A fonte pagadora, pessoa física ou jurídica, deve fornecer à pessoa física beneficiária, até o último dia útil do mês de fevereiro do ano subsequente àquele a que se referirem os rendimentos ou por ocasião da rescisão do contrato de trabalho, se esta ocorrer antes da referida data, documentos comprobatórios..." (trecho com acentos corrigidos na transcrição). Base citada: Lei 9.779/1999 art. 16; IN SRF 698/2006 arts. 1º e 2º; IN RFB 2.060/2021 arts. 2º a 4º.
+- Pergunta 057 (penalidade): "fica sujeita ao pagamento de multa equivalente a R$ 41,43 por documento." Base citada: Lei 8.981/1995 art. 86 §§ 3º e 4º; RIR/2018 art. 1.004; IN RFB 2.060/2021 arts. 5º e 6º.
+- Pergunta 055 nao cita a data do pedido de 15 de janeiro (afirmacao de busca [SEC]; nao confirmada no PDF oficial).
+- Mesma Q&A: "a DIRF" nao aparece como obrigacao vigente para 2026 (nao verificado explicitamente).
+Resultado item 2a (comprovante): RESOLVIDO com texto oficial. Pessoa fisica: fonte pagadora deve entregar ate o ultimo dia util de fevereiro (ou na rescisao). Extincao da DIRF nao altera essa obrigacao, em leitura direta da Q&A (que nao fala de DIRF).
+
+IN RFB 2.181/2024 (altera IN 2.043/2021, EFD-Reinf): texto NAO LIDO. Sinal [SEC]: "substituída ... em relação aos fatos ocorridos a partir de 1º de janeiro de 2025" (DIRF, IN 1.990/2020), com adiamento de 2024 para 2025. Fonte de busca: https://www.normaslegais.com.br/legislacao/instrucao-normativa-rfb-2181-2024.htm [SEC]. Noticias citam pedido de revogacao de CFC, Fenacon e Ibracon (desfecho nao achado) [SEC].
+- IN 2.043/2021 art. 6º (EFD-Reinf transmissao ate o dia 15 do mes seguinte): [SEC] via manual GDF (MANUAL_IRRF_ABRIL_2025, http://static.fazenda.df.gov.br/arquivos/servico-861/MANUAL_IRRF_ABRIL_2025.pdf). Nao lido no texto oficial.
+- Base 2.043/2021 literal: SEM FONTE OFICIAL ACHADA lida.
+
+Contagem item 2: comprovante RESOLVIDO [OF]; DIRF extinta e IN 2.181 SEM FONTE OFICIAL ACHADA (so secundaria); 1 divergencia pendente: pedido de revogacao da 2.181 (desfecho nao achado).
+
+================================================================
+ITEM 3 - IRRF na folha 2026 (Lei 15.270/2025 e regulamentacao)
+================================================================
+[OF] Lei 15.270, de 26/11/2025 (planalto): https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/L15270.htm
+- Ementa (transcricao): "Altera a Lei nº 9.250, de 26 de dezembro de 1995, e a Lei nº 9.249, de 26 de dezembro de 1995, para instituir a redução do imposto sobre a renda devido nas bases de cálculo mensal e anual e a tributação mínima para as pessoas físicas que auferem altas rendas; e dá outras providências."
+- Art. 2º, que insere o art. 3º-A na Lei 9.250: "A partir do mês de janeiro do ano-calendário de 2026, será concedida redução do imposto sobre os rendimentos tributáveis sujeitos à incidência mensal do Imposto sobre a Renda das Pessoas Físicas, de acordo com a seguinte tabela:" (tabela: ate R$ 5.000,00 reducao total; de R$ 5.000,01 a R$ 7.350,00 reducao linearmente decrescente; acima de R$ 7.350,00 nao ha reducao).
+- Art. 2º (outras partes, resumo do fetch): art. 10 (isencao anual de R$ 17.640,00 a partir de 2026); art. 6º-A (retencao de 10% sobre lucros e dividendos acima de R$ 50.000,00 por mes); art. 11-A (reducao anual); arts. 16-A e 16-B (tributacao minima anual e redutor). Nao transcrito literal.
+- Art. 8º (vigencia): "Esta Lei entra em vigor na data de sua publicação e produzirá efeitos a partir de 1º de janeiro de 2026." (transcricao do fetch).
+- Art. 6º: solicita projeto de lei de atualizacao (nao e vigencia).
+- Nota: a pagina do planalto avisa que o texto nao substitui o DOU de 27/11/2025.
+
+[OF] Tabelas 2026 (Receita Federal, pagina "Tributação de 2026"): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026
+- Tabela mensal progressiva, a partir de jan/2026: ate R$ 2.428,80 isento; R$ 2.428,81 a R$ 2.826,65: 7,5%, deducao R$ 182,16; R$ 2.826,66 a R$ 3.751,05: 15,0%, deducao R$ 394,16; R$ 3.751,06 a R$ 4.664,68: 22,5%, deducao R$ 675,49; acima de R$ 4.664,68: 27,5%, deducao R$ 908,73.
+- Deducao mensal por dependente: R$ 189,59.
+- Limite mensal de desconto simplificado: R$ 607,20.
+- Redução mensal (Lei 15.270, "a partir janeiro de 2026"): ate R$ 5.000,00: reducao de ate R$ 312,89, "de modo que o imposto devido seja zero"; de R$ 5.000,01 a R$ 7.350,00: R$ 978,62 - (0,133145 x rendimentos tributaveis sujeitos a incidencia mensal); zera a partir de R$ 7.350,00.
+- DIVERGENCIA: a pagina da Receita cita "Lei nº 15.191, de 11 de agosto de 2025" logo abaixo da tabela de incidencia mensal. A Lei 15.191/2025 nao foi lida nesta rodada; nao se sabe se e a base da tabela ou erro de citacao. Conferir antes de citar.
+
+[OF] Receita, noticia de 16/12/2025 (orienta fontes pagadoras a calcular a reducao a partir de 01/01/2026): https://www.gov.br/receitafederal/pt-br/assuntos/noticias/2025/dezembro/receita-federal-orienta-fontes-pagadoras-e-contribuintes-a-calcular-a-reducao-do-imposto-de-renda-a-partir-de-1o-de-janeiro-de-2026 - NAO LIDA (so citada em busca; afirma que o redutor nao supera o imposto apurado).
+[OF] Secom 2026/01 (redutor tambem vale para o 13º) - NAO LIDA (so busca).
+
+IN/Portaria RFB que regulamenta a retencao na fonte 2026: SEM FONTE OFICIAL ACHADA lida. Pistas [OF-pista]: noticia da Receita acima; Sipec comunicado 566295 (adequacao sistemica, 12/2025): https://www.gov.br/servidor/pt-br/canais_atendimento/central-sipec/comunicas-1/dezembro/comunicado-566295-adequacao-sistemica-lei-15-270-de-26-de-novembro-de-2025.pdf (nao lido, orgao publico federal, nao e regra da fonte pagadora privada).
+
+Desconto simplificado: valor R$ 607,20 [OF tabelas]. Base legal do desconto simplificado (art. da Lei 9.250 e regra de base, mais vantajosa): SEM FONTE OFICIAL ACHADA lida (so [SEC] Piracicaba).
+
+Mudanca 2027: SEM FONTE OFICIAL ACHADA lida (nao pesquisada nesta rodada; Fazenda FAQ docx citada em busca, nao lida).
+
+Contagem item 3: tabela, redutor, isencao, dependente, desconto simplificado RESOLVIDOS [OF]; IN/portaria RFB da retencao na fonte SEM FONTE OFICIAL ACHADA; DIVERGENTE: citacao "Lei 15.191/2025" na tabela da Receita; 2027 SEM FONTE OFICIAL ACHADA.
+
+================================================================
+ITEM 4 - INSS empregado 2026, teto, salario minimo, salario-familia
+================================================================
+[OF] Tabela de contribuicao mensal (INSS): https://www.gov.br/inss/pt-br/direitos-e-deveres/inscricao-e-contribuicao/tabela-de-contribuicao-mensal
+- Empregado, empregado domestico e trabalhador avulso (competencia janeiro/2026), norma citada: Portaria Interministerial MPS/MF nº 13, de 09/01/2026.
+  Ate R$ 1.621,00: 7,5%. De R$ 1.621,01 a R$ 2.902,84: 9%. De R$ 2.902,85 a R$ 4.354,27: 12%. De R$ 4.354,28 a R$ 8.475,55: 14%.
+- Teto: R$ 8.475,55 (ultimo limite da faixa de 14%).
+- Minimo de salario de contribuicao para empregado: NAO informado na tabela lida. Valor de R$ 1.621,00 e a primeira faixa. R$ 324,20 (salario minimo de contribuinte individual/facultativo/MEI) e teto de R$ 1.695,11 para aquela categoria: nao aplicam ao empregado.
+- Gov.br INSS, noticia "Com reajuste de 3,9%, teto do INSS chega a R$ 8.475,55 em 2026" (busca [OF-pista]): https://www.gov.br/inss/pt-br/assuntos/com-reajuste-de-3-9-teto-do-inss-chega-a-r-8-475-55-em-2026 (nao lido).
+- Portaria Interministerial MPS/MF 13/2026: texto oficial NAO LIDO (so as tabelas das paginas do INSS e do eSocial).
+
+[OF] Salario-familia (INSS): https://www.gov.br/inss/pt-br/direitos-e-deveres/salario-familia/valor-limite-para-direito-ao-salario-familia
+- Periodo: a partir de 01/01/2026. Limite de remuneracao: "Até 1.980,38" com cota de R$ 67,54. Norma citada: PORTARIA INTERMINISTERIAL MPS/MF Nº 13, DE 9 DE JANEIRO DE 2026.
+
+[OF] Salario minimo 2026: Decreto nº 12.797, de 23/12/2025 (planalto): https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/decreto/d12797.htm
+- Ementa: "Dispõe sobre o valor do salário mínimo a vigorar a partir de 1º de janeiro de 2026."
+- Art. 1º: "A partir de 1º de janeiro de 2026, o valor do salário mínimo será de R$ 1.621,00 (mil seiscentos e vinte e um reais)."
+- Pagina do planalto apresenta caracteres corrompidos; trecho reproduzido com acentos restaurados. Valores diario e horario (R$ 54,04 e R$ 7,37) em noticia de busca [SEC]; nao lidos no decreto.
+
+Contagem item 4: RESOLVIDO [OF] (tabela, teto, salario minimo, salario-familia). Minimo de contribuicao do empregado: SEM FONTE OFICIAL ACHADA lida.
+
+================================================================
+ITEM 5 - Desoneracao da folha 2026 e CPRB
+================================================================
+[OF] Lei 14.973, de 16/09/2024 (planalto): https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2024/lei/L14973.htm
+- Ementa (trecho): "Estabelece regime de transição para a contribuição substitutiva prevista nos arts. 7º e 8º da Lei nº 12.546 ..."
+- Art. 9º-A (inserido pelo art. 1º), caput: "Nos exercícios de 2025 a 2027, as empresas referidas nos arts. 7º e 8º desta Lei poderão contribuir" [trecho do fetch].
+- Art. 9º-A, II (2026): alinea "a": "60% (sessenta por cento) das alíquotas previstas nos arts. 7º-A e 8º-A desta Lei"; alinea "b": "50% (cinquenta por cento) das alíquotas previstas nos incisos I e III do caput do art. 22" (Lei 8.212).
+- Art. 9º-A, III (2027): 40% das alíquotas dos arts. 7º-A e 8º-A; 75% das do art. 22, I e III.
+- Art. 9º-A, 2025 (inciso I, resumo do fetch): 80% da CPRB e 25% da patronal.
+- Art. 4º, § 1º: "à alíquota de 20% (vinte por cento)" (aliquota patronal plena, na perda do beneficio).
+- O texto NAO menciona a Lei 14.784/2023 (fetch). O status da Lei 14.784/2023 frente a Lei 14.973/2024 NAO foi verificado no texto oficial. Lei 14.784/2023 nao foi lida.
+
+[OF] Lei 12.546/2011 (planalto, arts. 7º-A e 8º-A): https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2011/lei/l12546.htm
+- Art. 7º-A (CPRB), redacoes historicas: "será de 4,5% (quatro inteiros e cinco décimos por cento), exceto para as empresas de call center" (Lei 13.161/2015); "à alíquota de 2% (dois por cento)" para empresas dos incisos III, V e VI do art. 7º (Lei 13.202/2015).
+- Art. 8º-A: NAO LIDO (texto truncado no fetch).
+- Alíquotas de 1% e 2,5% (pedido): aparecem no art. 8º e no caput do art. 7º (redacao original 2011) segundo o fetch; mapeamento setor -> aliquota NAO CONFIRMADO no texto vigente (fetch truncou em 100.000 caracteres de 248.774).
+- Setores de 2026 e aliquotas vigentes por setor: SEM FONTE OFICIAL ACHADA lida.
+
+[SEC] Edital MTE (busca, nao lido): 2026 CPRB em 60% e INSS patronal em 50%; coincide com o art. 9º-A.
+
+Contagem item 5: Lei 14.973 e fracoes 2026/2027 RESOLVIDAS [OF]; lei 14.784/2023 SEM FONTE OFICIAL lida (nao mencionada pela 14.973); alíquotas setoriais 1%/2,5%/4,5% e setores de 2026: SEM FONTE OFICIAL ACHADA (mapeamento nao confirmado). DIVERGENTE: a premissa "Lei 14.784/2023" nao aparece no texto da lei que rege o regime 2025-2027.
+
+================================================================
+ITEM 6 - Simples Nacional 2027 (CGSN, LC 123, LC 214/2025, LC 227/2026)
+================================================================
+[OF-pista] Resolução CGSN nº 190/2026 (Receita, normas idAto=152832): https://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=152832 - pagina so com titulo "Resol. CGSN nº 190/2026" (WebFetch). NAO LIDA.
+[OF] Receita Federal, noticia "CGSN atualiza regras do Simples Nacional para adequação à Reforma Tributária do Consumo" (agosto/2026): https://www.gov.br/fazenda/pt-br/assuntos/noticias/2026/agosto/cgsn-atualiza-regras-do-simples-nacional-para-adequacao-a-reforma-tributaria-do-consumo
+- Trecho lido: "As Resoluções CGSN nº 190 e nº 191, de 2026" (ano; data nao no trecho lido). Lista de conceitos inclui: "receita bruta acumulada nos 12 meses anteriores (RBT12);"
+- Sem trecho sobre calculo do RBT12 a partir de 2027 nem sobre contribuicao patronal/INSS no DAS no trecho lido.
+[SEC, busca] Resolucao 190 (publicada no DOU em 10/08/2026, ato de 04/08/2026, altera a Res. CGSN 140/2018 - fonte: texto da Receita via busca). Efeitos: "como regra geral, a partir de 1º de janeiro de 2027" (noticia Receita) vs "a partir de 1º de novembro de 2026" (CNM, secundaria). Prazo de opcao para 2027: 1 a 30 de setembro de 2026 [SEC].
+[SEC] RBT12 2027: janela termina dois meses antes do mes de apuracao (ex.: DAS jan/2027 usa dez/2025 a nov/2026) - fonte SEFIN-RO e Receita (curso, slide) via busca. NAO confirmado no texto oficial.
+[OF-pista] LC 214/2025 (art. sobre Simples/RBT12): NAO LIDA. LC 227/2026, sancionada em 13/01/2026: https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp227.htm (existencia confirmada em busca; texto NAO lido; busca indicou que trata do CGIBS/IBS, nao do calculo do DAS).
+[SEC] LC 123/2006 alterada por LC 214/2025: NAO LIDA.
+
+Contribuicao patronal/CPP dentro do DAS 2027: SEM FONTE OFICIAL ACHADA lida. Nota de busca: a Receita diz que CBS e IBS deixam o DAS; nao trata de CPP.
+
+Contagem item 6: CGSN 190/2026 existencia e ementa parcial [OF]; RBT12 2027 SEM FONTE OFICIAL ACHADA lida (so [SEC] e [OF-pista]); CPP no DAS SEM FONTE OFICIAL ACHADA. DIVERGENTE: inicio de efeitos (1º/01/2027 na Receita vs 1º/11/2026 no CNM).
+
+================================================================
+ITEM 7 - FGTS Digital
+================================================================
+[OF] Manual de Orientacao do FGTS Digital, versao 1.50 (20/03/2026), capa: "CONFORME PORTARIA MTE Nº 240, DE 29 DE FEVEREIRO DE 2024". Pagina: https://www.gov.br/trabalho-e-emprego/pt-br/servicos/empregador/fgtsdigital/manual-e-documentacao-tecnica/manual-do-orientacao-do-fgts-digital-versao-1-50-20-03-2026.pdf (copia local lida: scratchpad/D05_manual-do-orientacao-do-fgts-digital-versao-1-50-20-03-2026-.pdf.txt, 304 paginas).
+- Portaria que institui: Portaria MTE nº 240, de 29/02/2024 [OF, capa do manual]. Texto da portaria NAO LIDO (busca: anttlegis.antt.gov.br, [SEC]).
+- Inicio: "1o de marco de 2024: entrada em producao do FGTS Digital e substituicao do SEFIP/Conectividade Social para os debitos de FGTS de fatos geradores a partir da competencia marco/2024." [OF, lido em rodada 2b; reconfirmado por busca].
+- Criterio: "O criterio para definicao de qual sistema devera ser utilizado sera a data do fato gerador (regime de competencia)." Exemplos do manual: FGTS mensal fev/2024 via SEFIP (venc. 07/03/2024); rescisorio de 26/02/2024 via GRRF; FGTS mensal mar/2024 via FGTS Digital (venc. 19/04/2024); rescisorio de 04/03/2024 via FGTS Digital (venc. 14/03/2024) [OF].
+- Sobra de SEFIP/GRF/GRRF: pelo manual, debitos anteriores a marco/2024 seguem por SEFIP/GRRF/Conectividade Social; reclamatoria (codigos 650/660) segue em SEFIP/GRFGTS ate edital SIT/SERPRO [SEC, busca, Caixa FAQ]; orgaos publicos: SEFIP vedado a partir de jan/2025 [SEC, MTE comunicado]. Edital da reclamatoria: nao achado.
+
+Funcionalidades (sumario, Caps. I e II, [OF]):
+Cap. I - Informacoes gerais: 1. Apresentacao e objetivos; 2. Producao limitada (testes em producao restrita); 3. Quem esta obrigado (MEI/SE; empregador domestico; orgaos publicos; deposito judicial); 4. FGTS Digital x SEFIP: quando utilizar; 5. Bases de dados: 5.1 eSocial (declaracao da folha anual 13º; sincronismo eSocial-FGTS Digital; composicao dos debitos; regras do S-5003; S-5503 processo trabalhista (em implantacao); orgaos publicos; competencia de apuracao x referencia; recolhimento sobre remuneracoes de periodos anteriores e verbas pos-contrato; multa complementar pos-contrato); 5.2 autodeclaracao do historico de remuneracoes para fins rescisorios (arquivamento); 5.3 parcelas de consignado (Credito do Trabalhador, Lei 10.820/2003); 6. Parcelamento (normal, com calamidade publica, especial); 7. Pagamento via PIX; 8. Conta virtual do empregador.
+Cap. II - Utilizacao do sistema: 1. Acesso (senha, certificado digital, perfis, dados do empregador, contatos, procuracoes, central de noticias); 2. Central de mensagens; 3. Gestao de guias (emissao rapida: mensal, rescisoria, consignado, mista, detalhamento; parametrizada; notificacao; relatorios; consignados vencidos; em lote por estabelecimento - em implantacao; consulta de guias); 4. Remuneracoes para fins rescisorios (historico; metodo 1 e 2; casos especiais: transferencia, cessao, reintegracao, baixa judicial; visualizacao; conclusao e importacao em lote); 5. Consultas do empregador (vinculos; competencias; pendencias (em implantacao); guias; conta virtual); 6. Parcelamento (contratacao, condicoes, calamidade, ME/EPP, consulta, guia).
+Leitura do sumario ate a pagina 2 de 304 (paginas 3 a 304 nao lidas nesta rodada).
+
+Contagem item 7: RESOLVIDO [OF] (portaria, inicio, criterio, funcionalidades). Pendente: texto da Portaria 240 (SEC busca); edital da reclamatoria (SEM FONTE OFICIAL ACHADA).
+
+================================================================
+ITEM 8 - Credito do Trabalhador (Lei 15.179/2025)
+================================================================
+[OF] Lei 15.179, de 24/07/2025 (planalto): https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15179.htm
+- Conversao: cabecalho "Conversão da Medida Provisória nº 1.292, de 2025" [OF] - confirma que a lei converteu a MP 1.292/2025 (MP vista no planalto: mpv1292impressao.htm). Ementa (trecho): "Altera a Lei nº 10.820, de 17 de dezembro de 2003 (Lei do Crédito Consignado)".
+- Art. 2º (altera art. 1º, § 9º, da Lei 10.820): "A consignação voluntária prevista no caput deste artigo será aplicável a todos os vínculos empregatícios ativos" (trecho literal do fetch).
+- Art. 2º-A, § 2º, I, a (empregador): "a obrigação de efetuar todos os procedimentos necessários à operacionalização dos descontos" (inclusive verbas rescisórias).
+- Art. 2º-A, § 2º, I, b (empregador): "informações fidedignas relativas à folha de pagamento ou à remuneração disponível do empregado".
+- Art. 2º-A, § 2º, II, a (empregado): autorizacao para os descontos quando feitos por sistemas ou plataformas digitais.
+- Art. 2º-A, § 3º: as consignacoes podem ser recolhidas por documento de arrecadacao gerado nos sistemas ou plataformas.
+- Art. 2º-A, § 4º: "a utilização do eSocial e do CNIS é condição necessária à formalização e averbação das operações, observado o disposto em regulamento do Poder Executivo federal" (resumo fiel do fetch).
+- Art. 2º-D: autorizacoes fora da plataforma devem ser averbadas na plataforma sob pena de nulidade (resumo [SEC] do MTE; texto do artigo nao lido literal).
+- Art. 2º-G: Comite Gestor das Operacoes de Credito Consignado (composicao Casa Civil, MTE, Fazenda) [OF fetch].
+- Art. 3º, § 1º: "Constatada a retenção indevida de valores descontados da remuneração do empregado a título de empréstimo consignado" -> Termo de Débito Salarial (TDS) pela Auditoria-Fiscal do Trabalho.
+- Art. 3º, § 3º: multa administrativa de 30% sobre o valor retido e nao repassado.
+- Art. 5º: "O empregador será o responsável pelas informações prestadas, pelo desconto e pelo recolhimento dos valores devidos."
+- Art. 4º: desconto em repasses de autonomos de transporte e entrega: limite de 30%.
+- "Margem consignavel": a lei nao usa a expressao; usa "remuneracao disponivel" [OF fetch].
+- Vigencia: lei nao lida integralmente; texto "não substitui o publicado no DOU de 25.7.2025" (aviso da pagina).
+
+Regulamentacao:
+- Decreto 12.415, de 20/03/2025 (regulamenta o Comite Gestor, art. 2º-G): [OF-pista, MTE: https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/credito-do-trabalhador/ (busca)] - nao lido.
+- Portaria MTE 434/2025 (habilitacao de instituicoes consignatarias; alterada pela Portaria 1.039/2025): [OF-pista, busca] - nao lida.
+- Portaria MTE 435/2025 (averbacao na Plataforma Credito do Trabalhador; migracao em 60 dias; remete ao Manual do eSocial para rubricas): [OF-pista] https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/legislacao/portarias-1/portarias-vigentes-3/word-portaria-mte-no-435-de-20-de-marco-de-2025-compilada-em-26-06-2026.pdf - nao lida; versao consolidada alterada pelas Portarias 1.418/2025 e 506/2026 (busca).
+- Resolucao CNPS: SEM FONTE OFICIAL ACHADA (busca nao achou resolucao do CNPS sobre o tema).
+- eSocial: a lei condiciona formalizacao e averbacao a eSocial/CNIS (art. 2º-A, § 4º). Rubricas: Manual de Orientacao do eSocial [SEC/OF-pista].
+
+Contagem item 8: Lei 15.179 e conversao da MP 1.292 RESOLVIDAS [OF]; artigos de desconto/responsabilidade/repasse RESOLVIDOS [OF] (texto via fetch, conferir DOU); decreto/portarias: OF-pista (nao lidas); CNPS: SEM FONTE OFICIAL ACHADA.
+
+================================================================
+RESUMO DA CONTAGEM (itens 1-8)
+================================================================
+Resolvidos com texto oficial lido (3): item 2 apenas no comprovante (prazo e multa, Q&A IRPF 2026); item 4 (INSS, teto, salario minimo, salario-familia); item 7 (FGTS Digital).
+Parciais (4): item 3 (tabelas, redutor e dependente resolvidos; IN/portaria da retencao RFB SEM FONTE OFICIAL ACHADA); item 5 (fracoes Lei 14.973 resolvidas; setores 1%/2,5%/4,5% SEM FONTE OFICIAL ACHADA); item 6 (existencia da Res. 190 [OF]; RBT12 2027 SEM FONTE OFICIAL ACHADA); item 8 (Lei 15.179 resolvida; decreto/portarias OF-pista; CNPS SEM FONTE OFICIAL ACHADA).
+SEM FONTE OFICIAL ACHADA integral: item 1 (texto literal do prazo da IN 2.237 e fatos geradores), item 2 (IN 2.181/2024 texto).
+DIVERGENTES: (a) item 1: IN 2.342/2026 altera IN 2.228/2024 (CSLL), nao a 2.237; (b) item 1: prazo mensal dia 25 (redacao original) vs ultimo dia util (IN 2.248/2025, por fonte secundaria); (c) item 3: Receita cita Lei 15.191/2025 na tabela mensal; (d) item 5: Lei 14.784/2023 nao aparece na Lei 14.973/2024; (e) item 6: efeitos da Res. CGSN 190 a partir de 1º/01/2027 (Receita) vs 1º/11/2026 (CNM); (f) item 2: pedido de revogacao da IN 2.181 pelo CFC/Fenacon/Ibracon (desfecho nao achado).
+
+Limites desta rodada: sijut (normas.receita) nao entregou textos de INs (2.237, 2.181, 2.060, 2.342, 152832) - navegador redirecionou para tela administrativa. Textos integrais de decretos e portarias do MTE nao lidos. Trechos transcritos via WebFetch (modelo) - conferir DOU antes de citar.
