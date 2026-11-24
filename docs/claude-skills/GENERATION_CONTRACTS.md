@@ -77,7 +77,7 @@ For DynamicTable-backed domains (leads, ERP, CRM) the service orchestrates `Dyna
 
 ## Backend Feature Folder Contract
 
-> Gate: `cd server && npm run check:arch` (rules `M1`, `M1a`, `M3`, `M4`, `D2`; decision in `docs/adr/ADR-MODULE-BOUNDARIES.md` §10–§12).
+> Gate: `cd server && npm run check:arch` (rules `M1`, `M1a`, `M3`, `M4`, `D2`; decision in `docs/adr/ADR-MODULE-BOUNDARIES.md` §10–§11).
 
 - Layer folders of `server/src/features/<resource>/`: `services/`, `repositories/`, `policies/`, `models/`, `dtos/`, `domain/`, `ports/`, `adapters/`, `public/`. New feature code goes into one of them — no loose file and no new ad-hoc folder at the feature root
 - Pure logic (calculation, mapping, static table): `server/src/features/<resource>/domain/` — never imports a repository, service, controller, route, `lib/prisma` or Express

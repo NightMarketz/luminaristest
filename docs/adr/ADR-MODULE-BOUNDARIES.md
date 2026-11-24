@@ -343,7 +343,7 @@ comentada no código, onboarding na tx do install) e jobs/`server.ts` (`PurgeDel
 - Limite da medida: regex, não AST. A regra de lint é a medida definitiva; se ela achar mais que o baseline acima,
   o achado vai à caixa antes de qualquer supressão.
 
-## 11. Emenda de 24/11/2026 — ligação das regras (PR-2 do BRIEF de execução)
+## 11. Emenda de 24/11/2026 — ligação das regras (PR-2 do BRIEF de execução; §11.5 = `users/public/` e `M4`)
 
 Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro". Esta emenda registra o que o §8 item 4 pede: o baseline
 antes/depois de cada regra ligada e a prova de que cada uma morde. As regras valem na branch
@@ -442,7 +442,85 @@ o `node_modules` pela junção do depósito; o resultado do CI (Linux) é o que 
   `users/public/user.types.ts` reexporta o tipo `IUser` e o enum `Role` de `models/`; `*.types.ts` passa a valer para
   tipo e enum/constante de `models/`, com regra nova que impede o arquivo de importar outra pasta. Vai em PR próprio na
   pilha, antes do PR-3.x, que reponta os imports existentes e as regras das skills. **Até lá as skills citadas seguem
-  apontando `users/models/`** (lacuna `L-20261124-194301-a802`).
+  apontando `users/models/`** (lacuna `L-20261124-194301-a802`). Feito no PR seguinte: §11.5.
 - **Contrato e skills:** o §2 do `_ARCHITECTURE-CONTRACT.md`, o `GENERATION_CONTRACTS.md` e as skills geradoras de
   service, repository, policy, dto, workflow, CRUD, fullstack e feature de frontend passam a dizer as duas regras
   (import entre features só por `public/`; peça de feature em pasta de camada).
+
+### 11.5 Emenda de 24/11/2026 — `users/public/user.types.ts`, regra `M4` e `BindingScope` em `models/`
+
+Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro"; questionário de 24/11 (sessão do PR-2): "Tudo em
+user.types.ts (Recommended)"; questionário de 24/11 (sessão deste PR): "Mover BindingScope já (Recommended)". PR próprio
+na pilha de `integration/module-boundaries-be`, entre o PR-2 e o PR-3.x. Fecha a lacuna `L-20261124-194301-a802`.
+
+**O que entrou**
+
+- `server/src/features/users/public/user.types.ts` reexporta, por nome, o tipo `IUser` e o enum `Role` de
+  `models/User.model`. Os 17 arquivos de produção de outras features que importavam `users/models/User.model`
+  (20 linhas de import: 12 policies, 4 services, 1 repository) passam a importar a porta. Controller, route, job,
+  `lib/` e teste ficam como estavam: estão fora do `from` da `M1`.
+- O arquivo `public/<nome>.types.ts` deixa de ser "só tipo": vale para tipo, enum e constante que moram em `models/`
+  ou `dtos/` da própria feature. A `L5` e a `L6` seguem deixando policy, model e dto importarem esse arquivo pelo nome.
+- Regra nova `M4-public-types-only-models-dtos`: `from ^src/features/([^/]+)/public/.*\.types\.ts$` (fora testes) →
+  `to` com `pathNot ^src/features/$1/(models|dtos)/`. O arquivo só importa `models/` e `dtos/` da própria feature.
+  Severidade de erro; nasce em 0 e não entra no known-violations.
+- `accountingBinding/scope/BindingScope.ts` → `accountingBinding/models/BindingScope.ts` (destino da tabela §5.3 do
+  BRIEF, antecipado do PR-3.x dessa feature). Motivo: com o arquivo em `scope/`, a `M4` media 1
+  (`accountingBinding/public/bindingScope.types.ts → accountingBinding/scope/BindingScope.ts`; lacuna
+  `L-20261124-201656-6a27`). 17 arquivos repontados para `models/BindingScope`; os dois controllers de `sectorKits`
+  passam a importar por `accountingBinding/public/` (2 arestas `M1` pagas). A pasta `scope/` de `accountingBinding`
+  deixa de existir; as outras pastas dessa feature na tabela §5.3 seguem para o PR-3.x.
+- Textos alinhados: `SVC-006` e `POL-008` (SKILL.md e governance.md), a linha "Actor" e a linha de import entre
+  features do Contrato §2, `GENERATION_CONTRACTS.md`, o template `example-appointments` do
+  `fullstack-feature-generator` e a linha de `*.types.ts` do `backend-dto-generator`. O eval `happy-1` da
+  `backend-policy-generator` troca `contains:User.model` por `contains-code:users/public/user.types` e
+  `absent-code:users/models/User.model`.
+
+**Baseline antes/depois (server, `.dependency-cruiser-known-violations.json`)**
+
+| Regra | Depois do PR-2 | Depois deste PR |
+|---|---|---|
+| `M1` | 378 | **359** (−17 para `users/models/User.model`, −2 de `sectorKits/controllers` para `accountingBinding/scope/BindingScope`) |
+| `M1a` | 36 | 36 |
+| `J1` | 16 | 16 |
+| `X3` | 11 | 11 |
+| `M4` | — (regra nova) | **0** (não entra no arquivo) |
+| Total | 441 | **422** |
+
+Diff do baseline: 19 entradas removidas, 0 acrescentadas (conferido por conjunto de `regra + from → to`). As 4 arestas
+`M1` e as 4 `M1a` para `users/repositories/IUserRepository` ficam para o PR-8.x.
+
+**Prova de que a `M4` morde** (saída literal de `depcruise src --config .dependency-cruiser.cjs --ignore-known …
+--output-type err`, 24/11; 422 conhecidas ignoradas em todas as rodadas)
+
+| Caso | Sonda | Saída | Exit |
+|---|---|---|---|
+| service da própria feature | `fx/public/__sondaM4.types.ts` com `export type { PtaxSyncService } from '../services/PtaxSyncService'` | `error M4-public-types-only-models-dtos: src/features/fx/public/__sondaM4.types.ts → src/features/fx/services/PtaxSyncService.ts` | 1 |
+| `public/` executável da mesma feature | `accountingBinding/public/__sondaM4.types.ts` com `export { resolveBindingScope } from './bindingScope'` | `error M4-public-types-only-models-dtos: src/features/accountingBinding/public/__sondaM4.types.ts → src/features/accountingBinding/public/bindingScope.ts` | 1 |
+| `*.types.ts` de outra feature | `fx/public/__sondaM4.types.ts` com `export type { IUser } from '../../users/public/user.types'` | `error M4-public-types-only-models-dtos: src/features/fx/public/__sondaM4.types.ts → src/features/users/public/user.types.ts` | 1 |
+| pacote externo | `fx/public/__sondaM4.types.ts` com `export type { ZodTypeAny } from 'zod'` | `error M4-public-types-only-models-dtos: src/features/fx/public/__sondaM4.types.ts → ../../../../../../.luminaris-deps/ws-fdb06403b753/server/node_modules/zod/index.js` | 1 |
+| contraprova: `models/` da própria feature (tipo e constante) | `fx/public/__sondaM4.types.ts` com `export { PTAX_SOURCE, type PtaxCurrency } from '../models/ptax'` | `✔ no dependency violations found (2168 modules, 10004 dependencies cruised)` | 0 |
+| contraprova: `dtos/` da própria feature | `users/public/__sondaM4.types.ts` com `export type { ListUsersQuery } from '../dtos/UserDto'` | `✔ no dependency violations found (2168 modules, 10004 dependencies cruised)` | 0 |
+| contraprova: o import do 1º caso fora de `*.types.ts` | `fx/public/__sondaM4.ts` com o mesmo `export type` | `✔ no dependency violations found (2168 modules, 10004 dependencies cruised)` | 0 |
+
+Sem sonda o gate cruza 2167 módulos; com cada sonda, 2168: a sonda entrou no grafo. Depois de cada caso a sonda foi
+removida (e a pasta `fx/public/`, criada só para o plantio); `git status` sem sobra. Antes de mover o `BindingScope`, a
+mesma regra dava `error M4-public-types-only-models-dtos: src/features/accountingBinding/public/bindingScope.types.ts →
+src/features/accountingBinding/scope/BindingScope.ts`, exit 1.
+
+**Declarado**
+
+- **A `M4` é literal:** o `*.types.ts` não importa o `*.types.ts` de outra feature nem pacote externo (casos 3 e 4). Tipo
+  que dependa de outro módulo mora em `models/` e sai reexportado.
+- **A `M4` olha a aresta, não o símbolo:** função definida dentro de `models/` e reexportada pelo `*.types.ts` passa. O
+  `BindingScope.ts`, agora em `models/`, tem duas funções puras; o `bindingScope.types.ts` reexporta só o tipo. Quem
+  segura `models/` é a `L6` (folha: não importa camada executável).
+- **`Role` é enum, valor em runtime:** policy de outra feature importa um valor por arquivo `*.types.ts`. É o que a
+  resposta do dono fixou.
+- **Controle do `skill-audit` não gravado:** a assertion nova de `POL-008` ficou sem controle em
+  `skill-audit/controls/`, porque o `.claude/settings.json` nega escrita em `.claude/skills/skill-audit/**` (lacuna
+  `L-20261124-201658-b9e7`). Prova feita sem ele: `skill-audit.mjs batch-eval backend-policy-generator` com saída boa ⇒
+  `happy-1 (9/9)`; com o caminho velho no código e o novo só em comentário ⇒ `happy-1 (7/9)`, `FAIL` nas duas
+  assertions. O eval comportamental da skill não foi rodado de novo.
+- **Ambiente da prova:** Windows, com o `node_modules` pela junção do depósito (daí o caminho do pacote externo no
+  caso 4). O resultado do CI (Linux) é o que vale.

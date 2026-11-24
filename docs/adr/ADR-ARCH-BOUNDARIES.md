@@ -24,7 +24,7 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 | L2 | controller não importa repository nem `lib/prisma` | 3 (interface `IAccountingBindingRepository`) |
 | L3 | service não importa controller/route/Express/`lib/prisma` | 3 (= as 3 supressões do ESLint: 1 SANCTIONED `DynamicTableService`, 2 DEBT) |
 | L4 | repository não importa service/controller/route/policy | 4 |
-| L5 | policy não importa repository/service/`lib/prisma` (nem interface). Emenda 2026-11-24 (§8): nem arquivo executável de `features/<x>/public/` (o `*.types.ts` passa) | 5 (todas type-only) |
+| L5 | policy não importa repository/service/`lib/prisma` (nem interface). Emenda 2026-11-24 (§8): nem arquivo executável de `features/<x>/public/` (o `*.types.ts` passa; o que ele pode importar é a `M4`) | 5 (todas type-only) |
 | L6 | `models/`, `dtos/` não importam camada executável. Emenda 2026-11-24 (§8): nem arquivo executável de `features/<x>/public/` (o `*.types.ts` passa) | 4 |
 | B1 | motor `features/dynamicTables/**` não importa `accounting`, `accountingBinding`, `legalParameters`, `fx`, `sectorKits` (`AC-2.1-B1`) | **0** |
 | B7 | motor `features/dynamicTables/**` não importa `features/(chat\|analytics\|integration)/services/` — "o motor nunca chama o consumidor" (Contrato §2.1). Emenda 2026-10-20, BE-INCR-DT-NO-CONSUMER-CALLS (dono, chat, 19/10: opção (b), F5 → β). Baseline antes/depois: 2 → **0** (as duas arestas `DynamicTableService → KnowledgeGraphService/KpiCacheService` removidas no mesmo PR; nunca entraram no arquivo de known violations). Prova de que morde: import plantado em `DynamicTableService.ts` → `B7` exit 1 | **0** |
@@ -36,10 +36,11 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 | D1 | núcleo do DP `features/dp/**` não importa submódulo opcional `features/dp<Nome>/**` (F-DP-10). Emenda 2026-11-03 (§1.1) | **0** (em 03/11) |
 | I6 | `src/controllers/` não importa `features/accounting/scope/resolveAccountingScopeInternal.ts` — controller resolve o escopo pelo `AccountingScopeResolver` (F-I6-7; dono, 2026-10-15, [`D-2026-10-15-I6-FORKS`](../plano/decisoes/D-2026-10-15-I6-FORKS.md)) — **exceção nomeada:** `controllers/crmController.ts`, cujo único uso é o hook Won `maybeSyncOpportunityWon` (unitId da oportunidade já gravada → chamador interno, F-I6-1 d; L-I6-3, dono, questionário, 2026-10-16: *"Exceção nomeada"*) | 42 em 16/10 (os controllers ainda não migrados; encolhe nos PR-2…PR-5 do I6 até 0) |
 | M1a | feature não importa `repositories/` de outra feature, nem a interface, nem por `import type`. Emenda 2026-11-24 (§8) | 36 (em 24/11) |
-| M1 | feature só importa outra por `features/<x>/public/`. Controller, route, job e `lib/factory.ts` ficam fora do `from`. Emenda 2026-11-24 (§8) | 378 (em 24/11) |
+| M1 | feature só importa outra por `features/<x>/public/`. Controller, route, job e `lib/factory.ts` ficam fora do `from`. Emenda 2026-11-24 (§8) | 378 (em 24/11); 359 depois da emenda §8.1 |
 | M3 | `features/<x>/public/` não importa nem reexporta `repositories/` (F-MBE-3 a). Emenda 2026-11-24 (§8) | **0** |
 | D2 | `domain/` é pura: não importa repository, service, controller, route, `lib/prisma` nem Express (F-MBE-4 a). Emenda 2026-11-24 (§8) | **0** |
 | J1 | `src/jobs/` não importa repository nem `lib/prisma`; fora da regra: `jobs/repositories/` e as CLIs `migratePlano4NiveisCli`, `rekeyLegacyUnitCli`, `seedAccountingFixtureCli`. Emenda 2026-11-24 (§8) | 16 (em 24/11) |
+| M4 | `features/<x>/public/<nome>.types.ts` só importa `models/` e `dtos/` da própria feature: carrega tipo, enum e constante, nada executável (dono, questionário, 24/11: "Tudo em user.types.ts"). Emenda 2026-11-24 (§8.1) | **0** |
 
 **Imports `type`-only contam.** Interface de repository dentro de policy é exatamente o sinal de policy impura que L5 quer ver.
 
@@ -246,3 +247,24 @@ sem arquivo de sonda).
   (`docs/architecture/lint-layer-gate.md` §R6; F-MBE-3 a; dono, questionário, 24/11: "No PR-2").
 - O baseline do my-app foi gerado no Windows, com o `node_modules` resolvido pela junção do depósito. O resultado que
   vale é o do CI (Linux).
+
+### 8.1 Emenda 2026-11-24 — `M4` e `users/public/user.types.ts`
+
+- **Decisão:** dono, questionário, 24/11/2026: "Tudo em user.types.ts" (como a feature `users` expõe `IUser` e `Role`)
+  e "Mover BindingScope já" (o que fazer com a única aresta que a regra nova media). Detalhe, os 7 plantios e os pontos
+  declarados estão no [`ADR-MODULE-BOUNDARIES.md`](ADR-MODULE-BOUNDARIES.md) §11.5.
+- **Regra nova:** `M4-public-types-only-models-dtos`, severidade de erro:
+  `from ^src/features/([^/]+)/public/.*\.types\.ts$` (fora testes) → `to` com
+  `pathNot ^src/features/$1/(models|dtos)/`. O `public/<nome>.types.ts` carrega tipo, enum e constante de `models/` e
+  `dtos/` da própria feature e não importa mais nada.
+- **Onde vale:** como o §8, na branch `integration/module-boundaries-be`.
+- **Cobertura:** a exceção de 13/10 (§4): gate estático que lê o código; não é bancada, rodada nem revisor.
+- **Baseline antes/depois:** server 441 → **422**, só remoção (`M1` 378 → 359: 17 arestas para
+  `users/models/User.model` e 2 para `accountingBinding/scope/BindingScope`, arquivo que foi para `models/`). A `M4`
+  nasce em 0 e não entra no arquivo. my-app sem mudança (79).
+- **Prova de que morde (condição que falha, 24/11):** `fx/public/__sondaM4.types.ts` reexportando
+  `../services/PtaxSyncService` ⇒ exit 1 com `error M4-public-types-only-models-dtos:
+  src/features/fx/public/__sondaM4.types.ts → src/features/fx/services/PtaxSyncService.ts`; reexportando
+  `../models/ptax` ⇒ exit 0 ("no dependency violations found", 422 conhecidas ignoradas). Sondas removidas.
+- **Ponto cego declarado:** a regra olha a aresta, não o símbolo. Função definida em `models/` passa pelo `*.types.ts`;
+  `models/` é folha pela `L6`.
