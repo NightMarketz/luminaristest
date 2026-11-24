@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { AtividadeSemAnexoError, SimplesRegraNaoRegulamentadaError } from '../../../lib/errors';
 import { ParametroLegalAusenteError, linhaLegalVigente, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 import { excecaoPisoIss, reducaoBpDaFaixa } from './issBeneficio';
+import { linhaDoMarco } from './marcoLegal';
 
 export const TRIBUTOS_SIMPLES = [
   'IRPJ',
@@ -181,8 +182,8 @@ export interface Janela {
   ate: string;
   regra: 'LC123-art18-§1' | 'LC214-art517';
 }
-/** Primeiro PA em que vale a redação da LC 214 (art. 517; efeitos pelo art. 544 III). */
-export const INICIO_LC214 = '2027-01';
+// Onda 3.2 fatia 4: o 1º PA em que vale a redação da LC 214 (art. 517; efeitos pelo art. 544 III) NÃO é mais literal aqui — é
+// a linha `MARCO_LEGAL/INICIO_LC214_RBT12` (models/marcoLegal.ts), que o chamador lê da fotografia e passa como `inicioLc214`.
 
 const somaMeses = (comp: string, delta: number): string => {
   const [a, m] = comp.split('-').map(Number);
@@ -191,11 +192,11 @@ const somaMeses = (comp: string, delta: number): string => {
 };
 
 /**
- * Até 2026: os 12 meses anteriores ao PA (LC 123 art. 18 § 1º; Res. CGSN 140 art. 22 § 1º). A partir de 2027: os 12
- * meses antecedentes ao mês anterior ao PA (red. LC 214 art. 517).
+ * Antes de `inicioLc214` (`YYYY-MM`, a linha `MARCO_LEGAL/INICIO_LC214_RBT12`; hoje 2027-01): os 12 meses anteriores ao PA (LC 123
+ * art. 18 § 1º; Res. CGSN 140 art. 22 § 1º). Daí em diante: os 12 meses antecedentes ao mês anterior ao PA (red. LC 214 art. 517).
  */
-export function janelaRbt12(comp: string): Janela {
-  return comp < INICIO_LC214
+export function janelaRbt12(comp: string, inicioLc214: string): Janela {
+  return comp < inicioLc214
     ? { de: somaMeses(comp, -12), ate: somaMeses(comp, -1), regra: 'LC123-art18-§1' }
     : { de: somaMeses(comp, -13), ate: somaMeses(comp, -2), regra: 'LC214-art517' };
 }
@@ -216,8 +217,9 @@ export function rbt12(
   comp: string,
   inicioAtividade: string | null,
   receitaPaCents: number,
+  inicioLc214: string,
 ): Rbt12 {
-  const janela = janelaRbt12(comp);
+  const janela = janelaRbt12(comp, inicioLc214);
   const todos: string[] = [];
   for (let m = janela.de; m <= janela.ate; m = somaMeses(m, 1)) todos.push(m);
   const meses = inicioAtividade ? todos.filter((m) => m >= inicioAtividade) : todos;
@@ -323,7 +325,10 @@ export function apurar(entrada: ApuracaoInput, linhas: readonly LinhaLegal[]): A
   const input = ApuracaoInputSchema.parse(entrada);
   const data = `${input.competencia}-01`;
   const usadas = new Map<string, Usada>();
-  const base = rbt12(input.historico, input.competencia, input.inicioAtividade, input.receitaPaCents);
+  // Proveniência: a linha do marco entra em `tabela` (→ `tabelaVersao`), como as demais linhas lidas; trocar o marco muda a versão.
+  const marco = linhaDoMarco(linhas, 'INICIO_LC214_RBT12', data);
+  usadas.set(marco.id, { id: marco.id, fonte: marco.fonte, vigenteDesde: marco.vigenteDesde });
+  const base = rbt12(input.historico, input.competencia, input.inicioAtividade, input.receitaPaCents, marco.valorTexto.slice(0, 7));
   const sublimite = SUBLIMITE[base.janela.regra];
 
   const atividades = input.atividades.map((at): AtividadeApurada => {

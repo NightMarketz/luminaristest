@@ -79,6 +79,8 @@ interface Cenario {
   customer?: Record<string, unknown> | null;
   /** EFICIENCIA-FISCAL PR-1 item 6: guarda fiscal da venda (porta estrutural). */
   guard?: { check: jest.Mock };
+  /** Onda 3.2 fatia 5: fotografia de LegalParameter diferente da semente (ex.: sem as tabelas do IBS/CBS). */
+  legalParams?: { fotografia: (tabelas: readonly string[]) => Promise<unknown[]> };
 }
 
 function montar(c: Cenario = {}) {
@@ -120,7 +122,7 @@ function montar(c: Cenario = {}) {
     { get: jest.fn() } as never,
     { canEmitFiscalDocument: () => true, canReadFiscalDocument: () => true } as never,
     auditService as never,
-    legalParamsSemente,
+    (c.legalParams ?? legalParamsSemente) as never,
     productFiscalProfileService as never,
     c.guard,
   );
@@ -290,6 +292,41 @@ describe('BE-INCR-NFCE PR-3 — emissão da NFC-e do Simples (NullEmissor)', () 
     const produtos = [perfilProduto('prod-1', { csosn: null, cstIcms: '00', ibsCbsCst: '000', ibsCbsClassTrib: '000001' })];
     const { service } = montar({ fiscalProfile: perfilSimples({ regimeTributario: 'PRESUMIDO' }), produtos });
     expect((await service.preview(SCOPE, SALE_ID, 'NFCE')).faltantes).toEqual([CRT3_ICMS_SEM_SPEC]);
+  });
+
+  it('Onda 3.2 fatia 5 — perfil PRESUMIDO com CST/cClassTrib e SEM as linhas das tabelas do IT 2025.002 ⇒ PARAMETRO_LEGAL_AUSENTE (fail-closed), não "CST inexistente"', async () => {
+    const produtos = [perfilProduto('prod-1', { csosn: null, cstIcms: '00', ibsCbsCst: '000', ibsCbsClassTrib: '000001' })];
+    const semTabelasNt = { fotografia: async (tabelas: readonly string[]) => (await legalParamsSemente.fotografia(tabelas)).filter((l) => !/^C(ST|CLASSTRIB|CREDPRES)_IBS_CBS$/.test(l.tabela)) };
+    const { service } = montar({ fiscalProfile: perfilSimples({ regimeTributario: 'PRESUMIDO' }), produtos, legalParams: semTabelasNt });
+    const r = await service.preview(SCOPE, SALE_ID, 'NFCE');
+    expect(r.ok).toBe(false);
+    expect(r.faltantes.join(' ')).toContain('Sem linha vigente de CST_IBS_CBS');
+    expect(r.faltantes.join(' ')).not.toContain('inexistente');
+  });
+
+  describe('Onda 3.2 fatia 5 — virada só por linhas (a fotografia muda, o código não)', () => {
+    const produtos = () => [perfilProduto('prod-1', { csosn: null, cstIcms: '00', ibsCbsCst: '000', ibsCbsClassTrib: '000001' })];
+    /** A semente com UMA linha alterada — é tudo que muda entre o caso e a semente. */
+    const comLinha = (id: string, muda: (l: { vigenteAte: string | null; valorJson: string | null }) => Record<string, unknown>) => ({
+      fotografia: async (tabelas: readonly string[]) => (await legalParamsSemente.fotografia(tabelas)).map((l) => (l.id === id ? { ...l, ...muda(l) } : l)),
+    });
+    const faltantesCom = async (legalParams?: { fotografia: (t: readonly string[]) => Promise<unknown[]> }) => {
+      const { service } = montar({ fiscalProfile: perfilSimples({ regimeTributario: 'PRESUMIDO' }), produtos: produtos(), legalParams });
+      return (await service.preview(SCOPE, SALE_ID, 'NFCE')).faltantes.join(' | ');
+    };
+
+    it('semente: 000001 vigente desde 2026-01-01 e permitido na NFC-e ⇒ só a recusa do ICMS (CRT3_ICMS_SEM_SPEC)', async () => {
+      expect(await faltantesCom()).toBe(CRT3_ICMS_SEM_SPEC);
+    });
+
+    it('trocar só o vigenteAte da linha do cClassTrib para 2026-06-30 ⇒ "fora da vigência"', async () => {
+      expect(await faltantesCom(comLinha('ibscbs-cclass-000001', () => ({ vigenteAte: '2026-06-30' })))).toContain('cClassTrib 000001 fora da vigência (2026-01-01–2026-06-30, IT 2025.002 v1.70)');
+    });
+
+    it('trocar só indNFCe da linha para 0 ⇒ UB14-25 (rej. 1025) na NFC-e', async () => {
+      const m = await faltantesCom(comLinha('ibscbs-cclass-000001', (l) => ({ valorJson: JSON.stringify({ ...JSON.parse(l.valorJson ?? '{}'), indNFCe: 0 }) })));
+      expect(m).toContain('cClassTrib 000001 não permitido no modelo 65 (UB14-25, rej. 1025)');
+    });
   });
 
   it('item 20 — cClassTrib que exige subgrupo sem dado no perfil (diferimento) ⇒ faltante nomeado', async () => {

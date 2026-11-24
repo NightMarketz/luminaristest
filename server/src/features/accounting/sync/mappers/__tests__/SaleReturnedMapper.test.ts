@@ -73,6 +73,12 @@ describe('SaleReturnedMapper', () => {
     expect(() => mapper.map(event({ amount: Number.MAX_SAFE_INTEGER }))).toThrow(ValidationError);
   });
 
+  it('PIN CENTAVOS-EXATOS PR-0: 1,005 reais vira 100 centavos hoje (o float de 1,005 fica abaixo do meio); a virada do PR-3 troca para 101 de propósito', () => {
+    const input = mapper.map(event({ amount: 1.005 }));
+    expect(input.lines.find((l) => l.debitCents > 0)!.debitCents).toBe(100);
+    expect(input.lines.find((l) => l.creditCents > 0)!.creditCents).toBe(100);
+  });
+
   it('never forwards a float to the posting input (cents are integers)', () => {
     const input = mapper.map(event({ amount: 99.99 }));
     expect(Number.isInteger(input.lines[0].debitCents)).toBe(true);

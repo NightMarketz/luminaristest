@@ -1,0 +1,174 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Lcp 224",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp224.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp224.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:35:18-03:00",
+      "sha256": "e29b0be75593626bd353695f6c0c5d027d43ed61b95ae93c5003e1758190e41a",
+      "arquivo": "docs/D01_lcp224-htm.html",
+      "texto": "docs/D01_lcp224-htm.txt",
+      "bytes": 87083,
+      "sha256_texto": "052d49812305138106b3de213ded2115a93234778bbdab564b72802b47d22f08",
+      "captura": {
+        "anterior": {
+          "slug": "regime-fora-simples-salao",
+          "id": "D11",
+          "baixado_em": "2026-11-21T08:43:30-03:00",
+          "sha256_texto": "052d49812305138106b3de213ded2115a93234778bbdab564b72802b47d22f08"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "D12808",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/decreto/d12808.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/decreto/d12808.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:35:37-03:00",
+      "sha256": "ad89cb193dcb68661e500a62b499e440f826fc46efd3ea78282b707df7774c5a",
+      "arquivo": "docs/D02_d12808-htm.html",
+      "texto": "docs/D02_d12808-htm.txt",
+      "bytes": 39990,
+      "sha256_texto": "b2415a125a5bd9316eb18f21323cf1310dd7a4ad88d66c1fa2de7ba6364d90cb",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Decreto nº 12.808 de 29/12/2025",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2025/dec-12808-2025-12-29.md",
+      "url_final": "https://github.com/ctresb/leis/blob/517db958cd0ae2ba36c1f0b524b3cc55fe4198c6/federal/decretos/2025/dec-12808-2025-12-29.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2025-12-29;12808",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "517db958cd0ae2ba36c1f0b524b3cc55fe4198c6",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-24T01:35:48-03:00",
+      "sha256": "e8fb5ed38f64bc698d588768532e9bf4167cc22d71d527ce2b6a415318c48f6f",
+      "arquivo": "docs/D03_dec-12808-2025-12-29.md",
+      "texto": "docs/D03_dec-12808-2025-12-29.txt",
+      "bytes": 14131,
+      "sha256_texto": "ce9b8693f4fd64f4be4ba5ae8ea417592d495dd6df8e5d735a62170dae407ca5",
+      "captura": {
+        "anterior": {
+          "slug": "regime-fora-simples-salao",
+          "id": "D15",
+          "baixado_em": "2026-11-21T08:50:51-03:00",
+          "sha256_texto": "ce9b8693f4fd64f4be4ba5ae8ea417592d495dd6df8e5d735a62170dae407ca5"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "D04_dgt-previsao-ploa-2026-base-conceitual-pdf",
+      "url": "https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/relatorios/renuncia/gastos-tributarios-ploa/dgt-previsao-ploa-2026-base-conceitual.pdf",
+      "url_final": "https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/relatorios/renuncia/gastos-tributarios-ploa/dgt-previsao-ploa-2026-base-conceitual.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:36:25-03:00",
+      "sha256": "808c3fa34e2663183b40d61773e5d6715de77e2add61b3bd93ef81a288c02a1c",
+      "arquivo": "docs/D04_dgt-previsao-ploa-2026-base-conceitual-pdf.pdf",
+      "texto": "docs/D04_dgt-previsao-ploa-2026-base-conceitual-pdf.txt",
+      "bytes": 3533604,
+      "sha256_texto": "08c608317cfcca54a32ea38e3ee93ca9c6b3f8e812f9671775ed48a0ef098691",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D05",
+      "titulo": "D05_dgt-previsao-ploa-2026-quadros-xlsx",
+      "url": "https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/relatorios/renuncia/gastos-tributarios-ploa/dgt-previsao-ploa-2026-quadros.xlsx",
+      "url_final": "https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/relatorios/renuncia/gastos-tributarios-ploa/dgt-previsao-ploa-2026-quadros.xlsx",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:36:26-03:00",
+      "sha256": "6dbb1ad438db30c9c59a345d1e9883858b44000a794d5fbd1b513eb539e141f6",
+      "arquivo": "docs/D05_dgt-previsao-ploa-2026-quadros-xlsx.html",
+      "texto": "docs/D05_dgt-previsao-ploa-2026-quadros-xlsx.txt",
+      "bytes": 487784,
+      "sha256_texto": "ce1643504656e7fa384284270d727744c766253b1a431667ef7c5bff13725acb",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D06",
+      "titulo": "Lei nº 10.147 de 21/12/2000",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/leis-ordinarias/2000/lei-10147-2000-12-21.md",
+      "url_final": "https://github.com/ctresb/leis/blob/dc08d8291baac23e97bb4c5095389052d6846822/federal/leis-ordinarias/2000/lei-10147-2000-12-21.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2000-12-21;10147",
+      "versao_texto": "compilada (texto vigente)",
+      "acervo_baixado_em": "2026-10-13",
+      "commit": "dc08d8291baac23e97bb4c5095389052d6846822",
+      "alertas": [],
+      "baixado_em": "2026-11-24T01:37:16-03:00",
+      "sha256": "3e15396e59ce53f5cec18fe5bdce6341dc281ef23e9924b977a80a696d687d37",
+      "arquivo": "docs/D06_lei-10147-2000-12-21.md",
+      "texto": "docs/D06_lei-10147-2000-12-21.txt",
+      "bytes": 9849,
+      "sha256_texto": "cf0782f3037fcdb6f2e3ae19a4f23005da150b3a35573fb4d896a44c0d859334",
+      "captura": {
+        "anterior": {
+          "slug": "regime-fora-simples-salao",
+          "id": "D04",
+          "baixado_em": "2026-11-21T08:39:32-03:00",
+          "sha256_texto": "cf0782f3037fcdb6f2e3ae19a4f23005da150b3a35573fb4d896a44c0d859334"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D07",
+      "titulo": "D07_NOTA-20T-c3-89CNICA-20N-c2-ba-20012-202026-20-20ORIENTA-c3-8",
+      "url": "http://sped.rfb.gov.br/arquivo/download/8126",
+      "url_final": "http://sped.rfb.gov.br/estatico/88/688E91C4FE8FAA97306B03BCB673580D027291/NOTA%20T%c3%89CNICA%20N%c2%ba%20012%202026%20-%20ORIENTA%c3%87%c3%83O%20PARA%20OS%20CONTRIBUINTES%20DE%20PIS_COFINS%20-%20LC%20224..pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:37:38-03:00",
+      "sha256": "9ff91fc533ae9a7c5865dde4939dbcda717287fec2f7bf5b24af0a931b35b91b",
+      "arquivo": "docs/D07_NOTA-20T-c3-89CNICA-20N-c2-ba-20012-202026-20-20ORIENTA-c3-8.pdf",
+      "texto": "docs/D07_NOTA-20T-c3-89CNICA-20N-c2-ba-20012-202026-20-20ORIENTA-c3-8.txt",
+      "bytes": 224526,
+      "sha256_texto": "5dda17112e128165d555a0e8f8732d2fc17fff81ad415bd093d32bdc2d05e01c",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D08",
+      "titulo": "D08_perguntas-e-respostas-reducao-dos-incentivos-e-beneficios-tr",
+      "url": "https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/perguntas-e-respostas/beneficios-fiscais/perguntas-e-respostas-reducao-dos-incentivos-e-beneficios-tributarios-v5-final.pdf",
+      "url_final": "https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/perguntas-e-respostas/beneficios-fiscais/perguntas-e-respostas-reducao-dos-incentivos-e-beneficios-tributarios-v5-final.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:38:06-03:00",
+      "sha256": "72c14639c7aa75402a7157b4edba0f3d94dabcae75706dbe30c68ed5cf4de9b8",
+      "arquivo": "docs/D08_perguntas-e-respostas-reducao-dos-incentivos-e-beneficios-tr.pdf",
+      "texto": "docs/D08_perguntas-e-respostas-reducao-dos-incentivos-e-beneficios-tr.txt",
+      "bytes": 843830,
+      "sha256_texto": "c0a23a68b86e3ac448ad09fca35f26d1ebb2598aa60ed68f153d8a6da910a9fe",
+      "captura": {
+        "anterior": {
+          "slug": "lc224-sobra-limite",
+          "id": "D03",
+          "baixado_em": "2026-11-03T19:24:12-03:00",
+          "sha256_texto": "c0a23a68b86e3ac448ad09fca35f26d1ebb2598aa60ed68f153d8a6da910a9fe"
+        },
+        "tipo": "IGUAL"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "loa2026-dgt-lei10147-art2",
+  "pergunta": "O demonstrativo de gastos tributários anexo à LOA 2026 inclui o art. 2º da Lei 10.147 (alíquota zero de PIS/Cofins do varejo de cosmético monofásico)? Efeito pela LC 224 art. 4º §§ 2º I e 4º I e Decreto 12.808",
+  "criado": "2026-11-24T01:20:22-03:00"
+}

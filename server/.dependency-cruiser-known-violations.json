@@ -1,113 +1,5 @@
 [
   {
-    "type": "dependency",
-    "from": "src/features/accounting/repositories/AccountantAssignmentRepository.ts",
-    "to": "src/features/accounting/policies/IAccountingPolicy.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L4-repository-is-the-floor"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/accounting/repositories/IAccountantAssignmentRepository.ts",
-    "to": "src/features/accounting/policies/IAccountingPolicy.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L4-repository-is-the-floor"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/chat/repositories/IKnowledgeGraphRepository.ts",
-    "to": "src/features/chat/services/KnowledgeGraphService.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L4-repository-is-the-floor"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/chat/repositories/KnowledgeGraphRepository.ts",
-    "to": "src/features/chat/services/KnowledgeGraphService.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L4-repository-is-the-floor"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/accountingBinding/policies/AccountingBindingPolicy.ts",
-    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L5-policy-is-pure"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/accountingBinding/policies/IAccountingBindingPolicy.ts",
-    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L5-policy-is-pure"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/sectorKits/policies/ISectorKitPolicy.ts",
-    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L5-policy-is-pure"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/sectorKits/policies/SectorKitPolicy.ts",
-    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L5-policy-is-pure"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/accounting/models/issLimite.ts",
-    "to": "src/features/legalParameters/services/legalParameterCache.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L6-model-dto-are-leaves"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/accounting/models/lc116ListaNacional.ts",
-    "to": "src/features/legalParameters/services/legalParameterCache.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L6-model-dto-are-leaves"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/accounting/models/outstandingLines.ts",
-    "to": "src/features/accounting/repositories/IPayableRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L6-model-dto-are-leaves"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/accounting/models/outstandingLines.ts",
-    "to": "src/features/accounting/repositories/IReceivableRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L6-model-dto-are-leaves"
-    }
-  },
-  {
     "type": "cycle",
     "from": "src/features/accounting/services/IInventoryService.ts",
     "to": "src/features/accounting/services/InventoryService.ts",
@@ -163,31 +55,6 @@
   },
   {
     "type": "cycle",
-    "from": "src/features/chat/repositories/IKnowledgeGraphRepository.ts",
-    "to": "src/features/chat/services/KnowledgeGraphService.ts",
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/chat/services/KnowledgeGraphService.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/chat/repositories/IKnowledgeGraphRepository.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
     "from": "src/features/dynamicTables/presets/index.ts",
     "to": "src/features/dynamicTables/presets/modules/registry.ts",
     "rule": {
@@ -200,72 +67,6 @@
         "dependencyTypes": [
           "local",
           "type-only",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/index.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/features/dynamicTables/presets/index.ts",
-    "to": "src/features/dynamicTables/presets/systems/AestheticClinicPreset.ts",
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/dynamicTables/presets/systems/AestheticClinicPreset.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/utils/TableFactory.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/index.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/features/dynamicTables/presets/index.ts",
-    "to": "src/features/dynamicTables/presets/systems/BeautySalonPreset.ts",
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/dynamicTables/presets/systems/BeautySalonPreset.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/utils/TableFactory.ts",
-        "dependencyTypes": [
-          "local",
           "import"
         ]
       },
@@ -529,31 +330,6 @@
         "dependencyTypes": [
           "local",
           "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/lib/vector/qdrant-initializer.ts",
-    "to": "src/lib/vector/qdrant.ts",
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/lib/vector/qdrant.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/lib/vector/qdrant-initializer.ts",
-        "dependencyTypes": [
-          "local",
           "import"
         ]
       }

@@ -3,7 +3,6 @@ import { PAYMENT_METHODS } from '../models/Payable.model';
 import { BANK_SETTLEMENT_STATUSES } from '../models/BankSettlement.model';
 import { PROVIDER_BALANCE_METHOD } from '../models/Receivable.model';
 import { MAX_CENTS } from '../models/money';
-import { IBS_CBS_ANTES_DE_2027 } from './IbsCbsAssessmentDto';
 
 /**
  * F5 PR-3 (P3-9, F-PP-7 a): o F7 aceita também `ProviderBalance` — a conta vem da PaymentAccount do extrato, não do
@@ -33,7 +32,7 @@ export type ScanBankSettlementsInput = z.infer<typeof ScanBankSettlementsSchema>
  * IBS-CBS-2027 PR-4 (item 19a + EMENDA PR-4, dono 22/10): split payment informado no confirm — o IBS e a CBS retidos
  * pelo provedor, em valores separados, e a competência (AAAA-MM) do débito extinto (padrão = mês da linha do extrato).
  * Só recebível; `|linha| + tarifa + ibsCents + cbsCents = saldo` é re-checado no pré-cheque (400 `split_mismatch`).
- * `competencia < 2027-01` ⇒ 400 nomeado já na borda (F-IBS-7 b).
+ * `competencia` antes do início da apuração de IBS/CBS ⇒ 400 nomeado (F-IBS-7 b) no serviço (Onda 3.2: o marco é linha, não literal de DTO).
  */
 const SplitCents = z.number().int().min(0).max(MAX_CENTS);
 export const BankSettlementSplitSchema = z
@@ -43,7 +42,6 @@ export const BankSettlementSplitSchema = z
     competencia: z
       .string()
       .regex(/^\d{4}-(0[1-9]|1[0-2])$/, { message: 'competencia no formato AAAA-MM' })
-      .refine((c) => c >= '2027-01', { message: IBS_CBS_ANTES_DE_2027 })
       .optional(),
   })
   .strict()

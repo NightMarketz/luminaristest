@@ -4,7 +4,7 @@
  * atribuição ativa — trava a família de `canClosePeriod` (F-GOV-3 a: só reabertura e assinatura mudam).
  */
 import { AccountingPolicy } from '../AccountingPolicy';
-import type { ActiveAccountant } from '../IAccountingPolicy';
+import type { ActiveAccountant } from '../../models/AccountantAssignment.model';
 import type { AccountingScope } from '../../scope/AccountingScope';
 import { resolveAccountingScopeInternal } from '../../scope/resolveAccountingScopeInternal';
 

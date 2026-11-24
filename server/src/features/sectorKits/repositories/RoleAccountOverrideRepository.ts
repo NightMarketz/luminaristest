@@ -1,6 +1,7 @@
 import prisma from '../../../lib/prisma';
 import type { Prisma, RoleAccountOverride } from 'generated/prisma';
-import { bindingScopeWhere, type BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import { bindingScopeWhere } from '../../accountingBinding/public/bindingScope';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 import type { IRoleAccountOverrideRepository, RoleAccountOverrideWithCode } from './IRoleAccountOverrideRepository';
 
 /** Prisma-backed — mesmo esqueleto do `KitInstallationRepository` (where explícito, `tx ?? prisma`). */
