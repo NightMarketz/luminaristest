@@ -94,10 +94,10 @@ export interface DreRow {
  * A regra da DRE de uma conta — a ÚNICA função que os leitores da DRE usam (seções, resultado, diagnóstico, J150).
  * 1. Papel (lacuna 038d; cédula D-2026-11-21-DRE-INSUMO-PELO-PAPEL, Lei 6.404/76 art. 187 II/III): a conta apontada em
  *    `insumoExpenseAccountId` do perfil fiscal é custo dos serviços, qualquer que seja o código. Só para `Expense`.
- * 2. Identidade da folha (lacuna 13dd; dono, 21/11, "pelo papel/natureza, não só pelo código"): a regra de folha do plano
- *    padrão em `Expense` casa só a conta que É essa folha — código igual (não prefixo) e nome + natureza da definição
- *    (`isContaDoPlanoPadrao`). A conta do usuário nesse código (ex.: 4.7 "Perda na Baixa de Imobilizado") cai na regra
- *    seguinte, `dre.expenses`.
+ * 2. Identidade da folha (lacuna 13dd; dono, 21/11, "pelo papel/natureza, não só pelo código"): a conta que ocupa o
+ *    código EXATO de uma folha do plano padrão em `Expense` só casa a regra da folha se É essa folha (nome + natureza da
+ *    definição, `isContaDoPlanoPadrao`). A conta do usuário nesse código (ex.: 4.7 "Perda na Baixa de Imobilizado") cai
+ *    na regra seguinte, `dre.expenses`. Os outros códigos do prefixo (subcontas legadas) seguem a tabela, como antes.
  * 3. O resto: a tabela de regras por natureza + prefixo, como `findMappingRule`.
  */
 export function findDreRule(row: DreRow, custoServicosAccountIds: ReadonlySet<string>): StatementMappingRule | undefined {
@@ -107,7 +107,7 @@ export function findDreRule(row: DreRow, custoServicosAccountIds: ReadonlySet<st
   return STATEMENT_MAPPING_RULES.find(
     (r) =>
       matchesByTable(r, row.nature, row.code, 'DRE') &&
-      (!isRegraDeFolhaExpense(r) || ('codePrefix' in r.match && row.code === r.match.codePrefix && isContaDoPlanoPadrao(row))),
+      (!isRegraDeFolhaExpense(r) || !('codePrefix' in r.match) || row.code !== r.match.codePrefix || isContaDoPlanoPadrao(row)),
   );
 }
 

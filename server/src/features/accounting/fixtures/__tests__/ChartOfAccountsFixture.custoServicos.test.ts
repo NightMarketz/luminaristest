@@ -45,8 +45,8 @@ describe('Lacuna 13dd — a regra de folha da DRE casa só a conta que É a folh
     expect(findDreRule(linha('4.2', 'Outra Despesa'), sem)?.id).toBe('dre.expenses');
   });
 
-  it('código igual, não prefixo: 4.70 não é a folha 4.7', () => {
-    expect(findDreRule(linha('4.70', 'Custo dos Serviços Prestados'), sem)?.id).toBe('dre.expenses');
+  it('só o código exato passa pela identidade: subconta legada sob a 4.7 segue a tabela (custo), como antes', () => {
+    expect(findDreRule(linha('4.7.1', 'Insumos do serviço (custo)'), sem)?.id).toBe('dre.cogs_services');
   });
 
   it('o papel do insumo vence a identidade (038d): a 4.7 do usuário apontada como insumo é custo', () => {
