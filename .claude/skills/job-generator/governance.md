@@ -75,8 +75,10 @@ Regras normativas da camada **Job / Seed** (background job em `server/src/jobs/`
 - `JOB-004` — padrão dos schedulers (Contrato §2.4): mensagem = constante `JOB`, `log.event` com evento do catálogo
   `LOG_EVENTS`, `alert` injetado (default `sendAlertWebhook`) disparando `job_failed` no `catch` do `runOnce`, que
   relança; teste de falha. Caso `happy-2` (reescrito em 2026-10-23, ADR-OBSERVABILIDADE §6 item 9).
-- `JOB-005` — Prisma direto é aceitável em seed/job mas **documentado** no topo (bypassa factory/validação/rules/policy);
-  job não usa `getFactory()`.
+- `JOB-005` — job em `server/src/jobs/` não importa `lib/prisma` nem repository de feature: pega o service pelo
+  `getFactory()` (regra `J1` do `check:arch`). Prisma direto só em seed de volume, **documentado** no topo (bypassa
+  factory/validação/rules/policy). Regra e caso `happy-2` reescritos em 2026-11-24 (ADR-MODULE-BOUNDARIES §11; dono,
+  questionário: "Regra agora"); o eval comportamental não foi rodado de novo depois da reescrita.
 - `JOB-006` — guard de produção (`process.env.NODE_ENV === 'production'`) no topo do seed; standalone, escopado a `userId`.
 - `JOB-007` — resolver tabelas/pais por `internalName`/`id`, nunca por posição `[0]` (a ordenação da API difere do `findMany`).
 - `JOB-008` — cobrir a variabilidade que a view ramifica (múltiplos status/scores, >1 registro-pai, datas passadas/futuras).

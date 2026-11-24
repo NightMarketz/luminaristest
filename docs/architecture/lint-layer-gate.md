@@ -88,6 +88,21 @@ O critério **shape+posse** é **detector de candidatos, não decisor**. O lint 
   O ADR (A3) contava 5; os 7 dos schedulers não estavam na conta (arrow de bloco vazio), e incluí-los foi decisão do
   dono por questionário no mesmo dia.
 
+### R6 — `public/` de feature é lista explícita (server) — 2026-11-24
+
+- **Regra:** em `src/features/*/public/**/*.ts`, `no-restricted-syntax` barra `ExportAllDeclaration` (`export *` e
+  `export * as ns`) e `ImportDeclaration` sem specifier (`import './x'`, import por efeito colateral).
+- **Por que existe:** `ADR-MODULE-BOUNDARIES.md` §11, F-MBE-3 (a) (dono, questionário, 2026-11-24; e chat de 24/11:
+  "No PR-2"). `public/` é o que outra feature pode importar: com `export *` a lista do que sai deixa de estar escrita,
+  e o import por efeito colateral executa código de quem só pediu um nome. O dependency-cruiser vê a aresta
+  (`M3-public-no-repository`), mas não a forma do `export`.
+- **Detalhe do flat config:** o bloco de `public/` redefine `no-restricted-syntax` para esses arquivos, então repete os
+  seletores do R5 (constante `SILENT_CATCH`).
+- **Baseline:** 0. Em 24/11 há 2 arquivos em `public/` (`accountingBinding/public/bindingScope{,.types}.ts`), os dois
+  com reexport por nome. Nenhuma supressão; o bloco `debt-ledger` não muda.
+- **Prova de que morde (24/11):** `fx/public/__sondaLint.ts` com `export * from '../models/ptax'` e com
+  `import '../models/ptax'` ⇒ `npx eslint` exit 1 citando R6; com reexport por nome ⇒ exit 0.
+
 ### R4 — CI gate
 - **server**: step `npm run lint` (`eslint src`) entre typecheck e test.
 - **my-app**: step `npm run lint:gate` (`eslint . --config eslint.gate.config.mjs`). Usa um config **separado** do `eslint.config.mjs` (next/dev): o frontend nunca foi lintado (`ignoreDuringBuilds: true`) e o ruleset next produz ~6000 erros pré-existentes — adotá-lo é iniciativa própria, não esta fatia. O gate roda isolado, só as regras de camada.

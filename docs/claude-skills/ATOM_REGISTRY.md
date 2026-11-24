@@ -14,7 +14,7 @@
 | Zod Schema | backend | server/src/features/*/schemas/*.ts | – | Validation schema | – | backend-dto-generator |
 | Prisma Model | backend | server/prisma/schema.prisma | – | DB model + migration | – | backend-prisma-model-generator |
 | Factory Registration | backend | server/src/lib/factory.ts | Service, Repo, Policy | Singleton wiring | – | backend-service-generator |
-| Job | backend | server/src/jobs/*.ts | Prisma | Scheduled task | – | job-generator |
+| Job | backend | server/src/jobs/*.ts | lib/factory (service) | Scheduled task | – | job-generator |
 | DynamicTable Preset Module | domain | server/src/features/dynamicTables/presets/modules/**/*.ts | Field presets | Module object export | – | dynamic-table-preset-generator |
 | DynamicTable Field Preset | domain | server/src/features/dynamicTables/presets/fields/**/*.ts | ITableSchema | Field config object | – | dynamic-table-preset-generator |
 | DynamicTable System Preset | domain | server/src/features/dynamicTables/presets/systems/*.ts | Module presets | System array export | – | dynamic-table-preset-generator |
