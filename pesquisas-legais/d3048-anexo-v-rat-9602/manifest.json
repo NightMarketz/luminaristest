@@ -1,0 +1,76 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "D3048",
+      "url": "https://www.planalto.gov.br/ccivil_03/decreto/d3048.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/decreto/d3048.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:36:32-03:00",
+      "sha256": "0ea9c2ac49a2e0bb9155f675d48ce9ca061840637812fc208b1dc75169f374ae",
+      "arquivo": "docs/D01_d3048-htm.html",
+      "texto": "docs/D01_d3048-htm.txt",
+      "bytes": 2390338,
+      "sha256_texto": "249d9616e52067d0a42ccd9bd807c0482855fbd9f2ee2739e6b89c3ae072d1f7",
+      "captura": {
+        "anterior": {
+          "slug": "parecer-salao-sp-4-pessoas",
+          "id": "D40",
+          "baixado_em": "2026-11-20T18:50:00-03:00",
+          "sha256_texto": "c0ec5aa708cfbe43516f753688bba2eb33c5605583b9b6bbd9d54091157bcd26"
+        },
+        "tipo": "TEXTO_MUDOU",
+        "citado_em": [
+          {
+            "slug": "parecer-salao-sp-4-pessoas",
+            "id": "D40"
+          }
+        ],
+        "diferencas": [
+          "-Decreto nº 3.048, de 6 de maio de 1999 (Regulamento da Previdência Social) — captura pelo navegador embutido",
+          "-Motivo: o decreto não está no acervo ctresb/leis (federal/decretos/1999 pula de dec-3047 para dec-3049) e o",
+          "-legal.py baixar deu timeout no planalto.gov.br (WinError 10060) em 20/11/2026; normas.leg.br devolveu casca JS (D32)."
+        ]
+      },
+      "alertas": [
+        "TEXTO MUDOU desde 2026-11-20. Dossiês que citaram a versão anterior: parecer-salao-sp-4-pessoas D40. Conferir se a conclusão deles ainda vale"
+      ]
+    },
+    {
+      "id": "D02",
+      "titulo": "D3048anexoiv-v-vol1",
+      "url": "https://www.planalto.gov.br/ccivil_03/decreto/D3048anexov-vol1.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/decreto/d3048anexov-vol1.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:36:54-03:00",
+      "sha256": "8c0cbd67eb1771b3925c452b490fc3e947e37e0b32f7fb1925262e786ccce8d5",
+      "arquivo": "docs/D02_d3048anexov-vol1-htm.html",
+      "texto": "docs/D02_d3048anexov-vol1-htm.txt",
+      "bytes": 1802111,
+      "sha256_texto": "d51eb2cecb6012991cea8a5c44e683a9bd1cff5d9a3a7e3b9c8d84b41eedfb93",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "d13054",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/D13054.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d13054.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:37:21-03:00",
+      "sha256": "9b45d51735db19959ca30a81306700877054db5e77fdaff66c39eb9fef0f7fdf",
+      "arquivo": "docs/D03_d13054-htm.html",
+      "texto": "docs/D03_d13054-htm.txt",
+      "bytes": 22245,
+      "sha256_texto": "5025f016fc4e8ed256780e4ecc0242634037ccd80b55892e436b67a9808642a7",
+      "captura": {
+        "tipo": "PRIMEIRA"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "d3048-anexo-v-rat-9602",
+  "pergunta": "O Decreto 3.048/1999 mudou desde 20/11/2026? No Anexo V vigente, qual é o RAT do CNAE 9602-5/01 (cabeleireiros, manicure e pedicure)?",
+  "criado": "2026-11-24T01:36:31-03:00"
+}

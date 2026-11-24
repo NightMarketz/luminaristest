@@ -1,0 +1,104 @@
+Arquivos varridos (git ls-files, recorte do enunciado): 3165
+Arquivos de locales (my-app/public/locales, tratados a parte): 18
+Ocorrencias principais: 98994  |  ambiguas (ambiguos.tsv): 10733
+
+Ocorrencias principais por categoria (codigo / comentario / teste):
+  IDENT: 1929 / 515 / 1828   (ambiguas: 109)
+  ENDERECO: 272 / 111 / 157   (ambiguas: 778)
+  MOEDA: 6252 / 1027 / 6060   (ambiguas: 0)
+  LOCALE: 888 / 173 / 723   (ambiguas: 0)
+  REGIME: 6016 / 1295 / 2777   (ambiguas: 4118)
+  TRIBUTO: 10340 / 1914 / 6415   (ambiguas: 2243)
+  CLASSIF: 1248 / 211 / 532   (ambiguas: 704)
+  DOCFISCAL: 2353 / 1117 / 2953   (ambiguas: 0)
+  OBRIGACAO: 5276 / 1742 / 4065   (ambiguas: 0)
+  BANCO: 254 / 108 / 455   (ambiguas: 1827)
+  TRABALHO: 2071 / 909 / 1255   (ambiguas: 0)
+  CONTABIL: 2022 / 562 / 1561   (ambiguas: 0)
+  ORGAO: 1343 / 267 / 225   (ambiguas: 954)
+  NORMA: 3721 / 2495 / 1494   (ambiguas: 0)
+  VIGENCIA: 215 / 0 / 3313   (ambiguas: 0)
+  TEXTO_PT: 3989 / 3030 / 1516   (ambiguas: 0)
+
+Top 30 arquivos por nº de ocorrencias codigo (principal):
+  3496	server/prisma/data/legal_parameters_simples_v1.sql
+  3297	server/prisma/data/legal_parameters_v6.sql
+  2123	server/prisma/data/legal_parameters_retencoes_v1.sql
+  1997	server/prisma/data/legal_parameters_v2.sql
+  1955	server/prisma/data/legal_parameters_dp_v1.sql
+  1114	server/prisma/data/legal_parameters_v3.sql
+  830	server/prisma/schema.prisma
+  767	server/src/features/accounting/models/ibsCbsTabelas.ts
+  630	server/src/features/accounting/services/SimplesApuracaoService.ts
+  469	server/src/features/accounting/models/taxSimulation.ts
+  404	server/src/features/accounting/services/FiscalDocumentEmissionService.ts
+  375	server/src/features/accounting/models/taxAssessmentCalc.ts
+  353	my-app/features/accounting/components/SpedGenerationPanel.tsx
+  344	server/src/features/accounting/services/FiscalProfileService.ts
+  340	server/src/lib/factory.ts
+  338	my-app/types/contracts/accounting/NfePayloadDto.gen.ts
+  313	server/src/features/accounting/dtos/NfeIbsCbsDto.ts
+  313	server/src/features/accounting/services/LalurService.ts
+  312	server/src/features/accounting/services/InterestOnEquityService.ts
+  307	server/src/features/accounting/services/CompanyFiscalProfileService.ts
+  306	server/src/features/legalParameters/models/formatoLinha.ts
+  302	server/src/features/accounting/services/TaxSimulationService.ts
+  286	server/src/features/accounting/services/TaxAssessmentService.ts
+  274	scripts/baixar-fontes-oficiais.mjs
+  265	server/src/lib/danfe/danfeHtml.ts
+  257	server/src/features/accounting/models/simplesCalc.ts
+  255	server/src/features/accounting/models/reinfLote.ts
+  251	server/src/features/accounting/services/PayableService.ts
+  245	server/src/features/accounting/services/IbsCbsAssessmentService.ts
+  239	server/src/features/accounting/audit/auditCanonical.ts
+
+CONFERENCIA
+  'BRL' literal em server/src {features,lib,controllers,jobs} nao-teste: grep=67 linhas em 28 arquivos | TSV termo brl (qualquer forma)=91 linhas em 37 arquivos | TSV brl com "'BRL'" no trecho=67 linhas em 28 arquivos. Esperado ~67 linhas em 28 arquivos.
+  America/Sao_Paulo no mesmo recorte: grep=28 linhas em 23 arquivos | TSV=28 linhas em 23 arquivos. Esperado ~28 linhas em 23 arquivos.
+  export const com DESDE|INICIO|FIM|ULTIMO|ANO em server/src/features/accounting: nome=12 | com valor data/ano=11. Esperado 11.
+    server/src/features/accounting/audit/auditCanonical.ts:5  export const CANONICAL_VERSION = 1;
+    server/src/features/accounting/dtos/NfeIbsCbsDto.ts:192  export const IBSCBS_EXIGIDO_DESDE = { crt3Homologacao: '2026-07-01', crt3Producao: '2026-08-03', simples: '2027-01-04' } as const;
+    server/src/features/accounting/models/ibsCbsCredito.ts:15  export const INICIO_CREDITO_IBS_CBS = '2027-01-01';
+    server/src/features/accounting/models/issTransicao.ts:11  export const INICIO_TRANSICAO_ISS = '2029-01-01';
+    server/src/features/accounting/models/issTransicao.ts:12  export const FIM_ISS = '2033-01-01';
+    server/src/features/accounting/models/nfeMontagem.ts:58  export const RTC_SIMPLES_DESDE = '2027-01-04';
+    server/src/features/accounting/models/profitDistribution.ts:22  export const ANO_RESULTADO_TRANSICAO_MAX = 2025;
+    server/src/features/accounting/models/segregacaoNcm.ts:19  export const FIM_MONOFASICO_PIS_COFINS = '2027-01-01';
+    server/src/features/accounting/models/servicoFiscalAvaliacao.ts:117  export const IBS_CBS_REDUCAO_NBS_DESDE = '2027-01-01';
+    server/src/features/accounting/models/simplesCaixa.ts:70  export const ULTIMO_ANO_RETORNO_DECIDIDO = 2025;
+    server/src/features/accounting/models/simplesCalc.ts:185  export const INICIO_LC214 = '2027-01';
+    server/src/features/accounting/models/taxOptimization.ts:46  export const PRINCIPAL_ACESSORIO_DESDE = '2027-01-01';
+  Nucleo-razao com DOCFISCAL/OBRIGACAO/REGIME: 23
+    server/src/features/accounting/services/AuditService.ts:60 [DOCFISCAL/a1] * `deleted:<id>:<name>` (SEC-A1-4) — a forma arquivada não é o que o operador digita.
+    server/src/features/accounting/services/PostingService.ts:23 [OBRIGACAO/lalur] import type { ILalurRepository } from '../repositories/ILalurRepository';
+    server/src/features/accounting/services/PostingService.ts:29 [DOCFISCAL/a1] /** FIX-MENSAGENS-ID-INTERNO lote 4 (F-MSG-2 a1; rótulo do dono, chat, 05/11): o lançamento é nº + data + descrição, nunca o cuid. */
+    server/src/features/accounting/services/PostingService.ts:41 [DOCFISCAL/nfe] * Descriptor for BE-INCR-PROVENANCE-ATTACH (NFE-X) — attaching formal provenance to an
+    server/src/features/accounting/services/PostingService.ts:93 [OBRIGACAO/ecf] /** ECF 3C item 19: ajustes vivos do e-Lalur apontando para a conta travam o soft-delete dela. */
+    server/src/features/accounting/services/PostingService.ts:93 [OBRIGACAO/lalur] /** ECF 3C item 19: ajustes vivos do e-Lalur apontando para a conta travam o soft-delete dela. */
+    server/src/features/accounting/services/PostingService.ts:94 [OBRIGACAO/lalur] private readonly lalurRepo: Pick<ILalurRepository, 'countLiveEntriesByAccount'>,
+    server/src/features/accounting/services/PostingService.ts:96 [OBRIGACAO/referencial] * IRRF-DISTRIBUICAO PR-1 (item 6; dono 21/10, opção (b)): referencial das folhas do plano padrão que os kits não trazem,
+    server/src/features/accounting/services/PostingService.ts:234 [OBRIGACAO/referencial] // Só quando alguma conta do plano padrão nasceu (ou voltou) agora: este método roda em todo lançamento, e o referencial
+    server/src/features/accounting/services/PostingService.ts:390 [OBRIGACAO/pva] // any result account is flagged (exercício inencerrável → no PVA-clean ECD). This mirrors
+    server/src/features/accounting/services/PostingService.ts:390 [OBRIGACAO/ecd] // any result account is flagged (exercício inencerrável → no PVA-clean ECD). This mirrors
+    server/src/features/accounting/services/PostingService.ts:392 [OBRIGACAO/sped] // content. The apuração I350/I355 path IS this closing entry (SPED gen is read-only, D7), so
+    server/src/features/accounting/services/PostingService.ts:449 [OBRIGACAO/ecd] // the immutable hash-chained payload, never the ledger fact or the ECD I250 hist.
+    server/src/features/accounting/services/PostingService.ts:785 [DOCFISCAL/nfe] * BE-INCR-PROVENANCE-ATTACH (NFE-X) — attach formal provenance to an ALREADY-POSTED entry
+    server/src/features/accounting/services/PostingService.ts:907 [DOCFISCAL/nfe] * Drill-down read of the origin documents linked to an entry (BE-INCR-PROVENANCE-ATTACH, NFE-X).
+    server/src/features/accounting/services/PostingService.ts:956 [OBRIGACAO/pva] * BE-INCR-PLANO-4-NIVEIS (L8, item 6): a regra do PVA aplicada na origem. Manual da ECD L9 (maio/2026) p. 120,
+    server/src/features/accounting/services/PostingService.ts:956 [OBRIGACAO/ecd] * BE-INCR-PLANO-4-NIVEIS (L8, item 6): a regra do PVA aplicada na origem. Manual da ECD L9 (maio/2026) p. 120,
+    server/src/features/accounting/services/PostingService.ts:966 [OBRIGACAO/ecd] `níveis no código (ex.: 1.1.1.01); '${dto.code}' tem ${segmentos.length} (Manual da ECD, REGRA_VALIDA_NIVEL_CONTAS).`,
+    server/src/features/accounting/services/PostingService.ts:1060 [OBRIGACAO/lalur] // BRIEF 3C item 19 (espelho de LalurService.archiveParteB): um ajuste vivo da Parte A com esta conta
+    server/src/features/accounting/services/PostingService.ts:1062 [OBRIGACAO/lalur] const lalurLive = await this.lalurRepo.countLiveEntriesByAccount(scope, accountId, tx);
+    server/src/features/accounting/services/PostingService.ts:1063 [OBRIGACAO/lalur] if (lalurLive > 0) {
+    server/src/features/accounting/services/PostingService.ts:1064 [OBRIGACAO/lalur] throw new AppError('Arquive os ajustes do e-Lalur/e-Lacs relacionados a esta conta antes de excluí-la.', 409, 'CONFLICT');
+    server/src/features/accounting/services/PostingService.ts:1064 [OBRIGACAO/lacs] throw new AppError('Arquive os ajustes do e-Lalur/e-Lacs relacionados a esta conta antes de excluí-la.', 409, 'CONFLICT');
+
+LIMITACOES (o que o script nao pega ou pode errar):
+  - Termos ambiguos (?) ficam so em ambiguos.tsv; matrizes, arquivos-por-categoria, nucleo.tsv e RESUMO usam so a principal.
+  - Termos de uma so palavra casam tokens exatos; termos compostos casam sequencias de tokens com o mesmo nº de partes. Palavras sem separador (ex.: "nfeissuer") nao casam.
+  - Termo "13" (TRABALHO) casa qualquer token numerico 13: ruido alto, mantido por ser o termo da semente.
+  - tipo=comentario usa so o prefixo da linha: linha de bloco sem * inicial ou "*" de multiplicacao no inicio contam errado.
+  - Heuristica de texto PT (a) e (b) e so de regex: pega acento em string, nao distingue mensagem de dado.
+  - VIGENCIA aceita data em aspas simples, duplas ou crase (o enunciado citava so aspas simples).
+  - server/test/** caiu em server-outros; my-app/scripts em fe-outros.
+  - Descoberta: heuristica de sufixo/acento/caixa alta, nao semantica; siglas em ingles tambem aparecem.

@@ -1,0 +1,104 @@
+{
+  "documentos": [
+    {
+      "id": "D01",
+      "titulo": "Decreto nº 12.955 de 29/04/2026",
+      "url": "https://raw.githubusercontent.com/ctresb/leis/main/federal/decretos/2026/dec-12955-2026-04-29.md",
+      "url_final": "https://github.com/ctresb/leis/blob/517db958cd0ae2ba36c1f0b524b3cc55fe4198c6/federal/decretos/2026/dec-12955-2026-04-29.md",
+      "orgao": "Acervo ctresb/leis (espelho de fonte oficial)",
+      "acervo": true,
+      "fonte_oficial": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2026-04-29;12955",
+      "versao_texto": "original",
+      "acervo_baixado_em": "2026-10-15",
+      "commit": "517db958cd0ae2ba36c1f0b524b3cc55fe4198c6",
+      "alertas": [
+        "versao_texto = 'original' (não é texto compilado: alterações posteriores não aparecem)"
+      ],
+      "baixado_em": "2026-11-24T01:24:34-03:00",
+      "sha256": "5527dbfe923a984a86c22b27ef1c5c0b6f4f0c2996bbe14315e8804afd08bbd9",
+      "arquivo": "docs/D01_dec-12955-2026-04-29.md",
+      "texto": "docs/D01_dec-12955-2026-04-29.txt",
+      "bytes": 779823,
+      "sha256_texto": "5e9edac0c08cbfc7d89c1bbcf32151b31396209c73c4afe4aeeffc93c344ec82",
+      "captura": {
+        "anterior": {
+          "slug": "regime-fora-simples-salao",
+          "id": "D16",
+          "baixado_em": "2026-11-21T08:50:53-03:00",
+          "sha256_texto": "5e9edac0c08cbfc7d89c1bbcf32151b31396209c73c4afe4aeeffc93c344ec82"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D02",
+      "titulo": "d12955",
+      "url": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2026/decreto/d12955.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:24:45-03:00",
+      "sha256": "5e94d3cf7568bc2b8cd5b5c548c00cfa46324dc5d7833f3ffa4d8a21ad78d63a",
+      "arquivo": "docs/D02_d12955-htm.html",
+      "texto": "docs/D02_d12955-htm.txt",
+      "bytes": 3184515,
+      "sha256_texto": "fdd17260256d367e90aaa8f51c289974e9c97078b68b0810b55927533f18671f",
+      "captura": {
+        "anterior": {
+          "slug": "nfse-2027-salao-parceiro-cbs-ibs",
+          "id": "D05",
+          "baixado_em": "2026-11-24T01:24:33-03:00",
+          "sha256_texto": "fdd17260256d367e90aaa8f51c289974e9c97078b68b0810b55927533f18671f"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D03",
+      "titulo": "Lcp 214",
+      "url": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "url_final": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "orgao": "Presidência - legislação federal",
+      "baixado_em": "2026-11-24T01:24:49-03:00",
+      "sha256": "5591db15aa6347ea50d579825c064af68ab527211361eb1cc9be7e80727446c7",
+      "arquivo": "docs/D03_lcp214-htm.html",
+      "texto": "docs/D03_lcp214-htm.txt",
+      "bytes": 5403923,
+      "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3",
+      "captura": {
+        "anterior": {
+          "slug": "nfse-2027-salao-parceiro-cbs-ibs",
+          "id": "D01",
+          "baixado_em": "2026-11-24T01:24:21-03:00",
+          "sha256_texto": "1c8ce026cc6100204e84f447dd34821ca8f6cd9f511091d571b97fd0f9c076a3"
+        },
+        "tipo": "IGUAL"
+      }
+    },
+    {
+      "id": "D04",
+      "titulo": "D04_30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs-pdf",
+      "url": "https://www.cgibs.gov.br/upload/arquivos/202604/30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs.pdf",
+      "url_final": "https://www.cgibs.gov.br/upload/arquivos/202604/30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs.pdf",
+      "orgao": "Órgãos federais (Receita, ANPD, INSS, etc.)",
+      "baixado_em": "2026-11-24T01:41:03-03:00",
+      "sha256": "9ed7032ef9c25bbee51bdb5e90f60e1ad01a2bf56cb41a28221c3db7f61d419a",
+      "arquivo": "docs/D04_30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs-pdf.pdf",
+      "texto": "docs/D04_30084927-res-cgibs-n-6-30-abr-2026-regulamenta-o-ibs-pdf.txt",
+      "bytes": 2896452,
+      "sha256_texto": "21d8be4312aa7cd5acd1203ef82734317d78c03e58691d8490689bf5fc89ba51",
+      "captura": {
+        "anterior": {
+          "slug": "regulamento-ibs-v2-art45",
+          "id": "D07",
+          "baixado_em": "2026-11-24T01:34:27-03:00",
+          "sha256_texto": "21d8be4312aa7cd5acd1203ef82734317d78c03e58691d8490689bf5fc89ba51"
+        },
+        "tipo": "IGUAL"
+      }
+    }
+  ],
+  "buscas": [],
+  "slug": "dec12955-energia-eletrica-credito",
+  "pergunta": "O que dizem os artigos do Decreto 12.955/2026 sobre energia elétrica (recolhimento, crédito de CBS) e se confirmam ou corrigem a regra geral do art. 47 da LC 214 para o crédito do salão no regime regular?",
+  "criado": "2026-11-24T01:20:28-03:00"
+}
