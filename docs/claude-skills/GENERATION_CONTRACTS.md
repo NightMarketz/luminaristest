@@ -75,6 +75,18 @@ For DynamicTable-backed domains (leads, ERP, CRM) the service orchestrates `Dyna
 - Validation messages: Inline strings like `'Name cannot exceed 100 characters'`
 - Domain model: Companion `<resource>/models/<Resource>.model.ts` with `interface I<Resource>` and enums
 
+## Backend Feature Folder Contract
+
+> Gate: `cd server && npm run check:arch` (rules `M1`, `M1a`, `M3`, `D2`; decision in `docs/adr/ADR-MODULE-BOUNDARIES.md` §10–§11).
+
+- Layer folders of `server/src/features/<resource>/`: `services/`, `repositories/`, `policies/`, `models/`, `dtos/`, `domain/`, `ports/`, `adapters/`, `public/`. New feature code goes into one of them — no loose file and no new ad-hoc folder at the feature root
+- Pure logic (calculation, mapping, static table): `server/src/features/<resource>/domain/<name>.ts` — never imports a repository, service, controller, route, `lib/prisma` or Express
+- Interface of something external to the feature: `server/src/features/<resource>/ports/<Name>Port.ts`; its implementation: `server/src/features/<resource>/adapters/<Name>Adapter.ts`
+- Cross-feature import: only `server/src/features/<other>/public/**`. Never `<other>/repositories/`, `services/`, `models/` or `dtos/`
+- Missing public file: create it in the **target** feature in the same change — types in `public/<name>.types.ts`, functions or executable ports in `public/<name>.ts`. `public/` only re-exports; it never imports `repositories/`
+- Policies, models and DTOs import from another feature only `public/<name>.types.ts`
+- Reference: `server/src/features/accountingBinding/public/bindingScope.ts` and `bindingScope.types.ts`
+
 ## Frontend Page Contract
 
 - File: `my-app/pages/<resource>/index.tsx` and `my-app/pages/<resource>/[id].tsx` if needed
@@ -87,6 +99,7 @@ For DynamicTable-backed domains (leads, ERP, CRM) the service orchestrates `Dyna
 
 - Directory: `my-app/features/<name>/`
 - Sub-folders: `components/`, `hooks/`, `types/`, `utils/`, `services/` (optional)
+- Cross-feature import: only through `my-app/features/<other>/public/` (rule `U9` of `cd my-app && npm run check:arch`); create the file in the target feature's `public/` when it does not exist
 - Category view: `my-app/features/dashboard/category-views/<name>/<Name>View.tsx` as main export
 - Registration: Add dynamic import in `my-app/pages/dashboard/index.tsx`
 

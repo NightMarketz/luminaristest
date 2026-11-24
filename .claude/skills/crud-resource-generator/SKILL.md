@@ -23,6 +23,8 @@ Atalho para o padrão mais comum do Luminaris: CRUD completo com soft-delete, pa
 
 Esta skill gera múltiplas camadas — TODO arquivo gerado deve cumprir `.claude/skills/_ARCHITECTURE-CONTRACT.md` (camadas, DI, soft-delete, policy-first, registro de rota = 2 toques com auth deny-by-default, no-`any`, frontend service layer, reuse de canônicos, design system, testes). O contrato é o gate final; as sub-skills herdam-no.
 
+> **Fronteira entre features (Contrato §2, `npm run check:arch`):** toda peça gerada mora em pasta de camada (`services/`, `repositories/`, `policies/`, `models/`, `dtos/`, `domain/` para lógica pura, `ports/` e `adapters/` para o que é externo); import de outra feature só por `features/<x>/public/`, criando o arquivo em `public/` da feature alvo quando ele não existe.
+
 ## ⭐ Exemplo de referência canônico (espelhe este slice)
 
 A feature **`users`** é o vertical-slice de referência de camadas — leia-a inteira antes de gerar e espelhe a estrutura:

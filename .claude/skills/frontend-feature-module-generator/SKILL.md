@@ -23,6 +23,8 @@ Cria a estrutura de um novo módulo de categoria no dashboard (`features/dashboa
 
 Antes de gerar, leia `.claude/skills/_ARCHITECTURE-CONTRACT.md` — as regras cross-cutting (reuse de canônicos, service layer, paginação DynamicTable, modal-não-rota, `useMemo`, no-`any`, container full-height, design system) são **gate** e não se repetem aqui. Esta skill adiciona apenas o checklist específico de **Feature Module**.
 
+> **Fronteira entre features:** import de outra feature só por `my-app/features/<x>/public/` (regra `U9`, `cd my-app && npm run check:arch`); se o arquivo não existe, crie-o em `public/` da feature alvo no mesmo PR.
+
 > **Decisão bespoke-vs-canônico (anti-ilha):** antes de criar View/tabela/analytics próprios, responda `.claude/skills/_REUSE-CRITERION.md` (shape+posse) — mesmo shape+fonte de um canônico vivo (§0, ex. `GenericTabbedView`/`AnalyticsDashboard`) = **reuse**; diverge em shape ou posse = bespoke sancionado. É o único gate de reuso que o lint não pega.
 
 ## When to use

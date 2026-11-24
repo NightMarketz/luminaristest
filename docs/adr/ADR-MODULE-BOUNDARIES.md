@@ -342,3 +342,89 @@ comentada no código, onboarding na tx do install) e jobs/`server.ts` (`PurgeDel
   enxerga chamada do Prisma. A linha entra no `CLAUDE.md` raiz no PR que ligar a regra, citando esta data.
 - Limite da medida: regex, não AST. A regra de lint é a medida definitiva; se ela achar mais que o baseline acima,
   o achado vai à caixa antes de qualquer supressão.
+
+## 11. Emenda de 24/11/2026 — ligação das regras (PR-2 do BRIEF de execução)
+
+Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro". Esta emenda registra o que o §8 item 4 pede: o baseline
+antes/depois de cada regra ligada e a prova de que cada uma morde. As regras valem na branch
+`integration/module-boundaries-be`; a `main` as recebe no fechamento, com baseline medido de novo.
+
+### 11.1 O que entrou, e onde o texto dos §2–§3 muda
+
+| Regra | Como entrou | Diferença para o texto de 20/10 |
+|---|---|---|
+| `M1a-no-foreign-repository` | como no §2 | — |
+| `M1-cross-feature-via-public` | alvo permitido = `features/<x>/public/` | o §2 dizia "pelo `index.ts`" (F-MB-1 b) |
+| `M3-public-no-repository` | `public/` não importa `repositories/` | regra nova, que este ADR não tinha (F-MBE-3 a) |
+| `D2-domain-is-pure` | como a "D1" do §2 | o nome muda: `D1` já é `D1-dp-core-not-optional` desde 03/11 (F-MBE-4 a). Onde o §2, o §8 e o §10 dizem "D1" para a pureza de `domain/`, leia `D2` |
+| `J1-job-is-entrypoint` | como no §2, com as isenções do F-MB-6 (a) | — |
+| `L5`, `L6` (alteradas) | o `to` ganha `PUBLIC_EXEC`: arquivo de `public/` que não é `*.types.ts` | ajuste novo (F-MBE-3 a). O esboço do BRIEF chamava a constante de `FOREIGN_PUBLIC_EXEC`; ela não distingue a feature de origem, então ficou `PUBLIC_EXEC` |
+| `U8-components-no-domain-service` | como no §3, sem exceção nomeada (F-MB-10 b) | — |
+| `U9-cross-feature-via-public` | alvo permitido = `features/<x>/public/` | o §3 dizia "pelo `index`" |
+| `M2` | **não entrou** | liga por feature, no PR que move as pastas (F-MB-12 a, F-MBE-2 c) |
+
+### 11.2 Baseline antes/depois por regra
+
+| Regra | Medida do BRIEF (`main` `d3f3a201c`, 24/11) | Gravado no PR-2 (depois do PR-0, PR-1a e PR-1b) |
+|---|---|---|
+| `M1` | 393 | **378** |
+| `M1a` | 49 | **36** |
+| `J1` | 18 | **16** |
+| `M3` | — (regra nova) | **0** (não entra no arquivo) |
+| `D2` | 0 | **0** (não entra no arquivo) |
+| `L5` | 4 | **0** |
+| `L6` | 4 | **0** |
+| `U8` | 11 | **11** |
+| `U9` | 45 | **45** |
+
+A `M1` caiu 13 no PR-0 (os imports de `BindingScope` passaram a `public/`) e mais 2 no PR-1a/PR-1b; o BRIEF previa 380
+depois do PR-0. Arquivo de baseline: server 11 → 441 entradas, my-app 23 → 79, só acréscimo. As contagens por regra da
+config versionada são iguais às da config temporária da sessão de planejamento rodada na mesma árvore
+(`M1` 378, `M1a` 36, `J1` 16, `X3` 11; `U8` 11, `U9` 45).
+
+### 11.3 Prova de que cada regra morde (saída literal de `npm run check:arch`, 24/11)
+
+Cada plantio é um arquivo de sonda criado, o gate rodado e o arquivo removido. Com o plantio: exit ≠ 0 e a linha
+`error` abaixo. Com a contraprova: `✔ no dependency violations found` e exit 0. Baseline ignorado em todas as rodadas:
+441 (server) e 79 (my-app).
+
+| Regra | Plantio | Saída | Exit |
+|---|---|---|---|
+| `M1a` | `crm/services/__sondaM1a.ts` importa `accounting/repositories/IPayableRepository` | `error M1a-no-foreign-repository: src/features/crm/services/__sondaM1a.ts → src/features/accounting/repositories/IPayableRepository.ts` (e a mesma aresta em `M1-cross-feature-via-public`) | 2 |
+| `M1` | `crm/services/__sondaM1.ts` importa `fx/services/PtaxSyncService` | `error M1-cross-feature-via-public: src/features/crm/services/__sondaM1.ts → src/features/fx/services/PtaxSyncService.ts` | 1 |
+| `D2` | `analytics/domain/__sondaD2.ts` importa `analytics/services/AnalyticsService` | `error D2-domain-is-pure: src/features/analytics/domain/__sondaD2.ts → src/features/analytics/services/AnalyticsService.ts` | 1 |
+| `J1` | `jobs/__sondaJ1.ts` importa `lib/prisma` | `error J1-job-is-entrypoint: src/jobs/__sondaJ1.ts → src/lib/prisma.ts` | 1 |
+| `M3` | `fx/public/__sondaM3.ts` com `export * from '../repositories/IPtaxRateRepository'` | `error M3-public-no-repository: src/features/fx/public/__sondaM3.ts → src/features/fx/repositories/IPtaxRateRepository.ts` | 1 |
+| `L5` | `sectorKits/policies/__sondaL5.ts` importa `accountingBinding/public/bindingScope` | `error L5-policy-is-pure: src/features/sectorKits/policies/__sondaL5.ts → src/features/accountingBinding/public/bindingScope.ts` | 1 |
+| `L5` (própria feature) | `accountingBinding/policies/__sondaL5.ts` importa `../public/bindingScope` | `error L5-policy-is-pure: src/features/accountingBinding/policies/__sondaL5.ts → src/features/accountingBinding/public/bindingScope.ts` | 1 |
+| `L6` | `sectorKits/models/__sondaL6.ts` importa `accountingBinding/public/bindingScope` | `error L6-model-dto-are-leaves: src/features/sectorKits/models/__sondaL6.ts → src/features/accountingBinding/public/bindingScope.ts` | 1 |
+| `U8` | `components/__sondaU8.tsx` importa `lib/services/user.service` | `error U8-components-no-domain-service: components/__sondaU8.tsx → lib/services/user.service.ts` | 1 |
+| `U9` | `features/crm/__sondaU9.ts` importa `features/dashboard/shared/utils/formatters` | `error U9-cross-feature-via-public: features/crm/__sondaU9.ts → features/dashboard/shared/utils/formatters.ts` | 1 |
+
+| Regra | Contraprova | Exit |
+|---|---|---|
+| `M1a` | o mesmo import a partir de `accounting/services/__sondaM1a.ts` (mesma feature) | 0 |
+| `M1` | `fx/public/__sonda.ts` plantado e importado por `crm/services/__sondaM1.ts` | 0 |
+| `D2` | `analytics/domain/__sondaD2.ts` importa `analytics/core/models/ChartPreset` | 0 |
+| `J1` | `jobs/__sondaJ1.ts` importa `lib/factory` | 0 |
+| `M3` | `fx/public/__sondaM3.ts` com `export * from '../models/ptax'` | 0 |
+| `L5` | `sectorKits/policies/__sondaL5.ts` importa `accountingBinding/public/bindingScope.types` | 0 |
+| `L6` | `sectorKits/models/__sondaL6.ts` importa `accountingBinding/public/bindingScope.types` | 0 |
+| `U8` | `components/__sondaU8.tsx` importa `lib/utils/nonEmpty` | 0 |
+| `U9` | `features/dashboard/public/__sonda.ts` plantado e importado por `features/crm/__sondaU9.ts` | 0 |
+
+Depois de cada caso o arquivo de sonda foi removido e o `git status` não mostrou sobra. A prova rodou no Windows, com
+o `node_modules` pela junção do depósito; o resultado do CI (Linux) é o que vale para o my-app.
+
+### 11.4 Declarado
+
+- **`L5`/`L6` na própria feature:** o texto do F-MBE-3 (a) fala em "`public/` de outra feature". A regra gravada barra
+  também a policy que importa o `public/` executável da própria feature (linha "própria feature" do §11.3), porque o
+  `to` não enxerga a feature do `from`. Hoje a medida é 0 nos dois casos.
+- **Lint de `public/`** (`export *` e import por efeito colateral, F-MBE-3 a): não entrou. O BRIEF não atribui essa
+  regra a nenhum PR; lacuna `L-20261124-193620-f833`.
+- **Skill `job-generator`:** ainda manda o job usar o Prisma direto, o contrário da `J1`. O BRIEF só pede nas skills as
+  regras de `public/` e de pasta de camada; lacuna `L-20261124-193622-4901`.
+- **Contrato e skills:** o §2 do `_ARCHITECTURE-CONTRACT.md`, o `GENERATION_CONTRACTS.md` e as skills geradoras de
+  service, repository, policy, dto, workflow, CRUD, fullstack e feature de frontend passam a dizer as duas regras
+  (import entre features só por `public/`; peça de feature em pasta de camada).
