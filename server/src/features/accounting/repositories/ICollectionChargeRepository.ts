@@ -65,9 +65,9 @@ export interface ICollectionChargeRepository {
   /** `declarante.nome` do perfil fiscal mais recente da PJ — para a descrição enviada ao MP (F9). */
   /**
    * Onda 4 / 4.3 — grava SÓ o controle de retentativa do job (nunca o `status`): `pollAttempts`, `nextPollAt`,
-   * `pollLastError`. `null` limpa. Bumpa o `updatedAt` (não decide nada para PENDING; a CREATING velha tem o próprio relógio).
+   * `pollGaveUpAt`, `pollLastError`. `null` limpa. Bumpa o `updatedAt` (não decide nada para PENDING; a CREATING velha tem o próprio relógio).
    */
-  updatePollState(id: string, patch: { pollAttempts?: number; nextPollAt?: Date | null; pollLastError?: string | null }, tx?: Prisma.TransactionClient): Promise<void>;
+  updatePollState(id: string, patch: { pollAttempts?: number; nextPollAt?: Date | null; pollGaveUpAt?: Date | null; pollLastError?: string | null }, tx?: Prisma.TransactionClient): Promise<void>;
   findCompanyName(userId: string): Promise<string | null>;
   runTransaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T>;
 }

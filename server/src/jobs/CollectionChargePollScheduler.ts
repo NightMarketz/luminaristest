@@ -49,7 +49,7 @@ export class CollectionChargePollScheduler {
       const summary = await this.poll();
       if (summary.failed > 0) this.log.event('warn', 'job.completed', JOB, { job: JOB, ...summary });
       else this.log.event('info', 'job.completed', JOB, { job: JOB, ...summary });
-      // Onda 4 / 4.3: cobrança que virou FAILED por 4xx definitivo repetido do provedor — alguém confere no provedor.
+      // Onda 4 / 4.3: cobrança que o job abandonou (4xx definitivo repetido do provedor; segue PENDING) — alguém confere no provedor.
       if ((summary.abandoned ?? 0) > 0) {
         this.alert({ source: 'collection_charge_poll', event: 'reconcile_summary', timestamp: new Date().toISOString(), job: JOB, abandoned: summary.abandoned });
       }

@@ -47,7 +47,7 @@ describe.each(cases)('$source — alert on failure', ({ source, build }) => {
   });
 });
 
-describe('collection_charge_poll — cobrança que virou FAILED por 4xx definitivo repetido (Onda 4 / 4.3)', () => {
+describe('collection_charge_poll — cobrança abandonada pelo job por 4xx definitivo repetido (Onda 4 / 4.3)', () => {
   it('abandoned > 0 ⇒ alerta remoto reconcile_summary; sem abandono, nenhum alerta', async () => {
     const alert = jest.fn();
     await new CollectionChargePollScheduler({ poll: async () => ({ scanned: 2, redriven: 0, refreshed: 1, failed: 1, abandoned: 1 }), log: silentLog(), alert }).runOnce();

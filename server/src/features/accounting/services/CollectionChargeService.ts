@@ -87,7 +87,7 @@ export interface CollectionPollSummary {
   redriven: number;
   refreshed: number;
   failed: number;
-  /** Onda 4 / 4.3 — cobranças que viraram FAILED neste tick por 4xx definitivo repetido do provedor. Ausente se 0. */
+  /** Onda 4 / 4.3 — cobranças que o job PAROU de consultar neste tick (4xx definitivo repetido do provedor). Ausente se 0. */
   abandoned?: number;
 }
 
@@ -95,9 +95,11 @@ export interface CollectionPollSummary {
  * Onda 4 / 4.3 — a re-consulta (`getCharge`) que falha não repete a cada tick para sempre. Falha de 5xx/rede/429/408 é
  * TRANSITÓRIA: a cobrança segue PENDING (o provedor volta e ela pode estar paga) e só é espaçada por backoff exponencial
  * (`nextPollAt`: 10 min, 20 min, … até 4 h; o tick é de 15 min). 4xx DEFINITIVO (404/403/422…, a mesma lista de
- * `isDefinitive`) repetido `POLL_PERMANENT_MAX` vezes seguidas ⇒ FAILED terminal + audit + `logger.error` (a F9 dá a
- * terminal baixa só à mão; se o MP disser pago depois, sai o alerta `collection_charge_paid_after_terminal`). 401 é da
- * credencial (P2-4) e não conta.
+ * `isDefinitive`) repetido `POLL_PERMANENT_MAX` vezes seguidas ⇒ `pollGaveUpAt`: o job PARA de consultar, `logger.error` e
+ * alerta, mas a cobrança segue PENDING (e VIVA). NÃO vira FAILED: FAILED solta o índice de uma-viva-por-título, e um 400/403
+ * pode ser da conta ou do provedor inteiro, não da cobrança — o Pix/boleto ainda pode ser pago. Reabilita sozinha quando um
+ * webhook válido traz o estado (`limparPollState`); cancelar/consultar à mão continua valendo. 401 é da credencial (P2-4) e
+ * não conta.
  */
 export const POLL_PERMANENT_MAX = 3;
 const POLL_BACKOFF_BASE_MS = 600_000;
@@ -349,7 +351,7 @@ export class CollectionChargeService {
   }
 
   /**
-   * 4.3 — uma falha do `getCharge` no job. Devolve `true` se a cobrança virou FAILED (4xx definitivo no teto). Falha ao
+   * 4.3 — uma falha do `getCharge` no job. Devolve `true` se o job desistiu da cobrança (4xx definitivo no teto). Falha ao
    * gravar o controle não derruba o tick: vira `logger.error` e a cobrança volta no próximo (sem backoff).
    */
   private async registrarFalhaDePoll(row: CollectionCharge, error: unknown): Promise<boolean> {
@@ -360,22 +362,14 @@ export class CollectionChargeService {
     const definitivo = isDefinitive(status) && status !== 408;
     try {
       if (definitivo && attempts >= POLL_PERMANENT_MAX) {
-        const scope = resolveAccountingScopeInternal({ userId: row.userId }, row.unitId);
-        const reason = `provider_getcharge_${status}: ${lastError}`.slice(0, POLL_LAST_ERROR_MAX);
-        const virou = await this.repo.runTransaction(async (tx) => {
-          const n = await this.repo.casStatus(row.id, 'PENDING', { status: 'FAILED', failReason: reason, pollAttempts: attempts, pollLastError: lastError, nextPollAt: null }, tx);
-          if (n === 1) await this.audit(tx, scope, COLLECTION_CHARGE_FAILED, row.id, { fromStatus: 'PENDING', toStatus: 'FAILED' });
-          return n === 1;
+        await this.repo.updatePollState(row.id, { pollAttempts: attempts, pollGaveUpAt: this.now(), nextPollAt: null, pollLastError: lastError });
+        logger.error('collection_charge_poll: 4xx definitivo repetido do provedor — o job parou de consultar a cobrança (segue PENDING; conferir no provedor)', {
+          collectionChargeId: row.id,
+          httpStatus: status,
+          attempts,
+          error: lastError,
         });
-        if (virou) {
-          logger.error('collection_charge_poll: 4xx definitivo repetido do provedor — cobrança FAILED (terminal, conferir no provedor)', {
-            collectionChargeId: row.id,
-            httpStatus: status,
-            attempts,
-            error: lastError,
-          });
-        }
-        return virou;
+        return true;
       }
       const delay = Math.min(POLL_BACKOFF_BASE_MS * 2 ** (attempts - 1), POLL_BACKOFF_MAX_MS);
       await this.repo.updatePollState(row.id, { pollAttempts: attempts, nextPollAt: new Date(this.now().getTime() + delay), pollLastError: lastError });
@@ -389,11 +383,11 @@ export class CollectionChargeService {
     }
   }
 
-  /** Re-consulta que deu certo zera a contagem e o backoff — só escreve se havia algo a limpar. */
+  /** Re-consulta que deu certo zera a contagem, o backoff e a desistência — só escreve se havia algo a limpar. */
   private async limparPollState(row: CollectionCharge): Promise<void> {
-    if (!(row.pollAttempts > 0 || row.nextPollAt || row.pollLastError)) return;
+    if (!(row.pollAttempts > 0 || row.nextPollAt || row.pollGaveUpAt || row.pollLastError)) return;
     try {
-      await this.repo.updatePollState(row.id, { pollAttempts: 0, nextPollAt: null, pollLastError: null });
+      await this.repo.updatePollState(row.id, { pollAttempts: 0, nextPollAt: null, pollGaveUpAt: null, pollLastError: null });
     } catch (error) {
       logger.warn('collection_charge_poll: não limpou o controle de retentativa', {
         collectionChargeId: row.id,

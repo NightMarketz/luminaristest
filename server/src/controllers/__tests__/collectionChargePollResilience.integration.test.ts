@@ -3,9 +3,11 @@
  * job" (200), e o job (`pollPending`) re-consultava a cobrança PENDING a CADA tick, para sempre, mesmo quando o
  * `getCharge` falha sempre. Aqui, SQLite real + um MP fake atrás do `fetch` global (nenhuma chamada real):
  *
+ * - Os contadores de GET são relativos (antes/depois): com o retry do `outboundFetch` (4.2) cada poll pode fazer até 3 GET.
  * - 5xx/rede do provedor é transitório: a cobrança continua PENDING (o provedor volta, ela vira PAID), mas com backoff — o
  *   tick seguinte não a re-consulta enquanto `nextPollAt` não vence;
- * - 4xx definitivo (404/403/422…) repetido não reenfileira para sempre: no 3º, FAILED terminal + audit + `logger.error`;
+ * - 4xx definitivo (404/403/422…) repetido não reenfileira para sempre: no 3º o job desiste (`pollGaveUpAt`), `logger.error` e
+ *   alerta — mas a cobrança segue PENDING e VIVA (FAILED soltaria o índice de uma-viva-por-título com o Pix ainda pagável);
  * - 401 é do caminho da credencial (conta CREDENTIAL_INVALID, P2-4) e não conta como falha da cobrança;
  * - a cobrança que falha não impede a sadia de ser atualizada no mesmo tick.
  */
@@ -130,14 +132,15 @@ describe('Onda 4 / 4.3 — pollPending: 4xx definitivo não reenfileira para sem
     expect(aposFalha.pollAttempts).toBe(1);
     expect(aposFalha.nextPollAt!.getTime()).toBeGreaterThan(Date.now());
     expect(aposFalha.pollLastError).toContain('503');
-    expect(getsDe(c.providerRef)).toBe(1);
+    const gets1 = getsDe(c.providerRef);
+    expect(gets1).toBeGreaterThanOrEqual(1);
 
     await poll(); // dentro do backoff: nem chega ao provedor
-    expect(getsDe(c.providerRef)).toBe(1);
+    expect(getsDe(c.providerRef)).toBe(gets1);
 
     await vencerBackoff(c.id);
     await poll();
-    expect(getsDe(c.providerRef)).toBe(2);
+    expect(getsDe(c.providerRef)).toBeGreaterThan(gets1);
     expect((await row(c.id)).pollAttempts).toBe(2);
 
     // o provedor volta e diz que foi pago: aplica, e o controle de retentativa zera
@@ -159,11 +162,12 @@ describe('Onda 4 / 4.3 — pollPending: 4xx definitivo não reenfileira para sem
     await poll();
     const r = await row(c.id);
     expect(r).toMatchObject({ status: 'PENDING', pollAttempts: 1 });
+    const gets1 = getsDe(c.providerRef);
     await poll();
-    expect(getsDe(c.providerRef)).toBe(1);
+    expect(getsDe(c.providerRef)).toBe(gets1);
   });
 
-  it('4xx definitivo (404) repetido: no 3º vira FAILED terminal + audit, e o job para de re-consultar', async () => {
+  it('4xx definitivo (404) repetido: no 3º o job desiste e alerta, a cobrança segue PENDING e VIVA; um webhook válido a reabilita', async () => {
     const c = await novaCobranca();
     mp.orders.get(c.providerRef)!.getMode = 404;
 
@@ -175,17 +179,35 @@ describe('Onda 4 / 4.3 — pollPending: 4xx definitivo não reenfileira para sem
     }
     const s3 = await poll();
     expect(s3.failed).toBeGreaterThanOrEqual(1);
+    expect(s3.abandoned).toBe(1);
     const r = await row(c.id);
-    expect(r.status).toBe('FAILED');
-    expect(r.failReason).toContain('404');
-    const ev = await prisma.auditEvent.findMany({ where: { eventType: 'collection_charge.failed' }, orderBy: { seq: 'asc' } });
-    expect(ev.map((e) => JSON.parse(e.payload))).toContainEqual({ collectionChargeId: c.id, fromStatus: 'PENDING', toStatus: 'FAILED' });
+    expect(r.status).toBe('PENDING'); // NÃO vira FAILED: o índice de uma-viva-por-título continua segurando o título
+    expect(r.pollGaveUpAt).not.toBeNull();
+    expect(r.pollAttempts).toBe(3);
+    expect(await prisma.auditEvent.count({ where: { eventType: 'collection_charge.failed', targetId: c.id } })).toBe(0);
     expect(errorLogs.some((l) => l.includes('collection_charge_poll') && l.includes(c.id))).toBe(true);
 
     const antes = getsDe(c.providerRef);
     await poll();
     await poll();
-    expect(getsDe(c.providerRef)).toBe(antes); // terminal: nunca mais consultada
+    expect(getsDe(c.providerRef)).toBe(antes); // abandonada pelo job: nunca mais consultada por ele
+
+    // o provedor responde de novo e manda o webhook: o estado entra e a desistência é limpa
+    const o = mp.orders.get(c.providerRef)!;
+    o.getMode = 'ok'; o.status = 'processed'; o.status_detail = 'accredited';
+    const ts = String(Date.now());
+    const { createHmac } = await import('node:crypto');
+    const sig = `ts=${ts},v1=${createHmac('sha256', SECRET).update(`id:${c.providerRef};request-id:req-2;ts:${ts};`).digest('hex')}`;
+    const w = await request(app)
+      .post(`/api/payment-collection/webhook/MERCADO_PAGO/${accountId}?data.id=${c.providerRef}&type=order`)
+      .set('x-signature', sig)
+      .set('x-request-id', 'req-2')
+      .send({ action: 'order.processed', type: 'order', data: { id: c.providerRef } });
+    expect(w.status).toBe(200);
+    const fim = await row(c.id);
+    expect(fim.status).toBe('PAID');
+    expect(fim.pollGaveUpAt).toBeNull();
+    expect(fim.pollAttempts).toBe(0);
   });
 
   it('a cobrança que falha não impede a sadia de ser atualizada no mesmo tick', async () => {

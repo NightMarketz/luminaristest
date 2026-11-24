@@ -92,9 +92,9 @@ export class CollectionChargeRepository implements ICollectionChargeRepository {
     return prisma.collectionCharge.findMany({
       where: {
         deletedAt: null,
-        // Onda 4 / 4.3: a PENDING em backoff (`nextPollAt` no futuro) fica fora até vencer.
+        // Onda 4 / 4.3: a PENDING em backoff (`nextPollAt` no futuro) fica fora até vencer; a que o job abandonou, até um webhook/ação manual a reabilitar.
         OR: [
-          { status: 'PENDING', OR: [{ nextPollAt: null }, { nextPollAt: { lte: now } }] },
+          { status: 'PENDING', pollGaveUpAt: null, OR: [{ nextPollAt: null }, { nextPollAt: { lte: now } }] },
           { status: 'CREATING', updatedAt: { lt: staleBefore } },
         ],
       },
@@ -114,7 +114,7 @@ export class CollectionChargeRepository implements ICollectionChargeRepository {
 
   public async updatePollState(
     id: string,
-    patch: { pollAttempts?: number; nextPollAt?: Date | null; pollLastError?: string | null },
+    patch: { pollAttempts?: number; nextPollAt?: Date | null; pollGaveUpAt?: Date | null; pollLastError?: string | null },
     tx?: Prisma.TransactionClient,
   ): Promise<void> {
     await (tx ?? prisma).collectionCharge.updateMany({ where: { id, deletedAt: null }, data: patch });

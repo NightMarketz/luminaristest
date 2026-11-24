@@ -3287,9 +3287,12 @@ model CollectionCharge {
   failReason           String?
   // Onda 4 / 4.3 — a re-consulta do job (`collection_charge_poll`) não repete para sempre a cobrança cujo `getCharge` falha:
   // `pollAttempts` conta as falhas seguidas (zera no sucesso), `nextPollAt` é o relógio do backoff (NÃO é o `updatedAt`,
-  // que decide a CREATING velha), `pollLastError` o último motivo. 4xx definitivo repetido ⇒ FAILED; 5xx/rede só espaça.
+  // que decide a CREATING velha), `pollLastError` o último motivo. 5xx/rede só espaça; 4xx definitivo repetido ⇒
+  // `pollGaveUpAt` (o job para e alerta) — a cobrança segue PENDING e VIVA (FAILED soltaria o índice de uma-viva-por-título
+  // com o Pix/boleto ainda pagável no provedor).
   pollAttempts         Int            @default(0)
   nextPollAt           DateTime?
+  pollGaveUpAt         DateTime?
   pollLastError        String?
   createdById          String?
   cancelledById        String?
