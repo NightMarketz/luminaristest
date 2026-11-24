@@ -371,7 +371,8 @@ import type { ISystemProvisioningPolicy } from '../features/onboarding/policies/
 import type { IAccountingEventMapper } from '../features/accounting/sync/mappers/IAccountingEventMapper';
 import type { PostEntryInput } from '../features/accounting/dtos/PostingDto';
 import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
-import type { BindingScope, IAccountingBindingRepository } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
+import type { IAccountingBindingRepository } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../features/accountingBinding/public/bindingScope.types';
 import { AccountingBindingV1Schema } from '../features/accountingBinding/dtos/AccountingBindingDto';
 import { ValidationError } from './errors';
 import type { ChartLookupPort, PostingValidatePort } from '../features/accountingBinding/models/types';

@@ -1,6 +1,7 @@
 import { ForbiddenError, NotFoundError } from '../../../lib/errors';
 import { AccountingBindingV1Schema } from '../../accountingBinding/dtos/AccountingBindingDto';
-import type { BindingScope, IAccountingBindingRepository } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { IAccountingBindingRepository } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 import type { KitTraceView } from '../dtos/KitTraceDto';
 import type { ISectorKitPolicy } from '../policies/ISectorKitPolicy';
 import type { JournalEntryTracePort } from './kitTracePorts';

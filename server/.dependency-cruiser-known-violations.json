@@ -37,42 +37,6 @@
   },
   {
     "type": "dependency",
-    "from": "src/features/accountingBinding/policies/AccountingBindingPolicy.ts",
-    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L5-policy-is-pure"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/accountingBinding/policies/IAccountingBindingPolicy.ts",
-    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L5-policy-is-pure"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/sectorKits/policies/ISectorKitPolicy.ts",
-    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L5-policy-is-pure"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/sectorKits/policies/SectorKitPolicy.ts",
-    "to": "src/features/accountingBinding/repositories/IAccountingBindingRepository.ts",
-    "rule": {
-      "severity": "error",
-      "name": "L5-policy-is-pure"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/accounting/models/issLimite.ts",
     "to": "src/features/legalParameters/services/legalParameterCache.ts",
     "rule": {
@@ -200,72 +164,6 @@
         "dependencyTypes": [
           "local",
           "type-only",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/index.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/features/dynamicTables/presets/index.ts",
-    "to": "src/features/dynamicTables/presets/systems/AestheticClinicPreset.ts",
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/dynamicTables/presets/systems/AestheticClinicPreset.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/utils/TableFactory.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/presets/index.ts",
-        "dependencyTypes": [
-          "local",
-          "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/features/dynamicTables/presets/index.ts",
-    "to": "src/features/dynamicTables/presets/systems/BeautySalonPreset.ts",
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/features/dynamicTables/presets/systems/BeautySalonPreset.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/features/dynamicTables/utils/TableFactory.ts",
-        "dependencyTypes": [
-          "local",
           "import"
         ]
       },
@@ -529,31 +427,6 @@
         "dependencyTypes": [
           "local",
           "type-only",
-          "import"
-        ]
-      }
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/lib/vector/qdrant-initializer.ts",
-    "to": "src/lib/vector/qdrant.ts",
-    "rule": {
-      "severity": "error",
-      "name": "X3-no-circular"
-    },
-    "cycle": [
-      {
-        "name": "src/lib/vector/qdrant.ts",
-        "dependencyTypes": [
-          "local",
-          "import"
-        ]
-      },
-      {
-        "name": "src/lib/vector/qdrant-initializer.ts",
-        "dependencyTypes": [
-          "local",
           "import"
         ]
       }

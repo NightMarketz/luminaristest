@@ -6,7 +6,7 @@
 import prisma from '@/lib/prisma';
 import { pushTestSchema, resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
-import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '@/features/accountingBinding/public/bindingScope.types';
 import { KIT_REGISTRY } from '@/features/sectorKits/registry';
 import { KitUpgradePreL8MigrationRequiredError, ULTIMA_VERSAO_KIT_PRE_L8 } from '@/features/sectorKits/models/kitUpgradeTypes';
 import { runUpgrade } from '@/jobs/upgradeSectorKitsCli';

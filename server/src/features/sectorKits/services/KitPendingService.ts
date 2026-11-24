@@ -21,7 +21,7 @@
 import { ForbiddenError, RoleOverrideCompileDraftError, ValidationError } from '../../../lib/errors';
 import { logger } from '../../../lib/logger';
 import type { KitUpgradePending, Prisma } from 'generated/prisma';
-import type { BindingScope } from '../../accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../../accountingBinding/public/bindingScope.types';
 import type { BindingCompileService } from '../../accountingBinding/services/BindingCompileService';
 import {
   DecideKitPendingRequestSchema,
