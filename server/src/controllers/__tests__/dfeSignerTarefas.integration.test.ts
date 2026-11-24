@@ -56,6 +56,7 @@ describe('X10a EMENDA-4 AL-PR-3 — fila do assinador local pela HTTP', () => {
   beforeAll(async () => {
     pushTestSchema();
     process.env.DFE_PARTNER_ENV = 'homologacao';
+    process.env.DFE_SIGNER_RETOMADA_ESPACO_MS = '1'; // o intervalo mínimo (padrão 60 s) não atrapalha os testes em sequência
     dono = await prisma.user.create({ data: { name: 'al3', username: 'al3-dono', email: 'al3@test.local', password: 'x', role: 'USER' } });
     const units = await prisma.dynamicTable.create({
       data: { userId: dono.id, name: 'Units', internalName: 'units', category: 'business', schema: { fields: [] } as never },
@@ -73,6 +74,7 @@ describe('X10a EMENDA-4 AL-PR-3 — fila do assinador local pela HTTP', () => {
   afterAll(async () => {
     getFactory().getDfeSignerTaskService().setOnRetomada(null);
     delete process.env.DFE_PARTNER_ENV;
+    delete process.env.DFE_SIGNER_RETOMADA_ESPACO_MS;
     await prisma.$disconnect();
   });
 
@@ -98,38 +100,75 @@ describe('X10a EMENDA-4 AL-PR-3 — fila do assinador local pela HTTP', () => {
     expect(retomadas.sort()).toEqual([centro, filial].sort());
     await poll();
     expect(retomadas).toHaveLength(2); // consumida: o poll seguinte não retoma de novo
-    // (2) o caixa pegou a tarefa e não respondeu (janela do PIN aberta): vence como ENTREGUE. O assinador NÃO caiu — não há
-    // "volta" a retomar (e reenviar enquanto o PIN está aberto abriria outro): a nota espera o operador (reenviar).
+    // (2) o caixa pegou a tarefa e caiu/reiniciou sem responder (ou a resposta do long-poll se perdeu): vence como ENTREGUE.
+    // O servidor não distingue isso do PIN aberto; a nota também não pode esperar o reenviar manual (F-AL-6 a).
     retomadas.length = 0;
     const entregue = (await fila()).executar(ASSINAR, 300);
     expect(DfeSignerTarefasRespostaSchema.parse((await poll({ espera: '5' })).body).tarefas).toHaveLength(1);
     expect(await entregue).toBe('ENTREGUE');
     await poll();
     await new Promise((r) => setImmediate(r));
-    expect(retomadas).toHaveLength(0);
+    expect(retomadas.sort()).toEqual([centro, filial].sort());
   });
 
-  it('AL-14 (sem laço): a tarefa criada PELA retomada que vence sem resposta não rearma a retomada — uma volta, uma retomada', async () => {
+  it('AL-14 (teto): a retomada que gera tarefa que vence sem resposta rearma, mas só até o teto por dispositivo — o laço acaba sozinho', async () => {
     const ASSINAR = { tipo: 'ASSINAR' as const, algoritmo: 'rsa-sha1' as const, digestB64: 'aGFzaA==', conteudo: CONTEUDO };
     const svc = getFactory().getDfeSignerTaskService();
     const tarefasDaRetomada: Promise<unknown>[] = [];
-    svc.setOnRetomada(async (scope) => {
+    svc.setOnRetomada((scope) => {
       retomadas.push(scope.unitId);
-      tarefasDaRetomada.push((await fila(scope.unitId)).executar(ASSINAR, 50)); // o reenvio das pendentes: uma ASSINAR por unidade
+      const p = fila(scope.unitId).then((f) => f.executar(ASSINAR, 50)); // o reenvio das pendentes: uma ASSINAR por unidade, nunca respondida
+      tarefasDaRetomada.push(p); // empilhado já no disparo (síncrono dentro do poll): o teste espera a cadeia inteira
+      return p;
     });
+    process.env.DFE_SIGNER_RETOMADA_MAX = '3';
+    process.env.DFE_SIGNER_RETOMADA_JANELA_MS = '2000';
+    await new Promise((r) => setTimeout(r, 2100)); // o histórico dos testes anteriores sai da janela
     try {
       await poll();
       retomadas.length = 0;
       expect(await (await fila()).executar(ASSINAR, 50)).toBe('NAO_ENTREGUE'); // o caixa estava fora: marca a volta
-      for (let i = 0; i < 6; i += 1) {
+      for (let i = 0; i < 8; i += 1) {
         await poll(); // o caixa volta mas nunca responde (espera 0: não segura a tarefa nova)
         await Promise.all(tarefasDaRetomada.splice(0));
       }
-      expect(retomadas.sort()).toEqual([centro, filial].sort()); // uma vez só, não a cada tarefa vencida
+      expect(retomadas).toHaveLength(3 * 2); // 3 retomadas (teto) × as 2 unidades do dispositivo, não 8
+      await poll();
+      expect(retomadas).toHaveLength(3 * 2); // teto atingido: a marca foi descartada, nada mais dispara
     } finally {
+      delete process.env.DFE_SIGNER_RETOMADA_MAX;
+      delete process.env.DFE_SIGNER_RETOMADA_JANELA_MS;
       svc.setOnRetomada(async (scope) => {
         retomadas.push(scope.unitId);
       });
+    }
+  });
+
+  it('AL-14 (espaçamento): outra queda logo depois de uma retomada espera o intervalo mínimo — a marca fica e dispara no poll seguinte ao intervalo', async () => {
+    const ASSINAR = { tipo: 'ASSINAR' as const, algoritmo: 'rsa-sha1' as const, digestB64: 'aGFzaA==', conteudo: CONTEUDO };
+    const episodio = async () => expect(await (await fila()).executar(ASSINAR, 50)).toBe('NAO_ENTREGUE');
+    const sec = () => new Promise((r) => setImmediate(r));
+    process.env.DFE_SIGNER_RETOMADA_MAX = '100';
+    try {
+      await poll();
+      retomadas.length = 0;
+      await episodio();
+      await poll();
+      await sec();
+      expect(retomadas).toHaveLength(2); // a primeira retomada
+      process.env.DFE_SIGNER_RETOMADA_ESPACO_MS = '60000';
+      await episodio();
+      await poll();
+      await sec();
+      expect(retomadas).toHaveLength(2); // cedo demais: segura, sem perder a marca
+      process.env.DFE_SIGNER_RETOMADA_ESPACO_MS = '1';
+      await new Promise((r) => setTimeout(r, 5));
+      await poll();
+      await sec();
+      expect(retomadas).toHaveLength(4); // passado o intervalo, a marca guardada dispara
+    } finally {
+      delete process.env.DFE_SIGNER_RETOMADA_MAX;
+      process.env.DFE_SIGNER_RETOMADA_ESPACO_MS = '1';
     }
   });
 
