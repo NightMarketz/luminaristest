@@ -10,6 +10,7 @@ import { ApplicationFactory } from './lib/factory';
 import { purgeOldDeletedRecords } from './jobs/PurgeDeletedRecords';
 import { accountingSyncScheduler } from './jobs/AccountingSyncScheduler';
 import { dfePollScheduler } from './jobs/DfePollScheduler';
+import { dfeSignerHealthScheduler } from './jobs/DfeSignerHealthScheduler';
 import { collectionChargePollScheduler } from './jobs/CollectionChargePollScheduler';
 import { mpReleaseReportScheduler } from './jobs/MpReleaseReportScheduler';
 import { legalParamsRecalcScheduler } from './jobs/LegalParamsRecalcScheduler';
@@ -57,6 +58,7 @@ async function bootstrap(): Promise<void> {
     // tick do reconcile enxerga os mappers vindos dos bindings Active, nunca a fixture.
     accountingSyncScheduler.start();
     dfePollScheduler.start(); // BE-INCR-DFE (nó X10b, item 27)
+    dfeSignerHealthScheduler.start(); // X10a EMENDA-4 AL-15: alerta do assinador local
     collectionChargePollScheduler.start(); // BE-INCR-PAYMENT-PROVIDER PR-2 (P2-9)
     mpReleaseReportScheduler.start(); // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-5)
     legalParamsRecalcScheduler.start(); // BE-INCR-LEGAL-PARAMS PR-4 (item 10): varredura dos jobs PENDING
@@ -129,6 +131,7 @@ function gracefulShutdown() {
   logger.info('Shutting down gracefully...');
   accountingSyncScheduler.stop();
   dfePollScheduler.stop();
+  dfeSignerHealthScheduler.stop();
   collectionChargePollScheduler.stop();
   mpReleaseReportScheduler.stop();
   legalParamsRecalcScheduler.stop();

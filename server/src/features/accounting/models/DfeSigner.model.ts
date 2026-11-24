@@ -76,3 +76,12 @@ export const DFE_SIGNER_SEM_DISPOSITIVO = 'dfe_assinador_sem_dispositivo';
 
 /** AL-13 (F-AL-6 a): o faltante nomeado do pré-voo, como o `FALTANTE_SESSAO_PSC` do PR-7. */
 export const FALTANTE_ASSINADOR_LOCAL = 'assinador local';
+
+// ── Saúde do assinador (AL-PR-4: AL-15; ADR-OBSERVABILIDADE OBS-R11) ─────────────────────────────────────────────────
+/** AL-15 (a): sem poll há mais de 15 min COM nota esperando (`PENDING_SIGNATURE`) há mais de 15 min ⇒ alerta. */
+export const DFE_SIGNER_ALERTA_SEM_POLL_MS = 15 * 60 * 1000;
+/** AL-15 (b): certificado do dispositivo vence em até 30 dias (ou já venceu) ⇒ alerta. */
+export const DFE_SIGNER_ALERTA_CERT_DIAS = 30;
+/** Os três casos do AL-15; o alerta é no máximo 1 por dispositivo, caso e dia. */
+export const DFE_SIGNER_ALERTA_EVENTOS = ['ASSINADOR_SEM_POLL_COM_PENDENTE', 'CERTIFICADO_VENCENDO', 'CONTINGENCIA_COM_ASSINADOR_FORA'] as const;
+export type DfeSignerAlertaEvento = (typeof DFE_SIGNER_ALERTA_EVENTOS)[number];

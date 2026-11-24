@@ -59,6 +59,9 @@ import { DfeSignerService } from '../features/accounting/services/DfeSignerServi
 import { DfeSignerTaskService } from '../features/accounting/services/DfeSignerTaskService';
 import { DfeSignerTaskRepository } from '../features/accounting/repositories/DfeSignerTaskRepository';
 import type { IDfeSignerTaskRepository } from '../features/accounting/repositories/IDfeSignerTaskRepository';
+import { DfeSignerHealthService } from '../features/accounting/services/DfeSignerHealthService';
+import { DfeSignerHealthRepository } from '../features/accounting/repositories/DfeSignerHealthRepository';
+import type { IDfeSignerHealthRepository } from '../features/accounting/repositories/IDfeSignerHealthRepository';
 import { ligarTransporteAssinadorLocal, transporteSemDispositivo } from '../features/accounting/dfe/local/assinadorLocalRuntime';
 import type { IPscProviderRepository } from '../features/accounting/repositories/IPscProviderRepository';
 import type { IPscCredentialRepository } from '../features/accounting/repositories/IPscCredentialRepository';
@@ -926,6 +929,7 @@ export class ApplicationFactory {
     pscCredential: IPscCredentialRepository;
     dfeSigner: IDfeSignerRepository; // X10a EMENDA-4 AL-PR-2
     dfeSignerTask: IDfeSignerTaskRepository; // X10a EMENDA-4 AL-PR-3
+    dfeSignerHealth: IDfeSignerHealthRepository; // X10a EMENDA-4 AL-PR-4
     nfceCsc: INfceCscRepository; // X10a PR-8
     nfceContingencia: INfceContingenciaRepository; // X10a PR-9
     collectionCharge: ICollectionChargeRepository; // BE-INCR-PAYMENT-PROVIDER PR-2
@@ -1063,6 +1067,7 @@ export class ApplicationFactory {
     pscCredential: PscCredentialService;
     dfeSigner: DfeSignerService; // X10a EMENDA-4 AL-PR-2
     dfeSignerTask: DfeSignerTaskService; // X10a EMENDA-4 AL-PR-3
+    dfeSignerHealth: DfeSignerHealthService; // X10a EMENDA-4 AL-PR-4
     nfceCsc: NfceCscService; // X10a PR-8
     nfceContingencia: NfceContingenciaService; // X10a PR-9
     collectionCharge: CollectionChargeService; // BE-INCR-PAYMENT-PROVIDER PR-2
@@ -1194,6 +1199,7 @@ export class ApplicationFactory {
       pscCredential: new PscCredentialRepository(),
       dfeSigner: new DfeSignerRepository(), // X10a EMENDA-4 AL-PR-2
       dfeSignerTask: new DfeSignerTaskRepository(), // X10a EMENDA-4 AL-PR-3
+      dfeSignerHealth: new DfeSignerHealthRepository(), // X10a EMENDA-4 AL-PR-4
       nfceCsc: new NfceCscRepository(),
       nfceContingencia: new NfceContingenciaRepository(),
       collectionCharge: new CollectionChargeRepository(),
@@ -2385,6 +2391,7 @@ export class ApplicationFactory {
         resolveUnitNameFromUnits,
       ),
       dfeSignerTask: dfeSignerTaskService, // X10a EMENDA-4 AL-PR-3
+      dfeSignerHealth: new DfeSignerHealthService(this.repositories.dfeSignerHealth), // X10a EMENDA-4 AL-PR-4
       nfceCsc: nfceCscService,
       collectionCharge: collectionChargeService,
       releaseReport: releaseReportService, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-1..P3-5)
@@ -2779,6 +2786,7 @@ export class ApplicationFactory {
   public getPscCredentialService = (): PscCredentialService => this.services.pscCredential;
   public getDfeSignerService = (): DfeSignerService => this.services.dfeSigner; // X10a EMENDA-4 AL-PR-2
   public getDfeSignerTaskService = (): DfeSignerTaskService => this.services.dfeSignerTask; // X10a EMENDA-4 AL-PR-3
+  public getDfeSignerHealthService = (): DfeSignerHealthService => this.services.dfeSignerHealth; // X10a EMENDA-4 AL-PR-4
   public getNfceCscService = (): NfceCscService => this.services.nfceCsc;
   public getNfceContingenciaService = (): NfceContingenciaService => this.services.nfceContingencia;
   public getCollectionChargeService = (): CollectionChargeService => this.services.collectionCharge;

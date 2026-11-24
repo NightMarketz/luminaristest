@@ -12,6 +12,7 @@ import { AccountingSyncScheduler } from '../AccountingSyncScheduler';
 import { CollectionChargePollScheduler } from '../CollectionChargePollScheduler';
 import { DataExchangeStaleSweepScheduler } from '../DataExchangeStaleSweepScheduler';
 import { DfePollScheduler } from '../DfePollScheduler';
+import { DfeSignerHealthScheduler } from '../DfeSignerHealthScheduler';
 import { LegalParamsRecalcScheduler } from '../LegalParamsRecalcScheduler';
 import { MpReleaseReportScheduler } from '../MpReleaseReportScheduler';
 import { PtaxRateScheduler } from '../PtaxRateScheduler';
@@ -25,6 +26,7 @@ const cases: { file: string; source: string; build: (alert: jest.Mock) => { runO
   { file: 'CollectionChargePollScheduler.ts', source: 'collection_charge_poll', build: (alert) => new CollectionChargePollScheduler({ poll: boom, log: silentLog(), alert }) },
   { file: 'DataExchangeStaleSweepScheduler.ts', source: 'data_exchange_stale_sweep', build: (alert) => new DataExchangeStaleSweepScheduler({ sweep: boom, log: silentLog(), alert }) },
   { file: 'DfePollScheduler.ts', source: 'dfe_poll', build: (alert) => new DfePollScheduler({ poll: boom, log: silentLog(), alert }) },
+  { file: 'DfeSignerHealthScheduler.ts', source: 'dfe_signer_health', build: (alert) => new DfeSignerHealthScheduler({ verificar: boom, log: silentLog(), alert }) },
   { file: 'LegalParamsRecalcScheduler.ts', source: 'legal_params_recalc', build: (alert) => new LegalParamsRecalcScheduler({ run: boom, log: silentLog(), alert }) },
   { file: 'MpReleaseReportScheduler.ts', source: 'mp_release_report', build: (alert) => new MpReleaseReportScheduler({ fetch: boom, log: silentLog(), alert }) },
   { file: 'PtaxRateScheduler.ts', source: 'ptax_rate', build: (alert) => new PtaxRateScheduler({ sync: boom, log: silentLog(), alert }) },
