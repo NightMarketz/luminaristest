@@ -71,6 +71,20 @@ export interface IAccountRepository {
   softDelete(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<Account>;
 
   /**
+   * Lacuna ad40/4e1f (BE-INCR-CONTA-CANONICA-PAPEL item 5): the soft-deleted row holding `code` in the scope, or null.
+   * The @@unique([userId, unitId, code]) covers soft-deleted rows, so the chart seeder needs to know WHOSE row it is
+   * before restoring it.
+   */
+  findDeletedByCode(scope: AccountingScope, code: string, tx?: Prisma.TransactionClient): Promise<Account | null>;
+
+  /**
+   * Soft-deletes the account AND frees its code (rename-on-delete: `<code>#deleted#<id>`, collision-free because the id
+   * is the PK). Only for a user's account holding a code of the standard chart (item 2): the code belongs to the system,
+   * which creates the standard account there next. Works on an already soft-deleted row (keeps its `deletedAt`).
+   */
+  softDeleteReleasingCode(scope: AccountingScope, id: string, tx?: Prisma.TransactionClient): Promise<Account>;
+
+  /**
    * Sets the `requiresDimension` flag on an account (INCR-DIM-COMPLETENESS SEC-B1-4). Scoped by
    * (ownerUserId + unitId + id). tx-aware so the flip + its mandatory AuditEvent commit atomically.
    */

@@ -2,7 +2,9 @@ import { AccountingPeriodNotOpenError, AppError, ForbiddenError, MaxCentsExceede
 import logger from '../../../lib/logger';
 import { Prisma } from 'generated/prisma';
 import type { Account, SourceDocument } from 'generated/prisma';
-import { CANONICAL_ACCOUNTS, isCodigoDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
+import { fiscalYearOf } from '../models/dates';
+import { CANONICAL_ACCOUNTS, isCodigoDoPlanoPadrao, isContaDoPlanoPadrao } from '../fixtures/ChartOfAccountsFixture';
+import type { CanonicalAccount } from '../fixtures/ChartOfAccountsFixture';
 import { CLOSING_SOURCE_TYPE, reversedClosingSourceId } from '../models/closing';
 import { MAX_CENTS, centsFromDb } from '../models/money';
 import type { CreateAccountInput, PostEntryInput, ReverseEntryInput } from '../dtos/PostingDto';
@@ -66,6 +68,22 @@ interface ResolvedPostingLine {
   dimensions: Array<{ definitionId: string; valueId: string }>;
 }
 
+/** Avisados neste processo: `ensureChartOfAccounts` roda em todo lançamento; o aviso sai uma vez por escopo e código. */
+const codigosOcupadosAvisados = new Set<string>();
+
+/** Lacuna ad40 (furo 1): código do plano padrão ocupado por conta viva do usuário; a conta padrão não nasce nele. */
+function avisarCodigoOcupado(userId: string, unitId: string, canonica: CanonicalAccount, accountId: string): void {
+  const chave = `${userId}:${unitId}:${canonica.code}`;
+  if (codigosOcupadosAvisados.has(chave)) return;
+  codigosOcupadosAvisados.add(chave);
+  logger.warn('Conta do plano padrão não criada: o código está ocupado por conta do usuário (outro nome ou natureza)', {
+    unitId,
+    code: canonica.code,
+    contaPadrao: canonica.name,
+    accountId,
+  });
+}
+
 /**
  * PostingService — double-entry posting engine, FIRST-CLASS PRISMA (no DynamicTable).
  *
@@ -106,21 +124,6 @@ export class PostingService {
     // Date-only strings (YYYY-MM-DD) are parsed as UTC midnight by JS — no tz conversion needed.
     const d = new Date(dateStr);
     return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
-  }
-
-  /**
-   * Fiscal year from a posting date (ADR-INCR3 Emenda 3: numbering must match the
-   * calendar year of the posting date, never drift to the prior/next year at the
-   * boundary). Must use the SAME UTC-only parsing as extractYearMonth — both read the
-   * same date-only `input.date` string, and the period gate (extractYearMonth) is
-   * authoritative for which year/month a posting belongs to. Converting to
-   * America/Sao_Paulo here (as a prior version did) shifts UTC midnight on Jan 1 back
-   * to Dec 31 21:00 BRT, so entries dated 2026-01-01 were numbered under fiscal year
-   * 2025 even though the period gate correctly placed them in 2026-01 — the two
-   * disagreed on the fiscal year of the exact same date.
-   */
-  private fiscalYearFrom(dateStr: string): number {
-    return new Date(dateStr).getUTCFullYear();
   }
 
   /**
@@ -196,7 +199,9 @@ export class PostingService {
    * exclude soft-deleted rows, while findByCode filters deletedAt:null. So if a canonical
    * account exists ONLY as a soft-deleted row, findByCode returns null → create trips P2002
    * → and swallowing it would leave the leaf permanently missing. We therefore try to
-   * RESTORE the soft-deleted row on P2002.
+   * RESTORE the soft-deleted row on P2002 — only when that row IS the standard account (code + nature + name,
+   * `isContaDoPlanoPadrao`). A deleted USER account holding the code gets its code released and the standard
+   * account is created (lacuna ad40). A live user account holding the code stays and is reported once (warn).
    *
    * Public since LAC-B: `POST /accounting-binding/activate-default` with `installChartIfEmpty`
    * installs the canonical chart through this same method (adapter in `lib/factory.ts`).
@@ -206,31 +211,48 @@ export class PostingService {
     let criou = false;
     for (const account of CANONICAL_ACCOUNTS) {
       const existing = await this.accountRepo.findByCode(scope, account.code);
-      if (existing) continue;
+      if (existing) {
+        // Lacuna ad40 (furo 1): conta do usuário viva no código do plano padrão. Fica no lugar (sem caminho de dado:
+        // dono, 21/11, "pelo papel/natureza") e é sinalizada. Apagá-la (sem partidas) libera o código: `deleteAccount`.
+        if (!isContaDoPlanoPadrao(existing)) avisarCodigoOcupado(userId, unitId, account, existing.id);
+        continue;
+      }
       criou = true;
+      const dados = {
+        userId,
+        unitId,
+        code: account.code,
+        name: account.name,
+        nature: account.nature,
+        acceptsEntries: account.acceptsEntries,
+      };
       try {
-        await this.accountRepo.create({
+        await this.accountRepo.create(dados);
+      } catch (error) {
+        if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002')) throw error;
+        // O código está preso a uma linha apagada (o @@unique cobre soft-deleted) ou outra chamada criou a conta agora.
+        const apagada = await this.accountRepo.findDeletedByCode(scope, account.code);
+        if (!apagada) continue; // corrida: a canônica viva nasceu em paralelo
+        if (isContaDoPlanoPadrao(apagada)) {
+          await this.accountRepo.restoreByCode(scope, account.code);
+          logger.info('Canonical account restored from soft-deleted row', { userId, unitId, code: account.code });
+          continue;
+        }
+        // Lacuna ad40 (furo 2): a linha apagada é do usuário; restaurá-la ressuscitaria a conta dele. Libera o código
+        // (rename-on-delete) e cria a canônica.
+        await this.accountRepo.softDeleteReleasingCode(scope, apagada.id);
+        try {
+          await this.accountRepo.create(dados);
+        } catch (retryError) {
+          if (!(retryError instanceof Prisma.PrismaClientKnownRequestError && retryError.code === 'P2002')) throw retryError;
+          continue; // corrida: outra chamada liberou o código e criou a canônica
+        }
+        logger.info('Canonical account created after releasing the code from a deleted user account', {
           userId,
           unitId,
           code: account.code,
-          name: account.name,
-          nature: account.nature,
-          acceptsEntries: account.acceptsEntries,
+          releasedAccountId: apagada.id,
         });
-      } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-          const restored = await this.accountRepo.restoreByCode(scope, account.code);
-          if (restored) {
-            logger.info('Canonical account restored from soft-deleted row', {
-              userId,
-              unitId,
-              code: account.code,
-            });
-            continue;
-          }
-          continue;
-        }
-        throw error;
       }
     }
     // Só quando alguma conta do plano padrão nasceu (ou voltou) agora: este método roda em todo lançamento, e o referencial
@@ -397,7 +419,7 @@ export class PostingService {
         // value) at the cost of mislabeling its entry as DRE-excluded — audited like every post.
         this.assertDimensionGateForLines(sourceType, resolvedLines);
 
-        const fiscalYear = this.fiscalYearFrom(input.date);
+        const fiscalYear = fiscalYearOf(input.date);
         const entryNumber = await this.postingRepo.nextEntryNumber(scope, fiscalYear, tx);
 
         const created = await this.journalEntryRepo.create(
@@ -651,7 +673,7 @@ export class PostingService {
         // AUTHORITATIVE PERIOD GATE — inside the tx, on the reversal date.
         const { jaFechado } = await this.assertPeriodOpenTx(tx, scope, input.reversalPostingDate);
 
-        const reversalFiscalYear = this.fiscalYearFrom(input.reversalPostingDate);
+        const reversalFiscalYear = fiscalYearOf(input.reversalPostingDate);
         const reversalEntryNumber = await this.postingRepo.nextEntryNumber(
           scope,
           reversalFiscalYear,
@@ -1019,9 +1041,9 @@ export class PostingService {
       throw new NotFoundError(`Conta '${accountId}' não encontrada.`);
     }
 
-    // Guard: cannot delete canonical (seeded) accounts.
-    const isCanonical = CANONICAL_ACCOUNTS.some((c) => c.code === account.code);
-    if (isCanonical) {
+    // Guard: cannot delete the standard-chart account. Identity is code + nature + name (lacuna 4e1f; dono, 21/11:
+    // ad40 "Nome/natureza", 13dd "pelo papel/natureza"): a user's account holding a standard code is deletable.
+    if (isContaDoPlanoPadrao(account)) {
       throw new AppError(
         'Contas padrão do plano de contas não podem ser excluídas.',
         409,
@@ -1043,7 +1065,10 @@ export class PostingService {
       // Gate autoritativo DENTRO da tx (item 16): o que mais depende da conta (BR: ajuste vivo do e-Lalur, ECF 3C item 19)
       // vem pela porta AccountDeletionGuard — o núcleo não conhece o fiscal.
       await this.accountDeletionGuard.assertAccountDeletable(scope, accountId, tx);
-      await this.accountRepo.softDelete(scope, accountId, tx);
+      // Conta do usuário no código do plano padrão: o soft-delete libera o código para a canônica nascer no próximo
+      // `ensureChartOfAccounts` (lacuna 13dd). A trilha guarda o código original (`payload.code`).
+      if (isCodigoDoPlanoPadrao(account.code)) await this.accountRepo.softDeleteReleasingCode(scope, accountId, tx);
+      else await this.accountRepo.softDelete(scope, accountId, tx);
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
         eventType:   'account.deleted',

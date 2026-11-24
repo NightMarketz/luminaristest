@@ -276,7 +276,7 @@ export class AccountingReportService {
    * already-fetched balance rows. Used internally by both balanceSheet and
    * incomeStatement to guarantee they share the same window.
    */
-  private computeDreNet(rows: TrialBalanceRow[]): {
+  private computeDreNet(rows: TrialBalanceRow[], custoServicosAccountIds: ReadonlySet<string> = new Set()): {
     grossRevenueCents: number;
     deductionsCents: number;
     cogsCents: number;
@@ -291,7 +291,7 @@ export class AccountingReportService {
     let expensesCents = 0;
 
     for (const row of rows) {
-      const rule = findMappingRule(row.nature, row.code, 'DRE');
+      const rule = findDreRule(row, custoServicosAccountIds);
       if (!rule) continue;
       const signed = applySign(row.balanceCents, rule.sign);
       if (rule.section === 'grossRevenue') grossRevenueCents += signed;
@@ -322,7 +322,7 @@ export class AccountingReportService {
     const accounts: BpDreLine[] = [];
     for (const row of rows) {
       const rule = statement === 'DRE'
-        ? findDreRule(row.nature, row.code, row.accountId, custoServicosAccountIds)
+        ? findDreRule(row, custoServicosAccountIds)
         : findMappingRule(row.nature, row.code, statement);
       if (!rule || rule.section !== sectionName) continue;
       const signed = applySign(row.balanceCents, rule.sign);
@@ -353,11 +353,11 @@ export class AccountingReportService {
         }
         continue;
       }
-      const rule = findMappingRule(row.nature, row.code, statement);
+      const rule = statement === 'DRE' ? findDreRule(row, new Set()) : findMappingRule(row.nature, row.code, statement);
       if (!rule && row.balanceCents !== 0) {
         // For BP diagnostics: Revenue/Expense accounts are DRE accounts represented via
         // netResultLine — they are not "unmapped", they just live on the other statement.
-        if (statement === 'BP' && findMappingRule(row.nature, row.code, 'DRE')) continue;
+        if (statement === 'BP' && findDreRule(row, new Set())) continue;
         // For DRE diagnostics: Asset/Liability/Equity accounts are BP accounts representing
         // patrimonial position — they are not "unmapped", they just live on the other statement.
         if (statement === 'DRE' && findMappingRule(row.nature, row.code, 'BP')) continue;
@@ -798,7 +798,7 @@ export class AccountingReportService {
     const excluir = new Set(excluirAccountIds);
     const rows = (await this.getAccountBalances(scope, from, to, [CLOSING_SOURCE_TYPE])).filter((r) => !excluir.has(r.accountId));
     const contas = rows.flatMap((r) => {
-      const rule = findMappingRule(r.nature, r.code, 'DRE');
+      const rule = findDreRule(r, new Set());
       const cents = rule ? applySign(r.balanceCents, rule.sign) : 0;
       return cents !== 0 ? [{ accountId: r.accountId, code: r.code, name: r.name, cents }] : [];
     });
@@ -851,7 +851,7 @@ export class AccountingReportService {
       const financialResult = this.buildSection(dreRows, 'DRE', 'financialResult', custoServicos);
       const expenses = this.buildSection(dreRows, 'DRE', 'expenses', custoServicos);
 
-      const { netCents: dreNetCents } = this.computeDreNet(dreRows);
+      const { netCents: dreNetCents } = this.computeDreNet(dreRows, custoServicos);
       const { netCents: priorNetCents } = this.computeDreNet(priorRows);
 
       const { diagnostics, reportStatus } = this.buildDiagnostics(dreRows, 'DRE', priorNetCents);
