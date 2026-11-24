@@ -5,7 +5,7 @@
 import type { AccountantAssignment } from 'generated/prisma';
 import { AccountantAssignmentService } from '../AccountantAssignmentService';
 import { AccountingPolicy } from '../../policies/AccountingPolicy';
-import type { ActiveAccountant } from '../../policies/IAccountingPolicy';
+import type { ActiveAccountant } from '../../models/AccountantAssignment.model';
 import type { IAccountantAssignmentRepository } from '../../repositories/IAccountantAssignmentRepository';
 import type { IAccountingContactRepository } from '../../repositories/IAccountingContactRepository';
 import type { IUserRepository } from '../../../users/repositories/IUserRepository';

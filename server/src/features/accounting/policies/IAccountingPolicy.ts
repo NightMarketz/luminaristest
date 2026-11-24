@@ -1,14 +1,6 @@
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { PolicyTarget } from '../models/AccountingPolicyVersion.model';
-
-/** Atribuição ACTIVE do contador responsável, como a policy a enxerga (BE-INCR-ACCOUNTANT-GOVERNANCE §4.2). */
-export interface ActiveAccountant {
-  id: string;
-  ownerUserId: string; // = AccountantAssignment.userId
-  unitId: string;
-  accountantUserId: string;
-  crcNumber: string; // snapshot normalizado
-}
+import type { ActiveAccountant } from '../models/AccountantAssignment.model';
 
 /**
  * Authorization contract for the accounting posting engine. Gates the three

@@ -6,7 +6,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { LEGAIS_SEMENTE, LEGAL_PARAMS_SEED_FILE_ISS_TRANSICAO, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { SemLinhaVigenteError, type LegalParameterTabela } from '../../../legalParameters/models/legalParameter';
 import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
 import { issAliquotaMaxBp } from '../issLimite';
@@ -124,10 +124,12 @@ describe('item 4 — perfil fiscal a partir do fim do ISS (F-ISS-5 a; Onda 3.2 #
     expect(UpsertFiscalProfileSchema.safeParse(perfil).success).toBe(true);
   });
 
+  // MODULE-BOUNDARIES PR-1a (dono, 24/11: "Vai para o service"): o DTO não lê mais o máximo; a recusa do 501 é do FiscalProfileService.validate
+  // (services/__tests__/FiscalProfileService.dfe.test.ts). Aqui fica o valor da tabela na data.
   it('2032-12-31: o máximo de 500 ainda vale', () => {
     em('2032-12-31T12:00:00-03:00');
     expect(UpsertFiscalProfileSchema.safeParse({ ...perfil, issAliquotaBp: 500 }).success).toBe(true);
-    expect(UpsertFiscalProfileSchema.safeParse({ ...perfil, issAliquotaBp: 501 }).success).toBe(false);
+    expect(issAliquotaMaxBp(LEGAIS_SEMENTE, '2032-12-31')).toBe(500);
   });
 });
 

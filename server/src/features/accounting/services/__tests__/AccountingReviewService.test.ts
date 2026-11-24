@@ -18,7 +18,8 @@ import type { ICounterpartyRepository } from '@/features/accounting/repositories
 import type { IJournalEntryRepository } from '@/features/accounting/repositories/IJournalEntryRepository';
 import type { IAuditRepository } from '@/features/accounting/repositories/IAuditRepository';
 import type { IAccountantAssignmentRepository } from '../../repositories/IAccountantAssignmentRepository';
-import type { ActiveAccountant, IAccountingPolicy } from '@/features/accounting/policies/IAccountingPolicy';
+import type { IAccountingPolicy } from '@/features/accounting/policies/IAccountingPolicy';
+import type { ActiveAccountant } from '@/features/accounting/models/AccountantAssignment.model';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
 import type { AuditService } from '@/features/accounting/services/AuditService';
 import type { PostingService } from '@/features/accounting/services/PostingService';
