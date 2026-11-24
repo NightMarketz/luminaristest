@@ -170,6 +170,9 @@ estruturas implícitas entra como verde com revisor PASS — `docs/plano/decisoe
   nativa (`gh stack init --base integration/<slug>`, `submit`, `merge`)** com a integração como base, livre dentro dela (o GitHub
   rebaseia os de cima; sem `rebase --onto` manual; piloto testou 2 camadas); a sessão que coordena o tema mergeia neles com CI verde; a `main` só recebe **um** PR
   `integration/<slug>` → `main` quando a feature fecha (classe de risco normal: verde → maestro, vermelho → lote do dono).
+- **Integração entrou na `main` → fecha as PRs que ela continha** (dono, 24/11): o corpo da integração lista cada PR contido, e esses PRs
+  são fechados sem comentário público (contexto no corpo da integração). Sem isso, ficam DIRTY depois do squash, porque a `main` tem o
+  conteúdo resolvido e o original não bate mais. Só fecha PR listado no corpo de uma integração já mergeada.
 - **PR isolado, sem irmãos, vai direto para a `main`** (regra abaixo, de 08/11). **A Faixa 1 de estruturas implícitas fica
   fora da integração:** ela segue direto na `main` pela `D-2026-11-10-FAIXA1-MERGE-LIVRE`.
 - **GAP-MAP:** o `GAP-MAP.md` vira índice/glossário gerado; cada achado tem o seu fragmento `docs/gap-map/<ID>.md` (padrão
