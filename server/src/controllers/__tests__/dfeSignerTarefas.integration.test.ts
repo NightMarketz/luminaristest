@@ -98,14 +98,39 @@ describe('X10a EMENDA-4 AL-PR-3 — fila do assinador local pela HTTP', () => {
     expect(retomadas.sort()).toEqual([centro, filial].sort());
     await poll();
     expect(retomadas).toHaveLength(2); // consumida: o poll seguinte não retoma de novo
-    // (2) o caixa pegou a tarefa e não respondeu (janela do PIN aberta): vence como ENTREGUE
+    // (2) o caixa pegou a tarefa e não respondeu (janela do PIN aberta): vence como ENTREGUE. O assinador NÃO caiu — não há
+    // "volta" a retomar (e reenviar enquanto o PIN está aberto abriria outro): a nota espera o operador (reenviar).
     retomadas.length = 0;
     const entregue = (await fila()).executar(ASSINAR, 300);
     expect(DfeSignerTarefasRespostaSchema.parse((await poll({ espera: '5' })).body).tarefas).toHaveLength(1);
     expect(await entregue).toBe('ENTREGUE');
     await poll();
     await new Promise((r) => setImmediate(r));
-    expect(retomadas.sort()).toEqual([centro, filial].sort());
+    expect(retomadas).toHaveLength(0);
+  });
+
+  it('AL-14 (sem laço): a tarefa criada PELA retomada que vence sem resposta não rearma a retomada — uma volta, uma retomada', async () => {
+    const ASSINAR = { tipo: 'ASSINAR' as const, algoritmo: 'rsa-sha1' as const, digestB64: 'aGFzaA==', conteudo: CONTEUDO };
+    const svc = getFactory().getDfeSignerTaskService();
+    const tarefasDaRetomada: Promise<unknown>[] = [];
+    svc.setOnRetomada(async (scope) => {
+      retomadas.push(scope.unitId);
+      tarefasDaRetomada.push((await fila(scope.unitId)).executar(ASSINAR, 50)); // o reenvio das pendentes: uma ASSINAR por unidade
+    });
+    try {
+      await poll();
+      retomadas.length = 0;
+      expect(await (await fila()).executar(ASSINAR, 50)).toBe('NAO_ENTREGUE'); // o caixa estava fora: marca a volta
+      for (let i = 0; i < 6; i += 1) {
+        await poll(); // o caixa volta mas nunca responde (espera 0: não segura a tarefa nova)
+        await Promise.all(tarefasDaRetomada.splice(0));
+      }
+      expect(retomadas.sort()).toEqual([centro, filial].sort()); // uma vez só, não a cada tarefa vencida
+    } finally {
+      svc.setOnRetomada(async (scope) => {
+        retomadas.push(scope.unitId);
+      });
+    }
   });
 
   it('AL-12: o poll é o heartbeat — a view fica online, com a versão e o token; L-AL-6: outro certificado = sem token', async () => {

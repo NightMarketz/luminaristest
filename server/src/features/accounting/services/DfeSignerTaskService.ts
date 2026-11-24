@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { createHash } from 'node:crypto';
 import type { DfeSignerTask } from 'generated/prisma';
 import { AppError, ConflictError } from '../../../lib/errors';
@@ -46,6 +47,9 @@ export interface DfeSignerTaskServiceOptions {
 
 type Resolver = (r: DfeSignerResultadoBody) => void;
 
+/** Contexto assíncrono da retomada (AL-14): tarefa criada de dentro dela não rearma a retomada (sem laço). */
+const emRetomada = new AsyncLocalStorage<true>();
+
 /** sha256 do resultado em JSON de chaves ordenadas — a idempotência por taskId compara este hash (AL-6). */
 function hashResultado(body: DfeSignerResultadoBody): string {
   const ordenado = Object.fromEntries(Object.entries(body).sort(([a], [b]) => a.localeCompare(b)));
@@ -66,8 +70,9 @@ function envMs(raw: string | undefined, padrao: number): number {
  * - `poll` (GET /v1/tarefas): o poll é o heartbeat (AL-12; L-AL-6: certificado diferente do pareamento = sem token);
  *   entrega as tarefas na hora ou segura até `espera` s e devolve vazio (204). O primeiro poll depois de uma queda
  *   dispara a retomada das `PENDING_SIGNATURE` das unidades do dispositivo (AL-14), uma vez só (update condicional). O
- *   poll que segue uma tarefa vencida sem resposta também retoma, uma vez só (marca em memória): a queda curta, abaixo
- *   dos 90 s do heartbeat, não pode deixar a nota para o `reenviar` manual.
+ *   poll que segue uma tarefa vencida sem ser pega também retoma, uma vez só (marca em memória): a queda curta, abaixo
+ *   dos 90 s do heartbeat, não pode deixar a nota para o `reenviar` manual. A tarefa criada pela própria retomada que
+ *   vence não rearma (uma volta, uma retomada); ENTREGUE sem resposta (PIN aberto) fica para o `reenviar` do operador.
  * - `registrarResultado` (POST /v1/tarefas/:id/resultado): idempotente por taskId (mesmo corpo ⇒ 200 sem efeito; corpo
  *   diferente ⇒ 409); tarefa vencida ⇒ 409.
  * - **O resultado nunca é gravado** (o ASSINAR traz o certificado, com o CPF do responsável — L-AL-1): vai ao chamador
@@ -80,8 +85,8 @@ export class DfeSignerTaskService {
   private readonly esperandoResultado = new Map<string, Resolver>();
   private readonly esperandoTarefa = new Map<string, Set<() => void>>();
   /**
-   * AL-14 — dispositivos cuja tarefa venceu sem resposta (a nota foi para `PENDING_SIGNATURE`): o próximo poll retoma, uma
-   * vez só. É o evento que criou a pendência, não o relógio do heartbeat: a nota pende com 20 s de silêncio e o
+   * AL-14 — dispositivos cuja tarefa venceu SEM SER PEGA (o assinador estava fora; a nota foi para `PENDING_SIGNATURE`): o
+   * próximo poll retoma, uma vez só. É o evento que criou a pendência, não o relógio do heartbeat: a nota pende com 20 s de silêncio e o
    * `lastSeenAt` só denuncia a queda depois de 90 s, então um caixa que volta entre os dois nunca seria "voltou".
    * Em memória, como `esperandoResultado` (uma instância por cliente, ADR-M2).
    */
@@ -233,9 +238,13 @@ export class DfeSignerTaskService {
     if (r) return r;
     // Sem resultado no prazo. Ainda `PENDING` ⇒ ninguém a pega depois (a expiração é atômica com a entrega). Já entregue ⇒
     // o caixa pode estar executando: `ENTREGUE`, que o adaptador trata como timeout da SEFAZ (AL-9), nunca como "não saiu".
-    // Nos dois casos a nota vai para `PENDING_SIGNATURE` (AL-13/F-AL-6): o próximo poll deste dispositivo a retoma (AL-14).
-    this.retomarNoProximoPoll.add(device.id);
-    if (await this.repo.expirarPendente(task.id)) return 'NAO_ENTREGUE';
+    if (await this.repo.expirarPendente(task.id)) {
+      // Ninguém pegou a tarefa: o assinador estava fora (a nota vai para `PENDING_SIGNATURE`, AL-13/F-AL-6) e o próximo poll
+      // dele é a volta — retoma (AL-14). Só a ausência marca: tarefa ENTREGUE sem resposta é o caixa vivo com o PIN aberto
+      // (reenviar abriria outro), e a tarefa que a PRÓPRIA retomada criou não rearma — uma volta, uma retomada, sem laço.
+      if (!emRetomada.getStore()) this.retomarNoProximoPoll.add(device.id);
+      return 'NAO_ENTREGUE';
+    }
     await this.repo.expire(task.id);
     return 'ENTREGUE';
   }
@@ -275,7 +284,7 @@ export class DfeSignerTaskService {
     if (!fn) return;
     for (const u of device.units) {
       const scope = resolveAccountingScopeInternal({ userId: device.userId }, u.unitId);
-      void fn(scope).catch((error: unknown) => {
+      void emRetomada.run(true, () => fn(scope)).catch((error: unknown) => {
         logger.warn('dfe_signer: retomada das notas pendentes falhou — ficam para o reenviar', {
           unitId: u.unitId,
           dispositivoId: device.id,
