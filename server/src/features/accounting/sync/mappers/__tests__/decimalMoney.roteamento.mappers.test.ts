@@ -8,7 +8,8 @@ import type { AccountingEvent } from '../../AccountingSyncPort';
  * CENTAVOS-EXATOS PR-2 (BRIEF §3 itens 6 e 8) — PROVA DE ROTEAMENTO dos 4 mappers de venda (A3, a referência dos
  * `goldenPhase0/1`): o núcleo `lib/decimalMoney` é trocado aqui pelo corpo exato e cada mapper tem de segui-lo
  * (1,005 → 101; o legado daria 100). Se um mapper voltasse a `Math.round(amount*100)` por conta própria, reprovaria.
- * Que NENHUM valor muda com o modo vigente continua provado pelos pins `1,005 → 100` dos testes de cada mapper.
+ * Que NENHUM valor muda com o modo vigente é provado pelos testes existentes de cada mapper (valores de 2 casas, sem edição) e,
+ * depois do merge do #1372 (PR-0, que deve entrar ANTES deste PR), também pelos pins `1,005 → 100` de cada mapper.
  */
 jest.mock('../../../../../lib/decimalMoney', () => {
   const real = jest.requireActual<typeof import('../../../../../lib/decimalMoney')>('../../../../../lib/decimalMoney');
