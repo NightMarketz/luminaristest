@@ -100,6 +100,12 @@ const REENVIAVEIS: readonly FiscalDocumentStatus[] = ['REJECTED', 'PENDING_SIGNA
 export const DFE_NAO_RECEBIDA = 'dfe_nao_recebida';
 export const NAO_CONSTA_MAX_CONSULTAS = 5;
 export const NAO_CONSTA_ESPACO_MS = 120_000;
+/**
+ * F-AL-6 (dono, chat, 2026-11-24): NFC-e normal que ficou `SENT` por timeout e tem a contingência ligada — a SEFAZ "não a conhece"
+ * na 2ª consulta 217 espaçada (≥ 2 min depois da 1ª), e aí a venda sai em contingência. Sem contingência disponível vale
+ * `NAO_CONSTA_MAX_CONSULTAS` e a rejeição `dfe_nao_recebida`, como antes.
+ */
+export const NAO_CONSTA_CONSULTAS_ANTES_DA_CONTINGENCIA = 2;
 const NAO_CONSTA_CODES = new Set(['217']);
 
 /** A chave de 44 dígitos do `infNFe/@Id` ("NFe" + chave) do payload da tentativa; `null` na DPS ou sem numeração. */
@@ -107,6 +113,16 @@ function chaveDaTentativa(payloadJson: string): string | null {
   try {
     const id = (JSON.parse(payloadJson) as { infNFe?: { Id?: unknown } }).infNFe?.Id;
     return typeof id === 'string' && /^NFe\d{44}$/.test(id) ? id.slice(3) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** `tpEmis` (B22) do payload da tentativa; `null` na DPS ou ilegível. */
+function tpEmisDaTentativa(payloadJson: string): number | null {
+  try {
+    const tpEmis = (JSON.parse(payloadJson) as { infNFe?: { ide?: { tpEmis?: unknown } } }).infNFe?.ide?.tpEmis;
+    return typeof tpEmis === 'number' ? tpEmis : null;
   } catch {
     return null;
   }
@@ -129,6 +145,7 @@ export function naoRecebida(
   resultJsonAnterior: string | null,
   result: EmissaoResult,
   agora: Date,
+  maxConsultas: number = NAO_CONSTA_MAX_CONSULTAS,
 ): { result: EmissaoResult; naoConsta?: NaoConstaContagem } {
   if (!isNaoConsta(result)) return { result };
   let previo: Partial<NaoConstaContagem> = {};
@@ -143,7 +160,7 @@ export function naoRecebida(
   const naoConsta: NaoConstaContagem = espacada
     ? { naoConsta: n + 1, naoConstaEm: agora.toISOString() }
     : { naoConsta: n, naoConstaEm: previo.naoConstaEm as string };
-  if (naoConsta.naoConsta < NAO_CONSTA_MAX_CONSULTAS) return { result, naoConsta };
+  if (naoConsta.naoConsta < maxConsultas) return { result, naoConsta };
   return {
     result: {
       status: 'REJECTED',
@@ -151,7 +168,7 @@ export function naoRecebida(
       errors: [
         {
           code: DFE_NAO_RECEBIDA,
-          message: `a SEFAZ não achou a nota (217) em ${NAO_CONSTA_MAX_CONSULTAS} consultas espaçadas — reenvie com o mesmo número`,
+          message: `a SEFAZ não achou a nota (217) em ${maxConsultas} consultas espaçadas — reenvie com o mesmo número`,
         },
       ],
     },
@@ -274,9 +291,41 @@ export class FiscalDocumentLifecycleService {
       await this.applyResult(scope, doc, result);
       return;
     }
-    const anterior = this.currentAttempt(full ?? (await this.comTentativas(scope, doc))).resultJson;
-    const { result: decidido, naoConsta } = naoRecebida(anterior, result, new Date());
+    const atual = full ?? (await this.comTentativas(scope, doc));
+    const tentativa = this.currentAttempt(atual);
+    // F-AL-6: a NFC-e normal (tpEmis 1) com a contingência ligada não vira "rejeitada, reenvie" — a SEFAZ não a conhecer é o que contingencia.
+    const comContingencia = doc.kind === 'NFCE' && this.contingencia !== null && port.capabilities.contingenciaOffline && tpEmisDaTentativa(tentativa.payloadJson) === 1;
+    const { result: decidido, naoConsta } = naoRecebida(tentativa.resultJson, result, new Date(), comContingencia ? NAO_CONSTA_CONSULTAS_ANTES_DA_CONTINGENCIA : undefined);
+    if (comContingencia && decidido.status === 'REJECTED' && decidido.errors.some((e) => e.code === DFE_NAO_RECEBIDA)) {
+      if (await this.contingenciarNaoRecebida(scope, atual, port, ctx)) return;
+      // A contingência falhou: a nota segue consultável (PROCESSING com a contagem); o próximo poll tenta de novo.
+      await this.applyResult(scope, doc, result, undefined, naoConsta);
+      return;
+    }
     await this.applyResult(scope, doc, decidido, undefined, naoConsta);
+  }
+
+  /** F-AL-6 — a SEFAZ não conhece a chave da NFC-e normal que deu timeout: re-emite a venda off-line (o mesmo handler do envio, decisão 4). */
+  private async contingenciarNaoRecebida(scope: AccountingScope, doc: FiscalDocumentWithAttempts, port: DfeEmissorPort, ctx: DfeCallContext | undefined): Promise<boolean> {
+    const payload = NfePayloadSchema.parse(JSON.parse(this.currentAttempt(doc).payloadJson));
+    try {
+      await this.contingencia!(scope, doc, port, {
+        kind: doc.kind as FiscalDocumentKind,
+        ref: attemptRef(doc.id, doc.currentAttemptNo),
+        ambiente: doc.ambiente as DfeAmbiente,
+        cnpjEmitente: payload.infNFe.emit.CNPJ,
+        partnerAccountRef: null,
+        payload,
+        ...(ctx ? { ctx: { ...ctx, payload } } : {}),
+      });
+      return true;
+    } catch (error) {
+      logger.error('dfe_contingencia: a entrada em contingência depois do 217 falhou — a nota segue consultável', {
+        documentId: doc.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    }
   }
 
   private async comTentativas(scope: AccountingScope, doc: FiscalDocument): Promise<FiscalDocumentWithAttempts> {

@@ -184,7 +184,7 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
   beforeAll(async () => {
     await sefaz.start();
     baseUrl = await psc.start();
-    const soap = new SefazSoapClient({ transporte: { pfx: pki.clientPfx, passphrase: pki.passphrase, ca: pki.caPem }, responseTimeoutMs: 3_000 });
+    const soap = new SefazSoapClient({ transporte: { pfx: pki.clientPfx, passphrase: pki.passphrase, ca: pki.caPem }, responseTimeoutMs: 3_000, connectTimeoutMs: 1_500 });
     emissor = new SefazNfeEmissor({ ambiente: 'homologacao', soap, endpoint: sefaz.endpoint });
     (selectDfeEmissor as jest.Mock).mockImplementation(() => ({ enabled: true, port: emissor, ambiente: 'homologacao' }));
     (resolveEmissorFor as jest.Mock).mockImplementation(() => emissor);
@@ -383,6 +383,55 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
     expect(voidService.inutilizarOrfa).toHaveBeenCalledWith(SCOPE, expect.objectContaining({ kind: 'NFCE', ambiente: 'homologacao', serie: 3, numero: 1n }));
     expect(cont.orfas[0]).toMatchObject({ status: 'VOID_REQUESTED', voidId: 'void-1' });
   });
+
+  // F-AL-6 (dono, chat, 2026-11-24): o timeout é ambíguo — a SEFAZ pode ter autorizado. Consulta pela chave ANTES de contingenciar.
+  // O timeout é de verdade: a SEFAZ falsa demora mais que o `connectTimeoutMs` do cliente (1,5 s) e o adaptador lança `sefaz_timeout`.
+  const timeoutNaTransmissao = async () => {
+    sefaz.controle.atrasoMs = 2_200;
+    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
+    sefaz.controle.atrasoMs = 0;
+    await new Promise((r) => setTimeout(r, 1_000)); // a SEFAZ lenta termina de processar a chamada que o cliente já largou
+    return view;
+  };
+
+  it('F-AL-6: timeout na transmissão (a SEFAZ chegou a autorizar) ⇒ a nota fica SENT, sem contingência nem número novo; o poll consulta a MESMA chave e autoriza', async () => {
+    const antes = sefaz.controle.chamadas.length;
+    const view = await timeoutNaTransmissao();
+    expect(view).toMatchObject({ status: 'SENT', numero: '1', currentAttemptNo: 1 });
+    expect(cont.estados.size).toBe(0);
+    expect(cont.orfas).toEqual([]);
+    expect(eventos()).not.toContain('dfe.contingency_entered');
+    const chave = payloadDe(view.id).infNFe.Id.slice(3);
+    expect(sefaz.autorizadas.has(chave)).toBe(true); // o tempo estourou mas a SEFAZ autorizou: contingenciar emitiria a mesma venda duas vezes
+
+    expect(await lifecycle.pollPendingOnce(FUTURO())).toMatchObject({ updated: 1, failed: 0 });
+    expect((await emission.getById(SCOPE, view.id)).status).toBe('AUTHORIZED');
+    expect(cont.orfas).toEqual([]);
+    expect(autorizacoes(antes)).toBe(1); // uma só autorização para a venda
+  }, 30_000);
+
+  it('F-AL-6: timeout e a SEFAZ não conhece a chave (217) ⇒ a 1ª consulta só conta; a 2ª, 2 min depois, contingencia (número novo, tpEmis 9, normal órfã)', async () => {
+    const view = await timeoutNaTransmissao();
+    const chave = payloadDe(view.id).infNFe.Id.slice(3);
+    sefaz.autorizadas.clear(); // a requisição se perdeu no caminho: a SEFAZ nunca gravou a nota
+    expect(view.status).toBe('SENT');
+
+    await lifecycle.pollPendingOnce(FUTURO()); // 217 nº 1
+    expect((await emission.getById(SCOPE, view.id)).status).toBe('PROCESSING');
+    expect(cont.estados.size).toBe(0);
+    await lifecycle.pollPendingOnce(FUTURO()); // antes do espaço de 2 min: não conta
+    expect((await emission.getById(SCOPE, view.id)).status).toBe('PROCESSING');
+    expect(cont.estados.size).toBe(0);
+
+    jest.setSystemTime(new Date(Date.now() + 121_000));
+    await lifecycle.pollPendingOnce(FUTURO()); // 217 nº 2, espaçada ⇒ a SEFAZ não conhece ⇒ contingência
+    const depois = await emission.getById(SCOPE, view.id);
+    expect(depois).toMatchObject({ status: 'CONTINGENCY', numero: '2', currentAttemptNo: 2 });
+    expect(payloadDe(view.id, 2).infNFe.ide).toMatchObject({ tpEmis: 9, nNF: 2 });
+    expect(cont.estados.get('homologacao')).toMatchObject({ ativa: true, origem: 'AUTO' });
+    expect(cont.orfas).toEqual([expect.objectContaining({ documentId: view.id, numero: 1n, chave, status: 'PENDING' })]);
+    expect(eventos()).toContain('dfe.contingency_entered');
+  }, 30_000);
 
   it('defeito (decisão 6): a órfã é consultada pelo assinador local da unidade — o transporte do boot (sem dispositivo) não pode barrar o 110112', async () => {
     sefaz.controle.perderRespostaAutorizacao = true;

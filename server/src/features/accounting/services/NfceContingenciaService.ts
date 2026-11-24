@@ -153,7 +153,7 @@ export class NfceContingenciaService {
       await this.docRepo.transition(
         scope,
         doc.id,
-        { status: 'CONTINGENCY', numero, currentAttemptNo: nextAttemptNo, errorsJson: null, contingenciaSuplJson: null, whenStatusIn: ['SENT'] },
+        { status: 'CONTINGENCY', numero, currentAttemptNo: nextAttemptNo, errorsJson: null, contingenciaSuplJson: null, whenStatusIn: ['SENT', 'PROCESSING'] }, // PROCESSING: o poll que viu o 217 (F-AL-6)
         tx,
       );
       await this.repo.createOrfa(

@@ -66,7 +66,13 @@ export async function enviarTentativa(
         });
         return;
       }
-      if (tpEmis === 1 && contingencia) {
+      // F-AL-6 (dono, chat, 2026-11-24): o TIMEOUT é ambíguo — a SEFAZ pode ter autorizado a nota. Não contingencia na hora (a
+      // mesma venda sairia duas vezes): a nota fica `SENT` na MESMA chave e o poll consulta; só a consulta que diz que a SEFAZ não
+      // a conhece (217, `FiscalDocumentLifecycleService.consultarEAplicar`) contingencia. As demais falhas de comunicação (TLS,
+      // HTTP, rede fora do ar) continuam contingenciando na hora: a requisição não chegou a ser processada.
+      if (tpEmis === 1 && contingencia && emitError.code === 'sefaz_timeout') {
+        logger.warn('dfe_contingencia: timeout na transmissão da NFC-e — a nota fica SENT; o poll consulta a chave antes de contingenciar', { documentId: doc.id });
+      } else if (tpEmis === 1 && contingencia) {
         try {
           await contingencia(scope, doc, port, input);
           return;
