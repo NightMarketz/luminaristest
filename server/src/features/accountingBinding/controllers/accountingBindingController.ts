@@ -2,8 +2,8 @@ import type { Request, Response } from 'express';
 import { handleApiError } from '../../../lib/apiUtils';
 import logger from '../../../lib/logger';
 import { getUserContextFromRequest } from '../../../lib/authUtils';
-import { resolveBindingScope } from '../scope/BindingScope';
-import type { BindingScope } from '../scope/BindingScope';
+import { resolveBindingScope } from '../models/BindingScope';
+import type { BindingScope } from '../models/BindingScope';
 import {
   CompileBindingRequestSchema,
   ListBindingsQuerySchema,

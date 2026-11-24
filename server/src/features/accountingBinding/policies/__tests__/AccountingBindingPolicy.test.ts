@@ -1,5 +1,5 @@
 import { AccountingBindingPolicy } from '../AccountingBindingPolicy';
-import type { BindingScope } from '../../scope/BindingScope';
+import type { BindingScope } from '../../models/BindingScope';
 
 /**
  * Gate de forma da policy (Corpo C, item 9/15 do BRIEF) — mesmo padrão de `AccountingPolicy`:

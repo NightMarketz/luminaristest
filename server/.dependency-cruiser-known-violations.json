@@ -4983,34 +4983,6 @@
   },
   {
     "type": "dependency",
-    "from": "src/features/sectorKits/controllers/kitRoleOverrideController.ts",
-    "to": "src/features/accountingBinding/scope/BindingScope.ts",
-    "unresolvedTo": "../../accountingBinding/scope/BindingScope",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
-    "from": "src/features/sectorKits/controllers/kitUpgradeController.ts",
-    "to": "src/features/accountingBinding/scope/BindingScope.ts",
-    "unresolvedTo": "../../accountingBinding/scope/BindingScope",
-    "dependencyTypes": [
-      "local",
-      "import"
-    ],
-    "rule": {
-      "severity": "error",
-      "name": "M1-cross-feature-via-public"
-    }
-  },
-  {
-    "type": "dependency",
     "from": "src/features/sectorKits/dtos/KitInstallationDto.ts",
     "to": "src/features/accounting/models/dates.ts",
     "unresolvedTo": "../../accounting/models/dates",

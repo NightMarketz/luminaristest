@@ -9,8 +9,9 @@
  * da fronteira; ver `.claude/skills/_REUSE-CRITERION.md` — divergência de POSSE (módulo dono
  * diferente), não de shape, é fork sancionado pelo critério.
  *
- * Mora em `scope/` (como `AccountingScope`), não em `repositories/`: controller resolve o escopo e não pode importar
- * repositório (ADR-ARCH-BOUNDARIES, regra L2-controller-not-repository).
+ * Mora em `models/` (tipo e where-builder puros; ADR-MODULE-BOUNDARIES §11.5, BRIEF §5.3), não em `repositories/`:
+ * controller resolve o escopo e não pode importar repositório (ADR-ARCH-BOUNDARIES, regra L2-controller-not-repository).
+ * Outra feature importa por `public/bindingScope` (funções) e `public/bindingScope.types` (tipo).
  */
 export interface BindingScope {
   /** Dono lógico do binding — vira `userId` na linha. */
