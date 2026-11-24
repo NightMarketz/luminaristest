@@ -38,11 +38,10 @@ import { ApplicationFactory } from '../lib/factory';
 import {
   CANONICAL_ACCOUNTS,
   CANONICAL_ACCOUNTS_PRE_L8,
-  NIVEL_MINIMO_ANALITICA_PATRIMONIAL,
-  PATRIMONIAL_NATURES,
   RENOMEACAO_CANONICA_L8,
   type AccountNature,
 } from '../features/accounting/fixtures/ChartOfAccountsFixture';
+import { NIVEL_MINIMO_ANALITICA_PATRIMONIAL, PATRIMONIAL_NATURES } from '../features/accounting/paises/br/EcdChartStructureRule';
 import { KIT_REGISTRY, latestKit } from '../features/sectorKits/registry';
 import { RENOMEACAO_FISCAL_L8, SINTETICAS_FISCAIS_L8 } from '../features/sectorKits/kits/_shared/conteudoFiscalCanonico';
 import { SECTOR_BINDING_REGISTRY } from '../features/accountingBinding/fixtures/sectorBindingRegistry';

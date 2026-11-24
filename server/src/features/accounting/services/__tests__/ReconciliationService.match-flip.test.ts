@@ -13,6 +13,7 @@
 import { ReconciliationService } from '../ReconciliationService';
 import { NotFoundError, ServiceError, ValidationError } from '../../../../lib/errors';
 import type { AccountingScope } from '../../scope/AccountingScope';
+import { statementParserBr } from '../../paises/br/StatementParserBr';
 
 const scope: AccountingScope = {
   ownerUserId: 'u1',
@@ -82,7 +83,7 @@ function buildService(over: {
   const accountRepo = { findById: jest.fn(async () => ({ id: 'acc-bank' })), ...over.accountRepo };
   const policy = { canReconcile: jest.fn(() => true), canRead: jest.fn(() => true), ...over.policy };
   const audit = { append: jest.fn(async () => undefined), ...over.audit };
-  const svc = new ReconciliationService(repo as never, accountRepo as never, policy as never, audit as never);
+  const svc = new ReconciliationService(repo as never, accountRepo as never, policy as never, audit as never, statementParserBr);
   return { svc, repo, accountRepo, policy, audit };
 }
 

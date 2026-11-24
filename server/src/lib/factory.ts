@@ -105,6 +105,11 @@ import { FixedAssetRepository } from '../features/accounting/repositories/FixedA
 import { FiscalDocumentRepository } from '../features/accounting/repositories/FiscalDocumentRepository';
 import { FiscalNumberVoidRepository } from '../features/accounting/repositories/FiscalNumberVoidRepository';
 import { LalurRepository } from '../features/accounting/repositories/LalurRepository';
+// Onda 1.2: adaptadores BR das portas do núcleo do razão (regra C1) — montados só aqui.
+import { ecdChartStructureRule } from '../features/accounting/paises/br/EcdChartStructureRule';
+import { LalurAccountDeletionGuard } from '../features/accounting/paises/br/LalurAccountDeletionGuard';
+import { TaxProvisionClosingGuard } from '../features/accounting/paises/br/TaxProvisionClosingGuard';
+import { statementParserBr } from '../features/accounting/paises/br/StatementParserBr';
 import { PackageBalanceRepository } from '../features/packages/repositories/PackageBalanceRepository';
 import { PackageAcceptanceRepository } from '../features/packages/repositories/PackageAcceptanceRepository';
 
@@ -1331,7 +1336,8 @@ export class ApplicationFactory {
       auditService,
       this.repositories.sourceProvenance,
       this.repositories.dimension,
-      this.repositories.lalur,
+      new LalurAccountDeletionGuard(this.repositories.lalur), // ECF 3C item 19 (adaptador BR da porta AccountDeletionGuard)
+      ecdChartStructureRule, // BE-INCR-PLANO-4-NIVEIS (adaptador BR da porta ChartStructureRule — Manual da ECD)
       // IRRF-DISTRIBUICAO PR-1 item 6 (opção (b) do dono, 21/10): referencial das folhas do plano padrão. Adaptador tardio —
       // o ReferentialMappingService é construído mais abaixo; a chamada só acontece em runtime.
       { ensureCanonicalMappings: (scope) => referentialMappingService.ensureCanonicalMappings(scope) },
@@ -1547,6 +1553,7 @@ export class ApplicationFactory {
       this.repositories.account,
       this.policies.accounting,
       auditService,
+      statementParserBr, // OFX/CNAB (adaptador BR da porta StatementParser)
     );
     // BE-INCR-BANK-SETTLEMENT (nó F7): consome AP/AR/posting/conciliação JÁ existentes pelos serviços
     // deles (protocolo claim→book→finalize não é reaberto, F-F7-4 a); leituras de título/linha pelo repo
@@ -2137,7 +2144,7 @@ export class ApplicationFactory {
         this.repositories.posting,
         postingService,
         this.policies.accounting,
-        this.repositories.taxAssessment, // X7 PR-3 item 18 (F-TA-8 a): recusa encerrar com provisão pendente
+        new TaxProvisionClosingGuard(this.repositories.taxAssessment), // X7 PR-3 item 18 (F-TA-8 a): recusa encerrar com provisão pendente (adaptador BR da porta ClosingGuard)
       ),
       payable: payableService,
       withholding: withholdingService, // RETENCOES-FONTE PR-2

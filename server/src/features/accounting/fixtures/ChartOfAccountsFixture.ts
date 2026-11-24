@@ -212,12 +212,6 @@ export function isContaDoPlanoPadrao(account: { code: string; name: string; natu
   return !!canonica && canonica.nature === account.nature && nomeNormalizado(canonica.name) === nomeNormalizado(account.name);
 }
 
-/** Natureza que entra na REGRA_VALIDA_NIVEL_CONTAS (Manual ECD L9 p. 120): COD_NAT 01/02/03. */
-export const PATRIMONIAL_NATURES: ReadonlyArray<AccountNature> = ['Asset', 'Liability', 'Equity'];
-
-/** Nível mínimo da analítica patrimonial (Manual ECD L9 p. 120 — a mensagem do PVA cita a Res. CFC 1.299/2010). */
-export const NIVEL_MINIMO_ANALITICA_PATRIMONIAL = 4;
-
 /**
  * Canonical retained-earnings leaf (Lucros ou Prejuízos Acumulados). The year-end closing
  * entry (BE-INCR-SPED-APURACAO) posts the net result of the exercise against this account.

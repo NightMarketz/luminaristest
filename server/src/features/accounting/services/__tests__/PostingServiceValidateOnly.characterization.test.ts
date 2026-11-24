@@ -31,6 +31,7 @@ import {
   MaxCentsExceededError,
   ValidationError,
 } from '../../../../lib/errors';
+import { ecdChartStructureRule } from '../../paises/br/EcdChartStructureRule';
 import { MAX_CENTS } from '../../models/money';
 import type { AccountingScope } from '../../scope/AccountingScope';
 
@@ -148,7 +149,8 @@ function buildService(over: {
     auditService as any,
     sourceProvenanceRepo as any,
     dimensionRepo as any,
-    { countLiveEntriesByAccount: async () => 0 }, // ECF 3C item 19: sem ajuste do e-Lalur nestas suítes
+    { assertAccountDeletable: async () => undefined }, // porta AccountDeletionGuard (ECF 3C item 19): sem ajuste do e-Lalur nestas suítes
+    ecdChartStructureRule, // adaptador BR REAL da porta ChartStructureRule
   );
   return { svc, accountRepo, journalEntryRepo, postingRepo, policy, periodRepo, auditService, sourceProvenanceRepo, dimensionRepo };
 }
