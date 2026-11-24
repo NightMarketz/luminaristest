@@ -43,6 +43,13 @@ export const CRITERIO_CARGA_LEGAL_BASIS = [
   { norma: 'LC 87/1996', artigo: 'art. 13 I (L17)' },
 ] as const;
 
+/**
+ * Onda 3.2 fatia 4 (#11) — FICA EM CÓDIGO, de propósito. A regra de fundo é LC 214 art. 7º II e § 2º (lido no Planalto em
+ * 24/11/2026), mas NENHUM artigo fixa `2027-01-01` para ela: o art. 544 não lista o art. 7º nos incisos I–V, logo vale o VI
+ * (efeitos desde 01/01/2026). O 2027 é decisão de produto do BRIEF/ADR EFICIENCIA-FISCAL (I-7: IBS/CBS só exigíveis em 2027),
+ * sem norma citável. Por isso não vira linha `MARCO_LEGAL` (exige `fonte` confirmada, e a lacuna está na caixa de lacunas):
+ * quando o dono ratificar a data (ou a fonte), vira a linha `PRINCIPAL_ACESSORIO_DESDE` e este literal sai.
+ */
 export const PRINCIPAL_ACESSORIO_DESDE = '2027-01-01';
 
 export interface PoliticaVigente {

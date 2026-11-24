@@ -19,6 +19,7 @@ import {
   TRIBUTOS_CSRF,
 } from '../../accounting/models/retencaoParams';
 import { IcmsStNcmJsonSchema } from '../../accounting/models/segregacaoNcm';
+import { MARCOS_LEGAIS } from '../../accounting/models/marcoLegal';
 import type { LegalParameterTabela } from './legalParameter';
 
 /**
@@ -339,6 +340,14 @@ const REGRAS: Partial<Record<LegalParameterTabela, Regra>> = {
     checar: (l) =>
       so(/^\d{2}$/.test(l.chave) && semDisc(l), 'chave = código de 2 dígitos da Tabela 07, sem discriminador') ??
       jsonOk(EsocialDescricaoJson, l.valorJson, 'valorJson = { descricao }'),
+  },
+  // Onda 3.2 fatia 4 (dono, 24/11/2026): chave = nome do marco (o que `models/marcoLegal.ts` lê), sem discriminador;
+  // valorTexto = a data do marco (YYYY-MM-DD, calendário válido).
+  MARCO_LEGAL: {
+    valor: 'texto',
+    checar: (l) =>
+      so((MARCOS_LEGAIS as readonly string[]).includes(l.chave) && semDisc(l), `chave = um marco conhecido (${MARCOS_LEGAIS.join('|')}); sem discriminador`) ??
+      so(isValidDateOnly(l.valorTexto ?? ''), 'valorTexto = data YYYY-MM-DD válida (o 1º dia em que a regra vale)'),
   },
   // DP-F2 PR-0R item 65: discriminador = categoria (3 dígitos) só onde a regra varia por categoria; nenhuma linha inicial varia.
   FOLHA_REGRA: {
