@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import {
   CollectionProviderError,
+  type CollectionCallContext,
   type ChargeResult,
   type CollectionCapabilities,
   type CollectionProviderPort,
@@ -11,7 +12,7 @@ import {
   type WebhookVerification,
 } from './CollectionProviderPort';
 import { MP_MAX_DAYS_TO_DUE, PAYMENT_WEBHOOK_MAX_AGE_MS } from '../models/CollectionCharge.model';
-import { outboundFetch } from '../../../lib/outboundHttp';
+import { OUTBOUND_POLICY, outboundFetch, type OutboundPolicy } from '../../../lib/outboundHttp';
 
 /**
  * MercadoPagoCollectionProvider — 1º adaptador da porta (BE-INCR-PAYMENT-PROVIDER PR-2, P2-1; F-PP-4 a: Orders API).
@@ -76,15 +77,18 @@ export class MercadoPagoCollectionProvider implements CollectionProviderPort {
       payer,
       transactions: { payments: [{ amount, payment_method: paymentMethod, expiration_time: input.expiresIn }] },
     };
-    return toResult(await this.call(account, 'POST', '/v1/orders', input.idempotencyKey, body));
+    return toResult(await this.call(account, 'POST', '/v1/orders', OUTBOUND_POLICY.mpOrderCreate, input.idempotencyKey, body));
   }
 
-  async getCharge(account: ResolvedAccount, providerRef: string): Promise<ChargeResult> {
-    return toResult(await this.call(account, 'GET', `/v1/orders/${encodeURIComponent(providerRef)}`));
+  async getCharge(account: ResolvedAccount, providerRef: string, context: CollectionCallContext = 'job'): Promise<ChargeResult> {
+    const policy = context === 'webhook' ? OUTBOUND_POLICY.mpGetChargeWebhook : OUTBOUND_POLICY.mpGetChargeJob;
+    return toResult(await this.call(account, 'GET', `/v1/orders/${encodeURIComponent(providerRef)}`, policy));
   }
 
   async cancelCharge(account: ResolvedAccount, providerRef: string, idempotencyKey: string): Promise<ChargeResult> {
-    return toResult(await this.call(account, 'POST', `/v1/orders/${encodeURIComponent(providerRef)}/cancel`, idempotencyKey));
+    return toResult(
+      await this.call(account, 'POST', `/v1/orders/${encodeURIComponent(providerRef)}/cancel`, OUTBOUND_POLICY.mpOrderCancel, idempotencyKey),
+    );
   }
 
   verifyWebhook(req: WebhookRequest, secret: string, now: Date): WebhookVerification {
@@ -149,12 +153,12 @@ export class MercadoPagoCollectionProvider implements CollectionProviderPort {
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     let res: Response;
     try {
-      // Timeout por tentativa no wrapper; GET é re-tentado em falha transitória, POST (sem chave) nunca.
+      // GET é re-tentado em falha transitória (2 tentativas, 125 s no total); POST (sem chave) nunca e sem deadline.
       res = await outboundFetch('mercado_pago', `${this.baseUrl}${path}`, {
         method,
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
-      }, { timeoutMs: 60_000 });
+      }, method === 'GET' ? OUTBOUND_POLICY.mpReportGet : OUTBOUND_POLICY.mpReportPost);
     } catch (error) {
       throw new CollectionProviderError(`Mercado Pago inacessível: ${error instanceof Error ? error.name : 'erro de rede'}`, null);
     }
@@ -167,6 +171,7 @@ export class MercadoPagoCollectionProvider implements CollectionProviderPort {
     account: ResolvedAccount,
     method: 'GET' | 'POST',
     path: string,
+    policy: OutboundPolicy,
     idempotencyKey?: string,
     body?: unknown,
   ): Promise<MpOrder> {
@@ -183,7 +188,7 @@ export class MercadoPagoCollectionProvider implements CollectionProviderPort {
         method,
         headers,
         body: body === undefined ? undefined : JSON.stringify(body),
-      }, { timeoutMs: 15_000 });
+      }, policy);
     } catch (error) {
       // Mensagem sem o token: só o motivo de rede (P1-7 / invariante 10).
       throw new CollectionProviderError(`Mercado Pago inacessível: ${error instanceof Error ? error.name : 'erro de rede'}`, null);
