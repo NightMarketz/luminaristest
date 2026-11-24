@@ -1,0 +1,3076 @@
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Nota Fiscal de Serviços 
+Eletrônica – NFS-e  
+ 
+ 
+ 
+Arquivo de Envio de RPS em Lote 
+- Instruções e Layout – 
+ 
+ 
+ 
+ 
+ 
+ 
+Versão 3.20 
+ 
+Para baixar a versão mais atualizada deste documento, acesse o endereço:  
+http://notadomilhao.prefeitura.sp.gov.br/Nfe/empresas/informacoes-gerais/manuais  
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 2 
+ 
+ 
+Manual de Envio de RPS em Lote 
+Instruções e Layout 
+ 
+ÍNDICE 
+ 
+1. INTRODUÇÃO .................................................................................................................................................... 3 
+2. ESPECIFICAÇÕES ................................................................................................................................................ 3 
+3. LAYOUT DO ARQUIVO – VERSÃO V.001 ............................................................................................................. 7 
+3.1 INSTRUÇÕES GERAIS .......................................................................................................................................... 7 
+3.1.1 SERVIÇOS SEM IDENTIFICAÇÃO DO INTERMEDIÁRIO (PARA RPS E RPS-M): .................................................................. 7 
+3.1.2 SERVIÇOS SEM IDENTIFICAÇÃO DO INTERMEDIÁRIO (PARA RPS-C): ............................................................................. 8 
+3.1.3 SERVIÇOS COM OBRIGATORIEDADE DE IDENTIFICAÇÃO DO INTERMEDIÁRIO: .................................................................. 8 
+3.2 REGISTRO TIPO 1 – CABEÇALHO .......................................................................................................................... 9 
+3.3 REGISTRO TIPO 2 – DETALHE ............................................................................................................................ 10 
+3.4 REGISTRO TIPO 5 – DETALHE DO INTERMEDIÁRIO DO SERVIÇO .................................................................................. 14 
+3.5 REGISTRO TIPO 3 - DETALHE (EXCLUSIVO PARA CUPONS) ....................................................................................... 14 
+3.6 REGISTRO TIPO 9 – RODAPÉ ............................................................................................................................. 16 
+4. LAYOUT DO ARQUIVO – VERSÃO V.002 ............................................................................................................ 17 
+4.1 INSTRUÇÕES GERAIS ........................................................................................................................................ 17 
+4.1.1 SERVIÇOS SEM IDENTIFICAÇÃO DO INTERMEDIÁRIO (PARA RPS E RPS-M): ................................................................ 17 
+4.1.2 SERVIÇOS SEM IDENTIFICAÇÃO DO INTERMEDIÁRIO (PARA RPS-C): ........................................................................... 17 
+4.1.3 SERVIÇOS COM OBRIGATORIEDADE DE IDENTIFICAÇÃO DO INTERMEDIÁRIO: ................................................................ 17 
+4.2 REGISTRO TIPO 1 – CABEÇALHO ........................................................................................................................ 18 
+4.3 REGISTRO TIPO 6 – DETALHE ............................................................................................................................ 19 
+4.4 REGISTRO TIPO 5 – DETALHE DO INTERMEDIÁRIO DO SERVIÇO .................................................................................. 22 
+4.5 REGISTRO TIPO 3 - DETALHE (EXCLUSIVO PARA CUPONS) ....................................................................................... 23 
+4.6 REGISTRO TIPO 9 – RODAPÉ ............................................................................................................................. 25 
+5. ERROS, ALERTAS E PROCEDIMENTOS ............................................................................................................... 25 
+5.1 RELAÇÃO DE ERROS......................................................................................................................................... 25 
+5.2 RELAÇÃO DE ALERTAS ...................................................................................................................................... 35 
+5.3 RELAÇÃO DE PROCEDIMENTOS .......................................................................................................................... 37 
+6. ARQUIVO DE RETORNO .................................................................................................................................... 38 
+7. ACESSO AO SISTEMA ........................................................................................................................................ 38 
+8. ARQUIVO DE EXEMPLO .................................................................................................................................... 38 
+9. MAIS INFORMAÇÕES ........................................................................................................................................ 38 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 3 
+ 
+ 
+ 
+1. Introdução 
+ 
+ 
+Visando facilitar a substituição do Recibo Provisório de Serviços - RPS por NFS-e (conversão em lote), o 
+Sistema NFS-e permite que sejam transferidas informações dos contribuintes para a Prefeitura em 
+arquivos no formato tex to. Tais arquivos devem atender a um layout pré-definido, apresentado neste 
+documento.  
+ 
+2. Especificações 
+ 
+ 
+2.1. O arquivo tem o formato texto  (Text Encoding = ISO -8859-1), podendo ser gerado com qualquer 
+nome, a critério do contribuinte, devendo possuir no máximo 10 MB (10240 Kbytes) de tamanho. 
+ 
+2.2. O arquivo conterá os RPS emitidos em determinado período. 
+ 
+2.3. Há 2 (dois) tipos de layouts de envio de RPS possíveis. 
+ 
+2.3.1. Layout – Versão V.001 
+ 
+É o layout atualmente utilizado na substit uição do RPS p or NFS-e e seu detalhamento está descrito nos 
+itens 3.2 a 3.6 deste manual.  
+ 
+a) Até 22/02/2015: o layout poderá ser utilizado normalmente. O campo “Situação do RPS” poderá ser  
+preenchido com: 
+ 
+T - Operação normal (tributação conforme documento emitido) 
+I - Operação isenta ou não tributável, executadas no Município de São Paulo  
+F – Operação isenta ou não tributável pelo Município de São Paulo, executada em outro Município  
+C - Cancelado 
+E – Extraviado 
+J – ISS Suspenso por Decisão Judicial 
+ 
+b) A partir de 23/02/2015: Para os prestadores que e mitirem NFS -e com indicação de i munidade, 
+isenção ou ISS Suspenso por decisão j udicial, o campo “Situação do RPS” não poderá mai s ser 
+preenchido com “I” ou “J”.  
+ 
+O campo “Situação do RPS” somente poderá ser preenchido com: 
+ 
+T – Tributado em São Paulo 
+ 
+Preencha o campo “Situação do RPS” com “T”  para serviços onde o ISS deve ser recolhido ao Município 
+de São Paulo. 
+ 
+F – Tributado Fora de São Paulo 
+ 
+Preencha o campo “Situação do RPS” com “F”  para serviços onde o  ISS deve ser recolhido fora do  
+Município de São Paulo. 
+ 
+A – Tributado em São Paulo, porém Isento 
+ 
+Preencha o campo “Situação do RPS” com “A”  para serviços cujo ISS deveria ser recolhido ao Município 
+de São Paulo, porém a legislação municipal prevê isenção  do ISS para o  prestador ou para o serviço 
+prestado. 
+ 
+B – Tributado Fora de São Paulo, porém Isento 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 4 
+ 
+ 
+Preencha o campo “Situação do RPS” com “B ” para serviços cujo ISS deveria ser recolhido fora do 
+Município de São Paulo, porém a legislação municipal prevê i senção do ISS para o prestador ou para o 
+serviço prestado. 
+ 
+D – Tributado em São Paulo com isenção parcial 
+ 
+Preencha o campo “Situação do RPS” com “D” para serviços em que a  lei que tenha concedido isenção 
+ao serviço (ou ao prestador) aponte a obrigatoried ade de observação da alíquota efetiva mínima  (Art. 8º 
+A, § 1º, da Lei Complementar 116, de 31 de julho de 2003). 
+ 
+M –Tributado em São Paulo, porém com indicação de imunidade subjetiva  
+ 
+Preencha o campo “Situação do RPS” com “M”  para serviços cujo ISS deveria ser recolhido ao Município 
+de São Paulo, porém o prestador de serviço é uma entidade imune.  
+ 
+N - Tributado Fora de São Paulo, porém com indicação de imunidade subjetiva  
+ 
+Preencha o campo “Situação do RPS” com “N”  para serviços cujo ISS deveria ser re colhido fora d o 
+Município de São Paulo, porém o prestador de serviço é uma entidade imune.  
+ 
+R - Tributado em São Paulo, porém com indicação de imunidade objetiva 
+ 
+Preencha o campo “Situação do RPS” com “R”  para serviços cujo ISS deveria ser recolhido ao M unicípio 
+de São Paulo, porém o serviço é abrangido pela imunidade.  
+ 
+S - Tributado fora de São Paulo, porém com indicação de imunidade objetiva  
+ 
+Preencha o campo “Situação do RPS” com “S”  para serviços cujo ISS deveria ser recolhido fora do 
+Município de São Paulo, porém o serviço é abrangido pela imunidade. 
+ 
+X –Tributado em São Paulo, porém Exigibilidade Suspensa 
+ 
+Preencha o campo “Situação do RPS” com “X”  para serviços cujo ISS deveria ser recolhido ao  Município 
+de São Paulo, porém existe ação judicial com  eficácia suspensiva da exigibilidade do crédito tributário 
+relativo ao serviço prestado. 
+ 
+V –Tributado Fora de São Paulo, porém Exigibilidade Suspensa 
+ 
+Preencha o campo “Situação do RPS” com “V”  para serviços cujo ISS deveria ser recolhido fora do 
+Município de São Paul o, porém existe ação judicial com eficácia suspensiva da exigibilidade do crédito 
+tributário relativo ao serviço prestado. 
+ 
+P – Exportação de Serviços 
+ 
+Preencha o campo “Situação do RPS” com “P” para as exportações de serviços para o exterior do País. 
+ 
+Observação: Não se enquadram como exportação  os serviços desenvolvidos no Brasil cujo resultado 
+aqui se verifique, ainda que o pagamento seja feito por residente no exterior.  
+ 
+C – Cancelado 
+ 
+Preencha o campo “Situação do RPS” com “C” caso o Reci bo Provisório de Serviços – RPS tenha sido 
+cancelado. 
+ 
+Atenção: a situação “E – Extraviado” deixa de ser informada a partir de 23/02/2015. 
+ 
+2.3.2. Layout – Versão V.002 
+ 
+Este layout poderá ser utilizado para NFS -e emitidas a partir de 23/02/2015 e seu deta lhamento está  
+descrito no item 4 deste manual.  
+ 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 5 
+ 
+ 
+O layout versão V.002 deverá ser obrigatoriamente utilizado pelos prestadores de serviços que, ao 
+optarem por substituir seus Recibos Provisórios de Serviços – RPS por meio de arquivos no formato 
+texto, sejam obrigados ou  desejarem  declarar informações que somente estejam previstas pelo layout 
+V.002. 
+ 
+Nesta nova versão foram incluídas ou alteradas as seguintes informações: 
+ 
+a) Campo “Situação do RPS” 
+ 
+O campo “Situação do RPS” somente poderá ser preenchido com: 
+ 
+T – Tributado em São Paulo 
+F – Tributado Fora de São Paulo 
+A – Tributado em São Paulo, porém Isento 
+B – Tributado Fora de São Paulo, porém Isento 
+D – Tributado em São Paulo com isenção parcial 
+M - Tributado em São Paulo, porém com indicação de imunidade subjetiva 
+N - Tributado fora de São Paulo, porém com indicação de imunidade subjetiva 
+R - Tributado em São Paulo, porém com indicação de imunidade objetiva  
+S - Tributado fora de São Paulo, porém com indicação de imunidade objetiva  
+X –Tributado em São Paulo, porém Exigibilidade Suspensa 
+V –Tributado Fora de São Paulo, porém Exigibilidade Suspensa 
+P – Exportação de Serviços 
+C – Cancelado 
+ 
+b) Retenção de Tributos e Contribuições Federais (campos 26 a 30  do Registro tipo 2 descrito no 
+item 4.3 deste manual) 
+ 
+Campos de uso facultativo que poderão ser preenchidos para que sejam informados valores de retenção 
+de tributos e contribuições federais.  
+ 
+c) Carga Tributária a ser informada na NFS -e para atendimento à  Lei Federal n º. 12.741/2012 
+(campos 31 a 33 do Registro tipo 2 descrito no item 4.3 deste manual) 
+ 
+Campos de uso facultativo que poderão ser preenchidos para atendimento ao disposto na Lei nº 
+12.741/2012.  
+ 
+d) Cadastro Específico do INSS – CEI (campo 34 do Registro tipo 2 descrito no item 4.3 deste 
+manual) 
+ 
+Neste campo é informado o número da matrícula no Cadastro Específico do INSS – CEI. Verifique as 
+situações de obrigatoriedade na legislação municipal.  
+ 
+e) Número de inscrição da obra (campo 35 do Registro tipo 2 descrito no item 4.3 deste manual)  
+ 
+Campo de preenchime nto obrigatório para empreitadas com dedução de construção civil , e para 
+subempreitadas tributadas passíveis de inclusão em encapsulamento . Permitido preenchimento somente 
+para os códigos de serviço  previstos no Anexo “Tabela de Códigos de Se rviço que perm item Indicação 
+de Número de Inscrição da Obra” do Manual de Acesso ao Sistema de NFS -e para Pessoas Jurídicas . 
+Para mais informações sobre o Cadastro do número de obra, acesse 
+http://www.prefeitura.sp.gov.br/sfobras. 
+ 
+f) Município onde o serviço foi prestado (campo 36 do Registro tipo 2 descrito no item 4.3 deste 
+manual) 
+ 
+Neste campo é informado o código relativo ao município onde ocorreu a prestação do serviço. Este 
+código é composto por 6 dígitos, conforme tabela de Códigos de Municípios elaborada pelo IBGE.  
+ 
+Deverá ser obrigatoriamente preenchido quando o serviço for tributado fora do município de São Paulo, 
+nas situações previstas no art. 3º, incisos II a XX, da Lei n⁰ 13.701/2003.  
+ 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 6 
+ 
+ 
+g) Número do Encapsulamento (campo 37 do Registro tipo 2 descrito no item 4.3 deste manual)  
+ 
+Campo de preenchimento obrigatório para empreitadas com dedução de construção civil, para 
+subempreitadas tributadas passíveis de inclusão em encap sulamento. Permitido preenchimento somente 
+para os códigos de serviço previstos no Anexo “ Tabela de Códigos de Serviço que permitem 
+Indicação de Número de Inscrição da Obra” do Manual de Acesso ao Sistema de NFS-e para Pessoas 
+Jurídicas. Para mais informaç ões sobre o Encapsulamento de Deduções de Construção Civil, acesse o 
+Manual do Sistema Eletrônico da Construção Civil – SISCON, 
+ 
+h) Valor Total Recebido (campo 39 do Registro tipo 2 descrito no item 4.3 deste manual) 
+ 
+O campo “Valor Total Recebido”, de pre enchimento facultativo, contemplará o valor correspondente à 
+totalidade de ingressos financeiros decorrentes da prestação de serviço, inclusive os valores repassados 
+a terceiros a título de reembolso de despesa. 
+ 
+Não se deve confundir os campos “Valor Tota l do Serviço” e ”Valor Total Recebido”. Enquanto o primeiro 
+é utilizado na composição da base de cálculo do imposto, sendo seu preenchimento obrigatório, o 
+segundo tem função apenas contábil e, sempre que preenchido, seu valor não pode ser inferior ao valo r 
+do serviço. 
+ 
+O preenchimento do campo “Valor Total Recebido” somente será permitido para os serviços prestados 
+nos códigos de serviço descritos nos subitens 10.08 e 33.01 da lista do “caput” do artigo 1º da Lei nº 
+13.701, de 24 de dezembro de 2003.. 
+ 
+Atenção: Excepcionalmente, por ocasião da emissão de NFS -e com o s códigos  dos subitens  citados 
+acima entre 22  de maio de 2018 e 30 de junho de 2018, poderão os prestadores preencher o campo 
+“Valor total do serviço” com o valor correspondente ao total de ingre ssos financeiros decorrentes da 
+prestação e preencher o campo “Valor total das deduções” com os valores repassados a terceiros, sendo 
+nesse caso vedado o preenchimento do campo “Valor total recebido”. 
+ 
+2.4. O arquivo deverá conter os RPS emitidos por um ú nico prestador, ou seja, uma única inscrição 
+municipal (CCM). Caso o prestador de serviços possua mais de uma inscrição municipal, deverá gerar 1 
+arquivo para cada uma de suas inscrições. 
+ 
+2.5. No caso de pessoa jurídica tomadora de serviços, inscrita no Cadastro de Contribuintes Mobiliários – 
+CCM, prevalecerá, para fins de emissão da NFS-e, o endereço constante do referido cadastro àquele 
+indicado no RPS. 
+ 
+2.6. No caso de pessoa física tomadora de serviços, cadastrada no Portal da NFS-e, prevalecerá, para 
+fins de emissão da NFS-e, o endereço constante do referido cadastro àquele indicado no RPS.  
+ 
+2.7. Prevalece o RPS convertido “on -line” por NFS-e, ainda que posteriormente tal RPS seja enviado por 
+arquivo. 
+ 
+2.8. É permitido o reenvio do arquivo sempre que necessário, sendo que: 
+a) em caso de RPS reenviado com dados alterados  (possível apenas na  funcionalidade de reemissão) : 
+será emitida nova NFS-e com o consequente cancelamento da anterior; 
+b) em caso de RPS reenviado sem alteração de dados: o sistema apontará erro; 
+c) para cancelar um RPS enviado anteriormente  (apenas na funcionalidade de cancelamento de RPS 
+convertido): deve-se alterar apenas o campo SITUAÇÃO DO RPS para o valor “C” (Cancelado).  
+ 
+2.9. Após o envio, o arquivo é validado, sendo que: 
+a) em caso de erro, nada será gravado (o lote inteir o será rejeitado) e aparecerá um relatório apontando 
+todas as ocorrências. O usuário deverá verificar o relatório gerado e após as correções necessárias 
+gerar novo arquivo. 
+b) em caso de alerta, aparecerá um relatório apontando todas as ocorrências. Na opç ão de 
+processamento automático, o resultado é gravado automaticamente. Na opção de simples validação, 
+após a análise das mensagens pelo contribuinte, o resultado poderá ser gravado;  
+c) em caso de sucesso, na opção de processamento automático, o resultado é  gravado 
+automaticamente. Na opção de simples validação, o contribuinte poderá ou não gravá -lo (a seu critério). 
+Caso o contribuinte decida utilizar o sistema de NFS-e apenas para validar o arquivo, basta não gravá-lo. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 7 
+ 
+ 
+ 
+Obs: Os erros e alerta s possíveis de serem gerados encontram -se neste documento na seção “Erros, 
+Alertas e Procedimentos” deste documento. 
+ 
+2.10. As informações do intermediário do serviço, nas situações em que sua identificação é obrigatória, 
+nos termos da legislação municipal , deverão ser informadas por meio do preenchimento do registro tipo 
+5. 
+ 
+2.11. Não existe a previsão de substituição de NFS -e por meio de envio de arquivo em lote. A 
+substituição de uma NFS-e deverá ser efetuada individualmente, por meio do Sistema NFS-e. 
+ 
+2.12. Tipos de RPS que podem ser enviados no arquivo: 
+ 
+✓ RPS = Recibo Provisório de Serviços (equivalente às extintas NFS, NFFS e NFSS).  
+✓ RPS-M = Recibo Provisório de Serviços provenientes de Nota Fiscal Conjugada (Mista – 
+Comércio/Serviços) 
+✓ RPS-C = Recibo P rovisório de Serviços simplificado (Cupons). Este tipo é especifico para 
+prestadores de serviços que emitem Cupons onde a única informação do tomador, possível de 
+ser preenchida, é o CPF/CNPJ. 
+ 
+3. Layout do arquivo – Versão V.001 
+ 
+3.1 INSTRUÇÕES GERAIS 
+Tipos e disposição de cada registro no arquivo: 
+✓ Registro Tipo 1 (Obrigatório): Uma linha de cabeçalho. Primeira linha do arquivo;  
+✓ Registro Tipo 2 (Opcional): Zero ou mais linhas de detalhe. Cada linha corresponde a um RPS. 
+Tipo de registro exclusivo para documentos do tipo RPS e RPS-M (Misto); 
+✓ Registro Tipo 5  (Opcional): Zero ou mais linhas de detalhe. Cada linha corresponde ao 
+intermediário do Serviço relativo ao registro 2 imediatamente acima. Tipo de registro exclusivo 
+para documentos tipo RPS e RPS -M (Misto) . Somente deverá existir nos serviços com 
+obrigatoriedade de identificação do intermediário na forma da legislação; 
+✓ Registro Tipo 3  (Opcional): Zero ou mais linhas de detalhe. Cada linha correspondente a um 
+RPS-C. Tipo de registro exclusivo para RPS-C (Cupons);  
+✓ Registro Tipo 9 (Obrigatório): Uma linha de rodapé. Última linha do arquivo. 
+ 
+Observações Gerais: 
+a) Todos os campos numéricos deverão ser preenchidos alinhados pela direita e sem formatação (sem 
+ponto e sem vírgula). Se necessário, preencher com zer os à esquerda até completar seu tamanho 
+máximo. Campo opcional: caso o conteúdo do campo não seja fornecido, este deverá ser preenchido 
+com zeros até completar seu tamanho máximo. 
+ 
+b) Todos os campos alfanuméricos deverão ser preenchidos alinhados pela esq uerda. Se necessário, 
+preencher com espaços em branco à direita até completar seu tamanho máximo, com exceção do 
+campo de Discriminação dos Serviços da linha de detalhe. Campo opcional: caso o conteúdo do campo 
+não seja fornecido, este deverá ser preenchid o com espaços em branco até completar seu tamanho 
+máximo. 
+ 
+3.1.1 SERVIÇOS SEM IDENTIFICAÇÃO DO INTERMEDIÁRIO (PARA RPS E RPS-M): 
+  
+O arquivo deverá ser gerado na seguinte estrutura: 
+Registro Tipo 1: Uma linha de cabeçalho. Primeira linha do arquivo. 
+Registro Tip o 2 : Cada linha de detalhe corresponde a um RPS. Tipo de registro exclusivo para 
+documentos do tipo RPS e RPS-M (Misto) 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 8 
+ 
+ 
+Registro Tipo 9: Uma linha de rodapé. Última linha do arquivo. 
+ 
+3.1.2 SERVIÇOS SEM IDENTIFICAÇÃO DO INTERMEDIÁRIO (PARA RPS-C): 
+  
+O arquivo deverá ser gerado na seguinte estrutura: 
+Registro Tipo 1: Uma linha de cabeçalho. Primeira linha do arquivo.  
+Registro Tipo 3 : Cada linha de detalhe corresponde a um RPS. Tipo de registro exclusivo para 
+documento do tipo RPS-C 
+Registro Tipo 9: Uma linha de rodapé. Última linha do arquivo. 
+ 
+3.1.3 SERVIÇOS COM OBRIGATORIEDADE DE IDENTIFICAÇÃO DO INTERMEDIÁRIO: 
+  
+O arquivo deverá ser gerado na seguinte estrutura: 
+Registro Tipo 1: Uma linha de cabeçalho. Primeira linha do arquivo.  
+Registro Tipo 2 : Cada linha de detalh e corresponde a um RPS. Tipo de registro exclusivo para 
+documentos do tipo RPS e RPS-M (Misto) 
+Registro Tipo 5 : conterá informações do intermediário do serviço relativo ao registro tipo 2 
+imediatamente acima. Não deverá ser considerado na somatória de linh as de detalhe informado no 
+registro tipo 9; 
+Registro Tipo 9: Uma linha de rodapé. Última linha do arquivo. 
+ 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 9 
+ 
+ 
+3.2 REGISTRO TIPO 1 – CABEÇALHO 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+1) Tipo de 
+registro 
+1 1 1 Numérico S Deve ser preenchido com valor “1”, 
+indicando linha de cabeçalho.  
+2) Versão do 
+Arquivo 
+2 4 3 Numérico S Indica a versão do layout  a ser utilizada. 
+Deve ser preenchido com o número  da 
+versão atual. A versão deste layout  é a 
+001.  
+ 
+Observação: caso seja informado 001, o 
+registro tipo 2 deverá obrigatoriamente ser 
+preenchido conforme especificado no item 
+3.3 deste manual.  
+3) Inscrição 
+Municipal do 
+Prestador 
+5 12 8 Numérico S Inscrição municipal do prestador a que se 
+refere o arquivo. 
+4) Data de 
+Início do 
+Período 
+Transferido no 
+Arquivo 
+13 20 8 AAAAMMDD S O arquivo de transferência deverá conter 
+todos os RPS referentes a um período. 
+Informe neste campo a Data INICIAL desse 
+período no formato AAAAMMDD. 
+5) Data de Fim 
+do Período 
+Transferido no 
+Arquivo 
+21 28 8 AAAAMMDD S O arquivo de transferência deverá conter 
+todos os RPS referentes a um período. 
+Informe neste campo a Data FINAL desse 
+período no formato AAAAMMDD. 
+Caractere de 
+Fim de Linha 
+29 30 2 ASCII(13) + 
+ASCII(10) 
+S Caractere de Fim de Linha (Chr(13) + 
+Chr(10)).  
+ 
+ 
+ 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 10 
+ 
+ 
+3.3 REGISTRO TIPO 2 – DETALHE 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+1) Tipo de 
+registro 
+1 1 1 Numérico S Deve ser preenchido com valor “2”, indicando 
+linha de detalhe. 
+2) Tipo do 
+RPS 
+2 6 5 Texto S Informe o Tipo do RPS emitido com 05 
+posições.  
+Tipos Válidos 
+✓ RPS – Recibo Provisório de Serviços 
+✓ RPS-M – Recibo Provisório de Serviços 
+proveniente de Nota Fiscal Conjugada 
+(Mista) 
+3) Série do 
+RPS 
+7 11 5 Texto N Informe a Série do RPS com 05 posições. 
+4) Número do 
+RPS 
+12 23 12 Numérico S Informe o Número do RPS com 12 posições. 
+5) Data de 
+Emissão do 
+RPS 
+24 31 8 AAAAMMDD S Informe a Data de emissão do RPS no 
+formato AAAAMMDD. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 11 
+ 
+ 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+6) Situação do 
+RPS 
+32 32 1 Caractere S Informe a Situação do RPS com 01 posição. 
+ 
+a) NFS-e emitidas até 22/02/2015: O campo 
+“Situação do RPS” poderá ser preenchido 
+com: 
+T – Operação normal (tributação conforme 
+documento emitido) 
+I – Operação isenta ou não tributável, 
+executadas no Município de São Paulo 
+F – Operação isenta ou não tributável pelo 
+Município de São Paulo, executada em outro 
+Município 
+C – Cancelado 
+E  Extraviado 
+J – ISS Suspenso por Decisão Judicial 
+ 
+b) NFS-e emitidas a partir de 23/02/2015: O 
+campo “Situação do RPS” poderá ser 
+preenchido com: 
+T – Tributado em São Paulo 
+F – Tributado Fora de São Paulo 
+A – Tributado em São Paulo, porém Isento 
+B – Tributado Fora de São Paulo, porém 
+Isento 
+D – Tributado em São Paulo com isenção 
+parcial 
+M – Tributado em São Paulo, porém com 
+indicação de imunidade subjetiva 
+N – Tributado fora de São Paulo, porém com 
+indicação de imunidade subjetiva 
+R – Tributado em São Paulo, porém com 
+indicação de imunidade objetiva 
+S – Tributado fora de São Paulo, porém com 
+indicação de imunidade objetiva 
+X –Tributado em São Paulo, porém 
+Exigibilidade Suspensa 
+V –Tributado Fora de São Paulo, porém 
+Exigibilidade Suspensa 
+P – Exportação de Serviços 
+C – Cancelado 
+ 
+Observação: a partir de 23/02/2015 as 
+indicações de I - Isenção/Imunidade, J – ISS 
+Suspenso por Decisão Judicial ou E – 
+Extraviado não mais poderão ser utilizadas. 
+O prestador de serviços deverá indicar: “A”, 
+“B”, “M”, “N”, “X” ou “V”, conforme o caso. 
+7) Valor dos 
+Serviços 
+33 47 15 Numérico S Informe o Valor dos Serviços com 15 
+posições. Campo obrigatório caso a situação 
+do RPS seja  diferente de “C” (Cancelado) e 
+“E” (Extraviado).  
+Exemplo: 
+R$ 500,85 – 000000000050085 
+R$ 500,00 – 000000000050000 
+8) Valor das 
+Deduções 
+48 62 15 Numérico S Informe o Valor das Deduções com 15 
+posições. Exemplo: 
+R$ 500,85 – 000000000050085 
+R$ 500,00 – 000000000050000 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 12 
+ 
+ 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+9) Código do 
+Serviço 
+Prestado 
+63 67 5 Numérico S Informe o Código do Serviço do RPS com 05 
+posições. Este código deve pertencer à lista 
+de serviços. 
+10) Alíquota 68 71 4 Numérico S Informe o Valor da Alíquota com 4 posições.  
+Exemplo: 
+5,00% – 0500 
+2,75% – 0275 
+Obs.: O conteúdo deste campo será ignorado 
+caso a tributação ocorra no município 
+(Situação do RPS = ‘T’ )  
+11) ISS Retido 72 72 1 Numérico S 1 para ISS Retido pelo Tomador. 
+2 para Nota Fiscal sem ISS Retido. 
+3 para ISS Retido pelo Intermediário. 
+12) Indicador 
+de CPF/CNPJ 
+do Tomador 
+73 73 1 Numérico S Este campo indica o tipo de dados que ser ão 
+fornecidos no campo CPF/CNPJ do Tomador 
+1 para CPF. 
+2 para CNPJ. 
+3 para CPF não-informado. 
+13) CPF ou 
+CNPJ do 
+Tomador 
+74 87 14 Numérico S Informe o CNPJ do tomador com 14 posições 
+ou CPF do tomador com 11 posições.  
+O conteúdo deste campo será ignorado caso 
+o campo 14 esteja preenchido.  
+14) Inscrição 
+Municipal do 
+Tomador 
+88 95 8 Numérico N Informe a Inscrição Municipal do Tomador, 
+com 8 posições. 
+ATENÇÃO!!! Este campo só deverá ser 
+preenchido para tomadores estabelecidos 
+no município de São Paulo (CCM). 
+Quando este campo for preenchido, seu 
+conteúdo será considerado como prioritário 
+em relação ao campo de CPF/CNPJ do 
+Tomador, sendo utilizado pa ra identificar o 
+Tomador e recuperar seus dados da base de 
+dados da Prefeitura.  
+15) Inscrição 
+Estadual do 
+Tomador 
+96 107 12 Numérico N Este campo será ignorado caso seja 
+fornecido um CPF/CNPJ ou a Inscrição 
+Municipal do tomador pertença ao município 
+de São Paulo. 
+16) Nome/ 
+Razão Social 
+do Tomador 
+108 182 75 Texto S (*) (*) Este campo é obrigatório apenas para 
+tomadores Pessoa Jurídica (CNPJ) 
+ 
+Este campo será ignorado caso seja 
+fornecido um CPF/CNPJ ou a Inscrição 
+Municipal do tomador pertença ao municípi o 
+de São Paulo. 
+ 
+17) Tipo do 
+Endereço do 
+Tomador 
+(Rua, Av, ...) 
+183 185 3 Texto (*) 
+(*) Estes campos são obrigatórios apenas 
+para tomadores pessoa jurídica (CNPJ 
+informado) 
+ 
+O conteúdo destes campos será ignorado 
+caso seja fornecido um CPF/CNPJ ou a 
+Inscrição Municipal do tomador pertença ao 
+município de São Paulo. 
+ 
+ 
+18) Endereço 
+do Tomador 
+186 235 50 Texto (*) 
+19) Número 
+do Endereço 
+do Tomador 
+236 245 10 Texto N 
+20) 
+Complemento 
+do Endereço 
+do Tomador 
+246 275 30 Texto N 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 13 
+ 
+ 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+21) Bairro do 
+Tomador 
+276 305 30 Texto (*) 
+22) Cidade do 
+Tomador 
+306 355 50 Texto (*) (*) Estes campos são obrigatórios apenas 
+para tomadores pessoa jurídica (CNPJ 
+informado). 
+Se os campos  Cidade/UF forem preenchidos 
+e não forem encontrados na base de dados 
+da Prefeitura, o sistem a irá pesquisar a 
+cidade correspondente ao CEP (se este for 
+informado).  
+Note que apenas tomadores cuja Cidade / UF 
+seja igual a SÃO PAULO / SP, irão receber 
+créditos. 
+23) UF do 
+Tomador 
+356 357 2 Texto (*) 
+24) CEP do 
+Tomador 
+358 365 8 Numérico (*) 
+25) Email do 
+Tomador 
+366 440 75 Texto N (*) Campo contendo o e-mail do tomador 
+26) 
+Discriminação 
+dos Serviços 
+441 441+ 
+(N-1) 
+N  
+(N ≤ 
+1000) 
+(*) 
+Texto S Texto contínuo descritivo dos serviços. O 
+conjunto de caracteres correspondentes ao 
+código ASCII 13 e ASCII 10 deverá ser 
+substituído pelo caracter | (pipe ou barra 
+vertical. ASCII 124). 
+Exemplo: 
+Digitado na NFS-e 
+“Lavagem de carro 
+com lavagem de motor” 
+Preenchimento do arquivo: 
+“Lavagem de carro|com lavagem de motor” 
+Não devem ser colocados espaços neste 
+campo para completar seu tamanho máximo, 
+devendo o campo ser preenchido apenas 
+com conteúdo a ser processado / 
+armazenado.  
+(*) Este campo é impresso num retângulo 
+com 95 caracteres (largura) e 24 linhas 
+(altura). É permitido (não recomendável), o 
+uso de mais de 1000 caracteres. Caso seja 
+ultrapassado o limite de 24 linhas, o 
+conteúdo será truncado durante a 
+impressão da Nota. 
+Caractere de 
+Fim de Linha 
+441 + N 442 + N 2 ASCII(13) + 
+ASCII(10) 
+S Caractere de Fim de Linha ( Chr(13) + 
+Chr(10)).  
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 14 
+ 
+ 
+3.4 REGISTRO TIPO 5 – DETALHE DO INTERMEDIÁRIO DO SERVIÇO 
+ 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+1) Tipo de 
+registro 
+1 1 1 Numérico S Preenchido com valor “5”, indicando linha 
+de detalhe do Intermediário do Serviço. 
+2) Indicador 
+de CNPJ do 
+Intermediário 
+2 2 1 Numérico S Preencher com valor “2”. 
+2) CNPJ do 
+Intermediário 
+3 16 14 Numérico S CNPJ do Intermediário de Serviços com 14 
+posições. Sem formatação (ponto, traço, 
+barra,....) 
+3) Inscrição 
+Municipal do 
+Intermediário 
+17 24 8 Numérico N Informe a Inscrição Municipal do 
+Intermediário, com 8 posições. 
+ATENÇÃO!!! Este campo só deverá ser 
+preenchido para intermediários 
+estabelecidos no município de São 
+Paulo (CCM). 
+Quando este campo for preenchido, seu 
+conteúdo será considerado como prioritário 
+em relação ao campo de CPF/CNPJ do 
+Intermediário, sendo utilizado para 
+identificar o Intermediário e re cuperar seus 
+dados da base de dados da Prefeitura.  
+4) E-mail do 
+Intermediário 
+25 99 75 Texto N Campo contendo o e-mail do intermediário. 
+5) Caractere 
+de Fim de 
+Linha 
+100 101 2 ASC (13) + 
+ASC (10) 
+S Caracter de Fim de Linha “Enter” (Chr(13) + 
+Chr(10)) 
+ 
+Observações:  
+a) somente deverá ser preenchido para os serviços com obrigatoriedade de identificação do 
+intermediário do serviço na emissão da NFS -e. Para mais informações, consulte a legislação 
+municipal; 
+b) para cada linha de detalhe tipo 2 que represente um RPS com identificação do intermediário, 
+deverá existir um registro do tipo 5; 
+c) não poderá ser utilizado para RPS-C (registro tipo 3).  
+ 
+3.5 REGISTRO TIPO 3 - DETALHE (EXCLUSIVO PARA CUPONS) 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+1) Tipo de 
+registro 
+1 1 1 Numérico S Deve ser preenchido com valor “3”, 
+indicando linha de detalhe específica para 
+Cupons (RPS simplificado). 
+2) Tipo do 
+RPS 
+2 6 5 Texto S Deve ser preenchido com “RPS-C” 
+3) Série do 
+RPS 
+7 11 5 Texto  Informe a Série do RPS com 05 posições 
+4) Número do 
+RPS 
+12 23 12 Numérico S Informe o Número d o RPS com 12 
+posições.  
+5) Data de 
+Emissão do 
+RPS 
+24 31 8 AAAAMMDD S Informe a Data de emissão d o RPS  no 
+formato AAAAMMDD. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 15 
+ 
+ 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+6) Situação do 
+RPS 
+32 32 1 Caractere S Informe a Situação d o RPS com 01 
+posição, de acordo com o tipo do RPS: 
+T - Operação normal (tributação conforme 
+documento emitido). 
+C – Cancelado 
+7) Valor dos 
+Serviços 
+33 47 15 Numérico S Informe o Valor dos Serviços com 15 
+posições. Camp o ob rigatório caso a 
+situação do  RPS seja diferente de “C” 
+(Cancelado) e “E” (Extraviado).  
+Exemplo: 
+R$ 500,85 – 000000000050085 
+R$ 500,00 – 000000000050000 
+8) Valor das 
+Deduções 
+48 62 15 Numérico S Informe o Valor das Deduções com 15 
+posições.  
+Exemplo: 
+R$ 500,85 – 000000000050085 
+R$ 500,00 – 000000000050000 
+9) Código do 
+Serviço 
+Prestado no 
+RPS 
+63 67 5 Numérico S Informe o Código do Serviço d o RPS com 
+05 posições. Este código deve pertencer à 
+lista de serviços. 
+10) Alíquota 68 71 4 Numérico S Informe o Valo r da Alíquota com 4 
+posições.  
+Exemplo: 
+5,00% – 0500 
+2,75% – 0275 
+Obs.: O conteúdo deste campo será 
+ignorado caso a tributação ocorra no 
+município (Situação do RPS = ‘T’ ) 
+11) ISS Retido 72 72 1 Numérico S 1 para ISS Retido. 
+2 para Nota Fiscal sem ISS Retido. 
+12) Indicador 
+de CPF/CNPJ 
+do Tomador 
+73 73 1 Numérico S Este campo indica o tipo de dados que 
+serão fornecidos no campo CPF/CNPJ do 
+Tomador 
+1 para CPF. 
+2 para CNPJ. 
+3 para CPF não-informado. 
+13) CPF ou 
+CNPJ do 
+Tomador 
+74 87 14 Numérico S Informe o C NPJ do tomador com 14 
+posições ou CPF do tomador com 11 
+posições.  
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 16 
+ 
+ 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+14) 
+Discriminação 
+dos Serviços 
+88 88+ (N-1) N  
+(N ≤ 
+1000) 
+(*) 
+Texto S Texto contínuo descritivo dos serviços. O 
+conjunto de caracteres correspondentes ao 
+código ASCII 13 e ASCII 10 deverá ser 
+substituído pelo caracter | (pipe ou barra 
+vertical. ASCII 124). 
+Exemplo: 
+Digitado na NFS-e 
+“Lavagem de carro 
+com lavagem de motor” 
+Preenchimento do arquivo: 
+“Lavagem de carro|com lavagem de motor” 
+Não devem ser colocados espaços neste 
+campo para compl etar seu tamanho 
+máximo, devendo o campo ser preenchido 
+apenas com conteúdo a ser processado / 
+armazenado.  
+(*) Este campo é impresso num retângulo 
+com 95 caracteres (largura) e 24 linhas 
+(altura). É permitido (não recomendável), o 
+uso de mais de 1000 cara cteres. Caso seja 
+ultrapassado o limite de 24 linhas, o 
+conteúdo será truncado durante a 
+impressão da Nota. 
+Caractere de 
+Fim de Linha 
+88 + N 89 + N 2 ASCII(13) + 
+ASCII(10) 
+S Caractere de Fim de Linha ( Chr(13) + 
+Chr(10)). 
+ 
+3.6 REGISTRO TIPO 9 – RODAPÉ 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+1) Tipo de 
+registro 
+1 1 1 Numérico S Deve ser preenchido com valor “9”, 
+indicando linha de rodapé. 
+2) Número de 
+linhas de 
+detalhe do 
+arquivo 
+2 8 7 Numérico S Número de linhas de detalhe ( apenas Tipo 
+2 +Tipo 3) contidas no arquivo.  
+Obs.: não considerar as linhas de detalhe 
+Tipo 5. 
+3) Valor total 
+dos serviços 
+contido no 
+arquivo 
+9 23 15 Numérico S Informe a soma dos valores dos serviços 
+das linhas de detalhe (Tipo 2 + Tip o 3) 
+contidas no arquivo. 
+4) Valor total 
+das deduções 
+contidas no 
+arquivo 
+24 38 15 Numérico S Informe a soma dos valores das deduções 
+das linhas de detalhe (Tipo 2 + Tipo 3) 
+contidas no arquivo. 
+Caractere de 
+Fim de Linha 
+39 40 2 ASCII(13) + 
+ASCII(10) 
+S Caractere de Fim de Linha ( Chr(13) + 
+Chr(10)). 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 17 
+ 
+ 
+4. Layout do arquivo – Versão V.002 
+ 
+4.1  INSTRUÇÕES GERAIS 
+Tipos e disposição de cada registro no arquivo: 
+✓ Registro Tipo 1 (Obrigatório): Uma linha de cabeçalho. Primeira linha do arquivo;  
+✓ Registro Tipo 6 (Opcional): Zero ou mais linhas de detalhe. Cada linha corresponde a um RPS. 
+Tipo de registro exclusivo para documentos do tipo RPS e RPS-M (Misto); 
+✓ Registro Tipo 5 (Opcional): Zero ou linhas de detalhe. Cada linha corresponde ao intermediário 
+do Serviço  relativo ao registro 6  imediatamente acima. Tipo de registro exclusivo para 
+documentos tipo RPS e RPS -M (Misto). Somente deverá existir nos serviços com 
+obrigatoriedade de identificação do intermediário na forma da legislação;  
+✓ Registro Tipo 3  (Opcional): Zero ou mais linhas de detalhe. Cada linha correspondente a um 
+RPS-C. Tipo de registro exclusivo para RPS-C (Cupons);  
+✓ Registro Tipo 9 (Obrigatório): Uma linha de rodapé. Última linha do arquivo. 
+ 
+Observações Gerais: 
+a) Todos os campos numéricos deverão se r preenchidos alinhados pela direita e sem formatação (sem 
+ponto e sem vírgula). Se necessário, preencher com zeros à esquerda até completar seu tamanho 
+máximo. Campo opcional: caso o conteúdo do campo não seja fornecido, este deverá ser preenchido 
+com zeros até completar seu tamanho máximo. 
+ 
+b) Todos os campos alfanuméricos deverão ser preenchidos alinhados pela esquerda. Se necessário, 
+preencher com espaços em branco à direita até completar seu tamanho máximo, com exceção do 
+campo de Discriminação dos Ser viços da linha de detalhe. Campo opcional: caso o conteúdo do campo 
+não seja fornecido, este deverá ser preenchido com espaços em branco até completar seu tamanho 
+máximo. 
+ 
+4.1.1 SERVIÇOS SEM IDENTIFICAÇÃO DO INTERMEDIÁRIO (PARA RPS E RPS-M): 
+  
+O arquivo deverá ser gerado na seguinte estrutura: 
+Registro Tipo 1: Uma linha de cabeçalho. Primeira linha do arquivo. 
+Registro Tipo 6: Cada linha de detalhe corresponde a um RPS. Tipo de registro exclusivo para 
+documentos do tipo RPS e RPS-M (Misto) 
+Registro Tipo 9: Uma linha de rodapé. Última linha do arquivo. 
+ 
+4.1.2 SERVIÇOS SEM IDENTIFICAÇÃO DO INTERMEDIÁRIO (PARA RPS-C): 
+  
+O arquivo deverá ser gerado na seguinte estrutura: 
+Registro Tipo 1: Uma linha de cabeçalho. Primeira linha do arquivo.  
+Registro Tipo 3 : Cada linha de deta lhe corresponde a um RPS. Tipo de registro exclusivo para 
+documento do tipo RPS-C 
+Registro Tipo 9: Uma linha de rodapé. Última linha do arquivo. 
+ 
+4.1.3 SERVIÇOS COM OBRIGATORIEDADE DE IDENTIFICAÇÃO DO INTERMEDIÁRIO: 
+  
+O arquivo deverá ser gerado na seguinte estrutura: 
+Registro Tipo 1: Uma linha de cabeçalho. Primeira linha do arquivo.  
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 18 
+ 
+ 
+Registro Tipo 6: Cada linha de detalhe corresponde a um RPS. Tipo de registro exclusivo para 
+documentos do tipo RPS e RPS-M (Misto) 
+Registro Tipo 5 : conterá informações do intermed iário do ser viço relativo ao registro tipo 6  
+imediatamente acima. Não deverá ser considerado na somatória de linhas de detalhe informado no 
+registro tipo 9; 
+Registro Tipo 9: Uma linha de rodapé. Última linha do arquivo. 
+ 
+ 
+4.2  REGISTRO TIPO 1 – CABEÇALHO 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+1) Tipo de 
+registro 
+1 1 1 Numérico S Deve ser preenchido com valor “1”, 
+indicando linha de cabeçalho.  
+2) Versão do 
+Arquivo 
+2 4 3 Numérico S Indica a versão do layout  a ser utilizada. 
+Deve ser preenchido com o número da 
+versão atual. A versão deste layout é a 
+002.  
+ 
+Observação: caso seja informado 002, o 
+registro tipo 6  deverá obrigatoriamente ser 
+preenchido conforme especificado no item 
+4 deste manual.  
+3) Inscrição 
+Municipal do 
+Prestador 
+5 12 8 Numérico S Inscrição municipal do prestador a que se 
+refere o arquivo.  
+ 
+Exemplo de preenchimento: CCM 
+1.234.567-8 
+O campo deverá ser preenchido como: 
+12345678 
+4) Data de 
+Início do 
+Período 
+Transferido no 
+Arquivo 
+13 20 8 AAAAMMDD S O arquivo de transferência deverá conter 
+todos os RPS referentes a um período. 
+Informe neste campo a Data INICIAL desse 
+período no formato AAAAMMDD. 
+5) Data de Fim 
+do Período 
+Transferido no 
+Arquivo 
+21 28 8 AAAAMMDD S O arquivo de transferência deve rá conter 
+todos os RPS referentes a um período. 
+Informe neste campo a Data FINAL desse 
+período no formato AAAAMMDD. 
+Caractere de 
+Fim de Linha 
+29 30 2 ASCII(13) + 
+ASCII(10) 
+S Caractere de Fim de Linha ( Chr(13) + 
+Chr(10)).  
+ 
+ 
+ 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 19 
+ 
+ 
+4.3  REGISTRO TIPO 6 – DETALHE 
+ 
+Campo 
+Posição 
+Inicial 
+Posição 
+Final 
+Tamanho 
+Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+1) Tipo de 
+registro 
+1 1 1 Numérico S Deve ser preenchido com valor “6”, indicando 
+linha de detalhe. 
+2) Tipo do RPS 2 6 5 Texto S Informe o Tipo do RPS emitido com 05 
+posições.  
+Tipos Válidos 
+✓ RPS – Recibo Provisório de Serviços 
+✓ RPS-M – Recibo Provisório de Serviços 
+proveniente de Nota Fiscal Conjugada 
+(Mista) 
+3) Série do RPS 7 11 5 Texto N Informe a Série do RPS com 05 posições.  
+4) Número do 
+RPS 
+12 23 12 Numérico S Informe o Número do RPS com 12 posições.  
+5) Data de 
+Emissão do RPS 
+24 31 8 AAAAMMDD S Informe a Data de emissão do RPS no formato 
+AAAAMMDD. 
+6) Situação do 
+RPS 
+32 32 1 Caractere S Informe a Situação do RPS com 01 posição, 
+de acordo com o tipo do RPS. 
+T – Tributado em São Paulo 
+F – Tributado Fora de São Paulo 
+A – Tributado em São Paulo, porém Isento 
+B – Tributado Fora de São Paulo, porém Isento 
+D – Tributado em São Paulo com isenção 
+parcial 
+M - Tributado em São Paulo, porém com 
+indicação de imunidade subjetiva 
+N - Tributado fora de São Paulo, porém com 
+indicação de imunidade subjetiva 
+R - Tributado em São Paulo, porém com 
+indicação de imunidade objetiva 
+S - Tributado fora de São Paulo, porém com 
+indicação de imunidade objetiva 
+X –Tributado em São Paulo, porém 
+Exgibilidade Suspensa 
+V –Tributado Fora de São Paulo, porém 
+Exgibilidade Suspensa 
+P – Exportação de Serviços 
+C – Cancelado 
+7) Valor dos 
+Serviços 
+33 47 15 Numérico S Informe o Valor dos Serviços com 15 posições. 
+Campo obrigatório caso a situação do RPS seja 
+diferente de “C” (Cancelado). 
+Exemplo: 
+R$ 500,85 – 000000000050085 
+R$ 500,00 – 000000000050000 
+8) Valor das 
+Deduções 
+48 62 15 Numérico S Informe o Valor das Deduções com 15 posições. 
+Exemplo: 
+R$ 500,85 – 000000000050085 
+R$ 500,00 – 000000000050000 
+9) Código do 
+Serviço Prestado 
+63 67 5 Numérico S Informe o Código do Serviço do RPS com 05 
+posições. Este código deve pertencer à lista de 
+serviços. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 20 
+ 
+ 
+Campo 
+Posição 
+Inicial 
+Posição 
+Final 
+Tamanho 
+Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+10) Alíquota 68 71 4 Numérico S Informe o Valor da Alíquota com 4 posições.  
+Exemplo: 
+5,00% – 0500 
+2,75% – 0275 
+Obs.: O conteúdo deste campo será ignorado 
+caso a tributação ocorra no município (Situação 
+do RPS = ‘T’ )  
+11) ISS Retido 72 72 1 Numérico S 1 para ISS Retido pelo Tomador. 
+2 para Nota Fiscal sem ISS Retido. 
+3 para ISS Retido pelo Intermediário. 
+12) Indicador de 
+CPF/CNPJ do 
+Tomador 
+73 73 1 Numérico S Este campo indica o tipo de dados que serão 
+fornecidos no campo CPF/CNPJ do Tomador 
+1 para CPF. 
+2 para CNPJ. 
+3 para CPF não-informado. 
+13) CPF ou 
+CNPJ do 
+Tomador 
+74 87 14 Numérico S Informe o CNPJ do tomador com 14 posições 
+ou CPF do tomador com 11 posições.  
+O conteúdo deste campo será ignorado caso o 
+campo 14 esteja preenchido.  
+14) Inscrição 
+Municipal do 
+Tomador 
+88 95 8 Numérico N Informe a Inscrição Municipal do Tomador, 
+com 8 posições. 
+ATENÇÃO!!! Este campo só deverá ser 
+preenchido para tomadores estabelecidos 
+no município de São Paulo (CCM). 
+Quando este campo for preenchido, seu 
+conteúdo será considerado como prioritário 
+em relação ao campo de CPF/CNPJ do 
+Tomador, sendo utilizado para identificar o 
+Tomador e recuperar seus dados da base 
+de dados da Prefeitura.  
+ 
+Exemplo de preenchimento: CCM 1.234.567-8 
+O campo deverá ser preenchido como: 
+12345678 
+15) Inscrição 
+Estadual do 
+Tomador 
+96 107 
+ 
+12 Numérico N Este campo será ignorado caso seja fornecido 
+um CPF/CNPJ ou a Inscrição Municipal do 
+tomador pertença ao município de São Paulo. 
+16) Nome/ Razão 
+Social do 
+Tomador 
+108 182 75 Texto S (*) (*) Este campo é obrigatório apenas para 
+tomadores Pessoa Jurídica (CNPJ) 
+ 
+Este campo será ignorado caso seja fornecido 
+um CPF/CNPJ ou a Inscrição Municipal do 
+tomador pertença ao município de São Paulo. 
+17) Tipo do 
+Endereço do 
+Tomador (Rua, 
+Av, ...) 
+183 185 3 Texto (*) (*) Estes campos são obrigatórios apenas para 
+tomadores pessoa jurídica (CNPJ informado) 
+ 
+O conteúdo destes campos será ignorado caso 
+seja fornecido um CPF/CNPJ ou a Inscrição 
+Municipal do tomador pertença ao município 
+de São Paulo. 
+ 
+ 
+18) Endereço do 
+Tomador 
+186 235 50 Texto (*) 
+19) Número do 
+Endereço do 
+Tomador 
+236 245 10 Texto N 
+20) Complemento 
+do Endereço do 
+Tomador 
+246 275 30 Texto N 
+21) Bairro do 
+Tomador 
+276 305 30 Texto (*) 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 21 
+ 
+ 
+Campo 
+Posição 
+Inicial 
+Posição 
+Final 
+Tamanho 
+Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+22) Cidade do 
+Tomador 
+306 355 50 Texto (*) (*) Estes campos são obrigatórios apenas para 
+tomadores pessoa jurídica (CNPJ informado). 
+Se os campos Cidade/UF forem preenchidos e 
+não forem encontrados na base de dados da 
+Prefeitura, o sistema irá pesquisar a cidade 
+correspondente ao CEP (se este for 
+informado).  
+ 
+23) UF do 
+Tomador 
+356 357 2 Texto (*) 
+24) CEP do 
+Tomador 
+358 365 8 Numérico (*) 
+25) Email do 
+Tomador 
+366 440 75 Texto N (*) Campo contendo o e-mail do tomador 
+26) PIS/PASEP 441 455 15 Numérico N Informe o valor da retenção do PIS com 15 
+posições. 
+ Exemplo: 
+R$ 500,85 – 000000000050085 
+R$ 500,00 – 000000000050000 
+27) COFINS 456 470 15 Numérico N Informe o valor da retenção da COFINS com 15 
+posições.  
+Exemplo: 
+R$ 500,85 – 000000000050085 
+R$ 500,00 – 000000000050000 
+28) INSS 471 485 15 Numérico N Informe o valor da retenção do INSS com 15 
+posições. 
+Exemplo: 
+R$ 500,85 – 000000000050085 
+R$ 500,00 – 000000000050000 
+29) IR 486 500 15 Numérico N Informe o valor da retenção do IR com 15 
+posições. 
+Exemplo: 
+R$ 500,85 – 000000000050085 
+R$ 500,00 – 000000000050000 
+30) CSSL 501 515 15 Numérico N Informe o valor da retenção da CSSL com 15 
+posições. 
+Exemplo: 
+R$ 500,85 – 000000000050085 
+R$ 500,00 – 000000000050000 
+31) Carga 
+tributária: Valor 
+516 530 15 Numérico N Informe o valor aproximado do Total dos 
+Tributos com 15 posições. Exemplo: 
+R$ 500,85 – 000000000050085 
+R$ 500,00 – 000000000050000 
+32) Carga 
+tributária: 
+porcentagem 
+531 
+ 
+535 5 Numérico N Informe o valor da Porcentagem do Total da 
+Carga Tributária com 5 posições. Exemplo: 
+12,36% – 01236 
+33) Carga 
+tributária: fonte 
+536 545 10 Texto N Informe a fonte de informação dos dados 
+tributários mencionados. 
+34) CEI 546 557 12 Numérico N Informe o CEI (Cadastro Específico do INSS). 
+35) Matrícula da 
+Obra 
+558 569 12 Numérico (*) (*) Campo de preenchimento obrigatório para 
+empreitadas com dedução de construção civil, e 
+para subempreitadas tributadas passíveis de 
+inclusão em encapsulamento. Permitido 
+preenchimento somente para os códigos de 
+serviço previstos no Anexo “Tabela de Códigos 
+de Serviço que permitem Indicação de Número 
+de Inscrição da Obra” do Manual de Acesso ao 
+Sistema de NFS-e para Pessoas Jurídicas. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 22 
+ 
+ 
+Campo 
+Posição 
+Inicial 
+Posição 
+Final 
+Tamanho 
+Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+36) Município 
+prestação – cód. 
+IBGE 
+570 576 07 Numérico (*) (*) Este campo é obrigatório quando o serviço 
+for tributado fora do município de São Paulo 
+(Campo Situação do RPS preenchido com “F”, 
+“B”, “N” ou “V”. 
+ 
+Informe o código relativo ao município onde 
+ocorreu a pr estação do serviço. Este código é 
+composto por 6 dígitos, conforme t abela de 
+Códigos de Municípios, elaborada pelo IBGE. 
+37) Número de 
+encapsulamento 
+577 586 10 Numérico (*) (*) Preenchimento obrigatório para empreitadas 
+com dedução de construção civil. Permitido 
+preenchimento somente para os códigos de 
+serviço previstos no Anexo “Tabela de Códigos 
+de Serviço que permitem Indicação de Número 
+de Inscrição da Obra”, do Manual de Acesso ao 
+Sistema de NFS-e para Pessoas Jurídicas. 
+38) Campo 
+reservado 
+587 596 10   Campo reservado. Deverá ser preenchido com 
+espaços em branco à direita até completar seu 
+tamanho máximo. 
+39) Valor Total 
+Recebido 
+597 611 15 Numérico N O campo “Valor total recebido”, de 
+preenchimento facultativo, representa o valor 
+correspondente à totalidade de ingressos 
+financeiros decorrentes da prestação de serviço, 
+inclusive os valores repassados a terceiros. 
+40) Campo 
+reservado 
+612 786 175   Campo reservado. Deverá ser preenchido com 
+espaços em branco à direita até completar seu 
+tamanho máximo. 
+41) 
+Discriminação 
+dos Serviços 
+787 787+ 
+(N-1) 
+N  
+(N ≤ 1000) 
+(*) 
+Texto S Texto contínuo descritivo dos serviços. O 
+conjunto de caracteres correspondentes ao 
+código ASCII 13 e ASCII 10 deverá ser 
+substituído pelo caracter | (pipe ou barra 
+vertical. ASCII 124). 
+Exemplo: 
+Digitado na NFS-e 
+“Lavagem de carro 
+com lavagem de motor” 
+Preenchimento do arquivo: 
+“Lavagem de carro|com lavagem de motor” 
+Não devem ser colocados espaços neste 
+campo para completar seu tamanho máximo, 
+devendo o campo ser preenchido apenas com 
+conteúdo a ser processado / armazenado.  
+(*) Este campo é impresso num retângulo com 
+95 caracteres (largura) e 24 linhas (altura). É 
+permitido (não recomendável), o uso de mais 
+de 1000 caracteres. Caso seja ultrapassado o 
+limite de 24 linhas, o conteúdo será truncado 
+durante a impressão da Nota. 
+Caractere de Fim 
+de Linha 
+778 + N 778 + N 2 ASCII(13) + 
+ASCII(10) 
+S Caractere de Fim de Linha (Chr(13) + Chr(10)).  
+ 
+4.4  REGISTRO TIPO 5 – DETALHE DO INTERMEDIÁRIO DO SERVIÇO 
+ 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+1) Tipo de 
+registro 
+1 1 1 Numérico S Preenchido com valor “5”, indicando linha de 
+detalhe do Intermediário do Serviço. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 23 
+ 
+ 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+2) Indicador 
+de CNPJ do 
+Intermediário 
+2 2 1 Numérico S Preencher com valor “2”. 
+2) CNPJ do 
+Intermediário 
+3 16 14 Numérico S CNPJ do Intermediário de Serviços com 14 
+posições. Sem formatação (ponto, traço, 
+barra,....) 
+3) Inscrição 
+Municipal do 
+Intermediário 
+17 24 8 Numérico N Informe a Inscrição M unicipal do Intermediário, 
+com 8 posições. 
+ATENÇÃO!!! Este campo só deverá ser 
+preenchido para intermediários 
+estabelecidos no município de São Paulo 
+(CCM). 
+Quando este campo for preenchido, seu 
+conteúdo será considerado como prioritário em 
+relação ao campo de CPF/CNPJ do 
+Intermediário, sendo utilizado para identificar o 
+Intermediário e r ecuperar seus dados da base 
+de dados da Prefeitura. 
+ 
+Exemplo de preenchimento: CCM 1.234.567-8 
+O cam po deverá ser preenchido como: 
+12345678 
+4) E-mail do 
+Intermediário 
+25 99 75 Texto N Campo contendo o e-mail do intermediário. 
+5) Caractere 
+de Fim de 
+Linha 
+100 101 2 ASC (13) + 
+ASC (10) 
+S Caracter de Fim de Linha “Enter” (Chr(13) + 
+Chr(10)) 
+ 
+Observações:  
+a) somente deverá ser preenchido para os serviços com obrigatoriedade de identificação do 
+intermediário do serviço na emissão da NFS-e. Para mais informações, consulte a legislação municipal; 
+b) para cada linha de detalhe tipo 6  que represente um RPS com identificação do intermediário, deverá 
+existir um registro do tipo 5; 
+c) não poderá ser utilizado para RPS-C (registro tipo 3).  
+ 
+4.5  REGISTRO TIPO 3 - DETALHE (EXCLUSIVO PARA CUPONS) 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+1) Tipo de 
+registro 
+1 1 1 Numérico S Deve ser preenchido com valor “3”, indicando 
+linha de detalhe específica para Cupons (RPS 
+simplificado). 
+2) Tipo do 
+RPS 
+2 6 5 Texto S Deve ser preenchido com “RPS-C” 
+3) Série do 
+RPS 
+7 11 5 Texto  Informe a Série do RPS com 05 posições 
+4) Número do 
+RPS 
+12 23 12 Numérico S Informe o Número do RPS com 12 posições.  
+5) Data de 
+Emissão do 
+RPS 
+24 31 8 AAAAMMDD S Informe a Data de emissão do RPS no formato 
+AAAAMMDD. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 24 
+ 
+ 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+6) Situação 
+do RPS 
+32 32 1 Caractere S Informe a Situação do RPS com 01 posição, de 
+acordo com o tipo do RPS: 
+T – Operação normal (tributação conforme 
+documento emitido). 
+C – Cancelado 
+7) Valor dos 
+Serviços 
+33 47 15 Numérico S Informe o Valor dos Serviços com 15 posições. 
+Campo obrigatório caso a situação do RPS seja 
+diferente de “C” (Cancelado) e “E” (Extraviado).  
+Exemplo: 
+R$ 500,85 – 000000000050085 
+R$ 500,00 – 000000000050000 
+8) Valor das 
+Deduções 
+48 62 15 Numérico S Informe o Valor das Deduções com 15 
+posições.  
+Exemplo: 
+R$ 500,85 – 000000000050085 
+R$ 500,00 – 000000000050000 
+9) Código do 
+Serviço 
+Prestado no 
+RPS 
+63 67 5 Numérico S Informe o Código do Serviço do RPS com 05 
+posições. Este c ódigo deve pertencer à lista de 
+serviços. 
+10) Alíquota 68 71 4 Numérico S Informe o Valor da Alíquota com 4 posições.  
+Exemplo: 
+5,00% – 0500 
+2,75% – 0275 
+Obs.: O conteúdo deste campo será ignorado 
+caso a tributação ocorra no município (Situação 
+do RPS = ‘T’ ) 
+11) ISS 
+Retido 
+72 72 1 Numérico S 1 para ISS Retido. 
+2 para Nota Fiscal sem ISS Retido. 
+12) Indicador 
+de CPF/CNPJ 
+do Tomador 
+73 73 1 Numérico S Este campo indica o tipo de dados que ser ão 
+fornecidos no campo CPF/CNPJ do Tomador 
+1 para CPF. 
+2 para CNPJ. 
+3 para CPF não-informado. 
+13) CPF ou 
+CNPJ do 
+Tomador 
+74 87 14 Numérico S Informe o CNPJ do tomador com 14 posições 
+ou CPF do tomador com 11 posições.  
+14) 
+Discriminação 
+dos Serviços 
+88 88+ (N-
+1) 
+N  
+(N ≤ 1000) 
+(*) 
+Texto S Texto contínuo descritivo dos  serviços. O 
+conjunto de caracteres correspondentes ao 
+código ASCII 13 e ASCII 10 deverá ser 
+substituído pelo caracter | (pipe ou barra 
+vertical. ASCII 124). 
+Exemplo: 
+Digitado na NF 
+“Lavagem de carro 
+com lavagem de motor” 
+Preenchimento do arquivo: 
+“Lavagem de carro|com lavagem de motor” 
+Não devem ser colocados espaços neste 
+campo para completar seu tamanho máximo, 
+devendo o campo ser preenchido apenas com 
+conteúdo a ser processado / armazenado.  
+(*) Este campo é impresso num retângulo com 
+95 caracteres (lar gura) e 24 linhas (altura). É 
+permitido (não recomendável), o uso de mais de 
+1000 caracteres. Caso seja ultrapassado o 
+limite de 24 linhas, o conteúdo será truncado 
+durante a impressão da Nota. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 25 
+ 
+ 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+Caractere de 
+Fim de Linha 
+88 + N 89 + N 2 ASCII(13) + 
+ASCII(10) 
+S Caractere de Fim de Linha (Chr(13) + Chr(10)). 
+ 
+ 
+4.6  REGISTRO TIPO 9 – RODAPÉ 
+Campo Posição 
+Inicial 
+Posição 
+Final Tamanho Formato 
+Preenchimento 
+Obrigatório 
+(S/N) 
+Conteúdo 
+1) Tipo de 
+registro 
+1 1 1 Numérico S Deve ser preenchido com valor “9”, indicando  
+linha de rodapé. 
+2) Número de 
+linhas de 
+detalhe do 
+arquivo 
+2 8 7 Numérico S Número de linhas de detalhe ( apenas Tipo 2 
++Tipo 3) contidas no arquivo.  
+Obs.: não considerar as linhas de detalhe Tipo 
+5. 
+3) Valor total 
+dos serviços 
+contido no 
+arquivo 
+9 23 15 Numérico S Informe a soma dos valores dos serviços das 
+linhas de detalhe (Tipo 2 + Tipo 3) contidas no 
+arquivo. 
+4) Valor total 
+das deduções 
+contidas no 
+arquivo 
+24 38 15 Numérico S Informe a soma dos valores das deduções das 
+linhas de detalhe (Tipo 2 + T ipo 3) contidas no 
+arquivo. 
+Caractere de 
+Fim de Linha 
+39 40 2 ASCII(13) + 
+ASCII(10) 
+S Caractere de Fim de Linha (Chr(13) + Chr(10)). 
+ 
+ 
+5. Erros, Alertas e Procedimentos 
+ 
+As tabelas a seguir, relacionam  os e rros, alertas e procedimentos adotados pelo Sist ema NFS-e na 
+substituição do Recibo Provisório de Serviços - RPS por NFS-e. 
+ 
+5.1 RELAÇÃO DE ERROS 
+ETAPA CÓD. MENSAGEM SOLUÇÃO 
+Cabeçalho 
+ 
+101 Tipo de Registro Incorreto. Utilizar o tipo especificado: 1. 
+Cabeçalho 
+ 
+102 Versão do Arquivo Incorreta. Informar a versão correta:  
+001 se layout Versão V. 001 
+002 se layout Versão V. 002 
+Cabeçalho 
+ 
+103 Data Inicial inválida. Preencher o campo com uma 
+data válida. 
+Preencher o campo com uma data válida. 
+Cabeçalho 104 A Data Inicial de emissão das Notas Fiscais 
+enviadas não pode ser inferior a {0}. 
+Preencher o campo com uma data maior ou igual 
+que a data indicada na mensagem de erro. 
+Cabeçalho 
+ 
+105 Data Final inválida.  Preencher o campo com uma 
+data válida. 
+Preencher o campo com uma data válida. 
+Cabeçalho 106 A Data F inal de emissão das Notas Fiscais 
+enviadas não pode ser inferior a {0}. 
+Preencher o campo com uma data maior ou igual 
+que a data indicada na mensagem de erro. 
+Cabeçalho 107 A Data Final de emissão das Notas Fiscais 
+enviadas não pode ser superior a {0}. 
+Preencher o campo com uma data menor ou igual 
+que a data indicada na mensagem de erro. 
+Cabeçalho 
+ 
+108 A Data Final de emissão das Notas Fiscais 
+enviadas deverá ser superior a Data Inicial. 
+Preencher o campo Data Final com uma data 
+maior ou igual que a indic ada no campo Data 
+Inicial.  
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 26 
+ 
+ 
+ETAPA CÓD. MENSAGEM SOLUÇÃO 
+Cabeçalho 
+ 
+109 Inscrição do Prestador de Serviços não encontrada 
+na base de dados de CCM do município. 
+Preencher o campo com o número de inscrição 
+correto. 
+Cabeçalho 110 Inscrição do Prestador especificada no Arquivo 
+não confere com o Prestador selecionado. 
+Utilizar um arquivo com a inscrição do Prestador 
+ou Selecionar o Prestador correto. 
+Cabeçalho 111 Inscrição do Prestador de Serviços inválida. Preencher o campo "Inscrição Municipal do 
+Prestador" com caracteres numéricos apenas. 
+Cabeçalho 112 Registro tipo 1 possui caracteres adicionais não 
+esperados. 
+Não preencher o Cabeçalho com quantidade de 
+caracteres além daquelas mencionadas no item 
+3.2 do Manual de Envio de RPS em Lote. 
+Cabeçalho 113 A Data Inicial de emissão das No tas Fiscais 
+enviadas não pode ser superior a {0}. 
+A Data Inicial não pode ser superior à data da 
+conversão do RPS. 
+Detalhe 
+ 
+201 Tipo de Registro incorreto. Utilizar um dos tipos especificados: 2 e 3. 
+ 
+Detalhe 
+ 
+202 Arquivo sem linhas de detalhe (tipo de Registro 2). Incluir os registro de detalhe (tipo 2 e/ou 3) no 
+arquivo. Verifique se os terminadores de linha 
+estão preenchidos corretamente (conjunto de 
+caracteres chr(13) seguido do chr(10)) em todos 
+os registros. 
+Detalhe 
+ 
+203 Número de Erros do Arquivo excedeu o máximo 
+permitido (<número máximo de erros permitido 
+parametrizado no sistema>). 
+Corrigir os erros apresentados. 
+Detalhe 
+ 
+204 Campo Tipo do RPS (<tipo informado no registro>) 
+inválido. 
+Utilizar um dos tipos especificados: "RPS", "RPS -
+C" ou "RPS-M". 
+Detalhe 
+ 
+205 Campo Tipo do RPS (<tipo informado no registro>) 
+inválido para o Tipo de Registro='3' (Cupons). 
+Utilizar um o tipo “RPS-C" 
+Detalhe 
+ 
+206 Campo Situação da Nota Fiscal (<situação 
+informada no registro>) inválido.  Para mais 
+informações consu lte o item 14. 19 da seção de 
+perguntas e respostas. 
+a) NFS-e emitidas até 22/02/2015: 
+Para o layout V.001: u tilizar um dos tipos de 
+situação especificados: “T”, “I”, “F”, “C”, “E” ou 
+“J”. 
+b) NFS-e emitidas a partir de 23/02/2015: 
+Para layout V.001 e V.002:  Utilizar um dos tipos 
+de situação especificados: “T”, “F”, "A", "B ", “D” 
+"M", "N",”R”,”S” “X”, “V”, “P” ou “C”. 
+Detalhe 
+ 
+207 Data de Emissão da Nota Fiscal não está 
+compreendida entre <data inicio de emissão do 
+lote> e <data fim de emissão do lote> confo rme 
+especificado no cabeçalho do arquivo. 
+Utilizar no cabeçalho do arquivo datas de Emissão 
+da Nota Fiscal compreendidas entre a data inicio 
+de emissão do lote e a data fim de emissão do 
+lote. 
+Detalhe 
+ 
+209 O código de serviço prestado não permite retenção 
+de ISS. 
+Alterar o campo "ISS Retido" para: 2 (Nota Fiscal 
+sem ISS Retido). 
+Detalhe 
+ 
+210 Campo ISS Retido (<tipo informado no registro>) 
+inválido. 
+Utilizar um dos tipos especificados: 1 para ISS 
+Retido pelo tomador, 2 para Nota Fiscal sem ISS 
+Retido ou 3 para ISS Retido pelo intermediário. 
+Detalhe 
+ 
+212 O campo CPF/CNPJ do Tomador deverá ser 
+preenchido com zeros quando o campo Indicador 
+do CPF/CNPJ do Tomador for igual a 3 (CPF não -
+informado). 
+Preencher o campo CPF/CNPJ do Tomador com 
+zeros. 
+Detalhe 
+ 
+213 Campo Indicador de CPF/CNPJ do Tomador 
+(<valor informado no registro>) inválido. 
+Utilizar um dos tipos especificados: 1  para CPF, 2 
+para CNPJ ou 3 para CPF não informado. 
+Detalhe 
+ 
+214 Cidade/UF informados (<cidade/UF informados no 
+registro>) não foram en contrados na base de 
+dados. 
+Preencher os campos Cidade/UF com os dados 
+corretos. 
+Em caso de cidades do exterior (fora do país), 
+deixar campos Cidade/UF em branco. 
+Detalhe 
+ 
+215 RPS em duplicidade no arquivo enviado. Remover do arquivo o registro excedente da nota 
+fiscal. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 27 
+ 
+ 
+ETAPA CÓD. MENSAGEM SOLUÇÃO 
+Detalhe 
+ 
+218 RPS não poderá ser enviado novamente, pois está 
+incluído em Guia de Recolhimento. 
+Remover do arquivo o registro da nota já incluída 
+em Guia de Recolhimento ou cancelar a Guia de 
+Recolhimento. 
+Detalhe 219 O campo Inscrição Mun icipal do tomador só 
+deverá ser preenchido para tomadores 
+estabelecidos no município de São Paulo. 
+Para tomadores estabelecidos fora do município 
+de São Paulo, deve-se preencher este campo com 
+zeros. 
+Detalhe 220 CNPJ do Tomador (<CNPJ enviado>) possui mais 
+de uma inscrição municipal, sendo obrigatório o 
+preenchimento do campo Inscrição Municipal do 
+Tomador ou Intermediário. 
+O CNPJ informado possui mais de uma inscrição 
+municipal. A informação da inscrição municipal é 
+obrigatória neste caso. 
+Detalhe 222 O código de serviço informado não corresponde à 
+prestação de serviço. 
+Informar um código de serviços válido, abaixo ou 
+igual ao valor de 9000. 
+Detalhe 225 O valor da alíquota deve ser entre 2% e 5%. O valor da alíquota não pode ser inferior a 2% ou 
+superior a 5%. 
+Detalhe 227 Campo Alíquota ({0}) inválido. Preencher o Campo Alíquota com caracteres 
+numéricos apenas. 
+Detalhe 228 Campo Número do RPS ({0}) inválido. Preencher o Campo Número do RPS com 
+caracteres numéricos apenas. 
+Detalhe 229 Campo Inscrição Municipal ({0}) inválido. Preencher o Campo Inscrição Municipal com 
+caracteres numéricos apenas. 
+Detalhe 230 Campo Inscrição Estadual ({0}) inválido. Preencher o Campo Inscrição Estadual com 
+caracteres numéricos apenas. 
+Detalhe 231 Campo CEP ({0}) inválido. Preencher o Campo CEP com caracteres 
+numéricos apenas. 
+Detalhe 301 O tomador de serviços informado é o próprio 
+prestador. 
+Esta mensagem acusa a emissão de uma NFS-e 
+do prestador para o próprio prestador (o tomador 
+possui mesmo CPF/CNPJ e mesma inscrição  
+municipal que o prestador). Caso o prestador 
+possua autorização (regime especial) esta 
+mensagem é apenas um alerta. 
+Detalhe 302 CNPJ do Tomador do serviço inválido (dígitos 
+verificadores não conferem) 
+Os dígitos verificadores do CNPJ informado (dois 
+últimos algarismos) não conferem. Acerte o CNPJ 
+do tomador e reenvie o arquivo. 
+Detalhe 303 O Valor dos serviços deverá ser igual ou superior a 
+R$ 0. 
+Preencher o Campo Valor dos Serviços. Não é 
+permitido valor de serviço inferior a zero 
+(negativo). 
+Detalhe 304 O Valor das deduções deverá ser inferior ao valor 
+dos serviços 
+Não é permitido valores de dedução superior ao 
+valor de serviços. 
+Detalhe 305 O Valor das deduções deverá ser superior ou igual 
+a R$ 0,00 (zero) 
+Não é permitido valor  de dedução inferior a zero 
+(negativos). 
+Detalhe 306 Código do Serviço Prestado <codigo enviado> da 
+NFS-e inexistente 
+Consulte a legislação vigente para saber o código 
+de serviço que deverá ser informado neste campo. 
+Detalhe 308 Código do Serviço Prestado <codigo enviado> da 
+NFS-e não permite dedução na base de cálculo 
+Consulte a legislação vigente para saber s e o 
+código de serviço informado  permite dedução da 
+base de cálculo 
+Detalhe 309 Código do Serviço Prestado <codigo enviado> da 
+NFS-e não permite tributação fora do município 
+Consulte a legislação vigente para saber se o 
+código de serviço informado permite a tributação 
+fora do município (Campo Situação do RPS = ‘F’  
+ou  “B” ou “N” ou “S” ou “V”) 
+Detalhe 310 Código do Serviço Prestado <codigo enviado> não 
+informado 
+Informe o  código de serviço prestado relativo ao 
+RPS informado 
+Detalhe 311 Apenas empresas tomadoras de serviços inscritas 
+no município podem efetuar retenção de ISS 
+(CPF/CNPJ = <CPF/CNPJ do Tomador>) 
+O CPF/CNPJ ou a Inscrição Municipal informada 
+do Tomador não fo i encontrada na base de dados 
+do município (CCM), não sendo permitida a 
+retenção. Acerte o CPF/CNPJ ou altere o campo 
+ISS Retido para 2 (Sem retenção de ISS) 
+Detalhe 312 A data da emissão do RPS não foi preenchida 
+corretamente 
+A data informada deverá esta r no formato 
+AAAA/MM/DD, ou seja, ano (4 dígitos) seguido de 
+mês (2 dígitos) e dia (2 dígitos). 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 28 
+ 
+ 
+ETAPA CÓD. MENSAGEM SOLUÇÃO 
+Detalhe 313 A data da emissão do RPS não poderá ser 
+superior a data de hoje 
+Não é permitido o envio de RPS com data de 
+emissão superior a data atual. 
+Detalhe 314 A data da emissão do RPS não poderá ser inferior 
+a 01/06/2006 
+Não é permitido o envio de RPS com data de 
+emissão inferior a 1º de Junho de 2006. 
+Detalhe 315 Número do RPS não informado O número do RPS é obrigatório e deve ser 
+informado. 
+Detalhe 316 E-mail do tomador do serviço inválido. Verificar itens abaixo: 
+Caracteres permitidos: Números de 0 a 9; Letras 
+de A/a a Z/z. 
+Obrigatório conter:  
+− Nome e arroba (Ex: fulano@...); 
+− Pelo menos um ponto “.” entre nomes ou 
+domínio (Ex: fulano.de.tal@... ou 
+fulano@provedor.com); 
+− Conter domínio com extensão de no máximo 6 
+caracteres (Ex: “.br” ou “.net”).  
+Detalhe 317 Campo Endereço não preenchido (obrigatório para 
+tomador com CNPJ) 
+O preenchimento do endereço (logradouro) é 
+obrigatório para tomadores Pessoas Juríd icas  
+(com CNPJ). 
+Detalhe 318 Campo Cidade/UF não preenchido (obrigatório 
+para tomador com CNPJ) 
+O preenchimento da Cidade e da UF do endereço 
+do tomador é obrigatório para tomadores Pessoas 
+Jurídicas  (com CNPJ). 
+Detalhe 319 Código do Serviço de Retenção não cadastrado. O Código de Serviço mencionado ainda não 
+possui Código de Retenção. Verificar tabela de 
+códigos vigentes a partir da aba "Legislação", no 
+sítio da Nota. 
+Detalhe 320 Inscrição Municipal do Tomador de Serviços 
+consta como cancelada. 
+A inscrição municipal do tomador fornecida consta 
+como cancelada na base de dados de CCM da 
+Prefeitura de São Paulo. 
+Detalhe 321 Apenas Notas com tributação no município ou fora 
+do município podem sofrer retenção de ISS. 
+RPS cujo campo Situação do  RPS seja igua l a 
+Isento (A ou B ) ou Imune (M ou N  ou R ou S ) ou 
+Exigibilidade Suspensa (X ou V) ou Exportação de 
+serviços (P) não podem sofrer retenção de ISS 
+(campo ISS Retido deverá ser igual a 2) 
+Detalhe 322 O campo discriminação dos serviços não foi 
+preenchido. 
+O preenchimento da discriminação dos serviços é 
+obrigatório por lei, devendo ser preenchido 
+adequadamente. 
+Detalhe 323 Nota não pode ser cancelada. Ver detalhes no 
+Manual 
+Nota não pode ser  cancelada pois a nota se 
+encontra bloqueada no sistema. Esse registr o 
+deve ser retirado do arquivo. 
+Detalhe 324 Operação não autorizada por meio eletrônico em 
+razão de ultrapassado o prazo permitido. 
+Nota não pode ser cancelada, pois o prazo 
+máximo de cancelamento da nota expirou. Esse 
+registro deve ser retirado do arquivo. 
+Detalhe 325 Nota (CCM:{0}, Número:{1}) não pode ser 
+cancelada. Ver detalhes no Manual.  
+NFS-e não pode ser cancelada por ação do 
+Prestador do Serviço emitente. Verificar os itens 
+"7.3. Cancelamento da NFS-e" e "7.5. Bloqueio de 
+NFS-e" do Manual de Aces so à NFS -e para 
+Pessoa Jurídica. 
+Detalhe 326 O código de serviço (<código de serviço informado 
+no registro>) não permite que o ISS seja retido 
+pelo Tomador. 
+Verificar na legislação correspondente ou nos 
+anexos do Manual de Acesso à NFS -e – versão 
+Pessoa J urídica, sobre os códigos de serviço 
+passíveis de retenção. 
+Detalhe 327 Código do Serviço Prestado <código enviado> da 
+NFS-e não está cadastrado para o prestador do 
+tipo pessoa física. 
+Verifique se o código de serviço informado está 
+correto. Se estiver, p roceda a atualização 
+cadastral junto à Prefeitura assim que possível, 
+pois o código informado não está cadastrado para 
+a sua inscrição municipal (CCM). 
+Detalhe 328 Código de Serviço Prestado (<código de serviço 
+informado no registro>) é de uso exclusivo d e 
+Sociedade de Profissionais e diferente de seu 
+código cadastrado. 
+Verifique se o código de serviço informado está 
+correto. As sociedades de profissionais deverão 
+informar o código de serviço cadastrado no CCM. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 29 
+ 
+ 
+ETAPA CÓD. MENSAGEM SOLUÇÃO 
+Detalhe 329 Código do Serviço Prestado (<cód igo de serviço 
+informado no registro>) é de uso exclusivo de 
+Sociedade de Profissionais e não pode ser usado 
+para prestador de serviço pessoa jurídica. 
+Verifique se o código de serviço informado está 
+correto. Códigos de serviço destinados a 
+Sociedades de P rofissionais  podem ser usados 
+somente por prestadores de serviço do tipo 
+sociedade de profissionais. 
+Detalhe 331 Código do Serviço Prestado (<código de serviço 
+informado no registro>) informado é exclusivo de 
+pessoas físicas. 
+Verifique se o código de ser viço informado está 
+correto. Códigos de serviço de profissionais 
+autônomos podem ser usados somente por estes 
+tipos de prestadores de serviço. 
+Detalhe 333 Campo Código de Serviço Prestado ({0}) inválido. Preencher o campo "Código do Serviço Prestado" 
+com caracteres numéricos apenas. 
+Detalhe 334 {0} da NFS-e não permite indicação de Isenção ou 
+Imunidade. 
+O código do serviço prestado não permite 
+indicação de isenção ou imunidade. 
+Detalhe 335 A data da prestação do serviço deverá estar 
+contida no Período de  Vigência do Código de 
+Serviço. 
+Verificar se o código de atividade declarado no 
+RPS está em vigência na data mencionada 
+referente à prestação do serviço. 
+Detalhe 336 Código do Serviço Prestado (<código de serviço 
+informado no registro>) informado é exclus ivo de 
+pessoas jurídicas. 
+Verifique se o código de serviço informado está 
+correto. Códigos de serviço de pessoas jurídicas 
+não podem ser usados por prestadores de serviço 
+“pessoas físicas”. 
+Detalhe 340 {0} é de uso exclusivo de Sociedade de 
+Profissionais. Código não permite indicação de 
+Isenção ou Imunidade. 
+a) NFS-e emitidas até 22/02/2015: 
+Utilizar um dos tipos de situação espe cificados: 
+"C", "E" ou "T". Não preencher com “F” ou "I", 
+tendo em  vista trat ar-se de código de serviço 
+exclusivo de sociedade de profissionais. 
+ 
+b) NFS-e emitidas a partir de 23/02/2015: 
+Utilizar um dos tipos de situação espe cificados: 
+"C", "T" ou “X”. Não preencher com “F” , “A”, “B ”, 
+“D”, “M”, “N”, ”R”, ”S” ou “V” tendo em vista  vista 
+tratar-se de código exclusivo de sociedade de 
+profissionais. 
+Detalhe 341 O preenchimento do campo discriminação dos 
+serviços ultrapassou o limite de caracteres 
+permitido. 
+A quantidade de caracteres permitida para o 
+preenchimento do Campo Discriminação dos 
+Serviços foi ultrapassada. Ver item 5.5.6 do 
+Manual de Acesso à NFS-e para Pessoa Jurídica. 
+Detalhe 342 Inscrição Municipal do Tomador inexistente ou 
+inválida. 
+Corrigir o CCM (Código de Contribuinte Mobiliário 
+ou Inscrição Municipal) do tomador do serviço. O 
+CCM informado não é válido (possui dígito  de 
+verificação incorreto) ou não consta da base de 
+dados da Secretaria de Finanças do Município de 
+São Paulo. 
+Detalhe 343 CNPJ do Tomador de Serviços inválido (dígitos 
+verificadores não conferem). 
+Corrigir o CNPJ do tomador do serviço. O CNPJ 
+informado possui dígitos de verificação incorretos. 
+Detalhe 344 {0} é de uso exclusivo de Sociedade de 
+Profissionais e não pode ser usado para prestador 
+de serviço pessoa física. 
+Utilizar código de serviço exclusivo de Pessoa 
+Física emitente de NFS-e. 
+Detalhe 350 Autorizado a emitir  NFS-e a partir de 01/ (<data de 
+autorização informada no registro, formato 
+mm/yyyy >). 
+A emissão de NFS-e é permitida somente a partir 
+da data informada. Para mais informações, 
+consulte o manual de acesso ao sistema da NFS -
+e. 
+Detalhe 351 Pessoas físicas somente podem emitir NFS -e com 
+data da prestação de serviço a partir de {0}. 
+A emissão de NFS -e por Prestador de Serviço 
+Pessoa Física é permitida a partir de 01/08/2011. 
+Detalhe 356 Autorizado a emitir NFS -e a partir de {0} (data de 
+inscrição do contribuinte). 
+A emissão de NFS -e é permitida a partir da data 
+da inscrição do contribuinte, ou seja, a partir da 
+data em que seu Código de Contribuinte Mobiliário 
+considera-se válido e não cancelado. 
+Detalhe 357 Sociedade de Profissionais some nte podem emitir 
+NFS-e com data da prestação de serviço a partir 
+de {0}. 
+A emissão de NFS -e por Prestador de Serviço 
+Pessoa Jurídica enquadrada como SUP é 
+permitida a partir de 01/08/2011. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 30 
+ 
+ 
+ETAPA CÓD. MENSAGEM SOLUÇÃO 
+Detalhe 359 Emissão por prestadores MEI não permitida desde 
+01/09/2023. Utilizar a Nota Fisc al de S erviços 
+Eletrônica – NFS-e de padrão nacional. 
+É vedada ao MEI a emissão de NFS -e pelo 
+sistema eletrônico de emissão municipal para 
+serviços com fato gerador a partir de 0 1/09/2023. 
+Os MEIs ficam obrigados a emitir Nota  Fiscal de 
+Serviços Eletrônica de Padrão Nacional – NFS-e 
+MEI nos casos de tomadores de serviços inscritos 
+no Cadastro Nacional da Pessoa Jurídica – CNPJ, 
+seguindo a Resolução do Comitê Gestor do 
+Simples Nacional (CGSN) nº 169/2022.. 
+A emissão de NFS-e MEI: 
+I - será efetuada exclusivamente em sistema 
+eletrônico disponibilizado no Portal do Simples 
+Nacional, conforme disciplinado pelo CGSN; 
+II - é facultativa no caso de tomador de serviço 
+consumidor final pessoa física. 
+Detalhe 360 O campo CPF/CNPJ do Tomad or ( <CPF/CNPJ 
+informado no registro>) inválido. 
+Utilizar um CPF/CNPJ válido para o tomador de 
+serviços. 
+Detalhe 
+ 
+361 Código de Serviço <código de serviço informado> 
+não pode ser utilizado pelo prestador de serviço. 
+Caso o plano de saúde preste serviços 
+enquadrados nos subitens 4.22 e  4.23 da lista do 
+“caput” do artigo 1º da Lei 13.701, de 24/12/03, 
+será obrigatório o cadastramento prévio dos 
+respectivos códigos de serviço no CCM. 
+Detalhe 369 A data da prestação do serviço deverá estar 
+contida no Período d e Vi gência do Código de 
+Serviço cadastrado para o prestador de serviço. 
+Verificar no Cadastro de Contribuinte Mobiliário 
+(CCM) do emitente se o código de atividade 
+declarado no RPS é vigente na data da prestação 
+do serviço. 
+Detalhe 372 RPS já convertido em NFS-e aceita pelo tomador 
+ou intermediário 
+Somente NFS-e rejeitada pelo tomador ou 
+intermediário poderá ser cancelada pelo prestador 
+de serviços.  
+Detalhe 373 RPS já convertido em NFS -e rejeitada com 
+emissão de NFTS pelo tomador ou intermediário. 
+Somente NF S-e rejeitada pelo tomado r ou 
+intermediário sem emissão de NFTS poderá ser 
+cancelada pelo prestador de serviços. 
+Detalhe 397 Tomador de serviço estabelecido fora do município 
+de São Paulo não pode ser responsável tributário. 
+Tomador de serviço estabelecido fora do município 
+de São Paulo não pode ser responsável tributário. 
+Detalhe 398 Prestador de serviço estabelecido fora do 
+município de São Paulo não pode emitir NFS-e. 
+Prestador de serviço estabelecido fora do 
+município de São Paulo não pode emitir NFS-e 
+Detalhe 393 Regime de tributação cadastrado pelo contribuinte 
+foi substituído pelo Simples Nacional (Lei 
+Complementar 123, de 14 de dezembro de 2006) e 
+não pode ser utilizado na emissão de NFS-e. 
+Previamente à emissão, deve-se escolher o 
+regime de tributação adequado (Normal ou 
+Simples Nacional) no menu Simples Nacional – 
+Alteração de Regime. 
+Previamente à emissão, deve-se escolher o 
+regime de tributação adequado (Normal ou 
+Simples Nacional) no menu Simples Nacional – 
+Alteração de Regime. 
+Detalhe 
+ 
+500 Tipo de registro incorreto. Utilizar o tipo especificado: 5. 
+Detalhe 501 Campo CNPJ do Intermediário não informado. O CNPJ do intermediário de serviços  é de 
+preenchimento obrigatório. 
+Detalhe 
+ 
+502 Campo Ind icador de CNPJ  do Intermediário não 
+informado. 
+Utilizar o tipo especificado: 2 
+Detalhe 503 Campo CNPJ do Intermediário: ( CNPJ informado 
+no registro>) inválido. 
+Informar um CNPJ válido para o intermediário de 
+serviços. 
+Detalhe 
+ 
+504 Campo Indicador de CNPJ do Intermediário (<valor 
+informado no registro>) inválido. 
+ 
+Utilizar o tipo especificado: 2 
+Detalhe 505 CNPJ do Intermediário de Serviços inválido 
+(dígitos verificadores não conferem) 
+Os d ígitos verificadores do CNPJ  informado (dois 
+últimos algarismos) não conferem. Acerte o CN PJ 
+do intermediário e reenvie o arquivo. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 31 
+ 
+ 
+ETAPA CÓD. MENSAGEM SOLUÇÃO 
+Detalhe 506 E-mail do intermediário do serviço inválido. Verificar itens abaixo: 
+Caracteres permitidos: Números de 0 a 9; Letras 
+de A/a a Z/z. 
+Obrigatório conter:  
+− Nome e arroba (Ex: fulano@...); 
+− Pelo menos um ponto “.” entre nomes ou 
+domínio (Ex: fulano.de.tal@... ou 
+fulano@provedor.com); 
+− Conter domínio com extensão de no máximo 6 
+caracteres (Ex: “.br” ou “.net”).  
+Detalhe 
+ 
+507 Recibo tipo (<tipo de RPS informado no registro>) 
+não permite identificação do intermediário. 
+Utilizar um dos tipos especificados “RPS” ou “RPS-
+M”. 
+Detalhe 508 O código de serviço (<código de serviço informado 
+no registro>) não permite que o ISS seja retido 
+pelo Intermediário. 
+Verificar na legislação correspondente ou nos 
+anexos do Manual de Acesso à NFS -e – versão 
+Pessoa Jurídica, sobre o s códigos de serviço 
+passíveis de retenção. 
+Detalhe  509 Intermediário não possui inscrição municipal.   Somente intermediários estabelecidos no 
+município de São Paulo podem ser identificados 
+na emissão da NFS-e. 
+Detalhe  510 Inscrição Municipal do Intermediário inválida. Informar uma inscrição municipal do Intermediário 
+válida com tipo numérico. 
+Detalhe  511 Inscrição Municipal do Intermediário especificada 
+no arquivo não confere com o CNPJ informado. 
+Informar a inscrição mu nicipal ou o CNPJ do 
+Intermediário correto. 
+Detalhe  512 Inscrição Municipal do Intermediário de Serviços 
+consta como cancelada. 
+A inscrição municipal do intermediário consta 
+como cancelada na base de dados do CCM da 
+Prefeitura de São Paulo. 
+Detalhe  513 Inscrição Municipal do Inter mediário de Serviços 
+não encontrada na base de dados de CCM do 
+município. 
+Preencher o campo com o número de inscrição 
+correto ou no caso de intermediário com apenas 
+uma inscrição, deixar o campo sem 
+preenchimento. 
+Detalhe 514 CNPJ do Intermediário ({0}) p ossui mais de uma 
+inscrição municipal. 
+O CNPJ informado possui mais de uma inscrição 
+municipal. A informação da inscrição municipal é 
+obrigatória neste caso. 
+Detalhe 516 Código de Serviço P restado (<código de serviço 
+informado no registro>) não permite a identificação 
+do intermediário do serviço. 
+Exclua a linha do registro tipo “5” correspondente 
+ou utilize um código de serviço que permita a 
+identificação do intermediário. 
+Detalhe 517 Para NFS-e sem intermediário, o campo ISS retido 
+deverá ser igual a 1 ou 2. Valor informado: <código 
+de serviço informado>. 
+Informe o campo ISS retido corretamente. 
+Detalhe 518 Para NFS-e com intermediário o campo ISS retido 
+deverá ser igual a 2 ou 3. Valor informado: <código 
+de serviço informado>. 
+Informe o campo ISS retido corretamente. 
+Detalhe 519 Para NFS -e sem identificação do intermediário, a 
+NFS-e deverá ser emitida sem retenção ou com 
+retenção pelo tomador. 
+Inclua a linha do registro tipo "5" correspondente e 
+informe o CNPJ do intermédiár io do serviço, caso 
+a NFS -e s eja emitida com retenção pelo 
+intermediário. 
+Detalhe 520 Registro tipo 5 possui caracteres adicionais não 
+esperados. 
+Não preencher a linha "Detalhe do Intermediário 
+do Serviço" com quantidade de caracteres além 
+daquelas mencionadas no item 3.4 do Manual d e 
+Envio de RPS em Lote. 
+Rodapé 
+ 
+901 Tipo de Registro Incorreto. Utilizar o tipo especificado: 9. 
+Rodapé 
+ 
+902 Número de Linhas de detalhe (<número de linhas 
+de detalhe informadas no rodapé>) não confere 
+com o número de notas enviadas (<número de 
+linhas de detalhe presentes no arquivo>). 
+Preencher o campo com o número de l inhas de 
+detalhe correto.  Somente linhas de detalhe 
+(registros tipo 2 ou 3) devem ser consideradas no 
+preenchimento do campo 2 do registro tipo 9 
+(rodapé). 
+Rodapé 
+ 
+903 Valor Total de Serviços (<valor informado no 
+rodapé>) não confere com o enviado (<s omatório 
+do valor dos serviços presentes no arquivo>). 
+Preencher o campo com o valor total de serviços 
+correto. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 32 
+ 
+ 
+ETAPA CÓD. MENSAGEM SOLUÇÃO 
+Rodapé 
+ 
+904 Valor Total de Dedução (<valor informado no 
+rodapé>) não confere com o enviado (<somatório 
+do valor das deduções presentes no arquivo>). 
+Preencher o campo com o  valor total de dedução 
+correto. 
+Rodapé 
+ 
+905 Registro Tipo 9 (Rodapé) não foi encontrado no 
+final do arquivo. 
+Incluir no arquivo um registro tipo 9 (rodapé). 
+Verifique se os terminadores de linha estão 
+preenchidos corretamente (conjunto de caracteres 
+chr(13) seguido do chr(10)) em todos os registros. 
+Rodapé 908 Número de Linhas de detalhe inválido. Preencher o campo "Número de linhas de detalhe 
+do arquivo" com caracteres numéricos apenas. 
+Rodapé 909 Valor Total de Serviços inválido. Preencher o campo "Va lor total dos serviços 
+contido no arquivo" com caracteres numéricos 
+apenas. 
+Rodapé 910 Valor Total de Dedução inválido. Preencher o campo "Valor total das deduções 
+contidas no arquivo" com caracteres numéricos 
+apenas. 
+Rodapé 911 Registro tipo 9 possui ca racteres adicionais não 
+esperados. 
+Não preencher o Rodapé com quantidade de 
+caracteres além daquelas mencionadas no item 
+3.6 do Manual de Envio de RPS em Lote. 
+Detalhe 1108 O CPF/CNPJ vinculado à Inscrição do Tomador 
+não corre sponde ao CPF/CNPJ informado no 
+campo CPFCNPJTomador. 
+Inserir o CNPJ correspondente ao Tomador do 
+Serviço cuja Inscrição Municipal foi informada no 
+campo "Inscrição Municipal do Tomador". 
+Detalhe 1207 Prestador de Serviços não autorizado a emitir 
+NFS-e. 
+Deve ser solicitada a "Autoriz ação para Emissão" 
+antes de se proceder ao envio de Lote de RPS. 
+Ver item 4 do Manual de Acesso à NFS -e para 
+Pessoa Jurídica. 
+Detalhe 1208 A Inscrição Municipal do Prestador de Serviços 
+consta como cancelada. Emissão de NFS -e não 
+autorizada. 
+Inscrição Mun icipal cancelada não emite NFS -e 
+tampouco pode proceder ao envio de Lote de RPS 
+no Sistema NFS-e. 
+Detalhe 1212 NFS-e não permite indicação de imunidade. CCM 
+do prestador não cadastrado por meio do sistema 
+de declaração de imunidades (SDI) para a data do 
+fato gerador informada. 
+CCM do prestador não cadastrado por meio do 
+sistema de declaração de imunidades (SDI) para a 
+data do fato gerador informada. Indicação de 
+imunidade não poderá ser informada. Consulte a 
+legislação municipal sobre o tema.  
+Detalhe 1213 NFS-e não permite indicação de imunidade. 
+Código de serviço informado na NFS -e não 
+cadastrado por meio do sistema de declaração de 
+imunidades (SDI) para a data do fato gerador 
+informada. 
+Código de serviço informado na NFS -e n ão 
+cadastrado por meio do sis tema de declaração de 
+imunidades (SDI) para o prestador de serviços e 
+para a data do fato gerador informada.  Consulte a 
+legislação municipal sobre o tema. 
+Detalhe 1233 NFS-e não permite indicação de imunidade ou 
+isenção para profissional autônomo. 
+Indicação de imunidade ou isenção não poderá ser 
+informada. Consulte a legislação municipal sobre o 
+tema. 
+Tratamentos para novos campos versão V.002 
+Detalhe 1214 Valor do IRRF inválido Preencher o campo apenas com números. Não é 
+permitido valor inferior a zero (negativo). 
+Detalhe 1215 Valor da CSSL inválido Preencher o campo apenas com números. Não é 
+permitido valor inferior a zero (negativo). 
+Detalhe 1216 Valor da COFINS inválido Preencher o campo apenas com números. Não é 
+permitido valor inferior a zero (negativo). 
+Detalhe 1217 Valor do INSS inválido Preencher o campo apenas com números. Não é 
+permitido valor inferior a zero (negativo). 
+Detalhe 1218 Valor do PIS/PASEP inválido Preencher o campo apenas com números. Não é 
+permitido valor inferior a zero (negativo). 
+Detalhe 1219 Valor relacionado à carga tributária inválido Preencher o campo apenas com números. Não é 
+permitido valor inferior a zero (negativo). 
+Detalhe 1220 Valor relacionado ao percentual da carga tributária 
+inválido 
+Preencher o campo apenas com números. Não é 
+permitido valor inferior a zero (negativo). 
+Detalhe 1221 Fonte de informação referente à carga tributária 
+preenchida incorretamente 
+Preencher o campo com o formato correto. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 33 
+ 
+ 
+ETAPA CÓD. MENSAGEM SOLUÇÃO 
+Detalhe 1222 Obrigatório informar o município onde o serviço foi 
+prestado 
+Obrigatório informar o código do IBGE relativo ao 
+município onde o serviço foi prestado. Informação 
+obrigatória se campo Situação do RPS preenchido 
+com “F”, “B”, “N”, “S” ou “V”. 
+Detalhe 1223 Para serviço tributado em São Paulo ou 
+exportação de serviços não é permitido informar o 
+município onde o serviço foi prestado. 
+Não informe o município onde o serviço foi 
+prestado se campo Situação do RPS preenchido 
+com “T”, “A”, “D”, “M”,”R”, “X” ou “P”. 
+Detalhe 1224 Município onde o serviço foi prestado inválido Preencher o campo com o formato correto. 
+Detalhe 1225 Município onde o serviço foi prestado inexistente Código do IBGE relativo ao Município inexistente. 
+Verifique a tabela de Códigos de Municípios, 
+elaborada pelo IBGE. 
+Detalhe 1226 Número de inscrição da obra inválido Preencher o campo com o formato correto. 
+Detalhe 
+374 
+Para serviços de construção civil com dedução na 
+base de cálculo do ISS é obrigatório informar o 
+número de inscrição no Cadastro Tributário de 
+Obras de Construção Civil. 
+Preencher o campo “Número de Inscrição de 
+Obra”. Em caso de dúvidas, consulte o Manual do 
+Sistema Eletrônico da Construção Civil – SISCON. 
+Detalhe 
+375 
+Para serviços de construção civil com dedução na 
+base de cálculo do ISS é obrigatório informar o 
+número de controle do encapsulamento das notas 
+dedutíveis. 
+Preencher o campo “Número de Encapsulamento”. 
+Em caso de dúvidas, consulte o Manual do 
+Sistema Eletrônico da Construção Civil – SISCON. 
+Detalhe 
+376 
+Número de inscrição da obra declarado na NFS-e 
+(XXXX/XXXXXXX-X) não confere com o número 
+de inscrição de obra do encapsulamento de 
+deduções (YYYY/YYYYYYY-Y) 
+Alterar número de inscrição de obra, ou escolher 
+encapsulamento cujo número de obra coincida 
+com o informado. Em caso de dúvidas, consulte o 
+Manual do Sistema Eletrônico da Construção Civil 
+– SISCON. 
+Detalhe 
+377 
+Valor de deduções declarado na NFS-e é menor 
+que o valor total de deduções contido no 
+encapsulamento. 
+Alterar Valor Total de Deduções informado no 
+arquivo, ou escolher encapsulamento cujo total de 
+deduções coincida com esse valor. Em caso de 
+dúvidas, consulte o Manual do Sistema Eletrônico 
+da Construção Civil – SISCON. 
+Detalhe 
+378 
+Não declare o número de inscrição da obra para 
+serviços tributados fora do município de São Paulo 
+ou para exportação de serviços. 
+Não informar o número de inscrição de obra. Em 
+caso de dúvidas, consulte o Manual do Sistema 
+Eletrônico da Construção Civil – SISCON. 
+Detalhe 
+379 Número de inscrição da obra inválido. 
+Alterar o número de inscrição de obra, ou suprimi-
+lo Atenção ao dígito verificador. Em caso de 
+dúvidas, consulte o Manual do Sistema Eletrônico 
+da Construção Civil – SISCON. 
+Detalhe 
+380 Número de inscrição da obra inexistente. 
+Alterar o número de inscrição de obra, ou suprimi-
+lo. Em caso de dúvidas, consulte o Manual do 
+Sistema Eletrônico da Construção Civil – SISCON. 
+Detalhe 
+381 Número do encapsulamento inválido. 
+Alterar o número de encapsulamento, ou suprimi-
+lo, zerando o valor total de deduções. Em caso de 
+dúvidas, consulte o Manual do Sistema Eletrônico 
+da Construção Civil – SISCON. 
+Detalhe 
+382 
+Encapsulamento de notas de subempreitadas e 
+materiais já foi vinculado à NFS-e nº X. 
+Utilizar outro número de encapsulamento. Em caso 
+de dúvidas, consulte o Manual do Sistema 
+Eletrônico da Construção Civil – SISCON. 
+Detalhe 
+383 
+Código de serviço não permite indicação do 
+número da obra. 
+Suprimir o número de obra, ou alterar o código de 
+serviço. Em caso de dúvidas, consulte o Manual 
+do Sistema Eletrônico da Construção Civil – 
+SISCON. 
+Detalhe 
+384 
+Número de encapsulamento de deduções foi 
+cancelado e não poderá ser utilizado. 
+Informar outro número de encapsulamento. Em 
+caso de dúvidas, consulte o Manual do Sistema 
+Eletrônico da Construção Civil – SISCON. 
+Detalhe 
+385 
+Valor de deduções declarado na NFS-e é maior 
+que o valor total de deduções do encapsulamento. 
+Alterar Valor Total de Deduções informado no 
+arquivo, ou escolher encapsulamento cujo total de 
+deduções coincida com esse valor. Em caso de 
+dúvidas, consulte o Manual do Sistema Eletrônico 
+da Construção Civil – SISCON. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 34 
+ 
+ 
+ETAPA CÓD. MENSAGEM SOLUÇÃO 
+Detalhe 
+386 
+NFS-e a ser cancelada foi selecionada para 
+deduções de subempreitadas. 
+Não será possível cancelar a referida NFS-e, salvo 
+se for retirada do encapsulamento de deduções 
+pelo tomador de serviços. Em caso de dúvidas, 
+consulte o Manual do Sistema Eletrônico da 
+Construção Civil – SISCON. 
+Detalhe 
+387 
+Para serviços isentos ou imunes não informe as 
+notas de subempreitadas e materiais. 
+Não preencher o campo número de 
+encapsulamento. Em caso de dúvidas, consulte o 
+Manual do Sistema Eletrônico da Construção Civil 
+– SISCON. 
+Detalhe 
+388 
+Data do fato gerador de uma ou mais notas de 
+subempreitadas ou registros de materiais é 
+posterior à data do fato gerador da NFS-e a ser 
+emitida pelo prestador de serviços. 
+Alterar conteúdo do encapsulamento escolhido, ou 
+escolher outro encapsulamento, ou verificar data 
+de execução da empreitada que será declarada na 
+NFS-e. Em caso de dúvidas, consulte o Manual do 
+Sistema Eletrônico da Construção Civil – SISCON. 
+Detalhe 
+389 
+Código de serviço não permite indicação do 
+número do encapsulamento. 
+Suprimir o número de encapsulamento, ou alterar 
+o código de serviço. Em caso de dúvidas, consulte 
+o Manual do Sistema Eletrônico da Construção 
+Civil – SISCON. 
+Detalhe 
+390 Número do encapsulamento inexistente. 
+Alterar o número de encapsulamento, ou suprimi-
+lo, zerando o valor total de deduções. Em caso de 
+dúvidas, consulte o Manual do Sistema Eletrônico 
+da Construção Civil – SISCON. 
+Detalhe 
+391 
+Código de atividade X,  não permite Deduções 
+para o Tipo de Registro='3' (Cupons). 
+Utilizar o tipo de registro 2. Em caso de dúvidas, 
+consulte o Manual do Sistema Eletrônico da 
+Construção Civil – SISCON. 
+Detalhe 1229 Cadastro Específico do INSS (CEI) inválido. Preencher o campo com o formato correto. 
+Detalhe 1232 O munícípio de São Paulo foi informado como 
+Município da Prestação mas o serviço é tributado 
+fora de São Paulo 
+Se o serviço for tributado fora de São Paulo não é 
+permitido informar Município da Prestação = São 
+Paulo 
+Detalhe 1234 Código do Serviço Prestado <código enviado> não 
+permite indicação do número do Cadastro 
+Específico do INSS (CEI). 
+Não informe o número do Cadastro Específico do 
+INSS (CEI). 
+Detalhe 1235 Tipo de Registro incompatível com a versão do 
+arquivo. 
+Preencha a versão do Arquivo no campo 02 do 
+cabeçalho com: 
+ 
+a) 001: se utilizado o layout versão V.001 
+(exclusivamente registro tipo 2 - detalhe) 
+ 
+a) 002: se utilizado o layout versão V.002 
+(exclusivamente registro tipo 6 - detalhe) 
+Detalhe 1236 Código de serviço não permite a indicação de 
+imunidade objetiva 
+O código de serviço informado não permite a 
+indicação da imunidade objetiva. Verifique a 
+legislação vigente. 
+Detalhe 1254 Prestador, tomador, código de serviço e/ou  tipo de 
+benefício fiscal não cadastrados por meio do 
+Sistema de Gestão de Benefícios Fiscais (GBF) 
+para a data de prestação informada. Para mais 
+informações, clique aqui. 
+Indicação de isenção não poderá ser informada. 
+Verifique o  cadastro de is enção no GBF para a 
+data do fato gerador  informada.  
+A declaração no GBF deverá ser providenciada 
+pelo prestador ou tomador de serviços, conforme o 
+caso.  
+Consulte a legislação municipal sobre o tema. 
+Detalhe 1255 Prestador, tomador, código de serviço e/ou  tipo de 
+benefício fiscal não cadastrados por meio do 
+Sistema de Gestão de Benefícios Fiscais (GBF) 
+para a data de prestação informada. Para mais 
+informações, clique aqui. 
+Indicação de isenção não poderá ser informada. 
+Código de serviço ou Categoria de benefício 
+informados na NFS-e não cadastrados por meio do 
+Sistema de Gestão de Benefícios Fiscais para a 
+data do fato gerador informada. 
+Consulte a legislação municipal sobre o tema. 
+Detalhe 1256 A isenção cadastrada no Sistema de Gestão de 
+Benefícios Fiscais (GBF) para o prestador de 
+serviços está vinculada a um CNPJ de tomador 
+diferente do informado, para a data de prestação 
+de serviço informada. 
+Tomador de serviços informado na NFS -e n ão 
+cadastrado por meio do Sistema de Gestão de 
+Benefícios Fiscais para o prestador de serviços e 
+para a data do fato gerador informada. Consulte a 
+legislação municipal sobre o tema. 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 35 
+ 
+ 
+ETAPA CÓD. MENSAGEM SOLUÇÃO 
+Detalhe 1600 O cancelamento de notas não pode ser realizado 
+por este meio. 
+A situação de RPS “C” deve ser utilizada única e 
+exclusivamente com a funcionalidade de 
+cancelamento. 
+Detalhe 1613 NFS-e não permite a indicação de isenção parcial 
+para profissional autônomo 
+Para profissional autônomo, não preencher o 
+campo Situação do RPS com “D” 
+Detalhe 1602 Somente registro do tipo Cancelamento é 
+permitido por essa opção. 
+Para se utilizar a funcionalidade de cancelamento, 
+o campo situação do RPS deve ser preenchido 
+com o valor “C”. 
+Detalhe 1604 A reemissão de notas não pode ser realizada por 
+essa opção. 
+Um RPS que já foi convertido só pode ser emitido 
+novamente pela funcionalidade de reemissão. 
+Detalhe 1609 Somente RPS já utilizados podem ser reemitidos. 
+RPS não será processado. 
+Não é possível reemitir um RPS que não foi 
+convertido em NFS-e. 
+Detalhe 1614 NFS-e não permite a indicação de isenção parcial 
+para Sociedade de Profissionais 
+Para Sociedade de Profissionais, não preencher o 
+campo Situação do RPS com “D” 
+Detalhe 1615 
+A indicação de isenção parcial (D) somente é 
+permitida para serviços com data de fato gerador a 
+partir de {0}. 
+A data de emissão do RPS não pode ser inferior à 
+13/02/2018 
+Detalhe 1616 Pessoa física não pode ser responsável tributário Não informe a retenção de ISS nos casos em que 
+o tomodor seja pessoa física 
+Detalhe 1620 RPS já convertido na NFS-e x. RPS não será 
+processado para reemissão. Verificar o manual. 
+No caso da reemissão, o arquivo não será 
+processado em qualquer destas situações: 
+- RPS não poderá ser enviado novamente, pois 
+está incluído em Guia de Recolhimento.  
+- RPS já convertido em NFS-e aceita pelo tomador 
+ou intermediário. 
+- RPS já convertido em NFS-e rejeitada com 
+emissão de NFTS pelo tomador ou intermediário. 
+- RPS não será processado, pois não possui 
+alterações. 
+Detalhe 1621 
+RPS já convertido na NFS-e x. RPS não será 
+processado para cancelamento. Verificar o 
+manual. 
+No caso do cancelamento, o arquivo não será 
+processado em qualquer destas situações: 
+- RPS não poderá ser cancelado, pois está 
+incluído em Guia de Recolhimento.  
+- RPS já convertido em NFS-e aceita pelo tomador 
+ou intermediário. 
+- RPS já convertido em NFS-e rejeitada com 
+emissão de NFTS pelo tomador ou intermediário. 
+Detalhe 1622 Campo reservado deve ser preenchido com 
+espaços em branco. 
+As posições reservadas para o Campo Reservado 
+devem ser todas preenchidas obrigatoriamente 
+com espaços em branco. 
+Detalhe 1630 
+Código de serviço (<código de serviço informado 
+no registro>) não permite indicação de Valor Total 
+Recebido. 
+Não preencha o campo Valor Total Recebido. 
+Detalhe 1631 
+Quando informado, o valor do campo Valor Total 
+Recebido deverá ser maior ou igual ao do campo 
+Valor Total do Serviço. 
+Preencha o campo Valor Total Recebido com valor 
+igual ou maior ao do campo Valor Total do Serviço, 
+ou deixe o campo em branco. 
+Detalhe 1632 Valor Total Recebido inválido. Preencha o campo apenas com números 
+Detalhe 1633 
+Os campos Valor Total Recebido e Valor Total das 
+Deduções não podem ser preenchidos 
+simultaneamente. 
+Preencha apenas um dos campos 
+ 
+ 
+5.2 RELAÇÃO DE ALERTAS 
+ETAPA CÓD. MENSAGEM INTERPRETAÇÃO 
+Detalhe 
+ 
+208 Alíquota informada (<alíquota informada no 
+registro>) difere da alíquota vigente (<Alíquota 
+cadastrada para a atividade>) para o código de 
+serviço informado. O sistema irá adotar a alíquota 
+vigente. 
+O sistema irá adotar a alíquota vigente. 
+ 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 36 
+ 
+ 
+ETAPA CÓD. MENSAGEM INTERPRETAÇÃO 
+Detalhe 
+ 
+209 Código do Serviço Prestado (<código de serviço 
+informado no registro> ) da NFS -e não está 
+cadastrado para o prestador de serviço. 
+O código de serviço não está cadastrado para o 
+CCM do prestador de serviços.  
+Detalhe 
+ 
+211 A inscrição mu nicipal do tomador não foi 
+encontrada na base de dados de CCM. 
+ 
+O sistema irá interpretar como se o Tomador não 
+tivesse inscrição no CCM. 
+ 
+Detalhe 214 Cidade/UF (<cidade/UF informada no registro>) 
+informada não foi encontrada na base de dados. 
+Informar uma cidade/UF válida. 
+Obs: Caso o CEP seja informado, na conversão do 
+RPS em NFS -e será considerada a Cidade e o 
+Estado vinculado ao CEP. 
+Detalhe 216 RPS já foi convertido individualmente em NFS -e 
+através do site e não será processado novamente. 
+O sistema irá ignorar este registro. 
+Detalhe 217 RPS reenviado com alterações. A NFS-e ({0}) será 
+cancelada e uma nova NFS-e será emitida. 
+Um mesmo RPS (com mesma numeração) já foi 
+enviado anteriormente, em outro lote, e possui 
+dados dif erentes do re -enviado neste a rquivo. 
+Neste caso o sistema irá cancelar a NFS -e 
+anteriormente vinculada ao RPS enviado e criar 
+uma nova NFS-e. Para apenas cancelar um RPS e 
+evitar este alerta, deve -se alterar apenas o campo 
+situação do RPS para “C” mantendo  todos os 
+demais campos com o s valores que foram 
+enviados anteriormente. 
+Detalhe 221 O CNPJ informado possui inscrição municipal em 
+São Paulo, porém foi informado endereço de fora 
+do município. 
+O sistema irá considerar o tomador conforme 
+todos os dados in formados no arquivo (endereço  
+de fora do município). 
+Detalhe 223 Nota Fiscal (<Nota Fiscal informada no registro>) 
+referente a este RPS está cancelada. RPS não 
+será processado, pois não possui alterações. 
+Refere-se a uma NFS-e já convertida e cancelada 
+por me io de arquivos anteriores . Esse registro 
+deve ser retirado do arquivo atual. 
+Detalhe 224 RPS já convertido na NFS-e (<Nota Fiscal 
+informada no registro>). RPS não será 
+processado, pois não possui alterações. 
+RPS já convertido em NFS-e por meio de arquivos 
+anteriores. Esse registr o deve ser retirado do 
+arquivo atual. 
+Detalhe 301 O tomador de serviços informado é o próprio 
+prestador. 
+Esta mensagem acusa a emissão de uma NFS-e 
+do prestador para o próprio prestador (o tomador 
+possui mesmo CPF/CNPJ e mesma  inscrição 
+municipal que o prestador). 
+Detalhe 302 CPF/CNPJ do Tomador de Serviços inválido. O cálculo dos dígitos verificadores de CPF (dois 
+últimos dígitos do CPF), não está correto. A NFS-e 
+não gerará crédito. 
+Detalhe 307 Código do Serviço Prestado <codigo enviado> da 
+NFS-e não está cadastrada para o prestador de 
+serviço 
+Verifique se o código de serviço informado está 
+correto. Se não estiver, proceda a atualização 
+cadastral junto à Prefeitura a ssim que possível , 
+pois o código informado não está cadastrado para 
+a sua inscrição municipal (CCM). 
+Detalhe 316 E-mail do tomador de serviços inválido. E -mail não 
+será enviado. 
+O e-mail do tomador de serviços não é válido. Este 
+campo será ignorado e não haverá envio de e -
+mail. 
+Detalhe 330 Prestador cadastrado como Sociedade de 
+Profissionais está utilizando código de Serviço 
+Prestado (<código de serviço informado no 
+registro>) de pessoas jurídicas normais, sujeitas 
+ao ISS pelo movimento econômico. 
+Verifique se o código de serviço informado está 
+correto. Se não estiver, proceda a atualização 
+cadastral junto à Prefeitura assim que possível, 
+pois o código informado não está cadastrado para 
+a sua inscrição municipal (CCM). 
+Detalhe 337 Dígitos verificadores do CPF do Tomador de 
+Serviços não conferem. Não haverá geração de 
+crédito. 
+Corrigir o CPF do Tomador do Serviço. 
+Detalhe 515 O intermediário do serviço informado é o próprio 
+prestador. 
+O intermediário está sendo declarado com o 
+mesmo CNPJ do prestador. 
+Detalhe 1227 O prestador de serviços deverá registrar a 
+solicitação de imunidade por meio do sistema de 
+declaração de imunidades. 
+Prestador de serviços não cadastrado por meio do 
+sistema de declaração de imunidades (SDI) para o 
+CCM e para a data do fato gerador informados. 
+Consulte a legislação municipal sobre o tema.  
+Detalhe 1251 O código de serviço e o tipo de isenção do ISS 
+deverão ser declarados pelo prestador ou tomador 
+Verifique o cadastro  no GBF para a data do fato 
+gerador informada. 
+O preenchimento prévio da Decla ração de 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 37 
+ 
+ 
+ETAPA CÓD. MENSAGEM INTERPRETAÇÃO 
+de serviços, conforme o caso, por meio do Sistema 
+de Gestão de Benefícios Fiscais (GBF). Para mais 
+informações, clique aqui. 
+Benefícios Fiscais no GBF será obrigatório para a 
+emissão da NFS-e com indicação de isenção para 
+serviços prestados a partir de 1º de julho de 2021 . 
+A declaração no GBF deverá ser providenciada 
+pelo prestador ou tomador de serviços, conforme o 
+caso.  
+Consulte a legislação municipal sobre o tema. 
+Detalhe 1252 O código de serviço e o tipo de isenção do ISS 
+deverão ser declarados pelo prestador ou tomador 
+de serviços, conforme o caso, por meio do Sistema 
+de Gestão de Benefícios Fiscais (GBF). Para mais 
+informações, clique aqui. 
+Verifique código de servi ço e categoria de 
+benefício no GBF para a data  do fato gerador  
+informada. 
+O preenchimento prévio da Declaração de 
+Benefícios Fiscais no GBF será obrigatório para a 
+emissão da NFS-e com indicação de isenção para 
+serviços prestados a partir de 1º de julho de 2021. 
+Consulte a legislação municipal sobre o tema. 
+Detalhe 1253 A isenção cadastrada no Sistema de Gestão de 
+Benefícios Fiscais (GBF) para o prestador de 
+serviços está vinculada a um CNPJ de tomador 
+diferente do informado, para a data de prestação 
+de serviço informada. 
+Tomador de serviços informado na NFS-e não 
+cadastrado por meio do Sistema de Gestão de 
+Benefícios Fiscais para o prestador de serviços e 
+para a data do fato gerador informada.  
+O preenchimento prévio da Declaração de 
+Benefícios Fiscais no GBF será obrigatório para a 
+emissão da NFS-e com indicação de isenção para 
+serviços prestados a partir de 1º de julho de 2021.  
+Consulte a legislação municipal sobre o tema. 
+ 
+Detalhe 1259 O código de serviço selecionado é específico para 
+os serviços de diversões públicas. A NFS-e poderá 
+ser gerada, porém o recolhimento do ISS relativo a 
+esta prestação de serviço deverá ser realizado 
+segundo as regras do Sistema de Diversões 
+Públicas – SDP 
+ 
+Com a instituição do Sistema de Diversões 
+Públicas – SDP, o recolhimento dos tributos 
+relativos às declarações geradas deverá ser feito 
+exclusivamente por meio de documento de 
+arrecadação gerado pelo SDP. Ficam obrigados à 
+entrega da declaração no SDP todos os 
+contribuintes, ainda que imunes ou isentos, 
+prestadores de serviços de diversões públicas 
+obrigados à emissão de bilhetes de ingresso, que 
+prestem serviços dentro do território do Município 
+de São Paulo. 
+As NFS-e emitidas nos códigos de serviços (em 
+princípio, até que sobrevenha novo ato da 
+Secretaria Municipal da Fazenda – SF, 08133, 
+08281 e 08290 do Anexo Único)  receberão 
+bloqueio de inexigibilidade do crédito tributário. 
+Nesta situação, as pendências geradas a partir da 
+emissão da NFS-e serão anuladas pela abertura 
+de um bloqueio. 
+Embora seja facultativo, alguns prestadores 
+podem optar por emitir NFS-e com tais códigos de 
+serviço de diversões públicas . Portanto, há 
+necessidade de o sistema apresentar essa 
+mensagem (alerta) apontando que o recolhimento 
+do ISS relativo à prestação de serviço deverá ser 
+realizado segundo as regras do SDP.  
+Detalhe 1612 
+Detalhe: Isenção Parcial (D): Conforme legislação 
+vigente, os benefícios fiscais não podem implicar 
+em uma alíquota efetiva inferior a 2% 
+O ISS do serviço será calculado com a aplicação 
+da alíquota mínima efetiva de 2% 
+Rodapé 
+ 
+906 Todas as linhas abaixo do rodapé foram 
+ignoradas. 
+O sistema irá ignorar todas a s li nhas abaixo do 
+rodapé. 
+ 
+ 
+ 
+5.3 RELAÇÃO DE PROCEDIMENTOS 
+No. Caso Procedimento adotado 
+1 CNPJ encontra -se cad astrado na base de contri buintes 
+municipal (CCM) 
+O sistema irá ignorar todos os demais dados deste tomador 
+(nome, endereço, etc...) 
+2 CPF/CNPJ encontra-se cadastrado no sistema de NFS-e 
+e exigiu que todas as NFS-e utilizem os dados informados 
+O si stema irá ignorar todos o s demais dados deste tomador 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 38 
+ 
+ 
+No. Caso Procedimento adotado 
+por ele (nome, endereço, etc...) 
+3 (Tomador informa o CEP) Cidade/UF não informada ou 
+não encontrada na base de dados 
+O sistema buscará a cidade através do CEP. Caso exista uma 
+cidade associada ao CEP informad o, o sistema adotará esta  
+cidade como sendo a cidade do Tomador. 
+4 (Tomador informa o CPF/CNPJ) Cidade/UF não 
+informada ou não encontrada e; CEP n ão encontrado ou 
+não informado. 
+O sistema utilizará a Cidade conforme os dados para o 
+CPF/CNPJ na Receita Federal. 
+ 
+5 (Tomador informa o CPF/CNPJ) Nome não informado. O sistema utilizará o Nome conforme os dados para o 
+CPF/CNPJ na Receita Federal. 
+ 
+6 (Tomador informa o CPF/CNPJ) Endereço não informado. O sistema utilizará o Endereço conforme os dados para o 
+CPF/CNPJ na Receita Federal. 
+ 
+7 CPF/CNPJ do Tomador não informado. Não haverá geração de crédito para o Tomador. 
+8 CNPJ encontra -se impossibilitado de e mitir notas como 
+imune 
+Verificar cadastro junto ao SDI (Sistema de Declaração de 
+Imunidade) 
+ 
+ 
+6. Arquivo de Retorno 
+ 
+ 
+Para obter um arquivo de retorno, contendo os dados da s NFS-e geradas após o envio do RPS, b asta 
+exportar o arquivo de NFS-e. Desta forma, é possível relacionar qual o número d e NFS-e geradas para 
+todos os RPS enviados, bem como ter acesso a outras informações geradas pelo sistema da NFS-e, tais 
+como o código de verificação, a data de quitação do ISS, entre outras. 
+ 
+O layout e as i nstruções deste arquivo de exportação de NFS-e pode ser obtido acessando o sistema e 
+clicando na aba ‘Exportação de NFS-e’. Também é p ossível obter este arquivo na seção de Manuais, 
+acessando http://notadomilhao.prefeitura.sp.gov.br/Nfe/empresas/informacoes-gerais/manuais .   
+ 
+ 
+7. Acesso ao Sistema 
+ 
+ 
+Para enviar, validar e processar o arquivo de envio de RPS em Lote é necessário acessar o sistema de 
+NFS-e e informar o CNPJ e a senha de acesso (Senha -Web)/Certificado Digital da empresa inscrita no 
+cadastro de contribuintes municipal (CCM).  
+ 
+Caso sua empresa não possua autorização para emissão de NFS-e, é permitido apenas o envio e 
+validação do arquivo, não s endo permitida a gravação deste. Com isto, é possível apenas validar o 
+arquivo, sem a necessidade de solicitar autorização para emissão de NFS-e. 
+ 
+ 
+ 
+ 
+8. Arquivo de Exemplo 
+ 
+Acesso o link a seguir para obter um arquivo de exemplo: 
+https://nfe.prefeitura.sp.gov.br/arquivos/rps.txt 
+9. Mais Informações 
+ 
+ 
+Envio de RPS em Lote – Instruções e Layout      Versão do Manual: 3.20        pág. 39 
+ 
+ 
+Para obter mais informações sobre o envio de RPS em Lote, acesse a seção “Perguntas e Respostas” 
+e “Manuais” no site http://notadomilhao.prefeitura.sp.gov.br/Nfe/empresas/informacoes-gerais/perguntas-
+e-respostas ou envie um e-mail para ni@prefeitura.sp.gov.br . 
+ 
+Para obter a versão mais atualizada deste documento, acesse a seção de Manuais, disponível no 
+endereço: 
+ 
+http://notadomilhao.prefeitura.sp.gov.br/Nfe/empresas/informacoes-gerais/manuais 

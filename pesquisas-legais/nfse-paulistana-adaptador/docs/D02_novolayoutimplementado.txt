@@ -1,0 +1,270 @@
+Prefeitura de São Paulo implementa novo layout da NFS-e com destaque de IBS e CBS - Secretaria Municipal da Fazenda - Prefeitura Pular para o Conteúdo principal 
+
+ Este site precisa que o seu navegador tenha JAVASCRIPT ativo para funcionar. 
+
+ Acesso à informação 
+ Divisor de acesso à informação 
+
+ Transparência São Paulo 
+ Divisor de transparência São Paulo 
+
+ Legislação 
+ Legislação 
+
+ Ouvidoria 
+ Ouvidoria 
+
+ 156 
+
+ LinkedIn da Prefeitura de São Paulo TikTok da Prefeitura de São Paulo YouTube da Prefeitura de São Paulo X da Prefeitura de São Paulo Instagram da Prefeitura de São Paulo Facebook da Prefeitura de São Paulo Diário Oficial 
+
+ Divisor de redes sociais 
+
+ Aumentar texto Diminuir texto Contrastar Acessibilidade 
+
+ Prefeitura de São Paulo 
+
+ Menu 
+ menu 
+
+ Órgãos Públicos arrow_drop_down 
+
+ Secretarias 
+
+ Outros órgãos 
+
+ Subprefeituras 
+
+ Serviços 
+
+ Notícias 
+
+ Menu close 
+
+ Aumentar texto Diminuir texto Contrastar Acessibilidade Acessibilidade Mobile 
+
+ Órgãos Públicos chevron_right 
+
+ Serviços 
+
+ Notícias 
+
+ Legislação 
+
+ Ouvidoria 
+
+ Mais opções chevron_left 
+
+ Secretarias 
+
+ Outros órgãos 
+
+ Subprefeituras 
+
+ Secretaria Municipal da Fazenda 
+
+ Procurar search 
+
+ Início 
+
+ Secretarias 
+
+ Secretaria Municipal da Fazenda 
+
+ Prefeitura de São Paulo implementa novo layout da NFS-e com destaque de IBS e CBS 
+
+ menu Menu do Site 
+
+ Acesso à Informação 
+
+ Participação Social 
+
+ Quadro de Serviços 
+
+ Proteção de Dados Pessoais 
+
+ Educação Fiscal 
+
+ Como acessar os Sistemas e Serviços 
+
+ Notícias 
+
+ Boletim Informativo SF 
+
+ Serviços e Orientações 
+ Administração Indireta 
+
+ Agenda Tributária 
+
+ Cadastro de Contribuintes Mobiliários (CCM) 
+
+ Cadastro de Prestadores de Outros Municípios (CPOM) 
+
+ Cadastro de Obras 
+
+ Cadastro Informativo Municipal (CADIN) 
+
+ Certidões (Emissão) 
+
+ Consulta Empenhos e Pagamentos 
+
+ Contribuição de Melhoria 
+
+ COSIP 
+
+ DEC 
+
+ DES-IF (Instituições Financeiras) 
+
+ Devolução e Restituição 
+
+ Dipam (Declaração para o IPM) 
+
+ Dívida Ativa 
+
+ DOC-DIMP (Meios de Pagamento) 
+
+ DUC (Demonstrativo Unificado) 
+
+ Imunidades e Isenções 
+
+ Incentivos Fiscais Zona Leste 
+
+ Indicadores Econômicos Municipais 
+
+ IPTU (Imposto Predial e Territorial) 
+
+ ISS (Imposto sobre Serviços) 
+
+ ISS (Construção Civil) 
+
+ ITBI (Transmissão de Imóveis) 
+
+ Multa IPTU (Obrigação Acessória) 
+
+ Nota Fiscal Paulistana 
+
+ Operações de Crédito 
+
+ Outros Serviços e Orientações 
+
+ Parcelamento de Tributos 
+
+ Pagamento de Tributos 
+
+ Passo a passo em vídeo 
+
+ Processos Administrativos 
+
+ Regularidade das UO's 
+
+ SAV - Solução de Atendimento Virtual 
+
+ Senha Web 
+
+ Serviço de Valet 
+
+ SIMBA - Sistema de Movimentação Bancária 
+
+ Simples Nacional (Supersimples) 
+
+ Sistema de Créditos - OTTCs 
+
+ Taxa de Resíduos Sólidos 
+
+ Taxas Mobiliárias 
+
+ Atendimento 
+
+ Contas Públicas 
+ Atas de Registro de Preços 
+
+ API-SOF 
+
+ Balancetes 
+
+ Balanço Anual 
+
+ Caderno do Orçamento 
+
+ Garantias 
+
+ Contratação de Organizações da Sociedade Civil - OSC 
+
+ Demonstrativos da LRF 
+
+ Licitações 
+
+ Orçamento 
+
+ Pagamento de Precatórios 
+
+ RSATM 
+
+ Manuais e Orientações 
+
+ Legislação Tributária Paulistana 
+
+ Instituto de Previdência Municipal - IPREM 
+
+ O fique em dia voltou! 
+
+Exibindo 1 - 1 de 3 resultados.
+
+1
+
+2
+
+3
+
+ Sexta-feira, 2 de Janeiro de 2026 | Horário: 15:23 
+
+ Compartilhe: 
+
+ Prefeitura de São Paulo implementa novo layout da NFS-e com destaque de IBS e CBS 
+
+Em atendimento às determinações da Lei Complementar 214/2025, a Prefeitura de São Paulo, por meio da Secretaria Municipal da Fazenda, implementou com sucesso o novo layout de emissão de Nota Fiscal de Serviço Eletrônica (NFS-e) com destaque de IBS e CBS já desde o primeiro dia de 2026.
+
+Durante o período de transição, o sistema da NFS-e não impedirá a emissão de nota fiscal sem o destaque dos novos tributos. Assim, para fatos geradores a partir de 1º/01/2026, o sistema permitirá a utilização de 2 layouts:
+
+Layout versão 1 (através dos métodos de emissão webservice, txt ou online): permite a emissão apenas com destaque de ISS;
+
+Layout versão 2 (através dos métodos de emissão webservice e online): permite a emissão com destaque de ISS, IBS e CBS.
+
+Já no primeiro dia de 2026 foram 122 contribuintes que emitiram notas com destaque de IBS e CBS, totalizando 1.566 notas. Até a última apuração (2/01) já foram emitidas cerca de 31 mil notas com o destaque de IBS e CBS. 
+
+A Secretaria Municipal da Fazenda continua trabalhando para implementar as adequações da Nota Técnica 5 e futuras regras que, porventura, venham a surgir. Em nosso site é possível conhecer as orientações sobre a emissão de NFS-e a partir de 1º de janeiro de 2026, e também a respeito da criação de códigos de serviços novos, com encerramento de alguns códigos antigos.
+
+collections 
+
+Galeria de imagens
+
+ São Paulo, cidade inteligente, resiliente e sustentável 
+
+Secretaria Municipal da Fazenda
+
+Rua Libero Badaró, 190, Centro – CEP 01008-000
+
+Contatos
+
+ mail Fale com a Fazenda 
+
+ call 156 
+
+ © COPYRIGHT 2026, Prefeitura Municipal de São Paulo Viaduto do Cha, 15 - Centro - CEP: 01002-020 
+
+ HAND TALK 
+
+ Clique neste componente para ter acesso as configurações do plugin Hand Talk 
+
+ Oculto 
+
+ A Prefeitura de São Paulo valoriza sua privacidade! 
+
+ Em nosso site, utilizamos cookies, que são arquivos salvos no seu computador para auxiliar a coletar informações sobre suas preferências e sobre outras páginas da internet visitadas por você a fim de otimizar sua experiência de navegação em nosso site, apresentando conteúdos personalizados. Ao selecionar "Aceitar todos", você consente com a utilização de cookies. Saiba mais 
+
+ Configuração 
+
+ Aceitar tudo 
+
+ Recusar tudo

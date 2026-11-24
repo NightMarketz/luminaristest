@@ -1,0 +1,141 @@
+» Prestadores - Nota Fiscal Paulistana Prestadores – Nota Fiscal Paulistana 
+
+ Ir para o topo1 
+
+ Ir para o conteúdo2 
+
+ Ir para a busca3 
+
+ Ir para o menu4 
+
+ Ir para o rodapé5 
+
+ dark_mode light_mode 
+
+ menu search Buscar no site search Acessar o sistema 
+
+Início
+
+ Perfis expand_more 
+
+ Prestador de Serviços expand_more 
+
+Pessoa Jurídica
+
+Pessoa Física
+
+Simples Nacional
+
+MEI
+
+Tomador de serviços
+
+Contador
+
+Desenvolvedor WebService
+
+Sorteios
+
+Notícias
+
+Serviços
+
+Legislação
+
+Informações Gerais
+
+Reforma tributária
+
+Manuais
+
+ house chevron_right 
+
+Prestador
+
+Prestador de serviços
+
+ Pessoa Jurídica 
+
+ Simples Nacional 
+
+ Pessoa Física 
+
+ MEI 
+
+ A Prefeitura do Município disponibiliza aos prestadores de serviço estabelecidos neste município o sistema de NFS-e para emissão do documento fiscal. 
+
+ Para saber mais, identifique o seu perfil e clique em um dos botões acima. 
+
+ O que é a nota fiscal de serviços eletrônica (NFS-e) 
+
+A Nota Fiscal de Serviços Eletrônica (NFS-e) é o documento emitido e armazenado eletronicamente em sistema próprio da Prefeitura da Cidade de São Paulo ou no Ambiente Nacional da NFS-e, conforme o enquadramento do prestador, com o objetivo de registrar as operações relativas à prestação de serviços.
+
+ Quem está obrigado à emissão da NFS-e 
+
+Conforme determinado pela Instrução Normativa SF/SUREM nº 10, de 12 de agosto de 2011, com as alterações introduzidas pela Instrução Normativa SF/SUREM nº 13, de 4 de novembro de 2026, estão obrigados à emissão da NFS-e todos os prestadores de serviços, independentemente da receita bruta de serviços, sendo opcional nos seguintes casos:
+
+I – as instituições financeiras e demais entidades obrigadas à entrega da Declaração de Instituições Financeiras – DIF;
+
+II – os serviços de transporte público de passageiros realizados pela Companhia do Metropolitano de São Paulo – Metrô e pela Concessionária da Linha 4 do Metrô de São Paulo S.A.;
+
+III – os prestadores de serviços enquadrados exclusivamente em um ou mais dos seguintes códigos de serviço: 01481 e 02330.
+
+A emissão da NFS-e por meio do Ambiente Nacional é obrigatória para os seguintes prestadores de serviços, conforme o artigo 1º-A da Instrução Normativa SF/SUREM nº 10/2011, com as alterações introduzidas pela Instrução Normativa SF/SUREM nº 13, de 4 de novembro de 2026:
+
+I – Microempreendedores Individuais (MEI), quando os tomadores dos serviços estiverem inscritos no Cadastro Nacional da Pessoa Jurídica – CNPJ;
+
+II – microempresas (ME) e empresas de pequeno porte (EPP) optantes pelo Simples Nacional, inclusive nas hipóteses de opção pendente em discussão administrativa que possa resultar em inclusão retroativa no regime ou de impedimento previsto no artigo 12 da Resolução CGSN nº 140/2018;
+
+III – profissionais liberais e autônomos que fazem jus à isenção prevista no artigo 1º da Lei Municipal nº 14.864/2008;
+
+IV – sociedades optantes pelo Simples Nacional autorizadas a permanecer enquadradas como sociedades uniprofissionais.
+
+Para o Microempreendedor Individual (MEI), a emissão da NFS-e Nacional é facultativa quando o tomador do serviço for consumidor final pessoa física.
+
+Os prestadores obrigados à utilização do Emissor Nacional não poderão emitir NFS-e pelo sistema eletrônico próprio do Município de São Paulo, observadas as regras aplicáveis à emissão de documentos relativos a competências anteriores à migração. A vedação também se aplica às ME, EPP e sociedades mencionadas nos incisos II e IV que venham a ser posteriormente desenquadradas do Simples Nacional.
+
+Conforme o artigo 10 da Instrução Normativa SF/SUREM nº 13/2026, a obrigatoriedade de utilização do Emissor Nacional aplica-se às ME, EPP e sociedades uniprofissionais optantes pelo Simples Nacional desde 1º de novembro de 2026 e aos profissionais liberais e autônomos abrangidos pela norma desde 1º de agosto de 2026.
+
+ O que é necessário para emissão da NFS-e 
+
+Para acessar o perfil de prestador de serviços e emitir uma NFS-e, faça o seu login no sistema.
+
+Para emitir a NFS-e pelo sistema municipal, certifique-se de que os seguintes requisitos foram cumpridos:
+
+Possuir registro no CCM – Cadastro de Contribuintes Mobiliários;
+
+Possuir pelo menos um código de serviço válido atrelado ao registro no CCM;
+
+Ter solicitado autorização para emissão de NFS-e.
+
+Os prestadores obrigados à utilização do Emissor Nacional deverão acessar o Portal Nacional da NFS-e e observar os requisitos e procedimentos de emissão estabelecidos para aquele ambiente.
+
+Para saber mais, consulte os manuais correspondentes ao sistema utilizado.
+
+ Meios de acesso: a senha web e o certificado digital 
+
+O acesso ao sistema para emissão de NFS-e pelos Prestadores Pessoa Jurídica deve ser realizado mediante a utilização de certificado digital. Para prestadores optantes pelo Simples Nacional, o uso do certificado não é obrigatório e o acesso poderá ser feito através de senha web. 
+
+Clique aqui para mais informações sobre a obrigatoriedade do uso do certificado digital.
+
+ Emitindo uma NFS-e 
+
+As empresas optantes pelo Simples Nacional devem seguir procedimentos específicos relacionados à emissão de NFS-e e recolhimento do ISS.
+
+Se o contribuinte estiver enquadrado no regime de tributação “Simples Nacional – DAS”, o ISS deverá ser recolhido por meio da guia específica (DAS – Documento de Arrecadação do Simples Nacional), gerada por meio do Portal do Simples Nacional ou outros canais disponibilizados pela Receita Federal do Brasil.
+
+ O que fazer no caso de emissão de NFS-e com regime de tributação incorreto? 
+
+Os contribuintes optantes pelo Simples Nacional devem selecionar o regime de tributação “Simples Nacional – DAS” no sistema da NFS-e. As NFS-e eventualmente emitidas com o regime incorreto devem ser corrigidas pela funcionalidade “Enquadramento Retroativo”.
+
+ Para mais informações sobre o procedimento de emissão de NFS-e, consulte a relação de Perguntas e respostas e os manuais. 
+
+ Voltar ao topo stat_1 
+
+ error 
+O Javascript do navegador está desabilitado. Habilite o Javascript nas configurações do navegador para a melhor utilização do sistema.
+
+Secretaria Municipal da Fazenda
+
+Rua Líbero Badaró, 190, Centro - CEP: 01008-000
+ mail Fale com a Fazenda phone 156
