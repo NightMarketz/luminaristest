@@ -41,7 +41,7 @@ import type { PostingService } from './PostingService';
 import type { FiscalDocumentEmissionService, FiscalDocumentView } from './FiscalDocumentEmissionService';
 import { selectDfeEmissor } from '../dfe/selectDfeEmissor';
 import { resolveEmissorFor } from '../dfe/resolveEmissor';
-import { ambienteFromTpAmb, assertTpAmb, DfeTransporteError, tpAmbFor } from '../dfe/DfeEmissorPort';
+import { ambienteFromTpAmb, assertTpAmb, DfeTransporteError, DfeTransporteIndisponivelError, tpAmbFor } from '../dfe/DfeEmissorPort';
 import type { CancelInput, CancelResult, DfeAmbiente, DfeCallContext, DfeEmissorPort, EmissaoResult, EventoNfse } from '../dfe/DfeEmissorPort';
 import { AssinaturaRemotaError, isSessaoPscVencida } from '../dfe/AssinadorRemotoPort';
 import { bloqueioSessaoPsc } from './DfeAssinaturaResolver';
@@ -244,7 +244,7 @@ export const POLL_PENDING_LIMIT = 100;
 
 /** A mensagem que fica em `pollLastError` e nos logs: a falha de transporte da SEFAZ leva o código (`sefaz_http`, `sefaz_timeout`...). */
 function descreverErroDePoll(error: unknown): string {
-  if (error instanceof DfeTransporteError) return `${error.code}: ${error.message}`;
+  if (error instanceof DfeTransporteError || error instanceof DfeTransporteIndisponivelError) return `${error.code}: ${error.message}`;
   return error instanceof Error ? error.message : String(error);
 }
 
@@ -379,6 +379,15 @@ export class FiscalDocumentLifecycleService {
         summary.updated++;
       } catch (error) {
         const message = descreverErroDePoll(error);
+        if (error instanceof DfeTransporteIndisponivelError) {
+          // O transporte local não está de pé (assinador fora): a nota já foi enviada, a consulta nem saiu daqui. Adia sem
+          // gastar tentativa e sem tocar a contagem/backoff que o documento já tinha — a caixa desligada à noite não faz o
+          // polling desistir (L-…580f).
+          logger.warn('dfe_poll_pending: transporte indisponível — documento adiado, sem gastar tentativa', { documentId: doc.id, error: message });
+          summary.skipped++;
+          await this.adiarPoll(scope, doc, now);
+          continue;
+        }
         if (isDfeSkippableError(error)) {
           logger.warn('dfe_poll_pending: skip (erro de código próprio)', { documentId: doc.id, error: message });
           summary.skipped++;

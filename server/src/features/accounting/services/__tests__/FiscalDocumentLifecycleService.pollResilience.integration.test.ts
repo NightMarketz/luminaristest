@@ -31,7 +31,7 @@ import {
   POLL_MAX_ATTEMPTS,
 } from '@/features/accounting/services/FiscalDocumentLifecycleService';
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
-import { DfeTransporteError, type EmissaoResult } from '@/features/accounting/dfe/DfeEmissorPort';
+import { DfeTransporteError, DfeTransporteIndisponivelError, type EmissaoResult } from '@/features/accounting/dfe/DfeEmissorPort';
 import { enviarTentativa } from '@/features/accounting/services/dfeEnvio';
 
 const DONO = 'u-dfe-poll-res';
@@ -202,6 +202,38 @@ describe('Onda 4 / 4.1 — polling de DF-e: teto, backoff e sem head-of-line (SQ
     expect(chamadasDe(d.id)).toBe(1); // reconsultou este documento (os outros do banco compartilhado não contam)
     expect(emitir).toHaveBeenCalledTimes(1); // e não reenviou
     expect((await row(d.id)).status).toBe('AUTHORIZED');
+  });
+
+  it('transporte indisponível (assinador local fora): ~3 h de ticks NÃO gastam tentativa nem desistem; ao voltar, o documento autoriza (L-…580f)', async () => {
+    const d = await pendente('assinador-fora');
+    portaCom(d.id, () => new DfeTransporteIndisponivelError('dfe_assinador_sem_dispositivo', 'caixa desligada'));
+    // 10 ticks de 1 h simuladas (o teto de tentativas de uma falha comum é 8; o relógio é injetado, nada espera)
+    for (let i = 0; i < POLL_MAX_ATTEMPTS + 2; i += 1) {
+      const t = await tick({ avanco: HORA });
+      expect(t.gaveUp ?? 0).toBe(0);
+    }
+    const fora = await row(d.id);
+    expect(fora.pollGaveUpAt).toBeNull();
+    expect(fora.pollAttempts).toBe(0);
+    expect(fora.status).toBe('PROCESSING');
+    expect(fora.nextPollAt).not.toBeNull(); // adiado, não esquecido
+
+    // contagem que já existia fica: adiar não reinicia o backoff
+    const d2 = await pendente('assinador-fora-2');
+    portaCom(d2.id, () => new DfeTransporteError('sefaz_http', 'HTTP 503'));
+    await tick();
+    expect((await row(d2.id)).pollAttempts).toBe(1);
+    portaCom(d2.id, () => new DfeTransporteIndisponivelError('dfe_assinador_sem_dispositivo', 'caixa desligada'));
+    await tick();
+    expect((await row(d2.id)).pollAttempts).toBe(1);
+
+    // a caixa volta: ambos autorizam
+    mockPort.consultar.mockImplementation(
+      async (ref: string): Promise<EmissaoResult> => ({ status: 'AUTHORIZED', partnerRef: ref, chaveOuCodigo: `CH-${ref}`, numero: '1', errors: [] }),
+    );
+    await tick();
+    expect((await row(d.id)).status).toBe('AUTHORIZED');
+    expect((await row(d2.id)).status).toBe('AUTHORIZED');
   });
 
   it('consulta manual (consultarUm) de documento que o job abandonou: se der certo, volta ao polling', async () => {
