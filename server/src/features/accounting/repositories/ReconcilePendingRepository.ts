@@ -59,7 +59,21 @@ export class ReconcilePendingRepository implements IReconcilePendingRepository {
   ): Promise<number> {
     const result = await (tx ?? prisma).reconcilePendingItem.updateMany({
       where: { ...accountingScopeWhere(scope), sourceType, sourceId, resolvedAt: null },
-      data: { resolvedAt: new Date() },
+      // alertedAt volta a null: um reaparecimento depois de resolvido é um BLOCKED novo e alerta de novo (CANCELLING PR-0, 0.9).
+      data: { resolvedAt: new Date(), alertedAt: null },
+    });
+    return result.count;
+  }
+
+  public async markAlerted(
+    scope: AccountingScope,
+    sourceType: string,
+    sourceId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<number> {
+    const result = await (tx ?? prisma).reconcilePendingItem.updateMany({
+      where: { ...accountingScopeWhere(scope), sourceType, sourceId, resolvedAt: null, alertedAt: null },
+      data: { alertedAt: new Date() },
     });
     return result.count;
   }

@@ -3135,7 +3135,12 @@
       "PACKAGE_CONSUMPTION_PENDING": "Aguardando o débito do consumo do pacote",
       "PACKAGE_ORIGIN_REVERSED": "A venda de origem do pacote foi estornada",
       "PACKAGE_EXPIRY_NFSE_PENDING": "Falta dado para a NFS-e do pacote vencido",
-      "UNKNOWN_EVENT_KEY": "Evento que nenhum kit de setor declara — erro de quem emite o evento; acione o suporte"
+      "UNKNOWN_EVENT_KEY": "Evento que nenhum kit de setor declara — erro de quem emite o evento; acione o suporte",
+      "PAYMENT_REVERSAL_INVARIANT_VIOLATED": "Estorno do pagamento já está no razão, mas o saldo do título não o comporta — exige conferência do operador",
+      "RECEIPT_REVERSAL_INVARIANT_VIOLATED": "Estorno do recebimento já está no razão, mas o saldo do título não o comporta — exige conferência do operador",
+      "IMPOSTO_JA_RECOLHIDO": "Imposto retido já recolhido — estorne o DARF antes de cancelar",
+      "JCP_JA_PAGO": "JCP com pagamento lançado — estorne a baixa e repita o cancelamento",
+      "CANCEL_REDRIVE_FAILED": "Cancelamento em andamento que ainda não concluiu — será repetido; confira o período e o estoque"
     }
   },
   "simples": {

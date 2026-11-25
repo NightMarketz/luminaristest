@@ -18,6 +18,14 @@
  *              houver e conclui a tx do subrazão; nunca finaliza como pago o pagamento cujo lançamento já está estornado)
  *              teste: SubledgerReversalAtomicity.integration.test.ts › "razão estornado + pagamento ACTIVE → reconcilePayables conclui o estorno (CANCELLED, título reaberto, 1 auditoria, sem 2º estorno)"
  *              teste: SubledgerReversalAtomicity.integration.test.ts › "o estorno já está no razão e o período FECHOU → repetir cancelPayment conclui"
+ *   CANCELLING (BE-INCR-CANCELAMENTO-CANCELLING PR-0, 69c7) — cancelPayable NÃO tem mais um commit 1 sem marca: o CAS de intenção
+ *              OPEN|PARTIALLY_PAID|PAID → CANCELLING (subrazão, tx própria, + audit payable.cancel_requested) é gravado ANTES de qualquer
+ *              efeito; depois estoque (replay-seguro), reverseEntry da retenção e do reconhecimento (commit 1, razão, idempotente) e por fim
+ *              CANCELLING → CANCELLED numa tx (commit 2). Falha depois da intenção NÃO compensa: o título fica CANCELLING, o AppError original
+ *              sobe e o reconcile (passo 1b) ou uma nova chamada retomam, repetindo só o idempotente.
+ *              teste: PayableService.cancelling.integration.test.ts › "crash depois do estoque: o título fica CANCELLING e o 2º cancelPayable conclui sem 2º decremento, sem 2º estorno e com 1 payable.cancelled"
+ *              teste: PayableService.cancelling.integration.test.ts › "reconcile passo 1b: razão já estornado + período fechado ⇒ conclui (replay antes do gate)"
+ *              teste: PayableService.cancelling.integration.test.ts › "reconcile 2x: a 2ª passada não repete nada"
  *   RETENCOES-FONTE PR-2 (F-RET-10 a) — a retenção feita é baixa SEM caixa (kind WITHHOLDING) gravada na tx1 do título (ou na
  *              tx da baixa, para a CSRF) com a TaxWithholding e o título de imposto; o razão vem depois, em postEntry próprio
  *              (sourceType='ap.withholding', sourceId=paymentId): D 2.1.2 / C conta a recolher. Falha do post ⇒ o reconcile refaz.
@@ -41,10 +49,14 @@ import {
   deletedDocumentNumber,
   hasSingleInventorySku,
   isInventoryPurchase,
+  PAYABLE_CANCEL_PENDING_SOURCE_TYPE,
   PAYABLE_SETTLEABLE_STATUSES,
   PAYABLE_TRANSITIONS,
   payableStatusForBalance,
+  PAYMENT_CANCEL_PENDING_SOURCE_TYPE,
   PAYMENT_REVERSAL_INVARIANT_CODE,
+  TITULO_EM_CANCELAMENTO_CODE,
+  TITULO_MUDOU_DURANTE_O_CANCELAMENTO_CODE,
   resolvePaymentMethodAccount,
   type PayableStatus,
 } from '../models/Payable.model';
@@ -68,6 +80,8 @@ import type { ISourceProvenanceRepository } from '../repositories/ISourceProvena
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostEntryInput } from '../dtos/PostingDto';
 import { syncSkipErrorCode } from '../sync/AccountingSyncPort';
+import type { ReconcilePendingReasonCodeValue } from '../dtos/ReconcilePendingDto';
+import type { PendingAlertMode, ReconcilePendingRecorder } from './reconcilePendingRecorder';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
 import type { IInventoryService } from './IInventoryService';
@@ -223,6 +237,9 @@ export class PayableService implements IFixedAssetDraftRedriver {
     // recognition para o re-drive de rascunho relê-la (`redriveFixedAssetDrafts`) — nunca uma 2ª
     // cópia do breakdown na linha do Payable (decisão do dono 23/09).
     private readonly sourceProvenanceRepo?: ISourceProvenanceRepository,
+    // OPTIONAL (BE-INCR-CANCELAMENTO-CANCELLING PR-0, item 0.9): grava o BLOCKED/pendência do cancelamento na bandeja do reconcile e alerta
+    // na 1ª captura. Ausente = comportamento anterior (só log) — o factory o liga; testes de unidade que não o exercitam não precisam dele.
+    private readonly pendingRecorder?: ReconcilePendingRecorder,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -543,30 +560,15 @@ export class PayableService implements IFixedAssetDraftRedriver {
   }
 
   /**
-   * RETENCOES-FONTE PR-2 (item 21) — estorno das retenções do RECONHECIMENTO antes do cancelamento do título: só quando as
-   * baixas ativas do título são todas sem caixa da retenção (pagamento ativo ⇒ o cancelamento segue recusando). Gate antes
-   * do razão (título de imposto já baixado ⇒ 409), depois os estornos no razão, depois a tx do subrazão. `true` = estornou.
+   * RETENCOES-FONTE PR-2 (item 21) — as retenções do RECONHECIMENTO que o cancelamento do título leva junto: só quando as baixas ativas
+   * do título são todas sem caixa da retenção (pagamento ativo ⇒ o cancelamento segue recusando). CANCELLING PR-0 (F-CX-1 a): em vez de
+   * estornar ANTES da marca, o cancelamento grava o `CANCELLING` e o estorno das retenções (razão + subrazão) vira parte do `driveCancelling`.
    */
-  private async estornarRetencoesDoReconhecimento(scope: AccountingScope, payable: PayableWithPayments, dto: CancelPayableInput): Promise<boolean> {
+  private async linhasRetencaoDoReconhecimento(scope: AccountingScope, payable: { id: string; payments: readonly { status: string; kind: string }[] }): Promise<TaxWithholding[]> {
+    if (!this.withholding) return [];
     const ativos = payable.payments.filter((p) => p.status === 'ACTIVE');
-    if (ativos.some((p) => p.kind !== WITHHOLDING_KIND)) return false;
-    const linhas = (await this.withholding!.repo.findActiveByTitle(scope, 'PAYABLE', payable.id)).filter((l) => l.event === 'RECOGNITION');
-    if (linhas.length === 0) return false;
-    await this.withholding!.service.assertEstornavel(scope, linhas);
-    await this.reverterLancamentosDeRetencao(scope, linhas, dto);
-    await this.payableRepo.runTransaction(async (tx) => {
-      const liberado = await this.withholding!.service.reverterNaTx(scope, linhas, tx);
-      if (liberado > 0 && (await this.payableRepo.releaseSettlement(scope, payable.id, liberado, tx)) === 0) {
-        throw new ValidationError('Não foi possível estornar as retenções: o saldo liquidado não comporta o estorno (invariante violado).');
-      }
-      const row = await this.payableRepo.findById(scope, payable.id, tx);
-      if (row) {
-        const status = payableStatusForBalance(centsFromDb(row.paidCents), centsFromDb(row.amountCents));
-        assertPayableRecalc(row.status, status);
-        await this.payableRepo.updatePayable(scope, payable.id, { status }, tx);
-      }
-    });
-    return true;
+    if (ativos.some((p) => p.kind !== WITHHOLDING_KIND)) return [];
+    return (await this.withholding.repo.findActiveByTitle(scope, 'PAYABLE', payable.id)).filter((l) => l.event === 'RECOGNITION');
   }
 
   /** Item 21 — estorna no razão (T5, período da data do estorno) o lançamento `ap.withholding` de cada linha; idempotente. */
@@ -691,6 +693,10 @@ export class PayableService implements IFixedAssetDraftRedriver {
         'Compra de estoque requer o serviço de estoque configurado (wiring de inventário pendente).',
       );
     }
+    // CANCELLING PR-0 (0.8): recebimento de estoque novo sobre título em cancelamento re-receberia o que o cancelamento desfaz.
+    if ((await this.payableRepo.findById(scope, params.payableId))?.status === 'CANCELLING') {
+      throw new ConflictError('A conta a pagar está em cancelamento — não recebe estoque.', TITULO_EM_CANCELAMENTO_CODE);
+    }
 
     const failed: Array<{ productRef: string; error: unknown }> = [];
     let received = 0;
@@ -745,6 +751,10 @@ export class PayableService implements IFixedAssetDraftRedriver {
 
     const payable = await this.payableRepo.findByIdWithPayments(scope, payableId);
     if (!payable) throw new NotFoundError(`Conta a pagar '${payableId}' não foi encontrada.`);
+    // CANCELLING PR-0 (0.8, F-CX-3 a): título em cancelamento é vivo para a leitura e morto para a escrita nova.
+    if (payable.status === 'CANCELLING') {
+      throw new ConflictError('A conta a pagar está em cancelamento — não aceita baixa.', TITULO_EM_CANCELAMENTO_CODE);
+    }
     // Guard pré-CAS (ADR F-PS2, site 2): OPEN and PARTIALLY_PAID may take another payment.
     if (!(PAYABLE_SETTLEABLE_STATUSES as readonly string[]).includes(payable.status)) {
       throw new ValidationError(
@@ -910,6 +920,8 @@ export class PayableService implements IFixedAssetDraftRedriver {
       const payable = await this.payableRepo.findById(scope, input.payableId, tx);
       if (!payable || payable.deletedAt) throw new NotFoundError(`Conta a pagar '${input.payableId}' não foi encontrada.`);
       if (payable.status === 'CANCELLED') throw new ValidationError('Conta a pagar cancelada — o crédito não pode ser apropriado.');
+      // CANCELLING PR-0 (0.8): o crédito de um título que está sendo cancelado não se apropria (o cancelamento o leva junto).
+      if (payable.status === 'CANCELLING') throw new ConflictError('A conta a pagar está em cancelamento — o crédito não pode ser apropriado.', TITULO_EM_CANCELAMENTO_CODE);
       const [comprovante] = await sourceRepo.findActiveSourceDocumentsByIds(scope, [input.sourceDocumentId], tx);
       if (!comprovante) {
         throw new ValidationError(`Comprovante '${input.sourceDocumentId}' não existe neste escopo — a apropriação exige o documento da extinção (F-IBS-4 a).`);
@@ -939,23 +951,36 @@ export class PayableService implements IFixedAssetDraftRedriver {
     });
   }
 
+  /**
+   * Cancela o título (estorno do reconhecimento + `CANCELLED`) em DOIS commits com a INTENÇÃO gravada antes (BE-INCR-CANCELAMENTO-CANCELLING
+   * PR-0, lacuna 69c7; cédula D-2026-11-25-FORKS-DRENAGEM-DA-CAIXA "Estado CANCELLING persistido"):
+   *   1. pré-cheques de LEITURA (período aberto na data do estorno, estoque suficiente, imposto retido não recolhido): nada mutou até aqui;
+   *   2. tx: re-lê o título, CAS `OPEN|PARTIALLY_PAID|PAID → CANCELLING` (data/motivo/ator gravados) + `payable.cancel_requested`;
+   *   3. efeitos, na ordem: estoque (replay-seguro por `reversalEventId`), físico, retenções e reconhecimento no razão (idempotentes);
+   *   4. `completePayableCancellation`: `CANCELLING → CANCELLED` + retenções no subrazão numa tx.
+   * Falha em 3/4 NÃO compensa (AC-2.3-1): o título fica `CANCELLING`, o erro original sobe e a pendência é registrada; repetir a chamada, o
+   * `/reconcile` ou o job de re-drive retomam (a intenção persistida prevalece sobre o corpo novo — item 0.5).
+   */
   async cancelPayable(scope: AccountingScope, payableId: string, dto: CancelPayableInput): Promise<Payable> {
     if (!this.policy.canManagePayable(scope)) {
       throw new ForbiddenError('Você não tem permissão para cancelar contas a pagar.');
     }
-    let payable = await this.payableRepo.findByIdWithPayments(scope, payableId);
+    const payable = await this.payableRepo.findByIdWithPayments(scope, payableId);
     if (!payable) throw new NotFoundError(`Conta a pagar '${payableId}' não foi encontrada.`);
     if (payable.status === 'CANCELLED') return payable; // idempotent
     // RETENCOES-FONTE PR-2 (item 19): o título de imposto é gerido pelas retenções — some quando elas são estornadas.
     if (payable.origin === PAYABLE_ORIGIN_WITHHOLDING_TAX) {
       throw new ValidationError('TITULO_IMPOSTO_GERIDO_PELAS_RETENCOES: o título de imposto encolhe com o estorno das retenções; cancele o título de origem.', null, 'TITULO_IMPOSTO_GERIDO_PELAS_RETENCOES');
     }
-    // RETENCOES-FONTE PR-2 (item 21): título só com as baixas sem caixa da retenção do reconhecimento ⇒ estorna-as antes
-    // (título de imposto já baixado ⇒ 409), e o cancelamento segue com o título de volta a OPEN.
-    if (this.withholding && (await this.estornarRetencoesDoReconhecimento(scope, payable, dto))) {
-      payable = (await this.payableRepo.findByIdWithPayments(scope, payableId))!;
-    }
-    if (payable.status !== 'OPEN') {
+    // Item 0.5 — retomada: o título já tem a intenção gravada; a data/motivo/ator PERSISTIDOS prevalecem sobre o `dto` desta chamada.
+    if (payable.status === 'CANCELLING') return (await this.driveCancellingRecording(scope, payable)).payable;
+
+    // RETENCOES-FONTE PR-2 (item 21) + F-CX-1 (a): título só com as baixas sem caixa da retenção do reconhecimento ⇒ as retenções saem junto
+    // (título de imposto já baixado ⇒ 409, ANTES de qualquer marca ou estorno), e o título pode estar PARTIALLY_PAID|PAID por causa delas.
+    const linhas = await this.linhasRetencaoDoReconhecimento(scope, payable);
+    const comRetencao = linhas.length > 0;
+    if (comRetencao) await this.withholding!.service.assertEstornavel(scope, linhas);
+    if (payable.status !== 'OPEN' && !(comRetencao && (payable.status === 'PARTIALLY_PAID' || payable.status === 'PAID'))) {
       throw new ValidationError(
         payable.status === 'PAID'
           ? 'Desfaça o pagamento (cancelar pagamento) antes de cancelar a conta.'
@@ -965,43 +990,134 @@ export class PayableService implements IFixedAssetDraftRedriver {
       );
     }
     // Defense-in-depth: an OPEN payable should have no active payment, but never cancel over one.
-    const activePayment = await this.payableRepo.findActivePayment(scope, payableId);
-    if (activePayment) {
+    if (!comRetencao && (await this.payableRepo.findActivePayment(scope, payableId))) {
       throw new ValidationError('Desfaça o pagamento ativo antes de cancelar a conta.');
     }
+    await this.assertCancelPrechecks(scope, payable, linhas, dto.reversalDate);
 
-    // INCR-INVENTORY D3(b): an inventory purchase received stock at create — un-receive it at the
-    // ORIGINAL receipt cost BEFORE reversing the ledger, so an insufficient-stock rejection (the goods
-    // were already sold) aborts the cancel cleanly instead of leaving a half-done ledger reversal.
-    // Idempotent by a reversalEventId distinct from the receipt key (payableId), so a retried cancel
-    // replays without a second decrement. Keeps the tie-out Σ==saldo(1.1.6) intact.
+    // Gate autoritativo DENTRO da tx (server/CLAUDE.md gate 5): re-lê o título e as baixas ativas e só então grava a intenção por CAS.
+    await this.payableRepo.runTransaction(async (tx) => {
+      const fresh = await this.payableRepo.findById(scope, payableId, tx);
+      if (!fresh) throw new NotFoundError(`Conta a pagar '${payableId}' não foi encontrada.`);
+      const ativas = await this.payableRepo.findActivePayments(scope, payableId, tx);
+      if (ativas.length > 0 && !(comRetencao && ativas.every((p) => p.kind === WITHHOLDING_KIND))) {
+        throw new ValidationError('Desfaça o pagamento ativo antes de cancelar a conta.');
+      }
+      const won = await this.payableRepo.casStartCancelling(
+        scope,
+        payableId,
+        {
+          fromStatuses: comRetencao ? ['OPEN', 'PARTIALLY_PAID', 'PAID'] : ['OPEN'],
+          cancelledById: scope.actorUserId,
+          cancelReason: dto.reason ?? null,
+          cancelReversalDate: dto.reversalDate,
+        },
+        tx,
+      );
+      if (won !== 1) {
+        throw new ConflictError(
+          'A conta a pagar mudou durante o cancelamento (baixa em trânsito ou outro cancelamento): releia e tente de novo.',
+          TITULO_MUDOU_DURANTE_O_CANCELAMENTO_CODE,
+        );
+      }
+      await this.auditService.append(tx, scope, {
+        actorUserId: scope.actorUserId,
+        eventType: 'payable.cancel_requested',
+        targetType: 'payable',
+        targetId: payableId,
+        // Sem texto livre (PII): o motivo só entra como "informado ou não".
+        payload: { payableId, reversalDate: dto.reversalDate, reasonPresent: Boolean(dto.reason) },
+      });
+    });
+    // Valores e tipo do título são imutáveis depois do create: a linha lida antes + a intenção que o CAS acabou de gravar.
+    const started: Payable = {
+      ...payable,
+      status: 'CANCELLING',
+      cancelledById: scope.actorUserId,
+      cancelReason: dto.reason ?? null,
+      cancelReversalDate: dto.reversalDate,
+    };
+    return (await this.driveCancellingRecording(scope, started)).payable;
+  }
+
+  /**
+   * Pré-cheques de LEITURA do cancelamento (item 0.4 i, F-CX-2 a) — só recusam o que já é visível; os gates autoritativos continuam
+   * dentro do `reverseStockForReceipt` e do `reverseEntry`. Não são atômicos com os efeitos (resíduo nomeado no BRIEF F-CX-2).
+   */
+  private async assertCancelPrechecks(scope: AccountingScope, payable: Payable, linhas: readonly TaxWithholding[], reversalDate: string): Promise<void> {
     if (isInventoryPurchase(payable)) {
       if (!this.inventoryService) {
-        throw new ValidationError(
-          'Cancelamento de compra de estoque requer o serviço de estoque configurado.',
-        );
+        throw new ValidationError('Cancelamento de compra de estoque requer o serviço de estoque configurado.');
+      }
+      const podeDesfazer = await this.inventoryService.canReverseStockForReceipt?.(scope, {
+        sourceType: INVENTORY_INBOUND_SOURCE_TYPE,
+        sourceId: payable.id,
+        reversalEventId: `${payable.id}:cancel`,
+      });
+      if (podeDesfazer === false) {
+        throw new ValidationError('Não é possível estornar a compra: a mercadoria recebida já foi baixada (estoque insuficiente).');
+      }
+    }
+    // Período só importa se ainda há estorno a ESCREVER no razão (o `reverseEntry` já estornado é idempotente e anterior ao gate).
+    const reconhecimento = await this.posting.findEntryBySource(scope, AP_PAYABLE_SOURCE_TYPE, payable.id);
+    let falta = reconhecimento != null && !isReversedEntry(reconhecimento);
+    for (const l of linhas) {
+      if (falta || !l.settlementId) continue;
+      const e = await this.posting.findEntryBySource(scope, AP_WITHHOLDING_SOURCE_TYPE, l.settlementId);
+      if (e && !isReversedEntry(e)) falta = true;
+    }
+    if (falta) await this.posting.assertPeriodOpenFor(scope, reversalDate);
+  }
+
+  /** `driveCancelling` com o registro da pendência (item 0.9) quando falha: o título fica `CANCELLING`, o erro original sobe intacto. */
+  private async driveCancellingRecording(scope: AccountingScope, payable: Payable): Promise<{ payable: Payable; completed: boolean }> {
+    try {
+      return await this.driveCancelling(scope, payable);
+    } catch (error) {
+      await this.recordCancellingFailure(scope, payable.id, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Os efeitos do cancelamento a partir da intenção PERSISTIDA (data, motivo e ator vêm da linha, nunca do corpo da chamada). Cada passo é
+   * idempotente, então a mesma rotina serve ao `cancelPayable`, à retomada pelo usuário e ao reconcile (passo 1b): estoque (`reverseStockForReceipt`
+   * devolve o REVERSAL existente sem decrementar de novo; o físico devolve `already-reversed`), retenções e reconhecimento no razão
+   * (`reverseEntry` é idempotente e anterior ao gate de período) e, por fim, `completePayableCancellation`.
+   */
+  private async driveCancelling(scope: AccountingScope, payable: Payable): Promise<{ payable: Payable; completed: boolean }> {
+    const payableId = payable.id;
+    const reversalDate = payable.cancelReversalDate ?? scopeToday(scope); // legado defensivo: linha CANCELLING sem a data (não deveria existir)
+    const reason = payable.cancelReason ?? undefined;
+    const linhas = await this.linhasRetencaoDoReconhecimento(scope, { id: payableId, payments: await this.payableRepo.findActivePayments(scope, payableId) });
+    // Imposto retido já recolhido ⇒ 409 antes de qualquer estorno (poison: só o operador resolve, estornando o DARF).
+    if (linhas.length > 0) await this.withholding!.service.assertEstornavel(scope, linhas);
+
+    // INCR-INVENTORY D3(b): an inventory purchase received stock at create — un-receive it at the ORIGINAL receipt cost BEFORE reversing the
+    // ledger, so an insufficient-stock rejection (the goods were already sold) stops here instead of leaving a half-done ledger reversal.
+    // Idempotent by a reversalEventId distinct from the receipt key (payableId), so a retried cancel replays without a second decrement.
+    if (isInventoryPurchase(payable)) {
+      if (!this.inventoryService) {
+        throw new ValidationError('Cancelamento de compra de estoque requer o serviço de estoque configurado.');
       }
       await this.inventoryService.reverseStockForReceipt(scope, {
         sourceType: INVENTORY_INBOUND_SOURCE_TYPE,
         sourceId: payableId,
         reversalEventId: `${payableId}:cancel`,
-        reversalDate: new Date(dto.reversalDate),
+        reversalDate: new Date(reversalDate),
       });
       // F-PS1: contra-movimento físico Out (best-effort; 'not-found' = físico nunca criado, ok).
       if (this.physicalStockSync) {
         try {
-          await this.physicalStockSync.reversePurchaseInbound(scope, {
-            payableId,
-            reversalDate: new Date(dto.reversalDate),
-          });
+          await this.physicalStockSync.reversePurchaseInbound(scope, { payableId, reversalDate: new Date(reversalDate) });
         } catch (error) {
-          logger.warn('AP cancel: contra-movimento físico falhou — divergência visível no tie-out físico', {
-            payableId,
-            error,
-          });
+          logger.warn('AP cancel: contra-movimento físico falhou — divergência visível no tie-out físico', { payableId, error });
         }
       }
     }
+
+    // RETENCOES-FONTE PR-2 (item 21): estorno, no razão, das retenções do reconhecimento (idempotente).
+    await this.reverterLancamentosDeRetencao(scope, linhas, { reversalDate, reason });
 
     // Reverse the recognition if it exists (a dangling create may have none).
     const recognition = await this.posting.findEntryBySource(scope, AP_PAYABLE_SOURCE_TYPE, payableId);
@@ -1010,34 +1126,103 @@ export class PayableService implements IFixedAssetDraftRedriver {
       const { reversal } = await this.posting.reverseEntry(scope, {
         unitId: scope.unitId,
         lancamentoId: recognition.id,
-        reversalPostingDate: dto.reversalDate,
-        reason: dto.reason || `Cancelamento da conta a pagar ${payableId}`,
+        reversalPostingDate: reversalDate,
+        reason: reason || `Cancelamento da conta a pagar ${payableId}`,
         automaticWriter: true,
       });
       reversalEntryId = reversal.id;
     }
+    return this.completePayableCancellation(scope, payable, linhas, reversalEntryId, reason);
+  }
 
+  /**
+   * COMMIT 2 do cancelamento do título (subrazão): `CANCELLING → CANCELLED` + retenções do reconhecimento + auditoria numa tx, e a pendência
+   * da bandeja resolvida na MESMA tx (concluir por qualquer caminho fecha o item sem depender do `rescan`). Compartilhado por `cancelPayable`
+   * e pelo reconcile. Idempotente: título que já saiu de `CANCELLING` ⇒ `completed: false`, sem 2º audit.
+   */
+  private async completePayableCancellation(
+    scope: AccountingScope,
+    payable: Payable,
+    linhas: readonly TaxWithholding[],
+    reversalEntryId: string | null,
+    reason: string | undefined,
+  ): Promise<{ payable: Payable; completed: boolean }> {
+    const payableId = payable.id;
     return this.payableRepo.runTransaction(async (tx) => {
-      const cancelled = await this.payableRepo.updatePayable(
-        scope,
-        payableId,
-        {
-          status: 'CANCELLED',
-          deletedAt: new Date(),
-          cancelledById: scope.actorUserId,
-          cancelReason: dto.reason ?? null,
-          documentNumber: deletedDocumentNumber(payableId, payable.documentNumber),
-        },
-        tx,
-      );
+      const row = await this.payableRepo.findById(scope, payableId, tx);
+      if (!row) {
+        // Soft-deleted: outro caminho já concluiu (CANCELLED + deletedAt). Só garante a pendência fechada.
+        await this.pendingRecorder?.resolve(scope, PAYABLE_CANCEL_PENDING_SOURCE_TYPE, payableId, tx);
+        return { payable: { ...payable, status: 'CANCELLED' }, completed: false };
+      }
+      if (row.status !== 'CANCELLING') {
+        throw new ConflictError('A conta a pagar não está mais em cancelamento.', TITULO_MUDOU_DURANTE_O_CANCELAMENTO_CODE);
+      }
+      // F-CX-1 (a): as retenções do reconhecimento saem na MESMA tx do CANCELLED (título de imposto baixado ⇒ 409 e a tx desfaz tudo).
+      if (linhas.length > 0) {
+        const liberado = await this.withholding!.service.reverterNaTx(scope, linhas, tx);
+        if (liberado > 0 && (await this.payableRepo.releaseSettlement(scope, payableId, liberado, tx)) === 0) {
+          throw new ValidationError('Não foi possível estornar as retenções: o saldo liquidado não comporta o estorno (invariante violado).');
+        }
+      }
+      const deletedAt = new Date();
+      const documentNumber = deletedDocumentNumber(payableId, row.documentNumber);
+      if ((await this.payableRepo.casCompleteCancelling(scope, payableId, { deletedAt, documentNumber }, tx)) !== 1) {
+        throw new ConflictError('A conta a pagar não está mais em cancelamento.', TITULO_MUDOU_DURANTE_O_CANCELAMENTO_CODE);
+      }
       await this.auditService.append(tx, scope, {
         actorUserId: scope.actorUserId,
         eventType: 'payable.cancelled',
         targetType: 'payable',
         targetId: payableId,
-        payload: { payableId, reversalEntryId, reason: dto.reason },
+        payload: { payableId, reversalEntryId, reason },
       });
-      return cancelled;
+      await this.pendingRecorder?.resolve(scope, PAYABLE_CANCEL_PENDING_SOURCE_TYPE, payableId, tx);
+      return { payable: { ...row, status: 'CANCELLED', deletedAt, documentNumber }, completed: true };
+    });
+  }
+
+  /**
+   * Re-drive de UM título `CANCELLING` (o que o job de re-drive e o `retryOneReconcilePendingItem` chamam; sem rota nova). Nunca lança por falha do
+   * efeito: devolve `blocked` (código determinístico ou período fechado — ver `reconcileBlockedCode`) ou `still_pending`, e registra a pendência.
+   */
+  async redriveCancelling(scope: AccountingScope, payableId: string): Promise<{ outcome: 'completed' | 'still_pending' | 'blocked'; code?: string }> {
+    if (!this.policy.canManagePayable(scope)) {
+      throw new ForbiddenError('Você não tem permissão para reconciliar contas a pagar.');
+    }
+    const row = await this.payableRepo.findById(scope, payableId);
+    if (!row || row.status !== 'CANCELLING') return { outcome: 'completed' };
+    return this.driveCancellingSafely(scope, row);
+  }
+
+  private async driveCancellingSafely(scope: AccountingScope, payable: Payable): Promise<{ outcome: 'completed' | 'still_pending' | 'blocked'; code?: string }> {
+    try {
+      await this.driveCancelling(scope, payable);
+      return { outcome: 'completed' };
+    } catch (error) {
+      await this.recordCancellingFailure(scope, payable.id, error);
+      const code = reconcileBlockedCode(error);
+      return code ? { outcome: 'blocked', code } : { outcome: 'still_pending' };
+    }
+  }
+
+  /** Item 0.9 — a falha do cancelamento depois da intenção vira pendência: poison (imposto recolhido) alerta; o resto é transitório, sem alerta. */
+  private async recordCancellingFailure(scope: AccountingScope, payableId: string, error: unknown): Promise<void> {
+    const code = error instanceof AppError ? error.errorCode : null;
+    let reasonCode: ReconcilePendingReasonCodeValue = 'CANCEL_REDRIVE_FAILED';
+    let alert: PendingAlertMode = 'none';
+    if (code === 'IMPOSTO_JA_RECOLHIDO') {
+      reasonCode = 'IMPOSTO_JA_RECOLHIDO';
+      alert = 'permanent';
+    } else if (code === 'ACCOUNTING_PERIOD_NOT_OPEN') {
+      reasonCode = 'ACCOUNTING_PERIOD_NOT_OPEN';
+    }
+    await this.pendingRecorder?.record(scope, {
+      sourceType: PAYABLE_CANCEL_PENDING_SOURCE_TYPE,
+      sourceId: payableId,
+      reasonCode,
+      reasonDetail: error instanceof Error ? error.message : String(error),
+      alert,
     });
   }
 
@@ -1134,6 +1319,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
       if (flipped === 0) {
         const already = await this.payableRepo.findPaymentById(scope, paymentId, tx);
         if (!already) throw new NotFoundError(`Pagamento '${paymentId}' não foi encontrado.`);
+        await this.pendingRecorder?.resolve(scope, PAYMENT_CANCEL_PENDING_SOURCE_TYPE, paymentId, tx);
         return { payment: already, completed: false }; // idempotent — no release, no second audit
       }
       const cancelled = { ...payment, status: 'CANCELLED' };
@@ -1177,6 +1363,8 @@ export class PayableService implements IFixedAssetDraftRedriver {
         targetId: payableId,
         payload: { payableId, paymentId, reversalEntryId, reason },
       });
+      // CANCELLING PR-0 (0.6): concluir por qualquer caminho fecha a pendência `payment.cancel` na mesma tx (hoje só o `rescan` a resolvia).
+      await this.pendingRecorder?.resolve(scope, PAYMENT_CANCEL_PENDING_SOURCE_TYPE, paymentId, tx);
       return { payment: cancelled, completed: true };
     });
   }
@@ -1193,6 +1381,9 @@ export class PayableService implements IFixedAssetDraftRedriver {
    */
   async reconcilePayables(
     scope: AccountingScope,
+    // CANCELLING PR-0 (0.7): `CANCELLING` mais novo que o `grace` pode ainda estar na mão de quem pediu o cancelamento; padrão 0 (a rota manual age
+    // na hora — os passos são idempotentes). O job de re-drive (PR-2) passa o `SUBLEDGER_REDRIVE_GRACE_MS`.
+    options: { cancellingGraceMs?: number } = {},
   ): Promise<{ recognitionsPosted: number; settlementsPosted: number; finalized: number; reversalsCompleted: number; blocked: number; failed: number }> {
     if (!this.policy.canManagePayable(scope)) {
       throw new ForbiddenError('Você não tem permissão para reconciliar contas a pagar.');
@@ -1207,7 +1398,8 @@ export class PayableService implements IFixedAssetDraftRedriver {
     // 1. Every live, non-cancelled payable must carry its recognition entry.
     const payables = await this.payableRepo.findAllActive(scope);
     for (const payable of payables) {
-      if (payable.status === 'CANCELLED') continue;
+      // CANCELLING PR-0 (0.7): o passo 1 re-receberia o estoque de uma compra que o cancelamento já desfez (`receiveStock` abaixo) — o 1b é o dono.
+      if (payable.status === 'CANCELLED' || payable.status === 'CANCELLING') continue;
       // RETENCOES-FONTE PR-2 (F-RET-11 a): título de imposto não tem reconhecimento próprio.
       if (payable.origin === PAYABLE_ORIGIN_WITHHOLDING_TAX) continue;
       const recognition = await this.posting.findEntryBySource(scope, AP_PAYABLE_SOURCE_TYPE, payable.id);
@@ -1313,6 +1505,24 @@ export class PayableService implements IFixedAssetDraftRedriver {
       }
     }
 
+    // 1b. CANCELLING PR-0 (0.7, 69c7): título com a intenção de cancelar gravada e o cancelamento não concluído — repete só o idempotente
+    // (estoque, físico, retenções e reconhecimento no razão) e conclui `CANCELLING → CANCELLED`. Erro determinístico/período ⇒ BLOCKED (e pendência, 0.9).
+    const graceMs = options.cancellingGraceMs ?? 0;
+    for (const payable of payables) {
+      if (payable.status !== 'CANCELLING') continue;
+      if (graceMs > 0 && Date.now() - payable.updatedAt.getTime() < graceMs) continue;
+      const result = await this.driveCancellingSafely(scope, payable);
+      if (result.outcome === 'completed') {
+        reversalsCompleted += 1;
+      } else if (result.outcome === 'blocked') {
+        blocked += 1;
+        logger.warn('AP reconcile: cancelamento em CANCELLING bloqueado — código determinístico/período', { payableId: payable.id, code: result.code });
+      } else {
+        failed += 1;
+        logger.warn('AP reconcile: cancelamento em CANCELLING falhou — próxima passada tenta de novo', { payableId: payable.id });
+      }
+    }
+
     // 2. Every active payment must carry its settlement entry AND its payable must be finalized.
     const payments = await this.payableRepo.findAllActivePayments(scope);
     for (const payment of payments) {
@@ -1342,27 +1552,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
         // DIREÇÃO REVERSA (Onda 2.1): o razão já estornou o pagamento (commit 1 de um cancelPayment) e ele segue ACTIVE ⇒ conclui o
         // estorno no subrazão. NUNCA cai no finalize abaixo: finalizar como pago um lançamento Reversed reabriria a divergência.
         if (settlement && isReversedEntry(settlement)) {
-          const csrf = this.withholding ? await this.withholding.repo.findActiveByOriginSettlement(scope, payment.id) : [];
-          // Mesmo pré-cheque do cancelPayment (review #307 F1) ANTES de qualquer estorno do razão da CSRF: invariante já quebrado ⇒ BLOCKED sem escrever.
-          const csrfCents = csrf.filter((l) => l.settlementId).reduce((sum, l) => sum + Number(l.amountCents), 0);
-          const current = await this.payableRepo.findById(scope, payment.payableId);
-          if (!current || centsFromDb(current.paidCents) < centsFromDb(payment.amountCents) + csrfCents) {
-            throw new ValidationError(
-              'Não foi possível estornar o pagamento: o saldo liquidado não comporta o estorno (invariante violado).',
-              null,
-              PAYMENT_REVERSAL_INVARIANT_CODE,
-            );
-          }
-          if (csrf.length > 0) {
-            // Mesma ordem do cancelPayment: imposto já recolhido ⇒ 409 (BLOCKED) antes de mexer; depois o estorno idempotente do razão da CSRF,
-            // na data do estorno que o razão já tem (período fechado ⇒ ACCOUNTING_PERIOD_NOT_OPEN ⇒ BLOCKED).
-            await this.withholding!.service.assertEstornavel(scope, csrf);
-            const reversal = await this.posting.findEntryBySource(scope, 'reversal', settlement.id);
-            const reversalDate = reversal ? reversal.date.toISOString().slice(0, 10) : scopeToday(scope);
-            await this.reverterLancamentosDeRetencao(scope, csrf, { reversalDate, reason: RECONCILE_REVERSAL_REASON });
-          }
-          const done = await this.completePaymentCancellation(scope, payment, csrf, settlement.reversedById, RECONCILE_REVERSAL_REASON);
-          if (done.completed) reversalsCompleted += 1;
+          if (await this.completeReversedPayment(scope, payment, settlement)) reversalsCompleted += 1;
           continue;
         }
         if (!settlement) {
@@ -1425,6 +1615,8 @@ export class PayableService implements IFixedAssetDraftRedriver {
           logger.warn('AP reconcile: settlement re-drive blocked — deterministic non-retriable code', {
             paymentId: payment.id, code: skipCode,
           });
+          // CANCELLING PR-0 (0.9, 9d3e): o BLOCKED determinístico da direção reversa fica gravado na bandeja e alerta na 1ª captura.
+          await this.recordPaymentCancelBlocked(scope, payment.id, skipCode, error);
         } else {
           failed += 1;
           logger.warn('AP reconcile: settlement re-drive failed', { paymentId: payment.id, error });
@@ -1434,6 +1626,63 @@ export class PayableService implements IFixedAssetDraftRedriver {
 
     logger.info('AP reconcile pass complete', { recognitionsPosted, settlementsPosted, finalized, reversalsCompleted, blocked, failed });
     return { recognitionsPosted, settlementsPosted, finalized, reversalsCompleted, blocked, failed };
+  }
+
+  /**
+   * DIREÇÃO REVERSA do pagamento (Onda 2.1): o lançamento `ap.payment` já está `Reversed` e o pagamento segue ACTIVE ⇒ conclui o estorno no
+   * subrazão (CSRF da parcela + saldo + status + auditoria numa tx). `true` = esta chamada concluiu. Lança o BLOCKED determinístico
+   * (`PAYMENT_REVERSAL_INVARIANT_CODE`, `IMPOSTO_JA_RECOLHIDO`) — quem chama decide contar/registrar.
+   */
+  private async completeReversedPayment(scope: AccountingScope, payment: PayablePayment, settlement: { id: string; reversedById: string | null }): Promise<boolean> {
+    const csrf = this.withholding ? await this.withholding.repo.findActiveByOriginSettlement(scope, payment.id) : [];
+    // Mesmo pré-cheque do cancelPayment (review #307 F1) ANTES de qualquer estorno do razão da CSRF: invariante já quebrado ⇒ BLOCKED sem escrever.
+    const csrfCents = csrf.filter((l) => l.settlementId).reduce((sum, l) => sum + Number(l.amountCents), 0);
+    const current = await this.payableRepo.findById(scope, payment.payableId);
+    if (!current || centsFromDb(current.paidCents) < centsFromDb(payment.amountCents) + csrfCents) {
+      throw new ValidationError(
+        'Não foi possível estornar o pagamento: o saldo liquidado não comporta o estorno (invariante violado).',
+        null,
+        PAYMENT_REVERSAL_INVARIANT_CODE,
+      );
+    }
+    if (csrf.length > 0) {
+      // Mesma ordem do cancelPayment: imposto já recolhido ⇒ 409 (BLOCKED) antes de mexer; depois o estorno idempotente do razão da CSRF,
+      // na data do estorno que o razão já tem (período fechado ⇒ ACCOUNTING_PERIOD_NOT_OPEN ⇒ BLOCKED).
+      await this.withholding!.service.assertEstornavel(scope, csrf);
+      const reversal = await this.posting.findEntryBySource(scope, 'reversal', settlement.id);
+      const reversalDate = reversal ? reversal.date.toISOString().slice(0, 10) : scopeToday(scope);
+      await this.reverterLancamentosDeRetencao(scope, csrf, { reversalDate, reason: RECONCILE_REVERSAL_REASON });
+    }
+    return (await this.completePaymentCancellation(scope, payment, csrf, settlement.reversedById, RECONCILE_REVERSAL_REASON)).completed;
+  }
+
+  /**
+   * Re-drive de UM pagamento ativo cujo lançamento já foi estornado (o que o `retryOneReconcilePendingItem` chama para `payment.cancel`).
+   * `completed` = concluído agora OU nada a concluir (pagamento já cancelado / lançamento não estornado: a pendência é obsoleta).
+   * O BLOCKED determinístico sobe como erro (o `rescan` o trata como "continua pendente").
+   */
+  async redrivePaymentCancellation(scope: AccountingScope, paymentId: string): Promise<{ outcome: 'completed' | 'still_pending' }> {
+    if (!this.policy.canManagePayable(scope)) {
+      throw new ForbiddenError('Você não tem permissão para reconciliar contas a pagar.');
+    }
+    const payment = await this.payableRepo.findPaymentById(scope, paymentId);
+    if (!payment || payment.status !== 'ACTIVE') return { outcome: 'completed' };
+    const settlement = await this.posting.findEntryBySource(scope, AP_PAYMENT_SOURCE_TYPE, paymentId);
+    if (!settlement || !isReversedEntry(settlement)) return { outcome: 'completed' };
+    await this.completeReversedPayment(scope, payment, settlement);
+    return { outcome: 'completed' };
+  }
+
+  /** Item 0.9 — só os BLOCKED determinísticos da direção reversa viram pendência `payment.cancel` (poison ⇒ alerta na 1ª captura). */
+  private async recordPaymentCancelBlocked(scope: AccountingScope, paymentId: string, code: string, error: unknown): Promise<void> {
+    if (code !== PAYMENT_REVERSAL_INVARIANT_CODE && code !== 'IMPOSTO_JA_RECOLHIDO') return;
+    await this.pendingRecorder?.record(scope, {
+      sourceType: PAYMENT_CANCEL_PENDING_SOURCE_TYPE,
+      sourceId: paymentId,
+      reasonCode: code,
+      reasonDetail: error instanceof Error ? error.message : String(error),
+      alert: 'permanent',
+    });
   }
 
   /**
@@ -1454,7 +1703,7 @@ export class PayableService implements IFixedAssetDraftRedriver {
     let created = 0;
     const payables = await this.payableRepo.findAllActive(scope);
     for (const payable of payables) {
-      if (payable.status === 'CANCELLED' || !payable.inventoryMultiItem) continue;
+      if (payable.status === 'CANCELLED' || payable.status === 'CANCELLING' || !payable.inventoryMultiItem) continue;
       try {
         const entry = await this.posting.findEntryBySource(scope, AP_PAYABLE_SOURCE_TYPE, payable.id);
         if (!entry) continue; // sem recognition ainda — nada a reler (residual named acima).

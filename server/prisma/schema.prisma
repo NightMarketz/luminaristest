@@ -1283,7 +1283,7 @@ model Payable {
   inventoryQty        Int? // INCR-INVENTORY D3(b): units received by this purchase; paired with inventoryProductRef. receiveStock gets amountCents as the TOTAL value (avoids per-unit rounding).
   counterpartyId      String // FK Counterparty (INCR-COUNTERPARTY / A1) — NOT NULL since SEC-A1-5 (2nd migration, F-NN1(a)): createPayable resolves a body id RE-SCOPED (SEC-A1-1) or mints the identity from supplierName, so there is no null branch left. supplierName stays the snapshot.
   counterparty        Counterparty     @relation(fields: [counterpartyId], references: [id], onDelete: Restrict) // F-NN2(a): SET NULL is unrepresentable on a NOT NULL column; archive is soft (SEC-A1-4), so RESTRICT never fires in the real flow.
-  status              String // OPEN | PARTIALLY_PAID | PAYING | PAID | CANCELLED (see PAYABLE_STATUSES)
+  status              String // OPEN | PARTIALLY_PAID | PAYING | PAID | CANCELLING | CANCELLED (see PAYABLE_STATUSES)
   paidCents           BigInt           @default(0) // BE-INCR-PARTIAL-SETTLEMENT (F-PS1 c): cache atomico de SUM(payments ACTIVE); gate de soma `paidCents <= amountCents - novo`; nunca fonte de relatorio oficial
   recoverableTaxLines String? // X6 F-X6-8 a: JSON [{accountId, amountCents}] dos créditos a recuperar reconhecidos NO MESMO entry (D estoque líquido + D a recuperar / C fornecedores = amountCents); persistido para o re-drive do reconcile reconstruir o mesmo entry
   // BE-INCR-FIXED-ASSETS PR-5 (nó C8, item 20-21, F-FA12 a): itens CFOP 1551/2551 desta NF-e NÃO
@@ -1296,6 +1296,7 @@ model Payable {
   createdById         String? // actor who created (AccountingScope.actorUserId); plain string
   cancelledById       String? // actor who cancelled; plain string
   cancelReason        String?
+  cancelReversalDate  String? // CANCELLING PR-0 (0.1 i): 'YYYY-MM-DD' da data do estorno, gravada junto com a intenção (status CANCELLING) para a retomada; NULL = nunca cancelado
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
   deletedAt           DateTime?
@@ -2756,6 +2757,7 @@ model ReconcilePendingItem {
   lastSeenAt   DateTime  @updatedAt
   resolvedAt   DateTime? // null = ainda pendente
   attempts     Int       @default(1)
+  alertedAt    DateTime? // CANCELLING PR-0 (0.1 ii): alerta de BLOCKED/idade já enviado (NULL = nenhum); resolvePending zera
 
   @@unique([userId, unitId, sourceType, sourceId])
   @@index([userId, unitId, resolvedAt])

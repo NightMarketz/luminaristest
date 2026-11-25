@@ -12445,6 +12445,7 @@
             "PARTIALLY_PAID",
             "PAYING",
             "PAID",
+            "CANCELLING",
             "CANCELLED",
             "DEFERRED"
           ]
@@ -14703,7 +14704,12 @@
         "PACKAGE_CONSUMPTION_PENDING",
         "PACKAGE_ORIGIN_REVERSED",
         "PACKAGE_EXPIRY_NFSE_PENDING",
-        "UNKNOWN_EVENT_KEY"
+        "UNKNOWN_EVENT_KEY",
+        "PAYMENT_REVERSAL_INVARIANT_VIOLATED",
+        "RECEIPT_REVERSAL_INVARIANT_VIOLATED",
+        "IMPOSTO_JA_RECOLHIDO",
+        "JCP_JA_PAGO",
+        "CANCEL_REDRIVE_FAILED"
       ]
     },
     "ListReconcilePendingQueryDto": {
@@ -14726,7 +14732,12 @@
             "PACKAGE_CONSUMPTION_PENDING",
             "PACKAGE_ORIGIN_REVERSED",
             "PACKAGE_EXPIRY_NFSE_PENDING",
-            "UNKNOWN_EVENT_KEY"
+            "UNKNOWN_EVENT_KEY",
+            "PAYMENT_REVERSAL_INVARIANT_VIOLATED",
+            "RECEIPT_REVERSAL_INVARIANT_VIOLATED",
+            "IMPOSTO_JA_RECOLHIDO",
+            "JCP_JA_PAGO",
+            "CANCEL_REDRIVE_FAILED"
           ]
         },
         "includeResolved": {
@@ -14806,7 +14817,12 @@
             "PACKAGE_CONSUMPTION_PENDING",
             "PACKAGE_ORIGIN_REVERSED",
             "PACKAGE_EXPIRY_NFSE_PENDING",
-            "UNKNOWN_EVENT_KEY"
+            "UNKNOWN_EVENT_KEY",
+            "PAYMENT_REVERSAL_INVARIANT_VIOLATED",
+            "RECEIPT_REVERSAL_INVARIANT_VIOLATED",
+            "IMPOSTO_JA_RECOLHIDO",
+            "JCP_JA_PAGO",
+            "CANCEL_REDRIVE_FAILED"
           ]
         },
         "reasonDetail": {
@@ -14873,7 +14889,12 @@
                   "PACKAGE_CONSUMPTION_PENDING",
                   "PACKAGE_ORIGIN_REVERSED",
                   "PACKAGE_EXPIRY_NFSE_PENDING",
-                  "UNKNOWN_EVENT_KEY"
+                  "UNKNOWN_EVENT_KEY",
+                  "PAYMENT_REVERSAL_INVARIANT_VIOLATED",
+                  "RECEIPT_REVERSAL_INVARIANT_VIOLATED",
+                  "IMPOSTO_JA_RECOLHIDO",
+                  "JCP_JA_PAGO",
+                  "CANCEL_REDRIVE_FAILED"
                 ]
               },
               "reasonDetail": {

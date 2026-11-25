@@ -98,7 +98,11 @@ describe('C7r — os 2 "blocked" sem reasonCode passam a ser capturados na tabel
     // O enum ratificado tinha 3 valores; (a) acrescenta exatamente os 2 (e o BE-INCR-PACOTE-VALIDADE, item 15
     // + §5.2 item 9.5, mais 4; D-2026-10-14-I4-I5-LACUNAS-EXECUCAO L-2, mais 1 — os 2 desta guarda continuam lá).
     expect(ReconcilePendingReasonCode.options).toEqual(expect.arrayContaining(['OPENING_ENTRY_MISSING', 'MISSING_PAID_WITH_PACKAGE_ID']));
-    expect(ReconcilePendingReasonCode.options).toHaveLength(10);
+    // CANCELLING PR-0 (0.10): +5 do BLOCKED persistido do cancelamento (4 poison + CANCEL_REDRIVE_FAILED transitório).
+    expect(ReconcilePendingReasonCode.options).toHaveLength(15);
+    expect(ReconcilePendingReasonCode.options).toEqual(
+      expect.arrayContaining(['PAYMENT_REVERSAL_INVARIANT_VIOLATED', 'RECEIPT_REVERSAL_INVARIANT_VIOLATED', 'IMPOSTO_JA_RECOLHIDO', 'JCP_JA_PAGO', 'CANCEL_REDRIVE_FAILED']),
+    );
   });
 });
 

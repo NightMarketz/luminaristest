@@ -254,7 +254,8 @@ export class PayableRepository implements IPayableRepository {
       where: {
         id,
         ...accountingScopeWhere(scope),
-        status: { in: ['PARTIALLY_PAID', 'PAID', 'PAYING'] },
+        // CANCELLING (PR-0, F-CX-1 a): a conclusão do cancelamento devolve ao saldo a retenção do reconhecimento estornada.
+        status: { in: ['PARTIALLY_PAID', 'PAID', 'PAYING', 'CANCELLING'] },
         paidCents: { gte: cents },
       },
       data: { paidCents: { decrement: cents } },
@@ -279,6 +280,37 @@ export class PayableRepository implements IPayableRepository {
     const result = await (tx ?? prisma).payable.updateMany({
       where: { id, ...accountingScopeWhere(scope), status: 'PAYING' },
       data: { status },
+    });
+    return result.count;
+  }
+
+  public async casStartCancelling(
+    scope: AccountingScope,
+    id: string,
+    data: { fromStatuses: readonly PayableStatus[]; cancelledById: string; cancelReason: string | null; cancelReversalDate: string },
+    tx: Prisma.TransactionClient,
+  ): Promise<number> {
+    const result = await tx.payable.updateMany({
+      where: { id, ...accountingScopeWhere(scope), deletedAt: null, status: { in: [...data.fromStatuses] } },
+      data: {
+        status: 'CANCELLING',
+        cancelledById: data.cancelledById,
+        cancelReason: data.cancelReason,
+        cancelReversalDate: data.cancelReversalDate,
+      },
+    });
+    return result.count;
+  }
+
+  public async casCompleteCancelling(
+    scope: AccountingScope,
+    id: string,
+    data: { deletedAt: Date; documentNumber: string | null },
+    tx: Prisma.TransactionClient,
+  ): Promise<number> {
+    const result = await tx.payable.updateMany({
+      where: { id, ...accountingScopeWhere(scope), deletedAt: null, status: 'CANCELLING' },
+      data: { status: 'CANCELLED', deletedAt: data.deletedAt, documentNumber: data.documentNumber },
     });
     return result.count;
   }

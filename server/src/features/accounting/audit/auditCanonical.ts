@@ -62,6 +62,7 @@ export const PAYLOAD_ALLOWLIST: Record<string, readonly string[]> = {
   // INCR-AP — Contas a Pagar. Id-only / money-as-string; NEVER the supplier name (PII-safe, D6).
   'payable.created':            ['payableId', 'supplierRef', 'amountCents', 'dueDate', 'expenseAccountCode', 'recoverableIcmsCents', 'recoverablePisCofinsCents', 'insumoCents', 'recoverableIbsCbsCents', 'expensedFixedAssetItems'], // X6 item 13 + ITEM-DESTINATION item 13 + IBS-CBS-2027 PR-3 item 14 + C8 emenda 3.2 E8
   'payable.cancelled':          ['payableId', 'reversalEntryId', 'reason'],
+  'payable.cancel_requested':   ['payableId', 'reversalDate', 'reasonPresent'], // CANCELLING PR-0 (0.11, 69c7): a intenção gravada antes do estorno; sem texto livre
   // IBS-CBS-2027 PR-3 (item 16): PENDENTE → APROPRIADO do crédito de IBS/CBS — ids, tributo, valor e dia; sem PII.
   'payable.ibs_cbs_credit.appropriated': ['payableId', 'tributo', 'amountCents', 'sourceDocumentId', 'apropriadoEm'],
   // BE-INCR-PARTIAL-SETTLEMENT (F-PS9 → a): `payment_*` → `settlement_*`; payload ganha o saldo após o

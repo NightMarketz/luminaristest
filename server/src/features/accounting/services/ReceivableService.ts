@@ -34,6 +34,7 @@ import {
   resolveReceiptMethodAccount,
   PROVIDER_BALANCE_METHOD,
   RECEIPT_REVERSAL_INVARIANT_CODE,
+  RECEIPT_CANCEL_PENDING_SOURCE_TYPE,
 } from '../models/Receivable.model';
 import type {
   CancelReceivableInput,
@@ -51,6 +52,7 @@ import { SPLIT_ACCOUNT_NOT_CONFIGURED, SPLIT_IBS_CBS_KIND } from '../models/Bank
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { PostEntryInput } from '../dtos/PostingDto';
 import { syncSkipErrorCode } from '../sync/AccountingSyncPort';
+import type { ReconcilePendingRecorder } from './reconcilePendingRecorder';
 import type { AuditService } from './AuditService';
 import type { PostingService } from './PostingService';
 import type { AccountingScope } from '../scope/AccountingScope';
@@ -118,6 +120,9 @@ export class ReceivableService {
     private readonly policy: IAccountingPolicy,
     private readonly counterpartyRepo: ICounterpartyRepository,
     private readonly collectionChargeRepo: Pick<ICollectionChargeRepository, 'findLiveByReceivable'>,
+    // OPTIONAL (BE-INCR-CANCELAMENTO-CANCELLING PR-0, F-AR-1 a / 9d3e): grava o BLOCKED determinístico do estorno do recebimento na bandeja do
+    // reconcile e alerta na 1ª captura. Ausente = comportamento anterior (só log). `cancelReceivable` NÃO ganha `CANCELLING` (F-AR-1 a).
+    private readonly pendingRecorder?: ReconcilePendingRecorder,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -524,6 +529,7 @@ export class ReceivableService {
       if (flipped === 0) {
         const already = await this.receivableRepo.findReceiptById(scope, receiptId, tx);
         if (!already) throw new NotFoundError(`Recebimento '${receiptId}' não foi encontrado.`);
+        await this.pendingRecorder?.resolve(scope, RECEIPT_CANCEL_PENDING_SOURCE_TYPE, receiptId, tx);
         return { receipt: already, completed: false };
       }
       const cancelled = { ...receipt, status: 'CANCELLED' };
@@ -559,6 +565,8 @@ export class ReceivableService {
         targetId: receivableId,
         payload: { receivableId, receiptId, reversalEntryId, reason },
       });
+      // CANCELLING PR-0 (0.6, F-AR-1 a): concluir por qualquer caminho fecha a pendência `receipt.cancel` na mesma tx.
+      await this.pendingRecorder?.resolve(scope, RECEIPT_CANCEL_PENDING_SOURCE_TYPE, receiptId, tx);
       return { receipt: cancelled, completed: true };
     });
   }
@@ -712,6 +720,16 @@ export class ReceivableService {
           logger.warn('AR reconcile: receipt re-drive blocked — deterministic non-retriable code', {
             receiptId: receipt.id, code: skipCode,
           });
+          // CANCELLING PR-0 (F-AR-1 a, 9d3e): o invariante do estorno do recebimento fica gravado na bandeja e alerta na 1ª captura.
+          if (skipCode === RECEIPT_REVERSAL_INVARIANT_CODE) {
+            await this.pendingRecorder?.record(scope, {
+              sourceType: RECEIPT_CANCEL_PENDING_SOURCE_TYPE,
+              sourceId: receipt.id,
+              reasonCode: RECEIPT_REVERSAL_INVARIANT_CODE,
+              reasonDetail: error instanceof Error ? error.message : String(error),
+              alert: 'permanent',
+            });
+          }
         } else {
           failed += 1;
           logger.warn('AR reconcile: receipt re-drive failed', { receiptId: receipt.id, error });
@@ -721,6 +739,23 @@ export class ReceivableService {
 
     logger.info('AR reconcile pass complete', { recognitionsPosted, receiptsPosted, finalized, reversalsCompleted, blocked, failed });
     return { recognitionsPosted, receiptsPosted, finalized, reversalsCompleted, blocked, failed };
+  }
+
+  /**
+   * Re-drive de UM recebimento ativo cujo lançamento já foi estornado (o que o `retryOneReconcilePendingItem` chama para `receipt.cancel`).
+   * `completed` = concluído agora OU nada a concluir (recibo já cancelado / lançamento não estornado: a pendência é obsoleta). O BLOCKED
+   * determinístico (`RECEIPT_REVERSAL_INVARIANT_CODE`) sobe como erro (o `rescan` o trata como "continua pendente").
+   */
+  async redriveReceiptCancellation(scope: AccountingScope, receiptId: string): Promise<{ outcome: 'completed' }> {
+    if (!this.policy.canManageReceivable(scope)) {
+      throw new ForbiddenError('Você não tem permissão para reconciliar contas a receber.');
+    }
+    const receipt = await this.receivableRepo.findReceiptById(scope, receiptId);
+    if (!receipt || receipt.status !== 'ACTIVE') return { outcome: 'completed' };
+    const settlement = await this.posting.findEntryBySource(scope, AR_RECEIPT_SOURCE_TYPE, receiptId);
+    if (!settlement || !isReversedEntry(settlement)) return { outcome: 'completed' };
+    await this.completeReceiptCancellation(scope, receipt, settlement.reversedById, RECONCILE_REVERSAL_REASON);
+    return { outcome: 'completed' };
   }
 
   // ---------------------------------------------------------------------------

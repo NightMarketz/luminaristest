@@ -43,6 +43,13 @@ export interface IReconcilePendingRepository {
   ): Promise<number>;
 
   /**
+   * CANCELLING PR-0 (0.9) — CAS do "alerta já enviado": `updateMany` where a pendência está aberta E `alertedAt` é nulo →
+   * `alertedAt = agora`. 1 = ESTA chamada é quem alerta (a 1ª captura); 0 = já alertado (ou resolvido). `resolvePending` zera a marca,
+   * então um reaparecimento depois de resolvido alerta de novo.
+   */
+  markAlerted(scope: AccountingScope, sourceType: string, sourceId: string, tx?: Prisma.TransactionClient): Promise<number>;
+
+  /**
    * Bumps `attempts` on a still-unresolved row without changing `reasonCode`/`reasonDetail`
    * (checklist item 6/7: a rescan that STILL fails — e.g. a poison `MAX_CENTS_EXCEEDED` retried
    * again — must show the attempt happened, without the retry path re-describing the failure

@@ -137,6 +137,15 @@ export class PostingService {
   }
 
   /**
+   * CANCELLING PR-0 (0.4 i) — o preflight de período como LEITURA pública para quem precisa recusar ANTES de gravar a intenção de um
+   * comando (cancelamento em 2 commits): lança `AccountingPeriodNotOpenError` se o período de `date` não está aberto. NÃO é o gate
+   * autoritativo (esse segue em `assertPeriodOpenTx`/no `reverseEntry`, dentro da tx).
+   */
+  async assertPeriodOpenFor(scope: AccountingScope, date: string): Promise<void> {
+    return this.assertPeriodOpen(scope, date);
+  }
+
+  /**
    * Authoritative period gate (inside tx) — re-checks AFTER the tx is open, immediately
    * before the Posted write, to close the TOCTOU window where an admin could close the
    * period between the preflight check and the commit.

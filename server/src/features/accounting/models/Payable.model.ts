@@ -18,7 +18,9 @@ import { BANCO_CODE, CAIXA_CODE } from '../fixtures/ChartOfAccountsFixture';
  */
 // RETENCOES-FONTE PR-2 (item 20): `DEFERRED` = título de imposto < R$ 10 somado ao da competência seguinte (Lei 9.430
 // art. 68 § 1º) — não vence, não aceita baixa e fica fora do "em aberto".
-export const PAYABLE_STATUSES = ['OPEN', 'PARTIALLY_PAID', 'PAYING', 'PAID', 'CANCELLED', 'DEFERRED'] as const;
+// BE-INCR-CANCELAMENTO-CANCELLING PR-0 (69c7): `CANCELLING` = a INTENÇÃO de cancelar, gravada ANTES do estorno no razão (commit 1);
+// só avança para `CANCELLED` (F-CX-2 a, dono 25/11). Para a leitura fiscal/de razão o título segue vivo; para toda escrita nova, morto (F-CX-3 a).
+export const PAYABLE_STATUSES = ['OPEN', 'PARTIALLY_PAID', 'PAYING', 'PAID', 'CANCELLING', 'CANCELLED', 'DEFERRED'] as const;
 export type PayableStatus = (typeof PAYABLE_STATUSES)[number];
 
 /**
@@ -30,17 +32,20 @@ export type PayableStatus = (typeof PAYABLE_STATUSES)[number];
  *   PAID|PARTIALLY_PAID → OPEN|PARTIALLY_PAID   estorno de baixa (recálculo; PAID recusado no estorno de baixa, não no de retenção)
  *   PARTIALLY_PAID → PARTIALLY_PAID         estorno de uma de duas baixas (grava o mesmo status; NÃO listado, ver lifecycle.ts)
  *   OPEN → DEFERRED, DEFERRED → OPEN       WithholdingService (título de imposto < R$ 10, Lei 9.430 art. 68 §1º)
- *   OPEN → CANCELLED                       cancelPayable (só OPEN)
+ *   OPEN|PARTIALLY_PAID|PAID → CANCELLING  cancelPayable, CAS de intenção ANTES do estorno (PARTIALLY_PAID|PAID só quando toda baixa ativa é retenção do reconhecimento — F-CX-1 a)
+ *   CANCELLING → CANCELLED                 completePayableCancellation (cancelPayable ou reconcile passo 1b); NADA mais sai de CANCELLING (F-CX-2 a)
+ *   OPEN → CANCELLED                       WithholdingService (cancelamento de título de imposto) e compensateFailedRecognition; cancelPayable passa por CANCELLING
  *   PARTIALLY_PAID|PAID → CANCELLED        compensateFailedRecognition (título nascido com retenção cujo razão falhou)
  *   OPEN → CANCELLED (também)              WithholdingService (cancelamento de título de imposto, exige OPEN)
  * Na criação o título nasce por `payableStatusForBalance` (OPEN | PARTIALLY_PAID | PAID). `CANCELLED` é terminal.
  * Mudou um sítio de escrita? Mude esta tabela no mesmo PR — `Payable.transitions.test.ts` amarra as constantes a ela.
  */
 export const PAYABLE_TRANSITIONS = {
-  OPEN: ['PAYING', 'DEFERRED', 'CANCELLED'],
-  PARTIALLY_PAID: ['PAYING', 'OPEN', 'CANCELLED'],
+  OPEN: ['PAYING', 'DEFERRED', 'CANCELLING', 'CANCELLED'],
+  PARTIALLY_PAID: ['PAYING', 'OPEN', 'CANCELLING', 'CANCELLED'],
   PAYING: ['PAID', 'PARTIALLY_PAID', 'OPEN'],
-  PAID: ['PARTIALLY_PAID', 'OPEN', 'CANCELLED'],
+  PAID: ['PARTIALLY_PAID', 'OPEN', 'CANCELLING', 'CANCELLED'],
+  CANCELLING: ['CANCELLED'],
   DEFERRED: ['OPEN'],
   CANCELLED: [],
 } as const satisfies TransitionTable<PayableStatus>;
@@ -50,10 +55,11 @@ export const PAYABLE_SETTLEABLE_STATUSES = ['OPEN', 'PARTIALLY_PAID'] as const;
 
 /**
  * "Em aberto" statuses for aging / posição (INCR-AGING, F-AG3→a; F-PS4→a): a payable still owes
- * `amountCents − paidCents` while `OPEN`, `PARTIALLY_PAID` or in-flight `PAYING`. EXCLUDES the
+ * `amountCents − paidCents` while `OPEN`, `PARTIALLY_PAID`, in-flight `PAYING` or `CANCELLING` (F-CX-3 a). EXCLUDES the
  * terminal `PAID`/`CANCELLED`. Outstanding per line is the REMAINING balance, never the raw total.
  */
-export const PAYABLE_OUTSTANDING_STATUSES = ['OPEN', 'PARTIALLY_PAID', 'PAYING'] as const;
+// CANCELLING PR-0 (F-CX-3 a, dono 25/11): em cancelamento o título ainda está no razão (2.1.2) até o estorno — fica na posição/aging/tie-out com o saldo, sem ações.
+export const PAYABLE_OUTSTANDING_STATUSES = ['OPEN', 'PARTIALLY_PAID', 'PAYING', 'CANCELLING'] as const;
 
 /**
  * Status a title settles to for a given balance (BE-INCR-PARTIAL-SETTLEMENT, F-PS2/F-PS3): used by
@@ -117,6 +123,14 @@ export function hasSingleInventorySku(payable: {
  * `SYNC_SKIP_ERROR_CODES` das pontes) e deixa o título para intervenção humana.
  */
 export const PAYMENT_REVERSAL_INVARIANT_CODE = 'PAYMENT_REVERSAL_INVARIANT_VIOLATED';
+
+/** CANCELLING PR-0 (0.8): escrita nova (baixa, recebimento de estoque, apropriação, edição) sobre título em cancelamento ⇒ 409. */
+export const TITULO_EM_CANCELAMENTO_CODE = 'TITULO_EM_CANCELAMENTO';
+/** CANCELLING PR-0 (0.4 ii): o CAS de intenção perdeu a corrida (o título mudou entre a leitura e a tx) ⇒ 409. */
+export const TITULO_MUDOU_DURANTE_O_CANCELAMENTO_CODE = 'TITULO_MUDOU_DURANTE_O_CANCELAMENTO';
+/** `sourceType` das pendências do cancelamento do AP (bandeja de reconcile). */
+export const PAYABLE_CANCEL_PENDING_SOURCE_TYPE = 'payable.cancel';
+export const PAYMENT_CANCEL_PENDING_SOURCE_TYPE = 'payment.cancel';
 
 /**
  * Dual fato gerador — two distinct ledger events keyed on DISTINCT source ids (D3):
