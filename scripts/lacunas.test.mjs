@@ -317,7 +317,7 @@ test('set no mesmo estado regrava o destino sem zerar o relógio das paradas nem
 });
 
 // L-…-a82c: a `aberta` que já traz o campo `pr` de um PR mergeado também resolve (ou sai em `conferir`).
-test('sincronizar olha a aberta com campo pr: mergeado que toca resolve, sem tocar vai a conferir, PR fechado não mexe', () => {
+test('sincronizar olha a aberta com campo pr: PR mergeado vai a conferir (nunca resolve sozinho), PR fechado não mexe', () => {
   const dir = nova();
   const toca = adicionar({ ...base, local: 'a.ts:1', pr: '20' }, dir);
   const naoToca = adicionar({ ...base, local: 'b.ts:1', pr: '21' }, dir);
@@ -326,12 +326,12 @@ test('sincronizar olha a aberta com campo pr: mergeado que toca resolve, sem toc
   const prs = new Map([['20', { state: 'MERGED', mergedAt: '2026-11-21T10:00:00Z' }], ['21', { state: 'MERGED' }], ['22', { state: 'CLOSED' }]]);
   const arquivosDoPr = (n) => ({ 20: ['a.ts'], 21: ['x.ts'] })[n] ?? [];
   const r = sincronizar(dir, { prs, arquivosDoPr });
-  assert.deepEqual(r.resolvidas, [toca.id]);
-  assert.deepEqual(r.conferir.map((c) => c.id), [naoToca.id]);
+  assert.deepEqual(r.resolvidas, [], 'o pr de uma aberta pode ser o PR onde o achado nasceu: não resolve sozinha');
+  assert.deepEqual(r.conferir.map((c) => c.id).sort(), [toca.id, naoToca.id].sort());
   assert.deepEqual(r.reabertas, []);
   assert.deepEqual(r.semPr, [], 'aberta sem PR é o normal, não é pendência');
   const est = Object.fromEntries(listar(dir).map((l) => [l.id, l.estado]));
-  assert.equal(est[toca.id], 'resolvida');
+  assert.equal(est[toca.id], 'aberta');
   assert.equal(est[naoToca.id], 'aberta');
   assert.equal(est[fechado.id], 'aberta');
   assert.equal(est[semPr.id], 'aberta');

@@ -219,7 +219,8 @@ export function prDaLacuna(l, prs) {
 // conteúdo entrou na main pelo PR `integração: …` de cima — L-…-cbc8 e L-…-2969 foram reabertos por engano).
 // PR mergeado só resolve a lacuna se tocar o arquivo dela: o #1240 mergeou sem tocar o arquivo da L-…-8a05 e ela teve
 // de ser reaberta à mão. Mergeado sem tocar fica como está e sai em `conferir`.
-// Também olha a `aberta` que já traz o campo `pr` (L-…-a82c): o PR mergeou e a lacuna seguia aberta.
+// Também olha a `aberta` que já traz o campo `pr` (L-…-a82c): se o PR mergeou, a lacuna sai em `conferir` (não resolve
+// sozinha: o `pr` dela pode ser o PR onde o achado nasceu).
 export function sincronizar(dir, { prs, arquivosDoPr, integrados = new Set(), simular = false, agora = new Date() }) {
   const r = { resolvidas: [], reabertas: [], promovidas: [], conferir: [], semPr: [] };
   for (const l of listar(dir).filter((x) => x.estado === 'em-pr' || x.estado === 'em-sessao' || (x.estado === 'aberta' && x.pr))) {
@@ -230,7 +231,11 @@ export function sincronizar(dir, { prs, arquivosDoPr, integrados = new Set(), si
     const arq = arquivoDe(l.local);
     const porIntegracao = p.state === 'CLOSED' && integrados.has(n);
     let mud = null;
-    if (p.state === 'MERGED' || porIntegracao) {
+    if ((p.state === 'MERGED' || porIntegracao) && l.estado === 'aberta') {
+      // `pr` numa lacuna `aberta` costuma ser o PR onde o achado apareceu ("resto fora do PR"), não o que o corrige:
+      // mergeou, então um humano confere o diff; resolver sozinho fecharia lacuna que o PR citou e não tocou.
+      r.conferir.push({ id: l.id, pr: n, arquivo: arq });
+    } else if (p.state === 'MERGED' || porIntegracao) {
       if (arquivosDoPr(n).includes(arq)) {
         mud = porIntegracao
           ? { estado: 'resolvida', destino: `PR #${n} integrado na main por commit de integração (sincronizar)` }
