@@ -61,7 +61,7 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 
 - **Decisão:** plano de correção de 24/11/2026 (dono, chat, via sessão-mãe; item 1.2 da auditoria fiscal/contábil read-only do mesmo dia) +
   F-PB-1 a ([`ADR-PAIS-NA-BORDA`](ADR-PAIS-NA-BORDA.md), 24/11): o centro é o conceito; o país mora na borda (`features/<domínio>/paises/br/**`).
-  O `ADR-MODULE-BOUNDARIES` (Accepted em 24/11, sem "executa") trata de fronteira **entre** features; a C1 é o anel **dentro** de `features/accounting`, sem sobreposição de regra: nenhuma regra dele (M1/M1a…) foi ligada por esta emenda.
+  O `ADR-MODULE-BOUNDARIES` (Accepted em 24/11; "executa" do BRIEF inteiro dado pelo dono no mesmo dia, PR-0 a PR-1b já na main pelo #1375) trata de fronteira **entre** features; a C1 é o anel **dentro** de `features/accounting`, sem sobreposição de regra: nenhuma regra dele (M1/M1a…) está ligada no `.dependency-cruiser.cjs` e esta emenda não liga nenhuma.
 - **Regra:** `C1-ledger-core-not-fiscal` (erro). `from` = `services/{PostingService,PeriodService,AuditService,ExerciseClosingService,ReconciliationService}`
   e `repositories/I?{JournalEntry,Posting,Account,AccountingPeriod,Audit,Reconciliation,SourceProvenance}Repository` de `features/accounting`.
   `to` = **tudo em `src/` fora da lista fechada** `LEDGER_CORE_ALLOWED`: `audit/`, `dtos/{Posting,Reconciliation}Dto`, `models/{AccountantAssignment.model,Reconciliation.model,closing,dates,ledgerStatus,money}`,
@@ -79,7 +79,7 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 - **Baseline antes/depois:** **5 → 0** violações da C1 (medidas com a regra final sobre o código do `origin/main` em cópia fora do repo:
   `ReconciliationService → lib/ofx`, `→ lib/cnab`; `PostingService → ILalurRepository`; `ExerciseClosingService → TaxAssessmentService`, `→ ITaxAssessmentRepository`;
   as 4 conhecidas do levantamento + o repositório de apuração, que só o grafo mostrou). O `.dependency-cruiser-known-violations.json` **não mudou**
-  (24 ativas ignoradas, 27 obsoletas, antes e depois); a C1 nasce com 0 e não entra no arquivo.
+  (medido pelo autor na base antiga: 24 ativas ignoradas, 27 obsoletas, antes e depois; após o #1375 o baseline da main é 11 ativas / 11 obsoletas, e o PR não o altera); a C1 nasce com 0 e não entra no arquivo.
 - **Prova de que morde (condição que falha, 24/11):** seis `import` plantados de uma vez, um por família de alvo — `PostingService → ITaxAssessmentRepository` (`import type`),
   `PeriodService → paises/br/EcdChartStructureRule` (`import type`), `AuditService → lib/ofx`, `ReconciliationService → lib/cnab`, `ExerciseClosingService → LalurService`
   (`import type`), `IPostingRepository → models/taxAssessmentProvisao` (`import type`) ⇒ `npm run check:arch` **exit 6**, `x 6 dependency violations`, cada uma como
