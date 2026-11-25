@@ -77,7 +77,7 @@ describe('buildSubledgerFilterWhere', () => {
     it('overdue usa `<` (não `<=`) contra `today` — vencer hoje não é estar vencido', () => {
       const r = build({ overdue: true }, { openStatuses: PAYABLE_OUTSTANDING_STATUSES, today: '2026-08-13' });
       expect(r).toEqual([
-        { dueDate: { lt: '2026-08-13T00:00:00.000Z' }, status: { in: ['OPEN', 'PARTIALLY_PAID', 'PAYING'] } },
+        { dueDate: { lt: '2026-08-13T00:00:00.000Z' }, status: { in: ['OPEN', 'PARTIALLY_PAID', 'PAYING', 'CANCELLING'] } },
       ]);
     });
 
@@ -89,15 +89,15 @@ describe('buildSubledgerFilterWhere', () => {
     it('`today` é usado EXATAMENTE o valor injetado — a função não lê o relógio real', () => {
       const passado = build({ overdue: true }, { openStatuses: PAYABLE_OUTSTANDING_STATUSES, today: '2000-01-01' });
       const futuro = build({ overdue: true }, { openStatuses: PAYABLE_OUTSTANDING_STATUSES, today: '2099-12-31' });
-      expect(passado).toEqual([{ dueDate: { lt: '2000-01-01T00:00:00.000Z' }, status: { in: ['OPEN', 'PARTIALLY_PAID', 'PAYING'] } }]);
-      expect(futuro).toEqual([{ dueDate: { lt: '2099-12-31T00:00:00.000Z' }, status: { in: ['OPEN', 'PARTIALLY_PAID', 'PAYING'] } }]);
+      expect(passado).toEqual([{ dueDate: { lt: '2000-01-01T00:00:00.000Z' }, status: { in: ['OPEN', 'PARTIALLY_PAID', 'PAYING', 'CANCELLING'] } }]);
+      expect(futuro).toEqual([{ dueDate: { lt: '2099-12-31T00:00:00.000Z' }, status: { in: ['OPEN', 'PARTIALLY_PAID', 'PAYING', 'CANCELLING'] } }]);
     });
 
     it('F10 — overdue + status viram DOIS blocos independentes, nunca um spread que se sobrescreve', () => {
       const r = build({ overdue: true, status: 'PAID' });
       expect(r).toEqual([
         { status: 'PAID' },
-        { dueDate: { lt: '2026-08-13T00:00:00.000Z' }, status: { in: ['OPEN', 'PARTIALLY_PAID', 'PAYING'] } },
+        { dueDate: { lt: '2026-08-13T00:00:00.000Z' }, status: { in: ['OPEN', 'PARTIALLY_PAID', 'PAYING', 'CANCELLING'] } },
       ]);
       // As duas chaves `status` sobrevivem em blocos separados — é o AND do chamador que produz o
       // conjunto vazio (nada pago está em aberto), não esta função.
@@ -107,15 +107,15 @@ describe('buildSubledgerFilterWhere', () => {
       const r = build({ overdue: true, dueTo: '2026-03-01' });
       expect(r).toEqual([
         { dueDate: { lte: '2026-03-01T00:00:00.000Z' } },
-        { dueDate: { lt: '2026-08-13T00:00:00.000Z' }, status: { in: ['OPEN', 'PARTIALLY_PAID', 'PAYING'] } },
+        { dueDate: { lt: '2026-08-13T00:00:00.000Z' }, status: { in: ['OPEN', 'PARTIALLY_PAID', 'PAYING', 'CANCELLING'] } },
       ]);
     });
   });
 
   describe('openStatuses por lado — AP e AR usam o próprio conjunto', () => {
-    it('lado AP usa PAYABLE_OUTSTANDING_STATUSES (OPEN, PARTIALLY_PAID, PAYING — F-PS4)', () => {
+    it('lado AP usa PAYABLE_OUTSTANDING_STATUSES (OPEN, PARTIALLY_PAID, PAYING — F-PS4; + CANCELLING — F-CX-3 a)', () => {
       const r = buildSubledgerFilterWhere<Prisma.PayableWhereInput>({ overdue: true }, OPTS_AP);
-      expect(r).toEqual([{ dueDate: { lt: '2026-08-13T00:00:00.000Z' }, status: { in: ['OPEN', 'PARTIALLY_PAID', 'PAYING'] } }]);
+      expect(r).toEqual([{ dueDate: { lt: '2026-08-13T00:00:00.000Z' }, status: { in: ['OPEN', 'PARTIALLY_PAID', 'PAYING', 'CANCELLING'] } }]);
     });
 
     it('lado AR usa RECEIVABLE_OUTSTANDING_STATUSES (OPEN, PARTIALLY_RECEIVED, RECEIVING — F-PS4)', () => {

@@ -13,7 +13,7 @@
  *              teste: controllers/__tests__/bankSettlementController.integration.test.ts — "confirm exato (item 6/7)" (linha MATCHED); FAILED+failedStep por falha injetada em "retry (item 9)"
  */
 import type { Prisma } from 'generated/prisma';
-import { ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import { logger } from '../../../lib/logger';
 import type { AccountingScope } from '../scope/AccountingScope';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
@@ -31,7 +31,7 @@ import type { ReceivableService } from './ReceivableService';
 import type { PostingService } from './PostingService';
 import { centsFromDb } from '../models/money';
 import { dateOnlyFromDayNumber, toUtcDayNumber } from '../models/dates';
-import { resolvePaymentMethodAccount } from '../models/Payable.model';
+import { resolvePaymentMethodAccount, TITULO_EM_CANCELAMENTO_CODE } from '../models/Payable.model';
 import { PROVIDER_BALANCE_METHOD } from '../models/Receivable.model';
 import { TERMINAL_CHARGE_STATUSES, type CollectionChargeStatus } from '../models/CollectionCharge.model';
 import { mpReleaseFeeCents } from '../../../lib/mpReleaseReport';
@@ -629,6 +629,10 @@ export class BankSettlementService {
       const orphan = await this.findOrphanSettlement(scope, titleType, item.titleId, toDateOnly(line.date), proposedCents, method, tx);
       if (orphan) {
         throw new ValidationError(`settlement_orphan_suspected: o título já tem ${titleType === 'PAYABLE' ? 'pagamento' : 'recebimento'} ACTIVE '${orphan}' igual a este item (mesma data, valor e método) sem vínculo — concilie à mão antes de repetir.`);
+      }
+      // CANCELLING PR-0 (0.8): título em cancelamento é morto para baixa nova — 409 nomeado (não o genérico `title_not_open`).
+      if (titleType === 'PAYABLE' && title?.status === 'CANCELLING') {
+        throw new ConflictError('TITULO_EM_CANCELAMENTO: a conta a pagar está em cancelamento — não aceita baixa.', TITULO_EM_CANCELAMENTO_CODE);
       }
       const settleable = titleType === 'PAYABLE' ? ['OPEN', 'PARTIALLY_PAID'] : ['OPEN', 'PARTIALLY_RECEIVED'];
       if (!title || !settleable.includes(title.status)) throw new ValidationError('title_not_open: o título não está aberto para baixa.');

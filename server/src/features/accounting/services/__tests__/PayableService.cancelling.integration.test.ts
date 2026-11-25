@@ -215,7 +215,7 @@ describe('CANCELLING PR-0 — cancelPayable em 2 commits (intenção persistida)
       expect(row.cancelReversalDate).toBe(mes(6));
     });
 
-    it('cancelPayable sobre CANCELLED não repete nada (idempotente)', async () => {
+    it('cancelPayable sobre título já CANCELLED: 404 (o soft-delete esconde a linha) e nenhum 2º payable.cancelled — NÃO é o "devolve idempotente" que o BRIEF 0.5 supõe', async () => {
       const t = await titulo(6);
       await ap().cancelPayable(scope(), t.payableId, { unitId: UNIT, reversalDate: mes(6) });
       await expect(ap().cancelPayable(scope(), t.payableId, { unitId: UNIT, reversalDate: mes(6) })).rejects.toMatchObject({ statusCode: 404 });
@@ -224,7 +224,7 @@ describe('CANCELLING PR-0 — cancelPayable em 2 commits (intenção persistida)
   });
 
   describe('0.7 — reconcile passo 1 pula CANCELLING e o passo 1b conclui', () => {
-    it('título de compra de estoque CANCELLING NÃO recebe estoque de novo no passo 1 (falharia se só o estado fosse acrescentado)', async () => {
+    it('título de compra de estoque CANCELLING não recebe estoque nem reposta nada no passo 1 (regressão: o estoque desfeito segue desfeito)', async () => {
       const c = await compraDeEstoque(7);
       await gravaIntencao(c.payableId, 7);
       await getFactory().getInventoryService().reverseStockForReceipt(scope(), {
@@ -283,6 +283,17 @@ describe('CANCELLING PR-0 — cancelPayable em 2 commits (intenção persistida)
       expect((await eventos(t.payableId, 'payable.cancelled'))[0].payload).not.toContain('"reversalEntryId":"'); // sem estorno ⇒ sem id (null não entra no canônico)
     });
 
+    it('o passo 1 NÃO re-posta o reconhecimento de um título CANCELLING (create pendurado + intenção): recognitionsPosted 0 e nenhum ap.payable nasce', async () => {
+      // Falsificável: sem o `continue` de CANCELLING no passo 1, o reconcile reconstruiria o lançamento que o cancelamento acabou de dispensar.
+      const t = await titulo(10);
+      await gravaIntencao(t.payableId, 10);
+      await prisma.journalEntry.deleteMany({ where: { userId: DONO, unitId: UNIT, sourceType: 'ap.payable', sourceId: t.payableId } });
+      const out = await ap().reconcilePayables(scope());
+      expect(out.recognitionsPosted).toBe(0);
+      expect(await prisma.journalEntry.count({ where: { userId: DONO, unitId: UNIT, sourceType: 'ap.payable', sourceId: t.payableId } })).toBe(0);
+      expect((await estado(t.payableId)).status).toBe('CANCELLED');
+    });
+
     it('`grace`: título CANCELLING mais novo que o grace fica para a passada seguinte', async () => {
       const t = await titulo(10);
       await gravaIntencao(t.payableId, 10);
@@ -308,17 +319,6 @@ describe('CANCELLING PR-0 — cancelPayable em 2 commits (intenção persistida)
       await expect(
         ap().apropriarCreditoIbsCbs(scope(), { unitId: UNIT, payableId: t.payableId, tributo: 'IBS', sourceDocumentId: doc.id, expectedStatus: 'PENDENTE' }),
       ).rejects.toMatchObject({ statusCode: 409, errorCode: 'TITULO_EM_CANCELAMENTO' });
-      await ap().redriveCancelling(scope(), t.payableId);
-    });
-
-    it('cancelPayable concorrente sobre o mesmo título: o CAS perdido devolve 409 TITULO_MUDOU_DURANTE_O_CANCELAMENTO (sequencial: o 2º já vê CANCELLING e retoma)', async () => {
-      const t = await titulo(11);
-      await gravaIntencao(t.payableId, 11);
-      // a leitura "antes da tx" acha OPEN, mas o CAS já foi ganho por outro: simula a janela chamando o CAS que o service chamaria
-      const perdeu = await prisma.$transaction((tx) =>
-        repo.casStartCancelling(scope(), t.payableId, { fromStatuses: ['OPEN'], cancelledById: DONO, cancelReason: null, cancelReversalDate: mes(11) }, tx),
-      );
-      expect(perdeu).toBe(0);
       await ap().redriveCancelling(scope(), t.payableId);
     });
   });

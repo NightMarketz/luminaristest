@@ -8,9 +8,15 @@
  *   commit 2 — subrazão: CAS OPEN → PAYING (claimForPayment) ANTES do post; finalize PAYING → PAID/PARTIALLY_PAID + settlementEntryId, runTransaction próprio
  *              teste: PayableService.test.ts › "TOCTOU: two parallel payments → exactly one succeeds (claimForPayment CAS)"
  *              teste: PayableService.test.ts › "does NOT revert the claim after a successful post (never revert over a booked ledger)"
+ *              cancelPayable (BE-INCR-CANCELAMENTO-CANCELLING PR-0, 69c7): CAS de INTENÇÃO OPEN|PARTIALLY_PAID|PAID → CANCELLING (+ payable.cancel_requested) gravado ANTES
+ *              do commit 1 do estorno; CANCELLING → CANCELLED (completePayableCancellation) depois. Falha depois da intenção não compensa: o título fica CANCELLING
+ *              teste: PayableService.cancelling.integration.test.ts › "título com baixa em trânsito (PAYING) ⇒ recusa e NADA persiste: sem intenção, sem audit, sem estorno"
+ *              teste: PayableService.cancelling.integration.test.ts › "crash DEPOIS do estoque desfeito: título CANCELLING; o 2º cancelPayable conclui sem 2º decremento, sem 2º estorno e com 1 payable.cancelled"
  *   reconcile — reconcilePayables(): read-first, reposta só o que falta e finaliza PAYING preso
  *              teste: PayableService.test.ts › "re-posts a missing settlement AND finalizes a PAYING payable"
  *              teste: PayableService.test.ts › "does NOT re-post when the recognition already exists (idempotent)"
+ *              passo 1b: título CANCELLING (intenção gravada, cancelamento não concluído) — repete só o idempotente e conclui; o passo 1 o PULA (senão re-recebe o estoque)
+ *              teste: PayableService.cancelling.integration.test.ts › "razão JÁ estornado + período FECHOU ⇒ conclui (o replay do reverseEntry vem antes do gate de período)" (asserta a 2ª passada)
  *   fora da tx — entrada de estoque (receiveStock; falha não compensa, o reconcile re-dirige) e rascunho de imobilizado (modo 4)
  *              teste: PayableService.test.ts › "does NOT compensate the recognition when the INBOUND fails (reconcile re-drives)"
  *   estorno — cancelPayment: reverseEntry (commit 1, idempotente) e DEPOIS a tx do subrazão (commit 2). Crash entre os dois = razão estornado +
@@ -18,14 +24,6 @@
  *              houver e conclui a tx do subrazão; nunca finaliza como pago o pagamento cujo lançamento já está estornado)
  *              teste: SubledgerReversalAtomicity.integration.test.ts › "razão estornado + pagamento ACTIVE → reconcilePayables conclui o estorno (CANCELLED, título reaberto, 1 auditoria, sem 2º estorno)"
  *              teste: SubledgerReversalAtomicity.integration.test.ts › "o estorno já está no razão e o período FECHOU → repetir cancelPayment conclui"
- *   CANCELLING (BE-INCR-CANCELAMENTO-CANCELLING PR-0, 69c7) — cancelPayable NÃO tem mais um commit 1 sem marca: o CAS de intenção
- *              OPEN|PARTIALLY_PAID|PAID → CANCELLING (subrazão, tx própria, + audit payable.cancel_requested) é gravado ANTES de qualquer
- *              efeito; depois estoque (replay-seguro), reverseEntry da retenção e do reconhecimento (commit 1, razão, idempotente) e por fim
- *              CANCELLING → CANCELLED numa tx (commit 2). Falha depois da intenção NÃO compensa: o título fica CANCELLING, o AppError original
- *              sobe e o reconcile (passo 1b) ou uma nova chamada retomam, repetindo só o idempotente.
- *              teste: PayableService.cancelling.integration.test.ts › "crash depois do estoque: o título fica CANCELLING e o 2º cancelPayable conclui sem 2º decremento, sem 2º estorno e com 1 payable.cancelled"
- *              teste: PayableService.cancelling.integration.test.ts › "reconcile passo 1b: razão já estornado + período fechado ⇒ conclui (replay antes do gate)"
- *              teste: PayableService.cancelling.integration.test.ts › "reconcile 2x: a 2ª passada não repete nada"
  *   RETENCOES-FONTE PR-2 (F-RET-10 a) — a retenção feita é baixa SEM caixa (kind WITHHOLDING) gravada na tx1 do título (ou na
  *              tx da baixa, para a CSRF) com a TaxWithholding e o título de imposto; o razão vem depois, em postEntry próprio
  *              (sourceType='ap.withholding', sourceId=paymentId): D 2.1.2 / C conta a recolher. Falha do post ⇒ o reconcile refaz.

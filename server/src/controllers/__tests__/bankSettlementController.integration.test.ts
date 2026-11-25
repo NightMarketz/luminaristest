@@ -287,6 +287,18 @@ describe('/api/bank-settlements — F7', () => {
     expect((await prisma.bankStatementLine.findUniqueOrThrow({ where: { id: l8 } })).status).toBe('MATCHED');
   });
 
+  it('CANCELLING PR-0 (0.8): título com cancelamento em andamento (CANCELLING) → confirm 409 TITULO_EM_CANCELAMENTO, sem baixa', async () => {
+    const pc = await criarPayable('NF-CX', 3100, '2026-06-19');
+    const lc = await criarLinha(91, -3100, 'NF-CX');
+    expect((await scan()).body.data.created).toBe(1);
+    const item = await itemByLine(lc);
+    await prisma.payable.update({ where: { id: pc }, data: { status: 'CANCELLING', cancelReversalDate: '2026-06-18', cancelledById: dono.id } });
+    const res = await confirm(item.id);
+    expect(res.status).toBe(409);
+    expect(JSON.stringify(res.body)).toMatch(/TITULO_EM_CANCELAMENTO/);
+    expect(await prisma.payablePayment.count({ where: { payableId: pc, status: 'ACTIVE' } })).toBe(0);
+  });
+
   it('stale (item 10): título cancelado após o scan → confirm 400 title_not_open; scan seguinte marca STALE', async () => {
     const p7 = await criarPayable('NF-7', 3000, '2026-06-19');
     const l9 = await criarLinha(9, -3000, 'NF-7');
