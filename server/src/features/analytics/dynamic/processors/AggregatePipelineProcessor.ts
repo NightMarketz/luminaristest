@@ -13,7 +13,7 @@ import { logger } from '@/lib/logger';
 import type { CompiledPipeline, Dimension, Measure, PipelineSpec, JoinRef } from '../../core/pipeline/Pipeline';
 import { compilePipeline } from '../../core/pipeline/Compiler';
 import { evaluateExpression } from '../../core/engine/ExpressionEvaluator';
-import type { ISchemaField } from '@/features/dynamicTables/models/DynamicTable.model';
+import type { ISchemaField } from '@/features/dynamicTables/public/dynamicTable.types';
 
 // =============================================================================
 // HELPERS

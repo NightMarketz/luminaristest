@@ -1,6 +1,6 @@
 import type { AnalyticsProcessor, ChartDataPoint } from '../../core';
 import { logger } from '../../../../lib/logger';
-import { PROPOSAL_STATUS_ORDER } from '../../../crm/constants';
+import { PROPOSAL_STATUS_ORDER } from '../../../crm/public/constants';
 
 /** Proposals grouped by status (cross-fetch from `leadProposals`). */
 export const crmProposalsByStatusProcessor: AnalyticsProcessor = async (context) => {

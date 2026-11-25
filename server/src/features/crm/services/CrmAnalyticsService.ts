@@ -3,7 +3,7 @@ import { moduleNotInstalled } from './CrmPipelineService';
 import type { DynamicTableService } from '../../dynamicTables/services/DynamicTableService';
 import type { IDynamicTableRepository } from '../../dynamicTables/repositories/IDynamicTableRepository';
 import type { IDynamicTable, ITableSchema } from '../../dynamicTables/models/DynamicTable.model';
-import type { AnalyticsProcessorContext, ChartDataPoint, TableDataRow } from '../../analytics/core';
+import type { AnalyticsProcessorContext, ChartDataPoint, TableDataRow } from '../../analytics/public/processor';
 import {
   crmFunnelProcessor,
   crmConversionProcessor,
@@ -12,7 +12,7 @@ import {
   crmBantProcessor,
   crmProposalsByStatusProcessor,
   crmActivitiesByTypeProcessor,
-} from '../../analytics/kpis/crm';
+} from '../../analytics/public/crmKpis';
 import type { CrmAnalyticsInput } from '../dtos/CrmAnalyticsDto';
 
 export interface CrmAnalyticsBundle {

@@ -5,7 +5,7 @@
  * Processors receive raw table data and return formatted chart data.
  */
 
-import type { IDynamicTable, ITableSchema } from '@/features/dynamicTables/models/DynamicTable.model';
+import type { IDynamicTable, ITableSchema } from '@/features/dynamicTables/public/dynamicTable.types';
 import { logger } from '@/lib/logger';
 
 // =============================================================================

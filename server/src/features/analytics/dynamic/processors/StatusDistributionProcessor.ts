@@ -6,7 +6,7 @@
  */
 
 import type { AnalyticsProcessor, ChartDataPoint } from '../../core';
-import type { ISchemaField, ITableSchema } from '@/features/dynamicTables/models/DynamicTable.model';
+import type { ISchemaField, ITableSchema } from '@/features/dynamicTables/public/dynamicTable.types';
 
 function findStatusField(
   schema: ITableSchema,

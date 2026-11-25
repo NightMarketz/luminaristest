@@ -10,8 +10,8 @@ import type { AnalyticsPresetGroup, ChartPreset } from '../models/ChartPreset';
 import { getFactory } from '@/lib/factory';
 import { getProcessor, type TableDataRow, type ChartDataPoint } from '../core';
 import type { UserContext } from '@/types/UserContext';
-import type { IDynamicTable, ITableSchema, ISchemaField, IFieldRelation } from '@/features/dynamicTables/models/DynamicTable.model';
-import type { DynamicTableService } from '@/features/dynamicTables/services/DynamicTableService';
+import type { IDynamicTable, ITableSchema, ISchemaField, IFieldRelation } from '@/features/dynamicTables/public/dynamicTable.types';
+import type { DynamicTableService } from '@/features/dynamicTables/public/dynamicTableService';
 
 // Import to register all processors and templates
 import '../dynamic';

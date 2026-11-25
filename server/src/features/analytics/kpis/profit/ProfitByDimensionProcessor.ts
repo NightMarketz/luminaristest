@@ -8,7 +8,7 @@
 import type { AnalyticsProcessor, ChartDataPoint, TableDataRow } from '../../core';
 import { logger } from '@/lib/logger';
 import { addMoney } from '../../utils/CurrencyUtils';
-import type { ISchemaField } from '@/features/dynamicTables/models/DynamicTable.model';
+import type { ISchemaField } from '@/features/dynamicTables/public/dynamicTable.types';
 
 type PeriodMode = 'month' | 'year';
 

@@ -1,5 +1,5 @@
 import type { AnalyticsProcessor, ChartDataPoint } from '../../core';
-import { LEAD_STATUS_ORDER } from '../../../crm/constants';
+import { LEAD_STATUS_ORDER } from '../../../crm/public/constants';
 
 /** Leads grouped by acquisition source (for a pie/donut). */
 export const crmSourceProcessor: AnalyticsProcessor = (context) => {

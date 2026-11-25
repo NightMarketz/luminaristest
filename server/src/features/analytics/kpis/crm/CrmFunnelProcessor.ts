@@ -1,6 +1,6 @@
 import type { AnalyticsProcessor, ChartDataPoint } from '../../core';
 import { logger } from '../../../../lib/logger';
-import { UNORDERED_STAGE_SENTINEL } from '../../../crm/constants';
+import { UNORDERED_STAGE_SENTINEL } from '../../../crm/public/constants';
 
 /**
  * CRM conversion funnel — number of leads per pipeline stage, ordered.

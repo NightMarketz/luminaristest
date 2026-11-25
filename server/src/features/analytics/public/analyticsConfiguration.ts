@@ -3,8 +3,9 @@
  * (`PresetTableDefinition.analytics`). Só o tipo: nenhuma outra feature alcança `analytics/core/` direto
  * (regra `M1`, ADR-MODULE-BOUNDARIES §10 e §11.6).
  *
- * Não é `*.types.ts` de propósito: a `M4` só deixa esse sufixo ler `models/` e `dtos/` na raiz da feature, e o tipo
- * mora em `core/models/` (dono, questionário, 24/11/2026: "Porta em analytics/public"). Consequência: policy, model e
- * DTO de outra feature não podem importar este arquivo (`L5`/`L6`).
+ * Nasceu sem o sufixo `*.types.ts` porque o tipo morava em `core/models/`, que a `M4` não aceita (dono, questionário,
+ * 24/11/2026: "Porta em analytics/public"). Desde 25/11 o tipo está em `analytics/models/` (dono, questionário:
+ * "analytics/models/"), e a troca de sufixo passou a ser possível; o nome ficou para não mexer nos importadores.
+ * Enquanto não for `*.types.ts`, policy, model e DTO de outra feature não podem importar este arquivo (`L5`/`L6`).
  */
 export type { AnalyticsConfiguration } from '../models/AnalyticsConfiguration';
