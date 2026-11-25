@@ -6,7 +6,7 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
-import { ApplicationFactory } from '@/lib/factory';
+import { ApplicationFactory, getFactory } from '@/lib/factory';
 import type { AccountingScope } from '@/features/accounting/scope/AccountingScope';
 import { resolveAccountingScopeInternal } from '@/features/accounting/scope/resolveAccountingScopeInternal';
 import { maybeSyncSaleFinalized } from '@/features/accounting/sync/bridges/SaleSalesAccountingBridge';
@@ -187,7 +187,8 @@ describe('item 14 — opção IBS/CBS por semestre', () => {
     const ok = await perfil(2027, { ibsCbsOpcaoS2: 'REGULAR' });
     expect(ok.status).toBe(200);
     expect(ok.body.data).toMatchObject({ ibsCbsOpcaoS1: null, ibsCbsOpcaoS2: 'REGULAR' });
-    expect([ibsCbsNoDas(ok.body.data, '2026-12'), ibsCbsNoDas(ok.body.data, '2027-06'), ibsCbsNoDas(ok.body.data, '2027-07')]).toEqual([false, true, false]);
+    const marcos = await getFactory().getLegalParameterService().fotografia(['MARCO_LEGAL']); // semeado pela migração (MARCO_LEGAL/INICIO_OPCAO_IBS_CBS_DAS)
+    expect([ibsCbsNoDas(ok.body.data, '2026-12', marcos), ibsCbsNoDas(ok.body.data, '2027-06', marcos), ibsCbsNoDas(ok.body.data, '2027-07', marcos)]).toEqual([false, true, false]);
   });
 });
 
