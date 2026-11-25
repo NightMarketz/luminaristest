@@ -64,6 +64,11 @@ export function extrairResultado(soap: string): string {
   return m[1].trim();
 }
 
+/** Prazo de CONEXÃO de uma chamada SOAP (socket `timeout` do `request`). Constante única; o total é `SEFAZ_CALL_TOTAL_MS`. */
+export const SEFAZ_CONNECT_TIMEOUT_MS = 10_000;
+/** INATIVIDADE da resposta (`res.setTimeout`: reinicia a cada dado) — conceito distinto do prazo TOTAL `SEFAZ_CALL_TOTAL_MS`. */
+export const SEFAZ_RESPONSE_INACTIVITY_MS = 30_000;
+
 export class SefazSoapClient implements SefazTransporte {
   constructor(private readonly opts: SefazSoapOptions) {}
 
@@ -71,7 +76,7 @@ export class SefazSoapClient implements SefazTransporte {
   async call(url: string, servico: SefazServico, xml: string): Promise<string> {
     const body = envelopeSoap(servico, xml);
     const startedAt = Date.now();
-    const { transporte, connectTimeoutMs = 10_000, responseTimeoutMs = 30_000, totalTimeoutMs = SEFAZ_CALL_TOTAL_MS } = this.opts;
+    const { transporte, connectTimeoutMs = SEFAZ_CONNECT_TIMEOUT_MS, responseTimeoutMs = SEFAZ_RESPONSE_INACTIVITY_MS, totalTimeoutMs = SEFAZ_CALL_TOTAL_MS } = this.opts;
     let relogio: NodeJS.Timeout | undefined;
     try {
       const resposta = await new Promise<{ status: number; body: string }>((resolve, reject) => {

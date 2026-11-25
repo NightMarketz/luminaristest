@@ -19,8 +19,8 @@ export const DFE_PSC_REDIRECT_MISSING = 'dfe_psc_redirect_missing';
 
 /** Validade da autorização pendente (code_verifier PKCE). */
 export const PSC_AUTHORIZATION_TTL_MS = 10 * 60 * 1000;
-/** Timeout das chamadas ao PSC (/oauth/token, /oauth/certificate-discovery). */
-export const PSC_HTTP_TIMEOUT_MS = 15_000;
+/** Timeout das chamadas ao PSC (/oauth/token, /oauth/certificate-discovery). Constante única em `lib/outboundHttp` (dono, 25/11/2026). */
+export { PSC_HTTP_TIMEOUT_MS } from '../../../lib/outboundHttp';
 /** DOC-ICP-17.01 v3.0 §6.4.5.1.1: escopo da sessão de assinatura. */
 export const PSC_OAUTH_SCOPE = 'signature_session';
 
