@@ -21,3 +21,18 @@ primeiro e o dono escolheu a recomendada nas quatro (nenhuma contra a recomenda�
 
 Cada lacuna voltou à fila como `aberta` com a classe da resposta e este texto no destino
 (`lacunas.mjs set … --classe …`). Os BRIEFs saem de `sessao-planejamento` do grupo, um por tema.
+
+## Ratificação dos forks dos três BRIEFs (dono, chat, 25/11, 2º questionário)
+
+Os BRIEFs saídos da tabela acima trouxeram forks próprios; o dono ratificou **todas as recomendadas** ("Ratificar as 4 / as 8 /
+as 5 recomendadas"). O BRIEF de cada tema carrega a marca e a citação; esta tabela é só o índice.
+
+| BRIEF (PR) | Forks ratificados |
+|---|---|
+| `BE-INCR-DFE-DENIED-SUBSTITUIVEL` (#1406) | F-DEN-1(a) transição terminal `CANCELLED` própria para 101/151 · F-DEN-2(a) consulta inválida lança `DfeConsultaInvalidaError`, desiste na 1ª e alerta · F-DEN-3(a) NFC-e denegada sai do alerta quando a substituta é `AUTHORIZED` · F-DEN-4(a) auto-cura na emissão (renomeia `DENIED` antigo; sem migração de dado) |
+| `BE-INCR-CANCELAMENTO-CANCELLING` (#1407) | F-CX-1(a) · F-CX-2(a) só para frente + pré-cheques · F-CX-3(a) vivo para leitura fiscal/razão, morto para escrita · F-DR-1(a) `BLOCKED` na bandeja `ReconcilePendingItem` (+`alertedAt`) · F-AR-1(a) · F-RD-1(a) por item · F-RD-2(a) scheduler próprio · F-RD-3(b) JCP/distribuição `PENDING_POST` entram |
+| `BE-INCR-DFE-POLLING-DESISTE` (#1405) | F-PD-1(a) re-arme a cada 6 h · F-PD-2(a) teto de 7 dias · F-PD-3(a) adiado por transporte com o mesmo teto · F-PD-4(a) contingência cai no contador do poll · F-PD-5(a) `pollAlertedAt` = "alerta final saiu" |
+
+Efeito (emenda de 21/11 de `D-2026-11-11-LACUNA-VAI-AO-MAESTRO`): BRIEF de grupo da caixa sem fork pendente permite a
+`sessao-feature`. Os três BRIEFs ainda não estão na `main`; a execução parte da branch do PR do BRIEF. A premissa "número da
+denegada fica consumido" segue gate humano (`9b9d`) e não é tocada. O PR-3 do polling (`f5fb`) só depois do #1146.
