@@ -1,7 +1,12 @@
 # BE-INCR-DFE-POLLING-DESISTE — BRIEF do grupo "Polling DF-e que desiste" (25/11/2026)
 
-**Sessão:** `sessao-planejamento` do grupo (cartão da drenagem da caixa). **Estado:** BRIEF pronto, **5 forks PENDENTES** (§4) —
-logo **não** vale a dispensa da emenda de 21/11 ("BRIEF de grupo sem fork executa"); o que depende deles espera a resposta do dono.
+**Sessão:** `sessao-planejamento` do grupo (cartão da drenagem da caixa). **Estado:** BRIEF pronto, **sem fork pendente** — F-PD-1..5
+**RATIFICADOS (dono, chat, 25/11/2026, AskUserQuestion da sessão que drenou a caixa: "Ratificar as 5 recomendadas")**, todos na opção (a):
+re-arme a cada **6 h**, teto de idade de **7 dias**, o adiado por transporte com o mesmo teto, contingência reusando contador e teto do
+poll, `pollAlertedAt` reusado como marca do alerta final (resposta relayada pela sessão que me abriu; a cédula escrita é a do #1401).
+Com a seção de forks sem pendência e nenhuma lacuna do grupo `com-dono`, vale a **emenda de 21/11 de
+`D-2026-11-11-LACUNA-VAI-AO-MAESTRO`** ("BRIEF de grupo sem fork executa sem ratificação") para a `sessao-feature` — o PR-3 (P3) continua
+esperando o #1146 na `main`, por dependência de código, não de fork.
 **Escopo:** backend, com o FE em PR próprio (a casa separa `BE-INCR-*` de `FE-INCR-*`). Nenhum código nesta sessão.
 
 > ⚠️ **Achado que muda o plano (verificado em 25/11, `origin/main` = `631dd60fe`):** o **#1392** (aberto, base `main`, branch
@@ -71,34 +76,34 @@ BRIEF editam `pollPendingOnce`/`registrarFalhaDePoll`/`rearmarPoll` e `FiscalDoc
 5. **P3 (f5fb)** só depois do #1146 na `main` e **junto/depois da 15b2** (mesmo `catch`); a migração nova, se houver (F-PD-5), com
    timestamp > `20261124150000`.
 
-## 4. Forks PENDENTES de ratificação (nenhum decidido aqui)
+## 4. Forks — os 5 RATIFICADOS (dono, chat, 25/11); nenhum pendente
 
 Todos são valor/política que a cédula e as lacunas deixam ao dono ("N é do dono", "alerta/desistência definidos pelo dono").
 
-- **F-PD-1 — Intervalo do re-arme automático do documento que desistiu.** (a) **6 h**, uma consulta por ciclo (recomendada: "backoff longo"
+- **F-PD-1 [RATIFICADO (a), dono, chat, 25/11] — Intervalo do re-arme automático do documento que desistiu.** (a) **6 h**, uma consulta por ciclo (recomendada: "backoff longo"
   da cédula; 4 consultas/dia, custo baixo, a nota que a SEFAZ já processou é achada em ≤ 6 h); (b) backoff exponencial 6 h→24 h com contador
-  (exige coluna nova); (c) 1 h fixo. **Recomendação (a)**, sem coluna. Status: RATIFICAÇÃO PENDENTE.
-- **F-PD-2 — Teto de idade do re-arme: medida, valor e efeito.** Medida: `now − FiscalDocument.createdAt` (não há coluna "enviada em";
+  (exige coluna nova); (c) 1 h fixo. **Recomendação (a)**, sem coluna. Status: **RATIFICADO (dono, chat, 25/11 — opção (a), a recomendada)**.
+- **F-PD-2 [RATIFICADO (a), dono, chat, 25/11] — Teto de idade do re-arme: medida, valor e efeito.** Medida: `now − FiscalDocument.createdAt` (não há coluna "enviada em";
   a alternativa, ler a tentativa corrente, custa um join por tick). Valor: (a) **7 dias** (recomendada), (b) 3 dias, (c) 30 dias.
   Efeito ao atingir: para de re-armar, grava/mantém `pollGaveUpAt`, **um** alerta final ("abandono definitivo"), a consulta manual
-  segue valendo. **Recomendação (a)**. Status: RATIFICAÇÃO PENDENTE. *Pendência externa:* se a nota SENT/PROCESSING parada por dias tem
+  segue valendo. **Recomendação (a)**. Status: **RATIFICADO (dono, chat, 25/11 — opção (a), a recomendada)**. *Pendência externa:* se a nota SENT/PROCESSING parada por dias tem
   efeito fiscal (prazo de cancelamento/inutilização) — ver §5.
-- **F-PD-3 — O documento adiado por transporte (92c5) também ganha teto de idade?** (a) **sim, o mesmo teto do F-PD-2**: ao completar a
+- **F-PD-3 [RATIFICADO (a), dono, chat, 25/11] — O documento adiado por transporte (92c5) também ganha teto de idade?** (a) **sim, o mesmo teto do F-PD-2**: ao completar a
   idade máxima adiado, vira `pollGaveUpAt` + alerta final (recomendada: um único conceito de idade, e fecha o "sem teto de idade" que o
   92c5 pede); (b) só o alerta de 1 h do #1392 (a leitura "só alerta, sem teto" de 24/11, que o corpo do #1392 cita e a cédula de 25/11
-  amplia); (c) teto próprio menor (24 h). **Recomendação (a)**. Status: RATIFICAÇÃO PENDENTE.
-- **F-PD-4 — Contingência que falha sempre (f5fb): qual teto e qual alerta?** (a) **reusar o contador e o teto do poll**: a falha de
+  amplia); (c) teto próprio menor (24 h). **Recomendação (a)**. Status: **RATIFICADO (dono, chat, 25/11 — opção (a), a recomendada)**.
+- **F-PD-4 [RATIFICADO (a), dono, chat, 25/11] — Contingência que falha sempre (f5fb): qual teto e qual alerta?** (a) **reusar o contador e o teto do poll**: a falha de
   `contingenciarNaoRecebida` deixa de ser engolida (`return false`) e vira erro tipado que cai em `registrarFalhaDePoll` ⇒ backoff,
   8 tentativas, `pollGaveUpAt`, alerta, e o re-arme automático do P1 (recomendada: zero coluna, um só caminho); (b) contador próprio da
-  contingência (coluna nova); (c) só alerta, sem desistência. **Recomendação (a)**. Status: RATIFICAÇÃO PENDENTE. Atenção: a NFC-e que
+  contingência (coluna nova); (c) só alerta, sem desistência. **Recomendação (a)**. Status: **RATIFICADO (dono, chat, 25/11 — opção (a), a recomendada)**. Atenção: a NFC-e que
   deveria entrar em contingência tem prazo de transmissão (X10a PR-9); desistir do poll **esconde** a nota que ainda precisa ser
   contingenciada — por isso o alerta é parte do fork, não opcional.
-- **F-PD-5 — Dedupe do alerta final e significado de `pollAlertedAt`.** O #1392 apaga `pollDeferredSince`/`pollAlertedAt` a cada falha
+- **F-PD-5 [RATIFICADO (a), dono, chat, 25/11] — Dedupe do alerta final e significado de `pollAlertedAt`.** O #1392 apaga `pollDeferredSince`/`pollAlertedAt` a cada falha
   da consulta e na desistência (`EPISODIO_ENCERRADO`), então depois da desistência as duas ficam livres. (a) **reusar `pollAlertedAt`
   como "o alerta de abandono definitivo (F-PD-2) já saiu"**, limpo pelo re-arme manual/sucesso (recomendada: nenhuma coluna nova; muda
   o significado de uma coluna que o #1392 criou); (b) coluna nova `pollFinalAlertedAt` (migração aditiva, timestamp > `…150000`);
   (c) dedupe só em memória, como `DfePollScheduler.alertadas` (perde o "já alertei" no restart ⇒ repete o alerta). **Recomendação
-  (a)**. Status: RATIFICAÇÃO PENDENTE. (Mudar o significado de `pollAlertedAt` é do dono porque o contrato do #1392 e a view `poll.alertedAt`
+  (a)**. Status: **RATIFICADO (dono, chat, 25/11 — opção (a), a recomendada)**. (Mudar o significado de `pollAlertedAt` é do dono porque o contrato do #1392 e a view `poll.alertedAt`
   passam a cobrir dois casos.)
 
 ## 5. Pendente de validação externa
@@ -111,7 +116,7 @@ Todos são valor/política que a cédula e as lacunas deixam ao dono ("N é do d
 
 ## 6. Checklist numerado
 
-**Legenda:** `[direto]` = sem fork; `[F-PD-n]` = só depois da resposta do fork. Cada item é testável sozinho. Padrão de camada:
+**Legenda:** `[direto]` = sem fork; `[F-PD-n]` = item que depende do fork F-PD-n, já RATIFICADO na opção (a) (valores em §4). Cada item é testável sozinho. Padrão de camada:
 Route → Controller → Service (Policy) → Repository → Prisma; DTO Zod `.strict()` onde houver entrada; soft-delete (`deletedAt: null`) em toda
 leitura nova.
 
