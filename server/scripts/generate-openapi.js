@@ -3,6 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const swaggerJSDoc = require('swagger-jsdoc');
 
+// Glob só aceita '/' como separador: no Windows, path.resolve devolve '\' e o swagger-jsdoc
+// casa 0 arquivos (spec vazio). No Linux path.sep já é '/', então isto é identidade lá.
+const toGlob = (p) => p.split(path.sep).join('/');
+
 const options = {
   definition: {
     openapi: '3.0.0',
@@ -28,7 +32,7 @@ const options = {
     // DTO @openapi blocks define the components/schemas that path annotations $ref —
     // without this glob every one of those refs dangles in the served spec.
     path.resolve(process.cwd(), 'src', 'features', '**', 'dtos', '*.ts'),
-  ],
+  ].map(toGlob),
 };
 
 // Exported so the regression test can build the spec straight from source (catching a
