@@ -1,5 +1,5 @@
 import { NoActiveAccountingBindingsError } from '../../../lib/errors';
-import type { IAccountingEventMapper } from '../../accounting/sync/mappers/IAccountingEventMapper';
+import type { IAccountingEventMapper } from '../../accounting/public/accountingEventMapper';
 import { AccountingBindingV1Schema } from '../dtos/AccountingBindingDto';
 import { InterpretedEventMapper } from '../interpreter/InterpretedEventMapper';
 import type { ArchetypeCatalog } from '../models/types';

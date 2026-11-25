@@ -48,17 +48,20 @@ function tsFiles(dir: string): string[] {
  *  segmento) nem `accountingBinding/...` (o segmento seguinte é 'B', não '/'). */
 const ACCOUNTING_SEGMENT = /(^|\/)accounting(\/|$)/;
 
-/** Módulo público permitido → nomes que podem ser importados dele (BRIEF item 13). */
+/** Módulo público permitido → nomes que podem ser importados dele (BRIEF item 13).
+ *  Desde 25/11/2026 (ADR-MODULE-BOUNDARIES §11.9; dono, questionário: "Portas e lista ajustada") os contratos são
+ *  lidos pelas portas em `accounting/public/`: os NOMES permitidos são os mesmos, mudou o caminho. Só
+ *  `models/dates` segue pelo caminho direto (o importador é um DTO, que não pode ler porta executável). */
 const ALLOWED_ACCOUNTING_IMPORTS: ReadonlyArray<{ suffix: RegExp; names: readonly string[] }> = [
-  { suffix: /accounting\/sync\/mappers\/IAccountingEventMapper$/, names: ['IAccountingEventMapper'] },
-  { suffix: /accounting\/dtos\/PostingDto$/, names: ['PostEntryInput'] },
+  { suffix: /accounting\/public\/accountingEventMapper$/, names: ['IAccountingEventMapper'] },
+  { suffix: /accounting\/public\/postingDto\.types$/, names: ['PostEntryInput'] },
   {
-    suffix: /accounting\/sync\/mappers\/revenueSplit$/,
+    suffix: /accounting\/public\/revenueSplit$/,
     names: ['splitRevenueCredit', 'SERVICE_REVENUE_ACCOUNT', 'RESALE_REVENUE_ACCOUNT', 'RevenueCreditLine'],
   },
-  { suffix: /accounting\/models\/money$/, names: ['MAX_CENTS'] },
+  { suffix: /accounting\/public\/money\.types$/, names: ['MAX_CENTS'] },
   // BE-INCR-PLANO-4-NIVEIS (F-L8-8 a, dono 13/10): o binding V2 deriva do V1 pelo de-para da L8 (fonte única).
-  { suffix: /accounting\/fixtures\/ChartOfAccountsFixture$/, names: ['codigoPosL8'] },
+  { suffix: /accounting\/public\/chartOfAccounts$/, names: ['codigoPosL8'] },
   // SOT F-12.1 (dono, chat, 10/11: "Liberar"): a validação de data e competência pelo calendário tem casa única.
   { suffix: /accounting\/models\/dates$/, names: ['isValidDateOnly', 'isValidCompetencia'] },
 ];

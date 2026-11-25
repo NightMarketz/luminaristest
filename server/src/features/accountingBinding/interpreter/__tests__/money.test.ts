@@ -1,5 +1,5 @@
 import { ValidationError } from '../../../../lib/errors';
-import { MAX_CENTS } from '../../../accounting/models/money';
+import { MAX_CENTS } from '../../../accounting/public/money.types';
 import { assertCentsInRange, centsFromReais } from '../money';
 
 /**

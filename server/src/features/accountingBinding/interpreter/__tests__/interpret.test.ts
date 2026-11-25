@@ -1,5 +1,5 @@
 import { ValidationError } from '../../../../lib/errors';
-import { MAX_CENTS } from '../../../accounting/models/money';
+import { MAX_CENTS } from '../../../accounting/public/money.types';
 import { revenueRecognitionArchetype } from '../../archetypes/RevenueRecognitionArchetype';
 import { settlementArchetype } from '../../archetypes/SettlementArchetype';
 import { reversalArchetype } from '../../archetypes/ReversalArchetype';

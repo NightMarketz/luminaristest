@@ -1,6 +1,6 @@
 import { roundReaisToCents } from '../../../lib/decimalMoney';
 import { ValidationError } from '../../../lib/errors';
-import { MAX_CENTS } from '../../accounting/models/money';
+import { MAX_CENTS } from '../../accounting/public/money.types';
 
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Fase P1, Corpo D) — os DOIS pontos de conversão de dinheiro do

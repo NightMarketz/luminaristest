@@ -1,11 +1,11 @@
 import { ValidationError } from '../../../lib/errors';
-import type { PostEntryInput } from '../../accounting/dtos/PostingDto';
-import type { IAccountingEventMapper } from '../../accounting/sync/mappers/IAccountingEventMapper';
+import type { PostEntryInput } from '../../accounting/public/postingDto.types';
+import type { IAccountingEventMapper } from '../../accounting/public/accountingEventMapper';
 import {
   RESALE_REVENUE_ACCOUNT,
   SERVICE_REVENUE_ACCOUNT,
   splitRevenueCredit,
-} from '../../accounting/sync/mappers/revenueSplit';
+} from '../../accounting/public/revenueSplit';
 import type { EventBinding, FieldSlot, RoleSlot } from '../dtos/AccountingBindingDto';
 import type {
   AccountRole,
