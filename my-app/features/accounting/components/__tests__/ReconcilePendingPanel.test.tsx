@@ -34,7 +34,7 @@ describe('ReconcilePendingPanel', () => {
 
   it('todo código do enum tem rótulo (o mapa fecha sobre o contrato gerado)', () => {
     expect(Object.keys(REASON_LABELS).sort()).toEqual([...RECONCILE_PENDING_REASON_CODES].sort());
-    expect(RECONCILE_PENDING_REASON_CODES).toHaveLength(10);
+    expect(RECONCILE_PENDING_REASON_CODES).toHaveLength(15); // +5 do BLOCKED persistido do cancelamento (CANCELLING PR-0, 0.10)
   });
 
   it('lista a pendência com origem, id, rótulo do motivo, detalhe e tentativas', async () => {

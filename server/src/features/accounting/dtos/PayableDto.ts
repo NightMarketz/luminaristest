@@ -514,7 +514,7 @@ export const CancelPaymentSchema = z
  *       required: [unitId]
  *       properties:
  *         unitId: { type: string }
- *         status: { type: string, enum: [OPEN, PARTIALLY_PAID, PAYING, PAID, CANCELLED] }
+ *         status: { type: string, enum: [OPEN, PARTIALLY_PAID, PAYING, PAID, CANCELLING, CANCELLED] }
  *         counterpartyId: { type: string, description: "Filtra pela FK de contraparte (INCR-COUNTERPARTY)" }
  *         dueFrom: { type: string, description: "Data-only YYYY-MM-DD — início da faixa de vencimento (inclusivo)" }
  *         dueTo:   { type: string, description: "Data-only YYYY-MM-DD — fim da faixa de vencimento (inclusivo)" }

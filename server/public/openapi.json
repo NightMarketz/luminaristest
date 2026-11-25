@@ -2948,6 +2948,7 @@
               "PARTIALLY_PAID",
               "PAYING",
               "PAID",
+              "CANCELLING",
               "CANCELLED"
             ]
           },
