@@ -53,7 +53,8 @@ CICLO
    fork pendente, e ainda tem PR do BRIEF por abrir (um 'executa' cobre o BRIEF inteiro). Ordem: FILA-ORDEM.
    `node scripts/paralelo.mjs plano <NÓS>` → ondas. Abra uma sessão por nó da onda (no máximo 4 ao mesmo tempo,
    worktree próprio, `user_asked`), com este brief: "sessao-feature do <NÓ>, <PR-k> do BRIEF <caminho>; branch longa (D-2026-11-25-BRANCH-LONGA-E-TURNOS §1):
-   trabalhe na `integration/<slug>` do nó, traga a `main` para ela por merge antes de começar, PR de fase em draft, um
+   trabalhe na `integration/<slug>` do nó (nó de PR único, sem irmãos, segue direto na `main`: Regra 1.6 de 10/11),
+   traga a `main` para ela por merge antes de começar, PR de fase em draft, um
    commit por item do BRIEF com o id no título, e tire o draft só quando a fase fechar com CI verde; tsc dos
    dois lados, testes do nó, check:arch; fold com `plano-vault.mjs fold` no próprio PR; abre o PR e NÃO mergeia.
    Fork não coberto pelo BRIEF: pare o nó e me reporte o fork com contexto (evidência lida, opções, recomendada)."

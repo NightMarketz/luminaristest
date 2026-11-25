@@ -26,7 +26,7 @@ como exceção pedida ao dono neste PR.
 ## 1. Branch longa, poucos PRs
 
 1. **A unidade de trabalho é a `integration/<slug>`**, que vive dias. Vale para nó com BRIEF, grupo da caixa e dreno
-   de lacunas da mesma área.
+   de lacunas da mesma área. Trabalho de PR único, sem irmãos, segue direto na `main` (Regra 1.6 de 10/11).
 2. **O PR é por fase que se testa junta, não por item.** PR-0 de contrato, quando o BRIEF tem, continua próprio e
    entra antes. Depois dele, o menor número de PRs que a dependência permitir. Cada item do BRIEF (ou cada lacuna)
    vira **um commit** dentro do PR da fase, com o id no título do commit. O rastro por item fica no commit.

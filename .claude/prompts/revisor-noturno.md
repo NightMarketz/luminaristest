@@ -13,7 +13,7 @@ corrige, não mergeia, não abre sessão, não comenta em PR, não edita arquivo
 
 PASTA DA PASSAGEM: T="$(git rev-parse --git-common-dir)/turno" (crie se faltar). Hoje você escreve `$T/revisao-<AAAA-MM-DD>.md`.
 
-0. Trava. Se outro thread "Revisor noturno" estiver em execução, ou `node scripts/heavy-slot.cjs status` mostrar vaga
+0. Trava. Se outro thread "Revisor noturno" **além deste** estiver em execução, ou `node scripts/heavy-slot.cjs status` mostrar vaga
    com rótulo `revisor`, escreva `NOITE <data> · PULADA: <motivo>` na passagem e termine.
 
 1. Estado. `git fetch origin`; `gh pr list --state open --json number,title,isDraft,mergeable,headRefName,baseRefName,headRefOid`.
@@ -34,7 +34,9 @@ PASTA DA PASSAGEM: T="$(git rev-parse --git-common-dir)/turno" (crie se faltar).
 3. Ordem: rodadas 3 e 2 antes das rodadas 1 (fechar o que está aberto); depois o PR mais antigo.
 
 4. Despacho, UM POR VEZ (espere voltar antes do próximo; nunca dois revisores na máquina). Sempre o agente
-   `revisor-independente` com isolation worktree, o BRIEF do nó no prompt e `rodada: <k>`.
+   `revisor-independente` com isolation worktree, o BRIEF do nó no prompt e `rodada: <k>`. Se esse tipo de agente
+   não carregar na sessão agendada (aconteceu com o maestro em 25/11), despache um filho em Opus, em worktree
+   isolada, com a instrução de seguir `.claude/agents/revisor-independente.md` ao pé da letra, e anote isso no bloco.
    - PR de fase (branch longa, mais de 4 commits de item): rodada 1 em FATIAS por área, cada uma com até 4 commits de
      item (`git log --oneline <base>..<head>`), uma fatia por despacho. Depois das fatias, uma PASSADA INTEGRADA sobre o
      diff inteiro, pedindo só o que cruza fatias: contrato entre camadas, migração, atomicidade e o que o BRIEF pede
