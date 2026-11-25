@@ -72,7 +72,7 @@ describe('IncomeStatementPanel (render)', () => {
     const { container } = render(<IncomeStatementPanel unitId="u1" />);
     fireEvent.click(screen.getByRole('button', { name: /Gerar DRE/ }));
 
-    await waitFor(() => expect(screen.getByText(/Custo das Mercadorias Vendidas/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Custo das Mercadorias e Serviços Vendidos/)).toBeInTheDocument());
     // -25000 cents → "250,00" visible in the CMV section.
     expect(container.textContent).toContain('250,00');
   });

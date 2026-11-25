@@ -937,7 +937,7 @@
     "section": {
       "grossRevenue": "Receita Bruta",
       "revenueDeductions": "(−) Deduções de Receita",
-      "costOfGoodsSold": "(−) Custo das Mercadorias Vendidas",
+      "costOfGoodsSold": "(−) Custo das Mercadorias e Serviços Vendidos",
       "expenses": "(−) Despesas"
     },
     "netResult": "Resultado Líquido do Exercício",
