@@ -12,7 +12,7 @@ import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { ApplicationFactory } from '@/lib/factory';
-import { SALE_BINDING_V1 } from '@/features/accountingBinding/fixtures/saleBinding';
+import { SALE_BINDING_V1 } from '@/features/accountingBinding/domain/fixtures/saleBinding';
 
 const app = makeApp();
 

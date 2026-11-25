@@ -5,7 +5,7 @@ import type {
   ActivateDefaultBindingResult,
   ActivationBlockingIssue,
 } from '../dtos/ActivateDefaultBindingDto';
-import { DEFAULT_SECTOR_KEY, SECTOR_BINDING_REGISTRY } from '../fixtures/sectorBindingRegistry';
+import { DEFAULT_SECTOR_KEY, SECTOR_BINDING_REGISTRY } from '../domain/fixtures/sectorBindingRegistry';
 import type { IAccountingBindingPolicy } from '../policies/IAccountingBindingPolicy';
 import type { IAccountingBindingRepository } from '../repositories/IAccountingBindingRepository';
 import type { BindingScope } from '../models/BindingScope';

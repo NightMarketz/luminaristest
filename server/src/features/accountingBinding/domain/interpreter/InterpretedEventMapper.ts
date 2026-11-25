@@ -1,7 +1,7 @@
-import type { PostEntryInput } from '../../accounting/public/postingDto.types';
-import type { IAccountingEventMapper } from '../../accounting/public/accountingEventMapper';
-import type { EventBinding } from '../dtos/AccountingBindingDto';
-import type { Archetype } from '../models/types';
+import type { PostEntryInput } from '../../../accounting/public/postingDto.types';
+import type { IAccountingEventMapper } from '../../../accounting/public/accountingEventMapper';
+import type { EventBinding } from '../../dtos/AccountingBindingDto';
+import type { Archetype } from '../../models/types';
 import { type AccountingEventLike, interpret, isSubledgerCommand } from './interpret';
 
 /**

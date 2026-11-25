@@ -2,7 +2,7 @@
  * A Prensa (BE-INCR-BINDING-PRESS, Corpo A) — catálogo fechado (item 4/5 do BRIEF, teste
  * explicitamente pedido: "catálogo fechado (chave desconhecida → undefined)").
  */
-import { archetypeCatalog } from '../archetypes/catalog';
+import { archetypeCatalog } from '../domain/archetypes/catalog';
 
 describe('ArchetypeCatalog — fechado', () => {
   it('devolve undefined para uma chave desconhecida (nunca lança, nunca inventa)', () => {

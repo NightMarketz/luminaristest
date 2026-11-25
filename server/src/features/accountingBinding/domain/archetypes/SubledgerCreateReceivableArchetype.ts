@@ -1,4 +1,4 @@
-import type { SubledgerCommandArchetype } from '../models/types';
+import type { SubledgerCommandArchetype } from '../../models/types';
 
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Corpo A, item 5 do BRIEF) — arquétipo classe 2

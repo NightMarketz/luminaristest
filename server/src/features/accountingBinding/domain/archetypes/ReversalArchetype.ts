@@ -1,4 +1,4 @@
-import type { LancamentoArchetype } from '../models/types';
+import type { LancamentoArchetype } from '../../models/types';
 
 /**
  * A Prensa (BE-INCR-BINDING-PRESS, Corpo A, item 4 do BRIEF) — arquétipo `reversal`

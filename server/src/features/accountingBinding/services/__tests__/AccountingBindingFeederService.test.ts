@@ -1,7 +1,7 @@
 import type { AccountingBinding } from 'generated/prisma';
 import { NoActiveAccountingBindingsError } from '../../../../lib/errors';
-import { archetypeCatalog } from '../../archetypes/catalog';
-import { SALE_BINDING_V1 } from '../../fixtures/saleBinding';
+import { archetypeCatalog } from '../../domain/archetypes/catalog';
+import { SALE_BINDING_V1 } from '../../domain/fixtures/saleBinding';
 import type { IAccountingBindingRepository } from '../../repositories/IAccountingBindingRepository';
 import { AccountingBindingFeederService } from '../AccountingBindingFeederService';
 

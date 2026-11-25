@@ -2,9 +2,9 @@ import { createHash } from 'crypto';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { KIT_REGISTRY, latestKit, listKits } from '../domain/registry';
-import { SECTOR_BINDING_REGISTRY, DEFAULT_SECTOR_KEY } from '../../accountingBinding/fixtures/sectorBindingRegistry';
-import { SALE_BINDING_V2, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../accountingBinding/fixtures/saleBinding';
-import { CLINIC_BINDING_V2, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../accountingBinding/fixtures/clinicBinding';
+import { SECTOR_BINDING_REGISTRY, DEFAULT_SECTOR_KEY } from '../../accountingBinding/domain/fixtures/sectorBindingRegistry';
+import { SALE_BINDING_V2, SALE_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../accountingBinding/domain/fixtures/saleBinding';
+import { CLINIC_BINDING_V2, CLINIC_OPERATIONAL_SCHEMA_SNAPSHOT } from '../../accountingBinding/domain/fixtures/clinicBinding';
 
 /**
  * BE-INCR-KIT-SETOR, PR-1 — registro (item 4), trava das versões publicadas (item 5), changelog

@@ -1,4 +1,4 @@
-import { centsFromReais } from '../../features/accountingBinding/interpreter/money';
+import { centsFromReais } from '../../features/accountingBinding/domain/interpreter/money';
 import { ValidationError } from '../errors';
 import { reaisToCents } from '../saleLine';
 

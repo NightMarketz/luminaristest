@@ -1,13 +1,13 @@
-import { ValidationError } from '../../../../lib/errors';
-import { MAX_CENTS } from '../../../accounting/public/money.types';
+import { ValidationError } from '../../../../../lib/errors';
+import { MAX_CENTS } from '../../../../accounting/public/money.types';
 import { revenueRecognitionArchetype } from '../../archetypes/RevenueRecognitionArchetype';
 import { settlementArchetype } from '../../archetypes/SettlementArchetype';
 import { reversalArchetype } from '../../archetypes/ReversalArchetype';
 import { performanceLiabilityArchetype } from '../../archetypes/PerformanceLiabilityArchetype';
 import { cogsArchetype } from '../../archetypes/CogsArchetype';
 import { subledgerCreateReceivableArchetype } from '../../archetypes/SubledgerCreateReceivableArchetype';
-import type { EventBinding } from '../../dtos/AccountingBindingDto';
-import type { LancamentoArchetype } from '../../models/types';
+import type { EventBinding } from '../../../dtos/AccountingBindingDto';
+import type { LancamentoArchetype } from '../../../models/types';
 import { SALE_BINDING_V1 } from '../../fixtures/saleBinding';
 import type { AccountingEventLike } from '../interpret';
 import { interpret, isSubledgerCommand } from '../interpret';

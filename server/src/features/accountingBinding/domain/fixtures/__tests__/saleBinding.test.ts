@@ -1,5 +1,5 @@
-import { AccountingBindingV1Schema } from '../../dtos/AccountingBindingDto';
-import { computeCompiledFromHash } from '../../domain/compiledFromHash';
+import { AccountingBindingV1Schema } from '../../../dtos/AccountingBindingDto';
+import { computeCompiledFromHash } from '../../compiledFromHash';
 import { SALE_BINDING_V1 } from '../saleBinding';
 
 /**

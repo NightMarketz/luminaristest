@@ -7,7 +7,7 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { ConsumptionTaxAssessmentRepository } from '@/features/accounting/repositories/ConsumptionTaxAssessmentRepository';
-import { SALE_BINDING_V2 } from '@/features/accountingBinding/fixtures/saleBinding';
+import { SALE_BINDING_V2 } from '@/features/accountingBinding/domain/fixtures/saleBinding';
 import { makeApp, pushTestSchema, authHeader, seedUnit } from '@test/helpers';
 
 const app = makeApp();

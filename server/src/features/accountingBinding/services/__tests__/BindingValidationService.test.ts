@@ -12,8 +12,8 @@
 import { BindingValidationService } from '../BindingValidationService';
 import type { Archetype, ArchetypeCatalog, ChartAccountLookup, ChartLookupPort, PostingValidatePort } from '../../models/types';
 import type { AccountingBindingV1 } from '../../dtos/AccountingBindingDto';
-import { archetypeCatalog } from '../../archetypes/catalog';
-import { SALE_BINDING_V1 } from '../../fixtures/saleBinding';
+import { archetypeCatalog } from '../../domain/archetypes/catalog';
+import { SALE_BINDING_V1 } from '../../domain/fixtures/saleBinding';
 
 // ---------------------------------------------------------------------------------------------
 // Arquétipo fixture — 1:1 com o "reconhecimento-receita" real (SaleFinalizedMapper): débito

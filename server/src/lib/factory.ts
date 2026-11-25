@@ -262,15 +262,16 @@ import { LalurService } from '../features/accounting/services/LalurService';
 import { PackageBalanceService } from '../features/packages/services/PackageBalanceService';
 import { PackageAcceptanceService } from '../features/packages/services/PackageAcceptanceService';
 import { AccountingSyncService } from '../features/accounting/sync/AccountingSyncService';
+import { serializeReload } from '../features/accountingBinding/domain/serializeReload';
 import { CrmReceivableBridge } from '../features/accounting/sync/bridges/CrmReceivableBridge';
 // BE-INCR-BINDING-PRESS (F-P1-3a, item 14 do BRIEF) — os 5 mappers-à-mão de salão saíram daqui:
 // o array de IAccountingEventMapper agora é CONSTRUÍDO a partir do binding compilado do salão +
 // o intérprete fixo (`buildSaleAccountingMappers`, abaixo). As classes de mapper continuam
 // existindo em `features/accounting/sync/mappers/*` (são a referência do golden test, Fases 0/1),
 // só não são mais instanciadas em produção por este factory.
-import { archetypeCatalog } from '../features/accountingBinding/archetypes/catalog';
-import { SALE_BINDING_V2 } from '../features/accountingBinding/fixtures/saleBinding';
-import { InterpretedEventMapper } from '../features/accountingBinding/interpreter/InterpretedEventMapper';
+import { archetypeCatalog } from '../features/accountingBinding/domain/archetypes/catalog';
+import { SALE_BINDING_V2 } from '../features/accountingBinding/domain/fixtures/saleBinding';
+import { InterpretedEventMapper } from '../features/accountingBinding/domain/interpreter/InterpretedEventMapper';
 // A Prensa (BE-INCR-BINDING-PRESS, item 15 do BRIEF, Fase B) — fiação das 3 rotas
 // POST /accounting-binding/compile|validate, GET /accounting-binding.
 import { AccountingBindingPolicy } from '../features/accountingBinding/policies/AccountingBindingPolicy';
@@ -2719,6 +2720,22 @@ export class ApplicationFactory {
   public async initializeAccountingSyncFromBindings(): Promise<void> {
     const registrations = await this.getAccountingBindingFeederService().buildActiveMapperRegistrations();
     this.services.accountingSync = new AccountingSyncService(this.services.posting, registrations, { declaredEventKeys: declaredEventKeys() });
+  }
+
+  /** A cadeia serial da recarga: uma por factory (um processo — T11). */
+  private readonly reloadAccountingMappersChain = serializeReload(() => this.initializeAccountingSyncFromBindings());
+
+  /**
+   * Recarga dos mappers contábeis em runtime — UMA implementação para todos os pontos de entrada (rota do binding,
+   * `dashboardController` do onboarding e o CLI de instalação de kit; FE-INCR-BINDING-ACTIVATION EMENDA-1 item 0b,
+   * BE-INCR-ONBOARDING-ACTIVATION item 13). Relê todo binding `Active` e troca a referência de
+   * `services.accountingSync`; as chamadas entram numa cadeia de `Promise` (`serializeReload`), então duas ativações
+   * simultâneas recarregam em série e uma recarga rejeitada não quebra a cadeia.
+   * Mora aqui desde 25/11/2026 (ADR-MODULE-BOUNDARIES §11.9; dono, questionário: "Factory dona da recarga"): antes
+   * era `accountingBinding/runtime/mapperReload.ts`, que rota, controller e job importavam direto.
+   */
+  public reloadAccountingMappersSerialized(): Promise<void> {
+    return this.reloadAccountingMappersChain();
   }
 
   // Service Getters

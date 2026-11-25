@@ -1,12 +1,12 @@
-import { ValidationError } from '../../../lib/errors';
-import type { PostEntryInput } from '../../accounting/public/postingDto.types';
-import type { IAccountingEventMapper } from '../../accounting/public/accountingEventMapper';
+import { ValidationError } from '../../../../lib/errors';
+import type { PostEntryInput } from '../../../accounting/public/postingDto.types';
+import type { IAccountingEventMapper } from '../../../accounting/public/accountingEventMapper';
 import {
   RESALE_REVENUE_ACCOUNT,
   SERVICE_REVENUE_ACCOUNT,
   splitRevenueCredit,
-} from '../../accounting/public/revenueSplit';
-import type { EventBinding, FieldSlot, RoleSlot } from '../dtos/AccountingBindingDto';
+} from '../../../accounting/public/revenueSplit';
+import type { EventBinding, FieldSlot, RoleSlot } from '../../dtos/AccountingBindingDto';
 import type {
   AccountRole,
   Archetype,
@@ -14,7 +14,7 @@ import type {
   ArchetypeSlotSpec,
   LancamentoArchetype,
   SubledgerCommandArchetype,
-} from '../models/types';
+} from '../../models/types';
 import { assertCentsInRange, centsFromReais } from './money';
 
 /**

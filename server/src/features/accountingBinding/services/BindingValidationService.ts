@@ -9,8 +9,8 @@ import type {
 } from '../models/types';
 import type { BindingValidationIssue, BindingValidationResult } from '../models/validationResult';
 import type { AccountingBindingV1, EventBinding, FieldSlot } from '../dtos/AccountingBindingDto';
-import { interpret } from '../interpreter/interpret';
-import type { AccountingEventLike } from '../interpreter/interpret';
+import { interpret } from '../domain/interpreter/interpret';
+import type { AccountingEventLike } from '../domain/interpreter/interpret';
 
 /**
  * BindingValidationService — validador determinístico da Prensa (BE-INCR-BINDING-PRESS, F-P1-6,

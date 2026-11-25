@@ -1,5 +1,4 @@
-jest.mock('../../../../lib/factory', () => ({ getFactory: jest.fn() }));
-import { serializeReload } from '../mapperReload';
+import { serializeReload } from '../serializeReload';
 
 /** LAC-B PR-0 — EMENDA-1 item 0b: a cadeia de `Promise` da recarga dos mappers. */
 describe('serializeReload', () => {

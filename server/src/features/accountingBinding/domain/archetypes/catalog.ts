@@ -1,4 +1,4 @@
-import type { Archetype, ArchetypeCatalog } from '../models/types';
+import type { Archetype, ArchetypeCatalog } from '../../models/types';
 import { revenueRecognitionArchetype } from './RevenueRecognitionArchetype';
 import { settlementArchetype } from './SettlementArchetype';
 import { reversalArchetype } from './ReversalArchetype';

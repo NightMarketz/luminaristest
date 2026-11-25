@@ -1,8 +1,8 @@
-import type { AccountingBindingV1 } from '../dtos/AccountingBindingDto';
-import { AccountingBindingV1Schema } from '../dtos/AccountingBindingDto';
-import type { ChartAccountSnapshot } from '../dtos/CompileBindingDto';
-import { computeCompiledFromHash } from '../domain/compiledFromHash';
-import { codigoPosL8 } from '../../accounting/public/chartOfAccounts';
+import type { AccountingBindingV1 } from '../../dtos/AccountingBindingDto';
+import { AccountingBindingV1Schema } from '../../dtos/AccountingBindingDto';
+import type { ChartAccountSnapshot } from '../../dtos/CompileBindingDto';
+import { computeCompiledFromHash } from '../compiledFromHash';
+import { codigoPosL8 } from '../../../accounting/public/chartOfAccounts';
 
 /**
  * BE-INCR-PLANO-4-NIVEIS (L8; F-L8-7 a — dono, 13/10): o binding V1 publicado (embutido nos kits v1/v2, congelados

@@ -1,4 +1,4 @@
-import type { LancamentoArchetype } from '../models/types';
+import type { LancamentoArchetype } from '../../models/types';
 
 /**
  * BE-INCR-PACOTE-VALIDADE (BRIEF item 12, contrato §4.3) — arquétipo `performance_liability_release`:

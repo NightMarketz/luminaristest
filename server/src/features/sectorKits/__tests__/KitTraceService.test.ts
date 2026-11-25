@@ -1,5 +1,5 @@
 import { ForbiddenError, NotFoundError } from '../../../lib/errors';
-import { SALE_BINDING_V1 } from '../../accountingBinding/fixtures/saleBinding';
+import { SALE_BINDING_V1 } from '../../accountingBinding/domain/fixtures/saleBinding';
 import { KitTraceService } from '../services/KitTraceService';
 import { SectorKitPolicy } from '../policies/SectorKitPolicy';
 import { declaredEventKeys, KIT_REGISTRY } from '../domain/registry';

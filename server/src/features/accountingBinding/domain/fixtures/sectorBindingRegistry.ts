@@ -1,5 +1,5 @@
-import type { AccountingBindingV1 } from '../dtos/AccountingBindingDto';
-import { KIT_REGISTRY, latestKit } from '../../sectorKits/public/registry';
+import type { AccountingBindingV1 } from '../../dtos/AccountingBindingDto';
+import { KIT_REGISTRY, latestKit } from '../../../sectorKits/public/registry';
 
 /**
  * Registry `sectorKey → {binding, operationalSchema}` — o binding PADRÃO de cada setor.

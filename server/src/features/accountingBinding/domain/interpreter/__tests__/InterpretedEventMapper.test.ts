@@ -1,6 +1,6 @@
 import { cogsArchetype } from '../../archetypes/CogsArchetype';
 import { subledgerCreateReceivableArchetype } from '../../archetypes/SubledgerCreateReceivableArchetype';
-import type { EventBinding } from '../../dtos/AccountingBindingDto';
+import type { EventBinding } from '../../../dtos/AccountingBindingDto';
 import { SALE_BINDING_V1 } from '../../fixtures/saleBinding';
 import type { AccountingEventLike } from '../interpret';
 import { InterpretedEventMapper } from '../InterpretedEventMapper';

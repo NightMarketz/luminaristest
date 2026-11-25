@@ -7,9 +7,9 @@ import { SaleCogsMapper } from '../../accounting/sync/mappers/SaleCogsMapper';
 import { SaleFinalizedMapper } from '../../accounting/sync/mappers/SaleFinalizedMapper';
 import { SaleReturnedMapper } from '../../accounting/sync/mappers/SaleReturnedMapper';
 import { SaleSettledMapper } from '../../accounting/sync/mappers/SaleSettledMapper';
-import { archetypeCatalog } from '../archetypes/catalog';
-import { SALE_BINDING_V2 } from '../fixtures/saleBinding';
-import { InterpretedEventMapper } from '../interpreter/InterpretedEventMapper';
+import { archetypeCatalog } from '../domain/archetypes/catalog';
+import { SALE_BINDING_V2 } from '../domain/fixtures/saleBinding';
+import { InterpretedEventMapper } from '../domain/interpreter/InterpretedEventMapper';
 
 /**
  * Golden test, FASE 1 (BE-INCR-BINDING-PRESS, Fase B, item 12 do BRIEF — a metade que faltava

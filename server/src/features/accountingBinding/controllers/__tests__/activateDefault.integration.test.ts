@@ -10,7 +10,7 @@
 import request from 'supertest';
 import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
-import { SALE_BINDING_V2 } from '@/features/accountingBinding/fixtures/saleBinding';
+import { SALE_BINDING_V2 } from '@/features/accountingBinding/domain/fixtures/saleBinding';
 
 const app = makeApp();
 const URL = '/api/accounting-binding/activate-default';

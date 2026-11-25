@@ -13,7 +13,7 @@ import {
   CANONICAL_ACCOUNTS_PRE_L8,
   RENOMEACAO_CANONICA_L8,
 } from '@/features/accounting/fixtures/ChartOfAccountsFixture';
-import { SALE_BINDING_V1 } from '@/features/accountingBinding/fixtures/saleBinding';
+import { SALE_BINDING_V1 } from '@/features/accountingBinding/domain/fixtures/saleBinding';
 import { CONTAS_FISCAIS, CONTAS_FISCAIS_V2, RENOMEACAO_FISCAL_L8 } from '@/features/sectorKits/domain/kits/_shared/conteudoFiscalCanonico';
 import { KIT_REGISTRY } from '@/features/sectorKits/domain/registry';
 import { migrarUnidade, ULTIMA_VERSAO_KIT_PRE_L8, type CompileFn, type UpgradeAteV5Fn } from '../migratePlano4NiveisCli';

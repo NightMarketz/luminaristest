@@ -12,7 +12,7 @@
  * natureza reparte o mesmo `amount`, nunca introduz um total próprio.
  */
 import { ACCOUNT_ROLES, type LancamentoArchetype } from '../models/types';
-import { archetypeCatalog } from '../archetypes/catalog';
+import { archetypeCatalog } from '../domain/archetypes/catalog';
 
 const lancamentoArchetypes = archetypeCatalog
   .all()
