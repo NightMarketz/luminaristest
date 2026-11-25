@@ -4,7 +4,7 @@
  * semana vazio, o EUR de 28/09 e o `CotacaoMoedaDia` com o rótulo `Fechamento PTAX`. O "dia corrente antes das 13h"
  * não se grava depois do fato: `periodo-usd-0924-antes-das-13h-derivado.json` = os 3 primeiros boletins de 24/09.
  */
-import { BcbPtaxClient, parseClosings, PtaxClientError } from '../clients/BcbPtaxClient';
+import { BcbPtaxClient, parseClosings, PtaxClientError } from '../adapters/BcbPtaxClient';
 import periodoUsd from './__fixtures__/periodo-usd-0924-0928.json';
 import fimDeSemana from './__fixtures__/periodo-eur-0926-0927-fim-de-semana.json';
 import periodoEur from './__fixtures__/periodo-eur-0928.json';

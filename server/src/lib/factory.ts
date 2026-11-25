@@ -7,7 +7,7 @@ import { LegalParameterRecalcJobRepository } from '../features/legalParameters/r
 import type { ILegalParameterRecalcJobRepository } from '../features/legalParameters/repositories/ILegalParameterRecalcJobRepository';
 import { PtaxRateRepository } from '../features/fx/repositories/PtaxRateRepository';
 import type { IPtaxRateRepository } from '../features/fx/repositories/IPtaxRateRepository';
-import { BcbPtaxClient } from '../features/fx/clients/BcbPtaxClient';
+import { BcbPtaxClient } from '../features/fx/adapters/BcbPtaxClient';
 import type { IPtaxClient } from '../features/fx/ports/IPtaxClient';
 import { PtaxSyncService } from '../features/fx/services/PtaxSyncService';
 import { TaxAssessmentRecalcService } from '../features/accounting/services/TaxAssessmentRecalcService';
