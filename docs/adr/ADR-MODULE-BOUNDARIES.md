@@ -343,7 +343,7 @@ comentada no código, onboarding na tx do install) e jobs/`server.ts` (`PurgeDel
 - Limite da medida: regex, não AST. A regra de lint é a medida definitiva; se ela achar mais que o baseline acima,
   o achado vai à caixa antes de qualquer supressão.
 
-## 11. Emenda de 24/11/2026 — ligação das regras (PR-2 do BRIEF de execução; §11.5 = `users/public/` e `M4`; §11.6 = renome de `dynamicTables` e `M2`; §11.7 = `M2` sem ponto cego, `D2` e CLI do P2; §11.8 = renome de `analytics` e `sectorKits`)
+## 11. Emenda de 24/11/2026 — ligação das regras (PR-2 do BRIEF de execução; §11.5 = `users/public/` e `M4`; §11.6 = renome de `dynamicTables` e `M2`; §11.7 = `M2` sem ponto cego, `D2` e CLI do P2; §11.8 = renome de `analytics` e `sectorKits`; §11.9 = renome de `crm`, `fx`, `interview` e `accountingBinding`)
 
 Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro". Esta emenda registra o que o §8 item 4 pede: o baseline
 antes/depois de cada regra ligada e a prova de que cada uma morde. As regras valem na branch
@@ -765,3 +765,105 @@ Sondas removidas depois de cada caso.
 - **`dynamicTables/public/dynamicTableService.ts`** expõe só o tipo do serviço. Não substitui o `DynamicTableReader` do
   PR-4, que troca a injeção do repositório.
 - **Testes de integração:** não rodaram aqui; valem os do CI.
+
+### 11.9 Emenda de 25/11/2026 — renome de `crm`, `fx`, `interview` e `accountingBinding` (mesma fase do §11.8)
+
+Autorização: dono, chat, 24/11/2026: "Executa o BRIEF inteiro"; 25/11/2026: "Pode seguir aqui"; questionário de 25/11
+(esta sessão), quatro respostas: "Pagar as 14 (Recommended)", "crm/models/ (Recommended)", "Portas e lista ajustada
+(Recommended)" e "Factory dona da recarga (Recommended)". Commits novos no PR de fase #1422, um por item. A feature
+`accounting` fica para depois (BRIEF §3.3 item 4).
+
+**O que entrou**
+
+- **Renome (tabela §5.3 do BRIEF):**
+  - `crm/constants.ts` → `crm/domain/constants.ts`.
+  - `fx/clients/` → `fx/adapters/`.
+  - `interview/{InterviewService,CustomizationService,FieldCustomizationService}/` → `interview/services/<pasta>/`.
+  - `accountingBinding/{archetypes,interpreter,fixtures}/` → `accountingBinding/domain/<pasta>/`.
+- **`M2_FEATURES`** passa a `(dynamicTables|analytics|sectorKits|interview|crm|fx|accountingBinding)`. As três regras
+  (`M2`, `M2b`, `M2c`) medem 0 para as quatro features novas.
+- **22 entradas `M1` pagas antes de cada movimento** (o commit de caminho não troca chave nenhuma):
+  - `crm` (1): `fx/models/ptax.ts` lia `CURRENCIES` de `crm/constants.ts`. Um model só importa `public/*.types.ts`, e
+    esse arquivo só lê `models/` e `dtos/` (`M4`). A lista de moedas foi para `crm/models/currencies.ts` e sai por
+    `crm/public/currencies.types.ts` ("crm/models/"); os 2 DTOs e os 2 services do `crm` importam de `models/`.
+  - `fx` (1): o cliente da PTAX lê `isValidDateOnly` por `accounting/public/dates.ts`.
+  - `interview` (12): `dynamicTables/public/presetService.ts` (a instância `presetService`),
+    `public/dynamicTable.types.ts` (`ISchemaField`, que já existia) e `public/dynamicTableDto.types.ts`
+    (`AdvancedFieldSchema`, `ADDED_TABLE_KEY_PATTERN`).
+  - `accountingBinding` (8): portas em `accounting/public/` — `postingDto.types.ts` (`PostEntryInput`),
+    `money.types.ts` (`MAX_CENTS`), `accountingEventMapper.ts` (`IAccountingEventMapper`), `revenueSplit.ts` e a
+    `chartOfAccounts.ts` que já existia. São as 7 que o movimento trocaria de chave mais a do
+    `AccountingBindingFeederService`, que usa a mesma porta.
+- **Três mudanças que a tabela §5.3 não previa**, cada uma forçada por regra que está em 0 e não tem baseline:
+  - `interview/FieldCustomizationService/Types.ts` → `interview/models/FieldCustomizationTypes.ts`. É arquivo de
+    contrato (tipos e constantes do W6) que `models/InterviewTypes.ts` importa; dentro de `services/` a aresta reprovava
+    na `L6`. Mesma classe do "Mover BindingScope já" (dono, 24/11).
+  - `accountingBinding/runtime/mapperReload.ts` não foi para `services/`: lá a rota `routes/accounting-binding.ts`
+    reprovava na `L1` ("Factory dona da recarga"). A função pura `serializeReload` foi para
+    `accountingBinding/domain/serializeReload.ts`; a cadeia serial virou campo da `lib/factory.ts`
+    (`reloadAccountingMappersSerialized()`), e a rota, o `dashboardController` e o `installSectorKitCli` pedem a
+    recarga ao `getFactory()`. A pasta `runtime/` deixa de existir.
+  - `computeCompiledFromHash` saiu do `BindingCompileService` para `accountingBinding/domain/compiledFromHash.ts`
+    (função pura; pré-requisito do F-MB-5 a, que o BRIEF já mandava). Corpo sem mudança.
+- **Teste-guarda `accountingBinding/__tests__/importBoundary.test.ts`:** a lista permitida passa a citar as portas de
+  `accounting/public/`, com os mesmos nomes ("Portas e lista ajustada"). `accounting/models/dates` segue pelo caminho
+  direto: o importador é um DTO, que não pode ler porta executável.
+- **Ledger de supressões sancionadas** (`docs/architecture/lint-layer-gate.md`): a chave do arquivo trocou de
+  `accountingBinding/runtime/mapperReload.ts` para `accountingBinding/domain/serializeReload.ts`.
+- **Caminhos em texto:** skill `interview-setup-generator` (SKILL.md e `evals/evals.json`),
+  `scripts/activate-salon-binding.mjs`, READMEs de `interview`, comentários. O `jobs/proveP2ZeroDiffCli.ts` não foi
+  tocado (congelado, §11.7).
+
+**Baseline antes/depois (server, `.dependency-cruiser-known-violations.json`)**
+
+| Regra | Antes (ponta do §11.8, depois do rebase sobre a `main`) | Depois |
+|---|---|---|
+| `M1` | 300 | **278** (−1 `crm`, −1 `fx`, −12 `interview`, −8 `accountingBinding`) |
+| `M1a` | 36 | 36 |
+| `J1` | 15 | 15 |
+| `X3` | 3 | 3 |
+| `M2`, `M2b`, `M2c` | 0 | **0** (não entram no arquivo) |
+| Total | 354 | **332** |
+
+Diff do baseline: 22 entradas removidas, 0 acrescentadas (conferido por conjunto de `regra + from → to` a cada commit
+de conteúdo). Os números de baseline dos §11.6 a §11.8 são os de antes do rebase da pilha sobre a `main`; depois dele
+todos sobem 7 (376 → 383, 347 → 354).
+
+**Prova de que a `M2` morde nas quatro features** (saída literal de `npm run check:arch`, 25/11; 332 conhecidas
+ignoradas; sem sonda, 2244 módulos)
+
+| Caso | Sonda | Saída | Exit |
+|---|---|---|---|
+| `interview`: pasta antiga recriada | `interview/InterviewService/__sondaM2.ts` importando `../models/InterviewTypes` | `error M2b-feature-code-in-layer-folder-importing: src/features/interview/InterviewService/__sondaM2.ts → src/features/interview/models/InterviewTypes.ts` · 2245 módulos | 1 |
+| `crm`: raiz da feature, importada por um service | `crm/__sondaM2.ts` ← `crm/services/__sondaM2Importer.ts` | `error M2-feature-code-in-layer-folder: src/features/crm/services/__sondaM2Importer.ts → src/features/crm/__sondaM2.ts` · 2246 módulos | 1 |
+| `fx`: pasta antiga recriada, órfã | `fx/clients/__sondaM2.ts` | `error M2c-feature-code-in-layer-folder-orphan: src/features/fx/clients/__sondaM2.ts` · 2245 módulos | 1 |
+| `accountingBinding`: pasta antiga recriada | `accountingBinding/runtime/__sondaM2.ts` importando `lib/logger` | `error M2b-feature-code-in-layer-folder-importing: src/features/accountingBinding/runtime/__sondaM2.ts → src/lib/logger.ts` · 2245 módulos | 1 |
+| contraprova: órfã em `interview/services/` | `interview/services/__sondaM2.ts` | `✔ no dependency violations found (2245 modules, 10356 dependencies cruised)` | 0 |
+| contraprova: a sonda do `crm` em `domain/` | `crm/domain/__sondaM2.ts` ← o mesmo service | `✔ no dependency violations found (2246 modules, 10357 dependencies cruised)` | 0 |
+| contraprova: órfã em `fx/adapters/` | `fx/adapters/__sondaM2.ts` | `✔ no dependency violations found (2245 modules, 10356 dependencies cruised)` | 0 |
+| contraprova: órfã em `accountingBinding/domain/` | `accountingBinding/domain/__sondaM2.ts` | `✔ no dependency violations found (2245 modules, 10356 dependencies cruised)` | 0 |
+| contraprova: feature fora de `M2_FEATURES` | `accounting/__sondaM2.ts` (órfã na raiz) | `✔ no dependency violations found (2245 modules, 10356 dependencies cruised)` | 0 |
+
+Sondas e pastas criadas para o plantio removidas depois de cada caso; `git status` sem sobra.
+
+**Prova do teste-guarda do binding** (`importBoundary.test.ts`, depois de trocar a lista): sonda
+`accountingBinding/domain/__sondaBoundary.ts` com três imports ⇒ o teste reprova citando os três — módulo não permitido
+(`accounting/services/PostingService`), nome não permitido numa porta (`OUTRO_NOME` de `accounting/public/money.types`)
+e o caminho antigo direto (`accounting/models/money`). Sem a sonda, 2 de 2 passam.
+
+**Declarado**
+
+- **Sem mudança de comportamento esperada, com uma mudança de fiação:** a cadeia da recarga dos mappers era um valor
+  de módulo e agora é um campo da factory. Em produção há uma factory por processo, então é a mesma cadeia. Os testes
+  de integração da recarga (`dashboardCreate.accountingReload`, `activateDefault.reload`) não rodaram aqui; valem os do
+  CI. O teste unitário do CLI (`activateAccountingBindingCli.test.ts`) trocou o nome do método no duplo da factory.
+- **`computeCompiledFromHash`:** o corpo veio sem mudança, e os testes que recomputam o hash dos bindings de fixture
+  passam. Não há teste com o valor literal do hash fixado.
+- **`dynamicTables/public/presetService.ts` expõe uma instância de módulo** (`presetService`), não um serviço da
+  factory. A porta paga a aresta; o singleton fora da factory é dívida anterior, registrada na caixa.
+- **Arestas de `interview` que ficaram:** `interview/models/InterviewTypes.ts` e `interview/dtos/CustomCreationDraft.dto.ts`
+  seguem importando `dynamicTables/models/` e `dynamicTables/dtos/` direto. Não mudaram de chave (os arquivos não se
+  moveram), então seguem no baseline.
+- **`accounting/public/` ganhou cinco portas antes do PR-3.x da `accounting`.** Quando `sync/` e `fixtures/` da
+  `accounting` se moverem, só o caminho de dentro das portas muda.
+- **Ambiente da prova:** Windows, com o `node_modules` pela junção do depósito. O resultado do CI (Linux) é o que vale.

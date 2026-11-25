@@ -6,7 +6,7 @@ import { bindingPosL8 } from './bindingPosL8';
 
 /**
  * BE-INCR-P2-VERTICAL-CLINICA — Bloco II, comportamento 4. O binding do SEGUNDO vertical
- * (`sectorKey: 'aestheticClinic'`, F-P2-1 → RATIFICADO), espelho literal de `fixtures/saleBinding.ts`
+ * (`sectorKey: 'aestheticClinic'`, F-P2-1 → RATIFICADO), espelho literal de `domain/fixtures/saleBinding.ts`
  * (o binding do vertical 1) — MESMO shape `AccountingBindingV1` (inalterado, F-P2-1 contrato §4.2),
  * MESMOS 5 `eventKey`/`archetypeKey`/`accountCode` (F-P2-6 → (b): o vocabulário `sale.*` já é
  * genérico — não é "engano de digitação" reusar o mesmo namespace, é o ponto: as pontes que emitem

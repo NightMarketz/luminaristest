@@ -170,7 +170,7 @@ async function selfCheck() {
   assertTrue(/nenhuma conta encontrada/i.test(outNoChart), 'mensagem identifica chart ausente');
 
   console.log('\n[self-check] seed do chart de contas COMPLETO do salão (os 10 códigos que o binding referencia)');
-  // Mesmos códigos/naturezas de SALON_CHART_SNAPSHOT (server/src/features/accountingBinding/fixtures/
+  // Mesmos códigos/naturezas de SALON_CHART_SNAPSHOT (server/src/features/accountingBinding/domain/fixtures/
   // salonBinding.ts) — o self-check precisa do chart INTEIRO, não de 1 conta: o validador real
   // (BindingCompileService.compile() → BindingValidationService) rejeita QUALQUER roleSlot cujo
   // accountCode não exista no plano de contas do escopo, e o binding do salão referencia os 10.

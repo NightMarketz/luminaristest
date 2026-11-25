@@ -138,7 +138,7 @@ function resolveSlotValues(
 
 /**
  * Slot de etiqueta de dimensão (emenda 2, ADR §11) — CONVENÇÃO: todo arquétipo classe-1 real
- * declara um slot `name: 'dimension', type: 'string'` (ver `archetypes/RevenueRecognitionArchetype.ts`
+ * declara um slot `name: 'dimension', type: 'string'` (ver `domain/archetypes/RevenueRecognitionArchetype.ts`
  * e irmãos, comentário: "wiring que cabe ao Corpo D"), deliberadamente sem `ArchetypeLine` própria
  * — não é o total de uma perna, é uma etiqueta que se aplica a TODAS as pernas do lançamento. Aceita
  * uma string única ou um array de strings; ausente/vazio ⇒ `dimensions` fica FORA da linha (mesmo
@@ -200,7 +200,7 @@ function resolveLineAccountCode(
  * canônico `splitRevenueCredit` (BRIEF item 11: "splitter canônico revenueSplit reusado por import
  * público"), nunca reimplementado aqui (a técnica não pode re-inlinar — classe
  * `reuse-criterion-blind-to-reinlined-technique`). CONVENÇÃO (achada lendo o catálogo real do Corpo
- * A, `archetypes/RevenueRecognitionArchetype.ts`): as 3 linhas do arquétipo `revenue_recognition`
+ * A, `domain/archetypes/RevenueRecognitionArchetype.ts`): as 3 linhas do arquétipo `revenue_recognition`
  * (débito + 2 créditos) referenciam o MESMO `amountSlot: 'amount'` — o split não tem um `amountSlot`
  * próprio; o gatilho é "mais de uma linha do MESMO lado (credit) compartilha o mesmo `amountSlot`" —
  * só então o intérprete busca o slot `revenueByNatureReais` do arquétipo (por TIPO, lookup, não
@@ -347,7 +347,7 @@ type DefensiveGuard = (
  * (defesa do invariante D1-Q10).
  *
  * GAP REGISTRADO (não inventado silenciosamente — ver notas de retorno desta sessão): o binding real
- * do salão (`fixtures/saleBinding.ts`, Corpo C) resolve `caixa-por-metodo:Package Balance`
+ * do salão (`domain/fixtures/saleBinding.ts`, Corpo C) resolve `caixa-por-metodo:Package Balance`
  * DIRETAMENTE para `2.1.1`, sem declarar um `roleSlot` separado `passivo-adiantamento` como segunda
  * fonte de verdade — a checagem cruzada original (duas constantes independentes no mapper) não tem
  * hoje um segundo dado independente para comparar dentro do binding compilado. Este guard fica

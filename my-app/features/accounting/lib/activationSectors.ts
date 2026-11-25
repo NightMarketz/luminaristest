@@ -1,6 +1,6 @@
 /**
  * Setores que a tela de ativação oferece (FE-INCR-BINDING-ACTIVATION-screen-brief item 9, F-BA-5 → a) — espelho do
- * `SECTOR_BINDING_REGISTRY` do server (`features/accountingBinding/fixtures/sectorBindingRegistry.ts`). Duplicação
+ * `SECTOR_BINDING_REGISTRY` do server (`features/accountingBinding/domain/fixtures/sectorBindingRegistry.ts`). Duplicação
  * declarada: não há rota que liste setores. Um setor novo no BE sem o FE só deixa de aparecer aqui; o teste fixa os dois.
  */
 export const ACTIVATION_SECTORS = ['beautySalon', 'aestheticClinic'] as const;

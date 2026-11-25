@@ -8,9 +8,10 @@ database) — the contract is the **public methods** of its singleton services.
 > Consumed by the frontend (there is no controller/route on the server). The customization state is kept
 > **in memory** per session (`StateManager` singleton).
 
-> **Architecture decision (non-CRUD feature):** this feature organizes folders **by service name**
-> (`InterviewService/`, `FieldCustomizationService/`, `CustomizationService/`) instead of the canonical
-> layout — an **accepted exception**, recorded in `server/ARCHITECTURE.md` §9. Authorization is by
+> **Architecture decision (non-CRUD feature):** this feature groups its code **by service name**
+> (`InterviewService/`, `FieldCustomizationService/`, `CustomizationService/`). Since 25/11/2026 the three folders
+> live inside `services/` (rule `M2`, `docs/adr/ADR-MODULE-BOUNDARIES.md` §11.9): the folder-per-service layout stays,
+> the exception to the layer folders recorded in `server/ARCHITECTURE.md` §9 does not. Authorization is by
 > **scope** (`UserContext`/`userId`); there is no `Policy` object.
 
 > ⚠️ **Status: NOT WIRED on the server.** No controller, route or other feature references these services
@@ -31,11 +32,11 @@ InterviewService          → orchestrates the interview by STAGES (discovery �
 ```
 
 1. **`InterviewService`** — the conversation's stage machine. Discovers the business, matches a preset
-   (`PresetMatcher`) and decides between creating directly or customizing. [README](./InterviewService/README.md)
+   (`PresetMatcher`) and decides between creating directly or customizing. [README](./services/InterviewService/README.md)
 2. **`CustomizationService`** — manages the **table** customization session of the chosen preset
-   (presentation, add/remove tables). [README](./CustomizationService/README.md)
+   (presentation, add/remove tables). [README](./services/CustomizationService/README.md)
 3. **`FieldCustomizationService`** — processes **field** customization requests for a specific table
-   (add/remove/modify), reusing field presets. [README](./FieldCustomizationService/README.md)
+   (add/remove/modify), reusing field presets. [README](./services/FieldCustomizationService/README.md)
 
 Shared types (stages, `IInterviewTurnResult`, `ICustomizationState`, ...) live in
 [`models/`](./models/README.md).
@@ -49,27 +50,29 @@ interview/
 ├── README.md                     # this index
 ├── models/
 │   ├── InterviewTypes.ts         # shared types (InterviewStage, IMessage, ICustomizationState, ...)
+│   ├── FieldCustomizationTypes.ts # W6 contracts (field change, proposal, history, sensitive categories)
 │   └── README.md
-├── InterviewService/
-│   ├── InterviewService.ts       # orchestrator (singleton)
-│   ├── PresetMatcher.ts          # matches the business description with a preset
-│   ├── StageHandlers.ts          # AI responses per stage / creation confirmation
-│   ├── PromptConfig.ts           # stageConfig (prompts per processable stage)
-│   └── README.md
-├── CustomizationService/
-│   ├── CustomizationService.ts   # table customization (singleton)
-│   ├── StateManager.ts           # IN-MEMORY session state (singleton)
-│   ├── TableExtractor.ts         # extracts tables from the real preset
-│   ├── AIInteractions.ts         # AI interactions for table customization
-│   └── README.md
-└── FieldCustomizationService/
-    ├── index.ts                  # the FieldCustomizationService class (W6, built by the factory)
-    ├── ModelOutput.ts            # strict json_schema of the model output + Zod re-read
-    ├── FieldProposal.ts          # validation (AdvancedFieldSchema), discard reasons, sensitive marks
-    ├── FieldUpdater.ts           # applies a validated proposal to the table
-    ├── FieldPresetMatcher.ts     # catalog keys + exact name/synonym match
-    ├── PromptConfig.ts / Types.ts / errors.ts
-    └── README.md
+└── services/
+    ├── InterviewService/
+    │   ├── InterviewService.ts       # orchestrator (singleton)
+    │   ├── PresetMatcher.ts          # matches the business description with a preset
+    │   ├── StageHandlers.ts          # AI responses per stage / creation confirmation
+    │   ├── PromptConfig.ts           # stageConfig (prompts per processable stage)
+    │   └── README.md
+    ├── CustomizationService/
+    │   ├── CustomizationService.ts   # table customization (singleton)
+    │   ├── StateManager.ts           # IN-MEMORY session state (singleton)
+    │   ├── TableExtractor.ts         # extracts tables from the real preset
+    │   ├── AIInteractions.ts         # AI interactions for table customization
+    │   └── README.md
+    └── FieldCustomizationService/
+        ├── index.ts                  # the FieldCustomizationService class (W6, built by the factory)
+        ├── ModelOutput.ts            # strict json_schema of the model output + Zod re-read
+        ├── FieldProposal.ts          # validation (AdvancedFieldSchema), discard reasons, sensitive marks
+        ├── FieldUpdater.ts           # applies a validated proposal to the table
+        ├── FieldPresetMatcher.ts     # catalog keys + exact name/synonym match
+        ├── PromptConfig.ts / errors.ts
+        └── README.md
 ```
 
 > ⚠️ Components that **do not exist** (they were mentioned in old docs): `AIFieldInteraction`,

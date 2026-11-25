@@ -373,8 +373,8 @@ describe('createSubledgerRecord — arquétipo classe-2 não declara papéis exi
 // -------------------------------------------------------------------------------------------
 // CORREÇÃO (review independente, finding high) — o papel `caixa-por-metodo` é resolvido por
 // sub-chave (`"caixa-por-metodo:<método>"`, convenção de `dtos/CompileBindingDto.ts` §header,
-// espelhada por `interpreter/interpret.ts:166-171`). O binding real do salão
-// (`fixtures/saleBinding.ts`) grava uma `roleSlot` por sub-chave — sem reconhecer o papel-base,
+// espelhada por `domain/interpreter/interpret.ts:166-171`). O binding real do salão
+// (`domain/fixtures/saleBinding.ts`) grava uma `roleSlot` por sub-chave — sem reconhecer o papel-base,
 // o validador rejeitava o próprio binding de referência. Testes abaixo provam, com o arquétipo
 // REAL (`settlementArchetype`, via `archetypeCatalog`) e — no último teste — o BINDING real
 // (`SALE_BINDING_V1`), que isso não acontece mais.

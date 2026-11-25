@@ -546,6 +546,20 @@ portas, plantios e pontos declarados no `ADR-MODULE-BOUNDARIES.md` §11.8.
 | §5.3, texto que o `tsc` não vê | skills, `GENERATION_CONTRACTS.md`, `scripts/` | também três testes que leem caminho em texto (`analyticsFieldMappingCoupling`, `sectorKits/__tests__/registry.test.ts`, `ChartOfAccountsFixture.plano4niveis.test.ts`) e o glob de `scripts/classe-risco.mjs` para `sectorKits/domain/kits/_shared/**` |
 | fora do BRIEF | — | o teste-guarda `sectorKits/__tests__/importBoundary.test.ts` (decisão de 08/10) ganhou a porta `accounting/public/chartOfAccounts` na lista permitida, só com `codigoPosL8` |
 
+### 13.4 PR-3.x de `crm`, `fx`, `interview` e `accountingBinding` (25/11/2026)
+
+Respostas literais em `docs/plano/decisoes/D-2026-11-25-MODULE-BOUNDARIES-PR3-INTERVIEW-CRM-FX-BINDING-RESPOSTAS.md`;
+medida, plantios e pontos declarados no `ADR-MODULE-BOUNDARIES.md` §11.9. Commits no PR de fase #1422.
+
+| Onde | O BRIEF dizia | O que valeu |
+|---|---|---|
+| §5.3, `interview` | `{Interview,Customization,FieldCustomization}Service/` → `services/<x>/` | as três pastas foram; `FieldCustomizationService/Types.ts` foi para `interview/models/FieldCustomizationTypes.ts`, porque `models/InterviewTypes.ts` o importa e a `L6` barra model → `services/`. 12 arestas `M1` para `dynamicTables` pagas por portas |
+| §5.3, `crm/constants.ts` | → `crm/domain/` | foi; antes, `CURRENCIES` e `DEFAULT_CURRENCY` saíram dele para `crm/models/currencies.ts` (a `fx` lê a lista por `crm/public/currencies.types.ts`) |
+| §5.3, `fx/clients/` | → `fx/adapters/`, depois do #1345 | foi; o #1345 foi fechado sem merge. A aresta para `accounting/models/dates` sai por `accounting/public/dates.ts` |
+| §5.3, `accountingBinding/runtime/` | → `services/` | não foi: a rota `accounting-binding.ts` reprovaria na `L1`. A recarga serializada virou método da `lib/factory.ts` e a função pura `serializeReload` foi para `domain/`; a pasta `runtime/` deixou de existir |
+| §5.3, `accountingBinding/{archetypes,interpreter,fixtures}/` | → `domain/`; antes, `computeCompiledFromHash` vira função pura | foi, com a função em `domain/compiledFromHash.ts`. 8 arestas `M1` para a `accounting` pagas por portas em `accounting/public/`, e a lista permitida do teste-guarda `importBoundary.test.ts` passou a citar as portas |
+| §2, baseline | — | 354 → 332 nesta rodada (o 354 é o 347 do §13.3 depois do rebase da pilha sobre a `main`) |
+
 ## Gates de envio [OPS-001]
 
 1. **Objetivo:** §1 (medida nova), §2 (fatias com classe), §3 (janela), §4 (prova), §7 (forks).

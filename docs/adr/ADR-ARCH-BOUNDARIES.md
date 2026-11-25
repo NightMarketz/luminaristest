@@ -41,7 +41,7 @@ lib/factory.ts = composition root (única peça de lib/ que conhece features)
 | D2 | `domain/` é pura: não importa repository, service, controller, route, `lib/prisma` nem Express (F-MBE-4 a). Emenda 2026-11-24 (§8). Desde 25/11 (§8.3), nem `lib/factory.ts` | **0** |
 | J1 | `src/jobs/` não importa repository nem `lib/prisma`; fora da regra: `jobs/repositories/` e as CLIs `migratePlano4NiveisCli`, `rekeyLegacyUnitCli`, `seedAccountingFixtureCli`. Emenda 2026-11-24 (§8) | 16 (em 24/11) |
 | M4 | `features/<x>/public/<nome>.types.ts` só importa `models/` e `dtos/` da própria feature: carrega tipo, enum e constante, nada executável (dono, questionário, 24/11: "Tudo em user.types.ts"). Emenda 2026-11-24 (§8.1) | **0** |
-| M2 | peça de feature mora em pasta de camada (`services`, `repositories`, `policies`, `models`, `dtos`, `controllers`, `domain`, `ports`, `adapters`, `public`); sem exceção para `index.ts`; `dynamicTables/rules/` isenta por nome. Vale por feature (F-MBE-2 c): `dynamicTables` desde 24/11 (§8.2), `analytics` e `sectorKits` desde 25/11 (§8.4). Desde 25/11 (§8.3) são três regras com o mesmo alvo — `M2` (arquivo importado, teste inclusive), `M2b` (arquivo que importa algo) e `M2c` (órfão) — e todo `.ts` de produção fora de pasta de camada reprova, com ou sem importador | **0** |
+| M2 | peça de feature mora em pasta de camada (`services`, `repositories`, `policies`, `models`, `dtos`, `controllers`, `domain`, `ports`, `adapters`, `public`); sem exceção para `index.ts`; `dynamicTables/rules/` isenta por nome. Vale por feature (F-MBE-2 c): `dynamicTables` desde 24/11 (§8.2), `analytics` e `sectorKits` desde 25/11 (§8.4), `interview`, `crm`, `fx` e `accountingBinding` desde 25/11 (§8.5). Desde 25/11 (§8.3) são três regras com o mesmo alvo — `M2` (arquivo importado, teste inclusive), `M2b` (arquivo que importa algo) e `M2c` (órfão) — e todo `.ts` de produção fora de pasta de camada reprova, com ou sem importador | **0** |
 
 **Imports `type`-only contam.** Interface de repository dentro de policy é exatamente o sinal de policy impura que L5 quer ver.
 
@@ -329,3 +329,23 @@ sem arquivo de sonda).
   src/features/analytics/services/__sondaImp.ts → src/features/analytics/__sondaM2.ts`; a mesma sonda em
   `analytics/domain/` ⇒ exit 0. `sectorKits/kits/__sondaM2.ts` (pasta antiga) importado por um service ⇒ exit 1; em
   `sectorKits/domain/` ⇒ exit 0. Os 7 casos estão no §11.8. Sondas removidas.
+
+### 8.5 Emenda 2026-11-25 — `M2` ligada para `interview`, `crm`, `fx` e `accountingBinding`
+
+- **Decisão:** dono, chat, 25/11/2026: "Pode seguir aqui"; F-MBE-2 (c). Questionário de 25/11: "Pagar as 14",
+  "crm/models/", "Portas e lista ajustada" e "Factory dona da recarga". Detalhe, os 9 plantios e os pontos declarados
+  estão no [`ADR-MODULE-BOUNDARIES.md`](ADR-MODULE-BOUNDARIES.md) §11.9.
+- **Regra:** nenhuma regra nova. `M2_FEATURES` passa a
+  `(dynamicTables|analytics|sectorKits|interview|crm|fx|accountingBinding)`; falta só a `accounting` para a lista virar
+  `[^/]+`.
+- **Onde vale:** como o §8, na branch `integration/module-boundaries-be`.
+- **Cobertura:** a exceção de 13/10 (§4): o mesmo gate estático.
+- **Baseline antes/depois:** server 354 → **332**, só remoção (`M1` 300 → 278). `M2`, `M2b` e `M2c` medem 0 para as
+  quatro features. O 354 é o 347 do §8.4 depois do rebase da pilha sobre a `main` (todo número de baseline dos §8 a
+  §8.4 sobe 7). my-app sem mudança.
+- **Prova de que morde (condição que falha, 25/11):** `fx/clients/__sondaM2.ts` (pasta antiga recriada, órfã) ⇒ exit 1
+  com `error M2c-feature-code-in-layer-folder-orphan: src/features/fx/clients/__sondaM2.ts`; a mesma sonda em
+  `fx/adapters/` ⇒ exit 0 ("no dependency violations found", 332 conhecidas ignoradas). Sondas removidas.
+- **Duas regras antigas seguraram o movimento:** a `L6` (o model de `interview` importava um arquivo que ia para
+  `services/`) e a `L1` (a rota do binding importava um arquivo que ia para `services/`). Nenhuma ganhou entrada de
+  baseline: os dois arquivos foram para o lugar que a regra aceita (§11.9).

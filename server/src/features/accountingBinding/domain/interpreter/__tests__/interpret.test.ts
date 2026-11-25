@@ -14,7 +14,7 @@ import { interpret, isSubledgerCommand } from '../interpret';
 
 /**
  * `interpret()` (BE-INCR-BINDING-PRESS, Corpo D, item 11 do BRIEF) — exercitado contra os
- * arquétipos REAIS do Corpo A (`archetypes/*.ts`) e o binding REAL do salão (`fixtures/saleBinding.ts`,
+ * arquétipos REAIS do Corpo A (`archetypes/*.ts`) e o binding REAL do salão (`domain/fixtures/saleBinding.ts`,
  * Corpo C), não fixtures inventadas por este corpo. Isto é uma prévia de integração (não substitui a
  * Fase 1 do golden, que é da Fase B): compara `interpret()` byte-a-byte, campo a campo, contra os
  * mesmos números que `goldenPhase0.test.ts` já congelou como saída dos mappers-à-mão — se
@@ -228,7 +228,7 @@ describe('interpret — cogs (arquétipo + binding REAIS)', () => {
 // -----------------------------------------------------------------------------------------------
 describe('interpret — dispatch por kind (subledgerCreateReceivableArchetype REAL)', () => {
   // A fixture do salão (Corpo C) não cobre a classe 2 (fora do escopo v1 do binding do salão — ver
-  // fixtures/saleBinding.ts, header) — este binding é construído aqui só para exercitar o dispatch.
+  // domain/fixtures/saleBinding.ts, header) — este binding é construído aqui só para exercitar o dispatch.
   const binding: EventBinding = {
     eventKey: 'crm.opportunity.won',
     archetypeKey: 'subledger_command',

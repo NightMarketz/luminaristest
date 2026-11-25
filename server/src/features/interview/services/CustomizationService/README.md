@@ -3,7 +3,7 @@
 Manages **table-level** customization of a chosen preset: presents the tables and processes requests to
 **add/remove** tables during the conversation. It is a **singleton** (`CustomizationService.getInstance()`).
 
-> Part of the [`interview`](../README.md) feature. Called by the
+> Part of the [`interview`](../../README.md) feature. Called by the
 > [`InterviewService`](../InterviewService/README.md) when the conversation enters customization.
 
 ## Public API

@@ -29,7 +29,7 @@ export class InterviewApiError extends Error {
   }
 }
 
-/** LGPD art. 5º, II — categorias que o servidor marca num campo proposto (W6 F-W6-6; `FieldCustomizationService/Types.ts`). */
+/** LGPD art. 5º, II — categorias que o servidor marca num campo proposto (W6 F-W6-6; `interview/models/FieldCustomizationTypes.ts`). */
 export type SensitiveCategory =
   | 'health' | 'sex_life' | 'genetic' | 'biometric' | 'racial_ethnic'
   | 'religious' | 'political' | 'union_or_org' | 'health_or_other_unspecified';
@@ -69,7 +69,7 @@ export interface CustomizeFieldsTable {
 
 /**
  * Resposta 200 de `/dashboard/ai/CustomizeFields` (W6, BRIEF §2.2; `CustomizeFieldsResult` em
- * `server/src/features/interview/FieldCustomizationService/index.ts`). Não é DTO de entrada, então não há `.gen.ts`.
+ * `server/src/features/interview/services/FieldCustomizationService/index.ts`). Não é DTO de entrada, então não há `.gen.ts`.
  */
 export interface CustomizeFieldsResult {
   sessionId: string;

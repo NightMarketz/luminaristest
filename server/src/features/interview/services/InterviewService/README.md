@@ -4,7 +4,7 @@ The orchestrator of the AI-guided interview. It is a **singleton** (`InterviewSe
 that advances the conversation through **stages** until the user has a chosen and (optionally) customized
 preset.
 
-> Part of the [`interview`](../README.md) feature. Types in [`../models`](../models/README.md).
+> Part of the [`interview`](../../README.md) feature. Types in [`../../models`](../../models/README.md).
 
 ## Public API
 
@@ -27,7 +27,7 @@ preset.
 
 ## Stages (`InterviewStage`)
 
-Defined in [`../models/InterviewTypes.ts`](../models/InterviewTypes.ts). `processTurn` explicitly handles:
+Defined in [`../../models/InterviewTypes.ts`](../../models/InterviewTypes.ts). `processTurn` explicitly handles:
 
 - **`GREETING`** → initial message; advances to `DISCOVERING_BUSINESS`.
 - **`MATCHING_PRESET`** → matches the preset; if found, builds a friendly message and goes to

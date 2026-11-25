@@ -452,8 +452,8 @@ import type { IPackageAcceptancePolicy } from '../features/packages/policies/IPa
 
 /**
  * BE-INCR-BINDING-PRESS (F-P1-3a, item 14 do BRIEF) — constrói o array de `IAccountingEventMapper`
- * do salão a partir do binding compilado (`fixtures/saleBinding.ts`, Corpo C) + o catálogo de
- * arquétipos em código (`archetypes/catalog.ts`, Corpo A), via o intérprete fixo
+ * do salão a partir do binding compilado (`domain/fixtures/saleBinding.ts`, Corpo C) + o catálogo de
+ * arquétipos em código (`domain/archetypes/catalog.ts`, Corpo A), via o intérprete fixo
  * (`InterpretedEventMapper`, Corpo D) — em vez dos 5 mappers escritos à mão. Pré-condição deste
  * swap: `goldenPhase1.test.ts` verde (item 12 do BRIEF) — a saída byte-idêntica está provada ANTES
  * deste código existir, não depois. `AccountingSyncService` recebe exatamente o mesmo shape de

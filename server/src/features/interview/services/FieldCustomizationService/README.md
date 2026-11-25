@@ -4,7 +4,7 @@ The finest customization step: **add/remove/update fields** of one table of the 
 conversation in the field panel (`POST /api/dashboard/ai/CustomizeFields`). Node **W6**: BRIEF
 `docs/accounting/WIZARD-W6-CUSTOMIZE-FIELDS-brief.md`, decision `docs/adr/ADR-W6-field-customization-ai.md`.
 
-> Part of the [`interview`](../README.md) feature. Works on the persisted `InterviewSession` (W4) through the
+> Part of the [`interview`](../../README.md) feature. Works on the persisted `InterviewSession` (W4) through the
 > [`StateManager`](../CustomizationService/StateManager.ts). Built by the factory (`getFieldCustomizationService()`),
 > never a singleton.
 

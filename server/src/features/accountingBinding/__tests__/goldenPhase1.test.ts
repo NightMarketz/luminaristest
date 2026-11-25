@@ -21,8 +21,8 @@ import { InterpretedEventMapper } from '../domain/interpreter/InterpretedEventMa
  * eventos, mesmos valores; o dossiê fala em prosa "15 casos", o arquivo irmão real tem 17 — ver
  * nota na asserção de contagem abaixo), gera o `PostEntryInput` de DUAS formas:
  *   1. mapper-à-mão de produção (`server/src/features/accounting/sync/mappers/*`) — a REFERÊNCIA;
- *   2. `InterpretedEventMapper` sobre o binding do salão compilado (`fixtures/saleBinding.ts`,
- *      Corpo C) + o catálogo de arquétipos em código (`archetypes/catalog.ts`, Corpo A).
+ *   2. `InterpretedEventMapper` sobre o binding do salão compilado (`domain/fixtures/saleBinding.ts`,
+ *      Corpo C) + o catálogo de arquétipos em código (`domain/archetypes/catalog.ts`, Corpo A).
  *
  * As duas saídas são serializadas pelo MESMO canonicalizador (ordem de chave fixa, `undefined`
  * sempre omitido, `.toBe` sobre STRING — nunca `.toEqual` sobre objeto) e comparadas byte a byte.
