@@ -6,6 +6,7 @@
 import fs from 'fs';
 import path from 'path';
 import { tabelaApuracaoSemente } from '@test/helpers/legalParams';
+import { ParametroLegalAusenteError } from '../../../legalParameters/models/legalParameter';
 import { parcelaExcedenteLc224, type EntradaLc224 } from '../taxAssessmentCalc';
 import { primeiraVigenciaDe, type TabelaApuracao } from '../taxAssessmentParams';
 
@@ -47,10 +48,25 @@ describe('CSLL × LC 224 — marco vindo da linha da tabela (Onda 3.2)', () => {
     expect(t04(comCsllDesde('2026-07-01')).excedenteCents).toBe(R(1_500_000));
   });
 
-  it('sem linha do acréscimo da CSLL na tabela não há LC 224 na CSLL (fail-closed), e o IRPJ segue', () => {
+  it('sem linha do acréscimo da CSLL na tabela o cálculo RECUSA (fail-closed: PARAMETRO_LEGAL_AUSENTE), e o IRPJ segue', () => {
     const semLinha: TabelaApuracao = { ...semente, linhas: semente.linhas.filter((l) => l.chave !== 'LC224_ACRESCIMO_CSLL') };
-    expect(parcelaExcedenteLc224(entrada(semLinha, { periodo: 'T03' })).vigente).toBe(false);
+    // dono, chat, 24/11/2026: vigência por linha falha fechada em todos os PRs — linha ausente não vira "sem acréscimo" em silêncio
+    expect(() => parcelaExcedenteLc224(entrada(semLinha, { periodo: 'T03' }))).toThrow(ParametroLegalAusenteError);
+    expect(() => parcelaExcedenteLc224(entrada(semLinha, { periodo: 'T03' }))).toThrow(/TAX_ASSESSMENT\/LC224_ACRESCIMO_CSLL/);
+    expect(() => parcelaExcedenteLc224(entrada(semLinha, { periodo: 'T01' }))).toThrow(ParametroLegalAusenteError); // nem o trimestre "anterior ao marco" escapa
     expect(parcelaExcedenteLc224(entrada(semLinha, { periodo: 'T03', tributo: 'IRPJ' })).vigente).toBe(true);
+  });
+
+  it('o erro é o mesmo dos outros PRs de vigência por linha: 400 PARAMETRO_LEGAL_AUSENTE', () => {
+    const semLinha: TabelaApuracao = { ...semente, linhas: semente.linhas.filter((l) => l.chave !== 'LC224_ACRESCIMO_CSLL') };
+    let erro: unknown;
+    try {
+      parcelaExcedenteLc224(entrada(semLinha, { periodo: 'T03' }));
+    } catch (e) {
+      erro = e;
+    }
+    expect(erro).toBeInstanceOf(ParametroLegalAusenteError);
+    expect(erro).toMatchObject({ statusCode: 400, errorCode: 'PARAMETRO_LEGAL_AUSENTE' });
   });
 
   it('o cálculo não repete a data do marco em literal (a fonte única é a linha)', () => {
