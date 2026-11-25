@@ -46,6 +46,27 @@ describe('FiscalDocumentView — campos do PR-1 (item 10)', () => {
     expect((await view({}, [attempt(1, null)])).xmlAttachmentId).toBeNull();
   });
 
+  it('lacuna cf36 (dono 25/11): o estado do polling (desistência e adiamento por transporte) sai na view; sem controle ⇒ zerado, nunca lança', async () => {
+    const v = await view(
+      {
+        pollAttempts: 8,
+        pollGaveUpAt: new Date('2026-11-24T10:00:00.000Z'),
+        pollLastError: 'sefaz_http: HTTP 503',
+        pollDeferredSince: new Date('2026-11-24T08:00:00.000Z'),
+        pollAlertedAt: new Date('2026-11-24T09:00:00.000Z'),
+      },
+      [attempt(1, null)],
+    );
+    expect(v.poll).toEqual({
+      attempts: 8,
+      gaveUpAt: '2026-11-24T10:00:00.000Z',
+      lastError: 'sefaz_http: HTTP 503',
+      deferredSince: '2026-11-24T08:00:00.000Z',
+      alertedAt: '2026-11-24T09:00:00.000Z',
+    });
+    expect((await view({}, [attempt(1, null)])).poll).toEqual({ attempts: 0, gaveUpAt: null, lastError: null, deferredSince: null, alertedAt: null });
+  });
+
   it('usa a tentativa CORRENTE, não a primeira', async () => {
     const v = await view({ currentAttemptNo: 2 }, [attempt(1, JSON.stringify({ releitura: RELEITURA })), attempt(2, null)]);
     expect(v.releitura).toBeNull();

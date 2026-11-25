@@ -3,11 +3,10 @@ import { join, relative } from 'path';
 import {
   CANONICAL_ACCOUNTS,
   CANONICAL_ACCOUNTS_PRE_L8,
-  NIVEL_MINIMO_ANALITICA_PATRIMONIAL,
-  PATRIMONIAL_NATURES,
   RENOMEACAO_CANONICA_L8,
   codigoPosL8,
 } from '../ChartOfAccountsFixture';
+import { NIVEL_MINIMO_ANALITICA_PATRIMONIAL, PATRIMONIAL_NATURES } from '../../paises/br/EcdChartStructureRule';
 import { CASH_ACCOUNT_CODE_PREFIXES } from '../../services/CashFlowReportService';
 
 /**

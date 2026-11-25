@@ -13,6 +13,7 @@
 import { parseOfx } from '../ofx';
 import { ReconciliationService } from '../../features/accounting/services/ReconciliationService';
 import { ValidationError } from '../errors';
+import { statementParserBr } from '../../features/accounting/paises/br/StatementParserBr';
 import type { AccountingScope } from '../../features/accounting/scope/AccountingScope';
 
 /** Wrap one or more <STMTTRN> blocks in a minimal single-account OFX 1.x (SGML) envelope. */
@@ -191,7 +192,7 @@ describe('ReconciliationService.importStatement — OFX format', () => {
     const accountRepo = { findById: jest.fn(async () => ({ id: 'acc-bank', acceptsEntries: true })) };
     const policy = { canReconcile: jest.fn(() => true), canRead: jest.fn(() => true) };
     const audit = { append: jest.fn(async () => undefined) };
-    const svc = new ReconciliationService(repo as never, accountRepo as never, policy as never, audit as never);
+    const svc = new ReconciliationService(repo as never, accountRepo as never, policy as never, audit as never, statementParserBr);
     return { svc, repo };
   }
 

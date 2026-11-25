@@ -69,7 +69,9 @@ export class DfePollScheduler {
       if (
         summary.failed > 0 ||
         (summary.gaveUp ?? 0) > 0 ||
+        (summary.transporteAdiadoAlerta ?? 0) > 0 ||
         (summary.attachments?.failed ?? 0) > 0 ||
+        (summary.fasesFalharam?.length ?? 0) > 0 ||
         (c && c.failed + c.orfasFalharam + c.pertoDoPrazo + c.vencidas > 0) ||
         (e && e.failed + e.ignorados + e.substituidasFora > 0)
       ) {
@@ -90,6 +92,18 @@ export class DfePollScheduler {
           pollGaveUpDocumentIds: summary.gaveUpIds ?? [],
         });
       }
+      // Lacuna 92c5 (dono 24/11): documento adiado por transporte (assinador local) indisponível há ≥ 1 h. O service devolve o id
+      // UMA vez por episódio (marcador `alertado` no documento), então não há dedupe de dia aqui. O documento segue adiado.
+      if ((summary.transporteAdiadoAlerta ?? 0) > 0) {
+        this.alert({
+          source: 'dfe_poll',
+          event: 'reconcile_summary',
+          timestamp: new Date().toISOString(),
+          job: JOB,
+          transporteAdiado: summary.transporteAdiadoAlerta,
+          transporteAdiadoDocumentIds: summary.transporteAdiadoIds ?? [],
+        });
+      }
       // X10a PR-9 (decisões 6, 7 e 9): NFC-e off-line perto do prazo/vencida ou órfã não resolvida ⇒ alerta remoto.
       // C3: no máximo 1 vez por nota, por evento e por dia — o tick de 2 min repetia o mesmo aviso ~720 vezes por dia.
       const novas = c ? this.alertasNovas(c.alertas) : [];
@@ -104,6 +118,19 @@ export class DfePollScheduler {
           contingenciaVencidas: conta('VENCIDA'),
           contingenciaOrfasFalharam: conta('ORFA_FALHOU'),
           contingenciaAlertas: novas,
+        });
+      }
+      // L1 do #1392: fase posterior ao poll lançou (já registrada em `job.failed` pelo job). Alerta POR ÚLTIMO — os alertas de
+      // desistência/adiamento acima dependem só do poll e não podem esperar nem se perder por causa dela.
+      const fases = summary.fasesFalharam ?? [];
+      if (fases.length > 0) {
+        this.alert({
+          source: 'dfe_poll',
+          event: 'job_failed',
+          timestamp: new Date().toISOString(),
+          job: JOB,
+          fases: fases.map((f) => f.fase),
+          error: fases.map((f) => f.error).join(' | '),
         });
       }
       return summary;

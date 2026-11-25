@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ValidationError } from '../../../lib/errors';
 import { findLinha } from './Lalur.model';
+import { ParametroLegalAusenteError } from '../../legalParameters/models/legalParameter';
 import {
   TAX_ASSESSMENT_TABELA_VERSAO,
   arred,
@@ -151,7 +152,7 @@ const F_15_9 = 'IN RFB 2.305/2025 art. 15 § 9º';
 /**
  * F-E1-1 (a): a CSLL só tem a LC 224 desde 01/04/2026 (art. 3º II; P&R LC 224 v5 item 13; SC Disit/SRRF10 10010/2026).
  * Onda 3.2: a data NÃO é mais literal aqui — é o `vigenteDesde` da linha `TAX_ASSESSMENT/LC224_ACRESCIMO_CSLL` (a mesma que
- * dá o acréscimo), lida por `primeiraVigenciaDe`. Sem essa linha a CSLL não tem acréscimo da LC 224 ⇒ `vigente: false`.
+ * dá o acréscimo), lida por `primeiraVigenciaDe`. Sem essa linha o cálculo da CSLL recusa (`ParametroLegalAusenteError`, fail-closed).
  */
 
 export interface EntradaLc224 {
@@ -206,7 +207,9 @@ export function parcelaExcedenteLc224(e: EntradaLc224): ResultadoLc224 {
   const limiteParam = linhaVigente(e.tabela, 'LC224_LIMITE_TRIMESTRE_CENTS', dataFim);
   // F-E1-1 (a): para a CSLL, trimestre anterior a 01/04/2026 conta como fora de atividade (§ 9º).
   const csllDesde = e.tributo === 'CSLL' ? primeiraVigenciaDe(e.tabela, 'LC224_ACRESCIMO_CSLL') : undefined;
-  if (e.tributo === 'CSLL' && csllDesde === undefined) return { vigente: false, limiteTrimestreCents: 0n, sobraAnteriorCents: 0n, excedenteCents: 0n, memoria: [] };
+  // Fail-closed (dono, chat, 24/11/2026: vigência por linha, igual aos demais PRs da Onda 3.2): sem a linha do acréscimo da CSLL o
+  // marco é desconhecido — recusa com 400 PARAMETRO_LEGAL_AUSENTE em vez de tratar como "CSLL sem LC 224" em silêncio.
+  if (e.tributo === 'CSLL' && csllDesde === undefined) throw new ParametroLegalAusenteError('TAX_ASSESSMENT', dataFim, 'LC224_ACRESCIMO_CSLL');
   const inicio = csllDesde !== undefined && (e.inicioAtividadeEm ?? '') < csllDesde ? csllDesde : e.inicioAtividadeEm;
   const ativos = trimestresEmAtividade(e.ano, inicio, e.encerramentoAtividadeEm);
   if (!limiteParam || !ativos.includes(e.periodo)) {

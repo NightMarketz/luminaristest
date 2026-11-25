@@ -35,6 +35,8 @@ O BRIEF §2 travava o PR-2 "até o `ProductFiscalProfile` estar em `main`". O mo
 | 2 | NCM sem linha PUBLISHED de ST na UF | **Não exclui ICMS + alerta** (recomendada): DAS cheio; produto com CSOSN 500 ⇒ alerta INFO "ST não conferida, declare na segregação manual". A fonte é a tabela (F-EF-5 a) |
 | 3 | I-9 (monofásico ≥ 2027) | **Na função, por data** (recomendada): `segregacaoPorNcm` devolve sem PIS/COFINS a partir de 2027-01-01 (LC 214 art. 542 XI [D04]); as linhas PUBLISHED do `PIS_COFINS_MONOFASICO_NCM` não mudam, e o X6 fica intacto |
 
+> **Decisão 3 revertida em 24/11/2026:** o fim do monofásico passou a ser lido da linha `PIS_COFINS` (`vigenteAte`), fail-closed sem linha — ver [[D-2026-11-24-MONOFASICO-POR-LINHA]].
+
 ## O que fica aberto
 
 - Fechar a vigência das linhas do `PIS_COFINS_MONOFASICO_NCM` em 2026-12-31 fica para o nó [[IBS-CBS-2027]]. A importação de NF-e

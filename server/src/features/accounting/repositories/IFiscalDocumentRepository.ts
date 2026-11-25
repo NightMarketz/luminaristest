@@ -99,6 +99,9 @@ export interface PollStatePatch {
   nextPollAt?: Date | null;
   pollGaveUpAt?: Date | null;
   pollLastError?: string | null;
+  /** Lacuna 6e13 — episódio de adiamento por transporte indisponível (início e "alertado"); `null` encerra. */
+  pollDeferredSince?: Date | null;
+  pollAlertedAt?: Date | null;
 }
 
 export interface TransitionData {
