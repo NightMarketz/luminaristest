@@ -13,11 +13,11 @@ export const INICIO_TRANSICAO_ISS = '2029-01-01';
 /**
  * Onda 3.2 (#4; dono, chat, 24/11/2026) — o fim do ISS NÃO é literal: é o dia seguinte ao maior `vigenteAte` de
  * `ISS_LIMITE/ALIQUOTA_MAX_BP` (LC 214 art. 543 IV: 2032-12-31 ⇒ 2033-01-01). Virar o ano é publicar linha.
- * Sem linha ⇒ `ParametroLegalAusenteError` (fail-closed); linha sem `vigenteAte` ⇒ `null` (sem fim publicado).
+ * Fail-closed (ressalva do #1357, dono 24/11): sem linha ⇒ `ParametroLegalAusenteError`; linha em vigor sem `vigenteAte` ⇒ `FimDeVigenciaNaoPublicadoError` (a linha que marca o fim exige o fim; nunca `null`).
  * O INÍCIO da transição (#3) segue literal: o dono (chat, 24/11/2026) escolheu esperar o marco `MARCO_LEGAL` (fatia 4),
  * porque derivá-lo do menor `vigenteDesde` de `ISS_TRANSICAO` enfraquece o invariante "2029 sem linha ⇒ erro, nunca 0".
  */
-export function fimIss(linhas: readonly LinhaLegal[], dataConsultada: string): string | null {
+export function fimIss(linhas: readonly LinhaLegal[], dataConsultada: string): string {
   return diaSeguinteAoFimDeVigencia(linhas, 'ISS_LIMITE', 'ALIQUOTA_MAX_BP', dataConsultada);
 }
 
@@ -36,7 +36,7 @@ export class IssExtintoError extends ValidationError {
 /** `linhas` = fotografia que contém `ISS_LIMITE` (o fim vem da linha, não de literal). */
 export function issExtinto(linhas: readonly LinhaLegal[], data: string): boolean {
   const fim = fimIss(linhas, data);
-  return fim !== null && data >= fim;
+  return data >= fim;
 }
 
 /**

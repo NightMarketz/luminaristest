@@ -518,3 +518,16 @@ export function erroDeFormato(l: LinhaParaFormato): string | null {
 }
 
 export const TEM_REGRA_DE_FORMATO = (t: LegalParameterTabela): boolean => REGRAS[t] !== undefined;
+
+/**
+ * Lacuna 03e4 (dono, questionário, 25/11/2026: "Barrar na publicação das chaves ISS/PIS") — as linhas cujo `vigenteAte` a apuração lê como o FIM da lei
+ * (`diaSeguinteAoFimDeVigencia`, fail-closed): `ISS_LIMITE/ALIQUOTA_MAX_BP` (`fimIss`) e toda a `PIS_COFINS`
+ * (`fimMonofasicoPisCofins`). Linha aberta ali derrubaria a plataforma inteira; as demais chaves aceitam fim aberto.
+ * Fica FORA de `erroDeFormato` de propósito: as verificações de semente passam a linha inteira para ele, e a `lp2` aberta
+ * (substituída, histórica) não é erro de dado — o gate vale só para a linha que entra agora (propor/publicar).
+ */
+export function erroDeFimObrigatorio(l: Pick<LinhaParaFormato, 'tabela' | 'chave'> & { vigenteAte?: string | null }): string | null {
+  const leFim = l.tabela === 'PIS_COFINS' || (l.tabela === 'ISS_LIMITE' && l.chave === 'ALIQUOTA_MAX_BP');
+  if (!leFim || (l.vigenteAte !== undefined && l.vigenteAte !== null)) return null;
+  return `${l.tabela}/${l.chave}: vigenteAte é obrigatório — a apuração lê o fim da lei desta linha; sem ele a publicação derrubaria o cálculo de toda a plataforma.`;
+}
