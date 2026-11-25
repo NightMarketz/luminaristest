@@ -59,6 +59,42 @@ export const DEFAULT_TIMEOUT_MS: Record<OutboundIntegration, number> = {
   sefaz: 30_000,
 };
 
+/** Política de rede de UM ponto de chamada: o que o chamador passa ao `outboundFetch` além da URL. */
+export type OutboundPolicy = Pick<OutboundOptions, 'timeoutMs' | 'retry' | 'deadlineMs'>;
+
+/**
+ * Política por ponto de chamada (dono, chat, 2026-11-24 — tabela §6 da proposta de `deadlineMs` por integração; lacunas
+ * 1f43/9f14). Cada ponto com retry vem como PAR `{maxAttempts, deadlineMs}`: `maxAttempts: 2` e `deadlineMs = 2 × timeout
+ * + 5 s` (5 s = `Retry-After` capado em 4 s + 1 s), de modo que o prazo é só o teto de segurança e nunca corta uma
+ * tentativa no meio — com `maxAttempts: 3` o wrapper faria uma 3ª tentativa truncada (lacuna 83be). Ponto de 1 tentativa:
+ * o timeout já é o teto, sem deadline. O mesmo `getCharge` tem política diferente no webhook (o MP espera 22 s) e no job.
+ * PROVISÓRIAS até haver medida (proposta §7): os prazos de criar/cancelar ordem do MP (`MP_ORDER_DEADLINE_MS`) e o da
+ * SEFAZ — mude só aqui.
+ */
+const RETRY_ONCE: OutboundRetryPolicy = { maxAttempts: 2 };
+export const MP_ORDER_DEADLINE_MS = 35_000; // 2 × 15 s + 5 s — provisório (linhas 1/2/4 da tabela)
+export const MP_REPORT_DEADLINE_MS = 125_000; // 2 × 60 s + 5 s
+export const BCB_PTAX_DEADLINE_MS = 25_000; // 2 × 10 s + 5 s
+export const PSC_DISCOVERY_TIMEOUT_MS = 15_000; // total (1 prazo só): hoje o `signal` compartilhado já era isso
+export const OUTBOUND_POLICY = {
+  /** POST /v1/orders — re-tenta com a MESMA `X-Idempotency-Key`. */
+  mpOrderCreate: { timeoutMs: 15_000, retry: RETRY_ONCE, deadlineMs: MP_ORDER_DEADLINE_MS },
+  /** POST /v1/orders/{id}/cancel — o 409 do re-cancel já é tratado relendo a ordem. */
+  mpOrderCancel: { timeoutMs: 15_000, retry: RETRY_ONCE, deadlineMs: MP_ORDER_DEADLINE_MS },
+  /** GET da ordem dentro do handler do webhook: 1 tentativa (15 s + HMAC/DB < 22 s do MP); falha ⇒ o job reconcilia. */
+  mpGetChargeWebhook: { timeoutMs: 15_000, retry: false },
+  /** GET da ordem no job/recheck. */
+  mpGetChargeJob: { timeoutMs: 15_000, retry: RETRY_ONCE, deadlineMs: MP_ORDER_DEADLINE_MS },
+  /** GET list/download do relatório de liberações. */
+  mpReportGet: { timeoutMs: 60_000, retry: RETRY_ONCE, deadlineMs: MP_REPORT_DEADLINE_MS },
+  /** POST release_report: sem chave de idempotência o wrapper nunca re-tenta; o timeout já é o teto. */
+  mpReportPost: { timeoutMs: 60_000 },
+  /** GET da cotação PTAX. */
+  bcbPtax: { timeoutMs: 10_000, retry: RETRY_ONCE, deadlineMs: BCB_PTAX_DEADLINE_MS },
+  /** GET certificate-discovery do PSC: prazo explícito de 15 s no total, sem `signal` do chamador. */
+  pscDiscovery: { timeoutMs: PSC_DISCOVERY_TIMEOUT_MS, deadlineMs: PSC_DISCOVERY_TIMEOUT_MS },
+} as const satisfies Record<string, OutboundPolicy>;
+
 const DEFAULT_RETRY = { maxAttempts: 3, baseDelayMs: 250, maxDelayMs: 4_000 } as const;
 const IDEMPOTENCY_HEADERS = ['x-idempotency-key', 'idempotency-key'];
 

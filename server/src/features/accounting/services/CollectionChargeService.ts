@@ -287,7 +287,7 @@ export class CollectionChargeService {
     const charge = await this.repo.findByProviderRefAnyScope(account.id, verification.resourceRef);
     if (!charge) return { status: 200 }; // ordem que não é nossa: nada a acordar, e o MP não deve reenviar
     try {
-      const result = await this.callProvider(account, () => port.getCharge(resolved, verification.resourceRef));
+      const result = await this.callProvider(account, () => port.getCharge(resolved, verification.resourceRef, 'webhook'));
       await this.applyProviderResult(charge.id, result);
       await this.limparPollState(charge);
     } catch (error) {
