@@ -130,8 +130,10 @@ export interface FiscalDocumentView {
   contingencia: { dhCont: string; prazoTransmissao: string; qrCode: string | null; urlChave: string | null } | null;
   /**
    * Lacunas cf36/6e13 (dono 25/11) — estado do polling (`dfe_poll_pending`) do documento: `gaveUpAt` preenchido = o job parou de
-   * consultar (teto de tentativas) até o re-arme (`POST …/rearmar-polling`); `deferredSince`/`alertedAt` = episódio de adiamento
-   * por transporte indisponível (assinador local fora). ISO 8601 ou `null`. `lastError` é a mensagem da última falha: erro de transporte leva `código: mensagem`; os demais devolvem `error.message` cru (até 500 caracteres, p.ex. `ZodError.message`) — dado do próprio tenant, nunca de outra conta.
+   * consultar (teto de tentativas) até o re-arme (`POST …/rearmar-polling`) — o job também re-arma sozinho a cada 6 h até a nota
+   * completar 7 dias (lacuna 3cf5), então `gaveUpAt` pode ficar preenchido e `attempts` passar de 8 enquanto ele ainda tenta; `deferredSince` =
+   * adiamento por transporte indisponível (assinador local fora). `alertedAt`: com `deferredSince`, o alerta de 1 h do episódio; com
+   * `gaveUpAt`, o alerta final de ABANDONO DEFINITIVO (o job não re-arma mais) — só este indica que o job desistiu de vez. ISO 8601 ou `null`. `lastError` é a mensagem da última falha: erro de transporte leva `código: mensagem`; os demais devolvem `error.message` cru (até 500 caracteres, p.ex. `ZodError.message`) — dado do próprio tenant, nunca de outra conta.
    */
   poll: { attempts: number; gaveUpAt: string | null; lastError: string | null; deferredSince: string | null; alertedAt: string | null };
 }

@@ -14,6 +14,7 @@ import type {
   IFiscalDocumentRepository,
   NumberedDocumentView,
   PollStatePatch,
+  PollStateGuard,
   SequenceAmbiente,
   TransitionData,
 } from './IFiscalDocumentRepository';
@@ -163,9 +164,9 @@ export class FiscalDocumentRepository implements IFiscalDocumentRepository {
     });
   }
 
-  public async updatePollState(scope: AccountingScope, id: string, patch: PollStatePatch, tx?: Prisma.TransactionClient): Promise<boolean> {
+  public async updatePollState(scope: AccountingScope, id: string, patch: PollStatePatch, tx?: Prisma.TransactionClient, guard: PollStateGuard = {}): Promise<boolean> {
     const r = await this.db(tx).fiscalDocument.updateMany({
-      where: { id, ...accountingScopeWhere(scope), deletedAt: null },
+      where: { id, ...accountingScopeWhere(scope), deletedAt: null, ...guard },
       data: patch,
     });
     return r.count === 1;

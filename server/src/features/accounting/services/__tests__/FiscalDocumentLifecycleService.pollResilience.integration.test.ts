@@ -641,6 +641,88 @@ describe('Onda 4 / 4.1 — polling de DF-e: teto, backoff e sem head-of-line (SQ
     expect(chamadasDe(d.id)).toBe(consultas);
   });
 
+  // Revisão independente do #1409 — guardas de estado (compare-and-set) e filtros do repositório.
+  it('revisão #1409 (A): re-arme manual ENTRE a listagem e a gravação do alerta final — nenhum alerta falso e `pollAlertedAt` não sobra', async () => {
+    const agora = livre(0);
+    const d = await abandonado('corrida-alerta', new Date(agora.getTime() - 7 * HORA), new Date(agora.getTime() - 8 * DIA));
+    const original = repo.listAbandonoDefinitivo.bind(repo);
+    const espiao = jest.spyOn(repo, 'listAbandonoDefinitivo').mockImplementationOnce(async (...args) => {
+      const docs = await original(...args);
+      await service.rearmarPoll(scope, d.id); // o operador re-arma depois de o job listar o documento
+      return docs;
+    });
+    try {
+      const t = await em(agora);
+      expect(t.abandonoDefinitivoIds ?? []).not.toContain(d.id);
+    } finally {
+      espiao.mockRestore();
+    }
+    const r = await row(d.id);
+    expect(r.pollGaveUpAt).toBeNull();
+    expect(r.pollAlertedAt).toBeNull(); // sem marca sobrando para suprimir o alerta de 1 h de um episódio futuro
+  });
+
+  it('revisão #1409 (B): re-arme manual DURANTE a consulta do re-armado automático — a falha seguinte não desfaz o re-arme', async () => {
+    const g = livre(0);
+    const d = await abandonado('corrida-rearme', g, new Date(g.getTime() - DIA));
+    mockPort.consultar.mockImplementation(async (ref: string): Promise<EmissaoResult> => {
+      if (ref.startsWith(d.id)) {
+        await service.rearmarPoll(scope, d.id); // o operador clica enquanto a consulta de rede está em voo
+        throw new DfeTransporteError('sefaz_http', 'HTTP 503');
+      }
+      return { status: 'AUTHORIZED', partnerRef: ref, chaveOuCodigo: `CH-${ref}`, numero: '1', errors: [] };
+    });
+    const t = await em(new Date(g.getTime() + POLL_REARME_INTERVALO_MS));
+    expect(t.gaveUpIds ?? []).not.toContain(d.id);
+    const r = await row(d.id);
+    expect(r.pollGaveUpAt).toBeNull(); // o re-arme manual vence a escrita velha do tick
+    expect(r.pollAttempts).toBe(0);
+  });
+
+  it('revisão #1409: re-arme duplo (clique repetido) audita UMA vez — o segundo não encontra mais nada abandonado', async () => {
+    const g = livre(0);
+    const d = await abandonado('rearme-duplo', g, new Date(g.getTime() - DIA));
+    auditoria.append.mockClear();
+    await Promise.all([service.rearmarPoll(scope, d.id), service.rearmarPoll(scope, d.id)]);
+    expect(auditoria.append).toHaveBeenCalledTimes(1);
+  });
+
+  it('revisão #1409: o alerta final e o re-arme ignoram documento apagado (soft-delete) e do modo manual', async () => {
+    const agora = livre(0);
+    const velho = new Date(agora.getTime() - 8 * DIA);
+    const quando = new Date(agora.getTime() - 7 * HORA);
+    const apagado = await abandonado('velho-apagado', quando, velho, { deletedAt: new Date() });
+    const manual = await abandonado('velho-manual', quando, velho, { partner: 'manual' });
+    const jovemApagado = await abandonado('jovem-apagado', new Date(agora.getTime() - 7 * HORA), new Date(agora.getTime() - DIA), { deletedAt: new Date() });
+    const jovemManual = await abandonado('jovem-manual', new Date(agora.getTime() - 7 * HORA), new Date(agora.getTime() - DIA), { partner: 'manual' });
+    mockPort.consultar.mockImplementation(async (ref: string): Promise<EmissaoResult> => {
+      throw new DfeTransporteError('sefaz_http', `HTTP 503 ${ref}`);
+    });
+    const t = await em(agora);
+    for (const x of [apagado, manual]) expect(t.abandonoDefinitivoIds ?? []).not.toContain(x.id);
+    for (const x of [jovemApagado, jovemManual]) expect(chamadasDe(x.id)).toBe(0);
+    for (const x of [apagado, manual]) expect((await row(x.id)).pollAlertedAt).toBeNull();
+  });
+
+  it('revisão #1409: falha ao gravar a marca do alerta final não derruba o tick nem perde o alerta — o próximo tick tenta de novo', async () => {
+    const agora = livre(0);
+    const d = await abandonado('marca-falha', new Date(agora.getTime() - 7 * HORA), new Date(agora.getTime() - 8 * DIA));
+    const original = repo.updatePollState.bind(repo);
+    const espiao = jest.spyOn(repo, 'updatePollState').mockImplementation(async (...args) => {
+      if (args[0] && args[1] === d.id) throw new Error('disco cheio');
+      return original(...args);
+    });
+    try {
+      const t = await em(agora);
+      expect(t.abandonoDefinitivoIds ?? []).not.toContain(d.id);
+    } finally {
+      espiao.mockRestore();
+    }
+    expect((await row(d.id)).pollAlertedAt).toBeNull();
+    const t2 = await em(new Date(agora.getTime() + HORA));
+    expect(t2.abandonoDefinitivoIds).toContain(d.id);
+  });
+
   it('consulta manual (consultarUm) de documento que o job abandonou: se der certo, volta ao polling', async () => {
     const d = await pendente('manual-volta');
     portaCom(d.id, () => new DfeTransporteError('sefaz_http', 'HTTP 503'));

@@ -104,6 +104,16 @@ export interface PollStatePatch {
   pollAlertedAt?: Date | null;
 }
 
+/**
+ * Compare-and-set do controle de retentativa (revisão do #1409): a escrita só vale se as colunas dadas AINDA têm o valor lido
+ * (`null` = "ainda nulo"). O tick processa até 100 documentos em série e o operador pode re-armar no meio; sem a guarda, a
+ * escrita do tick desfaz o re-arme ou grava o alerta final em documento que voltou ao polling. `false` = a linha mudou (ou sumiu).
+ */
+export interface PollStateGuard {
+  pollGaveUpAt?: Date | null;
+  pollAlertedAt?: Date | null;
+}
+
 export interface TransitionData {
   status: FiscalDocumentStatus;
   partnerRef?: string | null;
@@ -249,7 +259,7 @@ export interface IFiscalDocumentRepository {
    * mudado o documento entre a leitura e esta escrita). Escrever bumpa o `updatedAt`, que é o que manda o documento
    * para o fim do rodízio. `false` se o documento não existe mais no escopo.
    */
-  updatePollState(scope: AccountingScope, id: string, patch: PollStatePatch, tx?: Prisma.TransactionClient): Promise<boolean>;
+  updatePollState(scope: AccountingScope, id: string, patch: PollStatePatch, tx?: Prisma.TransactionClient, guard?: PollStateGuard): Promise<boolean>;
   /**
    * BE-INCR-DFE-EVENTOS (PR-2, item 18) — alvo da consulta de eventos: NFS-e `AUTHORIZED*` vivas, com chave, e com
    * `nfseDhProc >= desde` (o teto de 2 anos, Anexo I [114]), de todas as unidades (mesmo desenho de `listPending`). Vêm

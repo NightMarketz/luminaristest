@@ -407,11 +407,13 @@ export class FiscalDocumentLifecycleService {
     const doc = await this.repo.findById(scope, documentId);
     if (!doc) throw new ValidationError(`Documento fiscal '${documentId}' não encontrado.`, null);
     if ((doc.status === 'SENT' || doc.status === 'PROCESSING') && doc.pollGaveUpAt) {
-      const gaveUpAt = doc.pollGaveUpAt;
+      const pollGaveUpAt = doc.pollGaveUpAt;
+      const gaveUpAt = pollGaveUpAt;
       // Lacuna 3cf5 (P1.4/F-PD-5 a): zera também a marca do alerta final (`pollAlertedAt`) — o ciclo recomeça do zero — e audita
       // o re-arme na mesma tx (ação do operador sobre nota fiscal). Só audita se a linha mudou.
       await this.repo.runTransaction(async (tx) => {
-        const mudou = await this.repo.updatePollState(scope, doc.id, { pollAttempts: 0, nextPollAt: null, pollGaveUpAt: null, ...EPISODIO_ENCERRADO }, tx);
+        // guarda: só re-arma (e audita) quem AINDA está abandonado — duplo clique ou consulta que acabou de limpar não audita em falso
+        const mudou = await this.repo.updatePollState(scope, doc.id, { pollAttempts: 0, nextPollAt: null, pollGaveUpAt: null, ...EPISODIO_ENCERRADO }, tx, { pollGaveUpAt });
         if (!mudou) return;
         await this.auditService.append(tx, scope, {
           actorUserId: scope.actorUserId,
@@ -518,7 +520,8 @@ export class FiscalDocumentLifecycleService {
       for (const doc of docs) {
         const scope = resolveAccountingScopeInternal({ userId: doc.userId }, doc.unitId);
         try {
-          if (await this.repo.updatePollState(scope, doc.id, { pollAlertedAt: now })) {
+          // guarda: o operador pode ter re-armado entre a listagem e esta escrita (e outra instância, alertado) — nesse caso não há alerta
+          if (await this.repo.updatePollState(scope, doc.id, { pollAlertedAt: now }, undefined, { pollGaveUpAt: doc.pollGaveUpAt, pollAlertedAt: null })) {
             logger.error('dfe_poll_pending: documento abandonado além do teto de idade — o job não o re-arma mais (consulta e re-arme manuais seguem valendo)', {
               documentId: doc.id,
               gaveUpAt: doc.pollGaveUpAt?.toISOString(),
@@ -562,14 +565,21 @@ export class FiscalDocumentLifecycleService {
     try {
       if (desiste) {
         const definitivo = !reArmado && now.getTime() - doc.createdAt.getTime() >= POLL_IDADE_MAX_MS;
-        await this.repo.updatePollState(scope, doc.id, {
-          pollAttempts: attempts,
-          pollLastError: lastError,
-          pollGaveUpAt: now,
-          nextPollAt: null,
-          ...EPISODIO_ENCERRADO,
-          ...(definitivo ? { pollAlertedAt: now } : {}),
-        });
+        const gravou = await this.repo.updatePollState(
+          scope,
+          doc.id,
+          {
+            pollAttempts: attempts,
+            pollLastError: lastError,
+            pollGaveUpAt: now,
+            nextPollAt: null,
+            ...EPISODIO_ENCERRADO,
+            ...(definitivo ? { pollAlertedAt: now } : {}),
+          },
+          undefined,
+          { pollGaveUpAt: doc.pollGaveUpAt }, // o re-arme manual no meio do tick vence: não o desfaz nem alerta
+        );
+        if (!gravou) return null;
         logger.error('dfe_poll_pending: teto de tentativas — o job para de consultar o documento (consulta manual segue valendo)', {
           documentId: doc.id,
           attempts,
@@ -620,12 +630,19 @@ export class FiscalDocumentLifecycleService {
     const proximo = new Date(now.getTime() + POLL_ADIAR_MS);
     try {
       if (doc.pollGaveUpAt) {
-        await this.repo.updatePollState(scope, doc.id, { nextPollAt: proximo, pollLastError: lastError });
+        await this.repo.updatePollState(scope, doc.id, { nextPollAt: proximo, pollLastError: lastError }, undefined, { pollGaveUpAt: doc.pollGaveUpAt });
         return null;
       }
       const anterior = doc.pollDeferredSince ? { desde: doc.pollDeferredSince, alertado: doc.pollAlertedAt != null } : null;
       if (anterior && now.getTime() - anterior.desde.getTime() >= POLL_IDADE_MAX_MS) {
-        await this.repo.updatePollState(scope, doc.id, { pollLastError: lastError, pollGaveUpAt: now, nextPollAt: null, pollDeferredSince: null, pollAlertedAt: now });
+        const gravou = await this.repo.updatePollState(
+          scope,
+          doc.id,
+          { pollLastError: lastError, pollGaveUpAt: now, nextPollAt: null, pollDeferredSince: null, pollAlertedAt: now },
+          undefined,
+          { pollGaveUpAt: null },
+        );
+        if (!gravou) return null;
         logger.error('dfe_poll_pending: transporte indisponível pelo teto de idade — o job desiste do documento (consulta e re-arme manuais seguem valendo)', {
           documentId: doc.id,
           adiadoDesde: anterior.desde.toISOString(),
@@ -633,12 +650,19 @@ export class FiscalDocumentLifecycleService {
         return 'abandono';
       }
       const alertar = deveAlertarAdiamento(anterior, now, POLL_TRANSPORTE_ALERTA_APOS_MS);
-      await this.repo.updatePollState(scope, doc.id, {
-        nextPollAt: proximo,
-        pollLastError: lastError,
-        pollDeferredSince: anterior?.desde ?? now,
-        pollAlertedAt: alertar ? now : doc.pollAlertedAt,
-      });
+      const gravou = await this.repo.updatePollState(
+        scope,
+        doc.id,
+        {
+          nextPollAt: proximo,
+          pollLastError: lastError,
+          pollDeferredSince: anterior?.desde ?? now,
+          pollAlertedAt: alertar ? now : doc.pollAlertedAt,
+        },
+        undefined,
+        { pollGaveUpAt: null, pollAlertedAt: doc.pollAlertedAt }, // só se ninguém mexeu na marca (re-arme manual, outra instância)
+      );
+      if (!gravou) return null;
       if (alertar) {
         logger.error('dfe_poll_pending: transporte indisponível além da janela de alerta — documento segue adiado', {
           documentId: doc.id,
