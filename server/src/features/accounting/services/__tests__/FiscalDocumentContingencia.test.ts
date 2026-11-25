@@ -15,6 +15,7 @@ jest.mock('../../dfe/selectDfeEmissor', () => ({ __esModule: true, selectDfeEmis
 jest.mock('../../dfe/resolveEmissor', () => ({ __esModule: true, resolveEmissorFor: jest.fn() }));
 
 import { generateKeyPairSync } from 'node:crypto';
+import logger from '../../../../lib/logger';
 import { FakeSefaz, makeTlsPki } from '../../../../../test/helpers/fakeSefaz';
 import { makeTestCert } from '../../../../../test/helpers/nfeSignature';
 import { legalParamsSemente } from '@test/helpers/legalParams';
@@ -88,7 +89,7 @@ class MemRepo {
   listContingencia = async () => [...this.docs.values()].filter((d) => d.status === 'CONTINGENCY').map(this.full);
   listContingenciaNaoAutorizada = async (_desde: Date) =>
     [...this.docs.values()]
-      .filter((d) => d.kind === 'NFCE' && ['CONTINGENCY', 'SENT', 'PROCESSING', 'REJECTED', 'PENDING_SIGNATURE'].includes(d.status))
+      .filter((d) => d.kind === 'NFCE' && ['CONTINGENCY', 'SENT', 'PROCESSING', 'REJECTED', 'PENDING_SIGNATURE', 'DENIED'].includes(d.status))
       .filter((d) => (this.attempts.get(d.id) ?? []).some((a) => a.payloadJson.includes('"tpEmis":9')))
       .map(this.full);
   createPendingAttachment = jest.fn();
@@ -338,6 +339,23 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
     expect((await emission.getById(SCOPE, view.id)).status).toBe('CONTINGENCY');
   });
 
+  // BE-INCR-DFE-DENIED-SUBSTITUIVEL itens 6-8 (F-DEN-3 a, dono 25/11): a denegada não foi autorizada — segue no alerta até a substituta autorizar.
+  it('DENIED-SUBST 7/8: NFC-e de contingência DENIED e vencida ⇒ alerta VENCIDA com status DENIED; some quando a substituta (mesma venda/kind) é autorizada', async () => {
+    sefaz.controle.foraDoAr = true;
+    const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
+    repo.docs.get(view.id)!.status = 'DENIED'; // o retorno da SEFAZ denegou (applyResult é provado à parte)
+    jest.setSystemTime(new Date('2026-10-31T03:30:00Z')); // sáb 00:30 — vencido
+    const erro = jest.spyOn(logger, 'error').mockImplementation(() => undefined as never);
+    expect(await contingencia.tick(PASSADO())).toMatchObject({ pertoDoPrazo: 0, vencidas: 1, alertas: [{ evento: 'VENCIDA', documentId: view.id }] });
+    expect(erro).toHaveBeenCalledWith(expect.stringContaining('dfe_contingencia_prazo'), expect.objectContaining({ documentId: view.id, status: 'DENIED' }));
+    // Substituta REJEITADA não tira do alerta; AUTORIZADA tira.
+    const subst = await repo.createSent(SCOPE, { kind: 'NFCE', saleId: 'sale-1', cTribNac: '', payloadJson: '{}', initialStatus: 'REJECTED' });
+    expect(await contingencia.tick(PASSADO())).toMatchObject({ vencidas: 1 });
+    repo.docs.get((subst as { id: string }).id)!.status = 'AUTHORIZED';
+    expect(await contingencia.tick(PASSADO())).toMatchObject({ vencidas: 0, pertoDoPrazo: 0, alertas: [] });
+    erro.mockRestore();
+  });
+
   it('decisão 6: a normal chegou e foi autorizada (resposta perdida) ⇒ depois da de contingência autorizada, 110112 apontando-a ⇒ CANCELLED_SUBST', async () => {
     sefaz.controle.perderRespostaAutorizacao = true;
     const [view] = await emission.emit(SCOPE, 'sale-1', 'NFCE');
@@ -374,6 +392,25 @@ describe('X10a PR-9 — contingência off-line da NFC-e', () => {
     expect(await contingencia.tick(FUTURO())).toMatchObject({ transmitidas: 1, orfasResolvidas: 1 });
     expect(voidService.inutilizarOrfa).toHaveBeenCalledWith(SCOPE, expect.objectContaining({ kind: 'NFCE', ambiente: 'homologacao', serie: 3, numero: 1n }));
     expect(cont.orfas[0]).toMatchObject({ status: 'VOID_REQUESTED', voidId: 'void-1' });
+  });
+
+  it('DENIED-SUBST item 12: órfã cuja consulta acha 101 (cancelada) ou 252 (consulta inválida) NÃO inutiliza — grava ultimoErro e gira no rodízio', async () => {
+    try {
+      for (const cStat of ['101', '252']) {
+        voidService.inutilizarOrfa.mockClear();
+        cont.orfas.length = 0;
+        sefaz.controle.foraDoAr = true;
+        await emission.emit(SCOPE, `sale-orfa-${cStat}`, 'NFCE');
+        sefaz.controle.foraDoAr = false;
+        sefaz.controle.cStatConsulta = cStat;
+        expect(await contingencia.tick(FUTURO())).toMatchObject({ orfasResolvidas: 0, orfasFalharam: 0 });
+        expect(voidService.inutilizarOrfa).not.toHaveBeenCalled();
+        expect(cont.orfas[0]).toMatchObject({ tentativas: 1, ultimoErro: expect.stringContaining(cStat) });
+        expect(cont.orfas[0].status).not.toBe('VOID_REQUESTED');
+      }
+    } finally {
+      sefaz.controle.cStatConsulta = null;
+    }
   });
 
   it('decisão 6: o 110112 recusado vira pendência visível no documento (contingencia_orfa_falhou)', async () => {

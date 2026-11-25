@@ -2361,7 +2361,7 @@ model FiscalDocument {
   kind                    String // NFSE | NFE | NFCE (BE-INCR-NFCE item 3)
   status                  String // SENT | PROCESSING | AUTHORIZED | AUTHORIZED_DIVERGENT (releitura divergente, F-MAN-2 c) | REJECTED | CANCELLED | CANCEL_ANALYSIS (X11 PR-3: análise fiscal do cancelamento pendente)
   saleId                  String
-  saleKey                 String // = saleId enquanto vivo; "cancelled:<id>:<saleId>" após CANCELLED
+  saleKey                 String // = saleId enquanto vivo; "cancelled:<id>:<saleId>" após CANCELLED; "denied:<id>:<saleId>" após DENIED (nota denegada substituível)
   cTribNac                String                  @default("") // F-DFE-16 (b); "" para NFE
   anchorEntryId           String // JournalEntry âncora: sale.finalized | sale.package.sold (pacote VENDA, 5c)
   ambiente                String // producao | homologacao (ADR §9.2 item 5 — só producao vira SourceDocument)

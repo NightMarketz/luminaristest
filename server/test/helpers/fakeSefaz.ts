@@ -79,6 +79,8 @@ export interface FakeSefazControle {
   perderRespostaAutorizacao: boolean;
   /** cStat forçado na consulta de protocolo (ex.: '110' denegada, '301'/'302', '108'); null = o estado real da nota. */
   cStatConsulta: string | null;
+  /** Com `cStatConsulta` 101/151 e a nota autorizada na base: a consulta devolve também o `protNFe` da autorização original (cStat 100). */
+  protOriginalNaCancelada: boolean;
   /** cStat forçado no evento de cancelamento (ex.: '501'). */
   cStatEvento: string | null;
   /** cStat forçado na inutilização. */
@@ -100,6 +102,7 @@ export class FakeSefaz {
     cStatAutorizacao: null,
     perderRespostaAutorizacao: false,
     cStatConsulta: null,
+    protOriginalNaCancelada: false,
     cStatEvento: null,
     cStatInutilizacao: null,
     atrasoMs: 0,
@@ -213,6 +216,11 @@ export class FakeSefaz {
       const chave = /<chNFe>(\w{44})<\/chNFe>/.exec(msg)?.[1] ?? '';
       const a = this.autorizadas.get(chave);
       const forcadoConsulta = this.controle.cStatConsulta;
+      if (forcadoConsulta === '101' || forcadoConsulta === '151') {
+        // `[WS-CSTAT]` ER09: nota cancelada ⇒ `retCancNFe` com cStat 101 (cancelamento homologado) / 151 (fora de prazo).
+        const orig = this.controle.protOriginalNaCancelada && a ? this.protNFe(chave, '100', 'Autorizado o uso da NF-e', `<nProt>${a.nProt}</nProt><digVal>${a.digVal}</digVal>`) : '';
+        return `<retConsSitNFe xmlns="${NS}" versao="4.00"><cStat>${forcadoConsulta}</cStat><xMotivo>Cancelamento de NF-e homologado</xMotivo>${orig}</retConsSitNFe>`;
+      }
       if (forcadoConsulta) {
         const xMotivo = forcadoConsulta === '110' || forcadoConsulta === '301' || forcadoConsulta === '302' ? 'Uso Denegado' : 'Rejeicao forcada pelo teste';
         const prot = ['110', '301', '302'].includes(forcadoConsulta) ? this.protNFe(chave, forcadoConsulta, xMotivo, '<nProt>135260000000001</nProt>') : '';

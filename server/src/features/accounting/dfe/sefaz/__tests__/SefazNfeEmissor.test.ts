@@ -52,7 +52,7 @@ describe('SefazNfeEmissor', () => {
     await psc.stop();
   });
   afterEach(() => {
-    Object.assign(sefaz.controle, { cStatAutorizacao: null, perderRespostaAutorizacao: false, cStatConsulta: null, cStatEvento: null, cStatInutilizacao: null, atrasoMs: 0 });
+    Object.assign(sefaz.controle, { cStatAutorizacao: null, perderRespostaAutorizacao: false, cStatConsulta: null, protOriginalNaCancelada: false, cStatEvento: null, cStatInutilizacao: null, atrasoMs: 0 });
   });
 
   const emitir = (payload: NfePayload) => emissor.emitir({ kind: 'NFCE', ref: 'd:1', ambiente: 'homologacao', cnpjEmitente: payload.infNFe.emit.CNPJ, partnerAccountRef: null, payload, ctx });
@@ -130,6 +130,55 @@ describe('SefazNfeEmissor', () => {
     for (const cStat of ['108', '109', '656']) {
       sefaz.controle.cStatConsulta = cStat;
       expect(await emissor.consultar(p.infNFe.Id.slice(3), ctx)).toMatchObject({ status: 'PROCESSING', errors: [{ code: cStat }] });
+    }
+  });
+
+  // BE-INCR-DFE-DENIED-SUBSTITUIVEL itens 9 e 10 (lacuna 4fb9) — `[WS-CSTAT]` ER09 (retCancNFe 101/151) e J01-J06 (consulta inválida).
+  it.each(['101', '151'])('DENIED-SUBST item 9: envelope cStat %s (nota cancelada) ⇒ CANCELLED_AT_FISCO (nunca PROCESSING) com o código', async (cStat) => {
+    const p = nova();
+    sefaz.controle.cStatConsulta = cStat;
+    expect(await emissor.consultar(p.infNFe.Id.slice(3), ctx)).toMatchObject({
+      status: 'CANCELLED_AT_FISCO',
+      errors: [{ code: cStat, message: 'Cancelamento de NF-e homologado' }],
+    });
+  });
+
+  it.each(['101', '151'])('DENIED-SUBST item 9 (caso vermelho): envelope %s + protNFe cStat 100 da autorização original ⇒ CANCELLED_AT_FISCO, NUNCA AUTHORIZED', async (cStat) => {
+    const p = nova();
+    expect((await emitir(p)).status).toBe('AUTHORIZED'); // a SEFAZ falsa autoriza e guarda a nota
+    sefaz.controle.cStatConsulta = cStat;
+    sefaz.controle.protOriginalNaCancelada = true;
+    const r = await emissor.consultar(p.infNFe.Id.slice(3), { ...ctx, payload: p });
+    expect(r.status).toBe('CANCELLED_AT_FISCO');
+    expect(r.xml).toBeUndefined(); // não remonta o nfeProc de uma nota cancelada
+  });
+
+  it('DENIED-SUBST item 9: sem cancelamento, a nota autorizada segue AUTHORIZED (a precedência não vaza)', async () => {
+    const p = nova();
+    await emitir(p);
+    expect((await emissor.consultar(p.infNFe.Id.slice(3), { ...ctx, payload: p })).status).toBe('AUTHORIZED');
+  });
+
+  it.each(['252', '226', '236', '526', '562', '561', '613'])('DENIED-SUBST item 10: cStat %s da própria consulta ⇒ o adaptador segue PROCESSING com o código (a decisão é do serviço)', async (cStat) => {
+    const p = nova();
+    sefaz.controle.cStatConsulta = cStat;
+    expect(await emissor.consultar(p.infNFe.Id.slice(3), ctx)).toMatchObject({ status: 'PROCESSING', errors: [{ code: cStat }] });
+  });
+
+  it('DENIED-SUBST item 12: duplicidade (204) no envio delega à consulta — herda o terminal 101 (CANCELLED_AT_FISCO) e, com 252, só PROCESSING + código (sem exceção)', async () => {
+    const p = nova();
+    sefaz.controle.cStatAutorizacao = '204';
+    sefaz.controle.cStatConsulta = '101';
+    expect(await emitir(p)).toMatchObject({ status: 'CANCELLED_AT_FISCO', errors: [{ code: '101' }] });
+    sefaz.controle.cStatConsulta = '252';
+    expect(await emitir(nova())).toMatchObject({ status: 'PROCESSING', errors: [{ code: '252' }] });
+  });
+
+  it('DENIED-SUBST item 14: emissão síncrona com 101/252 do NFeAutorizacao segue REJECTED (cStat desconhecido, como hoje)', async () => {
+    for (const cStat of ['101', '252']) {
+      const p = nova();
+      sefaz.controle.cStatAutorizacao = cStat;
+      expect(await emitir(p)).toMatchObject({ status: 'REJECTED', errors: [{ code: cStat }] });
     }
   });
 

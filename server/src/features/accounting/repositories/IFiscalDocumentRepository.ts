@@ -131,7 +131,10 @@ export interface TransitionData {
   pdfAttachmentId?: string | null;
   sourceDocumentId?: string | null;
   currentAttemptNo?: number;
-  /** rename-on-cancel: `cancelled:<id>:<saleId>` libera o @@unique (memória unique-de-idempotencia-x-soft-delete). */
+  /**
+   * rename-on-cancel: `cancelled:<id>:<saleId>` libera o @@unique (memória unique-de-idempotencia-x-soft-delete). A nota
+   * DENEGADA também renomeia: `denied:<id>:<saleId>` (BE-INCR-DFE-DENIED-SUBSTITUIVEL item 1) — nenhum código decide nada pelo prefixo.
+   */
   saleKey?: string;
   /** BE-INCR-DFE-EVENTOS (item 1) — infNFSe/dhProc [19], gravado no AUTHORIZED. */
   nfseDhProc?: Date | null;

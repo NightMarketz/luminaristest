@@ -80,6 +80,7 @@ const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: '@_
 const AUTORIZADO = new Set(['100', '150']); // [WS-CSTAT] 100 autorizado; 150 autorizado fora de prazo
 const DUPLICIDADE = new Set(['204', '539']); // [WS-CSTAT] duplicidade de NF-e
 const DENEGADO = new Set(['110', '301', '302']); // [WS-CSTAT] 110 uso denegado; 301/302 = denegação por irregularidade do emitente/destinatário (Anexo I do MOC)
+const CONSULTA_CANCELADA = new Set(['101', '151']); // [WS-CSTAT] ER09 retCancNFe: 101 cancelamento homologado; 151 cancelamento fora de prazo — testado ANTES do ramo AUTORIZADO
 const NAO_CONSTA = '217'; // [WS-CSTAT] NF-e não consta na base de dados da SEFAZ
 const QR_V3_RECUSADO = '407'; // RV ZX02-220 (D02 p. 11): "QR Code versão 3 e UF não aceita esta versão"
 
@@ -177,6 +178,12 @@ export class SefazNfeEmissor implements DfeEmissorPort {
     const r = no(no(parser.parse(ret)).retConsSitNFe);
     const cStat = str(r.cStat);
     const prot = no(no(r.protNFe).infProt);
+    // BE-INCR-DFE-DENIED-SUBSTITUIVEL item 9: o cStat do ENVELOPE 101/151 vale mais que o protNFe da autorização original (100),
+    // que a consulta de uma nota cancelada pode trazer junto — sem esta precedência a cancelada voltava como AUTHORIZED.
+    if (CONSULTA_CANCELADA.has(cStat)) {
+      // `retCancNFe` (item 4.3.2 do MOC) não está transcrito: nenhum campo dele é lido — o instante do cancelamento fica `now` no serviço.
+      return { status: 'CANCELLED_AT_FISCO', partnerRef, errors: [{ code: cStat, message: str(r.xMotivo) }] };
+    }
     if (AUTORIZADO.has(cStat) || AUTORIZADO.has(str(prot.cStat))) {
       const payload = ctx?.payload ? NfePayloadSchema.parse(ctx.payload) : null;
       if (!payload || !ctx?.assinatura) {

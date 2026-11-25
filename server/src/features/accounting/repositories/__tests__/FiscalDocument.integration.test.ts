@@ -140,6 +140,17 @@ describe('FiscalDocument + ServiceFiscalProfile — contrato em SQLite real (BE-
     expect((await docRepo.findById(escopo(DONO_A), autorizada.id))?.contingenciaSuplJson).toBe('{"qrCode":"q","urlChave":"u"}');
   });
 
+  it('DENIED-SUBST item 6: listContingenciaNaoAutorizada traz a NFC-e tpEmis=9 DENIED; NFC-e normal (tpEmis=1) e NF-e DENIED não entram', async () => {
+    const ide = (tpEmis: number) => JSON.stringify({ infNFe: { ide: { tpEmis } } });
+    const denegadaCont = await docRepo.createSent(escopo(DONO_A), sent('sale-den-1', { kind: 'NFCE', cTribNac: '', initialStatus: 'DENIED', payloadJson: ide(9) }));
+    const denegadaNormal = await docRepo.createSent(escopo(DONO_A), sent('sale-den-2', { kind: 'NFCE', cTribNac: '', initialStatus: 'DENIED', payloadJson: ide(1) }));
+    const denegadaNfe = await docRepo.createSent(escopo(DONO_A), sent('sale-den-3', { kind: 'NFE', cTribNac: '', initialStatus: 'DENIED', payloadJson: ide(9) }));
+    const ids = (await docRepo.listContingenciaNaoAutorizada(new Date(Date.now() - 86_400_000))).map((d) => d.id);
+    expect(ids).toContain(denegadaCont.id);
+    expect(ids).not.toContain(denegadaNormal.id);
+    expect(ids).not.toContain(denegadaNfe.id);
+  });
+
   it('X10a PR-9 revisões E e F: nota parada não toma o teto — o alerta pega a mais recente e a transmissão gira pelo updatedAt', async () => {
     const pausa = () => new Promise((r) => setTimeout(r, 15));
     const off = (saleId: string, status: 'CONTINGENCY' | 'REJECTED') =>
