@@ -52,25 +52,27 @@ Cada passo tem três campos. EVIDÊNCIA é obrigatória e é sempre um artefato 
    (Network sem `POST`). Remover a 2ª linha.
    EVIDÊNCIA: [screenshot da mensagem + Network vazio]
 
-> **[EMENDA 2026-10-05 — dono em chat, 05/10: *"Pode emendar os 4"*] "Finalizar Venda" do modal Nova Venda quebrado — vale para os passos 5–7.** Na `main`
-> de 05/10 o modal Nova Venda cria a venda já `Finalized` e só depois os itens, que `assertParentSaleNotFinalized` recusa
-> (`FinanceService.createSaleWithItems` + `useSalesCreateForm.ts:270`; F11 do `PACOTE-VALIDADE-PENDENCIAS-brief.md`; o fix está
-> em sessão própria). Até ele entrar: no modal Nova Venda, **Salvar Rascunho**; depois, na lista de vendas ou no detalhe, **Finalizar**
-> (`PUT` com `status: 'Finalized'`, `SalesTable.tsx:240` / `SaleDetailPanel.tsx:116`). No Network aparece o `POST` da venda
-> (`Draft`), os `POST` dos itens e o `PUT` de finalização — o evento de finalização deve sair deste `PUT` (inferido pelo agente; o lançamento no razão é a prova). Se o "Finalizar Venda" do
-> modal Nova Venda for clicado por engano, a venda órfã (finalizada, sem itens) é **achado**, não falha deste passo: anote e siga.
-> Quando o fix do modal Nova Venda estiver em `main`, esta emenda cai e vale o texto original.
-> Nos passos 3–4 nada é enviado (a recusa é local), então o botão do modal Nova Venda pode ser clicado ali.
+> **A emenda F11 de 05/10 ("Salvar Rascunho" em vez de "Finalizar Venda") caiu.** Desde o INV F-40.2 (dono, 10/11) a venda
+> sempre nasce rascunho: o modal Nova Venda envia `"status": "Draft"` (`useSalesCreateForm.ts`, `submit`), o servidor recusa
+> `Finalized` na criação (`SalesPlugin.ts`, `beforeCreate`) e o "Finalizar Venda" do modal finaliza por `PUT` depois dos itens.
+> Pelo INV F-40.1 o servidor grava `subtotal`/`totalAmount` `0` na criação e recalcula dos itens no `PUT`; o total no corpo do
+> `POST` não é o que fica gravado. Vale o texto abaixo.
 
-5. Desconto `0`, quantidade `2`, preço `320,00`; **Finalizar Venda**.
-   Resultado esperado: subtotal `640,00`; no Network, `POST` da venda com `"aboveCatalogPrice": true` e `POST` do
-   item com `"type": "Package"`, `"packageId"`, `"quantity": 2`, `"unitPrice": 320`. Na lista, a venda mostra a
-   etiqueta **"Acima do catálogo"**; no detalhe, o item aparece como **Pacote** com o nome do pacote.
-   EVIDÊNCIA: [as duas linhas do Network com os corpos + screenshot da lista e do detalhe]
+5. Desconto `0`, quantidade `2`, preço `320,00`; **Finalizar Venda** (botão do modal).
+   Resultado esperado: subtotal `640,00` na tela. No Network, nesta ordem: `POST` da venda com `"status": "Draft"` e
+   `"aboveCatalogPrice": true`; `POST` do item com `"type": "Package"`, `"packageId"`, `"quantity": 2`, `"unitPrice": 320`;
+   **se o pacote tem validade**, `POST /api/package-acceptances` → `201` antes do `PUT` (F-PP-6 a), e o `PUT` leva
+   `"status": "Finalized"` com `subtotal`/`totalAmount`; **sem validade**, não há `POST` de aceite e o `PUT` leva só
+   `"status": "Finalized"`. Na lista, a venda aparece `Finalizada` com a etiqueta **"Acima do catálogo"**; no detalhe, o item
+   aparece como **Pacote** com o nome do pacote.
+   EVIDÊNCIA: [as linhas do Network com os corpos (`POST` venda, `POST` item, aceite se houver, `PUT`) + screenshot da lista e do detalhe]
 
-6. Nova venda de pacote pelo preço do catálogo (`300,00`, qtd 1), finalizada.
-   Resultado esperado: `"aboveCatalogPrice": false` no corpo do `POST`; sem etiqueta na lista.
-   EVIDÊNCIA: [linha do Network + screenshot da lista]
+6. Nova venda de pacote pelo preço do catálogo (`300,00`, qtd 1): **Salvar Rascunho** no modal e depois **Finalizar** pela lista
+   ou pelo detalhe (cobre o caminho do rascunho).
+   Resultado esperado: `POST` da venda com `"status": "Draft"` e `"aboveCatalogPrice": false`; `POST` do item; se o pacote tem
+   validade, o `POST /api/package-acceptances` sai depois dos itens, ainda no rascunho; a finalização é um `PUT` com
+   `"status": "Finalized"`. Sem etiqueta "Acima do catálogo" na lista.
+   EVIDÊNCIA: [linhas do Network (`POST` venda, `POST` item, aceite se houver, `PUT` da finalização) + screenshot da lista]
 
 7. Criar uma venda de **serviço** finalizada para o **mesmo cliente** e clicar **Pagar** → forma "Saldo de pacote".
    Resultado esperado: o saldo do pacote vendido nos passos 5–6 aparece como opção (crédito da ponte
