@@ -1,5 +1,6 @@
 import { validateImport, ImportHeaderError, type AccountLike } from '../dataExchangeValidators';
 import type { InTable } from '../../../../lib/spreadsheet';
+import { MAX_CENTS } from '../../models/money';
 
 const accounts: AccountLike[] = [
   { code: '1.1.01', acceptsEntries: true },
@@ -110,15 +111,24 @@ describe('dataExchangeValidators — journal entries', () => {
   });
 });
 
-// ACC-INCR6-J-001: the storage column (Posting.debitCents/creditCents) is Int32. A value the
-// column can't hold must be rejected at PREVIEW (a validation issue), not silently accepted and
-// left to fail as an opaque POST_FAILED at commit. Ceiling = MAX_CENTS = 2_147_483_647.
-describe('dataExchangeValidators — cents Int32 ceiling (ACC-INCR6-J-001)', () => {
-  const MAX = 2_147_483_647; // Int32 signed max
+// ACC-INCR6-J-001 (histórico): a coluna era Int32 e o valor que ela não segurava tinha de ser recusado na PRÉVIA, não
+// virar POST_FAILED opaco no commit. F-W2B-2 → (b) (24/11/2026): a coluna é BigInt e o teto de política MAX_CENTS
+// subiu para 2^43−1 (models/money.ts); acima dele a prévia segue recusando com *_TOO_LARGE, e acima de 2^53−1 já
+// morre no parse (BAD_*).
+describe('dataExchangeValidators — teto de centavos (MAX_CENTS = 2^43−1; ACC-INCR6-J-001 / F-W2B-2)', () => {
+  const MAX = MAX_CENTS;
   const OPEN = ['accountCode', 'postingDate', 'description', 'debitCents', 'creditCents'];
   const JRNL = ['entryKey', 'documentDate', 'postingDate', 'description', 'accountCode', 'debitCents', 'creditCents', 'lineDescription', 'externalReference'];
 
-  it('opening balances: the Int32-max value itself is accepted (balanced file → all VALID)', () => {
+  it('opening balances: o valor que o Int32 não segurava (2^31) agora é VALID (R$ 21,47 mi não é mais teto)', () => {
+    const t = table(OPEN, [
+      ['1.1.01', '2026-01-01', 'Banco', '2147483648', '0'],
+      ['2.1.01', '2026-01-01', 'Capital', '0', '2147483648'],
+    ]);
+    expect(statuses(validateImport('IMPORT_OPENING_BALANCES', t, accounts))).toEqual(['VALID', 'VALID']);
+  });
+
+  it('opening balances: the ceiling value itself is accepted (balanced file → all VALID)', () => {
     const t = table(OPEN, [
       ['1.1.01', '2026-01-01', 'Banco', String(MAX), '0'],
       ['2.1.01', '2026-01-01', 'Capital', '0', String(MAX)],
@@ -126,17 +136,17 @@ describe('dataExchangeValidators — cents Int32 ceiling (ACC-INCR6-J-001)', () 
     expect(statuses(validateImport('IMPORT_OPENING_BALANCES', t, accounts))).toEqual(['VALID', 'VALID']);
   });
 
-  it('opening balances: one cent over Int32 → DEBIT_TOO_LARGE at preview', () => {
+  it('opening balances: one cent over the ceiling → DEBIT_TOO_LARGE at preview', () => {
     const t = table(OPEN, [
       ['1.1.01', '2026-01-01', 'Banco', String(MAX + 1), '0'],
       ['2.1.01', '2026-01-01', 'Capital', '0', String(MAX + 1)],
     ]);
     const r = validateImport('IMPORT_OPENING_BALANCES', t, accounts);
-    expect(r[0].errorCode).toBe('DEBIT_TOO_LARGE'); // the offending row keeps its specific reason
+    expect(r[0].errorCode).toBe('DEBIT_TOO_LARGE'); // a linha ofensora mantém o motivo específico
     expect(r[0].status).toBe('INVALID');
   });
 
-  it('journal: the Int32-max value in a balanced group is accepted', () => {
+  it('journal: the ceiling value in a balanced group is accepted', () => {
     const t = table(JRNL, [
       ['L1', '', '2026-07-01', 'x', '1.1.01', String(MAX), '0', '', ''],
       ['L1', '', '2026-07-01', 'x', '2.1.01', '0', String(MAX), '', ''],
@@ -144,15 +154,20 @@ describe('dataExchangeValidators — cents Int32 ceiling (ACC-INCR6-J-001)', () 
     expect(statuses(validateImport('IMPORT_JOURNAL_ENTRIES', t, accounts))).toEqual(['VALID', 'VALID']);
   });
 
-  it('journal: the exact ACC-INCR6-J-001 value (near MAX_SAFE_INTEGER) → CREDIT_TOO_LARGE, not POST_FAILED', () => {
-    const t = table(JRNL, [
+  it('journal: o valor do ACC-INCR6-J-001 (2^31) agora entra, e uma perna desbalanceada no teto segue INVALID na prévia', () => {
+    const ok = table(JRNL, [
+      ['L1', '', '2026-07-01', 'x', '1.1.01', '2147483648', '0', '', ''],
+      ['L1', '', '2026-07-01', 'x', '2.1.01', '0', '2147483648', '', ''],
+    ]);
+    expect(statuses(validateImport('IMPORT_JOURNAL_ENTRIES', ok, accounts))).toEqual(['VALID', 'VALID']);
+    const unbalanced = table(JRNL, [
       ['L1', '', '2026-07-01', 'x', '1.1.01', '100000', '0', '', ''],
       ['L1', '', '2026-07-01', 'x', '2.1.01', '0', '9007199254740991', '', ''],
     ]);
-    const r = validateImport('IMPORT_JOURNAL_ENTRIES', t, accounts);
-    const bad = r.find((x) => x.errorCode === 'CREDIT_TOO_LARGE');
-    expect(bad).toBeDefined();
-    expect(bad?.status).toBe('INVALID');
+    const r = validateImport('IMPORT_JOURNAL_ENTRIES', unbalanced, accounts);
+    expect(r.some((x) => x.status === 'VALID')).toBe(false);
+    // 9007199254740991 (2^53−1) segue recusado com o motivo específico, não como POST_FAILED no commit.
+    expect(r.find((x) => x.errorCode === 'CREDIT_TOO_LARGE')?.status).toBe('INVALID');
   });
 
   it('journal: a value beyond MAX_SAFE_INTEGER still rejected (BAD_CREDIT via parse), never VALID', () => {

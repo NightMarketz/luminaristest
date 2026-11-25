@@ -3,8 +3,6 @@
  * `DENIED` (o cStat → DENIED é provado em `SefazNfeEmissor.test.ts`; aqui a perna de PERSISTÊNCIA e do ciclo), o serviço e o
  * repositório são os reais. Prova: o status `DENIED` é gravado, é terminal (o polling não volta a consultar), não é reenviável
  * (≠ REJECTED), o `errorsJson` leva o código e a auditoria sai como `dfe.denied` (nunca `dfe.rejected`).
- *
- * Fora de escopo, do dono: o texto "número consumido" mostrado ao operador.
  */
 const mockPort = {
   name: 'null',
@@ -115,7 +113,7 @@ describe('DENIED (uso denegado) — gravado em SQLite real, terminal, sem retry 
     expect(eventos).toEqual(['dfe.denied']);
   });
 
-  it('DENIED não é reenviável (o número foi consumido): reenviar → 400 reenvio_bloqueado e nada muda', async () => {
+  it('DENIED não é reenviável: reenviar → 400 reenvio_bloqueado e nada muda', async () => {
     const d = await pendente();
     mockPort.consultar.mockImplementation(
       async (ref: string): Promise<EmissaoResult> => (ref.startsWith(d.id) ? { status: 'DENIED', partnerRef: ref, errors: [{ code: '301', message: 'Uso Denegado' }] } : { status: 'PROCESSING', partnerRef: ref, errors: [] }),

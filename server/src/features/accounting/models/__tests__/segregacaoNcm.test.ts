@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { LEGAIS_SEMENTE, LEGAL_PARAMS_SEED_FILE_ICMS_ST_NCM_UF, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { erroDeFormato } from '../../../legalParameters/models/formatoLinha';
-import type { LegalParameterTabela, LinhaLegal } from '../../../legalParameters/models/legalParameter';
+import { ParametroLegalAusenteError, type LegalParameterTabela, type LinhaLegal } from '../../../legalParameters/models/legalParameter';
 import { fimMonofasicoPisCofins, icmsStDaNcm, segregacaoPorNcm } from '../segregacaoNcm';
 
 /**
@@ -75,6 +75,14 @@ describe('item 12 — segregacaoPorNcm (pura)', () => {
     expect(segregacaoPorNcm(CREME, SP, '2027-01-01', legais)).toEqual([]);
     // As linhas do monofásico NCM seguem sem fim: a importação de NF-e (X6) as lê (D-2026-10-27 decisão 3, parte que permanece).
     expect(legais.filter((l) => l.tabela === 'PIS_COFINS_MONOFASICO_NCM' && l.vigenteAte !== null)).toEqual([]);
+  });
+
+  it('FAIL-CLOSED (ressalva do #1357, dono 24/11): linha PIS_COFINS em vigor SEM vigenteAte ⇒ erro PARAMETRO_LEGAL_AUSENTE, nunca "sem fim" (que apagaria o fim da Lei 10.147)', () => {
+    const aberta = legais.map((l) => (l.tabela === 'PIS_COFINS' && l.chave === 'PIS' && l.discriminador === 'CUMULATIVO' ? { ...l, vigenteAte: null } : l));
+    expect(() => fimMonofasicoPisCofins(aberta, '2026-12-31')).toThrow(ParametroLegalAusenteError);
+    expect(() => fimMonofasicoPisCofins(aberta, '2026-12-31')).toThrow(/sem vigenteAte/);
+    expect(() => segregacaoPorNcm(CREME, SP, '2027-01-01', aberta)).toThrow(ParametroLegalAusenteError);
+    expect(() => fimMonofasicoPisCofins(legais, '2026-12-31')).not.toThrow(); // a semente real publica o fim
   });
 
   it('NCM fora das tabelas, ausente ou inválida ⇒ []', () => {

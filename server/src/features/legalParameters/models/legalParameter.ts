@@ -175,16 +175,19 @@ export function inicioDeVigencia(linhas: readonly LinhaLegal[], tabela: LegalPar
 
 /**
  * Onda 3.2 — o dia em que a lei deixa de valer: o dia seguinte ao maior `vigenteAte` das linhas em vigor da tabela/chave.
- * Três estados: nenhuma linha ⇒ `ParametroLegalAusenteError` (fail-closed); alguma linha em vigor sem `vigenteAte` ⇒ `null`
- * (sem fim publicado — a lei não acabou segundo o dado); caso contrário o dia seguinte ao último `vigenteAte`.
+ * FAIL-CLOSED (ressalva do #1357, dono 24/11/2026): a linha que marca o fim da lei EXIGE `vigenteAte`. Nenhuma linha em
+ * vigor ⇒ `ParametroLegalAusenteError`; alguma linha em vigor SEM `vigenteAte` ⇒ `FimDeVigenciaNaoPublicadoError` (mesmo
+ * código `PARAMETRO_LEGAL_AUSENTE`) — uma linha aberta não pode apagar o fim que a lei fixa (devolver `null` ligava de novo
+ * o ISS/o monofásico para sempre). Caso contrário o dia seguinte ao último `vigenteAte`.
  */
-export function diaSeguinteAoFimDeVigencia(linhas: readonly LinhaLegal[], tabela: LegalParameterTabela, chave: string | null, dataConsultada: string): string | null {
+export function diaSeguinteAoFimDeVigencia(linhas: readonly LinhaLegal[], tabela: LegalParameterTabela, chave: string | null, dataConsultada: string): string {
   const doMarco = linhasDoMarco(linhas, tabela, chave);
   if (doMarco.length === 0) throw new ParametroLegalAusenteError(tabela, dataConsultada, chave ?? undefined);
+  const abertas = doMarco.filter((l) => l.vigenteAte === null);
+  if (abertas.length > 0) throw new FimDeVigenciaNaoPublicadoError(tabela, dataConsultada, chave ?? undefined, abertas.map((l) => l.id));
   let ultimo = '';
   for (const l of doMarco) {
-    if (l.vigenteAte === null) return null;
-    if (l.vigenteAte > ultimo) ultimo = l.vigenteAte;
+    if (l.vigenteAte !== null && l.vigenteAte > ultimo) ultimo = l.vigenteAte;
   }
   const d = new Date(`${ultimo}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + 1);
@@ -238,6 +241,20 @@ export class ParametroLegalAusenteError extends SemLinhaVigenteError {
     super(tabela, data, chave, 'PARAMETRO_LEGAL_AUSENTE');
     Object.setPrototypeOf(this, ParametroLegalAusenteError.prototype);
     this.name = 'ParametroLegalAusenteError';
+  }
+}
+
+/**
+ * Ressalva do #1357 (dono 24/11/2026) — a linha em vigor que deveria marcar o fim da lei não publica `vigenteAte`. Mesma
+ * classe e mesmo código (`PARAMETRO_LEGAL_AUSENTE`, 400) dos demais parâmetros ausentes, com mensagem própria: o que falta
+ * é o FIM, não a linha. Nomeia as linhas abertas (`ids`) para o operador publicar o `vigenteAte`.
+ */
+export class FimDeVigenciaNaoPublicadoError extends ParametroLegalAusenteError {
+  constructor(tabela: string, data: string, chave: string | undefined, ids: readonly string[]) {
+    super(tabela, data, chave);
+    this.message = `Linha de ${tabela}${chave ? `/${chave}` : ''} em vigor sem vigenteAte (${ids.join(', ')}): a linha que marca o fim da lei precisa publicar o vigenteAte; sem ele o fim (consulta em ${data}) seria apagado, não presumido.`;
+    Object.setPrototypeOf(this, FimDeVigenciaNaoPublicadoError.prototype);
+    this.name = 'FimDeVigenciaNaoPublicadoError';
   }
 }
 

@@ -128,6 +128,12 @@ export interface FiscalDocumentView {
   substMotivo: string | null;
   /** X10a PR-9 (E-9) — NFC-e emitida em contingência off-line (tpEmis=9): dados do DANFE e o prazo de transmissão. */
   contingencia: { dhCont: string; prazoTransmissao: string; qrCode: string | null; urlChave: string | null } | null;
+  /**
+   * Lacunas cf36/6e13 (dono 25/11) — estado do polling (`dfe_poll_pending`) do documento: `gaveUpAt` preenchido = o job parou de
+   * consultar (teto de tentativas) até o re-arme (`POST …/rearmar-polling`); `deferredSince`/`alertedAt` = episódio de adiamento
+   * por transporte indisponível (assinador local fora). ISO 8601 ou `null`. `lastError` é a mensagem da última falha: erro de transporte leva `código: mensagem`; os demais devolvem `error.message` cru (até 500 caracteres, p.ex. `ZodError.message`) — dado do próprio tenant, nunca de outra conta.
+   */
+  poll: { attempts: number; gaveUpAt: string | null; lastError: string | null; deferredSince: string | null; alertedAt: string | null };
 }
 
 /** `resultJson` nulo, inválido ou sem `releitura` ⇒ `null` (nunca lança — a view não pode quebrar por dado legado). */
@@ -1556,6 +1562,13 @@ export class FiscalDocumentEmissionService {
       substitutedByDocumentId: doc.substitutedByDocumentId ?? null,
       substMotivo: doc.substMotivo ?? null,
       contingencia: contingenciaDaView(doc, feriados),
+      poll: {
+        attempts: doc.pollAttempts ?? 0,
+        gaveUpAt: doc.pollGaveUpAt?.toISOString() ?? null,
+        lastError: doc.pollLastError ?? null,
+        deferredSince: doc.pollDeferredSince?.toISOString() ?? null,
+        alertedAt: doc.pollAlertedAt?.toISOString() ?? null,
+      },
     };
   }
 }

@@ -533,7 +533,7 @@
  *                 unitId: { type: string }
  *                 chave: { type: string, enum: [PISO_SALARIAL_CENTS] }
  *                 discriminador: { type: string, description: cargoId }
- *                 valorInt: { type: string, pattern: '^\d+$', description: 'PISO_SALARIAL_CENTS in cents, 1..2147483647' }
+ *                 valorInt: { type: string, pattern: '^\d+$', description: 'PISO_SALARIAL_CENTS in cents, 1..8796093022207' }
  *                 clausula: { type: string, minLength: 1, maxLength: 4000 }
  *                 vigenteDesde: { type: string, format: date }
  *                 vigenteAte: { type: string, format: date, nullable: true }
@@ -560,7 +560,7 @@
  *               required: [unitId]
  *               properties:
  *                 unitId: { type: string }
- *                 valorInt: { type: string, pattern: '^\d+$', description: 'PISO_SALARIAL_CENTS in cents, 1..2147483647' }
+ *                 valorInt: { type: string, pattern: '^\d+$', description: 'PISO_SALARIAL_CENTS in cents, 1..8796093022207' }
  *                 clausula: { type: string, minLength: 1, maxLength: 4000 }
  *                 vigenteDesde: { type: string, format: date }
  *                 vigenteAte: { type: string, format: date, nullable: true }

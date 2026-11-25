@@ -27,7 +27,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { execSync } from 'child_process';
 import { PrismaClient } from 'generated/prisma';
-import { centsFromDb } from '../../models/money';
+import { MAX_CENTS, centsFromDb } from '../../models/money';
 import { jsonBigintReplacer } from '../../../../lib/jsonBigintReplacer';
 
 const SERVER_ROOT = path.join(__dirname, '../../../../../');
@@ -164,6 +164,22 @@ describe('Posting.debitCents/creditCents — BigInt ceiling, real SQLite DB (BE-
     const total = grouped.find((g) => g.accountId === 'acc-money-3')?._sum.debitCents;
     expect(total).toBe(3_000_000_000n);
     expect(centsFromDb(total ?? 0n)).toBe(3_000_000_000);
+  });
+
+  it('F-W2B-2 → (b): uma perna exatamente no teto de política (MAX_CENTS = 2^53−1) persiste e volta EXATA pela borda centsFromDb', async () => {
+    // O teto de política subiu de 2^31−1 para o limite seguro de Number (24/11/2026). O banco (BigInt) e a borda de
+    // leitura têm de segurar exatamente o valor que a API agora aceita; um centavo a mais é o caso do `it` seguinte.
+    const created = await db.posting.create({
+      data: {
+        userId: 'u-money', unitId: 'unit-money', entryId: 'entry-money', accountId: 'acc-money-1',
+        debitCents: BigInt(MAX_CENTS), creditCents: 0,
+      },
+    });
+    const reread = await db.posting.findUnique({ where: { id: created.id } });
+    expect(reread?.debitCents).toBe(BigInt(MAX_CENTS));
+    expect(centsFromDb(reread!.debitCents)).toBe(MAX_CENTS);
+    expect(JSON.parse(JSON.stringify(reread, jsonBigintReplacer)).debitCents).toBe(MAX_CENTS);
+    await db.posting.delete({ where: { id: created.id } });
   });
 
   it('F-W2B-3 guard: a *Cents value past Number.MAX_SAFE_INTEGER fails LOUD at the read/' +

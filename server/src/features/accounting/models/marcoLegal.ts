@@ -15,6 +15,12 @@ import { ParametroLegalAusenteError, linhasEmVigor, type LinhaLegal } from '../.
 export const MARCOS_LEGAIS = [
   // LC 214/2025 art. 517 (red. LC 123 art. 18 § 1º, "doze meses antecedentes ao mês anterior"), efeitos pelo art. 544 III.
   'INICIO_LC214_RBT12',
+  // LC 214/2025 art. 517 (LC 123 art. 13 IX–X e §§ 9º a 11: opção do Simples pelo IBS/CBS regular), efeitos pelo art. 544 III.
+  'INICIO_OPCAO_IBS_CBS_DAS',
+  // Res. CGSN 190/2026 art. 1º/8º IX e XII (fim do regime de caixa), efeitos pelo art. 9º II (red. Res. CGSN 196/2026).
+  'FIM_REGIME_CAIXA_SIMPLES',
+  // LC 214/2025 art. 343 (2026: só IBS estadual de 0,1%) e art. 344 (2027: estadual 0,05% + municipal 0,05%).
+  'INICIO_IBS_MUNICIPAL',
 ] as const;
 export type MarcoLegal = (typeof MARCOS_LEGAIS)[number];
 
@@ -37,4 +43,23 @@ export function dataDoMarco(linhas: readonly LinhaLegal[], marco: MarcoLegal, da
 /** Competência (`YYYY-MM`) em que a redação da LC 214 sobre o RBT12 passa a valer — o mês da data do marco. */
 export function inicioLc214Competencia(linhas: readonly LinhaLegal[], dataConsultada: string): string {
   return dataDoMarco(linhas, 'INICIO_LC214_RBT12', dataConsultada).slice(0, 7);
+}
+
+/** Competência (`YYYY-MM`) a partir da qual o optante do Simples pode escolher o IBS/CBS pelo regime regular — o mês do marco. */
+export function inicioOpcaoIbsCbsDasCompetencia(linhas: readonly LinhaLegal[], dataConsultada: string): string {
+  return dataDoMarco(linhas, 'INICIO_OPCAO_IBS_CBS_DAS', dataConsultada).slice(0, 7);
+}
+
+/**
+ * Perfil/ano-calendário `ano` ANTES do marco = o ano inteiro termina antes dele (`ano-12-31 < marco`). Com marco em 1º de janeiro
+ * é "ano < ano do marco"; com marco no meio do ano, o ano que contém o marco NÃO é "antes" (a regra já vale em parte dele).
+ */
+export const anoTerminaAntesDoMarco = (ano: number, dataMarco: string): boolean => `${ano}-12-31` < dataMarco;
+
+/** Perfil/ano-calendário `ano` DEPOIS do marco = o ano inteiro começa nele ou depois (`ano-01-01 >= marco`). */
+export const anoComecaNoOuDepoisDoMarco = (ano: number, dataMarco: string): boolean => `${ano}-01-01` >= dataMarco;
+
+/** Como a mensagem ao usuário fala do marco: só o ano quando é 1º de janeiro ("2027"), senão `DD/MM/AAAA`. */
+export function rotuloDoMarco(dataMarco: string): string {
+  return dataMarco.endsWith('-01-01') ? dataMarco.slice(0, 4) : `${dataMarco.slice(8, 10)}/${dataMarco.slice(5, 7)}/${dataMarco.slice(0, 4)}`;
 }

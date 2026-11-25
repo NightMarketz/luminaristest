@@ -34,6 +34,8 @@ import { AccountingPeriodRepository } from '@/features/accounting/repositories/A
 import { SourceProvenanceRepository } from '@/features/accounting/repositories/SourceProvenanceRepository';
 import { DimensionRepository } from '@/features/accounting/repositories/DimensionRepository';
 import { LalurRepository } from '@/features/accounting/repositories/LalurRepository';
+import { ecdChartStructureRule } from '@/features/accounting/paises/br/EcdChartStructureRule';
+import { LalurAccountDeletionGuard } from '@/features/accounting/paises/br/LalurAccountDeletionGuard';
 import { AuditRepository } from '@/features/accounting/repositories/AuditRepository';
 import { CounterpartyRepository } from '@/features/accounting/repositories/CounterpartyRepository';
 import { AccountingPolicy } from '@/features/accounting/policies/AccountingPolicy';
@@ -60,7 +62,8 @@ function buildRealService(): PostingService {
     new AuditService(new AuditRepository(), postingRepo, new AccountingPolicy(), new CounterpartyRepository()),
     new SourceProvenanceRepository(),
     new DimensionRepository(),
-    new LalurRepository(),
+    new LalurAccountDeletionGuard(new LalurRepository()),
+    ecdChartStructureRule,
   );
 }
 

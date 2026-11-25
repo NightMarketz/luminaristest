@@ -1,4 +1,5 @@
 import type { BankStatementLine, Posting } from 'generated/prisma';
+import type { SpreadsheetFormat } from '../../../lib/spreadsheet';
 
 /**
  * Domain types for bank reconciliation (BE-INCR-7 / ADR-INCR7).
@@ -6,6 +7,12 @@ import type { BankStatementLine, Posting } from 'generated/prisma';
  * ledger money values; the only ledger write is the derived JournalEntry
  * status flip Posted<->Reconciled (D5), owned by the service layer.
  */
+
+/**
+ * Widened import-boundary format: the spreadsheet formats plus OFX plus CNAB. Mora aqui (modelo do razão) desde a Onda 1.2
+ * para o núcleo não importar `lib/ofx`; `lib/ofx` reexporta para quem já importava de lá (o controller).
+ */
+export type StatementFormat = SpreadsheetFormat | 'ofx' | 'cnab';
 
 /** Lifecycle of an imported statement line (staging; immutable rows). */
 export type BankStatementLineStatus = 'UNMATCHED' | 'MATCHED' | 'IGNORED';

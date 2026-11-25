@@ -2,6 +2,8 @@ import type { NfeIbsCbs, NfeIbsCbsTot } from '../dtos/NfeIbsCbsDto';
 import { divHalfUp } from './retencaoParams';
 import { parametroIbsCbsVigente, type ParametroIbsCbs } from './ibsCbsParams';
 import { buscarCClassTrib, buscarCst, type CClassTribIbsCbs, type CstIbsCbs, type TabelasIbsCbs } from './ibsCbsTabelas';
+import { dataDoMarco } from './marcoLegal';
+import type { LinhaLegal } from '../../legalParameters/models/legalParameter';
 
 /**
  * BE-INCR-NFCE (nó X10a, item 20) — montagem PURA do grupo IBSCBS (UB12) do regime normal (CRT 3) a partir do
@@ -33,8 +35,9 @@ const pctDeBp = (bp: number): string => (bp / 100).toFixed(4);
  * IBS municipal (LC 214 art. 343: só o estadual de 0,1%; UB37-10: "0% … 2025 e 2026") e a tabela legal não tem a linha
  * `ALIQUOTA_MUN` de 2026 ⇒ zero até 31/12/2026. Fora disso, sem linha PUBLISHED ⇒ `SemLinhaVigenteError` (400 nomeado).
  */
-export function aliquotasIbsCbsVigentes(tabela: readonly ParametroIbsCbs[], data: string): AliquotasIbsCbs {
-  const mun = data < '2027-01-01' && !tabela.some((p) => p.tributo === 'IBS' && p.chave === 'ALIQUOTA_MUN' && p.vigenteDesde <= data)
+export function aliquotasIbsCbsVigentes(tabela: readonly ParametroIbsCbs[], data: string, marcos: readonly LinhaLegal[]): AliquotasIbsCbs {
+  // Marco INICIO_IBS_MUNICIPAL (LC 214 art. 344): antes dele, sem linha ALIQUOTA_MUN, o IBS municipal é zero. Sem a linha do marco ⇒ PARAMETRO_LEGAL_AUSENTE.
+  const mun = !tabela.some((p) => p.tributo === 'IBS' && p.chave === 'ALIQUOTA_MUN' && p.vigenteDesde <= data) && data < dataDoMarco(marcos, 'INICIO_IBS_MUNICIPAL', data)
     ? 0
     : parametroIbsCbsVigente(tabela, 'IBS', 'ALIQUOTA_MUN', data).aliquotaBp;
   return {
