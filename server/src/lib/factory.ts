@@ -329,10 +329,10 @@ import { AttachmentService } from '../features/attachments/services/AttachmentSe
 import { SavedTableViewService } from '../features/savedViews/services/SavedTableViewService';
 import { LlmCredentialService } from '../features/teammates/services/LlmCredentialService';
 import { TeammateService } from '../features/teammates/services/TeammateService';
-import { StateManager } from '../features/interview/CustomizationService/StateManager';
-import { CustomizationService } from '../features/interview/CustomizationService/CustomizationService';
-import { InterviewService } from '../features/interview/InterviewService/InterviewService';
-import { FieldCustomizationService } from '../features/interview/FieldCustomizationService';
+import { StateManager } from '../features/interview/services/CustomizationService/StateManager';
+import { CustomizationService } from '../features/interview/services/CustomizationService/CustomizationService';
+import { InterviewService } from '../features/interview/services/InterviewService/InterviewService';
+import { FieldCustomizationService } from '../features/interview/services/FieldCustomizationService';
 import { SystemProvisioningService } from '../features/onboarding/services/SystemProvisioningService';
 import * as attachmentStorage from './attachmentStorage';
 import { kpiCacheService } from '../features/analytics/services/KpiCacheService';
