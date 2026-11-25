@@ -22,6 +22,10 @@ function tpEmisDe(payload: unknown): number | null {
  * (`FiscalDocumentLifecycleService`). `doc` é o documento já em `SENT` na tentativa que sai.
  *
  * - Falha de rede ⇒ fica `SENT` com `errorsJson` (`failCode`), sem tentativa automática (item 20).
+ *   Onda 4 / 4.1: a falha de COMUNICAÇÃO (5xx, timeout, TLS — `DfeTransporteError`) NÃO diz se o fisco recebeu a nota: a
+ *   única retentativa segura é CONSULTAR pela chave (o polling faz, `consultarEAplicar`; no 217 repetido vira `REJECTED`
+ *   `dfe_nao_recebida`, que só então libera o `reenviar`). Reenviar às cegas pode duplicar a NF-e — nunca é feito aqui.
+ *   Sem resposta do fisco o documento não fica preso: o polling agora tem teto e backoff (`POLL_MAX_ATTEMPTS`).
  * - O PSC recusou por sessão vencida (CREDENCIAL_EXPIRADA/REVOGADA) ⇒ `PENDING_SIGNATURE` mantendo o número
  *   (E-13, F-PSC-6 a); nada foi ao fisco.
  * - Adaptador com `resultadoSincrono` ⇒ o retorno é aplicado por `applier` (F-ADN-5 a). Sem ele, o resultado imediato
@@ -77,7 +81,15 @@ export async function enviarTentativa(
         }
       }
     }
-    logger.error('DfeEmissorPort.emitir falhou — documento fica SENT, sem tentativa automática', { documentId: doc.id, error: message });
+    if (isFalhaDeComunicacao(emitError)) {
+      logger.warn('DfeEmissorPort.emitir: falha de comunicação — documento fica SENT; o polling reconsulta pela chave antes de qualquer reenvio', {
+        documentId: doc.id,
+        code: emitError.code,
+        error: message,
+      });
+    } else {
+      logger.error('DfeEmissorPort.emitir falhou — documento fica SENT, sem tentativa automática', { documentId: doc.id, error: message });
+    }
     await repo.transition(scope, doc.id, { status: 'SENT', errorsJson: JSON.stringify([{ code: failCode, message }]) });
     return;
   }

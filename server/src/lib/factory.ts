@@ -371,7 +371,8 @@ import type { ISystemProvisioningPolicy } from '../features/onboarding/policies/
 import type { IAccountingEventMapper } from '../features/accounting/sync/mappers/IAccountingEventMapper';
 import type { PostEntryInput } from '../features/accounting/dtos/PostingDto';
 import type { AccountingScope } from '../features/accounting/scope/AccountingScope';
-import type { BindingScope, IAccountingBindingRepository } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
+import type { IAccountingBindingRepository } from '../features/accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../features/accountingBinding/public/bindingScope.types';
 import { AccountingBindingV1Schema } from '../features/accountingBinding/dtos/AccountingBindingDto';
 import { ValidationError } from './errors';
 import type { ChartLookupPort, PostingValidatePort } from '../features/accountingBinding/models/types';
@@ -1569,6 +1570,7 @@ export class ApplicationFactory {
       this.repositories.collectionCharge, // BE-INCR-PAYMENT-PROVIDER PR-3 (P3-6)
       this.repositories.companyFiscalProfile, // IBS-CBS-2027 PR-4 (item 19a): regime da competência do split
       this.repositories.fiscalProfile, // IBS-CBS-2027 PR-4 (item 19a): contas de IBS/CBS a recolher
+      legalParameterService, // Onda 3.2: fotografia OBRIGACAO_REGIME (início da apuração de IBS/CBS)
     );
     // BE-INCR-PAYMENT-PROVIDER PR-2: o adaptador sai do `provider` da conta — MP é o único da porta hoje (P2-1).
     const collectionChargeService = new CollectionChargeService(
@@ -1605,6 +1607,7 @@ export class ApplicationFactory {
       this.repositories.companyFiscalProfile, // X13 PR-2: regime da empresa (itens 15/17)
       this.repositories.accountantAssignment, // GOV-CONTADOR política versionada (item 13)
       this.repositories.accountingPolicyVersion,
+      legalParameterService, // Onda 3.2 #4 + MODULE-BOUNDARIES PR-1a: fotografia ISS_LIMITE + LC116_SERVICO (fim do ISS e validate)
     );
     // BE-INCR-DFE (nó X10b, PR-1): perfil fiscal do serviço (F-DFE-6 a) — extraído como const própria
     // (não só inline no literal abaixo) porque FiscalDocumentEmissionService (PR-2) também a injeta.

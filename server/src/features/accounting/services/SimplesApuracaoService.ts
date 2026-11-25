@@ -21,9 +21,10 @@
 import type { Prisma, ReceitaFiscalLinha, SalaoParceriaContrato, SimplesApuracao } from 'generated/prisma';
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../../lib/errors';
 import logger from '../../../lib/logger';
+import { inicioLc214Competencia } from '../models/marcoLegal';
 import { ParametroLegalAusenteError, linhaLegalVigente, type LegalParameterTabela, type LinhaLegal } from '../../legalParameters/models/legalParameter';
 import type { LegalParameterService } from '../../legalParameters/services/LegalParameterService';
-import { INICIO_LC214, apurar, apurarSimei, janelaRbt12, type ApuracaoInput, type ApuracaoSimei, type ApuracaoCalculada, type AtividadeInput, type MesReceita, type NaturezaSimples, type TributoSimples } from '../models/simplesCalc';
+import { apurar, apurarSimei, janelaRbt12, type ApuracaoInput, type ApuracaoSimei, type ApuracaoCalculada, type AtividadeInput, type MesReceita, type NaturezaSimples, type TributoSimples } from '../models/simplesCalc';
 import { normalizeNcm } from '../models/pisCofinsMonofasicoNcm';
 import type { IProductFiscalProfileRepository } from '../repositories/IProductFiscalProfileRepository';
 import { espelhoPgdas, type EspelhoAtividade } from '../models/simplesEspelho';
@@ -65,7 +66,15 @@ export const SIMPLES_DAS_SUBSTITUIDO = 'tax.simples_das.substituido';
 /** BE-INCR-SOURCE-DOCUMENT-UPLOAD F-SD-8 (a): documento anexado a um DAS já registrado (ramo idempotente). */
 export const SIMPLES_DAS_DOCUMENTO_ANEXADO = 'tax.simples_das.documento_anexado';
 
-const TABELAS: readonly LegalParameterTabela[] = ['SIMPLES_ANEXO_FAIXA', 'SIMPLES_ANEXO_REPARTICAO', 'SIMPLES_TETO_ISS', 'SIMPLES_ENQUADRAMENTO', 'SIMPLES_LIMITE', 'ISS_LIMITE'];
+// Onda 3.2 fatia 4: + MARCO_LEGAL (o 1º PA da redação da LC 214 sobre o RBT12 é linha, não literal).
+const TABELAS: readonly LegalParameterTabela[] = ['SIMPLES_ANEXO_FAIXA', 'SIMPLES_ANEXO_REPARTICAO', 'SIMPLES_TETO_ISS', 'SIMPLES_ENQUADRAMENTO', 'SIMPLES_LIMITE', 'ISS_LIMITE', 'MARCO_LEGAL'];
+
+/**
+ * Res. CGSN 140 art. 27 II, red. Res. CGSN 190/2026 art. 9º (DOU 10/08/2026; efeitos em 01/01/2027, lido no Normas RFB — BRIEF
+ * `BE-INCR-SIMPLES-NACIONAL-brief.md` [D16]): 2% de ISS também no mês seguinte ao do início de atividade. Fica em código: a
+ * fonte NÃO está no acervo `ctresb/leis` e não foi relida na fatia 4 da Onda 3.2 (lacuna registrada na caixa) — não é o marco da LC 214.
+ */
+const INICIO_CGSN190_MES_SEGUINTE = '2027-01';
 
 export type { AlertaSimples, CodigoAlertaSimples } from '../dtos/SimplesDto';
 /** Última competência em que a ME/EPP ainda pode usar documento municipal (NFS-e nacional obrigatória desde 01/11/2026). */
@@ -508,7 +517,7 @@ export class SimplesApuracaoService {
 
     // Receita mensal: o subrazão (receita − cota do parceiro) prevalece; o histórico pré-adoção vale para os meses sem
     // subrazão (decisão do dono 07/10 pelo BRIEF item 10: o histórico é da PRÉ-adoção). Os dois no mesmo mês ⇒ alerta.
-    const janela = janelaRbt12(competencia);
+    const janela = janelaRbt12(competencia, inicioLc214Competencia(linhas, `${competencia}-01`));
     const todos = meses(`${ano - 1}-01` < janela.de ? `${ano - 1}-01` : janela.de, competencia);
     const [historico, subrazao] = await Promise.all([this.entradasRepo.findHistorico(scope, todos, tx), this.receitaRepo.somaPorCompetencia(scope, todos, tx)]);
     const hist = new Map(historico.map((h) => [h.competencia, h]));
@@ -656,7 +665,7 @@ export class SimplesApuracaoService {
       beneficios.set(`${e.natureza}|${e.cTribNac ?? ''}`, b);
       if (b.tipo === 'VALOR_FIXO') {
         alertas.push({ severity: 'INFO', codigo: 'ISS_VALOR_FIXO_MUNICIPAL', detalhe: `serviço ${e.cTribNac}: valor fixo municipal de ISS (${b.legislacao}) — fora do cálculo do DAS (Res. CGSN 140 arts. 31 II e 33)` });
-      } else if (!issExtinto(dataPa)) {
+      } else if (!issExtinto(linhas, dataPa)) {
         pisoIssBp ??= issAliquotaMinBp(linhas, dataPa);
         e.beneficioIss = { tipo: b.tipo, reducaoBpPorFaixa: b.reducaoBpPorFaixa, pisoIssBp };
       }
@@ -1224,7 +1233,7 @@ export class SimplesApuracaoService {
     const perfil = await this.companyProfileRepo.findByYear(scope, Number(competencia.slice(0, 4)));
     const inicio = perfil?.regime === 'SIMPLES' ? perfil.inicioAtividadeEm?.slice(0, 7) : undefined;
     // Res. CGSN 140 art. 27 II: 2% no mês de início; a partir de 2027, também no mês seguinte (red. Res. CGSN 190/2026).
-    if (inicio && (inicio === competencia || (competencia >= INICIO_LC214 && proximo(inicio, 1) === competencia))) {
+    if (inicio && (inicio === competencia || (competencia >= INICIO_CGSN190_MES_SEGUINTE && proximo(inicio, 1) === competencia))) {
       return {
         competencia,
         mesReferencia: competencia,
@@ -1238,7 +1247,7 @@ export class SimplesApuracaoService {
         alertas: [],
       };
     }
-    const mesPrestacao = competencia >= INICIO_LC214;
+    const mesPrestacao = competencia >= inicioLc214Competencia(await this.legalParams.fotografia(['MARCO_LEGAL']), `${competencia}-01`);
     const pa = mesPrestacao ? competencia : proximo(competencia, -1);
     const m = await this.montar(scope, pa, undefined, catalogo);
     return {

@@ -9,7 +9,7 @@ import prisma from '@/lib/prisma';
 import { makeApp, pushTestSchema, authHeader } from '@test/helpers';
 import { resetDb } from '@test/helpers/db';
 import { ApplicationFactory } from '@/lib/factory';
-import type { BindingScope } from '@/features/accountingBinding/repositories/IAccountingBindingRepository';
+import type { BindingScope } from '@/features/accountingBinding/public/bindingScope.types';
 import type { SectorKitV1 } from '@/features/sectorKits/dtos/SectorKitDto';
 import { BEAUTY_SALON_KIT_V1 } from '@/features/sectorKits/kits/beautySalon/kit.v1';
 import { BEAUTY_SALON_KIT_V4 } from '@/features/sectorKits/kits/beautySalon/kit.v4';

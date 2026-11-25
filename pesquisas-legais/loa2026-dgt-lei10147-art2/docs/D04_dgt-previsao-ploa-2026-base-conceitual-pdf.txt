@@ -1,0 +1,1662 @@
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+SETEMBRO/2025 
+Versão 1.01 
+ 
+ 
+ 
+Demonstrativo dos Gastos Tributários 
+PLOA 2026 
+Centro de Estudos Tributários e Aduaneiros 
+
+ 
+MINISTRO DA FAZENDA 
+Fernando Haddad 
+SECRETÁRIO ESPECIAL DA RECEITA FEDERAL DO BRASIL 
+Robinson Sakiyama Barreirinhas 
+CHEFE DO CENTRO DE ESTUDOS TRIBUTÁRIOS E ADUANEIROS 
+Claudemir Rodrigues Malaquias  
+COORDENADOR DE PREVISÃO E ANÁLISE 
+Marcelo de Mello Gomide Loures 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Demonstrativo dos Gastos Governamentais Indiretos de Natureza Tributária 
+(Gastos Tributários)  
+PLOA 2026 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Equipe Técnica 
+Carlos Eduardo Silva Rego 
+Francisco Rodrigues Braga Junior 
+Phelippe Machado Marques 
+Paulo Fernando Meneses Thome 
+Rafael Praciano Garcia 
+Wilson Massatoshi Kitazawa 
+ 
+ 
+É autorizada a reprodução total ou parcial do conteúdo desta publicação desde que citada a 
+fonte. 
+ 
+ 
+Esplanada dos Ministérios, BL. P 
+Edifício Sede do Ministério da Fazenda, 6º andar, sala 602 
+Brasília – DF CEP - 70.048-900 
+Brasil 
+Tel.: (061) 3412.2633 / 3412-2634 
+ 
+Sumário 
+CONSIDERAÇÕES INICIAIS ...................................................................................................................................... 4 
+CONCEITO DE GASTO TRIBUTÁRIO ......................................................................................................................... 4 
+INFORMAÇÕES METODOLÓGICAS ......................................................................................................................... 5 
+FORMA DE APRESENTAÇÃO DOS RESULTADOS ..................................................................................................... 6 
+FONTES DE INFORMAÇÃO E METODOLOGIAS UTILIZADAS NO CÁLCULO DOS GASTOS TRIBUTÁRIOS ................ 7 
+GASTOS TRIBUTÁRIOS NÃO IDENTIFICADOS (NI) .................................................................................................. 8 
+INCLUSÕES, ENCERRAMENTOS E PRORROGAÇÕES DE GASTOS TRIBUTÁRIOS ..................................................... 8 
+ESCLARECIMENTOS ADICIONAIS ............................................................................................................................ 8 
+ESTIMATIVAS E ANÁLISE DOS VALORES ................................................................................................................. 9 
+REFERÊNCIAS BIBLIOGRÁFICAS ............................................................................................................................ 11 
+ANEXO I - GASTOS TRIBUTÁRIOS – IDENTIFICAÇÃO,   INCLUSÕES,   EXCLUSÕES   E   PRORROGAÇÕES ............... 12 
+QUADRO XXVI - GASTOS TRIBUTÁRIOS EM VIGOR (ANO 2026 EM DIANTE) ......................................................................... 13 
+QUADRO XXVII – GASTOS TRIBUTÁRIOS NÃO IDENTIFICADOS (ANO 2026 EM DIANTE) ......................................................... 27 
+QUADRO XXVIII – GASTOS TRIBUTÁRIOS INCLUÍDOS NESTE DEMONSTRATIVO ..................................................................... 28 
+QUADRO XXIX – GASTOS TRIBUTÁRIOS COM ENCERRAMENTO EM 2026 (FIM DA VIGÊNCIA LEGAL)......................................... 29 
+QUADRO XXX – GASTOS TRIBUTÁRIOS PRORROGADOS A PARTIR DE 2024 (VIGENTES EM 2026) ............................................ 31 
+CONTROLE DE VERSÕES ........................................................................................................................................ 33 
+ 
+ 
+ 
+    
+ 
+ 
+DEMONSTRATIVO DOS GASTOS GOVERNAMENTAIS INDIRETOS DE NATUREZA 
+TRIBUTÁRIA (GASTOS TRIBUTÁRIOS) - PLOA 2026 
+ 
+CONSIDERAÇÕES INICIAIS  
+ O objetivo deste demonstrativo é estimar a perda de arrecadação decorrente 
+da concessão de benefícios de natureza tributária (gastos tributários) e, desse modo, dar 
+maior transparência às políticas fiscais e aos tratamentos diferenciados existentes, bem como 
+subsidiar os formuladores de políticas públicas e possibilitar aos cidadãos visualizar a alocação 
+dos recursos públicos e a distribuição da carga tributária. 
+ O Demonstrativo dos Gastos Governamentais Indiretos de Natureza Tributária 
+(DGT) é elaborado em cumprimento: 
+a) ao parágrafo 6º do art. 165 da Constituição Federal, que estabelece a 
+obrigação do Poder Executivo de apresentar demonstrativo regionalizado do 
+efeito, sobre as receitas e despesas, decorrente de isenções, anistias, 
+remissões, subsídios e benefícios de natureza tributária, financeira e creditícia; 
+e, 
+b) o inciso II do art. 5º da Lei Complementar nº 101, de 04 de maio de 2000, 
+que estabelece que o projeto de lei orçamentária anual (LOA) será 
+acompanhado de documento a que se refere o § 6º do art. 165 da Constituição 
+Federal, bem como das medidas de compensação de renúncias de receita e do 
+aumento de despesas obrigatórias de caráter continuado. 
+CONCEITO DE GASTO TRIBUTÁRIO 
+Para a Receita Federal do Brasil, gastos tributários são gastos indiretos do 
+governo realizados por intermédio do sistema tributário, visando a atender objetivos 
+econômicos e sociais e constituem-se em uma exceção ao Sistema Tributário de Referência - 
+4
+ 
+    
+ 
+ 
+STR1, reduzindo a arrecadação potencial e, consequentemente, aumentando a disponibilidade 
+econômica do contribuinte. 
+Cabe lembrar que o conceito de Gasto Tributário utilizado pela Receita Federal 
+teve como referência os critérios adotados por países membros da Organização para a 
+Cooperação e Desenvolvimento Econômico (OCDE), bem como as recomendações e melhores 
+práticas divulgadas pelo Centro Interamericano de Administrações Tributárias (CIAT). Mais 
+informações podem ser encontradas página referente ao conceito de Gasto Tributário2 na 
+área Dados Abertos do site da Receita Federal. 
+INFORMAÇÕES METODOLÓGICAS 
+Do ponto de vista metodológico, para a apuração dos gastos tributários, A 
+Receita Federal realiza uma mensuração individualizada dos itens (cerca de trezentos) que 
+compõem os Demonstrativos dos Gastos Tributários produzidos anualmente. Essa tarefa, 
+além de depender da identificação das medidas que se enquadram no conceito de gasto 
+tributário, requer o emprego de certas premissas, suposições e critérios. Diferentemente da 
+arrecadação, os valores dos tributos que deixam de ser arrecadados, em decorrência dos 
+gastos tributários, não podem ser observados diretamente. Por essas razões, as mensurações 
+apresentadas neste demonstrativo têm natureza de estimativas, projeções ou previsões.  
+Dito isso, a Receita Federal do Brasil utiliza, para mensuração desse tipo de 
+renúncia fiscal, o método de “perda de arrecadação”3, que é o método de cálculo mais 
+utilizado entre os países da OCDE. Mais informações acerca do tema estão disponibilizadas na 
+página referente a Informações Metodológicas4 na área Dados Abertos do site da Receita 
+Federal.  
+ 
+1          Estrutura tributária de referência a qual os desvios são identificados e classificados como Gastos Tributários.  
+2        https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/relatorios/renuncia/gastos-
+tributarios-bases-efetivas 
+3       Método que, resumidamente, simula uma tributação normal sobre o volume das operações desoneradas 
+que efetivamente ocorreram, ou esperadas para o futuro, mantendo os demais fatores constantes. Por definição, 
+não leva em consideração as alterações de comportamento dos contribuintes. 
+4        https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/relatorios/renuncia/gastos-
+tributarios-bases-efetivas 
+ 
+5
+ 
+    
+ 
+ 
+FORMA DE APRESENTAÇÃO DOS RESULTADOS 
+Informações básicas acerca deste Demonstrativo estão disponíveis na área de  
+Dados Abertos (Gastos Tributários – Previsões PLOA5). Já as estimativas detalhadas estão 
+dispostas por quadros em forma de planilha eletrônica, a qual também está publicada no site 
+da RFB.  
+Nos Quadros I a X, constam os valores dos gastos são discriminados por função 
+orçamentária e por tributo, consolidados por região geográfica do país e comparados com os 
+valores do Produto Interno Bruto – PIB e da Receita Administrada pela Receita Federal.  
+Por sua vez, Os Quadros XI a XXV apresentam os valores da renúncia por tributo 
+e por modalidade de gasto. 
+Segue abaixo a lista dos quadros apresentados: 
+1. Gastos Tributários – PLOA 2026 
+1.1. Quadro I - Por Função Orçamentária – Regionalizado - Valores Nominais; 
+1.2. Quadro II - Por Função Orçamentária – Regionalizado - Razões Percentuais; 
+1.3. Quadro III - Por Função Orçamentária E Por Modalidade De Gasto; 
+1.4. Quadro IV - Por Função Orçamentária E Por Gasto Tributário – Regionalizado; 
+1.5. Quadro V – Consolidação Por Função Orçamentária; 
+1.6. Quadro VI – Consolidação Por Tipo De Tributo - Valores Nominais E Percentuais; 
+1.7. Quadro VII - Por Tipo De Tributo E Por Gasto Tributário; 
+1.8. Quadro VII - Regional - Por Tipo De Tributo E Por Gasto Tributário – 
+Regionalizado; 
+1.9. Quadro VIII – Regionalização Por Tipo De Tributo – Valores Nominais; 
+1.10. Quadro IX - Regionalização Por Tipo De Tributo – Razões Percentuais; 
+1.11. Quadro X - Principais Gastos Tributários; 
+1.12. Quadro XI - Imposto Sobre Importação – II; 
+1.13. Quadro XII - Imposto de Renda Pessoa Física – IRPF; 
+ 
+5              https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/relatorios/renuncia/gastos-
+tributarios-ploa 
+6
+ 
+    
+ 
+ 
+1.14. Quadro XIII - Imposto de Renda Pessoa Jurídica – IRPJ; 
+1.15. Quadro XIV - Imposto de Renda Retido Na Fonte – IRRF; 
+1.16. Quadro XV - Imposto Sobre Produtos Industrializados – Operações Internas – 
+IPI-INTERNO; 
+1.17. Quadro XVI - Imposto Sobre Produtos Industrializados – Vinculado à 
+Importação – IPI-VINCULADO; 
+1.18. Quadro XVII - Imposto Sobe Operações Financeiras – IOF; 
+1.19. Quadro XVIII - Imposto Sobre a Propriedade Territorial Rural – ITR; 
+1.20. Quadro XIX - Contribuição Social Para o PIS-PASEP; 
+1.21. Quadro XX - Contribuição Social Sobre o Lucro Líquido – CSLL; 
+1.22. Quadro XXI - Contribuição p/ Financiamento Seguridade Social – COFINS; 
+1.23. Quadro XXII - Contribuição de Intervenção No Domínio Econômico – CIDE; 
+1.24. Quadro XXIII - Adicional ao Frete Para Renovação Da Marinha Mercante – 
+AFRMM; 
+1.25. Quadro XXIV - Contribuição Para o Desenvolvimento da Indústria 
+Cinematográfica Nacional – CONDECINE; 
+1.26. Quadro XXV - Contribuição Para a Previdência Social. 
+FONTES DE INFORMAÇÃO E METODOLOGIAS UTILIZADAS NO CÁLCULO DOS 
+GASTOS TRIBUTÁRIOS 
+ As medições dos gastos tributários são realizadas a partir de dados de fontes 
+internas e externas, provenientes de declarações, escriturações, processos, cadastros, 
+documentos de arrecadação e relatórios estatísticos. Idealmente, buscam-se fontes de 
+informações que possam identificar os montantes efetivos dos fatos geradores desonerados, 
+que seriam a base de cálculo para a apuração dos tributos. 
+ No Quadro XXVI do ANEXO I, apresentam-se os gastos tributários em vigor (ano 
+2026 em diante), segundo a legislação vigente até 20 de agosto de 2025, com os respectivos 
+tributos envolvidos. Lembrando que as fontes de informação utilizadas para o cálculo de cada 
+Gasto Tributário, os motivos para o enquadramento da renúncia nessa classificação, bem 
+7
+ 
+    
+ 
+ 
+como as metodologias aplicadas, encontram-se publicadas na área Dados Abertos6 do site da 
+Receita Federal do Brasil.  
+GASTOS TRIBUTÁRIOS NÃO IDENTIFICADOS (NI) 
+Neste Demonstrativo, existem itens referenciados pela sigla “NI”, a qual 
+significa que determinado gasto tributário não teve seu valor identificado. 
+O motivo pelo qual não foram demonstradas estimativas de renúncia para 
+esses itens foi a carência de informações necessárias para efetuar cálculos com aceitável nível 
+de confiabilidade. Esses gastos tributários encontram-se discriminados no Quadro XXVII 
+(ANEXO I). 
+INCLUSÕES, ENCERRAMENTOS E PRORROGAÇÕES DE GASTOS TRIBUTÁRIOS 
+ De acordo também com a legislação em vigor em 20 de agosto de 2025, listam-
+se, também no ANEXO I, os gastos tributários incluídos neste Demonstrativo (Quadro XXVIII), 
+os que tiveram os cálculos encerrados devido ao fim da vigência legal em 2026 (Quadro XXIX) 
+e, por fim, no Quadro XXX, apresentam-se os que tiveram seu prazo de vigência prorrogado a 
+partir de 2024 e que ainda permanecem vigentes no ano a que se refere este DGT PLOA.  
+ESCLARECIMENTOS ADICIONAIS 
+Nesta seção são apontados os gastos tributários para os quais houve aperfeiçoamento 
+metodológico do cálculo, alterações na legislação de referência que provocaram ampliação 
+ou redução dos benefícios e outros fatores que causaram impacto relevante no montante da 
+renúncia estimada. 
+a) PERSE  - Programa Emergencial De Retomada do Setor de Eventos (art. 4º da 
+Lei nº 14.148/21; MP nº 1202/2023) 
+ 
+ 
+6                https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/relatorios/renuncia/gastos-
+tributarios-bases-efetivas 
+8
+ 
+    
+ 
+ 
+ Para esse gasto tributário, de acordo com o disposto no Ato Declaratório 
+Executivo RFB nº 2/2025, houve a extinção do benefício para fatos geradores ocorridos 
+a partir de abril de 2025. Com efeito, não houve projeção de estimativas para o ano de 
+2026. 
+b) TRANSPORTE AÉREO DE PASSAGEIROS ( art. 2º, Lei nº 14.592/23) 
+ No que se refere a esse gasto tributário, passou-se a utilizar as informações 
+dispostas em código(s) específico(s) das Escriturações Fiscais Digitais da Contribuição 
+para o PIS/Pasep e da Cofins (EFD-Contribuições). Com efeito, elevou-se a a precisão 
+das estimativas, a quais, anteriormente, eram provenientes dos códigos de 
+arrecadação atrelados a esse tipo de receita tributária. 
+ESTIMATIVAS E ANÁLISE DOS VALORES 
+ Na planilha eletrônica referente a este Demonstrativo, a qual encontra-se 
+publicada na área referente a Gastos tributários – PLOA7 do site da Receita Federal, 
+apresentam-se as projeções dos gastos tributários estimados para o ano calendário de 2026. 
+Estas estão estruturadas em 25 (vinte e cinco) quadros. 
+A nomenclatura utilizada nesse tipo de relatório é a seguinte: 
+ Estimativa: representa o montante estimado do gasto tributário, com base 
+em metodologia pré-definida, aplicada sobre uma base de dados conhecidos. 
+ Projeção: refere-se à projeção para anos subsequentes das estimativas, 
+pela aplicação de índices que refletem os parâmetros macroeconômicos oficiais.  
+ Para o DGT PLOA, utilizam-se projeções a partir de números efetivos referentes 
+a períodos anteriores. 
+ANÁLISE DOS VALORES ESTIMADOS 
+  O gasto tributário para o ano de 2026 foi estimado em R$ 612,84 bilhões 
+(crescimento de 12,56% em relação do DGT PLOA referente ao ano anterior),  representando 
+ 
+7              https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/relatorios/renuncia/gastos-
+tributarios-ploa 
+9
+ 
+    
+ 
+ 
+4,43% do Produto Interno Bruto e 20,20% das receitas administradas pela RFB. Essas 
+informações estão dispostas no Quadro VI da planilha eletrônica referente a este 
+Demonstrativo. 
+Os efeitos regionais da renúncia tributária podem ser observados no Quadro II 
+deste mesmo arquivo. Verifica-se que as regiões Sudeste e Sul obtiveram as maiores 
+participações nos benefícios, com 49,00% e 16,13% respectivamente. 
+O Quadro II também permite comparar a renúncia tributária estimada por 
+região com a respectiva arrecadação prevista para 2026. Verifica-se que a região Sudeste 
+possui a menor renúncia tributária em relação a sua arrecadação (15,53%). Por sua vez, as 
+regiões Norte e Nordeste possuem os maiores percentuais de participação da renúncia em 
+relação as suas respectivas arrecadações, com 81,83% e 34,75% respectivamente.  
+Sob a ótica orçamentária, no exercício de 2026, a previsão dos gastos 
+tributários apontou uma concentração de 81,35% do valor dos gastos em 6 funções 
+orçamentárias de governo, são elas: Comércio e Serviço (22,54%), Saúde (17,41%), Agricultura 
+(14,95%), Trabalho (11,94%), Indústria (8,31%) e Assistência Social (6,21%), conforme o 
+Quadro V da planilha. 
+Por sua vez, as informações disponíveis nos Quadros VI e VII demonstram que 
+a Contribuição para o Financiamento da Seguridade Social – COFINS e o Imposto sobre a Renda 
+da Pessoa Jurídica – IRPJ são os tributos que concentram a maior parte dos gastos tributários. 
+Portanto, os gastos relativos à COFINS representam 22,62% do total e 1,00% do PIB e são 
+seguidos pelos relacionados ao IRPJ (19,23% do total e 0,85% do PIB) e ao Imposto sobre a 
+Renda da Pessoa Física – IRPF (17,22% do total e 0,76% do PIB).  
+Por fim, o Quadro X demonstra que o Simples Nacional é o gasto tributário de 
+maior participação no valor total (21,91%), seguido dos benefícios atrelados à agricultura e 
+agroindústria (12,93%), dos Rendimentos isentos e não tributáveis referentes ao IRPF 
+(10,31%), das Entidades sem fins lucrativos – imunes / isentas (9,13%) e, por fim, das 
+Deduções de rendimentos tributáveis também sobre IRPF (6,80%). 
+ 
+10
+ 
+    
+ 
+ 
+REFERÊNCIAS BIBLIOGRÁFICAS 
+ 
+BARRA, P. Y JORRATT M. [2002] “Medición del Gasto Tributario em Chile”. Documento 
+presentado en el Seminario Regional de Política Fiscal, CEPAL. 
+ 
+BID. Los presupuestos de gastos tributários. Conceptos y desafios de implementación. 2009. 
+ 
+CIAT. Manual de boas práticas na medição de gastos tributários – Uma experiência 
+Iberoamericana. Panamá, 2011. 
+ 
+CIAT. La medición y control de la erosión de las bases tributarias: Los gastos tributários y la 
+evasión tributaria. 40ª Asamblea General. Chile. 
+ 
+PARTHASARATHI, Shome. Tax Policy Handbook. Washington, D.C, International Monetary 
+Fund, 1995. 
+ 
+SEGURA, José V. Sevilla. Política Y Técnica Tributárias. Madrid: Instituto de Estudios Fiscales, 
+2004. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+11
+ 
+    
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ANEXO I - GASTOS TRIBUTÁRIOS – IDENTIFICAÇÃO,   INCLUSÕES,   EXCLUSÕES   
+E   PRORROGAÇÕES 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+12
+NOME TRIBUTO LEGISLAÇÃO PRAZO DE 
+VIGÊNCIA
+Desoneração da Folha dos Municípios CPS Lei nº 8.212/91, art. 22, III,  § 17.31/12/2026
+PERSE - Programa Emergencial de Retomada 
+do Setor de Eventos COFINS Lei nº 14.148, de 03 de maio de 2021.04/05/2026
+PERSE - Programa Emergencial de Retomada 
+do Setor de Eventos PIS-PASEP Lei nº 14.148, de 03 de maio de 2021.04/05/2026
+PERSE - Programa Emergencial de Retomada 
+do Setor de Eventos CSLL Lei nº 14.148, de 03 de maio de 2021.04/05/2026
+PERSE - Programa Emergencial de Retomada 
+do Setor de Eventos IRPJ Lei nº 14.148, de 03 de maio de 2021.04/05/2026
+PADIS - Programa de Apoio ao 
+Desenvolvimento Tecnológico  da Indústria de 
+Semicondutores 
+COFINS
+Lei nº 11.484/07, arts. 1º a 11; Lei n° 
+13.169/15, Lei 14.302/22 e Decreto 
+10.615/21
+31/12/2026
+PADIS - Programa de Apoio ao 
+Desenvolvimento Tecnológico  da Indústria de 
+Semicondutores 
+PIS-PASEP
+Lei nº 11.484/07, arts. 1º a 11; Lei n° 
+13.169/15, Lei 14.302/22 e Decreto 
+10.615/21
+31/12/2026
+Leasing de Aeronaves IRRF
+Lei nº 11.371/06, art. 16; Lei nº 9.481/97, 
+art. 1º, V;  Lei nº 13.043/14, art. 89, Lei 
+14.002/20, MP 1094/21 e Lei 14.355/22.
+31/12/2026
+PADIS - Programa de Apoio ao 
+Desenvolvimento Tecnológico  da Indústria de 
+Semicondutores 
+II
+Lei 11.484/07, arts. 1º a 11, em 
+específico: art. 3º, § 5º; Lei nº 13.159; Lei 
+n° 13.169/15, art. 12, Lei 14.302/22 e 
+Decreto 10.615/21
+31/12/2026
+Automóveis - Pessoas Portadoras de 
+Deficiência IPI-Interno
+Lei nº 8.989/95; Lei nº 12.767/12, art. 29; 
+Lei nº 13.146/2015, art. 126, Lei 
+14.183/21 e Lei 14.287/21
+31/12/2026
+PADIS - Programa de Apoio ao 
+Desenvolvimento Tecnológico  da Indústria de 
+Semicondutores 
+IPI-Interno
+Lei nº 11.484/07, arts. 1º a 11; Lei n° 
+13.169/15, Lei 14.302/22 e Decreto 
+10.615/21
+31/12/2026
+PADIS - Programa de Apoio ao 
+Desenvolvimento Tecnológico  da Indústria de 
+Semicondutores 
+IPI-Vinculado
+Lei nº 11.484/07, arts. 1º a 11, 64 e 65, 
+em específico: art. 3º, III, art. 4º , II, art. 
+5º ; Lei nº 13.159/15; Lei n° 13.169/15, 
+art. 12, Lei 14.302/22 e Decreto 
+10.615/21
+31/12/2026
+Pronas/PCD - Programa Nacional de Apoio à 
+Atenção da Saúde da Pessoa com DeficiênciaIRPJ art. 4º da Lei nº 12.715/12 31/12/2026
+Pronon - Programa Nacional de Apoio à 
+Atenção Oncológica IRPJ art. 4º da Lei nº 12.715/12 31/12/2026
+TAXI - Transporte Autonômo de Passageiros IPI-Interno
+Lei nº 8.989/95; Lei nº 12.767/12, art. 29; 
+Lei nº 13.146/2015, art. 126, Lei 
+14.183/21 e Lei 14.287/21
+31/12/2026
+Transporte Aéreo de Passageiros  COFINS Lei nº 14.592/23, artigo 2º. 31/12/2026
+Transporte Aéreo de Passageiros  PIS-PASEP Lei nº 14.592/23, artigo 2º. 31/12/2026
+QUADRO XXVI
+Gastos tributários vigentes no ano de 2026 em diante
+13
+Transporte Rodoviário Regular de Passageiros 
+Intermunicipal, exceto metropolitano, e 
+Interstadual
+ COFINS Lei nº 14.592/23, artigo 2º-A.31/12/2026
+Transporte Rodoviário Regular de Passageiros 
+Intermunicipal, exceto metropolitano, e 
+Interstadual
+ PIS-PASEP Lei nº 14.592/23, artigo 2º-A.31/12/2026
+Desoneração da Folha de Salários CPS Lei nº 12.546/11, arts. 7º a 11.31/12/2027
+Incentivo ao Desporto IRPF Lei nº 11.438/06, art. 1º; Lei nº 
+14.439/22. 31/12/2027
+Incentivo ao Desporto IRPJ Lei nº 11.438/06; Lei n° 13.155/15, art. 
+43; Lei nº 14.439/22. 31/12/2027
+Petroquímica COFINS Lei nº 11.196/05, arts. 56, 57 e 57-A; Lei 
+nº 10.865/04, art. 8º, §15. 31/12/2027
+Petroquímica PIS-PASEP Lei nº 11.196/05, arts. 56, 57 e 57-A; Lei 
+nº 10.865/04, art. 8º, §15. 31/12/2027
+REPORTO - Regime Tributário para Incentivo à 
+Modernização e à Ampliação da Estrutura 
+Portuária
+II
+Lei nº 11.033/04, arts. 13 a 16, em 
+específico: art. 14; Decreto nº 6.582/08; 
+Lei nº 11.774/08, art. 5º; Lei nº 
+12.715/12, art. 39; Lei nº 12.688/12, art. 
+30; Lei n° 13.169, art. 7°, Lei 14.301/22; 
+Lei nº 14.787/23.
+31/12/2028
+REPORTO - Regime Tributário para Incentivo à 
+Modernização e à Ampliação da Estrutura 
+Portuária
+IPI-Interno
+Lei nº 11.033/04, arts. 13 a 16, em 
+específico: art. 14; Decreto nº 6.582/08; 
+Lei nº 11.774/08, art. 5º; Lei nº 
+12.715/12, art. 39; Lei nº 12.688/12, art. 
+30; Lei n° 13.169, art. 7°, Lei 14.301/22; 
+Lei nº 14.787/23.
+31/12/2028
+REPORTO - Regime Tributário para Incentivo à 
+Modernização e à Ampliação da Estrutura 
+Portuária
+IPI-Vinculado
+Lei nº 11.033/04, arts. 13 a 16, em 
+específico: art. 14; Decreto nº 6.582/08; 
+Lei nº 11.774/08, art. 5º; Lei nº 
+12.715/12, art. 39; Lei nº 12.688/12, art. 
+30; Lei n° 13.169, art. 7°, Lei 14.301/22; 
+Lei nº 14.787/23.
+31/12/2028
+REPORTO - Regime Tributário para Incentivo à 
+Modernização e à Ampliação da Estrutura 
+Portuária
+COFINS
+Lei nº 11.033/04, arts. 13 a 16, em 
+específico: art. 14; Decreto nº 6.582/08; 
+Lei nº 11.774/08, art. 5º; Lei nº 
+12.715/12, art. 39; Lei nº 12.688/12, art. 
+30; Lei n° 13.169, art. 7°, Lei 14.301/22; 
+Lei nº 14.787/23.
+31/12/2028
+REPORTO - Regime Tributário para Incentivo à 
+Modernização e à Ampliação da Estrutura 
+Portuária
+PIS-PASEP
+Lei nº 11.033/04, arts. 13 a 16, em 
+específico: art. 14; Decreto nº 6.582/08; 
+Lei nº 11.774/08, art. 5º; Lei nº 
+12.715/12, art. 39; Lei nº 12.688/12, art. 
+30; Lei n° 13.169, art. 7°, Lei 14.301/22; 
+Lei nº 14.787/23.
+31/12/2028
+SUDAM - Redução por Reinvestimento IRPJ
+Lei nº 8.167/91, art. 19; Lei nº 8.191/91, 
+art. 4º; Lei nº 9.532/97, art. 2º; MP nº 
+2.199-14/01, art. 3º; Lei nº 12.715/12, 
+art. 69; Lei nº 13.799/19, art. 1º; Decreto 
+nº 9.682/19; Lei 14.753/23.
+31/12/2028
+SUDENE - Redução por Reinvestimento IRPJ
+Lei nº 8.167/91, art. 19; Lei nº 8.191/91, 
+art. 4º; Lei nº 9.532/97, art. 2º; MP nº 
+2.199-14/01, art. 3º; Lei nº 12.715/12, 
+art. 69; Lei nº 13.799/19, art. 1º; Decreto 
+nº 9.682/19; Lei 14.753/23.
+31/12/2028
+14
+Programa MOVER CSLL Lei nº 14.902/24 arts. 15 a 21.27/06/2029
+Atividade Audiovisual IRPF Arts. 1º e 1º-A, da Lei nº 8.685/93; art. 
+85, do Decreto nº 9.580/18.31/12/2029
+Atividade Audiovisual - Dedução Despesa 
+Operacional IRPJ art. 1º, § 4º da Lei nº 8.685/9331/12/2029
+Atividade Audiovisual - Dedução IR IRPJ
+arts. 1º, 1º-A e 3º-A da Lei 8.685/93; art. 
+1º da Lei 9.323/96; arts. 5º e 6º da Lei 
+9.532/97; art. 39, § 6º e arts. 44 e 45 da 
+MP 2.228/01
+31/12/2029
+Informática e Automação CSLL
+Lei nº 8.248/91, art. 4º; Lei nº 10.176/01, 
+art. 11; Lei nº 11.077/04, Lei nº 
+13.023/14; Lei n° 13.969/19; e Decreto nº 
+5.906/06.
+31/12/2029
+Informática e Automação IRPJ
+Lei nº 8.248/91, art. 4º; Lei nº 10.176/01, 
+art. 11; Lei nº 11.077/04, Lei nº 
+13.023/14; Lei n° 13.969/19; e Decreto nº 
+5.906/06.
+31/12/2029
+RECINE - Regime Especial de Tributação para 
+Desenvolvimento da Atividade de Exibição 
+Cinematográfica
+COFINS
+Art. 14, I, II, da Lei nº 12.599/12; art. 9º, 
+do Decreto nº 7.729/12; Lei 13.594, art. 
+1º.
+31/12/2029
+RECINE - Regime Especial de Tributação para 
+Desenvolvimento da Atividade de Exibição 
+Cinematográfica
+II Art. 14, V, da Lei nº 12.599/12; art. 9º, do 
+Decreto nº 7.729/12; Lei 13.594, art. 1º.31/12/2029
+RECINE - Regime Especial de Tributação para 
+Desenvolvimento da Atividade de Exibição 
+Cinematográfica
+IPI-Interno
+Art. 14, III, da Lei nº 12.599/12; art. 9º, 
+do Decreto nº 7.729/12; Lei 13.594, art. 
+1º.
+31/12/2029
+RECINE - Regime Especial de Tributação para 
+Desenvolvimento da Atividade de Exibição 
+Cinematográfica
+IPI-Vinculado
+Art. 14, IV, da Lei nº 12.599/12; art. 9º, 
+do Decreto nº 7.729/12, Lei 13.594, art. 
+1º.
+31/12/2029
+RECINE - Regime Especial de Tributação para 
+Desenvolvimento da Atividade de Exibição 
+Cinematográfica
+PIS-PASEP
+Art. 14, I, II, da Lei nº 12.599/12; art. 9º, 
+do Decreto nº 7.729/12; Lei 13.594, art. 
+1º.
+31/12/2029
+RETID - Regime Especial Tributário para a 
+Indústria de Defesa COFINS Lei nº 12.598/12, arts. 7º a 11; Decreto 
+nº 8.122/13. 22/03/2032
+RETID - Regime Especial Tributário para a 
+Indústria de Defesa IPI-InternoLei nº 12.598/12, arts. 7º a 11; Decreto 
+nº  8.122/2013. 22/03/2032
+RETID - Regime Especial Tributário para a 
+Indústria de Defesa IPI-Vinculado
+Lei nº 12.598/12, arts. 7º a 11, em 
+específico: art. 9º, IV; Decreto nº 
+8.122/2013.
+22/03/2032
+RETID - Regime Especial Tributário para a 
+Indústria de Defesa PIS-PASEPLei nº 12.598/12, arts. 7º a 11; Decreto 
+nº 8.122/2013. 22/03/2032
+SUDAM - Isenção Projeto Tecnologia Digital IRPJ
+Lei nº 12.546/12, art. 11; MP nº 2.199-
+14/01, art. 1º, § 1-A; Lei nº 12.715/12, 
+art. 69, Lei nº 12.995/14, art. 10.
+31/12/2033
+SUDAM - Redução 75% Projeto Setor 
+Prioritário IRPJ
+MP nº 2.199-14/01, art. 1º; Lei nº 
+12.715/12, art. 69, Lei nº 12.995/14, art. 
+10; Lei nº 13.799/19, art. 1º; Decreto nº 
+9.682/19.
+31/12/2033
+SUDENE - Isenção Projeto Tecnologia Digital IRPJ
+Lei nº 12.546/12, art. 11; MP nº 2.199-
+14/01, art. 1º, § 1-A; Lei nº 12.715/12, 
+art. 69; Lei nº 12.995/14, art. 10.
+31/12/2033
+15
+SUDENE - Redução 75% Projeto Setor 
+Prioritário IRPJ
+MP nº 2.199-14/01, art. 1º; Lei nº 
+12.715/12, art. 69; Lei nº 12.995/14, art. 
+10; Lei nº 13.799/19, art. 1º; Decreto nº 
+9.682/19.
+31/12/2033
+Áreas de Livre Comércio II
+Lei nº 7.965/89, art. 3º; Lei nº 8.210/91, 
+art. 4º; Lei nº 8.256/91, arts. 4º e 14; Lei 
+nº 8.387/91, art.11, § 2º; Lei nº 9065/95, 
+art. 19; Lei nº 13.023/14, art. 3º.
+31/12/2050
+Áreas de Livre Comércio IPI-Interno
+Lei nº 7.965/89, arts. 4º, 6º e 13; Lei nº 
+8.210/91, arts. 6º e 13; Lei nº  8.256/91, 
+arts. 7º e 14; Lei nº 8.387/91, art. 11, § 
+2º; Lei nº 8.857/94, art. 7º; Lei nº 
+8.981/95, arts. 108, 109 e 110; Lei nº 
+13.023/14, art. 3º; Lei nº 11.898/09; 
+Decreto nº 8.597/15.
+31/12/2050
+Áreas de Livre Comércio IPI-Vinculado
+Lei nº 7.965/89, art. 3º; Lei nº 8.210/91, 
+art. 4º; Lei nº 8.256/91, arts. 4º e 14; Lei 
+nº 8.387/91, art. 11, § 2º; Lei nº 
+9.065/95, art. 19; Lei nº 13.023/14, art. 
+3º.
+31/12/2050
+Zona Franca de Manaus  - Importação de 
+Matéria-Prima COFINS Lei nº 10.865/04, art. 14-A. 05/10/2073
+Zona Franca de Manaus - Importação de Bens 
+de Capital COFINS
+Lei nº 11.196/05, art. 50; Lei nº 
+10.865/04, art. 14, § 1º; Decreto nº 
+5.691/06.
+05/10/2073
+Zona Franca de Manaus - Matéria-Prima 
+Produzida na ZFM COFINS Lei nº 10.637/02, art. 5º-A; Decreto nº 
+5.310/04. 05/10/2073
+Zona Franca de Manaus e Área de Livre 
+Comércio - Alíquotas Diferenciadas COFINS
+Lei nº 10.996/04, arts. 3º e 4º; Lei nº 
+10.637/02, art. 2º, § 4º e art. 3º § 12; Lei 
+nº 10.833/03, art. 2º, § 5º e art. 3º § 17; 
+Decreto nº 5.310/04; Lei nº 13.097/15, 
+art. 147.
+05/10/2073
+Zona Franca de Manaus e Área de Livre 
+Comércio - Aquisição de Mercadorias COFINS Lei nº 10.996/04, art. 2º; Decreto nº 
+5.310/04; Lei nº 11.196/05, art. 65.05/10/2073
+Zona Franca de Manaus  - Importação de 
+Matéria-Prima PIS-PASEP Lei nº 10.865/04, art. 14-A. 05/10/2073
+Zona Franca de Manaus - Importação de Bens 
+de Capital PIS-PASEP
+Lei nº 11.196/05, art. 50; Lei nº 
+10.865/04, art. 14, § 1º; Decreto nº 
+5.691/06.
+05/10/2073
+Zona Franca de Manaus - Matéria-Prima 
+Produzida na ZFM PIS-PASEP Lei nº 10.637/02, art. 5º-A; Decreto nº 
+5.310/04. 05/10/2073
+Zona Franca de Manaus e Área de Livre 
+Comércio - Alíquotas Diferenciadas PIS-PASEP
+Lei nº 10.637/02, art. 2º, § 4º e art. 3º § 
+12; Lei nº 10.833/03, art. 2º, § 5º e art. 3º 
+§ 17; Decreto nº 5.310/04; Lei nº 
+10.996/04, arts. 3º e 4º; Lei nº 13.097/15, 
+art. 147.
+05/10/2073
+Zona Franca de Manaus e Área de Livre 
+Comércio - Aquisição de MercadoriasPIS-PASEP Lei nº 10.996/04, art. 2º; Decreto nº 
+5.310/04; Lei nº 11.196/05, art. 65.05/10/2073
+16
+Zona Franca de Manaus e Amazônia Ocidental II
+Decreto-Lei nº 288/67, art. 3º, § 1º, art. 
+7º, II; Decreto-Lei nº 356/68, art. 1º; 
+Decreto-Lei nº 2.434/88, art. 1º, II, c; Lei 
+nº 8.032/90, art. 2º, II, d, art. 4º; Lei nº 
+8.387/91, art. 1º; Constituição Federal do 
+Brasil, ADCT, arts. 40, 92 e 92-A; Portaria 
+Interministerial MIR/MCT/CICT/MC nº 
+272/93, art. 1º;  Portaria Interministerial 
+MDIC/MCTI nº 309/15, art. 1º;  Portaria 
+Interministerial MDIC/MCTIC nº 50/18, 
+art. 1º.
+05/10/2073
+Zona Franca de Manaus e Amazônia Ocidental IPI-Interno
+Decreto-Lei nº 288/67, arts. 4º, 9º, § 1º; 
+Lei nº 8.387/91, art. 1º; Constituição 
+Federal do Brasil, ADCT, arts. 40, 92 e 92-
+A; Decreto-Lei nº 356/68, art. 1º; Decreto 
+nº 1.435/75, art. 6º.
+05/10/2073
+Zona Franca de Manaus e Amazônia Ocidental IPI-Vinculado
+Decreto-Lei nº 288/67, art. 3º, § 1º, art. 
+7º, II; Decreto-Lei nº 356/68, art. 1º; 
+Decreto-Lei nº 2.434/88, art. 1º, II, c; Lei 
+nº 8.032/90, art. 2º, II, d, art. 4º; Lei nº 
+8.387/91, art. 1º; Constituição Federal do 
+Brasil, ADCT, arts. 40, 92 e 92-A; Portaria 
+Interministerial MIR/MCT/CICT/MC nº 
+272/93, art. 1º;  Portaria Interministerial 
+MDIC/MCTI nº 309/15, art. 1º;  Portaria 
+Interministerial MDIC/MCTIC nº 50/18, 
+art. 1º.
+05/10/2073
+Amazônia Ocidental AFRMM Lei nº 10.893/04, art. 14, V, g.indeterminado
+Doações de Bens para Entidades Filantrópicas AFRMMLei nº 10.893/04, art. 14, IV, a.indeterminado
+Livros, Jornais e Periódicos AFRMM Lei nº 10.893/04, art. 14, II.indeterminado
+Mercadorias Norte e Nordeste AFRMM
+Lei nº 9.432/97, art. 17; Lei nº 10.893/04, 
+art. 4º, Parágrafo único, inciso I; Lei nº 
+11.033/04, art. 18; Lei nº 11.482/07, art. 
+11; Lei nº 12.507/11, art. 3º; Lei nº 
+13.458/17; Decreto nº 8.257/14, art. 4º, 
+incisos II, III e IV e Parágrafo único.
+indeterminado
+Pesquisas Científicas AFRMM Lei nº 10.893/04, art. 14, IV, e; Lei nº 
+12.599/12, art. 1º. indeterminado
+Evento Esportivo, Cultural e Científico CIDE Lei nº 11.488/07, art. 38. indeterminado
+PADIS - Programa de Apoio ao 
+Desenvolvimento Tecnológico  da Indústria de 
+Semicondutores 
+CIDE Lei nº 11.484/07, art. 3º, § 3º , arts. 5º e 
+65; Lei n° 13.169/15, art. 12.indeterminado
+Academia Brasileira de Letras - ABL CPS Lei nº 13.353/16, art 1º; Lei 
+Complementar nº 70/91, art 6º. indeterminado
+Associação Brasileira de Imprensa - ABI CPS Lei nº 13.353/16, art. 1º; Lei 
+Complementar nº 70/91, art. 6º. indeterminado
+Dona de Casa CPS Lei nº 12.470/11; Lei nº 8.212/91, art. 21, 
+§ 2º, II, b. indeterminado
+Entidades Filantrópicas CPS
+Constituição Federal do Brasil 1988, art. 
+195, § 7º; Lei nº 12.101/09; Decreto nº 
+8.242/14.
+indeterminado
+17
+Exportação da Produção Rural CPS Constituição Federal do Brasil 1988, art. 
+149, § 2º, I; Lei nº 8.870/94, art. 25.indeterminado
+Funrural CPS Lei n° 13.606/18. indeterminado
+Instituto Histórico e Geográfico Brasileiro - 
+IHGB CPS Lei nº 13.353/16, art. 1º; Lei 
+Complementar nº 70/91, art. 6º.indeterminado
+MEI - Microempreendedor Individual CPS
+Lei complementar nº 123/06, art. 18-A, § 
+3º, V, a e § 11; Lei nº 12.470/11; Lei nº 
+8.212/91, art. 21, § 2º, II, a.
+indeterminado
+Simples Nacional - Regime Especial Unificado 
+de Arrecadação de Tributos e Contribuições 
+devidos pelas Microempresas e Empresas de 
+Pequeno Porte
+CPS
+Lei Complementar nº 123/06; Lei 
+Complementar nº 127/07; Lei 
+Complementar nº 139/11; Lei 
+Complementar nº 147/14.
+indeterminado
+TEF - Tributação Específica do Futebol CPS Lei n° 14.193/2021 , atrs. 31 e 32.indeterminado
+Programação CONDECINE MP nº 2.228-1/01, art. 39, VII, X; Lei nº 
+10.454/02. indeterminado
+Academia Brasileira de Letras - ABL COFINS Lei Complementar nº 70/91, art 6º. indeterminado
+Aerogeradores COFINS
+Lei nº 10.865/04, art. 8º, § 12, XL e art. 
+28, XXXVII; Lei nº 13.097/15, art. 1º;  Lei 
+nº 13.169/15, art. 15.
+indeterminado
+Agricultura e Agroindústria - crédito presumido COFINSLei n° 10.925/2004, art. 8°.indeterminado
+Agricultura e Agroindústria - Defensivos 
+agropecuários COFINS Lei nº 10.925/04, art. 1º, II.indeterminado
+Agricultura e Agroindústria - Desoneração 
+Cesta Básica COFINS
+Lei nº 10.925/04, arts. 1º, 8º, 9º; Decreto 
+nº 5.630/05; Lei nº 10.865/04, art. 28 e 
+art. 8º § 12; Lei nº 11.727/08, art. 25; Lei 
+nº 12.839/13.
+indeterminado
+Água Mineral COFINS Lei nº 12.715/12, art. 76. indeterminado
+Associação Brasileira de Imprensa - ABI COFINS Lei Complementar nº 70/91, art 6º. indeterminado
+Biodiesel COFINS
+Lei 11.116/05, arts. 1º a 13; Decreto 
+5.297/04, art. 4º; Decreto nº 6.458/08; 
+Decreto nº 7.768/12. 
+indeterminado
+Cadeira de Rodas e Aparelhos Assistivos COFINS Lei nº 10.865/04, arts. 8º e 28.indeterminado
+Embarcações e Aeronaves COFINS
+MP nº 2.158-35/01, art. 14, VI e § 1º;  Lei 
+10.865/04, art. 8º, § 12, I, VI e VII, art. 28, 
+IV e X; Lei nº 10.925/04, art. 6º; Lei nº 
+11.727/08, art. 26;  Lei nº 13.137/15, art. 
+1º.
+indeterminado
+Entidades sem Fins Lucrativos - Assistência 
+Social e Saúde COFINS
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Associação Civil COFINS
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Científica COFINS
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+18
+Entidades sem Fins Lucrativos - Cultural COFINS
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Educação COFINS
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Filantrópica COFINS
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Recreativa COFINS
+Constituição Federal do brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Equipamentos para uso médico, hospitalar, 
+clínico ou laboratorial COFINS Lei nº 13.043/14, art. 70. indeterminado
+Evento Esportivo, Cultural e Científico COFINS Lei nº 11.488/07, art. 38. indeterminado
+Gás Natural Liquefeito COFINS Lei nº 10.865/04, art. 8º,  § 12, XVI; Lei nº 
+11.727/08. indeterminado
+Indústria Cinematográfica e Radiodifusão COFINSLei nº 10.865/04, art. 8º, §12, V, XXIII  e 
+art. 28, XXI; Lei nº 12.599/12.indeterminado
+Instituto Histórico e Geográfico Brasileiro - 
+IHGB COFINS Lei Complementar nº 70/91, art. 6º.indeterminado
+Livros COFINS Lei nº 10.865/04, arts. 8º, §12, XII e 28, 
+VI; Lei nº 11.033/04, art. 6º.indeterminado
+Máquinas e Equipamentos - CNPq COFINS Lei nº 8.010/90; Lei nº 10.865/04, art. 9º, 
+II, h. indeterminado
+Medicamentos COFINS Lei nº 10.147/00. indeterminado
+Minha Casa, Minha Vida COFINS
+Lei nº 10.931/04, art. 4º, § 6º; Lei nº 
+12.024/09, art. 2º; Lei nº 12.844/13, art. 
+16; Lei nº 13.097/15, arts. 4º e 6º.
+indeterminado
+Produtos Químicos e Farmacêuticos COFINS
+Lei nº 10.637/02, art. 2º, § 3º; Lei nº 
+10.833/03, art. 2º, § 3º; Lei nº 10.865/04, 
+art. 8º, § 11; Decreto nº 6.426/08.
+indeterminado
+PROUNI - Programa Universidade para Todos COFINSLei nº 11.096/05, art. 8º. indeterminado
+Rede Arrecadadora COFINS Lei nº 12.844/13, art. 36. indeterminado
+REIDI - Regime Especial de Incentivos para o 
+Desenvolvimento de Infra-Estrutura COFINS Lei nº 11.488/07, arts. 1º a 5º.indeterminado
+Simples Nacional - Regime Especial Unificado 
+de Arrecadação de Tributos e Contribuições 
+devidos pelas Microempresas e Empresas de 
+Pequeno Porte
+COFINS
+Lei Complementar nº 123/06; Lei 
+Complementar nº 127/07; Lei 
+Complementar nº 139/11; Lei 
+Complementar nº 147/14.
+indeterminado
+Termoeletricidade COFINS Lei nº 10.312/01, arts. 1º e 2º.indeterminado
+TEF - Tributação Específica do Futebol COFINS Lei n° 14.193/2021 , atrs. 31 e 32.indeterminado
+Transporte Coletivo COFINS Lei nº 12.860/13. indeterminado
+Transporte Escolar COFINS Lei nº 10.865/04, art. 28, VIII e IX.indeterminado
+Trem de Alta Velocidade COFINS Lei nº 10.865/04, art. 28, XX.indeterminado
+19
+Academia Brasileira de Letras - ABL PIS-PASEP Lei nº 13.353/16, art. 4º; MP nº 2158-
+35/2001, art. 13-A. indeterminado
+Associação Brasileira de Imprensa - ABI PIS-PASEPLei nº 13.353/16, art. 4º; MP nº 2158-
+35/2001, art. 13-A. indeterminado
+Aerogeradores PIS-PASEP Lei nº 10.865/04, art. 8º, § 12, XL e art. 
+28, XXXVII; Lei nº 13.097/15, art. 1º;  Lei indeterminado
+Agricultura e Agroindústria - crédito presumido PIS-PASEPLei n° 10.925/04, art. 8°. indeterminadoAgricultura e Agroindústria - Defensivos 
+agropecuários PIS-PASEP Lei nº 10.925/04, art. 1º, inciso II.indeterminadoAgricultura e Agroindústria - Desoneração 
+Cesta Básica PIS-PASEPLei nº 10.925/04, arts. 1º, 8º, 9º; Decreto 
+nº 5.630/05; Lei nº 10.865/04, art. 28 e indeterminado
+Água Mineral PIS-PASEP Lei nº 12.715/12, art. 76. indeterminado
+Associação Brasileira de Imprensa - ABI PIS-PASEPLei nº 13.353/16, art. 4º; MP nº 2158-
+35/01, art. 13-A. indeterminado
+Biodiesel PIS-PASEP Lei nº 11.116/05, arts. 1º a 13; Decreto 
+nº 5.297/04, art. 4º. indeterminado
+Cadeira de Rodas e Aparelhos Assistivos PIS-PASEPLei nº 10.865/04, arts. 8º e 28.indeterminado
+Embarcações e Aeronaves PIS-PASEP MP 2.158-35/01, art. 14, VI e § 1º; Lei 
+10.865/04, art. 8º, § 12, I, VI e VII, art. 28, indeterminado
+Entidades Filantrópicas PIS-PASEP Constituição Federal do Brasil 1988, art. 
+195, § 7º; Lei nº 12.101/09; Decreto nº indeterminado
+Equipamentos para uso médico, hospitalar, 
+clínico ou laboratorial PIS-PASEP Lei nº 13.043/14, art. 70. indeterminado
+Evento Esportivo, Cultural e Científico PIS-PASEP Lei nº 11.488/07, art. 38. indeterminado
+Gás Natural Liquefeito PIS-PASEP Lei nº 10.865/04, art. 8º,  § 12, XVI.indeterminado
+Indústria Cinematográfica e Radiodifusão PIS-PASEPLei nº 10.865/04, art. 8º, §12, V, XXIII  e 
+art. 28, XXI. indeterminado
+Instituto Histórico e Geográfico Brasileiro - 
+IHGB PIS-PASEP Lei nº 13.353/16, art. 4º; MP nº 2158-
+35/01, art. 13-A. indeterminado
+Livros PIS-PASEP Lei nº 11.033/04, art. 6º. indeterminado
+Máquinas e Equipamentos - CNPq PIS-PASEP Lei nº 8.010/90; Lei nº 10.865/04, art. 9º, 
+II, h. indeterminado
+Medicamentos PIS-PASEP Lei nº 10.147/00. indeterminado
+Minha Casa, Minha Vida PIS-PASEP
+Lei nº 10.931/04, art. 4º, § 6º; Lei nº 
+12.024/09, art. 2º, Lei nº 13.097/15, arts. 
+4º e 6º.
+indeterminado
+Produtos Químicos e Farmacêuticos PIS-PASEP
+Lei nº 10.637/02, art. 2º, § 3º; Lei nº 
+10.833/03, art. 2º, § 3º; Lei nº 10.865/04, 
+art. 8º, § 11; Decreto nº 6.426/08.
+indeterminado
+PROUNI - Programa Universidade para Todos PIS-PASEPLei nº 11.096/05, art. 8º. indeterminado
+REIDI - Regime Especial de Incentivos para o 
+Desenvolvimento de Infra-Estrutura PIS-PASEP Lei nº 11.488/07, arts. 1º a 5º.indeterminado
+Simples Nacional - Regime Especial Unificado 
+de Arrecadação de Tributos e Contribuições 
+devidos pelas Microempresas e Empresas de 
+Pequeno Porte
+PIS-PASEP
+Lei Complementar nº 123/06; Lei 
+Complementar nº 127/07; Lei 
+Complementar nº 139/11; Lei 
+Complementar nº 147/2014.
+indeterminado
+Termoeletricidade PIS-PASEP Lei nº 10.312/01, arts. 1º e 2º.indeterminado
+TEF - Tributação Específica do Futebol PIS-PASEP Lei n° 14.193/2021 , atrs. 31 e 32.indeterminado
+Transporte Coletivo PIS-PASEP Lei nº 12.860/13. indeterminado
+Transporte Escolar PIS-PASEP Lei nº 10.865/04, art. 28, VIII e IX.indeterminado
+Trem de Alta Velocidade PIS-PASEP Lei nº 10.865/04, art. 28, XX.indeterminado
+Academia Brasileira de Letras - ABL CSLL Lei nº 9.532/97 art. 15, §5º , Lei nº 
+13.353/16 art. 2º. indeterminado
+Associação Brasileira de Imprensa - ABI CSLL Lei nº 9.532/97 art. 15, §5º , Lei nº 
+13.353/16 art. 2º. indeterminado
+Assistência Médica, Odontológica e 
+Farmacêutica a Empregados CSLL Lei nº 9.249/95, art. 13, V.indeterminado
+20
+Benefícios Previdenciários a Empregados e 
+FAPI - Fundo de Aposentadoria IndividualCSLL
+Lei nº 9.249/95, art. 13, V; Lei nº 
+9.477/97, arts. 7º e 10; Lei nº 9.532/97, 
+art. 11, §§2º, 3º e 4º; Lei nº 10.887/04.
+indeterminado
+Doações a Entidades Civis Sem Fins Lucrativos CSLLLei nº 9.249/95, art. 13, §2º, III; MP nº 
+2.158-35/01, art. 59. indeterminado
+Doações a Instituições de Ensino e Pesquisa CSLL Lei nº 9.249/95, art. 13, §2º, II.indeterminado
+Entidades sem Fins Lucrativos - Assistência 
+Social e Saúde CSLL
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Associação Civil CSLL
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Científica CSLL
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Cultural CSLL
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº  
+9.532/97, arts. 12 e 15; MP nº 2.158-
+35/01, art. 14, X; Lei nº 12.101/09; 
+Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Educação CSLL
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Filantrópica CSLL
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Recreativa CSLL
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Inovação Tecnológica CSLL
+Lei nº 11.196/05, arts. 19, 19-A, 26; Lei nº 
+11.487/07; Lei nº 12.546/11, art. 13; Lei 
+nº 11.774/08, art. 4º. 
+indeterminado
+Instituto Histórico e Geográfico Brasileiro - 
+IHGB CSLL Lei nº 9.532/97 art. 15, §5º , Lei nº 
+13.353/16 art. 2º. indeterminado
+Minha Casa, Minha Vida CSLL
+Lei nº 10.931/04, art. 4º, § 6º; Lei nº 
+12.024/09, art. 2º; Lei nº 13.097/15, arts. 
+4º e 6º.
+indeterminado
+PADIS - Programa de Apoio ao 
+Desenvolvimento Tecnológico  da Indústria de 
+Semicondutores 
+CSLL
+Lei nº 11.484/07, art. 1º a 11; Lei n° 
+13.169/15; Lei n° 13.969/19, Lei 
+14.302/22
+indeterminado
+Previdência Privada Fechada CSLL Decreto-Lei nº 2.065/83, art. 6º; IN SRF 
+588/05, art. 17. indeterminado
+21
+PROUNI - Programa Universidade para Todos CSLL Lei nº 11.096/05. indeterminado
+Simples Nacional - Regime Especial Unificado 
+de Arrecadação de Tributos e Contribuições 
+devidos pelas Microempresas e Empresas de 
+Pequeno Porte
+CSLL
+Lei Complementar nº 123/06; Lei 
+Complementar nº 127/07; Lei 
+Complementar nº 139/11; Lei 
+Complementar nº 147/14.
+indeterminado
+TEF - Tributação Específica do Futebol CSLL Lei n° 14.193/2021 , atrs. 31 e 32.indeterminado
+Aposentadoria de Declarante com 65 Anos ou 
+Mais IRPF Lei nº 7.713/88, art. 6º, inciso XV; Lei nº 
+12.469/11; Lei nº 13.149/15.indeterminado
+Aposentadoria por Moléstia Grave ou Acidente IRPFLei nº 7.713/88, art. 6º, inciso XIV; Lei nº 
+11.052/04. indeterminado
+Despesas com Educação IRPF Lei nº 9.250/95, art. 8º; Lei nº 12.469/11.indeterminado
+Despesas Médicas IRPF Lei nº 9.250/95, art. 8º, II, a.indeterminado
+Fundos de Direitos da Criança e do 
+Adolescente IRPF
+Lei nº 8.069/90, art. 260, II; Lei nº 
+9.250/95, art. 12, I; Lei nº 9.532/97, art 
+22.
+indeterminado
+Fundos do Idoso IRPF Lei nº 9.250/95, art. 12, I; Lei nº 
+9.532/97, art. 22. indeterminado
+Indenizações por Rescisão de Contrato de 
+Trabalho IRPF
+Lei nº 7.713/88, art. 6º, inciso V; Lei nº 
+8.036/90, art. 28. indeterminado
+Programa Nacional de Apoio à Cultura IRPF
+Lei nº 8.313/91, art. 18, § 3º e art. 26, I; 
+Lei nº 9.250/95, art. 12,  II; Lei nº 
+9.532/97, art.22; MP nº 2.228/01, art. 39, 
+X e § 6º; Decreto nº 5.761/06, arts. 28 e 
+29.
+indeterminado
+Incentivo à Reciclagem IRPF Lei nº 14.260, de 08 de dezembro de 
+2021. indeterminado
+Seguro ou Pecúlio Pago por Morte ou Invalidez IRPFLei nº 7.713/88, art. 6º, incisos VII e XIII.indeterminado
+Academia Brasileira de Letras - ABL IRPJ Lei nº 9.532/97 art. 15, §5º , Lei nº 
+13.353/16 art. 2º. indeterminado
+Associação Brasileira de Imprensa - ABI IRPJ Lei nº 9.532/97 art. 15, §5º , Lei nº 
+13.353/16 art. 2º. indeterminado
+Assistência Médica, Odontológica e 
+Farmacêutica a Empregados IRPJ Lei nº 9.249/95, art. 13, V.indeterminado
+Associações de Poupança e Empréstimo IRPJ Decreto-Lei nº 70/66, arts. 1º e 7º.indeterminado
+Benefícios Previdenciários a Empregados e 
+FAPI - Fundo de Aposentadoria IndividualIRPJ
+Lei nº 9.249/95, art. 13, V; Lei nº 
+9.477/97, arts. 7º e 10; Lei nº 9.532/97, 
+art. 11, §§2º, 3º e 4º; Lei nº 10.887/04.
+indeterminado
+Debêntures de sociedades de propósito 
+específico para investimento na área de 
+infraestrutura
+IRPJ Lei nº 12.431/11, arts. 2º e 3º.indeterminado
+Debêntures de sociedades de propósito 
+específico para investimento na Produção 
+Econômica Intensiva em Pesquisa, 
+Desenvolvimento e Inovação
+IRPJ Lei nº 12.431/11, arts. 2º e 3º.indeterminado
+Doações a Entidades Civis Sem Fins Lucrativos IRPJLei nº  9.249/95, art. 13, §2º, III; MP nº  
+2.158-35/01, art. 59. indeterminado
+Doações a Instituições de Ensino e Pesquisa IRPJ Lei nº 9.249/95, art. 13, §2º II.indeterminado
+Empresa cidadã IRPJ Lei nº 11.770/08. indeterminado
+22
+Entidades sem Fins Lucrativos - Assistência 
+Social e Saúde IRPJ
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Associação Civil IRPJ
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Científica IRPJ
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Cultural IRPJ
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Educação IRPJ
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Filantrópica IRPJ
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+Entidades sem Fins Lucrativos - Recreativa IRPJ
+Constituição Federal do Brasil 1988, art. 
+150, VI, c e art. 195, § 7º; Lei nº 9.532/97, 
+arts. 12 e 15; MP nº 2.158-35/01, art. 14, 
+X; Lei nº 12.101/09; Decreto nº 8.242/14.
+indeterminado
+FIP-IE - Fundo de Investimento em 
+Participações em Infra-Estrutura IRPJ Lei nº 11.478/07, art. 2º, § 1º, I; Lei nº 
+12.431/11, art. 4º. indeterminado
+FIP-PD&I - Fundo de Investimento em 
+Participação na Produção Econômica Intensiva 
+em Pesquisa, Desenvolvimento e Inovação e 
+Debêntures
+IRPJ Lei nº 11.478/07, art. 2º, § 1º, I; Lei nº 
+12.431/11, art. 4º. indeterminado
+Fundos de Direitos da Criança e do 
+Adolescente IRPJ Lei nº 8.069/90, art. 260; Lei nº 
+12.594/12, art. 87. indeterminado
+Fundos do Idoso IRPJ Lei nº 12.213/10; Lei nº 12.594/12, art. 
+88. indeterminado
+Horário Eleitoral Gratuito IRPJ
+Lei nº 9.096/95, art. 52, parágrafo único; 
+Lei nº  9.504/ 97, art. 99; Decreto nº 
+7.791/2012.
+indeterminado
+Inovação Tecnológica IRPJ
+Lei nº 11.196/05, arts. 19, 19-A, 26; Lei nº 
+11.487/07; Lei nº 12.546/11, art. 13; Lei 
+nº 11.774/08, art. 4º. 
+indeterminado
+Instituto Histórico e Geográfico Brasileiro - 
+IHGB IRPJ Lei nº 9.532/97 art. 15, §5º , Lei nº 
+13.353/16 art. 2º. indeterminado
+Minha Casa, Minha Vida IRPJ
+Lei nº 10.931/04, art. 4º, § 6º; Lei nº 
+12.024/09, art. 2º, Lei nº 13.097/15, arts. 
+4º e 6º.
+indeterminado
+23
+PADIS - Programa de Apoio ao 
+Desenvolvimento Tecnológico  da Indústria de 
+Semicondutores 
+IRPJ
+Lei nº 11.484/07, art. 1º a 11; Lei n° 
+13.169/15; Lei n° 13.969/19, Lei 
+14.302/22
+indeterminado
+PADIS - Programa de Apoio ao 
+Desenvolvimento Tecnológico  da Indústria de 
+Semicondutores 
+IRPJ Lei nº 11.484/07, art. 1º a 11; Lei n° 
+13.169/15. indeterminado
+PAIT - Planos de Poupança e Investimento IRPJ Decreto-Lei nº 2.292/86, art. 5º, § 2º.indeterminado
+PAT - Programa de Alimentação do 
+Trabalhador IRPJ Lei nº 6.321/76, art. 1º; Lei nº 9.532/97, 
+arts. 5º, 6º, inciso I. indeterminado
+Previdência Privada Fechada IRPJ Decreto-Lei 2.065/83, art. 6º; IN SRF nº 
+588/05, art. 17. indeterminado
+PRONAC - Programa Nacional de Apoio à 
+Cultura - Dedução Despesa OperacionalIRPJ
+Lei nº 8.313/91, art. 26, § 1º, II; Lei nº 
+9.249/95, art.13, § 2º, I; Decreto nº 
+5.761/06, art. 30, § 1º.
+indeterminado
+PRONAC - Programa Nacional de Apoio à 
+Cultura - Dedução IR IRPJ
+Lei nº 8.313/91, art. 26, §1º; Lei nº 
+9.249/95, art. 13, §2º, I; Decreto nº 
+5.761/06, arts. 28 e 30; Lei nº 8.313/91, 
+art. 18, caput e §§ 1º e 3º; MP nº 
+2.228/01, art. 39, § 6º e inciso X, art. 53.
+indeterminado
+PROUNI - Programa Universidade para Todos IRPJ Lei nº 11.096/05. indeterminado
+Incentivo à Reciclagem IRPJ Lei nº 14.260, de 08 de dezembro de 
+2021. indeterminado
+Simples Nacional - Regime Especial Unificado 
+de Arrecadação de Tributos e Contribuições 
+devidos pelas Microempresas e Empresas de 
+Pequeno Porte
+IRPJ
+Lei Complementar nº 123/06; Lei 
+Complementar nº 127/07; Lei 
+Complementar nº 139/11; Lei 
+Complementar nº 147/14.
+indeterminado
+SUDAM - Isenção Projeto Industrial / Agrícola IRPJLei nº 9.532/97, art. 3º; Lei nº 9.808/99, 
+art. 13. indeterminado
+SUDENE - Isenção Projeto Industrial / Agrícola IRPJLei nº 9.532/97, art. 3º; Lei nº 9.808/99, 
+art. 13. indeterminado
+TI e TIC - Tecnologia de Informação e 
+Tecnologia da Informação e da ComunicaçãoIRPJ Lei nº 11.908/09, art. 11; Lei nº 
+11.774/08, art. 13-A. indeterminado
+TEF - Tributação Específica do Futebol IRPJ Lei n° 14.193/2021 , atrs. 31 e 32.indeterminado
+Academia Brasileira de Letras - ABL IRRF Lei nº 13.353/16, art. 2º; Lei nº 9532/97, 
+art. 15. indeterminado
+Associação Brasileira de Imprensa - ABI IRRF Lei nº 13.353/16, art. 2º; Lei nº 9532/97, 
+art. 15. indeterminado
+Associações de Poupança e Empréstimo IRRF Lei nº 9.430/96, art. 57. indeterminado
+Atividade Audiovisual IRRF Lei nº 8.685/93, arts. 3º e 3º-A; Decreto-
+Lei nº 1.089/70; Lei nº 9.430/96, art. 72.indeterminado
+Debêntures de sociedades de propósito 
+específico para investimento na área de 
+infraestrutura
+IRRF Lei nº 12.431/11, art. 2º, § 1º e 3º; Lei nº 
+13.043/14, art. 20. indeterminado
+Debêntures de sociedades de propósito 
+específico para investimento na Produção 
+Econômica Intensiva em Pesquisa, 
+Desenvolvimento e Inovação
+IRRF Lei nº 12.431/11, art. 2º, § 1º e 3º; Lei nº 
+13.043/14, art. 20. indeterminado
+FIP-IE - Fundo de Investimento em 
+Participações em Infra-Estrutura IRRF Lei nº 11.478/07, art. 2º, §3º; Lei nº 
+12.431/11, art. 4º. indeterminado
+24
+FIP-PD&I - Fundo de Investimento em 
+Participação na Produção Econômica Intensiva 
+em Pesquisa, Desenvolvimento e Inovação e 
+Debêntures
+IRRF Lei nº 11.478/07, art. 2º, §3º; Lei nº 
+12.431/11, art. 4º. indeterminado
+Inovação Tecnológica IRRF Lei nº 11.196/05, art. 17, inciso VI.indeterminado
+Instituto Histórico e Geográfico Brasileiro - 
+IHGB IRRF Lei nº 13.353/16, art. 2º; Lei nº 
+9532/1997, art. 15. indeterminado
+Poupança IRRF Lei nº 8.981/95, art. 68, III.indeterminado
+Promoção de Produtos e Serviços Brasileiros IRRFLei nº 9.481/97, art. 1º, III; Decreto nº 
+6.761/09; MP nº 2.159/01, art. 9º.indeterminado
+Títulos de Crédito - Setor Imobiliário e do 
+Agronegócio IRRF Lei nº 13.097/15, art. 90, I; Lei nº 
+11.033/2004, art. 3º, II a V. indeterminado
+Embarcações e Aeronaves II
+Lei nº 8.032/90, art. 2º, II, j; Lei nº 
+8.402/92, art. 1.º, IV; Lei nº 9.493/97, art. 
+11.
+indeterminado
+Evento Esportivo, Cultural e Científico II Lei nº 11.488/07, art. 38. indeterminado
+Máquinas e Equipamentos - CNPq II
+Lei nº 8.010/90, art. 1º; Lei nº 8.032/90, 
+art. 2º, I, e, f e g; Lei nº 10.964/04, arts. 
+1º e 3º; Lei nº  13.243/16, arts. 8º e 9º; 
+Decreto nº 6.759/09, art. 136; Decreto nº 
+9.283/2018, art. 71.
+indeterminado
+Academia Brasileira de Letras - ABL IOF Lei nº 13.353/16, art. 3º; Lei nº 8.894/94, 
+art. 6-A. indeterminado
+Associação Brasileira de Imprensa - ABI IOF Lei nº 13.353/16, art. 3º; Lei nº 8.894/94, 
+art. 6-A. indeterminado
+Automóveis - Pessoas Portadoras de 
+Deficiência IOF Lei nº 8.383/91, art. 72, IV; Decreto nº 
+6.306/07, art. 9º, VI. indeterminado
+Financiamentos Habitacionais IOF Decreto-Lei nº 2.407/88; Decreto nº 
+6.306/07, art. 9º, I. indeterminado
+Fundos Constitucionais IOF Lei nº 7.827/89, art. 8º; Decreto nº 
+6.306/07, art. 9º, III. indeterminado
+Instituto Histórico e Geográfico Brasileiro - 
+IHGB IOF Lei nº 13.353/16, art. 3º; Lei nº 
+8.894/1994, art. 6-A. indeterminado
+Motocicletas IOF Decreto nº 6.306/07, art. 8, XXVI; 
+Decreto nº 9.017/17. indeterminado
+Seguro Rural IOF
+Decreto-Lei nº 73/66, art. 19; Decreto nº 
+6.306/07, art. 23, III; Lei Complementar 
+nº 137/10 , art. 22, III.
+indeterminado
+TAXI - Transporte Autonômo de Passageiros IOF Lei nº 8.383/91, art. 72; Decreto nº 
+6.306/07, art. 9º, VI. indeterminado
+Embarcações IPI-Interno Lei nº 9.493/97, art. 10; Lei nº 11.774/08, 
+art. 15; Decreto nº 6.704/08.indeterminado
+Inovação Tecnológica IPI-Interno Lei nº 11.196/05, art. 17; Decreto nº 
+5.798/06. indeterminado
+Simples Nacional - Regime Especial Unificado 
+de Arrecadação de Tributos e Contribuições 
+devidos pelas Microempresas e Empresas de 
+Pequeno Porte
+IPI-Interno
+Lei Complementar nº 123/06; Lei 
+Complementar nº 127/07; Lei 
+Complementar nº 139/11; Lei 
+Complementar nº 147/14.
+indeterminado
+Embarcações e Aeronaves IPI-Vinculado
+Lei nº 8.032/90, art. 2º, II, j e art. 3º, I; Lei 
+nº 8.402/92, art. 1º, IV; Lei nº 9.493/97, 
+art. 11.
+indeterminado
+Evento Esportivo, Cultural e Científico IPI-Vinculado Lei nº 11.488/07, art. 38. indeterminado
+25
+Máquinas e Equipamentos - CNPq IPI-Vinculado
+Lei nº 8.010/90, art. 1º; Lei nº 8.032/90, 
+art. 2º, I, e e f, art. 3º, I; Lei nº 10.964/04, 
+arts. 1º e 3º; Lei nº  13.243/16, arts. 8º e 
+9º.
+indeterminado
+ITR ITR Lei nº 9.393/96, art. 3º, I e II, art. 3º-A.indeterminado
+Legenda: 
+AFRMM - Adicional ao Frete para a Renovação da Marinha Mercante 
+CIDE - Contribuição de Intervenção no Domínio Econômico 
+Cont. Previdência Social - Contribuição para a Previdência Social
+CONDECINE - Contribuição para o Desenvolvimento da Indústria Cinematográfica Nacional
+COFINS - Contribuição para o Financiamento da Seguridade Social 
+PIS/Pasep - Contribuição Social para o PIS-PASEP
+CSLL - Contribuição Social sobre o Lucro Líquido 
+IRPF - Imposto sobre a Renda Pessoa Física
+IRPJ - Imposto sobre a Renda Pessoa Jurídica
+IRRF -  Imposto sobre a Renda Retido na Fonte
+II - Imposto sobre Importação
+IOF - Imposto sobre Operações Financeiras
+IPI-Interno - Imposto sobre Produtos Industrializados - Operações Internas
+IPI-Vinculado - Imposto sobre Produtos Industrializados - Vinculado à Importação.
+* De acordo com a legislação vigente até 20 de agosto de 2025.
+26
+NOME TRIBUTO LEGISLAÇÃO PRAZO DE 
+VIGÊNCIA
+Associação Brasileira de Imprensa - ABI IRRF Lei nº 13.353/16, art. 2º; Lei nº 
+9532/97, art. 15. indeterminado
+Associação Brasileira de Imprensa - ABI IOF Lei nº 13.353/16, art. 3º; Lei nº 
+8.894/94, art. 6-A. indeterminado
+Evento Esportivo, Cultural e Científico CIDE Lei nº 11.488/07, art. 38. indeterminado
+FIP-IE - Fundo de Investimento em 
+Participações em Infra-Estrutura IRPJ Lei nº 11.478/07, art. 2º, § 1º, I; Lei 
+nº 12.431/11, art. 4º. indeterminado
+FIP-IE - Fundo de Investimento em 
+Participações em Infra-Estrutura IRRF Lei nº 11.478/07, art. 2º, §3º; Lei nº 
+12.431/11, art. 4º. indeterminado
+FIP-PD&I - Fundo de Investimento em 
+Participação na Produção Econômica 
+Intensiva em Pesquisa, 
+Desenvolvimento e Inovação e 
+Debêntures
+IRPJ Lei nº 11.478/07, art. 2º, § 1º, I; Lei 
+nº 12.431/11, art. 4º. indeterminado
+FIP-PD&I - Fundo de Investimento em 
+Participação na Produção Econômica 
+Intensiva em Pesquisa, 
+Desenvolvimento e Inovação e 
+Debêntures
+IRRF Lei nº 11.478/07, art. 2º, §3º; Lei nº 
+12.431/11, art. 4º. indeterminado
+Simples Nacional - Regime Especial 
+Unificado de Arrecadação de Tributos e 
+Contribuições devidos pelas 
+Microempresas e Empresas de Pequeno 
+Porte
+IPI-Interno
+Artigo 146, inciso III, alínea d, da 
+Constituição Federal; e Lei 
+Complementar nº 123/06.
+indeterminado
+Trem de Alta Velocidade COFINS Lei nº 10.865/04, art. 28, XX. indeterminado
+Trem de Alta Velocidade PIS-PASEP Lei nº 10.865/04, art. 28, XX. indeterminado
+Legenda: 
+AFRMM - Adicional ao Frete para a Renovação da Marinha Mercante 
+CIDE - Contribuição de Intervenção no Domínio Econômico 
+Cont. Previdência Social - Contribuição para a Previdência Social
+CONDECINE - Contribuição para o Desenvolvimento da Indústria Cinematográfica Nacional
+COFINS - Contribuição para o Financiamento da Seguridade Social 
+PIS/Pasep - Contribuição Social para o PIS-PASEP
+CSLL - Contribuição Social sobre o Lucro Líquido 
+IRPF - Imposto sobre a Renda Pessoa Física
+IRPJ - Imposto sobre a Renda Pessoa Jurídica
+IRRF -  Imposto sobre a Renda Retido na Fonte
+II - Imposto sobre Importação
+IOF - Imposto sobre Operações Financeiras
+IPI-Interno - Imposto sobre Produtos Industrializados - Operações Internas
+IPI-Vinculado - Imposto sobre Produtos Industrializados - Vinculado à Importação.
+QUADRO XXVII
+Gastos tributários não identificados (vigência de 2026 em diante)
+* De acordo com a legislação vigente até 20 de agosto de 2025.
+27
+Não houve inclusão de Gasto(s) Tributário(s) para o período em referência*. 
+* De acordo com a legislação vigente até 20 de agosto de 2025.
+QUADRO XXVIII
+Gastos tributários incluídos neste Demonstrativo
+28
+NOME TRIBUTO LEGISLAÇÃO PRAZO DE 
+VIGÊNCIA
+Desoneração da Folha dos 
+Municípios CPS Lei nº 8.212/91, art. 22, III,  § 17. 31/12/2026
+PERSE - Programa Emergencial de 
+Retomada do Setor de EventosCOFINS Lei nº 14.148, de 03 de maio de 2021. 04/05/2026
+PERSE - Programa Emergencial de 
+Retomada do Setor de EventosPIS-PASEP Lei nº 14.148, de 03 de maio de 2021. 04/05/2026
+PERSE - Programa Emergencial de 
+Retomada do Setor de EventosCSLL Lei nº 14.148, de 03 de maio de 2021. 04/05/2026
+PERSE - Programa Emergencial de 
+Retomada do Setor de EventosIRPJ Lei nº 14.148, de 03 de maio de 2021. 04/05/2026
+PADIS - Programa de Apoio ao 
+Desenvolvimento Tecnológico  da 
+Indústria de Semicondutores 
+COFINS Lei nº 11.484/07, arts. 1º a 11; Lei n° 13.169/15, Lei 
+14.302/22 e Decreto 10.615/21 31/12/2026
+PADIS - Programa de Apoio ao 
+Desenvolvimento Tecnológico  da 
+Indústria de Semicondutores 
+PIS-PASEPLei nº 11.484/07, arts. 1º a 11; Lei n° 13.169/15, Lei 
+14.302/22 e Decreto 10.615/21 31/12/2026
+Leasing de Aeronaves IRRF
+Lei nº 11.371/06, art. 16; Lei nº 9.481/97, art. 1º, V;  
+Lei nº 13.043/14, art. 89, Lei 14.002/20, MP 
+1094/21 e Lei 14.355/22.
+31/12/2026
+PADIS - Programa de Apoio ao 
+Desenvolvimento Tecnológico  da 
+Indústria de Semicondutores 
+II
+Lei 11.484/07, arts. 1º a 11, em específico: art. 3º, § 
+5º; Lei nº 13.159; Lei n° 13.169/15, art. 12, Lei 
+14.302/22 e Decreto 10.615/21
+31/12/2026
+Automóveis - Pessoas Portadoras 
+de Deficiência IPI-Interno
+Lei nº 8.989/95; Lei nº 12.767/12, art. 29; Lei nº 
+13.146/2015, art. 126, Lei 14.183/21 e Lei 
+14.287/21
+31/12/2026
+PADIS - Programa de Apoio ao 
+Desenvolvimento Tecnológico  da 
+Indústria de Semicondutores 
+IPI-InternoLei nº 11.484/07, arts. 1º a 11; Lei n° 13.169/15, Lei 
+14.302/22 e Decreto 10.615/21 31/12/2026
+PADIS - Programa de Apoio ao 
+Desenvolvimento Tecnológico  da 
+Indústria de Semicondutores 
+IPI-Vinculado
+Lei nº 11.484/07, arts. 1º a 11, 64 e 65, em 
+específico: art. 3º, III, art. 4º , II, art. 5º ; Lei nº 
+13.159/15; Lei n° 13.169/15, art. 12, Lei 14.302/22 e 
+Decreto 10.615/21
+31/12/2026
+Pronas/PCD - Programa Nacional de 
+Apoio à Atenção da Saúde da 
+Pessoa com Deficiência
+IRPJ art. 4º da Lei nº 12.715/12 31/12/2026
+Pronon - Programa Nacional de 
+Apoio à Atenção Oncológica IRPJ art. 4º da Lei nº 12.715/12 31/12/2026
+TAXI - Transporte Autonômo de 
+Passageiros IPI-Interno
+Lei nº 8.989/95; Lei nº 12.767/12, art. 29; Lei nº 
+13.146/2015, art. 126, Lei 14.183/21 e Lei 
+14.287/21
+31/12/2026
+Transporte Aéreo de Passageiros  COFINS Lei nº 14.592/23, artigo 2º. 31/12/2026
+Transporte Aéreo de Passageiros  PIS-PASEP Lei nº 14.592/23, artigo 2º. 31/12/2026
+QUADRO XXIX
+Gastos tributários com encerramento em 2026 (fim da vigência legal)
+29
+Transporte Rodoviário Regular de 
+Passageiros Intermunicipal, exceto 
+metropolitano, e Interstadual
+ COFINS Lei nº 14.592/23, artigo 2º-A. 31/12/2026
+Transporte Rodoviário Regular de 
+Passageiros Intermunicipal, exceto 
+metropolitano, e Interstadual
+ PIS-PASEP Lei nº 14.592/23, artigo 2º-A. 31/12/2026
+Legenda: 
+AFRMM - Adicional ao Frete para a Renovação da Marinha Mercante 
+CIDE - Contribuição de Intervenção no Domínio Econômico 
+Cont. Previdência Social - Contribuição para a Previdência Social
+CONDECINE - Contribuição para o Desenvolvimento da Indústria Cinematográfica Nacional
+COFINS - Contribuição para o Financiamento da Seguridade Social 
+PIS/Pasep - Contribuição Social para o PIS-PASEP
+CSLL - Contribuição Social sobre o Lucro Líquido 
+IRPF - Imposto sobre a Renda Pessoa Física
+IRPJ - Imposto sobre a Renda Pessoa Jurídica
+IRRF -  Imposto sobre a Renda Retido na Fonte
+II - Imposto sobre Importação
+IOF - Imposto sobre Operações Financeiras
+IPI-Interno - Imposto sobre Produtos Industrializados - Operações Internas
+IPI-Vinculado - Imposto sobre Produtos Industrializados - Vinculado à Importação.
+* De acordo com a legislação vigente até 20 de agosto de 2025.
+30
+NOME TRIBUTO LEGISLAÇÃO PRAZO DE VIGÊNCIA 
+ANTERIOR
+PRAZO DE 
+VIGÊNCIA ATUAL
+Atividade Audiovisual IRPF
+Arts. 1º e 1º-A, da Lei nº 
+8.685/93; art. 85, do Decreto 
+nº 9.580/18.
+31/12/2024 31/12/2029
+Atividade Audiovisual - 
+Dedução Despesa 
+Operacional
+IRPJ art. 1º, § 4º da Lei nº 8.685/93 31/12/2024 31/12/2029
+Atividade Audiovisual - 
+Dedução IR IRPJ
+arts. 1º, 1º-A e 3º-A da Lei 
+8.685/93; art. 1º da Lei 
+9.323/96; arts. 5º e 6º da Lei 
+9.532/97; art. 39, § 6º e arts. 
+44 e 45 da MP 2.228/01
+31/12/2024 31/12/2029
+RECINE - Regime Especial 
+de Tributação para 
+Desenvolvimento da 
+Atividade de Exibição 
+Cinematográfica
+II
+Art. 14, V, da Lei nº 12.599/12; 
+art. 9º, do Decreto nº 7.729/12; 
+Lei 13.594, art. 1º.
+31/12/2024 31/12/2029
+RECINE - Regime Especial 
+de Tributação para 
+Desenvolvimento da 
+Atividade de Exibição 
+Cinematográfica
+IPI-Interno
+Art. 14, III, da Lei nº 12.599/12; 
+art. 9º, do Decreto nº 7.729/12; 
+Lei 13.594, art. 1º.
+31/12/2024 31/12/2029
+RECINE - Regime Especial 
+de Tributação para 
+Desenvolvimento da 
+Atividade de Exibição 
+Cinematográfica
+IPI-Vinculado
+Art. 14, IV, da Lei nº 12.599/12; 
+art. 9º, do Decreto nº 7.729/12, 
+Lei 13.594, art. 1º.
+31/12/2024 31/12/2029
+RECINE - Regime Especial 
+de Tributação para 
+Desenvolvimento da 
+Atividade de Exibição 
+Cinematográfica
+COFINS
+Art. 14, I, II, da Lei nº 
+12.599/12; art. 9º, do Decreto 
+nº 7.729/12; Lei 13.594, art. 1º.
+31/12/2024 31/12/2029
+RECINE - Regime Especial 
+de Tributação para 
+Desenvolvimento da 
+Atividade de Exibição 
+Cinematográfica
+PIS-PASEP
+Art. 14, I, II, da Lei nº 
+12.599/12; art. 9º, do Decreto 
+nº 7.729/12; Lei 13.594, art. 1º.
+31/12/2024 31/12/2029
+Legenda: 
+AFRMM - Adicional ao Frete para a Renovação da Marinha Mercante 
+CIDE - Contribuição de Intervenção no Domínio Econômico 
+Cont. Previdência Social - Contribuição para a Previdência Social
+CONDECINE - Contribuição para o Desenvolvimento da Indústria Cinematográfica Nacional
+COFINS - Contribuição para o Financiamento da Seguridade Social 
+* De acordo com a legislação vigente até 20 de agosto de 2025.
+QUADRO XXIX
+Gastos tributários prorrogados a partir de 2024 (vigentes em 2026)
+31
+PIS/Pasep - Contribuição Social para o PIS-PASEP
+CSLL - Contribuição Social sobre o Lucro Líquido 
+IRPF - Imposto sobre a Renda Pessoa Física
+IRPJ - Imposto sobre a Renda Pessoa Jurídica
+IRRF -  Imposto sobre a Renda Retido na Fonte
+II - Imposto sobre Importação
+IOF - Imposto sobre Operações Financeiras
+IPI-Interno - Imposto sobre Produtos Industrializados - Operações Internas
+IPI-Vinculado - Imposto sobre Produtos Industrializados - Vinculado à Importação.
+32
+ 
+    
+ 
+ 
+CONTROLE DE VERSÕES 
+a. Versão: 1.0 
+Data: 1º de setembro de 2025. 
+Descrição: publicação do Demonstrativo dos Gastos Tributários – PLOA 2026. 
+ 
+b. Versão: 1.01 
+Data: 10 de setembro de 2025. 
+Descrição: alteração das estimativas de arrecadação para 2026. 
+ 
+ 
+ 
+33

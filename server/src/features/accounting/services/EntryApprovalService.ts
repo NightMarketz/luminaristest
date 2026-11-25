@@ -3,6 +3,7 @@ import logger from '../../../lib/logger';
 import type { Account, Prisma } from 'generated/prisma';
 import { computeEntryContentHash, type HashablePosting } from '../models/entryContentHash';
 import { centsFromDb } from '../models/money';
+import { fiscalYearOf } from '../models/dates';
 import type {
   ApproveEntryInput,
   CreateDraftEntryInput,
@@ -286,7 +287,7 @@ export class EntryApprovalService {
 
       // Number is born HERE (ACC-015). If the CAS below loses, the tx rolls back and this
       // sequence increment is undone — gapless.
-      const fiscalYear = this.fiscalYearFrom(entry.date);
+      const fiscalYear = fiscalYearOf(entry.date);
       const entryNumber = await this.postingRepo.nextEntryNumber(scope, fiscalYear, tx);
 
       const count = await this.journalEntryRepo.casUpdate(
@@ -479,10 +480,6 @@ export class EntryApprovalService {
 
   private extractYearMonth(date: Date): { year: number; month: number } {
     return { year: date.getUTCFullYear(), month: date.getUTCMonth() + 1 };
-  }
-
-  private fiscalYearFrom(date: Date): number {
-    return date.getUTCFullYear();
   }
 
   private async assertPeriodOpen(scope: AccountingScope, date: Date): Promise<void> {

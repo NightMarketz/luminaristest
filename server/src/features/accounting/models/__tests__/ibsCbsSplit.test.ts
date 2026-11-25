@@ -20,11 +20,17 @@ describe('item 19a — contrato do split no confirm', () => {
     expect(BankSettlementSplitSchema.parse({ ibsCents: 0, cbsCents: 900 })).toEqual({ ibsCents: 0, cbsCents: 900 });
   });
 
+  // Onda 3.2: competência antes do início da apuração (F-IBS-7 b) não é do schema — o marco é a linha
+  // OBRIGACAO_REGIME/IBS_CBS_APURACAO e a recusa (400 IBS_CBS_ANTES_DE_2027) é do BankSettlementService
+  // (bankSettlementSplit.integration: competencia '2026-12'; ibsCbsViradaPorLinhas.test: virada por linhas).
+  it('competência anterior ao marco passa o schema (o serviço recusa pela linha)', () => {
+    expect(BankSettlementSplitSchema.safeParse({ ibsCents: 1, cbsCents: 9, competencia: '2026-12' }).success).toBe(true);
+  });
+
   it.each([
     ['soma zero', { ibsCents: 0, cbsCents: 0 }],
     ['valor negativo', { ibsCents: -1, cbsCents: 900 }],
     ['centavo fracionado', { ibsCents: 1.5, cbsCents: 900 }],
-    ['competência antes de 2027 (F-IBS-7 b)', { ibsCents: 1, cbsCents: 9, competencia: '2026-12' }],
     ['competência fora do formato', { ibsCents: 1, cbsCents: 9, competencia: '2027-13' }],
     ['um total só (dono 22/10: dois valores)', { totalCents: 1000 }],
     ['campo extra', { ibsCents: 1, cbsCents: 9, tarifa: 1 }],

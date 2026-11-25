@@ -5,7 +5,7 @@ import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
 import type { AccountingScope } from '../scope/AccountingScope';
 import { isValidDateOnly, scopeToday, toUtcDayNumber, dayNumberFromDateOnly } from '../models/dates';
-import { loadOutstandingPayables, loadOutstandingReceivables, type OutstandingLine } from '../models/outstandingLines';
+import { outstandingLinesFromPayables, outstandingLinesFromReceivables, type OutstandingLine } from '../models/outstandingLines';
 import type { AccountingReportService } from './AccountingReportService';
 import { findMappingRule, applySign } from './StatementMappingFixture';
 import {
@@ -386,7 +386,7 @@ export class AgingReportService {
   /** Carrega e normaliza as linhas em aberto do subrazão pedido para a forma comum (helper compartilhado). */
   private async loadOutstanding(scope: AccountingScope, kind: AgingKind): Promise<OutstandingLine[]> {
     return kind === 'payable'
-      ? loadOutstandingPayables(scope, this.payableRepo)
-      : loadOutstandingReceivables(scope, this.receivableRepo);
+      ? outstandingLinesFromPayables(await this.payableRepo.findOutstanding(scope))
+      : outstandingLinesFromReceivables(await this.receivableRepo.findOutstanding(scope));
   }
 }

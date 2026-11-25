@@ -6,7 +6,8 @@ import type { AccountingBindingV1, EventBinding } from '../dtos/AccountingBindin
 import type { ChartAccountSnapshot } from '../dtos/CompileBindingDto';
 import type { AccountingBindingStatus } from '../models/accountingBindingStatus';
 import type { BindingValidationResult } from '../models/validationResult';
-import type { BindingScope, IAccountingBindingRepository } from '../repositories/IAccountingBindingRepository';
+import type { IAccountingBindingRepository } from '../repositories/IAccountingBindingRepository';
+import type { BindingScope } from '../scope/BindingScope';
 import type { IAccountingBindingPolicy } from '../policies/IAccountingBindingPolicy';
 import { BindingSectorConflictError } from '../models/bindingSectorConflict';
 
