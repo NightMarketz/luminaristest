@@ -21,9 +21,9 @@
 da denegada, tela (`my-app/`, nó vizinho `FE-INCR-DFE`), nem os temas irmãos da mesma cédula (cancelamento `CANCELLING`,
 polling DF-e, re-drive) — cada um tem BRIEF próprio.
 **Divergência a reportar (não bloqueia):** a cédula não diz *qual* estado terminal vale para 101/151 nem *qual* alerta
-vale para as rejeições da consulta ("estado terminal **ou** alerta"); isso é F-DEN-1 e F-DEN-2 abaixo, e por isso este
-BRIEF **tem fork pendente** — a `sessao-feature` não roda o PR-0 inteiro antes de o dono responder esses dois (o
-bloco "DENIED substituível", itens 1–5, não depende deles e pode ir antes).
+vale para as rejeições da consulta ("estado terminal **ou** alerta"); isso é F-DEN-1 e F-DEN-2 abaixo (e F-DEN-3/F-DEN-4 fecham arestas), e por isso este
+BRIEF **tem 4 forks pendentes** — a `sessao-feature` **não** o roda sozinha: a emenda de 21/11 só libera BRIEF *sem* fork
+(o bloco "DENIED substituível", itens 1–4, 6–7, não depende deles e pode ir antes **se o dono mandar**).
 
 ## 1. Insumos lidos (fatos consumados — arquivo:linha em `631dd60fe`)
 
@@ -90,45 +90,82 @@ bloco "DENIED substituível", itens 1–5, não depende deles e pode ir antes).
 
 **Bloco C — `consultar` não devolve `PROCESSING` para terminal (depende de F-DEN-1 e F-DEN-2):**
 
-9. **cStat 101/151 na consulta.** `consultar` lê `retCancNFe` (ER09) e devolve o resultado do F-DEN-1. Teste:
-   `retConsSitNFe` com `cStat 101` e com `151` (sem `protNFe`) ⇒ resultado terminal, **nunca** `PROCESSING`; com
-   `protNFe` 100 **e** evento de cancelamento no mesmo retorno, vale o que a SEFAZ marcou em `cStat` do `retConsSitNFe`
-   (o teste fixa a precedência: `cStat` do envelope = 101/151 vence; autorizada sem cancelamento segue AUTHORIZED).
-10. **cStat 252/226/236/526/562/561/613 na consulta** ⇒ o desfecho do F-DEN-2 (alerta, **nunca** `REJECTED`, nunca
-    `PROCESSING` eterno). Teste por código, mais um teste negativo: **217 continua** pelo caminho `naoRecebida`
-    (`:311-318`) e 108/109/656 continuam `PROCESSING` (serviço indisponível não é terminal).
-11. **Sem repetir para sempre.** Teste de `pollPendingOnce` com a consulta devolvendo 252 por N rodadas: o documento
-    para de ser consultado pelo job na 1ª rodada (ou no teto, conforme F-DEN-2), `summary.gaveUp` conta e a consulta
-    manual (`consultarUm`) segue valendo.
-12. **Emissão síncrona não herda.** `emitir` (`:151`) não ganha mapeamento novo — só `consultar`. Teste prova que `emitir`
-    com 101/252 continua `REJECTED`/o comportamento atual (o 101 não vem do `NFeAutorizacao`).
+9. **cStat 101/151 na consulta — e o defeito pior que a lacuna descreve.** Hoje `consultar` testa
+   `AUTORIZADO.has(cStat) || AUTORIZADO.has(prot.cStat)` **primeiro** (`SefazNfeEmissor.ts:~188`): uma nota cancelada
+   cuja consulta traz o envelope `cStat 101` **e** o `protNFe` da autorização original (`cStat 100`) devolve
+   **`AUTHORIZED`** — o Luminaris marca como autorizada uma nota que o fisco cancelou (não `PROCESSING`). O MOC lido dá
+   ER08 (`protNFe` se 100/150/110) e ER09 (`retCancNFe` se 101/151) como grupos distintos; que a resposta real traga os
+   dois ao mesmo tempo é **inferência (grau I)** — por isso o teste cobre as **duas formas**: (i) só `retCancNFe`/`cStat
+   101` e `151` ⇒ terminal do F-DEN-1; (ii) envelope `cStat 101` + `protNFe cStat 100` ⇒ **o mesmo terminal**, nunca
+   `AUTHORIZED` (este é o caso vermelho nomeado). Precedência fixada no código: o `cStat` do **envelope** 101/151 é
+   testado **antes** do ramo autorizado; autorizada sem cancelamento segue `AUTHORIZED`.
+10. **cStat 252/226/236/526/562/561/613 na consulta ⇒ marcador, não exceção.** O adaptador **continua devolvendo
+    `PROCESSING`** com o cStat em `errors[0].code` (porta pura, como o 217 hoje) — a decisão é de quem **aplica**:
+    `consultarEAplicar` (`LifecycleService.ts:301-318`), ao lado do `isNaoConsta`, reconhece o conjunto
+    `CONSULTA_INVALIDA` e lança `DfeConsultaInvalidaError` (F-DEN-2 a). Assim os outros chamadores da `consultar` não
+    mudam de comportamento (tabela abaixo). Testes por código + negativos: **217 continua** pelo `naoRecebida` e
+    108/109/656 continuam `PROCESSING` simples (serviço indisponível não é terminal).
+11. **Sem repetir para sempre; o alerta é alerta.** `pollPendingOnce` com a consulta devolvendo 252: na **1ª** rodada
+    grava `pollGaveUpAt`, `summary.gaveUp` conta e o documento sai da fila. O erro **não** pode cair no ramo
+    `isDfeSkippableError` (`:~390`, prefixo `dfe_` ⇒ `warn` + `skipped`, que **esconderia** o alerta): ramo próprio
+    antes dele, `logger.error` + contagem `failed`. `consultarUm` (operador) responde 422 com o cStat/`xMotivo` (diz o
+    que a SEFAZ disse, sem afirmar motivo — §6.2) e **não** conta tentativa; a consulta manual segue valendo.
+12. **Todo chamador da `consultar` tem desfecho dado e testado** (a lista vem de `grep "\.consultar("`, 5 sítios):
+
+    | Chamador | Com 101/151 | Com 252/226/…/613 |
+    |---|---|---|
+    | `SefazNfeEmissor.emitir` ao achar duplicidade 204/539 (`:150`, delega a `this.consultar`) | herda o terminal do F-DEN-1 (o `resultApplier` o aplica a partir de `SENT`) — **desejado**, não é bug | herda `PROCESSING` + código (sem exceção: o marcador só vira exceção em `consultarEAplicar`); teste prova |
+    | `consultarEAplicar` (polling e `consultarUm`) | aplica o terminal (item 13) | `DfeConsultaInvalidaError` (item 10-11) |
+    | Webhook DF-e (`:1119`) | n/a: só a NFS-e tem webhook (`SefazNfeEmissor` não tem) — teste de que o resultado novo não quebra `applyResult` | idem |
+    | Backfill de anexo pendente (`:1893`) | sem XML ⇒ já cai em `skip — retorno sem XML`; nota cancelada não reentra | idem; sem exceção |
+    | Órfã da contingência (`NfceContingenciaService.ts:339`) | cai no fim do `resolverOrfa` (`:381`): grava `ultimoErro` e gira no rodízio — **sem inutilizar** (só 217 inutiliza); teste prova | idem |
+
+13. **`applyResult` aplica o terminal do F-DEN-1 (a)** como transição **própria**, não por `markCancelled` (que exige
+    `whenStatusIn: NOTA_VALIDA_STATUSES` e lançaria `fiscal_document_status_changed` para `SENT/PROCESSING`):
+    `repo.transition(…, { status:'CANCELLED', cancelledAt: dhProc ?? now, saleKey:'cancelled:<id>:<saleId>', chaveOuCodigo:
+    partnerRef, cancelEvento:'consulta_101_151', attemptResult, whenStatusIn: guardaDoResultado(doc) }, tx)` +
+    auditoria `dfe.cancelled` na mesma tx, sem `retireSourceDocument` (nunca houve proveniência). A tabela
+    `VALID_RESULT_TRANSITIONS` ganha `→ CANCELLED` **só** para o resultado novo (o teste "mutation target" de
+    `LifecycleService.test.ts:191-210` é atualizado de propósito, e a transição `AUTHORIZED→CANCELLED` direta segue só pelo
+    `cancelar()`). Teste: `SENT`, `PROCESSING` e `CONTINGENCY` → terminal; `AUTHORIZED` → recusa
+    (`invalid_transition`).
+14. **Emissão síncrona não herda o mapeamento da consulta inválida.** `emitir` com 101/252 vindo do
+    `NFeAutorizacao` continua como hoje (`REJECTED` por cStat desconhecido); o item 12 prova que só a **delegação por
+    duplicidade** herda o terminal.
 
 ### PR-1 — reemissão com número novo pela rota existente (depende do PR-0 em `main`)
 
-13. **O gate de nota viva ignora `DENIED`.** `findLiveBySale` passa a excluir `status IN (CANCELLED, DENIED)`
+15. **O gate de nota viva ignora `DENIED`.** `findLiveBySale` passa a excluir `status IN (CANCELLED, DENIED)`
     (`FiscalDocumentRepository.ts:48`) — **a mudança está no repositório, não no serviço**, para os dois usos
     (`EmissionService.ts:871` e `:1125`) e o `SimplesRegistroCaixaService.ts:76` herdarem. Teste de integração: venda
     com NF-e `DENIED` ⇒ `POST /api/nfe/dfe/documents` (kind NFE) emite a nota nova, sem "documento vivo já existe".
-14. **Número novo, de verdade.** A nota nova pega `nextNumber` da série/ambiente (nunca reaproveita o da denegada).
+16. **Número novo, de verdade.** A nota nova pega `nextNumber` da série/ambiente (nunca reaproveita o da denegada).
     Teste: `numero(nova) > numero(denegada)` e a denegada mantém o dela.
-15. **Reenvio da denegada continua proibido.** `reenviar` com `DENIED` segue `reenvio_bloqueado` (testes já existem:
+17. **Reenvio da denegada continua proibido.** `reenviar` com `DENIED` segue `reenvio_bloqueado` (testes já existem:
     `FiscalDocumentLifecycleService.denied.integration.test.ts:118`, `FiscalDocumentLifecycleService.test.ts:341`). Os
     **títulos desses testes e o comentário de `Lifecycle…:1539-1541`** dizem "o número foi consumido" — a premissa é gate
     humano (`9b9d`); reescrevê-los neutros (só texto, sem mudar assertion) entra neste PR por D-DEN-B.
-16. **Pendência na view.** `attachPendencias` (`EmissionService.ts:652-700`) ganha `denegada_sem_substituta`: doc `DENIED`
+18. **Pendência na view.** `attachPendencias` (`EmissionService.ts:652-700`) ganha `denegada_sem_substituta`: doc `DENIED`
     sem irmão do mesmo `kind`/`cTribNac` em `AUTHORIZED_STATUSES` ou `SENT/PROCESSING/CONTINGENCY` ⇒ pendência. Não é
     automática (item 30 do BRIEF original: "nada automático"). O rótulo i18n vai pt/en no mesmo PR (paridade).
-17. **Reemissão da NFC-e de contingência denegada** respeita o prazo e o `tpEmis` da nova nota (a nova nota **não** herda
+19. **Reemissão da NFC-e de contingência denegada** respeita o prazo e o `tpEmis` da nova nota (a nova nota **não** herda
     `tpEmis:9` por ser substituta): teste de que a nova sai pelo caminho normal da unidade (contingência só se a unidade
     estiver em contingência).
-18. **Sem rota nova.** Guarda: `docs.paths.ts`/`openapi.json` sem path novo (path-count igual) — o PR-1 usa só
-    `POST /documents`. Se F-DEN-5 escolher rota explícita, este item vira o contrato dela.
+20. **Sem rota nova.** Guarda: `docs.paths.ts`/`openapi.json` sem path novo (path-count igual) — o PR-1 usa só
+    `POST /documents` (D-DEN-D: "número novo" + `DENIED` fora de `REENVIAVEIS` descartam a leitura "reenviar").
+21. **`DENIED` não conta como substituta.** `attachPendencias` (`EmissionService.ts:668`, `hasReplacement`) só exclui
+    `CANCELLED`/`REJECTED`: um irmão `DENIED` suprimiria a pendência `cancelled_without_replacement` da nota cancelada.
+    Passa a excluir `DENIED` também. **Varredura feita** (`grep` dos filtros "≠ CANCELLED/REJECTED" em `services/` e
+    `repositories/`): só `findLiveBySale` (item 15), `:668` (este item) e `LifecycleService.ts:618`
+    (`substitutaConhecida`, **só NFS-e**, onde `DENIED` não ocorre — fora, sem mudança). Teste: cancelada + irmã `DENIED` ⇒
+    ainda `cancelled_without_replacement`.
 
 ## 3. Contratos esboçados
 
 ```ts
 // DfeEmissorPort.ts — EmissaoResult hoje (status: 'AUTHORIZED'|'REJECTED'|'PROCESSING'|'DENIED').
-// F-DEN-1 recomenda acrescentar UM status (o do fato do fisco), nunca overload de REJECTED:
+// F-DEN-1 recomenda acrescentar UM status de RESULTADO (o do fato do fisco), nunca overload de REJECTED; no banco
+// ele grava `CANCELLED` (item 13), então o enum persistido e o DTO NÃO crescem:
 export type EmissaoResult = {
   status: 'AUTHORIZED' | 'REJECTED' | 'PROCESSING' | 'DENIED' | 'CANCELLED_AT_FISCO'; // nome a ratificar (F-DEN-1)
   partnerRef: string;
@@ -136,13 +173,15 @@ export type EmissaoResult = {
   // inalterados: numero, nNFSe, chaveOuCodigo, xml, dhProc, valores
 };
 
-// Erro de código próprio da consulta inválida (F-DEN-2 a): o job trata como PERMANENTE (isPermanentPollError).
+// F-DEN-2 (a): lançado por `consultarEAplicar` (NÃO pelo adaptador — a porta segue pura, como no 217). Tratado como
+// PERMANENTE pelo job, em ramo próprio ANTES de `isDfeSkippableError` (o prefixo `dfe_` o contaria como "skipped").
 class DfeConsultaInvalidaError extends AppError {
   constructor(readonly cStat: string, readonly xMotivo: string) { super(`dfe_consulta_invalida:${cStat}`, 422); }
 }
-// SefazNfeEmissor.consultar — tabela única (um sítio):
-const CONSULTA_CANCELADA = new Set(['101', '151']);                        // [WS-CSTAT] ER09
-const CONSULTA_INVALIDA  = new Set(['252','226','236','526','562','561','613']); // [WS-CSTAT] J01-J06 (códigos; texto no Anexo I)
+// SefazNfeEmissor.ts — o adaptador só reconhece a CANCELADA (resultado terminal); a INVÁLIDA é conjunto do serviço:
+const CONSULTA_CANCELADA = new Set(['101', '151']);   // [WS-CSTAT] ER09 — testado ANTES do ramo AUTORIZADO (item 9)
+// FiscalDocumentLifecycleService.ts (ao lado de NAO_CONSTA_CODES):
+const CONSULTA_INVALIDA = new Set(['252','226','236','526','562','561','613']); // [WS-CSTAT] J01-J06 (códigos; texto no Anexo I)
 ```
 
 ```ts
@@ -155,7 +194,7 @@ await this.repo.transition(scope, doc.id, {
   whenStatusIn: guardaDoResultado(doc),
 }, tx);
 
-// FiscalDocumentRepository.findLiveBySale — item 13:
+// FiscalDocumentRepository.findLiveBySale — item 15:
 where: { ..., status: { notIn: ['CANCELLED', 'DENIED'] }, ... }
 
 // FiscalDocumentRepository.listContingenciaNaoAutorizada — item 6:
@@ -165,9 +204,9 @@ status: { in: ['CONTINGENCY', 'SENT', 'PROCESSING', 'REJECTED', 'PENDING_SIGNATU
 - **Sem coluna nova e sem migração de schema** no PR-0/PR-1 (o rename grava a coluna que já existe). Se F-DEN-4 escolher
   backfill por migração, entra uma migração de dado — S6 do smoke-gate reprova por desenho
   (`smoke-gate-s6-x-migracao-de-dado`); por isso a recomendação não é migrar.
-- **DTO:** nenhum campo novo; só o valor `status` se F-DEN-1 acrescentar um (o enum de `FiscalDocumentDto.ts:34` e `:187`
-  + `__dto-shapes__.json` à mão — o UPDATE do snapshot reordena todos os domínios no Windows — + tipos gerados do FE +
-  rótulo/cor e i18n pt/en em `dfeLabels.ts`/`accounting.json`).
+- **DTO:** nenhum campo e **nenhum valor novo** de `status`: o resultado novo da porta (F-DEN-1 a) grava `CANCELLED` (já no enum
+  de `FiscalDocumentDto.ts:34`); snapshot de shape, tipos gerados do FE e rótulos i18n do status **não mudam**. Só a pendência
+  nova `denegada_sem_substituta` (item 18) entra em i18n pt/en.
 - **Auditoria:** reaproveita `dfe.denied` e `dfe.cancelled` (já na allowlist de `auditCanonical.ts`); **nenhum eventType
   novo** → sem mudança de allowlist. A consulta inválida é `logger.error` + `pollGaveUpAt`, não evento de auditoria.
 
@@ -177,10 +216,11 @@ status: { in: ['CONTINGENCY', 'SENT', 'PROCESSING', 'REJECTED', 'PENDING_SIGNATU
 alerta"; não escolhe.* Evidência: ER09; `VALID_RESULT_TRANSITIONS` proíbe pendente→`CANCELLED` de propósito
 (`LifecycleService.ts:61-66`: "isso só acontece via `cancelar()`"); a nota **nunca foi** `AUTHORIZED` no Luminaris (sem
 `sourceDocumentId`, sem `authorizedAt`).
-- (a) **Novo resultado terminal "cancelada no fisco"** → `applyResult` grava `CANCELLED`, `cancelEvento` marcador,
-  `cancelledAt = dhProc` quando houver, **rename do `saleKey` pelo mesmo `markCancelled`**, auditoria `dfe.cancelled`;
-  sem `retireSourceDocument` (não há proveniência). Libera a venda para nota nova. Muda a tabela de transições
-  (o teste "mutation target" é atualizado de propósito).
+- (a) **Novo resultado terminal "cancelada no fisco"** → `applyResult` grava `CANCELLED` por **transição própria** (item 13;
+  `markCancelled` não serve: exige `NOTA_VALIDA_STATUSES` e lançaria `fiscal_document_status_changed` para `SENT/PROCESSING`),
+  `cancelEvento` marcador, `cancelledAt = dhProc`, rename do `saleKey`, auditoria `dfe.cancelled`; sem
+  `retireSourceDocument` (não há proveniência). Libera a venda para nota nova. Muda a tabela de transições (o teste
+  "mutation target" é atualizado de propósito).
 - (b) Só alerta: fica `PROCESSING`/`SENT` + desiste do polling + pendência. Não toca a máquina de estados, mas a venda
   fica presa com `saleKey` ocupado e a nota "viva" no `findLiveBySale` — repete o `db50` para o cancelamento.
 - (c) Dois passos `→ AUTHORIZED → CANCELLED` (reconstruir a autorização). Exige XML/protocolo que a consulta de uma
@@ -193,8 +233,9 @@ alerta"; não escolhe.* Evidência: ER09; `VALID_RESULT_TRANSITIONS` proíbe pen
 **F-DEN-2 — Destino da consulta inválida (252, 226, 236, 526, 562, 561, 613).** *A cédula diz "alerta"; não diz onde
 ele mora.* Esses códigos são erro da **consulta** (chave/ambiente/idade), "não é veredito sobre a nota" (lacuna `4fb9`);
 `REJECTED` liberaria o reenvio de uma nota que pode estar autorizada.
-- (a) `consultar` lança `DfeConsultaInvalidaError(cStat)`; `isPermanentPollError` passa a reconhecê-la ⇒ o job grava
-  `pollGaveUpAt` **na 1ª ocorrência**, alerta (`summary.gaveUp`, `logger.error`) e para; documento segue
+- (a) `consultarEAplicar` reconhece o código no resultado `PROCESSING` do adaptador e lança `DfeConsultaInvalidaError(cStat)`
+  (o adaptador segue puro; os outros 4 chamadores não mudam — item 12) ⇒ o job grava `pollGaveUpAt` **na 1ª
+  ocorrência**, alerta (`summary.gaveUp`, `logger.error`, ramo antes do `isDfeSkippableError`) e para; documento segue
   `SENT/PROCESSING`; consulta manual e re-arme (BRIEF de polling) seguem valendo. Reusa o mecanismo da Onda 4/4.1; sem
   coluna nova.
 - (b) Contar N ocorrências espaçadas antes de desistir (molde do 217). Mais complexo; esses códigos são determinísticos
@@ -221,15 +262,10 @@ cliente real até 2027, mas há dev/homologação).
   `@@unique`, renomear a(s) `DENIED` com `saleKey = saleId` na mesma tx antes de criar (idempotente; só `DENIED`).
 - (b) Migração de dado (`UPDATE … WHERE status='DENIED' AND saleKey=saleId`) — **S6 reprova** por desenho.
 - (c) Nenhuma: documentar que `DENIED` pré-existente em dev se resolve a mão; a tabela de produção nasce em 2027.
-- **Recomendação: (a)** se existir linha real em algum ambiente compartilhado; senão **(c)** com a evidência de
-  `SELECT count(*) FROM fiscal_documents WHERE status='DENIED' AND saleKey NOT LIKE 'denied:%'` colada no PR
-  (medição, não palpite — o BRIEF não mediu). **RATIFICAÇÃO PENDENTE.**
-
-**F-DEN-5 — Reemissão: operador pede por que rota?** A cédula diz "pela rota existente". Interpretação adotada (itens
-13-18): `POST /documents` com a venda (a mesma emissão), sem rota nova. Alternativa: `POST /documents/:id/reemitir`
-(amarra a nova à denegada via vínculo, como `substitutesDocumentId` da NFS-e). **Recomendação: a rota existente** (é o
-que a cédula diz; o vínculo denegada→substituta é derivável por `saleId`+`kind`). Marcado como fork **só** porque
-"rota existente" tem 2 leituras (emit × reenviar) e a escolhida precisa ser a do dono. **RATIFICAÇÃO PENDENTE.**
+- **Recomendação: (a)** — idempotente, só `DENIED`, sem migração de dado (S6) e sem depender de medir ambiente algum; a
+  invariante "`DENIED` sempre sai do `@@unique`" passa a valer também para a linha antiga. O BRIEF **não mediu** quantas
+  linhas existem (insumo ausente, §7); (c) só se o dono confirmar que nenhum ambiente compartilhado tem `DENIED`.
+  **RATIFICAÇÃO PENDENTE.**
 
 ### Decisões diretas (não são fork)
 
@@ -238,12 +274,15 @@ que a cédula diz; o vínculo denegada→substituta é derivável por `saleId`+`
   uma linha em `inutilizacao.ts:26` e **não desfaz** este BRIEF (reemitir com número novo vale nos dois casos — com
   número novo a premissa é irrelevante para o fluxo).
 - **D-DEN-B.** Texto ao operador neutro (cédula): nenhuma mensagem nova diz "número consumido".
-- **D-DEN-C.** `emitir` síncrono não muda (item 12).
+- **D-DEN-C.** `emitir` síncrono não muda (item 14).
+- **D-DEN-D.** A reemissão sai pela **rota existente** `POST /documents` (cédula: "pela rota existente"). Não é fork: "reemissão com
+  número novo" + `DENIED` fora de `REENVIAVEIS` (dono, 24/11, #1358) excluem a leitura "reenviar" (que reaproveitaria o número); o
+  vínculo denegada→substituta é derivável por `saleId`+`kind`.
 
 ## 5. Gates que o diff aciona (no checklist, não na improvisação)
 
-- `tsc` limpo (server + my-app se o enum de status crescer); snapshot de shape do DTO **só** se F-DEN-1 acrescentar status
-  (editar à mão); paridade i18n pt/en para `denegada_sem_substituta` e para o rótulo do novo status; guard de path-count
+- `tsc` limpo (server + my-app se o enum de status crescer); snapshot de shape do DTO **inalterado** (F-DEN-1 a grava `CANCELLED`, valor já existente);
+  paridade i18n pt/en para `denegada_sem_substituta`; guard de path-count
   do openapi (sem rota nova ⇒ igual); allowlist do `auditCanonical.ts` (sem eventType novo ⇒ igual).
 - `check:arch`: mudanças em repositório e serviço existentes, sem dependência nova entre camadas.
 - Classe de risco: **vermelha** (fiscal) — `node scripts/classe-risco.mjs pr <n>`; `revisor-independente` antes do lote
@@ -271,24 +310,29 @@ que a cédula diz; o vínculo denegada→substituta é derivável por `saleId`+`
 
 ## 9. Write-set (para a nota do nó e o paralelismo — PAR-002/005)
 
-**PR-0** (edita): `server/src/features/accounting/services/FiscalDocumentLifecycleService.ts`,
-`server/src/features/accounting/repositories/FiscalDocumentRepository.ts`,
-`server/src/features/accounting/repositories/IFiscalDocumentRepository.ts` (comentário),
-`server/src/features/accounting/dfe/sefaz/SefazNfeEmissor.ts`, `server/src/features/accounting/dfe/DfeEmissorPort.ts`
-(só se F-DEN-1 acrescentar status), `server/prisma/schema.prisma` (**só comentário**, linha 2364 — sem migração),
-`server/src/features/accounting/dtos/FiscalDocumentDto.ts` + `__dto-shapes__.json` + `my-app/types/contracts/accounting/FiscalDocumentDto.gen.ts`
-+ `my-app/features/accounting/components/dfe/dfeLabels.ts` + `my-app/public/locales/{pt,en}/accounting.json`
-(**só** se F-DEN-1 acrescentar status), testes `**/__tests__/*` das mesmas pastas.
-**PR-1** (edita): `FiscalDocumentRepository.ts` (`findLiveBySale`), `FiscalDocumentEmissionService.ts` (`attachPendencias`,
-auto-cura do F-DEN-4 a), `my-app/public/locales/{pt,en}/accounting.json`, testes.
-**Choke points da PAR-001:** `schema.prisma` (comentário apenas — avisar o lote), nenhum de `factory.ts`/`docs.paths.ts`.
-**Sobreposição com outros BRIEFs da mesma cédula:** `FiscalDocumentLifecycleService.ts:370-420` e `FiscalDocumentRepository.ts`
-(polling Onda 4) — o BRIEF "polling DF-e" (`polling-df-e-colunas-pr`) toca as mesmas regiões; **PRs de sessões diferentes
-não rodam em paralelo nesse arquivo** (um por vez, mesmo conjunto de arquivos).
-> Gravar `write_set`/`registros` no frontmatter de `docs/plano/nos/X10a.md` é do fold (a nota é de um nó com autorização
-> própria e `estado` é do fold; esta sessão não edita a nota).
+**PR-0** (edita): `server/src/features/accounting/services/FiscalDocumentLifecycleService.ts` (`applyResult`,
+`consultarEAplicar`, `VALID_RESULT_TRANSITIONS`, `pollPendingOnce`, `NAO_CONSTA`-vizinho), `…/repositories/FiscalDocumentRepository.ts`
+(`listContingenciaNaoAutorizada`), `…/repositories/IFiscalDocumentRepository.ts` (comentários), `…/dfe/sefaz/SefazNfeEmissor.ts`,
+`…/dfe/DfeEmissorPort.ts` (um status de **resultado**), `…/services/NfceContingenciaService.ts` (só se F-DEN-3 a),
+`server/prisma/schema.prisma` (**só comentário**, linha 2364 — sem migração), testes `**/__tests__/*` das mesmas pastas.
+**PR-1** (edita): `FiscalDocumentRepository.ts` (`findLiveBySale`), `FiscalDocumentEmissionService.ts` (`attachPendencias`
+`hasReplacement`, auto-cura do F-DEN-4 a), `my-app/public/locales/{pt,en}/accounting.json` (+ o rótulo da pendência em
+`my-app/features/accounting/components/dfe/dfeLabels.ts`), testes.
+**Choke points da PAR-001:** `schema.prisma` (comentário apenas — avisar o lote); nenhum de `factory.ts`/`docs.paths.ts`.
+**Sobreposição com outro BRIEF da mesma cédula:** `FiscalDocumentLifecycleService.ts:370-420` e `FiscalDocumentRepository.ts`
+(polling Onda 4) — o BRIEF "polling DF-e" (sessão `polling-df-e-colunas-pr`) toca as mesmas regiões, e o PR-1 dele (re-arme
+automático) **pode desfazer** o "para na 1ª ocorrência" do F-DEN-2 (a) para 252 e afins; registrado em nota na pasta de
+notas compartilhada. Um PR por vez nesse arquivo; quem chegar depois rebaseia.
+
+**Por que `write_set`/`registros` NÃO foram gravados no frontmatter de `docs/plano/nos/X10a.md`** (regra do dono, 16/10, que
+manda gravar): a lacuna tem `no: ""` e o vínculo ao X10a é **inferência desta sessão** (o `SefazNfeEmissor` é do X10a);
+a nota do X10a **não tem** `write_set` hoje e o rascunho de `paralelo.mjs sugerir X10a` devolve ~45 arquivos de 5 outros
+BRIEFs (inclusive `my-app/` e `dynamicTables/`) — gravar o conjunto deste BRIEF sozinho **declararia o nó inteiro** com
+um recorte parcial e mentiria para o lote. Fica para o fold do nó, que decide se este BRIEF é do X10a (PAR-002 tratará
+o nó como serial até lá). Isto é desvio declarado da regra, não omissão.
 
 ## 10. Dependências e ordem
 
-PR-0 → PR-1 (o PR-1 só faz sentido com o rename em `main`). PR-0 Bloco A+B pode ir sem esperar F-DEN-1/F-DEN-2; o Bloco C
-espera as duas respostas. Nada aqui depende do `9b9d`.
+PR-0 → PR-1 (o PR-1 só faz sentido com o rename em `main`). **Itens 1-4, 6-7 e 12 (sem exceção nova) não dependem de fork**
+e podem ir antes; item 5 e a auto-cura do PR-1 esperam F-DEN-4; item 8, F-DEN-3; itens 9-11 e 13, F-DEN-1/F-DEN-2.
+Nada aqui depende do `9b9d`.
