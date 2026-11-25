@@ -14,6 +14,9 @@ só no vermelho). Não cria revisor, gate nem rodada (regra ⛔ do CLAUDE.md): m
 `revisor-independente`, o jeito como a maestro o despacha e acrescenta o campo `revisor` ao `scripts/classe-risco.mjs`
 (a lista `VERMELHO` não muda).
 
+> **Emenda de 25/11:** achado fecha pela reprodução, sem rodada nova para o PR que o corrige, e o revisor lê o CI do SHA
+> em vez de rodar `tsc` e suíte de novo. Regra em [D-2026-11-25-MATRIZ-DE-LACUNAS](D-2026-11-25-MATRIZ-DE-LACUNAS.md) §8.
+
 ## De onde vêm as lições, e por que não se copiam
 
 Fonte: o texto de engenharia da equipe do Claude Code, "How the Claude Code team does code review" (claude.dev, 15/10/2026,

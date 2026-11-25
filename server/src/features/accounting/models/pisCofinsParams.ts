@@ -25,9 +25,6 @@ export interface ParametroPisCofins {
   vigenteAte: string; // YYYY-MM-DD, inclusive
 }
 
-/** Revogação (LC 214/2025 art. 542; art. 544 III). O último dia (2026-12-31) é o `vigenteAte` das linhas `PIS_COFINS`. */
-export const PIS_COFINS_REVOGACAO_FONTE = 'LC 214/2025 art. 542 (efeito: art. 544 III)';
-
 /**
  * BE-INCR-LEGAL-PARAMS PR-1 (F-LP-4 a) — fotografia das linhas `PIS_COFINS` em vigor (chave = tributo, discriminador
  * = modalidade, `valorInt` = alíquota em bp), montada pelo serviço. As linhas em código saíram na migração. PR-2: o

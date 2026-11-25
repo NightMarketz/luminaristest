@@ -65,7 +65,8 @@ describe('DpCadastrosDto', () => {
     expect(ok.success && ok.data.valorInt).toBe(180000n);
     expect(CreateConvencaoParametroSchema.safeParse({ ...p, chave: 'ADICIONAL_NOTURNO_BP' }).success).toBe(false);
     expect(CreateConvencaoParametroSchema.safeParse({ ...p, valorInt: '0' }).success).toBe(false);
-    expect(CreateConvencaoParametroSchema.safeParse({ ...p, valorInt: '2147483648' }).success).toBe(false);
+    expect(CreateConvencaoParametroSchema.safeParse({ ...p, valorInt: '8796093022208' }).success).toBe(false); // MAX_CENTS (2^43−1, F-W2B-2 b) + 1
+    expect(CreateConvencaoParametroSchema.safeParse({ ...p, valorInt: '8796093022207' }).success).toBe(true); // = MAX_CENTS
     expect(CreateConvencaoParametroSchema.safeParse({ ...p, clausula: '' }).success).toBe(false);
     expect(CreateConvencaoParametroSchema.safeParse({ ...p, discriminador: undefined }).success).toBe(false);
   });

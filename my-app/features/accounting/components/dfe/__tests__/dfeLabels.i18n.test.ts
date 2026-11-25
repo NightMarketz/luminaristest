@@ -37,3 +37,23 @@ describe.each(['pt', 'en'])('i18n dfe (%s)', (loc) => {
     expect(get(acc, campoKey('toma.doc'))).toBe(CAMPO_LABEL['toma.doc']);
   });
 });
+
+/**
+ * Decisão do dono (24/11, ressalva do #1358): o texto de DENIED NÃO afirma que o número da nota foi consumido — o acervo
+ * `ctresb/leis` não traz "denegada" e a afirmação não se verifica sem oráculo externo. Diz só que a SEFAZ denegou o uso e
+ * orienta a conferir a nota / a situação do emitente.
+ */
+describe('DENIED: texto neutro, sem afirmar número consumido', () => {
+  const textos: Array<[string, string]> = [
+    ['STATUS_LABEL (fallback pt)', STATUS_LABEL.DENIED],
+    ['pt/accounting.json', String(get(load('pt', 'accounting'), 'dfe.status.DENIED'))],
+    ['en/accounting.json', String(get(load('en', 'accounting'), 'dfe.status.DENIED'))],
+  ];
+  it.each(textos)('%s não afirma consumo do número', (_origem, texto) => {
+    expect(texto).not.toMatch(/consumid|consumed/i);
+  });
+  it('pt e en orientam a conferir a nota / o emitente', () => {
+    expect(String(get(load('pt', 'accounting'), 'dfe.status.DENIED'))).toMatch(/confira|conferir/i);
+    expect(String(get(load('en', 'accounting'), 'dfe.status.DENIED'))).toMatch(/check/i);
+  });
+});

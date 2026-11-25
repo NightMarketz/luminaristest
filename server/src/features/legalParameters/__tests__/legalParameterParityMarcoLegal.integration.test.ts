@@ -5,7 +5,7 @@
  * de novo: o cálculo recusa sem a linha (fail-closed).
  */
 import { pushTestSchema, resetDb, disconnectDb } from '@test/helpers';
-import { LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, legalParamsSeedRows } from '@test/helpers/legalParams';
+import { LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL_V2, legalParamsSeedRows } from '@test/helpers/legalParams';
 import { getFactory } from '@/lib/factory';
 import { erroDeFormato } from '../models/formatoLinha';
 import { ParametroLegalAusenteError, type LinhaLegal } from '../models/legalParameter';
@@ -25,10 +25,13 @@ describe('Onda 3.2 fatia 4 — paridade MARCO_LEGAL: semente × banco migrado', 
   afterAll(() => disconnectDb());
 
   it('o banco tem exatamente as linhas da semente (id, chave, valor, fonte, vigência, status)', () => {
-    const semente = legalParamsSeedRows(LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL);
+    const semente = legalParamsSeedRows([LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL, LEGAL_PARAMS_SEED_FILE_MARCO_LEGAL_V2]); // v1 (RBT12) + v2 (ressalva #1363: opção IBS/CBS no DAS, fim do caixa, IBS municipal)
     const pick = (l: LinhaLegal) => ({ id: l.id, tabela: l.tabela, chave: l.chave, discriminador: l.discriminador, valorTexto: l.valorTexto, fonte: l.fonte, vigenteDesde: l.vigenteDesde, vigenteAte: l.vigenteAte, status: l.status });
     expect(fot.map(pick).sort((a, b) => a.id.localeCompare(b.id))).toEqual(semente.map(pick).sort((a, b) => a.id.localeCompare(b.id)));
-    expect(fot.length).toBeGreaterThan(0);
+    expect(fot.length).toBe(4);
+    expect(dataDoMarco(fot, 'INICIO_OPCAO_IBS_CBS_DAS', '2026-06-01')).toBe('2027-01-01');
+    expect(dataDoMarco(fot, 'FIM_REGIME_CAIXA_SIMPLES', '2026-06-01')).toBe('2027-01-01');
+    expect(dataDoMarco(fot, 'INICIO_IBS_MUNICIPAL', '2026-06-01')).toBe('2027-01-01');
   });
 
   it('o marco lido do banco é o do literal antigo (2027-01) e toda linha passa no formato e tem fonte', () => {

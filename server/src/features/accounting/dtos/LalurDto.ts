@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { MAX_CENTS } from '../models/money';
 import { isValidDateOnly } from '../models/dates';
 import { queryBoolean } from './queryPrimitives';
+import { CNPJ_REGEX, isValidCnpj } from '../../../lib/cnpj';
 import {
   LALUR_IND_LAN_ANT,
   LALUR_IND_PROC,
@@ -161,7 +162,7 @@ export function refineLalurLine(l: LineShape, ctx: z.RefinementCtx): void {
  *         quarter:        { type: string, enum: [T01, T02, T03, T04, A00, A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A12] }
  *         livro:          { type: string, enum: [lalur, lacs, n500, n620, n630, n660, n670], description: "lalur=M300 (IRPJ) · lacs=M350 (CSLL) · n500/n620/n630/n660/n670 = linhas E do Bloco N. n620/n660 só em A01..A12 e, até o catálogo N620/N660 entrar (X7 Fase B PR-4), todo write nelas é 400; n630/n670 só em T0x/A00" }
  *         codigo:         { type: string, description: "Código da linha na Tabela Dinâmica (aba M300A/M350A/N500/N620/N630A/N660/N670). Só linha tipo E, vigente no ano — senão 400 com código e motivo." }
- *         valorCents:     { type: integer, minimum: 0, maximum: 2147483647, description: "Sempre ≥ 0 — a direção (adição/exclusão) vem do TIPO_LANCAMENTO derivado do catálogo (Manual p.244)." }
+ *         valorCents:     { type: integer, minimum: 0, maximum: 8796093022207, description: "Sempre ≥ 0 — a direção (adição/exclusão) vem do TIPO_LANCAMENTO derivado do catálogo (Manual p.244)." }
  *         histLancamento: { type: string, maxLength: 500, description: "M300.HIST_LAN_LAL; obrigatório com indRelacao=4; proibido em livro N" }
  *         indRelacao:     { type: string, enum: ['1','2','3','4'], description: "M300.IND_RELACAO — obrigatório em lalur/lacs, proibido em livro N. 1=Parte B · 2=conta contábil · 3=ambas · 4=sem relacionamento" }
  *         parteBId:       { type: string, description: "id de LalurParteBAccount (M305/M355) — obrigatório com indRelacao 1 ou 3; tributo da conta tem de casar com o livro" }
@@ -242,7 +243,7 @@ export const ListLalurEntriesQuerySchema = z.object({
  *         codTributo:    { type: string, enum: [I, C], description: "M010.COD_TRIBUTO — I=IRPJ (e-Lalur) · C=CSLL (e-Lacs)" }
  *         saldoIniCents: { type: integer, minimum: 0, description: "M010.VL_SALDO_INI em centavos, sinal em indSaldoIni" }
  *         indSaldoIni:   { type: string, enum: [D, C], description: "M010.IND_VL_SALDO_INI" }
- *         cnpjSitEsp:    { type: string, description: "M010.CNPJ_SIT_ESP — 14 dígitos, opcional" }
+ *         cnpjSitEsp:    { type: string, description: "M010.CNPJ_SIT_ESP — 14 posições (CNPJ alfanumérico), opcional" }
  */
 export const CreateLalurParteBAccountSchema = z
   .object({
@@ -255,7 +256,10 @@ export const CreateLalurParteBAccountSchema = z
     codTributo: z.enum(LALUR_TRIBUTOS),
     saldoIniCents: cents('saldoIniCents'),
     indSaldoIni: z.enum(LALUR_IND_SALDO),
-    cnpjSitEsp: z.string().regex(/^\d{14}$/, 'cnpjSitEsp = 14 dígitos').optional(),
+    cnpjSitEsp: z
+      .string()
+      .regex(CNPJ_REGEX, 'cnpjSitEsp = CNPJ de 14 posições [A-Z0-9]{12}[0-9]{2}, sem máscara')
+      .refine(isValidCnpj, 'cnpjSitEsp: dígito verificador inválido').optional(),
   })
   .strict();
 
@@ -285,7 +289,10 @@ export const UpdateLalurParteBAccountSchema = z
     dtLimite: dateOnly('dtLimite').nullable().optional(),
     saldoIniCents: cents('saldoIniCents').optional(),
     indSaldoIni: z.enum(LALUR_IND_SALDO).optional(),
-    cnpjSitEsp: z.string().regex(/^\d{14}$/, 'cnpjSitEsp = 14 dígitos').nullable().optional(),
+    cnpjSitEsp: z
+      .string()
+      .regex(CNPJ_REGEX, 'cnpjSitEsp = CNPJ de 14 posições [A-Z0-9]{12}[0-9]{2}, sem máscara')
+      .refine(isValidCnpj, 'cnpjSitEsp: dígito verificador inválido').nullable().optional(),
   })
   .strict();
 

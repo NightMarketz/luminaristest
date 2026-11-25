@@ -2,8 +2,7 @@ import { createHash } from 'crypto';
 import type { BankStatement, BankStatementLine, Prisma } from 'generated/prisma';
 import { ForbiddenError, NotFoundError, ServiceError, ValidationError } from '../../../lib/errors';
 import { parseTable, type InTable } from '../../../lib/spreadsheet';
-import { parseOfx, type StatementFormat } from '../../../lib/ofx';
-import { parseCnab } from '../../../lib/cnab';
+import type { StatementParser } from '../ports/LedgerPorts';
 import type { IReconciliationRepository } from '../repositories/IReconciliationRepository';
 import type { IAccountRepository } from '../repositories/IAccountRepository';
 import type { IAccountingPolicy } from '../policies/IAccountingPolicy';
@@ -15,6 +14,7 @@ import type {
   CandidatePosting,
   CreateBankStatementLineInput,
   ReconciliationMatchType,
+  StatementFormat,
 } from '../models/Reconciliation.model';
 import type {
   ImportBankStatementDto,
@@ -97,6 +97,8 @@ export class ReconciliationService {
     private readonly accountRepo: IAccountRepository,
     private readonly policy: IAccountingPolicy,
     private readonly audit: AuditService,
+    /** Onda 1.2: OFX/CNAB (formatos de banco/país) entram pela porta; CSV/XLSX seguem no `lib/spreadsheet`. Adaptador na factory. */
+    private readonly statementParser: StatementParser,
   ) {}
 
   // ── Import (§4.1) ─────────────────────────────────────────────────────────
@@ -130,9 +132,9 @@ export class ReconciliationService {
     const table = preParsed
       ? preParsed.table
       : file.format === 'ofx'
-        ? parseOfx(file.buffer)
+        ? this.statementParser.parse('ofx', file.buffer)
         : file.format === 'cnab'
-          ? parseCnab(file.buffer)
+          ? this.statementParser.parse('cnab', file.buffer)
           : await parseTable(file.buffer, file.format);
     const parsedLines = this.parseLines(scope, table);
     if (parsedLines.length === 0) {

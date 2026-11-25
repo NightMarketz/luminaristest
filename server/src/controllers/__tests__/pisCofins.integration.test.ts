@@ -255,7 +255,7 @@ describe('X8 PR-2 — apuração mensal de PIS/Cofins: prévia, confirmação, l
     const dono = await novoDono('PRESUMIDO');
     const em2027 = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2027, periodo: 'M01' });
     expect(em2027.status).toBe(400);
-    expect(corpo(em2027)).toContain('LC 214/2025 art. 542');
+    expect(corpo(em2027)).toContain('fonte da linha: IN RFB 2.121/2022');
 
     const semPerfil = await request(app).post(`${BASE}/pis-cofins/preview`).set(authHeader(dono)).send({ unitId: dono.unitId, anoCalendario: 2025, periodo: 'M12' });
     expect(semPerfil.status).toBe(400);

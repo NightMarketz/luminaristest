@@ -25,6 +25,8 @@ import type { LegalParameterService } from '../../legalParameters/services/Legal
 import type { CondicoesPerfil, ObrigacaoSped, StatusObrigacao } from '../models/obrigacoesPorRegime';
 import type { RegimeEmpresa } from '../models/regimeEmpresa';
 import { TABELA_ANEXO_XI, chavesInexistentes } from '../models/meiAnexoXi';
+import { anoComecaNoOuDepoisDoMarco, anoTerminaAntesDoMarco, dataDoMarco, inicioOpcaoIbsCbsDasCompetencia, rotuloDoMarco } from '../models/marcoLegal';
+import type { LinhaLegal } from '../../legalParameters/models/legalParameter';
 import type { PresumidoTetoService } from './PresumidoTetoService';
 
 export const COMPANY_FISCAL_PROFILE_UPDATED = 'company_fiscal_profile.updated';
@@ -169,11 +171,17 @@ export class CompanyFiscalProfileService {
   async upsert(scope: AccountingScope, ano: number, input: UpsertCompanyFiscalProfileInput): Promise<CompanyFiscalProfileUpsertView> {
     this.assertManage(scope);
     const data = toData(input);
-    // X14 PR-2 item 14: a opção do IBS/CBS no DAS existe a partir de 2027 (LC 123 art. 13 §§ 9º–10, red. LC 214).
-    if (ano < 2027 && (data.ibsCbsOpcaoS1 !== null || data.ibsCbsOpcaoS2 !== null)) {
-      throw new ValidationError(`A opção do IBS/CBS por semestre só existe a partir de 2027 (perfil de ${ano}).`);
+    // X14 PR-2 item 14: a opção do IBS/CBS no DAS existe a partir do marco INICIO_OPCAO_IBS_CBS_DAS (LC 214 art. 517 + 544 III;
+    // LC 123 art. 13 §§ 9º a 11). Onda 3.2 (#1363): o marco vem da tabela MARCO_LEGAL, lido só quando há opção no payload.
+    if (data.ibsCbsOpcaoS1 !== null || data.ibsCbsOpcaoS2 !== null) {
+      const inicioOpcao = dataDoMarco(await this.legalParams.fotografia(['MARCO_LEGAL']), 'INICIO_OPCAO_IBS_CBS_DAS', `${ano}-01-01`);
+      if (anoTerminaAntesDoMarco(ano, inicioOpcao)) {
+        throw new ValidationError(`A opção do IBS/CBS por semestre só existe a partir de ${rotuloDoMarco(inicioOpcao)} (perfil de ${ano}).`);
+      }
     }
-    assertCaixaAte2026(ano, data);
+    if (data.simplesRegimeApuracao === 'CAIXA') {
+      assertCaixaAntesDoFim(ano, data, dataDoMarco(await this.legalParams.fotografia(['MARCO_LEGAL']), 'FIM_REGIME_CAIXA_SIMPLES', `${ano}-01-01`));
+    }
     // SIMPLES-PISO-ANEXO-XI item 12 (decisões 2 e 4 do dono, chat, 10/10): campo opcional, mas chave que veio e não existe
     // no Anexo XI (Res. CGSN 140 art. 100 caput e § 1º-C I) ⇒ 400. A vigência na competência é checada na apuração.
     if (input.meiOcupacoes) {
@@ -326,6 +334,8 @@ export class CompanyFiscalProfileService {
    */
   async copyFrom(scope: AccountingScope, ano: number, anoAnterior: number): Promise<CompanyFiscalProfileView> {
     this.assertManage(scope);
+    // Onda 3.2 (#1363): a fotografia dos marcos é lida ANTES da tx (leitura de dado legal, fora do SQLite em escrita); só vira erro se o perfil copiado usar o caixa.
+    const marcos = await this.legalParams.fotografia(['MARCO_LEGAL']);
     return this.repo.runTransaction(async (tx) => {
       const origem = await this.repo.findByYear(scope, anoAnterior, tx);
       if (!origem) throw new NotFoundError(`company_fiscal_profile_missing: sem perfil fiscal da empresa para ${anoAnterior}.`);
@@ -334,7 +344,7 @@ export class CompanyFiscalProfileService {
       }
       // PRESUMIDO-TETO-78MI item 5 (invariante 7): a receita declarada é do ano de origem — nunca se copia.
       const data: CompanyFiscalProfileData = { ...rowToData(origem), ecdNumOrd: null, receitaTotalAnoAnteriorCents: null };
-      assertCaixaAte2026(ano, data);
+      if (data.simplesRegimeApuracao === 'CAIXA') assertCaixaAntesDoFim(ano, data, dataDoMarco(marcos, 'FIM_REGIME_CAIXA_SIMPLES', `${ano}-01-01`));
       // X7 Fase B PR-4 (item 2 + achado do review, decisão do dono 05/10): o ano sem perfil é TRIMESTRAL no e-Lalur.
       await this.assertTrocaDeFormaSemLalur(scope, ano, null, data, tx);
       await this.assertRefs(scope, data, tx);
@@ -497,8 +507,9 @@ export class CompanyFiscalProfileService {
  * X14 PR-2 item 14 (F-SN-11 → a) — IBS e CBS entram no DAS da competência? Antes de 2027 não existem; a partir daí,
  * sim, salvo opção REGULAR no semestre (LC 123 art. 13 §§ 9º–10, red. LC 214). Lido pela apuração (PR-3).
  */
-export function ibsCbsNoDas(perfil: { ibsCbsOpcaoS1: string | null; ibsCbsOpcaoS2: string | null } | null, competencia: string): boolean {
-  if (competencia < '2027-01') return false;
+export function ibsCbsNoDas(perfil: { ibsCbsOpcaoS1: string | null; ibsCbsOpcaoS2: string | null } | null, competencia: string, marcos: readonly LinhaLegal[]): boolean {
+  // marco INICIO_OPCAO_IBS_CBS_DAS (LC 214 art. 517 + 544 III); sem linha ⇒ PARAMETRO_LEGAL_AUSENTE, nunca um default em código
+  if (competencia < inicioOpcaoIbsCbsDasCompetencia(marcos, `${competencia}-01`)) return false;
   const opcao = Number(competencia.slice(5, 7)) <= 6 ? perfil?.ibsCbsOpcaoS1 : perfil?.ibsCbsOpcaoS2;
   return opcao !== 'REGULAR';
 }
@@ -538,13 +549,14 @@ function assertFormaNaoTravada(atual: CompanyFiscalProfile, data: CompanyFiscalP
 }
 
 /**
- * X14-CAIXA item 2 — o regime de caixa acaba em 01/01/2027: a Res. CGSN 190/2026 dá ao art. 16 caput da Res. CGSN 140 a
- * redação "receita bruta total mensal auferida" (art. 1º) e revoga o art. 16 § 1º e o art. 19 (art. 8º IX e XII).
+ * X14-CAIXA item 2 — o regime de caixa acaba no marco `FIM_REGIME_CAIXA_SIMPLES` (01/01/2027): a Res. CGSN 190/2026 dá ao art. 16
+ * caput da Res. CGSN 140 a redação "receita bruta total mensal auferida" (art. 1º) e revoga o art. 16 § 1º e os arts. 19 e 20
+ * (art. 8º IX e XII), com efeitos pelo art. 9º II (red. Res. CGSN 196/2026). O marco vem da tabela (Onda 3.2, #1363).
  */
-function assertCaixaAte2026(ano: number, data: CompanyFiscalProfileData): void {
-  if (ano >= 2027 && data.simplesRegimeApuracao === 'CAIXA') {
+function assertCaixaAntesDoFim(ano: number, data: CompanyFiscalProfileData, fimCaixa: string): void {
+  if (anoComecaNoOuDepoisDoMarco(ano, fimCaixa) && data.simplesRegimeApuracao === 'CAIXA') {
     throw new ValidationError(
-      `O regime de caixa do Simples Nacional não existe a partir de 2027 (perfil de ${ano}): a Res. CGSN 190/2026 dá ao art. 16 da Res. CGSN 140 a redação "receita bruta total mensal auferida" (art. 1º) e revoga o art. 16 § 1º e o art. 19 (art. 8º IX e XII).`,
+      `O regime de caixa do Simples Nacional não existe a partir de ${rotuloDoMarco(fimCaixa)} (perfil de ${ano}): a Res. CGSN 190/2026 dá ao art. 16 da Res. CGSN 140 a redação "receita bruta total mensal auferida" (art. 1º) e revoga o art. 16 § 1º e os arts. 19 e 20 (art. 8º IX e XII), com efeitos pelo art. 9º II (red. Res. CGSN 196/2026).`,
     );
   }
 }

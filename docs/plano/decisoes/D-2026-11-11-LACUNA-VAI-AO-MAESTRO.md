@@ -5,7 +5,7 @@ dominio: "processo"
 titulo: "Lacuna, débito ou achado fora de escopo que uma sessão encontra vai à caixa do maestro, e o maestro abre a sessão que o resolve"
 estado: "decided"
 autorizacao: "dono, chat, 2026-11-11: \"se as sessões que estão realizando tarefas acharem lacunas, elas precisam enviar essas lacunas já direto pro orquestrador e o orquestrador já vai lançar outras sessões que vão resolver essas lacunas que ficaram. Senão fica lá esperando parado e perdendo tempo.\""
-atualizado: "2026-11-21"
+atualizado: "2026-11-25"
 ---
 # D-2026-11-11-LACUNA-VAI-AO-MAESTRO
 
@@ -79,6 +79,16 @@ destino`. Nenhuma lacuna aberta sai do dia sem destino: ou tem sessão, ou PR, o
 - Fork de verdade continua do dono; o maestro não ratifica BRIEF nem escolhe produto, lei ou arquitetura.
 - A moratória de aparato de auditoria (`CLAUDE.md` §⛔): a caixa é fila de trabalho, não rodada de descoberta. Sessão
   nenhuma sai **procurando** lacuna; registra a que apareceu no caminho da tarefa.
+
+> **Emenda de 25/11 (critério de entrada):** todo `add` leva `--gravidade <bug|gate|fiscal|melhoria|nit|estilo>`; a meta
+> do dreno é zerar bug, gate e fiscal, não a caixa inteira; nit e estilo ficam na caixa fora da contagem e não abrem
+> sessão. Regra em [D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA](D-2026-11-25-CRITERIO-DE-ENTRADA-DA-CAIXA.md).
+>
+> **Emenda de 25/11 (matriz):** o rótulo único e a meta bug/gate/fiscal deram lugar à matriz de 6 eixos, com prioridade
+> P0–P3 derivada e meta P0 + P1 + P2 fiscal. Regra em [D-2026-11-25-MATRIZ-DE-LACUNAS](D-2026-11-25-MATRIZ-DE-LACUNAS.md).
+>
+> **Emenda de 25/11 (admissão):** a tabela §2 só despacha a meta, fork e gate; o resto vai ao backlog que o dono revê por
+> semana, filha fora da meta não entra e geração > 2 vai ao dono. Regra na MATRIZ §7 e §8b.
 
 ## Emenda de 11/11: em todo lugar (OPS-007)
 

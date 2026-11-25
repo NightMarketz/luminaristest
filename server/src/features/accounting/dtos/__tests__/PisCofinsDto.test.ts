@@ -14,7 +14,7 @@ describe('PisCofinsPreviewSchema / PisCofinsConfirmSchema', () => {
   });
 
   // Onda 3.2: o fim do PIS/Cofins é a ausência de linha `PIS_COFINS` vigente — quem recusa 2027 é `parametrosDoMes` no
-  // serviço (400 citando LC 214 art. 542; provado em ibsCbsViradaPorLinhas.test). O schema só mantém o piso e o formato.
+  // serviço (400 citando a `fonte` da linha; provado em ibsCbsViradaPorLinhas.test). O schema só mantém o piso e o formato.
   it('2027 passa o schema (a revogação vem das linhas, no serviço); 2024 e período fora de M01..M12 ⇒ 400', () => {
     expect(PisCofinsPreviewSchema.safeParse({ ...base, anoCalendario: 2027 }).success).toBe(true);
     expect(PisCofinsPreviewSchema.safeParse({ ...base, anoCalendario: 2024 }).success).toBe(false);

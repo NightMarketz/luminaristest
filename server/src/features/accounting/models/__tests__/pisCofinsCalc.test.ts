@@ -107,7 +107,7 @@ describe('apurarPisCofinsMensal', () => {
   });
 
   it('23 (e) 2027-01 ⇒ 400 (revogados — LC 214 art. 542); SIMPLES/MEI ⇒ 400 (DAS); regime → modalidade', () => {
-    expect(() => apurarPisCofinsMensal(entrada({ ano: 2027, periodo: 'M01' }))).toThrow(/revogados.*LC 214\/2025 art\. 542/);
+    expect(() => apurarPisCofinsMensal(entrada({ ano: 2027, periodo: 'M01' }))).toThrow(/revogados a partir de 2027-01 \(fonte da linha: IN RFB 2\.121\/2022/);
     expect(() => modalidadeDoRegime('SIMPLES')).toThrow(/DAS/);
     expect(() => modalidadeDoRegime('MEI')).toThrow(/DAS/);
     expect([modalidadeDoRegime('PRESUMIDO'), modalidadeDoRegime('REAL')]).toEqual(['CUMULATIVO', 'NAO_CUMULATIVO']);

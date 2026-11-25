@@ -12,6 +12,32 @@ const FEATURE_LOGIC = '^src/features/[^/]+/(?!models/).+';
 const FISCAL_LIB =
   '^src/lib/(sped|ecf|ecfReal|nfe|nfeCost|nfeSignature|nfse|nfseEvento|nfseReadback|nfseSignature|mit|cnab|ofx|cnpj|cpf|referentialCatalog)\\.ts$';
 
+// Onda 1.2 (ADR-ARCH-BOUNDARIES §1.2) — NÚCLEO DO RAZÃO: os serviços que escrevem/guardam o razão e os repositórios dele.
+const LEDGER_CORE =
+  '^src/features/accounting/(' +
+  'services/(PostingService|PeriodService|AuditService|ExerciseClosingService|ReconciliationService)' +
+  '|repositories/I?(JournalEntry|Posting|Account|AccountingPeriod|Audit|Reconciliation|SourceProvenance)Repository' +
+  ')\\.ts$';
+// O que o núcleo do razão PODE importar (lista fechada). Fiscal/localização (`paises/`, Tax*/Lalur*/Simples*/Sped*/Nfe*…, `lib/ofx|cnab|sped|ecf…`)
+// nunca está aqui: entra por porta (`ports/LedgerPorts.ts`) com adaptador em `paises/br/` montado só em `lib/factory.ts`.
+const LEDGER_CORE_ALLOWED =
+  '^src/features/accounting/(' +
+  'audit/' +
+  '|dtos/(PostingDto|ReconciliationDto)\\.ts' +
+  // Resíduo declarado: o plano de contas padrão (CANONICAL_ACCOUNTS) ainda é dado do Brasil dentro do núcleo — vai para
+  // `paises/br/` em fatia própria (lacuna na caixa; ADR-ARCH-BOUNDARIES §1.2). As regras da ECD já saíram.
+  '|fixtures/ChartOfAccountsFixture\\.ts' +
+  // `AccountantAssignment.model`: contador responsável por escopo (GOV-CONTADOR) é núcleo, não fiscal; `ActiveAccountant` mora aqui desde
+  // o PR-1a do MODULE-BOUNDARIES (#1375), de onde o `PeriodService` o importa (antes vinha de `policies/IAccountingPolicy`).
+  '|models/(AccountantAssignment\\.model|Reconciliation\\.model|closing|dates|ledgerStatus|money)\\.ts' +
+  '|policies/IAccountingPolicy\\.ts' +
+  '|ports/LedgerPorts\\.ts' +
+  '|repositories/I?(Account|AccountantAssignment|AccountingPeriod|Audit|Counterparty|Dimension|JournalEntry|Posting|Reconciliation|SourceProvenance)Repository\\.ts' +
+  '|scope/' +
+  '|services/(AuditService|PostingService|dimensionTagging)\\.ts' +
+  ')' +
+  '|^src/lib/(errors|logger|prisma|spreadsheet)\\.ts$';
+
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
   forbidden: [
@@ -109,6 +135,19 @@ module.exports = {
         'Prisma/HTTP. Podem ler features/*/models/ (dado puro).',
       from: { path: FISCAL_LIB },
       to: { path: `(${FEATURE_LOGIC}|${PRISMA}|^src/controllers/|^src/routes/)` },
+    },
+    // ---- Onda 1.2: núcleo do razão fechado para fiscal/localização ----
+    {
+      name: 'C1-ledger-core-not-fiscal',
+      severity: 'error',
+      comment:
+        'Onda 1.2 (dono, 24/11/2026; F-PB-1 a, ADR-PAIS-NA-BORDA): o núcleo do razão (PostingService, PeriodService, AuditService, ' +
+        'ExerciseClosingService, ReconciliationService e os repositórios do razão) só importa a lista fechada LEDGER_CORE_ALLOWED. ' +
+        'Fiscal e localização (paises/**, TaxAssessment*, ILalurRepository, lib/ofx|cnab|sped|ecf…, regras do Manual da ECD) entram por ' +
+        'porta de ports/LedgerPorts.ts, com adaptador em paises/br/ montado só no lib/factory.ts. Import type conta. Nasce em 0: nunca ' +
+        'entra no known-violations; precisar de algo novo = emenda datada no ADR com a porta, não item na lista.',
+      from: { path: LEDGER_CORE },
+      to: { path: '^src/', pathNot: LEDGER_CORE_ALLOWED },
     },
     // ---- lib/ é infraestrutura ----
     {

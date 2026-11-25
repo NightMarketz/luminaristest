@@ -61,8 +61,8 @@ const dateOnly = z
  *         statementRef: { type: string, nullable: true }
  *         periodStart: { type: string, format: date }
  *         periodEnd: { type: string, format: date }
- *         openingBalanceCents: { type: integer, nullable: true, minimum: -2147483647, maximum: 2147483647, description: "Signed integer cents (a closing balance can be negative — overdraft). POLICY ceiling in both directions (not a persistence limit — the column is BigInt since BE-INCR-MONEY-BIGINT): outside this range the API returns 400." }
- *         closingBalanceCents: { type: integer, nullable: true, minimum: -2147483647, maximum: 2147483647, description: "Signed integer cents. Same POLICY ceiling as openingBalanceCents (see above)." }
+ *         openingBalanceCents: { type: integer, nullable: true, minimum: -8796093022207, maximum: 8796093022207, description: "Signed integer cents (a closing balance can be negative — overdraft). POLICY ceiling in both directions (not a persistence limit — the column is BigInt since BE-INCR-MONEY-BIGINT): outside this range the API returns 400." }
+ *         closingBalanceCents: { type: integer, nullable: true, minimum: -8796093022207, maximum: 8796093022207, description: "Signed integer cents. Same POLICY ceiling as openingBalanceCents (see above)." }
  *         format: { type: string, enum: [mp_release], nullable: true, description: "F5 PR-3 (G6): opcional; vazio = formato detectado pelo conteúdo. mp_release = relatório de liberações do Mercado Pago da conta de provedor desta folha (sem conta ⇒ 409; saldos vêm só do arquivo — informar saldo ⇒ 400)." }
  *         file: { type: string, format: binary }
  */

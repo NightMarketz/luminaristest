@@ -99,6 +99,27 @@ export interface PollStatePatch {
   nextPollAt?: Date | null;
   pollGaveUpAt?: Date | null;
   pollLastError?: string | null;
+  /** Lacuna 6e13 — episódio de adiamento por transporte indisponível (início e "alertado"); `null` encerra. */
+  pollDeferredSince?: Date | null;
+  pollAlertedAt?: Date | null;
+}
+
+/**
+ * Ressalva (c) do revisor do #1414 — estado que a escrita CONDICIONAL do marcador exige ainda valer no momento da gravação
+ * (a releitura anterior pode estar velha: uma consulta que deu certo zera o controle de falha entre a releitura e a escrita).
+ * Todos os campos dados são conjuntivos (AND no `where`).
+ */
+export interface PollStateGuard {
+  /** O documento ainda está nestes status. */
+  statusIn: readonly FiscalDocumentStatus[];
+  /** `null` ⇒ exige `pollGaveUpAt` ainda nulo / `pollAlertedAt` ainda nulo. */
+  pollGaveUpAt?: null;
+  pollAlertedAt?: null;
+  /** `true` ⇒ exige `pollLastError` ainda preenchido (a falha que originou o alerta). */
+  hasPollLastError?: true;
+  /** Compare-and-set do ESTADO que originou o alerta: mesma contagem de tentativas / mesmo início de episódio de adiamento. */
+  pollAttempts?: number;
+  pollDeferredSince?: Date;
 }
 
 export interface TransitionData {
@@ -234,6 +255,17 @@ export interface IFiscalDocumentRepository {
    * para o fim do rodízio. `false` se o documento não existe mais no escopo.
    */
   updatePollState(scope: AccountingScope, id: string, patch: PollStatePatch, tx?: Prisma.TransactionClient): Promise<boolean>;
+  /**
+   * `updatePollState` numa ÚNICA escrita condicional (`updateMany` com o estado esperado no `where`): só grava se o documento
+   * AINDA está no estado que originou a escrita (`guard`). `false` se não gravou (estado mudou, ou o documento não existe mais).
+   */
+  updatePollStateWhen(scope: AccountingScope, id: string, guard: PollStateGuard, patch: PollStatePatch, tx?: Prisma.TransactionClient): Promise<boolean>;
+  /**
+   * Lacuna 2374 — os documentos vivos destes ids, de qualquer escopo (mesmo desenho de `listPending`: o job não tem escopo, o
+   * escopo sai de cada linha). Serve à confirmação de alerta entregue, que precisa do escopo de cada linha para gravar o
+   * marcador (a decisão de gravar é da escrita condicional `updatePollStateWhen`, não desta leitura).
+   */
+  findManyByIds(ids: readonly string[], tx?: Prisma.TransactionClient): Promise<FiscalDocument[]>;
   /**
    * BE-INCR-DFE-EVENTOS (PR-2, item 18) — alvo da consulta de eventos: NFS-e `AUTHORIZED*` vivas, com chave, e com
    * `nfseDhProc >= desde` (o teto de 2 anos, Anexo I [114]), de todas as unidades (mesmo desenho de `listPending`). Vêm

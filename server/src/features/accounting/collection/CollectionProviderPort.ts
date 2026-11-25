@@ -91,11 +91,15 @@ export class CollectionProviderError extends Error {
   }
 }
 
+/** Onde a consulta roda — o mesmo `getCharge` tem política de rede diferente (`OUTBOUND_POLICY`). */
+export type CollectionCallContext = 'webhook' | 'job';
+
 export interface CollectionProviderPort {
   readonly name: 'MERCADO_PAGO' | 'NULL';
   readonly capabilities: CollectionCapabilities;
   createCharge(account: ResolvedAccount, input: CreateChargeInput): Promise<ChargeResult>;
-  getCharge(account: ResolvedAccount, providerRef: string): Promise<ChargeResult>;
+  /** `context` escolhe a política de rede: `webhook` = 1 tentativa (o MP espera 22 s); `job` (padrão) = 2 tentativas/35 s. */
+  getCharge(account: ResolvedAccount, providerRef: string, context?: CollectionCallContext): Promise<ChargeResult>;
   cancelCharge(account: ResolvedAccount, providerRef: string, idempotencyKey: string): Promise<ChargeResult>;
   verifyWebhook(req: WebhookRequest, secret: string, now: Date): WebhookVerification;
   /** PR-3 (P3-5, M10): pede o relatório de liberações da faixa `[fromUtc, toUtc)` (ISO UTC `…Z`); o MP responde 202. */

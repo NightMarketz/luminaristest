@@ -99,10 +99,16 @@ continua; muda o destino do achado:
 - O que é da sua tarefa você resolve antes de fechar: caso que a spec pede, teste que o seu diff exige, erro que o seu
   código introduziu. Isso não é "fora de escopo".
 - Cada linha de "Achados fora de escopo" / "Lacunas de spec" vira uma entrada na caixa, antes do relatório:
-  `node scripts/lacunas.mjs add --local <arquivo:linha> --classe <defeito|debito|spec|feature|fork|gate> --o-que "…"
+  `node scripts/lacunas.mjs add --local <arquivo:linha> --classe <defeito|debito|spec|feature|fork|gate>
+  --dominio <fiscal|contabil|dados|operacao|produto|engenharia> --gravidade <G1..G5> --exposicao <E1..E4>
+  --deteccao <silencioso|ruidoso> --certeza <verificado|inferido|assumido> [--gatilho regressao,norma,vazamento,persistido]
+  --o-que "…"
   --evidencia "…" [--como-provar "…"] [--no <NÓ>] [--pr <n>] [--pai <id>]` (`--pai` = o id da lacuna que originou esta
-  sessão, se veio de uma). O id entra na linha do relatório e no corpo do PR.
-- 1ª linha do relatório final: `LACUNAS NA CAIXA: <n> (<ids>)` ou `LACUNAS NA CAIXA: 0`.
+  sessão, se veio de uma; em spec, feature, fork ou gate, `--impacto` no lugar de `--gravidade`; com G5, nit/estilo, basta
+  o domínio). Com `--pai`, só entra filha da meta: a de fora o `add` recusa, e ela vai descrita no relatório
+  (D-2026-11-25-MATRIZ-DE-LACUNAS §8b). O id entra na linha do relatório e no corpo do PR.
+- 1ª linha do relatório final: `LACUNAS NA CAIXA: <n> (<ids>)` ou `LACUNAS NA CAIXA: 0`; `<n>` não conta G5 (nit e estilo),
+  que vai ao lado como `· G5: <m>` (matriz: `docs/plano/decisoes/D-2026-11-25-MATRIZ-DE-LACUNAS.md`).
 - **Não envie a lacuna por `SendMessage` ao maestro**: turno aberto por mensagem de sessão não abre sessão, e a cadeia
   para. O maestro lê a caixa quando volta.
 - Lacuna da caixa (id `L-…`) é lacuna mapeada para esta sessão: o campo Lacuna leva o id + o `show` dela, a autorização
@@ -112,7 +118,7 @@ continua; muda o destino do achado:
 `docs/plano/decisoes/D-2026-11-21-RECOMENDAR-SOLUCAO-ESTRUTURAL.md`). As regras 1 e 3 continuam: esta sessão não toca
 fora da localização. Mas, quando a causa raiz está em outro lugar ou o fix mínimo seria remendo (sobrepor sintoma,
 `!`/override, caso especial no consumidor), o relatório **descreve a correção estrutural** (arquivo/camada dona, o que
-muda, versão incremental se for grande) e ela vai à caixa como `--classe defeito|debito`. O fix mínimo desta sessão
+muda, versão incremental se for grande) e ela vai à caixa como `--classe defeito|debito` (com os eixos da matriz, `D-2026-11-25-MATRIZ-DE-LACUNAS`). O fix mínimo desta sessão
 só entra se for etapa declarada dela, e o relatório diz isso.
 
 **Autorização quando a lacuna é nó do vault.** Lacuna priorizada pode ter nota em `docs/plano/nos/PASSO-*.md`

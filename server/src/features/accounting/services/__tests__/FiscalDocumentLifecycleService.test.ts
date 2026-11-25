@@ -338,7 +338,7 @@ describe('FiscalDocumentLifecycleService — consultarUm (itens 24-25)', () => {
     expect(auditService.append).not.toHaveBeenCalledWith(expect.anything(), SCOPE, expect.objectContaining({ eventType: 'dfe.rejected' }));
   });
 
-  it('DENIED não é reenviável (o número foi consumido; só REJECTED/PENDING_SIGNATURE reenviam)', async () => {
+  it('DENIED não é reenviável (só REJECTED/PENDING_SIGNATURE reenviam)', async () => {
     const { service } = makeService({ docs: { 'doc-1': baseDoc({ status: 'DENIED' }) } });
     await expect(service.reenviar(SCOPE, 'doc-1')).rejects.toThrow(/reenvio_bloqueado/);
   });

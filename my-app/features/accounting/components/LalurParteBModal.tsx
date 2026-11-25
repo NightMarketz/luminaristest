@@ -10,6 +10,7 @@ import {
   type LalurTributo,
   type UpdateLalurParteBAccountInput,
 } from '../../../lib/services/lalur.service';
+import { CNPJ_REGEX, cnpjInput, formatCnpj } from '../../../lib/cnpj';
 import { resolveError } from '../lib/resolveError';
 import { parseBrl } from '../lib/parseBrl';
 import { scopeToday } from '../lib/formatDate';
@@ -29,15 +30,8 @@ export interface LalurParteBModalProps {
   onForbidden?: () => void;
 }
 
-/** 14 digits → `##.###.###/####-##` (display only; the wire carries the digits). */
-export function formatCnpj(digits: string): string {
-  const d = digits.replace(/\D/g, '').slice(0, 14);
-  return d
-    .replace(/^(\d{2})(\d)/, '$1.$2')
-    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/\.(\d{3})(\d)/, '.$1/$2')
-    .replace(/(\d{4})(\d)/, '$1-$2');
-}
+/** 14 posições alfanuméricas → `AA.AAA.AAA/AAAA-DD` (display only; o fio leva as 14 posições sem máscara). */
+export { formatCnpj };
 
 /** REGRA_DT_AP_ZERO (Manual p.237; `SpedEcfRealGenerationService`): conta criada DENTRO do exercício tem VL_SALDO_INI = 0. */
 export const isCreatedInYear = (dtCriacao: string, year: number) =>
@@ -123,10 +117,10 @@ export function LalurParteBModal({ isOpen, onClose, unitId, year, editing, onSuc
 
   const zeroByRule = isCreatedInYear(dtCriacao, year);
   const pipeInCode = codCtaB.includes('|');
-  const cnpjDigits = cnpjSitEsp.replace(/\D/g, '');
+  const cnpjDigits = cnpjInput(cnpjSitEsp);
   const isValid =
     codCtaB.trim() !== '' && !pipeInCode && descricao.trim() !== '' && codPbRfb !== '' && dtCriacao !== '' &&
-    (cnpjDigits === '' || cnpjDigits.length === 14);
+    (cnpjDigits === '' || CNPJ_REGEX.test(cnpjDigits));
   const isDirty = codCtaB !== '' || descricao !== '' || codPbRfb !== '';
 
   function handleClose() {
@@ -308,15 +302,16 @@ export function LalurParteBModal({ isOpen, onClose, unitId, year, editing, onSuc
             <Field label={t('lalur.parteB.field.cnpjSitEsp', 'CNPJ situação especial — opcional')}>
               <input
                 type="text"
-                inputMode="numeric"
+                inputMode="text"
+                autoCapitalize="characters"
                 value={formatCnpj(cnpjSitEsp)}
-                onChange={(e) => setCnpjSitEsp(e.target.value.replace(/\D/g, '').slice(0, 14))}
+                onChange={(e) => setCnpjSitEsp(cnpjInput(e.target.value))}
                 placeholder="00.000.000/0000-00"
-                aria-invalid={(cnpjDigits !== '' && cnpjDigits.length !== 14) || undefined}
+                aria-invalid={(cnpjDigits !== '' && !CNPJ_REGEX.test(cnpjDigits)) || undefined}
                 className={inputClass}
               />
-              {cnpjDigits !== '' && cnpjDigits.length !== 14 && (
-                <span role="alert" className="text-red-300">{t('lalur.parteB.field.cnpjInvalid', 'CNPJ tem 14 dígitos.')}</span>
+              {cnpjDigits !== '' && !CNPJ_REGEX.test(cnpjDigits) && (
+                <span role="alert" className="text-red-300">{t('lalur.parteB.field.cnpjInvalid', 'CNPJ tem 14 posições (12 letras ou números + 2 dígitos).')}</span>
               )}
             </Field>
           </div>
