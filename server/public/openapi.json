@@ -28083,6 +28083,68 @@
         }
       }
     },
+    "/api/nfe/dfe/documents/{id}/rearmar-polling": {
+      "post": {
+        "summary": "Re-arm the polling job for a document it gave up on (lacunas cf36/3cf5)",
+        "description": "O job `dfe_poll_pending` desiste de consultar o documento SENT/PROCESSING depois de 8 falhas seguidas (ou erro permanente) e alerta (`poll.gaveUpAt` na view). Este POST zera a desistência, a contagem de tentativas e o backoff; o documento NÃO muda de status e não é consultado na hora (o próximo tick o pega). Documento que o job não abandonou, ou já terminal, não é alterado — devolve a view atual.",
+        "tags": [
+          "Accounting"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "unitId"
+                ],
+                "properties": {
+                  "unitId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "FiscalDocumentView (poll.gaveUpAt = null depois do re-arme)"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/UnitNotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/UnitDeleted"
+          }
+        }
+      }
+    },
     "/api/nfe/dfe/documents/{id}/reenviar": {
       "post": {
         "summary": "Resend a REJECTED document as a new attempt (item 26)",

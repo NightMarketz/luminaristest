@@ -117,6 +117,23 @@ export const consultarFiscalDocument = async (req: Request, res: Response) => {
   }
 };
 
+/** POST /documents/:id/rearmar-polling (cf36/3cf5) — devolve ao job de polling o documento que ele abandonou. */
+export const rearmarPollingFiscalDocument = async (req: Request, res: Response) => {
+  try {
+    const user = getUserContextFromRequest(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const params = FiscalDocumentParamsSchema.safeParse(req.params);
+    const body = FiscalDocumentActionBodySchema.safeParse(req.body);
+    if (!params.success) return res.status(400).json({ success: false, error: params.error.flatten() });
+    if (!body.success) return res.status(400).json({ success: false, error: body.error.flatten() });
+    const scope = await getFactory().getAccountingScopeResolver().resolve(user, body.data.unitId, { access: 'write' });
+    const data = await getFactory().getFiscalDocumentLifecycleService().rearmarPoll(scope, params.data.id);
+    return res.json({ success: true, data });
+  } catch (error) {
+    return handleApiError(error, res);
+  }
+};
+
 export const reenviarFiscalDocument = async (req: Request, res: Response) => {
   try {
     const user = getUserContextFromRequest(req);
