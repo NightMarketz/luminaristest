@@ -1,6 +1,9 @@
 # BE-INCR-DFE-DENIED-SUBSTITUIVEL — BRIEF (nota denegada substituível; consulta que não repete para sempre)
 
-> `sessao-planejamento`, 2026-11-25, base `631dd60fe` (main). Sem código de aplicação. **Nada aqui ratifica fork.**
+> `sessao-planejamento`, 2026-11-25, base `631dd60fe` (main). Sem código de aplicação. **Forks F-DEN-1..4 RATIFICADOS pelo dono em 25/11 (abaixo); esta sessão não ratificou nada.**
+> **Ratificação (literal da mensagem relatada pela sessão que drenou a caixa):** "Dono ratificou F-DEN-1(a), F-DEN-2(a),
+> F-DEN-3(a) e F-DEN-4(a) (dono, chat, 25/11, `AskUserQuestion` da sessão que drenou a caixa: 'Ratificar as 4 recomendadas')."
+> **Estado: BRIEF sem fork pendente** — a `sessao-feature` pode executá-lo pela emenda de 21/11 (2) de `D-2026-11-11-LACUNA-VAI-AO-MAESTRO`.
 > Nó: [`X10a`](../plano/nos/X10a.md) (adaptador SEFAZ da NF-e/NFC-e), emenda do #1358 (DENIED, integrado em #1378).
 > Lacunas da caixa: `L-20261124-122232-4eaa`, `L-20261124-061534-db50`, `L-20261124-061534-4fb9`.
 > Relacionada, **fora do escopo de código**: `L-20261124-211013-9b9d` (gate humano, PR #1391).
@@ -20,10 +23,9 @@
 **Cobre exatamente** o item (PR-0 + PR-1, as 3 lacunas). **Não cobre:** decidir o consumo do número (9b9d), inutilização
 da denegada, tela (`my-app/`, nó vizinho `FE-INCR-DFE`), nem os temas irmãos da mesma cédula (cancelamento `CANCELLING`,
 polling DF-e, re-drive) — cada um tem BRIEF próprio.
-**Divergência a reportar (não bloqueia):** a cédula não diz *qual* estado terminal vale para 101/151 nem *qual* alerta
-vale para as rejeições da consulta ("estado terminal **ou** alerta"); isso é F-DEN-1 e F-DEN-2 abaixo (e F-DEN-3/F-DEN-4 fecham arestas), e por isso este
-BRIEF **tem 4 forks pendentes** — a `sessao-feature` **não** o roda sozinha: a emenda de 21/11 só libera BRIEF *sem* fork
-(o bloco "DENIED substituível", itens 1–4, 6–7, não depende deles e pode ir antes **se o dono mandar**).
+**Divergência resolvida:** a cédula não dizia *qual* estado terminal vale para 101/151, *qual* alerta vale para as rejeições da
+consulta, até quando a denegada fica no alerta, nem o que fazer com `DENIED` pré-existente; isso foi F-DEN-1..4, **ratificados
+em 25/11 nas recomendações (a)** — o BRIEF está **sem fork pendente**.
 
 ## 1. Insumos lidos (fatos consumados — arquivo:linha em `631dd60fe`)
 
@@ -210,7 +212,7 @@ status: { in: ['CONTINGENCY', 'SENT', 'PROCESSING', 'REJECTED', 'PENDING_SIGNATU
 - **Auditoria:** reaproveita `dfe.denied` e `dfe.cancelled` (já na allowlist de `auditCanonical.ts`); **nenhum eventType
   novo** → sem mudança de allowlist. A consulta inválida é `logger.error` + `pollGaveUpAt`, não evento de auditoria.
 
-## 4. Forks pendentes de ratificação — todos **RATIFICAÇÃO PENDENTE**
+## 4. Forks — todos RATIFICADOS (dono, chat, 25/11); nenhum pendente
 
 **F-DEN-1 — Estado da nota que a consulta acha já cancelada (cStat 101/151).** *A cédula diz "estado terminal ou
 alerta"; não escolhe.* Evidência: ER09; `VALID_RESULT_TRANSITIONS` proíbe pendente→`CANCELLED` de propósito
@@ -228,7 +230,7 @@ alerta"; não escolhe.* Evidência: ER09; `VALID_RESULT_TRANSITIONS` proíbe pen
 - **Recomendação: (a)** — é o fato do fisco (padrão que a casa já usa em `e101101/e305101/e105104`, `:468`), simétrico ao
   `DENIED`, e não deixa a venda presa. Deixa aberto: o que fazer se a nota foi **autorizada e cancelada** fora do
   Luminaris já com receita contabilizada (o razão é da venda, não da nota; `markCancelled` "nunca toca venda nem razão").
-  **RATIFICAÇÃO PENDENTE.**
+  **RATIFICADO (dono, chat, 25/11): (a).**
 
 **F-DEN-2 — Destino da consulta inválida (252, 226, 236, 526, 562, 561, 613).** *A cédula diz "alerta"; não diz onde
 ele mora.* Esses códigos são erro da **consulta** (chave/ambiente/idade), "não é veredito sobre a nota" (lacuna `4fb9`);
@@ -244,7 +246,7 @@ ele mora.* Esses códigos são erro da **consulta** (chave/ambiente/idade), "nã
 - **Recomendação: (a).** Deixa aberto: nada resolve a nota presa em `PROCESSING` — quem fecha é o operador (consulta
   manual/XML/verificar ambiente) ou o re-arme; o BRIEF de polling (`pollDeferredSince`/`pollGaveUpAt`/botão) é quem
   dá a saída. **Dependência de ordem:** este item e o PR-0 daquele BRIEF mexem em `LifecycleService.ts:370-420`;
-  a sessão que chegar depois rebaseia, não duplica (ver Write-set). **RATIFICAÇÃO PENDENTE.**
+  a sessão que chegar depois rebaseia, não duplica (ver Write-set). **RATIFICADO (dono, chat, 25/11): (a).**
 
 **F-DEN-3 — Até quando a NFC-e de contingência denegada fica no alerta de prazo.** *A cédula diz "não pode sair do
 alerta"; não diz quando sai.*
@@ -254,7 +256,7 @@ alerta"; não diz quando sai.*
 - (c) Fica até o operador marcar resolvida (estado novo) — descartada, estado sem comando.
 - **Recomendação: (a):** o alerta serve para "ação humana"; autorizada a substituta, a ação foi feita. Custo: uma
   consulta a mais por doc no `tick` (`listBySale`). Deixa aberto: nota `DENIED` cuja substituta foi **rejeitada** segue
-  alertando (certo). **RATIFICAÇÃO PENDENTE.**
+  alertando (certo). **RATIFICADO (dono, chat, 25/11): (a).**
 
 **F-DEN-4 — Linhas `DENIED` que já existem com `saleKey = saleId`** (criadas entre o merge do #1358 e este PR; sem
 cliente real até 2027, mas há dev/homologação).
@@ -265,7 +267,7 @@ cliente real até 2027, mas há dev/homologação).
 - **Recomendação: (a)** — idempotente, só `DENIED`, sem migração de dado (S6) e sem depender de medir ambiente algum; a
   invariante "`DENIED` sempre sai do `@@unique`" passa a valer também para a linha antiga. O BRIEF **não mediu** quantas
   linhas existem (insumo ausente, §7); (c) só se o dono confirmar que nenhum ambiente compartilhado tem `DENIED`.
-  **RATIFICAÇÃO PENDENTE.**
+  **RATIFICADO (dono, chat, 25/11): (a).**
 
 ### Decisões diretas (não são fork)
 
@@ -333,6 +335,5 @@ o nó como serial até lá). Isto é desvio declarado da regra, não omissão.
 
 ## 10. Dependências e ordem
 
-PR-0 → PR-1 (o PR-1 só faz sentido com o rename em `main`). **Itens 1-4, 6-7 e 12 (sem exceção nova) não dependem de fork**
-e podem ir antes; item 5 e a auto-cura do PR-1 esperam F-DEN-4; item 8, F-DEN-3; itens 9-11 e 13, F-DEN-1/F-DEN-2.
-Nada aqui depende do `9b9d`.
+PR-0 → PR-1 (o PR-1 só faz sentido com o rename em `main`). Forks F-DEN-1..4 ratificados em (a): os itens 5, 8, 9-11, 13 e a
+auto-cura do PR-1 seguem as recomendações (a) acima. Nada aqui depende do `9b9d`.
