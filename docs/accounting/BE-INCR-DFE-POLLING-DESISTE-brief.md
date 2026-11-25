@@ -37,7 +37,10 @@ logo **não** vale a dispensa da emenda de 21/11 ("BRIEF de grupo sem fork execu
   #1392 diz fechá-la), **153d** (nota autorizada por outro caminho mantém `pollGaveUpAt`/`pollDeferredSince`; por isso o P2.2 só mostra o
   estado em SENT/PROCESSING), **16c9** e **54f4** (`adiarPoll` não encerra o episódio; `adiarPorTransporte` regrava o episódio a partir do
   documento lido no início do tick — mesma função que P1.5 toca), **e1f3** (corrida poll × consulta manual da contingência, teste em SQLite
-  real — toca o mesmo caminho do P3.1). Quem implementar P1/P3 lê essas quatro antes de editar `adiarPorTransporte`/`registrarFalhaDePoll`.
+  real — toca o mesmo caminho do P3.1), **bf96** (tipo `poll` e botão no FE: **é o P0.3/P2.1/P2.2 deste BRIEF** — o PR-2 a fecha; o
+  "UI adiada pelo dono" dela é anterior à cédula de 25/11, que pede o botão), **9bdf** (ordem dos alertas no scheduler, teste do #1392) e
+  **2374** (`sendAlertWebhook` sem retry: com o marcador "já alertei" gravado o alerta se perde — **agrava o F-PD-5**: quanto mais o
+  dedupe for persistido, mais o alerta final depende do webhook; fica como risco do F-PD-5(a), não resolvido aqui). Quem implementar P1/P3 lê essas quatro antes de editar `adiarPorTransporte`/`registrarFalhaDePoll`.
 
 ## 2. Lacuna → item que a fecha → comando que prova
 
